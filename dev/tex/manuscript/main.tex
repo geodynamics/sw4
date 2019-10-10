@@ -103,7 +103,7 @@ Here, $C$ is symmetric and positive definite, we refer to Appendix ? for the def
 0 & 0 & 2\mu+\lambda\end{array}\right),\]
 Here, $\lambda$ and $\mu$ are the first and second Lame parameters respectively, which are determined by the properties of the materials.
 
-Denote the unit outward normal ${\bf n}_i = (n_i^{(1)},n_i^{(2)},n_i^{(3)})$ for the boundaries $x^{(i)} = 0, a^{(i)}, i = 1,2,3$. For example, ${\bf n}_1 = (\pm 1, 0,0)$ for the boundaries $x^{(1)} = a^{(1)}$ or $x^{(1)} = 0$, then we have the boundary traction forcing {\color{red}(The notation ${\bf n}_1 = (\pm 1, 0,0)$ is a bit confusing to me, i.e. use one notation to denote normals on two boundaries. I can see that this is used in Anders and Sjögreen 2015. )}
+Denote the unit outward normal {\color{blue}${\bf n}_i^{\pm} = (n_i^{\pm,(1)},n_i^{\pm,(2)},n_i^{\pm,(3)})$ for the boundaries $x^{(i)} = 0, a^{(i)}, i = 1,2,3$ respectively. For example, ${\bf n}_1^{\pm} = (\pm 1, 0,0)$ for the boundaries $x^{(1)} = a^{(1)}$ and $x^{(1)} = 0$ respectively}, then we have the boundary traction forcing {\color{red}(The notation ${\bf n}_1 = (\pm 1, 0,0)$ is a bit confusing to me, i.e. use one notation to denote normals on two boundaries. I can see that this is used in Anders and Sjögreen 2015. )}
 \begin{equation*}
 {\bf n}_i\cdot\mathcal{T} = n^{(1)}_iA_1\nabla{\bf u} + n^{(2)}_iA_2\nabla{\bf u} + n^{(3)}_iA_3\nabla{\bf u},\ \ i = 1,2,3. 
 \end{equation*}
@@ -114,7 +114,7 @@ It is known that the elastic wave equation with the homogeneous Dirichelet bound
 \subsection{Generalization to curvilinear coordinates}
 %Present the transformed equation. Notation is important. We can write a few formulas first, and discuss if it is good notation. Maybe we shall follow notations from one of Anders' papers?
 
-In this section, we consider a curvilinear domain $\Omega$. Assume there is a one-to-one mapping ${\bf x} = {\bf x}({\bf r}) : [0,1]^3 \rightarrow \Omega \in \mathbb{R}^3$ {\color{red}(Is it $R^3$ or in a bounded domain?)} with ${\bf x}({\bf r}) = (x^{(1)}({\bf r}),x^{(2)}({\bf r}),x^{(3)}({\bf r}))^T, {\bf r} = (r^{(1)},r^{(2)},r^{(3)})^T, 0\leq r^{(i)}\leq1, i = 1,2,3$.
+In this section, we consider a curvilinear domain $\Omega$. Assume there is a one-to-one mapping {\color{blue}${\bf x} = {\bf x}({\bf r}) : [0,1]^3 \rightarrow \Omega \subset \mathbb{R}^3$} {\color{blue}{it is $R^3$}}{\color{red}(Is it $R^3$ or in a bounded domain?)} with ${\bf x}({\bf r}) = (x^{(1)}({\bf r}),x^{(2)}({\bf r}),x^{(3)}({\bf r}))^T, {\bf r} = (r^{(1)},r^{(2)},r^{(3)})^T, 0\leq r^{(i)}\leq1, i = 1,2,3$.
 
 We define the derivative of the forward mapping to be 
 \begin{equation}\label{elastic_eq_carte}
@@ -166,9 +166,9 @@ respectively. Here, the ${\bf n}_1$ and ${\bf n}_2$ have a similar definition as
 \subsubsection{Energy estimate}
 From the definitions of matrcies $N_{ij}$, we can easily verify that $N_{11}, N_{22}, N_{33}$ are positive definite and $N_{ij} = N_{ji}^T$. In the curvilinear coordinates, the $L^2$ scalar product is scaled by $J$. We define the $L^2$ scalar product of the two real vector-valued functions ${\bf u}({\bf x})\in\mathbb{R}^3\rightarrow \mathbb{R}^3$ and ${\bf v}(\bf x)\in\mathbb{R}^3\rightarrow \mathbb{R}^3$ by
 \begin{equation*}
-({\bf u},{\bf v})_2 = \int_{\Omega}  \left(\sum_{l=1}^q u^{l}v^{l}\right)dx^{(1)}dx^{(2)}dx^{(3)} = \int_{{\bf r}\in[0,1]^3} \left(\sum_{l=1}^q u^{l}v^{l}\right)Jdr^{(1)}dr^{(2)}dr^{(3)}.
+({\bf u},{\bf v})_2 = \int_{\Omega}  \left(\sum_{l=1}^3 u^{l}v^{l}\right)dx^{(1)}dx^{(2)}dx^{(3)} = \int_{{\bf r}\in[0,1]^3} \left(\sum_{l=1}^3 u^{l}v^{l}\right)Jdr^{(1)}dr^{(2)}dr^{(3)}.
 \end{equation*}
-{\color{red}(Can we explain $u^l$ and $q$? Is $q$ equal to 3?)}To analyze the energy estimate of the solution of an elastic wave equation in the curvilinear domain, we multiply the equation (\ref{elastic_eq_curvi}) by $J{\bf u}_t$ and integrate over the parameter space $[0,1]^3$ to obtain
+{\color{red}(Can we explain $u^l$ and $q$? Is $q$ equal to 3?)}{\color{blue}( $q$ is changed to $3$)}To analyze the energy estimate of the solution of an elastic wave equation in the curvilinear domain, we multiply the equation (\ref{elastic_eq_curvi}) by $J{\bf u}_t$ and integrate over the parameter space $[0,1]^3$ to obtain
 \begin{align}\label{time_deri_curvi}
 ({\bf u}_t,\rho {\bf u}_{tt})_2 &= \left({\bf u}_t,\frac{1}{J}\bar{\partial}_1(\bar{A}_1\bar{\nabla}{\bf u})\right)_2+ \left({\bf u}_t,\frac{1}{J}\bar{\partial}_2(\bar{A}_2\bar{\nabla}{\bf u})\right)_2+ \left({\bf u}_t,\frac{1}{J}\bar{\partial}_3(\bar{A}_3\bar{\nabla}{\bf u})\right)_2+({\bf u}_t, {\bf F})_2\nonumber\\
 &:= -S({\bf u}_t,{\bf u}) + B({\bf u}_t,{\bf u}) + ({\bf u}_t,{\bf F})_2,
@@ -272,11 +272,7 @@ We consider the elastic wave equation in curvilinear coordinates
 \begin{equation}\label{elastic_equation}
 \rho\frac{\partial^2 {\bf u}}{\partial t^2} = L{\bf u},
 \end{equation}
-where 
-\begin{multline}\label{spatial_operator}
-L{\bf u} = \frac{1}{J}\Big[\bar{\partial}_1(N_{11}\bar{\partial}_1{\bf u}) + \bar{\partial}_2(N_{22}\bar{\partial}_2{\bf u}) + \bar{\partial}_3(N_{33}\bar{\partial}_3{\bf u}) + \bar{\partial}_1(N_{12}\bar{\partial}_2{\bf u}) + \bar{\partial}_1(N_{13}\bar{\partial}_3{\bf u}) \\
-+ \bar{\partial}_2(N_{21}\bar{\partial}_1{\bf u}) + \bar{\partial}_2(N_{23}\bar{\partial}_3{\bf u}) +\bar{\partial}_3(N_{31}\bar{\partial}_1{\bf u}) + \bar{\partial}_3(N_{32}\bar{\partial}_2{\bf u})\Big],
-\end{multline}
+here $L{\bf u}$ has the same expression as in (\ref{elastic_eq_curvi}) provided ${\bf F} = 0$. {\color{blue} (simplified)}
 {\color{red}(Is the above equation the same as (2) with F=0? If so, we do not need to repeat, but refer to (2) with F=0.)} The parameter space $[0,1]^3$ is discretized as $r_{i_1}^{(1)} = (i_1-1)h_1, i_1 = 0,1,2,\cdots,n_1+1$, $r_{i_2}^{(2)} = (i_2-1)h_2, i_2 = 0,1,2,\cdots,n_2+1$, and $r_{i_3}^{(3)} = (i_3-1)h_3, i_3 = 0,1,2,\cdots,n_3+1$ with $h_1 = 1/(n_1-1), h_2 = 1/(n_2-1), h_3 = 1/(n_3-1)$, the ghost points are used to impose the boundary conditions.
 
 The physical coordinates of the grid points follow from the mapping ${\bf x}_{i_1,i_2,i_3} = {\bf x}({\bf r}_{i_1,i_2,i_3})$. Denote a grid function ${\bf u}_{i_1,i_2,i_3} = {\bf u}(r_{i_1}^{(1)},r_{i_2}^{(2)},r_{i_3}^{(3)})$. To condense the notation, we intoduce the muti-index notations
@@ -285,12 +281,13 @@ Besides, we define a grid function on the top surface as
 \[{\bf u}_{{\bf i}_{\Omega_t}} = {\bf u}_{i_1,i_2,n_3}, \ \ {\bf i}_{\Omega_t} = (i_1,i_2,n_3),\]
 and a grid function on the bottom surface to be
 \[{\bf u}_{{\bf i}_{\Omega_b}} = {\bf u}_{i_1,i_2,1}, \ \ {\bf i}_{\Omega_b} = (i_1,i_2,1).\]
-The terms $\bar{\partial}_k(N_{kk}\bar{\partial}_k{\bf u}), k = 1,2,3$ in the spatial operator (\ref{spatial_operator}) are approximated by a SBP operator $\hat{G}\in\{\uline{\wt G}, \wt{G}, \uline{G}, G\}$ which is fourth order in the interior and  second order near the boundaries. The operators $D$ in  (\ref{first_sbp}) are used to approximate  $\bar{\partial}_k, \bar{\partial}_j, k,j = 1,2,3$ in $\bar{\partial}_j(N_{jk}\bar{\partial}_k{\bf u})$ without using any ghost points. Then the spatial operator (\ref{spatial_operator}) is discretized as {\color{red} (Why $\hat{ L}_h$? Is $L_h$ used for something else?)}
+The terms $\bar{\partial}_k(N_{kk}\bar{\partial}_k{\bf u}), k = 1,2,3$ in the spatial operator (\ref{elastic_eq_curvi}) are approximated by a SBP operator $\hat{G}\in\{\uline{\wt G}, \wt{G}, \uline{G}, G\}$ which is fourth order in the interior and  second order near the boundaries. The operators $D$ in  (\ref{first_sbp}) are used to approximate  $\bar{\partial}_k, \bar{\partial}_j, k,j = 1,2,3$ in $\bar{\partial}_j(N_{jk}\bar{\partial}_k{\bf u})$ without using any ghost points. Then the spatial operator (\ref{elastic_eq_curvi}) is discretized as {\color{red} (Why $\hat{ L}_h$? Is $L_h$ used for something else?)}
 \begin{multline}\label{discrete_elastic}
 \hat{ L}_h{\bf u}_{\bf i} = \frac{1}{J_{\bf i}}\big[\hat{G}_1(N_{11}){\bf u}_{\bf i}+\hat{G}_2(N_{22}){\bf u}_{\bf i}+\hat{G}_3(N_{33}){\bf u}_{\bf i}+D_1(N_{12}D_2{\bf u}_{\bf i})\\
 +D_1(N_{13}D_3{\bf u}_{\bf i})+D_2(N_{21}D_1{\bf u}_{\bf i})+D_2(N_{23}D_3{\bf u}_{\bf i})+D_3(N_{31}D_1{\bf u}_{\bf i})
-+D_3(N_{32}D_2{\bf u}_{\bf i})\big].
++D_3(N_{32}D_2{\bf u}_{\bf i})\big],
 \end{multline}
+{\color{blue} were, $\hat{L}_h\in\{\uline{\wt L}_h, \wt{L}_h, \uline{L}_h,L_h\}$ is determined by $\hat{G}$. Particularly, $\hat{L}_h$ is consistent with $\hat{G}_3$ if we have periodic boundary conditions in directions $1$ and $2$.}
  
 \subsection{Boundary conditions}\label{boundary_conditions}
 To conserve space, we only describe the technique for imposing boudnary conditions with ghost points. It is also possible to impose the boundary conditions without ghost points, say SAT penalty method, see \cite{?}, but we only focus on the scheme with ghost points for the boundary conditions in this paper. For simplicity, we only impose the boundary conditions on the top/bottom surface (direction $3$), and the other boundaries are assumed to be periodic; besides, we only describe the top boundary here and omit the bottom boundary. In the rest of the paper, we define a discrete scalar product as
@@ -303,9 +300,9 @@ We start by considering the boundary forcing
 \begin{equation}\label{boundary_forcing}
 \mathcal{T}\cdot{\bf n}_3 = {\bf g}(x^{(1)},x^{(2)},x^{(3)},t) = (g_1,g_2,g_3)^T,
 \end{equation}
-where $(x^{(1)},x^{(2)},x^{(3)})$ are on the top surface and ${\bf n}_3$ is the unit outward norm of the top surface. Then in our sechme, the semi-discrtization of (\ref{elastic_equation}) and (\ref{boundary_forcing}) are
+where $(x^{(1)},x^{(2)},x^{(3)})$ are on the top surface and ${\bf n}_3$ is the unit outward norm of the top surface. Then in our secheme, the semi-discrtization of (\ref{elastic_equation}) and (\ref{boundary_forcing}) are
 \begin{equation}\label{semi_discrete_elastic}
-\rho_{\bf i}({\bf u}_{tt})_{\bf i} = \hat{E}(\mu_{\bf i},\lambda_{\bf i}){\bf u}_{\bf i}, \ \ \ t\geq0  {\color{red}(E?)}
+\rho_{\bf i}({\bf u}_{tt})_{\bf i} = {\color{blue}\hat{L}_h}(\mu_{\bf i},\lambda_{\bf i}){\bf u}_{\bf i}, \ \ \ t\geq0  {\color{red}(E?)}
 \end{equation}
 and
 \begin{equation}\label{discrete_boundary_forcing}
@@ -387,7 +384,7 @@ where $(x^{(1)},x^{(2)},x^{(3)})$ are on the top surface. It is obvious that we 
 \end{equation}
 From the discrete point of view, we have
 \begin{equation}\label{dbc_discrete}
-({\bf u}_{tt})_{{\bf i}_{\Omega_t}}=\frac{1}{\rho_{{\bf i}_{\Omega_t}}} \hat{E}(\mu_{{\bf i}_{\Omega_t}},\lambda_{{\bf i}_{\Omega_t}}){\bf u}_{{\bf i}_{\Omega_t}} = ({\bf f}_{tt})_{i_1,i_2}. {\color{red}E?}
+({\bf u}_{tt})_{{\bf i}_{\Omega_t}}=\frac{1}{\rho_{{\bf i}_{\Omega_t}}} {\color{blue}\hat{L}_h}(\mu_{{\bf i}_{\Omega_t}},\lambda_{{\bf i}_{\Omega_t}}){\bf u}_{{\bf i}_{\Omega_t}} = ({\bf f}_{tt})_{i_1,i_2}. {\color{red}E?}
 \end{equation}
 Since we have periodic boundary conditions in the directions $1,2$ and $D_3$ in the (\ref{discrete_elastic}) use the first derivative oprator which does not contain the ghost points, the only term contains the ghost points is 
 \[\frac{\hat{G}_3(N_{33}){\bf u}_{{\bf i}_{\Omega_t}}}{\rho_{{\bf i}_{\Omega_t}}J_{{\bf i}_{\Omega_t}}}.\]
@@ -417,9 +414,9 @@ We approximate the elastic wave equations (\ref{coarse_problem}) and (\ref{fine_
 \[{\bf i}^c = (i_1^c,i_2^c,i_3^c), \ {\bf i}^c_{\Omega^c_b} = (i_1^c,i_2^c,1),\  {\bf i}^c_{\Gamma} = (i_1^c,i_2^c,n_3^c),\]
 and
 \[ {\bf i}^f = (i_1^f,i_2^f,i_3^f), \ {\bf i}^f_{\Gamma} = (i_1^f,i_2^f,1), \ {\bf i}^f_{\Omega_t^f} = (i_1^f,i_2^f,n_3^f).\]
- Then in coarse domain $\Omega_c$, we have {(\color{red} In the following three equations, the first two terms do not seem to be correct. To approximate second derivative, we use second derivative SBP operator, but do not use the first derivative SBP operator twice.)}
+ Then in coarse domain $\Omega_c$, we have {(\color{red} In the following three equations, the first two terms do not seem to be correct. To approximate second derivative, we use second derivative SBP operator, but do not use the first derivative SBP operator twice.)}{\color{blue} fixed}
 \begin{multline}\label{coarse_scheme}
-\rho_{{\bf i}^c}^c ({\bf u}_{tt}^c)_{{\bf i}^c} = \frac{1}{J_{{\bf i}^c}^c}\Big[D_1^c(N_{11}^cD_1^c{\bf u}_{i,j,k}^c)+D_2^c(N_{22}^cD_2^c{\bf u}_{i,j,k}^c)+\uline{\wt{G}}_3^c(N_{33}^c){\bf u}_{{\bf i}^c}^c\\
+\rho_{{\bf i}^c}^c ({\bf u}_{tt}^c)_{{\bf i}^c} = \frac{1}{J_{{\bf i}^c}^c}\Big[G_1^c(N_{11}^c){\bf u}_{{\bf i}^c}^c+G_2^c(N_{22}^c){\bf u}_{{\bf i}^c}^c+\uline{\wt{G}}_3^c(N_{33}^c){\bf u}_{{\bf i}^c}^c\\
 +D_1^c(N_{12}^cD_2^c{\bf u}_{{\bf i}^c}^c)+D_1^c(N_{13}^cD_3^c{\bf u}_{{\bf i}^c}^c)
 +D_2^c(N_{21}^cD_1^c{\bf u}_{{\bf i}^c}^c)+D_2^c(N_{23}^cD_3^c{\bf u}_{{\bf i}^c}^c)\\
 +D_3^c(N_{31}^cD_1^c{\bf u}_{{\bf i}^c}^c)
@@ -428,7 +425,7 @@ and
  For the fine domian $\Omega_f$, we impose
 \begin{multline}\label{fine_scheme_2}
 \rho_{{\bf i}^f}^f ({\bf u}_{tt}^f)_{{\bf i}^f} =
- \frac{1}{J_{{\bf i}^f}^f}\Big[D_1^f(N_{11}^fD_1^f{\bf u}_{{\bf i}^f}^f)+D_2^f(N_{22}^fD_2^f{\bf u}_{{\bf i}^f}^f)+\wt{G}_3^f(N_{33}^f){\bf u}_{{\bf i}^f}^f\\
+ \frac{1}{J_{{\bf i}^f}^f}\Big[G_1^f(N_{11}^f){\bf u}_{{\bf i}^f}^f+G_2^f(N_{22}^f){\bf u}_{{\bf i}^f}^f+\wt{G}_3^f(N_{33}^f){\bf u}_{{\bf i}^f}^f\\
 +D_1^f(N_{12}^fD_2^f{\bf u}_{{\bf i}^f}^f)+D_1^f(N_{13}^fD_3^f{\bf u}_{{\bf i}^f}^f)
 +D_2^f(N_{21}^fD_1^f{\bf u}_{{\bf i}^f}^f)+D_2^f(N_{23}^fD_3^f{\bf u}_{{\bf i}^f}^f)\\
 +D_3^f(N_{31}^fD_1^f{\bf u}_{{\bf i}^f}^f)+D_3^f(N_{32}^fD_2^f{\bf u}_{{\bf i}^f}^f)\Big] 
@@ -436,7 +433,7 @@ and
 \end{multline}
 with $ i_3^f = 2,\cdots,n_3^f$ and
 \begin{multline}\label{fine_scheme_1}
-\rho_{{\bf i}^f_{\Gamma}}^f ({\bf u}_{tt}^f)_{{\bf i}^f_{\Gamma}} = \frac{1}{J_{{\bf i}^f_{\Gamma}}^f}\Big[D_1^f(N_{11}^fD_1^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)+D_2^f(N_{22}^fD_2^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)
+\rho_{{\bf i}^f_{\Gamma}}^f ({\bf u}_{tt}^f)_{{\bf i}^f_{\Gamma}} = \frac{1}{J_{{\bf i}^f_{\Gamma}}^f}\Big[G_1^f(N_{11}^f){\bf u}_{{\bf i}_\Gamma^f}^f+G_2^f(N_{22}^f){\bf u}_{{\bf i}_\Gamma^f}^f
 +G_3^f(N_{33}^f){\bf u}_{{\bf i}^f_{\Gamma}}^f\\
 +D_1^f(N_{12}^fD_2^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)+D_1^f(N_{13}^fD_3^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)
 +D_2^f(N_{21}^fD_1^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)+D_2^f(N_{23}^fD_3^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)\\
@@ -592,12 +589,12 @@ Let ${\bf u}^{n,c}$ and ${\bf u}^{n,f}$ denote the numerical approximations of $
 	Given initial conditions $\uline{\wt{{\bf u}}}^{0,c}, \uline{\wt{{\bf u}}}^{-1,c}$ and $\wt{{\bf u}}^{0,f}, \wt{{\bf u}}^{-1,f}$ that satisfies the discretized boundary conditions.
 	
 	\begin{itemize}
-	\item  {Compute the predictor at the interior grid points for both fine and coarse domains {\color{red}(We use L instead of E, right?)}
+	\item  {Compute the predictor at the interior grid points for both fine and coarse domains {\color{red}(We use L instead of E, right?)}{\color{blue} fixed}
 		\begin{equation*}
-		   {\bf u}^{c,*,n+1}_{{\bf i}^c} = 2{\bf u}^{c,n}_{{\bf i}^c} - {\bf u}^{c,n-1}_{{\bf i}^c} + \Delta_t^2(\rho^c_{{\bf i}^c})^{-1}\uline{\wt{E}}_c(\mu_{{\bf i}^c},\lambda_{{\bf i}^c}) {\bf{u}}^{c,n}_{{\bf i}^c}
+		   {\bf u}^{c,*,n+1}_{{\bf i}^c} = 2{\bf u}^{c,n}_{{\bf i}^c} - {\bf u}^{c,n-1}_{{\bf i}^c} + \Delta_t^2(\rho^c_{{\bf i}^c})^{-1}\uline{\wt{L}}_{h^c} {\bf{u}}^{c,n}_{{\bf i}^c}
 		\end{equation*}
 		\begin{equation*}
-		{\bf u}^{f,*,n+1}_{{\bf i}^f} = 2{\bf u}^{f,n}_{{\bf i}^f} - {\bf u}^{f,n-1}_{{\bf i}^f} + \Delta_t^2(\rho^f_{{\bf i}^f})^{-1}{\wt{E}}_f(\mu_{{\bf i}^f},\lambda_{{\bf i}^f}) {\bf{u}}^{f,n}_{{\bf i}^f}
+		{\bf u}^{f,*,n+1}_{{\bf i}^f} = 2{\bf u}^{f,n}_{{\bf i}^f} - {\bf u}^{f,n-1}_{{\bf i}^f} + \Delta_t^2(\rho^f_{{\bf i}^f})^{-1}{\wt{L}}_{h^f} {\bf{u}}^{f,n}_{{\bf i}^f}
 		\end{equation*}
 	   }
    \item {For the boundary forcing condition, assign the ghost point value ${\bf u}^{f,*,n+1}_{i_1^f,i_2^f,n^f_3+1}$ to satisfy
@@ -607,7 +604,7 @@ Let ${\bf u}^{n,c}$ and ${\bf u}^{n,f}$ denote the numerical approximations of $
    }
    \item {For the Dirichlet boundary condition, assign the ghost point value ${\bf u}^{c,*,n+1}_{i_1^c,i_2^c,0}$ to satisfy
    	\begin{equation*}
-   	\uline{\wt{M}}_c(\mu_{{\bf i}^c_{\Omega^c_b}},\lambda_{{\bf i}^c_{\Omega^c_b}}) {\bf{u}}^{c,*,n+1}_{{\bf i}^c_{\Omega^c_b}} = 2\uline{\wt{M}}_c(\mu_{{\bf i}^c_{\Omega^c_b}},\lambda_{{\bf i}^c_{\Omega^c_b}}) {\bf{u}}^{c,*,n}_{{\bf i}^c_{\Omega^c_b}} - 	\uline{\wt{M}}_c(\mu_{{\bf i}^c_{\Omega^c_b}},\lambda_{{\bf i}^c_{\Omega^c_b}}) {\bf{u}}^{c,*,n-1}_{{\bf i}^c_{\Omega^c_b}}
+   	\uline{\wt{L}}_{h^c} {\bf{u}}^{c,*,n+1}_{{\bf i}^c_{\Omega^c_b}} = 2\uline{\wt{L}}_{h^c}{\bf{u}}^{c,*,n}_{{\bf i}^c_{\Omega^c_b}} - 	\uline{\wt{L}}_{h^c} {\bf{u}}^{c,*,n-1}_{{\bf i}^c_{\Omega^c_b}}
    	\end{equation*}
    }
   \item{For the continuity of solution on the interface $\Gamma$, assign the value ${\bf u}^{f,*,n+1}_{i_1^f,i_2^f,0}$ to satisfy
@@ -631,10 +628,10 @@ Let ${\bf u}^{n,c}$ and ${\bf u}^{n,f}$ denote the numerical approximations of $
   }
   \item{Compute the corrector at the interior grid points
   	\begin{equation*}
-  	{\bf u}^{c,n+1}_{{\bf i}^c} = {\bf u}^{c,*,n+1}_{{\bf i}^c} + \frac{\Delta_t^4}{12}(\rho^c_{{\bf i}^c})^{-1}\uline{\wt{E}}_c(\mu_{{\bf i}^c},\lambda_{{\bf i}^c}) {\bf{u}}^{c,*,n}_{{\bf i}^c}
+  	{\bf u}^{c,n+1}_{{\bf i}^c} = {\bf u}^{c,*,n+1}_{{\bf i}^c} + \frac{\Delta_t^4}{12}(\rho^c_{{\bf i}^c})^{-1}\uline{\wt{L}}_{h^c}(\mu_{{\bf i}^c},\lambda_{{\bf i}^c}) {\bf{u}}^{c,*,n}_{{\bf i}^c}
   	\end{equation*}
   	\begin{equation*}
-  		{\bf u}^{f,n+1}_{{\bf i}^f} = {\bf u}^{f,*,n+1}_{{\bf i}^f} + \frac{\Delta_t^4}{12}(\rho^f_{{\bf i}^f})^{-1}\wt{E}_f(\mu_{{\bf i}^f},\lambda_{{\bf i}^f}) {\bf{u}}^{f,*,n}_{{\bf i}^f}
+  		{\bf u}^{f,n+1}_{{\bf i}^f} = {\bf u}^{f,*,n+1}_{{\bf i}^f} + \frac{\Delta_t^4}{12}(\rho^f_{{\bf i}^f})^{-1}\wt{L}_{h^f}(\mu_{{\bf i}^f},\lambda_{{\bf i}^f}) {\bf{u}}^{f,*,n}_{{\bf i}^f}
   	\end{equation*}
   }
  \item {For the boundary forcing condition, assign the ghost point value ${\bf u}^{f,n+1}_{i^f_1,i^f_2,n_3^f+1}$ to satisfy
@@ -644,7 +641,7 @@ Let ${\bf u}^{n,c}$ and ${\bf u}^{n,f}$ denote the numerical approximations of $
  }
  \item {For the Dirichlet boundary condition, assign the ghost point value ${\bf u}^{c,n+1}_{i^c_1,i^c_2,0}$ to satify
  	\begin{equation*}
- 	\uline{\wt{M}}(\mu_{{\bf i}^c_{\Omega^c_b}},\lambda_{{\bf i}^c_{\Omega^c_b}}){\bf u}_{{\bf i}^c_{\Omega^c_b}}^{c,n+1} = \frac{\rho^c_{{\bf i}^c_{\Omega^c_b}}}{\Delta_t^2}\Big({\bf f} _{i^c_1,i^c_2}(t_{n+2})-2{\bf u}_{{\bf i}^c_{\Omega^c_b}}^{c,n+1}+{\bf u}_{{\bf i}^c_{\Omega^c_b}}^{c,n}\Big)
+ 	\uline{\wt{L}}_{h^c}{\bf u}_{{\bf i}^c_{\Omega^c_b}}^{c,n+1} = \frac{\rho^c_{{\bf i}^c_{\Omega^c_b}}}{\Delta_t^2}\Big({\bf f} _{i^c_1,i^c_2}(t_{n+2})-2{\bf u}_{{\bf i}^c_{\Omega^c_b}}^{c,n+1}+{\bf u}_{{\bf i}^c_{\Omega^c_b}}^{c,n}\Big)
  	\end{equation*}
  }
  \item{For continuity of solution on the interface $\Gamma$, assign the value ${\bf u}^{f,n+1}_{i^c_1,i^c_2,0}$ to satisfy
