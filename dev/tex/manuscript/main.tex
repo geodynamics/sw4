@@ -689,7 +689,7 @@ $\theta_b$ is the bottom surface geometry,
 \begin{equation}\label{bottom_geometry}
 \theta_b\big(r^{(1)},r^{(2)}\big) = 0.2\exp\left(-\frac{(r^{(1)}-0.6)^2}{0.04}\right)+0.2\exp\left(-\frac{(r^{(2)}-0.6)^2}{0.04}\right).
 \end{equation}
-As for the fine domian $\Omega_f$, it is choose to be
+As for the fine domian $\Omega_f$, we choose 
 \begin{equation}\label{fine_domain_manufactured}
 \left\{
 \begin{aligned}
@@ -716,20 +716,21 @@ and
 \begin{equation}\label{lambda_function}
 \lambda(x^{(1)},x^{(2)},x^{(3)})  = 21+ \cos(x^{(1)}+0.1)\cos(x^{(2)}+0.1)\sin^2(3x^{(3)}),
 \end{equation}
-respectively. Besides, we impose a boundary forcing on the top surface and Dirichlet boundary conditions for the other boundaries. The internal forcing ${\bf F}$, top boundary forcing ${\bf g}$ and initial conditions are chosen such that ${\bf u} = (u_1,u_2,u_3)^T$ with
+respectively. Besides, we impose a boundary forcing on the top surface and Dirichlet boundary conditions for the other boundaries. The internal forcing ${\bf F}$, top boundary forcing ${\bf g}$ and initial conditions are chosen such that the solution ${\bf u} = (u_1,u_2,u_3)^T$ is
 \begin{align*}
 u_1 &= \cos(x^{(1)}+0.3)\sin(x^{(2)}+0.3)\sin(x^{(3)}+0.2)\cos(t^2),\\
 u_2 &= \sin(x^{(1)}+0.3)\cos(x^{(2)}+0.3)\sin(x^{(3)}+0.2)\cos(t^2),\\
 u_3 &= \sin(x^{(1)}+0.2)\sin(x^{(2)}+0.2)\cos(x^{(3)}+0.2)\sin(t).
 \end{align*}
-For example, for the boundary forcing on the top surface, we impose 
+For example, for the boundary forcing on the top surface, we impose {\color{red}(What is the M matrix?)} 
 \begin{equation}\label{traction_force}
 {\bf g} = (g_1,g_2,g_3)^T = \sum_{i=1}^3\left(\sum_{j = 1}^3 M_{ij}\frac{\partial{\bf u}}{\partial x^{(j)}}\right) n^{(i)},
 \end{equation}
 where, $n^{(i)}$ is the element of the unit outward normal ${\bf n} = (n^{(1)},n^{(2)},n^{(3)})$ for the top surface. 
 
 \subsubsection{Iterative methods}\label{iterative_section}
-In the proposed scheme (\ref{coarse_scheme})--(\ref{traction_continuous_curvi}), we need to solve a $3n_1^cn_2^c\times 3n_1^cn_2^c$ linear system at each time step twice for the continutiy of the traction force along the interface (\ref{traction_gamma_pre}) and (\ref{traction_gamma_corr}). Even ethough we can do LU factorization one time before the time loop start and reuse it at each time step, it is vergy expensive to do LU factorization for a large problem. Besides, consider solving real problems which are usually in large scale, we want to perform the computation on many processors on a parallel distributed memory machine, but it is not clear how to calculate the LU factorization of a matrix on many processors. 
+In the proposed scheme (\ref{coarse_scheme})--(\ref{traction_continuous_curvi}), we need to solve a $3n_1^cn_2^c\times 3n_1^cn_2^c$ linear system at each time step twice for the continutiy of the traction force along the interface (\ref{traction_gamma_pre}) and (\ref{traction_gamma_corr}). One approach is to perform a LU factorization of the linear equation. However, for practical problems in large scale, LU factorization is computationally expensive and memory inefficient, and is difficult to perform on parallel computers. Alternatively, iterative methods are a better approach. 
+%Even though we can do LU factorization one time before the time loop start and reuse it at each time step, it is vergy expensive to do LU factorization for a large problem. Besides, consider solving real problems which are usually in large scale, we want to perform the computation on many processors on a parallel distributed memory machine, but it is not clear how to calculate the LU factorization of a matrix on many processors. 
 
 In this paper, we propose three iterative methods: block Jacobian method, conjugate gradient method, preconditioned conjugate gradient method. We find that preconditioned conjugate gradient method is the most efficient one and conjugate gradient method needs most iteration numbers.
 
@@ -763,7 +764,7 @@ Table \ref{condition_number} shows the condition number of the original coeffici
 \subsubsection{Verification of convergence rate}\label{convergence_study}
 We now perform a convergence study for the proposed scheme (\ref{coarse_scheme})--(\ref{traction_continuous_curvi}). The convergence rate is computed by
 \[log\left(\frac{e_h}{e_{2h}}\right)\Bigg/log\left(\frac{1}{2}\right),\]
-here, $e_h$ is the corresponding $L^2$ error.  The $L^2$ error for the numerical solutions in the whole domain, $L^{f,2}$ error for the numerical solutions in the fine domain $\Omega^f$ and$L^{c,2}$ error for the numerical solutions in the coarse domain $\Omega^c$ are presented in Table \ref{convergence_rate}. We observe that the convergence rate is fourth order for all cases, thought the theoretical convergence rate is second for the points near boundaries. Note that we use a block Jacobian iterative method for the experiments here.
+here, $e_h$ is the corresponding $L^2$ error.  The $L^2$ error for the numerical solutions in the whole domain, $L^{f,2}$ error for the numerical solutions in the fine domain $\Omega^f$ and$L^{c,2}$ error for the numerical solutions in the coarse domain $\Omega^c$ are presented in Table \ref{convergence_rate}. We observe that the convergence rate is fourth order for all cases. Note that we use a block Jacobian iterative method for the experiments here.
 
 \begin{table}[htb]
 	\begin{center}
@@ -836,7 +837,7 @@ Homogenerous Dirichlet boundary conditions are imposed to the other boundaries. 
 
 To compare the results, we use the solutions from a flat interface surface, $\theta_i(r^{(1)},r^{(2)}) = 0$, with only Cartesian grids and no mesh refinement. Specifically, denote $(n_1^c,n_2^c,n_3^c)$ to be the number of grid points in the coarse domian $\Omega_c$, $(n_1^f,n_2^f,n_3^f)$ to be the number of grid points in the fine domian $\Omega_f$, $(n_1,n_2,n_3)$ to be the number of grid points for the reference solution.
 
-In the simulation of the reference solution, we choose $n_1 = n_2 = 201, n_3 = 101$. And in the experiments for the curvilinear interface with mesh refinement, we have $n_1^c = n_2^c = 101, n_3^c = 41$ and $n_1^f = n_2^f = 201, n_3^f = 21$. The numerical simulations are conducted until $T = 0.4$.
+In the simulation of the reference solution, we choose $n_1 = n_2 = 201, n_3 = 101$. And in the experiments for the curvilinear interface with mesh refinement, we have $n_1^c = n_2^c = 101, n_3^c = 41$ and $n_1^f = n_2^f = 201, n_3^f = 21$. The numerical simulations are conducted until $T = 0.4$. {\color{red}(Adding two figures for the grids, one for Cartesian one for curvilinear, would be nice.)}
 
 \begin{figure}[H]
 	\centering
