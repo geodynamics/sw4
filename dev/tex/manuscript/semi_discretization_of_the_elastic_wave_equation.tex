@@ -1,0 +1,22 @@
+%!TEX root = elastic_3d_sbp.tex
+\subsection{Semi-discretization of the elastic wave equation}
+
+We consider the elastic wave equation in curvilinear coordinates 
+\begin{equation}\label{elastic_equation}
+\rho\frac{\partial^2 {\bf u}}{\partial t^2} = L{\bf u},
+\end{equation}
+here $L{\bf u}$ has the same expression as in (\ref{elastic_eq_curvi}) provided ${\bf F} = 0$. The parameter space $[0,1]^3$ is discretized as $r_{i_1}^{(1)} = (i_1-1)h_1, i_1 = 0,1,2,\cdots,n_1+1$, $r_{i_2}^{(2)} = (i_2-1)h_2, i_2 = 0,1,2,\cdots,n_2+1$, and $r_{i_3}^{(3)} = (i_3-1)h_3, i_3 = 0,1,2,\cdots,n_3+1$ with $h_1 = 1/(n_1-1), h_2 = 1/(n_2-1), h_3 = 1/(n_3-1)$, the ghost points are used to impose the boundary conditions.
+
+The physical coordinates of the grid points follow from the mapping ${\bf x}_{i_1,i_2,i_3} = {\bf x}({\bf r}_{i_1,i_2,i_3})$. Denote a grid function ${\bf u}_{i_1,i_2,i_3} = {\bf u}(r_{i_1}^{(1)},r_{i_2}^{(2)},r_{i_3}^{(3)})$. To condense the notation, we intoduce the muti-index notations
+\[{\bf i} = (i_1,i_2,i_3),\ \ {\bf x}_{\bf i} = {\bf x}({\bf r}_{\bf i}),\ \ {\bf u}_{\bf i} = {\bf u}_{i_1,i_2,i_3}.\]
+Besides, we define a grid function on the top surface as
+\[{\bf u}_{{\bf i}_{\Omega_t}} = {\bf u}_{i_1,i_2,n_3}, \ \ {\bf i}_{\Omega_t} = (i_1,i_2,n_3),\]
+and a grid function on the bottom surface to be
+\[{\bf u}_{{\bf i}_{\Omega_b}} = {\bf u}_{i_1,i_2,1}, \ \ {\bf i}_{\Omega_b} = (i_1,i_2,1).\]
+{\color{blue}The terms $\bar{\partial}_3(N_{33}\bar{\partial}_3{\bf u})$ in the spatial operator (\ref{elastic_eq_curvi}) are approximated by a SBP operator $\hat{G}_3\in\{\uline{\wt G}_3, \wt{G}_3, \uline{G}_3, G_3\}$ which is defined in Section \ref{sec_sbp_1d} and is fourth order in the interior and  second order near the boundaries in the direction $3$. The operators $D$ in  (\ref{first_sbp}) are used to approximate  $\bar{\partial}_k, \bar{\partial}_j, k,j = 1,2,3$ in $\bar{\partial}_j(N_{jk}\bar{\partial}_k{\bf u})$ without using any ghost points. Finally, for the terms $\bar{\partial}_k(N_{kk}\bar{\partial}_k{\bf u}), k = 1,2$, we approximate them by the operators $G_k, k = 1,2$ which are fourth order centeral difference operator everywhere for second derivative in direction $k = 1,2$. Then the spatial operator (\ref{elastic_eq_curvi}) is discretized as} 
+\begin{multline}\label{discrete_elastic}
+\hat{ L}_h{\bf u}_{\bf i} = \frac{1}{J_{\bf i}}\big[G_1(N_{11}){\bf u}_{\bf i}+G_2(N_{22}){\bf u}_{\bf i}+\hat{G}_3(N_{33}){\bf u}_{\bf i}+D_1(N_{12}D_2{\bf u}_{\bf i})\\
++D_1(N_{13}D_3{\bf u}_{\bf i})+D_2(N_{21}D_1{\bf u}_{\bf i})+D_2(N_{23}D_3{\bf u}_{\bf i})+D_3(N_{31}D_1{\bf u}_{\bf i})
++D_3(N_{32}D_2{\bf u}_{\bf i})\big],
+\end{multline}
+{\color{blue} were, $\hat{L}_h\in\{\uline{\wt L}_h, \wt{L}_h, \uline{L}_h,L_h\}$ is determined by $\hat{G}_3$.}
