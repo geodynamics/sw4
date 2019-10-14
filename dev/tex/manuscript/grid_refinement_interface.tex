@@ -1,0 +1,17 @@
+%!TEX root = elastic_3d_sbp.tex
+\section{Grid refinement interface}
+In this section, we partition the physical domian into two subdomains with interface surface $\Gamma$,
+\begin{equation}\label{coarse_problem}
+\rho^c\frac{\partial ^2 {\bf u}^c}{\partial t^2} =  L{\bf u}^c, \ \ \ \ \ {\bf x} \in \Omega^c,\ \ \ t>0,
+\end{equation}
+\begin{equation}\label{fine_problem}
+\rho^f\frac{\partial ^2 {\bf u}^f}{\partial t^2} =  L{\bf u}^f, \ \ \ \ \ {\bf x} \in \Omega^f,\ \ \ t>0
+\end{equation}
+provided suitable initial and boundary conditions. We assume that $\Omega^f$ is on the top of $\Omega^c$ with $\Omega^c\cup\Omega^f = \Omega$ and $\Omega^c\cap\Omega^f = \Gamma=\Omega^c_t =\Omega^f_b $. The interface conditions are given to guarantee the continuity of the solutions and the continuity of the traction force,
+\begin{equation}\label{continuity_sol}
+{\bf u}_f = {\bf u}_c, \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\bf x}\in \Gamma, \ \ \ t>0, 
+\end{equation}
+\begin{equation}\label{continuity_trac}
+\mathcal{T}^f\cdot{\bf n}^f = -\mathcal{T}^c\cdot{\bf n}^c,  \ \ \ \ \ \ \  {\bf x}\in \Gamma, \ \ \ t>0.
+\end{equation}
+Dirichlet boundary condition is given on the bottom surface (direction $3$) for $\Omega^c$ and boundary forcing condition is assumed on the top surface (direction $3$) for $\Omega^f$. Directions $1$ and $2$ are periodic. By \eqref{bdry_integral_curvi}, it is easy to verify that the continuous problem \eqref{coarse_problem}-\eqref{continuity_trac} satisfies an energy estimate.

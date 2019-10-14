@@ -1,0 +1,85 @@
+%!TEX root = elastic_3d_sbp.tex
+\subsection{Time discretization with SBP scheme}
+In the following, we give the detailed procedures about how we apply the fourth order time integrator to the problem (\ref{coarse_scheme}) -- (\ref{traction_continuous_curvi}). 
+
+Let ${\bf u}^{n,c}$ and ${\bf u}^{n,f}$ denote the numerical approximations of ${\bf u}({\bf x},t_n), {\bf x}\in\Omega_c$ and ${\bf u}({\bf x},t_n), {\bf x}\in\Omega_f$ respectively. Here, $t_n = n\Delta t, n = 0,1,\cdots$ and $\Delta_t > 0$ is a constant time step. We present the fourth order time integrator with predictor and corrector in the Algorithm \ref{first_alg}.
+
+\begin{breakablealgorithm}
+	\caption{Fourth order accurate time steping for the elastic wave equation with SBP discretization in space}\label{first_alg}
+	Given initial conditions $\uline{\wt{{\bf u}}}^{0,c}, \uline{\wt{{\bf u}}}^{-1,c}$ and $\wt{{\bf u}}^{0,f}, \wt{{\bf u}}^{-1,f}$ that satisfies the discretized boundary conditions.
+	
+	\begin{itemize}
+		\item  {Compute the predictor at the interior grid points for both fine and coarse domains
+			\begin{equation*}
+			{\bf u}^{c,*,n+1}_{{\bf i}^c} = 2{\bf u}^{c,n}_{{\bf i}^c} - {\bf u}^{c,n-1}_{{\bf i}^c} + \Delta_t^2(\rho^c_{{\bf i}^c})^{-1}\uline{\wt{L}}_{h^c} {\bf{u}}^{c,n}_{{\bf i}^c}
+			\end{equation*}
+			\begin{equation*}
+			{\bf u}^{f,*,n+1}_{{\bf i}^f} = 2{\bf u}^{f,n}_{{\bf i}^f} - {\bf u}^{f,n-1}_{{\bf i}^f} + \Delta_t^2(\rho^f_{{\bf i}^f})^{-1}{\wt{L}}_{h^f} {\bf{u}}^{f,n}_{{\bf i}^f}
+			\end{equation*}
+		}
+		\item {For the boundary forcing condition, assign the ghost point value ${\bf u}^{f,*,n+1}_{i_1^f,i_2^f,n^f_3+1}$ to satisfy
+			\begin{equation*}
+			N_{31}^fD_1{\bf u}^{f,*,n+1}_{{\bf i}^f_{\Omega^f_t}} + N_{32}^fD_2{\bf u}^{f,*,n+1}_{{\bf i}^f_{\Omega^f_t}} + N_{33}^f\wt{D}_3{\bf u}^{f,*,n+1}_{{\bf i}^f_{\Omega^f_t}} = {\bf g}_{i_1^f,i_2^f}(t_{n+1})(J^f|\nabla r^{(3)}|)_{{\bf i}^f_{\Omega^f_t}}
+			\end{equation*}
+		}
+		\item {For the Dirichlet boundary condition, assign the ghost point value ${\bf u}^{c,*,n+1}_{i_1^c,i_2^c,0}$ to satisfy
+			\begin{equation*}
+			\uline{\wt{L}}_{h^c} {\bf{u}}^{c,*,n+1}_{{\bf i}^c_{\Omega^c_b}} = 2\uline{\wt{L}}_{h^c}{\bf{u}}^{c,*,n}_{{\bf i}^c_{\Omega^c_b}} - 	\uline{\wt{L}}_{h^c} {\bf{u}}^{c,*,n-1}_{{\bf i}^c_{\Omega^c_b}}
+			\end{equation*}
+		}
+		\item{For the continuity of solution on the interface $\Gamma$, assign the value ${\bf u}^{f,*,n+1}_{i_1^f,i_2^f,0}$ to satisfy
+			\begin{equation*}
+			{\bf u}^{f,*,n+1}\big|_{\Gamma} = \mathcal{P}\big({\bf u}^{c,*,n+1}\big|_{\Gamma}\big)
+			\end{equation*}
+		}
+		\item{For the continuity of traction force on the interface $\Gamma$, assign the ghost point value ${\bf u}^{c,*,n+1}_{i_1^c,i_2^c,n_3^c+1}$ to satisfy
+			\begin{equation}\label{traction_gamma_pre}
+			\frac{\hat{A}_3^c{\bf u}^{c,*,n+1}}{J^c|\nabla r_c^{(3)}|}\Bigg|_{\Gamma} = \mathcal{R}\left(\frac{\hat{A}_3^f{\bf u}^{f,*,n+1}}{J^f|\nabla r_f^{(3)}|}\Bigg|_{\Gamma} - \frac{h_3^f\omega_1^{(3)}{\bm \eta}^*}{J^f|\nabla r_f^{(3)}|}\Bigg|_{\Gamma}\right)
+			\end{equation}
+			with the definition of $\hat{A}^c_3$ in (\ref{hatAc}), $\hat{A}^f_3$ in (\ref{hatAf}) and ${\bm \eta}^*$ has a similar definition as in (\ref{eta}) with ${\bf u}$ substituted by ${\bf u}^*$
+		}
+		\item{Evaluate the acceleration at all grids 
+			\begin{equation*}
+			\uline{\wt{\bf v}}^{c,n} = \frac{\uline{\wt{\bf u}}^{c,*,n+1}-2\uline{\wt{\bf u}}^{c,n}+\uline{\wt{\bf u}}^{c,n-1}}{\Delta^2_t}
+			\end{equation*}
+			\begin{equation*}
+			\wt{\bf v}^{f,n} = \frac{\wt{\bf u}^{f,*,n+1}-2\wt{\bf u}^{f,n}+\wt{\bf u}^{f,n-1}}{\Delta^2_t}
+			\end{equation*}
+		}
+		\item{Compute the corrector at the interior grid points
+			\begin{equation*}
+			{\bf u}^{c,n+1}_{{\bf i}^c} = {\bf u}^{c,*,n+1}_{{\bf i}^c} + \frac{\Delta_t^4}{12}(\rho^c_{{\bf i}^c})^{-1}\uline{\wt{L}}_{h^c}{\bf{u}}^{c,*,n}_{{\bf i}^c}
+			\end{equation*}
+			\begin{equation*}
+			{\bf u}^{f,n+1}_{{\bf i}^f} = {\bf u}^{f,*,n+1}_{{\bf i}^f} + \frac{\Delta_t^4}{12}(\rho^f_{{\bf i}^f})^{-1}\wt{L}_{h^f}{\bf{u}}^{f,*,n}_{{\bf i}^f}
+			\end{equation*}
+		}
+		\item {For the boundary forcing condition, assign the ghost point value ${\bf u}^{f,n+1}_{i^f_1,i^f_2,n_3^f+1}$ to satisfy
+			\begin{equation*}
+			N_{31}^fD_1{\bf u}^{f,n+1}_{{\bf i}^f_{\Omega^f_t}} + N_{32}^fD_2{\bf u}^{f,n+1}_{{\bf i}^f_{\Omega^f_t}} + N_{33}^f\wt{D}_3{\bf u}^{f,n+1}_{{\bf i}^f_{\Omega^f_t}} = {\bf g}_{i^c_1,i^c_2}(t_{n+1})(J^f|\nabla r^{(3)}|)_{{\bf i}^f_{\Omega^f_t}}
+			\end{equation*}	
+		}
+		\item {For the Dirichlet boundary condition, assign the ghost point value ${\bf u}^{c,n+1}_{i^c_1,i^c_2,0}$ to satify
+			\begin{equation*}
+			\uline{\wt{L}}_{h^c}{\bf u}_{{\bf i}^c_{\Omega^c_b}}^{c,n+1} = \frac{\rho^c_{{\bf i}^c_{\Omega^c_b}}}{\Delta_t^2}\Big({\bf f} _{i^c_1,i^c_2}(t_{n+2})-2{\bf u}_{{\bf i}^c_{\Omega^c_b}}^{c,n+1}+{\bf u}_{{\bf i}^c_{\Omega^c_b}}^{c,n}\Big)
+			\end{equation*}
+		}
+		\item{For continuity of solution on the interface $\Gamma$, assign the value ${\bf u}^{f,n+1}_{i^c_1,i^c_2,0}$ to satisfy
+			\begin{equation*}
+			{\bf u}^{f,n+1}\big|_{\Gamma} = \mathcal{P}\big({\bf u}^{c,n+1}\big|_{\Gamma}\big)
+			\end{equation*}
+		}
+		\item{For the continuity of traction force on the interface $\Gamma$, assign the ghost point value ${\bf u}^{c,n+1}_{i,j,n_3^c+1}$ to satisfy
+			\begin{equation}\label{traction_gamma_corr}
+			\frac{\hat{A}_3^c{\bf u}^{c,n+1}}{J^c|\nabla r_c^{(3)}|}\Bigg|_{\Gamma} = \mathcal{R}\left(\frac{\hat{A}_3^f{\bf u}^{f,n+1}}{J^f|\nabla r_f^{(3)}|}\Bigg|_{\Gamma} - \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\Bigg|_{\Gamma}\right)
+			\end{equation}
+			with the definition of $\hat{A}^c_3$ in (\ref{hatAc}), $\hat{A}^f_3$ in (\ref{hatAf}) and ${\bm \eta}$ in (\ref{eta})
+		}
+	\end{itemize}
+\end{breakablealgorithm}
+Here, we only give the steps to evolve the elatic wave equation with suitable initial and boundary conditions and skip the detailed derivations of the fourth order predictor corrector time integator. One can refer to \cite{?} to get more details.
+
+In the Algorithm \ref{first_alg}, we need to solve the equations come from the continuity of the traction force for the interface $\Gamma$ in both preditor step (\ref{traction_gamma_pre}) and corrector step (
+\ref{traction_gamma_corr}). The structure of (\ref{traction_gamma_pre}) and (\ref{traction_gamma_corr}) are same, for simplicity, we only clarify how we solve (\ref{traction_gamma_pre}) in the predictor step.
+
+Note that there are $3n_1^cn_2^c$ unknowns in (\ref{traction_gamma_pre}) and $3n_1^cn_2^c$ linear equations in (\ref{traction_gamma_pre}). Since it is very expensive to calculate the LU-factorization for a large problem in $3$D and there is no efficient ways to calculate the LU-factorization in a parallel machine, we instead using iterative methods to solve the linear system (\ref{traction_gamma_pre}). Specificly, we use three different iterative methods: block Jacobian iterative method, conjugate gradient iterative method, pre-conditioned conjugate gradient iterative method, to solve (\ref{traction_gamma_pre}). The details are given in Section \ref{iterative_section}.

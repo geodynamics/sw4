@@ -1,0 +1,6 @@
+%!TEX root = elastic_3d_sbp.tex
+\subsection{Boundary conditions}\label{boundary_conditions}
+To conserve space, we only describe the technique for imposing boudnary conditions with ghost points. It is also possible to impose the boundary conditions without ghost points, say SAT penalty method, see \cite{?}, but we only focus on the scheme with ghost points for the boundary conditions in this paper. We only impose the boundary conditions on the top/bottom surface (direction $3$) since other boundaries are periodic; besides, we only describe the top boundary here and omit the bottom boundary. In the rest of the paper, we define a discrete scalar product as
+\begin{equation}\label{scalar_product_discrete_interior}
+({\bf u}, {\bf v})_h = h_1h_2h_3\sum_{i_1=1}^{n_1}\sum_{i_2=1}^{n_2}\sum_{i_3=1}^{n_3}\omega_{i_1}^{(1)}\omega_{i_2}^{(2)}\omega_{i_3}^{(3)}J_{\bf i}{\bf u}^{T}_{\bf i}{\bf v}_{\bf i}.
+\end{equation}
