@@ -7020,10 +7020,8 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
   }
   else
   {
-    if (hdf5format && hdf5FileName != "station") 
-      fileName = hdf5FileName;
 
-    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, x, y, depth, 
+    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, hdf5FileName, x, y, depth, 
 					topodepth, writeEvery, downSample, !nsew, event );
 #if USE_HDF5
     if (hdf5format) {
@@ -7389,8 +7387,8 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
   }
   else
   {
-    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, x, y, depth, 
-					topodepth, writeEvery, true, event );
+    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, hdf5file, x, y, depth, 
+					topodepth, writeEvery, 1, true, event );
     // Read in file. 
     // ignore_utc=true, ignores UTC read from file, instead uses the default utc = simulation utc as reference.
     //        This is useful for synthetic data.

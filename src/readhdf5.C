@@ -167,7 +167,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       /* if (op_data->myRank == 0) */
       /*   cout << "x=" << x << ", y=" << y << ", z=" << z << ", writeEvery=" << op_data->writeEvery << endl; */
 
-      TimeSeries *ts_ptr = new TimeSeries(a_ew, op_data->outFileName, grp_name, op_data->mode, false, false, true, x, y, z, 
+      TimeSeries *ts_ptr = new TimeSeries(a_ew, op_data->outFileName, grp_name, op_data->mode, false, false, true, op_data->outFileName, x, y, z, 
   					topodepth, op_data->writeEvery, op_data->downSample, !nsew, op_data->event );
       if((*op_data->GlobalTimeSeries)[op_data->event].size() == 0) 
         ts_ptr->allocFid();

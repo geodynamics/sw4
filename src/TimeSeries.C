@@ -57,7 +57,7 @@ void parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& 
 		int& second, int& msecond, int& fail );
 
 TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, 
-                        bool sacFormat, bool usgsFormat, bool hdf5Format, 
+                        bool sacFormat, bool usgsFormat, bool hdf5Format, std::string hdf5FileName, 
                         float_sw4 x, float_sw4 y, float_sw4 depth, 
                         bool topoDepth, int writeEvery, int downSample, bool xyzcomponent, int event ):
   m_ew(a_ew),
@@ -66,6 +66,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_myPoint(false),
   m_fileName(fileName),
   m_staName(staName),
+  m_hdf5Name(hdf5FileName),
   m_path(a_ew->getPath(event)),
   mX(x),
   mY(y),
@@ -2181,7 +2182,7 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
    if( addname )
       filename = m_fileName + filename;
 
-   TimeSeries* retval = new TimeSeries( a_ew, filename, m_staName, m_mode, m_sacFormat, m_usgsFormat,
+   TimeSeries* retval = new TimeSeries( a_ew, filename, m_staName, m_mode, m_sacFormat, m_usgsFormat, m_hdf5Format, m_hdf5Name, 
 					mX, mY, mZ, m_zRelativeToTopography, mWriteEvery, m_xyzcomponent, m_event );
    retval->m_t0    = m_t0;
    retval->m_dt    = m_dt;
@@ -3178,7 +3179,7 @@ void TimeSeries::doRestart(EW *ew, bool ignore_utc, float_sw4 shift, int beginCy
   else if (m_hdf5Format) {
     // Read the timeseries data in the HDF5 file from the fileio path directory
     std::string fullFilePath = ew->getPath();
-    fullFilePath += "/" + m_fileName;
+    fullFilePath += "/" + m_hdf5Name;
 #ifdef USE_HDF5
     if( m_myPoint )
       readSACHDF5(ew, fullFilePath, ignore_utc);

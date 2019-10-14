@@ -55,7 +55,7 @@ public:
 // support for derived quantities of the time derivative are not yet implemented
   enum receiverMode{Displacement, Div, Curl, Strains, Velocity, DisplacementGradient /*, DivVelo, CurlVelo, StrainsVelo */ };
 
-TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, bool sacFormat, bool usgsFormat, bool hdf5Format, 
+TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, bool sacFormat, bool usgsFormat, bool hdf5Format, std::string hdf5FileName, 
 	    float_sw4 x, float_sw4 y, float_sw4 z, bool topoDepth, int writeEvery, int downSample, bool xyzcomponent=true, int event=0 );
 ~TimeSeries();
 
@@ -124,6 +124,7 @@ float_sw4 get_shift() const;
 void add_shift( float_sw4 shift );
 std::string getStationName(){return m_staName;}
 std::string getFileName(){return m_fileName;}
+std::string gethdf5FileName(){return m_hdf5Name;}
 std::string getPath(){return m_path;}
 
 void set_scalefactor( float_sw4 value );
@@ -174,7 +175,7 @@ int m_nComp;
 
 bool m_myPoint; // set to true if this processor writes to the arrays
 
-std::string m_fileName, m_staName;
+std::string m_fileName, m_staName, m_hdf5Name;
 
 float_sw4 mX, mY, mZ, mGPX, mGPY, mGPZ; // original and actual location
 float_sw4 m_zTopo;

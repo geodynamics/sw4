@@ -267,7 +267,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   start_time = MPI_Wtime();
 
   std::string path = TimeSeries[0]->getPath();
-  std::string name = TimeSeries[0]->getFileName();
+  std::string name = TimeSeries[0]->gethdf5FileName();
   std::string filename;
 
   // Build the file name
@@ -476,7 +476,7 @@ int openHDF5file(vector<TimeSeries*> & TimeSeries)
   /* H5Pset_all_coll_metadata_ops(fapl, false); */
 
   std::string path = TimeSeries[0]->getPath();
-  std::string name = TimeSeries[0]->getFileName();
+  std::string name = TimeSeries[0]->gethdf5FileName();
   std::string filename;
 
   // Build the file name
