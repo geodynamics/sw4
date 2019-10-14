@@ -7163,7 +7163,7 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
      else if( startswith("hdf5file=",token) )
      {
         token += 9;
-        hdf5file += token;
+        hdf5file = token;
      }
      else if(startswith("file=", token))
      {

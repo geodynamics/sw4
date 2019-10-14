@@ -3319,17 +3319,13 @@ int TimeSeries::closeHDF5File()
   int myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
-  if(*m_fid_ptr > 0) {
+  if(m_fid_ptr && *m_fid_ptr > 0) {
     /* printf("%d: Closing HDf5 file: %ld\n", myRank, *m_fid_ptr); */
     /* fflush(stdout); */
     H5Fclose(*m_fid_ptr);
     *m_fid_ptr = 0;
     /* printf("HDf5 file closed\n"); */
     /* fflush(stdout); */
-  }
-  else {
-    printf("%d: Invalid HDf5 file handle!\n", myRank);
-    fflush(stdout);
   }
 
   return 0;

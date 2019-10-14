@@ -425,8 +425,8 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     }
 
     for (int i = 0; i < ndset; i++) {
-      total_dims = (hsize_t)(totalSteps/TimeSeries[i]->getDownSample());
-      if (totalSteps % TimeSeries[i]->getDownSample() != 0) 
+      total_dims = (hsize_t)(totalSteps/TimeSeries[ts]->getDownSample());
+      if (totalSteps % TimeSeries[ts]->getDownSample() != 0) 
         total_dims++;
       dset_space = H5Screate_simple(1, &total_dims, NULL);
       dset       = H5Dcreate(grp, dset_names[i].c_str(), H5T_NATIVE_FLOAT, dset_space, H5P_DEFAULT, dcpl, H5P_DEFAULT);
