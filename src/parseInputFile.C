@@ -373,6 +373,8 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
      }      
      else if( m_topoInputStyle == EW::Rfile )
 	extractTopographyFromRfile( m_topoFileName );
+     else if( m_topoInputStyle == EW::Sfile )
+	extractTopographyFromSfile( m_topoFileName );
 
 // preprocess the mTopo array
      if (m_topoInputStyle != EW::GaussianHill) // no smoothing or extrapolation for a gaussian hill

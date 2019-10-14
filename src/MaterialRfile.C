@@ -324,8 +324,10 @@ int MaterialRfile::io_processor( )
 //-----------------------------------------------------------------------
 void MaterialRfile::read_rfile( )
 {
+   double start_time, end_time;
    string rname = "MaterialRfile::read_rfile";
 
+   start_time = MPI_Wtime();
   // Figure out bounding box in this processor
    float_sw4 xmin=1e38, xmax=-1e38, ymin=1e38, ymax=-1e38, zmin=1e38, zmax=-1e38;
    for( int g=0 ; g < mEW->mNumberOfGrids ; g++ )
@@ -759,6 +761,11 @@ void MaterialRfile::read_rfile( )
    }
    else
       cout << "MaterialRfile::read_rfile, error could not open file " << fname << endl;
+
+   MPI_Barrier(MPI_COMM_WORLD);
+   end_time = MPI_Wtime();
+   if (mEW->getRank()==0)
+     printf("Read material properties from rfile time=%e seconds\n", end_time-start_time);
 }
 
 //-----------------------------------------------------------------------

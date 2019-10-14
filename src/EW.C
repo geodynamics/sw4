@@ -6206,6 +6206,8 @@ void EW::extractTopographyFromEfile(std::string a_topoFileName, std::string a_to
 //-----------------------------------------------------------------------
 void EW::extractTopographyFromRfile( std::string a_topoFileName )
 {
+   double start_time, end_time;
+   start_time = MPI_Wtime();
    std::string rname ="EW::extractTopographyFromRfile";
    Sarray gridElev;
    int fd=open( a_topoFileName.c_str(), O_RDONLY );
@@ -6589,11 +6591,17 @@ void EW::extractTopographyFromRfile( std::string a_topoFileName )
    }
    else
       cout << rname << " error could not open file " << a_topoFileName << endl;
+   MPI_Barrier(MPI_COMM_WORLD);
+   end_time = MPI_Wtime();
+   if (m_myRank==0)
+     printf("Read topography from rfile time=%e seconds\n", end_time-start_time);
 }
 
 //-----------------------------------------------------------------------
 void EW::extractTopographyFromSfile( std::string a_topoFileName )
 {
+  double start_time, end_time;
+  start_time = MPI_Wtime();
 #ifdef USE_HDF5
   int verbose = mVerbose;
   mVerbose = 2;
@@ -6604,21 +6612,26 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
   int prec;
   double lonlataz[3];
 
-  plist_id = H5Pcreate(H5P_FILE_ACCESS);
-  H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
-  file_id = H5Fopen(a_topoFileName.c_str(), H5F_ACC_RDONLY, plist_id);
-  if (file_id < 0) {
-     cout << "Could not open hdf5 file: " << a_topoFileName.c_str()<< endl;
-     MPI_Abort(MPI_COMM_WORLD, file_id);
+  /* plist_id = H5Pcreate(H5P_FILE_ACCESS); */
+  /* H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL); */
+  /* file_id = H5Fopen(a_topoFileName.c_str(), H5F_ACC_RDONLY, plist_id); */
+  if (m_myRank==0 ) {
+    file_id = H5Fopen(a_topoFileName.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+    if (file_id < 0) {
+       cout << "Could not open hdf5 file: " << a_topoFileName.c_str()<< endl;
+       MPI_Abort(MPI_COMM_WORLD, file_id);
+    }
   }
 
   // Origin longitude, latitude, azimuth
-  attr_id = H5Aopen(file_id, "Origin longitude, latitude, azimuth", H5P_DEFAULT);
-  ASSERT(attr_id >= 0);
-  ierr = H5Aread(attr_id, H5T_NATIVE_DOUBLE, lonlataz);
-  ASSERT(ierr >= 0);
-  H5Aclose(attr_id);
-
+  if (m_myRank==0 ) {
+    attr_id = H5Aopen(file_id, "Origin longitude, latitude, azimuth", H5P_DEFAULT);
+    ASSERT(attr_id >= 0);
+    ierr = H5Aread(attr_id, H5T_NATIVE_DOUBLE, lonlataz);
+    ASSERT(ierr >= 0);
+    H5Aclose(attr_id);
+  }
+  MPI_Bcast(&lonlataz, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   double alpha = lonlataz[2], lon0 = lonlataz[0], lat0 = lonlataz[1];
 
@@ -6628,10 +6641,13 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
 
   // Ngrids - int, number of 3D grids in the file
   int npatches;
-  attr_id = H5Aopen(file_id, "ngrids", H5P_DEFAULT);
-  ierr = H5Aread(attr_id, H5T_NATIVE_INT, &npatches);
-  ASSERT(ierr >= 0);
-  H5Aclose(attr_id);
+  if (m_myRank==0 ) {
+    attr_id = H5Aopen(file_id, "ngrids", H5P_DEFAULT);
+    ierr = H5Aread(attr_id, H5T_NATIVE_INT, &npatches);
+    ASSERT(ierr >= 0);
+    H5Aclose(attr_id);
+  }
+  MPI_Bcast(&npatches, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (m_myRank==0 && mVerbose >= 2) {
     printf("Sfile header: \n");
@@ -6640,30 +6656,37 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
   }
 
   double hh;
-  attr_id = H5Aopen(file_id, "Coarsest horizontal grid spacing", H5P_DEFAULT);
-  ASSERT(attr_id >= 0);
-  ierr = H5Aread(attr_id, H5T_NATIVE_DOUBLE, &hh);
-  ASSERT(ierr >= 0);
-  H5Aclose(attr_id);
+  if (m_myRank==0 ) {
+    attr_id = H5Aopen(file_id, "Coarsest horizontal grid spacing", H5P_DEFAULT);
+    ASSERT(attr_id >= 0);
+    ierr = H5Aread(attr_id, H5T_NATIVE_DOUBLE, &hh);
+    ASSERT(ierr >= 0);
+    H5Aclose(attr_id);
+  }
+  MPI_Bcast(&hh, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   // ---------- read topography on file into array gridElev
   hsize_t dims[2];
   char intf_name[32];
 
-  group_id = H5Gopen(file_id, "Z_interfaces", H5P_DEFAULT);
-  ASSERT(group_id >= 0);
+  if (m_myRank==0 ) {
+    group_id = H5Gopen(file_id, "Z_interfaces", H5P_DEFAULT);
+    ASSERT(group_id >= 0);
 
-  sprintf(intf_name, "z_values_%d", 0);
-  dataset_id = H5Dopen(group_id, intf_name, H5P_DEFAULT);
-  ASSERT(dataset_id >= 0);
+    sprintf(intf_name, "z_values_%d", 0);
+    dataset_id = H5Dopen(group_id, intf_name, H5P_DEFAULT);
+    ASSERT(dataset_id >= 0);
 
-  dataspace_id = H5Dget_space(dataset_id);
-  H5Sget_simple_extent_dims(dataspace_id, dims, NULL);
-  H5Sclose(dataspace_id);
+    dataspace_id = H5Dget_space(dataset_id);
+    H5Sget_simple_extent_dims(dataspace_id, dims, NULL);
+    H5Sclose(dataspace_id);
 
-  datatype_id = H5Dget_type(dataset_id);
-  prec = (int)H5Tget_size(datatype_id);
-  H5Tclose(datatype_id);
+    datatype_id = H5Dget_type(dataset_id);
+    prec = (int)H5Tget_size(datatype_id);
+    H5Tclose(datatype_id);
+  }
+  MPI_Bcast(dims, 2, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&prec, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   int nitop = (int)dims[0], njtop = (int)dims[1];
 
@@ -6687,9 +6710,14 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
       in_data = (void*)d_data;
   }
 
-  ierr = H5Dread(dataset_id, h5_dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, in_data);
-  ASSERT(ierr >= 0);
-  H5Dclose(dataset_id);
+  if (m_myRank==0 ) {
+    ierr = H5Dread(dataset_id, h5_dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, in_data);
+    ASSERT(ierr >= 0);
+    H5Dclose(dataset_id);
+    H5Gclose(group_id);
+    H5Fclose(file_id);
+  }
+  MPI_Bcast(in_data, nitop * njtop * prec, MPI_CHAR, 0, MPI_COMM_WORLD);
 
   float_sw4 *data = new float_sw4[nitop * njtop];
   for (int i = 0; i < nitop * njtop; i++) {
@@ -6705,9 +6733,6 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
  
   gridElev.define(1, nitop, 1, njtop, 1, 1);
   gridElev.assign(data);
-
-  H5Gclose(group_id);
-  H5Fclose(file_id);
 
   bool roworder=true;
   if (m_myRank==0 && mVerbose >= 2) {
@@ -6828,6 +6853,11 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
         
     }// end for j
   }// end for i
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  end_time = MPI_Wtime();
+  if (m_myRank==0)
+    printf("Read topography from sfile time=%e seconds\n", end_time-start_time);
   
   // test
   if (m_myRank==0 && mVerbose>=2) {
