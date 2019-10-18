@@ -475,6 +475,8 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 	 processReceiverHDF5(buffer, a_GlobalTimeSeries);
        else if (!m_inverse_problem && (startswith("rec", buffer) || startswith("sac", buffer)) ) // was called "sac" in WPP
 	 processReceiver(buffer, a_GlobalTimeSeries);
+       else if (m_inverse_problem && (startswith("obshdf5", buffer) || startswith("observationhdf5", buffer))) // 
+	  processObservationHDF5(buffer, a_GlobalTimeSeries);
        else if (m_inverse_problem && startswith("obs", buffer)) // 
 	  processObservation(buffer, a_GlobalTimeSeries);
        else if (m_inverse_problem && startswith("scalefactors", buffer)) // 
@@ -6719,7 +6721,8 @@ void EW::processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_Glob
   }
 
 #ifdef USE_HDF5
-  readStationHDF5(this, inFileName, fileName, writeEvery, downSample, mode, event, a_GlobalTimeSeries, m_global_xmax, m_global_ymax);
+  bool is_obs = false;
+  readStationHDF5(this, inFileName, fileName, writeEvery, downSample, mode, event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax, is_obs, false, false, 0, 0, false, false, false, 0, false, 0);
 #else
   if (proc_zero())
     cout << "Using HDF5 station input but sw4 is not compiled with HDF5!"<< endl;
@@ -7040,6 +7043,273 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
 }
 
 //-----------------------------------------------------------------------
+void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries)
+{
+  double x=0.0, y=0.0, z=0.0;
+  double lat = 0.0, lon = 0.0, depth = 0.0;
+  float_sw4 t0 = 0;
+  float_sw4 scalefactor=1;
+  bool cartCoordSet = false, geoCoordSet = false;
+  string fileName = "rec";
+  string staName = "station";
+  bool staNameGiven=false;
+  
+  int writeEvery = 0;
+  int downSample = 1;
+
+  bool dateSet = false;
+  bool timeSet = false;
+  bool topodepth = false;
+
+  //  int utc[7];
+  //  bool utcset = false;
+
+  string date = "";
+  string time = "";
+  string sacfile1, sacfile2, sacfile3;
+  string hdf5file = "";
+
+  bool usgsformat = 0, sacformat=0, hdf5format = 1;
+  TimeSeries::receiverMode mode=TimeSeries::Displacement;
+  float_sw4 winl, winr;
+  bool winlset=false, winrset=false;
+  char exclstr[4]={'\0','\0','\0','\0'};
+  bool usex=true, usey=true, usez=true;
+  bool usgsfileset=false, sf1set=false, sf2set=false, sf3set=false;
+  bool scalefactor_set=false;
+  int event=0;
+
+  char* token = strtok(buffer, " \t");
+  m_filter_observations = true;
+
+  CHECK_INPUT(strcmp("observation", token) == 0, "ERROR: not an observation line...: " << token);
+  token = strtok(NULL, " \t");
+
+  string err = "OBSERVATION Error: ";
+
+  while (token != NULL)
+  {
+     if (startswith("#", token) || startswith(" ", buffer))
+        // Ignore commented lines and lines with just a space.
+        break;
+     /* if (startswith("x=", token)) */
+     /* { */
+     /*    CHECK_INPUT(!geoCoordSet, */
+     /*            err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate"); */
+     /*    token += 2; // skip x= */
+     /*    cartCoordSet = true; */
+     /*    x = atof(token); */
+     /*    CHECK_INPUT(x >= 0.0, */
+		    /* "observation command: x must be greater than or equal to 0, not " << x); */
+     /*    CHECK_INPUT(x <= m_global_xmax, */
+		    /* "observation command: x must be less than or equal to xmax, not " << x); */
+     /* } */
+     /* else if (startswith("y=", token)) */
+     /* { */
+     /*    CHECK_INPUT(!geoCoordSet, */
+     /*            err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate"); */
+     /*    token += 2; // skip y= */
+     /*    cartCoordSet = true; */
+     /*    y = atof(token); */
+     /*    CHECK_INPUT(y >= 0.0, */
+     /*            "observation command: y must be greater than or equal to 0, not " << y); */
+     /*    CHECK_INPUT(y <= m_global_ymax, */
+		    /* "observation command: y must be less than or equal to ymax, not " << y); */
+     /* } */
+     /* else if (startswith("lat=", token)) */
+     /* { */
+     /*    CHECK_INPUT(!cartCoordSet, */
+     /*            err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate"); */
+     /*    token += 4; // skip lat= */
+     /*    lat = atof(token); */
+     /*    CHECK_INPUT(lat >= -90.0, */
+     /*            "observation command: lat must be greater than or equal to -90 degrees, not " */ 
+     /*            << lat); */
+     /*    CHECK_INPUT(lat <= 90.0, */
+     /*            "observation command: lat must be less than or equal to 90 degrees, not " */
+     /*            << lat); */
+     /*    geoCoordSet = true; */
+     /* } */
+     /* else if (startswith("lon=", token)) */
+     /* { */
+     /*    CHECK_INPUT(!cartCoordSet, */
+     /*            err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate"); */
+     /*    token += 4; // skip lon= */
+     /*    lon = atof(token); */
+     /*    CHECK_INPUT(lon >= -180.0, */
+     /*            "observation command: lon must be greater or equal to -180 degrees, not " */ 
+     /*            << lon); */
+     /*    CHECK_INPUT(lon <= 180.0, */
+     /*            "observation command: lon must be less than or equal to 180 degrees, not " */
+     /*            << lon); */
+     /*    geoCoordSet = true; */
+     /* } */
+     /* else if (startswith("z=", token)) */
+     /* { */
+     /*   token += 2; // skip z= */
+/* // depth is currently the same as z */
+     /*   depth = z = atof(token); */
+     /*   topodepth = false; */
+     /*   CHECK_INPUT(z <= m_global_zmax, */
+		   /* "observation command: z must be less than or equal to zmax, not " << z); */
+     /* } */
+     /* else if (startswith("depth=", token)) */
+     /* { */
+     /*    token += 6; // skip depth= */
+     /*   z = depth = atof(token); */
+     /*   topodepth = true; */
+     /*   CHECK_INPUT(depth >= 0.0, */
+	       /* err << "observation command: depth must be greater than or equal to zero"); */
+     /*   CHECK_INPUT(depth <= m_global_zmax, */
+		   /* "observation command: depth must be less than or equal to zmax, not " << depth); */
+/* // by depth we here mean depth below topography */
+     /* } */
+     else if(startswith("hdf5file=", token))
+     {
+        token += 9; // skip hdf5file=
+        fileName = token;
+        hdf5file = token;
+     }
+     else if(startswith("file=", token))
+     {
+        token += 5; // skip file=
+        fileName = token;
+        hdf5file = token;
+     }
+     else if(startswith("event=",token))
+     {
+	token += 6;
+	//	event = atoi(token);
+	//	CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
+	// Ignore if no events given
+	if( m_nevents_specified > 0 )
+	{
+	   map<string,int>::iterator it = m_event_names.find(token);
+	   CHECK_INPUT( it != m_event_names.end(), 
+		     err << "event with name "<< token << " not found" );
+	   event = it->second;
+	}
+     }
+     /* else if (startswith("sta=", token)) */
+     /* { */
+     /*    token += strlen("sta="); */
+     /*    staName = token; */
+	/* staNameGiven=true; */
+     /* } */
+// (small) shifts of the observation in time can be used to compensate for incorrect velocites
+// in the material model
+     else if(startswith("shift=", token))
+     {
+        token += 6; // skip shift=
+        t0 = atof(token);
+     }
+     //     else if( startswith("utc=",token) )
+     //     {
+     //	token += 4;
+     //        if( strcmp("ignore",token)==0 || strcmp("off",token)==0 )
+     //	   ignore_utc = true;
+     //	else
+     //	{
+     //	   int year,month,day,hour,minute,second,msecond, fail;
+     //	   // Format: 01/04/2012:17:34:45.2343  (Month/Day/Year:Hour:Min:Sec.fraction)
+     //	   parsedate( token, year, month, day, hour, minute, second, msecond, fail );
+     //	   if( fail == 0 )
+     //	   {
+     //              utcset = true;
+     //	      utc[0] = year;
+     //	      utc[1] = month;
+     //	      utc[2] = day;
+     //	      utc[3] = hour;
+     //	      utc[4] = minute;
+     //	      utc[5] = second;
+     //	      utc[6] = msecond;
+     //	   }
+     //	   else
+     //	      CHECK_INPUT(fail == 0 , "processObservation: Error in utc format. Give as mm/dd/yyyy:hh:mm:ss.ms "
+     //			  << " or use utc=ignore" );
+     //	}
+     //     }
+     else if( startswith("windowL=",token))
+     {
+        token += 8;
+        winl = atof(token);
+        winlset = true;
+     }
+     else if( startswith("windowR=",token))
+     {
+        token += 8;
+        winr = atof(token);
+        winrset = true;
+     }
+     else if( startswith("exclude=",token) )
+     {
+        token += 8;
+	strncpy(exclstr,token,4);
+
+	int c=0;
+	while( c < 3 && exclstr[c] != '\0' )
+	{
+	   if( exclstr[c] == 'x' || exclstr[c] == 'e' )
+	      usex=false;
+	   if( exclstr[c] == 'y' || exclstr[c] == 'n' )
+	      usey=false;
+	   if( exclstr[c] == 'z' || exclstr[c] == 'u' )
+	      usez=false;
+	   c++;
+	}
+     }
+     else if(startswith("filter=", token))
+     {
+        token += 7; // skip filter=
+        if( strcmp(token,"0")==0 || strcmp(token,"no")==0 )
+	   m_filter_observations = false;
+     }
+     /* else if( startswith("sacfile1=",token) ) */
+     /* { */
+     /*    token += 9; */
+     /*    sacfile1 += token; */
+	/* sf1set = true; */
+     /* } */
+     /* else if( startswith("sacfile2=",token) ) */
+     /* { */
+     /*    token += 9; */
+     /*    sacfile2 += token; */
+	/* sf2set = true; */
+     /* } */
+     /* else if( startswith("sacfile3=",token) ) */
+     /* { */
+     /*    token += 9; */
+     /*    sacfile3 += token; */
+	/* sf3set = true; */
+     /* } */
+     else if( startswith("scalefactor=",token) )
+     {
+	token += 12;
+	scalefactor = atof(token);
+	scalefactor_set = true;
+     }
+     else
+     {
+        badOption("observation", token);
+     }
+     token = strtok(NULL, " \t");
+  }  
+
+  // Read from HDF5 file, and create time series data
+#ifdef USE_HDF5
+  bool is_obs = true;
+  readStationHDF5(this, fileName, NULL, writeEvery, downSample, mode, event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax, is_obs, winlset, winrset, winl, winr, usex, usey, usez, t0, scalefactor_set,  scalefactor);
+
+#else
+  if (proc_zero())
+    cout << "Using HDF5 station input but sw4 is not compiled with HDF5!"<< endl;
+  return;
+#endif
+
+}
+
+
+//-----------------------------------------------------------------------
 void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries)
 {
   double x=0.0, y=0.0, z=0.0;
@@ -7063,7 +7333,7 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
   string date = "";
   string time = "";
   string sacfile1, sacfile2, sacfile3;
-  string hdf5file;
+  string hdf5file = "";
 
   bool usgsformat = 1, sacformat=0, hdf5format = 0;
   TimeSeries::receiverMode mode=TimeSeries::Displacement;
@@ -7159,11 +7429,6 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
        CHECK_INPUT(depth <= m_global_zmax,
 		   "observation command: depth must be less than or equal to zmax, not " << depth);
 // by depth we here mean depth below topography
-     }
-     else if( startswith("hdf5file=",token) )
-     {
-        token += 9;
-        hdf5file = token;
      }
      else if(startswith("file=", token))
      {
@@ -7294,11 +7559,6 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
   if( usgsfileset )
   {
      CHECK_INPUT( !sf1set && !sf2set && !sf3set, "processObservation, Error: can not give both usgs file and sacfiles" );
-  }
-  else if ( hdf5format )
-  {
-    // TODO: read data from HDF5 file
-
   }
   else
   {

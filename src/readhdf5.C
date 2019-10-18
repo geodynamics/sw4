@@ -46,6 +46,7 @@
 #include "Require.h"
 #include "EW.h"
 #include "TimeSeries.h"
+#include "readhdf5.h"
 
 #ifdef USE_HDF5
 
@@ -55,6 +56,7 @@ struct traverse_data_t {
   int myRank;
   EW* ew;
   /* bool cartCoordSet; */
+  string inFileName;
   string outFileName;
   int writeEvery;
   int downSample;
@@ -63,6 +65,17 @@ struct traverse_data_t {
   vector<vector<TimeSeries*>> *GlobalTimeSeries;
   float_sw4 m_global_xmax;
   float_sw4 m_global_ymax;
+  bool is_obs;
+  bool winlset;
+  bool winrset;
+  float_sw4 winl;
+  float_sw4 winr;
+  bool usex;
+  bool usey;
+  bool usez;
+  float_sw4 t0;
+  bool scalefactor_set; 
+  float_sw4 scalefactor;
 } traverse_data_t;
 
 static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_t *info, void *operator_data)
@@ -173,6 +186,40 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
         ts_ptr->allocFid();
       else 
         ts_ptr->setFidPtr((*op_data->GlobalTimeSeries)[op_data->event][0]->getFidPtr());
+
+      // Read data
+      std::string fullFilePath = op_data->ew->getPath();
+      fullFilePath += "/" + op_data->inFileName;
+      bool ignore_utc = false;
+      ts_ptr->readSACHDF5(op_data->ew, fullFilePath, ignore_utc);
+
+      // Only for observation data
+      if (op_data->is_obs) {
+        // Set reference UTC to simulation UTC, for easier plotting.
+        ts_ptr->set_utc_to_simulation_utc();
+  
+        // Set window, in simulation time
+        if( op_data->winlset || op_data->winrset )
+        {
+           if( op_data->winlset && !op_data->winrset )
+              op_data->winr = 1e38;
+           if( !op_data->winlset && op_data->winrset )
+              op_data->winl = -1;
+           ts_ptr->set_window( op_data->winl, op_data->winr );
+        }
+  
+        // Exclude some components
+        if( !op_data->usex || !op_data->usey || !op_data->usez )
+           ts_ptr->exclude_component( op_data->usex, op_data->usey, op_data->usez );
+  
+        // Add extra shift from command line, use with care.
+        if( op_data->t0 != 0 )
+           ts_ptr->add_shift( op_data->t0 );
+  
+        // Set scale factor if given
+        if( op_data->scalefactor_set )
+           ts_ptr->set_scalefactor( op_data->scalefactor );
+      }
   
       // include the receiver in the global list
       (*op_data->GlobalTimeSeries)[op_data->event].push_back(ts_ptr);
@@ -185,10 +232,56 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
 }
 
 
-void readStationHDF5(EW *ew, string inFileName, string outFileName, int writeEvery, int downSample, TimeSeries::receiverMode mode, int event, vector< vector<TimeSeries*> > &GlobalTimeSeries, float_sw4 m_global_xmax, float_sw4 m_global_ymax)
+void readStationHDF5(
+  EW* ew,
+  string inFileName,
+  string outFileName,
+  int writeEvery,
+  int downSample,
+  TimeSeries::receiverMode mode,
+  int event,
+  vector<vector<TimeSeries*>> *GlobalTimeSeries,
+  float_sw4 m_global_xmax,
+  float_sw4 m_global_ymax,
+  bool is_obs,
+  bool winlset,
+  bool winrset,
+  float_sw4 winl,
+  float_sw4 winr,
+  bool usex,
+  bool usey,
+  bool usez,
+  float_sw4 t0,
+  bool scalefactor_set, 
+  float_sw4 scalefactor
+  )
 {
   hid_t fid, fapl;
+
   struct traverse_data_t tData;
+  memset(&tData, 0, sizeof(struct traverse_data_t));
+  tData.myRank = ew->getRank();
+  tData.ew = ew;
+  tData.inFileName  = inFileName;
+  tData.outFileName = outFileName;
+  tData.writeEvery  = writeEvery;
+  tData.downSample  = downSample;
+  tData.mode = mode;
+  tData.event = event;
+  tData.m_global_xmax = m_global_xmax;
+  tData.m_global_ymax = m_global_ymax;
+  tData.GlobalTimeSeries = GlobalTimeSeries;
+  tData.is_obs = is_obs;
+  tData.winlset = winlset;
+  tData.winrset = winrset;
+  tData.winl = winl;
+  tData.winr = winr;
+  tData.usex = usex;
+  tData.usey = usey;
+  tData.usez = usez;
+  tData.t0 = t0;
+  tData.scalefactor_set = scalefactor_set;
+  tData.scalefactor = scalefactor;
 
   fapl = H5Pcreate(H5P_FILE_ACCESS);
   H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
@@ -200,21 +293,10 @@ void readStationHDF5(EW *ew, string inFileName, string outFileName, int writeEve
   }
 
   if (inFileName == outFileName) {
-    if (ew->getRank() == 0) {
+    if (tData.myRank == 0) {
       printf("Warning: Same station input file and output file name [%s]\n", inFileName.c_str());
     }
   }
-
-  tData.myRank = ew->getRank();
-  tData.ew = ew;
-  tData.outFileName = outFileName;
-  tData.writeEvery = writeEvery;
-  tData.downSample = downSample;
-  tData.mode = mode;
-  tData.event = event;
-  tData.m_global_xmax = m_global_xmax;
-  tData.m_global_ymax = m_global_ymax;
-  tData.GlobalTimeSeries = &GlobalTimeSeries;
 
   H5Literate (fid, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, traverse_func, &tData);
 
