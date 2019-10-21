@@ -1,24 +1,22 @@
-\documentclass[a4paper]{article}
-
-\usepackage[english]{babel}
-\usepackage[utf8]{inputenc}
-\usepackage{amsmath}
+\documentclass[11pt]{article}
+\usepackage{color,url}
+\usepackage{enumitem}
 \usepackage{graphicx}
-%\usepackage[colorinlistoftodos]{todonotes}
-\usepackage{tikz}
-\usetikzlibrary{arrows}
-\usepackage{booktabs}
-\usepackage{threeparttable}
-\usepackage{tikz}
-\usetikzlibrary{arrows.meta}
-\usepackage{pgfplots}
-\usepackage{subcaption}
-\usepackage[toc,page]{appendix}
+
+\usepackage{graphicx,psfrag}
+\usepackage{epic}
+%\usepackage{eepic}
+\usepackage{amssymb}
+\usepackage{afterpage}
+\usepackage{epsfig}
+\usepackage{pstricks}
+\usepackage{stmaryrd,url}
+\usepackage{tikz,amsmath}
+\usepackage{ulem}
+\usepackage{algorithm,algpseudocode}
+\usepackage{footmisc}
 \usepackage{bm}
 \usepackage{amsfonts}
-\usepackage{algorithm,algpseudocode}
-\usepackage{ulem}
-\usepackage{footmisc}
 
 \makeatletter
 \newenvironment{breakablealgorithm}
@@ -44,10 +42,15 @@
 \newcommand{\wt}{\widetilde}
 
 
+\usepackage[top=1.0in,bottom=1.0in,left=1.0in,right=1.0in]{geometry}
+\bibliographystyle{plain}
+
 \title{Fourth order summation-by-parts finite difference methods for  3-D elastic wave propagation in curvilinear coordinates with mesh refinement interfaces}
 
 \date{\today}
 \author{ Lu Zhang \and Siyang Wang \and N. Anders Petersson}
+
+
 \begin{document}
 \maketitle
 
@@ -63,7 +66,7 @@ We analyze
 
 \input{generalization_to_curvilinear_coordinates}
 
-\input{energy_estimate}
+%\input{energy_estimate}
 
 \input{the_spatial_discretization}
 
@@ -100,5 +103,9 @@ We analyze
 \input{energy_conservation_test}
 
 \input{conclusion}
+
+\input{appendix}
+
+\bibliography{lu}
 
 \end{document}

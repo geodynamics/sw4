@@ -19,7 +19,7 @@ where $M_{ij}, i,j = 1,2,3$ are defined by
 \begin{equation}\label{Mmatrices}
 M_{ij} = P^T_iCP_j.
 \end{equation}
-Here, $C$ is symmetric and positive definite, we refer to Appendix ? for the definitions of matrices $C$ and $P_i, i = 1,2,3$. For the matrices $M_{ij}$, we have that $M_{ii}$ are symmetric positive definite, and $M_{ij}=M^T_{ji}$, for $i,j=1,2,3$. Especially, for the isotropic elastic wave equation, we have
+Here, $C$ is $6\times 6$ stiffness matrix and it is symmetric and positive definite, we refer to Appendix \ref{appendix} for the definitions of matrices $P_i, i = 1,2,3$. For the matrices $M_{ij}$, we have that $M_{ii}$ are symmetric positive definite, and $M_{ij}=M^T_{ji}$, for $i,j=1,2,3$. Especially, for the isotropic elastic wave equation, we have
 \[ M_{11} = \left(\begin{array}{ccc}
 2\mu+\lambda & 0 & 0\\
 0 & \mu & 0\\
@@ -49,4 +49,4 @@ Denote the unit outward normal ${\bf n}_i^{\pm} = (n_i^{\pm,(1)},n_i^{\pm,(2)},n
 \end{equation*}
 A homogeneous Dirichlet boundary condition corresponds to ${\bf u} = {\bf 0}$ and a free surface boundary condtion is ${\bf n}_i^{\pm}\cdot\mathcal{T}  = {\bf 0}, i = 1,2,3$.
 
-It is known that the elastic wave equation with the homogeneous Dirichelet boundary conidtion or free surface boundary condition in a Cartesian domain is a well-posed problem and the total energy of the solution is conserved if the external force ${\bf F} = 0$, we refer to \cite{?} for a detailed analysis.
+It is known that the elastic wave equation with the homogeneous Dirichelet boundary conidtion or free surface boundary condition in a Cartesian domain is a well-posed problem and the total energy of the solution is conserved if the external force ${\bf F} = 0$, we refer to \cite{petersson2015wave} for a detailed analysis.
