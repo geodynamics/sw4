@@ -45,7 +45,7 @@
 
 
 int openHDF5file(vector<TimeSeries*> & TimeSeries);
-int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, float_sw4 delta);
+int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, float_sw4 delta, string suffix);
 int writeTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int npts, void *data);
 
 int createAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id);

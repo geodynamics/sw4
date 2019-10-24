@@ -1158,6 +1158,8 @@ int main(int argc, char **argv)
 	      {
 		 string newname = "_out";
 		 TimeSeries *elem = GlobalObservations[e][m]->copy( &simulation, newname, true );
+                 // Disable writing out SAC HDF5
+                 elem->disableHDF5();
 		 GlobalTimeSeries[e].push_back(elem);
 	      }
 	   }

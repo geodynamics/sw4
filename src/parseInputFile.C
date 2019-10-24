@@ -6737,7 +6737,7 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
   double lat = 0.0, lon = 0.0, depth = 0.0;
   bool cartCoordSet = false, geoCoordSet = false;
   string fileName = "station";
-  string hdf5FileName = "station";
+  string hdf5FileName = "station.hdf5";
   string staName = "station";
   bool staNameGiven=false;
   
@@ -7082,7 +7082,7 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
   char* token = strtok(buffer, " \t");
   m_filter_observations = true;
 
-  CHECK_INPUT(strcmp("observation", token) == 0, "ERROR: not an observation line...: " << token);
+  CHECK_INPUT(strcmp("observationhdf5", token) == 0 || strcmp("obshdf5", token) == 0, "ERROR: not an observation line...: " << token);
   token = strtok(NULL, " \t");
 
   string err = "OBSERVATION Error: ";
@@ -7092,78 +7092,6 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
      if (startswith("#", token) || startswith(" ", buffer))
         // Ignore commented lines and lines with just a space.
         break;
-     /* if (startswith("x=", token)) */
-     /* { */
-     /*    CHECK_INPUT(!geoCoordSet, */
-     /*            err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate"); */
-     /*    token += 2; // skip x= */
-     /*    cartCoordSet = true; */
-     /*    x = atof(token); */
-     /*    CHECK_INPUT(x >= 0.0, */
-		    /* "observation command: x must be greater than or equal to 0, not " << x); */
-     /*    CHECK_INPUT(x <= m_global_xmax, */
-		    /* "observation command: x must be less than or equal to xmax, not " << x); */
-     /* } */
-     /* else if (startswith("y=", token)) */
-     /* { */
-     /*    CHECK_INPUT(!geoCoordSet, */
-     /*            err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate"); */
-     /*    token += 2; // skip y= */
-     /*    cartCoordSet = true; */
-     /*    y = atof(token); */
-     /*    CHECK_INPUT(y >= 0.0, */
-     /*            "observation command: y must be greater than or equal to 0, not " << y); */
-     /*    CHECK_INPUT(y <= m_global_ymax, */
-		    /* "observation command: y must be less than or equal to ymax, not " << y); */
-     /* } */
-     /* else if (startswith("lat=", token)) */
-     /* { */
-     /*    CHECK_INPUT(!cartCoordSet, */
-     /*            err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate"); */
-     /*    token += 4; // skip lat= */
-     /*    lat = atof(token); */
-     /*    CHECK_INPUT(lat >= -90.0, */
-     /*            "observation command: lat must be greater than or equal to -90 degrees, not " */ 
-     /*            << lat); */
-     /*    CHECK_INPUT(lat <= 90.0, */
-     /*            "observation command: lat must be less than or equal to 90 degrees, not " */
-     /*            << lat); */
-     /*    geoCoordSet = true; */
-     /* } */
-     /* else if (startswith("lon=", token)) */
-     /* { */
-     /*    CHECK_INPUT(!cartCoordSet, */
-     /*            err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate"); */
-     /*    token += 4; // skip lon= */
-     /*    lon = atof(token); */
-     /*    CHECK_INPUT(lon >= -180.0, */
-     /*            "observation command: lon must be greater or equal to -180 degrees, not " */ 
-     /*            << lon); */
-     /*    CHECK_INPUT(lon <= 180.0, */
-     /*            "observation command: lon must be less than or equal to 180 degrees, not " */
-     /*            << lon); */
-     /*    geoCoordSet = true; */
-     /* } */
-     /* else if (startswith("z=", token)) */
-     /* { */
-     /*   token += 2; // skip z= */
-/* // depth is currently the same as z */
-     /*   depth = z = atof(token); */
-     /*   topodepth = false; */
-     /*   CHECK_INPUT(z <= m_global_zmax, */
-		   /* "observation command: z must be less than or equal to zmax, not " << z); */
-     /* } */
-     /* else if (startswith("depth=", token)) */
-     /* { */
-     /*    token += 6; // skip depth= */
-     /*   z = depth = atof(token); */
-     /*   topodepth = true; */
-     /*   CHECK_INPUT(depth >= 0.0, */
-	       /* err << "observation command: depth must be greater than or equal to zero"); */
-     /*   CHECK_INPUT(depth <= m_global_zmax, */
-		   /* "observation command: depth must be less than or equal to zmax, not " << depth); */
-/* // by depth we here mean depth below topography */
-     /* } */
      else if(startswith("hdf5file=", token))
      {
         token += 9; // skip hdf5file=
@@ -7190,14 +7118,8 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
 	   event = it->second;
 	}
      }
-     /* else if (startswith("sta=", token)) */
-     /* { */
-     /*    token += strlen("sta="); */
-     /*    staName = token; */
-	/* staNameGiven=true; */
-     /* } */
-// (small) shifts of the observation in time can be used to compensate for incorrect velocites
-// in the material model
+     // (small) shifts of the observation in time can be used to compensate for incorrect velocites
+     // in the material model
      else if(startswith("shift=", token))
      {
         token += 6; // skip shift=
@@ -7264,24 +7186,6 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
         if( strcmp(token,"0")==0 || strcmp(token,"no")==0 )
 	   m_filter_observations = false;
      }
-     /* else if( startswith("sacfile1=",token) ) */
-     /* { */
-     /*    token += 9; */
-     /*    sacfile1 += token; */
-	/* sf1set = true; */
-     /* } */
-     /* else if( startswith("sacfile2=",token) ) */
-     /* { */
-     /*    token += 9; */
-     /*    sacfile2 += token; */
-	/* sf2set = true; */
-     /* } */
-     /* else if( startswith("sacfile3=",token) ) */
-     /* { */
-     /*    token += 9; */
-     /*    sacfile3 += token; */
-	/* sf3set = true; */
-     /* } */
      else if( startswith("scalefactor=",token) )
      {
 	token += 12;
@@ -7298,7 +7202,7 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
   // Read from HDF5 file, and create time series data
 #ifdef USE_HDF5
   bool is_obs = true;
-  readStationHDF5(this, fileName, NULL, writeEvery, downSample, mode, event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax, is_obs, winlset, winrset, winl, winr, usex, usey, usez, t0, scalefactor_set,  scalefactor);
+  readStationHDF5(this, fileName, staName, writeEvery, downSample, mode, event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax, is_obs, winlset, winrset, winl, winr, usex, usey, usez, t0, scalefactor_set,  scalefactor);
 
 #else
   if (proc_zero())
@@ -7307,7 +7211,6 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
 #endif
 
 }
-
 
 //-----------------------------------------------------------------------
 void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries)

@@ -124,6 +124,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_isMetaWritten(false),
   m_isIncAzWritten(false),
   m_nptsWritten(0),
+  m_isInverse(false),
 #endif
   m_event(event)
 {
@@ -3040,13 +3041,112 @@ void TimeSeries::set_utc_to_simulation_utc()
 }
 
 #ifdef USE_HDF5
-void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc )
+/* 
+ * Cubic interpolation code spline, splint, spline1_c are modified from 
+ * https://www.atnf.csiro.au/computing/software/gipsy/sub/spline.c
+ */
+static int spline( float *x, float *y, int n, float yp1, float ypn, float *y2)
+{
+    int  i,k;
+    float p,qn,sig,un,*u;
+
+    u=(float *)calloc((n-1), sizeof(float));
+    if (!u) return -1;
+    if (yp1 > 0.99e30)
+            y2[0]=u[0]=0.0;
+    else {
+        y2[0] = -0.5;
+        u[0]=(3.0/(x[1]-x[0]))*((y[1]-y[0])/(x[1]-x[0])-yp1);
+    }
+    for (i=1;i<=n-2;i++) {
+        sig=(x[i]-x[i-1])/(x[i+1]-x[i-1]);
+        p=sig*y2[i-1]+2.0;
+        y2[i]=(sig-1.0)/p;
+        u[i]=(y[i+1]-y[i])/(x[i+1]-x[i]) - (y[i]-y[i-1])/(x[i]-x[i-1]);
+        u[i]=(6.0*u[i]/(x[i+1]-x[i-1])-sig*u[i-1])/p;
+    }
+    if (ypn > 0.99e30)
+        qn=un=0.0;
+    else {
+        qn=0.5;
+        un=(3.0/(x[n-1]-x[n-2]))*(ypn-(y[n-1]-y[n-2])/(x[n-1]-x[n-2]));
+    }
+    y2[n-1]=(un-qn*u[n-2])/(qn*y2[n-2]+1.0);
+    for (k=n-2;k>=0;k--)
+        y2[k]=y2[k]*y2[k+1]+u[k];
+    free(u);
+    return 0;
+}
+
+static int splint(float *xa, float *ya, float *y2a, int n, float x, float *y)
+{
+    int k, klo = 0, khi = n-1;
+    float h,b,a;
+
+    while (khi-klo > 1) {
+        k=(khi+klo) >> 1;
+        if (xa[k] > x) khi=k;
+        else klo=k;
+    }
+    h=xa[khi]-xa[klo];
+    if (h == 0.0) {
+       memset(y, 0, sizeof(float)*n) ;
+    } 
+    else {
+       a=(xa[khi]-x)/h;
+       b=(x-xa[klo])/h;
+       *y=a*ya[klo]+b*ya[khi]+( (a*a*a-a)*y2a[klo]+
+                                (b*b*b-b)*y2a[khi] ) * (h*h) / 6.0;
+    }
+    return 0;
+}
+
+/* xi      Array containing input x-coordinates. */
+/* yi      Array containing input y-coordinates. */
+/* nin     Number of (XI,YI) coordinate pairs. */
+/* xo      Array containing x-coordinates for which y-coordinates */
+/*         are to be interpolated. */
+/* yo      Array containing interpolated y-coordinates. */
+/*         If ALL YI are undefined, ALL YO are set to undefined. */
+/* nout    Number of x-coordinates for which interpolation */
+/*         is wanted. */
+
+static int cubic_interp(float *xi, float *yi, int nin, float *xo, float *yo, int nout)
+{
+    float *y2;
+    int error, n;
+
+    if (NULL==xi || NULL==yi || NULL==xo || NULL==yo) 
+        return -1;
+
+    y2 = (float *)malloc(nin * sizeof(float));
+    if (NULL == y2) return -1 ;
+
+    error = spline(xi, yi, nin, 3e30, 3e30, y2) ;
+    if ( error < 0 ) return -1 ;
+
+    for ( n = 0  ; n < nout ; n++ ) {
+      error = splint(xi, yi, y2, nin, xo[n] , &yo[n]) ;
+      if ( error < 0 ) return -1;
+    }
+
+    free(y2) ;
+
+    return 0;
+}
+
+void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
 {
   bool debug = false;
   hid_t fid, grp;
   char data[128];
   hsize_t ndim, dims[4];
+  int ret;
 
+  if (!m_myPoint) 
+      return;
+
+  setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
   fid = H5Fopen(FileName.c_str(),  H5F_ACC_RDONLY, H5P_DEFAULT);
   if (fid < 0) {
     printf("%s Error opening file [%s]\n", __func__, FileName.c_str());
@@ -3065,6 +3165,14 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc )
     m_t0 = utc_distance( utcrefsim, m_utc );
   }
 
+  // dt may be downsampled 
+  int downsample;
+  readAttrInt(fid, "DOWNSAMPLE", &downsample);
+  if (downsample < 1) {
+     cout << "ERROR: downsample="<< downsample << " is invalid! Setting to 1" << endl;
+     downsample = 1;
+  }
+
   std::string dset_names[3];
   char unit[128];
   readAttrStr(fid, "UNIT", unit);
@@ -3079,21 +3187,22 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc )
     if (grp < 0) 
       cout << "ERROR opening group [" << m_staName << "] !" << endl;
 
-    if (H5Lexists(grp, "Z", H5P_DEFAULT) == true) {
-      cartesian = true;
-      dset_names[0] = "X";
-      dset_names[1] = "Y";
-      dset_names[2] = "Z";
+    int is_nsew, npts, sw4npts;
+    readAttrInt(grp, "ISNSEW", &is_nsew);
 
-    }
-    else {
+    if (is_nsew == 1) {
       dset_names[0] = "EW";
       dset_names[1] = "NS";
       dset_names[2] = "UP";
     }
+    else {
+      cartesian = true;
+      dset_names[0] = "X";
+      dset_names[1] = "Y";
+      dset_names[2] = "Z";
+    }
     m_xyzcomponent = cartesian;
 
-    int npts, sw4npts;
     readAttrInt(grp, "NPTS", &npts);
     if( npts <= 1 ) {
        cout << "ERROR: observed data is too short" << endl;
@@ -3103,21 +3212,21 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc )
 
     float dt, tstart;
     readAttrFloat(fid, "DELTA", &dt);
-    tstart = (npts-1) * dt;
 
-    // dt may be downsampled 
-    int downsample = (int)(dt / m_dt + 0.5);
-    sw4npts =  (npts-1) * downsample;
-    if (downsample < 1) {
-       cout << "ERROR: downsample="<< downsample << " is invalid!" << endl;
-       return;
-    }
+    sw4npts =  (npts-1) * downsample + 1;
 
     // Only allocate arrays if we aren't doing a restart
-    if(!mIsRestart)
-      allocateRecordingArrays( sw4npts, m_t0+tstart, dt );
-    else
+    if(!mIsRestart) {
+      // Assumes starting from time 0 and timestep 0
+      tstart = 0;
+      allocateRecordingArrays( sw4npts, m_t0+tstart, tstart);
+    }
+    else {
       m_nptsWritten = npts;
+    }
+
+    m_dt = dt / downsample;
+    mLastTimeStep = sw4npts - 1;
 
     float *buf_0 = new float[npts];
     float *buf_1 = new float[npts];
@@ -3134,16 +3243,66 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc )
     float_sw4 a21 =-m_salpha*deti;
     float_sw4 a22 = m_thynrm*deti;
 
-    for (int i = 0; i < npts; i++) {
-      if( cartesian ) {
-        mRecordedSol[0][i*downsample] = (float_sw4)buf_0[i];
-        mRecordedSol[1][i*downsample] = (float_sw4)buf_1[i];
-        mRecordedSol[2][i*downsample] = (float_sw4)buf_2[i];
+    if (downsample > 1) {
+      float *buf_0up = new float[sw4npts];
+      float *buf_1up = new float[sw4npts];
+      float *buf_2up = new float[sw4npts];
+      float *x  = new float[npts];
+      float *nx = new float[sw4npts];
+      for (int i = 0; i < npts; i++) 
+          x[i] = i * downsample;
+
+      for (int i = 0; i < sw4npts; i++) 
+          nx[i] = i;
+
+      // Cubic interpolation
+      ret = cubic_interp(x, buf_0, npts, nx, buf_0up, sw4npts);
+      if (ret < 0) {
+        cout << "ERROR: cubic_interp failed!" << endl;
+        return;
       }
-      else {
-        mRecordedSol[0][i*downsample] = a11*(float_sw4)buf_1[i] + a12*(float_sw4)buf_0[i];
-        mRecordedSol[1][i*downsample] = a21*(float_sw4)buf_1[i] + a22*(float_sw4)buf_0[i];
-        mRecordedSol[2][i*downsample] = -(float_sw4)buf_2[i];
+      ret = cubic_interp(x, buf_1, npts, nx, buf_1up, sw4npts);
+      if (ret < 0) {
+        cout << "ERROR: cubic_interp failed!" << endl;
+        return;
+      }
+      ret = cubic_interp(x, buf_2, npts, nx, buf_2up, sw4npts);
+      if (ret < 0) {
+        cout << "ERROR: cubic_interp failed!" << endl;
+        return;
+      }
+
+      for (int i = 0; i < npts; i++) {
+        if( cartesian ) {
+          mRecordedSol[0][i] = (float_sw4)buf_0up[i];
+          mRecordedSol[1][i] = (float_sw4)buf_1up[i];
+          mRecordedSol[2][i] = (float_sw4)buf_2up[i];
+        }
+        else {
+          mRecordedSol[0][i] = a11*(float_sw4)buf_1up[i] + a12*(float_sw4)buf_0up[i];
+          mRecordedSol[1][i] = a21*(float_sw4)buf_1up[i] + a22*(float_sw4)buf_0up[i];
+          mRecordedSol[2][i] = -(float_sw4)buf_2up[i];
+        }
+      }
+
+      delete[] buf_0up;
+      delete[] buf_1up;
+      delete[] buf_2up;
+      delete[] x;
+      delete[] nx;
+    }
+    else {
+      for (int i = 0; i < npts; i++) {
+        if( cartesian ) {
+          mRecordedSol[0][i] = (float_sw4)buf_0[i];
+          mRecordedSol[1][i] = (float_sw4)buf_1[i];
+          mRecordedSol[2][i] = (float_sw4)buf_2[i];
+        }
+        else {
+          mRecordedSol[0][i] = a11*(float_sw4)buf_1[i] + a12*(float_sw4)buf_0[i];
+          mRecordedSol[1][i] = a21*(float_sw4)buf_1[i] + a22*(float_sw4)buf_0[i];
+          mRecordedSol[2][i] = -(float_sw4)buf_2[i];
+        }
       }
     }
 
@@ -3151,6 +3310,9 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc )
     delete[] buf_1;
     delete[] buf_2;
     H5Gclose(grp);
+  }
+  else {
+    cout << "ERROR: unit [" << unit << "] is unrecognized! Currently supports m or m/s" << endl;
   }
 
   H5Fclose(fid);

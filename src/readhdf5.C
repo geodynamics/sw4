@@ -180,18 +180,20 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       /* if (op_data->myRank == 0) */
       /*   cout << "x=" << x << ", y=" << y << ", z=" << z << ", writeEvery=" << op_data->writeEvery << endl; */
 
-      TimeSeries *ts_ptr = new TimeSeries(a_ew, op_data->outFileName, grp_name, op_data->mode, false, false, true, op_data->outFileName, x, y, z, 
+      TimeSeries *ts_ptr = new TimeSeries(a_ew, grp_name, grp_name, op_data->mode, false, false, true, op_data->outFileName, x, y, z, 
   					topodepth, op_data->writeEvery, op_data->downSample, !nsew, op_data->event );
+
+      /* if (op_data->is_obs) */ 
+      /*     ts_ptr->m_isInverse = true; */
+      
       if((*op_data->GlobalTimeSeries)[op_data->event].size() == 0) 
         ts_ptr->allocFid();
       else 
         ts_ptr->setFidPtr((*op_data->GlobalTimeSeries)[op_data->event][0]->getFidPtr());
 
       // Read data
-      std::string fullFilePath = op_data->ew->getPath();
-      fullFilePath += "/" + op_data->inFileName;
       bool ignore_utc = false;
-      ts_ptr->readSACHDF5(op_data->ew, fullFilePath, ignore_utc);
+      ts_ptr->readSACHDF5(op_data->ew, op_data->inFileName, ignore_utc);
 
       // Only for observation data
       if (op_data->is_obs) {
@@ -232,29 +234,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
 }
 
 
-void readStationHDF5(
-  EW* ew,
-  string inFileName,
-  string outFileName,
-  int writeEvery,
-  int downSample,
-  TimeSeries::receiverMode mode,
-  int event,
-  vector<vector<TimeSeries*>> *GlobalTimeSeries,
-  float_sw4 m_global_xmax,
-  float_sw4 m_global_ymax,
-  bool is_obs,
-  bool winlset,
-  bool winrset,
-  float_sw4 winl,
-  float_sw4 winr,
-  bool usex,
-  bool usey,
-  bool usez,
-  float_sw4 t0,
-  bool scalefactor_set, 
-  float_sw4 scalefactor
-  )
+void readStationHDF5(EW* ew, string inFileName, string outFileName, int writeEvery, int downSample, TimeSeries::receiverMode mode, int event, vector<vector<TimeSeries*>> *GlobalTimeSeries, float_sw4 m_global_xmax, float_sw4 m_global_ymax, bool is_obs, bool winlset, bool winrset, float_sw4 winl, float_sw4 winr, bool usex, bool usey, bool usez, float_sw4 t0, bool scalefactor_set, float_sw4 scalefactor)
 {
   hid_t fid, fapl;
 

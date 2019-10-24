@@ -78,6 +78,7 @@ bool myPoint(){ return m_myPoint; }
 receiverMode getMode(){ return m_mode; }
 
 int getUseHDF5(){ return m_hdf5Format; }
+void disableHDF5(){m_hdf5Format=false;};
 
 float_sw4 getX() const {return mX;}
 float_sw4 getY() const {return mY;}
@@ -138,6 +139,8 @@ int m_k0;
 int m_grid0;
 
 #ifdef USE_HDF5
+bool  m_isInverse;
+bool  isInverse() {return m_isInverse;};
 int   allocFid();
 int   setFidPtr(hid_t *fid);
 hid_t *getFidPtr();

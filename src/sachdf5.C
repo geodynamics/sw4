@@ -247,7 +247,7 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int nd
 }
 
 
-int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, float_sw4 delta)
+int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, float_sw4 delta, string suffix)
 {
   bool is_debug = false;
 
@@ -264,6 +264,10 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   if (TimeSeries.size() == 0) 
       return 0;
 
+  /* // Do not create file for inverse */
+  /* if (TimeSeries[0]->isInverse()) */ 
+  /*     return 0; */
+
   start_time = MPI_Wtime();
 
   std::string path = TimeSeries[0]->getPath();
@@ -275,6 +279,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     filename = path;
 
   filename.append(name);
+  filename.append(suffix);
  
   if (is_debug) {
       printf("Start createTimeSeriesHDF5File [%s], %d steps\n", filename.c_str(), totalSteps);
@@ -309,9 +314,12 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   createWriteAttrStr(fid, "DATETIME", utcstr);
  
   // delta, sample interval of time-series (seconds)
-  dt = (float)delta;
-  dt *= TimeSeries[0]->getDownSample();
+  int downsample = TimeSeries[0]->getDownSample();
+  if (downsample < 1) downsample = 1;
+
+  dt = (float)delta * downsample;
   createWriteAttr(fid, "DELTA", H5T_NATIVE_FLOAT, attr_space1, &dt);
+  createWriteAttr(fid, "DOWNSAMPLE", H5T_NATIVE_INT, attr_space1, &downsample);
 
   // o, origin time (seconds, relative to start time of SW4 calculation and seismogram, earliest source)
   createAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, attr_space1);
@@ -464,6 +472,10 @@ int openHDF5file(vector<TimeSeries*> & TimeSeries)
 
   if (TimeSeries.size() == 0) 
       return 0;
+
+  /* // Do not open file for inverse */
+  /* if (TimeSeries[0]->isInverse()) */ 
+  /*     return 0; */
 
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
