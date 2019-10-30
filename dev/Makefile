@@ -17,7 +17,7 @@ LD = $(CXX)
 
 # Object files
 
-OBJS = main.o problemsetup_new_3d.o fortran_functions.o Sarray.o cfunctions.o
+OBJS = main.o fortran_functions_current.o Sarray.o cfunctions.o
 
 #
 .PHONY:copy
