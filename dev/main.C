@@ -19,7 +19,8 @@ extern "C" {
 // void kappa(double*,double*,double*,double*,double*,double*,double*,double*);
 // void exact_solution(double *, double *, double *, double *, double *, double
 // *, double *, int *); void interface_block(double *, double *, double*, double
-// *, double *, double *, double *, 		       double *, double *, double
+// *, double *, double *, double *, 		       double *, double *,
+// double
 // *, double *, double *, double *);
 void dgetrf_wrap(int *, int *, double *, int *, int *, int *);
 void dgetrs_wrap(int, int, double *, int, int *, double *, int, int *);

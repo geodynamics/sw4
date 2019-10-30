@@ -44,3 +44,7 @@ Elastic_3D_Interface_nonconforming_bj.f90: problemsetup_new_3d.mod SBP_operator.
 
 clean:
 	rm -rf *.x *.txt *.o *.a *.mod s0* f0* smultivar.0* fmultivar.0* *__genmod.f90 *~ *#
+
+format:
+	clang-format -style Google -i *.C
+	clang-format -style Google -i *.h

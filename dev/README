@@ -1,0 +1,11 @@
+This is the C++ port of the code from the curvi-mr branch : sw4/dev/src
+Binary file for comparing error norms was generated on quartz.
+
+The errors from a successfull run looks like this:
+
+ERROR ANALYSES COMPARED TO BASELINE
+0 0.0039702360217262478 0.0039702360217262478 0 %
+1 0.0038741601737259934 0.0038741601737259934 0 %
+2 0.0017834418454089674 0.0017834418454089674 0 %
+
+The last line is the % error compared to the baseline
