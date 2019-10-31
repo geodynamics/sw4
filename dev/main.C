@@ -176,10 +176,15 @@ int main(int argc, char *argv[]) {
   Garray<2> g = {1 - nrg, n1_c + nrg, 3, 4};
 
   // allocate memory for solutions
-  Farray u_c(1 - nrg, n1_c + nrg, 1 - nrg, n2_c + nrg, 1 - nrg, n3_c + nrg, 1,
-             dim, 1, 4);
+  //Farray u_c(1 - nrg, n1_c + nrg, 1 - nrg, n2_c + nrg, 1 - nrg, n3_c + nrg, 1,
+  //          dim, 1, 4);
   Farray u_f(1 - nrg, n1_f + nrg, 1 - nrg, n2_f + nrg, 1 - nrg, n3_f + nrg, 1,
              dim, 1, 4);
+  // Split arrays as in SW4 
+  Farray Up_c(1 - nrg, n1_c + nrg, 1 - nrg, n2_c + nrg, 1 - nrg, n3_c + nrg, 1,dim);
+  Farray Um_c(1 - nrg, n1_c + nrg, 1 - nrg, n2_c + nrg, 1 - nrg, n3_c + nrg, 1,dim);
+  Farray U_c(1 - nrg, n1_c + nrg, 1 - nrg, n2_c + nrg, 1 - nrg, n3_c + nrg, 1,dim);
+  Farray Ux_c(1 - nrg, n1_c + nrg, 1 - nrg, n2_c + nrg, 1 - nrg, n3_c + nrg, 1,dim);
   // Temps not in original code
   Farray u_ct(1 - nrg, n1_c + nrg, 1 - nrg, n2_c + nrg, 1 - nrg, n3_c + nrg, 1,
               dim);
@@ -243,14 +248,14 @@ int main(int argc, char *argv[]) {
     for (int i = 1 - nrg; i <= n2_c + nrg; i++) {
       for (int j = 1 - nrg; j <= n1_c + nrg; j++) {
         exact_solution(Xgrid_c_1(j), Xgrid_c_2(i), Xgrid_c_3(j, i, k), mdt,
-                       u_c(j, i, k, 1, 1), u_c(j, i, k, 2, 1),
-                       u_c(j, i, k, 3, 1), flag);
+                       Um_c(j, i, k, 1), Um_c(j, i, k, 2),
+                       Um_c(j, i, k, 3), flag);
         exact_solution(Xgrid_c_1(j), Xgrid_c_2(i), Xgrid_c_3(j, i, k), zero,
-                       u_c(j, i, k, 1, 2), u_c(j, i, k, 2, 2),
-                       u_c(j, i, k, 3, 2), flag);
+                       U_c(j, i, k, 1), U_c(j, i, k, 2),
+                       U_c(j, i, k, 3), flag);
         exact_solution(Xgrid_c_1(j), Xgrid_c_2(i), Xgrid_c_3(j, i, k), dt,
-                       u_c(j, i, k, 1, 3), u_c(j, i, k, 2, 3),
-                       u_c(j, i, k, 3, 3), flag);
+                       Up_c(j, i, k, 1), Up_c(j, i, k, 2),
+                       Up_c(j, i, k, 3), flag);
       }
     }
   }
@@ -309,8 +314,8 @@ int main(int argc, char *argv[]) {
 
   // Before the time loop, we make the initial conditions compatible with
   // interface conditions
-  injection(u_f, u_c, P, a, 1);
-  injection(u_f, u_c, P, a, 2);
+  injection(u_f, Um_c, P, a, 1);
+  injection(u_f, U_c, P, a, 2);
   // u_f matches here
 
   // update ghost points value for the interface with block jacobian iterative
@@ -325,7 +330,7 @@ int main(int argc, char *argv[]) {
 
   interface_rhs(Vass, lh_c, lh_f, Jacobian_c, Jacobian_f, mu_c, mu_f, lambda_c,
                 lambda_f, rho_c, rho_f, XI13_c, XI23_c, XI33_c, XI13_f, XI23_f,
-                XI33_f, P, Sb, Rop, sbop_no_gp, acof_no_gp, u_c, u_f, Mass_f1,
+                XI33_f, P, Sb, Rop, sbop_no_gp, acof_no_gp, Um_c, u_f, Mass_f1,
                 ux_cof, ghcof, acof, bof, a, 1);
 
   // interface_lhs(LHS.get(),lh_c.get(),lh_f.get(),Jacobian_c.get(),Jacobian_f.get(),
@@ -338,7 +343,7 @@ int main(int argc, char *argv[]) {
 
   interface_lhs(LHS, lh_c, lh_f, Jacobian_c, Jacobian_f, mu_c, mu_f, lambda_c,
                 lambda_f, rho_c, rho_f, XI13_c, XI23_c, XI33_c, XI13_f, XI23_f,
-                XI33_f, P, Sb, Rop, sbop_no_gp, acof_no_gp, u_c, u_f, Mass_f1,
+                XI33_f, P, Sb, Rop, sbop_no_gp, acof_no_gp, Um_c, u_f, Mass_f1,
                 ux_cof, ghcof, acof, bof, a, 1);
 
   for (int i = 1; i <= n1_c * n2_c * 3; i++) residual(i) = Vass(i) - LHS(i);
@@ -370,14 +375,14 @@ int main(int argc, char *argv[]) {
                     << " INFO = " << INFO << " " << Mass_block(INFO, INFO, i, j)
                     << "\n";
         }
-        u_c(i, j, n3_c + 1, 1, 1) =
-            u_c(i, j, n3_c + 1, 1, 1) +
+        Um_c(i, j, n3_c + 1, 1) =
+            Um_c(i, j, n3_c + 1, 1) +
             residual((j - 1) * 3 * n1_c + 3 * (i - 1) + 1);
-        u_c(i, j, n3_c + 1, 2, 1) =
-            u_c(i, j, n3_c + 1, 2, 1) +
+        Um_c(i, j, n3_c + 1, 2) =
+            Um_c(i, j, n3_c + 1, 2) +
             residual((j - 1) * 3 * n1_c + 3 * (i - 1) + 2);
-        u_c(i, j, n3_c + 1, 3, 1) =
-            u_c(i, j, n3_c + 1, 3, 1) +
+        Um_c(i, j, n3_c + 1, 3) =
+	  Um_c(i, j, n3_c + 1, 3) +
             residual((j - 1) * 3 * n1_c + 3 * (i - 1) + 3);
       }
     }
@@ -391,7 +396,7 @@ int main(int argc, char *argv[]) {
 
     interface_lhs(LHS, lh_c, lh_f, Jacobian_c, Jacobian_f, mu_c, mu_f, lambda_c,
                   lambda_f, rho_c, rho_f, XI13_c, XI23_c, XI33_c, XI13_f,
-                  XI23_f, XI33_f, P, Sb, Rop, sbop_no_gp, acof_no_gp, u_c, u_f,
+                  XI23_f, XI33_f, P, Sb, Rop, sbop_no_gp, acof_no_gp, Um_c, u_f,
                   Mass_f1, ux_cof, ghcof, acof, bof, a, 1);
 
     for (int i = 1; i <= n1_c * n2_c * 3; i++) residual(i) = Vass(i) - LHS(i);
@@ -404,7 +409,7 @@ int main(int argc, char *argv[]) {
   // nt = 2; // FOR DEBUGGIN
   // std::cerr<<" ****** WARNING ***********NT HAS BEEN RESTET FOR TESTING\n";
 
-  std::shared_ptr<Farray> u_c_t = u_c.subset(2);
+  //  std::shared_ptr<Farray> u_c_t = u_c.subset(2); // PBUGS USE U_C DIRECTLY
   std::shared_ptr<Farray> u_f_t = u_f.subset(2);
 
   t1 = std::chrono::high_resolution_clock::now();
@@ -425,7 +430,7 @@ int main(int argc, char *argv[]) {
     interface_rhs(Vass, lh_c, lh_f, Jacobian_c, Jacobian_f, mu_c, mu_f,
                   lambda_c, lambda_f, rho_c, rho_f, XI13_c, XI23_c, XI33_c,
                   XI13_f, XI23_f, XI33_f, P, Sb, Rop, sbop_no_gp, acof_no_gp,
-                  u_c, u_f, Mass_f1, ux_cof, ghcof, acof, bof, a, 2);
+                  U_c, u_f, Mass_f1, ux_cof, ghcof, acof, bof, a, 2);
 
     // interface_lhs(LHS.get(),lh_c.get(),lh_f.get(),Jacobian_c.get(),Jacobian_f.get(),
     // mu_c.get(),
@@ -437,7 +442,7 @@ int main(int argc, char *argv[]) {
 
     interface_lhs(LHS, lh_c, lh_f, Jacobian_c, Jacobian_f, mu_c, mu_f, lambda_c,
                   lambda_f, rho_c, rho_f, XI13_c, XI23_c, XI33_c, XI13_f,
-                  XI23_f, XI33_f, P, Sb, Rop, sbop_no_gp, acof_no_gp, u_c, u_f,
+                  XI23_f, XI33_f, P, Sb, Rop, sbop_no_gp, acof_no_gp, U_c, u_f,
                   Mass_f1, ux_cof, ghcof, acof, bof, a, 2);
 
     for (int i = 1; i <= n1_c * n2_c * 3; i++) residual(i) = Vass(i) - LHS(i);
@@ -459,14 +464,14 @@ int main(int argc, char *argv[]) {
                       << Mass_block(INFO, INFO, i, j) << "\n";
           }
 
-          u_c(i, j, n3_c + 1, 1, 2) =
-              u_c(i, j, n3_c + 1, 1, 2) +
+          U_c(i, j, n3_c + 1, 1) =
+              U_c(i, j, n3_c + 1, 1) +
               residual((j - 1) * 3 * n1_c + 3 * (i - 1) + 1);
-          u_c(i, j, n3_c + 1, 2, 2) =
-              u_c(i, j, n3_c + 1, 2, 2) +
+          U_c(i, j, n3_c + 1, 2) =
+              U_c(i, j, n3_c + 1, 2) +
               residual((j - 1) * 3 * n1_c + 3 * (i - 1) + 2);
-          u_c(i, j, n3_c + 1, 3, 2) =
-              u_c(i, j, n3_c + 1, 3, 2) +
+          U_c(i, j, n3_c + 1, 3) =
+              U_c(i, j, n3_c + 1, 3) +
               residual((j - 1) * 3 * n1_c + 3 * (i - 1) + 3);
         }
       }
@@ -481,7 +486,7 @@ int main(int argc, char *argv[]) {
       interface_lhs(LHS, lh_c, lh_f, Jacobian_c, Jacobian_f, mu_c, mu_f,
                     lambda_c, lambda_f, rho_c, rho_f, XI13_c, XI23_c, XI33_c,
                     XI13_f, XI23_f, XI33_f, P, Sb, Rop, sbop_no_gp, acof_no_gp,
-                    u_c, u_f, Mass_f1, ux_cof, ghcof, acof, bof, a, 2);
+                    U_c, u_f, Mass_f1, ux_cof, ghcof, acof, bof, a, 2);
 
       for (int i = 1; i <= n1_c * n2_c * 3; i++) residual(i) = Vass(i) - LHS(i);
     }
@@ -493,7 +498,7 @@ int main(int argc, char *argv[]) {
     // 		     lh_c.get(),Jacobian_c.get(),mu_c.get(),lambda_c.get(),XI13_c.get(),XI23_c.get(),XI33_c.get());
 
     // std::cout<<"USE COUNT IS "<<u_c_t.use_count()<<"\n";
-    update_interior(*u_c_t, *u_f_t, bof, ghcof, acof, acof_no_gp, lh_f,
+    update_interior(U_c, *u_f_t, bof, ghcof, acof, acof_no_gp, lh_f,
                     Jacobian_f, mu_f, lambda_f, XI13_f, XI23_f, XI33_f, lh_c,
                     Jacobian_c, mu_c, lambda_c, XI13_c, XI23_c, XI33_c, a);
 
@@ -547,17 +552,17 @@ int main(int argc, char *argv[]) {
     for (int k = 1; k <= n3_c; k++) {
       for (int j = 1; j <= n2_c; j++) {
         for (int i = 1; i <= n1_c; i++) {
-          u_c(i, j, k, 1, 3) = 2.0 * u_c(i, j, k, 1, 2) - u_c(i, j, k, 1, 1) +
+          Up_c(i, j, k, 1) = 2.0 * U_c(i, j, k, 1) - Um_c(i, j, k, 1) +
                                dt * dt *
                                    (lh_c(i, j, k, 1) +
                                     Jacobian_c(i, j, k) * force_c(i, j, k, 1)) /
                                    rho_c(i, j, k);
-          u_c(i, j, k, 2, 3) = 2.0 * u_c(i, j, k, 2, 2) - u_c(i, j, k, 2, 1) +
+          Up_c(i, j, k, 2) = 2.0 * U_c(i, j, k, 2) - Um_c(i, j, k, 2) +
                                dt * dt *
                                    (lh_c(i, j, k, 2) +
                                     Jacobian_c(i, j, k) * force_c(i, j, k, 2)) /
                                    rho_c(i, j, k);
-          u_c(i, j, k, 3, 3) = 2.0 * u_c(i, j, k, 3, 2) - u_c(i, j, k, 3, 1) +
+          Up_c(i, j, k, 3) = 2.0 * U_c(i, j, k, 3) - Um_c(i, j, k, 3) +
                                dt * dt *
                                    (lh_c(i, j, k, 3) +
                                     Jacobian_c(i, j, k) * force_c(i, j, k, 3)) /
@@ -574,7 +579,7 @@ int main(int argc, char *argv[]) {
     // The argument '3' means time level star
     //'1', '2' and '4' mean time level n-1, n and n+1, respectively.
     // update_gp(Xgrid_c_1.get(),Xgrid_c_2.get(),Xgrid_c_3.get(),u_c.get(),Xgrid_f_1.get(),Xgrid_f_2.get(),Xgrid_f_3.get(),u_f.get(),&tv,3);
-    update_gp(Xgrid_c_1, Xgrid_c_2, Xgrid_c_3, u_c, Xgrid_f_1, Xgrid_f_2,
+    update_gp(Xgrid_c_1, Xgrid_c_2, Xgrid_c_3, Up_c, Xgrid_f_1, Xgrid_f_2,
               Xgrid_f_3, u_f, tv, a, 3);
     // Update ghost point values for the traction boundary
     // update_traction(traction_rhs,traction_data.get(),Xgrid_f_1.get(),Xgrid_f_2.get(),Xgrid_f_3.get(),
@@ -588,11 +593,11 @@ int main(int argc, char *argv[]) {
 
     // u_f_tmp.compare(u_f);
     // Injection at the interface
-    injection(u_f, u_c, P, a, 3);
+    injection(u_f, Up_c, P, a, 3);
 
     // Update Dirichlet boundary condition
     // update_dirichlet_bc(Xgrid_c_1.get(),Xgrid_c_2.get(),Xgrid_c_3.get(),u_c.get(),&tv,3);
-    update_dirichlet_bc(Xgrid_c_1, Xgrid_c_2, Xgrid_c_3, u_c, tv, a, 3);
+    update_dirichlet_bc(Xgrid_c_1, Xgrid_c_2, Xgrid_c_3, Up_c, tv, a, 3);
 
     // Corrector step
 
@@ -609,7 +614,7 @@ int main(int argc, char *argv[]) {
     interface_rhs(Vass, lh_c, lh_f, Jacobian_c, Jacobian_f, mu_c, mu_f,
                   lambda_c, lambda_f, rho_c, rho_f, XI13_c, XI23_c, XI33_c,
                   XI13_f, XI23_f, XI33_f, P, Sb, Rop, sbop_no_gp, acof_no_gp,
-                  u_c, u_f, Mass_f1, ux_cof, ghcof, acof, bof, a, 3);
+                  Up_c, u_f, Mass_f1, ux_cof, ghcof, acof, bof, a, 3);
 
     // interface_lhs(LHS.get(),lh_c.get(),lh_f.get(),Jacobian_c.get(),Jacobian_f.get(),
     // mu_c.get(),
@@ -620,7 +625,7 @@ int main(int argc, char *argv[]) {
     // 		   ux_cof.get(),ghcof.get(),acof.get(),bof.get(),3);
     interface_lhs(LHS, lh_c, lh_f, Jacobian_c, Jacobian_f, mu_c, mu_f, lambda_c,
                   lambda_f, rho_c, rho_f, XI13_c, XI23_c, XI33_c, XI13_f,
-                  XI23_f, XI33_f, P, Sb, Rop, sbop_no_gp, acof_no_gp, u_c, u_f,
+                  XI23_f, XI33_f, P, Sb, Rop, sbop_no_gp, acof_no_gp, Up_c, u_f,
                   Mass_f1, ux_cof, ghcof, acof, bof, a, 3);
 
     for (int i = 1; i <= n1_c * n2_c * 3; i++) residual(i) = Vass(i) - LHS(i);
@@ -642,14 +647,14 @@ int main(int argc, char *argv[]) {
                       << Mass_block(INFO, INFO, i, j) << "\n";
           }
 
-          u_c(i, j, n3_c + 1, 1, 3) =
-              u_c(i, j, n3_c + 1, 1, 3) +
+          Up_c(i, j, n3_c + 1, 1) =
+              Up_c(i, j, n3_c + 1, 1) +
               residual((j - 1) * 3 * n1_c + 3 * (i - 1) + 1);
-          u_c(i, j, n3_c + 1, 2, 3) =
-              u_c(i, j, n3_c + 1, 2, 3) +
+          Up_c(i, j, n3_c + 1, 2) =
+              Up_c(i, j, n3_c + 1, 2) +
               residual((j - 1) * 3 * n1_c + 3 * (i - 1) + 2);
-          u_c(i, j, n3_c + 1, 3, 3) =
-              u_c(i, j, n3_c + 1, 3, 3) +
+          Up_c(i, j, n3_c + 1, 3) =
+              Up_c(i, j, n3_c + 1, 3) +
               residual((j - 1) * 3 * n1_c + 3 * (i - 1) + 3);
         }
       }
@@ -664,7 +669,7 @@ int main(int argc, char *argv[]) {
       interface_lhs(LHS, lh_c, lh_f, Jacobian_c, Jacobian_f, mu_c, mu_f,
                     lambda_c, lambda_f, rho_c, rho_f, XI13_c, XI23_c, XI33_c,
                     XI13_f, XI23_f, XI33_f, P, Sb, Rop, sbop_no_gp, acof_no_gp,
-                    u_c, u_f, Mass_f1, ux_cof, ghcof, acof, bof, a, 3);
+                    Up_c, u_f, Mass_f1, ux_cof, ghcof, acof, bof, a, 3);
 
       for (int i = 1; i <= n1_c * n2_c * 3; i++) residual(i) = Vass(i) - LHS(i);
     }
@@ -683,8 +688,8 @@ int main(int argc, char *argv[]) {
       for (int k = 1 - nrg; k <= n3_c + nrg; k++)
         for (int j = 1 - nrg; j <= n2_c + nrg; j++)
           for (int i = 1 - nrg; i <= n1_c + nrg; i++)
-            u_ct(i, j, k, l) = (u_c(i, j, k, l, 3) - 2 * u_c(i, j, k, l, 2) +
-                                u_c(i, j, k, l, 1)) /
+            u_ct(i, j, k, l) = (Up_c(i, j, k, l) - 2 * U_c(i, j, k, l) +
+                                Um_c(i, j, k, l)) /
                                (dt * dt);
 
     s = 1 - nrg;
@@ -750,20 +755,20 @@ int main(int argc, char *argv[]) {
     for (int k = 1; k <= n3_c; k++) {
       for (int j = 1; j <= n2_c; j++) {
         for (int i = 1; i <= n1_c; i++) {
-          u_c(i, j, k, 1, 4) =
-              u_c(i, j, k, 1, 3) +
+          Ux_c(i, j, k, 1) =
+              Up_c(i, j, k, 1) +
               dt4 / 12.0 *
                   (lh_c(i, j, k, 1) +
                    Jacobian_c(i, j, k) * force_tt_c(i, j, k, 1)) /
                   rho_c(i, j, k);
-          u_c(i, j, k, 2, 4) =
-              u_c(i, j, k, 2, 3) +
+          Ux_c(i, j, k, 2) =
+              Up_c(i, j, k, 2) +
               dt4 / 12.0 *
                   (lh_c(i, j, k, 2) +
                    Jacobian_c(i, j, k) * force_tt_c(i, j, k, 2)) /
                   rho_c(i, j, k);
-          u_c(i, j, k, 3, 4) =
-              u_c(i, j, k, 3, 3) +
+          Ux_c(i, j, k, 3) =
+              Up_c(i, j, k, 3) +
               dt4 / 12.0 *
                   (lh_c(i, j, k, 3) +
                    Jacobian_c(i, j, k) * force_tt_c(i, j, k, 3)) /
@@ -775,7 +780,7 @@ int main(int argc, char *argv[]) {
     // Update ghost point values outside the left and right boundaries
     // update_gp(Xgrid_c_1.get(),Xgrid_c_2.get(),Xgrid_c_3.get(),u_c.get(),Xgrid_f_1.get(),Xgrid_f_2.get(),Xgrid_f_3.get(),u_f.get(),&tv,4);
 
-    update_gp(Xgrid_c_1, Xgrid_c_2, Xgrid_c_3, u_c, Xgrid_f_1, Xgrid_f_2,
+    update_gp(Xgrid_c_1, Xgrid_c_2, Xgrid_c_3, Ux_c, Xgrid_f_1, Xgrid_f_2,
               Xgrid_f_3, u_f, tv, a, 4);
     // Update ghost point values for the traction boundary
     // update_traction(traction_rhs,traction_data.get(),Xgrid_f_1.get(),Xgrid_f_2.get(),Xgrid_f_3.get(),
@@ -784,11 +789,11 @@ int main(int argc, char *argv[]) {
     update_traction(traction_data, Xgrid_f_1, Xgrid_f_2, Xgrid_f_3, u_f, mu_f,
                     lambda_f, Jacobian_f, XI13_f, XI23_f, XI33_f, Sb, tv, a, 4);
     // injection at the interface
-    injection(u_f, u_c, P, a, 4);
+    injection(u_f, Ux_c, P, a, 4);
 
     // Update Dirichlet boundary condition
     // update_dirichlet_bc(Xgrid_c_1.get(),Xgrid_c_2.get(),Xgrid_c_3.get(),u_c.get(),&tv,4);
-    update_dirichlet_bc(Xgrid_c_1, Xgrid_c_2, Xgrid_c_3, u_c, tv, a, 4);
+    update_dirichlet_bc(Xgrid_c_1, Xgrid_c_2, Xgrid_c_3, Ux_c, tv, a, 4);
 
     // Update solutions
     for (int l = 1; l <= dim; l++)
@@ -803,8 +808,8 @@ int main(int argc, char *argv[]) {
       for (int k = 1 - nrg; k <= n3_c + nrg; k++)
         for (int j = 1 - nrg; j <= n2_c + nrg; j++)
           for (int i = 1 - nrg; i <= n1_c + nrg; i++) {
-            u_c(i, j, k, l, 1) = u_c(i, j, k, l, 2);
-            u_c(i, j, k, l, 2) = u_c(i, j, k, l, 4);
+            Um_c(i, j, k, l) = U_c(i, j, k, l);
+            U_c(i, j, k, l) = Ux_c(i, j, k, l);
           }
 
   }  // TIME STEP LOOP
@@ -836,17 +841,17 @@ int main(int argc, char *argv[]) {
     for (int i = 1; i <= n2_c; i++) {
       for (int j = 1; j <= n1_c; j++) {
         exact_solution(Xgrid_c_1(j), Xgrid_c_2(i), Xgrid_c_3(j, i, k), tv,
-                       u_c(j, i, k, 1, 3), u_c(j, i, k, 2, 3),
-                       u_c(j, i, k, 3, 3), flag);
+                       Up_c(j, i, k, 1), Up_c(j, i, k, 2),
+                       Up_c(j, i, k, 3), flag);
         err_c(j, i, k) = std::max(
-            std::fabs(u_c(j, i, k, 1, 4) - u_c(j, i, k, 1, 3)),
-            std::max(std::fabs(u_c(j, i, k, 2, 4) - u_c(j, i, k, 2, 3)),
-                     std::fabs(u_c(j, i, k, 3, 4) - u_c(j, i, k, 3, 3))));
+            std::fabs(Ux_c(j, i, k, 1) - Up_c(j, i, k, 1)),
+            std::max(std::fabs(Ux_c(j, i, k, 2) - Up_c(j, i, k, 2)),
+                     std::fabs(Ux_c(j, i, k, 3) - Up_c(j, i, k, 3))));
         l2_err =
             l2_err + h1_c * h2_c * h3_c *
-                         (pow((u_c(j, i, k, 1, 4) - u_c(j, i, k, 1, 3)), 2) +
-                          pow((u_c(j, i, k, 2, 4) - u_c(j, i, k, 2, 3)), 2) +
-                          pow((u_c(j, i, k, 3, 4) - u_c(j, i, k, 3, 3)), 2));
+                         (pow((Ux_c(j, i, k, 1) - Up_c(j, i, k, 1)), 2) +
+                          pow((Ux_c(j, i, k, 2) - Up_c(j, i, k, 2)), 2) +
+                          pow((Ux_c(j, i, k, 3) - Up_c(j, i, k, 3)), 2));
       }
     }
   }

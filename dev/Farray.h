@@ -149,19 +149,23 @@ class Farray {
   }
 
   inline float_sw4& operator()(int i, int j) {
+    if (dims!=2) { std::cerr<<"ERROR OPERATOR2 "<<dims<<"\n";abort();}
     return data[base + i + j * len[0]];
   }
 
   inline float_sw4& operator()(int i, int j, int k) {
+    if (dims!=3) { std::cerr<<"ERROR OPERATOR3 "<<dims<<"\n";abort();}
     return data[base + i + j * len[0] + k * len[0] * len[1]];
   }
 
   inline float_sw4& operator()(int i, int j, int k, int l) {
+    if (dims!=4) { std::cerr<<"ERROR OPERATOR4 "<<dims<<"\n";abort();}
     return data[base + i + j * len[0] + k * len[0] * len[1] +
                 l * len[0] * len[1] * len[2]];
   }
 
   inline float_sw4& operator()(int i, int j, int k, int l, int m) {
+    if (dims!=5) { std::cerr<<"ERROR OPERATOR5 "<<dims<<"\n";abort();}
     return data[base + i + j * len[0] + k * len[0] * len[1] +
                 l * len[0] * len[1] * len[2] +
                 m * len[0] * len[1] * len[2] * len[3]];
