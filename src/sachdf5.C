@@ -298,8 +298,6 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
       cout << "ERROR: renaming SAC HDF5 file to " << bak.c_str() <<  endl;
   }
 
-  // Disable HDF5 file locking so we can have multiple writer to open and write different datasets of the same file
-  setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
   fid = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
   if (fid < 0) {
     printf("Error: H5Fcreate failed\n");
