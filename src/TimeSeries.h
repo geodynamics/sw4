@@ -78,7 +78,8 @@ bool myPoint(){ return m_myPoint; }
 receiverMode getMode(){ return m_mode; }
 
 int getUseHDF5(){ return m_hdf5Format; }
-void disableHDF5(){m_hdf5Format=false;};
+void setHDF5Format(bool flag){m_hdf5Format = flag;};
+void setUSGSFormat(bool flag){m_usgsFormat = flag;};
 
 float_sw4 getX() const {return mX;}
 float_sw4 getY() const {return mY;}
@@ -139,20 +140,19 @@ int m_k0;
 int m_grid0;
 
 #ifdef USE_HDF5
-bool  m_isInverse;
-bool  isInverse() {return m_isInverse;};
 int   allocFid();
 int   setFidPtr(hid_t *fid);
 hid_t *getFidPtr();
 int   closeHDF5File();
-
-void write_hdf5_format( int npts, hid_t loc, float *y, float btime, float dt, char *var,
+void  readSACHDF5( EW *ew, string FileName, bool ignore_utc );
+hid_t openHDF5File(std::string suffix);
+void  write_hdf5_format( int npts, hid_t loc, float *y, float btime, float dt, char *var,
 		       float cmpinc, float cmpaz, bool makeCopy=false, bool isLast=false);
-void readSACHDF5( EW *ew, string FileName, bool ignore_utc );
 #endif
 
 private:   
 TimeSeries();
+
 void write_usgs_format( string a_fileName);
 void write_sac_format( int npts, char *ofile, float *y, float btime, float dt, char *var,
 		       float cmpinc, float cmpaz, bool makeCopy=false);
@@ -168,6 +168,7 @@ void readSACdata( const char* fname, int npts, float_sw4* u );
 void convertjday( int jday, int year, int& day, int& month );   
 void getwgh( float_sw4 ai, float_sw4 wgh[6], float_sw4 dwgh[6], float_sw4 ddwgh[6] );
 void getwgh5( float_sw4 ai, float_sw4 wgh[6], float_sw4 dwgh[6], float_sw4 ddwgh[6] );
+
 
 float_sw4 compute_maxshift( TimeSeries& observed );
 void shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &func,
@@ -258,6 +259,7 @@ float_sw4 m_scalefactor;
    bool m_isMetaWritten;
    bool m_isIncAzWritten;
    int  m_nptsWritten;
+   std::string m_fidName;
 #endif
 };
 

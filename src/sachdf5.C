@@ -465,62 +465,6 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   return 1;
 }
 
-int openHDF5file(vector<TimeSeries*> & TimeSeries)
-{
-  hid_t fapl, *fid_ptr;
-  int myRank;
-
-  if (TimeSeries.size() == 0) 
-      return 0;
-
-  /* // Do not open file for inverse */
-  /* if (TimeSeries[0]->isInverse()) */ 
-  /*     return 0; */
-
-  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-
-  fapl = H5Pcreate(H5P_FILE_ACCESS);
-  H5Pset_fapl_sec2(fapl);
-
-  /* H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL); */
-  /* H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL); */
-  /* H5Pset_coll_metadata_write(fapl, false); */
-  /* H5Pset_all_coll_metadata_ops(fapl, false); */
-
-  std::string path = TimeSeries[0]->getPath();
-  std::string name = TimeSeries[0]->gethdf5FileName();
-  std::string filename;
-
-  // Build the file name
-  if( path != "." )
-    filename = path;
-
-  filename.append(name);
-  if (name.find(".hdf5") == string::npos && name.find(".h5") == string::npos) 
-    filename.append(".hdf5");
- 
-  fid_ptr = TimeSeries[0]->getFidPtr();
-  if (fid_ptr == NULL) {
-    printf("%s fid_ptr is NULL, cannot open file [%s]\n", __func__, filename.c_str());
-    return -1;
-  }
-
-  *fid_ptr = H5Fopen(filename.c_str(),  H5F_ACC_RDWR, fapl);
-  if (*fid_ptr < 0) {
-    printf("%s Error opening file [%s]\n", __func__, filename.c_str());
-    return -1;
-  }
-
-  /* if (myRank == 0) { */
-  /*     printf("Rank %d: HDF5 file [%s] successfully opened: %ld\n", myRank, filename.c_str(), *fid_ptr); */
-  /*     fflush(stdout); */
-  /* } */
-
-  H5Pclose(fapl);
-
-  return 0;
-}
-
 int readAttrStr(hid_t loc, const char *name, char* str)
 {
     herr_t ret;

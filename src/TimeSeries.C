@@ -124,7 +124,6 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_isMetaWritten(false),
   m_isIncAzWritten(false),
   m_nptsWritten(0),
-  m_isInverse(false),
 #endif
   m_event(event)
 {
@@ -143,6 +142,14 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
    int iwrite = m_myPoint ? 1 : 0;
    int counter;
    MPI_Allreduce( &iwrite, &counter, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+
+   /* int myRank; */
+   /* MPI_Comm_rank(MPI_COMM_WORLD, &myRank); */
+   /* if (counter != 1 && m_myPoint == 1) { */
+   /*     cout << "Rank " << myRank << "has this point mX=" << mX << " mY=" << mY << " mZ=" << mZ << endl; */
+   /* } */
+   /* if (m_myPoint == 1) */ 
+   /*     cout << "Rank " << myRank << " has station mX=" << mX << " mY=" << mY << " mZ=" << mZ << endl; */
    
    a_ew->get_utc( m_utc, m_event );
    //   int size;
@@ -460,11 +467,23 @@ void TimeSeries::writeFile( string suffix )
 
 // get the epicenter from EW object (note that the epicenter is not always known when this object is created)
   m_ew->get_epicenter( m_epi_lat, m_epi_lon, m_epi_depth, m_epi_time_offset, m_event );
+ 
+  stringstream filePrefix;
+
+//building the file name...
+  if( m_path != "." )
+    filePrefix << m_path;
+  if( suffix == "" )
+     filePrefix << m_fileName << "." ;
+  else
+     filePrefix << m_fileName << suffix.c_str() << "." ;
+  
+  stringstream ux, uy, uz, uxy, uxz, uyz, uyx, uzx, uzy;
   
 #ifdef USE_HDF5
   // Open the output HDF5 file if not already opened
-  std::string h5fname;
-  hid_t *fid_ptr, grp = 0; 
+  std::string h5fname, fidName;
+  hid_t fid, grp = 0; 
   float stlalodp[3], stxyz[3], origintime;
   int myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
@@ -476,13 +495,13 @@ void TimeSeries::writeFile( string suffix )
     /*   printf("Writing station timeseries data\n", myRank, m_staName.c_str()); */
     /*   fflush(stdout); */
     /* } */
+    fid = openHDF5File(suffix);
 
-    fid_ptr = getFidPtr();
-    if (fid_ptr == NULL) 
-      printf("%s fid_ptr is NULL, cannot open group [%s]\n", __func__, m_staName.c_str());
+    if (fid <= 0) 
+      printf("%s fid is invalid, cannot open group [%s]\n", __func__, m_staName.c_str());
     else 
     {
-      grp = H5Gopen(*fid_ptr, const_cast<char*>(m_staName.c_str()), H5P_DEFAULT);
+      grp = H5Gopen(fid, const_cast<char*>(m_staName.c_str()), H5P_DEFAULT);
       if (grp < 0) 
         printf("TimeSeries::writeFile Error opening group [%s]\n", m_staName.c_str());
 
@@ -499,7 +518,7 @@ void TimeSeries::writeFile( string suffix )
         openWriteAttr(grp, "STX,STY,STZ", H5T_NATIVE_FLOAT, stxyz);
 
         origintime = float(m_epi_time_offset);
-        openWriteAttr(*fid_ptr, "ORIGINTIME", H5T_NATIVE_FLOAT, &origintime);
+        openWriteAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, &origintime);
 
         m_isMetaWritten = true;
       }
@@ -507,19 +526,7 @@ void TimeSeries::writeFile( string suffix )
   }
 
 #endif
-
-  stringstream filePrefix;
-
-//building the file name...
-  if( m_path != "." )
-    filePrefix << m_path;
-  if( suffix == "" )
-     filePrefix << m_fileName << "." ;
-  else
-     filePrefix << m_fileName << suffix.c_str() << "." ;
-  
-  stringstream ux, uy, uz, uxy, uxz, uyz, uyx, uzx, uzy;
-  
+ 
 // Write out displacement components (ux, uy, uz)
 
   if( m_sacFormat || m_hdf5Format)
@@ -3486,6 +3493,7 @@ int TimeSeries::closeHDF5File()
     /* fflush(stdout); */
     H5Fclose(*m_fid_ptr);
     *m_fid_ptr = 0;
+    m_fidName = "";
     /* printf("HDf5 file closed\n"); */
     /* fflush(stdout); */
   }
@@ -3493,5 +3501,59 @@ int TimeSeries::closeHDF5File()
   return 0;
 }
 
+hid_t TimeSeries::openHDF5File(std::string suffix)
+{
+  hid_t fapl;
+
+  std::string filename;
+
+  // Build the file name
+  if( m_path != "." )
+    filename = m_path;
+
+  filename.append(m_hdf5Name);
+  filename.append(suffix);
+
+  if (m_hdf5Name.find(".hdf5") == string::npos && m_hdf5Name.find(".h5") == string::npos) 
+    filename.append(".hdf5");
+
+  if (filename.compare(m_fidName) == 0) {
+    // If file is alread open, no need to open it again
+    return *m_fid_ptr;
+  }
+  else {
+    // Close file and open a new one
+    closeHDF5File();
+  }
+ 
+  fapl = H5Pcreate(H5P_FILE_ACCESS);
+  H5Pset_fapl_sec2(fapl);
+
+  /* H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL); */
+  /* H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL); */
+  /* H5Pset_coll_metadata_write(fapl, false); */
+  /* H5Pset_all_coll_metadata_ops(fapl, false); */
+
+
+  *m_fid_ptr = H5Fopen(filename.c_str(),  H5F_ACC_RDWR, fapl);
+  if (*m_fid_ptr < 0) {
+    printf("%s Error opening file [%s]\n", __func__, filename.c_str());
+    H5Pclose(fapl);
+    return 0;
+  }
+
+  m_fidName = filename;
+
+  /* int myRank; */
+  /* MPI_Comm_rank(MPI_COMM_WORLD, &myRank); */
+  /* if (myRank == 0) { */
+  /*     printf("Rank %d: HDF5 file [%s] successfully opened: %ld\n", myRank, filename.c_str(), *m_fid_ptr); */
+  /*     fflush(stdout); */
+  /* } */
+
+  H5Pclose(fapl);
+
+  return *m_fid_ptr;
+}
 
 #endif

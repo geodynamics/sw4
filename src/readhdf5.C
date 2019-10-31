@@ -183,44 +183,45 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       TimeSeries *ts_ptr = new TimeSeries(a_ew, grp_name, grp_name, op_data->mode, false, false, true, op_data->outFileName, x, y, z, 
   					topodepth, op_data->writeEvery, op_data->downSample, !nsew, op_data->event );
 
-      /* if (op_data->is_obs) */ 
-      /*     ts_ptr->m_isInverse = true; */
+       if((*op_data->GlobalTimeSeries)[op_data->event].size() == 0) 
+         ts_ptr->allocFid();
+       else 
+         ts_ptr->setFidPtr((*op_data->GlobalTimeSeries)[op_data->event][0]->getFidPtr());
+     
+      if (ts_ptr->myPoint()) {
+        /* cout << "Rank " << op_data->myRank << "has this point x=" << x << " y=" << y << " z=" << z << endl; */
+
+        // Read data
+        bool ignore_utc = false;
+        ts_ptr->readSACHDF5(op_data->ew, op_data->inFileName, ignore_utc);
+
+        // Only for observation data
+        if (op_data->is_obs) {
+          // Set reference UTC to simulation UTC, for easier plotting.
+          ts_ptr->set_utc_to_simulation_utc();
       
-      if((*op_data->GlobalTimeSeries)[op_data->event].size() == 0) 
-        ts_ptr->allocFid();
-      else 
-        ts_ptr->setFidPtr((*op_data->GlobalTimeSeries)[op_data->event][0]->getFidPtr());
-
-      // Read data
-      bool ignore_utc = false;
-      ts_ptr->readSACHDF5(op_data->ew, op_data->inFileName, ignore_utc);
-
-      // Only for observation data
-      if (op_data->is_obs) {
-        // Set reference UTC to simulation UTC, for easier plotting.
-        ts_ptr->set_utc_to_simulation_utc();
-  
-        // Set window, in simulation time
-        if( op_data->winlset || op_data->winrset )
-        {
-           if( op_data->winlset && !op_data->winrset )
-              op_data->winr = 1e38;
-           if( !op_data->winlset && op_data->winrset )
-              op_data->winl = -1;
-           ts_ptr->set_window( op_data->winl, op_data->winr );
-        }
-  
-        // Exclude some components
-        if( !op_data->usex || !op_data->usey || !op_data->usez )
-           ts_ptr->exclude_component( op_data->usex, op_data->usey, op_data->usez );
-  
-        // Add extra shift from command line, use with care.
-        if( op_data->t0 != 0 )
-           ts_ptr->add_shift( op_data->t0 );
-  
-        // Set scale factor if given
-        if( op_data->scalefactor_set )
-           ts_ptr->set_scalefactor( op_data->scalefactor );
+          // Set window, in simulation time
+          if( op_data->winlset || op_data->winrset )
+          {
+             if( op_data->winlset && !op_data->winrset )
+                op_data->winr = 1e38;
+             if( !op_data->winlset && op_data->winrset )
+                op_data->winl = -1;
+             ts_ptr->set_window( op_data->winl, op_data->winr );
+          }
+      
+          // Exclude some components
+          if( !op_data->usex || !op_data->usey || !op_data->usez )
+             ts_ptr->exclude_component( op_data->usex, op_data->usey, op_data->usez );
+      
+          // Add extra shift from command line, use with care.
+          if( op_data->t0 != 0 )
+             ts_ptr->add_shift( op_data->t0 );
+      
+          // Set scale factor if given
+          if( op_data->scalefactor_set )
+             ts_ptr->set_scalefactor( op_data->scalefactor );
+          }
       }
   
       // include the receiver in the global list

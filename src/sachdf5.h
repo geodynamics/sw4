@@ -43,8 +43,6 @@
 
 #include "hdf5.h"
 
-
-int openHDF5file(vector<TimeSeries*> & TimeSeries);
 int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, float_sw4 delta, string suffix);
 int writeTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int npts, void *data);
 

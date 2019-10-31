@@ -1159,7 +1159,8 @@ int main(int argc, char **argv)
 		 string newname = "_out";
 		 TimeSeries *elem = GlobalObservations[e][m]->copy( &simulation, newname, true );
                  // Disable writing out SAC HDF5
-                 elem->disableHDF5();
+                 elem->setUSGSFormat(true);
+                 elem->setHDF5Format(false);
 		 GlobalTimeSeries[e].push_back(elem);
 	      }
 	   }
