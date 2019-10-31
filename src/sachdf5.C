@@ -280,10 +280,13 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
 
   filename.append(name);
   filename.append(suffix);
+
+  if (filename.find(".hdf5") == string::npos && filename.find(".h5") == string::npos) 
+    filename.append(".hdf5");
  
   if (is_debug) {
-      printf("Start createTimeSeriesHDF5File [%s], %d steps\n", filename.c_str(), totalSteps);
-      fflush(stdout);
+    printf("Start create time-history HDF5 file [%s], %d steps\n", filename.c_str(), totalSteps);
+    fflush(stdout);
   }
 
   if( access( filename.c_str(), F_OK ) != -1) {
@@ -295,10 +298,12 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
       cout << "ERROR: renaming SAC HDF5 file to " << bak.c_str() <<  endl;
   }
 
+  // Disable HDF5 file locking so we can have multiple writer to open and write different datasets of the same file
+  setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
   fid = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
   if (fid < 0) {
-     printf("Error: H5Fcreate failed\n");
-     return -1;
+    printf("Error: H5Fcreate failed\n");
+    return -1;
   }
 
   attr_space1 = H5Screate_simple(1, &dims1, NULL);

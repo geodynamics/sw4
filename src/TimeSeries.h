@@ -128,6 +128,8 @@ std::string getStationName(){return m_staName;}
 std::string getFileName(){return m_fileName;}
 std::string gethdf5FileName(){return m_hdf5Name;}
 std::string getPath(){return m_path;}
+float_sw4 getDt() {return m_dt;}
+float_sw4 getLastTimeStep() {return mLastTimeStep;}
 
 void set_scalefactor( float_sw4 value );
 bool get_compute_scalefactor() const;

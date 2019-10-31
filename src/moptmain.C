@@ -20,6 +20,9 @@
 #define SQR(x) ((x)*(x))
 #endif
 
+#ifdef USE_HDF5
+#include <sachdf5.h>
+#endif
 
 void usage(string thereason)
 {
@@ -1156,11 +1159,7 @@ int main(int argc, char **argv)
 //  the simulation time step and start time into GlobalTimeSeries.
 	      for( int m = 0; m < GlobalObservations[e].size(); m++ )
 	      {
-		 string newname = "_out";
-		 TimeSeries *elem = GlobalObservations[e][m]->copy( &simulation, newname, true );
-                 // Disable writing out SAC HDF5
-                 elem->setUSGSFormat(true);
-                 elem->setHDF5Format(false);
+		 TimeSeries *elem = GlobalObservations[e][m]->copy( &simulation, "_out", true );
 		 GlobalTimeSeries[e].push_back(elem);
 	      }
 	   }
@@ -1344,9 +1343,19 @@ int main(int argc, char **argv)
               double f;
 	      compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 			 GlobalObservations, f, mopt );
-	      for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
+	      for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ ) 
+              {
+#ifdef USE_HDF5
+                 // Tang: need to create a HDF5 file before writing
+                 if (GlobalTimeSeries[e].size() > 0 && GlobalTimeSeries[e][0]->getUseHDF5()) {
+                   if(myRank == 0) 
+                     createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][0]->getLastTimeStep(), GlobalTimeSeries[e][0]->getDt(), "");
+                   MPI_Barrier(MPI_COMM_WORLD);
+                 }
+#endif
 		 for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
 		    GlobalTimeSeries[e][m]->writeFile( );
+              }
 	   }
 	   else if( mopt->m_opttest == 7 )
 	   {

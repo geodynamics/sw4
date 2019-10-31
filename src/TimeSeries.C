@@ -2187,10 +2187,14 @@ float_sw4 TimeSeries::misfit2( TimeSeries& observed, TimeSeries* diff )
 //-----------------------------------------------------------------------
 TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
 {
-   if( addname )
+   string hdf5name = m_hdf5Name;
+   if( addname ) 
+   {
+      hdf5name = m_hdf5Name + filename; 
       filename = m_fileName + filename;
+   }
 
-   TimeSeries* retval = new TimeSeries( a_ew, filename, m_staName, m_mode, m_sacFormat, m_usgsFormat, m_hdf5Format, m_hdf5Name, 
+   TimeSeries* retval = new TimeSeries( a_ew, filename, m_staName, m_mode, m_sacFormat, m_usgsFormat, m_hdf5Format, hdf5name, 
 					mX, mY, mZ, m_zRelativeToTopography, mWriteEvery, mDownSample, m_xyzcomponent, m_event );
    retval->m_t0    = m_t0;
    retval->m_dt    = m_dt;
