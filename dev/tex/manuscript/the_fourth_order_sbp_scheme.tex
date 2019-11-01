@@ -6,29 +6,30 @@ and
 \[ {\bf i}^f = (i_1^f,i_2^f,i_3^f), \ {\bf i}^f_{\Gamma} = (i_1^f,i_2^f,1), \ {\bf i}^f_{\Omega_t^f} = (i_1^f,i_2^f,n_3^f).\]
 Then in coarse domain $\Omega_c$, we have 
 \begin{multline}\label{coarse_scheme}
-\rho_{{\bf i}^c}^c ({\bf u}_{tt}^c)_{{\bf i}^c} = \frac{1}{J_{{\bf i}^c}^c}\Big[G_1^c(N_{11}^c){\bf u}_{{\bf i}^c}^c+G_2^c(N_{22}^c){\bf u}_{{\bf i}^c}^c+\uline{\wt{G}}_3^c(N_{33}^c){\bf u}_{{\bf i}^c}^c\\
+\rho_{{\bf i}^c}^c ({\bf u}_{tt}^c)_{{\bf i}^c} = \frac{1}{J_{{\bf i}^c}^c}\Big[G_1^c(N_{11}^c){\bf u}_{{\bf i}^c}^c+G_2^c(N_{22}^c){\bf u}_{{\bf i}^c}^c+\uline{\wt{G}}_3^c(N_{33}^c){\bf u}_{{\bf i}^c}^c
 +D_1^c(N_{12}^cD_2^c{\bf u}_{{\bf i}^c}^c)+D_1^c(N_{13}^cD_3^c{\bf u}_{{\bf i}^c}^c)
-+D_2^c(N_{21}^cD_1^c{\bf u}_{{\bf i}^c}^c)+D_2^c(N_{23}^cD_3^c{\bf u}_{{\bf i}^c}^c)\\
++\\D_2^c(N_{21}^cD_1^c{\bf u}_{{\bf i}^c}^c)+D_2^c(N_{23}^cD_3^c{\bf u}_{{\bf i}^c}^c)
 +D_3^c(N_{31}^cD_1^c{\bf u}_{{\bf i}^c}^c)
 +D_3^c(N_{32}^cD_2^c{\bf u}_{{\bf i}^c}^c)\Big] := \uline{\wt{L}}_{h^c} {\bf{u}}^c_{{\bf i}^c},
 \end{multline}
 For the fine domian $\Omega_f$, we impose
 \begin{multline}\label{fine_scheme_2}
 \rho_{{\bf i}^f}^f ({\bf u}_{tt}^f)_{{\bf i}^f} =
-\frac{1}{J_{{\bf i}^f}^f}\Big[G_1^f(N_{11}^f){\bf u}_{{\bf i}^f}^f+G_2^f(N_{22}^f){\bf u}_{{\bf i}^f}^f+\wt{G}_3^f(N_{33}^f){\bf u}_{{\bf i}^f}^f\\
+\frac{1}{J_{{\bf i}^f}^f}\Big[G_1^f(N_{11}^f){\bf u}_{{\bf i}^f}^f+G_2^f(N_{22}^f){\bf u}_{{\bf i}^f}^f+\wt{G}_3^f(N_{33}^f){\bf u}_{{\bf i}^f}^f
 +D_1^f(N_{12}^fD_2^f{\bf u}_{{\bf i}^f}^f)+D_1^f(N_{13}^fD_3^f{\bf u}_{{\bf i}^f}^f)
-+D_2^f(N_{21}^fD_1^f{\bf u}_{{\bf i}^f}^f)+D_2^f(N_{23}^fD_3^f{\bf u}_{{\bf i}^f}^f)\\
++\\D_2^f(N_{21}^fD_1^f{\bf u}_{{\bf i}^f}^f)+D_2^f(N_{23}^fD_3^f{\bf u}_{{\bf i}^f}^f)
 +D_3^f(N_{31}^fD_1^f{\bf u}_{{\bf i}^f}^f)+D_3^f(N_{32}^fD_2^f{\bf u}_{{\bf i}^f}^f)\Big] 
 := \wt{L}_{h^f}{\bf{u}}^f_{{\bf i}^f},
 \end{multline}
 with $ i_3^f = 2,\cdots,n_3^f$ and
 \begin{multline}\label{fine_scheme_1}
 \rho_{{\bf i}^f_{\Gamma}}^f ({\bf u}_{tt}^f)_{{\bf i}^f_{\Gamma}} = \frac{1}{J_{{\bf i}^f_{\Gamma}}^f}\Big[G_1^f(N_{11}^f){\bf u}_{{\bf i}_\Gamma^f}^f+G_2^f(N_{22}^f){\bf u}_{{\bf i}_\Gamma^f}^f
-+G_3^f(N_{33}^f){\bf u}_{{\bf i}^f_{\Gamma}}^f\\
++G_3^f(N_{33}^f){\bf u}_{{\bf i}^f_{\Gamma}}^f
 +D_1^f(N_{12}^fD_2^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)+D_1^f(N_{13}^fD_3^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)
-+D_2^f(N_{21}^fD_1^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)+D_2^f(N_{23}^fD_3^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)\\
++\\D_2^f(N_{21}^fD_1^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)+
+D_2^f(N_{23}^fD_3^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)
 +D_3^f(N_{31}^fD_1^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)
-+D_3^f(N_{32}^fD_2^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)+{\bm \eta}_{i^f,j^f}\Big]\\
++D_3^f(N_{32}^fD_2^f{\bf u}_{{\bf i}^f_{\Gamma}}^f)+{\bm \eta}_{i^f,j^f}\Big]
 := L_{h^f}{\bf u}^f_{{\bf i}^f_{\Gamma}}+{\bm \eta}_{i^f,j^f}/J^f_{{\bf i}^f_{\Gamma}},
 \end{multline}
 where
@@ -45,18 +46,18 @@ The stencil in the interpolation operator $\mathcal{P}$ can be easily computed b
 \end{array}\right.
 \end{align}
 where $\mathcal{B}^j, j = 1,2$ are the fourth order interpolation operators in $1$D for the direction $j$.  
-\begin{figure}[H]
+\begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.45\textwidth]{interpolation1.eps}
 	\includegraphics[width=0.45\textwidth]{interpolation2.eps}
-	\caption{\scriptsize{From left to right, the sketch of interpolation stencil for $(i_1^f,i_2^f) =$ (odd, odd) and $(i_1^f,i_2^f) =$ (even, odd) respectively. The number at the right-top corner are the coefficients of the corresponding coarse grids.}}\label{interpolation_1_2}
+	\caption{From left to right, the sketch of interpolation stencil for $(i_1^f,i_2^f) =$ (odd, odd) and $(i_1^f,i_2^f) =$ (even, odd) respectively. The number at the right-top corner are the coefficients of the corresponding coarse grids.}\label{interpolation_1_2}
 \end{figure}
 Figure \ref{interpolation_1_2} illustrates the interpolation coefficients when $(i_1^f,i_2^f) = $ (odd, odd) and  $(i_1^f,i_2^f) = $ (even, odd) respectively. While Figure \ref{interpolation_3_4} gives the interpolation coefficients when $(i_1^f,i_2^f) = $ (odd, even) and  $(i_1^f,i_2^f) = $ (even, even) respectively.
-\begin{figure}[H]
+\begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.45\textwidth]{interpolation3.eps}
 	\includegraphics[width=0.45\textwidth]{interpolation4.eps}
-	\caption{\scriptsize{From left to right, the sketch of interpolation stencil for $(i_1^f,i_2^f) =$ (odd, even) and $(i_1^f,i_2^f) =$ (even, even) respectively. The number at the right-top corner are the coefficients of the corresponding coarse grids.}}\label{interpolation_3_4}
+	\caption{From left to right, the sketch of interpolation stencil for $(i_1^f,i_2^f) =$ (odd, even) and $(i_1^f,i_2^f) =$ (even, even) respectively. The number at the right-top corner are the coefficients of the corresponding coarse grids.}\label{interpolation_3_4}
 \end{figure}
 
 Furthermore, the compatibility condition of the intrpolation operator $\mathcal{P}$ and restriction operator $\mathcal{R}$, $\mathcal{P} = 4\mathcal{R}^T$ for $h_1^c = 2h_1^f$ in $2$D, determines the corresponding restriction operator $\mathcal{R}$ with
@@ -65,10 +66,10 @@ Furthermore, the compatibility condition of the intrpolation operator $\mathcal{
 \end{equation}
 where $\mathcal{A}^j, j = 1,2$ are the fourth order restriction operators in $1$D for the direction $j$. Figure \ref{extrapolation} shows the restriction coefficients for the coarse grids $(i_1^c,i_2^c)$.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 	\centering
-	\includegraphics[width=0.8\textwidth]{extrapolation.eps}
-	\caption{\scriptsize{The sketch of extrapolation stencil in $2$D. The number at the right-top corner are the coefficients of the corresponding fine grids.}}\label{extrapolation}
+	\includegraphics[width=0.8\textwidth]{restriction1.eps}
+	\caption{The sketch of restriction operator in $2$D. The number at the right-top corner are the coefficients of the corresponding fine grids.}\label{extrapolation}
 \end{figure}
 For the simplicity of analysis, we introduce a general notation for the schemes (\ref{fine_scheme_2}) and (\ref{fine_scheme_1}) in the fine domain $\Omega_f$,
 \begin{align}\label{fine_scheme}

@@ -18,10 +18,10 @@ for fine domain $\Omega^f$. Multiplying (\ref{coarse_scheme}) by $h_1^ch_2^ch_3^
 \end{equation}
 multiplying (\ref{fine_scheme_1}) by $h_1^fh_2^fh_3^f\omega_{i_1^f}^{(1)}\omega_{i_2^f}^{(2)}\omega_{i_3^f}^{(3)}J_{{\bf i}^f}^f$ and summing over all grids, we obtain
 \begin{multline}\label{fine_simple}
-({\bf u}_t^f, \rho^f{\bf u}_{tt}^f)_{h^f} = -S_{h^f}({\bf u}_t^f,{\bf u}^f) + B_{h^f}({\bf u}_t^f,{\bf u}^f) \\
+({\bf u}_t^f, \rho^f{\bf u}_{tt}^f)_{h^f} = -S_{h^f}({\bf u}_t^f,{\bf u}^f) + B_{h^f}({\bf u}_t^f,{\bf u}^f) 
 +h_3^f\omega_1^{(3)}h_1^fh_2^f\sum_{i_1^f=1}^{n_1^f}\sum_{i_2^f=1}^{n_2^f}\omega_{i_1^f}^{(1)}\omega_{i_2^f}^{(2)}({\bf u}_t^f)_{{\bf i}^f_{\Gamma}}^{T}{\bm \eta}_{i_1^f,i_2^f},
 \end{multline}
-where  $S_{h^c}$ and $S_{h^f}$ can be found in Appendix ?, and 
+where  both $S_{h^c}$ and $S_{h^f}$ are symmetric and positive definite bilinear forms, and 
 \begin{equation}\label{boundary_f}
 B_{h^f} ({\bf u}_t^f,{\bf u}^f) = -h_1^fh_2^f\sum_{i_1^f = 1}^{n_1^f}\sum_{i_2^f=1}^{n_2^f}\omega_{i_1^f}^{(1)}\omega_{i_2^f}^{(2)}({\bf u}_t^f)^T_{{\bf i}^f_{\Gamma}}\big(N_{31}^fD_1^f {\bf u}^f_{{\bf i}^f_{\Gamma}}+ N_{32}^fD_2^f{\bf u}^f_{{\bf i}^f_{\Gamma}}+N_{33}^fD_3^f{\bf u}^f_{{\bf i}^f_{\Gamma}}\big),
 \end{equation}
@@ -35,13 +35,13 @@ provided periodic boundary conditions in the directions $1$ and $2$, a homogeneo
 2B_{h^f}({\bf u}_t^f,{\bf u}^f) + 2B_{h^c}({\bf u}_t^c,{\bf u}^c) + 2h_3^f\omega_1^{(3)}h_1^f h_2^f\sum_{i_1^f=1}^{n_1^f}\sum_{i_2^f=1}^{n_2^f}\omega_{i_1^f}^{(1)}\omega_{i_2^f}^{(2)}({\bf u}_t^f)^T_{{\bf i}^f_{\Gamma}}{\bm \eta}_{i_1^f,i_2^f},
 \end{multline}
 plugging (\ref{boundary_f}) and (\ref{bounary_c}) into (\ref{semi_energy_1}) and combining the definition of the scalar product on the interface $\Gamma$ (\ref{scalar_product_discrete_interface_c}) and (\ref{scalar_product_discrete_interface_f}), we have
-\begin{multline}\label{semi_energy_2}
-\frac{d}{dt}\left[({\bf u}_t^f,\rho^f {\bf u}_t^f)_{h^f} + S_{h^f}({\bf u}^f,{\bf u}^f_t) + ({\bf u}_t^c,\rho^c {\bf u}_t^c)_{h^c} + S_{h^c}({\bf u}^c,{\bf u}^c_t) \right]  = \\
-2\left(-{\bf u}_t^f,\frac{\hat{A}_3^f{\bf u}^f}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} + 2\left({\bf u}_t^c,\frac{\hat{A}_3^c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma} + 2\left({\bf u}_t^f,\frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} = \\
-2\left({\bf u}_t^f,-\frac{\hat{A}_3^f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} +  2\left({\bf u}_t^c,\frac{\hat{A}_3^c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma} = \\
-2\left(\mathcal{P}{\bf u}^c_t,-\frac{\hat{A}_3^f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} + 2\left({\bf u}_t^c,\frac{\hat{A}_3^c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma} = \\
-2\left({\bf u}_t^c,\mathcal{R}\Big(-\frac{\hat{A}_3^f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\Big)\right)_{h_c,\Gamma} + 2\left({\bf u}_t^c,\frac{\hat{A}_3^c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma}.
-\end{multline}
+\begin{align}\label{semi_energy_2}
+&\hspace{0.4cm}\frac{d}{dt}\left[({\bf u}_t^f,\rho^f {\bf u}_t^f)_{h^f} + S_{h^f}({\bf u}^f,{\bf u}^f_t) + ({\bf u}_t^c,\rho^c {\bf u}_t^c)_{h^c} + S_{h^c}({\bf u}^c,{\bf u}^c_t) \right]   \nonumber\\
+&=2\left(-{\bf u}_t^f,\frac{\hat{A}_3^f{\bf u}^f}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} + 2\left({\bf u}_t^c,\frac{\hat{A}_3^c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma} + 2\left({\bf u}_t^f,\frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} \nonumber\\
+&=2\left({\bf u}_t^f,-\frac{\hat{A}_3^f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} +  2\left({\bf u}_t^c,\frac{\hat{A}_3^c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma} \nonumber\\
+&=2\left(\mathcal{P}{\bf u}^c_t,-\frac{\hat{A}_3^f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\right)_{h_f,\Gamma} + 2\left({\bf u}_t^c,\frac{\hat{A}_3^c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma}\nonumber \\
+&=2\left({\bf u}_t^c,\mathcal{R}\Big(-\frac{\hat{A}_3^f{\bf u}^f}{J^f|\nabla r_f^{(3)}|} + \frac{h_3^f\omega_1^{(3)}{\bm \eta}}{J^f|\nabla r_f^{(3)}|}\Big)\right)_{h_c,\Gamma} + 2\left({\bf u}_t^c,\frac{\hat{A}_3^c{\bf u}^c}{J^c|\nabla r_c^{(3)}|}\right)_{h_c,\Gamma}.
+\end{align}
 Here, to simplify the formula,  we have used the notations
 \begin{equation}\label{hatAf}
 \hat{A}_3^f{\bf u}^f_{{\bf i}^f} = N^f_{31}D^f_1{\bf u}^f_{{\bf i}^f} + N^f_{32}D^f_2{\bf u}^f_{{\bf i}^f} + N^f_{33}D^f_3{\bf u}^f_{{\bf i}^f},

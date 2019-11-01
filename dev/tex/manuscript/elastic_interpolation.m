@@ -39,6 +39,7 @@ plot([7],[7],'bo','MarkerFaceColor','b','Markersize',8)
 axis([0 8 0 8])
 f2 = plot([4],[4],'rs','MarkerEdgeColor','r','Markersize',12,'linewidth',2);
 legend([f1 f2],'coarse grids', 'fine grid')
+set(gca,'fontsize',16)
 
 axis off
 
@@ -54,6 +55,7 @@ plot([3],[7],'bo','MarkerFaceColor','b','Markersize',8)
 axis([0 8 0 8])
 f2 = plot([3],[4],'rs','MarkerEdgeColor','r','Markersize',12,'linewidth',2);
 legend([f1 f2],'coarse grids', 'fine grid')
+set(gca,'fontsize',16)
 
 axis off
 
@@ -69,6 +71,7 @@ plot([7],[5],'bo','MarkerFaceColor','b','Markersize',8)
 axis([0 8 0 8])
 f2 = plot([4],[5],'rs','MarkerEdgeColor','r','Markersize',12,'linewidth',2);
 legend([f1 f2],'coarse grids', 'fine grid')
+set(gca,'fontsize',16)
 
 axis off
 
@@ -81,6 +84,7 @@ axis([0 8 0 8])
 f1 = plot([3],[5],'rs','MarkerEdgeColor','r','Markersize',12,'linewidth',2);
 f2 = plot([3],[5],'bo','MarkerFaceColor','b','Markersize',8);
 legend([f1 f2],'coarse grids', 'fine grid')
+set(gca,'fontsize',16)
 
 axis off
 
@@ -109,6 +113,7 @@ plot(x1,y,'rs',...
 f1 = plot(x1(1),y(1),'rs','MarkerEdgeColor','r','Markersize',12,'linewidth',2);
 f2 = plot([4],[4],'bo','MarkerFaceColor','b','Markersize',8,'linewidth',2);
 legend([f1 f2], 'fine grids','coarse grid')
+set(gca,'fontsize',16)
 
 axis off
 
@@ -146,6 +151,7 @@ y = ones(1,4);
 x = [27 28 29 30];
 plot(x(1:3),y(1:3),'b^','MarkerFaceColor','b','Markersize',10)
 plot(x(4),y(4),'mo','MarkerFaceColor','m','Markersize',10)
+set(gca,'fontsize',16)
 
 % each 'm*'
 figure(7)

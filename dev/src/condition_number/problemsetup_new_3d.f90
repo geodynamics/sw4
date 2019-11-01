@@ -11,7 +11,7 @@ module problemsetup_new_3d
   real(dp),parameter :: l1 = 2.d0*pi, l2 = 2.d0*pi, l3 = 2.d0*pi ! space interval
   real(dp),parameter :: int_pos = 0.5d0 ! This is the position in r3 where the interface is located.
 
-  integer,parameter :: n1_c = 49, n2_c = 49 ! number of grid points in direction-1,2 in the coarse domain
+  integer,parameter :: n1_c = 25, n2_c = 25 ! number of grid points in direction-1,2 in the coarse domain
   real(dp),parameter :: h1phy_c = l1/(n1_c-1), h1phy_f = h1phy_c*0.5d0  ! mesh size in physical space, x
   real(dp),parameter :: h2phy_c = l2/(n2_c-1), h2phy_f = h2phy_c*0.5d0  ! mesh size in physical space, y
   integer,parameter :: n3_c = ceiling(int_pos*l3/h1phy_c)+1 ! number of grid points in direction-3

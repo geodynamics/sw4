@@ -3,18 +3,18 @@
 %We present the predictor-corrector discretization in time, and explain how the ghost points are updated. In addtion, we describle the iterative methods. Perhaps we shall also talk about CFL and the time steps. Maybe no fully-discrete energy analysis? That would be very messy. 
 The equations are advanced in time with an explicit fourth order accurate predictor-corrector time integration method. Like all explicit time stepping methods, there is a maximum time step not exceed CFL stabilitity limit.
 
-In \cite{?}, it is proved that the time step constraint by CFL condition for the Newmark scheme 
+In \cite{petersson2015wave}, it is proved that the time step constraint by CFL condition for the Newmark scheme 
 \begin{equation*}
 \frac{{\bf u}^{n+1}-2{\bf u}^n + {\bf u}^{n-1}}{\Delta_t^2} = {\bf L}_h{\bf u}^n + {\bf F}^n, \ \ \ n = 0,1,\cdots
 \end{equation*}
-which is second order if
+which is second order is
 \begin{equation*}
-\frac{\Delta_t^2}{h^2}\kappa_{\text{max}}\leq C_{\text{cfl}}^2.
+\frac{\Delta_t^2}{h^2}\kappa_{\text{max}}\leq C_{\text{cfl}}^2,
 \end{equation*}
-Here, 
+for the elastic wave equaiton with a homogeneous material and periodic boundary conditions. Here, 
 $\kappa_{\text{max}}$ is the maximum of the eigenvalue of the matrix 
 \[T = \frac{1}{\rho}\left(\begin{array}{ccc}
 Tr(N_{11}) &  Tr(N_{12})& Tr(N_{13})\\
 Tr(N_{21}) & Tr(N_{22}) & Tr(N_{23})\\
 Tr(N_{31}) & Tr(N_{32}) & Tr(N_{33})\end{array}\right), \]
-where $Tr(N_{ij})$ represents the trace of the matrix $N_{ij},i,j = 1,2,3$. In this paper, we use the predictor-corrector strategy to obtain a fourth order time integrator. In \cite{?}, it shows that the fourth order scheme has a somewhat larger stability limit for the time step, but the way used to approximate eigenvalue is same. We use $C_{\text{cfl}} = 1.3175$ in the numrical experiments in this paper.
+where $Tr(N_{ij})$ represents the trace of the matrix $N_{ij},i,j = 1,2,3$. In this paper, we use the predictor-corrector strategy to obtain a fourth order time integrator. In \cite{sjogreen2012fourth}, it shows that the fourth order scheme has a somewhat larger stability limit for the time step, but the way used to approximate eigenvalue is same. We use $C_{\text{cfl}} = 1.3175$ in the numrical experiments in this paper.

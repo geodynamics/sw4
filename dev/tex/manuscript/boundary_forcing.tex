@@ -14,12 +14,11 @@ and
 \end{equation}
 Here, $D_{1,2}$ are fourth order central difference operators for the first derivative $\partial_{1,2}$ witout using any ghost points and $\wt{D}_3$ is a fourth order SBP operator as in (\ref{sbp_1st_1}) with ghost points. Multiplying (\ref{semi_discrete_elastic}) by $h_1h_2h_3\omega_{i_1}^{(1)}\omega_{i_2}^{(2)}\omega_{i_3}^{(3)}J_{\bf i}$ and summing over all grids, we have
 \begin{multline*}
-({\bf u}_t,\rho{\bf u}_{tt})_h = -S_h({\bf u}_t,{\bf u}) \\
-+ h_1h_2\sum_{i_1=1}^{n_1}\sum_{i_2=1}^{n_2}\omega_{i_1}^{(1)}\omega_{i_2}^{(2)}({\bf u}_t)_{{\bf i}_{\Omega_t}}^T(N_{31}D_1{\bf u}_{{\bf i}_{\Omega_t}} + N_{32}D_2{\bf u}_{{\bf i}_{\Omega_t}} +N_{33}\wt{D}_3{\bf u}_{{\bf i}_{\Omega_t}}),
+({\bf u}_t,\rho{\bf u}_{tt})_h = -S_h({\bf u}_t,{\bf u}) + h_1h_2\sum_{i_1=1}^{n_1}\sum_{i_2=1}^{n_2}\omega_{i_1}^{(1)}\omega_{i_2}^{(2)}({\bf u}_t)_{{\bf i}_{\Omega_t}}^T(N_{31}D_1{\bf u}_{{\bf i}_{\Omega_t}} + N_{32}D_2{\bf u}_{{\bf i}_{\Omega_t}} +N_{33}\wt{D}_3{\bf u}_{{\bf i}_{\Omega_t}}),
 \end{multline*}
-where $S_h$ is given in Appendix ?. And the equation can be rewritten as
+where the bilinear form $S_h(\cdot,\cdot)$ is symmetric and positive semi-definite. And the equation can be rewritten as
 \begin{multline}\label{time_derivative_energy}
-({\bf u}_t,\rho{\bf u}_{tt})_h + S_h({\bf u}_t,{\bf u}) = \\
+({\bf u}_t,\rho{\bf u}_{tt})_h + S_h({\bf u}_t,{\bf u}) = 
 h_1h_2\sum_{i_1=1}^{n_1}\sum_{i_2=1}^{n_2}\omega_{i_1}^{(1)}\omega_{i_2}^{(2)}({\bf u}_t)_{{\bf i}_{\Omega_t}}^T(N_{31}D_1{\bf u}_{{\bf i}_{\Omega_t}} + N_{32}D_2{\bf u}_{{\bf i}_{\Omega_t}} +N_{33}\wt{D}_3{\bf u}_{{\bf i}_{\Omega_t}}).
 \end{multline}
 We define the discrete energy as
@@ -63,8 +62,8 @@ for $k = 1,2,3$. Plug (\ref{eq2}) into (\ref{eq1}), we get
 \sum_{m=1}^3\frac{1}{h_3}(N_{33})_{1m}\sum_{k=1}^4\tilde{d}_k(u_m)_{i_1,i_2,n_3+1-k}\\
 \sum_{m=2}^3\frac{1}{h_3}(N_{33})_{2m}\sum_{k=1}^4\tilde{d}_k(u_m)_{i_1,i_2,n_3+1-k}\\
 \sum_{m=2}^3\frac{1}{h_3}(N_{33})_{3m}\sum_{k=1}^4\tilde{d}_k(u_m)_{i_1,i_2,n_3+1-k}
-\end{array}\right)\nonumber\\
-&\hspace{0.4cm}+\left(\begin{array}{ccc}
+\end{array}\right)\nonumber
++\left(\begin{array}{ccc}
 \sum_{m=1}^2\sum_{k=1}^3(N_{3m})D_m(u_k)_{i_1,i_2,n_3}\\
 \sum_{m=1}^2\sum_{k=1}^3(N_{3m})D_m(u_k)_{i_1,i_2,n_3}\\
 \sum_{m=1}^2\sum_{k=1}^3(N_{3m})D_m(u_k)_{i_1,i_2,n_3}

@@ -10,13 +10,13 @@ for $k = 1,2,3$ and the backward mapping to be
 \begin{equation*}
 {\bf a}^k := \nabla r^{(k)} = \left(\frac{\partial r^{(k)}}{\partial x^{(1)}},\frac{\partial r^{(k)}}{\partial x^{(2)}},\frac{\partial r^{(k)}}{\partial x^{(3)}}\right)^T := (\xi_{1k},\xi_{2k},\xi_{3k})^T,
 \end{equation*}
-for $k = 1,2,3$. It is known that the backward mapping can be expressed by the forward mapping \cite{?}, 
+for $k = 1,2,3$. It is known that the backward mapping can be expressed by the forward mapping \cite{thompson1985numerical}, 
 \begin{equation*}
 {\bf a}^i = \frac{1}{J}({\bf a}_j\times{\bf a}_k), \ \ \ (i,j,k) \ \text{cycle}.
 \end{equation*}
 Here, $J:=\text{det}({\bf a}_1, {\bf a}_2, {\bf a}_3)$ is the Jacobian of the forward mapping. We assume that the mapping is non-singular such that  $0<J<\infty$.
 
-After applying the forward and backward mapping, reader can refer to \cite{?} for details, the elastic wave equation (\ref{elastic_eq_carte}) can be written as
+After applying the forward and backward mapping, reader can refer to \cite{petersson2015wave} for details, the elastic wave equation (\ref{elastic_eq_carte}) can be written as
 \begin{equation}\label{elastic_eq_curvi}
 \rho\frac{\partial^2 {\bf u}}{\partial t^2} = \frac{1}{J}\left[\bar{\partial }_1(\bar{A}_1\bar{\nabla}{\bf u}) + \bar{\partial }_2(\bar{A}_2\bar{\nabla}{\bf u}) +\bar{\partial }_3(\bar{A}_3\bar{\nabla}{\bf u}) \right] + {\bf F},
 \end{equation}
@@ -48,3 +48,9 @@ Similarly, we can derive the boundary forcing condition along $r^{(1)} = 0,1$ an
 \mathcal{T}\cdot{\bf n}_2^{\pm} = \frac{\pm 1}{J\left|\nabla r^{(2)}\right|}\bar{A}_2\bar{\nabla}{\bf u}, \ \ \ r^{(2)} = 1, 0,
 \end{equation} 
 respectively. Here, the ${\bf n}_1^{\pm}$ and ${\bf n}_2^{\pm}$ have a similar definition as ${\bf n}_3^{\pm}$ in (\ref{definition_bdry3_curvi}).
+
+Furthermore, an energy estimate for (\ref{elastic_eq_curvi}) can be derived by a same way as in \cite{petersson2015wave}  to get  the contribution to the time derivative of the energy for (\ref{elastic_eq_curvi}) is
+\begin{equation}\label{bdry_integral_curvi}
+\int_{\partial \Omega} {\bf u}_t^T({\bf n}\cdot\mathcal{T})\ dS.
+\end{equation}
+ Consider periodic boundary condition in directions $1,2$ and homogeneous Dirichlet boundary condition or free surface boundary condition in direction $3$, the elastic wave equation in curvilinear coordinates is a well-posed problem.
