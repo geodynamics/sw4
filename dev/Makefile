@@ -39,9 +39,9 @@ $(BINDIR)/x: $(OBJS)
 
 # The dependencies between modules
 
-Elastic_3D_Interface_nonconforming_bj.f90: problemsetup_new_3d.mod SBP_operator.mod
-
-
+x: Farray.h Sarray.h cfunctions.h
+main.o: Farray.h Sarray.h cfunctions.h
+cfunctions.o: Farray.h Sarray.h cfunctions.h
 clean:
 	rm -rf *.x *.txt *.o *.a *.mod s0* f0* smultivar.0* fmultivar.0* *__genmod.f90 *~ *#
 

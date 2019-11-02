@@ -35,10 +35,10 @@ void interface_lhs(Farray &LHS, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
                    Sarray &rho_f, Sarray &XI13_c, Sarray &XI23_c,
                    Sarray &XI33_c, Sarray &XI13_f, Sarray &XI23_f,
                    Sarray &XI33_f, Farray &P, Farray &Sb, Farray &Rop,
-                   Farray &sbop_no_gp, Farray &acof_no_gp, Farray &u_c,
+                   Farray &sbop_no_gp, Farray &acof_no_gp, Sarray &u_c,
                    Farray &u_f, Farray &Mass_f1, Farray &ux_cof, Farray &ghcof,
                    Farray &acof, Farray &bof, PackArgs &a, int index);
-void injection(Farray &u_f, Farray &u_c, Farray &P, PackArgs &a, int index);
+void injection(Farray &u_f, Sarray &u_c, Farray &P, PackArgs &a, int index);
 
 void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
                    Sarray &Jacobian_f, Sarray &mu_c, Sarray &mu_f,
@@ -46,10 +46,10 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
                    Sarray &rho_f, Sarray &XI13_c, Sarray &XI23_c,
                    Sarray &XI33_c, Sarray &XI13_f, Sarray &XI23_f,
                    Sarray &XI33_f, Farray &P, Farray &Sb, Farray &Rop,
-                   Farray &sbop_no_gp, Farray &acof_no_gp, Farray &u_c,
+                   Farray &sbop_no_gp, Farray &acof_no_gp, Sarray &u_c,
                    Farray &u_f, Farray &Mass_f1, Farray &ux_cof, Farray &ghcof,
                    Farray &acof, Farray &bof, PackArgs &a, int index);
-void update_interior(Farray &u_c_t, Farray &u_f_t, Farray &bof, Farray &ghcof,
+void update_interior(Sarray &u_c_t, Farray &u_f_t, Farray &bof, Farray &ghcof,
                      Farray &acof, Farray &acof_no_gp, Farray &lh_f,
                      Sarray &Jacobian_f, Sarray &mu_f, Sarray &lambda_f,
                      Sarray &XI13_f, Sarray &XI23_f, Sarray &XI33_f,
@@ -62,7 +62,7 @@ void forcing(float_sw4 x1, float_sw4 x2, float_sw4 x3, float_sw4 t,
 void forcing_tt(float_sw4 x1, float_sw4 x2, float_sw4 x3, float_sw4 t,
                 float_sw4 &f1tt, float_sw4 &f2tt, float_sw4 &f3tt);
 void update_gp(Farray &Xgrid_c_1, Farray &Xgrid_c_2, Farray &Xgrid_c_3,
-               Farray &u_c, Farray &Xgrid_f_1, Farray &Xgrid_f_2,
+               Sarray &u_c, Farray &Xgrid_f_1, Farray &Xgrid_f_2,
                Farray &Xgrid_f_3, Farray &u_f, float_sw4 tv, PackArgs &a,
                int index);
 
@@ -75,5 +75,5 @@ void top_normal_data(float_sw4 x1, float_sw4 x2, float_sw4 x3, float_sw4 l1,
                      float_sw4 l2, float_sw4 t, int i, int j, Sarray &g,
                      PackArgs &a);
 void update_dirichlet_bc(Farray &Xgrid_c_1, Farray &Xgrid_c_2,
-                         Farray &Xgrid_c_3, Farray &u_c, float_sw4 tv,
+                         Farray &Xgrid_c_3, Sarray &u_c, float_sw4 tv,
                          PackArgs &a, int index);

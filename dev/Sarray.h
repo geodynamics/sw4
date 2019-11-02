@@ -95,6 +95,11 @@ class Sarray {
 #endif
     //      return
     //      m_data[c-1+m_nc*(i-m_ib)+m_nc*m_ni*(j-m_jb)+m_nc*m_ni*m_nj*(k-m_kb)];}
+    //if (c>4){ std::cerr<<"BOOOM\n";abort();}
+    // if (isnan(m_data[m_base + m_offc * c + m_offi * i + m_offj * j + m_offk * k])){
+    //   std::cerr<<"Nan detected at "<<c<<" "<<i<<" "<<j<<" "<<k<<"\n";
+    // 	abort();
+    //   }
     return m_data[m_base + m_offc * c + m_offi * i + m_offj * j + m_offk * k];
   }
   inline float_sw4& operator()(int i, int j, int k) {
@@ -191,6 +196,19 @@ class Sarray {
       abort();
     }
     for (size_t i = 0; i < size; i++) m_data[i] *= in.m_data[i];
+  }
+  void print(){
+    size_t size = m_nc * m_ni * m_nj * m_nk;
+    for (size_t i = 0; i < size; i++) std::cout<<m_data[i]<<",";
+    std::cout<<"\n";
+  }
+  void checknan(){
+    size_t size = m_nc * m_ni * m_nj * m_nk;
+    size_t count=0;
+    for (size_t i = 0; i < size; i++) if (isnan(m_data[i])) count++;
+    std::cout<<"COUNT "<<count<<"\n";
+    if (count!=0) {
+      std::cerr<<"NAAANS "<<count<<"\n"<<std::flush; abort();}
   }
   // END EXTENSIONS MADE FOR CURVI_MR
  private:
