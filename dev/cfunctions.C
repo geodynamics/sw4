@@ -1199,9 +1199,9 @@ void interface_lhs(Farray &LHS, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
   u_temp = 0.0;
   for (j = 1; j <= n2_c; j++) {
     for (i = 1; i <= n1_c; i++) {
-      u_temp(i, j, 1) = u_c(1,i, j, n3_c + 1);
-      u_temp(i, j, 2) = u_c(2,i, j, n3_c + 1);
-      u_temp(i, j, 3) = u_c(3,i, j, n3_c + 1);
+      u_temp(i, j, 1) = u_c(1, i, j, n3_c + 1);
+      u_temp(i, j, 2) = u_c(2, i, j, n3_c + 1);
+      u_temp(i, j, 3) = u_c(3, i, j, n3_c + 1);
     }
   }
 
@@ -1620,29 +1620,29 @@ void injection(Sarray &u_f, Sarray &u_c, Farray &P, PackArgs &a, int index) {
   for (int l = 1; l <= a.dim; l++) {
     for (j = 1; j <= n2_c; j++) {
       for (i = 1; i <= n1_c; i++) {
-        u_f(l,2 * i - 1, 2 * j - 1, 1) = u_c(l,i, j, n3_c);
-        u_f(l,2 * i, 2 * j - 1, 1) =
-            P(-1) * u_c(l,i - 1, j, n3_c) + P(0) * u_c(l,i, j, n3_c) +
-            P(1) * u_c(l,i + 1, j, n3_c) + P(2) * u_c(l,i + 2, j, n3_c);
-        u_f(l,2 * i - 1, 2 * j, 1) =
-            P(-1) * u_c(l,i, j - 1, n3_c) + P(0) * u_c(l,i, j, n3_c) +
-            P(1) * u_c(l,i, j + 1, n3_c) + P(2) * u_c(l,i, j + 2, n3_c);
-        u_f(l,2 * i, 2 * j, 1) =
-            P(-1) * (P(-1) * u_c(l,i - 1, j - 1, n3_c) +
-                     P(0) * u_c(l,i, j - 1, n3_c) +
-                     P(1) * u_c(l,i + 1, j - 1, n3_c) +
-                     P(2) * u_c(l,i + 2, j - 1, n3_c)) +
-            P(0) * (P(-1) * u_c(l,i - 1, j, n3_c) + P(0) * u_c(l,i, j, n3_c) +
-                    P(1) * u_c(l,i + 1, j, n3_c) +
-                    P(2) * u_c(l,i + 2, j, n3_c)) +
-            P(1) * (P(-1) * u_c(l,i - 1, j + 1, n3_c) +
-                    P(0) * u_c(l,i, j + 1, n3_c) +
-                    P(1) * u_c(l,i + 1, j + 1, n3_c) +
-                    P(2) * u_c(l,i + 2, j + 1, n3_c)) +
-            P(2) * (P(-1) * u_c(l,i - 1, j + 2, n3_c) +
-                    P(0) * u_c(l,i, j + 2, n3_c) +
-                    P(1) * u_c(l,i + 1, j + 2, n3_c) +
-                    P(2) * u_c(l,i + 2, j + 2, n3_c));
+        u_f(l, 2 * i - 1, 2 * j - 1, 1) = u_c(l, i, j, n3_c);
+        u_f(l, 2 * i, 2 * j - 1, 1) =
+            P(-1) * u_c(l, i - 1, j, n3_c) + P(0) * u_c(l, i, j, n3_c) +
+            P(1) * u_c(l, i + 1, j, n3_c) + P(2) * u_c(l, i + 2, j, n3_c);
+        u_f(l, 2 * i - 1, 2 * j, 1) =
+            P(-1) * u_c(l, i, j - 1, n3_c) + P(0) * u_c(l, i, j, n3_c) +
+            P(1) * u_c(l, i, j + 1, n3_c) + P(2) * u_c(l, i, j + 2, n3_c);
+        u_f(l, 2 * i, 2 * j, 1) =
+            P(-1) * (P(-1) * u_c(l, i - 1, j - 1, n3_c) +
+                     P(0) * u_c(l, i, j - 1, n3_c) +
+                     P(1) * u_c(l, i + 1, j - 1, n3_c) +
+                     P(2) * u_c(l, i + 2, j - 1, n3_c)) +
+            P(0) * (P(-1) * u_c(l, i - 1, j, n3_c) + P(0) * u_c(l, i, j, n3_c) +
+                    P(1) * u_c(l, i + 1, j, n3_c) +
+                    P(2) * u_c(l, i + 2, j, n3_c)) +
+            P(1) * (P(-1) * u_c(l, i - 1, j + 1, n3_c) +
+                    P(0) * u_c(l, i, j + 1, n3_c) +
+                    P(1) * u_c(l, i + 1, j + 1, n3_c) +
+                    P(2) * u_c(l, i + 2, j + 1, n3_c)) +
+            P(2) * (P(-1) * u_c(l, i - 1, j + 2, n3_c) +
+                    P(0) * u_c(l, i, j + 2, n3_c) +
+                    P(1) * u_c(l, i + 1, j + 2, n3_c) +
+                    P(2) * u_c(l, i + 2, j + 2, n3_c));
       }
     }
   }
@@ -1699,43 +1699,43 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
                      pow(XI13_c(i, k, n3_c), 2) +
                  mu_c(i, k, n3_c) * (pow(XI23_c(i, k, n3_c), 2) +
                                      pow(XI33_c(i, k, n3_c), 2))) *
-                Sb(j) * u_c(1,i, k, n3_c + 1 - j) / h3_c +
+                Sb(j) * u_c(1, i, k, n3_c + 1 - j) / h3_c +
             Jacobian_c(i, k, n3_c) * (lambda_c(i, k, n3_c) + mu_c(i, k, n3_c)) *
                 XI13_c(i, k, n3_c) * XI23_c(i, k, n3_c) * Sb(j) *
-                u_c(2,i, k, n3_c + 1 - j) / h3_c +
+                u_c(2, i, k, n3_c + 1 - j) / h3_c +
             Jacobian_c(i, k, n3_c) * (lambda_c(i, k, n3_c) + mu_c(i, k, n3_c)) *
                 XI13_c(i, k, n3_c) * XI33_c(i, k, n3_c) * Sb(j) *
-                u_c(3,i, k, n3_c + 1 - j) / h3_c;
+                u_c(3, i, k, n3_c + 1 - j) / h3_c;
         // second set equation
         Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 2) =
             Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 2) +
             Jacobian_c(i, k, n3_c) * (lambda_c(i, k, n3_c) + mu_c(i, k, n3_c)) *
                 XI13_c(i, k, n3_c) * XI23_c(i, k, n3_c) * Sb(j) *
-                u_c(1,i, k, n3_c + 1 - j) / h3_c +
+                u_c(1, i, k, n3_c + 1 - j) / h3_c +
             Jacobian_c(i, k, n3_c) *
                 ((2.0 * mu_c(i, k, n3_c) + lambda_c(i, k, n3_c)) *
                      pow(XI23_c(i, k, n3_c), 2) +
                  mu_c(i, k, n3_c) * (pow(XI13_c(i, k, n3_c), 2) +
                                      pow(XI33_c(i, k, n3_c), 2))) *
-                Sb(j) * u_c(2,i, k, n3_c + 1 - j) / h3_c +
+                Sb(j) * u_c(2, i, k, n3_c + 1 - j) / h3_c +
             Jacobian_c(i, k, n3_c) * (lambda_c(i, k, n3_c) + mu_c(i, k, n3_c)) *
                 XI23_c(i, k, n3_c) * XI33_c(i, k, n3_c) * Sb(j) *
-                u_c(3,i, k, n3_c + 1 - j) / h3_c;
+                u_c(3, i, k, n3_c + 1 - j) / h3_c;
         // third set equation
         Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 3) =
             Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 3) +
             Jacobian_c(i, k, n3_c) * (lambda_c(i, k, n3_c) + mu_c(i, k, n3_c)) *
                 XI13_c(i, k, n3_c) * XI33_c(i, k, n3_c) * Sb(j) *
-                u_c(1,i, k, n3_c + 1 - j) / h3_c +
+                u_c(1, i, k, n3_c + 1 - j) / h3_c +
             Jacobian_c(i, k, n3_c) * (lambda_c(i, k, n3_c) + mu_c(i, k, n3_c)) *
                 XI23_c(i, k, n3_c) * XI33_c(i, k, n3_c) * Sb(j) *
-                u_c(2,i, k, n3_c + 1 - j) / h3_c +
+                u_c(2, i, k, n3_c + 1 - j) / h3_c +
             Jacobian_c(i, k, n3_c) *
                 ((2.0 * mu_c(i, k, n3_c) + lambda_c(i, k, n3_c)) *
                      pow(XI33_c(i, k, n3_c), 2) +
                  mu_c(i, k, n3_c) * (pow(XI13_c(i, k, n3_c), 2) +
                                      pow(XI23_c(i, k, n3_c), 2))) *
-                Sb(j) * u_c(3,i, k, n3_c + 1 - j) / h3_c;
+                Sb(j) * u_c(3, i, k, n3_c + 1 - j) / h3_c;
       }
     }
   }
@@ -1750,50 +1750,50 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
             Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 1) -
             Jacobian_c(i, k, n3_c) *
                 (2.0 * mu_c(i, k, n3_c) + lambda_c(i, k, n3_c)) / l1 *
-                XI13_c(i, k, n3_c) * ux_cof(j) * u_c(1,i + j, k, n3_c) / h1_c -
+                XI13_c(i, k, n3_c) * ux_cof(j) * u_c(1, i + j, k, n3_c) / h1_c -
             Jacobian_c(i, k, n3_c) * mu_c(i, k, n3_c) / l1 *
-                XI23_c(i, k, n3_c) * ux_cof(j) * u_c(2,i + j, k, n3_c) / h1_c -
+                XI23_c(i, k, n3_c) * ux_cof(j) * u_c(2, i + j, k, n3_c) / h1_c -
             Jacobian_c(i, k, n3_c) * mu_c(i, k, n3_c) / l1 *
-                XI33_c(i, k, n3_c) * ux_cof(j) * u_c(3,i + j, k, n3_c) / h1_c;
+                XI33_c(i, k, n3_c) * ux_cof(j) * u_c(3, i + j, k, n3_c) / h1_c;
         // second set equation
         Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 2) =
             Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 2) -
             Jacobian_c(i, k, n3_c) * lambda_c(i, k, n3_c) / l1 *
-                XI23_c(i, k, n3_c) * ux_cof(j) * u_c(1,i + j, k, n3_c) / h1_c -
+                XI23_c(i, k, n3_c) * ux_cof(j) * u_c(1, i + j, k, n3_c) / h1_c -
             Jacobian_c(i, k, n3_c) * mu_c(i, k, n3_c) / l1 *
-                XI13_c(i, k, n3_c) * ux_cof(j) * u_c(2,i + j, k, n3_c) / h1_c;
+                XI13_c(i, k, n3_c) * ux_cof(j) * u_c(2, i + j, k, n3_c) / h1_c;
         // third set equation
         Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 3) =
             Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 3) -
             Jacobian_c(i, k, n3_c) * lambda_c(i, k, n3_c) / l1 *
-                XI33_c(i, k, n3_c) * ux_cof(j) * u_c(1,i + j, k, n3_c) / h1_c -
+                XI33_c(i, k, n3_c) * ux_cof(j) * u_c(1, i + j, k, n3_c) / h1_c -
             Jacobian_c(i, k, n3_c) * mu_c(i, k, n3_c) / l1 *
-                XI13_c(i, k, n3_c) * ux_cof(j) * u_c(3,i + j, k, n3_c) / h1_c;
+                XI13_c(i, k, n3_c) * ux_cof(j) * u_c(3, i + j, k, n3_c) / h1_c;
         // 32
         // first set equation
         Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 1) =
             Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 1) -
             Jacobian_c(i, k, n3_c) * mu_c(i, k, n3_c) / l2 *
-                XI23_c(i, k, n3_c) * ux_cof(j) * u_c(1,i, k + j, n3_c) / h2_c -
+                XI23_c(i, k, n3_c) * ux_cof(j) * u_c(1, i, k + j, n3_c) / h2_c -
             Jacobian_c(i, k, n3_c) * lambda_c(i, k, n3_c) / l2 *
-                XI13_c(i, k, n3_c) * ux_cof(j) * u_c(2,i, k + j, n3_c) / h2_c;
+                XI13_c(i, k, n3_c) * ux_cof(j) * u_c(2, i, k + j, n3_c) / h2_c;
         // second set equation
         Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 2) =
             Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 2) -
             Jacobian_c(i, k, n3_c) * mu_c(i, k, n3_c) / l2 *
-                XI13_c(i, k, n3_c) * ux_cof(j) * u_c(1,i, k + j, n3_c) / h2_c -
+                XI13_c(i, k, n3_c) * ux_cof(j) * u_c(1, i, k + j, n3_c) / h2_c -
             Jacobian_c(i, k, n3_c) *
                 (2.0 * mu_c(i, k, n3_c) + lambda_c(i, k, n3_c)) / l2 *
-                XI23_c(i, k, n3_c) * ux_cof(j) * u_c(2,i, k + j, n3_c) / h2_c -
+                XI23_c(i, k, n3_c) * ux_cof(j) * u_c(2, i, k + j, n3_c) / h2_c -
             Jacobian_c(i, k, n3_c) * mu_c(i, k, n3_c) / l2 *
-                XI33_c(i, k, n3_c) * ux_cof(j) * u_c(3,i, k + j, n3_c) / h2_c;
+                XI33_c(i, k, n3_c) * ux_cof(j) * u_c(3, i, k + j, n3_c) / h2_c;
         // third set equation
         Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 3) =
             Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 3) -
             Jacobian_c(i, k, n3_c) * lambda_c(i, k, n3_c) / l2 *
-                XI33_c(i, k, n3_c) * ux_cof(j) * u_c(2,i, k + j, n3_c) / h2_c -
+                XI33_c(i, k, n3_c) * ux_cof(j) * u_c(2, i, k + j, n3_c) / h2_c -
             Jacobian_c(i, k, n3_c) * mu_c(i, k, n3_c) / l2 *
-                XI23_c(i, k, n3_c) * ux_cof(j) * u_c(3,i, k + j, n3_c) / h2_c;
+                XI23_c(i, k, n3_c) * ux_cof(j) * u_c(3, i, k + j, n3_c) / h2_c;
       }
     }
   }
@@ -1812,7 +1812,7 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
                 (2.0 * mu_c(i - 1, j, n3_c) + lambda_c(i - 1, j, n3_c)) / 6.0 -
             Jacobian_c(i, j, n3_c) *
                 (2.0 * mu_c(i, j, n3_c) + lambda_c(i, j, n3_c)) / 8.0) *
-               u_c(1,i - 2, j, n3_c) +
+               u_c(1, i - 2, j, n3_c) +
            (Jacobian_c(i - 2, j, n3_c) *
                 (2.0 * mu_c(i - 2, j, n3_c) + lambda_c(i - 2, j, n3_c)) / 6.0 +
             Jacobian_c(i - 1, j, n3_c) *
@@ -1821,7 +1821,7 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
                 (2.0 * mu_c(i, j, n3_c) + lambda_c(i, j, n3_c)) / 2.0 +
             Jacobian_c(i + 1, j, n3_c) *
                 (2.0 * mu_c(i + 1, j, n3_c) + lambda_c(i + 1, j, n3_c)) / 6.0) *
-               u_c(1,i - 1, j, n3_c) +
+               u_c(1, i - 1, j, n3_c) +
            (-Jacobian_c(i - 2, j, n3_c) *
                 (2.0 * mu_c(i - 2, j, n3_c) + lambda_c(i - 2, j, n3_c)) / 24.0 -
             Jacobian_c(i - 1, j, n3_c) *
@@ -1835,7 +1835,7 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
             Jacobian_c(i + 2, j, n3_c) *
                 (2.0 * mu_c(i + 2, j, n3_c) + lambda_c(i + 2, j, n3_c)) /
                 24.0) *
-               u_c(1,i - 0, j, n3_c) +
+               u_c(1, i - 0, j, n3_c) +
            (Jacobian_c(i - 1, j, n3_c) *
                 (2.0 * mu_c(i - 1, j, n3_c) + lambda_c(i - 1, j, n3_c)) / 6.0 +
             Jacobian_c(i, j, n3_c) *
@@ -1844,88 +1844,88 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
                 (2.0 * mu_c(i + 1, j, n3_c) + lambda_c(i + 1, j, n3_c)) / 2.0 +
             Jacobian_c(i + 2, j, n3_c) *
                 (2.0 * mu_c(i + 2, j, n3_c) + lambda_c(i + 2, j, n3_c)) / 6.0) *
-               u_c(1,i + 1, j, n3_c) +
+               u_c(1, i + 1, j, n3_c) +
            (-Jacobian_c(i, j, n3_c) *
                 (2.0 * mu_c(i, j, n3_c) + lambda_c(i, j, n3_c)) / 8.0 +
             Jacobian_c(i + 1, j, n3_c) *
                 (2.0 * mu_c(i + 1, j, n3_c) + lambda_c(i + 1, j, n3_c)) / 6.0 -
             Jacobian_c(i + 2, j, n3_c) *
                 (2.0 * mu_c(i + 2, j, n3_c) + lambda_c(i + 2, j, n3_c)) / 8.0) *
-               u_c(1,i + 2, j, n3_c)) /
+               u_c(1, i + 2, j, n3_c)) /
               (h1_c * h1_c) / (l1 * l1) +
           ((-Jacobian_c(i, j - 2, n3_c) * mu_c(i, j - 2, n3_c) / 8.0 +
             Jacobian_c(i, j - 1, n3_c) * mu_c(i, j - 1, n3_c) / 6.0 -
             Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) / 8.0) *
-               u_c(1,i, j - 2, n3_c) +
+               u_c(1, i, j - 2, n3_c) +
            (Jacobian_c(i, j - 2, n3_c) * mu_c(i, j - 2, n3_c) / 6.0 +
             Jacobian_c(i, j - 1, n3_c) * mu_c(i, j - 1, n3_c) / 2.0 +
             Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) / 2.0 +
             Jacobian_c(i, j + 1, n3_c) * mu_c(i, j + 1, n3_c) / 6.0) *
-               u_c(1,i, j - 1, n3_c) +
+               u_c(1, i, j - 1, n3_c) +
            (-Jacobian_c(i, j - 2, n3_c) * mu_c(i, j - 2, n3_c) / 24.0 -
             Jacobian_c(i, j - 1, n3_c) * mu_c(i, j - 1, n3_c) * 5.0 / 6.0 -
             Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) * 3.0 / 4.0 -
             Jacobian_c(i, j + 1, n3_c) * mu_c(i, j + 1, n3_c) * 5.0 / 6.0 -
             Jacobian_c(i, j + 2, n3_c) * mu_c(i, j + 2, n3_c) / 24.0) *
-               u_c(1,i, j - 0, n3_c) +
+               u_c(1, i, j - 0, n3_c) +
            (Jacobian_c(i, j - 1, n3_c) * mu_c(i, j - 1, n3_c) / 6.0 +
             Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) / 2.0 +
             Jacobian_c(i, j + 1, n3_c) * mu_c(i, j + 1, n3_c) / 2.0 +
             Jacobian_c(i, j + 2, n3_c) * mu_c(i, j + 2, n3_c) / 6.0) *
-               u_c(1,i, j + 1, n3_c) +
+               u_c(1, i, j + 1, n3_c) +
            (-Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) / 8.0 +
             Jacobian_c(i, j + 1, n3_c) * mu_c(i, j + 1, n3_c) / 6.0 -
             Jacobian_c(i, j + 2, n3_c) * mu_c(i, j + 2, n3_c) / 8.0) *
-               u_c(1,i, j + 2, n3_c)) /
+               u_c(1, i, j + 2, n3_c)) /
               (h2_c * h2_c) / (l2 * l2) +
           (Jacobian_c(i - 2, j, n3_c) * lambda_c(i - 2, j, n3_c) *
-               (u_c(2,i - 2, j - 2, n3_c) / 12.0 -
-                u_c(2,i - 2, j - 1, n3_c) * 2.0 / 3.0 +
-                u_c(2,i - 2, j + 1, n3_c) * 2.0 / 3.0 -
-                u_c(2,i - 2, j + 2, n3_c) / 12.0) /
+               (u_c(2, i - 2, j - 2, n3_c) / 12.0 -
+                u_c(2, i - 2, j - 1, n3_c) * 2.0 / 3.0 +
+                u_c(2, i - 2, j + 1, n3_c) * 2.0 / 3.0 -
+                u_c(2, i - 2, j + 2, n3_c) / 12.0) /
                12.0 -
            Jacobian_c(i - 1, j, n3_c) * lambda_c(i - 1, j, n3_c) *
-               (u_c(2,i - 1, j - 2, n3_c) / 12.0 -
-                u_c(2,i - 1, j - 1, n3_c) * 2.0 / 3.0 +
-                u_c(2,i - 1, j + 1, n3_c) * 2.0 / 3.0 -
-                u_c(2,i - 1, j + 2, n3_c) / 12.0) *
+               (u_c(2, i - 1, j - 2, n3_c) / 12.0 -
+                u_c(2, i - 1, j - 1, n3_c) * 2.0 / 3.0 +
+                u_c(2, i - 1, j + 1, n3_c) * 2.0 / 3.0 -
+                u_c(2, i - 1, j + 2, n3_c) / 12.0) *
                2.0 / 3.0 +
            Jacobian_c(i + 1, j, n3_c) * lambda_c(i + 1, j, n3_c) *
-               (u_c(2,i + 1, j - 2, n3_c) / 12.0 -
-                u_c(2,i + 1, j - 1, n3_c) * 2.0 / 3.0 +
-                u_c(2,i + 1, j + 1, n3_c) * 2.0 / 3.0 -
-                u_c(2,i + 1, j + 2, n3_c) / 12.0) *
+               (u_c(2, i + 1, j - 2, n3_c) / 12.0 -
+                u_c(2, i + 1, j - 1, n3_c) * 2.0 / 3.0 +
+                u_c(2, i + 1, j + 1, n3_c) * 2.0 / 3.0 -
+                u_c(2, i + 1, j + 2, n3_c) / 12.0) *
                2.0 / 3.0 -
            Jacobian_c(i + 2, j, n3_c) * lambda_c(i + 2, j, n3_c) *
-               (u_c(2,i + 2, j - 2, n3_c) / 12.0 -
-                u_c(2,i + 2, j - 1, n3_c) * 2.0 / 3.0 +
-                u_c(2,i + 2, j + 1, n3_c) * 2.0 / 3.0 -
-                u_c(2,i + 2, j + 2, n3_c) / 12.0) /
+               (u_c(2, i + 2, j - 2, n3_c) / 12.0 -
+                u_c(2, i + 2, j - 1, n3_c) * 2.0 / 3.0 +
+                u_c(2, i + 2, j + 1, n3_c) * 2.0 / 3.0 -
+                u_c(2, i + 2, j + 2, n3_c) / 12.0) /
                12.0) /
               l1 / l2 / h1_c / h2_c +
           (Jacobian_c(i, j - 2, n3_c) * mu_c(i, j - 2, n3_c) *
-               (u_c(2,i - 2, j - 2, n3_c) / 12.0 -
-                u_c(2,i - 1, j - 2, n3_c) * 2.0 / 3.0 +
-                u_c(2,i + 1, j - 2, n3_c) * 2.0 / 3.0 -
-                u_c(2,i + 2, j - 2, n3_c) / 12.0) /
+               (u_c(2, i - 2, j - 2, n3_c) / 12.0 -
+                u_c(2, i - 1, j - 2, n3_c) * 2.0 / 3.0 +
+                u_c(2, i + 1, j - 2, n3_c) * 2.0 / 3.0 -
+                u_c(2, i + 2, j - 2, n3_c) / 12.0) /
                12.0 -
            Jacobian_c(i, j - 1, n3_c) * mu_c(i, j - 1, n3_c) *
-               (u_c(2,i - 2, j - 1, n3_c) / 12.0 -
-                u_c(2,i - 1, j - 1, n3_c) * 2.0 / 3.0 +
-                u_c(2,i + 1, j - 1, n3_c) * 2.0 / 3.0 -
-                u_c(2,i + 2, j - 1, n3_c) / 12.0) *
+               (u_c(2, i - 2, j - 1, n3_c) / 12.0 -
+                u_c(2, i - 1, j - 1, n3_c) * 2.0 / 3.0 +
+                u_c(2, i + 1, j - 1, n3_c) * 2.0 / 3.0 -
+                u_c(2, i + 2, j - 1, n3_c) / 12.0) *
                2.0 / 3.0 +
            Jacobian_c(i, j + 1, n3_c) * mu_c(i, j + 1, n3_c) *
-               (u_c(2,i - 2, j + 1, n3_c) / 12.0 -
-                u_c(2,i - 1, j + 1, n3_c) * 2.0 / 3.0 +
-                u_c(2,i + 1, j + 1, n3_c) * 2.0 / 3.0 -
-                u_c(2,i + 2, j + 1, n3_c) / 12.0) *
+               (u_c(2, i - 2, j + 1, n3_c) / 12.0 -
+                u_c(2, i - 1, j + 1, n3_c) * 2.0 / 3.0 +
+                u_c(2, i + 1, j + 1, n3_c) * 2.0 / 3.0 -
+                u_c(2, i + 2, j + 1, n3_c) / 12.0) *
                2.0 / 3.0 -
            Jacobian_c(i, j + 2, n3_c) * mu_c(i, j + 2, n3_c) *
-               (u_c(2,i - 2, j + 2, n3_c) / 12.0 -
-                u_c(2,i - 1, j + 2, n3_c) * 2.0 / 3.0 +
-                u_c(2,i + 1, j + 2, n3_c) * 2.0 / 3.0 -
-                u_c(2,i + 2, j + 2, n3_c) / 12.0) /
+               (u_c(2, i - 2, j + 2, n3_c) / 12.0 -
+                u_c(2, i - 1, j + 2, n3_c) * 2.0 / 3.0 +
+                u_c(2, i + 1, j + 2, n3_c) * 2.0 / 3.0 -
+                u_c(2, i + 2, j + 2, n3_c) / 12.0) /
                12.0) /
               l1 / l2 / h1_c / h2_c;
       //
@@ -1935,27 +1935,27 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
           ((-Jacobian_c(i - 2, j, n3_c) * mu_c(i - 2, j, n3_c) / 8.0 +
             Jacobian_c(i - 1, j, n3_c) * mu_c(i - 1, j, n3_c) / 6.0 -
             Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) / 8.0) *
-               u_c(2,i - 2, j, n3_c) +
+               u_c(2, i - 2, j, n3_c) +
            (Jacobian_c(i - 2, j, n3_c) * mu_c(i - 2, j, n3_c) / 6.0 +
             Jacobian_c(i - 1, j, n3_c) * mu_c(i - 1, j, n3_c) / 2.0 +
             Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) / 2.0 +
             Jacobian_c(i + 1, j, n3_c) * mu_c(i + 1, j, n3_c) / 6.0) *
-               u_c(2,i - 1, j, n3_c) +
+               u_c(2, i - 1, j, n3_c) +
            (-Jacobian_c(i - 2, j, n3_c) * mu_c(i - 2, j, n3_c) / 24.0 -
             Jacobian_c(i - 1, j, n3_c) * mu_c(i - 1, j, n3_c) * 5.0 / 6.0 -
             Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) * 3.0 / 4.0 -
             Jacobian_c(i + 1, j, n3_c) * mu_c(i + 1, j, n3_c) * 5.0 / 6.0 -
             Jacobian_c(i + 2, j, n3_c) * mu_c(i + 2, j, n3_c) / 24.0) *
-               u_c(2,i - 0, j, n3_c) +
+               u_c(2, i - 0, j, n3_c) +
            (Jacobian_c(i - 1, j, n3_c) * mu_c(i - 1, j, n3_c) / 6.0 +
             Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) / 2.0 +
             Jacobian_c(i + 1, j, n3_c) * mu_c(i + 1, j, n3_c) / 2.0 +
             Jacobian_c(i + 2, j, n3_c) * mu_c(i + 2, j, n3_c) / 6.0) *
-               u_c(2,i + 1, j, n3_c) +
+               u_c(2, i + 1, j, n3_c) +
            (-Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) / 8.0 +
             Jacobian_c(i + 1, j, n3_c) * mu_c(i + 1, j, n3_c) / 6.0 -
             Jacobian_c(i + 2, j, n3_c) * mu_c(i + 2, j, n3_c) / 8.0) *
-               u_c(2,i + 2, j, n3_c)) /
+               u_c(2, i + 2, j, n3_c)) /
               pow(h1_c, 2) / pow(l1, 2) +
           ((-Jacobian_c(i, j - 2, n3_c) *
                 (2.0 * mu_c(i, j - 2, n3_c) + lambda_c(i, j - 2, n3_c)) / 8.0 +
@@ -1963,7 +1963,7 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
                 (2.0 * mu_c(i, j - 1, n3_c) + lambda_c(i, j - 1, n3_c)) / 6.0 -
             Jacobian_c(i, j, n3_c) *
                 (2.0 * mu_c(i, j, n3_c) + lambda_c(i, j, n3_c)) / 8.0) *
-               u_c(2,i, j - 2, n3_c) +
+               u_c(2, i, j - 2, n3_c) +
            (Jacobian_c(i, j - 2, n3_c) *
                 (2.0 * mu_c(i, j - 2, n3_c) + lambda_c(i, j - 2, n3_c)) / 6.0 +
             Jacobian_c(i, j - 1, n3_c) *
@@ -1972,7 +1972,7 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
                 (2.0 * mu_c(i, j, n3_c) + lambda_c(i, j, n3_c)) / 2.0 +
             Jacobian_c(i, j + 1, n3_c) *
                 (2.0 * mu_c(i, j + 1, n3_c) + lambda_c(i, j + 1, n3_c)) / 6.0) *
-               u_c(2,i, j - 1, n3_c) +
+               u_c(2, i, j - 1, n3_c) +
            (-Jacobian_c(i, j - 2, n3_c) *
                 (2.0 * mu_c(i, j - 2, n3_c) + lambda_c(i, j - 2, n3_c)) / 24.0 -
             Jacobian_c(i, j - 1, n3_c) *
@@ -1986,7 +1986,7 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
             Jacobian_c(i, j + 2, n3_c) *
                 (2.0 * mu_c(i, j + 2, n3_c) + lambda_c(i, j + 2, n3_c)) /
                 24.0) *
-               u_c(2,i, j - 0, n3_c) +
+               u_c(2, i, j - 0, n3_c) +
            (Jacobian_c(i, j - 1, n3_c) *
                 (2.0 * mu_c(i, j - 1, n3_c) + lambda_c(i, j - 1, n3_c)) / 6.0 +
             Jacobian_c(i, j, n3_c) *
@@ -1995,63 +1995,63 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
                 (2.0 * mu_c(i, j + 1, n3_c) + lambda_c(i, j + 1, n3_c)) / 2.0 +
             Jacobian_c(i, j + 2, n3_c) *
                 (2.0 * mu_c(i, j + 2, n3_c) + lambda_c(i, j + 2, n3_c)) / 6.0) *
-               u_c(2,i, j + 1, n3_c) +
+               u_c(2, i, j + 1, n3_c) +
            (-Jacobian_c(i, j, n3_c) *
                 (2.0 * mu_c(i, j, n3_c) + lambda_c(i, j, n3_c)) / 8.0 +
             Jacobian_c(i, j + 1, n3_c) *
                 (2.0 * mu_c(i, j + 1, n3_c) + lambda_c(i, j + 1, n3_c)) / 6.0 -
             Jacobian_c(i, j + 2, n3_c) *
                 (2.0 * mu_c(i, j + 2, n3_c) + lambda_c(i, j + 2, n3_c)) / 8.0) *
-               u_c(2,i, j + 2, n3_c)) /
+               u_c(2, i, j + 2, n3_c)) /
               pow(h2_c, 2) / pow(l2, 2) +
           (Jacobian_c(i - 2, j, n3_c) * mu_c(i - 2, j, n3_c) *
-               (u_c(1,i - 2, j - 2, n3_c) / 12.0 -
-                u_c(1,i - 2, j - 1, n3_c) * 2.0 / 3.0 +
-                u_c(1,i - 2, j + 1, n3_c) * 2.0 / 3.0 -
-                u_c(1,i - 2, j + 2, n3_c) / 12.0) /
+               (u_c(1, i - 2, j - 2, n3_c) / 12.0 -
+                u_c(1, i - 2, j - 1, n3_c) * 2.0 / 3.0 +
+                u_c(1, i - 2, j + 1, n3_c) * 2.0 / 3.0 -
+                u_c(1, i - 2, j + 2, n3_c) / 12.0) /
                12.0 -
            Jacobian_c(i - 1, j, n3_c) * mu_c(i - 1, j, n3_c) *
-               (u_c(1,i - 1, j - 2, n3_c) / 12.0 -
-                u_c(1,i - 1, j - 1, n3_c) * 2.0 / 3.0 +
-                u_c(1,i - 1, j + 1, n3_c) * 2.0 / 3.0 -
-                u_c(1,i - 1, j + 2, n3_c) / 12.0) *
+               (u_c(1, i - 1, j - 2, n3_c) / 12.0 -
+                u_c(1, i - 1, j - 1, n3_c) * 2.0 / 3.0 +
+                u_c(1, i - 1, j + 1, n3_c) * 2.0 / 3.0 -
+                u_c(1, i - 1, j + 2, n3_c) / 12.0) *
                2.0 / 3.0 +
            Jacobian_c(i + 1, j, n3_c) * mu_c(i + 1, j, n3_c) *
-               (u_c(1,i + 1, j - 2, n3_c) / 12.0 -
-                u_c(1,i + 1, j - 1, n3_c) * 2.0 / 3.0 +
-                u_c(1,i + 1, j + 1, n3_c) * 2.0 / 3.0 -
-                u_c(1,i + 1, j + 2, n3_c) / 12.0) *
+               (u_c(1, i + 1, j - 2, n3_c) / 12.0 -
+                u_c(1, i + 1, j - 1, n3_c) * 2.0 / 3.0 +
+                u_c(1, i + 1, j + 1, n3_c) * 2.0 / 3.0 -
+                u_c(1, i + 1, j + 2, n3_c) / 12.0) *
                2.0 / 3.0 -
            Jacobian_c(i + 2, j, n3_c) * mu_c(i + 2, j, n3_c) *
-               (u_c(1,i + 2, j - 2, n3_c) / 12.0 -
-                u_c(1,i + 2, j - 1, n3_c) * 2.0 / 3.0 +
-                u_c(1,i + 2, j + 1, n3_c) * 2.0 / 3.0 -
-                u_c(1,i + 2, j + 2, n3_c) / 12.0) /
+               (u_c(1, i + 2, j - 2, n3_c) / 12.0 -
+                u_c(1, i + 2, j - 1, n3_c) * 2.0 / 3.0 +
+                u_c(1, i + 2, j + 1, n3_c) * 2.0 / 3.0 -
+                u_c(1, i + 2, j + 2, n3_c) / 12.0) /
                12.0) /
               l1 / l2 / h1_c / h2_c +
           (Jacobian_c(i, j - 2, n3_c) * lambda_c(i, j - 2, n3_c) *
-               (u_c(1,i - 2, j - 2, n3_c) / 12.0 -
-                u_c(1,i - 1, j - 2, n3_c) * 2.0 / 3.0 +
-                u_c(1,i + 1, j - 2, n3_c) * 2.0 / 3.0 -
-                u_c(1,i + 2, j - 2, n3_c) / 12.0) /
+               (u_c(1, i - 2, j - 2, n3_c) / 12.0 -
+                u_c(1, i - 1, j - 2, n3_c) * 2.0 / 3.0 +
+                u_c(1, i + 1, j - 2, n3_c) * 2.0 / 3.0 -
+                u_c(1, i + 2, j - 2, n3_c) / 12.0) /
                12.0 -
            Jacobian_c(i, j - 1, n3_c) * lambda_c(i, j - 1, n3_c) *
-               (u_c(1,i - 2, j - 1, n3_c) / 12.0 -
-                u_c(1,i - 1, j - 1, n3_c) * 2.0 / 3.0 +
-                u_c(1,i + 1, j - 1, n3_c) * 2.0 / 3.0 -
-                u_c(1,i + 2, j - 1, n3_c) / 12.0) *
+               (u_c(1, i - 2, j - 1, n3_c) / 12.0 -
+                u_c(1, i - 1, j - 1, n3_c) * 2.0 / 3.0 +
+                u_c(1, i + 1, j - 1, n3_c) * 2.0 / 3.0 -
+                u_c(1, i + 2, j - 1, n3_c) / 12.0) *
                2.0 / 3.0 +
            Jacobian_c(i, j + 1, n3_c) * lambda_c(i, j + 1, n3_c) *
-               (u_c(1,i - 2, j + 1, n3_c) / 12.0 -
-                u_c(1,i - 1, j + 1, n3_c) * 2.0 / 3.0 +
-                u_c(1,i + 1, j + 1, n3_c) * 2.0 / 3.0 -
-                u_c(1,i + 2, j + 1, n3_c) / 12.0) *
+               (u_c(1, i - 2, j + 1, n3_c) / 12.0 -
+                u_c(1, i - 1, j + 1, n3_c) * 2.0 / 3.0 +
+                u_c(1, i + 1, j + 1, n3_c) * 2.0 / 3.0 -
+                u_c(1, i + 2, j + 1, n3_c) / 12.0) *
                2.0 / 3.0 -
            Jacobian_c(i, j + 2, n3_c) * lambda_c(i, j + 2, n3_c) *
-               (u_c(1,i - 2, j + 2, n3_c) / 12.0 -
-                u_c(1,i - 1, j + 2, n3_c) * 2.0 / 3.0 +
-                u_c(1,i + 1, j + 2, n3_c) * 2.0 / 3.0 -
-                u_c(1,i + 2, j + 2, n3_c) / 12.0) /
+               (u_c(1, i - 2, j + 2, n3_c) / 12.0 -
+                u_c(1, i - 1, j + 2, n3_c) * 2.0 / 3.0 +
+                u_c(1, i + 1, j + 2, n3_c) * 2.0 / 3.0 -
+                u_c(1, i + 2, j + 2, n3_c) / 12.0) /
                12.0) /
               l1 / l2 / h1_c / h2_c;
       // third set
@@ -2060,52 +2060,52 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
           ((-Jacobian_c(i - 2, j, n3_c) * mu_c(i - 2, j, n3_c) / 8.0 +
             Jacobian_c(i - 1, j, n3_c) * mu_c(i - 1, j, n3_c) / 6.0 -
             Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) / 8.0) *
-               u_c(3,i - 2, j, n3_c) +
+               u_c(3, i - 2, j, n3_c) +
            (Jacobian_c(i - 2, j, n3_c) * mu_c(i - 2, j, n3_c) / 6.0 +
             Jacobian_c(i - 1, j, n3_c) * mu_c(i - 1, j, n3_c) / 2.0 +
             Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) / 2.0 +
             Jacobian_c(i + 1, j, n3_c) * mu_c(i + 1, j, n3_c) / 6.0) *
-               u_c(3,i - 1, j, n3_c) +
+               u_c(3, i - 1, j, n3_c) +
            (-Jacobian_c(i - 2, j, n3_c) * mu_c(i - 2, j, n3_c) / 24.0 -
             Jacobian_c(i - 1, j, n3_c) * mu_c(i - 1, j, n3_c) * 5.0 / 6.0 -
             Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) * 3.0 / 4.0 -
             Jacobian_c(i + 1, j, n3_c) * mu_c(i + 1, j, n3_c) * 5.0 / 6.0 -
             Jacobian_c(i + 2, j, n3_c) * mu_c(i + 2, j, n3_c) / 24.0) *
-               u_c(3,i - 0, j, n3_c) +
+               u_c(3, i - 0, j, n3_c) +
            (Jacobian_c(i - 1, j, n3_c) * mu_c(i - 1, j, n3_c) / 6.0 +
             Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) / 2.0 +
             Jacobian_c(i + 1, j, n3_c) * mu_c(i + 1, j, n3_c) / 2.0 +
             Jacobian_c(i + 2, j, n3_c) * mu_c(i + 2, j, n3_c) / 6.0) *
-               u_c(3,i + 1, j, n3_c) +
+               u_c(3, i + 1, j, n3_c) +
            (-Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) / 8.0 +
             Jacobian_c(i + 1, j, n3_c) * mu_c(i + 1, j, n3_c) / 6.0 -
             Jacobian_c(i + 2, j, n3_c) * mu_c(i + 2, j, n3_c) / 8.0) *
-               u_c(3,i + 2, j, n3_c)) /
+               u_c(3, i + 2, j, n3_c)) /
               pow(h1_c, 2) / pow(l1, 2) +
           ((-Jacobian_c(i, j - 2, n3_c) * mu_c(i, j - 2, n3_c) / 8.0 +
             Jacobian_c(i, j - 1, n3_c) * mu_c(i, j - 1, n3_c) / 6.0 -
             Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) / 8.0) *
-               u_c(3,i, j - 2, n3_c) +
+               u_c(3, i, j - 2, n3_c) +
            (Jacobian_c(i, j - 2, n3_c) * mu_c(i, j - 2, n3_c) / 6.0 +
             Jacobian_c(i, j - 1, n3_c) * mu_c(i, j - 1, n3_c) / 2.0 +
             Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) / 2.0 +
             Jacobian_c(i, j + 1, n3_c) * mu_c(i, j + 1, n3_c) / 6.0) *
-               u_c(3,i, j - 1, n3_c) +
+               u_c(3, i, j - 1, n3_c) +
            (-Jacobian_c(i, j - 2, n3_c) * mu_c(i, j - 2, n3_c) / 24.0 -
             Jacobian_c(i, j - 1, n3_c) * mu_c(i, j - 1, n3_c) * 5.0 / 6.0 -
             Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) * 3.0 / 4.0 -
             Jacobian_c(i, j + 1, n3_c) * mu_c(i, j + 1, n3_c) * 5.0 / 6.0 -
             Jacobian_c(i, j + 2, n3_c) * mu_c(i, j + 2, n3_c) / 24.0) *
-               u_c(3,i, j - 0, n3_c) +
+               u_c(3, i, j - 0, n3_c) +
            (Jacobian_c(i, j - 1, n3_c) * mu_c(i, j - 1, n3_c) / 6.0 +
             Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) / 2.0 +
             Jacobian_c(i, j + 1, n3_c) * mu_c(i, j + 1, n3_c) / 2.0 +
             Jacobian_c(i, j + 2, n3_c) * mu_c(i, j + 2, n3_c) / 6.0) *
-               u_c(3,i, j + 1, n3_c) +
+               u_c(3, i, j + 1, n3_c) +
            (-Jacobian_c(i, j, n3_c) * mu_c(i, j, n3_c) / 8.0 +
             Jacobian_c(i, j + 1, n3_c) * mu_c(i, j + 1, n3_c) / 6.0 -
             Jacobian_c(i, j + 2, n3_c) * mu_c(i, j + 2, n3_c) / 8.0) *
-               u_c(3,i, j + 2, n3_c)) /
+               u_c(3, i, j + 2, n3_c)) /
               pow(h2_c, 2) / pow(l2, 2);
     }
   }
@@ -2125,17 +2125,17 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
                 mu_c(k, j, n3_c + 1 - m) *
                     (pow(XI23_c(k, j, n3_c + 1 - m), 2) +
                      pow(XI33_c(k, j, n3_c + 1 - m), 2))) *
-               u_c(1,k, j, n3_c + 1 - k1)) /
+               u_c(1, k, j, n3_c + 1 - k1)) /
                   pow(h3_c, 2) +
               (acof(1, k1, m) * Jacobian_c(k, j, n3_c + 1 - m) *
                (mu_c(k, j, n3_c + 1 - m) + lambda_c(k, j, n3_c + 1 - m)) *
                XI13_c(k, j, n3_c + 1 - m) * XI23_c(k, j, n3_c + 1 - m) *
-               u_c(2,k, j, n3_c + 1 - k1)) /
+               u_c(2, k, j, n3_c + 1 - k1)) /
                   pow(h3_c, 2) +
               (acof(1, k1, m) * Jacobian_c(k, j, n3_c + 1 - m) *
                (mu_c(k, j, n3_c + 1 - m) + lambda_c(k, j, n3_c + 1 - m)) *
                XI13_c(k, j, n3_c + 1 - m) * XI33_c(k, j, n3_c + 1 - m) *
-               u_c(3,k, j, n3_c + 1 - k1)) /
+               u_c(3, k, j, n3_c + 1 - k1)) /
                   pow(h3_c, 2);
           // second set equation PROBLEM FIXED HERE
           lh_c(k, j, n3_c, 2) =
@@ -2143,7 +2143,7 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
               (acof(1, k1, m) * Jacobian_c(k, j, n3_c + 1 - m) *
                (mu_c(k, j, n3_c + 1 - m) + lambda_c(k, j, n3_c + 1 - m)) *
                XI13_c(k, j, n3_c + 1 - m) * XI23_c(k, j, n3_c + 1 - m) *
-               u_c(1,k, j, n3_c + 1 - k1)) /
+               u_c(1, k, j, n3_c + 1 - k1)) /
                   pow(h3_c, 2) +
               (acof(1, k1, m) * Jacobian_c(k, j, n3_c + 1 - m) *
                ((2.0 * mu_c(k, j, n3_c + 1 - m) +
@@ -2152,12 +2152,12 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
                 mu_c(k, j, n3_c + 1 - m) *
                     (pow(XI13_c(k, j, n3_c + 1 - m), 2) +
                      pow(XI33_c(k, j, n3_c + 1 - m), 2))) *
-               u_c(2,k, j, n3_c + 1 - k1)) /
+               u_c(2, k, j, n3_c + 1 - k1)) /
                   pow(h3_c, 2) +
               (acof(1, k1, m) * Jacobian_c(k, j, n3_c + 1 - m) *
                (mu_c(k, j, n3_c + 1 - m) + lambda_c(k, j, n3_c + 1 - m)) *
                XI23_c(k, j, n3_c + 1 - m) * XI33_c(k, j, n3_c + 1 - m) *
-               u_c(3,k, j, n3_c + 1 - k1)) /
+               u_c(3, k, j, n3_c + 1 - k1)) /
                   pow(h3_c, 2);
           // third set equation
           lh_c(k, j, n3_c, 3) =
@@ -2165,12 +2165,12 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
               (acof(1, k1, m) * Jacobian_c(k, j, n3_c + 1 - m) *
                (mu_c(k, j, n3_c + 1 - m) + lambda_c(k, j, n3_c + 1 - m)) *
                XI13_c(k, j, n3_c + 1 - m) * XI33_c(k, j, n3_c + 1 - m) *
-               u_c(1,k, j, n3_c + 1 - k1)) /
+               u_c(1, k, j, n3_c + 1 - k1)) /
                   pow(h3_c, 2) +
               (acof(1, k1, m) * Jacobian_c(k, j, n3_c + 1 - m) *
                (mu_c(k, j, n3_c + 1 - m) + lambda_c(k, j, n3_c + 1 - m)) *
                XI23_c(k, j, n3_c + 1 - m) * XI33_c(k, j, n3_c + 1 - m) *
-               u_c(2,k, j, n3_c + 1 - k1)) /
+               u_c(2, k, j, n3_c + 1 - k1)) /
                   pow(h3_c, 2) +
               (acof(1, k1, m) * Jacobian_c(k, j, n3_c + 1 - m) *
                ((2.0 * mu_c(k, j, n3_c + 1 - m) +
@@ -2179,7 +2179,7 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
                 mu_c(k, j, n3_c + 1 - m) *
                     (pow(XI13_c(k, j, n3_c + 1 - m), 2) +
                      pow(XI23_c(k, j, n3_c + 1 - m), 2))) *
-               u_c(3,k, j, n3_c + 1 - k1)) /
+               u_c(3, k, j, n3_c + 1 - k1)) /
                   pow(h3_c, 2);
         }
       }
@@ -2191,49 +2191,49 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
       // first set equation
       lh_c(k, j, n3_c, 1) =
           lh_c(k, j, n3_c, 1) +
-          (u_c(1,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(1, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            ((2.0 * mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) *
                 pow(XI13_c(k, j, n3_c), 2) +
             mu_c(k, j, n3_c) *
                 (pow(XI23_c(k, j, n3_c), 2) + pow(XI33_c(k, j, n3_c), 2)))) /
               pow(h3_c, 2) +
-          (u_c(2,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(2, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI13_c(k, j, n3_c) *
            XI23_c(k, j, n3_c)) /
               pow(h3_c, 2) +
-          (u_c(3,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(3, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI13_c(k, j, n3_c) *
            XI33_c(k, j, n3_c)) /
               pow(h3_c, 2);
       // second set equation
       lh_c(k, j, n3_c, 2) =
           lh_c(k, j, n3_c, 2) +
-          (u_c(1,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(1, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI13_c(k, j, n3_c) *
            XI23_c(k, j, n3_c)) /
               pow(h3_c, 2) +
-          (u_c(2,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(2, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            ((2.0 * mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) *
                 pow(XI23_c(k, j, n3_c), 2) +
             mu_c(k, j, n3_c) *
                 (pow(XI13_c(k, j, n3_c), 2) + pow(XI33_c(k, j, n3_c), 2)))) /
               pow(h3_c, 2) +
-          (u_c(3,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(3, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI23_c(k, j, n3_c) *
            XI33_c(k, j, n3_c)) /
               pow(h3_c, 2);
       // third set equation
       lh_c(k, j, n3_c, 3) =
           lh_c(k, j, n3_c, 3) +
-          (u_c(1,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(1, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI13_c(k, j, n3_c) *
            XI33_c(k, j, n3_c)) /
               pow(h3_c, 2) +
-          (u_c(2,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(2, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI23_c(k, j, n3_c) *
            XI33_c(k, j, n3_c)) /
               pow(h3_c, 2) +
-          (u_c(3,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(3, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            ((2.0 * mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) *
                 pow(XI33_c(k, j, n3_c), 2) +
             mu_c(k, j, n3_c) *
@@ -2248,49 +2248,49 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
       // first set equation
       lh_c(k, j, n3_c, 1) =
           lh_c(k, j, n3_c, 1) +
-          (u_c(1,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(1, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            ((2.0 * mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) *
                 pow(XI13_c(k, j, n3_c), 2) +
             mu_c(k, j, n3_c) *
                 (pow(XI23_c(k, j, n3_c), 2) + pow(XI33_c(k, j, n3_c), 2)))) /
               pow(h3_c, 2) +
-          (u_c(2,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(2, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI13_c(k, j, n3_c) *
            XI23_c(k, j, n3_c)) /
               pow(h3_c, 2) +
-          (u_c(3,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(3, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI13_c(k, j, n3_c) *
            XI33_c(k, j, n3_c)) /
               pow(h3_c, 2);
       // second set equation
       lh_c(k, j, n3_c, 2) =
           lh_c(k, j, n3_c, 2) +
-          (u_c(1,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(1, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI13_c(k, j, n3_c) *
            XI23_c(k, j, n3_c)) /
               pow(h3_c, 2) +
-          (u_c(2,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(2, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            ((2.0 * mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) *
                 pow(XI23_c(k, j, n3_c), 2) +
             mu_c(k, j, n3_c) *
                 (pow(XI13_c(k, j, n3_c), 2) + pow(XI33_c(k, j, n3_c), 2)))) /
               pow(h3_c, 2) +
-          (u_c(3,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(3, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI23_c(k, j, n3_c) *
            XI33_c(k, j, n3_c)) /
               pow(h3_c, 2);
       // third set equation
       lh_c(k, j, n3_c, 3) =
           lh_c(k, j, n3_c, 3) +
-          (u_c(1,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(1, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI13_c(k, j, n3_c) *
            XI33_c(k, j, n3_c)) /
               pow(h3_c, 2) +
-          (u_c(2,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(2, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI23_c(k, j, n3_c) *
            XI33_c(k, j, n3_c)) /
               pow(h3_c, 2) +
-          (u_c(3,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(3, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            ((2.0 * mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) *
                 pow(XI33_c(k, j, n3_c), 2) +
             mu_c(k, j, n3_c) *
@@ -2305,49 +2305,49 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
       // first set equation
       lh_c(k, j, n3_c, 1) =
           lh_c(k, j, n3_c, 1) +
-          (u_c(1,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(1, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            ((2.0 * mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) *
                 pow(XI13_c(k, j, n3_c), 2) +
             mu_c(k, j, n3_c) *
                 (pow(XI23_c(k, j, n3_c), 2) + pow(XI33_c(k, j, n3_c), 2)))) /
               pow(h3_c, 2) +
-          (u_c(2,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(2, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI13_c(k, j, n3_c) *
            XI23_c(k, j, n3_c)) /
               pow(h3_c, 2) +
-          (u_c(3,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(3, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI13_c(k, j, n3_c) *
            XI33_c(k, j, n3_c)) /
               pow(h3_c, 2);
       // second set equation
       lh_c(k, j, n3_c, 2) =
           lh_c(k, j, n3_c, 2) +
-          (u_c(1,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(1, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI13_c(k, j, n3_c) *
            XI23_c(k, j, n3_c)) /
               pow(h3_c, 2) +
-          (u_c(2,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(2, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            ((2.0 * mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) *
                 pow(XI23_c(k, j, n3_c), 2) +
             mu_c(k, j, n3_c) *
                 (pow(XI13_c(k, j, n3_c), 2) + pow(XI33_c(k, j, n3_c), 2)))) /
               pow(h3_c, 2) +
-          (u_c(3,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(3, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI23_c(k, j, n3_c) *
            XI33_c(k, j, n3_c)) /
               pow(h3_c, 2);
       // third set equation
       lh_c(k, j, n3_c, 3) =
           lh_c(k, j, n3_c, 3) +
-          (u_c(1,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(1, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI13_c(k, j, n3_c) *
            XI33_c(k, j, n3_c)) /
               pow(h3_c, 2) +
-          (u_c(2,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(2, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI23_c(k, j, n3_c) *
            XI33_c(k, j, n3_c)) /
               pow(h3_c, 2) +
-          (u_c(3,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(3, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            ((2.0 * mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) *
                 pow(XI33_c(k, j, n3_c), 2) +
             mu_c(k, j, n3_c) *
@@ -2361,49 +2361,49 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
       // first set equation
       lh_c(k, j, n3_c, 1) =
           lh_c(k, j, n3_c, 1) +
-          (u_c(1,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(1, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            ((2.0 * mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) *
                 pow(XI13_c(k, j, n3_c), 2) +
             mu_c(k, j, n3_c) *
                 (pow(XI23_c(k, j, n3_c), 2) + pow(XI33_c(k, j, n3_c), 2)))) /
               pow(h3_c, 2) +
-          (u_c(2,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(2, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI13_c(k, j, n3_c) *
            XI23_c(k, j, n3_c)) /
               pow(h3_c, 2) +
-          (u_c(3,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(3, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI13_c(k, j, n3_c) *
            XI33_c(k, j, n3_c)) /
               pow(h3_c, 2);
       // second set equation
       lh_c(k, j, n3_c, 2) =
           lh_c(k, j, n3_c, 2) +
-          (u_c(1,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(1, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI13_c(k, j, n3_c) *
            XI23_c(k, j, n3_c)) /
               pow(h3_c, 2) +
-          (u_c(2,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(2, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            ((2.0 * mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) *
                 pow(XI23_c(k, j, n3_c), 2) +
             mu_c(k, j, n3_c) *
                 (pow(XI13_c(k, j, n3_c), 2) + pow(XI33_c(k, j, n3_c), 2)))) /
               pow(h3_c, 2) +
-          (u_c(3,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(3, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI23_c(k, j, n3_c) *
            XI33_c(k, j, n3_c)) /
               pow(h3_c, 2);
       // third set equation
       lh_c(k, j, n3_c, 3) =
           lh_c(k, j, n3_c, 3) +
-          (u_c(1,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(1, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI13_c(k, j, n3_c) *
            XI33_c(k, j, n3_c)) /
               pow(h3_c, 2) +
-          (u_c(2,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(2, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            (mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) * XI23_c(k, j, n3_c) *
            XI33_c(k, j, n3_c)) /
               pow(h3_c, 2) +
-          (u_c(3,k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
+          (u_c(3, k, j, n3_c + 1) * ghcof(1) * Jacobian_c(k, j, n3_c) *
            ((2.0 * mu_c(k, j, n3_c) + lambda_c(k, j, n3_c)) *
                 pow(XI33_c(k, j, n3_c), 2) +
             mu_c(k, j, n3_c) *
@@ -2422,298 +2422,298 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
             (-Jacobian_c(j - 2, i, n3_c) *
                  (2.0 * mu_c(j - 2, i, n3_c) + lambda_c(j - 2, i, n3_c)) *
                  XI13_c(j - 2, i, n3_c) * bof(1, k1) *
-                 u_c(1,j - 2, i, n3_c + 1 - k1) / 12.0 +
+                 u_c(1, j - 2, i, n3_c + 1 - k1) / 12.0 +
              Jacobian_c(j - 1, i, n3_c) *
                  (2.0 * mu_c(j - 1, i, n3_c) + lambda_c(j - 1, i, n3_c)) *
                  XI13_c(j - 1, i, n3_c) * bof(1, k1) *
-                 u_c(1,j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
+                 u_c(1, j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
              Jacobian_c(j + 1, i, n3_c) *
                  (2.0 * mu_c(j + 1, i, n3_c) + lambda_c(j + 1, i, n3_c)) *
                  XI13_c(j + 1, i, n3_c) * bof(1, k1) *
-                 u_c(1,j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
+                 u_c(1, j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
              Jacobian_c(j + 2, i, n3_c) *
                  (2.0 * mu_c(j + 2, i, n3_c) + lambda_c(j + 2, i, n3_c)) *
                  XI13_c(j + 2, i, n3_c) * bof(1, k1) *
-                 u_c(1,j + 2, i, n3_c + 1 - k1) / 12.0) /
+                 u_c(1, j + 2, i, n3_c + 1 - k1) / 12.0) /
                 l1 / h1_c / h3_c +
             (-Jacobian_c(j - 2, i, n3_c) * lambda_c(j - 2, i, n3_c) *
                  XI23_c(j - 2, i, n3_c) * bof(1, k1) *
-                 u_c(2,j - 2, i, n3_c + 1 - k1) / 12.0 +
+                 u_c(2, j - 2, i, n3_c + 1 - k1) / 12.0 +
              Jacobian_c(j - 1, i, n3_c) * lambda_c(j - 1, i, n3_c) *
                  XI23_c(j - 1, i, n3_c) * bof(1, k1) *
-                 u_c(2,j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
+                 u_c(2, j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
              Jacobian_c(j + 1, i, n3_c) * lambda_c(j + 1, i, n3_c) *
                  XI23_c(j + 1, i, n3_c) * bof(1, k1) *
-                 u_c(2,j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
+                 u_c(2, j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
              Jacobian_c(j + 2, i, n3_c) * lambda_c(j + 2, i, n3_c) *
                  XI23_c(j + 2, i, n3_c) * bof(1, k1) *
-                 u_c(2,j + 2, i, n3_c + 1 - k1) / 12.0) /
+                 u_c(2, j + 2, i, n3_c + 1 - k1) / 12.0) /
                 l1 / h1_c / h3_c +
             (-Jacobian_c(j - 2, i, n3_c) * lambda_c(j - 2, i, n3_c) *
                  XI33_c(j - 2, i, n3_c) * bof(1, k1) *
-                 u_c(3,j - 2, i, n3_c + 1 - k1) / 12.0 +
+                 u_c(3, j - 2, i, n3_c + 1 - k1) / 12.0 +
              Jacobian_c(j - 1, i, n3_c) * lambda_c(j - 1, i, n3_c) *
                  XI33_c(j - 1, i, n3_c) * bof(1, k1) *
-                 u_c(3,j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
+                 u_c(3, j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
              Jacobian_c(j + 1, i, n3_c) * lambda_c(j + 1, i, n3_c) *
                  XI33_c(j + 1, i, n3_c) * bof(1, k1) *
-                 u_c(3,j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
+                 u_c(3, j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
              Jacobian_c(j + 2, i, n3_c) * lambda_c(j + 2, i, n3_c) *
                  XI33_c(j + 2, i, n3_c) * bof(1, k1) *
-                 u_c(3,j + 2, i, n3_c + 1 - k1) / 12.0) /
+                 u_c(3, j + 2, i, n3_c + 1 - k1) / 12.0) /
                 l1 / h1_c / h3_c +
             (-Jacobian_c(j, i - 2, n3_c) * mu_c(j, i - 2, n3_c) *
                  XI23_c(j, i - 2, n3_c) * bof(1, k1) *
-                 u_c(1,j, i - 2, n3_c + 1 - k1) / 12.0 +
+                 u_c(1, j, i - 2, n3_c + 1 - k1) / 12.0 +
              Jacobian_c(j, i - 1, n3_c) * mu_c(j, i - 1, n3_c) *
                  XI23_c(j, i - 1, n3_c) * bof(1, k1) *
-                 u_c(1,j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 -
+                 u_c(1, j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 -
              Jacobian_c(j, i + 1, n3_c) * mu_c(j, i + 1, n3_c) *
                  XI23_c(j, i + 1, n3_c) * bof(1, k1) *
-                 u_c(1,j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 +
+                 u_c(1, j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 +
              Jacobian_c(j, i + 2, n3_c) * mu_c(j, i + 2, n3_c) *
                  XI23_c(j, i + 2, n3_c) * bof(1, k1) *
-                 u_c(1,j, i + 2, n3_c + 1 - k1) / 12.0) /
+                 u_c(1, j, i + 2, n3_c + 1 - k1) / 12.0) /
                 l2 / h2_c / h3_c +
             (-Jacobian_c(j, i - 2, n3_c) * mu_c(j, i - 2, n3_c) *
                  XI13_c(j, i - 2, n3_c) * bof(1, k1) *
-                 u_c(2,j, i - 2, n3_c + 1 - k1) / 12.0 +
+                 u_c(2, j, i - 2, n3_c + 1 - k1) / 12.0 +
              Jacobian_c(j, i - 1, n3_c) * mu_c(j, i - 1, n3_c) *
                  XI13_c(j, i - 1, n3_c) * bof(1, k1) *
-                 u_c(2,j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 -
+                 u_c(2, j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 -
              Jacobian_c(j, i + 1, n3_c) * mu_c(j, i + 1, n3_c) *
                  XI13_c(j, i + 1, n3_c) * bof(1, k1) *
-                 u_c(2,j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 +
+                 u_c(2, j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 +
              Jacobian_c(j, i + 2, n3_c) * mu_c(j, i + 2, n3_c) *
                  XI13_c(j, i + 2, n3_c) * bof(1, k1) *
-                 u_c(2,j, i + 2, n3_c + 1 - k1) / 12.0) /
+                 u_c(2, j, i + 2, n3_c + 1 - k1) / 12.0) /
                 l2 / h2_c / h3_c +
             (-bof(1, k1) * Jacobian_c(j, i, n3_c + 1 - k1) *
              (2.0 * mu_c(j, i, n3_c + 1 - k1) + lambda_c(j, i, n3_c + 1 - k1)) *
              XI13_c(j, i, n3_c + 1 - k1) *
-             (u_c(1,j - 2, i, n3_c + 1 - k1) / 12.0 -
-              u_c(1,j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
-              u_c(1,j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
-              u_c(1,j + 2, i, n3_c + 1 - k1) / 12.0)) /
+             (u_c(1, j - 2, i, n3_c + 1 - k1) / 12.0 -
+              u_c(1, j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
+              u_c(1, j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
+              u_c(1, j + 2, i, n3_c + 1 - k1) / 12.0)) /
                 l1 / h3_c / h1_c +
             (-bof(1, k1) * Jacobian_c(j, i, n3_c + 1 - k1) *
              mu_c(j, i, n3_c + 1 - k1) * XI23_c(j, i, n3_c + 1 - k1) *
-             (u_c(2,j - 2, i, n3_c + 1 - k1) / 12.0 -
-              u_c(2,j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
-              u_c(2,j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
-              u_c(2,j + 2, i, n3_c + 1 - k1) / 12.0)) /
+             (u_c(2, j - 2, i, n3_c + 1 - k1) / 12.0 -
+              u_c(2, j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
+              u_c(2, j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
+              u_c(2, j + 2, i, n3_c + 1 - k1) / 12.0)) /
                 l1 / h3_c / h1_c +
             (-bof(1, k1) * Jacobian_c(j, i, n3_c + 1 - k1) *
              mu_c(j, i, n3_c + 1 - k1) * XI33_c(j, i, n3_c + 1 - k1) *
-             (u_c(3,j - 2, i, n3_c + 1 - k1) / 12.0 -
-              u_c(3,j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
-              u_c(3,j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
-              u_c(3,j + 2, i, n3_c + 1 - k1) / 12.0)) /
+             (u_c(3, j - 2, i, n3_c + 1 - k1) / 12.0 -
+              u_c(3, j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
+              u_c(3, j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
+              u_c(3, j + 2, i, n3_c + 1 - k1) / 12.0)) /
                 l1 / h1_c / h3_c +
             (-bof(1, k1) * Jacobian_c(j, i, n3_c + 1 - k1) *
              mu_c(j, i, n3_c + 1 - k1) * XI23_c(j, i, n3_c + 1 - k1) *
-             (u_c(1,j, i - 2, n3_c + 1 - k1) / 12.0 -
-              u_c(1,j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 +
-              u_c(1,j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 -
-              u_c(1,j, i + 2, n3_c + 1 - k1) / 12.0)) /
+             (u_c(1, j, i - 2, n3_c + 1 - k1) / 12.0 -
+              u_c(1, j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 +
+              u_c(1, j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 -
+              u_c(1, j, i + 2, n3_c + 1 - k1) / 12.0)) /
                 l2 / h3_c / h2_c +
             (-bof(1, k1) * Jacobian_c(j, i, n3_c + 1 - k1) *
              lambda_c(j, i, n3_c + 1 - k1) * XI13_c(j, i, n3_c + 1 - k1) *
-             (u_c(2,j, i - 2, n3_c + 1 - k1) / 12.0 -
-              u_c(2,j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 +
-              u_c(2,j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 -
-              u_c(2,j, i + 2, n3_c + 1 - k1) / 12.0)) /
+             (u_c(2, j, i - 2, n3_c + 1 - k1) / 12.0 -
+              u_c(2, j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 +
+              u_c(2, j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 -
+              u_c(2, j, i + 2, n3_c + 1 - k1) / 12.0)) /
                 l2 / h3_c / h2_c;
         // second set equation
         lh_c(j, i, n3_c, 2) =
             lh_c(j, i, n3_c, 2) +
             (-Jacobian_c(j - 2, i, n3_c) * mu_c(j - 2, i, n3_c) *
                  XI23_c(j - 2, i, n3_c) * bof(1, k1) *
-                 u_c(1,j - 2, i, n3_c + 1 - k1) / 12.0 +
+                 u_c(1, j - 2, i, n3_c + 1 - k1) / 12.0 +
              Jacobian_c(j - 1, i, n3_c) * mu_c(j - 1, i, n3_c) *
                  XI23_c(j - 1, i, n3_c) * bof(1, k1) *
-                 u_c(1,j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
+                 u_c(1, j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
              Jacobian_c(j + 1, i, n3_c) * mu_c(j + 1, i, n3_c) *
                  XI23_c(j + 1, i, n3_c) * bof(1, k1) *
-                 u_c(1,j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
+                 u_c(1, j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
              Jacobian_c(j + 2, i, n3_c) * mu_c(j + 2, i, n3_c) *
                  XI23_c(j + 2, i, n3_c) * bof(1, k1) *
-                 u_c(1,j + 2, i, n3_c + 1 - k1) / 12.0) /
+                 u_c(1, j + 2, i, n3_c + 1 - k1) / 12.0) /
                 l1 / h1_c / h3_c +
             (-Jacobian_c(j - 2, i, n3_c) * mu_c(j - 2, i, n3_c) *
                  XI13_c(j - 2, i, n3_c) * bof(1, k1) *
-                 u_c(2,j - 2, i, n3_c + 1 - k1) / 12.0 +
+                 u_c(2, j - 2, i, n3_c + 1 - k1) / 12.0 +
              Jacobian_c(j - 1, i, n3_c) * mu_c(j - 1, i, n3_c) *
                  XI13_c(j - 1, i, n3_c) * bof(1, k1) *
-                 u_c(2,j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
+                 u_c(2, j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
              Jacobian_c(j + 1, i, n3_c) * mu_c(j + 1, i, n3_c) *
                  XI13_c(j + 1, i, n3_c) * bof(1, k1) *
-                 u_c(2,j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
+                 u_c(2, j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
              Jacobian_c(j + 2, i, n3_c) * mu_c(j + 2, i, n3_c) *
                  XI13_c(j + 2, i, n3_c) * bof(1, k1) *
-                 u_c(2,j + 2, i, n3_c + 1 - k1) / 12.0) /
+                 u_c(2, j + 2, i, n3_c + 1 - k1) / 12.0) /
                 l1 / h1_c / h3_c +
             (-Jacobian_c(j, i - 2, n3_c) * lambda_c(j, i - 2, n3_c) *
                  XI13_c(j, i - 2, n3_c) * bof(1, k1) *
-                 u_c(1,j, i - 2, n3_c + 1 - k1) / 12.0 +
+                 u_c(1, j, i - 2, n3_c + 1 - k1) / 12.0 +
              Jacobian_c(j, i - 1, n3_c) * lambda_c(j, i - 1, n3_c) *
                  XI13_c(j, i - 1, n3_c) * bof(1, k1) *
-                 u_c(1,j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 -
+                 u_c(1, j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 -
              Jacobian_c(j, i + 1, n3_c) * lambda_c(j, i + 1, n3_c) *
                  XI13_c(j, i + 1, n3_c) * bof(1, k1) *
-                 u_c(1,j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 +
+                 u_c(1, j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 +
              Jacobian_c(j, i + 2, n3_c) * lambda_c(j, i + 2, n3_c) *
                  XI13_c(j, i + 2, n3_c) * bof(1, k1) *
-                 u_c(1,j, i + 2, n3_c + 1 - k1) / 12.0) /
+                 u_c(1, j, i + 2, n3_c + 1 - k1) / 12.0) /
                 l2 / h2_c / h3_c +
             (-Jacobian_c(j, i - 2, n3_c) *
                  (2.0 * mu_c(j, i - 2, n3_c) + lambda_c(j, i - 2, n3_c)) *
                  XI23_c(j, i - 2, n3_c) * bof(1, k1) *
-                 u_c(2,j, i - 2, n3_c + 1 - k1) / 12.0 +
+                 u_c(2, j, i - 2, n3_c + 1 - k1) / 12.0 +
              Jacobian_c(j, i - 1, n3_c) *
                  (2.0 * mu_c(j, i - 1, n3_c) + lambda_c(j, i - 1, n3_c)) *
                  XI23_c(j, i - 1, n3_c) * bof(1, k1) *
-                 u_c(2,j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 -
+                 u_c(2, j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 -
              Jacobian_c(j, i + 1, n3_c) *
                  (2.0 * mu_c(j, i + 1, n3_c) + lambda_c(j, i + 1, n3_c)) *
                  XI23_c(j, i + 1, n3_c) * bof(1, k1) *
-                 u_c(2,j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 +
+                 u_c(2, j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 +
              Jacobian_c(j, i + 2, n3_c) *
                  (2.0 * mu_c(j, i + 2, n3_c) + lambda_c(j, i + 2, n3_c)) *
                  XI23_c(j, i + 2, n3_c) * bof(1, k1) *
-                 u_c(2,j, i + 2, n3_c + 1 - k1) / 12.0) /
+                 u_c(2, j, i + 2, n3_c + 1 - k1) / 12.0) /
                 l2 / h2_c / h3_c +
             (-Jacobian_c(j, i - 2, n3_c) * lambda_c(j, i - 2, n3_c) *
                  XI33_c(j, i - 2, n3_c) * bof(1, k1) *
-                 u_c(3,j, i - 2, n3_c + 1 - k1) / 12.0 +
+                 u_c(3, j, i - 2, n3_c + 1 - k1) / 12.0 +
              Jacobian_c(j, i - 1, n3_c) * lambda_c(j, i - 1, n3_c) *
                  XI33_c(j, i - 1, n3_c) * bof(1, k1) *
-                 u_c(3,j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 -
+                 u_c(3, j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 -
              Jacobian_c(j, i + 1, n3_c) * lambda_c(j, i + 1, n3_c) *
                  XI33_c(j, i + 1, n3_c) * bof(1, k1) *
-                 u_c(3,j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 +
+                 u_c(3, j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 +
              Jacobian_c(j, i + 2, n3_c) * lambda_c(j, i + 2, n3_c) *
                  XI33_c(j, i + 2, n3_c) * bof(1, k1) *
-                 u_c(3,j, i + 2, n3_c + 1 - k1) / 12.0) /
+                 u_c(3, j, i + 2, n3_c + 1 - k1) / 12.0) /
                 l2 / h2_c / h3_c +
             (-bof(1, k1) * Jacobian_c(j, i, n3_c + 1 - k1) *
              lambda_c(j, i, n3_c + 1 - k1) * XI23_c(j, i, n3_c + 1 - k1) *
-             (u_c(1,j - 2, i, n3_c + 1 - k1) / 12.0 -
-              u_c(1,j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
-              u_c(1,j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
-              u_c(1,j + 2, i, n3_c + 1 - k1) / 12.0)) /
+             (u_c(1, j - 2, i, n3_c + 1 - k1) / 12.0 -
+              u_c(1, j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
+              u_c(1, j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
+              u_c(1, j + 2, i, n3_c + 1 - k1) / 12.0)) /
                 l1 / h1_c / h3_c +
             (-bof(1, k1) * Jacobian_c(j, i, n3_c + 1 - k1) *
              mu_c(j, i, n3_c + 1 - k1) * XI13_c(j, i, n3_c + 1 - k1) *
-             (u_c(2,j - 2, i, n3_c + 1 - k1) / 12.0 -
-              u_c(2,j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
-              u_c(2,j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
-              u_c(2,j + 2, i, n3_c + 1 - k1) / 12.0)) /
+             (u_c(2, j - 2, i, n3_c + 1 - k1) / 12.0 -
+              u_c(2, j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
+              u_c(2, j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
+              u_c(2, j + 2, i, n3_c + 1 - k1) / 12.0)) /
                 l1 / h1_c / h3_c +
             (-bof(1, k1) * Jacobian_c(j, i, n3_c + 1 - k1) *
              mu_c(j, i, n3_c + 1 - k1) * XI13_c(j, i, n3_c + 1 - k1) *
-             (u_c(1,j, i - 2, n3_c + 1 - k1) / 12.0 -
-              u_c(1,j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 +
-              u_c(1,j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 -
-              u_c(1,j, i + 2, n3_c + 1 - k1) / 12.0)) /
+             (u_c(1, j, i - 2, n3_c + 1 - k1) / 12.0 -
+              u_c(1, j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 +
+              u_c(1, j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 -
+              u_c(1, j, i + 2, n3_c + 1 - k1) / 12.0)) /
                 l2 / h3_c / h2_c +
             (-bof(1, k1) * Jacobian_c(j, i, n3_c + 1 - k1) *
              (2.0 * mu_c(j, i, n3_c + 1 - k1) + lambda_c(j, i, n3_c + 1 - k1)) *
              XI23_c(j, i, n3_c + 1 - k1) *
-             (u_c(2,j, i - 2, n3_c + 1 - k1) / 12.0 -
-              u_c(2,j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 +
-              u_c(2,j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 -
-              u_c(2,j, i + 2, n3_c + 1 - k1) / 12.0)) /
+             (u_c(2, j, i - 2, n3_c + 1 - k1) / 12.0 -
+              u_c(2, j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 +
+              u_c(2, j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 -
+              u_c(2, j, i + 2, n3_c + 1 - k1) / 12.0)) /
                 l2 / h3_c / h2_c +
             (-bof(1, k1) * Jacobian_c(j, i, n3_c + 1 - k1) *
              mu_c(j, i, n3_c + 1 - k1) * XI33_c(j, i, n3_c + 1 - k1) *
-             (u_c(3,j, i - 2, n3_c + 1 - k1) / 12.0 -
-              u_c(3,j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 +
-              u_c(3,j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 -
-              u_c(3,j, i + 2, n3_c + 1 - k1) / 12.0)) /
+             (u_c(3, j, i - 2, n3_c + 1 - k1) / 12.0 -
+              u_c(3, j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 +
+              u_c(3, j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 -
+              u_c(3, j, i + 2, n3_c + 1 - k1) / 12.0)) /
                 l2 / h3_c / h2_c;
         // third set equation
         lh_c(j, i, n3_c, 3) =
             lh_c(j, i, n3_c, 3) +
             (-Jacobian_c(j - 2, i, n3_c) * mu_c(j - 2, i, n3_c) *
                  XI33_c(j - 2, i, n3_c) * bof(1, k1) *
-                 u_c(1,j - 2, i, n3_c + 1 - k1) / 12.0 +
+                 u_c(1, j - 2, i, n3_c + 1 - k1) / 12.0 +
              Jacobian_c(j - 1, i, n3_c) * mu_c(j - 1, i, n3_c) *
                  XI33_c(j - 1, i, n3_c) * bof(1, k1) *
-                 u_c(1,j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
+                 u_c(1, j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
              Jacobian_c(j + 1, i, n3_c) * mu_c(j + 1, i, n3_c) *
                  XI33_c(j + 1, i, n3_c) * bof(1, k1) *
-                 u_c(1,j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
+                 u_c(1, j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
              Jacobian_c(j + 2, i, n3_c) * mu_c(j + 2, i, n3_c) *
                  XI33_c(j + 2, i, n3_c) * bof(1, k1) *
-                 u_c(1,j + 2, i, n3_c + 1 - k1) / 12.0) /
+                 u_c(1, j + 2, i, n3_c + 1 - k1) / 12.0) /
                 l1 / h1_c / h3_c +
             (-Jacobian_c(j - 2, i, n3_c) * mu_c(j - 2, i, n3_c) *
                  XI13_c(j - 2, i, n3_c) * bof(1, k1) *
-                 u_c(3,j - 2, i, n3_c + 1 - k1) / 12.0 +
+                 u_c(3, j - 2, i, n3_c + 1 - k1) / 12.0 +
              Jacobian_c(j - 1, i, n3_c) * mu_c(j - 1, i, n3_c) *
                  XI13_c(j - 1, i, n3_c) * bof(1, k1) *
-                 u_c(3,j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
+                 u_c(3, j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
              Jacobian_c(j + 1, i, n3_c) * mu_c(j + 1, i, n3_c) *
                  XI13_c(j + 1, i, n3_c) * bof(1, k1) *
-                 u_c(3,j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
+                 u_c(3, j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
              Jacobian_c(j + 2, i, n3_c) * mu_c(j + 2, i, n3_c) *
                  XI13_c(j + 2, i, n3_c) * bof(1, k1) *
-                 u_c(3,j + 2, i, n3_c + 1 - k1) / 12.0) /
+                 u_c(3, j + 2, i, n3_c + 1 - k1) / 12.0) /
                 l1 / h1_c / h3_c +
             (-Jacobian_c(j, i - 2, n3_c) * mu_c(j, i - 2, n3_c) *
                  XI33_c(j, i - 2, n3_c) * bof(1, k1) *
-                 u_c(2,j, i - 2, n3_c + 1 - k1) / 12.0 +
+                 u_c(2, j, i - 2, n3_c + 1 - k1) / 12.0 +
              Jacobian_c(j, i - 1, n3_c) * mu_c(j, i - 1, n3_c) *
                  XI33_c(j, i - 1, n3_c) * bof(1, k1) *
-                 u_c(2,j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 -
+                 u_c(2, j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 -
              Jacobian_c(j, i + 1, n3_c) * mu_c(j, i + 1, n3_c) *
                  XI33_c(j, i + 1, n3_c) * bof(1, k1) *
-                 u_c(2,j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 +
+                 u_c(2, j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 +
              Jacobian_c(j, i + 2, n3_c) * mu_c(j, i + 2, n3_c) *
                  XI33_c(j, i + 2, n3_c) * bof(1, k1) *
-                 u_c(2,j, i + 2, n3_c + 1 - k1) / 12.0) /
+                 u_c(2, j, i + 2, n3_c + 1 - k1) / 12.0) /
                 l2 / h2_c / h3_c +
             (-Jacobian_c(j, i - 2, n3_c) * mu_c(j, i - 2, n3_c) *
                  XI23_c(j, i - 2, n3_c) * bof(1, k1) *
-                 u_c(3,j, i - 2, n3_c + 1 - k1) / 12.0 +
+                 u_c(3, j, i - 2, n3_c + 1 - k1) / 12.0 +
              Jacobian_c(j, i - 1, n3_c) * mu_c(j, i - 1, n3_c) *
                  XI23_c(j, i - 1, n3_c) * bof(1, k1) *
-                 u_c(3,j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 -
+                 u_c(3, j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 -
              Jacobian_c(j, i + 1, n3_c) * mu_c(j, i + 1, n3_c) *
                  XI23_c(j, i + 1, n3_c) * bof(1, k1) *
-                 u_c(3,j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 +
+                 u_c(3, j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 +
              Jacobian_c(j, i + 2, n3_c) * mu_c(j, i + 2, n3_c) *
                  XI23_c(j, i + 2, n3_c) * bof(1, k1) *
-                 u_c(3,j, i + 2, n3_c + 1 - k1) / 12.0) /
+                 u_c(3, j, i + 2, n3_c + 1 - k1) / 12.0) /
                 l2 / h2_c / h3_c +
             (-bof(1, k1) * Jacobian_c(j, i, n3_c + 1 - k1) *
              lambda_c(j, i, n3_c + 1 - k1) * XI33_c(j, i, n3_c + 1 - k1) *
-             (u_c(1,j - 2, i, n3_c + 1 - k1) / 12.0 -
-              u_c(1,j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
-              u_c(1,j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
-              u_c(1,j + 2, i, n3_c + 1 - k1) / 12.0)) /
+             (u_c(1, j - 2, i, n3_c + 1 - k1) / 12.0 -
+              u_c(1, j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
+              u_c(1, j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
+              u_c(1, j + 2, i, n3_c + 1 - k1) / 12.0)) /
                 l1 / h3_c / h1_c +
             (-bof(1, k1) * Jacobian_c(j, i, n3_c + 1 - k1) *
              mu_c(j, i, n3_c + 1 - k1) * XI13_c(j, i, n3_c + 1 - k1) *
-             (u_c(3,j - 2, i, n3_c + 1 - k1) / 12.0 -
-              u_c(3,j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
-              u_c(3,j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
-              u_c(3,j + 2, i, n3_c + 1 - k1) / 12.0)) /
+             (u_c(3, j - 2, i, n3_c + 1 - k1) / 12.0 -
+              u_c(3, j - 1, i, n3_c + 1 - k1) * 2.0 / 3.0 +
+              u_c(3, j + 1, i, n3_c + 1 - k1) * 2.0 / 3.0 -
+              u_c(3, j + 2, i, n3_c + 1 - k1) / 12.0)) /
                 l1 / h3_c / h1_c +
             (-bof(1, k1) * Jacobian_c(j, i, n3_c + 1 - k1) *
              lambda_c(j, i, n3_c + 1 - k1) * XI33_c(j, i, n3_c + 1 - k1) *
-             (u_c(2,j, i - 2, n3_c + 1 - k1) / 12.0 -
-              u_c(2,j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 +
-              u_c(2,j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 -
-              u_c(2,j, i + 2, n3_c + 1 - k1) / 12.0)) /
+             (u_c(2, j, i - 2, n3_c + 1 - k1) / 12.0 -
+              u_c(2, j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 +
+              u_c(2, j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 -
+              u_c(2, j, i + 2, n3_c + 1 - k1) / 12.0)) /
                 l2 / h2_c / h3_c +
             (-bof(1, k1) * Jacobian_c(j, i, n3_c + 1 - k1) *
              mu_c(j, i, n3_c + 1 - k1) * XI23_c(j, i, n3_c + 1 - k1) *
-             (u_c(3,j, i - 2, n3_c + 1 - k1) / 12.0 -
-              u_c(3,j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 +
-              u_c(3,j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 -
-              u_c(3,j, i + 2, n3_c + 1 - k1) / 12.0)) /
+             (u_c(3, j, i - 2, n3_c + 1 - k1) / 12.0 -
+              u_c(3, j, i - 1, n3_c + 1 - k1) * 2.0 / 3.0 +
+              u_c(3, j, i + 1, n3_c + 1 - k1) * 2.0 / 3.0 -
+              u_c(3, j, i + 2, n3_c + 1 - k1) / 12.0)) /
                 l2 / h2_c / h3_c;
       }
     }
@@ -2895,7 +2895,7 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
                 (2.0 * mu_f(i - 1, j, 1) + lambda_f(i - 1, j, 1)) / 6.0 -
             Jacobian_f(i, j, 1) * (2.0 * mu_f(i, j, 1) + lambda_f(i, j, 1)) /
                 8.0) *
-	   u_f(1,i - 2, j, 1) +
+               u_f(1, i - 2, j, 1) +
            (Jacobian_f(i - 2, j, 1) *
                 (2.0 * mu_f(i - 2, j, 1) + lambda_f(i - 2, j, 1)) / 6.0 +
             Jacobian_f(i - 1, j, 1) *
@@ -3572,7 +3572,7 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
             Jacobian_f(i, k, 1) * mu_f(i, k, 1) / l2 * XI23_f(i, k, 1) *
                 ux_cof(j) * u_f(1, i, k + j, 1) / h2_f +
             Jacobian_f(i, k, 1) * lambda_f(i, k, 1) / l2 * XI13_f(i, k, 1) *
-	  ux_cof(j) * u_f(2, i, k + j, 1) / h2_f;
+                ux_cof(j) * u_f(2, i, k + j, 1) / h2_f;
         // second set equation
         lh_f(i, k, 1, 2) =
             lh_f(i, k, 1, 2) +
@@ -3594,7 +3594,7 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
             Jacobian_f(i, k, 1) * mu_f(i, k, 1) / l1 * XI13_f(i, k, 1) *
                 ux_cof(j) * u_f(3, i + j, k, 1) / h1_f +
             Jacobian_f(i, k, 1) * lambda_f(i, k, 1) / l2 * XI33_f(i, k, 1) *
-	  ux_cof(j) * u_f(2,i, k + j, 1) / h2_f +
+                ux_cof(j) * u_f(2, i, k + j, 1) / h2_f +
             Jacobian_f(i, k, 1) * mu_f(i, k, 1) / l2 * XI23_f(i, k, 1) *
                 ux_cof(j) * u_f(3, i, k + j, 1) / h2_f;
       }
@@ -9144,7 +9144,7 @@ void update_interior(Sarray &u_c_t, Sarray &u_f_t, Farray &bof, Farray &ghcof,
   }
   //
   // std::cout<<"END \n";
-} // END UPDATE INTERIOR
+}  // END UPDATE INTERIOR
 
 void forcing(float_sw4 x1, float_sw4 x2, float_sw4 x3, float_sw4 t,
              float_sw4 &f1, float_sw4 &f2, float_sw4 &f3) {
@@ -9376,11 +9376,11 @@ void update_gp(Farray &Xgrid_c_1, Farray &Xgrid_c_2, Farray &Xgrid_c_3,
     for (j = 1 - nrg; j <= n2_c + nrg; j++) {
       for (k = 1 - nrg; k <= 0; k++) {
         exact_solution(Xgrid_c_1(k), Xgrid_c_2(j), Xgrid_c_3(k, j, i), tv,
-                       u_c(1,k, j, i), u_c(2,k, j, i), u_c(3,k, j, i), 0);
+                       u_c(1, k, j, i), u_c(2, k, j, i), u_c(3, k, j, i), 0);
       }
       for (k = n1_c + 1; k <= n1_c + nrg; k++) {
         exact_solution(Xgrid_c_1(k), Xgrid_c_2(j), Xgrid_c_3(k, j, i), tv,
-                       u_c(1,k, j, i), u_c(2,k, j, i), u_c(3,k, j, i), 0);
+                       u_c(1, k, j, i), u_c(2, k, j, i), u_c(3, k, j, i), 0);
       }
     }
   }
@@ -9405,13 +9405,13 @@ void update_gp(Farray &Xgrid_c_1, Farray &Xgrid_c_2, Farray &Xgrid_c_3,
     for (j = 1 - nrg; j <= 0; j++) {
       for (k = 1; k <= n1_c; k++) {
         exact_solution(Xgrid_c_1(k), Xgrid_c_2(j), Xgrid_c_3(k, j, i), tv,
-                       u_c(1,k, j, i), u_c(2,k, j, i), u_c(3,k, j, i), 0);
+                       u_c(1, k, j, i), u_c(2, k, j, i), u_c(3, k, j, i), 0);
       }
     }
     for (j = n2_c + 1; j <= n2_c + nrg; j++) {
       for (k = 1; k <= n1_c; k++) {
         exact_solution(Xgrid_c_1(k), Xgrid_c_2(j), Xgrid_c_3(k, j, i), tv,
-                       u_c(1,k, j, i), u_c(2,k, j, i), u_c(3,k, j, i), 0);
+                       u_c(1, k, j, i), u_c(2, k, j, i), u_c(3, k, j, i), 0);
       }
     }
   }
@@ -9789,7 +9789,7 @@ void update_traction(Sarray &traction_data, Farray &Xgrid_f_1,
                 XI33_f(i, j, n3_f)) *
                traction_rhs[3]);
       // update the third component
-      u_f(3,i, j, n3_f + 1) =
+      u_f(3, i, j, n3_f + 1) =
           h3_f / Sb(0) / mat_det *
           ((Jacobian_f(i, j, n3_f) * (lambda_f(i, j, n3_f) + mu_f(i, j, n3_f)) *
                 XI13_f(i, j, n3_f) * XI23_f(i, j, n3_f) *
@@ -9837,7 +9837,7 @@ void update_traction(Sarray &traction_data, Farray &Xgrid_f_1,
                traction_rhs[3]);
     }
   }
-} //TRACTION
+}  // TRACTION
 
 void top_normal_data(float_sw4 x1, float_sw4 x2, float_sw4 x3, float_sw4 l1,
                      float_sw4 l2, float_sw4 t, int i, int j, Sarray &g,
@@ -9932,7 +9932,7 @@ void update_dirichlet_bc(Farray &Xgrid_c_1, Farray &Xgrid_c_2,
     for (k = 1 - nrg; k <= n1_c + nrg; k++) {
       i = 1;
       exact_solution(Xgrid_c_1(k), Xgrid_c_2(j), Xgrid_c_3(k, j, i), tv,
-                     u_c(1,k, j, i), u_c(2,k, j, i), u_c(3,k, j, i), 0);
+                     u_c(1, k, j, i), u_c(2, k, j, i), u_c(3, k, j, i), 0);
       i = n3_c;
       // call
       // exact_solution(Xgrid_c(k,j,i,1),Xgrid_c(k,j,i,2),Xgrid_c(k,j,3),tv, &
