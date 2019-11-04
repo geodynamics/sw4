@@ -36,9 +36,9 @@ void interface_lhs(Farray &LHS, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
                    Sarray &XI33_c, Sarray &XI13_f, Sarray &XI23_f,
                    Sarray &XI33_f, Farray &P, Farray &Sb, Farray &Rop,
                    Farray &sbop_no_gp, Farray &acof_no_gp, Sarray &u_c,
-                   Farray &u_f, Farray &Mass_f1, Farray &ux_cof, Farray &ghcof,
+                   Sarray &u_f, Farray &Mass_f1, Farray &ux_cof, Farray &ghcof,
                    Farray &acof, Farray &bof, PackArgs &a, int index);
-void injection(Farray &u_f, Sarray &u_c, Farray &P, PackArgs &a, int index);
+void injection(Sarray &u_f, Sarray &u_c, Farray &P, PackArgs &a, int index);
 
 void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
                    Sarray &Jacobian_f, Sarray &mu_c, Sarray &mu_f,
@@ -47,9 +47,9 @@ void interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_f, Sarray &Jacobian_c,
                    Sarray &XI33_c, Sarray &XI13_f, Sarray &XI23_f,
                    Sarray &XI33_f, Farray &P, Farray &Sb, Farray &Rop,
                    Farray &sbop_no_gp, Farray &acof_no_gp, Sarray &u_c,
-                   Farray &u_f, Farray &Mass_f1, Farray &ux_cof, Farray &ghcof,
+                   Sarray &u_f, Farray &Mass_f1, Farray &ux_cof, Farray &ghcof,
                    Farray &acof, Farray &bof, PackArgs &a, int index);
-void update_interior(Sarray &u_c_t, Farray &u_f_t, Farray &bof, Farray &ghcof,
+void update_interior(Sarray &u_c_t, Sarray &u_f_t, Farray &bof, Farray &ghcof,
                      Farray &acof, Farray &acof_no_gp, Farray &lh_f,
                      Sarray &Jacobian_f, Sarray &mu_f, Sarray &lambda_f,
                      Sarray &XI13_f, Sarray &XI23_f, Sarray &XI33_f,
@@ -63,11 +63,11 @@ void forcing_tt(float_sw4 x1, float_sw4 x2, float_sw4 x3, float_sw4 t,
                 float_sw4 &f1tt, float_sw4 &f2tt, float_sw4 &f3tt);
 void update_gp(Farray &Xgrid_c_1, Farray &Xgrid_c_2, Farray &Xgrid_c_3,
                Sarray &u_c, Farray &Xgrid_f_1, Farray &Xgrid_f_2,
-               Farray &Xgrid_f_3, Farray &u_f, float_sw4 tv, PackArgs &a,
+               Farray &Xgrid_f_3, Sarray &u_f, float_sw4 tv, PackArgs &a,
                int index);
 
 void update_traction(Sarray &traction_data, Farray &Xgrid_f_1,
-                     Farray &Xgrid_f_2, Farray &Xgrid_f_3, Farray &u_f,
+                     Farray &Xgrid_f_2, Farray &Xgrid_f_3, Sarray &u_f,
                      Sarray &mu_f, Sarray &lambda_f, Sarray &Jacobian_f,
                      Sarray &XI13_f, Sarray &XI23_f, Sarray &XI33_f, Farray &Sb,
                      float_sw4 tv, PackArgs &a, int index);
