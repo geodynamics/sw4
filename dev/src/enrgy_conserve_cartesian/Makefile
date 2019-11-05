@@ -16,7 +16,7 @@ LD = $(FC)
 
 # Object files
 
-OBJS = energy_test_cartesian.o problemsetup_new_3d.o SBP_operator.o
+OBJS = energy_test.o problemsetup_new_3d.o SBP_operator.o
 
 #
 .PHONY:copy
@@ -35,7 +35,7 @@ $(BINDIR)/energy_test_cartesian.x: $(OBJS)
 
 # The dependencies between modules
 
-energy_test_cartesian.f90: problemsetup_new_3d.mod SBP_operator.mod
+energy_test.f90: problemsetup_new_3d.mod SBP_operator.mod
 
 clean:
 	rm -rf *.x *.o *.a *.mod *.txt s0* f0* smultivar.0* fmultivar.0* *__genmod.f90 *~ *#
