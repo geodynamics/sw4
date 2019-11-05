@@ -32,11 +32,11 @@ end
     axis equal
     xlabel('x')
     ylabel('z')
-    title('u1,t=0.5')
+    title('u1,t=1')
     colorbar
 
 times = load('times.txt');
 energy = load('energy.txt');
 
 figure(2)
-plot(times(1:38),energy(1:38),'-o')
+plot(times(1:34),energy(1:34),'-o')
