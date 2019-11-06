@@ -990,15 +990,18 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount,
   SW4_MARK_FUNCTION;
   SW4_MARK_BEGIN("THE REST");
   MPI_Request send_req = MPI_REQUEST_NULL, recv_req = MPI_REQUEST_NULL;
-  std::chrono::high_resolution_clock::time_point t1, t2;
+
   int recv_count = std::get<0>(recvt) * std::get<1>(recvt);
   int send_count = std::get<0>(sendt) * std::get<1>(sendt);
   SW4_MARK_END("THE REST");
 #if defined(ENABLE_MPI_TIMING_BARRIER)
-  t1 = SW4_CHRONO_NOW;
-  MPI_Barrier(MPI_COMM_WORLD);
-  t2 = SW4_CHRONO_NOW;
 #if defined(SW4_TRACK_MPI)
+  std::chrono::high_resolution_clock::time_point t1, t2;
+  t1 = SW4_CHRONO_NOW;
+#endif
+  MPI_Barrier(MPI_COMM_WORLD);
+#if defined(SW4_TRACK_MPI)
+  t2 = SW4_CHRONO_NOW;
   coll_sm.insert(0, SW4_CHRONO_DURATION_US(t1, t2));
 #endif
 #endif
@@ -1362,15 +1365,18 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount,
   SW4_MARK_FUNCTION;
   SW4_MARK_BEGIN("THE REST2");
   MPI_Request send_req = MPI_REQUEST_NULL, recv_req = MPI_REQUEST_NULL;
-  std::chrono::high_resolution_clock::time_point t1, t2;
+
   int recv_count = std::get<0>(recvt) * std::get<1>(recvt);
   int send_count = std::get<0>(sendt) * std::get<1>(sendt);
   SW4_MARK_END("THE REST2");
 #if defined(ENABLE_MPI_TIMING_BARRIER)
-  t1 = SW4_CHRONO_NOW;
-  MPI_Barrier(MPI_COMM_WORLD);
-  t2 = SW4_CHRONO_NOW;
 #if defined(SW4_TRACK_MPI)
+  std::chrono::high_resolution_clock::time_point t1, t2;
+  t1 = SW4_CHRONO_NOW;
+#endif
+  MPI_Barrier(MPI_COMM_WORLD);
+#if defined(SW4_TRACK_MPI)
+  t2 = SW4_CHRONO_NOW;
   coll_sm.insert(2, SW4_CHRONO_DURATION_US(t1, t2));
 #endif
 #endif

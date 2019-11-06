@@ -367,8 +367,8 @@ void AllDims::decomp1d_2(int N, int myid, int nproc, int& s, int& e, int nghost,
 // and padding points are added after distribution.
 //
 {
-  int nglobal = N + 2 * nghost;
-  int olap = 2 * npad;
+  //  int nglobal = N + 2 * nghost;
+  // int olap = 2 * npad;
 
   int nlocal = N / nproc;
   int deficit = N % nproc;
