@@ -7052,7 +7052,7 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
   bool cartCoordSet = false, geoCoordSet = false;
   string inhdf5file = "";
   string outhdf5file = "station";
-  int writeEvery = 1;
+  int writeEvery = 0;
   int downSample = 1;
   TimeSeries::receiverMode mode=TimeSeries::Displacement;
   float_sw4 winl, winr;
