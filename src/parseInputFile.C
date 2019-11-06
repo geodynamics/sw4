@@ -7050,32 +7050,15 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
   float_sw4 t0 = 0;
   float_sw4 scalefactor=1;
   bool cartCoordSet = false, geoCoordSet = false;
-  string fileName = "rec";
-  string staName = "station";
-  bool staNameGiven=false;
-  
-  int writeEvery = 0;
+  string inhdf5file = "";
+  string outhdf5file = "station";
+  int writeEvery = 1;
   int downSample = 1;
-
-  bool dateSet = false;
-  bool timeSet = false;
-  bool topodepth = false;
-
-  //  int utc[7];
-  //  bool utcset = false;
-
-  string date = "";
-  string time = "";
-  string sacfile1, sacfile2, sacfile3;
-  string hdf5file = "";
-
-  bool usgsformat = 0, sacformat=0, hdf5format = 1;
   TimeSeries::receiverMode mode=TimeSeries::Displacement;
   float_sw4 winl, winr;
   bool winlset=false, winrset=false;
   char exclstr[4]={'\0','\0','\0','\0'};
   bool usex=true, usey=true, usez=true;
-  bool usgsfileset=false, sf1set=false, sf2set=false, sf3set=false;
   bool scalefactor_set=false;
   int event=0;
 
@@ -7095,14 +7078,12 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
      else if(startswith("hdf5file=", token))
      {
         token += 9; // skip hdf5file=
-        fileName = token;
-        hdf5file = token;
+        inhdf5file = token;
      }
-     else if(startswith("file=", token))
+     else if(startswith("outhdf5file=", token))
      {
-        token += 5; // skip file=
-        fileName = token;
-        hdf5file = token;
+        token += 12; // skip outhdf5file=
+        outhdf5file = token;
      }
      else if(startswith("event=",token))
      {
@@ -7202,7 +7183,7 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
   // Read from HDF5 file, and create time series data
 #ifdef USE_HDF5
   bool is_obs = true;
-  readStationHDF5(this, fileName, staName, writeEvery, downSample, mode, event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax, is_obs, winlset, winrset, winl, winr, usex, usey, usez, t0, scalefactor_set,  scalefactor);
+  readStationHDF5(this, inhdf5file, outhdf5file, writeEvery, downSample, mode, event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax, is_obs, winlset, winrset, winl, winr, usex, usey, usez, t0, scalefactor_set,  scalefactor);
 
 #else
   if (proc_zero())

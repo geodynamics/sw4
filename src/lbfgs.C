@@ -620,7 +620,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
        // Tang: need to create a HDF5 file before writing
        if (GlobalTimeSeries[e].size() > 0 && GlobalTimeSeries[e][0]->getUseHDF5()) {
          if(myRank == 0) 
-           createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][0]->getLastTimeStep(), GlobalTimeSeries[e][0]->getDt(), "_ini");
+           createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "_ini");
          MPI_Barrier(MPI_COMM_WORLD);
        }
 #endif

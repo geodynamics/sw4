@@ -78,8 +78,6 @@ bool myPoint(){ return m_myPoint; }
 receiverMode getMode(){ return m_mode; }
 
 int getUseHDF5(){ return m_hdf5Format; }
-void setHDF5Format(bool flag){m_hdf5Format = flag;};
-void setUSGSFormat(bool flag){m_usgsFormat = flag;};
 
 float_sw4 getX() const {return mX;}
 float_sw4 getY() const {return mY;}
@@ -142,6 +140,8 @@ int m_k0;
 int m_grid0;
 
 #ifdef USE_HDF5
+int   getNsteps() {return m_nsteps;};
+int   setNsteps(int nsteps) {m_nsteps = nsteps;};
 int   allocFid();
 int   setFidPtr(hid_t *fid);
 hid_t *getFidPtr();
@@ -261,6 +261,7 @@ float_sw4 m_scalefactor;
    bool m_isMetaWritten;
    bool m_isIncAzWritten;
    int  m_nptsWritten;
+   int  m_nsteps;
    std::string m_fidName;
 #endif
 };

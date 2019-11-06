@@ -1161,6 +1161,15 @@ int main(int argc, char **argv)
 	      {
 		 TimeSeries *elem = GlobalObservations[e][m]->copy( &simulation, "_out", true );
 		 GlobalTimeSeries[e].push_back(elem);
+#if USE_HDF5
+                 // Allocate HDF5 fid for later file write
+                 if (elem->getUseHDF5()) {
+                   if(m == 0) 
+                     elem->allocFid();
+                   else 
+                     elem->setFidPtr(GlobalTimeSeries[e][0]->getFidPtr());
+                 }
+#endif
 	      }
 	   }
 
@@ -1349,7 +1358,7 @@ int main(int argc, char **argv)
                  // Tang: need to create a HDF5 file before writing
                  if (GlobalTimeSeries[e].size() > 0 && GlobalTimeSeries[e][0]->getUseHDF5()) {
                    if(myRank == 0) 
-                     createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][0]->getLastTimeStep(), GlobalTimeSeries[e][0]->getDt(), "");
+                     createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "");
                    MPI_Barrier(MPI_COMM_WORLD);
                  }
 #endif

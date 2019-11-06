@@ -439,6 +439,10 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
       total_dims = (hsize_t)(totalSteps/TimeSeries[ts]->getDownSample());
       if (totalSteps % TimeSeries[ts]->getDownSample() != 0) 
         total_dims++;
+      if (total_dims == 0) {
+        printf("%s: Error with dataset length 0\n", __func__);
+        return -1;
+      }
       dset_space = H5Screate_simple(1, &total_dims, NULL);
       dset       = H5Dcreate(grp, dset_names[i].c_str(), H5T_NATIVE_FLOAT, dset_space, H5P_DEFAULT, dcpl, H5P_DEFAULT);
       H5Sclose(dset_space);
@@ -455,6 +459,8 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
       H5Dclose(dset);
     }
     H5Gclose(grp);
+
+    TimeSeries[ts]->setNsteps(totalSteps);
   }
 
   H5Pclose(dcpl);

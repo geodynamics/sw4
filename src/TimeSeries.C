@@ -124,6 +124,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_isMetaWritten(false),
   m_isIncAzWritten(false),
   m_nptsWritten(0),
+  m_nsteps(0),
 #endif
   m_event(event)
 {
@@ -452,6 +453,7 @@ void TimeSeries::recordData(vector<float_sw4> & u)
 
    if (mWriteEvery > 0 && mLastTimeStep > 0 && mLastTimeStep % mWriteEvery == 0)
       writeFile();
+
 }
 
    
@@ -2207,6 +2209,11 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
    retval->m_compute_scalefactor = m_compute_scalefactor;
    retval->m_misfit_scaling = m_misfit_scaling;
 
+#ifdef USE_HDF5
+   // Record the number of timesteps for HDF5 dset space allocation
+   retval->m_nsteps = m_nsteps;
+#endif
+
 // Component rotation:
    retval->m_calpha = m_calpha;
    retval->m_salpha = m_salpha;
@@ -3510,6 +3517,11 @@ hid_t TimeSeries::openHDF5File(std::string suffix)
   hid_t fapl;
 
   std::string filename;
+
+  if (NULL == m_fid_ptr) {
+    printf("%s Error! No HDF5 fid allocated!\n", __func__); 
+    return 0;
+  }
 
   // Build the file name
   if( m_path != "." )
