@@ -302,3 +302,6 @@ clean:
 test:
 	echo "Running tests..."
 	/opt/local/bin/ctest --force-new-ctest-process $(ARGS)
+format:
+	clang-format -style Google -i src/*.C
+	clang-format -style Google -i src/*.h

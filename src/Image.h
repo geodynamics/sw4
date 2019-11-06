@@ -3,212 +3,256 @@
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
 // # ----------------------------------------------------------------------
-// # Copyright (c) 2013, Lawrence Livermore National Security, LLC. 
-// # Produced at the Lawrence Livermore National Laboratory. 
-// # 
+// # Copyright (c) 2013, Lawrence Livermore National Security, LLC.
+// # Produced at the Lawrence Livermore National Laboratory.
+// #
 // # Written by:
 // # N. Anders Petersson (petersson1@llnl.gov)
 // # Bjorn Sjogreen      (sjogreen2@llnl.gov)
-// # 
-// # LLNL-CODE-643337 
-// # 
-// # All rights reserved. 
-// # 
+// #
+// # LLNL-CODE-643337
+// #
+// # All rights reserved.
+// #
 // # This file is part of SW4, Version: 1.0
-// # 
-// # Please also read LICENCE.txt, which contains "Our Notice and GNU General Public License"
-// # 
+// #
+// # Please also read LICENCE.txt, which contains "Our Notice and GNU General
+// Public License"
+// #
 // # This program is free software; you can redistribute it and/or modify
 // # it under the terms of the GNU General Public License (as published by
-// # the Free Software Foundation) version 2, dated June 1991. 
-// # 
+// # the Free Software Foundation) version 2, dated June 1991.
+// #
 // # This program is distributed in the hope that it will be useful, but
 // # WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY OF
 // # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the terms and
-// # conditions of the GNU General Public License for more details. 
-// # 
+// # conditions of the GNU General Public License for more details.
+// #
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
-// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
+// # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 #ifndef EW_IMAGE_H
 #define EW_IMAGE_H
 
-#include <string>
 #include <sstream>
+#include <string>
 #include <vector>
 
-#include "boundaryConditionTypes.h"
-#include "Sarray.h"
 #include "Parallel_IO.h"
+#include "Sarray.h"
+#include "boundaryConditionTypes.h"
 
 class EW;
 
-class Image
-{
-public:
+class Image {
+ public:
+  enum ImageMode {
+    NONE,
+    UX,
+    UY,
+    UZ,
+    RHO,
+    LAMBDA,
+    MU,
+    P,
+    S,
+    UXEXACT,
+    UYEXACT,
+    UZEXACT,
+    DIV,
+    CURLMAG,
+    DIVDT,
+    CURLMAGDT,
+    LAT,
+    LON,
+    TOPO,
+    GRIDX,
+    GRIDY,
+    GRIDZ,
+    UXERR,
+    UYERR,
+    UZERR,
+    MAGDUDT,
+    HMAGDUDT,
+    HMAXDUDT,
+    VMAXDUDT,
+    MAG,
+    HMAG,
+    HMAX,
+    VMAX,
+    GRADRHO,
+    GRADMU,
+    GRADLAMBDA,
+    GRADP,
+    GRADS,
+    QP,
+    QS
+  };
 
-   enum ImageMode { NONE, UX, UY, UZ, RHO, LAMBDA, MU, P, S, UXEXACT, UYEXACT, UZEXACT, DIV, CURLMAG,
-		    DIVDT, CURLMAGDT, LAT, LON, TOPO, GRIDX, GRIDY, GRIDZ, UXERR, UYERR, UZERR, 
-		    MAGDUDT, HMAGDUDT, HMAXDUDT, VMAXDUDT, MAG, HMAG, HMAX, VMAX,
-		    GRADRHO, GRADMU, GRADLAMBDA, GRADP, GRADS, QP, QS }; 
+  static int MODES;
+  static Image* nil;
 
-static int MODES;
-static Image* nil;
+  enum ImageOrientation { UNDEFINED, X, Y, Z };
 
-enum ImageOrientation {UNDEFINED, X, Y, Z};
+  Image(EW* a_ew, float_sw4 time, float_sw4 timeInterval, int cycle,
+        int cycleInterval, const std::string& filePrefix, ImageMode mode,
+        ImageOrientation locationType, float_sw4 locationValue, bool doubleMode,
+        bool userCreated = true);
 
-Image(EW * a_ew,
-      float_sw4 time, 
-      float_sw4 timeInterval, 
-      int cycle, 
-      int cycleInterval,
-      const std::string& filePrefix, 
-      ImageMode mode,
-      ImageOrientation locationType, 
-      float_sw4 locationValue,
-      bool doubleMode, bool userCreated=true );
+  static void setSteps(int a_steps);
 
-static  void setSteps(int a_steps);
+  // static void setTiming(float startTime, float dt);
+  // static void setGridAttributes(std::vector<double> a_gridSize      ,
+  // 			      std::vector<double> a_zmin          ,
+  // 			      const int           a_n_ghost_points,
+  // 			      const int           a_padding       );
 
-// static void setTiming(float startTime, float dt);
-// static void setGridAttributes(std::vector<double> a_gridSize      ,
-// 			      std::vector<double> a_zmin          ,
-// 			      const int           a_n_ghost_points,
-// 			      const int           a_padding       );
+  void set_double(bool val = true);
+  /* Here, we compute the index --in the local grid-- of the coordinate value at
+     which we have to plot. For x, y, the local grid is the same as the global
+     grid, but for z, k resets at each refinement boundary. */
+  void computeGridPtIndex();
+  void allocatePlane();
 
-void set_double( bool val=true ); 
-  /* Here, we compute the index --in the local grid-- of the coordinate value at which we have to plot. 
-     For x, y, the local grid is the same as the global grid, but for z, k resets at each refinement boundary. */
-void computeGridPtIndex();
-void allocatePlane();
+  void computeImageQuantity(std::vector<Sarray>& a_mu, int a_nComp);
+  void computeImagePvel(std::vector<Sarray>& mu, std::vector<Sarray>& lambda,
+                        std::vector<Sarray>& rho);
+  void computeImageSvel(std::vector<Sarray>& mu, std::vector<Sarray>& rho);
+  void computeImageGrid(Sarray& a_X, Sarray& a_Y, Sarray& a_Z);
+  void computeImageLatLon(Sarray& a_X, Sarray& a_Y, Sarray& a_Z);
+  void computeImageDivCurl(std::vector<Sarray>& a_Up, std::vector<Sarray>& a_U,
+                           std::vector<Sarray>& a_Um, float_sw4 dt, int dminus);
+  void computeImageMagdt(std::vector<Sarray>& a_Up, std::vector<Sarray>& a_Um,
+                         float_sw4 dt);
+  void computeImageMag(std::vector<Sarray>& a_U);
+  void computeImageHmagdt(std::vector<Sarray>& a_Up, std::vector<Sarray>& a_Um,
+                          float_sw4 dt);
+  void computeImageHmag(std::vector<Sarray>& a_U);
+  void compute_image_gradp(vector<Sarray>& a_gLambda, vector<Sarray>& a_Mu,
+                           vector<Sarray>& a_Lambda, vector<Sarray>& a_Rho);
+  void compute_image_grads(vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
+                           vector<Sarray>& a_Mu, vector<Sarray>& a_Rho);
 
-void computeImageQuantity(std::vector<Sarray> &a_mu, int a_nComp);
-void computeImagePvel(std::vector<Sarray> &mu, std::vector<Sarray> &lambda,
-		      std::vector<Sarray> &rho );
-void computeImageSvel(std::vector<Sarray> &mu, std::vector<Sarray> &rho );
-void computeImageGrid( Sarray &a_X, Sarray &a_Y, Sarray &a_Z );
-void computeImageLatLon( Sarray &a_X, Sarray &a_Y, Sarray &a_Z );
-void computeImageDivCurl( std::vector<Sarray> &a_Up, std::vector<Sarray>& a_U,
-			  std::vector<Sarray> &a_Um, float_sw4 dt, int dminus );
-void computeImageMagdt( std::vector<Sarray> &a_Up, std::vector<Sarray> &a_Um, float_sw4 dt );
-void computeImageMag( std::vector<Sarray> &a_U );
-void computeImageHmagdt( std::vector<Sarray> &a_Up, std::vector<Sarray> &a_Um, float_sw4 dt );
-void computeImageHmag( std::vector<Sarray> &a_U );
-void compute_image_gradp( vector<Sarray>& a_gLambda, vector<Sarray>& a_Mu,
-			  vector<Sarray>& a_Lambda, vector<Sarray>& a_Rho );
-void compute_image_grads( vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda, 
-			  vector<Sarray>& a_Mu, vector<Sarray>& a_Rho );
+  void computeImageQuantityDiff(vector<Sarray>& a_U, vector<Sarray>& a_Uex,
+                                int comp);
 
-void computeImageQuantityDiff( vector<Sarray>& a_U, vector<Sarray>& a_Uex,
-			       int comp );
+  void output_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
+                    vector<Sarray>& a_Up, vector<Sarray>& a_U,
+                    vector<Sarray>& a_Um, vector<Sarray>& a_Rho,
+                    vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+                    vector<Sarray>& a_gRho, vector<Sarray>& a_gMu,
+                    vector<Sarray>& a_gLambda, vector<Source*>& a_sources,
+                    int a_dminus);
 
-void output_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt,
-		   vector<Sarray>& a_Up,  vector<Sarray>& a_U, vector<Sarray>& a_Um,
-		   vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
-		   vector<Sarray>& a_gRho, vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
-		   vector<Source*>& a_sources, int a_dminus );
+  void update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
+                    vector<Sarray>& a_Up, vector<Sarray>& a_U,
+                    vector<Sarray>& a_Um, vector<Sarray>& a_Rho,
+                    vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+                    vector<Sarray>& a_gRho, vector<Sarray>& a_gMu,
+                    vector<Sarray>& a_gLambda, vector<Source*>& a_sources,
+                    int a_dminus);
 
-void update_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt,
-		   vector<Sarray>& a_Up,  vector<Sarray>& a_U, vector<Sarray>& a_Um,
-		   vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
-		   vector<Sarray>& a_gRho, vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
-		   vector<Source*>& a_sources, int a_dminus );
+  // void computeImageError(std::vector<Sarray> &a_mu, int a_nComp);
 
-//void computeImageError(std::vector<Sarray> &a_mu, int a_nComp);
+  void copy2DArrayToImage(Sarray& twoDimensionalArray);
 
-void copy2DArrayToImage(Sarray &twoDimensionalArray);
+  bool is_time_derivative() const;
 
-bool is_time_derivative() const;
+  void associate_gridfiles(vector<Image*>& imgs);
 
-void associate_gridfiles( vector<Image*>& imgs );
-   
-void writeImagePlane_2(int cycle, std::string &a_path, float_sw4 time );
-void add_grid_filenames_to_file( const char* fname );
-void add_grid_to_file( const char* fname, bool iwrite, size_t offset );
+  void writeImagePlane_2(int cycle, std::string& a_path, float_sw4 time);
+  void add_grid_filenames_to_file(const char* fname);
+  void add_grid_to_file(const char* fname, bool iwrite, size_t offset);
 
-bool plane_in_proc(int a_gridIndexCoarsest);
-void initializeIO();
+  bool plane_in_proc(int a_gridIndexCoarsest);
+  void initializeIO();
 
-void computeNearestGridPoint(std::vector<int> & a_arrayIndex, float_sw4 x) const;
-  
-void update_maxes_vVelMax( std::vector<Sarray> &a_Up, std::vector<Sarray> &a_Um, float_sw4 dt );
-void update_maxes_hVelMax( std::vector<Sarray> &a_Up, std::vector<Sarray> &a_Um, float_sw4 dt );
-void update_maxes_vMax( std::vector<Sarray> &a_U );
-void update_maxes_hMax( std::vector<Sarray> &a_U );
+  void computeNearestGridPoint(std::vector<int>& a_arrayIndex,
+                               float_sw4 x) const;
 
-const std::string fieldSuffix(ImageMode mode) const;
+  void update_maxes_vVelMax(std::vector<Sarray>& a_Up,
+                            std::vector<Sarray>& a_Um, float_sw4 dt);
+  void update_maxes_hVelMax(std::vector<Sarray>& a_Up,
+                            std::vector<Sarray>& a_Um, float_sw4 dt);
+  void update_maxes_vMax(std::vector<Sarray>& a_U);
+  void update_maxes_hMax(std::vector<Sarray>& a_U);
 
-bool timeToWrite(float_sw4 time, int cycle, float_sw4 dt );
-bool timeToWrite( int cycle );
-void compute_file_suffix( std::stringstream & fileSuffix, int cycle );
+  const std::string fieldSuffix(ImageMode mode) const;
 
-ImageOrientation getOrientation() const {return mLocationType;};
+  bool timeToWrite(float_sw4 time, int cycle, float_sw4 dt);
+  bool timeToWrite(int cycle);
+  void compute_file_suffix(std::stringstream& fileSuffix, int cycle);
 
-ImageMode mMode;
-std::string mFilePrefix;
-void initializeTime(double t=0.0);
-bool needs_mgrad() const;
+  ImageOrientation getOrientation() const { return mLocationType; };
 
-protected:
+  ImageMode mMode;
+  std::string mFilePrefix;
+  void initializeTime(double t = 0.0);
+  bool needs_mgrad() const;
 
-void define_pio();  
-   //bool proc_write();
+ protected:
+  void define_pio();
+  // bool proc_write();
 
-float_sw4 mTime;
-bool m_time_done;
-float_sw4 mTimeInterval;
-float_sw4 mNextTime;
-int mWritingCycle;
-int mCycleInterval;
-//std::string mFileName;
-  
-std::vector<std::string> mMode2Suffix;
-std::vector<std::string> mOrientationString;
-  
-static int mPreceedZeros; // number of digits for unique time step in file names
+  float_sw4 mTime;
+  bool m_time_done;
+  float_sw4 mTimeInterval;
+  float_sw4 mNextTime;
+  int mWritingCycle;
+  int mCycleInterval;
+  // std::string mFileName;
 
-   //bool m_gridPtValueInitialized;
-  
-private:
+  std::vector<std::string> mMode2Suffix;
+  std::vector<std::string> mOrientationString;
 
-Image(); // make it impossible to call default constructor
-Image(const Image &im); // hide copy constructor 
+  static int
+      mPreceedZeros;  // number of digits for unique time step in file names
 
-void computeDivergence( std::vector<Sarray> &a_U, std::vector<float_sw4*>& a_div );
-void computeCurl( std::vector<Sarray> &a_U, std::vector<float_sw4*>& a_curl );
+  // bool m_gridPtValueInitialized;
 
-   //bool mWriting;
-   //bool mReadyToWrite;
+ private:
+  Image();                 // make it impossible to call default constructor
+  Image(const Image& im);  // hide copy constructor
 
-ImageOrientation mLocationType;
-float_sw4 mCoordValue;
-std::vector<int> m_gridPtIndex;
+  void computeDivergence(std::vector<Sarray>& a_U,
+                         std::vector<float_sw4*>& a_div);
+  void computeCurl(std::vector<Sarray>& a_U, std::vector<float_sw4*>& a_curl);
 
-MPI_Comm m_mpiComm_writers;
-bool m_isDefinedMPIWriters;
+  // bool mWriting;
+  // bool mReadyToWrite;
 
-   //int mNonempty;
+  ImageOrientation mLocationType;
+  float_sw4 mCoordValue;
+  std::vector<int> m_gridPtIndex;
 
-int mGridinfo;   // -1 = undefined, 0=Cartesian patches, 1=Curvilinear grid appended, 2=grid file names appended.
-bool mStoreGrid; // true=append curvilinear grid to image, false=append grid file names to image.
-Image* m_gridimage; // Curvilinear grid z-coordinate 
-bool m_user_created; // true --> This image was created from the input file
+  MPI_Comm m_mpiComm_writers;
+  bool m_isDefinedMPIWriters;
 
-   //int m_rankWriter;
-bool m_isDefined;
-bool m_double;
-EW* mEW;
-Parallel_IO** m_pio;
+  // int mNonempty;
 
-// moved to class EW
-//int m_pfs, m_nwriters;
+  int mGridinfo;    // -1 = undefined, 0=Cartesian patches, 1=Curvilinear grid
+                    // appended, 2=grid file names appended.
+  bool mStoreGrid;  // true=append curvilinear grid to image, false=append grid
+                    // file names to image.
+  Image* m_gridimage;   // Curvilinear grid z-coordinate
+  bool m_user_created;  // true --> This image was created from the input file
 
-std::vector<int*> mWindow; // start + end indices for (i,j,k) for each grid level
+  // int m_rankWriter;
+  bool m_isDefined;
+  bool m_double;
+  EW* mEW;
+  Parallel_IO** m_pio;
 
-// pointers to in-plane data (only one will get allocated by Image::allocatePlane()
-std::vector<double*> m_doubleField;
-std::vector<float*> m_floatField;
+  // moved to class EW
+  // int m_pfs, m_nwriters;
 
+  std::vector<int*>
+      mWindow;  // start + end indices for (i,j,k) for each grid level
+
+  // pointers to in-plane data (only one will get allocated by
+  // Image::allocatePlane()
+  std::vector<double*> m_doubleField;
+  std::vector<float*> m_floatField;
 };
 
 #endif
