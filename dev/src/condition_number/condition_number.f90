@@ -122,6 +122,9 @@ program condition_number
   ! interface system
   call Interface_system(Mass)
   Mass0 = Mass
+
+  call print_array_to_file(3*n1_c*n2_c,3*n1_c*n2_c,1,Mass,'Mass.txt')
+  stop
   !
   !pdir1 = 0.d0
   !do j = 1,n2_c
@@ -1105,4 +1108,21 @@ contains
   !
   end subroutine Interface_LHS_cg
   !
+  !!!!!!! new !!!!
+  subroutine print_array_to_file(n1,n2,n3,A,file_name)
+    use problemsetup_new_3d, only: dp
+    integer n1,n2,n3
+    real(dp), dimension (1:n1,1:n2,1:n3) :: A
+    character(len=*) :: file_name
+    open (unit = 7, file = file_name)
+    do i = 1,n3
+       do j = 1,n2
+          do k = 1,n1
+             write(7,"(ES15.5E3)") A(k,j,i)
+          end do
+       end do
+    end do
+    close(7)
+  end  subroutine print_array_to_file
+
 end program condition_number
