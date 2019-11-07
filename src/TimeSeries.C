@@ -500,7 +500,7 @@ void TimeSeries::writeFile( string suffix )
     fid = openHDF5File(suffix);
 
     if (fid <= 0) 
-      printf("%s fid is invalid, cannot open group [%s]\n", __func__, m_staName.c_str());
+      printf("Rank %d: %s fid is invalid, cannot open file [%s]\n", myRank, __func__, filePrefix.str().c_str());
     else 
     {
       grp = H5Gopen(fid, const_cast<char*>(m_staName.c_str()), H5P_DEFAULT);
@@ -1149,6 +1149,9 @@ void TimeSeries::
 write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *var,
 		 float cmpinc, float cmpaz, bool makeCopy /*=false*/, bool isLast /*=false*/)
 {
+  bool is_debug = false;
+  /* is_debug = true; */
+
   hsize_t start, count;
   int ret = 1, prev_npts;
   int write_npts;
@@ -1172,8 +1175,12 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
   // write only new data
   start = (hsize_t)m_nptsWritten;
   count = (hsize_t)(write_npts - m_nptsWritten);
-  /* printf("dset %s, start=%llu, count=%llu, write_npts=%d, nptswritten=%d\n", var, start, count, write_npts, m_nptsWritten); */
-  /* fflush(stdout); */
+
+  if (is_debug) {
+    printf("dset %s, start=%llu, count=%llu, write_npts=%d, nptswritten=%d\n", var, start, count, write_npts, m_nptsWritten);
+    fflush(stdout);
+  }
+
   if (count > 0) 
     ret = openWriteData(grp, var, H5T_NATIVE_FLOAT, (void*)write_data, 1, &start, &count, write_npts, btime, cmpinc, cmpaz, m_isIncAzWritten, isLast);
 
@@ -3484,37 +3491,38 @@ int TimeSeries::allocFid()
   *m_fid_ptr = 0;
 }
 
-int TimeSeries::setFidPtr(hid_t *fid)
-{
-  m_fid_ptr = fid;
-}
-
-hid_t* TimeSeries::getFidPtr()
-{
-  return m_fid_ptr;
-}
-
 int TimeSeries::closeHDF5File()
 { 
-  int myRank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+  /* int myRank; */
+  /* MPI_Comm_rank(MPI_COMM_WORLD, &myRank); */
 
   if(m_fid_ptr && *m_fid_ptr > 0) {
     /* printf("%d: Closing HDf5 file: %ld\n", myRank, *m_fid_ptr); */
     /* fflush(stdout); */
     H5Fclose(*m_fid_ptr);
     *m_fid_ptr = 0;
-    m_fidName = "";
+    if (this->m_ts0Ptr)
+      this->m_ts0Ptr->m_fidName = "";
+    else
+      printf("%s: Error with ts0 pointer!\n", __func__);
     /* printf("HDf5 file closed\n"); */
     /* fflush(stdout); */
   }
 
   return 0;
 }
+void TimeSeries::resetHDF5file()
+{
+  m_nptsWritten = 0;
+  m_isMetaWritten = m_isIncAzWritten = false;
+  closeHDF5File();
+}
 
 hid_t TimeSeries::openHDF5File(std::string suffix)
 {
   hid_t fapl;
+  bool is_debug = false;
+  /* is_debug = true; */
 
   std::string filename;
 
@@ -3533,7 +3541,7 @@ hid_t TimeSeries::openHDF5File(std::string suffix)
   if (m_hdf5Name.find(".hdf5") == string::npos && m_hdf5Name.find(".h5") == string::npos) 
     filename.append(".hdf5");
 
-  if (filename.compare(m_fidName) == 0) {
+  if (*m_fid_ptr >=0 && this->m_ts0Ptr && filename.compare(this->m_ts0Ptr->m_fidName) == 0) {
     // If file is alread open, no need to open it again
     return *m_fid_ptr;
   }
@@ -3552,20 +3560,23 @@ hid_t TimeSeries::openHDF5File(std::string suffix)
 
 
   *m_fid_ptr = H5Fopen(filename.c_str(),  H5F_ACC_RDWR, fapl);
-  if (*m_fid_ptr < 0) {
+  if (*m_fid_ptr <= 0) {
     printf("%s Error opening file [%s]\n", __func__, filename.c_str());
     H5Pclose(fapl);
     return 0;
   }
 
-  m_fidName = filename;
+  if (this->m_ts0Ptr)
+    this->m_ts0Ptr->m_fidName = filename;
+  else
+    printf("%s: Error with ts0 pointer!\n", __func__);
 
-  /* int myRank; */
-  /* MPI_Comm_rank(MPI_COMM_WORLD, &myRank); */
-  /* if (myRank == 0) { */
-  /*     printf("Rank %d: HDF5 file [%s] successfully opened: %ld\n", myRank, filename.c_str(), *m_fid_ptr); */
-  /*     fflush(stdout); */
-  /* } */
+  int myRank;
+  if (is_debug) {
+    MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+    printf("Rank %d: HDF5 file [%s] successfully opened: %ld\n", myRank, filename.c_str(), *m_fid_ptr);
+    fflush(stdout);
+  }
 
   H5Pclose(fapl);
 

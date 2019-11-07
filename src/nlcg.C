@@ -96,6 +96,8 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
        if (GlobalTimeSeries[e].size() > 0 && GlobalTimeSeries[e][0]->getUseHDF5()) {
          if(myRank == 0) 
            createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "_ini");
+         for (int tsi = 0; tsi < GlobalTimeSeries[e].size(); tsi++) 
+           GlobalTimeSeries[e][tsi]->resetHDF5file();
          MPI_Barrier(MPI_COMM_WORLD);
        }
 #endif

@@ -189,6 +189,9 @@ int createWriteAttrStr(hid_t loc, const char *name, const char* str)
 int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int ndim, hsize_t *start, hsize_t *count, int total_npts, 
                   float btime, float cmpinc, float cmpaz, bool isIncAzWritten, bool isLast)
 {
+    bool is_debug = false;
+    /* is_debug = true; */
+
     hid_t dset, filespace, dxpl;
     herr_t ret;
 
@@ -233,6 +236,13 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int nd
 
     if (isLast) {
         openWriteAttr(loc, "NPTS", H5T_NATIVE_INT, &total_npts);
+    }
+
+    if (is_debug) {
+        float *write_data = (float*)data;
+        printf("npts=%d, first=%e, second=%e, middle=%e, second last=%e, last=%e\n", 
+                total_npts, write_data[0], write_data[1], write_data[total_npts/2], write_data[total_npts-2], write_data[total_npts-1]);
+        fflush(stdout);
     }
 
     H5Pclose(dxpl);
@@ -294,6 +304,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     std::string bak;
     bak =  filename + ".bak";
     ret = rename(filename.c_str(), bak.c_str());
+    cout << "Rename existing file to [" << bak.c_str() <<  "]" << endl;
     if( ret == -1 )
       cout << "ERROR: renaming SAC HDF5 file to " << bak.c_str() <<  endl;
   }

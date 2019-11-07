@@ -183,10 +183,14 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       TimeSeries *ts_ptr = new TimeSeries(a_ew, grp_name, grp_name, op_data->mode, false, false, true, op_data->outFileName, x, y, z, 
   					topodepth, op_data->writeEvery, op_data->downSample, !nsew, op_data->event );
 
-       if((*op_data->GlobalTimeSeries)[op_data->event].size() == 0) 
-         ts_ptr->allocFid();
-       else 
-         ts_ptr->setFidPtr((*op_data->GlobalTimeSeries)[op_data->event][0]->getFidPtr());
+      if((*op_data->GlobalTimeSeries)[op_data->event].size() == 0) {
+        ts_ptr->allocFid();
+        ts_ptr->setTS0Ptr(ts_ptr);
+      }
+      else {
+        ts_ptr->setFidPtr((*op_data->GlobalTimeSeries)[op_data->event][0]->getFidPtr());
+        ts_ptr->setTS0Ptr((*op_data->GlobalTimeSeries)[op_data->event][0]);
+      }
      
       if (ts_ptr->myPoint()) {
         /* cout << "Rank " << op_data->myRank << "has this point x=" << x << " y=" << y << " z=" << z << endl; */

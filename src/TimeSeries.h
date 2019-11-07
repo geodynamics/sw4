@@ -141,11 +141,13 @@ int m_grid0;
 
 #ifdef USE_HDF5
 int   getNsteps() {return m_nsteps;};
-int   setNsteps(int nsteps) {m_nsteps = nsteps;};
+void  setNsteps(int nsteps) {m_nsteps = nsteps;};
 int   allocFid();
-int   setFidPtr(hid_t *fid);
-hid_t *getFidPtr();
+void  setFidPtr(hid_t *fid) {m_fid_ptr = fid;};
+void  setTS0Ptr(TimeSeries *ptr) {m_ts0Ptr = ptr;};
+hid_t *getFidPtr() {return m_fid_ptr;};
 int   closeHDF5File();
+void  resetHDF5file();
 void  readSACHDF5( EW *ew, string FileName, bool ignore_utc );
 hid_t openHDF5File(std::string suffix);
 void  write_hdf5_format( int npts, hid_t loc, float *y, float btime, float dt, char *var,
@@ -263,6 +265,7 @@ float_sw4 m_scalefactor;
    int  m_nptsWritten;
    int  m_nsteps;
    std::string m_fidName;
+   TimeSeries *m_ts0Ptr;
 #endif
 };
 

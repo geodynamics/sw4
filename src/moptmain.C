@@ -1164,10 +1164,14 @@ int main(int argc, char **argv)
 #if USE_HDF5
                  // Allocate HDF5 fid for later file write
                  if (elem->getUseHDF5()) {
-                   if(m == 0) 
+                   if(m == 0) { 
                      elem->allocFid();
-                   else 
+                     elem->setTS0Ptr(elem);
+                   }
+                   else {
                      elem->setFidPtr(GlobalTimeSeries[e][0]->getFidPtr());
+                     elem->setTS0Ptr(GlobalTimeSeries[e][0]);
+                   }
                  }
 #endif
 	      }
@@ -1357,6 +1361,8 @@ int main(int argc, char **argv)
 #ifdef USE_HDF5
                  // Tang: need to create a HDF5 file before writing
                  if (GlobalTimeSeries[e].size() > 0 && GlobalTimeSeries[e][0]->getUseHDF5()) {
+                   for (int tsi = 0; tsi < GlobalTimeSeries[e].size(); tsi++) 
+                     GlobalTimeSeries[e][tsi]->resetHDF5file();
                    if(myRank == 0) 
                      createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "");
                    MPI_Barrier(MPI_COMM_WORLD);

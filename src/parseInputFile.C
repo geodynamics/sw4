@@ -7030,10 +7030,14 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
 					topodepth, writeEvery, downSample, !nsew, event );
 #if USE_HDF5
     if (hdf5format) {
-      if(a_GlobalTimeSeries[event].size() == 0) 
+      if(a_GlobalTimeSeries[event].size() == 0) {
         ts_ptr->allocFid();
-      else 
+        ts_ptr->setTS0Ptr(ts_ptr);
+      }
+      else {
         ts_ptr->setFidPtr(a_GlobalTimeSeries[event][0]->getFidPtr());
+        ts_ptr->setTS0Ptr(a_GlobalTimeSeries[event][0]);
+      }
     }
 #endif
 
