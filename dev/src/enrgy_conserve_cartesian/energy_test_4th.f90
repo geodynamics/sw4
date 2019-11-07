@@ -223,8 +223,8 @@ contains
     do i=1-nrg,n3_c+nrg
        do j=1-nrg,n2_c+nrg
           do k=1-nrg,n1_c+nrg
-             mu_c(k,j,i) = 3.d0 !+ sin(3.d0*Xgrid_c(k,j,i,1)+0.1d0)*sin(3.d0*Xgrid_c(k,j,i,2)+0.1d0)*sin(Xgrid_c(k,j,i,3))
-             lambda_c(k,j,i) = 21.d0!+ cos(Xgrid_c(k,j,i,1)+0.1d0)*cos(Xgrid_c(k,j,i,2)+0.1d0)*sin(3.d0*Xgrid_c(k,j,i,3))**2
+             mu_c(k,j,i) = 3.d0 + sin(3.d0*Xgrid_c(k,j,i,1)+0.1d0)*sin(3.d0*Xgrid_c(k,j,i,2)+0.1d0)*sin(Xgrid_c(k,j,i,3))
+             lambda_c(k,j,i) = 21.d0+ cos(Xgrid_c(k,j,i,1)+0.1d0)*cos(Xgrid_c(k,j,i,2)+0.1d0)*sin(3.d0*Xgrid_c(k,j,i,3))**2
              rho_c(k,j,i,:) = 2.d0 + sin(Xgrid_c(k,j,i,1)+0.3d0)*sin(Xgrid_c(k,j,i,2)+0.3d0)*sin(Xgrid_c(k,j,i,3)-0.2d0)
           end do
        end do
@@ -593,7 +593,7 @@ contains
         + rho_c(1:n1_c,1:n2_c,1:n3_c,1)* &
         (uc_new(1:n1_c,1:n2_c,1:n3_c,l1)-uc_old(1:n1_c,1:n2_c,1:n3_c,l1))**2/(dt**2)
     end do
-    energy_num_temp_c = energy_num_temp_c*Jacobian_c(1:n1_c,1:n2_c,1:n3_c)
+    energy_num_temp_c = energy_num_temp_c !*Jacobian_c(1:n1_c,1:n2_c,1:n3_c)
 	
 	Lh_old = rho_c(1:n1_c,1:n2_c,1:n3_c,:)* &
 	(uc_star(1:n1_c,1:n2_c,1:n3_c,:) - 2.d0*uc_old(1:n1_c,1:n2_c,1:n3_c,:)+uc_oldold(1:n1_c,1:n2_c,1:n3_c,:))/dt**2
@@ -607,7 +607,7 @@ contains
 	   uc_new(1:n1_c,1:n2_c,1:n3_c,1)*(uc_new(1:n1_c,1:n2_c,1:n3_c,1)-uc_star(1:n1_c,1:n2_c,1:n3_c,1))/dt**2 &
       +uc_new(1:n1_c,1:n2_c,1:n3_c,2)*(uc_new(1:n1_c,1:n2_c,1:n3_c,2)-uc_star(1:n1_c,1:n2_c,1:n3_c,2))/dt**2 &
 	  +uc_new(1:n1_c,1:n2_c,1:n3_c,3)*(uc_new(1:n1_c,1:n2_c,1:n3_c,3)-uc_star(1:n1_c,1:n2_c,1:n3_c,3))/dt**2) &
-      /Jacobian_c(1:n1_c,1:n2_c,1:n3_c)*rho_c(1:n1_c,1:n2_c,1:n3_c,1)
+      *rho_c(1:n1_c,1:n2_c,1:n3_c,1)!/Jacobian_c(1:n1_c,1:n2_c,1:n3_c)
     ! add grid points with corresponding weights
     energy_num = 0.d0
     do k = 5,n3_c-4
