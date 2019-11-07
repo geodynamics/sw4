@@ -54,7 +54,7 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int nd
 int readAttrStr(hid_t loc, const char *name, char* str);
 int readAttrInt(hid_t loc, const char *name, int *data);
 int readAttrFloat(hid_t loc, const char *name, float *data);
-int readData(hid_t loc, const char *name, int npts, void *data);
+int readHDF5Data(hid_t loc, const char *name, int npts, void *data);
 
 #endif // USE_HDF5
 

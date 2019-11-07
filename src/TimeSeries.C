@@ -3250,6 +3250,11 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
       m_nptsWritten = npts;
     }
 
+    if (mAllocatedSize <= 0) {
+       cout << "ERROR: recording arrays not allocated!" << endl;
+       return;
+    }
+
     m_dt = dt / downsample;
     mLastTimeStep = sw4npts - 1;
 
@@ -3257,9 +3262,9 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
     float *buf_1 = new float[npts];
     float *buf_2 = new float[npts];
 
-    readData(grp, dset_names[0].c_str(), npts, buf_0);
-    readData(grp, dset_names[1].c_str(), npts, buf_1);
-    readData(grp, dset_names[2].c_str(), npts, buf_2);
+    readHDF5Data(grp, dset_names[0].c_str(), npts, buf_0);
+    readHDF5Data(grp, dset_names[1].c_str(), npts, buf_1);
+    readHDF5Data(grp, dset_names[2].c_str(), npts, buf_2);
 
     // Mapping to invert (e,n) to (x,y) components, Only needed in the non-cartesian case.
     float_sw4 deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
@@ -3297,7 +3302,8 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
         return;
       }
 
-      for (int i = 0; i < npts; i++) {
+      for (int i = 0; i < mAllocatedSize; i++) {
+      /* for (int i = 0; i < npts; i++) { */
         if( cartesian ) {
           mRecordedSol[0][i] = (float_sw4)buf_0up[i];
           mRecordedSol[1][i] = (float_sw4)buf_1up[i];
@@ -3317,7 +3323,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
       delete[] nx;
     }
     else {
-      for (int i = 0; i < npts; i++) {
+      for (int i = 0; i < mAllocatedSize; i++) {
         if( cartesian ) {
           mRecordedSol[0][i] = (float_sw4)buf_0[i];
           mRecordedSol[1][i] = (float_sw4)buf_1[i];

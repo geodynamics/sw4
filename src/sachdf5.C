@@ -586,7 +586,7 @@ int readAttrFloat(hid_t loc, const char *name, float *data)
     return 1;
 }
 
-int readData(hid_t loc, const char *name, int npts, void *data)
+int readHDF5Data(hid_t loc, const char *name, int npts, void *data)
 {
   hid_t dset, filespace, dxpl;
   hsize_t start, count;
