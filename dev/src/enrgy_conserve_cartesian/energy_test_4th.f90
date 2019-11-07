@@ -225,7 +225,7 @@ contains
           do k=1-nrg,n1_c+nrg
              mu_c(k,j,i) = 3.d0 !+ sin(3.d0*Xgrid_c(k,j,i,1)+0.1d0)*sin(3.d0*Xgrid_c(k,j,i,2)+0.1d0)*sin(Xgrid_c(k,j,i,3))
              lambda_c(k,j,i) = 21.d0!+ cos(Xgrid_c(k,j,i,1)+0.1d0)*cos(Xgrid_c(k,j,i,2)+0.1d0)*sin(3.d0*Xgrid_c(k,j,i,3))**2
-             rho_c(k,j,i,:) = 1.d0 !+ sin(Xgrid_c(k,j,i,1)+0.3d0)*sin(Xgrid_c(k,j,i,2)+0.3d0)*sin(Xgrid_c(k,j,i,3)-0.2d0)
+             rho_c(k,j,i,:) = 2.d0 + sin(Xgrid_c(k,j,i,1)+0.3d0)*sin(Xgrid_c(k,j,i,2)+0.3d0)*sin(Xgrid_c(k,j,i,3)-0.2d0)
           end do
        end do
     end do
@@ -595,18 +595,19 @@ contains
     end do
     energy_num_temp_c = energy_num_temp_c*Jacobian_c(1:n1_c,1:n2_c,1:n3_c)
 	
-	Lh_old = (uc_star(1:n1_c,1:n2_c,1:n3_c,:) - 2.d0*uc_old(1:n1_c,1:n2_c,1:n3_c,:)+uc_oldold(1:n1_c,1:n2_c,1:n3_c,:))/dt**2
+	Lh_old = rho_c(1:n1_c,1:n2_c,1:n3_c,:)* &
+	(uc_star(1:n1_c,1:n2_c,1:n3_c,:) - 2.d0*uc_old(1:n1_c,1:n2_c,1:n3_c,:)+uc_oldold(1:n1_c,1:n2_c,1:n3_c,:))/dt**2
 	
 	! term w.r.t S_h(unew,uold) = -(unew,L_h uold)
-	energy_num_temp_c = energy_num_temp_c - uc_new(1:n1_c,1:n2_c,1:n3_c,1)*Lh_old(:,:,:,1) &
-       - uc_new(1:n1_c,1:n2_c,1:n3_c,2)*Lh_old(:,:,:,2) &
-       - uc_new(1:n1_c,1:n2_c,1:n3_c,3)*Lh_old(:,:,:,3)
+	energy_num_temp_c = energy_num_temp_c - (uc_new(1:n1_c,1:n2_c,1:n3_c,1)*Lh_old(:,:,:,1) &
+       + uc_new(1:n1_c,1:n2_c,1:n3_c,2)*Lh_old(:,:,:,2) &
+       + uc_new(1:n1_c,1:n2_c,1:n3_c,3)*Lh_old(:,:,:,3))
 
 	energy_num_temp_c = energy_num_temp_c-( &
 	   uc_new(1:n1_c,1:n2_c,1:n3_c,1)*(uc_new(1:n1_c,1:n2_c,1:n3_c,1)-uc_star(1:n1_c,1:n2_c,1:n3_c,1))/dt**2 &
       +uc_new(1:n1_c,1:n2_c,1:n3_c,2)*(uc_new(1:n1_c,1:n2_c,1:n3_c,2)-uc_star(1:n1_c,1:n2_c,1:n3_c,2))/dt**2 &
 	  +uc_new(1:n1_c,1:n2_c,1:n3_c,3)*(uc_new(1:n1_c,1:n2_c,1:n3_c,3)-uc_star(1:n1_c,1:n2_c,1:n3_c,3))/dt**2) &
-      /Jacobian_c(1:n1_c,1:n2_c,1:n3_c)
+      /Jacobian_c(1:n1_c,1:n2_c,1:n3_c)*rho_c(1:n1_c,1:n2_c,1:n3_c,1)
     ! add grid points with corresponding weights
     energy_num = 0.d0
     do k = 5,n3_c-4
