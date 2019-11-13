@@ -3841,7 +3841,45 @@ $u^{(y)}_x$, $u^{(y)}_y$, $u^{(y)}_z$, $u^{(z)}_x$, $u^{(z)}_y$, and $u^{(z)}_z$
 The geographic coordinate option {\tt nsew=1} is only effective when {\tt variables} is
 {\tt displacement}, {\tt velocity}, or {\tt div}.
 
-\index{rec parameters!file, sta, writeEvery, usgsformat, sacformat, nsew, variables}
+\index{rec parameters!file, sta, writeEvery, usgsformat, sacformat, hdf5format, nsew, variables}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{rechdf5 (or sachdf5) [optional]}
+\index{command!rechdf5}
+\index{command!sachdf5}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Similar to the \verb+rec+ command, the \verb+rechdf5+ command is used to save the time history of the solution at a fixed location in
+space in the HDF5 format, see \S~\ref{sec:rec} for examples. The major difference is that all station's data is stored in a single
+file instead of multiple ones in either SAC or USGS format.
+\begin{flushleft}
+\bf
+Syntax:\\
+\tt
+rechdf5 infile=... outfile=... writeEvery=... downsample=... variables=...
+\\
+\bf Required parameters:\\
+\rm Location of the receiver in Cartesian or geographical coordinates stored in HDF5 format.
+\end{flushleft}
+%
+The HDF5 file format is described in Section~\ref{sec:sachdf5-format}.
+%
+
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
+\multicolumn{5}{|c|}{\bf sachdf5 command parameters}\\ \hline
+\bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline \hline
+infile & input file name  & string & none & station.h5 \\ \hline
+outfile & input file name  & string & none & station_out.h5 \\ \hline
+writeEvery & cycle interval to write the file to disk & int & none & 1000 \\ \hline
+%
+\hline
+variables & displacement, velocity, div, curl, strains, or displacementgradient & string & none & displacement \\ \hline
+downsample & outputs all components with the given downsample rate, resulting in less output data size & int & none & 1\\ \hline
+\end{tabular}
+\end{center}
+
+\index{rechdf5 parameters!writeEvery, infile, outfile, downsample, variables}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % images
