@@ -52,6 +52,10 @@
 #include "ESSI3D.h"
 #include "sacutils.h"
 
+#if USE_HDF5
+#include "readhdf5.h"
+#endif
+
 #include <cstring>
 #include <iostream>
 #include <fstream>
@@ -467,8 +471,12 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 	  processCheckPoint(buffer);
        else if (startswith("globalmaterial", buffer))
          processGlobalMaterial(buffer);
+       else if (!m_inverse_problem && (startswith("rechdf5", buffer) || startswith("sachdf5", buffer)) ) // was called "sac" in WPP
+	 processReceiverHDF5(buffer, a_GlobalTimeSeries);
        else if (!m_inverse_problem && (startswith("rec", buffer) || startswith("sac", buffer)) ) // was called "sac" in WPP
 	 processReceiver(buffer, a_GlobalTimeSeries);
+       else if (m_inverse_problem && (startswith("obshdf5", buffer) || startswith("observationhdf5", buffer))) // 
+	  processObservationHDF5(buffer, a_GlobalTimeSeries);
        else if (m_inverse_problem && startswith("obs", buffer)) // 
 	  processObservation(buffer, a_GlobalTimeSeries);
        else if (m_inverse_problem && startswith("scalefactors", buffer)) // 
@@ -6621,20 +6629,124 @@ void EW::processAnisotropicMaterialBlock( char* buffer,  int & blockCount )
 }   
 
 //-----------------------------------------------------------------------
+void EW::processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries)
+{
+  string inFileName = "station";
+  string fileName   = "station_out";
+  string staName    = "station";
+  int writeEvery    = 1000;
+  int downSample    = 1;
+  int event         = 0;
+  TimeSeries::receiverMode mode=TimeSeries::Displacement;
+
+  char* token = strtok(buffer, " \t");
+
+  CHECK_INPUT(strcmp("rechdf5", token) == 0 || strcmp("sachdf5", token) == 0, "ERROR: not a rechdf5 line...: " << token);
+  token = strtok(NULL, " \t");
+
+  string err = "RECEIVER Error: ";
+
+  while (token != NULL)
+  {
+     if (startswith("#", token) || startswith(" ", buffer))
+        // Ignore commented lines and lines with just a space.
+        break;
+
+     if(startswith("infile=", token))
+     {
+        token += 7; // skip infile=
+        inFileName= token;
+     }
+     else if(startswith("outfile=", token))
+     {
+        token += 8; // skip outfile=
+        fileName = token;
+     }
+     else if (startswith("writeEvery=", token))
+     {
+       token += strlen("writeEvery=");
+       writeEvery = atoi(token);
+       CHECK_INPUT(writeEvery >= 0,
+	       err << "rechdf5 command: writeEvery must be set to a non-negative integer, not: " << token);
+     }
+     else if (startswith("downSample=", token) || startswith("downsample=", token))
+     {
+       token += strlen("downsample=");
+       downSample = atoi(token);
+       CHECK_INPUT(downSample >= 1,
+	       err << "rechdf5 command: downsample must be set to an integer greater or equal than 1, not: " << token);
+     }
+     else if(startswith("event=",token))
+     {
+	token += 6;
+	// Ignore if no events given
+	if( m_nevents_specified > 0 )
+	{
+	   map<string,int>::iterator it = m_event_names.find(token);
+	   CHECK_INPUT( it != m_event_names.end(), 
+		     err << "event with name "<< token << " not found" );
+	   event = it->second;
+	}
+     }
+     else if( startswith("variables=", token) )
+     {
+       token += strlen("variables=");
+
+       if( strcmp("displacement",token)==0 )
+	 mode = TimeSeries::Displacement;
+       else if( strcmp("velocity",token)==0 )
+	 mode = TimeSeries::Velocity;
+       else if( strcmp("div",token)==0 )
+	 mode = TimeSeries::Div;
+       else if( strcmp("curl",token)==0 )
+	 mode = TimeSeries::Curl;
+       else if( strcmp("strains",token)==0 )
+	 mode = TimeSeries::Strains;
+       else if( strcmp("displacementgradient",token)==0 )
+	 mode = TimeSeries::DisplacementGradient;
+       else
+       {
+	 if (proc_zero())
+	   cout << "receiver command: variables=" << token << " not understood" << endl
+		<< "using default mode (displacement)" << endl << endl;
+	 mode = TimeSeries::Displacement;
+       }
+       
+     }
+     else
+     {
+        badOption("receiver", token);
+     }
+     token = strtok(NULL, " \t");
+  }
+
+#ifdef USE_HDF5
+  bool is_obs = false;
+  readStationHDF5(this, inFileName, fileName, writeEvery, downSample, mode, event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax, is_obs, false, false, 0, 0, false, false, false, 0, false, 0);
+#else
+  if (proc_zero())
+    cout << "Using HDF5 station input but sw4 is not compiled with HDF5!"<< endl;
+#endif
+
+}
+
+//-----------------------------------------------------------------------
 void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries)
 {
   double x=0.0, y=0.0, z=0.0;
   double lat = 0.0, lon = 0.0, depth = 0.0;
   bool cartCoordSet = false, geoCoordSet = false;
   string fileName = "station";
+  string hdf5FileName = "station.hdf5";
   string staName = "station";
   bool staNameGiven=false;
   
   int writeEvery = 1000;
+  int downSample = 1;
 
   bool topodepth = false;
 
-  bool usgsformat = 0, sacformat=1; // default is to write sac files
+  bool usgsformat = 0, sacformat = 1, hdf5format = 0; // default is to write sac files
   TimeSeries::receiverMode mode=TimeSeries::Displacement;
 
   char* token = strtok(buffer, " \t");
@@ -6743,6 +6855,11 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
        CHECK_INPUT(depth <= m_global_zmax,
 		   "receiver command: depth must be less than or equal to zmax, not " << depth);
      }
+     else if(startswith("hdf5file=", token))
+     {
+        token += 9; // skip file=
+        hdf5FileName = token;
+     }
      else if(startswith("file=", token))
      {
         token += 5; // skip file=
@@ -6771,6 +6888,13 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
        CHECK_INPUT(writeEvery >= 0,
 	       err << "sac command: writeEvery must be set to a non-negative integer, not: " << token);
      }
+     else if (startswith("downSample=", token) || startswith("downsample=", token))
+     {
+       token += strlen("downSample=");
+       downSample = atoi(token);
+       CHECK_INPUT(downSample >= 1,
+	       err << "sac command: downSample must be set to an integer greater or equal than 1, not: " << token);
+     }
      else if(startswith("event=",token))
      {
 	token += 6;
@@ -6794,6 +6918,11 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
      {
         token += strlen("sacformat=");
         sacformat = atoi(token);
+     }
+     else if( startswith("hdf5format=", token) )
+     {
+        token += strlen("hdf5format=");
+        hdf5format = atoi(token);
      }
      else if( startswith("variables=", token) )
      {
@@ -6896,11 +7025,176 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
   }
   else
   {
-    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, x, y, depth, 
-					topodepth, writeEvery, !nsew, event );
+
+    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, hdf5FileName, x, y, depth, 
+					topodepth, writeEvery, downSample, !nsew, event );
+#if USE_HDF5
+    if (hdf5format) {
+      if(a_GlobalTimeSeries[event].size() == 0) {
+        ts_ptr->allocFid();
+        ts_ptr->setTS0Ptr(ts_ptr);
+      }
+      else {
+        ts_ptr->setFidPtr(a_GlobalTimeSeries[event][0]->getFidPtr());
+        ts_ptr->setTS0Ptr(a_GlobalTimeSeries[event][0]);
+      }
+    }
+#endif
+
 // include the receiver in the global list
     a_GlobalTimeSeries[event].push_back(ts_ptr);
   }
+}
+
+//-----------------------------------------------------------------------
+void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries)
+{
+  double x=0.0, y=0.0, z=0.0;
+  double lat = 0.0, lon = 0.0, depth = 0.0;
+  float_sw4 t0 = 0;
+  float_sw4 scalefactor=1;
+  bool cartCoordSet = false, geoCoordSet = false;
+  string inhdf5file = "";
+  string outhdf5file = "station";
+  int writeEvery = 0;
+  int downSample = 1;
+  TimeSeries::receiverMode mode=TimeSeries::Displacement;
+  float_sw4 winl, winr;
+  bool winlset=false, winrset=false;
+  char exclstr[4]={'\0','\0','\0','\0'};
+  bool usex=true, usey=true, usez=true;
+  bool scalefactor_set=false;
+  int event=0;
+
+  char* token = strtok(buffer, " \t");
+  m_filter_observations = true;
+
+  CHECK_INPUT(strcmp("observationhdf5", token) == 0 || strcmp("obshdf5", token) == 0, "ERROR: not an observation line...: " << token);
+  token = strtok(NULL, " \t");
+
+  string err = "OBSERVATION Error: ";
+
+  while (token != NULL)
+  {
+     if (startswith("#", token) || startswith(" ", buffer))
+        // Ignore commented lines and lines with just a space.
+        break;
+     else if(startswith("hdf5file=", token))
+     {
+        token += 9; // skip hdf5file=
+        inhdf5file = token;
+     }
+     else if(startswith("outhdf5file=", token))
+     {
+        token += 12; // skip outhdf5file=
+        outhdf5file = token;
+     }
+     else if(startswith("event=",token))
+     {
+	token += 6;
+	//	event = atoi(token);
+	//	CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
+	// Ignore if no events given
+	if( m_nevents_specified > 0 )
+	{
+	   map<string,int>::iterator it = m_event_names.find(token);
+	   CHECK_INPUT( it != m_event_names.end(), 
+		     err << "event with name "<< token << " not found" );
+	   event = it->second;
+	}
+     }
+     // (small) shifts of the observation in time can be used to compensate for incorrect velocites
+     // in the material model
+     else if(startswith("shift=", token))
+     {
+        token += 6; // skip shift=
+        t0 = atof(token);
+     }
+     //     else if( startswith("utc=",token) )
+     //     {
+     //	token += 4;
+     //        if( strcmp("ignore",token)==0 || strcmp("off",token)==0 )
+     //	   ignore_utc = true;
+     //	else
+     //	{
+     //	   int year,month,day,hour,minute,second,msecond, fail;
+     //	   // Format: 01/04/2012:17:34:45.2343  (Month/Day/Year:Hour:Min:Sec.fraction)
+     //	   parsedate( token, year, month, day, hour, minute, second, msecond, fail );
+     //	   if( fail == 0 )
+     //	   {
+     //              utcset = true;
+     //	      utc[0] = year;
+     //	      utc[1] = month;
+     //	      utc[2] = day;
+     //	      utc[3] = hour;
+     //	      utc[4] = minute;
+     //	      utc[5] = second;
+     //	      utc[6] = msecond;
+     //	   }
+     //	   else
+     //	      CHECK_INPUT(fail == 0 , "processObservation: Error in utc format. Give as mm/dd/yyyy:hh:mm:ss.ms "
+     //			  << " or use utc=ignore" );
+     //	}
+     //     }
+     else if( startswith("windowL=",token))
+     {
+        token += 8;
+        winl = atof(token);
+        winlset = true;
+     }
+     else if( startswith("windowR=",token))
+     {
+        token += 8;
+        winr = atof(token);
+        winrset = true;
+     }
+     else if( startswith("exclude=",token) )
+     {
+        token += 8;
+	strncpy(exclstr,token,4);
+
+	int c=0;
+	while( c < 3 && exclstr[c] != '\0' )
+	{
+	   if( exclstr[c] == 'x' || exclstr[c] == 'e' )
+	      usex=false;
+	   if( exclstr[c] == 'y' || exclstr[c] == 'n' )
+	      usey=false;
+	   if( exclstr[c] == 'z' || exclstr[c] == 'u' )
+	      usez=false;
+	   c++;
+	}
+     }
+     else if(startswith("filter=", token))
+     {
+        token += 7; // skip filter=
+        if( strcmp(token,"0")==0 || strcmp(token,"no")==0 )
+	   m_filter_observations = false;
+     }
+     else if( startswith("scalefactor=",token) )
+     {
+	token += 12;
+	scalefactor = atof(token);
+	scalefactor_set = true;
+     }
+     else
+     {
+        badOption("observation", token);
+     }
+     token = strtok(NULL, " \t");
+  }  
+
+  // Read from HDF5 file, and create time series data
+#ifdef USE_HDF5
+  bool is_obs = true;
+  readStationHDF5(this, inhdf5file, outhdf5file, writeEvery, downSample, mode, event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax, is_obs, winlset, winrset, winl, winr, usex, usey, usez, t0, scalefactor_set,  scalefactor);
+
+#else
+  if (proc_zero())
+    cout << "Using HDF5 station input but sw4 is not compiled with HDF5!"<< endl;
+  return;
+#endif
+
 }
 
 //-----------------------------------------------------------------------
@@ -6927,8 +7221,9 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
   string date = "";
   string time = "";
   string sacfile1, sacfile2, sacfile3;
+  string hdf5file = "";
 
-  bool usgsformat = 1, sacformat=0;
+  bool usgsformat = 1, sacformat=0, hdf5format = 0;
   TimeSeries::receiverMode mode=TimeSeries::Displacement;
   float_sw4 winl, winr;
   bool winlset=false, winrset=false;
@@ -7242,8 +7537,8 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
   }
   else
   {
-    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, x, y, depth, 
-					topodepth, writeEvery, true, event );
+    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, hdf5file, x, y, depth, 
+					topodepth, writeEvery, 1, true, event );
     // Read in file. 
     // ignore_utc=true, ignores UTC read from file, instead uses the default utc = simulation utc as reference.
     //        This is useful for synthetic data.

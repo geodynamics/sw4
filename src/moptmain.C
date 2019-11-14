@@ -20,6 +20,9 @@
 #define SQR(x) ((x)*(x))
 #endif
 
+#ifdef USE_HDF5
+#include <sachdf5.h>
+#endif
 
 void usage(string thereason)
 {
@@ -1156,9 +1159,21 @@ int main(int argc, char **argv)
 //  the simulation time step and start time into GlobalTimeSeries.
 	      for( int m = 0; m < GlobalObservations[e].size(); m++ )
 	      {
-		 string newname = "_out";
-		 TimeSeries *elem = GlobalObservations[e][m]->copy( &simulation, newname, true );
+		 TimeSeries *elem = GlobalObservations[e][m]->copy( &simulation, "_out", true );
 		 GlobalTimeSeries[e].push_back(elem);
+#if USE_HDF5
+                 // Allocate HDF5 fid for later file write
+                 if (elem->getUseHDF5()) {
+                   if(m == 0) { 
+                     elem->allocFid();
+                     elem->setTS0Ptr(elem);
+                   }
+                   else {
+                     elem->setFidPtr(GlobalTimeSeries[e][0]->getFidPtr());
+                     elem->setTS0Ptr(GlobalTimeSeries[e][0]);
+                   }
+                 }
+#endif
 	      }
 	   }
 
@@ -1341,9 +1356,21 @@ int main(int argc, char **argv)
               double f;
 	      compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 			 GlobalObservations, f, mopt );
-	      for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
+	      for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ ) 
+              {
+#ifdef USE_HDF5
+                 // Tang: need to create a HDF5 file before writing
+                 if (GlobalTimeSeries[e].size() > 0 && GlobalTimeSeries[e][0]->getUseHDF5()) {
+                   for (int tsi = 0; tsi < GlobalTimeSeries[e].size(); tsi++) 
+                     GlobalTimeSeries[e][tsi]->resetHDF5file();
+                   if(myRank == 0) 
+                     createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "");
+                   MPI_Barrier(MPI_COMM_WORLD);
+                 }
+#endif
 		 for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
 		    GlobalTimeSeries[e][m]->writeFile( );
+              }
 	   }
 	   else if( mopt->m_opttest == 7 )
 	   {
