@@ -125,6 +125,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_isIncAzWritten(false),
   m_nptsWritten(0),
   m_nsteps(0),
+  m_writeTime(0.0),
 #endif
   m_event(event)
 {
@@ -462,6 +463,8 @@ void TimeSeries::writeFile( string suffix )
 {
   if (!m_myPoint) return;
 
+  double stime, etime;
+  stime = MPI_Wtime();
 // ------------------------------------------------------------------
 // We should add an argument to this function that describes how the
 // header and filename should be constructed
@@ -991,17 +994,6 @@ void TimeSeries::writeFile( string suffix )
 
   } // end if m_sacFormat || m_hdf5Format
   
-#ifdef USE_HDF5
-  if (m_hdf5Format) {
-    /* if (grp > 0) */ 
-    /*   H5Gflush(grp); */
-    if (grp > 0) 
-      H5Gclose(grp);
-    /* printf("Rank %d: Finished writing station data [%s]\n", myRank, m_staName.c_str()); */
-    /* fflush(stdout); */
-  }
-#endif
-
   if( m_usgsFormat )
   {
     filePrefix << "txt";
@@ -1012,6 +1004,20 @@ void TimeSeries::writeFile( string suffix )
 
     write_usgs_format( filePrefix.str() );
   }
+
+#ifdef USE_HDF5
+  if (m_hdf5Format) {
+    /* if (grp > 0) */ 
+    /*   H5Gflush(grp); */
+    if (grp > 0) 
+      H5Gclose(grp);
+    /* printf("Rank %d: Finished writing station data [%s]\n", myRank, m_staName.c_str()); */
+    /* fflush(stdout); */
+  }
+  etime = MPI_Wtime();
+  m_writeTime += (etime - stime);
+#endif
+
 
 }
 

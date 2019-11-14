@@ -6632,7 +6632,7 @@ void EW::processAnisotropicMaterialBlock( char* buffer,  int & blockCount )
 void EW::processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries)
 {
   string inFileName = "station";
-  string fileName   = "station_out";
+  string fileName   = "out_station";
   string staName    = "station";
   int writeEvery    = 1000;
   int downSample    = 1;
