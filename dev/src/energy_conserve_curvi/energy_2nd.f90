@@ -210,15 +210,11 @@ program energy_2nd
 
     ! Evaluate the difference operators
     call Update_interior(u_c(:,:,:,:,2),u_f(:,:,:,:,2))
-    call compute_eta(u_c(:,:,:,:,2),u_f(:,:,:,:,2))
+    !call compute_eta(u_c(:,:,:,:,2),u_f(:,:,:,:,2))
 
-     ! Update the solution  (it seems that we don't add the stability term eta)
+     ! Update the solution
      u_f(1:n1_f,1:n2_f,2:n3_f,:,4) = 2.d0*u_f(1:n1_f,1:n2_f,2:n3_f,:,2) - u_f(1:n1_f,1:n2_f,2:n3_f,:,1) &
           + dt**2*(lh_f(1:n1_f,1:n2_f,2:n3_f,:))/rho_f(1:n1_f,1:n2_f,2:n3_f,:)
-     !
-     u_f(1:n1_f,1:n2_f,1,:,4) = 2.d0*u_f(1:n1_f,1:n2_f,1,:,2) - u_f(1:n1_f,1:n2_f,1,:,1) &
-          + dt**2*(lh_f(1:n1_f,1:n2_f,1,:)+eta_f(1:n1_f,1:n2_f,1,:))/rho_f(1:n1_f,1:n2_f,1,:)
-
      u_c(1:n1_c,1:n2_c,1:n3_c,:,4) = 2.d0*u_c(1:n1_c,1:n2_c,1:n3_c,:,2) - u_c(1:n1_c,1:n2_c,1:n3_c,:,1) &
           + dt**2*(lh_c(1:n1_c,1:n2_c,1:n3_c,:))/rho_c(1:n1_c,1:n2_c,1:n3_c,:)
 
@@ -346,7 +342,6 @@ contains
        end do
     end do
 
-
     ! variable coefficients
     do i=1-nrg,n3_c+nrg
        do j=1-nrg,n2_c+nrg
@@ -375,7 +370,6 @@ contains
     Jacobian_f_3(:,:,:,3) = Jacobian_f
     rho_c = rho_c*Jacobian_c_3
     rho_f = rho_f*Jacobian_f_3
-
 
     ! coarse
     N11_c(:,:,:,1,1) = Jacobian_c*((2.d0*mu_c+lambda_c)*XI11_c*XI11_c+mu_c*(XI21_c*XI21_c+XI31_c*XI31_c))
@@ -1490,16 +1484,25 @@ contains
       end do
     end do
     !
+    !do j = 1,n2_c
+    !  do i = 1,n1_c
+    !    energy_num = energy_num + h1_c*h2_c*h3_c &
+    !      * (17.d0/48.d0*(energy_num_temp_c(i,j,1) + energy_num_temp_c(i,j,n3_c)) &
+    !      + 59.d0/48.d0*(energy_num_temp_c(i,j,2) + energy_num_temp_c(i,j,n3_c-1)) &
+    !      + 43.d0/48.d0*(energy_num_temp_c(i,j,3) + energy_num_temp_c(i,j,n3_c-2)) &
+    !      + 49.d0/48.d0*(energy_num_temp_c(i,j,4) + energy_num_temp_c(i,j,n3_c-3)))
+    !  end do
+    !end do
+    !
     do j = 1,n2_c
       do i = 1,n1_c
         energy_num = energy_num + h1_c*h2_c*h3_c &
-          * (17.d0/48.d0*(energy_num_temp_c(i,j,1) + energy_num_temp_c(i,j,n3_c)) &
+          * (17.d0/48.d0*(energy_num_temp_c(i,j,1)) &
           + 59.d0/48.d0*(energy_num_temp_c(i,j,2) + energy_num_temp_c(i,j,n3_c-1)) &
           + 43.d0/48.d0*(energy_num_temp_c(i,j,3) + energy_num_temp_c(i,j,n3_c-2)) &
           + 49.d0/48.d0*(energy_num_temp_c(i,j,4) + energy_num_temp_c(i,j,n3_c-3)))
       end do
     end do
-    !
     ! interface integral
     energy_num_bdry = 0.d0
     boundary_c = 0.d0
@@ -1548,10 +1551,20 @@ contains
       end do
     end do
     !
+    !do j = 1,n2_f
+    !  do i = 1,n1_f
+    !    energy_num = energy_num + h1_f*h2_f*h3_f &
+    !      * (17.d0/48.d0*(energy_num_temp_f(i,j,1)+ energy_num_temp_f(i,j,n3_f)) &
+    !      + 59.d0/48.d0*(energy_num_temp_f(i,j,2) + energy_num_temp_f(i,j,n3_f-1)) &
+    !      + 43.d0/48.d0*(energy_num_temp_f(i,j,3) + energy_num_temp_f(i,j,n3_f-2)) &
+    !      + 49.d0/48.d0*(energy_num_temp_f(i,j,4) + energy_num_temp_f(i,j,n3_f-3)))
+    !  end do
+    !end do
+    !
     do j = 1,n2_f
       do i = 1,n1_f
         energy_num = energy_num + h1_f*h2_f*h3_f &
-          * (17.d0/48.d0*(energy_num_temp_f(i,j,1)+ energy_num_temp_f(i,j,n3_f)) &
+          * (17.d0/48.d0*(energy_num_temp_f(i,j,n3_f)) &
           + 59.d0/48.d0*(energy_num_temp_f(i,j,2) + energy_num_temp_f(i,j,n3_f-1)) &
           + 43.d0/48.d0*(energy_num_temp_f(i,j,3) + energy_num_temp_f(i,j,n3_f-2)) &
           + 49.d0/48.d0*(energy_num_temp_f(i,j,4) + energy_num_temp_f(i,j,n3_f-3)))
