@@ -12,6 +12,10 @@
 #include "compute_f.h"
 #endif
 
+#ifdef USE_HDF5
+#include <sachdf5.h>
+#endif
+
 using namespace std;
 
 //-----------------------------------------------------------------------
@@ -87,6 +91,16 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
    {
      for( int e=0 ; e < GlobalTimeSeries.size() ; e++ )
      {
+#ifdef USE_HDF5
+       // Tang: need to create a HDF5 file before writing
+       if (GlobalTimeSeries[e].size() > 0 && GlobalTimeSeries[e][0]->getUseHDF5()) {
+         if(myRank == 0) 
+           createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "_ini");
+         for (int tsi = 0; tsi < GlobalTimeSeries[e].size(); tsi++) 
+           GlobalTimeSeries[e][tsi]->resetHDF5file();
+         MPI_Barrier(MPI_COMM_WORLD);
+       }
+#endif
        for( int m = 0; m < GlobalTimeSeries[e].size(); m++ )
 	 GlobalTimeSeries[e][m]->writeFile( "_ini" );
      }

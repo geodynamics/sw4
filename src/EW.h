@@ -154,9 +154,12 @@ void processMaterialEtree(char* buffer);
 void processMaterialVimaterial(char* buffer);
 void processMaterialInvtest(char* buffer);
 void processMaterialRfile(char* buffer);
+void processMaterialSfile(char* buffer);
 void processAnisotropicMaterialBlock( char* buffer, int & ablockCount );
 void processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
+void processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
 void processObservation(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
+void processObservationHDF5(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
 void processBoundaryConditions(char *buffer);
 void processPrefilter(char* buffer);
 void processGMT(char* buffer);
@@ -399,6 +402,7 @@ void setEtreeFile(EtreeFile* efile);
 void extractTopographyFromEfile(string a_topoFileName, string a_topoExtFileName, string a_QueryType,
                                 float_sw4 a_EFileResolution);
 void extractTopographyFromRfile( std::string a_topoFileName );
+void extractTopographyFromSfile( std::string a_topoFileName );
 
 void smoothTopography(int maxIter);
 
@@ -564,7 +568,7 @@ void get_gridgen_info( int& order, float_sw4& zetaBreak ) const;
 // functions from the old FileInput class
 void cleanUpRefinementLevels();
 
-enum InputMode { UNDEFINED, Efile, GaussianHill, GridFile, CartesianGrid, TopoImage, Rfile};
+enum InputMode { UNDEFINED, Efile, GaussianHill, GridFile, CartesianGrid, TopoImage, Rfile, Sfile};
 
 // access functions needed by the Image (and perhaps other) classes
 int getNumberOfCartesianGrids(){return mNumberOfCartesianGrids;};

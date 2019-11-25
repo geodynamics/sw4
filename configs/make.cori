@@ -7,6 +7,10 @@
 # ..so do not use FFTWHOME:
 undefine FFTWHOME
 #
+# To define HDF5 on Cori, use
+# module add cray-hdf5-parallel
+# .. and do not set HDF5ROOT
+#
 # cray compiler wrappers
   FC = ftn
   CXX = CC

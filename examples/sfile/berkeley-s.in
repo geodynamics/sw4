@@ -1,0 +1,95 @@
+# SW4 input: read entire berkeley rfile model and make images
+
+fileio path=entire-berkeley-sfile-images
+
+# Grid coords: 
+# DON'T CHANGE AZ
+grid x=12000 y=12000 z=6300 h=25 lon=-122.25 lat=37.93 az=143.6380001671 proj=tmerc datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
+
+time steps=0
+
+# Earth Model
+
+# Sfile material model + topography
+sfile filename=berkeley.sfile
+refinement zmax=2587.5 # hv=50 
+
+# NOTE: order = 2 for quadratic interpolation ONLY to be used for model construction
+topography input=sfile zmax=2287.5 order=2 file=berkeley.sfile
+
+attenuation
+
+# 1 source to make SW4 happy
+source x=6e3 y=6e3 depth=3e3
+
+# Image output z=0 (make sure you are on a parallel file system if fileio pio=1
+image z=0 mode=p file=s_image cycle=0
+image z=0 mode=s file=s_image cycle=0
+image z=0 mode=qp file=s_image cycle=0
+image z=0 mode=qs file=s_image cycle=0
+image z=0 mode=rho file=s_image cycle=0
+# image z=0 mode=lat file=s_image cycle=0
+# image z=0 mode=lon file=s_image cycle=0
+image z=0 mode=topo file=s_image cycle=0
+
+# vertical x-sections
+image x=0000  mode=s file=s_image cycle=0
+image x=3000  mode=s file=s_image cycle=0
+image x=6000  mode=s file=s_image cycle=0
+image x=9000  mode=s file=s_image cycle=0
+image x=12000 mode=s file=s_image cycle=0
+
+image x=0000  mode=p file=s_image cycle=0
+image x=3000  mode=p file=s_image cycle=0
+image x=6000  mode=p file=s_image cycle=0
+image x=9000  mode=p file=s_image cycle=0
+image x=12000 mode=p file=s_image cycle=0
+
+image x=0000  mode=rho file=s_image cycle=0
+image x=3000  mode=rho file=s_image cycle=0
+image x=6000  mode=rho file=s_image cycle=0
+image x=9000  mode=rho file=s_image cycle=0
+image x=12000 mode=rho file=s_image cycle=0
+
+image x=0000  mode=qp file=s_image cycle=0
+image x=3000  mode=qp file=s_image cycle=0
+image x=6000  mode=qp file=s_image cycle=0
+image x=9000  mode=qp file=s_image cycle=0
+image x=12000 mode=qp file=s_image cycle=0
+
+image x=0000  mode=qs file=s_image cycle=0
+image x=3000  mode=qs file=s_image cycle=0
+image x=6000  mode=qs file=s_image cycle=0
+image x=9000  mode=qs file=s_image cycle=0
+image x=12000 mode=qs file=s_image cycle=0
+
+image y=0000  mode=s file=s_image cycle=0
+image y=3000  mode=s file=s_image cycle=0
+image y=6000  mode=s file=s_image cycle=0
+image y=9000  mode=s file=s_image cycle=0
+image y=12000 mode=s file=s_image cycle=0
+
+image y=0000  mode=p file=s_image cycle=0
+image y=3000  mode=p file=s_image cycle=0
+image y=6000  mode=p file=s_image cycle=0
+image y=9000  mode=p file=s_image cycle=0
+image y=12000 mode=p file=s_image cycle=0
+
+image y=0000  mode=rho file=s_image cycle=0
+image y=3000  mode=rho file=s_image cycle=0
+image y=6000  mode=rho file=s_image cycle=0
+image y=9000  mode=rho file=s_image cycle=0
+image y=12000 mode=rho file=s_image cycle=0
+
+image y=0000  mode=qp file=s_image cycle=0
+image y=3000  mode=qp file=s_image cycle=0
+image y=6000  mode=qp file=s_image cycle=0
+image y=9000  mode=qp file=s_image cycle=0
+image y=12000 mode=qp file=s_image cycle=0
+
+image y=0000  mode=qs file=s_image cycle=0
+image y=3000  mode=qs file=s_image cycle=0
+image y=6000  mode=qs file=s_image cycle=0
+image y=9000  mode=qs file=s_image cycle=0
+image y=12000 mode=qs file=s_image cycle=0
+

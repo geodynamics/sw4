@@ -210,6 +210,11 @@ main(int argc, char **argv)
       for (int ts=0; ts<GlobalTimeSeries[0].size(); ts++)
       {
 	GlobalTimeSeries[0][ts]->writeFile();
+#ifdef USE_HDF5
+        MPI_Barrier(MPI_COMM_WORLD);
+        if( ts == GlobalTimeSeries[0].size()-1)
+	  GlobalTimeSeries[0][ts]->closeHDF5File();
+#endif
       }
 
       if( myRank == 0 )
