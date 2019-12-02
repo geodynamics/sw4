@@ -4604,7 +4604,7 @@ void EW::allocateCurvilinearArrays()
   mZ.set_to_zero();  
 // Allocate array for the metric
   mMetric.define(4,m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
-  mMetric.set_to_zero();//set to zero to improve thread affinity
+  mMetric.set_to_zero();
 // and the Jacobian of the transformation
   mJ.define(m_iStart[gTop],m_iEnd[gTop],m_jStart[gTop],m_jEnd[gTop],m_kStart[gTop],m_kEnd[gTop]);
   mJ.set_to_zero();

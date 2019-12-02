@@ -103,7 +103,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       Up[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       Um[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       U[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
-      // Thread affinity
+      //
       F[g].set_to_zero();
       Lu[g].set_to_zero();
       Uacc[g].set_to_zero();
