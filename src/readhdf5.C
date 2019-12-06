@@ -62,7 +62,7 @@ struct traverse_data_t {
   int downSample;
   TimeSeries::receiverMode mode;
   int event;
-  vector<vector<TimeSeries*>> *GlobalTimeSeries;
+  vector<vector<TimeSeries*> > *GlobalTimeSeries;
   float_sw4 m_global_xmax;
   float_sw4 m_global_ymax;
   bool is_obs;

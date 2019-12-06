@@ -268,7 +268,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 			float_sw4* __restrict__ a_met, float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu,
 			int* onesided, float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
 			float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
-			char op );
+			int nk, char op );
 void energy4_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		 int i1, int i2, int j1, int j2, int k1, int k2, int* onesided,
 		 float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_up,
@@ -4412,12 +4412,13 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
      kfirst   = m_kStart[g];
      klast    = m_kEnd[g];
      onesided_ptr = m_onesided[g];
+     int nk = m_global_nz[g];
      char op = '='; // assign Uacc := L_u(u)
 //FTNC     if( m_croutines )
 	curvilinear4sg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
 			   u_ptr, mu_ptr, la_ptr, met_ptr, jac_ptr,
 			   uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
-			   m_sg_str_x[g], m_sg_str_y[g], op );
+			   m_sg_str_x[g], m_sg_str_y[g], nk, op );
 //FTNC     else
 //FTNC     {
 //FTNC	if( usingSupergrid() )
@@ -4443,7 +4444,7 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 	     curvilinear4sg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
 			       alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
 			       uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp,
-			       m_sg_str_x[g], m_sg_str_y[g], op );
+                                m_sg_str_x[g], m_sg_str_y[g], nk, op );
 	  }	     
 //FTNC	  else
 //FTNC	  {
