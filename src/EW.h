@@ -1866,6 +1866,7 @@ class EW {
   StatMachine<size_t, double> sm2;
   StatMachine<int, double> coll_sm;
   StatMachine<int, double> step_sm;
+  StatMachine<int, double> host_sm;
 #endif
  public:
   int m_neighbor[4];
@@ -1886,6 +1887,7 @@ class EW {
   // Checkpointing and restart
   //   CheckPoint* m_restart_check_point;
   CheckPoint* m_check_point;
+  bool cudaProfilerOn;
 };
 
 #endif

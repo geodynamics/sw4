@@ -684,19 +684,24 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries) {
   Force(t, F, point_sources, identsources);
   // end test
   std::chrono::high_resolution_clock::time_point t1, t2;
+#ifdef SW4_TRACK_MPI
+  std::chrono::high_resolution_clock::time_point t3,t6;
+#endif
   // BEGIN TIME STEPPING LOOP
   // PROFILER_START;
   SW4_MARK_BEGIN("TIME_STEPPING");
 #ifdef SW4_TRACK_MPI
-  bool cudaProfilerOn = false;
+  //bool cudaProfilerOn = false;
 #endif
   for (int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps;
        currentTimeStep++) {
     time_measure[0] = MPI_Wtime();
     if (currentTimeStep == mNumberOfTimeSteps) t1 = SW4_CHRONO_NOW;
     if (currentTimeStep == (beginCycle + 10)) {
+
       PROFILER_START;
 #ifdef SW4_TRACK_MPI
+      t6 = SW4_CHRONO_NOW;
       cudaProfilerOn = true;
 #endif
     }
@@ -1114,11 +1119,15 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries) {
       }
     }
 #ifdef SW4_TRACK_MPI
-    t4 = SW4_CHRONO_NOW;
+    std::chrono::high_resolution_clock::time_point t4 = SW4_CHRONO_NOW;
     if (cudaProfilerOn) step_sm.insert(0, SW4_CHRONO_DURATION_MS(t3, t4));
 #endif
     if (currentTimeStep == mNumberOfTimeSteps) {
       t2 = SW4_CHRONO_NOW;
+#ifdef SW4_TRACK_MPI
+      std::cout<<"Clean time stepping time "<<std::chrono::duration_cast<std::chrono::seconds>(t2 -
+												    t6).count()<<" s \n";
+#endif
       if (proc_zero()) {
         std::cout << " Time for the last time step is "
                   << std::chrono::duration_cast<std::chrono::milliseconds>(t2 -

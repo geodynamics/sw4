@@ -618,7 +618,7 @@ EW::EW(const string& fileName, vector<Source*>& a_GlobalSources,
       m_croutines(true),
       NO_TOPO(1e38),
       ForceVector(NULL),
-      ForceAddress(NULL) {
+  ForceAddress(NULL),cudaProfilerOn(false) {
   MPI_Comm_rank(MPI_COMM_WORLD, &m_myRank);
   MPI_Comm_size(MPI_COMM_WORLD, &m_nProcs);
 
@@ -771,6 +771,12 @@ EW::~EW() {
       [=](int size, double time) -> double { return time; });
   step_sm.printhistory(hfile);  // This needs to be done before print in which
                                 // the history gets sorted
+  host_sm.print(
+      ofile, [=](size_t size) -> double { return size * 8 / 1024.0; },
+      [=](size_t size, double time) -> double {
+        return size / time * 8 * 1.0e6 / 1024 / 1024 / 1024;
+      });
+  
   step_sm.print(
       ofile, [=](size_t size) -> double { return size; },
       [=](size_t size, double time) -> double { return time; });
