@@ -905,9 +905,9 @@ void EW::processGrid(char* buffer) {
   //         if( m_geodynbc_center )
   // 	{
   // 	   // Center cube in the middle of the domain (in x,y), discarding input
-  // origin. 	   double xlen = x; 	   double ylen = y; 	   if( xlen == 0 )
-  // xlen = h*(nx-1); 	   if( ylen == 0 ) 	      ylen = h*(ny-1); 	   origin[0] =
-  // 0.5*(xlen-cubelen); 	   origin[1] = 0.5*(ylen-cubelen);
+  // origin. 	   double xlen = x; 	   double ylen = y; 	   if( xlen == 0
+  // ) xlen = h*(nx-1); 	   if( ylen == 0 ) 	      ylen = h*(ny-1);
+  // origin[0] = 0.5*(xlen-cubelen); 	   origin[1] = 0.5*(ylen-cubelen);
   // 	}
   // 	if( adjust == 1 )
   // 	{
@@ -3033,7 +3033,8 @@ void EW::processPrefilter(char* buffer) {
 
 // //-----------------------------------------------------------------------
 // void FileInput::geodynbcGetSizes( string filename, double origin[3], double
-// &cubelen, 				  double& zcubelen, bool &found_latlon, double&
+// &cubelen, 				  double& zcubelen, bool &found_latlon,
+// double&
 // lat, 				  double& lon, double& az, int& adjust )
 // {
 //    ifstream geodynfile(m_geodynbc_filename.c_str());
@@ -6388,8 +6389,9 @@ void EW::processObservation(char* buffer,
     //	{
     //	   int year,month,day,hour,minute,second,msecond, fail;
     //	   // Format: 01/04/2012:17:34:45.2343
-    //(Month/Day/Year:Hour:Min:Sec.fraction) 	   parsedate( token, year, month,
-    //day, hour, minute, second, msecond, fail ); 	   if( fail == 0 )
+    //(Month/Day/Year:Hour:Min:Sec.fraction) 	   parsedate( token, year,
+    //month, day, hour, minute, second, msecond, fail ); 	   if( fail == 0
+    // )
     //	   {
     //              utcset = true;
     //	      utc[0] = year;

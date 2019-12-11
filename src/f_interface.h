@@ -167,7 +167,7 @@ void subsurfforcing(int* ifirst, int* ilast, int* jfirst, int* jlast,
 //   void getsurfforcinggh( int*ifirst, int *ilast, int *jfirst, int* jlast,
 //   int* kfirst, int* klast,
 //			  int* k, float_sw4* h, float_sw4* tau, float_sw4*
-//forcing, float_sw4* amp, float_sw4* xc, 			  float_sw4* yc,
+// forcing, float_sw4* amp, float_sw4* xc, 			  float_sw4* yc,
 // float_sw4* xl, float_sw4* yl );
 void getsurfforcingsg(int* ifirst, int* ilast, int* jfirst, int* jlast,
                       int* kfirst, int* klast, int* k, float_sw4* met,

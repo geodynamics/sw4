@@ -685,20 +685,19 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries) {
   // end test
   std::chrono::high_resolution_clock::time_point t1, t2;
 #ifdef SW4_TRACK_MPI
-  std::chrono::high_resolution_clock::time_point t3,t6;
+  std::chrono::high_resolution_clock::time_point t3, t6;
 #endif
   // BEGIN TIME STEPPING LOOP
   // PROFILER_START;
   SW4_MARK_BEGIN("TIME_STEPPING");
 #ifdef SW4_TRACK_MPI
-  //bool cudaProfilerOn = false;
+  // bool cudaProfilerOn = false;
 #endif
   for (int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps;
        currentTimeStep++) {
     time_measure[0] = MPI_Wtime();
     if (currentTimeStep == mNumberOfTimeSteps) t1 = SW4_CHRONO_NOW;
     if (currentTimeStep == (beginCycle + 10)) {
-
       PROFILER_START;
 #ifdef SW4_TRACK_MPI
       t6 = SW4_CHRONO_NOW;
@@ -1125,8 +1124,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries) {
     if (currentTimeStep == mNumberOfTimeSteps) {
       t2 = SW4_CHRONO_NOW;
 #ifdef SW4_TRACK_MPI
-      std::cout<<"Clean time stepping time "<<std::chrono::duration_cast<std::chrono::seconds>(t2 -
-												    t6).count()<<" s \n";
+      std::cout
+          << "Clean time stepping time "
+          << std::chrono::duration_cast<std::chrono::seconds>(t2 - t6).count()
+          << " s \n";
 #endif
       if (proc_zero()) {
         std::cout << " Time for the last time step is "
@@ -1137,7 +1138,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries) {
       }
     }
 
-    if (currentTimeStep ==beginCycle){
+    if (currentTimeStep == beginCycle) {
       SW4_PEEK;
       SYNC_DEVICE;
     }
@@ -2789,7 +2790,8 @@ void EW::compute_preliminary_corrector(
   //       float_sw4 amplambda= m_twilight_forcing->m_amplambda;
   //       if( m_croutines )
   // 	 forcingttfort_ci( ib, ie, jb, je, kic, kic, force.c_ptr(), t, om, cv,
-  // ph, omm, phm, 			   amprho, ampmu, amplambda, mGridSize[g], m_zmin[g]
+  // ph, omm, phm, 			   amprho, ampmu, amplambda, mGridSize[g],
+  // m_zmin[g]
   // );
   //       else
   // 	 forcingttfort( &ib, &ie, &jb, &je, &kic, &kic, force.c_ptr(), &t, &om,
@@ -3729,8 +3731,8 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
 
 // //---------------------------------------------------------------------------
 // void eval_curvilinear_bc_stress(Sarray & a_u, double ** bcForcing, Sarray &
-// a_x, Sarray & a_y, Sarray & a_z, 				Sarray & a_mu, Sarray &
-// a_lam, Sarray & a_q, Sarray & a_r, Sarray & a_s, Sarray & a_J)
+// a_x, Sarray & a_y, Sarray & a_z, 				Sarray & a_mu, Sarray
+// & a_lam, Sarray & a_q, Sarray & a_r, Sarray & a_s, Sarray & a_J)
 // {
 // // 4D macros swap the last and first indices to compensate for different
 // conventions between how

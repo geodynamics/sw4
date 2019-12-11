@@ -391,7 +391,8 @@ void Image3D::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
       if (m_double) {
         //	    for( int ks=0 ; ks <= (mWindow[g][5]-mWindow[g][4])/st ;
         // ks++ ) 	       for( int js=0 ; js <=
-        // (mWindow[g][3]-mWindow[g][2])/st ; js++ ) 		  for( int is=0 ; is <=
+        // (mWindow[g][3]-mWindow[g][2])/st ; js++ ) 		  for( int is=0 ;
+        // is <=
         //(mWindow[g][1]-mWindow[g][0])/st ; is++ )
         //		  {
         //		     int k = mWindow[g][4]+ks*st;

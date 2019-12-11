@@ -4,6 +4,7 @@
 #include "Mspace.h"
 #include "caliper.h"
 #include "foralls.h"
+#include "forallsdecl.h"
 #include "policies.h"
 #include "sw4.h"
 //#ifdef ENABLE_GPU
@@ -1252,10 +1253,17 @@ void rhs4th3fortsgstr_ci(
 #define NO_COLLAPSE 1
 #endif
 #if defined(NO_COLLAPSE)
+
+#ifdef SW4_AUTOTUNE
+    RangeAT<384, __LINE__, 1> IJK_AT(ifirst + 2, ilast - 1, jfirst + 2,
+                                     jlast - 1, k1, k2 + 1);
+    forall3asyncAT<__LINE__>(IJK_AT, [=] RAJA_DEVICE(int i, int j, int k) {
+#else
     Range<16> I(ifirst + 2, ilast - 1);
     Range<4> J(jfirst + 2, jlast - 1);
     Range<4> K(k1, k2 + 1);
     forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+#endif
 #else
     RAJA::kernel<
         XRHS_POL_ASYNC>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
@@ -2542,10 +2550,12 @@ void dpdmtfortatt_ci(int ib, int ie, int jb, int je, int kb, int ke,
 
 // //-----------------------------------------------------------------------
 // void EW::updatememvar_ci( int ifirst, int ilast, int jfirst, int jlast, int
-// kfirst, int klast, 			  float_sw4* __restrict__ a_alp, float_sw4*
+// kfirst, int klast, 			  float_sw4* __restrict__ a_alp,
+// float_sw4*
 // __restrict__ a_alm, 			  float_sw4* __restrict__ a_up,
 // float_sw4* __restrict__ a_u, 			  float_sw4*
-// __restrict__ a_um, 			  float_sw4 omega, float_sw4 dt, int domain
+// __restrict__ a_um, 			  float_sw4 omega, float_sw4 dt, int
+// domain
 // )
 // {
 //    const float_sw4 i6 = 1.0/6;
@@ -3350,8 +3360,8 @@ void att_free_curvi_ci(
 // #ifdef ENABLE_CUDA
 // void rhs4th3fortsgstr_ciopt( int ifirst, int ilast, int jfirst, int jlast,
 // int kfirst, int klast, 			     int ni,int nj,int nk,
-// float_sw4* a_lu, float_sw4* a_u, 			     float_sw4* a_mu, float_sw4* a_lambda,
-// 			     float_sw4 h, float_sw4* a_strx, float_sw4* a_stry,
+// float_sw4* a_lu, float_sw4* a_u, 			     float_sw4* a_mu,
+// float_sw4* a_lambda, 			     float_sw4 h, float_sw4* a_strx, float_sw4* a_stry,
 // 			     float_sw4* a_strz, char op ){
 //   SW4_MARK_FUNCTION;
 //   int njcomp = jlast - jfirst + 1;

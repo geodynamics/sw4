@@ -139,7 +139,8 @@ void memvar_pred_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   // 			 RAJA::statement::For<2, RAJA::cuda_threadblock_exec<1>,
   // 					      RAJA::statement::For<0,
   // RAJA::cuda_threadblock_exec<1024>,
-  // RAJA::statement::For<3, RAJA::seq_exec, 								   RAJA::statement::Lambda<0>
+  // RAJA::statement::For<3, RAJA::seq_exec,
+  // RAJA::statement::Lambda<0>
   // >>>>>>;
 
   //  RAJA::kernel<DEFAULT_LOOP4>(
@@ -255,7 +256,8 @@ void memvar_corr_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   // 			    [=]RAJA_DEVICE (int i,int j, int k,int c) {
   // 			    size_t ind = base+i+ni*j+nij*k;
   // 			    // Note that alp is ASSIGNED by this formula
-  // 			    alp[ind+c*nijk] = icp*( cm*alm[ind+c*nijk] + u[ind+c*nijk]
+  // 			    alp[ind+c*nijk] = icp*( cm*alm[ind+c*nijk] +
+  // u[ind+c*nijk]
   // + i6* ( dto*dto*u[ind+c*nijk] +
   // dto*(up[ind+c*nijk]-um[ind+c*nijk]) +
   // (up[ind+c*nijk]-2*u[ind+c*nijk]+um[ind+c*nijk]) ) );

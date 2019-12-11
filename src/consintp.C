@@ -405,18 +405,17 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
     }
 #endif
 
-
     SW4_MARK_BEGIN("CONSINTP::MPI_ALLREDUCE");
 #if defined(SW4_TRACK_MPI)
     {
       std::chrono::high_resolution_clock::time_point t1, t2;
       t1 = SW4_CHRONO_NOW;
 #endif
-    MPI_Allreduce(&jacerrtmp, &jacerr, 1, m_mpifloat, MPI_MAX,
-                  m_cartesian_communicator);
+      MPI_Allreduce(&jacerrtmp, &jacerr, 1, m_mpifloat, MPI_MAX,
+                    m_cartesian_communicator);
 #if defined(SW4_TRACK_MPI)
-    t2 = SW4_CHRONO_NOW;
-    coll_sm.insert(301, SW4_CHRONO_DURATION_US(t1, t2));
+      t2 = SW4_CHRONO_NOW;
+      coll_sm.insert(301, SW4_CHRONO_DURATION_US(t1, t2));
     }
 #endif
     SW4_MARK_END("CONSINTP::MPI_ALLREDUCE");

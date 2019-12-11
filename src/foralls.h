@@ -1,4 +1,14 @@
+#include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <map>
+#include <sstream>
+#include <vector>
+
+#include "mpi.h"
+#include "policies.h"
+std::vector<int> factors(int N);
+std::vector<int> factors(int N, int start);
 #ifdef ENABLE_CUDA
 template <typename Func>
 __global__ void forallkernel(int start, int N, Func f) {
@@ -83,6 +93,16 @@ class RangeGS {
 };
 
 template <typename Func>
+__global__ void forall3kernel(const int start0, const int N0, const int start1,
+                              const int N1, const int start2, const int N2,
+                              Func f) {
+  int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
+  int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
+  int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
+  if ((tid0 < N0) && (tid1 < N1) && (tid2 < N2)) f(tid0, tid1, tid2);
+}
+
+template <int N, typename Func>
 __global__ void forall3kernel(const int start0, const int N0, const int start1,
                               const int N1, const int start2, const int N2,
                               Func f) {
@@ -194,4 +214,186 @@ void forall2(T1 &irange, T2 &jrange, LoopBody &&body) {
   forall2async(irange, jrange, body);
   cudaStreamSynchronize(0);
 }
+
+// AutoTuning Code
+template <int N, int M, int L>
+class RangeAT {
+ public:
+  RangeAT(int istart, int iend, int jstart, int jend, int kstart, int kend)
+      : istart(istart),
+        iend(iend),
+        jstart(jstart),
+        jend(jend),
+        kstart(kstart),
+        kend(kend) {
+    auto curr =
+        std::make_tuple((iend - istart), (jend - jstart), (kend - kstart));
+    if (files.find(curr) == files.end()) {
+      int myRank;
+      MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+      // std::cout << "Opening the file \n";
+      std::stringstream s;
+      s << "Times" << myRank << "_" << M << "_" << L << "_" << (iend - istart)
+        << "_" << (jend - jstart) << "_" << (kend - kstart) << ".dat";
+      auto &ofile = files[curr];
+      ofile.open(s.str());
+      // iles[curr]=std::move(ofile);
+    }
+    if (mintime.find(std::make_tuple((iend - istart), (jend - jstart),
+                                     (kend - kstart))) == mintime.end())
+      mintime[std::make_tuple((iend - istart), (jend - jstart),
+                              (kend - kstart))] = 1.0e89;
+    if (vloca.find(std::make_tuple((iend - istart), (jend - jstart),
+                                   (kend - kstart))) == vloca.end())
+      vloca[std::make_tuple((iend - istart), (jend - jstart),
+                            (kend - kstart))] = 0;
+    if (map.find(std::make_tuple((iend - istart), (jend - jstart),
+                                 (kend - kstart))) == map.end()) {
+      int max_block_size = floor(65536.0 / (N + 2)) - 1;
+      max_block_size = N;
+      // max_block_size = floor((256*255.0)/(N+1));
+      files[curr] << "#Largest allowable block size is " << max_block_size
+                  << " for Regs Per thread of " << N << " on line " << M
+                  << " \n";
+      files[curr] << "#LOOP SIZES " << (iend - istart) << " " << (jend - jstart)
+                  << " " << (kend - kstart) << "\n";
+      int ii, jj, kk;
+      std::vector<std::tuple<int, int, int, int, int, int>> mins;
+      if (0) {
+        // Insert arbitrary configuration into vector of launch configs
+        int ii = ceil(float(iend - istart) / 16);
+        int jj = ceil(float(jend - jstart) / 4);
+        int kk = ceil(float(kend - kstart) / 6);
+        confs[curr].clear();
+        dim3 tpb(16, 4, 6);
+        dim3 blks(ii, jj, kk);
+        confs[curr].push_back(std::make_tuple(tpb, blks));
+      }
+      const int offset = 0;  // Controlling the search space
+      for (int block_size = max_block_size - offset;
+           block_size <= max_block_size; block_size++) {
+        auto f = factors(block_size, 32);
+        for (const int &i : f) {
+          int rest = block_size / i;
+          auto ff = factors(rest);
+          for (const int &j : ff) {
+            int k = rest / j;
+            assert(i * j * k == N);
+            ii = ceil(float(iend - istart) / i);
+            jj = ceil(float(jend - jstart) / j);
+            kk = ceil(float(kend - kstart) / k);
+ 
+            dim3 tpb(i, j, k);
+            dim3 blks(ii, jj, kk);
+            if (k <= 64) confs[curr].push_back(std::make_tuple(tpb, blks));
+
+            assert(ii * i >= (iend - istart));
+            assert(jj * j >= (jend - jstart));
+            assert(kk * k >= (kend - kstart));
+          }
+        }
+      }
+    }
+  }
+  static std::map<std::tuple<int, int, int>, std::tuple<dim3, dim3>> map;
+  static std::map<std::tuple<int, int, int>,
+                  std::vector<std::tuple<dim3, dim3>>>
+      confs;
+  static std::map<std::tuple<int, int, int>, float> mintime;
+  static std::map<std::tuple<int, int, int>, int> vloca;
+  static std::map<std::tuple<int, int, int>, std::ofstream> files;
+  static dim3 mint, minb;
+  int istart, jstart, kstart;
+  int iend, jend, kend;
+  int ib, jb, kb;
+  int ic, jc, kc;
+  int blocks;
+  int tpb;
+};
+
+template <int N, typename T1, typename LoopBody>
+void forall3asyncAT(T1 &range3, LoopBody &&body) {
+  dim3 tpb(range3.ic, range3.jc, range3.kc);
+  dim3 blocks(range3.ib, range3.jb, range3.kb);
+
+  cudaEvent_t start, stop;
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
+  auto curr = std::make_tuple((range3.iend - range3.istart),
+                              (range3.jend - range3.jstart),
+                              (range3.kend - range3.kstart));
+#define SW4_VERBOSE
+#ifdef SW4_VERBOSE
+  // Calculate max block size and compare it to early calculations
+  int minGridSize;
+  int blockSize;
+
+  if (range3.vloca[curr] == 0) {
+    SW4_CheckDeviceError(cudaOccupancyMaxPotentialBlockSize(
+        &minGridSize, &blockSize, forall3kernel<N, LoopBody>, 0, 0));
+    range3.files[curr] << "#LINE " << N << " MAX BLOCK SIZE FOR OCC CALC "
+                       << blockSize << " minGridSize " << minGridSize << " \n";
+    int numBlocks;
+    SW4_CheckDeviceError(cudaOccupancyMaxActiveBlocksPerMultiprocessor(
+        &numBlocks, forall3kernel<N, LoopBody>, blockSize, 0));
+    range3.files[curr] << "#LINE " << N
+                       << " maximum number of active blocks per SM "
+                       << numBlocks << " \n";
+  }
+// end max block size
+#endif
+
+  if (range3.vloca[curr] < range3.confs[curr].size()) {
+    auto &i = range3.confs[curr][range3.vloca[curr]];
+    range3.vloca[curr]++;
+
+    int n = std::get<1>(i).x * std::get<1>(i).y * std::get<1>(i).z;
+
+    cudaEventRecord(start);
+    forall3kernel<N><<<std::get<1>(i), std::get<0>(i)>>>(
+        range3.istart, range3.iend, range3.jstart, range3.jend, range3.kstart,
+        range3.kend, body);
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    float ms = 0;
+    cudaEventElapsedTime(&ms, start, stop);
+    if (cudaGetLastError() == cudaSuccess) {
+      range3.files[curr] << n << " " << ms << " " << std::get<0>(i).x << " "
+                         << std::get<0>(i).y << " " << std::get<0>(i).z << " "
+                         << range3.vloca[curr] << "\n";
+      if (range3.mintime[curr] > ms) {
+        range3.mintime[curr] = ms;
+        range3.map[curr] = std::make_tuple(std::get<0>(i), std::get<1>(i));
+      }
+    } else {
+      std::cout << range3.vloca[curr] << " " << N << " " << std::get<0>(i).x
+                << " " << std::get<0>(i).y << " " << std::get<0>(i).z
+                << " TPB FAILED \n";
+      std::cout << range3.vloca[curr] << " " << N << " " << std::get<1>(i).x
+                << " " << std::get<1>(i).y << " " << std::get<1>(i).z
+                << " BLKS FAILED \n";
+    }
+
+    if (range3.vloca[curr] == range3.confs[curr].size()) {
+      auto &mint = std::get<0>(range3.map[curr]);
+      range3.files[curr] << "&\n#BEST CONFIG " << range3.mintime[curr] << " "
+                         << mint.x << " " << mint.y << " " << mint.z << " "
+                         << range3.confs[curr].size() << "\n";
+      auto &minb = std::get<1>(range3.map[curr]);
+      int minblocks = minb.x * minb.y * minb.z;
+
+      range3.files[curr] << minblocks << " " << range3.mintime[curr] << " "
+                         << mint.x << " " << mint.y << " " << mint.z << " "
+                         << range3.confs[curr].size() << "\n";
+    }
+  } else {
+    auto &v = range3.map[std::make_tuple((range3.iend - range3.istart),
+                                         (range3.jend - range3.jstart),
+                                         (range3.kend - range3.kstart))];
+    forall3kernel<N><<<std::get<1>(v), std::get<0>(v)>>>(
+        range3.istart, range3.iend, range3.jstart, range3.jend, range3.kstart,
+        range3.kend, body);
+  }
+}
+
 #endif

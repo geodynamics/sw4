@@ -1382,20 +1382,19 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount,
 #endif
   SW4_MARK_BEGIN("MPI_SENDRECV_ACTUAL2");
 
-
   if (sendto != MPI_PROC_NULL) {
 #if defined(SW4_TRACK_MPI)
     auto t1 = SW4_CHRONO_NOW;
     {
 #endif
-    // getbuffer_device(a,std::get<0>(buf),sendt,true);
-    getbuffer_host(a, std::get<0>(buf), sendt);
+      // getbuffer_device(a,std::get<0>(buf),sendt,true);
+      getbuffer_host(a, std::get<0>(buf), sendt);
 #if defined(SW4_TRACK_MPI)
-    auto t2 = SW4_CHRONO_NOW;
-    size_t size = 0;
-    if (sendto != MPI_PROC_NULL) size += send_count;
-    if (recvfrom != MPI_PROC_NULL) size += recv_count;
-    host_sm.insert(size, SW4_CHRONO_DURATION_US(t1, t2));
+      auto t2 = SW4_CHRONO_NOW;
+      size_t size = 0;
+      if (sendto != MPI_PROC_NULL) size += send_count;
+      if (recvfrom != MPI_PROC_NULL) size += recv_count;
+      host_sm.insert(size, SW4_CHRONO_DURATION_US(t1, t2));
     }
 #endif
   }
@@ -1433,15 +1432,15 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount,
 #endif
     {
 #if defined(SW4_TRACK_MPI)
-    auto t1 = SW4_CHRONO_NOW;
+      auto t1 = SW4_CHRONO_NOW;
 #endif
-    putbuffer_host(b, std::get<1>(buf), recvt);
+      putbuffer_host(b, std::get<1>(buf), recvt);
 #if defined(SW4_TRACK_MPI)
-    auto t2 = SW4_CHRONO_NOW;
-    size_t size = 0;
-    if (sendto != MPI_PROC_NULL) size += send_count;
-    if (recvfrom != MPI_PROC_NULL) size += recv_count;
-    host_sm.insert(size, SW4_CHRONO_DURATION_US(t1, t2));
+      auto t2 = SW4_CHRONO_NOW;
+      size_t size = 0;
+      if (sendto != MPI_PROC_NULL) size += send_count;
+      if (recvfrom != MPI_PROC_NULL) size += recv_count;
+      host_sm.insert(size, SW4_CHRONO_DURATION_US(t1, t2));
 #endif
     }
     // std::cout<<"RECEIVING :: "<<recvfrom<<" ";

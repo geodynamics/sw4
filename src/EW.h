@@ -770,9 +770,8 @@ class EW {
   // void dirichlet_LRic( Sarray& U, int g, int kic, float_sw4 t, int adj );
   // void gridref_initial_guess( Sarray& u, int g, bool upper );
   // void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray&
-  // a_Um, Sarray& Unext, 				    int g, int kic, float_sw4
-  // t,
-  // std::vector<GridPointSource*> point_sources ); void
+  // a_Um, Sarray& Unext, 				    int g, int kic,
+  // float_sw4 t, std::vector<GridPointSource*> point_sources ); void
   // compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext,
   // int
   // g, int kic, float_sw4 t, std::vector<GridPointSource*> point_sources );
@@ -781,8 +780,8 @@ class EW {
   // a_str_x, float_sw4* a_str_y); void consintp( Sarray& Uf, Sarray& Unextf,
   // Sarray& Bf, Sarray& Muf, Sarray& Lambdaf, Sarray& Rhof, float_sw4 hf,
   //	       Sarray& Uc, Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray&
-  // Lambdac, Sarray& Rhoc, float_sw4 hc, 	       float_sw4 cof, int gc, int
-  // gp, int is_periodic[2] ); void check_corrector( Sarray& Uf, Sarray& Uc,
+  // Lambdac, Sarray& Rhoc, float_sw4 hc, 	       float_sw4 cof, int gc,
+  // int gp, int is_periodic[2] ); void check_corrector( Sarray& Uf, Sarray& Uc,
   // Sarray&
   // Unextf, Sarray& Unextc, int kf, int kc );
 
@@ -992,8 +991,8 @@ class EW {
   // void updatememvar_ci( int ifirst, int ilast, int jfirst, int jlast, int
   // kfirst, int klast, 		      float_sw4* __restrict__ a_alp,
   // float_sw4* __restrict__
-  // a_alm, float_sw4* __restrict__ a_up, 		      float_sw4* __restrict__
-  // a_u, float_sw4*
+  // a_alm, float_sw4* __restrict__ a_up, 		      float_sw4*
+  // __restrict__ a_u, float_sw4*
   //__restrict__ a_um, 		      float_sw4 omega, float_sw4 dt, int domain
   //);
 

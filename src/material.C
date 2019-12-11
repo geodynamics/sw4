@@ -343,7 +343,8 @@ float_sw4 EW::localMin(std::vector<Sarray>& a_field) {
         for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
           if (a_field[g](i, j, k) < lmin) {
             lmin = a_field[g](i, j, k);
-            //		      cout << "lmin = " << lmin << " at " << i << " " << j
+            //		      cout << "lmin = " << lmin << " at " << i << " " <<
+            //j
             //<< " " << k << endl;
           }
         }

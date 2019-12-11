@@ -298,8 +298,8 @@ void EW::consintp(Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf,
         //	       if( c == 3 && ic == 12 && jc == 13 )
         //	       {
         //	         cout << "i,j " << i << " " << j << " " << b1 << " " <<
-        // b2 << " " << r1 << " " << r2 << endl; 		 cout << "   " <<
-        // Uf(c,i,j,nkf+1)
+        // b2 << " " << r1 << " " << r2 << endl; 		 cout << "   "
+        // << Uf(c,i,j,nkf+1)
         //<< " " << Uc(c,ic,jc,0) << " " <<
         //		    a21*Uf(c,i,j,nkf+1)+Unextf(c,i,j,nkf) << " " <<
         //-a22*Uc(c,ic,jc,0)+Unextc(c,ic,jc,1) << endl;

@@ -198,7 +198,8 @@ void MaterialRfile::set_material_properties(std::vector<Sarray>& rho,
               //<< " " << wghx[1] << " " << wghx[2] << " " << wghx[3] << endl;
               //		      cout << "wghy = " << wghy[0] << " " <<
               // wghy[1] << " " << wghy[2] << " " << wghy[3] << endl;
-              // cout << "wghz = " << wghz[0] << " " << wghz[1] << " " << wghz[2]
+              // cout << "wghz = " << wghz[0] << " " << wghz[1] << " " <<
+              // wghz[2]
               //<< " "
               //<< wghz[3] << endl; 		      cout << " r, s, t = " << r
               //<< " " << s << " " << t << endl;
@@ -698,8 +699,8 @@ void MaterialRfile::read_rfile() {
     //	 {
     //	    cout << "p= "<< p << " ncblock= " << ncblock[p] << " ifirst,ilast "
     //<< m_ifirst[p] << " " << m_ilast[p] << 	       " jfirst,jlast " <<
-    //m_jfirst[p] << " " << m_jlast[p] << 	       " kfirst,klast " <<
-    //m_kfirst[p] << " " << m_klast[p]
+    // m_jfirst[p] << " " << m_jlast[p] << 	       " kfirst,klast " <<
+    // m_kfirst[p] << " " << m_klast[p]
     //<< endl;
     //	 }
     //      }
@@ -757,7 +758,8 @@ void MaterialRfile::read_rfile() {
     //      {
     //	 cout << "rho min and max " << mMaterial[p].minimum(1)<< " " <<
     // mMaterial[p].maximum(1) << endl; 	 cout << "cp  min and max " <<
-    // mMaterial[p].minimum(2)<< " " << mMaterial[p].maximum(2) << endl; 	 cout
+    // mMaterial[p].minimum(2)<< " " << mMaterial[p].maximum(2) << endl;
+    // cout
     // << "cs  min and max " << mMaterial[p].minimum(3)<< " " <<
     // mMaterial[p].maximum(3) << endl;
     //      }

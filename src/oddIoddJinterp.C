@@ -843,8 +843,8 @@ void oddIoddJinterp(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf,
         //	       if( c == 2 && ic == 12 && jc == 13 )
         //	       {
         //	         cout << "i,j " << i << " " << j << " " << b1 << " " <<
-        // b2 << " " << r1 << " " << r2 << endl; 		 cout << "   " <<
-        // Uf(c,i,j,nkf+1)
+        // b2 << " " << r1 << " " << r2 << endl; 		 cout << "   "
+        // << Uf(c,i,j,nkf+1)
         //<< " " << Uc(c,ic,jc,0) << " " <<
         //		    a21*Uf(c,i,j,nkf+1)+Unextf(c,i,j,nkf) << " " <<
         //-a22*Uc(c,ic,jc,0)+Unextc(c,ic,jc,1) << endl;
@@ -932,7 +932,7 @@ void oddIoddJinterp(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf,
       // b2 << " " << r1 << " " << r2 << endl; 		 cout << "   " <<
       // Uf(c,i,j,nkf+1)
       //<< " " << Uc(c,ic,jc,0) << " " <<
-      //a21*Uf(c,i,j,nkf+1)+Unextf(c,i,j,nkf)
+      // a21*Uf(c,i,j,nkf+1)+Unextf(c,i,j,nkf)
       //<< " " << -a22*Uc(c,ic,jc,0)+Unextc(c,ic,jc,1) << endl;
       //	       }
     }  // end for ic, jc

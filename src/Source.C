@@ -1790,7 +1790,8 @@ void Source::set_grid_point_sources4(EW* a_EW,
         //	       cout << "kc = 1  ref:  " << wghkref[0] << " " <<
         // wghkref[1] << " " << wghkref[2] << endl; 	       cout << " this: "
         // << wghk[2] << " " << wghk[3] << " " << wghk[4] << " " << wghk[5] <<
-        // endl; 	       cout << "  middle sum: " << wghk[2]+wghkref[2] << endl; 	       cout <<
+        // endl; 	       cout << "  middle sum: " << wghk[2]+wghkref[2] <<
+        // endl; 	       cout <<
         //" 2*ci = " << 2*ci << endl;
 
         wghkref[0] /= normwgh[2];
@@ -2864,7 +2865,8 @@ int Source::spline_interpolation() {
     // {
     // 	cout << "before spline interp" << endl;
     // 	cout << "npts = " << npts << " t0 = " << mPar[0] << " dt= " << 1/mFreq
-    // << endl; 	for( int i=0 ; i < npts ; i++ ) 	  cout << "fun[" << i << "] =
+    // << endl; 	for( int i=0 ; i < npts ; i++ ) 	  cout << "fun[" << i << "]
+    // =
     // "<< mPar[i+1] << endl;
     // }
 

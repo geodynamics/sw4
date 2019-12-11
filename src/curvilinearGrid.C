@@ -341,7 +341,7 @@ bool EW::curvilinear_grid_mapping(float_sw4 q, float_sw4 r, float_sw4 s,
       //	Rjp1 = (r - j);
       //	tau = mTopoGridExt(i,j,1)*Rj*Qi + mTopoGridExt(i,j+1,1)*Rjp1*Qi
       //+ mTopoGridExt(i+1,j,1)*Rj*Qip1 +
-      //mTopoGridExt(i+1,j+1,1)*Rjp1*Qip1;
+      // mTopoGridExt(i+1,j+1,1)*Rjp1*Qip1;
       //      }
       if (point_in_proc_ext(i - 3, j - 3, gCurv) &&
           point_in_proc_ext(i + 4, j + 4, gCurv)) {
@@ -562,7 +562,7 @@ bool EW::invert_curvilinear_grid_mapping(float_sw4 X0, float_sw4 Y0,
       //	Rjp1 = (r - j);
       //	tau = mTopoGridExt(i,j,1)*Rj*Qi + mTopoGridExt(i,j+1,1)*Rjp1*Qi
       //+ mTopoGridExt(i+1,j,1)*Rj*Qip1 +
-      //mTopoGridExt(i+1,j+1,1)*Rjp1*Qip1;
+      // mTopoGridExt(i+1,j+1,1)*Rjp1*Qip1;
       // tmp
       //	printf("invert_curvilinear_mapping: q=%e, r=%e, Linear
       // tau=%e\n", q, r, tau);
