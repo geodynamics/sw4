@@ -344,18 +344,26 @@ void MaterialParAllpts::set_scalefactors( int nmpars, double* sfs,
 
 //-----------------------------------------------------------------------
 void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* xms, 
+					 double* xmd0, double* xms0, double regcoeff,
 					 vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 					 vector<Sarray>& a_lambda, double& mf_reg,
-					 double* sfm, bool compute_derivative, double* dmf_reg )
+					 double* sfd, double* sfs, 
+					 bool compute_derivative, double* dmfd_reg,
+					 double* dmfs_reg )
 {
+   if( regcoeff == 0 )
+      return;
+
 #define SQR(x) ((x)*(x))
-   // Regularization
+   // Laplacian regularization
    Sarray cs, cp;
    int npts = 0;
    size_t ind0 = 0;
    int o=0;
    if( m_variables == RCSCP )
       o = 1;
+   int myrank;
+   MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
 
    mf_reg = 0;
    for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
@@ -368,10 +376,22 @@ void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* 
       const int nk = ( m_ew->m_kEndAct[g]- m_ew->m_kStartAct[g]+1);
       const int nij = ni*nj;
 
-      double rhoref=sfm[ind0], muref=sfm[ind0+1], laref=sfm[ind0+2];
-      double csref=0,cpref=0;
-
-      if( m_variables == RCSCP || m_variables == CSCP )
+      double rhoref=1.0, muref=1.0, laref=1.0;
+      double csref=1.0,cpref=1.0;
+      //      cout << myrank<<"act domain: " << iba << " " << ni << " " << jba << " " << nj
+      //	   << " " << kba << " " << nk << endl;
+      //      cout << myrank<<"nmd = " << nmd << " " << m_nmd << endl;
+      //      cout << myrank<<"nms = " << nms << " " << m_nms << endl;
+      if( m_variables == RML )
+      {
+	 if( m_nmd > 0 )
+	 {
+	    rhoref = sfd[ind0];
+	    muref  = sfd[ind0+1];
+	    laref  = sfd[ind0+2];
+	 }
+      }
+      else if( m_variables == RCSCP || m_variables == CSCP )
       {
 	 cs.define(a_mu[g]);
 	 cp.define(a_lambda[g]);
@@ -387,6 +407,7 @@ void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* 
 	 }
 	 csref = csptr[0];
 	 cpref = cpptr[0];
+	 rhoref=rhoptr[0];
       }
       else if( m_variables == CP )
       {
@@ -401,7 +422,7 @@ void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* 
 	 }
 	 cpref = cpptr[0];
       }
-      // Scalar scale factors for now, turned out that using the full sfm array 
+      // Scalar scale factors for now, turned out that using the full sfd array 
       // requires reworking of all formulas, since it enters as a variable coefficient.
       double irh2 = 1/(rhoref*rhoref);
       double imu2 = 1/(muref*muref);
@@ -422,38 +443,38 @@ void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* 
 		  if( k > 1 )
 		     mf_reg += SQR(2*a_rho[g](i,j,k)-a_rho[g](i,j,k+1)-a_rho[g](i,j,k-1))*irh2;
 		  else
-		     mf_reg += SQR(a_rho[g](i,j,k+1)-a_rho[g](i,j,k))*irh2;
+		     mf_reg += SQR(2*(a_rho[g](i,j,k+1)-a_rho[g](i,j,k)))*irh2;
 	       }
 	       if( m_variables == RML )
 	       {
 		  mf_reg += (SQR(2*a_mu[g](i,j,k)-a_mu[g](i+1,j,k)-a_mu[g](i-1,j,k))+
 			     SQR(2*a_mu[g](i,j,k)-a_mu[g](i,j+1,k)-a_mu[g](i,j-1,k)))*imu2;
 		     mf_reg += ( k > 1 ) ? SQR(2*a_mu[g](i,j,k)-a_mu[g](i,j,k+1)-a_mu[g](i,j,k-1))*imu2:
-		     SQR(a_mu[g](i,j,k+1)-a_mu[g](i,j,k))*imu2;
+			SQR(2*(a_mu[g](i,j,k+1)-a_mu[g](i,j,k)))*imu2;
 
 		  mf_reg += (SQR(2*a_lambda[g](i,j,k)-a_lambda[g](i+1,j,k)-a_lambda[g](i-1,j,k))+
 			     SQR(2*a_lambda[g](i,j,k)-a_lambda[g](i,j+1,k)-a_lambda[g](i,j-1,k))*ila2);
 		  mf_reg += ( k > 1 ) ?
 		     SQR(2*a_lambda[g](i,j,k)-a_lambda[g](i,j,k+1)-a_lambda[g](i,j,k-1))*ila2:
-		     SQR(a_lambda[g](i,j,k+1)-a_lambda[g](i,j,k))*ila2;
+		     SQR(2*(a_lambda[g](i,j,k+1)-a_lambda[g](i,j,k)))*ila2;
 	       }
 	       else if( m_variables == RCSCP || m_variables == CSCP )
 	       {
 		  mf_reg += (SQR(2*cs(i,j,k)-cs(i+1,j,k)-cs(i-1,j,k))+
 			     SQR(2*cs(i,j,k)-cs(i,j+1,k)-cs(i,j-1,k)) )*ics2;
 		  mf_reg += ( k > 1 ) ? SQR(2*cs(i,j,k)-cs(i,j,k+1)-cs(i,j,k-1))*ics2:
-		     SQR(cs(i,j,k+1)-cs(i,j,k))*ics2;
+		     SQR(2*(cs(i,j,k+1)-cs(i,j,k)))*ics2;
 		  mf_reg += (SQR(2*cp(i,j,k)-cp(i+1,j,k)-cp(i-1,j,k)) +
 			     SQR(2*cp(i,j,k)-cp(i,j+1,k)-cp(i,j-1,k)))*icp2;
 		  mf_reg += ( k > 1 ) ? SQR(2*cp(i,j,k)-cp(i,j,k+1)-cp(i,j,k-1))*icp2:
-		     SQR(cp(i,j,k+1)-cp(i,j,k))*icp2;
+		     SQR(2*(cp(i,j,k+1)-cp(i,j,k)))*icp2;
 	       }
 	       else if( m_variables == CP )
 	       {
 		  mf_reg += (SQR(2*cp(i,j,k)-cp(i+1,j,k)-cp(i-1,j,k))+
 			     SQR(2*cp(i,j,k)-cp(i,j+1,k)-cp(i,j-1,k)))*icp2;
 		  mf_reg += ( k > 1 ) ? SQR(2*cp(i,j,k)-cp(i,j,k+1)-cp(i,j,k-1))*icp2:
-		     SQR(cp(i,j,k+1)-cp(i,j,k))*icp2;
+		     SQR(2*(cp(i,j,k+1)-cp(i,j,k)))*icp2;
 	       }
 	       npts++;
 	    }
@@ -461,7 +482,7 @@ void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* 
       {
 
 	 for( int i = 0 ; i < m_nc*nij*nk ; i++ )
-	    dmf_reg[ind0+i] = 0;
+	    dmfd_reg[ind0+i] = 0;
 
 	 int kstart = m_ew->m_kStartAct[g];
 	 if( kstart == 1 )
@@ -475,7 +496,7 @@ void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* 
 		     ind = ind0 + m_nc*(i-iba+ni*(j-jba)+nij*(k-kba));
 		     if( m_variables == RML || m_variables == RCSCP )
 		     {
-			dmf_reg[ind] += (3*a_rho[g](i,j,k)
+			dmfd_reg[ind] += (3*a_rho[g](i,j,k)
 			   -(a_rho[g](i+1,j,k)+a_rho[g](i-1,j,k) +
 			     a_rho[g](i,j+1,k)+a_rho[g](i,j-1,k)) +
 			   +0.25*(a_rho[g](i+2,j,k)+a_rho[g](i-2,j,k) +
@@ -485,14 +506,14 @@ void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* 
 		     }
 		     if( m_variables == RML )
 		     {
-			dmf_reg[ind+1] += (3*a_mu[g](i,j,k)
+			dmfd_reg[ind+1] += (3*a_mu[g](i,j,k)
 			   -(a_mu[g](i+1,j,k)+a_mu[g](i-1,j,k) +
 			     a_mu[g](i,j+1,k)+a_mu[g](i,j-1,k)) +
 			   +0.25*(a_mu[g](i+2,j,k)+a_mu[g](i-2,j,k) +
 				  a_mu[g](i,j+2,k)+a_mu[g](i,j-2,k)) +
 			   rcof[4*(k-1)  ]*a_mu[g](i,j,1) + rcof[4*(k-1)+1]*a_mu[g](i,j,2)+
 			   rcof[4*(k-1)+2]*a_mu[g](i,j,3) + rcof[4*(k-1)+3]*a_mu[g](i,j,4))*imu2;
-			dmf_reg[ind+2] += (3*a_lambda[g](i,j,k)
+			dmfd_reg[ind+2] += (3*a_lambda[g](i,j,k)
 			   -(a_lambda[g](i+1,j,k)+a_lambda[g](i-1,j,k) +
 			     a_lambda[g](i,j+1,k)+a_lambda[g](i,j-1,k)) +
 			   +0.25*(a_lambda[g](i+2,j,k)+a_lambda[g](i-2,j,k) +
@@ -502,14 +523,14 @@ void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* 
 		     }
 		     else if( m_variables == RCSCP || m_variables == CSCP )
 		     {
-			dmf_reg[ind+o] += (3*cs(i,j,k)
+			dmfd_reg[ind+o] += (3*cs(i,j,k)
 			   -(cs(i+1,j,k)+cs(i-1,j,k) +
 			     cs(i,j+1,k)+cs(i,j-1,k)) +
 			   +0.25*(cs(i+2,j,k)+cs(i-2,j,k) +
 				  cs(i,j+2,k)+cs(i,j-2,k)) +
 			   rcof[4*(k-1)  ]*cs(i,j,1) + rcof[4*(k-1)+1]*cs(i,j,2)+
 			   rcof[4*(k-1)+2]*cs(i,j,3) + rcof[4*(k-1)+3]*cs(i,j,4))*ics2;
-			dmf_reg[ind+o+1] += (3*cp(i,j,k)
+			dmfd_reg[ind+o+1] += (3*cp(i,j,k)
 			   -(cp(i+1,j,k)+cp(i-1,j,k) +
 			     cp(i,j+1,k)+cp(i,j-1,k)) +
 			   +0.25*(cp(i+2,j,k)+cp(i-2,j,k) +
@@ -519,7 +540,7 @@ void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* 
 		     }
 		     else if( m_variables == CP )
 		     {
-			dmf_reg[ind] += (3*cp(i,j,k)
+			dmfd_reg[ind] += (3*cp(i,j,k)
 			   -(cp(i+1,j,k)+cp(i-1,j,k) +
 			     cp(i,j+1,k)+cp(i,j-1,k)) +
 			   +0.25*(cp(i+2,j,k)+cp(i-2,j,k) +
@@ -536,7 +557,7 @@ void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* 
 	       {
 		  ind = ind0 + m_nc*(i-iba+ni*(j-jba)+nij*(k-kba));
 		  if( m_variables == RML || m_variables == RCSCP )
-		     dmf_reg[ind] += (4.5*a_rho[g](i,j,k)
+		     dmfd_reg[ind] += (4.5*a_rho[g](i,j,k)
 			-(a_rho[g](i+1,j,k)+a_rho[g](i-1,j,k) +
 			  a_rho[g](i,j+1,k)+a_rho[g](i,j-1,k) +
 			  a_rho[g](i,j,k+1)+a_rho[g](i,j,k-1) ) 
@@ -545,14 +566,14 @@ void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* 
 			       a_rho[g](i,j,k+2)+a_rho[g](i,j,k-2) ))*irh2;
 		  if( m_variables == RML )
 		  {
-		     dmf_reg[ind+1] += (4.5*a_mu[g](i,j,k)
+		     dmfd_reg[ind+1] += (4.5*a_mu[g](i,j,k)
 			-(a_mu[g](i+1,j,k)+a_mu[g](i-1,j,k) +
 			  a_mu[g](i,j+1,k)+a_mu[g](i,j-1,k) +
 			  a_mu[g](i,j,k+1)+a_mu[g](i,j,k-1) ) 
 			+0.25*(a_mu[g](i+2,j,k)+a_mu[g](i-2,j,k) +
 			       a_mu[g](i,j+2,k)+a_mu[g](i,j-2,k) +
 			       a_mu[g](i,j,k+2)+a_mu[g](i,j,k-2) ))*imu2;
-		     dmf_reg[ind+2] += (4.5*a_lambda[g](i,j,k)
+		     dmfd_reg[ind+2] += (4.5*a_lambda[g](i,j,k)
 			-(a_lambda[g](i+1,j,k)+a_lambda[g](i-1,j,k) +
 			  a_lambda[g](i,j+1,k)+a_lambda[g](i,j-1,k) +
 			  a_lambda[g](i,j,k+1)+a_lambda[g](i,j,k-1) ) 
@@ -562,14 +583,14 @@ void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* 
 		  }
 		  else if( m_variables == RCSCP || m_variables == CSCP )
 		  {
-		     dmf_reg[ind+o] += (4.5*cs(i,j,k)
+		     dmfd_reg[ind+o] += (4.5*cs(i,j,k)
 			-(cs(i+1,j,k)+cs(i-1,j,k) +
 			  cs(i,j+1,k)+cs(i,j-1,k) +
 			  cs(i,j,k+1)+cs(i,j,k-1) ) 
 			+0.25*(cs(i+2,j,k)+cs(i-2,j,k) +
 			       cs(i,j+2,k)+cs(i,j-2,k) +
 			       cs(i,j,k+2)+cs(i,j,k-2) ))*ics2;
-		     dmf_reg[ind+o+1] += (4.5*cp(i,j,k)
+		     dmfd_reg[ind+o+1] += (4.5*cp(i,j,k)
 			-(cp(i+1,j,k)+cp(i-1,j,k) +
 			  cp(i,j+1,k)+cp(i,j-1,k) +
 			  cp(i,j,k+1)+cp(i,j,k-1) ) 
@@ -579,7 +600,7 @@ void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* 
 		  }
 		  else if( m_variables == CP )
 		  {
-		     dmf_reg[ind] += (4.5*cp(i,j,k)
+		     dmfd_reg[ind] += (4.5*cp(i,j,k)
 			-(cp(i+1,j,k)+cp(i-1,j,k) +
 			  cp(i,j+1,k)+cp(i,j-1,k) +
 			  cp(i,j,k+1)+cp(i,j,k-1) ) 
@@ -595,6 +616,13 @@ void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* 
    MPI_Allreduce( &mf_reg_tmp, &mf_reg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
    int npts_tmp = npts;
    MPI_Allreduce( &npts_tmp, &npts, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
-   mf_reg = mf_reg/npts;
+
+   double inpts = 1.0/npts;
+   mf_reg = 0.125*regcoeff*mf_reg*inpts;
+   if( compute_derivative )
+   {
+      for( int i=0; i < m_nmd ; i++ )
+	 dmfd_reg[i] *= regcoeff*inpts;
+   }
 #undef SQR
 }

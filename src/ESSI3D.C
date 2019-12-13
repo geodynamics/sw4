@@ -82,6 +82,13 @@ ESSI3D::~ESSI3D()
 }
 
 //-----------------------------------------------------------------------
+void ESSI3D::set_ntimestep(int ntimestep)
+{
+    m_ntimestep = ntimestep;
+}
+
+
+//-----------------------------------------------------------------------
 void ESSI3D::set_dump_interval( int a_dumpInterval )
 {
   if (a_dumpInterval > 0)
@@ -384,7 +391,10 @@ void ESSI3D::open_vel_file( int a_cycle, std::string& a_path,
      cout << "Creating extendible hdf5 velocity fields..." << endl;
   */
 
-  m_hdf5helper->init_write_vel();
+  if (m_dumpInterval > 0) 
+    m_hdf5helper->init_write_vel(m_dumpInterval);
+  else
+    m_hdf5helper->init_write_vel(m_ntimestep);
   m_hdf5_time += (MPI_Wtime()-hdf5_time);
 
   m_fileOpen = true;

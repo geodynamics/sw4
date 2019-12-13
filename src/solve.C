@@ -35,6 +35,10 @@
 #include "cf_interface.h"
 #include "f_interface.h"
 
+#ifdef USE_HDF5
+#include "sachdf5.h"
+#endif
+
 #define SQR(x) ((x)*(x))
 
 //--------------------------------------------------------------------
@@ -99,6 +103,13 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       Up[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       Um[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       U[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+      //
+      F[g].set_to_zero();
+      Lu[g].set_to_zero();
+      Uacc[g].set_to_zero();
+      Up[g].set_to_zero();
+      Um[g].set_to_zero();
+      U[g].set_to_zero();
       if (m_use_attenuation && m_number_mechanisms > 0)
       {
 	 for (int a=0; a<m_number_mechanisms; a++)
@@ -106,6 +117,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 	    AlphaVE[g][a].define( 3,ifirst,ilast,jfirst,jlast,kfirst,klast);
 	    AlphaVEp[g][a].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
 	    AlphaVEm[g][a].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+	    AlphaVE[g][a].set_to_zero();
+	    AlphaVEp[g][a].set_to_zero();
+	    AlphaVEm[g][a].set_to_zero();
 	 }
       }
    }
@@ -429,6 +443,20 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 
 // save initial data on receiver records
   vector<float_sw4> uRec;
+
+#if USE_HDF5
+  // Tang: if write HDF5 data and not restart, have rank 0 create the HDF5 file with all necessary groups, attributes, and datasets
+  // Disable HDF5 file locking so we can have multiple writer to open and write different datasets of the same file
+  setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
+  if ( a_TimeSeries.size() > 0 && a_TimeSeries[0]->getUseHDF5()) {
+    for (int tsi = 0; tsi < a_TimeSeries.size(); tsi++) 
+      a_TimeSeries[tsi]->resetHDF5file();
+    if(m_myRank == 0 && !m_check_point->do_restart()) 
+      createTimeSeriesHDF5File(a_TimeSeries, mNumberOfTimeSteps[event]+1, mDt, "");
+    MPI_Barrier(MPI_COMM_WORLD);
+  }
+#endif
+
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
   {
 // can't compute a 2nd order accurate time derivative at this point
@@ -450,8 +478,11 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
     mImage3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[event], mZ );
 
-  for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
+  for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ ) {
+    mESSI3DFiles[i3]->set_ntimestep(mNumberOfTimeSteps[event]);
     mESSI3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mPath[event], mZ );
+  }
+// NOTE: time stepping loop starts at currentTimeStep = beginCycle; ends at currentTimeStep <= mNumberOfTimeSteps
 
   FILE *lf=NULL;
 // open file for saving norm of error
@@ -523,6 +554,11 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   {    
     if( m_output_detailed_timing )
       time_measure[0] = MPI_Wtime();
+
+    // Tang print progress
+    bool is_debug = false;
+    if( is_debug && proc_zero() )
+      cout << "Solving " << currentTimeStep << endl;
 
 // all types of forcing...
     bool trace =false;
@@ -596,7 +632,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     {
        if( mOrder == 2 )
        {
-	  //	  int i0=84, j0=102, k0=25;
 	  impose_geodyn_ibcdata( Up, U, t+mDt, BCForcing );
           advance_geodyn_time( t+2*mDt );
 	  if( m_twilight_forcing )

@@ -158,7 +158,7 @@ void MParGridFile::interpolate_to_other( float_sw4* xms, int vars, int nx, int n
 	 {
 	    if( m_vars == 1 )
 	    {
-	      if( isnan(m_xms[3*ind+1]) || isnan(m_xms[3*ind]) || m_xms[3*ind+1]<0 || m_xms[3*ind]< 0 )
+	       if( std::isnan(m_xms[3*ind+1]) || std::isnan(m_xms[3*ind]) || m_xms[3*ind+1]<0 || m_xms[3*ind]< 0 )
 		std::cout  << "error for xmsrc (rho,mu,lambda)= " << m_xms[3*ind] << " " << m_xms[3*ind+1] <<
 		  " " <<  m_xms[3*ind+2] <<std::endl;
 	       xmsrc[2*ind  ] = sqrt(m_xms[3*ind+1]/m_xms[3*ind]); // cs = sqrt(mu/rho)
@@ -224,7 +224,7 @@ void MParGridFile::interpolate_to_other( float_sw4* xms, int vars, int nx, int n
 					        wghy*((1-wghx)*xmsrc[c+nc*(ind+m_nxr)]+wghx*xmsrc[c+nc*(ind+1+m_nxr)]))+
 	      wghz*((1-wghy)*((1-wghx)*xmsrc[c+nc*(ind+      nxyr)] + wghx*xmsrc[c+nc*(ind+1+      nxyr)])+
 			wghy*((1-wghx)*xmsrc[c+nc*(ind+m_nxr+nxyr)] + wghx*xmsrc[c+nc*(ind+1+m_nxr+nxyr)]));
-	       if( isnan(xms[c+nc*indpar]) )
+	       if( std::isnan(xms[c+nc*indpar]) )
 		 std::cout << "nan in interp " << c << " " << indpar << " ind= " << ind << " wgh= " << wghx << " "
 			   << wghy << " " << wghz << " " << xmsrc[c+nc*ind] << " " << xmsrc[c+nc*(ind+1)]   << " "
 			   << xmsrc[c+nc*(ind+m_nxr)] << " " << xmsrc[c+nc*(ind+1+m_nxr)] <<std::endl;

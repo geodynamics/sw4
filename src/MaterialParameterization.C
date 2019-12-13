@@ -76,7 +76,7 @@ void MaterialParameterization::write_parameters( const char* filename,
 {
   VERIFY2( nms == m_nms, "MP::write_parameters: Error in sizes nms = " << nms << " m_nms = " << m_nms );
    // Format: nms,xms[0],xms[1],..xms[nms-1]
-   if( m_myrank == 0 )
+   if( m_myrank == 0 && nms > 0 )
    {
       int fd=open(filename,O_CREAT|O_TRUNC|O_WRONLY,0660);
       size_t nr=write(fd,&nms,sizeof(int));
@@ -104,7 +104,7 @@ void MaterialParameterization::write_parameters( int nms, double* xms )
 {
    VERIFY2( nms == m_nms, "MP::write_parameters: Error in sizes ");
    // Format: nms,xms[0],xms[1],..xms[nms-1]
-   if( m_myrank == 0 )
+   if( m_myrank == 0 && nms > 0 )
    {
       string fname = m_path + m_filename;
       int fd=open(fname.c_str(),O_CREAT|O_TRUNC|O_WRONLY,0660);
@@ -194,4 +194,58 @@ void MaterialParameterization::set_scalefactors( int nmpars, double* sfs,
       sfs[i+1] = mu_ref;
       sfs[i+2] = lambda_ref;
    }
+}
+
+//-----------------------------------------------------------------------
+void  MaterialParameterization::get_regularizer( int nmd, double* xmd, int nms, double* xms, 
+		      double* xmd0, double* xms0, double regcoeff,
+		      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
+		      std::vector<Sarray>& a_lambda, double& mf_reg,
+		      double* sfd, double* sfs, bool compute_derivative, 
+		      double* dmfd_reg, double* dmfs_reg )
+{
+   if( regcoeff == 0 )
+      return;
+
+// Default, Tikhonov regularizing term:
+#define SQR(x) ((x)*(x))
+   mf_reg=0;
+   double tcoff = (1.0/(m_nms+m_nmd_global))*regcoeff;
+   if( compute_derivative )
+   {
+ // Shared parameters
+      double tikhonov=0;
+      //      cout << "In get_regularizer " << m_nms << " " << m_nmd << endl;
+      for (int q=0; q<m_nms; q++)
+      {
+	 tikhonov +=  SQR( (xms[q] - xms0[q])/sfs[q]);
+	 dmfs_reg[q]   = 2*tcoff*(xms[q] - xms0[q])/SQR(sfs[q]);
+	 //         cout << " q = " << q << " sfs = " << sfs[q] << " " << xms0[q] << " " << xms[q] << endl;
+      }
+      mf_reg += tcoff*tikhonov;
+
+ // Distributed parameters
+      double tikhonovd = 0;
+      for (int q=0; q<m_nmd; q++)
+      {
+	 tikhonovd += SQR( (xmd[q] - xmd0[q])/sfd[q]);
+	 dmfd_reg[q] = 2*tcoff*(xmd[q] - xmd0[q])/SQR(sfd[q]);
+      }
+      MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      mf_reg += tcoff*tikhonov;
+   }
+   else
+   {
+      double tikhonov=0;
+      for (int q=0; q<m_nms; q++)
+	 tikhonov +=  SQR( (xms[q] - xms0[q])/sfs[q]);
+      mf_reg += tcoff*tikhonov;
+
+      double tikhonovd = 0;
+      for (int q=0; q<m_nmd; q++)
+	 tikhonovd += SQR( (xmd[q] - xmd0[q])/sfd[q]);
+      MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      mf_reg += tcoff*tikhonov;
+   }
+#undef SQR
 }

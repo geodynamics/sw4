@@ -30,9 +30,11 @@ public:
    ssize_t local_index( size_t ind_global );
 
    void get_regularizer( int nmd, double* xmd, int nms, double* xms, 
+			 double* xmd0, double* xms0, double regcoeff,
 			 std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
 			 std::vector<Sarray>& a_lambda, double& mf_reg,
-			 double* sfm, bool compute_derivative, double* dmf_reg );
+			 double* sfd, double* sfs, bool compute_derivative, 
+			 double* dmfd_reg, double* dmfs_reg );
 };
 
 #endif

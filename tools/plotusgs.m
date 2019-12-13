@@ -45,14 +45,15 @@ if winL < winR
       end;
    end;
 end;
- if (erase ~= 0)
-   clf;
- end
+if (erase ~= 0)
+  clf;
+end
 % east component
 subplot(3,1,1)
 %figure(1)
-%if (erase == 0)
-%  hold on;
+if (erase == 0)
+  hold on;
+end
 %else
 %  clf;
 %end
@@ -66,8 +67,9 @@ axis tight;
 % north component
 subplot(3,1,2)
 %figure(2)
-%if (erase == 0)
-%  hold on;
+if (erase == 0)
+  hold on;
+end;
 %else
 %  clf;
 %end
@@ -81,8 +83,9 @@ axis tight;
 % up component
 subplot(3,1,3)
 %figure(3)
-%if (erase == 0)
-%  hold on;
+if (erase == 0)
+  hold on;
+end;
 %else
 %  clf;
 %end
@@ -92,3 +95,4 @@ if lw>0
 end;
 set(gca,'FontSize',20)
 axis tight;
+
