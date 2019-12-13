@@ -102,7 +102,7 @@ void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTim
 	    vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, vector<Sarray>& a_Rho,
 	    vector<Sarray>& U, vector<Sarray>& Um,
 	    vector<DataPatches*>& Upred_saved_sides,
-	    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides, int event );
+	    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides, int event, int save_steps );
 
 void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, float_sw4 gradient[11], float_sw4 hessian[121] );
    //void solve_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
@@ -154,9 +154,12 @@ void processMaterialEtree(char* buffer);
 void processMaterialVimaterial(char* buffer);
 void processMaterialInvtest(char* buffer);
 void processMaterialRfile(char* buffer);
+void processMaterialSfile(char* buffer);
 void processAnisotropicMaterialBlock( char* buffer, int & ablockCount );
 void processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
+void processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
 void processObservation(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
+void processObservationHDF5(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
 void processBoundaryConditions(char *buffer);
 void processPrefilter(char* buffer);
 void processGMT(char* buffer);
@@ -300,8 +303,8 @@ void update_images( int Nsteps, float_sw4 time, vector<Sarray> & a_Up, vector<Sa
 void initialize_SAC_files(); // going away
 void update_SACs( int Nsteps ); // going away
 
-void print_execution_times( float_sw4 times[10] );
-void print_execution_time( float_sw4 t1, float_sw4 t2, string msg );
+void print_execution_times( double times[10] );
+void print_execution_time( double t1, double t2, string msg );
 
 void finalizeIO();
 string bc_name( const boundaryConditionType bc ) const;
@@ -399,6 +402,7 @@ void setEtreeFile(EtreeFile* efile);
 void extractTopographyFromEfile(string a_topoFileName, string a_topoExtFileName, string a_QueryType,
                                 float_sw4 a_EFileResolution);
 void extractTopographyFromRfile( std::string a_topoFileName );
+void extractTopographyFromSfile( std::string a_topoFileName );
 
 void smoothTopography(int maxIter);
 
@@ -564,7 +568,7 @@ void get_gridgen_info( int& order, float_sw4& zetaBreak ) const;
 // functions from the old FileInput class
 void cleanUpRefinementLevels();
 
-enum InputMode { UNDEFINED, Efile, GaussianHill, GridFile, CartesianGrid, TopoImage, Rfile};
+enum InputMode { UNDEFINED, Efile, GaussianHill, GridFile, CartesianGrid, TopoImage, Rfile, Sfile};
 
 // access functions needed by the Image (and perhaps other) classes
 int getNumberOfCartesianGrids(){return mNumberOfCartesianGrids;};
@@ -690,6 +694,13 @@ void interpolate_to_coarse_vel( int nx, int ny, int nz, double xmin, double ymin
 				    Sarray& rho, Sarray& cs, Sarray& cp,
 				    vector<Sarray>& rhogrid, vector<Sarray>& mugrid,
 				    vector<Sarray>& lambdagrid );
+
+void interpolate_base_to_coarse( int nx, int ny, int nz, double xmin, double ymin,
+				 double zmin, double hx, double hy, double hz,
+				 Sarray& rho, Sarray& mu, Sarray& lambda );
+void interpolate_base_to_coarse_vel( int nx, int ny, int nz, double xmin, double ymin,
+				     double zmin, double hx, double hy, double hz,
+				     Sarray& rho, Sarray& cs, Sarray& cp );
 
 void update_and_transform_material( int g, Sarray& rho, Sarray& mu, Sarray& lambda );
 

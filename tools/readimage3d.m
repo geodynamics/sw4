@@ -1,7 +1,7 @@
 %
 % READIMAGE3D
 %
-%    Read volumeimage produced by sw4 on format with the *.sw4img extension.
+%    Read volumeimage produced by sw4 on format with the *.3Dimg extension.
 %    This script will not read the older WPP image format.
 %
 %         [im,x,y,z,t,timestring]=readimage3d( imfile, pnr, verbose )

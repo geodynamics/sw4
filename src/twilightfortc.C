@@ -22,7 +22,7 @@ void EW::twilightfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
       {
          float_sw4 y = (j-1)*h;
 #pragma ivdep
-#pragma simd
+	 //#pragma simd
 	 for( int i=ifirst; i<=ilast; i++ )
 	 {
 	    float_sw4 x = (i-1)*h;
@@ -159,7 +159,7 @@ void EW::twilightfortattc_ci(int ifirst, int ilast, int jfirst, int jlast, int k
    for( int k=kfirst; k<=klast; k++ )
       for( int j=jfirst; j<=jlast; j++ )
 #pragma ivdep
-#pragma simd
+	 //#pragma simd
 	 for( int i=ifirst; i<=ilast; i++ )
 	 {
 	    size_t ind = base + i + ni*j + nij*k;

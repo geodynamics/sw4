@@ -1106,7 +1106,6 @@ void EW::set_materials()
 	  //	  double zmax = m_zmin[g]+(m_global_nz[g]-1)*mGridSize[g];
 	  //	  for( unsigned int b=0 ; b < m_random_blocks.size() ; b++ )
 	  //	     m_random_blocks[b]->perturb_velocities( g, mMu[g], mLambda[g], mGridSize[g], m_zmin[g], zmax );
-
 	  communicate_array( mMu[g], g );
 	  communicate_array( mLambda[g], g );
        }
@@ -1999,14 +1998,15 @@ void EW::setup_supergrid( )
      m_kStartActGlobal[g] = m_kStartAct[g] = 1;
      m_kEndActGlobal[g]   = m_kEndAct[g]   = kmax-1;
 
-     if( m_iStartAct[g] < m_iStart[g] )
-        m_iStartAct[g] = m_iStart[g];
-     if( m_jStartAct[g] < m_jStart[g] )
-        m_jStartAct[g] = m_jStart[g];
-     if( m_iEndAct[g] > m_iEnd[g] )
-        m_iEndAct[g] = m_iEnd[g];
-     if( m_jEndAct[g] > m_jEnd[g] )
-        m_jEndAct[g] = m_jEnd[g];
+     // Changed to interior Start --> StartInt etc..
+     if( m_iStartAct[g] < m_iStartInt[g] )
+        m_iStartAct[g] = m_iStartInt[g];
+     if( m_jStartAct[g] < m_jStartInt[g] )
+        m_jStartAct[g] = m_jStartInt[g];
+     if( m_iEndAct[g] > m_iEndInt[g] )
+        m_iEndAct[g] = m_iEndInt[g];
+     if( m_jEndAct[g] > m_jEndInt[g] )
+        m_jEndAct[g] = m_jEndInt[g];
 
      // If empty, set dimensions so that imax-imin+1=0, to avoid negative element count.
      if( m_iStartAct[g] > m_iEndAct[g] )

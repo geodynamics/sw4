@@ -203,13 +203,18 @@ main(int argc, char **argv)
       vector<Sarray> U(ng), Um(ng);
       simulation.solve( GlobalSources[0], GlobalTimeSeries[0], simulation.mMu, 
 			simulation.mLambda, simulation.mRho, U, Um, upred_saved, 
-			ucorr_saved, false, 0 );
+			ucorr_saved, false, 0, 0 );
 
 // save all time series
       
       for (int ts=0; ts<GlobalTimeSeries[0].size(); ts++)
       {
 	GlobalTimeSeries[0][ts]->writeFile();
+#ifdef USE_HDF5
+        MPI_Barrier(MPI_COMM_WORLD);
+        if( ts == GlobalTimeSeries[0].size()-1)
+	  GlobalTimeSeries[0][ts]->closeHDF5File();
+#endif
       }
 
       if( myRank == 0 )

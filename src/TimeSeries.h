@@ -38,6 +38,10 @@
 
 #include "sw4.h"
 
+#ifdef USE_HDF5
+#include "hdf5.h"
+#endif
+
 class EW;
 class Sarray;
 class Filter;
@@ -51,8 +55,8 @@ public:
 // support for derived quantities of the time derivative are not yet implemented
   enum receiverMode{Displacement, Div, Curl, Strains, Velocity, DisplacementGradient /*, DivVelo, CurlVelo, StrainsVelo */ };
 
-TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, bool sacFormat, bool usgsFormat, 
-	    float_sw4 x, float_sw4 y, float_sw4 z, bool topoDepth, int writeEvery, bool xyzcomponent=true, int event=0 );
+TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, bool sacFormat, bool usgsFormat, bool hdf5Format, std::string hdf5FileName, 
+	    float_sw4 x, float_sw4 y, float_sw4 z, bool topoDepth, int writeEvery, int downSample, bool xyzcomponent=true, int event=0 );
 ~TimeSeries();
 
 void allocateRecordingArrays( int numberOfTimeSteps, float_sw4 startTime, float_sw4 timeStep );
@@ -60,27 +64,43 @@ void allocateRecordingArrays( int numberOfTimeSteps, float_sw4 startTime, float_
 void recordData(vector<float_sw4> & u);
 
 void writeFile( string suffix="" );
+void writeFileUSGS( string suffix="" );
 
 void readFile( EW* ew, bool ignore_utc );
 
 float_sw4 **getRecordingArray(){ return mRecordedSol; }
 
 int getNsteps() const {return mLastTimeStep+1;}
+int getDownSample() const {return mDownSample;}
 
 bool myPoint(){ return m_myPoint; }
 
 receiverMode getMode(){ return m_mode; }
 
+int getUseHDF5(){ return m_hdf5Format; }
+
 float_sw4 getX() const {return mX;}
 float_sw4 getY() const {return mY;}
 float_sw4 getZ() const {return mZ;}
 
+float_sw4 getLat() const {return m_rec_lat;}
+float_sw4 getLon() const {return m_rec_lon;}
+
+float_sw4 getXaz() const {return m_x_azimuth;}
+
+float_sw4 getMshift() const {return m_shift;}
+
+int getMUTC(int i) const {return m_utc[i];}
+
+/* float_sw4 getEpiTimeOffset() const {return m_epi_time_offset;} */
+
+bool getXYZcomponent() const {return m_xyzcomponent;}
 float_sw4 arrival_time( float_sw4 lod );
 
 TimeSeries* copy( EW* a_ew, string filename, bool addname=false );
 
 float_sw4 misfit( TimeSeries& observed, TimeSeries* diff, float_sw4& dshift, float_sw4& ddshift, float_sw4& dd1shift );
-float_sw4 misfit2( TimeSeries& observed );
+float_sw4 misfit2( TimeSeries& observed, TimeSeries* diff );
 
 void interpolate( TimeSeries& intpfrom );
 
@@ -103,6 +123,11 @@ void set_shift( float_sw4 shift );
 float_sw4 get_shift() const;
 void add_shift( float_sw4 shift );
 std::string getStationName(){return m_staName;}
+std::string getFileName(){return m_fileName;}
+std::string gethdf5FileName(){return m_hdf5Name;}
+std::string getPath(){return m_path;}
+float_sw4 getDt() {return m_dt;}
+float_sw4 getLastTimeStep() {return mLastTimeStep;}
 
 void set_scalefactor( float_sw4 value );
 bool get_compute_scalefactor() const;
@@ -114,8 +139,24 @@ int m_j0;
 int m_k0;
 int m_grid0;
 
+#ifdef USE_HDF5
+int   getNsteps() {return m_nsteps;};
+void  setNsteps(int nsteps) {m_nsteps = nsteps;};
+int   allocFid();
+void  setFidPtr(hid_t *fid) {m_fid_ptr = fid;};
+void  setTS0Ptr(TimeSeries *ptr) {m_ts0Ptr = ptr;};
+hid_t *getFidPtr() {return m_fid_ptr;};
+int   closeHDF5File();
+void  resetHDF5file();
+void  readSACHDF5( EW *ew, string FileName, bool ignore_utc );
+hid_t openHDF5File(std::string suffix);
+void  write_hdf5_format( int npts, hid_t loc, float *y, float btime, float dt, char *var,
+		       float cmpinc, float cmpaz, bool makeCopy=false, bool isLast=false);
+#endif
+
 private:   
 TimeSeries();
+
 void write_usgs_format( string a_fileName);
 void write_sac_format( int npts, char *ofile, float *y, float btime, float dt, char *var,
 		       float cmpinc, float cmpaz, bool makeCopy=false);
@@ -132,12 +173,17 @@ void convertjday( int jday, int year, int& day, int& month );
 void getwgh( float_sw4 ai, float_sw4 wgh[6], float_sw4 dwgh[6], float_sw4 ddwgh[6] );
 void getwgh5( float_sw4 ai, float_sw4 wgh[6], float_sw4 dwgh[6], float_sw4 ddwgh[6] );
 
+
+float_sw4 compute_maxshift( TimeSeries& observed );
+void shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &func,
+		float_sw4 &dfunc, float_sw4& ddfunc, float_sw4** adjsrc=NULL );
+
 receiverMode m_mode;
 int m_nComp;
 
 bool m_myPoint; // set to true if this processor writes to the arrays
 
-std::string m_fileName, m_staName;
+std::string m_fileName, m_staName, m_hdf5Name;
 
 float_sw4 mX, mY, mZ, mGPX, mGPY, mGPZ; // original and actual location
 float_sw4 m_zTopo;
@@ -145,8 +191,9 @@ float_sw4 m_zTopo;
 bool m_zRelativeToTopography; // location is given relative to topography
 
 int mWriteEvery;
+int mDownSample;
 
-bool m_usgsFormat, m_sacFormat;
+bool m_usgsFormat, m_sacFormat, m_hdf5Format;
 string m_path;
 
 // start time, shift, and time step 
@@ -208,6 +255,18 @@ float_sw4 m_scalefactor;
 
 // Event no. (in case of multiple events)
    int m_event;
+
+// HDF5 file id for all SAC data
+#ifdef USE_HDF5
+   float_sw4 m_sta_z;
+   hid_t *m_fid_ptr;
+   bool m_isMetaWritten;
+   bool m_isIncAzWritten;
+   int  m_nptsWritten;
+   int  m_nsteps;
+   std::string m_fidName;
+   TimeSeries *m_ts0Ptr;
+#endif
 };
 
 

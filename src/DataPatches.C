@@ -156,6 +156,13 @@ size_t DataPatches::get_noofpoints() const
 //-----------------------------------------------------------------------
 void DataPatches::add_patch( int wind[6] )
 {
+   //   int myid;
+   //   MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+   //   if( myid==1 )
+   //   {
+   //      cout << "adding patch = " << wind[0] << " " << wind[1] <<
+   //	 " " << wind[2] << " " << wind[3] << " " << wind[4] << " " << wind[5] << endl;
+   //   }
    if( wind[1]>=wind[0] && wind[3]>=wind[2] && wind[5]>=wind[4] )
    {
       m_dims.push_back(wind[0]);
@@ -171,6 +178,8 @@ void DataPatches::add_patch( int wind[6] )
 //-----------------------------------------------------------------------
 void DataPatches::push( Sarray& u, int n )
 {
+   //   int myid;
+   //   MPI_Comm_rank(MPI_COMM_WORLD,&myid);
    if( m_isnonempty && !m_error )
    {
       if( m_ncurrent == m_nsteps )
@@ -200,6 +209,8 @@ void DataPatches::push( Sarray& u, int n )
 		  ind++;
 	       }
       }
+      //      if( myid == 2 )
+      //         printf("push: ncurrent = %i n= %i step[0] = %i \n",m_ncurrent,n,m_steps[0] );
       m_steps[m_ncurrent] = n;
       m_ncurrent++;
    }
@@ -304,6 +315,8 @@ void DataPatches::save_to_file( )
 //-----------------------------------------------------------------------
 void DataPatches::pop( Sarray& u, int n )
 {
+   //   int myid;
+   //   MPI_Comm_rank(MPI_COMM_WORLD,&myid);
    if( m_isnonempty && !m_error )
    {
       int nloc;
@@ -318,7 +331,8 @@ void DataPatches::pop( Sarray& u, int n )
       nloc = m_ncurrent-1;
       while( nloc >= 0 && m_steps[nloc] != n )
 	nloc--;
-      //      printf("nloc = %i n= %i step[0] = %i \n",nloc,n,m_steps[0] );
+      //      if( nloc < 0 )
+      //	 printf("pop: myid = %d nloc = %i n= %i step[0] = %i \n",myid,nloc,n,m_steps[0] );
       int ib=u.m_ib;
       int jb=u.m_jb;
       int kb=u.m_kb;
@@ -402,7 +416,7 @@ void DataPatches::print_openerr( int ecode ) const
    string emsg;
    switch( ecode )
    {
-   case EACCES: emsg = "EACCESS";break;
+   case EACCES: emsg = "EACCES";break;
    case EEXIST: emsg = "EEXIST";break;
    case EFAULT: emsg = "EFAULT";break;
    case EISDIR: emsg = "EISDIR";break;

@@ -314,7 +314,7 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 	 for( k=1 ; k<= 6 ; k++ )
 /* the centered stencil can be used in the x- and y-directions */
 	    for( j=jfirst+2; j<=jlast-2; j++ )
-#pragma simd
+	       //#pragma simd
 #pragma ivdep
 	       for( i=ifirst+2; i<=ilast-2; i++ )
 	       {
@@ -566,7 +566,7 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 #pragma omp for
 	 for(  k = nk-5 ; k <= nk ; k++ )
 	    for(  j=jfirst+2; j<=jlast-2; j++ )
-#pragma simd
+	       //#pragma simd
 #pragma ivdep
 	       for(  i=ifirst+2; i<=ilast-2; i++ )
 	       {
@@ -908,7 +908,7 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 #pragma omp for
    for( k= k1; k <= k2 ; k++ )
       for( j=jfirst+2; j <= jlast-2 ; j++ )
-#pragma simd
+	 //#pragma simd
 #pragma ivdep
 	 for( i=ifirst+2; i <= ilast-2 ; i++ )
 	 {
@@ -1146,7 +1146,7 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 	 for( k=1 ; k<= 6 ; k++ )
 /* the centered stencil can be used in the x- and y-directions */
 	    for( j=jfirst+2; j<=jlast-2; j++ )
-#pragma simd
+	       //#pragma simd
 #pragma ivdep
 	       for( i=ifirst+2; i<=ilast-2; i++ )
 	       {
@@ -1398,7 +1398,7 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
 #pragma omp for
 	 for(  k = nk-5 ; k <= nk ; k++ )
 	    for(  j=jfirst+2; j<=jlast-2; j++ )
-#pragma simd
+	       //#pragma simd
 #pragma ivdep
 	       for(  i=ifirst+2; i<=ilast-2; i++ )
 	       {
@@ -1684,7 +1684,7 @@ void rhserrfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, in
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	    {
-	       float_sw4 er=abs(fo(c,i,j,k)-u2(c,i,j,k));
+	       float_sw4 er=std::abs(fo(c,i,j,k)-u2(c,i,j,k));
 	       if( lowz < er )
 		  lowz = er;
 	    }
@@ -1700,7 +1700,7 @@ void rhserrfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, in
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	    {
-	       float_sw4 er=abs(fo(c,i,j,k)-u2(c,i,j,k));
+	       float_sw4 er=std::abs(fo(c,i,j,k)-u2(c,i,j,k));
 	       if( interz < er )
 		  interz = er;
 	    }
@@ -1717,7 +1717,7 @@ void rhserrfort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, in
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	    {
-	       float_sw4 er=abs(fo(c,i,j,k)-u2(c,i,j,k));
+	       float_sw4 er=std::abs(fo(c,i,j,k)-u2(c,i,j,k));
 	       if( highz < er )
 		  highz = er;
 	    }
@@ -1753,7 +1753,7 @@ void rhouttlumf_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, in
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	    {
-	       float_sw4 er=abs(rho(i,j,k)*uacc(c,i,j,k)-lu(c,i,j,k)-fo(c,i,j,k));
+	       float_sw4 er=std::abs(rho(i,j,k)*uacc(c,i,j,k)-lu(c,i,j,k)-fo(c,i,j,k));
 	       if( lowz < er )
 		  lowz = er;
 	    }
@@ -1769,7 +1769,7 @@ void rhouttlumf_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, in
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	    {
-	       float_sw4 er=abs(rho(i,j,k)*uacc(c,i,j,k)-lu(c,i,j,k)-fo(c,i,j,k));
+	       float_sw4 er=std::abs(rho(i,j,k)*uacc(c,i,j,k)-lu(c,i,j,k)-fo(c,i,j,k));
 	       if( interz < er )
 		  interz = er;
 	    }
@@ -1786,7 +1786,7 @@ void rhouttlumf_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, in
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
 	    {
-	       float_sw4 er=abs(rho(i,j,k)*uacc(c,i,j,k)-lu(c,i,j,k)-fo(c,i,j,k));
+	       float_sw4 er=std::abs(rho(i,j,k)*uacc(c,i,j,k)-lu(c,i,j,k)-fo(c,i,j,k));
 	       if( highz < er )
 		  highz = er;
 	    }
@@ -1808,7 +1808,7 @@ void predfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
    const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
 #pragma omp parallel for
 #pragma ivdep
-#pragma simd
+   //#pragma simd
    for( size_t i=0 ; i < npts ; i++ )
    {
       float_sw4 dt2orh = dt2/rho[i];
@@ -1828,7 +1828,7 @@ void corrfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
    const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
 #pragma omp parallel for
 #pragma ivdep
-#pragma simd
+   //#pragma simd
    for( size_t i=0 ; i < npts ; i++ )
    {
       float_sw4 dt4i12orh = dt4i12/rho[i];
@@ -1847,7 +1847,7 @@ void dpdmtfort_ci( int ib, int ie, int jb, int je, int kb, int ke,
   const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
 #pragma omp parallel for
 #pragma ivdep
-#pragma simd
+  //#pragma simd
   for( size_t i = 0 ; i < 3*npts ; i++ )
     u2[i] = dt2i*(up[i]-2*u[i]+um[i]);
 }
@@ -1860,7 +1860,7 @@ void dpdmtfortatt_ci( int ib, int ie, int jb, int je, int kb, int ke,
   const size_t npts = static_cast<size_t>((ie-ib+1))*(je-jb+1)*(ke-kb+1);
 #pragma omp parallel for
 #pragma ivdep
-#pragma simd
+  //#pragma simd
   for( size_t i = 0 ; i < 3*npts ; i++ )
     um[i] = dt2i*(up[i]-2*u[i]+um[i]);
 }
@@ -1935,7 +1935,7 @@ void satt_ci( float_sw4* __restrict__ up, float_sw4* __restrict__ qs,
    const float_sw4 efact=M_PI*cfreq*dt;
 #pragma omp parallel for   
 #pragma ivdep
-#pragma simd
+   //#pragma simd
    for( size_t i = 0 ; i < npts ; i++ )
    {
       float_sw4 fact = exp(-efact/qs[i]);
@@ -1965,19 +1965,19 @@ void solveattfreeac_ci( int ifirst, int ilast, int jfirst, int jlast,
 #pragma omp for
       for( int j=jfirst+2; j<=jlast-2; j++)
 #pragma ivdep
-#pragma simd
+	 //#pragma simd
 	 for( int i=ifirst+2; i<=ilast-2; i++ )
 	    alpha(1,i,j,k) += cof*up(1,i,j,k);
 #pragma omp for
       for( int j=jfirst+2; j<=jlast-2; j++)
 #pragma ivdep
-#pragma simd
+	 //#pragma simd
 	 for( int i=ifirst+2; i<=ilast-2; i++ )
 	    alpha(2,i,j,k) += cof*up(2,i,j,k);
 #pragma omp for
       for( int j=jfirst+2; j<=jlast-2; j++)
 #pragma ivdep
-#pragma simd
+	 //#pragma simd
 	 for( int i=ifirst+2; i<=ilast-2; i++ )
 	    alpha(3,i,j,k) += cof*up(3,i,j,k);
    }
@@ -2019,7 +2019,7 @@ void solveattfreec_ci( int ifirst, int ilast, int jfirst, int jlast,
 #pragma omp for
       for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
 #pragma ivdep
-#pragma simd
+	 //#pragma simd
 	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
 	 {
 	    float_sw4 mupt = mu(i,j,k)-muve(i,j);
@@ -2121,7 +2121,7 @@ void addbstresswresc_ci( int ifirst, int ilast, int jfirst, int jlast,
 #pragma omp for
       for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
 #pragma ivdep
-#pragma simd
+	 //#pragma simd
 	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
 	 {
             float_sw4 r1 = (-cm*alpham(1,i,j,k-kl)+(4+omdt*omdt)*i6*u(1,i,j,k-kl)+

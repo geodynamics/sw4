@@ -198,8 +198,12 @@ void CheckPoint::define_pio( )
   time_measure[0] = time_start;
 
    // Create the restart directory if it doesn't exist
-   if( mRestartPathSet )
-     mEW->create_directory(mRestartPath);
+//
+// AP: On the burst buffer at Cori it takes *forever* to build a directory
+// For now, assume the directory is already there
+//
+  if( mRestartPathSet )
+    mEW->create_directory(mRestartPath);
 
    m_parallel_io = new Parallel_IO*[ghigh-glow+1];
    for( int g=glow ; g < ghigh ; g++ )
@@ -402,7 +406,6 @@ void CheckPoint::write_checkpoint( float_sw4 a_time, int a_cycle, vector<Sarray>
       
       // allocate local buffer array
       float_sw4* doubleField = new float_sw4[3*nptsloc];
-
       if( m_kji_order )
       {
 	 a_Um[g].extract_subarrayIK( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5],

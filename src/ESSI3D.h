@@ -60,6 +60,7 @@ public:
    void setup( );
 
    double getHDF5Timings();
+   void set_ntimestep(int ntimestep);
 
    static void setSteps(int a_steps);
 
@@ -118,6 +119,7 @@ private:
    int mGlobalDims[6]; // Global start + end indices for (i,j,k) for last curvilinear grid
    double* m_doubleField;
    bool m_ihavearray;
+   int m_ntimestep;
 };
 
 #endif

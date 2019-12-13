@@ -122,6 +122,7 @@ Image::Image(EW * a_ew,
   mMode2Suffix[GRADMU] = "gradmu";
   mMode2Suffix[GRADLAMBDA] = "gradlambda";
   mMode2Suffix[GRADP] = "gradp";
+  mMode2Suffix[GRADS] = "grads";
   mMode2Suffix[QP] = "qp";
   mMode2Suffix[QS] = "qs";
 

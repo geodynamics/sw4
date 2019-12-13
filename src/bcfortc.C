@@ -839,7 +839,7 @@ void EW::twfrsurfz_wind_ci( int ifirst, int ilast, int jfirst, int jlast, int kf
       float_sw4 t13,t15,t16,t19,t20,t21,t23,t24,t28,t29,t32,t33,t34,t37,t38,t43,t44,t49,t60,t62,t65;
       float_sw4 y = (j-1)*h;
 #pragma ivdep
-#pragma simd      
+      //#pragma simd      
       for( int i = i1; i <= i2 ;i++ )
       {
 	 size_t ind = (i-ifirst)+ni*(j-jfirst)+nij*(kz-kfirst);
@@ -895,7 +895,7 @@ void EW::twfrsurfzsg_wind_ci( int ifirst, int ilast, int jfirst, int jlast, int 
       float_sw4 t1,t10,t11,t12,t15,t17,t19,t20,t22,t24,t25,t29,t3,t31,t32,t36,t39,t4,t40,t46,t51,t53,t56,t6,t7;
       float_sw4 y = (j-1)*h;
 #pragma ivdep
-#pragma simd      
+      //#pragma simd      
       for( int i = i1; i <= i2 ;i++ )
       {
 	 size_t ind = (i-ifirst)+ni*(j-jfirst)+nij*(kz-kfirst);
@@ -957,7 +957,7 @@ void EW::twfrsurfz_att_wind_ci( int ifirst, int ilast, int jfirst, int jlast,
       float_sw4 t40, t45, t50, t52, t54, t16, t23, t24, t34;
       float_sw4 y = (j-1)*h;
 #pragma ivdep
-#pragma simd      
+      //#pragma simd      
       for( int i = i1; i <= i2 ;i++ )
       {
 	 size_t ind = (i-ifirst)+ni*(j-jfirst)+nij*(kz-kfirst);
@@ -1017,7 +1017,7 @@ void EW::twfrsurfzsg_att_wind_ci( int ifirst, int ilast, int jfirst, int jlast,
       float_sw4 t1,t12,t13,t17,t19,t22,t23,t28,t3,t31,t32,t35,t36,t4,t40,t42,t43,t45,t5,t51,t56,t61,t66,t68,t7,t8;
       float_sw4 y = (j-1)*h;
 #pragma ivdep
-#pragma simd      
+      //#pragma simd      
       for( int i = i1; i <= i2 ;i++ )
       {
 	 size_t ind = (i-ifirst)+ni*(j-jfirst)+nij*(kz-kfirst);

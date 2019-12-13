@@ -31,6 +31,7 @@ AllDims::AllDims( int nproci, int nprocj, int nprock, int ibg, int ieg,
    m_nprock=nprock;
    MPI_Comm_rank( MPI_COMM_WORLD, &m_myid1d );
    compute_myid3d();
+
    m_ibg = ibg-nghost;
    m_ieg = ieg+nghost;
    m_jbg = jbg-nghost;
@@ -43,6 +44,7 @@ AllDims::AllDims( int nproci, int nprocj, int nprock, int ibg, int ieg,
    m_je.resize(m_nprocj);
    m_kb.resize(m_nprock);
    m_ke.resize(m_nprock);
+
    int Ntot = ieg-ibg+1+2*nghost;
    for( int p1=0 ; p1 < m_nproci ; p1++ )
    {
@@ -70,7 +72,6 @@ AllDims::AllDims( int nproci, int nprocj, int nprock, int ibg, int ieg,
    m_indrev = false;
 }
 
-
 //-----------------------------------------------------------------------
 AllDims::AllDims( int nprocs, int ibg, int ieg, int jbg, int jeg,
 		  int kbg, int keg, int nghost )
@@ -81,6 +82,7 @@ AllDims::AllDims( int nprocs, int ibg, int ieg, int jbg, int jeg,
    m_nproci = nprocs;
    m_nprocj = 1;
    m_nprock = 1;
+
    m_ibg = ibg-nghost;
    m_ieg = ieg+nghost;
    m_jbg = jbg-nghost;
@@ -92,12 +94,15 @@ AllDims::AllDims( int nprocs, int ibg, int ieg, int jbg, int jeg,
    int nig=ieg-ibg+1+2*nghost;
    int njg=jeg-jbg+1+2*nghost;
    int nkg=keg-kbg+1+2*nghost;
-   ptrdiff_t ni, ib;
+
 #ifdef ENABLE_FFTW
+   ptrdiff_t ni, ib;
    ptrdiff_t fftw_alloc_local = fftw_mpi_local_size_3d( nig, njg, nkg, MPI_COMM_WORLD, &ni, &ib );
    m_fftw_alloc_local = static_cast<size_t>(fftw_alloc_local);
+#else
+   int ni, ib;
 #endif
-   
+
    std::vector<int> niloc(m_nproci), ibloc(m_nproci);
    niloc[m_myid1d] = ni;
    ibloc[m_myid1d] = ib;
@@ -475,4 +480,3 @@ void AllDims::decomp1d_frf( int N, int myid, int nproc, int& s, int& e, int ngho
    else
       e += npad;
 }
-

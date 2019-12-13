@@ -46,7 +46,7 @@ void EW::freesurfcurvisg_ci( int ib, int ie, int jb, int je, int kb, int ke,
    {
       float_sw4 istry = 1/stry(j);
 #pragma ivdep
-#pragma simd
+      //#pragma simd
       for( int i= ib+2; i<=ie-2 ; i++ )
       {
 	 float_sw4 istrx = 1/strx(i);
@@ -172,7 +172,7 @@ void EW::getsurfforcingsg_ci( int ifirst, int ilast, int jfirst, int jlast,
    {
       float_sw4 istry=1/stry(j);
 #pragma ivdep
-#pragma simd
+      //#pragma simd
       for( int i=ifirst ; i <=ilast ; i++ )
       {
 	 float_sw4 istrx = 1/strx(i);
@@ -226,7 +226,7 @@ void EW::subsurfforcingsg_ci( int ifirst, int ilast, int jfirst, int jlast,
    {
       float_sw4 istry=1/stry(j);
 #pragma ivdep
-#pragma simd
+      //#pragma simd
       for( int i=ifirst ; i <=ilast ; i++ )
       {
 	 float_sw4 istrx=1/strx(i);

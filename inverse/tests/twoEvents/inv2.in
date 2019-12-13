@@ -1,0 +1,126 @@
+#------------------------------
+# Grid (w=2500)
+#
+grid h=350 x=35000 y=35000 z=19500 ghostpts=2
+#
+#-------------------
+# Two events:
+#
+event path=event1_output obspath=event1 name=first
+event path=event2_output obspath=event2 name=second
+#------------------------------
+# Time
+#
+time t=9 utcstart=09/17/2013:17:49:47.000 event=first
+time t=9 utcstart=09/17/2013:17:49:47.000 event=second
+#
+#------------------------------
+# Paths etc..
+#
+fileio verbose=1 path=obs2 temppath=tmp pfs=1
+#
+#------------------------------
+# Default supergrid parameters
+#
+#------------------------------
+# Reference material
+# 
+block vp=4630.76 vs=2437.56 r=2650
+#
+#------------------------------
+# Material parameterization
+# 
+#mparcart nx=1 ny=1 nz=1 init=onep-pr0p1.bin
+mparcart nx=1 ny=1 nz=1 init=onep-pr10.bin
+#
+#------------------------------
+# Optimizer and properties
+#
+mrun task=minvert mcheck=on tsoutput=on
+lbfgs nvectors=3 ihess0=scale-factors maxit=8 tolerance=1e-12 linesearch=on
+#mscalefactors rho=2650 mu=2.5e10 lambda=2.4e12 misfit=1
+mscalefactors rho=2650 mu=1.54e10 lambda=7.52e11 misfit=1
+#
+#------------------------------
+# Source
+#
+source x=17500 y=17500 z=2000 Mxy=1 m0=1e18 t0=1.5 freq=4 type=Gaussian event=first
+source x=20000 y=15000 z=1500 Mxy=1 m0=1e18 t0=1.5 freq=4 type=Gaussian event=second
+
+#
+#----------------------------
+#
+developer cfl=1.1
+#
+#------------------------------
+#
+# Observations (synthetic)
+#  
+observation x=11500 y=11500 z=0 file=sta11 event=first
+observation x=14500 y=11500 z=0 file=sta21 event=first
+observation x=17500 y=11500 z=0 file=sta31 event=first
+observation x=20500 y=11500 z=0 file=sta41 event=first
+observation x=23500 y=11500 z=0 file=sta51 event=first
+observation x=11500 y=14500 z=0 file=sta12 event=first
+observation x=14500 y=14500 z=0 file=sta22 event=first
+observation x=17500 y=14500 z=0 file=sta32 event=first
+observation x=20500 y=14500 z=0 file=sta42 event=first
+observation x=23500 y=14500 z=0 file=sta52 event=first
+observation x=11500 y=17500 z=0 file=sta13 event=first
+observation x=14500 y=17500 z=0 file=sta23 event=first
+observation x=17500 y=17500 z=0 file=sta33 event=first
+observation x=20500 y=17500 z=0 file=sta43 event=first
+observation x=23500 y=17500 z=0 file=sta53 event=first
+observation x=11500 y=20500 z=0 file=sta14 event=first
+observation x=14500 y=20500 z=0 file=sta24 event=first
+observation x=17500 y=20500 z=0 file=sta34 event=first
+observation x=20500 y=20500 z=0 file=sta44 event=first
+observation x=23500 y=20500 z=0 file=sta54 event=first
+observation x=11500 y=23500 z=0 file=sta15 event=first
+observation x=14500 y=23500 z=0 file=sta25 event=first
+observation x=17500 y=23500 z=0 file=sta35 event=first
+observation x=20500 y=23500 z=0 file=sta45 event=first
+observation x=23500 y=23500 z=0 file=sta55 event=first
+#
+#  
+observation x=11500 y=11500 z=0 file=sta11 event=second
+observation x=14500 y=11500 z=0 file=sta21 event=second
+observation x=17500 y=11500 z=0 file=sta31 event=second
+observation x=20500 y=11500 z=0 file=sta41 event=second
+observation x=23500 y=11500 z=0 file=sta51 event=second
+observation x=11500 y=14500 z=0 file=sta12 event=second
+observation x=14500 y=14500 z=0 file=sta22 event=second
+observation x=17500 y=14500 z=0 file=sta32 event=second
+observation x=20500 y=14500 z=0 file=sta42 event=second
+observation x=23500 y=14500 z=0 file=sta52 event=second
+observation x=11500 y=17500 z=0 file=sta13 event=second
+observation x=14500 y=17500 z=0 file=sta23 event=second
+observation x=17500 y=17500 z=0 file=sta33 event=second
+observation x=20500 y=17500 z=0 file=sta43 event=second
+observation x=23500 y=17500 z=0 file=sta53 event=second
+observation x=11500 y=20500 z=0 file=sta14 event=second
+observation x=14500 y=20500 z=0 file=sta24 event=second
+observation x=17500 y=20500 z=0 file=sta34 event=second
+observation x=20500 y=20500 z=0 file=sta44 event=second
+observation x=23500 y=20500 z=0 file=sta54 event=second
+observation x=11500 y=23500 z=0 file=sta15 event=second
+observation x=14500 y=23500 z=0 file=sta25 event=second
+observation x=17500 y=23500 z=0 file=sta35 event=second
+observation x=20500 y=23500 z=0 file=sta45 event=second
+observation x=23500 y=23500 z=0 file=sta55 event=second
+#
+#-----------------------------------------------------------------------
+#
+# Output some images
+#
+#mimage mode=rho x=17500 cycleInterval=1 
+#mimage mode=mu x=17500 cycleInterval=1 
+#mimage mode=lambda x=17500 cycleInterval=1 
+#
+#mimage mode=rho z=1000 cycleInterval=1 
+#mimage mode=mu z=1000 cycleInterval=1 
+#mimage mode=lambda z=1000 cycleInterval=1 
+#
+#mimage mode=rho z=5000 cycleInterval=1 
+#mimage mode=mu z=5000 cycleInterval=1 
+#mimage mode=lambda z=5000 cycleInterval=1

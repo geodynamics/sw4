@@ -23,7 +23,7 @@ MPI_Datatype get_mpi_datatype( std::complex<float>* var ) {return MPI_CXX_FLOAT_
 RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zmax,
 					float_sw4 corrlen, float_sw4 corrlenz, 
 					float_sw4 hurst, float_sw4 sigma,
-					unsigned int seed, float_sw4 csmax )
+					unsigned int seed )
 {
    mEW = a_ew;
    float_sw4 bbox[6];
@@ -45,8 +45,8 @@ RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zma
    m_hurst = hurst;
    m_sigma = sigma;
    m_seed  = seed;
-   m_csmax = csmax;
-
+   m_vsmax = 1e38;
+   
 // Determine discretization based on correlation length.
    float_sw4 ppcl = 20; // grid points per correlation length
    m_nig = ppcl*(global_xmax)/corrlen;
@@ -67,7 +67,6 @@ RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zma
    m_hh = ratio*a_ew->mGridSize[g];
    m_nig = static_cast<int>(round(global_xmax/m_hh)+1);
    m_njg = static_cast<int>(round(global_ymax/m_hh)+1);
-      
 
    bool tmptest=false;
    if( tmptest )
@@ -151,8 +150,6 @@ void RandomizedMaterial::perturb_velocities( int g, Sarray& cs, Sarray& cp,
 	 for( int j=mEW->m_jStartInt[g] ; j <= mEW->m_jEndInt[g] ; j++ )
 	    for( int i=mEW->m_iStartInt[g] ; i <= mEW->m_iEndInt[g] ; i++ )
 	    {
-	       if( cs(i,j,k) <= m_csmax )
-	       {
 		  float_sw4 x = (i-1)*h, y=(j-1)*h, z= zmin + (k-1)*h;
 		  if( curvilinear )
 		  {
@@ -172,24 +169,29 @@ void RandomizedMaterial::perturb_velocities( int g, Sarray& cs, Sarray& cp,
 					    (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp)  + wghi*mRndMaterial(ip+1,jp+1,kp))) +
 		     (wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp+1)+ wghi*mRndMaterial(ip+1,jp,  kp+1))+
 			     (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp+1)+ wghi*mRndMaterial(ip+1,jp+1,kp+1)));
-			cs(i,j,k) *= rndpert;
-			cp(i,j,k) *= rndpert;
-		     }
-		     else if( ip >= mRndMaterial.m_ib && ip <= mRndMaterial.m_ie &&
-			      jp >= mRndMaterial.m_jb && jp <= mRndMaterial.m_je &&
-			      kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke )
-		     {
-			float_sw4 rndpert = mRndMaterial(ip,jp,kp);
-			cs(i,j,k) *= rndpert;
-			cp(i,j,k) *= rndpert;
-		     }
-		     else
-			CHECK_INPUT(false,"ERROR: index " << ip << " " << jp << " " << kp << " not in material array bounds " <<
-				    mRndMaterial.m_ib << " <= ip <= " << mRndMaterial.m_ie << "  " <<
-				    mRndMaterial.m_jb << " <= jp <= " << mRndMaterial.m_je << "  " <<
-				    mRndMaterial.m_kb << " <= kp <= " << mRndMaterial.m_ke << " y= " << y << " j= " << j<<endl );
+		  if( cs(i,j,k) <= m_vsmax )
+		  {
+		     cs(i,j,k) *= rndpert;
+		     cp(i,j,k) *= rndpert;
 		  }
 	       }
+	       else if( ip >= mRndMaterial.m_ib && ip <= mRndMaterial.m_ie &&
+			jp >= mRndMaterial.m_jb && jp <= mRndMaterial.m_je &&
+			kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke )
+	       {
+		  float_sw4 rndpert = mRndMaterial(ip,jp,kp);
+		  if( cs(i,j,k) <= m_vsmax )
+		  {
+		     cs(i,j,k) *= rndpert;
+		     cp(i,j,k) *= rndpert;
+		  }
+	       }
+	       else
+		  CHECK_INPUT(false,"ERROR: index " << ip << " " << jp << " " << kp << " not in material array bounds " <<
+			      mRndMaterial.m_ib << " <= ip <= " << mRndMaterial.m_ie << "  " <<
+			      mRndMaterial.m_jb << " <= jp <= " << mRndMaterial.m_je << "  " <<
+			      mRndMaterial.m_kb << " <= kp <= " << mRndMaterial.m_ke << " y= " << y << " j= " << j<<endl );
+                  }
 	    }
    }
 }
@@ -212,7 +214,7 @@ void RandomizedMaterial::perturb_velocities( std::vector<Sarray> & cs,
 	    for( int j=mRndMaterial.m_jb ; j <= mRndMaterial.m_je ; j++ )
 	       for( int i=mRndMaterial.m_ib ; i <= mRndMaterial.m_ie ; i++ )
 	       {
-		  if( cs[0](i,j,k) <= m_csmax )
+		  if( cs[0](i+1,j+1,k+1) <= m_vsmax )
 		  {
 		     cs[0](i+1,j+1,k+1) *= mRndMaterial(i,j,k);
 		     cp[0](i+1,j+1,k+1) *= mRndMaterial(i,j,k);
@@ -244,6 +246,7 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g,
    }
 
 // 1. Generate Fourier modes and setup FFTW plan 
+
    get_fourier_modes( uc, n1, ib1, n1g, n2g, n3g, Lx, Ly, Lz, hurst, m_seed );
    fftw_plan plan = fftw_mpi_plan_dft_3d( n1g, n2g, n3g, (fftw_complex*)uc, (fftw_complex*)uc,
 					  MPI_COMM_WORLD, FFTW_BACKWARD, FFTW_ESTIMATE );
@@ -407,15 +410,15 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g,
       std::cout << "imnrm = "  << imnrm << std::endl;
    delete[] uc;
 
-   AllDims* sw4dims= mEW->get_fine_alldimobject( );
 
+   AllDims* sw4dims= mEW->get_fine_alldimobject( );
    AllDims sarobj( sw4dims, 0, n1g-1, 0, n2g-1, 0, n3g-1, 0, 0 );
    //   AllDims sarobj(m_nproc2d[0], m_nproc2d[1], 1, 0, n1g-1, 0, n2g-1, 0, n3g-1, 0, 0 );
 
    sarobj.getdims_nopad(dims);
    mRndMaterial.define(dims[0],dims[1],dims[2],dims[3],dims[4],dims[5]);
    redistribute_array<float_sw4>( *dimobj, sarobj, u, mRndMaterial.c_ptr() );
-   //   cout << "SARRAY DIMS RANDMTRL: " << dims[2] << " " << dims[3] << endl;
+
    delete[] u;
 #else
    cout << "ERROR: Can not generate random material without FFTW" << endl;
@@ -444,7 +447,6 @@ void RandomizedMaterial::get_fourier_modes( complex<float_sw4>* uhat, int n1, in
       float_sw4 k1eff=k1;
       if( k1 > r1 )
 	 k1eff = k1-n1g;
-      //      float_sw4 k1eff = k1>r1?k1-n1g:k1;
       for( int k2=0 ; k2 <= n2-1 ; k2++ )
       {
 	 float_sw4 k2eff=k2;
@@ -700,6 +702,12 @@ void RandomizedMaterial::comm_sarray( Sarray& sar, int neigh[4], int padding )
 
    delete[] sbuf;
    delete[] rbuf;
+}
+
+//-----------------------------------------------------------------------
+void RandomizedMaterial::set_vsmax( float_sw4 vsmax )
+{
+   m_vsmax = vsmax;
 }
 
 //-----------------------------------------------------------------------
