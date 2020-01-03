@@ -145,14 +145,6 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
    int counter;
    MPI_Allreduce( &iwrite, &counter, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
 
-   /* int myRank; */
-   /* MPI_Comm_rank(MPI_COMM_WORLD, &myRank); */
-   /* if (counter != 1 && m_myPoint == 1) { */
-   /*     cout << "Rank " << myRank << "has this point mX=" << mX << " mY=" << mY << " mZ=" << mZ << endl; */
-   /* } */
-   /* if (m_myPoint == 1) */ 
-   /*     cout << "Rank " << myRank << " has station mX=" << mX << " mY=" << mY << " mZ=" << mZ << endl; */
-   
    a_ew->get_utc( m_utc, m_event );
    //   int size;
    //   MPI_Comm_size(MPI_COMM_WORLD,&size);
@@ -1007,15 +999,14 @@ void TimeSeries::writeFile( string suffix )
 
 #ifdef USE_HDF5
   if (m_hdf5Format) {
-    /* if (grp > 0) */ 
-    /*   H5Gflush(grp); */
     if (grp > 0) 
       H5Gclose(grp);
-    /* printf("Rank %d: Finished writing station data [%s]\n", myRank, m_staName.c_str()); */
-    /* fflush(stdout); */
   }
   etime = MPI_Wtime();
   m_writeTime += (etime - stime);
+
+  /* printf("Rank %d: done written timeseries data of station [%s], %f seconds\n", myRank, m_staName.c_str(), etime - stime); */
+  /* fflush(stdout); */
 #endif
 
 
@@ -1157,11 +1148,14 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
 {
   bool is_debug = false;
   /* is_debug = true; */
+  double stime, etime;
 
   hsize_t start, count;
   int ret = 1, prev_npts;
   int write_npts;
   float *write_data;
+
+  /* stime = MPI_Wtime(); */
 
   write_npts = npts;
   write_data = y;
@@ -1192,11 +1186,17 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
 
   if (isLast && ret == 1) {
     m_nptsWritten += count;
-    H5Gflush(grp);
+    /* H5Gflush(grp); */
   }
 
   if (mDownSample > 1) 
     delete [] write_data;
+
+  /* etime = MPI_Wtime(); */
+  /* int myRank; */
+  /* MPI_Comm_rank(MPI_COMM_WORLD, &myRank); */
+  /* printf("Rank %d: [%s], write_npts=%d, time=%f\n", myRank, var, count, etime-stime); */
+  /* fflush(stdout); */
 }
 #endif
 
@@ -3570,9 +3570,10 @@ hid_t TimeSeries::openHDF5File(std::string suffix)
   }
  
   fapl = H5Pcreate(H5P_FILE_ACCESS);
-  H5Pset_fapl_sec2(fapl);
+  /* H5Pset_fapl_sec2(fapl); */
+  /* H5Pset_fapl_stdio(fapl); */
 
-  /* H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL); */
+  H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL);
   /* H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL); */
   /* H5Pset_coll_metadata_write(fapl, false); */
   /* H5Pset_all_coll_metadata_ops(fapl, false); */

@@ -191,9 +191,11 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int nd
 {
     bool is_debug = false;
     /* is_debug = true; */
-
+    double stime, etime, etime1;
     hid_t dset, filespace, dxpl;
     herr_t ret;
+
+    /* stime = MPI_Wtime(); */
 
     dxpl = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
@@ -207,26 +209,14 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int nd
         return -1;
     }
 
-    if (!isIncAzWritten) {
-#ifdef USE_DSET_ATTR
-      std::string newname = name;
-      std::string incname = newname + "CMPINC";
-      std::string azname  = newname + "CMPAZ";
-      openWriteAttr(loc, incname.c_str(), H5T_NATIVE_FLOAT, &cmpinc);
-      openWriteAttr(loc, azname.c_str(), H5T_NATIVE_FLOAT, &cmpaz);
-#else
-      openWriteAttr(dset, "CMPINC", H5T_NATIVE_FLOAT, &cmpinc);
-      openWriteAttr(dset, "CMPAZ", H5T_NATIVE_FLOAT, &cmpaz);
-#endif
-    }
 
-    if (start[0] == 0) {
-        filespace = H5S_ALL;
-    }
-    else {
+    /* if (start[0] == 0) { */
+    /*     filespace = H5S_ALL; */
+    /* } */
+    /* else { */
         filespace = H5Dget_space(dset);
         H5Sselect_hyperslab (filespace, H5S_SELECT_SET, start, NULL, count, NULL);
-    }
+    /* } */
 
     ret  = H5Dwrite(dset, type_id, H5S_ALL, filespace, dxpl, data);
     if (ret < 0) {
@@ -234,9 +224,31 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int nd
         return -1;
     }
 
-    if (isLast) {
+    /* etime = MPI_Wtime(); */
+
+    /* if (!isIncAzWritten) { */
+/* #ifdef USE_DSET_ATTR */
+    /*   std::string newname = name; */
+    /*   std::string incname = newname + "CMPINC"; */
+    /*   std::string azname  = newname + "CMPAZ"; */
+    /*   openWriteAttr(loc, incname.c_str(), H5T_NATIVE_FLOAT, &cmpinc); */
+    /*   openWriteAttr(loc, azname.c_str(), H5T_NATIVE_FLOAT, &cmpaz); */
+/* #else */
+    /*   openWriteAttr(dset, "CMPINC", H5T_NATIVE_FLOAT, &cmpinc); */
+    /*   openWriteAttr(dset, "CMPAZ", H5T_NATIVE_FLOAT, &cmpaz); */
+/* #endif */
+    /* } */
+
+    if (isLast) 
         openWriteAttr(loc, "NPTS", H5T_NATIVE_INT, &total_npts);
-    }
+
+    /* etime1 = MPI_Wtime(); */
+
+    /* int myRank; */
+    /* MPI_Comm_rank(MPI_COMM_WORLD, &myRank); */
+    /* printf("Rank %d: Attr write time %f, data write time %f\n", myRank, etime1-etime, etime-stime); */
+    /* fflush(stdout); */
+
 
     if (is_debug) {
         float *write_data = (float*)data;
@@ -244,6 +256,8 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int nd
                 total_npts, write_data[0], write_data[1], write_data[total_npts/2], write_data[total_npts-2], write_data[total_npts-1]);
         fflush(stdout);
     }
+
+    /* H5Dflush(dset); */
 
     H5Pclose(dxpl);
     if (filespace != H5S_ALL) 
@@ -283,6 +297,11 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   std::string path = TimeSeries[0]->getPath();
   std::string name = TimeSeries[0]->gethdf5FileName();
   std::string filename;
+
+  // Set stripe parameters to dir for time-series data
+  char setstripe[4096];
+  sprintf(setstripe, "lfs setstripe -c 128 -S 512k %s", path.c_str());
+  system(setstripe);
 
   // Build the file name
   if( path != "." )
@@ -347,6 +366,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   /* else if( mode == TimeSeries::??) */
       /* createWriteAttrStr(fid, "Unit", "m/s/s"); */
 
+  float cmpazs[9] = {0}, cmpincs[9] = {0};
 
   for (int ts=0; ts<TimeSeries.size(); ts++)
   {
@@ -375,6 +395,12 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
 
     createWriteAttr(grp, "ISNSEW", H5T_NATIVE_INT, attr_space1, &isnsew);
 
+    cmpazs[0] = TimeSeries[ts]->getXaz();
+    cmpazs[1] = TimeSeries[ts]->getXaz()+90.;
+    cmpazs[2] = 0.;
+    cmpincs[0] = 90.;
+    cmpincs[1] = 90.;
+    cmpincs[2] = 180.;
     mode         = TimeSeries[ts]->getMode();
     // Datasets
     if( mode == TimeSeries::Displacement )
@@ -391,12 +417,12 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
           dset_names[0] = "EW";
           dset_names[1] = "NS";
           dset_names[2] = "UP";
-
+          cmpincs[2] = 0.;
        }
     }
     else if( mode == TimeSeries::Velocity )
     {
-        ndset = 3;
+       ndset = 3;
        if( xyzcomponent )
        {
           dset_names[0] = "Vx";
@@ -408,6 +434,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
           dset_names[0] = "Vew";
           dset_names[1] = "Vns";
           dset_names[2] = "Vup";
+          cmpincs[2] = 0.;
        }
     }
     else if( mode == TimeSeries::Div )
@@ -446,6 +473,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     	dset_names[8] = "DUZDZ";
     }
 
+
     for (int i = 0; i < ndset; i++) {
       total_dims = (hsize_t)(totalSteps/TimeSeries[ts]->getDownSample());
       if (totalSteps % TimeSeries[ts]->getDownSample() != 0) 
@@ -461,11 +489,15 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
 #ifdef USE_DSET_ATTR
       std::string incname = dset_names[i] + "CMPINC";
       std::string azname  = dset_names[i] + "CMPAZ";
-      createAttr(grp, incname.c_str(), H5T_NATIVE_FLOAT, attr_space1);
-      createAttr(grp, azname.c_str(), H5T_NATIVE_FLOAT, attr_space1);
+      /* createAttr(grp, incname.c_str(), H5T_NATIVE_FLOAT, attr_space1); */
+      /* createAttr(grp, azname.c_str(), H5T_NATIVE_FLOAT, attr_space1); */
+      createWriteAttr(grp, incname.c_str(), H5T_NATIVE_FLOAT, attr_space1, &cmpazs[i]);
+      createWriteAttr(grp, azname.c_str(), H5T_NATIVE_FLOAT, attr_space1, &cmpincs[i]);
 #else
-      createAttr(dset, "CMPINC", H5T_NATIVE_FLOAT, attr_space1);
-      createAttr(dset, "CMPAZ", H5T_NATIVE_FLOAT, attr_space1);
+      /* createAttr(dset, "CMPINC", H5T_NATIVE_FLOAT, attr_space1); */
+      /* createAttr(dset, "CMPAZ", H5T_NATIVE_FLOAT, attr_space1); */
+      createWriteAttr(grp, "CMPAZ", H5T_NATIVE_FLOAT, attr_space1, &cmpazs[i]);
+      createWriteAttr(grp, "CMPINC", H5T_NATIVE_FLOAT, attr_space1, &cmpincs[i]);
 #endif
       H5Dclose(dset);
     }
