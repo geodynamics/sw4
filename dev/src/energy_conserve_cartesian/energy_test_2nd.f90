@@ -104,17 +104,6 @@ program energy_test_cartesian
         end do
      end do
   end do
-  
-  !do k=2,n3_c-1
-  !   do i=2,n2_c-1
-  !      do j=2,n1_c-1
-  !         call initial_solution(l1,l2,l3,Xgrid_c(j,i,k,1),Xgrid_c(j,i,k,2),Xgrid_c(j,i,k,3), &
-  !              u_c(j,i,k,1,1),u_c(j,i,k,2,1),u_c(j,i,k,3,1))
-  !         call initial_solution(l1,l2,l3,Xgrid_c(j,i,k,1),Xgrid_c(j,i,k,2),Xgrid_c(j,i,k,3), &
-  !              u_c(j,i,k,1,2),u_c(j,i,k,2,2),u_c(j,i,k,3,2))
-  !      end do
-  !   end do
-  !end do
 
   CALL system_clock(count_rate=cr)
   CALL SYSTEM_CLOCK(c1)
@@ -122,25 +111,17 @@ program energy_test_cartesian
   rate = real(cr)
   tv = 0.d0
   ! make sure the initial condition satisfy the free surface boundarycondition
-  ! Update ghost point values for the traction boundary
-  !call Update_traction(1)
-  !call Update_traction(2)
-     call  Update_gp(2)
-     call  Update_Dirichlet_BC(2)    
-	 call  Update_gp(1)
-     call  Update_Dirichlet_BC(1)
+  call  Update_gp(2)
+  call  Update_Dirichlet_BC(2)
+	call  Update_gp(1)
+  call  Update_Dirichlet_BC(1)
+
+  ! Evaluate the difference operators
+  call  Update_interior(u_c(:,:,:,:,2))
   ! time stepping
   do time_index = 1, nt
-     ! Predictor step
 
-     ! Evaluate the difference operators
-     call  Update_interior(u_c(:,:,:,:,2))
-	 call  Update_gp(3)
-     call  Update_Dirichlet_BC(3)
-	 call  Update_gp(2)
-     call  Update_Dirichlet_BC(2)
-	 call  Update_gp(1)
-     call  Update_Dirichlet_BC(1)
+     !call  Update_interior(u_c(:,:,:,:,2))
 
      ! Update the solution in the predictor step
      u_c(1:n1_c,1:n2_c,1:n3_c,:,4)= 2.d0*u_c(1:n1_c,1:n2_c,1:n3_c,:,2) - u_c(1:n1_c,1:n2_c,1:n3_c,:,1) &
@@ -150,56 +131,18 @@ program energy_test_cartesian
      tv = tv + dt
      times(time_index) = tv
 
-     ! Update ghost points outside the left and right boundaries
-     ! The argument '3' means time level star
-     ! '1', '2' and '4' mean time level n-1, n and n+1, respectively.
-     call  Update_gp(3)
-     call  Update_Dirichlet_BC(3)
-     call  Update_gp(2)
-     call  Update_Dirichlet_BC(2)    
-	 call  Update_gp(1)
-     call  Update_Dirichlet_BC(1)
-     ! Corrector step
-     ! call  Update_gp(4)
-
-     ! Update ghost point values for the traction boundary
-     !call  Update_traction(4)
-
-     ! Update Dirichlet boundary condition
+	   call Update_Dirichlet_BC(4)
+	   call Update_gp(4)
 
      ! Evaluate the difference operators
-     !call Update_interior((u_c(:,:,:,:,3) - 2.d0*u_c(:,:,:,:,2) + u_c(:,:,:,:,1))/dt**2)
-	 call Update_Dirichlet_BC(4)
+     call  Update_interior(u_c(:,:,:,:,4))
 
-	 call Update_gp(4)
-
-     ! Update ghost point values for the traction boundary
-     !call  Update_traction(4)
-
-     ! Update Dirichlet boundary condition
-     !call  Update_Dirichlet_BC(4)
-
-
-     ! Evaluate the difference operators
-     !u_c(1:n1_c,1:n2_c,1:n3_c,:,4) = u_c(1:n1_c,1:n2_c,1:n3_c,:,3) &
-     !     + dt**4/12.d0*lh_c(1:n1_c,1:n2_c,1:n3_c,:)/rho_c(1:n1_c,1:n2_c,1:n3_c,:)
-
-
-     ! Update ghost point values outside the left and right boundaries
-     call  Update_gp(4)
-
-     ! Update ghost point values for the traction boundary
-     ! call  Update_traction(4)
-
-     ! Update Dirichlet boundary condition
-     call  Update_Dirichlet_BC(4)
-	 call discrete_energy(u_c(:,:,:,:,1),u_c(:,:,:,:,2),u_c(:,:,:,:,4),dt,energy_discrete(time_index))
+	   call discrete_energy(u_c(:,:,:,:,1),u_c(:,:,:,:,2),u_c(:,:,:,:,4),dt,energy_discrete(time_index))
 
      ! Update solutions
      u_c(:,:,:,:,1) = u_c(:,:,:,:,2)
      u_c(:,:,:,:,2) = u_c(:,:,:,:,4)
-     !print *, maxval(abs(u_c(:,:,:,:,1)-u_c(:,:,:,:,2)))
-     ! compute the discrete energy
+
   end do ! end of time loop
 
   N6(1) = n1_c
@@ -253,7 +196,7 @@ contains
        do j=1-nrg,n2_c+nrg
           do k=1-nrg,n1_c+nrg
              mu_c(k,j,i) = 3.d0 !+ sin(3.d0*Xgrid_c(k,j,i,1)+0.1d0)*sin(3.d0*Xgrid_c(k,j,i,2)+0.1d0)*sin(Xgrid_c(k,j,i,3))
-             lambda_c(k,j,i) = 21.d0!+ cos(Xgrid_c(k,j,i,1)+0.1d0)*cos(Xgrid_c(k,j,i,2)+0.1d0)*sin(3.d0*Xgrid_c(k,j,i,3))**2
+             lambda_c(k,j,i) = 21.d0 !+ cos(Xgrid_c(k,j,i,1)+0.1d0)*cos(Xgrid_c(k,j,i,2)+0.1d0)*sin(3.d0*Xgrid_c(k,j,i,3))**2
              rho_c(k,j,i,:) = 1.d0 !+ sin(Xgrid_c(k,j,i,1)+0.3d0)*sin(Xgrid_c(k,j,i,2)+0.3d0)*sin(Xgrid_c(k,j,i,3)-0.2d0)
           end do
        end do
@@ -424,68 +367,6 @@ contains
 
   end subroutine Update_interior
 
-  subroutine Update_traction(index)
-    ! traction B.C. on the top of the fine mesh
-
-    integer :: index
-    real(dp) :: mat_det
-
-    int_temp_c_1 = 0.d0
-    int_temp_c_2 = 0.d0
-
-    do j = 1,n2_c
-       do i=1,n1_c
-          call top_normal_data(traction_data(i,j,:))
-       end do
-    end do
-
-    do jj = 1,3
-       call FD_r1(h1_c,-1,n1_c+2,1,n2_c,n3_c,n3_c,u_c(-1:n1_c+2,1:n2_c,n3_c,jj,index),int_temp_c_1(1:n1_c,1:n2_c,jj))
-       call FD_r2(h2_c,1,n1_c,-1,n2_c+2,n3_c,n3_c,u_c(1:n1_c,-1:n2_c+2,n3_c,jj,index),int_temp_c_2(1:n1_c,1:n2_c,jj))
-    end do
-
-    do j = 1,n2_c
-       do i = 1,n1_c
-          traction_rhs = 0.d0
-          do iset = 1,3
-             do k = 1,4
-                do jj = 1,3
-                   traction_rhs(iset) = traction_rhs(iset) &
-                       - 1.d0/h3_c*Sb(k)*u_c(i,j,n3_c+1-k,jj,index)*N33_c(i,j,n3_c,iset,jj)
-                end do
-             end do
-             do jj = 1,3
-                traction_rhs(iset) = traction_rhs(iset) + N31_c(i,j,n3_c,iset,jj)*int_temp_c_1(i,j,jj) &
-                                     + N32_c(i,j,n3_c,iset,jj)*int_temp_c_2(i,j,jj)
-             end do
-             traction_rhs(iset) = traction_rhs(iset) &
-               - sqrt(XI13_c(i,j,n3_c)**2+XI23_c(i,j,n3_c)**2+XI33_c(i,j,n3_c)**2)*Jacobian_c(i,j,n3_c)*traction_data(i,j,iset)
-          end do
-
-          ! Update ghost point at the traction boundary
-          mat_det = N33_c(i,j,n3_c,1,1)*N33_c(i,j,n3_c,2,2)*N33_c(i,j,n3_c,3,3) &
-                  +N33_c(i,j,n3_c,2,1)*N33_c(i,j,n3_c,3,2)*N33_c(i,j,n3_c,1,3) &
-                  + N33_c(i,j,n3_c,3,1)*N33_c(i,j,n3_c,1,2)*N33_c(i,j,n3_c,2,3) &
-                  -N33_c(i,j,n3_c,1,3)*N33_c(i,j,n3_c,2,2)*N33_c(i,j,n3_c,3,1) &
-                  - N33_c(i,j,n3_c,1,1)*N33_c(i,j,n3_c,3,2)*N33_c(i,j,n3_c,2,3) &
-                  -N33_c(i,j,n3_c,3,3)*N33_c(i,j,n3_c,2,1)*N33_c(i,j,n3_c,1,2)
-
-          u_c(i,j,n3_c+1,1,index) = h3_c/Sb(0)/mat_det* &
-              ((N33_c(i,j,n3_c,2,2)*N33_c(i,j,n3_c,3,3)-N33_c(i,j,n3_c,2,3)*N33_c(i,j,n3_c,3,2))*traction_rhs(1) &
-             +(N33_c(i,j,n3_c,1,3)*N33_c(i,j,n3_c,3,2)-N33_c(i,j,n3_c,1,2)*N33_c(i,j,n3_c,3,3))*traction_rhs(2) &
-             +(N33_c(i,j,n3_c,1,2)*N33_c(i,j,n3_c,2,3)-N33_c(i,j,n3_c,1,3)*N33_c(i,j,n3_c,2,2))*traction_rhs(3))
-          u_c(i,j,n3_c+1,2,index) = h3_c/Sb(0)/mat_det* &
-              ((N33_c(i,j,n3_c,2,3)*N33_c(i,j,n3_c,3,1)-N33_c(i,j,n3_c,3,3)*N33_c(i,j,n3_c,2,1))*traction_rhs(1) &
-             +(N33_c(i,j,n3_c,1,1)*N33_c(i,j,n3_c,3,3)-N33_c(i,j,n3_c,1,3)*N33_c(i,j,n3_c,3,1))*traction_rhs(2) &
-             +(N33_c(i,j,n3_c,1,3)*N33_c(i,j,n3_c,2,1)-N33_c(i,j,n3_c,1,1)*N33_c(i,j,n3_c,2,3))*traction_rhs(3))
-          u_c(i,j,n3_c+1,3,index) = h3_c/Sb(0)/mat_det* &
-              ((N33_c(i,j,n3_c,2,1)*N33_c(i,j,n3_c,3,2)-N33_c(i,j,n3_c,2,2)*N33_c(i,j,n3_c,3,1))*traction_rhs(1) &
-             +(N33_c(i,j,n3_c,1,2)*N33_c(i,j,n3_c,3,1)-N33_c(i,j,n3_c,1,1)*N33_c(i,j,n3_c,3,2))*traction_rhs(2) &
-             +(N33_c(i,j,n3_c,1,1)*N33_c(i,j,n3_c,2,2)-N33_c(i,j,n3_c,1,2)*N33_c(i,j,n3_c,2,1))*traction_rhs(3))
-       end do
-    end do
-  end subroutine Update_traction
-
   subroutine Update_gp(index)
     integer index
     ! Update ghost point values on the left and right domain
@@ -522,9 +403,7 @@ contains
           end do
        end do
     end do
-	
-	
-	
+
 	do i=1-nrg,1
        do j = 1-nrg,n2_c+nrg
           do k = 1-nrg,n1_c+nrg
@@ -534,7 +413,7 @@ contains
           end do
 	   end do
 	end do
-		  
+
     do i=n3_c,n3_c+nrg
        do j = 1-nrg,n2_c+nrg
           do k = 1-nrg,n1_c+nrg
@@ -544,10 +423,6 @@ contains
           end do
 	   end do
 	end do
-	
-	
-	
-	
 
   end subroutine Update_gp
 
@@ -567,43 +442,6 @@ contains
        end do
     end do
   end subroutine Update_Dirichlet_BC
-  !
-  subroutine Lh_interior(u_c_t)
-    real(dp), dimension (1-nrg:n1_c+nrg,1-nrg:n2_c+nrg,1-nrg:n3_c+nrg,1:dim) :: u_c_t
-
-    ! Difference operators in the interior of the domains
-    lh_total = 0.d0
-    do iset = 1,3
-      do jj = 1,3
-         call FD_r1r1(h1_c,n1_c,n2_c,n3_c,N11_c(:,:,:,iset,jj),u_c_t(:,:,:,jj),1,n1_c,1,n2_c,1,n3_c,G1_c)
-         call FD_r2r2(h2_c,n1_c,n2_c,n3_c,N22_c(:,:,:,iset,jj),u_c_t(:,:,:,jj),1,n1_c,1,n2_c,1,n3_c,G2_c)
-         call FD_r3r3(h3_c,n1_c,n2_c,n3_c,N33_c(:,:,:,iset,jj),u_c_t(:,:,:,jj),1,n1_c,1,n2_c,1,n3_c,G3_c,acof,ghcof)
-
-         call FD_r3(h3_c,-1,n1_c+2,1,n2_c,1,n3_c,u_c_t(-1:n1_c+2,1:n2_c,1:n3_c,jj),D3_1c,bof)
-         call FD_r1(h1_c,-1,n1_c+2,1,n2_c,1,n3_c,N13_c(-1:n1_c+2,1:n2_c,1:n3_c,iset,jj)*D3_1c,D31_c)
-
-         call FD_r2(h2_c,-1,n1_c+2,-1,n2_c+2,1,n3_c,u_c_t(-1:n1_c+2,-1:n2_c+2,1:n3_c,jj),D2_1c)
-         call FD_r1(h1_c,-1,n1_c+2,1,n2_c,1,n3_c,N12_c(-1:n1_c+2,1:n2_c,1:n3_c,iset,jj)*D2_1c,D21_c)
-
-         call FD_r1(h1_c,-1,n1_c+2,-1,n2_c+2,1,n3_c,u_c_t(-1:n1_c+2,-1:n2_c+2,1:n3_c,jj),D1_2c)
-         call FD_r2(h2_c,1,n1_c,-1,n2_c+2,1,n3_c,N21_c(1:n1_c,-1:n2_c+2,1:n3_c,iset,jj)*D1_2c,D12_c)
-
-         call FD_r3(h3_c,1,n1_c,-1,n2_c+2,1,n3_c,u_c_t(1:n1_c,-1:n2_c+2,1:n3_c,jj),D3_2c,bof)
-         call FD_r2(h2_c,1,n1_c,-1,n2_c+2,1,n3_c,N23_c(1:n1_c,-1:n2_c+2,1:n3_c,iset,jj)*D3_2c,D32_c)
-
-         call FD_r1(h1_c,-1,n1_c+2,1,n2_c,1,n3_c,u_c_t(-1:n1_c+2,1:n2_c,1:n3_c,jj),D1_3c)
-         call FD_r3(h3_c,1,n1_c,1,n2_c,1,n3_c,N31_c(1:n1_c,1:n2_c,1:n3_c,iset,jj)*D1_3c,D13_c,bof)
-
-         call FD_r2(h2_c,1,n1_c,-1,n2_c+2,1,n3_c,u_c_t(1:n1_c,-1:n2_c+2,1:n3_c,jj),D2_3c)
-         call FD_r3(h3_c,1,n1_c,1,n2_c,1,n3_c,N32_c(1:n1_c,1:n2_c,1:n3_c,iset,jj)*D2_3c,D23_c,bof)
-
-         lh_total(1:n1_c,1:n2_c,1:n3_c,iset) = &
-             lh_total(1:n1_c,1:n2_c,1:n3_c,iset)+G1_c+G2_c+G3_c+D31_c+D21_c+D12_c+D32_c+D13_c+D23_c
-
-      end do
-    end do
-
-  end subroutine Lh_interior
 
   ! compute the discrete energy
   subroutine discrete_energy(uc_oldold,uc_old,uc_new,dt,energy_num)
@@ -622,26 +460,19 @@ contains
         + rho_c(1:n1_c,1:n2_c,1:n3_c,1)* &
         (uc_new(1:n1_c,1:n2_c,1:n3_c,l1)-uc_old(1:n1_c,1:n2_c,1:n3_c,l1))**2/(dt**2)
     end do
-    energy_num_temp_c = energy_num_temp_c*Jacobian_c(1:n1_c,1:n2_c,1:n3_c)
-    !
-    !call Lh_interior(uc_old)
-    !!Lh_old = Lh_total
-    !call Lh_interior(uc_new)
-    !Lh_new = Lh_total
-	! term w.r.t S_h(unew,uold) = -(unew,L_h uold)
-    Lh_old = (uc_new(1:n1_c,1:n2_c,1:n3_c,:)-2.d0*uc_old(1:n1_c,1:n2_c,1:n3_c,:)+uc_oldold(1:n1_c,1:n2_c,1:n3_c,:))/dt**2
-	energy_num_temp_c = energy_num_temp_c - uc_new(1:n1_c,1:n2_c,1:n3_c,1)*Lh_old(:,:,:,1) &
+
+	  ! term w.r.t S_h(unew,uold) = -(unew,L_h uold)
+    Lh_old = rho_c(1:n1_c,1:n2_c,1:n3_c,:)* &
+      (uc_new(1:n1_c,1:n2_c,1:n3_c,:)-2.d0*uc_old(1:n1_c,1:n2_c,1:n3_c,:)+uc_oldold(1:n1_c,1:n2_c,1:n3_c,:))/dt**2
+	  energy_num_temp_c = energy_num_temp_c - uc_new(1:n1_c,1:n2_c,1:n3_c,1)*Lh_old(:,:,:,1) &
        - uc_new(1:n1_c,1:n2_c,1:n3_c,2)*Lh_old(:,:,:,2) &
        - uc_new(1:n1_c,1:n2_c,1:n3_c,3)*Lh_old(:,:,:,3)
 
-	!energy_num_temp_c = energy_num_temp_c - uc_old(1:n1_c,1:n2_c,1:n3_c,1)*Lh_new(:,:,:,1) &
-    !   - uc_old(1:n1_c,1:n2_c,1:n3_c,2)*Lh_new(:,:,:,2) &
-    !   - uc_old(1:n1_c,1:n2_c,1:n3_c,3)*Lh_new(:,:,:,3)
-    ! term w.r.t (L_h unew,L_h uold)
-    
-    !energy_num_temp_c = energy_num_temp_c+dt*dt*(Lh_new(:,:,:,1)*Lh_old(:,:,:,1) &
-    !  +Lh_new(:,:,:,2)*Lh_old(:,:,:,2)+Lh_new(:,:,:,3)*Lh_old(:,:,:,3)) &
-    !  /Jacobian_c(1:n1_c,1:n2_c,1:n3_c)/12.d0
+    !energy_num_temp_c = energy_num_temp_c &
+    !   - uc_new(1:n1_c,1:n2_c,1:n3_c,1)*lh_c(1:n1_c,1:n2_c,1:n3_c,1) &
+    !   - uc_new(1:n1_c,1:n2_c,1:n3_c,2)*lh_c(1:n1_c,1:n2_c,1:n3_c,2) &
+    !   - uc_new(1:n1_c,1:n2_c,1:n3_c,3)*lh_c(1:n1_c,1:n2_c,1:n3_c,3)
+
     ! add grid points with corresponding weights
     energy_num = 0.d0
     do k = 5,n3_c-4
@@ -654,29 +485,11 @@ contains
     !
     do j = 1,n2_c
       do i = 1,n1_c
-        energy_num = energy_num + h1_c*h2_c*h3_c*17.d0/48.d0*energy_num_temp_c(i,j,1) &
-          + h1_c*h2_c*h3_c*17.d0/48.d0*energy_num_temp_c(i,j,n3_c)
-      end do
-    end do
-    !
-    do j = 1,n2_c
-      do i = 1,n1_c
-        energy_num = energy_num + h1_c*h2_c*h3_c*59.d0/48.d0*energy_num_temp_c(i,j,2) &
-          + h1_c*h2_c*h3_c*59.d0/48.d0*energy_num_temp_c(i,j,n3_c-1)
-      end do
-    end do
-    !
-    do j = 1,n2_c
-      do i = 1,n1_c
-        energy_num = energy_num + h1_c*h2_c*h3_c*43.d0/48.d0*energy_num_temp_c(i,j,3) &
-          + h1_c*h2_c*h3_c*43.d0/48.d0*energy_num_temp_c(i,j,n3_c-2)
-      end do
-    end do
-    !
-    do j = 1,n2_c
-      do i = 1,n1_c
-        energy_num = energy_num + h1_c*h2_c*h3_c*49.d0/48.d0*energy_num_temp_c(i,j,4) &
-          + h1_c*h2_c*h3_c*49.d0/48.d0*energy_num_temp_c(i,j,n3_c-3)
+        energy_num = energy_num + h1_c*h2_c*h3_c &
+          *(17.d0/48.d0*(energy_num_temp_c(i,j,1)+ energy_num_temp_c(i,j,n3_c)) &
+          + 59.d0/48.d0*(energy_num_temp_c(i,j,2)+ energy_num_temp_c(i,j,n3_c-1)) &
+          + 43.d0/48.d0*(energy_num_temp_c(i,j,3)+ energy_num_temp_c(i,j,n3_c-2)) &
+          + 49.d0/48.d0*(energy_num_temp_c(i,j,4)+ energy_num_temp_c(i,j,n3_c-3)))
       end do
     end do
     !
