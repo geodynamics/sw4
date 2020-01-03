@@ -3113,6 +3113,25 @@ The SRF file format is described on the SCEC wiki webpage:
 \verb+http://scec.usc.edu/scecpedia/Standard_Rupture_Format+
 \index{rupture parameters! file}
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{rupturehdf5}
+\index{command!rupturehdf5}
+\label{keyword:rupturehdf5}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{flushleft}
+\bf
+Syntax:\\ \tt rupturehdf5 file=...\\ 
+\bf
+Required parameters:\\ \rm name of SRF file in HDF5 format.
+\end{flushleft}
+The \verb+rupturehdf5+ command is similar to the \verb+rupture+ command, it reads a SRF-HDF5 file that is
+converted from a SRF file using the python script found at sw4/tools/srf2hdf5.py.
+
+The SRF-HDF5 file format is described in Section~\ref{sec:rupturehdf5-format}
+
+\index{rupturehdf5 parameters! file}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The material model [required]} 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -5031,6 +5050,97 @@ GROUP "/" {
    }
 }
 }
+\end{verbatim}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{SRF-HDF5}\label{sec:rupturehdf5-format}
+\index{fileformats!rupturehdf5}
+Based on the SRF (Standard Rupture Format), we have created the SRF-HDF5 format, which stores
+the same amount of information in a more compact HDF5 file that is smaller in size and can be read faster.
+
+The output of {\tt h5dump -A} header and metadata is below, the ``PLANE'' and ``VERSION'' attributes 
+store the header block of the SRF file, with the number of plane segments implicitly implied in the 
+dataspace of the ``PLANE'' attribute.
+
+The ``POINTS'' and ``SR1'' datasets store the data block of the SRF file. Different from the SRF format,
+where the slip rate at each time step for a direction follows immediately after each point source, 
+we concatenate all slip rates and put it in a single 1D dataset, which is optimized for data read.
+To access the slip rates of a particular point source, one needs to accumulate the number of rates
+before the desired one and calculate its offset in the ``SR1'' dataset. 
+
+Only ``SR1'' is converted in the SRF-HDF5 format as others (SR2 and SR3) are ignored by sw4.
+
+\begin{verbatim}
+HDF5 "m6.5-20.0x13.0.s500.v5.1.srf.h5" {
+GROUP "/" {
+   ATTRIBUTE "PLANE" {
+      DATATYPE  H5T_COMPOUND {
+         H5T_IEEE_F32LE "ELON";
+         H5T_IEEE_F32LE "ELAT";
+         H5T_STD_I32LE "NSTK";
+         H5T_STD_I32LE "NDIP";
+         H5T_IEEE_F32LE "LEN";
+         H5T_IEEE_F32LE "WID";
+         H5T_IEEE_F32LE "STK";
+         H5T_IEEE_F32LE "DIP";
+         H5T_IEEE_F32LE "DTOP";
+         H5T_IEEE_F32LE "SHYP";
+         H5T_IEEE_F32LE "DHYP";
+      }
+      DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
+      DATA {
+      (0): {
+            -122.218,
+            37.8433,
+            100,
+            65,
+            20,
+            13,
+            144,
+            90,
+            3,
+            -5,
+            8
+         }
+      }
+   }
+   ATTRIBUTE "VERSION" {
+      DATATYPE  H5T_IEEE_F32LE
+      DATASPACE  SCALAR
+      DATA {
+      (0): 2
+      }
+   }
+   DATASET "POINTS" {
+      DATATYPE  H5T_COMPOUND {
+         H5T_IEEE_F32LE "LON";
+         H5T_IEEE_F32LE "LAT";
+         H5T_IEEE_F32LE "DEP";
+         H5T_IEEE_F32LE "STK";
+         H5T_IEEE_F32LE "DIP";
+         H5T_IEEE_F32LE "AREA";
+         H5T_IEEE_F32LE "TINIT";
+         H5T_IEEE_F32LE "DT";
+         H5T_IEEE_F32LE "VS";
+         H5T_IEEE_F32LE "DEN";
+         H5T_IEEE_F32LE "RAKE";
+         H5T_IEEE_F32LE "SLIP1";
+         H5T_STD_I32LE "NT1";
+         H5T_IEEE_F32LE "SLIP2";
+         H5T_STD_I32LE "NT2";
+         H5T_IEEE_F32LE "SLIP3";
+         H5T_STD_I32LE "NT3";
+      }
+      DATASPACE  SIMPLE { ( 6500 ) / ( 6500 ) }
+   }
+   DATASET "SR1" {
+      DATATYPE  H5T_IEEE_F32LE
+      DATASPACE  SIMPLE { ( 144616 ) / ( 144616 ) }
+   }
+}
+}
+
 \end{verbatim}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
