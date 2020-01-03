@@ -1047,6 +1047,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    {
      float_sw4 errInf=0, errL2=0, solInf=0, solL2=0;
 // depending on the test case, we should compare in the interior, or only on the surface
+
       if (m_lamb_test)
 	normOfSurfaceDifference( Up, U, errInf, errL2, solInf, solL2, a_Sources);
       else

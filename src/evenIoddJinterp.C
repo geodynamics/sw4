@@ -125,9 +125,9 @@ void evenIoddJinterpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew, Sarray 
 	Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
       }
 
-  rmax[3] = rmax1;
-  rmax[4] = rmax2;
-  rmax[5] = rmax3;
+  rmax[3] = rmax1 > rmax[3] ? rmax1:rmax[3];
+  rmax[4] = rmax2 > rmax[4] ? rmax2:rmax[4];
+  rmax[5] = rmax3 > rmax[5] ? rmax3:rmax[5];
 } // end evenIOddJinterpJacobi
 
 //--------------------------- Optimized version ---------------
@@ -300,9 +300,10 @@ void evenIoddJinterpJacobiOpt(float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
 	Uf(c,i,j,nkf+1) = UfNew(c,i,j,nkf+1);
       }
 
-  rmax[3] = rmax1;
-  rmax[4] = rmax2;
-  rmax[5] = rmax3;
+  rmax[3] = rmax1 > rmax[3] ? rmax1:rmax[3];
+  rmax[4] = rmax2 > rmax[4] ? rmax2:rmax[4];
+  rmax[5] = rmax3 > rmax[5] ? rmax3:rmax[5];
+
 #undef Unextf
 #undef UnextcInterp
 #undef Mufs
@@ -431,9 +432,9 @@ void evenIoddJinterp(float_sw4 rmax[6], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf
     //	       rmax[2+3] = rmax[2+3] > fabs(r3) ? rmax[2+3] : fabs(r3);
 
     } // end for i even, j odd
-  rmax[3] = rmax1;
-  rmax[4] = rmax2;
-  rmax[5] = rmax3;
+  rmax[3] = rmax1 > rmax[3] ? rmax1:rmax[3];
+  rmax[4] = rmax2 > rmax[4] ? rmax2:rmax[4];
+  rmax[5] = rmax3 > rmax[5] ? rmax3:rmax[5];
 #undef strc_x
 #undef strc_y
 #undef strf_x
