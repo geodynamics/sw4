@@ -1,0 +1,46 @@
+This is BibTeX, Version 0.99d (TeX Live 2019)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+The top-level auxiliary file: elastic_3d_sbp.aux
+The style file: plain.bst
+Database file #1: lu.bib
+You've used 6 entries,
+            2118 wiz_defined-function locations,
+            536 strings with 5133 characters,
+and the built_in function-call counts, 1841 in all, are:
+= -- 184
+> -- 83
+< -- 1
++ -- 33
+- -- 26
+* -- 128
+:= -- 321
+add.period$ -- 18
+call.type$ -- 6
+change.case$ -- 30
+chr.to.int$ -- 0
+cite$ -- 6
+duplicate$ -- 66
+empty$ -- 142
+format.name$ -- 26
+if$ -- 371
+int.to.chr$ -- 0
+int.to.str$ -- 6
+missing$ -- 7
+newline$ -- 33
+num.names$ -- 12
+pop$ -- 26
+preamble$ -- 1
+purify$ -- 25
+quote$ -- 0
+skip$ -- 47
+stack$ -- 0
+substring$ -- 119
+swap$ -- 7
+text.length$ -- 1
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 22
+warning$ -- 0
+while$ -- 20
+width$ -- 7
+write$ -- 67

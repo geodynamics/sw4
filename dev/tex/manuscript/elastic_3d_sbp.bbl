@@ -1,0 +1,39 @@
+\begin{thebibliography}{1}
+
+\bibitem{duru2014stable}
+Kenneth Duru and Kristoffer Virta.
+\newblock Stable and high order accurate difference methods for the elastic
+  wave equation in discontinuous media.
+\newblock {\em Journal of Computational Physics}, 279:37--62, 2014.
+
+\bibitem{mattsson2004summation}
+Ken Mattsson and Jan Nordstr{\"o}m.
+\newblock Summation by parts operators for finite difference approximations of
+  second derivatives.
+\newblock {\em Journal of Computational Physics}, 199(2):503--540, 2004.
+
+\bibitem{petersson2015wave}
+N~Anders Petersson and Bj{\"o}rn Sj{\"o}green.
+\newblock Wave propagation in anisotropic elastic materials and curvilinear
+  coordinates using a summation-by-parts finite difference method.
+\newblock {\em Journal of Computational Physics}, 299:820--841, 2015.
+
+\bibitem{sjogreen2012fourth}
+Bj{\"o}rn Sj{\"o}green and N~Anders Petersson.
+\newblock A fourth order accurate finite difference scheme for the elastic wave
+  equation in second order formulation.
+\newblock {\em Journal of Scientific Computing}, 52(1):17--48, 2012.
+
+\bibitem{thompson1985numerical}
+Joe~F Thompson, Zahir~UA Warsi, and C~Wayne Mastin.
+\newblock {\em Numerical grid generation: foundations and applications},
+  volume~45.
+\newblock North-holland Amsterdam, 1985.
+
+\bibitem{wang2018fourth}
+Siyang Wang and N~Anders Petersson.
+\newblock Fourth order finite difference methods for the wave equation with
+  mesh refinement interfaces.
+\newblock {\em arXiv preprint arXiv:1809.04310}, 2018.
+
+\end{thebibliography}

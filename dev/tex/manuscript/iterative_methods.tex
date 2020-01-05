@@ -1,10 +1,10 @@
 %!TEX root = elastic_3d_sbp.tex
 \subsubsection{Iterative methods}\label{iterative_section}
-In the proposed scheme (\ref{coarse_scheme})--(\ref{traction_continuous_curvi}), we need to solve a $3n_1^cn_2^c\times 3n_1^cn_2^c$ linear system at each time step twice for the continutiy of the traction force along the interface (\ref{traction_gamma_pre}) and (\ref{traction_gamma_corr}). Even ethough we can do LU factorization one time before the time loop start and reuse it at each time step, it is very expensive to do LU factorization for a large problem. Besides, consider solving real problems which are usually in large scale, we want to perform the computation on many processors on a parallel distributed memory machine, but it is not clear how to calculate the LU factorization of a matrix on many processors. 
+In the proposed scheme (\ref{elastic_semi_c}), (\ref{fine_scheme}) and (\ref{continuous_sol})--(\ref{continuous_traction}), we need to solve a $3n^{2h}n^{2h}\times 3n^{2h}n^{2h}$ linear system at each time step twice for the continutiy of the traction force along the interface (\ref{traction_gamma_pre}) and (\ref{traction_gamma_corr}). Even ethough we can do LU factorization one time before the time loop start and reuse it at each time step, it is very expensive to do LU factorization for a large problem. Besides, consider solving real problems which are usually in large scale, we want to perform the computation on many processors on a parallel distributed memory machine, but it is not clear how to calculate the LU factorization of a matrix on many processors. 
 
 In this paper, we propose three iterative methods: block Jacobian method, conjugate gradient method, preconditioned conjugate gradient method. We find that preconditioned conjugate gradient method is the most efficient one and conjugate gradient method needs most iteration numbers.
 
-For the problem proposed in Section \ref{manufactured_sol}, the structure of the coefficient matrix of the linear system (\ref{traction_continuous_curvi}) is shown in Figure \ref{Mass_matrix} which is determined by the interplation operator $\mathcal{P}$ and restriction operator $\mathcal{R}$. We choose the red circles in the purple circles in Figure \ref{Mass_matrix} to be the block Jacobian matrix in block Jacobian iterative method and pre-conditioning matrix in pre-conditioned conjugate gradient iterative method. We also set a absolute error tolerance $1e-7$ for each iterative method.
+For the problem proposed in Section \ref{manufactured_sol}, the structure of the coefficient matrix of the linear system (\ref{continuous_traction}) is shown in Figure \ref{Mass_matrix} which is determined by the interplation operator $\wt{\mathcal{P}}$ and restriction operator $\wt{\mathcal{R}}$. We choose the red circles in the purple circles in Figure \ref{Mass_matrix} to be the block Jacobian matrix in block Jacobian iterative method and pre-conditioning matrix in pre-conditioned conjugate gradient iterative method. We also set a absolute error tolerance $1e-7$ for each iterative method.
 
 \begin{table}[htbp]
 	\begin{center}
@@ -12,9 +12,9 @@ For the problem proposed in Section \ref{manufactured_sol}, the structure of the
 			\hline
 			$h^c_k = 2h^f_k$   & ~~~~ CG ~~~~& Block Jacobian & Preconditioned CG  \\
 			\hline
-			$2\pi/24$ &37.76& 24.96& 4.07\\
+			$2\pi/24$ &37.78& 24.96& 4.01\\
 			\hline
-			$2\pi/48$ &38.61 & 25.38 & 2.88\\
+			$2\pi/48$ &38.61 & 25.38 & 2.87\\
 			\hline 
 			$2\pi/96$ &39.14 &25.43 & 2.55\\
 			\hline
@@ -26,7 +26,7 @@ Table \ref{condition_number} shows the condition number of the original coeffici
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.45\textwidth]{Mass_matrix.eps}
-	\includegraphics[width=0.45\textwidth]{Mass_block_diagonal.eps}
-	\caption{The left panel is the structure of the coefficient matrix of the linear system (\ref{traction_continuous_curvi}). For each blue triangle and purple circle in the left panel, they have the structure as in the right panel which is constructed by balck squares and red circles. This wide stencile is determined by the restriction operator on interpolation operation in two dimensional.}\label{Mass_matrix}
+	\includegraphics[width=0.45\textwidth,trim={1.2cm 1cm 1.4cm 1.2cm}, clip]{Mass_matrix.eps}
+	\includegraphics[width=0.45\textwidth,trim={1.2cm 1cm 1.4cm 1.2cm}, clip]{Mass_diagonal_matrix.eps}
+	\caption{The left panel is the structure of the coefficient matrix of the linear system (\ref{continuous_traction}). The right panel is the zoom in structure for the repeated pattern on the left panel.}\label{Mass_matrix}
 \end{figure}

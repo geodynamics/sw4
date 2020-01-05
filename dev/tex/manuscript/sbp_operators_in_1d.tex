@@ -1,10 +1,9 @@
 %!TEX root = elastic_3d_sbp.tex
 \subsection{SBP operators in $1$D}\label{sec_sbp_1d}
 Consider a uniform discretization of the domain $x\in[0,1]$ with the grids,
-\[\uline{\wt
-	{{\bf x}}} = [x_0,x_1,\cdots,x_n,x_{n+1}]^T,\ \  x_i = (i-1)h,\ \ i = 0,1,\cdots,n,n+1,\ \ h = 1/(n-1),\]
-where $i = 1,n$ correspond to the grid points on the boundary, and $i = 0,n+1$ are ghost points outside the physical domain.
-We also denote ${\bf x} = [x_1,x_2,\cdots,x_n]^T$ the grids that does not  contain the ghost points, $\wt{{\bf x}} = [x_1,x_2,\cdots,x_n,x_{n+1}]^T$ the grids only conatin the ghost point on the right, $\uline{{\bf x}} = [x_0,x_1,x_2,\cdots,x_n]^T$ the grids only conatin the ghost point on the left. The  operator $D \approx \frac{\partial }{\partial x}$ is a first derivative SBP operator if 
+\[\wt
+	{\bf x} = [x_0,x_1,\cdots,x_n,x_{n+1}]^T,\ \  x_i = (i-1)h,\ \ i = 0,1,\cdots,n,n+1,\ \ h = 1/(n-1),\]
+where $i = 1,n$ correspond to the grid points on the boundary, and $i = 0,n+1$ are ghost points outside of the physical domain. The  operator $D \approx \frac{\partial }{\partial x}$ is a first derivative SBP operator if 
 \begin{equation}\label{first_sbp}
 ({\bf u}, D{\bf v})_h = -(D{\bf u},{\bf v})_h - u_1v_1 + u_nv_n,
 \end{equation}
@@ -14,19 +13,19 @@ with a scalar product
 \end{equation}
 Here, $0<\omega_i < \infty $ are the weights of scalar product. The SBP operator $D$ has a centered difference stencil at the grid points away from the boudnary and the corresponding weights $\omega_i = 1$. To satisfy the SBP identity (\ref{first_sbp}), the coefficients in $D$ are  modified at a few points near the boundary and the corresponding weights $\omega_i \neq 1$. The operator $D$ does not use any ghost points. 
 
-To discretize the elastic wave equation, we also need to approximate the second derivative with variable coefficient $(\gamma(x)u_x)_x$. Here, the known function $\gamma(x)>0$ describes the property of the material. There are two different fourth order accurate SBP operators for the approximation of $(\gamma(x)u_x)_x$. The first one $\uline{\wt{G}}(\gamma){\bf u} \approx (\gamma(x)u_x)_x $, derived by Sj\"ogreen and Petersson \cite{sjogreen2012fourth}, uses one ghost point outside each boundary, and satisfies the second derivative SBP identity,
+To discretize the elastic wave equation, we also need to approximate the second derivative with variable coefficient $(\gamma(x)u_x)_x$. Here, the known function $\gamma(x)>0$ describes the property of the material. There are two different fourth order accurate SBP operators for the approximation of $(\gamma(x)u_x)_x$. The first one $\wt{G}(\gamma){\bf u} \approx (\gamma(x)u_x)_x $, derived by Sj\"ogreen and Petersson \cite{sjogreen2012fourth}, uses one ghost point outside each boundary, and satisfies the second derivative SBP identity,
 \begin{equation}\label{sbp_2nd_1}
-({\bf u}, \uline{\wt{G}}(\gamma){\bf v})_h = -S_\gamma({\bf u},{\bf v})-u_1\gamma_1\uline{\bf b}_1{\bf v} + u_n\gamma_n\wt{\bf b}_n {\bf v}.
+({\bf u}, \wt{G}(\gamma){\bf v})_h = -P_\gamma({\bf u},{\bf v})-u_1\gamma_1\wt{\bf b}_1{\bf v} + u_n\gamma_n\wt{\bf b}_n {\bf v}.
 \end{equation}
-Here, the bilinear form $S_\gamma(\cdot,\cdot)$ is symmetric and positive semi-definite, and does not use any ghost points. The operators $\uline{\bf b}_1$ and $\wt{\bf b}_n$ aprroximate the first derivative on the left and right boundaries, respectively. Using the left boundary as an example, we have 
+Here, the bilinear form $P_\gamma(\cdot,\cdot)$ is symmetric and positive semi-definite, and does not use any ghost points. The operators $\wt{\bf b}_1$ and $\wt{\bf b}_n$ aprroximate the first derivative on the left and right boundaries, respectively. Using the left boundary as an example, we have 
 \begin{equation}\label{sbp_1st_1}
-\wt{\bf b}_1 {\bf v} = \frac{1}{h}\sum_{i=0}^{4} \wt{d}_i v_i,
+\wt{\bf b}_1 {\bf v} = \frac{1}{h}\sum_{i=0}^{4} d_i v_i,
 \end{equation}
-as the fourth order accurate approximation of $u_x(x_1)$. We note that the notation $\uline{\wt{G}}(\gamma){\bf v}$ implies that the operator $\uline{\wt{G}}$ uses ${\bf v}$ on all grid points $\uline{\wt{{\bf x}}}$, but $\uline{\wt{G}}(\gamma){\bf v}$ only returns values on the grid ${\bf x}$ without ghost points. Therefore, when writing in matrix form, $\uline{\wt{G}}$ is a non-square matrix of size $n$ by $n+2$.
+as the fourth order accurate approximation of $u_x(x_1)$. We note that the notation $\wt{G}(\gamma){\bf v}$ implies that the operator $\wt{G}$ uses ${\bf v}$ on all grid points $\wt{\bf x}$, but $\wt{G}(\gamma){\bf v}$ only returns values on the grid ${\bf x}$ without ghost points. Therefore, when writing in matrix form, $\wt{G}$ is a non-square matrix of size $n$ by $n+2$.
 
 The other SBP operator ${G}(\gamma){\bf u} \approx (\gamma(x)u_x)_x $ is developed by Mattsson \cite{mattsson2004summation} without using any ghost points, and satisfies a similar SBP identity,
 \begin{equation}\label{sbp_2nd_2}
-({\bf u}, G(\gamma){\bf v})_h = -S_\gamma({\bf u},{\bf v})-u_1\gamma_1{\bf b}_1{\bf v} + u_n\gamma_n{\bf b}_n{\bf v}.
+({\bf u}, G(\gamma){\bf v})_h = -P_\gamma({\bf u},{\bf v})-u_1\gamma_1{\bf b}_1{\bf v} + u_n\gamma_n{\bf b}_n{\bf v}.
 \end{equation}
 Here, ${\bf b}_1$ and ${\bf b}_n$ are also finite difference operators for the first derivative at the boundaries, but are constructed to third order accurate,
 \begin{equation}\label{sbp_1st_2}
@@ -34,12 +33,4 @@ Here, ${\bf b}_1$ and ${\bf b}_n$ are also finite difference operators for the f
 \end{equation}
 In this case, ${G}(\gamma)$ is square in matrix form. 
 
-For the second derivative SBP operators $\uline{\wt{G}}(\gamma)$ and $G(\gamma)$, both of them use a fourth order five points centered difference stencil to approximate $(\gamma u_x)_x$ on the interior points away from the boundaries. For the first and the last six grid points close to the boudaries, the operators $G(\gamma)$ and $\uline{\wt{G}}(\gamma)$ use second order accurate one-sided difference stencils. They are designed to satisfy (\ref{sbp_2nd_2}) and (\ref{sbp_2nd_1}), respectively.  Note that we can derive two new second derivative SBP operators $\wt{G}(\gamma), \uline{G}(\gamma)$ based on $\uline{\wt{G}}(\gamma), G(\gamma)$ and they satisfy
-\begin{equation}\label{sbp_2nd_3}
-({\bf u}, \wt{G}(\gamma){\bf v})_h = -S_\gamma({\bf u},{\bf v})-u_1\gamma_1{\bf b}_1{\bf v} + u_n\gamma_n\wt{{\bf b}}_n{\bf v},
-\end{equation}
-and
-\begin{equation}\label{sbp_2nd_4}
-({\bf u}, \uline{G}(\gamma){\bf v})_h = -S_\gamma({\bf u},{\bf v})-u_1\gamma_1\uline{{\bf b}}_1{\bf v} + u_n\gamma_n{\bf b}_n{\bf v},
-\end{equation}
-respectively. Besides, in the matrix form, both of them are of size $n$ by $n+1$. In the following sections, we use all of them to develop a multi-block finite difference discretization for the elastic wave equation. 
+For the second derivative SBP operators $\wt{G}(\gamma)$ and $G(\gamma)$, both of them use a fourth order five points centered difference stencil to approximate $(\gamma u_x)_x$ on the interior points away from the boundaries. For the first and the last six grid points close to the boudaries, the operators $G(\gamma)$ and $\wt{G}(\gamma)$ use second order accurate one-sided difference stencils. They are designed to satisfy (\ref{sbp_2nd_2}) and (\ref{sbp_2nd_1}), respectively. In the following sections, we use both of them to develop a multi-block finite difference discretization for the elastic wave equation. 

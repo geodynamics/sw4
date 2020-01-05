@@ -1,22 +1,137 @@
 %!TEX root = elastic_3d_sbp.tex
-\subsection{Semi-discretization of the elastic wave equation}
+\subsection{Semi-discretization of the elastic wave equation}\label{semi_discrete_form}
 
-We consider the elastic wave equation in curvilinear coordinates 
-\begin{equation}\label{elastic_equation}
-\rho\frac{\partial^2 {\bf u}}{\partial t^2} = L{\bf u},
+In this section, we discretize the elastic wave equation (\ref{elastic_curvi}) with mesh refinement interface $\Gamma$. The ratio of the mesh size for subdomains $\Omega^f_r$ and $\Omega^c_r$ is $1:2$, that is we assume uniformal mesh size $h$ for $\Omega^f_r$ and $2h$ for $\Omega^c_r$ with $h(n^h-1) = 1$ and $2h(n^{2h}-1) = 1$, other ratios can be treated analogously. Figure \ref{physical_discretization} gives an illustration of the discretation of a physical domain. 
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.6\textwidth,trim={0cm 1.1cm 1cm 2.3cm}, clip]{physical_discretization.eps}
+	\caption{The sketch for the spatial discretization of physical domain $\Omega$. The blue region is the spacial discretization of coarse subdomain $\Omega^c$ and the red region is the spatial discretization of fine domain $\Omega^f$.}\label{physical_discretization}
+\end{figure}
+We focus on the numerical treatment of the interface conditions (\ref{interface_cond}) and suppose boundaries are periodic in directions $1$ and $2$, ignore the boundaries in dierection $3$. In Figure \ref{section_discretization}, we fix $y = 0$ and present the $x$-$z$ section of the domain $\Omega$.
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.45\textwidth,trim={3.4cm 0.8cm 3.2cm 0.5cm}, clip]{physical_section_discretization.eps}
+	\includegraphics[width=0.45\textwidth,trim={3.4cm 0.8cm 3.2cm 0.5cm}, clip]{parameter_section_discretization.eps}
+	\caption{The sketch of spacial discretization of $x$-$z$ section with $y = 0$. From the left to the right are for physcail domain and parameter space respectively. The blue dots are the ghost points for coarse domain $\Omega^c$.}\label{section_discretization}
+\end{figure}
+ To condense notations, we intoduce the multi-index notations
+\[{\bf i} = (i,j,k),\ \ {\bf r}_{\bf i} = (r^1_i,r^2_j,r^3_k),\ \ {\bf x}^{\{f,c\}}_{\bf i} = (x^{\{f,c\},1}_i,x^{\{f,c\},2}_j,x^{\{f,c\},3}_k),\ \ {\bf x}_{\bf i}^{\{f,c\}} = {\bf X}^{\{f,c\}}({\bf r}_{\bf i}).\]
+Note that for ${\bf x}^f_{\bf i}\in\Omega^f$, we have $i\in[1,n^h]$, $j\in[1,n^h]$, $k\in[1,n^h]$; for ${\bf x}^c_{\bf i}\in\Omega^c$, we have $i\in[1,n^{2h}]$, $j\in[1,n^{2h}]$, $k\in[1,n^{2h}]$; for ${\bf x}_{\bf i}^c \in \Gamma\cap\Omega^c := \Gamma^c$, we have $i\in[1,n^{2h}]$, $j\in[1,n^{2h}]$, $k = n^{2h}$; for ${\bf x}_{\bf i}^f \in \Gamma\cap\Omega^f := \Gamma^f$, we have $i\in[1,n^h]$, $j\in[1,n^h]$, $k = 1$; for ${\bf x_i}^f\in \Omega^f \setminus \Gamma := \overline{\Gamma^f}$, we have $i\in[1,n^h]$, $j\in[1,n^h]$, $k\in[2,n^h]$. Now, denote the grid functions in $\Omega^f$ and $\Omega^c$ as
+\[{\bf f} = ({\bf f}^1, {\bf f}^2, {\bf f}^3)^T\ \ \ \ \mbox{and}\ \ \ \  {\bf c} = ({\bf c}^1, {\bf c}^2, {\bf c}^3)^T\]
+respectively. Here, 
+\[{\bf f}^l\approx F_l({\bf r}), \ \ {\bf X}^f({\bf r})\in\Omega^f,\ \ l=1,2,3 ,\]
+and
+\[{\bf c}^l \approx C_l({\bf r}),\ \ {\bf X}^c({\bf r})\in\Omega^c \ \ l = 1,2,3.\]
+Furthermore, we define ${\bf f}_{\Gamma}$ as the grid function for ${\bf X}^f({{\bf r}})\in\Gamma^f$, ${\bf c}_{\Gamma}$ to be the grid function for ${\bf X}^c({{\bf r}})\in\Gamma^c$ and ${\bf f}_{\overline{\Gamma}}$ as the grid function for ${\bf X}^f({{\bf r}})\in\overline{\Gamma^f}$. Particularly, we define $\wt{\bf c} = (\wt{\bf c}^1,\wt{\bf c}^2,\wt{\bf c}^3)^T$ as the grid function which contain both grids in $\Omega^c$ and ghost points outside of $\Omega^c$ with $i\in[1,n^{2h}], j\in[1,n^{2h}], k\in[0,n^{2h}+1]$. Then we approximate the elastic wave equation (\ref{elastic_curvi}) on $\Omega^c$ by
+\begin{equation}\label{elastic_semi_c}
+{\varrho}^{2h} {\bf c}_{tt} =( \mathcal{ J}^{2h})^{-1}\left(\sum_{l=1}^2\mathcal{G}_l^{2h}({N}_{ll}){\bf c}+\wt{\mathcal{G}}_3^{2h}({N}_{33}){\wt{\bf c}}+\sum_{l=1}^3\sum_{m=1,m\neq l}^3\mathcal{D}_l^{2h}(\mathcal{N}_{lm}^{2h}\mathcal{D}_m^{2h}{\bf c})\right) := \wt{L}^{2h} {\wt {\bf c}},
 \end{equation}
-here $L{\bf u}$ has the same expression as in (\ref{elastic_eq_curvi}) provided ${\bf F} = 0$. The parameter space $[0,1]^3$ is discretized as $r_{i_1}^{(1)} = (i_1-1)h_1, i_1 = 0,1,2,\cdots,n_1+1$, $r_{i_2}^{(2)} = (i_2-1)h_2, i_2 = 0,1,2,\cdots,n_2+1$, and $r_{i_3}^{(3)} = (i_3-1)h_3, i_3 = 0,1,2,\cdots,n_3+1$ with $h_1 = 1/(n_1-1), h_2 = 1/(n_2-1), h_3 = 1/(n_3-1)$, the ghost points are used to impose the boundary conditions.
+where 
+\begin{align}\label{rho_j}
+\varrho^{2h} = \left(\begin{array}{ccc}
+{\bm \rho}^{2h}& ~  & ~ \\
+~ & {\bm \rho}^{2h} & ~ \\
+~ &~  &{\bm \rho}^{2h}\end{array}\right),\ \ \ \mathcal{J}^{2h} = \left(\begin{array}{ccc}
+{\bf J}^{2h}& ~  & ~ \\
+~ & {\bf J}^{2h} & ~ \\
+~ &~  &{\bf J}^{2h}\end{array}\right)
+\end{align}
+with both ${\bm \rho}^{2h}$ and ${\bf J}^{2h}$ are $n^{2h}n^{2h}n^{2h}\times n^{2h}n^{2h}n^{2h}$ diagonal matrix with diagonal entries are values of density function $\rho^c$ and Jacobian of transformation $J^c$ on the grids in $\Omega^c$ respectively.
+And $\mathcal{G}_l^{2h}({N}_{ll})$, $l=1,2$ are defined as
+\begin{align}\label{g1122}
+\mathcal{G}^{2h}_l({N}_{ll}) = \left(\begin{array}{ccc}
+G_l^{2h}(N_{ll}^{11}) & G_l^{2h}(N_{ll}^{12})  & G_l^{2h}(N_{ll}^{13}) \\
+G_l^{2h}(N_{ll}^{21}) & G_l^{2h}(N_{ll}^{22})  & G_l^{2h}(N_{ll}^{23}) \\
+G_l^{2h}(N_{ll}^{31}) & G_l^{2h}(N_{ll}^{32})  & G_l^{2h}(N_{ll}^{33}) \end{array}\right),
+\end{align}
+with $G_l^{2h}(N_{ll}^{ij})$, $i,j = 1,2,3$, are $n^{2h}n^{2h}n^{2h}\times n^{2h}n^{2h}n^{2h}$ matrix which is from the central difference operator for second derivative with variable coefficient in direction $l$, the superscript $ij$ represents the $i'$th row and $j'$th column of matrix $N_{ll}$. As for $\wt{\mathcal{G}}_3^{2h}({N}_{33})$, it has a structure
+\[ \wt{\mathcal{G}}^{2h}_3({N}_{33}) = \left(\begin{array}{ccc}
+\wt{G}_3^{2h}(N_{33}^{11}) & \wt{G}_3^{2h}(N_{33}^{12})  & \wt{G}_3^{2h}(N_{33}^{13}) \\
+\wt{G}_3^{2h}(N_{33}^{21}) & \wt{G}_3^{2h}(N_{33}^{22})  & \wt{G}_3^{2h}(N_{33}^{23}) \\
+\wt{G}_3^{2h}(N_{33}^{31}) & \wt{G}_3^{2h}(N_{33}^{32})  & \wt{G}_3^{2h}(N_{33}^{33}) \end{array}\right),\]
+where $\wt{G}_3^{2h}(N_{33}^{ij})$, $i,j = 1,2,3$, are $n^{2h}n^{2h}n^{2h}\times n^{2h}n^{2h}(n^{2h}+2)$ matrices which are defined as in (\ref{sbp_2nd_1}) for direction $3$. Finally, let's look at the term $\mathcal{D}_l^{2h}(\mathcal{N}_{lm}^{2h}\mathcal{D}_m^{2h})$, $l = 1,2,3, m = 1,2,3, l\neq m$, we use $\mathcal{D}_1^{2h}(\mathcal{N}_{12}^{2h}\mathcal{D}_2^{2h})$ as an example and other cases are analogous,
+\[\mathcal{D}_1^{2h} = {\bf I}\otimes D_1^{2h} \otimes {\bf I}_2 \otimes {\bf I}_3,\ \ \ \mathcal{D}_2^{2h} ={\bf I}\otimes {\bf I}_1\otimes D_2^{2h}\otimes {\bf I}_3,\]
+where ${\bf I}$ is $3\times3$ identity matrix, ${\bf I}_l$, $l = 1,2,3$ are $n^{2h}\times n^{2h}$ identity matrices, $D_1^{2h}$ is a $n^{2h}\times n^{2h}$ matrix defined in (\ref{first_sbp}) for direction $1$ and $D_2^{2h}$ is a matrix of size $n^{2h}\times n^{2h}$ defined in (\ref{first_sbp}) for direction $2$. $\mathcal{N}_{lm}^{2h}$ is a $3\times3$ block matrix with each block to be a $n^{2h}n^{2h}n^{2h}\times n^{2h}n^{2h}n^{2h}$ matrix
+\begin{align}\label{Nij}
+\mathcal{N}_{lm}^{2h}= \left(\begin{array}{ccc}
+N_{lm}^{11}({\bf r})&N_{lm}^{12}({\bf r}) & N_{lm}^{13}({\bf r})\\
+N_{lm}^{21}({\bf r})& N_{lm}^{22}({\bf r}) &  N_{lm}^{23}({\bf r})\\
+N_{lm}^{31}({\bf r})& N_{lm}^{32}({\bf r}) &  N_{lm}^{33}({\bf r})\\ \end{array}\right),\ \ \ l = 1,2,3, m = 1,2,3, l\neq m.
+\end{align}
+Next, we approximate the elastic wave equation (\ref{elastic_curvi}) on $\overline{\Gamma^f}$ 
+\begin{equation}\label{elastic_semi_f}
+\varrho^h_{\overline{\Gamma}} ({\bf f}_{\overline{\Gamma}})_{tt} =
+( \mathcal{ J}_{\overline{\Gamma}}^{h})^{-1}\left(\sum_{l=1}^3\Big(\mathcal{G}_l^{h}({N}_{ll}){\bf f}\Big|_{\overline{\Gamma}}+\sum_{m=1,m\neq l}^3\mathcal{D}_l^{h}(\mathcal{N}_{lm}^{h}\mathcal{D}_m^{h}{\bf f})\Big|_{\overline{\Gamma}}\Big)\right) := L^h{\bf f}\Big|_{\overline{\Gamma}},
+\end{equation}
+where ${\varrho}^{h}_{\overline{\Gamma}}$ and ${\mathcal{J}}^{h}_{\overline{\Gamma}}$ are $3n^hn^h(n^h-1)\times 3n^hn^h(n^h-1)$ diagonal matrix, which has a similar definition as in (\ref{rho_j}), but corresponds to the grids in $\overline{\Gamma^f}$. Lastly, we approximate the elastic wave equation (\ref{elastic_curvi}) on $\Gamma^f$ by
+\begin{equation}\label{elastic_semi_f_i}
+{\varrho}^h_\Gamma ({\bf f}_\Gamma)_{tt} =
+( {\mathcal{ J}}^{h}_\Gamma)^{-1}\left(\sum_{l=1}^3\Big(\mathcal{G}_l^{h}({N}_{ll}){\bf f}\Big|_\Gamma+\sum_{m=1,m\neq l}^3\mathcal{D}_l^{h}(\mathcal{N}_{lm}^{h}\mathcal{D}_m^{h}{\bf f})\Big|_\Gamma\Big) \right) + {\bm \eta} := L^h{\bf f}\Big|_\Gamma + {\bm \eta},
+\end{equation}
+with 
+\begin{equation}\label{eta}
+{\bm \eta} = {\varrho}^h_{\Gamma}\wt{\mathcal{P}}\left(({ \varrho}^{2h})^{-1}\wt{L}^{2h} \wt{{\bf c}}\Big|_{\Gamma}\right) - L^{h}{\bf f}\Big|_{\Gamma},
+\end{equation}
+here, ${\varrho}^{h}_{\Gamma}$ and ${\mathcal{ J}}^{h}_{\Gamma}$ are $3n^hn^h\times 3n^hn^h$ diagonal matrix with a similar definition as in (\ref{rho_j}) with grids on $\Gamma^f$. $({\varrho}^{2h})^{-1}\wt{L}^{2h} \wt{{\bf c}}\big|_{\Gamma}$ is a colume vector of size $3n^{2h} n^{2h}$ and its value corresponds to the grids on $\Gamma^c$. Moreover, the terms $\mathcal{G}_l^h({N}_{ll}), l = 1,2$ and $\mathcal{D}_l^h(\mathcal{N}_{lm}^h\mathcal{D}_m^h), l=1,2,3,m=1,2,3,l\neq m$ in (\ref{elastic_semi_f})--(\ref{elastic_semi_f_i}) has similar definitions as in (\ref{g1122})--(\ref{Nij}), and $\mathcal{G}_3^h({N}_{33})$ is defined by
+\[ \mathcal{G}^{2h}_3({N}_{33}) = \left(\begin{array}{ccc}
+G_3^{2h}(N_{33}^{11}) & G_3^{2h}(N_{33}^{12})  & G_3^{2h}(N_{33}^{13}) \\
+G_3^{2h}(N_{33}^{21}) & G_3^{2h}(N_{33}^{22})  & G_3^{2h}(N_{33}^{23}) \\
+G_3^{2h}(N_{33}^{31}) & G_3^{2h}(N_{33}^{32})  & G_3^{2h}(N_{33}^{33}) \end{array}\right),\]
+where ${G}_3^{h}(N_{33}^{ij}({\bf r}))$, $i,j = 1,2,3$, are $n^{h}n^{h}n^{h}\times n^{h}n^{h}n^{h}$ matrix which are defined as in (\ref{sbp_2nd_2}) for direction $3$. For the simplicity of analysis, we introduce a general notation for the schemes (\ref{elastic_semi_f}) and (\ref{elastic_semi_f_i}) in the fine domain $\Omega^f$,
+\begin{align}\label{fine_scheme}
+{\varrho}^h{\bf f}_{tt} = \hat{L}^h{\bf f} = \left\{
+\begin{aligned}
+&L^h{\bf f}\big|_\Gamma +{\bm \eta}, \\
+&L^h{\bf f}\big|_{\overline{\Gamma}}.
+\end{aligned}
+\right.
+\end{align}
+The following we are going to look at the interpolation operator ${\bf P}$ and restriction operator ${\bf R}$ in two dimensions. The stencils for the interpolation operator ${\bf P}$ can be easily computed by a Talor series expansion. In our case, we have the ratio of the mesh size for subdomain $\Omega^f$ and $\Omega^c$ is $1:2$, then if  ${\bf P}$ is a fourth order interpolation operator in two dimensions,  the stencils of ${\bf P}$ are illuatrated in  Figure \ref{interpolation}, the stencils for the corresponding restriction operator in two dimensions can be determined by the compatibility between interpolation and restriction operators, ${\bf P} = 4{\bf R}^T$, and its stencil is presented in Figure \ref{restriction}.
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.24\textwidth,trim={1.8cm 0.8cm 1.4cm 1.2cm}, clip]{interpolation1.eps}
+	\includegraphics[width=0.24\textwidth,trim={1.8cm 0.8cm 1.4cm 1.2cm}, clip]{interpolation2.eps}
+	\includegraphics[width=0.24\textwidth,trim={1.8cm 0.8cm 1.4cm 1.2cm}, clip]{interpolation3.eps}
+	\includegraphics[width=0.24\textwidth,trim={1.8cm 0.8cm 1.4cm 1.2cm}, clip]{interpolation4.eps}
+	\caption{The sketch for the stencils of $4$th order interpolation operator $\mathcal{P}$ in two dimensions with parameters $\gamma = -\frac{1}{16}$, $\eta = \frac{9}{16}$, $\mu = 1$, $\alpha = \frac{1}{256}$, $\beta = -\frac{9}{256}$ and $\theta = \frac{81}{256}$. }\label{interpolation}
+\end{figure}
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.6\textwidth]{restriction.eps}
+	\caption{The scketch for the stencil of $4$th order restriction operator $\mathcal{R}$ in two dimensions with parameters $\epsilon = \frac{1}{1024}$, $\nu = -\frac{9}{1024}$, $\phi = -\frac{16}{1024}$, $\delta = \frac{81}{1024}$, $\sigma = \frac{144}{1024}$, $\chi = \frac{256}{1024}$ and $\zeta = 0$.}\label{restriction}
+\end{figure}
 
-The physical coordinates of the grid points follow from the mapping ${\bf x}_{i_1,i_2,i_3} = {\bf x}({\bf r}_{i_1,i_2,i_3})$. Denote a grid function ${\bf u}_{i_1,i_2,i_3} = {\bf u}(r_{i_1}^{(1)},r_{i_2}^{(2)},r_{i_3}^{(3)})$. To condense the notation, we intoduce the muti-index notations
-\[{\bf i} = (i_1,i_2,i_3),\ \ {\bf x}_{\bf i} = {\bf x}({\bf r}_{\bf i}),\ \ {\bf u}_{\bf i} = {\bf u}_{i_1,i_2,i_3}.\]
-Besides, we define a grid function on the top surface as
-\[{\bf u}_{{\bf i}_{\Omega_t}} = {\bf u}_{i_1,i_2,n_3}, \ \ {\bf i}_{\Omega_t} = (i_1,i_2,n_3),\]
-and a grid function on the bottom surface to be
-\[{\bf u}_{{\bf i}_{\Omega_b}} = {\bf u}_{i_1,i_2,1}, \ \ {\bf i}_{\Omega_b} = (i_1,i_2,1).\]
-The terms $\bar{\partial}_3(N_{33}\bar{\partial}_3{\bf u})$ in the spatial operator (\ref{elastic_eq_curvi}) are approximated by a SBP operator $\hat{G}_3\in\{\uline{\wt G}_3, \wt{G}_3, \uline{G}_3, G_3\}$ which is defined in Section \ref{sec_sbp_1d} and is fourth order in the interior and  second order near the boundaries in the direction $3$. The operators $D$ in  (\ref{first_sbp}) are used to approximate  $\bar{\partial}_k, \bar{\partial}_j, k,j = 1,2,3$ in $\bar{\partial}_j(N_{jk}\bar{\partial}_k{\bf u})$ without using any ghost points. Finally, for the terms $\bar{\partial}_k(N_{kk}\bar{\partial}_k{\bf u}), k = 1,2$, we approximate them by the operators $G_k, k = 1,2$ which are fourth order centeral difference operator everywhere for second derivative in direction $k = 1,2$. Then the spatial operator (\ref{elastic_eq_curvi}) is discretized as
-\begin{multline}\label{discrete_elastic}
-\hat{ L}_h{\bf u}_{\bf i} = \frac{1}{J_{\bf i}}\big[G_1(N_{11}){\bf u}_{\bf i}+G_2(N_{22}){\bf u}_{\bf i}+\hat{G}_3(N_{33}){\bf u}_{\bf i}+D_1(N_{12}D_2{\bf u}_{\bf i})\\
-+D_1(N_{13}D_3{\bf u}_{\bf i})+D_2(N_{21}D_1{\bf u}_{\bf i})+D_2(N_{23}D_3{\bf u}_{\bf i})+D_3(N_{31}D_1{\bf u}_{\bf i})
-+D_3(N_{32}D_2{\bf u}_{\bf i})\big],
-\end{multline}
-where, $\hat{L}_h\in\{\uline{\wt L}_h, \wt{L}_h, \uline{L}_h,L_h\}$ is determined by $\hat{G}_3$.
+To proceed the interface conditions, we fisrtly introduce scaled interpolation and restriction operators
+\[\wt{\mathcal{P}} = (\mathcal{J}^h_\Gamma |\nabla^f r^3|)^{-\frac{1}{2}}\mathcal{P}(\mathcal{J}^{2h}_\Gamma |\nabla^c r^3|)^{\frac{1}{2}},\ \ \ \ \wt{\mathcal{R}} =  (\mathcal{J}^{2h}_\Gamma |\nabla^c r^3|)^{-\frac{1}{2}}\mathcal{R}(\mathcal{J}^{h}_\Gamma |\nabla^f r^3|)^{\frac{1}{2}}.\]
+Here, $\mathcal{P}$ is a $3n^{2h}n^{2h}n^{2h}\times 3n^{2h}n^{2h}n^{2h}$ matrix and $\mathcal{R}$ is a $3n^hn^hn^h\times 3n^hn^hn^h$ matrix as 
+\begin{align}\label{iandr}
+\mathcal{P} = \left(\begin{array}{ccc}
+{\bf P}& ~  & ~ \\
+~ & {\bf P} & ~ \\
+~ &~  &{\bf P}\end{array}\right),\ \ \ \mathcal{R} = \left(\begin{array}{ccc}
+{\bf R}& ~  & ~ \\
+~ & {\bf R} & ~ \\
+~ &~  &{\bf R}\end{array}\right),
+\end{align}
+$\bf P$ is a $n^{2h}n^{2h}n^{2h}\times n^{2h}n^{2h}n^{2h}$ matrix which has stencils as in Figure \ref{interpolation} and $\bf R$ is a $n^hn^hn^h\times n^hn^hn^h$ matrix has a stencil as in Figure \ref{restriction}. Now, we are ready to state the continuous interface conditions (\ref{interface_cond}), the grid functions ${\bf f}$ and ${\bf c}$ are coupled through interface conditions,
+\begin{equation}\label{continuous_sol}
+{\bf f}\big|_{\Gamma} = \wt{\mathcal{P}}({\bf c}\big|_{\Gamma}),
+\end{equation}
+which imposes the continuity of the solution at the interface $\Gamma$
+and
+\begin{equation}\label{continuous_traction}
+\left|\nabla^c r^{3}\right|^{-1}({\mathcal J}_{\Gamma}^{2h})^{-1}\wt{\mathcal{A}}_3^{2h}\wt{\bf c}\big|_\Gamma
+= \wt{\mathcal{R}}\left(|\nabla^f r^{3}|^{-1}({\mathcal J}^h_{\Gamma})^{-1}(\mathcal{A}_3^h{\bf f}\big|_\Gamma-h\omega_1{\mathcal J}^h{\bm \eta})\right)
+\end{equation}
+where we have used the notations
+\begin{equation}\label{hatAf}
+\mathcal{A}_3^h{\bf f}\big|_\Gamma = \mathcal{N}_{31}^{h}\mathcal{D}^h_1{\bf f}\big|_\Gamma + \mathcal{N}_{32}^h\mathcal{D}^h_2{\bf f}\big|_\Gamma + \mathcal{N}_{33}^h\mathcal{D}_3^h{\bf f}\big|_\Gamma,
+\end{equation}
+and
+\begin{equation}\label{hatAc}
+\wt{\mathcal{A}}_3^{2h}\wt{\bf c}\big|_\Gamma = \mathcal{N}_{31}^{2h}\mathcal{D}^{2h}_1{\bf c}\big|_\Gamma + \mathcal{N}_{32}^{2h}\mathcal{D}^{2h}_2{\bf c}\big|_\Gamma + \mathcal{N}_{33}^{2h}\wt{\mathcal D}^{2h}_3\wt{\bf c}\big|_\Gamma,
+\end{equation}
+ which imposes the continuity of traction at the interface $\Gamma$, here, $\omega_1$ is the first entry in the scalar product (\ref{inner_product}), and $\wt{\mathcal{D}}_3^{2h}$ is defined as
+ \[\wt{\mathcal{D}}_3^{2h} = {\bf I}\otimes {\bf I}_1 \otimes {\bf I}_2 \otimes \wt{D}_3^{2h}\]
+ where ${\bf I}$ is $3\times3$ identity matrix, ${\bf I}_l$, $l = 1,2$ are $n^{2h}\times n^{2h}$ identity matrices, $\wt{D}_3^{2h}$ is a $n^{2h}\times (n^{2h}+2)$ matrix defined in (\ref{first_sbp}) for direction $3$.
+
