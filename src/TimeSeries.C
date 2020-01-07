@@ -118,6 +118,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   mIsRestart(false),
   m_compute_scalefactor(true),
   m_misfit_scaling(1),
+  m_readTime(0.0),
 #ifdef USE_HDF5
   m_sta_z(depth),
   m_fid_ptr(NULL),

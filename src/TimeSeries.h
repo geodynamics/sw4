@@ -154,6 +154,8 @@ void  write_hdf5_format( int npts, hid_t loc, float *y, float btime, float dt, c
 		       float cmpinc, float cmpaz, bool makeCopy=false, bool isLast=false);
 double getWriteTime() {return m_writeTime;};
 #endif
+double getReadTime() {return m_readTime;};
+double addReadTime(double t) {m_readTime += t;};
 
 private:   
 TimeSeries();
@@ -269,6 +271,7 @@ float_sw4 m_scalefactor;
    TimeSeries *m_ts0Ptr;
    double m_writeTime;
 #endif
+   double m_readTime;
 };
 
 

@@ -579,6 +579,10 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 // wait until all processes have read the input file
   MPI_Barrier(MPI_COMM_WORLD);
 
+  if (proc_zero())
+    if (a_GlobalTimeSeries.size() > 0 && a_GlobalTimeSeries[0].size() > 0) 
+      cout << "Read station input, took " << a_GlobalTimeSeries[0][0]->getReadTime() << "seconds." << endl;
+
   print_execution_time( time_start, MPI_Wtime(), "reading input file" );
 
   // ---------------------------------------------
@@ -6723,6 +6727,8 @@ void EW::processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_Glob
   int downSample    = 1;
   int event         = 0;
   TimeSeries::receiverMode mode=TimeSeries::Displacement;
+  double stime, etime;
+  stime = MPI_Wtime();
 
   char* token = strtok(buffer, " \t");
 
@@ -6812,7 +6818,9 @@ void EW::processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_Glob
   if (proc_zero())
     cout << "Using HDF5 station input but sw4 is not compiled with HDF5!"<< endl;
 #endif
-
+  etime = MPI_Wtime();
+  if (a_GlobalTimeSeries.size() > 0 && a_GlobalTimeSeries[0].size() > 0) 
+    a_GlobalTimeSeries[0][0]->addReadTime(etime-stime);
 }
 
 //-----------------------------------------------------------------------
@@ -6825,6 +6833,8 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
   string hdf5FileName = "station.hdf5";
   string staName = "station";
   bool staNameGiven=false;
+  double stime, etime;
+  stime = MPI_Wtime();
   
   int writeEvery = 1000;
   int downSample = 1;
@@ -7129,6 +7139,11 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
 // include the receiver in the global list
     a_GlobalTimeSeries[event].push_back(ts_ptr);
   }
+
+  etime = MPI_Wtime();
+  if (a_GlobalTimeSeries.size() > 0 && a_GlobalTimeSeries[0].size() > 0) 
+    a_GlobalTimeSeries[0][0]->addReadTime(etime-stime);
+  
 }
 
 //-----------------------------------------------------------------------
