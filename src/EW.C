@@ -6604,7 +6604,6 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
   start_time = MPI_Wtime();
 #ifdef USE_HDF5
   int verbose = mVerbose;
-  mVerbose = 2;
   std::string rname ="EW::extractTopographyFromSfile";
   Sarray gridElev;
   herr_t ierr;

@@ -34,5 +34,6 @@
 
 void readStationHDF5(EW* ew, string inFileName, string outFileName, int writeEvery, int downSample, TimeSeries::receiverMode mode, int event, vector<vector<TimeSeries*> > *GlobalTimeSeries, float_sw4 m_global_xmax, float_sw4 m_global_ymax, bool is_obs, bool winlset, bool winrset, float_sw4 winl, float_sw4 winr, bool usex, bool usey, bool usez, float_sw4 t0, bool scalefactor_set,  float_sw4 scalefactor);
 
+void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSource, EW *ew, int event, float_sw4 m_global_xmax, float_sw4 m_global_ymax, float_sw4 m_global_zmax, float_sw4 mGeoAz, float_sw4 xmin, float_sw4 ymin, float_sw4 zmin, int mVerboses);
 
 #endif // _READHDF5_H

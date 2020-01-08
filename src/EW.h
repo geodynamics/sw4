@@ -146,6 +146,7 @@ void processTestEnergy(char* buffer);
 bool checkTestEnergyPeriodic(char* buffer);
 void processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSources);
 void processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSources);
+void processRuptureHDF5(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSources);
 void processMaterial( char* buffer );
 void processMaterialIfile( char* buffer );
 void processMaterialBlock( char* buffer, int & blockCount );

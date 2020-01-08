@@ -497,6 +497,8 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
          processTestEnergy(buffer);
        else if (startswith("source", buffer))
 	 processSource(buffer, a_GlobalUniqueSources);
+       else if (startswith("rupturehdf5", buffer))
+	 processRuptureHDF5(buffer, a_GlobalUniqueSources);
        else if (startswith("rupture", buffer))
 	 processRupture(buffer, a_GlobalUniqueSources);
        else if (startswith("block", buffer))
@@ -576,6 +578,10 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 
 // wait until all processes have read the input file
   MPI_Barrier(MPI_COMM_WORLD);
+
+  if (proc_zero())
+    if (a_GlobalTimeSeries.size() > 0 && a_GlobalTimeSeries[0].size() > 0) 
+      cout << "Read station input, took " << a_GlobalTimeSeries[0][0]->getReadTime() << "seconds." << endl;
 
   print_execution_time( time_start, MPI_Wtime(), "reading input file" );
 
@@ -5614,6 +5620,84 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
     cout << "********Done parsing source command*********" << endl;
 }
 
+
+//----------------------------------------------------------------------------
+void EW::processRuptureHDF5(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSources )
+{
+#ifdef USE_HDF5
+  int event = 0;
+  bool rfileset=false;
+  char rfile[100];
+  double stime, etime;
+  stime = MPI_Wtime();
+
+// bounding box
+// only check the z>zmin when we have topography. For a flat free surface, we will remove sources too 
+// close or above the surface in the call to mGlobalUniqueSources[i]->correct_Z_level()
+  float_sw4 xmin = 0.;
+  float_sw4 ymin = 0.;
+  float_sw4 zmin;
+  if (topographyExists()) // topography command must be read before the source command
+    zmin = m_global_zmin;
+  else
+    zmin = -m_global_zmax;
+
+  string err = "Rupture Error: ";
+
+  char* token = strtok(buffer, " \t");
+  REQUIRE2(strcmp("rupturehdf5", token) == 0, "ERROR: not a rupturehdf5 line...: " << token);
+  token = strtok(NULL, " \t");
+
+  while (token != NULL)
+    {
+      // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+          // Ignore commented lines and lines with just a space.
+          break;
+      if (startswith("file=",token))
+      {
+	token += 5; // read past 'file='
+         strncpy(rfile, token,100);
+	 rfileset = true;
+      }
+      else if(startswith("event=",token))
+      {
+	 token += 6;
+	 //	 event = atoi(token);
+	 //	 CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
+	// Ignore if no events given
+	 if( m_nevents_specified > 0 )
+	 {
+	    map<string,int>::iterator it = m_event_names.find(token);
+	    CHECK_INPUT( it != m_event_names.end(), 
+		     err << "event with name "<< token << " not found" );
+	    event = it->second;
+	 }
+      }
+      else
+      {
+         badOption("rupturehdf5", token);
+      }
+      token = strtok(NULL, " \t");
+    }
+
+
+  if( rfileset)
+    readRuptureHDF5(rfile, a_GlobalUniqueSources, this, event, m_global_xmax, m_global_ymax, m_global_zmax, mGeoAz, xmin, ymin, zmin, mVerbose);
+
+
+  etime = MPI_Wtime();
+  
+  if (proc_zero())
+      cout << "Read HDF5 rupture data, took " << etime-stime << "seconds." << endl;
+#else
+  if (proc_zero())
+    cout << "Using HDF5 rupture input but sw4 is not compiled with HDF5!"<< endl;
+#endif
+
+} // end processRupture()
+
+
 //----------------------------------------------------------------------------
 void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSources )
 {
@@ -5621,6 +5705,8 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 // point moment tensor sources in the strike, dip, rake format
 // for each source, the slip velocity time function is defined by a discrete time function
   Source* sourcePtr;
+  double stime, etime;
+  stime = MPI_Wtime();
   
   float_sw4 m0 = 1.0;
   float_sw4 t0=0.0, f0=1.0, freq=1.0;
@@ -5630,7 +5716,6 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
   float_sw4 mxx=0.0, mxy=0.0, mxz=0.0, myy=0.0, myz=0.0, mzz=0.0;
   float_sw4 strike=0.0, dip=0.0, rake=0.0;
   float_sw4 fx=0.0, fy=0.0, fz=0.0;
-  int isMomentType = -1;
   int event = 0;
   
   double lat = 0.0, lon = 0.0;
@@ -6010,6 +6095,10 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
     
     fclose(fd);
   }
+
+  etime = MPI_Wtime();
+  if (proc_zero())
+      cout << "Read SRF rupture data, took " << etime-stime << "seconds." << endl;
 } // end processRupture()
 
 
@@ -6638,6 +6727,8 @@ void EW::processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_Glob
   int downSample    = 1;
   int event         = 0;
   TimeSeries::receiverMode mode=TimeSeries::Displacement;
+  double stime, etime;
+  stime = MPI_Wtime();
 
   char* token = strtok(buffer, " \t");
 
@@ -6727,7 +6818,9 @@ void EW::processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_Glob
   if (proc_zero())
     cout << "Using HDF5 station input but sw4 is not compiled with HDF5!"<< endl;
 #endif
-
+  etime = MPI_Wtime();
+  if (a_GlobalTimeSeries.size() > 0 && a_GlobalTimeSeries[0].size() > 0) 
+    a_GlobalTimeSeries[0][0]->addReadTime(etime-stime);
 }
 
 //-----------------------------------------------------------------------
@@ -6740,6 +6833,8 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
   string hdf5FileName = "station.hdf5";
   string staName = "station";
   bool staNameGiven=false;
+  double stime, etime;
+  stime = MPI_Wtime();
   
   int writeEvery = 1000;
   int downSample = 1;
@@ -7044,6 +7139,11 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
 // include the receiver in the global list
     a_GlobalTimeSeries[event].push_back(ts_ptr);
   }
+
+  etime = MPI_Wtime();
+  if (a_GlobalTimeSeries.size() > 0 && a_GlobalTimeSeries[0].size() > 0) 
+    a_GlobalTimeSeries[0][0]->addReadTime(etime-stime);
+  
 }
 
 //-----------------------------------------------------------------------

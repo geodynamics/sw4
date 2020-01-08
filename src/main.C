@@ -207,13 +207,19 @@ main(int argc, char **argv)
 
 // save all time series
       
+      double myWriteTime = 0.0, allWriteTime;
       for (int ts=0; ts<GlobalTimeSeries[0].size(); ts++)
       {
 	GlobalTimeSeries[0][ts]->writeFile();
 #ifdef USE_HDF5
-        MPI_Barrier(MPI_COMM_WORLD);
-        if( ts == GlobalTimeSeries[0].size()-1)
+        myWriteTime += GlobalTimeSeries[0][ts]->getWriteTime();
+        if( ts == GlobalTimeSeries[0].size()-1) {
 	  GlobalTimeSeries[0][ts]->closeHDF5File();
+
+          MPI_Reduce(&myWriteTime, &allWriteTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+          if( myRank == 0 )
+            cout << "Max time-series data write time across all ranks: " << allWriteTime << endl;
+        }
 #endif
       }
 
