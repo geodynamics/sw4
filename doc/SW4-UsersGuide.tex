@@ -5059,6 +5059,11 @@ GROUP "/" {
 Based on the SRF (Standard Rupture Format), we have created the SRF-HDF5 format, which stores
 the same amount of information in a more compact HDF5 file that is smaller in size and can be read faster.
 
+To convert an existing SRF file into HDF5 format, we have provided a python script under 
+{\tt tools/srf2hdf5.py} in the sw4 repository. 
+The script requires two command line parameters to specify the input SRF file and the output SRF-HDF5 file, 
+e.g. {\tt python srf2hdf5.py rupture.srf rupture.h5}.
+
 The output of {\tt h5dump -A} header and metadata is below, the ``PLANE'' and ``VERSION'' attributes 
 store the header block of the SRF file, with the number of plane segments implicitly implied in the 
 dataspace of the ``PLANE'' attribute.
