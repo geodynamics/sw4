@@ -1,6 +1,5 @@
 %!TEX root = elastic_3d_sbp.tex
 \section{The temporal discretization}
-%We present the predictor-corrector discretization in time, and explain how the ghost points are updated. In addtion, we describle the iterative methods. Perhaps we shall also talk about CFL and the time steps. Maybe no fully-discrete energy analysis? That would be very messy. 
 The equations are advanced in time with an explicit fourth order accurate predictor-corrector time integration method. Like all explicit time stepping methods, there is a maximum time step not exceed CFL stabilitity limit.
 
 In \cite{petersson2015wave}, it is proved that the time step constraint by CFL condition for the Newmark scheme 
@@ -12,10 +11,10 @@ which is second order with
 \begin{equation*}
 \frac{\Delta_t^2}{h^2}\kappa_{\text{max}}\leq C_{\text{cfl}}^2
 \end{equation*}
-for the elastic wave equaiton with a homogeneous material and periodic boundary conditions. Here, 
+for the elastic wave equaiton with a homogeneous material and periodic boundary conditions, provided $h_1 = h_2 = h_3 = h$. Here, 
 $\kappa_{\text{max}}$ is the maximum of the eigenvalue of the matrices 
-\[T^{\{f,c\}} = \frac{1}{\rho^{\{f,c\}}}\left(\begin{array}{ccc}
-Tr(N_{11}^{\{f,c\}}) &  Tr(N_{12}^{\{f,c\}})& Tr(N_{13}^{\{f,c\}})\\
-Tr(N_{21}^{\{f,c\}}) & Tr(N_{22}^{\{f,c\}}) & Tr(N_{23}^{\{f,c\}})\\
-Tr(N_{31}^{\{f,c\}}) & Tr(N_{32}^{\{f,c\}}) & Tr(N_{33}^{\{f,c\}})\end{array}\right), \]
-where $Tr(N_{ij}^{f,c})$ represents the trace of the matrix $N_{ij}^{f,c},i,j = 1,2,3$. In this paper, we use the predictor-corrector strategy to obtain a fourth order time integrator. In \cite{sjogreen2012fourth}, it shows that the fourth order scheme has a somewhat larger stability limit for the time step, but the way used to approximate eigenvalue is same. We use $C_{\text{cfl}} = 1.3175$ in the numrical experiments in this paper.
+\[T_{\bf i}^{\{f,c\}} = \frac{1}{\rho^{\{f,c\}}({\bf r}_{\bf i})}\left(\begin{array}{ccc}
+Tr(N_{11}^{\{f,c\}}({\bf r}_{\bf i})) &  Tr(N_{12}^{\{f,c\}}({\bf r}_{\bf i}))& Tr(N_{13}^{\{f,c\}}({\bf r}_{\bf i}))\\
+Tr(N_{21}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{22}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{23}^{\{f,c\}}({\bf r}_{\bf i}))\\
+Tr(N_{31}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{32}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{33}^{\{f,c\}}({\bf r}_{\bf i}))\end{array}\right), \]
+where $Tr(N_{ij}^{f,c}({\bf r}_{\bf i}))$ represents the trace of $3\times3$ matrix $N_{ij}^{f,c}({\bf r}_{\bf i}),i,j = 1,2,3$. In this paper, we use the predictor-corrector strategy to obtain a fourth order time integrator. In \cite{sjogreen2012fourth}, it shows that the fourth order scheme has a somewhat larger stability limit for the time step, but the way used to approximate eigenvalue is same. We use $C_{\text{cfl}} = 1.3175$ in the numrical experiments in this paper.

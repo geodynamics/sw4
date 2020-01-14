@@ -2,13 +2,13 @@
 \subsubsection{Verification of convergence rate}\label{convergence_study}
 We now perform a convergence study for the proposed scheme (\ref{elastic_semi_c}), (\ref{fine_scheme}) and (\ref{continuous_sol})--(\ref{continuous_traction}). The convergence rate is computed by
 \[log\left(\frac{e_h}{e_{2h}}\right)\Bigg/log\left(\frac{1}{2}\right),\]
-here, $e_h$ is the corresponding $L^2$ error.  The problem is evolved until final time $T = 0.5$. The $L^2$ error for the numerical solutions in the whole domain, $L^{f,2}$ error for the numerical solutions in the fine domain $\Omega^f$ and$L^{c,2}$ error for the numerical solutions in the coarse domain $\Omega^c$ are presented in Table \ref{convergence_rate}. We observe that the convergence rate is fourth order for all cases, thought the theoretical convergence rate is second for the points near boundaries. Note that we use a block Jacobian iterative method for the experiments here.
+here, $e_h$ is the corresponding $L^2$ error.  The problem is evolved until final time $T = 0.5$. The $L^2$ error for the numerical solutions in the whole domain, $L^{f,2}$ error for the numerical solutions in the fine domain $\Omega^f$ and$L^{c,2}$ error for the numerical solutions in the coarse domain $\Omega^c$ are presented in Table \ref{convergence_rate}. We observe that the convergence rate is fourth order for all cases, though the theoretical convergence rate is second for the points near boundaries. Note that we use a block Jacobian iterative method for the experiments here.
 
 \begin{table}[htb]
 	\begin{center}
 		\begin{tabular}{|c|c c c|}
 			\hline
-			$h^c = 2h^f$   & $L^2$ & $L^{f,2}$ & $L^{c,2}$  \\
+			$2h_1 = 2h_2 = 2h_3 = 2h$   & $L^2$ & $L^{f,2}$ & $L^{c,2}$  \\
 			\hline
 			$2\pi/24$ &2.2227e-03 ~~~~~~~~ & 8.0442e-04 ~~~~~~~~ & 2.0720e-03 ~~~~~~~~\\
 			\hline

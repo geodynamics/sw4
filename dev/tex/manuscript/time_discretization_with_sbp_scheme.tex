@@ -2,10 +2,10 @@
 \subsection{Time discretization with SBP scheme}
 In the following, we give the detailed procedures about how we apply the fourth order time integrator to the problems (\ref{elastic_semi_c}) and  (\ref{fine_scheme}). 
 
-Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf C}({\bf x},t_n), {\bf x}\in\Omega^c$ and ${\bf F}({\bf x},t_n), {\bf x}\in\Omega^f$ respectively. Here, $t_n = n\Delta t, n = 0,1,\cdots$ and $\Delta_t > 0$ is a constant time step. We present the fourth order time integrator with predictor and corrector in the Algorithm \ref{first_alg}.
+Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf C}({\bf x},t_n), {\bf x}\in\Omega^c$ and ${\bf F}({\bf x},t_n), {\bf x}\in\Omega^f$ respectively. Here, $t_n = n\Delta_t, n = 0,1,\cdots$ and $\Delta_t > 0$ is a constant time step. We present the fourth order time integrator with predictor and corrector in the Algorithm \ref{first_alg}.
 
 \begin{breakablealgorithm}
-	\caption{Fourth order accurate time steping for the elastic wave equation with SBP discretization in space}\label{first_alg}
+	\caption{Fourth order accurate time stepping for the elastic wave equation with SBP discretization in space}\label{first_alg}
 	Given initial conditions $\wt{{\bf c}}^{0}, \wt{{\bf c}}^{-1}$ and ${\bf f}^{0}, {\bf f}^{-1}$ that satisfies the discretized interface conditions.
 	
 	\begin{itemize}
@@ -22,8 +22,8 @@ Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf
 		}
 		\item{For the continuity of traction on the interface $\Gamma$, assign the ghost points value in $\wt{\bf c}^{*,n+1}$ to satisfy
 			\begin{equation}\label{traction_gamma_pre}
-			\left|\nabla^c r^{3}\right|^{-1}({\mathcal J}_{\Gamma}^{2h})^{-1}\wt{\mathcal{A}}_3^{2h}\wt{\bf c}^{*,n+1}\big|_\Gamma
-			= \wt{\mathcal{R}}\left(|\nabla^f r^{3}|^{-1}({\mathcal J}^h_{\Gamma})^{-1}(\mathcal{A}_3^h{\bf f}^{*,n+1}\big|_\Gamma-h\omega_1{\bm \eta}^{\ast,n+1})\right)
+			\left|\nabla_x^c r^{3}\right|^{-1}({\mathcal J}_{\Gamma}^{2h})^{-1}\wt{\mathcal{A}}_3^{2h}\wt{\bf c}^{*,n+1}\big|_\Gamma
+			= \wt{\mathcal{R}}\left(|\nabla_x^f r^{3}|^{-1}({\mathcal J}^h_{\Gamma})^{-1}(\mathcal{A}_3^h{\bf f}^{*,n+1}\big|_\Gamma-h_3\omega_1{\bm \eta}^{\ast,n+1})\right)
 			\end{equation}
 			with the definition of $\wt{\mathcal{A}}_3^{2h}$ in (\ref{hatAc}), $\mathcal{A}_3^h$ in (\ref{hatAf}) 
 		}
@@ -36,7 +36,7 @@ Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf
 		\item{Compute the corrector at the interior grid points
 			\begin{equation*}
 			{\bf c}^{n+1} = {\bf c}^{*,n+1} + \frac{\Delta_t^4}{12}(\varrho^{2h})^{-1}\wt{L}^{2h}\wt{\bf{c}}^{n},\ \ \ 
-			{\bf f}^{n+1} = {\bf f}^{*,n+1} + \frac{\Delta_t^4}{12}(\varrho^{h})^{-1}L^{h}{\bf{f}}^{n}
+			{\bf f}^{n+1} = {\bf f}^{*,n+1} + \frac{\Delta_t^4}{12}(\varrho^{h})^{-1}\hat{L}^{h}{\bf{f}}^{n}
 			\end{equation*}
 		}
 		\item{For the continuity of solution on the interface $\Gamma$, assign the value ${\bf f}^{n+1}_\Gamma$ to satisfy
@@ -46,16 +46,16 @@ Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf
 		}
 		\item{For the continuity of traction on the interface $\Gamma$, assign the ghost point value in $\wt{\bf c}^{n+1}$ to satisfy
 			\begin{equation}\label{traction_gamma_corr}
-			\left|\nabla^c r^{3}\right|^{-1}({\mathcal J}_{\Gamma}^{2h})^{-1}\wt{\mathcal{A}}_3^{2h}\wt{\bf c}^{n+1}\big|_\Gamma
-			= \wt{\mathcal{R}}\left(|\nabla^f r^{3}|^{-1}({\mathcal J}^h_{\Gamma})^{-1}(\mathcal{A}_3^h{\bf f}^{n+1}\big|_\Gamma-h\omega_1{\bm \eta}^{n+1})\right)
+			\left|\nabla_x^c r^{3}\right|^{-1}({\mathcal J}_{\Gamma}^{2h})^{-1}\wt{\mathcal{A}}_3^{2h}\wt{\bf c}^{n+1}\big|_\Gamma
+			= \wt{\mathcal{R}}\left(|\nabla_x^f r^{3}|^{-1}({\mathcal J}^h_{\Gamma})^{-1}(\mathcal{A}_3^h{\bf f}^{n+1}\big|_\Gamma-h_3\omega_1{\bm \eta}^{n+1})\right)
 			\end{equation}
 			with the definition of $\wt{\mathcal{A}}_3^{2h}$ in (\ref{hatAc}), $\mathcal{A}_3^h$ in (\ref{hatAf})
 		}
 	\end{itemize}
 \end{breakablealgorithm}
-Here, we only give the steps to evolve the elatic wave equation with suitable initial and interface conditions and skip the detailed derivations of the fourth order predictor corrector time integator. One can refer to \cite{wang2018fourth} to get more details.
+Here, we only give the steps to evolve the elatic wave equation with suitable initial and interface conditions and skip the detailed derivations of the fourth order predictor corrector time integator. One can refer \cite{wang2018fourth} to get more details.
 
 In the Algorithm \ref{first_alg}, we need to solve the equations come from the continuity of the traction force for the interface $\Gamma$ in both preditor step (\ref{traction_gamma_pre}) and corrector step (
 \ref{traction_gamma_corr}). The structure of (\ref{traction_gamma_pre}) and (\ref{traction_gamma_corr}) are same, for simplicity, we only clarify how we solve (\ref{traction_gamma_pre}) in the predictor step.
 
-Note that there are $3n^{2h}n^{2h}$ unknowns in (\ref{traction_gamma_pre}) and $3n^{2h}n^{2h}$ linear equations in (\ref{traction_gamma_pre}). Since it is very expensive to calculate the LU-factorization for a large problem in $3$D and there is no efficient ways to calculate the LU-factorization in a parallel machine, we instead using iterative methods to solve the linear system (\ref{traction_gamma_pre}). Specificly, we use three different iterative methods: block Jacobian iterative method, conjugate gradient iterative method, pre-conditioned conjugate gradient iterative method, to solve (\ref{traction_gamma_pre}). The details are given in Section \ref{iterative_section}.
+Note that there are $3n_1^{2h}n_2^{2h}$ unknowns in (\ref{traction_gamma_pre}) and $3n_1^{2h}n_2^{2h}$ linear equations in (\ref{traction_gamma_pre}). Since it is very expensive to calculate the LU-factorization for a large problem in $3$D and there is no efficient ways to calculate the LU-factorization in a parallel machine, we instead using iterative methods to solve the linear system (\ref{traction_gamma_pre}). Specificly, we use three different iterative methods: block Jacobian iterative method, conjugate gradient iterative method and pre-conditioned conjugate gradient iterative method to solve (\ref{traction_gamma_pre}). The details are given in Section \ref{iterative_section}.

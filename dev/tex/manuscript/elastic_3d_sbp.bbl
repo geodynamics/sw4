@@ -6,6 +6,18 @@ Kenneth Duru and Kristoffer Virta.
   wave equation in discontinuous media.
 \newblock {\em Journal of Computational Physics}, 279:37--62, 2014.
 
+\bibitem{Hagstrom2012}
+T.~Hagstrom and G.~Hagstrom.
+\newblock Grid stabilization of high--order one--sided differencing {II}:
+  second--order wave equations.
+\newblock {\em J. Comput. Phys.}, 231:7907--7931, 2012.
+
+\bibitem{Kreiss1972}
+H.~O. Kreiss and J.~Oliger.
+\newblock {C}omparison of accurate methods for the integration of hyperbolic
+  equations.
+\newblock {\em Tellus}, 24:199--215, 1972.
+
 \bibitem{mattsson2004summation}
 Ken Mattsson and Jan Nordstr{\"o}m.
 \newblock Summation by parts operators for finite difference approximations of

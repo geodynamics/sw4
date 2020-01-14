@@ -11,8 +11,10 @@ with a scalar product
 \begin{equation}\label{inner_product}
 ({\bf u},{\bf v})_h = h\sum_{i = 1}^{n}\omega_iu_iv_i.
 \end{equation}
-Here, $0<\omega_i < \infty $ are the weights of scalar product. The SBP operator $D$ has a centered difference stencil at the grid points away from the boudnary and the corresponding weights $\omega_i = 1$. To satisfy the SBP identity (\ref{first_sbp}), the coefficients in $D$ are  modified at a few points near the boundary and the corresponding weights $\omega_i \neq 1$. The operator $D$ does not use any ghost points. 
-
+Here, $0<\omega_i < \infty $ are the weights of scalar product. The SBP operator $D$ has a centered difference stencil at the grid points away from the boudnary and the corresponding weights $\omega_i = 1$. To satisfy the SBP identity (\ref{first_sbp}), the coefficients in $D$ are  modified at a few points near the boundary and the corresponding weights $\omega_i \neq 1$. The operator $D$ does not use any ghost points.  {\color{red}Similarly, we can define another operator $\wt{D} \approx\frac{\partial }{\partial x}$ which uses one ghost point outside each boundary as
+\begin{equation}\label{first_sbp_gh}
+({\bf u}, \wt{D}{\bf v})_h = -(D{\bf u},{\bf v})_h - u_1v_1 + u_nv_n.
+\end{equation} }
 To discretize the elastic wave equation, we also need to approximate the second derivative with variable coefficient $(\gamma(x)u_x)_x$. Here, the known function $\gamma(x)>0$ describes the property of the material. There are two different fourth order accurate SBP operators for the approximation of $(\gamma(x)u_x)_x$. The first one $\wt{G}(\gamma){\bf u} \approx (\gamma(x)u_x)_x $, derived by Sj\"ogreen and Petersson \cite{sjogreen2012fourth}, uses one ghost point outside each boundary, and satisfies the second derivative SBP identity,
 \begin{equation}\label{sbp_2nd_1}
 ({\bf u}, \wt{G}(\gamma){\bf v})_h = -P_\gamma({\bf u},{\bf v})-u_1\gamma_1\wt{\bf b}_1{\bf v} + u_n\gamma_n\wt{\bf b}_n {\bf v}.
