@@ -10,7 +10,7 @@ We take the computation domain to be
 \end{aligned}
 \right.
 \end{equation}
-for coarse domain $\Omega^c$. Here, $0\leq r^1, r^2, r^3\leq 1$, $f_i$ is the interface surface geometry,
+for coarse domain $\Omega^c$. Here, $0\leq r^1, r^2, r^3\leq 1$, $\theta_i$ is the interface surface geometry,
 \begin{equation}\label{iterface_geometry}
 \theta_i\big(r^1,r^2\big) = \pi+0.2\sin(4\pi r^1)+0.2\cos(4\pi r^2),
 \end{equation}
@@ -31,10 +31,9 @@ As for the fine domian $\Omega^f$, it is chosen to be
 \end{equation}
 where $0\leq r^1, r^2, r^3\leq 1$, $\theta_t$ is the top surface geometry,
 \begin{equation}\label{top_geometry}
-\theta_t\big(r^1,r^2\big) = 0.2\exp\left(-\frac{(r^1-0.5)^2}{0.04}\right)+0.2\exp\left(-\frac{(r^2-0.5)^2}{0.04}\right),
+\theta_t\big(r^1,r^2\big) = 2\pi+0.2\exp\left(-\frac{(r^1-0.5)^2}{0.04}\right)+0.2\exp\left(-\frac{(r^2-0.5)^2}{0.04}\right),
 \end{equation}
-and $\theta_i$ is the interface geometry which is given in (\ref{iterface_geometry}). Note that the subdomian 
-$\Omega^f$ is on the top of the subdomain $\Omega^c$. For both fine and coarse domians, let the density vary according to
+and $\theta_i$ is the interface geometry which is given in (\ref{iterface_geometry}). For both fine and coarse domians, let the density vary according to
 \begin{equation}\label{density_function}
 \rho(x^1,x^2,x^3) = 2 + \sin(x^1+0.3)\sin(x^2+0.3)\sin(x^3-0.2),
 \end{equation}
