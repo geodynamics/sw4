@@ -1,6 +1,6 @@
-%!TEX root = elastic_3d_sbp.tex
+%!TEX root = SISC_elastic_3d.tex
 \subsection{Energy conservation test}\label{conserved_energy}
-To verify the energy conservation property of our scheme, we perform a computation without external source term, but with a Gaussian initial profile which centered at the origin of the computational domain.  Specifically, the computational domain, density function $\rho$ and material functions $\mu, \lambda$ are taken to be the same as in the Section \ref{manufactured_sol}; the initial Gaussian profiles are
+To verify the energy conservation property of our scheme, we perform a computation without external source term, but with a Gaussian initial profile which centered at the origin of the computational domain.  Specifically, the computational domain, density function $\rho$ and material functions $\mu, \lambda$ are taken to be the same as in the Section \ref{convergence_study}; the initial Gaussian profiles are
 \begin{align*}
 	u_1(\cdot,0) &= \mbox{exp}\left(-\frac{(x^1-\pi)^2}{0.1}\right)\mbox{exp}\left(-\frac{(x^2-\pi)^2}{0.1}\right)\mbox{exp}\left(-\frac{(x^3-\pi)^2}{0.1}\right),\\
 	u_2(\cdot,0) &= \mbox{exp}\left(-\frac{(x^1-\pi)^2}{0.2}\right)\mbox{exp}\left(-\frac{(x^2-\pi)^2}{0.2}\right)\mbox{exp}\left(-\frac{(x^3-\pi)^2}{0.2}\right),\\

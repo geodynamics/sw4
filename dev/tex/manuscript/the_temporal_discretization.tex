@@ -1,20 +1,13 @@
-%!TEX root = elastic_3d_sbp.tex
+%!TEX root = SISC_elastic_3d.tex
 \section{The temporal discretization}
-The equations are advanced in time with an explicit fourth order accurate predictor-corrector time integration method. Like all explicit time stepping methods, there is a maximum time step not exceed CFL stabilitity limit.
-
-In \cite{petersson2015wave}, it is proved that the time step constraint by CFL condition for the Newmark scheme 
+The equations are advanced in time with an explicit fourth order accurate predictor-corrector time integration method. Like all explicit time stepping methods, there is a maximum time step not exceed CFL stabilitity limit. By a similar analysis as in \cite{sjogreen2012fourth}, we require 
 \begin{equation*}
-\varrho^h\frac{{\bf f}^{n+1}-2{\bf f}^n + {\bf f}^{n-1}}{\Delta_t^2} = \hat{\mathcal{L}}^h {\bf f}^n, \ \ \ 
-\varrho^{2h}\frac{{\bf c}^{n+1}-2{\bf c}^n + {\bf c}^{n-1}}{\Delta_t^2} = \wt{\mathcal{L}}^{2h} \wt{\bf c}^n, \ \ \ n = 0,1,\cdots,
+\Delta_t\leq 0.9C_{\text{cfl}}\min\{h_1,h_2,h_3\},
 \end{equation*}
-which is second order with
-\begin{equation*}
-\frac{\Delta_t^2}{h^2}\kappa_{\text{max}}\leq C_{\text{cfl}}^2
-\end{equation*}
-for the elastic wave equaiton with a homogeneous material and periodic boundary conditions, provided $h_1 = h_2 = h_3 = h$. Here, 
+where $C_{\text{cfl}}^2 = \frac{3}{1.4\kappa_{\text{max}}}$ and
 $\kappa_{\text{max}}$ is the maximum of the eigenvalue of the matrices 
 \[T_{\bf i}^{\{f,c\}} = \frac{1}{\rho^{\{f,c\}}({\bf r}_{\bf i})}\left(\begin{array}{ccc}
 Tr(N_{11}^{\{f,c\}}({\bf r}_{\bf i})) &  Tr(N_{12}^{\{f,c\}}({\bf r}_{\bf i}))& Tr(N_{13}^{\{f,c\}}({\bf r}_{\bf i}))\\
 Tr(N_{21}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{22}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{23}^{\{f,c\}}({\bf r}_{\bf i}))\\
 Tr(N_{31}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{32}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{33}^{\{f,c\}}({\bf r}_{\bf i}))\end{array}\right), \]
-where $Tr(N_{lm}^{\{f,c\}}({\bf r}_{\bf i}))$ represents the trace of $3\times3$ matrix $N_{lm}^{\{f,c\}}({\bf r}_{\bf i}),l,m = 1,2,3$. In this paper, we use the predictor-corrector strategy to obtain a fourth order time integrator. In \cite{sjogreen2012fourth}, it shows that the fourth order scheme has a somewhat larger stability limit for the time step, but the way used to approximate eigenvalues is same. We use $C_{\text{cfl}} = 1.3175$ in the numrical experiments in this paper.
+where $Tr(N_{lm}^{\{f,c\}}({\bf r}_{\bf i}))$ represents the trace of $3\times3$ matrix $N_{lm}^{\{f,c\}}({\bf r}_{\bf i}),l,m = 1,2,3$. Note that $\kappa_{\text{max}}$ is related to the material properties $\mu, \lambda$ and $\rho$, we will give different CFL number for different simulaions in the following sections. 

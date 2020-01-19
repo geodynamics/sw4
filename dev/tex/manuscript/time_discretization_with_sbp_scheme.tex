@@ -1,9 +1,9 @@
-%!TEX root = elastic_3d_sbp.tex
+%!TEX root = SISC_elastic_3d.tex
 \subsection{Time discretization with SBP scheme}
 In the following, we give the detailed procedures about how we apply the fourth order time integrator to the problems (\ref{elastic_semi_c}) and  (\ref{fine_scheme}). 
 
 Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf C}({\bf x},t_n), {\bf x}\in\Omega^c$ and ${\bf F}({\bf x},t_n), {\bf x}\in\Omega^f$ respectively. Here, $t_n = n\Delta_t, n = 0,1,\cdots$ and $\Delta_t > 0$ is a constant time step. We present the fourth order time integrator with predictor and corrector in the Algorithm \ref{first_alg}.
-
+~\\
 \begin{breakablealgorithm}
 	\caption{Fourth order accurate time stepping for the elastic wave equation with SBP discretization in space}\label{first_alg}
 	Given initial conditions $\wt{{\bf c}}^{0}, \wt{{\bf c}}^{-1}$ and ${\bf f}^{0}, {\bf f}^{-1}$ that satisfy the discretized interface conditions.
@@ -53,6 +53,7 @@ Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf
 		}
 	\end{itemize}
 \end{breakablealgorithm}
+~\\
 Here, we only give the steps to evolve the elatic wave equation with suitable initial and interface conditions and skip the detailed derivations of the fourth order predictor corrector time integator. One can refer \cite{wang2018fourth} to get more details.
 
 In the Algorithm \ref{first_alg}, we need to solve the equations come from the continuity of the traction force for the interface $\Gamma$ in both preditor step (\ref{traction_gamma_pre}) and corrector step (

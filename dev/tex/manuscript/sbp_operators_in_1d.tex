@@ -1,4 +1,4 @@
-%!TEX root = elastic_3d_sbp.tex
+%!TEX root = SISC_elastic_3d.tex
 \subsection{SBP operators in $1$D}\label{sec_sbp_1d}
 Consider a uniform discretization of the domain $x\in[0,1]$ with the grids,
 \[\wt
@@ -21,7 +21,7 @@ To discretize the elastic wave equation, we also need to approximate the second 
 \end{equation}
 Here, the bilinear form $P_\gamma(\cdot,\cdot)$ is symmetric and positive semi-definite, and does not use any ghost points. The operators $\wt{\bf b}_1$ and $\wt{\bf b}_n$ approximate the first derivative on the left and right boundaries, respectively. Using the right boundary as an example, we have 
 \begin{equation}\label{sbp_1st_1}
-\wt{\bf b}_n {\bf v} = \frac{1}{h}\sum_{i=n-3}^{n+1} d_i v_i,
+\wt{\bf b}_n {\bf v} = \frac{1}{h}\sum_{i=n-3}^{n+1} \wt{d}_i v_i,
 \end{equation}
 as the fourth order accurate approximation of $u_x(x_1)$. We note that the notation $\wt{G}(\gamma){\bf v}$ implies that the operator $\wt{G}$ uses ${\bf v}$ on all grid points $\wt{\bf x}$, but $\wt{G}(\gamma){\bf v}$ only returns values on the grid ${\bf x}$ without ghost points. Therefore, when writing in matrix form, $\wt{G}$ is a non-square matrix of size $n$ by $n+2$.
 

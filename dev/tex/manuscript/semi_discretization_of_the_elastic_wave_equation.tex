@@ -1,4 +1,4 @@
-%!TEX root = elastic_3d_sbp.tex
+%!TEX root = SISC_elastic_3d.tex
 \subsection{Semi-discretization of the elastic wave equation}\label{semi_discrete_form}
 
 \begin{figure}[htbp]
@@ -22,13 +22,13 @@ We focus on the numerical treatment of the interface conditions (\ref{interface_
 \end{figure}
  To condense notations, we intoduce the multi-index notations
 \[{\bf i} = (i,j,k),\ \ {\bf r}_{\bf i} = (r^1_i,r^2_j,r^3_k),\ \ {\bf x}^{\{f,c\}}_{\bf i} = (x^{\{f,c\},1}_i,x^{\{f,c\},2}_j,x^{\{f,c\},3}_k),\ \ {\bf x}_{\bf i}^{\{f,c\}} = {\bf X}^{\{f,c\}}({\bf r}_{\bf i}).\]
-Note that for ${\bf x}^f_{\bf i}\in\Omega^f$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[1,n_3^h]$; for ${\bf x}^c_{\bf i}\in\Omega^c$, we have $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k\in[1,n_3^{2h}]$; for ${\bf x}_{\bf i}^c \in \Gamma\cap\Omega^c$, we have $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k = n_3^{2h}$; for ${\bf x}_{\bf i}^f \in \Gamma\cap\Omega^f$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k = 1$; for ${\bf x}_{\bf i}^f\in \Omega \setminus \Omega^c := \overline{\Gamma^f}$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[2,n_3^h]$. Now, denote the grid functions in $\Omega^f$ and $\Omega^c$ as
+Note that for ${\bf x}^f_{\bf i}\in\Omega^f$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[1,n_3^h]$; for ${\bf x}^c_{\bf i}\in\Omega^c$, we have $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k\in[1,n_3^{2h}]$; for ${\bf x}_{\bf i}^c \in \Gamma\cap\Omega^c$, we have $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k = n_3^{2h}$; for ${\bf x}_{\bf i}^f \in \Gamma\cap\Omega^f$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k = 1$; for ${\bf x}_{\bf i}^f\in \Omega \setminus \Omega^c := \overline{\Gamma}$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[2,n_3^h]$. Note that we abused the symble $\bar{\Gamma}$ a little bit to only contain the grid points in $\Omega^f$ but not in $\Omega^c$. Now, denote the grid functions in $\Omega^f$ and $\Omega^c$ as
 \[{\bf f} = ({\bf f}^1, {\bf f}^2, {\bf f}^3)^T\ \ \ \ \mbox{and}\ \ \ \  {\bf c} = ({\bf c}^1, {\bf c}^2, {\bf c}^3)^T\]
 respectively. Here, 
 \[{\bf f}^l\approx F_l({\bf r}), \ \ {\bf X}^f({\bf r})\in\Omega^f,\ \ l=1,2,3 ,\]
 and
 \[{\bf c}^l \approx C_l({\bf r}),\ \ {\bf X}^c({\bf r})\in\Omega^c, \ \ l = 1,2,3.\]
-Furthermore, we define ${\bf f}_{\Gamma}$ as the fine grid function for ${\bf X}^f({{\bf r}})\in\Gamma$, ${\bf c}_{\Gamma}$ to be the coarse grid function for ${\bf X}^c({{\bf r}})\in\Gamma$ and ${\bf f}_{\overline{\Gamma}}$ as the fine grid function for ${\bf X}^f({{\bf r}})\in\overline{\Gamma^f}$. Particularly, we define $\wt{\bf c} = (\wt{\bf c}^1,\wt{\bf c}^2,\wt{\bf c}^3)^T$ as the coarse grid function which contains both grids in $\Omega^c$ and ghost points outside of $\Omega^c$ with $i\in[1,n_1^{2h}], j\in[1,n_2^{2h}], k\in[0,n_3^{2h}+1]$. Then we approximate the elastic wave equation (\ref{elastic_curvi}) on $\Omega^c$ by
+Furthermore, we define ${\bf f}_{\Gamma}$ as the fine grid function for ${\bf X}^f({{\bf r}})\in\Gamma$, ${\bf c}_{\Gamma}$ to be the coarse grid function for ${\bf X}^c({{\bf r}})\in\Gamma$ and ${\bf f}_{\overline{\Gamma}}$ as the fine grid function for ${\bf X}^f({{\bf r}})\in\overline{\Gamma}$. Particularly, we define $\wt{\bf c} = (\wt{\bf c}^1,\wt{\bf c}^2,\wt{\bf c}^3)^T$ as the coarse grid function which contains both grids in $\Omega^c$ and ghost points outside of $\Omega^c$ with $i\in[1,n_1^{2h}], j\in[1,n_2^{2h}], k\in[0,n_3^{2h}+1]$. Then we approximate the elastic wave equation (\ref{elastic_curvi}) on $\Omega^c$ by
 \begin{equation}\label{elastic_semi_c}
 {\varrho}^{2h} {\bf c}_{tt} =( \mathcal{ J}^{2h})^{-1}\left(\sum_{l=1}^2\mathcal{G}_l^{2h}({N}_{ll}){\bf c}+\wt{\mathcal{G}}_3^{2h}({N}_{33}){\wt{\bf c}}+\sum_{l=1}^3\sum_{m=1,m\neq l}^3\mathcal{D}_l^{2h}(\mathcal{N}_{lm}^{2h}\mathcal{D}_m^{2h}{\bf c})\right) := \wt{\mathcal{L}}^{2h} {\wt {\bf c}},
 \end{equation}
@@ -46,20 +46,24 @@ with both ${\bm \rho}^{2h}$ and ${\bf J}^{2h}$ are $n_1^{2h}n_2^{2h}n_3^{2h}\tim
 The operators $\mathcal{G}_l^{2h}({N}_{ll})$, $l=1,2$ are defined as
 \begin{align}\label{g1122}
 \mathcal{G}^{2h}_l({N}_{ll}) = \left(\begin{array}{ccc}
-G_l^{2h}(N_{ll}^{11}) & G_l^{2h}(N_{ll}^{12})  & G_l^{2h}(N_{ll}^{13}) \\
-G_l^{2h}(N_{ll}^{21}) & G_l^{2h}(N_{ll}^{22})  & G_l^{2h}(N_{ll}^{23}) \\
-G_l^{2h}(N_{ll}^{31}) & G_l^{2h}(N_{ll}^{32})  & G_l^{2h}(N_{ll}^{33}) \end{array}\right),
+Q_l^{2h}(N_{ll}^{11}) & Q_l^{2h}(N_{ll}^{12})  & Q_l^{2h}(N_{ll}^{13}) \\
+Q_l^{2h}(N_{ll}^{21}) & Q_l^{2h}(N_{ll}^{22})  & Q_l^{2h}(N_{ll}^{23}) \\
+Q_l^{2h}(N_{ll}^{31}) & Q_l^{2h}(N_{ll}^{32})  & Q_l^{2h}(N_{ll}^{33}) \end{array}\right),
 \end{align}
-with $G_l^{2h}(N_{ll}^{ij})$, $i,j = 1,2,3$, are $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ matrices which are from the central difference operator for second derivative with variable coefficient in direction $l$, the superscript $ij$ represents the $i'$th row and $j'$th column of matrix $N_{ll}$, and $N^{ij}_{ll}$ is a function of ${\bf r}$ located in coarse parameter domain. As for $\wt{\mathcal{G}}_3^{2h}({N}_{33})$, it has a structure
+with $Q_l^{2h}(N_{ll}^{ij})$, $i,j = 1,2,3$, are $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ matrices which are from the central difference operator for second derivative with variable coefficient in direction $l$, the superscript $ij$ represents the $i'$th row and $j'$th column of matrix $N_{ll}$, and $N^{ij}_{ll}$ is a function of ${\bf r}$ located in coarse parameter domain. As for $\wt{\mathcal{G}}_3^{2h}({N}_{33})$, it has a structure
 \[ \wt{\mathcal{G}}^{2h}_3({N}_{33}) = \left(\begin{array}{ccc}
 \wt{G}_3^{2h}(N_{33}^{11}) & \wt{G}_3^{2h}(N_{33}^{12})  & \wt{G}_3^{2h}(N_{33}^{13}) \\
 \wt{G}_3^{2h}(N_{33}^{21}) & \wt{G}_3^{2h}(N_{33}^{22})  & \wt{G}_3^{2h}(N_{33}^{23}) \\
 \wt{G}_3^{2h}(N_{33}^{31}) & \wt{G}_3^{2h}(N_{33}^{32})  & \wt{G}_3^{2h}(N_{33}^{33}) \end{array}\right),\]
-where $\wt{G}_3^{2h}(N_{33}^{ij})$, $i,j = 1,2,3$, are $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}(n_3^{2h}+2)$ matrices which are defined as in (\ref{sbp_2nd_1}) for direction $3$, and $N_{33}^{ij}$ is a function of ${\bf r}$ located in coarse parameter domain. Finally, let's look at the term $\mathcal{D}_l^{2h}(\mathcal{N}_{lm}^{2h}\mathcal{D}_m^{2h})$, $l = 1,2,3, m = 1,2,3, l\neq m$, we use $\mathcal{D}_1^{2h}(\mathcal{N}_{12}^{2h}\mathcal{D}_2^{2h})$ as an example and other cases are analogous,
+where $\wt{G}_3^{2h}(N_{33}^{ij})$, $i,j = 1,2,3$, are $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}(n_3^{2h}+2)$ matrices which are defined as in (\ref{sbp_2nd_1}) for direction $3$, and $N_{33}^{ij}$ is a function of ${\bf r}$ located in coarse parameter domain. Finally, let's look at the terms $\mathcal{D}_l^{2h}(\mathcal{N}_{lm}^{2h}\mathcal{D}_m^{2h})$, $l = 1,2,3, m = 1,2,3, l\neq m$. We first explain the cases with $l = 1,2$ and $m = 1,2$, we use $\mathcal{D}_1^{2h}(\mathcal{N}_{12}^{2h}\mathcal{D}_2^{2h})$ as an example and the other case is analogous,
 \begin{equation}\label{D12}
 \mathcal{D}_1^{2h} = {\bf I}\otimes D_1^{2h} \otimes {\bf I}_2 \otimes {\bf I}_3,\ \ \ \mathcal{D}_2^{2h} ={\bf I}\otimes {\bf I}_1\otimes D_2^{2h}\otimes {\bf I}_3,
 \end{equation}
-where ${\bf I}$ is a $3\times3$ identity matrix, ${\bf I}_l$, $l = 1,2,3$ are $n_l^{2h}\times n_l^{2h}$ identity matrices, $D_1^{2h}$ is a $n_1^{2h}\times n_1^{2h}$ matrix defined in (\ref{first_sbp}) for direction $1$ and $D_2^{2h}$ is a matrix of size $n_2^{2h}\times n_2^{2h}$ defined in (\ref{first_sbp}) for direction $2$. $\mathcal{N}_{12}^{2h}$ is a $3n_1^{2h}n_2^{2h}n_3^{2h}\times3n_1^{2h}n_2^{2h}n_3^{2h}$ matrix with a structure
+where ${\bf I}$ is a $3\times3$ identity matrix, ${\bf I}_l$, $l = 1,2,3$ are $n_l^{2h}\times n_l^{2h}$ identity matrices, $D_1^{2h}$ is a $n_1^{2h}\times n_1^{2h}$ matrix and the stencil is central difference operator for first order derivative, $D_2^{2h}$ is a matrix of size $n_2^{2h}\times n_2^{2h}$, and with central difference operator for first order derivative as stencil. Then let's look at the terms with either $l = 3$ or $m = 3$, we use $\mathcal{D}_1^{2h}(\mathcal{N}_{13}^{2h}\mathcal{D}_3^{2h})$ as an example and the other cases are similar,
+\begin{equation}\label{D13}
+\mathcal{D}_1^{2h} = {\bf I}\otimes D_1^{2h} \otimes {\bf I}_2 \otimes {\bf I}_3,\ \ \ \mathcal{D}_3^{2h} ={\bf I}\otimes {\bf I}_1\otimes {\bf I}_2\otimes D_3^{2h},
+\end{equation}
+here, $\mathcal{D}_1^{2h}$ is defined in (\ref{D12}) and $D_3^{2h}$ is a matrix of size $n_3^{2h}\times n_3^{2h}$ defined in (\ref{first_sbp}) for direction $3$. $\mathcal{N}_{12}^{2h}$ is a $3n_1^{2h}n_2^{2h}n_3^{2h}\times3n_1^{2h}n_2^{2h}n_3^{2h}$ matrix with a structure
 \begin{align}\label{N12}
 \mathcal{N}_{12}^{2h}= \left(\begin{array}{ccc}
 \mathscr{N}_{12}^{2h,11}&\mathscr{N}_{12}^{2h,12}& \mathscr{N}_{12}^{2h,13}\\
@@ -123,7 +127,7 @@ Here, $\mathscr{R}^{h}$ is a diagonal matrix of size $n_1^{h}n_2^h\times n_1^hn_
 \end{align}
 where $\bf P$ is a $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ matrix which has stencils as in Figure \ref{interpolation} and $\bf R$ is a $n_1^hn_2^hn_3^h\times n_1^hn_2^hn_3^h$ matrix with a stencil as in Figure \ref{restriction}. Lastly, $\mathcal{J}^{2h}_\Gamma$ has a similar definition as $\mathcal{J}^{2}_\Gamma$, but it is evaluated at the coarse grids on interface $\Gamma$.
 
-Now, we are ready to state the continuous interface conditions (\ref{interface_cond}), the grid functions ${\bf f}$ and ${\bf c}$ are coupled through interface conditions,
+Now, we are ready to  work on the continuous interface conditions (\ref{interface_cond}). In the discrete sense,  the grid functions ${\bf f}$ and ${\bf c}$ are coupled through interface conditions,
 \begin{equation}\label{continuous_sol}
 {\bf f}_{\Gamma} = \wt{\mathcal{P}}({\bf c}_{\Gamma}),
 \end{equation}
@@ -141,11 +145,10 @@ and
 \begin{equation}\label{hatAc}
 (\wt{\mathcal{A}}_3^{2h}\wt{\bf c})\big|_\Gamma = (\mathcal{N}_{31}^{2h}\mathcal{D}^{2h}_1{\bf c})\big|_\Gamma + (\mathcal{N}_{32}^{2h}\mathcal{D}^{2h}_2{\bf c})\big|_\Gamma + (\mathcal{N}_{33}^{2h}\wt{\mathscr D}^{2h}_3\wt{\bf c})\big|_\Gamma,
 \end{equation}
- which imposes the continuity of traction at the interface $\Gamma$, here, $\omega_1$ is the first entry in the scalar product (\ref{inner_product}), $\wt{\mathscr{D}}_3^{2h}$ is defined as
- \[\wt{\mathscr{D}}_3^{2h} = {\bf I}\otimes {\bf I}_1 \otimes {\bf I}_2 \otimes \wt{\mathfrak{D}}_3^{2h}\]
- where ${\bf I}$ is a $3\times3$ identity matrix, ${\bf I}_l$, $l = 1,2$ are $n_l^{2h}\times n_l^{2h}$ identity matrices, $\wt{\mathfrak{D}}_3^{2h}$ is a $n_3^{2h}\times (n_3^{2h}+2)$ matrix defined in (\ref{sbp_1st_1}) for direction $3$, and $\mathscr{D}_3^{h}$ is defined as
- \[\mathscr{D}_3^{h} = {\bf I}\otimes {\bf I}_1 \otimes {\bf I}_2 \otimes \wt{\mathfrak{D}}_3^{2h}\]
- where ${\bf I}$ is a $3\times3$ identity matrix, ${\bf I}_l$, $l = 1,2$ are $n_l^{h}\times n_l^{h}$ identity matrices, $\mathfrak{D}_3^{h}$ is a $n_3^{h}\times n_3^{h}$ matrix defined in (\ref{sbp_1st_2}) for direction $3$.
- 
- Note that both (\ref{sbp_1st_1}) and (\ref{sbp_1st_2}) are defined only on boundaries, but for the dimension consistency, we define $\wt{\mathfrak{D}}^{2h}_3$ and $\mathfrak{D}^h_3$ for the whole coarse domain and fine domain respectively. As for the elements in $\wt{\mathfrak{D}}^{2h}_3$ and $\mathfrak{D}^h_3$ which do not correspond to the coarse grid points and fine points on the interface $\Gamma$, we can set they are to be zeros, since we are not using them in analysis.
+which imposes the continuity of physical traction at the interface $\Gamma$, here, $\omega_1$ is the first entry in the scalar product (\ref{inner_product}), $\wt{\mathscr{D}}_3^{2h}$ is defined as
+\[\wt{\mathscr{D}}_3^{2h} = {\bf I}\otimes {\bf I}_1 \otimes {\bf I}_2 \otimes \wt{\mathfrak{D}}_3^{2h}\]
+where ${\bf I}$ is a $3\times3$ identity matrix, ${\bf I}_l$, $l = 1,2$ are $n_l^{2h}\times n_l^{2h}$ identity matrices, $\wt{\mathfrak{D}}_3^{2h}$ is a $n_3^{2h}\times (n_3^{2h}+2)$ matrix defined in (\ref{sbp_1st_1}) for direction $3$ which is a sparse matirx with only the last row has $5$ non-zeros and the rest of elements are zeros. As for $\mathscr{D}_3^{h}$, it is defined as
+\[\mathscr{D}_3^{h} = {\bf I}\otimes {\bf I}_1 \otimes {\bf I}_2 \otimes \wt{\mathfrak{D}}_3^{2h}\]
+where ${\bf I}$ is a $3\times3$ identity matrix, ${\bf I}_l$, $l = 1,2$ are $n_l^{h}\times n_l^{h}$ identity matrices, $\mathfrak{D}_3^{h}$ is a $n_3^{h}\times n_3^{h}$ matrix defined in (\ref{sbp_1st_2}) for direction $3$. And $\mathfrak{D}_3^{h}$ is a sparse matirx with only the first row has $4$ non-zeros and the rest of elements are zeros. 
+
 
