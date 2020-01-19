@@ -2,9 +2,9 @@
 \subsection{Energy conservation test}\label{conserved_energy}
 To verify the energy conservation property of our scheme, we perform a computation without external source term, but with a Gaussian initial profile which centered at the origin of the computational domain.  Specifically, the computational domain, density function $\rho$ and material functions $\mu, \lambda$ are taken to be the same as in the Section \ref{convergence_study}; the initial Gaussian profiles are
 \begin{align*}
-	u_1(\cdot,0) &= \mbox{exp}\left(-\frac{(x^1-\pi)^2}{0.1}\right)\mbox{exp}\left(-\frac{(x^2-\pi)^2}{0.1}\right)\mbox{exp}\left(-\frac{(x^3-\pi)^2}{0.1}\right),\\
-	u_2(\cdot,0) &= \mbox{exp}\left(-\frac{(x^1-\pi)^2}{0.2}\right)\mbox{exp}\left(-\frac{(x^2-\pi)^2}{0.2}\right)\mbox{exp}\left(-\frac{(x^3-\pi)^2}{0.2}\right),\\
-	u_3(\cdot,0) &= \mbox{exp}\left(-\frac{(x^1-\pi)^2}{0.1}\right)\mbox{exp}\left(-\frac{(x^2-\pi)^2}{0.2}\right)\mbox{exp}\left(-\frac{(x^3-\pi)^2}{0.2}\right).
+	u_1(\cdot,0) &= \mbox{exp}\left(-\frac{(x^{(1)}-\pi)^2}{0.1}\right)\mbox{exp}\left(-\frac{(x^{(2)}-\pi)^2}{0.1}\right)\mbox{exp}\left(-\frac{(x^{(3)}-\pi)^2}{0.1}\right),\\
+	u_2(\cdot,0) &= \mbox{exp}\left(-\frac{(x^{(1)}-\pi)^2}{0.2}\right)\mbox{exp}\left(-\frac{(x^{(2)}-\pi)^2}{0.2}\right)\mbox{exp}\left(-\frac{(x^{(3)}-\pi)^2}{0.2}\right),\\
+	u_3(\cdot,0) &= \mbox{exp}\left(-\frac{(x^{(1)}-\pi)^2}{0.1}\right)\mbox{exp}\left(-\frac{(x^{(2)}-\pi)^2}{0.2}\right)\mbox{exp}\left(-\frac{(x^{(3)}-\pi)^2}{0.2}\right).
 \end{align*}
 Energy conservation is ensured by homogeneous Dirichlet boundary conditions. The grid spacing is $h_1 = h_2 = h_3 = h$ and $2h = \frac{\pi}{24}$ for coarse domain $\Omega^c$, $h = \frac{\pi}{48}$ for fine domain $\Omega^f$, thus we have $25\times25\times13$ grid points in the coarse domain $\Omega^c$ and $49\times49\times25$ grid points in the fine domain $\Omega^f$. 
 
