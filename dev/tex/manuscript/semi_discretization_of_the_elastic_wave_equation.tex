@@ -7,13 +7,13 @@
 	\caption{The sketch for the spatial discretization of physical domain $\Omega$. The blue region is the spacial discretization of coarse subdomain $\Omega^c$ and the red region is the spatial discretization of fine domain $\Omega^f$.}\label{physical_discretization}
 \end{figure}
 
-In this section, we discretize the elastic wave equation (\ref{elastic_curvi}) with mesh refinement interface $\Gamma$. Without losing generality, we assume the ratio of mesh sizes for subdomain $\Omega^f_r$ and subdomain $\Omega^c_r$ is $1:2$, that is the mesh sizes of $\Omega_r^f$ and $\Omega_r^c$ satisfy
-\[h_1(n_1^h-1) = 1, \ \ \ h_2(n_2^h-1) = 1, \ \ \ h_3(n_3^h-1) = 1\]
+In this section, we discretize the elastic wave equation (\ref{elastic_curvi}) with mesh refinement interface $\Gamma$. Without loss of generality, we assume the ratio of mesh sizes for subdomain $\Omega^f_r$ and subdomain $\Omega^c_r$ is $1:2$, that is the mesh sizes of $\Omega_r^f$ and $\Omega_r^c$ satisfy
+\[h_1(n_1^h-1) = 1, \ \ \ h_2(n_2^h-1) = 1, \ \ \ h_3(n_3^h-1) = 1,\]
 and
-\[2h_1(n_1^{2h}-1) = 1, \ \ \ 2h_2(n_2^{2h}-1) = 1, \ \ \ 2h_3(n_3^{2h}-1) = 1\]
-respectively, other ratios can be treated analogously. Figure \ref{physical_discretization} gives an illustration of the discretation of a physical domain. 
+\[2h_1(n_1^{2h}-1) = 1, \ \ \ 2h_2(n_2^{2h}-1) = 1, \ \ \ 2h_3(n_3^{2h}-1) = 1,\]
+respectively. Other ratios can be treated analogously. Figure \ref{physical_discretization} gives an illustration of the discretation of a physical domain. This is an ideal mesh if the wave speed in $\Omega_r^f$ is half of the wave speed in $\Omega_r^c$.
 
-We focus on the numerical treatment of the interface conditions (\ref{interface_cond}) and suppose boundaries are periodic in directions $1$ and $2$, ignore the boundaries in dierection $3$. In Figure \ref{section_discretization}, we fix $x^{(2)} = 0$ and present the $x^{(1)}$-$x^{(3)}$ section of the domain $\Omega$ in both curvilinear space and parameter space.
+In seismic wave simulation, far-field boundary conditions are often imposed in the $x^1$ and $x^2$ directions. Here, our focus is on the numerical treatment of the interface conditions (\ref{interface_cond}). We assume periodic boundary conditions in $x^1$ and $x^2$, and ignore the boundaries in $x^3$. In Figure \ref{section_discretization}, we fix $x^{(2)} = 0$ and present the $x^{(1)}$-$x^{(3)}$ section of the domain $\Omega$ in both curvilinear space and parameter space.
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.45\textwidth,trim={1.0cm 2.0cm 1.0cm 1.8cm}, clip]{physical_section_discretization.eps}
@@ -82,14 +82,16 @@ where ${\varrho}^{h}_{\overline{\Gamma}}$ and ${\mathcal{J}}^{h}_{\overline{\Gam
 \end{equation}
 with 
 \begin{equation}\label{eta}
-{\bm \eta} = {\varrho}^h_{\Gamma}\wt{\mathcal{P}}\left(\big(({ \varrho}^{2h})^{-1}\wt{\mathcal{L}}^{2h} \wt{{\bf c}}\big)\Big|_{\Gamma}\right) - \mathcal{L}^{h}{\bf f}\Big|_{\Gamma},
+{\bm \eta} = {\varrho}^h_{\Gamma}\wt{\mathcal{P}}\left(\big(({ \varrho}^{2h})^{-1}\wt{\mathcal{L}}^{2h} \wt{{\bf c}}\big)\Big|_{\Gamma}\right) - \mathcal{L}^{h}{\bf f}\Big|_{\Gamma}.
 \end{equation}
-here, ${\varrho}^{h}_{\Gamma}$ and ${\mathcal{ J}}^{h}_{\Gamma}$ are $3n_1^hn_2^h\times 3n_1^hn_2^h$ diagonal matrices with similar definitions as in (\ref{rho_j}) with fine grids on $\Gamma$. $\big(({\varrho}^{2h})^{-1}\wt{L}^{2h} \wt{{\bf c}}\big)\big|_{\Gamma}$ is a colume vector of size $3n_1^{2h} n_2^{2h}$ and its value corresponds to the coarse grids on $\Gamma$. In addition, the terms $\mathcal{G}_l^h({N}_{ll}), l = 1,2$ and $\mathcal{D}_l^h(\mathcal{N}_{lm}^h\mathcal{D}_m^h), l=1,2,3,m=1,2,3,l\neq m$ in (\ref{elastic_semi_f})--(\ref{elastic_semi_f_i}) have similar definitions as in (\ref{g1122})--(\ref{N12}), and $\mathcal{G}_3^h({N}_{33})$ is defined by
+Here, ${\varrho}^{h}_{\Gamma}$ and ${\mathcal{ J}}^{h}_{\Gamma}$ are $3n_1^hn_2^h\times 3n_1^hn_2^h$ diagonal matrices with similar definitions as in (\ref{rho_j}) with fine grids on $\Gamma$. $\big(({\varrho}^{2h})^{-1}\wt{L}^{2h} \wt{{\bf c}}\big)\big|_{\Gamma}$ is a colume vector of size $3n_1^{2h} n_2^{2h}$ and its value corresponds to the coarse grids on $\Gamma$. In addition, the terms $\mathcal{G}_l^h({N}_{ll}), l = 1,2$ and $\mathcal{D}_l^h(\mathcal{N}_{lm}^h\mathcal{D}_m^h), l=1,2,3,m=1,2,3,l\neq m$ in (\ref{elastic_semi_f})--(\ref{elastic_semi_f_i}) have similar definitions as in (\ref{g1122})--(\ref{N12}), and $\mathcal{G}_3^h({N}_{33})$ is defined by
 \[ \mathcal{G}^{h}_3({N}_{33}) = \left(\begin{array}{ccc}
 G_3^{h}(N_{33}^{11}) & G_3^{h}(N_{33}^{12})  & G_3^{h}(N_{33}^{13}) \\
 G_3^{h}(N_{33}^{21}) & G_3^{h}(N_{33}^{22})  & G_3^{h}(N_{33}^{23}) \\
 G_3^{h}(N_{33}^{31}) & G_3^{h}(N_{33}^{32})  & G_3^{h}(N_{33}^{33}) \end{array}\right),\]
-where ${G}_3^{h}(N_{33}^{ij}({\bf r}))$, $i,j = 1,2,3$, are $n_1^{h}n_2^{h}n_3^{h}\times n_1^{h}n_2^{h}n_3^{h}$ matrices which are defined as in (\ref{sbp_2nd_2}) for direction $3$, and ${\bf r}$ locates in the fine parameter space. For the simplicity of analysis, we introduce a general notation for the schemes (\ref{elastic_semi_f}) and (\ref{elastic_semi_f_i}) in the fine domain $\Omega^f$,
+where ${G}_3^{h}(N_{33}^{ij}({\bf r}))$, $i,j = 1,2,3$, are $n_1^{h}n_2^{h}n_3^{h}\times n_1^{h}n_2^{h}n_3^{h}$ matrices which are defined as in (\ref{sbp_2nd_2}) for direction $3$, and ${\bf r}$ locates in the fine parameter space. We note that $\bm \eta$ is approximately zero with a second order truncation error, which is of the same order as the boundary stencil of the SBP operator. Therefore, it does not affect the overall accuracy of the semi-discretization. 
+
+For the simplicity of analysis, we introduce a general notation for the schemes (\ref{elastic_semi_f}) and (\ref{elastic_semi_f_i}) in the fine domain $\Omega^f$,
 \begin{align}\label{fine_scheme}
 {\varrho}^h{\bf f}_{tt} = \hat{\mathcal{L}}^h{\bf f} = \left\{
 \begin{aligned}
@@ -98,7 +100,8 @@ where ${G}_3^{h}(N_{33}^{ij}({\bf r}))$, $i,j = 1,2,3$, are $n_1^{h}n_2^{h}n_3^{
 \end{aligned}
 \right.
 \end{align}
-In the following we are going to look at the interpolation operator ${\bf P}$ and restriction operator ${\bf R}$ in two dimensions. The stencils for the interpolation operator ${\bf P}$ can be easily computed by a Talor series expansion. In our case, we have the ratio of the mesh sizes for subdomain $\Omega^f$ and $\Omega^c$ is $1:2$, then if  ${\bf P}$ is a fourth order interpolation operator in two dimensions,  the stencils of ${\bf P}$ are illustrated in  Figure \ref{interpolation}, the stencils for the corresponding restriction operator $\bf R$ in two dimensions can be determined by the compatibility between interpolation and restriction operators, ${\bf P} = 4{\bf R}^T$, and its stencil is presented in Figure \ref{restriction}.
+
+In the following we are going to look at the interpolation operator ${\bf P}$ and restriction operator ${\bf R}$ in two dimensions. The stencils for the interpolation operator ${\bf P}$ can be easily computed by a Taylor series expansion. In our case, we have the ratio of the mesh sizes for subdomain $\Omega^f$ and $\Omega^c$ is $1:2$, then if  ${\bf P}$ is a fourth order interpolation operator in two dimensions,  the stencils of ${\bf P}$ are illustrated in  Figure \ref{interpolation}, the stencils for the corresponding restriction operator $\bf R$ in two dimensions can be determined by the compatibility between interpolation and restriction operators, ${\bf P} = 4{\bf R}^T$, and its stencil is presented in Figure \ref{restriction}.
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.24\textwidth,trim={1.8cm 0.8cm 1.4cm 1.2cm}, clip]{interpolation1.eps}
