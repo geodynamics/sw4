@@ -42,6 +42,10 @@
 #include <cstring>
 #include <unistd.h>
 
+#ifdef USE_HDF5
+#include "sachdf5.h"
+#endif
+
 // initializing static member
 int Image::mPreceedZeros=0;
 
@@ -61,6 +65,7 @@ Image::Image(EW * a_ew,
 	     ImageOrientation locationType, 
              float_sw4 locationValue,
 	     bool doubleMode,
+	     bool usehdf5,
 	     bool userCreated ):
   mTime(time),
   mEW(a_ew),
@@ -79,6 +84,7 @@ Image::Image(EW * a_ew,
   //  m_isDefined(false),
   m_isDefinedMPIWriters(false),
   m_double(doubleMode),
+  m_usehdf5(usehdf5),
   mGridinfo(-1),
   mStoreGrid(true),
   m_gridimage(Image::nil),
@@ -178,7 +184,7 @@ void Image::associate_gridfiles( vector<Image*>& imgs )
       if( m_gridimage == Image::nil )
       {
          m_gridimage = new Image( mEW, 0.0, 0.0, 0, 0, mFilePrefix, Image::GRIDZ, mLocationType, mCoordValue,
-				  m_double, false );
+				  m_double, m_usehdf5, false );
 	 m_gridimage->computeGridPtIndex();
 	 m_gridimage->allocatePlane();
          imgs.push_back(m_gridimage);
@@ -1013,6 +1019,9 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
    
    ASSERT(m_isDefinedMPIWriters);
 
+#ifdef USE_HDF5
+   hid_t h5_fid, grd, dset, attr, dtype, attr_space1, dset_space, fapl;
+#endif
 // plane_in_proc returns true for z=const lpanes, because all processors have a part in these planes
    bool ihavearray = plane_in_proc(m_gridPtIndex[0]);
 
@@ -1057,13 +1066,14 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
       s << fileSuffix.str();
    }
 
-   if( m_pio[0]->proc_zero() )
+   if( m_usehdf5 == false && m_pio[0]->proc_zero() )
    {
       fid = open( const_cast<char*>(s.str().c_str()), O_CREAT | O_TRUNC | O_WRONLY, 0660 ); 
       if (fid == -1 )
       {
 	 VERIFY2(0, "ERROR: Image::writeImagePlane_2, error opening file " << s.str() << " for writing header");
       }  
+      cout << "Rank " << mEW->getRank() << " created new file [" << s.str() << "]" << endl;
 
       cout << "writing image plane on file " << s.str() << endl;// " (msg from proc # " << m_rankWriter << ")" << endl;
       prec = m_double ? 8 : 4;
@@ -1162,63 +1172,352 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
       }
       fsync(fid);
    }
+   else if( m_usehdf5 == true && m_pio[0]->proc_zero() ) 
+   {
+#ifdef USE_HDF5
+      int ret, ltype;
+      hsize_t dims, dims1 = 1, total_elem = 0;
+      h5_fid = H5Fcreate((const char*)(s.str().c_str()), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+      if (h5_fid < 0) 
+	VERIFY2(0, "ERROR: Image::writeImagePlane_2, error opening HDF5 file " << s.str() << " for writing header");
+
+      cout << "Rank " << mEW->getRank() << " created new file [" << s.str() << "]" << endl;
+
+      attr_space1 = H5Screate_simple(1, &dims1, NULL);
+
+      nPatches = mLocationType == Image::Z ? 1 : mEW->mNumberOfGrids;
+      ret = createWriteAttr(h5_fid, "npatch", H5T_NATIVE_INT, attr_space1, &nPatches);
+      if( ret < 0 )
+	 cout << "ERROR: Image::writeImagePlane_2 could not write number of patches" << endl;
+
+      double dblevar=static_cast<double>(t);
+      ret = createWriteAttr(h5_fid, "time", H5T_NATIVE_DOUBLE, attr_space1, &dblevar);
+      if( ret < 0 )
+	 cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 time" << endl;
+
+      if( mLocationType == Image::X )
+         ltype = 0;
+      else if( mLocationType == Image::Y )
+	 ltype = 1;
+      else
+	 ltype = 2;
+
+      ret = createWriteAttr(h5_fid, "plane", H5T_NATIVE_INT, attr_space1, &ltype);
+      if( ret < 0 )
+	 cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 plane type" << endl;
+
+      float_sw4 coordvalue = (m_gridPtIndex[0]-1)*mEW->mGridSize[glow];
+      if( mLocationType == Image::Z )
+         coordvalue += mEW->m_zmin[glow];
+
+      dblevar=static_cast<double>(coordvalue);
+      ret = createWriteAttr(h5_fid, "coordinate", H5T_NATIVE_DOUBLE, attr_space1, &dblevar);
+      if( ret < 0 )
+	 cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 coordinate value" << endl;
+
+      int imode = static_cast<int>(mMode);
+      ret = createWriteAttr(h5_fid, "mode", H5T_NATIVE_INT, attr_space1, &imode);
+      if( ret < 0 )
+	 cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 imode" << endl;
+
+      ret = createWriteAttr(h5_fid, "gridinfo", H5T_NATIVE_INT, attr_space1, &mGridinfo);
+      if( ret < 0 )
+	 cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 gridinfo" << endl;
+
+      H5Sclose(attr_space1);
+
+      time_t realtime;
+      time(&realtime);
+      string strtime;
+      strtime += asctime(localtime(&realtime));
+      char strtimec[25];
+      strncpy(strtimec,strtime.c_str(),25);
+      strtimec[24] ='\0';
+
+      createWriteAttrStr(h5_fid, "creationtime", (const char*)strtimec);
+      if( ret < 0 )
+	 cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 strtimec" << endl;
+
+      double *grid_size = new double[nPatches];
+      double *zmin      = new double[nPatches];
+      int    *ni        = new int[nPatches];
+      int    *nj        = new int[nPatches];
+      /* int    *ib        = new int[nPatches]; */
+      /* int    *jb        = new int[nPatches]; */
+      
+      for(int g = glow; g < ghigh ;g++)
+      {
+          grid_size[g-glow] = static_cast<double>(mEW->mGridSize[g]);
+          zmin[g-glow]      = static_cast<double>(mEW->m_zmin[g]); 
+
+         // should hold the global number of interior points
+	 if(mLocationType == Image::X)
+	 {
+	    ni[g-glow] = mEW->m_global_ny[g];
+	    nj[g-glow] = mEW->m_global_nz[g];
+	 }
+	 if(mLocationType == Image::Y)
+	 {
+	    ni[g-glow] = mEW->m_global_nx[g];
+	    nj[g-glow] = mEW->m_global_nz[g];
+	 }
+	 if(mLocationType == Image::Z)
+	 {
+	    ni[g-glow] = mEW->m_global_nx[g];
+	    nj[g-glow] = mEW->m_global_ny[g];
+	 }
+         total_elem += (ni[g-glow]*nj[g-glow]);
+      }
+
+      dims = nPatches;
+      dset_space = H5Screate_simple(1, &dims, NULL);
+
+      dset = H5Dcreate(h5_fid, "grid_size", H5T_NATIVE_DOUBLE, dset_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+      ret  = H5Dwrite(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, grid_size);
+      if( ret < 0 )
+	 cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 grid_size dataset" << endl;
+      H5Dclose(dset);
+
+      dset = H5Dcreate(h5_fid, "zmin", H5T_NATIVE_DOUBLE, dset_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+      ret  = H5Dwrite(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, zmin);
+      if( ret < 0 )
+	 cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 zmin dataset" << endl;
+      H5Dclose(dset);
+
+
+      dset = H5Dcreate(h5_fid, "ni", H5T_NATIVE_DOUBLE, dset_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+      ret  = H5Dwrite(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, ni);
+      if( ret < 0 )
+	 cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 grid_size dataset" << endl;
+      H5Dclose(dset);
+
+
+      dset = H5Dcreate(h5_fid, "nj", H5T_NATIVE_DOUBLE, dset_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+      ret  = H5Dwrite(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, nj);
+      if( ret < 0 )
+	 cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 grid_size dataset" << endl;
+      H5Dclose(dset);
+
+      H5Sclose(dset_space);
+
+      if (m_double) 
+        dtype = H5T_NATIVE_DOUBLE;
+      else
+        dtype = H5T_NATIVE_FLOAT;
+
+      dims = total_elem;
+      dset_space = H5Screate_simple(1, &dims, NULL);
+      /* cout << "Rank " << mEW->getRank() << " creating patches array with length " << dims << endl; */
+      dset = H5Dcreate(h5_fid, "patches", dtype, dset_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+      if( dset < 0 )
+	 cout << "ERROR: Image::writeImagePlane_2 could not create HDF5 patches dataset" << endl;
+      H5Sclose(dset_space);
+      H5Dclose(dset);
+
+      if( mGridinfo == 1 )
+      {
+        int g=mEW->mNumberOfGrids-1;
+        int globalSizes[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g], mEW->m_global_nz[g]} ;
+        if(mLocationType == Image::X)
+  	 globalSizes[0]    = 1;
+        if (mLocationType == Image::Y)
+  	 globalSizes[1]    = 1;
+        if (mLocationType == Image::Z)
+  	 globalSizes[2]    = 1;
+
+         dims = globalSizes[0]*globalSizes[1]*globalSizes[2];
+         dset_space = H5Screate_simple(1, &dims, NULL);
+         /* cout << "Rank " << mEW->getRank() << " creating grid array with length " << dims << endl; */
+         dset = H5Dcreate(h5_fid, "grid", dtype, dset_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+         if( dset < 0 )
+            cout << "ERROR: Image::writeImagePlane_2 could not create HDF5 grid dataset" << endl;
+         H5Sclose(dset_space);
+         H5Dclose(dset);
+      }
+
+      delete [] grid_size;
+      delete [] zmin;
+      delete [] ni;
+      delete [] nj;
+
+      /* H5Fflush(h5_fid, H5F_SCOPE_LOCAL); */
+      H5Fclose(h5_fid);
+#else
+     cout << "ERROR: cannot write image in HDF5 format without sw4 compiled with HDF5 library!" << endl;
+#endif
+   } // End proc 0 write metadata
 
 // write the data...
+   if(m_usehdf5 == false) 
+   {
+     if( ihavearray )
+     {
+        for( int g = glow ; g < ghigh; g++)
+        {
+           int globalSizes[3] = {mEW->m_global_nx[g],
+           		       mEW->m_global_ny[g],
+           		       mEW->m_global_nz[g]} ;
+           if(mLocationType == Image::X)
+              globalSizes[0]    = 1;
+           if (mLocationType == Image::Y)
+              globalSizes[1]    = 1;
+           if (mLocationType == Image::Z)
+              globalSizes[2]    = 1;
+
+           if( !mEW->usingParallelFS() || g == glow )
+              MPI_Barrier( m_mpiComm_writers );
+
+           if( g==glow && iwrite && !m_pio[0]->proc_zero() )
+           {
+              fid = open( const_cast<char*>(s.str().c_str()), O_WRONLY );
+              if (fid == -1 )
+              {
+                 VERIFY2(0, "ERROR: Image::writeImagePlane2, Error opening file: " << s.str() << " for writing data patches" );
+              }  
+           }
+
+           if( m_double )
+           {
+              char dblStr[]="double";	  
+              m_pio[g-glow]->write_array( &fid, 1, m_doubleField[g], offset, dblStr );
+              offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]*sizeof(double));
+           }
+           else
+           {
+              char fltStr[]="float";
+               //	    bool dbg=false;
+               //	    if( mMode == S && mEW->getRank() == 10 )
+               //	    {
+               //	       cout << "Before write, value is  " << m_floatField[g][618] << " g= " << g << "off= " << offset << " glow= " << glow << " ghigh= "<< ghigh << endl;
+               //	       dbg = true;
+               //	    }
+               //	    if( mMode == S && mEW->getRank() == 63 && mLocationType == Z )
+               //	       dbg = true;
+              m_pio[g-glow]->write_array( &fid, 1, m_floatField[g], offset, fltStr );
+              offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]*sizeof(float));
+           }
+        }
+     }
+     if( iwrite )
+        close(fid);
+
+     if( mGridinfo == 1 )
+        add_grid_to_file( s.str().c_str(), iwrite, offset );
+     if( mGridinfo == 2 )
+        add_grid_filenames_to_file( s.str().c_str() );
+   }
+   else
+   {
+#ifdef USE_HDF5
+      hsize_t dims, dims1 = 1;
+      if( ihavearray )
+      {
+         offset = 0;
+         for( int g = glow ; g < ghigh; g++)
+         {
+            int globalSizes[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g], mEW->m_global_nz[g]} ;
+
+            if(mLocationType == Image::X)
+               globalSizes[0]    = 1;
+            if (mLocationType == Image::Y)
+               globalSizes[1]    = 1;
+            if (mLocationType == Image::Z)
+               globalSizes[2]    = 1;
+
+            /* if( !mEW->usingParallelFS() || g == glow ) */
+            if( g == glow )
+            {
+               MPI_Barrier( m_mpiComm_writers );
+               /* cout << "Rank " << mEW->getRank() <<" after barrier" << endl; */
+            }
+
+            /* if( g==glow && iwrite && !m_pio[0]->proc_zero() ) */
+            /* if( g==glow && iwrite ) */
+            /* { */
+            /*    fapl = H5Pcreate(H5P_FILE_ACCESS); */
+            /*    H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL); */
+            /*    /1* setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1); *1/ */
+            /*    cout << "Rank " << mEW->getRank() <<" opening file [" << s.str().c_str() << "]" << endl; */
+            /*    fflush(stdout); */
+            /*    h5_fid = H5Fopen((const char*)(s.str().c_str()), H5F_ACC_RDWR, fapl); */
+            /*    if (h5_fid < 0) */ 
+            /*       VERIFY2(0, "ERROR: Image::writeImagePlane_2, error opening HDF5 file " << s.str() << " for writing data"); */
+            /*    H5Pclose(fapl); */
+
+            /*    dset = H5Dopen(h5_fid, "patches", H5P_DEFAULT); */
+            /*    cout << "Rank " << mEW->getRank() <<" opening patches dset from file [" << s.str().c_str() << "]" << endl; */
+            /*    fflush(stdout); */
+            /* } */
+
+            /* if (dset < 0) */ 
+            /*    VERIFY2(0, "ERROR: Image::writeImagePlane_2, error opening patches dataset "); */
+
+            if( m_double )
+            {
+               char dblStr[]="double";	  
+               m_pio[g-glow]->write_array_hdf5( (const char*)(s.str().c_str()), "patches", 1, m_doubleField[g], offset, dblStr );
+               /* m_pio[g-glow]->write_array_hdf5( dset, 1, m_doubleField[g], offset, dblStr ); */
+               offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]);
+            }
+            else
+            {
+               char fltStr[]="float";
+               m_pio[g-glow]->write_array_hdf5( (const char*)(s.str().c_str()), "patches", 1, m_floatField[g], offset, fltStr );
+               offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]);
+            }
+
+         }
+
+         /* if (iwrite) */ 
+         /* { */
+         /*    H5Dclose(dset); */
+         /*    H5Fclose(h5_fid); */
+         /* } */
+      } // End if ihavearray
+
+      if( mGridinfo == 1 )
+         add_grid_to_file_hdf5( s.str().c_str(), iwrite, offset );
+      /* if( mGridinfo == 2 ) */
+      /*    add_grid_filenames_to_file( s.str().c_str() ); */
+#endif
+   } // End use_hdf5 == true
+}
+
+//-----------------------------------------------------------------------
+void Image::add_grid_to_file_hdf5( const char* fname, bool iwrite, size_t offset )
+{
+   bool ihavearray = plane_in_proc(m_gridPtIndex[0]);
    if( ihavearray )
    {
-      for( int g = glow ; g < ghigh; g++)
+#ifdef USE_HDF5
+      int g=mEW->mNumberOfGrids-1;
+      int globalSizes[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g], mEW->m_global_nz[g]} ;
+      if(mLocationType == Image::X)
+	 globalSizes[0]    = 1;
+      if (mLocationType == Image::Y)
+	 globalSizes[1]    = 1;
+      if (mLocationType == Image::Z)
+	 globalSizes[2]    = 1;
+
+      if( mEW->usingParallelFS() )
+	 MPI_Barrier( m_mpiComm_writers );
+
+      if( m_double )
       {
-	 int globalSizes[3] = {mEW->m_global_nx[g],
-			       mEW->m_global_ny[g],
-			       mEW->m_global_nz[g]} ;
-	 if(mLocationType == Image::X)
-	    globalSizes[0]    = 1;
-	 if (mLocationType == Image::Y)
-	    globalSizes[1]    = 1;
-	 if (mLocationType == Image::Z)
-	    globalSizes[2]    = 1;
-
-	 if( !mEW->usingParallelFS() || g == glow )
-	    MPI_Barrier( m_mpiComm_writers );
-
-	 if( g==glow && iwrite && !m_pio[0]->proc_zero() )
-	 {
-	    fid = open( const_cast<char*>(s.str().c_str()), O_WRONLY );
-	    if (fid == -1 )
-	    {
-	       VERIFY2(0, "ERROR: Image::writeImagePlane2, Error opening file: " << s.str() << " for writing data patches" );
-	    }  
-	 }
-
-	 if( m_double )
-	 {
-	    char dblStr[]="double";	  
-	    m_pio[g-glow]->write_array( &fid, 1, m_doubleField[g], offset, dblStr );
-	    offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]*sizeof(double));
-	 }
-	 else
-	 {
-	    char fltStr[]="float";
-	    //	    bool dbg=false;
-	    //	    if( mMode == S && mEW->getRank() == 10 )
-	    //	    {
-	    //	       cout << "Before write, value is  " << m_floatField[g][618] << " g= " << g << "off= " << offset << " glow= " << glow << " ghigh= "<< ghigh << endl;
-	    //	       dbg = true;
-	    //	    }
-	    //	    if( mMode == S && mEW->getRank() == 63 && mLocationType == Z )
-	    //	       dbg = true;
-	    m_pio[g-glow]->write_array( &fid, 1, m_floatField[g], offset, fltStr );
-	    offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]*sizeof(float));
-	 }
+	 char dblStr[]="double";	  
+	 m_pio[g]->write_array_hdf5(fname, "grid", 1, m_gridimage->m_doubleField[g], offset, dblStr );
+	 /* m_pio[g]->write_array_hdf5(dset, 1, m_gridimage->m_doubleField[g], offset, dblStr ); */
+	 offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]*sizeof(double));
       }
+      else
+      {
+	 char fltStr[]="float";
+	 m_pio[g]->write_array_hdf5(fname, "grid", 1, m_gridimage->m_floatField[g], offset, fltStr );
+	 /* m_pio[g]->write_array_hdf5(dset, 1, m_gridimage->m_floatField[g], offset, fltStr ); */
+	 offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]*sizeof(float));
+      }
+#endif
    }
-   if( iwrite )
-      close(fid);
-
-   if( mGridinfo == 1 )
-      add_grid_to_file( s.str().c_str(), iwrite, offset );
-   if( mGridinfo == 2 )
-      add_grid_filenames_to_file( s.str().c_str() );
 }
 
 //-----------------------------------------------------------------------
@@ -1307,6 +1606,9 @@ void Image::compute_file_suffix( stringstream& fileSuffix, int cycle )
    fileSuffix << cycle << "." << mOrientationString[mLocationType] << "=";
    fileSuffix << mCoordValue;
    fileSuffix << "." << fieldSuffix(mMode) << ".sw4img";
+   // Add .h5 suffix
+   if (m_usehdf5) 
+      fileSuffix << ".h5";
 }
 
 //-----------------------------------------------------------------------

@@ -135,7 +135,7 @@ void deprecatedOption(const string& command,
 void processTime(char* buffer);
 void processTwilight(char* buffer);
 void processFileIO(char* buffer);
-void processImage(char* buffer);
+void processImage(char* buffer, bool usehdf5);
 void processImage3D(char* buffer);
 void processESSI3D(char* buffer);
 void deprecatedImageMode(int value, const char* name) const;
