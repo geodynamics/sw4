@@ -1,4 +1,4 @@
-program Elastic_3D_Interface_nonconforming
+program Elastic_3D_Interface_nonconforming1
 
   use problemsetup_new_3d
   use SBP_operator
@@ -28,11 +28,11 @@ program Elastic_3D_Interface_nonconforming
 
   ! Error
   real(dp), dimension (1:6) :: N6
-  real(dp) :: l2_err = 0.d0
+  real(dp) :: l2_err = 0.d0, l2_err_c = 0.d0, l2_err_f = 0.d0
   real(dp), dimension (:,:,:), allocatable :: err_f, err_c
 
   ! System of linear equations on interface
-  real(dp), dimension (:,:), allocatable :: Mass
+  real(dp), dimension (:,:), allocatable :: Mass,Vass_temp
   real(dp), dimension (:,:), allocatable :: Mass_f1
   real(dp), dimension (:), allocatable :: Vass
   integer, dimension (:), allocatable :: IPIV
@@ -103,6 +103,7 @@ program Elastic_3D_Interface_nonconforming
 
   ! allocate memory for interface linear system
   allocate(Mass(1:3*n1_c*n2_c,1:3*n1_c*n2_c))
+  allocate(Vass_temp(1:n1_c,1:n2_c))
   allocate(Vass(1:n1_c*n2_c*3))
   allocate(Mass_f1(-2:n1_f+3,-2:n2_f+3))
   allocate(IPIV(1:3*n1_c*n2_c))
@@ -380,9 +381,9 @@ program Elastic_3D_Interface_nonconforming
         do j=1,n1_f
            call exact_solution(Xgrid_f_1(j),Xgrid_f_2(i),Xgrid_f_3(j,i,k), &
                     tv,u_f(j,i,k,1,3),u_f(j,i,k,2,3),u_f(j,i,k,3,3),1)
-           err_f(j,i,k) = max(abs(u_f(j,i,k,1,4)-u_f(j,i,k,1,3)),abs(u_f(j,i,k,2,4)-u_f(j,i,k,2,3)), &
-                    abs(u_f(j,i,k,3,4)-u_f(j,i,k,3,3)))
-           l2_err = l2_err + h1_f*h2_f*h3_f*((u_f(j,i,k,1,4)-u_f(j,i,k,1,3))**2 &
+           !err_f(j,i,k) = max(abs(u_f(j,i,k,1,4)-u_f(j,i,k,1,3)),abs(u_f(j,i,k,2,4)-u_f(j,i,k,2,3)), &
+            !        abs(u_f(j,i,k,3,4)-u_f(j,i,k,3,3)))
+           l2_err_f = l2_err_f + h1_f*h2_f*h3_f*((u_f(j,i,k,1,4)-u_f(j,i,k,1,3))**2 &
               + (u_f(j,i,k,2,4)-u_f(j,i,k,2,3))**2+(u_f(j,i,k,3,4)-u_f(j,i,k,3,3))**2)
         end do
      end do
@@ -394,14 +395,17 @@ program Elastic_3D_Interface_nonconforming
         do j=1,n1_c
            call exact_solution(Xgrid_c_1(j),Xgrid_c_2(i),Xgrid_c_3(j,i,k), &
                     tv,u_c(j,i,k,1,3),u_c(j,i,k,2,3),u_c(j,i,k,3,3),0)
-           err_c(j,i,k) = max(abs(u_c(j,i,k,1,4)-u_c(j,i,k,1,3)),abs(u_c(j,i,k,2,4)-u_c(j,i,k,2,3)), &
-                    abs(u_c(j,i,k,3,4)-u_c(j,i,k,3,3)))
-           l2_err = l2_err + h1_c*h2_c*h3_c*((u_c(j,i,k,1,4)-u_c(j,i,k,1,3))**2 &
+           !err_c(j,i,k) = max(abs(u_c(j,i,k,1,4)-u_c(j,i,k,1,3)),abs(u_c(j,i,k,2,4)-u_c(j,i,k,2,3)), &
+            !        abs(u_c(j,i,k,3,4)-u_c(j,i,k,3,3)))
+           l2_err_c = l2_err_c + h1_c*h2_c*h3_c*((u_c(j,i,k,1,4)-u_c(j,i,k,1,3))**2 &
               +(u_c(j,i,k,2,4)-u_c(j,i,k,2,3))**2+(u_c(j,i,k,3,4)-u_c(j,i,k,3,3))**2)
         end do
      end do
   end do
 
+  l2_err = l2_err_c + l2_err_f
+  l2_err_c = sqrt(l2_err_c)
+  l2_err_f = sqrt(l2_err_f)
   l2_err = sqrt(l2_err)
   N6(1) = n1_c
   N6(2) = n2_c
@@ -422,8 +426,10 @@ program Elastic_3D_Interface_nonconforming
   call print_array_to_file(n1_c,n2_c,n3_c,err_c(1:n1_c,1:n2_c,1:n3_c),'err_c.txt')
 
   write(*,"(A20,6I5)") 'No. of grid points', n1_c,n2_c,n3_c,n1_f,n2_f,n3_f
-  write(*,"(A20,5ES25.15E3)") 'errors',maxval(err_c),maxval(err_f), l2_err
-  write(*,"(A20,5ES25.15E3)") 'errors/16',maxval(err_c)/16.d0,maxval(err_f)/16.d0, l2_err/16.d0
+  !write(*,"(A20,5ES25.15E3)") 'errors',maxval(err_c),maxval(err_f), l2_err
+  !write(*,"(A20,5ES25.15E3)") 'errors/16',maxval(err_c)/16.d0,maxval(err_f)/16.d0, l2_err/16.d0
+  write(*,"(A20,5ES25.15E3)") 'errors',l2_err_c,l2_err_f,l2_err
+  write(*,"(A20,5ES25.15E3)") 'errors/16',l2_err_c/16.d0,l2_err_f/16.d0,l2_err/16.d0
   write(*,"(A20,5ES25.15E3)") 'computational time', (c2-c1)/rate
   write(*,"(A20,5ES25.15E3)") 'cfl', cfl
 
@@ -533,7 +539,7 @@ contains
     real(dp), dimension (:,:,:,:), allocatable :: Mass_r_11,Mass_r_12,Mass_r_13,Mass_r_21,Mass_r_22
     real(dp), dimension (:,:,:,:), allocatable :: Mass_r_23,Mass_r_31,Mass_r_32,Mass_r_33
     !
-    allocate(int_cof_c(1:n1_c,1:n2_c))
+    allocate(int_cof_c(1-nrg:n1_c+nrg,1-nrg:n2_c+nrg))
     allocate(int_cof_f(1-nrg:n1_f+nrg,1-nrg:n2_f+nrg))
     allocate(Mass_p_11(-2:n1_f+3,-2:n2_f+3,-2:n1_c+3,-2:n2_c+3))
     allocate(Mass_p_12(-2:n1_f+3,-2:n2_f+3,-2:n1_c+3,-2:n2_c+3))
@@ -576,8 +582,8 @@ contains
 
     int_cof = 17.d0/48.d0*h3_f*ghcof(1)/h3_c**2
 
-    do j = 1,n2_c
-       do i = 1,n1_c
+    do j = 1-nrg,n2_c+nrg
+       do i = 1-nrg,n1_c+nrg
           int_cof_c(i,j) = Jacobian_c(i,j,n3_c)*sqrt(XI13_c(i,j,n3_c)**2+XI23_c(i,j,n3_c)**2+XI33_c(i,j,n3_c)**2)
        end do
     end do
@@ -590,89 +596,108 @@ contains
 
     do k = 0,n2_c+1
       do i = 0,n1_c+1
-        Mass_p_11(2*i-1,2*k-1,i,k) = Jacobian_c(i,k,n3_c)*((2.d0*mu_c(i,k,n3_c)+lambda_c(i,k,n3_c)) &
+        Mass_p_11(2*i-1,2*k-1,i,k) = sqrt(int_cof_c(i,k))*Jacobian_c(i,k,n3_c)*((2.d0*mu_c(i,k,n3_c)+lambda_c(i,k,n3_c)) &
             *XI13_c(i,k,n3_c)*XI13_c(i,k,n3_c)+mu_c(i,k,n3_c)*(XI23_c(i,k,n3_c)*XI23_c(i,k,n3_c) &
-            +XI33_c(i,k,n3_c)*XI33_c(i,k,n3_c)))/rho_c(i,k,n3_c)
-        Mass_p_12(2*i-1,2*k-1,i,k) = Jacobian_c(i,k,n3_c)*XI13_c(i,k,n3_c)*XI23_c(i,k,n3_c) &
-            *(mu_c(i,k,n3_c)+lambda_c(i,k,n3_c))/rho_c(i,k,n3_c)
-        Mass_p_13(2*i-1,2*k-1,i,k) = Jacobian_c(i,k,n3_c)*XI13_c(i,k,n3_c)*XI33_c(i,k,n3_c) &
-            *(mu_c(i,k,n3_c)+lambda_c(i,k,n3_c))/rho_c(i,k,n3_c)
-        Mass_p_21(2*i-1,2*k-1,i,k) = Jacobian_c(i,k,n3_c)*XI13_c(i,k,n3_c)*XI23_c(i,k,n3_c) &
-            *(mu_c(i,k,n3_c)+lambda_c(i,k,n3_c))/rho_c(i,k,n3_c)
-        Mass_p_22(2*i-1,2*k-1,i,k) = Jacobian_c(i,k,n3_c)*((2.d0*mu_c(i,k,n3_c)+lambda_c(i,k,n3_c)) &
+            +XI33_c(i,k,n3_c)*XI33_c(i,k,n3_c)))/rho_c(i,k,n3_c)/sqrt(int_cof_f(2*i-1,2*k-1))
+        Mass_p_12(2*i-1,2*k-1,i,k) = sqrt(int_cof_c(i,k))*Jacobian_c(i,k,n3_c)*XI13_c(i,k,n3_c)*XI23_c(i,k,n3_c) &
+            *(mu_c(i,k,n3_c)+lambda_c(i,k,n3_c))/rho_c(i,k,n3_c)/sqrt(int_cof_f(2*i-1,2*k-1))
+        Mass_p_13(2*i-1,2*k-1,i,k) = sqrt(int_cof_c(i,k))*Jacobian_c(i,k,n3_c)*XI13_c(i,k,n3_c)*XI33_c(i,k,n3_c) &
+            *(mu_c(i,k,n3_c)+lambda_c(i,k,n3_c))/rho_c(i,k,n3_c)/sqrt(int_cof_f(2*i-1,2*k-1))
+        Mass_p_21(2*i-1,2*k-1,i,k) = sqrt(int_cof_c(i,k))*Jacobian_c(i,k,n3_c)*XI13_c(i,k,n3_c)*XI23_c(i,k,n3_c) &
+            *(mu_c(i,k,n3_c)+lambda_c(i,k,n3_c))/rho_c(i,k,n3_c)/sqrt(int_cof_f(2*i-1,2*k-1))
+        Mass_p_22(2*i-1,2*k-1,i,k) = sqrt(int_cof_c(i,k))*Jacobian_c(i,k,n3_c)*((2.d0*mu_c(i,k,n3_c)+lambda_c(i,k,n3_c)) &
             *XI23_c(i,k,n3_c)*XI23_c(i,k,n3_c)+XI13_c(i,k,n3_c)*XI13_c(i,k,n3_c)*mu_c(i,k,n3_c) &
-            +XI33_c(i,k,n3_c)*XI33_c(i,k,n3_c)*mu_c(i,k,n3_c))/rho_c(i,k,n3_c)
-        Mass_p_23(2*i-1,2*k-1,i,k) = Jacobian_c(i,k,n3_c)*XI23_c(i,k,n3_c)*XI33_c(i,k,n3_c) &
-            *(mu_c(i,k,n3_c)+lambda_c(i,k,n3_c))/rho_c(i,k,n3_c)
-        Mass_p_31(2*i-1,2*k-1,i,k) = Jacobian_c(i,k,n3_c)*XI13_c(i,k,n3_c)*XI33_c(i,k,n3_c) &
-            *(mu_c(i,k,n3_c)+lambda_c(i,k,n3_c))/rho_c(i,k,n3_c)
-        Mass_p_32(2*i-1,2*k-1,i,k) = Jacobian_c(i,k,n3_c)*XI23_c(i,k,n3_c)*XI33_c(i,k,n3_c) &
-            *(mu_c(i,k,n3_c)+lambda_c(i,k,n3_c))/rho_c(i,k,n3_c)
-        Mass_p_33(2*i-1,2*k-1,i,k) = Jacobian_c(i,k,n3_c)*((2.d0*mu_c(i,k,n3_c)+lambda_c(i,k,n3_c)) &
+            +XI33_c(i,k,n3_c)*XI33_c(i,k,n3_c)*mu_c(i,k,n3_c))/rho_c(i,k,n3_c)/sqrt(int_cof_f(2*i-1,2*k-1))
+        Mass_p_23(2*i-1,2*k-1,i,k) = sqrt(int_cof_c(i,k))*Jacobian_c(i,k,n3_c)*XI23_c(i,k,n3_c)*XI33_c(i,k,n3_c) &
+            *(mu_c(i,k,n3_c)+lambda_c(i,k,n3_c))/rho_c(i,k,n3_c)/sqrt(int_cof_f(2*i-1,2*k-1))
+        Mass_p_31(2*i-1,2*k-1,i,k) = sqrt(int_cof_c(i,k))*Jacobian_c(i,k,n3_c)*XI13_c(i,k,n3_c)*XI33_c(i,k,n3_c) &
+            *(mu_c(i,k,n3_c)+lambda_c(i,k,n3_c))/rho_c(i,k,n3_c)/sqrt(int_cof_f(2*i-1,2*k-1))
+        Mass_p_32(2*i-1,2*k-1,i,k) = sqrt(int_cof_c(i,k))*Jacobian_c(i,k,n3_c)*XI23_c(i,k,n3_c)*XI33_c(i,k,n3_c) &
+            *(mu_c(i,k,n3_c)+lambda_c(i,k,n3_c))/rho_c(i,k,n3_c)/sqrt(int_cof_f(2*i-1,2*k-1))
+        Mass_p_33(2*i-1,2*k-1,i,k) = sqrt(int_cof_c(i,k))*Jacobian_c(i,k,n3_c)*((2.d0*mu_c(i,k,n3_c)+lambda_c(i,k,n3_c)) &
             *XI33_c(i,k,n3_c)*XI33_c(i,k,n3_c)+mu_c(i,k,n3_c)*(XI13_c(i,k,n3_c)*XI13_c(i,k,n3_c) &
-            +XI23_c(i,k,n3_c)*XI23_c(i,k,n3_c)))/rho_c(i,k,n3_c)
+            +XI23_c(i,k,n3_c)*XI23_c(i,k,n3_c)))/rho_c(i,k,n3_c)/sqrt(int_cof_f(2*i-1,2*k-1))
       end do
     end do
     !
     do k = -1,n2_c+1
       do i = 0,n1_c+1
         do j = -1,2
-          Mass_p_11(2*i-1,2*k,i,k+j) = Mass_p_11(2*i-1,2*k,i,k+j)+P(j)*Jacobian_c(i,k+j,n3_c) &
+          Mass_p_11(2*i-1,2*k,i,k+j) = Mass_p_11(2*i-1,2*k,i,k+j)+P(j)*sqrt(int_cof_c(i,k+j))*Jacobian_c(i,k+j,n3_c) &
             *((2.d0*mu_c(i,k+j,n3_c)+lambda_c(i,k+j,n3_c))*XI13_c(i,k+j,n3_c)*XI13_c(i,k+j,n3_c) &
             +mu_c(i,k+j,n3_c)*(XI23_c(i,k+j,n3_c)*XI23_c(i,k+j,n3_c)+XI33_c(i,k+j,n3_c) &
             *XI33_c(i,k+j,n3_c)))/rho_c(i,k+j,n3_c)
-          Mass_p_12(2*i-1,2*k,i,k+j) = Mass_p_12(2*i-1,2*k,i,k+j)+P(j)*Jacobian_c(i,k+j,n3_c) &
+          Mass_p_12(2*i-1,2*k,i,k+j) = Mass_p_12(2*i-1,2*k,i,k+j)+P(j)*sqrt(int_cof_c(i,k+j))*Jacobian_c(i,k+j,n3_c) &
             *XI13_c(i,k+j,n3_c)*XI23_c(i,k+j,n3_c)*(mu_c(i,k+j,n3_c)+lambda_c(i,k+j,n3_c))/rho_c(i,k+j,n3_c)
-          Mass_p_13(2*i-1,2*k,i,k+j) = Mass_p_13(2*i-1,2*k,i,k+j)+P(j)*Jacobian_c(i,k+j,n3_c) &
+          Mass_p_13(2*i-1,2*k,i,k+j) = Mass_p_13(2*i-1,2*k,i,k+j)+P(j)*sqrt(int_cof_c(i,k+j))*Jacobian_c(i,k+j,n3_c) &
             *XI13_c(i,k+j,n3_c)*XI33_c(i,k+j,n3_c)*(mu_c(i,k+j,n3_c)+lambda_c(i,k+j,n3_c))/rho_c(i,k+j,n3_c)
-          Mass_p_21(2*i-1,2*k,i,k+j) = Mass_p_21(2*i-1,2*k,i,k+j)+P(j)*Jacobian_c(i,k+j,n3_c) &
+          Mass_p_21(2*i-1,2*k,i,k+j) = Mass_p_21(2*i-1,2*k,i,k+j)+P(j)*sqrt(int_cof_c(i,k+j))*Jacobian_c(i,k+j,n3_c) &
             *XI13_c(i,k+j,n3_c)*XI23_c(i,k+j,n3_c)*(mu_c(i,k+j,n3_c)+lambda_c(i,k+j,n3_c))/rho_c(i,k+j,n3_c)
-          Mass_p_22(2*i-1,2*k,i,k+j) = Mass_p_22(2*i-1,2*k,i,k+j)+P(j)*Jacobian_c(i,k+j,n3_c) &
+          Mass_p_22(2*i-1,2*k,i,k+j) = Mass_p_22(2*i-1,2*k,i,k+j)+P(j)*sqrt(int_cof_c(i,k+j))*Jacobian_c(i,k+j,n3_c) &
             *((2.d0*mu_c(i,k+j,n3_c)+lambda_c(i,k+j,n3_c))*XI23_c(i,k+j,n3_c)*XI23_c(i,k+j,n3_c) &
             +XI13_c(i,k+j,n3_c)*XI13_c(i,k+j,n3_c)*mu_c(i,k+j,n3_c)+XI33_c(i,k+j,n3_c) &
             *XI33_c(i,k+j,n3_c)*mu_c(i,k+j,n3_c))/rho_c(i,k+j,n3_c)
-          Mass_p_23(2*i-1,2*k,i,k+j) = Mass_p_23(2*i-1,2*k,i,k+j)+P(j)*Jacobian_c(i,k+j,n3_c) &
+          Mass_p_23(2*i-1,2*k,i,k+j) = Mass_p_23(2*i-1,2*k,i,k+j)+P(j)*sqrt(int_cof_c(i,k+j))*Jacobian_c(i,k+j,n3_c) &
             *XI23_c(i,k+j,n3_c)*XI33_c(i,k+j,n3_c)*(mu_c(i,k+j,n3_c)+lambda_c(i,k+j,n3_c))/rho_c(i,k+j,n3_c)
-          Mass_p_31(2*i-1,2*k,i,k+j) = Mass_p_31(2*i-1,2*k,i,k+j)+P(j)*Jacobian_c(i,k+j,n3_c) &
+          Mass_p_31(2*i-1,2*k,i,k+j) = Mass_p_31(2*i-1,2*k,i,k+j)+P(j)*sqrt(int_cof_c(i,k+j))*Jacobian_c(i,k+j,n3_c) &
             *XI13_c(i,k+j,n3_c)*XI33_c(i,k+j,n3_c)*(mu_c(i,k+j,n3_c)+lambda_c(i,k+j,n3_c))/rho_c(i,k+j,n3_c)
-          Mass_p_32(2*i-1,2*k,i,k+j) = Mass_p_32(2*i-1,2*k,i,k+j)+P(j)*Jacobian_c(i,k+j,n3_c) &
+          Mass_p_32(2*i-1,2*k,i,k+j) = Mass_p_32(2*i-1,2*k,i,k+j)+P(j)*sqrt(int_cof_c(i,k+j))*Jacobian_c(i,k+j,n3_c) &
             *XI23_c(i,k+j,n3_c)*XI33_c(i,k+j,n3_c)*(mu_c(i,k+j,n3_c)+lambda_c(i,k+j,n3_c))/rho_c(i,k+j,n3_c)
-          Mass_p_33(2*i-1,2*k,i,k+j) = Mass_p_33(2*i-1,2*k,i,k+j)+P(j)*Jacobian_c(i,k+j,n3_c) &
+          Mass_p_33(2*i-1,2*k,i,k+j) = Mass_p_33(2*i-1,2*k,i,k+j)+P(j)*sqrt(int_cof_c(i,k+j))*Jacobian_c(i,k+j,n3_c) &
             *((2.d0*mu_c(i,k+j,n3_c)+lambda_c(i,k+j,n3_c))*XI33_c(i,k+j,n3_c)*XI33_c(i,k+j,n3_c) &
             +mu_c(i,k+j,n3_c)*(XI13_c(i,k+j,n3_c)*XI13_c(i,k+j,n3_c)+XI23_c(i,k+j,n3_c) &
             *XI23_c(i,k+j,n3_c)))/rho_c(i,k+j,n3_c)
         end do
+        Mass_p_11(2*i-1,2*k,i,k-1:k+2) = Mass_p_11(2*i-1,2*k,i,k-1:k+2)/sqrt(int_cof_f(2*i-1,2*k))
+        Mass_p_12(2*i-1,2*k,i,k-1:k+2) = Mass_p_12(2*i-1,2*k,i,k-1:k+2)/sqrt(int_cof_f(2*i-1,2*k))
+        Mass_p_13(2*i-1,2*k,i,k-1:k+2) = Mass_p_13(2*i-1,2*k,i,k-1:k+2)/sqrt(int_cof_f(2*i-1,2*k))
+        Mass_p_21(2*i-1,2*k,i,k-1:k+2) = Mass_p_21(2*i-1,2*k,i,k-1:k+2)/sqrt(int_cof_f(2*i-1,2*k))
+        Mass_p_22(2*i-1,2*k,i,k-1:k+2) = Mass_p_22(2*i-1,2*k,i,k-1:k+2)/sqrt(int_cof_f(2*i-1,2*k))
+        Mass_p_23(2*i-1,2*k,i,k-1:k+2) = Mass_p_23(2*i-1,2*k,i,k-1:k+2)/sqrt(int_cof_f(2*i-1,2*k))
+        Mass_p_31(2*i-1,2*k,i,k-1:k+2) = Mass_p_31(2*i-1,2*k,i,k-1:k+2)/sqrt(int_cof_f(2*i-1,2*k))
+        Mass_p_32(2*i-1,2*k,i,k-1:k+2) = Mass_p_32(2*i-1,2*k,i,k-1:k+2)/sqrt(int_cof_f(2*i-1,2*k))
+        Mass_p_33(2*i-1,2*k,i,k-1:k+2) = Mass_p_33(2*i-1,2*k,i,k-1:k+2)/sqrt(int_cof_f(2*i-1,2*k))
       end do
     end do
     !
     do k = 0,n2_c+1
       do i = -1,n1_c+1
         do j = -1,2
-          Mass_p_11(2*i,2*k-1,i+j,k) = Mass_p_11(2*i,2*k-1,i+j,k)+P(j)*Jacobian_c(i+j,k,n3_c) &
+          !print *, Mass_p_11(2*i,2*k-1,i+j,k)
+          Mass_p_11(2*i,2*k-1,i+j,k) = Mass_p_11(2*i,2*k-1,i+j,k)+P(j)*sqrt(int_cof_c(i+j,k))*Jacobian_c(i+j,k,n3_c) &
             *((2.d0*mu_c(i+j,k,n3_c)+lambda_c(i+j,k,n3_c))*XI13_c(i+j,k,n3_c)*XI13_c(i+j,k,n3_c) &
             +mu_c(i+j,k,n3_c)*(XI23_c(i+j,k,n3_c)*XI23_c(i+j,k,n3_c)+XI33_c(i+j,k,n3_c) &
             *XI33_c(i+j,k,n3_c)))/rho_c(i+j,k,n3_c)
-          Mass_p_12(2*i,2*k-1,i+j,k) = Mass_p_12(2*i,2*k-1,i+j,k)+P(j)*Jacobian_c(i+j,k,n3_c) &
+          Mass_p_12(2*i,2*k-1,i+j,k) = Mass_p_12(2*i,2*k-1,i+j,k)+P(j)*sqrt(int_cof_c(i+j,k))*Jacobian_c(i+j,k,n3_c) &
             *XI13_c(i+j,k,n3_c)*XI23_c(i+j,k,n3_c)*(mu_c(i+j,k,n3_c)+lambda_c(i+j,k,n3_c))/rho_c(i+j,k,n3_c)
-          Mass_p_13(2*i,2*k-1,i+j,k) = Mass_p_13(2*i,2*k-1,i+j,k)+P(j)*Jacobian_c(i+j,k,n3_c) &
+          Mass_p_13(2*i,2*k-1,i+j,k) = Mass_p_13(2*i,2*k-1,i+j,k)+P(j)*sqrt(int_cof_c(i+j,k))*Jacobian_c(i+j,k,n3_c) &
             *XI13_c(i+j,k,n3_c)*XI33_c(i+j,k,n3_c)*(mu_c(i+j,k,n3_c)+lambda_c(i+j,k,n3_c))/rho_c(i+j,k,n3_c)
-          Mass_p_21(2*i,2*k-1,i+j,k) = Mass_p_21(2*i,2*k-1,i+j,k)+P(j)*Jacobian_c(i+j,k,n3_c) &
+          Mass_p_21(2*i,2*k-1,i+j,k) = Mass_p_21(2*i,2*k-1,i+j,k)+P(j)*sqrt(int_cof_c(i+j,k))*Jacobian_c(i+j,k,n3_c) &
             *XI13_c(i+j,k,n3_c)*XI23_c(i+j,k,n3_c)*(mu_c(i+j,k,n3_c)+lambda_c(i+j,k,n3_c))/rho_c(i+j,k,n3_c)
-          Mass_p_22(2*i,2*k-1,i+j,k) = Mass_p_22(2*i,2*k-1,i+j,k)+P(j)*Jacobian_c(i+j,k,n3_c) &
+          Mass_p_22(2*i,2*k-1,i+j,k) = Mass_p_22(2*i,2*k-1,i+j,k)+P(j)*sqrt(int_cof_c(i+j,k))*Jacobian_c(i+j,k,n3_c) &
             *((2.d0*mu_c(i+j,k,n3_c)+lambda_c(i+j,k,n3_c))*XI23_c(i+j,k,n3_c)*XI23_c(i+j,k,n3_c) &
             +XI13_c(i+j,k,n3_c)*XI13_c(i+j,k,n3_c)*mu_c(i+j,k,n3_c)+XI33_c(i+j,k,n3_c) &
             *XI33_c(i+j,k,n3_c)*mu_c(i+j,k,n3_c))/rho_c(i+j,k,n3_c)
-          Mass_p_23(2*i,2*k-1,i+j,k) = Mass_p_23(2*i,2*k-1,i+j,k)+P(j)*Jacobian_c(i+j,k,n3_c) &
+          Mass_p_23(2*i,2*k-1,i+j,k) = Mass_p_23(2*i,2*k-1,i+j,k)+P(j)*sqrt(int_cof_c(i+j,k))*Jacobian_c(i+j,k,n3_c) &
             *XI23_c(i+j,k,n3_c)*XI33_c(i+j,k,n3_c)*(mu_c(i+j,k,n3_c)+lambda_c(i+j,k,n3_c))/rho_c(i+j,k,n3_c)
-          Mass_p_31(2*i,2*k-1,i+j,k) = Mass_p_31(2*i,2*k-1,i+j,k)+P(j)*Jacobian_c(i+j,k,n3_c) &
+          Mass_p_31(2*i,2*k-1,i+j,k) = Mass_p_31(2*i,2*k-1,i+j,k)+P(j)*sqrt(int_cof_c(i+j,k))*Jacobian_c(i+j,k,n3_c) &
             *XI13_c(i+j,k,n3_c)*XI33_c(i+j,k,n3_c)*(mu_c(i+j,k,n3_c)+lambda_c(i+j,k,n3_c))/rho_c(i+j,k,n3_c)
-          Mass_p_32(2*i,2*k-1,i+j,k) = Mass_p_32(2*i,2*k-1,i+j,k)+P(j)*Jacobian_c(i+j,k,n3_c) &
+          Mass_p_32(2*i,2*k-1,i+j,k) = Mass_p_32(2*i,2*k-1,i+j,k)+P(j)*sqrt(int_cof_c(i+j,k))*Jacobian_c(i+j,k,n3_c) &
             *XI23_c(i+j,k,n3_c)*XI33_c(i+j,k,n3_c)*(mu_c(i+j,k,n3_c)+lambda_c(i+j,k,n3_c))/rho_c(i+j,k,n3_c)
-          Mass_p_33(2*i,2*k-1,i+j,k) = Mass_p_33(2*i,2*k-1,i+j,k)+P(j)*Jacobian_c(i+j,k,n3_c) &
+          Mass_p_33(2*i,2*k-1,i+j,k) = Mass_p_33(2*i,2*k-1,i+j,k)+P(j)*sqrt(int_cof_c(i+j,k))*Jacobian_c(i+j,k,n3_c) &
             *((2.d0*mu_c(i+j,k,n3_c)+lambda_c(i+j,k,n3_c))*XI33_c(i+j,k,n3_c)*XI33_c(i+j,k,n3_c) &
             +mu_c(i+j,k,n3_c)*(XI13_c(i+j,k,n3_c)*XI13_c(i+j,k,n3_c)+XI23_c(i+j,k,n3_c) &
             *XI23_c(i+j,k,n3_c)))/rho_c(i+j,k,n3_c)
         end do
+        Mass_p_11(2*i,2*k-1,i-1:i+2,k) = Mass_p_11(2*i,2*k-1,i-1:i+2,k)/sqrt(int_cof_f(2*i,2*k-1))
+        Mass_p_12(2*i,2*k-1,i-1:i+2,k) = Mass_p_12(2*i,2*k-1,i-1:i+2,k)/sqrt(int_cof_f(2*i,2*k-1))
+        Mass_p_13(2*i,2*k-1,i-1:i+2,k) = Mass_p_13(2*i,2*k-1,i-1:i+2,k)/sqrt(int_cof_f(2*i,2*k-1))
+        Mass_p_21(2*i,2*k-1,i-1:i+2,k) = Mass_p_21(2*i,2*k-1,i-1:i+2,k)/sqrt(int_cof_f(2*i,2*k-1))
+        Mass_p_22(2*i,2*k-1,i-1:i+2,k) = Mass_p_22(2*i,2*k-1,i-1:i+2,k)/sqrt(int_cof_f(2*i,2*k-1))
+        Mass_p_23(2*i,2*k-1,i-1:i+2,k) = Mass_p_23(2*i,2*k-1,i-1:i+2,k)/sqrt(int_cof_f(2*i,2*k-1))
+        Mass_p_31(2*i,2*k-1,i-1:i+2,k) = Mass_p_31(2*i,2*k-1,i-1:i+2,k)/sqrt(int_cof_f(2*i,2*k-1))
+        Mass_p_32(2*i,2*k-1,i-1:i+2,k) = Mass_p_32(2*i,2*k-1,i-1:i+2,k)/sqrt(int_cof_f(2*i,2*k-1))
+        Mass_p_33(2*i,2*k-1,i-1:i+2,k) = Mass_p_33(2*i,2*k-1,i-1:i+2,k)/sqrt(int_cof_f(2*i,2*k-1))
       end do
     end do
     !
@@ -680,38 +705,47 @@ contains
       do i = -1,n1_c+1
         do l = -1,2
           do j = -1,2
-            Mass_p_11(2*i,2*k,i+j,k+l)=Mass_p_11(2*i,2*k,i+j,k+l)+P(l)*(P(j)*Jacobian_c(i+j,k+l,n3_c) &
+            Mass_p_11(2*i,2*k,i+j,k+l)=Mass_p_11(2*i,2*k,i+j,k+l)+P(l)*(P(j)*sqrt(int_cof_c(i+j,k+l))*Jacobian_c(i+j,k+l,n3_c) &
               *((2.d0*mu_c(i+j,k+l,n3_c)+lambda_c(i+j,k+l,n3_c))*XI13_c(i+j,k+l,n3_c) &
               *XI13_c(i+j,k+l,n3_c)+mu_c(i+j,k+l,n3_c)*(XI23_c(i+j,k+l,n3_c)*XI23_c(i+j,k+l,n3_c) &
               +XI33_c(i+j,k+l,n3_c)*XI33_c(i+j,k+l,n3_c)))/rho_c(i+j,k+l,n3_c))
-            Mass_p_12(2*i,2*k,i+j,k+l)=Mass_p_12(2*i,2*k,i+j,k+l)+P(l)*(P(j)*Jacobian_c(i+j,k+l,n3_c) &
+            Mass_p_12(2*i,2*k,i+j,k+l)=Mass_p_12(2*i,2*k,i+j,k+l)+P(l)*(P(j)*sqrt(int_cof_c(i+j,k+l))*Jacobian_c(i+j,k+l,n3_c) &
               *XI13_c(i+j,k+l,n3_c)*XI23_c(i+j,k+l,n3_c)*(mu_c(i+j,k+l,n3_c)+lambda_c(i+j,k+l,n3_c)) &
               /rho_c(i+j,k+l,n3_c))
-            Mass_p_13(2*i,2*k,i+j,k+l)=Mass_p_13(2*i,2*k,i+j,k+l)+P(l)*(P(j)*Jacobian_c(i+j,k+l,n3_c) &
+            Mass_p_13(2*i,2*k,i+j,k+l)=Mass_p_13(2*i,2*k,i+j,k+l)+P(l)*(P(j)*sqrt(int_cof_c(i+j,k+l))*Jacobian_c(i+j,k+l,n3_c) &
               *XI13_c(i+j,k+l,n3_c)*XI33_c(i+j,k+l,n3_c)*(mu_c(i+j,k+l,n3_c)+lambda_c(i+j,k+l,n3_c)) &
               /rho_c(i+j,k+l,n3_c))
-            Mass_p_21(2*i,2*k,i+j,k+l)=Mass_p_21(2*i,2*k,i+j,k+l)+P(l)*(P(j)*Jacobian_c(i+j,k+l,n3_c) &
+            Mass_p_21(2*i,2*k,i+j,k+l)=Mass_p_21(2*i,2*k,i+j,k+l)+P(l)*(P(j)*sqrt(int_cof_c(i+j,k+l))*Jacobian_c(i+j,k+l,n3_c) &
               *XI13_c(i+j,k+l,n3_c)*XI23_c(i+j,k+l,n3_c)*(mu_c(i+j,k+l,n3_c)+lambda_c(i+j,k+l,n3_c)) &
               /rho_c(i+j,k+l,n3_c))
-            Mass_p_22(2*i,2*k,i+j,k+l)=Mass_p_22(2*i,2*k,i+j,k+l)+P(l)*(P(j)*Jacobian_c(i+j,k+l,n3_c) &
+            Mass_p_22(2*i,2*k,i+j,k+l)=Mass_p_22(2*i,2*k,i+j,k+l)+P(l)*(P(j)*sqrt(int_cof_c(i+j,k+l))*Jacobian_c(i+j,k+l,n3_c) &
               *((2.d0*mu_c(i+j,k+l,n3_c)+lambda_c(i+j,k+l,n3_c))*XI23_c(i+j,k+l,n3_c) &
               *XI23_c(i+j,k+l,n3_c)+XI13_c(i+j,k+l,n3_c)*XI13_c(i+j,k+l,n3_c)*mu_c(i+j,k+l,n3_c) &
               +XI33_c(i+j,k+l,n3_c)*XI33_c(i+j,k+l,n3_c)*mu_c(i+j,k+l,n3_c))/rho_c(i+j,k+l,n3_c))
-            Mass_p_23(2*i,2*k,i+j,k+l)=Mass_p_23(2*i,2*k,i+j,k+l)+P(l)*(P(j)*Jacobian_c(i+j,k+l,n3_c) &
+            Mass_p_23(2*i,2*k,i+j,k+l)=Mass_p_23(2*i,2*k,i+j,k+l)+P(l)*(P(j)*sqrt(int_cof_c(i+j,k+l))*Jacobian_c(i+j,k+l,n3_c) &
               *XI23_c(i+j,k+l,n3_c)*XI33_c(i+j,k+l,n3_c)*(mu_c(i+j,k+l,n3_c)+lambda_c(i+j,k+l,n3_c)) &
               /rho_c(i+j,k+l,n3_c))
-            Mass_p_31(2*i,2*k,i+j,k+l)=Mass_p_31(2*i,2*k,i+j,k+l)+P(l)*(P(j)*Jacobian_c(i+j,k+l,n3_c) &
+            Mass_p_31(2*i,2*k,i+j,k+l)=Mass_p_31(2*i,2*k,i+j,k+l)+P(l)*(P(j)*sqrt(int_cof_c(i+j,k+l))*Jacobian_c(i+j,k+l,n3_c) &
               *XI13_c(i+j,k+l,n3_c)*XI33_c(i+j,k+l,n3_c)*(mu_c(i+j,k+l,n3_c)+lambda_c(i+j,k+l,n3_c)) &
               /rho_c(i+j,k+l,n3_c))
-            Mass_p_32(2*i,2*k,i+j,k+l)=Mass_p_32(2*i,2*k,i+j,k+l)+P(l)*(P(j)*Jacobian_c(i+j,k+l,n3_c) &
+            Mass_p_32(2*i,2*k,i+j,k+l)=Mass_p_32(2*i,2*k,i+j,k+l)+P(l)*(P(j)*sqrt(int_cof_c(i+j,k+l))*Jacobian_c(i+j,k+l,n3_c) &
               *XI23_c(i+j,k+l,n3_c)*XI33_c(i+j,k+l,n3_c)*(mu_c(i+j,k+l,n3_c)+lambda_c(i+j,k+l,n3_c)) &
               /rho_c(i+j,k+l,n3_c))
-            Mass_p_33(2*i,2*k,i+j,k+l)=Mass_p_33(2*i,2*k,i+j,k+l)+P(l)*(P(j)*Jacobian_c(i+j,k+l,n3_c) &
+            Mass_p_33(2*i,2*k,i+j,k+l)=Mass_p_33(2*i,2*k,i+j,k+l)+P(l)*(P(j)*sqrt(int_cof_c(i+j,k+l))*Jacobian_c(i+j,k+l,n3_c) &
               *((2.d0*mu_c(i+j,k+l,n3_c)+lambda_c(i+j,k+l,n3_c))*XI33_c(i+j,k+l,n3_c) &
               *XI33_c(i+j,k+l,n3_c)+mu_c(i+j,k+l,n3_c)*(XI13_c(i+j,k+l,n3_c)*XI13_c(i+j,k+l,n3_c) &
               +XI23_c(i+j,k+l,n3_c)*XI23_c(i+j,k+l,n3_c)))/rho_c(i+j,k+l,n3_c))
           end do
         end do
+        Mass_p_11(2*i,2*k,i-1:i+2,k-1:k+2) = Mass_p_11(2*i,2*k,i-1:i+2,k-1:k+2)/sqrt(int_cof_f(2*i,2*k))
+        Mass_p_12(2*i,2*k,i-1:i+2,k-1:k+2) = Mass_p_12(2*i,2*k,i-1:i+2,k-1:k+2)/sqrt(int_cof_f(2*i,2*k))
+        Mass_p_13(2*i,2*k,i-1:i+2,k-1:k+2) = Mass_p_13(2*i,2*k,i-1:i+2,k-1:k+2)/sqrt(int_cof_f(2*i,2*k))
+        Mass_p_21(2*i,2*k,i-1:i+2,k-1:k+2) = Mass_p_21(2*i,2*k,i-1:i+2,k-1:k+2)/sqrt(int_cof_f(2*i,2*k))
+        Mass_p_22(2*i,2*k,i-1:i+2,k-1:k+2) = Mass_p_22(2*i,2*k,i-1:i+2,k-1:k+2)/sqrt(int_cof_f(2*i,2*k))
+        Mass_p_23(2*i,2*k,i-1:i+2,k-1:k+2) = Mass_p_23(2*i,2*k,i-1:i+2,k-1:k+2)/sqrt(int_cof_f(2*i,2*k))
+        Mass_p_31(2*i,2*k,i-1:i+2,k-1:k+2) = Mass_p_31(2*i,2*k,i-1:i+2,k-1:k+2)/sqrt(int_cof_f(2*i,2*k))
+        Mass_p_32(2*i,2*k,i-1:i+2,k-1:k+2) = Mass_p_32(2*i,2*k,i-1:i+2,k-1:k+2)/sqrt(int_cof_f(2*i,2*k))
+        Mass_p_33(2*i,2*k,i-1:i+2,k-1:k+2) = Mass_p_33(2*i,2*k,i-1:i+2,k-1:k+2)/sqrt(int_cof_f(2*i,2*k))
       end do
     end do
 
@@ -765,42 +799,51 @@ contains
         do l = -4,2
           do j = -4,2
             Mass_r_11(i,k,1:n1_c,1:n2_c) = Mass_r_11(i,k,1:n1_c,1:n2_c) &
-                + Rop(l)*(Rop(j)*rho_f(2*i+j,2*k+l,1)*Mass_p_11(2*i+j,2*k+l,1:n1_c,1:n2_c)&
+                + Rop(l)*(Rop(j)*sqrt(int_cof_f(2*i+j,2*k+l))*rho_f(2*i+j,2*k+l,1)*Mass_p_11(2*i+j,2*k+l,1:n1_c,1:n2_c)&
                 /int_cof_f(2*i+j,2*k+l))
             !
             Mass_r_12(i,k,1:n1_c,1:n2_c) = Mass_r_12(i,k,1:n1_c,1:n2_c) &
-                + Rop(l)*(Rop(j)*rho_f(2*i+j,2*k+l,1)*Mass_p_12(2*i+j,2*k+l,1:n1_c,1:n2_c)&
+                + Rop(l)*(Rop(j)*sqrt(int_cof_f(2*i+j,2*k+l))*rho_f(2*i+j,2*k+l,1)*Mass_p_12(2*i+j,2*k+l,1:n1_c,1:n2_c)&
                 /int_cof_f(2*i+j,2*k+l))
             !
             Mass_r_13(i,k,1:n1_c,1:n2_c) = Mass_r_13(i,k,1:n1_c,1:n2_c) &
-                + Rop(l)*(Rop(j)*rho_f(2*i+j,2*k+l,1)*Mass_p_13(2*i+j,2*k+l,1:n1_c,1:n2_c)&
+                + Rop(l)*(Rop(j)*sqrt(int_cof_f(2*i+j,2*k+l))*rho_f(2*i+j,2*k+l,1)*Mass_p_13(2*i+j,2*k+l,1:n1_c,1:n2_c)&
                 /int_cof_f(2*i+j,2*k+l))
             !
             Mass_r_21(i,k,1:n1_c,1:n2_c) = Mass_r_21(i,k,1:n1_c,1:n2_c) &
-                + Rop(l)*(Rop(j)*rho_f(2*i+j,2*k+l,1)*Mass_p_21(2*i+j,2*k+l,1:n1_c,1:n2_c)&
+                + Rop(l)*(Rop(j)*sqrt(int_cof_f(2*i+j,2*k+l))*rho_f(2*i+j,2*k+l,1)*Mass_p_21(2*i+j,2*k+l,1:n1_c,1:n2_c)&
                 /int_cof_f(2*i+j,2*k+l))
             !
             Mass_r_22(i,k,1:n1_c,1:n2_c) = Mass_r_22(i,k,1:n1_c,1:n2_c) &
-                + Rop(l)*(Rop(j)*rho_f(2*i+j,2*k+l,1)*Mass_p_22(2*i+j,2*k+l,1:n1_c,1:n2_c)&
+                + Rop(l)*(Rop(j)*sqrt(int_cof_f(2*i+j,2*k+l))*rho_f(2*i+j,2*k+l,1)*Mass_p_22(2*i+j,2*k+l,1:n1_c,1:n2_c)&
                 /int_cof_f(2*i+j,2*k+l))
             !
             Mass_r_23(i,k,1:n1_c,1:n2_c) = Mass_r_23(i,k,1:n1_c,1:n2_c) &
-                + Rop(l)*(Rop(j)*rho_f(2*i+j,2*k+l,1)*Mass_p_23(2*i+j,2*k+l,1:n1_c,1:n2_c)&
+                + Rop(l)*(Rop(j)*sqrt(int_cof_f(2*i+j,2*k+l))*rho_f(2*i+j,2*k+l,1)*Mass_p_23(2*i+j,2*k+l,1:n1_c,1:n2_c)&
                 /int_cof_f(2*i+j,2*k+l))
             !
             Mass_r_31(i,k,1:n1_c,1:n2_c) = Mass_r_31(i,k,1:n1_c,1:n2_c) &
-                + Rop(l)*(Rop(j)*rho_f(2*i+j,2*k+l,1)*Mass_p_31(2*i+j,2*k+l,1:n1_c,1:n2_c)&
+                + Rop(l)*(Rop(j)*sqrt(int_cof_f(2*i+j,2*k+l))*rho_f(2*i+j,2*k+l,1)*Mass_p_31(2*i+j,2*k+l,1:n1_c,1:n2_c)&
                 /int_cof_f(2*i+j,2*k+l))
             !
             Mass_r_32(i,k,1:n1_c,1:n2_c) = Mass_r_32(i,k,1:n1_c,1:n2_c) &
-                + Rop(l)*(Rop(j)*rho_f(2*i+j,2*k+l,1)*Mass_p_32(2*i+j,2*k+l,1:n1_c,1:n2_c)&
+                + Rop(l)*(Rop(j)*sqrt(int_cof_f(2*i+j,2*k+l))*rho_f(2*i+j,2*k+l,1)*Mass_p_32(2*i+j,2*k+l,1:n1_c,1:n2_c)&
                 /int_cof_f(2*i+j,2*k+l))
             !
             Mass_r_33(i,k,1:n1_c,1:n2_c) = Mass_r_33(i,k,1:n1_c,1:n2_c) &
-                + Rop(l)*(Rop(j)*rho_f(2*i+j,2*k+l,1)*Mass_p_33(2*i+j,2*k+l,1:n1_c,1:n2_c)&
+                + Rop(l)*(Rop(j)*sqrt(int_cof_f(2*i+j,2*k+l))*rho_f(2*i+j,2*k+l,1)*Mass_p_33(2*i+j,2*k+l,1:n1_c,1:n2_c)&
                 /int_cof_f(2*i+j,2*k+l))
           end do
         end do
+        Mass_r_11(i,k,1:n1_c,1:n2_c) = Mass_r_11(i,k,1:n1_c,1:n2_c)/sqrt(int_cof_c(i,k))
+        Mass_r_12(i,k,1:n1_c,1:n2_c) = Mass_r_12(i,k,1:n1_c,1:n2_c)/sqrt(int_cof_c(i,k))
+        Mass_r_13(i,k,1:n1_c,1:n2_c) = Mass_r_13(i,k,1:n1_c,1:n2_c)/sqrt(int_cof_c(i,k))
+        Mass_r_21(i,k,1:n1_c,1:n2_c) = Mass_r_21(i,k,1:n1_c,1:n2_c)/sqrt(int_cof_c(i,k))
+        Mass_r_22(i,k,1:n1_c,1:n2_c) = Mass_r_22(i,k,1:n1_c,1:n2_c)/sqrt(int_cof_c(i,k))
+        Mass_r_23(i,k,1:n1_c,1:n2_c) = Mass_r_23(i,k,1:n1_c,1:n2_c)/sqrt(int_cof_c(i,k))
+        Mass_r_31(i,k,1:n1_c,1:n2_c) = Mass_r_31(i,k,1:n1_c,1:n2_c)/sqrt(int_cof_c(i,k))
+        Mass_r_32(i,k,1:n1_c,1:n2_c) = Mass_r_32(i,k,1:n1_c,1:n2_c)/sqrt(int_cof_c(i,k))
+        Mass_r_33(i,k,1:n1_c,1:n2_c) = Mass_r_33(i,k,1:n1_c,1:n2_c)/sqrt(int_cof_c(i,k))
       end do
     end do
     do l = 1,n2_c
@@ -879,11 +922,11 @@ contains
     integer index
     real(dp), dimension (:,:), allocatable :: int_cof_c, int_cof_f
     !
-    allocate(int_cof_c(1:n1_c,1:n2_c))
+    allocate(int_cof_c(1-nrg:n1_c+nrg,1-nrg:n2_c+nrg))
     allocate(int_cof_f(1-nrg:n1_f+nrg,1-nrg:n2_f+nrg))
     !
-    do j = 1,n2_c
-       do i = 1,n1_c
+    do j = 1-nrg,n2_c+nrg
+       do i = 1-nrg,n1_c+nrg
           int_cof_c(i,j) = Jacobian_c(i,j,n3_c)*sqrt(XI13_c(i,j,n3_c)**2+XI23_c(i,j,n3_c)**2+XI33_c(i,j,n3_c)**2)
        end do
     end do
@@ -1315,44 +1358,52 @@ contains
        do i = -1,n1_c+1
           do j = -1,2
              do l = -1,2
-                Mass_f1(2*i,2*k)=Mass_f1(2*i,2*k)+P(j)*(P(l)*lh_c(i+l,k+j,n3_c,1)/rho_c(i+l,k+j,n3_c))
+                Mass_f1(2*i,2*k)=Mass_f1(2*i,2*k)&
+                  +P(j)*(P(l)*sqrt(int_cof_c(i+l,k+j))*lh_c(i+l,k+j,n3_c,1)/rho_c(i+l,k+j,n3_c))
              end do
           end do
+          Mass_f1(2*i,2*k)=Mass_f1(2*i,2*k)/sqrt(int_cof_f(2*i,2*k))
       end do
     end do
     !
     do k = -1,n2_c+1
        do i = 0,n1_c+1
           do j = -1,2
-             Mass_f1(2*i-1,2*k)=Mass_f1(2*i-1,2*k)+P(j)*lh_c(i,k+j,n3_c,1)/rho_c(i,j+k,n3_c)
+             Mass_f1(2*i-1,2*k)=Mass_f1(2*i-1,2*k)+P(j)*sqrt(int_cof_c(i,k+j))*lh_c(i,k+j,n3_c,1)/rho_c(i,j+k,n3_c)
           end do
+          Mass_f1(2*i-1,2*k)=Mass_f1(2*i-1,2*k)/sqrt(int_cof_f(2*i-1,2*k))
        end do
     end do
     !
     do k = 0,n2_c+1
        do i = -1,n1_c+1
           do j = -1,2
-             Mass_f1(2*i,2*k-1)=Mass_f1(2*i,2*k-1)+P(j)*lh_c(i+j,k,n3_c,1)/rho_c(i+j,k,n3_c)
+             Mass_f1(2*i,2*k-1)=Mass_f1(2*i,2*k-1)+P(j)*sqrt(int_cof_c(i+j,k))*lh_c(i+j,k,n3_c,1)/rho_c(i+j,k,n3_c)
           end do
+          Mass_f1(2*i,2*k-1)=Mass_f1(2*i,2*k-1)/sqrt(int_cof_f(2*i,2*k-1))
        end do
     end do
     !
     do k = 0,n2_c+1
        do i = 0,n1_c+1
-          Mass_f1(2*i-1,2*k-1)=lh_c(i,k,n3_c,1)/rho_c(i,k,n3_c)
+          Mass_f1(2*i-1,2*k-1)=sqrt(int_cof_c(i,k))*lh_c(i,k,n3_c,1)/rho_c(i,k,n3_c)
+          Mass_f1(2*i-1,2*k-1)=Mass_f1(2*i-1,2*k-1)/sqrt(int_cof_f(2*i-1,2*k-1))
        end do
     end do
     ! restrict
     ! first set
+    Vass_temp = 0.d0
     do k = 1,n2_c
        do i = 1,n1_c
           do j = -4,2
              do l = -4,2
-                Vass((k-1)*3*n1_c+(i-1)*3+1)=Vass((k-1)*3*n1_c+(i-1)*3+1)&
-                     -17.d0/48.d0*h3_f*Rop(j)*(Rop(l)*rho_f(2*i+l,2*k+j,1)*Mass_f1(2*i+l,2*k+j)*1.d0)&
-                     /int_cof_f(2*i+l,2*k+j)
+                Vass_temp(i,k)=Vass_temp(i,k)&
+                     -17.d0/48.d0*h3_f*Rop(j)*(Rop(l)*sqrt(int_cof_f(2*i+l,2*k+j))*rho_f(2*i+l,2*k+j,1)&
+                     *Mass_f1(2*i+l,2*k+j)*1.d0)/int_cof_f(2*i+l,2*k+j)
              end do
           end do
+          Vass_temp(i,k)=Vass_temp(i,k)/sqrt(int_cof_c(i,k))
+          Vass((k-1)*3*n1_c+(i-1)*3+1)=Vass((k-1)*3*n1_c+(i-1)*3+1)+Vass_temp(i,k)
        end do
     end do
     ! second set
@@ -1361,44 +1412,51 @@ contains
        do i = -1,n1_c+1
           do j = -1,2
              do l = -1,2
-                Mass_f1(2*i,2*k)=Mass_f1(2*i,2*k)+P(j)*(P(l)*lh_c(i+l,k+j,n3_c,2)/rho_c(i+l,k+j,n3_c))
+                Mass_f1(2*i,2*k)=Mass_f1(2*i,2*k)+P(j)*(P(l)*sqrt(int_cof_c(i+l,k+j))*lh_c(i+l,k+j,n3_c,2)/rho_c(i+l,k+j,n3_c))
              end do
           end do
+          Mass_f1(2*i,2*k) = Mass_f1(2*i,2*k)/sqrt(int_cof_f(2*i,2*k))
       end do
     end do
     !
     do k = -1,n2_c+1
        do i = 0,n1_c+1
           do j = -1,2
-             Mass_f1(2*i-1,2*k)=Mass_f1(2*i-1,2*k)+P(j)*lh_c(i,k+j,n3_c,2)/rho_c(i,j+k,n3_c)
+             Mass_f1(2*i-1,2*k)=Mass_f1(2*i-1,2*k)+P(j)*sqrt(int_cof_c(i,k+j))*lh_c(i,k+j,n3_c,2)/rho_c(i,j+k,n3_c)
           end do
+          Mass_f1(2*i-1,2*k)=Mass_f1(2*i-1,2*k)/sqrt(int_cof_f(2*i-1,2*k))
        end do
     end do
     !
     do k = 0,n2_c+1
        do i = -1,n1_c+1
           do j = -1,2
-             Mass_f1(2*i,2*k-1)=Mass_f1(2*i,2*k-1)+P(j)*lh_c(i+j,k,n3_c,2)/rho_c(i+j,k,n3_c)
+             Mass_f1(2*i,2*k-1)=Mass_f1(2*i,2*k-1)+P(j)*sqrt(int_cof_c(i+j,k))*lh_c(i+j,k,n3_c,2)/rho_c(i+j,k,n3_c)
           end do
+          Mass_f1(2*i,2*k-1)=Mass_f1(2*i,2*k-1)/sqrt(int_cof_f(2*i,2*k-1))
        end do
     end do
     !
     do k = 0,n2_c+1
        do i = 0,n1_c+1
-          Mass_f1(2*i-1,2*k-1)=lh_c(i,k,n3_c,2)/rho_c(i,k,n3_c)
+          Mass_f1(2*i-1,2*k-1)=sqrt(int_cof_c(i,k))*lh_c(i,k,n3_c,2)/rho_c(i,k,n3_c)
+          Mass_f1(2*i-1,2*k-1)=Mass_f1(2*i-1,2*k-1)/sqrt(int_cof_f(2*i-1,2*k-1))
        end do
     end do
     ! restriction
     ! second set
+    Vass_temp = 0.d0
     do k = 1,n2_c
        do i = 1,n1_c
           do j = -4,2
              do l = -4,2
-                Vass((k-1)*3*n1_c+(i-1)*3+2)=Vass((k-1)*3*n1_c+(i-1)*3+2) &
-                     -17.d0/48.d0*h3_f*Rop(j)*(Rop(l)*rho_f(2*i+l,2*k+j,1)*Mass_f1(2*i+l,2*k+j)*1.d0)&
+                Vass_temp(i,k)=Vass_temp(i,k) &
+                     -17.d0/48.d0*h3_f*Rop(j)*(Rop(l)*sqrt(int_cof_f(2*i+l,2*k+j))*rho_f(2*i+l,2*k+j,1)*Mass_f1(2*i+l,2*k+j)*1.d0)&
                      /int_cof_f(2*i+l,2*k+j)
              end do
           end do
+          Vass_temp(i,k)=Vass_temp(i,k)/sqrt(int_cof_c(i,k))
+          Vass((k-1)*3*n1_c+(i-1)*3+2)=Vass((k-1)*3*n1_c+(i-1)*3+2)+Vass_temp(i,k)
        end do
     end do
     ! third set
@@ -1407,44 +1465,51 @@ contains
        do i = -1,n1_c+1
           do j = -1,2
              do l = -1,2
-                Mass_f1(2*i,2*k)=Mass_f1(2*i,2*k)+P(j)*(P(l)*lh_c(i+l,k+j,n3_c,3)/rho_c(i+l,k+j,n3_c))
+                Mass_f1(2*i,2*k)=Mass_f1(2*i,2*k)+P(j)*(P(l)*sqrt(int_cof_c(i+l,k+j))*lh_c(i+l,k+j,n3_c,3)/rho_c(i+l,k+j,n3_c))
              end do
           end do
+          Mass_f1(2*i,2*k) = Mass_f1(2*i,2*k)/sqrt(int_cof_f(2*i,2*k))
       end do
     end do
     !
     do k = -1,n2_c+1
        do i = 0,n1_c+1
           do j = -1,2
-             Mass_f1(2*i-1,2*k)=Mass_f1(2*i-1,2*k)+P(j)*lh_c(i,k+j,n3_c,3)/rho_c(i,j+k,n3_c)
+             Mass_f1(2*i-1,2*k)=Mass_f1(2*i-1,2*k)+P(j)*sqrt(int_cof_c(i,k+j))*lh_c(i,k+j,n3_c,3)/rho_c(i,j+k,n3_c)
           end do
+          Mass_f1(2*i-1,2*k) = Mass_f1(2*i-1,2*k)/sqrt(int_cof_f(2*i-1,2*k))
        end do
     end do
     !
     do k = 0,n2_c+1
        do i = -1,n1_c+1
           do j = -1,2
-             Mass_f1(2*i,2*k-1)=Mass_f1(2*i,2*k-1)+P(j)*lh_c(i+j,k,n3_c,3)/rho_c(i+j,k,n3_c)
+             Mass_f1(2*i,2*k-1)=Mass_f1(2*i,2*k-1)+P(j)*sqrt(int_cof_c(i+j,k))*lh_c(i+j,k,n3_c,3)/rho_c(i+j,k,n3_c)
           end do
+          Mass_f1(2*i,2*k-1) = Mass_f1(2*i,2*k-1)/sqrt(int_cof_f(2*i,2*k-1))
        end do
     end do
     !
     do k = 0,n2_c+1
        do i = 0,n1_c+1
-          Mass_f1(2*i-1,2*k-1)=lh_c(i,k,n3_c,3)/rho_c(i,k,n3_c)
+          Mass_f1(2*i-1,2*k-1)=sqrt(int_cof_c(i,k))*lh_c(i,k,n3_c,3)/rho_c(i,k,n3_c)
+          Mass_f1(2*i-1,2*k-1)=Mass_f1(2*i-1,2*k-1)/sqrt(int_cof_f(2*i-1,2*k-1))
        end do
     end do
     ! restrict
     ! third set
+    Vass_temp = 0.d0
     do k = 1,n2_c
        do i = 1,n1_c
           do j = -4,2
              do l = -4,2
-                Vass((k-1)*3*n1_c+(i-1)*3+3)=Vass((k-1)*3*n1_c+(i-1)*3+3) &
-                     -17.d0/48.d0*h3_f*Rop(j)*(Rop(l)*rho_f(2*i+l,2*k+j,1)*Mass_f1(2*i+l,2*k+j)*1.d0)&
+                Vass_temp(i,k)=Vass_temp(i,k) &
+                     -17.d0/48.d0*h3_f*Rop(j)*(Rop(l)*sqrt(int_cof_f(2*i+l,2*k+j))*rho_f(2*i+l,2*k+j,1)*Mass_f1(2*i+l,2*k+j)*1.d0)&
                      /int_cof_f(2*i+l,2*k+j)
              end do
           end do
+          Vass_temp(i,k) = Vass_temp(i,k)/sqrt(int_cof_c(i,k))
+          Vass((k-1)*3*n1_c+(i-1)*3+3)=Vass((k-1)*3*n1_c+(i-1)*3+3)+Vass_temp(i,k)
        end do
     end do
     ! term 3
@@ -1716,24 +1781,51 @@ contains
       end do
    end do
    ! now restrict it to the coarse grid
+   Vass_temp = 0.d0
    do k = 1,n2_c
       do i = 1,n1_c
          do j = -4,2
             do l = -4,2
                ! first set
-               Vass((k-1)*3*n1_c+(i-1)*3+1) = Vass((k-1)*3*n1_c+(i-1)*3+1)+Rop(j)*(Rop(l)*lh_f(2*i+l,2*k+j,1,1))&
-                  /int_cof_f(2*i+l,2*k+j)
-               ! second set
-               Vass((k-1)*3*n1_c+(i-1)*3+2) = Vass((k-1)*3*n1_c+(i-1)*3+2)+Rop(j)*(Rop(l)*lh_f(2*i+l,2*k+j,1,2))&
-                  /int_cof_f(2*i+l,2*k+j)
-               ! third set
-               Vass((k-1)*3*n1_c+(i-1)*3+3) = Vass((k-1)*3*n1_c+(i-1)*3+3)+Rop(j)*(Rop(l)*lh_f(2*i+l,2*k+j,1,3))&
+               Vass_temp(i,k) = Vass_temp(i,k)+Rop(j)*(Rop(l)*sqrt(int_cof_f(2*i+l,2*k+j))*lh_f(2*i+l,2*k+j,1,1))&
                   /int_cof_f(2*i+l,2*k+j)
             end do
         end do
+        Vass_temp(i,k) = Vass_temp(i,k)/sqrt(int_cof_c(i,k))
+        Vass((k-1)*3*n1_c+(i-1)*3+1) = Vass((k-1)*3*n1_c+(i-1)*3+1)+Vass_temp(i,k)
       end do
    end do
-  !
+   !
+   Vass_temp = 0.d0
+   do k = 1,n2_c
+      do i = 1,n1_c
+         do j = -4,2
+            do l = -4,2
+               ! second set
+               Vass_temp(i,k) = Vass_temp(i,k)+Rop(j)*(Rop(l)*sqrt(int_cof_f(2*i+l,2*k+j))*lh_f(2*i+l,2*k+j,1,2))&
+                  /int_cof_f(2*i+l,2*k+j)
+            end do
+        end do
+        Vass_temp(i,k) = Vass_temp(i,k)/sqrt(int_cof_c(i,k))
+        Vass((k-1)*3*n1_c+(i-1)*3+2) = Vass((k-1)*3*n1_c+(i-1)*3+2)+Vass_temp(i,k)
+      end do
+   end do
+   !
+   Vass_temp = 0.d0
+   do k = 1,n2_c
+      do i = 1,n1_c
+         do j = -4,2
+            do l = -4,2
+               ! third set
+               Vass_temp(i,k) = Vass_temp(i,k)+Rop(j)*(Rop(l)*sqrt(int_cof_f(2*i+l,2*k+j))*lh_f(2*i+l,2*k+j,1,3))&
+                  /int_cof_f(2*i+l,2*k+j)
+            end do
+        end do
+        Vass_temp(i,k) = Vass_temp(i,k)/sqrt(int_cof_c(i,k))
+        Vass((k-1)*3*n1_c+(i-1)*3+3) = Vass((k-1)*3*n1_c+(i-1)*3+3)+Vass_temp(i,k)
+      end do
+   end do
+   !
   end subroutine Interface_RHS
 
   subroutine Update_interior(u_c_t,u_f_t)
@@ -4136,27 +4228,53 @@ contains
 
   subroutine Injection(index)
     integer index
+    real(dp), dimension (:,:), allocatable :: int_cof_c, int_cof_f
+    !
+    allocate(int_cof_c(1-nrg:n1_c+nrg,1-nrg:n2_c+nrg))
+    allocate(int_cof_f(1-nrg:n1_f+nrg,1-nrg:n2_f+nrg))
+    !
+    do j = 1-nrg,n2_c+nrg
+       do i = 1-nrg,n1_c+nrg
+          int_cof_c(i,j) = Jacobian_c(i,j,n3_c)*sqrt(XI13_c(i,j,n3_c)**2+XI23_c(i,j,n3_c)**2+XI33_c(i,j,n3_c)**2)
+       end do
+    end do
+    !
+    do j = 1-nrg,n2_f+nrg
+       do i = 1-nrg,n1_f+nrg
+          int_cof_f(i,j) = Jacobian_f(i,j,1)*sqrt(XI13_f(i,j,1)**2+XI23_f(i,j,1)**2+XI33_f(i,j,1)**2)
+       end do
+    end do
     ! Injection at the interface
     do j = 1, n2_c
        do i = 1, n1_c
-          u_f(2*i-1,2*j-1,1,:,index) = u_c(i,j,n3_c,:,index)
-          u_f(2*i,2*j-1,1,:,index) = P(-1)*u_c(i-1,j,n3_c,:,index)+P(0)*u_c(i,j,n3_c,:,index)&
-                                   +P(1)*u_c(i+1,j,n3_c,:,index)+P(2)*u_c(i+2,j,n3_c,:,index)
-          u_f(2*i-1,2*j,1,:,index) = P(-1)*u_c(i,j-1,n3_c,:,index)+P(0)*u_c(i,j,n3_c,:,index)&
-                                   +P(1)*u_c(i,j+1,n3_c,:,index)+P(2)*u_c(i,j+2,n3_c,:,index)
-          u_f(2*i,2*j,1,:,index) = P(-1)*(P(-1)*u_c(i-1,j-1,n3_c,:,index)+P(0)*u_c(i,j-1,n3_c,:,index)&
-                                           +P(1)*u_c(i+1,j-1,n3_c,:,index)+P(2)*u_c(i+2,j-1,n3_c,:,index))&
-                                     +P(0)*(P(-1)*u_c(i-1,j,n3_c,:,index)+P(0)*u_c(i,j,n3_c,:,index)&
-                                           +P(1)*u_c(i+1,j,n3_c,:,index)+P(2)*u_c(i+2,j,n3_c,:,index))&
-                                     +P(1)*(P(-1)*u_c(i-1,j+1,n3_c,:,index)+P(0)*u_c(i,j+1,n3_c,:,index)&
-                                           +P(1)*u_c(i+1,j+1,n3_c,:,index)+P(2)*u_c(i+2,j+1,n3_c,:,index))&
-                                     +P(2)*(P(-1)*u_c(i-1,j+2,n3_c,:,index)+P(0)*u_c(i,j+2,n3_c,:,index)&
-                                           +P(1)*u_c(i+1,j+2,n3_c,:,index)+P(2)*u_c(i+2,j+2,n3_c,:,index))
+          u_f(2*i-1,2*j-1,1,:,index) = sqrt(int_cof_c(i,j))*u_c(i,j,n3_c,:,index)
+          u_f(2*i-1,2*j-1,1,:,index) = u_f(2*i-1,2*j-1,1,:,index)/sqrt(int_cof_f(2*i-1,2*j-1))
+
+          u_f(2*i,2*j-1,1,:,index) = P(-1)*sqrt(int_cof_c(i-1,j))*u_c(i-1,j,n3_c,:,index) &
+            +P(0)*sqrt(int_cof_c(i,j))*u_c(i,j,n3_c,:,index)+P(1)*sqrt(int_cof_c(i+1,j))*u_c(i+1,j,n3_c,:,index)&
+            +P(2)*sqrt(int_cof_c(i+2,j))*u_c(i+2,j,n3_c,:,index)
+          u_f(2*i,2*j-1,1,:,index) = u_f(2*i,2*j-1,1,:,index)/sqrt(int_cof_f(2*i,2*j-1))
+
+          u_f(2*i-1,2*j,1,:,index) = P(-1)*sqrt(int_cof_c(i,j-1))*u_c(i,j-1,n3_c,:,index)&
+            +P(0)*sqrt(int_cof_c(i,j))*u_c(i,j,n3_c,:,index)+P(1)*sqrt(int_cof_c(i,j+1))*u_c(i,j+1,n3_c,:,index)&
+            +P(2)*sqrt(int_cof_c(i,j+2))*u_c(i,j+2,n3_c,:,index)
+          u_f(2*i-1,2*j,1,:,index) = u_f(2*i-1,2*j,1,:,index)/sqrt(int_cof_f(2*i-1,2*j))
+
+          u_f(2*i,2*j,1,:,index) = P(-1)*(P(-1)*sqrt(int_cof_c(i-1,j-1))*u_c(i-1,j-1,n3_c,:,index)&
+            +P(0)*sqrt(int_cof_c(i,j-1))*u_c(i,j-1,n3_c,:,index)+P(1)*sqrt(int_cof_c(i+1,j-1))*u_c(i+1,j-1,n3_c,:,index)&
+            +P(2)*sqrt(int_cof_c(i+2,j-1))*u_c(i+2,j-1,n3_c,:,index))&
+            +P(0)*(P(-1)*sqrt(int_cof_c(i-1,j))*u_c(i-1,j,n3_c,:,index)+P(0)*sqrt(int_cof_c(i,j))*u_c(i,j,n3_c,:,index)&
+            +P(1)*sqrt(int_cof_c(i+1,j))*u_c(i+1,j,n3_c,:,index)+P(2)*sqrt(int_cof_c(i+2,j))*u_c(i+2,j,n3_c,:,index))&
+            +P(1)*(P(-1)*sqrt(int_cof_c(i-1,j+1))*u_c(i-1,j+1,n3_c,:,index)+P(0)*sqrt(int_cof_c(i,j+1))*u_c(i,j+1,n3_c,:,index)&
+            +P(1)*sqrt(int_cof_c(i+1,j+1))*u_c(i+1,j+1,n3_c,:,index)+P(2)*sqrt(int_cof_c(i+2,j+1))*u_c(i+2,j+1,n3_c,:,index))&
+            +P(2)*(P(-1)*sqrt(int_cof_c(i-1,j+2))*u_c(i-1,j+2,n3_c,:,index)+P(0)*sqrt(int_cof_c(i,j+2))*u_c(i,j+2,n3_c,:,index)&
+            +P(1)*sqrt(int_cof_c(i+1,j+2))*u_c(i+1,j+2,n3_c,:,index)+P(2)*sqrt(int_cof_c(i+2,j+2))*u_c(i+2,j+2,n3_c,:,index))
+          u_f(2*i,2*j,1,:,index) = u_f(2*i,2*j,1,:,index)/sqrt(int_cof_f(2*i,2*j))
        end do
     end do
   end subroutine Injection
 
-end program Elastic_3D_Interface_nonconforming
+end program Elastic_3D_Interface_nonconforming1
 
 subroutine print_array_to_file(n1,n2,n3,A,file_name)
   use problemsetup_new_3d, only: dp

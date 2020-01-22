@@ -4,7 +4,7 @@ module problemsetup_new_3d
 
   integer, parameter :: dp = real64
   real(dp),parameter :: pi = dacos(-1.d0)
-  real(dp),parameter :: tn = 2.d0
+  real(dp),parameter :: tn = 0.5d0
   integer, parameter :: nrg = 5
 
   ! parameters for generating meshes
@@ -20,7 +20,7 @@ module problemsetup_new_3d
 
 
   integer,parameter :: dim = 3
-  real(dp),parameter :: amp = 0.d0, peak = 0.04d0 !!!! 0.07 still converge for amp
+  real(dp),parameter :: amp = 0.2d0, peak = 0.04d0 !!!! 0.07 still converge for amp
 
 contains
 
@@ -214,7 +214,6 @@ contains
     !interface_cfy = -amp*exp(-(y-0.4d0)**2/peak)*(2.d0*y-0.8d0)/peak
     interface_cfy = -amp*4.d0*pi*sin(4.d0*pi*y)
   end function interface_cfy
-
   ! exact solution
   ! We want the time-term to be the same in u1,u2 and u3, so that we don't need to call this function
   ! in every time step. We just need to scale the initial condition.
@@ -235,6 +234,9 @@ contains
     u2 = exp(-((x1-l1/2.d0)**2)/0.2d0)*exp(-((x2-l2/2.d0)**2)/0.2d0)*exp(-((x3-l3/2.d0)**2)/0.2d0)
     u3 = exp(-((x1-l1/2.d0)**2)/0.1d0)*exp(-((x2-l2/2.d0)**2)/0.2d0)*exp(-((x3-l3/2.d0)**2)/0.2d0)
     !
+    !u1 = exp(-((x1-l1/2.d0)**2)/0.0025d0)*exp(-((x2-l2/2.d0)**2)/0.0025d0)*exp(-((x3-l3/2.d0)**2)/0.0025d0)
+    !u2 = exp(-((x1-l1/2.d0)**2)/0.005d0)*exp(-((x2-l2/2.d0)**2)/0.005d0)*exp(-((x3-l3/2.d0)**2)/0.005d0)
+    !u3 = exp(-((x1-l1/2.d0)**2)/0.0025d0)*exp(-((x2-l2/2.d0)**2)/0.005d0)*exp(-((x3-l3/2.d0)**2)/0.005d0)
   end subroutine initial_solution
 
 end module problemsetup_new_3d

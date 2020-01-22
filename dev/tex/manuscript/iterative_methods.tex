@@ -1,32 +1,34 @@
-%!TEX root = elastic_3d_sbp.tex
-\subsubsection{Iterative methods}\label{iterative_section}
-In the proposed scheme (\ref{coarse_scheme})--(\ref{traction_continuous_curvi}), we need to solve a $3n_1^cn_2^c\times 3n_1^cn_2^c$ linear system at each time step twice for the continutiy of the traction force along the interface (\ref{traction_gamma_pre}) and (\ref{traction_gamma_corr}). Even ethough we can do LU factorization one time before the time loop start and reuse it at each time step, it is very expensive to do LU factorization for a large problem. Besides, consider solving real problems which are usually in large scale, we want to perform the computation on many processors on a parallel distributed memory machine, but it is not clear how to calculate the LU factorization of a matrix on many processors. 
+%!TEX root = SISC_elastic_3d.tex
+\subsection{Iterative methods}\label{iterative_section}
+In this section, we use a same computation domain and a same manufactured solution as in Section \ref{convergence_study}. For the proposed scheme (\ref{elastic_semi_c}), (\ref{fine_scheme}) and (\ref{continuous_sol})--(\ref{continuous_traction}), we need to solve a $3n_1^{2h}n_2^{2h}\times 3n_1^{2h}n_2^{2h}$ linear system at each time step twice for the continutiy of the traction force along the interface (\ref{traction_gamma_pre}) and (\ref{traction_gamma_corr}). Even though we can LU factorize the linear system before the time loop and reuse it at each time step, it is very expensive and memory inefficient to do LU factorization for a large problem in $3$D. Besides, consider solving real problems which are usually in large scale, we want to perform the computation on many processors on a parallel distributed memory machine, but it is not clear how to calculate the LU factorization of a matrix on many processors. 
 
-In this paper, we propose three iterative methods: block Jacobian method, conjugate gradient method, preconditioned conjugate gradient method. We find that preconditioned conjugate gradient method is the most efficient one and conjugate gradient method needs most iteration numbers.
+We have considered three iterative methods: the block Jacobian method, the conjugate gradient method, and the preconditioned conjugate gradient method. We note that the coefficient matrix of linear system which arises from the interface conditions is not symmetric positive definite. However, our experiment show that both the conjugate gradient method and the preconditioned conjugate gradient method converge. Except the following test that compares the three iterative methods, we always use the block Jacobian method to garantee that the whole scheme converges. 
 
-For the problem proposed in Section \ref{manufactured_sol}, the structure of the coefficient matrix of the linear system (\ref{traction_continuous_curvi}) is shown in Figure \ref{Mass_matrix} which is determined by the interplation operator $\mathcal{P}$ and restriction operator $\mathcal{R}$. We choose the red circles in the purple circles in Figure \ref{Mass_matrix} to be the block Jacobian matrix in block Jacobian iterative method and pre-conditioning matrix in pre-conditioned conjugate gradient iterative method. We also set a absolute error tolerance $1e-7$ for each iterative method.
+For the problem proposed in Section \ref{convergence_study}, the structure of the coefficient matrix of the linear system (\ref{continuous_traction}) is shown in Figure \ref{Mass_matrix} which is determined by the interplation operator $\wt{\mathcal{P}}$ and restriction operator $\wt{\mathcal{R}}$, here we use $n_1^{2h} = n_2^{2h}=13, n_3^{2h} = 7$. We choose the red parts in Figure \ref{Mass_matrix} to be the block Jacobian matrix in block Jacobian iterative method and pre-conditioning matrix in pre-conditioned conjugate gradient iterative method. Note that the layout of the numerical solution is that for each grid point we have a $3\times1$ vector, not for each component we have a $n_1^{2h}n_2^{2h}n_3^{2h}\times1$ vector.  Thus the block Jacobian matrix we chosen means that we only consider the influence of the current grid and ignore the impacts from the neighboring grids. The absolute error tolerance is set to be $1e-7$ for each iterative method and $h_1 = h_2 = h_3 = h$.
 
 \begin{table}[htbp]
 	\begin{center}
 		\begin{tabular}{|c|c c c|}
 			\hline
-			$h^c_k = 2h^f_k$   & ~~~~ CG ~~~~& Block Jacobian & Preconditioned CG  \\
+			$2h$   & ~~~~ CG ~~~~& Block Jacobian & Preconditioned CG  \\
 			\hline
-			$2\pi/24$ &37.76& 24.96& 4.07\\
+			$2\pi/24$ &37.78& 24.96& 4.01\\
 			\hline
-			$2\pi/48$ &38.61 & 25.38 & 2.88\\
+			$2\pi/48$ &38.61 & 25.38 & 2.87\\
 			\hline 
-			$2\pi/96$ &39.14 &25.43 & 2.55\\
+			$2\pi/96$ &39.14 &25.43 & 2.25\\
 			\hline
 		\end{tabular}
 	\end{center}
-	\caption{condition number of matrices in conjugate gradient method, block Jacobian method, preconditioned conjugate gradient method}\label{condition_number}
+	\caption{condition number of matrices in conjugate gradient method, block Jacobian method, and preconditioned conjugate gradient method}\label{condition_number}
 \end{table} 
-Table \ref{condition_number} shows the condition number of the original coefficient matrix, the block Jacobian matrix and the coefficient matrix after applying pre-conditioner respectively. We observe that the condition number for preconditioned conjugate gradient method is smallest which is consistent with the results for iteration number of different iterative methods : there is around $44$ iterations for conjugate gradient method, $13$ iterations for block Jacobian method and $9$ iterations for preconditioned conjugate method.
+Table \ref{condition_number} shows the condition number of the original coefficient matrix, the block Jacobian matrix and the coefficient matrix after applying pre-conditioner respectively. We observe that the condition number for preconditioned conjugate gradient method is smallest which is consistent with the results of iteration number for different iterative methods : there is around $44$ iterations for conjugate gradient method, $13$ iterations for block Jacobian method and $9$ iterations for preconditioned conjugate method.
+
+In comparison, we have also performed an LU factorization for the linear system when the mesh size $2h = 2\pi/96$, and the computation takes 40.6 GB memory. In contrast, with the block Jacobian method, the peak memory usage is only 1.2 GB. For large-scale problems, the memory usage becomes infeasible for the LU factorization. 
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.45\textwidth]{Mass_matrix.eps}
-	\includegraphics[width=0.45\textwidth]{Mass_block_diagonal.eps}
-	\caption{The left panel is the structure of the coefficient matrix of the linear system (\ref{traction_continuous_curvi}). For each blue triangle and purple circle in the left panel, they have the structure as in the right panel which is constructed by balck squares and red circles. This wide stencile is determined by the restriction operator on interpolation operation in two dimensional.}\label{Mass_matrix}
+	\includegraphics[width=0.45\textwidth,trim={0.6cm 1cm 1cm 1.2cm}, clip]{Mass_matrix.eps}
+	\includegraphics[width=0.45\textwidth,trim={0.6cm 1cm 1cm 1.2cm}, clip]{Mass_diagonal_matrix.eps}
+	\caption{The left panel is the structure of the coefficient matrix of the linear system (\ref{continuous_traction}). The right panel is the zoom in structure for the repeated pattern on the left panel.}\label{Mass_matrix}
 \end{figure}

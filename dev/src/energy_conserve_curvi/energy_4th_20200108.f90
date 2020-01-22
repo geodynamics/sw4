@@ -1,4 +1,4 @@
-program Elastic_3D_Interface_conforming_static_reorder1
+program energy_2nd_20191218
 
   use problemsetup_new_3d
   use SBP_operator
@@ -13,7 +13,7 @@ program Elastic_3D_Interface_conforming_static_reorder1
 
   ! forcing function and spatial discretization
   real(dp), dimension (1-nrg:n1_c+nrg,1-nrg:n2_c+nrg,1-nrg:n3_c+nrg,dim) :: force_c,force_tt_c,lh_c
-  real(dp), dimension (1-nrg:n1_f+nrg,1-nrg:n2_f+nrg,1-nrg:n3_f+nrg,dim) :: force_f,force_tt_f,lh_f
+  real(dp), dimension (1-nrg:n1_f+nrg,1-nrg:n2_f+nrg,1-nrg:n3_f+nrg,dim) :: force_f,force_tt_f,lh_f,eta
 
   ! Metric derivatives
   real(dp), dimension (1-nrg:n1_c+nrg,1-nrg:n2_c+nrg,1-nrg:n3_c+nrg) :: X1R1_c,X1R2_c,X1R3_c,X2R1_c
@@ -60,13 +60,17 @@ program Elastic_3D_Interface_conforming_static_reorder1
   real(dp), dimension (1:n1_f,1:n2_f,1:n3_f) :: err_f
   real(dp), dimension (1:n1_c,1:n2_c,1:n3_c) :: err_c
   real(dp), dimension (1:6) :: N6
-  real(dp) :: l2_err = 0.d0,l2_err_c = 0.d0,l2_err_f = 0.d0
+  real(dp) :: l2_err = 0.d0
+
+  real(dp), dimension(1:10000) :: energy_discrete, Times, energy_bdry, bdry
 
 
   ! System of linear equations
-  real(dp), dimension (1:n1_c*n2_c*3,1:n1_c*n2_c*3) :: Mass
-  real(dp), dimension (1:n1_c*n2_c*3) :: Vass, IPIV
+  real(dp), dimension (1:(n1_c-2)*(n2_c-2)*3,1:(n1_c-2)*(n2_c-2)*3) :: Mass
   real(dp), dimension (1:n1_c,1:n2_c) :: Vass_temp
+  real(dp), dimension (1:(n1_c-2)*(n2_c-2)*3) :: Vass_1
+
+  real(dp), dimension (1:n1_c*n2_c*3) :: Vass, IPIV, difference
   real(dp), dimension (1:3,1:3,1:n1_c,1:n2_c) :: DJI_matrix, DJI_matrix1
   real(dp), dimension (1:3*n1_c*n2_c) :: LHS_off,LHS,residual,a,a1
   real(dp), dimension (1:3) :: IPIV_DJ,Vass1
@@ -117,38 +121,33 @@ program Elastic_3D_Interface_conforming_static_reorder1
 
   ! estimate time step
   call kappa(tv)
-  cfl=sqrt(3.d0/1.40/tv)
-  dt0 = min(h1_f,h2_f,h3_f)*cfl*0.9
+  cfl=sqrt(3.d0/1.4d0/tv)
+  dt0 = min(h1_f,h2_f,h3_f)*cfl*0.9d0
   nt = ceiling(tn/dt0)+1
   dt = tn/nt
 
   print *, nt
   ! exact solution at t = -dt, 0, dt
-  do k=1-nrg,n3_c+nrg
-     do i=1-nrg,n2_c+nrg
-        do j=1-nrg,n1_c+nrg
-           call exact_solution(Xgrid_c(j,i,k,1),Xgrid_c(j,i,k,2),Xgrid_c(j,i,k,3), &
-                -dt,u_c(j,i,k,1,1),u_c(j,i,k,2,1),u_c(j,i,k,3,1),0)
-           call exact_solution(Xgrid_c(j,i,k,1),Xgrid_c(j,i,k,2),Xgrid_c(j,i,k,3), &
-                0.d0,u_c(j,i,k,1,2),u_c(j,i,k,2,2),u_c(j,i,k,3,2),0)
-           !call exact_solution(Xgrid_c(j,i,k,1),Xgrid_c(j,i,k,2),Xgrid_c(j,i,k,3), &
-          !      dt,u_c(j,i,k,1,3),u_c(j,i,k,2,3),u_c(j,i,k,3,3),0)
+  do k=2,n3_c-1
+     do i=2,n2_c-1
+        do j=2,n1_c
+           call initial_solution(l1,l2,l3,Xgrid_c(j,i,k,1),Xgrid_c(j,i,k,2),Xgrid_c(j,i,k,3), &
+                u_c(j,i,k,1,1),u_c(j,i,k,2,1),u_c(j,i,k,3,1))
+           call initial_solution(l1,l2,l3,Xgrid_c(j,i,k,1),Xgrid_c(j,i,k,2),Xgrid_c(j,i,k,3), &
+                u_c(j,i,k,1,2),u_c(j,i,k,2,2),u_c(j,i,k,3,2))
         end do
      end do
   end do
-  do k = 1-nrg,n3_f+nrg
-     do i=1-nrg,n2_f+nrg
-        do j=1-nrg,n1_f+nrg
-           call exact_solution(Xgrid_f(j,i,k,1),Xgrid_f(j,i,k,2),Xgrid_f(j,i,k,3), &
-                -dt,u_f(j,i,k,1,1),u_f(j,i,k,2,1),u_f(j,i,k,3,1),1)
-           call exact_solution(Xgrid_f(j,i,k,1),Xgrid_f(j,i,k,2),Xgrid_f(j,i,k,3), &
-                0.d0,u_f(j,i,k,1,2),u_f(j,i,k,2,2),u_f(j,i,k,3,2),1)
-           !call exact_solution(Xgrid_f(j,i,k,1),Xgrid_f(j,i,k,2),Xgrid_f(j,i,k,3), &
-            !    dt,u_f(j,i,k,1,3),u_f(j,i,k,2,3),u_f(j,i,k,3,3),1)
+  do k = 2,n3_f-1
+     do i=2,n2_f-1
+        do j=1,n1_f-1
+           call initial_solution(l1,l2,l3,Xgrid_f(j,i,k,1),Xgrid_f(j,i,k,2),Xgrid_f(j,i,k,3), &
+                u_f(j,i,k,1,1),u_f(j,i,k,2,1),u_f(j,i,k,3,1))
+           call initial_solution(l1,l2,l3,Xgrid_f(j,i,k,1),Xgrid_f(j,i,k,2),Xgrid_f(j,i,k,3), &
+                u_f(j,i,k,1,2),u_f(j,i,k,2,2),u_f(j,i,k,3,2))
         end do
      end do
   end do
-
 
   ! Construct the system matrix for computing ghost points values on the interface
   ! We have 3*n1_c*n2_c equations in 3D
@@ -159,28 +158,50 @@ program Elastic_3D_Interface_conforming_static_reorder1
   call Interface_system(Mass)
 
   ! lu factorization
-  call dgetrf(3*n1_c*n2_c,3*n1_c*n2_c,Mass,3*n1_c*n2_c,IPIV,INFO)
+  call dgetrf(3*(n1_c-2)*(n2_c-2),3*(n1_c-2)*(n2_c-2),Mass,3*(n1_c-2)*(n2_c-2),IPIV,INFO)
   if (INFO .ne. 0) then
      write(*,"(A20,I5)") 'LU fails, INFO=', INFO
   end if
 
-  ! Before the time loop, we make the initial conditions compatible with interface conditions
+  ! Before the time loop, we make the initial conditions compatible with conditions
+  call update_gp(1)
+  call Update_Dirichlet_BC(1)
   call Injection(1)
-  call Injection(2)
-
+  call update_gp(1)
   call Interface_RHS(1)
   ! Solve system of linear equations to get values on ghost points
-  call dgetrs('N',3*n1_c*n2_c,1,Mass,3*n1_c*n2_c,IPIV,Vass,3*n1_c*n2_c,INFO)
+  call dgetrs('N',3*(n1_c-2)*(n2_c-2),1,Mass,3*(n1_c-2)*(n2_c-2),IPIV,Vass_1,3*(n1_c-2)*(n2_c-2),INFO)
   if (INFO .ne. 0) then
      write(*,"(A20)") 'Solving fails'
   end if
 
   ! Update ghost points values for the interface
-  do j = 1,n2_c
-     do i = 1,n1_c
-        u_c(i,j,n3_c+1,1,1) = Vass((j-1)*3*n1_c+3*(i-1)+1)
-        u_c(i,j,n3_c+1,2,1) = Vass((j-1)*3*n1_c+3*(i-1)+2)
-        u_c(i,j,n3_c+1,3,1) = Vass((j-1)*3*n1_c+3*(i-1)+3)
+  do j = 1,n2_c-2
+     do i = 1,n1_c-2
+        u_c(i+1,j+1,n3_c+1,1,1) = Vass_1((j-1)*3*(n1_c-2)+3*(i-1)+1)
+        u_c(i+1,j+1,n3_c+1,2,1) = Vass_1((j-1)*3*(n1_c-2)+3*(i-1)+2)
+        u_c(i+1,j+1,n3_c+1,3,1) = Vass_1((j-1)*3*(n1_c-2)+3*(i-1)+3)
+     end do
+  end do
+
+  call update_gp(2)
+  call Update_Dirichlet_BC(2)
+  call Injection(2)
+  call update_gp(2)
+  call Interface_RHS(2)
+
+  ! Solve system of linear equations to get values on ghost points
+  call dgetrs('N',3*(n1_c-2)*(n2_c-2),1,Mass,3*(n1_c-2)*(n2_c-2),IPIV,Vass_1,3*(n1_c-2)*(n2_c-2),INFO)
+  if (INFO .ne. 0) then
+     write(*,"(A20)") 'Solving fails'
+  end if
+
+  ! Update ghost point values for the interface
+  do j = 1,n2_c-2
+     do i = 1,n1_c-2
+        u_c(i+1,j+1,n3_c+1,1,2) = Vass_1((j-1)*3*(n1_c-2)+3*(i-1)+1)
+        u_c(i+1,j+1,n3_c+1,2,2) = Vass_1((j-1)*3*(n1_c-2)+3*(i-1)+2)
+        u_c(i+1,j+1,n3_c+1,3,2) = Vass_1((j-1)*3*(n1_c-2)+3*(i-1)+3)
      end do
   end do
 
@@ -191,134 +212,84 @@ program Elastic_3D_Interface_conforming_static_reorder1
   tv = 0.d0
   ! time stepping
   do time_index = 1, nt
-     ! Predictor step
 
-     ! Build the right hand side vector for the system of linear equations for the interface
-     call  Interface_RHS(2)
+     ! Evaluate the difference opera
+
+     call Update_interior(u_c(:,:,:,:,2),u_f(:,:,:,:,2))
+
+     ! Update the solution in the predictor step
+     u_f(1:n1_f,1:n2_f,1:n3_f,:,3) = 2.d0*u_f(1:n1_f,1:n2_f,1:n3_f,:,2) - u_f(1:n1_f,1:n2_f,1:n3_f,:,1) &
+          + dt**2*lh_f(1:n1_f,1:n2_f,1:n3_f,:)/rho_f(1:n1_f,1:n2_f,1:n3_f,:)
+
+     u_c(1:n1_c,1:n2_c,1:n3_c,:,3) = 2.d0*u_c(1:n1_c,1:n2_c,1:n3_c,:,2) - u_c(1:n1_c,1:n2_c,1:n3_c,:,1) &
+          + dt**2*lh_c(1:n1_c,1:n2_c,1:n3_c,:)/rho_c(1:n1_c,1:n2_c,1:n3_c,:)
+
+
+
+     ! Update time
+     tv = tv + dt
+     Times(time_index) = tv
+
+     call Update_gp(3)
+     call Update_Dirichlet_BC(3)
+     call Injection(3)
+	   call Update_gp(3)
+
+
+     call Interface_RHS(3)
 
      ! Solve system of linear equations to get values on ghost points
-     call dgetrs('N',3*n1_c*n2_c,1,Mass,3*n1_c*n2_c,IPIV,Vass,3*n1_c*n2_c,INFO)
+     call dgetrs('N',3*(n1_c-2)*(n2_c-2),1,Mass,3*(n1_c-2)*(n2_c-2),IPIV,Vass_1,3*(n1_c-2)*(n2_c-2),INFO)
      if (INFO .ne. 0) then
         write(*,"(A20)") 'Solving fails'
      end if
 
      ! Update ghost point values for the interface
-     do j = 1,n2_c
-        do i = 1,n1_c
-           u_c(i,j,n3_c+1,1,2) = Vass((j-1)*3*n1_c+3*(i-1)+1)
-           u_c(i,j,n3_c+1,2,2) = Vass((j-1)*3*n1_c+3*(i-1)+2)
-           u_c(i,j,n3_c+1,3,2) = Vass((j-1)*3*n1_c+3*(i-1)+3)
+     do j = 1,n2_c-2
+        do i = 1,n1_c-2
+           u_c(i+1,j+1,n3_c+1,1,3) = Vass_1((j-1)*3*(n1_c-2)+3*(i-1)+1)
+           u_c(i+1,j+1,n3_c+1,2,3) = Vass_1((j-1)*3*(n1_c-2)+3*(i-1)+2)
+           u_c(i+1,j+1,n3_c+1,3,3) = Vass_1((j-1)*3*(n1_c-2)+3*(i-1)+3)
         end do
      end do
+     !!!!!!!!!!!! new stuff !!!!!!!!!!!!!
+     ! Evaluate the difference operators
+     call Update_interior((u_c(:,:,:,:,3) - 2.d0*u_c(:,:,:,:,2) + u_c(:,:,:,:,1))/(dt**2),&
+       (u_f(:,:,:,:,3) - 2.d0*u_f(:,:,:,:,2) + u_f(:,:,:,:,1))/(dt**2))
 
      ! Evaluate the difference operators
-     call Update_interior(u_c(:,:,:,:,2),u_f(:,:,:,:,2))
+     u_f(1:n1_f,1:n2_f,1:n3_f,:,4) = u_f(1:n1_f,1:n2_f,1:n3_f,:,3) &
+          + (dt**4)/12.d0*lh_f(1:n1_f,1:n2_f,1:n3_f,:)/rho_f(1:n1_f,1:n2_f,1:n3_f,:)
+     !
+     u_c(1:n1_c,1:n2_c,1:n3_c,:,4) = u_c(1:n1_c,1:n2_c,1:n3_c,:,3) &
+          + (dt**4)/12.d0*lh_c(1:n1_c,1:n2_c,1:n3_c,:)/rho_c(1:n1_c,1:n2_c,1:n3_c,:)
+     !
+     call Update_gp(4)
+     call Update_Dirichlet_BC(4)
+     call Injection(4)
+	   call Update_gp(4)
 
-     ! Compute forcing functions
-     do k=1-nrg,n3_c+nrg
-        do i=1-nrg,n2_c+nrg
-           do j=1-nrg,n1_c+nrg
-              call forcing(Xgrid_c(j,i,k,1),Xgrid_c(j,i,k,2),Xgrid_c(j,i,k,3),tv, &
-                       force_c(j,i,k,1),force_c(j,i,k,2),force_c(j,i,k,3))
-           end do
-        end do
-     end do
-     do k=1-nrg,n3_f+nrg
-        do i=1-nrg,n2_f+nrg
-           do j=1-nrg,n1_f+nrg
-              call forcing(Xgrid_f(j,i,k,1),Xgrid_f(j,i,k,2),Xgrid_f(j,i,k,3),tv, &
-                       force_f(j,i,k,1),force_f(j,i,k,2),force_f(j,i,k,3))
-           end do
-        end do
-     end do
 
-     ! Update the solution in the predictor step
-     u_f(1:n1_f,1:n2_f,1:n3_f,:,3) = 2.d0*u_f(1:n1_f,1:n2_f,1:n3_f,:,2) - u_f(1:n1_f,1:n2_f,1:n3_f,:,1) &
-          + dt**2*(lh_f(1:n1_f,1:n2_f,1:n3_f,:) &
-          + Jacobian_f_3(1:n1_f,1:n2_f,1:n3_f,:)*force_f(1:n1_f,1:n2_f,1:n3_f,:))/rho_f(1:n1_f,1:n2_f,1:n3_f,:)
-
-     u_c(1:n1_c,1:n2_c,1:n3_c,:,3) = 2.d0*u_c(1:n1_c,1:n2_c,1:n3_c,:,2) - u_c(1:n1_c,1:n2_c,1:n3_c,:,1) &
-          + dt**2*(lh_c(1:n1_c,1:n2_c,1:n3_c,:) &
-          +Jacobian_c_3(1:n1_c,1:n2_c,1:n3_c,:)*force_c(1:n1_c,1:n2_c,1:n3_c,:))/rho_c(1:n1_c,1:n2_c,1:n3_c,:)
-
-     ! Update time
-     tv = tv + dt
-
-     ! Update ghost points outside the left and right boundaries
-     ! The argument '3' means time level star
-     ! '1', '2' and '4' mean time level n-1, n and n+1, respectively.
-     call  Update_gp(3)
-
-     ! Update ghost point values for the traction boundary
-     call  Update_traction(3)
-
-     ! Injection at the interface
-     call Injection(3)
-
-     ! Update Dirichlet boundary condition
-     call  Update_Dirichlet_BC(3)
-
-     ! Corrector step
-
-     ! Build the right hand side vector for the system of linear equations for the interface
-     call  Interface_RHS(3)
+     call Interface_RHS(4)
 
      ! Solve system of linear equations to get values on ghost points
-     call dgetrs('N',3*n1_c*n2_c,1,Mass,3*n1_c*n2_c,IPIV,Vass,3*n1_c*n2_c,INFO)
+     call dgetrs('N',3*(n1_c-2)*(n2_c-2),1,Mass,3*(n1_c-2)*(n2_c-2),IPIV,Vass_1,3*(n1_c-2)*(n2_c-2),INFO)
      if (INFO .ne. 0) then
         write(*,"(A20)") 'Solving fails'
      end if
 
-     ! Update ghost point values on the interface
-     do j = 1,n2_c
-        do i = 1,n1_c
-           u_c(i,j,n3_c+1,1,3) = Vass((j-1)*3*n1_c+3*(i-1)+1)
-           u_c(i,j,n3_c+1,2,3) = Vass((j-1)*3*n1_c+3*(i-1)+2)
-           u_c(i,j,n3_c+1,3,3) = Vass((j-1)*3*n1_c+3*(i-1)+3)
-        end do
-     end do
-     ! Evaluate the difference operators
-     call Update_interior((u_c(:,:,:,:,3) - 2.d0*u_c(:,:,:,:,2) + u_c(:,:,:,:,1))/dt**2, &
-          (u_f(:,:,:,:,3) - 2.d0*u_f(:,:,:,:,2) + u_f(:,:,:,:,1))/dt**2)
-
-     ! Compute the second time derivative of the forcing fucntions
-     do k=1-nrg,n3_c+nrg
-        do i=1-nrg,n2_c+nrg
-           do j=1-nrg,n1_c+nrg
-              call forcing_tt(Xgrid_c(j,i,k,1),Xgrid_c(j,i,k,2),Xgrid_c(j,i,k,3), &
-                       tv-dt,force_tt_c(j,i,k,1),force_tt_c(j,i,k,2),force_tt_c(j,i,k,3))
-           end do
-        end do
-     end do
-     do k=1-nrg,n3_f+nrg
-        do i=1-nrg,n2_f+nrg
-           do j=1-nrg,n1_f+nrg
-              call forcing_tt(Xgrid_f(j,i,k,1),Xgrid_f(j,i,k,2),Xgrid_f(j,i,k,3), &
-                       tv-dt,force_tt_f(j,i,k,1),force_tt_f(j,i,k,2),force_tt_f(j,i,k,3))
-           end do
+     ! Update ghost point values for the interface
+     do j = 1,n2_c-2
+        do i = 1,n1_c-2
+           u_c(i+1,j+1,n3_c+1,1,4) = Vass_1((j-1)*3*(n1_c-2)+3*(i-1)+1)
+           u_c(i+1,j+1,n3_c+1,2,4) = Vass_1((j-1)*3*(n1_c-2)+3*(i-1)+2)
+           u_c(i+1,j+1,n3_c+1,3,4) = Vass_1((j-1)*3*(n1_c-2)+3*(i-1)+3)
         end do
      end do
 
-     ! Evaluate the difference operators
-     u_f(1:n1_f,1:n2_f,1:n3_f,:,4) = u_f(1:n1_f,1:n2_f,1:n3_f,:,3) &
-          + dt**4/12.d0*(lh_f(1:n1_f,1:n2_f,1:n3_f,:) &
-          + Jacobian_f_3(1:n1_f,1:n2_f,1:n3_f,:)*force_tt_f(1:n1_f,1:n2_f,1:n3_f,:))/rho_f(1:n1_f,1:n2_f,1:n3_f,:)
-     u_c(1:n1_c,1:n2_c,1:n3_c,:,4) = u_c(1:n1_c,1:n2_c,1:n3_c,:,3) &
-          + dt**4/12.d0*(lh_c(1:n1_c,1:n2_c,1:n3_c,:) &
-          + Jacobian_c_3(1:n1_c,1:n2_c,1:n3_c,:)*force_tt_c(1:n1_c,1:n2_c,1:n3_c,:))/rho_c(1:n1_c,1:n2_c,1:n3_c,:)
-
-
-     ! Update ghost point values outside the left and right boundaries
-     call  Update_gp(4)
-
-     ! Update ghost point values for the traction boundary
-     call  Update_traction(4)
-
-     ! Injection at the interface
-     call Injection(4)
-
-     ! Update Dirichlet boundary condition
-     call  Update_Dirichlet_BC(4)
+     call discrete_energy(u_f(:,:,:,:,1),u_f(:,:,:,:,2),u_f(:,:,:,:,3),u_f(:,:,:,:,4),&
+        u_c(:,:,:,:,1),u_c(:,:,:,:,2),u_c(:,:,:,:,3),u_c(:,:,:,:,4),dt,&
+        energy_discrete(time_index),energy_bdry(time_index),bdry(time_index))
 
      ! Update solutions
      u_f(:,:,:,:,1) = u_f(:,:,:,:,2)
@@ -328,77 +299,11 @@ program Elastic_3D_Interface_conforming_static_reorder1
   end do ! end of time loop
 
   CALL SYSTEM_CLOCK(c2)
-  ! exact solution at final time
-  ! fine mesh
-  do k=1,n3_f
-     do i=1,n2_f
-        do j=1,n1_f
-           call exact_solution(Xgrid_f(j,i,k,1),Xgrid_f(j,i,k,2),Xgrid_f(j,i,k,3), &
-                    tv,u_f_n(j,i,k,1),u_f_n(j,i,k,2),u_f_n(j,i,k,3),1)
-        end do
-     end do
-  end do
-  do k = 1,n3_f
-     do i = 1,n2_f
-        do j = 1,n1_f
-           !err_f(j,i,k) = max(abs(u_f(j,i,k,1,4)-u_f_n(j,i,k,1)),abs(u_f(j,i,k,2,4)-u_f_n(j,i,k,2)), &
-            !        abs(u_f(j,i,k,3,4)-u_f_n(j,i,k,3)))
-           l2_err_f = l2_err_f + h1_f*h2_f*h3_f*((u_f(j,i,k,1,4)-u_f_n(j,i,k,1))**2 &
-              + (u_f(j,i,k,2,4)-u_f_n(j,i,k,2))**2+(u_f(j,i,k,3,4)-u_f_n(j,i,k,3))**2)
-        end do
-     end do
-  end do
 
-  ! coarse mesh
-  do k=1,n3_c
-     do i=1,n2_c
-        do j=1,n1_c
-           call exact_solution(Xgrid_c(j,i,k,1),Xgrid_c(j,i,k,2),Xgrid_c(j,i,k,3), &
-                    tv,u_c_n(j,i,k,1),u_c_n(j,i,k,2),u_c_n(j,i,k,3),0)
-        end do
-     end do
-  end do
-  do k=1,n3_c
-     do i = 1,n2_c
-        do j = 1,n1_c
-           !err_c(j,i,k) = max(abs(u_c(j,i,k,1,4)-u_c_n(j,i,k,1)),abs(u_c(j,i,k,2,4)-u_c_n(j,i,k,2)), &
-            !        abs(u_c(j,i,k,3,4)-u_c_n(j,i,k,3)))
-           l2_err_c = l2_err_c + h1_c*h2_c*h3_c*((u_c(j,i,k,1,4)-u_c_n(j,i,k,1))**2 &
-              +(u_c(j,i,k,2,4)-u_c_n(j,i,k,2))**2+(u_c(j,i,k,3,4)-u_c_n(j,i,k,3))**2)
-        end do
-     end do
-  end do
-  l2_err = l2_err_c+l2_err_f
-
-  l2_err_c = sqrt(l2_err_c)
-  l2_err_f = sqrt(l2_err_f)
-  l2_err = sqrt(l2_err)
-  N6(1) = n1_c
-  N6(2) = n2_c
-  N6(3) = n3_c
-  N6(4) = n1_f
-  N6(5) = n2_f
-  N6(6) = n3_f
-
-  call print_array_to_file(1,1,6,N6,'N6.txt')
-  call print_array_to_file(n1_c,n2_c,n3_c,Xgrid_c(1:n1_c,1:n2_c,1:n3_c,1),'X1c.txt')
-  call print_array_to_file(n1_c,n2_c,n3_c,Xgrid_c(1:n1_c,1:n2_c,1:n3_c,2),'X2c.txt')
-  call print_array_to_file(n1_c,n2_c,n3_c,Xgrid_c(1:n1_c,1:n2_c,1:n3_c,3),'X3c.txt')
-  call print_array_to_file(n1_f,n2_f,n3_f,Xgrid_f(1:n1_f,1:n2_f,1:n3_f,1),'X1f.txt')
-  call print_array_to_file(n1_f,n2_f,n3_f,Xgrid_f(1:n1_f,1:n2_f,1:n3_f,2),'X2f.txt')
-  call print_array_to_file(n1_f,n2_f,n3_f,Xgrid_f(1:n1_f,1:n2_f,1:n3_f,3),'X3f.txt')
-
-  call print_array_to_file(n1_f,n2_f,n3_f,err_f(1:n1_f,1:n2_f,1:n3_f),'err_f.txt')
-  call print_array_to_file(n1_c,n2_c,n3_c,err_c(1:n1_c,1:n2_c,1:n3_c),'err_c.txt')
-
-  write(*,"(A20,6I5)") 'No. of grid points', n1_c,n2_c,n3_c,n1_f,n2_f,n3_f
-  !write(*,"(A20,5ES25.15E3)") 'errors',maxval(err_c),maxval(err_f), l2_err
-  !write(*,"(A20,5ES25.15E3)") 'errors/16',maxval(err_c)/16.d0,maxval(err_f)/16.d0, l2_err/16.d0
-  write(*,"(A20,5ES25.15E3)") 'errors',l2_err_c,l2_err_f,l2_err
-  write(*,"(A20,5ES25.15E3)") 'errors/16',l2_err_c/16.d0,l2_err_f/16.d0,l2_err/16.d0
-  write(*,"(A20,5ES25.15E3)") 'computational time', (c2-c1)/rate
-  write(*,"(A20,5ES25.15E3)") 'cfl', cfl
-
+  call print_array_to_file(1,1,nt,Times,'times.txt')
+  call print_array_to_file(1,1,nt,energy_discrete,'energy_interior.txt')
+  call print_array_to_file(1,1,nt,energy_bdry,'energy_bdry.txt')
+  call print_array_to_file(1,1,nt,bdry,'traction_continuity.txt')
 
 contains
 
@@ -465,7 +370,7 @@ contains
           do k=1-nrg,n1_f+nrg
              mu_f(k,j,i) = 3.d0 + sin(3.d0*Xgrid_f(k,j,i,1)+0.1d0)*sin(3.d0*Xgrid_f(k,j,i,2)+0.1d0)*sin(Xgrid_f(k,j,i,3))
              lambda_f(k,j,i) = 21.d0+ cos(Xgrid_f(k,j,i,1)+0.1d0)*cos(Xgrid_f(k,j,i,2)+0.1d0)*sin(3.d0*Xgrid_f(k,j,i,3))**2
-             rho_f(k,j,i,:) = 2.d0 + sin(Xgrid_f(k,j,i,1)+0.3d0)*sin(Xgrid_f(k,j,i,2)+0.3d0)*sin(Xgrid_f(k,j,i,3)-0.2d0)
+             rho_f(k,j,i,:) = 2.d0 +  sin(Xgrid_f(k,j,i,1)+0.3d0)*sin(Xgrid_f(k,j,i,2)+0.3d0)*sin(Xgrid_f(k,j,i,3)-0.2d0)
           end do
        end do
     end do
@@ -695,7 +600,8 @@ contains
   subroutine Interface_system(Mass)
 
     ! System of linear equations
-    real(dp), dimension (1:n1_c*n2_c*3,1:n1_c*n2_c*3) :: Mass
+    real(dp), dimension (1:(n1_c-2)*(n2_c-2)*3,1:(n1_c-2)*(n2_c-2) *3) :: Mass
+    !real(dp), dimension (1:n1_c*n2_c*3,1:n1_c*n2_c*3) :: Mass
     real(dp), dimension (-2:n1_f+3,-2:n2_f+3,-2:n1_c+3,-2:n2_c+3) :: Mass_p = 0.d0
     real(dp), dimension (1:n1_c,1:n2_c,1:n1_c,1:n2_c) :: Mass_r = 0.d0
     real(dp) :: int_cof
@@ -751,10 +657,15 @@ contains
            end do
         end do
 
-        Mass_p(:,:,-2:0,:) = 0.d0
-        Mass_p(:,:,n1_c+1:n1_c+3,:) = 0.d0
-        Mass_p(:,:,:,-2:0) = 0.d0
-        Mass_p(:,:,:,n2_c+1:n2_c+3) = 0.d0
+        Mass_p(:,:,-2:1,:) = 0.d0
+        Mass_p(:,:,n1_c:n1_c+3,:) = 0.d0
+        Mass_p(:,:,:,-2:1) = 0.d0
+        Mass_p(:,:,:,n2_c:n2_c+3) = 0.d0
+        ! enforce the term P(Lc) = 0 at ghost points
+        Mass_p(-2:1,:,:,:) = 0.d0
+        Mass_p(n1_f:n1_f+3,:,:,:) = 0.d0
+        Mass_p(:,-2:1,:,:) = 0.d0
+        Mass_p(:,n2_f:n2_f+3,:,:) = 0.d0
 
         do k = 1,n2_c
            do i = 1,n1_c
@@ -768,22 +679,47 @@ contains
               Mass_r(i,k,1:n1_c,1:n2_c) = Mass_r(i,k,1:n1_c,1:n2_c)/sqrt(int_cof_c(i,k))
            end do
         end do
-        do l = 1,n2_c
-           do k = 1,n1_c
-              do j = 1,n2_c
-                 do i = 1,n1_c
-                    Mass((l-1)*3*n1_c+(k-1)*3+iset,(j-1)*3*n1_c+(i-1)*3+jj) = Mass_r(k,l,i,j)*int_cof
+        !do l = 1,n2_c
+        !   do k = 1,n1_c
+        !      do j = 1,n2_c
+        !         do i = 1,n1_c
+        !            Mass((l-1)*3*n1_c+(k-1)*3+iset,(j-1)*3*n1_c+(i-1)*3+jj) = Mass_r(k,l,i,j)*int_cof
+        !         end do
+        !      end do
+        !   end do
+        !end do
+
+
+		do l = 1,n2_c-2
+           do k = 1,n1_c-2
+              do j = 1,n2_c-2
+                 do i = 1,n1_c-2
+                    Mass((l-1)*3*(n1_c-2)+(k-1)*3+iset,(j-1)*3*(n1_c-2)+(i-1)*3+jj) = Mass_r(k+1,l+1,i+1,j+1)*int_cof
                  end do
               end do
            end do
         end do
-        do j = 1, n2_c
-           do i = 1, n1_c
-              Mass((j-1)*3*n1_c+(i-1)*3+iset,(j-1)*3*n1_c+(i-1)*3+jj) = &
-                  Mass((j-1)*3*n1_c+(i-1)*3+iset,(j-1)*3*n1_c+(i-1)*3+jj) &
-                  -Sb(0)*N33_c(i,j,n3_c,iset,jj)/h3_c/int_cof_c(i,j)
+
+
+
+        !do j = 1, n2_c
+        !   do i = 1, n1_c
+        !      Mass((j-1)*3*n1_c+(i-1)*3+iset,(j-1)*3*n1_c+(i-1)*3+jj) = &
+        !          Mass((j-1)*3*n1_c+(i-1)*3+iset,(j-1)*3*n1_c+(i-1)*3+jj) &
+        !          -Sb(0)*N33_c(i,j,n3_c,iset,jj)/h3_c/int_cof_c(i,j)
+        !   end do
+        !end do
+
+		do j = 1, n2_c-2
+           do i = 1, n1_c-2
+              Mass((j-1)*3*(n1_c-2)+(i-1)*3+iset,(j-1)*3*(n1_c-2)+(i-1)*3+jj) = &
+                  Mass((j-1)*3*(n1_c-2)+(i-1)*3+iset,(j-1)*3*(n1_c-2)+(i-1)*3+jj) &
+                  -Sb(0)*N33_c(i+1,j+1,n3_c,iset,jj)/h3_c/int_cof_c(i+1,j+1)
            end do
         end do
+
+
+
         Mass_p = 0.d0
         Mass_r = 0.d0
       end do
@@ -811,6 +747,7 @@ contains
     end do
 
     Vass = 0.d0
+	Vass_1 = 0.d0
     !
     do iset = 1,3
        ! term 1
@@ -950,6 +887,12 @@ contains
          end do
       end do
 
+      ! enforce lc = 0 at ghost points
+      lh_c(-2:1,:,n3_c,iset) = 0.d0
+      lh_c(n1_c:n1_c+3,:,n3_c,iset) = 0.d0
+      lh_c(:,-2:1,n3_c,iset) = 0.d0
+      lh_c(:,n2_c:n2_c+3,n3_c,iset) = 0.d0
+
       ! project
       Mass_f1 = 0.d0
       do k = -1,n2_c+1
@@ -979,6 +922,13 @@ contains
              Mass_f1(2*i,2*k) = Mass_f1(2*i,2*k)/sqrt(int_cof_f(2*i,2*k))
            end do
        end do
+
+       ! enforce the term contain p(lc) = 0 at ghost points
+       Mass_f1(-2:1,:) = 0.d0
+       Mass_f1(n1_f:n1_f+3,:) = 0.d0
+       Mass_f1(:,-2:1) = 0.d0
+       Mass_f1(:,n2_f:n2_f+3) = 0.d0
+
       ! restrict
       Vass_temp = 0.d0
       do k = 1,n2_c
@@ -1119,6 +1069,12 @@ contains
          end do
       end do
 
+      ! enforce the term contain p(lc) = 0 at ghost points
+      lh_f(-2:1,:,1,iset) = 0.d0
+      lh_f(n1_f:n1_f+3,:,1,iset) = 0.d0
+      lh_f(:,-2:1,1,iset) = 0.d0
+      lh_f(:,n2_f:n2_f+3,1,iset) = 0.d0
+
       ! now restrict it to the coarse grid
       Vass_temp = 0.d0
       do k = 1,n2_c
@@ -1133,8 +1089,20 @@ contains
             Vass((k-1)*3*n1_c+(i-1)*3+iset) = Vass((k-1)*3*n1_c+(i-1)*3+iset)+Vass_temp(i,k)
          end do
       end do
-      !
+
+
+
+      do k = 1,n2_c-2
+         do j = 1,n1_c-2
+            Vass_1((k-1)*3*(n1_c-2)+(j-1)*3+iset) = Vass((k+1-1)*3*n1_c+(j+1-1)*3+iset)
+		     end do
+	    end do
+			 !
    end do
+
+
+
+
 
   end subroutine Interface_RHS
 
@@ -1204,65 +1172,75 @@ contains
 
       end do
     end do
+	 lh_c(1,1:n2_c,1:n3_c,:) = 0.d0
+     lh_c(n1_c,1:n2_c,1:n3_c,:) = 0.d0
+     lh_c(1:n1_c,1,1:n3_c,:) = 0.d0
+     lh_c(1:n1_c,n2_c,1:n3_c,:) = 0.d0
+
+	 lh_f(1,1:n2_f,1:n3_f,:) = 0.d0
+     lh_f(n1_f,1:n2_f,1:n3_f,:) = 0.d0
+     lh_f(1:n1_f,1,1:n3_f,:) = 0.d0
+     lh_f(1:n1_f,n2_f,1:n3_f,:) = 0.d0
+
 
   end subroutine Update_interior
 
   subroutine Update_gp(index)
     integer index
 
+    ! Update ghost point values on the back and front domain
+    ! fine mesh
+    do i = 1-nrg,n3_f+nrg
+       do j = 1-nrg,n2_f+nrg
+          do k = 1-nrg,1
+             call exact_solution(Xgrid_f(k,j,i,1),Xgrid_f(k,j,i,2),Xgrid_f(k,j,i,3),tv, &
+                     u_f(k,j,i,1,index),u_f(k,j,i,2,index),u_f(k,j,i,3,index),1)
+          end do
+          do k = n1_f,n1_f+nrg
+             call exact_solution(Xgrid_f(k,j,i,1),Xgrid_f(k,j,i,2),Xgrid_f(k,j,i,3),tv, &
+                     u_f(k,j,i,1,index),u_f(k,j,i,2,index),u_f(k,j,i,3,index),1)
+          end do
+       end do
+    end do
+    ! coarse fine
+    do i=1-nrg,n3_c+nrg
+       do j = 1-nrg,n2_c+nrg
+          do k = 1-nrg,1
+             call exact_solution(Xgrid_c(k,j,i,1),Xgrid_c(k,j,i,2),Xgrid_c(k,j,i,3),tv, &
+                     u_c(k,j,i,1,index),u_c(k,j,i,2,index),u_c(k,j,i,3,index),0)
+          end do
+          do k = n1_c,n1_c+nrg
+             call exact_solution(Xgrid_c(k,j,i,1),Xgrid_c(k,j,i,2),Xgrid_c(k,j,i,3),tv, &
+                     u_c(k,j,i,1,index),u_c(k,j,i,2,index),u_c(k,j,i,3,index),0)
+          end do
+       end do
+    end do
     ! Update ghost point values on the left and right domain
     ! fine mesh
-    do i=1,n3_f
-       do j = 1-nrg,n2_f+nrg
-          do k = 1-nrg,0
-             call exact_solution(Xgrid_f(k,j,i,1),Xgrid_f(k,j,i,2),Xgrid_f(k,j,i,3),tv, &
-                     u_f(k,j,i,1,index),u_f(k,j,i,2,index),u_f(k,j,i,3,index),1)
-          end do
-          do k = n1_f+1,n1_f+nrg
+    do i = 1-nrg,n3_f+nrg
+       do j = 1-nrg,1
+          do k = 1-nrg,n1_f+nrg
              call exact_solution(Xgrid_f(k,j,i,1),Xgrid_f(k,j,i,2),Xgrid_f(k,j,i,3),tv, &
                      u_f(k,j,i,1,index),u_f(k,j,i,2,index),u_f(k,j,i,3,index),1)
           end do
        end do
-    end do
-    ! coarse fine
-    do i=0,n3_c+1
-       do j = 1-nrg,n2_c+nrg
-          do k = 1-nrg,0
-             call exact_solution(Xgrid_c(k,j,i,1),Xgrid_c(k,j,i,2),Xgrid_c(k,j,i,3),tv, &
-                     u_c(k,j,i,1,index),u_c(k,j,i,2,index),u_c(k,j,i,3,index),0)
-          end do
-          do k = n1_c+1,n1_c+nrg
-             call exact_solution(Xgrid_c(k,j,i,1),Xgrid_c(k,j,i,2),Xgrid_c(k,j,i,3),tv, &
-                     u_c(k,j,i,1,index),u_c(k,j,i,2,index),u_c(k,j,i,3,index),0)
-          end do
-       end do
-    end do
-    ! Update ghost point values on the front and back domain
-    ! fine mesh
-    do i=1,n3_f
-       do j = 1-nrg,0
-          do k = 1,n1_f
-             call exact_solution(Xgrid_f(k,j,i,1),Xgrid_f(k,j,i,2),Xgrid_f(k,j,i,3),tv, &
-                     u_f(k,j,i,1,index),u_f(k,j,i,2,index),u_f(k,j,i,3,index),1)
-          end do
-       end do
-       do j = n2_f+1,n2_f+nrg
-          do k = 1,n1_f
+       do j = n2_f,n2_f+nrg
+          do k = 1-nrg,n1_f+nrg
              call exact_solution(Xgrid_f(k,j,i,1),Xgrid_f(k,j,i,2),Xgrid_f(k,j,i,3),tv, &
                      u_f(k,j,i,1,index),u_f(k,j,i,2,index),u_f(k,j,i,3,index),1)
           end do
        end do
     end do
     ! coarse fine
-    do i=0,n3_c+1
-       do j = 1-nrg,0
-          do k = 1,n1_c
+    do i=1-nrg,n3_c+nrg
+       do j = 1-nrg,1
+          do k = 1-nrg,n1_c+nrg
              call exact_solution(Xgrid_c(k,j,i,1),Xgrid_c(k,j,i,2),Xgrid_c(k,j,i,3),tv, &
                      u_c(k,j,i,1,index),u_c(k,j,i,2,index),u_c(k,j,i,3,index),0)
           end do
        end do
-       do j = n2_c+1,n2_c+nrg
-          do k = 1,n1_c
+       do j = n2_c,n2_c+nrg
+          do k = 1-nrg,n1_c+nrg
              call exact_solution(Xgrid_c(k,j,i,1),Xgrid_c(k,j,i,2),Xgrid_c(k,j,i,3),tv, &
                      u_c(k,j,i,1,index),u_c(k,j,i,2,index),u_c(k,j,i,3,index),0)
           end do
@@ -1271,80 +1249,18 @@ contains
 
   end subroutine Update_gp
 
-  subroutine Update_traction(index)
-    ! traction B.C. on the top of the fine mesh
-
-    integer :: index
-    real(dp) :: mat_det
-
-    int_temp_f_1 = 0.d0
-    int_temp_f_2 = 0.d0
-
-    do j = 1,n2_f
-       do i=1,n1_f
-          call top_normal_data(Xgrid_f(i,j,n3_f,1),Xgrid_f(i,j,n3_f,2),Xgrid_f(i,j,n3_f,3), &
-              l1,l2,tv,traction_data(i,j,:))
-       end do
-    end do
-
-    do jj = 1,3
-       call FD_r1(h1_f,-1,n1_f+2,1,n2_f,n3_f,n3_f,u_f(-1:n1_f+2,1:n2_f,n3_f,jj,index),int_temp_f_1(1:n1_f,1:n2_f,jj))
-       call FD_r2(h2_f,1,n1_f,-1,n2_f+2,n3_f,n3_f,u_f(1:n1_f,-1:n2_f+2,n3_f,jj,index),int_temp_f_2(1:n1_f,1:n2_f,jj))
-    end do
-
-    do j = 1,n2_f
-       do i = 1,n1_f
-          traction_rhs = 0.d0
-          do iset = 1,3
-             do k = 1,4
-                do jj = 1,3
-                   traction_rhs(iset) = traction_rhs(iset) &
-                       - 1.d0/h3_f*Sb(k)*u_f(i,j,n3_f+1-k,jj,index)*N33_f(i,j,n3_f,iset,jj)
-                end do
-             end do
-             do jj = 1,3
-                traction_rhs(iset) = traction_rhs(iset) + N31_f(i,j,n3_f,iset,jj)*int_temp_f_1(i,j,jj) &
-                                     + N32_f(i,j,n3_f,iset,jj)*int_temp_f_2(i,j,jj)
-             end do
-             traction_rhs(iset) = traction_rhs(iset) &
-               - sqrt(XI13_f(i,j,n3_f)**2+XI23_f(i,j,n3_f)**2+XI33_f(i,j,n3_f)**2)*Jacobian_f(i,j,n3_f)*traction_data(i,j,iset)
-          end do
-
-          ! Update ghost point at the traction boundary
-          mat_det = N33_f(i,j,n3_f,1,1)*N33_f(i,j,n3_f,2,2)*N33_f(i,j,n3_f,3,3) &
-                  +N33_f(i,j,n3_f,2,1)*N33_f(i,j,n3_f,3,2)*N33_f(i,j,n3_f,1,3) &
-                  + N33_f(i,j,n3_f,3,1)*N33_f(i,j,n3_f,1,2)*N33_f(i,j,n3_f,2,3) &
-                  -N33_f(i,j,n3_f,1,3)*N33_f(i,j,n3_f,2,2)*N33_f(i,j,n3_f,3,1) &
-                  - N33_f(i,j,n3_f,1,1)*N33_f(i,j,n3_f,3,2)*N33_f(i,j,n3_f,2,3) &
-                  -N33_f(i,j,n3_f,3,3)*N33_f(i,j,n3_f,2,1)*N33_f(i,j,n3_f,1,2)
-
-          u_f(i,j,n3_f+1,1,index) = h3_f/Sb(0)/mat_det* &
-              ((N33_f(i,j,n3_f,2,2)*N33_f(i,j,n3_f,3,3)-N33_f(i,j,n3_f,2,3)*N33_f(i,j,n3_f,3,2))*traction_rhs(1) &
-             +(N33_f(i,j,n3_f,1,3)*N33_f(i,j,n3_f,3,2)-N33_f(i,j,n3_f,1,2)*N33_f(i,j,n3_f,3,3))*traction_rhs(2) &
-             +(N33_f(i,j,n3_f,1,2)*N33_f(i,j,n3_f,2,3)-N33_f(i,j,n3_f,1,3)*N33_f(i,j,n3_f,2,2))*traction_rhs(3))
-          u_f(i,j,n3_f+1,2,index) = h3_f/Sb(0)/mat_det* &
-              ((N33_f(i,j,n3_f,2,3)*N33_f(i,j,n3_f,3,1)-N33_f(i,j,n3_f,3,3)*N33_f(i,j,n3_f,2,1))*traction_rhs(1) &
-             +(N33_f(i,j,n3_f,1,1)*N33_f(i,j,n3_f,3,3)-N33_f(i,j,n3_f,1,3)*N33_f(i,j,n3_f,3,1))*traction_rhs(2) &
-             +(N33_f(i,j,n3_f,1,3)*N33_f(i,j,n3_f,2,1)-N33_f(i,j,n3_f,1,1)*N33_f(i,j,n3_f,2,3))*traction_rhs(3))
-          u_f(i,j,n3_f+1,3,index) = h3_f/Sb(0)/mat_det* &
-              ((N33_f(i,j,n3_f,2,1)*N33_f(i,j,n3_f,3,2)-N33_f(i,j,n3_f,2,2)*N33_f(i,j,n3_f,3,1))*traction_rhs(1) &
-             +(N33_f(i,j,n3_f,1,2)*N33_f(i,j,n3_f,3,1)-N33_f(i,j,n3_f,1,1)*N33_f(i,j,n3_f,3,2))*traction_rhs(2) &
-             +(N33_f(i,j,n3_f,1,1)*N33_f(i,j,n3_f,2,2)-N33_f(i,j,n3_f,1,2)*N33_f(i,j,n3_f,2,1))*traction_rhs(3))
-       end do
-    end do
-  end subroutine Update_traction
-
   subroutine Update_Dirichlet_BC(index)
     integer index
+    !!! top and bottom
     ! fine mesh
     do j=1-nrg,n2_f+nrg
        do k=1-nrg,n1_f+nrg
-          i = 1
+          !i = 1
           !call exact_solution(Xgrid_f(k,j,i,1),Xgrid_f(k,j,i,2),Xgrid_f(k,j,i,3),tv, &
-                    !u_f(k,j,i,1,index),u_f(k,j,i,2,index),u_f(k,j,i,3,index),1)
+          !          u_f(k,j,i,1,index),u_f(k,j,i,2,index),u_f(k,j,i,3,index),1)
           i = n3_f
-          !call exact_solution(Xgrid_f(k,j,i,1),Xgrid_f(k,j,i,2),Xgrid_f(k,j,i,3),tv, &
-           !         u_f(k,j,i,1,index),u_f(k,j,i,2,index),u_f(k,j,i,3,index),1)
+          call exact_solution(Xgrid_f(k,j,i,1),Xgrid_f(k,j,i,2),Xgrid_f(k,j,i,3),tv, &
+                    u_f(k,j,i,1,index),u_f(k,j,i,2,index),u_f(k,j,i,3,index),1)
        end do
     end do
     !coarse mesh
@@ -1353,11 +1269,58 @@ contains
           i = 1
           call exact_solution(Xgrid_c(k,j,i,1),Xgrid_c(k,j,i,2),Xgrid_c(k,j,i,3),tv, &
                    u_c(k,j,i,1,index),u_c(k,j,i,2,index),u_c(k,j,i,3,index),0)
-          i = n3_c
-          !call exact_solution(Xgrid_c(k,j,i,1),Xgrid_c(k,j,i,2),Xgrid_c(k,j,3),tv, &
-                   !u_c(k,j,i,1,index),u_c(k,j,i,2,index),u_c(k,j,i,3,index),0)
+          !i = n3_c
+          !call exact_solution(Xgrid_c(k,j,i,1),Xgrid_c(k,j,i,2),Xgrid_c(k,j,i,3),tv, &
+          !         u_c(k,j,i,1,index),u_c(k,j,i,2,index),u_c(k,j,i,3,index),0)
        end do
     end do
+    !!! back and front
+    ! fine mesh
+    do i=1-nrg,n3_f+nrg
+       do j=1-nrg,n2_f+nrg
+          k = 1
+          call exact_solution(Xgrid_f(k,j,i,1),Xgrid_f(k,j,i,2),Xgrid_f(k,j,i,3),tv, &
+                    u_f(k,j,i,1,index),u_f(k,j,i,2,index),u_f(k,j,i,3,index),1)
+          k = n1_f
+          call exact_solution(Xgrid_f(k,j,i,1),Xgrid_f(k,j,i,2),Xgrid_f(k,j,i,3),tv, &
+                    u_f(k,j,i,1,index),u_f(k,j,i,2,index),u_f(k,j,i,3,index),1)
+       end do
+    end do
+    !coarse mesh
+    do i=1-nrg,n3_c+nrg
+       do j=1-nrg,n2_c+nrg
+          k = 1
+          call exact_solution(Xgrid_c(k,j,i,1),Xgrid_c(k,j,i,2),Xgrid_c(k,j,i,3),tv, &
+                   u_c(k,j,i,1,index),u_c(k,j,i,2,index),u_c(k,j,i,3,index),0)
+          k = n1_c
+          call exact_solution(Xgrid_c(k,j,i,1),Xgrid_c(k,j,i,2),Xgrid_c(k,j,i,3),tv, &
+                   u_c(k,j,i,1,index),u_c(k,j,i,2,index),u_c(k,j,i,3,index),0)
+       end do
+    end do
+    !!! left and right
+    ! fine mesh
+    do i=1-nrg,n3_f+nrg
+       do k=1-nrg,n1_f+nrg
+          j = 1
+          call exact_solution(Xgrid_f(k,j,i,1),Xgrid_f(k,j,i,2),Xgrid_f(k,j,i,3),tv, &
+                    u_f(k,j,i,1,index),u_f(k,j,i,2,index),u_f(k,j,i,3,index),1)
+          j = n2_f
+          call exact_solution(Xgrid_f(k,j,i,1),Xgrid_f(k,j,i,2),Xgrid_f(k,j,i,3),tv, &
+                    u_f(k,j,i,1,index),u_f(k,j,i,2,index),u_f(k,j,i,3,index),1)
+       end do
+    end do
+    !coarse mesh
+    do i=1-nrg,n3_c+nrg
+       do k=1-nrg,n1_c+nrg
+          j = 1
+          call exact_solution(Xgrid_c(k,j,i,1),Xgrid_c(k,j,i,2),Xgrid_c(k,j,i,3),tv, &
+                   u_c(k,j,i,1,index),u_c(k,j,i,2,index),u_c(k,j,i,3,index),0)
+          j = n2_c
+          call exact_solution(Xgrid_c(k,j,i,1),Xgrid_c(k,j,i,2),Xgrid_c(k,j,i,3),tv, &
+                   u_c(k,j,i,1,index),u_c(k,j,i,2,index),u_c(k,j,i,3,index),0)
+       end do
+    end do
+
   end subroutine Update_Dirichlet_BC
 
   subroutine Injection(index)
@@ -1405,10 +1368,594 @@ contains
        end do
     end do
   end subroutine Injection
+  !
+  subroutine compute_eta(index)
+    !
+    integer index
+    real(dp), dimension (1-nrg:n1_c+nrg,1-nrg:n2_c+nrg) :: int_cof_c
+    real(dp), dimension (1-nrg:n1_f+nrg,1-nrg:n2_f+nrg) :: int_cof_f
 
-end program Elastic_3D_Interface_conforming_static_reorder1
+    do j = 1-nrg,n2_c+nrg
+       do i = 1-nrg,n1_c+nrg
+          int_cof_c(i,j) = Jacobian_c(i,j,n3_c)*sqrt(XI13_c(i,j,n3_c)**2+XI23_c(i,j,n3_c)**2+XI33_c(i,j,n3_c)**2)
+       end do
+    end do
+
+    do j = 1-nrg,n2_f+nrg
+       do i = 1-nrg,n1_f+nrg
+          int_cof_f(i,j) = Jacobian_f(i,j,1)*sqrt(XI13_f(i,j,1)**2+XI23_f(i,j,1)**2+XI33_f(i,j,1)**2)
+       end do
+    end do
+
+    eta = 0.d0
+    !
+    do iset = 1,3
+
+       ! interior
+       ! second derivatives 11
+       lh_c = 0.d0
+       int_temp_c = 0.d0
+       do jj = 1,3
+          call FD_r1r1(h1_c,n1_c,n2_c,n3_c,N11_c(:,:,:,iset,jj),u_c(:,:,:,jj,index), &
+                -2,n1_c+3,-2,n2_c+3,n3_c,n3_c,int_temp_c(-2:n1_c+3,-2:n2_c+3,1))
+          lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset)=lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset)+int_temp_c(-2:n1_c+3,-2:n2_c+3,1)
+       end do
+
+       ! second derivatives 22
+       int_temp_c = 0.d0
+       do jj = 1,3
+          call FD_r2r2(h2_c,n1_c,n2_c,n3_c,N22_c(:,:,:,iset,jj),u_c(:,:,:,jj,index), &
+                -2,n1_c+3,-2,n2_c+3,n3_c,n3_c,int_temp_c(-2:n1_c+3,-2:n2_c+3,1))
+          lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset)=lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset)+int_temp_c(-2:n1_c+3,-2:n2_c+3,1)
+       end do
+
+       ! second derivatives 33
+       do k = 1,8
+          do m = 1,8
+             do jj = 1,3
+                lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset) =lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset) &
+                 +acof(1,k,m)*N33_c(-2:n1_c+3,-2:n2_c+3,n3_c+1-m,iset,jj)*u_c(-2:n1_c+3,-2:n2_c+3,n3_c+1-k,jj,index)/h3_c**2
+             end do
+          end do
+       end do
+       ! ghost points
+       do jj = 1,3
+          lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset) =lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset) &
+            + N33_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset,jj)*ghcof(1)*u_c(-2:n1_c+3,-2:n2_c+3,n3_c+1,jj,index)/h3_c**2
+       end do
+
+       ! mixed derivatives 12
+       do jj = 1,3
+          int_temp_c = 0.d0
+          do i=-2,2
+             int_temp_c(-4:n1_c+5,-2:n2_c+3,1)=int_temp_c(-4:n1_c+5,-2:n2_c+3,1) &
+                       +ux_cof(i)*u_c(-4:n1_c+5,-2+i:n2_c+3+i,n3_c,jj,index)/h2_c
+          end do
+          do i=-2,2
+             lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset)=lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset) &
+                +ux_cof(i)*N12_c(-2+i:n1_c+3+i,-2:n2_c+3,n3_c,iset,jj)*int_temp_c(-2+i:n1_c+3+i,-2:n2_c+3,1)/h1_c
+          end do
+       end do
+
+       ! mixed derivatives 13
+       do jj = 1,3
+          int_temp_c = 0.d0
+          do i =1,4
+             int_temp_c(-4:n1_c+5,-2:n2_c+3,1)=int_temp_c(-4:n1_c+5,-2:n2_c+3,1) &
+                        -u_c(-4:n1_c+5,-2:n2_c+3,n3_c+1-i,jj,index)*bof(1,i)/h3_c
+          end do
+          do i =-2,2
+             lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset)=lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset) &
+                +ux_cof(i)*N13_c(-2+i:n1_c+3+i,-2:n2_c+3,n3_c,iset,jj)*int_temp_c(-2+i:n1_c+3+i,-2:n2_c+3,1)/h1_c
+          end do
+       end do
+
+       ! mixed derivatives 21
+       do jj = 1,3
+          int_temp_c = 0.d0
+          do i=-2,2
+             int_temp_c(-2:n1_c+3,-4:n2_c+5,1)=int_temp_c(-2:n1_c+3,-4:n2_c+5,1) &
+                       +ux_cof(i)*u_c(-2+i:n1_c+3+i,-4:n2_c+5,n3_c,jj,index)/h1_c
+          end do
+          do i=-2,2
+             lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset)=lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset) &
+                +ux_cof(i)*N21_c(-2:n1_c+3,-2+i:n2_c+3+i,n3_c,iset,jj)*int_temp_c(-2:n1_c+3,-2+i:n2_c+3+i,1)/h2_c
+          end do
+      end do
+
+      ! mixed derivatives 23
+      do jj = 1,3
+         int_temp_c = 0.d0
+         do i =1,4
+            int_temp_c(-2:n1_c+3,-4:n2_c+5,1)=int_temp_c(-2:n1_c+3,-4:n2_c+5,1) &
+                        -u_c(-2:n1_c+3,-4:n2_c+5,n3_c+1-i,jj,index)*bof(1,i)/h3_c
+         end do
+         do i =-2,2
+            lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset)=lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset) &
+                +ux_cof(i)*N23_c(-2:n1_c+3,-2+i:n2_c+3+i,n3_c,iset,jj)*int_temp_c(-2:n1_c+3,-2+i:n2_c+3+i,1)/h2_c
+         end do
+      end do
+
+      ! mixed derivatives 31
+      do jj = 1,3
+         int_temp_c = 0.d0
+         do i = -2,2
+            int_temp_c(-2:n1_c+3,-2:n2_c+3,1:4)=int_temp_c(-2:n1_c+3,-2:n2_c+3,1:4) &
+               +ux_cof(i)*u_c(-2+i:n1_c+3+i,-2:n2_c+3,n3_c:n3_c-3:-1,jj,index)/h1_c
+         end do
+         do i = 1,4
+            lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset)=lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset) &
+               -N31_c(-2:n1_c+3,-2:n2_c+3,n3_c-i+1,iset,jj)*int_temp_c(-2:n1_c+3,-2:n2_c+3,i)*bof(1,i)/h3_c
+         end do
+      end do
+
+      ! mixed derivatives 32
+      do jj = 1,3
+         int_temp_c = 0.d0
+         do i = -2,2
+            int_temp_c(-2:n1_c+3,-2:n2_c+3,1:4)=int_temp_c(-2:n1_c+3,-2:n2_c+3,1:4) &
+               +ux_cof(i)*u_c(-2:n1_c+3,-2+i:n2_c+3+i,n3_c:n3_c-3:-1,jj,index)/h2_c
+         end do
+         do i = 1,4
+            lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset)=lh_c(-2:n1_c+3,-2:n2_c+3,n3_c,iset) &
+                -N32_c(-2:n1_c+3,-2:n2_c+3,n3_c-i+1,iset,jj)*int_temp_c(-2:n1_c+3,-2:n2_c+3,i)*bof(1,i)/h3_c
+         end do
+      end do
+
+      ! force lc = 0 at ghost points
+      lh_c(-2:1,:,n3_c,iset) = 0.d0
+      lh_c(n1_c:n1_c+3,:,n3_c,iset) = 0.d0
+      lh_c(:,-2:1,n3_c,iset) = 0.d0
+      lh_c(:,n2_c:n2_c+3,n3_c,iset) = 0.d0
+
+      ! project
+      Mass_f1 = 0.d0
+      do k = -1,n2_c+1
+         do i = -1,n1_c+1
+            if (k .gt. -1 .and. i .gt. -1) then
+                Mass_f1(2*i-1,2*k-1)=sqrt(int_cof_c(i,k))*lh_c(i,k,n3_c,iset)/rho_c(i,k,n3_c,1)
+                Mass_f1(2*i-1,2*k-1) = Mass_f1(2*i-1,2*k-1)/sqrt(int_cof_f(2*i-1,2*k-1))
+            end if
+            if (k .ge. -1 .and. i .gt. -1) then
+               do j = -1,2
+                  Mass_f1(2*i-1,2*k)=Mass_f1(2*i-1,2*k)+P(j)*sqrt(int_cof_c(i,k+j))*lh_c(i,k+j,n3_c,iset)/rho_c(i,j+k,n3_c,1)
+               end do
+               Mass_f1(2*i-1,2*k) = Mass_f1(2*i-1,2*k)/sqrt(int_cof_f(2*i-1,2*k))
+            end if
+            if (k .gt. -1 .and. i .ge. -1) then
+               do j = -1,2
+                  Mass_f1(2*i,2*k-1)=Mass_f1(2*i,2*k-1)+P(j)*sqrt(int_cof_c(i+j,k))*lh_c(i+j,k,n3_c,iset)/rho_c(i+j,k,n3_c,1)
+               end do
+               Mass_f1(2*i,2*k-1)=Mass_f1(2*i,2*k-1)/sqrt(int_cof_f(2*i,2*k-1))
+            end if
+            do j = -1,2
+               do l = -1,2
+                   Mass_f1(2*i,2*k)=Mass_f1(2*i,2*k)&
+                    +P(j)*(P(l)*sqrt(int_cof_c(i+l,k+j))*lh_c(i+l,k+j,n3_c,iset)/rho_c(i+l,k+j,n3_c,1))
+                end do
+             end do
+             Mass_f1(2*i,2*k) = Mass_f1(2*i,2*k)/sqrt(int_cof_f(2*i,2*k))
+           end do
+       end do
+
+      eta(-2:n1_f+3,-2:n2_f+3,1,iset) = rho_f(-2:n1_f+3,-2:n2_f+3,1,1)*Mass_f1(:,:)
+
+      ! enforce the term contain p(lc) = 0 at ghost points
+      eta(-2:1,:,1,iset) = 0.d0
+      eta(n1_f:n1_f+3,:,1,iset) = 0.d0
+      eta(:,-2:1,1,iset) = 0.d0
+      eta(:,n2_f:n2_f+3,1,iset) = 0.d0
+
+      ! term 3
+      ! second derivatives 11
+      lh_f = 0.d0
+      int_temp_f = 0.d0
+      do jj = 1,3
+         call FD_r1r1(h1_f,n1_f,n2_f,n3_f,N11_f(:,:,:,iset,jj),u_f(:,:,:,jj,index), &
+                      -2,n1_f+3,-2,n2_f+3,1,1,int_temp_f(-2:n1_f+3,-2:n2_f+3,1))
+         lh_f(-2:n1_f+3,-2:n2_f+3,1,iset) = lh_f(-2:n1_f+3,-2:n2_f+3,1,iset)+int_temp_f(-2:n1_f+3,-2:n2_f+3,1)
+      end do
+
+      ! second derivatives 22
+      int_temp_f = 0.d0
+      do jj = 1,3
+         call FD_r2r2(h2_f,n1_f,n2_f,n3_f,N22_f(:,:,:,iset,jj),u_f(:,:,:,jj,index), &
+                      -2,n1_f+3,-2,n2_f+3,1,1,int_temp_f(-2:n1_f+3,-2:n2_f+3,1))
+         lh_f(-2:n1_f+3,-2:n2_f+3,1,iset) = lh_f(-2:n1_f+3,-2:n2_f+3,1,iset)+int_temp_f(-2:n1_f+3,-2:n2_f+3,1)
+      end do
+
+      ! second derivatives 33
+      do k = 1,8
+         do m = 1,8
+            do jj = 1,3
+               lh_f(-2:n1_f+3,-2:n2_f+3,1,iset) =lh_f(-2:n1_f+3,-2:n2_f+3,1,iset) &
+                 +acof_no_gp(1,k,m)*N33_f(-2:n1_f+3,-2:n2_f+3,m,iset,jj)*u_f(-2:n1_f+3,-2:n2_f+3,k,jj,index)/h3_f**2
+            end do
+         end do
+      end do
+
+      ! mixed derivatives 12
+      do jj = 1,3
+         int_temp_f = 0.d0
+         do i=-2,2
+            int_temp_f(-4:n1_f+5,-2:n2_f+3,1)=int_temp_f(-4:n1_f+5,-2:n2_f+3,1) &
+                          +ux_cof(i)*u_f(-4:n1_f+5,-2+i:n2_f+3+i,1,jj,index)/h2_f
+         end do
+         do i=-2,2
+            lh_f(-2:n1_f+3,-2:n2_f+3,1,iset)=lh_f(-2:n1_f+3,-2:n2_f+3,1,iset) &
+                +ux_cof(i)*N12_f(-2+i:n1_f+3+i,-2:n2_f+3,1,iset,jj)*int_temp_f(-2+i:n1_f+3+i,-2:n2_f+3,1)/h1_f
+         end do
+      end do
+
+      ! mixed derivatives 13
+      do jj = 1,3
+         int_temp_f = 0.d0
+         do i =1,4
+            int_temp_f(-4:n1_f+5,-2:n2_f+3,1)=int_temp_f(-4:n1_f+5,-2:n2_f+3,1) &
+                               +u_f(-4:n1_f+5,-2:n2_f+3,i,jj,index)*bof(1,i)/h3_f
+         end do
+         do i =-2,2
+            lh_f(-2:n1_f+3,-2:n2_f+3,1,iset)=lh_f(-2:n1_f+3,-2:n2_f+3,1,iset) &
+               +ux_cof(i)*N13_f(-2+i:n1_f+3+i,-2:n2_f+3,1,iset,jj)*int_temp_f(-2+i:n1_f+3+i,-2:n2_f+3,1)/h1_f
+         end do
+      end do
+
+      ! mixed derivatives 21
+      do jj = 1,3
+         int_temp_f = 0.d0
+         do i=-2,2
+            int_temp_f(-2:n1_f+3,-4:n2_f+5,1)=int_temp_f(-2:n1_f+3,-4:n2_f+5,1) &
+                          +ux_cof(i)*u_f(-2+i:n1_f+3+i,-4:n2_f+5,1,jj,index)/h1_f
+         end do
+         do i=-2,2
+            lh_f(-2:n1_f+3,-2:n2_f+3,1,iset)=lh_f(-2:n1_f+3,-2:n2_f+3,1,iset) &
+               +ux_cof(i)*N21_f(-2:n1_f+3,-2+i:n2_f+3+i,1,iset,jj)*int_temp_f(-2:n1_f+3,-2+i:n2_f+3+i,1)/h2_f
+        end do
+      end do
+
+      ! mixed derivatives 23
+      do jj = 1,3
+         int_temp_f = 0.d0
+         do i =1,4
+            int_temp_f(-2:n1_f+3,-4:n2_f+5,1)=int_temp_f(-2:n1_f+3,-4:n2_f+5,1) &
+                               +u_f(-2:n1_f+3,-4:n2_f+5,i,jj,index)*bof(1,i)/h3_f
+         end do
+         do i =-2,2
+            lh_f(-2:n1_f+3,-2:n2_f+3,1,iset)=lh_f(-2:n1_f+3,-2:n2_f+3,1,iset) &
+                +ux_cof(i)*N23_f(-2:n1_f+3,-2+i:n2_f+3+i,1,iset,jj)*int_temp_f(-2:n1_f+3,-2+i:n2_f+3+i,1)/h2_f
+         end do
+      end do
+
+      ! mixed derivatives 31
+      do jj = 1,3
+         int_temp_f = 0.d0
+         do i = -2,2
+            int_temp_f(-2:n1_f+3,-2:n2_f+3,1:4)=int_temp_f(-2:n1_f+3,-2:n2_f+3,1:4) &
+                        +ux_cof(i)*u_f(-2+i:n1_f+3+i,-2:n2_f+3,1:4,jj,index)/h1_f
+         end do
+         do i = 1,4
+            lh_f(-2:n1_f+3,-2:n2_f+3,1,iset)=lh_f(-2:n1_f+3,-2:n2_f+3,1,iset) &
+               +N31_f(-2:n1_f+3,-2:n2_f+3,i,iset,jj)*int_temp_f(-2:n1_f+3,-2:n2_f+3,i)*bof(1,i)/h3_f
+         end do
+      end do
+
+      ! mixed derivatives 32
+      do jj = 1,3
+         int_temp_f = 0.d0
+         do i = -2,2
+            int_temp_f(-2:n1_f+3,-2:n2_f+3,1:4)=int_temp_f(-2:n1_f+3,-2:n2_f+3,1:4) &
+                        +ux_cof(i)*u_f(-2:n1_f+3,-2+i:n2_f+3+i,1:4,jj,index)/h2_f
+         end do
+         do i = 1,4
+            lh_f(-2:n1_f+3,-2:n2_f+3,1,iset)=lh_f(-2:n1_f+3,-2:n2_f+3,1,iset) &
+                +N32_f(-2:n1_f+3,-2:n2_f+3,i,iset,jj)*int_temp_f(-2:n1_f+3,-2:n2_f+3,i)*bof(1,i)/h3_f
+         end do
+      end do
+
+      ! enforce the term contain p(lc) = 0 at ghost points
+      lh_f(-2:1,:,1,iset) = 0.d0
+      lh_f(n1_f:n1_f+3,:,1,iset) = 0.d0
+      lh_f(:,-2:1,1,iset) = 0.d0
+      lh_f(:,n2_f:n2_f+3,1,iset) = 0.d0
+
+      eta(-2:n1_f+3,-2:n2_f+3,1,iset) = eta(-2:n1_f+3,-2:n2_f+3,1,iset) - lh_f(-2:n1_f+3,-2:n2_f+3,1,iset)
+      eta(-2:1,:,1,iset) = 0.d0
+      eta(n1_f:n1_f+3,:,1,iset) = 0.d0
+      eta(:,-2:1,1,iset) = 0.d0
+      eta(:,n2_f:n2_f+3,1,iset) = 0.d0
+
+      ! eta does not divided by J*|\nabla r3| as in paper
+
+   end do
+  !
+  end subroutine compute_eta
+  !
+  subroutine verify_bdry(index)
+    !
+    integer index
+    real(dp), dimension (1-nrg:n1_c+nrg,1-nrg:n2_c+nrg) :: int_cof_c
+    real(dp), dimension (1-nrg:n1_f+nrg,1-nrg:n2_f+nrg) :: int_cof_f
+
+    do j = 1-nrg,n2_c+nrg
+       do i = 1-nrg,n1_c+nrg
+          int_cof_c(i,j) = Jacobian_c(i,j,n3_c)*sqrt(XI13_c(i,j,n3_c)**2+XI23_c(i,j,n3_c)**2+XI33_c(i,j,n3_c)**2)
+       end do
+    end do
+
+    do j = 1-nrg,n2_f+nrg
+       do i = 1-nrg,n1_f+nrg
+          int_cof_f(i,j) = Jacobian_f(i,j,1)*sqrt(XI13_f(i,j,1)**2+XI23_f(i,j,1)**2+XI33_f(i,j,1)**2)
+       end do
+    end do
+
+    difference = 0.d0
+    !
+    do iset = 1,3
+       ! term 1
+       do k = 1,n2_c
+          do i = 1,n1_c
+             do j = 0,4
+                do jj = 1,3
+                   difference((k-1)*3*n1_c+(i-1)*3+iset) = difference((k-1)*3*n1_c+(i-1)*3+iset) &
+                     - N33_c(i,k,n3_c,iset,jj)*Sb(j)*u_c(i,k,n3_c+1-j,jj,index)/h3_c/int_cof_c(i,k)
+                end do
+             end do
+             do j = -2,2
+                do jj = 1,3
+                   difference((k-1)*3*n1_c+(i-1)*3+iset) = difference((k-1)*3*n1_c+(i-1)*3+iset) &
+                     + N31_c(i,k,n3_c,iset,jj)*ux_cof(j)*u_c(i+j,k,n3_c,jj,index)/h1_c/int_cof_c(i,k) &
+                     + N32_c(i,k,n3_c,iset,jj)*ux_cof(j)*u_c(i,k+j,n3_c,jj,index)/h2_c/int_cof_c(i,k)
+                end do
+             end do
+          end do
+       end do
+
+      lh_f = 0.d0
+      ! Add another three terms that need to be restricted
+      do j = 1,5
+         do jj = 1,3
+            lh_f(-2:n1_f+3,-2:n2_f+3,1,iset) = lh_f(-2:n1_f+3,-2:n2_f+3,1,iset) &
+              + N33_f(-2:n1_f+3,-2:n2_f+3,1,iset,jj)*sbop_no_gp(j)*u_f(-2:n1_f+3,-2:n2_f+3,j,jj,index)/h3_f
+          end do
+      end do
+      do j = -2,2
+         do jj = 1,3
+            lh_f(-2:n1_f+3,-2:n2_f+3,1,iset) = lh_f(-2:n1_f+3,-2:n2_f+3,1,iset) &
+              + (N31_f(-2:n1_f+3,-2:n2_f+3,1,iset,jj)*ux_cof(j)*u_f(-2+j:n1_f+3+j,-2:n2_f+3,1,jj,index)/h1_f &
+              + N32_f(-2:n1_f+3,-2:n2_f+3,1,iset,jj)*ux_cof(j)*u_f(-2:n1_f+3,-2+j:n2_f+3+j,1,jj,index)/h2_f)
+         end do
+      end do
+      ! enforce the term contain p(lc) = 0 at ghost points
+      lh_f(-2:0,:,1,iset) = 0.d0
+      lh_f(n1_f+1:n1_f+3,:,1,iset) = 0.d0
+      lh_f(:,-2:0,1,iset) = 0.d0
+      lh_f(:,n2_f+1:n2_f+3,1,iset) = 0.d0
+
+      ! now restrict it to the coarse grid
+      Vass_temp = 0.d0
+      do k = 1,n2_c
+         do i = 1,n1_c
+            do j = -4,2
+               do l = -4,2
+                  Vass_temp(i,k) = Vass_temp(i,k) &
+                   - Rop(j)*(Rop(l)*sqrt(int_cof_f(2*i+l,2*k+j))*lh_f(2*i+l,2*k+j,1,iset)/int_cof_f(2*i+l,2*k+j)) &
+                   + h3_f*17.d0/48.d0*Rop(j)*(Rop(l)*sqrt(int_cof_f(2*i+l,2*k+j))*eta(2*i+l,2*k+j,1,iset)/int_cof_f(2*i+l,2*k+j))
+               end do
+            end do
+            Vass_temp(i,k) = Vass_temp(i,k)/sqrt(int_cof_c(i,k))
+            difference((k-1)*3*n1_c+(i-1)*3+iset) = difference((k-1)*3*n1_c+(i-1)*3+iset)+Vass_temp(i,k)
+         end do
+      end do
+      !
+   end do
+  !
+  end subroutine verify_bdry
+  !
+  subroutine discrete_energy(uf_oldold,uf_old,uf_star,uf_new,uc_oldold,uc_old,uc_star,uc_new,&
+      dt,energy_num,energy_num_bdry,difference_b)
+    real(dp), dimension(1-nrg:n1_c+nrg,1-nrg:n2_c+nrg,1-nrg:n3_c+nrg,1:dim) :: uc_oldold,uc_old,uc_star,uc_new
+    real(dp), dimension(1-nrg:n1_f+nrg,1-nrg:n2_f+nrg,1-nrg:n3_f+nrg,1:dim) :: uf_oldold,uf_old,uf_star,uf_new
+    real(dp), dimension(1:n1_c,1:n2_c,1:n3_c) :: energy_temp_c,energy_num_temp_c
+    real(dp), dimension(1:n1_f,1:n2_f,1:n3_f) :: energy_temp_f,energy_num_temp_f
+    real(dp), dimension(-2:n1_c+3,-2:n2_c+3,1:n3_c,1:3) :: Lh_old_c
+    real(dp), dimension(1:n1_f,1:n2_f,1:n3_f,1:3) :: Lh_old_f,difference_f
+    real(dp), dimension(-2:n1_c+3,-2:n2_c+3,1:3) :: boundary_c
+    real(dp), dimension(-2:n1_f+3,-2:n2_f+3,1:3) :: boundary_f
+    real(dp) :: dt,energy_num,energy_num_bdry,difference_b, difference_c
+
+    integer :: l1,l2,index
+
+    real(dp), dimension (1:n1_c,1:n2_c) :: int_cof_c
+    real(dp), dimension (1-nrg:n1_f+nrg,1-nrg:n2_f+nrg) :: int_cof_f
+
+    do j = 1,n2_c
+       do i = 1,n1_c
+          int_cof_c(i,j) = Jacobian_c(i,j,n3_c)*sqrt(XI13_c(i,j,n3_c)**2+XI23_c(i,j,n3_c)**2+XI33_c(i,j,n3_c)**2)
+       end do
+    end do
+
+    do j = 1-nrg,n2_f+nrg
+       do i = 1-nrg,n1_f+nrg
+          int_cof_f(i,j) = Jacobian_f(i,j,1)*sqrt(XI13_f(i,j,1)**2+XI23_f(i,j,1)**2+XI33_f(i,j,1)**2)
+       end do
+    end do
+
+    ! coarse domain
+    energy_num_temp_c = 0.d0
+    ! term w.r.t time derivative
+    do l1 = 1,3
+      energy_num_temp_c = energy_num_temp_c &
+        + rho_c(1:n1_c,1:n2_c,1:n3_c,1)* &
+        (uc_new(1:n1_c,1:n2_c,1:n3_c,l1)-uc_old(1:n1_c,1:n2_c,1:n3_c,l1))**2/(dt**2)
+    end do
+    !
+    Lh_old_c(-2:n1_c+3,-2:n2_c+3,:,:) = rho_c(-2:n1_c+3,-2:n2_c+3,1:n3_c,:)* &
+	     (uc_star(-2:n1_c+3,-2:n2_c+3,1:n3_c,:) - 2.d0*uc_old(-2:n1_c+3,-2:n2_c+3,1:n3_c,:)&
+	      +uc_oldold(-2:n1_c+3,-2:n2_c+3,1:n3_c,:))/dt**2
+
+	  ! term w.r.t S_h(unew,uold) = -(unew,L_h uold)
+	  energy_num_temp_c = energy_num_temp_c - (uc_new(1:n1_c,1:n2_c,1:n3_c,1)*Lh_old_c(1:n1_c,1:n2_c,:,1) &
+       + uc_new(1:n1_c,1:n2_c,1:n3_c,2)*Lh_old_c(1:n1_c,1:n2_c,:,2) &
+       + uc_new(1:n1_c,1:n2_c,1:n3_c,3)*Lh_old_c(1:n1_c,1:n2_c,:,3))
+    !
+    energy_num_temp_c = energy_num_temp_c-( &
+  	   uc_new(1:n1_c,1:n2_c,1:n3_c,1)*(uc_new(1:n1_c,1:n2_c,1:n3_c,1)-uc_star(1:n1_c,1:n2_c,1:n3_c,1))/dt**2 &
+       +uc_new(1:n1_c,1:n2_c,1:n3_c,2)*(uc_new(1:n1_c,1:n2_c,1:n3_c,2)-uc_star(1:n1_c,1:n2_c,1:n3_c,2))/dt**2 &
+  	   +uc_new(1:n1_c,1:n2_c,1:n3_c,3)*(uc_new(1:n1_c,1:n2_c,1:n3_c,3)-uc_star(1:n1_c,1:n2_c,1:n3_c,3))/dt**2) &
+        *rho_c(1:n1_c,1:n2_c,1:n3_c,1)
+
+    ! add grid points with corresponding weights
+    energy_num = 0.d0
+    do k = 5,n3_c-4
+      do j = 2,n2_c-1
+        do i = 2,n1_c-1
+          energy_num = energy_num + h1_c*h2_c*h3_c*energy_num_temp_c(i,j,k)
+        end do
+      end do
+    end do
+    !
+    do j = 2,n2_c-1
+      do i = 2,n1_c-1
+        energy_num = energy_num + h1_c*h2_c*h3_c &
+          * (17.d0/48.d0*(energy_num_temp_c(i,j,1) + energy_num_temp_c(i,j,n3_c)) &
+          + 59.d0/48.d0*(energy_num_temp_c(i,j,2) + energy_num_temp_c(i,j,n3_c-1)) &
+          + 43.d0/48.d0*(energy_num_temp_c(i,j,3) + energy_num_temp_c(i,j,n3_c-2)) &
+          + 49.d0/48.d0*(energy_num_temp_c(i,j,4) + energy_num_temp_c(i,j,n3_c-3)))
+      end do
+    end do
+    !
+    ! fine domain
+    energy_num_temp_f = 0.d0
+    ! term w.r.t time derivative
+    do l1 = 1,3
+      energy_num_temp_f(:,:,:) = energy_num_temp_f(:,:,:) &
+        + rho_f(1:n1_f,1:n2_f,1:n3_f,1)* &
+        (uf_new(1:n1_f,1:n2_f,1:n3_f,l1)-uf_old(1:n1_f,1:n2_f,1:n3_f,l1))**2/(dt**2)
+    end do
+
+    Lh_old_f = rho_f(1:n1_f,1:n2_f,1:n3_f,:)* &
+        (uf_star(1:n1_f,1:n2_f,1:n3_f,:) - 2.d0*uf_old(1:n1_f,1:n2_f,1:n3_f,:) &
+         +uf_oldold(1:n1_f,1:n2_f,1:n3_f,:))/dt**2
+
+    ! term w.r.t S_h(unew,uold) = -(unew,L_h uold)
+    energy_num_temp_f(:,:,:) = energy_num_temp_f(:,:,:) - (uf_new(1:n1_f,1:n2_f,1:n3_f,1)*Lh_old_f(:,:,1:n3_f,1) &
+       + uf_new(1:n1_f,1:n2_f,1:n3_f,2)*Lh_old_f(:,:,1:n3_f,2) &
+       + uf_new(1:n1_f,1:n2_f,1:n3_f,3)*Lh_old_f(:,:,1:n3_f,3))
+    !
+    energy_num_temp_f(:,:,:) = energy_num_temp_f(:,:,:)-( &
+  	    uf_new(1:n1_f,1:n2_f,1:n3_f,1)*(uf_new(1:n1_f,1:n2_f,1:n3_f,1)-uf_star(1:n1_f,1:n2_f,1:n3_f,1))/dt**2 &
+        +uf_new(1:n1_f,1:n2_f,1:n3_f,2)*(uf_new(1:n1_f,1:n2_f,1:n3_f,2)-uf_star(1:n1_f,1:n2_f,1:n3_f,2))/dt**2 &
+  	    +uf_new(1:n1_f,1:n2_f,1:n3_f,3)*(uf_new(1:n1_f,1:n2_f,1:n3_f,3)-uf_star(1:n1_f,1:n2_f,1:n3_f,3))/dt**2) &
+        *rho_f(1:n1_f,1:n2_f,1:n3_f,1)
+
+    ! add grid points with corresponding weights
+    do k = 5,n3_f-4
+      do j = 2,n2_f-1
+        do i = 2,n1_f-1
+          energy_num = energy_num + h1_f*h2_f*h3_f*energy_num_temp_f(i,j,k)
+        end do
+      end do
+    end do
+    !
+    do j = 2,n2_f-1
+      do i = 2,n1_f-1
+        energy_num = energy_num + h1_f*h2_f*h3_f &
+          * (17.d0/48.d0*(energy_num_temp_f(i,j,1) + energy_num_temp_f(i,j,n3_f)) &
+          + 59.d0/48.d0*(energy_num_temp_f(i,j,2) + energy_num_temp_f(i,j,n3_f-1)) &
+          + 43.d0/48.d0*(energy_num_temp_f(i,j,3) + energy_num_temp_f(i,j,n3_f-2)) &
+          + 49.d0/48.d0*(energy_num_temp_f(i,j,4) + energy_num_temp_f(i,j,n3_f-3)))
+      end do
+    end do
+    !
+    ! interface integral
+    call compute_eta(2)
+    difference = 0.d0
+    !call verify_bdry(2)
+    !difference_b = sum(difference)
+    energy_num_bdry = 0.d0
+    boundary_c = 0.d0
+    boundary_f = 0.d0
+    do iset = 1,3
+       do j = 0,4
+          do jj = 1,3
+             boundary_c(1:n1_c,1:n2_c,iset) = boundary_c(1:n1_c,1:n2_c,iset) &
+               - N33_c(1:n1_c,1:n2_c,n3_c,iset,jj)*Sb(j)*uc_old(1:n1_c,1:n2_c,n3_c+1-j,jj)/h3_c
+          end do
+       end do
+       do j = -2,2
+          do jj = 1,3
+             boundary_c(1:n1_c,1:n2_c,iset) = boundary_c(1:n1_c,1:n2_c,iset) &
+               + N31_c(1:n1_c,1:n2_c,n3_c,iset,jj)*ux_cof(j)*uc_old(1+j:n1_c+j,1:n2_c,n3_c,jj)/h1_c &
+               + N32_c(1:n1_c,1:n2_c,n3_c,iset,jj)*ux_cof(j)*uc_old(1:n1_c,1+j:n2_c+j,n3_c,jj)/h2_c
+          end do
+       end do
+
+      do j = 1,5
+         do jj = 1,3
+            boundary_f(-2:n1_f+3,-2:n2_f+3,iset) = boundary_f(-2:n1_f+3,-2:n2_f+3,iset) &
+              + N33_f(-2:n1_f+3,-2:n2_f+3,1,iset,jj)*sbop_no_gp(j)*uf_old(-2:n1_f+3,-2:n2_f+3,j,jj)/h3_f
+          end do
+      end do
+      do j = -2,2
+         do jj = 1,3
+            boundary_f(-2:n1_f+3,-2:n2_f+3,iset) = boundary_f(-2:n1_f+3,-2:n2_f+3,iset) &
+              + (N31_f(-2:n1_f+3,-2:n2_f+3,1,iset,jj)*ux_cof(j)*uf_old(-2+j:n1_f+3+j,-2:n2_f+3,1,jj)/h1_f &
+              + N32_f(-2:n1_f+3,-2:n2_f+3,1,iset,jj)*ux_cof(j)*uf_old(-2:n1_f+3,-2+j:n2_f+3+j,1,jj)/h2_f)
+         end do
+      end do
+      ! enforce the term contain p(lc) = 0 at ghost points
+      boundary_f(-2:1,:,iset) = 0.d0
+      boundary_f(n1_f:n1_f+3,:,iset) = 0.d0
+      boundary_f(:,-2:1,iset) = 0.d0
+      boundary_f(:,n2_f:n2_f+3,iset) = 0.d0
+      !
+      do l = 1,n2_c
+         do i = 1,n1_c
+            energy_num_bdry = energy_num_bdry &
+             + h1_c*h2_c*(uc_new(i,l,n3_c,iset)-uc_oldold(i,l,n3_c,iset))*boundary_c(i,l,iset)
+         end do
+      end do
+
+      do l = 1,n2_f
+         do i = 1,n1_f
+            energy_num_bdry = energy_num_bdry&
+              + (-h1_f*h2_f*(uf_new(i,l,1,iset)-uf_oldold(i,l,1,iset))*boundary_f(i,l,iset) &
+              + h3_f*17.d0/48.d0*h1_f*h2_f*(uf_new(i,l,1,iset)-uf_oldold(i,l,1,iset))*eta(i,l,1,iset))
+         end do
+      end do
+
+      ! traction forcing continuity
+      Vass_temp = 0.d0
+      do k = 2,n2_c-1
+         do i = 2,n1_c-1
+           difference((k-1)*3*n1_c+(i-1)*3+iset) = boundary_c(i,k,iset)/int_cof_c(i,k)
+            do j = -4,2
+               do l = -4,2
+                  Vass_temp(i,k) = Vass_temp(i,k) &
+                   - Rop(j)*(Rop(l)*sqrt(int_cof_f(2*i+l,2*k+j))*boundary_f(2*i+l,2*k+j,iset)/int_cof_f(2*i+l,2*k+j)) &
+                   + h3_f*17.d0/48.d0*Rop(j)*(Rop(l)*sqrt(int_cof_f(2*i+l,2*k+j))*eta(2*i+l,2*k+j,1,iset)/int_cof_f(2*i+l,2*k+j))
+               end do
+            end do
+            Vass_temp(i,k) = Vass_temp(i,k)/sqrt(int_cof_c(i,k))
+            difference((k-1)*3*n1_c+(i-1)*3+iset) = difference((k-1)*3*n1_c+(i-1)*3+iset)+Vass_temp(i,k)
+         end do
+      end do
+    end do ! iset
+
+    difference_f = 0.d0
 
 
+    difference_b = sum(difference)
+
+
+
+
+
+    print *, energy_num, energy_num_bdry, difference_b
+
+  end subroutine discrete_energy
+
+end program energy_2nd_20191218
 
 subroutine FD_r1r1(h1,n1,n2,n3,N,u,m11,m12,m21,m22,m31,m32,Gu)
   use problemsetup_new_3d, only: dp, nrg
@@ -1605,7 +2152,7 @@ subroutine print_array_to_file(n1,n2,n3,A,file_name)
   do i = 1,n3
      do j = 1,n2
         do k = 1,n1
-           write(7,"(ES15.5E3)") A(k,j,i)
+           write(7,"(ES25.15E3)") A(k,j,i)
         end do
      end do
   end do

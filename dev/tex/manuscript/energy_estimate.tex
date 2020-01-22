@@ -1,51 +1,70 @@
-%!TEX root = elastic_3d_sbp.tex
-\subsubsection{Energy estimate}
-From the definitions of matrcies $N_{ij}$, we can easily verify that $N_{11}, N_{22}, N_{33}$ are positive definite and $N_{ij} = N_{ji}^T$. In the curvilinear coordinates, the $L^2$ scalar product is scaled by $J$. We define the $L^2$ scalar product of the two real vector-valued functions ${\bf u}({\bf x})\in\mathbb{R}^3\rightarrow \mathbb{R}^3$ and ${\bf v}(\bf x)\in\mathbb{R}^3\rightarrow \mathbb{R}^3$ by
-\begin{equation*}
-({\bf u},{\bf v})_2 = \int_{\Omega}  \left(\sum_{l=1}^3 u^{l}v^{l}\right)dx^{(1)}dx^{(2)}dx^{(3)} = \int_{{\bf r}\in[0,1]^3} \left(\sum_{l=1}^3 u^{l}v^{l}\right)Jdr^{(1)}dr^{(2)}dr^{(3)}.
-\end{equation*}
-To analyze the energy estimate of the solution of an elastic wave equation in the curvilinear domain, we multiply the equation (\ref{elastic_eq_curvi}) by $J{\bf u}_t$ and integrate over the parameter space $[0,1]^3$ to obtain
-\begin{align}\label{time_deri_curvi}
-({\bf u}_t,\rho {\bf u}_{tt})_2 &= \left({\bf u}_t,\frac{1}{J}\bar{\partial}_1(\bar{A}_1\bar{\nabla}{\bf u})\right)_2+ \left({\bf u}_t,\frac{1}{J}\bar{\partial}_2(\bar{A}_2\bar{\nabla}{\bf u})\right)_2+ \left({\bf u}_t,\frac{1}{J}\bar{\partial}_3(\bar{A}_3\bar{\nabla}{\bf u})\right)_2+({\bf u}_t, {\bf F})_2\nonumber\\
-&:= -S({\bf u}_t,{\bf u}) + B({\bf u}_t,{\bf u}) + ({\bf u}_t,{\bf F})_2,
-\end{align}
-where the term $S$ represents the interior terms after integration by parts,
-\begin{multline*}
-S({\bf u}_t,{\bf u}) = \int_{{\bf r}\in[0,1]^3} (\bar{\partial}_1 {\bf u}_t)^T ({\bar A}_1\bar{\nabla}{\bf u}) + (\bar{\partial}_2 {\bf u}_t)^T ({\bar A}_2\bar{\nabla}{\bf u}) + (\bar{\partial}_3 {\bf u}_t)^T ({\bar A}_3\bar{\nabla}{\bf u})\ dr^{(1)}dr^{(2)}dr^{(3)}\\
-= \int_{{\bf r}\in[0,1]^3} (\bar{\partial}_1 {\bf u}_t)^T (N_{11}\bar{\partial}_1{\bf u} +N_{12}\bar{\partial}_2{\bf u}+ N_{13}\bar{\partial}_3{\bf u}) + (\bar{\partial}_2 {\bf u}_t)^T (N_{21}\bar{\partial}_1{\bf u} +N_{22}\bar{\partial}_2{\bf u}+ N_{23}\bar{\partial}_3{\bf u}) \\
-+(\bar{\partial}_3 {\bf u}_t)^T (N_{31}\bar{\partial}_1{\bf u} +N_{32}\bar{\partial}_2{\bf u}+ N_{33}\bar{\partial}_3{\bf u})\ dr^{(1)}dr^{(2)}dr^{(3)}\\
-= \sum_{i = 1}^3\sum_{j=1}^3  \int_{{\bf r}\in[0,1]^3} (\bar{\partial}_i {\bf u}_t)^T(N_{ij}\bar{\partial}_j {\bf u})\ dr^{(1)}dr^{(2)}dr^{(3)}.
-\end{multline*}
-Recall the definition of $N_{ij}, i,j = 1,2,3$ in (\ref{definition_Nij}), we have
-\begin{multline*}
-S({\bf u}_t,{\bf u}) = \sum_{i=1}^3\sum_{j=1}^3 \int_{{\bf r}\in[0,1]^3} (\bar{\partial}_i {\bf u}_t)^T(J\bar{P}_i^TC\bar{P}_j\bar{\partial}_j {\bf u})\ dr^{(1)}dr^{(2)}dr^{(3)} \\
-= \sum_{i=1}^3\sum_{j=1}^3 \int_{{\bf r}\in[0,1]^3} (\bar{P}_i\bar{\partial}_i {\bf u}_t)^TC(\bar{P}_j\bar{\partial}_j {\bf u}) J\ dr^{(1)}dr^{(2)}dr^{(3)}.
-\end{multline*}
-Since $C$ is a symmetric and positive definite matrix and $J > 0$, we have 
-\begin{equation*}
-S({\bf u}_t,{\bf u}) = S({\bf u},{\bf u}_t) \ \ \  \text{and} \ \ \ S({\bf u},{\bf u}) \geq 0.
-\end{equation*}
-The term $B$ that contains the boundary integrals is
-\begin{multline}\label{bdry_integral_ref}
-B({\bf u}_t,{\bf u}) = \int_{r^{(1)} = 0}^{r^{(1)} = 1} \int_{r^{(2)} = 0}^{r^{(2)} = 1}  \left[{\bf u}_t^T\bar{A}_3\bar{\nabla} {\bf u}\right]_{r^{(3)}=0}^{r^{(3)}=1} \ dr^{(1)}dr^{(2)}\\
-+ \int_{r^{(2)} = 0}^{r^{(2)} = 1} \int_{r^{(3)} = 0}^{r^{(3)} = 1}  \left[{\bf u}_t^T\bar{A}_1\bar{\nabla} {\bf u}\right]_{r^{(1)}=0}^{r^{(1)}=1}\ dr^{(2)}dr^{(3)} +\int_{r^{(1)} = 0}^{r^{(1)} = 1} \int_{r^{(3)} = 0}^{r^{(3)} = 1}  \left[{\bf u}_t^T\bar{A}_2\bar{\nabla} {\bf u}\right]_{r^{(2)}=0}^{r^{(2)}=1} \ dr^{(1)}dr^{(3)},
-\end{multline}
-Comparing the terms (\ref{bdry3_curvi}) to (\ref{bdry2_curvi}) with (\ref{bdry_integral_ref}), we note that the intergral terms in (\ref{bdry_integral_ref}) are the scaled boundary traction,
-\begin{multline}\label{bdry_integral_curvi}
-B({\bf u}_t,{\bf u}) = \int_{r^{(1)} = 0}^{r^{(1)} = 1} \int_{r^{(2)} = 0}^{r^{(2)} = 1} J|\nabla r^{(3)}|\frac{1}{J\left|\nabla r^{(3)}\right|} \left[{\bf u}_t^T\bar{A}_3\bar{\nabla} {\bf u}\right]_{r^{(3)}=0}^{r^{(3)}=1} \ dr^{(1)}dr^{(2)}\\
-+ \int_{r^{(2)} = 0}^{r^{(2)} = 1} \int_{r^{(3)} = 0}^{r^{(3)} = 1} J|\nabla r^{(1)}|\frac{1}{J\left|\nabla r^{(1)}\right|}  \left[{\bf u}_t^T\bar{A}_1\bar{\nabla} {\bf u}\right]_{r^{(1)}=0}^{r^{(1)}=1}\ dr^{(2)}dr^{(3)} \\
-+\int_{r^{(1)} = 0}^{r^{(1)} = 1} \int_{r^{(3)} = 0}^{r^{(3)} = 1} J|\nabla r^{(2)}|\frac{1}{J\left|\nabla r^{(2)}\right|}  \left[{\bf u}_t^T\bar{A}_2\bar{\nabla} {\bf u}\right]_{r^{(2)}=0}^{r^{(2)}=1} \ dr^{(1)}dr^{(3)} = \int_{\partial \Omega} {\bf u}_t^T({\bf n}\cdot\mathcal{T})\ dS.
-\end{multline}
-Here, ${\bf n}$ is the unit outward norm of the cuvilinear domain $\Omega$. It is obvious that $B({\bf u}_t, {\bf u}) = 0$ if ${\bf u}$ satifies the homogeneous Dirichlt boundary condition ${\bf u} = {\bf 0}$ or the free surface boundary condition ${\bf n}\cdot\mathcal{T} = {\bf 0}$ in the direction $3$ provided periodic boundary conditions in the directions $1$ and $2$. The boundary term also vanishes at a grid interface if we impose continuity of ${\bf u}$ and continuity of the traction forcing ${\bf n}\cdot\mathcal{T}$. We then have 
-\begin{equation}\label{simple_time_deri_curvi}
-\frac{1}{2}\frac{d}{dt} \left(||\sqrt{\rho}{\bf u}_t||_2^2 + S({\bf u},{\bf u})\right) =  ({\bf u}_t,{\bf F})_2.
+%!TEX root = SISC_elastic_3d.tex
+\subsection{Energy estimate}
+In this section, we investigate the energy estimate for the semi-discrete forms (\ref{elastic_semi_c}) and (\ref{fine_scheme}) in section \ref{semi_discrete_form}. We are interested in the stability of the secheme with mesh refinement interface in this paper, and assume periodic boundary conditions in directions $r^{(1)}$ and $r^{(2)}$, ignore the boundaries in direction $r^{(3)}$. We refer \cite{petersson2015wave} for the proof of the stability of the scheme without mesh refinement interface and with homogeneous Dirichlet boundary condition on the bottom surface, free surface on the top surface and periodic boundary condition for directions $r^{(1)}$ and $r^{(2)}$.
+
+Let ${\bf u}, {\bf v}$ be grid functions in $\Omega^c$. We define the three dimensional scalar product in $\Omega^c$
+\begin{equation}\label{scalar_product_inner}
+({\bf u}, {\bf v})_{2h} = 8h_1h_2h_3\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}\sum_{k=1}^{n_3^{2h}}\omega_k{\bf J}_{ijk}^{2h}u_{ijk}v_{ijk},
 \end{equation}
-Denote the continuous energy ${E} = ||\sqrt{\rho}{\bf u}_t||_2^2 + S({\bf u},{\bf u})$. From Cauchy-Schwarz inequality, we have
+where ${\bf J}^{2h}_{ijk}$ located at the $((k-1)n_1^{2h}n_2^{2h}+(j-1)n_1^{2h}+i)$'th row and $((k-1)n_1^{2h}n_2^{2h}+(j-1)n_1^{2h}+i)$'th column of ${\bf J}^{2h}$, $u_{ijk}$ and $v_{ijk}$ loacted at the $((k-1)n_1^{2h}n_2^{2h}+(j-1)n_1^{2h}+i)$'th row of ${\bf u}$, ${\bf v}$ respectively. The two dimensional scalar product for coarse grid functions on the interface $\Gamma$
+\begin{equation}\label{scalar_product_discrete_interface_c}
+\left<{\bf u}_{\Gamma}, {\bf v}_{\Gamma}\right>_{2h} = 4h_1h_2\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}{\bf  J}_{\Gamma,ij}^{2h}\mathcal{B}^{2h}_{ij}u_{ij}v_{ij}.
+\end{equation}
+with ${\bf J}^{2h}_{\Gamma,ij}, \mathcal{B}^{2h}_{ij}$ located at the $((j-1)n_1^{2h}+i)$'th row and $((j-1)n_1^{2h}+i)$'th column of diagonal matrix ${\bf J}_{\Gamma}^{2h}$ and $\mathcal{B}^{2h}$ respectively, $u_{ij}$, $v_{ij}$ are the $((j-1)n_1^{2h}+i)$'th element of coarse grid vectors ${\bf u}_{\Gamma}$ and ${\bf v}_{\Gamma}$ respectively. On the other hand, let ${\bf u}, {\bf v}$ be grid functions in $\Omega^f$. We define the three dimensional discrete scalar product in $\Omega^f$ similarly as in $\Omega^c$
 \begin{equation*}
-({\bf u}_t,{\bf F})_2\leq ||{\bf u}_t||_2 ||{\bf F}||_2\leq \tilde {C}\sqrt{E}||{\bf F}||_2,
+({\bf u}, {\bf v})_{h} = h_1h_2h_3\sum_{i=1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}\sum_{k=1}^{n_3^{h}}\omega_k{\bf J}_{ijk}^{h}u_{ijk}v_{ijk},
 \end{equation*}
-where $\tilde{C}$ is a constant. Then combine with (\ref{simple_time_deri_curvi}), we obtain
+and the two dimensional scalar product for fine grid functions on the interface $\Gamma$
+\begin{equation}\label{scalar_product_discrete_interface_f}
+\left<{\bf u}_{\Gamma}, {\bf v}_{\Gamma}\right>_{h} = h_1h_2\sum_{i=1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}{ \bf J}^{h}_{\Gamma,ij}\mathcal{B}^{h}_{ij}u_{ij}v_{ij},
+\end{equation}
+where ${\bf J}^h_{ijk}$, $\mathcal{B}^{h}_{ij}$, $u_{ijk}$, $v_{ijk}$, ${\bf J}^h_{\Gamma,ij}$, $u_{ij}$ and $v_{ij}$ have similar definitions as in (\ref{scalar_product_inner}) and (\ref{scalar_product_discrete_interface_c}).
+
+ Now, we are ready to present the energy conservation of the proposed schemes in Section \ref{semi_discrete_form}. Multiplying (\ref{elastic_semi_c}) by $8h_1h_2h_3\omega_k{\mathcal J}^{2h}{\bf c}_t$ and summing over all grids, we have
+\begin{equation}\label{coarse_simple}
+({\bf c}_t, {\varrho}^{2h}{\bf c}_{tt})_{2h} = ({\bf c}_t,\wt{\mathcal{L}}^{2h}\wt{{\bf c}})_{2h} = -S_{2h}({\bf c}_t,{\bf c}) + B_{2h}({\bf c}_t,\wt{{\bf c}}),
+\end{equation}
+multiplying (\ref{fine_scheme}) by $h_1h_2h_3\omega_k{\mathcal J}^h{\bf f}_t$ and summing over all grids, we obtain
 \begin{equation*}
-\frac{d\sqrt{E}}{dt} \leq \tilde{C}||{\bf F}||_2.
+({\bf f}_t, {\varrho}^h{\bf f}_{tt})_h = ({\bf f}_t,\hat{\mathcal{L}}^h{\bf f})_h = -S_h({\bf f}_t,{\bf f}) + B_h({\bf f}_t,{\bf f}) 
++h_1h_2h_3\omega_1({\bf f}_\Gamma)_t^T{\bm \eta},
 \end{equation*}
-Therefore, the total energy of the solution is non-inscreasing when the external force ${\bf F} = 0$ for all time.
+where  both $S_{2h}$ and $S_h$ are symmetric and positive definite bilinear forms, 
+\begin{multline*}
+S_{2h}({\bf c}_t,{\bf c}) = (\mathcal{D}_1^{2h}{\bf c}_t,\mathcal{N}_{11}^{2h}\mathcal{D}_1{\bf c})_{2h} +  (\mathcal{D}_1^{2h}{\bf c}_t,\mathcal{N}_{12}^{2h}\mathcal{D}_2{\bf c})_{2h} +  (\mathcal{D}_1^{2h}{\bf c}_t,\mathcal{N}_{13}^{2h}\mathcal{D}_3{\bf c})_{2h}\\
+ +  (\mathcal{D}_2^{2h}{\bf c}_t,\mathcal{N}_{21}^{2h}\mathcal{D}_1{\bf c})_{2h} 
++  (\mathcal{D}_2^{2h}{\bf c}_t,\mathcal{N}_{22}^{2h}\mathcal{D}_2{\bf c})_{2h} +  (\mathcal{D}_2^{2h}{\bf c}_t,\mathcal{N}_{23}^{2h}\mathcal{D}_3{\bf c})_{2h} \\
++  (\mathcal{D}_3^{2h}{\bf c}_t,\mathcal{N}_{31}^{2h}\mathcal{D}_1{\bf c})_{2h} 
++  (\mathcal{D}_3^{2h}{\bf c}_t,\mathcal{N}_{32}^{2h}\mathcal{D}_2{\bf c})_{2h} +  (\mathcal{D}_3^{2h}{\bf c}_t,\mathcal{N}_{33}^{2h}\mathcal{D}_3{\bf c})_{2h}\\
++ ({\bf c}_t, P^{2h}_1(N_{11}^{2h}){\bf c})_{2hr} + ({\bf c}_t, P^{2h}_2(N_{22}^{2h}){\bf c})_{2hr} + ({\bf c}_t, P^{2h}_1(N_{33}^{2h}){\bf c})_{2hr}
+\end{multline*}
+and 
+\begin{multline*}
+S_{h}({\bf f}_t,{\bf f}) = (\mathcal{D}_1^{h}{\bf c}_t,\mathcal{N}_{11}^{h}\mathcal{D}_1{\bf f})_{h} +  (\mathcal{D}_1^{h}{\bf f}_t,\mathcal{N}_{12}^{h}\mathcal{D}_2{\bf f})_{h} +  (\mathcal{D}_1^{h}{\bf f}_t,\mathcal{N}_{13}^{h}\mathcal{D}_3{\bf f})_{h}\\
++  (\mathcal{D}_2^{h}{\bf f}_t,\mathcal{N}_{21}^{h}\mathcal{D}_1{\bf f})_{h} 
++  (\mathcal{D}_2^{h}{\bf f}_t,\mathcal{N}_{22}^{h}\mathcal{D}_2{\bf f})_{h} +  (\mathcal{D}_2^{h}{\bf f}_t,\mathcal{N}_{23}^{h}\mathcal{D}_3{\bf f})_{h} \\
++  (\mathcal{D}_3^{h}{\bf f}_t,\mathcal{N}_{31}^{h}\mathcal{D}_1{\bf f})_{h} 
++  (\mathcal{D}_3^{h}{\bf f}_t,\mathcal{N}_{32}^{h}\mathcal{D}_2{\bf f})_{h} +  (\mathcal{D}_3^{h}{\bf f}_t,\mathcal{N}_{33}^{h}\mathcal{D}_3{\bf f})_{h}\\
++ ({\bf f}_t, P^{h}_1(N_{11}^h){\bf f})_{hr} + ({\bf f}_t, P^{h}_2(N_{22}^h){\bf f})_{hr} + ({\bf f}_t, P^{h}_1(N_{33}^h){\bf f})_{hr}.
+\end{multline*}
+Note that the positive semi-definite operator $P_i^{\{h,2h\}}(N_{ii}^{\{h,2h\}}), i = 1,2,3$ is small and non-zero for odd-even modes and the scalar product $({\bf v}, {\bf u})_{hr}$ is weighted differently than $({\bf u}, {\bf v})_h$ and $({\bf v}, {\bf u})_{2hr}$ is also weighted differently than $({\bf u}, {\bf v})_{2h}$, see \cite{sjogreen2012fourth, petersson2015wave} for details. In addition,
+\begin{equation}\label{boundary_f}
+B_h ({\bf f}_t,{\bf f}) = -h_1h_2({\bf f}_{\Gamma})_t^T\big((\mathcal{N}_{31}^h{\mathcal D}_1^h {\bf f})\big|_{\Gamma}+ (\mathcal{N}_{32}^h\mathcal{D}_2^h{\bf f})\big|_{\Gamma}+(\mathcal{N}_{33}^h\mathfrak{D}_3^h{\bf f})\big|_{\Gamma}\big),
+\end{equation}
+and
+\begin{equation}\label{bounary_c}
+B_{2h} ({\bf c}_t,\wt{\bf c}) = 4h_1h_2({\bf c}_{\Gamma})_t^T\big((\mathcal{N}_{31}^{2h}\mathcal{D}_1^{2h}{\bf c})\big|_{\Gamma}+ (\mathcal{N}_{32}^{2h}\mathcal{D}_2^{2h}{\bf c})\big|_{\Gamma}+(\mathcal{N}_{33}^{2h}\wt{\mathfrak{D}}_3^{2h}\wt{{\bf c}})\big|_{\Gamma}\big).
+\end{equation}
+Then, the time derivative of the semi-discrete energy reads as
+\begin{multline}\label{semi_energy_1}
+\frac{d}{dt}\big[({\bf f}_t,\varrho^h {\bf f}_t)_h + S_h({\bf f},{\bf f}_t) + ({\bf c}_t,\varrho^{2h} {\bf c}_t)_{2h} + S_{2h}({\bf c},{\bf c}_t) \big]  = \\
+2B_{h}({\bf f}_t,{\bf f}) + 2B_{2h}({\bf c}_t,\wt{\bf c}) + 2h_1h_2h_3\omega_1({\bf f}_\Gamma)_t^T{\bm \eta},
+\end{multline}
+plugging (\ref{boundary_f})--(\ref{bounary_c}) into (\ref{semi_energy_1}) and combining the definitions of the scalar product on the interface $\Gamma$ (\ref{scalar_product_discrete_interface_c})--(\ref{scalar_product_discrete_interface_f}), we have
+\begin{align*}\label{semi_energy_2}
+&\hspace{0.4cm}\frac{d}{dt}\left[({\bf f}_t,\varrho^h {\bf f}_t)_{h} + S_{h}({\bf f},{\bf f}_t) + ({\bf c}_t,\varrho^{2h} {\bf c}_t)_{2h} + S_{2h}({\bf c},{\bf c}_t) \right]   \nonumber\\
+& = 2\left<({\bf f}_\Gamma)_t,(\mathcal{B}^{h}\mathcal{J}^h_\Gamma)^{-1}(-(\mathcal{A}_3^h{\bf f})\big|_\Gamma+h\omega_1{\bm \eta})\right>_{h}+ 2\left<({\bf c}_\Gamma)_t,(\mathcal{B}^{2h}\mathcal{J}^{2h}_\Gamma)^{-1}(\wt{\mathcal{A}}_3^{2h}\wt{\bf c})\big|_\Gamma\right>_{2h} \nonumber\\
+& = 2\left<\wt{\mathcal{P}}\big(({\bf c}_\Gamma)_t\big),(\mathcal{B}^{h}\mathcal{J}^h_\Gamma)^{-1}(-(\mathcal{A}_3^h{\bf f})\big|_\Gamma+h\omega_1{\bm \eta})\right>_{h}+ 2\left<({\bf c}_\Gamma)_t(\mathcal{B}^{2h}\mathcal{J}^{2h}_\Gamma)^{-1}(\wt{\mathcal{A}}_3^{2h}\wt{\bf c})\big|_\Gamma\right>_{2h} \nonumber\\
+& = 2\left<({\bf c}_\Gamma)_t,\wt{\mathcal{R}}\big((\mathcal{B}^{h}\mathcal{J}^h_\Gamma)^{-1}(-(\mathcal{A}_3^h{\bf f})\big|_\Gamma+h\omega_1{\bm \eta})\big)\right>_{2h}+ 2\left<({\bf c}_\Gamma)_t,(\mathcal{B}^{2h}\mathcal{J}^{2h}_\Gamma)^{-1}(\wt{\mathcal{A}}_3^{2h}\wt{\bf c})\big|_\Gamma\right>_{2h} = 0,
+\end{align*}
+where we have used the notaions in (\ref{hatAf})--(\ref{hatAc}).
