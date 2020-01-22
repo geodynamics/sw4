@@ -1289,7 +1289,6 @@ void EW::cleanUpRefinementLevels()
           if (zLev > 0 && zLev < m_topo_zmax)
              m_curviRefLev.push_back(zLev);
        }
-       
 // remove this entry from the vector
 //      cout << "Removing out-of-range refinement level="<< *it << endl;
       it = m_refinementBoundaries.erase(it); // returns next element
@@ -1309,7 +1308,7 @@ void EW::cleanUpRefinementLevels()
    for (q=0; q<nRef; q++)
       m_curviRefLev[q] = zValues[nRef-q-1];
 
-  
+   delete[] zValues;  
 // need to remove any duplicate entries in the m_refinementBoundaries array
 // tmp
 //  cout << "Removing duplicate items..."<< endl;

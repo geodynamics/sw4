@@ -262,8 +262,9 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 			float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda,
 			float_sw4* __restrict__ a_met, float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu,
 			int* onesided, float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
-			float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
-			char op );
+			float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_acof_no_gp, 
+                        float_sw4* __restrict__ a_ghcof_no_gp,
+                        float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, int nk, char op );
 void energy4_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		 int i1, int i2, int j1, int j2, int k1, int k2, int* onesided,
 		 float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_up,
@@ -342,6 +343,10 @@ void addMemVarCorr2Curvilinear( Sarray& a_X, Sarray& a_Y, Sarray& a_Z, float_sw4
 using namespace std;
 
 #define SQR(x) ((x)*(x))
+
+#include "Farray.h"
+
+int Farray::count = 0;
 
 // constructor
 EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
@@ -843,6 +848,7 @@ void EW::assign_local_bcs( )
      if( m_iscurvilinear[g+1] && m_iscurvilinear[g] ) // Acoustic/Elastic interface
 	m_bcType[g][4] = bAEInterface;
   }
+  int ncurv = mNumberOfGrids - mNumberOfCartesianGrids;
 
   m_bcType[0][5] = mbcGlobalType[5];
   for( g = 1 ; g < mNumberOfGrids ; g++ )
@@ -859,9 +865,22 @@ void EW::assign_local_bcs( )
 
 // Find out which boundaries need one sided approximation in mixed derivatives
   for( g= 0 ; g < mNumberOfGrids ; g++ )
-    for(side=4 ; side < 6 ; side++ )
-       m_onesided[g][side] = (m_bcType[g][side] == bStressFree) ||
-	  (m_bcType[g][side] == bRefInterface) || (m_bcType[g][side] == bAEInterface); 
+  { 
+     for(side=0 ; side < 4 ; side++ )
+        m_onesided[g][side]=0;
+     for(side=4 ; side < 6 ; side++ )
+        m_onesided[g][side] = (m_bcType[g][side] == bStressFree) ||
+           (m_bcType[g][side] == bRefInterface) || (m_bcType[g][side] == bAEInterface) || 
+           (m_bcType[g][side] == bCCInterface && (ncurv > 1) ); 
+  }
+  if( m_myRank == 0 )
+  {
+     for( g= 0 ; g < mNumberOfGrids ; g++ )
+     {
+        cout << "GRID: " << g << " onesided-k " << m_onesided[g][4] << " " << m_onesided[g][5]
+             << " bctype-k " << bc_name(m_bcType[g][4]) << " " << bc_name(m_bcType[g][5]) << endl; 
+     }
+  }
 }
 
 //-----------------------------------------------------------------------
@@ -4438,12 +4457,13 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
      kfirst   = m_kStart[g];
      klast    = m_kEnd[g];
      onesided_ptr = m_onesided[g];
+     int nkg = m_global_nz[g];
      char op = '='; // assign Uacc := L_u(u)
 //FTNC     if( m_croutines )
 	curvilinear4sg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
 			   u_ptr, mu_ptr, la_ptr, met_ptr, jac_ptr,
 			   uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
-			   m_sg_str_x[g], m_sg_str_y[g], op );
+			   m_acof_no_gp, m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op );
 //FTNC     else
 //FTNC     {
 //FTNC	if( usingSupergrid() )
@@ -4467,9 +4487,9 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 //FTNC	  if( m_croutines )
 	  {
 	     curvilinear4sg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
-			       alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
-			       uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp,
-			       m_sg_str_x[g], m_sg_str_y[g], op );
+                                alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
+                                uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp,
+                                m_acof_no_gp, m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op );
 	  }	     
 //FTNC	  else
 //FTNC	  {
@@ -7437,6 +7457,30 @@ void EW::sort_grid_point_sources( vector<GridPointSource*>& point_sources,
    //	    m_point_sources[i]->m_i0 << " " << 
    //	    m_point_sources[i]->m_j0 << " " << 
    //	    m_point_sources[i]->m_k0 << std::endl;
+}
+float_sw4 EW::curvilinear_interface_parameter( int gcurv )
+{
+   if( gcurv < 0 )
+      return 0;
+   else 
+      return (m_topo_zmax-m_curviRefLev[gcurv])/m_topo_zmax;
+}
+
+#include "TestGrid.h"
+
+TestGrid* EW::create_gaussianHill()
+{
+   return new TestGrid( m_topo_zmax, m_GaussianAmp, m_GaussianXc, m_GaussianYc, m_GaussianLx, m_GaussianLy );
+}
+
+#include "TestTwilight.h"
+
+TestTwilight* EW::create_twilight()
+{
+   return new TestTwilight( m_twilight_forcing->m_omega, m_twilight_forcing->m_c,
+                            m_twilight_forcing->m_phase, m_twilight_forcing->m_momega,
+                            m_twilight_forcing->m_mphase, m_twilight_forcing->m_amprho,
+                            m_twilight_forcing->m_ampmu, m_twilight_forcing->m_amplambda );
 }
 
 #include "AllDims.h"

@@ -71,10 +71,16 @@
 #include "DataPatches.h"
 
 #include "CheckPoint.h"
+//#include "Farray.h"
+//#include "CurvilinearInterface.h"
+
 
 using namespace std;
 
 class AllDims;
+class TestGrid;
+class TestTwilight;
+class CurvilinearInterface;
 
 class EW 
 {
@@ -573,6 +579,7 @@ void get_gridgen_info( int& order, float_sw4& zetaBreak ) const;
 
 // functions from the old FileInput class
 void cleanUpRefinementLevels();
+float_sw4 curvilinear_interface_parameter( int gcurv );
 
 enum InputMode { UNDEFINED, Efile, GaussianHill, GridFile, CartesianGrid, TopoImage, Rfile};
 
@@ -1189,12 +1196,15 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void enforceIC2( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
                     vector<Sarray*>& a_AlphaVEp, float_sw4 t, 
                     vector<Sarray> &F, std::vector<GridPointSource*> point_sources );
+   void CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda  );
+   
    void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
    void dirichlet_twilight_ic( Sarray& U, int g, int kic, float_sw4 t);
    
    void dirichlet_LRic( Sarray& U, int g, int kic, float_sw4 t, int adj );
    void dirichlet_LRstress( Sarray& B, int g, int kic, float_sw4 t, int adj );
    
+
    void gridref_initial_guess( Sarray& u, int g, bool upper );
    void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
                                        Sarray* a_AlphaVEp, Sarray* a_AlphaVE, Sarray* a_AlphaVEm, Sarray& Utt, Sarray& Unext,
@@ -1207,6 +1217,10 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
                                        int g, int kic, float_sw4 t, Sarray &F, vector<GridPointSource*> point_sources );
    
    void compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic, float_sw4* a_str_x, float_sw4* a_str_y);
+   void compute_icstresses_curv( Sarray& a_Up, Sarray& B, int kic,
+                                 Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
+                                 float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop );
+
    void add_ve_stresses( Sarray& a_Up, Sarray& B, int g, int kic, int a_a, float_sw4* a_str_x, float_sw4* a_str_y);
    
    void consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& Lambdaf, Sarray& Rhof, float_sw4 hf,
@@ -1229,6 +1243,8 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void checkpoint_twilight_test( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarray>& Up,
 				  vector<Sarray*> AlphaVEm, vector<Sarray*> AlphaVE,
 				  vector<Sarray*> AlphaVEp, vector<Source*> a_Sources, float_sw4 t );
+   TestGrid* create_gaussianHill();
+   TestTwilight* create_twilight();
    AllDims* get_fine_alldimobject( );
 //
 // VARIABLES BEYOND THIS POINT
@@ -1605,6 +1621,7 @@ float_sw4 m_sbop[6], m_acof[384], m_bop[24], m_bope[48], m_ghcof[6];
 //float_sw4 m_hnorm[4], m_iop[5], m_iop2[5], m_bop2[24]; // unused
 float_sw4 m_acof_no_gp[384], m_ghcof_no_gp[6], m_sbop_no_gp[6];
 
+vector<CurvilinearInterface*> m_clInterface;
 
 vector<MPI_Datatype> m_send_type1;
 vector<MPI_Datatype> m_send_type3;

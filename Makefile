@@ -37,12 +37,12 @@ endif
 
 ifeq ($(optlevel),DEBUG)
    FFLAGS    = -g
-   CXXFLAGS  = -g -I../src -DBZ_DEBUG
+   CXXFLAGS  = -g -I../src -DBZ_DEBUG -std=c++11
    CFLAGS    = -g
 else
    FFLAGS   = -O3
 # AP (160419) Note that cmake uses -O3 instead of -O for CXX and C
-   CXXFLAGS = -O3 -I../src
+   CXXFLAGS = -O3 -I../src -std=c++11
    CFLAGS   = -O3 
 endif
 
@@ -220,7 +220,8 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o curvilinearGri
        MaterialVolimagefile.o MaterialRfile.o AnisotropicMaterialBlock.o sacutils.o \
        addmemvarforcing2.o consintp.o oddIoddJinterp.o evenIoddJinterp.o oddIevenJinterp.o \
        evenIevenJinterp.o CheckPoint.o geodyn.o AllDims.o Patch.o RandomizedMaterial.o \
-       MaterialInvtest.o DataPatches.o
+       MaterialInvtest.o DataPatches.o TestTwilight.o TestGrid.o CurvilinearInterface.o \
+       curvilinear4sgwind.o
 
 # Fortran routines (lamb_exact_numquad needs QUADPACK)
  OBJ += rayleighfort.o lamb_exact_numquad.o

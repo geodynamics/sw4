@@ -140,8 +140,10 @@ public:
 
    void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, double* ar );
    void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, float* ar );
+   void insert_intersection( Sarray& a_U );
    void insert_subarrayIK( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* ar );
    void copy_kplane( Sarray& u, int k );
+   void copy_kplane2( Sarray& u, int k );
    void assign( const float* ar, int corder );
    void assign(  const double* ar, int corder );
    void extract( double* ar, int corder );
@@ -155,6 +157,7 @@ public:
    void page_unlock( EWCuda* cu );
    Sarray* create_copy_on_device( EWCuda* cu );
    void define_offsets();
+   void transform_coordsystem();
 //   void write( char* filename, CartesianProcessGrid* cartcomm, std::vector<float_sw4> pars );
    int m_nc, m_ni, m_nj, m_nk;
 private:

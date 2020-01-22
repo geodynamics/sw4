@@ -744,6 +744,45 @@ void Sarray::insert_subarray( int ib, int ie, int jb, int je, int kb,
 }
 
 //-----------------------------------------------------------------------
+void Sarray::insert_intersection( Sarray& a_U )
+{
+   // Assuming nc is the same for m_data and a_U.m_data.
+   int wind[6];
+   int ib=a_U.m_ib, ie=a_U.m_ie, jb=a_U.m_jb, je=a_U.m_je, kb=a_U.m_kb, ke=a_U.m_ke;
+   intersection( ib, ie, jb, je, kb, ke, wind );
+   int nis = ie-ib+1;
+   int njs = je-jb+1;
+   int nks = ke-kb+1;
+   size_t sind=0, ind=0;
+   if( m_corder )
+   {
+      size_t totpts  = static_cast<size_t>(m_ni)*m_nj*m_nk;
+      size_t totptss = static_cast<size_t>(nis)*njs*(nks);
+      for( int k=wind[4] ; k<=wind[5] ; k++ )
+	 for( int j=wind[2] ; j<=wind[3] ; j++ )
+	    for( int i=wind[0] ; i <= wind[1] ; i++ )
+	    {
+               sind = (i-ib)  +  nis*(j-jb)   +  nis*njs*(k-kb);
+               ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
+	       for( int c=1 ; c <= m_nc ; c++ )
+		  m_data[ind+totpts*(c-1)] = a_U.m_data[sind+totptss*(c-1)];
+	    }
+   }
+   else
+   {
+      for( int k=wind[4] ; k<=wind[5] ; k++ )
+	 for( int j=wind[2] ; j<=wind[3] ; j++ )
+	    for( int i=wind[0] ; i <= wind[1] ; i++ )
+	    {
+               sind = (i-ib)  +  nis*(j-jb)   +  nis*njs*(k-kb);
+               ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
+	       for( int c=1 ; c <= m_nc ; c++ )
+		  m_data[ind*m_nc+c-1] = a_U.m_data[sind*m_nc+c-1];
+	    }
+   }
+}
+
+//-----------------------------------------------------------------------
 void Sarray::extract_subarrayIK( int ib, int ie, int jb, int je, int kb,
 				 int ke, float_sw4* ar )
 {
@@ -848,6 +887,43 @@ void Sarray::copy_kplane( Sarray& u, int k )
 	 {
 	    size_t ind  = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
 	    size_t uind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-u.m_kb);
+	    for( int c=0 ; c < m_nc ; c++ )
+	       m_data[c+m_nc*ind] = u.m_data[c+m_nc*uind];
+	 }
+   }
+}
+
+//-----------------------------------------------------------------------
+void Sarray::copy_kplane2( Sarray& u, int k )
+{
+   // Only check k-dimension, other dims do not have to match, only copy the intersecting part.
+   if( !( u.m_kb <= k && k <= u.m_ke && m_kb <= k && k <= m_ke ) )
+   {
+      cout << "Sarray::copy_kplane, ERROR k index " << k << " not in range "<< endl;
+      return;
+   }
+   int wind[6];
+   intersection( u.m_ib, u.m_ie, u.m_jb, u.m_je, u.m_kb, u.m_ke, wind );
+   if( m_corder )
+   {
+      size_t nijk = m_ni*m_nj*m_nk;
+      size_t unijk = u.m_ni*u.m_nj*u.m_nk;
+      for( int c=0 ; c < m_nc ; c++ )
+	 for( int j=wind[2] ; j<=wind[3] ; j++ )
+	    for( int i=wind[0] ; i <= wind[1] ; i++ )
+	    {
+	       size_t ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
+	       size_t uind = (i-u.m_ib) + u.m_ni*(j-u.m_jb) + u.m_ni*u.m_nj*(k-u.m_kb);
+	       m_data[ind+c*nijk] = u.m_data[uind+c*unijk];
+	    }
+   }
+   else
+   {
+      for( int j=wind[2] ; j<=wind[3] ; j++ )
+         for( int i=wind[0] ; i <= wind[1] ; i++ )
+	 {
+	    size_t ind  = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
+	    size_t uind = (i-u.m_ib) + u.m_ni*(j-u.m_jb) + u.m_ni*u.m_nj*(k-u.m_kb);
 	    for( int c=0 ; c < m_nc ; c++ )
 	       m_data[c+m_nc*ind] = u.m_data[c+m_nc*uind];
 	 }
@@ -1067,5 +1143,40 @@ void Sarray::transposeik( )
       m_data[i] = tmpar[i];
    delete[] tmpar;
 }
-
-   
+//-----------------------------------------------------------------------
+void Sarray::transform_coordsystem()
+{
+   // (ux,uy,uz) --> (uy,ux,-uz)
+   if( m_nc == 3 )
+   {
+      if( m_corder )
+      {
+         size_t npts = static_cast<size_t>(m_ni)*m_nj*m_nk;
+#pragma omp parallel for   
+         for( int i=0 ; i <m_ni ; i++ )
+            for( int j=0 ; j <m_nj ; j++ )
+               for( int k=0 ; k <m_nk ; k++ )
+               {
+                  size_t ind  = i + m_ni*j + m_ni*m_nj*k;
+                  float_sw4 ux       =  m_data[ind];
+                  m_data[ind]        =  m_data[ind+npts];
+                  m_data[ind+npts]   =  ux;
+                  m_data[ind+2*npts] = -m_data[ind+2*npts];
+               }
+      }
+      else
+      {
+#pragma omp parallel for   
+         for( int i=0 ; i <m_ni ; i++ )
+            for( int j=0 ; j <m_nj ; j++ )
+               for( int k=0 ; k <m_nk ; k++ )
+               {
+                  size_t ind  = i + m_ni*j + m_ni*m_nj*k;
+                  float_sw4 ux    =  m_data[3*ind];
+                  m_data[3*ind  ] =  m_data[3*ind+1];
+                  m_data[3*ind+1] =  ux;
+                  m_data[3*ind+2] = -m_data[3*ind+2];
+               }
+      }
+   }
+}

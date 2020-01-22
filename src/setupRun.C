@@ -30,6 +30,7 @@
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
 #include "EW.h"
+#include "CurvilinearInterface.h"
 #include <cstring>
 
 // making directories
@@ -381,6 +382,14 @@ void EW::setupRun( vector<vector<Source*> > & a_GlobalUniqueSources )
 
 // form combinations of material coefficients for MR
   setup_MR_coefficients();
+
+// Define curvilinear grid refinement interfaces
+   if( mNumberOfGrids-mNumberOfCartesianGrids > 1 )
+   {
+      m_clInterface.resize(mNumberOfGrids-mNumberOfCartesianGrids-1);
+      for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
+         m_clInterface[g-mNumberOfCartesianGrids]= new CurvilinearInterface( g, this );
+   }
 
   if( mVerbose && proc_zero() )
     cout << "  Assigned material properties" << endl;
@@ -1942,8 +1951,9 @@ void EW::setup_supergrid( )
     cout << "Detected at least one boundary with supergrid conditions" << endl;
   
   int gTop = mNumberOfCartesianGrids-1;
-  vector<float_sw4> sg_width(mNumberOfCartesianGrids);
-
+  //  vector<float_sw4> sg_width(mNumberOfCartesianGrids);
+  vector<float_sw4> sg_width(mNumberOfGrids);
+  
 // if the number of grid points was specified in the input file, we need to convert that to a physical width, based on the coarsest grid
   if ( !m_use_sg_width )
   {
@@ -1951,7 +1961,8 @@ void EW::setup_supergrid( )
      m_use_sg_width = true;
   }
 
-  for( int g=0 ; g < mNumberOfCartesianGrids ; g++ )
+  //  for( int g=0 ; g < mNumberOfCartesianGrids ; g++ )
+  for( int g=0 ; g < mNumberOfGrids ; g++ )
   {
      if( m_use_sg_width )
         sg_width[g] = m_supergrid_width;
@@ -1965,16 +1976,16 @@ void EW::setup_supergrid( )
                                           (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
                                           sg_width[g] );
   }
-  if( topographyExists() )
-  {
-     int g=mNumberOfGrids-1;
-     m_supergrid_taper_x[g].define_taper( (mbcGlobalType[0] == bSuperGrid), 0.0,
-                                          (mbcGlobalType[1] == bSuperGrid), m_global_xmax, 
-                                          sg_width[gTop] );
-     m_supergrid_taper_y[g].define_taper( (mbcGlobalType[2] == bSuperGrid), 0.0,
-                                          (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
-                                          sg_width[gTop] );
-  }
+  //  if( topographyExists() )
+  //  {
+  //     int g=mNumberOfGrids-1;
+  //     m_supergrid_taper_x[g].define_taper( (mbcGlobalType[0] == bSuperGrid), 0.0,
+  //                                          (mbcGlobalType[1] == bSuperGrid), m_global_xmax, 
+  //                                          sg_width[gTop] );
+  //     m_supergrid_taper_y[g].define_taper( (mbcGlobalType[2] == bSuperGrid), 0.0,
+  //                                          (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
+  //                                          sg_width[gTop] );
+  //  }
   if( mNumberOfGrids == 1 )
   {
      m_supergrid_taper_z[0].define_taper( !topographyExists() && (mbcGlobalType[4] == bSuperGrid), 0.0,

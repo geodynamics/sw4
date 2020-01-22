@@ -31,8 +31,10 @@
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
 
 #include "sw4.h"
+//#include <iostream>
 
-void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+void curvilinear4sgwind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+                         int kfirstw, int klastw,
 			float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda,
 			float_sw4* __restrict__ a_met, float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu,
 			int* onesided, float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
@@ -41,15 +43,22 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
                         float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry,
 			int nk, char op )
 {
-//      subroutine CURVILINEAR4SG( ifirst, ilast, jfirst, jlast, kfirst,
-//     *                         klast, u, mu, la, met, jac, lu, 
-//     *                         onesided, acof, bope, ghcof, strx, stry,
-//     *                         op )
 
-
-// Routine with supergrid stretchings strx and stry. No stretching
-// in z, since top is always topography, and bottom always interface
-// to a deeper Cartesian grid.
+// Routine with supergrid stretchings strx and stry. Evaluate Lu for kfirstw <= k <= klastw.
+// Assume that a_Lu is declared of size ifirst:ilast, jfirst:jlast, kfirstw:klastw
+// The other arrays have dimensions ifirst:ilast, jfirst:jlast, kfirst:klast,
+// the calling routine need to assure that kfirst:klast is large enough to fit a
+// stencil evaluated at all k between kfirstw and klastw.
+// Typical use kfirstw=klastw=k0 to compute Lu on the grid plane k=k0, to use in grid-grid interface conditions.
+//
+// Note: This routine does not use the 'onesided' array, it is assumed that both k-boundaries use SBP operators.
+//   
+// Note: Stencil coefficients acof are used at the boundary k=1, coefficients acof_no_gp are used
+//   at the boundary k=nk. In SW4 acof is the stencil coefficient array that uses ghost points, and
+//   acof_no_gp is the stencil coefficients that do not use ghost points. However, the calling routine can easily
+//   control which boundary stencil is used, for example, if acof is wanted at both boundaries
+//   use acof as actual argument for both formal arguments a_acof and a_acof_no_gp.
+//
 // opcount: 
 //      Interior (k>6), 2126 arithmetic ops.
 //      Boundary discretization (1<=k<=6 ), 6049 arithmetic ops.
@@ -86,6 +95,8 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
    const int base4 = base-nijk;
    const int ifirst0 = ifirst;
    const int jfirst0 = jfirst;
+   const int nijkw  = nij*(klastw-kfirstw+1);
+   const int base3w = -(ifirst+ni*jfirst+nij*kfirstw)-nijkw;
 
  // Direct reuse of fortran code by these macro definitions:
  // Direct reuse of fortran code by these macro definitions:
@@ -93,7 +104,8 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 #define la(i,j,k) a_lambda[base+(i)+ni*(j)+nij*(k)]
 #define jac(i,j,k)   a_jac[base+(i)+ni*(j)+nij*(k)]
 #define u(c,i,j,k)     a_u[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]   
-#define lu(c,i,j,k)   a_lu[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]   
+   //#define lu(c,i,j,k)   a_lu[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]   
+#define lu(c,i,j,k)   a_lu[base3w+(i)+ni*(j)+nij*(k)+nijkw*(c)]   
 #define met(c,i,j,k) a_met[base4+(i)+ni*(j)+nij*(k)+nijk*(c)]   
 #define strx(i) a_strx[i-ifirst0]
 #define stry(j) a_stry[j-jfirst0]
@@ -103,18 +115,60 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 #define acof_no_gp(i,j,k) a_acof_no_gp[(i-1)+6*(j-1)+48*(k-1)]
 #define ghcof_no_gp(i) a_ghcof_no_gp[i-1]
 
+   bool lower=false, mid=false, upper=false;
+   int klowb=1, klowe=0, kmidb=1, kmide=0, khighb=1, khighe=0;
+   if( kfirstw <= 6 )
+   {
+      lower = true;
+      klowb = kfirstw;
+      if( klastw <= 6 )
+         klowe = klastw;
+      else if( klastw < nk-5 )
+      {
+         mid = true;
+         klowe = 6;
+         kmidb = 7;
+         kmide = klastw;
+      }
+      else // klastw >= nk-5
+      {
+         mid   = true;
+         upper = true;
+         klowe = 6;
+         kmidb = 7;
+         kmide = nk-6;
+         khighb= nk-5;
+         khighe= nk;
+      }
+   }
+   else if( kfirstw <= nk-6 )
+   {
+      mid = true;
+      kmidb = kfirstw;
+      if( klastw < nk-5 )
+         kmide = klastw;
+      else
+      {
+         upper  =true;
+         kmide = nk-6;
+         khighb= nk-5;
+         khighe= klastw;
+      }
+   }
+   else // kfirstw > nk-6
+   {
+      upper =true;
+      khighb = kfirstw;
+      khighe = klastw;
+   }
+   //   std::cout << "Curvilinear4sgwind u,l,m= " << upper << " " << mid << "  " << lower << " high(kb,ke)= " << khighb << " " << khighe << std::endl;
 #pragma omp parallel
    {
-   int kstart = kfirst+2;
-   int kend   = klast-2;
-   if( onesided[5] == 1 )
-      kend = nk-6;
-   if( onesided[4] == 1 )
+   if( lower )
    {
-      kstart = 7;
    // SBP Boundary closure terms
 #pragma omp for
-      for( int k= 1; k <= 6 ; k++ )
+      for( int k= klowb; k <= klowe ; k++ )
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
 #pragma omp simd
 #pragma ivdep	 
@@ -607,8 +661,10 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 	       lu(3,i,j,k) = a1*lu(3,i,j,k) + sgn*r3*ijac;
 	    }
    }
+   if( mid )
+   {
 #pragma omp for
-   for( int k= kstart; k <= kend ; k++ )
+   for( int k= kmidb ; k <= kmide ; k++ )
       for( int j=jfirst+2; j <= jlast-2 ; j++ )
 #pragma omp simd
 #pragma ivdep	 
@@ -1415,10 +1471,11 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 // 4 ops, tot=2126
 	    lu(3,i,j,k) = a1*lu(3,i,j,k) + sgn*r3*ijac;
 	 }
-   if( onesided[5]==1 )
+   }
+   if( upper )
    {
 #pragma omp for
-      for( int k= nk-5; k <= nk ; k++ )
+      for( int k= khighb; k <= khighe ; k++ )
 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
 #pragma omp simd
 #pragma ivdep	 
