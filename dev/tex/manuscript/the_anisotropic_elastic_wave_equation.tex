@@ -19,9 +19,9 @@ where ${\bf F} = (F_1,F_2,F_3)^T$ and ${\bf C} = (C_1,C_2,C_3)^T$ are the three 
 \end{align*}
 with
 \begin{equation}\label{N_definition}
-	N_{ij}^{\{f,c\}} = J^{\{f,c\}}\big(O_i\big)^TM^{\{f,c\}}O_j, \ \ i,j = 1,2,3.
+	N_{ij}^{\{f,c\}} = J^{\{f,c\}}\big(O_i\big)^TM^{\{f,c\}}O_j, \ \ i,j = 1,2,3,
 \end{equation}
-Here, 
+where, 
 \[ O_{1}^T = \left(\begin{array}{cccccc}
 1 & 0 & 0 &0 & 0 & 0\\
 0 & 0 & 0 &0 & 0 & 1\\
@@ -69,7 +69,7 @@ and the backward mapping,
 \begin{equation*}
 {\bf a}^{\{f,c\},i} = \frac{1}{J^{\{f,c\}}}\left({\bf a}_j^{\{f,c\}}\times{\bf a}_k^{\{f,c\}}\right), \ \ \ (i,j,k) \ \mbox{cycle}.
 \end{equation*}
-Denote the unit outward normal ${\bf n}_i^{\{f,c\},\pm} = (n_i^{\{f,c\},\pm,1},n_i^{\{f,c\},\pm,2},n_i^{\{f,c\},\pm,3})$, $i = 1,2,3$, for the boundaries of $i'$th direction on subdomain $\Omega^{\{f,c\}}$, then
+Denote the unit outward normal ${\bf n}_i^{\{f,c\},\pm} = (n_i^{\{f,c\},\pm,1},n_i^{\{f,c\},\pm,2},n_i^{\{f,c\},\pm,3})$, $i = 1,2,3$, for the boundaries of $r^{(i)}$ direction on subdomain $\Omega^{\{f,c\}}$, then
 \begin{align}\label{outward_normal}
 {\bf n}_i^{\{f,c\},\pm} &:= (n^{\{f,c\},\pm,1}_i,n^{\{f,c\},\pm,2}_i,n^{\{f,c\},\pm,3}_i)^T = \pm \frac{\nabla_x^{\{f,c\}} r^{i}}{\left|\nabla_x^{\{f,c\}} r^{i}\right|} \nonumber\\
 &= \pm\frac{ \left(\xi_{1i}^{\{f,c\}},\xi_{2i}^{\{f,c\}},\xi_{3i}^{\{f,c\}}\right)^T}{\sqrt{(\xi_{1i}^{\{f,c\}})^2+(\xi_{2i}^{\{f,c\}})^2+(\xi_{3i}^{\{f,c\}})^2}},
