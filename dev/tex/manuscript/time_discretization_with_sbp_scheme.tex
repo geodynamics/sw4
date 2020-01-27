@@ -22,8 +22,8 @@ Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf
 		}
 		\item{For the continuity of traction on the interface $\Gamma$, assign the ghost points value in $\wt{\bf c}^{*,n+1}$ to satisfy
 			\begin{equation}\label{traction_gamma_pre}
-			(\mathcal{B}^{2h}{\mathcal J}_{\Gamma}^{2h})^{-1}(\wt{\mathcal{A}}_3^{2h}\wt{\bf c}^{*,n+1})\big|_\Gamma
-			= \wt{\mathcal{R}}\left((\mathcal{B}^{h}{\mathcal J}^h_{\Gamma})^{-1}((\mathcal{A}_3^h{\bf f}^{*,n+1})\big|_\Gamma-h_3\omega_1{\bm \eta}^{\ast,n+1})\right)
+			(\bm{\Lambda}^{2h}{\mathcal J}_{\Gamma}^{2h})^{-1}(\wt{\mathcal{A}}_3^{2h}\wt{\bf c}^{*,n+1})\big|_\Gamma
+			= \wt{\mathcal{R}}\left((\bm{\Lambda}^{h}{\mathcal J}^h_{\Gamma})^{-1}((\mathcal{A}_3^h{\bf f}^{*,n+1})\big|_\Gamma-h_3\omega_1{\bm \eta}^{\ast,n+1})\right)
 			\end{equation}
 			with the definition of $\wt{\mathcal{A}}_3^{2h}$ in (\ref{hatAc}), $\mathcal{A}_3^h$ in (\ref{hatAf}) 
 		}
@@ -46,8 +46,8 @@ Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf
 		}
 		\item{For the continuity of traction on the interface $\Gamma$, assign the ghost point value in $\wt{\bf c}^{n+1}$ to satisfy
 			\begin{equation}\label{traction_gamma_corr}
-			(\mathcal{B}^{2h}{\mathcal J}_{\Gamma}^{2h})^{-1}(\wt{\mathcal{A}}_3^{2h}\wt{\bf c}^{n+1})\big|_\Gamma
-			= \wt{\mathcal{R}}\left((\mathcal{B}^{h}{\mathcal J}^h_{\Gamma})^{-1}((\mathcal{A}_3^h{\bf f}^{n+1})\big|_\Gamma-h_3\omega_1{\bm \eta}^{n+1})\right)
+			(\bm{\Lambda}^{2h}{\mathcal J}_{\Gamma}^{2h})^{-1}(\wt{\mathcal{A}}_3^{2h}\wt{\bf c}^{n+1})\big|_\Gamma
+			= \wt{\mathcal{R}}\left((\bm{\Lambda}^{h}{\mathcal J}^h_{\Gamma})^{-1}((\mathcal{A}_3^h{\bf f}^{n+1})\big|_\Gamma-h_3\omega_1{\bm \eta}^{n+1})\right)
 			\end{equation}
 			with the definition of $\wt{\mathcal{A}}_3^{2h}$ in (\ref{hatAc}), $\mathcal{A}_3^h$ in (\ref{hatAf})
 		}

@@ -117,8 +117,8 @@ In the following we are going to look at the interpolation operator ${\bf P}$ an
 \end{figure}
 
 To proceed the interface conditions (\ref{interface_cond}), we fisrtly introduce scaled interpolation and restriction operators
-\[\wt{\mathcal{P}} = (\mathcal{J}^h_\Gamma \mathcal{B}^h)^{-\frac{1}{2}}\mathcal{P}(\mathcal{J}^{2h}_\Gamma \mathcal{B}^{2h})^{\frac{1}{2}},\ \ \ \ \wt{\mathcal{R}} =  (\mathcal{J}^{2h}_\Gamma \mathcal{B}^{2h})^{-\frac{1}{2}}\mathcal{R}(\mathcal{J}^{h}_\Gamma \mathcal{B}^h)^{\frac{1}{2}}.\]
-Here, both $\mathcal{B}^{h}$ and $\mathcal{R}$ are $3n_1^hn_2^hn_3^h\times 3n_1^hn_2^hn_3^h$ matrices, both $\mathcal{B}^{2h}$ and $\mathcal{R}$ are $3n_1^{2h}n_2^{2h}n_3^{2h}\times 3n_1^{2h}n_2^{2h}n_3^{2h}$ matrics, and they have the following structures
+\[\wt{\mathcal{P}} = (\mathcal{J}^h_\Gamma \bm{\Lambda}^h)^{-\frac{1}{2}}\mathcal{P}(\mathcal{J}^{2h}_\Gamma \bm{\Lambda}^{2h})^{\frac{1}{2}},\ \ \ \ \wt{\mathcal{R}} =  (\mathcal{J}^{2h}_\Gamma \bm{\Lambda}^{2h})^{-\frac{1}{2}}\mathcal{R}(\mathcal{J}^{h}_\Gamma \bm{\Lambda}^h)^{\frac{1}{2}}.\]
+Here, both $\bm{\Lambda}^{h}$ and $\mathcal{R}$ are $3n_1^hn_2^hn_3^h\times 3n_1^hn_2^hn_3^h$ matrices, both $\bm{\Lambda}^{2h}$ and $\mathcal{P}$ are $3n_1^{2h}n_2^{2h}n_3^{2h}\times 3n_1^{2h}n_2^{2h}n_3^{2h}$ matrics, and they have the following structures
 \begin{align}\label{iandr}
 \mathcal{P} = \left(\begin{array}{ccc}
 {\bf P}& ~  & ~ \\
@@ -131,15 +131,15 @@ Here, both $\mathcal{B}^{h}$ and $\mathcal{R}$ are $3n_1^hn_2^hn_3^h\times 3n_1^
 where $\bf P$ is a $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ matrix which has stencils as in Figure \ref{interpolation} and $\bf R$ is a $n_1^hn_2^hn_3^h\times n_1^hn_2^hn_3^h$ matrix with a stencil as in Figure \ref{restriction}
 . And
 \begin{align}
-\mathcal{B}^h = \left(\begin{array}{ccc}
-{\bf B}^h& ~  & ~ \\
-~ & {\bf B}^h & ~ \\
-~ &~  &{\bf B}^h\end{array}\right), \ \ \mathcal{B}^{2h} = \left(\begin{array}{ccc}
-{\bf B}^{2h}& ~  & ~ \\
-~ & {\bf B}^{2h} & ~ \\
-~ &~  &{\bf B}^{2h}\end{array}\right),
+\bm{\Lambda}^h = \left(\begin{array}{ccc}
+\Lambda^h& ~  & ~ \\
+~ & \Lambda^h & ~ \\
+~ &~  &\Lambda^h\end{array}\right), \ \ \bm{\Lambda}^{2h} = \left(\begin{array}{ccc}
+\Lambda^{2h}& ~  & ~ \\
+~ & \Lambda^{2h} & ~ \\
+~ &~  &\Lambda^{2h}\end{array}\right),
 \end{align}
-where ${\bf B}^{2h}$ is a $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ diagonal matrix and its diagonal value is $|\nabla_x^c r^{(3)}|$ evalued at the coarse grid points on interface $\Gamma$; ${\bf B}^{h}$ is a $n_1^{h}n_2^{h}n_3^{h}\times n_1^{h}n_2^{h}n_3^{h}$ diagonal matrix with diagonal value to be  $|\nabla_x^f r^{(3)}|$ evalued at the fine grid points on interface $\Gamma$.
+where $\Lambda^{2h}$ is a $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ diagonal matrix and its diagonal value is $|\nabla_x^c r^{(3)}|$ evalued at the coarse grid points on interface $\Gamma$; $\Lambda^{h}$ is a $n_1^{h}n_2^{h}n_3^{h}\times n_1^{h}n_2^{h}n_3^{h}$ diagonal matrix with diagonal value to be  $|\nabla_x^f r^{(3)}|$ evalued at the fine grid points on interface $\Gamma$.
 
 Now, we are ready to  work on the continuous interface conditions (\ref{interface_cond}). In the discrete sense,  the grid functions ${\bf f}$ and ${\bf c}$ are coupled through interface conditions,
 \begin{equation}\label{continuous_sol}
@@ -148,8 +148,8 @@ Now, we are ready to  work on the continuous interface conditions (\ref{interfac
 which imposes the continuity of the solution at the interface $\Gamma$
 and
 \begin{equation}\label{continuous_traction}
-(\mathcal{B}^{2h}{\mathcal J}_{\Gamma}^{2h})^{-1}\big(\wt{\mathcal{A}}_3^{2h}\wt{\bf c}\big)\big|_\Gamma
-= \wt{\mathcal{R}}\left((\mathcal{B}^{h}{\mathcal J}^h_{\Gamma})^{-1}((\mathcal{A}_3^h{\bf f})\big|_\Gamma-h_3\omega_1{\mathcal J}^h{\bm \eta})\right)
+(\bm{\Lambda}^{2h}{\mathcal J}_{\Gamma}^{2h})^{-1}\big(\wt{\mathcal{A}}_3^{2h}\wt{\bf c}\big)\big|_\Gamma
+= \wt{\mathcal{R}}\left((\bm{\Lambda}^{h}{\mathcal J}^h_{\Gamma})^{-1}((\mathcal{A}_3^h{\bf f})\big|_\Gamma-h_3\omega_1{\mathcal J}^h{\bm \eta})\right)
 \end{equation}
 where we have used the notations
 \begin{equation}\label{hatAf}
