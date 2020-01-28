@@ -1073,7 +1073,6 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
       {
 	 VERIFY2(0, "ERROR: Image::writeImagePlane_2, error opening file " << s.str() << " for writing header");
       }  
-      cout << "Rank " << mEW->getRank() << " created new file [" << s.str() << "]" << endl;
 
       cout << "writing image plane on file " << s.str() << endl;// " (msg from proc # " << m_rankWriter << ")" << endl;
       prec = m_double ? 8 : 4;
@@ -1177,11 +1176,13 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
 #ifdef USE_HDF5
       int ret, ltype;
       hsize_t dims, dims1 = 1, total_elem = 0;
+      setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
       h5_fid = H5Fcreate((const char*)(s.str().c_str()), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
       if (h5_fid < 0) 
 	VERIFY2(0, "ERROR: Image::writeImagePlane_2, error opening HDF5 file " << s.str() << " for writing header");
 
-      cout << "Rank " << mEW->getRank() << " created new file [" << s.str() << "]" << endl;
+      /* cout << "Rank " << mEW->getRank() << " created new file [" << s.str() << "]" << endl; */
+      cout << "writing image plane on file " << s.str() << endl;// " (msg from proc # " << m_rankWriter << ")" << endl;
 
       attr_space1 = H5Screate_simple(1, &dims1, NULL);
 
@@ -1285,17 +1286,17 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
       H5Dclose(dset);
 
 
-      dset = H5Dcreate(h5_fid, "ni", H5T_NATIVE_DOUBLE, dset_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-      ret  = H5Dwrite(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, ni);
+      dset = H5Dcreate(h5_fid, "ni", H5T_NATIVE_INT, dset_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+      ret  = H5Dwrite(dset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, ni);
       if( ret < 0 )
-	 cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 grid_size dataset" << endl;
+	 cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 ni dataset" << endl;
       H5Dclose(dset);
 
 
-      dset = H5Dcreate(h5_fid, "nj", H5T_NATIVE_DOUBLE, dset_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-      ret  = H5Dwrite(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, nj);
+      dset = H5Dcreate(h5_fid, "nj", H5T_NATIVE_INT, dset_space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+      ret  = H5Dwrite(dset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, nj);
       if( ret < 0 )
-	 cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 grid_size dataset" << endl;
+	 cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 nj dataset" << endl;
       H5Dclose(dset);
 
       H5Sclose(dset_space);
@@ -1430,28 +1431,6 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
                MPI_Barrier( m_mpiComm_writers );
                /* cout << "Rank " << mEW->getRank() <<" after barrier" << endl; */
             }
-
-            /* if( g==glow && iwrite && !m_pio[0]->proc_zero() ) */
-            /* if( g==glow && iwrite ) */
-            /* { */
-            /*    fapl = H5Pcreate(H5P_FILE_ACCESS); */
-            /*    H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL); */
-            /*    /1* setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1); *1/ */
-            /*    cout << "Rank " << mEW->getRank() <<" opening file [" << s.str().c_str() << "]" << endl; */
-            /*    fflush(stdout); */
-            /*    h5_fid = H5Fopen((const char*)(s.str().c_str()), H5F_ACC_RDWR, fapl); */
-            /*    if (h5_fid < 0) */ 
-            /*       VERIFY2(0, "ERROR: Image::writeImagePlane_2, error opening HDF5 file " << s.str() << " for writing data"); */
-            /*    H5Pclose(fapl); */
-
-            /*    dset = H5Dopen(h5_fid, "patches", H5P_DEFAULT); */
-            /*    cout << "Rank " << mEW->getRank() <<" opening patches dset from file [" << s.str().c_str() << "]" << endl; */
-            /*    fflush(stdout); */
-            /* } */
-
-            /* if (dset < 0) */ 
-            /*    VERIFY2(0, "ERROR: Image::writeImagePlane_2, error opening patches dataset "); */
-
             if( m_double )
             {
                char dblStr[]="double";	  
@@ -1465,18 +1444,11 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
                m_pio[g-glow]->write_array_hdf5( (const char*)(s.str().c_str()), "patches", 1, m_floatField[g], offset, fltStr );
                offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]);
             }
-
          }
-
-         /* if (iwrite) */ 
-         /* { */
-         /*    H5Dclose(dset); */
-         /*    H5Fclose(h5_fid); */
-         /* } */
       } // End if ihavearray
 
       if( mGridinfo == 1 )
-         add_grid_to_file_hdf5( s.str().c_str(), iwrite, offset );
+         add_grid_to_file_hdf5( s.str().c_str(), iwrite, 0);
       /* if( mGridinfo == 2 ) */
       /*    add_grid_filenames_to_file( s.str().c_str() ); */
 #endif

@@ -5685,7 +5685,7 @@ void EW::processRuptureHDF5(char* buffer, vector<vector<Source*> > & a_GlobalUni
 
 
   if( rfileset)
-    readRuptureHDF5(rfile, a_GlobalUniqueSources, this, event, m_global_xmax, m_global_ymax, m_global_zmax, mGeoAz, xmin, ymin, zmin, mVerbose);
+    readRuptureHDF5(rfile, a_GlobalUniqueSources, this, event, m_global_xmax, m_global_ymax, m_global_zmax, mGeoAz, xmin, ymin, zmin, mVerbose, m_nwriters);
 
 
   etime = MPI_Wtime();

@@ -1164,15 +1164,15 @@ void Parallel_IO::setup_substeps( )
 #ifdef USE_HDF5
 //-----------------------------------------------------------------------
 void Parallel_IO::write_array_hdf5( const char *fname, const char *dname, int nc, void* array, hsize_t pos0, char* typ )
-/* void Parallel_IO:: write_array_hdf5( hid_t loc, int nc, void* array, hsize_t pos0, char* type ) */
 {
 //
 //  Write array previously set up by constructing object.
 //
 // Input: fname - HDF5 file name
+//        dname - HDF5 dataset name
 //        nc    - Number of components per grid point of array.
 //        array - The data array, local in the processor.
-//        pos0  - Start writing the array at this byte position in file.
+//        pos0  - Start writing the array at this byte position in the HDF5 dataset.
 //        typ   - Declared type of 'array', possible values are "float" or "double".
 //                The array saved on disk will have the same type.
 //
@@ -1185,12 +1185,15 @@ void Parallel_IO::write_array_hdf5( const char *fname, const char *dname, int nc
    double* rbuf, *ribuf;
    float* rfbuf, *ribuff;
    bool debug =false;
-   hid_t filespace, dspace, dxpl;
+   hid_t dspace, filespace, dxpl, h5_fid, fapl, dset;
+
+   fapl = H5Pcreate(H5P_FILE_ACCESS);
+   H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL);
+   dxpl = H5Pcreate(H5P_DATASET_XFER);
+   H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
 
    if( m_data_comm != MPI_COMM_NULL )
    {
-      dxpl = H5Pcreate(H5P_DATASET_XFER);
-      H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
       MPI_Comm_rank( MPI_COMM_WORLD, &gproc );
       float* arf;
       double* ar;
@@ -1465,10 +1468,6 @@ void Parallel_IO::write_array_hdf5( const char *fname, const char *dname, int nc
             // Write to disk
 	    begin_sequential( m_write_comm );
 
-            hid_t h5_fid, fapl, dset, filespace, dxpl;
-            fapl = H5Pcreate(H5P_FILE_ACCESS);
-            H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL);
-            /* setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1); */
             /* cout << "Rank " << gproc <<" opening file [" << fname << "]" << endl; */
             /* fflush(stdout); */
             h5_fid = H5Fopen(fname, H5F_ACC_RDWR, fapl);
@@ -1476,27 +1475,28 @@ void Parallel_IO::write_array_hdf5( const char *fname, const char *dname, int nc
                cout << "Rank " << gproc <<" error opening file [" << fname << "]" << endl;
             H5Pclose(fapl);
 
-            /* cout << "Rank " << gproc <<" opening patches dset from file [" << fname << "]" << endl; */
             dset = H5Dopen(h5_fid, dname, H5P_DEFAULT);
             if (dset < 0) 
                cout << "Rank " << gproc <<" error opening [" << dname << "] dset from file [" << fname << "]" << endl;
 
-            /* fflush(stdout); */
-
             filespace = H5Dget_space(dset);
             count = ((hsize_t)nc)*niblock*njblock*nkblock;
             H5Sselect_hyperslab (filespace, H5S_SELECT_SET, &offset, NULL, &count, NULL);
+            dspace = H5Screate_simple(1, &count, NULL);
             /* cout << "Rank " << gproc << ": writing to offset " << offset << " with " << count << " elements" << endl; */
-	    if( flt == 0 )
-               ret  = H5Dwrite(dset, H5T_NATIVE_DOUBLE, H5S_ALL, filespace, dxpl, rbuf);
-	    else
-               ret  = H5Dwrite(dset, H5T_NATIVE_FLOAT, H5S_ALL, filespace, dxpl, rfbuf);
+	    if( flt == 0 ) 
+               ret  = H5Dwrite(dset, H5T_NATIVE_DOUBLE, dspace, filespace, dxpl, rbuf);
+	    else 
+               ret  = H5Dwrite(dset, H5T_NATIVE_FLOAT, dspace, filespace, dxpl, rfbuf);
+            /* cout << "Rank " << gproc << " writing data " << rfbuf[0] << ", " << rfbuf[1] << ", ..., " << rfbuf[count-2] << ", " << rfbuf[count-1] << endl; */
 
             if (ret < 0) {
-                cout << "Parallel_IO::write_array_hdf5, error writing patches dataset, offset " << offset << "count" << count << endl;
+                cout << "Parallel_IO::write_array_hdf5, error writing " << dname << " dataset, offset " << offset << "count" << count << endl;
                 MPI_Abort(MPI_COMM_WORLD,1);
             }
 
+            H5Sclose(dspace);
+            H5Sclose(filespace);
             H5Dclose(dset);
             H5Fclose(h5_fid);
 	    end_sequential( m_write_comm );
@@ -1521,8 +1521,8 @@ void Parallel_IO::write_array_hdf5( const char *fname, const char *dname, int nc
 	 }
 	 delete[] req;
       }
-      H5Pclose(dxpl);
    } // End if( m_data_comm != MPI_COMM_NULL )
+   H5Pclose(dxpl);
 }
 #endif
 
