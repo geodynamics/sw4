@@ -66,7 +66,9 @@ Image(EW * a_ew,
       ImageMode mode,
       ImageOrientation locationType, 
       float_sw4 locationValue,
-      bool doubleMode, bool userCreated=true );
+      bool doubleMode, 
+      bool usehdf5=false, 
+      bool userCreated=true );
 
 static  void setSteps(int a_steps);
 
@@ -125,6 +127,7 @@ void associate_gridfiles( vector<Image*>& imgs );
 void writeImagePlane_2(int cycle, std::string &a_path, float_sw4 time );
 void add_grid_filenames_to_file( const char* fname );
 void add_grid_to_file( const char* fname, bool iwrite, size_t offset );
+void add_grid_to_file_hdf5( const char* fname, bool iwrite, size_t offset );
 
 bool plane_in_proc(int a_gridIndexCoarsest);
 void initializeIO();
@@ -197,6 +200,7 @@ bool m_user_created; // true --> This image was created from the input file
    //int m_rankWriter;
 bool m_isDefined;
 bool m_double;
+bool m_usehdf5;
 EW* mEW;
 Parallel_IO** m_pio;
 

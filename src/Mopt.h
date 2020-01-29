@@ -29,7 +29,7 @@ class Mopt
    void processLBFGS( char* buffer );
    void processNLCG( char* buffer );
    void processMfsurf( char* buffer );
-   void processMimage( char* buffer );
+   void processMimage( char* buffer, bool use_hdf5 );
    void processM3Dimage( char* buffer );
    void processMtypx( char* buffer );
    void processMfileio( char* buffer );

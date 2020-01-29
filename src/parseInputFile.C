@@ -528,8 +528,10 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
           processMaterialIfile(buffer);
        else if (startswith("material", buffer))
           processMaterial(buffer);
+       else if (startswith("imagehdf5", buffer))
+         processImage(buffer, true);
        else if (startswith("image", buffer))
-         processImage(buffer);
+         processImage(buffer, false);
        else if (startswith("volimage", buffer))
           processImage3D(buffer);
        else if (startswith("essioutput", buffer))
@@ -4659,7 +4661,7 @@ void EW::deprecatedImageMode(int value, const char* name) const
 }
 
 //-----------------------------------------------------------------------
-void EW::processImage(char* buffer)
+void EW::processImage(char* buffer, bool use_hdf5)
 {
    int cycle=-1, cycleInterval=0;
 //   int pfs = 0, nwriters=1;
@@ -4683,7 +4685,7 @@ void EW::processImage(char* buffer)
   bool mode_is_grid = false;
   
   char* token = strtok(buffer, " \t");
-  if ( strcmp("image", token) != 0 )
+  if ( strcmp("image", token) != 0 && strcmp("imagehdf5", token) != 0 )
   {
     cerr << "Processing image command: " << "ERROR: not an image line...: " << token;
     MPI_Abort( MPI_COMM_WORLD, 1 );
@@ -4923,35 +4925,35 @@ void EW::processImage(char* buffer)
 	    if( locationType == Image::X )
 	    {
 	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			 filePrefix, Image::GRIDY, locationType, coordValue, use_double);
+			 filePrefix, Image::GRIDY, locationType, coordValue, use_double, use_hdf5);
 	       addImage(i);
 	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			 filePrefix, Image::GRIDZ, locationType, coordValue, use_double);
+			 filePrefix, Image::GRIDZ, locationType, coordValue, use_double, use_hdf5);
 	       addImage(i);
 	    }
 	    else if( locationType == Image::Y )
 	    {
 	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			 filePrefix, Image::GRIDX, locationType, coordValue, use_double);
+			 filePrefix, Image::GRIDX, locationType, coordValue, use_double, use_hdf5);
 	       addImage(i);
 	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			 filePrefix, Image::GRIDZ, locationType, coordValue, use_double);
+			 filePrefix, Image::GRIDZ, locationType, coordValue, use_double, use_hdf5);
 	       addImage(i);
 	    }
 	    else if( locationType == Image::Z )
 	    {
 	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			 filePrefix, Image::GRIDX, locationType, coordValue, use_double);
+			 filePrefix, Image::GRIDX, locationType, coordValue, use_double, use_hdf5);
 	       addImage(i);
 	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			     filePrefix, Image::GRIDY, locationType, coordValue, use_double);
+			     filePrefix, Image::GRIDY, locationType, coordValue, use_double, use_hdf5);
 	       addImage(i);
 	    }
 	 }
 	 else
 	 {
 	    i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			  filePrefix, mode, locationType, coordValue, use_double);
+			  filePrefix, mode, locationType, coordValue, use_double, use_hdf5);
 	    addImage(i);
 	 }
       }
@@ -5683,7 +5685,7 @@ void EW::processRuptureHDF5(char* buffer, vector<vector<Source*> > & a_GlobalUni
 
 
   if( rfileset)
-    readRuptureHDF5(rfile, a_GlobalUniqueSources, this, event, m_global_xmax, m_global_ymax, m_global_zmax, mGeoAz, xmin, ymin, zmin, mVerbose);
+    readRuptureHDF5(rfile, a_GlobalUniqueSources, this, event, m_global_xmax, m_global_ymax, m_global_zmax, mGeoAz, xmin, ymin, zmin, mVerbose, m_nwriters);
 
 
   etime = MPI_Wtime();

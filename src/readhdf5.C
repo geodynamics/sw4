@@ -324,12 +324,26 @@ void readStationHDF5(EW* ew, string inFileName, string outFileName, int writeEve
 
 }
 
-void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSources, EW *ew, int event, float_sw4 m_global_xmax, float_sw4 m_global_ymax, float_sw4 m_global_zmax, float_sw4 mGeoAz, float_sw4 xmin, float_sw4 ymin, float_sw4 zmin, int mVerbose)
+void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSources, EW *ew, int event, float_sw4 m_global_xmax, float_sw4 m_global_ymax, float_sw4 m_global_zmax, float_sw4 mGeoAz, float_sw4 xmin, float_sw4 ymin, float_sw4 zmin, int mVerbose, int nreader)
 {
-  int myRank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+  bool is_debug = true;
+  int world_rank, world_size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+  if (nreader <= 0) 
+      nreader = 1;
 
-  hid_t fid, grp, attr, ctype, dtype, dset, dspace, aspace;
+  int read_color = world_rank % (world_size / nreader) == 0 ? 0 : 1;
+  int node_color = world_rank / nreader;
+  int read_rank, read_size;
+  MPI_Comm read_comm, node_comm;
+  MPI_Comm_split(MPI_COMM_WORLD, read_color, world_rank, &read_comm);
+  MPI_Comm_split(MPI_COMM_WORLD, node_color, world_rank, &node_comm);
+  MPI_Comm_rank(MPI_COMM_WORLD, &read_rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &read_size);
+
+  double stime, etime;
+  hid_t fid, grp, attr, ctype, dtype, dset, dspace, aspace, fapl;
 
   ctype = H5Tcreate(H5T_COMPOUND, 9 * sizeof(float) + 2 * sizeof(int));
   H5Tinsert(ctype, "ELON",                  0, H5T_NATIVE_FLOAT);
@@ -372,18 +386,24 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
   double rVersion;
   int nSources=0, nu1=0, nu2=0, nu3=0;
 
+  stime = MPI_Wtime();
   // Only rank 0 reads data, then broadcast to all other processes
-  if (myRank == 0) {
-    fid = H5Fopen(fname, H5F_ACC_RDONLY, H5P_DEFAULT);
+  if (read_color == 0) {
+
+    fapl = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_fapl_mpio(fapl, read_comm, MPI_INFO_NULL);
+    fid = H5Fopen(fname, H5F_ACC_RDONLY, fapl);
     if (fid <= 0) 
       cout << "Rupture HDF5 file " << fname << " not found" << endl;
     
-    printf("Opened rupture file '%s'\n", fname);
+    if (world_rank == 0) 
+      printf("Opened rupture file '%s'\n", fname);
 
     attr = H5Aopen(fid, "VERSION", H5P_DEFAULT);
     H5Aread(attr, H5T_NATIVE_DOUBLE, &rVersion);
     H5Aclose(attr);
-    printf("Version = %.1f\n", rVersion);
+    if (world_rank == 0) 
+      printf("Version = %.1f\n", rVersion);
 
     // read each header block
     attr = H5Aopen(fid, "PLANE", H5P_DEFAULT);
@@ -392,15 +412,18 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
     nseg = (int)dims;
     srf_metadata = (struct srf_meta_t *)malloc(nseg * sizeof(struct srf_meta_t));
     H5Sclose(aspace);
-    printf("Number of segments in header block: %i\n", nseg);
+    if (world_rank == 0) 
+      printf("Number of segments in header block: %i\n", nseg);
     H5Aread(attr, ctype, srf_metadata);
     H5Aclose(attr);
 
-    for (int seg=0; seg<nseg; seg++) {
-      printf("Seg #%i: elon=%g, elat=%g, nstk=%i, ndip=%i, len=%g, wid=%g\n", 
-	      seg+1, srf_metadata[seg].elon, srf_metadata[seg].elat, srf_metadata[seg].nstk, srf_metadata[seg].ndip, srf_metadata[seg].len, srf_metadata[seg].wid);
-      printf("        stk=%g, dip=%g, dtop=%g, shyp=%g, dhyp=%g\n", 
-              srf_metadata[seg].stk, srf_metadata[seg].dip, srf_metadata[seg].dtop, srf_metadata[seg].shyp, srf_metadata[seg].dhyp);
+    if (world_rank == 0) {
+      for (int seg=0; seg<nseg; seg++) {
+        printf("Seg #%i: elon=%g, elat=%g, nstk=%i, ndip=%i, len=%g, wid=%g\n", 
+                seg+1, srf_metadata[seg].elon, srf_metadata[seg].elat, srf_metadata[seg].nstk, srf_metadata[seg].ndip, srf_metadata[seg].len, srf_metadata[seg].wid);
+        printf("        stk=%g, dip=%g, dtop=%g, shyp=%g, dhyp=%g\n", 
+                srf_metadata[seg].stk, srf_metadata[seg].dip, srf_metadata[seg].dtop, srf_metadata[seg].shyp, srf_metadata[seg].dhyp);
+      }
     }
 
     free(srf_metadata);
@@ -414,7 +437,8 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
  
       H5Sget_simple_extent_dims(dspace, &dims, NULL);
       npts = (int)dims;
-      printf("Number of point sources in data block: %i\n", npts);
+      if (world_rank == 0) 
+        printf("Number of point sources in data block: %i\n", npts);
 
       point_data = (struct srf_data_t*)malloc(npts*sizeof(struct srf_data_t));
       H5Dread(dset, dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, point_data);
@@ -440,25 +464,36 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
     }
 
     H5Fclose(fid);
-  }// End myRank=0
+  }// End read_color=0
+  etime = MPI_Wtime();
 
-  MPI_Bcast(&npts, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if (is_debug && world_rank == 0) 
+      printf("Read SRF-HDF5 takes %.2f seconds\n", etime-stime);
+
+  MPI_Bcast(&npts, 1, MPI_INT, 0, node_comm);
+  /* MPI_Bcast(&npts, 1, MPI_INT, 0, MPI_COMM_WORLD); */
   if (npts == -1) 
     return;
 
-  if (myRank != 0) 
-    point_data = (struct srf_data_t*)malloc(npts*sizeof(struct srf_data_t));
-
-  MPI_Bcast(point_data, npts*sizeof(struct srf_data_t), MPI_CHAR, 0, MPI_COMM_WORLD);
-
-  MPI_Bcast(&nsr1, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&nsr1, 1, MPI_INT, 0, node_comm);
+  /* MPI_Bcast(&nsr1, 1, MPI_INT, 0, MPI_COMM_WORLD); */
   if (nsr1 == -1) 
     return;
 
-  if (myRank != 0) 
+  if (read_color != 0) {
+    point_data = (struct srf_data_t*)malloc(npts*sizeof(struct srf_data_t));
     sr_data = (float*)malloc(nsr1*sizeof(float));
+  }
 
-  MPI_Bcast(sr_data, nsr1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(point_data, npts*sizeof(struct srf_data_t), MPI_CHAR, 0, node_comm);
+  /* MPI_Bcast(point_data, npts*sizeof(struct srf_data_t), MPI_CHAR, 0, MPI_COMM_WORLD); */
+
+  MPI_Bcast(sr_data, nsr1, MPI_FLOAT, 0, node_comm);
+  /* MPI_Bcast(sr_data, nsr1, MPI_FLOAT, 0, MPI_COMM_WORLD); */
+  stime = MPI_Wtime();
+
+  if (is_debug && world_rank == 0) 
+      printf("Bcast SRF-HDF5 takes %.2f seconds\n", stime-etime);
 
   Source* sourcePtr;
   timeDep tDep = iDiscrete;
@@ -500,7 +535,7 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
     // nothing to do if nt1=nt2=nt3=0
     if (nt1<=0 && nt2<=0 && nt3<=0) continue;
 
-    if (myRank == 0 && mVerbose >= 2)
+    if (world_rank == 0 && mVerbose >= 2)
     {
       printf("point #%i: lon=%g, lat=%g, dep=%g, stk=%g, dip=%g, area=%g, tinit=%g, dt=%g\n", 
              pts+1, lon, lat, dep, stk, dip, area, tinit, dt);
@@ -550,7 +585,7 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
       }
       slip_sum *=dt;
   
-      if (myRank == 0 && mVerbose >= 2)
+      if (world_rank == 0 && mVerbose >= 2)
       {
          printf("INFO: SRF file: dt*sum(slip_vel)=%e [m], total slip (from header)=%e [m]\n", slip_sum, slip_m);
       }
@@ -559,7 +594,7 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
       {
          par[i] /= slip_sum;
       }
-      if (myRank == 0 && mVerbose >= 2)
+      if (world_rank == 0 && mVerbose >= 2)
       {
          slip_sum=0;
          for (int i=1; i<=nt1dim+1; i++)
@@ -642,7 +677,7 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
           sourceposerr << " z is " << z - m_global_zmax << 
             " meters away from max z (" << m_global_zmax << ")" << endl;
         sourceposerr << "***************************************************" << endl;
-        if (myRank == 0)
+        if (world_rank == 0)
           cout << sourceposerr.str();
       }
       else
@@ -672,7 +707,7 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
     {
       nu2++;
       double dum;
-      if (myRank == 0)
+      if (world_rank == 0)
         printf("WARNING nt2=%i > 0 will be ignored\n", nt2);
     } // end if nt2 > 0
   
@@ -681,14 +716,18 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
     {
       nu3++;
       double dum;
-      if (myRank == 0)
+      if (world_rank == 0)
         printf("WARNING nt3=%i > 0 will be ignored\n", nt3);
     } // end if nt3 > 0
     
   } // end for all sources
-  if (myRank == 0)
-    printf("Read npts=%i, made %i point moment tensor sources, nu1=%i, nu2=%i, nu3=%i\n", 
-           npts, nSources, nu1, nu2, nu3);
+  if (world_rank == 0)
+    printf("Read npts=%i, made %i point moment tensor sources, nu1=%i, nu2=%i, nu3=%i\n", npts, nSources, nu1, nu2, nu3);
+
+  etime = MPI_Wtime();
+  if (is_debug && world_rank == 0) 
+      printf("Create source takes %.2f seconds\n", etime-stime);
+
 
   H5Tclose(ctype);
   H5Tclose(dtype);
