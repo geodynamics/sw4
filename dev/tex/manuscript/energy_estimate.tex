@@ -1,12 +1,12 @@
 %!TEX root = SISC_elastic_3d.tex
 \subsection{Energy estimate}
-In this section, we investigate the energy estimate for the semi-discrete forms (\ref{elastic_semi_c}) and (\ref{fine_scheme}) in section \ref{semi_discrete_form}. We are interested in the stability of the secheme with mesh refinement interface in this paper, and assume periodic boundary conditions in directions $r^{(1)}$ and $r^{(2)}$, ignore the boundaries in direction $r^{(3)}$. We refer \cite{petersson2015wave} for the proof of the stability of the scheme without mesh refinement interface and with homogeneous Dirichlet boundary condition on the bottom surface, free surface on the top surface and periodic boundary condition for directions $r^{(1)}$ and $r^{(2)}$.
+In this section, we investigate the energy estimate for the semi-discrete forms (\ref{elastic_semi_c}) and (\ref{fine_scheme}) in section \ref{semi_discrete_form}. We are interested in the stability of the scheme with mesh refinement interface in this paper, and assume periodic boundary conditions in directions $r^{(1)}$ and $r^{(2)}$, ignore the boundaries in direction $r^{(3)}$. We refer \cite{petersson2015wave} for the proof of the stability of the scheme without mesh refinement interface and with homogeneous Dirichlet boundary condition on the bottom surface, free surface on the top surface and periodic boundary condition for directions $r^{(1)}$ and $r^{(2)}$.
 
 Let ${\bf u}, {\bf v}$ be grid functions in $\Omega^c$. We define the three dimensional scalar product in $\Omega^c$
 \begin{equation}\label{scalar_product_inner}
 ({\bf u}, {\bf v})_{2h} = 8h_1h_2h_3\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}\sum_{k=1}^{n_3^{2h}}\omega_k{\bf J}_{ijk}^{2h}u_{ijk}v_{ijk},
 \end{equation}
-where ${\bf J}^{2h}_{ijk}$ located at the $((k-1)n_1^{2h}n_2^{2h}+(j-1)n_1^{2h}+i)$'th row and $((k-1)n_1^{2h}n_2^{2h}+(j-1)n_1^{2h}+i)$'th column of ${\bf J}^{2h}$, $u_{ijk}$ and $v_{ijk}$ loacted at the $((k-1)n_1^{2h}n_2^{2h}+(j-1)n_1^{2h}+i)$'th row of ${\bf u}$, ${\bf v}$ respectively. The two dimensional scalar product for coarse grid functions on the interface $\Gamma$
+where ${\bf J}^{2h}_{ijk}$ located at the $((k-1)n_1^{2h}n_2^{2h}+(j-1)n_1^{2h}+i)$'th row and $((k-1)n_1^{2h}n_2^{2h}+(j-1)n_1^{2h}+i)$'th column of ${\bf J}^{2h}$, $u_{ijk}$ and $v_{ijk}$ located at the $((k-1)n_1^{2h}n_2^{2h}+(j-1)n_1^{2h}+i)$'th row of ${\bf u}$, ${\bf v}$ respectively. The two dimensional scalar product for coarse grid functions on the interface $\Gamma$
 \begin{equation}\label{scalar_product_discrete_interface_c}
 \left<{\bf u}_{\Gamma}, {\bf v}_{\Gamma}\right>_{2h} = 4h_1h_2\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}{\bf  J}_{\Gamma,ij}^{2h}\mathcal{B}^{2h}_{ij}u_{ij}v_{ij}.
 \end{equation}
@@ -67,4 +67,4 @@ plugging (\ref{boundary_f})--(\ref{bounary_c}) into (\ref{semi_energy_1}) and co
 & = 2\left<\wt{\mathcal{P}}\big(({\bf c}_\Gamma)_t\big),(\mathcal{B}^{h}\mathcal{J}^h_\Gamma)^{-1}(-(\mathcal{A}_3^h{\bf f})\big|_\Gamma+h\omega_1{\bm \eta})\right>_{h}+ 2\left<({\bf c}_\Gamma)_t(\mathcal{B}^{2h}\mathcal{J}^{2h}_\Gamma)^{-1}(\wt{\mathcal{A}}_3^{2h}\wt{\bf c})\big|_\Gamma\right>_{2h} \nonumber\\
 & = 2\left<({\bf c}_\Gamma)_t,\wt{\mathcal{R}}\big((\mathcal{B}^{h}\mathcal{J}^h_\Gamma)^{-1}(-(\mathcal{A}_3^h{\bf f})\big|_\Gamma+h\omega_1{\bm \eta})\big)\right>_{2h}+ 2\left<({\bf c}_\Gamma)_t,(\mathcal{B}^{2h}\mathcal{J}^{2h}_\Gamma)^{-1}(\wt{\mathcal{A}}_3^{2h}\wt{\bf c})\big|_\Gamma\right>_{2h} = 0,
 \end{align*}
-where we have used the notaions in (\ref{hatAf})--(\ref{hatAc}).
+where we have used the notations in (\ref{hatAf})--(\ref{hatAc}).
