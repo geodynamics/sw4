@@ -1,6 +1,6 @@
 %!TEX root = SISC_elastic_3d.tex
 \subsection{Energy conservation test}\label{conserved_energy}
-To verify the energy conservation property of our scheme, we perform a computation without external source term, but with a Gaussian initial profile which centered at the origin of the computational domain.  Specifically, the computational domain, density function $\rho$ and material functions $\mu, \lambda$ are taken to be the same as in the Section \ref{convergence_study}; the initial Gaussian profiles are
+To verify the energy conservation property of our scheme, we perform computation without external source term, but with a Gaussian initial profile which centered at the origin of the computational domain.  Specifically, the computational domain, density function $\rho$ and material functions $\mu, \lambda$ are taken to be the same as in the Section \ref{convergence_study}; the initial Gaussian profiles are
 \begin{align*}
 	u_1(\cdot,0) &= \mbox{exp}\left(-\frac{(x^{(1)}-\pi)^2}{0.1}\right)\mbox{exp}\left(-\frac{(x^{(2)}-\pi)^2}{0.1}\right)\mbox{exp}\left(-\frac{(x^{(3)}-\pi)^2}{0.1}\right),\\
 	u_2(\cdot,0) &= \mbox{exp}\left(-\frac{(x^{(1)}-\pi)^2}{0.2}\right)\mbox{exp}\left(-\frac{(x^{(2)}-\pi)^2}{0.2}\right)\mbox{exp}\left(-\frac{(x^{(3)}-\pi)^2}{0.2}\right),\\
@@ -13,7 +13,7 @@ For the semi-discrete approximation, the energy is given by $({\bf f}_t,\mathcal
 E^{n+1/2} &= \left|\left|\sqrt{\mathcal{\varrho}^h}\frac{{\bf f}^{n+1}-{\bf f}^n}{\Delta t}\right|\right|_h^2 + S_h({\bf f}^{n+1},{\bf f}^n) - \frac{(\Delta t)^2}{12}(\mathcal{L}^h{\bf f}^{n+1},\mathcal{L}^h{\bf f}^n)_h\\
 &+ \left|\left|\sqrt{\mathcal{\varrho}^{2h}}\frac{{\bf c}^{n+1}-{\bf c}^n}{\Delta t}\right|\right|_{2h}^2 + S_{2h}({\bf c}^{n+1},{\bf c}^n) - \frac{(\Delta t)^2}{12}(\wt{\mathcal{L}}^{2h}\wt{\bf c}^{n+1},\wt{\mathcal{L}}^{2h}\wt{\bf c}^n)_{2h}.
 \end{align*}
-We present the relative change in fully discrete energy, $(E^{n+1/2}-E^{1/2})/E^{1/2}$, as a function of time with $t\in[0,90]$ in Figure \ref{discrete_energy}. This corresponds to $6186$ time steps. Our numerical results show that the fully discrete energy remains constant up to $4e-14$ relative error. 
+We present the relative change in fully discrete energy, $(E^{n+1/2}-E^{1/2})/E^{1/2}$, as a function of time with $t\in[0,90]$ in Figure \ref{discrete_energy}. This corresponds to $6186$ time steps. Our numerical results show that the fully discrete energy remains constant up to round-off error.
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.6\textwidth,trim={0cm 0cm 0cm 0cm}, clip]{discrete_energy.eps}

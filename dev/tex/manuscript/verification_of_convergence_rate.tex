@@ -45,7 +45,7 @@ and
 \begin{equation}\label{lambda_function}
 \lambda(x^{(1)},x^{(2)},x^{(3)})  = 21+ \cos(x^{(1)}+0.1)\cos(x^{(2)}+0.1)\sin^2(3x^{(3)}),
 \end{equation}
-respectively. Besides, we impose a boundary forcing on the top surface and Dirichlet boundary conditions for the other boundaries. The external forcing, top boundary forcing ${\bf g}$ and initial conditions are chosen such that ${\bf u}(\cdot,t) = (u_1(\cdot,t),u_2(\cdot,t),u_3(\cdot,t))^T$ with
+respectively. In addition, we impose a boundary forcing on the top surface and Dirichlet boundary conditions for the other boundaries. The external forcing, top boundary forcing ${\bf g}$ and initial conditions are chosen such that ${\bf u}(\cdot,t) = (u_1(\cdot,t),u_2(\cdot,t),u_3(\cdot,t))^T$ with
 \begin{align*}
 u_1(\cdot,t) &= \cos(x^{(1)}+0.3)\sin(x^{(2)}+0.3)\sin(x^{(3)}+0.2)\cos(t^2),\\
 u_2(\cdot,t) &= \sin(x^{(1)}+0.3)\cos(x^{(2)}+0.3)\sin(x^{(3)}+0.2)\cos(t^2),\\
@@ -59,7 +59,7 @@ where, $M_{ij}^f$ and $n^{f,+,i}_3 $ can be found in (\ref{M_definition}) and (\
 
 The convergence rate is computed by
 \[log\left(\frac{e_h}{e_{2h}}\right)\Bigg/log\left(\frac{1}{2}\right),\]
-here, $e_h$ is the corresponding $L^2$ error.  The problem is evolved until final time $T = 0.5$. The $L^2$ error for the numerical solutions in the whole domain, $L^{f,2}$ error for the numerical solutions in the fine domain $\Omega^f$ and$L^{c,2}$ error for the numerical solutions in the coarse domain $\Omega^c$ are presented in Table \ref{convergence_rate}, note that the convergence rates are shown in the bracket of the Table \ref{convergence_rate}. We observe that the convergence rate is fourth order for all cases. Even though the boundary accuracy of the SBP operator is only  second order, the optimal convergence rate is fourth order. For more detailed analysis on the convergence rate, we refer to \cite{Wang2017,Wang2018b}.  To solve the linear system for ghost point values, we use a block Jacobian iterative method. In the following section, we study two more iterative methods, and compare them in terms of condition number and number of iterations.
+here, $e_h$ is the corresponding $L^2$ error.  The problem is evolved until final time $T = 0.5$. The $L^2$ error for the numerical solutions in the whole domain, $L^{f,2}$ error for the numerical solutions in the fine domain $\Omega^f$ and $L^{c,2}$ error for the numerical solutions in the coarse domain $\Omega^c$ are presented in Table \ref{convergence_rate}, note that the convergence rates are shown in the bracket of the Table \ref{convergence_rate}. We observe that the convergence rate is fourth order for all cases. Even though the boundary accuracy of the SBP operator is only second order, the optimal convergence rate is fourth order. For a more detailed analysis of the convergence rate, we refer to \cite{Wang2017, Wang2018b}.  To solve the linear system for ghost point values, we use a block Jacobi iterative method. In the following section, we study two more iterative methods and compare them in terms of condition number and number of iterations.
 
 \begin{table}[htb]
 	\begin{center}
@@ -75,5 +75,5 @@ here, $e_h$ is the corresponding $L^2$ error.  The problem is evolved until fina
 			\hline
 		\end{tabular}
 	\end{center}
-	\caption{Convergence rate of the fourth order SBP method}\label{convergence_rate}
+	\caption{The $L^2$ error and corresponding convergence rates of the fourth order SBP method }\label{convergence_rate}
 \end{table} 

@@ -19,7 +19,7 @@ $\theta_b$ is the bottom surface geometry,
 \begin{equation}
 \theta_b\big(r^{(1)},r^{(2)}\big) = 0.
 \end{equation}
-As for the fine domain $\Omega^f$, it is choose to be
+As for the fine domain $\Omega^f$, it chooses to be
 \begin{equation}
 \left\{
 \begin{aligned}
@@ -42,13 +42,13 @@ and material parameters $\mu, \lambda$ satisfy
 \mu(x^{(1)},x^{(2)},x^{(3)}) = 1.5\times 10^9,\ \ 
 \lambda(x^{(1)},x^{(2)},x^{(3)})  = 3\times 10^9,
 \end{equation}
-respectively. Besides, we impose a Gaussian source on the top surface
+respectively. In addition, we impose a Gaussian source on the top surface
 \[{\bf g} = (g_1,g_2,g_3)^T ,\]
 where, $g_1 = g_2 = 0$, and 
 \[g_3 = 10^9 \text{exp}\left(-\left(\frac{t-4/44.2}{1/44.2}\right)^2\right)\text{exp}\left(-\left(\frac{x^{(1)}-1000}{12.5}\right)^2-\left(\frac{x^{(2)}-1000}{12.5}\right)^2\right).\]
 Homogeneous Dirichlet boundary conditions are imposed to other boundaries. The external forcing is chosen to be zeros everywhere and the initial conditions are also set to be zero everywhere, ${\bf u} = {\bf 0}$ at $t = 0$.
 
-To compare the results, we use the solutions from a flat interface surface, $\theta_i(r^{(1)},r^{(2)}) = 0$, with only Cartesian grids and no mesh refinement. Specifically, denote $(n_1^{2h},n_2^{2h},n_3^{2h})$ to be the number of grid points in the coarse domain $\Omega^c$, $(n_1^h,n_2^h,n_3^h)$ to be the number of grid points in the fine domain $\Omega^f$, $(n_1,n_2,n_3)$ to be the number of grid points for the reference solution.
+Homogeneous Dirichlet boundary conditions are imposed on other boundaries. The external forcing is chosen to be zeros everywhere and the initial conditions are also set to be zero everywhere, ${\bf u} = {\bf 0}$ at $t = 0$.
 
 In the simulation of the reference solution, we choose $n_1 = n_2 = 201, n_3 = 101$. And in the experiments for the curvilinear interface with mesh refinement, we have $n_1^{2h} = n_2^{2h} = 101, n_3^{2h} = 41$ and $n_1^h = n_2^h = 201, n_3^h = 21$. The numerical simulations are conducted until $T = 0.4$.
 
@@ -58,17 +58,17 @@ In the simulation of the reference solution, we choose $n_1 = n_2 = 201, n_3 = 1
 	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u1_t02_curvi_mr.png}\\
 	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u1_t04_cartesian.png}
 	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u1_t04_curvi_mr.png}
-	\caption{The graph for $u_1$. From left to right are for Cartesian mesh without mesh refinement interface and curvilinear mesh with mesh refinement interface respectively. From top to bottom are for $t = 0.2$ and $t = 0.4$ respectively. Note that $x,z$ in the graph correspond to $x^{(1)}, x^{(3)}$ respectively.}\label{u1}
+	\caption{The graph for $u_1$. From left to right are for Cartesian mesh without mesh refinement interface and curvilinear mesh with mesh refinement interface respectively. From top to bottom are for $t = 0.2$ and $t = 0.4$ respectively. The red dash line in the graphs on the right panel represents the curvilinear interface. Note that $x,z$ in the graph correspond to $x^{(1)}, x^{(3)}$ respectively.}\label{u1}
 \end{figure}
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u2_t02_cartesian.png}
-	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u2_t02_curvi_mr.png}\\
-	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u2_t04_cartesian.png}
-	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u2_t04_curvi_mr.png}
-	\caption{The graph for $u_2$. From left to right are for Cartesian mesh without mesh refinement interface and curvilinear mesh with mesh refinement interface respectively. From top to bottom are for $t = 0.2$ and $t = 0.4$ respectively. Note that $x,z$ in the graph correspond to $x^{(1)}, x^{(3)}$ respectively.}\label{u2}
-\end{figure}
+%\begin{figure}[htbp]
+%	\centering
+%	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u2_t02_cartesian.png}
+%	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u2_t02_curvi_mr.png}\\
+%	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u2_t04_cartesian.png}
+%	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u2_t04_curvi_mr.png}
+%	\caption{The graph for $u_2$. From left to right are for Cartesian mesh without mesh refinement interface and curvilinear mesh with mesh refinement interface respectively. From top to bottom are for $t = 0.2$ and $t = 0.4$ respectively. Note that $x,z$ in the graph correspond to $x^{(1)}, x^{(3)}$ respectively.}\label{u2}
+%\end{figure}
 
 \begin{figure}[htbp]
 	\centering
@@ -76,6 +76,6 @@ In the simulation of the reference solution, we choose $n_1 = n_2 = 201, n_3 = 1
 	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u3_t02_curvi_mr.png}\\
 	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u3_t04_cartesian.png}
 	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u3_t04_curvi_mr.png}
-	\caption{The graph for $u_3$. From left to right are for Cartesian mesh without mesh refinement interface and curvilinear mesh with mesh refinement interface respectively. From top to bottom are for $t = 0.2$ and $t = 0.4$ respectively. Note that $x,z$ in the graph correspond to $x^{(1)}, x^{(3)}$ respectively.}\label{u3}
+	\caption{The graph for $u_3$. From left to right are for Cartesian mesh without mesh refinement interface and curvilinear mesh with mesh refinement interface respectively. From top to bottom are for $t = 0.2$ and $t = 0.4$ respectively. The red dash line in the graphs on the right panel represents the curvilinear interface. Note that $x,z$ in the graph correspond to $x^{(1)}, x^{(3)}$ respectively.}\label{u3}
 \end{figure}
-From Figure \ref{u1}, Figure \ref{u2} and Figure \ref{u3}, we observe that there is no significant reflection at the mesh refinement interface.
+From Figure \ref{u1} and Figure \ref{u3}, we observe that there is no significant reflection at the mesh refinement interface for both component $u_1$ and $u_3$. As for component $u_2$, it is zero up to round-off error, so we don't present it here.

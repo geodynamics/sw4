@@ -1,6 +1,6 @@
 %!TEX root = SISC_elastic_3d.tex
 \section{The temporal discretization}
-The equations are advanced in time with an explicit fourth order accurate predictor-corrector time integration method. Like all explicit time stepping methods, there is a maximum time step not exceed CFL stability limit. By a similar analysis as in \cite{sjogreen2012fourth}, we require 
+The equations are advanced in time with an explicit fourth order accurate predictor-corrector time integration method. Like all explicit time stepping methods, the time step must not exceed the CFL stability limit. By a similar analysis as in \cite{sjogreen2012fourth}, we require 
 \begin{equation*}
 \Delta_t\leq 0.9C_{\text{cfl}}\min\{h_1,h_2,h_3\},
 \end{equation*}
@@ -10,4 +10,4 @@ $\kappa_{\text{max}}$ is the maximum of the eigenvalue of the matrices
 Tr(N_{11}^{\{f,c\}}({\bf r}_{\bf i})) &  Tr(N_{12}^{\{f,c\}}({\bf r}_{\bf i}))& Tr(N_{13}^{\{f,c\}}({\bf r}_{\bf i}))\\
 Tr(N_{21}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{22}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{23}^{\{f,c\}}({\bf r}_{\bf i}))\\
 Tr(N_{31}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{32}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{33}^{\{f,c\}}({\bf r}_{\bf i}))\end{array}\right), \]
-where $Tr(N_{lm}^{\{f,c\}}({\bf r}_{\bf i}))$ represents the trace of $3\times3$ matrix $N_{lm}^{\{f,c\}}({\bf r}_{\bf i}),l,m = 1,2,3$. Note that $\kappa_{\text{max}}$ is related to the material properties $\mu^{\{f,c\}}, \lambda^{\{f,c\}}$ and $\rho^{\{f,c\}}$.
+where $Tr(N_{lm}^{\{f,c\}}({\bf r}_{\bf i}))$ represents the trace of $3\times3$ matrix $N_{lm}^{\{f,c\}}({\bf r}_{\bf i}),l,m = 1,2,3$. Note that $\kappa_{\text{max}}$ is related to the material properties $\mu^{\{f,c\}}, \lambda^{\{f,c\}}$ and $\rho^{\{f,c\}}$. The notation $\{\cdot,\cdot\}$ represents the componentwise identities.

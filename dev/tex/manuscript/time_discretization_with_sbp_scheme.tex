@@ -1,6 +1,6 @@
 %!TEX root = SISC_elastic_3d.tex
 \subsection{Time discretization with SBP scheme}
-In the following, we give the detailed procedures about how we apply the fourth order time integrator to the problems (\ref{elastic_semi_c}) and  (\ref{fine_scheme}). 
+In the following, we give detailed procedures about how we apply the fourth order time integrator to the problems (\ref{elastic_semi_c}) and  (\ref{fine_scheme}). 
 
 Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf C}({\bf x},t_n), {\bf x}\in\Omega^c$ and ${\bf F}({\bf x},t_n), {\bf x}\in\Omega^f$ respectively. Here, $t_n = n\Delta_t, n = 0,1,\cdots$ and $\Delta_t > 0$ is a constant time step. We present the fourth order time integrator with predictor and corrector in the Algorithm \ref{first_alg}.
 ~\\
@@ -56,7 +56,7 @@ Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf
 ~\\
 Here, we only give the steps to evolve the elastic wave equation with suitable initial and interface conditions and skip the detailed derivations of the fourth order predictor corrector time integrator. For more details, see  \cite{wang2018fourth}.
 
-In the Algorithm \ref{first_alg}, we need to solve the equations come from the continuity of the traction force for the interface $\Gamma$ in both predictor step (\ref{traction_gamma_pre}) and corrector step (
-\ref{traction_gamma_corr}). The structure of (\ref{traction_gamma_pre}) and (\ref{traction_gamma_corr}) are same, for simplicity, we only clarify how we solve (\ref{traction_gamma_pre}) in the predictor step.
+In the Algorithm \ref{first_alg}, we need to solve the equations from the continuity of the traction force for the interface $\Gamma$ in both predictor step (\ref{traction_gamma_pre}) and corrector step (
+\ref{traction_gamma_corr}). The structure of (\ref{traction_gamma_pre}) and (\ref{traction_gamma_corr}) are the same, for simplicity, we only clarify how we solve (\ref{traction_gamma_pre}) in the predictor step.
 
-Note that there are $3n_1^{2h}n_2^{2h}$ unknowns in (\ref{traction_gamma_pre}) and $3n_1^{2h}n_2^{2h}$ linear equations in (\ref{traction_gamma_pre}). Since it is very expensive to calculate the LU-factorization for a large problem in $3$D and there is no efficient ways to calculate the LU-factorization in a parallel machine, we instead using iterative methods to solve the linear system (\ref{traction_gamma_pre}). In particular, we consider three different iterative methods: block Jacobian iterative method, conjugate gradient iterative method and preconditioned conjugate gradient iterative method. The details are given in Section \ref{iterative_section}.
+Note that there are $3n_1^{2h}n_2^{2h}$ unknowns in (\ref{traction_gamma_pre}) and $3n_1^{2h}n_2^{2h}$ linear equations in (\ref{traction_gamma_pre}). Since it is very expensive to calculate the LU-factorization for a large problem in $3$D and there are no efficient ways to calculate the LU-factorization in a parallel machine, we instead of using iterative methods to solve the linear system (\ref{traction_gamma_pre}). In particular, we consider three different iterative methods: block Jacobi iterative method, conjugate gradient iterative method and preconditioned conjugate gradient iterative method. The details are given in Section \ref{iterative_section}.

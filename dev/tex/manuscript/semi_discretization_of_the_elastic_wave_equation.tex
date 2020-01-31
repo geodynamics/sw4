@@ -4,25 +4,26 @@
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.6\textwidth,trim={0.4cm 0.7cm 0.8cm 1.4cm}, clip]{physical_discretization.eps}
-	\caption{The sketch for the spatial discretization of physical domain $\Omega$. The blue region is the spacial discretization of coarse subdomain $\Omega^c$ and the red region is the spatial discretization of fine domain $\Omega^f$. Note that $x,y,z$ in the graph correspond to $x^{(1)}, x^{(2)}, x^{(3)}$ respectively. }\label{physical_discretization}
+	\caption{The sketch for the spatial discretization of the physical domain $\Omega$. The blue region is the spatial discretization of coarse subdomain $\Omega^c$ and the red region is the spatial discretization of the fine domain $\Omega^f$. Note that $x,y,z$ in the graph correspond to $x^{(1)}, x^{(2)}, x^{(3)}$ respectively.
+	 }\label{physical_discretization}
 \end{figure}
 
-In this section, we discretize the elastic wave equation (\ref{elastic_curvi}) with mesh refinement interface $\Gamma$. Without loss of generality, we assume the ratio of mesh sizes for subdomain $\Omega^f_r$ and subdomain $\Omega^c_r$ is $1:2$, that is the mesh sizes of $\Omega_r^f$ and $\Omega_r^c$ satisfy
+In this section, we discretize the elastic wave equation (\ref{elastic_curvi}) with mesh refinement interface $\Gamma$. Without loss of generality, we assume the ratio of mesh sizes for subdomain $\Omega^f$ and subdomain $\Omega^c$ is $1:2$, that is the mesh sizes of $\Omega^f$ and $\Omega^c$ satisfy
 \[h_1(n_1^h-1) = 1, \ \ \ h_2(n_2^h-1) = 1, \ \ \ h_3(n_3^h-1) = 1,\]
 and
 \[2h_1(n_1^{2h}-1) = 1, \ \ \ 2h_2(n_2^{2h}-1) = 1, \ \ \ 2h_3(n_3^{2h}-1) = 1,\]
-respectively. Other ratios can be treated analogously. Figure \ref{physical_discretization} gives an illustration of the discretization of a physical domain. This is an ideal mesh if the wave speed in $\Omega_r^f$ is half of the wave speed in $\Omega_r^c$.
+respectively. Other ratios can be treated analogously. Figure \ref{physical_discretization} gives an illustration of the discretization of a physical domain. This is an ideal mesh if the wave speed in $\Omega^f$ is half of the wave speed in $\Omega^c$.
 
 In seismic wave simulation, far-field boundary conditions are often imposed in the $x^{(1)}$ and $x^{(2)}$ directions. Here, our focus is on the numerical treatment of the interface conditions (\ref{interface_cond}). We assume periodic boundary conditions in $x^{(1)}$ and $x^{(2)}$, and ignore the boundaries in $x^{(3)}$. In Figure \ref{section_discretization}, we fix $x^{(2)} = 0$ and present the $x^{(1)}$-$x^{(3)}$ section of the domain $\Omega$ in both curvilinear space and parameter space.
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.45\textwidth,trim={1.0cm 2.0cm 1.0cm 1.8cm}, clip]{physical_section_discretization.eps}
 	\includegraphics[width=0.45\textwidth,trim={1.0cm 2.0cm 1cm 1.8cm}, clip]{parameter_section_discretization.eps}
-	\caption{The sketch of spacial discretization of $x^{(1)}$-$x^{(3)}$ section with $x^{(2)} = 0$. From the left to the right are for physical domain and parameter space respectively. The blue dots are the ghost points for coarse domain $\Omega^c$.}\label{section_discretization}
+	\caption{The sketch of spatial discretization of $x^{(1)}$-$x^{(3)}$ section with $x^{(2)} = 0$. From the left to the right are for physical domain and parameter space respectively. The blue dots are the ghost points for the coarse domain $\Omega^c$.}\label{section_discretization}
 \end{figure}
  To condense notations, we introduce the multi-index notations
 \[{\bf i} = (i,j,k),\ \ {\bf r}_{\bf i} = (r^{(1)}_i,r^{(2)}_j,r^{(3)}_k),\ \ {\bf x}^{\{f,c\}}_{\bf i} = (x^{\{f,c\},(1)}_i,x^{\{f,c\},(2)}_j,x^{\{f,c\},(3)}_k),\ \ {\bf x}_{\bf i}^{\{f,c\}} = {\bf X}^{\{f,c\}}({\bf r}_{\bf i}).\]
-Note that for ${\bf x}^f_{\bf i}\in\Omega^f$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[1,n_3^h]$; for ${\bf x}^c_{\bf i}\in\Omega^c$, we have $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k\in[1,n_3^{2h}]$; for ${\bf x}_{\bf i}^c \in \Gamma\cap\Omega^c$, we have $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k = n_3^{2h}$; for ${\bf x}_{\bf i}^f \in \Gamma\cap\Omega^f$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k = 1$; for ${\bf x}_{\bf i}^f\in \Omega \setminus \Omega^c := \overline{\Gamma}$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[2,n_3^h]$. Note that we abused the symbol $\bar{\Gamma}$ a little bit to only contain the grid points in $\Omega^f$ but not in $\Omega^c$. Now, denote the grid functions in $\Omega^f$ and $\Omega^c$ as
+Note that for ${\bf x}^f_{\bf i}\in\Omega^f$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[1,n_3^h]$; for ${\bf x}^c_{\bf i}\in\Omega^c$, we have $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k\in[1,n_3^{2h}]$; for ${\bf x}_{\bf i}^c \in \Gamma\cap\Omega^c$, we have $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k = n_3^{2h}$; for ${\bf x}_{\bf i}^f \in \Gamma\cap\Omega^f$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k = 1$; for ${\bf x}_{\bf i}^f\in \Omega \setminus \Omega^c := \overline{\Gamma}$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[2,n_3^h]$. We want to mention that we have abused the symbol $\bar{\Gamma}$ a little bit to only contain the grid points in $\Omega^f$ but not in $\Omega^c$. Now, denote the grid functions in $\Omega^f$ and $\Omega^c$ as
 \[{\bf f} = ({\bf f}^1, {\bf f}^2, {\bf f}^3)^T\ \ \ \ \mbox{and}\ \ \ \  {\bf c} = ({\bf c}^1, {\bf c}^2, {\bf c}^3)^T\]
 respectively. Here, 
 \[{\bf f}^l\approx F_l({\bf r}), \ \ {\bf X}^f({\bf r})\in\Omega^f,\ \ l=1,2,3 ,\]
@@ -70,12 +71,12 @@ here, $\mathcal{D}_1^{2h}$ is defined in (\ref{D12}) and $D_3^{2h}$ is a matrix 
 \mathscr{N}_{12}^{2h,21} & \mathscr{N}_{12}^{2h,22} & \mathscr{N}_{12}^{2h,23} \\
 \mathscr{N}_{12}^{2h,31}&\mathscr{N}_{12}^{2h,32}&  \mathscr{N}_{12}^{2h,33}\\ \end{array}\right),
 \end{align}
-here, $\mathscr{N}_{12}^{2h,ij}$, $i,j = 1,2,3$ are diagonal matrices of size $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ with the diagonal values to be $N_{12}^{2h}(i,j)$ evaluated at coarse grid points. Next, we approximate the elastic wave equation (\ref{elastic_curvi}) on $\overline{\Gamma}$ 
+here, $\mathscr{N}_{12}^{2h,ij}$, $i,j = 1,2,3$ are diagonal matrices of size $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ with the diagonal values to be $N_{12}^{2h}(i,j)$ evaluated at coarse grid points. Next, we approximate the elastic wave equation for the fine grids on $\overline{\Gamma}$ 
 \begin{equation}\label{elastic_semi_f}
 \varrho^h_{\overline{\Gamma}} ({\bf f}_{\overline{\Gamma}})_{tt} =
 ( \mathcal{ J}_{\overline{\Gamma}}^{h})^{-1}\left(\sum_{l=1}^3\Big(\big(\mathcal{G}_l^{h}({N}_{ll}^h){\bf f}\big)\Big|_{\overline{\Gamma}}+\sum_{m=1,m\neq l}^3\big(\mathcal{D}_l^{h}(\mathcal{N}_{lm}^{h}\mathcal{D}_m^{h}{\bf f})\big)\Big|_{\overline{\Gamma}}\Big)\right) := \mathcal{L}^h{\bf f}\Big|_{\overline{\Gamma}},
 \end{equation}
-where ${\varrho}^{h}_{\overline{\Gamma}}$ and ${\mathcal{J}}^{h}_{\overline{\Gamma}}$ are $3n_1^hn_2^h(n_3^h-1)\times 3n_1^hn_2^h(n_3^h-1)$ diagonal matrices, which have similar definitions as in (\ref{rho_j}), but correspond to the grids in $\overline{\Gamma}$. Lastly, we approximate the elastic wave equation (\ref{elastic_curvi}) on $\Gamma$ with fine grid points by
+where ${\varrho}^{h}_{\overline{\Gamma}}$ and ${\mathcal{J}}^{h}_{\overline{\Gamma}}$ are $3n_1^hn_2^h(n_3^h-1)\times 3n_1^hn_2^h(n_3^h-1)$ diagonal matrices, which have similar definitions as in (\ref{rho_j}), but correspond to the grids in $\overline{\Gamma}$. Lastly, we approximate the elastic wave equation on $\Gamma$ with fine grid points by
 \begin{equation}\label{elastic_semi_f_i}
 {\varrho}^h_\Gamma ({\bf f}_\Gamma)_{tt} =
 ( {\mathcal{ J}}^{h}_\Gamma)^{-1}\left(\sum_{l=1}^3\Big(\big(\mathcal{G}_l^{h}({N}_{ll}^h){\bf f}\big)\Big|_\Gamma+\sum_{m=1,m\neq l}^3\big(\mathcal{D}_l^{h}(\mathcal{N}_{lm}^{h}\mathcal{D}_m^{h}{\bf f})\big)\Big|_\Gamma\Big) \right) + {\bm \eta} := \mathcal{L}^h{\bf f}\Big|_\Gamma + {\bm \eta},
@@ -116,15 +117,9 @@ In the following we are going to look at the interpolation operator ${\bf P}$ an
 	\caption{The sketch for the stencil of fourth order restriction operator ${\bf R}$ in two dimensions with parameters $\epsilon = \frac{1}{1024}$, $\nu = -\frac{9}{1024}$, $\phi = -\frac{16}{1024}$, $\delta = \frac{81}{1024}$, $\sigma = \frac{144}{1024}$, $\chi = \frac{256}{1024}$ and $\zeta = 0$.}\label{restriction}
 \end{figure}
 
-<<<<<<< HEAD
-To proceed the interface conditions (\ref{interface_cond}), we firstly introduce scaled interpolation and restriction operators
-\[\wt{\mathcal{P}} = (\mathcal{J}^h_\Gamma \mathcal{B}^h)^{-\frac{1}{2}}\mathcal{P}(\mathcal{J}^{2h}_\Gamma \mathcal{B}^{2h})^{\frac{1}{2}},\ \ \ \ \wt{\mathcal{R}} =  (\mathcal{J}^{2h}_\Gamma \mathcal{B}^{2h})^{-\frac{1}{2}}\mathcal{R}(\mathcal{J}^{h}_\Gamma \mathcal{B}^h)^{\frac{1}{2}}.\]
-Here, both $\mathcal{B}^{h}$ and $\mathcal{R}$ are $3n_1^hn_2^hn_3^h\times 3n_1^hn_2^hn_3^h$ matrices, both $\mathcal{B}^{2h}$ and $\mathcal{R}$ are $3n_1^{2h}n_2^{2h}n_3^{2h}\times 3n_1^{2h}n_2^{2h}n_3^{2h}$ matrices, and they have the following structures
-=======
-To proceed the interface conditions (\ref{interface_cond}), we fisrtly introduce scaled interpolation and restriction operators
+To proceed with the interface conditions (\ref{interface_cond}), we firstly introduce scaled interpolation and restriction operators
 \[\wt{\mathcal{P}} = (\mathcal{J}^h_\Gamma \bm{\Lambda}^h)^{-\frac{1}{2}}\mathcal{P}(\mathcal{J}^{2h}_\Gamma \bm{\Lambda}^{2h})^{\frac{1}{2}},\ \ \ \ \wt{\mathcal{R}} =  (\mathcal{J}^{2h}_\Gamma \bm{\Lambda}^{2h})^{-\frac{1}{2}}\mathcal{R}(\mathcal{J}^{h}_\Gamma \bm{\Lambda}^h)^{\frac{1}{2}}.\]
 Here, both $\bm{\Lambda}^{h}$ and $\mathcal{R}$ are $3n_1^hn_2^hn_3^h\times 3n_1^hn_2^hn_3^h$ matrices, both $\bm{\Lambda}^{2h}$ and $\mathcal{P}$ are $3n_1^{2h}n_2^{2h}n_3^{2h}\times 3n_1^{2h}n_2^{2h}n_3^{2h}$ matrics, and they have the following structures
->>>>>>> ec1644b430c31a418d62aa1c4944f2d63996242b
 \begin{align}\label{iandr}
 \mathcal{P} = \left(\begin{array}{ccc}
 {\bf P}& ~  & ~ \\
@@ -145,10 +140,10 @@ where $\bf P$ is a $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ mat
 ~ & \Lambda^{2h} & ~ \\
 ~ &~  &\Lambda^{2h}\end{array}\right),
 \end{align}
-where ${\bf B}^{2h}$ is a $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ diagonal matrix and its diagonal value is $|\nabla_x^c r^{(3)}|$ evaluated at the coarse grid points on interface $\Gamma$; ${\bf B}^{h}$ is a $n_1^{h}n_2^{h}n_3^{h}\times n_1^{h}n_2^{h}n_3^{h}$ diagonal matrix with diagonal value to be  $|\nabla_x^f r^{(3)}|$ evaluated at the fine grid points on interface $\Gamma$.
+where $\Lambda^{2h}$ is a $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ diagonal matrix and its diagonal value is $|\nabla_x^c r^{(3)}|$ evaluated at the coarse grid points on interface $\Gamma$; $\Lambda^{h}$ is a $n_1^{h}n_2^{h}n_3^{h}\times n_1^{h}n_2^{h}n_3^{h}$ diagonal matrix with diagonal value to be  $|\nabla_x^f r^{(3)}|$ evaluated at the fine grid points on interface $\Gamma$.
 
 
-Now, we are ready to  work on the continuous interface conditions (\ref{interface_cond}). In the discrete sense,  the grid functions ${\bf f}$ and ${\bf c}$ are coupled through interface conditions,
+Now, we are ready to work on continuous interface conditions (\ref{interface_cond}). In the discrete sense,  the grid functions ${\bf f}$ and ${\bf c}$ are coupled through interface conditions,
 \begin{equation}\label{continuous_sol}
 {\bf f}_{\Gamma} = \wt{\mathcal{P}}({\bf c}_{\Gamma}),
 \end{equation}

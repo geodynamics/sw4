@@ -1,6 +1,6 @@
 %!TEX root = SISC_elastic_3d.tex
 \subsection{Energy estimate}
-In this section, we investigate the energy estimate for the semi-discrete forms (\ref{elastic_semi_c}) and (\ref{fine_scheme}) in section \ref{semi_discrete_form}. We are interested in the stability of the scheme with mesh refinement interface in this paper, and assume periodic boundary conditions in directions $r^{(1)}$ and $r^{(2)}$, ignore the boundaries in direction $r^{(3)}$. We refer \cite{petersson2015wave} for the proof of the stability of the scheme without mesh refinement interface and with homogeneous Dirichlet boundary condition on the bottom surface, free surface on the top surface and periodic boundary condition for directions $r^{(1)}$ and $r^{(2)}$.
+In this section, we investigate the energy estimate for the semi-discrete forms (\ref{elastic_semi_c}) and (\ref{fine_scheme}) in section \ref{semi_discrete_form}. We are interested in the stability of the scheme with mesh refinement interface in this paper, and assume periodic boundary conditions in directions $r^{(1)}$ and $r^{(2)}$, ignore the boundaries in direction $r^{(3)}$. We refer \cite{petersson2015wave} for the proof of the stability of the scheme without mesh refinement interface and with homogeneous Dirichlet boundary condition on the bottom surface, a free surface on the top surface and periodic boundary condition for directions $r^{(1)}$ and $r^{(2)}$.
 
 Let ${\bf u}, {\bf v}$ be grid functions in $\Omega^c$. We define the three dimensional scalar product in $\Omega^c$
 \begin{equation}\label{scalar_product_inner}
@@ -10,15 +10,15 @@ where ${\bf J}^{2h}_{ijk}$ located at the $((k-1)n_1^{2h}n_2^{2h}+(j-1)n_1^{2h}+
 \begin{equation}\label{scalar_product_discrete_interface_c}
 \left<{\bf u}_{\Gamma}, {\bf v}_{\Gamma}\right>_{2h} = 4h_1h_2\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}{\bf  J}_{\Gamma,ij}^{2h}\Lambda^{2h}_{ij}u_{ij}v_{ij}.
 \end{equation}
-with ${\bf J}^{2h}_{\Gamma,ij}, \Lambda^{2h}_{ij}$ located at the $((j-1)n_1^{2h}+i)$'th row and $((j-1)n_1^{2h}+i)$'th column of diagonal matrix ${\bf J}_{\Gamma}^{2h}$ and $\Lambda^{2h}$ respectively, $u_{ij}$, $v_{ij}$ are the $((j-1)n_1^{2h}+i)$'th element of coarse grid vectors ${\bf u}_{\Gamma}$ and ${\bf v}_{\Gamma}$ respectively. On the other hand, let ${\bf u}, {\bf v}$ be grid functions in $\Omega^f$. We define the three dimensional discrete scalar product in $\Omega^f$ similarly as in $\Omega^c$
-\begin{equation*}
-({\bf u}, {\bf v})_{h} = h_1h_2h_3\sum_{i=1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}\sum_{k=1}^{n_3^{h}}\omega_k{\bf J}_{ijk}^{h}u_{ijk}v_{ijk},
-\end{equation*}
-and the two dimensional scalar product for fine grid functions on the interface $\Gamma$
-\begin{equation}\label{scalar_product_discrete_interface_f}
-\left<{\bf u}_{\Gamma}, {\bf v}_{\Gamma}\right>_{h} = h_1h_2\sum_{i=1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}{ \bf J}^{h}_{\Gamma,ij}\Lambda^{h}_{ij}u_{ij}v_{ij},
-\end{equation}
-where ${\bf J}^h_{ijk}$, $\Lambda^{h}_{ij}$, $u_{ijk}$, $v_{ijk}$, ${\bf J}^h_{\Gamma,ij}$, $u_{ij}$ and $v_{ij}$ have similar definitions as in (\ref{scalar_product_inner}) and (\ref{scalar_product_discrete_interface_c}).
+with ${\bf J}^{2h}_{\Gamma,ij}, \Lambda^{2h}_{ij}$ located at the $((j-1)n_1^{2h}+i)$'th row and $((j-1)n_1^{2h}+i)$'th column of diagonal matrix ${\bf J}_{\Gamma}^{2h}$ and $\Lambda^{2h}$ respectively, $u_{ij}$, $v_{ij}$ are the $((j-1)n_1^{2h}+i)$'th element of coarse grid vectors ${\bf u}_{\Gamma}$ and ${\bf v}_{\Gamma}$ respectively. The three dimensional scaler product in $\Omega^f$ and two dimensional scalar product for fine grid functions on the interface $\Gamma$ can be defined by a similar manner as in (\ref{scalar_product_inner}) and (\ref{scalar_product_discrete_interface_c}) repectively.%On the other hand, let ${\bf u}, {\bf v}$ be grid functions in $\Omega^f$. We define the three dimensional discrete scalar product in $\Omega^f$ similarly as in $\Omega^c$
+%\begin{equation*}
+%({\bf u}, {\bf v})_{h} = h_1h_2h_3\sum_{i=1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}\sum_{k=1}^{n_3^{h}}\omega_k{\bf J}_{ijk}^{h}u_{ijk}v_{ijk},
+%\end{equation*}
+%and the two dimensional scalar product for fine grid functions on the interface $\Gamma$
+%\begin{equation}\label{scalar_product_discrete_interface_f}
+%\left<{\bf u}_{\Gamma}, {\bf v}_{\Gamma}\right>_{h} = h_1h_2\sum_{i=1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}{ \bf J}^{h}_{\Gamma,ij}\Lambda^{h}_{ij}u_{ij}v_{ij},
+%\end{equation}
+%where ${\bf J}^h_{ijk}$, $\Lambda^{h}_{ij}$, $u_{ijk}$, $v_{ijk}$, ${\bf J}^h_{\Gamma,ij}$, $u_{ij}$ and $v_{ij}$ have similar definitions as in (\ref{scalar_product_inner}) and (\ref{scalar_product_discrete_interface_c}).
 
  Now, we are ready to present the energy conservation of the proposed schemes in Section \ref{semi_discrete_form}. Multiplying (\ref{elastic_semi_c}) by $8h_1h_2h_3\omega_k{\mathcal J}^{2h}{\bf c}_t$ and summing over all grids, we have
 \begin{equation}\label{coarse_simple}
@@ -47,7 +47,7 @@ and
 +  (\mathcal{D}_3^{h}{\bf f}_t,\mathcal{N}_{32}^{h}\mathcal{D}_2{\bf f})_{h} +  (\mathcal{D}_3^{h}{\bf f}_t,\mathcal{N}_{33}^{h}\mathcal{D}_3{\bf f})_{h}\\
 + ({\bf f}_t, P^{h}_1(N_{11}^h){\bf f})_{hr} + ({\bf f}_t, P^{h}_2(N_{22}^h){\bf f})_{hr} + ({\bf f}_t, P^{h}_1(N_{33}^h){\bf f})_{hr}.
 \end{multline*}
-Note that the positive semi-definite operator $P_i^{\{h,2h\}}(N_{ii}^{\{h,2h\}}), i = 1,2,3$ is small and non-zero for odd-even modes and the scalar product $({\bf v}, {\bf u})_{hr}$ is weighted differently than $({\bf u}, {\bf v})_h$ and $({\bf v}, {\bf u})_{2hr}$ is also weighted differently than $({\bf u}, {\bf v})_{2h}$, see \cite{sjogreen2012fourth, petersson2015wave} for details. In addition,
+Note that the positive semi-definite operator $P_i^{h}(N_{ii}^{h})$ and $P_i^{2h}(N_{ii}^{2h}), i = 1,2,3$ are small and non-zero for odd-even modes and the scalar product $({\bf v}, {\bf u})_{hr}$ is weighted differently than $({\bf u}, {\bf v})_h$ and $({\bf v}, {\bf u})_{2hr}$ is also weighted differently than $({\bf u}, {\bf v})_{2h}$, see \cite{sjogreen2012fourth, petersson2015wave} for details. In addition,
 \begin{equation}\label{boundary_f}
 B_h ({\bf f}_t,{\bf f}) = -h_1h_2({\bf f}_{\Gamma})_t^T\big((\mathcal{N}_{31}^h{\mathcal D}_1^h {\bf f})\big|_{\Gamma}+ (\mathcal{N}_{32}^h\mathcal{D}_2^h{\bf f})\big|_{\Gamma}+(\mathcal{N}_{33}^h\mathfrak{D}_3^h{\bf f})\big|_{\Gamma}\big),
 \end{equation}
@@ -60,7 +60,7 @@ Then, the time derivative of the semi-discrete energy reads as
 \frac{d}{dt}\big[({\bf f}_t,\varrho^h {\bf f}_t)_h + \mathcal{S}_{h}({\bf f},{\bf f}_t) + ({\bf c}_t,\varrho^{2h} {\bf c}_t)_{2h} + \mathcal{S}_{2h}({\bf c},{\bf c}_t) \big]  = \\
 2B_{h}({\bf f}_t,{\bf f}) + 2B_{2h}({\bf c}_t,\wt{\bf c}) + 2h_1h_2h_3\omega_1({\bf f}_\Gamma)_t^T{\bm \eta},
 \end{multline}
-plugging (\ref{boundary_f})--(\ref{bounary_c}) into (\ref{semi_energy_1}) and combining the definitions of the scalar product on the interface $\Gamma$ (\ref{scalar_product_discrete_interface_c})--(\ref{scalar_product_discrete_interface_f}), we have
+plugging (\ref{boundary_f})--(\ref{bounary_c}) into (\ref{semi_energy_1}) and combining the definitions of the scalar product on the interface $\Gamma$ (\ref{scalar_product_discrete_interface_c}), we have
 \begin{align*}\label{semi_energy_2}
 &\hspace{0.4cm}\frac{d}{dt}\left[({\bf f}_t,\varrho^h {\bf f}_t)_{h} + \mathcal{S}_{h}({\bf f},{\bf f}_t) + ({\bf c}_t,\varrho^{2h} {\bf c}_t)_{2h} + \mathcal{S}_{2h}({\bf c},{\bf c}_t) \right]   \nonumber\\
 & = 2\left<({\bf f}_\Gamma)_t,(\bm{\Lambda}^{h}\mathcal{J}^h_\Gamma)^{-1}(-(\mathcal{A}_3^h{\bf f})\big|_\Gamma+h\omega_1{\bm \eta})\right>_{h}+ 2\left<({\bf c}_\Gamma)_t,(\bm{\Lambda}^{2h}\mathcal{J}^{2h}_\Gamma)^{-1}(\wt{\mathcal{A}}_3^{2h}\wt{\bf c})\big|_\Gamma\right>_{2h} \nonumber\\
