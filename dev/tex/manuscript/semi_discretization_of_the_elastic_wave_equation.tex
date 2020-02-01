@@ -4,7 +4,7 @@
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.6\textwidth,trim={0.4cm 0.7cm 0.8cm 1.4cm}, clip]{physical_discretization.eps}
-	\caption{The sketch for the spatial discretization of the physical domain $\Omega$. The blue region is the spatial discretization of coarse subdomain $\Omega^c$ and the red region is the spatial discretization of the fine domain $\Omega^f$. Note that $x,y,z$ in the graph correspond to $x^{(1)}, x^{(2)}, x^{(3)}$ respectively.
+	\caption{The sketch for the curvilinear mesh of the physical domain $\Omega$. The blue region is the spatial discretization of coarse subdomain $\Omega^c$ and the red region is the spatial discretization of the fine domain $\Omega^f$. Note that $x,y,z$ in the graph correspond to $x^{(1)}, x^{(2)}, x^{(3)}$ respectively. 
 	 }\label{physical_discretization}
 \end{figure}
 
@@ -23,13 +23,14 @@ In seismic wave simulation, far-field boundary conditions are often imposed in t
 \end{figure}
  To condense notations, we introduce the multi-index notations
 \[{\bf i} = (i,j,k),\ \ {\bf r}_{\bf i} = (r^{(1)}_i,r^{(2)}_j,r^{(3)}_k),\ \ {\bf x}^{\{f,c\}}_{\bf i} = (x^{\{f,c\},(1)}_i,x^{\{f,c\},(2)}_j,x^{\{f,c\},(3)}_k),\ \ {\bf x}_{\bf i}^{\{f,c\}} = {\bf X}^{\{f,c\}}({\bf r}_{\bf i}).\]
-Note that for ${\bf x}^f_{\bf i}\in\Omega^f$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[1,n_3^h]$; for ${\bf x}^c_{\bf i}\in\Omega^c$, we have $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k\in[1,n_3^{2h}]$; for ${\bf x}_{\bf i}^c \in \Gamma\cap\Omega^c$, we have $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k = n_3^{2h}$; for ${\bf x}_{\bf i}^f \in \Gamma\cap\Omega^f$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k = 1$; for ${\bf x}_{\bf i}^f\in \Omega \setminus \Omega^c := \overline{\Gamma}$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[2,n_3^h]$. We want to mention that we have abused the symbol $\bar{\Gamma}$ a little bit to only contain the grid points in $\Omega^f$ but not in $\Omega^c$. Now, denote the grid functions in $\Omega^f$ and $\Omega^c$ as
-\[{\bf f} = ({\bf f}^1, {\bf f}^2, {\bf f}^3)^T\ \ \ \ \mbox{and}\ \ \ \  {\bf c} = ({\bf c}^1, {\bf c}^2, {\bf c}^3)^T\]
+Note that for ${\bf x}^f_{\bf i}\in\Omega^f$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[1,n_3^h]$; for ${\bf x}^c_{\bf i}\in\Omega^c$, we have $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k\in[1,n_3^{2h}]$; for ${\bf x}_{\bf i}^c \in \Gamma\cap\Omega^c$, we have $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k = n_3^{2h}$; for ${\bf x}_{\bf i}^f \in \Gamma\cap\Omega^f$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k = 1$; for ${\bf x}_{\bf i}^f\in \Omega \setminus \Omega^c := \overline{\Gamma}$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[2,n_3^h]$. %We want to mention that we have abused the symbol $\bar{\Gamma}$ a little bit to only contain the grid points in $\Omega^f$ but not in $\Omega^c$.
+Now, denote the grid functions in $\Omega^f$ and $\Omega^c$ by
+\[{\bf f} = ({\bf f}^1, {\bf f}^2, {\bf f}^3)^T\ \ \ \ \mbox{and}\ \ \ \  {\bf c} = ({\bf c}^1, {\bf c}^2, {\bf c}^3)^T,\]
 respectively. Here, 
 \[{\bf f}^l\approx F_l({\bf r}), \ \ {\bf X}^f({\bf r})\in\Omega^f,\ \ l=1,2,3 ,\]
 and
 \[{\bf c}^l \approx C_l({\bf r}),\ \ {\bf X}^c({\bf r})\in\Omega^c, \ \ l = 1,2,3.\]
-Furthermore, we define ${\bf f}_{\Gamma}$ as the fine grid function for ${\bf X}^f({{\bf r}})\in\Gamma$, ${\bf c}_{\Gamma}$ to be the coarse grid function for ${\bf X}^c({{\bf r}})\in\Gamma$ and ${\bf f}_{\overline{\Gamma}}$ as the fine grid function for ${\bf X}^f({{\bf r}})\in\overline{\Gamma}$. Particularly, we define $\wt{\bf c} = (\wt{\bf c}^1,\wt{\bf c}^2,\wt{\bf c}^3)^T$ as the coarse grid function which contains both grids in $\Omega^c$ and ghost points outside of $\Omega^c$ with $i\in[1,n_1^{2h}], j\in[1,n_2^{2h}], k\in[0,n_3^{2h}+1]$. Then we approximate the elastic wave equation (\ref{elastic_curvi}) on $\Omega^c$ by
+Furthermore, we define ${\bf f}_{\Gamma}$ as the fine grid function for ${\bf X}^f({{\bf r}})\in\Gamma$, ${\bf c}_{\Gamma}$ as the coarse grid function for ${\bf X}^c({{\bf r}})\in\Gamma$ and ${\bf f}_{\overline{\Gamma}}$ as the fine grid function for ${\bf X}^f({{\bf r}})\in\overline{\Gamma}$. Particularly, we define $\wt{\bf c} = (\wt{\bf c}^1,\wt{\bf c}^2,\wt{\bf c}^3)^T$ as the coarse grid function which contains both grids in $\Omega^c$ and ghost points outside $\Omega^c$ with $i\in[1,n_1^{2h}], j\in[1,n_2^{2h}], k\in[0,n_3^{2h}+1]$. Then we approximate the elastic wave equation (\ref{elastic_curvi}) in $\Omega^c$ by
 \begin{equation}\label{elastic_semi_c}
 {\varrho}^{2h} {\bf c}_{tt} =( \mathcal{ J}^{2h})^{-1}\left(\sum_{l=1}^2\mathcal{G}_l^{2h}({N}_{ll}^{2h}){\bf c}+\wt{\mathcal{G}}_3^{2h}({N}_{33}^{2h}){\wt{\bf c}}+\sum_{l=1}^3\sum_{m=1,m\neq l}^3\mathcal{D}_l^{2h}(\mathcal{N}_{lm}^{2h}\mathcal{D}_m^{2h}{\bf c})\right) := \wt{\mathcal{L}}^{2h} {\wt {\bf c}},
 \end{equation}
@@ -43,7 +44,7 @@ where
 ~ & {\bf J}^{2h} & ~ \\
 ~ &~  &{\bf J}^{2h}\end{array}\right)
 \end{align}
-with both ${\bm \rho}^{2h}$ and ${\bf J}^{2h}$ are $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ diagonal matrices. The diagonal entries of ${\bm \rho}^{2h}$ and ${\bf J}^{2h}$ are values of density function $\rho^c$ and Jacobian of transformation $J^c$ on the grids in $\Omega^c$ respectively.
+with both ${\bm \rho}^{2h}$ and ${\bf J}^{2h}$  diagonal matrices of size  $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$. The diagonal entries of ${\bm \rho}^{2h}$ and ${\bf J}^{2h}$ are values of density function $\rho^c$ and Jacobian of transformation $J^c$ on the grids in $\Omega^c$, respectively.
 The operators $\mathcal{G}_l^{2h}({N}_{ll}^{2h})$, $l=1,2$ are defined as
 \begin{align}\label{g1122}
 \mathcal{G}^{2h}_l({N}_{ll}^{2h}) = \left(\begin{array}{ccc}
@@ -51,16 +52,16 @@ Q_l^{2h}(N_{ll}^{2h}(1,1)) & Q_l^{2h}(N_{ll}^{2h}(1,2))  & Q_l^{2h}(N_{ll}^{2h}(
 Q_l^{2h}(N_{ll}^{2h}(2,1)) & Q_l^{2h}(N_{ll}^{2h}(2,2))  & Q_l^{2h}(N_{ll}^{2h}(2,3)) \\
 Q_l^{2h}(N_{ll}^{2h}(3,1)) & Q_l^{2h}(N_{ll}^{2h}(3,2))  & Q_l^{2h}(N_{ll}^{2h}(3,3)) \end{array}\right),
 \end{align}
-with $Q_l^{2h}(N_{ll}^{2h}(i,j))$, $i,j = 1,2,3$, are $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ matrices which are from the central difference operator in direction $r^{(l)}$ for second derivative with variable coefficient. Here, we also use a matlab notation $N_{ll}^{2h}(i,j)$ to represent the $i'$th row and $j'$th column of matrix $N_{ll}^{2h}$. Note that for each grid point, $N_{ll}^{2h}$ is a $3\times3$ matrix. As for $\wt{\mathcal{G}}_3^{2h}({N}_{33}^{2h})$, it has a structure
+where $Q_l^{2h}(N_{ll}^{2h}(i,j))$, $i,j = 1,2,3$, are $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ matrices with the central difference stencils in direction $r^{(l)}$ for second derivative with variable coefficient. Here, we also use a matlab notation $N_{ll}^{2h}(i,j)$ to represent the $i'$th row and $j'$th column of matrix $N_{ll}^{2h}$. Note that for each grid point, $N_{ll}^{2h}$ is a $3\times3$ matrix. As for $\wt{\mathcal{G}}_3^{2h}({N}_{33}^{2h})$, it has a structure
 \[ \wt{\mathcal{G}}^{2h}_3({N}_{33}^{2h}) = \left(\begin{array}{ccc}
 \wt{G}_3^{2h}(N_{33}^{2h}(1,1)) & \wt{G}_3^{2h}(N_{33}^{2h}(1,2))  & \wt{G}_3^{2h}(N_{33}^{2h}(1,3)) \\
 \wt{G}_3^{2h}(N_{33}^{2h}(2,1)) & \wt{G}_3^{2h}(N_{33}^{2h}(2,2))  & \wt{G}_3^{2h}(N_{33}^{2h}(2,3)) \\
 \wt{G}_3^{2h}(N_{33}^{2h}(3,1)) & \wt{G}_3^{2h}(N_{33}^{2h}(3,2))  & \wt{G}_3^{2h}(N_{33}^{2h}(3,3)) \end{array}\right),\]
-where $\wt{G}_3^{2h}(N_{33}^{2h}(i,j))$, $i,j = 1,2,3$, are $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}(n_3^{2h}+2)$ matrices which are defined as in (\ref{sbp_2nd_1}) for direction $r^{(3)}$. Finally, let's look at the terms $\mathcal{D}_l^{2h}(\mathcal{N}_{lm}^{2h}\mathcal{D}_m^{2h})$, $l = 1,2,3, m = 1,2,3, l\neq m$. We first explain the cases with $l = 1,2$ and $m = 1,2$, we use $\mathcal{D}_1^{2h}(\mathcal{N}_{12}^{2h}\mathcal{D}_2^{2h})$ as an example and the other case is analogous,
+where $\wt{G}_3^{2h}(N_{33}^{2h}(i,j))$, $i,j = 1,2,3$, are $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}(n_3^{2h}+2)$ matrices which are defined as in (\ref{sbp_2nd_1}) for direction $r^{(3)}$. Finally, let's look at the terms $\mathcal{D}_l^{2h}(\mathcal{N}_{lm}^{2h}\mathcal{D}_m^{2h})$, $l = 1,2,3, m = 1,2,3, l\neq m$. We first explain the cases with $l = 1,2$ and $m = 1,2$ by using $\mathcal{D}_1^{2h}(\mathcal{N}_{12}^{2h}\mathcal{D}_2^{2h})$ as an example. The other cases are analogous. We have 
 \begin{equation}\label{D12}
 \mathcal{D}_1^{2h} = {\bf I}\otimes D_1^{2h} \otimes {\bf I}_2 \otimes {\bf I}_3,\ \ \ \mathcal{D}_2^{2h} ={\bf I}\otimes {\bf I}_1\otimes D_2^{2h}\otimes {\bf I}_3,
 \end{equation}
-where ${\bf I}$ is a $3\times3$ identity matrix, ${\bf I}_l$, $l = 1,2,3$ are $n_l^{2h}\times n_l^{2h}$ identity matrices, $D_1^{2h}$ is a $n_1^{2h}\times n_1^{2h}$ matrix and its stencil is central difference operator for first order derivative in direction $r^{(1)}$, $D_2^{2h}$ is a matrix of size $n_2^{2h}\times n_2^{2h}$ with central difference operator for first order derivative in direction $r^{(2)}$ as stencil. Then let's look at the terms with either $l = 3$ or $m = 3$, we use $\mathcal{D}_1^{2h}(\mathcal{N}_{13}^{2h}\mathcal{D}_3^{2h})$ as an example and the other cases are similar,
+where ${\bf I}$ is a $3\times3$ identity matrix, ${\bf I}_l$, $l = 1,2,3$ are $n_l^{2h}\times n_l^{2h}$ identity matrices, $D_1^{2h}$ is a $n_1^{2h}\times n_1^{2h}$ matrix with central difference stencil for first order derivative in direction $r^{(1)}$, $D_2^{2h}$ is a matrix of size $n_2^{2h}\times n_2^{2h}$ with central difference operator for first order derivative in direction $r^{(2)}$ as stencil. Then let's look at the terms with either $l = 3$ or $m = 3$, we use $\mathcal{D}_1^{2h}(\mathcal{N}_{13}^{2h}\mathcal{D}_3^{2h})$ as an example and the other cases are similar,
 \begin{equation}\label{D13}
 \mathcal{D}_1^{2h} = {\bf I}\otimes D_1^{2h} \otimes {\bf I}_2 \otimes {\bf I}_3,\ \ \ \mathcal{D}_3^{2h} ={\bf I}\otimes {\bf I}_1\otimes {\bf I}_2\otimes D_3^{2h},
 \end{equation}
@@ -71,7 +72,7 @@ here, $\mathcal{D}_1^{2h}$ is defined in (\ref{D12}) and $D_3^{2h}$ is a matrix 
 \mathscr{N}_{12}^{2h,21} & \mathscr{N}_{12}^{2h,22} & \mathscr{N}_{12}^{2h,23} \\
 \mathscr{N}_{12}^{2h,31}&\mathscr{N}_{12}^{2h,32}&  \mathscr{N}_{12}^{2h,33}\\ \end{array}\right),
 \end{align}
-here, $\mathscr{N}_{12}^{2h,ij}$, $i,j = 1,2,3$ are diagonal matrices of size $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ with the diagonal values to be $N_{12}^{2h}(i,j)$ evaluated at coarse grid points. Next, we approximate the elastic wave equation for the fine grids on $\overline{\Gamma}$ 
+here, $\mathscr{N}_{12}^{2h,ij}$, $i,j = 1,2,3$ are diagonal matrices of size $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ with the diagonal values to be $N_{12}^{2h}(i,j)$ evaluated at the coarse grid points. Next, we approximate the elastic wave equation for the fine grids on $\overline{\Gamma}$ 
 \begin{equation}\label{elastic_semi_f}
 \varrho^h_{\overline{\Gamma}} ({\bf f}_{\overline{\Gamma}})_{tt} =
 ( \mathcal{ J}_{\overline{\Gamma}}^{h})^{-1}\left(\sum_{l=1}^3\Big(\big(\mathcal{G}_l^{h}({N}_{ll}^h){\bf f}\big)\Big|_{\overline{\Gamma}}+\sum_{m=1,m\neq l}^3\big(\mathcal{D}_l^{h}(\mathcal{N}_{lm}^{h}\mathcal{D}_m^{h}{\bf f})\big)\Big|_{\overline{\Gamma}}\Big)\right) := \mathcal{L}^h{\bf f}\Big|_{\overline{\Gamma}},
@@ -102,7 +103,7 @@ For the simplicity of analysis, we introduce a general notation for the schemes 
 \right.
 \end{align}
 
-In the following we are going to look at the interpolation operator ${\bf P}$ and restriction operator ${\bf R}$ in two dimensions. The stencils for the interpolation operator ${\bf P}$ can be easily computed by a Taylor series expansion. In our case, we have the ratio of the mesh sizes for subdomain $\Omega^f$ and $\Omega^c$ is $1:2$, then if  ${\bf P}$ is a fourth order interpolation operator in two dimensions,  the stencils of ${\bf P}$ are illustrated in  Figure \ref{interpolation}, the stencils for the corresponding restriction operator $\bf R$ in two dimensions can be determined by the compatibility between interpolation and restriction operators, ${\bf P} = 4{\bf R}^T$, and its stencil is presented in Figure \ref{restriction}.
+In the following we constrct interpolation operator ${\bf P}$ and restriction operator ${\bf R}$ in two dimensions. The stencils for the interpolation operator ${\bf P}$ can be  computed by a Taylor series expansion. Since the ratio of the mesh sizes for subdomain $\Omega^f$ and $\Omega^c$ is $1:2$, then the stencils of the fourth order accurate interpolation operator ${\bf P}$ in two dimensions have four cases, see the illustration in  Figure \ref{interpolation}. The stencils for the corresponding restriction operator $\bf R$ in two dimensions can be determined by the compatibility between interpolation and restriction operators, ${\bf P} = 4{\bf R}^T$, and its stencil is presented in Figure \ref{restriction}. As will be seen later, the compatibility condition is essential for energy stability. 
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.24\textwidth,trim={1.8cm 0.8cm 1.4cm 1.2cm}, clip]{interpolation1.eps}
@@ -129,8 +130,8 @@ Here, both $\bm{\Lambda}^{h}$ and $\mathcal{R}$ are $3n_1^hn_2^hn_3^h\times 3n_1
 ~ & {\bf R} & ~ \\
 ~ &~  &{\bf R}\end{array}\right),
 \end{align}
-where $\bf P$ is a $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ matrix which has stencils as in Figure \ref{interpolation} and $\bf R$ is a $n_1^hn_2^hn_3^h\times n_1^hn_2^hn_3^h$ matrix with a stencil as in Figure \ref{restriction}
-. And
+%where $\bf P$ is a $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ matrix which has stencils as in Figure \ref{interpolation} and $\bf R$ is a $n_1^hn_2^hn_3^h\times n_1^hn_2^hn_3^h$ matrix with a stencil as in Figure \ref{restriction}
+%. And
 \begin{align}
 \bm{\Lambda}^h = \left(\begin{array}{ccc}
 \Lambda^h& ~  & ~ \\
@@ -165,6 +166,6 @@ which imposes the continuity of physical traction at the interface $\Gamma$, her
 \[\wt{\mathscr{D}}_3^{2h} = {\bf I}\otimes {\bf I}_1 \otimes {\bf I}_2 \otimes \wt{\mathfrak{D}}_3^{2h}\]
 where ${\bf I}$ is a $3\times3$ identity matrix, ${\bf I}_l$, $l = 1,2$ are $n_l^{2h}\times n_l^{2h}$ identity matrices, $\wt{\mathfrak{D}}_3^{2h}$ is a $n_3^{2h}\times (n_3^{2h}+2)$ matrix defined in (\ref{sbp_1st_1}) for direction $r^{(3)}$ which is a sparse matrix with only the last row has $5$ non-zeros and the rest of elements are zeros. As for $\mathscr{D}_3^{h}$, it is defined as
 \[\mathscr{D}_3^{h} = {\bf I}\otimes {\bf I}_1 \otimes {\bf I}_2 \otimes \wt{\mathfrak{D}}_3^{2h}\]
-where ${\bf I}$ is a $3\times3$ identity matrix, ${\bf I}_l$, $l = 1,2$ are $n_l^{h}\times n_l^{h}$ identity matrices, $\mathfrak{D}_3^{h}$ is a $n_3^{h}\times n_3^{h}$ matrix defined in (\ref{sbp_1st_2}) for direction $r^{(3)}$. And $\mathfrak{D}_3^{h}$ is a sparse matrix with only the first row has $4$ non-zeros and the rest of elements are zeros. 
+where ${\bf I}$ is a $3\times3$ identity matrix, ${\bf I}_l$, $l = 1,2$ are $n_l^{h}\times n_l^{h}$ identity matrices, $\mathfrak{D}_3^{h}$ is a $n_3^{h}\times n_3^{h}$ matrix defined in (\ref{sbp_1st_2}) for direction $r^{(3)}$. The sparse matrix $\mathfrak{D}_3^{h}$ has $4$ nonzeros in the first row, and zeros elsewhere. 
 
 

@@ -1,6 +1,6 @@
 %!TEX root = SISC_elastic_3d.tex
 \subsection{Energy conservation test}\label{conserved_energy}
-To verify the energy conservation property of our scheme, we perform computation without external source term, but with a Gaussian initial profile which centered at the origin of the computational domain.  Specifically, the computational domain, density function $\rho$ and material functions $\mu, \lambda$ are taken to be the same as in the Section \ref{convergence_study}; the initial Gaussian profiles are
+To verify the energy conservation property of our scheme, we perform computation without external source term, but with a Gaussian initial profile  centered at the origin of the computational domain.  Specifically, the computational domain, density function $\rho$ and material functions $\mu, \lambda$ are taken to be the same as in the Section \ref{convergence_study}; the initial Gaussian profile is
 \begin{align*}
 	u_1(\cdot,0) &= \mbox{exp}\left(-\frac{(x^{(1)}-\pi)^2}{0.1}\right)\mbox{exp}\left(-\frac{(x^{(2)}-\pi)^2}{0.1}\right)\mbox{exp}\left(-\frac{(x^{(3)}-\pi)^2}{0.1}\right),\\
 	u_2(\cdot,0) &= \mbox{exp}\left(-\frac{(x^{(1)}-\pi)^2}{0.2}\right)\mbox{exp}\left(-\frac{(x^{(2)}-\pi)^2}{0.2}\right)\mbox{exp}\left(-\frac{(x^{(3)}-\pi)^2}{0.2}\right),\\
@@ -8,7 +8,7 @@ To verify the energy conservation property of our scheme, we perform computation
 \end{align*}
  The grid spacing is $h_1 = h_2 = h_3 = h$ and $2h = \frac{\pi}{24}$ for coarse domain $\Omega^c$, $h = \frac{\pi}{48}$ for fine domain $\Omega^f$, thus we have $25\times25\times13$ grid points in the coarse domain $\Omega^c$ and $49\times49\times25$ grid points in the fine domain $\Omega^f$. 
 
-For the semi-discrete approximation, the energy is given by $({\bf f}_t,\mathcal{\varrho}^h{\bf f}_t)_h + S_h({\bf f},{\bf f}_t) + ({\bf c}_t,\mathcal{\varrho}^{2h}{\bf c}_t)_{2h} + S_{2h}({\bf c},{\bf c}_t)$, see (\ref{semi_energy_1}). By using a same approach as for the isotropic elastic wave equation, see \cite{petersson2015wave,sjogreen2012fourth},  the expression for the fully discrete energy reads as
+For the semi-discrete approximation, the energy is given by $({\bf f}_t,\mathcal{\varrho}^h{\bf f}_t)_h + S_h({\bf f},{\bf f}_t) + ({\bf c}_t,\mathcal{\varrho}^{2h}{\bf c}_t)_{2h} + S_{2h}({\bf c},{\bf c}_t)$, see (\ref{semi_energy_1}). By using the same approach as for the isotropic elastic wave equation, see \cite{petersson2015wave,sjogreen2012fourth},  the expression for the fully discrete energy reads as
 \begin{align*}
 E^{n+1/2} &= \left|\left|\sqrt{\mathcal{\varrho}^h}\frac{{\bf f}^{n+1}-{\bf f}^n}{\Delta t}\right|\right|_h^2 + S_h({\bf f}^{n+1},{\bf f}^n) - \frac{(\Delta t)^2}{12}(\mathcal{L}^h{\bf f}^{n+1},\mathcal{L}^h{\bf f}^n)_h\\
 &+ \left|\left|\sqrt{\mathcal{\varrho}^{2h}}\frac{{\bf c}^{n+1}-{\bf c}^n}{\Delta t}\right|\right|_{2h}^2 + S_{2h}({\bf c}^{n+1},{\bf c}^n) - \frac{(\Delta t)^2}{12}(\wt{\mathcal{L}}^{2h}\wt{\bf c}^{n+1},\wt{\mathcal{L}}^{2h}\wt{\bf c}^n)_{2h}.
@@ -17,7 +17,7 @@ We present the relative change in fully discrete energy, $(E^{n+1/2}-E^{1/2})/E^
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.6\textwidth,trim={0cm 0cm 0cm 0cm}, clip]{discrete_energy.eps}
-	\caption{The relative change in fully discrete energy as a function of time. Here, $t = 90$ corresponds to $6186$ time steps}\label{discrete_energy}
+	\caption{The relative change in fully discrete energy as a function of time. Here, $t = 90$ corresponds to $6186$ time steps.}\label{discrete_energy}
 \end{figure}
 
 

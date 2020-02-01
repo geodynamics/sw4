@@ -25,10 +25,12 @@ The other SBP operator ${G}(\gamma){\bf u} \approx (\gamma(x)u_x)_x $ is develop
 \begin{equation}\label{sbp_2nd_2}
 ({\bf u}, G(\gamma){\bf v})_h = -S_\gamma({\bf u},{\bf v})-u_1\gamma_1{\bf b}_1{\bf v} + u_n\gamma_n{\bf b}_n{\bf v}.
 \end{equation}
-Here, ${\bf b}_1$ and ${\bf b}_n$ are also finite difference operators for the first derivative at the boundaries, but are constructed to third order accurate,
+Here, ${\bf b}_1$ and ${\bf b}_n$ are also finite difference operators for the first derivative at the boundaries, but are constructed to third order accuracy,
 \begin{equation}\label{sbp_1st_2}
 {\bf b}_1 {\bf v} = \frac{1}{h}\sum_{i=1}^{4} d_i v_i,
 \end{equation}
 which is used to approximate $u_x(x_1)$. In this case, ${G}(\gamma)$ is square in matrix form. 
 
-For the second derivative SBP operators $\wt{G}(\gamma)$ and $G(\gamma)$, both of them use a fourth order five points centered difference stencil to approximate $(\gamma u_x)_x$ on the interior points away from the boundaries. For the first and the last six grid points close to the boundaries, the operators $G(\gamma)$ and $\wt{G}(\gamma)$ use second order accurate one-sided difference stencils. They are designed to satisfy (\ref{sbp_2nd_2}) and (\ref{sbp_2nd_1}), respectively. In the following sections, we use both of them to develop a multi-block finite difference discretization for the elastic wave equation. 
+For the second derivative SBP operators $\wt{G}(\gamma)$ and $G(\gamma)$, both of them use a fourth order five points centered difference stencil to approximate $(\gamma u_x)_x$ at the interior points away from the boundaries. For the first and the last six grid points close to the boundaries, the operators $G(\gamma)$ and $\wt{G}(\gamma)$ use second order accurate one-sided difference stencils. They are designed to satisfy (\ref{sbp_2nd_2}) and (\ref{sbp_2nd_1}), respectively. In \cite{wang2018fourth}, a close relation between the SBP operator with ghost point and without ghost point is explored. In addtion, a method to convert one type of the SBP operator to another type is presented. 
+
+In the following section, we use a combination of two SBP operators to develop a multi-block finite difference discretization for the elastic wave equation. The first SBP operator is $\wt{G}(\gamma)$ with ghost point, and the seond SBP operator, converted from $\wt{G}(\gamma)$, does not use ghost point.
