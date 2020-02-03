@@ -73,7 +73,12 @@ Denote the unit outward normal ${\bf n}_i^{c,\pm} = (n_i^{c,\pm,1},n_i^{c,\pm,2}
 {\bf n}_i^{c,\pm} &:= (n^{c,\pm,1}_i,n^{c,\pm,2}_i,n^{c,\pm,3}_i)^T = \pm \frac{\nabla_x^c r^{(i)}}{\left|\nabla_x^c r^{(i)}\right|} \nonumber\\
 &= \pm\frac{ \left(\xi_{1i}^c,\xi_{2i}^c,\xi_{3i}^c\right)^T}{\sqrt{(\xi_{1i}^c)^2+(\xi_{2i}^c)^2+(\xi_{3i}^c)^2}}.
 \end{align}
-Here, $'+'$ corresponds to $r^{(i)} = 1$ and $'-'$ corresponds to $r^{(i)} = 0$. The elastic wave equation in the fine domain $\Omega^f$ in terms of displacements in curvilinear coordinates is defined in the same way as in the  coarse domain $\Omega^c$.
+Here, $'+'$ corresponds to $r^{(i)} = 1$ and $'-'$ corresponds to $r^{(i)} = 0$. The elastic wave equation in the fine domain $\Omega^f$ in terms of displacements in curvilinear coordinates is defined in the same way as in the  coarse domain $\Omega^c$. We have 
+\begin{align}\label{elastic_curvi_f}
+	\rho^f\frac{\partial^2{\bf F}}{\partial^2 t} &= \frac{1}{J^f}\left[\partial_1(A_1^f\nabla{\bf F}) + \partial_2(A_2^f\nabla{\bf F}) +\partial_3(A_3^f\nabla{\bf F}) \right], \ \ \  {\bf r}\in\Omega^f_r,\ \ \  t\geq0.
+	%\rho^c\frac{\partial^2{\bf C}}{\partial^2 t} = \frac{1}{J^c}\left[\partial_1(A_1^c\nabla{\bf C}) + \partial_2(A_2^c\nabla{\bf C}) +\partial_3(A_3^c\nabla{\bf C}) \right],\ \ \  {\bf r}\in[0,1]^3,\ \ \  t\geq0,
+\end{align}
+
 
 At the interface $\Gamma$, suitable physical interface conditions are the continuity of the traction vectors and the continuity of the displacement vectors 
 \begin{equation}\label{interface_cond}

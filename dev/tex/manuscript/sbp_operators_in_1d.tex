@@ -23,8 +23,9 @@ as the fourth order accurate approximation of $u_x(x_n)$. We note that the notat
 
 The other SBP operator ${G}(\gamma){\bf u} \approx (\gamma(x)u_x)_x $ is developed by Mattsson \cite{mattsson2004summation} without using any ghost points, and satisfies a similar SBP identity,
 \begin{equation}\label{sbp_2nd_2}
-({\bf u}, G(\gamma){\bf v})_h = -S_\gamma({\bf u},{\bf v})-u_1\gamma_1{\bf b}_1{\bf v} + u_n\gamma_n{\bf b}_n{\bf v}.
+({\bf u}, G(\gamma){\bf v})_h = -S_\gamma^M({\bf u},{\bf v})-u_1\gamma_1{\bf b}_1{\bf v} + u_n\gamma_n{\bf b}_n{\bf v},
 \end{equation}
+where $S_\gamma^M({\bf u},{\bf v})$ is symmetric positive semi-definite. 
 Here, ${\bf b}_1$ and ${\bf b}_n$ are also finite difference operators for the first derivative at the boundaries, but are constructed to third order accuracy,
 \begin{equation}\label{sbp_1st_2}
 {\bf b}_1 {\bf v} = \frac{1}{h}\sum_{i=1}^{4} d_i v_i,
