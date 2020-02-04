@@ -7,10 +7,9 @@ and
 \[{\bf x}^{c} = {\bf X}^{c}({\bf r}) :  [0,1]^3 \rightarrow \Omega^{c} \subset \mathbb{R}^3\]
 with ${\bf X}^{c}({\bf r}) = (x^{c,(1)}({\bf r}),x^{c,(2)}({\bf r}),x^{c,(3)}({\bf r}))^T$, ${\bf X}^{f}({\bf r}) = (x^{f,(1)}({\bf r}),x^{f,(2)}({\bf r}),x^{f,(3)}({\bf r}))^T$ to the subdomains $\Omega^f$ and $\Omega^c$,  respectively. Here, we want to mention that the interface $\Gamma$ corresponds to $r^{(3)} = 1$ for the coarse domain and $r^{(3)} = 0$ for the fine domain, that is we assume the fine domain $\Omega^f$ is on the top of coarse domain $\Omega^c$ in this paper. Then the elastic wave equation in the course domain $\Omega^c$ in terms of displacements can be written in curvilinear coordinates as
 \begin{align}\label{elastic_curvi}
-	%\rho^f\frac{\partial^2{\bf F}}{\partial^2 t} &= \frac{1}{J^f}\left[\partial_1(A_1^f\nabla{\bf F}) + \partial_2(A_2^f\nabla{\bf F}) +\partial_3(A_3^f\nabla{\bf F}) \right], \ \ \  {\bf r}\in\Omega^f_r,\ \ \  t\geq0,\nonumber\\
 	\rho^c\frac{\partial^2{\bf C}}{\partial^2 t} = \frac{1}{J^c}\left[\partial_1(A_1^c\nabla{\bf C}) + \partial_2(A_2^c\nabla{\bf C}) +\partial_3(A_3^c\nabla{\bf C}) \right],\ \ \  {\bf r}\in[0,1]^3,\ \ \  t\geq0,
 \end{align}
-where ${\bf C}({\bf r}) = (C_1({\bf r}),C_2({\bf r}),C_3({\bf r}))^T$ is the three dimensional displacement vector and $\rho^c$ is the density function on coarse domain $\Omega^c$ repectively. In addition, we define
+where ${\bf C}({\bf r}) = (C_1({\bf r}),C_2({\bf r}),C_3({\bf r}))^T$ is the three dimensional displacement vector and $\rho^c$ is the density function on coarse domain $\Omega^c$, respectively. In addition, we define
 \begin{align*} 
 	A_1^c\nabla{\bf C} &:= N_{11}^c\partial_1{\bf C} + N_{12}^c\partial_2{\bf C} + N_{13}^c\partial_3{\bf C}, \\
 	A_2^c\nabla{\bf C} &:= N_{21}^c\partial_1{\bf C} + N_{22}^c\partial_2{\bf C} + N_{23}^c\partial_3{\bf C}, \\
@@ -76,7 +75,6 @@ Denote the unit outward normal ${\bf n}_i^{c,\pm} = (n_i^{c,\pm,1},n_i^{c,\pm,2}
 Here, $'+'$ corresponds to $r^{(i)} = 1$ and $'-'$ corresponds to $r^{(i)} = 0$. The elastic wave equation in the fine domain $\Omega^f$ in terms of displacements in curvilinear coordinates is defined in the same way as in the  coarse domain $\Omega^c$. We have 
 \begin{align}\label{elastic_curvi_f}
 	\rho^f\frac{\partial^2{\bf F}}{\partial^2 t} &= \frac{1}{J^f}\left[\partial_1(A_1^f\nabla{\bf F}) + \partial_2(A_2^f\nabla{\bf F}) +\partial_3(A_3^f\nabla{\bf F}) \right], \ \ \  {\bf r}\in\Omega^f_r,\ \ \  t\geq0.
-	%\rho^c\frac{\partial^2{\bf C}}{\partial^2 t} = \frac{1}{J^c}\left[\partial_1(A_1^c\nabla{\bf C}) + \partial_2(A_2^c\nabla{\bf C}) +\partial_3(A_3^c\nabla{\bf C}) \right],\ \ \  {\bf r}\in[0,1]^3,\ \ \  t\geq0,
 \end{align}
 
 
@@ -84,6 +82,6 @@ At the interface $\Gamma$, suitable physical interface conditions are the contin
 \begin{equation}\label{interface_cond}
 \frac{A_3^f\nabla{\bf F}}{J^f|\nabla_x^f r^{(3)}|}  = \frac{A_3^c\nabla{\bf C}}{J^c\left|\nabla_x^c r^{(3)}\right|}, \ \ \ \ {\bf F} = {\bf C}.
 \end{equation}
-Together with suitable physical boundary conditions, the problem (\ref{elastic_curvi}, \ref{interface_cond}) is well-posed \cite{duru2014stable, petersson2015wave}.
+Together with suitable physical boundary conditions, the problem (\ref{elastic_curvi}, \ref{elastic_curvi_f}) is well-posed \cite{duru2014stable, petersson2015wave}.
 
 

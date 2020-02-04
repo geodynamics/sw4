@@ -46,7 +46,6 @@ respectively. In addition, we impose a Gaussian source on the top surface
 \[{\bf g} = (g_1,g_2,g_3)^T ,\]
 where, $g_1 = g_2 = 0$, and 
 \[g_3 = 10^9 \text{exp}\left(-\left(\frac{t-4/44.2}{1/44.2}\right)^2\right)\text{exp}\left(-\left(\frac{x^{(1)}-1000}{12.5}\right)^2-\left(\frac{x^{(2)}-1000}{12.5}\right)^2\right).\]
-%Homogeneous Dirichlet boundary conditions are imposed to other boundaries. The external forcing is chosen to be zeros everywhere and the initial conditions are also set to be zero everywhere, ${\bf u} = {\bf 0}$ at $t = 0$.
 
 Homogeneous Dirichlet boundary conditions are imposed on other boundaries. The external forcing is chosen to be zero everywhere and the initial conditions are also set to be zero everywhere, ${\bf u} = {\bf 0}$ at $t = 0$.
 
@@ -58,8 +57,7 @@ In the simulation of the reference solution, we choose $n_1 = n_2 = 201, n_3 = 1
 	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u1_t02_curvi_mr.png}\\
 	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u1_t04_cartesian.png}
 	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u1_t04_curvi_mr.png}
-	%\caption{The graph for $u_1$. From left to right are for Cartesian mesh without mesh refinement interface and curvilinear mesh with mesh refinement interface respectively. From top to bottom are for $t = 0.2$ and $t = 0.4$ respectively. The red dash line in the graphs on the right panel represents the curvilinear interface. Note that $x,z$ in the graph correspond to $x^{(1)}, x^{(3)}$ respectively.}
-\caption{The graphs for $u_1$. In the two figures on the left, we show reference solutions at $t=0.2$ and $t=0.4$, computed on a Cartesian mesh without mesh refinement interface. On the right, the two figures show the solutions computed on a curvilinear mesh with a curved mesh refinement interface at $t=0.2$ and $t=0.4$. The curved interfacs are marked with the red dash lines. Note that $x,z$ in the graph correspond to $x^{(1)}, x^{(3)}$ respectively. {\color{red} Why dont we use x1 and x3 as axis labels?}}
+\caption{The graphs for $u_1$. In the two figures on the left, we show reference solutions at $t=0.2$ and $t=0.4$, computed on a Cartesian mesh without mesh refinement interface. On the right, the two figures show the solutions computed on a curvilinear mesh with a curved mesh refinement interface at $t=0.2$ and $t=0.4$. The curved interfaces are marked with the red dash lines. Note that $x,z$ in the graph correspond to $x^{(1)}, x^{(3)}$ respectively.}
 \label{u1}
 \end{figure}
 
@@ -78,8 +76,7 @@ In the simulation of the reference solution, we choose $n_1 = n_2 = 201, n_3 = 1
 	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u3_t02_curvi_mr.png}\\
 	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u3_t04_cartesian.png}
 	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u3_t04_curvi_mr.png}
-	%\caption{The graph for $u_3$. From left to right are for Cartesian mesh without mesh refinement interface and curvilinear mesh with mesh refinement interface respectively. From top to bottom are for $t = 0.2$ and $t = 0.4$ respectively. The red dash line in the graphs on the right panel represents the curvilinear interface. Note that $x,z$ in the graph correspond to $x^{(1)}, x^{(3)}$ respectively.}
-	\caption{The graphs for $u_3$. In the two figures on the left, we show reference solutions at $t=0.2$ and $t=0.4$, computed on a Cartesian mesh without mesh refinement interface. On the right, the two figures show the solutions computed on a curvilinear mesh with a curved mesh refinement interface at $t=0.2$ and $t=0.4$. The curved interfacs are marked with the red dash lines. Note that $x,z$ in the graph correspond to $x^{(1)}, x^{(3)}$ respectively. {\color{red} Why dont we use x1 and x3 as axis labels?}}
+	\caption{The graphs for $u_3$. In the two figures on the left, we show reference solutions at $t=0.2$ and $t=0.4$, computed on a Cartesian mesh without mesh refinement interface. On the right, the two figures show the solutions computed on a curvilinear mesh with a curved mesh refinement interface at $t=0.2$ and $t=0.4$. The curved interfaces are marked with the red dash lines. Note that $x,z$ in the graph correspond to $x^{(1)}, x^{(3)}$ respectively.}
 \label{u3}
 \end{figure}
 From Figure \ref{u1} and Figure \ref{u3}, we observe that there is no significant reflection at the mesh refinement interface for both component $u_1$ and $u_3$. As for component $u_2$, it is zero up to round-off error, and is not presented here.

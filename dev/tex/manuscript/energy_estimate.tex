@@ -1,7 +1,6 @@
 %!TEX root = SISC_elastic_3d.tex
 \subsection{Energy estimate}\label{sec_energy}
-In this section, we derive an energy estimate for the semi-discretization (\ref{elastic_semi_c}) and (\ref{fine_scheme}) in Sec.\ref{semi_discrete_form}. %We are interested in the stability of the scheme with mesh refinement interface in this paper, and assume periodic boundary conditions in directions $r^{(1)}$ and $r^{(2)}$, ignore the boundaries in direction $r^{(3)}$. We refer \cite{petersson2015wave} for the proof of the stability of the scheme without mesh refinement interface and with homogeneous Dirichlet boundary condition on the bottom surface, a free surface on the top surface and periodic boundary condition for directions $r^{(1)}$ and $r^{(2)}$.
-Let ${\bf u}, {\bf v}$ be grid functions in $\Omega^c$. We define the three dimensional scalar product in $\Omega^c$
+In this section, we derive an energy estimate for the semi-discretization (\ref{elastic_semi_c}) and (\ref{fine_scheme}) in Sec.\ref{semi_discrete_form}. Let ${\bf u}, {\bf v}$ be grid functions in $\Omega^c$. We define the three dimensional scalar product in $\Omega^c$
 \begin{equation}\label{scalar_product_inner}
 ({\bf u}, {\bf v})_{2h} = 8h_1h_2h_3\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}\sum_{k=1}^{n_3^{2h}}\omega_k{\bf J}_{ijk}^{2h}u_{ijk}v_{ijk},
 \end{equation}
@@ -9,7 +8,7 @@ where ${\bf J}^{2h}_{ijk}$ is the element of ${\bf J}^{2h}$ in the $((k-1)n_1^{2
 \begin{equation}\label{scalar_product_discrete_interface_c}
 \left<{\bf u}_{\Gamma}, {\bf v}_{\Gamma}\right>_{2h} = 4h_1h_2\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}{\bf  J}_{\Gamma,ij}^{2h}\Lambda^{2h}_{ij}u_{ij}v_{ij},
 \end{equation}
-with ${\bf J}^{2h}_{\Gamma,ij}, \Lambda^{2h}_{ij}$ located at the $((j-1)n_1^{2h}+i)$'th row and $((j-1)n_1^{2h}+i)$'th column of diagonal matrix ${\bf J}_{\Gamma}^{2h}$ and $\Lambda^{2h}$ respectively, $u_{ij}$, $v_{ij}$ are the $((j-1)n_1^{2h}+i)$'th element of coarse grid vectors ${\bf u}_{\Gamma}$ and ${\bf v}_{\Gamma}$ respectively. The three dimensional scaler product in $\Omega^f$ and two dimensional scalar product for fine grid functions on the interface $\Gamma$ can be defined by a similar manner as in (\ref{scalar_product_inner}) and (\ref{scalar_product_discrete_interface_c}), repectively.%On the other hand, let ${\bf u}, {\bf v}$ be grid functions in $\Omega^f$. We define the three dimensional discrete scalar product in $\Omega^f$ similarly as in $\Omega^c$
+with ${\bf J}^{2h}_{\Gamma,ij}, \Lambda^{2h}_{ij}$ located at the $((j-1)n_1^{2h}+i)$'th row and $((j-1)n_1^{2h}+i)$'th column of diagonal matrix ${\bf J}_{\Gamma}^{2h}$ and $\Lambda^{2h}$, respectively, $u_{ij}$, $v_{ij}$ are the $((j-1)n_1^{2h}+i)$'th element of coarse grid vectors ${\bf u}_{\Gamma}$ and ${\bf v}_{\Gamma}$ respectively. The three dimensional scaler product in $\Omega^f$ and two dimensional scalar product for fine grid functions on the interface $\Gamma$ can be defined by a similar manner as in (\ref{scalar_product_inner}) and (\ref{scalar_product_discrete_interface_c}), repectively.%On the other hand, let ${\bf u}, {\bf v}$ be grid functions in $\Omega^f$. We define the three dimensional discrete scalar product in $\Omega^f$ similarly as in $\Omega^c$
 %\begin{equation*}
 %({\bf u}, {\bf v})_{h} = h_1h_2h_3\sum_{i=1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}\sum_{k=1}^{n_3^{h}}\omega_k{\bf J}_{ijk}^{h}u_{ijk}v_{ijk},
 %\end{equation*}
