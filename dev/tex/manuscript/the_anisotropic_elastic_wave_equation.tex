@@ -57,7 +57,7 @@ M_{22}^c = \left(\begin{array}{ccc}
 \[ M_{31}^c = (M_{13}^c)^T, \ \ \  M_{32}^c =(M_{23}^c)^T, \ \ \ M_{21}^c =(M_{12}^c)^T.\]
 Here, $\lambda^c$ and $\mu^c$ are the first and second L{\' {a}}me parameters, respectively, and are determined by the material property. From the definitions of matrices $N_{ij}^c$ in (\ref{N_definition}), we have that $N_{ii}^c$, $i = 1,2,3$, are symmetric positive definite, and $N_{ij}^c=\big(N_{ji}^c\big)^T$, $i,j=1,2,3$. Finally, $J^c =$ det$\left({\bf a}^c_1,{\bf a}^c_2,{\bf a}^c_3\right)\in (0,\infty)$ is the Jacobian of transformation, with the derivative of the forward mapping, 
 \begin{equation}\label{forward_map}
-{\bf a}_k^c := \partial_k{\bf x}^c  = \left(\frac{\partial x^{c,(1)}}{\partial r^{k}},\frac{\partial x^{c,(2)}}{\partial r^{k}},\frac{\partial x^{c,(3)}}{\partial r^{k}}\right)^T,\ \ \ \ k = 1,2,3,
+{\bf a}_k^c := \partial_k{\bf x}^c  = \left(\frac{\partial x^{c,(1)}}{\partial r^{(k)}},\frac{\partial x^{c,(2)}}{\partial r^{(k)}},\frac{\partial x^{c,(3)}}{\partial r^{(k)}}\right)^T,\ \ \ \ k = 1,2,3,
 \end{equation}
 and the backward mapping,
 \begin{equation}\label{backward_map}
@@ -72,9 +72,9 @@ Denote the unit outward normal ${\bf n}_i^{c,\pm} = (n_i^{c,\pm,1},n_i^{c,\pm,2}
 {\bf n}_i^{c,\pm} &:= (n^{c,\pm,1}_i,n^{c,\pm,2}_i,n^{c,\pm,3}_i)^T = \pm \frac{\nabla_x^c r^{(i)}}{\left|\nabla_x^c r^{(i)}\right|} \nonumber\\
 &= \pm\frac{ \left(\xi_{1i}^c,\xi_{2i}^c,\xi_{3i}^c\right)^T}{\sqrt{(\xi_{1i}^c)^2+(\xi_{2i}^c)^2+(\xi_{3i}^c)^2}}.
 \end{align}
-Here, $'+'$ corresponds to $r^{(i)} = 1$ and $'-'$ corresponds to $r^{(i)} = 0$. The elastic wave equation in the fine domain $\Omega^f$ in terms of displacements in curvilinear coordinates is defined in the same way as in the  coarse domain $\Omega^c$. We have 
+Here, $'+'$ corresponds to $r^{(i)} = 1$ and $'-'$ corresponds to $r^{(i)} = 0$. The elastic wave equation in the fine domain in terms of displacements in curvilinear coordinates is defined in the same way as in the  coarse domain. We have 
 \begin{align}\label{elastic_curvi_f}
-	\rho^f\frac{\partial^2{\bf F}}{\partial^2 t} &= \frac{1}{J^f}\left[\partial_1(A_1^f\nabla{\bf F}) + \partial_2(A_2^f\nabla{\bf F}) +\partial_3(A_3^f\nabla{\bf F}) \right], \ \ \  {\bf r}\in\Omega^f_r,\ \ \  t\geq0.
+	\rho^f\frac{\partial^2{\bf F}}{\partial^2 t} &= \frac{1}{J^f}\left[\partial_1(A_1^f\nabla{\bf F}) + \partial_2(A_2^f\nabla{\bf F}) +\partial_3(A_3^f\nabla{\bf F}) \right], \ \ \  {\bf r}\in [0,1]^3,\ \ \  t\geq0.
 \end{align}
 
 
