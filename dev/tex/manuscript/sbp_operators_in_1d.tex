@@ -21,17 +21,17 @@ Here, the bilinear form $S_\gamma(\cdot,\cdot)$ is symmetric positive semi-defin
 \end{equation}
 as the fourth order accurate approximation of $u_x(x_n)$. We note that the notation $\wt{G}(\gamma){\bf v}$ implies that the operator $\wt{G}$ uses ${\bf v}$ on all grid points $\wt{\bf x}$, but $\wt{G}(\gamma){\bf v}$ only returns values on the grid ${\bf x}$ without ghost points. Therefore, when writing in matrix form, $\wt{G}$ is a non-square matrix of size $n$ by $n+2$.
 
-The other SBP operator ${G}(\gamma){\bf u} \approx (\gamma(x)u_x)_x $ is developed by Mattsson \cite{mattsson2004summation} without using any ghost points, and satisfies a similar SBP identity,
-\begin{equation}\label{sbp_2nd_2}
-({\bf u}, G(\gamma){\bf v})_h = -S_\gamma^M({\bf u},{\bf v})-u_1\gamma_1{\bf b}_1{\bf v} + u_n\gamma_n{\bf b}_n{\bf v},
-\end{equation}
-where $S_\gamma^M({\bf u},{\bf v})$ is symmetric positive semi-definite. 
-Here, ${\bf b}_1$ and ${\bf b}_n$ are also finite difference operators for the first derivative at the boundaries, but are constructed to third order accuracy,
-\begin{equation}\label{sbp_1st_2}
-{\bf b}_1 {\bf v} = \frac{1}{h}\sum_{i=1}^{4} d_i v_i,
-\end{equation}
-which is used to approximate $u_x(x_1)$. In this case, ${G}(\gamma)$ is square in matrix form. 
+ In \cite{wang2018fourth}, Wang and Petersson propose a method to convert the SBP operator $\wt{G}(\gamma)$ to another SBP operator $G(\gamma)$ which does not use any ghost point and satisfy
+ \begin{equation}\label{sbp_2nd_2}
+ ({\bf u}, G(\gamma){\bf v})_h = -S_\gamma({\bf u},{\bf v})-u_1\gamma_1{\bf b}_1{\bf v} + u_n\gamma_n{\bf b}_n{\bf v},
+ \end{equation}
+ where $S_\gamma({\bf u},{\bf v})$ is symmetric positive semi-definite. 
+ Here, ${\bf b}_1$ and ${\bf b}_n$ are also finite difference operators for the first derivative at the boundaries, and are constructed to fourth order accuracy,
+ \begin{equation}\label{sbp_1st_2}
+ {\bf b}_1 {\bf v} = \frac{1}{h}\sum_{i=1}^{5} d_i v_i,
+ \end{equation}
+ which is used to approximate $u_x(x_1)$. In this case, ${G}(\gamma)$ is square in matrix form. We refer \cite{mattsson2004summation} for another SBP operator which is used to approximate $(\gamma(x)u_x)_x $ without using any ghost points.
+ 
+For the second derivative SBP operators $\wt{G}(\gamma)$ in (\ref{sbp_2nd_1}) and $G(\gamma)$ in (\ref{sbp_2nd_2}), both of them use a fourth order five points centered difference stencil to approximate $(\gamma u_x)_x$ at the interior points away from the boundaries. For the first and the last six grid points close to the boundaries, the operators $G(\gamma)$ and $\wt{G}(\gamma)$ use second order accurate one-sided difference stencils. They are designed to satisfy (\ref{sbp_2nd_2}) and (\ref{sbp_2nd_1}), respectively.
 
-For the second derivative SBP operators $\wt{G}(\gamma)$ and $G(\gamma)$, both of them use a fourth order five points centered difference stencil to approximate $(\gamma u_x)_x$ at the interior points away from the boundaries. For the first and the last six grid points close to the boundaries, the operators $G(\gamma)$ and $\wt{G}(\gamma)$ use second order accurate one-sided difference stencils. They are designed to satisfy (\ref{sbp_2nd_2}) and (\ref{sbp_2nd_1}), respectively. In \cite{wang2018fourth}, a close relation between the SBP operator with ghost point and without ghost point is explored. In addtion, a method to convert one type of the SBP operator to another type is presented. 
-
-In the following section, we use a combination of two SBP operators to develop a multi-block finite difference discretization for the elastic wave equation. The first SBP operator is $\wt{G}(\gamma)$ with ghost point, and the seond SBP operator, converted from $\wt{G}(\gamma)$, does not use ghost point.
+In the following section, we use a combination of two SBP operators, $\wt{G}(\gamma)$ and $G(\gamma)$, to develop a multi-block finite difference discretization for the elastic wave equation. The first SBP operator is $\wt{G}(\gamma)$ with ghost point, and the seond SBP operator $G(\gamma)$, converted from $\wt{G}(\gamma)$, does not use ghost point.
