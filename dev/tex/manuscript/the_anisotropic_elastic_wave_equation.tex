@@ -55,11 +55,13 @@ M_{22}^c = \left(\begin{array}{ccc}
 0 & 0 & \lambda^c\\
 0 & \mu^c & 0\end{array}\right),\]
 \[ M_{31}^c = (M_{13}^c)^T, \ \ \  M_{32}^c =(M_{23}^c)^T, \ \ \ M_{21}^c =(M_{12}^c)^T.\]
-Here, $\lambda^c$ and $\mu^c$ are the first and second L{\' {a}}me parameters, respectively, and are determined by the material property. From the definitions of matrices $N_{ij}^c$ in (\ref{N_definition}), we have that $N_{ii}^c$, $i = 1,2,3$, are symmetric positive definite, and $N_{ij}^c=\big(N_{ji}^c\big)^T$, $i,j=1,2,3$. Finally, $J^c =$ \mbox{det}$\left({\bf a}^c_1,{\bf a}^c_2,{\bf a}^c_3\right)\in (0,\infty)$ is the Jacobian of transformation, with the derivative of the forward mapping, 
+Here, $\lambda^c$ and $\mu^c$ are the first and second L{\' {a}}me parameters, respectively, and are determined by the material property. 
+
+From (\ref{N_definition}) we find that, even in the isotropic case the matrices $N_{ij}^c$ are full. Hence, wave propagation in isotropic media has anisotropic property after coordinate transformation. In either isotropic or anisotropic material, the matrices $N_{ii}^c$, $i = 1,2,3$, are symmetric positive definite, and $N_{ij}^c=\big(N_{ji}^c\big)^T$, $i,j=1,2,3$. The Jacobian of the coordinate transformation is $J^c =$ \mbox{det}$\left({\bf a}^c_1,{\bf a}^c_2,{\bf a}^c_3\right)\in (0,\infty)$, and the derivative of the forward mapping is 
 \begin{equation}\label{forward_map}
 {\bf a}_k^c := \partial_k{\bf x}^c  = \left(\frac{\partial x^{c,(1)}}{\partial r^{(k)}},\frac{\partial x^{c,(2)}}{\partial r^{(k)}},\frac{\partial x^{c,(3)}}{\partial r^{(k)}}\right)^T,\ \ \ \ k = 1,2,3,
 \end{equation}
-and the backward mapping,
+and the backward mapping is
 \begin{equation}\label{backward_map}
 {\bf a}^{c,k} := \nabla_x^c r^{(k)} = \left(\frac{\partial r^{(k)}}{\partial x^{c,(1)}},\frac{\partial r^{(k)}}{\partial x^{c,(2)}},\frac{\partial r^{(k)}}{\partial x^{c,(3)}}\right)^T := \left(\xi_{1k}^c,\xi_{2k}^c,\xi_{3k}^c\right)^T,\ \ \ k = 1,2,3.
 \end{equation}
