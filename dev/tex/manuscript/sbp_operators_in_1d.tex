@@ -3,7 +3,7 @@
 Consider a uniform discretization of the domain $x\in[0,1]$ with the grids,
 \[\wt
 	{\bf x} = [x_0,x_1,\cdots,x_n,x_{n+1}]^T,\ \  x_i = (i-1)h,\ \ i = 0,1,\cdots,n,n+1,\ \ h = 1/(n-1),\]
-where $i = 1,n$ correspond to the grid points on the boundary, and $i = 0,n+1$ are ghost points outside of the physical domain. The  operator $D \approx \frac{\partial }{\partial x}$ is a first derivative SBP operator \cite{Kreiss1974,Strand1994} if 
+where $i = 1,n$ correspond to the grid points at the boundary, and $i = 0,n+1$ are ghost points outside of the physical domain. The  operator $D \approx \frac{\partial }{\partial x}$ is a first derivative SBP operator \cite{Kreiss1974,Strand1994} if 
 \begin{equation}\label{first_sbp}
 ({\bf u}, D{\bf v})_h = -(D{\bf u},{\bf v})_h - u_1v_1 + u_nv_n,
 \end{equation}

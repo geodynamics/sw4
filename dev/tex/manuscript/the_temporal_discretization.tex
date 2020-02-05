@@ -25,12 +25,12 @@ Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf
 			{\bf f}^{*,n+1} = 2{\bf f}^{n} - {\bf f}^{n-1} + \Delta_t^2(\varrho^h)^{-1}\hat{\mathcal{L}}^{h} {\bf{f}}^{n}.
 			\end{equation*}
 		}
-		\item{For the continuity of solution on the interface $\Gamma$, assign the value ${\bf f}_{\Gamma}^{*,n+1}$ to satisfy
+		\item{For the continuity of solution at the interface $\Gamma$, assign the value ${\bf f}_{\Gamma}^{*,n+1}$ to satisfy
 			\begin{equation*}
 			{\bf f}^{*,n+1}_{\Gamma} = \wt{\mathcal{P}}\big({\bf c}^{*,n+1}_{\Gamma}\big).
 			\end{equation*}
 		}
-		\item{For the continuity of traction on the interface $\Gamma$, assign the ghost points value in $\wt{\bf c}^{*,n+1}$ to satisfy
+		\item{For the continuity of traction at the interface $\Gamma$, assign the ghost points value in $\wt{\bf c}^{*,n+1}$ to satisfy
 			\begin{equation}\label{traction_gamma_pre}
 			(\bm{\Lambda}^{2h}{\mathcal J}_{\Gamma}^{2h})^{-1}(\wt{\mathcal{A}}_3^{2h}\wt{\bf c}^{*,n+1})\big|_\Gamma
 			= \wt{\mathcal{R}}\left((\bm{\Lambda}^{h}{\mathcal J}^h_{\Gamma})^{-1}((\mathcal{A}_3^h{\bf f}^{*,n+1})\big|_\Gamma-h_3\omega_1{\bm \eta}^{\ast,n+1})\right)
@@ -49,12 +49,12 @@ Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf
 			{\bf f}^{n+1} = {\bf f}^{*,n+1} + \frac{\Delta_t^4}{12}(\varrho^{h})^{-1}\hat{\mathcal{L}}^{h}{\bf{f}}^{n}.
 			\end{equation*}
 		}
-		\item{For the continuity of solution on the interface $\Gamma$, assign the value ${\bf f}^{n+1}_\Gamma$ to satisfy
+		\item{For the continuity of solution at the interface $\Gamma$, assign the value ${\bf f}^{n+1}_\Gamma$ to satisfy
 			\begin{equation*}
 			{\bf f}^{n+1}_{\Gamma} = \wt{\mathcal{P}}\big({\bf c}^{n+1}_{\Gamma}\big).
 			\end{equation*}
 		}
-		\item{For the continuity of traction on the interface $\Gamma$, assign the ghost point value in $\wt{\bf c}^{n+1}$ to satisfy
+		\item{For the continuity of traction at the interface $\Gamma$, assign the ghost point value in $\wt{\bf c}^{n+1}$ to satisfy
 			\begin{equation}\label{traction_gamma_corr}
 			(\bm{\Lambda}^{2h}{\mathcal J}_{\Gamma}^{2h})^{-1}(\wt{\mathcal{A}}_3^{2h}\wt{\bf c}^{n+1})\big|_\Gamma
 			= \wt{\mathcal{R}}\left((\bm{\Lambda}^{h}{\mathcal J}^h_{\Gamma})^{-1}((\mathcal{A}_3^h{\bf f}^{n+1})\big|_\Gamma-h_3\omega_1{\bm \eta}^{n+1})\right)
@@ -68,4 +68,4 @@ Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf
 In the Algorithm \ref{first_alg}, we need to solve the equations from the continuity of the traction force for the interface $\Gamma$ in both predictor step (\ref{traction_gamma_pre}) and corrector step (
 \ref{traction_gamma_corr}). The structure of (\ref{traction_gamma_pre}) and (\ref{traction_gamma_corr}) are the same, for simplicity, we only clarify how we solve (\ref{traction_gamma_pre}) in the predictor step.
 
-There are $3n_1^{2h}n_2^{2h}$ unknowns in (\ref{traction_gamma_pre}) and $3n_1^{2h}n_2^{2h}$ linear equations in (\ref{traction_gamma_pre}). For large problems in three dimensions, it is very memory inefficient to calculate the LU-factorization. Therefore, We use iterative methods to solve the linear system (\ref{traction_gamma_pre}). In particular, we consider three different iterative methods: block Jacobi iterative method, conjugate gradient iterative method and preconditioned conjugate gradient iterative method. The details are given in Section \ref{iterative_section}.
+There are $3n_1^{2h}n_2^{2h}$ unknowns and $3n_1^{2h}n_2^{2h}$ linear equations in (\ref{traction_gamma_pre}). For large problems in three dimensions, it is very memory inefficient to calculate the LU-factorization. Therefore, We use iterative methods to solve the linear system (\ref{traction_gamma_pre}). In particular, we consider three different iterative methods: block Jacobi iterative method, conjugate gradient (CG) iterative method and preconditioned conjugate gradient iterative method. The details are given in Section \ref{iterative_section}.

@@ -19,11 +19,12 @@ In seismic wave simulation, far-field boundary conditions are often imposed in t
 	\centering
 	\includegraphics[width=0.45\textwidth,trim={1.0cm 2.0cm 1.0cm 1.8cm}, clip]{physical_section_discretization.eps}
 	\includegraphics[width=0.45\textwidth,trim={1.0cm 2.0cm 1cm 1.8cm}, clip]{parameter_section_discretization.eps}
-	\caption{The sketch of spatial discretization of $x^{(1)}$-$x^{(3)}$ section with $x^{(2)} = 0$. From the left to the right are for physical domain and parameter space respectively. The blue dots are the ghost points for the coarse domain $\Omega^c$.}\label{section_discretization}
+	\caption{The sketch of spatial discretization of $x^{(1)}$-$x^{(3)}$ section with $x^{(2)} = 0$. From the left to the right are for physical domain and parameter space, respectively. The blue dots are the ghost points for the coarse domain $\Omega^c$.}\label{section_discretization}
 \end{figure}
+
  To condense notations, we introduce the multi-index notations
-\[{\bf i} = (i,j,k),\ \ {\bf r}_{\bf i} = (r^{(1)}_i,r^{(2)}_j,r^{(3)}_k),\ \ {\bf x}^{\{f,c\}}_{\bf i} = (x^{\{f,c\},(1)}_i,x^{\{f,c\},(2)}_j,x^{\{f,c\},(3)}_k),\ \ {\bf x}_{\bf i}^{\{f,c\}} = {\bf X}^{\{f,c\}}({\bf r}_{\bf i}).\]
-Note that for ${\bf x}^f_{\bf i}\in\Omega^f$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[1,n_3^h]$; for ${\bf x}^c_{\bf i}\in\Omega^c$, we have $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k\in[1,n_3^{2h}]$; for ${\bf x}_{\bf i}^c \in \Gamma\cap\Omega^c$, we have $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k = n_3^{2h}$; for ${\bf x}_{\bf i}^f \in \Gamma\cap\Omega^f$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k = 1$; for ${\bf x}_{\bf i}^f\in \Omega \setminus \Omega^c := \overline{\Gamma}$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[2,n_3^h]$. %We want to mention that we have abused the symbol $\bar{\Gamma}$ a little bit to only contain the grid points in $\Omega^f$ but not in $\Omega^c$.
+\[{\bf i} = (i,j,k),\ \ {\bf r}_{\bf i} = (r^{(1)}_i,r^{(2)}_j,r^{(3)}_k),\ \ {\bf x}^{\{f,c\}}_{\bf i} = (x^{\{f,c\},(1)}_i,x^{\{f,c\},(2)}_j,x^{\{f,c\},(3)}_k),\ \ {\bf x}_{\bf i}^{\{f,c\}} = {\bf X}^{\{f,c\}}({\bf r}_{\bf i}),\]
+where $\{\cdot,\cdot\}$ represents the component-wise identities. Note that for ${\bf x}^f_{\bf i}\in\Omega^f$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[1,n_3^h]$; for ${\bf x}^c_{\bf i}\in\Omega^c$, we have $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k\in[1,n_3^{2h}]$; for ${\bf x}_{\bf i}^c \in \Gamma\cap\Omega^c$, we have $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k = n_3^{2h}$; for ${\bf x}_{\bf i}^f \in \Gamma\cap\Omega^f$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k = 1$; for ${\bf x}_{\bf i}^f\in \Omega \setminus \Omega^c := \overline{\Gamma}$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[2,n_3^h]$. %We want to mention that we have abused the symbol $\bar{\Gamma}$ a little bit to only contain the grid points in $\Omega^f$ but not in $\Omega^c$.
 Now, denote the grid functions in $\Omega^f$ and $\Omega^c$ by
 \[{\bf f} = ({\bf f}^1, {\bf f}^2, {\bf f}^3)^T\ \ \ \ \mbox{and}\ \ \ \  {\bf c} = ({\bf c}^1, {\bf c}^2, {\bf c}^3)^T,\]
 respectively. Here, 
@@ -44,7 +45,7 @@ where
 ~ & {\bf J}^{2h} & ~ \\
 ~ &~  &{\bf J}^{2h}\end{array}\right)
 \end{align}
-with both ${\bm \rho}^{2h}$ and ${\bf J}^{2h}$  diagonal matrices of size  $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$. The diagonal entries of ${\bm \rho}^{2h}$ and ${\bf J}^{2h}$ are values of density function $\rho^c$ and Jacobian of transformation $J^c$ on the grids in $\Omega^c$, respectively.
+with both ${\bm \rho}^{2h}$ and ${\bf J}^{2h}$ are diagonal matrices of size  $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$. The diagonal entries of ${\bm \rho}^{2h}$ and ${\bf J}^{2h}$ are values of density function $\rho^c$ and Jacobian of transformation $J^c$ on the grids in $\Omega^c$, respectively.
 The operators $\mathcal{G}_l^{2h}({N}_{ll}^{2h})$, $l=1,2$ are defined as
 \begin{align}\label{g1122}
 \mathcal{G}^{2h}_l({N}_{ll}^{2h}) = \left(\begin{array}{ccc}
@@ -52,7 +53,7 @@ Q_l^{2h}(N_{ll}^{2h}(1,1)) & Q_l^{2h}(N_{ll}^{2h}(1,2))  & Q_l^{2h}(N_{ll}^{2h}(
 Q_l^{2h}(N_{ll}^{2h}(2,1)) & Q_l^{2h}(N_{ll}^{2h}(2,2))  & Q_l^{2h}(N_{ll}^{2h}(2,3)) \\
 Q_l^{2h}(N_{ll}^{2h}(3,1)) & Q_l^{2h}(N_{ll}^{2h}(3,2))  & Q_l^{2h}(N_{ll}^{2h}(3,3)) \end{array}\right),
 \end{align}
-where $Q_l^{2h}(N_{ll}^{2h}(i,j))$, $i,j = 1,2,3$, are $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ matrices with the central difference stencils in direction $r^{(l)}$ for second derivative with variable coefficient. Here, we also use a matlab notation $N_{ll}^{2h}(i,j)$ to represent the $i'$th row and $j'$th column of matrix $N_{ll}^{2h}$. Note that for each grid point, $N_{ll}^{2h}$ is a $3\times3$ matrix. As for $\wt{\mathcal{G}}_3^{2h}({N}_{33}^{2h})$, it has a structure
+where $Q_l^{2h}(N_{ll}^{2h}(i,j))$, $i,j = 1,2,3$, are $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ matrices with the central difference stencils in direction $r^{(l)}$ for second derivative with variable coefficient. Here, we also use a matlab notation $N_{ll}^{2h}(i,j)$ to represent the $i'$th row and $j'$th column of matrix $N_{ll}^{2h}$. Note that for each grid point, $N_{ll}^{2h}$ is a $3\times3$ matrix and its values are $N_{ll}^c$ evaluated at the grid points. As for $\wt{\mathcal{G}}_3^{2h}({N}_{33}^{2h})$, it has a structure
 \[ \wt{\mathcal{G}}^{2h}_3({N}_{33}^{2h}) = \left(\begin{array}{ccc}
 \wt{G}_3^{2h}(N_{33}^{2h}(1,1)) & \wt{G}_3^{2h}(N_{33}^{2h}(1,2))  & \wt{G}_3^{2h}(N_{33}^{2h}(1,3)) \\
 \wt{G}_3^{2h}(N_{33}^{2h}(2,1)) & \wt{G}_3^{2h}(N_{33}^{2h}(2,2))  & \wt{G}_3^{2h}(N_{33}^{2h}(2,3)) \\
@@ -70,16 +71,15 @@ where ${\bf I}$ is a $3\times3$ identity matrix, ${\bf I}_l$, $l = 1,2,3$ are $n
 \mathscr{N}_{12}^{2h,21} & \mathscr{N}_{12}^{2h,22} & \mathscr{N}_{12}^{2h,23} \\
 \mathscr{N}_{12}^{2h,31}&\mathscr{N}_{12}^{2h,32}&  \mathscr{N}_{12}^{2h,33}\\ \end{array}\right),
 \end{align}
-where $\mathscr{N}_{12}^{2h,ij}$, $i,j = 1,2,3$ are diagonal matrices of size $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ with the diagonal values to be $N_{12}^{2h}(i,j)$ evaluated at the coarse grid points. 
-
+where $\mathscr{N}_{12}^{2h,ij}$, $i,j = 1,2,3$ are diagonal matrices of size $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ with the diagonal values to be $N_{12}^{c}(i,j)$ evaluated at the coarse grid points, i.e., $N_{12}^{2h}(i,j)$. 
 
 Then, let's look at the terms with either $l = 3$ or $m = 3$, we use $\mathcal{D}_1^{2h}(\mathcal{N}_{13}^{2h}\mathcal{D}_3^{2h})$ as an example and the other cases are similar,
 \begin{equation}\label{D13}
 \mathcal{D}_1^{2h} = {\bf I}\otimes D_1^{2h} \otimes {\bf I}_2 \otimes {\bf I}_3,\ \ \ \mathcal{D}_3^{2h} ={\bf I}\otimes {\bf I}_1\otimes {\bf I}_2\otimes D_3^{2h},
 \end{equation}
-here, $\mathcal{D}_1^{2h}$ is defined in (\ref{D12}) and $D_3^{2h}$ is a matrix of size $n_3^{2h}\times n_3^{2h}$ defined in (\ref{first_sbp}) for direction $r^{(3)}$, $\mathcal{N}_{13}^{2h}$ has a similar definition as $\mathcal{N}_{12}^{2h}$ in (\ref{N12}).
+where $\mathcal{D}_1^{2h}$ is defined in (\ref{D12}) and $D_3^{2h}$ is a matrix of size $n_3^{2h}\times n_3^{2h}$ defined in (\ref{first_sbp}) for direction $r^{(3)}$, $\mathcal{N}_{13}^{2h}$ has a similar definition as $\mathcal{N}_{12}^{2h}$ in (\ref{N12}).
 
-Next, we approximate the elastic wave equation for the fine grids (\ref{elastic_curvi_f}). We first consider all grid points not on the interface, and have the semi-discretization
+Next, we approximate the elastic wave equation (\ref{elastic_curvi_f}) for the fine grids. We first consider all fine grid points not at the interface, and have the semi-discretization
 \begin{equation}\label{elastic_semi_f}
 \varrho^h_{\overline{\Gamma}} ({\bf f}_{\overline{\Gamma}})_{tt} =
 ( \mathcal{ J}_{\overline{\Gamma}}^{h})^{-1}\left(\sum_{l=1}^3\Big(\big(\mathcal{G}_l^{h}({N}_{ll}^h){\bf f}\big)\Big|_{\overline{\Gamma}}+\sum_{m=1,m\neq l}^3\big(\mathcal{D}_l^{h}(\mathcal{N}_{lm}^{h}\mathcal{D}_m^{h}{\bf f})\big)\Big|_{\overline{\Gamma}}\Big)\right) := \mathcal{L}^h{\bf f}\Big|_{\overline{\Gamma}},
@@ -91,7 +91,6 @@ G_3^{h}(N_{33}^{h}(2,1)) & G_3^{h}(N_{33}^{h}(2,2))  & G_3^{h}(N_{33}^{h}(2,3)) 
 G_3^{h}(N_{33}^{h}(3,1)) & G_3^{h}(N_{33}^{h}(3,2))  & G_3^{h}(N_{33}^{h}(3,3)) \end{array}\right),\]
 where ${G}_3^{h}(N_{33}^{h}(i,j))$, $i,j = 1,2,3$, are $n_1^{h}n_2^{h}n_3^{h}\times n_1^{h}n_2^{h}n_3^{h}$ matrices which are defined as in (\ref{sbp_2nd_2}) for direction $r^{(3)}$. The symbol $(\cdot)\big|_{\bar{\Gamma}}$ in (\ref{elastic_semi_f}) corresponds to the data in $\bar{\Gamma}$.
 
-
 For the approximation on the interface $\Gamma$, we obtain the numerical solution by injection using a scaled interpolation operator
 \begin{equation}\label{continuous_sol}
 {\bf f}_{\Gamma} = \wt{\mathcal{P}}({\bf c}_{\Gamma}),
@@ -100,7 +99,7 @@ which imposes the continuity of the solution at the interface $\Gamma$.
 
 For energy stability, the operator $ \wt{\mathcal{P}}$ must be in a specific form 
 \[\wt{\mathcal{P}} = (\mathcal{J}^h_\Gamma \bm{\Lambda}^h)^{-\frac{1}{2}}\mathcal{P}(\mathcal{J}^{2h}_\Gamma \bm{\Lambda}^{2h})^{\frac{1}{2}}.\]
-Here, both  $\mathcal{P}$ and $\bm{\Lambda}^{2h}$ are $3n_1^{2h}n_2^{2h}n_3^{2h}\times 3n_1^{2h}n_2^{2h}n_3^{2h}$ matrices. The size of $\bm{\Lambda}^{h}$ is $3n_1^{h}n_2^{h}n_3^{h}\times 3n_1^{h}n_2^{h}n_3^{h}$. They have the following structures
+Here, both  $\mathcal{P}$ and $\bm{\Lambda}^{2h}$ are $3n_1^{2h}n_2^{2h}n_3^{2h}\times 3n_1^{2h}n_2^{2h}n_3^{2h}$ matrices and the size of $\bm{\Lambda}^{h}$ is $3n_1^{h}n_2^{h}n_3^{h}\times 3n_1^{h}n_2^{h}n_3^{h}$. They have the following structures
 \begin{align}\label{iandr}
 \mathcal{P} = \left(\begin{array}{ccc}
 {\bf P}& ~  & ~ \\
@@ -112,10 +111,10 @@ Here, both  $\mathcal{P}$ and $\bm{\Lambda}^{2h}$ are $3n_1^{2h}n_2^{2h}n_3^{2h}
 ~ &~  &\Lambda^h\end{array}\right), \ \ \ \bm{\Lambda}^{2h} = \left(\begin{array}{ccc}
 \Lambda^{2h}& ~  & ~ \\
 ~ & \Lambda^{2h} & ~ \\
-~ &~  &\Lambda^{2h}\end{array}\right),
+~ &~  &\Lambda^{2h}\end{array}\right).
 \end{align}
-where $\bf P$ is a $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ matrix. Since the mesh refinement ratio is $1:2$, the stencils of the fourth order accurate interpolation operator ${\bf P}$ in two dimensions have four cases, see the illustration in  Figure \ref{interpolation}. 
-The matrix $\Lambda^{h}$ is a $n_1^{h}n_2^{h}n_3^{h}\times n_1^{h}n_2^{h}n_3^{h}$ diagonal matrix and its diagonal values are $|\nabla_x^f r^{(3)}|$ evaluated at the fine grid points on interface $\Gamma$. Similarly, $\Lambda^{2h}$ is a $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ diagonal matrix with diagonal values  $|\nabla_x^c r^{(3)}|$ evaluated at the coarse grid points on interface $\Gamma$.
+The matrix $\bf P$ is of size $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$. Since the mesh refinement ratio is $1:2$, the stencils of the fourth order accurate interpolation operator ${\bf P}$ in two dimensions have four cases, see the illustration in  Figure \ref{interpolation}. 
+The matrix $\Lambda^{h}$ is a $n_1^{h}n_2^{h}n_3^{h}\times n_1^{h}n_2^{h}n_3^{h}$ diagonal matrix and its diagonal values are $|\nabla_x^f r^{(3)}|$ evaluated at the fine grid points at interface $\Gamma$. Similarly, $\Lambda^{2h}$ is a $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ diagonal matrix with diagonal values  $|\nabla_x^c r^{(3)}|$ evaluated at the coarse grid points at interface $\Gamma$.
 
 We note that \eqref{continuous_sol} is equivalent to the more complicated form
 \begin{equation}\label{elastic_semi_f_i}
@@ -126,7 +125,7 @@ with
 \begin{equation}\label{eta}
 {\bm \eta} = {\varrho}^h_{\Gamma}\wt{\mathcal{P}}\left(\big(({ \varrho}^{2h})^{-1}\wt{\mathcal{L}}^{2h} \wt{{\bf c}}\big)\Big|_{\Gamma}\right) - \mathcal{L}^{h}{\bf f}\Big|_{\Gamma}.
 \end{equation}
-Here, ${\varrho}^{h}_{\Gamma}$ and ${\mathcal{ J}}^{h}_{\Gamma}$ are $3n_1^hn_2^h\times 3n_1^hn_2^h$ diagonal matrices with similar definitions as in (\ref{rho_j}) with fine grids on $\Gamma$. The size of the column vector $\big(({\varrho}^{2h})^{-1}\wt{L}^{2h} \wt{{\bf c}}\big)\big|_{\Gamma}$ is $3n_1^{2h} n_2^{2h}$. 
+Here, ${\varrho}^{h}_{\Gamma}$ and ${\mathcal{ J}}^{h}_{\Gamma}$ are $3n_1^hn_2^h\times 3n_1^hn_2^h$ diagonal matrices with similar definitions as in (\ref{rho_j}) with fine grids at $\Gamma$. The size of the column vector $\big(({\varrho}^{2h})^{-1}\wt{L}^{2h} \wt{{\bf c}}\big)\big|_{\Gamma}$ is $3n_1^{2h} n_2^{2h}$. 
 
  We note that $\bm \eta$ is approximately zero with a second order truncation error, which is of the same order as the boundary stencil of the SBP operator. Therefore, it does not affect the overall accuracy of the semi-discretization. 
 
