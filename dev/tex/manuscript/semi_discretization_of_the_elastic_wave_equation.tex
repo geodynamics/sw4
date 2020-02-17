@@ -21,10 +21,9 @@ In seismic wave simulation, far-field boundary conditions are often imposed in t
 	\includegraphics[width=0.45\textwidth,trim={1.0cm 2.0cm 1cm 1.8cm}, clip]{parameter_section_discretization.eps}
 	\caption{The sketch of spatial discretization of $x^{(1)}$-$x^{(3)}$ section with $x^{(2)} = 0$. From the left to the right are for physical domain and parameter space, respectively. The blue dots are the ghost points for the coarse domain $\Omega^c$.}\label{section_discretization}
 \end{figure}
-
  To condense notations, we introduce the multi-index notations
-\[{\bf i} = (i,j,k),\ \ {\bf r}_{\bf i} = (r^{(1)}_i,r^{(2)}_j,r^{(3)}_k),\ \ {\bf x}^{\{f,c\}}_{\bf i} = (x^{\{f,c\},(1)}_i,x^{\{f,c\},(2)}_j,x^{\{f,c\},(3)}_k),\ \ {\bf x}_{\bf i}^{\{f,c\}} = {\bf X}^{\{f,c\}}({\bf r}_{\bf i}),\]
-where $\{\cdot,\cdot\}$ represents the component-wise identities. Note that for ${\bf x}^f_{\bf i}\in\Omega^f$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[1,n_3^h]$; for ${\bf x}^c_{\bf i}\in\Omega^c$, we have $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k\in[1,n_3^{2h}]$; for ${\bf x}_{\bf i}^c \in \Gamma\cap\Omega^c$, we have $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k = n_3^{2h}$; for ${\bf x}_{\bf i}^f \in \Gamma\cap\Omega^f$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k = 1$; for ${\bf x}_{\bf i}^f\in \Omega \setminus \Omega^c := \overline{\Gamma}$, we have $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[2,n_3^h]$. %We want to mention that we have abused the symbol $\bar{\Gamma}$ a little bit to only contain the grid points in $\Omega^f$ but not in $\Omega^c$.
+\[{\bf i} = (i,j,k),\ \ {\bf r}_{\bf i} = (r^{(1)}_i,r^{(2)}_j,r^{(3)}_k),\ \ {\bf x}_{\bf i} = (x^{(1)}_i,x^{(2)}_j,x^{(3)}_k).\]
+ Note that for ${\bf x}_{\bf i}\in\Omega^f$, we have ${\bf x}_{\bf i} = {\bf X}^f({\bf r}_{\bf i})$, $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[1,n_3^h]$; for ${\bf x}_{\bf i}\in\Omega^c$, we have ${\bf x}_{\bf i} = {\bf X}^c({\bf r}_{\bf i})$, $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k\in[1,n_3^{2h}]$; for ${\bf x}_{\bf i} \in \Gamma\cap\Omega^c$, we have ${\bf x}_{\bf i} = {\bf X}^c({\bf r}_{\bf i})$, $i\in[1,n_1^{2h}]$, $j\in[1,n_2^{2h}]$, $k = n_3^{2h}$; for ${\bf x}_{\bf i} \in \Gamma\cap\Omega^f$, we have ${\bf x}_{\bf i} = {\bf X}^f({\bf r}_{\bf i})$, $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k = 1$; for ${\bf x}_{\bf i}\in \Omega \setminus \Omega^c := \overline{\Gamma}$, we have ${\bf x}_{\bf i} = {\bf X}^f({\bf r}_{\bf i})$, $i\in[1,n_1^h]$, $j\in[1,n_2^h]$, $k\in[2,n_3^h]$. %We want to mention that we have abused the symbol $\bar{\Gamma}$ a little bit to only contain the grid points in $\Omega^f$ but not in $\Omega^c$.
 Now, denote the grid functions in $\Omega^f$ and $\Omega^c$ by
 \[{\bf f} = ({\bf f}^1, {\bf f}^2, {\bf f}^3)^T\ \ \ \ \mbox{and}\ \ \ \  {\bf c} = ({\bf c}^1, {\bf c}^2, {\bf c}^3)^T,\]
 respectively. Here, 
@@ -114,7 +113,7 @@ Here, both  $\mathcal{P}$ and $\bm{\Lambda}^{2h}$ are $3n_1^{2h}n_2^{2h}n_3^{2h}
 ~ &~  &\Lambda^{2h}\end{array}\right).
 \end{align*}
 The matrix $\bf P$ is of size $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$. Since the mesh refinement ratio is $1:2$, the stencils of the fourth order accurate interpolation operator ${\bf P}$ in two dimensions have four cases, see the illustration in  Figure \ref{interpolation}. 
-The matrix $\Lambda^{h}$ is a $n_1^{h}n_2^{h}n_3^{h}\times n_1^{h}n_2^{h}n_3^{h}$ diagonal matrix and its diagonal values are $|\nabla_x^f r^{(3)}|$ evaluated at the fine grid points at interface $\Gamma$. Similarly, $\Lambda^{2h}$ is a $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ diagonal matrix with diagonal values  $|\nabla_x^c r^{(3)}|$ evaluated at the coarse grid points at interface $\Gamma$.
+The matrix $\Lambda^{h}$ is a $n_1^{h}n_2^{h}n_3^{h}\times n_1^{h}n_2^{h}n_3^{h}$ diagonal matrix and its diagonal values are $|\nabla_x R^{f,(3)}|$ evaluated at the fine grid points at interface $\Gamma$. Similarly, $\Lambda^{2h}$ is a $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ diagonal matrix with diagonal values  $|\nabla_x R^{c,(3)}|$ evaluated at the coarse grid points at interface $\Gamma$.
 
 We note that \eqref{continuous_sol} is equivalent to the more complicated form
 \begin{equation}\label{elastic_semi_f_i}
