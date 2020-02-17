@@ -6,15 +6,15 @@ We consider the time dependent anisotropic elastic wave equation in a three dime
 \end{equation}
 Let the inverse of the mappings in (\ref{mapping}) be ${\bf r} = {\bf R}^f({\bf x})$ with components ${\bf R}^f({\bf x}) = (R^{f,(1)}, R^{f,(2)}, R^{f,(3)})^T$ and ${\bf r} = {\bf R}^c({\bf x})$ with components ${\bf R}^c({\bf x}) = (R^{c,(1)}, R^{c,(2)}, R^{c,(3)})^T$, respectively.
  
-We futher assume that the interface $\Gamma$ corresponds to $r^{(3)} = 1$ for the coarse domain and $r^{(3)} = 0$ for the fine domain. Then the elastic wave equation in the coarse domain $\Omega^c$ in terms of the displacement vector ${\bf C} = {\bf C}({\bf r}, t)$ can be written in curvilinear coordinates as (see \cite{petersson2015wave})
+We further assume that the interface $\Gamma$ corresponds to $r^{(3)} = 1$ for the coarse domain and $r^{(3)} = 0$ for the fine domain. Then the elastic wave equation in the coarse domain $\Omega^c$ in terms of the displacement vector ${\bf C} = {\bf C}({\bf r}, t)$ can be written in curvilinear coordinates as (see \cite{petersson2015wave})
 \begin{align}\label{elastic_curvi}
 	\rho^c\frac{\partial^2{\bf C}}{\partial^2 t} = \frac{1}{J^c}\left[\wt{\partial}_1(A_1^c\nabla_r{\bf C}) + \wt{\partial}_2(A_2^c\nabla_r{\bf C}) +\wt{\partial}_3(A_3^c\nabla_r{\bf C}) \right],\ \ \  {\bf r}\in[0,1]^3,\ \ \  t\geq0,
 \end{align}
-where $\rho^c$ is the density function in coarse domain $\Omega^c$ and we define
+where $\rho^c$ is the density function in the coarse domain $\Omega^c$ and we define
 \begin{align*} 
 A_k^c\nabla_r{\bf C} = \sum_{j = 1}^3 N_{kj}\wt{\partial}_j {\bf C}, \ \ \ k = 1,2,3,
 \end{align*}
-with $\wt{\partial}_i = \frac{\partial}{\partial r^{(i)}}$, $\nabla_r = (\wt{\partial}_1,\wt{\partial}_2,\wt{\partial}_3)$ and
+with $\wt{\partial}_i = \frac{\partial}{\partial r^{(i)}}$ and
 \begin{equation}\label{N_definition}
 	N_{ij}^c = J^cO_i^TM_{ij}^cO_j, \ \ i,j = 1,2,3,
 \end{equation}
@@ -56,27 +56,15 @@ M_{22}^c = \left(\begin{array}{ccc}
 \[ M_{31}^c = (M_{13}^c)^T, \ \ \  M_{32}^c =(M_{23}^c)^T, \ \ \ M_{21}^c =(M_{12}^c)^T.\]
 Here, $\lambda^c$ and $\mu^c$ are the first and second Lam{\'{e}} parameters, respectively. 
 
-From (\ref{N_definition}) we find that, even in the isotropic case the matrices $N_{ij}^c$ are full. Hence, wave propagation in isotropic media has anisotropic properties in curvilinear coordinates. In both isotropic and anisotropic material, the matrices $N_{ii}^c$, $i = 1,2,3$, are symmetric positive definite and $N_{ij}^c=\big(N_{ji}^c\big)^T$, $i,j=1,2,3$. 
+From (\ref{N_definition}) we find that even in the isotropic case the matrices $N_{ij}^c$ are full. Hence, wave propagation in isotropic media has anisotropic properties in curvilinear coordinates. In both isotropic and anisotropic material, the matrices $N_{ii}^c$, $i = 1,2,3$, are symmetric positive definite and $N_{ij}^c=\big(N_{ji}^c\big)^T$, $i,j=1,2,3$. 
 
 Last, $J^c$ is the Jacobian of the coordinate transformation with
-\[J^c = \mbox{det} \left({\bf a}^c_1,{\bf a}^c_2,{\bf a}^c_3\right)\in (0,\infty),\] 
-where the covariant basis vectors are
-\begin{equation}\label{forward_map}
-{\bf a}_k^c := \wt{\partial}_k{\bf X}^c, \ \ \ k = 1,2,3,
-\end{equation}
-and the contravariant basis vectors are
-\begin{equation}\label{backward_map}
-{\bf a}^{c,k} := \nabla_x R^{c,(k)},\ \ \ k = 1,2,3,
-\end{equation}
- where $\nabla_x = (\partial_1, \partial_2, \partial_3)$ and $\partial_i = \frac{\partial}{\partial x^{(i)}}, i = 1,2,3$. The metric relation between (\ref{forward_map}) and (\ref{backward_map}) is given by \cite{thompson1985numerical},
-\begin{equation*}
-{\bf a}^{c,i} = \frac{1}{J^c}\left({\bf a}_j^c\times{\bf a}_k^c\right), \ \ \ (i,j,k) \ \mbox{cyclic}.
-\end{equation*}
-Denote the unit outward normal ${\bf n}_i^{c,\pm} = (n_i^{c,\pm,1},n_i^{c,\pm,2},n_i^{c,\pm,3})$, $i = 1,2,3$, for the boundaries of subdomain $\Omega^c$, then
+\[J^c = \mbox{det} \left(\wt{\partial}_1 {\bf X}^c, \wt{\partial}_2 {\bf X}^c, \wt{\partial}_3 {\bf X}^c\right)\in (0,\infty).\] 
+Denote the unit outward normal ${\bf n}_i^{c,\pm} = (n_i^{c,\pm,1},n_i^{c,\pm,2},n_i^{c,\pm,3})$, $i = 1,2,3$, for the boundaries of the subdomain $\Omega^c$, then
 \begin{align}\label{outward_normal}
 {\bf n}_i^{c,\pm}  = \pm \frac{\nabla_x R^{c,(i)}}{|\nabla_x R^{c,(i)}|}.
 \end{align}
-Here, $'+'$ corresponds to $r^{(i)} = 1$ and $'-'$ corresponds to $r^{(i)} = 0$. The elastic wave equation in curvilinear coordinates for the fine domain in terms of displacement vector ${\bf F} = {\bf F}({\bf r}, t)$ is defined in a same way as in the  coarse domain. We have 
+Here, $\nabla_x = (\partial_1, \partial_2, \partial_3)$, $\partial_i = \frac{\partial}{\partial x^{(i)}}, i = 1,2,3$, $'+'$ corresponds to $r^{(i)} = 1$ and $'-'$ corresponds to $r^{(i)} = 0$. The elastic wave equation in curvilinear coordinates for the fine domain in terms of the displacement vector ${\bf F} = {\bf F}({\bf r}, t)$ is defined in the same way as in the coarse domain. We have 
 \begin{align}\label{elastic_curvi_f}
 	\rho^f\frac{\partial^2{\bf F}}{\partial^2 t} &= \frac{1}{J^f}\left[\wt{\partial}_1(A_1^f\nabla_r{\bf F}) + \wt{\partial}_2(A_2^f\nabla_r{\bf F}) + \wt{\partial}_3(A_3^f\nabla_r{\bf F}) \right], \ \ \  {\bf r}\in [0,1]^3,\ \ \  t\geq0.
 \end{align}
