@@ -26,11 +26,11 @@ as the fourth order accurate approximation of $u_x(x_n)$. We note that the notat
  ({\bf u}, G(\gamma){\bf v})_h = -S_\gamma({\bf u},{\bf v})-u_1\gamma_1{\bf b}_1{\bf v} + u_n\gamma_n{\bf b}_n{\bf v},
  \end{equation}
  where $S_\gamma({\bf u},{\bf v})$ is symmetric positive semi-definite. 
- Here, ${\bf b}_1$ and ${\bf b}_n$ are also finite difference operators for the first derivative at the boundaries, and are constructed to fourth order accuracy,
+ Here, ${\bf b}_1$ and ${\bf b}_n$ are also finite difference operators for the first derivative at the boundaries, and are constructed to fourth order accuracy. For example,
  \begin{equation}\label{sbp_1st_2}
- {\bf b}_1 {\bf v} = \frac{1}{h}\sum_{i=1}^{5} d_i v_i,
+ {\bf b}_1 {\bf v} = \frac{1}{h}\sum_{i=1}^{5} d_i v_i
  \end{equation}
- which is used to approximate $u_x(x_1)$. In this case, ${G}(\gamma)$ is square in matrix form.% We refer \cite{mattsson2004summation} for another SBP operator which is used to approximate $(\gamma(x)u_x)_x $ without using any ghost points.
+  is used to approximate $u_x(x_1)$. In this case, ${G}(\gamma)$ is square in matrix form.% We refer \cite{mattsson2004summation} for another SBP operator which is used to approximate $(\gamma(x)u_x)_x $ without using any ghost points.
  
 For the second derivative SBP operators $\wt{G}(\gamma)$ in (\ref{sbp_2nd_1}) and $G(\gamma)$ in (\ref{sbp_2nd_2}), both of them use a fourth order five points centered difference stencil to approximate $(\gamma u_x)_x$ at the interior points away from the boundaries. For the first and the last six grid points close to the boundaries, the operators $G(\gamma)$ and $\wt{G}(\gamma)$ use second order accurate one-sided difference stencils. They are designed to satisfy (\ref{sbp_2nd_2}) and (\ref{sbp_2nd_1}), respectively.
 
