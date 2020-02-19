@@ -218,7 +218,7 @@ main(int argc, char **argv)
 
           MPI_Reduce(&myWriteTime, &allWriteTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
           if( myRank == 0 )
-            cout << "Max time-series data write time across all ranks: " << allWriteTime << endl;
+            cout << "  ==> Max wallclock time to write time-series data is " << allWriteTime << " seconds." << endl;
         }
 #endif
       }
