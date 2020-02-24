@@ -155,7 +155,7 @@ void  write_hdf5_format( int npts, hid_t loc, float *y, float btime, float dt, c
 double getWriteTime() {return m_writeTime;};
 #endif
 double getReadTime() {return m_readTime;};
-double addReadTime(double t) {m_readTime += t;};
+void addReadTime(double t) {m_readTime += t;};
 
 private:   
 TimeSeries();
