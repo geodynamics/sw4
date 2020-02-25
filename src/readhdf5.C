@@ -334,7 +334,7 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
       nreader = 1;
 
   int read_color = world_rank % (world_size / nreader) == 0 ? 0 : 1;
-  int node_color = world_rank / nreader;
+  int node_color = world_rank / (world_size / nreader);
   int read_rank, read_size;
   MPI_Comm read_comm, node_comm;
   MPI_Comm_split(MPI_COMM_WORLD, read_color, world_rank, &read_comm);
