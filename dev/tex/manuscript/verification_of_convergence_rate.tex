@@ -1,7 +1,7 @@
 %!TEX root = SISC_elastic_3d.tex
 \subsection{Verification of convergence rate}\label{convergence_study}
 We use the method of the manufactured solution to verify the theoretical convergence order of the proposed scheme. Specifically, we take the computation domain to be 
-\begin{equation}\label{coarse_domain_manufactured}
+\begin{equation*}\label{coarse_domain_manufactured}
 \left\{
 \begin{aligned}
 & x^{c,(1)} = 2\pi r^{(1)}\\
@@ -9,18 +9,18 @@ We use the method of the manufactured solution to verify the theoretical converg
 & x^{c,(3)} = r^{(3)}\theta_i\big(r^{(1)},r^{(2)}\big) + (1-r^{(3)})\theta_b\big(r^{(1)},r^{(2)}\big)
 \end{aligned}
 \right.
-\end{equation}
+\end{equation*}
 for coarse domain $\Omega^c$. Here, $0\leq r^{(1)}, r^{(2)}, r^{(3)}\leq 1$, $\theta_i$ is the interface surface geometry,
 \begin{equation}\label{iterface_geometry}
 \theta_i\big(r^{(1)},r^{(2)}\big) = \pi+0.2\sin(4\pi r^{(1)})+0.2\cos(4\pi r^{(2)}),
 \end{equation}
 and 
 $\theta_b$ is the bottom surface geometry,
-\begin{equation}\label{bottom_geometry}
+\begin{equation*}\label{bottom_geometry}
 \theta_b\big(r^{(1)},r^{(2)}\big) = 0.2\exp\left(-\frac{(r^{(1)}-0.6)^2}{0.04}\right)+0.2\exp\left(-\frac{(r^{(2)}-0.6)^2}{0.04}\right).
-\end{equation}
-As for the fine domian $\Omega^f$, it is chosen to be
-\begin{equation}\label{fine_domain_manufactured}
+\end{equation*}
+As for the fine domain $\Omega^f$, it is chosen to be
+\begin{equation*}\label{fine_domain_manufactured}
 \left\{
 \begin{aligned}
 & x^{f,(1)} = 2\pi r^{(1)}\\
@@ -28,44 +28,42 @@ As for the fine domian $\Omega^f$, it is chosen to be
 & x^{f,(3)} = r^{(3)}\theta_t\big(r^{(1)},r^{(2)}\big) + (1-r^{(3)})\theta_i\big(r^{(1)},r^{(2)}\big),
 \end{aligned}
 \right.
-\end{equation}
+\end{equation*}
 where $0\leq r^{(1)}, r^{(2)}, r^{(3)}\leq 1$, $\theta_t$ is the top surface geometry,
-\begin{equation}\label{top_geometry}
+\begin{equation*}\label{top_geometry}
 \theta_t\big(r^{(1)},r^{(2)}\big) = 2\pi+0.2\exp\left(-\frac{(r^{(1)}-0.5)^2}{0.04}\right)+0.2\exp\left(-\frac{(r^{(2)}-0.5)^2}{0.04}\right),
-\end{equation}
-and $\theta_i$ is the interface geometry which is given in (\ref{iterface_geometry}). For both fine and coarse domians, let the density vary according to
-\begin{equation}\label{density_function}
+\end{equation*}
+and $\theta_i$ is the interface geometry which is given in (\ref{iterface_geometry}). For both fine and coarse domains, let the density vary according to
+\begin{equation*}\label{density_function}
 \rho(x^{(1)},x^{(2)},x^{(3)}) = 2 + \sin(x^{(1)}+0.3)\sin(x^{(2)}+0.3)\sin(x^{(3)}-0.2),
-\end{equation}
+\end{equation*}
 and material parameters $\mu, \lambda$ satisfy
-\begin{equation}\label{mu_function}
+\begin{equation*}\label{mu_function}
 \mu(x^{(1)},x^{(2)},x^{(3)}) = 3 + \sin(3x^{(1)}+0.1)\sin(3x^{(2)}+0.1)\sin(x^{(3)}),
-\end{equation}
+\end{equation*}
 and 
-\begin{equation}\label{lambda_function}
+\begin{equation*}\label{lambda_function}
 \lambda(x^{(1)},x^{(2)},x^{(3)})  = 21+ \cos(x^{(1)}+0.1)\cos(x^{(2)}+0.1)\sin^2(3x^{(3)}),
-\end{equation}
-respectively. Besides, we impose a boundary forcing on the top surface and Dirichlet boundary conditions for the other boundaries. The external forcing, top boundary forcing ${\bf g}$ and initial conditions are chosen such that ${\bf u}(\cdot,t) = (u_1(\cdot,t),u_2(\cdot,t),u_3(\cdot,t))^T$ with
+\end{equation*}
+respectively. In addition, we impose a boundary forcing on the top surface and Dirichlet boundary conditions for the other boundaries. The external forcing, top boundary forcing ${\bf g}$ and initial conditions are chosen such that ${\bf u}(\cdot,t) = (u_1(\cdot,t),u_2(\cdot,t),u_3(\cdot,t))^T$ with
 \begin{align*}
 u_1(\cdot,t) &= \cos(x^{(1)}+0.3)\sin(x^{(2)}+0.3)\sin(x^{(3)}+0.2)\cos(t^2),\\
 u_2(\cdot,t) &= \sin(x^{(1)}+0.3)\cos(x^{(2)}+0.3)\sin(x^{(3)}+0.2)\cos(t^2),\\
 u_3(\cdot,t) &= \sin(x^{(1)}+0.2)\sin(x^{(2)}+0.2)\cos(x^{(3)}+0.2)\sin(t).
 \end{align*}
 For example, for the boundary forcing on the top surface, we impose 
-\begin{equation}\label{traction_force}
+\begin{equation*}\label{traction_force}
 {\bf g} = (g_1,g_2,g_3)^T = \sum_{i=1}^3\left(\sum_{j = 1}^3 M_{ij}^f\frac{\partial{\bf u}}{\partial x^{(j)}}\right) n^{f,+,i}_3,
-\end{equation}
-where, $M_{ij}^f$ and $n^{f,+,i}_3 $ can be found in (\ref{M_definition}) and (\ref{outward_normal}) respectively.
+\end{equation*}
+where, $M_{ij}^f$ and $n^{f,+,i}_3 $ can be found in (\ref{M_definition}) and (\ref{outward_normal}), respectively.
 
-The convergence rate is computed by
-\[log\left(\frac{e_h}{e_{2h}}\right)\Bigg/log\left(\frac{1}{2}\right),\]
-here, $e_h$ is the corresponding $L^2$ error.  The problem is evolved until final time $T = 0.5$. The $L^2$ error for the numerical solutions in the whole domain, $L^{f,2}$ error for the numerical solutions in the fine domain $\Omega^f$ and$L^{c,2}$ error for the numerical solutions in the coarse domain $\Omega^c$ are presented in Table \ref{convergence_rate}, note that the convergence rates are shown in the bracket of the Table \ref{convergence_rate}. We observe that the convergence rate is fourth order for all cases, though the theoretical convergence rate is second for the points near boundaries. We want to mention that a block Jacobian iterative method is used for the experiments here, and we are going to give more details about the iterative methods in the Section \ref{iterative_section}.
+The problem is evolved until final time $T = 0.5$. In Table \ref{convergence_rate}, we use $L_2$ to represent the $L^2$ error for the numerical solutions in the whole domain $\Omega$; $L_2^f$ to be the $L^2$ error for the numerical solutions in the fine domain $\Omega^f$; $L_2^c$ to represent the $L^2$ error for the numerical solutions in the coarse domain $\Omega^c$. In addition, the convergence rates are shown in the bracket of the Table \ref{convergence_rate}. We observe that the convergence rate is fourth order for all cases. Even though the boundary accuracy of the SBP operator is only second order, the optimal convergence rate is fourth order. For a more detailed analysis of the convergence rate, we refer to \cite{Wang2017, Wang2018b}.  To solve the linear system for ghost point values, we use a block Jacobi iterative method. In the following section, we study two more iterative methods and compare them in terms of condition number and number of iterations.
 
 \begin{table}[htb]
 	\begin{center}
 		\begin{tabular}{|c|c c c|}
 			\hline
-			$2h_1 = 2h_2 = 2h_3 = 2h$   & $L^2$ & $L^{f,2}$ & $L^{c,2}$  \\
+			$2h_1 = 2h_2 = 2h_3 = 2h$   & $L_2$ & $L_2^f$ & $L_2^c$  \\
 			\hline
 			$2\pi/24$ &2.2227e-03 ~~~~~~~~ & 8.0442e-04 ~~~~~~~~ & 2.0720e-03 ~~~~~~~~\\
 			\hline
@@ -75,5 +73,5 @@ here, $e_h$ is the corresponding $L^2$ error.  The problem is evolved until fina
 			\hline
 		\end{tabular}
 	\end{center}
-	\caption{Convergence rate of the fourth order SBP method}\label{convergence_rate}
+	\caption{The $L^2$ error and corresponding convergence rates of the fourth order SBP method }\label{convergence_rate}
 \end{table} 
