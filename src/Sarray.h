@@ -150,6 +150,8 @@ public:
    void assign( const float* ar );
    void assign( const double* ar );
    void transposeik();
+   void transposeij();
+   void swap12();
    void copy_to_device( EWCuda* cu, bool async=false, int st=0 );
    void copy_from_device( EWCuda* cu, bool async=false, int st=0 );
    void allocate_on_device( EWCuda* cu );

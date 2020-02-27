@@ -123,14 +123,14 @@ void EW::freesurfcurvisg_ci( int ib, int ie, int jb, int je, int kb, int ke,
 				yoxsqrt*met(3,i,j,k)*rhs2 + isqrtxy*met(4,i,j,k)*rhs3);
 
             u(1,i,j,k-kl) = -s0i*(  s[1]*u(1,i,j,k)+s[2]*u(1,i,j,k+kl)+
-                s[3]*u(1,i,j,k+2*kl)+s[4]*u(1,i,j,k+3*kl) + bc*rhs1 - 
-				    dc*met(2,i,j,k)*xoysqrt );
+                s[3]*u(1,i,j,k+2*kl)+s[4]*u(1,i,j,k+3*kl) + kl*bc*rhs1 - 
+				    kl*dc*met(2,i,j,k)*xoysqrt );
             u(2,i,j,k-kl) = -s0i*(  s[1]*u(2,i,j,k)+s[2]*u(2,i,j,k+kl)+
-                s[3]*u(2,i,j,k+2*kl)+s[4]*u(2,i,j,k+3*kl) + bc*rhs2 - 
-				    dc*met(3,i,j,k)*yoxsqrt );
+                s[3]*u(2,i,j,k+2*kl)+s[4]*u(2,i,j,k+3*kl) + kl*bc*rhs2 - 
+				    kl*dc*met(3,i,j,k)*yoxsqrt );
             u(3,i,j,k-kl) = -s0i*(  s[1]*u(3,i,j,k)+s[2]*u(3,i,j,k+kl)+
-                s[3]*u(3,i,j,k+2*kl)+s[4]*u(3,i,j,k+3*kl) + bc*rhs3 - 
-				    dc*met(4,i,j,k)*isqrtxy );
+                s[3]*u(3,i,j,k+2*kl)+s[4]*u(3,i,j,k+3*kl) + kl*bc*rhs3 - 
+				    kl*dc*met(4,i,j,k)*isqrtxy );
       }
    }
 #undef mu

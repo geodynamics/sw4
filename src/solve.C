@@ -377,6 +377,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   else
      enforceBC( U, a_Mu, a_Lambda, t, BCForcing );   
 
+  //   for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
+  //      m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( Up, t );
+
+
 // Impose un-coupled free surface boundary condition with visco-elastic terms for 'Up'
   if( m_use_attenuation && (m_number_mechanisms > 0) )
   {
@@ -398,6 +402,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
      enforceBCanisotropic( Um, mC, t-mDt, BCForcing );
   else
      enforceBC( Um, a_Mu, a_Lambda, t-mDt, BCForcing );
+
+  //   for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
+  //      m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( Um, t-mDt );
+
 // Impose un-coupled free surface boundary condition with visco-elastic terms for 'Up'
   if( m_use_attenuation && (m_number_mechanisms > 0) )
   {
@@ -711,6 +719,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 
 
        evalDpDmInTime( Up, U, Um, Uacc ); // store result in Uacc
+
        if( trace && m_myRank == dbgproc )
           cout <<" after evalDpDmInTime" << endl;
        if( save_sides )
@@ -1126,14 +1135,14 @@ void EW::cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector
 void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 		    float_sw4 t, vector<float_sw4 **> & a_BCForcing )
 {
-  int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
+  int ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
   float_sw4 *u_ptr, *mu_ptr, *la_ptr, h;
   boundaryConditionType *bcType_ptr;
   float_sw4 *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr, *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
   int *wind_ptr;
   float_sw4 om=0, ph=0, cv=0;
     
-  for(g=0 ; g<mNumberOfGrids; g++ )
+  for(int g=0 ; g<mNumberOfGrids; g++ )
   {
     u_ptr  = a_U[g].c_ptr();
     mu_ptr = a_Mu[g].c_ptr();
@@ -1157,7 +1166,7 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
     //    for( int s=0 ; s < 6 ; s++ )
     //       cout << " side " << s << " wind = " << wind_ptr[6*s] << " " << wind_ptr[6*s+1] << " " << wind_ptr[6*s+2] << " " 
     //	    << wind_ptr[6*s+3] << " " << wind_ptr[6*s+4] << " " << wind_ptr[6*s+5] << endl;
-    int topo=topographyExists() && g == mNumberOfGrids-1;
+    int topo=topographyExists() && g >= mNumberOfCartesianGrids;
     
 // THESE ARRAYS MUST BE FILLED IN BEFORE CALLING THIS ROUTINE
 // for periodic bc, a_BCForcing[g][s] == NULL, so you better not access theses arrays in that case
@@ -1274,12 +1283,13 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
       {
          // Curvilinear grid do not necessarily become Cartesian near bottom. Use explicit interface condition
          // to take into account discontinuities in metric, etc.
-         CurviCartIC( g, a_U, a_Mu, a_Lambda );
+         CurviCartIC( g, a_U, a_Mu, a_Lambda, t );
       }
    }
 }
 //-----------------------------------------------------------------------
-void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda  )
+void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+                      float_sw4 t )
 {
    int gcurv=gcart+1;
    int ib=m_iStart[gcurv], ie=m_iEnd[gcurv];
@@ -1304,6 +1314,20 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
          a_U[gcurv](2,i,j,nk) = a_U[gcart](2,i,j,1);
          a_U[gcurv](3,i,j,nk) = a_U[gcart](3,i,j,1);
       }
+   bool force_dirichlet=false;
+   if( force_dirichlet )
+   {
+      TestTwilight* tw = create_twilight();
+      int sides[6];
+      int nrg = 3;
+      sides[0]=sides[1]=sides[2]=sides[3]=sides[4]=0;
+      sides[5]=1;
+      tw->get_ubnd( a_U[gcurv], mX[gcurv], mY[gcurv], mZ[gcurv], t, nrg+1, sides );
+      sides[0]=sides[1]=sides[2]=sides[3] = sides[5]=0;
+      sides[4]=1;
+      tw->get_ubnd( a_U[gcart], h, m_zmin[gcart], t, nrg+1, sides );
+      return;
+   }
    // Initial guess
    for( int j=jb+2 ; j <= je-2 ; j++ )
       for( int i=ib+2 ; i <= ie-2 ; i++ )
@@ -1475,7 +1499,8 @@ void EW::update_curvilinear_cartesian_interface( vector<Sarray>& a_U )
    if (topographyExists())
    {
       int g  = mNumberOfCartesianGrids-1;
-      int gc = mNumberOfGrids-1;
+      int gc = g+1;
+      //      int gc = mNumberOfGrids-1;
       int nc = a_U[0].m_nc;
 // inject solution values between lower boundary of gc and upper boundary of g
 #pragma omp parallel for
@@ -1770,6 +1795,11 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
          dirichlet_LRic( a_Up[g], g, kc-1, time+mDt, 1 );
       }
    }
+   for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
+   {
+      m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt );
+   }
+
 }// end enforceIC2
 
 
@@ -2918,14 +2948,14 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
 			      vector<Source*>& a_sources )
 // assign the boundary forcing arrays a_BCForcing[g][side]
 {
-  int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
+  int ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
   float_sw4 *u_ptr, *mu_ptr, *la_ptr, h, zmin;
   boundaryConditionType *bcType_ptr;
   float_sw4 *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr, *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
   int *wind_ptr;
   float_sw4 om=0, ph=0, cv=0, omm;
     
-  for(g=0 ; g<mNumberOfGrids; g++ )
+  for(int g=0 ; g<mNumberOfGrids; g++ )
   {
     mu_ptr    = mMu[g].c_ptr();
     la_ptr    = mLambda[g].c_ptr();
@@ -3313,20 +3343,34 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
             }
             else
             {
-               twfrsurfz_ci( ifirst, ilast, jfirst, jlast, kfirst, 
-			  klast, h, k, t, om, cv, ph,
-			  bforce_side5_ptr, mu_ptr, la_ptr, m_zmin[g] );
-               if( m_use_attenuation )
-               {
-                  float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
-                  float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
-                  twfrsurfzatt_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+	       if( curvilinear )
+	       {
+                  Sarray tau(6,ifirst,ilast,jfirst,jlast,1,1);
+		  twstensor_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+				k, t, om, cv, ph,
+				mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
+               // Compute boundary forcing for given stress tensor, tau.
+		  getsurfforcing_ci( ifirst, ilast, jfirst, jlast, kfirst,
+				     klast, k, mMetric[g].c_ptr(), mJ[g].c_ptr(),
+				     tau.c_ptr(), bforce_side5_ptr );
+	       }
+	       else
+	       {
+                  twfrsurfz_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+		   	        klast, h, k, t, om, cv, ph,
+			        bforce_side5_ptr, mu_ptr, la_ptr, m_zmin[g] );
+                  if( m_use_attenuation )
+                  {
+                     float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
+                     float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
+                     twfrsurfzatt_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 				klast, h, k, t, om, cv, ph,
 				bforce_side5_ptr, mua_ptr, laa_ptr, m_zmin[g] );
-               }
+                  }
+	       }
             } // end ! supergrid
             
-         } // end isotropic case
+         }// end isotropic case
          
       } // end bStressFree on side 5
       
@@ -4103,7 +4147,8 @@ void EW::enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<S
       int kfirst = m_kStart[g];
       int klast  = m_kEnd[g];
       float_sw4 h   = mGridSize[g];
-      int topo = topographyExists() && g == mNumberOfGrids-1;
+      //      int topo = topographyExists() && g == mNumberOfGrids-1;
+      int topo = g > mNumberOfCartesianGrids-1;
       if( m_bcType[g][4] == bStressFree && !topo ) // Cartesian case
       {
 //FTNC	 //	    if( m_croutines )

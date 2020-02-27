@@ -1,5 +1,6 @@
 #include "TestGrid.h"
 #include "TestTwilight.h"
+#include "TestEcons.h"
 #include "Farray.h"
 #include "sw4.h"
 #include "F77_FUNC.h"
@@ -15,6 +16,8 @@ extern "C" {
 
 CurvilinearInterface::CurvilinearInterface( int a_gc, EW* a_ew )
 {
+   m_tw   = 0;
+   m_etest= 0;
    nghost = 5;
    gc = a_gc;
    gf = a_gc+1;
@@ -54,14 +57,58 @@ CurvilinearInterface::CurvilinearInterface( int a_gc, EW* a_ew )
 
    define_coeffs();
 
-   for( int i=0 ; i < 5 ;i++ )
+   // Sb used for k=1 boundary here, was k=nk boundary in the test code.
+   // Easier to change sign of coefficients than changing sign of operator everywhere in the code.
+   for( int i=0 ; i < 6 ;i++ )
       Sb(i)=-Sb(i);
 
    m_test_grid = a_ew->create_gaussianHill();
-   m_tw = a_ew->create_twilight();
+   m_tw    = a_ew->create_twilight();
+   //   m_etest = a_ew->create_energytest();
    m_ew=a_ew;
 }
 
+void negate_z( Sarray& z )
+{
+   double* zp=z.c_ptr();
+   for( int i=0; i < z.m_npts ; i++ )
+      zp[i] = -zp[i];
+}
+
+void negate_zcomponent( Sarray& U )
+{
+   for( int k=U.m_kb ; k <= U.m_ke ;k++)
+     for( int j=U.m_jb ; j <= U.m_je ;j++)
+       for( int i=U.m_ib ; i <= U.m_ie ;i++)
+	 U(3,i,j,k)=-U(3,i,j,k);
+}
+void swap( int& a, int& b )
+{
+  int tmp=a;
+  a=b;
+  b=tmp;
+}
+void swap( double& a, double& b )
+{
+  double tmp=a;
+  a=b;
+  b=tmp;
+}
+void zero_out_unknowns( Sarray& U_f, Sarray& U_c, int n3_f )
+{
+
+  for( int j=U_c.m_jb ; j <= U_c.m_je ;j++)
+    for( int i=U_c.m_ib ; i <= U_c.m_ie ;i++)
+    {
+      U_c(i,j,0)=0;
+    }
+  for( int j=U_f.m_jb ; j <= U_f.m_je ;j++)
+    for( int i=U_f.m_ib ; i <= U_f.m_ie ;i++)
+    {
+      U_f(i,j,n3_f)=0;
+    }
+}
+//-----------------------------------------------------------------------
 void CurvilinearInterface::init_arrays( std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda, 
                                         std::vector<Sarray>& a_rho, std::vector<Sarray>& a_metric, 
                                         std::vector<Sarray>& a_jac )
@@ -71,21 +118,11 @@ void CurvilinearInterface::init_arrays( std::vector<Sarray>& a_mu, std::vector<S
 
    rho_c.define(1-nghost,n1_c+nghost,1-nghost,n2_c+nghost,1,1);
    rho_f.define(1-nghost,n1_f+nghost,1-nghost,n2_f+nghost,n3_f,n3_f);
-
-   //   rho_c.insert_intersection(a_rho[gc]);
-   //   rho_f.insert_intersection(a_rho[gf]);
-
    mu_c.define(1-nghost,n1_c+nghost,1-nghost,n2_c+nghost,0,8);
    lambda_c.define(1-nghost,n1_c+nghost,1-nghost,n2_c+nghost,0,8);               
    mu_f.define(1-nghost,n1_f+nghost,1-nghost,n2_f+nghost,n3_f-7,n3_f);
    lambda_f.define(1-nghost,n1_f+nghost,1-nghost,n2_f+nghost,n3_f-7,n3_f);
 
-
-   //   mu_c.insert_intersection(a_mu[gc]);
-   //   mu_f.insert_intersection(a_mu[gf]);
-   //   lambda_c.insert_intersection(a_lambda[gc]);
-   //   lambda_f.insert_intersection(a_lambda[gf]);
-                   
    Jacobian_c.define(1-nghost,n1_c+nghost,1-nghost,n2_c+nghost,0,8);
    Jacobian_f.define(1-nghost,n1_f+nghost,1-nghost,n2_f+nghost,n3_f-7,n3_f);
 
@@ -99,7 +136,7 @@ void CurvilinearInterface::init_arrays( std::vector<Sarray>& a_mu, std::vector<S
    XI33_c.define(1-nghost,n1_c+nghost,1-nghost,n2_c+nghost,0,8);
    //   compute_metric( XI13_c, XI23_c, XI33_c, a_metric[gc], a_jac[gc], hc, n1_c, n2_c, n3_c );
 
-   Sarray jac_f(1-nghost,n1_f+nghost,1-nghost,n2_f+nghost,n3_f-7,n3_f);
+   Sarray jac_f(  1-nghost,n1_f+nghost,1-nghost,n2_f+nghost,n3_f-7,n3_f);
    Sarray met_f(4,1-nghost,n1_f+nghost,1-nghost,n2_f+nghost,n3_f-7,n3_f);
    XI13_f.define(1-nghost,n1_f+nghost,1-nghost,n2_f+nghost,n3_f-7,n3_f);
    XI23_f.define(1-nghost,n1_f+nghost,1-nghost,n2_f+nghost,n3_f-7,n3_f);
@@ -118,20 +155,77 @@ void CurvilinearInterface::init_arrays( std::vector<Sarray>& a_mu, std::vector<S
 
    m_test_grid->generate_grid_and_met( m_ew, gf, x_f, y_f, z_f, jac_f, met_f );
    m_test_grid->generate_grid_and_met( m_ew, gc, x_c, y_c, z_c, jac_c, met_c );   
+   //   negate_z( z_c );
+   //   negate_z( z_f );
+   
+   //   m_test_grid->generate_grid_and_met( m_ew, gf, y_f, x_f, z_f, jac_f, met_f );
+   //   m_test_grid->generate_grid_and_met( m_ew, gc, y_c, x_c, z_c, jac_c, met_c );   
    convert_metric( jac_f, met_f, XI13_f, XI23_f, XI33_f, Jacobian_f, hf, n1_f, n2_f, n3_f );
    convert_metric( jac_c, met_c, XI13_c, XI23_c, XI33_c, Jacobian_c, hc, n1_c, n2_c, n3_c );   
 
-   m_tw->get_rho(rho_c,x_c,y_c,z_c);
-   m_tw->get_rho(rho_f,x_f,y_f,z_f);
-   m_tw->get_mula(mu_c,lambda_c,x_c,y_c,z_c);
-   m_tw->get_mula(mu_f,lambda_f,x_f,y_f,z_f);
-
+   if( m_tw != 0 )
+   {
+      m_tw->get_rho(rho_c,x_c,y_c,z_c);
+      m_tw->get_rho(rho_f,x_f,y_f,z_f);
+      m_tw->get_mula(mu_c,lambda_c,x_c,y_c,z_c);
+      m_tw->get_mula(mu_f,lambda_f,x_f,y_f,z_f);
+   }
+   if( m_etest != 0 )
+   {
+      int sides[6]={1,1,1,1,0,0};
+      rho_c.insert_intersection(a_rho[gc]);
+      rho_f.insert_intersection(a_rho[gf]);
+      mu_c.insert_intersection(a_mu[gc]);
+      mu_f.insert_intersection(a_mu[gf]);
+      lambda_c.insert_intersection(a_lambda[gc]);
+      lambda_f.insert_intersection(a_lambda[gf]);
+      int extra_ghost = nghost-m_ew->getNumberOfGhostPoints();
+      if( extra_ghost > 0 )
+      {
+         m_etest->get_rhobnd(rho_c,extra_ghost,sides);
+         m_etest->get_rhobnd(rho_f,extra_ghost,sides);
+         m_etest->get_mulabnd(mu_c,lambda_c,extra_ghost,sides);
+         m_etest->get_mulabnd(mu_f,lambda_f,extra_ghost,sides);
+      }
+   }
    //   rho_c *= Jacobian_c;
    //   rho_f *= Jacobian_f;
    scale_rho( rho_c, Jacobian_c );
    scale_rho( rho_f, Jacobian_f );
 
-   
+   // Transpose x <--> y, rho, jacobian, mu, lambda, xi13, xi23, xi33
+   rho_c.transposeij();
+   rho_f.transposeij();
+   mu_c.transposeij();
+   mu_f.transposeij( );
+   lambda_c.transposeij();
+   lambda_f.transposeij();
+   Jacobian_c.transposeij();
+   Jacobian_f.transposeij();
+   XI13_c.transposeij();
+   XI13_f.transposeij();
+   XI23_c.transposeij();
+   XI23_f.transposeij();
+   XI33_c.transposeij();
+   XI33_f.transposeij();
+   swap( a.n1_c, a.n2_c );
+   swap( a.h1_c, a.h2_c );
+   swap( a.n1_f, a.n2_f );
+   swap( a.h1_f, a.h2_f );
+   swap( a.l1, a.l2 );
+   n1_c=a.n1_c;
+   n1_f=a.n1_f;
+   n2_c=a.n2_c;
+   n2_f=a.n2_f;
+   //Swap XI13 and XI23
+   // moved to convert_metric
+   //   double* tmp= XI13_c.c_ptr();
+   //   XI13_c.reference( XI23_c.c_ptr() );
+   //   XI23_c.reference( tmp );
+   //   tmp= XI13_f.c_ptr();
+   //   XI13_f.reference( XI23_f.c_ptr() );
+   //   XI23_f.reference(tmp);
+
    Mass_block.define(1,3,1,3,1,n1_c,1,n2_c);
    interface_block( Rop, ghcof, Sb, rho_c, lambda_c, rho_f, Jacobian_c, mu_c, P, XI13_c, XI23_c, XI33_c, Mass_block, a );
    //   x_c.save_to_disk("xc.bin");
@@ -191,8 +285,10 @@ void CurvilinearInterface::convert_metric( Sarray& jac, Sarray& met, Sarray& XI1
          for( int i=jac.m_ib ; i <= jac.m_ie ; i++ )
          {
             float_sw4 im1=1/met(1,i,j,k);
-            XI13(i,j,k) = h1f*met(2,i,j,k)*im1;
-            XI23(i,j,k) = h1f*met(3,i,j,k)*im1;
+            XI13(i,j,k) = h1f*met(3,i,j,k)*im1;
+            XI23(i,j,k) = h1f*met(2,i,j,k)*im1;
+	    //            XI13(i,j,k) = -h1f*met(2,i,j,k)*im1;
+	    //            XI23(i,j,k) = -h1f*met(3,i,j,k)*im1;
             XI33(i,j,k) = h3f*im1*im1;
             Jacobian(i,j,k) = jac(i,j,k)*jfact;
          }
@@ -215,7 +311,13 @@ void CurvilinearInterface::impose_ic( std::vector<Sarray>& a_U, float_sw4 t )
    int n2_c = a.n2_c;
    int n3_c = a.n3_c;
    int nrg  = a.nrg;
-   Sarray U_f(3,-4,n1_f+5,-4,n2_f+5,n3_f-7,n3_f), U_c(3,-4,n1_c+5,-4,n2_c+5,0,8);
+   bool force_dirichlet = false, check_stress_cont=false;
+   int fg=0;
+   if( force_dirichlet )
+      fg = 1;
+
+   //   Sarray U_f(3,-4,n1_f+5,-4,n2_f+5,n3_f-7,n3_f+fg), U_c(3,-4,n1_c+5,-4,n2_c+5,0,8);
+   Sarray U_f(3,-4,n2_f+5,-4,n1_f+5,n3_f-7,n3_f+fg), U_c(3,-4,n2_c+5,-4,n1_c+5,0,8);
 
 //  1. copy   a_U into U_f and U_c
    U_f.insert_intersection(a_U[gf]);
@@ -223,16 +325,51 @@ void CurvilinearInterface::impose_ic( std::vector<Sarray>& a_U, float_sw4 t )
 
 // 2a. Impose dirichlet conditions at ghost points
    int sides[6]={1,1,1,1,0,0};
-   m_tw->get_ubnd( U_f, x_f, y_f, z_f, t, nrg+1, sides );
-   m_tw->get_ubnd( U_c, x_c, y_c, z_c, t, nrg+1, sides );
+   if( m_tw != 0 )
+   {
+      m_tw->get_ubnd( U_f, x_f, y_f, z_f, t, nrg+1, sides );
+      m_tw->get_ubnd( U_c, x_c, y_c, z_c, t, nrg+1, sides );
+      if( force_dirichlet )
+      {
+      // Debug
+         sides[0]=sides[1]=sides[2]=sides[3]=sides[4]=0;
+         sides[5]=1;
+         m_tw->get_ubnd( U_f, x_f, y_f, z_f, t, nrg+1, sides );
+         sides[0]=sides[1]=sides[2]=sides[3] = sides[5]=0;
+         sides[4]=1;
+         m_tw->get_ubnd( U_c, x_c, y_c, z_c, t, nrg+1, sides );
+         a_U[gc].copy_kplane2(U_c,0); // have computed U_c:s ghost points
+         a_U[gc].copy_kplane2(U_c,1); // have computed U_c:s ghost points
+         a_U[gf].copy_kplane2(U_f,n3_f);    // .. and U_f:s interface points
+         a_U[gf].copy_kplane2(U_f,n3_f+1);    // .. and U_f:s ghost point
+         return;
+      // End debug
+      }
+   }
+   if( m_etest != 0 )
+   {
+      m_etest->get_ubnd( U_f, nrg+1, sides );
+      m_etest->get_ubnd( U_c, nrg+1, sides );
+   }
+
 // 2b. communicate U_f and U_c, all k=planes.
 
 // 2c. Transform components
+   U_f.transposeij();
+   U_c.transposeij();
+   U_f.swap12();
+   U_c.swap12();
+   negate_zcomponent( U_f );
+   negate_zcomponent( U_c );
+   
+   //   zero_out_unknowns( U_f, U_c, n3_f );
 //   U_f.transform_coordsystem();
 //   U_c.transform_coordsystem();   
 
 // 3. Inject U_f := U_c on interface
+//   std::cout << "uc, uf before " << U_c(1,9,36,1) << " " << U_f(1,17,71,n3_f)<<std::endl;
    injection( U_f, U_c, P, a );
+   //   std::cout << "uc, uf after " << U_c(1,9,36,1) << " " << U_f(1,17,71,n3_f)<<std::endl;
 
 // 4. Solve equation for stress continuity
    Farray Vass(1,n1_c*n2_c*3), LHS(1,n1_c*n2_c*3), residual(1,n1_c*n2_c*3);
@@ -256,7 +393,7 @@ void CurvilinearInterface::impose_ic( std::vector<Sarray>& a_U, float_sw4 t )
       residual(i) = Vass(i) - LHS(i);
 
    // 4.c Jacobi iteration 
-   float_sw4 tol=1e-7;
+   float_sw4 tol=1e-10;
    int iter=0;
    float_sw4 res=0;
    int INFO=0, three=3, one=1;
@@ -264,40 +401,115 @@ void CurvilinearInterface::impose_ic( std::vector<Sarray>& a_U, float_sw4 t )
    //   cout << "Before while"<<endl;
    while(((res = residual.maxabs())>tol) && iter <= 50 )
    {
-      //    std::cout << "Iteration " << iter++ << " " << std::setprecision(17) << res << "\n";
-    for (int j = 1; j <= n2_c; j++) {
-      for (int i = 1; i <= n1_c; i++) {
-         F77_FUNC(dgetrs,DGETRS)(&trans, &three, &one, &Mass_block(1, 1, i, j), &three,
+      iter++;
+    //      std::cout << "Iteration " << iter << " " << std::setprecision(17) << res << "\n";
+      for (int j = 1; j <= n2_c; j++) {
+         for (int i = 1; i <= n1_c; i++) {
+            F77_FUNC(dgetrs,DGETRS)(&trans, &three, &one, &Mass_block(1, 1, i, j), &three,
                     &IPIV_block[0 + (i - 1) * 3 + (j - 1) * 3 * n1_c],
                     &residual((j - 1) * 3 * n1_c + 3 * (i - 1) + 1), &three, &INFO);
-        if (INFO != 0) {
-          std::cerr << "SOLVE Fails at (i,j) equals" << i << "," << j
-                    << " INFO = " << INFO << " " << Mass_block(INFO, INFO, i, j)
-                    << "\n";
-          abort();
-        }
-        U_c(1, i, j, 0) +=
-            residual((j - 1) * 3 * n1_c + 3 * (i - 1) + 1);
-        U_c(2, i, j, 0) +=
-            residual((j - 1) * 3 * n1_c + 3 * (i - 1) + 2);
-        U_c(3, i, j, 0) +=
-            residual((j - 1) * 3 * n1_c + 3 * (i - 1) + 3);
+            if (INFO != 0) {
+               std::cerr << "SOLVE Fails at (i,j) equals" << i << "," << j
+                         << " INFO = " << INFO << " " << Mass_block(INFO, INFO, i, j)
+                         << "\n";
+               abort();
+            }
+            U_c(1, i, j, 0) +=
+               residual((j - 1) * 3 * n1_c + 3 * (i - 1) + 1);
+            U_c(2, i, j, 0) +=
+               residual((j - 1) * 3 * n1_c + 3 * (i - 1) + 2);
+            U_c(3, i, j, 0) +=
+               residual((j - 1) * 3 * n1_c + 3 * (i - 1) + 3);
+         }
       }
-    }
   // 4.d Communicate U_c here, only k=0 plane
-
-    interface_lhs( LHS, Jacobian_c, mu_c, lambda_c, rho_c, rho_f,  XI13_c, XI23_c, XI33_c,
-                  P, Sb, Rop, U_c, ghcof, a );
-    for (int i = 1; i <= n1_c * n2_c * 3; i++) 
-       residual(i) = Vass(i) - LHS(i);
-  }
+      interface_lhs( LHS, Jacobian_c, mu_c, lambda_c, rho_c, rho_f,  XI13_c, XI23_c, XI33_c,
+                     P, Sb, Rop, U_c, ghcof, a );
+      for (int i = 1; i <= n1_c * n2_c * 3; i++) 
+         residual(i) = Vass(i) - LHS(i);
+   }
+   if( res > tol )
+      std::cout << "WARNING, no convergence in curvilinear interface, res = " << res << " tol= " << tol << std::endl;
+   
+   //   std::cout << "uc, uf before transform " << U_c(1,9,36,1) << " " << U_f(1,17,71,n3_f)<<std::endl;
    // 4.e Inverse transform the components.
+   U_f.transposeij();
+   U_c.transposeij();
+   U_f.swap12();
+   U_c.swap12();
+   negate_zcomponent( U_f );
+   negate_zcomponent( U_c );
    //   U_f.transform_coordsystem();
    //   U_c.transform_coordsystem();   
 
+   //   std::cout << "uc, uf after transform " << U_c(2,36,9,1) << " " << U_f(2,71,17,n3_f)<<std::endl;
 // 5. Copy U_c and U_f back to a_U, only k=0 for U_c and k=n3f for U_f.
    a_U[gc].copy_kplane2(U_c,0); // have computed U_c:s ghost points
    a_U[gf].copy_kplane2(U_f,n3_f);    // .. and U_f:s interface points
+   //   std::cout << "uc, uf after copyplane " << a_U[gc](2,36,9,1) << " " << a_U[gf](2,71,17,n3_f)<<std::endl;
+// 6. Check stress continuity
+   if( check_stress_cont )
+   {
+      int nk=m_ew->m_kEndInt[gf];
+
+      Sarray Bc(3,a_U[gc].m_ib,a_U[gc].m_ie,a_U[gc].m_jb,a_U[gc].m_je,1,1);
+      Sarray B (3,a_U[gf].m_ib,a_U[gf].m_ie,a_U[gf].m_jb,a_U[gf].m_je,nk,nk);
+
+      double* strx=new double[a_U[gf].m_ie-a_U[gf].m_ib+1];
+      double* stry=new double[a_U[gf].m_je-a_U[gf].m_jb+1];
+      for( int i=0; i < a_U[gf].m_ie-a_U[gf].m_ib+1 ;i++ )
+         strx[i]=1;
+      for( int i=0; i < a_U[gf].m_je-a_U[gf].m_jb+1 ;i++ )
+         strx[i]=1;
+      double sbop[6]={-3.0/12,-10/12.0,18.0/12.0,-6.0/12.0,1.0/12.0,0};
+      double sbopng[6]={0,-25.0/12.0,4.0,-3.0,4.0/3, -1.0/4};
+
+      m_ew->compute_icstresses_curv( a_U[gc], Bc, 1, m_ew->mMetric[gc], m_ew->mMu[gc], m_ew->mLambda[gc], strx, stry, sbop );
+      m_ew->compute_icstresses_curv( a_U[gf], B , nk, m_ew->mMetric[gf], m_ew->mMu[gf], m_ew->mLambda[gf], strx, stry, sbopng );
+
+      double bdiff[3] = {0,0,0}, bnorm[3]={0,0,0}; 
+      int imx[3], jmx[3];
+      for( int j=Bc.m_jb+3 ; j <= Bc.m_je-3 ; j++ )
+	for( int i=Bc.m_ib+3 ; i <= Bc.m_ie-3 ; i++ )
+	  for( int c=1 ; c <= 3 ; c++ )
+	  {
+	    if( abs(4*B(c,2*i-1,2*j-1,nk)-Bc(c,i,j,1)) > bdiff[c-1] )
+	      {
+	      bdiff[c-1] = abs(4*B(c,2*i-1,2*j-1,nk)-Bc(c,i,j,1));
+	      imx[c-1]=i;
+	      jmx[c-1]=j;
+	      }
+	    if( abs(B(c,2*i-1,2*j-1,nk)) > bnorm[c-1] )
+	      bnorm[c-1] = abs(B(c,2*i-1,2*j-1,nk));
+
+	  }
+      std::cout << "Bstress norm(diff) = " << bdiff[0] << " " << bdiff[1] << " " << bdiff[2] << " max diff at (i,j) " << imx[0] << ","<<jmx[0] << "   " << imx[1] << "," << jmx[1] <<
+	"     " << imx[2] << "," << jmx[2] <<  std::endl;
+      std::cout << "Bstress norm = " << bnorm[0] << " " << bnorm[1] << " " << bnorm[2] << std::endl;
+      bool printout=true;
+      if( printout)
+      {
+	 int ic=71, jc=17; //ff  (121,121) (i,j)-grid (middle grid, i.e. coarse curvilinear)
+	 if( n2_c == 61 )
+	 {
+	    ic=36;
+	    jc=9;
+	 }
+         std::cout << "checking at (i,j) = " << ic << " " << jc << std::endl;
+      //      int ic=18, jc=46; //f 61x61 (i,j)-grid (middle grid, i.e. coarse curvilinear)
+	 std::cout << "Boundary stresses Bf = " << 4*B(1,2*ic-1,2*jc-1,nk) << " " << 4*B(2,2*ic-1,2*jc-1,nk) << " " << 4*B(3,2*ic-1,2*jc-1,nk) << std::endl;
+	 std::cout << "Boundary stresses Bc = " << Bc(1,ic,jc,1) << " " << Bc(2,ic,jc,1) << " " << Bc(3,ic,jc,1) << std::endl;
+	 std::cout << " difference           = " << 4*B(1,2*ic-1,2*jc-1,nk)-Bc(1,ic,jc,1) << " "
+             << 4*B(2,2*ic-1,2*jc-1,nk)-Bc(2,ic,jc,1) << " " 
+             << 4*B(3,2*ic-1,2*jc-1,nk)-Bc(3,ic,jc,1) << std::endl;
+	 std::cout << "Difference in displacements " << a_U[gc](1,ic,jc,1)-a_U[gf](1,2*ic-1,2*jc-1,nk) << " "  <<
+         a_U[gc](2,ic,jc,1)-a_U[gf](2,2*ic-1,2*jc-1,nk) << " " << a_U[gc](3,ic,jc,1)-a_U[gf](3,2*ic-1,2*jc-1,nk) << std::endl;
+      //      B.save_to_disk("B.bin");
+      //      Bc.save_to_disk("Bc.bin");
+	 delete[] strx, stry;
+      //      exit(0);
+      }
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -317,6 +529,8 @@ void CurvilinearInterface::interface_block(Farray &Rop, Farray &ghcof, Farray &S
   auto n3_f = a.n3_f;
   //
   int_cof = 17.0 / 48.0 * h3_f * ghcof(1) / pow(h3_c, 2);
+  // SIGN CHANGE
+  int_cof = -int_cof;
   //
   Mass_block = 0.0;
   for (l = 1; l <= n2_c; l++) {
@@ -690,7 +904,7 @@ void CurvilinearInterface::interface_block(Farray &Rop, Farray &ghcof, Farray &S
               ((2.0 * mu_c(k, l, 1) + lambda_c(k, l, 1)) *
                    pow(XI33_c(k, l, 1), 2) +
                mu_c(k, l, 1) *
-                   (pow(XI13_c(k, l, 1), 2) + pow(XI23_c(k, l, 1), 2))) /
+               (pow(XI13_c(k, l, 1), 2) + pow(XI23_c(k, l, 1), 2))) /
               h3_c;
     }
   }
@@ -757,7 +971,7 @@ void CurvilinearInterface::interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_
 
   float_sw4 l1 = a.l1;
   float_sw4 l2 = a.l2;
-  float_sw4 l3 = a.l3;
+  //  float_sw4 l3 = a.l3;
 
   auto n1_c = a.n1_c;
   auto n2_c = a.n2_c;
@@ -779,7 +993,7 @@ void CurvilinearInterface::interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_
 
   //
   // term 1
-  // Vass := Vass + Bc*uc
+  // Vass := Vass - Bc*uc
   for (k = 1; k <= n2_c; k++) {
     for (i = 1; i <= n1_c; i++) {
       for (j = 1; j <= 4; j++) {
@@ -1504,7 +1718,7 @@ void CurvilinearInterface::interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_
                 (pow(XI13_c(k, j, 1), 2) + pow(XI23_c(k, j, 1), 2)))) /
               pow(h3_c, 2);
     }
-  }
+    }
   //
   for (i = -2; i <= n2_c + 3; i++) {
     for (j = -2; j <= n1_c + 3; j++) {
@@ -1857,12 +2071,14 @@ void CurvilinearInterface::interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_
   // restrict
   // first set 
   //     Vass := Vass -hf*w1*R(rho_f*J*P(L_c/(rho_c)))
+  // SIGN CHANGE
   for (k = 1; k <= n2_c; k++) {
     for (i = 1; i <= n1_c; i++) {
       for (j = -4; j <= 2; j++) {
         for (l = -4; l <= 2; l++) {
           Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 1) =
-              Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 1) -
+	    //              Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 1) -
+              Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 1) +
               17.0 / 48.0 * h3_f * Rop(j) *
                   (Rop(l) * rho_f(2 * i + l, 2 * k + j, n3_f) *
                    Mass_f1(2 * i + l, 2 * k + j) * 1.0);
@@ -1911,12 +2127,14 @@ void CurvilinearInterface::interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_
   }
   // restriction
   // second set
+  // SIGN CHANGE
   for (k = 1; k <= n2_c; k++) {
     for (i = 1; i <= n1_c; i++) {
       for (j = -4; j <= 2; j++) {
         for (l = -4; l <= 2; l++) {
           Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 2) =
-              Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 2) -
+	    //              Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 2) -
+              Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 2) +
               17.0 / 48.0 * h3_f * Rop(j) *
                   (Rop(l) * rho_f(2 * i + l, 2 * k + j, n3_f) *
                    Mass_f1(2 * i + l, 2 * k + j) * 1.0);
@@ -1965,12 +2183,14 @@ void CurvilinearInterface::interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_
   }
   // restrict
   // third set
+  // SIGN CHANGE
   for (k = 1; k <= n2_c; k++) {
     for (i = 1; i <= n1_c; i++) {
       for (j = -4; j <= 2; j++) {
         for (l = -4; l <= 2; l++) {
           Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 3) =
-              Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 3) -
+	    //              Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 3) -
+              Vass((k - 1) * 3 * n1_c + (i - 1) * 3 + 3) +
               17.0 / 48.0 * h3_f * Rop(j) *
                   (Rop(l) * rho_f(2 * i + l, 2 * k + j, n3_f) *
                    Mass_f1(2 * i + l, 2 * k + j) * 1.0);
@@ -2594,11 +2814,15 @@ void CurvilinearInterface::interface_rhs(Farray &Vass, Farray &lh_c, Farray &lh_
 
   // scale L_f
   // lh_f := hf*w1*lh_f
+  // SIGN CHANGE
   for (j = -2; j <= n2_f + 3; j++) {
     for (i = -2; i <= n1_f + 3; i++) {
-      lh_f(i, j, n3_f, 1) = lh_f(i, j, n3_f, 1) * 17.0 / 48.0 * h3_f;
-      lh_f(i, j, n3_f, 2) = lh_f(i, j, n3_f, 2) * 17.0 / 48.0 * h3_f;
-      lh_f(i, j, n3_f, 3) = lh_f(i, j, n3_f, 3) * 17.0 / 48.0 * h3_f;
+      //      lh_f(i, j, n3_f, 1) = lh_f(i, j, n3_f, 1) * 17.0 / 48.0 * h3_f;
+      //      lh_f(i, j, n3_f, 2) = lh_f(i, j, n3_f, 2) * 17.0 / 48.0 * h3_f;
+      //      lh_f(i, j, n3_f, 3) = lh_f(i, j, n3_f, 3) * 17.0 / 48.0 * h3_f;
+      lh_f(i, j, n3_f, 1) = -lh_f(i, j, n3_f, 1) * 17.0 / 48.0 * h3_f;
+      lh_f(i, j, n3_f, 2) = -lh_f(i, j, n3_f, 2) * 17.0 / 48.0 * h3_f;
+      lh_f(i, j, n3_f, 3) = -lh_f(i, j, n3_f, 3) * 17.0 / 48.0 * h3_f;
     }
   }
   //
@@ -2754,6 +2978,8 @@ void CurvilinearInterface::interface_lhs(Farray &LHS, Sarray &Jacobian_c,
   }
 
   int_cof = 17.0 / 48.0 * h3_f * ghcof(1) / pow(h3_c, 2);
+  // SIGN CHANGE
+  int_cof = -int_cof;
 
   LHS = 0.0;
   for (l = 1; l <= n2_c; l++) {

@@ -51,6 +51,7 @@
 #include "Image3D.h"
 #include "ESSI3D.h"
 #include "sacutils.h"
+#include "TestGrid.h"
 
 #include <cstring>
 #include <iostream>
@@ -399,8 +400,18 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 // make the grid, allocate arrays for the curvilinear grid
   if (m_topography_exists)
   {
-    generate_grid();
-    setup_metric();
+     if( m_topoInputStyle == EW::GaussianHill && mNumberOfGrids-mNumberOfCartesianGrids > 1 )
+     {
+        TestGrid* gh = create_gaussianHill();
+        for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids ; g++ )
+           gh->generate_grid_and_met( this, g, mX[g], mY[g], mZ[g], mJ[g], mMetric[g] );
+        delete gh;
+     }
+     else
+     {
+        generate_grid();
+        setup_metric();
+     }
   }
 
 // output grid size info

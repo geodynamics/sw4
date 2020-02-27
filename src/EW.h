@@ -80,6 +80,7 @@ using namespace std;
 class AllDims;
 class TestGrid;
 class TestTwilight;
+class TestEcons;
 class CurvilinearInterface;
 
 class EW 
@@ -1196,7 +1197,7 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void enforceIC2( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
                     vector<Sarray*>& a_AlphaVEp, float_sw4 t, 
                     vector<Sarray> &F, std::vector<GridPointSource*> point_sources );
-   void CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda  );
+   void CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, float_sw4 t );
    
    void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
    void dirichlet_twilight_ic( Sarray& U, int g, int kic, float_sw4 t);
@@ -1245,6 +1246,7 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
 				  vector<Sarray*> AlphaVEp, vector<Source*> a_Sources, float_sw4 t );
    TestGrid* create_gaussianHill();
    TestTwilight* create_twilight();
+   TestEcons* create_energytest();
    AllDims* get_fine_alldimobject( );
 //
 // VARIABLES BEYOND THIS POINT

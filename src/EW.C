@@ -864,14 +864,23 @@ void EW::assign_local_bcs( )
   }
 
 // Find out which boundaries need one sided approximation in mixed derivatives
-  for( g= 0 ; g < mNumberOfGrids ; g++ )
+// DEBUG
+//  m_bcType[0][5]=bStressFree;
+//  m_bcType[0][4]=bCCInterface;
+//  m_bcType[1][5]=bCCInterface;
+//  m_bcType[1][4]=bStressFree;
+//  m_bcType[2][5]=bStressFree;
+//  m_bcType[2][4]=bStressFree;
+
+  for( g= 0 ; g < mNumberOfGrids ; g++ ) 
   { 
      for(side=0 ; side < 4 ; side++ )
         m_onesided[g][side]=0;
      for(side=4 ; side < 6 ; side++ )
+        //        m_onesided[g][side] = (m_bcType[g][side] == bStressFree) || (m_bcType[g][side]== bCCInterface) ;
         m_onesided[g][side] = (m_bcType[g][side] == bStressFree) ||
            (m_bcType[g][side] == bRefInterface) || (m_bcType[g][side] == bAEInterface) || 
-           (m_bcType[g][side] == bCCInterface && (ncurv > 1) ); 
+           (m_bcType[g][side] == bCCInterface && (ncurv > 1 ) ); 
   }
   if( m_myRank == 0 )
   {
@@ -879,6 +888,11 @@ void EW::assign_local_bcs( )
      {
         cout << "GRID: " << g << " onesided-k " << m_onesided[g][4] << " " << m_onesided[g][5]
              << " bctype-k " << bc_name(m_bcType[g][4]) << " " << bc_name(m_bcType[g][5]) << endl; 
+     }
+     for( g= 0 ; g < mNumberOfGrids ; g++ )
+     {
+        cout << "GRID: " << g << " bctypes on I- and J-sides " << bc_name(m_bcType[g][0]) << ", " <<
+           bc_name(m_bcType[g][1]) << " , " << bc_name(m_bcType[g][2])  << " , " << bc_name(m_bcType[g][3])  << endl;
      }
   }
 }
@@ -1864,6 +1878,8 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_
 		       linfLocal, l2Local, xInfGrid, x0, y0, z0, radius,
 		       imin, imax, jmin, jmax, kmin, kmax,
 		       usesg, m_sg_str_x[g], m_sg_str_y[g] );
+          if( m_myRank ==0)
+             cout << "solution error at grid " << g << " is Linf= " << linfLocal << ", L2= " <<sqrt(l2Local) << endl;
     }
     else
     {
@@ -1884,6 +1900,9 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_
 		      y0, z0, radius,
 		      imin, imax, jmin, jmax, kmin, kmax, geocube,
                       i0, i1, j0, j1, k0, k1 );
+          if( m_myRank ==0)
+             cout << "solution error at grid " << g << " is Linf= " << linfLocal << ", L2= " <<sqrt(l2Local) << endl;
+
 //FTNC       else
 //FTNC	  solerr3( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &h,
 //FTNC		   uex_ptr, u_ptr, &linfLocal, &l2Local, &xInfGrid, &m_zmin[g], &x0,
@@ -2670,7 +2689,7 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
       //      m0  = source.getAmplitude();
       m0 = 1;
    }
-   bool curvilinear = topographyExists() && g == mNumberOfGrids-1;
+   bool curvilinear = topographyExists() && g > mNumberOfCartesianGrids-1;
    //   float_sw4* up = u.c_ptr();
    float_sw4 h   = mGridSize[g];
    float_sw4 eps = 1e-3*h;
@@ -4210,9 +4229,10 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> 
 	      }
            }
         }
-        if( topographyExists() )
+        //        if( topographyExists() )
+        for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
         {
-           g = mNumberOfGrids-1;
+           //           g = mNumberOfGrids-1;
            f_ptr    = a_F[g].c_ptr();
            ifirst = m_iStart[g];
            ilast  = m_iEnd[g];
@@ -4462,8 +4482,9 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 //FTNC     if( m_croutines )
 	curvilinear4sg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
 			   u_ptr, mu_ptr, la_ptr, met_ptr, jac_ptr,
-			   uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
+ 	                   uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
 			   m_acof_no_gp, m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op );
+	//			   m_acof, m_ghcof, m_sg_str_x[g], m_sg_str_y[g], nkg, op );
 //FTNC     else
 //FTNC     {
 //FTNC	if( usingSupergrid() )
@@ -4814,7 +4835,7 @@ void EW::updateMemVarCorrNearInterface( Sarray& a_AlphaVEp, Sarray& a_AlphaVEm,
       float_sw4 om = m_twilight_forcing->m_omega;
       float_sw4 ph = m_twilight_forcing->m_phase;
       float_sw4 cv = m_twilight_forcing->m_c;
-      if( topographyExists() )
+      if( topographyExists() && a_grid >= mNumberOfCartesianGrids )
       {
          addMemVarCorr2Curvilinear( mX[a_grid], mY[a_grid], mZ[a_grid], a_t,  a_AlphaVEp, mOmegaVE[0], mDt, om, ph, cv);
       }
@@ -5516,7 +5537,7 @@ void EW::compute_energy( float_sw4 dt, bool write_file, vector<Sarray>& Um,
       float_sw4 locenergy;
       int* onesided_ptr = m_onesided[g];
 //      if( topographyExists() && g == mNumberOfGrids-1 )
-      if( topographyExists() )
+      if( topographyExists() && g >= mNumberOfCartesianGrids )
       {
 //FTNC	 if( m_croutines )
 	    energy4c_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
@@ -6808,7 +6829,7 @@ void EW::add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& U
       int* onesided_ptr = m_onesided[g];
       int nb = 4, wb=6;
 //      if( topographyExists() && g == mNumberOfGrids-1 )
-      if( topographyExists() )
+      if( topographyExists() && g >= mNumberOfCartesianGrids )
       {
 //FTNC	 if( m_croutines )
 	 {
@@ -7477,10 +7498,23 @@ TestGrid* EW::create_gaussianHill()
 
 TestTwilight* EW::create_twilight()
 {
-   return new TestTwilight( m_twilight_forcing->m_omega, m_twilight_forcing->m_c,
-                            m_twilight_forcing->m_phase, m_twilight_forcing->m_momega,
-                            m_twilight_forcing->m_mphase, m_twilight_forcing->m_amprho,
-                            m_twilight_forcing->m_ampmu, m_twilight_forcing->m_amplambda );
+   if( m_twilight_forcing != 0 )
+      return new TestTwilight( m_twilight_forcing->m_omega, m_twilight_forcing->m_c,
+                               m_twilight_forcing->m_phase, m_twilight_forcing->m_momega,
+                               m_twilight_forcing->m_mphase, m_twilight_forcing->m_amprho,
+                               m_twilight_forcing->m_ampmu, m_twilight_forcing->m_amplambda );
+   else
+      return 0;
+}
+
+#include "TestEcons.h"
+
+TestEcons* EW::create_energytest()
+{
+   if( m_energy_test != 0 )
+      return new TestEcons( m_energy_test->m_stochastic_amp, m_energy_test->m_cpcsratio );
+   else
+      return 0;
 }
 
 #include "AllDims.h"

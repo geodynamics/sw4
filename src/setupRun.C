@@ -1268,12 +1268,15 @@ void EW::set_materials()
 	   // mu_ptr[i]    = rho0[g]*vs0[g]*vs0[g] + amp*drand48();
            // lambda_ptr[i] = rho0[g]*(vp0[g]*vp0[g] - 2*vs0[g]*vs0[g]) + amp*drand48();
 	}
+     }
+     material_ic( mRho );
+     material_ic( mMu );
+     material_ic( mLambda );
 	// Communication needed here. Because of random material data,
 	// processor overlap points will otherwise have different values
 	// in different processors.
-        material_ic( mRho );
-        material_ic( mMu );
-	material_ic( mLambda );
+     for (g=0; g<mNumberOfGrids; g++)
+     {
 	communicate_array( mRho[g], g );
 	communicate_array( mMu[g], g );
 	communicate_array( mLambda[g], g );
@@ -1362,8 +1365,9 @@ void EW::set_anisotropic_materials()
       }
       if( topographyExists() )
       {
-         int g=mNumberOfGrids-1;
-         anisomtrltocurvilinear_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+         //         int g=mNumberOfGrids-1;
+         for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids ; g++ )
+            anisomtrltocurvilinear_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
 				 mMetric[g].c_ptr(), mC[g].c_ptr(), mCcurv.c_ptr() );// NOT implemented for several curvilinear grids
 //FTNC
 //         anisomtrltocurvilinear( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
@@ -1616,7 +1620,7 @@ void EW::computeDT()
       for (g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++)
       {
 //     g = mNumberOfGrids-1;
-         float_sw4 la, mu, la2mu;
+//         float_sw4 la, mu, la2mu;
 
 // do consider ghost points (especially the ghost line above the topography might be important)
 #pragma omp parallel for reduction(min:dtCurv)

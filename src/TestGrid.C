@@ -1,6 +1,7 @@
 
 #include "EW.h"
 #include "TestGrid.h"
+#include <iostream>
 
 TestGrid::TestGrid( float_sw4 topo_zmax, float_sw4 amp, float_sw4 xc, float_sw4 yc, float_sw4 lx, float_sw4 ly )
    :
@@ -24,6 +25,10 @@ void TestGrid::generate_grid_and_met( EW *a_ew, int g, Sarray& a_x, Sarray& a_y,
       float_sw4 h  = a_ew->mGridSize[g];
       float_sw4 s1 = a_ew->curvilinear_interface_parameter(iSurfTop);
       float_sw4 s0 = a_ew->curvilinear_interface_parameter(iSurfTop-1);
+      std::cout << " grid " << g << " interface parameters s0,s1 " << s0 << " " << s1 <<
+         " kint = " << a_ew->m_kStartInt[g] << " " << a_ew->m_kEndInt[g] << std::endl;
+      std::cout << " array dims " << a_x.m_ib << " " << a_x.m_ie << " " << a_x.m_jb << " " << a_x.m_je << " " 
+                << a_x.m_kb << " " << a_x.m_ke << std::endl;
       for (int j=a_x.m_jb; j<=a_x.m_je; j++)
          for (int i=a_x.m_ib; i<=a_x.m_ie; i++)
          {
@@ -47,7 +52,7 @@ void TestGrid::generate_grid_and_met( EW *a_ew, int g, Sarray& a_x, Sarray& a_y,
             float_sw4 Nz_real = static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
             float_sw4 inzr = 1.0/Nz_real;
 #pragma omp parallel for
-            for (int k= a_x.m_kb; k<= a_x.m_ke; k++)
+            for (int k= a_x.m_kb; k <= a_x.m_ke; k++)
             {
                float_sw4 zeta = static_cast<float_sw4>((k - a_ew->m_kStartInt[g])*inzr);
                a_x(i,j,k)  = X0;

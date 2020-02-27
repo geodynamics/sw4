@@ -1144,6 +1144,81 @@ void Sarray::transposeik( )
    delete[] tmpar;
 }
 //-----------------------------------------------------------------------
+void Sarray::transposeij( )
+{
+   // Transpose a_{i,j,k} := a_{j,i,k}
+   float_sw4* tmpar = new float_sw4[m_nc*m_ni*m_nj*m_nk];
+   if( m_corder )
+   {
+      size_t npts = static_cast<size_t>(m_ni)*m_nj*m_nk;
+#pragma omp parallel for   
+      for( int i=0 ; i <m_ni ; i++ )
+	 for( int j=0 ; j <m_nj ; j++ )
+	    for( int k=0 ; k <m_nk ; k++ )
+	    {
+	       size_t ind  = i + m_ni*j + m_ni*m_nj*k;
+	       size_t indr = j + m_nj*i + m_ni*m_nj*k;
+	       for( int c=0 ; c < m_nc ; c++ )
+		  tmpar[npts*c+indr] = m_data[npts*c+ind];
+	    }
+   }
+   else
+   {
+#pragma omp parallel for   
+      for( int i=0 ; i <m_ni ; i++ )
+	 for( int j=0 ; j <m_nj ; j++ )
+	    for( int k=0 ; k <m_nk ; k++ )
+	    {
+	       size_t ind  = i + m_ni*j + m_ni*m_nj*k;
+	       size_t indr = j + m_nj*i + m_ni*m_nj*k;
+	       for( int c=0 ; c < m_nc ; c++ )
+		  tmpar[c+m_nc*indr] = m_data[c+m_nc*ind];
+	    }
+   }
+   int tmp=m_ni;
+   m_ni = m_nj;
+   m_nj = tmp;
+
+   tmp = m_ib;
+   m_ib = m_jb;
+   m_jb = tmp;
+
+   tmp = m_ie;
+   m_ie = m_je;
+   m_je = tmp;
+
+   define_offsets();
+#pragma omp parallel for   
+   for( size_t i=0 ; i < m_ni*((size_t) m_nj)*m_nk*m_nc ; i++ )
+      m_data[i] = tmpar[i];
+   delete[] tmpar;
+}
+
+//-----------------------------------------------------------------------
+void Sarray::swap12()
+{
+   if( m_corder )
+   {
+      size_t npts = static_cast<size_t>(m_ni)*m_nj*m_nk;
+      for( size_t ind=0 ; ind < npts; ind++ )
+      {
+         double ux=m_data[ind];
+	 m_data[ind]=m_data[ind+npts];
+	 m_data[ind+npts]=ux;
+      }
+   }
+   else
+   {
+      size_t npts = static_cast<size_t>(m_ni)*m_nj*m_nk;
+      for( size_t ind=0 ; ind < npts; ind++ )
+      {
+         double ux=m_data[m_nc*ind];
+	 m_data[m_nc*ind]=m_data[m_nc*ind+1];
+	 m_data[m_nc*ind+1]=ux;
+      }
+   }
+}
+//-----------------------------------------------------------------------
 void Sarray::transform_coordsystem()
 {
    // (ux,uy,uz) --> (uy,ux,-uz)

@@ -31,8 +31,11 @@ class CurvilinearInterface
    //   std::vector<float_sw4> m_scale_factors;
 
    PackArgs a;
+
    TestGrid* m_test_grid;
    TestTwilight* m_tw;
+   TestEcons* m_etest;
+
    EW* m_ew;
 
    void define_coeffs();
