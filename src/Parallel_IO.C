@@ -355,9 +355,6 @@ void Parallel_IO::init_pio( int iwrite, int pfs, int ihave_array )
 	      << "return code = " << retcode << " from processor " << gproc << endl;
       }
 
-      if (gproc == 0) 
-          printf("Rank 0: %s - MPI_Comm_create m_data_comm\n", __func__);
-
       retcode = MPI_Comm_create( MPI_COMM_WORLD, array_group, &m_data_comm );
       if( retcode != MPI_SUCCESS )
       {
@@ -432,9 +429,6 @@ void Parallel_IO::init_pio( int iwrite, int pfs, int ihave_array )
 	 cout << "Parallel_IO::init_pio, error from second call to MPI_Group_incl, "
 	      << "return code = " << retcode << " from processor " << gproc << endl;
       }
-
-      if (gproc == 0) 
-          printf("Rank 0: %s - MPI_Comm_create m_write_comm\n", __func__);
 
       retcode = MPI_Comm_create( m_data_comm, writer_group, &m_write_comm );
       if( retcode != MPI_SUCCESS )
