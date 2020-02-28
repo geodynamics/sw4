@@ -82,6 +82,7 @@ Image::Image(EW * a_ew,
   mLocationType(locationType),
   mCoordValue(locationValue),
   //  m_isDefined(false),
+  m_mpiComm_writers(MPI_COMM_NULL),
   m_isDefinedMPIWriters(false),
   m_double(doubleMode),
   m_usehdf5(usehdf5),
@@ -344,6 +345,9 @@ void Image::computeGridPtIndex()
           "ImageSlice write error, no processors in communicator")          ;
 
   //  m_rankWriter = fileWriterIDs[0];
+
+  if (m_mpiComm_writers != MPI_COMM_NULL) 
+      MPI_Comm_free(&m_mpiComm_writers);
 
   MPI_Group_incl(origGroup,fileWriterIDs.size(),&fileWriterIDs[0],&newGroup);
   MPI_Comm_create(MPI_COMM_WORLD,newGroup,&m_mpiComm_writers)               ;

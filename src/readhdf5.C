@@ -492,6 +492,9 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
   /* MPI_Bcast(sr_data, nsr1, MPI_FLOAT, 0, MPI_COMM_WORLD); */
   stime = MPI_Wtime();
 
+  MPI_Comm_free(&node_comm);
+  MPI_Comm_free(&read_comm);
+
   if (is_debug && world_rank == 0) 
       printf("Bcast SRF-HDF5 takes %.2f seconds\n", stime-etime);
 
