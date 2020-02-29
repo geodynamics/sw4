@@ -7,45 +7,45 @@ Warning--empty year in Almquist2019
 Warning--empty journal in Lundquist2018
 Warning--empty journal in OReilly2020
 Warning--empty year in SW4
-You've used 16 entries,
+You've used 17 entries,
             2244 wiz_defined-function locations,
-            648 strings with 6843 characters,
-and the built_in function-call counts, 6541 in all, are:
-= -- 633
-> -- 216
+            654 strings with 7003 characters,
+and the built_in function-call counts, 6831 in all, are:
+= -- 652
+> -- 234
 < -- 0
-+ -- 86
-- -- 68
-* -- 461
-:= -- 889
-add.period$ -- 16
-call.type$ -- 16
-change.case$ -- 82
++ -- 93
+- -- 74
+* -- 484
+:= -- 936
+add.period$ -- 17
+call.type$ -- 17
+change.case$ -- 87
 chr.to.int$ -- 0
-cite$ -- 20
-duplicate$ -- 356
-empty$ -- 573
-format.name$ -- 68
-if$ -- 1468
+cite$ -- 21
+duplicate$ -- 371
+empty$ -- 602
+format.name$ -- 74
+if$ -- 1528
 int.to.chr$ -- 0
-int.to.str$ -- 16
-missing$ -- 16
-newline$ -- 51
-num.names$ -- 32
-pop$ -- 124
+int.to.str$ -- 17
+missing$ -- 18
+newline$ -- 54
+num.names$ -- 34
+pop$ -- 136
 preamble$ -- 1
-purify$ -- 66
+purify$ -- 71
 quote$ -- 0
-skip$ -- 288
+skip$ -- 294
 stack$ -- 0
-substring$ -- 546
-swap$ -- 148
+substring$ -- 551
+swap$ -- 150
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 64
+type$ -- 66
 warning$ -- 4
-while$ -- 74
-width$ -- 18
-write$ -- 141
+while$ -- 76
+width$ -- 19
+write$ -- 150
 (There were 4 warnings)
