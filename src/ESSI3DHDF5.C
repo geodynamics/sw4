@@ -263,7 +263,7 @@ void ESSI3DHDF5::write_topo(double* window_array)
   cout << msg;
   */
 
-  hsize_t start[3]={-1,-1,-1};
+  hsize_t start[3]={0,0,0};
   start[0] = m_window[0]; // i window offset
   start[1] = m_window[2]; // j window offset
   start[2] = m_window[4]; // k local index lo relative to global
@@ -419,7 +419,7 @@ void ESSI3DHDF5::write_vel(double* window_array, int comp, int cycle)
   */
 
   m_vel_dataspace_id[comp] = H5Dget_space(m_vel_dataset_id[comp]);
-  hsize_t start[4]={-1,-1,-1,0};
+  hsize_t start[4]={0,0,0,0};
   start[0] = cycle - m_start_cycle;
   start[1] = m_window[0]; // local index lo relative to global
   start[2] = m_window[2]; // local index lo relative to global

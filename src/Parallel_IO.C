@@ -354,6 +354,7 @@ void Parallel_IO::init_pio( int iwrite, int pfs, int ihave_array )
 	 cout << "Parallel_IO::init_pio, error from first call to MPI_Group_incl, "
 	      << "return code = " << retcode << " from processor " << gproc << endl;
       }
+
       retcode = MPI_Comm_create( MPI_COMM_WORLD, array_group, &m_data_comm );
       if( retcode != MPI_SUCCESS )
       {
@@ -428,6 +429,7 @@ void Parallel_IO::init_pio( int iwrite, int pfs, int ihave_array )
 	 cout << "Parallel_IO::init_pio, error from second call to MPI_Group_incl, "
 	      << "return code = " << retcode << " from processor " << gproc << endl;
       }
+
       retcode = MPI_Comm_create( m_data_comm, writer_group, &m_write_comm );
       if( retcode != MPI_SUCCESS )
       {
@@ -1188,7 +1190,7 @@ void Parallel_IO::write_array_hdf5( const char *fname, const char *dname, int nc
    hid_t dspace, filespace, dxpl, h5_fid, fapl, dset;
 
    fapl = H5Pcreate(H5P_FILE_ACCESS);
-   H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL);
+   /* H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL); */
    dxpl = H5Pcreate(H5P_DATASET_XFER);
    H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
 
