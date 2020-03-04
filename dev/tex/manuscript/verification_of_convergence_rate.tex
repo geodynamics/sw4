@@ -1,16 +1,11 @@
 %!TEX root = SISC_elastic_3d.tex
 \subsection{Verification of convergence rate}\label{convergence_study}
-We use the method of the manufactured solution to verify the theoretical convergence order of the proposed scheme. Specifically, we take the computation domain to be 
-\begin{equation*}\label{coarse_domain_manufactured}
-\left\{
-\begin{aligned}
-& x^{c,(1)} = 2\pi r^{(1)}\\
-& x^{c,(2)} = 2\pi r^{(2)}\\
-& x^{c,(3)} = r^{(3)}\theta_i\big(r^{(1)},r^{(2)}\big) + (1-r^{(3)})\theta_b\big(r^{(1)},r^{(2)}\big)
-\end{aligned}
-\right.
-\end{equation*}
-for coarse domain $\Omega^c$. Here, $0\leq r^{(1)}, r^{(2)}, r^{(3)}\leq 1$, $\theta_i$ is the interface surface geometry,
+We use the method of the manufactured solution to verify the theoretical convergence order of the proposed scheme. For coarse domain $\Omega^c$, we set
+\[ {\bf x} = {\bf X}^c({\bf r}) = \left(\begin{array}{c}
+2\pi r^{(1)} \\
+2\pi r^{(2)} \\
+r^{(3)}\theta_i\big(r^{(1)},r^{(2)}\big) + (1-r^{(3)})\theta_b\big(r^{(1)},r^{(2)}\big) \end{array}\right), \]
+where $0\leq r^{(1)}, r^{(2)}, r^{(3)}\leq 1$, $\theta_i$ is the interface surface geometry,
 \begin{equation}\label{iterface_geometry}
 \theta_i\big(r^{(1)},r^{(2)}\big) = \pi+0.2\sin(4\pi r^{(1)})+0.2\cos(4\pi r^{(2)}),
 \end{equation}
@@ -20,15 +15,10 @@ $\theta_b$ is the bottom surface geometry,
 \theta_b\big(r^{(1)},r^{(2)}\big) = 0.2\exp\left(-\frac{(r^{(1)}-0.6)^2}{0.04}\right)+0.2\exp\left(-\frac{(r^{(2)}-0.6)^2}{0.04}\right).
 \end{equation*}
 As for the fine domain $\Omega^f$, it is chosen to be
-\begin{equation*}\label{fine_domain_manufactured}
-\left\{
-\begin{aligned}
-& x^{f,(1)} = 2\pi r^{(1)}\\
-& x^{f,(2)} = 2\pi r^{(2)}\\
-& x^{f,(3)} = r^{(3)}\theta_t\big(r^{(1)},r^{(2)}\big) + (1-r^{(3)})\theta_i\big(r^{(1)},r^{(2)}\big),
-\end{aligned}
-\right.
-\end{equation*}
+\[ {\bf x} = {\bf X}^f({\bf r}) = \left(\begin{array}{c}
+2\pi r^{(1)}\\
+2\pi r^{(2)}\\
+r^{(3)}\theta_t\big(r^{(1)},r^{(2)}\big) + (1-r^{(3)})\theta_i\big(r^{(1)},r^{(2)}\big), \end{array}\right), \]
 where $0\leq r^{(1)}, r^{(2)}, r^{(3)}\leq 1$, $\theta_t$ is the top surface geometry,
 \begin{equation*}\label{top_geometry}
 \theta_t\big(r^{(1)},r^{(2)}\big) = 2\pi+0.2\exp\left(-\frac{(r^{(1)}-0.5)^2}{0.04}\right)+0.2\exp\left(-\frac{(r^{(2)}-0.5)^2}{0.04}\right),
