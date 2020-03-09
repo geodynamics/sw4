@@ -45,7 +45,7 @@
 #define SQR(x) ((x) * (x))
 
 //--------------------------------------------------------------------
-void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries) {
+void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,int event) {
   SW4_MARK_FUNCTION;
   // solution arrays
   vector<Sarray> F, Lu, Uacc, Up, Um, U;
@@ -116,7 +116,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries) {
 #pragma omp parallel for
   for (int ts = 0; ts < a_TimeSeries.size(); ts++) {
     a_TimeSeries[ts]->allocateRecordingArrays(
-        mNumberOfTimeSteps + 1, mTstart, mDt);  // AP: added one to mNumber...
+        mNumberOfTimeSteps[event] + 1, mTstart, mDt);  // AP: added one to mNumber...
     // In forward solve, the output receivers will use the same UTC as the
     // global reference utc0, therefore, set station utc equal reference utc.
     //     if( m_utc0set )
@@ -232,13 +232,13 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries) {
 
       // building the file name...
       string filename;
-      if (mPath != ".") filename += mPath;
+      if (mPath[event] != ".") filename += mPath[event];
       filename += "g1.dat";
 
       FILE* tf = fopen(filename.c_str(), "w");
       float_sw4 t;
       float_sw4 gt, gt1, gt2;
-      for (int i = 0; i <= mNumberOfTimeSteps; i++) {
+      for (int i = 0; i <= mNumberOfTimeSteps[event]; i++) {
         //           for( int sb=0 ; sb < 10 ; sb++ )
         //	   {
         //	      t = mTstart + i*mDt + 0.1*sb*mDt;
@@ -256,7 +256,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries) {
   if (!mQuiet && mVerbose && proc_zero()) {
     cout << endl << "***  Starting solve ***" << endl;
   }
-  printPreamble(a_Sources);
+  printPreamble(a_Sources,event);
 
   // Set up timers
   double time_start_solve = MPI_Wtime();
@@ -619,8 +619,11 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries) {
   for (int i3 = 0; i3 < mImage3DFiles.size(); i3++)
     mImage3DFiles[i3]->update_image(beginCycle - 1, t, mDt, U, mRho, mMu,
                                     mLambda, mRho, mMu, mLambda, mQp, mQs,
-                                    mPath, mZ);
-
+                                    mPath[event], mZ);
+  for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ ) {
+    mESSI3DFiles[i3]->set_ntimestep(mNumberOfTimeSteps[event]);
+    mESSI3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mPath[event], mZ );
+  }
   FILE* lf = NULL;
   // open file for saving norm of error
   if ((m_lamb_test || m_point_source_test || m_rayleigh_wave_test ||
@@ -693,10 +696,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries) {
 #ifdef SW4_TRACK_MPI
   // bool cudaProfilerOn = false;
 #endif
-  for (int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps;
+  for (int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps[event];
        currentTimeStep++) {
     time_measure[0] = MPI_Wtime();
-    if (currentTimeStep == mNumberOfTimeSteps) t1 = SW4_CHRONO_NOW;
+    if (currentTimeStep == mNumberOfTimeSteps[event]) t1 = SW4_CHRONO_NOW;
     if (currentTimeStep == (beginCycle + 10)) {
       PROFILER_START;
 #ifdef SW4_TRACK_MPI
@@ -975,7 +978,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries) {
     t += mDt;
 
     // periodically, print time stepping info to stdout
-    printTime(currentTimeStep, t, currentTimeStep == mNumberOfTimeSteps);
+    printTime(currentTimeStep, t, currentTimeStep == mNumberOfTimeSteps[event]);
     //    printTime( currentTimeStep, t, true );
 
     // Images have to be written before the solution arrays are cycled, because
@@ -989,12 +992,18 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries) {
     // No strictly required due to the sync in
     // enforceIC/consinsp/communicate_array_2d/copy_kplane.
     update_images(currentTimeStep, t, Up, U, Um, mRho, mMu, mLambda, a_Sources,
-                  currentTimeStep == mNumberOfTimeSteps);
+                  currentTimeStep == mNumberOfTimeSteps[event]);
     for (int i3 = 0; i3 < mImage3DFiles.size(); i3++)
       mImage3DFiles[i3]->update_image(
           currentTimeStep, t, mDt, Up, mRho, mMu, mLambda, mRho, mMu, mLambda,
-          mQp, mQs, mPath, mZ);  // mRho, mMu, mLambda occur twice because we
+          mQp, mQs, mPath[event], mZ);  // mRho, mMu, mLambda occur twice because we
                                  // don't use gradRho etc.
+
+    // Update the ESSI hdf5 data
+    double time_essi_tmp=MPI_Wtime();
+    for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
+      mESSI3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mPath[event], mZ );
+    double time_essi=MPI_Wtime()-time_essi_tmp;
 
     // save the current solution on receiver records (time-derivative require Up
     // and Um for a 2nd order approximation, so do this before cycling the
@@ -1054,8 +1063,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries) {
     // // Energy evaluation, requires all three time levels present, do before
     // cycle arrays.
     if (m_energy_test)
-      compute_energy(mDt, currentTimeStep == mNumberOfTimeSteps, Um, U, Up,
-                     currentTimeStep);
+      compute_energy(mDt, currentTimeStep == mNumberOfTimeSteps[event], Um, U, Up,
+                     currentTimeStep,event);
 
     // cycle the solution arrays
     cycleSolutionArrays(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp);
@@ -1121,7 +1130,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries) {
     std::chrono::high_resolution_clock::time_point t4 = SW4_CHRONO_NOW;
     if (cudaProfilerOn) step_sm.insert(0, SW4_CHRONO_DURATION_MS(t3, t4));
 #endif
-    if (currentTimeStep == mNumberOfTimeSteps) {
+    if (currentTimeStep == mNumberOfTimeSteps[event]) {
       t2 = SW4_CHRONO_NOW;
 #ifdef SW4_TRACK_MPI
       std::cout

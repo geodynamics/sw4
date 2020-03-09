@@ -36,6 +36,9 @@
 
 #include "Byteswapper.h"
 #include "mpi.h"
+#ifdef USE_HDF5
+#include "hdf5.h"
+#endif
 
 class Comminfo {
  public:
@@ -67,6 +70,10 @@ class Parallel_IO {
   Parallel_IO(int iwrite, int pfs, int globalsizes[3], int localsizes[3],
               int starts[3], int nptsbuf = 1000000, int padding = 0);
   void write_array(int* fid, int nc, void* array, off_t pos0, char* type);
+#ifdef USE_HDF5
+   void write_array_hdf5( const char* fname, const char *dname, int nc, void* array, hsize_t pos0, char* type );
+   /* void write_array_hdf5( hid_t loc, int nc, void* array, hsize_t pos0, char* type ); */
+#endif
   void read_array(int* fid, int nc, double* array, off_t pos0, const char* typ,
                   bool swap_bytes = false);
 

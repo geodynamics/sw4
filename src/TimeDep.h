@@ -52,7 +52,8 @@ enum timeDep {
   iDBrune,
   iDirac,
   iC6SmoothBump,
-  iDiscrete6moments
+  iDiscrete6moments,
+  iDiscrete3forces
 };
 
 #endif

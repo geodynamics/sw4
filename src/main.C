@@ -211,9 +211,9 @@ int main(int argc, char **argv) {
   cout << std::scientific;
 
   // Save the source description here
-  vector<Source *> GlobalSources;
+  vector<vector<Source *> > GlobalSources;
   // Save the time series here
-  vector<TimeSeries *> GlobalTimeSeries;
+  vector<vector<TimeSeries *> > GlobalTimeSeries;
 
 // make a new simulation object by reading the input file 'fileName'
 // nvtxRangePushA("outer");
@@ -274,12 +274,22 @@ int main(int argc, char **argv) {
                << endl;
         }
         // run the simulation
-        simulation.solve(GlobalSources, GlobalTimeSeries);
+        simulation.solve(GlobalSources[0], GlobalTimeSeries[0],0);
 
         // save all time series
 
         for (int ts = 0; ts < GlobalTimeSeries.size(); ts++) {
-          GlobalTimeSeries[ts]->writeFile();
+          GlobalTimeSeries[0][ts]->writeFile();
+#ifdef USE_HDF5
+        myWriteTime += GlobalTimeSeries[0][ts]->getWriteTime();
+        if( ts == GlobalTimeSeries[0].size()-1) {
+	  GlobalTimeSeries[0][ts]->closeHDF5File();
+
+          MPI_Reduce(&myWriteTime, &allWriteTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+          if( myRank == 0 )
+            cout << "  ==> Max wallclock time to write time-series data is " << allWriteTime << " seconds." << endl;
+        }
+#endif
         }
 
         if (myRank == 0) {

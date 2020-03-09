@@ -105,7 +105,7 @@ void bndryOpNoGhostc(float_sw4 *acof_no_gp, float_sw4 *ghcof_no_gp,
 #define SQR(x) ((x) * (x))
 
 //----------------------------------------------
-void EW::setupRun(vector<Source *> &a_GlobalUniqueSources) {
+void EW::setupRun(vector<vector<Source *> > &a_GlobalUniqueSources) {
   if (mIsInitialized && proc_zero())
     cout << " WARNING, calling setupRun twice " << endl;
 
@@ -307,7 +307,8 @@ void EW::setupRun(vector<Source *> &a_GlobalUniqueSources) {
   //  int beginCycle = 1;
 
   // Initialize IO
-  create_directory(mPath);
+for( int e=0 ; e < m_nevent ; e++ )
+  create_directory(mPath[e]);
 
   if (proc_zero()) {
     double lat[4], lon[4];
@@ -438,7 +439,7 @@ void EW::setupRun(vector<Source *> &a_GlobalUniqueSources) {
 }
 
 //-----------------------------------------------------------------------
-void EW::preprocessSources(vector<Source *> &a_GlobalUniqueSources) {
+void EW::preprocessSources(vector<vector<Source *> >&a_GlobalUniqueSources) {
   // This routine should be called once, after setupRun (can we include it in
   // setupRun?)
 
@@ -481,19 +482,19 @@ void EW::preprocessSources(vector<Source *> &a_GlobalUniqueSources) {
       }
 
       if (m_point_source_test &&
-          !(a_GlobalUniqueSources[0]->getName() == "VerySmoothBump" ||
-            a_GlobalUniqueSources[0]->getName() == "C6SmoothBump" ||
-            a_GlobalUniqueSources[0]->getName() == "SmoothWave" ||
-            a_GlobalUniqueSources[0]->getName() == "Gaussian")) {
+          !(a_GlobalUniqueSources[0][0]->getName() == "VerySmoothBump" ||
+            a_GlobalUniqueSources[0][0]->getName() == "C6SmoothBump" ||
+            a_GlobalUniqueSources[0][0]->getName() == "SmoothWave" ||
+            a_GlobalUniqueSources[0][0]->getName() == "Gaussian")) {
         if (proc_zero())
           cout << "Error: Point Source Test can only have source types"
                << " VerySmoothBump, SmoothWave, or Gaussian" << endl
-               << "  Input name is " << a_GlobalUniqueSources[0]->getName()
+               << "  Input name is " << a_GlobalUniqueSources[0][0]->getName()
                << endl;
         sources_ok = false;
       }
 
-      if (m_lamb_test && a_GlobalUniqueSources[0]->isMomentSource()) {
+      if (m_lamb_test && a_GlobalUniqueSources[0][0]->isMomentSource()) {
         if (proc_zero())
           cout << "Error: Lamb's Test must have one point force" << endl
                << "       The defined source is a moment tensor" << endl;
@@ -502,19 +503,19 @@ void EW::preprocessSources(vector<Source *> &a_GlobalUniqueSources) {
 
       if (m_lamb_test) {
         float_sw4 fx, fy, fz, z0, freq;
-        a_GlobalUniqueSources[0]->getForces(fx, fy, fz);
-        z0 = a_GlobalUniqueSources[0]->getZ0();
-        freq = a_GlobalUniqueSources[0]->getFrequency();
+        a_GlobalUniqueSources[0][0]->getForces(fx, fy, fz);
+        z0 = a_GlobalUniqueSources[0][0]->getZ0();
+        freq = a_GlobalUniqueSources[0][0]->getFrequency();
 
-        if (!((a_GlobalUniqueSources[0]->getName() == "VerySmoothBump" ||
-               a_GlobalUniqueSources[0]->getName() == "C6SmoothBump") &&
+        if (!((a_GlobalUniqueSources[0][0]->getName() == "VerySmoothBump" ||
+               a_GlobalUniqueSources[0][0]->getName() == "C6SmoothBump") &&
               freq == 1.0 && z0 == 0.0 && fx == 0.0 && fy == 0.0)) {
           if (proc_zero())
             cout << "Error: Lamb Test assumes a 'VerySmoothBump' time function "
                     "with freq=1"
                  << " on z=0 with fx=0 and fy=0" << endl
                  << " The specified source has a '"
-                 << a_GlobalUniqueSources[0]->getName()
+                 << a_GlobalUniqueSources[0][0]->getName()
                  << "' time function with freq=" << freq << " on z=" << z0
                  << " with fx=" << fx << " and fy=" << fy << endl;
           sources_ok = false;
@@ -535,7 +536,9 @@ void EW::preprocessSources(vector<Source *> &a_GlobalUniqueSources) {
       // value of t0
 
       // get the epicenter
-      compute_epicenter(a_GlobalUniqueSources);
+for( int e=0 ; e < m_nevent ; e++ )
+  {
+    compute_epicenter(a_GlobalUniqueSources[e],e);
 
       // Set up 'normal' sources for point_source_test, lamb_test, or standard
       // seismic case.
@@ -544,9 +547,9 @@ void EW::preprocessSources(vector<Source *> &a_GlobalUniqueSources) {
       // Mij coefficients by mu (shear modulus)
       bool need_mu_corr = false;
 #pragma omp parallel for reduction(|| : need_mu_corr)
-      for (int i = 0; i < a_GlobalUniqueSources.size(); i++)
+      for (int i = 0; i < a_GlobalUniqueSources[e].size(); i++)
         need_mu_corr =
-            (need_mu_corr || a_GlobalUniqueSources[i]->get_CorrectForMu());
+            (need_mu_corr || a_GlobalUniqueSources[e][i]->get_CorrectForMu());
 
       // must communicate need_mu_corr
       int mu_corr_global = 0, mu_corr_loc = need_mu_corr ? 1 : 0;
@@ -583,11 +586,11 @@ void EW::preprocessSources(vector<Source *> &a_GlobalUniqueSources) {
 // fill in the values that are known to this processor
 #pragma omp parallel for
         for (int s = 0; s < nSources; s++)
-          if (a_GlobalUniqueSources[s]->myPoint()) {
-            int is = a_GlobalUniqueSources[s]->m_i0;
-            int js = a_GlobalUniqueSources[s]->m_j0;
-            int ks = a_GlobalUniqueSources[s]->m_k0;
-            int gs = a_GlobalUniqueSources[s]->m_grid;
+          if (a_GlobalUniqueSources[e][s]->myPoint()) {
+            int is = a_GlobalUniqueSources[e][s]->m_i0;
+            int js = a_GlobalUniqueSources[e][s]->m_j0;
+            int ks = a_GlobalUniqueSources[e][s]->m_k0;
+            int gs = a_GlobalUniqueSources[e][s]->m_grid;
 
             // tmp
             mu_source_loc[s] = mMu[gs](is, js, ks);
@@ -607,14 +610,14 @@ void EW::preprocessSources(vector<Source *> &a_GlobalUniqueSources) {
 // scale all moments components
 #pragma omp parallel for
         for (int s = 0; s < nSources; s++)
-          if (a_GlobalUniqueSources[s]->get_CorrectForMu()) {
+          if (a_GlobalUniqueSources[e][s]->get_CorrectForMu()) {
             float_sw4 mu, mxx, mxy, mxz, myy, myz, mzz;
             mu = mu_source_global[s];
-            a_GlobalUniqueSources[s]->getMoments(mxx, mxy, mxz, myy, myz, mzz);
-            a_GlobalUniqueSources[s]->setMoments(mu * mxx, mu * mxy, mu * mxz,
+            a_GlobalUniqueSources[e][s]->getMoments(mxx, mxy, mxz, myy, myz, mzz);
+            a_GlobalUniqueSources[e][s]->setMoments(mu * mxx, mu * mxy, mu * mxz,
                                                  mu * myy, mu * myz, mu * mzz);
             // lower the flag
-            a_GlobalUniqueSources[s]->set_CorrectForMu(false);
+            a_GlobalUniqueSources[e][s]->set_CorrectForMu(false);
           }
         // cleanup
         delete[] mu_source_loc;
@@ -639,8 +642,8 @@ void EW::preprocessSources(vector<Source *> &a_GlobalUniqueSources) {
       float_sw4 zMax = m_global_zmin, zMaxGlobal, zMin = m_global_zmax,
                 zMinGlobal;
 #pragma omp parallel for reduction(max : zMax) reduction(min : zMin)
-      for (int s = 0; s < a_GlobalUniqueSources.size(); s++) {
-        float_sw4 zSource = a_GlobalUniqueSources[s]->getZ0();
+      for (int s = 0; s < a_GlobalUniqueSources[e].size(); s++) {
+        float_sw4 zSource = a_GlobalUniqueSources[e][s]->getZ0();
         if (zSource > zMax) zMax = zSource;
         if (zSource < zMin) zMin = zSource;
       }
@@ -655,9 +658,9 @@ void EW::preprocessSources(vector<Source *> &a_GlobalUniqueSources) {
 
 // Need to set the frequency to 1/dt for Dirac source
 #pragma omp parallel for
-      for (int s = 0; s < a_GlobalUniqueSources.size(); s++)
-        if (a_GlobalUniqueSources[s]->getTfunc() == iDirac)
-          a_GlobalUniqueSources[s]->setFrequency(1.0 / mDt);
+      for (int s = 0; s < a_GlobalUniqueSources[e].size(); s++)
+        if (a_GlobalUniqueSources[e][s]->getTfunc() == iDirac)
+          a_GlobalUniqueSources[e][s]->setFrequency(1.0 / mDt);
 
       if (m_prefilter_sources) {
         // tell the filter about the time step and compute the second order
@@ -724,7 +727,8 @@ void EW::preprocessSources(vector<Source *> &a_GlobalUniqueSources) {
 
       // // TODO: check that t0 is large enough even when prefilter is NOT used
 
-      if (proc_zero()) saveGMTFile(a_GlobalUniqueSources);
+      if (proc_zero()) saveGMTFile(a_GlobalUniqueSources,e);
+  }
 
     }  // end normal seismic setup
 
@@ -736,7 +740,7 @@ void EW::preprocessSources(vector<Source *> &a_GlobalUniqueSources) {
 }  // end preprocessSources
 
 //-----------------------------------------------------------------------
-void EW::compute_epicenter(vector<Source *> &a_GlobalUniqueSources) {
+void EW::compute_epicenter(vector<Source *> &a_GlobalUniqueSources,int e) {
   // To find out which event goes first, we need to query all sources
   double earliestTime = 0.;
   double epiLat = 0.0, epiLon = 0.0, epiDepth = 0.0;
@@ -761,7 +765,7 @@ void EW::compute_epicenter(vector<Source *> &a_GlobalUniqueSources) {
     epiDepth = firstSource->getDepth();  // corrected for topography!
   }
 
-  set_epicenter(epiLat, epiLon, epiDepth, earliestTime);
+  set_epicenter(epiLat, epiLon, epiDepth, earliestTime,e);
 }
 
 //-----------------------------------------------------------------------
@@ -1604,17 +1608,20 @@ void EW::computeDT() {
     cout << "TIME accuracy order=" << mOrder << " CFL=" << mCFL
          << " prel. time step=" << mDt << endl;
   }
-
-  if (mTimeIsSet) {
-    // constrain the dt based on the goal time
-    //      VERIFY2(mTmax > mTstart,"*** ERROR: Tstart is greater than Tmax!
-    //      ***");
-    mNumberOfTimeSteps = static_cast<int>((mTmax - mTstart) / mDt + 0.5);
-    mNumberOfTimeSteps = (mNumberOfTimeSteps == 0) ? 1 : mNumberOfTimeSteps;
-    // the resulting mDt could be slightly too large, because the
-    // numberOfTimeSteps is rounded to the nearest int
-    mDt = (mTmax - mTstart) / mNumberOfTimeSteps;
-  }
+  for( int e=0 ; e < m_nevent ; e++ )
+    {
+      if (mTimeIsSet[e]) {
+	// constrain the dt based on the goal time
+	//      VERIFY2(mTmax > mTstart,"*** ERROR: Tstart is greater than Tmax!
+	//      ***");
+	mNumberOfTimeSteps[e] = static_cast<int>((mTmax[e] - mTstart) / mDt + 0.5);
+	mNumberOfTimeSteps[e] = (mNumberOfTimeSteps[e] == 0) ? 1 : mNumberOfTimeSteps[e];
+	// the resulting mDt could be slightly too large, because the
+	// numberOfTimeSteps is rounded to the nearest int
+	// When more than one event set mTmax, the final time will only be perfect for one event, don't know how to fix that....
+	mDt = (mTmax[e] - mTstart) / mNumberOfTimeSteps[e];
+      }
+    }
 }
 
 //-----------------------------------------------------------------------
@@ -1661,16 +1668,18 @@ void EW::computeDTanisotropic() {
     cout << "order of accuracy=" << mOrder << " CFL=" << mCFL
          << " prel. time step=" << mDt << endl;
   }
-
-  if (mTimeIsSet) {
-    // constrain the dt based on the goal time
-    //      VERIFY2(mTmax > mTstart,"*** ERROR: Tstart is greater than Tmax!
-    //      ***");
-    mNumberOfTimeSteps = static_cast<int>((mTmax - mTstart) / mDt + 0.5);
-    mNumberOfTimeSteps = (mNumberOfTimeSteps == 0) ? 1 : mNumberOfTimeSteps;
-    // the resulting mDt could be slightly too large, because the
-    // numberOfTimeSteps is rounded to the nearest int
-    mDt = (mTmax - mTstart) / mNumberOfTimeSteps;
+for( int e=0 ; e < m_nevent ; e++ )
+  {
+    if (mTimeIsSet[e]) {
+      // constrain the dt based on the goal time
+      //      VERIFY2(mTmax > mTstart,"*** ERROR: Tstart is greater than Tmax!
+      //      ***");
+      mNumberOfTimeSteps[e] = static_cast<int>((mTmax[e] - mTstart) / mDt + 0.5);
+      mNumberOfTimeSteps[e] = (mNumberOfTimeSteps[e] == 0) ? 1 : mNumberOfTimeSteps[e];
+      // the resulting mDt could be slightly too large, because the
+      // numberOfTimeSteps is rounded to the nearest int
+      mDt = (mTmax[e] - mTstart) / mNumberOfTimeSteps[e];
+    }
   }
 }
 
@@ -2265,11 +2274,20 @@ void EW::getDtFromRestartFile() {
   //   VERIFY2( m_check_point->mDoRestart,
   //	    "Error in EW::getDtFromRestartFile: there is no restart command");
   mDt = m_check_point->getDt();
-  if (mTimeIsSet) {
+  // Assume one event for restart.
+   if( m_nevent > 1 )
+   {
+      if( proc_zero() )
+	 cout << "WARNING: Restart only supported for single event computations." << 
+	    " Restart will use default event" << endl;
+   }
+   int event=0;
+  if (mTimeIsSet[event]) {
     // constrain Tmax based on the time step
-    mNumberOfTimeSteps = static_cast<int>((mTmax - mTstart) / mDt + 0.5);
-    mNumberOfTimeSteps = (mNumberOfTimeSteps == 0) ? 1 : mNumberOfTimeSteps;
-    mTmax = mTstart + mNumberOfTimeSteps * mDt;
+    mNumberOfTimeSteps[event] = static_cast<int>((mTmax[event] - mTstart) / mDt + 0.5);
+    mNumberOfTimeSteps[event] = (mNumberOfTimeSteps[event] == 0) ? 1 : mNumberOfTimeSteps[event];
+    mTmax[event] = mTstart + mNumberOfTimeSteps[event] * mDt;
+    // Do not change time step from restart solution !
     //      mDt = (mTmax - mTstart) / mNumberOfTimeSteps;
   }
 }
