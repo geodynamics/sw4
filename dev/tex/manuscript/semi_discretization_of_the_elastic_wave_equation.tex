@@ -27,11 +27,11 @@ Then for different grid points, we have
 \begin{equation*}
 \left\{
 \begin{aligned}
-{\bf x}_{\bf i} &= {\bf X}^f({\bf r}_{\bf i}), \quad {\bf x}_{\bf i}\in\Omega^f, \quad (i,j,k)\in[1,n_1^h]\times[1,n_2^h]\times[1,n_3^h]\\
-{\bf x}_{\bf i} &= {\bf X}^c({\bf r}_{\bf i}), \quad {\bf x}_{\bf i}\in\Omega^c, \quad (i,j,k)\in[1,n_1^{2h}]\times[1,n_2^{2h}]\times[1,n_3^{2h}]\\
-{\bf x}_{\bf i} &= {\bf X}^c({\bf r}_{\bf i}) \quad {\bf x}_{\bf i} \in \Gamma\cap\Omega^f, \quad (i,j)\in[1,n_1^{2h}]\times[1,n_2^{2h}],\ k = n_3^{2h}\\
-{\bf x}_{\bf i} &= {\bf X}^f({\bf r}_{\bf i}) \quad {\bf x}_{\bf i} \in \Gamma\cap\Omega^f, \quad (i,j)\in[1,n_1^h]\times[1,n_2^h],\ k = 1\\
-{\bf x}_{\bf i} &= {\bf X}^f({\bf r}_{\bf i}), \quad {\bf x}_{\bf i}\in \Omega \setminus \Omega^c := \overline{\Gamma}, \quad (i,j,k)\in[1,n_1^h]\times[1,n_2^h]\times[2,n_3^h].
+{\bf x}_{\bf i} &= {\bf X}^f({\bf r}_{\bf i}), \quad {\bf x}_{\bf i}\in\Omega^f, \quad {\bf i}\in[1,n_1^h]\times[1,n_2^h]\times[1,n_3^h]\\
+{\bf x}_{\bf i} &= {\bf X}^c({\bf r}_{\bf i}), \quad {\bf x}_{\bf i}\in\Omega^c, \quad  {\bf i}\in[1,n_1^{2h}]\times[1,n_2^{2h}]\times[1,n_3^{2h}]\\
+{\bf x}_{\bf i} &= {\bf X}^c({\bf r}_{\bf i}), \quad {\bf x}_{\bf i} \in \Gamma\cap\Omega^f, \quad{\bf i}\in[1,n_1^{2h}]\times[1,n_2^{2h}]\times\{ n_3^{2h}\}\\
+{\bf x}_{\bf i} &= {\bf X}^f({\bf r}_{\bf i}), \quad {\bf x}_{\bf i} \in \Gamma\cap\Omega^f, \quad{\bf i}\in[1,n_1^h]\times[1,n_2^h]\times\{1\}\\
+{\bf x}_{\bf i} &= {\bf X}^f({\bf r}_{\bf i}), \quad {\bf x}_{\bf i}\in \Omega \setminus \Omega^c := \overline{\Gamma}, \quad {\bf i}\in[1,n_1^h]\times[1,n_2^h]\times[2,n_3^h].
 \end{aligned}
 \right.
 \end{equation*}
@@ -61,7 +61,7 @@ respectively. Here,
 \end{equation*}
  with $l = 1,2,3$. Last, for the grid functions which are definded in $\overline{\Gamma}$, we have 
  \[{\bf f}_{\overline{\Gamma}} = ({\bf f}_{\overline{\Gamma}}^1, {\bf f}_{\overline{\Gamma}}^2, {\bf f}_{\overline{\Gamma}}^3)^T, \quad {\bf f}_{\overline{\Gamma}}^l\approx F_l({\bf r}), \quad l = 1,2,3, \quad {\bf X}^f({\bf r})\in\overline{\Gamma}.\]
- For the rest of the paper, we introduce the notation $\wt{\bf c} = (\wt{\bf c}^1,\wt{\bf c}^2,\wt{\bf c}^3)^T$ to represent both grid functions in $\Omega^c$ defined in (\ref{grid_function}) and grid functions for ghost points denfied in (\ref{sbp_2nd_1})--(\ref{sbp_1st_1}) outside of $\Omega^c$. Then we approximate the elastic wave equation (\ref{elastic_curvi}) in $\Omega^c$ by
+ For the rest of the paper, $\wt{\bf c} = (\wt{\bf c}^1,\wt{\bf c}^2,\wt{\bf c}^3)^T$ represents a grid function which  is defined on all grid points in $\Omega^c$ plus the ghost points (see Figure \ref{section_discretization}). Then we approximate the elastic wave equation (\ref{elastic_curvi}) in $\Omega^c$ by
 \begin{equation}\label{elastic_semi_c}
 {\varrho}^{2h} {\bf c}_{tt} =( \mathcal{ J}^{2h})^{-1}\left(\sum_{l=1}^2\mathcal{G}_l^{2h}({N}_{ll}^{2h}){\bf c}+\wt{\mathcal{G}}_3^{2h}({N}_{33}^{2h}){{\bf c}}+\sum_{l=1}^3\sum_{m=1,m\neq l}^3\mathcal{D}_l^{2h}(\mathcal{N}_{lm}^{2h}\mathcal{D}_m^{2h}{\bf c})\right) := \wt{\mathcal{L}}^{2h} \wt{{\bf c}},
 \end{equation}
