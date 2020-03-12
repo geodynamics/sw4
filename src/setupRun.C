@@ -452,6 +452,7 @@ void EW::preprocessSources(vector<vector<Source *> >&a_GlobalUniqueSources) {
   // MOVED TO Source:prepareTimeFunc() *** 6: saves a GMT file if requested
 
   // make sure that the material model is in place
+  //std::cout<<" ENTER PRPE  "<<a_GlobalUniqueSources[0][1]->getAmplitude()<<"\n";
   if (!mIsInitialized) {
     if (proc_zero())
       printf(
@@ -471,7 +472,7 @@ void EW::preprocessSources(vector<vector<Source *> >&a_GlobalUniqueSources) {
         cout << "Sanity testing of the source" << endl;
 
       if ((m_point_source_test || m_lamb_test) &&
-          a_GlobalUniqueSources.size() != 1) {
+          a_GlobalUniqueSources[0].size() != 1) {
         if (proc_zero())
           cout << "Error: Point Source Test and Lamb Test must have one single "
                   "source"
@@ -568,7 +569,7 @@ for( int e=0 ; e < m_nevent ; e++ )
                need_mu_corr ? "TRUE" : "FALSE");
 
       if (need_mu_corr) {
-        int nSources = a_GlobalUniqueSources.size();
+        int nSources = a_GlobalUniqueSources[e].size();
         // if (proc_zero())
         //   printf("Number of sources: %i\n", nSources);
 
@@ -606,9 +607,10 @@ for( int e=0 ; e < m_nevent ; e++ )
 // tmp
 // for (s=0; s<nSources; s++)
 //   printf("Proc #%i, source#%i, mu=%e\n", getRank(), s, mu_source_global[s]);
-
+	//std::cout<<" BEFORE MU "<<a_GlobalUniqueSources[0][1]->getAmplitude()<<" mu "<<mu_source_global[1]<<"  bool "<<a_GlobalUniqueSources[0][1]->get_CorrectForMu()<<"\n";
 // scale all moments components
 #pragma omp parallel for
+	//std::cout<<" N SOURCE "<<nSources<<"\n";
         for (int s = 0; s < nSources; s++)
           if (a_GlobalUniqueSources[e][s]->get_CorrectForMu()) {
             float_sw4 mu, mxx, mxy, mxz, myy, myz, mzz;
@@ -623,7 +625,7 @@ for( int e=0 ; e < m_nevent ; e++ )
         delete[] mu_source_loc;
         delete[] mu_source_global;
       }  // end if need_mu_corr
-
+      //std::cout<<" AFTER MU "<<a_GlobalUniqueSources[0][1]->getAmplitude()<<"\n";
       // limit max freq parameter (right now the raw freq parameter in the time
       // function) Either rad/s or Hz depending on the time fcn if
       // (m_limit_source_freq)
@@ -661,7 +663,7 @@ for( int e=0 ; e < m_nevent ; e++ )
       for (int s = 0; s < a_GlobalUniqueSources[e].size(); s++)
         if (a_GlobalUniqueSources[e][s]->getTfunc() == iDirac)
           a_GlobalUniqueSources[e][s]->setFrequency(1.0 / mDt);
-
+      std::cout<<" IN PREPE "<<a_GlobalUniqueSources[e][1]->getAmplitude()<<"\n";
       if (m_prefilter_sources) {
         // tell the filter about the time step and compute the second order
         // sections

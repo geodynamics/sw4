@@ -42,7 +42,9 @@ void prefetch_to_device(const float_sw4 *ptr);
 #endif
 void check_mem();
 void global_prefetch();
-enum Space { Host, Managed, Device, Pinned, Managed_temps };
+enum Space { Host, Managed, Device, Pinned, Managed_temps, Space_Error };
+Space
+GML(const void *ptr);
 void *operator new(std::size_t size, Space loc) throw(std::bad_alloc);
 void operator delete(void *ptr, Space loc) throw();
 void *operator new[](std::size_t size, Space loc) throw(std::bad_alloc);

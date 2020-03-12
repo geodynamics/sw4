@@ -210,14 +210,14 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 //  cout << "********Reading the input file, proc=" << m_myRank << endl;
 
 // First process Geodyn input for restrictions of allowable grid sizes.
- while (!inputFile.eof())
- {
-    inputFile.getline(buffer, 256);
-    if( startswith("geodynbc",buffer ) )
-       geodynFindFile(buffer);
- }
- inputFile.clear();
- inputFile.seekg(0, ios::beg);
+ // while (!inputFile.eof())
+ // {
+ //    inputFile.getline(buffer, 256);
+ //    if( startswith("geodynbc",buffer ) )
+ //       geodynFindFile(buffer);
+ // }
+ // inputFile.clear();
+ // inputFile.seekg(0, ios::beg);
   
 // process the testrayleigh command to enable a periodic domain in the (x,y)-directions
 // these commands can enter data directly the object (this->)
@@ -544,8 +544,8 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
        // 	 processPrefilter(buffer);
        else if( startswith("developer", buffer ) )
           processDeveloper(buffer);
-       else if( startswith("geodynbc", buffer ) )
-          processGeodynbc(buffer);
+       // else if( startswith("geodynbc", buffer ) )
+       //    processGeodynbc(buffer);
        else if( startswith("randomize", buffer ) )
        {
 	  //          processRandomize(buffer);
@@ -2264,9 +2264,9 @@ void EW::processTestLamb(char* buffer)
    token = strtok(NULL, " \t");
 
    string err = "Testlamb Error: ";
-   float_sw4 x0=0.0, y0=0.0, z0=0.0;
-   float_sw4 cs = 1.0, rho=1.0, cp=sqrt(3.0), fz=1.0, freq=1.0, f0=1.0; // the exact solution assumes freq = 1
-
+   //   float_sw4 x0=0.0, y0=0.0, z0=0.0;
+   //float_sw4 cs = 1.0, rho=1.0, cp=sqrt(3.0), fz=1.0, freq=1.0, f0=1.0; // the exact solution assumes freq = 1
+   float_sw4 rho=1.0, cp=sqrt(3.0);
    while (token != NULL)
    {
       if (startswith("#", token) || startswith(" ", buffer))
@@ -2435,13 +2435,13 @@ bool EW::checkTestEnergyPeriodic(char* buffer)
 void EW::processFileIO(char* buffer)
 {
    int printcycle = 100;
-   char* path = 0;
-   char* scenario = 0;
+   //   char* path = 0;
+   //  char* scenario = 0;
    int nwriters=8;
    bool pfs=false;
    
    int verbose = 0;
-   bool debug = false;
+   //  bool debug = false;
 
    char* token = strtok(buffer, " \t");
    CHECK_INPUT(strcmp("fileio", token) == 0, "ERROR: not a fileio line...: " << token);
@@ -2606,7 +2606,7 @@ void EW::processTime(char* buffer)
   float_sw4 t=0.0;
   int steps = -1;
   int year, month, day, hour, minute, second, msecond, fail;
-  bool refdateset=false, refeventdateset=false;
+  bool refdateset=false; // refeventdateset=false;
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("time", token) == 0, "ERROR: not a time line...: " << token);
   token = strtok(NULL, " \t");
@@ -2869,8 +2869,8 @@ void EW::processGlobalMaterial(char* buffer)
    token = strtok(NULL, " \t");
 
    string err = "globalmaterial error: ";
-   int modelnr = 0;
-   float_sw4 frequency = 1;
+   //   int modelnr = 0;
+   // float_sw4 frequency = 1;
    float_sw4 vpmin=0, vsmin=0;
   
    while (token != NULL)
@@ -3886,7 +3886,7 @@ void EW::processCheckPoint(char* buffer)
    token = strtok(NULL, " \t");
    string err = "CheckPoint Error: ";
    int cycle=-1, cycleInterval=0;
-   float_sw4 time=0.0, timeInterval=0.0;
+   //float_sw4 time=0.0, timeInterval=0.0;
    bool timingSet=false;
    string filePrefix = "checkpoint";
 
@@ -4159,6 +4159,8 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
      }
    }
    
+   // SView array used in enforceBCfreeAtt2
+  viewArrayActual = SW4_NEW(Managed, SView[m_number_mechanisms * 3]);
    m_iStart.resize(mNumberOfGrids);
    m_iEnd.resize(mNumberOfGrids);
    m_jStart.resize(mNumberOfGrids);
@@ -5960,7 +5962,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 	float_sw4 S, D, R;
 	stk -= mGeoAz; // subtract off the grid azimuth
 	S = stk*radconv; D = dip*radconv; R = rake*radconv;
-      
+	if (pts==1) std::cout<<"STK DIP RAKE "<<S<<" "<<D<<" "<<R<<"\n"<<std::flush;
 	mxx = -1.0 * ( sin(D) * cos(R) * sin (2*S) + sin(2*D) * sin(R) * sin(S)*sin(S) );
 	myy =        ( sin(D) * cos(R) * sin (2*S) - sin(2*D) * sin(R) * cos(S)*cos(S) );
 	mzz = -1.0 * ( mxx + myy );	
@@ -6029,6 +6031,10 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 	  else
 	  {
 	    a_GlobalUniqueSources[event].push_back(sourcePtr);
+	    if (a_GlobalUniqueSources[event].size()==2) {
+	      //std::cout<<"MXX "<<mxx<<" "<<mxy<<" "<<mxz<<" "<<myy<<" "<<myz<<" "<<mzz<<"\n";
+	      //std::cout<<"AT READ "<<sourcePtr->getAmplitude()<<"\n"<<std::flush;
+	    }
 	    nSources++;
 	  }
 	}

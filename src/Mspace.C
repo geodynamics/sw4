@@ -126,6 +126,10 @@ void *operator new(std::size_t size, Space loc) throw(std::bad_alloc) {
       SW4_CheckDeviceError(cudaMemAdvise(ptr, size,
                                          cudaMemAdviseSetPreferredLocation,
                                          global_variables.device));
+      if (ptr==NULL){
+	std::cerr<<"NULL POINTER \n"<<std::flush;
+	abort();
+      }
       return ptr;
     }
 #else
@@ -356,7 +360,16 @@ void operator delete[](void *ptr, Space loc) throw() {
       global_variables.curr_mem -= ss->size;
       // global_variables.max_mem=std::max(global_variables.max_mem,curr_mem);
     }
-    SW4_CheckDeviceError(cudaFree(ptr));
+    if (ptr==NULL){
+      std::cerr<<"Null pointer passed to freee \n";
+    } else {
+      if (GML(ptr)!=Managed){
+	std::cerr<<" Wrong space "<<GML(ptr)<<" "<<ptr<<"\n";
+	abort();
+      } else {
+	SW4_CheckDeviceError(cudaFree(ptr));
+      }
+    }
 #else
     umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
     auto allocator = rma.getAllocator("UM_pool");
@@ -635,7 +648,7 @@ void global_prefetch() {
     auto size = umpire::ResourceManager::getInstance()
                     .getAllocator(allocators[count])
                     .getHighWatermark();
-    std::cout << "GLOBAL PREFETCH SIZES " << size << " , " << std::get<1>(v)
+    std::cout << "GLOBAL PREFETCH SIZES FOR "<<allocators[count]<<" "<< size << " , " << std::get<1>(v)
               << "\n";
 #define PREFETCH_ALL 1
 #ifdef PREFETCH_ALL
@@ -661,4 +674,27 @@ std::vector<int> factors(int N, int start) {
   for (int i = start; i <= N; i++)
     if (N % i == 0) v.push_back(i);
   return v;
+}
+Space
+GML(const void *ptr)
+{
+  struct cudaPointerAttributes attr;
+  cudaPointerGetAttributes(&attr, ptr);
+   if (attr.type == cudaMemoryTypeUnregistered)
+   {
+     return Host;
+   }
+   else if (attr.type == cudaMemoryTypeHost)
+   {
+     return Pinned;
+   }
+   else if (attr.type == cudaMemoryTypeDevice)
+   {
+     return Device;
+   }
+   else if (attr.type == cudaMemoryTypeManaged)
+   {
+     return Managed;
+   }
+   else return Space_Error;
 }

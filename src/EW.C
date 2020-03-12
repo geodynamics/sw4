@@ -587,6 +587,9 @@ EW::EW(const string& fileName, vector<vector<Source*> >& a_GlobalSources,
       m_velo_omega(-1.0),
       m_min_omega(-1.0),
       m_max_omega(-1.0),
+  m_geodynbc_found(false),
+  m_geodynbc_center(false),
+  m_do_geodynbc(false),
       //  m_do_geodynbc(false),
       m_att_use_max_frequency(false),
       m_att_ppw(8.0),
@@ -645,7 +648,7 @@ EW::EW(const string& fileName, vector<vector<Source*> >& a_GlobalSources,
   if (!m_myRank) std::cout << "Using MPI buffers in device memory\n";
 #elif defined(SW4_MANAGED_MPI_BUFFERS)
   mpi_buffer_space = Managed;
-  if (!m_myRank) std::cout << "Using MPI buffersi n managed memory\n";
+  if (!m_myRank) std::cout << "Using MPI buffers in managed memory\n";
 #elif defined(SW4_PINNED_MPI_BUFFERS)
   mpi_buffer_space = Pinned;
   if (!m_myRank)
@@ -676,10 +679,34 @@ EW::EW(const string& fileName, vector<vector<Source*> >& a_GlobalSources,
 
   m_nevents_specified = findNumberOfEvents();
   m_nevent = m_nevents_specified > 0 ? m_nevents_specified:1;
-
-  mPath.resize(m_nevent);
-  mObsPath.resize(m_nevent);
-  mNumberOfTimeSteps.resize(m_nevent);
+  //std::cout<<"EVENTS "<<m_nevents_specified<<"  "<<m_nevent<<"\n";
+  // Allocate storage 
+   m_epi_lat.resize(m_nevent);
+   m_epi_lon.resize(m_nevent);
+   m_epi_depth.resize(m_nevent);
+   m_epi_t0.resize(m_nevent);
+   a_GlobalSources.resize(m_nevent);
+   a_GlobalTimeSeries.resize(m_nevent);
+   mPath.resize(m_nevent);
+   mObsPath.resize(m_nevent);
+   mTmax.resize(m_nevent);
+   mNumberOfTimeSteps.resize(m_nevent);
+   mTimeIsSet.resize(m_nevent);
+   m_utc0.resize(m_nevent);
+// Defaults
+   for( int e=0 ; e < m_nevent ; e++ )
+   {
+      m_epi_lat[e]  = 0.0;
+      m_epi_lon[e]  = 0.0;
+      m_epi_depth[e]= 0.0;
+      m_epi_t0[e]   = 0.0;
+      //      mPath[e] = "./";
+      //      mObsPath[e] = "./";
+      mTmax[e]= 0.0;
+      mNumberOfTimeSteps[e]=-1;
+      mTimeIsSet[e]=false;
+      m_utc0[e].resize(7);
+   }
 
 
   // read the input file and setup the simulation object
@@ -919,6 +946,7 @@ void EW::printPreamble(vector<Source*>& a_Sources,int event) const {
         if (a_Sources[i]->isMomentSource()) {
           numsrc++;
           myM0Sum += a_Sources[i]->getAmplitude();
+	  if (i==1) std::cout<<" SOURE "<<i<<" "<<a_Sources[i]->getAmplitude()<<"\n";
         }
       }
       if (!mQuiet) {
@@ -1612,7 +1640,7 @@ void EW::saveGMTFile(vector<vector<Source*> >& a_GlobalUniqueSources,int event) 
     }
 #endif
 
-    if (a_GlobalUniqueSources.size() > 0) {
+    if (a_GlobalUniqueSources[event].size() > 0) {
       contents << "# Sources... " << endl << "cat << EOF >! event.d" << endl;
 
       for (int i = 0; i < a_GlobalUniqueSources.size(); ++i) {
@@ -8511,8 +8539,8 @@ AllDims* EW::get_fine_alldimobject() {
 //-----------------------------------------------------------------------
 void EW::extractTopographyFromSfile( std::string a_topoFileName )
 {
-  double start_time, end_time;
-  start_time = MPI_Wtime();
+  //double start_time, end_time;
+  //start_time = MPI_Wtime();
 #ifdef USE_HDF5
   int verbose = mVerbose;
   std::string rname ="EW::extractTopographyFromSfile";

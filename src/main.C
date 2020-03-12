@@ -278,7 +278,7 @@ int main(int argc, char **argv) {
 
         // save all time series
 
-        for (int ts = 0; ts < GlobalTimeSeries.size(); ts++) {
+        for (int ts = 0; ts < GlobalTimeSeries[0].size(); ts++) {
           GlobalTimeSeries[0][ts]->writeFile();
 #ifdef USE_HDF5
         myWriteTime += GlobalTimeSeries[0][ts]->getWriteTime();

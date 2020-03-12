@@ -135,6 +135,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,int
 
   // Transfer source terms to each individual grid as point sources at grid
   // points.
+  // RUNS OUT OF MEMORY HERE
+  //std::cout<<getRank()<<" souces = "<<a_Sources.size()<<"\n";
   SW4_MARK_BEGIN("set_grid_point_sources4");
   for (unsigned int i = 0; i < a_Sources.size(); i++)
     a_Sources[i]->set_grid_point_sources4(this, point_sources);
@@ -475,6 +477,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,int
 
   // Um
   // communicate across processor boundaries
+  //return; // Crashes at the next line
   for (int g = 0; g < mNumberOfGrids; g++) communicate_array(Um[g], g);
 
   //    Um[0].save_to_disk("um-dbg0.bin");
