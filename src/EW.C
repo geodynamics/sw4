@@ -49,6 +49,10 @@
 #include "startEnd.h"
 #include "version.h"
 
+#ifdef USE_HDF5
+#include "hdf5.h"
+#endif
+
 extern "C" {
 void tw_aniso_force(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                     int klast, float_sw4* fo, float_sw4 t, float_sw4 om,
@@ -8539,14 +8543,15 @@ AllDims* EW::get_fine_alldimobject() {
 //-----------------------------------------------------------------------
 void EW::extractTopographyFromSfile( std::string a_topoFileName )
 {
-  //double start_time, end_time;
-  //start_time = MPI_Wtime();
+ 
 #ifdef USE_HDF5
-  int verbose = mVerbose;
+ double start_time, end_time;
+  start_time = MPI_Wtime();
+  //  int verbose = mVerbose;
   std::string rname ="EW::extractTopographyFromSfile";
   Sarray gridElev;
   herr_t ierr;
-  hid_t file_id, dataset_id, datatype_id, h5_dtype, group_id, dataspace_id, attr_id, plist_id;
+  hid_t file_id, dataset_id, datatype_id, h5_dtype, group_id, dataspace_id, attr_id;// plist_id;
   int prec;
   double lonlataz[3];
 

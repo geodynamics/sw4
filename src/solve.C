@@ -42,6 +42,10 @@
 #include "cuda_profiler_api.h"
 #endif
 
+#ifdef USE_HDF5
+#include "sachdf5.h"
+#endif
+
 #define SQR(x) ((x) * (x))
 
 //--------------------------------------------------------------------
@@ -600,6 +604,21 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,int
 
   // save initial data on receiver records
   vector<float_sw4> uRec;
+
+
+#if USE_HDF5
+  // Tang: if write HDF5 data and not restart, have rank 0 create the HDF5 file with all necessary groups, attributes, and datasets
+  // Disable HDF5 file locking so we can have multiple writer to open and write different datasets of the same file
+  setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
+  if ( a_TimeSeries.size() > 0 && a_TimeSeries[0]->getUseHDF5()) {
+    for (int tsi = 0; tsi < a_TimeSeries.size(); tsi++) 
+      a_TimeSeries[tsi]->resetHDF5file();
+    if(m_myRank == 0 && !m_check_point->do_restart()) 
+      createTimeSeriesHDF5File(a_TimeSeries, mNumberOfTimeSteps[event]+1, mDt, "");
+    MPI_Barrier(MPI_COMM_WORLD);
+  }
+#endif
+
   for (int ts = 0; ts < a_TimeSeries.size(); ts++) {
     // can't compute a 2nd order accurate time derivative at this point
     // therefore, don't record anything related to velocities for the initial
@@ -1165,6 +1184,35 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,int
   //      delete[] ind;
 
   double time_end_solve = MPI_Wtime();
+
+#if USE_HDF5
+// Only do this if there are any essi hdf5 files
+   if (mESSI3DFiles.size() > 0)
+   {
+     // Calculate the total ESSI hdf5 io time across all ranks
+     double hdf5_time=0;
+     for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
+       hdf5_time += mESSI3DFiles[i3]->getHDF5Timings();
+     // Max over all rank
+     double max_hdf5_time;
+     MPI_Reduce( &hdf5_time, &max_hdf5_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD );
+     if( m_myRank == 0 )
+       cout << "  ==> Max wallclock time to open/write ESSI hdf5 output is " 
+         << max_hdf5_time << " seconds " << endl;
+// add to total time for detailed timing output
+     // time_sum[0] += max_hdf5_time;
+     // time_sum[7] += max_hdf5_time; // fold the essi output into images and time-series
+   }
+
+   double total_time = 0.0, all_total_time;
+   for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
+      total_time += mImageFiles[fIndex]->get_write_time();
+   MPI_Reduce(&total_time, &all_total_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+   if( m_myRank == 0 )
+     cout << "  ==> Max wallclock time to write images is " << all_total_time << " seconds." << endl;
+#endif
+
+
   print_execution_time(time_start_solve, time_end_solve, "solver phase");
 
   if (m_output_detailed_timing) print_execution_times(time_sum);

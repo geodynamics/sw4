@@ -642,6 +642,7 @@ class EW {
   int getNumberOfGrids() { return mNumberOfGrids; };
   int getNumberOfGhostPoints() { return m_ghost_points; };
   int getNumberOfParallelPaddingPoints() { return m_ppadding; };
+  float_sw4 getLonOrigin(){ return mLonOrigin;};
   float_sw4 getLatOrigin() { return mLatOrigin; };
   float_sw4 getGridAzimuth() { return mGeoAz; };
   float_sw4 getMetersPerDegree() { return mMetersPerDegree; };

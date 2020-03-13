@@ -679,7 +679,11 @@ Space
 GML(const void *ptr)
 {
   struct cudaPointerAttributes attr;
-  cudaPointerGetAttributes(&attr, ptr);
+  if (cudaPointerGetAttributes(&attr, ptr)==cudaErrorInvalidValue){
+    // This shuld go away with Cuda 11
+    std::cerr<<"Invalid value in GML \n";
+    return Host;
+  }
    if (attr.type == cudaMemoryTypeUnregistered)
    {
      return Host;

@@ -200,7 +200,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        anisomtrltocurvilinear.o bcfreesurfcurvani.o tw_ani_stiff.o tw_aniso_force.o tw_aniso_force_tt.o \
        updatememvar.o addmemvarforcing2.o addsg4wind.o consintp.o scalar_prod.o oddIoddJinterp.o evenIoddJinterp.o \
        oddIevenJinterp.o evenIevenJinterp.o CheckPoint.o Mspace.o RandomizedMaterial.o AllDims.o Patch.o ESSI3D.o \
-	MaterialSfile.o MaterialInvtest.o geodyn.o ESSI3DHDF5.o
+	MaterialSfile.o MaterialInvtest.o geodyn.o ESSI3DHDF5.o sachdf5.o readhdf5.o
 
 
 # new C-routines converted from fortran
