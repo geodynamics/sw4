@@ -3361,8 +3361,8 @@ void att_free_curvi_ci(
 // void rhs4th3fortsgstr_ciopt( int ifirst, int ilast, int jfirst, int jlast,
 // int kfirst, int klast, 			     int ni,int nj,int nk,
 // float_sw4* a_lu, float_sw4* a_u, 			     float_sw4* a_mu,
-// float_sw4* a_lambda, 			     float_sw4 h, float_sw4* a_strx, float_sw4* a_stry,
-// 			     float_sw4* a_strz, char op ){
+// float_sw4* a_lambda, 			     float_sw4 h, float_sw4* a_strx,
+// float_sw4* a_stry, 			     float_sw4* a_strz, char op ){
 //   SW4_MARK_FUNCTION;
 //   int njcomp = jlast - jfirst + 1;
 //   dim3 blocks = dim3((ni+BX-1)/BX, (njcomp+BY-1)/BY, 1);

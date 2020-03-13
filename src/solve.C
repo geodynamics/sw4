@@ -49,7 +49,8 @@
 #define SQR(x) ((x) * (x))
 
 //--------------------------------------------------------------------
-void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,int event) {
+void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
+               int event) {
   SW4_MARK_FUNCTION;
   // solution arrays
   vector<Sarray> F, Lu, Uacc, Up, Um, U;
@@ -120,7 +121,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,int
 #pragma omp parallel for
   for (int ts = 0; ts < a_TimeSeries.size(); ts++) {
     a_TimeSeries[ts]->allocateRecordingArrays(
-        mNumberOfTimeSteps[event] + 1, mTstart, mDt);  // AP: added one to mNumber...
+        mNumberOfTimeSteps[event] + 1, mTstart,
+        mDt);  // AP: added one to mNumber...
     // In forward solve, the output receivers will use the same UTC as the
     // global reference utc0, therefore, set station utc equal reference utc.
     //     if( m_utc0set )
@@ -140,7 +142,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,int
   // Transfer source terms to each individual grid as point sources at grid
   // points.
   // RUNS OUT OF MEMORY HERE
-  //std::cout<<getRank()<<" souces = "<<a_Sources.size()<<"\n";
+  // std::cout<<getRank()<<" souces = "<<a_Sources.size()<<"\n";
   SW4_MARK_BEGIN("set_grid_point_sources4");
   for (unsigned int i = 0; i < a_Sources.size(); i++)
     a_Sources[i]->set_grid_point_sources4(this, point_sources);
@@ -262,7 +264,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,int
   if (!mQuiet && mVerbose && proc_zero()) {
     cout << endl << "***  Starting solve ***" << endl;
   }
-  printPreamble(a_Sources,event);
+  printPreamble(a_Sources, event);
 
   // Set up timers
   double time_start_solve = MPI_Wtime();
@@ -481,7 +483,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,int
 
   // Um
   // communicate across processor boundaries
-  //return; // Crashes at the next line
+  // return; // Crashes at the next line
   for (int g = 0; g < mNumberOfGrids; g++) communicate_array(Um[g], g);
 
   //    Um[0].save_to_disk("um-dbg0.bin");
@@ -605,16 +607,18 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,int
   // save initial data on receiver records
   vector<float_sw4> uRec;
 
-
 #if USE_HDF5
-  // Tang: if write HDF5 data and not restart, have rank 0 create the HDF5 file with all necessary groups, attributes, and datasets
-  // Disable HDF5 file locking so we can have multiple writer to open and write different datasets of the same file
+  // Tang: if write HDF5 data and not restart, have rank 0 create the HDF5 file
+  // with all necessary groups, attributes, and datasets Disable HDF5 file
+  // locking so we can have multiple writer to open and write different datasets
+  // of the same file
   setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
-  if ( a_TimeSeries.size() > 0 && a_TimeSeries[0]->getUseHDF5()) {
-    for (int tsi = 0; tsi < a_TimeSeries.size(); tsi++) 
+  if (a_TimeSeries.size() > 0 && a_TimeSeries[0]->getUseHDF5()) {
+    for (int tsi = 0; tsi < a_TimeSeries.size(); tsi++)
       a_TimeSeries[tsi]->resetHDF5file();
-    if(m_myRank == 0 && !m_check_point->do_restart()) 
-      createTimeSeriesHDF5File(a_TimeSeries, mNumberOfTimeSteps[event]+1, mDt, "");
+    if (m_myRank == 0 && !m_check_point->do_restart())
+      createTimeSeriesHDF5File(a_TimeSeries, mNumberOfTimeSteps[event] + 1, mDt,
+                               "");
     MPI_Barrier(MPI_COMM_WORLD);
   }
 #endif
@@ -642,9 +646,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,int
     mImage3DFiles[i3]->update_image(beginCycle - 1, t, mDt, U, mRho, mMu,
                                     mLambda, mRho, mMu, mLambda, mQp, mQs,
                                     mPath[event], mZ);
-  for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ ) {
+  for (int i3 = 0; i3 < mESSI3DFiles.size(); i3++) {
     mESSI3DFiles[i3]->set_ntimestep(mNumberOfTimeSteps[event]);
-    mESSI3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mPath[event], mZ );
+    mESSI3DFiles[i3]->update_image(beginCycle - 1, t, mDt, U, mPath[event], mZ);
   }
   FILE* lf = NULL;
   // open file for saving norm of error
@@ -718,8 +722,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,int
 #ifdef SW4_TRACK_MPI
   // bool cudaProfilerOn = false;
 #endif
-  for (int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps[event];
-       currentTimeStep++) {
+  for (int currentTimeStep = beginCycle;
+       currentTimeStep <= mNumberOfTimeSteps[event]; currentTimeStep++) {
     time_measure[0] = MPI_Wtime();
     if (currentTimeStep == mNumberOfTimeSteps[event]) t1 = SW4_CHRONO_NOW;
     if (currentTimeStep == (beginCycle + 10)) {
@@ -1018,14 +1022,15 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,int
     for (int i3 = 0; i3 < mImage3DFiles.size(); i3++)
       mImage3DFiles[i3]->update_image(
           currentTimeStep, t, mDt, Up, mRho, mMu, mLambda, mRho, mMu, mLambda,
-          mQp, mQs, mPath[event], mZ);  // mRho, mMu, mLambda occur twice because we
-                                 // don't use gradRho etc.
+          mQp, mQs, mPath[event], mZ);  // mRho, mMu, mLambda occur twice
+                                        // because we don't use gradRho etc.
 
     // Update the ESSI hdf5 data
-    double time_essi_tmp=MPI_Wtime();
-    for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
-      mESSI3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mPath[event], mZ );
-    double time_essi=MPI_Wtime()-time_essi_tmp;
+    double time_essi_tmp = MPI_Wtime();
+    for (int i3 = 0; i3 < mESSI3DFiles.size(); i3++)
+      mESSI3DFiles[i3]->update_image(currentTimeStep, t, mDt, Up, mPath[event],
+                                     mZ);
+    double time_essi = MPI_Wtime() - time_essi_tmp;
 
     // save the current solution on receiver records (time-derivative require Up
     // and Um for a 2nd order approximation, so do this before cycling the
@@ -1085,8 +1090,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,int
     // // Energy evaluation, requires all three time levels present, do before
     // cycle arrays.
     if (m_energy_test)
-      compute_energy(mDt, currentTimeStep == mNumberOfTimeSteps[event], Um, U, Up,
-                     currentTimeStep,event);
+      compute_energy(mDt, currentTimeStep == mNumberOfTimeSteps[event], Um, U,
+                     Up, currentTimeStep, event);
 
     // cycle the solution arrays
     cycleSolutionArrays(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp);
@@ -1186,32 +1191,34 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,int
   double time_end_solve = MPI_Wtime();
 
 #if USE_HDF5
-// Only do this if there are any essi hdf5 files
-   if (mESSI3DFiles.size() > 0)
-   {
-     // Calculate the total ESSI hdf5 io time across all ranks
-     double hdf5_time=0;
-     for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
-       hdf5_time += mESSI3DFiles[i3]->getHDF5Timings();
-     // Max over all rank
-     double max_hdf5_time;
-     MPI_Reduce( &hdf5_time, &max_hdf5_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD );
-     if( m_myRank == 0 )
-       cout << "  ==> Max wallclock time to open/write ESSI hdf5 output is " 
-         << max_hdf5_time << " seconds " << endl;
-// add to total time for detailed timing output
-     // time_sum[0] += max_hdf5_time;
-     // time_sum[7] += max_hdf5_time; // fold the essi output into images and time-series
-   }
+  // Only do this if there are any essi hdf5 files
+  if (mESSI3DFiles.size() > 0) {
+    // Calculate the total ESSI hdf5 io time across all ranks
+    double hdf5_time = 0;
+    for (int i3 = 0; i3 < mESSI3DFiles.size(); i3++)
+      hdf5_time += mESSI3DFiles[i3]->getHDF5Timings();
+    // Max over all rank
+    double max_hdf5_time;
+    MPI_Reduce(&hdf5_time, &max_hdf5_time, 1, MPI_DOUBLE, MPI_MAX, 0,
+               MPI_COMM_WORLD);
+    if (m_myRank == 0)
+      cout << "  ==> Max wallclock time to open/write ESSI hdf5 output is "
+           << max_hdf5_time << " seconds " << endl;
+    // add to total time for detailed timing output
+    // time_sum[0] += max_hdf5_time;
+    // time_sum[7] += max_hdf5_time; // fold the essi output into images and
+    // time-series
+  }
 
-   double total_time = 0.0, all_total_time;
-   for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
-      total_time += mImageFiles[fIndex]->get_write_time();
-   MPI_Reduce(&total_time, &all_total_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-   if( m_myRank == 0 )
-     cout << "  ==> Max wallclock time to write images is " << all_total_time << " seconds." << endl;
+  double total_time = 0.0, all_total_time;
+  for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
+    total_time += mImageFiles[fIndex]->get_write_time();
+  MPI_Reduce(&total_time, &all_total_time, 1, MPI_DOUBLE, MPI_MAX, 0,
+             MPI_COMM_WORLD);
+  if (m_myRank == 0)
+    cout << "  ==> Max wallclock time to write images is " << all_total_time
+         << " seconds." << endl;
 #endif
-
 
   print_execution_time(time_start_solve, time_end_solve, "solver phase");
 
@@ -2850,8 +2857,8 @@ void EW::compute_preliminary_corrector(
   //       float_sw4 amplambda= m_twilight_forcing->m_amplambda;
   //       if( m_croutines )
   // 	 forcingttfort_ci( ib, ie, jb, je, kic, kic, force.c_ptr(), t, om, cv,
-  // ph, omm, phm, 			   amprho, ampmu, amplambda, mGridSize[g],
-  // m_zmin[g]
+  // ph, omm, phm, 			   amprho, ampmu, amplambda,
+  // mGridSize[g], m_zmin[g]
   // );
   //       else
   // 	 forcingttfort( &ib, &ie, &jb, &je, &kic, &kic, force.c_ptr(), &t, &om,
@@ -3791,8 +3798,8 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
 
 // //---------------------------------------------------------------------------
 // void eval_curvilinear_bc_stress(Sarray & a_u, double ** bcForcing, Sarray &
-// a_x, Sarray & a_y, Sarray & a_z, 				Sarray & a_mu, Sarray
-// & a_lam, Sarray & a_q, Sarray & a_r, Sarray & a_s, Sarray & a_J)
+// a_x, Sarray & a_y, Sarray & a_z, 				Sarray & a_mu,
+// Sarray & a_lam, Sarray & a_q, Sarray & a_r, Sarray & a_s, Sarray & a_J)
 // {
 // // 4D macros swap the last and first indices to compensate for different
 // conventions between how

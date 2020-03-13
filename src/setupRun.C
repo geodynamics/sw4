@@ -307,8 +307,7 @@ void EW::setupRun(vector<vector<Source *> > &a_GlobalUniqueSources) {
   //  int beginCycle = 1;
 
   // Initialize IO
-for( int e=0 ; e < m_nevent ; e++ )
-  create_directory(mPath[e]);
+  for (int e = 0; e < m_nevent; e++) create_directory(mPath[e]);
 
   if (proc_zero()) {
     double lat[4], lon[4];
@@ -439,7 +438,7 @@ for( int e=0 ; e < m_nevent ; e++ )
 }
 
 //-----------------------------------------------------------------------
-void EW::preprocessSources(vector<vector<Source *> >&a_GlobalUniqueSources) {
+void EW::preprocessSources(vector<vector<Source *> > &a_GlobalUniqueSources) {
   // This routine should be called once, after setupRun (can we include it in
   // setupRun?)
 
@@ -452,7 +451,8 @@ void EW::preprocessSources(vector<vector<Source *> >&a_GlobalUniqueSources) {
   // MOVED TO Source:prepareTimeFunc() *** 6: saves a GMT file if requested
 
   // make sure that the material model is in place
-  //std::cout<<" ENTER PRPE  "<<a_GlobalUniqueSources[0][1]->getAmplitude()<<"\n";
+  // std::cout<<" ENTER PRPE
+  // "<<a_GlobalUniqueSources[0][1]->getAmplitude()<<"\n";
   if (!mIsInitialized) {
     if (proc_zero())
       printf(
@@ -537,200 +537,208 @@ void EW::preprocessSources(vector<vector<Source *> >&a_GlobalUniqueSources) {
       // value of t0
 
       // get the epicenter
-for( int e=0 ; e < m_nevent ; e++ )
-  {
-    compute_epicenter(a_GlobalUniqueSources[e],e);
+      for (int e = 0; e < m_nevent; e++) {
+        compute_epicenter(a_GlobalUniqueSources[e], e);
 
-      // Set up 'normal' sources for point_source_test, lamb_test, or standard
-      // seismic case.
+        // Set up 'normal' sources for point_source_test, lamb_test, or standard
+        // seismic case.
 
-      // if the sources were defined by a rupture file, we need to multiply the
-      // Mij coefficients by mu (shear modulus)
-      bool need_mu_corr = false;
+        // if the sources were defined by a rupture file, we need to multiply
+        // the Mij coefficients by mu (shear modulus)
+        bool need_mu_corr = false;
 #pragma omp parallel for reduction(|| : need_mu_corr)
-      for (int i = 0; i < a_GlobalUniqueSources[e].size(); i++)
-        need_mu_corr =
-            (need_mu_corr || a_GlobalUniqueSources[e][i]->get_CorrectForMu());
+        for (int i = 0; i < a_GlobalUniqueSources[e].size(); i++)
+          need_mu_corr =
+              (need_mu_corr || a_GlobalUniqueSources[e][i]->get_CorrectForMu());
 
-      // must communicate need_mu_corr
-      int mu_corr_global = 0, mu_corr_loc = need_mu_corr ? 1 : 0;
+        // must communicate need_mu_corr
+        int mu_corr_global = 0, mu_corr_loc = need_mu_corr ? 1 : 0;
 
-      // take max over all procs to communicate
-      MPI_Allreduce(&mu_corr_loc, &mu_corr_global, 1, MPI_INT, MPI_MAX,
-                    m_cartesian_communicator);
-      need_mu_corr = (bool)mu_corr_global;
+        // take max over all procs to communicate
+        MPI_Allreduce(&mu_corr_loc, &mu_corr_global, 1, MPI_INT, MPI_MAX,
+                      m_cartesian_communicator);
+        need_mu_corr = (bool)mu_corr_global;
 
-      // tmp
-      //      printf(" Proc #%i, sources needs correction for shear modulus:
-      //      %s\n", getRank(), need_mu_corr? "TRUE":"FALSE");
+        // tmp
+        //      printf(" Proc #%i, sources needs correction for shear modulus:
+        //      %s\n", getRank(), need_mu_corr? "TRUE":"FALSE");
 
-      if (!mQuiet && mVerbose >= 3 && proc_zero())
-        printf(" Some sources needs correction for shear modulus: %s\n",
-               need_mu_corr ? "TRUE" : "FALSE");
+        if (!mQuiet && mVerbose >= 3 && proc_zero())
+          printf(" Some sources needs correction for shear modulus: %s\n",
+                 need_mu_corr ? "TRUE" : "FALSE");
 
-      if (need_mu_corr) {
-        int nSources = a_GlobalUniqueSources[e].size();
-        // if (proc_zero())
-        //   printf("Number of sources: %i\n", nSources);
+        if (need_mu_corr) {
+          int nSources = a_GlobalUniqueSources[e].size();
+          // if (proc_zero())
+          //   printf("Number of sources: %i\n", nSources);
 
-        // allocate a temp array for the mu value at all source locations
-        float_sw4 *mu_source_loc = new float_sw4[nSources];
-        float_sw4 *mu_source_global = new float_sw4[nSources];
-        // initialize
+          // allocate a temp array for the mu value at all source locations
+          float_sw4 *mu_source_loc = new float_sw4[nSources];
+          float_sw4 *mu_source_global = new float_sw4[nSources];
+          // initialize
 
 #pragma omp parallel for
-        for (int s = 0; s < nSources; s++) {
-          mu_source_loc[s] = -1.0;
-          mu_source_global[s] = -1.0;
-        }
+          for (int s = 0; s < nSources; s++) {
+            mu_source_loc[s] = -1.0;
+            mu_source_global[s] = -1.0;
+          }
 
 // fill in the values that are known to this processor
 #pragma omp parallel for
-        for (int s = 0; s < nSources; s++)
-          if (a_GlobalUniqueSources[e][s]->myPoint()) {
-            int is = a_GlobalUniqueSources[e][s]->m_i0;
-            int js = a_GlobalUniqueSources[e][s]->m_j0;
-            int ks = a_GlobalUniqueSources[e][s]->m_k0;
-            int gs = a_GlobalUniqueSources[e][s]->m_grid;
+          for (int s = 0; s < nSources; s++)
+            if (a_GlobalUniqueSources[e][s]->myPoint()) {
+              int is = a_GlobalUniqueSources[e][s]->m_i0;
+              int js = a_GlobalUniqueSources[e][s]->m_j0;
+              int ks = a_GlobalUniqueSources[e][s]->m_k0;
+              int gs = a_GlobalUniqueSources[e][s]->m_grid;
 
-            // tmp
-            mu_source_loc[s] = mMu[gs](is, js, ks);
-            // printf("Proc #%i, source#%i, i=%i, j=%i, k=%i, g=%i, mu=%e\n",
-            // getRank(), s, is, js, ks, gs, mu_source_loc[s]);
-          }
-        // take max over all procs: communicate
-        MPI_Allreduce(mu_source_loc, mu_source_global, nSources, m_mpifloat,
-                      MPI_MAX, m_cartesian_communicator);
+              // tmp
+              mu_source_loc[s] = mMu[gs](is, js, ks);
+              // printf("Proc #%i, source#%i, i=%i, j=%i, k=%i, g=%i, mu=%e\n",
+              // getRank(), s, is, js, ks, gs, mu_source_loc[s]);
+            }
+          // take max over all procs: communicate
+          MPI_Allreduce(mu_source_loc, mu_source_global, nSources, m_mpifloat,
+                        MPI_MAX, m_cartesian_communicator);
 
-        if (!mQuiet && mVerbose >= 3 && proc_zero())
-          printf(" Done communicating shear modulus to all procs\n");
+          if (!mQuiet && mVerbose >= 3 && proc_zero())
+            printf(" Done communicating shear modulus to all procs\n");
 // tmp
 // for (s=0; s<nSources; s++)
 //   printf("Proc #%i, source#%i, mu=%e\n", getRank(), s, mu_source_global[s]);
-	//std::cout<<" BEFORE MU "<<a_GlobalUniqueSources[0][1]->getAmplitude()<<" mu "<<mu_source_global[1]<<"  bool "<<a_GlobalUniqueSources[0][1]->get_CorrectForMu()<<"\n";
+// std::cout<<" BEFORE MU "<<a_GlobalUniqueSources[0][1]->getAmplitude()<<" mu
+// "<<mu_source_global[1]<<"  bool
+// "<<a_GlobalUniqueSources[0][1]->get_CorrectForMu()<<"\n";
 // scale all moments components
 #pragma omp parallel for
-	//std::cout<<" N SOURCE "<<nSources<<"\n";
-        for (int s = 0; s < nSources; s++)
-          if (a_GlobalUniqueSources[e][s]->get_CorrectForMu()) {
-            float_sw4 mu, mxx, mxy, mxz, myy, myz, mzz;
-            mu = mu_source_global[s];
-            a_GlobalUniqueSources[e][s]->getMoments(mxx, mxy, mxz, myy, myz, mzz);
-            a_GlobalUniqueSources[e][s]->setMoments(mu * mxx, mu * mxy, mu * mxz,
-                                                 mu * myy, mu * myz, mu * mzz);
-            // lower the flag
-            a_GlobalUniqueSources[e][s]->set_CorrectForMu(false);
-          }
-        // cleanup
-        delete[] mu_source_loc;
-        delete[] mu_source_global;
-      }  // end if need_mu_corr
-      //std::cout<<" AFTER MU "<<a_GlobalUniqueSources[0][1]->getAmplitude()<<"\n";
-      // limit max freq parameter (right now the raw freq parameter in the time
-      // function) Either rad/s or Hz depending on the time fcn if
-      // (m_limit_source_freq)
-      // {
-      // 	if (mVerbose && proc_zero() )
-      // 	  printf(" Limiting the freq parameter in all source time
-      // functions to the max value %e\n", m_source_freq_max);
+          // std::cout<<" N SOURCE "<<nSources<<"\n";
+          for (int s = 0; s < nSources; s++)
+            if (a_GlobalUniqueSources[e][s]->get_CorrectForMu()) {
+              float_sw4 mu, mxx, mxy, mxz, myy, myz, mzz;
+              mu = mu_source_global[s];
+              a_GlobalUniqueSources[e][s]->getMoments(mxx, mxy, mxz, myy, myz,
+                                                      mzz);
+              a_GlobalUniqueSources[e][s]->setMoments(
+                  mu * mxx, mu * mxy, mu * mxz, mu * myy, mu * myz, mu * mzz);
+              // lower the flag
+              a_GlobalUniqueSources[e][s]->set_CorrectForMu(false);
+            }
+          // cleanup
+          delete[] mu_source_loc;
+          delete[] mu_source_global;
+        }  // end if need_mu_corr
+        // std::cout<<" AFTER MU
+        // "<<a_GlobalUniqueSources[0][1]->getAmplitude()<<"\n";
+        // limit max freq parameter (right now the raw freq parameter in the
+        // time function) Either rad/s or Hz depending on the time fcn if
+        // (m_limit_source_freq)
+        // {
+        // 	if (mVerbose && proc_zero() )
+        // 	  printf(" Limiting the freq parameter in all source time
+        // functions to the max value %e\n", m_source_freq_max);
 
-      // 	for( int s=0; s < a_GlobalUniqueSources.size(); s++ )
-      // 	  a_GlobalUniqueSources[s]->setMaxFrequency( m_source_freq_max
-      // );
+        // 	for( int s=0; s < a_GlobalUniqueSources.size(); s++ )
+        // 	  a_GlobalUniqueSources[s]->setMaxFrequency( m_source_freq_max
+        // );
 
-      // } // end limit_source_freq
+        // } // end limit_source_freq
 
-      // check how deep the sources go
-      float_sw4 zMax = m_global_zmin, zMaxGlobal, zMin = m_global_zmax,
-                zMinGlobal;
+        // check how deep the sources go
+        float_sw4 zMax = m_global_zmin, zMaxGlobal, zMin = m_global_zmax,
+                  zMinGlobal;
 #pragma omp parallel for reduction(max : zMax) reduction(min : zMin)
-      for (int s = 0; s < a_GlobalUniqueSources[e].size(); s++) {
-        float_sw4 zSource = a_GlobalUniqueSources[e][s]->getZ0();
-        if (zSource > zMax) zMax = zSource;
-        if (zSource < zMin) zMin = zSource;
-      }
-      // compute global max over all processors
-      MPI_Allreduce(&zMax, &zMaxGlobal, 1, m_mpifloat, MPI_MAX,
-                    m_cartesian_communicator);
-      MPI_Allreduce(&zMin, &zMinGlobal, 1, m_mpifloat, MPI_MIN,
-                    m_cartesian_communicator);
-      if (!mQuiet && mVerbose >= 1 && proc_zero())
-        printf(" Min source z-level: %e, max source z-level: %e\n", zMinGlobal,
-               zMaxGlobal);
+        for (int s = 0; s < a_GlobalUniqueSources[e].size(); s++) {
+          float_sw4 zSource = a_GlobalUniqueSources[e][s]->getZ0();
+          if (zSource > zMax) zMax = zSource;
+          if (zSource < zMin) zMin = zSource;
+        }
+        // compute global max over all processors
+        MPI_Allreduce(&zMax, &zMaxGlobal, 1, m_mpifloat, MPI_MAX,
+                      m_cartesian_communicator);
+        MPI_Allreduce(&zMin, &zMinGlobal, 1, m_mpifloat, MPI_MIN,
+                      m_cartesian_communicator);
+        if (!mQuiet && mVerbose >= 1 && proc_zero())
+          printf(" Min source z-level: %e, max source z-level: %e\n",
+                 zMinGlobal, zMaxGlobal);
 
 // Need to set the frequency to 1/dt for Dirac source
 #pragma omp parallel for
-      for (int s = 0; s < a_GlobalUniqueSources[e].size(); s++)
-        if (a_GlobalUniqueSources[e][s]->getTfunc() == iDirac)
-          a_GlobalUniqueSources[e][s]->setFrequency(1.0 / mDt);
-      std::cout<<" IN PREPE "<<a_GlobalUniqueSources[e][1]->getAmplitude()<<"\n";
-      if (m_prefilter_sources) {
-        // tell the filter about the time step and compute the second order
-        // sections
-        m_filter_ptr->computeSOS(mDt);
+        for (int s = 0; s < a_GlobalUniqueSources[e].size(); s++)
+          if (a_GlobalUniqueSources[e][s]->getTfunc() == iDirac)
+            a_GlobalUniqueSources[e][s]->setFrequency(1.0 / mDt);
+        std::cout << " IN PREPE " << a_GlobalUniqueSources[e][1]->getAmplitude()
+                  << "\n";
+        if (m_prefilter_sources) {
+          // tell the filter about the time step and compute the second order
+          // sections
+          m_filter_ptr->computeSOS(mDt);
 
-        // output details about the filter
-        if (mVerbose >= 3 && proc_zero()) cout << *m_filter_ptr;
+          // output details about the filter
+          if (mVerbose >= 3 && proc_zero()) cout << *m_filter_ptr;
 
-        if (!getQuiet() && proc_zero()) {
-          printf("Filter precursor = %e\n", m_filter_ptr->estimatePrecursor());
+          if (!getQuiet() && proc_zero()) {
+            printf("Filter precursor = %e\n",
+                   m_filter_ptr->estimatePrecursor());
+          }
         }
+
+        // // Modify the time functions if prefiltering is enabled
+
+        // // 1. Make sure the smallest time offset is at least t0_min +
+        // (timeFcn dependent offset for centered fcn's) 	double dt0 = 0;
+        // double dt0loc, dt0max, t0_min; 	t0_min =
+        // m_filter_ptr->estimatePrecursor();
+        // // tmp
+        // 	if (!mQuiet && proc_zero() )
+        // 	  printf("Filter precursor = %e\n", t0_min);
+
+        // // old estimate for 2-pole low-pass Butterworth
+        // //	t0_min = 4./m_filter_ptr->get_corner_freq2();
+
+        // 	for( int s=0; s < a_GlobalUniqueSources.size(); s++ )
+        // 	{
+        // 	  dt0loc = a_GlobalUniqueSources[s]->compute_t0_increase( t0_min
+        // );
+
+        // 	  if( dt0loc > dt0 )
+        // 	    dt0 = dt0loc;
+        // 	}
+        // // compute global max over all processors
+        // 	MPI_Allreduce( &dt0, &dt0max, 1, MPI_DOUBLE, MPI_MAX,
+        // m_cartesian_communicator);
+
+        // // dt0max is the maxima over all dt0loc in all processors.
+        // // If it is positive, the t0 field in all source commands should be
+        // incremented
+        // // by at least this amount. Otherwise, there might be significant
+        // artifacts from
+        // // a sudden start of some source.
+        // 	if (dt0max > 0.)
+        // 	{
+        // // Don't mess with t0.
+        // // Instead, warn the user of potential transients due to unsmooth
+        // start
+        // //	  for( int s=0; s < a_GlobalUniqueSources.size(); s++ )
+        // //	    a_GlobalUniqueSources[s]->adjust_t0( dt0max );
+        // 	  if ( !mQuiet && proc_zero() )
+        // 	    printf("\n*** WARNING: the 2 pass prefilter has an estimated
+        // precursor of length %e s\n"
+        // 		   "*** To avoid artifacts due to sudden startup,
+        // increase t0 in all source commands by at least %e\n\n",
+        // t0_min, dt0max);
+        // 	}
+
+        // // Do the filtering
+        // 	for( int s=0; s < a_GlobalUniqueSources.size(); s++ )
+        //            a_GlobalUniqueSources[s]->filter_timefunc( m_filter_ptr,
+        //            mTstart, mDt, mNumberOfTimeSteps );
+        //       }
+
+        // // TODO: check that t0 is large enough even when prefilter is NOT
+        // used
+
+        if (proc_zero()) saveGMTFile(a_GlobalUniqueSources, e);
       }
-
-      // // Modify the time functions if prefiltering is enabled
-
-      // // 1. Make sure the smallest time offset is at least t0_min + (timeFcn
-      // dependent offset for centered fcn's) 	double dt0 = 0; double dt0loc,
-      // dt0max, t0_min; 	t0_min = m_filter_ptr->estimatePrecursor();
-      // // tmp
-      // 	if (!mQuiet && proc_zero() )
-      // 	  printf("Filter precursor = %e\n", t0_min);
-
-      // // old estimate for 2-pole low-pass Butterworth
-      // //	t0_min = 4./m_filter_ptr->get_corner_freq2();
-
-      // 	for( int s=0; s < a_GlobalUniqueSources.size(); s++ )
-      // 	{
-      // 	  dt0loc = a_GlobalUniqueSources[s]->compute_t0_increase( t0_min
-      // );
-
-      // 	  if( dt0loc > dt0 )
-      // 	    dt0 = dt0loc;
-      // 	}
-      // // compute global max over all processors
-      // 	MPI_Allreduce( &dt0, &dt0max, 1, MPI_DOUBLE, MPI_MAX,
-      // m_cartesian_communicator);
-
-      // // dt0max is the maxima over all dt0loc in all processors.
-      // // If it is positive, the t0 field in all source commands should be
-      // incremented
-      // // by at least this amount. Otherwise, there might be significant
-      // artifacts from
-      // // a sudden start of some source.
-      // 	if (dt0max > 0.)
-      // 	{
-      // // Don't mess with t0.
-      // // Instead, warn the user of potential transients due to unsmooth start
-      // //	  for( int s=0; s < a_GlobalUniqueSources.size(); s++ )
-      // //	    a_GlobalUniqueSources[s]->adjust_t0( dt0max );
-      // 	  if ( !mQuiet && proc_zero() )
-      // 	    printf("\n*** WARNING: the 2 pass prefilter has an estimated
-      // precursor of length %e s\n"
-      // 		   "*** To avoid artifacts due to sudden startup,
-      // increase t0 in all source commands by at least %e\n\n",
-      // t0_min, dt0max);
-      // 	}
-
-      // // Do the filtering
-      // 	for( int s=0; s < a_GlobalUniqueSources.size(); s++ )
-      //            a_GlobalUniqueSources[s]->filter_timefunc( m_filter_ptr,
-      //            mTstart, mDt, mNumberOfTimeSteps );
-      //       }
-
-      // // TODO: check that t0 is large enough even when prefilter is NOT used
-
-      if (proc_zero()) saveGMTFile(a_GlobalUniqueSources,e);
-  }
 
     }  // end normal seismic setup
 
@@ -742,7 +750,7 @@ for( int e=0 ; e < m_nevent ; e++ )
 }  // end preprocessSources
 
 //-----------------------------------------------------------------------
-void EW::compute_epicenter(vector<Source *> &a_GlobalUniqueSources,int e) {
+void EW::compute_epicenter(vector<Source *> &a_GlobalUniqueSources, int e) {
   // To find out which event goes first, we need to query all sources
   double earliestTime = 0.;
   double epiLat = 0.0, epiLon = 0.0, epiDepth = 0.0;
@@ -767,7 +775,7 @@ void EW::compute_epicenter(vector<Source *> &a_GlobalUniqueSources,int e) {
     epiDepth = firstSource->getDepth();  // corrected for topography!
   }
 
-  set_epicenter(epiLat, epiLon, epiDepth, earliestTime,e);
+  set_epicenter(epiLat, epiLon, epiDepth, earliestTime, e);
 }
 
 //-----------------------------------------------------------------------
@@ -1610,20 +1618,22 @@ void EW::computeDT() {
     cout << "TIME accuracy order=" << mOrder << " CFL=" << mCFL
          << " prel. time step=" << mDt << endl;
   }
-  for( int e=0 ; e < m_nevent ; e++ )
-    {
-      if (mTimeIsSet[e]) {
-	// constrain the dt based on the goal time
-	//      VERIFY2(mTmax > mTstart,"*** ERROR: Tstart is greater than Tmax!
-	//      ***");
-	mNumberOfTimeSteps[e] = static_cast<int>((mTmax[e] - mTstart) / mDt + 0.5);
-	mNumberOfTimeSteps[e] = (mNumberOfTimeSteps[e] == 0) ? 1 : mNumberOfTimeSteps[e];
-	// the resulting mDt could be slightly too large, because the
-	// numberOfTimeSteps is rounded to the nearest int
-	// When more than one event set mTmax, the final time will only be perfect for one event, don't know how to fix that....
-	mDt = (mTmax[e] - mTstart) / mNumberOfTimeSteps[e];
-      }
+  for (int e = 0; e < m_nevent; e++) {
+    if (mTimeIsSet[e]) {
+      // constrain the dt based on the goal time
+      //      VERIFY2(mTmax > mTstart,"*** ERROR: Tstart is greater than Tmax!
+      //      ***");
+      mNumberOfTimeSteps[e] =
+          static_cast<int>((mTmax[e] - mTstart) / mDt + 0.5);
+      mNumberOfTimeSteps[e] =
+          (mNumberOfTimeSteps[e] == 0) ? 1 : mNumberOfTimeSteps[e];
+      // the resulting mDt could be slightly too large, because the
+      // numberOfTimeSteps is rounded to the nearest int
+      // When more than one event set mTmax, the final time will only be perfect
+      // for one event, don't know how to fix that....
+      mDt = (mTmax[e] - mTstart) / mNumberOfTimeSteps[e];
     }
+  }
 }
 
 //-----------------------------------------------------------------------
@@ -1670,14 +1680,15 @@ void EW::computeDTanisotropic() {
     cout << "order of accuracy=" << mOrder << " CFL=" << mCFL
          << " prel. time step=" << mDt << endl;
   }
-for( int e=0 ; e < m_nevent ; e++ )
-  {
+  for (int e = 0; e < m_nevent; e++) {
     if (mTimeIsSet[e]) {
       // constrain the dt based on the goal time
       //      VERIFY2(mTmax > mTstart,"*** ERROR: Tstart is greater than Tmax!
       //      ***");
-      mNumberOfTimeSteps[e] = static_cast<int>((mTmax[e] - mTstart) / mDt + 0.5);
-      mNumberOfTimeSteps[e] = (mNumberOfTimeSteps[e] == 0) ? 1 : mNumberOfTimeSteps[e];
+      mNumberOfTimeSteps[e] =
+          static_cast<int>((mTmax[e] - mTstart) / mDt + 0.5);
+      mNumberOfTimeSteps[e] =
+          (mNumberOfTimeSteps[e] == 0) ? 1 : mNumberOfTimeSteps[e];
       // the resulting mDt could be slightly too large, because the
       // numberOfTimeSteps is rounded to the nearest int
       mDt = (mTmax[e] - mTstart) / mNumberOfTimeSteps[e];
@@ -2277,17 +2288,18 @@ void EW::getDtFromRestartFile() {
   //	    "Error in EW::getDtFromRestartFile: there is no restart command");
   mDt = m_check_point->getDt();
   // Assume one event for restart.
-   if( m_nevent > 1 )
-   {
-      if( proc_zero() )
-	 cout << "WARNING: Restart only supported for single event computations." << 
-	    " Restart will use default event" << endl;
-   }
-   int event=0;
+  if (m_nevent > 1) {
+    if (proc_zero())
+      cout << "WARNING: Restart only supported for single event computations."
+           << " Restart will use default event" << endl;
+  }
+  int event = 0;
   if (mTimeIsSet[event]) {
     // constrain Tmax based on the time step
-    mNumberOfTimeSteps[event] = static_cast<int>((mTmax[event] - mTstart) / mDt + 0.5);
-    mNumberOfTimeSteps[event] = (mNumberOfTimeSteps[event] == 0) ? 1 : mNumberOfTimeSteps[event];
+    mNumberOfTimeSteps[event] =
+        static_cast<int>((mTmax[event] - mTstart) / mDt + 0.5);
+    mNumberOfTimeSteps[event] =
+        (mNumberOfTimeSteps[event] == 0) ? 1 : mNumberOfTimeSteps[event];
     mTmax[event] = mTstart + mNumberOfTimeSteps[event] * mDt;
     // Do not change time step from restart solution !
     //      mDt = (mTmax - mTstart) / mNumberOfTimeSteps;

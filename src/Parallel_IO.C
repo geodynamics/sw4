@@ -1715,365 +1715,342 @@ int Parallel_IO::proc_zero_rank_in_comm_world() {
 }
 #ifdef USE_HDF5
 //-----------------------------------------------------------------------
-void Parallel_IO::write_array_hdf5( const char *fname, const char *dname, int nc, void* array, hsize_t pos0, char* typ )
-{
-//
-//  Write array previously set up by constructing object.
-//
-// Input: fname - HDF5 file name
-//        dname - HDF5 dataset name
-//        nc    - Number of components per grid point of array.
-//        array - The data array, local in the processor.
-//        pos0  - Start writing the array at this byte position in the HDF5 dataset.
-//        typ   - Declared type of 'array', possible values are "float" or "double".
-//                The array saved on disk will have the same type.
-//
-   int i1, i2, j1, j2, k1, k2, nsi, nsj, nsk, nri, nrj, nrk;
-   int b, i, mxsize, ii, jj, kk, c, niblock, njblock, nkblock;
-   int il, jl, kl, tag, myid, retcode, gproc, ret;
-   hsize_t ind, ptr, sizew, offset, count;
-   MPI_Status status;
-   MPI_Request* req;
-   double* rbuf, *ribuf;
-   float* rfbuf, *ribuff;
-   bool debug =false;
-   hid_t dspace, filespace, dxpl, h5_fid, fapl, dset;
+void Parallel_IO::write_array_hdf5(const char* fname, const char* dname, int nc,
+                                   void* array, hsize_t pos0, char* typ) {
+  //
+  //  Write array previously set up by constructing object.
+  //
+  // Input: fname - HDF5 file name
+  //        dname - HDF5 dataset name
+  //        nc    - Number of components per grid point of array.
+  //        array - The data array, local in the processor.
+  //        pos0  - Start writing the array at this byte position in the HDF5
+  //        dataset. typ   - Declared type of 'array', possible values are
+  //        "float" or "double".
+  //                The array saved on disk will have the same type.
+  //
+  int i1, i2, j1, j2, k1, k2, nsi, nsj, nsk, nri, nrj, nrk;
+  int b, i, mxsize, ii, jj, kk, c, niblock, njblock, nkblock;
+  int il, jl, kl, tag, myid, retcode, gproc, ret;
+  hsize_t ind, ptr, sizew, offset, count;
+  MPI_Status status;
+  MPI_Request* req;
+  double *rbuf, *ribuf;
+  float *rfbuf, *ribuff;
+  bool debug = false;
+  hid_t dspace, filespace, dxpl, h5_fid, fapl, dset;
 
-   fapl = H5Pcreate(H5P_FILE_ACCESS);
-   /* H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL); */
-   dxpl = H5Pcreate(H5P_DATASET_XFER);
-   H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
+  fapl = H5Pcreate(H5P_FILE_ACCESS);
+  /* H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL); */
+  dxpl = H5Pcreate(H5P_DATASET_XFER);
+  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
 
-   if( m_data_comm != MPI_COMM_NULL )
-   {
-      MPI_Comm_rank( MPI_COMM_WORLD, &gproc );
-      float* arf;
-      double* ar;
-      double* sbuf;
-      float*  sbuff;
-      int flt, typsize;
-      try
-      {
-	 if( strcmp(typ,"float")==0)
-	 {
-	    arf = static_cast<float*>(array);
-	    sbuff = new float[m_isend.m_maxbuf*nc];
-	    flt = 1;
-	    typsize = sizeof(float);
-	 }
-	 else if( strcmp(typ,"double")==0 )
-	 {
-	    ar = static_cast<double*>(array);
-	    sbuf  = new double[m_isend.m_maxbuf*nc];
-	    typsize = sizeof(double);
-	    flt = 0;
-	 }
-	 else
-	 {
-	 // error return
-	 }
+  if (m_data_comm != MPI_COMM_NULL) {
+    MPI_Comm_rank(MPI_COMM_WORLD, &gproc);
+    float* arf;
+    double* ar;
+    double* sbuf;
+    float* sbuff;
+    int flt, typsize;
+    try {
+      if (strcmp(typ, "float") == 0) {
+        arf = static_cast<float*>(array);
+        sbuff = new float[m_isend.m_maxbuf * nc];
+        flt = 1;
+        typsize = sizeof(float);
+      } else if (strcmp(typ, "double") == 0) {
+        ar = static_cast<double*>(array);
+        sbuf = new double[m_isend.m_maxbuf * nc];
+        typsize = sizeof(double);
+        flt = 0;
+      } else {
+        // error return
       }
-      catch( bad_alloc& ba )
-      {
-	 int gproc;
-	 MPI_Comm_rank( MPI_COMM_WORLD, &gproc );
-	 cout << "Parallel_IO::write_array, processor " << gproc <<  
-	    ". Allocation of sbuf or sbuff failed. Tried to allocate " << m_isend.m_maxbuf*nc;
-	 if( flt == 0 )
-	    cout << "doubles";
-	 else
-	    cout << "floats";
-	 cout << " Exception= " << ba.what() << endl;
-	 MPI_Abort(MPI_COMM_WORLD,0);
+    } catch (bad_alloc& ba) {
+      int gproc;
+      MPI_Comm_rank(MPI_COMM_WORLD, &gproc);
+      cout << "Parallel_IO::write_array, processor " << gproc
+           << ". Allocation of sbuf or sbuff failed. Tried to allocate "
+           << m_isend.m_maxbuf * nc;
+      if (flt == 0)
+        cout << "doubles";
+      else
+        cout << "floats";
+      cout << " Exception= " << ba.what() << endl;
+      MPI_Abort(MPI_COMM_WORLD, 0);
+    }
+
+    if (debug) {
+      cout << "DEBUGPARIO iwrite= " << m_iwrite << endl;
+      m_isend.print(0);
+      if (m_iwrite == 1) m_irecv.print(1);
+    }
+    bool really_writing;
+    if (m_iwrite == 1) {
+      really_writing = false;
+      for (b = 0; b < m_csteps; b++)
+        if (m_irecv.m_ncomm[b] > 0) really_writing = true;
+    }
+
+    MPI_Comm_rank(m_data_comm, &myid);
+
+    if (m_iwrite == 1 && really_writing) {
+      try {
+        if (flt == 1) {
+          rfbuf = new float[m_irecv.m_maxiobuf * nc];
+          ribuff = new float[m_irecv.m_maxbuf * nc];
+        } else {
+          rbuf = new double[m_irecv.m_maxiobuf * nc];
+          ribuf = new double[m_irecv.m_maxbuf * nc];
+        }
+      } catch (bad_alloc& ba) {
+        int gproc;
+        MPI_Comm_rank(MPI_COMM_WORLD, &gproc);
+        cout << "Parallel_IO::write_array, processor " << gproc
+             << ". Allocation of rbuf and ribuff failed. Tried to allocate "
+             << m_irecv.m_maxbuf * nc << " + " << m_irecv.m_maxiobuf * nc;
+        if (flt == 0)
+          cout << " doubles";
+        else
+          cout << " floats";
+        cout << ". Exception= " << ba.what() << endl;
+        MPI_Abort(MPI_COMM_WORLD, 0);
       }
-
-      if( debug )
-      {
-	 cout << "DEBUGPARIO iwrite= " << m_iwrite << endl;
-	 m_isend.print(0);
-	 if( m_iwrite==1 )
-	    m_irecv.print(1);
-      }
-      bool really_writing;
-      if( m_iwrite == 1 )
-      {
-         really_writing = false;
-         for( b=0 ; b < m_csteps ; b++ )
-	    if( m_irecv.m_ncomm[b] > 0 )
-	       really_writing = true;
-      }
-
-      MPI_Comm_rank( m_data_comm, &myid );
-
-      if( m_iwrite == 1 && really_writing )
-      {
-	 try
-	 {
-	    if( flt == 1 )
-	    {
-	       rfbuf  = new float[m_irecv.m_maxiobuf*nc];
-	       ribuff = new float[m_irecv.m_maxbuf*nc];
-	    }
-	    else
-	    {
-	       rbuf  = new double[m_irecv.m_maxiobuf*nc];
-	       ribuf = new double[m_irecv.m_maxbuf*nc];
-	    }
-	 }
-	 catch( bad_alloc& ba )
-	 {
-	    int gproc;
-	    MPI_Comm_rank( MPI_COMM_WORLD, &gproc );
-	    cout << "Parallel_IO::write_array, processor " << gproc <<  
-	    ". Allocation of rbuf and ribuff failed. Tried to allocate " << m_irecv.m_maxbuf*nc
-		 << " + "  << m_irecv.m_maxiobuf*nc;
-	    if( flt ==  0 )
-	       cout  << " doubles";
-	    else
-	       cout  << " floats";
-	    cout  <<  ". Exception= " << ba.what() << endl;
-	    MPI_Abort(MPI_COMM_WORLD,0);
-	 }
-	 mxsize = 0;
-	 for( b= 0; b < m_csteps ; b++ )
-	    if( mxsize < m_irecv.m_ncomm[b] )
-	       mxsize = m_irecv.m_ncomm[b];
-	 try
-	 {
-	    req = new MPI_Request[mxsize];
-	 }
-	 catch( bad_alloc& ba )
-	 {
-	    int gproc;
-	    MPI_Comm_rank( MPI_COMM_WORLD, &gproc );
-	    cout << "Parallel_IO::write_array, processor " << gproc << ". Allocating req failed. " 
-		 << "Tried to allocate " << mxsize << " MPI_Requests. " << "Exception = " << ba.what() << endl;
-	    MPI_Abort(MPI_COMM_WORLD,0);
-	 }
-
-	 il = m_irecv.m_ilow[0];
-	 jl = m_irecv.m_jlow[0];
-	 kl = m_irecv.m_klow[0];
-	 ind = il-1+nig*(jl-1)+((off_t)nig)*njg*(kl-1);
-         offset = pos0 + nc*ind;
-	 /* sizew = lseek( *fid, pos0+nc*ind*typsize, SEEK_SET ); */
-	 if( offset < 0 )
-	 {
-	    int eno = errno;
-	    cout << "Error in write_array: could not go to write start position" << endl;
-	    if( eno == EBADF )
-	       cout << "errno = EBADF" << endl;
-	    if( eno == EINVAL )
-	       cout << "errno = EINVAL" << endl;
-	    if( eno == EOVERFLOW )
-	       cout << "errno = EOVERFLOW" << endl;
-	    if( eno == ESPIPE )
-	       cout << "errno = ESPIPE" << endl;
-	    cout << "errno = " << eno << endl;
-            cout << "Requested offset = " << pos0+nc*ind<< endl;
-            cout << "pos0 = " << pos0 << endl;
-	    cout << "nc = " << nc << endl;
-	    cout << "ind = " << ind << endl;
-	    cout << "typsize = " << typsize << endl;
-            cout << "m_csteps = " << m_csteps << endl;
-	    cout << "nglobal = " << nig << " " << njg << " " << nkg << endl;
-	    cout << "m_irecv.m_ilow " << m_irecv.m_ilow[0] << endl;
-	    cout << "m_irecv.m_jlow " << m_irecv.m_jlow[0] << endl;
-	    cout << "m_irecv.m_klow " << m_irecv.m_klow[0] << endl;
-            cout << "m_irecv.m_ncomm[0] = " << m_irecv.m_ncomm[0] << endl;
-	    //	    MPI_Abort(MPI_COMM_WORLD,1);
-	 }
+      mxsize = 0;
+      for (b = 0; b < m_csteps; b++)
+        if (mxsize < m_irecv.m_ncomm[b]) mxsize = m_irecv.m_ncomm[b];
+      try {
+        req = new MPI_Request[mxsize];
+      } catch (bad_alloc& ba) {
+        int gproc;
+        MPI_Comm_rank(MPI_COMM_WORLD, &gproc);
+        cout << "Parallel_IO::write_array, processor " << gproc
+             << ". Allocating req failed. "
+             << "Tried to allocate " << mxsize << " MPI_Requests. "
+             << "Exception = " << ba.what() << endl;
+        MPI_Abort(MPI_COMM_WORLD, 0);
       }
 
-      tag = 334;
-      for( b = 0; b < m_csteps ; b++ )
-      {
+      il = m_irecv.m_ilow[0];
+      jl = m_irecv.m_jlow[0];
+      kl = m_irecv.m_klow[0];
+      ind = il - 1 + nig * (jl - 1) + ((off_t)nig) * njg * (kl - 1);
+      offset = pos0 + nc * ind;
+      /* sizew = lseek( *fid, pos0+nc*ind*typsize, SEEK_SET ); */
+      if (offset < 0) {
+        int eno = errno;
+        cout << "Error in write_array: could not go to write start position"
+             << endl;
+        if (eno == EBADF) cout << "errno = EBADF" << endl;
+        if (eno == EINVAL) cout << "errno = EINVAL" << endl;
+        if (eno == EOVERFLOW) cout << "errno = EOVERFLOW" << endl;
+        if (eno == ESPIPE) cout << "errno = ESPIPE" << endl;
+        cout << "errno = " << eno << endl;
+        cout << "Requested offset = " << pos0 + nc * ind << endl;
+        cout << "pos0 = " << pos0 << endl;
+        cout << "nc = " << nc << endl;
+        cout << "ind = " << ind << endl;
+        cout << "typsize = " << typsize << endl;
+        cout << "m_csteps = " << m_csteps << endl;
+        cout << "nglobal = " << nig << " " << njg << " " << nkg << endl;
+        cout << "m_irecv.m_ilow " << m_irecv.m_ilow[0] << endl;
+        cout << "m_irecv.m_jlow " << m_irecv.m_jlow[0] << endl;
+        cout << "m_irecv.m_klow " << m_irecv.m_klow[0] << endl;
+        cout << "m_irecv.m_ncomm[0] = " << m_irecv.m_ncomm[0] << endl;
+        //	    MPI_Abort(MPI_COMM_WORLD,1);
+      }
+    }
+
+    tag = 334;
+    for (b = 0; b < m_csteps; b++) {
       // Post receive
-	 if( m_iwrite == 1 )
-	 {
-	    ptr = 0;
-	    for( i = 0  ; i < m_irecv.m_ncomm[b] ; i++ )
-	    {
-	       i1 = m_irecv.m_comm_index[0][b][i];
-	       i2 = m_irecv.m_comm_index[1][b][i];
-	       j1 = m_irecv.m_comm_index[2][b][i];
-	       j2 = m_irecv.m_comm_index[3][b][i];
-	       k1 = m_irecv.m_comm_index[4][b][i];
-	       k2 = m_irecv.m_comm_index[5][b][i];
-	       nri = i2-i1+1;
-	       nrj = j2-j1+1;
-	       nrk = k2-k1+1;
-               if( flt == 0 )
-		  retcode = MPI_Irecv( ribuf+ptr, nri*nrj*nrk*nc, MPI_DOUBLE, m_irecv.m_comm_id[b][i],
-			     tag, m_data_comm, &req[i] );
-	       else
-		  retcode = MPI_Irecv( ribuff+ptr, nri*nrj*nrk*nc, MPI_FLOAT, m_irecv.m_comm_id[b][i],
-			     tag, m_data_comm, &req[i] );
-               if( retcode != MPI_SUCCESS )
-	       {
-		  cout << "Parallel_IO::write_array, error from call to MPI_Irecv. "
-		       << "Return code = " << retcode << " from processor " << gproc << endl;
-	       }
-	       ptr += ((off_t)nri)*nrj*nrk*nc;
-	    }
-	 }
-      // Send 
-	 for( i = 0 ; i < m_isend.m_ncomm[b] ; i++ )
-	 {
-	    i1 = m_isend.m_comm_index[0][b][i];
-	    i2 = m_isend.m_comm_index[1][b][i];
-	    j1 = m_isend.m_comm_index[2][b][i];
-	    j2 = m_isend.m_comm_index[3][b][i];
-	    k1 = m_isend.m_comm_index[4][b][i];
-	    k2 = m_isend.m_comm_index[5][b][i];
-	    nsi = i2-i1+1;
-	    nsj = j2-j1+1;
-	    nsk = k2-k1+1;
-            if( flt == 0 )
-	    {
-	       for( kk=k1 ; kk <= k2 ; kk++ )
-		  for( jj=j1 ; jj <= j2 ; jj++ )
-		     for( ii=i1 ; ii <= i2 ; ii++ )
-			for( c=0 ; c < nc ; c++ )
-			{
-			   sbuf[c+nc*(ii-i1)+nc*nsi*(jj-j1)+nc*nsi*nsj*(kk-k1)]
-			      = ar[c+nc*(ii-1-oi)+ni*nc*(jj-1-oj)+((off_t)ni)*nj*nc*(kk-1-ok)];
-			}
-	       retcode = MPI_Send( sbuf, nsi*nsj*nsk*nc, MPI_DOUBLE, m_isend.m_comm_id[b][i], tag, m_data_comm );
-	    }
-	    else
-	    {
-	       for( kk=k1 ; kk <= k2 ; kk++ )
-		  for( jj=j1 ; jj <= j2 ; jj++ )
-		     for( ii=i1 ; ii <= i2 ; ii++ )
-			for( c=0 ; c < nc ; c++ )
-			{
-			   sbuff[c+nc*(ii-i1)+nc*nsi*(jj-j1)+nc*nsi*nsj*(kk-k1)]
-			      = arf[c+nc*(ii-1-oi)+ni*nc*(jj-1-oj)+((off_t)ni)*nj*nc*(kk-1-ok)];
-			}
-	       retcode = MPI_Send( sbuff, nsi*nsj*nsk*nc, MPI_FLOAT, m_isend.m_comm_id[b][i], tag, m_data_comm );
-	    }
-	    if( retcode != MPI_SUCCESS )
-	    {
-	       cout << "Parallel_IO::write_array, error from call to MPI_Send. "
-		       << "Return code = " << retcode << " from processor " << gproc << endl;
-	    }
-
-	 }
+      if (m_iwrite == 1) {
+        ptr = 0;
+        for (i = 0; i < m_irecv.m_ncomm[b]; i++) {
+          i1 = m_irecv.m_comm_index[0][b][i];
+          i2 = m_irecv.m_comm_index[1][b][i];
+          j1 = m_irecv.m_comm_index[2][b][i];
+          j2 = m_irecv.m_comm_index[3][b][i];
+          k1 = m_irecv.m_comm_index[4][b][i];
+          k2 = m_irecv.m_comm_index[5][b][i];
+          nri = i2 - i1 + 1;
+          nrj = j2 - j1 + 1;
+          nrk = k2 - k1 + 1;
+          if (flt == 0)
+            retcode =
+                MPI_Irecv(ribuf + ptr, nri * nrj * nrk * nc, MPI_DOUBLE,
+                          m_irecv.m_comm_id[b][i], tag, m_data_comm, &req[i]);
+          else
+            retcode =
+                MPI_Irecv(ribuff + ptr, nri * nrj * nrk * nc, MPI_FLOAT,
+                          m_irecv.m_comm_id[b][i], tag, m_data_comm, &req[i]);
+          if (retcode != MPI_SUCCESS) {
+            cout << "Parallel_IO::write_array, error from call to MPI_Irecv. "
+                 << "Return code = " << retcode << " from processor " << gproc
+                 << endl;
+          }
+          ptr += ((off_t)nri) * nrj * nrk * nc;
+        }
+      }
+      // Send
+      for (i = 0; i < m_isend.m_ncomm[b]; i++) {
+        i1 = m_isend.m_comm_index[0][b][i];
+        i2 = m_isend.m_comm_index[1][b][i];
+        j1 = m_isend.m_comm_index[2][b][i];
+        j2 = m_isend.m_comm_index[3][b][i];
+        k1 = m_isend.m_comm_index[4][b][i];
+        k2 = m_isend.m_comm_index[5][b][i];
+        nsi = i2 - i1 + 1;
+        nsj = j2 - j1 + 1;
+        nsk = k2 - k1 + 1;
+        if (flt == 0) {
+          for (kk = k1; kk <= k2; kk++)
+            for (jj = j1; jj <= j2; jj++)
+              for (ii = i1; ii <= i2; ii++)
+                for (c = 0; c < nc; c++) {
+                  sbuf[c + nc * (ii - i1) + nc * nsi * (jj - j1) +
+                       nc * nsi * nsj * (kk - k1)] =
+                      ar[c + nc * (ii - 1 - oi) + ni * nc * (jj - 1 - oj) +
+                         ((off_t)ni) * nj * nc * (kk - 1 - ok)];
+                }
+          retcode = MPI_Send(sbuf, nsi * nsj * nsk * nc, MPI_DOUBLE,
+                             m_isend.m_comm_id[b][i], tag, m_data_comm);
+        } else {
+          for (kk = k1; kk <= k2; kk++)
+            for (jj = j1; jj <= j2; jj++)
+              for (ii = i1; ii <= i2; ii++)
+                for (c = 0; c < nc; c++) {
+                  sbuff[c + nc * (ii - i1) + nc * nsi * (jj - j1) +
+                        nc * nsi * nsj * (kk - k1)] =
+                      arf[c + nc * (ii - 1 - oi) + ni * nc * (jj - 1 - oj) +
+                          ((off_t)ni) * nj * nc * (kk - 1 - ok)];
+                }
+          retcode = MPI_Send(sbuff, nsi * nsj * nsk * nc, MPI_FLOAT,
+                             m_isend.m_comm_id[b][i], tag, m_data_comm);
+        }
+        if (retcode != MPI_SUCCESS) {
+          cout << "Parallel_IO::write_array, error from call to MPI_Send. "
+               << "Return code = " << retcode << " from processor " << gproc
+               << endl;
+        }
+      }
 
       // Do actual receive
-	 if( m_iwrite == 1 && m_irecv.m_ncomm[b] > 0 )
-	 {
-	    ptr = 0;
-	    il = m_irecv.m_ilow[b];
-	    jl = m_irecv.m_jlow[b];
-	    kl = m_irecv.m_klow[b];
-	    niblock = m_irecv.m_niblock[b];
-	    njblock = m_irecv.m_njblock[b];
-	    nkblock = m_irecv.m_nkblock[b];
-	    for( i = 0  ; i < m_irecv.m_ncomm[b] ; i++ )
-	    {
-	       retcode = MPI_Wait( &req[i], &status );
-               if( retcode != MPI_SUCCESS )
-	       {
-		  cout << "Parallel_IO::write_array, error from call to MPI_Wait. "
-		       << "Return code = " << retcode << " from processor " << gproc << endl;
-	       }
-	       i1 = m_irecv.m_comm_index[0][b][i];
-	       i2 = m_irecv.m_comm_index[1][b][i];
-	       j1 = m_irecv.m_comm_index[2][b][i];
-	       j2 = m_irecv.m_comm_index[3][b][i];
-	       k1 = m_irecv.m_comm_index[4][b][i];
-	       k2 = m_irecv.m_comm_index[5][b][i];
+      if (m_iwrite == 1 && m_irecv.m_ncomm[b] > 0) {
+        ptr = 0;
+        il = m_irecv.m_ilow[b];
+        jl = m_irecv.m_jlow[b];
+        kl = m_irecv.m_klow[b];
+        niblock = m_irecv.m_niblock[b];
+        njblock = m_irecv.m_njblock[b];
+        nkblock = m_irecv.m_nkblock[b];
+        for (i = 0; i < m_irecv.m_ncomm[b]; i++) {
+          retcode = MPI_Wait(&req[i], &status);
+          if (retcode != MPI_SUCCESS) {
+            cout << "Parallel_IO::write_array, error from call to MPI_Wait. "
+                 << "Return code = " << retcode << " from processor " << gproc
+                 << endl;
+          }
+          i1 = m_irecv.m_comm_index[0][b][i];
+          i2 = m_irecv.m_comm_index[1][b][i];
+          j1 = m_irecv.m_comm_index[2][b][i];
+          j2 = m_irecv.m_comm_index[3][b][i];
+          k1 = m_irecv.m_comm_index[4][b][i];
+          k2 = m_irecv.m_comm_index[5][b][i];
 
-	       nri = i2-i1+1;
-	       nrj = j2-j1+1;
-	       nrk = k2-k1+1;
+          nri = i2 - i1 + 1;
+          nrj = j2 - j1 + 1;
+          nrk = k2 - k1 + 1;
 
-	       if( flt == 0 )
-	       {
-		  double* recbuf = ribuf+ptr;
-		  for( kk=k1 ; kk <= k2 ; kk++ )
-		     for( jj=j1 ; jj <= j2 ; jj++ )
-			for( ii=i1 ; ii <= i2 ; ii++ )
-			   for( c=0 ; c < nc ; c++ )
-			   {
-			      rbuf[c+nc*(ii-il)+nc*niblock*(jj-jl)+nc*((off_t)niblock)*njblock*(kk-kl)]
-				 = recbuf[c+nc*(ii-i1)+nri*nc*(jj-j1)+nri*nrj*nc*(kk-k1)];
-			   }
-	       }
-	       else
-	       {
-		  float* recbuf = ribuff+ptr;
-		  for( kk=k1 ; kk <= k2 ; kk++ )
-		     for( jj=j1 ; jj <= j2 ; jj++ )
-			for( ii=i1 ; ii <= i2 ; ii++ )
-			   for( c=0 ; c < nc ; c++ )
-			   {
-			      rfbuf[c+nc*(ii-il)+nc*niblock*(jj-jl)+nc*((off_t)niblock)*njblock*(kk-kl)]
-				 = recbuf[c+nc*(ii-i1)+nri*nc*(jj-j1)+nri*nrj*nc*(kk-k1)];
-			   }
-	       }
-	       ptr += ((off_t)nri)*nrj*nrk*nc;
-	    }
+          if (flt == 0) {
+            double* recbuf = ribuf + ptr;
+            for (kk = k1; kk <= k2; kk++)
+              for (jj = j1; jj <= j2; jj++)
+                for (ii = i1; ii <= i2; ii++)
+                  for (c = 0; c < nc; c++) {
+                    rbuf[c + nc * (ii - il) + nc * niblock * (jj - jl) +
+                         nc * ((off_t)niblock) * njblock * (kk - kl)] =
+                        recbuf[c + nc * (ii - i1) + nri * nc * (jj - j1) +
+                               nri * nrj * nc * (kk - k1)];
+                  }
+          } else {
+            float* recbuf = ribuff + ptr;
+            for (kk = k1; kk <= k2; kk++)
+              for (jj = j1; jj <= j2; jj++)
+                for (ii = i1; ii <= i2; ii++)
+                  for (c = 0; c < nc; c++) {
+                    rfbuf[c + nc * (ii - il) + nc * niblock * (jj - jl) +
+                          nc * ((off_t)niblock) * njblock * (kk - kl)] =
+                        recbuf[c + nc * (ii - i1) + nri * nc * (jj - j1) +
+                               nri * nrj * nc * (kk - k1)];
+                  }
+          }
+          ptr += ((off_t)nri) * nrj * nrk * nc;
+        }
 
-            // Write to disk
-	    begin_sequential( m_write_comm );
+        // Write to disk
+        begin_sequential(m_write_comm);
 
-            /* cout << "Rank " << gproc <<" opening file [" << fname << "]" << endl; */
-            /* fflush(stdout); */
-            h5_fid = H5Fopen(fname, H5F_ACC_RDWR, fapl);
-            if (h5_fid < 0) 
-               cout << "Rank " << gproc <<" error opening file [" << fname << "]" << endl;
-            H5Pclose(fapl);
+        /* cout << "Rank " << gproc <<" opening file [" << fname << "]" << endl;
+         */
+        /* fflush(stdout); */
+        h5_fid = H5Fopen(fname, H5F_ACC_RDWR, fapl);
+        if (h5_fid < 0)
+          cout << "Rank " << gproc << " error opening file [" << fname << "]"
+               << endl;
+        H5Pclose(fapl);
 
-            dset = H5Dopen(h5_fid, dname, H5P_DEFAULT);
-            if (dset < 0) 
-               cout << "Rank " << gproc <<" error opening [" << dname << "] dset from file [" << fname << "]" << endl;
+        dset = H5Dopen(h5_fid, dname, H5P_DEFAULT);
+        if (dset < 0)
+          cout << "Rank " << gproc << " error opening [" << dname
+               << "] dset from file [" << fname << "]" << endl;
 
-            filespace = H5Dget_space(dset);
-            count = ((hsize_t)nc)*niblock*njblock*nkblock;
-            H5Sselect_hyperslab (filespace, H5S_SELECT_SET, &offset, NULL, &count, NULL);
-            dspace = H5Screate_simple(1, &count, NULL);
-            /* cout << "Rank " << gproc << ": writing to offset " << offset << " with " << count << " elements" << endl; */
-	    if( flt == 0 ) 
-               ret  = H5Dwrite(dset, H5T_NATIVE_DOUBLE, dspace, filespace, dxpl, rbuf);
-	    else 
-               ret  = H5Dwrite(dset, H5T_NATIVE_FLOAT, dspace, filespace, dxpl, rfbuf);
-            /* cout << "Rank " << gproc << " writing data " << rfbuf[0] << ", " << rfbuf[1] << ", ..., " << rfbuf[count-2] << ", " << rfbuf[count-1] << endl; */
+        filespace = H5Dget_space(dset);
+        count = ((hsize_t)nc) * niblock * njblock * nkblock;
+        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &offset, NULL, &count,
+                            NULL);
+        dspace = H5Screate_simple(1, &count, NULL);
+        /* cout << "Rank " << gproc << ": writing to offset " << offset << "
+         * with " << count << " elements" << endl; */
+        if (flt == 0)
+          ret =
+              H5Dwrite(dset, H5T_NATIVE_DOUBLE, dspace, filespace, dxpl, rbuf);
+        else
+          ret =
+              H5Dwrite(dset, H5T_NATIVE_FLOAT, dspace, filespace, dxpl, rfbuf);
+        /* cout << "Rank " << gproc << " writing data " << rfbuf[0] << ", " <<
+         * rfbuf[1] << ", ..., " << rfbuf[count-2] << ", " << rfbuf[count-1] <<
+         * endl; */
 
-            if (ret < 0) {
-                cout << "Parallel_IO::write_array_hdf5, error writing " << dname << " dataset, offset " << offset << "count" << count << endl;
-                MPI_Abort(MPI_COMM_WORLD,1);
-            }
+        if (ret < 0) {
+          cout << "Parallel_IO::write_array_hdf5, error writing " << dname
+               << " dataset, offset " << offset << "count" << count << endl;
+          MPI_Abort(MPI_COMM_WORLD, 1);
+        }
 
-            H5Sclose(dspace);
-            H5Sclose(filespace);
-            H5Dclose(dset);
-            H5Fclose(h5_fid);
-	    end_sequential( m_write_comm );
-	 }
+        H5Sclose(dspace);
+        H5Sclose(filespace);
+        H5Dclose(dset);
+        H5Fclose(h5_fid);
+        end_sequential(m_write_comm);
       }
-      if( flt == 0 )
-	 delete[] sbuf;
-      else
-	 delete[] sbuff;
+    }
+    if (flt == 0)
+      delete[] sbuf;
+    else
+      delete[] sbuff;
 
-      if( m_iwrite == 1 && really_writing )
-      {
-	 if( flt == 0 )
-	 {
-	    delete[] rbuf;
-	    delete[] ribuf;
-	 }
-	 else
-	 {
-	    delete[] rfbuf;
-	    delete[] ribuff;
-	 }
-	 delete[] req;
+    if (m_iwrite == 1 && really_writing) {
+      if (flt == 0) {
+        delete[] rbuf;
+        delete[] ribuf;
+      } else {
+        delete[] rfbuf;
+        delete[] ribuff;
       }
-   } // End if( m_data_comm != MPI_COMM_NULL )
-   H5Pclose(dxpl);
+      delete[] req;
+    }
+  }  // End if( m_data_comm != MPI_COMM_NULL )
+  H5Pclose(dxpl);
 }
 #endif

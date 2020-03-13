@@ -44,6 +44,7 @@
 #include "AnisotropicMaterial.h"
 #include "CheckPoint.h"
 #include "DataPatches.h"
+#include "ESSI3D.h"
 #include "EtreeFile.h"
 #include "Filter.h"
 #include "ForcingTwilight.h"
@@ -51,8 +52,6 @@
 #include "GridPointSource.h"
 #include "Image.h"
 #include "Image3D.h"
-#include "ESSI3D.h"
-
 #include "MaterialData.h"
 #include "MaterialProperty.h"
 #include "Mspace.h"
@@ -76,31 +75,31 @@ using namespace std;
 
 class EW {
  public:
-  EW(const string& name, vector<vector<Source*> >& a_GlobalUniqueSources,
-     vector<vector<TimeSeries*> >& a_GlobalTimeSeries, bool invproblem = false);
+  EW(const string& name, vector<vector<Source*>>& a_GlobalUniqueSources,
+     vector<vector<TimeSeries*>>& a_GlobalTimeSeries, bool invproblem = false);
   ~EW();
   bool wasParsingSuccessful();
   bool isInitialized();
 
   void set_output_options(bool output_load, bool output_detailed_timing);
   void setGMTOutput(string filename, string wppfilename);
-  void saveGMTFile(vector<vector<Source*> >& a_GlobalUniqueSources,int event);
+  void saveGMTFile(vector<vector<Source*>>& a_GlobalUniqueSources, int event);
   void allocateCartesianSolverArrays(float_sw4 a_global_zmax);
-  //void setGoalTime(float_sw4 t);
-  void setGoalTime(float_sw4 t,int event=0);
+  // void setGoalTime(float_sw4 t);
+  void setGoalTime(float_sw4 t, int event = 0);
   // double getCurrentTime(){return mTime;}
 
-  //void setNumberSteps(int steps);  // remove???
-  void setNumberSteps(int steps,int event=0); // remove???
-  //int getNumberOfSteps() const;
-  int getNumberOfSteps(int event=0) const;
+  // void setNumberSteps(int steps);  // remove???
+  void setNumberSteps(int steps, int event = 0);  // remove???
+  // int getNumberOfSteps() const;
+  int getNumberOfSteps(int event = 0) const;
   int getNumberOfEvents() const;
   int findNumberOfEvents();
 
-  void setupRun(vector<vector<Source*> >& a_GlobalUniqueSources);
+  void setupRun(vector<vector<Source*>>& a_GlobalUniqueSources);
 
   void solve(vector<Source*>& a_GlobalSources,
-             vector<TimeSeries*>& a_GlobalTimeSeries,int event);
+             vector<TimeSeries*>& a_GlobalTimeSeries, int event);
   void solve_backward(vector<Source*>& a_Sources,
                       vector<TimeSeries*>& a_TimeSeries, float_sw4 gradient[11],
                       float_sw4 hessian[121]);
@@ -122,8 +121,8 @@ class EW {
                               vector<Sarray>& gMu, vector<Sarray>& gLambda);
   // int nmpar, float_sw4* gradientm );
 
-  bool parseInputFile(vector<vector<Source*> >& a_GlobalSources,
-                      vector< vector<TimeSeries*> >& a_GlobalTimeSeries);
+  bool parseInputFile(vector<vector<Source*>>& a_GlobalSources,
+                      vector<vector<TimeSeries*>>& a_GlobalTimeSeries);
   void parsedate(char* datestr, int& year, int& month, int& day, int& hour,
                  int& minute, int& second, int& msecond, int& fail);
 
@@ -142,7 +141,7 @@ class EW {
   void processTime(char* buffer);
   void processTwilight(char* buffer);
   void processFileIO(char* buffer);
-  //void processImage(char* buffer);
+  // void processImage(char* buffer);
   void processImage(char* buffer, bool usehdf5);
   void processImage3D(char* buffer);
   void processESSI3D(char* buffer);
@@ -152,11 +151,14 @@ class EW {
   void processTestLamb(char* buffer);
   void processTestEnergy(char* buffer);
   bool checkTestEnergyPeriodic(char* buffer);
-  //void processSource(char* buffer, vector<Source*>& a_GlobalUniqueSources);
-  void processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSources);
-  //void processRupture(char* buffer, vector<Source*>& a_GlobalUniqueSources);
-  void processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSources);
-  void processRuptureHDF5(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSources);
+  // void processSource(char* buffer, vector<Source*>& a_GlobalUniqueSources);
+  void processSource(char* buffer,
+                     vector<vector<Source*>>& a_GlobalUniqueSources);
+  // void processRupture(char* buffer, vector<Source*>& a_GlobalUniqueSources);
+  void processRupture(char* buffer,
+                      vector<vector<Source*>>& a_GlobalUniqueSources);
+  void processRuptureHDF5(char* buffer,
+                          vector<vector<Source*>>& a_GlobalUniqueSources);
   void processMaterial(char* buffer);
   void processMaterialIfile(char* buffer);
   void processMaterialBlock(char* buffer, int& blockCount);
@@ -167,13 +169,18 @@ class EW {
   void processMaterialRfile(char* buffer);
   void processMaterialSfile(char* buffer);
   void processAnisotropicMaterialBlock(char* buffer, int& ablockCount);
-  //void processReceiver(char* buffer, vector<TimeSeries*>& a_GlobalTimeSeries);
-  void processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
-  void processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
-  //void processObservation(char* buffer,
+  // void processReceiver(char* buffer, vector<TimeSeries*>&
+  // a_GlobalTimeSeries);
+  void processReceiver(char* buffer,
+                       vector<vector<TimeSeries*>>& a_GlobalTimeSeries);
+  void processReceiverHDF5(char* buffer,
+                           vector<vector<TimeSeries*>>& a_GlobalTimeSeries);
+  // void processObservation(char* buffer,
   //                       vector<TimeSeries*>& a_GlobalTimeSeries);
-  void processObservation(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
-  void processObservationHDF5(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
+  void processObservation(char* buffer,
+                          vector<vector<TimeSeries*>>& a_GlobalTimeSeries);
+  void processObservationHDF5(char* buffer,
+                              vector<vector<TimeSeries*>>& a_GlobalTimeSeries);
   void processBoundaryConditions(char* buffer);
   void processPrefilter(char* buffer);
   void processGMT(char* buffer);
@@ -186,8 +193,7 @@ class EW {
   void processCheckPoint(char* buffer);
   void processGeodynbc(char* buffer);
 
-
-  void processEvent( char* buffer, int enr );
+  void processEvent(char* buffer, int enr);
   // void getEfileInfo(char* buffer);
 
   void side_plane(int g, int side, int wind[6], int nGhost);
@@ -202,7 +208,7 @@ class EW {
   // void setDampingCFL(float_sw4 d4_cfl) { m_d4_cfl = d4_cfl; }
 
   void printTime(int cycle, float_sw4 t, bool force = false) const;
-  void printPreamble(vector<Source*>& a_Sources,int event) const;
+  void printPreamble(vector<Source*>& a_Sources, int event) const;
   void switch_on_checkfornan();
   void switch_on_error_log();
   void set_energylog(string logfile, bool print, bool elog);
@@ -354,7 +360,7 @@ class EW {
                      vector<Sarray>& a_U, vector<Sarray>& a_Um,
                      vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
                      vector<Sarray>& a_Lambda, vector<Source*>& a_sources,
-                     int dminus,int event=0);
+                     int dminus, int event = 0);
 
   void initialize_SAC_files();   // going away
   void update_SACs(int Nsteps);  // going away
@@ -368,8 +374,10 @@ class EW {
   // const string& getOutputPath() {
   //   return mPath;
   // };  // Consider getPath instead! This function has caused grief in the past
-  const string& getOutputPath(int event=0) { return mPath[event]; }; // Consider getPath instead! This function has caused grief in the past
-  //const string& getObservationPath() { return mObsPath; };
+  const string& getOutputPath(int event = 0) {
+    return mPath[event];
+  };  // Consider getPath instead! This function has caused grief in the past
+  // const string& getObservationPath() { return mObsPath; };
   const string& getObservationPath(int event) { return mObsPath[event]; };
   const string& getName() { return mName; };
   void set_global_bcs(
@@ -464,7 +472,7 @@ class EW {
                                   string a_topoExtFileName, string a_QueryType,
                                   float_sw4 a_EFileResolution);
   void extractTopographyFromRfile(std::string a_topoFileName);
-  void extractTopographyFromSfile( std::string a_topoFileName );
+  void extractTopographyFromSfile(std::string a_topoFileName);
 
   void smoothTopography(int maxIter);
 
@@ -480,11 +488,11 @@ class EW {
                               float_sw4& latitude);
 
   void initializeSystemTime();
-  void compute_epicenter(vector<Source*>& a_GlobalUniqueSources,int event=0);
+  void compute_epicenter(vector<Source*>& a_GlobalUniqueSources, int event = 0);
   void set_epicenter(float_sw4 epiLat, float_sw4 epiLon, float_sw4 epiDepth,
-                     float_sw4 earliestTime,int e=0);
+                     float_sw4 earliestTime, int e = 0);
   void get_epicenter(float_sw4& epiLat, float_sw4& epiLon, float_sw4& epiDepth,
-                     float_sw4& earliestTime,int e=0);
+                     float_sw4& earliestTime, int e = 0);
 
   // void update_all_boundaries(vector<Sarray> &U, vector<Sarray> &UM, float_sw4
   // t, 			   vector<Sarray*> &AlphaVE );
@@ -602,15 +610,17 @@ class EW {
                                  vector<Sarray>& U, vector<Sarray>& Um,
                                  int crf);
 
-  void geodynbcGetSizes( string filename, float_sw4 origin[3], float_sw4 &cubelen,
-		       float_sw4& zcubelen, bool &found_latlon, double& lat, 
-		       double& lon, double& az, int& adjust );
+  void geodynbcGetSizes(string filename, float_sw4 origin[3],
+                        float_sw4& cubelen, float_sw4& zcubelen,
+                        bool& found_latlon, double& lat, double& lon,
+                        double& az, int& adjust);
   void geodynFindFile(char* buffer);
 
   void integrate_source();
 
   void compute_energy(float_sw4 dt, bool write_file, vector<Sarray>& Um,
-                      vector<Sarray>& U, vector<Sarray>& Up, int step,int event);
+                      vector<Sarray>& U, vector<Sarray>& Up, int step,
+                      int event);
 
   float_sw4 scalarProduct(vector<Sarray>& U, vector<Sarray>& V);
   void get_gridgen_info(int& order, float_sw4& zetaBreak) const;
@@ -642,15 +652,17 @@ class EW {
   int getNumberOfGrids() { return mNumberOfGrids; };
   int getNumberOfGhostPoints() { return m_ghost_points; };
   int getNumberOfParallelPaddingPoints() { return m_ppadding; };
-  float_sw4 getLonOrigin(){ return mLonOrigin;};
+  float_sw4 getLonOrigin() { return mLonOrigin; };
   float_sw4 getLatOrigin() { return mLatOrigin; };
   float_sw4 getGridAzimuth() { return mGeoAz; };
   float_sw4 getMetersPerDegree() { return mMetersPerDegree; };
   bool usingParallelFS() { return m_pfs; };
   int getNumberOfWritersPFS() { return m_nwriters; };
   float_sw4 getTimeStep() const { return mDt; };
-  //int getNumberOfTimeSteps() const { return mNumberOfTimeSteps; };
-  int getNumberOfTimeSteps(int event=0) const {return mNumberOfTimeSteps[event];};
+  // int getNumberOfTimeSteps() const { return mNumberOfTimeSteps; };
+  int getNumberOfTimeSteps(int event = 0) const {
+    return mNumberOfTimeSteps[event];
+  };
   int getNumberOfMechanisms() const { return m_number_mechanisms; };
 
   // test point source
@@ -699,10 +711,10 @@ class EW {
 
   void getGlobalBoundingBox(float_sw4 bbox[6]);
 
-  //string getPath() { return mPath; }
-  string getPath(int event=0){ return mPath[event]; }
+  // string getPath() { return mPath; }
+  string getPath(int event = 0) { return mPath[event]; }
   void set_utcref(TimeSeries& ts);
-  void print_utc(int event=0);
+  void print_utc(int event = 0);
 
   // For inverse problem
   void processCG(char* buffer);
@@ -744,7 +756,7 @@ class EW {
                    vector<Sarray>& gLambda);
 
   void get_optmethod(int& method, int& bfgs_m);
-  void get_utc(int utc[7],int event=0) const;
+  void get_utc(int utc[7], int event = 0) const;
 
   void perturb_mtrl();
   void perturb_mtrl(int peri, int perj, int perk, float_sw4 h, int grid,
@@ -1540,14 +1552,14 @@ class EW {
   vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs, m_Mlcs;
 
  private:
-  //void preprocessSources(vector<Source*>& a_GlobalSources);
-  void preprocessSources( vector<vector<Source*> >& a_GlobalSources );
+  // void preprocessSources(vector<Source*>& a_GlobalSources);
+  void preprocessSources(vector<vector<Source*>>& a_GlobalSources);
   void revvector(int npts, float_sw4* v);
 
-
-  int m_nevent; // Number of events, needed for multiple event material optimization.
-  int m_nevents_specified; // Number of event lines in input file
-  map<string,int> m_event_names;
+  int m_nevent;  // Number of events, needed for multiple event material
+                 // optimization.
+  int m_nevents_specified;  // Number of event lines in input file
+  map<string, int> m_event_names;
 
   // epicenter
   vector<float_sw4> m_epi_lat, m_epi_lon, m_epi_depth, m_epi_t0;
@@ -1627,8 +1639,8 @@ class EW {
   vector<SuperGrid> m_supergrid_taper_x, m_supergrid_taper_y;
   vector<SuperGrid> m_supergrid_taper_z;
 
-  //string mPath, mObsPath, mTempPath;
-  vector<string> mPath, mObsPath;//Nevent?
+  // string mPath, mObsPath, mTempPath;
+  vector<string> mPath, mObsPath;  // Nevent?
   string mTempPath;
 
   // number of boundary points on each side
@@ -1716,14 +1728,14 @@ class EW {
   // Image file info
   vector<Image*> mImageFiles;
   vector<Image3D*> mImage3DFiles;
-  vector<ESSI3D*> mESSI3DFiles; 
+  vector<ESSI3D*> mESSI3DFiles;
   bool m_iotiming;
 
   // time data
-vector<bool> mTimeIsSet;
-vector<float_sw4> mTmax;
+  vector<bool> mTimeIsSet;
+  vector<float_sw4> mTmax;
 
-vector<int> mNumberOfTimeSteps;
+  vector<int> mNumberOfTimeSteps;
 
   // Test modes
   int m_update_boundary_function;
@@ -1923,8 +1935,8 @@ vector<int> mNumberOfTimeSteps;
 
   // UTC time corresponding to simulation time 0.
   // bool m_utc0set, m_utc0isrefevent;
-  //int m_utc0[7];
-  vector<vector<int> > m_utc0; //Nevent?
+  // int m_utc0[7];
+  vector<vector<int>> m_utc0;  // Nevent?
 
   // Error handling facility
   // ErrorChecking* m_error_checking;

@@ -2531,7 +2531,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
             //		  }
 
             //		  if( mAmp != 0 && (fx != 0 || fy != 0 || fz != 0) )
-            if (1 <= k && k <= Nz) { // Runs out of memory here
+            if (1 <= k && k <= Nz) {  // Runs out of memory here
               GridPointSource* sourcePtr = new GridPointSource(
                   mFreq, mT0, i, j, k, g, fx, fy, fz, mTimeDependence, mNcyc,
                   mPar, mNpar, mIpar, mNipar, dsdp, dddp, dh1, dh2, dh3);
@@ -2865,7 +2865,8 @@ int Source::spline_interpolation() {
     // {
     // 	cout << "before spline interp" << endl;
     // 	cout << "npts = " << npts << " t0 = " << mPar[0] << " dt= " << 1/mFreq
-    // << endl; 	for( int i=0 ; i < npts ; i++ ) 	  cout << "fun[" << i << "]
+    // << endl; 	for( int i=0 ; i < npts ; i++ ) 	  cout << "fun[" << i <<
+    // "]
     // =
     // "<< mPar[i+1] << endl;
     // }

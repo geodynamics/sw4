@@ -282,7 +282,7 @@ class RangeAT {
             ii = ceil(float(iend - istart) / i);
             jj = ceil(float(jend - jstart) / j);
             kk = ceil(float(kend - kstart) / k);
- 
+
             dim3 tpb(i, j, k);
             dim3 blks(ii, jj, kk);
             if (k <= 64) confs[curr].push_back(std::make_tuple(tpb, blks));

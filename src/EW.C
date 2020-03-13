@@ -438,8 +438,8 @@ using namespace std;
 #define SQR(x) ((x) * (x))
 
 // constructor
-EW::EW(const string& fileName, vector<vector<Source*> >& a_GlobalSources,
-       vector<vector<TimeSeries*> >& a_GlobalTimeSeries, bool a_invproblem)
+EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
+       vector<vector<TimeSeries*>>& a_GlobalTimeSeries, bool a_invproblem)
     : m_epi_lat(0.0),
       m_epi_lon(0.0),
       m_epi_depth(0.0),
@@ -457,8 +457,8 @@ EW::EW(const string& fileName, vector<vector<Source*> >& a_GlobalSources,
       mNumberOfGrids(0),
       mName(fileName),
       m_scenario(" "),
-//mPath("./"),
-//      mObsPath("./"),
+      // mPath("./"),
+      //      mObsPath("./"),
       mTempPath("./"),
       mWriteGMTOutput(false),
       mPlotFrequency(80),
@@ -474,7 +474,7 @@ EW::EW(const string& fileName, vector<vector<Source*> >& a_GlobalSources,
       mTmax(0.0),
       mTstart(0.0),
       mDt(0.0),
-//mNumberOfTimeSteps(-1),
+      // mNumberOfTimeSteps(-1),
       m_testing(false),
       m_moment_test(false),
       m_twilight_forcing(NULL),
@@ -591,9 +591,9 @@ EW::EW(const string& fileName, vector<vector<Source*> >& a_GlobalSources,
       m_velo_omega(-1.0),
       m_min_omega(-1.0),
       m_max_omega(-1.0),
-  m_geodynbc_found(false),
-  m_geodynbc_center(false),
-  m_do_geodynbc(false),
+      m_geodynbc_found(false),
+      m_geodynbc_center(false),
+      m_do_geodynbc(false),
       //  m_do_geodynbc(false),
       m_att_use_max_frequency(false),
       m_att_ppw(8.0),
@@ -682,36 +682,34 @@ EW::EW(const string& fileName, vector<vector<Source*> >& a_GlobalSources,
   m_proc_array[1] = 0;
 
   m_nevents_specified = findNumberOfEvents();
-  m_nevent = m_nevents_specified > 0 ? m_nevents_specified:1;
-  //std::cout<<"EVENTS "<<m_nevents_specified<<"  "<<m_nevent<<"\n";
-  // Allocate storage 
-   m_epi_lat.resize(m_nevent);
-   m_epi_lon.resize(m_nevent);
-   m_epi_depth.resize(m_nevent);
-   m_epi_t0.resize(m_nevent);
-   a_GlobalSources.resize(m_nevent);
-   a_GlobalTimeSeries.resize(m_nevent);
-   mPath.resize(m_nevent);
-   mObsPath.resize(m_nevent);
-   mTmax.resize(m_nevent);
-   mNumberOfTimeSteps.resize(m_nevent);
-   mTimeIsSet.resize(m_nevent);
-   m_utc0.resize(m_nevent);
-// Defaults
-   for( int e=0 ; e < m_nevent ; e++ )
-   {
-      m_epi_lat[e]  = 0.0;
-      m_epi_lon[e]  = 0.0;
-      m_epi_depth[e]= 0.0;
-      m_epi_t0[e]   = 0.0;
-      //      mPath[e] = "./";
-      //      mObsPath[e] = "./";
-      mTmax[e]= 0.0;
-      mNumberOfTimeSteps[e]=-1;
-      mTimeIsSet[e]=false;
-      m_utc0[e].resize(7);
-   }
-
+  m_nevent = m_nevents_specified > 0 ? m_nevents_specified : 1;
+  // std::cout<<"EVENTS "<<m_nevents_specified<<"  "<<m_nevent<<"\n";
+  // Allocate storage
+  m_epi_lat.resize(m_nevent);
+  m_epi_lon.resize(m_nevent);
+  m_epi_depth.resize(m_nevent);
+  m_epi_t0.resize(m_nevent);
+  a_GlobalSources.resize(m_nevent);
+  a_GlobalTimeSeries.resize(m_nevent);
+  mPath.resize(m_nevent);
+  mObsPath.resize(m_nevent);
+  mTmax.resize(m_nevent);
+  mNumberOfTimeSteps.resize(m_nevent);
+  mTimeIsSet.resize(m_nevent);
+  m_utc0.resize(m_nevent);
+  // Defaults
+  for (int e = 0; e < m_nevent; e++) {
+    m_epi_lat[e] = 0.0;
+    m_epi_lon[e] = 0.0;
+    m_epi_depth[e] = 0.0;
+    m_epi_t0[e] = 0.0;
+    //      mPath[e] = "./";
+    //      mObsPath[e] = "./";
+    mTmax[e] = 0.0;
+    mNumberOfTimeSteps[e] = -1;
+    mTimeIsSet[e] = false;
+    m_utc0[e].resize(7);
+  }
 
   // read the input file and setup the simulation object
   if (parseInputFile(a_GlobalSources, a_GlobalTimeSeries))
@@ -843,7 +841,7 @@ void EW::printTime(int cycle, float_sw4 t, bool force) const {
     printf("Time step %7i  t = %15.7e\n", cycle, t);
 }
 //-----------------------------------------------------------------------
-void EW::printPreamble(vector<Source*>& a_Sources,int event) const {
+void EW::printPreamble(vector<Source*>& a_Sources, int event) const {
   stringstream msg;
 
   if (!mQuiet && proc_zero()) {
@@ -859,8 +857,8 @@ void EW::printPreamble(vector<Source*>& a_Sources,int event) const {
     else
       msg << mNumberOfTimeSteps[event] * mDt << endl;
 
-    msg << " Number of time steps = " << mNumberOfTimeSteps[event] << " dt: " << mDt
-        << endl;
+    msg << " Number of time steps = " << mNumberOfTimeSteps[event]
+        << " dt: " << mDt << endl;
 
     if (mVerbose) {
       msg << endl;
@@ -950,7 +948,9 @@ void EW::printPreamble(vector<Source*>& a_Sources,int event) const {
         if (a_Sources[i]->isMomentSource()) {
           numsrc++;
           myM0Sum += a_Sources[i]->getAmplitude();
-	  if (i==1) std::cout<<" SOURE "<<i<<" "<<a_Sources[i]->getAmplitude()<<"\n";
+          if (i == 1)
+            std::cout << " SOURE " << i << " " << a_Sources[i]->getAmplitude()
+                      << "\n";
         }
       }
       if (!mQuiet) {
@@ -1491,7 +1491,8 @@ void EW::setGMTOutput(string filename, string wppfilename) {
 }
 
 //-----------------------------------------------------------------------
-void EW::saveGMTFile(vector<vector<Source*> >& a_GlobalUniqueSources,int event) {
+void EW::saveGMTFile(vector<vector<Source*>>& a_GlobalUniqueSources,
+                     int event) {
   // this routine needs to be updated (at least for the etree info)
   if (!mWriteGMTOutput) return;
 
@@ -1651,8 +1652,8 @@ void EW::saveGMTFile(vector<vector<Source*> >& a_GlobalUniqueSources,int event) 
         double latSource, lonSource;
 
         computeGeographicCoord(a_GlobalUniqueSources[event][i]->getX0(),
-                               a_GlobalUniqueSources[event][i]->getY0(), lonSource,
-                               latSource);
+                               a_GlobalUniqueSources[event][i]->getY0(),
+                               lonSource, latSource);
         //  should name the event better
         contents << lonSource << " " << latSource << " EVENT-NAME  CB" << endl;
       }
@@ -5432,7 +5433,7 @@ void EW::update_images(int currentTimeStep, float_sw4 time,
                        vector<Sarray>& a_Up, vector<Sarray>& a_U,
                        vector<Sarray>& a_Um, vector<Sarray>& a_Rho,
                        vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
-                       vector<Source*>& a_sources, int dminus,int event) {
+                       vector<Source*>& a_sources, int dminus, int event) {
   SW4_MARK_FUNCTION;
   //   double maxerr;
   for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex) {
@@ -5690,7 +5691,8 @@ void EW::update_images(int currentTimeStep, float_sw4 time,
       // write the image plane on file
       double t[3];
       t[0] = t[1] = t[2] = MPI_Wtime();
-      img->writeImagePlane_2(currentTimeStep - td, mPath[event], time - td * mDt);
+      img->writeImagePlane_2(currentTimeStep - td, mPath[event],
+                             time - td * mDt);
       t[2] = MPI_Wtime();
 
       // output timing info?
@@ -5731,18 +5733,15 @@ void EW::addImage(Image* i) { mImageFiles.push_back(i); }
 //-----------------------------------------------------------------------
 void EW::addImage3D(Image3D* i) { mImage3DFiles.push_back(i); }
 //-----------------------------------------------------------------------
-void EW::addESSI3D(ESSI3D* i)
-{
-   mESSI3DFiles.push_back(i);
-}
+void EW::addESSI3D(ESSI3D* i) { mESSI3DFiles.push_back(i); }
 //-----------------------------------------------------------------------
 void EW::initialize_image_files() {
-
-// In case of multiple events, prepare maximum number of time steps
-   int maxNumberOfTimeSteps = 0;
-   for( int e=0 ; e < m_nevent ; e++ )
-     maxNumberOfTimeSteps = mNumberOfTimeSteps[e] > maxNumberOfTimeSteps ? mNumberOfTimeSteps[e] : 
-       maxNumberOfTimeSteps;
+  // In case of multiple events, prepare maximum number of time steps
+  int maxNumberOfTimeSteps = 0;
+  for (int e = 0; e < m_nevent; e++)
+    maxNumberOfTimeSteps = mNumberOfTimeSteps[e] > maxNumberOfTimeSteps
+                               ? mNumberOfTimeSteps[e]
+                               : maxNumberOfTimeSteps;
 
   // Image planes
   Image::setSteps(maxNumberOfTimeSteps);
@@ -5765,9 +5764,9 @@ void EW::initialize_image_files() {
   for (unsigned int fIndex = 0; fIndex < mImage3DFiles.size(); ++fIndex)
     mImage3DFiles[fIndex]->setup_images();
   ESSI3D::setSteps(maxNumberOfTimeSteps);
-   //   ESSI3D::setSteps(mNumberOfTimeSteps);
+  //   ESSI3D::setSteps(mNumberOfTimeSteps);
   for (unsigned int fIndex = 0; fIndex < mESSI3DFiles.size(); ++fIndex)
-    mESSI3DFiles[fIndex]->setup( );
+    mESSI3DFiles[fIndex]->setup();
 }
 
 //-----------------------------------------------------------------------
@@ -5994,7 +5993,8 @@ void EW::get_cgparameters(int& maxit, int& maxrestart, float_sw4& tolerance,
 
 //-----------------------------------------------------------------------
 void EW::compute_energy(float_sw4 dt, bool write_file, vector<Sarray>& Um,
-                        vector<Sarray>& U, vector<Sarray>& Up, int step,int event) {
+                        vector<Sarray>& U, vector<Sarray>& Up, int step,
+                        int event) {
   SW4_MARK_FUNCTION;
   // Compute energy
   float_sw4 energy = 0;
@@ -6083,16 +6083,16 @@ float_sw4 EW::scalarProduct(vector<Sarray>& U, vector<Sarray>& V) {
 }
 
 //-----------------------------------------------------------------------
-void EW::get_utc(int utc[7],int event) const {
+void EW::get_utc(int utc[7], int event) const {
   for (int c = 0; c < 7; c++) utc[c] = m_utc0[event][c];
 }
 
 //-----------------------------------------------------------------------
 void EW::print_utc(int e) {
   if (proc_zero()) {
-    printf("EW reference UTC is  %02i/%02i/%i:%i:%i:%i.%i\n", m_utc0[e][1], m_utc0[e][2], 
-	   m_utc0[e][0], m_utc0[e][3], m_utc0[e][4], m_utc0[e][5], m_utc0[e][6] );
-    
+    printf("EW reference UTC is  %02i/%02i/%i:%i:%i:%i.%i\n", m_utc0[e][1],
+           m_utc0[e][2], m_utc0[e][0], m_utc0[e][3], m_utc0[e][4], m_utc0[e][5],
+           m_utc0[e][6]);
   }
 }
 
@@ -7341,7 +7341,7 @@ void EW::get_optmethod(int& method, int& bfgs_m) {
 
 //-----------------------------------------------------------------------
 void EW::set_epicenter(float_sw4 epiLat, float_sw4 epiLon, float_sw4 epiDepth,
-                       float_sw4 earliestTime,int e) {
+                       float_sw4 earliestTime, int e) {
   m_epi_lat[e] = epiLat;
   m_epi_lon[e] = epiLon;
   m_epi_depth[e] = epiDepth;
@@ -7350,7 +7350,7 @@ void EW::set_epicenter(float_sw4 epiLat, float_sw4 epiLon, float_sw4 epiDepth,
 
 //-----------------------------------------------------------------------
 void EW::get_epicenter(float_sw4& epiLat, float_sw4& epiLon,
-                       float_sw4& epiDepth, float_sw4& earliestTime,int e) {
+                       float_sw4& epiDepth, float_sw4& earliestTime, int e) {
   epiLat = m_epi_lat[e];
   epiLon = m_epi_lon[e];
   epiDepth = m_epi_depth[e];
@@ -7532,11 +7532,11 @@ void EW::check_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
     //      {
     //	 // Curvilinear
     //	 F77_FUNC(projectmtrlc,PROJECTMTRLC)( &ifirst, &ilast, &jfirst, &jlast,
-    //&kfirst, &klast, 					    &ifirstact, &ilastact,
-    //&jfirstact, &jlastact, &kfirstact,
-    //&klastact,  rhop, mup, lap, &mDt, mMetric.c_ptr(),
-    // mJ.c_ptr(), 					      &mCFLmax, &vsmin, &rhoscale, &muscale,
-    // &lascale, &infogrid );
+    //&kfirst, &klast, 					    &ifirstact,
+    //&ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,  rhop, mup, lap,
+    //&mDt, mMetric.c_ptr(),
+    // mJ.c_ptr(), 					      &mCFLmax, &vsmin, &rhoscale,
+    // &muscale, &lascale, &infogrid );
     //      }
     //      else
     //      {
@@ -8541,34 +8541,34 @@ AllDims* EW::get_fine_alldimobject() {
   return fine;
 }
 //-----------------------------------------------------------------------
-void EW::extractTopographyFromSfile( std::string a_topoFileName )
-{
- 
+void EW::extractTopographyFromSfile(std::string a_topoFileName) {
 #ifdef USE_HDF5
- double start_time, end_time;
+  double start_time, end_time;
   start_time = MPI_Wtime();
   //  int verbose = mVerbose;
-  std::string rname ="EW::extractTopographyFromSfile";
+  std::string rname = "EW::extractTopographyFromSfile";
   Sarray gridElev;
   herr_t ierr;
-  hid_t file_id, dataset_id, datatype_id, h5_dtype, group_id, dataspace_id, attr_id;// plist_id;
+  hid_t file_id, dataset_id, datatype_id, h5_dtype, group_id, dataspace_id,
+      attr_id;  // plist_id;
   int prec;
   double lonlataz[3];
 
   /* plist_id = H5Pcreate(H5P_FILE_ACCESS); */
   /* H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL); */
   /* file_id = H5Fopen(a_topoFileName.c_str(), H5F_ACC_RDONLY, plist_id); */
-  if (m_myRank==0 ) {
+  if (m_myRank == 0) {
     file_id = H5Fopen(a_topoFileName.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     if (file_id < 0) {
-       cout << "Could not open hdf5 file: " << a_topoFileName.c_str()<< endl;
-       MPI_Abort(MPI_COMM_WORLD, file_id);
+      cout << "Could not open hdf5 file: " << a_topoFileName.c_str() << endl;
+      MPI_Abort(MPI_COMM_WORLD, file_id);
     }
   }
 
   // Origin longitude, latitude, azimuth
-  if (m_myRank==0 ) {
-    attr_id = H5Aopen(file_id, "Origin longitude, latitude, azimuth", H5P_DEFAULT);
+  if (m_myRank == 0) {
+    attr_id =
+        H5Aopen(file_id, "Origin longitude, latitude, azimuth", H5P_DEFAULT);
     ASSERT(attr_id >= 0);
     ierr = H5Aread(attr_id, H5T_NATIVE_DOUBLE, lonlataz);
     ASSERT(ierr >= 0);
@@ -8578,13 +8578,15 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
 
   double alpha = lonlataz[2], lon0 = lonlataz[0], lat0 = lonlataz[1];
 
-  CHECK_INPUT( fabs(alpha-mGeoAz) < 1e-6, "ERROR: Sfile azimuth must be equal to coordinate system azimuth" <<
-               " azimuth on sfile = " << alpha << " azimuth of coordinate sytem = " << mGeoAz << 
-               " difference = " << alpha-mGeoAz );
+  CHECK_INPUT(fabs(alpha - mGeoAz) < 1e-6,
+              "ERROR: Sfile azimuth must be equal to coordinate system azimuth"
+                  << " azimuth on sfile = " << alpha
+                  << " azimuth of coordinate sytem = " << mGeoAz
+                  << " difference = " << alpha - mGeoAz);
 
   // Ngrids - int, number of 3D grids in the file
   int npatches;
-  if (m_myRank==0 ) {
+  if (m_myRank == 0) {
     attr_id = H5Aopen(file_id, "ngrids", H5P_DEFAULT);
     ierr = H5Aread(attr_id, H5T_NATIVE_INT, &npatches);
     ASSERT(ierr >= 0);
@@ -8592,14 +8594,14 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
   }
   MPI_Bcast(&npatches, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  if (m_myRank==0 && mVerbose >= 2) {
+  if (m_myRank == 0 && mVerbose >= 2) {
     printf("Sfile header: \n");
     printf("              azimuth=%e, lon0=%e, lat0=%e\n", alpha, lon0, lat0);
     printf("              nblocks=%i\n", npatches);
   }
 
   double hh;
-  if (m_myRank==0 ) {
+  if (m_myRank == 0) {
     attr_id = H5Aopen(file_id, "Coarsest horizontal grid spacing", H5P_DEFAULT);
     ASSERT(attr_id >= 0);
     ierr = H5Aread(attr_id, H5T_NATIVE_DOUBLE, &hh);
@@ -8612,7 +8614,7 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
   hsize_t dims[2];
   char intf_name[32];
 
-  if (m_myRank==0 ) {
+  if (m_myRank == 0) {
     group_id = H5Gopen(file_id, "Z_interfaces", H5P_DEFAULT);
     ASSERT(group_id >= 0);
 
@@ -8633,28 +8635,28 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
 
   int nitop = (int)dims[0], njtop = (int)dims[1];
 
-  if (m_myRank==0 && mVerbose >= 2) {
+  if (m_myRank == 0 && mVerbose >= 2) {
     printf("Topography header\n");
     printf("  hh=%e\n", hh);
     printf("  ni=%i, nj=%i\n", nitop, njtop);
   }
 
-
-  // Depending on the precision of the sfile and sw4, need to convert between float and doulbe
-  void *in_data;
-  float  *f_data = new float[nitop * njtop];
-  double *d_data = new double[nitop * njtop];
+  // Depending on the precision of the sfile and sw4, need to convert between
+  // float and doulbe
+  void* in_data;
+  float* f_data = new float[nitop * njtop];
+  double* d_data = new double[nitop * njtop];
   if (prec == 4) {
-      h5_dtype = H5T_NATIVE_FLOAT;
-      in_data = (void*)f_data;
-  }
-  else if (prec == 8) {
-      h5_dtype = H5T_NATIVE_DOUBLE;
-      in_data = (void*)d_data;
+    h5_dtype = H5T_NATIVE_FLOAT;
+    in_data = (void*)f_data;
+  } else if (prec == 8) {
+    h5_dtype = H5T_NATIVE_DOUBLE;
+    in_data = (void*)d_data;
   }
 
-  if (m_myRank==0 ) {
-    ierr = H5Dread(dataset_id, h5_dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, in_data);
+  if (m_myRank == 0) {
+    ierr =
+        H5Dread(dataset_id, h5_dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, in_data);
     ASSERT(ierr >= 0);
     H5Dclose(dataset_id);
     H5Gclose(group_id);
@@ -8662,153 +8664,168 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
   }
   MPI_Bcast(in_data, nitop * njtop * prec, MPI_CHAR, 0, MPI_COMM_WORLD);
 
-  float_sw4 *data = new float_sw4[nitop * njtop];
+  float_sw4* data = new float_sw4[nitop * njtop];
   for (int i = 0; i < nitop * njtop; i++) {
-      if (prec == 4) 
-          data[i] = -(float_sw4)f_data[i];
-      else if (prec == 8) 
-          data[i] = -(float_sw4)d_data[i];
+    if (prec == 4)
+      data[i] = -(float_sw4)f_data[i];
+    else if (prec == 8)
+      data[i] = -(float_sw4)d_data[i];
   }
 
   delete[] f_data;
   delete[] d_data;
 
- 
   gridElev.define(1, nitop, 1, njtop, 1, 1);
   gridElev.assign(data);
 
-  bool roworder=true;
-  if (m_myRank==0 && mVerbose >= 2) {
-    printf("1st topo (float) data=%e, gridElev(1,1,1)=%e\n", data[0], gridElev(1,1,1));
-    printf("last topo (float) data=%e, gridElev(ni,nj,1)=%e\n", data[nitop*njtop-1], gridElev(nitop,njtop,1));
+  bool roworder = true;
+  if (m_myRank == 0 && mVerbose >= 2) {
+    printf("1st topo (float) data=%e, gridElev(1,1,1)=%e\n", data[0],
+           gridElev(1, 1, 1));
+    printf("last topo (float) data=%e, gridElev(ni,nj,1)=%e\n",
+           data[nitop * njtop - 1], gridElev(nitop, njtop, 1));
     // get min and max
-    float tmax=-9e-10, tmin=9e+10;
-    for (int q=0; q<nitop*njtop; q++) {
-      if (data[q]>tmax) tmax=data[q];
-      if (data[q]<tmin) tmin=data[q];	     
+    float tmax = -9e-10, tmin = 9e+10;
+    for (int q = 0; q < nitop * njtop; q++) {
+      if (data[q] > tmax) tmax = data[q];
+      if (data[q] < tmin) tmin = data[q];
     }
     printf("topo max (float)=%e, min (float)=%e\n", tmax, tmin);
   }
   delete[] data;
- 
-  if( roworder )
-    gridElev.transposeik();
+
+  if (roworder) gridElev.transposeik();
 
   // ---------- done reading
 
   // ---------- origin on file
-  double x0, y0; // Origin on grid file
+  double x0, y0;  // Origin on grid file
   computeCartesianCoord(x0, y0, lon0, lat0);
   if (m_myRank == 0 && mVerbose >= 2) {
-    printf("mat-lon0=%e mat-lat0=%e, comp-x0=%e, commp-y0=%e\n", lon0, lat0, x0, y0);
+    printf("mat-lon0=%e mat-lat0=%e, comp-x0=%e, commp-y0=%e\n", lon0, lat0, x0,
+           y0);
   }
 
   // Topography read, next interpolate to the computational grid
-  int topLevel=mNumberOfGrids-1;
+  int topLevel = mNumberOfGrids - 1;
 
-  float_sw4 topomax=-1e30, topomin=1e30;
-#pragma omp parallel for reduction(max:topomax) reduction(min:topomin)      
+  float_sw4 topomax = -1e30, topomin = 1e30;
+#pragma omp parallel for reduction(max : topomax) reduction(min : topomin)
   for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
     for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j) {
-      float_sw4 x = (i-1)*mGridSize[topLevel];
-      float_sw4 y = (j-1)*mGridSize[topLevel];
-      int i0 = static_cast<int>( trunc( 1 + (x-x0)/hh ));
-      int j0 = static_cast<int>( trunc( 1 + (y-y0)/hh ));
-// test
-      float_sw4 xmat0 = (i0-1)*hh, ymat0 = (j0-1)*hh;
+      float_sw4 x = (i - 1) * mGridSize[topLevel];
+      float_sw4 y = (j - 1) * mGridSize[topLevel];
+      int i0 = static_cast<int>(trunc(1 + (x - x0) / hh));
+      int j0 = static_cast<int>(trunc(1 + (y - y0) / hh));
+      // test
+      float_sw4 xmat0 = (i0 - 1) * hh, ymat0 = (j0 - 1) * hh;
       float_sw4 xmatx = x - x0, ymaty = y - y0;
-      
-      if (mVerbose>=3) {
-        if (xmatx<xmat0 || xmatx>xmat0+hh) 
-          printf("WARNING: i0=%i is out of bounds for x=%e, xmatx=%e\n", i0, x, xmatx);
-        if (ymaty<ymat0 || ymaty>ymat0+hh) 
-          printf("WARNING: i0=%i is out of bounds for y=%e, ymaty=%e\n", i0, y, ymaty);
+
+      if (mVerbose >= 3) {
+        if (xmatx < xmat0 || xmatx > xmat0 + hh)
+          printf("WARNING: i0=%i is out of bounds for x=%e, xmatx=%e\n", i0, x,
+                 xmatx);
+        if (ymaty < ymat0 || ymaty > ymat0 + hh)
+          printf("WARNING: i0=%i is out of bounds for y=%e, ymaty=%e\n", i0, y,
+                 ymaty);
       }
-      
-      bool extrapol=false;
-      if( i0 < -1 ) {
+
+      bool extrapol = false;
+      if (i0 < -1) {
         extrapol = true;
         i0 = 1;
-      }
-      else if( i0 < 2 )
+      } else if (i0 < 2)
         i0 = 2;
-        
-      if( i0 > nitop+1 ) {
+
+      if (i0 > nitop + 1) {
         extrapol = true;
         i0 = nitop;
-      }
-      else if( i0 > nitop-2 )
-        i0 = nitop-2;
-        
-      if( j0 < -1 ) {
+      } else if (i0 > nitop - 2)
+        i0 = nitop - 2;
+
+      if (j0 < -1) {
         extrapol = true;
         j0 = 1;
-      }
-      else if( j0 < 2 )
+      } else if (j0 < 2)
         j0 = 2;
 
-      if( j0 > njtop+1 ) {
+      if (j0 > njtop + 1) {
         extrapol = true;
         j0 = njtop;
-      }
-      else if( j0 > njtop-2 )
-        j0 = njtop-2;
+      } else if (j0 > njtop - 2)
+        j0 = njtop - 2;
 
-      if( !extrapol ) {
-        float_sw4 q = (x - x0 - (i0-1)*hh)/hh;
-        float_sw4 r = (y - y0 - (j0-1)*hh)/hh;
-        float_sw4 Qim1, Qi, Qip1, Qip2, Rjm1, Rj, Rjp1, Rjp2, tjm1, tj, tjp1, tjp2;
-        Qim1 = (q)*(q-1)*(q-2)/(-6.);
-        Qi   = (q+1)*(q-1)*(q-2)/(2.);
-        Qip1 = (q+1)*(q)*(q-2)/(-2.);
-        Qip2 = (q+1)*(q)*(q-1)/(6.);
+      if (!extrapol) {
+        float_sw4 q = (x - x0 - (i0 - 1) * hh) / hh;
+        float_sw4 r = (y - y0 - (j0 - 1) * hh) / hh;
+        float_sw4 Qim1, Qi, Qip1, Qip2, Rjm1, Rj, Rjp1, Rjp2, tjm1, tj, tjp1,
+            tjp2;
+        Qim1 = (q) * (q - 1) * (q - 2) / (-6.);
+        Qi = (q + 1) * (q - 1) * (q - 2) / (2.);
+        Qip1 = (q + 1) * (q) * (q - 2) / (-2.);
+        Qip2 = (q + 1) * (q) * (q - 1) / (6.);
 
-        Rjm1 = (r)*(r-1)*(r-2)/(-6.);
-        Rj   = (r+1)*(r-1)*(r-2)/(2.);
-        Rjp1 = (r+1)*(r)*(r-2)/(-2.);
-        Rjp2 = (r+1)*(r)*(r-1)/(6.);
+        Rjm1 = (r) * (r - 1) * (r - 2) / (-6.);
+        Rj = (r + 1) * (r - 1) * (r - 2) / (2.);
+        Rjp1 = (r + 1) * (r) * (r - 2) / (-2.);
+        Rjp2 = (r + 1) * (r) * (r - 1) / (6.);
 
-        if (mVerbose>=3) {
-          if (i0<2 || i0>nitop-2) printf("WARNING: topo interp out of bounds i0=%i, nitop=%i\n", i0, nitop);
-          if (j0<2 || j0>njtop-2) printf("WARNING: topo interp out of bounds j0=%i, njtop=%i\n", j0, njtop);
+        if (mVerbose >= 3) {
+          if (i0 < 2 || i0 > nitop - 2)
+            printf("WARNING: topo interp out of bounds i0=%i, nitop=%i\n", i0,
+                   nitop);
+          if (j0 < 2 || j0 > njtop - 2)
+            printf("WARNING: topo interp out of bounds j0=%i, njtop=%i\n", j0,
+                   njtop);
         }
-        
-        tjm1 = Qim1*gridElev(i0-1,j0-1,1) +    Qi*gridElev(i0,  j0-1,1)
-          +  Qip1*gridElev(i0+1,j0-1,1) +  Qip2*gridElev(i0+2,j0-1,1);
-        tj   = Qim1*gridElev(i0-1,j0,  1) +    Qi*gridElev(i0,  j0,  1)
-          +  Qip1*gridElev(i0+1,j0,  1) +  Qip2*gridElev(i0+2,j0,  1);
-        tjp1 = Qim1*gridElev(i0-1,j0+1,1) +    Qi*gridElev(i0,  j0+1,1)
-          +  Qip1*gridElev(i0+1,j0+1,1) +  Qip2*gridElev(i0+2,j0+1,1);
-        tjp2 = Qim1*gridElev(i0-1,j0+2,1) +    Qi*gridElev(i0,  j0+2,1)
-          +  Qip1*gridElev(i0+1,j0+2,1) +  Qip2*gridElev(i0+2,j0+2,1);
-        mTopo(i,j,1) = Rjm1*tjm1 + Rj*tj + Rjp1*tjp1 + Rjp2*tjp2;
+
+        tjm1 = Qim1 * gridElev(i0 - 1, j0 - 1, 1) +
+               Qi * gridElev(i0, j0 - 1, 1) +
+               Qip1 * gridElev(i0 + 1, j0 - 1, 1) +
+               Qip2 * gridElev(i0 + 2, j0 - 1, 1);
+        tj = Qim1 * gridElev(i0 - 1, j0, 1) + Qi * gridElev(i0, j0, 1) +
+             Qip1 * gridElev(i0 + 1, j0, 1) + Qip2 * gridElev(i0 + 2, j0, 1);
+        tjp1 = Qim1 * gridElev(i0 - 1, j0 + 1, 1) +
+               Qi * gridElev(i0, j0 + 1, 1) +
+               Qip1 * gridElev(i0 + 1, j0 + 1, 1) +
+               Qip2 * gridElev(i0 + 2, j0 + 1, 1);
+        tjp2 = Qim1 * gridElev(i0 - 1, j0 + 2, 1) +
+               Qi * gridElev(i0, j0 + 2, 1) +
+               Qip1 * gridElev(i0 + 1, j0 + 2, 1) +
+               Qip2 * gridElev(i0 + 2, j0 + 2, 1);
+        mTopo(i, j, 1) = Rjm1 * tjm1 + Rj * tj + Rjp1 * tjp1 + Rjp2 * tjp2;
+      } else {
+        if (mVerbose >= 3)
+          printf(
+              "INFO: topo extrapolated for i=%i, j=%i, x=%e, y=%e, i0=%i, "
+              "j0=%i\n",
+              i, j, x, y, i0, j0);
+
+        mTopo(i, j, 1) = gridElev(i0, j0, 1);
       }
-      else {
-        if (mVerbose>=3)
-          printf("INFO: topo extrapolated for i=%i, j=%i, x=%e, y=%e, i0=%i, j0=%i\n", i, j, x, y, i0, j0);
-        
-        mTopo(i,j,1) = gridElev(i0,j0,1);
-      }
-      
+
       // test
-      if (mTopo(i,j,1)>topomax) topomax=mTopo(i,j,1);
-      if (mTopo(i,j,1)<topomin) topomin=mTopo(i,j,1);
-        
-    }// end for j
-  }// end for i
+      if (mTopo(i, j, 1) > topomax) topomax = mTopo(i, j, 1);
+      if (mTopo(i, j, 1) < topomin) topomin = mTopo(i, j, 1);
+
+    }  // end for j
+  }    // end for i
 
   MPI_Barrier(MPI_COMM_WORLD);
   end_time = MPI_Wtime();
-  if (m_myRank==0)
-    printf("Read topography from sfile time=%e seconds\n", end_time-start_time);
-  
+  if (m_myRank == 0)
+    printf("Read topography from sfile time=%e seconds\n",
+           end_time - start_time);
+
   // test
-  if (m_myRank==0 && mVerbose>=2) {
+  if (m_myRank == 0 && mVerbose >= 2) {
     printf("Topo variation on comp grid: max=%e min=%e\n", topomax, topomin);
   }
 #else
-  if (m_myRank==0)
-    printf("WARNING: sw4 not compiled with hdf5=yes, ignoring read sfile, abort!\n");
+  if (m_myRank == 0)
+    printf(
+        "WARNING: sw4 not compiled with hdf5=yes, ignoring read sfile, "
+        "abort!\n");
   MPI_Abort(MPI_COMM_WORLD, -1);
 #endif
 }
