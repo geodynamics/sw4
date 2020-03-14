@@ -5691,7 +5691,7 @@ void EW::processRuptureHDF5(char* buffer, vector<vector<Source*> > & a_GlobalUni
   etime = MPI_Wtime();
   
   if (proc_zero())
-      cout << "Read HDF5 rupture data, took " << etime-stime << "seconds." << endl;
+      cout << "Process rupture data, took " << etime-stime << "seconds." << endl;
 #else
   if (proc_zero())
     cout << "Using HDF5 rupture input but sw4 is not compiled with HDF5!"<< endl;
@@ -6100,7 +6100,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 
   etime = MPI_Wtime();
   if (proc_zero())
-      cout << "Read SRF rupture data, took " << etime-stime << "seconds." << endl;
+      cout << "Process rupture data, took " << etime-stime << "seconds." << endl;
 } // end processRupture()
 
 

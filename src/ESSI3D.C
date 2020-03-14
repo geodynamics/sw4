@@ -313,7 +313,7 @@ void ESSI3D::open_vel_file( int a_cycle, std::string& a_path,
 
   // Parameters for extendible dataset
   const int num_dims = 3 + 1; // 3 space + 1 time that will be extendible
-  hsize_t dims[num_dims]={-1,-1,-1,H5S_UNLIMITED};
+  hsize_t dims[num_dims]={0,0,0,H5S_UNLIMITED};
   hsize_t slice_dims[num_dims];
   hsize_t block_dims[num_dims];
   hsize_t global_dims[num_dims];

@@ -151,6 +151,7 @@ ImageMode mMode;
 std::string mFilePrefix;
 void initializeTime(double t=0.0);
 bool needs_mgrad() const;
+double get_write_time() {return m_write_time;};
 
 protected:
 
@@ -203,6 +204,7 @@ bool m_double;
 bool m_usehdf5;
 EW* mEW;
 Parallel_IO** m_pio;
+double m_write_time;
 
 // moved to class EW
 //int m_pfs, m_nwriters;

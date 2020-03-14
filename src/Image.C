@@ -82,12 +82,14 @@ Image::Image(EW * a_ew,
   mLocationType(locationType),
   mCoordValue(locationValue),
   //  m_isDefined(false),
+  m_mpiComm_writers(MPI_COMM_NULL),
   m_isDefinedMPIWriters(false),
   m_double(doubleMode),
   m_usehdf5(usehdf5),
   mGridinfo(-1),
   mStoreGrid(true),
   m_gridimage(Image::nil),
+  m_write_time(0.0),
   m_user_created(userCreated)
 {
   mMode2Suffix.resize(MODES);
@@ -343,6 +345,9 @@ void Image::computeGridPtIndex()
           "ImageSlice write error, no processors in communicator")          ;
 
   //  m_rankWriter = fileWriterIDs[0];
+
+  if (m_mpiComm_writers != MPI_COMM_NULL) 
+      MPI_Comm_free(&m_mpiComm_writers);
 
   MPI_Group_incl(origGroup,fileWriterIDs.size(),&fileWriterIDs[0],&newGroup);
   MPI_Comm_create(MPI_COMM_WORLD,newGroup,&m_mpiComm_writers)               ;
@@ -1019,6 +1024,8 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
    
    ASSERT(m_isDefinedMPIWriters);
 
+   double stime, etime;
+   stime = MPI_Wtime();
 #ifdef USE_HDF5
    hid_t h5_fid, grd, dset, attr, dtype, attr_space1, dset_space, fapl;
 #endif
@@ -1453,6 +1460,8 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
       /*    add_grid_filenames_to_file( s.str().c_str() ); */
 #endif
    } // End use_hdf5 == true
+   etime = MPI_Wtime();
+   m_write_time += (etime - stime);
 }
 
 //-----------------------------------------------------------------------

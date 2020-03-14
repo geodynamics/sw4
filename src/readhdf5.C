@@ -62,7 +62,7 @@ struct traverse_data_t {
   int downSample;
   TimeSeries::receiverMode mode;
   int event;
-  vector<vector<TimeSeries*>> *GlobalTimeSeries;
+  vector< vector<TimeSeries*> > *GlobalTimeSeries;
   float_sw4 m_global_xmax;
   float_sw4 m_global_ymax;
   bool is_obs;
@@ -273,7 +273,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
 }
 
 
-void readStationHDF5(EW* ew, string inFileName, string outFileName, int writeEvery, int downSample, TimeSeries::receiverMode mode, int event, vector<vector<TimeSeries*>> *GlobalTimeSeries, float_sw4 m_global_xmax, float_sw4 m_global_ymax, bool is_obs, bool winlset, bool winrset, float_sw4 winl, float_sw4 winr, bool usex, bool usey, bool usez, float_sw4 t0, bool scalefactor_set, float_sw4 scalefactor)
+void readStationHDF5(EW* ew, string inFileName, string outFileName, int writeEvery, int downSample, TimeSeries::receiverMode mode, int event, vector< vector<TimeSeries*> > *GlobalTimeSeries, float_sw4 m_global_xmax, float_sw4 m_global_ymax, bool is_obs, bool winlset, bool winrset, float_sw4 winl, float_sw4 winr, bool usex, bool usey, bool usez, float_sw4 t0, bool scalefactor_set, float_sw4 scalefactor)
 {
   hid_t fid, fapl;
 
@@ -334,7 +334,7 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
       nreader = 1;
 
   int read_color = world_rank % (world_size / nreader) == 0 ? 0 : 1;
-  int node_color = world_rank / nreader;
+  int node_color = world_rank / (world_size / nreader);
   int read_rank, read_size;
   MPI_Comm read_comm, node_comm;
   MPI_Comm_split(MPI_COMM_WORLD, read_color, world_rank, &read_comm);
@@ -491,6 +491,9 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
   MPI_Bcast(sr_data, nsr1, MPI_FLOAT, 0, node_comm);
   /* MPI_Bcast(sr_data, nsr1, MPI_FLOAT, 0, MPI_COMM_WORLD); */
   stime = MPI_Wtime();
+
+  MPI_Comm_free(&node_comm);
+  MPI_Comm_free(&read_comm);
 
   if (is_debug && world_rank == 0) 
       printf("Bcast SRF-HDF5 takes %.2f seconds\n", stime-etime);
