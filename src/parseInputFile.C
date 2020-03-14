@@ -5851,7 +5851,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
     for (int pts=0; pts<npts; pts++) 
     {
       double lon, lat, dep, stk, dip, area, tinit, dt, rake, slip1, slip2, slip3;
-      int nt1, nt2, nt3;
+      int nt1=0, nt2=0, nt3=0;
       fgets(buf,bufsize,fd);
       sscanf(buf,"%lg %lg %lg %lg %lg %lg %lg %lg", &lon, &lat, &dep, &stk, &dip, &area, 
 	     &tinit, &dt);
