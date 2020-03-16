@@ -1182,12 +1182,22 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
    {
 #ifdef USE_HDF5
       int ret, ltype;
+      hid_t fapl;
       hsize_t dims, dims1 = 1, total_elem = 0;
       setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
-      h5_fid = H5Fcreate((const char*)(s.str().c_str()), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+      int alignment = 1;
+      char *env = getenv("HDF5_ALIGNMENT_SIZE");
+      if (env != NULL) 
+          alignment = atoi(env);
+      if (alignment < 65536) 
+          alignment = 65536;
+      fapl = H5Pcreate(H5P_FILE_ACCESS);
+      H5Pset_alignment(fapl, 10000, alignment);
+      h5_fid = H5Fcreate((const char*)(s.str().c_str()), H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
       if (h5_fid < 0) 
 	VERIFY2(0, "ERROR: Image::writeImagePlane_2, error opening HDF5 file " << s.str() << " for writing header");
 
+      H5Pclose(fapl);
       /* cout << "Rank " << mEW->getRank() << " created new file [" << s.str() << "]" << endl; */
       cout << "writing image plane on file " << s.str() << endl;// " (msg from proc # " << m_rankWriter << ")" << endl;
 

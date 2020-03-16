@@ -1189,8 +1189,16 @@ void Parallel_IO::write_array_hdf5( const char *fname, const char *dname, int nc
    bool debug =false;
    hid_t dspace, filespace, dxpl, h5_fid, fapl, dset;
 
+   int alignment = 1;
+   char *env = getenv("HDF5_ALIGNMENT_SIZE");
+   if (env != NULL) 
+       alignment = atoi(env);
+   if (alignment < 65536) 
+       alignment = 65536;
+
    fapl = H5Pcreate(H5P_FILE_ACCESS);
    /* H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL); */
+   H5Pset_alignment(fapl, 10000, alignment);
    dxpl = H5Pcreate(H5P_DATASET_XFER);
    H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
 
