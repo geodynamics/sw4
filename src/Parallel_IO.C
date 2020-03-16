@@ -1314,33 +1314,6 @@ void Parallel_IO::write_array_hdf5( const char *fname, const char *dname, int nc
 	 kl = m_irecv.m_klow[0];
 	 ind = il-1+nig*(jl-1)+((off_t)nig)*njg*(kl-1);
          offset = pos0 + nc*ind;
-	 /* sizew = lseek( *fid, pos0+nc*ind*typsize, SEEK_SET ); */
-	 if( offset < 0 )
-	 {
-	    int eno = errno;
-	    cout << "Error in write_array: could not go to write start position" << endl;
-	    if( eno == EBADF )
-	       cout << "errno = EBADF" << endl;
-	    if( eno == EINVAL )
-	       cout << "errno = EINVAL" << endl;
-	    if( eno == EOVERFLOW )
-	       cout << "errno = EOVERFLOW" << endl;
-	    if( eno == ESPIPE )
-	       cout << "errno = ESPIPE" << endl;
-	    cout << "errno = " << eno << endl;
-            cout << "Requested offset = " << pos0+nc*ind<< endl;
-            cout << "pos0 = " << pos0 << endl;
-	    cout << "nc = " << nc << endl;
-	    cout << "ind = " << ind << endl;
-	    cout << "typsize = " << typsize << endl;
-            cout << "m_csteps = " << m_csteps << endl;
-	    cout << "nglobal = " << nig << " " << njg << " " << nkg << endl;
-	    cout << "m_irecv.m_ilow " << m_irecv.m_ilow[0] << endl;
-	    cout << "m_irecv.m_jlow " << m_irecv.m_jlow[0] << endl;
-	    cout << "m_irecv.m_klow " << m_irecv.m_klow[0] << endl;
-            cout << "m_irecv.m_ncomm[0] = " << m_irecv.m_ncomm[0] << endl;
-	    //	    MPI_Abort(MPI_COMM_WORLD,1);
-	 }
       }
 
       tag = 334;
