@@ -131,8 +131,8 @@ def read_sw4img_hdf5(fname):
     return np.array(pdata)
 
 
-def verify(tolerance):
-    ref_dir = os.getcwd() + '/loh1-h100-mr-1/'
+def verify(pytest_dir, tolerance):
+    ref_dir = pytest_dir + '/hdf5/loh1-h100-mr-1/'
     hdf5_dir = os.getcwd() + '/loh1-h100-mr-1-hdf5/'
     verify = True
     nsta = 0

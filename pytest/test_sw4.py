@@ -141,6 +141,10 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
         if omp_threads<=0: omp_threads=1;
         if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
+    elif 'batch' in node_name: # for summit
+        if omp_threads<=0: omp_threads=7;
+        if mpi_tasks<=0: mpi_tasks = 6
+        mpirun_cmd="jsrun -a1 -c7 -r6 -l CPU-CPU -d packed -b packed:7 -n " + str(mpi_tasks)
     # add more machine names here
     elif 'Linux' in sys_name:
         if omp_threads<=0: omp_threads=1;
@@ -150,10 +154,6 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
         if omp_threads<=0: omp_threads=1;
         if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
-    elif 'batch' in sys_name: # for summit
-        if omp_threads<=0: omp_threads=4;
-        if mpi_tasks<=0: mpi_tasks = 16
-        mpirun_cmd="jsrun -a1 -c7 -r6 -l CPU-CPU -d packed -b packed:7 -n " + str(mpi_tasks)
     else:
         #default mpi command
         if omp_threads<=0: omp_threads=1;
@@ -164,10 +164,13 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
 
 #------------------------------------------------
 
-def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threads=0, verbose=False, nohdf5=False):
+def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mpi_tasks=0, omp_threads=0, verbose=False, nohdf5=False):
     assert sys.version_info >= (3,5) # named tuples in Python version >=3.3
+
     sep = '/'
-    pytest_dir = os.getcwd()
+    if pytest_dir == "none":
+        pytest_dir = os.getcwd()
+
     pytest_dir_list = pytest_dir.split(sep)
     sw4_base_list = pytest_dir_list[:-1] # discard the last sub-directory (pytest)
 
@@ -192,6 +195,7 @@ def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threa
     if verbose: print('reference_dir =', reference_dir)          
     
     sw4_exe = optimize_dir + '/sw4'
+
     #print('sw4-exe = ', sw4_exe)
 
     # make sure sw4 is present in the optimize dir
@@ -305,7 +309,7 @@ def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threa
 
 
             if result_file == 'hdf5.log':
-                success = verify_hdf5.verify(1e-5)
+                success = verify_hdf5.verify(pytest_dir, 1e-5)
                 if success == False:
                     print('HDF5 test failed! (disable HDF5 test with -n option)')
             elif result_file == 'energy.log':
@@ -350,10 +354,11 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mpitasks", type=int, help="number of mpi tasks")
     parser.add_argument("-t", "--ompthreads", type=int, help="number of omp threads per task")
     parser.add_argument("-d", "--sw4_exe_dir", help="name of directory for sw4 executable", default="optimize_mp")
+    parser.add_argument("-p", "--pytest_dir", help="directory of pytest", default="none")
     parser.add_argument("-n", "--nohdf5", help="disable HDF5 test", action="store_true")
     args = parser.parse_args()
     if args.nohdf5:
-        #print("verbose mode enabled")
+        #print("HDF5 test disabled")
         nohdf5=True
     if args.verbose:
         #print("verbose mode enabled")
@@ -367,10 +372,13 @@ if __name__ == "__main__":
     if args.ompthreads:
         #print("OMP-threads specified=", args.ompthreads)
         if args.ompthreads > 0: omp_threads=args.ompthreads
+    if args.pytest_dir:
+        #print("sw4_exe specified=", args.sw4_exe)
+        pytest_dir=args.pytest_dir
     if args.sw4_exe_dir:
         #print("sw4_exe_dir specified=", args.sw4_exe_dir)
         sw4_exe_dir=args.sw4_exe_dir
 
-    if not main_test(sw4_exe_dir, testing_level, mpi_tasks, omp_threads, verbose, nohdf5):
+    if not main_test(sw4_exe_dir, pytest_dir, testing_level, mpi_tasks, omp_threads, verbose, nohdf5):
         print("test_sw4 was unsuccessful")
 
