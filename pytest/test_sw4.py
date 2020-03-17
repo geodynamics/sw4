@@ -134,11 +134,8 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
         mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks) + " -c " + str(omp_threads)
     elif 'nid' in node_name: # the cori knl nodes are called nid
         if omp_threads<=0: omp_threads=4;
-        # Tang: for Haswell
-        # if mpi_tasks<=0: mpi_tasks = int(64/omp_threads) # use 64 hardware cores per node
-        # sw_threads = 4*omp_threads # Cori uses hyperthreading by default
-        if mpi_tasks<=0: mpi_tasks = int(32/omp_threads) # use 64 hardware cores per node
-        sw_threads = 1*omp_threads # Cori uses hyperthreading by default
+        if mpi_tasks<=0: mpi_tasks = int(64/omp_threads) # use 64 hardware cores per node
+        sw_threads = 4*omp_threads # Cori uses hyperthreading by default
         mpirun_cmd="srun --cpu_bind=cores -n " + str(mpi_tasks) + " -c " + str(sw_threads)
     elif 'fourier' in node_name:
         if omp_threads<=0: omp_threads=1;
