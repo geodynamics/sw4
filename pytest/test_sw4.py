@@ -3,7 +3,7 @@
 # Arguments:
 # -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir -t omp-threads
 
-import os, sys, argparse, subprocess
+import os, sys, argparse, subprocess, verify_hdf5
 
 #----(Currently not used)--------------------------------------------
 def run_checks(checks):
@@ -134,8 +134,11 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
         mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks) + " -c " + str(omp_threads)
     elif 'nid' in node_name: # the cori knl nodes are called nid
         if omp_threads<=0: omp_threads=4;
-        if mpi_tasks<=0: mpi_tasks = int(64/omp_threads) # use 64 hardware cores per node
-        sw_threads = 4*omp_threads # Cori uses hyperthreading by default
+        # Tang: for Haswell
+        # if mpi_tasks<=0: mpi_tasks = int(64/omp_threads) # use 64 hardware cores per node
+        # sw_threads = 4*omp_threads # Cori uses hyperthreading by default
+        if mpi_tasks<=0: mpi_tasks = int(32/omp_threads) # use 64 hardware cores per node
+        sw_threads = 1*omp_threads # Cori uses hyperthreading by default
         mpirun_cmd="srun --cpu_bind=cores -n " + str(mpi_tasks) + " -c " + str(sw_threads)
     elif 'fourier' in node_name:
         if omp_threads<=0: omp_threads=1;
@@ -160,7 +163,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
 
 #------------------------------------------------
 
-def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threads=0, verbose=False):
+def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threads=0, verbose=False, nohdf5=False):
     assert sys.version_info >= (3,5) # named tuples in Python version >=3.3
     sep = '/'
     pytest_dir = os.getcwd()
@@ -208,20 +211,27 @@ def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threa
     num_pass=0
     num_fail=0
 
-    all_dirs = ['energy', 'energy', 'energy', 'energy', 'meshrefine', 'meshrefine', 'meshrefine', 'attenuation', 'attenuation', 'pointsource', 'twilight', 'twilight', 'lamb']
-    all_cases = ['energy-nomr-2nd', 'energy-mr-4th', 'energy-mr-sg-order2', 'energy-mr-sg-order4', 'refine-el', 'refine-att', 'refine-att-2nd', 'tw-att', 'tw-topo-att', 'pointsource-sg', 'flat-twi', 'gauss-twi', 'lamb']
-    all_results =['energy.log', 'energy.log', 'energy.log', 'energy.log', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'PointSourceErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt']
-    num_meshes =[1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 1] # default number of meshes for level 0
+    all_dirs = ['energy', 'energy', 'energy', 'energy', 'meshrefine', 'meshrefine', 'meshrefine', 'attenuation', 'attenuation', 'pointsource', 'twilight', 'twilight', 'lamb', 'hdf5']
+    all_cases = ['energy-nomr-2nd', 'energy-mr-4th', 'energy-mr-sg-order2', 'energy-mr-sg-order4', 'refine-el', 'refine-att', 'refine-att-2nd', 'tw-att', 'tw-topo-att', 'pointsource-sg', 'flat-twi', 'gauss-twi', 'lamb', 'loh1-h100-mr-hdf5']
+    all_results =['energy.log', 'energy.log', 'energy.log', 'energy.log', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'PointSourceErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt', 'hdf5.log']
+    num_meshes =[1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 1, 1] # default number of meshes for level 0
 
     # add more tests for higher values of the testing level
     if testing_level == 1:
-        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 2, 2, 3, 3, 2]
+        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 2, 2, 3, 3, 2, 1]
     elif testing_level == 2:
-        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3]
+        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 1]
     
     print("Running all tests for level", testing_level, "...")
     # run all tests
     for qq in range(len(all_dirs)):
+
+        # skip HDF5 test if specified
+        if qq == len(all_dirs)-1 and nohdf5 == True:
+            print("HDF5 test skipped")
+            break
+        elif qq == len(all_dirs)-1:
+            print("Running HDF5 test, may take a few minutes ...")
     
         test_dir = all_dirs[qq]
         base_case = all_cases[qq]
@@ -293,7 +303,11 @@ def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threa
             #print('Test #', num_test, 'output dirs: local case_dir =', case_dir, 'ref_result =', ref_result)
 
 
-            if result_file == 'energy.log':
+            if result_file == 'hdf5.log':
+                success = verify_hdf5.verify(1e-5)
+                if success == False:
+                    print('HDF5 test failed! (disable HDF5 test with -n option)')
+            elif result_file == 'energy.log':
                 success = compare_energy(case_dir + sep + result_file, 1e-10, verbose)
             else:
                 # compare output with reference result (always compare the last line)
@@ -324,6 +338,7 @@ if __name__ == "__main__":
     # default arguments
     testing_level=0
     verbose=False
+    nohdf5=False
     mpi_tasks=0 # machine dependent default
     omp_threads=0 #no threading by default
 
@@ -334,7 +349,11 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mpitasks", type=int, help="number of mpi tasks")
     parser.add_argument("-t", "--ompthreads", type=int, help="number of omp threads per task")
     parser.add_argument("-d", "--sw4_exe_dir", help="name of directory for sw4 executable", default="optimize_mp")
+    parser.add_argument("-n", "--nohdf5", help="disable HDF5 test", action="store_true")
     args = parser.parse_args()
+    if args.nohdf5:
+        #print("verbose mode enabled")
+        nohdf5=True
     if args.verbose:
         #print("verbose mode enabled")
         verbose=True
@@ -351,6 +370,6 @@ if __name__ == "__main__":
         #print("sw4_exe_dir specified=", args.sw4_exe_dir)
         sw4_exe_dir=args.sw4_exe_dir
 
-    if not main_test(sw4_exe_dir, testing_level, mpi_tasks, omp_threads, verbose):
+    if not main_test(sw4_exe_dir, testing_level, mpi_tasks, omp_threads, verbose, nohdf5):
         print("test_sw4 was unsuccessful")
 
