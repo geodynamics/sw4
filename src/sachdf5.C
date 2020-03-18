@@ -328,12 +328,12 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
       cout << "ERROR: renaming SAC HDF5 file to " << bak.c_str() <<  endl;
   }
 
-  int alignment = 1;
-  char *env = getenv("HDF5_ALIGNMENT_SIZE");
-  if (env != NULL) 
-      alignment = atoi(env);
-  if (alignment < 65536) 
-      alignment = 65536;
+  int alignment = 262144;
+  /* char *env = getenv("HDF5_ALIGNMENT_SIZE"); */
+  /* if (env != NULL) */ 
+  /*     alignment = atoi(env); */
+  /* if (alignment < 65536) */ 
+  /*     alignment = 65536; */
 
   fapl = H5Pcreate(H5P_FILE_ACCESS);
   H5Pset_alignment(fapl, 10000, alignment);
