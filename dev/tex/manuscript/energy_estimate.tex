@@ -1,69 +1,67 @@
 %!TEX root = SISC_elastic_3d.tex
 \subsection{Energy estimate}\label{sec_energy}
-In this section, we derive an energy estimate for the semi-discretization (\ref{elastic_semi_c}) and (\ref{fine_scheme}) in Sec.\ref{semi_discrete_form}. Let ${\bf u}, {\bf v}$ be grid functions in $\Omega^c$. We define the three dimensional scalar product in $\Omega^c$
+In this section, we derive an energy estimate for the semi-discretization (\ref{elastic_semi_c}) and (\ref{fine_scheme}) in Sec.~\ref{semi_discrete_form}. Let ${\bf u}, {\bf v}$ be grid functions in $\Omega^c$. We define the three dimensional scalar product in $\Omega^c$
 \begin{equation}\label{scalar_product_inner}
-({\bf u}, {\bf v})_{2h} = 8h_1h_2h_3\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}\sum_{k=1}^{n_3^{2h}}\omega_k{\bf J}_{ijk}^{2h}u_{ijk}v_{ijk},
+({\bf u}, {\bf v})_{2h} = 8h_1h_2h_3\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}\sum_{k=1}^{n_3^{2h}}\omega_k{J}_{i,j,k}^{c}({\bf u}_{i,j,k}^T\cdot {\bf v}_{i,j,k}),
 \end{equation}
-where ${\bf J}^{2h}_{ijk}$ is the element of ${\bf J}^{2h}$ in the $((k-1)n_1^{2h}n_2^{2h}+(j-1)n_1^{2h}+i)$'th row and $((k-1)n_1^{2h}n_2^{2h}+(j-1)n_1^{2h}+i)$'th column. In addition, $u_{ijk}$ and $v_{ijk}$ are elements of  ${\bf u}$, ${\bf v}$ in the $((k-1)n_1^{2h}n_2^{2h}+(j-1)n_1^{2h}+i)$'th row, respectively. The two dimensional scalar product for coarse grid functions at the interface $\Gamma$ is defined as 
+and the two dimensional scalar product for coarse grid functions at the interface $\Gamma$ is defined as 
 \begin{equation}\label{scalar_product_discrete_interface_c}
-\left<{\bf u}_{\Gamma}, {\bf v}_{\Gamma}\right>_{2h} = 4h_1h_2\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}{\bf  J}_{\Gamma,ij}^{2h}\Lambda^{2h}_{ij}u_{ij}v_{ij},
+\left<{\bf u}, {\bf v}\right>_{2h} = 4h_1h_2\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}{  J}_{i,j,n_3^{2h}}^{c}\Lambda^{2h}_{i,j,n_3^{2h}}({\bf u}_{i,j,n_3^{2h}}^T\cdot {\bf v}_{i,j,n_3^{2h}}).
 \end{equation}
-with ${\bf J}^{2h}_{\Gamma,ij}, \Lambda^{2h}_{ij}$ located at the $((j-1)n_1^{2h}+i)$'th row and $((j-1)n_1^{2h}+i)$'th column of diagonal matrix ${\bf J}_{\Gamma}^{2h}$ and $\Lambda^{2h}$, respectively, $u_{ij}$, $v_{ij}$ are the $((j-1)n_1^{2h}+i)$'th element of coarse grid vectors ${\bf u}_{\Gamma}$ and ${\bf v}_{\Gamma}$ respectively. The three dimensional scaler product in $\Omega^f$ and two dimensional scalar product for fine grid functions at the interface $\Gamma$ are defined by a similar manner as in (\ref{scalar_product_inner}) and (\ref{scalar_product_discrete_interface_c}), respectively.
-
- Now, we are ready to state an energy estimate of the proposed schemes in Section \ref{semi_discrete_form}. 
+The three dimensional scalar product in $\Omega^f$ and two dimensional scalar product for fine grid functions at the interface $\Gamma$ are defined by a similar manner as those in (\ref{scalar_product_inner}) and (\ref{scalar_product_discrete_interface_c}) with grid points in $I_{\Omega^f}$ and $I_{\Gamma^f}$, respectively. Now, we are ready to state an energy estimate of the proposed schemes in Section \ref{semi_discrete_form}. 
  \begin{theorem}
   The semi-discretization (\ref{elastic_semi_c}) and (\ref{fine_scheme}) is energy stable 
   \[
-  \frac{d}{dt}\left[({\bf f}_t,\varrho^h {\bf f}_t)_{h} + \mathcal{S}_{h}({\bf f},{\bf f}_t) + ({\bf c}_t,\varrho^{2h} {\bf c}_t)_{2h} + \mathcal{S}_{2h}({\bf c},{\bf c}_t) \right]   = 0.
+  \frac{d}{dt}\left[({\bf F}_t,\rho^f {\bf F}_t)_{h} + \mathcal{S}_{h}({\bf F},{\bf F}) + ({\bf C}_t,\rho^{c} {\bf C}_t)_{2h} + \mathcal{S}_{2h}({\bf C},{\bf C}) \right]   = 0.
   \]
  \end{theorem}
  \begin{proof}
- Multiplying (\ref{elastic_semi_c}) by $8h_1h_2h_3\omega_k{\mathcal J}^{2h}{\bf c}_t$ and summing over all grids, we have
+ Multiplying (\ref{elastic_semi_c}) by $8h_1h_2h_3\omega_kJ^{c}{\bf C}_t$ and summing over all grids, we have
 \begin{equation*}\label{coarse_simple}
-({\bf c}_t, {\varrho}^{2h}{\bf c}_{tt})_{2h} = ({\bf c}_t,\wt{\mathcal{L}}^{2h}\wt{{\bf c}})_{2h} = -\mathcal{S}_{2h}({\bf c}_t,{\bf c}) + B_{2h}({\bf c}_t,\wt{{\bf c}}),
+({\bf C}_t, {\rho}^{c}{\bf C}_{tt})_{2h} = ({\bf C}_t,({J^c})^{-1}\wt{\mathcal{L}}^{2h}{\bf C})_{2h} = -\mathcal{S}_{2h}({\bf C}_t,{\bf C}) + B_{2h}({\bf C}_t,{{\bf C}}),
 \end{equation*}
-multiplying (\ref{fine_scheme}) by $h_1h_2h_3\omega_k{\mathcal J}^h{\bf f}_t$ and summing over all grids, we obtain
+multiplying (\ref{fine_scheme}) by $h_1h_2h_3\omega_kJ^f{\bf F}_t$ and summing over all grids, we obtain
 \begin{equation*}
-({\bf f}_t, {\varrho}^h{\bf f}_{tt})_h = ({\bf f}_t,\hat{\mathcal{L}}^h{\bf f})_h = -\mathcal{S}_{h}({\bf f}_t,{\bf f}) + B_h({\bf f}_t,{\bf f}) 
-+h_1h_2h_3\omega_1({\bf f}_\Gamma)_t^T{\bm \eta},
+({\bf F}_t, {\rho}^f{\bf F}_{tt})_h = ({\bf F}_t,({J^f})^{-1}\hat{\mathcal{L}}^h{\bf F})_h = -\mathcal{S}_{h}({\bf F}_t,{\bf F}) + B_h({\bf F}_t,{\bf F}) 
++h_1h_2h_3\omega_1\sum_{i = 1}^{n_1^h}\sum_{j=1}^{n_2^h} \left(\frac{d{\bf F}_{i,j,1}}{dt}\right)^T\cdot{\bm \eta}_{i,j,1},
 \end{equation*}
 where  both $\mathcal{S}_{2h}$ and $\mathcal{S}_{h}$ are symmetric and positive definite bilinear forms, 
 \begin{multline*}
-\mathcal{S}_{2h}({\bf c}_t,{\bf c}) = (\mathcal{D}_1^{2h}{\bf c}_t,\mathcal{N}_{11}^{2h}\mathcal{D}_1{\bf c})_{2h} +  (\mathcal{D}_1^{2h}{\bf c}_t,\mathcal{N}_{12}^{2h}\mathcal{D}_2{\bf c})_{2h} +  (\mathcal{D}_1^{2h}{\bf c}_t,\mathcal{N}_{13}^{2h}\mathcal{D}_3{\bf c})_{2h}\\
- +  (\mathcal{D}_2^{2h}{\bf c}_t,\mathcal{N}_{21}^{2h}\mathcal{D}_1{\bf c})_{2h} 
-+  (\mathcal{D}_2^{2h}{\bf c}_t,\mathcal{N}_{22}^{2h}\mathcal{D}_2{\bf c})_{2h} +  (\mathcal{D}_2^{2h}{\bf c}_t,\mathcal{N}_{23}^{2h}\mathcal{D}_3{\bf c})_{2h} \\
-+  (\mathcal{D}_3^{2h}{\bf c}_t,\mathcal{N}_{31}^{2h}\mathcal{D}_1{\bf c})_{2h} 
-+  (\mathcal{D}_3^{2h}{\bf c}_t,\mathcal{N}_{32}^{2h}\mathcal{D}_2{\bf c})_{2h} +  (\mathcal{D}_3^{2h}{\bf c}_t,\mathcal{N}_{33}^{2h}\mathcal{D}_3{\bf c})_{2h}\\
-+ ({\bf c}_t, P^{2h}_1(N_{11}^{2h}){\bf c})_{2hr} + ({\bf c}_t, P^{2h}_2(N_{22}^{2h}){\bf c})_{2hr} + ({\bf c}_t, P^{2h}_1(N_{33}^{2h}){\bf c})_{2hr}
+\mathcal{S}_{2h}({\bf C}_t,{\bf C}) = ({D}_1^{2h}{\bf C}_t,{N}_{11}^{2h}{D}_1{\bf C})_{2h} +  ({D}_1^{2h}{\bf C}_t,{N}_{12}^{2h}{D}_2{\bf C})_{2h} +  ({D}_1^{2h}{\bf C}_t,{N}_{13}^{2h}{D}_3{\bf C})_{2h}\\
+ +  ({D}_2^{2h}{\bf C}_t,{N}_{21}^{2h}{D}_1{\bf C})_{2h} 
++  ({D}_2^{2h}{\bf C}_t,{N}_{22}^{2h}{D}_2{\bf C})_{2h} +  ({D}_2^{2h}{\bf C}_t,{N}_{23}^{2h}{D}_3{\bf C})_{2h} \\
++  ({D}_3^{2h}{\bf C}_t,{N}_{31}^{2h}{D}_1{\bf C})_{2h} 
++  ({D}_3^{2h}{\bf C}_t,{N}_{32}^{2h}{D}_2{\bf C})_{2h} +  ({D}_3^{2h}{\bf C}_t,{N}_{33}^{2h}{D}_3{\bf C})_{2h}\\
++ ({\bf C}_t, P^{2h}_1(N_{11}^{2h}){\bf C})_{2hr} + ({\bf C}_t, P^{2h}_2(N_{22}^{2h}){\bf C})_{2hr} + ({\bf C}_t, P^{2h}_1(N_{33}^{2h}){\bf C})_{2hr}
 \end{multline*}
 and 
 \begin{multline*}
-\mathcal{S}_{h}({\bf f}_t,{\bf f}) = (\mathcal{D}_1^{h}{\bf c}_t,\mathcal{N}_{11}^{h}\mathcal{D}_1{\bf f})_{h} +  (\mathcal{D}_1^{h}{\bf f}_t,\mathcal{N}_{12}^{h}\mathcal{D}_2{\bf f})_{h} +  (\mathcal{D}_1^{h}{\bf f}_t,\mathcal{N}_{13}^{h}\mathcal{D}_3{\bf f})_{h}\\
-+  (\mathcal{D}_2^{h}{\bf f}_t,\mathcal{N}_{21}^{h}\mathcal{D}_1{\bf f})_{h} 
-+  (\mathcal{D}_2^{h}{\bf f}_t,\mathcal{N}_{22}^{h}\mathcal{D}_2{\bf f})_{h} +  (\mathcal{D}_2^{h}{\bf f}_t,\mathcal{N}_{23}^{h}\mathcal{D}_3{\bf f})_{h} \\
-+  (\mathcal{D}_3^{h}{\bf f}_t,\mathcal{N}_{31}^{h}\mathcal{D}_1{\bf f})_{h} 
-+  (\mathcal{D}_3^{h}{\bf f}_t,\mathcal{N}_{32}^{h}\mathcal{D}_2{\bf f})_{h} +  (\mathcal{D}_3^{h}{\bf f}_t,\mathcal{N}_{33}^{h}\mathcal{D}_3{\bf f})_{h}\\
-+ ({\bf f}_t, P^{h}_1(N_{11}^h){\bf f})_{hr} + ({\bf f}_t, P^{h}_2(N_{22}^h){\bf f})_{hr} + ({\bf f}_t, P^{h}_1(N_{33}^h){\bf f})_{hr}.
+\mathcal{S}_{h}({\bf F}_t,{\bf F}) = ({D}_1^{h}{\bf F}_t,{N}_{11}^{h}{D}_1{\bf F})_{h} +  ({D}_1^{h}{\bf F}_t,{N}_{12}^{h}{D}_2{\bf F})_{h} +  ({D}_1^{h}{\bf F}_t,{N}_{13}^{h}{D}_3{\bf F})_{h}\\
++  ({D}_2^{h}{\bf F}_t,{N}_{21}^{h}{D}_1{\bf F})_{h} 
++  ({D}_2^{h}{\bf F}_t,{N}_{22}^{h}{D}_2{\bf F})_{h} +  ({D}_2^{h}{\bf F}_t,{N}_{23}^{h}{D}_3{\bf F})_{h} \\
++  ({D}_3^{h}{\bf F}_t,{N}_{31}^{h}{D}_1{\bf F})_{h} 
++  ({D}_3^{h}{\bf F}_t,{N}_{32}^{h}{D}_2{\bf F})_{h} +  ({D}_3^{h}{\bf F}_t,{N}_{33}^{h}{D}_3{\bf F})_{h}\\
++ ({\bf F}_t, P^{h}_1(N_{11}^h){\bf F})_{hr} + ({\bf F}_t, P^{h}_2(N_{22}^h){\bf F})_{hr} + ({\bf F}_t, P^{h}_1(N_{33}^h){\bf F})_{hr}.
 \end{multline*}
 Note that the positive semi-definite operators $P_i^{h}(N_{ii}^{h})$ and $P_i^{2h}(N_{ii}^{2h}), i = 1,2,3$ are small and non-zero for odd-even modes and the scalar product $({\bf v}, {\bf u})_{hr}$ is weighted differently than $({\bf u}, {\bf v})_h$, $({\bf v}, {\bf u})_{2hr}$ is also weighted differently than $({\bf u}, {\bf v})_{2h}$, see \cite{sjogreen2012fourth, petersson2015wave} for details. In addition,
 \begin{equation}\label{boundary_f}
-B_h ({\bf f}_t,{\bf f}) = -h_1h_2({\bf f}_{\Gamma})_t^T\big((\mathcal{N}_{31}^h{\mathcal D}_1^h {\bf f})\big|_{\Gamma}+ (\mathcal{N}_{32}^h\mathcal{D}_2^h{\bf f})\big|_{\Gamma}+(\mathcal{N}_{33}^h\mathfrak{D}_3^h{\bf f})\big|_{\Gamma}\big),
+B_h ({\bf F}_t,{\bf F}) = -h_1h_2\sum_{{\bf i}\in I_{\Gamma^f}}\left(\frac{d{\bf F}_{\bf i}}{dt}\right)^T\cdot\left({N}_{31}^h{D}_1^h {\bf F}_{\bf i}+ {N}_{32}^h{D}_2^h{\bf F}_{\bf i}+{N}_{33}^h\mathcal{D}_3^h{\bf F}_{\bf i}\right),
 \end{equation}
-and
+and similarly, 
 \begin{equation}\label{bounary_c}
-B_{2h} ({\bf c}_t,\wt{\bf c}) = 4h_1h_2({\bf c}_{\Gamma})_t^T\big((\mathcal{N}_{31}^{2h}\mathcal{D}_1^{2h}{\bf c})\big|_{\Gamma}+ (\mathcal{N}_{32}^{2h}\mathcal{D}_2^{2h}{\bf c})\big|_{\Gamma}+(\mathcal{N}_{33}^{2h}\wt{\mathfrak{D}}_3^{2h}\wt{{\bf c}})\big|_{\Gamma}\big).
+B_{2h} ({\bf C}_t,{\bf C}) = 4h_1h_2\sum_{{\bf i}\in I_{\Gamma^c}}\left(\frac{d{\bf C}_{\bf i}}{dt}\right)^T\cdot\left({N}_{31}^{2h}{D}_1^{2h}{\bf C}_{\bf i}+{N}_{32}^{2h}{D}_2^{2h}{\bf C}_{\bf i}+{N}_{33}^{2h}\wt{\mathcal{D}}_3^{2h}{\bf C}_{\bf i}\right).
 \end{equation}
 Then, the time derivative of the semi-discrete energy reads as
 \begin{multline}\label{semi_energy_1}
-\frac{d}{dt}\big[({\bf f}_t,\varrho^h {\bf f}_t)_h + \mathcal{S}_{h}({\bf f},{\bf f}_t) + ({\bf c}_t,\varrho^{2h} {\bf c}_t)_{2h} + \mathcal{S}_{2h}({\bf c},{\bf c}_t) \big]  = \\
-2B_{h}({\bf f}_t,{\bf f}) + 2B_{2h}({\bf c}_t,\wt{\bf c}) + 2h_1h_2h_3\omega_1({\bf f}_\Gamma)_t^T{\bm \eta},
+\frac{d}{dt}\big[({\bf F}_t,\rho^f {\bf F}_t)_h + \mathcal{S}_{h}({\bf F},{\bf F}) + ({\bf C}_t,\rho^{c} {\bf C}_t)_{2h} + \mathcal{S}_{2h}({\bf C},{\bf C}) \big]  = \\
+2B_{h}({\bf F}_t,{\bf F}) + 2B_{2h}({\bf C}_t,{\bf C}) + 2h_1h_2h_3\omega_1\sum_{i = 1}^{n_1^h}\sum_{j=1}^{n_2^h}\left(\frac{d{\bf F}_{i,j,1}}{dt}\right)^T\cdot{\bm \eta}_{i,j,1},
 \end{multline}
 plugging (\ref{boundary_f})--(\ref{bounary_c}) into (\ref{semi_energy_1}) and combining the definitions of the scalar product at the interface $\Gamma$ (\ref{scalar_product_discrete_interface_c}), we have
 \begin{align*}\label{semi_energy_2}
-&\hspace{0.4cm}\frac{d}{dt}\left[({\bf f}_t,\varrho^h {\bf f}_t)_{h} + \mathcal{S}_{h}({\bf f},{\bf f}_t) + ({\bf c}_t,\varrho^{2h} {\bf c}_t)_{2h} + \mathcal{S}_{2h}({\bf c},{\bf c}_t) \right]   \nonumber\\
-& = 2\left<({\bf f}_\Gamma)_t,(\bm{\Lambda}^{h}\mathcal{J}^h_\Gamma)^{-1}(-(\mathcal{A}_3^h{\bf f})\big|_\Gamma+h\omega_1{\bm \eta})\right>_{h}+ 2\left<({\bf c}_\Gamma)_t,(\bm{\Lambda}^{2h}\mathcal{J}^{2h}_\Gamma)^{-1}(\wt{\mathcal{A}}_3^{2h}\wt{\bf c})\big|_\Gamma\right>_{2h} \nonumber\\
-& = 2\left<\wt{\mathcal{P}}\big(({\bf c}_\Gamma)_t\big),(\bm{\Lambda}^{h}\mathcal{J}^h_\Gamma)^{-1}(-(\mathcal{A}_3^h{\bf f})\big|_\Gamma+h\omega_1{\bm \eta})\right>_{h}+ 2\left<({\bf c}_\Gamma)_t(\bm{\Lambda}^{2h}\mathcal{J}^{2h}_\Gamma)^{-1}(\wt{\mathcal{A}}_3^{2h}\wt{\bf c})\big|_\Gamma\right>_{2h} \nonumber\\
-& = 2\left<({\bf c}_\Gamma)_t,\wt{\mathcal{R}}\big((\bm{\Lambda}^{h}\mathcal{J}^h_\Gamma)^{-1}(-(\mathcal{A}_3^h{\bf f})\big|_\Gamma+h\omega_1{\bm \eta})\big)\right>_{2h}+ 2\left<({\bf c}_\Gamma)_t,(\bm{\Lambda}^{2h}\mathcal{J}^{2h}_\Gamma)^{-1}(\wt{\mathcal{A}}_3^{2h}\wt{\bf c})\big|_\Gamma\right>_{2h} = 0,
+&\hspace{0.4cm}\frac{d}{dt}\left[({\bf F}_t,\rho^f {\bf F}_t)_{h} + \mathcal{S}_{h}({\bf F},{\bf F}) + ({\bf C}_t,\rho^{c} {\bf C}_t)_{2h} + \mathcal{S}_{2h}({\bf C},{\bf C}) \right]   \nonumber\\
+& = 2\left<{\bf F}_t,(\bm{\Lambda}^{h}\mathcal{J}^h_\Gamma)^{-1}(-\mathcal{A}_3^h{\bf F}+h_3\omega_1{\bm \eta})\right>_{h}+ 2\left<{\bf C}_t,(\bm{\Lambda}^{2h}\mathcal{J}^{2h}_\Gamma)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf C}\right>_{2h} \nonumber\\
+& = 2\left<\wt{\mathcal{P}}{\bf C}_t,(\bm{\Lambda}^{h}\mathcal{J}^h_\Gamma)^{-1}(-\mathcal{A}_3^h{\bf F}+h_3\omega_1{\bm \eta})\right>_{h}+ 2\left<{\bf C}_t, (\bm{\Lambda}^{2h}\mathcal{J}^{2h}_\Gamma)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf C}\right>_{2h} \nonumber\\
+& = 2\left<{\bf C}_t,\wt{\mathcal{R}}\big((\bm{\Lambda}^{h}\mathcal{J}^h_\Gamma)^{-1}(-\mathcal{A}_3^h{\bf F}+h_3\omega_1{\bm \eta})\big)\right>_{2h}+ 2\left<{\bf C}_t,(\bm{\Lambda}^{2h}\mathcal{J}^{2h}_\Gamma)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf C}\right>_{2h} = 0,
 \end{align*}
 where we have used the notations in (\ref{hatAf})--(\ref{hatAc}).
 \end{proof}
