@@ -11,8 +11,8 @@ event path=second-fake-event_output obspath=second-fake-event_data name=second
 #------------------------------
 # Time command for both events
 #
-time t=25.0 utcstart=09/06/2008:04:00:10.650 event=first
-time t=25.0 utcstart=09/06/2008:04:00:10.650 event=second
+time t=25.0 utcstart=09/06/2018:08:00:11.123 event=first
+time t=25.0 utcstart=09/06/2018:08:00:11.123 event=second
 #
 #------------------------------
 # Paths etc. Note that obspath is defined by the event command
@@ -49,9 +49,9 @@ mparcart nx=1 ny=1 nz=1 init=0
 #------------------------------
 # Optimizer and properties
 #
-mrun task=minvert mcheck=on tsoutput=on
+mrun task=minvert mcheck=on tsoutput=on savesteps=1500
 #lbfgs nvectors=20 ihess0=scale-factors maxit=5 tolerance=1e-12 linesearch=on
-nlcg maxit=5 tolerance=1e-12 linesearch=on
+nlcg maxit=3 tolerance=1e-12 linesearch=on
 mscalefactors rho=2650 mu=1.54e10 lambda=7.52e11 misfit=1
 #mscalefactors rho=2650 mu=2.5e10 lambda=2.4e12 misfit=1
 #
@@ -88,14 +88,14 @@ observation sta=FAKE.4 file=FAKE.4 lat=37.82 lon=-122.45 depth=0.0 event=second
 #
 # Output some images
 #
-mimage mode=rho x=17500 cycleInterval=1 
-mimage mode=mu x=17500 cycleInterval=1 
-mimage mode=lambda x=17500 cycleInterval=1 
+mimage mode=rho x=17500 iterInterval=1 
+mimage mode=mu x=17500 iterInterval=1 
+mimage mode=lambda x=17500 iterInterval=1 
 #
-mimage mode=rho z=1000 cycleInterval=1 
-mimage mode=mu z=1000 cycleInterval=1 
-mimage mode=lambda z=1000 cycleInterval=1 
+mimage mode=rho z=1000 iterInterval=1 
+mimage mode=mu z=1000 iterInterval=1 
+mimage mode=lambda z=1000 iterInterval=1 
 #
-mimage mode=rho z=5000 cycleInterval=1 
-mimage mode=mu z=5000 cycleInterval=1 
-mimage mode=lambda z=5000 cycleInterval=1 
+mimage mode=rho z=5000 iterInterval=1 
+mimage mode=mu z=5000 iterInterval=1 
+mimage mode=lambda z=5000 iterInterval=1 
