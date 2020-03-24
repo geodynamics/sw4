@@ -105,10 +105,9 @@ We note that \eqref{continuous_sol} is equivalent to the more complicated form
 \end{equation}
 with 
 \begin{equation}\label{eta}
-{\bm \eta}_{\bf i} = {\rho}^f_{\bf i}J^f_{\bf i}\wt{\mathcal{P}}\left(\frac{1}{\rho^c_{{\bf i}'}J^c_{{\bf i}'}}\wt{\mathcal{L}}^{2h} {\bf C}_{{\bf i}'}\right) - \mathcal{L}^{h}{\bf F}_{\bf i}, \quad {\bf i}\in I_{\Gamma^f},\quad {{\bf i}'}\in I_{\Gamma^c}.
+{\bm \eta}_{\bf i} = {\rho}^f_{\bf i}J^f_{\bf i}\wt{\mathcal{P}}\left(\frac{1}{\rho^c_{{\bf i}'}J^c_{{\bf i}'}}\wt{\mathcal{L}}^{2h} {\bf C}_{{\bf i}'}\right) - \mathcal{L}^{h}{\bf F}_{\bf i}, \quad {\bf i}\in I_{\Gamma^f},\quad {{\bf i}'}\in I_{\Gamma^c},
 \end{equation}
-
- We note that $\bm \eta$ in (\ref{eta}) is approximately zero with a second order truncation error, which is of the same order as the boundary stencil of the SBP operator. Therefore, it does not affect the overall accuracy of the semi-discretization. 
+which is useful in the energy analysis in the next section. The variable $\bm \eta$ in (\ref{eta}) is approximately zero with a second order truncation error, which is of the same order as the boundary stencil of the SBP operator. %Therefore, it does not affect the overall accuracy of the semi-discretization. 
 
 For the simplicity of analysis, we introduce a general notation for the schemes (\ref{elastic_semi_f}) and (\ref{elastic_semi_f_i}) in the fine domain $\Omega^f$,
 \begin{align}\label{fine_scheme}
