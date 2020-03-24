@@ -368,9 +368,9 @@ contains
     do i=1-nrg,n3_f+nrg
        do j=1-nrg,n2_f+nrg
           do k=1-nrg,n1_f+nrg
-             mu_f(k,j,i) = 3.d0 + sin(3.d0*Xgrid_f(k,j,i,1)+0.1d0)*sin(3.d0*Xgrid_f(k,j,i,2)+0.1d0)*sin(Xgrid_f(k,j,i,3))
-             lambda_f(k,j,i) = 21.d0+ cos(Xgrid_f(k,j,i,1)+0.1d0)*cos(Xgrid_f(k,j,i,2)+0.1d0)*sin(3.d0*Xgrid_f(k,j,i,3))**2
-             rho_f(k,j,i,:) = 2.d0 +  sin(Xgrid_f(k,j,i,1)+0.3d0)*sin(Xgrid_f(k,j,i,2)+0.3d0)*sin(Xgrid_f(k,j,i,3)-0.2d0)
+             mu_f(k,j,i) = 2.d0 + cos(3.d0*Xgrid_f(k,j,i,1)+0.1d0)*sin(3.d0*Xgrid_f(k,j,i,2)+0.1d0)*sin(Xgrid_f(k,j,i,3))**2
+             lambda_f(k,j,i) = 15.d0+ cos(Xgrid_f(k,j,i,1)+0.1d0)*sin(4.d0*Xgrid_f(k,j,i,2)+0.1d0)*sin(3.d0*Xgrid_f(k,j,i,3))**2
+             rho_f(k,j,i,:) = 3.d0 +  sin(2.d0*Xgrid_f(k,j,i,1)+0.3d0)*cos(Xgrid_f(k,j,i,2)+0.3d0)*sin(2.d0*Xgrid_f(k,j,i,3)-0.2d0)
           end do
        end do
     end do
@@ -1868,90 +1868,90 @@ contains
     end do
     !
     ! interface integral
-    call compute_eta(2)
-    difference = 0.d0
-    !call verify_bdry(2)
-    !difference_b = sum(difference)
-    energy_num_bdry = 0.d0
-    boundary_c = 0.d0
-    boundary_f = 0.d0
-    do iset = 1,3
-       do j = 0,4
-          do jj = 1,3
-             boundary_c(1:n1_c,1:n2_c,iset) = boundary_c(1:n1_c,1:n2_c,iset) &
-               - N33_c(1:n1_c,1:n2_c,n3_c,iset,jj)*Sb(j)*uc_old(1:n1_c,1:n2_c,n3_c+1-j,jj)/h3_c
-          end do
-       end do
-       do j = -2,2
-          do jj = 1,3
-             boundary_c(1:n1_c,1:n2_c,iset) = boundary_c(1:n1_c,1:n2_c,iset) &
-               + N31_c(1:n1_c,1:n2_c,n3_c,iset,jj)*ux_cof(j)*uc_old(1+j:n1_c+j,1:n2_c,n3_c,jj)/h1_c &
-               + N32_c(1:n1_c,1:n2_c,n3_c,iset,jj)*ux_cof(j)*uc_old(1:n1_c,1+j:n2_c+j,n3_c,jj)/h2_c
-          end do
-       end do
+    !call compute_eta(2)
+    !difference = 0.d0
+    !!call verify_bdry(2)
+    !!difference_b = sum(difference)
+    !energy_num_bdry = 0.d0
+    !boundary_c = 0.d0
+    !boundary_f = 0.d0
+    !do iset = 1,3
+    !   do j = 0,4
+    !      do jj = 1,3
+    !         boundary_c(1:n1_c,1:n2_c,iset) = boundary_c(1:n1_c,1:n2_c,iset) &
+    !           - N33_c(1:n1_c,1:n2_c,n3_c,iset,jj)*Sb(j)*uc_old(1:n1_c,1:n2_c,n3_c+1-j,jj)/h3_c
+    !      end do
+    !   end do
+    !   do j = -2,2
+    !      do jj = 1,3
+    !         boundary_c(1:n1_c,1:n2_c,iset) = boundary_c(1:n1_c,1:n2_c,iset) &
+    !           + N31_c(1:n1_c,1:n2_c,n3_c,iset,jj)*ux_cof(j)*uc_old(1+j:n1_c+j,1:n2_c,n3_c,jj)/h1_c &
+    !           + N32_c(1:n1_c,1:n2_c,n3_c,iset,jj)*ux_cof(j)*uc_old(1:n1_c,1+j:n2_c+j,n3_c,jj)/h2_c
+    !      end do
+    !   end do
 
-      do j = 1,5
-         do jj = 1,3
-            boundary_f(-2:n1_f+3,-2:n2_f+3,iset) = boundary_f(-2:n1_f+3,-2:n2_f+3,iset) &
-              + N33_f(-2:n1_f+3,-2:n2_f+3,1,iset,jj)*sbop_no_gp(j)*uf_old(-2:n1_f+3,-2:n2_f+3,j,jj)/h3_f
-          end do
-      end do
-      do j = -2,2
-         do jj = 1,3
-            boundary_f(-2:n1_f+3,-2:n2_f+3,iset) = boundary_f(-2:n1_f+3,-2:n2_f+3,iset) &
-              + (N31_f(-2:n1_f+3,-2:n2_f+3,1,iset,jj)*ux_cof(j)*uf_old(-2+j:n1_f+3+j,-2:n2_f+3,1,jj)/h1_f &
-              + N32_f(-2:n1_f+3,-2:n2_f+3,1,iset,jj)*ux_cof(j)*uf_old(-2:n1_f+3,-2+j:n2_f+3+j,1,jj)/h2_f)
-         end do
-      end do
+    !  do j = 1,5
+    !     do jj = 1,3
+    !        boundary_f(-2:n1_f+3,-2:n2_f+3,iset) = boundary_f(-2:n1_f+3,-2:n2_f+3,iset) &
+    !          + N33_f(-2:n1_f+3,-2:n2_f+3,1,iset,jj)*sbop_no_gp(j)*uf_old(-2:n1_f+3,-2:n2_f+3,j,jj)/h3_f
+    !      end do
+    !  end do
+    !  do j = -2,2
+    !     do jj = 1,3
+    !        boundary_f(-2:n1_f+3,-2:n2_f+3,iset) = boundary_f(-2:n1_f+3,-2:n2_f+3,iset) &
+    !          + (N31_f(-2:n1_f+3,-2:n2_f+3,1,iset,jj)*ux_cof(j)*uf_old(-2+j:n1_f+3+j,-2:n2_f+3,1,jj)/h1_f &
+    !          + N32_f(-2:n1_f+3,-2:n2_f+3,1,iset,jj)*ux_cof(j)*uf_old(-2:n1_f+3,-2+j:n2_f+3+j,1,jj)/h2_f)
+    !     end do
+    !  end do
       ! enforce the term contain p(lc) = 0 at ghost points
-      boundary_f(-2:1,:,iset) = 0.d0
-      boundary_f(n1_f:n1_f+3,:,iset) = 0.d0
-      boundary_f(:,-2:1,iset) = 0.d0
-      boundary_f(:,n2_f:n2_f+3,iset) = 0.d0
+    !  boundary_f(-2:1,:,iset) = 0.d0
+    !  boundary_f(n1_f:n1_f+3,:,iset) = 0.d0
+    !  boundary_f(:,-2:1,iset) = 0.d0
+    !  boundary_f(:,n2_f:n2_f+3,iset) = 0.d0
       !
-      do l = 1,n2_c
-         do i = 1,n1_c
-            energy_num_bdry = energy_num_bdry &
-             + h1_c*h2_c*(uc_new(i,l,n3_c,iset)-uc_oldold(i,l,n3_c,iset))*boundary_c(i,l,iset)
-         end do
-      end do
+    !  do l = 1,n2_c
+    !     do i = 1,n1_c
+    !        energy_num_bdry = energy_num_bdry &
+    !         + h1_c*h2_c*(uc_new(i,l,n3_c,iset)-uc_oldold(i,l,n3_c,iset))*boundary_c(i,l,iset)
+    !     end do
+    !  end do
 
-      do l = 1,n2_f
-         do i = 1,n1_f
-            energy_num_bdry = energy_num_bdry&
-              + (-h1_f*h2_f*(uf_new(i,l,1,iset)-uf_oldold(i,l,1,iset))*boundary_f(i,l,iset) &
-              + h3_f*17.d0/48.d0*h1_f*h2_f*(uf_new(i,l,1,iset)-uf_oldold(i,l,1,iset))*eta(i,l,1,iset))
-         end do
-      end do
+    !  do l = 1,n2_f
+    !     do i = 1,n1_f
+    !        energy_num_bdry = energy_num_bdry&
+    !          + (-h1_f*h2_f*(uf_new(i,l,1,iset)-uf_oldold(i,l,1,iset))*boundary_f(i,l,iset) &
+    !          + h3_f*17.d0/48.d0*h1_f*h2_f*(uf_new(i,l,1,iset)-uf_oldold(i,l,1,iset))*eta(i,l,1,iset))
+    !     end do
+    !  end do
 
-      ! traction forcing continuity
-      Vass_temp = 0.d0
-      do k = 2,n2_c-1
-         do i = 2,n1_c-1
-           difference((k-1)*3*n1_c+(i-1)*3+iset) = boundary_c(i,k,iset)/int_cof_c(i,k)
-            do j = -4,2
-               do l = -4,2
-                  Vass_temp(i,k) = Vass_temp(i,k) &
-                   - Rop(j)*(Rop(l)*sqrt(int_cof_f(2*i+l,2*k+j))*boundary_f(2*i+l,2*k+j,iset)/int_cof_f(2*i+l,2*k+j)) &
-                   + h3_f*17.d0/48.d0*Rop(j)*(Rop(l)*sqrt(int_cof_f(2*i+l,2*k+j))*eta(2*i+l,2*k+j,1,iset)/int_cof_f(2*i+l,2*k+j))
-               end do
-            end do
-            Vass_temp(i,k) = Vass_temp(i,k)/sqrt(int_cof_c(i,k))
-            difference((k-1)*3*n1_c+(i-1)*3+iset) = difference((k-1)*3*n1_c+(i-1)*3+iset)+Vass_temp(i,k)
-         end do
-      end do
-    end do ! iset
+    !  ! traction forcing continuity
+    !  Vass_temp = 0.d0
+    !  do k = 2,n2_c-1
+    !     do i = 2,n1_c-1
+    !       difference((k-1)*3*n1_c+(i-1)*3+iset) = boundary_c(i,k,iset)/int_cof_c(i,k)
+    !        do j = -4,2
+    !           do l = -4,2
+    !              Vass_temp(i,k) = Vass_temp(i,k) &
+    !               - Rop(j)*(Rop(l)*sqrt(int_cof_f(2*i+l,2*k+j))*boundary_f(2*i+l,2*k+j,iset)/int_cof_f(2*i+l,2*k+j)) &
+    !               + h3_f*17.d0/48.d0*Rop(j)*(Rop(l)*sqrt(int_cof_f(2*i+l,2*k+j))*eta(2*i+l,2*k+j,1,iset)/int_cof_f(2*i+l,2*k+j))
+    !           end do
+    !        end do
+    !        Vass_temp(i,k) = Vass_temp(i,k)/sqrt(int_cof_c(i,k))
+    !        difference((k-1)*3*n1_c+(i-1)*3+iset) = difference((k-1)*3*n1_c+(i-1)*3+iset)+Vass_temp(i,k)
+    !     end do
+    !  end do
+    !end do ! iset
 
-    difference_f = 0.d0
-
-
-    difference_b = sum(difference)
+    !difference_f = 0.d0
 
 
+    !difference_b = sum(difference)
 
 
 
-    print *, energy_num, energy_num_bdry, difference_b
+
+
+    !print *, energy_num, energy_num_bdry, difference_b
 
   end subroutine discrete_energy
 
