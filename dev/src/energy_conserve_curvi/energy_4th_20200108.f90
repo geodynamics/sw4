@@ -368,9 +368,12 @@ contains
     do i=1-nrg,n3_f+nrg
        do j=1-nrg,n2_f+nrg
           do k=1-nrg,n1_f+nrg
-             mu_f(k,j,i) = 2.d0 + cos(3.d0*Xgrid_f(k,j,i,1)+0.1d0)*sin(3.d0*Xgrid_f(k,j,i,2)+0.1d0)*sin(Xgrid_f(k,j,i,3))**2
-             lambda_f(k,j,i) = 15.d0+ cos(Xgrid_f(k,j,i,1)+0.1d0)*sin(4.d0*Xgrid_f(k,j,i,2)+0.1d0)*sin(3.d0*Xgrid_f(k,j,i,3))**2
-             rho_f(k,j,i,:) = 3.d0 +  sin(2.d0*Xgrid_f(k,j,i,1)+0.3d0)*cos(Xgrid_f(k,j,i,2)+0.3d0)*sin(2.d0*Xgrid_f(k,j,i,3)-0.2d0)
+             !mu_f(k,j,i) = 2.d0 + cos(3.d0*Xgrid_f(k,j,i,1)+0.1d0)*sin(3.d0*Xgrid_f(k,j,i,2)+0.1d0)*sin(Xgrid_f(k,j,i,3))**2
+             !lambda_f(k,j,i) = 15.d0+ cos(Xgrid_f(k,j,i,1)+0.1d0)*sin(4.d0*Xgrid_f(k,j,i,2)+0.1d0)*sin(3.d0*Xgrid_f(k,j,i,3))**2
+             !rho_f(k,j,i,:) = 3.d0 +  sin(2.d0*Xgrid_f(k,j,i,1)+0.3d0)*cos(Xgrid_f(k,j,i,2)+0.3d0)*sin(2.d0*Xgrid_f(k,j,i,3)-0.2d0)
+             mu_f(k,j,i) = 0.5d0*(3.d0 + sin(3.d0*Xgrid_f(k,j,i,1)+0.1d0)*sin(3.d0*Xgrid_f(k,j,i,2)+0.1d0)*sin(Xgrid_f(k,j,i,3)))
+             lambda_f(k,j,i) = 0.5d0*(21.d0+ cos(Xgrid_f(k,j,i,1)+0.1d0)*cos(Xgrid_f(k,j,i,2)+0.1d0)*sin(3.d0*Xgrid_f(k,j,i,3))**2)
+             rho_f(k,j,i,:) = 2.d0*(2.d0 + sin(Xgrid_f(k,j,i,1)+0.3d0)*sin(Xgrid_f(k,j,i,2)+0.3d0)*sin(Xgrid_f(k,j,i,3)-0.2d0))
           end do
        end do
     end do
