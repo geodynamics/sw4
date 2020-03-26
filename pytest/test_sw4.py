@@ -3,7 +3,7 @@
 # Arguments:
 # -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir -t omp-threads
 
-import os, sys, argparse, subprocess, verify_hdf5
+import os, sys, argparse, subprocess
 
 #----(Currently not used)--------------------------------------------
 def run_checks(checks):
@@ -136,8 +136,10 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
         mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks) + " -c " + str(omp_threads)
     elif 'nid' in node_name: # the cori knl nodes are called nid
         if omp_threads<=0: omp_threads=4;
-        if mpi_tasks<=0: mpi_tasks = int(64/omp_threads) # use 64 hardware cores per node
+        if mpi_tasks<=0: mpi_tasks = int(64/omp_threads) # for KNL nodes, use 64 hardware cores per node
         sw_threads = 4*omp_threads # Cori uses hyperthreading by default
+        if mpi_tasks<=0: mpi_tasks = int(32/omp_threads) # for Haswell nodes
+        sw_threads = omp_threads 
         mpirun_cmd="srun --cpu_bind=cores -n " + str(mpi_tasks) + " -c " + str(sw_threads)
     elif 'fourier' in node_name:
         if omp_threads<=0: omp_threads=1;
@@ -185,7 +187,7 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
         print("ERROR: directory", sw4_base_dir, "does not exists")
         return False
     if not os.path.isdir(optimize_dir):
-        print("ERROR: directory", optimize_dir, "does not exists (HINT: use -d 'sw4_exe_dir')")
+        print("ERROR: directory", optimize_dir, "does not exists (HINT: use -d 'sw4_exe_dir' or -p 'pytest_dir')")
         return False
     if not os.path.isdir(reference_dir):
         print("ERROR: directory", reference_dir, "does not exists")
@@ -238,7 +240,7 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
             print("HDF5 test skipped")
             break
         elif qq == len(all_dirs)-1:
-            print("Running HDF5 test, may take a few minutes ...")
+            print("  Running HDF5 test, may take a few minutes ...")
     
         test_dir = all_dirs[qq]
         base_case = all_cases[qq]
@@ -311,6 +313,7 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
 
 
             if result_file == 'hdf5.log':
+                import verify_hdf5
                 success = verify_hdf5.verify(pytest_dir, 1e-5)
                 if success == False:
                     print('HDF5 test failed! (disable HDF5 test with -n option)')
@@ -356,7 +359,7 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mpitasks", type=int, help="number of mpi tasks")
     parser.add_argument("-t", "--ompthreads", type=int, help="number of omp threads per task")
     parser.add_argument("-d", "--sw4_exe_dir", help="name of directory for sw4 executable", default="optimize_mp")
-    parser.add_argument("-p", "--pytest_dir", help="directory of pytest", default="none")
+    parser.add_argument("-p", "--pytest_dir", help="full path to the directory of pytest (/path/sw4/pytest)", default="none")
     parser.add_argument("-n", "--nohdf5", help="disable HDF5 test", action="store_true")
     args = parser.parse_args()
     if args.nohdf5:

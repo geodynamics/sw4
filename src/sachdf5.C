@@ -299,9 +299,34 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   std::string filename;
 
   // Set stripe parameters to dir for time-series data
-  char setstripe[4096];
-  sprintf(setstripe, "lfs setstripe -c 128 -S 512k %s", path.c_str());
-  system(setstripe);
+  char setstripe[4096], *env;
+  int disablestripe=0, stripecount=128, stripesize=512;
+
+  env = getenv("DISABLE_LUSTRE_STRIPE");
+  if (env != NULL) 
+      disablestripe = atoi(env);
+
+  if (disablestripe != 1) {
+      env = getenv("LUSTRE_STRIPE_COUNT");
+      if (env != NULL) 
+          stripecount = atoi(env);
+      env = getenv("LUSTRE_STRIPE_SIZE");
+      if (env != NULL) 
+          stripesize = atoi(env);
+
+      if (stripecount < 1) 
+          stripecount = 1;
+      if (stripesize < 128) 
+          stripesize = 512;
+
+      fflush(stdout);
+      sprintf(setstripe, "lfs setstripe -c %d -S %dk %s", stripecount, stripesize, path.c_str());
+      if (system(setstripe) != 0)
+        printf("Failed to set Lustre stripe, sw4 will continue to run (set DISABLE_LUSTRE_STRIPE=1 to disable this and the above lfs error messages, or set valid values to LUSTRE_STRIPE_COUNT and LUSTRE_STRIPE_SIZE)\n");
+      else
+        printf("Lustre stripe set to: %s\n", setstripe);
+      fflush(stdout);
+  }
 
   // Build the file name
   if( path != "." )
