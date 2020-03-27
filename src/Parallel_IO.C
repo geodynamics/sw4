@@ -34,6 +34,7 @@
 using namespace std;
 
 #include <cstring>
+#include <cstdlib>
 #include <errno.h>
 #include <unistd.h>
 #include "Parallel_IO.h"
@@ -1189,8 +1190,16 @@ void Parallel_IO::write_array_hdf5( const char *fname, const char *dname, int nc
    bool debug =false;
    hid_t dspace, filespace, dxpl, h5_fid, fapl, dset;
 
+   int alignment = 262144;
+   /* char *env = getenv("HDF5_ALIGNMENT_SIZE"); */
+   /* if (env != NULL) */ 
+   /*     alignment = atoi(env); */
+   /* if (alignment < 65536) */ 
+   /*     alignment = 65536; */
+
    fapl = H5Pcreate(H5P_FILE_ACCESS);
    /* H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL); */
+   H5Pset_alignment(fapl, 10000, alignment);
    dxpl = H5Pcreate(H5P_DATASET_XFER);
    H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
 
@@ -1306,33 +1315,6 @@ void Parallel_IO::write_array_hdf5( const char *fname, const char *dname, int nc
 	 kl = m_irecv.m_klow[0];
 	 ind = il-1+nig*(jl-1)+((off_t)nig)*njg*(kl-1);
          offset = pos0 + nc*ind;
-	 /* sizew = lseek( *fid, pos0+nc*ind*typsize, SEEK_SET ); */
-	 if( offset < 0 )
-	 {
-	    int eno = errno;
-	    cout << "Error in write_array: could not go to write start position" << endl;
-	    if( eno == EBADF )
-	       cout << "errno = EBADF" << endl;
-	    if( eno == EINVAL )
-	       cout << "errno = EINVAL" << endl;
-	    if( eno == EOVERFLOW )
-	       cout << "errno = EOVERFLOW" << endl;
-	    if( eno == ESPIPE )
-	       cout << "errno = ESPIPE" << endl;
-	    cout << "errno = " << eno << endl;
-            cout << "Requested offset = " << pos0+nc*ind<< endl;
-            cout << "pos0 = " << pos0 << endl;
-	    cout << "nc = " << nc << endl;
-	    cout << "ind = " << ind << endl;
-	    cout << "typsize = " << typsize << endl;
-            cout << "m_csteps = " << m_csteps << endl;
-	    cout << "nglobal = " << nig << " " << njg << " " << nkg << endl;
-	    cout << "m_irecv.m_ilow " << m_irecv.m_ilow[0] << endl;
-	    cout << "m_irecv.m_jlow " << m_irecv.m_jlow[0] << endl;
-	    cout << "m_irecv.m_klow " << m_irecv.m_klow[0] << endl;
-            cout << "m_irecv.m_ncomm[0] = " << m_irecv.m_ncomm[0] << endl;
-	    //	    MPI_Abort(MPI_COMM_WORLD,1);
-	 }
       }
 
       tag = 334;
