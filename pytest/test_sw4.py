@@ -153,6 +153,10 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
         os.environ["PSM2_DEVICES"] = ""
         if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="lrun -T4 "
+    elif 'lassen' in node_name:
+        os.environ["PSM2_DEVICES"] = ""
+        if mpi_tasks<=0: mpi_tasks = 4
+        mpirun_cmd="lrun -T4 "
         #mpirun_cmd="jsrun -g4 -c40 -a4 -n" + str(mpi_tasks) # Simulate Summit runs with -g4
     # add more machine names here
     elif 'Linux' in sys_name:
@@ -314,7 +318,7 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
 
 
             ref_result = reference_dir + sep + test_dir + sep + case_dir + sep + result_file
-            print('Test #', num_test, 'output dirs: local case_dir =', case_dir, 'ref_result =', ref_result)
+            #print('Test #', num_test, 'output dirs: local case_dir =', case_dir, 'ref_result =', ref_result)
 
 
             if result_file == 'hdf5.log':
