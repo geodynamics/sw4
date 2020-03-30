@@ -9,8 +9,7 @@ Here, $0\leq r^{(1)}, r^{(2)}, r^{(3)}\leq 1$, $\theta_i$ is the interface surfa
 \begin{equation}\label{interface_gausian}
 \theta_i\big(r^{(1)},r^{(2)}\big) = 800+20\sin(4\pi r^{(1)})+20\cos(4\pi r^{(2)}),
 \end{equation}
-and 
-$\theta_b$ is the bottom surface geometry,
+and $\theta_b$ is the bottom surface geometry,
 \begin{equation*}
 \theta_b\big(r^{(1)},r^{(2)}\big) = 0.
 \end{equation*}
@@ -47,7 +46,7 @@ In the simulation of the reference solution, we choose $n_1 = n_2 = 201, n_3 = 1
 	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u1_t02_curvi_mr.png}\\
 	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u1_t04_cartesian.png}
 	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u1_t04_curvi_mr.png}
-\caption{The graphs for $u_1$. In the two figures on the left, we show reference solutions at $t=0.2$ and $t=0.4$, computed on a Cartesian mesh without mesh refinement interface. On the right, the two figures show the solutions computed on a curvilinear mesh with a curved mesh refinement interface at $t=0.2$ and $t=0.4$. The curved interfaces are marked with the red dash lines. Note that $x,z$ in the graph correspond to $x^{(1)}, x^{(3)}$ respectively.}
+\caption{The graphs for $u_1$. In the two figures on the left, we show reference solutions at $t=0.2$ and $t=0.4$, computed on a Cartesian mesh without a mesh refinement interface. On the right, the two figures show the solutions computed on a curvilinear mesh with a curved mesh refinement interface at $t=0.2$ and $t=0.4$. The curved interfaces are marked with the red dash lines. Note that $x,z$ in the graph correspond to $x^{(1)}, x^{(3)}$ respectively.}
 \label{u1}
 \end{figure}
 
@@ -66,7 +65,7 @@ In the simulation of the reference solution, we choose $n_1 = n_2 = 201, n_3 = 1
 	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u3_t02_curvi_mr.png}\\
 	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u3_t04_cartesian.png}
 	\includegraphics[width=0.4\textwidth,trim={0 2.8cm 0 2.8cm}, clip]{u3_t04_curvi_mr.png}
-	\caption{The graphs for $u_3$. In the two figures on the left, we show reference solutions at $t=0.2$ and $t=0.4$, computed on a Cartesian mesh without mesh refinement interface. On the right, the two figures show the solutions computed on a curvilinear mesh with a curved mesh refinement interface at $t=0.2$ and $t=0.4$. The curved interfaces are marked with the red dash lines. Note that $x,z$ in the graph correspond to $x^{(1)}, x^{(3)}$ respectively.}
+	\caption{The graphs for $u_3$. In the two figures on the left, we show reference solutions at $t=0.2$ and $t=0.4$, computed on a Cartesian mesh without a mesh refinement interface. On the right, the two figures show the solutions computed on a curvilinear mesh with a curved mesh refinement interface at $t=0.2$ and $t=0.4$. The curved interfaces are marked with the red dash lines. Note that $x,z$ in the graph correspond to $x^{(1)}, x^{(3)}$ respectively.}
 \label{u3}
 \end{figure}
-From Figure \ref{u1} and Figure \ref{u3}, we observe that there is no significant reflection at the mesh refinement interface for both component $u_1$ and $u_3$. As for component $u_2$, it is zero up to round-off error, and is not presented here.
+From Figure \ref{u1} and Figure \ref{u3}, we observe that there is no significant reflection at the mesh refinement interface for both component $u_1$ and $u_3$. As for component $u_2$, it is zero up to round-off error and is not presented here.

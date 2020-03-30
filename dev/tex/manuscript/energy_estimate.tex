@@ -8,8 +8,38 @@ and the two dimensional scalar product for coarse grid functions at the interfac
 \begin{equation}\label{scalar_product_discrete_interface_c}
 \left<{\bf u}, {\bf v}\right>_{2h} = 4h_1h_2\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}{  J}_{i,j,n_3^{2h}}^{c}\Lambda^{2h}_{i,j,n_3^{2h}}({\bf u}_{i,j,n_3^{2h}}^T\cdot {\bf v}_{i,j,n_3^{2h}}).
 \end{equation}
-The three dimensional scalar product in $\Omega^f$ and two dimensional scalar product for fine grid functions at the interface $\Gamma$ are defined by a similar manner as those in (\ref{scalar_product_inner}) and (\ref{scalar_product_discrete_interface_c}) with grid points in $I_{\Omega^f}$ and $I_{\Gamma^f}$, respectively. Now, we are ready to state an energy estimate of the proposed schemes in Section \ref{semi_discrete_form}. 
- \begin{theorem}
+The three dimensional scalar product in $\Omega^f$ and two dimensional scalar product for fine grid functions at the interface $\Gamma$ are defined by a similar manner as those in (\ref{scalar_product_inner}) and (\ref{scalar_product_discrete_interface_c}) with grid points in $I_{\Omega^f}$ and $I_{\Gamma^f}$, respectively. 
+{\color{red}
+\begin{lemma}\label{lemma1}
+ Let ${\bf c}$ and ${\bf f}$ are grid functions at the interface for coarse domain and fine domain, respectively. Then the interpolation operator $\mathcal{P}$ and the restriction operator $\mathcal{R}$ satisfy
+ \begin{equation}\label{pr_relation}
+ \left<\mathcal{P} {\bf c}, {\bf f}\right>_h = \left<{\bf c}, \mathcal{R}{\bf f}\right>_{2h}
+ \end{equation}
+\end{lemma}
+\begin{proof}
+	Since 
+	\begin{align*}
+	{\mathcal{P}} &= (\mathcal{J}^h_\Gamma \bm{\Lambda}^h)^{-\frac{1}{2}}({\bf P}\otimes{\bf I})(\mathcal{J}^{2h}_\Gamma \bm{\Lambda}^{2h})^{\frac{1}{2}}\\
+	& = ((J_{\Gamma}^h\otimes{\bf I})(\Lambda^h\otimes{\bf I}))^{-\frac{1}{2}}({\bf P}\otimes{\bf I})((J_{\Gamma}^{2h}\otimes{\bf I})(\Lambda^{2h}\otimes{\bf I}))^{\frac{1}{2}}\\
+	& = (J_{\Gamma}^h\Lambda^h)^{-\frac{1}{2}}{\bf P}(J_{\Gamma}^{2h}\Lambda^{2h})^{\frac{1}{2}}\otimes{\bf I},
+	\end{align*}
+	and
+	\begin{align*}
+	{\mathcal{R}} &= (\mathcal{J}^{2h}_\Gamma \bm{\Lambda}^{2h})^{-\frac{1}{2}}({\bf R}\otimes{\bf I})(\mathcal{J}^{h}_\Gamma \bm{\Lambda}^{h})^{\frac{1}{2}}\\
+	& = ((J_{\Gamma}^{2h}\otimes{\bf I})(\Lambda^{2h}\otimes{\bf I}))^{-\frac{1}{2}}({\bf R}\otimes{\bf I})((J_{\Gamma}^{h}\otimes{\bf I})(\Lambda^{h}\otimes{\bf I}))^{\frac{1}{2}}\\
+	& = (J_{\Gamma}^{2h}\Lambda^{2h})^{-\frac{1}{2}}{\bf R}(J_{\Gamma}^{h}\Lambda^{h})^{\frac{1}{2}}\otimes{\bf I},
+	\end{align*}
+	then
+	\begin{align*}
+	\left<\mathcal{P}{\bf c}, {\bf f}\right>_h &= h_1h_2\left[\left((J_{\Gamma}^h\Lambda^h)^{\frac{1}{2}} {\bf P}(J_{\Gamma}^{2h}\Lambda^{2h})^{\frac{1}{2}}\otimes {\bf I}\right){\bf c}\right]^T\cdot{\bf f}\\
+	& = 4h_1h_2 {\bf c}^T \cdot \left[\left((J_{\Gamma}^{2h}\Lambda^{2h})\frac{1}{4}{\bf P}^T(J_{\Gamma}^h\Lambda^h)^{\frac{1}{2}}\otimes {\bf I}\right) {\bf f}\right]\\
+	& =4h_1h_2 {\bf c}^T \cdot \left[\left((J_{\Gamma}^{2h}\Lambda^{2h}){\bf R}(J_{\Gamma}^h\Lambda^h)^{\frac{1}{2}}\otimes {\bf I}\right) {\bf f}\right] = \left<{\bf c}, \mathcal{R}{\bf f}\right>_{2h}
+	\end{align*}
+\end{proof}
+}
+
+Now, we are ready to state an energy estimate of the proposed schemes in Section \ref{semi_discrete_form}. 
+ \begin{theorem}\label{thm1}
   The semi-discretization (\ref{elastic_semi_c}) and (\ref{fine_scheme}) is energy stable 
   \[
   \frac{d}{dt}\left[({\bf F}_t,\rho^f {\bf F}_t)_{h} + \mathcal{S}_{h}({\bf F},{\bf F}) + ({\bf C}_t,\rho^{c} {\bf C}_t)_{2h} + \mathcal{S}_{2h}({\bf C},{\bf C}) \right]   = 0.
@@ -56,7 +86,7 @@ Then, the time derivative of the semi-discrete energy reads as
 \frac{d}{dt}\big[({\bf F}_t,\rho^f {\bf F}_t)_h + \mathcal{S}_{h}({\bf F},{\bf F}) + ({\bf C}_t,\rho^{c} {\bf C}_t)_{2h} + \mathcal{S}_{2h}({\bf C},{\bf C}) \big]  = \\
 2B_{h}({\bf F}_t,{\bf F}) + 2B_{2h}({\bf C}_t,{\bf C}) + 2h_1h_2h_3\omega_1\sum_{i = 1}^{n_1^h}\sum_{j=1}^{n_2^h}\left(\frac{d{\bf F}_{i,j,1}}{dt}\right)^T\cdot{\bm \eta}_{i,j,1},
 \end{multline}
-plugging (\ref{boundary_f})--(\ref{bounary_c}) into (\ref{semi_energy_1}) and combining the definitions of the scalar product at the interface $\Gamma$ (\ref{scalar_product_discrete_interface_c}), we have
+plugging (\ref{boundary_f})--(\ref{bounary_c}) into (\ref{semi_energy_1}) and combining the definitions of the scalar product at the interface $\Gamma$ (\ref{scalar_product_discrete_interface_c}), {\color{red}Lemma \ref{lemma1},} we have
 \begin{align*}\label{semi_energy_2}
 &\hspace{0.4cm}\frac{d}{dt}\left[({\bf F}_t,\rho^f {\bf F}_t)_{h} + \mathcal{S}_{h}({\bf F},{\bf F}) + ({\bf C}_t,\rho^{c} {\bf C}_t)_{2h} + \mathcal{S}_{2h}({\bf C},{\bf C}) \right]   \nonumber\\
 & = 2\left<{\bf F}_t,(\bm{\Lambda}^{h}\mathcal{J}^h_\Gamma)^{-1}(-\mathcal{A}_3^h{\bf F}+h_3\omega_1{\bm \eta})\right>_{h}+ 2\left<{\bf C}_t,(\bm{\Lambda}^{2h}\mathcal{J}^{2h}_\Gamma)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf C}\right>_{2h} \nonumber\\

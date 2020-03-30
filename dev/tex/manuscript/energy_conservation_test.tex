@@ -1,11 +1,11 @@
 %!TEX root = SISC_elastic_3d.tex
 \subsection{Energy conservation test}\label{conserved_energy}
-To verify the energy conservation property of our scheme, we perform computation without external source term, but with a Gaussian initial profile  centered at the origin of the computational domain.  Specifically, the computational domain is taken to be the same as in the Section \ref{convergence_study}. And the material is discontinuous: for fine domain,  the density varies according to
+To verify the energy conservation property of our scheme, we perform computation without external source term, but with a Gaussian initial profile centered at the origin of the computational domain.  Specifically, the computational domain is taken to be the same as in Section \ref{convergence_study}. And the material is discontinuous: for the fine domain,  the density varies according to
 \[\rho^f(x^{(1)},x^{(2)},x^{(3)}) = 3 + \sin(2x^{(1)}+0.3)\cos(x^{(2)}+0.3)\sin(2x^{(3)}-0.2),\] 
 and material parameters satisfy
 \[\mu^f(x^{(1)},x^{(2)},x^{(3)}) = 2 + \cos(3x^{(1)}+0.1)\sin(3x^{(2)}+0.1)\sin(x^{(3)})^2,\]
 \[\lambda^f(x^{(1)},x^{(2)},x^{(3)}) = 15 + \cos(x^{(1)}+0.1)\sin(4x^{(2)}+0.1)\sin(3x^{(3)})^2;\]
-for coarse domain, the density varies according to
+for the coarse domain, the density varies according to
 \[\rho^c(x^{(1)},x^{(2)},x^{(3)}) = 2 + \sin(x^{(1)}+0.3)\sin(x^{(2)}+0.3)\sin(2x^{(3)}-0.2),\] 
 and material parameters satisfy
 \[\mu^c(x^{(1)},x^{(2)},x^{(3)}) = 3 + \sin(3x^{(1)}+0.1)\sin(3x^{(2)}+0.1)\sin(x^{(3)}),\]
