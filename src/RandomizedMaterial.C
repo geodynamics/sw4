@@ -144,7 +144,8 @@ void RandomizedMaterial::perturb_velocities( int g, Sarray& cs, Sarray& cp,
       //      cout << "intersection, z lims grid block " << zmin << " " << zmax << endl;
       //      cout << "intersection, z lims rand block " << m_zmin << " " << m_zmax << endl;
   // Grid block intersects random material block
-      bool curvilinear = g == mEW->mNumberOfGrids-1 && mEW->topographyExists(); // NOT verified for several curvilinear grids
+      //      bool curvilinear = g == mEW->mNumberOfGrids-1 && mEW->topographyExists(); // NOT verified for several curvilinear grids
+      bool curvilinear = g >= mEW->mNumberOfCartesianGrids;
       // Interpolate to sw4 grid
       for( int k=mEW->m_kStartInt[g] ; k <= mEW->m_kEndInt[g] ; k++ )
 	 for( int j=mEW->m_jStartInt[g] ; j <= mEW->m_jEndInt[g] ; j++ )

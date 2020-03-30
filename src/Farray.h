@@ -226,6 +226,7 @@ class Farray {
     }
 #endif
     for (size_t i = 0; i < size; i++) data[i] *= in.data[i];
+    return *this;
   }
 
   inline void operator=(double in) {
@@ -277,7 +278,7 @@ class Farray {
 
   inline float_sw4 max() {
     float_sw4 maxval = data[0];
-    for (int i = 1; i < size; i++)
+    for (size_t i = 1; i < size; i++)
       maxval = (maxval < data[i]) ? data[i] : maxval;
     return maxval;
   }

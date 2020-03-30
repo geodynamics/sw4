@@ -2,7 +2,7 @@
 #define SW4_CURVILINEARINTERFACE
 
 #include "EW.h"
-#include "TestGrid.h"
+//#include "TestGrid.h"
 #include "TestTwilight.h"
 // Coefficients: Rop, Sb, ghcof, P
 #include "Farray.h"
@@ -32,7 +32,7 @@ class CurvilinearInterface
 
    PackArgs a;
 
-   TestGrid* m_test_grid;
+   //   TestGrid* m_test_grid;
    TestTwilight* m_tw;
    TestEcons* m_etest;
 

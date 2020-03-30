@@ -1,4 +1,4 @@
-[sjogreen2@tux405 curvimeshrefine]$ ../../../optimize/sw4 gausshill-el-1.in
+[bjorn@localhost curvimeshrefine]$ ../../../optimize/sw4 gausshill-el-1.in 
 ----------------------------------------------------------------
             sw4 version 3.0-alpha
 
@@ -6,10 +6,10 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Wed Feb 26 11:17:52 PST 2020
-  By user:     sjogreen2
-  Machine:     tux405
-  Compiler:    /usr/apps/mpich2/latest/bin/mpicxx
+  Compiled on: Mon Mar 30 14:52:25 PDT 2020
+  By user:     bjorn
+  Machine:     localhost.localdomain
+  Compiler:    /usr/lib64/mpich-3.2/bin/mpicxx
   3rd party include dir: /include, and library dir: /lib
 ----------------------------------------------------------------
 
@@ -19,7 +19,7 @@ Input file: gausshill-el-1.in
 * Setting h to 2.00000000e-01 from  x/(nx-1) (x=6.00000000e+00, nx=31)
 * Setting ny to 21 to be consistent with h=2.00000000e-01
 * Setting nz to 36 to be consistent with h=2.00000000e-01
-cleanupRefinementLevels: m_topo_zmax = 2.50000000e+00
+cleanupRefinementLevels: topo_zmax = 2.50000000e+00
  Cartesian refinement levels (z=):
 2.50000000e+00
  Curvilinear refinement levels (z=):
@@ -39,14 +39,9 @@ Corrected global_zmax = 7.10000000e+00
 Rank=0, Grid #2 (curvilinear), iInterior=[1,61], jInterior=[1,41]
 Rank=0, Grid #1 (curvilinear), iInterior=[1,31], jInterior=[1,21]
 Rank=0, Grid #0 (Cartesian), iInterior=[1,31], jInterior=[1,21], kInterior=[1,24]
-***inside buildGaussianHillTopography***
 ***inside allocateCurvilinearArrays***
 
 ***Topography grid: min z = -2.800000e+00, max z = -2.886753e-06, top Cartesian z = 2.500000e+00
- grid 1 interface parameters s0,s1 0.00000000e+00 6.00000000e-01 kint = 1 12
- array dims -2 34 -2 24 -2 15
- grid 2 interface parameters s0,s1 6.00000000e-01 1.00000000e+00 kint = 1 16
- array dims -2 64 -2 44 -2 19
 
 Global grid sizes (without ghost points)
 Grid         h        Nx        Ny        Nz       Points      Type
@@ -57,7 +52,7 @@ Total number of grid points (without ghost points): 63452
 
 
 
-   Execution time, reading input file 6.83784485e-03 seconds 
+   Execution time, reading input file 1.85370445e-02 seconds 
   Using Bjorn's fast (parallel) IO library
 Assuming a SERIAL file system.
 GRID: 0 onesided-k 1 0 bctype-k Curvilinear/Cartesian interface dirichlet
@@ -97,17 +92,13 @@ g=2, h=1.000000e-01, minVs/h=10.0001 (curvilinear)
 
   Assigned material properties
 *** computing the time step ***
-INFO: Smallest stable time step for curvilinear grid only: 1.839323e-02
-TIME accuracy order=4 CFL=1.30000000e+00 prel. time step=1.83932281e-02
+INFO: Smallest stable time step for curvilinear grid only: 1.839363e-02
+TIME accuracy order=4 CFL=1.30000000e+00 prel. time step=1.83936304e-02
 *** Initialized Images
 
-   Execution time, start up phase 1.11204863e-01 seconds 
+   Execution time, start up phase 1.02510691e-01 seconds 
 Running sw4 on 1 processor...
 Writing output to directory: gausshill-el-1/
- grid 2 interface parameters s0,s1 6.00000000e-01 1.00000000e+00 kint = 1 16
- array dims -4 66 -4 46 9 16
- grid 1 interface parameters s0,s1 0.00000000e+00 6.00000000e-01 kint = 1 12
- array dims -4 36 -4 26 0 8
 
 ***  Starting solve ***
 ============================================================
@@ -145,21 +136,16 @@ m_use_supergrid=no
 End report of internal flags and settings
 
 
-   Execution time, initial data phase 1.15301847e-01 seconds 
+   Execution time, initial data phase 7.61470795e-02 seconds 
 
   Begin time stepping...
 Time step       1  t =   1.8604651e-02
 Time step      43  t =   8.0000000e-01
   Time stepping finished...
 
-   Execution time, time stepping phase 1.47015538e+01 seconds 
-solution error at grid 0 is Linf= 6.99633170e-04, L2= 1.58676889e-03
-Max error on grid: 2.81259617e-03 at (i,j,k)= 18 9 1
-solution error at grid 1 is Linf= 2.81259617e-03, L2= 4.02190064e-03
-Max error on grid: 7.50275433e-03 at (i,j,k)= 38 23 1
-solution error at grid 2 is Linf= 7.50275433e-03, L2= 6.17620642e-03
+   Execution time, time stepping phase 8.49011707e+00 seconds 
 
- Final solution errors: Linf =   7.5027543e-03, L2 =   7.5391675e-03
+ Final solution errors: Linf =   7.4351680e-03, L2 =   7.6630849e-03
 **** Closing file with solution errors for testing
 ============================================================
  program sw4 finished! 

@@ -456,6 +456,35 @@ bool Sarray::in_domain( int i, int j, int k )
 }
 
 //-----------------------------------------------------------------------
+float_sw4 Sarray::absmax( int c )
+{
+   ///   int cm = c-1;
+   //   float_sw4 mx = m_data[cm];
+   //   for( int i=0 ; i<m_ni*m_nj*m_nk ; i++ )
+   //      mx = mx > m_data[cm+i*m_nc] ? mx : m_data[cm+i*m_nc];
+   //   size_t first = m_base+m_offc*c+m_offi*m_ib+m_offj*m_jb+m_offk*m_kb;
+   size_t npts = static_cast<size_t>(m_ni)*m_nj*m_nk;
+   float_sw4 mx;
+   if( m_corder )
+   {
+      size_t first = (c-1)*npts;
+      mx = -1;
+#pragma omp parallel for reduction(max:mx)
+      for( unsigned int i=0 ; i<npts ; i++ )
+	 mx = mx > abs(m_data[first+i]) ? mx : abs(m_data[first+i]);
+   }
+   else
+   {
+      size_t first = (c-1);
+      mx = -1;
+#pragma omp parallel for reduction(max:mx)
+      for( unsigned int i=0 ; i<npts ; i++ )
+	 mx = mx > abs(m_data[first+i*m_nc]) ? mx : abs(m_data[first+i*m_nc]);
+   }
+   return mx;
+}
+
+//-----------------------------------------------------------------------
 float_sw4 Sarray::maximum( int c )
 {
    ///   int cm = c-1;
@@ -470,7 +499,7 @@ float_sw4 Sarray::maximum( int c )
       size_t first = (c-1)*npts;
       mx = m_data[first];
 #pragma omp parallel for reduction(max:mx)
-      for( int i=0 ; i<npts ; i++ )
+      for( unsigned int i=0 ; i<npts ; i++ )
 	 mx = mx > m_data[first+i] ? mx : m_data[first+i];
    }
    else
@@ -478,7 +507,7 @@ float_sw4 Sarray::maximum( int c )
       size_t first = (c-1);
       mx = m_data[first];
 #pragma omp parallel for reduction(max:mx)
-      for( int i=0 ; i<npts ; i++ )
+      for( unsigned int i=0 ; i<npts ; i++ )
 	 mx = mx > m_data[first+i*m_nc] ? mx : m_data[first+i*m_nc];
    }
    return mx;
@@ -498,7 +527,7 @@ float_sw4 Sarray::minimum( int c )
       size_t first = (c-1)*npts;
       mn = m_data[first];
 #pragma omp parallel for reduction(min:mn)
-      for( int i=0 ; i<npts ; i++ )
+      for( unsigned int i=0 ; i<npts ; i++ )
 	 mn = mn < m_data[first+i] ? mn : m_data[first+i];
    }
    else
@@ -506,7 +535,7 @@ float_sw4 Sarray::minimum( int c )
       size_t first = (c-1);
       mn = m_data[first];
 #pragma omp parallel for reduction(min:mn)
-      for( int i=0 ; i<npts ; i++ )
+      for( unsigned int i=0 ; i<npts ; i++ )
 	 mn = mn < m_data[first+i*m_nc] ? mn : m_data[first+i*m_nc];
    }
    return mn;
@@ -526,14 +555,14 @@ float_sw4 Sarray::sum( int c )
    {
       size_t first = (c-1)*npts;
 #pragma omp parallel for reduction(+:s)
-      for( int i=0 ; i<npts ; i++ )
+      for( unsigned int i=0 ; i<npts ; i++ )
 	 s += m_data[first+i];
    }
    else
    {
       size_t first = (c-1);
 #pragma omp parallel for reduction(+:s)
-      for( int i=0 ; i<npts ; i++ )
+      for( unsigned int i=0 ; i<npts ; i++ )
 	 s += m_data[first+i*m_nc];
    }
    return s;
@@ -789,7 +818,7 @@ void Sarray::extract_subarrayIK( int ib, int ie, int jb, int je, int kb,
    // Assuming nc is the same for m_data and subarray ar.
    // Return `ar' in order suitable for storing array on file.
 
-   int nis = ie-ib+1;
+  //   int nis = ie-ib+1;
    int njs = je-jb+1;
    int nks = ke-kb+1;
    size_t sind=0, ind=0;
@@ -827,7 +856,7 @@ void Sarray::insert_subarrayIK( int ib, int ie, int jb, int je, int kb,
    // Assuming nc is the same for m_data and subarray ar.
    // Insert array `ar', where `ar' is in order suitable for storing array on file.
 
-   int nis = ie-ib+1;
+  //   int nis = ie-ib+1;
    int njs = je-jb+1;
    int nks = ke-kb+1;
    //   int nks = ke-kb+1;
@@ -1192,6 +1221,97 @@ void Sarray::transposeij( )
    for( size_t i=0 ; i < m_ni*((size_t) m_nj)*m_nk*m_nc ; i++ )
       m_data[i] = tmpar[i];
    delete[] tmpar;
+}
+
+//-----------------------------------------------------------------------
+void Sarray::extrapolij( int npts )
+{
+  // Extrapolate to layer npts thick at outermost points in i- and j-directions.
+   if( m_corder )
+   {
+      size_t nijk=static_cast<size_t>(m_ni)*m_nj*m_nk;
+      for( int c=0 ; c < m_nc ; c++ ) 
+      {
+         for( int k=0 ; k <= m_nk-1 ; k++ )
+            for( int j=0 ; j <= m_nj-1 ; j++ )
+               for( int i=0 ; i <= npts-1 ; i++ )
+	       {
+	          size_t ind  = i    + m_ni*j + m_ni*m_nj*k;
+	          size_t indf = npts + m_ni*j + m_ni*m_nj*k;
+	          m_data[ind+c*nijk] = m_data[indf+c*nijk];
+	       }
+  // side i-high
+         for( int k=0 ; k <= m_nk-1 ; k++ )
+            for( int j=0 ; j <= m_nj-1 ; j++ )
+               for( int i=m_ni-npts ; i <= m_ni-1 ; i++ )
+	       {
+	          size_t ind  = i           + m_ni*j + m_ni*m_nj*k;
+	          size_t indf = m_ni-npts-1 + m_ni*j + m_ni*m_nj*k;
+	          m_data[ind+c*nijk] = m_data[indf+c*nijk];
+	       }
+  // side j-low 
+         for( int k=0 ; k <= m_nk-1 ; k++ )
+            for( int j=0 ; j <= npts-1 ; j++ )
+               for( int i=0 ; i <= m_ni-1 ; i++ )
+	       {
+	          size_t ind  = i + m_ni*j    + m_ni*m_nj*k;
+	          size_t indf = i + m_ni*npts + m_ni*m_nj*k;
+	          m_data[ind+c*nijk] = m_data[indf+c*nijk];
+	       }
+  // side j-high
+         for( int k=0 ; k <= m_nk-1 ; k++ )
+            for( int j=m_nj-npts ; j <= m_nj-1 ; j++ )
+               for( int i=0 ; i <= m_ni-1 ; i++ )
+	       {
+	          size_t ind  = i + m_ni*j             + m_ni*m_nj*k;
+	          size_t indf = i + m_ni*(m_nj-npts-1) + m_ni*m_nj*k;
+	          m_data[ind+c*nijk] = m_data[indf+c*nijk];
+	       }
+      }
+   }
+   else
+   {
+  // side i-low 
+      for( int k=0 ; k <= m_nk-1 ; k++ )
+         for( int j=0 ; j <= m_nj-1 ; j++ )
+            for( int i=0 ; i <= npts-1 ; i++ )
+	       for( int c=0 ; c < m_nc ; c++ ) 
+	       {
+	           size_t ind  = i    + m_ni*j + m_ni*m_nj*k;
+	           size_t indf = npts + m_ni*j + m_ni*m_nj*k;
+	           m_data[c+m_nc*ind] = m_data[c+m_nc*indf];
+	       }
+  // side i-high
+      for( int k=0 ; k <= m_nk-1 ; k++ )
+         for( int j=0 ; j <= m_nj-1 ; j++ )
+            for( int i=m_ni-npts ; i <= m_ni-1 ; i++ )
+               for( int c=0 ; c < m_nc ; c++ )
+	       {
+	          size_t ind  = i           + m_ni*j + m_ni*m_nj*k;
+	          size_t indf = m_ni-1-npts + m_ni*j + m_ni*m_nj*k;
+	          m_data[c+m_nc*ind] = m_data[c+m_nc*indf];
+	       }
+  // side j-low 
+      for( int k=0 ; k <= m_nk-1 ; k++ )
+         for( int j=0 ; j <= npts-1 ; j++ )
+            for( int i=0 ; i <= m_ni-1 ; i++ )
+               for( int c=0 ; c < m_nc ; c++ )
+	       {
+	          size_t ind  = i + m_ni*j    + m_ni*m_nj*k;
+	          size_t indf = i + m_ni*npts + m_ni*m_nj*k;
+	          m_data[c+m_nc*ind] = m_data[c+m_nc*indf];
+	       }
+  // side j-high
+      for( int k=0 ; k <= m_nk-1 ; k++ )
+         for( int j=m_nj-npts ; j <= m_nj-1 ; j++ )
+            for( int i=0 ; i <= m_ni-1 ; i++ )
+               for( int c=0 ; c < m_nc ; c++ )
+	       {
+	          size_t ind  = i + m_ni*j             + m_ni*m_nj*k;
+	          size_t indf = i + m_ni*(m_nj-1-npts) + m_ni*m_nj*k;
+	          m_data[c+m_nc*ind] = m_data[c+m_nc*indf];
+	      }
+   }
 }
 
 //-----------------------------------------------------------------------

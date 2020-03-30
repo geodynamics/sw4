@@ -46,6 +46,7 @@
 #include "Filter.h"
 
 #include "EW.h"
+#include "GridGenerator.h"
 
 using namespace std;
 
@@ -154,7 +155,8 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
       q = mX/h + 1.0;
       r = mY/h + 1.0;
 // evaluate elevation of topography on the grid
-      if (!a_ew->interpolate_topography(q, r, m_zTopo, true))
+      if (!a_ew->m_gridGenerator->interpolate_topography(a_ew,q, r, m_zTopo, a_ew->mTopoGridExt))
+         //      if (!a_ew->interpolate_topography(q, r, m_zTopo, true))
       {
 	 cerr << "Unable to evaluate topography for receiver station" << m_fileName << " mX= " << mX << " mY= " << mY << endl;
 	 cerr << "Setting topography to ZERO" << endl;
@@ -194,8 +196,10 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
    if( m_grid0 >= a_ew->mNumberOfCartesianGrids-1 && a_ew->topographyExists() )
    {
 // Curvilinear
-      bool canBeInverted = a_ew->invert_curvilinear_grid_mapping( mX, mY, mZ, q, r, s );
-      if (a_ew->invert_curvilinear_grid_mapping( mX, mY, mZ, q, r, s )) // the inversion was successful
+      bool canBeInverted = a_ew->m_gridGenerator->inverse_grid_mapping( a_ew, mX, mY, mZ, m_grid0, q, r, s );
+      //      bool canBeInverted = a_ew->invert_curvilinear_grid_mapping( mX, mY, mZ, q, r, s );
+      if (a_ew->m_gridGenerator->inverse_grid_mapping( a_ew, mX, mY, mZ, m_grid0, q, r, s )) // the inversion was successful
+         //      if (a_ew->invert_curvilinear_grid_mapping( mX, mY, mZ, q, r, s )) // the inversion was successful
       {
 	 m_k0 = (int)floor(s);
 	 if (s-(m_k0+0.5) > 0.) m_k0++;

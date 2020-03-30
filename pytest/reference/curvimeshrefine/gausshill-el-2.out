@@ -1,4 +1,4 @@
-[sjogreen2@tux405 curvimeshrefine]$ ../../../optimize/sw4 gausshill-el-2.in
+[bjorn@localhost curvimeshrefine]$ mpirun -np 4 ../../../optimize/sw4 gausshill-el-2.in 
 ----------------------------------------------------------------
             sw4 version 3.0-alpha
 
@@ -6,10 +6,10 @@
  This is free software, and you are welcome to redistribute     
  it under certain conditions, see LICENSE.txt for more details  
 ----------------------------------------------------------------
-  Compiled on: Wed Feb 26 11:17:52 PST 2020
-  By user:     sjogreen2
-  Machine:     tux405
-  Compiler:    /usr/apps/mpich2/latest/bin/mpicxx
+  Compiled on: Mon Mar 30 14:52:25 PDT 2020
+  By user:     bjorn
+  Machine:     localhost.localdomain
+  Compiler:    /usr/lib64/mpich-3.2/bin/mpicxx
   3rd party include dir: /include, and library dir: /lib
 ----------------------------------------------------------------
 
@@ -19,15 +19,15 @@ Input file: gausshill-el-2.in
 * Setting h to 1.00000000e-01 from  x/(nx-1) (x=6.00000000e+00, nx=61)
 * Setting ny to 41 to be consistent with h=1.00000000e-01
 * Setting nz to 71 to be consistent with h=1.00000000e-01
-cleanupRefinementLevels: m_topo_zmax = 2.50000000e+00
+cleanupRefinementLevels: topo_zmax = 2.50000000e+00
  Cartesian refinement levels (z=):
 2.50000000e+00
  Curvilinear refinement levels (z=):
 1.00000000e+00
 0.00000000e+00
- Grid distributed on 1 processors 
+ Grid distributed on 4 processors 
  Finest grid size    127 x 87
- Processor array     1 x 1
+ Processor array     2 x 2
 Number of curvilinear grids = 2
 Number of Cartesian grids = 1
 Total number of grids = 3
@@ -36,17 +36,12 @@ Cartesian refinement levels after correction:
 Grid=0 z-min=2.50000000e+00
 Corrected global_zmax = 7.00000000e+00
 
-Rank=0, Grid #2 (curvilinear), iInterior=[1,121], jInterior=[1,81]
-Rank=0, Grid #1 (curvilinear), iInterior=[1,61], jInterior=[1,41]
-Rank=0, Grid #0 (Cartesian), iInterior=[1,61], jInterior=[1,41], kInterior=[1,46]
-***inside buildGaussianHillTopography***
+Rank=0, Grid #2 (curvilinear), iInterior=[1,61], jInterior=[1,41]
+Rank=0, Grid #1 (curvilinear), iInterior=[1,31], jInterior=[1,21]
+Rank=0, Grid #0 (Cartesian), iInterior=[1,31], jInterior=[1,21], kInterior=[1,46]
 ***inside allocateCurvilinearArrays***
 
 ***Topography grid: min z = -2.800000e+00, max z = -2.191546e-05, top Cartesian z = 2.500000e+00
- grid 1 interface parameters s0,s1 0.00000000e+00 6.00000000e-01 kint = 1 24
- array dims -2 64 -2 44 -2 27
- grid 2 interface parameters s0,s1 6.00000000e-01 1.00000000e+00 kint = 1 32
- array dims -2 124 -2 84 -2 35
 
 Global grid sizes (without ghost points)
 Grid         h        Nx        Ny        Nz       Points      Type
@@ -57,15 +52,15 @@ Total number of grid points (without ghost points): 488702
 
 
 
-   Execution time, reading input file 5.54139614e-02 seconds 
+   Execution time, reading input file 1.90062523e-02 seconds 
   Using Bjorn's fast (parallel) IO library
 Assuming a SERIAL file system.
 GRID: 0 onesided-k 1 0 bctype-k Curvilinear/Cartesian interface dirichlet
 GRID: 1 onesided-k 1 1 bctype-k Acoustic/Elastic interface Curvilinear/Cartesian interface
 GRID: 2 onesided-k 1 1 bctype-k free surface Acoustic/Elastic interface
-GRID: 0 bctypes on I- and J-sides dirichlet, dirichlet , dirichlet , dirichlet
-GRID: 1 bctypes on I- and J-sides dirichlet, dirichlet , dirichlet , dirichlet
-GRID: 2 bctypes on I- and J-sides dirichlet, dirichlet , dirichlet , dirichlet
+GRID: 0 bctypes on I- and J-sides dirichlet, processor , dirichlet , processor
+GRID: 1 bctypes on I- and J-sides dirichlet, processor , dirichlet , processor
+GRID: 2 bctypes on I- and J-sides dirichlet, processor , dirichlet , processor
 ----------------------------------------------------
  Making Directory: gausshill-el-2/
 		
@@ -97,21 +92,17 @@ g=2, h=5.000000e-02, minVs/h=20.0002 (curvilinear)
 
   Assigned material properties
 *** computing the time step ***
-INFO: Smallest stable time step for curvilinear grid only: 9.161254e-03
-TIME accuracy order=4 CFL=1.30000000e+00 prel. time step=9.16125391e-03
+INFO: Smallest stable time step for curvilinear grid only: 9.161270e-03
+TIME accuracy order=4 CFL=1.30000000e+00 prel. time step=9.16127001e-03
 *** Initialized Images
 
-   Execution time, start up phase 4.17462587e-01 seconds 
-Running sw4 on 1 processor...
+   Execution time, start up phase 2.10562944e-01 seconds 
+Running sw4 on 4 processors...
 Writing output to directory: gausshill-el-2/
- grid 2 interface parameters s0,s1 6.00000000e-01 1.00000000e+00 kint = 1 32
- array dims -4 126 -4 86 25 32
- grid 1 interface parameters s0,s1 0.00000000e+00 6.00000000e-01 kint = 1 24
- array dims -4 66 -4 46 0 8
 
 ***  Starting solve ***
 ============================================================
- Running program on 1 MPI tasks using the following data: 
+ Running program on 4 MPI tasks using the following data: 
 
  Start Time = 0 Goal Time = 0.8
  Number of time steps = 87 dt: 0.0091954
@@ -145,21 +136,16 @@ m_use_supergrid=no
 End report of internal flags and settings
 
 
-   Execution time, initial data phase 3.98657799e-01 seconds 
+   Execution time, initial data phase 1.45254850e-01 seconds 
 
   Begin time stepping...
 Time step       1  t =   9.1954023e-03
 Time step      87  t =   8.0000000e-01
   Time stepping finished...
 
-   Execution time, time stepping phase 2 minutes 1.48958302e+00 seconds 
-solution error at grid 0 is Linf= 5.61089883e-05, L2= 8.49301025e-05
-Max error on grid: 2.26246950e-04 at (i,j,k)= 36 18 1
-solution error at grid 1 is Linf= 2.26246950e-04, L2= 2.54783725e-04
-Max error on grid: 4.72267560e-04 at (i,j,k)= 75 47 1
-solution error at grid 2 is Linf= 4.72267560e-04, L2= 4.00137960e-04
+   Execution time, time stepping phase 4.47585387e+01 seconds 
 
- Final solution errors: Linf =   4.7226756e-04, L2 =   4.8191105e-04
+ Final solution errors: Linf =   4.6830924e-04, L2 =   4.7479954e-04
 **** Closing file with solution errors for testing
 ============================================================
  program sw4 finished! 

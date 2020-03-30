@@ -172,7 +172,7 @@ void EW::solerr3c_ci( int ib, int ie, int jb, int je, int kb, int ke,
 	 xli = xliloc>xli?xliloc:xli;
 	 l2 += l2loc;
    }
-   std::cout << "Max error on grid: " << li << " at (i,j,k)= " << imxerr << " " << jmxerr << " " << kmxerr << std::endl;
+   //   std::cout << "Max error on grid: " << li << " at (i,j,k)= " << imxerr << " " << jmxerr << " " << kmxerr << std::endl;
 }
 
 //-----------------------------------------------------------------------

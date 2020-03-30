@@ -30,7 +30,9 @@
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
 #include "EW.h"
-#include "CurvilinearInterface.h"
+#include "CurvilinearInterface2.h"
+#include "GridGenerator.h"
+
 #include <cstring>
 
 // making directories
@@ -384,12 +386,21 @@ void EW::setupRun( vector<vector<Source*> > & a_GlobalUniqueSources )
   setup_MR_coefficients();
 
 // Define curvilinear grid refinement interfaces
-   if( mNumberOfGrids-mNumberOfCartesianGrids > 1 )
-   {
-      m_clInterface.resize(mNumberOfGrids-mNumberOfCartesianGrids-1);
-      for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
-         m_clInterface[g-mNumberOfCartesianGrids]= new CurvilinearInterface( g, this );
-   }
+  if( mNumberOfGrids-mNumberOfCartesianGrids > 1 )
+  {
+     m_cli2.resize(mNumberOfGrids-mNumberOfCartesianGrids-1);
+     for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
+     {
+        m_cli2[g-mNumberOfCartesianGrids] = new CurvilinearInterface2( g, this );
+     }
+  }
+
+//   if( mNumberOfGrids-mNumberOfCartesianGrids > 1 )
+//   {
+//      m_clInterface.resize(mNumberOfGrids-mNumberOfCartesianGrids-1);
+//      for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
+//         m_clInterface[g-mNumberOfCartesianGrids]= new CurvilinearInterface( g, this );
+//   }
 
   if( mVerbose && proc_zero() )
     cout << "  Assigned material properties" << endl;
@@ -1101,10 +1112,12 @@ void EW::set_materials()
        for( int g=0 ; g < mNumberOfGrids ; g++ )
        {
 	  double zmin,zmax;
-	  if( g == mNumberOfGrids-1 && topographyExists() )
+          if( g >= mNumberOfCartesianGrids )
+          //	  if( g == mNumberOfGrids-1 && topographyExists() )
 	  {
 	     zmin = m_global_zmin;
-	     zmax = m_topo_zmax;
+             //	     zmax = m_topo_zmax;
+             zmax = m_gridGenerator->get_topo_zmax();
 	  }
 	  else
 	  {
@@ -2313,31 +2326,33 @@ void EW::assign_supergrid_damping_arrays()
 void EW::material_ic( vector<Sarray>& a_mtrl )
 {
 // interface between curvilinear and top Cartesian grid
-   if (topographyExists())
+   if (topographyExists() )
    {
-      //      int nc=1;
-      int g  = mNumberOfCartesianGrids-1;
-      int gc = g+1;
-      int nc = a_mtrl[g].ncomp();
-      int q, i, j;
+      if( m_gridGenerator->curviCartIsSmooth(mNumberOfGrids-mNumberOfCartesianGrids) )
+      {
+         int g  = mNumberOfCartesianGrids-1;
+         int gc = g+1;
+	 int nc = a_mtrl[g].ncomp();
+	 int q, i, j;
 // inject values between lower boundary of gc and upper boundary of g
 #pragma omp parallel for
-      for( int j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
-	 for( int i = m_iStart[g]; i <= m_iEnd[g]; i++ )
-	 {
+	 for( int j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
+	   for( int i = m_iStart[g]; i <= m_iEnd[g]; i++ )
+	   {
 // assign ghost points in the Cartesian grid
-	    for (int q = 0; q < m_ghost_points; q++) // only once when m_ghost_points==1
-	    {
-	       for( int c = 1; c <= nc ; c++ )
-		  a_mtrl[g](c,i,j,m_kStart[g] + q) = a_mtrl[gc](c,i,j,m_kEnd[gc]-2*m_ghost_points + q);
-	    }
+	      for (int q = 0; q < m_ghost_points; q++) // only once when m_ghost_points==1
+	      {
+	         for( int c = 1; c <= nc ; c++ )
+		   a_mtrl[g](c,i,j,m_kStart[g] + q) = a_mtrl[gc](c,i,j,m_kEnd[gc]-2*m_ghost_points + q);
+	      }
 // assign ghost points in the Curvilinear grid
-	    for (int q = 0; q <= m_ghost_points; q++) // twice when m_ghost_points==1 (overwrites solution on the common grid line)
-	    {
-	       for( int c = 1; c <= nc ; c++ )
+	      for (int q = 0; q <= m_ghost_points; q++) // twice when m_ghost_points==1 (overwrites solution on the common grid line)
+	      {
+	         for( int c = 1; c <= nc ; c++ )
 		  a_mtrl[gc](c,i,j,m_kEnd[gc]-q) = a_mtrl[g](c,i,j,m_kStart[g]+2*m_ghost_points - q);
-	    }
-	 }
+	      }
+	   }
+      }
    }
 }
 

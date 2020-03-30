@@ -32,6 +32,7 @@
 #include "mpi.h"
 
 #include "EW.h"
+#include "GridGenerator.h"
 
 #include <cstring>
 
@@ -352,7 +353,7 @@ int Farray::count = 0;
 EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
        vector<vector<TimeSeries*> > & a_GlobalTimeSeries, bool a_invproblem ): 
 //  m_epi_lat(0.0), m_epi_lon(0.0), m_epi_depth(0.0), m_epi_t0(0.0),
-  m_topo_zmax(0.0),
+//  m_topo_zmax(0.0),
   m_topoInputStyle(UNDEFINED), 
   mTopoImageFound(false),
   m_nx_base(0), m_ny_base(0), m_nz_base(0), m_h_base(0.0),
@@ -410,13 +411,13 @@ EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
   m_doubly_periodic(false),
   mbcsSet(false),
 
-  m_analytical_topo(false),
-  m_use_analytical_metric(false),
-  m_GaussianAmp(0.05),
-  m_GaussianLx(0.15),
-  m_GaussianLy(0.15),
-  m_GaussianXc(0.5),
-  m_GaussianYc(0.5),
+//  m_analytical_topo(false),
+//  m_use_analytical_metric(false),
+//  m_GaussianAmp(0.05),
+//  m_GaussianLx(0.15),
+//  m_GaussianLy(0.15),
+//  m_GaussianXc(0.5),
+//  m_GaussianYc(0.5),
 
   m_use_supergrid(false),
   m_sg_gp_thickness(30),
@@ -447,8 +448,8 @@ EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
   m_useVelocityThresholds(false),
   m_vpMin(0.),
   m_vsMin(0.),
-  m_grid_interpolation_order(3),
-  m_zetaBreak(0.95),
+//  m_grid_interpolation_order(3),
+//  m_zetaBreak(0.95),
   m_global_xmax(0.),
   m_global_ymax(0.),
   m_global_zmax(0.),
@@ -880,7 +881,7 @@ void EW::assign_local_bcs( )
         //        m_onesided[g][side] = (m_bcType[g][side] == bStressFree) || (m_bcType[g][side]== bCCInterface) ;
         m_onesided[g][side] = (m_bcType[g][side] == bStressFree) ||
            (m_bcType[g][side] == bRefInterface) || (m_bcType[g][side] == bAEInterface) || 
-           (m_bcType[g][side] == bCCInterface && (ncurv > 1 ) ); 
+	  (m_bcType[g][side] == bCCInterface &&  !(m_gridGenerator->curviCartIsSmooth(ncurv)) ); 
   }
   if( m_myRank == 0 )
   {
@@ -1010,7 +1011,8 @@ bool EW::getDepth( float_sw4 x, float_sw4 y, float_sw4 z, float_sw4 & depth)
 
 // // evaluate elevation of topography on the grid (smoothed topo)
     success=true;
-    if (!interpolate_topography(q, r, zMinTilde, true))
+    if (!m_gridGenerator->interpolate_topography(this,q, r, zMinTilde, mTopoGridExt))
+    //    if (!interpolate_topography(q, r, zMinTilde, true))
     {
       cerr << "ERROR: getDepth: Unable to evaluate topography for x=" << x << " y= " << y << " on proc # " << getRank() << endl;
       cerr << "q=" << q << " r=" << r << " qMin=" << qMin << " qMax=" << qMax << " rMin=" << rMin << " rMax=" << rMax << endl;
@@ -1878,8 +1880,8 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_
 		       linfLocal, l2Local, xInfGrid, x0, y0, z0, radius,
 		       imin, imax, jmin, jmax, kmin, kmax,
 		       usesg, m_sg_str_x[g], m_sg_str_y[g] );
-          if( m_myRank ==0)
-             cout << "solution error at grid " << g << " is Linf= " << linfLocal << ", L2= " <<sqrt(l2Local) << endl;
+	  //          if( m_myRank ==0)
+	  //             cout << "solution error at grid " << g << " is Linf= " << linfLocal << ", L2= " <<sqrt(l2Local) << endl;
     }
     else
     {
@@ -1900,8 +1902,8 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_
 		      y0, z0, radius,
 		      imin, imax, jmin, jmax, kmin, kmax, geocube,
                       i0, i1, j0, j1, k0, k1 );
-          if( m_myRank ==0)
-             cout << "solution error at grid " << g << " is Linf= " << linfLocal << ", L2= " <<sqrt(l2Local) << endl;
+//          if( m_myRank ==0)
+//             cout << "solution error at grid " << g << " is Linf= " << linfLocal << ", L2= " <<sqrt(l2Local) << endl;
 
 //FTNC       else
 //FTNC	  solerr3( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &h,
@@ -5539,6 +5541,10 @@ void EW::compute_energy( float_sw4 dt, bool write_file, vector<Sarray>& Um,
 //      if( topographyExists() && g == mNumberOfGrids-1 )
       if( topographyExists() && g >= mNumberOfCartesianGrids )
       {
+         if( m_gridGenerator->curviCartIsSmooth( mNumberOfGrids-mNumberOfCartesianGrids )
+	     && g == mNumberOfCartesianGrids )
+	   kend--;
+	   
 //FTNC	 if( m_croutines )
 	    energy4c_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
 			istart, iend, jstart, jend, kstart, kend, onesided_ptr,
@@ -6672,12 +6678,12 @@ bool EW::is_onesided( int g, int side ) const
    return m_onesided[g][side] == 1;
 }
 
-//-----------------------------------------------------------------------
-void EW::get_gridgen_info( int& order, float_sw4& zetaBreak ) const
-{
-   order = m_grid_interpolation_order;
-   zetaBreak = m_zetaBreak;
-}
+////-----------------------------------------------------------------------
+//void EW::get_gridgen_info( int& order, float_sw4& zetaBreak ) const
+//{
+//   order = m_grid_interpolation_order;
+//   zetaBreak = m_zetaBreak;
+//}
 
 //-----------------------------------------------------------------------
 //void EW::get_nr_of_material_parameters( int& nmvar )
@@ -7479,20 +7485,20 @@ void EW::sort_grid_point_sources( vector<GridPointSource*>& point_sources,
    //	    m_point_sources[i]->m_j0 << " " << 
    //	    m_point_sources[i]->m_k0 << std::endl;
 }
-float_sw4 EW::curvilinear_interface_parameter( int gcurv )
-{
-   if( gcurv < 0 )
-      return 0;
-   else 
-      return (m_topo_zmax-m_curviRefLev[gcurv])/m_topo_zmax;
-}
+//float_sw4 EW::curvilinear_interface_parameter( int gcurv )
+//{
+//   if( gcurv < 0 )
+//      return 0;
+//   else 
+//      return (m_topo_zmax-m_curviRefLev[gcurv])/m_topo_zmax;
+//}
 
-#include "TestGrid.h"
+//#include "TestGrid.h"
 
-TestGrid* EW::create_gaussianHill()
-{
-   return new TestGrid( m_topo_zmax, m_GaussianAmp, m_GaussianXc, m_GaussianYc, m_GaussianLx, m_GaussianLy );
-}
+//TestGrid* EW::create_gaussianHill()
+//{
+//   return new TestGrid( m_topo_zmax, m_GaussianAmp, m_GaussianXc, m_GaussianYc, m_GaussianLx, m_GaussianLy );
+//}
 
 #include "TestTwilight.h"
 
@@ -7524,4 +7530,22 @@ AllDims* EW::get_fine_alldimobject( )
    AllDims* fine = new AllDims( m_proc_array[0], m_proc_array[1], 1, 1, m_global_nx[g], 
 		       1, m_global_ny[g], 1, m_global_nz[g], m_ghost_points, m_ppadding );
    return fine;
+}
+
+//-----------------------------------------------------------------------
+void EW::grid_information( int g )
+{
+   if( g >= mNumberOfCartesianGrids )
+   {
+      float_sw4 minJ = mJ[g].minimum();
+      float_sw4 maxJ = mJ[g].maximum();
+      float_sw4 minJglobal, maxJglobal;
+      MPI_Allreduce( &minJ, &minJglobal, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
+      MPI_Allreduce( &maxJ, &maxJglobal, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator);
+      if (mVerbose>3 && proc_zero())
+      std::cout <<  "*** Jacobian of metric, curvi grid g= " << g <<
+         " minJ = " <<  minJglobal << " maxJ = " << maxJglobal << std::endl;
+      m_minJacobian  = min(m_minJacobian, minJglobal);
+      m_maxJacobian  = max(m_maxJacobian, maxJglobal);
+   }
 }
