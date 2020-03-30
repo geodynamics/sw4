@@ -11,10 +11,11 @@ and the two dimensional scalar product for coarse grid functions at the interfac
 The three dimensional scalar product in $\Omega^f$ and two dimensional scalar product for fine grid functions at the interface $\Gamma$ are defined by a similar manner as those in (\ref{scalar_product_inner}) and (\ref{scalar_product_discrete_interface_c}) with grid points in $I_{\Omega^f}$ and $I_{\Gamma^f}$, respectively. 
 {\color{red}
 \begin{lemma}\label{lemma1}
- Let ${\bf c}$ and ${\bf f}$ are grid functions at the interface for coarse domain and fine domain, respectively. Then the interpolation operator $\mathcal{P}$ and the restriction operator $\mathcal{R}$ satisfy
+ Let ${\bf c}$ and ${\bf f}$ be grid functions at the interface for coarse domain and fine domain, respectively. Then the interpolation operator $\mathcal{P}$ and the restriction operator $\mathcal{R}$ satisfy
  \begin{equation}\label{pr_relation}
  \left<\mathcal{P} {\bf c}, {\bf f}\right>_h = \left<{\bf c}, \mathcal{R}{\bf f}\right>_{2h}
  \end{equation}
+ if $\bm{R} = \frac{1}{4}\bm{P}^T$. 
 \end{lemma}
 \begin{proof}
 	Since 

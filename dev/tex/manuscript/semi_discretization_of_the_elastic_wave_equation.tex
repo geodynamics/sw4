@@ -34,7 +34,9 @@ then group different sets of grids as
 \end{equation*}
 The physical coordinates of the coarse grid points and fine grid points follow from the mappings ${\bf x}_{\bf i} = {\bf X}^c({\bf r}_{\bf i})$ and ${\bf x}_{\bf i} = {\bf X}^f({\bf r}_{\bf i})$, respectively. We denote a grid function by
 \[{\bf u}_{\bf i} = {\bf u}_{i,j,k} = {\bf u}({\bf x}_{\bf i}),\]
-where ${\bf u}$ can be either a scalar or vector. {\color{red}The essential idea of the spatial discretization is that we only use ghost points in the coarse domain and no ghost points in the fine domain. For the rest of the paper, the $\sim$ over an operator represents that the ghost points are used. Specifically,} we approximate the elastic wave equation (\ref{elastic_curvi}) in $\Omega^c$ by
+where ${\bf u}$ can be either a scalar or vector. 
+
+{\color{red}In the spatial discretization, we only use ghost points in the coarse domain and do not use ghost points in the fine domain. Comparing with the approach of using ghost points in both domains, the system of linear equations at the interface becomes smaller and has a better structure. For the rest of the paper, the $\sim$ over an operator represents that the ghost points are used. Specifically,} we approximate the elastic wave equation (\ref{elastic_curvi}) in $\Omega^c$ by
 \begin{equation}\label{elastic_semi_c}
 {\rho}_{\bf i}^{c}\frac{d^2{{\bf C}_{\bf i}}}{dt^2} = \frac{1}{J^c_{\bf i}}\wt{\mathcal{L}}^{2h} {{\bf C}}_{\bf i},\quad {\bf i}\in I_{\Omega^c},\quad t>0,
 \end{equation}
@@ -93,7 +95,7 @@ The following condition imposes continuity of traction at the interface, the fir
 (\Lambda^{c}_{{\bf i}'}J_{{\bf i}'}^{c})^{-1}\wt{\mathcal{A}}_3^{2h}{\bf C}_{{\bf i}'}
 = {\mathcal{R}}\Big((\Lambda^f_{\bf i}{ J}^f_{\bf i})^{-1}(\mathcal{A}_3^h{\bf F}_{\bf i}-h_3\omega_1{\bm \eta}_{\bf i})\Big), \quad {\bf i}\in I_{\Gamma^f},\quad {{\bf i}'}\in I_{\Gamma^c}.
 \end{equation}
-{\color{red}Note that we have an extra term $h_3\omega_1{\bm \eta}_{\bf i}$ in (\ref{continuous_traction}). Because it is on the order of the truncation error it does not affect the order of accuracy. As a consequence, (\ref{continuous_traction}) provides a valid way of enforcing the continuity of traction force at the interface. The Theorem \ref{thm1} illustrates why the ${\bm \eta}_{\bf i}$-term is important for energy stability. Now let's work on the terms in (\ref{continuous_traction})}. $\omega_1$ is the first entry in the scalar product (\ref{inner_product}), $\Lambda_{{\bf i}'}^c$ and $\Lambda_{\bf i}^f$ store the values of functions $|\nabla_x R^{c,(3)}|$ and $|\nabla_x R^{f,(3)}|$ evaluated at the grid points in $I_{\Gamma^c}$ and $I_{\Gamma^f}$, respectively. And we have used the notation
+{\color{red}The term $h_3\omega_1{\bm \eta}_{\bf i}$ in (\ref{continuous_traction}) originates from the fact that ghost points are only used in the coarse domain but not in the fine domain. The term is important for energy stability, as shown in Theorem \ref{thm1}. It is a penalty term on the order of the truncation error and thus (\ref{continuous_traction})  provides a valid way of enforcing the continuity of traction force at the interface.  In (\ref{continuous_traction})}, $\omega_1$ is the first entry in the scalar product (\ref{inner_product}), $\Lambda_{{\bf i}'}^c$ and $\Lambda_{\bf i}^f$ store the values of functions $|\nabla_x R^{c,(3)}|$ and $|\nabla_x R^{f,(3)}|$ evaluated at the grid points in $I_{\Gamma^c}$ and $I_{\Gamma^f}$, respectively. We have used the notation
 \begin{equation}\label{hatAf}
 \mathcal{A}_3^h{\bf F} = {N}_{31}^{h}{D}^h_1{\bf F} + {N}_{32}^h{D}^h_2{\bf F} + {N}_{33}^h\mathcal{D}_3^h{\bf F},
 \end{equation}
