@@ -1187,7 +1187,7 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
 
   if (isLast && ret == 1) {
     m_nptsWritten += count;
-    /* H5Gflush(grp); */
+    H5Gflush(grp);
   }
 
   if (mDownSample > 1) 
