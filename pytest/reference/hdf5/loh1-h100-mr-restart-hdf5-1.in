@@ -77,5 +77,5 @@ imagehdf5 mode=mag z=0 file=surf timeInterval=0.5
 imagehdf5 mode=uy y=15e3 file=ver timeInterval=0.5
 
 
-checkpoint cycleInterval=100 restartfile=loh1_hdf5_restart.cycle=100.sw4checkpoint restartpath=loh1-h100-mr-1-hdf5 file=loh1_hdf5_restart
+checkpoint cycleInterval=100 restartfile=loh1_hdf5_restart.cycle=200.sw4checkpoint restartpath=loh1-h100-mr-1-hdf5 file=loh1_hdf5_restart
 

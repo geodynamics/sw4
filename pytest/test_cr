@@ -1,4 +1,6 @@
+# This should be run using sh test_cr after pytest since it uses the timeseries file from that run
 lrun -T4 ../optimize/sw4 reference/hdf5/loh1-h100-mr-checkpoint-hdf5-1.in
-Kill after 101
 lrun -T4 ../optimize/sw4 reference/hdf5/loh1-h100-mr-restart-hdf5-1.in
+echo " *******  Diffing time series files **********"
 h5diff loh1-h100-mr-1-hdf5/sta.h5 loh1-h100-mr-1-hdf5-cr/sta_cr.h5
+echo "Only diffs must be in the DATETIME fields"
