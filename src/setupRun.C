@@ -666,8 +666,6 @@ void EW::preprocessSources(vector<vector<Source *> > &a_GlobalUniqueSources) {
         for (int s = 0; s < a_GlobalUniqueSources[e].size(); s++)
           if (a_GlobalUniqueSources[e][s]->getTfunc() == iDirac)
             a_GlobalUniqueSources[e][s]->setFrequency(1.0 / mDt);
-        std::cout << " IN PREPE " << a_GlobalUniqueSources[e][1]->getAmplitude()
-                  << "\n";
         if (m_prefilter_sources) {
           // tell the filter about the time step and compute the second order
           // sections
