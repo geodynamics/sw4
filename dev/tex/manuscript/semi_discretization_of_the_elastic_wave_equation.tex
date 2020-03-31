@@ -44,7 +44,7 @@ where the discrete spatial operator is
 \begin{equation}\label{L_operator}
 \wt{\mathcal{L}}^{2h} {{\bf C}} = \left(\sum_{l=1}^2{Q}_l^{2h}({N}_{ll}^{2h}){\bf C}+\wt{{G}}_3^{2h}({N}_{33}^{2h}){{\bf C}}+\sum_{l=1}^3\sum_{m=1,m\neq l}^3{D}_l^{2h}({N}_{lm}^{2h}{D}_m^{2h}{\bf C})\right).
 \end{equation}
-Here, the components of the vector ${\bf C}$ are ${\bf C} = (C^{(1)}, C^{(2)}, C^{(3)})^T$. {\color{red} The definitions of the terms in (\ref{L_operator}) are given in the Appendix \ref{appendix_cdomain}.}
+Here, the components of the vector ${\bf C}$ are ${\bf C} = (C^{(1)}, C^{(2)}, C^{(3)})^T$. {\color{red}The terms $Q_l^{2h}(N_{ll}^{2h}){\bf C}, l = 1,2$ approximate $\bar{\partial}_l(N_{ll}\bar{\partial}_l{\bf C})$, respectively; $\wt{G}_3^{2h}(N_{33}^{2h}){\bf C}$ approximates $\bar{\partial}_3(N_{33}\bar{\partial}_3 {\bf C})$; and $D_{l}^{2h}(N_{lm}^{2h}D_m^{2h}{\bf C}), l,m = 1,2,3, l\neq m$ approximate the terms $\bar{\partial}_l(N_{lm}\bar{\partial}_m {\bf C})$, respectively. The definitions of these terms in (\ref{L_operator}) are given in the Appendix \ref{appendix_cdomain}.}
 
 Next, we approximate the elastic wave equation (\ref{elastic_curvi_f}) for the fine grids. We first consider all fine grid points which are not located at the interface $\Gamma$, and have the semi-discretization where the discrete spatial operator is
 \begin{equation}\label{elastic_semi_f}
@@ -54,7 +54,7 @@ Here, the discrete spatial operator is
 \begin{equation}\label{Lf_operator}
 {\mathcal{L}}^{h} {{\bf F}} = \left(\sum_{l=1}^2{Q}_l^{h}({N}_{ll}^h){\bf F}+{G}_3^{h}({N}_{33}^h){\bf F}+\sum_{l=1}^3\sum_{m=1,m\neq l}^3{D}_l^{h}({N}_{lm}^{h}{D}_m^{h}{\bf F})\right),
 \end{equation}
-where the components of the vector ${\bf F}$ are ${\bf F} = (F^{(1)}, F^{(2)}, F^{(3)})^T$. In addition, ${Q}_l^{h}({N}_{ll}^h){\bf F}, l = 1,2$ and ${D}_l^{h}({N}_{lm}^{h}{D}_m^{h}{\bf F})$ are defined similar as those in (\ref{L_operator}), but with the grids in $I_{\Omega^f}\backslash I_{{\Gamma^f}}$. {\color{red} The definition of ${{G}}_3^{h}({N}_{33}^{h}){\bf F}$ are shown in Appendix \ref{appendix_fdomain}.}
+where the components of the vector ${\bf F}$ are ${\bf F} = (F^{(1)}, F^{(2)}, F^{(3)})^T$. {\color{red}The terms $Q_l^{h}(N_{ll}^{h}){\bf F}, l = 1,2$ approximate $\bar{\partial}_l(N_{ll}\bar{\partial}_l{\bf F})$, respectively; ${G}_3^{h}(N_{33}^{h}){\bf F}$ approximates $\bar{\partial}_3(N_{33}\bar{\partial}_3 {\bf F})$; and $D_{l}^{h}(N_{lm}^{2h}D_m^{h}{\bf F}), l,m = 1,2,3, l\neq m$ approximate the terms $\bar{\partial}_l(N_{lm}\bar{\partial}_m {\bf F})$, respectively. Here, ${Q}_l^{h}({N}_{ll}^h){\bf F}, l = 1,2$ and ${D}_l^{h}({N}_{lm}^{h}{D}_m^{h}{\bf F})$ are defined similar as those in (\ref{L_operator}), but with the grids in $I_{\Omega^f}\backslash I_{{\Gamma^f}}$. The definition of ${{G}}_3^{h}({N}_{33}^{h}){\bf F}$ are shown in Appendix \ref{appendix_fdomain}.}
 
 For the approximation at the interface $\Gamma$, we obtain the numerical solution by injection using a scaled interpolation operator
 \begin{equation}\label{continuous_sol}
@@ -99,11 +99,11 @@ The following condition imposes continuity of traction at the interface, the fir
 \begin{equation}\label{hatAf}
 \mathcal{A}_3^h{\bf F} = {N}_{31}^{h}{D}^h_1{\bf F} + {N}_{32}^h{D}^h_2{\bf F} + {N}_{33}^h\mathcal{D}_3^h{\bf F},
 \end{equation}
-where ${N}_{3l}^hD_l^h{\bf F}, l = 1,2$ and ${N}_{33}^h\mathcal{D}_3^h{\bf F}$ are given in Appendix \ref{traction_f}; and the other notation 
+{\color{red}where ${N}_{3l}^hD_l^h{\bf F}, l = 1,2,3$ approximate $N_{3l}\bar{\partial}_l{\bf F}$ and are given in Appendix \ref{traction_f};} and the other notation 
 \begin{equation}\label{hatAc}
-\wt{\mathcal{A}}_3^{2h}{\bf C} = {N}_{31}^{2h}{D}^{2h}_1{\bf C} + {N}_{32}^{2h}{D}^{2h}_2{\bf C} + {N}_{33}^{2h}\wt{\mathcal{D}}^{2h}_3{\bf C},
+\wt{\mathcal{A}}_3^{2h}{\bf C} = {N}_{31}^{2h}{D}^{2h}_1{\bf C} + {N}_{32}^{2h}{D}^{2h}_2{\bf C} + {N}_{33}^{2h}\wt{\mathcal{D}}^{2h}_3{\bf C}.
 \end{equation}
-where ${N}_{3l}^{2h}D_l^h{\bf C}, l = 1,2$ have similar definitions as those in (\ref{hatAf}), but correspond to the grids in $I_{\Gamma^c}$; and ${N}_{33}^{2h}\wt{\mathcal{D}}^{2h}_3{\bf C}$ are shown in Appendix \ref{traction_c}. The condition \eqref{continuous_traction} determines the ghost points values in the coarse domain. Finally, the scaled restriction operator ${\mathcal{R}} $ has the structure 
+{\color{red} Here, ${N}_{3l}^{2h}D_l^{2h}{\bf C}, l = 1,2$ approximate $N_{3l}\bar{\partial}_l{\bf C}$ and they have similar definitions as those in (\ref{hatAf}), but correspond to the grids in $I_{\Gamma^c}$; and ${N}_{33}^{2h}\wt{\mathcal{D}}^{2h}_3{\bf C}$ approximates $N_{33}\bar{\partial}_3{\bf C}$ are shown in Appendix \ref{traction_c}.} The condition \eqref{continuous_traction} determines the ghost points values in the coarse domain. Finally, the scaled restriction operator ${\mathcal{R}} $ has the structure 
  \[{\mathcal{R}} =  (\mathcal{J}^{2h}_\Gamma \bm{\Lambda}^{2h})^{-\frac{1}{2}}({\bf R}\otimes{\bf I})(\mathcal{J}^{h}_\Gamma \bm{\Lambda}^h)^{\frac{1}{2}},\]
  where ${\bf I}$ is a $3\times3$ identity matrix, ${\bf R}$ is a $n_1^{2h}n_2^{2h}\times n_1^hn_2^h$ restriction operator in two dimensions which is determined by the compatibility condition ${\bf R}=\frac{1}{4}{\bf P}^T$ and its stencil is presented in Figure \ref{restriction}. As will be seen later, the compatibility condition, as well as the scaling of the interpolation and restrictions, are essential for energy stability \cite{Lundquist2018}.
 
