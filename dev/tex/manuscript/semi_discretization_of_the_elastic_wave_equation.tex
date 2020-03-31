@@ -46,7 +46,7 @@ where the discrete spatial operator is
 \end{equation}
 Here, the components of the vector ${\bf C}$ are ${\bf C} = (C^{(1)}, C^{(2)}, C^{(3)})^T$. Note that we have used the same notation ${\bf C}$ in semi-discretization formula (\ref{L_operator}) and continuous formula (\ref{elastic_curvi}). But ${\bf C}$ represents a grid function when it is in a semi-discretization formula and a continuous function when it is in a continuous framework. The term $Q_l^{2h}(N_{ll}^{2h}){\bf C}$ approximates $\bar{\partial}_l(N_{ll}\bar{\partial}_l{\bf C})$ for $ l = 1,2$; $\wt{G}_3^{2h}(N_{33}^{2h}){\bf C}$ approximates $\bar{\partial}_3(N_{33}\bar{\partial}_3 {\bf C})$; and $D_{l}^{2h}(N_{lm}^{2h}D_m^{2h}{\bf C})$ approximates $\bar{\partial}_l(N_{lm}\bar{\partial}_m {\bf C})$ for  $l,m = 1,2,3, l\neq m$. The precise definitions of these terms are given in  Appendix \ref{appendix_cdomain}.
 
-Next, we approximate the elastic wave equation (\ref{elastic_curvi_f}) for the fine grids. We first consider all fine grid points which are not located at the interface $\Gamma$, and have the semi-discretization where the discrete spatial operator is
+Next, we approximate the elastic wave equation (\ref{elastic_curvi_f}) on the fine grids. We first consider all fine grid points that are not located at the interface $\Gamma$. The semi-discretization  is
 \begin{equation}\label{elastic_semi_f}
 {\rho}_{\bf i}^{f}\frac{d^2{{\bf F}_{\bf i}}}{dt^2} = \frac{1}{J^f_{\bf i}}{\mathcal{L}}^{h} {{\bf F}}_{\bf i},\quad {\bf i}\in I_{\Omega^f}\backslash I_{{\Gamma^f}},\quad t>0.
 \end{equation}
