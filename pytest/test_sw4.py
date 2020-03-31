@@ -222,7 +222,7 @@ def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threa
     if testing_level == 1:
         num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 2, 2, 3, 3, 2, 2, 2]
     elif testing_level == 2:
-        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 2, 2]
+        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 2, 3]
     
     print("Running all tests for level", testing_level, "...")
     # run all tests
