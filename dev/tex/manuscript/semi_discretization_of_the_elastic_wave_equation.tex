@@ -34,57 +34,57 @@ then group different sets of grids as
 \end{equation*}
 The physical coordinates of the coarse grid points and fine grid points follow from the mappings ${\bf x}_{\bf i} = {\bf X}^c({\bf r}_{\bf i})$ and ${\bf x}_{\bf i} = {\bf X}^f({\bf r}_{\bf i})$, respectively. We denote a grid function by
 \[{\bf u}_{\bf i} = {\bf u}_{i,j,k} = {\bf u}({\bf x}_{\bf i}),\]
-where ${\bf u}$ can be either a scalar or vector. 
+where ${\bf u}$ can be either a scalar or vector. {\color{red} To identify the grid functions and continuous functions of the solutions, we use $c_{\bf i}$ and $f_{\bf i}$ to denote the grid functions $C({\bf x}_{\bf i})$ and $F({\bf x}_{\bf i})$, respectively.}
 
 In the spatial discretization, we only use ghost points in the coarse domain and do not use ghost points in the fine domain. Comparing with the approach of using ghost points in both domains, the system of linear equations at the interface becomes smaller and has a better structure. For the rest of the paper, the $\sim$ over an operator represents that the ghost points are used. Specifically, we approximate the elastic wave equation (\ref{elastic_curvi}) in $\Omega^c$ by
 \begin{equation}\label{elastic_semi_c}
-{\rho}_{\bf i}^{c}\frac{d^2{{\bf C}_{\bf i}}}{dt^2} = \frac{1}{J^c_{\bf i}}\wt{\mathcal{L}}^{2h} {{\bf C}}_{\bf i},\quad {\bf i}\in I_{\Omega^c},\quad t>0,
+{\rho}_{\bf i}^{c}\frac{d^2{{\bf c}_{\bf i}}}{dt^2} = \frac{1}{J^c_{\bf i}}\wt{\mathcal{L}}^{2h} {{\bf c}}_{\bf i},\quad {\bf i}\in I_{\Omega^c},\quad t>0,
 \end{equation}
 where the discrete spatial operator is
 \begin{equation}\label{L_operator}
-\wt{\mathcal{L}}^{2h} {{\bf C}} = \left(\sum_{l=1}^2{Q}_l^{2h}({N}_{ll}^{2h}){\bf C}+\wt{{G}}_3^{2h}({N}_{33}^{2h}){{\bf C}}+\sum_{l=1}^3\sum_{m=1,m\neq l}^3{D}_l^{2h}({N}_{lm}^{2h}{D}_m^{2h}{\bf C})\right).
+\wt{\mathcal{L}}^{2h} {{\bf c}} = \left(\sum_{l=1}^2{Q}_l^{2h}({N}_{ll}^{2h}){\bf c}+\wt{{G}}_3^{2h}({N}_{33}^{2h}){{\bf c}}+\sum_{l=1}^3\sum_{m=1,m\neq l}^3{D}_l^{2h}({N}_{lm}^{2h}{D}_m^{2h}{\bf c})\right),
 \end{equation}
-Here, the components of the vector ${\bf C}$ are ${\bf C} = (C^{(1)}, C^{(2)}, C^{(3)})^T$. Note that we have used the same notation ${\bf C}$ in semi-discretization formula (\ref{L_operator}) and continuous formula (\ref{elastic_curvi}). But ${\bf C}$ represents a grid function when it is in a semi-discretization formula and a continuous function when it is in a continuous framework. The term $Q_l^{2h}(N_{ll}^{2h}){\bf C}$ approximates $\bar{\partial}_l(N_{ll}\bar{\partial}_l{\bf C})$ for $ l = 1,2$; $\wt{G}_3^{2h}(N_{33}^{2h}){\bf C}$ approximates $\bar{\partial}_3(N_{33}\bar{\partial}_3 {\bf C})$; and $D_{l}^{2h}(N_{lm}^{2h}D_m^{2h}{\bf C})$ approximates $\bar{\partial}_l(N_{lm}\bar{\partial}_m {\bf C})$ for  $l,m = 1,2,3, l\neq m$. The precise definitions of these terms are given in  Appendix \ref{appendix_cdomain}.
+{\color{red} which uses a ghost point in the coarse domain. Here, the components of the vector ${\bf c}$ are ${\bf c} = (c^{(1)}, c^{(2)}, c^{(3)})^T$. The term $Q_l^{2h}(N_{ll}^{2h}){\bf c}$ approximates $\bar{\partial}_l(N_{ll}\bar{\partial}_l{\bf c})$ for $ l = 1,2$ are shown in (\ref{3_8_1}); $\wt{G}_3^{2h}(N_{33}^{2h}){\bf c}$ using ghost points to approximate $\bar{\partial}_3(N_{33}\bar{\partial}_3 {\bf c})$ is given in (\ref{3_8_2}); and $D_{l}^{2h}(N_{lm}^{2h}D_m^{2h}{\bf c})$ approximates $\bar{\partial}_l(N_{lm}\bar{\partial}_m {\bf c})$ for  $l,m = 1,2,3, l\neq m$ are presented in (\ref{3_8_3}).}
 
 Next, we approximate the elastic wave equation (\ref{elastic_curvi_f}) on the fine grids. We first consider all fine grid points that are not located at the interface $\Gamma$. The semi-discretization  is
 \begin{equation}\label{elastic_semi_f}
-{\rho}_{\bf i}^{f}\frac{d^2{{\bf F}_{\bf i}}}{dt^2} = \frac{1}{J^f_{\bf i}}{\mathcal{L}}^{h} {{\bf F}}_{\bf i},\quad {\bf i}\in I_{\Omega^f}\backslash I_{{\Gamma^f}},\quad t>0.
+{\rho}_{\bf i}^{f}\frac{d^2{{\bf f}_{\bf i}}}{dt^2} = \frac{1}{J^f_{\bf i}}{\mathcal{L}}^{h} {{\bf f}}_{\bf i},\quad {\bf i}\in I_{\Omega^f}\backslash I_{{\Gamma^f}},\quad t>0.
 \end{equation}
 Here, the discrete spatial operator is
 \begin{equation}\label{Lf_operator}
-{\mathcal{L}}^{h} {{\bf F}} = \left(\sum_{l=1}^2{Q}_l^{h}({N}_{ll}^h){\bf F}+{G}_3^{h}({N}_{33}^h){\bf F}+\sum_{l=1}^3\sum_{m=1,m\neq l}^3{D}_l^{h}({N}_{lm}^{h}{D}_m^{h}{\bf F})\right),
+{\mathcal{L}}^{h} {{\bf f}} = \left(\sum_{l=1}^2{Q}_l^{h}({N}_{ll}^h){\bf f}+{G}_3^{h}({N}_{33}^h){\bf f}+\sum_{l=1}^3\sum_{m=1,m\neq l}^3{D}_l^{h}({N}_{lm}^{h}{D}_m^{h}{\bf f})\right),
 \end{equation}
-where the components of the vector ${\bf F}$ are ${\bf F} = (F^{(1)}, F^{(2)}, F^{(3)})^T$. Note that, like in the coarse domain, we also use the same notation ${\bf F}$ in semi-discretization formula (\ref{Lf_operator}) and continuous formula (\ref{elastic_curvi_f}). But ${\bf F}$ has different meanings when it is used in different framework as in the coarse domain. The terms $Q_l^{h}(N_{ll}^{h}){\bf F}, l = 1,2$ approximate $\bar{\partial}_l(N_{ll}\bar{\partial}_l{\bf F})$; ${G}_3^{h}(N_{33}^{h}){\bf F}$ approximates $\bar{\partial}_3(N_{33}\bar{\partial}_3 {\bf F})$; and $D_{l}^{h}(N_{lm}^{2h}D_m^{h}{\bf F}), l,m = 1,2,3, l\neq m$ approximate the terms $\bar{\partial}_l(N_{lm}\bar{\partial}_m {\bf F})$. Here, ${Q}_l^{h}({N}_{ll}^h){\bf F}, l = 1,2$ and ${D}_l^{h}({N}_{lm}^{h}{D}_m^{h}{\bf F})$ are defined similar as those in (\ref{L_operator}), but with the grids in $I_{\Omega^f}\backslash I_{{\Gamma^f}}$. The definition of ${{G}}_3^{h}({N}_{33}^{h}){\bf F}$ are shown in Appendix \ref{appendix_fdomain}.
+{\color{red} which does not use any ghost points. The components of the vector ${\bf f}$ are ${\bf f} = (f^{(1)}, f^{(2)}, f^{(3)})^T$. ${G}_3^{h}(N_{33}^{h}){\bf f}$ approximates $\bar{\partial}_3(N_{33}\bar{\partial}_3 {\bf f})$ is presented in (\ref{3_10_2}) without using any ghost points; The terms $Q_l^{h}(N_{ll}^{h}){\bf f}, l = 1,2$ approximate $\bar{\partial}_l(N_{ll}\bar{\partial}_l{\bf f})$; and $D_{l}^{h}(N_{lm}^{2h}D_m^{h}{\bf f}), l,m = 1,2,3, l\neq m$ approximate the terms $\bar{\partial}_l(N_{lm}\bar{\partial}_m {\bf f})$. Here, ${Q}_l^{h}({N}_{ll}^h){\bf f}, l = 1,2$ and ${D}_l^{h}({N}_{lm}^{h}{D}_m^{h}{\bf f})$ are defined similar as those in (\ref{L_operator}), but with the grids in $I_{\Omega^f}\backslash I_{{\Gamma^f}}$.}
 
-For the approximation at the interface $\Gamma$, we obtain the numerical solution by injection using a scaled interpolation operator
+{\color{red} Before stating the approximation at the interface $\Gamma$, we want to mention that the order of the grid functions are that for each grid ${\bf x}_{\bf i}$ we have a $3\times 1$ vector. This explains the order of the Kronecker product of the following contents.} Then we obtain the numerical solution by injection using a scaled interpolation operator
 \begin{equation}\label{continuous_sol}
-{\bf F}_{\bf i} = {\mathcal{P}}{\bf C}_{{\bf i}'},\quad {\bf i}\in I_{\Gamma^f},\quad {{\bf i}'}\in I_{\Gamma^c}.
+{\bf f}_{\bf i} = {\mathcal{P}}{\bf c}_{{\bf i}'},\quad {\bf i}\in I_{\Gamma^f},\quad {{\bf i}'}\in I_{\Gamma^c}.
 \end{equation}
 It imposes the continuity of the solution at the interface $\Gamma$. 
 
 For energy stability, the operator ${\mathcal{P}}$ must be in a specific form
 \[{\mathcal{P}} = (\mathcal{J}^h_\Gamma \bm{\Lambda}^h)^{-\frac{1}{2}}({\bf P}\otimes{\bf I})(\mathcal{J}^{2h}_\Gamma \bm{\Lambda}^{2h})^{\frac{1}{2}}.\]
-Here, ${\bf P}$ is a $n_1^hn_2^h\times n_1^{2h}n_2^{2h}$ interpolation matrix. Since the mesh refinement ratio is $1:2$, the stencils of the fourth order accurate interpolation operator ${\bf P}$ in two dimensions have four cases, see the illustration in  Figure \ref{interpolation}; and 
+Here, ${\bf P}$ {\color{red} is an interpolation operator for a scalar grid function; and it is a $n_1^hn_2^h\times n_1^{2h}n_2^{2h}$ matrix in matrix form}. Since the mesh refinement ratio is $1:2$, the stencils of the fourth order accurate interpolation operator ${\bf P}$ in two dimensions have four cases, see the illustration in  Figure \ref{interpolation}; and 
 \[\mathcal{J}_{\Gamma}^h = J^{h}_{\Gamma} \otimes {\bf I},\quad {\bm{\Lambda}^h} = \Lambda^h\otimes {\bf I},\]
 where both $J_{\Gamma}^h$ and $\Lambda^h$ are $n_1^{2h}n_2^{2h}\times n_1^{2h}n_2^{2h}$ diagonal matrices, the diagonal elements of $J_{\Gamma}^h$ and $\Lambda^{h}$ are $J^f$ and $|\nabla_x R^{f,(3)}|$ evaluated at fine grid points in $I_{\Gamma^f}$, respectively. ${\bf I}$ is $3\times 3$ identity matrix. As for $\mathcal{J}_{\Gamma}^{2h}$ and ${\bm{\Lambda}^{2h}}$, they have similar definitions with $\mathcal{J}_{\Gamma}^{h}$ and ${\bm{\Lambda}^{h}}$ but correspond to the coarse grid points in $I_{\Gamma^c}$.
 
 We note that \eqref{continuous_sol} is equivalent to the more complicated form
 \begin{equation}\label{elastic_semi_f_i}
-{\rho}^f_{\bf i} \frac{d^2{\bf F}_{\bf i}}{dt^2} =
-\frac{1}{J^f_{\bf i}}(\mathcal{L}^h{\bf F}_{\bf i} + {\bm \eta}_{\bf i}), \quad {\bf i}\in I_{\Gamma^f}
+{\rho}^f_{\bf i} \frac{d^2{\bf f}_{\bf i}}{dt^2} =
+\frac{1}{J^f_{\bf i}}(\mathcal{L}^h{\bf f}_{\bf i} + {\bm \eta}_{\bf i}), \quad {\bf i}\in I_{\Gamma^f}
 \end{equation}
 with 
 \begin{equation}\label{eta}
-{\bm \eta}_{\bf i} = {\rho}^f_{\bf i}J^f_{\bf i}\wt{\mathcal{P}}\left(\frac{1}{\rho^c_{{\bf i}'}J^c_{{\bf i}'}}\wt{\mathcal{L}}^{2h} {\bf C}_{{\bf i}'}\right) - \mathcal{L}^{h}{\bf F}_{\bf i}, \quad {\bf i}\in I_{\Gamma^f},\quad {{\bf i}'}\in I_{\Gamma^c},
+{\bm \eta}_{\bf i} = {\rho}^f_{\bf i}J^f_{\bf i}{\mathcal{P}}\left(\frac{1}{\rho^c_{{\bf i}'}J^c_{{\bf i}'}}\wt{\mathcal{L}}^{2h} {\bf c}_{{\bf i}'}\right) - \mathcal{L}^{h}{\bf f}_{\bf i}, \quad {\bf i}\in I_{\Gamma^f},\quad {{\bf i}'}\in I_{\Gamma^c},
 \end{equation}
 which is useful in the energy analysis in the next section. The variable $\bm \eta$ in (\ref{eta}) is approximately zero with a second order truncation error, which is of the same order as the boundary stencil of the SBP operator. %Therefore, it does not affect the overall accuracy of the semi-discretization. 
 
 For the simplicity of analysis, we introduce a general notation for the schemes (\ref{elastic_semi_f}) and (\ref{elastic_semi_f_i}) in the fine domain $\Omega^f$,
 \begin{align}\label{fine_scheme}
-{\rho}^f_{\bf i}\frac{d^2{\bf F}_{\bf i}}{dt^2} =\frac{1}{J^f_{\bf i}}\hat{\mathcal{L}}^h{\bf F}_{\bf i} = \left\{
+{\rho}^f_{\bf i}\frac{d^2{\bf f}_{\bf i}}{dt^2} =\frac{1}{J^f_{\bf i}}\hat{\mathcal{L}}^h{\bf f}_{\bf i} = \left\{
 \begin{aligned}
-&\frac{1}{J^f_{\bf i}}(\mathcal{L}^h{\bf F}_{\bf i} +{\bm \eta}_{\bf i}), \quad {\bf i}\in I_{\Gamma^f}\\
-&\frac{1}{J^f_{\bf i}}\mathcal{L}^h{\bf F}_{\bf i},\quad\quad\quad {\bf i}\in I_{\Omega^f}\backslash I_{\Gamma^f} 
+&\frac{1}{J^f_{\bf i}}(\mathcal{L}^h{\bf f}_{\bf i} +{\bm \eta}_{\bf i}), \quad {\bf i}\in I_{\Gamma^f}\\
+&\frac{1}{J^f_{\bf i}}\mathcal{L}^h{\bf f}_{\bf i},\quad\quad\quad {\bf i}\in I_{\Omega^f}\backslash I_{\Gamma^f} 
 \end{aligned}
 \right. \quad t > 0.
 \end{align}
@@ -92,20 +92,49 @@ In computer implementation, we use \eqref{continuous_sol} to obtain the solution
 
 The following condition imposes continuity of traction at the interface, the first equation in (\ref{interface_cond}),
 \begin{equation}\label{continuous_traction}
-(\Lambda^{c}_{{\bf i}'}J_{{\bf i}'}^{c})^{-1}\wt{\mathcal{A}}_3^{2h}{\bf C}_{{\bf i}'}
-= {\mathcal{R}}\Big((\Lambda^f_{\bf i}{ J}^f_{\bf i})^{-1}(\mathcal{A}_3^h{\bf F}_{\bf i}-h_3\omega_1{\bm \eta}_{\bf i})\Big), \quad {\bf i}\in I_{\Gamma^f},\quad {{\bf i}'}\in I_{\Gamma^c}.
+(\Lambda^{c}_{{\bf i}'}J_{{\bf i}'}^{c})^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}_{{\bf i}'}
+= {\mathcal{R}}\Big((\Lambda^f_{\bf i}{ J}^f_{\bf i})^{-1}(\mathcal{A}_3^h{\bf f}_{\bf i}-h_3\omega_1{\bm \eta}_{\bf i})\Big), \quad {\bf i}\in I_{\Gamma^f},\quad {{\bf i}'}\in I_{\Gamma^c}.
 \end{equation}
 The term $h_3\omega_1{\bm \eta}_{\bf i}$ in (\ref{continuous_traction}) originates from the fact that ghost points are only used in the coarse domain but not in the fine domain. The term is important for energy stability, as shown in Theorem \ref{thm1}. It is a penalty term on the order of the truncation error and thus (\ref{continuous_traction})  provides a valid way of enforcing the continuity of traction force at the interface.  In (\ref{continuous_traction}), $\omega_1$ is the first entry in the scalar product (\ref{inner_product}), $\Lambda_{{\bf i}'}^c$ and $\Lambda_{\bf i}^f$ store the values of functions $|\nabla_x R^{c,(3)}|$ and $|\nabla_x R^{f,(3)}|$ evaluated at the grid points in $I_{\Gamma^c}$ and $I_{\Gamma^f}$, respectively. We have used the notation
 \begin{equation}\label{hatAf}
-\mathcal{A}_3^h{\bf F} = {N}_{31}^{h}{D}^h_1{\bf F} + {N}_{32}^h{D}^h_2{\bf F} + {N}_{33}^h\mathcal{D}_3^h{\bf F},
+\mathcal{A}_3^h{\bf f} = {N}_{31}^{h}{D}^h_1{\bf f} + {N}_{32}^h{D}^h_2{\bf f} + {N}_{33}^h\mathcal{D}_3^h{\bf f},
 \end{equation}
-where ${N}_{3l}^hD_l^h{\bf F}, l = 1,2,3$ approximate $N_{3l}\bar{\partial}_l{\bf F}$ and are given in Appendix \ref{traction_f}; and the other notation 
+where ${N}_{3l}^hD_l^h{\bf f}, l = 1,2$ approximate $N_{3l}\bar{\partial}_l{\bf f}$ and are given in (\ref{gamma_D}); ${N}_{33}^h\mathcal{D}_3^h{\bf f}$ approximates $N_{33}\bar{\partial}_3{\bf f}$ and is given in (\ref{gamma_D1}); and the other notation 
 \begin{equation}\label{hatAc}
-\wt{\mathcal{A}}_3^{2h}{\bf C} = {N}_{31}^{2h}{D}^{2h}_1{\bf C} + {N}_{32}^{2h}{D}^{2h}_2{\bf C} + {N}_{33}^{2h}\wt{\mathcal{D}}^{2h}_3{\bf C}.
+\wt{\mathcal{A}}_3^{2h}{\bf c} = {N}_{31}^{2h}{D}^{2h}_1{\bf c} + {N}_{32}^{2h}{D}^{2h}_2{\bf c} + {N}_{33}^{2h}\wt{\mathcal{D}}^{2h}_3{\bf c}.
 \end{equation}
-Here, ${N}_{3l}^{2h}D_l^{2h}{\bf C}, l = 1,2$ approximate $N_{3l}\bar{\partial}_l{\bf C}$ and they have similar definitions as those in (\ref{hatAf}), but correspond to the grids in $I_{\Gamma^c}$; and ${N}_{33}^{2h}\wt{\mathcal{D}}^{2h}_3{\bf C}$ approximates $N_{33}\bar{\partial}_3{\bf C}$ are shown in Appendix \ref{traction_c}. The condition \eqref{continuous_traction} determines the ghost points values in the coarse domain. Finally, the scaled restriction operator ${\mathcal{R}} $ has the structure 
+Here, ${N}_{3l}^{2h}D_l^{2h}{\bf c}, l = 1,2$ approximate $N_{3l}\bar{\partial}_l{\bf c}$ and they have similar definitions as those in (\ref{hatAf}), but correspond to the grids in $I_{\Gamma^c}$; and ${N}_{33}^{2h}\wt{\mathcal{D}}^{2h}_3{\bf c}$ approximates $N_{33}\bar{\partial}_3{\bf c}$ are shown in (\ref{3_17}). The condition \eqref{continuous_traction} determines the ghost points values in the coarse domain. Finally, the scaled restriction operator ${\mathcal{R}} $ has the structure 
  \[{\mathcal{R}} =  (\mathcal{J}^{2h}_\Gamma \bm{\Lambda}^{2h})^{-\frac{1}{2}}({\bf R}\otimes{\bf I})(\mathcal{J}^{h}_\Gamma \bm{\Lambda}^h)^{\frac{1}{2}},\]
- where ${\bf I}$ is a $3\times3$ identity matrix, ${\bf R}$ is a $n_1^{2h}n_2^{2h}\times n_1^hn_2^h$ restriction operator in two dimensions which is determined by the compatibility condition ${\bf R}=\frac{1}{4}{\bf P}^T$ and its stencil is presented in Figure \ref{restriction}. As will be seen later, the compatibility condition, as well as the scaling of the interpolation and restrictions, are essential for energy stability \cite{Lundquist2018}.
+ where ${\bf I}$ is a $3\times3$ identity matrix, ${\bf R}$ is {\color{red} a restriction operator for scalar grid funcitons; and it is a $n_1^{2h}n_2^{2h}\times n_1^hn_2^h$ matrix in matrix form} which is determined by the compatibility condition ${\bf R}=\frac{1}{4}{\bf P}^T$ and its stencil is presented in Figure \ref{restriction}. As will be seen later, the compatibility condition, as well as the scaling of the interpolation and restrictions, are essential for energy stability \cite{Lundquist2018}.
+ 
+ \begin{lemma}\label{lemma1}
+ 	Let ${\bf c}$ and ${\bf f}$ be grid functions at the interface for coarse domain and fine domain, respectively. Then the interpolation operator $\mathcal{P}$ and the restriction operator $\mathcal{R}$ satisfy
+ 	\begin{equation}\label{pr_relation}
+ 	\left<\mathcal{P} {\bf c}, {\bf f}\right>_h = \left<{\bf c}, \mathcal{R}{\bf f}\right>_{2h}
+ 	\end{equation}
+ 	if $\bm{R} = \frac{1}{4}\bm{P}^T$. 
+ \end{lemma}
+ \begin{proof}
+ 	Since 
+ 	\begin{align*}
+ 	{\mathcal{P}} &= (\mathcal{J}^h_\Gamma \bm{\Lambda}^h)^{-\frac{1}{2}}({\bf P}\otimes{\bf I})(\mathcal{J}^{2h}_\Gamma \bm{\Lambda}^{2h})^{\frac{1}{2}}\\
+ 	& = ((J_{\Gamma}^h\otimes{\bf I})(\Lambda^h\otimes{\bf I}))^{-\frac{1}{2}}({\bf P}\otimes{\bf I})((J_{\Gamma}^{2h}\otimes{\bf I})(\Lambda^{2h}\otimes{\bf I}))^{\frac{1}{2}}\\
+ 	& = (J_{\Gamma}^h\Lambda^h)^{-\frac{1}{2}}{\bf P}(J_{\Gamma}^{2h}\Lambda^{2h})^{\frac{1}{2}}\otimes{\bf I},
+ 	\end{align*}
+ 	and
+ 	\begin{align*}
+ 	{\mathcal{R}} &= (\mathcal{J}^{2h}_\Gamma \bm{\Lambda}^{2h})^{-\frac{1}{2}}({\bf R}\otimes{\bf I})(\mathcal{J}^{h}_\Gamma \bm{\Lambda}^{h})^{\frac{1}{2}}\\
+ 	& = ((J_{\Gamma}^{2h}\otimes{\bf I})(\Lambda^{2h}\otimes{\bf I}))^{-\frac{1}{2}}({\bf R}\otimes{\bf I})((J_{\Gamma}^{h}\otimes{\bf I})(\Lambda^{h}\otimes{\bf I}))^{\frac{1}{2}}\\
+ 	& = (J_{\Gamma}^{2h}\Lambda^{2h})^{-\frac{1}{2}}{\bf R}(J_{\Gamma}^{h}\Lambda^{h})^{\frac{1}{2}}\otimes{\bf I},
+ 	\end{align*}
+ 	then
+ 	\begin{align*}
+ 	\left<\mathcal{P}{\bf c}, {\bf f}\right>_h &= h_1h_2\left[\left((J_{\Gamma}^h\Lambda^h)^{\frac{1}{2}} {\bf P}(J_{\Gamma}^{2h}\Lambda^{2h})^{\frac{1}{2}}\otimes {\bf I}\right){\bf c}\right]^T\cdot{\bf f}\\
+ 	& = 4h_1h_2 {\bf c}^T \cdot \left[\left((J_{\Gamma}^{2h}\Lambda^{2h})\frac{1}{4}{\bf P}^T(J_{\Gamma}^h\Lambda^h)^{\frac{1}{2}}\otimes {\bf I}\right) {\bf f}\right]\\
+ 	& =4h_1h_2 {\bf c}^T \cdot \left[\left((J_{\Gamma}^{2h}\Lambda^{2h}){\bf R}(J_{\Gamma}^h\Lambda^h)^{\frac{1}{2}}\otimes {\bf I}\right) {\bf f}\right] = \left<{\bf c}, \mathcal{R}{\bf f}\right>_{2h}
+ 	\end{align*}
+ \end{proof}
+ 
 
 \begin{figure}%[htbp]
 	\centering
