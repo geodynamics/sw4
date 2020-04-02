@@ -293,8 +293,8 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t )
    }
    else if( m_etest != 0 )
    {
-      m_etest->get_ubnd( U_f, m_nghost+1, sides );
-      m_etest->get_ubnd( U_c, m_nghost+1, sides );
+      m_etest->get_ubnd( U_f, m_nghost, sides );
+      m_etest->get_ubnd( U_c, m_nghost, sides );
    }
    else
    {
@@ -312,6 +312,8 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t )
    communicate_array( U_c, true );
 
    injection( U_f, U_c );
+   //   prolongate2D( U_c, U_f, 1, m_nkf );
+
    communicate_array( U_f, true );
 
 // 4. Solve equation for stress continuity, formulated as lhs*x+rhs=0, where x are uc's ghost points at k=0.
@@ -404,10 +406,23 @@ void CurvilinearInterface2::injection(Sarray &u_f, Sarray &u_c )
 
   const float_sw4 a= 9.0/16;
   const float_sw4 b=-1.0/16;
-  const int ngh = m_nghost;
+  //  const int ngh = m_nghost;
+  int i1=u_c.m_ib+m_nghost-1, i2=u_c.m_ie-m_nghost+1;
+  int j1=u_c.m_jb+m_nghost-1, j2=u_c.m_je-m_nghost+1;
+  if( m_ew->getLocalBcType( m_gc, 0 ) != bProcessor )
+     i1++;
+  if( m_ew->getLocalBcType( m_gc, 1 ) != bProcessor )
+     i2--;
+  if( m_ew->getLocalBcType( m_gc, 2 ) != bProcessor )
+     j1++;
+  if( m_ew->getLocalBcType( m_gc, 3 ) != bProcessor )
+     j2--;
+  
   for (int l = 1; l <= u_c.m_nc; l++) 
-    for (int j = u_c.m_jb+ngh-1; j <= u_c.m_je-ngh+1; j++)
-      for (int i = u_c.m_ib+ngh-1; i <= u_c.m_ie-ngh+1; i++) 
+    //    for (int j = u_c.m_jb+ngh-1; j <= u_c.m_je-ngh+1; j++)
+    //      for (int i = u_c.m_ib+ngh-1; i <= u_c.m_ie-ngh+1; i++) 
+    for (int j = j1; j <= j2; j++)
+      for (int i = i1; i <= i2; i++) 
       {
         u_f(l, 2 * i - 1, 2 * j - 1, m_nkf) = u_c(l, i, j, 1);
         u_f(l, 2 * i, 2 * j - 1, m_nkf) =
@@ -888,6 +903,7 @@ void CurvilinearInterface2::prolongate2D( Sarray& Uc, Sarray& Uf, int kc, int kf
    else
       ie2 = (Uf.m_ie-1)/2;
    ie2 = min(Uc.m_ie-2,ie2);
+
    int jb1, je1, jb2, je2;
    if( Uf.m_jb % 2 == 0 )
       jb1 = Uf.m_jb/2+1;
@@ -919,19 +935,19 @@ void CurvilinearInterface2::prolongate2D( Sarray& Uc, Sarray& Uf, int kc, int kf
 #pragma omp simd
          for( int i=ib1 ; i <= ie1 ; i++ )
             Uf(c,2*i-1,2*j-1,kf) = Uc(c,i,j,kc);
-   for( int c=1 ; c <= 3 ;c++)
+   for( int c=1 ; c <= Uf.m_nc ;c++)
 #pragma omp for
       for( int j=jb2 ; j <= je2 ; j++ )
 #pragma omp simd
          for( int i=ib1 ; i <= ie1 ; i++ )
             Uf(c,2*i-1,2*j,  kf) = i16*(-Uc(c,i,j-1,kc)+9*(Uc(c,i,j,kc)+Uc(c,i,j+1,kc))-Uc(c,i,j+2,kc));
-   for( int c=1 ; c <= 3 ;c++)
+   for( int c=1 ; c <= Uf.m_nc ;c++)
 #pragma omp for
       for( int j=jb1 ; j <= je1 ; j++ )
 #pragma omp simd
          for( int i=ib2 ; i <= ie2 ; i++ )
             Uf(c,2*i,  2*j-1,kf) = i16*(-Uc(c,i-1,j,kc)+9*(Uc(c,i,j,kc)+Uc(c,i+1,j,kc))-Uc(c,i+2,j,kc));
-   for( int c=1 ; c <= 3 ;c++)
+   for( int c=1 ; c <= Uf.m_nc ;c++)
 #pragma omp for
       for( int j=jb2 ; j <= je2 ; j++ )
 #pragma omp simd

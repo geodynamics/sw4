@@ -68,7 +68,7 @@ void TestEcons::get_mulabnd( Sarray& mu, Sarray& lambda, int npts, int sides[6] 
 void TestEcons::get_ubnd( Sarray& u, int npts, int sides[6] )
 {
 // Homogeneous Dirichet at boundaries
-   for( int s=0 ; s < 5 ; s++ )
+   for( int s=0 ; s < 6 ; s++ )
       if( sides[s]==1 )
       {
          int kb=u.m_kb, ke=u.m_ke, jb=u.m_jb, je=u.m_je, ib=u.m_ib, ie=u.m_ie;

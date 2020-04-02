@@ -22,11 +22,11 @@ twilight omega=1.1 phase=0.2 momega=1.2 errorlog=1
 
 # image mode=topo z=0 cycle=0 file=gaussian
 
-image mode=ux y=3.194 cycleInterval=5 file=gaussian
-image mode=uxerr y=3.194  cycleInterval=5 file=gaussian
-image mode=uy y=3.194 cycleInterval=5 file=gaussian
-image mode=uyerr y=3.194  cycleInterval=5 file=gaussian
-image mode=uz y=3.194 cycleInterval=5 file=gaussian
-image mode=uzerr y=3.194  cycleInterval=5 file=gaussian
+#image mode=ux y=3.194 cycleInterval=5 file=gaussian
+#image mode=uxerr y=3.194  cycleInterval=5 file=gaussian
+#image mode=uy y=3.194 cycleInterval=5 file=gaussian
+#image mode=uyerr y=3.194  cycleInterval=5 file=gaussian
+#image mode=uz y=3.194 cycleInterval=5 file=gaussian
+#image mode=uzerr y=3.194  cycleInterval=5 file=gaussian
 
 

@@ -1,7 +1,7 @@
 #grid nx=31 x=6.283185307179586 y=6.283185307179586 z=12.56637061435917
 grid nx=31 x=6.283185307179586 y=6.283185307179586 z=6.283185307179586
 time t=0.8
-#time steps=5
+#time steps=1
 
 fileio path=gauss-mr-test1z verbose=2
 
@@ -17,15 +17,15 @@ refinement zmax=1
 #twilight omega=6.28 phase=0.8 momega=6.28 errorlog=1
 twilight omega=1.1 phase=0.2 momega=1.2 errorlog=1
 
-image mode=p x=0.5 cycle=0 file=gaussian
-image mode=s y=0.5 cycle=0 file=gaussian
+#image mode=p x=0.5 cycle=0 file=gaussian
+#image mode=s y=0.5 cycle=0 file=gaussian
 
 # image mode=topo z=0 cycle=0 file=gaussian
 
-image mode=ux y=3.194 cycleInterval=5 file=gaussian
-image mode=uxerr y=3.194  cycleInterval=5 file=gaussian
-image mode=uy y=3.194 cycleInterval=5 file=gaussian
-image mode=uyerr y=3.194  cycleInterval=5 file=gaussian
-image mode=uz y=3.194 cycleInterval=5 file=gaussian
-image mode=uzerr y=3.194  cycleInterval=5 file=gaussian
+#image mode=ux y=3.194 cycleInterval=5 file=gaussian
+#image mode=uxerr y=3.194  cycleInterval=5 file=gaussian
+#image mode=uy y=3.194 cycleInterval=5 file=gaussian
+#image mode=uyerr y=3.194  cycleInterval=5 file=gaussian
+#image mode=uz y=3.194 cycleInterval=5 file=gaussian
+#image mode=uzerr y=3.194  cycleInterval=5 file=gaussian
 
