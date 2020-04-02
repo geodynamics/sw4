@@ -64,7 +64,7 @@ It imposes the continuity of the solution at the interface $\Gamma$.
 
 For energy stability, the operator ${\mathcal{P}}$ must be in a specific form
 \[{\mathcal{P}} = (\mathcal{J}^h_\Gamma \bm{\Lambda}^h)^{-\frac{1}{2}}({\bf P}\otimes{\bf I})(\mathcal{J}^{2h}_\Gamma \bm{\Lambda}^{2h})^{\frac{1}{2}}.\]
-Here, ${\bf P}$ {\color{red} is an interpolation operator of size $n_1^hn_2^h\times n_1^{2h}n_2^{2h}$ for a scalar grid function}. Since the mesh refinement ratio is $1:2$, the stencils of the fourth order accurate interpolation operator ${\bf P}$ in two dimensions have four cases, see the illustration in  Figure \ref{interpolation}; and 
+Here, ${\bf P}$ {\color{red} is an interpolation operator of size $n_1^hn_2^h\times n_1^{2h}n_2^{2h}$ for scalar grid functions}. Since the mesh refinement ratio is $1:2$, the stencils of the fourth order accurate interpolation operator ${\bf P}$ in two dimensions have four cases, see the illustration in  Figure \ref{interpolation}; and 
 \[\mathcal{J}_{\Gamma}^h = J^{h}_{\Gamma} \otimes {\bf I},\quad {\bm{\Lambda}^h} = \Lambda^h\otimes {\bf I},\]
 where both $J_{\Gamma}^h$ and $\Lambda^h$ are $n_1^{2h}n_2^{2h}\times n_1^{2h}n_2^{2h}$ diagonal matrices, the diagonal elements of $J_{\Gamma}^h$ and $\Lambda^{h}$ are $J^f$ and $|\nabla_x R^{f,(3)}|$ evaluated at fine grid points in $I_{\Gamma^f}$, respectively. ${\bf I}$ is $3\times 3$ identity matrix. As for $\mathcal{J}_{\Gamma}^{2h}$ and ${\bm{\Lambda}^{2h}}$, they have similar definitions with $\mathcal{J}_{\Gamma}^{h}$ and ${\bm{\Lambda}^{h}}$ but correspond to the coarse grid points in $I_{\Gamma^c}$.
 
