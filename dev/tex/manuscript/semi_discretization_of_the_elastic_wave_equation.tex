@@ -37,18 +37,11 @@ The physical coordinates of the coarse grid points and fine grid points follow f
 where ${\bf u}$ can be either a scalar or vector. {\color{red} To distinguish between the continuous variables and the correspoding approximations on the grid, we use $c_{\bf i}$ and $f_{\bf i}$ to denote the grid functions for the approximations of $C({\bf x}_{\bf i})$ and $F({\bf x}_{\bf i})$, respectively. The components of the vectors $\bf c$ and $\bf f$ follows the rules:
 	\begin{description}
 		\item[a.] for each grid point ${\bf x}_{\bf i}$, there is a $3\times 1$ vector, say ${\bf c}_{\bf i} = (c^{(1)}_{\bf i}, c^{(2)}_{\bf i}, c^{(3)}_{\bf i})^T$ and ${\bf f}_{\bf i} = (f^{(1)}_{\bf i}, f^{(2)}_{\bf i}, f^{(3)}_{\bf i})^T$;
-		\item[b.] the grids first go over $r^{(1)}$ direction ($i$), then $r^{(2)}$ direction ($j$), and finally $r^{(3)}$ direction ($k$).
+		\item[b.] the grids first go over $r^{(1)}$ direction ($i$), then $r^{(2)}$ direction ($j$), and finally $r^{(3)}$ direction ($k$). Precisely, $\bf c$ is ordered as
+		${\bf c} = [c^{(1)}_{1,1,1}, c^{(2)}_{1,1,1}, c^{(3)}_{1,1,1},c^{(1)}_{2,1,1}, c^{(2)}_{2,1,1}, c^{(3)}_{2,1,1},\cdots]^T$, and the grid function $\bf f$ is defined in the same way. 
 	\end{description}
 }
-Precisely, the components of a grid function, for example $\bf c$, are ordered with the following convention
-\[
-{\bf c} = [c^{(1)}_{1,1,1}, c^{(2)}_{1,1,1}, c^{(3)}_{1,1,1},c^{(1)}_{2,1,1}, c^{(2)}_{2,1,1}, c^{(3)}_{2,1,1},\cdots]^T.
-\]
-The grid function $\bf f$ is defined in the same way. 
 	
-	
-
-    
 In the spatial discretization, we only use ghost points in the coarse domain and do not use ghost points in the fine domain. Comparing with the approach of using ghost points in both domains, the system of linear equations at the interface becomes smaller and has a better structure. For the rest of the paper, the $\sim$ over an operator represents that the ghost points are used. Specifically, we approximate the elastic wave equation (\ref{elastic_curvi}) in $\Omega^c$ by
 \begin{equation}\label{elastic_semi_c}
 {\rho}_{\bf i}^{c}\frac{d^2{{\bf c}_{\bf i}}}{dt^2} = \frac{1}{J^c_{\bf i}}\wt{\mathcal{L}}^{2h} {{\bf c}}_{\bf i},\quad {\bf i}\in I_{\Omega^c},\quad t>0,
@@ -69,7 +62,7 @@ Here, the discrete spatial operator is
 \end{equation}
 {\color{red} which does not use any ghost points. The components of the vector ${\bf f}$ are ${\bf f} = (f^{(1)}, f^{(2)}, f^{(3)})^T$. The term ${G}_3^{h}(N_{33}^{h}){\bf f}$ approximating $\bar{\partial}_3(N_{33}\bar{\partial}_3 {\bf F})$ is presented in (\ref{3_10_2}) without using any ghost points; the terms $Q_l^{h}(N_{ll}^{h}){\bf f}, l = 1,2$ approximates $\bar{\partial}_l(N_{ll}\bar{\partial}_l{\bf F})$; and $D_{l}^{h}(N_{lm}^{2h}D_m^{h}{\bf f}), l,m = 1,2,3, l\neq m$ approximates  $\bar{\partial}_l(N_{lm}\bar{\partial}_m {\bf F})$. Here, ${Q}_l^{h}({N}_{ll}^h){\bf f}, l = 1,2$ and ${D}_l^{h}({N}_{lm}^{h}{D}_m^{h}{\bf f})$ are defined similar as those in (\ref{L_operator}), but with the grids in $I_{\Omega^f}\backslash I_{{\Gamma^f}}$.}
 
-{\color{red} Before stating the approximation at the interface $\Gamma$, we want to remark that the order of the grid functions are that for each grid ${\bf x}_{\bf i}$ we have a $3\times 1$ vector. This explains the order of the Kronecker product of the following contents.} Then we obtain the numerical solution by injection using a scaled interpolation operator
+{\color{red} For the approximation at the interface $\Gamma$, we obtain the numerical solution by injection using a scaled interpolation operator}
 \begin{equation}\label{continuous_sol}
 {\bf f}_{\bf i} = {\mathcal{P}}{\bf c}_{{\bf i}'},\quad {\bf i}\in I_{\Gamma^f},\quad {{\bf i}'}\in I_{\Gamma^c}.
 \end{equation}
