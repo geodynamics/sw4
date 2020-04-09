@@ -1,6 +1,7 @@
 import sys
 import h5py
 import numpy as np
+from datetime import datetime
 
 # filename='HF_M7.0_3DTOPO_VSMIN250_H6.25MR.sw4input'
 # filename='hayward-att-h100-cori.in'
@@ -52,6 +53,7 @@ for line in lines:
             i += 1
             grp = outfile.create_group(grp_name)
 
+        downsample = 1
         for pairs in llist:
             kv = pairs.split('=')
             if kv[0] == "depth" or kv[0] == "topodepth" or kv[0] == "z":
@@ -64,19 +66,31 @@ for line in lines:
                 xyz[0] = float(kv[1])
             elif kv[0] == "lon" :
                 xyz[1] = float(kv[1])
-            elif kv[0] == "writeEvery" :
-                grp.attrs.create("write every", int(kv[1]))
-            elif kv[0] == "variables" :
-                grp.attrs.create("variables", int(kv[1]))
-            elif kv[0] == "usgsformat" or kv[0] == "sacformat" or kv[0] == "sta" or kv[0] == "file" or kv[0] == "nsew":
+            elif kv[0] == "downsample" :
+                downsample = int(kv[1])
+            elif kv[0] == "usgsformat" or kv[0] == "sacformat" or kv[0] == "sta" or kv[0] == "file" or kv[0] == "variables" or kv[0] == "nsew":
                 continue
             else:
-                print("Unsupported cmd:", kv[0], kv[1])
+                print("Ignored cmd:", kv[0])
 
+        dset = grp.create_dataset('ISNSEW', (1,), dtype='i4')
+        dset[0] = nsew
         if nsew == 0:
-            grp.attrs.create('x,y,z', xyz, shape=xyz.shape)
+            dset = grp.create_dataset('STX,STY,STZ', (3,), dtype='f4')
         else:
-            grp.attrs.create('lat,lon,depth', xyz, shape=xyz.shape)
+            dset = grp.create_dataset('STLA,STLO,STDP', (3,), dtype='f4')
 
-outfile.attrs.create('is_nsew', is_nsew)
+        dset[:] = xyz
+
+dset = outfile.create_dataset('DOWNSAMPLE', (1,), dtype='i4')
+dset[0] = downsample
+
+# outfile.attrs.create('UNIT', 'm')
+outfile.attrs["UNIT"] = np.string_("m")
+
+now = datetime.now()
+dt_string = now.strftime("%Y-%m-%dT%H:%M:%S.0")
+# outfile.attrs.create('DATETIME', dt_string)
+outfile.attrs["DATETIME"] = np.string_(dt_string)
+
 outfile.close()
