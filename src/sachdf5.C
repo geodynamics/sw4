@@ -353,7 +353,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
       cout << "ERROR: renaming SAC HDF5 file to " << bak.c_str() <<  endl;
   }
 
-  int alignment = 262144;
+  int alignment = 65536;
   /* char *env = getenv("HDF5_ALIGNMENT_SIZE"); */
   /* if (env != NULL) */ 
   /*     alignment = atoi(env); */
@@ -361,7 +361,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   /*     alignment = 65536; */
 
   fapl = H5Pcreate(H5P_FILE_ACCESS);
-  H5Pset_alignment(fapl, 10000, alignment);
+  H5Pset_alignment(fapl, 32767, alignment);
   fid = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
   if (fid < 0) {
     printf("Error: H5Fcreate failed\n");

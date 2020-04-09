@@ -3178,7 +3178,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
   if (!m_myPoint) 
       return;
 
-  setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
+  /* setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1); */
   fid = H5Fopen(FileName.c_str(),  H5F_ACC_RDONLY, H5P_DEFAULT);
   if (fid < 0) {
     printf("%s Error opening file [%s]\n", __func__, FileName.c_str());
