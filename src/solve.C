@@ -408,6 +408,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   else
      enforceBC( U, a_Mu, a_Lambda, t, BCForcing );   
 
+  for( int g=mNumberOfCartesianGrids; g < mNumberOfGrids-1 ; g++ )
+      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( U, t );
+
 // Impose un-coupled free surface boundary condition with visco-elastic terms for 'Up'
   if( m_use_attenuation && (m_number_mechanisms > 0) )
   {
@@ -429,6 +432,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
      enforceBCanisotropic( Um, mC, t-mDt, BCForcing );
   else
      enforceBC( Um, a_Mu, a_Lambda, t-mDt, BCForcing );
+
+  for( int g=mNumberOfCartesianGrids; g < mNumberOfGrids-1 ; g++ )
+      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( Um, t-mDt );
 
 // Impose un-coupled free surface boundary condition with visco-elastic terms for 'Up'
   if( m_use_attenuation && (m_number_mechanisms > 0) )

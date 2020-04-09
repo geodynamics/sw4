@@ -15,6 +15,7 @@ class CurvilinearInterface2
    int m_nghost, m_ib, m_ie, m_jb, m_je, m_ibf, m_ief, m_jbf, m_jef, m_nkf;
    int m_kb, m_ke, m_kbf, m_kef;
    int m_gc, m_gf;
+   bool m_isbndry[4]; // side is physical boundary
 
    float_sw4 *m_strx_c, *m_strx_f, *m_stry_c, *m_stry_f;
    Sarray m_Mass_block, m_rho_c, m_rho_f, m_mu_c, m_mu_f, m_lambda_c, m_lambda_f;
@@ -50,7 +51,7 @@ class CurvilinearInterface2
    void prolongate2D( Sarray& Uc, Sarray& Uf, int kc, int kf );
    void restrict2D( Sarray& Uc, Sarray& Uf, int kc, int kf );
    void restprol2D( Sarray& Uc, Sarray& alpha, int kc, int kf );
-   void bnd_zero( Sarray& u, int npts, int sides[6] );
+   void bnd_zero( Sarray& u, int npts );
    void copy_str( float_sw4* dest, float_sw4* src, int offset, int n, int nsw );
    void communicate_array1d( float_sw4* u, int n, int dir, int ngh );
    void communicate_array( Sarray& u, bool allkplanes=true, int kplane=0 );
