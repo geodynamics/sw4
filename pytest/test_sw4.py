@@ -116,7 +116,7 @@ def compare_energy(test_file_name, errTol, verbose):
     return success
 
 #------------------------------------------------
-def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
+def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     if verbose: print('os.uname=', os.uname())
     node_name = os.uname()[1]
     if verbose: print('node_name=', node_name)
@@ -127,7 +127,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
     if 'quartz' in node_name:
         if omp_threads<=0: omp_threads=2;
         if mpi_tasks<=0: mpi_tasks = int(36/omp_threads)
-        mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks) + " -c " + str(omp_threads)
+        mpirun_cmd="srun -ppdebug " + " -A " + cpu_allocation + " -n " + str(mpi_tasks) + " -c " + str(omp_threads)
     elif 'cab' in node_name:
         if omp_threads<=0: omp_threads=2;
         if mpi_tasks<=0: mpi_tasks = int(16/omp_threads)
@@ -159,7 +159,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
     return mpirun_cmd
 
 #------------------------------------------------
-def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threads=0, verbose=False):
+def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threads=0, cpu_allocation="", verbose=False):
     assert sys.version_info >= (3,5) # named tuples in Python version >=3.3
     sep = '/'
     pytest_dir = os.getcwd()
@@ -195,7 +195,7 @@ def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threa
         return False
 
     # guess the mpi run command from the uname info
-    mpirun_cmd=guess_mpi_cmd(mpi_tasks, omp_threads, verbose)
+    mpirun_cmd=guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose)
 
     sw4_mpi_run = mpirun_cmd + ' ' + sw4_exe
     if (omp_threads>0):
@@ -207,8 +207,14 @@ def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threa
     num_pass=0
     num_fail=0
 
-    all_dirs = ['energy', 'energy', 'energy', 'energy', 'meshrefine', 'meshrefine', 'meshrefine', 'attenuation', 'attenuation', 'pointsource', 'twilight', 'twilight', 'lamb', 'curvimeshrefine']
+    all_dirs = ['energy', 'energy', 'energy', 'energy',
+                'meshrefine', 'meshrefine', 'meshrefine',
+                'attenuation', 'attenuation', 'pointsource',
+                'twilight', 'twilight', 'lamb', 
+                'curvimeshrefine', 'curvimeshrefine']
+
     all_cases = ['energy-nomr-2nd', 'energy-mr-4th', 'energy-mr-sg-order2', 'energy-mr-sg-order4', 'refine-el', 'refine-att', 'refine-att-2nd', 'tw-att', 'tw-topo-att', 'pointsource-sg', 'flat-twi', 'gauss-twi', 'lamb','gausshill-el','gauss-sg-mr']
+    
     all_results =['energy.log', 'energy.log', 'energy.log', 'energy.log', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'PointSourceErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt','TwilightErr.txt','TwilightErr.txt']
     num_meshes =[1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 1, 1, 1] # default number of meshes for level 0
 
@@ -216,7 +222,7 @@ def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threa
     if testing_level == 1:
         num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 2, 2, 3, 3, 2, 2, 2]
     elif testing_level == 2:
-        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 2, 2]
+        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 2, 3]
     
     print("Running all tests for level", testing_level, "...")
     # run all tests
@@ -332,6 +338,7 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mpitasks", type=int, help="number of mpi tasks")
     parser.add_argument("-t", "--ompthreads", type=int, help="number of omp threads per task")
     parser.add_argument("-d", "--sw4_exe_dir", help="name of directory for sw4 executable", default="optimize_mp")
+    parser.add_argument("-A","--cpu_allocation", help="name of cpu bank/allocation",default="")
     args = parser.parse_args()
     if args.verbose:
         #print("verbose mode enabled")
@@ -348,7 +355,10 @@ if __name__ == "__main__":
     if args.sw4_exe_dir:
         #print("sw4_exe_dir specified=", args.sw4_exe_dir)
         sw4_exe_dir=args.sw4_exe_dir
+    if args.cpu_allocation:
+        #print("cpu_allocation specified=", args.cpu_allocation)
+        cpu_allocation=args.cpu_allocation
 
-    if not main_test(sw4_exe_dir, testing_level, mpi_tasks, omp_threads, verbose):
+    if not main_test(sw4_exe_dir, testing_level, mpi_tasks, omp_threads, cpu_allocation,verbose):
         print("test_sw4 was unsuccessful")
 

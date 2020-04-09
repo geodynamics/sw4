@@ -10,50 +10,50 @@ $\kappa_{\text{max}}$ is the maximum of the eigenvalue of the matrices
 Tr(N_{11}^{\{f,c\}}({\bf r}_{\bf i})) &  Tr(N_{12}^{\{f,c\}}({\bf r}_{\bf i}))& Tr(N_{13}^{\{f,c\}}({\bf r}_{\bf i}))\\
 Tr(N_{21}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{22}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{23}^{\{f,c\}}({\bf r}_{\bf i}))\\
 Tr(N_{31}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{32}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{33}^{\{f,c\}}({\bf r}_{\bf i}))\end{array}\right), \]
-where $Tr(N_{lm}^{\{f,c\}}({\bf r}_{\bf i}))$ represents the trace of $3\times3$ matrix $N_{lm}^{\{f,c\}}({\bf r}_{\bf i}),l,m = 1,2,3$. Note that $\kappa_{\text{max}}$ is related to the material properties $\mu^{\{f,c\}}, \lambda^{\{f,c\}}$ and $\rho^{\{f,c\}}$. The notation $\{\cdot,\cdot\}$ represents the component-wise identities. In the following, we give detailed procedures about how we apply the fourth order time integrator to the problems (\ref{elastic_semi_c}) and  (\ref{fine_scheme}). 
+where $Tr(N_{lm}^{\{f,c\}}({\bf r}_{\bf i}))$ represents the trace of $3\times3$ matrix $N_{lm}^{\{f,c\}}({\bf r}_{\bf i})$. Note that $\kappa_{\text{max}}$ is related to the material properties $\mu^{\{f,c\}}, \lambda^{\{f,c\}}$ and $\rho^{\{f,c\}}$. The notation $\{\cdot,\cdot\}$ represents the component-wise identities. In the following, we give detailed procedures about how we apply the fourth order time integrator to the problems (\ref{elastic_semi_c}) and  (\ref{fine_scheme}). 
 
-Let ${\bf C}^{n}$ and ${\bf F}^{n}$ denote the numerical approximations of ${\bf C}({\bf x},t_n), {\bf x}\in\Omega^c$ and ${\bf F}({\bf x},t_n), {\bf x}\in\Omega^f$ respectively. Here, $t_n = n\Delta_t, n = 0,1,\cdots$ and $\Delta_t > 0$ is a constant time step. We present the fourth order time integrator with predictor and corrector in  Algorithm \ref{first_alg}.
+Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf c}({\bf x},t_n), {\bf x}\in\Omega^c$ and ${\bf f}({\bf x},t_n), {\bf x}\in\Omega^f$ respectively. Here, $t_n = n\Delta_t, n = 0,1,\cdots$ and $\Delta_t > 0$ is a constant time step. We present the fourth order time integrator with predictor and corrector in  Algorithm \ref{first_alg}.
 ~\\
 \begin{breakablealgorithm}
 	\caption{Fourth order accurate time stepping for the semi-discretization .......}\label{first_alg}
-	Given  $\wt{{\bf C}}^{n}, \wt{{\bf C}}^{n-1}$ and ${\bf F}^{n}, {\bf F}^{n-1}$ that satisfy the discretized interface conditions.
+	Given  $\wt{{\bf c}}^{n}, \wt{{\bf c}}^{n-1}$ and ${\bf f}^{n}, {\bf f}^{n-1}$ that satisfy the discretized interface conditions.
 	
 	\begin{itemize}
 		\item  {Compute the predictor at the interior grid points for both fine and coarse domains
-			\[{\bf C}^{*,n+1}_{\bf i} = 2{\bf C}^{n}_{\bf i} - {\bf C}^{n-1}_{\bf i} + \Delta_t^2(\rho^{c}_{\bf i}J^c_{\bf i})^{-1}{\wt{\mathcal{L}}}^{2h} {\bf{C}}^{n}_{\bf i},\quad {\bf i}\in I_{\Omega^c},\]
-			\[{\bf F}^{*,n+1}_{\bf i} = 2{\bf F}^{n}_{\bf i} - {\bf F}^{n-1}_{\bf i} + \Delta_t^2(\rho^f_{\bf i}J^f_{\bf i})^{-1}\hat{\mathcal{L}}^{h} {\bf{f}}^{n}_{\bf i},\quad {\bf i}\in I_{\Omega^f}\backslash I_{\Gamma^f}.\]
+			\[{\bf c}^{*,n+1}_{\bf i} = 2{\bf c}^{n}_{\bf i} - {\bf c}^{n-1}_{\bf i} + \Delta_t^2(\rho^{c}_{\bf i}J^c_{\bf i})^{-1}{\wt{\mathcal{L}}}^{2h} {\bf{c}}^{n}_{\bf i},\quad {\bf i}\in I_{\Omega^c},\]
+			\[{\bf f}^{*,n+1}_{\bf i} = 2{\bf f}^{n}_{\bf i} - {\bf f}^{n-1}_{\bf i} + \Delta_t^2(\rho^f_{\bf i}J^f_{\bf i})^{-1}\hat{\mathcal{L}}^{h} {\bf{f}}^{n}_{\bf i},\quad {\bf i}\in I_{\Omega^f}\backslash I_{\Gamma^f}.\]
 		}
-		\item{For the continuity of solution at the interface $\Gamma$, assign the value ${\bf F}^{*,n+1}_{\bf i}, {\bf i}\in I_{\Gamma^f}$ to satisfy
+		\item{For the continuity of solution at the interface $\Gamma$, assign the value ${\bf f}^{*,n+1}_{\bf i}$ to satisfy
 			\begin{equation*}
-			{\bf F}^{*,n+1}_{\bf i} = {\mathcal{P}}{\bf C}^{*,n+1}_{{\bf i}'} \quad {\bf i}'\in I_{\Gamma^c}.
+			{\bf f}^{*,n+1}_{\bf i} = {\mathcal{P}}{\bf c}^{*,n+1}_{{\bf i}'} \quad {\bf i}\in I_{\Gamma^f},\quad {\bf i}'\in I_{\Gamma^c}.
 			\end{equation*}
 		}
-		\item{For the continuity of traction at the interface $\Gamma$, assign the ghost points value in $\wt{\bf C}^{*,n+1}$ to satisfy
+		\item{For the continuity of traction at the interface $\Gamma$, assign the ghost points value in $\wt{\bf c}^{*,n+1}$ to satisfy
 			\begin{equation}\label{traction_gamma_pre}
-			({\Lambda}^{c}_{{\bf i}'}{J}_{{\bf i}'}^{c})^{-1}\wt{\mathcal{A}}_3^{2h}{\bf C}^{*,n+1}_{{\bf i}'}
-			= {\mathcal{R}}\left(({\Lambda}^{f}_{\bf i}{J}^f_{\bf i})^{-1}(\mathcal{A}_3^h{\bf F}^{*,n+1}_{\bf i}-h_3\omega_1{\bm \eta}^{\ast,n+1}_{\bf i})\right),\quad {\bf i}'\in I_{\Gamma^c},\quad {\bf i}\in I_{\Gamma^f}
+			({\Lambda}^{c}_{{\bf i}'}{J}_{{\bf i}'}^{c})^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}^{*,n+1}_{{\bf i}'}
+			= {\mathcal{R}}\left(({\Lambda}^{f}_{\bf i}{J}^f_{\bf i})^{-1}(\mathcal{A}_3^h{\bf f}^{*,n+1}_{\bf i}-h_3\omega_1{\bm \eta}^{\ast,n+1}_{\bf i})\right),\quad {\bf i}'\in I_{\Gamma^c},\quad {\bf i}\in I_{\Gamma^f}
 			\end{equation}
 			with the definition of $\wt{\mathcal{A}}_3^{2h}$ in (\ref{hatAc}), and $\mathcal{A}_3^h$ in (\ref{hatAf}) .
 		}
-		\item{Evaluate the acceleration at all grids 
+		\item{Evaluate the acceleration at all grid points 
 			\begin{equation*}
-			\wt{\bf C}^n= \frac{\wt{\bf C}^{*,n+1}-2\wt{\bf C}^{n}+\wt{\bf C}^{n-1}}{\Delta^2_t},\ \ \ \
-			{\bf F}^{n} = \frac{{\bf F}^{*,n+1}-2{\bf F}^{n}+{\bf F}^{n-1}}{\Delta^2_t},
+			\wt{\bf c}^n= \frac{\wt{\bf c}^{*,n+1}-2\wt{\bf c}^{n}+\wt{\bf c}^{n-1}}{\Delta^2_t},\ \ \ \
+			{\bf f}^{n} = \frac{{\bf f}^{*,n+1}-2{\bf f}^{n}+{\bf f}^{n-1}}{\Delta^2_t},
 			\end{equation*}
 		}
 		\item{Compute the corrector at the interior grid points
-			\[{\bf C}^{n+1}_{\bf i} = {\bf C}^{*,n+1}_{\bf i} + \frac{\Delta_t^4}{12}(\rho^{c}_{\bf i}J^c_{\bf i})^{-1}\wt{\mathcal{L}}^{2h}{\bf{C}}^{n}_{\bf i},\quad {\bf i}\in I_{\Omega^c},\]
-			\[{\bf F}^{n+1}_{\bf i} = {\bf F}^{*,n+1}_{\bf i} + \frac{\Delta_t^4}{12}(\rho^{f}_{\bf i}J^f_{\bf i})^{-1}\hat{\mathcal{L}}^{h}{\bf{F}}^{n}_{\bf i},\quad {\bf i}\in I_\Omega^f.\]
+			\[{\bf c}^{n+1}_{\bf i} = {\bf c}^{*,n+1}_{\bf i} + \frac{\Delta_t^4}{12}(\rho^{c}_{\bf i}J^c_{\bf i})^{-1}\wt{\mathcal{L}}^{2h}{\bf{c}}^{n}_{\bf i},\quad {\bf i}\in I_{\Omega^c},\]
+			\[{\bf f}^{n+1}_{\bf i} = {\bf f}^{*,n+1}_{\bf i} + \frac{\Delta_t^4}{12}(\rho^{f}_{\bf i}J^f_{\bf i})^{-1}\hat{\mathcal{L}}^{h}{\bf{f}}^{n}_{\bf i},\quad {\bf i}\in I_\Omega^f.\]
 		}
-		\item{For the continuity of solution at the interface $\Gamma$, assign the value ${\bf F}^{n+1}_{\bf i}$, ${\bf i}\in I_{\Gamma^f}$ to satisfy
+		\item{For the continuity of solution at the interface $\Gamma$, assign the value ${\bf f}^{n+1}_{\bf i}$ to satisfy
 			\begin{equation*}
-			{\bf F}^{n+1}_{\bf i} = {\mathcal{P}}{\bf C}^{n+1}_{{\bf i}'}, \quad {{\bf i}'}\in I_{\Gamma^c}.
+			{\bf f}^{n+1}_{\bf i} = {\mathcal{P}}{\bf c}^{n+1}_{{\bf i}'}, \quad {\bf i}\in I_{\Gamma^f},\quad {{\bf i}'}\in I_{\Gamma^c}.
 			\end{equation*}
 		}
-		\item{For the continuity of traction at the interface $\Gamma$, assign the ghost point value in $\wt{\bf C}^{n+1}$ to satisfy
+		\item{For the continuity of traction at the interface $\Gamma$, assign the ghost point value in $\wt{\bf c}^{n+1}$ to satisfy
 			\begin{equation}\label{traction_gamma_corr}
-			({\Lambda}^{c}_{{\bf i}'}{J}_{{\bf i}'}^{c})^{-1}(\wt{\mathcal{A}}_3^{2h}{\bf C}^{n+1}_{{\bf i}'})
-			= {\mathcal{R}}\left(({\Lambda}^{f}_{\bf i}{ J}^f_{\bf i})^{-1}((\mathcal{A}_3^h{\bf F}^{n+1}_{\bf i})-h_3\omega_1{\bm \eta}^{n+1}_{\bf i})\right), \quad {{\bf i}'}\in I_{\Gamma^c}, \quad {\bf i}\in I_{\Gamma^f}
+			({\Lambda}^{c}_{{\bf i}'}{J}_{{\bf i}'}^{c})^{-1}(\wt{\mathcal{A}}_3^{2h}{\bf c}^{n+1}_{{\bf i}'})
+			= {\mathcal{R}}\left(({\Lambda}^{f}_{\bf i}{ J}^f_{\bf i})^{-1}((\mathcal{A}_3^h{\bf f}^{n+1}_{\bf i})-h_3\omega_1{\bm \eta}^{n+1}_{\bf i})\right), \quad {{\bf i}'}\in I_{\Gamma^c}, \quad {\bf i}\in I_{\Gamma^f}
 			\end{equation}
 			with the definition of $\wt{\mathcal{A}}_3^{2h}$ in (\ref{hatAc}), and $\mathcal{A}_3^h$ in (\ref{hatAf}).
 		}
@@ -61,7 +61,7 @@ Let ${\bf C}^{n}$ and ${\bf F}^{n}$ denote the numerical approximations of ${\bf
 \end{breakablealgorithm}
 ~\\
 
-In the Algorithm \ref{first_alg}, we need to solve the equations from the continuity of the traction force for the interface $\Gamma$ in both predictor step (\ref{traction_gamma_pre}) and corrector step (
-\ref{traction_gamma_corr}). The structure of (\ref{traction_gamma_pre}) and (\ref{traction_gamma_corr}) are the same, for simplicity, we only clarify how we solve (\ref{traction_gamma_pre}) in the predictor step.
+In the Algorithm \ref{first_alg}, we need to solve the linear system from the continuity of traction at the interface $\Gamma$ in both predictor step (\ref{traction_gamma_pre}) and corrector step (
+\ref{traction_gamma_corr}). The structure of (\ref{traction_gamma_pre}) and (\ref{traction_gamma_corr}) are the same, for simplicity, we only illustrate how we solve (\ref{traction_gamma_pre}) in the predictor step.
 
-There are $3n_1^{2h}n_2^{2h}$ unknowns and $3n_1^{2h}n_2^{2h}$ linear equations in (\ref{traction_gamma_pre}). For large problems in three dimensions, it is very memory inefficient to calculate the LU-factorization. Therefore, We use iterative methods to solve the linear system (\ref{traction_gamma_pre}). In particular, we consider three different iterative methods: block Jacobi iterative method, conjugate gradient (CG) iterative method and preconditioned conjugate gradient iterative method. The details are given in Section \ref{iterative_section}.
+There are $3n_1^{2h}n_2^{2h}$ unknowns and $3n_1^{2h}n_2^{2h}$ linear equations in (\ref{traction_gamma_pre}). For large problems in three dimensions, it is very memory inefficient to calculate the LU-factorization. Therefore, We use iterative methods to solve the linear system in (\ref{traction_gamma_pre}). In particular, we consider three different iterative methods: block Jacobi iterative method, conjugate gradient (CG) iterative method and preconditioned conjugate gradient iterative method. The details are given in Section \ref{iterative_section}.
