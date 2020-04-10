@@ -115,11 +115,11 @@ Here, ${N}_{3l}^{2h}D_l^{2h}{\bf c}$ approximate $N_{3l}\bar{\partial}_l{\bf C}$
  
 Let ${\bf u}$ and ${\bf v}$ be grid functions in coarse domain $\Omega^c$, we define the discrete inner product at the interface by
 \begin{equation}\label{scalar_product_discrete_interface_c}
-\left<{\bf u}, {\bf v}\right>_{2h} = 4h_1h_2\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}{  J}_{i,j,n_3^{2h}}^{c}\Lambda^{c}_{i,j,n_3^{2h}}({\bf u}_{i,j,n_3^{2h}}^T\cdot {\bf v}_{i,j,n_3^{2h}}).
+\left<{\bf u}, {\bf v}\right>_{2h} = 4h_1h_2\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}{  J}_{i,j,n_3^{2h}}^{c}\Lambda^{c}_{i,j,n_3^{2h}}({\bf u}_{i,j,n_3^{2h}}\cdot {\bf v}_{i,j,n_3^{2h}}).
 \end{equation}
 Similarly, the discrete inner product at the interface for fine domain $\Omega^f$ is defined as
 \begin{equation}\label{scalar_product_discrete_interface_f}
-\left<{\bf u}, {\bf v}\right>_{h} = h_1h_2\sum_{i=1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}{  J}_{i,j,1}^{f}\Lambda^{f}_{i,j,1}({\bf u}_{i,j,1}^T\cdot {\bf v}_{i,j,1})
+\left<{\bf u}, {\bf v}\right>_{h} = h_1h_2\sum_{i=1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}{  J}_{i,j,1}^{f}\Lambda^{f}_{i,j,1}({\bf u}_{i,j,1}\cdot {\bf v}_{i,j,1})
 \end{equation}
 with $\bf u$ and $\bf v$ are grid functions in fine domain $\Omega^f$. Then we have the following lemma.
  

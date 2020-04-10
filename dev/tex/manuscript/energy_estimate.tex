@@ -1,88 +1,74 @@
 %!TEX root = SISC_elastic_3d.tex
 \subsection{Energy estimate}\label{sec_energy}
-In this section, we derive an energy estimate for the semi-discretization (\ref{elastic_semi_c}) and (\ref{fine_scheme}) in Sec.~\ref{semi_discrete_form}. Let ${\bf u}, {\bf v}$ be grid functions in $\Omega^c$. Define the three dimensional discrete scalar product in $\Omega^c$ as
+In this section, we derive an energy estimate for the semi-discretization (\ref{elastic_semi_c}) and (\ref{fine_scheme}) in Sec.~\ref{semi_discrete_form}. Let ${\bf u}, {\bf v}$ be grid functions in the coarse domain $\Omega^c$ and define the three dimensional discrete scalar product in $\Omega^c$ as
 \begin{equation}\label{scalar_product_inner}
-({\bf v}, {\bf u})_{2h} = 8h_1h_2h_3\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}\sum_{k=1}^{n_3^{2h}}\omega_k{J}_{i,j,k}^{c}({\bf v}_{i,j,k}^T\cdot {\bf u}_{i,j,k}),
+({\bf v}, {\bf u})_{2h} = 8h_1h_2h_3\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}\sum_{k=1}^{n_3^{2h}}\omega_k{J}_{i,j,k}^{c}({\bf v}_{i,j,k}\cdot {\bf u}_{i,j,k}).
 \end{equation}
-we then obtain
-\begin{align}
-({\bf v}, D_l^{2h}(N_{lm}^{2h}D_m^{2h}{\bf u}))_{2h} &= -(D_l^{2h}{\bf v},N_{lm}^{2h}D_m^{2h}{\bf u})_{2h}, \quad l = 1,2,\quad m = 1,2,3,\quad m\neq l,\label{ceq1}\\
-({\bf v},D_3^{2h}(N_{3m}^{2h}D_m^{2h}{\bf u}))_{2h} &= -(D_3^{2h}{\bf v},N_{3m}^{2h}D_m^{2h}{\bf u})_{2h} + 4h_1h_2\sum_{{\bf i}\in I_{\Gamma^c}}{\bf v}_{\bf i}^T\cdot (N_{3m}^{2h}{D}_m^{2h}{\bf u}_{\bf i}), \quad m = 1,2,\label{ceq2}
-\end{align}
-and
-\begin{align}
-({\bf v},Q_l^{2h}(N_{ll}^{2h}){\bf u})_{2h} &= -(D_l^{2h}{\bf v},N_{ll}^{2h}D_l^{2h}{\bf u})_{2h} + ({\bf v},P_l^{2h}(N_{ll}^{2h}){\bf u})_{2hr},\quad l = 1,2,\label{ceq3}\\
-({\bf v},\wt{G}_3^{2h}(N_{33}^{2h}){\bf u})_{2h} &= -(D_3^{2h}{\bf v},N_{33}^{2h}D_3^{2h}{\bf u})_{2h} + ({\bf v},P_3^{2h}(N_{11}^{2h}){\bf u})_{2hr} + 4h_1h_2\sum_{{\bf i}\in I_{\Gamma^c}}{\bf v}_{\bf i}^T\cdot (N_{33}^{2h}\wt{\mathcal{D}}_3^{2h}{\bf u}_{\bf i}),\label{ceq4}
-\end{align}
-where the positive semi-definite operators $P_i^{h}(N_{ii}^{h})$ and $P_i^{2h}(N_{ii}^{2h})$ are small and non-zero for odd-even modes. The scalar products $(\cdot, \cdot)_{hr}$, $(\cdot,\cdot)_{2hr}$ are weighted differently with $(\cdot, \cdot)_h$,$(\cdot, \cdot)_{2h}$, see \cite{petersson2015wave,sjogreen2012fourth} for details. Denote 
-\begin{multline}\label{s2h}
-\mathcal{S}_{2h}({\bf v},{\bf u}) = ({D}_1^{2h}{\bf v},{N}_{11}^{2h}{D}_1{\bf u})_{2h} +  ({D}_1^{2h}{\bf v},{N}_{12}^{2h}{D}_2{\bf u})_{2h} +  ({D}_1^{2h}{\bf v},{N}_{13}^{2h}{D}_3{\bf u})_{2h}\\
-+  ({D}_2^{2h}{\bf v},{N}_{21}^{2h}{D}_1{\bf u})_{2h} 
-+  ({D}_2^{2h}{\bf v},{N}_{22}^{2h}{D}_2{\bf u})_{2h} +  ({D}_2^{2h}{\bf v},{N}_{23}^{2h}{D}_3{\bf u})_{2h} \\
-+  ({D}_3^{2h}{\bf v},{N}_{31}^{2h}{D}_1{\bf u})_{2h} 
-+  ({D}_3^{2h}{\bf v},{N}_{32}^{2h}{D}_2{\bf u})_{2h} +  ({D}_3^{2h}{\bf v},{N}_{33}^{2h}{D}_3{\bf u})_{2h}\\
-+ ({\bf v}, P^{2h}_1(N_{11}^{2h}){\bf u})_{2hr} + ({\bf v}, P^{2h}_2(N_{22}^{2h}){\bf u})_{2hr} + ({\bf v}, P^{2h}_1(N_{33}^{2h}){\bf u})_{2hr},
-\end{multline}
-which is symmetric and positive definite bilinear form, and
-\begin{equation}\label{bounary_c1}
-B_{2h} ({\bf v},{\bf u}) = 4h_1h_2\sum_{{\bf i}\in I_{\Gamma^c}}{\bf v}_{\bf i}^T\cdot\left({N}_{31}^{2h}{D}_1^{2h}{\bf u}_{\bf i}+{N}_{32}^{2h}{D}_2^{2h}{\bf u}_{\bf i}+{N}_{33}^{2h}\wt{\mathcal{D}}_3^{2h}{\bf u}_{\bf i}\right).
-\end{equation}
-Similarly, define the three dimensional discrete scalar product in the fine domain $\Omega^f$ as
+Similarly, define the three dimensional discrete scalar product in $\Omega^f$ as
 \begin{equation}\label{scalar_product_inner_f}
-({\bf v}, {\bf u})_{h} = h_1h_2h_3\sum_{i=1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}\sum_{k=1}^{n_3^{h}}\omega_k{J}_{i,j,k}^{f}({\bf v}_{i,j,k}^T\cdot {\bf u}_{i,j,k}),
+({\bf v}, {\bf u})_{h} = h_1h_2h_3\sum_{i=1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}\sum_{k=1}^{n_3^{h}}\omega_k{J}_{i,j,k}^{f}({\bf v}_{i,j,k}\cdot {\bf u}_{i,j,k}),
 \end{equation}
-where $\bf u$ and $\bf v$ are grid functions in $\Omega^f$. we derive
-\begin{align}
-({\bf v}, D_l^{h}(N_{lm}^{h}D_m^{2h}{\bf u}))_{h} &= -(D_l^{h}{\bf v},N_{lm}^{h}D_m^{h}{\bf u})_{h}, \quad l = 1,2,\quad m = 1,2,3,\quad m\neq l,\label{feq1}\\
-({\bf v},D_3^{h}(N_{3m}^{h}D_m^{h}{\bf u}))_{h} &= -(D_3^{h}{\bf v},N_{3m}^{h}D_m^{h}{\bf u})_{h} - h_1h_2\sum_{{\bf i}\in I_{\Gamma^f}}{\bf v}_{\bf i}^T\cdot (N_{3m}^{h}{D}_m^{h}{\bf u}_{\bf i}), \quad m = 1,2,\label{feq2}
-\end{align}
-and
-\begin{align}
-({\bf v},Q_l^{h}(N_{ll}^{h}){\bf u})_{h} &= -(D_l^{h}{\bf v},N_{ll}^{h}D_l^{2h}{\bf u})_{h} + ({\bf v},P_l^{h}(N_{ll}^{h}){\bf u})_{hr},\quad l = 1,2,\label{feq3}\\
-({\bf v},{G}_3^{h}(N_{33}^{h}){\bf u})_{h} &= -(D_3^{h}{\bf v},N_{33}^{h}D_3^{h}{\bf u})_{h} + ({\bf v},P_3^{h}(N_{11}^{h}){\bf u})_{hr} - h_1h_2\sum_{{\bf i}\in I_{\Gamma^f}}{\bf v}_{\bf i}^T\cdot (N_{33}^{h}{\mathcal{D}}_3^{h}{\bf u}_{\bf i}).\label{feq4}
-\end{align}
-Then denote
-\begin{multline}\label{sh}
-\mathcal{S}_{h}({\bf v},{\bf u}) = ({D}_1^{h}{\bf v},{N}_{11}^{h}{D}_1{\bf u})_{h} +  ({D}_1^{h}{\bf v},{N}_{12}^{h}{D}_2{\bf u})_{h} +  ({D}_1^{h}{\bf v},{N}_{13}^{h}{D}_3{\bf u})_{h}\\
-+  ({D}_2^{h}{\bf v},{N}_{21}^{h}{D}_1{\bf u})_{h} 
-+  ({D}_2^{h}{\bf v},{N}_{22}^{h}{D}_2{\bf u})_{h} +  ({D}_2^{h}{\bf v},{N}_{23}^{h}{D}_3{\bf u})_{h} \\
-+  ({D}_3^{h}{\bf v},{N}_{31}^{h}{D}_1{\bf u})_{h} 
-+  ({D}_3^{h}{\bf v},{N}_{32}^{h}{D}_2{\bf u})_{h} +  ({D}_3^{h}{\bf v},{N}_{33}^{h}{D}_3{\bf u})_{h}\\
-+ ({\bf v}, P^{h}_1(N_{11}^h){\bf u})_{hr} + ({\bf v}, P^{h}_2(N_{22}^h){\bf u})_{hr} + ({\bf v}, P^{h}_1(N_{33}^h){\bf u})_{hr}.
-\end{multline}
-Again $\mathcal{S}_h$ is symmetric and positive definite bilinear form, and
-\begin{equation}\label{boundary_f1}
-B_h ({\bf v},{\bf u}) = -h_1h_2\sum_{{\bf i}\in I_{\Gamma^f}}{\bf v}^T\cdot\left({N}_{31}^h{D}_1^h {\bf u}_{\bf i}+ {N}_{32}^h{D}_2^h{\bf u}_{\bf i}+{N}_{33}^h\mathcal{D}_3^h{\bf u}_{\bf i}\right).
-\end{equation}
-
-Now, we are ready to state the energy estimate of the proposed schemes in Section \ref{semi_discrete_form}. 
- \begin{theorem}\label{thm1}
-  The semi-discretization (\ref{elastic_semi_c}) and (\ref{fine_scheme}) is energy stable follows
-  \[
-  \frac{d}{dt}\left[({\bf f}_t,\rho^f {\bf f}_t)_{h} + \mathcal{S}_{h}({\bf f},{\bf f}) + ({\bf c}_t,\rho^{c} {\bf c}_t)_{2h} + \mathcal{S}_{2h}({\bf c},{\bf c}) \right]   = 0.
-  \]
- \end{theorem}
- \begin{proof}
- Multiplying (\ref{elastic_semi_c}) by $8h_1h_2h_3\omega_kJ^{c}{\bf c}_t$ and summing over all grid points, based on \eqref{scalar_product_inner}--\eqref{bounary_c1}, we have
-\begin{equation*}\label{coarse_simple}
-({\bf c}_t, {\rho}^{c}{\bf c}_{tt})_{2h} = ({\bf c}_t,({J^c})^{-1}\wt{\mathcal{L}}^{2h}{\bf c})_{2h} = -\mathcal{S}_{2h}({\bf c}_t,{\bf c}) + B_{2h}({\bf c}_t,{{\bf c}}),
-\end{equation*}
-multiplying (\ref{fine_scheme}) by $h_1h_2h_3\omega_kJ^f{\bf f}_t$ and summing over all grid points, based on \eqref{scalar_product_inner_f}--\eqref{boundary_f1}, we obtain
-\begin{equation*}
-({\bf f}_t, {\rho}^f{\bf f}_{tt})_h = ({\bf f}_t,({J^f})^{-1}\hat{\mathcal{L}}^h{\bf f})_h = -\mathcal{S}_{h}({\bf f}_t,{\bf f}) + B_h({\bf f}_t,{\bf f}) 
-+h_1h_2h_3\omega_1\sum_{i = 1}^{n_1^h}\sum_{j=1}^{n_2^h} \left(\frac{d{\bf f}_{i,j,1}}{dt}\right)^T\cdot{\bm \eta}_{i,j,1}.
-\end{equation*}
-Then, the time derivative of the semi-discrete energy can be written as
-\begin{multline}\label{semi_energy_1}
-\frac{d}{dt}\big[({\bf f}_t,\rho^f {\bf f}_t)_h + \mathcal{S}_{h}({\bf f},{\bf f}) + ({\bf c}_t,\rho^{c} {\bf c}_t)_{2h} + \mathcal{S}_{2h}({\bf c},{\bf c}) \big]  = \\
-2B_{h}({\bf f}_t,{\bf f}) + 2B_{2h}({\bf c}_t,{\bf c}) + 2h_1h_2h_3\omega_1\sum_{i = 1}^{n_1^h}\sum_{j=1}^{n_2^h}\left(\frac{d{\bf f}_{i,j,1}}{dt}\right)^T\cdot{\bm \eta}_{i,j,1}.
-\end{multline}
-Substituting (\ref{boundary_f1}) and (\ref{bounary_c1}) into (\ref{semi_energy_1}) and combining the definitions of the scalar product at the interface (\ref{scalar_product_discrete_interface_c})--(\ref{scalar_product_discrete_interface_f}) and Lemma \ref{lemma1}, we have
-\begin{align*}\label{semi_energy_2}
-&\hspace{0.4cm}\frac{d}{dt}\left[({\bf f}_t,\rho^f {\bf f}_t)_{h} + \mathcal{S}_{h}({\bf f},{\bf f}) + ({\bf c}_t,\rho^{c} {\bf c}_t)_{2h} + \mathcal{S}_{2h}({\bf c},{\bf c}) \right]   \nonumber\\
-& = 2\left<{\bf f}_t,\big(({\Lambda}^{h}{J}^h_\Gamma\big)\otimes {\bf I})^{-1}(-\mathcal{A}_3^h{\bf f}+h_3\omega_1{\bm \eta})\right>_{h}+ 2\left<{\bf c}_t,\big(({\Lambda}^{2h}{J}^{2h}_\Gamma\big)\otimes{\bf I})^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}\right>_{2h} \nonumber\\
-& = 2\left<{\mathcal{P}}{\bf c}_t,\big(({\Lambda}^{h}{J}^h_\Gamma)\otimes{\bf I}\big)^{-1}(-\mathcal{A}_3^h{\bf f}+h_3\omega_1{\bm \eta})\right>_{h}+ 2\left<{\bf c}_t, \big(({\Lambda}^{2h}{J}^{2h}_\Gamma)\otimes{\bf I}\big)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}\right>_{2h} \nonumber\\
-& = 2\left<{\bf c}_t,{\mathcal{R}}\Big(\big(({\Lambda}^{h}{J}^h_\Gamma)\otimes{\bf I}\big)^{-1}(-\mathcal{A}_3^h{\bf f}+h_3\omega_1{\bm \eta})\Big)\right>_{2h}+ 2\left<{\bf c}_t,\big(({\Lambda}^{2h}{J}^{2h}_\Gamma)\otimes{\bf I}\big)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}\right>_{2h} = 0,
-\end{align*}
-where we have used the notations in (\ref{hatAf})--(\ref{hatAc}) and ${\bf I}$.% is a $3\times3$ identity matrix.
+where $\bf u$ and $\bf v$ are grid functions in the fine domain $\Omega^f$. Now, we are ready to state the energy estimate of the proposed schemes in Section \ref{semi_discrete_form}. 
+\begin{theorem}\label{thm1}
+	The semi-discretization (\ref{elastic_semi_c}) and (\ref{fine_scheme}) is energy stable if the interface conditions \eqref{continuous_sol} and \eqref{continuous_traction} are satisfied.
+\end{theorem}
+\begin{proof}
+	Multiplying (\ref{elastic_semi_c}) by $8h_1h_2h_3\omega_kJ^{c}{\bf c}_t$ and summing over all grid points, based on \eqref{scalar_product_inner}, we have
+	\begin{equation}\label{coarse_simple}
+	({\bf c}_t, {\rho}^{c}{\bf c}_{tt})_{2h} = ({\bf c}_t,({J^c})^{-1}\wt{\mathcal{L}}^{2h}{\bf c})_{2h} = -\mathcal{S}_{2h}({\bf c}_t,{\bf c}) + B_{2h}({\bf c}_t,{{\bf c}}),
+	\end{equation}
+	where 
+	\begin{multline}\label{s2h}
+	\mathcal{S}_{2h}({\bf c}_t,{\bf c}) = ({D}_1^{2h}{\bf c}_t,{N}_{11}^{2h}{D}_1^{2h}{\bf c})_{2h} +  ({D}_1^{2h}{\bf c}_t,{N}_{12}^{2h}{D}_2^{2h}{\bf c})_{2h} +  ({D}_1^{2h}{\bf c}_t,{N}_{13}^{2h}{D}_3^{2h}{\bf c})_{2h}\\
+	+  ({D}_2^{2h}{\bf c}_t,{N}_{21}^{2h}{D}_1^{2h}{\bf c})_{2h} 
+	+  ({D}_2^{2h}{\bf c}_t,{N}_{22}^{2h}{D}_2^{2h}{\bf c})_{2h} +  ({D}_2^{2h}{\bf c}_t,{N}_{23}^{2h}{D}_3^{2h}{\bf c})_{2h} \\
+	+  ({D}_3^{2h}{\bf c}_t,{N}_{31}^{2h}{D}_1^{2h}{\bf c})_{2h} 
+	+  ({D}_3^{2h}{\bf c}_t,{N}_{32}^{2h}{D}_2^{2h}{\bf c})_{2h} +  ({D}_3^{2h}{\bf c}_t,{N}_{33}^{2h}{D}_3^{2h}{\bf c})_{2h}\\
+	+ ({\bf c}_t, P^{2h}_1(N_{11}^{2h}){\bf c})_{2hr} + ({\bf c}_t, P^{2h}_2(N_{22}^{2h}){\bf c})_{2hr} + ({\bf c}_t, P^{2h}_3(N_{33}^{2h}){\bf c})_{2hr},
+	\end{multline}
+	which is a symmetric and positive definite bilinear form, $P_3^{2h}(N_{33}^{2h})$ is a positive semi-definite operator defined in \eqref{sbp_2nd_1} for direction $r^{(3)}$ and $P_1^{2h}(N_{11}^{2h}), P_2^{2h}(N_{22}^{2h})$ are analogue to $P_3^{2h}(N_{33}^{2h})$. The boundary term $B_{2h} ({\bf c}_t,{\bf c})$ is given by
+	\begin{equation}\label{bounary_c1}
+	B_{2h} ({\bf c}_t,{\bf c}) = 4h_1h_2\sum_{{\bf i}\in I_{\Gamma^c}}\frac{d{\bf c}_{\bf i}}{dt}\cdot\left({N}_{31}^{2h}{D}_1^{2h}{\bf c}+{N}_{32}^{2h}{D}_2^{2h}{\bf c}+{N}_{33}^{2h}\wt{\mathcal{D}}_3^{2h}{\bf c}\right)_{\bf i}.
+	\end{equation}
+	
+	Multiplying (\ref{fine_scheme}) by $h_1h_2h_3\omega_kJ^f{\bf f}_t$ and summing over all grid points, based on \eqref{scalar_product_inner_f}, we obtain
+	\begin{equation}\label{fine_simple}
+	({\bf f}_t, {\rho}^f{\bf f}_{tt})_h = ({\bf f}_t,({J^f})^{-1}\hat{\mathcal{L}}^h{\bf f})_h = -\mathcal{S}_{h}({\bf f}_t,{\bf f}) + B_h({\bf f}_t,{\bf f}) 
+	+h_1h_2h_3\omega_1\sum_{i = 1}^{n_1^h}\sum_{j=1}^{n_2^h} \frac{d{\bf f}_{i,j,1}}{dt}\cdot{\bm \eta}_{i,j,1},
+	\end{equation}
+	where
+	\begin{multline}\label{sh}
+	\mathcal{S}_{h}({\bf f}_t,{\bf f}) = ({D}_1^{h}{\bf f}_t,{N}_{11}^{h}{D}_1^h{\bf f})_{h} +  ({D}_1^{h}{\bf f}_t,{N}_{12}^{h}{D}_2^h{\bf f})_{h} +  ({D}_1^{h}{\bf f}_t,{N}_{13}^{h}{D}_3^h{\bf f})_{h}\\
+	+  ({D}_2^{h}{\bf f}_t,{N}_{21}^{h}{D}_1^h{\bf f})_{h} 
+	+  ({D}_2^{h}{\bf f}_t,{N}_{22}^{h}{D}_2^h{\bf f})_{h} +  ({D}_2^{h}{\bf f}_t,{N}_{23}^{h}{D}_3^h{\bf f})_{h} \\
+	+  ({D}_3^{h}{\bf f}_t,{N}_{31}^{h}{D}_1^h{\bf f})_{h} 
+	+  ({D}_3^{h}{\bf f}_t,{N}_{32}^{h}{D}_2^h{\bf f})_{h} +  ({D}_3^{h}{\bf f}_t,{N}_{33}^{h}{D}_3^h{\bf f})_{h}\\
+	+ ({\bf f}_t, P^{h}_1(N_{11}^h){\bf f})_{hr} + ({\bf f}_t, P^{h}_2(N_{22}^h){\bf f})_{hr} + ({\bf f}_t, P^{h}_3(N_{33}^h){\bf f})_{hr}.
+	\end{multline}
+	Again $\mathcal{S}_h$ is a symmetric and positive definite bilinear form, $P_l^h(N_{ll}^h)$ are defined similar as those in \eqref{s2h}. The boundary term $B_h ({\bf f}_t,{\bf f})$ has the following form
+	\begin{equation}\label{boundary_f1}
+	B_h ({\bf f}_t,{\bf f}) = -h_1h_2\sum_{{\bf i}\in I_{\Gamma^f}}\frac{d{\bf f}_{\bf i}}{dt}\cdot\left({N}_{31}^h{D}_1^h {\bf f}+ {N}_{32}^h{D}_2^h{\bf f}+{N}_{33}^h\mathcal{D}_3^h{\bf f}\right)_{\bf i}.
+	\end{equation}
+	Adding \eqref{coarse_simple} and \eqref{fine_simple} together, we obtain
+	\begin{multline}\label{semi_energy_1}
+	\frac{d}{dt}\big[({\bf f}_t,\rho^f {\bf f}_t)_h + \mathcal{S}_{h}({\bf f},{\bf f}) + ({\bf c}_t,\rho^{c} {\bf c}_t)_{2h} + \mathcal{S}_{2h}({\bf c},{\bf c}) \big]  = \\
+	2B_{h}({\bf f}_t,{\bf f}) + 2B_{2h}({\bf c}_t,{\bf c}) + 2h_1h_2h_3\omega_1\sum_{i = 1}^{n_1^h}\sum_{j=1}^{n_2^h}\frac{d{\bf f}_{i,j,1}}{dt}\cdot{\bm \eta}_{i,j,1}.
+	\end{multline}
+	Substituting (\ref{boundary_f1}) and (\ref{bounary_c1}) into (\ref{semi_energy_1}) and combining the definitions of the scalar product at the interface (\ref{scalar_product_discrete_interface_c})--(\ref{scalar_product_discrete_interface_f}) and Lemma \ref{lemma1}, we have
+	\begin{align*}\label{semi_energy_2}
+	&\hspace{0.4cm}\frac{d}{dt}\left[({\bf f}_t,\rho^f {\bf f}_t)_{h} + \mathcal{S}_{h}({\bf f},{\bf f}) + ({\bf c}_t,\rho^{c} {\bf c}_t)_{2h} + \mathcal{S}_{2h}({\bf c},{\bf c}) \right]   \nonumber\\
+	& = 2\left<{\bf f}_t,\big(({\Lambda}^{h}{J}^h_\Gamma\big)\otimes {\bf I})^{-1}(-\mathcal{A}_3^h{\bf f}+h_3\omega_1{\bm \eta})\right>_{h}+ 2\left<{\bf c}_t,\big(({\Lambda}^{2h}{J}^{2h}_\Gamma\big)\otimes{\bf I})^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}\right>_{2h} \nonumber\\
+	& = 2\left<{\mathcal{P}}{\bf c}_t,\big(({\Lambda}^{h}{J}^h_\Gamma)\otimes{\bf I}\big)^{-1}(-\mathcal{A}_3^h{\bf f}+h_3\omega_1{\bm \eta})\right>_{h}+ 2\left<{\bf c}_t, \big(({\Lambda}^{2h}{J}^{2h}_\Gamma)\otimes{\bf I}\big)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}\right>_{2h} \nonumber\\
+	& = 2\left<{\bf c}_t,{\mathcal{R}}\Big(\big(({\Lambda}^{h}{J}^h_\Gamma)\otimes{\bf I}\big)^{-1}(-\mathcal{A}_3^h{\bf f}+h_3\omega_1{\bm \eta})\Big)\right>_{2h}+ 2\left<{\bf c}_t,\big(({\Lambda}^{2h}{J}^{2h}_\Gamma)\otimes{\bf I}\big)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}\right>_{2h} = 0,
+	\end{align*}
+	where we have used the notations in (\ref{hatAf})--(\ref{hatAc}) and ${\bf I}$. Note that the energy for the semi-discretization \eqref{elastic_semi_c} and \eqref{fine_scheme} is gievn by $({\bf f}_t,\rho^f {\bf f}_t)_{h} + \mathcal{S}_{h}({\bf f},{\bf f}) + ({\bf c}_t,\rho^{c} {\bf c}_t)_{2h} + \mathcal{S}_{2h}({\bf c},{\bf c})$.
 \end{proof}
+
+
+
+
+
+
+
+
+ 

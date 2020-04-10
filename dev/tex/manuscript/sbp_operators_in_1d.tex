@@ -15,7 +15,7 @@ Here, $0<\omega_i < \infty $ are the weights of scalar product. The SBP operator
 \begin{equation}\label{sbp_2nd_1}
 ({\bf u}, \wt{G}(\gamma){\bf v})_h = -S_\gamma({\bf u},{\bf v})-u_1\gamma_1\wt{\bf b}_1{\bf v} + u_n\gamma_n\wt{\bf b}_n {\bf v}.
 \end{equation}
-Here, the bilinear form $S_\gamma(\cdot,\cdot)$ is symmetric positive semi-definite, and does not use any ghost points. The operators $\wt{\bf b}_1$ and $\wt{\bf b}_n$ take the form %Using the right boundary as an example, we have 
+Here, the bilinear form $S_\gamma({\bf u},{\bf v}) = -(D{\bf u},\gamma D{\bf v})_h - ({\bf u}, P(\gamma){\bf v})_{hr}$ without using any ghost points, the positive semi-definite operator $P(\gamma)$ is small for smooth grid functions and non-zero for odd-even modes , see \cite{petersson2015wave,sjogreen2012fourth} for details, and $S_\gamma(\cdot,\cdot)$ is symmetric positive semi-definite. The operators $\wt{\bf b}_1$ and $\wt{\bf b}_n$ take the form %Using the right boundary as an example, we have 
 \begin{equation}\label{sbp_1st_1}
 \wt{\bf b}_1 {\bf v} = \frac{1}{h}\sum_{i=0}^{4} \wt{d}_i v_i, \quad\wt{\bf b}_n {\bf v} = \frac{1}{h}\sum_{i=n-3}^{n+1} \wt{d}_i v_i.
 \end{equation}
@@ -25,7 +25,7 @@ They are fourth order approximations of the first derivative $v_x$ on the left a
  \begin{equation}\label{sbp_2nd_2}
  ({\bf u}, G(\gamma){\bf v})_h = -S_\gamma({\bf u},{\bf v})-u_1\gamma_1{\bf b}_1{\bf v} + u_n\gamma_n{\bf b}_n{\bf v},
  \end{equation}
- where $S_\gamma({\bf u},{\bf v})$ is symmetric positive semi-definite. 
+ where $S_\gamma(\cdot,\cdot)$ is symmetric positive semi-definite. 
  Here, ${\bf b}_1$ and ${\bf b}_n$ are also finite difference operators for the first derivative at the boundaries, and are constructed to fourth order accuracy. They take the form
  \begin{equation}\label{sbp_1st_2}
  {\bf b}_1 {\bf v} = \frac{1}{h}\sum_{i=1}^{5} d_i v_i,\quad {\bf b}_n {\bf v} = \frac{1}{h}\sum_{i=n-4}^{n} d_i v_i.
