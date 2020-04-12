@@ -71,8 +71,10 @@ which imposes the continuity of the solution at the interface $\Gamma$.
 
 For energy stability, the operator ${\mathcal{P}}$ must be in a specific form
 %\[{\mathcal{P}} = (\mathcal{J}^h_\Gamma \bm{\Lambda}^h)^{-\frac{1}{2}}({\bf P}\otimes{\bf I})(\mathcal{J}^{2h}_\Gamma \bm{\Lambda}^{2h})^{\frac{1}{2}}.\]
-\[{\mathcal{P}} = \left(({J}^h_\Gamma {\Lambda}^h)^{-\frac{1}{2}}{\bf P}({J}^{2h}_\Gamma {\Lambda}^{2h})^{\frac{1}{2}}\right)\otimes{\bf I}.\]
-Here, $J_{\Gamma}^h$ and $\Lambda^h$ are $n_1^{h}n_2^{h}\times n_1^{h}n_2^{h}$ diagonal matrices. The diagonal elements of $J_{\Gamma}^h$ and $\Lambda^{h}$ are $J^f$ and $|\nabla_x R^{f,(3)}|$ evaluated at fine grid points in $I_{\Gamma^f}$, respectively. Similarly, ${J}_{\Gamma}^{2h}$ and ${{\Lambda}^{2h}}$ are $n_1^{2h}n_2^{2h}\times n_1^{2h}n_2^{2h}$ diagonal matrices. The diagonal elements of $J_{\Gamma}^{2h}$ and $\Lambda^{2h}$ are $J^c$ and $|\nabla_x R^{c,(3)}|$ evaluated at coarse grid points in $I_{\Gamma^c}$, respectively. Because the spatial dimension of the governing equation is 3, the matrix ${\bf I}$ is a $3\times 3$ identity matrix. Finally, ${\bf P}$ is an interpolation operator of size $n_1^hn_2^h\times n_1^{2h}n_2^{2h}$ for scalar grid functions on $\Gamma^c$. Since the spatial discretization is fourth order accurate, we also use a fourth order interpolation. With mesh refinement ratio  $1:2$, the stencils ${\bf P}$ have four cases as illustrated in  Figure \ref{interpolation}. Consequently, the scaled interpolation operator $\mathcal{P}$ is also fourth order accurate.
+\begin{equation}\label{scaleP}
+{\mathcal{P}} = \left(({J}^h_\Gamma {\Lambda}^h)^{-\frac{1}{2}}{\bf P}({J}^{2h}_\Gamma {\Lambda}^{2h})^{\frac{1}{2}}\right)\otimes{\bf I}.
+\end{equation}
+Here, $J_{\Gamma}^h$ and $\Lambda^h$ are $n_1^{h}n_2^{h}\times n_1^{h}n_2^{h}$ diagonal matrices. The diagonal elements of $J_{\Gamma}^h$ and $\Lambda^{h}$ are $J^f$ and $|\nabla_x R^{f,(3)}|$ evaluated at fine grid points in $I_{\Gamma^f}$, respectively. Similarly, ${J}_{\Gamma}^{2h}$ and ${{\Lambda}^{2h}}$ are $n_1^{2h}n_2^{2h}\times n_1^{2h}n_2^{2h}$ diagonal matrices. The diagonal elements of $J_{\Gamma}^{2h}$ and $\Lambda^{2h}$ are $J^c$ and $|\nabla_x R^{c,(3)}|$ evaluated at coarse grid points in $I_{\Gamma^c}$, respectively. Because the spatial dimension of the governing equation is 3, the matrix ${\bf I}$ is a $3\times 3$ identity matrix. Finally, ${\bf P}$ is an interpolation operator of size $n_1^hn_2^h\times n_1^{2h}n_2^{2h}$ for scalar grid functions at $\Gamma^c$. Since the spatial discretization is fourth order accurate, we also use a fourth order interpolation. With mesh refinement ratio  $1:2$, the stencils ${\bf P}$ have four cases as illustrated in  Figure \ref{interpolation}. Consequently, the scaled interpolation operator $\mathcal{P}$ is also fourth order accurate.
 
 In computer implementation, we use \eqref{continuous_sol} to obtain the solution at the interface of the fine domain. However, in the energy analysis in  Sec.~\ref{sec_energy}, it is more convenient to use the equivalent form
 %We note that \eqref{continuous_sol} is equivalent to 
@@ -102,17 +104,19 @@ The following condition imposes continuity of traction at the interface, the fir
 (\Lambda^{c}_{{\bf i}'}J_{{\bf i}'}^{c})^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}_{{\bf i}'}
 = {\mathcal{R}}\Big((\Lambda^f_{\bf i}{ J}^f_{\bf i})^{-1}(\mathcal{A}_3^h{\bf f}_{\bf i}-h_3\omega_1{\bm \eta}_{\bf i})\Big), \quad {\bf i}\in I_{\Gamma^f},\quad {{\bf i}'}\in I_{\Gamma^c}.
 \end{equation}
-The term $h_3\omega_1{\bm \eta}_{\bf i}$ in (\ref{continuous_traction}) originates from the fact that ghost points are only used in the coarse domain but not in the fine domain. The term is important for energy stability, as shown in Theorem \ref{thm1}. It is a penalty term on the order of the truncation error and thus (\ref{continuous_traction})  provides a valid way of enforcing the continuity of traction force at the interface.  In (\ref{continuous_traction}), $\omega_1$ is a weight in the inner product (\ref{inner_product}), $\Lambda_{{\bf i}'}^c$ and $\Lambda_{\bf i}^f$ store the values of functions $|\nabla_x R^{c,(3)}|$ and $|\nabla_x R^{f,(3)}|$ evaluated at the grid points ${\bf x}_{{\bf i}'}\in I_{\Gamma^c}$ and ${\bf x}_{\bf i}\in I_{\Gamma^f}$, respectively. In \eqref{continuous_traction}, we have used the notation
+Here, $(\Lambda^{c}_{{\bf i}'}J_{{\bf i}'}^{c})^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}_{{\bf i}'}$ approximates the traction, $\frac{A_3^c\nabla_r{\bf C}}{J^c\left|\nabla_x R^{c,(3)}\right|}$, at the interface of the coarse domain with $\Lambda_{{\bf i}'}^c = |\nabla_x R^{c,(3)}({\bf x}_{{\bf i}'})|$ and
+\begin{equation}\label{hatAc}
+\wt{\mathcal{A}}_3^{2h}{\bf c} = {N}_{31}^{2h}{D}^{2h}_1{\bf c} + {N}_{32}^{2h}{D}^{2h}_2{\bf c} + {N}_{33}^{2h}\wt{\mathcal{D}}^{2h}_3{\bf c},
+\end{equation}
+where ${N}_{3l}^{2h}D_l^h{\bf c}$ approximates $N_{3l}\bar{\partial}_l{\bf C}$ and ${N}_{33}^{2h}\wt{\mathcal{D}}_3^{2h}{\bf c}$ approximates $N_{33}\bar{\partial}_3{\bf C}$ are given in Appendix \ref{appendix_cdomain}; $(\Lambda^f_{\bf i}{ J}^f_{\bf i})^{-1}\mathcal{A}_3^h{\bf f}_{\bf i}$ approximates the traction, $\frac{A_3^f\nabla_r{\bf F}}{J^f\left|\nabla_x R^{f,(3)}\right|}$, at the interface of the fine domain with $\Lambda_{\bf i}^f = |\nabla_x R^{f,(3)}({\bf x}_{\bf i})|$ and 
 \begin{equation}\label{hatAf}
 \mathcal{A}_3^h{\bf f} = {N}_{31}^{h}{D}^h_1{\bf f} + {N}_{32}^h{D}^h_2{\bf f} + {N}_{33}^h\mathcal{D}_3^h{\bf f},
 \end{equation}
-where ${N}_{3l}^hD_l^h{\bf f}$ approximating $N_{3l}\bar{\partial}_l{\bf F}$ and ${N}_{33}^h\mathcal{D}_3^h{\bf f}$ approximating $N_{33}\bar{\partial}_3{\bf F}$ are given in Appendix \ref{appendix_cdomain}; and the other notation 
-\begin{equation}\label{hatAc}
-\wt{\mathcal{A}}_3^{2h}{\bf c} = {N}_{31}^{2h}{D}^{2h}_1{\bf c} + {N}_{32}^{2h}{D}^{2h}_2{\bf c} + {N}_{33}^{2h}\wt{\mathcal{D}}^{2h}_3{\bf c}.
-\end{equation}
-Here, ${N}_{3l}^{2h}D_l^{2h}{\bf c}$ approximate $N_{3l}\bar{\partial}_l{\bf C}$ and they have similar definitions as those in (\ref{hatAf}), but correspond to the grid points in $I_{\Gamma^c}$; ${N}_{33}^{2h}\wt{\mathcal{D}}^{2h}_3{\bf c}$ approximating $N_{33}\bar{\partial}_3{\bf C}$ is given in Appendix \ref{appendix_cdomain}. The scaled restriction operator ${\mathcal{R}} $ in \eqref{continuous_traction} has the structure 
- \[{\mathcal{R}} =  \left(({J}^{2h}_\Gamma{\Lambda}^{2h})^{-\frac{1}{2}}{\bf R}({J}^{h}_\Gamma {\Lambda}^h)^{\frac{1}{2}}\right)\otimes {\bf I},\]
- where ${\bf I}$ is a $3\times3$ identity matrix, ${\bf R}$ is a restriction operator of size $n_1^{2h}n_2^{2h}\times n_1^hn_2^h$ for scalar grid funcitons. It is determined by the compatibility condition ${\bf R}=\frac{1}{4}{\bf P}^T$, see the stencils in Figure \ref{restriction}. As will be seen later, the compatibility condition, as well as the scaling of the interpolation and restrictions, are essential for energy stability \cite{Lundquist2018}. We want to remark that the condition \eqref{continuous_traction} determines the ghost points values in the coarse domain. 
+where ${N}_{3l}^{h}D_l^{h}{\bf f}$ approximating $N_{3l}\bar{\partial}_l{\bf F}$ have similar definitions as those in (\ref{hatAc}), but correspond to the grid points in $I_{\Gamma^f}$, ${N}_{33}^{2h}{\mathcal{D}}^{2h}_3{\bf f}$ approximating $N_{33}\bar{\partial}_3{\bf F}$ is given in Appendix \ref{appendix_cdomain}; the term $h_3\omega_1{\bm \eta}_{\bf i}$ originates from the fact that ghost points are only used in the coarse domain but not in the fine domain. The term is important for energy stability, as shown in Theorem \ref{thm1}. It is a penalty term on the order of the truncation error and thus (\ref{continuous_traction})  provides a valid way of enforcing the continuity of traction at the interface, $\omega_1$ is a weight in the inner product (\ref{inner_product}); $\mathcal{R}$ is a scaled restriction operator with the structure 
+\begin{equation}\label{scaleR}
+ {\mathcal{R}} =  \left(({J}^{2h}_\Gamma{\Lambda}^{2h})^{-\frac{1}{2}}{\bf R}({J}^{h}_\Gamma {\Lambda}^h)^{\frac{1}{2}}\right)\otimes {\bf I},
+ \end{equation}
+ where ${\bf R}$ is a restriction operator of size $n_1^{2h}n_2^{2h}\times n_1^hn_2^h$ for scalar grid funcitons. It is determined by the compatibility condition ${\bf R}=\frac{1}{4}{\bf P}^T$, see the stencils in Figure \ref{restriction}. As will be seen later, the compatibility condition, as well as the scaling of the interpolation and restrictions, are essential for energy stability \cite{Lundquist2018}. We want to remark that the condition \eqref{continuous_traction} determines the ghost points values in the coarse domain. 
  
 Let ${\bf u}$ and ${\bf v}$ be grid functions in coarse domain $\Omega^c$, we define the discrete inner product at the interface by
 \begin{equation}\label{scalar_product_discrete_interface_c}
@@ -145,7 +149,7 @@ with $\bf u$ and $\bf v$ are grid functions in fine domain $\Omega^f$. Then we h
  	%& = (J_{\Gamma}^{2h}\Lambda^{2h})^{-\frac{1}{2}}{\bf R}(J_{\Gamma}^{h}\Lambda^{h})^{\frac{1}{2}}\otimes{\bf I},
  	%\end{align*}
  	%then
- 	From \eqref{scalar_product_discrete_interface_c}--\eqref{scalar_product_discrete_interface_f}, we obtain
+ 	From \eqref{scalar_product_discrete_interface_c}--\eqref{scalar_product_discrete_interface_f}, the definiton of $\mathcal{P}$ in \eqref{scaleP} and $\mathcal{R}$ in \eqref{scaleR}, we obtain
  	\begin{align*}
  	\left<\mathcal{P}{\bf c}, {\bf f}\right>_h &= h_1h_2\left[\left((J_{\Gamma}^h\Lambda^h)^{\frac{1}{2}} {\bf P}(J_{\Gamma}^{2h}\Lambda^{2h})^{\frac{1}{2}}\otimes {\bf I}\right){\bf c}\right]^T\cdot{\bf f}\\
  	& = 4h_1h_2 {\bf c}^T \cdot \left[\left((J_{\Gamma}^{2h}\Lambda^{2h})^{\frac{1}{2}}\frac{1}{4}{\bf P}^T(J_{\Gamma}^h\Lambda^h)^{\frac{1}{2}}\otimes {\bf I}\right) {\bf f}\right]\\

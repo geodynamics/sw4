@@ -36,25 +36,15 @@ For the second term in (\ref{Lf_operator}), we have
 \end{align*}
 Here, ${G}_3^{h}(N_{33}^{h}(p,q)) {f}^{(q)}$ is the SBP operator defined in (\ref{sbp_2nd_2}) for direction $r^{(3)}$. 
 
-For the terms in (\ref{hatAf}), we have
-\begin{align*}\label{gamma_D} 
-{N}_{3l}^hD_l^h{\bf f} := \left(\begin{array}{c}
-({N}_{3l}^hD_l^h{\bf f})_1 \\
-({N}_{3l}^hD_l^h{\bf f})_2 \\
-({N}_{3l}^hD_l^h{\bf f})_3 
-\end{array}\right), \quad ({N}_{3l}^hD_l^h{\bf f})_p = \sum_{q = 1}^{3} N_{3l}^h(p,q)D_l^h{f}^{(q)},\quad l = 1,2, \quad p = 1,2,3,
-\end{align*}
-where $D_l^h{f}^{(q)}$ is a central difference operator for first spatial derivative in direction $r^{(l)}$, and
-\begin{align*}\label{gamma_D1}
-{N}_{33}^h\mathcal{D}_3^h{\bf f} := \left(\begin{array}{c}
-({N}_{33}^h\mathcal{D}_3^h{\bf f})_1 \\
-({N}_{33}^h\mathcal{D}_3^h{\bf f})_2 \\
-({N}_{33}^h\mathcal{D}_3^h{\bf f})_3 
-\end{array}\right), \quad ({N}_{33}^h\mathcal{D}_3^h{\bf f})_p = \sum_{q = 1}^{3} N_{33}^h(p,q)\mathcal{D}_3^h{f}^{(q)},\quad p = 1,2,3,
-\end{align*}
-where $\mathcal{D}_3^h{f}^{(q)}$ is the SBP operator for first spatial derivative in direction $r^{(3)}$ defined as in the first equation of (\ref{sbp_1st_2}).
-
 For the terms in (\ref{hatAc}), we have
+\begin{align*}\label{gamma_D} 
+{N}_{3l}^{2h}D_l^{2h}{\bf c} := \left(\begin{array}{c}
+({N}_{3l}^{2h}D_l^{2h}{\bf c})_1 \\
+({N}_{3l}^{2h}D_l^{2h}{\bf c})_2 \\
+({N}_{3l}^{2h}D_l^{2h}{\bf c})_3 
+\end{array}\right), \quad ({N}_{3l}^{2h}D_l^{2h}{\bf c})_p = \sum_{q = 1}^{3} N_{3l}^{2h}(p,q)D_l^{2h}{c}^{(q)},\quad l = 1,2, \quad p = 1,2,3,
+\end{align*}
+where $D_l^{2h}{c}^{(q)}$ is a central difference operator for first spatial derivative in direction $r^{(l)}$, and
 \begin{align*}\label{3_17}
 {N}_{33}^{2h}\wt{\mathcal{D}}_3^{2h}{\bf c} := \left(\begin{array}{c}
 ({N}_{33}^{2h}\wt{\mathcal{D}}_3^{2h}{\bf c})_1 \\
@@ -63,6 +53,16 @@ For the terms in (\ref{hatAc}), we have
 \end{array}\right), \quad ({N}_{33}^{2h}\wt{\mathcal{D}}_3^{2h}{\bf c})_p = \sum_{q = 1}^{3} N_{33}^{2h}(p,q)\wt{\mathcal{D}}_3^{2h}{c}^{(q)},\quad p = 1,2,3,
 \end{align*}
 where $\wt{\mathcal{D}}_3^{2h}{c}^{(q)}$ is the difference operator for first spatial derivative in direction $r^{(3)}$ defined as in the second equation of (\ref{sbp_1st_1}).
+
+For the terms in (\ref{hatAf}), we have
+\begin{align*}\label{gamma_D1}
+{N}_{33}^h\mathcal{D}_3^h{\bf f} := \left(\begin{array}{c}
+({N}_{33}^h\mathcal{D}_3^h{\bf f})_1 \\
+({N}_{33}^h\mathcal{D}_3^h{\bf f})_2 \\
+({N}_{33}^h\mathcal{D}_3^h{\bf f})_3 
+\end{array}\right), \quad ({N}_{33}^h\mathcal{D}_3^h{\bf f})_p = \sum_{q = 1}^{3} N_{33}^h(p,q)\mathcal{D}_3^h{f}^{(q)},\quad p = 1,2,3,
+\end{align*}
+where $\mathcal{D}_3^h{f}^{(q)}$ is the SBP operator for first spatial derivative in direction $r^{(3)}$ defined as in the first equation of (\ref{sbp_1st_2}).
 
 \section{Bilinear form}\label{appendix_bf}
 The term $\mathcal{S}_{2h}({\bf c}_t,{\bf c})$ in \eqref{coarse_simple} is given by
