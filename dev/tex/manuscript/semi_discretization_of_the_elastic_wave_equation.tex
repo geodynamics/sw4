@@ -72,19 +72,20 @@ which imposes the continuity of the solution at the interface $\Gamma$.
 For energy stability, the operator ${\mathcal{P}}$ must be in a specific form
 %\[{\mathcal{P}} = (\mathcal{J}^h_\Gamma \bm{\Lambda}^h)^{-\frac{1}{2}}({\bf P}\otimes{\bf I})(\mathcal{J}^{2h}_\Gamma \bm{\Lambda}^{2h})^{\frac{1}{2}}.\]
 \[{\mathcal{P}} = \left(({J}^h_\Gamma {\Lambda}^h)^{-\frac{1}{2}}{\bf P}({J}^{2h}_\Gamma {\Lambda}^{2h})^{\frac{1}{2}}\right)\otimes{\bf I}.\]
-Here, $J_{\Gamma}^h$ and $\Lambda^h$ are $n_1^{h}n_2^{h}\times n_1^{h}n_2^{h}$ diagonal matrices. The diagonal elements of $J_{\Gamma}^h$ and $\Lambda^{h}$ are $J^f$ and $|\nabla_x R^{f,(3)}|$ evaluated at fine grid points in $I_{\Gamma^f}$, respectively. Similarly, ${J}_{\Gamma}^{2h}$ and ${{\Lambda}^{2h}}$ are $n_1^{2h}n_2^{2h}\times n_1^{2h}n_2^{2h}$ diagonal matrices. The diagonal elements of $J_{\Gamma}^{2h}$ and $\Lambda^{2h}$ are $J^c$ and $|\nabla_x R^{c,(3)}|$ evaluated at coarse grid points in $I_{\Gamma^c}$, respectively. ${\bf I}$ is $3\times 3$ identity matrix. ${\bf P}$ is an interpolation operator of size $n_1^hn_2^h\times n_1^{2h}n_2^{2h}$ for scalar grid functions. Since the mesh refinement ratio is $1:2$, the stencils of the fourth order accurate interpolation operator ${\bf P}$ in two dimensions have four cases, see the illustration in  Figure \ref{interpolation}.
+Here, $J_{\Gamma}^h$ and $\Lambda^h$ are $n_1^{h}n_2^{h}\times n_1^{h}n_2^{h}$ diagonal matrices. The diagonal elements of $J_{\Gamma}^h$ and $\Lambda^{h}$ are $J^f$ and $|\nabla_x R^{f,(3)}|$ evaluated at fine grid points in $I_{\Gamma^f}$, respectively. Similarly, ${J}_{\Gamma}^{2h}$ and ${{\Lambda}^{2h}}$ are $n_1^{2h}n_2^{2h}\times n_1^{2h}n_2^{2h}$ diagonal matrices. The diagonal elements of $J_{\Gamma}^{2h}$ and $\Lambda^{2h}$ are $J^c$ and $|\nabla_x R^{c,(3)}|$ evaluated at coarse grid points in $I_{\Gamma^c}$, respectively. Because the spatial dimension of the governing equation is 3, the matrix ${\bf I}$ is a $3\times 3$ identity matrix. Finally, ${\bf P}$ is an interpolation operator of size $n_1^hn_2^h\times n_1^{2h}n_2^{2h}$ for scalar grid functions on $\Gamma^c$. Since the spatial discretization is fourth order accurate, we also use a fourth order interpolation. With mesh refinement ratio  $1:2$, the stencils ${\bf P}$ have four cases as illustrated in  Figure \ref{interpolation}. Consequently, the scaled interpolation operator $\mathcal{P}$ is also fourth order accurate.
 
-We note that \eqref{continuous_sol} is equivalent to 
+In computer implementation, we use \eqref{continuous_sol} to obtain the solution at the interface of the fine domain. However, in the energy analysis in  Sec.~\ref{sec_energy}, it is more convenient to use the equivalent form
+%We note that \eqref{continuous_sol} is equivalent to 
 \begin{equation}\label{elastic_semi_f_i}
 {\rho}^f_{\bf i} \frac{d^2{\bf f}_{\bf i}}{dt^2} =
 \frac{1}{J^f_{\bf i}}(\mathcal{L}^h{\bf f}_{\bf i} + {\bm \eta}_{\bf i}), \quad {\bf i}\in I_{\Gamma^f}
 \end{equation}
 with 
 \begin{equation}\label{eta}
-{\bm \eta}_{\bf i} = {\rho}^f_{\bf i}J^f_{\bf i}{\mathcal{P}}\left(\frac{1}{\rho^c_{{\bf i}'}J^c_{{\bf i}'}}\wt{\mathcal{L}}^{2h} {\bf c}_{{\bf i}'}\right) - \mathcal{L}^{h}{\bf f}_{\bf i}, \quad {\bf i}\in I_{\Gamma^f},\quad {{\bf i}'}\in I_{\Gamma^c},
+{\bm \eta}_{\bf i} = {\rho}^f_{\bf i}J^f_{\bf i}{\mathcal{P}}\left(\frac{1}{\rho^c_{{\bf i}'}J^c_{{\bf i}'}}\wt{\mathcal{L}}^{2h} {\bf c}_{{\bf i}'}\right) - \mathcal{L}^{h}{\bf f}_{\bf i}, \quad {\bf i}\in I_{\Gamma^f},\quad {{\bf i}'}\in I_{\Gamma^c}.
 \end{equation}
-which is useful in the energy analysis in the next section. The variable $\bm \eta$ in (\ref{eta}) is approximately zero with a second order truncation error, which is of the same order as the boundary stencil of the SBP operator. %Therefore, it does not affect the overall accuracy of the semi-discretization. 
-
+%which is useful in the energy analysis in the next section. 
+The variable $\bm \eta$ in (\ref{eta}) is approximately zero with a second order truncation error, which is of the same order as the boundary stencil of the SBP operator. Hence,  $\bm \eta$ does not affect the order of truncation error in the spatial discretization. %Therefore, it does not affect the overall accuracy of the semi-discretization. 
 For the simplicity of analysis, we introduce a general notation for the schemes (\ref{elastic_semi_f}) and (\ref{elastic_semi_f_i}) in the fine domain $\Omega^f$,
 \begin{align}\label{fine_scheme}
 {\rho}^f_{\bf i}\frac{d^2{\bf f}_{\bf i}}{dt^2} =\frac{1}{J^f_{\bf i}}\hat{\mathcal{L}}^h{\bf f}_{\bf i} = \left\{
@@ -94,7 +95,7 @@ For the simplicity of analysis, we introduce a general notation for the schemes 
 \end{aligned}
 \right. \quad t > 0.
 \end{align}
-In computer implementation, we use \eqref{continuous_sol} to obtain the solution at the interface of the fine domain. The reason for introducing \eqref{elastic_semi_f_i} is that it will be helpful in the energy analysis in Sec.~\ref{sec_energy}.
+%In computer implementation, we use \eqref{continuous_sol} to obtain the solution at the interface of the fine domain. The reason for introducing \eqref{elastic_semi_f_i} is that it will be helpful in the energy analysis in Sec.~\ref{sec_energy}.
 
 The following condition imposes continuity of traction at the interface, the first equation in (\ref{interface_cond}),
 \begin{equation}\label{continuous_traction}
