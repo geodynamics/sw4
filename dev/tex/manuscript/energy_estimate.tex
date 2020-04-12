@@ -17,7 +17,7 @@ where $\bf u$ and $\bf v$ are grid functions in the fine domain $\Omega^f$. Now,
 	\begin{equation}\label{coarse_simple}
 	({\bf c}_t, {\rho}^{c}{\bf c}_{tt})_{2h} = ({\bf c}_t,({J^c})^{-1}\wt{\mathcal{L}}^{2h}{\bf c})_{2h} = -\mathcal{S}_{2h}({\bf c}_t,{\bf c}) + B_{2h}({\bf c}_t,{{\bf c}}),
 	\end{equation}
-	where $\mathcal{S}_{2h}({\bf c}_t,{\bf c})$ is a symmetric and positive definite bilinear form given in Appendix \ref{appendix_cdomain}, the boundary term $B_{2h} ({\bf c}_t,{\bf c})$ is given by
+	where $\mathcal{S}_{2h}({\bf c}_t,{\bf c})$ is a symmetric and positive definite bilinear form given in Appendix \ref{appendix_bf}, the boundary term $B_{2h} ({\bf c}_t,{\bf c})$ is given by
 	\begin{equation}\label{bounary_c1}
 	B_{2h} ({\bf c}_t,{\bf c}) = 4h_1h_2\sum_{{\bf i}\in I_{\Gamma^c}}\frac{d{\bf c}_{\bf i}}{dt}\cdot (\wt{A}_3^{2h}{\bf c}_{\bf i}),
 	\end{equation}
@@ -26,7 +26,7 @@ where $\bf u$ and $\bf v$ are grid functions in the fine domain $\Omega^f$. Now,
 	({\bf f}_t, {\rho}^f{\bf f}_{tt})_h = ({\bf f}_t,({J^f})^{-1}\hat{\mathcal{L}}^h{\bf f})_h = -\mathcal{S}_{h}({\bf f}_t,{\bf f}) + B_h({\bf f}_t,{\bf f}) 
 	+h_1h_2h_3\omega_1\sum_{i = 1}^{n_1^h}\sum_{j=1}^{n_2^h} \frac{d{\bf f}_{i,j,1}}{dt}\cdot{\bm \eta}_{i,j,1}.
 	\end{equation}
-Here, $\mathcal{S}_h$ is also a symmetric and positive definite bilinear form given in Appendix \ref{appendix_cdomain}. The boundary term $B_h ({\bf f}_t,{\bf f})$ has the following form
+Here, $\mathcal{S}_h$ is also a symmetric and positive definite bilinear form given in Appendix \ref{appendix_bf}. The boundary term $B_h ({\bf f}_t,{\bf f})$ has the following form
 	\begin{equation}\label{boundary_f1}
 	B_h ({\bf f}_t,{\bf f}) = -h_1h_2\sum_{{\bf i}\in I_{\Gamma^f}}\frac{d{\bf f}_{\bf i}}{dt}\cdot(A_3^h {\bf f}_{\bf i}),
 	\end{equation}
@@ -42,7 +42,7 @@ Here, $\mathcal{S}_h$ is also a symmetric and positive definite bilinear form gi
 	& = 2\left<{\mathcal{P}}{\bf c}_t,\big(({\Lambda}^{h}{J}^h_\Gamma)\otimes{\bf I}\big)^{-1}(-\mathcal{A}_3^h{\bf f}+h_3\omega_1{\bm \eta})\right>_{h}+ 2\left<{\bf c}_t, \big(({\Lambda}^{2h}{J}^{2h}_\Gamma)\otimes{\bf I}\big)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}\right>_{2h} \nonumber\\
 	& = 2\left<{\bf c}_t,{\mathcal{R}}\Big(\big(({\Lambda}^{h}{J}^h_\Gamma)\otimes{\bf I}\big)^{-1}(-\mathcal{A}_3^h{\bf f}+h_3\omega_1{\bm \eta})\Big)\right>_{2h}+ 2\left<{\bf c}_t,\big(({\Lambda}^{2h}{J}^{2h}_\Gamma)\otimes{\bf I}\big)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}\right>_{2h} = 0,
 	\end{align*}
-	where ${\bf I}$ is a $3\times3$ identity matrix. Note that the energy for the semi-discretization \eqref{elastic_semi_c} and \eqref{fine_scheme} is gievn by $({\bf f}_t,\rho^f {\bf f}_t)_{h} + \mathcal{S}_{h}({\bf f},{\bf f}) + ({\bf c}_t,\rho^{c} {\bf c}_t)_{2h} + \mathcal{S}_{2h}({\bf c},{\bf c})$.
+	where ${\bf I}$ is a $3\times3$ identity matrix. Note that the discrete energy for the semi-discretization \eqref{elastic_semi_c} and \eqref{fine_scheme} is gievn by $({\bf f}_t,\rho^f {\bf f}_t)_{h} + \mathcal{S}_{h}({\bf f},{\bf f}) + ({\bf c}_t,\rho^{c} {\bf c}_t)_{2h} + \mathcal{S}_{2h}({\bf c},{\bf c})$.
 \end{proof}
 
 
