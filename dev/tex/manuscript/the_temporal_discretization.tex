@@ -31,9 +31,8 @@ Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf
 		\item{For the continuity of traction at the interface $\Gamma$, assign the ghost points value in $\wt{\bf c}^{*,n+1}$ to satisfy
 			\begin{equation}\label{traction_gamma_pre}
 			({\Lambda}^{c}_{{\bf i}'}{J}_{{\bf i}'}^{c})^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}^{*,n+1}_{{\bf i}'}
-			= {\mathcal{R}}\left(({\Lambda}^{f}_{\bf i}{J}^f_{\bf i})^{-1}(\mathcal{A}_3^h{\bf f}^{*,n+1}_{\bf i}-h_3\omega_1{\bm \eta}^{\ast,n+1}_{\bf i})\right),\quad {\bf i}'\in I_{\Gamma^c},\quad {\bf i}\in I_{\Gamma^f}
+			= {\mathcal{R}}\left(({\Lambda}^{f}_{\bf i}{J}^f_{\bf i})^{-1}(\mathcal{A}_3^h{\bf f}^{*,n+1}_{\bf i}-h_3\omega_1{\bm \eta}^{\ast,n+1}_{\bf i})\right),\quad {\bf i}'\in I_{\Gamma^c},\quad {\bf i}\in I_{\Gamma^f}.
 			\end{equation}
-			with the definition of $\wt{\mathcal{A}}_3^{2h}$ in (\ref{hatAc}), and $\mathcal{A}_3^h$ in (\ref{hatAf}) .
 		}
 		\item{Evaluate the acceleration at all grid points 
 			\begin{equation*}
@@ -53,9 +52,8 @@ Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf
 		\item{For the continuity of traction at the interface $\Gamma$, assign the ghost point value in $\wt{\bf c}^{n+1}$ to satisfy
 			\begin{equation}\label{traction_gamma_corr}
 			({\Lambda}^{c}_{{\bf i}'}{J}_{{\bf i}'}^{c})^{-1}(\wt{\mathcal{A}}_3^{2h}{\bf c}^{n+1}_{{\bf i}'})
-			= {\mathcal{R}}\left(({\Lambda}^{f}_{\bf i}{ J}^f_{\bf i})^{-1}((\mathcal{A}_3^h{\bf f}^{n+1}_{\bf i})-h_3\omega_1{\bm \eta}^{n+1}_{\bf i})\right), \quad {{\bf i}'}\in I_{\Gamma^c}, \quad {\bf i}\in I_{\Gamma^f}
+			= {\mathcal{R}}\left(({\Lambda}^{f}_{\bf i}{ J}^f_{\bf i})^{-1}((\mathcal{A}_3^h{\bf f}^{n+1}_{\bf i})-h_3\omega_1{\bm \eta}^{n+1}_{\bf i})\right), \quad {{\bf i}'}\in I_{\Gamma^c}, \quad {\bf i}\in I_{\Gamma^f}.
 			\end{equation}
-			with the definition of $\wt{\mathcal{A}}_3^{2h}$ in (\ref{hatAc}), and $\mathcal{A}_3^h$ in (\ref{hatAf}).
 		}
 	\end{itemize}
 \end{breakablealgorithm}
