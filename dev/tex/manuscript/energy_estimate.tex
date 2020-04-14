@@ -13,7 +13,8 @@ where $\bf u$ and $\bf v$ are grid functions in the fine domain $\Omega^f$. Now,
 	The semi-discretization (\ref{elastic_semi_c}) and (\ref{fine_scheme}) is energy stable if the interface conditions \eqref{continuous_sol} and \eqref{continuous_traction} are satisfied.
 \end{theorem}
 \begin{proof}
-	Let $\rho^{h}, \rho^{2h}$ be diagonal matrices. Their diagonal elements are $\rho^f, \rho^c$ evaluated at grid points in $\Omega^f$ and $\Omega^c$, respectively; let $J^{h}, J^{2h}$ be diagonal matrices. Their diagonal elements are $J^f, J^c$ evaluated at grid points in $\Omega^f$ and $\Omega^c$, respectively.
+	%Let $\rho^{h}, \rho^{2h}$ be diagonal matrices. Their diagonal elements are $\rho^f, \rho^c$ evaluated at grid points in $\Omega^f$ and $\Omega^c$, respectively; let $J^{h}, J^{2h}$ be diagonal matrices. Their diagonal elements are $J^f, J^c$ evaluated at grid points in $\Omega^f$ and $\Omega^c$, respectively.
+		Let $\rho^{h}$, $\rho^{2h}$, $J^{h}$ and $J^{2h}$ be diagonal matrices with diagonal elements equal to the corresponding continuous functions evaluated on the grid, respectively. 
 	Multiplying (\ref{elastic_semi_c}) by $8h_1h_2h_3\omega_k(J^{2h}\otimes {\bf I}){\bf c}_t$ and summing over all grid points in $\Omega^c$, based on \eqref{scalar_product_inner}, we have
 	\begin{equation}\label{coarse_simple}
 	({\bf c}_t, (\rho^{2h}\otimes {\bf I}){\bf c}_{tt})_{2h} = ({\bf c}_t,(J^{2h}\otimes {\bf I})^{-1}\wt{\mathcal{L}}^{2h}{\bf c})_{2h} = -\mathcal{S}_{2h}({\bf c}_t,{\bf c}) + B_{2h}({\bf c}_t,{{\bf c}}),
