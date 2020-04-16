@@ -1315,7 +1315,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    float_sw4 normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
 
    // tmp
-   printf("set_grid_point_sources4: nearest grid point: (%d, %d, %d) in grid = %d\n", i, j, k, g);
+   //   printf("set_grid_point_sources4: nearest grid point: (%d, %d, %d) in grid = %d\n", i, j, k, g);
 
 // if g=0 and # Cartesian Grids =1, the grid is NOT curvilinear!!!
 //   if( g >= a_EW->mNumberOfCartesianGrids-1 && a_EW->topographyExists() )
