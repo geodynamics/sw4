@@ -416,10 +416,10 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     createAttr(grp, "NPTS", H5T_NATIVE_INT, attr_space1);
 
     // x, y, z
-    createAttr(grp, "STX,STY,STZ", H5T_NATIVE_FLOAT, attr_space3);
+    createAttr(grp, "STX,STY,STZ", H5T_NATIVE_DOUBLE, attr_space3);
 
     // Lon, lat, dep
-    createAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_FLOAT, attr_space3);
+    createAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_DOUBLE, attr_space3);
 
     // TODO: Location, no value to write now
     createAttr(grp, "LOC", H5T_NATIVE_INT, attr_space1);

@@ -68,17 +68,17 @@ for line in lines:
                 xyz[1] = float(kv[1])
             elif kv[0] == "downsample" :
                 downsample = int(kv[1])
-            elif kv[0] == "usgsformat" or kv[0] == "sacformat" or kv[0] == "sta" or kv[0] == "file" or kv[0] == "variables" or kv[0] == "nsew":
-                continue
-            else:
-                print("Ignored cmd:", kv[0])
+            # elif kv[0] == "  " or kv[0] == "hdf5file" or kv[0] == "hdf5format" or kv[0] == "usgsformat" or kv[0] == "sacformat" or kv[0] == "sta" or kv[0] == "file" or kv[0] == "variables" or kv[0] == "nsew":
+            #     continue
+            # else:
+            #     print("Ignored cmd:[", kv[0], "]")
 
         dset = grp.create_dataset('ISNSEW', (1,), dtype='i4')
         dset[0] = nsew
         if nsew == 0:
-            dset = grp.create_dataset('STX,STY,STZ', (3,), dtype='f4')
+            dset = grp.create_dataset('STX,STY,STZ', (3,), dtype='f8')
         else:
-            dset = grp.create_dataset('STLA,STLO,STDP', (3,), dtype='f4')
+            dset = grp.create_dataset('STLA,STLO,STDP', (3,), dtype='f8')
 
         dset[:] = xyz
 

@@ -52,6 +52,7 @@
 
 #ifdef USE_HDF5
 #include "hdf5.h"
+#include "readhdf5.h"
 #endif
 
 extern "C" {
@@ -1468,7 +1469,82 @@ void EW::saveGMTFile( vector<vector<Source*> > & a_GlobalUniqueSources, int even
          while (!sw4InputFile.eof())
          { 
             sw4InputFile.getline(buffer, 256);
-            if (startswith("rec", buffer) || startswith("sac", buffer))
+            if (startswith("rechdf5", buffer) || startswith("sachdf5", buffer)) {
+#ifdef USE_HDF5
+               bool cartCoordSet = false;
+               bool gridPointSet = false;
+               bool geoCoordSet = false;
+               bool statSet = false;
+               string filename="null";
+               string name="null";
+               int i=0,j=0,k=0;
+	       int ev=0;
+               double x=0.0, y=0.0, z=0.0;
+               double lat=0.0, lon=0.0;
+               // Get location and write to file
+               char* token = strtok(buffer, " \t");   
+               token = strtok(NULL, " \t"); // skip sac
+               while (token != NULL)
+               {
+                  // while there are tokens in the string still
+                  // NOTE: we skip all verify stmts as these have
+                  //       already been checked during initial parsing
+                  if (startswith("#", token) || startswith(" ", buffer))
+                     // Ignore commented lines and lines with just a space.
+                     break;
+                  else if (startswith("event=", token))
+                  {
+                     token += 6; // skip event=
+                     ev = atoi(token);
+                  }
+                  else if (startswith("infile=", token))
+                  {
+                     token += 7; 
+                     vector<string> stanamev;
+                     vector<double> xv;
+                     vector<double> yv;
+                     vector<double> zv;
+                     vector<int> is_nsewv;
+                     int nsta = 0;
+                     filename = token;
+
+                     readStationInfoHDF5(filename, &stanamev, &xv, &yv, &zv, &is_nsewv, &nsta);
+
+                     for (int i = 0; i < nsta; i++) {
+                       x = xv[i];
+                       y = yv[i];
+                       z = zv[i];
+                       lat = xv[i];
+                       lon = yv[i];
+                       name = stanamev[i];
+
+                       if (is_nsewv[i] == 0) 
+                           cartCoordSet = true;
+                       else 
+                           geoCoordSet = true;
+
+                       VERIFY(cartCoordSet || geoCoordSet);
+
+                       if (!geoCoordSet && cartCoordSet)
+                       {
+                         computeGeographicCoord(x, y, lon, lat);
+                       }
+                       if( ev == event )
+                       {
+                          numStations += 1;
+                       
+                       // Now have location
+                          stationstr << lon << " " << lat << " " << name << " CB" << endl; 
+                       }
+                     } // end for
+
+                  }
+
+                  token = strtok(NULL, " \t");
+               }
+#endif
+            } // token on sac line
+            else if (startswith("rec", buffer) || startswith("sac", buffer))
             {
 
                bool cartCoordSet = false;
