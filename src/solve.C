@@ -406,16 +406,16 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   if( m_anisotropic )
      enforceBCanisotropic( U, mC, t, BCForcing );
   else
-     enforceBC( U, a_Mu, a_Lambda, t, BCForcing );   
+     enforceBC( U, a_Mu, a_Lambda, AlphaVE, t, BCForcing );   
 
   for( int g=mNumberOfCartesianGrids; g < mNumberOfGrids-1 ; g++ )
-      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( U, t );
+     m_cli2[g-mNumberOfCartesianGrids]->impose_ic( U, t, AlphaVE );
 
 // Impose un-coupled free surface boundary condition with visco-elastic terms for 'Up'
-  if( m_use_attenuation && (m_number_mechanisms > 0) )
-  {
-     enforceBCfreeAtt2( U, a_Mu, a_Lambda, AlphaVE, BCForcing );
-  }
+//  if( m_use_attenuation && (m_number_mechanisms > 0) )
+//  {
+//     enforceBCfreeAtt2( U, a_Mu, a_Lambda, AlphaVE, BCForcing );
+//  }
 // Um
 // communicate across processor boundaries
   for(int g=0 ; g < mNumberOfGrids ; g++ )
@@ -431,16 +431,16 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   if( m_anisotropic )
      enforceBCanisotropic( Um, mC, t-mDt, BCForcing );
   else
-     enforceBC( Um, a_Mu, a_Lambda, t-mDt, BCForcing );
+     enforceBC( Um, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
 
   for( int g=mNumberOfCartesianGrids; g < mNumberOfGrids-1 ; g++ )
-      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( Um, t-mDt );
+     m_cli2[g-mNumberOfCartesianGrids]->impose_ic( Um, t-mDt, AlphaVEm );
 
 // Impose un-coupled free surface boundary condition with visco-elastic terms for 'Up'
-  if( m_use_attenuation && (m_number_mechanisms > 0) )
-  {
-     enforceBCfreeAtt2( Um, a_Mu, a_Lambda, AlphaVEm, BCForcing );
-  }
+//  if( m_use_attenuation && (m_number_mechanisms > 0) )
+//  {
+//     enforceBCfreeAtt2( Um, a_Mu, a_Lambda, AlphaVEm, BCForcing );
+//  }
 
 // more testing
   checkpoint_twilight_test( Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp, a_Sources, t );
@@ -669,13 +669,13 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     if( m_anisotropic )
        enforceBCanisotropic( Up, mC, t+mDt, BCForcing );
     else
-       enforceBC( Up, a_Mu, a_Lambda, t+mDt, BCForcing );
+       enforceBC( Up, a_Mu, a_Lambda, AlphaVEp, t+mDt, BCForcing );
 
 
 // NEW
 // Impose un-coupled free surface boundary condition with visco-elastic terms
-    if( m_use_attenuation && m_number_mechanisms > 0 )
-       enforceBCfreeAtt2( Up, a_Mu, a_Lambda, AlphaVEp, BCForcing );
+//    if( m_use_attenuation && m_number_mechanisms > 0 )
+//       enforceBCfreeAtt2( Up, a_Mu, a_Lambda, AlphaVEp, BCForcing );
     
     if( m_output_detailed_timing )
        time_measure[6] = MPI_Wtime();
@@ -838,14 +838,14 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
        if( m_anisotropic )
 	  enforceBCanisotropic( Up, mC, t+mDt, BCForcing );
        else
-	  enforceBC( Up, a_Mu, a_Lambda, t+mDt, BCForcing );
+	  enforceBC( Up, a_Mu, a_Lambda, AlphaVEp, t+mDt, BCForcing );
 
 // NEW (Apr. 4, 2017)
 // Impose un-coupled free surface boundary condition with visco-elastic terms for 'Up'
-       if( m_use_attenuation && (m_number_mechanisms > 0) )
-       {
-          enforceBCfreeAtt2( Up, a_Mu, a_Lambda, AlphaVEp, BCForcing );
-       }
+//       if( m_use_attenuation && (m_number_mechanisms > 0) )
+//       {
+//          enforceBCfreeAtt2( Up, a_Mu, a_Lambda, AlphaVEp, BCForcing );
+//       }
 
        if( m_output_detailed_timing )
           time_measure[15] = MPI_Wtime();
@@ -1163,7 +1163,7 @@ void EW::cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector
 
 //---------------------------------------------------------------------------
 void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
-		    float_sw4 t, vector<float_sw4 **> & a_BCForcing )
+		    vector<Sarray*>& a_AlphaVE, float_sw4 t, vector<float_sw4 **> & a_BCForcing )
 {
   int ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
   float_sw4 *u_ptr, *mu_ptr, *la_ptr, h;
@@ -1286,12 +1286,16 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
      if( m_gridGenerator->curviCartIsSmooth( mNumberOfGrids-mNumberOfCartesianGrids ) )
         update_curvilinear_cartesian_interface( a_U );
      else
-        CurviCartIC( mNumberOfCartesianGrids-1, a_U, a_Mu, a_Lambda, t );
+        CurviCartIC( mNumberOfCartesianGrids-1, a_U, a_Mu, a_Lambda, a_AlphaVE,  t );
   }
+
+  // Reimpose free surface condition with attenuation terms included
+  if( usingAttenuation() )
+     enforceBCfreeAtt2( a_U, a_Mu, a_Lambda, a_AlphaVE, a_BCForcing );
 }
 //-----------------------------------------------------------------------
 void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
-                      float_sw4 t )
+                      vector<Sarray*>& a_Alpha, float_sw4 t )
 {
    int gcurv=gcart+1;
    int ib=m_iStart[gcurv], ie=m_iEnd[gcurv];
@@ -1316,6 +1320,16 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
          a_U[gcurv](2,i,j,nk) = a_U[gcart](2,i,j,1);
          a_U[gcurv](3,i,j,nk) = a_U[gcart](3,i,j,1);
       }
+   if( m_use_attenuation )
+      for( int a=0 ; a < m_number_mechanisms ; a++)
+         for( int j=jb ; j <= je ; j++ )
+            for( int i=ib ; i <= ie ; i++ )
+            {
+               a_Alpha[gcurv][a](1,i,j,nk) = a_Alpha[gcart][a](1,i,j,1);
+               a_Alpha[gcurv][a](2,i,j,nk) = a_Alpha[gcart][a](2,i,j,1);
+               a_Alpha[gcurv][a](3,i,j,nk) = a_Alpha[gcart][a](3,i,j,1);
+            }
+
    bool force_dirichlet=false;
    if( force_dirichlet )
    {
@@ -1346,17 +1360,40 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
                        a_Lambda[gcurv].c_ptr(), mMetric[gcurv].c_ptr(), mJ[gcurv].c_ptr(), Lup,
                        m_onesided[gcurv], m_acof, m_bope, m_ghcof, m_acof_no_gp,
                        m_ghcof_no_gp, m_sg_str_x[gcurv], m_sg_str_y[gcurv], nk, '=');
+   if( m_use_attenuation )
+      for( int a=0 ; a < m_number_mechanisms ; a++)
+         curvilinear4sgwind( ib, ie, jb, je, kb, ke, nk, nk, a_Alpha[gcurv][a].c_ptr(), mMuVE[gcurv][a].c_ptr(), 
+                       mLambdaVE[gcurv][a].c_ptr(), mMetric[gcurv].c_ptr(), mJ[gcurv].c_ptr(), Lup,
+                       m_onesided[gcurv], m_acof_no_gp, m_bope, m_ghcof_no_gp, m_acof_no_gp,
+                       m_ghcof_no_gp, m_sg_str_x[gcurv], m_sg_str_y[gcurv], nk, '-');
+
 
    rhs4th3wind( ibca, ieca, jbca, jeca, kbca, keca, nkca, m_onesided[gcart], m_acof, m_bope, m_ghcof, Lucap,
                 a_U[gcart].c_ptr(), a_Mu[gcart].c_ptr(), a_Lambda[gcart].c_ptr(), h,
                 m_sg_str_x[gcart], m_sg_str_y[gcart], m_sg_str_z[gcart], '=', kbca, keca, 1, 1 );
+   if( m_use_attenuation )
+      for( int a=0 ; a < m_number_mechanisms ; a++)
+         rhs4th3wind( ibca, ieca, jbca, jeca, kbca, keca, nkca, m_onesided[gcart], m_acof_no_gp, m_bope, m_ghcof_no_gp, Lucap,
+                      a_Alpha[gcart][a].c_ptr(), mMuVE[gcart][a].c_ptr(), mLambdaVE[gcart][a].c_ptr(), h,
+                      m_sg_str_x[gcart], m_sg_str_y[gcart], m_sg_str_z[gcart], '-', kbca, keca, 1, 1 );
    
+
    Sarray Bca(3,ib,ie,jb,je,1,1);
-   compute_icstresses( a_U[gcart], Bca, gcart, 1, m_sg_str_x[gcart], m_sg_str_y[gcart] );
+   compute_icstresses2( a_U[gcart], Bca, 1, mGridSize[gcart], a_Mu[gcart], a_Lambda[gcart], 
+                        m_sg_str_x[gcart], m_sg_str_y[gcart], m_sbop, '=' );
+   if( m_use_attenuation )
+      for( int a=0 ; a < m_number_mechanisms ; a++)
+         compute_icstresses2( a_Alpha[gcart][a], Bca, 1, mGridSize[gcart], mMuVE[gcart][a], mLambdaVE[gcart][a],
+                             m_sg_str_x[gcart], m_sg_str_y[gcart], m_sbop_no_gp, '-' );
+   
 
    Sarray B(3,ib,ie,jb,je,nk,nk);
    compute_icstresses_curv( a_U[gcurv], B, nk, mMetric[gcurv], a_Mu[gcurv], a_Lambda[gcurv],
-                            m_sg_str_x[gcurv], m_sg_str_y[gcurv], m_sbop_no_gp );
+                            m_sg_str_x[gcurv], m_sg_str_y[gcurv], m_sbop_no_gp, '=' );
+   if( m_use_attenuation )
+      for( int a=0 ; a < m_number_mechanisms ; a++)
+         compute_icstresses_curv( a_Alpha[gcurv][a], B, nk, mMetric[gcurv], mMuVE[gcurv][a], mLambdaVE[gcurv][a],
+                                  m_sg_str_x[gcurv], m_sg_str_y[gcurv], m_sbop_no_gp, '-' );
 
    float_sw4 w1=17.0/48.0;
    for( int j=jb+2 ; j <= je-2 ; j++ )
@@ -1393,10 +1430,10 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
                    a_U[gcart].c_ptr(), a_Mu[gcart].c_ptr(), a_Lambda[gcart].c_ptr(), h,
                    m_sg_str_x[gcart], m_sg_str_y[gcart], m_sg_str_z[gcart], '=', kbca, keca, 1, 1 );
    
-      compute_icstresses( a_U[gcart], Bca, gcart, 1, m_sg_str_x[gcart], m_sg_str_y[gcart] );
+      compute_icstresses( a_U[gcart], Bca, gcart, 1, m_sg_str_x[gcart], m_sg_str_y[gcart],m_sbop,'=' );
 
       compute_icstresses_curv( a_U[gcurv], B, nk, mMetric[gcurv], a_Mu[gcurv], a_Lambda[gcurv],
-                               m_sg_str_x[gcurv], m_sg_str_y[gcurv], m_sbop_no_gp );
+                               m_sg_str_x[gcurv], m_sg_str_y[gcurv], m_sbop_no_gp, '=' );
       float_sw4 resmax=0;
       for( int j=jb+2 ; j <= je-2 ; j++ )
          for( int i=ib+2 ; i <= ie-2 ; i++ )
@@ -1611,8 +1648,8 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 	 }
       }
 
-      compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1]);
-      compute_icstresses( a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g] );
+      compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1],m_sbop,'=');
+      compute_icstresses( a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g],m_sbop,'=' );
 
 // NEW June 13, 2017: add in the visco-elastic boundary traction
       if( m_use_attenuation && m_number_mechanisms > 0 )
@@ -1678,7 +1715,7 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
    for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
    {
      //         m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt );
-      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt );
+      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt, a_AlphaVEp );
       //      check_ic_conditions( g, a_Up );
    }
 } // enforceIC
@@ -1709,9 +1746,9 @@ void EW::check_ic_conditions( int gc, vector<Sarray>& a_U )
             a_U[gc](c,i,j,0) = 0;
 
    compute_icstresses_curv( a_U[gc], Bc, 1,  mMetric[gc], mMu[gc], mLambda[gc],
-                            m_sg_str_x[gc], m_sg_str_y[gc], m_sbop );
+                            m_sg_str_x[gc], m_sg_str_y[gc], m_sbop, '=' );
    compute_icstresses_curv( a_U[gf], Bf, nk, mMetric[gf], mMu[gf], mLambda[gf],
-                            m_sg_str_x[gf], m_sg_str_y[gf], m_sbop_no_gp );
+                            m_sg_str_x[gf], m_sg_str_y[gf], m_sbop_no_gp, '=' );
 
    Sarray Luf(3,a_U[gf].m_ib,a_U[gf].m_ie,a_U[gf].m_jb,a_U[gf].m_je,nk,nk);
    curvilinear4sgwind( ib, ie, jb, je, kb, ke, nk, nk, a_U[gf].c_ptr(), mMu[gf].c_ptr(), 
@@ -1848,8 +1885,8 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
 //      initialData(time+mDt, a_Up, a_AlphaVEp);
 // end test
 //  compute contribution to the normal stresses (Bc, Bf) from the interior grid points in Up
-      compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1]);
-      compute_icstresses( a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g]);
+      compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1],m_sbop,'=');
+      compute_icstresses( a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g],m_sbop,'=');
 
 // add in the visco-elastic boundary traction
       if( m_use_attenuation && m_number_mechanisms > 0 )
@@ -1919,7 +1956,7 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
    for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
    {
      //      m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt );
-      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt );
+      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt, a_AlphaVEp );
    }
 
 }// end enforceIC2
@@ -2889,7 +2926,8 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
 
 //-----------------------------------------------------------------------
 void EW::compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic,
-			     float_sw4* a_str_x, float_sw4* a_str_y )
+			     float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop, 
+                             char op )
 {
    const float_sw4 a1=2.0/3, a2=-1.0/12;
    bool upper = (kic == 1);
@@ -2899,6 +2937,14 @@ void EW::compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic,
    int jfirst = a_Up.m_jb;
 #define str_x(i) a_str_x[(i-ifirst)]   
 #define str_y(j) a_str_y[(j-jfirst)]   
+   float_sw4 sgn=1;
+   if( op == '=' )
+   {
+      B.set_value(0.0);
+      sgn = 1;
+   }
+   else if( op == '-' )
+      sgn =-1;
 
 #pragma omp parallel for
    for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
@@ -2909,33 +2955,96 @@ void EW::compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic,
 	 uz = vz = wz = 0;
 	 if( upper )
 	 {
-	    for( int m=0 ; m <= 4 ; m++ )
+	    for( int m=0 ; m <= 5 ; m++ )
 	    {
-	       uz += m_sbop[m]*a_Up(1,i,j,k+m-1);
-	       vz += m_sbop[m]*a_Up(2,i,j,k+m-1);
-	       wz += m_sbop[m]*a_Up(3,i,j,k+m-1);
+	       uz += sbop[m]*a_Up(1,i,j,k+m-1);
+	       vz += sbop[m]*a_Up(2,i,j,k+m-1);
+	       wz += sbop[m]*a_Up(3,i,j,k+m-1);
 	    }
 	 }
 	 else
 	 {
-	    for( int m=0 ; m <= 4 ; m++ )
+	    for( int m=0 ; m <= 5 ; m++ )
 	    {
-	       uz -= m_sbop[m]*a_Up(1,i,j,k+1-m);
-	       vz -= m_sbop[m]*a_Up(2,i,j,k+1-m);
-	       wz -= m_sbop[m]*a_Up(3,i,j,k+1-m);
+	       uz -= sbop[m]*a_Up(1,i,j,k+1-m);
+	       vz -= sbop[m]*a_Up(2,i,j,k+1-m);
+	       wz -= sbop[m]*a_Up(3,i,j,k+1-m);
 	    }
 	 }
-         B(1,i,j,k) = ih*mMu[g](i,j,k)*(
+         B(1,i,j,k) += sgn*ih*mMu[g](i,j,k)*(
             str_x(i)*( a2*(a_Up(3,i+2,j,k)-a_Up(3,i-2,j,k))+
                        a1*(a_Up(3,i+1,j,k)-a_Up(3,i-1,j,k))) + (uz)  );
-         B(2,i,j,k) = ih*mMu[g](i,j,k)*(
+         B(2,i,j,k) += sgn*ih*mMu[g](i,j,k)*(
             str_y(j)*( a2*(a_Up(3,i,j+2,k)-a_Up(3,i,j-2,k))+
                        a1*(a_Up(3,i,j+1,k)-a_Up(3,i,j-1,k))) +
             (vz)  );
-         B(3,i,j,k) = ih*((2*mMu[g](i,j,k)+mLambda[g](i,j,k))*(wz) + mLambda[g](i,j,k)*(
+         B(3,i,j,k) += sgn*ih*((2*mMu[g](i,j,k)+mLambda[g](i,j,k))*(wz) + mLambda[g](i,j,k)*(
                              str_x(i)*( a2*(a_Up(1,i+2,j,k)-a_Up(1,i-2,j,k))+a1*(a_Up(1,i+1,j,k)-a_Up(1,i-1,j,k))) +
                              str_y(j)*( a2*(a_Up(2,i,j+2,k)-a_Up(2,i,j-2,k))+a1*(a_Up(2,i,j+1,k)-a_Up(2,i,j-1,k))) ) );
-         
+      }
+#undef str_x
+#undef str_y
+}
+
+//-----------------------------------------------------------------------
+void EW::compute_icstresses2( Sarray& a_Up, Sarray& B, int kic, float_sw4 h,
+                              Sarray& a_mu, Sarray& a_lambda,
+                              float_sw4* a_str_x, float_sw4* a_str_y, 
+                              float_sw4* sbop, char op )
+{
+   const float_sw4 a1=2.0/3, a2=-1.0/12;
+   bool upper = (kic == 1);
+   int k=kic;
+   float_sw4 ih = 1/h;
+   int ifirst = a_Up.m_ib;
+   int jfirst = a_Up.m_jb;
+#define str_x(i) a_str_x[(i-ifirst)]   
+#define str_y(j) a_str_y[(j-jfirst)]   
+
+   float_sw4 sgn=1;
+   if( op == '=' )
+   {
+      B.set_value(0.0);
+      sgn = 1;
+   }
+   else if( op == '-' )
+      sgn =-1;
+
+#pragma omp parallel for
+   for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
+#pragma omp simd
+      for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
+      {
+	 float_sw4 uz, vz, wz;	 
+	 uz = vz = wz = 0;
+	 if( upper )
+	 {
+	    for( int m=0 ; m <= 5 ; m++ )
+	    {
+	       uz += sbop[m]*a_Up(1,i,j,k+m-1);
+	       vz += sbop[m]*a_Up(2,i,j,k+m-1);
+	       wz += sbop[m]*a_Up(3,i,j,k+m-1);
+	    }
+	 }
+	 else
+	 {
+	    for( int m=0 ; m <= 5 ; m++ )
+	    {
+	       uz -= sbop[m]*a_Up(1,i,j,k+1-m);
+	       vz -= sbop[m]*a_Up(2,i,j,k+1-m);
+	       wz -= sbop[m]*a_Up(3,i,j,k+1-m);
+	    }
+	 }
+         B(1,i,j,k) += sgn*ih*a_mu(i,j,k)*(
+            str_x(i)*( a2*(a_Up(3,i+2,j,k)-a_Up(3,i-2,j,k))+
+                       a1*(a_Up(3,i+1,j,k)-a_Up(3,i-1,j,k))) + (uz)  );
+         B(2,i,j,k) += sgn*ih*a_mu(i,j,k)*(
+            str_y(j)*( a2*(a_Up(3,i,j+2,k)-a_Up(3,i,j-2,k))+
+                       a1*(a_Up(3,i,j+1,k)-a_Up(3,i,j-1,k))) +
+            (vz)  );
+         B(3,i,j,k) += sgn*ih*((2*a_mu(i,j,k)+a_lambda(i,j,k))*(wz) + a_lambda(i,j,k)*(
+                             str_x(i)*( a2*(a_Up(1,i+2,j,k)-a_Up(1,i-2,j,k))+a1*(a_Up(1,i+1,j,k)-a_Up(1,i-1,j,k))) +
+                             str_y(j)*( a2*(a_Up(2,i,j+2,k)-a_Up(2,i,j-2,k))+a1*(a_Up(2,i,j+1,k)-a_Up(2,i,j-1,k))) ) );
       }
 #undef str_x
 #undef str_y
@@ -2944,7 +3053,7 @@ void EW::compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic,
 //-----------------------------------------------------------------------
 void EW::compute_icstresses_curv( Sarray& a_Up, Sarray& B, int kic,
 				  Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
-				  float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop )
+				  float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop, char op )
 {
    const float_sw4 a1=2.0/3, a2=-1.0/12;
    const bool upper = (kic == 1);
@@ -2954,6 +3063,16 @@ void EW::compute_icstresses_curv( Sarray& a_Up, Sarray& B, int kic,
    const int jfirst = a_Up.m_jb;
 #define str_x(i) a_str_x[(i-ifirst)]   
 #define str_y(j) a_str_y[(j-jfirst)]   
+   float_sw4 sgn=1;
+   if( op == '=' )
+   {
+      B.set_value(0.0);
+      sgn = 1;
+   }
+   if( op == '-' )
+   {
+      sgn = -1;
+   }
 
 #pragma omp parallel for
    for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
@@ -2971,24 +3090,6 @@ void EW::compute_icstresses_curv( Sarray& a_Up, Sarray& B, int kic,
          uz *=kl;
          vz *=kl;
          wz *=kl;
-	 //	 if( upper )
-	 //	 {
-	 //	    for( int m=0 ; m <= 5 ; m++ )
-	 //	    {
-	 //	       uz += sbop[m]*a_Up(1,i,j,k+m-1);
-	 //	       vz += sbop[m]*a_Up(2,i,j,k+m-1);
-	 //	       wz += sbop[m]*a_Up(3,i,j,k+m-1);
-	 //	    }
-	 //	 }
-	 //	 else
-	 //	 {
-	 //	    for( int m=0 ; m <= 5 ; m++ )
-	 //	    {
-	 //	       uz -= sbop[m]*a_Up(1,i,j,k+1-m);
-	 //	       vz -= sbop[m]*a_Up(2,i,j,k+1-m);
-	 //	       wz -= sbop[m]*a_Up(3,i,j,k+1-m);
-	 //	    }
-	 //	 }
 
          // Normal terms
          float_sw4 m2 = str_x(i)*a_metric(2,i,j,k);
@@ -2996,32 +3097,38 @@ void EW::compute_icstresses_curv( Sarray& a_Up, Sarray& B, int kic,
          float_sw4 m4 = a_metric(4,i,j,k);
          float_sw4 un = m2*uz+m3*vz+m4*wz;
          float_sw4 mnrm = m2*m2+m3*m3+m4*m4;
+         float_sw4 B1, B2, B3;
 
-         B(1,i,j,k) = a_mu(i,j,k)*mnrm*uz + (a_mu(i,j,k)+a_lambda(i,j,k))*m2*un;
-         B(2,i,j,k) = a_mu(i,j,k)*mnrm*vz + (a_mu(i,j,k)+a_lambda(i,j,k))*m3*un;
-         B(3,i,j,k) = a_mu(i,j,k)*mnrm*wz + (a_mu(i,j,k)+a_lambda(i,j,k))*m4*un;
+         B1 = a_mu(i,j,k)*mnrm*uz + (a_mu(i,j,k)+a_lambda(i,j,k))*m2*un;
+         B2 = a_mu(i,j,k)*mnrm*vz + (a_mu(i,j,k)+a_lambda(i,j,k))*m3*un;
+         B3 = a_mu(i,j,k)*mnrm*wz + (a_mu(i,j,k)+a_lambda(i,j,k))*m4*un;
 
          // Tangential terms
          // p-derivatives
          float_sw4 up1=str_x(i)*(a2*(a_Up(1,i+2,j,k)-a_Up(1,i-2,j,k))+a1*(a_Up(1,i+1,j,k)-a_Up(1,i-1,j,k)));   
          float_sw4 up2=str_x(i)*(a2*(a_Up(2,i+2,j,k)-a_Up(2,i-2,j,k))+a1*(a_Up(2,i+1,j,k)-a_Up(2,i-1,j,k)));   
          float_sw4 up3=str_x(i)*(a2*(a_Up(3,i+2,j,k)-a_Up(3,i-2,j,k))+a1*(a_Up(3,i+1,j,k)-a_Up(3,i-1,j,k)));
-         B(1,i,j,k) += a_metric(1,i,j,k)*( (2*a_mu(i,j,k)+a_lambda(i,j,k))*m2*up1 + a_mu(i,j,k)*(m3*up2 + m4*up3));
-         B(2,i,j,k) += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m3*up1 + a_mu(i,j,k)*m2*up2 );
-         B(3,i,j,k) += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m4*up1 + a_mu(i,j,k)*m2*up3 );
+         B1 += a_metric(1,i,j,k)*( (2*a_mu(i,j,k)+a_lambda(i,j,k))*m2*up1 + a_mu(i,j,k)*(m3*up2 + m4*up3));
+         B2 += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m3*up1 + a_mu(i,j,k)*m2*up2 );
+         B3 += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m4*up1 + a_mu(i,j,k)*m2*up3 );
          
          // q-derivatives
          float_sw4 uq1=str_y(j)*(a2*(a_Up(1,i,j+2,k)-a_Up(1,i,j-2,k))+a1*(a_Up(1,i,j+1,k)-a_Up(1,i,j-1,k)));
          float_sw4 uq2=str_y(j)*(a2*(a_Up(2,i,j+2,k)-a_Up(2,i,j-2,k))+a1*(a_Up(2,i,j+1,k)-a_Up(2,i,j-1,k)));
          float_sw4 uq3=str_y(j)*(a2*(a_Up(3,i,j+2,k)-a_Up(3,i,j-2,k))+a1*(a_Up(3,i,j+1,k)-a_Up(3,i,j-1,k)));
-         B(1,i,j,k) += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m2*uq2 + a_mu(i,j,k)*m3*uq1);
-         B(2,i,j,k) += a_metric(1,i,j,k)*( (2*a_mu(i,j,k)+a_lambda(i,j,k))*m3*uq2 +a_mu(i,j,k)*(m2*uq1 + m4*uq3));
-         B(3,i,j,k) += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m4*uq2 + a_mu(i,j,k)*m3*uq3);
+         B1 += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m2*uq2 + a_mu(i,j,k)*m3*uq1);
+         B2 += a_metric(1,i,j,k)*( (2*a_mu(i,j,k)+a_lambda(i,j,k))*m3*uq2 +a_mu(i,j,k)*(m2*uq1 + m4*uq3));
+         B3 += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m4*uq2 + a_mu(i,j,k)*m3*uq3);
 
          float_sw4 isgxy = 1.0/(str_x(i)*str_y(j));
-         B(1,i,j,k) *= isgxy;
-         B(2,i,j,k) *= isgxy;
-         B(3,i,j,k) *= isgxy;
+         B1 *= isgxy;
+         B2 *= isgxy;
+         B3 *= isgxy;
+         //
+         B(1,i,j,k) += sgn*B1;
+         B(2,i,j,k) += sgn*B2;
+         B(3,i,j,k) += sgn*B3;
+         
       }
 #undef str_x
 #undef str_y

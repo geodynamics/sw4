@@ -233,7 +233,7 @@ void setupSBPCoeff( );
 // time stepping routines
 void simpleAttenuation( vector<Sarray> & a_Up );
 void enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
-		float_sw4 t, vector<float_sw4 **> & a_BCForcing );
+		vector<Sarray*>& a_AlphaVE, float_sw4 t, vector<float_sw4 **> & a_BCForcing );
 
 void enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, 
 			   vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
@@ -1199,7 +1199,8 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void enforceIC2( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
                     vector<Sarray*>& a_AlphaVEp, float_sw4 t, 
                     vector<Sarray> &F, std::vector<GridPointSource*> point_sources );
-   void CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, float_sw4 t );
+   void CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, 
+                     vector<Sarray*>& a_AlphaVE, float_sw4 t );
    
    void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
    void dirichlet_twilight_ic( Sarray& U, int g, int kic, float_sw4 t);
@@ -1219,10 +1220,15 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_AlphaVEp, Sarray& Unext,
                                        int g, int kic, float_sw4 t, Sarray &F, vector<GridPointSource*> point_sources );
    
-   void compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic, float_sw4* a_str_x, float_sw4* a_str_y);
+   void compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic, float_sw4* a_str_x, float_sw4* a_str_y, 
+                            float_sw4* sbop, char op );
+
+   void compute_icstresses2( Sarray& a_Up, Sarray& B, int kic, float_sw4 h, Sarray& a_mu, Sarray& a_lambda,
+                             float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop, char op );
+
    void compute_icstresses_curv( Sarray& a_Up, Sarray& B, int kic,
                                  Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
-                                 float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop );
+                                 float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop, char op );
 
    void add_ve_stresses( Sarray& a_Up, Sarray& B, int g, int kic, int a_a, float_sw4* a_str_x, float_sw4* a_str_y);
    
@@ -1326,6 +1332,7 @@ ofstream msgStream;
 vector<Sarray> mMu;
 vector<Sarray> mLambda;
 vector<Sarray> mRho;
+vector<Sarray*> mMuVE, mLambdaVE;// Attenuation material
 vector<Sarray> mC; // Anisotropic material parameters
 Sarray mCcurv; // Anisotropic material with metric (on curvilinear grid).
 
@@ -1432,7 +1439,7 @@ float_sw4 m_velo_omega, m_min_omega, m_max_omega, m_att_max_frequency, m_att_ppw
 float_sw4 m_qmultiplier;
 
 vector<Sarray> mQp, mQs;
-vector<Sarray*> mMuVE, mLambdaVE;
+
 // relaxation frequencies
 vector<float_sw4> mOmegaVE;
 

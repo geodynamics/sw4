@@ -30,6 +30,8 @@ CurvilinearInterface2::CurvilinearInterface2( int a_gc, EW* a_ew )
    bndryOpNoGhostc( m_acof_no_gp, m_ghcof_no_gp, m_sbop_no_gp );
    for( int s=0 ; s < 4 ; s++ )
       m_isbndry[s] = true;
+   m_use_attenuation   = a_ew->usingAttenuation();
+   m_number_mechanisms = a_ew->getNumberOfMechanisms();
 }
 
 //-----------------------------------------------------------------------
@@ -214,6 +216,9 @@ void CurvilinearInterface2::init_arrays( vector<float_sw4*>& a_strx,
    communicate_array( m_mu_f, true );
    communicate_array( m_lambda_f, true );
 
+   if( m_use_attenuation )
+      init_arrays_att();
+
   // Matrix only defined at interior points
    m_Mass_block.define(9,m_ib+m_nghost,m_ie-m_nghost,m_jb+m_nghost,m_je-m_nghost,1,1);
    interface_block( m_Mass_block );
@@ -252,7 +257,77 @@ void CurvilinearInterface2::init_arrays( vector<float_sw4*>& a_strx,
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t )
+void CurvilinearInterface2::init_arrays_att()
+{
+   // Attenuation material setup 
+   if( m_use_attenuation )
+   {
+      m_muve_c.resize(m_number_mechanisms);
+      m_lambdave_c.resize(m_number_mechanisms);
+      for( int a=0 ; a < m_number_mechanisms; a++ )
+      {
+         m_muve_c[a].define(m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
+         m_lambdave_c[a].define(m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
+      }
+      m_muve_f.resize(m_number_mechanisms);
+      m_lambdave_f.resize(m_number_mechanisms);
+      for( int a=0 ; a < m_number_mechanisms; a++ )
+      {
+         m_muve_f[a].define(m_ibf,m_ief,m_jbf,m_jef,m_kbf,m_kef);
+         m_lambdave_f[a].define(m_ibf,m_ief,m_jbf,m_jef,m_kbf,m_kef);
+      }
+      if( m_tw != 0 )
+      {
+         // Note, twilight uses only one attenuation mechanism
+         m_tw->get_mula_att(m_muve_c[0],m_lambdave_c[0],m_x_c,m_y_c,m_z_c);
+         m_tw->get_mula_att(m_muve_f[0],m_lambdave_f[0],m_x_f,m_y_f,m_z_f);
+      }
+      else
+      {
+         for( int a=0 ; a < m_number_mechanisms; a++ )
+         {
+            m_muve_c[a].insert_intersection(m_ew->mMuVE[m_gc][a]);
+            m_lambdave_c[a].insert_intersection(m_ew->mLambdaVE[m_gc][a]);
+            m_muve_f[a].insert_intersection(m_ew->mMuVE[m_gf][a]);
+            m_lambdave_f[a].insert_intersection(m_ew->mLambdaVE[m_gf][a]);
+         }
+         int extra_ghost = m_nghost - m_ew->getNumberOfGhostPoints();
+         if( extra_ghost > 0 )
+         {
+            if( m_etest != 0 ) 
+            {
+               int sides[6]={1,1,1,1,0,0};
+               for( int a=0 ; a < m_number_mechanisms; a++ )
+               {
+                  m_etest->get_mulabnd(m_muve_c[a],m_lambdave_c[a],extra_ghost,sides);
+                  m_etest->get_mulabnd(m_muve_f[a],m_lambdave_f[a],extra_ghost,sides);
+               }
+            }
+            else
+            {
+               for( int a=0 ; a < m_number_mechanisms; a++ )
+               {
+                  m_muve_c[a].extrapolij(extra_ghost);
+                  m_muve_f[a].extrapolij(extra_ghost);
+                  m_lambdave_c[a].extrapolij(extra_ghost);
+                  m_lambdave_f[a].extrapolij(extra_ghost);
+               }
+            }
+         }
+      }
+      for( int a=0 ; a < m_number_mechanisms; a++ )
+      {
+         communicate_array( m_muve_c[a], true );
+         communicate_array( m_lambdave_c[a], true );         
+         communicate_array( m_muve_f[a], true );
+         communicate_array( m_lambdave_f[a], true );         
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
+void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
+                                       std::vector<Sarray*>& a_AlphaVE )
 {
    bool force_dirichlet = false; //, check_stress_cont=false;
    //   int fg=0;
@@ -261,17 +336,36 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t )
 
    Sarray U_f(3,m_ibf,m_ief,m_jbf,m_jef,m_kbf,m_kef);
    Sarray U_c(3,m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
+   vector<Sarray> Alpha_c, Alpha_f;
 
 //  1. copy   a_U into U_f and U_c
    U_f.insert_intersection(a_U[m_gf]);
    U_c.insert_intersection(a_U[m_gc]);
-
+   if( m_use_attenuation )
+   {
+      Alpha_c.resize(m_number_mechanisms);
+      Alpha_f.resize(m_number_mechanisms);
+      //      Alpha_c = new Sarray[m_number_mechanisms];
+      //      Alpha_f = new Sarray[m_number_mechanisms];
+      for( int a=0 ; a < m_number_mechanisms ; a++)
+      {
+         Alpha_f[a].define(3,m_ibf,m_ief,m_jbf,m_jef,m_kbf,m_kef);
+         Alpha_c[a].define(3,m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
+         Alpha_f[a].insert_intersection(a_AlphaVE[m_gf][a]);
+         Alpha_c[a].insert_intersection(a_AlphaVE[m_gc][a]);
+      }
+   }
 // 2a. Impose dirichlet conditions at ghost points
    int sides[6]={1,1,1,1,0,0};
    if( m_tw != 0 )
    {
       m_tw->get_ubnd( U_f, m_x_f, m_y_f, m_z_f, t, m_nghost, sides );
       m_tw->get_ubnd( U_c, m_x_c, m_y_c, m_z_c, t, m_nghost, sides );
+      if( m_use_attenuation )
+      {
+         m_tw->get_bnd_att( Alpha_f[0], m_x_f, m_y_f, m_z_f, t, m_nghost, sides );
+         m_tw->get_bnd_att( Alpha_c[0], m_x_c, m_y_c, m_z_c, t, m_nghost, sides );
+      }
       if( force_dirichlet )
       {
       // Debug
@@ -298,26 +392,33 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t )
    {
       bnd_zero( U_c, m_nghost );
       bnd_zero( U_f, m_nghost );
+      if( m_use_attenuation )
+         for( int a=0 ; a < m_number_mechanisms ; a++)
+         {
+            bnd_zero( Alpha_c[a], m_nghost );
+            bnd_zero( Alpha_f[a], m_nghost );           
+         }
    }
 
 // 3. Inject U_f := U_c on interface
    communicate_array( U_c, true );
-   //
    injection( U_f, U_c );
-
-   //   prolongate2D( U_c, U_f, 1, m_nkf );
-   //   if( m_tw != 0 )
-   //      m_tw->get_ubnd( U_f, m_x_f, m_y_f, m_z_f, t, m_nghost, sides );
-   //   else
-   //      bnd_zero(U_f,m_nghost);
-
    communicate_array( U_f, true );
+
+   if( m_use_attenuation )
+      for( int a=0 ; a < m_number_mechanisms ; a++)
+      {
+         communicate_array(Alpha_c[a],true);
+         injection(Alpha_f[a],Alpha_c[a]);
+         communicate_array( Alpha_f[a], true );
+      }
+
 
 // 4. Solve equation for stress continuity, formulated as lhs*x+rhs=0, where x are uc's ghost points at k=0.
 
    // 4.a Form right hand side of equation
    Sarray rhs(3,m_ib,m_ie,m_jb,m_je,1,1);
-   interface_rhs( rhs, U_c, U_f );
+   interface_rhs( rhs, U_c, U_f, Alpha_c, Alpha_f );
 
    // 4.b Left hand side, lhs*x
    Sarray lhs(rhs), residual(rhs);
@@ -394,7 +495,13 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t )
 // 5. Copy U_c and U_f back to a_U, only k=0 for U_c and k=n3f for U_f.
    a_U[m_gc].copy_kplane2(U_c,0);     // have computed U_c:s ghost points
    a_U[m_gf].copy_kplane2(U_f,m_nkf);   // .. and U_f:s interface points
+   if( m_use_attenuation )
+   {
+      for( int a=0 ; a < m_number_mechanisms ; a++ )
+         a_AlphaVE[m_gf][a].copy_kplane2(Alpha_f[a],m_nkf);
+   }
 }
+
 
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::injection(Sarray &u_f, Sarray &u_c )
@@ -538,7 +645,8 @@ void CurvilinearInterface2::interface_lhs( Sarray& lhs, Sarray& uc )
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearInterface2::interface_rhs( Sarray& rhs, Sarray& uc, Sarray& uf )
+void CurvilinearInterface2::interface_rhs( Sarray& rhs, Sarray& uc, Sarray& uf,
+                             vector<Sarray>& Alpha_c, vector<Sarray>& Alpha_f )
 {
    Sarray utmp(3,uc.m_ib,uc.m_ie,uc.m_jb,uc.m_je,0,0);
 
@@ -560,6 +668,13 @@ void CurvilinearInterface2::interface_rhs( Sarray& rhs, Sarray& uc, Sarray& uf )
                        m_met_c.c_ptr(), m_jac_c.c_ptr(), rhs.c_ptr(),
                        onesided, m_acof, m_bope, m_ghcof, m_acof_no_gp,
                        m_ghcof_no_gp, m_strx_c, m_stry_c, 8, '=');
+   if( m_use_attenuation )
+      for( int a=0 ; a < m_number_mechanisms ; a++ )
+         curvilinear4sgwind( m_ib, m_ie, m_jb, m_je, m_kb, m_ke, 1, 1, Alpha_c[a].c_ptr(),
+                             m_muve_c[a].c_ptr(), m_lambdave_c[a].c_ptr(),
+                             m_met_c.c_ptr(), m_jac_c.c_ptr(), rhs.c_ptr(),
+                             onesided, m_acof_no_gp, m_bope, m_ghcof_no_gp,
+                             m_acof_no_gp, m_ghcof_no_gp, m_strx_c, m_stry_c, 8, '-');
 
    for( int c=1 ; c <= 3; c++ )
       for( int j=rhs.m_jb ; j <= rhs.m_je ; j++ )
@@ -578,11 +693,22 @@ void CurvilinearInterface2::interface_rhs( Sarray& rhs, Sarray& uc, Sarray& uf )
 		       m_mu_f.c_ptr(), m_lambda_f.c_ptr(), m_met_f.c_ptr(), m_jac_f.c_ptr(), Luf.c_ptr(),
                        onesided, m_acof, m_bope, m_ghcof, m_acof_no_gp,
                        m_ghcof_no_gp, m_strx_f, m_stry_f, m_nkf, '=');
+   if( m_use_attenuation )
+      for( int a=0 ; a < m_number_mechanisms ; a++ )
+         curvilinear4sgwind( m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef, m_nkf, m_nkf, Alpha_f[a].c_ptr(),
+		       m_muve_f[a].c_ptr(), m_lambdave_f[a].c_ptr(), m_met_f.c_ptr(), 
+                       m_jac_f.c_ptr(), Luf.c_ptr(),
+                       onesided, m_acof_no_gp, m_bope, m_ghcof_no_gp, m_acof_no_gp,
+                       m_ghcof_no_gp, m_strx_f, m_stry_f, m_nkf, '-');
 
 // 5. Compute B(uf)
    Sarray Bf(prolrhs);
    compute_icstresses_curv( uf, Bf, m_nkf, m_met_f, m_mu_f, m_lambda_f,
-			    m_strx_f, m_stry_f, m_sbop_no_gp );
+			    m_strx_f, m_stry_f, m_sbop_no_gp, '=' );
+   if( m_use_attenuation )
+      for( int a=0 ; a < m_number_mechanisms ; a++ )
+         compute_icstresses_curv( Alpha_f[a], Bf, m_nkf, m_met_f, m_muve_f[a], m_lambdave_f[a],
+                                  m_strx_f, m_stry_f, m_sbop_no_gp, '-' );
 
 // 6. Form term prolrhs := r(w1*J[gf]*(rhof*p(L(uc)/rhoc-L(uf))+B(uf))
    for( int c=1 ; c <= 3 ;c++)
@@ -597,7 +723,12 @@ void CurvilinearInterface2::interface_rhs( Sarray& rhs, Sarray& uc, Sarray& uf )
 // 7. Compute B(uc), and form rhs := rhs - B(uc) = r(w1*J[gf]*(rhof*p(L(uc)/rhoc-L(uf))+B(uf))-B(uc)
    Sarray Bc(rhs);
    compute_icstresses_curv( uc, Bc, 1,  m_met_c, m_mu_c, m_lambda_c,
-			    m_strx_c, m_stry_c, m_sbop );
+			    m_strx_c, m_stry_c, m_sbop, '=' );
+   if( m_use_attenuation )
+      for( int a=0 ; a < m_number_mechanisms ; a++ )
+         compute_icstresses_curv( Alpha_c[a], Bc, 1, m_met_c, m_muve_c[a], m_lambdave_c[a],
+                                  m_strx_c, m_stry_c, m_sbop_no_gp, '-' );
+
    for( int c=1 ; c <= 3 ;c++)
       for( int j=rhs.m_jb ; j <= rhs.m_je ; j++ )
          for( int i=rhs.m_ib ; i <= rhs.m_ie ; i++ )
@@ -613,7 +744,8 @@ void CurvilinearInterface2::interface_rhs( Sarray& rhs, Sarray& uc, Sarray& uf )
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::compute_icstresses_curv( Sarray& a_Up, Sarray& B, int kic,
 						     Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
-						     float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop )
+						     float_sw4* a_str_x, float_sw4* a_str_y, 
+                                                     float_sw4* sbop, char op )
 {
    const float_sw4 a1=2.0/3, a2=-1.0/12;
    const bool upper = (kic == 1);
@@ -623,6 +755,17 @@ void CurvilinearInterface2::compute_icstresses_curv( Sarray& a_Up, Sarray& B, in
    const int jfirst = a_Up.m_jb;
 #define str_x(i) a_str_x[(i-ifirst)]   
 #define str_y(j) a_str_y[(j-jfirst)]   
+   float_sw4 sgn=1;
+   if( op == '=' )
+   {
+      B.set_value(0.0);
+      sgn = 1;
+   }
+   if( op == '-' )
+   {
+      sgn = -1;
+   }
+
 
 #pragma omp parallel for
    for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
@@ -647,32 +790,37 @@ void CurvilinearInterface2::compute_icstresses_curv( Sarray& a_Up, Sarray& B, in
          float_sw4 m4 = a_metric(4,i,j,k);
          float_sw4 un = m2*uz+m3*vz+m4*wz;
          float_sw4 mnrm = m2*m2+m3*m3+m4*m4;
+         float_sw4 B1, B2, B3;
 
-         B(1,i,j,k) = a_mu(i,j,k)*mnrm*uz + (a_mu(i,j,k)+a_lambda(i,j,k))*m2*un;
-         B(2,i,j,k) = a_mu(i,j,k)*mnrm*vz + (a_mu(i,j,k)+a_lambda(i,j,k))*m3*un;
-         B(3,i,j,k) = a_mu(i,j,k)*mnrm*wz + (a_mu(i,j,k)+a_lambda(i,j,k))*m4*un;
+         B1 = a_mu(i,j,k)*mnrm*uz + (a_mu(i,j,k)+a_lambda(i,j,k))*m2*un;
+         B2 = a_mu(i,j,k)*mnrm*vz + (a_mu(i,j,k)+a_lambda(i,j,k))*m3*un;
+         B3 = a_mu(i,j,k)*mnrm*wz + (a_mu(i,j,k)+a_lambda(i,j,k))*m4*un;
 
          // Tangential terms
          // p-derivatives
          float_sw4 up1=str_x(i)*(a2*(a_Up(1,i+2,j,k)-a_Up(1,i-2,j,k))+a1*(a_Up(1,i+1,j,k)-a_Up(1,i-1,j,k)));   
          float_sw4 up2=str_x(i)*(a2*(a_Up(2,i+2,j,k)-a_Up(2,i-2,j,k))+a1*(a_Up(2,i+1,j,k)-a_Up(2,i-1,j,k)));   
          float_sw4 up3=str_x(i)*(a2*(a_Up(3,i+2,j,k)-a_Up(3,i-2,j,k))+a1*(a_Up(3,i+1,j,k)-a_Up(3,i-1,j,k)));
-         B(1,i,j,k) += a_metric(1,i,j,k)*( (2*a_mu(i,j,k)+a_lambda(i,j,k))*m2*up1 + a_mu(i,j,k)*(m3*up2 + m4*up3));
-         B(2,i,j,k) += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m3*up1 + a_mu(i,j,k)*m2*up2 );
-         B(3,i,j,k) += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m4*up1 + a_mu(i,j,k)*m2*up3 );
+         B1 += a_metric(1,i,j,k)*( (2*a_mu(i,j,k)+a_lambda(i,j,k))*m2*up1 + a_mu(i,j,k)*(m3*up2 + m4*up3));
+         B2 += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m3*up1 + a_mu(i,j,k)*m2*up2 );
+         B3 += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m4*up1 + a_mu(i,j,k)*m2*up3 );
          
          // q-derivatives
          float_sw4 uq1=str_y(j)*(a2*(a_Up(1,i,j+2,k)-a_Up(1,i,j-2,k))+a1*(a_Up(1,i,j+1,k)-a_Up(1,i,j-1,k)));
          float_sw4 uq2=str_y(j)*(a2*(a_Up(2,i,j+2,k)-a_Up(2,i,j-2,k))+a1*(a_Up(2,i,j+1,k)-a_Up(2,i,j-1,k)));
          float_sw4 uq3=str_y(j)*(a2*(a_Up(3,i,j+2,k)-a_Up(3,i,j-2,k))+a1*(a_Up(3,i,j+1,k)-a_Up(3,i,j-1,k)));
-         B(1,i,j,k) += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m2*uq2 + a_mu(i,j,k)*m3*uq1);
-         B(2,i,j,k) += a_metric(1,i,j,k)*( (2*a_mu(i,j,k)+a_lambda(i,j,k))*m3*uq2 +a_mu(i,j,k)*(m2*uq1 + m4*uq3));
-         B(3,i,j,k) += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m4*uq2 + a_mu(i,j,k)*m3*uq3);
+         B1 += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m2*uq2 + a_mu(i,j,k)*m3*uq1);
+         B2 += a_metric(1,i,j,k)*( (2*a_mu(i,j,k)+a_lambda(i,j,k))*m3*uq2 +a_mu(i,j,k)*(m2*uq1 + m4*uq3));
+         B3 += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m4*uq2 + a_mu(i,j,k)*m3*uq3);
 
          float_sw4 isgxy = 1.0/(str_x(i)*str_y(j));
-         B(1,i,j,k) *= isgxy;
-         B(2,i,j,k) *= isgxy;
-         B(3,i,j,k) *= isgxy;
+         B1 *= isgxy;
+         B2 *= isgxy;
+         B3 *= isgxy;
+
+         B(1,i,j,k) += sgn*B1;
+         B(2,i,j,k) += sgn*B2;
+         B(3,i,j,k) += sgn*B3;
       }
 #undef str_x
 #undef str_y

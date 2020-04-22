@@ -140,3 +140,68 @@ void TestTwilight::get_ubnd( Sarray& u, float_sw4 h, float_sw4 zmin, float_sw4 t
                }
       }
 }
+
+void TestTwilight::get_mula_att( Sarray& muve, Sarray& lambdave, Sarray& x, Sarray& y, Sarray& z )
+{
+   if( m_sw4twilight )
+   {
+      for( int k=muve.m_kb ; k <= muve.m_ke ; k++ )
+         for( int j=muve.m_jb ; j <= muve.m_je ; j++ )
+            for( int i=muve.m_ib ; i <= muve.m_ie ; i++ )
+            {
+               muve(i,j,k) = m_ampmu*(1.5 + 0.5*
+                                 cos(m_momega*x(i,j,k)+m_mphase)*
+                                 cos(m_momega*y(i,j,k)+m_mphase)*
+                                 sin(m_momega*z(i,j,k)+m_mphase) );
+               lambdave(i,j,k)= m_amplambda*(0.5 + 0.25*
+                                        sin(m_momega*x(i,j,k)+m_mphase)*
+                                        cos(m_momega*y(i,j,k)+m_mphase)*
+                                        sin(m_momega*z(i,j,k)+m_mphase) );
+            }
+   }
+}
+
+void TestTwilight::get_bnd_att( Sarray& AlphaVE, Sarray& x, Sarray& y, Sarray& z, float_sw4 t, int npts, int sides[6] )
+{
+   for( int s=0 ; s < 6 ; s++ )
+      if( sides[s]==1 )
+      {
+         int kb=AlphaVE.m_kb, ke=AlphaVE.m_ke, jb=AlphaVE.m_jb, je=AlphaVE.m_je, ib=AlphaVE.m_ib, ie=AlphaVE.m_ie;
+         if( s == 0 )
+            ie = ib+npts-1;
+         if( s == 1 )
+            ib = ie-npts+1;
+         if( s == 2 )
+            je = jb+npts-1;
+         if( s == 3 )
+            jb = je-npts+1;
+         if( s == 4 )
+         {
+            ke = kb+npts-1;
+            if( ke > AlphaVE.m_ke )
+               ke = AlphaVE.m_ke;
+         }
+         if( s == 5 )
+         {
+            kb = ke-npts+1;
+            if( kb < AlphaVE.m_kb )
+               kb = AlphaVE.m_kb;
+         }
+         for( int k=kb ; k <= ke ; k++ )
+            for( int j=jb ; j <= je ; j++ )
+               for( int i=ib ; i <= ie ; i++ )
+               {
+                  AlphaVE(1,i,j,k) = cos(m_omega*(x(i,j,k)-m_c*t)+m_phase)*
+                                     sin(m_omega*x(i,j,k)        +m_phase)*
+                                     cos(m_omega*(z(i,j,k)-m_c*t)+m_phase);
+
+                  AlphaVE(2,i,j,k) = sin(m_omega*(x(i,j,k)-m_c*t)        )*
+                                     cos(m_omega*(y(i,j,k)-m_c*t)+m_phase)*
+                                     cos(m_omega*z(i,j,k)        +m_phase);
+
+                  AlphaVE(3,i,j,k) = cos(m_omega*x(i,j,k)        +m_phase)*
+                                     cos(m_omega*y(i,j,k)        +m_phase)*
+                                     sin(m_omega*(z(i,j,k)-m_c*t)+m_phase);
+               }
+      }
+}
