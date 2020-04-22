@@ -73,13 +73,17 @@
 
 load('times.txt')
 load('energy_interior.txt')
-load('energy_bdry.txt')
-load('traction_continuity.txt')
+%load('energy_bdry.txt')
+%load('traction_continuity.txt')
 a = 1;
 times = times(a:end);
 energy_interior = energy_interior(a:end);
-energy_bdry = energy_bdry(a:end);
+%energy_bdry = energy_bdry(a:end);
 figure(3)
-plot(times,energy_interior-energy_interior(1),'-o')
-figure(4)
-plot(times,energy_bdry-energy_bdry(1),'-o')
+plot(times,(energy_interior-energy_interior(1))/energy_interior(1))
+axis([0 120 -5e-14 2e-14])
+set(gca,'fontsize',24)
+xlabel('t')
+ylabel('(E(t)-E(0))/E(0)')
+%figure(4)
+%plot(times,energy_bdry-energy_bdry(1),'-o')

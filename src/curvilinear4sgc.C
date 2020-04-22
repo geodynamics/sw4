@@ -98,7 +98,7 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 #define strx(i) a_strx[i-ifirst0]
 #define stry(j) a_stry[j-jfirst0]
 #define acof(i,j,k) a_acof[(i-1)+6*(j-1)+48*(k-1)]
-#define bope(i,j) a_bope[i-1+6*(j-1)]
+#define bope(i,j) a_bope[(i-1)+6*(j-1)]
 #define ghcof(i) a_ghcof[i-1]
 #define acof_no_gp(i,j,k) a_acof_no_gp[(i-1)+6*(j-1)+48*(k-1)]
 #define ghcof_no_gp(i) a_ghcof_no_gp[i-1]

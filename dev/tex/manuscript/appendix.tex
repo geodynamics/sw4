@@ -1,0 +1,88 @@
+%!TEX root = SISC_elastic_3d.tex
+\section{Terms in the spatial discretization}\label{appendix_cdomain}
+For the first term in (\ref{L_operator}), we have
+\begin{align*}\label{3_8_1}
+{Q}_l^{2h}({N}_{ll}^{2h}){\bf c} := \left(\begin{array}{c}
+({Q}_l^{2h}({N}_{ll}^{2h}){\bf c})_1 \\
+({Q}_l^{2h}({N}_{ll}^{2h}){\bf c})_2 \\
+({Q}_l^{2h}({N}_{ll}^{2h}){\bf c})_3 
+\end{array}\right), \quad ({Q}_l^{2h}({N}_{ll}^{2h}){\bf c})_p = \sum_{q = 1}^{3} Q_l^{2h}(N_{ll}^{2h}(p,q)) {c}^{(q)},\quad p = 1,2,3,
+\end{align*}
+where we have used a matlab notation $N_{ll}^{2h}(p,q)$ to represent the $p$-th row and $q$-th column of the matrix $N_{ll}^{2h}$; $Q_l^{2h}(N_{ll}^{2h}(p,q)){ c}^{(q)}$ is the central difference operator in direction $r^{(l)}$ for spatial second derivative with variable coefficient. For the second term in (\ref{L_operator}), we have
+\begin{align*}\label{3_8_2}
+\wt{{G}}_3^{2h}({N}_{33}^{2h}){\bf c} := \left(\begin{array}{c}
+(\wt{{G}}_3^{2h}({N}_{33}^{2h}){\bf c})_1 \\
+(\wt{{G}}_3^{2h}({N}_{33}^{2h}){\bf c})_2 \\
+(\wt{{G}}_3^{2h}({N}_{33}^{2h}){\bf c})_3 
+\end{array}\right), \quad (\wt{{G}}_3^{2h}({N}_{33}^{2h}){\bf c})_p = \sum_{q = 1}^{3} \wt{G}_3^{2h}(N_{33}^{2h}(p,q)) {c}^{(q)},\quad p = 1,2,3,
+\end{align*}
+where $\wt{G}_3^{2h}(N_{33}^{2h}(p,q)) {c}^{(j)}$ is the second derivative SBP operator  defined in (\ref{sbp_2nd_1}) for direction $r^{(3)}$. For the third term in (\ref{L_operator}), we have
+\begin{align*}\label{3_8_3}
+{D}_l^{2h}({N}_{lm}^{2h}{D}_m^{2h}{\bf c}) := \left(\begin{array}{c}
+(D^{2h}_l(N^{2h}_{lm}D_m^{2h}{\bf c}))_1 \\
+(D^{2h}_l(N^{2h}_{lm}D_m^{2h}{\bf c}))_2 \\
+(D^{2h}_l(N^{2h}_{lm}D_m^{2h}{\bf c}))_3 
+\end{array}\right), (D^{2h}_l(N^{2h}_{lm}D_m^{2h}{\bf c}))_p = \sum_{q = 1}^{3} D^{2h}_l(N^{2h}_{lm}(p,q)D_m^{2h}{c}^{(q)}), p = 1,2,3.
+\end{align*}
+Here, $D_m^{2h}c^{(q)}$ is a central difference operator in direction $r^{(m)}$ for the spatial first derivative, and $D_3^{2h}c^{(q)}$ is the SBP operator defined in (\ref{first_sbp}) for direction $r^{(3)}$.
+
+For the second term in (\ref{Lf_operator}), we have
+\begin{align*}\label{3_10_2}
+{{G}}_3^{h}({N}_{33}^{h}){\bf f} := \left(\begin{array}{c}
+({{G}}_3^{h}({N}_{33}^{h}){\bf f})_1 \\
+({{G}}_3^{h}({N}_{33}^{h}){\bf f})_2 \\
+({{G}}_3^{h}({N}_{33}^{h}){\bf f})_3 
+\end{array}\right), \quad ({{G}}_3^{h}({N}_{33}^{h}){\bf f})_p = \sum_{q = 1}^{3} {G}_3^{h}(N_{33}^{h}(p,q)) {f}^{(q)},\quad p = 1,2,3.
+\end{align*}
+Here, ${G}_3^{h}(N_{33}^{h}(p,q)) {f}^{(q)}$ is the SBP operator defined in (\ref{sbp_2nd_2}) for direction $r^{(3)}$. 
+
+For the terms in $\wt{\mathcal{A}}^{2h}_3{\bf c}$, we have
+\begin{align*}\label{gamma_D} 
+{N}_{3l}^{2h}D_l^{2h}{\bf c} := \left(\begin{array}{c}
+({N}_{3l}^{2h}D_l^{2h}{\bf c})_1 \\
+({N}_{3l}^{2h}D_l^{2h}{\bf c})_2 \\
+({N}_{3l}^{2h}D_l^{2h}{\bf c})_3 
+\end{array}\right), \quad ({N}_{3l}^{2h}D_l^{2h}{\bf c})_p = \sum_{q = 1}^{3} N_{3l}^{2h}(p,q)D_l^{2h}{c}^{(q)},\quad l = 1,2, \quad p = 1,2,3,
+\end{align*}
+where $D_l^{2h}{c}^{(q)}$ is a central difference operator for first spatial derivative in direction $r^{(l)}$, and
+\begin{align*}\label{3_17}
+{N}_{33}^{2h}\wt{\mathcal{D}}_3^{2h}{\bf c} := \left(\begin{array}{c}
+({N}_{33}^{2h}\wt{\mathcal{D}}_3^{2h}{\bf c})_1 \\
+({N}_{33}^{2h}\wt{\mathcal{D}}_3^{2h}{\bf c})_2 \\
+({N}_{33}^{2h}\wt{\mathcal{D}}_3^{2h}{\bf c})_3 
+\end{array}\right), \quad ({N}_{33}^{2h}\wt{\mathcal{D}}_3^{2h}{\bf c})_p = \sum_{q = 1}^{3} N_{33}^{2h}(p,q)\wt{\mathcal{D}}_3^{2h}{c}^{(q)},\quad p = 1,2,3,
+\end{align*}
+where $\wt{\mathcal{D}}_3^{2h}{c}^{(q)}$ is the difference operator for first spatial derivative in direction $r^{(3)}$ defined as in the second equation of (\ref{sbp_1st_1}).
+
+For the terms in $\mathcal{A}^{h}_3{\bf f}$, we have
+\begin{align*}\label{gamma_D1}
+{N}_{33}^h\mathcal{D}_3^h{\bf f} := \left(\begin{array}{c}
+({N}_{33}^h\mathcal{D}_3^h{\bf f})_1 \\
+({N}_{33}^h\mathcal{D}_3^h{\bf f})_2 \\
+({N}_{33}^h\mathcal{D}_3^h{\bf f})_3 
+\end{array}\right), \quad ({N}_{33}^h\mathcal{D}_3^h{\bf f})_p = \sum_{q = 1}^{3} N_{33}^h(p,q)\mathcal{D}_3^h{f}^{(q)},\quad p = 1,2,3,
+\end{align*}
+where $\mathcal{D}_3^h{f}^{(q)}$ is the SBP operator for first spatial derivative in direction $r^{(3)}$ defined as in the first equation of (\ref{sbp_1st_2}).
+
+\section{Bilinear form}\label{appendix_bf}
+The term $\mathcal{S}_{2h}({\bf c}_t,{\bf c})$ in \eqref{coarse_simple} is given by
+\begin{multline*}
+\mathcal{S}_{2h}({\bf c}_t,{\bf c}) = ({D}_1^{2h}{\bf c}_t,{N}_{11}^{2h}{D}_1^{2h}{\bf c})_{2h} +  ({D}_1^{2h}{\bf c}_t,{N}_{12}^{2h}{D}_2^{2h}{\bf c})_{2h} +  ({D}_1^{2h}{\bf c}_t,{N}_{13}^{2h}{D}_3^{2h}{\bf c})_{2h}\\
++  ({D}_2^{2h}{\bf c}_t,{N}_{21}^{2h}{D}_1^{2h}{\bf c})_{2h} 
++  ({D}_2^{2h}{\bf c}_t,{N}_{22}^{2h}{D}_2^{2h}{\bf c})_{2h} +  ({D}_2^{2h}{\bf c}_t,{N}_{23}^{2h}{D}_3^{2h}{\bf c})_{2h} \\
++  ({D}_3^{2h}{\bf c}_t,{N}_{31}^{2h}{D}_1^{2h}{\bf c})_{2h} 
++  ({D}_3^{2h}{\bf c}_t,{N}_{32}^{2h}{D}_2^{2h}{\bf c})_{2h} +  ({D}_3^{2h}{\bf c}_t,{N}_{33}^{2h}{D}_3^{2h}{\bf c})_{2h}\\
++ ({\bf c}_t, P^{2h}_1(N_{11}^{2h}){\bf c})_{2hr} + ({\bf c}_t, P^{2h}_2(N_{22}^{2h}){\bf c})_{2hr} + ({\bf c}_t, P^{2h}_3(N_{33}^{2h}){\bf c})_{2hr},
+\end{multline*}
+where $P_3^{2h}(N_{33}^{2h})$ is a positive semi-definite operator defined in \eqref{sbp_2nd_1} for direction $r^{(3)}$; $P_1^{2h}(N_{11}^{2h}), P_2^{2h}(N_{22}^{2h})$ are analogue to $P_3^{2h}(N_{33}^{2h})$. 
+
+The term $\mathcal{S}_{h}({\bf f}_t,{\bf f})$ is defined as
+\begin{multline*}
+\mathcal{S}_{h}({\bf f}_t,{\bf f}) = ({D}_1^{h}{\bf f}_t,{N}_{11}^{h}{D}_1^h{\bf f})_{h} +  ({D}_1^{h}{\bf f}_t,{N}_{12}^{h}{D}_2^h{\bf f})_{h} +  ({D}_1^{h}{\bf f}_t,{N}_{13}^{h}{D}_3^h{\bf f})_{h}\\
++  ({D}_2^{h}{\bf f}_t,{N}_{21}^{h}{D}_1^h{\bf f})_{h} 
++  ({D}_2^{h}{\bf f}_t,{N}_{22}^{h}{D}_2^h{\bf f})_{h} +  ({D}_2^{h}{\bf f}_t,{N}_{23}^{h}{D}_3^h{\bf f})_{h} \\
++  ({D}_3^{h}{\bf f}_t,{N}_{31}^{h}{D}_1^h{\bf f})_{h} 
++  ({D}_3^{h}{\bf f}_t,{N}_{32}^{h}{D}_2^h{\bf f})_{h} +  ({D}_3^{h}{\bf f}_t,{N}_{33}^{h}{D}_3^h{\bf f})_{h}\\
++ ({\bf f}_t, P^{h}_1(N_{11}^h){\bf f})_{hr} + ({\bf f}_t, P^{h}_2(N_{22}^h){\bf f})_{hr} + ({\bf f}_t, P^{h}_3(N_{33}^h){\bf f})_{hr}.
+\end{multline*}
+Here, $P_l^h(N_{ll}^h)$ are defined similar as $P_l^{2h}(N_{ll}^{2h})$ in $\mathcal{S}_{2h}({\bf c}_t,{\bf c})$. 

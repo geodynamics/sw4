@@ -78,9 +78,12 @@
 using namespace std;
 
 class AllDims;
-class TestGrid;
+//class TestGrid;
 class TestTwilight;
-class CurvilinearInterface;
+class TestEcons;
+//class CurvilinearInterface;
+class CurvilinearInterface2;
+class GridGenerator;
 
 class EW 
 {
@@ -230,7 +233,7 @@ void setupSBPCoeff( );
 // time stepping routines
 void simpleAttenuation( vector<Sarray> & a_Up );
 void enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
-		float_sw4 t, vector<float_sw4 **> & a_BCForcing );
+		vector<Sarray*>& a_AlphaVE, float_sw4 t, vector<float_sw4 **> & a_BCForcing );
 
 void enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, 
 			   vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
@@ -317,7 +320,7 @@ const string& getOutputPath(int event=0) { return mPath[event]; }; // Consider g
 const string& getObservationPath(int event) { return mObsPath[event]; };
 const string& getName() { return mName; };
 void set_global_bcs(boundaryConditionType bct[6]); // assigns the global boundary conditions
-   boundaryConditionType getLocalBcType(int g, int side){return m_bcType[g][side]; };
+boundaryConditionType getLocalBcType(int g, int side){return m_bcType[g][side]; };
    
 
 void add_mtrl_block( MaterialData* md ){ m_mtrlblocks.push_back( md ); };
@@ -566,7 +569,7 @@ void compute_energy( float_sw4 dt, bool write_file, vector<Sarray>& Um,
 		     vector<Sarray>& U, vector<Sarray>& Up, int step, int event );
 
 float_sw4 scalarProduct( vector<Sarray>& U, vector<Sarray>& V);
-void get_gridgen_info( int& order, float_sw4& zetaBreak ) const;
+   //void get_gridgen_info( int& order, float_sw4& zetaBreak ) const;
 
 
 //  void update_maxes_hVelMax();
@@ -579,7 +582,7 @@ void get_gridgen_info( int& order, float_sw4& zetaBreak ) const;
 
 // functions from the old FileInput class
 void cleanUpRefinementLevels();
-float_sw4 curvilinear_interface_parameter( int gcurv );
+   //float_sw4 curvilinear_interface_parameter( int gcurv );
 
 enum InputMode { UNDEFINED, Efile, GaussianHill, GridFile, CartesianGrid, TopoImage, Rfile};
 
@@ -1196,7 +1199,8 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void enforceIC2( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
                     vector<Sarray*>& a_AlphaVEp, float_sw4 t, 
                     vector<Sarray> &F, std::vector<GridPointSource*> point_sources );
-   void CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda  );
+   void CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, 
+                     vector<Sarray*>& a_AlphaVE, float_sw4 t );
    
    void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
    void dirichlet_twilight_ic( Sarray& U, int g, int kic, float_sw4 t);
@@ -1216,10 +1220,15 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_AlphaVEp, Sarray& Unext,
                                        int g, int kic, float_sw4 t, Sarray &F, vector<GridPointSource*> point_sources );
    
-   void compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic, float_sw4* a_str_x, float_sw4* a_str_y);
+   void compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic, float_sw4* a_str_x, float_sw4* a_str_y, 
+                            float_sw4* sbop, char op );
+
+   void compute_icstresses2( Sarray& a_Up, Sarray& B, int kic, float_sw4 h, Sarray& a_mu, Sarray& a_lambda,
+                             float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop, char op );
+
    void compute_icstresses_curv( Sarray& a_Up, Sarray& B, int kic,
                                  Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
-                                 float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop );
+                                 float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop, char op );
 
    void add_ve_stresses( Sarray& a_Up, Sarray& B, int g, int kic, int a_a, float_sw4* a_str_x, float_sw4* a_str_y);
    
@@ -1243,9 +1252,12 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void checkpoint_twilight_test( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarray>& Up,
 				  vector<Sarray*> AlphaVEm, vector<Sarray*> AlphaVE,
 				  vector<Sarray*> AlphaVEp, vector<Source*> a_Sources, float_sw4 t );
-   TestGrid* create_gaussianHill();
+   //   TestGrid* create_gaussianHill();
    TestTwilight* create_twilight();
+   TestEcons* create_energytest();
    AllDims* get_fine_alldimobject( );
+   void grid_information( int g );
+   void check_ic_conditions( int gc, vector<Sarray>& a_U );
 //
 // VARIABLES BEYOND THIS POINT
 //
@@ -1288,6 +1300,8 @@ int m_paddingCells[4]; // indexing is [0] = low-i, [1] = high-i, [2] = low-j, [3
 // and the metric derivatives as well as the jacobian
    vector<Sarray> mMetric;
 
+   GridGenerator* m_gridGenerator;
+
 // command prefilter
    bool m_prefilter_sources, m_filter_observations;
 // filter setup
@@ -1318,11 +1332,14 @@ ofstream msgStream;
 vector<Sarray> mMu;
 vector<Sarray> mLambda;
 vector<Sarray> mRho;
+vector<Sarray*> mMuVE, mLambdaVE;// Attenuation material
 vector<Sarray> mC; // Anisotropic material parameters
 Sarray mCcurv; // Anisotropic material with metric (on curvilinear grid).
 
 // Store coefficeints needed for Mesh refinement
 vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs, m_Mlcs;
+
+vector<float_sw4> m_curviRefLev; 
 
 private:
 void preprocessSources( vector<vector<Source*> >& a_GlobalSources );
@@ -1362,8 +1379,8 @@ int m_proc_array[2];
 bool mbcsSet;
 
 // for some simple topographies (e.g. Gaussian hill) there is an analytical expression for the top elevation
-bool m_analytical_topo, m_use_analytical_metric;
-float_sw4 m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc, m_GaussianYc;
+//bool m_analytical_topo, m_use_analytical_metric;
+//float_sw4 m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc, m_GaussianYc;
 
 // interface surfaces in the material model
 //int m_number_material_surfaces, m_Nlon, m_Nlat;
@@ -1377,8 +1394,8 @@ float_sw4 m_vpMin, m_vsMin;
 
 
 // order of polynomial mapping in algebraic grid genenerator
-int m_grid_interpolation_order;
-float_sw4 m_zetaBreak;
+//int m_grid_interpolation_order;
+   //float_sw4 m_zetaBreak;
 
 // metric of the curvilinear grid
 float_sw4 m_minJacobian, m_maxJacobian;
@@ -1422,7 +1439,7 @@ float_sw4 m_velo_omega, m_min_omega, m_max_omega, m_att_max_frequency, m_att_ppw
 float_sw4 m_qmultiplier;
 
 vector<Sarray> mQp, mQs;
-vector<Sarray*> mMuVE, mLambdaVE;
+
 // relaxation frequencies
 vector<float_sw4> mOmegaVE;
 
@@ -1445,11 +1462,11 @@ int mMaterialExtrapolate;
 int m_nx_base, m_ny_base, m_nz_base;
 float_sw4 m_h_base;
 vector<bool> m_iscurvilinear;
-   vector<float_sw4> m_refinementBoundaries, m_curviRefLev; // AP added m_curviRefLev
+vector<float_sw4> m_refinementBoundaries;
 InputMode m_topoInputStyle;
 string m_topoFileName, m_topoExtFileName, m_QueryType;
 bool mTopoImageFound;
-float_sw4 m_topo_zmax;
+   //float_sw4 m_topo_zmax;
 int m_maxIter;
 float_sw4 m_EFileResolution;
 
@@ -1621,7 +1638,8 @@ float_sw4 m_sbop[6], m_acof[384], m_bop[24], m_bope[48], m_ghcof[6];
 //float_sw4 m_hnorm[4], m_iop[5], m_iop2[5], m_bop2[24]; // unused
 float_sw4 m_acof_no_gp[384], m_ghcof_no_gp[6], m_sbop_no_gp[6];
 
-vector<CurvilinearInterface*> m_clInterface;
+  //vector<CurvilinearInterface*> m_clInterface;
+vector<CurvilinearInterface2*> m_cli2;
 
 vector<MPI_Datatype> m_send_type1;
 vector<MPI_Datatype> m_send_type3;

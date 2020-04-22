@@ -128,6 +128,7 @@ public:
    int ncomp() const {return m_nc;}
    int npts() const  {return m_ni*m_nj*m_nk;}
    void copy( const Sarray& u );
+   float_sw4 absmax( int c=1 );
    float_sw4 maximum( int c=1 );
    float_sw4 minimum( int c=1 );
    float_sw4 sum( int c=1 );
@@ -150,6 +151,9 @@ public:
    void assign( const float* ar );
    void assign( const double* ar );
    void transposeik();
+   void transposeij();
+   void extrapolij( int npts );
+   void swap12();
    void copy_to_device( EWCuda* cu, bool async=false, int st=0 );
    void copy_from_device( EWCuda* cu, bool async=false, int st=0 );
    void allocate_on_device( EWCuda* cu );

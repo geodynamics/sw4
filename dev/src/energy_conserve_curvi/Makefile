@@ -16,7 +16,7 @@ LD = $(FC)
 
 # Object files
 
-OBJS = energy_2nd_20191218.o problemsetup_new_3d.o SBP_operator.o
+OBJS = energy_4th_20200108.o problemsetup_new_3d.o SBP_operator.o
 #OBJS = Elastic_3D_Interface_nonconforming_it.o problemsetup_new_3d.o SBP_operator.o Iterative_solver.o
 
 #
@@ -37,7 +37,7 @@ $(BINDIR)/energy.x: $(OBJS)
 # The dependencies between modules
 
 #Elastic_3D_Interface_nonconforming_it.f90: problemsetup_new_3d.mod SBP_operator.mod Iterative_solver.mod
-energy_2nd_20191218.f90: problemsetup_new_3d.mod SBP_operator.mod
+energy_4th_20200108.f90: problemsetup_new_3d.mod SBP_operator.mod
 
 clean:
 	rm -rf *.x *.o *.a *.mod *.txt s0* f0* smultivar.0* fmultivar.0* *__genmod.f90 *~ *#

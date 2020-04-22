@@ -100,24 +100,24 @@
 \newcommand{\colortwo}[1]{{\color{blue} #1}}
 
 % Sets running headers as well as PDF title and authors
-\headers{Finite difference methods for the elastic wave equations}{L. ZHang, S. Wang and N. A. Petersson}
-\title{Fourth order finite difference methods for  3D elastic wave propagation in curvilinear coordinates with mesh refinement interfaces}
+\headers{Finite difference methods for the elastic wave equations}{L. Zhang, S. Wang and N. A. Petersson}
+\title{Elastic wave propagation in curvilinear coordinates with mesh refinement interfaces by a fourth order finite difference method}
 
 
 \begin{document}
-\author{Lu Zhang \thanks{SMU}\and Siyang Wang \thanks{Division of Applied Mathematics, UKK, M\"alardalen University, V\"aster\aa s, 
-    Sweden. \href{mailto:siyang.wang@chalmers.se}{Email: siyang.wang@mdh.se}}\and N. Anders
-  Petersson \thanks{Center for Applied Scientific Computing, Lawrence Livermore National Laboratory,
+\author{Lu Zhang\thanks{Department of Mathematics, Southern Methodist University, Dallas, TX 75206, USA. \href{mailto:luzhang@smu.edu}{Email: luzhang@smu.edu}}\and Siyang Wang\thanks{Division of Applied Mathematics, UKK, M\"alardalen University, V\"aster\aa s, 
+    Sweden. \href{mailto:siyang.wang@mdh.se}{Email: siyang.wang@mdh.se}}\and N. Anders
+  Petersson\thanks{Center for Applied Scientific Computing, Lawrence Livermore National Laboratory,
     Livermore, CA 94551, USA. \href{mailto:petersson1@llnl.gov}{Email: petersson1@llnl.gov}}}
 \maketitle
 
 
 \begin{abstract}
-We develop a fourth order finite difference method for the three-dimensional elastic wave equation in anisotropic media with piecewise smooth material property. In our model, the material property can be discontinuous at curved interfaces. The governing equations are discretized in second order form on curvilinear meshes by using a fourth order finite difference operator satisfying a summation-by-parts property. A highlight of our method is that mesh sizes can be chosen according to the velocity structure of the material so that computational efficiency is improved. At mesh refinement interfaces with hanging nodes, physical interface conditions are imposed by using ghost points and interpolation. We prove energy stability of the discretization.  With a fourth order predictor-corrector time integrator, the fully discrete scheme is energy conserving. Numerical experiments are presented to verify the fourth order convergence rate, and the energy conserving property. 
+We develop a fourth order accurate finite difference method for the three dimensional elastic wave equation in isotropic media with the piecewise smooth material property. In our model, the material property can be discontinuous at curved interfaces. The governing equations are discretized in second order form on curvilinear meshes by using a fourth order finite difference operator satisfying a summation-by-parts property. The method is energy stable and high order accurate. The highlight is that mesh sizes can be chosen according to the velocity structure of the material so that computational efficiency is improved. At the mesh refinement interfaces with hanging nodes, physical interface conditions are imposed by using ghost points and interpolation.  With a fourth order predictor-corrector time integrator, the fully discrete scheme is energy conserving. Numerical experiments are presented to verify the fourth order convergence rate and the energy conserving property. 
 \end{abstract}
 
 \begin{keywords}
-Elastic wave equations, Three space dimension,  Finite difference methods, Summation-by-parts, Non-conforming, Mesh refinement
+Elastic wave equations, Three space dimension,  Finite difference methods, Summation-by-parts, Non-conforming mesh refinement
 \end{keywords}
 
 \begin{AMS}
@@ -138,8 +138,6 @@ Elastic wave equations, Three space dimension,  Finite difference methods, Summa
 
 \input{the_temporal_discretization}
 
-\input{time_discretization_with_sbp_scheme}
-
 \input{numerical_experiments}
 
 \input{verification_of_convergence_rate}
@@ -151,6 +149,10 @@ Elastic wave equations, Three space dimension,  Finite difference methods, Summa
 \input{energy_conservation_test}
 
 \input{conclusion}
+
+\appendix
+
+\input{appendix}
 
 
 \bibliography{lu}

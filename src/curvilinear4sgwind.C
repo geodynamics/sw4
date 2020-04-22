@@ -161,7 +161,7 @@ void curvilinear4sgwind( int ifirst, int ilast, int jfirst, int jlast, int kfirs
       khighb = kfirstw;
       khighe = klastw;
    }
-   //   std::cout << "Curvilinear4sgwind u,l,m= " << upper << " " << mid << "  " << lower << " high(kb,ke)= " << khighb << " " << khighe << std::endl;
+   //   std::cout << "Curvilinear4sgwind u,l,m= " << upper << " " << mid << "  " << lower << " high(kb,ke)= " << khighb << " " << khighe << " low(kb,ke) = " << klowb << " " << klowe << std::endl;
 #pragma omp parallel
    {
    if( lower )
@@ -1668,6 +1668,7 @@ void curvilinear4sgwind( int ifirst, int ilast, int jfirst, int jlast, int kfirs
 	       r1 += istrxy*mucofu2*u(1,i,j,nk+1) + mucofuv*u(2,i,j,nk+1) + istry*mucofuw*u(3,i,j,nk+1);
 	       r2 += mucofuv*u(1,i,j,nk+1) + istrxy*mucofv2*u(2,i,j,nk+1) + istrx*mucofvw*u(3,i,j,nk+1);
 	       r3 += istry*mucofuw*u(1,i,j,nk+1) + istrx*mucofvw*u(2,i,j,nk+1) + istrxy*mucofw2*u(3,i,j,nk+1);
+
 
 	       // pq-derivatives (u-eq)
 // 38 ops., tot=4049

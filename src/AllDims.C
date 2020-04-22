@@ -92,10 +92,12 @@ AllDims::AllDims( int nprocs, int ibg, int ieg, int jbg, int jeg,
    int nig=ieg-ibg+1+2*nghost;
    int njg=jeg-jbg+1+2*nghost;
    int nkg=keg-kbg+1+2*nghost;
-   ptrdiff_t ni, ib;
 #ifdef ENABLE_FFTW
+   ptrdiff_t ni, ib;
    ptrdiff_t fftw_alloc_local = fftw_mpi_local_size_3d( nig, njg, nkg, MPI_COMM_WORLD, &ni, &ib );
    m_fftw_alloc_local = static_cast<size_t>(fftw_alloc_local);
+#else
+   int ni, ib;
 #endif
    
    std::vector<int> niloc(m_nproci), ibloc(m_nproci);

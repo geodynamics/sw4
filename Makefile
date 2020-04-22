@@ -107,8 +107,8 @@ else
       include configs/make.cori
       foundincfile := "configs/make.cori"
   # for Bjorn's tux box
-    else ifeq ($(findstring tux337,$(HOSTNAME)),tux337)
-      include configs/make.tux337
+    else ifeq ($(findstring tux405,$(HOSTNAME)),tux405)
+      include configs/make.tux405
       foundincfile := "configs/make.tux337"
   # for Anders' tux box
     else ifeq ($(findstring tux355,$(HOSTNAME)),tux355)
@@ -220,8 +220,9 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o curvilinearGri
        MaterialVolimagefile.o MaterialRfile.o AnisotropicMaterialBlock.o sacutils.o \
        addmemvarforcing2.o consintp.o oddIoddJinterp.o evenIoddJinterp.o oddIevenJinterp.o \
        evenIevenJinterp.o CheckPoint.o geodyn.o AllDims.o Patch.o RandomizedMaterial.o \
-       MaterialInvtest.o DataPatches.o TestTwilight.o TestGrid.o CurvilinearInterface.o \
-       curvilinear4sgwind.o
+       MaterialInvtest.o DataPatches.o TestTwilight.o \
+       curvilinear4sgwind.o TestEcons.o GridGenerator.o GridGeneratorGeneral.o  \
+       GridGeneratorGaussianHill.o CurvilinearInterface2.o
 
 # Fortran routines (lamb_exact_numquad needs QUADPACK)
  OBJ += rayleighfort.o lamb_exact_numquad.o

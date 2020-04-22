@@ -1,0 +1,14 @@
+grid nx=61 x=6.283185307179586 y=6.283185307179586 z=6.283185307179586
+time t=0.8
+
+fileio path=gauss-sg-mr-2 verbose=2
+
+topography input=gaussian zmax=2.5 order=4 gaussianAmp=2.8 gaussianXc=3.1415926536 gaussianYc=3.1415926536 gaussianLx=1.256637061435917 gaussianLy=1.256637061435917 
+
+refinement zmax=1
+
+twilight omega=1.1 phase=0.2 momega=1.2 errorlog=1 sgstretching=1 omstrx=0.5 omstry=0.5
+
+developer cfl=1.0
+
+
