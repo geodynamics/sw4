@@ -586,6 +586,9 @@ int EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
          else
 	    cout << " cfl_max = " << sqrt(limits[6]) << " on grid " << g << endl;
       } // end if proc_zero && verbose > 1
+
+      //cerr << "limits[6]=" << limits[6] << " mCFLmax^2=" << mCFLmax*mCFLmax << " limits[8]=" << limits[8] << endl;
+
       ok = ok && (limits[0]>0 && limits[2]>0 && limits[6] <= mCFLmax*mCFLmax && limits[8]>0);
       if (!ok)
       {

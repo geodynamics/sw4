@@ -873,6 +873,9 @@ void Sarray::save_to_disk( const char* fname )
    if( nr != sizeof(int) )
       std::cout << "Error saving nk to " << fname << std::endl;
    size_t npts = m_nc*( (size_t)m_ni)*m_nj*( (size_t)m_nk);
+
+   //cout << "Sarray: save_to_disk nc=" << m_nc << " ni=" << m_ni << " nj=" << m_nj << " nk=" << m_nk << endl;
+
    if( m_corder )
    {
       float_sw4* ar = new float_sw4[npts];

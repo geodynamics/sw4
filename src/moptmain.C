@@ -155,6 +155,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
       if( mopt->m_misfit == Mopt::L2 )
       {
 	 double dshift, ddshift, dd1shift;
+
 	 for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
 	    mf += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], NULL, dshift, ddshift, dd1shift );
       }
@@ -266,12 +267,15 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    vector<Sarray> rho(ng), mu(ng), lambda(ng);
 
    int nms, nmd, nmpard_global;
+   int ok=1;
+
    mopt->m_mp->get_nr_of_parameters( nms, nmd, nmpard_global );
    if( nms != nmpars || nmd != nmpard )
       cout << "compute_f_and_df: WARNING, inconsistent number of material parameters" << endl;
+
+   checkMinMax(nmpars, &xs[nspar], "compute_f_and_df: xs");
    mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
 
-   int ok=1;
    if( mopt->m_mcheck )
       simulation.check_material( rho, mu, lambda, ok, 2 );
    VERIFY2( ok, "ERROR: Material check failed\n" );
@@ -310,15 +314,18 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       {
 	 if( mopt->m_output_ts && it >= 0 )
 	    GlobalTimeSeries[e][m]->writeFile();
-	 TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc" );
-	 diffs.push_back(elem);
+     TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc", true);  // add true to append filename substring
+	  diffs.push_back(elem);
       }
 // 2. misfit function also updates diffs := this - observed
       if( mopt->m_misfit == Mopt::L2 )
       {
 	 double dshift, ddshift, dd1shift;
-	 for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
-	    f += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
+     //cerr << "diffs size=" << GlobalTimeSeries[e].size() << endl;
+     for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ ) {
+	     f += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
+        diffs[m]->writeFileUSGS();
+        }
       }
       else if( mopt->m_misfit == Mopt::CROSSCORR )
       {
@@ -331,9 +338,15 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       sw4_profile->time_stamp("backward+adjoint solve" );
       simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, e );
       sw4_profile->time_stamp("done backward+adjoint solve" );
+
+      cout << "done adjoint solve: gLambda[0] npts=" << gLambda[0].npts() << " min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << endl;
+      cout << "done adjoint solve: lambda[0] npts=" << lambda[0].npts() << " min=" << lambda[0].minimum() << " max=" << lambda[0].maximum() << endl;
+
+
       //      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], &dfs[nspar], dfm, gRho, gMu, gLambda );
       //      mopt->m_mp->gradient_transformation( rho, mu, lambda, gRho, gMu, gLambda );
-      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfmevent, rho, mu, lambda, gRho, gMu, gLambda );
+      
+      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfmevent, rho, mu, lambda, gRho, gMu, gLambda, myrank);
       for( int m=0 ; m < nmpars ; m++ )
 	 dfs[m+nspar] += dfsevent[m];
       for( int m=0 ; m < nmpard ; m++ )
@@ -1387,6 +1400,7 @@ int main(int argc, char **argv)
 		 lbfgs( simulation, nspar, nmpars, xs, nmpard, xm, 
 			GlobalSources, GlobalTimeSeries,
 			GlobalObservations, myRank, mopt );
+         
 	      else if( mopt->m_optmethod == 2 )
 		 nlcg( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		       GlobalObservations, myRank, mopt );

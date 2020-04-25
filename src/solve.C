@@ -474,7 +474,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   }
 
 // save any images for cycle = 0 (initial data), or beginCycle-1 (checkpoint restart)
-  update_images( beginCycle-1, t, U, Um, Up, a_Rho, a_Mu, a_Lambda, a_Sources, 1 );
+  //update_images( beginCycle-1, t, U, Um, Up, a_Rho, a_Mu, a_Lambda, a_Sources, 1 );
   for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
     mImage3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[event], mZ );
 
@@ -881,7 +881,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 //
 // AP: Note to self: Any quantity related to velocities will be lagged by one time step
 //
-    update_images( currentTimeStep, t, Up, U, Um, a_Rho, a_Mu, a_Lambda, a_Sources, currentTimeStep == mNumberOfTimeSteps[event] );
+    //update_images( currentTimeStep, t, Up, U, Um, a_Rho, a_Mu, a_Lambda, a_Sources, currentTimeStep == mNumberOfTimeSteps[event] );
+    
     for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
       mImage3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, 
 				       mQp, mQs, mPath[event], mZ ); // mRho, a_Mu, mLambda occur twice because we don't use gradRho etc.

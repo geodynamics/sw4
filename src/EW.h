@@ -72,6 +72,8 @@
 
 #include "CheckPoint.h"
 
+#include "util.h"
+
 using namespace std;
 
 class AllDims;

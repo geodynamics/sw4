@@ -122,13 +122,16 @@ void MaterialParCartesianVsVp::get_material( int nmd, double* xmd, int nms,
    double* csp = m_cs.c_ptr();
    double* cpp = m_cp.c_ptr();
    size_t ind =0;
+
+   cout << "MaterialParCartesianVsVp::get_material: nx=" << m_nx << " ny=" << m_ny << " nz=" << m_nz << " nms=" << nms << " nmd=" << nmd << endl;
+
    for( int k=1 ; k <= m_nz ; k++ )
-      for( int j=1 ; j <= m_ny ; j++ )
+   for( int j=1 ; j <= m_ny ; j++ )
 	 for( int i=1 ; i <= m_nx ; i++ )
 	 {
-            size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
+      size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
 	    //            rhop[indm] = xms[3*ind];
-            rhop[indm] = 0;
+       rhop[indm] = 0;
 	    csp[indm]  = xms[2*ind ];
 	    cpp[indm]  = xms[2*ind+1];
 	    //	    mup[indm]    = rhop[indm]*csp[indm]*csp[indm];
@@ -139,6 +142,7 @@ void MaterialParCartesianVsVp::get_material( int nmd, double* xmd, int nms,
    {
       //      m_ew->interpolate( m_nx, m_ny, m_nz, m_xmin, m_ymin, m_zmin, m_hx, m_hy, m_hz, m_rho, m_mu,
       //			 m_lambda, g, a_rho[g], a_mu[g], a_lambda[g], false );
+      // interpolate init model perturbation to the ref model
       m_ew->interpolate( m_nx, m_ny, m_nz, m_xmin, m_ymin, m_zmin, m_hx, m_hy, m_hz, m_rho, m_cs,
 			 m_cp, g, a_rho[g], a_mu[g], a_lambda[g], false );
       m_ew->update_and_transform_material( g, a_rho[g], a_mu[g], a_lambda[g] );
@@ -197,10 +201,13 @@ void MaterialParCartesianVsVp::get_parameters( int nmd, double* xmd, int nms,
 					   double* xms, std::vector<Sarray>& a_rho, 
 					   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
 {
+
+   if(m_myrank==0) cout << ">>>>>>>>> get_parameters: offset from ref model option m_init=" << m_init << endl;
+
    if( m_init == 0 )
    {
       for( int i=0 ; i < nms ; i++ )
-	 xms[i] = 0;
+	 xms[i] = 0;           
    }
    else if( m_init == 1 )
    {
@@ -264,15 +271,21 @@ void MaterialParCartesianVsVp::get_gradient( int nmd, double* xmd, int nms, doub
 					 std::vector<Sarray>& a_lambda,
 					 std::vector<Sarray>& a_gradrho,
 					 std::vector<Sarray>& a_gradmu,
-					 std::vector<Sarray>& a_gradlambda )
+					 std::vector<Sarray>& a_gradlambda,
+                int rank)
 {
    // Computes gradient with respect to the material parameterization from given
    // gradients with respect to the material at grid points.
    // It is assumed that transform_gradient has been called before this routine.
 
+  if(rank==0) a_gradlambda[0].save_to_disk("gradlambda.say"); 
+
+   // transform grads from lambda/mu to vp/vs
    for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
       m_ew->transform_gradient( a_rho[g], a_mu[g], a_lambda[g], 
 				a_gradrho[g], a_gradmu[g], a_gradlambda[g] );
+
+   if(rank==0) a_gradlambda[0].save_to_disk("gradLambda.say");  // scaling difference
 
    Sarray grho(0,m_nx+1,0,m_ny+1,0,m_nz+1), gmu(0,m_nx+1,0,m_ny+1,0,m_nz+1);
    Sarray glambda(0,m_nx+1,0,m_ny+1,0,m_nz+1);
@@ -287,6 +300,12 @@ void MaterialParCartesianVsVp::get_gradient( int nmd, double* xmd, int nms, doub
       m_ew->interpolation_gradient( m_nx, m_ny, m_nz, m_xmin, m_ymin, m_zmin, m_hx, m_hy, m_hz,
 			       grho, gmu, glambda, g, a_gradrho[g], a_gradmu[g], a_gradlambda[g] );
    }   
+
+   // QC grad before and after interpolation
+   //a_gradlambda[0].save_to_disk("gradLambda.say");
+ 
+
+
    //   double* grhop=grho.c_ptr();
    double* gmup=gmu.c_ptr();
    double* glambdap=glambda.c_ptr();
@@ -305,6 +324,8 @@ void MaterialParCartesianVsVp::get_gradient( int nmd, double* xmd, int nms, doub
       tmp[i] = glambdap[i];
    MPI_Allreduce( tmp, glambdap, npts, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
    delete[] tmp;
+
+  //glambda.save_to_disk("gLambda.say");
 
    size_t ind =0;
    for( int k=1 ; k <= m_nz ; k++ )

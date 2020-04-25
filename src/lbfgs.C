@@ -343,6 +343,8 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	 xmnew[i] = xm[i] + lambda*pm[i];
       int ng = simulation.mNumberOfGrids;
       vector<Sarray> rho(ng), mu(ng), la(ng);
+
+	  checkMinMax(nmpars, &xsnew[nspar], "linesearch: xsnew");
       mopt->m_mp->get_material( nmpard, xmnew, nmpars, &xsnew[nspar], rho, mu, la );
       int ret_code = simulation.check_material( rho, mu, la, ok );
       if( !ok )
@@ -572,6 +574,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 
 
    ns = nspar + nmpars;
+   if(myRank==0) cout << "nspar=" << nspar << " nmpars=" << nmpars << " ns=" << ns << endl;
 
    if( maxit == 0 )
       return;
@@ -606,11 +609,22 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
       dx   = new double[ns];
    }
    
-   if( myRank == 0 )
+   if( myRank == 0 ) {
       cout << "Begin L-BFGS iteration by evaluating initial misfit and gradient..." << endl;
+      checkMinMax(ns, xs, "xs");
+	  checkMinMax(nmpard, xm, "xm");
+    }
 
    compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		     GlobalObservations, f, dfs, dfm, myRank, mopt, 0 );
+    
+	if( myRank == 0 ) {
+      cout << "initial misfit f=" << f << endl;
+	  cout << "ns=" << ns << endl;
+      checkMinMax(ns, dfs, "gradient to update model perturbation (most critical): dfs");
+	  checkMinMax(nmpard, dfm, "dfm");
+	  save_array_to_disk(ns, dfs, "dfs.bin"); // multi-component *ns
+    }
 
    if( mopt->m_output_ts )
    {
@@ -867,17 +881,21 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 	 if( myRank == 0 )
          {
 	    printf(".. return code %d misfit changed from %e to %e\n",  retcode,  f, fp);
-//	    cout << " .. return code "  << retcode << " misfit changed from " << f << " to " << fp << endl;
+	    cout << " .. return code "  << retcode << " misfit changed from " << f << " to " << fp << endl;
+		cout << "line search alpha=" << alpha << endl;
+		checkMinMax(ns, ds, "ds");
          }
          
       }
       else
       {
 	 for( int i=0 ; i < ns ; i++ )
-	    xa[i] = xs[i] + alpha*ds[i];
+	    xa[i] = xs[i] + alpha*ds[i];   // updated model
 	 for( int i=0 ; i < nmpard ; i++ )
-	    xam[i] = xm[i] + alpha*dm[i];
+	    xam[i] = xm[i] + alpha*dm[i];   
       }
+
+     if(myRank ==0) checkMinMax(ns, xa, "updated model");
 
       // xa is now the new iterate
       // store x^{k+1}-x^k in d to save memory

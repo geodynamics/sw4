@@ -110,15 +110,18 @@ void MaterialParCartesian::get_material( int nmd, double* xmd, int nms,
    double* mup=m_mu.c_ptr();
    double* lambdap=m_lambda.c_ptr();
    size_t ind =0;
+
+   cout << "MaterialParCartesian::get_material: nx=" << m_nx << " ny=" << m_ny << " nz=" << m_nz << " nms=" << nms << " nmd=" << nmd << endl;
+
    for( int k=1 ; k <= m_nz ; k++ )
-      for( int j=1 ; j <= m_ny ; j++ )
-	 for( int i=1 ; i <= m_nx ; i++ )
+   for( int j=1 ; j <= m_ny ; j++ )
+	for( int i=1 ; i <= m_nx ; i++ )
 	 {
             size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
             rhop[indm]    = xms[3*ind];
-	    mup[indm]     = xms[3*ind+1];
-	    lambdap[indm] = xms[3*ind+2];
-	    ind++;
+	         mup[indm]     = xms[3*ind+1];
+	         lambdap[indm] = xms[3*ind+2];
+	         ind++;
 	 }
    for( int g = 0 ; g < m_ew->mNumberOfGrids ; g++ )
    {
@@ -238,7 +241,7 @@ void MaterialParCartesian::get_gradient( int nmd, double* xmd, int nms, double* 
 					 std::vector<Sarray>& a_lambda,
 					 std::vector<Sarray>& a_gradrho,
 					 std::vector<Sarray>& a_gradmu,
-					 std::vector<Sarray>& a_gradlambda )
+					 std::vector<Sarray>& a_gradlambda, int rank )
 {
    Sarray grho(0,m_nx+1,0,m_ny+1,0,m_nz+1), gmu(0,m_nx+1,0,m_ny+1,0,m_nz+1);
    Sarray glambda(0,m_nx+1,0,m_ny+1,0,m_nz+1);

@@ -123,6 +123,9 @@ void MaterialParCartesianVels::get_material( int nmd, double* xmd, int nms,
    double* csp = m_cs.c_ptr();
    double* cpp = m_cp.c_ptr();
    size_t ind =0;
+
+   cout << "MaterialParCartesianVels::get_material: nx=" << m_nx << " ny=" << m_ny << " nz=" << m_nz << " nms=" << nms << " nmd=" << nmd << endl;
+
    for( int k=1 ; k <= m_nz ; k++ )
       for( int j=1 ; j <= m_ny ; j++ )
 	 for( int i=1 ; i <= m_nx ; i++ )
@@ -260,7 +263,7 @@ void MaterialParCartesianVels::get_gradient( int nmd, double* xmd, int nms, doub
 					 std::vector<Sarray>& a_lambda,
 					 std::vector<Sarray>& a_gradrho,
 					 std::vector<Sarray>& a_gradmu,
-					 std::vector<Sarray>& a_gradlambda )
+					 std::vector<Sarray>& a_gradlambda, int rank )
 {
    //
    // Computes gradient with respect to the material parameterization from given

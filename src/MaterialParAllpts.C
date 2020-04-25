@@ -163,7 +163,7 @@ void MaterialParAllpts::get_gradient( int nmd, double* xmd, int nms, double* xms
 				      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
 				      std::vector<Sarray>& a_lambda, 
 				      vector<Sarray>& a_gradrho, vector<Sarray>& a_gradmu,
-				      vector<Sarray>& a_gradlambda )
+				      vector<Sarray>& a_gradlambda, int rank )
 {
    double irat2=1/(m_ratio*m_ratio);
 

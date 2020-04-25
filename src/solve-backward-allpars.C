@@ -122,7 +122,8 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 //	   a_TimeSeries[ts]->writeFile();
 
    // Backward time stepping loop
-   for( int currentTimeStep = mNumberOfTimeSteps[event] ; currentTimeStep >= beginCycle; currentTimeStep-- )
+   //for( int currentTimeStep = mNumberOfTimeSteps[event] ; currentTimeStep >= beginCycle; currentTimeStep-- )
+   for( int currentTimeStep = mNumberOfTimeSteps[event] ; currentTimeStep >= 30; currentTimeStep-- )
    {    
       time_measure[0] = MPI_Wtime();
       evalRHS( K, a_Mu, a_Lambda, Lk, AlphaVE );
@@ -202,7 +203,16 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 	 point_sources[s]->add_to_gradient( K, Kacc, t, mDt, gradientsrc, mGridSize, mJ, topographyExists() );
 	 //	 point_sources[s]->add_to_hessian(  K, Kacc, t, mDt, hessian,  mGridSize );
       }
+  
       add_to_grad( K, Kacc, Um, U, Up, Uacc, gRho, gMu, gLambda );      
+
+      // add QC of backward propgating wavefields Kp
+      update_images( currentTimeStep, t, Kp, K, Km, gRho, gMu, gLambda, a_Sources, currentTimeStep == mNumberOfTimeSteps[event] );
+
+     //   gRho[0].save_to_disk("grho.bin");
+      gMu[0].save_to_disk("gmu.say");
+      gLambda[0].save_to_disk("glambda.say");
+
 
       time_measure[6] = MPI_Wtime();
       t -= mDt;
@@ -258,14 +268,13 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 	 cout << "   Max norm of backed out Um = " << umx[0]  <<  " " << umx[1]  <<  " " << umx[2]  << endl;
       }
    }
+
+
    communicate_arrays( gRho );
    communicate_arrays( gMu );
    communicate_arrays( gLambda );
-   
-
-   //   gRho[0].save_to_disk("grho.bin");
-   //   gMu[0].save_to_disk("gmu.bin");
-   //   gLambda[0].save_to_disk("glambda.bin");
+    
+ 
 
     for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
        mImage3DFiles[i3]->force_write_image( t, 0, Up, a_Rho, a_Mu, a_Lambda, gRho, gMu, gLambda, mQp, mQs, mPath[event], mZ );

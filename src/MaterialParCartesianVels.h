@@ -24,7 +24,7 @@ public:
 		      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
 		      std::vector<Sarray>& a_lambda,
 		      std::vector<Sarray>& a_gradrho, std::vector<Sarray>& a_gradmu,
-		      std::vector<Sarray>& a_gradlambda );
+		      std::vector<Sarray>& a_gradlambda, int rank );
    //   void gradient_transformation( std::vector<Sarray>& a_rho,
    //				 std::vector<Sarray>& a_mu,
    //				 std::vector<Sarray>& a_lambda,
