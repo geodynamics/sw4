@@ -363,7 +363,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   /*     alignment = 65536; */
 
   fapl = H5Pcreate(H5P_FILE_ACCESS);
-  H5Pset_alignment(fapl, 10000, alignment);
+  H5Pset_alignment(fapl, 32767, alignment);
   fid = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
   if (fid < 0) {
     printf("Error: H5Fcreate failed\n");
@@ -443,10 +443,10 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     createAttr(grp, "NPTS", H5T_NATIVE_INT, attr_space1);
 
     // x, y, z
-    createAttr(grp, "STX,STY,STZ", H5T_NATIVE_FLOAT, attr_space3);
+    createAttr(grp, "STX,STY,STZ", H5T_NATIVE_DOUBLE, attr_space3);
 
     // Lon, lat, dep
-    createAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_FLOAT, attr_space3);
+    createAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_DOUBLE, attr_space3);
 
     // TODO: Location, no value to write now
     createAttr(grp, "LOC", H5T_NATIVE_INT, attr_space1);

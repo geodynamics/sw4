@@ -36,4 +36,5 @@ void readStationHDF5(EW* ew, string inFileName, string outFileName, int writeEve
 
 void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSource, EW *ew, int event, float_sw4 m_global_xmax, float_sw4 m_global_ymax, float_sw4 m_global_zmax, float_sw4 mGeoAz, float_sw4 xmin, float_sw4 ymin, float_sw4 zmin, int mVerboses, int nreader);
 
+void readStationInfoHDF5(string inFileName, vector<string> *staname, vector<double> *x, vector<double> *y, vector<double> *z, vector<int> *is_nsew, int *n);
 #endif // _READHDF5_H

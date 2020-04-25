@@ -1199,7 +1199,7 @@ void Parallel_IO::write_array_hdf5( const char *fname, const char *dname, int nc
 
    fapl = H5Pcreate(H5P_FILE_ACCESS);
    /* H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL); */
-   H5Pset_alignment(fapl, 10000, alignment);
+   H5Pset_alignment(fapl, 32767, alignment);
    dxpl = H5Pcreate(H5P_DATASET_XFER);
    H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
 
