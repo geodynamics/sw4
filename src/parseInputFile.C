@@ -7020,6 +7020,9 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
      {
         token += strlen("hdf5format=");
         hdf5format = atoi(token);
+        // Write 64k data (16384 steps) each time for better HDF5 I/O performance
+        if (writeEvery == 1000) 
+            writeEvery = 16383;
      }
      else if( startswith("variables=", token) )
      {

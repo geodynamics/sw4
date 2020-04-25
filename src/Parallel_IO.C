@@ -1190,7 +1190,7 @@ void Parallel_IO::write_array_hdf5( const char *fname, const char *dname, int nc
    bool debug =false;
    hid_t dspace, filespace, dxpl, h5_fid, fapl, dset;
 
-   int alignment = 262144;
+   int alignment = 65536;
    /* char *env = getenv("HDF5_ALIGNMENT_SIZE"); */
    /* if (env != NULL) */ 
    /*     alignment = atoi(env); */

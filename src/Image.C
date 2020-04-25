@@ -1185,8 +1185,8 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
       int ret, ltype;
       hid_t fapl;
       hsize_t dims, dims1 = 1, total_elem = 0;
-      setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
-      int alignment = 262144;
+      /* setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1); */
+      int alignment = 65536;
       /* char *env = getenv("HDF5_ALIGNMENT_SIZE"); */
       /* if (env != NULL) */ 
       /*     alignment = atoi(env); */
