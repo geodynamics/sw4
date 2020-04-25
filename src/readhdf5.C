@@ -78,6 +78,15 @@ struct traverse_data_t {
   float_sw4 scalefactor;
 } traverse_data_t;
 
+struct traverse_data2_t {
+  vector<string> *staname;
+  vector<double> *x;
+  vector<double> *y;
+  vector<double> *z;
+  vector<int>    *is_nsew;
+  int            *n;
+} traverse_data2_t;
+
 struct srf_meta_t {
     float elon;
     float elat;
@@ -118,7 +127,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
   herr_t status;
   H5O_info_t infobuf;
   EW *a_ew;
-  float data[3];
+  double data[3];
   double lon, lat, depth, x, y, z;
   bool geoCoordSet = true, topodepth = false, nsew = true;
   int isnsew;
@@ -160,7 +169,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
     if (nsew) {
       // STLA,STLO,STDP
       dset = H5Dopen(grp, "STLA,STLO,STDP", H5P_DEFAULT);
-      status = H5Dread(dset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+      status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
       H5Dclose(dset);
       lat = data[0];
       lon = data[1];
@@ -170,7 +179,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
     else {
       // X, Y, Z
       dset = H5Dopen(grp, "STX,STY,STZ", H5P_DEFAULT);
-      status = H5Dread(dset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+      status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
       H5Dclose(dset);
       x = data[0];
       y = data[1];
@@ -229,12 +238,12 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       if (ts_ptr->myPoint()) {
         /* cout << "Rank " << op_data->myRank << "has this point x=" << x << " y=" << y << " z=" << z << endl; */
 
-        // Read data
-        bool ignore_utc = false;
-        ts_ptr->readSACHDF5(op_data->ew, op_data->inFileName, ignore_utc);
-
         // Only for observation data
         if (op_data->is_obs) {
+          // Read data
+          bool ignore_utc = false;
+          ts_ptr->readSACHDF5(op_data->ew, op_data->inFileName, ignore_utc);
+
           // Set reference UTC to simulation UTC, for easier plotting.
           ts_ptr->set_utc_to_simulation_utc();
       
@@ -271,7 +280,6 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
 
   return 0;
 }
-
 
 void readStationHDF5(EW* ew, string inFileName, string outFileName, int writeEvery, int downSample, TimeSeries::receiverMode mode, int event, vector< vector<TimeSeries*> > *GlobalTimeSeries, float_sw4 m_global_xmax, float_sw4 m_global_ymax, bool is_obs, bool winlset, bool winrset, float_sw4 winl, float_sw4 winr, bool usex, bool usey, bool usez, float_sw4 t0, bool scalefactor_set, float_sw4 scalefactor)
 {
@@ -318,6 +326,92 @@ void readStationHDF5(EW* ew, string inFileName, string outFileName, int writeEve
   }
 
   H5Literate (fid, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, traverse_func, &tData);
+
+  H5Pclose(fapl);
+  H5Fclose(fid);
+
+}
+
+static herr_t traverse_func2 (hid_t loc_id, const char *grp_name, const H5L_info_t *info, void *operator_data)
+{
+  hid_t grp, dset, attr;
+  herr_t status;
+  H5O_info_t infobuf;
+  float data[3];
+  int isnsew;
+
+  ASSERT(operator_data != NULL);
+
+  struct traverse_data2_t *op_data = (struct traverse_data2_t *)operator_data;
+
+  status = H5Oget_info_by_name (loc_id, grp_name, &infobuf, H5P_DEFAULT);
+  if (infobuf.type == H5O_TYPE_GROUP) {
+    /* if (op_data->myRank == 0) */
+    /*   printf ("Group: [%s] \n", grp_name); */
+
+    // read x,y,z or ns,ew,up
+    grp = H5Gopen(loc_id, grp_name, H5P_DEFAULT);
+    if (grp < 0) {
+      printf("Error opening group [%s]\n", grp_name);
+      return -1;
+    }
+
+    attr = H5Dopen(grp, "ISNSEW", H5P_DEFAULT);
+    hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
+    H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, dxpl, &isnsew);
+    H5Pclose(dxpl);
+    H5Dclose(attr);
+
+    if (isnsew == 0) {
+      // X, Y, Z
+      dset = H5Dopen(grp, "STX,STY,STZ", H5P_DEFAULT);
+      status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+      H5Dclose(dset);
+    }
+    else {
+      // STLA,STLO,STDP
+      dset = H5Dopen(grp, "STLA,STLO,STDP", H5P_DEFAULT);
+      status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+      H5Dclose(dset);
+    }
+
+    string staname = grp_name;
+    (*op_data->staname).push_back(staname);
+    (*op_data->x).push_back(data[0]);
+    (*op_data->y).push_back(data[1]);
+    (*op_data->z).push_back(data[2]);
+    (*op_data->is_nsew).push_back(isnsew);
+    (*op_data->n)++;
+
+    H5Gclose(grp);
+  }
+
+  return 0;
+}
+
+void readStationInfoHDF5(string inFileName, vector<string> *staname, vector<double> *x, vector<double> *y, vector<double> *z, vector<int> *is_nsew, int *n)
+{
+  hid_t fid, fapl;
+
+  struct traverse_data2_t tData;
+  tData.staname = staname;
+  tData.x = x;
+  tData.y = y;
+  tData.z = z;
+  tData.is_nsew = is_nsew;
+  tData.n = n;
+
+  fapl = H5Pcreate(H5P_FILE_ACCESS);
+  H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL);
+
+  fid = H5Fopen(inFileName.c_str(),  H5F_ACC_RDONLY, fapl);
+  if (fid < 0) {
+    printf("%s Error opening file [%s]\n", __func__, inFileName.c_str());
+    return;
+  }
+
+  H5Literate (fid, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, traverse_func2, &tData);
 
   H5Pclose(fapl);
   H5Fclose(fid);
