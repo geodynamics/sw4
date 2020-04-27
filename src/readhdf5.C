@@ -286,7 +286,6 @@ void readStationHDF5(EW* ew, string inFileName, string outFileName, int writeEve
   hid_t fid, fapl;
 
   struct traverse_data_t tData;
-  memset(&tData, 0, sizeof(struct traverse_data_t));
   tData.myRank = ew->getRank();
   tData.ew = ew;
   tData.inFileName  = inFileName;
