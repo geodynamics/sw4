@@ -275,7 +275,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
 {
   bool is_debug = false;
 
-  hid_t fid, grp, attr, attr_space1, attr_space3, dset_space, dset, dcpl;
+  hid_t fid, grp, attr, attr_space1, attr_space3, dset_space, dset, dcpl, fapl;
   herr_t ret;
   hsize_t dims1 = 1, dims3 = 3, total_dims;
   double start_time, elapsed_time;
@@ -298,10 +298,37 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   std::string name = TimeSeries[0]->gethdf5FileName();
   std::string filename;
 
-  // Set stripe parameters to dir for time-series data
-  char setstripe[4096];
-  sprintf(setstripe, "lfs setstripe -c 128 -S 512k %s", path.c_str());
-  system(setstripe);
+  char setstripe[4096], *env;
+  int disablestripe=0, stripecount=128, stripesize=512;
+
+  env = getenv("DISABLE_LUSTRE_STRIPE");
+  if (env != NULL) 
+      disablestripe = atoi(env);
+
+  // Set stripe parameters for time-series data
+  if (disablestripe != 1) {
+      env = getenv("SAC_LUSTRE_STRIPE_COUNT");
+      if (env != NULL) 
+          stripecount = atoi(env);
+      env = getenv("SAC_LUSTRE_STRIPE_SIZE");
+      if (env != NULL) 
+          stripesize = atoi(env);
+
+      if (stripecount < 1) 
+          stripecount = 1;
+      if (stripesize < 128) 
+          stripesize = 512;
+
+      fflush(stdout);
+      sprintf(setstripe, "lfs setstripe -c %d -S %dk %s", stripecount, stripesize, path.c_str());
+      if (system(setstripe) != 0) {
+        disablestripe = 1;
+        printf("Failed to set Lustre stripe for SAC-HDF5 file, sw4 will continue to run (set DISABLE_LUSTRE_STRIPE=1 to disable this and the above lfs error messages, or set valid values to SAC_LUSTRE_STRIPE_COUNT and SAC_LUSTRE_STRIPE_SIZE)\n");
+      }
+      else
+        printf("For SAC-HDF5 files Lustre stripe set to: %s\n", setstripe);
+      fflush(stdout);
+  }
 
   // Build the file name
   if( path != "." )
@@ -325,14 +352,49 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     ret = rename(filename.c_str(), bak.c_str());
     cout << "Rename existing file to [" << bak.c_str() <<  "]" << endl;
     if( ret == -1 )
-      cout << "ERROR: renaming SAC HDF5 file to " << bak.c_str() <<  endl;
+      cout << "ERROR: renaming SAC-HDF5 file to " << bak.c_str() <<  endl;
   }
 
-  fid = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+  int alignment = 65536;
+  /* char *env = getenv("HDF5_ALIGNMENT_SIZE"); */
+  /* if (env != NULL) */ 
+  /*     alignment = atoi(env); */
+  /* if (alignment < 65536) */ 
+  /*     alignment = 65536; */
+
+  fapl = H5Pcreate(H5P_FILE_ACCESS);
+  H5Pset_alignment(fapl, 32767, alignment);
+  fid = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
   if (fid < 0) {
     printf("Error: H5Fcreate failed\n");
     return -1;
   }
+  H5Pclose(fapl);
+
+  // Set stripe parameters for files created after sac file (e.g. images)
+  if (disablestripe != 1) {
+      stripecount=128, stripesize=1024;
+      env = getenv("IMAGE_LUSTRE_STRIPE_COUNT");
+      if (env != NULL) 
+          stripecount = atoi(env);
+      env = getenv("IMAGE_LUSTRE_STRIPE_SIZE");
+      if (env != NULL) 
+          stripesize = atoi(env);
+
+      if (stripecount < 1) 
+          stripecount = 1;
+      if (stripesize < 1024) 
+          stripesize = 1024;
+
+      fflush(stdout);
+      sprintf(setstripe, "lfs setstripe -c %d -S %dk %s", stripecount, stripesize, path.c_str());
+      if (system(setstripe) != 0)
+        printf("Failed to set Lustre stripe for files other than SAC-HDF5, sw4 will continue to run (set DISABLE_LUSTRE_STRIPE=1 to disable this and the above lfs error messages, or set valid values to IMAGE_LUSTRE_STRIPE_COUNT and IMAGE_LUSTRE_STRIPE_SIZE)\n");
+      else
+        printf("For files other than SAC-HDF5 Lustre stripe set to: %s\n", setstripe);
+      fflush(stdout);
+  }
+
 
   attr_space1 = H5Screate_simple(1, &dims1, NULL);
   attr_space3 = H5Screate_simple(1, &dims3, NULL);
@@ -381,10 +443,10 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     createAttr(grp, "NPTS", H5T_NATIVE_INT, attr_space1);
 
     // x, y, z
-    createAttr(grp, "STX,STY,STZ", H5T_NATIVE_FLOAT, attr_space3);
+    createAttr(grp, "STX,STY,STZ", H5T_NATIVE_DOUBLE, attr_space3);
 
     // Lon, lat, dep
-    createAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_FLOAT, attr_space3);
+    createAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_DOUBLE, attr_space3);
 
     // TODO: Location, no value to write now
     createAttr(grp, "LOC", H5T_NATIVE_INT, attr_space1);

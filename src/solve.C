@@ -1024,7 +1024,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
      // Max over all rank
      double max_hdf5_time;
      MPI_Reduce( &hdf5_time, &max_hdf5_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD );
-     if( m_myRank == 0 )
+     if( m_myRank == 0 && max_hdf5_time > 0.1)
        cout << "  ==> Max wallclock time to open/write ESSI hdf5 output is " 
          << max_hdf5_time << " seconds " << endl;
 // add to total time for detailed timing output
@@ -1036,7 +1036,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
       total_time += mImageFiles[fIndex]->get_write_time();
    MPI_Reduce(&total_time, &all_total_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-   if( m_myRank == 0 )
+   if( m_myRank == 0 && all_total_time > 0.1)
      cout << "  ==> Max wallclock time to write images is " << all_total_time << " seconds." << endl;
 #endif
 

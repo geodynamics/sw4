@@ -482,7 +482,8 @@ void TimeSeries::writeFile( string suffix )
   // Open the output HDF5 file if not already opened
   std::string h5fname, fidName;
   hid_t fid, grp = 0; 
-  float stlalodp[3], stxyz[3], origintime;
+  double stlalodp[3], stxyz[3];
+  float origintime;
   int myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
@@ -504,16 +505,16 @@ void TimeSeries::writeFile( string suffix )
         printf("TimeSeries::writeFile Error opening group [%s]\n", m_staName.c_str());
 
       if (grp > 0 && !m_isMetaWritten) {
-        stlalodp[0] = float(m_rec_lat);
-        stlalodp[1] = float(m_rec_lon);
-        stlalodp[2] = float(m_sta_z);
+        stlalodp[0] = double(m_rec_lat);
+        stlalodp[1] = double(m_rec_lon);
+        stlalodp[2] = double(m_sta_z);
 
-        openWriteAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_FLOAT, stlalodp);
+        openWriteAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_DOUBLE, stlalodp);
 
-        stxyz[0] = float(mX);
-        stxyz[1] = float(mY);
-        stxyz[2] = float(m_sta_z);
-        openWriteAttr(grp, "STX,STY,STZ", H5T_NATIVE_FLOAT, stxyz);
+        stxyz[0] = double(mX);
+        stxyz[1] = double(mY);
+        stxyz[2] = double(m_sta_z);
+        openWriteAttr(grp, "STX,STY,STZ", H5T_NATIVE_DOUBLE, stxyz);
 
         origintime = float(m_epi_time_offset);
         openWriteAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, &origintime);
@@ -1187,7 +1188,7 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
 
   if (isLast && ret == 1) {
     m_nptsWritten += count;
-    /* H5Gflush(grp); */
+    H5Gflush(grp);
   }
 
   if (mDownSample > 1) 
@@ -3178,7 +3179,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
   if (!m_myPoint) 
       return;
 
-  setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
+  /* setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1); */
   fid = H5Fopen(FileName.c_str(),  H5F_ACC_RDONLY, H5P_DEFAULT);
   if (fid < 0) {
     printf("%s Error opening file [%s]\n", __func__, FileName.c_str());
