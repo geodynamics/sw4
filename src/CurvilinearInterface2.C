@@ -439,8 +439,8 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
 
    // 4.c Jacobi iteration 
    float_sw4 scalef=(m_ew->m_global_nx[m_gc]-1)*(m_ew->m_global_ny[m_gc]-1); //scale residual to be size O(1).
-   int maxit = 20;
-   float_sw4 tol=1e-6;
+   int maxit = 30;
+   float_sw4 reltol=1e-6, abstol=1e-6;
    int iter = 0;
    int info = 0, three=3, one=1;
    char trans='N';
@@ -449,7 +449,13 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
    //        --> xp-x=-inv(M)*(lhs*x+rhs) --> xp = x - inv(M)*(lhs*x+rhs)
    float_sw4 maxres0 = maxres;
    float_sw4 relax = 1.0;
-   while( maxres > tol*maxres0 && iter <= maxit )
+   //   if(  convhist.size() == 0 )
+   //   {
+   //      convhist.push_back(sfact);
+   //      convhist.push_back(reltol);
+   //      convhist.push_back(abstol);
+   //   }
+   while( maxres > reltol*maxres0 && scalef*maxres > abstol && iter <= maxit )
    {
       iter++;
       //      std::cout << "Iteration " << iter << " " << scalef*maxres << "\n";
@@ -491,10 +497,17 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
 	     }
       MPI_Allreduce( &maxresloc, &maxres, 1, m_ew->m_mpifloat, MPI_MAX, m_ew->m_cartesian_communicator);
    }
-   if( maxres > tol )
-      std::cout << "WARNING, no convergence in curvilinear interface, res = " << maxres <<
-	" tol= " << tol << std::endl;
-
+   //   convhist.push_back(maxres0);
+   //   convhist.push_back(maxres);
+   //   convhist.push_back(it);
+   if( maxres > reltol*maxres0 && scalef*maxres > abstol )
+   {
+      std::cout << "WARNING, no convergence in curvilinear interface, res = " 
+                << maxres << " reltol= " << reltol << " initial res = " << maxres0 
+                << std::endl;
+      std::cout << "     scaled res = " << scalef*maxres << " abstol= " << abstol 
+                << std::endl;
+   }
 // 5. Copy U_c and U_f back to a_U, only k=0 for U_c and k=n3f for U_f.
    a_U[m_gc].copy_kplane2(U_c,0);     // have computed U_c:s ghost points
    a_U[m_gf].copy_kplane2(U_f,m_nkf);   // .. and U_f:s interface points

@@ -883,7 +883,8 @@ void EW::assign_local_bcs( )
            (m_bcType[g][side] == bRefInterface) || (m_bcType[g][side] == bAEInterface) || 
 	  (m_bcType[g][side] == bCCInterface &&  !(m_gridGenerator->curviCartIsSmooth(ncurv)) ); 
   }
-  if( m_myRank == 0 )
+  bool debug=false;
+  if( m_myRank == 0 && debug )
   {
      for( g= 0 ; g < mNumberOfGrids ; g++ )
      {

@@ -1,7 +1,7 @@
 # SW4 input file for testing curvilinear mesh refinement
 
 # set pfs=1 if you are on a parallel file system
-fileio path=berkeley-results pfs=1
+fileio path=berkeley-results-att pfs=1
 
 #time steps=10
 
@@ -31,7 +31,7 @@ refinement zmax=210
 refinement zmax=800
 refinement zmax=2700
 
-#attenuation phasefreq=2.0 nmech=3 maxfreq=3.0
+attenuation phasefreq=2.0 nmech=3 maxfreq=3.0
 
 #developer cfl=0.8
 
