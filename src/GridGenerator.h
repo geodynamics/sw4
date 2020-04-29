@@ -31,7 +31,7 @@ class GridGenerator
                               float_sw4& x, float_sw4& y, float_sw4& z )=0;
    virtual bool inverse_grid_mapping( EW* a_ew, float_sw4 x, float_sw4 y, float_sw4 z, int g,
                                       float_sw4& p, float_sw4& q, float_sw4& r )=0;
-   virtual bool interpolate_topography( EW* a_ew, float_sw4 q, float_sw4 r, float_sw4& z, Sarray& topo );
+   virtual bool interpolate_topography( EW* a_ew, float_sw4 x, float_sw4 y, float_sw4& z, Sarray& topo );
    virtual bool exact_metric( EW *a_ew, int g, Sarray& a_jac, Sarray& a_met );
    virtual void fill_topo( Sarray& topo, float_sw4 h );
 };

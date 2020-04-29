@@ -439,14 +439,17 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
 
    // 4.c Jacobi iteration 
    float_sw4 scalef=(m_ew->m_global_nx[m_gc]-1)*(m_ew->m_global_ny[m_gc]-1); //scale residual to be size O(1).
-   float_sw4 tol=1e-10;
+   int maxit = 20;
+   float_sw4 tol=1e-6;
    int iter = 0;
    int info = 0, three=3, one=1;
    char trans='N';
    int nimb = m_Mass_block.m_ie-m_Mass_block.m_ib+1;
    // Block Jacobi, lhs*x+rhs=0 and lhs=M+N --> M*xp+N*x+rhs=0 --> M*(xp-x)+lhs*x+rhs=0
    //        --> xp-x=-inv(M)*(lhs*x+rhs) --> xp = x - inv(M)*(lhs*x+rhs)
-   while( scalef*maxres > tol && iter <= 50 )
+   float_sw4 maxres0 = maxres;
+   float_sw4 relax = 1.0;
+   while( maxres > tol*maxres0 && iter <= maxit )
    {
       iter++;
       //      std::cout << "Iteration " << iter << " " << scalef*maxres << "\n";
@@ -467,9 +470,9 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
 	    residual(1,i,j,1) = x[0];
 	    residual(2,i,j,1) = x[1];
 	    residual(3,i,j,1) = x[2];
-	    U_c(1,i,j,0) -= residual(1,i,j,1);
-	    U_c(2,i,j,0) -= residual(2,i,j,1);
-	    U_c(3,i,j,0) -= residual(3,i,j,1);
+	    U_c(1,i,j,0) -= relax*residual(1,i,j,1);
+	    U_c(2,i,j,0) -= relax*residual(2,i,j,1);
+	    U_c(3,i,j,0) -= relax*residual(3,i,j,1);
 	 }
 
   // 4.d Communicate U_c here (only k=0 plane)

@@ -139,7 +139,7 @@ int GridGenerator::metric_ci( int ib, int ie, int jb, int je, int kb, int ke, fl
 }
 
 //-----------------------------------------------------------------------
-bool GridGenerator::interpolate_topography( EW* a_ew, float_sw4 q, float_sw4 r,
+bool GridGenerator::interpolate_topography( EW* a_ew, float_sw4 x, float_sw4 y,
                                             float_sw4& z, Sarray& topo )
 {
 // Interpolate the topography
@@ -160,6 +160,8 @@ bool GridGenerator::interpolate_topography( EW* a_ew, float_sw4 q, float_sw4 r,
 
    int gTop    = a_ew->mNumberOfGrids - 1;
    float_sw4 h = a_ew->mGridSize[gTop];
+   float_sw4 q = x/h+1.0;
+   float_sw4 r = y/h+1.0;
 
 // Find topography at (q,r), tau=tau(q,r)
    // Nearest grid point:

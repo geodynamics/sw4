@@ -1,47 +1,68 @@
-# SW4 input file for testing the rfile command
+# SW4 input file for testing curvilinear mesh refinement
 
 # set pfs=1 if you are on a parallel file system
-fileio path=berkeley-results pfs=0
+fileio path=berkeley-results pfs=1
 
-time steps=0
+#time steps=10
+
+time t=4
 
 # grid size is set in the grid command
 # DO NOT CHANGE AZ!
-grid x=12e3 y=12e3 z=5e3 h=150 lat=37.93 lon=-122.25 az=143.6380001671 proj=tmerc datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
+grid x=12e3 y=12e3 z=9e3 h=150 lat=37.93 lon=-122.25 az=143.6380001671 proj=tmerc datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
 
 # curvilinear grid extends to z=63e and gets approximately the same gridsize as the finest Cartesian
-topography input=rfile zmax=1.5e3 order=3 file=/Users/petersson1/src/sw4/performance/rfile/berkeley.rfile
+topography input=rfile zmax=1.5e3 order=3 file=../rfile/berkeley.rfile gridgenerator=new
+#topography input=gaussian zmax=1.7e3 order=3 gaussianAmp=0 gaussianXc=5000 gaussianYc=7000 gaussianLx=2100 gaussianLy=1900
 
 # background mat
-#block vp=6000 vs=3000 rho=2000
+block vp=6000 vs=3000 rho=2000 qp=800 qs=400
 
 # Small subset of version 8.3 of the USGS model in rfile format
-rfile filename=berkeley.rfile directory=/Users/petersson1/src/sw4/performance/rfile/
+rfile filename=berkeley.rfile directory=../rfile/
 
 # threshold on vp and vs
 globalmaterial vsmin=250 vpmin=700
 
-refinement zmax=190
+supergrid  width=4000 dc=0.005
+
+refinement zmax=210
+#refinement zmax=190
 refinement zmax=800
 refinement zmax=2700
+
+#attenuation phasefreq=2.0 nmech=3 maxfreq=3.0
+
+#developer cfl=0.8
+
+#stations
+rec y=2000 x=6000 depth=0 file=sta62 sacformat=0 usgsformat=1
+rec y=4000 x=6000 depth=0 file=sta64 sacformat=0 usgsformat=1
+rec y=8000 x=6000 depth=0 file=sta68 sacformat=0 usgsformat=1
+#
+rec y=6000 x=3000 depth=0 file=sta36 sacformat=0 usgsformat=1
+rec y=6000 x=6000 depth=0 file=sta66 sacformat=0 usgsformat=1
+rec y=6000 x=9000 depth=0 file=sta96 sacformat=0 usgsformat=1
+
 # images
 # topography (can't be written without the topography command enabled)
-image mode=topo z=0.0 cycle=0 file=berk
+#image mode=topo z=0.0 cycle=0 file=berk
 
-image mode=lat z=0.0 cycle=0 file=berk
-image mode=lon z=0.0 cycle=0 file=berk
+#image mode=lat z=0.0 cycle=0 file=berk
+#image mode=lon z=0.0 cycle=0 file=berk
 
 # material images
-image mode=p x=6e3 cycle=0 file=berk
-image mode=s x=6e3 cycle=0 file=berk
-image mode=rho x=6e3 cycle=0 file=berk
+#image mode=p x=6e3 cycle=0 file=berk
+#image mode=s x=6e3 cycle=0 file=berk
+#image mode=rho x=6e3 cycle=0 file=berk
 
-image mode=p y=1e3 cycle=0 file=berk
-image mode=s y=1e3 cycle=0 file=berk
-image mode=rho y=1e3 cycle=0 file=berk
+#image mode=p y=1e3 cycle=0 file=berk
+#image mode=s y=1e3 cycle=0 file=berk
+#image mode=rho y=1e3 cycle=0 file=berk
+
+#image mode=ux y=6e3 cycleInterval=5 file=berk
+#image mode=uy y=6e3 cycleInterval=5 file=berk
+#image mode=uz y=6e3 cycleInterval=5 file=berk
 
 # simple source (at least 1 source is needed to run)
-source x=2.5e3 y=2.5e3 z=3e3 mxy=1e18 t0=0.4 freq=15 type=Gaussian
-
-
-
+source x=7e3 y=6e3 z=3.3e3 mxy=1e18 t0=0.4 freq=15 type=Gaussian

@@ -578,14 +578,14 @@ void Source::correct_Z_level( EW *a_ew )
   {    
 // evaluate z-coordinate of topography
 // NOTE: we already tested for topography above
-    float_sw4 q, r, s;
-    int gCurv = a_ew->mNumberOfGrids - 1;
-    float_sw4 h = a_ew->mGridSize[gCurv];
-    q = mX0/h + 1.0;
-    r = mY0/h + 1.0;
+//    float_sw4 q, r, s;
+//    int gCurv = a_ew->mNumberOfGrids - 1;
+//    float_sw4 h = a_ew->mGridSize[gCurv];
+//    q = mX0/h + 1.0;
+//    r = mY0/h + 1.0;
 // evaluate elevation of topography on the grid
 //    if (!a_ew->interpolate_topography(q, r, zTopoLoc, true)) // used the smoothed topography
-         if (!a_ew->m_gridGenerator->interpolate_topography(a_ew,q, r, zTopoLoc, a_ew->mTopoGridExt)) // used the smoothed topography
+         if (!a_ew->m_gridGenerator->interpolate_topography(a_ew, mX0, mY0, zTopoLoc, a_ew->mTopoGridExt)) // used the smoothed topography
     {
       cerr << "Unable to evaluate topography for source at X= " << mX0 << " Y= " << mY0 << " Z= " << mZ0 << endl;
       cerr << "Setting topography to ZERO" << endl;

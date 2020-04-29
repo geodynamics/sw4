@@ -208,9 +208,9 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
 #pragma omp parallel for reduction(+:material,outside)
      for( int k = mEW->m_kStart[g] ; k <= mEW->m_kEnd[g]; k++ )
      {
-        for( int j = mEW->m_jStart[g] ; j <= mEW->m_jEnd[g]; j++ )
+        for( int j = mEW->m_jStartInt[g] ; j <= mEW->m_jEndInt[g]; j++ )
         {
-           for( int i = mEW->m_iStart[g] ; i <= mEW->m_iEnd[g] ; i++ )
+           for( int i = mEW->m_iStartInt[g] ; i <= mEW->m_iEndInt[g] ; i++ )
            {
               float_sw4 x = mEW->mX[g](i,j,k);
               float_sw4 y = mEW->mY[g](i,j,k);
@@ -259,6 +259,14 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
            } // end for i
         } // end for j
      } // end for k
+     mEW->communicate_array( rho[g], g );
+     mEW->communicate_array( cs[g], g );
+     mEW->communicate_array( cp[g], g );
+
+     if (qs[g].is_defined())
+        mEW->communicate_array( qs[g], g );
+     if (qp[g].is_defined())
+        mEW->communicate_array( qp[g], g );
   } // end for g (curvilinear)
 
   size_t outsideSum, materialSum;
