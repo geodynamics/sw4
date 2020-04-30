@@ -696,6 +696,8 @@ void enforceDirichlet5( vector<Sarray> & a_U );
 
 bool check_for_nan( vector<Sarray>& a_U, int verbose, string name );
 
+bool check_for_nan( vector<Sarray*>& a_U, int nmech, int verbose, string name );
+   
 void define_parallel_io( vector<Parallel_IO*>& parallel_io );
 
 void read_volimage( std::string &path, std::string &fname, vector<Sarray>& data );

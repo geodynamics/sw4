@@ -2,6 +2,7 @@
 #include "cf_interface.h"
 #include <cstddef>
 #include <cstdio>
+#include <sys/types.h>
 
 //#ifdef SW4_NOC
 //extern "C" {
@@ -51,7 +52,11 @@ void rhs4th3wind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
   float_sw4 cof = 1.0/(h*h);
   int a1=0;
   if( op == '=' )
+  {
     a1 = 0;
+    for(size_t i=0 ; i < static_cast<size_t>((ilast-ifirst+1))*(jlast-jfirst+1)*(klastw-kfirstw+1)*3; i++)
+       a_lu[i]=0;
+  }
   else if( op == '+')
     a1 = 1;
   else if( op == '-')

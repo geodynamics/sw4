@@ -7031,8 +7031,30 @@ bool EW::check_for_nan( vector<Sarray>& a_U, int verbose, string name )
       {
 	 int cnan, inan, jnan, knan;
 	 a_U[g].count_nans(cnan,inan,jnan,knan);
-	 cout << "grid " << g << " array " << name << " found " << nn << "  nans. First nan at " <<
+	 cout << "proc " << m_myRank << " grid " << g << " array " << name << " found " << nn << "  nans. First nan at " <<
 	    cnan << " " << inan << " " << jnan << " " << knan << endl;
+      }
+   }
+   return retval;
+}
+
+//-----------------------------------------------------------------------
+bool EW::check_for_nan( vector<Sarray*>& a_U, int nmech, int verbose, string name )
+{
+   bool retval = false;
+   for( int a=0 ; a < nmech ; a++ )
+   {
+      for( int g=0 ; g<mNumberOfGrids; g++ )
+      {
+         size_t nn=a_U[g][a].count_nans();
+         retval = retval || nn > 0;
+         if( nn > 0 && verbose == 1 )
+         {
+            int cnan, inan, jnan, knan;
+            a_U[g][a].count_nans(cnan,inan,jnan,knan);
+            cout << "proc " << m_myRank << "mech= " << a<< " grid " << g << " array " << name << " found " << nn << "  nans. First nan at " <<
+	    cnan << " " << inan << " " << jnan << " " << knan << endl;
+         }
       }
    }
    return retval;

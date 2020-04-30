@@ -448,26 +448,23 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 // test if the spatial operator is self-adjoint (only works without mesh refinement)
   if (m_energy_test && getVerbosity() >= 1 && getNumberOfGrids() == 1)
   {
-    if ( proc_zero() )
-    {
-      printf("Using the intial data to check if the spatial operator is self-adjoint\n");
-    }
+     if ( proc_zero() )
+        printf("Using the intial data to check if the spatial operator is self-adjoint\n");
+
      
 // compute Uacc = L(U) and Vacc=L(V); V=Um
-    evalRHS( U, a_Mu, a_Lambda, Lu, AlphaVE ); // save Lu in composite grid 'Lu'
-    evalRHS( Um, a_Mu, a_Lambda, Uacc, AlphaVE ); // save Lu in composite grid 'Lu'
+     evalRHS( U, a_Mu, a_Lambda, Lu, AlphaVE ); // save Lu in composite grid 'Lu'
+     evalRHS( Um, a_Mu, a_Lambda, Uacc, AlphaVE ); // save Lu in composite grid 'Lu'
 // should not be necessary to communicate across processor boundaries to make ghost points agree
   
 // evaluate (V, Uacc) and (U, Vacc) and compare!
 
 // NOTE: scalalarProd() is not implemented for curvilinear grids
-    float_sw4 sp_vLu = scalarProduct( Um,Lu );
-    float_sw4 sp_uLv = scalarProduct( U,Uacc );
+     float_sw4 sp_vLu = scalarProduct( Um,Lu );
+     float_sw4 sp_uLv = scalarProduct( U,Uacc );
     
-    if ( proc_zero() )
-    {
-       printf("Scalar products (Um, L(U)) = %e and (U, L(Um)) = %e, diff=%e\n", sp_vLu, sp_uLv, sp_vLu-sp_uLv);
-    }
+     if ( proc_zero() )
+        printf("Scalar products (Um, L(U)) = %e and (U, L(Um)) = %e, diff=%e\n", sp_vLu, sp_uLv, sp_vLu-sp_uLv);
   } // end m_energy_test ...
 
   if( m_moment_test )
@@ -589,6 +586,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     {
        check_for_nan( F, 1, "F" );
        check_for_nan( U, 1, "U" );
+       //       check_for_nan( AlphaVE, m_number_mechanisms, 1, "alpha");
     }
 
 // evaluate right hand side
@@ -606,7 +604,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     if( m_checkfornan )
        check_for_nan( Lu, 1, "Lu pred. " );
 
-// take predictor step, store in Up
+    // take predictor step, store in Up
     evalPredictor( Up, U, Um, a_Rho, Lu, F );    
 
     if( m_output_detailed_timing )
@@ -739,6 +737,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
        if( m_output_detailed_timing )
           time_measure[9] = MPI_Wtime();
     }
+
 //
 // corrector step for
 // *** 4th order in time ***
@@ -1399,7 +1398,7 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
    for( int j=jb+2 ; j <= je-2 ; j++ )
       for( int i=ib+2 ; i <= ie-2 ; i++ )
       {
-         float_sw4 istrxy=1/(m_sg_str_x[gcurv][i-ib]*m_sg_str_y[gcurv][j-jb]);
+         float_sw4 istrxy =1/(m_sg_str_x[gcurv][i-ib]*m_sg_str_y[gcurv][j-jb]);
          float_sw4 istrxyc=1/(m_sg_str_x[gcart][i-ib]*m_sg_str_y[gcart][j-jb]);
          float_sw4 rhrat = mRho[gcurv](i,j,nk)/mRho[gcart](i,j,1);
          float_sw4 bcof = h*m_sbop[0]*istrxyc-m_ghcof[0]*rhrat*w1*mJ[gcurv](i,j,nk)*istrxy/(h*h);
@@ -1415,7 +1414,6 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
                - w1*mJ[gcurv](i,j,nk)*istrxy*Lu(3,i,j,nk) + B(3,i,j,nk);            
          a_U[gcart](3,i,j,0) += res/((2*a_Mu[gcart](i,j,1)+a_Lambda[gcart](i,j,1))*bcof );
       }
-
 
    bool debug=false;
    if( debug )

@@ -51,7 +51,11 @@ void rhs4th3fort_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
    float_sw4 cof = 1.0/(h*h);
 
    if( op == '=' )
+   {
       a1 = 0;
+      for(size_t i=0 ; i < static_cast<size_t>((ilast-ifirst+1))*(jlast-jfirst+1)*(klast-kfirst+1)*3; i++)
+         a_lu[i]=0;
+   }
    else if( op == '+' )
       a1 = 1;
    else if( op == '-' )
@@ -883,7 +887,11 @@ void rhs4th3fortsgstr_ci( int ifirst, int ilast, int jfirst, int jlast, int kfir
    float_sw4 cof = 1.0/(h*h);
 
    if( op == '=' )
+   {
       a1 = 0;
+      for(size_t i=0 ; i < static_cast<size_t>((ilast-ifirst+1))*(jlast-jfirst+1)*(klast-kfirst+1)*3; i++)
+         a_lu[i]=0;
+   }
    else if( op == '+' )
       a1 = 1;
    else if( op == '-' )
