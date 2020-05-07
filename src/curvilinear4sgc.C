@@ -31,7 +31,7 @@
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
 
 #include "sw4.h"
-
+#include <sys/types.h>
 void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda,
 			float_sw4* __restrict__ a_met, float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu,
@@ -60,6 +60,8 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
    if( op=='=' )
    {
       a1 = 0;
+      for(size_t i=0 ; i < static_cast<size_t>((ilast-ifirst+1))*(jlast-jfirst+1)*(klast-kfirst+1)*3; i++)
+         a_lu[i]=0;
       sgn= 1;
    }
    else if( op=='+')

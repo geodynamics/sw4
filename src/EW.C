@@ -883,7 +883,8 @@ void EW::assign_local_bcs( )
            (m_bcType[g][side] == bRefInterface) || (m_bcType[g][side] == bAEInterface) || 
 	  (m_bcType[g][side] == bCCInterface &&  !(m_gridGenerator->curviCartIsSmooth(ncurv)) ); 
   }
-  if( m_myRank == 0 )
+  bool debug=false;
+  if( m_myRank == 0 && debug )
   {
      for( g= 0 ; g < mNumberOfGrids ; g++ )
      {
@@ -993,29 +994,33 @@ bool EW::getDepth( float_sw4 x, float_sw4 y, float_sw4 z, float_sw4 & depth)
   {
 // topography 
      float_sw4 zMinTilde;
-     int gCurv = mNumberOfGrids - 1;
-     float_sw4 h = mGridSize[gCurv];
-     float_sw4 q = x/h + 1.0;
-     float_sw4 r = y/h + 1.0;
+     //     int gCurv = mNumberOfGrids - 1;
+     //     float_sw4 h = mGridSize[gCurv];
+     //     float_sw4 q = x/h + 1.0;
+     //     float_sw4 r = y/h + 1.0;
 
 // define the depth for ghost points (in x or y) to equal the depth on the nearest boundary point
-     float_sw4 qMin = 1.0;
-     float_sw4 qMax = (float_sw4) m_global_nx[gCurv];
-     float_sw4 rMin = 1.0;
-     float_sw4 rMax = (float_sw4) m_global_ny[gCurv];
+//     float_sw4 qMin = 1.0;
+//     float_sw4 qMax = (float_sw4) m_global_nx[gCurv];
+//     float_sw4 rMin = 1.0;
+//     float_sw4 rMax = (float_sw4) m_global_ny[gCurv];
 
-     if (q<qMin) q=qMin;
-     if (q>qMax) q=qMax;
-     if (r<rMin) r=rMin;
-     if (r>rMax) r=rMax;
+//     if (q<qMin) q=qMin;
+//     if (q>qMax) q=qMax;
+//     if (r<rMin) r=rMin;
+//     if (r>rMax) r=rMax;
+     if (x<0) x=0;
+     if (x>m_global_xmax) x=m_global_xmax;
+     if (y<0) y=0;
+     if (y>m_global_ymax) y=m_global_ymax;
 
 // // evaluate elevation of topography on the grid (smoothed topo)
     success=true;
-    if (!m_gridGenerator->interpolate_topography(this,q, r, zMinTilde, mTopoGridExt))
+    if (!m_gridGenerator->interpolate_topography(this,x, y, zMinTilde, mTopoGridExt))
     //    if (!interpolate_topography(q, r, zMinTilde, true))
     {
       cerr << "ERROR: getDepth: Unable to evaluate topography for x=" << x << " y= " << y << " on proc # " << getRank() << endl;
-      cerr << "q=" << q << " r=" << r << " qMin=" << qMin << " qMax=" << qMax << " rMin=" << rMin << " rMax=" << rMax << endl;
+      //      cerr << "q=" << q << " r=" << r << " qMin=" << qMin << " qMax=" << qMax << " rMin=" << rMin << " rMax=" << rMax << endl;
       // cerr << "Setting elevation of topography to ZERO" << endl;
       success = false;
 //      zMinTilde = 0;
@@ -1132,6 +1137,64 @@ void EW::computeLowTopoGridPoint(int & iLow,
    jLow = static_cast<int>( floor(a_y/h) )+1;
 }
       
+//-----------------------------------------------------------------------
+int EW::computeNearestGridPoint2( int& a_i, int& a_j, int& a_k, int& a_g,
+                                  float_sw4 a_x, float_sw4 a_y, float_sw4 a_z )
+{
+   int success = 0;
+   if( a_z >= m_zmin[mNumberOfCartesianGrids-1] )
+   {
+      // point is in a Cartesian grid
+      int g=0;
+      while( g < mNumberOfCartesianGrids && a_z < m_zmin[g] )
+         g++;
+      a_g = g;
+      a_i = static_cast<int>( round( a_x/mGridSize[g]+1) );
+      a_j = static_cast<int>( round( a_y/mGridSize[g]+1) );
+      a_k = static_cast<int>( round( (a_z-m_zmin[g])/mGridSize[g]+1) );
+
+      VERIFY2(a_i >= 1-m_ghost_points && a_i <= m_global_nx[a_g]+m_ghost_points,
+              "Grid Error: i (" << a_i << ") is out of bounds: ( " << 1 << "," 
+              << m_global_nx[a_g] << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
+      VERIFY2(a_j >= 1-m_ghost_points && a_j <= m_global_ny[a_g]+m_ghost_points,
+              "Grid Error: j (" << a_j << ") is out of bounds: ( " << 1 << ","
+              << m_global_ny[a_g] << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
+      VERIFY2(a_k >= m_kStart[a_g] && a_k <= m_kEnd[a_g],
+              "Grid Error: k (" << a_k << ") is out of bounds: ( " << 1 << "," 
+              << m_kEnd[a_g]-m_ghost_points << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
+      success = interior_point_in_proc(a_i,a_j,a_g);
+   }
+   else
+   {
+      // point is in a curvilinear grid
+      //
+      // foundglobal= Grid point found in at least one processor.
+      // success  = Grid point found in my processor (found locally).
+      //
+      int g=mNumberOfCartesianGrids;
+      //  int foundglobal=0; 
+      success = 0;
+      float_sw4 q, r, s;
+      while( g < mNumberOfGrids && !success )
+      //      while( g < mNumberOfGrids && !foundglobal )
+      {
+         success = m_gridGenerator->
+            inverse_grid_mapping( this, a_x, a_y, a_z, g, q, r, s );
+         if( success )
+         {
+            a_g = g;
+            a_i = static_cast<int>( round( q ) );
+            a_j = static_cast<int>( round( r ) );
+            a_k = static_cast<int>( round( s ) );
+         }
+     //         MPI_Allreduce(&success,&foundglobal,1,MPI_INT,MPI_MAX,m_cartesian_communicator);
+         g++;
+      }
+      //      VERIFY2( foundglobal, "ERROR in EW:computeNearestGridPoint2, could not find curvilinear grid point");
+   }
+   return success;
+}
+
 //-------------------------------------------------------
 void EW::computeNearestGridPoint(int & a_i, 
                                    int & a_j, 
@@ -6968,8 +7031,30 @@ bool EW::check_for_nan( vector<Sarray>& a_U, int verbose, string name )
       {
 	 int cnan, inan, jnan, knan;
 	 a_U[g].count_nans(cnan,inan,jnan,knan);
-	 cout << "grid " << g << " array " << name << " found " << nn << "  nans. First nan at " <<
+	 cout << "proc " << m_myRank << " grid " << g << " array " << name << " found " << nn << "  nans. First nan at " <<
 	    cnan << " " << inan << " " << jnan << " " << knan << endl;
+      }
+   }
+   return retval;
+}
+
+//-----------------------------------------------------------------------
+bool EW::check_for_nan( vector<Sarray*>& a_U, int nmech, int verbose, string name )
+{
+   bool retval = false;
+   for( int a=0 ; a < nmech ; a++ )
+   {
+      for( int g=0 ; g<mNumberOfGrids; g++ )
+      {
+         size_t nn=a_U[g][a].count_nans();
+         retval = retval || nn > 0;
+         if( nn > 0 && verbose == 1 )
+         {
+            int cnan, inan, jnan, knan;
+            a_U[g][a].count_nans(cnan,inan,jnan,knan);
+            cout << "proc " << m_myRank << "mech= " << a<< " grid " << g << " array " << name << " found " << nn << "  nans. First nan at " <<
+	    cnan << " " << inan << " " << jnan << " " << knan << endl;
+         }
       }
    }
    return retval;

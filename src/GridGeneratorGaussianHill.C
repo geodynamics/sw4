@@ -66,60 +66,75 @@ bool GridGeneratorGaussianHill::inverse_grid_mapping( EW* a_ew, float_sw4 x, flo
    float_sw4 h = a_ew->mGridSize[g];
    q = x/h+1;
    r = y/h+1;
-   float_sw4 tau = top(x,y);
-   if( m_always_new || a_ew->mNumberOfGrids-a_ew->mNumberOfCartesianGrids > 1 )
+   int i= static_cast<int>(round(q));
+   int j= static_cast<int>(round(r));   
+   if( a_ew->interior_point_in_proc( i, j, g ) )
    {
+      float_sw4 tau = top(x,y);
+      if( m_always_new || a_ew->mNumberOfGrids-a_ew->mNumberOfCartesianGrids > 1 )
+      {
    // new
-      float_sw4 s1 = curvilinear_interface_parameter(a_ew,g-a_ew->mNumberOfCartesianGrids);
-      float_sw4 s0 = curvilinear_interface_parameter(a_ew,g-a_ew->mNumberOfCartesianGrids-1);
-      float_sw4 Ztop  = s1*(-tau)+(1-s1)*m_topo_zmax;
-      float_sw4 Zbot  = s0*(-tau)+(1-s0)*m_topo_zmax;
+         float_sw4 s1 = curvilinear_interface_parameter(a_ew,g-a_ew->mNumberOfCartesianGrids);
+         float_sw4 s0 = curvilinear_interface_parameter(a_ew,g-a_ew->mNumberOfCartesianGrids-1);
+         float_sw4 Ztop  = s1*(-tau)+(1-s1)*m_topo_zmax;
+         float_sw4 Zbot  = s0*(-tau)+(1-s0)*m_topo_zmax;
 
-      float_sw4 Nz_real = static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
-      float_sw4 zeta = (z-Ztop)/(Zbot-Ztop);
-      s = (Nz_real)*zeta+a_ew->m_kStartInt[g];
-      return true;
-   }
-   else
-   {
-   // old
-      int nz           = a_ew->m_global_nz[g];
-//   If z is in the Cartesian part of grid, this is the s value:
-      s = (z-m_topo_zmax)/h + nz;
-      float_sw4 zlim = m_topo_zmax - (nz-1)*(1-m_zetaBreak)*h;
-      if( z >= zlim )
-         return true;
+         if( Ztop <= z && z <= Zbot || 
+             ( g == a_ew->mNumberOfGrids-1 && (Ztop-h*0.5 <= z && z <= Zbot)))
+         {
+            // Point is found on grid:
+            float_sw4 Nz_real = static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
+            float_sw4 zeta = (z-Ztop)/(Zbot-Ztop);
+            s = (Nz_real)*zeta+a_ew->m_kStartInt[g];
+         //         s = (z-ztop)/(zbot-ztop)*(Nz-1)+1;
+         //         if( s < 1 )
+         //            s = 1;
+            return true;
+         }
+         else
+            return false;
+      }
       else
       {
+   // old
+         int nz           = a_ew->m_global_nz[g];
+//   If z is in the Cartesian part of grid, this is the s value:
+         s = (z-m_topo_zmax)/h + nz;
+         float_sw4 zlim = m_topo_zmax - (nz-1)*(1-m_zetaBreak)*h;
+         if( z >= zlim )
+            return true;
+         else
+         {
          // z is in the curvilinear part, solve non-linear equation
-         float_sw4 z0  = m_topo_zmax - (nz-1)*h + tau;
-         float_sw4 izb = 1.0/(m_zetaBreak*(nz-1));
-         float_sw4 tol = 1e-12;
-         float_sw4 er = tol+1;
-         int maxit = 10;
-         int it = 0;
-         while( er > tol && it < maxit )
-         {
-            float_sw4 omra = 1-(s-1)*izb;
-            float_sw4 omsm = omra;
-            for( int l=2 ; l <= m_grid_interpolation_order-1 ; l++ )
+            float_sw4 z0  = m_topo_zmax - (nz-1)*h + tau;
+            float_sw4 izb = 1.0/(m_zetaBreak*(nz-1));
+            float_sw4 tol = 1e-12;
+            float_sw4 er = tol+1;
+            int maxit = 10;
+            int it = 0;
+            while( er > tol && it < maxit )
+            {
+               float_sw4 omra = 1-(s-1)*izb;
+               float_sw4 omsm = omra;
+               for( int l=2 ; l <= m_grid_interpolation_order-1 ; l++ )
+                  omsm *= omra;
+               float_sw4 dfcn  = h + izb*m_grid_interpolation_order*omsm*z0;
                omsm *= omra;
-            float_sw4 dfcn  = h + izb*m_grid_interpolation_order*omsm*z0;
-            omsm *= omra;
-            float_sw4 fcn = m_topo_zmax - (nz-s)*h - omsm*z0 - z;
-            float_sw4 sp    = s - fcn/dfcn;
-            er    = abs(sp-s);
-            s     = sp;
-            it++;
-         }
-         if( er > tol )
-         {
-            cout << "GaussianHill::inverse__grid_mapping: poor convergence for X0, Y0, Z0 = "
+               float_sw4 fcn = m_topo_zmax - (nz-s)*h - omsm*z0 - z;
+               float_sw4 sp    = s - fcn/dfcn;
+               er    = abs(sp-s);
+               s     = sp;
+               it++;
+            }
+            if( er > tol )
+            {
+               cout << "GaussianHill::inverse__grid_mapping: poor convergence for X0, Y0, Z0 = "
                  << x << ", " << y << ", " << z << endl;
-            MPI_Abort(MPI_COMM_WORLD, 1);
+               MPI_Abort(MPI_COMM_WORLD, 1);
+            }
          }
+         return true;
       }
-      return true;
    }
 }
 
@@ -272,11 +287,11 @@ void GridGeneratorGaussianHill::generate_grid_and_met_old_gh( EW *a_ew, Sarray& 
 }
 
 //-----------------------------------------------------------------------
-bool GridGeneratorGaussianHill::interpolate_topography( EW* a_ew, float_sw4 q, float_sw4 r, float_sw4& z, Sarray& topo )
+bool GridGeneratorGaussianHill::interpolate_topography( EW* a_ew, float_sw4 x, float_sw4 y, float_sw4& z, Sarray& topo )
 {
-   float_sw4 h = a_ew->mGridSize[a_ew->mNumberOfGrids-1];
-   float_sw4 x = (q-1)*h;
-   float_sw4 y = (r-1)*h;
+   //   float_sw4 h = a_ew->mGridSize[a_ew->mNumberOfGrids-1];
+   //   float_sw4 x = (q-1)*h;
+   //   float_sw4 y = (r-1)*h;
    z = - m_amp*exp( -(x-m_xc)*(x-m_xc)*m_ixl2 - (y-m_yc)*(y-m_yc)*m_iyl2);
    return true;
 }

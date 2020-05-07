@@ -578,14 +578,14 @@ void Source::correct_Z_level( EW *a_ew )
   {    
 // evaluate z-coordinate of topography
 // NOTE: we already tested for topography above
-    float_sw4 q, r, s;
-    int gCurv = a_ew->mNumberOfGrids - 1;
-    float_sw4 h = a_ew->mGridSize[gCurv];
-    q = mX0/h + 1.0;
-    r = mY0/h + 1.0;
+//    float_sw4 q, r, s;
+//    int gCurv = a_ew->mNumberOfGrids - 1;
+//    float_sw4 h = a_ew->mGridSize[gCurv];
+//    q = mX0/h + 1.0;
+//    r = mY0/h + 1.0;
 // evaluate elevation of topography on the grid
 //    if (!a_ew->interpolate_topography(q, r, zTopoLoc, true)) // used the smoothed topography
-         if (!a_ew->m_gridGenerator->interpolate_topography(a_ew,q, r, zTopoLoc, a_ew->mTopoGridExt)) // used the smoothed topography
+         if (!a_ew->m_gridGenerator->interpolate_topography(a_ew, mX0, mY0, zTopoLoc, a_ew->mTopoGridExt)) // used the smoothed topography
     {
       cerr << "Unable to evaluate topography for source at X= " << mX0 << " Y= " << mY0 << " Z= " << mZ0 << endl;
       cerr << "Setting topography to ZERO" << endl;
@@ -1319,7 +1319,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    float_sw4 normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
 
    // tmp
-   printf("set_grid_point_sources4: nearest grid point: (%d, %d, %d) in grid = %d\n", i, j, k, g);
+   //   printf("set_grid_point_sources4: nearest grid point: (%d, %d, %d) in grid = %d\n", i, j, k, g);
 
 // if g=0 and # Cartesian Grids =1, the grid is NOT curvilinear!!!
 //   if( g >= a_EW->mNumberOfCartesianGrids-1 && a_EW->topographyExists() )

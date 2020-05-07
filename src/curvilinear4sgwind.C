@@ -31,8 +31,9 @@
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
 
 #include "sw4.h"
+#include <sys/types.h>
 //#include <iostream>
-
+//using namespace std;
 void curvilinear4sgwind( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
                          int kfirstw, int klastw,
 			float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda,
@@ -69,6 +70,8 @@ void curvilinear4sgwind( int ifirst, int ilast, int jfirst, int jlast, int kfirs
    if( op=='=' )
    {
       a1 = 0;
+      for(size_t i=0 ; i < static_cast<size_t>((ilast-ifirst+1))*(jlast-jfirst+1)*(klastw-kfirstw+1)*3; i++)
+         a_lu[i]=0;
       sgn= 1;
    }
    else if( op=='+')
@@ -162,6 +165,8 @@ void curvilinear4sgwind( int ifirst, int ilast, int jfirst, int jlast, int kfirs
       khighe = klastw;
    }
    //   std::cout << "Curvilinear4sgwind u,l,m= " << upper << " " << mid << "  " << lower << " high(kb,ke)= " << khighb << " " << khighe << " low(kb,ke) = " << klowb << " " << klowe << std::endl;
+   //   bool debug= (ifirst==105 && ilast==137 && jfirst==105 && jlast==137);
+   //   int idbg=108, jdbg=107;
 #pragma omp parallel
    {
    if( lower )
@@ -1531,6 +1536,7 @@ void curvilinear4sgwind( int ifirst, int ilast, int jfirst, int jlast, int kfirs
                     mux3*(u(1,i,j+1,k)-u(1,i,j,k)) +
                     mux4*(u(1,i,j+2,k)-u(1,i,j,k))  )*istrx;
 
+
 	       // pp derivative (v) (v-eq)
 // 43 ops, tot=144
 	       cof1=(mu(i-2,j,k))*met(1,i-2,j,k)*met(1,i-2,j,k)*strx(i-2);
@@ -1738,6 +1744,7 @@ void curvilinear4sgwind( int ifirst, int ilast, int jfirst, int jlast, int kfirs
                c2*(u(1,i-1,j+2,k)-u(1,i-1,j-2,k)) + 
                c1*(u(1,i-1,j+1,k)-u(1,i-1,j-1,k))));
 
+               
       // rp - derivatives
 // 24*8 = 192 ops, tot=4355
 	       float_sw4 dudrm2 = 0, dudrm1=0, dudrp1=0, dudrp2=0;
@@ -1923,6 +1930,7 @@ void curvilinear4sgwind( int ifirst, int ilast, int jfirst, int jlast, int kfirs
              c2*(u(2,i,j+2,q)-u(2,i,j-2,q)) +
              c1*(u(2,i,j+1,q)-u(2,i,j-1,q))  ) );
 
+
 	       // (v-eq)
 // 53 ops
 		  r2 -= bope(nk-k+1,nk-q+1)*(
@@ -1962,6 +1970,7 @@ void curvilinear4sgwind( int ifirst, int ilast, int jfirst, int jlast, int kfirs
              c2*(u(2,i,j+2,q)-u(2,i,j-2,q)) +
              c1*(u(2,i,j+1,q)-u(2,i,j-1,q))  )*istrx );
 	       }
+
 
 // 12 ops, tot=6049
 	       lu(1,i,j,k) = a1*lu(1,i,j,k) + sgn*r1*ijac;

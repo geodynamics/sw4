@@ -20,6 +20,10 @@ class CurvilinearInterface2
    float_sw4 *m_strx_c, *m_strx_f, *m_stry_c, *m_stry_f;
    Sarray m_Mass_block, m_rho_c, m_rho_f, m_mu_c, m_mu_f, m_lambda_c, m_lambda_f;
    Sarray m_met_c, m_met_f, m_jac_c, m_jac_f, m_x_c, m_x_f, m_y_c, m_y_f, m_z_c, m_z_f;
+   bool m_use_attenuation;
+   int m_number_mechanisms;
+   std::vector<Sarray> m_muve_f, m_lambdave_f, m_muve_c, m_lambdave_c;
+
    float_sw4* m_mass_block;
    int* m_ipiv_block;
 
@@ -29,10 +33,11 @@ class CurvilinearInterface2
    void injection(Sarray &u_f, Sarray &u_c );
    void interface_block( Sarray& matrix );
    void interface_lhs( Sarray& lhs, Sarray& uc );
-   void interface_rhs( Sarray& rhs, Sarray& uc, Sarray& uf );
+   void interface_rhs( Sarray& rhs, Sarray& uc, Sarray& uf, std::vector<Sarray>& Alpha_c, 
+                       std::vector<Sarray>& Alpha_f );
    void compute_icstresses_curv( Sarray& a_Up, Sarray& B, int kic,
 				 Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
-				 float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop );
+				 float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop, char op );
    void lhs_icstresses_curv( Sarray& a_Up, Sarray& a_lhs, int kic,
 			     Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
 			     float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop );
@@ -55,14 +60,15 @@ class CurvilinearInterface2
    void copy_str( float_sw4* dest, float_sw4* src, int offset, int n, int nsw );
    void communicate_array1d( float_sw4* u, int n, int dir, int ngh );
    void communicate_array( Sarray& u, bool allkplanes=true, int kplane=0 );
+   void init_arrays_att();
 public:
    CurvilinearInterface2( int a_gc, EW* a_ew );
    CurvilinearInterface2() {}
-   void init_arrays( vector<float_sw4*>& a_strx, vector<float_sw4*>& a_stry );
+   void init_arrays( std::vector<float_sw4*>& a_strx, std::vector<float_sw4*>& a_stry );
    //   void test1( EW* a_ew, int gc, std::vector<Sarray>& a_U );
    //   void test2( EW* a_ew, int gc, std::vector<Sarray>& a_U );
    
-   void impose_ic( std::vector<Sarray>& a_U, float_sw4 t );
+   void impose_ic( std::vector<Sarray>& a_U, float_sw4 t, std::vector<Sarray*>& a_AlphaVE );
 };
 
 #endif

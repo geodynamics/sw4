@@ -17,9 +17,13 @@ class GridGeneratorGeneral: public GridGenerator
    bool grid_mapping_old( float_sw4 p, float_sw4 q, float_sw4 r, int g,
                           float_sw4& x, float_sw4& y, float_sw4& z, Sarray& TopoGridExt,
                           float_sw4 h, int Nz );
-   bool inverse_grid_mapping_old( float_sw4 p, float_sw4 q, float_sw4 r, int g,
+   bool inverse_grid_mapping_old( EW* a_ew, float_sw4 p, float_sw4 q, float_sw4 r, int g,
                           float_sw4& x, float_sw4& y, float_sw4& z, Sarray& TopoGridExt,
                           float_sw4 h, int Nz );
+   bool inverse_grid_mapping_new( EW* a_ew, float_sw4 x,float_sw4 y, float_sw4 z, int g,
+                                  float_sw4& q, float_sw4& r, float_sw4& s,
+                                  float_sw4 h, int Nz );
+
  public:
    GridGeneratorGeneral( float_sw4 topo_zmax, bool always_new, 
                          int grid_interpolation_order, float_sw4 zetaBreak );
