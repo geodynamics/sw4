@@ -25,13 +25,17 @@ Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf
 		}
 		\item{For the continuity of solution at the interface $\Gamma$, assign the value ${\bf f}^{*,n+1}_{\bf i}$ to satisfy
 			\begin{equation*}
-			{\bf f}^{*,n+1}_{\bf i} = {\mathcal{P}}{\bf c}^{*,n+1}_{{\bf i}'} \quad {\bf i}\in I_{\Gamma^f},\quad {\bf i}'\in I_{\Gamma^c}.
+			{\bf f}^{*,n+1}_{\bf i} = {\mathcal{P}}_{\bf i}({\bf c}^{*,n+1})\quad {\bf i}\in I_{\Gamma^f}.
 			\end{equation*}
 		}
 		\item{For the continuity of traction at the interface $\Gamma$, assign the ghost points value in $\wt{\bf c}^{*,n+1}$ to satisfy
-			\begin{equation}\label{traction_gamma_pre}
-			({\Lambda}^{c}_{{\bf i}'}{J}_{{\bf i}'}^{c})^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}^{*,n+1}_{{\bf i}'}
-			= {\mathcal{R}}\left(({\Lambda}^{f}_{\bf i}{J}^f_{\bf i})^{-1}(\mathcal{A}_3^h{\bf f}^{*,n+1}_{\bf i}-h_3\omega_1{\bm \eta}^{\ast,n+1}_{\bf i})\right),\quad {\bf i}'\in I_{\Gamma^c},\quad {\bf i}\in I_{\Gamma^f}.
+			%\begin{equation}\label{traction_gamma_pre}
+			%({\Lambda}^{c}_{{\bf i}'}{J}_{{\bf i}'}^{c})^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}^{*,n+1}_{{\bf i}'}
+			%= {\mathcal{R}}\left(({\Lambda}^{f}_{\bf i}{J}^f_{\bf i})^{-1}(\mathcal{A}_3^h{\bf f}^{*,n+1}_{\bf i}-h_3\omega_1{\bm \eta}^{\ast,n+1}_{\bf i})\right),\quad {\bf i}'\in I_{\Gamma^c},\quad {\bf i}\in I_{\Gamma^f}.
+			%\end{equation}
+				\begin{equation}\label{traction_gamma_pre}
+			\left(\left((\Lambda^{2h}J^{2h})\otimes{\bf I}\right)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}^{\star,n+1}\right)_{\bf i}
+			= {\mathcal{R}}_{\bf i}\Big(\left((\Lambda^hJ^h)\otimes{\bf I}\right)^{-1}(\mathcal{A}_3^h{\bf f}^{\star,n+1}-h_3\omega_1{\bm \eta}^{\star,n+1})\Big), \quad {\bf i}\in I_{\Gamma^c}.
 			\end{equation}
 		}
 		\item{Evaluate the acceleration at all grid points 
@@ -41,18 +45,20 @@ Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf
 			\end{equation*}
 		}
 		\item{Compute the corrector at the interior grid points
-			\[{\bf c}^{n+1}_{\bf i} = {\bf c}^{*,n+1}_{\bf i} + \frac{\Delta_t^4}{12}(\rho^{c}_{\bf i}J^c_{\bf i})^{-1}\wt{\mathcal{L}}^{2h}{\bf{c}}^{n}_{\bf i},\quad {\bf i}\in I_{\Omega^c},\]
-			\[{\bf f}^{n+1}_{\bf i} = {\bf f}^{*,n+1}_{\bf i} + \frac{\Delta_t^4}{12}(\rho^{f}_{\bf i}J^f_{\bf i})^{-1}\hat{\mathcal{L}}^{h}{\bf{f}}^{n}_{\bf i},\quad {\bf i}\in I_\Omega^f.\]
+			\[{\bf c}^{n+1}_{\bf i} = {\bf c}^{*,n+1}_{\bf i} + \frac{\Delta_t^4}{12}\left((\rho^{2h}J^{2h})\otimes{\bf I}\right)^{-1}\wt{\mathcal{L}}^{2h}_{\bf i}{\bf{c}}^{n},\quad {\bf i}\in I_{\Omega^c},\]
+			\[{\bf f}^{n+1}_{\bf i} = {\bf f}^{*,n+1}_{\bf i} + \frac{\Delta_t^4}{12}\left((\rho^{h}J^h)\otimes{\bf I}\right)^{-1}\hat{\mathcal{L}}^{h}_{\bf i}{\bf{f}}^{n},\quad {\bf i}\in I_\Omega^f.\]
 		}
 		\item{For the continuity of solution at the interface $\Gamma$, assign the value ${\bf f}^{n+1}_{\bf i}$ to satisfy
 			\begin{equation*}
-			{\bf f}^{n+1}_{\bf i} = {\mathcal{P}}{\bf c}^{n+1}_{{\bf i}'}, \quad {\bf i}\in I_{\Gamma^f},\quad {{\bf i}'}\in I_{\Gamma^c}.
+			{\bf f}^{n+1}_{\bf i} = {\mathcal{P}}_{\bf i}({\bf c}^{n+1}), \quad {\bf i}\in I_{\Gamma^f}.
 			\end{equation*}
 		}
 		\item{For the continuity of traction at the interface $\Gamma$, assign the ghost point value in $\wt{\bf c}^{n+1}$ to satisfy
 			\begin{equation}\label{traction_gamma_corr}
-			({\Lambda}^{c}_{{\bf i}'}{J}_{{\bf i}'}^{c})^{-1}(\wt{\mathcal{A}}_3^{2h}{\bf c}^{n+1}_{{\bf i}'})
-			= {\mathcal{R}}\left(({\Lambda}^{f}_{\bf i}{ J}^f_{\bf i})^{-1}((\mathcal{A}_3^h{\bf f}^{n+1}_{\bf i})-h_3\omega_1{\bm \eta}^{n+1}_{\bf i})\right), \quad {{\bf i}'}\in I_{\Gamma^c}, \quad {\bf i}\in I_{\Gamma^f}.
+			%({\Lambda}^{c}_{{\bf i}'}{J}_{{\bf i}'}^{c})^{-1}(\wt{\mathcal{A}}_3^{2h}{\bf c}^{n+1}_{{\bf i}'})
+			%= {\mathcal{R}}\left(({\Lambda}^{f}_{\bf i}{ J}^f_{\bf i})^{-1}((\mathcal{A}_3^h{\bf f}^{n+1}_{\bf i})-h_3\omega_1{\bm \eta}^{n+1}_{\bf i})\right), \quad {{\bf i}'}\in I_{\Gamma^c}, \quad {\bf i}\in I_{\Gamma^f}.
+			\left(\left((\Lambda^{2h}J^{2h})\otimes{\bf I}\right)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}^{n+1}\right)_{\bf i}
+			= {\mathcal{R}}_{\bf i}\Big(\left((\Lambda^hJ^h)\otimes{\bf I}\right)^{-1}(\mathcal{A}_3^h{\bf f}^{n+1}-h_3\omega_1{\bm \eta}^{n+1})\Big), \quad {\bf i}\in I_{\Gamma^c}.
 			\end{equation}
 		}
 	\end{itemize}
