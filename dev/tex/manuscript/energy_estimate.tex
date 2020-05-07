@@ -15,7 +15,7 @@ where $\bf u$ and $\bf v$ are grid functions in the fine domain $\Omega^f$. Now,
 \begin{proof}
 	%Let $\rho^{h}, \rho^{2h}$ be diagonal matrices. Their diagonal elements are $\rho^f, \rho^c$ evaluated at grid points in $\Omega^f$ and $\Omega^c$, respectively; let $J^{h}, J^{2h}$ be diagonal matrices. Their diagonal elements are $J^f, J^c$ evaluated at grid points in $\Omega^f$ and $\Omega^c$, respectively.
 		Let $\rho^{h}$, $\rho^{2h}$, $J^{h}$ and $J^{2h}$ be diagonal matrices with diagonal elements equal to the corresponding continuous functions evaluated on the grid, respectively. 
-	Multiplying (\ref{elastic_semi_c}) by $8h_1h_2h_3\omega_k(J^{2h}\otimes {\bf I}){\bf c}_t$ and summing over all grid points in $\Omega^c$, based on \eqref{scalar_product_inner}, we have
+	By forming the inner product between (\ref{elastic_semi_c}) and $8h_1h_2h_3\omega_k(J^{2h}\otimes {\bf I}){\bf c}_t$, based on \eqref{scalar_product_inner}, we have
 	\begin{equation}\label{coarse_simple}
 	({\bf c}_t, (\rho^{2h}\otimes {\bf I}){\bf c}_{tt})_{2h} = ({\bf c}_t,(J^{2h}\otimes {\bf I})^{-1}\wt{\mathcal{L}}^{2h}{\bf c})_{2h} = -\mathcal{S}_{2h}({\bf c}_t,{\bf c}) + B_{2h}({\bf c}_t,{{\bf c}}),
 	\end{equation}
@@ -23,7 +23,7 @@ where $\bf u$ and $\bf v$ are grid functions in the fine domain $\Omega^f$. Now,
 	\begin{equation}\label{bounary_c1}
 	B_{2h} ({\bf c}_t,{\bf c}) = 4h_1h_2\sum_{{\bf i}\in I_{\Gamma^c}}\frac{d{\bf c}_{\bf i}}{dt}\cdot (\wt{A}_3^{2h}{\bf c}_{\bf i}).
 	\end{equation}
-	Multiplying (\ref{fine_scheme}) by $h_1h_2h_3\omega_k(J^h\otimes {\bf I}){\bf f}_t$ and summing over all grid points in $\Omega^f$, based on \eqref{scalar_product_inner_f}, we obtain
+	By forming the inner product between (\ref{fine_scheme}) and $h_1h_2h_3\omega_k(J^h\otimes {\bf I}){\bf f}_t$, based on \eqref{scalar_product_inner_f}, we obtain
 	\begin{equation}\label{fine_simple}
 	({\bf f}_t, (\rho^h\otimes {\bf I}){\bf f}_{tt})_h = ({\bf f}_t,(J^h\otimes {\bf I})^{-1}\hat{\mathcal{L}}^h{\bf f})_h = -\mathcal{S}_{h}({\bf f}_t,{\bf f}) + B_h({\bf f}_t,{\bf f}) 
 	+h_1h_2h_3\omega_1\sum_{i = 1}^{n_1^h}\sum_{j=1}^{n_2^h} \frac{d{\bf f}_{i,j,1}}{dt}\cdot{\bm \eta}_{i,j,1}.
@@ -44,7 +44,7 @@ Here, $\mathcal{S}_h$ is also a symmetric and positive definite bilinear form gi
 	& = 2\left<{\mathcal{P}}{\bf c}_t,\big(({\Lambda}^{h}{J}^h_\Gamma)\otimes{\bf I}\big)^{-1}(-\mathcal{A}_3^h{\bf f}+h_3\omega_1{\bm \eta})\right>_{h}+ 2\left<{\bf c}_t, \big(({\Lambda}^{2h}{J}^{2h}_\Gamma)\otimes{\bf I}\big)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}\right>_{2h} \nonumber\\
 	& = 2\left<{\bf c}_t,{\mathcal{R}}\Big(\big(({\Lambda}^{h}{J}^h_\Gamma)\otimes{\bf I}\big)^{-1}(-\mathcal{A}_3^h{\bf f}+h_3\omega_1{\bm \eta})\Big)\right>_{2h}+ 2\left<{\bf c}_t,\big(({\Lambda}^{2h}{J}^{2h}_\Gamma)\otimes{\bf I}\big)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}\right>_{2h} = 0.
 	\end{align*}
-Note that the discrete energy for the semi-discretization \eqref{elastic_semi_c} and \eqref{fine_scheme} is gievn by $({\bf f}_t,(\rho^h\otimes {\bf I}) {\bf f}_t)_{h} + \mathcal{S}_{h}({\bf f},{\bf f}) + ({\bf c}_t,(\rho^{2h} \otimes {\bf I}){\bf c}_t)_{2h} + \mathcal{S}_{2h}({\bf c},{\bf c})$.
+Note that the discrete energy for the semi-discretization \eqref{elastic_semi_c} and \eqref{fine_scheme} is given by $({\bf f}_t,(\rho^h\otimes {\bf I}) {\bf f}_t)_{h} + \mathcal{S}_{h}({\bf f},{\bf f}) + ({\bf c}_t,(\rho^{2h} \otimes {\bf I}){\bf c}_t)_{2h} + \mathcal{S}_{2h}({\bf c},{\bf c})$.
 \end{proof}
 
 
