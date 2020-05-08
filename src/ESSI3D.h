@@ -53,7 +53,8 @@ public:
      const std::string& filePrefix,
       int dumpInterval,
       float_sw4 coordBox[4],
-      float_sw4 depth );
+      float_sw4 depth,
+      int precision);
    ~ESSI3D();
 
    void set_dump_interval( int a_dumpInterval );
@@ -92,6 +93,7 @@ protected:
    float_sw4 mTime;
    float_sw4 mCoordBox[4];
    float_sw4 mDepth;
+   int m_precision;
 
    std::string mFileName;
 

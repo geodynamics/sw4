@@ -46,7 +46,7 @@ public:
   static ESSI3DHDF5* nil;
 
   ESSI3DHDF5(const std::string& filename, int (&global)[3],
-    int (&window)[6], bool ihavearray);
+    int (&window)[6], bool ihavearray, int precision);
   ~ESSI3DHDF5();
 
   void create_file();
@@ -76,6 +76,7 @@ private:
   int m_end_cycle;
   int m_window[6];
   int m_global[3];
+  int m_precision;
 
 #ifdef USE_HDF5
   hsize_t m_window_dims[4]; // for just this proc, this cycle
