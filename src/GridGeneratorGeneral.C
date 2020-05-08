@@ -45,6 +45,7 @@ bool GridGeneratorGeneral::inverse_grid_mapping( EW* a_ew, float_sw4 x, float_sw
    int ncurv = a_ew->mNumberOfGrids-a_ew->mNumberOfCartesianGrids;
    if( m_always_new || ncurv > 1 )
    {
+   // New mapping.
       float_sw4 h = a_ew->mGridSize[g];
       int     Nz  = a_ew->m_global_nz[g];
       return inverse_grid_mapping_new( a_ew, x, y, z, g, q, r, s, h, Nz );
@@ -92,7 +93,7 @@ void GridGeneratorGeneral::generate_grid_and_met_old( EW *a_ew, Sarray& a_x, Sar
             else
             {
                float_sw4 tau;
-               tau = m_curviInterface[0](i,j,1); 
+               tau = -m_curviInterface[0](i,j,1); 
                //               evaluate_topography(a_x(i,j,k),a_y(i,j,k),tau,m_topo);
                a_z(i,j,k) = m_topo_zmax - (nz-k)*h - omsm*(m_topo_zmax-(nz-1)*h+tau);
             }
@@ -266,25 +267,6 @@ bool GridGeneratorGeneral::grid_mapping_old( float_sw4 q, float_sw4 r, float_sw4
 // The parameters are normalized such that 1 <= q <= Nx is the full domain (without ghost points),
 //  1 <= r <= Ny, 1 <= s <= Nz.
 
-//   int gFinest = mNumberOfGrids - 1;
-//   float_sw4 h = mGridSize[gFinest];
-
-// No need to check here, the routine will return 'false' if we are not
-// in the range determined by TopoGridExt.
-// check global parameter space
-//   float_sw4 qMin = (float_sw4) (1- m_ghost_points);
-//   float_sw4 qMax = (float_sw4) (m_global_nx[gFinest] + m_ghost_points);
-//   float_sw4 rMin = (float_sw4) (1- m_ghost_points);
-//   float_sw4 rMax = (float_sw4) (m_global_ny[gFinest] + m_ghost_points);
-//   float_sw4 sMin = (float_sw4) m_kStart[gFinest];
-//   float_sw4 sMax = (float_sw4) m_kEnd[gFinest];
-
-//   if (! (q >= qMin && q <= qMax && r >= rMin && r <= rMax && s >= sMin && s <= sMax))
-//   {
-//      cout << "grid_mapping: input parameters out of bounds (q,r,s) = " << q << ", " << r << ", " << s << endl;
-//      cout << "limits are " << qMin << " " << qMax << " " << rMin << " " << rMax << " " <<sMin <<  " " << sMax << endl;
-//      return false;
-//   }
    int nghost = 3; // 3 ghost points is maximum in solver.
 // 0. Check if s is in range
    if( !( 1-nghost <= s && s <= Nz+nghost ) )
