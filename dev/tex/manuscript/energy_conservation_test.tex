@@ -1,6 +1,6 @@
 %!TEX root = SISC_elastic_3d.tex
 \subsection{Energy conservation test}\label{conserved_energy}
-To verify the energy conservation property of the scheme, we perform computation without external source term, but with a Gaussian initial profile centered at the origin of the computational domain.  Precisely, the computational domain is chosen to be the same as in Sec.~\ref{convergence_study}. The material is discontinuous: for the fine domain $\Omega^f$,  the density varies according to
+To verify the energy conservation property of the scheme, we perform computation without external source term, but with a Gaussian initial profile centered at the origin of the computational domain. The computational domain is chosen to be the same as in Sec.~\ref{convergence_study}. The material is discontinuous: for the fine domain $\Omega^f$,  the density varies according to
 \[\rho^f(x^{(1)},x^{(2)},x^{(3)}) = 3 + \sin(2x^{(1)}+0.3)\cos(x^{(2)}+0.3)\sin(2x^{(3)}-0.2),\] 
 and material parameters satisfy
 \[\mu^f(x^{(1)},x^{(2)},x^{(3)}) = 2 + \cos(3x^{(1)}+0.1)\sin(3x^{(2)}+0.1)\sin(x^{(3)})^2,\]
@@ -27,7 +27,7 @@ We present the relative change in full discrete energy, $(E^{n+1/2}-E^{1/2})/E^{
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.6\textwidth,trim={0cm 0cm 0cm 0cm}, clip]{discrete_energy.eps}
-	\caption{The relative change in full discrete energy as a function of time. Here, $t = 120$ corresponds to $6186$ time steps.}\label{discrete_energy}
+	\caption{The relative change in fully discrete energy as a function of time. Here, $t = 120$ corresponds to $6186$ time steps.}\label{discrete_energy}
 \end{figure}
 
 
