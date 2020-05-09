@@ -78,7 +78,7 @@ int createAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id)
     return 1;
 }
 
-int createWriteAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id, void *data)
+int createWriteAttr(hid_t loc, char const *name, hid_t type_id, hid_t space_id, void *data)
 {
     hid_t attr, dcpl;
     herr_t ret;

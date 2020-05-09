@@ -1,0 +1,13 @@
+grid x=30 y=30 z=17 nx=51
+topography input=gaussian zmax=12 order=4 gaussianAmp=2 gaussianXc=15 gaussianYc=14 gaussianLx=6 gaussianLy=7
+refinement zmax=5
+time t=1000
+fileio verbose=1 path=energy-1-dir-l
+testenergy seed=34983249 cpcsratio=1.732 bchorizontal=dirichlet 
+#twilight omega=1.1 phase=0.2 momega=1.2 errorlog=1
+#developer ctol=1e-10 cmaxit=100 crelax=0.92 time_order=2 cfl=0.8
+
+#image mode=ux y=15 cycleInterval=500 file=energy
+#image mode=uy y=15 cycleInterval=500 file=energy
+#image mode=uz y=15 cycleInterval=500 file=energy
+

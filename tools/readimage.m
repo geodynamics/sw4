@@ -1,3 +1,4 @@
+%-*-octave-*--
 %
 % READIMAGE
 %
@@ -43,9 +44,10 @@ if fd ~= -1
    if verbose == 1
       disp(['Found:  prec  = ' num2str(prec)  ' t= ' num2str(t) ' plane= ' num2str(plane)]);   
       disp(['        coord = ' num2str(coord) ' mode= ' mstr ' npatches= ' num2str(npatches) ]);
-      disp(['        gridinfo = ' num2str(gridinfo) ]); 
-     disp(['    file created ' timecreated(1:24)]);
+      disp(['        gridinfo (number of curvilinear patches)= ' num2str(gridinfo) ]); 
+      printf('        file created on %s\n', timecreated(1:24) );
    end;
+   firstCurviPatch = npatches - gridinfo + 1;
    for p=1:npatches
       h(p) = fread(fd,1,'double');
       zmin(p) = fread(fd,1,'double');
@@ -68,9 +70,17 @@ if fd ~= -1
      else
         im0 = fread(fd,[ni(pnr)-ib(pnr)+1 nj(pnr)-jb(pnr)+1],'double');
      end;
+     for p=pnr+1:npatches
+	fseek(fd,(ni(p)-ib(p)+1)*(nj(p)-jb(p)+1)*prec,'cof');
+     end;
 % read grid z-coordinates
-     if (pnr == npatches) && (gridinfo == 1 )
-%        disp(['Reading z-coordinates...']);   
+%     if (pnr == npatches) && (gridinfo == 1 )
+     if (pnr >= firstCurviPatch && gridinfo >= 1 )
+%       printf("Skipping earlier z-ccordinate patches\n");
+       for p=firstCurviPatch:pnr-1
+	 fseek(fd,(ni(p)-ib(p)+1)*(nj(p)-jb(p)+1)*prec,'cof');
+       end;
+%       printf("Reading z-coordinates for patch %d\n", pnr);   
         if prec == 4
            z0 = fread(fd,[ni(pnr)-ib(pnr)+1 nj(pnr)-jb(pnr)+1],'float');
         else

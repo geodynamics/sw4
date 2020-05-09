@@ -71,9 +71,10 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
 // Assume attenuation arrays defined on all grids if they are defined on grid zero.
    bool use_q = m_use_attenuation && xis[0].is_defined() && xip[0].is_defined();
    size_t outside=0, material=0;
+
    for( int g=0 ; g < mEW->mNumberOfGrids  ; g++ )
    {
-      bool curvilinear = mEW->topographyExists() && g == mEW->mNumberOfGrids-1;
+      bool curvilinear = mEW->topographyExists() && g >= mEW->mNumberOfCartesianGrids;
       float_sw4* rhop=rho[g].c_ptr();
       float_sw4*  csp=cs[g].c_ptr();
       float_sw4*  cpp=cp[g].c_ptr();
@@ -95,7 +96,7 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
 		float_sw4 y = (j-1)*mEW->mGridSize[g];
 		float_sw4 z;
 		if( curvilinear )
-		   z = mEW->mZ(i,j,k);
+		   z = mEW->mZ[g](i,j,k);
 		else
 		   z = mEW->m_zmin[g] + (k-1)*mEW->mGridSize[g];
 		size_t ind = ofs + i + ni*j + ni*nj*k;
@@ -232,16 +233,18 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
 		}
 		else
 		   outside++;
-	    }
+	    } // end for i...
 
    } // end for g...
 
    mEW->communicate_arrays( rho );
    mEW->communicate_arrays( cs );
    mEW->communicate_arrays( cp );
+
    mEW->material_ic( rho );
    mEW->material_ic( cs );
    mEW->material_ic( cp );
+   
    if( use_q )
    {
       mEW->communicate_arrays( xis );
@@ -290,6 +293,7 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
       //           << endl;
       cout << endl
 	   << "rfile command: outside = " << outsideSum << ", material = " << materialSum << endl;
+
 }
 
 
@@ -341,16 +345,16 @@ void MaterialRfile::read_rfile( )
 	 ymin =  (mEW->m_jStart[g]-1)*h;
       if( ymax < (mEW->m_jEnd[g]-1)*h )
 	 ymax =  (mEW->m_jEnd[g]-1)*h;
-      if( mEW->topographyExists() && g == mEW->mNumberOfGrids-1 )
+      if( mEW->topographyExists() && g >= mEW->mNumberOfCartesianGrids )
       {
          int kb=mEW->m_kStart[g], ke=mEW->m_kEnd[g];
          for( int j=mEW->m_jStart[g] ; j <= mEW->m_jEnd[g] ; j++ )
 	    for( int i=mEW->m_iStart[g] ; i <= mEW->m_iEnd[g] ; i++ )
 	    {
-	       if( zmin > mEW->mZ(i,j,kb) )
-		  zmin = mEW->mZ(i,j,kb);
-	       if( zmax < mEW->mZ(i,j,ke) )
-		  zmax = mEW->mZ(i,j,ke);
+	       if( zmin > mEW->mZ[g](i,j,kb) )
+		  zmin = mEW->mZ[g](i,j,kb);
+	       if( zmax < mEW->mZ[g](i,j,ke) )
+		  zmax = mEW->mZ[g](i,j,ke);
 	    }
       }
       else

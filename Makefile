@@ -41,11 +41,12 @@ endif
 
 ifeq ($(optlevel),DEBUG)
    FFLAGS    = -g -O0
-   CXXFLAGS  = -g -I../src  -DBZ_DEBUG -O0
+   CXXFLAGS  = -g -I../src -DBZ_DEBUG -O0 -std=c++11
    CFLAGS    = -g -O0
 else
-   FFLAGS   = -O3 
-   CXXFLAGS = -O3 -I../src 
+   FFLAGS   = -O3
+# AP (160419) Note that cmake uses -O3 instead of -O for CXX and C
+   CXXFLAGS = -O3 -I../src -std=c++11
    CFLAGS   = -O3 
 endif
 
@@ -216,15 +217,16 @@ OBJSW4 = main.o
 OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        curvilinearGrid.o   \
        parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
-       solve.o  Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o  \
-       TimeSeries.o sacsubc.o SuperGrid.o  TestRayleighWave.o \
-       MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
-       EtreeFile.o MaterialIfile.o GeographicProjection.o \
-       Image3D.o ESSI3D.o ESSI3DHDF5.o MaterialVolimagefile.o MaterialRfile.o MaterialSfile.o  \
-       AnisotropicMaterialBlock.o  sacutils.o  DataPatches.o addmemvarforcing2.o \
-       consintp.o  oddIoddJinterp.o evenIoddJinterp.o MaterialInvtest.o \
-       oddIevenJinterp.o evenIevenJinterp.o CheckPoint.o geodyn.o AllDims.o Patch.o RandomizedMaterial.o  \
-       sw4-prof.o sachdf5.o readhdf5.o
+       solve.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o TimeSeries.o sacsubc.o \
+       SuperGrid.o TestRayleighWave.o MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o \
+       time_functions.o Qspline.o EtreeFile.o MaterialIfile.o GeographicProjection.o Image3D.o ESSI3D.o ESSI3DHDF5.o \
+       MaterialVolimagefile.o MaterialRfile.o MaterialSfile.o AnisotropicMaterialBlock.o sacutils.o \
+       DataPatches.o addmemvarforcing2.o consintp.o oddIoddJinterp.o evenIoddJinterp.o oddIevenJinterp.o \
+       evenIevenJinterp.o CheckPoint.o geodyn.o AllDims.o Patch.o RandomizedMaterial.o \
+       MaterialInvtest.o sw4-prof.o sachdf5.o readhdf5.o TestTwilight.o \
+       curvilinear4sgwind.o TestEcons.o GridGenerator.o GridGeneratorGeneral.o  \
+       GridGeneratorGaussianHill.o CurvilinearInterface2.o
+
 
 # Fortran routines (lamb_exact_numquad needs QUADPACK)
  OBJ +=  rayleighfort.o lamb_exact_numquad.o 

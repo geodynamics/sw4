@@ -70,7 +70,7 @@ void MaterialIfile::set_material_properties( std::vector<Sarray> & rho,
    if( mEw->m_materials.size() < m_number_material_surfaces )
    {
       cerr << "set_materials: ERROR: There are "<< m_number_material_surfaces << " material surfaces but only "
-	     << mEw->m_materials.size() << " defined materials" << endl;
+           << mEw->m_materials.size() << " defined materials" << endl;
       MPI_Abort(MPI_COMM_WORLD, 1);
    }
    int totalPoints=0, definedPoints=0;
@@ -158,73 +158,81 @@ void MaterialIfile::set_material_properties( std::vector<Sarray> & rho,
    } // end for g (all Cartesian grids)
    if (mEw->topographyExists()) // curvilinear grid
    {
-      g = mEw->mNumberOfGrids-1; 
+      int gTop = mEw->mNumberOfGrids-1;
+      for (int g = mEw->mNumberOfCartesianGrids; g< mEw->mNumberOfGrids; g++)
+      {
+//      g = mEw->mNumberOfGrids-1; 
+         int kLow = mEw->m_kStart[g];
+         if (g == gTop)
+            kLow = 1;
 
 // Gradient and quadratic terms: Assume given (vp, vs, rho) constants are values at the previous depth surface.
 //      double zsurf = 0; // set to zero for the first ifile command NEED TO GENERALIZE
 #pragma omp parallel for reduction(+:totalPoints,definedPoints)
-      for( int k = 1 ; k <= mEw->m_kEnd[g]; k++ )// don't attempt querying the ifile above the topography (start at k=1)
-      {
-	 for( int j = mEw->m_jStart[g] ; j <= mEw->m_jEnd[g]; j++ )
-	 {
-	    for( int i = mEw->m_iStart[g] ; i <= mEw->m_iEnd[g] ; i++ )
-	    {
-	       totalPoints += 1;
-	       float_sw4 x = mEw->mX(i,j,k);
-	       float_sw4 y = mEw->mY(i,j,k);
-	       float_sw4 z = mEw->mZ(i,j,k);
+         for( int k = kLow ; k <= mEw->m_kEnd[g]; k++ )// don't attempt querying the ifile above the topography (start at k=1)
+         {
+            for( int j = mEw->m_jStart[g] ; j <= mEw->m_jEnd[g]; j++ )
+            {
+               for( int i = mEw->m_iStart[g] ; i <= mEw->m_iEnd[g] ; i++ )
+               {
+                  totalPoints += 1;
+                  float_sw4 x = mEw->mX[g](i,j,k);
+                  float_sw4 y = mEw->mY[g](i,j,k);
+                  float_sw4 z = mEw->mZ[g](i,j,k);
                       
-	  //printf("x ,y,z %f %f %f %f\n",x,y,z,mEw->m_zmin[g]);
-	       float_sw4 depth;
-	       mEw->getDepth(x, y, z, depth);
+                  //printf("x ,y,z %f %f %f %f\n",x,y,z,mEw->m_zmin[g]);
+                  float_sw4 depth;
+                  mEw->getDepth(x, y, z, depth);
 // (lon,lat) or (x,y) coordinates ?
-	       if ( m_mat_Cartesian)
-	       {
-		  if ( inside_cartesian_material_surfaces(x, y))
-		  {
+                  if ( m_mat_Cartesian)
+                  {
+                     if ( inside_cartesian_material_surfaces(x, y))
+                     {
 // interpolate material surfaces to find which material is at the specified depth 
-		     int materialID = getCartesianMaterialID(x, y, depth);
-		     if( 0 <= materialID && materialID < mEw->m_materials.size() )
-		     {
-			MaterialProperty* mprop = mEw->m_materials[materialID];
-			definedPoints +=1;
-			rho[g](i,j,k) = lookup_Rho(mprop, depth);
-			cs[g](i,j,k)  = lookup_Vs(mprop, depth);
-			cp[g](i,j,k)  = lookup_Vp(mprop, depth);
-	// attenuation model
-			if( qp[g].is_defined())
-			   qp[g](i,j,k) = lookup_Qp(mprop, depth);
-			if( qs[g].is_defined())
-			   qs[g](i,j,k) = lookup_Qs(mprop, depth);
-		     } // end if knownMaterial
-		  } // end if inside
-	       } // end if (x,y)
-	       else
-	       {
+                        int materialID = getCartesianMaterialID(x, y, depth);
+                        if( 0 <= materialID && materialID < mEw->m_materials.size() )
+                        {
+                           MaterialProperty* mprop = mEw->m_materials[materialID];
+                           definedPoints +=1;
+                           rho[g](i,j,k) = lookup_Rho(mprop, depth);
+                           cs[g](i,j,k)  = lookup_Vs(mprop, depth);
+                           cp[g](i,j,k)  = lookup_Vp(mprop, depth);
+                           // attenuation model
+                           if( qp[g].is_defined())
+                              qp[g](i,j,k) = lookup_Qp(mprop, depth);
+                           if( qs[g].is_defined())
+                              qs[g](i,j,k) = lookup_Qs(mprop, depth);
+                        } // end if knownMaterial
+                     } // end if inside
+                  } // end if (x,y)
+                  else
+                  {
 // need to calculate (lon, lat) from (x, y) before calling getMaterialID
-		  mEw->computeGeographicCoord(x, y, lon, lat );
-		  if ( inside_material_surfaces(lat, lon))
-		  {
+                     mEw->computeGeographicCoord(x, y, lon, lat );
+                     if ( inside_material_surfaces(lat, lon))
+                     {
 // interpolate material surfaces to find which material is at the specified depth 
-		     int materialID = getMaterialID(lat, lon, depth );
-		     if( 0 <= materialID && materialID < mEw->m_materials.size() )
-		     {
-			MaterialProperty* mprop = mEw->m_materials[materialID];
-			definedPoints +=1;
-			rho[g](i,j,k) = lookup_Rho(mprop, depth);
-			cs[g](i,j,k)  = lookup_Vs(mprop, depth);
-			cp[g](i,j,k)  = lookup_Vp(mprop, depth);
+                        int materialID = getMaterialID(lat, lon, depth );
+                        if( 0 <= materialID && materialID < mEw->m_materials.size() )
+                        {
+                           MaterialProperty* mprop = mEw->m_materials[materialID];
+                           definedPoints +=1;
+                           rho[g](i,j,k) = lookup_Rho(mprop, depth);
+                           cs[g](i,j,k)  = lookup_Vs(mprop, depth);
+                           cp[g](i,j,k)  = lookup_Vp(mprop, depth);
 // attenuation model
-			if( qp[g].is_defined())
-			   qp[g](i,j,k) = lookup_Qp(mprop, depth);
-			if( qs[g].is_defined())
-			   qs[g](i,j,k) = lookup_Qs(mprop, depth);
-		     } // end if knownMaterial
-		  } // end if inside
-	       } // end (lon, lat)
-	    } // end for i
-	 }// end for j
-      } // end for k
+                           if( qp[g].is_defined())
+                              qp[g](i,j,k) = lookup_Qp(mprop, depth);
+                           if( qs[g].is_defined())
+                              qs[g](i,j,k) = lookup_Qs(mprop, depth);
+                        } // end if knownMaterial
+                     } // end if inside
+                  } // end (lon, lat)
+               } // end for i
+            }// end for j
+         } // end for k
+      } // end for g (curvilinear)
+      
    } // end if topographyExists
    int totalPointsSum, materialSum;
    MPI_Reduce(&totalPoints, &totalPointsSum, 1, MPI_INT, MPI_SUM, 0, mEw->m_cartesian_communicator);
