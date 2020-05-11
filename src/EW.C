@@ -350,9 +350,9 @@ using namespace std;
 
 #define SQR(x) ((x)*(x))
 
-#include "Farray.h"
+//#include "Farray.h"
 
-int Farray::count = 0;
+//int Farray::count = 0;
 
 // constructor
 EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,

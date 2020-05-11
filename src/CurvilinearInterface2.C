@@ -20,6 +20,9 @@ void curvilinear4sgwind( int, int, int, int, int, int, int, int, float_sw4*, flo
 //-----------------------------------------------------------------------
 CurvilinearInterface2::CurvilinearInterface2( int a_gc, EW* a_ew )
 {
+   m_reltol= 1e-6;
+   m_abstol= 1e-6;
+   m_maxit = 30;
    m_gc = a_gc;
    m_gf = a_gc+1;
    m_ew = a_ew;
@@ -439,8 +442,8 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
 
    // 4.c Jacobi iteration 
    float_sw4 scalef=(m_ew->m_global_nx[m_gc]-1)*(m_ew->m_global_ny[m_gc]-1); //scale residual to be size O(1).
-   int maxit = 30;
-   float_sw4 reltol=1e-6, abstol=1e-6;
+   //   int maxit = 30;
+   //   float_sw4 reltol=1e-6, abstol=1e-6;
    int iter = 0;
    int info = 0, three=3, one=1;
    char trans='N';
@@ -455,7 +458,7 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
    //      convhist.push_back(reltol);
    //      convhist.push_back(abstol);
    //   }
-   while( maxres > reltol*maxres0 && scalef*maxres > abstol && iter <= maxit )
+   while( maxres > m_reltol*maxres0 && scalef*maxres > m_abstol && iter <= m_maxit )
    {
       iter++;
       //      std::cout << "Iteration " << iter << " " << scalef*maxres << "\n";
@@ -500,12 +503,12 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
    //   convhist.push_back(maxres0);
    //   convhist.push_back(maxres);
    //   convhist.push_back(it);
-   if( maxres > reltol*maxres0 && scalef*maxres > abstol )
+   if( maxres > m_reltol*maxres0 && scalef*maxres > m_abstol )
    {
       std::cout << "WARNING, no convergence in curvilinear interface, res = " 
-                << maxres << " reltol= " << reltol << " initial res = " << maxres0 
+                << maxres << " reltol= " << m_reltol << " initial res = " << maxres0 
                 << std::endl;
-      std::cout << "     scaled res = " << scalef*maxres << " abstol= " << abstol 
+      std::cout << "     scaled res = " << scalef*maxres << " abstol= " << m_abstol 
                 << std::endl;
    }
 // 5. Copy U_c and U_f back to a_U, only k=0 for U_c and k=n3f for U_f.

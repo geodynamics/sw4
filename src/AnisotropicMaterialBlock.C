@@ -207,7 +207,7 @@ void AnisotropicMaterialBlock::set_material_properties( std::vector<Sarray> & rh
                     }
                     else
                     {
-                       depth = z - mEW->mZ[gTop](i,j,1); // Temporary fix; (i,j) are different on the gTop grid
+                       mEW->getDepth(x,y,z,depth);
                     }	  
 
                     if(inside_block(x,y,depth))
