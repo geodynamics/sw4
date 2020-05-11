@@ -127,7 +127,7 @@ void EW::set_geodyn_data( string file, int nx, int nz, float_sw4 h, float_sw4 or
       k0 = static_cast<int>(round((m_geodyn_origin[2]-m_zmin[g])/mGridSize[g]+1));
       k1 = static_cast<int>(round((m_geodyn_origin[2]-m_zmin[g]+zcubelen)/mGridSize[g]+1));
 
-      if( g == mNumberOfGrids-1 && topographyExists() )
+      if( g == mNumberOfGrids-1 && topographyExists() ) // NOT verified for several curvilinear grids
       {
 	 // Curvilinear grid, inaccurate quick fix.
 	 // Assume upper side of cube is at the free surface
@@ -146,7 +146,7 @@ void EW::set_geodyn_data( string file, int nx, int nz, float_sw4 h, float_sw4 or
 	    for( int i = icmin ; i <= icmax ; i++ )
 	    {
 	       int k=1;
-               while( k <= m_kEnd[g] && mZ(i,j,k)-mZ(i,j,1) < zcubelen )
+               while( k <= m_kEnd[g] && mZ[g](i,j,k)-mZ[g](i,j,1) < zcubelen )
 		  k++;
 	       kavgm += k-1;
 	       kavgp += k;
@@ -172,8 +172,8 @@ void EW::set_geodyn_data( string file, int nx, int nz, float_sw4 h, float_sw4 or
 	    for( int j = jcmin ; j <= jcmax ; j++ )
 	       for( int i = icmin ; i <= icmax ; i++ )
 	       {
-                  deperrp += (mZ(i,j,kp)-mZ(i,j,1)-zcubelen)*(mZ(i,j,kp)-mZ(i,j,1)-zcubelen);
-                  deperrm += (mZ(i,j,km)-mZ(i,j,1)-zcubelen)*(mZ(i,j,km)-mZ(i,j,1)-zcubelen);
+                  deperrp += (mZ[g](i,j,kp)-mZ[g](i,j,1)-zcubelen)*(mZ[g](i,j,kp)-mZ[g](i,j,1)-zcubelen);
+                  deperrm += (mZ[g](i,j,km)-mZ[g](i,j,1)-zcubelen)*(mZ[g](i,j,km)-mZ[g](i,j,1)-zcubelen);
 	       }
 	 }	    
 	 float_sw4 errp, errm;
@@ -609,9 +609,9 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
 	 for( int k=k0 ;  k<= k1 ; k++ )
 	    for( int j=j0 ;  j<=j1 ; j++ )
 	    {
-               float_sw4 strfact = (mZ(i0,j,k1)-mZ(i0,j,1))/zcubelen;
+               float_sw4 strfact = (mZ[g](i0,j,k1)-mZ[g](i0,j,1))/zcubelen;
                int jg0 = static_cast<int>(floor(((j-1)*h - m_geodyn_origin[1])/m_geodyn_h+1));
-               int kg0 = static_cast<int>(floor((mZ(i0,j,k)-mZ(i0,j,1))/(strfact*m_geodyn_h)+1));
+               int kg0 = static_cast<int>(floor((mZ[g](i0,j,k)-mZ[g](i0,j,1))/(strfact*m_geodyn_h)+1));
 	       //               int kg0 = static_cast<int>(floor(((k-1)*h - m_geodyn_origin[2])/m_geodyn_h+1));
                if( jg0 >= m_geodyn_nj )
 		  jg0 = m_geodyn_nj - 1;
@@ -622,7 +622,7 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
 	       if( kg0 <= 0 )
 		  kg0 = 1;
 	       float_sw4 wghj = ((j-1)*h - (m_geodyn_origin[1]+(jg0-1)*m_geodyn_h))/m_geodyn_h;
-	       float_sw4 wghk = ((mZ(i0,j,k)-mZ(i0,j,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 wghk = ((mZ[g](i0,j,k)-mZ[g](i0,j,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
 
                for( int c= 1; c <= 3 ;c++)
 	       {
@@ -635,13 +635,13 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
 				 (1-wghj)*wghk*m_geodyn_data2[0](c,jg0,kg0+1,1)+
 				 wghj*wghk*m_geodyn_data2[0](c,jg0+1,kg0+1,1) );
 	       }
-	       strfact = (mZ(i1,j,k1)-mZ(i1,j,1))/zcubelen;
-               kg0 = static_cast<int>(floor((mZ(i1,j,k)-mZ(i1,j,1))/(strfact*m_geodyn_h)+1));
+	       strfact = (mZ[g](i1,j,k1)-mZ[g](i1,j,1))/zcubelen;
+               kg0 = static_cast<int>(floor((mZ[g](i1,j,k)-mZ[g](i1,j,1))/(strfact*m_geodyn_h)+1));
                if( kg0 >= m_geodyn_nk )
 		  kg0 = m_geodyn_nk - 1;
 	       if( kg0 <= 0 )
 		  kg0 = 1;
-	       wghk = ((mZ(i1,j,k)-mZ(i1,j,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
+	       wghk = ((mZ[g](i1,j,k)-mZ[g](i1,j,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
 
 	       for( int c=1 ; c <= 3; c++ )
 	       {
@@ -659,9 +659,9 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
 	 for( int k=k0 ;  k<= k1 ; k++ )
 	    for( int i=i0 ;  i<=i1 ; i++ )
 	    {
-               float_sw4 strfact = (mZ(i,j0,k1)-mZ(i,j0,1))/zcubelen;
+               float_sw4 strfact = (mZ[g](i,j0,k1)-mZ[g](i,j0,1))/zcubelen;
                int ig0 = static_cast<int>(floor(((i-1)*h - m_geodyn_origin[0])/m_geodyn_h+1));
-               int kg0 = static_cast<int>(floor((mZ(i,j0,k)-mZ(i,j0,1))/(strfact*m_geodyn_h)+1));
+               int kg0 = static_cast<int>(floor((mZ[g](i,j0,k)-mZ[g](i,j0,1))/(strfact*m_geodyn_h)+1));
 	       //	       int kg0 = static_cast<int>(floor(((k-1)*h - m_geodyn_origin[2])/m_geodyn_h+1));
                if( ig0 >= m_geodyn_ni )
 		  ig0 = m_geodyn_ni - 1;
@@ -673,7 +673,7 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
 		  kg0 = 1;
 	       float_sw4 wghi = ((i-1)*h - (m_geodyn_origin[0]+(ig0-1)*m_geodyn_h))/m_geodyn_h;
 	       //	       float_sw4 wghk = ((k-1)*h - (m_geodyn_origin[2]+(kg0-1)*m_geodyn_h))/m_geodyn_h;
-	       float_sw4 wghk = ((mZ(i,j0,k)-mZ(i,j0,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
+	       float_sw4 wghk = ((mZ[g](i,j0,k)-mZ[g](i,j0,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
 
                for( int c= 1; c <= 3 ;c++)
 	       {
@@ -686,13 +686,13 @@ void EW::impose_geodyn_ibcdata( vector<Sarray> &u, vector<Sarray> &um,
 				 (1-wghi)*wghk*m_geodyn_data2[2](c,ig0,kg0+1,1)+
 				 wghi*wghk*m_geodyn_data2[2](c,ig0+1,kg0+1,1) );
 	       }
-               strfact = (mZ(i,j1,k1)-mZ(i,j1,1))/zcubelen;
-               kg0 = static_cast<int>(floor((mZ(i,j1,k)-mZ(i,j1,1))/(strfact*m_geodyn_h)+1));
+               strfact = (mZ[g](i,j1,k1)-mZ[g](i,j1,1))/zcubelen;
+               kg0 = static_cast<int>(floor((mZ[g](i,j1,k)-mZ[g](i,j1,1))/(strfact*m_geodyn_h)+1));
                if( kg0 >= m_geodyn_nk )
 		  kg0 = m_geodyn_nk - 1;
 	       if( kg0 <= 0 )
 		  kg0 = 1;
-	       wghk = ((mZ(i,j1,k)-mZ(i,j1,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
+	       wghk = ((mZ[g](i,j1,k)-mZ[g](i,j1,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
 	       for( int c=1 ; c <= 3; c++ )
 	       {
 		  
@@ -1244,12 +1244,12 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
    Sarray Lu0(3,i0,i0,j0,j1,k0,k1);
    if( low_interior )
       evalLuCurv<0,1,1,1,1,1>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-			       U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric, mJ,
+			       U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g], mJ[g],
 			       i0, i0, j0, j1, k0, k1 );	    
    Sarray Lu1(3,i1,i1,j0,j1,k0,k1);
    if( high_interior )
       evalLuCurv<1,0,1,1,1,1>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-			       U[g], Lu1, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric, mJ,
+			       U[g], Lu1, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g], mJ[g],
 			       i1, i1, j0, j1, k0, k1 );
 
    int kstart = k0+1;
@@ -1258,11 +1258,11 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 // Special at corner between free surface and Geodyn cube
       if( low_interior )
 	 evalLuCurv<0,1,1,1,1,0>(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-				 U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric, mJ,
+				 U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g], mJ[g],
 				 i0, i0, j0, j1, k0, k0 );
       if( high_interior )
 	 evalLuCurv<1,0,1,1,1,0>(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-				 U[g], Lu1, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric, mJ,
+				 U[g], Lu1, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g], mJ[g],
 				 i1, i1, j0, j1, k0, k0 );
       kstart = k0;
    }
@@ -1271,9 +1271,9 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
    for( int k=kstart ;  k<= k1-1 ; k++ )
       for( int j=j0+1 ;  j<=j1-1 ; j++ )
       {
-	 float_sw4 strfact = (mZ(i0,j,k1)-mZ(i0,j,1))/zcubelen;
+	 float_sw4 strfact = (mZ[g](i0,j,k1)-mZ[g](i0,j,1))/zcubelen;
 	 int jg0 = static_cast<int>(floor(((j-1)*h - m_geodyn_origin[1])/m_geodyn_h+1));
-	 int kg0 = static_cast<int>(floor((mZ(i0,j,k)-mZ(i0,j,1))/(strfact*m_geodyn_h)+1));
+	 int kg0 = static_cast<int>(floor((mZ[g](i0,j,k)-mZ[g](i0,j,1))/(strfact*m_geodyn_h)+1));
 	       //               int kg0 = static_cast<int>(floor(((k-1)*h - m_geodyn_origin[2])/m_geodyn_h+1));
 	 if( jg0 >= m_geodyn_nj )
 	    jg0 = m_geodyn_nj - 1;
@@ -1284,11 +1284,11 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 	 if( kg0 <= 0 )
 	    kg0 = 1;
 	 float_sw4 wghj = ((j-1)*h - (m_geodyn_origin[1]+(jg0-1)*m_geodyn_h))/m_geodyn_h;
-	 float_sw4 wghk = ((mZ(i0,j,k)-mZ(i0,j,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
+	 float_sw4 wghk = ((mZ[g](i0,j,k)-mZ[g](i0,j,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
 	 float_sw4 bnd0[3],bnd1[3];
 	 //	 if( i0+1==86 && j==102 && k==25)
 	 //	    cout << "boundary data: wk " << wghk << " sf " << strfact << " zk1 " 
-	 //		 << mZ(i0,j,k1) << " z1 " << mZ(i0,j,1) << " k1 " << k1 <<  endl;
+	 //		 << mZ[g](i0,j,k1) << " z1 " << mZ[g](i0,j,1) << " k1 " << k1 <<  endl;
 	 for( int c= 1; c <= 3 ;c++)
 	 {
 	    bnd0[c-1] = twgh*( (1-wghj)*(1-wghk)*m_geodyn_data1[0](c,jg0,kg0,1)+
@@ -1300,13 +1300,13 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 				 (1-wghj)*wghk*m_geodyn_data2[0](c,jg0,kg0+1,1)+
 				 wghj*wghk*m_geodyn_data2[0](c,jg0+1,kg0+1,1) );
 	 }
-	 strfact = (mZ(i1,j,k1)-mZ(i1,j,1))/zcubelen;
-	 kg0 = static_cast<int>(floor((mZ(i1,j,k)-mZ(i1,j,1))/(strfact*m_geodyn_h)+1));
+	 strfact = (mZ[g](i1,j,k1)-mZ[g](i1,j,1))/zcubelen;
+	 kg0 = static_cast<int>(floor((mZ[g](i1,j,k)-mZ[g](i1,j,1))/(strfact*m_geodyn_h)+1));
 	 if( kg0 >= m_geodyn_nk )
 	    kg0 = m_geodyn_nk - 1;
 	 if( kg0 <= 0 )
 	    kg0 = 1;
-	 wghk = ((mZ(i1,j,k)-mZ(i1,j,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
+	 wghk = ((mZ[g](i1,j,k)-mZ[g](i1,j,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
 	 for( int c= 1; c <= 3 ;c++)
 	 {
 	    bnd1[c-1] = twgh*( (1-wghj)*(1-wghk)*m_geodyn_data1[1](c,jg0,kg0,1)+
@@ -1333,15 +1333,15 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 	    //								 0.5*(lambda[g](i0+1,j,k)+lambda[g](i0,j,k)));
 	    //	    U[g](2,i0+1,j,k) = U[g](2,i0+1,j,k) + 2*h2*res2/(mu[g](i0+1,j,k)+mu[g](i0,j,k));
 	    //	    U[g](3,i0+1,j,k) = U[g](3,i0+1,j,k) + 2*h2*res3/(mu[g](i0+1,j,k)+mu[g](i0,j,k));
-	    U[g](1,i0+1,j,k) = U[g](1,i0+1,j,k) + mJ(i0,j,k)*res1/
-	       ( (mu[g](i0+1,j,k)+0.5*lambda[g](i0+1,j,k))*SQR(mMetric(1,i0+1,j,k))+
-		 (mu[g](i0,  j,k)+0.5*lambda[g](i0  ,j,k))*SQR(mMetric(1,i0,  j,k)));
-	    U[g](2,i0+1,j,k) = U[g](2,i0+1,j,k) + 2*mJ(i0,j,k)*res2/
-	       ( mu[g](i0+1,j,k)*SQR(mMetric(1,i0+1,j,k))+
-		 mu[g](i0,  j,k)*SQR(mMetric(1,i0,  j,k))  );
-	    U[g](3,i0+1,j,k) = U[g](3,i0+1,j,k) + 2*mJ(i0,j,k)*res3/
-	       (  mu[g](i0+1,j,k)*SQR(mMetric(1,i0+1,j,k))+
-		  mu[g](i0,  j,k)*SQR(mMetric(1,i0,  j,k))  );
+	    U[g](1,i0+1,j,k) = U[g](1,i0+1,j,k) + mJ[g](i0,j,k)*res1/
+	       ( (mu[g](i0+1,j,k)+0.5*lambda[g](i0+1,j,k))*SQR(mMetric[g](1,i0+1,j,k))+
+		 (mu[g](i0,  j,k)+0.5*lambda[g](i0  ,j,k))*SQR(mMetric[g](1,i0,  j,k)));
+	    U[g](2,i0+1,j,k) = U[g](2,i0+1,j,k) + 2*mJ[g](i0,j,k)*res2/
+	       ( mu[g](i0+1,j,k)*SQR(mMetric[g](1,i0+1,j,k))+
+		 mu[g](i0,  j,k)*SQR(mMetric[g](1,i0,  j,k))  );
+	    U[g](3,i0+1,j,k) = U[g](3,i0+1,j,k) + 2*mJ[g](i0,j,k)*res3/
+	       (  mu[g](i0+1,j,k)*SQR(mMetric[g](1,i0+1,j,k))+
+		  mu[g](i0,  j,k)*SQR(mMetric[g](1,i0,  j,k))  );
 	    //	    if( i0+1==86 && j==102 && k==25)
 	    //		     cout << "In geodyn bc "  << m_myRank << " " << U[g](1,i0+1,j,k) <<
 	    //			" " << Um[g](1,i0,j,k) << " " << bnd0[0] << " " << Lu0(1,i0,j,k) << endl;
@@ -1361,15 +1361,15 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 	    //								 0.5*(lambda[g](i1-1,j,k)+lambda[g](i1,j,k)));
 	    //	    U[g](2,i1-1,j,k) = U[g](2,i1-1,j,k) + 2*h2*res2/(mu[g](i1-1,j,k)+mu[g](i1,j,k));
 	    //	    U[g](3,i1-1,j,k) = U[g](3,i1-1,j,k) + 2*h2*res3/(mu[g](i1-1,j,k)+mu[g](i1,j,k));
-	    U[g](1,i1-1,j,k) = U[g](1,i1-1,j,k) + mJ(i1,j,k)*res1/
-	       ( (mu[g](i1-1,j,k)+0.5*lambda[g](i1-1,j,k))*SQR(mMetric(1,i1-1,j,k))+
-		 (mu[g](i1,  j,k)+0.5*lambda[g](i1  ,j,k))*SQR(mMetric(1,i1,  j,k)));
-	    U[g](2,i1-1,j,k) = U[g](2,i1-1,j,k) + 2*mJ(i1,j,k)*res2/
-	       (  mu[g](i1-1,j,k)*SQR(mMetric(1,i1-1,j,k))+
-		  mu[g](i1,  j,k)*SQR(mMetric(1,i1,  j,k))  );
-	    U[g](3,i1-1,j,k) = U[g](3,i1-1,j,k) + 2*mJ(i1,j,k)*res3/
-	       (  mu[g](i1-1,j,k)*SQR(mMetric(1,i1-1,j,k))+
-		  mu[g](i1,  j,k)*SQR(mMetric(1,i1,  j,k))  );
+	    U[g](1,i1-1,j,k) = U[g](1,i1-1,j,k) + mJ[g](i1,j,k)*res1/
+	       ( (mu[g](i1-1,j,k)+0.5*lambda[g](i1-1,j,k))*SQR(mMetric[g](1,i1-1,j,k))+
+		 (mu[g](i1,  j,k)+0.5*lambda[g](i1  ,j,k))*SQR(mMetric[g](1,i1,  j,k)));
+	    U[g](2,i1-1,j,k) = U[g](2,i1-1,j,k) + 2*mJ[g](i1,j,k)*res2/
+	       (  mu[g](i1-1,j,k)*SQR(mMetric[g](1,i1-1,j,k))+
+		  mu[g](i1,  j,k)*SQR(mMetric[g](1,i1,  j,k))  );
+	    U[g](3,i1-1,j,k) = U[g](3,i1-1,j,k) + 2*mJ[g](i1,j,k)*res3/
+	       (  mu[g](i1-1,j,k)*SQR(mMetric[g](1,i1-1,j,k))+
+		  mu[g](i1,  j,k)*SQR(mMetric[g](1,i1,  j,k))  );
 	 }
       }
    // Side with j=const
@@ -1379,34 +1379,34 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
    {
       Lu0.define(3,i0,i1,j0,j0,k0,k1);
       evalLuCurv<1,1,0,1,1,1>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-			       U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric, mJ,
+			       U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g], mJ[g],
 			       i0, i1, j0, j0, k0, k1 );
    }
    if( high_interior )
    {
       Lu1.define(3,i0,i1,j1,j1,k0,k1);
       evalLuCurv<1,1,1,0,1,1>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-			       U[g], Lu1, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric, mJ,
+			       U[g], Lu1, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g], mJ[g],
 			       i0, i1, j1, j1, k0, k1 );
    }
    if( surface_correction )
    {
       if( low_interior )
 	 evalLuCurv<1,1,0,1,1,0>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-				  U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric, mJ,
+				  U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g], mJ[g],
 				  i0, i1, j0, j0, k0, k0 );
       if( high_interior )
 	 evalLuCurv<1,1,1,0,1,0>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-				  U[g], Lu1, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric, mJ,
+				  U[g], Lu1, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g], mJ[g],
 				  i0, i1, j1, j1, k0, k0 );
    }
 #pragma omp parallel for
    for( int k=kstart ;  k<= k1-1 ; k++ )
       for( int i=i0+1 ;  i<=i1-1 ; i++ )
       {
-	 float_sw4 strfact = (mZ(i,j0,k1)-mZ(i,j0,1))/zcubelen;
+	 float_sw4 strfact = (mZ[g](i,j0,k1)-mZ[g](i,j0,1))/zcubelen;
 	 int ig0 = static_cast<int>(floor(((i-1)*h - m_geodyn_origin[0])/m_geodyn_h+1));
-	 int kg0 = static_cast<int>(floor((mZ(i,j0,k)-mZ(i,j0,1))/(strfact*m_geodyn_h)+1));
+	 int kg0 = static_cast<int>(floor((mZ[g](i,j0,k)-mZ[g](i,j0,1))/(strfact*m_geodyn_h)+1));
 	 //	       int kg0 = static_cast<int>(floor(((k-1)*h - m_geodyn_origin[2])/m_geodyn_h+1));
 	 if( ig0 >= m_geodyn_ni )
 	    ig0 = m_geodyn_ni - 1;
@@ -1418,7 +1418,7 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 	    kg0 = 1;
 	 float_sw4 wghi = ((i-1)*h - (m_geodyn_origin[0]+(ig0-1)*m_geodyn_h))/m_geodyn_h;
 	       //	       double wghk = ((k-1)*h - (m_geodyn_origin[2]+(kg0-1)*m_geodyn_h))/m_geodyn_h;
-	 float_sw4 wghk = ((mZ(i,j0,k)-mZ(i,j0,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
+	 float_sw4 wghk = ((mZ[g](i,j0,k)-mZ[g](i,j0,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
 	 float_sw4 bnd0[3],bnd1[3];
 	 for( int c= 1; c <= 3 ;c++)
 	 {
@@ -1431,13 +1431,13 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 			    (1-wghi)*  wghk  *m_geodyn_data2[2](c,ig0,  kg0+1,1)+
 			    wghi  *  wghk  *m_geodyn_data2[2](c,ig0+1,kg0+1,1) );
 	 }
-	 strfact = (mZ(i,j1,k1)-mZ(i,j1,1))/zcubelen;
-	 kg0 = static_cast<int>(floor((mZ(i,j1,k)-mZ(i,j1,1))/(strfact*m_geodyn_h)+1));
+	 strfact = (mZ[g](i,j1,k1)-mZ[g](i,j1,1))/zcubelen;
+	 kg0 = static_cast<int>(floor((mZ[g](i,j1,k)-mZ[g](i,j1,1))/(strfact*m_geodyn_h)+1));
 	 if( kg0 >= m_geodyn_nk )
 	    kg0 = m_geodyn_nk - 1;
 	 if( kg0 <= 0 )
 	    kg0 = 1;
-	 wghk = ((mZ(i,j1,k)-mZ(i,j1,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
+	 wghk = ((mZ[g](i,j1,k)-mZ[g](i,j1,1))/strfact - ((kg0-1)*m_geodyn_h))/m_geodyn_h;
 	 for( int c= 1; c <= 3 ;c++)
 	 {
 	    bnd1[c-1] = twgh*( (1-wghi)*(1-wghk)*m_geodyn_data1[3](c,ig0,  kg0,  1)+
@@ -1464,15 +1464,15 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 	    //	    U[g](2,i,j0+1,k) = U[g](2,i,j0+1,k) +   h2*res2/(mu[g](i,j0+1,k)+mu[g](i,j0,k)+
 	    //							     0.5*(lambda[g](i,j0+1,k)+lambda[g](i,j0,k)));
 	    //	    U[g](3,i,j0+1,k) = U[g](3,i,j0+1,k) + 2*h2*res3/(mu[g](i,j0+1,k)+mu[g](i,j0,k));
-	    U[g](1,i,j0+1,k) = U[g](1,i,j0+1,k) + 2*mJ(i,j0,k)*res1/
-	       ( mu[g](i,j0+1,k)*SQR(mMetric(1,i,j0+1,k))+
-		 mu[g](i,j0,  k)*SQR(mMetric(1,i,j0,  k))  );
-	    U[g](2,i,j0+1,k) = U[g](2,i,j0+1,k) + mJ(i,j0,k)*res2/
-	       (  (mu[g](i,j0+1,k)+0.5*lambda[g](i,j0+1,k))*SQR(mMetric(1,i,j0+1,k))+
-		  (mu[g](i,j0,  k)+0.5*lambda[g](i,j0,  k))*SQR(mMetric(1,i,j0,  k)));
-	    U[g](3,i,j0+1,k) = U[g](3,i,j0+1,k) + 2*mJ(i,j0,k)*res3/
-	       (  mu[g](i,j0+1,k)*SQR(mMetric(1,i,j0+1,k))+
-		  mu[g](i,j0,  k)*SQR(mMetric(1,i,j0,  k))  );
+	    U[g](1,i,j0+1,k) = U[g](1,i,j0+1,k) + 2*mJ[g](i,j0,k)*res1/
+	       ( mu[g](i,j0+1,k)*SQR(mMetric[g](1,i,j0+1,k))+
+		 mu[g](i,j0,  k)*SQR(mMetric[g](1,i,j0,  k))  );
+	    U[g](2,i,j0+1,k) = U[g](2,i,j0+1,k) + mJ[g](i,j0,k)*res2/
+	       (  (mu[g](i,j0+1,k)+0.5*lambda[g](i,j0+1,k))*SQR(mMetric[g](1,i,j0+1,k))+
+		  (mu[g](i,j0,  k)+0.5*lambda[g](i,j0,  k))*SQR(mMetric[g](1,i,j0,  k)));
+	    U[g](3,i,j0+1,k) = U[g](3,i,j0+1,k) + 2*mJ[g](i,j0,k)*res3/
+	       (  mu[g](i,j0+1,k)*SQR(mMetric[g](1,i,j0+1,k))+
+		  mu[g](i,j0,  k)*SQR(mMetric[g](1,i,j0,  k))  );
 
 	 }
 	 // Upper bndry
@@ -1489,15 +1489,15 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 	    //	    U[g](2,i,j1-1,k) = U[g](2,i,j1-1,k) +   h2*res2/(mu[g](i,j1-1,k)+mu[g](i,j1,k)+
 	    //							     0.5*(lambda[g](i,j1-1,k)+lambda[g](i,j1,k)));
 	    //	    U[g](3,i,j1-1,k) = U[g](3,i,j1-1,k) + 2*h2*res3/(mu[g](i,j1-1,k)+mu[g](i,j1,k));
-	    U[g](1,i,j1-1,k) = U[g](1,i,j1-1,k) + 2*mJ(i,j1,k)*res1/
-	       (  mu[g](i,j1-1,k)*SQR(mMetric(1,i,j1-1,k))+
-		  mu[g](i,j1,  k)*SQR(mMetric(1,i,j1,  k))  );
-	    U[g](2,i,j1-1,k) = U[g](2,i,j1-1,k) + mJ(i,j1,k)*res2/
-	       (   (mu[g](i,j1-1,k)+0.5*lambda[g](i,j1-1,k))*SQR(mMetric(1,i,j1-1,k))+
-		   (mu[g](i,j1,  k)+0.5*lambda[g](i,j1,  k))*SQR(mMetric(1,i,j1,  k)));
-	    U[g](3,i,j1-1,k) = U[g](3,i,j1-1,k) + 2*mJ(i,j1,k)*res3/
-	       (    mu[g](i,j1-1,k)*SQR(mMetric(1,i,j1-1,k))+
-		    mu[g](i,j1,  k)*SQR(mMetric(1,i,j1,  k))  );
+	    U[g](1,i,j1-1,k) = U[g](1,i,j1-1,k) + 2*mJ[g](i,j1,k)*res1/
+	       (  mu[g](i,j1-1,k)*SQR(mMetric[g](1,i,j1-1,k))+
+		  mu[g](i,j1,  k)*SQR(mMetric[g](1,i,j1,  k))  );
+	    U[g](2,i,j1-1,k) = U[g](2,i,j1-1,k) + mJ[g](i,j1,k)*res2/
+	       (   (mu[g](i,j1-1,k)+0.5*lambda[g](i,j1-1,k))*SQR(mMetric[g](1,i,j1-1,k))+
+		   (mu[g](i,j1,  k)+0.5*lambda[g](i,j1,  k))*SQR(mMetric[g](1,i,j1,  k)));
+	    U[g](3,i,j1-1,k) = U[g](3,i,j1-1,k) + 2*mJ[g](i,j1,k)*res3/
+	       (    mu[g](i,j1-1,k)*SQR(mMetric[g](1,i,j1-1,k))+
+		    mu[g](i,j1,  k)*SQR(mMetric[g](1,i,j1,  k))  );
 	 }
       }
  // Side with k=const
@@ -1508,7 +1508,7 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
       //      cout << "geodyn low_interior curvi " << endl;
       Lu0.define(3,i0,i1,j0,j1,k0,k0);
       evalLuCurv<1,1,1,1,0,1>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-			       U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric, mJ,
+			       U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g], mJ[g],
 			       i0, i1, j0, j1, k0, k0 );
    }
    if( high_interior )
@@ -1516,7 +1516,7 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
       //      cout << "geodyn high_interior curvi " << endl;
       Lu1.define(3,i0,i1,j0,j1,k1,k1);
       evalLuCurv<1,1,1,1,1,0>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
-			       U[g], Lu1, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric, mJ,
+			       U[g], Lu1, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g], mJ[g],
 			       i0, i1, j0, j1, k1, k1 );
    }
 #pragma omp parallel for
@@ -1575,32 +1575,32 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 	    //							     0.5*(lambda[g](i,j,k1-1)+lambda[g](i,j,k1)));
 	    double x[3], amat_[9];
 #define a(i,j) amat_[((i)-1)+3*((j)-1)]
-	    x[0] = 2*mJ(i,j,k1)*res1;
-	    x[1] = 2*mJ(i,j,k1)*res2;
-	    x[2] = 2*mJ(i,j,k1)*res3;
-	    a(1,1) = (2*mu[g](i,j,k1-1)+lambda[g](i,j,k1-1))*SQR(mMetric(2,i,j,k1-1)) + 
-	             (2*mu[g](i,j,k1  )+lambda[g](i,j,k1  ))*SQR(mMetric(2,i,j,k1  )) +
-   	         mu[g](i,j,k1-1)*(SQR(mMetric(3,i,j,k1-1))+SQR(mMetric(4,i,j,k1-1)))    + 
- 	         mu[g](i,j,k1  )*(SQR(mMetric(3,i,j,k1  ))+SQR(mMetric(4,i,j,k1  ))); 
+	    x[0] = 2*mJ[g](i,j,k1)*res1;
+	    x[1] = 2*mJ[g](i,j,k1)*res2;
+	    x[2] = 2*mJ[g](i,j,k1)*res3;
+	    a(1,1) = (2*mu[g](i,j,k1-1)+lambda[g](i,j,k1-1))*SQR(mMetric[g](2,i,j,k1-1)) + 
+	             (2*mu[g](i,j,k1  )+lambda[g](i,j,k1  ))*SQR(mMetric[g](2,i,j,k1  )) +
+   	         mu[g](i,j,k1-1)*(SQR(mMetric[g](3,i,j,k1-1))+SQR(mMetric[g](4,i,j,k1-1)))    + 
+ 	         mu[g](i,j,k1  )*(SQR(mMetric[g](3,i,j,k1  ))+SQR(mMetric[g](4,i,j,k1  ))); 
 
-	    a(1,2) = (mu[g](i,j,k1-1)+lambda[g](i,j,k1-1))*mMetric(2,i,j,k1-1)*mMetric(3,i,j,k1-1) +
-	             (mu[g](i,j,k1  )+lambda[g](i,j,k1  ))*mMetric(2,i,j,k1  )*mMetric(3,i,j,k1  );
-	    a(1,3) = (mu[g](i,j,k1-1)+lambda[g](i,j,k1-1))*mMetric(2,i,j,k1-1)*mMetric(4,i,j,k1-1) +
-	             (mu[g](i,j,k1  )+lambda[g](i,j,k1  ))*mMetric(2,i,j,k1  )*mMetric(4,i,j,k1  );
+	    a(1,2) = (mu[g](i,j,k1-1)+lambda[g](i,j,k1-1))*mMetric[g](2,i,j,k1-1)*mMetric[g](3,i,j,k1-1) +
+	             (mu[g](i,j,k1  )+lambda[g](i,j,k1  ))*mMetric[g](2,i,j,k1  )*mMetric[g](3,i,j,k1  );
+	    a(1,3) = (mu[g](i,j,k1-1)+lambda[g](i,j,k1-1))*mMetric[g](2,i,j,k1-1)*mMetric[g](4,i,j,k1-1) +
+	             (mu[g](i,j,k1  )+lambda[g](i,j,k1  ))*mMetric[g](2,i,j,k1  )*mMetric[g](4,i,j,k1  );
 
 	    a(2,1) = a(1,2);
-	    a(2,2) = (2*mu[g](i,j,k1-1)+lambda[g](i,j,k1-1))*SQR(mMetric(3,i,j,k1-1)) + 
-	             (2*mu[g](i,j,k1  )+lambda[g](i,j,k1  ))*SQR(mMetric(3,i,j,k1  )) +
-   	         mu[g](i,j,k1-1)*(SQR(mMetric(2,i,j,k1-1))+SQR(mMetric(4,i,j,k1-1)))    + 
- 	         mu[g](i,j,k1  )*(SQR(mMetric(2,i,j,k1  ))+SQR(mMetric(4,i,j,k1  ))); 
-	    a(2,3) = (mu[g](i,j,k1-1)+lambda[g](i,j,k1-1))*mMetric(3,i,j,k1-1)*mMetric(4,i,j,k1-1) +
-	             (mu[g](i,j,k1  )+lambda[g](i,j,k1  ))*mMetric(3,i,j,k1  )*mMetric(4,i,j,k1  );
+	    a(2,2) = (2*mu[g](i,j,k1-1)+lambda[g](i,j,k1-1))*SQR(mMetric[g](3,i,j,k1-1)) + 
+	             (2*mu[g](i,j,k1  )+lambda[g](i,j,k1  ))*SQR(mMetric[g](3,i,j,k1  )) +
+   	         mu[g](i,j,k1-1)*(SQR(mMetric[g](2,i,j,k1-1))+SQR(mMetric[g](4,i,j,k1-1)))    + 
+ 	         mu[g](i,j,k1  )*(SQR(mMetric[g](2,i,j,k1  ))+SQR(mMetric[g](4,i,j,k1  ))); 
+	    a(2,3) = (mu[g](i,j,k1-1)+lambda[g](i,j,k1-1))*mMetric[g](3,i,j,k1-1)*mMetric[g](4,i,j,k1-1) +
+	             (mu[g](i,j,k1  )+lambda[g](i,j,k1  ))*mMetric[g](3,i,j,k1  )*mMetric[g](4,i,j,k1  );
 	    a(3,1) = a(1,3);
 	    a(3,2) = a(2,3);
-	    a(3,3) = (2*mu[g](i,j,k1-1)+lambda[g](i,j,k1-1))*SQR(mMetric(4,i,j,k1-1)) + 
-	             (2*mu[g](i,j,k1  )+lambda[g](i,j,k1  ))*SQR(mMetric(4,i,j,k1  )) +
-   	         mu[g](i,j,k1-1)*(SQR(mMetric(2,i,j,k1-1))+SQR(mMetric(3,i,j,k1-1)))    + 
- 	         mu[g](i,j,k1  )*(SQR(mMetric(2,i,j,k1  ))+SQR(mMetric(3,i,j,k1  ))); 
+	    a(3,3) = (2*mu[g](i,j,k1-1)+lambda[g](i,j,k1-1))*SQR(mMetric[g](4,i,j,k1-1)) + 
+	             (2*mu[g](i,j,k1  )+lambda[g](i,j,k1  ))*SQR(mMetric[g](4,i,j,k1  )) +
+   	         mu[g](i,j,k1-1)*(SQR(mMetric[g](2,i,j,k1-1))+SQR(mMetric[g](3,i,j,k1-1)))    + 
+ 	         mu[g](i,j,k1  )*(SQR(mMetric[g](2,i,j,k1  ))+SQR(mMetric[g](3,i,j,k1  ))); 
 	    int ipiv[3], info, three=3, one=1;
 	    F77_FUNC(dgesv,DGESV)(&three, &one, amat_, &three, ipiv, x, &three, &info );
 	    VERIFY2( info ==0 , "ERROR: info = " << info << " from DGESV in geodyn_second_ghost_point_curvilinear\n" );
@@ -1625,32 +1625,32 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 	    //	    U[g](3,i,j,k0+1) = U[g](3,i,j,k0+1) +   h2*res3/(mu[g](i,j,k0+1)+mu[g](i,j,k0)+
 	    //							     0.5*(lambda[g](i,j,k0+1)+lambda[g](i,j,k0)));
 	    double x[3], amat_[9];
-	    x[0] = 2*mJ(i,j,k0)*res1;
-	    x[1] = 2*mJ(i,j,k0)*res2;
-	    x[2] = 2*mJ(i,j,k0)*res3;
-	    a(1,1) = (2*mu[g](i,j,k0+1)+lambda[g](i,j,k0+1))*SQR(mMetric(2,i,j,k0+1)) + 
-	             (2*mu[g](i,j,k0  )+lambda[g](i,j,k0  ))*SQR(mMetric(2,i,j,k0  )) +
-   	         mu[g](i,j,k0+1)*(SQR(mMetric(3,i,j,k0+1))+SQR(mMetric(4,i,j,k0+1)))    + 
- 	         mu[g](i,j,k0  )*(SQR(mMetric(3,i,j,k0  ))+SQR(mMetric(4,i,j,k0  ))); 
+	    x[0] = 2*mJ[g](i,j,k0)*res1;
+	    x[1] = 2*mJ[g](i,j,k0)*res2;
+	    x[2] = 2*mJ[g](i,j,k0)*res3;
+	    a(1,1) = (2*mu[g](i,j,k0+1)+lambda[g](i,j,k0+1))*SQR(mMetric[g](2,i,j,k0+1)) + 
+	             (2*mu[g](i,j,k0  )+lambda[g](i,j,k0  ))*SQR(mMetric[g](2,i,j,k0  )) +
+   	         mu[g](i,j,k0+1)*(SQR(mMetric[g](3,i,j,k0+1))+SQR(mMetric[g](4,i,j,k0+1)))    + 
+ 	         mu[g](i,j,k0  )*(SQR(mMetric[g](3,i,j,k0  ))+SQR(mMetric[g](4,i,j,k0  ))); 
 
-	    a(1,2) = (mu[g](i,j,k0+1)+lambda[g](i,j,k0+1))*mMetric(2,i,j,k0+1)*mMetric(3,i,j,k0+1) +
-	             (mu[g](i,j,k0  )+lambda[g](i,j,k0  ))*mMetric(2,i,j,k0  )*mMetric(3,i,j,k0  );
-	    a(1,3) = (mu[g](i,j,k0+1)+lambda[g](i,j,k0+1))*mMetric(2,i,j,k0+1)*mMetric(4,i,j,k0+1) +
-	             (mu[g](i,j,k0  )+lambda[g](i,j,k0  ))*mMetric(2,i,j,k0  )*mMetric(4,i,j,k0  );
+	    a(1,2) = (mu[g](i,j,k0+1)+lambda[g](i,j,k0+1))*mMetric[g](2,i,j,k0+1)*mMetric[g](3,i,j,k0+1) +
+	             (mu[g](i,j,k0  )+lambda[g](i,j,k0  ))*mMetric[g](2,i,j,k0  )*mMetric[g](3,i,j,k0  );
+	    a(1,3) = (mu[g](i,j,k0+1)+lambda[g](i,j,k0+1))*mMetric[g](2,i,j,k0+1)*mMetric[g](4,i,j,k0+1) +
+	             (mu[g](i,j,k0  )+lambda[g](i,j,k0  ))*mMetric[g](2,i,j,k0  )*mMetric[g](4,i,j,k0  );
 
 	    a(2,1) = a(1,2);
-	    a(2,2) = (2*mu[g](i,j,k0+1)+lambda[g](i,j,k0+1))*SQR(mMetric(3,i,j,k0+1)) + 
-	             (2*mu[g](i,j,k0  )+lambda[g](i,j,k0  ))*SQR(mMetric(3,i,j,k0  )) +
-   	         mu[g](i,j,k0+1)*(SQR(mMetric(2,i,j,k0+1))+SQR(mMetric(4,i,j,k0+1)))    + 
- 	         mu[g](i,j,k0  )*(SQR(mMetric(2,i,j,k0  ))+SQR(mMetric(4,i,j,k0  ))); 
-	    a(2,3) = (mu[g](i,j,k0+1)+lambda[g](i,j,k0+1))*mMetric(3,i,j,k0+1)*mMetric(4,i,j,k0+1) +
-	             (mu[g](i,j,k0  )+lambda[g](i,j,k0  ))*mMetric(3,i,j,k0  )*mMetric(4,i,j,k0  );
+	    a(2,2) = (2*mu[g](i,j,k0+1)+lambda[g](i,j,k0+1))*SQR(mMetric[g](3,i,j,k0+1)) + 
+	             (2*mu[g](i,j,k0  )+lambda[g](i,j,k0  ))*SQR(mMetric[g](3,i,j,k0  )) +
+   	         mu[g](i,j,k0+1)*(SQR(mMetric[g](2,i,j,k0+1))+SQR(mMetric[g](4,i,j,k0+1)))    + 
+ 	         mu[g](i,j,k0  )*(SQR(mMetric[g](2,i,j,k0  ))+SQR(mMetric[g](4,i,j,k0  ))); 
+	    a(2,3) = (mu[g](i,j,k0+1)+lambda[g](i,j,k0+1))*mMetric[g](3,i,j,k0+1)*mMetric[g](4,i,j,k0+1) +
+	             (mu[g](i,j,k0  )+lambda[g](i,j,k0  ))*mMetric[g](3,i,j,k0  )*mMetric[g](4,i,j,k0  );
 	    a(3,1) = a(1,3);
 	    a(3,2) = a(2,3);
-	    a(3,3) = (2*mu[g](i,j,k0+1)+lambda[g](i,j,k0+1))*SQR(mMetric(4,i,j,k0+1)) + 
-	             (2*mu[g](i,j,k0  )+lambda[g](i,j,k0  ))*SQR(mMetric(4,i,j,k0  )) +
-   	         mu[g](i,j,k0+1)*(SQR(mMetric(2,i,j,k0+1))+SQR(mMetric(3,i,j,k0+1)))    + 
- 	         mu[g](i,j,k0  )*(SQR(mMetric(2,i,j,k0  ))+SQR(mMetric(3,i,j,k0  ))); 
+	    a(3,3) = (2*mu[g](i,j,k0+1)+lambda[g](i,j,k0+1))*SQR(mMetric[g](4,i,j,k0+1)) + 
+	             (2*mu[g](i,j,k0  )+lambda[g](i,j,k0  ))*SQR(mMetric[g](4,i,j,k0  )) +
+   	         mu[g](i,j,k0+1)*(SQR(mMetric[g](2,i,j,k0+1))+SQR(mMetric[g](3,i,j,k0+1)))    + 
+ 	         mu[g](i,j,k0  )*(SQR(mMetric[g](2,i,j,k0  ))+SQR(mMetric[g](3,i,j,k0  ))); 
 	    int ipiv[3], info, three=3, one=1;
 	    F77_FUNC(dgesv,DGESV)(&three, &one, amat_, &three, ipiv, x, &three, &info );
 	    VERIFY2( info ==0 , "ERROR: info = " << info << " from DGESV in geodyn_second_ghost_point_curvilinear\n" );
@@ -2796,7 +2796,7 @@ void EW::bcsurf_curvilinear_2nd_order( int side, int i0, int i1, int j0, int j1,
    int jb=m_jStart[g];
    int ni = m_iEnd[g]-m_iStart[g]+1;
    int nj = m_jEnd[g]-m_jStart[g]+1;
-   Sarray& met = mMetric; // Rename mMetric, makes formulas shorter.
+   Sarray& met = mMetric[g]; // Rename mMetric, makes formulas shorter.
    for( int j=j0 ; j <= j1 ; j++ )
       for( int i=i0 ; i <= i1 ; i++ )
       {

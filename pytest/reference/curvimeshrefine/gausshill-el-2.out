@@ -1,0 +1,152 @@
+[bjorn@localhost curvimeshrefine]$ mpirun -np 4 ../../../optimize/sw4 gausshill-el-2.in 
+----------------------------------------------------------------
+            sw4 version 3.0-alpha
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Mon Mar 30 14:52:25 PDT 2020
+  By user:     bjorn
+  Machine:     localhost.localdomain
+  Compiler:    /usr/lib64/mpich-3.2/bin/mpicxx
+  3rd party include dir: /include, and library dir: /lib
+----------------------------------------------------------------
+
+Input file: gausshill-el-2.in
+
+* Processing the grid command...
+* Setting h to 1.00000000e-01 from  x/(nx-1) (x=6.00000000e+00, nx=61)
+* Setting ny to 41 to be consistent with h=1.00000000e-01
+* Setting nz to 71 to be consistent with h=1.00000000e-01
+cleanupRefinementLevels: topo_zmax = 2.50000000e+00
+ Cartesian refinement levels (z=):
+2.50000000e+00
+ Curvilinear refinement levels (z=):
+1.00000000e+00
+0.00000000e+00
+ Grid distributed on 4 processors 
+ Finest grid size    127 x 87
+ Processor array     2 x 2
+Number of curvilinear grids = 2
+Number of Cartesian grids = 1
+Total number of grids = 3
+Extent of the computational domain xmax=6.00000000e+00 ymax=4.00000000e+00 zmax=7.00000000e+00
+Cartesian refinement levels after correction: 
+Grid=0 z-min=2.50000000e+00
+Corrected global_zmax = 7.00000000e+00
+
+Rank=0, Grid #2 (curvilinear), iInterior=[1,61], jInterior=[1,41]
+Rank=0, Grid #1 (curvilinear), iInterior=[1,31], jInterior=[1,21]
+Rank=0, Grid #0 (Cartesian), iInterior=[1,31], jInterior=[1,21], kInterior=[1,46]
+***inside allocateCurvilinearArrays***
+
+***Topography grid: min z = -2.800000e+00, max z = -2.191546e-05, top Cartesian z = 2.500000e+00
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points      Type
+   0       0.1        61        41        46       115046     Cartesian
+   1       0.1        61        41        24        60024     Curvilinear
+   2      0.05       121        81        32       313632     Curvilinear
+Total number of grid points (without ghost points): 488702
+
+
+
+   Execution time, reading input file 1.90062523e-02 seconds 
+  Using Bjorn's fast (parallel) IO library
+Assuming a SERIAL file system.
+GRID: 0 onesided-k 1 0 bctype-k Curvilinear/Cartesian interface dirichlet
+GRID: 1 onesided-k 1 1 bctype-k Acoustic/Elastic interface Curvilinear/Cartesian interface
+GRID: 2 onesided-k 1 1 bctype-k free surface Acoustic/Elastic interface
+GRID: 0 bctypes on I- and J-sides dirichlet, processor , dirichlet , processor
+GRID: 1 bctypes on I- and J-sides dirichlet, processor , dirichlet , processor
+GRID: 2 bctypes on I- and J-sides dirichlet, processor , dirichlet , processor
+----------------------------------------------------
+ Making Directory: gausshill-el-2/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= -1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= -1.180000e+02, Lat=3.700005e+01, x=6.000000e+00, y=0.000000e+00
+2: Lon= -1.180000e+02, Lat=3.700005e+01, x=6.000000e+00, y=4.000000e+00
+3: Lon= -1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=4.000000e+00
+
+******************************
+ ASSIGNING TWILIGHT MATERIALS 
+******************************
+
+       ----------- Material properties ranges ---------------
+       1.00022733e+00 kg/m^3 <=  Density <= 2.99970391e+00 kg/m^3
+       1.63303919e+00 m/s    <=  Vp      <= 2.82817997e+00 m/s
+       1.00001083e+00 m/s    <=  Vs      <= 1.73189440e+00 m/s
+       1.52753182e+00        <=  Vp/Vs   <= 1.73204800e+00
+       2.00013177e+00 Pa     <=  mu      <= 3.99993700e+00 Pa
+       1.00007544e+00 Pa     <=  lambda  <= 2.99993700e+00 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=1.000000e-01, minVs/h=10.0001 (Cartesian)
+g=1, h=1.000000e-01, minVs/h=10.0001 (curvilinear)
+g=2, h=5.000000e-02, minVs/h=20.0002 (curvilinear)
+
+  Assigned material properties
+*** computing the time step ***
+INFO: Smallest stable time step for curvilinear grid only: 9.161270e-03
+TIME accuracy order=4 CFL=1.30000000e+00 prel. time step=9.16127001e-03
+*** Initialized Images
+
+   Execution time, start up phase 2.10562944e-01 seconds 
+Running sw4 on 4 processors...
+Writing output to directory: gausshill-el-2/
+
+***  Starting solve ***
+============================================================
+ Running program on 4 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 0.8
+ Number of time steps = 87 dt: 0.0091954
+
+============================================================
+ Global boundary conditions 
+      x=0    dirichlet
+      x=xMax dirichlet
+      y=0    dirichlet
+      y=yMax dirichlet
+      z=topo free surface
+      z=zMax dirichlet
+
+-----------------------------------------------------------
+Twilight zone testing (aka method of manufactured solution)
+Parameters:
+  omega = 1.10000000e+00
+  c = 1.30000000e+00
+  phase = 2.00000000e-01
+  mat-omega = 1.20000000e+00
+  mat-phase = 4.00000000e-01
+  amprho = 1.00000000e+00
+  amplambda = 1.00000000e+00
+  ampmu = 1.00000000e+00
+-----------------------------------------------------------
+  Initial data has been assigned
+
+Reporting SW4 internal flags and settings:
+m_testing=yes, twilight=yes, point_source=no, moment_test=no, energy_test=no, lamb_test=no, rayleigh_test=no
+m_use_supergrid=no
+End report of internal flags and settings
+
+
+   Execution time, initial data phase 1.45254850e-01 seconds 
+
+  Begin time stepping...
+Time step       1  t =   9.1954023e-03
+Time step      87  t =   8.0000000e-01
+  Time stepping finished...
+
+   Execution time, time stepping phase 4.47585387e+01 seconds 
+
+ Final solution errors: Linf =   4.6830924e-04, L2 =   4.7479954e-04
+**** Closing file with solution errors for testing
+============================================================
+ program sw4 finished! 
+============================================================

@@ -1,0 +1,57 @@
+%!TEX root = SISC_elastic_3d.tex
+\subsection{Energy estimate}\label{sec_energy}
+In this section, we derive an energy estimate for the semi-discretization (\ref{elastic_semi_c}) and (\ref{fine_scheme}) in Sec.~\ref{semi_discrete_form}. Let ${\bf u}, {\bf v}$ be grid functions in the coarse domain $\Omega^c$ and define the three dimensional discrete scalar product in $\Omega^c$ as
+\begin{equation}\label{scalar_product_inner}
+({\bf v}, {\bf u})_{2h} = 8h_1h_2h_3\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}\sum_{k=1}^{n_3^{2h}}\omega_k{J}_{i,j,k}^{c}({\bf v}_{i,j,k}\cdot {\bf u}_{i,j,k}).
+\end{equation}
+Similarly, define the three dimensional discrete scalar product in $\Omega^f$ as
+\begin{equation}\label{scalar_product_inner_f}
+({\bf v}, {\bf u})_{h} = h_1h_2h_3\sum_{i=1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}\sum_{k=1}^{n_3^{h}}\omega_k{J}_{i,j,k}^{f}({\bf v}_{i,j,k}\cdot {\bf u}_{i,j,k}),
+\end{equation}
+where $\bf u$ and $\bf v$ are grid functions in the fine domain $\Omega^f$. Now, we are ready to state the energy estimate of the proposed schemes in Section \ref{semi_discrete_form}. 
+\begin{theorem}\label{thm1}
+	The semi-discretization (\ref{elastic_semi_c}) and (\ref{fine_scheme}) is energy stable if the interface conditions \eqref{continuous_sol} and \eqref{continuous_traction} are satisfied.
+\end{theorem}
+\begin{proof}
+	%Let $\rho^{h}, \rho^{2h}$ be diagonal matrices. Their diagonal elements are $\rho^f, \rho^c$ evaluated at grid points in $\Omega^f$ and $\Omega^c$, respectively; let $J^{h}, J^{2h}$ be diagonal matrices. Their diagonal elements are $J^f, J^c$ evaluated at grid points in $\Omega^f$ and $\Omega^c$, respectively.
+		Let $\rho^{h}$, $\rho^{2h}$, $J^{h}$ and $J^{2h}$ be diagonal matrices with diagonal elements equal to the corresponding continuous functions evaluated on the grid, respectively. 
+	By forming the inner product between (\ref{elastic_semi_c}) and $8h_1h_2h_3\omega_k(J^{2h}\otimes {\bf I}){\bf c}_t$, based on \eqref{scalar_product_inner}, we have
+	\begin{equation}\label{coarse_simple}
+	({\bf c}_t, (\rho^{2h}\otimes {\bf I}){\bf c}_{tt})_{2h} = ({\bf c}_t,(J^{2h}\otimes {\bf I})^{-1}\wt{\mathcal{L}}^{2h}{\bf c})_{2h} = -\mathcal{S}_{2h}({\bf c}_t,{\bf c}) + B_{2h}({\bf c}_t,{{\bf c}}),
+	\end{equation}
+	where $\mathcal{S}_{2h}({\bf c}_t,{\bf c})$ is a symmetric and positive definite bilinear form given in Appendix \ref{appendix_bf}, the boundary term $B_{2h} ({\bf c}_t,{\bf c})$ is given by
+	\begin{equation}\label{bounary_c1}
+	B_{2h} ({\bf c}_t,{\bf c}) = 4h_1h_2\sum_{{\bf i}\in I_{\Gamma^c}}\frac{d{\bf c}_{\bf i}}{dt}\cdot (\wt{A}_3^{2h}{\bf c}_{\bf i}).
+	\end{equation}
+	By forming the inner product between (\ref{fine_scheme}) and $h_1h_2h_3\omega_k(J^h\otimes {\bf I}){\bf f}_t$, based on \eqref{scalar_product_inner_f}, we obtain
+	\begin{equation}\label{fine_simple}
+	({\bf f}_t, (\rho^h\otimes {\bf I}){\bf f}_{tt})_h = ({\bf f}_t,(J^h\otimes {\bf I})^{-1}\hat{\mathcal{L}}^h{\bf f})_h = -\mathcal{S}_{h}({\bf f}_t,{\bf f}) + B_h({\bf f}_t,{\bf f}) 
+	+h_1h_2h_3\omega_1\sum_{i = 1}^{n_1^h}\sum_{j=1}^{n_2^h} \frac{d{\bf f}_{i,j,1}}{dt}\cdot{\bm \eta}_{i,j,1}.
+	\end{equation}
+Here, $\mathcal{S}_h$ is also a symmetric and positive definite bilinear form given in Appendix \ref{appendix_bf}. The boundary term $B_h ({\bf f}_t,{\bf f})$ has the following form
+	\begin{equation}\label{boundary_f1}
+	B_h ({\bf f}_t,{\bf f}) = -h_1h_2\sum_{{\bf i}\in I_{\Gamma^f}}\frac{d{\bf f}_{\bf i}}{dt}\cdot(A_3^h {\bf f}_{\bf i}).
+	\end{equation}
+	 Adding \eqref{coarse_simple} and \eqref{fine_simple} together, we have
+	\begin{multline}\label{semi_energy_1}
+	\frac{d}{dt}\big[({\bf f}_t,(\rho^h\otimes {\bf I}) {\bf f}_t)_h + \mathcal{S}_{h}({\bf f},{\bf f}) + ({\bf c}_t,(\rho^{2h}\otimes {\bf I}) {\bf c}_t)_{2h} + \mathcal{S}_{2h}({\bf c},{\bf c}) \big]  = \\
+	2B_{h}({\bf f}_t,{\bf f}) + 2B_{2h}({\bf c}_t,{\bf c}) + 2h_1h_2h_3\omega_1\sum_{i = 1}^{n_1^h}\sum_{j=1}^{n_2^h}\frac{d{\bf f}_{i,j,1}}{dt}\cdot{\bm \eta}_{i,j,1}.
+	\end{multline}
+	Substituting (\ref{boundary_f1}) and (\ref{bounary_c1}) into (\ref{semi_energy_1}) and combining the definitions of the scalar product at the interface (\ref{scalar_product_discrete_interface_c})--(\ref{scalar_product_discrete_interface_f}), the continuity of solution at the interface \eqref{continuous_sol} and Lemma \ref{lemma1}, we get
+	\begin{align*}\label{semi_energy_2}
+	&\hspace{0.4cm}\frac{d}{dt}\left[({\bf f}_t,(\rho^h\otimes {\bf I}) {\bf f}_t)_{h} + \mathcal{S}_{h}({\bf f},{\bf f}) + ({\bf c}_t,(\rho^{2h}\otimes {\bf I}) {\bf c}_t)_{2h} + \mathcal{S}_{2h}({\bf c},{\bf c}) \right]   \nonumber\\
+	& = 2\left<{\bf f}_t,\big(({\Lambda}^{h}{J}^h_\Gamma\big)\otimes {\bf I})^{-1}(-\mathcal{A}_3^h{\bf f}+h_3\omega_1{\bm \eta})\right>_{h}+ 2\left<{\bf c}_t,\big(({\Lambda}^{2h}{J}^{2h}_\Gamma\big)\otimes{\bf I})^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}\right>_{2h} \nonumber\\
+	& = 2\left<{\mathcal{P}}{\bf c}_t,\big(({\Lambda}^{h}{J}^h_\Gamma)\otimes{\bf I}\big)^{-1}(-\mathcal{A}_3^h{\bf f}+h_3\omega_1{\bm \eta})\right>_{h}+ 2\left<{\bf c}_t, \big(({\Lambda}^{2h}{J}^{2h}_\Gamma)\otimes{\bf I}\big)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}\right>_{2h} \nonumber\\
+	& = 2\left<{\bf c}_t,{\mathcal{R}}\Big(\big(({\Lambda}^{h}{J}^h_\Gamma)\otimes{\bf I}\big)^{-1}(-\mathcal{A}_3^h{\bf f}+h_3\omega_1{\bm \eta})\Big)\right>_{2h}+ 2\left<{\bf c}_t,\big(({\Lambda}^{2h}{J}^{2h}_\Gamma)\otimes{\bf I}\big)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}\right>_{2h} = 0.
+	\end{align*}
+Note that the discrete energy for the semi-discretization \eqref{elastic_semi_c} and \eqref{fine_scheme} is given by $({\bf f}_t,(\rho^h\otimes {\bf I}) {\bf f}_t)_{h} + \mathcal{S}_{h}({\bf f},{\bf f}) + ({\bf c}_t,(\rho^{2h} \otimes {\bf I}){\bf c}_t)_{2h} + \mathcal{S}_{2h}({\bf c},{\bf c})$.
+\end{proof}
+
+
+
+
+
+
+
+
+ 

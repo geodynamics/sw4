@@ -721,26 +721,29 @@ void EW::setup_MR_coefficients()
 #define str_x(i) m_sg_str_x[g][(i-m_iStart[g])]   
 #define str_y(j) m_sg_str_y[g][(j-m_jStart[g])]   
 // calculate m_Morc, etc for all Cartesian grids
-  for(int g = 0; g < mNumberOfCartesianGrids; g++ )
-  {
-    int nk = m_global_nz[g];
-    for (int c=1; c<=3; c++)
-      for (int j=m_jStart[g]; j<=m_jEnd[g]; j++)
-	for (int i=m_iStart[g]; i<=m_iEnd[g]; i++)
-	{
-	  float_sw4 irho=1/mRho[g](i,j,1);
-	  m_Morc[g](i,j,1) = mMu[g](i,j,1)*irho; // mu/rho at k=1
-	  m_Mlrc[g](i,j,1) = (2*mMu[g](i,j,1)+mLambda[g](i,j,1))*irho; // (2*mu+lambda)/rho at k=1
-	  m_Mucs[g](i,j,1) = mMu[g](i,j,1)/(str_x(i)*str_y(j)); // mu/str at 1
-	  m_Mlcs[g](i,j,1) = (2*mMu[g](i,j,1)+mLambda[g](i,j,1))/(str_x(i)*str_y(j)); //(2*mu + lambda)/str at 1
+   if( !m_anisotropic )
+   {
+      for(int g = 0; g < mNumberOfCartesianGrids; g++ )
+      {
+         int nk = m_global_nz[g];
+         for (int c=1; c<=3; c++)
+            for (int j=m_jStart[g]; j<=m_jEnd[g]; j++)
+               for (int i=m_iStart[g]; i<=m_iEnd[g]; i++)
+               {
+                  float_sw4 irho=1/mRho[g](i,j,1);
+                  m_Morc[g](i,j,1) = mMu[g](i,j,1)*irho; // mu/rho at k=1
+                  m_Mlrc[g](i,j,1) = (2*mMu[g](i,j,1)+mLambda[g](i,j,1))*irho; // (2*mu+lambda)/rho at k=1
+                  m_Mucs[g](i,j,1) = mMu[g](i,j,1)/(str_x(i)*str_y(j)); // mu/str at 1
+                  m_Mlcs[g](i,j,1) = (2*mMu[g](i,j,1)+mLambda[g](i,j,1))/(str_x(i)*str_y(j)); //(2*mu + lambda)/str at 1
 
-	  float_sw4 irhoN=1/mRho[g](i,j,nk);
-	  m_Morf[g](i,j, nk) = mMu[g](i,j, nk)*irhoN; // mu/rho at nk
-	  m_Mlrf[g](i,j, nk) = (2*mMu[g](i,j, nk)+mLambda[g](i,j, nk))*irhoN; // (2*mu+lambda)/rho at nk
-	  m_Mufs[g](i,j,nk) = mMu[g](i,j,nk)/(str_x(i)*str_y(j)); // mu/str at nk
-	  m_Mlfs[g](i,j,nk) = (2*mMu[g](i,j,nk)+mLambda[g](i,j,nk))/(str_x(i)*str_y(j)); //(2*mu + lambda)/str at nk
-	}
-  }
+                  float_sw4 irhoN=1/mRho[g](i,j,nk);
+                  m_Morf[g](i,j, nk) = mMu[g](i,j, nk)*irhoN; // mu/rho at nk
+                  m_Mlrf[g](i,j, nk) = (2*mMu[g](i,j, nk)+mLambda[g](i,j, nk))*irhoN; // (2*mu+lambda)/rho at nk
+                  m_Mufs[g](i,j,nk) = mMu[g](i,j,nk)/(str_x(i)*str_y(j)); // mu/str at nk
+                  m_Mlfs[g](i,j,nk) = (2*mMu[g](i,j,nk)+mLambda[g](i,j,nk))/(str_x(i)*str_y(j)); //(2*mu + lambda)/str at nk
+               }
+      }
+   }
 #undef str_x
 #undef str_y
 }

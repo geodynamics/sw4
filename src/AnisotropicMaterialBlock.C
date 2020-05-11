@@ -177,61 +177,66 @@ void AnisotropicMaterialBlock::set_material_properties( std::vector<Sarray> & rh
   
   if (mEW->topographyExists()) // curvilinear grid
   {
-    int g = mEW->mNumberOfGrids-1; 
+     int gTop = mEW->mNumberOfGrids-1; 
+     for (int g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids;  g++)
+     {
+//    int g = mEW->mNumberOfGrids-1; 
 
 // reference z-level for gradients is at z=0: AP changed this on 12/21/09
 #pragma omp parallel
-    {
-    float_sw4 zsurf = 0.;
+        {
+           float_sw4 zsurf = 0.;
 
 #pragma omp for reduction(+:material,outside)
-    for( int k = mEW->m_kStart[g] ; k <= mEW->m_kEnd[g]; k++ )
-    {
-      for( int j = mEW->m_jStart[g] ; j <= mEW->m_jEnd[g]; j++ )
-      {
-	for( int i = mEW->m_iStart[g] ; i <= mEW->m_iEnd[g] ; i++ )
-	{
-	  float_sw4 x = mEW->mX(i,j,k);
-	  float_sw4 y = mEW->mY(i,j,k);
-	  float_sw4 z = mEW->mZ(i,j,k);
+           for( int k = mEW->m_kStart[g] ; k <= mEW->m_kEnd[g]; k++ )
+           {
+              for( int j = mEW->m_jStart[g] ; j <= mEW->m_jEnd[g]; j++ )
+              {
+                 for( int i = mEW->m_iStart[g] ; i <= mEW->m_iEnd[g] ; i++ )
+                 {
+                    float_sw4 x = mEW->mX[g](i,j,k);
+                    float_sw4 y = mEW->mY[g](i,j,k);
+                    float_sw4 z = mEW->mZ[g](i,j,k);
                       
 	  //printf("x ,y,z %f %f %f %f\n",x,y,z,mEW->m_zmin[g]);
-                      
-	  float_sw4 depth;
-	  if (m_absoluteDepth)
-	  {
-	    depth = z;
-	  }
-	  else
-	  {
-	    depth = z - mEW->mZ(i,j,1);
-	  }	  
+                    
+                    float_sw4 depth;
+                    if (m_absoluteDepth)
+                    {
+                       depth = z;
+                    }
+                    else
+                    {
+                       mEW->getDepth(x,y,z,depth);
+                    }	  
 
-	  if(inside_block(x,y,depth))
-	  {
-	    if( m_rho != -1 )
-	      rho[g](i,j,k) = m_rho + m_rhograd*(depth-zsurf);
-	    for( int nr=1 ; nr <= 21 ; nr++ )
-	       c[g](nr,i,j,k) = m_c[nr-1] + m_cgrad[nr-1]*(depth-zsurf);
-	    material++;
-	  }
-	  else
-	  {
-	    if (mEW->getVerbosity() > 2)
-	    {
-	      printf("Point (i,j,k)=(%i, %i, %i) in grid g=%i\n"
-		     "with (x,y,z)=(%e,%e,%e) and depth=%e\n"
-		     "is outside the block domain: %e<= x <= %e, %e <= y <= %e, %e <= depth <= %e\n", 
-		     i, j, k, g, 
-		     x, y, z, depth,
-		     m_xmin, m_xmax, m_ymin, m_ymax, m_zmin, m_zmax);
-	    }
-	    outside++;
-	  }
-	}
-      }
-    }
-    }
+                    if(inside_block(x,y,depth))
+                    {
+                       if( m_rho != -1 )
+                          rho[g](i,j,k) = m_rho + m_rhograd*(depth-zsurf);
+                       for( int nr=1 ; nr <= 21 ; nr++ )
+                          c[g](nr,i,j,k) = m_c[nr-1] + m_cgrad[nr-1]*(depth-zsurf);
+                       material++;
+                    }
+                    else
+                    {
+                       if (mEW->getVerbosity() > 2)
+                       {
+                          printf("Point (i,j,k)=(%i, %i, %i) in grid g=%i\n"
+                                 "with (x,y,z)=(%e,%e,%e) and depth=%e\n"
+                                 "is outside the block domain: %e<= x <= %e, %e <= y <= %e, %e <= depth <= %e\n", 
+                                 i, j, k, g, 
+                                 x, y, z, depth,
+                                 m_xmin, m_xmax, m_ymin, m_ymax, m_zmin, m_zmax);
+                       }
+                       outside++;
+                    } // end else
+                 } // end for i
+              } // end for j
+           } // end for k
+        } // end pragma omp
+     } // end for g (curvilinear)
+     
   } // end if topographyExists
   int outsideSum, materialSum;
   MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );

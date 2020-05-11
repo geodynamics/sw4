@@ -77,9 +77,9 @@ void MaterialInvtest::set_material_properties( std::vector<Sarray> & rho, std::v
       jlast  = mEW->m_jEnd[g];
       kfirst = mEW->m_kStart[g];
       klast  = mEW->m_kEnd[g];
-      float_sw4* x_ptr = mEW->mX.c_ptr();
-      float_sw4* y_ptr = mEW->mY.c_ptr();
-      float_sw4* z_ptr = mEW->mZ.c_ptr();
+      float_sw4* x_ptr = mEW->mX[g].c_ptr(); // NOT verified for several curvilinear grids
+      float_sw4* y_ptr = mEW->mY[g].c_ptr();
+      float_sw4* z_ptr = mEW->mZ[g].c_ptr();
       invtestmtrlc( ifirst, ilast, jfirst, jlast, kfirst, klast,
 		    rho_ptr, cs_ptr, cp_ptr, x_ptr, y_ptr, z_ptr, m_nr );
    }

@@ -1,0 +1,22 @@
+grid nx=31 x=1.0 y=1.0 z=1.0
+#time t=0.8
+time steps=0
+
+fileio path=gauss-mr-test verbose=2
+
+topography input=gaussian zmax=0.5 order=4 gaussianAmp=0.05
+
+refinement zmax=0.25
+
+twilight omega=6.28 phase=0.8 momega=6.28 errorlog=1
+
+image mode=p x=0.5 cycle=0 file=gaussian
+image mode=s y=0.5 cycle=0 file=gaussian
+
+# image mode=topo z=0 cycle=0 file=gaussian
+# image mode=ux x=0.5 time=0.8 file=gaussian
+# image mode=uxerr x=0.5 time=0.8 file=gaussian
+# image mode=ux y=0.5 time=0.8 file=gaussian
+
+
+
