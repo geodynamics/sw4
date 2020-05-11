@@ -361,6 +361,7 @@ if __name__ == "__main__":
     nohdf5=False
     mpi_tasks=0 # machine dependent default
     omp_threads=0 #no threading by default
+    cpu_allocation=""
 
     parser=argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
