@@ -323,7 +323,7 @@ void Image3D::update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
                            vector<Sarray>& a_gRho, vector<Sarray>& a_gMu,
                            vector<Sarray>& a_gLambda, vector<Sarray>& a_Qp,
                            vector<Sarray>& a_Qs, std::string a_path,
-                           Sarray& a_Z) {
+                           std::vector<Sarray>& a_Z) {
   SW4_MARK_FUNCTION;
   if (timeToWrite(a_time, a_cycle, a_dt)) {
     compute_image(a_U, a_Rho, a_Mu, a_Lambda, a_gRho, a_gMu, a_gLambda, a_Qp,
@@ -339,7 +339,7 @@ void Image3D::force_write_image(float_sw4 a_time, int a_cycle,
                                 vector<Sarray>& a_gRho, vector<Sarray>& a_gMu,
                                 vector<Sarray>& a_gLambda, vector<Sarray>& a_Qp,
                                 vector<Sarray>& a_Qs, std::string a_path,
-                                Sarray& a_Z) {
+                                std::vector<Sarray>& a_Z) {
   compute_image(a_U, a_Rho, a_Mu, a_Lambda, a_gRho, a_gMu, a_gLambda, a_Qp,
                 a_Qs);
   write_image(a_cycle, a_path, a_time, a_Z);
@@ -649,210 +649,210 @@ void Image3D::compute_file_suffix(int cycle, std::stringstream& fileSuffix) {
 }
 
 //-----------------------------------------------------------------------
-void Image3D::write_image(int cycle, std::string& path, float_sw4 t,
-                          Sarray& a_Z) {
-  SW4_MARK_FUNCTION;
-  // File format:
-  //
-  // [precision(int), npatches(int), time(double), plane(int=-1),
-  // coordinate(double=-1),
-  //  imagetype(int), gridinfo(int), timeofday(string),
-  //     h_1(double)  zmin_1(double)  sizes_1(6 int)
-  //     h_2(double)  zmin_2(double)  sizes_2(6 int)
-  //                    ....
-  //     h_ng(double) zmin_ng(double) sizes_ng(6 int)
-  //     data_1(float/double array) ... data_ng(float/double array)
-  //     [z(float/double array)] ]
-  //  plane and coordinate are always -1, exist here for compatibility with the
-  //  2D images imagetype = mode nr. (ux=1,uy=2, etc..) gridinfo  = -1 no grid
-  //  info given
-  //               0 all blocks are on Cartesian grids, no z-coordinate needed
-  //               1 Curvilinear grid is stored after the data blocks
-  // timeofday - String describing the creation date of the file, max 25 bytes.
-  //
+// void Image3D::write_image(int cycle, std::string& path, float_sw4 t,
+//                           Sarray& a_Z) {
+//   SW4_MARK_FUNCTION;
+//   // File format:
+//   //
+//   // [precision(int), npatches(int), time(double), plane(int=-1),
+//   // coordinate(double=-1),
+//   //  imagetype(int), gridinfo(int), timeofday(string),
+//   //     h_1(double)  zmin_1(double)  sizes_1(6 int)
+//   //     h_2(double)  zmin_2(double)  sizes_2(6 int)
+//   //                    ....
+//   //     h_ng(double) zmin_ng(double) sizes_ng(6 int)
+//   //     data_1(float/double array) ... data_ng(float/double array)
+//   //     [z(float/double array)] ]
+//   //  plane and coordinate are always -1, exist here for compatibility with the
+//   //  2D images imagetype = mode nr. (ux=1,uy=2, etc..) gridinfo  = -1 no grid
+//   //  info given
+//   //               0 all blocks are on Cartesian grids, no z-coordinate needed
+//   //               1 Curvilinear grid is stored after the data blocks
+//   // timeofday - String describing the creation date of the file, max 25 bytes.
+//   //
 
-  int ng = mEW->mNumberOfGrids;
-  // offset initialized to header size:
-  off_t offset = 2 * sizeof(int) + 2 * sizeof(double) + 3 * sizeof(int) +
-                 25 * sizeof(char) +
-                 ng * (2 * sizeof(double) + 6 * sizeof(int));
+//   int ng = mEW->mNumberOfGrids;
+//   // offset initialized to header size:
+//   off_t offset = 2 * sizeof(int) + 2 * sizeof(double) + 3 * sizeof(int) +
+//                  25 * sizeof(char) +
+//                  ng * (2 * sizeof(double) + 6 * sizeof(int));
 
-  ASSERT(m_isDefinedMPIWriters);
-  int gridinfo = 0;
-  if (mEW->topographyExists()) gridinfo = 1;
+//   ASSERT(m_isDefinedMPIWriters);
+//   int gridinfo = 0;
+//   if (mEW->topographyExists()) gridinfo = 1;
 
-  bool iwrite = false;
-  for (int g = 0; g < ng; g++) iwrite = iwrite || m_parallel_io[g]->i_write();
+//   bool iwrite = false;
+//   for (int g = 0; g < ng; g++) iwrite = iwrite || m_parallel_io[g]->i_write();
 
-  int fid = -1;
-  std::stringstream s, fileSuffix;
+//   int fid = -1;
+//   std::stringstream s, fileSuffix;
 
-  if (iwrite) {
-    compute_file_suffix(cycle, fileSuffix);
-    if (path != ".") s << path;
-    s << fileSuffix.str();  // string 's' is the file name including path
-  }
+//   if (iwrite) {
+//     compute_file_suffix(cycle, fileSuffix);
+//     if (path != ".") s << path;
+//     s << fileSuffix.str();  // string 's' is the file name including path
+//   }
 
-  int st = mImageSamplingFactor;
+//   int st = mImageSamplingFactor;
 
-  // Open file from processor zero and write header.
-  if (m_parallel_io[0]->proc_zero()) {
-    fid = open(const_cast<char*>(s.str().c_str()), O_CREAT | O_TRUNC | O_WRONLY,
-               0660);
-    CHECK_INPUT(fid != -1, "Image3D::write_image: Error opening: " << s.str());
-    int myid;
+//   // Open file from processor zero and write header.
+//   if (m_parallel_io[0]->proc_zero()) {
+//     fid = open(const_cast<char*>(s.str().c_str()), O_CREAT | O_TRUNC | O_WRONLY,
+//                0660);
+//     CHECK_INPUT(fid != -1, "Image3D::write_image: Error opening: " << s.str());
+//     int myid;
 
-    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
-    std::cout << "writing volume image on file " << s.str();
-    std::cout << " (msg from proc # " << myid << ")" << std::endl;
+//     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+//     std::cout << "writing volume image on file " << s.str();
+//     std::cout << " (msg from proc # " << myid << ")" << std::endl;
 
-    int prec = m_double ? 8 : 4;
-    size_t ret = write(fid, &prec, sizeof(int));
-    CHECK_INPUT(ret == sizeof(int),
-                "Image3D::write_image: Error writing precision");
-    ret = write(fid, &ng, sizeof(int));
-    CHECK_INPUT(ret == sizeof(int), "Image3D::write_image: Error writing ng");
-    double dblevar = (double)t;
-    ret = write(fid, &dblevar, sizeof(double));
-    CHECK_INPUT(ret == sizeof(double),
-                "Image3D::write_image: Error writing time");
-    int mone = -1;
-    ret = write(fid, &mone, sizeof(int));
-    CHECK_INPUT(ret == sizeof(int), "Image3D::write_image: Error writing -1");
-    double dum = -1;
-    ret = write(fid, &dum, sizeof(double));
-    CHECK_INPUT(ret == sizeof(double),
-                "Image3D::write_image: Error writing dummy-coord");
+//     int prec = m_double ? 8 : 4;
+//     size_t ret = write(fid, &prec, sizeof(int));
+//     CHECK_INPUT(ret == sizeof(int),
+//                 "Image3D::write_image: Error writing precision");
+//     ret = write(fid, &ng, sizeof(int));
+//     CHECK_INPUT(ret == sizeof(int), "Image3D::write_image: Error writing ng");
+//     double dblevar = (double)t;
+//     ret = write(fid, &dblevar, sizeof(double));
+//     CHECK_INPUT(ret == sizeof(double),
+//                 "Image3D::write_image: Error writing time");
+//     int mone = -1;
+//     ret = write(fid, &mone, sizeof(int));
+//     CHECK_INPUT(ret == sizeof(int), "Image3D::write_image: Error writing -1");
+//     double dum = -1;
+//     ret = write(fid, &dum, sizeof(double));
+//     CHECK_INPUT(ret == sizeof(double),
+//                 "Image3D::write_image: Error writing dummy-coord");
 
-    int imode = static_cast<int>(mMode);
-    ret = write(fid, &imode, sizeof(int));
-    CHECK_INPUT(ret == sizeof(int),
-                "Image3D::write_image could not write imode");
+//     int imode = static_cast<int>(mMode);
+//     ret = write(fid, &imode, sizeof(int));
+//     CHECK_INPUT(ret == sizeof(int),
+//                 "Image3D::write_image could not write imode");
 
-    ret = write(fid, &gridinfo, sizeof(int));
-    CHECK_INPUT(ret == sizeof(int),
-                "Image3D::write_image could not write gridinfo");
+//     ret = write(fid, &gridinfo, sizeof(int));
+//     CHECK_INPUT(ret == sizeof(int),
+//                 "Image3D::write_image could not write gridinfo");
 
-    time_t realtime;
-    time(&realtime);
-    string strtime;
-    strtime += asctime(localtime(&realtime));
-    char strtimec[25];
+//     time_t realtime;
+//     time(&realtime);
+//     string strtime;
+//     strtime += asctime(localtime(&realtime));
+//     char strtimec[25];
 
-    strncpy(strtimec, strtime.c_str(), 25);
-    ret = write(fid, strtimec, 25 * sizeof(char));
-    CHECK_INPUT(ret == 25 * sizeof(char),
-                "Image3D::write_image could not write strtimec");
+//     strncpy(strtimec, strtime.c_str(), 25);
+//     ret = write(fid, strtimec, 25 * sizeof(char));
+//     CHECK_INPUT(ret == 25 * sizeof(char),
+//                 "Image3D::write_image could not write strtimec");
 
-    for (int g = 0; g < ng; g++) {
-      double h = (double)mEW->mGridSize[g] * mImageSamplingFactor;
-      ret = write(fid, &h, sizeof(double));
-      CHECK_INPUT(ret == sizeof(double),
-                  "Image3D::write_image: Error writing h");
-      dblevar = (double)mEW->m_zmin[g];
-      ret = write(fid, &dblevar, sizeof(double));
-      CHECK_INPUT(ret == sizeof(double),
-                  "Image3D::write_image: Error writing zmin");
-      int globalSize[6];
-      globalSize[0] = 1;
-      globalSize[1] = (mGlobalDims[g][1] - mGlobalDims[g][0]) / st + 1;
-      globalSize[2] = 1;
-      globalSize[3] = (mGlobalDims[g][3] - mGlobalDims[g][2]) / st + 1;
-      globalSize[4] = 1;
-      globalSize[5] =
-          (mGlobalDims[g][5] - mGlobalDims[g][4]) / st + 1 + m_extraz[g];
-      ret = write(fid, globalSize, 6 * sizeof(int));
-      CHECK_INPUT(ret == 6 * sizeof(int),
-                  "Image3D::write_image: Error writing global sizes");
-    }
-    fsync(fid);
-  }
-  m_parallel_io[0]->writer_barrier();
+//     for (int g = 0; g < ng; g++) {
+//       double h = (double)mEW->mGridSize[g] * mImageSamplingFactor;
+//       ret = write(fid, &h, sizeof(double));
+//       CHECK_INPUT(ret == sizeof(double),
+//                   "Image3D::write_image: Error writing h");
+//       dblevar = (double)mEW->m_zmin[g];
+//       ret = write(fid, &dblevar, sizeof(double));
+//       CHECK_INPUT(ret == sizeof(double),
+//                   "Image3D::write_image: Error writing zmin");
+//       int globalSize[6];
+//       globalSize[0] = 1;
+//       globalSize[1] = (mGlobalDims[g][1] - mGlobalDims[g][0]) / st + 1;
+//       globalSize[2] = 1;
+//       globalSize[3] = (mGlobalDims[g][3] - mGlobalDims[g][2]) / st + 1;
+//       globalSize[4] = 1;
+//       globalSize[5] =
+//           (mGlobalDims[g][5] - mGlobalDims[g][4]) / st + 1 + m_extraz[g];
+//       ret = write(fid, globalSize, 6 * sizeof(int));
+//       CHECK_INPUT(ret == 6 * sizeof(int),
+//                   "Image3D::write_image: Error writing global sizes");
+//     }
+//     fsync(fid);
+//   }
+//   m_parallel_io[0]->writer_barrier();
 
-  // Open file from all writers
-  if (iwrite && !m_parallel_io[0]->proc_zero()) {
-    fid = open(const_cast<char*>(s.str().c_str()), O_WRONLY);
-    CHECK_INPUT(fid != -1,
-                "Image3D::write_images:: Error opening: " << s.str());
-  }
+//   // Open file from all writers
+//   if (iwrite && !m_parallel_io[0]->proc_zero()) {
+//     fid = open(const_cast<char*>(s.str().c_str()), O_WRONLY);
+//     CHECK_INPUT(fid != -1,
+//                 "Image3D::write_images:: Error opening: " << s.str());
+//   }
 
-  // Write data blocks
-  for (int g = 0; g < ng; g++) {
-    size_t npts =
-        ((size_t)(mGlobalDims[g][1] - mGlobalDims[g][0]) / st + 1) *
-        ((mGlobalDims[g][3] - mGlobalDims[g][2]) / st + 1) *
-        ((mGlobalDims[g][5] - mGlobalDims[g][4]) / st + 1 + m_extraz[g]);
+//   // Write data blocks
+//   for (int g = 0; g < ng; g++) {
+//     size_t npts =
+//         ((size_t)(mGlobalDims[g][1] - mGlobalDims[g][0]) / st + 1) *
+//         ((mGlobalDims[g][3] - mGlobalDims[g][2]) / st + 1) *
+//         ((mGlobalDims[g][5] - mGlobalDims[g][4]) / st + 1 + m_extraz[g]);
 
-    if (!mEW->usingParallelFS() || g == 0) m_parallel_io[g]->writer_barrier();
+//     if (!mEW->usingParallelFS() || g == 0) m_parallel_io[g]->writer_barrier();
 
-    if (m_double) {
-      char cprec[] = "double";
-      m_parallel_io[g]->write_array(&fid, 1, m_doubleField[g], offset, cprec);
-      offset += npts * sizeof(double);
-    } else {
-      char cprec[] = "float";
-      m_parallel_io[g]->write_array(&fid, 1, m_floatField[g], offset, cprec);
-      offset += npts * sizeof(float);
-    }
-  }
+//     if (m_double) {
+//       char cprec[] = "double";
+//       m_parallel_io[g]->write_array(&fid, 1, m_doubleField[g], offset, cprec);
+//       offset += npts * sizeof(double);
+//     } else {
+//       char cprec[] = "float";
+//       m_parallel_io[g]->write_array(&fid, 1, m_floatField[g], offset, cprec);
+//       offset += npts * sizeof(float);
+//     }
+//   }
 
-  // Add curvilinear grid, if needed
-  if (gridinfo == 1) {
-    int g = ng - 1;
-    float_sw4* zp = a_Z.c_ptr();
-    size_t npts =
-        ((size_t)(mGlobalDims[g][1] - mGlobalDims[g][0]) / st + 1) *
-        ((mGlobalDims[g][3] - mGlobalDims[g][2]) / st + 1) *
-        ((mGlobalDims[g][5] - mGlobalDims[g][4]) / st + 1 + m_extraz[g]);
+//   // Add curvilinear grid, if needed
+//   if (gridinfo == 1) {
+//     int g = ng - 1;
+//     float_sw4* zp = a_Z.c_ptr();
+//     size_t npts =
+//         ((size_t)(mGlobalDims[g][1] - mGlobalDims[g][0]) / st + 1) *
+//         ((mGlobalDims[g][3] - mGlobalDims[g][2]) / st + 1) *
+//         ((mGlobalDims[g][5] - mGlobalDims[g][4]) / st + 1 + m_extraz[g]);
 
-    if (!mEW->usingParallelFS() || g == 0) m_parallel_io[g]->writer_barrier();
+//     if (!mEW->usingParallelFS() || g == 0) m_parallel_io[g]->writer_barrier();
 
-    size_t nptsloc =
-        ((size_t)(mWindow[g][1] - mWindow[g][0]) / mImageSamplingFactor + 1) *
-        ((mWindow[g][3] - mWindow[g][2]) / mImageSamplingFactor + 1) *
-        ((mWindow[g][5] - mWindow[g][4]) / mImageSamplingFactor + 1 +
-         m_extraz[g]);
+//     size_t nptsloc =
+//         ((size_t)(mWindow[g][1] - mWindow[g][0]) / mImageSamplingFactor + 1) *
+//         ((mWindow[g][3] - mWindow[g][2]) / mImageSamplingFactor + 1) *
+//         ((mWindow[g][5] - mWindow[g][4]) / mImageSamplingFactor + 1 +
+//          m_extraz[g]);
 
-    int ni = (mWindow[g][1] - mWindow[g][0]) / st + 1;
-    int nij = ni * ((mWindow[g][3] - mWindow[g][2]) / st + 1);
-    if (m_double) {
-      double* zfp = new double[nptsloc];
-#pragma omp parallel for
-      for (int k = mWindow[g][4]; k <= mWindow[g][5]; k += st)
-        for (int j = mWindow[g][2]; j <= mWindow[g][3]; j += st)
-          for (int i = mWindow[g][0]; i <= mWindow[g][1]; i += st) {
-            size_t ind = (i - mWindow[g][0]) / st +
-                         ni * (j - mWindow[g][2]) / st +
-                         nij * (k - mWindow[g][4]) / st;
-            zfp[ind] = (double)a_Z(i, j, k);
-          }
-      //	 for( size_t i = 0; i < nptsloc ; i++ )
-      //	    zfp[i] = zp[i];
-      char cprec[] = "double";
-      m_parallel_io[g]->write_array(&fid, 1, zfp, offset, cprec);
-      offset += npts * sizeof(double);
-      delete[] zfp;
-    } else {
-      float* zfp = new float[nptsloc];
-#pragma omp parallel for
-      for (int k = mWindow[g][4]; k <= mWindow[g][5]; k += st)
-        for (int j = mWindow[g][2]; j <= mWindow[g][3]; j += st)
-          for (int i = mWindow[g][0]; i <= mWindow[g][1]; i += st) {
-            size_t ind = (i - mWindow[g][0]) / st +
-                         ni * (j - mWindow[g][2]) / st +
-                         nij * (k - mWindow[g][4]) / st;
-            zfp[ind] = (float)a_Z(i, j, k);
-          }
-      //	 for( size_t i = 0; i < nptsloc ; i++ )
-      //	    zfp[i] = zp[i];
-      char cprec[] = "float";
-      m_parallel_io[g]->write_array(&fid, 1, zfp, offset, cprec);
-      offset += npts * sizeof(float);
-      delete[] zfp;
-    }
-  }
-  if (iwrite) close(fid);
-}
+//     int ni = (mWindow[g][1] - mWindow[g][0]) / st + 1;
+//     int nij = ni * ((mWindow[g][3] - mWindow[g][2]) / st + 1);
+//     if (m_double) {
+//       double* zfp = new double[nptsloc];
+// #pragma omp parallel for
+//       for (int k = mWindow[g][4]; k <= mWindow[g][5]; k += st)
+//         for (int j = mWindow[g][2]; j <= mWindow[g][3]; j += st)
+//           for (int i = mWindow[g][0]; i <= mWindow[g][1]; i += st) {
+//             size_t ind = (i - mWindow[g][0]) / st +
+//                          ni * (j - mWindow[g][2]) / st +
+//                          nij * (k - mWindow[g][4]) / st;
+//             zfp[ind] = (double)a_Z(i, j, k);
+//           }
+//       //	 for( size_t i = 0; i < nptsloc ; i++ )
+//       //	    zfp[i] = zp[i];
+//       char cprec[] = "double";
+//       m_parallel_io[g]->write_array(&fid, 1, zfp, offset, cprec);
+//       offset += npts * sizeof(double);
+//       delete[] zfp;
+//     } else {
+//       float* zfp = new float[nptsloc];
+// #pragma omp parallel for
+//       for (int k = mWindow[g][4]; k <= mWindow[g][5]; k += st)
+//         for (int j = mWindow[g][2]; j <= mWindow[g][3]; j += st)
+//           for (int i = mWindow[g][0]; i <= mWindow[g][1]; i += st) {
+//             size_t ind = (i - mWindow[g][0]) / st +
+//                          ni * (j - mWindow[g][2]) / st +
+//                          nij * (k - mWindow[g][4]) / st;
+//             zfp[ind] = (float)a_Z(i, j, k);
+//           }
+//       //	 for( size_t i = 0; i < nptsloc ; i++ )
+//       //	    zfp[i] = zp[i];
+//       char cprec[] = "float";
+//       m_parallel_io[g]->write_array(&fid, 1, zfp, offset, cprec);
+//       offset += npts * sizeof(float);
+//       delete[] zfp;
+//     }
+//   }
+//   if (iwrite) close(fid);
+// }
 
 //-----------------------------------------------------------------------
 void EW::read_volimage(std::string& path, std::string& fname,
@@ -1068,4 +1068,211 @@ void EW::define_parallel_io(vector<Parallel_IO*>& parallel_io) {
     parallel_io[g] =
         new Parallel_IO(iwrite, usingParallelFS(), global, local, start);
   }
+}
+//-----------------------------------------------------------------------
+void Image3D::write_image( int cycle, std::string &path, float_sw4 t,
+			   std::vector<Sarray>& a_Z )
+{
+  //File format: 
+  //
+  // [precision(int), npatches(int), time(double), plane(int=-1), coordinate(double=-1), 
+  //  imagetype(int), gridinfo(int), timeofday(string),
+  //     h_1(double)  zmin_1(double)  sizes_1(6 int) 
+  //     h_2(double)  zmin_2(double)  sizes_2(6 int) 
+  //                    ....
+  //     h_ng(double) zmin_ng(double) sizes_ng(6 int) 
+  //     data_1(float/double array) ... data_ng(float/double array) [z(float/double array)] ]
+  //  plane and coordinate are always -1, exist here for compatibility with the 2D images
+  //  imagetype = mode nr. (ux=1,uy=2, etc..)
+  //  gridinfo  = -1 no grid info given
+  //               0 all blocks are on Cartesian grids, no z-coordinate needed
+  //               1 Curvilinear grid is stored after the data blocks
+  // timeofday - String describing the creation date of the file, max 25 bytes.
+  //
+
+   int ng = mEW->mNumberOfGrids;
+  // offset initialized to header size:
+   off_t offset = 2*sizeof(int) + 2*sizeof(double) + 3*sizeof(int) + 25*sizeof(char) +
+      ng*(2*sizeof(double)+6*sizeof(int));
+
+   ASSERT(m_isDefinedMPIWriters);
+   int gridinfo = 0;
+   if( mEW->topographyExists() )
+      gridinfo = 1;
+
+   bool iwrite = false;
+   for( int g=0 ; g < ng ; g++ )
+      iwrite = iwrite || m_parallel_io[g]->i_write();
+  
+   int fid=-1;
+   std::stringstream s, fileSuffix;
+
+   if( iwrite )
+   {
+      compute_file_suffix( cycle, fileSuffix );
+      if( path != "." )
+	 s << path;
+      s << fileSuffix.str(); // string 's' is the file name including path
+   }
+
+   int st = mImageSamplingFactor;
+
+   // Open file from processor zero and write header.
+   if( m_parallel_io[0]->proc_zero() )
+   {
+      fid = open( const_cast<char*>(s.str().c_str()), O_CREAT | O_TRUNC | O_WRONLY, 0660 ); 
+      CHECK_INPUT(fid != -1, "Image3D::write_image: Error opening: " << s.str() );
+      int myid;
+
+      MPI_Comm_rank( MPI_COMM_WORLD, &myid );
+      std::cout << "writing volume image on file " << s.str();
+      std::cout << " (msg from proc # " << myid << ")" << std::endl;
+
+      int prec = m_double ? 8 : 4;
+      size_t ret = write(fid,&prec,sizeof(int));
+      CHECK_INPUT( ret == sizeof(int),"Image3D::write_image: Error writing precision" );
+      ret = write(fid,&ng,sizeof(int));
+      CHECK_INPUT( ret == sizeof(int),"Image3D::write_image: Error writing ng" );
+      double dblevar = (double) t;
+      ret = write(fid,&dblevar,sizeof(double));
+      CHECK_INPUT( ret == sizeof(double),"Image3D::write_image: Error writing time" );
+      int mone = -1;
+      ret = write(fid,&mone,sizeof(int));
+      CHECK_INPUT( ret == sizeof(int),"Image3D::write_image: Error writing -1" );
+      double dum=-1;
+      ret = write(fid,&dum,sizeof(double));
+      CHECK_INPUT( ret == sizeof(double),"Image3D::write_image: Error writing dummy-coord" );
+
+      int imode = static_cast<int>(mMode);
+      ret = write(fid,&imode,sizeof(int));
+      CHECK_INPUT( ret == sizeof(int), "Image3D::write_image could not write imode" );
+
+      ret = write(fid,&gridinfo,sizeof(int));
+      CHECK_INPUT( ret == sizeof(int), "Image3D::write_image could not write gridinfo");
+
+      time_t realtime;
+      time(&realtime);
+      string strtime;
+      strtime += asctime(localtime(&realtime));
+      char strtimec[25];
+
+      strncpy(strtimec,strtime.c_str(),25);
+      ret = write(fid,strtimec,25*sizeof(char));
+      CHECK_INPUT(ret == 25*sizeof(char),"Image3D::write_image could not write strtimec");
+
+      for(int g = 0; g < ng ;g++ )
+      {
+         double h = (double) mEW->mGridSize[g]*mImageSamplingFactor;
+	 ret = write( fid, &h, sizeof(double) );
+	 CHECK_INPUT( ret == sizeof(double),"Image3D::write_image: Error writing h" );
+	 dblevar = (double) mEW->m_zmin[g];
+         ret = write( fid, &dblevar, sizeof(double) );
+	 CHECK_INPUT( ret == sizeof(double),"Image3D::write_image: Error writing zmin" );
+	 int globalSize[6];
+         globalSize[0] = 1;
+         globalSize[1] = (mGlobalDims[g][1]-mGlobalDims[g][0])/st+1;
+         globalSize[2] = 1;
+         globalSize[3] = (mGlobalDims[g][3]-mGlobalDims[g][2])/st+1;
+         globalSize[4] = 1;
+         globalSize[5] = (mGlobalDims[g][5]-mGlobalDims[g][4])/st+1+m_extraz[g];
+	 ret = write( fid, globalSize, 6*sizeof(int) );
+	 CHECK_INPUT( ret == 6*sizeof(int),"Image3D::write_image: Error writing global sizes" );
+      }
+      fsync(fid);
+   }
+   m_parallel_io[0]->writer_barrier();
+
+   // Open file from all writers
+   if( iwrite && !m_parallel_io[0]->proc_zero() )
+   {
+      fid = open( const_cast<char*>(s.str().c_str()), O_WRONLY );
+      CHECK_INPUT(fid != -1, "Image3D::write_images:: Error opening: " << s.str() );
+   }
+
+   // Write data blocks
+   for( int g = 0 ; g < ng ; g++ )
+   {
+      size_t npts = ((size_t)(mGlobalDims[g][1]-mGlobalDims[g][0])/st+1)*
+	 ((mGlobalDims[g][3]-mGlobalDims[g][2])/st+1)*
+	 ((mGlobalDims[g][5]-mGlobalDims[g][4])/st+1+m_extraz[g]);
+
+      if( !mEW->usingParallelFS() || g == 0 )
+	 m_parallel_io[g]->writer_barrier();
+      
+      if( m_double )
+      {
+	char cprec[]="double";
+	m_parallel_io[g]->write_array( &fid, 1, m_doubleField[g], offset, cprec );
+	offset += npts*sizeof(double);
+      }
+      else
+      {
+	char cprec[]="float";
+	m_parallel_io[g]->write_array( &fid, 1, m_floatField[g], offset, cprec );
+	offset += npts*sizeof(float);
+      }
+   }
+
+   // Add curvilinear grid, if needed
+   if( gridinfo == 1 )
+   {
+      for (int g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids; g++)
+      {
+//      int g = ng-1;
+         float_sw4* zp = a_Z[g].c_ptr();
+         size_t npts = ((size_t)(mGlobalDims[g][1]-mGlobalDims[g][0])/st+1)*
+            ((mGlobalDims[g][3]-mGlobalDims[g][2])/st+1)*
+            ((mGlobalDims[g][5]-mGlobalDims[g][4])/st+1+m_extraz[g]);
+
+         if( !mEW->usingParallelFS() || g == 0 )
+            m_parallel_io[g]->writer_barrier();
+      
+         size_t nptsloc  = ((size_t)(mWindow[g][1] - mWindow[g][0])/mImageSamplingFactor + 1)*
+            ( (mWindow[g][3] - mWindow[g][2])/mImageSamplingFactor + 1)*
+            ( (mWindow[g][5] - mWindow[g][4])/mImageSamplingFactor + 1 + m_extraz[g]);
+
+         int ni = (mWindow[g][1]-mWindow[g][0])/st+1;
+         int nij=ni*((mWindow[g][3]-mWindow[g][2])/st+1);
+         if( m_double )
+         {
+            double* zfp = new double[nptsloc];
+#pragma omp parallel for
+	    for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
+	       for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
+		  for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st )
+		  {
+		     size_t ind = (i-mWindow[g][0])/st+ni*(j-mWindow[g][2])/st+nij*(k-mWindow[g][4])/st;
+		     zfp[ind] = (double) a_Z[g](i,j,k);
+		  }
+	    //	 for( size_t i = 0; i < nptsloc ; i++ )
+	    //	    zfp[i] = zp[i];
+            char cprec[]="double";
+            m_parallel_io[g]->write_array( &fid, 1, zfp, offset, cprec );
+            offset += npts*sizeof(double);
+            delete[] zfp;
+         }
+         else
+         {
+            float* zfp = new float[nptsloc];
+#pragma omp parallel for
+	    for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
+	       for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
+		  for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st )
+		  {
+		     size_t ind = (i-mWindow[g][0])/st+ni*(j-mWindow[g][2])/st+nij*(k-mWindow[g][4])/st;
+		     zfp[ind] = (float) a_Z[g](i,j,k);
+		  }
+	    //	 for( size_t i = 0; i < nptsloc ; i++ )
+	    //	    zfp[i] = zp[i];
+            char cprec[]="float";
+            m_parallel_io[g]->write_array( &fid, 1, zfp, offset, cprec );
+            offset += npts*sizeof(float);
+            delete[] zfp;
+         }
+      } // end for g (curvilinear)
+      
+   } // end if grid info
+   
+   if( iwrite )
+      close(fid);
 }

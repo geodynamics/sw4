@@ -1963,7 +1963,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
                   i, j, g))  // checks if (i,j) belongs to this processor
           {
             if (curvilinear)
-              wF /= a_EW->mJ(i, j, k);
+              wF /= a_EW->mJ[g](i, j, k);  // is 'g' correct?
             else
               wF /= h * h * h;
 
@@ -2348,7 +2348,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
 
             float_sw4 jaci;
             if (curvilinear)
-              jaci = 1 / a_EW->mJ(i, j, k);
+              jaci = 1 / a_EW->mJ[g](i, j, k);  // is 'g' correct?
             else
               jaci = 1.0 / (h * h * h);
 

@@ -70,6 +70,8 @@
 #ifdef SW4_TRACK_MPI
 #include "StatMachine.h"
 #endif
+#include "CurvilinearInterface2.h"
+#include "GridGenerator.h"
 
 using namespace std;
 
@@ -443,6 +445,7 @@ class EW {
   void communicate_array_2d_asym(Sarray& u, int g, int k);
   void communicate_array_2d_ext(Sarray& u);
   void communicate_array_2d_ext_async(Sarray& u);
+  void communicate_array_2d_isurf( Sarray& u, int iSurf );
 
   void set_materials();
   void set_anisotropic_materials();
@@ -595,7 +598,7 @@ class EW {
                        int faces);
 
   void impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
-                             float_sw4 t);
+                             float_sw4 t,vector<float_sw4**>& bforcing );
 
   void get_geodyn_timelevel(vector<Sarray>& geodyndata);
 
@@ -615,7 +618,8 @@ class EW {
                         bool& found_latlon, double& lat, double& lon,
                         double& az, int& adjust);
   void geodynFindFile(char* buffer);
-
+  void bcsurf_curvilinear_2nd_order( int side, int i0, int i1, int j0, int j1,
+				   int k0, int g, Sarray& u, float_sw4* bforcing );
   void integrate_source();
 
   void compute_energy(float_sw4 dt, bool write_file, vector<Sarray>& Um,
@@ -1437,6 +1441,14 @@ class EW {
   void check_corrector(Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc,
                        int kf, int kc);
   void getDtFromRestartFile();
+  void initial_tw_test( vector<Sarray>& U, vector<Sarray>& Up, vector<Sarray>& F,
+			 vector<Sarray>& Mu, vector<Sarray>& Lambda, vector<Sarray>& Lu,
+			 vector<Sarray>& Uacc, vector<Sarray*> AlphaVE,
+			 vector<GridPointSource*> point_sources, vector<int> identsources,
+			 float_sw4 t );
+void checkpoint_twilight_test( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarray>& Up,
+				  vector<Sarray*> AlphaVEm, vector<Sarray*> AlphaVE,
+				  vector<Sarray*> AlphaVEp, vector<Source*> a_Sources, float_sw4 t );
   void make_type(vector<std::tuple<int, int, int>>& send_type,
                  vector<std::tuple<float_sw4*, float_sw4*>>& bufs_type, int i1,
                  int j1, int k1, int i2, int j2, int k2, int g);
@@ -1466,6 +1478,8 @@ class EW {
   void putbuffer_host(float_sw4* data, float_sw4* buf,
                       std::tuple<int, int, int>& mtype);
 
+  TestTwilight* create_twilight();
+  TestEcons* create_energytest();
   AllDims* get_fine_alldimobject();
   //
   // VARIABLES BEYOND THIS POINT
@@ -1511,10 +1525,12 @@ class EW {
 
   // for the curvilinear grid, we also store the cartesian coordinates of the
   // grid points
-  Sarray mX, mY, mZ;  // needed by the Source class, so must be public
-  Sarray mJ;          // Jacobian also needed by the Source class
+  vector<Sarray> mX, mY, mZ;  // needed by the Source class, so must be public
+  vector<Sarray> mJ;          // Jacobian also needed by the Source class
   // and the metric derivatives as well as the jacobian
-  Sarray mMetric;
+  vector<Sarray> mMetric;
+  
+  GridGenerator* m_gridGenerator;
 
   // command prefilter
   bool m_prefilter_sources, m_filter_observations;
@@ -1531,9 +1547,12 @@ class EW {
   // mTopo holds the raw topography (according to the "elevation" field in the
   // etree) topoMat holds the highest elevation where the etree returns solid
   // material properties (now local to EtreeFile::readEFile() ) mTopoGridExt
-  // holds the smoothed topography which follows the top surface of the
+  // holds the smoothed topography which follows th`e top surface of the
   // curvilinear grid
   Sarray mTopo, mTopoGridExt;
+
+// 2-D arrays with interface surfaces (z-coordinates) for mesh refinement in the curvilinear grid
+   vector<Sarray> m_curviInterface;
 
   // material description used with material surfaces and the ifile command
   vector<MaterialProperty*> m_materials;
@@ -1545,12 +1564,14 @@ class EW {
   vector<Sarray> mMu;
   vector<Sarray> mLambda;
   vector<Sarray> mRho;
+  vector<Sarray*> mMuVE, mLambdaVE; // Attenuation material
   vector<Sarray> mC;  // Anisotropic material parameters
   Sarray mCcurv;      // Anisotropic material with metric (on curvilinear grid).
 
   // Store coefficeints needed for Mesh refinement
   vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs, m_Mlcs;
 
+  vector<float_sw4> m_curviRefLev; 
  private:
   // void preprocessSources(vector<Source*>& a_GlobalSources);
   void preprocessSources(vector<vector<Source*>>& a_GlobalSources);
@@ -1657,7 +1678,7 @@ class EW {
   float_sw4 m_qmultiplier;
 
   vector<Sarray> mQp, mQs;
-  vector<Sarray*> mMuVE, mLambdaVE;
+  //vector<Sarray*> mMuVE, mLambdaVE;
   // relaxation frequencies
   vector<float_sw4> mOmegaVE;
 
@@ -1809,6 +1830,7 @@ class EW {
 
   // Geodyn coupling
   bool m_do_geodynbc;
+  std::vector<float_sw4*> m_geo_usgh; // Save ghost point
   std::vector<int*> m_geodyn_dims;
   std::vector<Sarray> m_geodyn_data1;
   std::vector<Sarray> m_geodyn_data2;
@@ -1817,7 +1839,7 @@ class EW {
   int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk, m_geodyn_faces;
   std::string m_geodyn_filename;
   std::ifstream m_geodynfile;
-  bool m_geodyn_iwillread;
+  bool m_geodyn_iwillread, m_geodyn_past_end;   
 
   // From wpp FileInput class
   bool m_geodynbc_found, m_geodynbc_center;
@@ -1875,6 +1897,8 @@ class EW {
   // Array of sviews used in EW::enforceBCfreeAtt2 in solve.C
   SView* viewArrayActual;
 
+  vector<CurvilinearInterface2*> m_cli2;
+
   // int m_neighbor[4];
   vector<MPI_Datatype> m_send_type1;
   vector<MPI_Datatype> m_send_type3;
@@ -1882,6 +1906,12 @@ class EW {
   vector<MPI_Datatype> m_send_type21;  // anisotropic
   MPI_Datatype m_send_type_2dfinest[2];
   MPI_Datatype m_send_type_2dfinest_ext[2];
+
+  // for communicating interface surfaces
+   vector<MPI_Datatype> m_send_type_isurfx;
+   vector<MPI_Datatype> m_send_type_isurfy;
+
+
   vector<MPI_Datatype> m_send_type_2dx;
   vector<MPI_Datatype> m_send_type_2dy;
   vector<MPI_Datatype> m_send_type_2dx3p;

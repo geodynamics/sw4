@@ -48,167 +48,167 @@ void meterr4c(int*, int*, int*, int*, int*, int*, double*, double*, double*,
 }
 #define SQR(x) ((x) * (x))
 //---------------------------------------------------------
-void EW::setup_metric() {
-  if (!m_topography_exists) return;
-  if (mVerbose >= 1 && proc_zero()) cout << "***inside setup_metric***" << endl;
-  int g = mNumberOfGrids - 1;
-  int Bx = m_iStart[g];
-  int By = m_jStart[g];
-  int Bz = m_kStart[g];
-  int Nx = m_iEnd[g];
-  int Ny = m_jEnd[g];
-  int Nz = m_kEnd[g];
+// void EW::setup_metric() {
+//   if (!m_topography_exists) return;
+//   if (mVerbose >= 1 && proc_zero()) cout << "***inside setup_metric***" << endl;
+//   int g = mNumberOfGrids - 1;
+//   int Bx = m_iStart[g];
+//   int By = m_jStart[g];
+//   int Bz = m_kStart[g];
+//   int Nx = m_iEnd[g];
+//   int Ny = m_jEnd[g];
+//   int Nz = m_kEnd[g];
 
-  if (m_analytical_topo && m_use_analytical_metric) {
-    // Gaussina hill topography, analytical expressions for metric derivatives.
-    int nxg = m_global_nx[g];
-    int nyg = m_global_ny[g];
-    int nzg = m_global_nz[g];
-    float_sw4 h = mGridSize[g];
-    float_sw4 zmax = m_zmin[g - 1] - (nzg - 1) * h * (1 - m_zetaBreak);
-    if (m_croutines)
-      metricexgh_ci(Bx, Nx, By, Ny, Bz, Nz, nzg, mX.c_ptr(), mY.c_ptr(),
-                    mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr(),
-                    m_grid_interpolation_order, m_zetaBreak, zmax,
-                    m_GaussianAmp, m_GaussianXc, m_GaussianYc, m_GaussianLx,
-                    m_GaussianLy);
+//   if (m_analytical_topo && m_use_analytical_metric) {
+//     // Gaussina hill topography, analytical expressions for metric derivatives.
+//     int nxg = m_global_nx[g];
+//     int nyg = m_global_ny[g];
+//     int nzg = m_global_nz[g];
+//     float_sw4 h = mGridSize[g];
+//     float_sw4 zmax = m_zmin[g - 1] - (nzg - 1) * h * (1 - m_zetaBreak);
+//     if (m_croutines)
+//       metricexgh_ci(Bx, Nx, By, Ny, Bz, Nz, nzg, mX.c_ptr(), mY.c_ptr(),
+//                     mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr(),
+//                     m_grid_interpolation_order, m_zetaBreak, zmax,
+//                     m_GaussianAmp, m_GaussianXc, m_GaussianYc, m_GaussianLx,
+//                     m_GaussianLy);
 
-    else
-      metricexgh(&Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(),
-                 mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr(),
-                 &m_grid_interpolation_order, &m_zetaBreak, &zmax,
-                 &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx,
-                 &m_GaussianLy);
-  } else {
-    int ierr = 0;
-    if (m_croutines)
-      ierr = metric_ci(Bx, Nx, By, Ny, Bz, Nz, mX.c_ptr(), mY.c_ptr(),
-                       mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr());
-    else
-      metric(&Bx, &Nx, &By, &Ny, &Bz, &Nz, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
-             mMetric.c_ptr(), mJ.c_ptr(), &ierr);
-    CHECK_INPUT(ierr == 0, "Problems calculating the metric coefficients");
-  }
+//     else
+//       metricexgh(&Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(),
+//                  mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr(),
+//                  &m_grid_interpolation_order, &m_zetaBreak, &zmax,
+//                  &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx,
+//                  &m_GaussianLy);
+//   } else {
+//     int ierr = 0;
+//     if (m_croutines)
+//       ierr = metric_ci(Bx, Nx, By, Ny, Bz, Nz, mX.c_ptr(), mY.c_ptr(),
+//                        mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr());
+//     else
+//       metric(&Bx, &Nx, &By, &Ny, &Bz, &Nz, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+//              mMetric.c_ptr(), mJ.c_ptr(), &ierr);
+//     CHECK_INPUT(ierr == 0, "Problems calculating the metric coefficients");
+//   }
 
-  communicate_array(mMetric, mNumberOfGrids - 1);
-  communicate_array(mJ, mNumberOfGrids - 1);
+//   communicate_array(mMetric, mNumberOfGrids - 1);
+//   communicate_array(mJ, mNumberOfGrids - 1);
 
-  if (m_analytical_topo && !m_use_analytical_metric && mVerbose > 3)
-    // Test metric derivatives if available
-    metric_derivatives_test();
+//   if (m_analytical_topo && !m_use_analytical_metric && mVerbose > 3)
+//     // Test metric derivatives if available
+//     metric_derivatives_test();
 
-  float_sw4 minJ, maxJ;
-  if (m_croutines)
-    gridinfo_ci(Bx, Nx, By, Ny, Bz, Nz, mMetric.c_ptr(), mJ.c_ptr(), minJ,
-                maxJ);
-  else
-    gridinfo(&Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), mJ.c_ptr(), &minJ,
-             &maxJ);
-  float_sw4 minJglobal, maxJglobal;
-  MPI_Allreduce(&minJ, &minJglobal, 1, m_mpifloat, MPI_MIN,
-                m_cartesian_communicator);
-  MPI_Allreduce(&maxJ, &maxJglobal, 1, m_mpifloat, MPI_MAX,
-                m_cartesian_communicator);
-  if (mVerbose > 3 && proc_zero())
-    printf("*** Jacobian of metric: minJ = %e maxJ = %e\n", minJglobal,
-           maxJglobal);
-  // just save the results for now... do the sanity check later
-  m_minJacobian = minJglobal;
-  m_maxJacobian = maxJglobal;
-}
+//   float_sw4 minJ, maxJ;
+//   if (m_croutines)
+//     gridinfo_ci(Bx, Nx, By, Ny, Bz, Nz, mMetric.c_ptr(), mJ.c_ptr(), minJ,
+//                 maxJ);
+//   else
+//     gridinfo(&Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), mJ.c_ptr(), &minJ,
+//              &maxJ);
+//   float_sw4 minJglobal, maxJglobal;
+//   MPI_Allreduce(&minJ, &minJglobal, 1, m_mpifloat, MPI_MIN,
+//                 m_cartesian_communicator);
+//   MPI_Allreduce(&maxJ, &maxJglobal, 1, m_mpifloat, MPI_MAX,
+//                 m_cartesian_communicator);
+//   if (mVerbose > 3 && proc_zero())
+//     printf("*** Jacobian of metric: minJ = %e maxJ = %e\n", minJglobal,
+//            maxJglobal);
+//   // just save the results for now... do the sanity check later
+//   m_minJacobian = minJglobal;
+//   m_maxJacobian = maxJglobal;
+// }
 
 //-----------------------------------------------------------------------
-void EW::generate_grid() {
-  SW4_MARK_FUNCTION;
-  // Generate grid on domain: topography <= z <= zmax,
-  // The 2D grid on z=zmax, is given by ifirst <= i <= ilast, jfirst <= j <=
-  // jlast spacing h.
-  if (!m_topography_exists) return;
+// void EW::generate_grid() {
+//   SW4_MARK_FUNCTION;
+//   // Generate grid on domain: topography <= z <= zmax,
+//   // The 2D grid on z=zmax, is given by ifirst <= i <= ilast, jfirst <= j <=
+//   // jlast spacing h.
+//   if (!m_topography_exists) return;
 
-  //  m_grid_interpolation_order = a_order;
+//   //  m_grid_interpolation_order = a_order;
 
-  if (mVerbose >= 1 && proc_zero())
-    cout << "***inside generate_grid***" << endl;
+//   if (mVerbose >= 1 && proc_zero())
+//     cout << "***inside generate_grid***" << endl;
 
-  // get the size from the top Cartesian grid
-  int g = mNumberOfCartesianGrids - 1;
-  int ifirst = m_iStart[g];
-  int ilast = m_iEnd[g];
-  int jfirst = m_jStart[g];
-  int jlast = m_jEnd[g];
+//   // get the size from the top Cartesian grid
+//   int g = mNumberOfCartesianGrids - 1;
+//   int ifirst = m_iStart[g];
+//   int ilast = m_iEnd[g];
+//   int jfirst = m_jStart[g];
+//   int jlast = m_jEnd[g];
 
-  float_sw4 h = mGridSize[g];  // grid size must agree with top cartesian grid
-  float_sw4 zMaxCart = m_zmin[g];  // bottom z-level for curvilinear grid
+//   float_sw4 h = mGridSize[g];  // grid size must agree with top cartesian grid
+//   float_sw4 zMaxCart = m_zmin[g];  // bottom z-level for curvilinear grid
 
-  //  int i, j;
-  int gTop = mNumberOfGrids - 1;
-  int Nz = m_kEnd[gTop] - m_ghost_points;
+//   //  int i, j;
+//   int gTop = mNumberOfGrids - 1;
+//   int Nz = m_kEnd[gTop] - m_ghost_points;
 
-  if (mVerbose > 4 && proc_zero()) {
-    printf(
-        "generate_grid: Number of grid points in curvilinear grid = %i, kStart "
-        "= %i, kEnd = %i\n",
-        Nz, m_kStart[gTop], m_kEnd[gTop]);
-  }
+//   if (mVerbose > 4 && proc_zero()) {
+//     printf(
+//         "generate_grid: Number of grid points in curvilinear grid = %i, kStart "
+//         "= %i, kEnd = %i\n",
+//         Nz, m_kStart[gTop], m_kEnd[gTop]);
+//   }
 
-// generate the grid by calling the curvilinear mapping function
-#pragma omp parallel for
-  for (int k = m_kStart[gTop]; k <= m_kEnd[gTop]; k++)
-    for (int j = m_jStart[gTop]; j <= m_jEnd[gTop]; j++)
-      for (int i = m_iStart[gTop]; i <= m_iEnd[gTop]; i++) {
-        float_sw4 X0, Y0, Z0;
-        curvilinear_grid_mapping((float_sw4)i, (float_sw4)j, (float_sw4)k, X0,
-                                 Y0, Z0);
-        mX(i, j, k) = X0;
-        mY(i, j, k) = Y0;
-        mZ(i, j, k) = Z0;
-      }
-  // tmp
-  // test the inverse mapping
-  //  double q0, r0, s0, dist=0.;
-  //  for (k=m_kStart[gTop]; k<=m_kEnd[gTop]; k++)
-  //    for (j=m_jStart[gTop]; j<=m_jEnd[gTop]; j++)
-  //      for (i=m_iStart[gTop]; i<=m_iEnd[gTop]; i++)
-  //      {
-  // 	invert_curvilinear_grid_mapping(mX(i,j,k), mY(i,j,k), mZ(i,j,k), q0, r0,
-  // s0); 	dist += SQR(q0 - (double) i) + SQR(r0 - (double) j) + SQR(s0 -
-  // (double) k);
-  //      }
-  //   double totalDist;
-  //   MPI_Allreduce( &dist, &totalDist, 1, MPI_DOUBLE, MPI_SUM,
-  //   m_cartesian_communicator ); if (m_myRank == 0)
-  //     printf("L2-error in inverse of curvilinear mapping = %e\n",
-  //     sqrt(totalDist));
-  // end test
+// // generate the grid by calling the curvilinear mapping function
+// #pragma omp parallel for
+//   for (int k = m_kStart[gTop]; k <= m_kEnd[gTop]; k++)
+//     for (int j = m_jStart[gTop]; j <= m_jEnd[gTop]; j++)
+//       for (int i = m_iStart[gTop]; i <= m_iEnd[gTop]; i++) {
+//         float_sw4 X0, Y0, Z0;
+//         curvilinear_grid_mapping((float_sw4)i, (float_sw4)j, (float_sw4)k, X0,
+//                                  Y0, Z0);
+//         mX(i, j, k) = X0;
+//         mY(i, j, k) = Y0;
+//         mZ(i, j, k) = Z0;
+//       }
+//   // tmp
+//   // test the inverse mapping
+//   //  double q0, r0, s0, dist=0.;
+//   //  for (k=m_kStart[gTop]; k<=m_kEnd[gTop]; k++)
+//   //    for (j=m_jStart[gTop]; j<=m_jEnd[gTop]; j++)
+//   //      for (i=m_iStart[gTop]; i<=m_iEnd[gTop]; i++)
+//   //      {
+//   // 	invert_curvilinear_grid_mapping(mX(i,j,k), mY(i,j,k), mZ(i,j,k), q0, r0,
+//   // s0); 	dist += SQR(q0 - (double) i) + SQR(r0 - (double) j) + SQR(s0 -
+//   // (double) k);
+//   //      }
+//   //   double totalDist;
+//   //   MPI_Allreduce( &dist, &totalDist, 1, MPI_DOUBLE, MPI_SUM,
+//   //   m_cartesian_communicator ); if (m_myRank == 0)
+//   //     printf("L2-error in inverse of curvilinear mapping = %e\n",
+//   //     sqrt(totalDist));
+//   // end test
 
-  // make sure all processors have made their grid before we continue
-  communicate_array(mZ, gTop);
+//   // make sure all processors have made their grid before we continue
+//   communicate_array(mZ, gTop);
 
-  // tmp
-  // calculate min and max((mZ(i,j,k)-mZ(i,j,k-1))/h) for k=Nz
-  int k = Nz;
-  // tmp
-  float_sw4 mZmin = 1.0e9, mZmax = 0;
-#pragma omp parallel for reduction(min : mZmin) reduction(max : mZmax)
-  for (int j = m_jStart[gTop]; j <= m_jEnd[gTop]; j++)
-    for (int i = m_iStart[gTop]; i <= m_iEnd[gTop]; i++) {
-      float_sw4 hRatio = (mZ(i, j, k) - mZ(i, j, k - 1)) / mGridSize[gTop];
-      if (hRatio < mZmin) mZmin = hRatio;
-      if (hRatio > mZmax) mZmax = hRatio;
-    }
-  float_sw4 zMinGlobal, zMaxGlobal;
-  MPI_Allreduce(&mZmin, &zMinGlobal, 1, m_mpifloat, MPI_MIN,
-                m_cartesian_communicator);
-  MPI_Allreduce(&mZmax, &zMaxGlobal, 1, m_mpifloat, MPI_MAX,
-                m_cartesian_communicator);
-  if (mVerbose > 3 && proc_zero()) {
-    printf(
-        "Curvilinear/Cartesian interface (k=Nz-1): Min grid size ratio - 1 = "
-        "%e, max ratio z - 1 = %e, top grid # = %i\n",
-        zMinGlobal - 1., zMaxGlobal - 1., gTop);
-  }
-  // end tmp
-}
+//   // tmp
+//   // calculate min and max((mZ(i,j,k)-mZ(i,j,k-1))/h) for k=Nz
+//   int k = Nz;
+//   // tmp
+//   float_sw4 mZmin = 1.0e9, mZmax = 0;
+// #pragma omp parallel for reduction(min : mZmin) reduction(max : mZmax)
+//   for (int j = m_jStart[gTop]; j <= m_jEnd[gTop]; j++)
+//     for (int i = m_iStart[gTop]; i <= m_iEnd[gTop]; i++) {
+//       float_sw4 hRatio = (mZ(i, j, k) - mZ(i, j, k - 1)) / mGridSize[gTop];
+//       if (hRatio < mZmin) mZmin = hRatio;
+//       if (hRatio > mZmax) mZmax = hRatio;
+//     }
+//   float_sw4 zMinGlobal, zMaxGlobal;
+//   MPI_Allreduce(&mZmin, &zMinGlobal, 1, m_mpifloat, MPI_MIN,
+//                 m_cartesian_communicator);
+//   MPI_Allreduce(&mZmax, &zMaxGlobal, 1, m_mpifloat, MPI_MAX,
+//                 m_cartesian_communicator);
+//   if (mVerbose > 3 && proc_zero()) {
+//     printf(
+//         "Curvilinear/Cartesian interface (k=Nz-1): Min grid size ratio - 1 = "
+//         "%e, max ratio z - 1 = %e, top grid # = %i\n",
+//         zMinGlobal - 1., zMaxGlobal - 1., gTop);
+//   }
+//   // end tmp
+// }
 
 //-----------------------------------------------------------------------
 bool EW::curvilinear_grid_mapping(float_sw4 q, float_sw4 r, float_sw4 s,
@@ -953,70 +953,73 @@ bool EW::interpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0,
 }
 
 //-----------------------------------------------------------------------
-void EW::metric_derivatives_test() {
-  // Assumes mMetric and mJ have been computed by numerical differentiation
-  // This function computes corresponding expressions by analytical
-  // differentiation
+void EW::metric_derivatives_test()
+{
+   // Assumes mMetric and mJ have been computed by numerical differentiation
+   // This function computes corresponding expressions by analytical differentiation
 
-  Sarray metex(mMetric), jacex(mJ);
+   int g=mNumberOfGrids-1;
+   Sarray metex(mMetric[g]), jacex(mJ[g]); // TEMPORARY FIX
 
-  int g = mNumberOfGrids - 1;
-  int Bx = m_iStart[g];
-  int By = m_jStart[g];
-  int Bz = m_kStart[g];
-  int Nx = m_iEnd[g];
-  int Ny = m_jEnd[g];
-  int Nz = m_kEnd[g];
+   int Bx=m_iStart[g];
+   int By=m_jStart[g];
+   int Bz=m_kStart[g];
+   int Nx=m_iEnd[g];
+   int Ny=m_jEnd[g];
+   int Nz=m_kEnd[g];
 
-  int nxg = m_global_nx[g];
-  int nyg = m_global_ny[g];
-  int nzg = m_global_nz[g];
-  float_sw4 h = mGridSize[g];
-  float_sw4 zmax = m_zmin[g - 1] - (nzg - 1) * h * (1 - m_zetaBreak);
+   //   int nxg = m_global_nx[g];
+   //   int nyg = m_global_ny[g];
+   //   int nzg = m_global_nz[g];
+   float_sw4 h= mGridSize[g];   
+   //   float_sw4 zmax = m_zmin[g-1] - (nzg-1)*h*(1-m_zetaBreak);
 
-  if (m_croutines)
-    metricexgh_ci(Bx, Nx, By, Ny, Bz, Nz, nzg, mX.c_ptr(), mY.c_ptr(),
-                  mZ.c_ptr(), metex.c_ptr(), jacex.c_ptr(),
-                  m_grid_interpolation_order, m_zetaBreak, zmax, m_GaussianAmp,
-                  m_GaussianXc, m_GaussianYc, m_GaussianLx, m_GaussianLy);
-  else
-    metricexgh(&Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(),
-               mY.c_ptr(), mZ.c_ptr(), metex.c_ptr(), jacex.c_ptr(),
-               &m_grid_interpolation_order, &m_zetaBreak, &zmax, &m_GaussianAmp,
-               &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy);
-  communicate_array(metex, mNumberOfGrids - 1);
-  communicate_array(jacex, mNumberOfGrids - 1);
+//FTNC   if( m_croutines )
+   m_gridGenerator->exact_metric( this, g, metex, jacex );
+   //      metricexgh_ci( Bx, Nx, By, Ny, Bz, Nz, nzg, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
+   //				    metex.c_ptr(), jacex.c_ptr(), m_grid_interpolation_order, m_zetaBreak, zmax, 
+   //				    m_GaussianAmp, m_GaussianXc, m_GaussianYc, m_GaussianLx, m_GaussianLy ); 
+//FTNC   else
+//FTNC      metricexgh( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
+//FTNC				    metex.c_ptr(), jacex.c_ptr(), &m_grid_interpolation_order, &m_zetaBreak, &zmax, 
+//FTNC				    &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy ); 
+   communicate_array( metex, mNumberOfGrids-1 );
+   communicate_array( jacex, mNumberOfGrids-1 );
 
-  float_sw4 li[5], l2[5];
-  int imin = m_iStartInt[g];
-  int imax = m_iEndInt[g];
-  int jmin = m_jStartInt[g];
-  int jmax = m_jEndInt[g];
-  int kmin = m_kStartInt[g];
-  int kmax = m_kEndInt[g];
+   float_sw4 li[5], l2[5];
+   int imin = m_iStartInt[g];
+   int imax = m_iEndInt[g];
+   int jmin = m_jStartInt[g];
+   int jmax = m_jEndInt[g];
+   int kmin = m_kStartInt[g];
+   int kmax = m_kEndInt[g];
 
-  if (m_croutines)
-    meterr4c_ci(Bx, Nx, By, Ny, Bz, Nz, mMetric.c_ptr(), metex.c_ptr(),
-                mJ.c_ptr(), jacex.c_ptr(), li, l2, imin, imax, jmin, jmax, kmin,
-                kmax, h);
-  else
-    meterr4c(&Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric.c_ptr(), metex.c_ptr(),
-             mJ.c_ptr(), jacex.c_ptr(), li, l2, &imin, &imax, &jmin, &jmax,
-             &kmin, &kmax, &h);
+//FTNC   if( m_croutines )
+      meterr4c_ci( Bx, Nx, By, Ny, Bz, Nz, mMetric[g].c_ptr(), metex.c_ptr(), mJ[g].c_ptr(),
+		   jacex.c_ptr(), li, l2, imin, imax, jmin, jmax, kmin, kmax, h );
+//FTNC   else
+//FTNC      meterr4c( &Bx, &Nx, &By, &Ny, &Bz, &Nz, mMetric[g].c_ptr(), metex.c_ptr(), mJ[g].c_ptr(),
+//FTNC		jacex.c_ptr(), li, l2, &imin, &imax, &jmin, &jmax, &kmin, &kmax, &h );
 
-  float_sw4 tmp[5];
-  for (int c = 0; c < 5; c++) tmp[c] = li[c];
-  MPI_Allreduce(tmp, li, 5, m_mpifloat, MPI_MAX, m_cartesian_communicator);
-  for (int c = 0; c < 5; c++) tmp[c] = l2[c];
-  MPI_Allreduce(tmp, l2, 5, m_mpifloat, MPI_SUM, m_cartesian_communicator);
-  for (int c = 0; c < 5; c++) l2[c] = sqrt(l2[c]);
-  if (proc_zero()) {
-    cout << "Errors in metric, max norm and L2 norm \n";
-    for (int c = 0; c < 4; c++) cout << " " << li[c] << " " << l2[c] << endl;
-    cout << "Error in Jacobian, max norm and L2 norm \n";
-    cout << " " << li[4] << " " << l2[4] << endl;
-  }
+   float_sw4 tmp[5];
+   for( int c=0 ; c < 5 ;c++ )
+      tmp[c] =li[c];
+   MPI_Allreduce( tmp, li, 5, m_mpifloat, MPI_MAX, m_cartesian_communicator);
+   for( int c=0 ; c < 5 ;c++ )
+      tmp[c] =l2[c];
+   MPI_Allreduce( tmp, l2, 5, m_mpifloat, MPI_SUM, m_cartesian_communicator);
+   for( int c=0 ; c < 5 ;c++ )
+      l2[c] = sqrt(l2[c]);
+   if( proc_zero() )
+   {
+      cout << "Errors in metric, max norm and L2 norm \n";
+      for( int c=0 ; c < 4 ; c++ )
+	 cout << " " << li[c] << " " << l2[c] << endl;
+      cout << "Error in Jacobian, max norm and L2 norm \n";
+      cout << " " << li[4] << " " << l2[4] << endl;
+   }
 }
+
 
 //-----------------------------------------------------------------------
 void EW::copy_topo_to_topogridext() {
@@ -1088,89 +1091,88 @@ void EW::gettopowgh(float_sw4 ai, float_sw4 wgh[8]) const {
 }
 
 //-----------------------------------------------------------------------
-void EW::smooth_grid(int maxIter) {
-  // Smooth the grid (only the Z component for now)
-  // NOTE: the current smoothing algorithm makes the error larger rather than
-  // smaller!
-  float_sw4 rf = 0.05;  // rf<1/6 for stability
-  if (mVerbose >= 1 && proc_zero() && maxIter > 0)
-    cout << "***smoothing the grid with " << maxIter
-         << " Jacobi iterations and relaxation factor " << rf << " ***" << endl;
+void EW::smooth_grid( int maxIter )
+{
+// Smooth the grid (only the Z component for now)
+// NOTE: the current smoothing algorithm makes the error larger rather than smaller!
+   float_sw4 rf=0.05; // rf<1/6 for stability
+   if (mVerbose >= 1 && proc_zero() && maxIter>0)
+      cout << "***smoothing the grid with " << maxIter << " Jacobi iterations and relaxation factor " << rf << " ***"<< endl;
 
-  int topLevel = mNumberOfGrids - 1;
-  int iter;
-  // temporary storage: How can I use mJ for temporary storage?
-  Sarray tmp;
-  tmp.define(m_iStart[topLevel], m_iEnd[topLevel], m_jStart[topLevel],
-             m_jEnd[topLevel], m_kStart[topLevel], m_kEnd[topLevel]);
+   int topLevel = mNumberOfGrids-1;
+   int g = mNumberOfGrids-1;
+   int iter;
+// temporary storage: How can I use mJ for temporary storage?
+   Sarray tmp;
+   tmp.define(m_iStart[topLevel],m_iEnd[topLevel],m_jStart[topLevel],m_jEnd[topLevel],m_kStart[topLevel],m_kEnd[topLevel]);
 
 // initialize to make the Dirichlet boundary conditions work
 #pragma omp parallel for
-  for (int k = m_kStart[topLevel]; k <= m_kEnd[topLevel]; k++)
-    for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
-      for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
-        tmp(i, j, k) = mZ(i, j, k);
-      }
+   for (int k = m_kStart[topLevel]; k <= m_kEnd[topLevel]; k++)
+      for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
+	 for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
+	 {
+	    tmp(i,j,k) = mZ[g](i,j,k);
+	 }
 
-  // Laplacian filter
-  for (iter = 0; iter < maxIter; iter++) {
+// Laplacian filter
+   for (iter=0; iter < maxIter; iter++)
+   {
 // loop over all interior points
 #pragma omp parallel for
-    for (int k = m_kStart[topLevel] + m_ghost_points + 1;
-         k <= m_kEnd[topLevel] - m_ghost_points - 2; k++)
-      for (int j = m_jStart[topLevel] + 1; j <= m_jEnd[topLevel] - 1; j++)
-        for (int i = m_iStart[topLevel] + 1; i <= m_iEnd[topLevel] - 1; i++) {
-          tmp(i, j, k) = mZ(i, j, k) + rf * (mZ(i + 1, j, k) + mZ(i - 1, j, k) +
-                                             mZ(i, j + 1, k) + mZ(i, j - 1, k) +
-                                             mZ(i, j, k + 1) + mZ(i, j, k - 1) -
-                                             6. * mZ(i, j, k));
-        }
+      for (int k = m_kStart[topLevel]+m_ghost_points+1; k <= m_kEnd[topLevel]-m_ghost_points-2; k++)
+	 for (int j = m_jStart[topLevel]+1; j <= m_jEnd[topLevel]-1; j++)
+	    for (int i = m_iStart[topLevel]+1; i <= m_iEnd[topLevel]-1; i++)
+	    {
+	       tmp(i,j,k) = mZ[g](i,j,k) + rf*(mZ[g](i+1,j,k) + mZ[g](i-1,j,k) + mZ[g](i,j+1,k) + mZ[g](i,j-1,k) + mZ[g](i,j,k+1) + mZ[g](i,j,k-1) - 6.*mZ[g](i,j,k));
+	    }
 
 // impose Neumann bc on the i and j sides
 #pragma omp parallel for
-    for (int k = m_kStart[topLevel] + m_ghost_points + 1;
-         k <= m_kEnd[topLevel] - m_ghost_points - 2; k++) {
-      for (int j = m_jStart[topLevel] + 1; j <= m_jEnd[topLevel] - 1; ++j) {
-        int i = m_iStart[topLevel];
-        tmp(i, j, k) = tmp(i + 1, j, k);
-        i = m_iEnd[topLevel];
-        tmp(i, j, k) = tmp(i - 1, j, k);
-      }
+      for (int k = m_kStart[topLevel]+m_ghost_points+1; k <= m_kEnd[topLevel]-m_ghost_points-2; k++)
+      {
+	 for (int j = m_jStart[topLevel]+1; j <= m_jEnd[topLevel]-1; ++j)
+	 {
+	    int i = m_iStart[topLevel];
+	    tmp(i,j,k) = tmp(i+1,j,k);
+	    i = m_iEnd[topLevel];
+	    tmp(i,j,k) = tmp(i-1,j,k);
+	 }
 
-      for (int i = m_iStart[topLevel] + 1; i <= m_iEnd[topLevel] - 1; ++i) {
-        int j = m_jStart[topLevel];
-        tmp(i, j, k) = tmp(i, j + 1, k);
-        j = m_jEnd[topLevel];
-        tmp(i, j, k) = tmp(i, j - 1, k);
-      }
-      // Corners
-      int i = m_iStart[topLevel];
-      int j = m_jStart[topLevel];
-      tmp(i, j, k) = tmp(i + 1, j + 1, k);
+	 for (int i = m_iStart[topLevel]+1; i <= m_iEnd[topLevel]-1; ++i)
+	 {
+	    int j = m_jStart[topLevel];
+	    tmp(i,j,k) = tmp(i,j+1,k);
+	    j = m_jEnd[topLevel];
+	    tmp(i,j,k) = tmp(i,j-1,k);
+	 }
+// Corners
+	 int i = m_iStart[topLevel];
+	 int j = m_jStart[topLevel];
+	 tmp(i,j,k) = tmp(i+1,j+1,k);
 
-      i = m_iEnd[topLevel];
-      j = m_jStart[topLevel];
-      tmp(i, j, k) = tmp(i - 1, j + 1, k);
+	 i = m_iEnd[topLevel];
+	 j = m_jStart[topLevel];
+	 tmp(i,j,k) = tmp(i-1,j+1,k);
 
-      i = m_iStart[topLevel];
-      j = m_jEnd[topLevel];
-      tmp(i, j, k) = tmp(i + 1, j - 1, k);
+	 i = m_iStart[topLevel];
+	 j = m_jEnd[topLevel];
+	 tmp(i,j,k) = tmp(i+1,j-1,k);
+    
+	 i = m_iEnd[topLevel];
+	 j = m_jEnd[topLevel];
+	 tmp(i,j,k) = tmp(i-1,j-1,k);
+      } // end Neumann loop
 
-      i = m_iEnd[topLevel];
-      j = m_jEnd[topLevel];
-      tmp(i, j, k) = tmp(i - 1, j - 1, k);
-    }  // end Neumann loop
+// communicate parallel ghost points
+      communicate_array( tmp, topLevel );
 
-    // communicate parallel ghost points
-    communicate_array(tmp, topLevel);
-
-// update solution (Dirichlet are imposed implicitly by never changing the tmp
-// array along the top or bottom boundary)
+// update solution (Dirichlet are imposed implicitly by never changing the tmp array along the top or bottom boundary)
 #pragma omp parallel for
-    for (int k = m_kStart[topLevel]; k <= m_kEnd[topLevel]; k++)
-      for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
-        for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
-          mZ(i, j, k) = tmp(i, j, k);
+      for (int k = m_kStart[topLevel]; k <= m_kEnd[topLevel]; k++)
+	 for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
+	    for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
+	       mZ[g](i,j,k) = tmp(i,j,k);
 
-  }  // end for iter (grid smoother)
+   }// end for iter (grid smoother)
 }

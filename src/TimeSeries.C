@@ -239,7 +239,7 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
   if (m_grid0 < a_ew->mNumberOfCartesianGrids) {
     zG = a_ew->m_zmin[m_grid0] + (m_k0 - 1) * a_ew->mGridSize[m_grid0];
   } else {
-    zG = a_ew->mZ(m_i0, m_j0, m_k0);
+    zG = a_ew->mZ[m_grid0](m_i0, m_j0, m_k0);
   }
 
   // remember corrected location

@@ -646,9 +646,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     mImage3DFiles[i3]->update_image(beginCycle - 1, t, mDt, U, mRho, mMu,
                                     mLambda, mRho, mMu, mLambda, mQp, mQs,
                                     mPath[event], mZ);
+  int gg = mNumberOfGrids-1; // top grid
   for (int i3 = 0; i3 < mESSI3DFiles.size(); i3++) {
     mESSI3DFiles[i3]->set_ntimestep(mNumberOfTimeSteps[event]);
-    mESSI3DFiles[i3]->update_image(beginCycle - 1, t, mDt, U, mPath[event], mZ);
+    mESSI3DFiles[i3]->update_image(beginCycle - 1, t, mDt, U, mPath[event], mZ[gg]);
   }
   FILE* lf = NULL;
   // open file for saving norm of error
@@ -1027,9 +1028,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
     // Update the ESSI hdf5 data
     double time_essi_tmp = MPI_Wtime();
+    gg = mNumberOfGrids-1; // top grid
     for (int i3 = 0; i3 < mESSI3DFiles.size(); i3++)
       mESSI3DFiles[i3]->update_image(currentTimeStep, t, mDt, Up, mPath[event],
-                                     mZ);
+                                     mZ[gg]);
     double time_essi = MPI_Wtime() - time_essi_tmp;
 
     // save the current solution on receiver records (time-derivative require Up
@@ -1413,12 +1415,12 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
         side = 5;
         if (m_croutines)
           freesurfcurvisg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
-                             side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(),
+                             side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
                              m_sbop, bforce_side4_ptr, m_sg_str_x[g],
                              m_sg_str_y[g]);
         else
           freesurfcurvisg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                          &nz, &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(),
+                          &nz, &side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
                           m_sbop, bforce_side4_ptr, m_sg_str_x[g],
                           m_sg_str_y[g]);
       }
@@ -1440,22 +1442,22 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
         side = 5;
         if (m_croutines)
           freesurfcurvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
-                           side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop,
+                           side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(), m_sbop,
                            bforce_side4_ptr);
         else
           freesurfcurvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
-                        &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop,
+                        &side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(), m_sbop,
                         bforce_side4_ptr);
       }
       if (topo == 1 && m_bcType[g][5] == bStressFree) {
         side = 6;
         if (m_croutines)
           freesurfcurvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
-                           side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop,
+                           side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(), m_sbop,
                            bforce_side5_ptr);
         else
           freesurfcurvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
-                        &side, u_ptr, mu_ptr, la_ptr, mMetric.c_ptr(), m_sbop,
+                        &side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(), m_sbop,
                         bforce_side5_ptr);
       }
     }
@@ -3399,11 +3401,11 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
           if (m_croutines)
             twdirbdryc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                           &wind_ptr[0], t, om, cv, ph, bforce_side0_ptr,
-                          mX.c_ptr(), mY.c_ptr(), mZ.c_ptr());
+                          mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
           else
             twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                        &wind_ptr[0], &t, &om, &cv, &ph, bforce_side0_ptr,
-                       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr());
+                       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
         }
         SW4_MARK_END("LOOP1");
       }
@@ -3420,11 +3422,11 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
           if (m_croutines)
             twdirbdryc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                           &wind_ptr[6], t, om, cv, ph, bforce_side1_ptr,
-                          mX.c_ptr(), mY.c_ptr(), mZ.c_ptr());
+                          mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
           else
             twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                        &wind_ptr[6], &t, &om, &cv, &ph, bforce_side1_ptr,
-                       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr());
+                       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
         }
       }
       SW4_MARK_BEGIN("LOOP2");
@@ -3440,11 +3442,11 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
           if (m_croutines)
             twdirbdryc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                           &wind_ptr[6 * 2], t, om, cv, ph, bforce_side2_ptr,
-                          mX.c_ptr(), mY.c_ptr(), mZ.c_ptr());
+                          mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
           else
             twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                        &wind_ptr[6 * 2], &t, &om, &cv, &ph, bforce_side2_ptr,
-                       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr());
+                       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
         }
       }
 
@@ -3460,11 +3462,11 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
           if (m_croutines)
             twdirbdryc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                           &wind_ptr[6 * 3], t, om, cv, ph, bforce_side3_ptr,
-                          mX.c_ptr(), mY.c_ptr(), mZ.c_ptr());
+                          mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
           else
             twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                        &wind_ptr[6 * 3], &t, &om, &cv, &ph, bforce_side3_ptr,
-                       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr());
+                       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
         }
       }
       SW4_MARK_END("LOOP2");
@@ -3481,11 +3483,11 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
           if (m_croutines)
             twdirbdryc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                           &wind_ptr[6 * 4], t, om, cv, ph, bforce_side4_ptr,
-                          mX.c_ptr(), mY.c_ptr(), mZ.c_ptr());
+                          mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
           else
             twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                        &wind_ptr[6 * 4], &t, &om, &cv, &ph, bforce_side4_ptr,
-                       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr());
+                       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
         }
       } else if (m_bcType[g][4] == bStressFree) {
         k = 1;
@@ -3537,21 +3539,21 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
             // Get twilight stress tensor, tau.
             if (m_croutines)
               twstensor_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, k, t,
-                           om, cv, ph, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+                           om, cv, ph, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
                            tau.c_ptr(), mu_ptr, la_ptr);
             else
               twstensor(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &k,
-                        &t, &om, &cv, &ph, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+                        &t, &om, &cv, &ph, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
                         tau.c_ptr(), mu_ptr, la_ptr);
             // Compute boundary forcing for given stress tensor, tau.
 
             if (m_croutines)
               getsurfforcing_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, k,
-                                mMetric.c_ptr(), mJ.c_ptr(), tau.c_ptr(),
+                                mMetric[g].c_ptr(), mJ[g].c_ptr(), tau.c_ptr(),
                                 bforce_side4_ptr);
             else
               getsurfforcing(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                             &k, mMetric.c_ptr(), mJ.c_ptr(), tau.c_ptr(),
+                             &k, mMetric[g].c_ptr(), mJ[g].c_ptr(), tau.c_ptr(),
                              bforce_side4_ptr);
 
             if (m_use_attenuation) {
@@ -3559,19 +3561,19 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
               float_sw4* laa_ptr = mLambdaVE[g][0].c_ptr();
               if (m_croutines)
                 twstensoratt_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, k,
-                                t, om, cv, ph, mX.c_ptr(), mY.c_ptr(),
-                                mZ.c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr);
+                                t, om, cv, ph, mX[g].c_ptr(), mY[g].c_ptr(),
+                                mZ[g].c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr);
               else
                 twstensoratt(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                             &k, &t, &om, &cv, &ph, mX.c_ptr(), mY.c_ptr(),
-                             mZ.c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr);
+                             &k, &t, &om, &cv, &ph, mX[g].c_ptr(), mY[g].c_ptr(),
+                             mZ[g].c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr);
               if (m_croutines)
                 subsurfforcing_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
-                                  k, mMetric.c_ptr(), mJ.c_ptr(), tau.c_ptr(),
+                                  k, mMetric[g].c_ptr(), mJ[g].c_ptr(), tau.c_ptr(),
                                   bforce_side4_ptr);
               else
                 subsurfforcing(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-                               &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+                               &klast, &k, mMetric[g].c_ptr(), mJ[g].c_ptr(),
                                tau.c_ptr(), bforce_side4_ptr);
             }
           } else if (!usingSupergrid() && !curvilinear) {
@@ -3604,21 +3606,21 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
             // Get twilight stress tensor, tau.
             if (m_croutines)
               twstensorsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, k, t,
-                             om, cv, ph, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+                             om, cv, ph, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
                              tau.c_ptr(), mu_ptr, la_ptr, omstrx, omstry);
             else
               twstensorsg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &k,
-                          &t, &om, &cv, &ph, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+                          &t, &om, &cv, &ph, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
                           tau.c_ptr(), mu_ptr, la_ptr, &omstrx, &omstry);
             // Compute boundary forcing for given stress tensor, tau.
             if (m_croutines)
               getsurfforcingsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
-                                  k, mMetric.c_ptr(), mJ.c_ptr(), tau.c_ptr(),
+                                  k, mMetric[g].c_ptr(), mJ[g].c_ptr(), tau.c_ptr(),
                                   m_sg_str_x[g], m_sg_str_y[g],
                                   bforce_side4_ptr);
             else
               getsurfforcingsg(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-                               &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+                               &klast, &k, mMetric[g].c_ptr(), mJ[g].c_ptr(),
                                tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g],
                                bforce_side4_ptr);
 
@@ -3627,20 +3629,20 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
               float_sw4* laa_ptr = mLambdaVE[g][0].c_ptr();
               if (m_croutines) {
                 twstensorsgatt_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
-                                  k, t, om, cv, ph, mX.c_ptr(), mY.c_ptr(),
-                                  mZ.c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr,
+                                  k, t, om, cv, ph, mX[g].c_ptr(), mY[g].c_ptr(),
+                                  mZ[g].c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr,
                                   omstrx, omstry);
                 subsurfforcingsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
-                                    k, mMetric.c_ptr(), mJ.c_ptr(), tau.c_ptr(),
+                                    k, mMetric[g].c_ptr(), mJ[g].c_ptr(), tau.c_ptr(),
                                     m_sg_str_x[g], m_sg_str_y[g],
                                     bforce_side4_ptr);
               } else {
                 twstensorsgatt(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-                               &klast, &k, &t, &om, &cv, &ph, mX.c_ptr(),
-                               mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mua_ptr,
+                               &klast, &k, &t, &om, &cv, &ph, mX[g].c_ptr(),
+                               mY[g].c_ptr(), mZ[g].c_ptr(), tau.c_ptr(), mua_ptr,
                                laa_ptr, &omstrx, &omstry);
                 subsurfforcingsg(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-                                 &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+                                 &klast, &k, mMetric[g].c_ptr(), mJ[g].c_ptr(),
                                  tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g],
                                  bforce_side4_ptr);
               }
@@ -3665,11 +3667,11 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
           if (m_croutines)
             twdirbdryc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                           &wind_ptr[6 * 5], t, om, cv, ph, bforce_side5_ptr,
-                          mX.c_ptr(), mY.c_ptr(), mZ.c_ptr());
+                          mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
           else
             twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                        &wind_ptr[6 * 5], &t, &om, &cv, &ph, bforce_side5_ptr,
-                       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr());
+                       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
         }
         SW4_MARK_END("LOOP4");
       } else if (m_bcType[g][5] == bStressFree) {
@@ -3830,7 +3832,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
 //   double * x_=a_x.c_ptr();
 //   double * y_=a_y.c_ptr();
 //   double * z_=a_z.c_ptr();
-//   double * mu_=a_mu.c_ptr();
+//   double * mu_=a_mu[g].c_ptr();
 //   double * lam_=a_lam.c_ptr();
 //   double * J_=a_J.c_ptr();
 
@@ -4172,285 +4174,226 @@ void EW::testSourceDiscretization(int kx[3], int ky[3], int kz[3],
 }
 
 //-----------------------------------------------------------------------
-void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0,
-                           int k0, int g0, vector<float_sw4>& uRec,
-                           vector<Sarray>& Um2, vector<Sarray>& U) {
-  SW4_MARK_FUNCTION;
-  if (mode == TimeSeries::Displacement) {
+//-----------------------------------------------------------------------
+void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0, int g0, 
+			   vector<float_sw4> &uRec, vector<Sarray> &Um2, vector<Sarray> &U)
+{
+  if (mode == TimeSeries::Displacement)
+  {
     uRec.resize(3);
     uRec[0] = U[g0](1, i0, j0, k0);
     uRec[1] = U[g0](2, i0, j0, k0);
     uRec[2] = U[g0](3, i0, j0, k0);
-  } else if (mode == TimeSeries::Velocity) {
+  }
+  else if (mode == TimeSeries::Velocity)
+  {
     uRec.resize(3);
-    uRec[0] = (U[g0](1, i0, j0, k0) - Um2[g0](1, i0, j0, k0)) / (2 * mDt);
-    uRec[1] = (U[g0](2, i0, j0, k0) - Um2[g0](2, i0, j0, k0)) / (2 * mDt);
-    uRec[2] = (U[g0](3, i0, j0, k0) - Um2[g0](3, i0, j0, k0)) / (2 * mDt);
-  } else if (mode == TimeSeries::Div) {
+    uRec[0] = (U[g0](1, i0, j0, k0) - Um2[g0](1, i0, j0, k0))/(2*mDt);
+    uRec[1] = (U[g0](2, i0, j0, k0) - Um2[g0](2, i0, j0, k0))/(2*mDt);
+    uRec[2] = (U[g0](3, i0, j0, k0) - Um2[g0](3, i0, j0, k0))/(2*mDt);
+  }
+  else if(mode == TimeSeries::Div)
+  {
     uRec.resize(1);
-    if (g0 < mNumberOfCartesianGrids)  // must be a Cartesian grid
+    if (g0 < mNumberOfCartesianGrids) // must be a Cartesian grid
     {
-      //      int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
-      float_sw4 factor = 1.0 / (2 * mGridSize[g0]);
-      uRec[0] = ((U[g0](1, i0 + 1, j0, k0) - U[g0](1, i0 - 1, j0, k0) +
-                  U[g0](2, i0, j0 + 1, k0) - U[g0](2, i0, j0 - 1, k0) +
-                  U[g0](3, i0, j0, k0 + 1) - U[g0](3, i0, j0, k0 - 1)) *
-                 factor);
-    } else  // must be curvilinear
-    {
-      //      int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
-      float_sw4 factor = 0.5 / sqrt(mJ(i0, j0, k0));
-      uRec[0] = ((mMetric(1, i0, j0, k0) *
-                      (U[g0](1, i0 + 1, j0, k0) - U[g0](1, i0 - 1, j0, k0)) +
-                  mMetric(1, i0, j0, k0) *
-                      (U[g0](2, i0, j0 + 1, k0) - U[g0](2, i0, j0 - 1, k0)) +
-                  mMetric(2, i0, j0, k0) *
-                      (U[g0](1, i0, j0, k0 + 1) - U[g0](1, i0, j0, k0 - 1)) +
-                  mMetric(3, i0, j0, k0) *
-                      (U[g0](2, i0, j0, k0 + 1) - U[g0](2, i0, j0, k0 - 1)) +
-                  mMetric(4, i0, j0, k0) *
-                      (U[g0](3, i0, j0, k0 + 1) - U[g0](3, i0, j0, k0 - 1))) *
-                 factor);
+//      int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
+      float_sw4 factor = 1.0/(2*mGridSize[g0]);
+      uRec[0] = ((U[g0](1,i0+1, j0, k0) - U[g0](1,i0-1, j0, k0)+
+		  U[g0](2,i0, j0+1, k0) - U[g0](2,i0, j0-1, k0)+
+		  U[g0](3,i0, j0, k0+1) - U[g0](3,i0, j0, k0-1))*factor);
     }
-  }  // end div
-  else if (mode == TimeSeries::Curl) {
+    else // must be curvilinear
+    {
+//      int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
+       float_sw4 factor = 0.5/sqrt(mJ[g0](i0,j0,k0));
+       uRec[0] = ( ( mMetric[g0](1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
+		     mMetric[g0](1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
+		     mMetric[g0](2,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))+
+		     mMetric[g0](3,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))+
+		     mMetric[g0](4,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1))  )*factor);
+    }
+  } // end div
+  else if(mode == TimeSeries::Curl)
+  {
     uRec.resize(3);
-    if (g0 < mNumberOfCartesianGrids)  // must be a Cartesian grid
+    if (g0 < mNumberOfCartesianGrids) // must be a Cartesian grid
     {
-      //       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
-      float_sw4 factor = 1.0 / (2 * mGridSize[g0]);
-      float_sw4 duydx =
-          (U[g0](2, i0 + 1, j0, k0) - U[g0](2, i0 - 1, j0, k0)) * factor;
-      float_sw4 duzdx =
-          (U[g0](3, i0 + 1, j0, k0) - U[g0](3, i0 - 1, j0, k0)) * factor;
-      float_sw4 duxdy =
-          (U[g0](1, i0, j0 + 1, k0) - U[g0](1, i0, j0 - 1, k0)) * factor;
-      float_sw4 duzdy =
-          (U[g0](3, i0, j0 + 1, k0) - U[g0](3, i0, j0 - 1, k0)) * factor;
-      float_sw4 duxdz =
-          (U[g0](1, i0, j0, k0 + 1) - U[g0](1, i0, j0, k0 - 1)) * factor;
-      float_sw4 duydz =
-          (U[g0](2, i0, j0, k0 + 1) - U[g0](2, i0, j0, k0 - 1)) * factor;
-      //       if( m_xycomponent )
-      //       {
-      uRec[0] = (duzdy - duydz);
-      uRec[1] = (duxdz - duzdx);
-      uRec[2] = (duydx - duxdy);
-      //       }
-      //       else
-      //       {
-      // 	 float_sw4 uns = m_thynrm*(duzdy-duydz)-m_thxnrm*(duxdz-duzdx);
-      // 	 float_sw4 uew = m_salpha*(duzdy-duydz)+m_calpha*(duxdz-duzdx);
-      // 	 mRecordedUX.push_back( uew );
-      // 	 mRecordedUY.push_back( uns );
-      // 	 mRecordedUZ.push_back( -(duydx-duxdy) );
-      //       }
-    } else  // must be curvilinear
-    {
-      //       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
-      float_sw4 factor = 0.5 / sqrt(mJ(i0, j0, k0));
-      float_sw4 duxdq = (U[g0](1, i0 + 1, j0, k0) - U[g0](1, i0 - 1, j0, k0));
-      float_sw4 duydq = (U[g0](2, i0 + 1, j0, k0) - U[g0](2, i0 - 1, j0, k0));
-      float_sw4 duzdq = (U[g0](3, i0 + 1, j0, k0) - U[g0](3, i0 - 1, j0, k0));
-      float_sw4 duxdr = (U[g0](1, i0, j0 + 1, k0) - U[g0](1, i0, j0 - 1, k0));
-      float_sw4 duydr = (U[g0](2, i0, j0 + 1, k0) - U[g0](2, i0, j0 - 1, k0));
-      float_sw4 duzdr = (U[g0](3, i0, j0 + 1, k0) - U[g0](3, i0, j0 - 1, k0));
-      float_sw4 duxds = (U[g0](1, i0, j0, k0 + 1) - U[g0](1, i0, j0, k0 - 1));
-      float_sw4 duyds = (U[g0](2, i0, j0, k0 + 1) - U[g0](2, i0, j0, k0 - 1));
-      float_sw4 duzds = (U[g0](3, i0, j0, k0 + 1) - U[g0](3, i0, j0, k0 - 1));
-      float_sw4 duzdy =
-          mMetric(1, i0, j0, k0) * duzdr + mMetric(3, i0, j0, k0) * duzds;
-      float_sw4 duydz = mMetric(4, i0, j0, k0) * duyds;
-      float_sw4 duxdz = mMetric(4, i0, j0, k0) * duxds;
-      float_sw4 duzdx =
-          mMetric(1, i0, j0, k0) * duzdq + mMetric(2, i0, j0, k0) * duzds;
-      float_sw4 duydx =
-          mMetric(1, i0, j0, k0) * duydq + mMetric(2, i0, j0, k0) * duyds;
-      float_sw4 duxdy =
-          mMetric(1, i0, j0, k0) * duxdr + mMetric(3, i0, j0, k0) * duxds;
-      //       if( m_xycomponent )
-      //       {
-      uRec[0] = (duzdy - duydz) * factor;
-      uRec[1] = (duxdz - duzdx) * factor;
-      uRec[2] = (duydx - duxdy) * factor;
-      //       }
-      //       else
-      //       {
-      // 	 float_sw4 uns = m_thynrm*(duzdy-duydz)-m_thxnrm*(duxdz-duzdx);
-      // 	 float_sw4 uew = m_salpha*(duzdy-duydz)+m_calpha*(duxdz-duzdx);
-      // 	 mRecordedUX.push_back( uew*factor );
-      // 	 mRecordedUY.push_back( uns*factor );
-      // 	 mRecordedUZ.push_back( -(duydx-duxdy)*factor );
-      //       }
+//       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
+      float_sw4 factor = 1.0/(2*mGridSize[g0]);
+      float_sw4 duydx = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0))*factor;
+      float_sw4 duzdx = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0))*factor;
+      float_sw4 duxdy = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0))*factor;
+      float_sw4 duzdy = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0))*factor;
+      float_sw4 duxdz = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))*factor;
+      float_sw4 duydz = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))*factor;
+//       if( m_xycomponent )
+//       {
+      uRec[0] = ( duzdy-duydz );
+      uRec[1] = ( duxdz-duzdx );
+      uRec[2] = ( duydx-duxdy );
+//       }
+//       else
+//       {
+// 	 float_sw4 uns = m_thynrm*(duzdy-duydz)-m_thxnrm*(duxdz-duzdx);
+// 	 float_sw4 uew = m_salpha*(duzdy-duydz)+m_calpha*(duxdz-duzdx);
+// 	 mRecordedUX.push_back( uew );
+// 	 mRecordedUY.push_back( uns );
+// 	 mRecordedUZ.push_back( -(duydx-duxdy) );
+//       }
     }
-  }  // end Curl
-  else if (mode == TimeSeries::Strains) {
-    uRec.resize(6);
-    if (g0 < mNumberOfCartesianGrids)  // must be a Cartesian grid
+    else // must be curvilinear
     {
-      //       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
-      float_sw4 factor = 1.0 / (2 * mGridSize[g0]);
-      float_sw4 duydx =
-          (U[g0](2, i0 + 1, j0, k0) - U[g0](2, i0 - 1, j0, k0)) * factor;
-      float_sw4 duzdx =
-          (U[g0](3, i0 + 1, j0, k0) - U[g0](3, i0 - 1, j0, k0)) * factor;
-      float_sw4 duxdy =
-          (U[g0](1, i0, j0 + 1, k0) - U[g0](1, i0, j0 - 1, k0)) * factor;
-      float_sw4 duzdy =
-          (U[g0](3, i0, j0 + 1, k0) - U[g0](3, i0, j0 - 1, k0)) * factor;
-      float_sw4 duxdz =
-          (U[g0](1, i0, j0, k0 + 1) - U[g0](1, i0, j0, k0 - 1)) * factor;
-      float_sw4 duydz =
-          (U[g0](2, i0, j0, k0 + 1) - U[g0](2, i0, j0, k0 - 1)) * factor;
-      float_sw4 duxdx =
-          (U[g0](1, i0 + 1, j0, k0) - U[g0](1, i0 - 1, j0, k0)) * factor;
-      float_sw4 duydy =
-          (U[g0](2, i0, j0 + 1, k0) - U[g0](2, i0, j0 - 1, k0)) * factor;
-      float_sw4 duzdz =
-          (U[g0](3, i0, j0, k0 + 1) - U[g0](3, i0, j0, k0 - 1)) * factor;
-      uRec[0] = (duxdx);
-      uRec[1] = (duydy);
-      uRec[2] = (duzdz);
-      uRec[3] = (0.5 * (duydx + duxdy));
-      uRec[4] = (0.5 * (duzdx + duxdz));
-      uRec[5] = (0.5 * (duydz + duzdy));
-    } else  // must be curvilinear
-    {
-      //       int i=m_i0, j=m_j0, k0=m_k00, g0=m_grid0;
-      float_sw4 factor = 0.5 / sqrt(mJ(i0, j0, k0));
-      float_sw4 duxdq = (U[g0](1, i0 + 1, j0, k0) - U[g0](1, i0 - 1, j0, k0));
-      float_sw4 duydq = (U[g0](2, i0 + 1, j0, k0) - U[g0](2, i0 - 1, j0, k0));
-      float_sw4 duzdq = (U[g0](3, i0 + 1, j0, k0) - U[g0](3, i0 - 1, j0, k0));
-      float_sw4 duxdr = (U[g0](1, i0, j0 + 1, k0) - U[g0](1, i0, j0 - 1, k0));
-      float_sw4 duydr = (U[g0](2, i0, j0 + 1, k0) - U[g0](2, i0, j0 - 1, k0));
-      float_sw4 duzdr = (U[g0](3, i0, j0 + 1, k0) - U[g0](3, i0, j0 - 1, k0));
-      float_sw4 duxds = (U[g0](1, i0, j0, k0 + 1) - U[g0](1, i0, j0, k0 - 1));
-      float_sw4 duyds = (U[g0](2, i0, j0, k0 + 1) - U[g0](2, i0, j0, k0 - 1));
-      float_sw4 duzds = (U[g0](3, i0, j0, k0 + 1) - U[g0](3, i0, j0, k0 - 1));
-      float_sw4 duzdy =
-          (mMetric(1, i0, j0, k0) * duzdr + mMetric(3, i0, j0, k0) * duzds) *
-          factor;
-      float_sw4 duydz = (mMetric(4, i0, j0, k0) * duyds) * factor;
-      float_sw4 duxdz = (mMetric(4, i0, j0, k0) * duxds) * factor;
-      float_sw4 duzdx =
-          (mMetric(1, i0, j0, k0) * duzdq + mMetric(2, i0, j0, k0) * duzds) *
-          factor;
-      float_sw4 duydx =
-          (mMetric(1, i0, j0, k0) * duydq + mMetric(2, i0, j0, k0) * duyds) *
-          factor;
-      float_sw4 duxdy =
-          (mMetric(1, i0, j0, k0) * duxdr + mMetric(3, i0, j0, k0) * duxds) *
-          factor;
-      float_sw4 duxdx =
-          (mMetric(1, i0, j0, k0) *
-               (U[g0](1, i0 + 1, j0, k0) - U[g0](1, i0 - 1, j0, k0)) +
-           mMetric(2, i0, j0, k0) *
-               (U[g0](1, i0, j0, k0 + 1) - U[g0](1, i0, j0, k0 - 1))) *
-          factor;
-      float_sw4 duydy =
-          (mMetric(1, i0, j0, k0) *
-               (U[g0](2, i0, j0 + 1, k0) - U[g0](2, i0, j0 - 1, k0)) +
-           mMetric(3, i0, j0, k0) *
-               (U[g0](2, i0, j0, k0 + 1) - U[g0](2, i0, j0, k0 - 1))) *
-          factor;
-      float_sw4 duzdz = (mMetric(4, i0, j0, k0) * (U[g0](3, i0, j0, k0 + 1) -
-                                                   U[g0](3, i0, j0, k0 - 1))) *
-                        factor;
-      uRec[0] = (duxdx);
-      uRec[1] = (duydy);
-      uRec[2] = (duzdz);
-      uRec[3] = (0.5 * (duydx + duxdy));
-      uRec[4] = (0.5 * (duzdx + duxdz));
-      uRec[5] = (0.5 * (duydz + duzdy));
+//       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
+      float_sw4 factor = 0.5/sqrt(mJ[g0](i0,j0,k0));
+      //      float_sw4 duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
+      float_sw4 duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
+      float_sw4 duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
+      float_sw4 duxdr = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0));
+      //      float_sw4 duydr = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0));
+      float_sw4 duzdr = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0));
+      float_sw4 duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
+      float_sw4 duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
+      float_sw4 duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
+      float_sw4 duzdy = mMetric[g0](1,i0,j0,k0)*duzdr+mMetric[g0](3,i0,j0,k0)*duzds;
+      float_sw4 duydz = mMetric[g0](4,i0,j0,k0)*duyds;
+      float_sw4 duxdz = mMetric[g0](4,i0,j0,k0)*duxds;
+      float_sw4 duzdx = mMetric[g0](1,i0,j0,k0)*duzdq+mMetric[g0](2,i0,j0,k0)*duzds;
+      float_sw4 duydx = mMetric[g0](1,i0,j0,k0)*duydq+mMetric[g0](2,i0,j0,k0)*duyds;
+      float_sw4 duxdy = mMetric[g0](1,i0,j0,k0)*duxdr+mMetric[g0](3,i0,j0,k0)*duxds;
+//       if( m_xycomponent )
+//       {
+      uRec[0] = (duzdy-duydz)*factor;
+      uRec[1] = (duxdz-duzdx)*factor;
+      uRec[2] = (duydx-duxdy)*factor;
+//       }
+//       else
+//       {
+// 	 float_sw4 uns = m_thynrm*(duzdy-duydz)-m_thxnrm*(duxdz-duzdx);
+// 	 float_sw4 uew = m_salpha*(duzdy-duydz)+m_calpha*(duxdz-duzdx);
+// 	 mRecordedUX.push_back( uew*factor );
+// 	 mRecordedUY.push_back( uns*factor );
+// 	 mRecordedUZ.push_back( -(duydx-duxdy)*factor );
+//       }
     }
-  }  // end Strains
-  else if (mode == TimeSeries::DisplacementGradient) {
-    uRec.resize(9);
-    if (g0 < mNumberOfCartesianGrids)  // must be a Cartesian grid
+  } // end Curl
+  else if(mode == TimeSeries::Strains )
+  {
+     uRec.resize(6);
+    if (g0 < mNumberOfCartesianGrids) // must be a Cartesian grid
     {
-      //       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
-      float_sw4 factor = 1.0 / (2 * mGridSize[g0]);
-      float_sw4 duydx =
-          (U[g0](2, i0 + 1, j0, k0) - U[g0](2, i0 - 1, j0, k0)) * factor;
-      float_sw4 duzdx =
-          (U[g0](3, i0 + 1, j0, k0) - U[g0](3, i0 - 1, j0, k0)) * factor;
-      float_sw4 duxdy =
-          (U[g0](1, i0, j0 + 1, k0) - U[g0](1, i0, j0 - 1, k0)) * factor;
-      float_sw4 duzdy =
-          (U[g0](3, i0, j0 + 1, k0) - U[g0](3, i0, j0 - 1, k0)) * factor;
-      float_sw4 duxdz =
-          (U[g0](1, i0, j0, k0 + 1) - U[g0](1, i0, j0, k0 - 1)) * factor;
-      float_sw4 duydz =
-          (U[g0](2, i0, j0, k0 + 1) - U[g0](2, i0, j0, k0 - 1)) * factor;
-      float_sw4 duxdx =
-          (U[g0](1, i0 + 1, j0, k0) - U[g0](1, i0 - 1, j0, k0)) * factor;
-      float_sw4 duydy =
-          (U[g0](2, i0, j0 + 1, k0) - U[g0](2, i0, j0 - 1, k0)) * factor;
-      float_sw4 duzdz =
-          (U[g0](3, i0, j0, k0 + 1) - U[g0](3, i0, j0, k0 - 1)) * factor;
-      uRec[0] = duxdx;
-      uRec[1] = duxdy;
-      uRec[2] = duxdz;
-      uRec[3] = duydx;
-      uRec[4] = duydy;
-      uRec[5] = duydz;
-      uRec[6] = duzdx;
-      uRec[7] = duzdy;
-      uRec[8] = duzdz;
-    } else  // must be curvilinear
-    {
-      //       int i=m_i0, j=m_j0, k0=m_k00, g0=m_grid0;
-      float_sw4 factor = 0.5 / sqrt(mJ(i0, j0, k0));
-      float_sw4 duxdq = (U[g0](1, i0 + 1, j0, k0) - U[g0](1, i0 - 1, j0, k0));
-      float_sw4 duydq = (U[g0](2, i0 + 1, j0, k0) - U[g0](2, i0 - 1, j0, k0));
-      float_sw4 duzdq = (U[g0](3, i0 + 1, j0, k0) - U[g0](3, i0 - 1, j0, k0));
-      float_sw4 duxdr = (U[g0](1, i0, j0 + 1, k0) - U[g0](1, i0, j0 - 1, k0));
-      float_sw4 duydr = (U[g0](2, i0, j0 + 1, k0) - U[g0](2, i0, j0 - 1, k0));
-      float_sw4 duzdr = (U[g0](3, i0, j0 + 1, k0) - U[g0](3, i0, j0 - 1, k0));
-      float_sw4 duxds = (U[g0](1, i0, j0, k0 + 1) - U[g0](1, i0, j0, k0 - 1));
-      float_sw4 duyds = (U[g0](2, i0, j0, k0 + 1) - U[g0](2, i0, j0, k0 - 1));
-      float_sw4 duzds = (U[g0](3, i0, j0, k0 + 1) - U[g0](3, i0, j0, k0 - 1));
-      float_sw4 duzdy =
-          (mMetric(1, i0, j0, k0) * duzdr + mMetric(3, i0, j0, k0) * duzds) *
-          factor;
-      float_sw4 duydz = (mMetric(4, i0, j0, k0) * duyds) * factor;
-      float_sw4 duxdz = (mMetric(4, i0, j0, k0) * duxds) * factor;
-      float_sw4 duzdx =
-          (mMetric(1, i0, j0, k0) * duzdq + mMetric(2, i0, j0, k0) * duzds) *
-          factor;
-      float_sw4 duydx =
-          (mMetric(1, i0, j0, k0) * duydq + mMetric(2, i0, j0, k0) * duyds) *
-          factor;
-      float_sw4 duxdy =
-          (mMetric(1, i0, j0, k0) * duxdr + mMetric(3, i0, j0, k0) * duxds) *
-          factor;
-      float_sw4 duxdx =
-          (mMetric(1, i0, j0, k0) *
-               (U[g0](1, i0 + 1, j0, k0) - U[g0](1, i0 - 1, j0, k0)) +
-           mMetric(2, i0, j0, k0) *
-               (U[g0](1, i0, j0, k0 + 1) - U[g0](1, i0, j0, k0 - 1))) *
-          factor;
-      float_sw4 duydy =
-          (mMetric(1, i0, j0, k0) *
-               (U[g0](2, i0, j0 + 1, k0) - U[g0](2, i0, j0 - 1, k0)) +
-           mMetric(3, i0, j0, k0) *
-               (U[g0](2, i0, j0, k0 + 1) - U[g0](2, i0, j0, k0 - 1))) *
-          factor;
-      float_sw4 duzdz = (mMetric(4, i0, j0, k0) * (U[g0](3, i0, j0, k0 + 1) -
-                                                   U[g0](3, i0, j0, k0 - 1))) *
-                        factor;
-      uRec[0] = duxdx;
-      uRec[1] = duxdy;
-      uRec[2] = duxdz;
-      uRec[3] = duydx;
-      uRec[4] = duydy;
-      uRec[5] = duydz;
-      uRec[6] = duzdx;
-      uRec[7] = duzdy;
-      uRec[8] = duzdz;
-    }
+//       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
+      float_sw4 factor = 1.0/(2*mGridSize[g0]);
+      float_sw4 duydx = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0))*factor;
+      float_sw4 duzdx = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0))*factor;
+      float_sw4 duxdy = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0))*factor;
+      float_sw4 duzdy = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0))*factor;
+      float_sw4 duxdz = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))*factor;
+      float_sw4 duydz = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))*factor;
+      float_sw4 duxdx = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))*factor;
+      float_sw4 duydy = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))*factor;
+      float_sw4 duzdz = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1))*factor;
+      uRec[0] = ( duxdx );
+      uRec[1] = ( duydy );
+      uRec[2] = ( duzdz );
+      uRec[3] = ( 0.5*(duydx+duxdy) );
+      uRec[4] = ( 0.5*(duzdx+duxdz) );
+      uRec[5] = ( 0.5*(duydz+duzdy) );
+   }
+    else // must be curvilinear
+   {
+//       int i=m_i0, j=m_j0, k0=m_k00, g0=m_grid0;
+      float_sw4 factor = 0.5/sqrt(mJ[g0](i0,j0,k0));
+      //      float_sw4 duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
+      float_sw4 duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
+      float_sw4 duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
+      float_sw4 duxdr = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0));
+      //      float_sw4 duydr = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0));
+      float_sw4 duzdr = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0));
+      float_sw4 duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
+      float_sw4 duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
+      float_sw4 duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
+      float_sw4 duzdy = (mMetric[g0](1,i0,j0,k0)*duzdr+mMetric[g0](3,i0,j0,k0)*duzds)*factor;
+      float_sw4 duydz = (mMetric[g0](4,i0,j0,k0)*duyds)*factor;
+      float_sw4 duxdz = (mMetric[g0](4,i0,j0,k0)*duxds)*factor;
+      float_sw4 duzdx = (mMetric[g0](1,i0,j0,k0)*duzdq+mMetric[g0](2,i0,j0,k0)*duzds)*factor;
+      float_sw4 duydx = (mMetric[g0](1,i0,j0,k0)*duydq+mMetric[g0](2,i0,j0,k0)*duyds)*factor;
+      float_sw4 duxdy = (mMetric[g0](1,i0,j0,k0)*duxdr+mMetric[g0](3,i0,j0,k0)*duxds)*factor;
+      float_sw4 duxdx = ( mMetric[g0](1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
+		       mMetric[g0](2,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1)) )*factor;
+      float_sw4 duydy = ( mMetric[g0](1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
+		       mMetric[g0](3,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1)) )*factor;
+      float_sw4 duzdz = ( mMetric[g0](4,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1)) )*factor;
+      uRec[0] = ( duxdx );
+      uRec[1] = ( duydy );
+      uRec[2] = ( duzdz );
+      uRec[3] = ( 0.5*(duydx+duxdy) );
+      uRec[4] = ( 0.5*(duzdx+duxdz) );
+      uRec[5] = ( 0.5*(duydz+duzdy) );
+   }
+  } // end Strains
+  else if(mode == TimeSeries::DisplacementGradient )
+  {
+     uRec.resize(9);
+     if (g0 < mNumberOfCartesianGrids) // must be a Cartesian grid
+     {
+//       int i=m_i0, j=m_j0, k=m_k0, g=m_grid0;
+	float_sw4 factor = 1.0/(2*mGridSize[g0]);
+	float_sw4 duydx = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0))*factor;
+	float_sw4 duzdx = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0))*factor;
+	float_sw4 duxdy = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0))*factor;
+	float_sw4 duzdy = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0))*factor;
+	float_sw4 duxdz = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1))*factor;
+	float_sw4 duydz = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1))*factor;
+	float_sw4 duxdx = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))*factor;
+	float_sw4 duydy = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))*factor;
+	float_sw4 duzdz = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1))*factor;
+	uRec[0] =  duxdx;
+	uRec[1] =  duxdy;
+	uRec[2] =  duxdz;
+	uRec[3] =  duydx;
+	uRec[4] =  duydy;
+	uRec[5] =  duydz;
+	uRec[6] =  duzdx;
+	uRec[7] =  duzdy;
+	uRec[8] =  duzdz;
+     }
+     else // must be curvilinear
+     {
+//       int i=m_i0, j=m_j0, k0=m_k00, g0=m_grid0;
+	float_sw4 factor = 0.5/sqrt(mJ[g0](i0,j0,k0));
+	//	float_sw4 duxdq = (U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0));
+	float_sw4 duydq = (U[g0](2,i0+1,j0,k0) - U[g0](2,i0-1,j0,k0));
+	float_sw4 duzdq = (U[g0](3,i0+1,j0,k0) - U[g0](3,i0-1,j0,k0));
+	float_sw4 duxdr = (U[g0](1,i0,j0+1,k0) - U[g0](1,i0,j0-1,k0));
+	//	float_sw4 duydr = (U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0));
+	float_sw4 duzdr = (U[g0](3,i0,j0+1,k0) - U[g0](3,i0,j0-1,k0));
+	float_sw4 duxds = (U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1));
+	float_sw4 duyds = (U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1));
+	float_sw4 duzds = (U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1));
+	float_sw4 duzdy = (mMetric[g0](1,i0,j0,k0)*duzdr+mMetric[g0](3,i0,j0,k0)*duzds)*factor;
+	float_sw4 duydz = (mMetric[g0](4,i0,j0,k0)*duyds)*factor;
+	float_sw4 duxdz = (mMetric[g0](4,i0,j0,k0)*duxds)*factor;
+	float_sw4 duzdx = (mMetric[g0](1,i0,j0,k0)*duzdq+mMetric[g0](2,i0,j0,k0)*duzds)*factor;
+	float_sw4 duydx = (mMetric[g0](1,i0,j0,k0)*duydq+mMetric[g0](2,i0,j0,k0)*duyds)*factor;
+	float_sw4 duxdy = (mMetric[g0](1,i0,j0,k0)*duxdr+mMetric[g0](3,i0,j0,k0)*duxds)*factor;
+	float_sw4 duxdx = ( mMetric[g0](1,i0,j0,k0)*(U[g0](1,i0+1,j0,k0) - U[g0](1,i0-1,j0,k0))+
+		       mMetric[g0](2,i0,j0,k0)*(U[g0](1,i0,j0,k0+1) - U[g0](1,i0,j0,k0-1)) )*factor;
+	float_sw4 duydy = ( mMetric[g0](1,i0,j0,k0)*(U[g0](2,i0,j0+1,k0) - U[g0](2,i0,j0-1,k0))+
+		       mMetric[g0](3,i0,j0,k0)*(U[g0](2,i0,j0,k0+1) - U[g0](2,i0,j0,k0-1)) )*factor;
+	float_sw4 duzdz = ( mMetric[g0](4,i0,j0,k0)*(U[g0](3,i0,j0,k0+1) - U[g0](3,i0,j0,k0-1)) )*factor;
+	uRec[0] =  duxdx;
+	uRec[1] =  duxdy;
+	uRec[2] =  duxdz;
+	uRec[3] =  duydx;
+	uRec[4] =  duydy;
+	uRec[5] =  duydz;
+	uRec[6] =  duzdx;
+	uRec[7] =  duzdy;
+	uRec[8] =  duzdz;
+     }
 
-  }  // end DisplacementGradient
+  } // end DisplacementGradient
   return;
 }
 
@@ -4480,12 +4423,12 @@ void EW::addSuperGridDamping(vector<Sarray>& a_Up, vector<Sarray>& a_U,
         if (m_croutines)
           addsgd4c_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr,
                       u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g],
-                      m_sg_str_x[g], m_sg_str_y[g], mJ.c_ptr(),
+                      m_sg_str_x[g], m_sg_str_y[g], mJ[g].c_ptr(),
                       m_sg_corner_x[g], m_sg_corner_y[g],
                       m_supergrid_damping_coefficient);
         else
           addsgd4c(&mDt, up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g],
-                   m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g], mJ.c_ptr(),
+                   m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g], mJ[g].c_ptr(),
                    m_sg_corner_x[g], m_sg_corner_y[g], &ifirst, &ilast, &jfirst,
                    &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient);
       } else {
@@ -4507,12 +4450,12 @@ void EW::addSuperGridDamping(vector<Sarray>& a_Up, vector<Sarray>& a_U,
         if (m_croutines)
           addsgd6c_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr,
                       u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g],
-                      m_sg_str_x[g], m_sg_str_y[g], mJ.c_ptr(),
+                      m_sg_str_x[g], m_sg_str_y[g], mJ[g].c_ptr(),
                       m_sg_corner_x[g], m_sg_corner_y[g],
                       m_supergrid_damping_coefficient);
         else
           addsgd6c(&mDt, up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g],
-                   m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g], mJ.c_ptr(),
+                   m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g], mJ[g].c_ptr(),
                    m_sg_corner_x[g], m_sg_corner_y[g], &ifirst, &ilast, &jfirst,
                    &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient);
       } else {
@@ -4918,10 +4861,10 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
       //	 if( m_croutines )
       //	    addbstressc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
       //			    nz, up_p, mu_p, la_p, bforcerhs.c_ptr(),
-      // mMetric.c_ptr(), 			    side, m_sbop, op, ghno,
+      // mMetric[g].c_ptr(), 			    side, m_sbop, op, ghno,
       // usesg, m_sg_str_x[g], m_sg_str_y[g] ); 	 else 	    addbstressc(
       // &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-      //&nz, up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(),
+      //&nz, up_p, mu_p, la_p, bforcerhs.c_ptr(), mMetric[g].c_ptr(),
       // &side, m_sbop, &op, &ghno, &usesg, m_sg_str_x[g], m_sg_str_y[g] );
 
       for (int a = 0; a < m_number_mechanisms; a++) {
@@ -4935,13 +4878,13 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
         if (m_croutines)
           ve_bndry_stress_curvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                                    nz, alphap_p, mu_ve_p, lave_p,
-                                   bforcerhs.c_ptr(), mMetric.c_ptr(), side,
+                                   bforcerhs.c_ptr(), mMetric[g].c_ptr(), side,
                                    m_sbop_no_gp, usesg, m_sg_str_x[g],
                                    m_sg_str_y[g]);  // no ghost points here
         else
           ve_bndry_stress_curvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
                                 &klast, &nz, alphap_p, mu_ve_p, lave_p,
-                                bforcerhs.c_ptr(), mMetric.c_ptr(), &side,
+                                bforcerhs.c_ptr(), mMetric[g].c_ptr(), &side,
                                 m_sbop_no_gp, &usesg, m_sg_str_x[g],
                                 m_sg_str_y[g]);  // no ghost points here
       }                                          // end for a...
@@ -4949,12 +4892,12 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
       // update GHOST POINT VALUES OF UP
       if (m_croutines)
         att_free_curvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_p,
-                          mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(),
+                          mu_p, la_p, bforcerhs.c_ptr(), mMetric[g].c_ptr(),
                           m_sbop,  // use ghost points
                           usesg, m_sg_str_x[g], m_sg_str_y[g]);
       else
         att_free_curvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, up_p,
-                       mu_p, la_p, bforcerhs.c_ptr(), mMetric.c_ptr(),
+                       mu_p, la_p, bforcerhs.c_ptr(), mMetric[g].c_ptr(),
                        m_sbop,  // use ghost points
                        &usesg, m_sg_str_x[g], m_sg_str_y[g]);
       SW4_MARK_END("enforceBCfreeAtt2::SET 3");

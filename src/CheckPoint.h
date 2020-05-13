@@ -36,6 +36,7 @@ class CheckPoint {
   bool timeToWrite(float_sw4 time, int cycle, float_sw4 dt);
   float_sw4 getDt();
   bool do_checkpointing();
+  int get_checkpoint_cycle_interval();
   bool do_restart();
   void set_restart_path(string restartPath);
   std::string get_restart_path();

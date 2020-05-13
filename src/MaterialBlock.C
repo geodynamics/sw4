@@ -187,9 +187,9 @@ void MaterialBlock::set_material_properties(std::vector<Sarray>& rho,
     for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; k++) {
       for (int j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; j++) {
         for (int i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g]; i++) {
-          float_sw4 x = mEW->mX(i, j, k);
-          float_sw4 y = mEW->mY(i, j, k);
-          float_sw4 z = mEW->mZ(i, j, k);
+          float_sw4 x = mEW->mX[g](i, j, k);
+          float_sw4 y = mEW->mY[g](i, j, k);
+          float_sw4 z = mEW->mZ[g](i, j, k);
 
           // printf("x ,y,z %f %f %f %f\n",x,y,z,mEW->m_zmin[g]);
 
@@ -197,7 +197,8 @@ void MaterialBlock::set_material_properties(std::vector<Sarray>& rho,
           if (m_absoluteDepth) {
             depth = z;
           } else {
-            depth = z - mEW->mZ(i, j, 1);
+            //depth = z - mEW->mZ(i, j, 1);
+	    mEW->getDepth(x, y, z, depth);
           }
 
           if (inside_block(x, y, depth)) {

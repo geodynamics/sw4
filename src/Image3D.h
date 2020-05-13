@@ -84,14 +84,14 @@ class Image3D {
                     std::vector<Sarray>& a_Mu, std::vector<Sarray>& a_Lambda,
                     std::vector<Sarray>& a_gRho, std::vector<Sarray>& a_gMu,
                     std::vector<Sarray>& a_gLambda, std::vector<Sarray>& a_Qp,
-                    std::vector<Sarray>& a_Qs, std::string a_path, Sarray& a_Z);
+                    std::vector<Sarray>& a_Qs, std::string a_path, std::vector<Sarray>& a_Z);
 
   void force_write_image(float_sw4 a_time, int a_cycle, vector<Sarray>& a_U,
                          vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
                          vector<Sarray>& a_Lambda, vector<Sarray>& a_gRho,
                          vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
                          vector<Sarray>& a_Qp, vector<Sarray>& a_Qs,
-                         std::string a_path, Sarray& a_Z);
+                         std::string a_path, std::vector<Sarray>& a_Z);
 
   //   void set_start_time(double tStart);
 
@@ -104,7 +104,7 @@ class Image3D {
                      std::vector<Sarray>& a_gLambda, std::vector<Sarray>& a_Qp,
                      std::vector<Sarray>& a_Qs);
 
-  void write_image(int cycle, std::string& path, float_sw4 t, Sarray& a_Z);
+  void write_image(int cycle, std::string& path, float_sw4 t, std::vector<Sarray>& a_Z);
 
   void define_pio();
 
