@@ -20,8 +20,8 @@ Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf
 	
 	\begin{itemize}
 		\item  {Compute the predictor at the interior grid points for both fine and coarse domains
-			\[{\bf c}^{*,n+1}_{\bf i} = 2{\bf c}^{n}_{\bf i} - {\bf c}^{n-1}_{\bf i} + \Delta_t^2(\rho^{c}_{\bf i}J^c_{\bf i})^{-1}{\wt{\mathcal{L}}}^{2h} {\bf{c}}^{n}_{\bf i},\quad {\bf i}\in I_{\Omega^c},\]
-			\[{\bf f}^{*,n+1}_{\bf i} = 2{\bf f}^{n}_{\bf i} - {\bf f}^{n-1}_{\bf i} + \Delta_t^2(\rho^f_{\bf i}J^f_{\bf i})^{-1}\hat{\mathcal{L}}^{h} {\bf{f}}^{n}_{\bf i},\quad {\bf i}\in I_{\Omega^f}\backslash I_{\Gamma^f}.\]
+			\[{\bf c}^{*,n+1}_{\bf i} = 2{\bf c}^{n}_{\bf i} - {\bf c}^{n-1}_{\bf i} + \Delta_t^2\left((\rho^{2h}J^{2h})\otimes{\bf I}\right)^{-1}{\wt{\mathcal{L}}}^{2h}_{\bf i} {\bf{c}}^{n},\quad {\bf i}\in I_{\Omega^c},\]
+			\[{\bf f}^{*,n+1}_{\bf i} = 2{\bf f}^{n}_{\bf i} - {\bf f}^{n-1}_{\bf i} + \Delta_t^2\left((\rho^{h}J^{h}\otimes{\bf I})\right)^{-1}\hat{\mathcal{L}}^{h}_{\bf i} {\bf{f}}^{n},\quad {\bf i}\in I_{\Omega^f}\backslash I_{\Gamma^f}.\]
 		}
 		\item{For the continuity of solution at the interface $\Gamma$, assign the value ${\bf f}^{*,n+1}_{\bf i}$ to satisfy
 			\begin{equation*}
@@ -35,7 +35,7 @@ Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf
 			%\end{equation}
 				\begin{equation}\label{traction_gamma_pre}
 			\left(\left((\Lambda^{2h}J^{2h})\otimes{\bf I}\right)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}^{\star,n+1}\right)_{\bf i}
-			= {\mathcal{R}}_{\bf i}\Big(\left((\Lambda^hJ^h)\otimes{\bf I}\right)^{-1}(\mathcal{A}_3^h{\bf f}^{\star,n+1}-h_3\omega_1{\bm \eta}^{\star,n+1})\Big), \quad {\bf i}\in I_{\Gamma^c}.
+			= {\mathcal{R}}_{\bf i}\Big(\left((\Lambda^hJ^h)\otimes{\bf I}\right)^{-1}(\mathcal{A}_3^h{\bf f}^{\star,n+1}-h_3\omega_1{\bm \eta}^{\star,n+1})\Big), {\bf i}\in I_{\Gamma^c}.
 			\end{equation}
 		}
 		\item{Evaluate the acceleration at all grid points 
