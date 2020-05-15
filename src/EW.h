@@ -221,6 +221,7 @@ class EW {
 
   void default_bcs();
   void update_curvilinear_cartesian_interface(vector<Sarray>& a_U);
+  void update_curvilinear_cartesian_interface_raja(vector<Sarray>& a_U);
 
   void set_twilight_forcing(ForcingTwilight* a_forcing);
   // perhaps these functions should be in the ForcingTwilight class?
@@ -267,7 +268,7 @@ class EW {
   // time stepping routines
   void simpleAttenuation(vector<Sarray>& a_Up);
   void enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
-                 vector<Sarray>& a_Lambda, float_sw4 t,
+                 vector<Sarray>& a_Lambda, vector<Sarray*>& a_AlphaVE, float_sw4 t,
                  vector<float_sw4**>& a_BCForcing);
 
   void enforceBCfreeAtt(vector<Sarray>& a_Up, vector<Sarray>& a_U,
@@ -1397,6 +1398,8 @@ class EW {
                   std::vector<Sarray>& a_Um, vector<Sarray*>& a_AlphaVEp,
                   float_sw4 t, vector<Sarray>& F,
                   std::vector<GridPointSource*>& point_sources);
+void CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, 
+                     vector<Sarray*>& a_AlphaVE, float_sw4 t );
   void dirichlet_hom_ic(Sarray& U, int g, int k, bool inner);
   void dirichlet_twilight_ic(Sarray& U, int g, int kic, float_sw4 t);
 
@@ -1423,6 +1426,12 @@ class EW {
 
   void compute_icstresses(Sarray& a_Up, Sarray& B, int g, int kic,
                           float_sw4* a_str_x, float_sw4* a_str_y);
+void compute_icstresses2( Sarray& a_Up, Sarray& B, int kic, float_sw4 h, Sarray& a_mu, Sarray& a_lambda,
+                             float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop, char op );
+
+   void compute_icstresses_curv( Sarray& a_Up, Sarray& B, int kic,
+                                 Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
+                                 float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop, char op );
   void add_ve_stresses(Sarray& a_Up, Sarray& B, int g, int kic, int a_a,
                        float_sw4* a_str_x, float_sw4* a_str_y);
 

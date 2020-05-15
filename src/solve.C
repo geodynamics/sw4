@@ -46,6 +46,12 @@
 #include "sachdf5.h"
 #endif
 
+void curvilinear4sgwind(int, int, int, int, int, int, int, int, float_sw4*,
+                        float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+                        float_sw4*, int*, float_sw4*, float_sw4*, float_sw4*,
+                        float_sw4*, float_sw4*, float_sw4*, float_sw4*, int,
+                        char);
+
 #define SQR(x) ((x) * (x))
 
 //--------------------------------------------------------------------
@@ -115,6 +121,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     }
   }
 // done allocating solution arrays
+
+// Setup curvilinear grid refinement interface
+   for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
+     m_cli2[g-mNumberOfCartesianGrids]->init_arrays( m_sg_str_x, m_sg_str_y);
 
 // Set the number of time steps, allocate the recording arrays, and set
 // reference time in all time series objects
@@ -471,7 +481,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   if (m_anisotropic)
     enforceBCanisotropic(U, mC, t, BCForcing);
   else
-    enforceBC(U, mMu, mLambda, t, BCForcing);
+    enforceBC(U, mMu, mLambda, AlphaVE, t, BCForcing);
   // Impose un-coupled free surface boundary condition with visco-elastic terms
   // for 'Up'
   if (m_use_attenuation && (m_number_mechanisms > 0)) {
@@ -499,7 +509,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   if (m_anisotropic)
     enforceBCanisotropic(Um, mC, t - mDt, BCForcing);
   else
-    enforceBC(Um, mMu, mLambda, t - mDt, BCForcing);
+    enforceBC(Um, mMu, mLambda, AlphaVEm, t - mDt, BCForcing);
   // Impose un-coupled free surface boundary condition with visco-elastic terms
   // for 'Up'
   if (m_use_attenuation && (m_number_mechanisms > 0)) {
@@ -814,7 +824,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     if (m_anisotropic)
       enforceBCanisotropic(Up, mC, t + mDt, BCForcing);
     else
-      enforceBC(Up, mMu, mLambda, t + mDt, BCForcing);
+      enforceBC(Up, mMu, mLambda, AlphaVEp, t + mDt, BCForcing);
 
     // NEW
     // Impose un-coupled free surface boundary condition with visco-elastic
@@ -954,7 +964,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       if (m_anisotropic)
         enforceBCanisotropic(Up, mC, t + mDt, BCForcing);
       else
-        enforceBC(Up, mMu, mLambda, t + mDt, BCForcing);
+        enforceBC(Up, mMu, mLambda, AlphaVEp, t + mDt, BCForcing);
 
       // NEW (Apr. 4, 2017)
       // Impose un-coupled free surface boundary condition with visco-elastic
@@ -1347,7 +1357,7 @@ void EW::cycleSolutionArrays(vector<Sarray>& a_Um, vector<Sarray>& a_U,
 
 //---------------------------------------------------------------------------
 void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
-                   vector<Sarray>& a_Lambda, float_sw4 t,
+                   vector<Sarray>& a_Lambda, vector<Sarray*>& a_AlphaVE,float_sw4 t,
                    vector<float_sw4**>& a_BCForcing) {
   SW4_MARK_FUNCTION;
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
@@ -1463,6 +1473,28 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
       }
     }
   }
+#define SW4_RAJA_CURVIMR
+#ifdef SW4_RAJA_CURVIMR
+  // NEW CURVI MR CODE
+  // Interface condition between curvilinear and top Cartesian grid
+  if( mNumberOfGrids-mNumberOfCartesianGrids > 0 )
+    {
+      if( m_gridGenerator->curviCartIsSmooth( mNumberOfGrids-mNumberOfCartesianGrids ) )
+        update_curvilinear_cartesian_interface_raja( a_U );
+      else
+        CurviCartIC( mNumberOfCartesianGrids-1, a_U, a_Mu, a_Lambda, a_AlphaVE,  t );
+    }
+
+
+  // THE CALL BELOW IS MADE IN SOLVE IN THE RAJA VERSION
+  // AND HERE IN THE DEVELOPER BRANCH
+  // Reimpose free surface condition with attenuation terms included
+  //if( usingAttenuation() )
+  // enforceBCfreeAtt2( a_U, a_Mu, a_Lambda, a_AlphaVE, a_BCForcing );
+
+  return;
+#else
+// Below is the PRE CURVI_MR CODE
   // interface between curvilinear and top Cartesian grid
   if (topographyExists()) {
     int nc = 3;
@@ -1517,6 +1549,7 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     //      cout << "Difference of curvilinear and cartesian common grid line =
     //      "<< nrm[0] << " " << nrm[1] << " " << nrm[2] << endl;
   }
+#endif
 }
 
 //---------------------------------------------------------------------------
@@ -1598,6 +1631,62 @@ void EW::enforceBCanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
   }
   update_curvilinear_cartesian_interface(a_U);
 }
+//
+void EW::update_curvilinear_cartesian_interface_raja(vector<Sarray>& a_U) {
+ if (topographyExists()) {
+    int nc = 3;
+    int g = mNumberOfCartesianGrids - 1;
+    int gc = mNumberOfGrids - 1;
+    int mgp = getNumberOfGhostPoints();
+    //      float_sw4 nrm[3]={0,0,0};
+    //      int q, i, j;
+    // inject solution values between lower boundary of gc and upper boundary of
+    // g
+    //
+    SView& a_UgV = a_U[g].getview();
+    SView& a_UgcV = a_U[gc].getview();
+    ASSERT_MANAGED(a_U[g].c_ptr());
+    ASSERT_MANAGED(a_U[gc].c_ptr());
+    int kstartg = m_kStart[g];
+    int kendgc = m_kEnd[gc];
+    RAJA::RangeSegment j_range(m_jStart[g], m_jEnd[g] + 1);
+    RAJA::RangeSegment i_range(m_iStart[g], m_iEnd[g] + 1);
+    RAJA::kernel<ENFORCEBC_CORR_EXEC_POL1>(
+        RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+          // #pragma omp parallel for
+          //       for( int j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
+          // 	 for( int i = m_iStart[g]; i <= m_iEnd[g]; i++ )
+          // 	 {
+          // assign ghost points in the Cartesian grid
+          for (int q = 0; q < mgp; q++)  // only once when m_ghost_points==1
+          {
+            for (int c = 1; c <= nc; c++)
+              a_UgV(c, i, j, kstartg + q) =
+                  a_UgcV(c, i, j, kendgc - 2 * mgp + q);
+          }
+          // assign ghost points in the Curvilinear grid
+          for (int q = 0; q <= mgp;
+               q++)  // twice when m_ghost_points==1 (overwrites solution on the
+                     // common grid line)
+          {
+            for (int c = 1; c <= nc; c++)
+              a_UgcV(c, i, j, kendgc - q) =
+                  a_UgV(c, i, j, kstartg + 2 * mgp - q);
+          }
+          //	    // Verify that the grid lines are the same
+          //            if( i>= 1 && i <= m_global_nx[g] && j >= 1 && j <=
+          //            m_global_ny[g] ) for( int c=1; c <= nc ; c++ )
+          //	    {
+          //	       float_sw4
+          // ndiff=fabs(a_U[gc](c,i,j,m_kEnd[gc]-m_ghost_points)-a_U[g](c,i,j,m_kStart[g]+m_ghost_points));
+          //	       if( ndiff > nrm[c-1] )
+          //		  nrm[c-1] = ndiff;
+          //	    }
+        });  // End of RAJA loop
+    //      cout << "Difference of curvilinear and cartesian common grid line =
+    //      "<< nrm[0] << " " << nrm[1] << " " << nrm[2] << endl;
+  }
+}
 
 //-----------------------------------------------------------------------
 void EW::update_curvilinear_cartesian_interface(vector<Sarray>& a_U) {
@@ -1605,6 +1694,7 @@ void EW::update_curvilinear_cartesian_interface(vector<Sarray>& a_U) {
     int g = mNumberOfCartesianGrids - 1;
     int gc = mNumberOfGrids - 1;
     int nc = a_U[0].m_nc;
+    std::cout<<"CALL TO void EW::update_curvilinear_cartesian_interface\n";
 // inject solution values between lower boundary of gc and upper boundary of g
 #pragma omp parallel for
     for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
@@ -4971,4 +5061,313 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
 
   }  // end for g=0,.
      //::operator delete[](viewArray,Managed);
+}
+void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+                      vector<Sarray*>& a_Alpha, float_sw4 t )
+{
+  std::cout<<"CALL TO EW::CurviCartIC ON CPU \n";
+   int gcurv=gcart+1;
+   int ib=m_iStart[gcurv], ie=m_iEnd[gcurv];
+   int jb=m_jStart[gcurv], je=m_jEnd[gcurv];
+   int kb=m_kStart[gcurv], ke=m_kEnd[gcurv];
+   int ibca=m_iStart[gcart], ieca=m_iEnd[gcart];
+   int jbca=m_jStart[gcart], jeca=m_jEnd[gcart];
+   int kbca=m_kStart[gcart], keca=m_kEnd[gcart];
+   int nk = m_global_nz[gcurv];
+   int nkca = m_global_nz[gcart];
+
+   Sarray Lu(3,ib,ie,jb,je,nk,nk);
+   Sarray Luca(3,ib,ie,jb,je,1,1);
+   float_sw4* Lup=Lu.c_ptr(), *Lucap=Luca.c_ptr();
+   float_sw4 h = mGridSize[gcart];
+   
+   // Injection into curvilinear grid
+   for( int j=jb ; j <= je ; j++ )
+      for( int i=ib ; i <= ie ; i++ )
+      {
+         a_U[gcurv](1,i,j,nk) = a_U[gcart](1,i,j,1);
+         a_U[gcurv](2,i,j,nk) = a_U[gcart](2,i,j,1);
+         a_U[gcurv](3,i,j,nk) = a_U[gcart](3,i,j,1);
+      }
+   if( m_use_attenuation )
+      for( int a=0 ; a < m_number_mechanisms ; a++)
+         for( int j=jb ; j <= je ; j++ )
+            for( int i=ib ; i <= ie ; i++ )
+            {
+               a_Alpha[gcurv][a](1,i,j,nk) = a_Alpha[gcart][a](1,i,j,1);
+               a_Alpha[gcurv][a](2,i,j,nk) = a_Alpha[gcart][a](2,i,j,1);
+               a_Alpha[gcurv][a](3,i,j,nk) = a_Alpha[gcart][a](3,i,j,1);
+            }
+
+   bool force_dirichlet=false;
+   if( force_dirichlet )
+   {
+      TestTwilight* tw = create_twilight();
+      int sides[6];
+      int nrg = 3;
+      sides[0]=sides[1]=sides[2]=sides[3]=sides[4]=0;
+      sides[5]=1;
+      tw->get_ubnd( a_U[gcurv], mX[gcurv], mY[gcurv], mZ[gcurv], t, nrg+1, sides );
+      sides[0]=sides[1]=sides[2]=sides[3] = sides[5]=0;
+      sides[4]=1;
+      tw->get_ubnd( a_U[gcart], h, m_zmin[gcart], t, nrg+1, sides );
+      return;
+   }
+   // Initial guess
+   for( int j=jb+2 ; j <= je-2 ; j++ )
+      for( int i=ib+2 ; i <= ie-2 ; i++ )
+      {
+         //         a_U[gcart](1,i,j,0)=a_U[gcart](1,i,j,1);
+         //         a_U[gcart](2,i,j,0)=a_U[gcart](2,i,j,1);
+         //         a_U[gcart](3,i,j,0)=a_U[gcart](3,i,j,1);
+         a_U[gcart](1,i,j,0)=0;
+         a_U[gcart](2,i,j,0)=0;
+         a_U[gcart](3,i,j,0)=0;
+      }
+
+   curvilinear4sgwind( ib, ie, jb, je, kb, ke, nk, nk, a_U[gcurv].c_ptr(), a_Mu[gcurv].c_ptr(), 
+                       a_Lambda[gcurv].c_ptr(), mMetric[gcurv].c_ptr(), mJ[gcurv].c_ptr(), Lup,
+                       m_onesided[gcurv], m_acof, m_bope, m_ghcof, m_acof_no_gp,
+                       m_ghcof_no_gp, m_sg_str_x[gcurv], m_sg_str_y[gcurv], nk, '=');
+   if( m_use_attenuation )
+      for( int a=0 ; a < m_number_mechanisms ; a++)
+         curvilinear4sgwind( ib, ie, jb, je, kb, ke, nk, nk, a_Alpha[gcurv][a].c_ptr(), mMuVE[gcurv][a].c_ptr(), 
+                       mLambdaVE[gcurv][a].c_ptr(), mMetric[gcurv].c_ptr(), mJ[gcurv].c_ptr(), Lup,
+                       m_onesided[gcurv], m_acof_no_gp, m_bope, m_ghcof_no_gp, m_acof_no_gp,
+                       m_ghcof_no_gp, m_sg_str_x[gcurv], m_sg_str_y[gcurv], nk, '-');
+
+
+   rhs4th3wind( ibca, ieca, jbca, jeca, kbca, keca, nkca, m_onesided[gcart], m_acof, m_bope, m_ghcof, Lucap,
+                a_U[gcart].c_ptr(), a_Mu[gcart].c_ptr(), a_Lambda[gcart].c_ptr(), h,
+                m_sg_str_x[gcart], m_sg_str_y[gcart], m_sg_str_z[gcart], '=', kbca, keca, 1, 1 );
+   if( m_use_attenuation )
+      for( int a=0 ; a < m_number_mechanisms ; a++)
+         rhs4th3wind( ibca, ieca, jbca, jeca, kbca, keca, nkca, m_onesided[gcart], m_acof_no_gp, m_bope, m_ghcof_no_gp, Lucap,
+                      a_Alpha[gcart][a].c_ptr(), mMuVE[gcart][a].c_ptr(), mLambdaVE[gcart][a].c_ptr(), h,
+                      m_sg_str_x[gcart], m_sg_str_y[gcart], m_sg_str_z[gcart], '-', kbca, keca, 1, 1 );
+   
+
+   Sarray Bca(3,ib,ie,jb,je,1,1);
+   compute_icstresses2( a_U[gcart], Bca, 1, mGridSize[gcart], a_Mu[gcart], a_Lambda[gcart], 
+                        m_sg_str_x[gcart], m_sg_str_y[gcart], m_sbop, '=' );
+   if( m_use_attenuation )
+      for( int a=0 ; a < m_number_mechanisms ; a++)
+         compute_icstresses2( a_Alpha[gcart][a], Bca, 1, mGridSize[gcart], mMuVE[gcart][a], mLambdaVE[gcart][a],
+                             m_sg_str_x[gcart], m_sg_str_y[gcart], m_sbop_no_gp, '-' );
+   
+
+   Sarray B(3,ib,ie,jb,je,nk,nk);
+   compute_icstresses_curv( a_U[gcurv], B, nk, mMetric[gcurv], a_Mu[gcurv], a_Lambda[gcurv],
+                            m_sg_str_x[gcurv], m_sg_str_y[gcurv], m_sbop_no_gp, '=' );
+   if( m_use_attenuation )
+      for( int a=0 ; a < m_number_mechanisms ; a++)
+         compute_icstresses_curv( a_Alpha[gcurv][a], B, nk, mMetric[gcurv], mMuVE[gcurv][a], mLambdaVE[gcurv][a],
+                                  m_sg_str_x[gcurv], m_sg_str_y[gcurv], m_sbop_no_gp, '-' );
+
+   float_sw4 w1=17.0/48.0;
+   for( int j=jb+2 ; j <= je-2 ; j++ )
+      for( int i=ib+2 ; i <= ie-2 ; i++ )
+      {
+         float_sw4 istrxy =1/(m_sg_str_x[gcurv][i-ib]*m_sg_str_y[gcurv][j-jb]);
+         float_sw4 istrxyc=1/(m_sg_str_x[gcart][i-ib]*m_sg_str_y[gcart][j-jb]);
+         float_sw4 rhrat = mRho[gcurv](i,j,nk)/mRho[gcart](i,j,1);
+         float_sw4 bcof = h*m_sbop[0]*istrxyc-m_ghcof[0]*rhrat*w1*mJ[gcurv](i,j,nk)*istrxy/(h*h);
+         float_sw4 res = -h*h*Bca(1,i,j,1)*istrxyc+ w1*rhrat*mJ[gcurv](i,j,nk)*istrxy*Luca(1,i,j,1)
+               - w1*mJ[gcurv](i,j,nk)*istrxy*Lu(1,i,j,nk) + B(1,i,j,nk);            
+         a_U[gcart](1,i,j,0) += res/(a_Mu[gcart](i,j,1)*bcof);
+
+         res = -h*h*Bca(2,i,j,1)*istrxyc+ w1*rhrat*mJ[gcurv](i,j,nk)*istrxy*Luca(2,i,j,1)
+               - w1*mJ[gcurv](i,j,nk)*istrxy*Lu(2,i,j,nk) + B(2,i,j,nk);            
+         a_U[gcart](2,i,j,0) += res/(a_Mu[gcart](i,j,1)*bcof);
+
+         res = -h*h*Bca(3,i,j,1)*istrxyc+ w1*rhrat*mJ[gcurv](i,j,nk)*istrxy*Luca(3,i,j,1)
+               - w1*mJ[gcurv](i,j,nk)*istrxy*Lu(3,i,j,nk) + B(3,i,j,nk);            
+         a_U[gcart](3,i,j,0) += res/((2*a_Mu[gcart](i,j,1)+a_Lambda[gcart](i,j,1))*bcof );
+      }
+
+   bool debug=false;
+   if( debug )
+   {
+      // Verify that interface condition is satisfied.
+      curvilinear4sgwind( ib, ie, jb, je, kb, ke, nk, nk, a_U[gcurv].c_ptr(), a_Mu[gcurv].c_ptr(), 
+                          a_Lambda[gcurv].c_ptr(), mMetric[gcurv].c_ptr(), mJ[gcurv].c_ptr(), Lup,
+                          m_onesided[gcurv], m_acof, m_bope, m_ghcof, m_acof_no_gp,
+                          m_ghcof_no_gp, m_sg_str_x[gcurv], m_sg_str_y[gcurv], nk, '=');
+
+      rhs4th3wind( ibca, ieca, jbca, jeca, kbca, keca, nkca, m_onesided[gcart], m_acof, m_bope, m_ghcof, Lucap,
+                   a_U[gcart].c_ptr(), a_Mu[gcart].c_ptr(), a_Lambda[gcart].c_ptr(), h,
+                   m_sg_str_x[gcart], m_sg_str_y[gcart], m_sg_str_z[gcart], '=', kbca, keca, 1, 1 );
+   
+      //compute_icstresses( a_U[gcart], Bca, gcart, 1, m_sg_str_x[gcart], m_sg_str_y[gcart],m_sbop,'=' );
+      // Modifed RAJA version
+compute_icstresses( a_U[gcart], Bca, gcart, 1, m_sg_str_x[gcart], m_sg_str_y[gcart]);
+
+      compute_icstresses_curv( a_U[gcurv], B, nk, mMetric[gcurv], a_Mu[gcurv], a_Lambda[gcurv],
+                               m_sg_str_x[gcurv], m_sg_str_y[gcurv], m_sbop_no_gp, '=' );
+      float_sw4 resmax=0;
+      for( int j=jb+2 ; j <= je-2 ; j++ )
+         for( int i=ib+2 ; i <= ie-2 ; i++ )
+         {
+            float_sw4 rhrat = mRho[gcurv](i,j,nk)/mRho[gcart](i,j,1);
+            float_sw4 res = abs(-h*h*Bca(1,i,j,1)+ w1*rhrat*mJ[gcurv](i,j,nk)*Luca(1,i,j,1)
+                    - w1*mJ[gcurv](i,j,nk)*Lu(1,i,j,nk) + B(1,i,j,nk));            
+            resmax = res > resmax ? res:resmax;
+
+            res = abs(-h*h*Bca(2,i,j,1)+ w1*rhrat*mJ[gcurv](i,j,nk)*Luca(2,i,j,1)
+                   - w1*mJ[gcurv](i,j,nk)*Lu(2,i,j,nk) + B(2,i,j,nk));            
+            resmax = res > resmax ? res:resmax;
+
+            res = abs(-h*h*Bca(3,i,j,1)+ w1*rhrat*mJ[gcurv](i,j,nk)*Luca(3,i,j,1)
+                   - w1*mJ[gcurv](i,j,nk)*Lu(3,i,j,nk) + B(3,i,j,nk));            
+            resmax = res > resmax ? res:resmax;
+         }
+      cout << "resmax = " << resmax << endl;
+   }
+}
+//-----------------------------------------------------------------------
+void EW::compute_icstresses2( Sarray& a_Up, Sarray& B, int kic, float_sw4 h,
+                              Sarray& a_mu, Sarray& a_lambda,
+                              float_sw4* a_str_x, float_sw4* a_str_y, 
+                              float_sw4* sbop, char op )
+{
+   const float_sw4 a1=2.0/3, a2=-1.0/12;
+   bool upper = (kic == 1);
+   int k=kic;
+   float_sw4 ih = 1/h;
+   int ifirst = a_Up.m_ib;
+   int jfirst = a_Up.m_jb;
+#define str_x(i) a_str_x[(i-ifirst)]   
+#define str_y(j) a_str_y[(j-jfirst)]   
+
+   float_sw4 sgn=1;
+   if( op == '=' )
+   {
+      B.set_value(0.0);
+      sgn = 1;
+   }
+   else if( op == '-' )
+      sgn =-1;
+
+#pragma omp parallel for
+   for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
+#pragma omp simd
+      for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
+      {
+	 float_sw4 uz, vz, wz;	 
+	 uz = vz = wz = 0;
+	 if( upper )
+	 {
+	    for( int m=0 ; m <= 5 ; m++ )
+	    {
+	       uz += sbop[m]*a_Up(1,i,j,k+m-1);
+	       vz += sbop[m]*a_Up(2,i,j,k+m-1);
+	       wz += sbop[m]*a_Up(3,i,j,k+m-1);
+	    }
+	 }
+	 else
+	 {
+	    for( int m=0 ; m <= 5 ; m++ )
+	    {
+	       uz -= sbop[m]*a_Up(1,i,j,k+1-m);
+	       vz -= sbop[m]*a_Up(2,i,j,k+1-m);
+	       wz -= sbop[m]*a_Up(3,i,j,k+1-m);
+	    }
+	 }
+         B(1,i,j,k) += sgn*ih*a_mu(i,j,k)*(
+            str_x(i)*( a2*(a_Up(3,i+2,j,k)-a_Up(3,i-2,j,k))+
+                       a1*(a_Up(3,i+1,j,k)-a_Up(3,i-1,j,k))) + (uz)  );
+         B(2,i,j,k) += sgn*ih*a_mu(i,j,k)*(
+            str_y(j)*( a2*(a_Up(3,i,j+2,k)-a_Up(3,i,j-2,k))+
+                       a1*(a_Up(3,i,j+1,k)-a_Up(3,i,j-1,k))) +
+            (vz)  );
+         B(3,i,j,k) += sgn*ih*((2*a_mu(i,j,k)+a_lambda(i,j,k))*(wz) + a_lambda(i,j,k)*(
+                             str_x(i)*( a2*(a_Up(1,i+2,j,k)-a_Up(1,i-2,j,k))+a1*(a_Up(1,i+1,j,k)-a_Up(1,i-1,j,k))) +
+                             str_y(j)*( a2*(a_Up(2,i,j+2,k)-a_Up(2,i,j-2,k))+a1*(a_Up(2,i,j+1,k)-a_Up(2,i,j-1,k))) ) );
+      }
+#undef str_x
+#undef str_y
+}
+
+//-----------------------------------------------------------------------
+void EW::compute_icstresses_curv( Sarray& a_Up, Sarray& B, int kic,
+				  Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
+				  float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop, char op )
+{
+   const float_sw4 a1=2.0/3, a2=-1.0/12;
+   const bool upper = (kic == 1);
+   const int k=kic;
+   const int kl = upper ? 1 :-1;
+   const int ifirst = a_Up.m_ib;
+   const int jfirst = a_Up.m_jb;
+#define str_x(i) a_str_x[(i-ifirst)]   
+#define str_y(j) a_str_y[(j-jfirst)]   
+   float_sw4 sgn=1;
+   if( op == '=' )
+   {
+      B.set_value(0.0);
+      sgn = 1;
+   }
+   if( op == '-' )
+   {
+      sgn = -1;
+   }
+
+#pragma omp parallel for
+   for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
+#pragma omp simd
+      for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
+      {
+	 float_sw4 uz, vz, wz;	 
+	 uz = vz = wz = 0;
+         for( int m=0 ; m <= 5 ; m++ )
+         {
+            uz += sbop[m]*a_Up(1,i,j,k+kl*(m-1));
+            vz += sbop[m]*a_Up(2,i,j,k+kl*(m-1));
+            wz += sbop[m]*a_Up(3,i,j,k+kl*(m-1));
+         }
+         uz *=kl;
+         vz *=kl;
+         wz *=kl;
+
+         // Normal terms
+         float_sw4 m2 = str_x(i)*a_metric(2,i,j,k);
+         float_sw4 m3 = str_y(j)*a_metric(3,i,j,k);
+         float_sw4 m4 = a_metric(4,i,j,k);
+         float_sw4 un = m2*uz+m3*vz+m4*wz;
+         float_sw4 mnrm = m2*m2+m3*m3+m4*m4;
+         float_sw4 B1, B2, B3;
+
+         B1 = a_mu(i,j,k)*mnrm*uz + (a_mu(i,j,k)+a_lambda(i,j,k))*m2*un;
+         B2 = a_mu(i,j,k)*mnrm*vz + (a_mu(i,j,k)+a_lambda(i,j,k))*m3*un;
+         B3 = a_mu(i,j,k)*mnrm*wz + (a_mu(i,j,k)+a_lambda(i,j,k))*m4*un;
+
+         // Tangential terms
+         // p-derivatives
+         float_sw4 up1=str_x(i)*(a2*(a_Up(1,i+2,j,k)-a_Up(1,i-2,j,k))+a1*(a_Up(1,i+1,j,k)-a_Up(1,i-1,j,k)));   
+         float_sw4 up2=str_x(i)*(a2*(a_Up(2,i+2,j,k)-a_Up(2,i-2,j,k))+a1*(a_Up(2,i+1,j,k)-a_Up(2,i-1,j,k)));   
+         float_sw4 up3=str_x(i)*(a2*(a_Up(3,i+2,j,k)-a_Up(3,i-2,j,k))+a1*(a_Up(3,i+1,j,k)-a_Up(3,i-1,j,k)));
+         B1 += a_metric(1,i,j,k)*( (2*a_mu(i,j,k)+a_lambda(i,j,k))*m2*up1 + a_mu(i,j,k)*(m3*up2 + m4*up3));
+         B2 += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m3*up1 + a_mu(i,j,k)*m2*up2 );
+         B3 += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m4*up1 + a_mu(i,j,k)*m2*up3 );
+         
+         // q-derivatives
+         float_sw4 uq1=str_y(j)*(a2*(a_Up(1,i,j+2,k)-a_Up(1,i,j-2,k))+a1*(a_Up(1,i,j+1,k)-a_Up(1,i,j-1,k)));
+         float_sw4 uq2=str_y(j)*(a2*(a_Up(2,i,j+2,k)-a_Up(2,i,j-2,k))+a1*(a_Up(2,i,j+1,k)-a_Up(2,i,j-1,k)));
+         float_sw4 uq3=str_y(j)*(a2*(a_Up(3,i,j+2,k)-a_Up(3,i,j-2,k))+a1*(a_Up(3,i,j+1,k)-a_Up(3,i,j-1,k)));
+         B1 += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m2*uq2 + a_mu(i,j,k)*m3*uq1);
+         B2 += a_metric(1,i,j,k)*( (2*a_mu(i,j,k)+a_lambda(i,j,k))*m3*uq2 +a_mu(i,j,k)*(m2*uq1 + m4*uq3));
+         B3 += a_metric(1,i,j,k)*( a_lambda(i,j,k)*m4*uq2 + a_mu(i,j,k)*m3*uq3);
+
+         float_sw4 isgxy = 1.0/(str_x(i)*str_y(j));
+         B1 *= isgxy;
+         B2 *= isgxy;
+         B3 *= isgxy;
+         //
+         B(1,i,j,k) += sgn*B1;
+         B(2,i,j,k) += sgn*B2;
+         B(3,i,j,k) += sgn*B3;
+         
+      }
+#undef str_x
+#undef str_y
 }
