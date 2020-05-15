@@ -222,18 +222,18 @@ class Sarray {
                        double* ar);
   void insert_subarray(int ib, int ie, int jb, int je, int kb, int ke,
                        float* ar);
-  void insert_intersection( Sarray& a_U );
+  void insert_intersection(Sarray& a_U);
   void insert_subarrayIK(int ib, int ie, int jb, int je, int kb, int ke,
                          float_sw4* ar);
   void copy_kplane(Sarray& u, int k);
-  void copy_kplane2( Sarray& u, int k );
+  void copy_kplane2(Sarray& u, int k);
   void assign(const float* ar, int corder);
   void assign(const double* ar, int corder);
   void extract(double* ar, int corder);
   void assign(const float* ar);
   void assign(const double* ar);
   void transposeik();
-  void extrapolij( int npts );
+  void extrapolij(int npts);
   void copy_to_device(EWCuda* cu, bool async = false, int st = 0);
   void copy_from_device(EWCuda* cu, bool async = false, int st = 0);
   void allocate_on_device(EWCuda* cu);

@@ -1975,15 +1975,16 @@ void EW::normOfDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
     if (topographyExists() && g == mNumberOfGrids - 1) {
       if (m_croutines)
         solerr3c_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, uex_ptr, u_ptr,
-                    mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), mJ[g].c_ptr(), linfLocal,
-                    l2Local, xInfGrid, x0, y0, z0, radius, imin, imax, jmin,
-                    jmax, kmin, kmax, usesg, m_sg_str_x[g], m_sg_str_y[g]);
+                    mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), mJ[g].c_ptr(),
+                    linfLocal, l2Local, xInfGrid, x0, y0, z0, radius, imin,
+                    imax, jmin, jmax, kmin, kmax, usesg, m_sg_str_x[g],
+                    m_sg_str_y[g]);
       else
         solerr3c(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, uex_ptr,
-                 u_ptr, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), mJ[g].c_ptr(),
-                 &linfLocal, &l2Local, &xInfGrid, &x0, &y0, &z0, &radius, &imin,
-                 &imax, &jmin, &jmax, &kmin, &kmax, &usesg, m_sg_str_x[g],
-                 m_sg_str_y[g]);
+                 u_ptr, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
+                 mJ[g].c_ptr(), &linfLocal, &l2Local, &xInfGrid, &x0, &y0, &z0,
+                 &radius, &imin, &imax, &jmin, &jmax, &kmin, &kmax, &usesg,
+                 m_sg_str_x[g], m_sg_str_y[g]);
     } else {
       if (m_croutines)
         solerr3_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, h, uex_ptr,
@@ -2268,10 +2269,12 @@ void EW::initialData(float_sw4 a_t, vector<Sarray>& a_U,
       cv = m_twilight_forcing->m_c;
       if (m_croutines)
         twilightfortc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr,
-                         a_t, om, cv, ph, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+                         a_t, om, cv, ph, mX[g].c_ptr(), mY[g].c_ptr(),
+                         mZ[g].c_ptr());
       else
         twilightfortc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, u_ptr,
-                      &a_t, &om, &cv, &ph, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+                      &a_t, &om, &cv, &ph, mX[g].c_ptr(), mY[g].c_ptr(),
+                      mZ[g].c_ptr());
       if (m_use_attenuation) {
         // one mechanism is assumed
         float_sw4* alpha_ptr = a_AlphaVE[g][0].c_ptr();
@@ -2404,10 +2407,12 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
       cv = m_twilight_forcing->m_c;
       if (m_croutines)
         twilightfortc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr,
-                         a_t, om, cv, ph, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+                         a_t, om, cv, ph, mX[g].c_ptr(), mY[g].c_ptr(),
+                         mZ[g].c_ptr());
       else
         twilightfortc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, u_ptr,
-                      &a_t, &om, &cv, &ph, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+                      &a_t, &om, &cv, &ph, mX[g].c_ptr(), mY[g].c_ptr(),
+                      mZ[g].c_ptr());
       if (m_use_attenuation) {
         // one mechanism is assumed
         float_sw4* alpha_ptr = a_AlphaVE[g][0].c_ptr();
@@ -4203,13 +4208,13 @@ void EW::exactRhsTwilight(float_sw4 a_t, vector<Sarray>& a_F) {
       if (m_croutines)
         exactrhsfortsgc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
                            a_t, om, cv, ph, omm, phm, amprho, ampmu, ampla,
-                           mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), omstrx, omstry,
-                           omstrz);
+                           mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), omstrx,
+                           omstry, omstrz);
       else
         exactrhsfortsgc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                         f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu,
-                        &ampla, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), &omstrx,
-                        &omstry, &omstrz);
+                        &ampla, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
+                        &omstrx, &omstry, &omstrz);
     } else {
       if (m_croutines)
         exactrhsfortc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
@@ -4275,10 +4280,12 @@ void EW::exactAccTwilight(float_sw4 a_t, vector<Sarray>& a_Uacc) {
     // +     klast, utt, t, om, c, ph, h, zmin )
     if (m_croutines)
       exactaccfortc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, uacc_ptr,
-                       a_t, om, cv, ph, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+                       a_t, om, cv, ph, mX[g].c_ptr(), mY[g].c_ptr(),
+                       mZ[g].c_ptr());
     else
       exactaccfortc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, uacc_ptr,
-                    &a_t, &om, &cv, &ph, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+                    &a_t, &om, &cv, &ph, mX[g].c_ptr(), mY[g].c_ptr(),
+                    mZ[g].c_ptr());
   }
 }
 
@@ -4442,13 +4449,13 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
           if (m_croutines)
             forcingfortcsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                               f_ptr, a_t, om, cv, ph, omm, phm, amprho, ampmu,
-                              ampla, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), omstrx,
-                              omstry, omstrz);
+                              ampla, mX[g].c_ptr(), mY[g].c_ptr(),
+                              mZ[g].c_ptr(), omstrx, omstry, omstrz);
           else
             forcingfortcsg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                            f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho,
-                           &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
-                           &omstrx, &omstry, &omstrz);
+                           &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(),
+                           mZ[g].c_ptr(), &omstrx, &omstry, &omstrz);
           if (m_use_attenuation) {
             if (m_croutines)
               forcingfortsgattc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
@@ -4458,8 +4465,9 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
             else
               forcingfortsgattc(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
                                 &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
-                                &amprho, &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(),
-                                mZ[g].c_ptr(), &omstrx, &omstry, &omstrz);
+                                &amprho, &ampmu, &ampla, mX[g].c_ptr(),
+                                mY[g].c_ptr(), mZ[g].c_ptr(), &omstrx, &omstry,
+                                &omstrz);
           }
         } else {
           if (m_croutines)
@@ -4469,7 +4477,8 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
           else
             forcingfortc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                          f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho,
-                         &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+                         &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(),
+                         mZ[g].c_ptr());
           if (m_use_attenuation) {
             if (m_croutines)
               forcingfortattc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
@@ -4650,9 +4659,10 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
         phm = m_twilight_forcing->m_mphase;
         amprho = m_twilight_forcing->m_amprho;
         if (m_croutines)
-          tw_aniso_curvi_force_tt_ci(
-              ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr, a_t, om, cv,
-              ph, omm, phm, amprho, phc, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+          tw_aniso_curvi_force_tt_ci(ifirst, ilast, jfirst, jlast, kfirst,
+                                     klast, f_ptr, a_t, om, cv, ph, omm, phm,
+                                     amprho, phc, mX[g].c_ptr(), mY[g].c_ptr(),
+                                     mZ[g].c_ptr());
         else
           tw_aniso_curvi_force_tt(ifirst, ilast, jfirst, jlast, kfirst, klast,
                                   f_ptr, a_t, om, cv, ph, omm, phm, amprho, phc,
@@ -4751,13 +4761,13 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
           if (m_croutines)
             forcingttfortcsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                                 f_ptr, a_t, om, cv, ph, omm, phm, amprho, ampmu,
-                                ampla, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
-                                omstrx, omstry, omstrz);
+                                ampla, mX[g].c_ptr(), mY[g].c_ptr(),
+                                mZ[g].c_ptr(), omstrx, omstry, omstrz);
           else
             forcingttfortcsg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                              f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho,
-                             &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
-                             &omstrx, &omstry, &omstrz);
+                             &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(),
+                             mZ[g].c_ptr(), &omstrx, &omstry, &omstrz);
           if (m_use_attenuation) {
             if (m_croutines)
               forcingttfortsgattc_ci(
@@ -4768,18 +4778,20 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
               forcingttfortsgattc(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
                                   &klast, f_ptr, &a_t, &om, &cv, &ph, &omm,
                                   &phm, &amprho, &ampmu, &ampla, mX[g].c_ptr(),
-                                  mY[g].c_ptr(), mZ[g].c_ptr(), &omstrx, &omstry,
-                                  &omstrz);
+                                  mY[g].c_ptr(), mZ[g].c_ptr(), &omstrx,
+                                  &omstry, &omstrz);
           }
         } else {
           if (m_croutines)
             forcingttfortc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                               f_ptr, a_t, om, cv, ph, omm, phm, amprho, ampmu,
-                              ampla, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+                              ampla, mX[g].c_ptr(), mY[g].c_ptr(),
+                              mZ[g].c_ptr());
           else
             forcingttfortc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                            f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho,
-                           &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+                           &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(),
+                           mZ[g].c_ptr());
           if (m_use_attenuation) {
             if (m_croutines)
               forcingttattfortc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
@@ -4789,8 +4801,8 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
             else
               forcingttattfortc(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
                                 &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
-                                &amprho, &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(),
-                                mZ[g].c_ptr());
+                                &amprho, &ampmu, &ampla, mX[g].c_ptr(),
+                                mY[g].c_ptr(), mZ[g].c_ptr());
           }
         }
       }
@@ -5225,8 +5237,8 @@ void EW::updateMemVarPred(vector<Sarray*>& a_AlphaVEp,
       float_sw4 ph = m_twilight_forcing->m_phase;
       float_sw4 cv = m_twilight_forcing->m_c;
       if (topographyExists() && g == mNumberOfGrids - 1)
-        addMemVarPredCurvilinear(mX[g], mY[g], mZ[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0],
-                                 mDt, om, ph, cv);
+        addMemVarPredCurvilinear(mX[g], mY[g], mZ[g], a_t, a_AlphaVEp[g][0],
+                                 mOmegaVE[0], mDt, om, ph, cv);
       else {
         // this routine comes from WPP
         //  It  works with SG stretching because no spatial derivatives occur in
@@ -5341,8 +5353,8 @@ void EW::updateMemVarCorrNearInterface(Sarray& a_AlphaVEp, Sarray& a_AlphaVEm,
     double ph = m_twilight_forcing->m_phase;
     double cv = m_twilight_forcing->m_c;
     if (topographyExists() && a_grid == mNumberOfGrids - 1) {
-      addMemVarCorr2Curvilinear(mX[a_grid], mY[a_grid], mZ[a_grid], a_t, a_AlphaVEp, mOmegaVE[0], mDt,
-                                om, ph, cv);
+      addMemVarCorr2Curvilinear(mX[a_grid], mY[a_grid], mZ[a_grid], a_t,
+                                a_AlphaVEp, mOmegaVE[0], mDt, om, ph, cv);
     } else {
       //  It  works with SG stretching because no spatial derivatives occur in
       //  the forcing
@@ -5943,7 +5955,7 @@ void EW::testsourcediff(vector<Source*> GlobalSources, float_sw4 gradient[11],
   //   cout << "size of sources " << gpsources.size() << endl;
   for (int m = 0; m < gpsources.size() - 1; m++) {
     gpsources[m]->add_to_gradient(kappa, eta, 0.63, mDt, gradient, mGridSize,
-                                  mJ[mNumberOfGrids-1], topographyExists());
+                                  mJ[mNumberOfGrids - 1], topographyExists());
     gpsources[m]->add_to_hessian(kappa, eta, 0.63, mDt, hessian, mGridSize);
   }
 }
@@ -7243,8 +7255,8 @@ void EW::add_to_grad(vector<Sarray>& K, vector<Sarray>& Kacc,
         addgradmulac_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, ifirstact,
                         ilastact, jfirstact, jlastact, kfirstact, klastact,
                         k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr, glambda_ptr, mDt,
-                        h, mMetric[g].c_ptr(), mJ[g].c_ptr(), onesided_ptr, nb, wb,
-                        m_bop);
+                        h, mMetric[g].c_ptr(), mJ[g].c_ptr(), onesided_ptr, nb,
+                        wb, m_bop);
       } else {
         addgradrhoc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                     &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
@@ -7524,8 +7536,8 @@ void EW::check_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
     //&kfirst, &klast, 					    &ifirstact,
     //&ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,  rhop, mup, lap,
     //&mDt, mMetric.c_ptr(),
-    // mJ[g].c_ptr(), 					      &mCFLmax, &vsmin, &rhoscale,
-    // &muscale, &lascale, &infogrid );
+    // mJ[g].c_ptr(), 					      &mCFLmax, &vsmin,
+    // &rhoscale, &muscale, &lascale, &infogrid );
     //      }
     //      else
     //      {
@@ -8193,13 +8205,13 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
           if (m_croutines)
             forcingfortcsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                               f_ptr, a_t, om, cv, ph, omm, phm, amprho, ampmu,
-                              ampla, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), omstrx,
-                              omstry, omstrz);
+                              ampla, mX[g].c_ptr(), mY[g].c_ptr(),
+                              mZ[g].c_ptr(), omstrx, omstry, omstrz);
           else
             forcingfortcsg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                            f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho,
-                           &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
-                           &omstrx, &omstry, &omstrz);
+                           &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(),
+                           mZ[g].c_ptr(), &omstrx, &omstry, &omstrz);
           if (m_use_attenuation) {
             if (m_croutines)
               forcingfortsgattc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
@@ -8209,8 +8221,9 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
             else
               forcingfortsgattc(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
                                 &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
-                                &amprho, &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(),
-                                mZ[g].c_ptr(), &omstrx, &omstry, &omstrz);
+                                &amprho, &ampmu, &ampla, mX[g].c_ptr(),
+                                mY[g].c_ptr(), mZ[g].c_ptr(), &omstrx, &omstry,
+                                &omstrz);
           }
         } else {
           if (m_croutines)
@@ -8220,7 +8233,8 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
           else
             forcingfortc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                          f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho,
-                         &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+                         &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(),
+                         mZ[g].c_ptr());
           if (m_use_attenuation) {
             if (m_croutines)
               forcingfortattc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
@@ -8330,9 +8344,10 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
         phm = m_twilight_forcing->m_mphase;
         amprho = m_twilight_forcing->m_amprho;
         if (m_croutines)
-          tw_aniso_curvi_force_tt_ci(
-              ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr, a_t, om, cv,
-              ph, omm, phm, amprho, phc, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+          tw_aniso_curvi_force_tt_ci(ifirst, ilast, jfirst, jlast, kfirst,
+                                     klast, f_ptr, a_t, om, cv, ph, omm, phm,
+                                     amprho, phc, mX[g].c_ptr(), mY[g].c_ptr(),
+                                     mZ[g].c_ptr());
         else
           tw_aniso_curvi_force_tt(ifirst, ilast, jfirst, jlast, kfirst, klast,
                                   f_ptr, a_t, om, cv, ph, omm, phm, amprho, phc,
@@ -8431,13 +8446,13 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
           if (m_croutines)
             forcingttfortcsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                                 f_ptr, a_t, om, cv, ph, omm, phm, amprho, ampmu,
-                                ampla, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
-                                omstrx, omstry, omstrz);
+                                ampla, mX[g].c_ptr(), mY[g].c_ptr(),
+                                mZ[g].c_ptr(), omstrx, omstry, omstrz);
           else
             forcingttfortcsg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                              f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho,
-                             &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
-                             &omstrx, &omstry, &omstrz);
+                             &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(),
+                             mZ[g].c_ptr(), &omstrx, &omstry, &omstrz);
           if (m_use_attenuation) {
             if (m_croutines)
               forcingttfortsgattc_ci(
@@ -8448,18 +8463,20 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
               forcingttfortsgattc(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
                                   &klast, f_ptr, &a_t, &om, &cv, &ph, &omm,
                                   &phm, &amprho, &ampmu, &ampla, mX[g].c_ptr(),
-                                  mY[g].c_ptr(), mZ[g].c_ptr(), &omstrx, &omstry,
-                                  &omstrz);
+                                  mY[g].c_ptr(), mZ[g].c_ptr(), &omstrx,
+                                  &omstry, &omstrz);
           }
         } else {
           if (m_croutines)
             forcingttfortc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                               f_ptr, a_t, om, cv, ph, omm, phm, amprho, ampmu,
-                              ampla, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+                              ampla, mX[g].c_ptr(), mY[g].c_ptr(),
+                              mZ[g].c_ptr());
           else
             forcingttfortc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                            f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho,
-                           &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+                           &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(),
+                           mZ[g].c_ptr());
           if (m_use_attenuation) {
             if (m_croutines)
               forcingttattfortc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
@@ -8469,8 +8486,8 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
             else
               forcingttattfortc(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
                                 &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
-                                &amprho, &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(),
-                                mZ[g].c_ptr());
+                                &amprho, &ampmu, &ampla, mX[g].c_ptr(),
+                                mY[g].c_ptr(), mZ[g].c_ptr());
           }
         }
       }
@@ -8821,23 +8838,23 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
 // CURVI_MR_CODE ADDED HERE
 #include "TestTwilight.h"
 
-TestTwilight* EW::create_twilight()
-{
-   if( m_twilight_forcing != 0 )
-      return new TestTwilight( m_twilight_forcing->m_omega, m_twilight_forcing->m_c,
-                               m_twilight_forcing->m_phase, m_twilight_forcing->m_momega,
-                               m_twilight_forcing->m_mphase, m_twilight_forcing->m_amprho,
-                               m_twilight_forcing->m_ampmu, m_twilight_forcing->m_amplambda );
-   else
-      return 0;
+TestTwilight* EW::create_twilight() {
+  if (m_twilight_forcing != 0)
+    return new TestTwilight(
+        m_twilight_forcing->m_omega, m_twilight_forcing->m_c,
+        m_twilight_forcing->m_phase, m_twilight_forcing->m_momega,
+        m_twilight_forcing->m_mphase, m_twilight_forcing->m_amprho,
+        m_twilight_forcing->m_ampmu, m_twilight_forcing->m_amplambda);
+  else
+    return 0;
 }
 
 #include "TestEcons.h"
 
-TestEcons* EW::create_energytest()
-{
-   if( m_energy_test != 0 )
-      return new TestEcons( m_energy_test->m_stochastic_amp, m_energy_test->m_cpcsratio );
-   else
-      return 0;
+TestEcons* EW::create_energytest() {
+  if (m_energy_test != 0)
+    return new TestEcons(m_energy_test->m_stochastic_amp,
+                         m_energy_test->m_cpcsratio);
+  else
+    return 0;
 }

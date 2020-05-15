@@ -197,8 +197,8 @@ void MaterialBlock::set_material_properties(std::vector<Sarray>& rho,
           if (m_absoluteDepth) {
             depth = z;
           } else {
-            //depth = z - mEW->mZ(i, j, 1);
-	    mEW->getDepth(x, y, z, depth);
+            // depth = z - mEW->mZ(i, j, 1);
+            mEW->getDepth(x, y, z, depth);
           }
 
           if (inside_block(x, y, depth)) {

@@ -1277,166 +1277,147 @@ float_sw4* memoize(Sarray& u, int c, int i, int j, int k) {
   }
 }
 //-----------------------------------------------------------------------
-void Sarray::insert_intersection( Sarray& a_U )
-{
-   // Assuming nc is the same for m_data and a_U.m_data.
-   int wind[6];
-   int ib=a_U.m_ib, ie=a_U.m_ie, jb=a_U.m_jb, je=a_U.m_je, kb=a_U.m_kb, ke=a_U.m_ke;
-   intersection( ib, ie, jb, je, kb, ke, wind );
-   int nis = ie-ib+1;
-   int njs = je-jb+1;
-   int nks = ke-kb+1;
-   size_t sind=0, ind=0;
-   if( m_corder )
-   {
-      size_t totpts  = static_cast<size_t>(m_ni)*m_nj*m_nk;
-      size_t totptss = static_cast<size_t>(nis)*njs*(nks);
-      for( int k=wind[4] ; k<=wind[5] ; k++ )
-	 for( int j=wind[2] ; j<=wind[3] ; j++ )
-	    for( int i=wind[0] ; i <= wind[1] ; i++ )
-	    {
-               sind = (i-ib)  +  nis*(j-jb)   +  nis*njs*(k-kb);
-               ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
-	       for( int c=1 ; c <= m_nc ; c++ )
-		  m_data[ind+totpts*(c-1)] = a_U.m_data[sind+totptss*(c-1)];
-	    }
-   }
-   else
-   {
-      for( int k=wind[4] ; k<=wind[5] ; k++ )
-	 for( int j=wind[2] ; j<=wind[3] ; j++ )
-	    for( int i=wind[0] ; i <= wind[1] ; i++ )
-	    {
-               sind = (i-ib)  +  nis*(j-jb)   +  nis*njs*(k-kb);
-               ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
-	       for( int c=1 ; c <= m_nc ; c++ )
-		  m_data[ind*m_nc+c-1] = a_U.m_data[sind*m_nc+c-1];
-	    }
-   }
+void Sarray::insert_intersection(Sarray& a_U) {
+  // Assuming nc is the same for m_data and a_U.m_data.
+  int wind[6];
+  int ib = a_U.m_ib, ie = a_U.m_ie, jb = a_U.m_jb, je = a_U.m_je, kb = a_U.m_kb,
+      ke = a_U.m_ke;
+  intersection(ib, ie, jb, je, kb, ke, wind);
+  int nis = ie - ib + 1;
+  int njs = je - jb + 1;
+  int nks = ke - kb + 1;
+  size_t sind = 0, ind = 0;
+  if (m_corder) {
+    size_t totpts = static_cast<size_t>(m_ni) * m_nj * m_nk;
+    size_t totptss = static_cast<size_t>(nis) * njs * (nks);
+    for (int k = wind[4]; k <= wind[5]; k++)
+      for (int j = wind[2]; j <= wind[3]; j++)
+        for (int i = wind[0]; i <= wind[1]; i++) {
+          sind = (i - ib) + nis * (j - jb) + nis * njs * (k - kb);
+          ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
+          for (int c = 1; c <= m_nc; c++)
+            m_data[ind + totpts * (c - 1)] =
+                a_U.m_data[sind + totptss * (c - 1)];
+        }
+  } else {
+    for (int k = wind[4]; k <= wind[5]; k++)
+      for (int j = wind[2]; j <= wind[3]; j++)
+        for (int i = wind[0]; i <= wind[1]; i++) {
+          sind = (i - ib) + nis * (j - jb) + nis * njs * (k - kb);
+          ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
+          for (int c = 1; c <= m_nc; c++)
+            m_data[ind * m_nc + c - 1] = a_U.m_data[sind * m_nc + c - 1];
+        }
+  }
 }
 
-void Sarray::extrapolij( int npts )
-{
+void Sarray::extrapolij(int npts) {
   // Extrapolate to layer npts thick at outermost points in i- and j-directions.
-   if( m_corder )
-   {
-      size_t nijk=static_cast<size_t>(m_ni)*m_nj*m_nk;
-      for( int c=0 ; c < m_nc ; c++ ) 
-      {
-         for( int k=0 ; k <= m_nk-1 ; k++ )
-            for( int j=0 ; j <= m_nj-1 ; j++ )
-               for( int i=0 ; i <= npts-1 ; i++ )
-	       {
-	          size_t ind  = i    + m_ni*j + m_ni*m_nj*k;
-	          size_t indf = npts + m_ni*j + m_ni*m_nj*k;
-	          m_data[ind+c*nijk] = m_data[indf+c*nijk];
-	       }
-  // side i-high
-         for( int k=0 ; k <= m_nk-1 ; k++ )
-            for( int j=0 ; j <= m_nj-1 ; j++ )
-               for( int i=m_ni-npts ; i <= m_ni-1 ; i++ )
-	       {
-	          size_t ind  = i           + m_ni*j + m_ni*m_nj*k;
-	          size_t indf = m_ni-npts-1 + m_ni*j + m_ni*m_nj*k;
-	          m_data[ind+c*nijk] = m_data[indf+c*nijk];
-	       }
-  // side j-low 
-         for( int k=0 ; k <= m_nk-1 ; k++ )
-            for( int j=0 ; j <= npts-1 ; j++ )
-               for( int i=0 ; i <= m_ni-1 ; i++ )
-	       {
-	          size_t ind  = i + m_ni*j    + m_ni*m_nj*k;
-	          size_t indf = i + m_ni*npts + m_ni*m_nj*k;
-	          m_data[ind+c*nijk] = m_data[indf+c*nijk];
-	       }
-  // side j-high
-         for( int k=0 ; k <= m_nk-1 ; k++ )
-            for( int j=m_nj-npts ; j <= m_nj-1 ; j++ )
-               for( int i=0 ; i <= m_ni-1 ; i++ )
-	       {
-	          size_t ind  = i + m_ni*j             + m_ni*m_nj*k;
-	          size_t indf = i + m_ni*(m_nj-npts-1) + m_ni*m_nj*k;
-	          m_data[ind+c*nijk] = m_data[indf+c*nijk];
-	       }
-      }
-   }
-   else
-   {
-  // side i-low 
-      for( int k=0 ; k <= m_nk-1 ; k++ )
-         for( int j=0 ; j <= m_nj-1 ; j++ )
-            for( int i=0 ; i <= npts-1 ; i++ )
-	       for( int c=0 ; c < m_nc ; c++ ) 
-	       {
-	           size_t ind  = i    + m_ni*j + m_ni*m_nj*k;
-	           size_t indf = npts + m_ni*j + m_ni*m_nj*k;
-	           m_data[c+m_nc*ind] = m_data[c+m_nc*indf];
-	       }
-  // side i-high
-      for( int k=0 ; k <= m_nk-1 ; k++ )
-         for( int j=0 ; j <= m_nj-1 ; j++ )
-            for( int i=m_ni-npts ; i <= m_ni-1 ; i++ )
-               for( int c=0 ; c < m_nc ; c++ )
-	       {
-	          size_t ind  = i           + m_ni*j + m_ni*m_nj*k;
-	          size_t indf = m_ni-1-npts + m_ni*j + m_ni*m_nj*k;
-	          m_data[c+m_nc*ind] = m_data[c+m_nc*indf];
-	       }
-  // side j-low 
-      for( int k=0 ; k <= m_nk-1 ; k++ )
-         for( int j=0 ; j <= npts-1 ; j++ )
-            for( int i=0 ; i <= m_ni-1 ; i++ )
-               for( int c=0 ; c < m_nc ; c++ )
-	       {
-	          size_t ind  = i + m_ni*j    + m_ni*m_nj*k;
-	          size_t indf = i + m_ni*npts + m_ni*m_nj*k;
-	          m_data[c+m_nc*ind] = m_data[c+m_nc*indf];
-	       }
-  // side j-high
-      for( int k=0 ; k <= m_nk-1 ; k++ )
-         for( int j=m_nj-npts ; j <= m_nj-1 ; j++ )
-            for( int i=0 ; i <= m_ni-1 ; i++ )
-               for( int c=0 ; c < m_nc ; c++ )
-	       {
-	          size_t ind  = i + m_ni*j             + m_ni*m_nj*k;
-	          size_t indf = i + m_ni*(m_nj-1-npts) + m_ni*m_nj*k;
-	          m_data[c+m_nc*ind] = m_data[c+m_nc*indf];
-	      }
-   }
+  if (m_corder) {
+    size_t nijk = static_cast<size_t>(m_ni) * m_nj * m_nk;
+    for (int c = 0; c < m_nc; c++) {
+      for (int k = 0; k <= m_nk - 1; k++)
+        for (int j = 0; j <= m_nj - 1; j++)
+          for (int i = 0; i <= npts - 1; i++) {
+            size_t ind = i + m_ni * j + m_ni * m_nj * k;
+            size_t indf = npts + m_ni * j + m_ni * m_nj * k;
+            m_data[ind + c * nijk] = m_data[indf + c * nijk];
+          }
+      // side i-high
+      for (int k = 0; k <= m_nk - 1; k++)
+        for (int j = 0; j <= m_nj - 1; j++)
+          for (int i = m_ni - npts; i <= m_ni - 1; i++) {
+            size_t ind = i + m_ni * j + m_ni * m_nj * k;
+            size_t indf = m_ni - npts - 1 + m_ni * j + m_ni * m_nj * k;
+            m_data[ind + c * nijk] = m_data[indf + c * nijk];
+          }
+      // side j-low
+      for (int k = 0; k <= m_nk - 1; k++)
+        for (int j = 0; j <= npts - 1; j++)
+          for (int i = 0; i <= m_ni - 1; i++) {
+            size_t ind = i + m_ni * j + m_ni * m_nj * k;
+            size_t indf = i + m_ni * npts + m_ni * m_nj * k;
+            m_data[ind + c * nijk] = m_data[indf + c * nijk];
+          }
+      // side j-high
+      for (int k = 0; k <= m_nk - 1; k++)
+        for (int j = m_nj - npts; j <= m_nj - 1; j++)
+          for (int i = 0; i <= m_ni - 1; i++) {
+            size_t ind = i + m_ni * j + m_ni * m_nj * k;
+            size_t indf = i + m_ni * (m_nj - npts - 1) + m_ni * m_nj * k;
+            m_data[ind + c * nijk] = m_data[indf + c * nijk];
+          }
+    }
+  } else {
+    // side i-low
+    for (int k = 0; k <= m_nk - 1; k++)
+      for (int j = 0; j <= m_nj - 1; j++)
+        for (int i = 0; i <= npts - 1; i++)
+          for (int c = 0; c < m_nc; c++) {
+            size_t ind = i + m_ni * j + m_ni * m_nj * k;
+            size_t indf = npts + m_ni * j + m_ni * m_nj * k;
+            m_data[c + m_nc * ind] = m_data[c + m_nc * indf];
+          }
+    // side i-high
+    for (int k = 0; k <= m_nk - 1; k++)
+      for (int j = 0; j <= m_nj - 1; j++)
+        for (int i = m_ni - npts; i <= m_ni - 1; i++)
+          for (int c = 0; c < m_nc; c++) {
+            size_t ind = i + m_ni * j + m_ni * m_nj * k;
+            size_t indf = m_ni - 1 - npts + m_ni * j + m_ni * m_nj * k;
+            m_data[c + m_nc * ind] = m_data[c + m_nc * indf];
+          }
+    // side j-low
+    for (int k = 0; k <= m_nk - 1; k++)
+      for (int j = 0; j <= npts - 1; j++)
+        for (int i = 0; i <= m_ni - 1; i++)
+          for (int c = 0; c < m_nc; c++) {
+            size_t ind = i + m_ni * j + m_ni * m_nj * k;
+            size_t indf = i + m_ni * npts + m_ni * m_nj * k;
+            m_data[c + m_nc * ind] = m_data[c + m_nc * indf];
+          }
+    // side j-high
+    for (int k = 0; k <= m_nk - 1; k++)
+      for (int j = m_nj - npts; j <= m_nj - 1; j++)
+        for (int i = 0; i <= m_ni - 1; i++)
+          for (int c = 0; c < m_nc; c++) {
+            size_t ind = i + m_ni * j + m_ni * m_nj * k;
+            size_t indf = i + m_ni * (m_nj - 1 - npts) + m_ni * m_nj * k;
+            m_data[c + m_nc * ind] = m_data[c + m_nc * indf];
+          }
+  }
 }
 //-----------------------------------------------------------------------
-void Sarray::copy_kplane2( Sarray& u, int k )
-{
-   // Only check k-dimension, other dims do not have to match, only copy the intersecting part.
-   if( !( u.m_kb <= k && k <= u.m_ke && m_kb <= k && k <= m_ke ) )
-   {
-      cout << "Sarray::copy_kplane, ERROR k index " << k << " not in range "<< endl;
-      return;
-   }
-   int wind[6];
-   intersection( u.m_ib, u.m_ie, u.m_jb, u.m_je, u.m_kb, u.m_ke, wind );
-   if( m_corder )
-   {
-      size_t nijk = m_ni*m_nj*m_nk;
-      size_t unijk = u.m_ni*u.m_nj*u.m_nk;
-      for( int c=0 ; c < m_nc ; c++ )
-	 for( int j=wind[2] ; j<=wind[3] ; j++ )
-	    for( int i=wind[0] ; i <= wind[1] ; i++ )
-	    {
-	       size_t ind = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
-	       size_t uind = (i-u.m_ib) + u.m_ni*(j-u.m_jb) + u.m_ni*u.m_nj*(k-u.m_kb);
-	       m_data[ind+c*nijk] = u.m_data[uind+c*unijk];
-	    }
-   }
-   else
-   {
-      for( int j=wind[2] ; j<=wind[3] ; j++ )
-         for( int i=wind[0] ; i <= wind[1] ; i++ )
-	 {
-	    size_t ind  = (i-m_ib) + m_ni*(j-m_jb) + m_ni*m_nj*(k-m_kb);
-	    size_t uind = (i-u.m_ib) + u.m_ni*(j-u.m_jb) + u.m_ni*u.m_nj*(k-u.m_kb);
-	    for( int c=0 ; c < m_nc ; c++ )
-	       m_data[c+m_nc*ind] = u.m_data[c+m_nc*uind];
-	 }
-   }
+void Sarray::copy_kplane2(Sarray& u, int k) {
+  // Only check k-dimension, other dims do not have to match, only copy the
+  // intersecting part.
+  if (!(u.m_kb <= k && k <= u.m_ke && m_kb <= k && k <= m_ke)) {
+    cout << "Sarray::copy_kplane, ERROR k index " << k << " not in range "
+         << endl;
+    return;
+  }
+  int wind[6];
+  intersection(u.m_ib, u.m_ie, u.m_jb, u.m_je, u.m_kb, u.m_ke, wind);
+  if (m_corder) {
+    size_t nijk = m_ni * m_nj * m_nk;
+    size_t unijk = u.m_ni * u.m_nj * u.m_nk;
+    for (int c = 0; c < m_nc; c++)
+      for (int j = wind[2]; j <= wind[3]; j++)
+        for (int i = wind[0]; i <= wind[1]; i++) {
+          size_t ind =
+              (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
+          size_t uind = (i - u.m_ib) + u.m_ni * (j - u.m_jb) +
+                        u.m_ni * u.m_nj * (k - u.m_kb);
+          m_data[ind + c * nijk] = u.m_data[uind + c * unijk];
+        }
+  } else {
+    for (int j = wind[2]; j <= wind[3]; j++)
+      for (int i = wind[0]; i <= wind[1]; i++) {
+        size_t ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
+        size_t uind = (i - u.m_ib) + u.m_ni * (j - u.m_jb) +
+                      u.m_ni * u.m_nj * (k - u.m_kb);
+        for (int c = 0; c < m_nc; c++)
+          m_data[c + m_nc * ind] = u.m_data[c + m_nc * uind];
+      }
+  }
 }

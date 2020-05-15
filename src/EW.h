@@ -445,7 +445,7 @@ class EW {
   void communicate_array_2d_asym(Sarray& u, int g, int k);
   void communicate_array_2d_ext(Sarray& u);
   void communicate_array_2d_ext_async(Sarray& u);
-  void communicate_array_2d_isurf( Sarray& u, int iSurf );
+  void communicate_array_2d_isurf(Sarray& u, int iSurf);
 
   void set_materials();
   void set_anisotropic_materials();
@@ -597,8 +597,8 @@ class EW {
                        float_sw4 origin[3], float_sw4 dt, int nsteps,
                        int faces);
 
-  void impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
-                             float_sw4 t,vector<float_sw4**>& bforcing );
+  void impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um, float_sw4 t,
+                             vector<float_sw4**>& bforcing);
 
   void get_geodyn_timelevel(vector<Sarray>& geodyndata);
 
@@ -618,8 +618,9 @@ class EW {
                         bool& found_latlon, double& lat, double& lon,
                         double& az, int& adjust);
   void geodynFindFile(char* buffer);
-  void bcsurf_curvilinear_2nd_order( int side, int i0, int i1, int j0, int j1,
-				   int k0, int g, Sarray& u, float_sw4* bforcing );
+  void bcsurf_curvilinear_2nd_order(int side, int i0, int i1, int j0, int j1,
+                                    int k0, int g, Sarray& u,
+                                    float_sw4* bforcing);
   void integrate_source();
 
   void compute_energy(float_sw4 dt, bool write_file, vector<Sarray>& Um,
@@ -1441,14 +1442,17 @@ class EW {
   void check_corrector(Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc,
                        int kf, int kc);
   void getDtFromRestartFile();
-  void initial_tw_test( vector<Sarray>& U, vector<Sarray>& Up, vector<Sarray>& F,
-			 vector<Sarray>& Mu, vector<Sarray>& Lambda, vector<Sarray>& Lu,
-			 vector<Sarray>& Uacc, vector<Sarray*> AlphaVE,
-			 vector<GridPointSource*> point_sources, vector<int> identsources,
-			 float_sw4 t );
-void checkpoint_twilight_test( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarray>& Up,
-				  vector<Sarray*> AlphaVEm, vector<Sarray*> AlphaVE,
-				  vector<Sarray*> AlphaVEp, vector<Source*> a_Sources, float_sw4 t );
+  void initial_tw_test(vector<Sarray>& U, vector<Sarray>& Up, vector<Sarray>& F,
+                       vector<Sarray>& Mu, vector<Sarray>& Lambda,
+                       vector<Sarray>& Lu, vector<Sarray>& Uacc,
+                       vector<Sarray*> AlphaVE,
+                       vector<GridPointSource*> point_sources,
+                       vector<int> identsources, float_sw4 t);
+  void checkpoint_twilight_test(vector<Sarray>& Um, vector<Sarray>& U,
+                                vector<Sarray>& Up, vector<Sarray*> AlphaVEm,
+                                vector<Sarray*> AlphaVE,
+                                vector<Sarray*> AlphaVEp,
+                                vector<Source*> a_Sources, float_sw4 t);
   void make_type(vector<std::tuple<int, int, int>>& send_type,
                  vector<std::tuple<float_sw4*, float_sw4*>>& bufs_type, int i1,
                  int j1, int k1, int i2, int j2, int k2, int g);
@@ -1529,7 +1533,7 @@ void checkpoint_twilight_test( vector<Sarray>& Um, vector<Sarray>& U, vector<Sar
   vector<Sarray> mJ;          // Jacobian also needed by the Source class
   // and the metric derivatives as well as the jacobian
   vector<Sarray> mMetric;
-  
+
   GridGenerator* m_gridGenerator;
 
   // command prefilter
@@ -1551,8 +1555,9 @@ void checkpoint_twilight_test( vector<Sarray>& Um, vector<Sarray>& U, vector<Sar
   // curvilinear grid
   Sarray mTopo, mTopoGridExt;
 
-// 2-D arrays with interface surfaces (z-coordinates) for mesh refinement in the curvilinear grid
-   vector<Sarray> m_curviInterface;
+  // 2-D arrays with interface surfaces (z-coordinates) for mesh refinement in
+  // the curvilinear grid
+  vector<Sarray> m_curviInterface;
 
   // material description used with material surfaces and the ifile command
   vector<MaterialProperty*> m_materials;
@@ -1564,14 +1569,15 @@ void checkpoint_twilight_test( vector<Sarray>& Um, vector<Sarray>& U, vector<Sar
   vector<Sarray> mMu;
   vector<Sarray> mLambda;
   vector<Sarray> mRho;
-  vector<Sarray*> mMuVE, mLambdaVE; // Attenuation material
-  vector<Sarray> mC;  // Anisotropic material parameters
-  Sarray mCcurv;      // Anisotropic material with metric (on curvilinear grid).
+  vector<Sarray*> mMuVE, mLambdaVE;  // Attenuation material
+  vector<Sarray> mC;                 // Anisotropic material parameters
+  Sarray mCcurv;  // Anisotropic material with metric (on curvilinear grid).
 
   // Store coefficeints needed for Mesh refinement
   vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs, m_Mlcs;
 
-  vector<float_sw4> m_curviRefLev; 
+  vector<float_sw4> m_curviRefLev;
+
  private:
   // void preprocessSources(vector<Source*>& a_GlobalSources);
   void preprocessSources(vector<vector<Source*>>& a_GlobalSources);
@@ -1678,7 +1684,7 @@ void checkpoint_twilight_test( vector<Sarray>& Um, vector<Sarray>& U, vector<Sar
   float_sw4 m_qmultiplier;
 
   vector<Sarray> mQp, mQs;
-  //vector<Sarray*> mMuVE, mLambdaVE;
+  // vector<Sarray*> mMuVE, mLambdaVE;
   // relaxation frequencies
   vector<float_sw4> mOmegaVE;
 
@@ -1830,7 +1836,7 @@ void checkpoint_twilight_test( vector<Sarray>& Um, vector<Sarray>& U, vector<Sar
 
   // Geodyn coupling
   bool m_do_geodynbc;
-  std::vector<float_sw4*> m_geo_usgh; // Save ghost point
+  std::vector<float_sw4*> m_geo_usgh;  // Save ghost point
   std::vector<int*> m_geodyn_dims;
   std::vector<Sarray> m_geodyn_data1;
   std::vector<Sarray> m_geodyn_data2;
@@ -1839,7 +1845,7 @@ void checkpoint_twilight_test( vector<Sarray>& Um, vector<Sarray>& U, vector<Sar
   int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk, m_geodyn_faces;
   std::string m_geodyn_filename;
   std::ifstream m_geodynfile;
-  bool m_geodyn_iwillread, m_geodyn_past_end;   
+  bool m_geodyn_iwillread, m_geodyn_past_end;
 
   // From wpp FileInput class
   bool m_geodynbc_found, m_geodynbc_center;
@@ -1908,9 +1914,8 @@ void checkpoint_twilight_test( vector<Sarray>& Um, vector<Sarray>& U, vector<Sar
   MPI_Datatype m_send_type_2dfinest_ext[2];
 
   // for communicating interface surfaces
-   vector<MPI_Datatype> m_send_type_isurfx;
-   vector<MPI_Datatype> m_send_type_isurfy;
-
+  vector<MPI_Datatype> m_send_type_isurfx;
+  vector<MPI_Datatype> m_send_type_isurfy;
 
   vector<MPI_Datatype> m_send_type_2dx;
   vector<MPI_Datatype> m_send_type_2dy;

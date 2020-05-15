@@ -118,8 +118,10 @@ class Image {
   void computeImagePvel(std::vector<Sarray>& mu, std::vector<Sarray>& lambda,
                         std::vector<Sarray>& rho);
   void computeImageSvel(std::vector<Sarray>& mu, std::vector<Sarray>& rho);
-  void computeImageGrid( std::vector<Sarray> &a_X, std::vector<Sarray> &a_Y, std::vector<Sarray> &a_Z );
-  void computeImageLatLon(std::vector<Sarray>& a_X, std::vector<Sarray>& a_Y, std::vector<Sarray>& a_Z);
+  void computeImageGrid(std::vector<Sarray>& a_X, std::vector<Sarray>& a_Y,
+                        std::vector<Sarray>& a_Z);
+  void computeImageLatLon(std::vector<Sarray>& a_X, std::vector<Sarray>& a_Y,
+                          std::vector<Sarray>& a_Z);
   void computeImageDivCurl(std::vector<Sarray>& a_Up, std::vector<Sarray>& a_U,
                            std::vector<Sarray>& a_Um, float_sw4 dt, int dminus);
   void computeImageMagdt(std::vector<Sarray>& a_Up, std::vector<Sarray>& a_Um,

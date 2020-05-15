@@ -64,8 +64,9 @@ class ESSI3D {
   void update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
                     std::vector<Sarray>& a_U, std::string& a_path, Sarray& a_Z);
 
-  void force_write_image(float_sw4 a_time, int a_cycle, std::vector<Sarray>& a_U,
-                         std::string& a_path, Sarray& a_Z);
+  void force_write_image(float_sw4 a_time, int a_cycle,
+                         std::vector<Sarray>& a_U, std::string& a_path,
+                         Sarray& a_Z);
 
  protected:
   void compute_image(Sarray& a_U, int a_comp);
