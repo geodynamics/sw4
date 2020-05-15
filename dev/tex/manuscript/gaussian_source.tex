@@ -65,8 +65,8 @@ In the numerical schemes, we consider three different meshes: Mesh 1 is the Cart
 	\centering
 	\includegraphics[width=0.49\textwidth,trim={0.05cm 0.1cm 0.55cm 0.45cm}, clip]{u1_t02_cartesian.png}
 	\includegraphics[width=0.49\textwidth,trim={0.05cm 0.1cm 0.55cm 0.45cm}, clip]{u1_t04_cartesian.png}\\
-	\includegraphics[width=0.49\textwidth,trim={0.05cm 0.1cm 0.55cm 0.45cm}, clip]{u1_t02_curvi_mr.png}
-	\includegraphics[width=0.49\textwidth,trim={0.05cm 0.1cm 0.55cm 0.45cm}, clip]{u1_t04_curvi_mr.png}\\
+	\includegraphics[width=0.49\textwidth,trim={0.05cm 0.1cm 0.55cm 0.45cm}, clip]{u1_t02_curvi.png}
+	\includegraphics[width=0.49\textwidth,trim={0.05cm 0.1cm 0.55cm 0.45cm}, clip]{u1_t04_curvi.png}\\
 	\includegraphics[width=0.49\textwidth,trim={0.05cm 0.1cm 0.55cm 0.45cm}, clip]{u1_t02_curvi_finer.png}
 	\includegraphics[width=0.49\textwidth,trim={0.05cm 0.1cm 0.55cm 0.45cm}, clip]{u1_t04_curvi_finer.png}
 \caption{The graphs for $u_1$. In the top, middle and bottom panel, we show numerical solutions at $t=0.2$ and $t=0.4$ computed with Mesh 1, Mesh 2 and Mesh 3, respectively. The curved interfaces are marked with the red dash lines.}
@@ -86,11 +86,11 @@ In the numerical schemes, we consider three different meshes: Mesh 1 is the Cart
 	\centering
 	\includegraphics[width=0.49\textwidth,trim={0.05cm 0.1cm 0.55cm 0.45cm}, clip]{u3_t02_cartesian.png}
 	\includegraphics[width=0.49\textwidth,trim={0.05cm 0.1cm 0.55cm 0.45cm}, clip]{u3_t04_cartesian.png}\\
-	\includegraphics[width=0.49\textwidth,trim={0.05cm 0.1cm 0.55cm 0.45cm}, clip]{u3_t02_curvi_mr.png}
-	\includegraphics[width=0.49\textwidth,trim={0.05cm 0.1cm 0.55cm 0.45cm}, clip]{u3_t04_curvi_mr.png}\\
+	\includegraphics[width=0.49\textwidth,trim={0.05cm 0.1cm 0.55cm 0.45cm}, clip]{u3_t02_curvi.png}
+	\includegraphics[width=0.49\textwidth,trim={0.05cm 0.1cm 0.55cm 0.45cm}, clip]{u3_t04_curvi.png}\\
 	\includegraphics[width=0.49\textwidth,trim={0.05cm 0.1cm 0.55cm 0.45cm}, clip]{u3_t02_curvi_finer.png}
 	\includegraphics[width=0.49\textwidth,trim={0.05cm 0.1cm 0.55cm 0.45cm}, clip]{u3_t04_curvi_finer.png}
 	\caption{The graphs for $u_3$. In the top, middle and bottom panel, we show numerical solutions at $t=0.2$ and $t=0.4$ computed with Mesh 1, Mesh 2 and Mesh 3, respectively. The curved interfaces are marked with the red dash lines.}
 \label{u3}
 \end{figure}
-In Figure \ref{u1}, we plot the component $u_1$ at $t=0.2$ and $t=0.4$.  Some artifacts are observed in the solution computed with the second mesh, which is due to the small number of grid points per wavelength in $\Omega^c$. The artifacts disappear when the finer curvilinear mesh is used. From Figure \ref{u3}, we observe that there is no obvious reflection at the mesh refinement interface for the component $u_3$, and we have a better results when a finer curvilinear mesh is used. The component $u_2$ is zero up to round-off error for both the Cartesian mesh and curvilinear meshes and is not presented here.
+In Figure \ref{u1}, we plot the component $u_1$ at $t=0.2$ and $t=0.4$.  Some artifacts are observed in the solution computed with the second mesh, which is due to the small number of grid points per wavelength in $\Omega^c$. The results become better when the finer curvilinear mesh is used. From Figure \ref{u3}, we observe that there is no obvious reflection at the mesh refinement interface for the component $u_3$, and we have a better results when a finer curvilinear mesh is used. The component $u_2$ is zero up to round-off error for both the Cartesian mesh and curvilinear meshes and is not presented here.
