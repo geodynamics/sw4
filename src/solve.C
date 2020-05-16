@@ -488,6 +488,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     enforceBCfreeAtt2(U, mMu, mLambda, AlphaVE, BCForcing);
   }
 
+  for( int g=mNumberOfCartesianGrids; g < mNumberOfGrids-1 ; g++ )
+     m_cli2[g-mNumberOfCartesianGrids]->impose_ic( U, t, AlphaVE );
+
   //    U[0].save_to_disk("u-dbg0-bc.bin");
   //    U[1].save_to_disk("u-dbg1-bc.bin");
 
@@ -516,6 +519,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     enforceBCfreeAtt2(Um, mMu, mLambda, AlphaVEm, BCForcing);
   }
 
+  for( int g=mNumberOfCartesianGrids; g < mNumberOfGrids-1 ; g++ )
+     m_cli2[g-mNumberOfCartesianGrids]->impose_ic( Um, t-mDt, AlphaVEm );
   // more testing
   if (m_twilight_forcing && m_check_point->do_restart() &&
       getVerbosity() >= 3) {
@@ -1880,8 +1885,14 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
       dirichlet_LRic(a_Up[g + 1], g + 1, kf + 1, time + mDt, 1);
       dirichlet_LRic(a_Up[g], g, kc - 1, time + mDt, 1);
     }
-
   }  // end for g...
+  for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
+    {
+      //         m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt );
+      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt, a_AlphaVEp );
+      //      check_ic_conditions( g, a_Up );
+    }
+
 }  // enforceIC
 
 //-----------------------Special case for 2nd order time
@@ -2036,6 +2047,11 @@ void EW::enforceIC2(vector<Sarray>& a_Up, vector<Sarray>& a_U,
       dirichlet_LRic(a_Up[g], g, kc - 1, time + mDt, 1);
     }
   }
+  for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
+   {
+     //      m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt );
+      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt, a_AlphaVEp );
+   }
 }  // end enforceIC2
 
 //-----------------------------------------------------------------------

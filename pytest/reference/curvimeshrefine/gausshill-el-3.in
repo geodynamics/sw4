@@ -1,0 +1,11 @@
+grid nx=121 x=6 y=4 z=7
+time t=0.8
+
+fileio path=gausshill-el-3 verbose=1
+
+topography input=gaussian zmax=2.5 order=4 gaussianAmp=2.8 gaussianXc=3.4 gaussianYc=1.8 gaussianLx=1.4 gaussianLy=1.1
+
+refinement zmax=1.0
+
+twilight omega=1.1 phase=0.2 momega=1.2 errorlog=1
+
