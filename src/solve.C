@@ -3309,13 +3309,13 @@ void EW::compute_icstresses(Sarray& a_Up, Sarray& B, int g, int kic,
         uz = vz = wz = 0.0;
         // printf("UZ %lf %lf %lf\n",uz,vz,wz);
         if (upper) {
-          for (int m = 0; m <= 4; m++) {
+          for (int m = 0; m <= 5; m++) {
             uz += lm_sbop[m] * UpV(1, i, j, k + m - 1);
             vz += lm_sbop[m] * UpV(2, i, j, k + m - 1);
             wz += lm_sbop[m] * UpV(3, i, j, k + m - 1);
           }
         } else {
-          for (int m = 0; m <= 4; m++) {
+          for (int m = 0; m <= 5; m++) {
             uz -= lm_sbop[m] * UpV(1, i, j, k + 1 - m);
             vz -= lm_sbop[m] * UpV(2, i, j, k + 1 - m);
             wz -= lm_sbop[m] * UpV(3, i, j, k + 1 - m);
