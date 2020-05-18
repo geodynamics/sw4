@@ -66,9 +66,9 @@ Next, we approximate the elastic wave equation (\ref{elastic_curvi_f}) on the fi
 \end{equation}
 Here, $\rho^{h}$ and $J^{h}$ are $n_1^{h}n_2^{h}n_3^{h}\times n_1^{h}n_2^{h}n_3^{h}$ diagonal matrices with the diagonal elements $\rho^h_{\bf i} = \rho^f({\bf x}_{\bf i})$ and $J^h_{\bf i} = J^f({\bf x}_{\bf i})$, ${\bf i}\in I_{\Omega^f}$. And the discrete spatial operator is
 \begin{equation}\label{Lf_operator}
-{\mathcal{L}}^{h} {{\bf f}} = \left(\sum_{l=1}^2{Q}_l^{h}({N}_{ll}^h){\bf f}+{G}_3^{h}({N}_{33}^h){\bf f}+\sum_{l=1}^3\sum_{m=1,m\neq l}^3{D}_l^{h}({N}_{lm}^{h}{D}_m^{h}{\bf f})\right),
+{\mathcal{L}}^{h} {{\bf f}} = \left(\sum_{l=1}^2{Q}_l^{h}({N}_{ll}^h){\bf f}+{G}_3^{h}({N}_{33}^h){\bf f}+\sum_{l=1}^3\sum_{m=1,m\neq l}^3{D}_l^{h}({N}_{lm}^{h}{D}_m^{h}{\bf f})\right).
 \end{equation}
-which does not use any ghost points. The term ${G}_3^{h}(N_{33}^{h}){\bf f}$ approximating $\bar{\partial}_3(N_{33}\bar{\partial}_3 {\bf F})$ is presented in Appendix \ref{appendix_cdomain}; the terms $Q_l^{h}(N_{ll}^{h}){\bf f}$ and $D_{l}^{h}(N_{lm}^{2h}D_m^{h}{\bf f})$ approximate $\bar{\partial}_l(N_{ll}\bar{\partial}_l{\bf F})$ and $\bar{\partial}_l(N_{lm}\bar{\partial}_m {\bf F})$, respectively. Here, ${Q}_l^{h}({N}_{ll}^h){\bf f}$ and ${D}_l^{h}({N}_{lm}^{h}{D}_m^{h}{\bf f})$ are defined similar as those in (\ref{L_operator}), but with the grid points in $I_{\Omega^f}\backslash I_{{\Gamma^f}}$.
+Here, the term ${G}_3^{h}(N_{33}^{h}){\bf f}$ approximating $\bar{\partial}_3(N_{33}\bar{\partial}_3 {\bf F})$ without using any ghost points is presented in Appendix \ref{appendix_cdomain}; the terms $Q_l^{h}(N_{ll}^{h}){\bf f}$ and $D_{l}^{h}(N_{lm}^{2h}D_m^{h}{\bf f})$ approximate $\bar{\partial}_l(N_{ll}\bar{\partial}_l{\bf F})$ and $\bar{\partial}_l(N_{lm}\bar{\partial}_m {\bf F})$, respectively. Here, ${Q}_l^{h}({N}_{ll}^h){\bf f}$ and ${D}_l^{h}({N}_{lm}^{h}{D}_m^{h}{\bf f})$ are defined similar as those in (\ref{L_operator}), but with the grid points in $I_{\Omega^f}\backslash I_{{\Gamma^f}}$.
 
 For the approximation at the interface $\Gamma$, we obtain the numerical solution using a scaled interpolation operator
 \begin{equation}\label{continuous_sol}
