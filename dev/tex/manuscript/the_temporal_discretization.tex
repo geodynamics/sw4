@@ -20,8 +20,8 @@ Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf
 	
 	\begin{itemize}
 		\item  {Compute the predictor at the interior grid points %for both fine and coarse domains
-			\[{\bf c}^{*,n+1}_{\bf i} = 2{\bf c}^{n}_{\bf i} - {\bf c}^{n-1}_{\bf i} + \Delta_t^2\left((\rho^{2h}J^{2h})\otimes{\bf I}\right)^{-1}{\wt{\mathcal{L}}}^{2h}_{\bf i} {\bf{c}}^{n},\quad {\bf i}\in I_{\Omega^c},\]
-			\[{\bf f}^{*,n+1}_{\bf i} = 2{\bf f}^{n}_{\bf i} - {\bf f}^{n-1}_{\bf i} + \Delta_t^2\left((\rho^{h}J^{h}\otimes{\bf I})\right)^{-1}\hat{\mathcal{L}}^{h}_{\bf i} {\bf{f}}^{n},\quad {\bf i}\in I_{\Omega^f}\backslash I_{\Gamma^f}.\]
+			\[{\bf c}^{*,n+1}_{\bf i} = 2{\bf c}^{n}_{\bf i} - {\bf c}^{n-1}_{\bf i} + \Delta_t^2\left((\rho^{2h}\otimes{\bf I})(J^{2h}\otimes{\bf I})\right)^{-1}{\wt{\mathcal{L}}}^{2h}_{\bf i} {\bf{c}}^{n},\quad {\bf i}\in I_{\Omega^c},\]
+			\[{\bf f}^{*,n+1}_{\bf i} = 2{\bf f}^{n}_{\bf i} - {\bf f}^{n-1}_{\bf i} + \Delta_t^2\left((\rho^{h}\otimes{\bf I})(J^{h}\otimes{\bf I})\right)^{-1}\hat{\mathcal{L}}^{h}_{\bf i} {\bf{f}}^{n},\quad {\bf i}\in I_{\Omega^f}\backslash I_{\Gamma^f}.\]
 		}
 		\item{At the interface $\Gamma$, the values ${\bf f}^{*,n+1}_{\bf i}$  are computed by the continuity of solution 
 			\begin{equation*}
@@ -45,8 +45,8 @@ Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf
 			\end{equation*}
 		}
 		\item{Compute the corrector at the interior grid points
-			\[{\bf c}^{n+1}_{\bf i} = {\bf c}^{*,n+1}_{\bf i} + \frac{\Delta_t^4}{12}\left((\rho^{2h}J^{2h})\otimes{\bf I}\right)^{-1}\wt{\mathcal{L}}^{2h}_{\bf i}\underline{{\bf{c}}}^{n},\quad {\bf i}\in I_{\Omega^c},\]
-			\[{\bf f}^{n+1}_{\bf i} = {\bf f}^{*,n+1}_{\bf i} + \frac{\Delta_t^4}{12}\left((\rho^{h}J^h)\otimes{\bf I}\right)^{-1}\hat{\mathcal{L}}^{h}_{\bf i}\underline{{\bf{f}}}^{n},\quad {\bf i}\in I_\Omega^f.\]
+			\[{\bf c}^{n+1}_{\bf i} = {\bf c}^{*,n+1}_{\bf i} + \frac{\Delta_t^4}{12}\left((\rho^{2h}\otimes{\bf I})(J^{2h}\otimes{\bf I})\right)^{-1}\wt{\mathcal{L}}^{2h}_{\bf i}\underline{{\bf{c}}}^{n},\quad {\bf i}\in I_{\Omega^c},\]
+			\[{\bf f}^{n+1}_{\bf i} = {\bf f}^{*,n+1}_{\bf i} + \frac{\Delta_t^4}{12}\left((\rho^{h}\otimes{\bf I})(J^h\otimes{\bf I})\right)^{-1}\hat{\mathcal{L}}^{h}_{\bf i}\underline{{\bf{f}}}^{n},\quad {\bf i}\in I_\Omega^f.\]
 		}
 		\item{At the interface $\Gamma$, the values ${\bf f}^{n+1}_{\bf i}$  are computed by the continuity of solution
 			\begin{equation*}

@@ -48,7 +48,7 @@ In the spatial discretization, we only use ghost points in the coarse domain and
 {%\rho}_{\bf i}^{c}\frac{d^2{{\bf c}_{\bf i}}}{dt^2} = \frac{1}{J^c_{\bf i}}\wt{\mathcal{L}}^{2h} {{\bf c}}_{\bf i},\quad {\bf i}\in I_{\Omega^c},\quad t>0.
 %\end{equation}
 \begin{equation}\label{elastic_semi_c}
-\left(\left(({\rho}^{2h}J^{2h})\otimes {\bf I}\right)\frac{d^2{{\bf c}}}{dt^2}\right)_{\bf i} = \wt{\mathcal{L}}^{2h}_{\bf i} {{\bf c}},\quad {\bf i}\in I_{\Omega^c},\quad t>0,
+\left(({\rho}^{2h}\otimes{\bf I})(J^{2h}\otimes {\bf I})\frac{d^2{{\bf c}}}{dt^2}\right)_{\bf i} = \wt{\mathcal{L}}^{2h}_{\bf i} {{\bf c}},\quad {\bf i}\in I_{\Omega^c},\quad t>0,
 \end{equation}
 where $\rho^{2h}$ and $J^{2h}$ are $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ diagonal matrices with the diagonal elements to be $\rho^c$ and $J^c$ evaluated at the coarse grid points in $\Omega^c$, respectively; the matrix ${\bf I}$ is a $3\times 3$ identity matrix because the spatial dimension of the governing equation is $3$; finally, the discrete spatial operator is
 \begin{equation}\label{L_operator}
@@ -62,7 +62,7 @@ Next, we approximate the elastic wave equation (\ref{elastic_curvi_f}) on the fi
 {%\rho}_{\bf i}^{f}\frac{d^2{{\bf f}_{\bf i}}}{dt^2} = \frac{1}{J^f_{\bf i}}{\mathcal{L}}^{h} {{\bf f}}_{\bf i},\quad {\bf i}\in I_{\Omega^f}\backslash I_{{\Gamma^f}},\quad t>0.
 %\end{equation}
 \begin{equation}\label{elastic_semi_f}
-\left(\left(({\rho}^{h}J^h)\otimes{\bf I}\right)\frac{d^2{{\bf f}}}{dt^2}\right)_{\bf i} = {\mathcal{L}}^{h}_{\bf i} {{\bf f}},\quad {\bf i}\in I_{\Omega^f}\backslash I_{{\Gamma^f}},\quad t>0.
+\left(({\rho}^{h}\otimes{\bf I})(J^h\otimes{\bf I})\frac{d^2{{\bf f}}}{dt^2}\right)_{\bf i} = {\mathcal{L}}^{h}_{\bf i} {{\bf f}},\quad {\bf i}\in I_{\Omega^f}\backslash I_{{\Gamma^f}},\quad t>0.
 \end{equation}
 Here, $\rho^{h}$ and $J^{h}$ are $n_1^{h}n_2^{h}n_3^{h}\times n_1^{h}n_2^{h}n_3^{h}$ diagonal matrices with the diagonal elements to be $\rho^f$ and $J^f$ evaluated at the fine grid points in $\Omega^f$, respectively. And the discrete spatial operator is
 \begin{equation}\label{Lf_operator}
@@ -89,7 +89,7 @@ In the implementation of our scheme, we use \eqref{continuous_sol} to obtain the
 %\frac{1}{J^f_{\bf i}}(\mathcal{L}^h{\bf f}_{\bf i} + {\bm \eta}_{\bf i}), \quad {\bf i}\in I_{\Gamma^f}
 %\end{equation}
 \begin{equation}\label{elastic_semi_f_i}
-\left(\left(({\rho}^hJ^h)\otimes{\bf I}\right) \frac{d^2{\bf f}}{dt^2} \right)_{\bf i}=
+\left(({\rho}^h\otimes{\bf I})(J^h\otimes{\bf I}) \frac{d^2{\bf f}}{dt^2} \right)_{\bf i}=
 \mathcal{L}^h_{\bf i}{\bf f} + {\bm \eta}_{\bf i}, \quad {\bf i}\in I_{\Gamma^f}
 \end{equation}
 with 
@@ -111,7 +111,7 @@ For the simplicity of analysis, we introduce a general notation for the schemes 
 %\right. \quad t > 0.
 %\end{align}
 \begin{align}\label{fine_scheme}
-\left(\left(({\rho}^hJ^h)\otimes{\bf I}\right)\frac{d^2{\bf f}}{dt^2}\right)_{\bf i} = \hat{\mathcal{L}}^h_{\bf i}{\bf f} = \left\{
+\left(({\rho}^h\otimes{\bf I})(J^h\otimes{\bf I})\frac{d^2{\bf f}}{dt^2}\right)_{\bf i} = \hat{\mathcal{L}}^h_{\bf i}{\bf f} = \left\{
 \begin{aligned}
 &\mathcal{L}^h_{\bf i}{\bf f} +{\bm \eta}_{\bf i}, \quad {\bf i}\in I_{\Gamma^f}\\
 &\mathcal{L}^h_{\bf i}{\bf f},\quad\quad\quad {\bf i}\in I_{\Omega^f}\backslash I_{\Gamma^f} 
