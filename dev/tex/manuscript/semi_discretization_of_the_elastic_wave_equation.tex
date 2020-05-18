@@ -70,17 +70,17 @@ Here, $\rho^{h}$ and $J^{h}$ are $n_1^{h}n_2^{h}n_3^{h}\times n_1^{h}n_2^{h}n_3^
 \end{equation}
 which does not use any ghost points. The term ${G}_3^{h}(N_{33}^{h}){\bf f}$ approximating $\bar{\partial}_3(N_{33}\bar{\partial}_3 {\bf F})$ is presented in Appendix \ref{appendix_cdomain}; the terms $Q_l^{h}(N_{ll}^{h}){\bf f}$ and $D_{l}^{h}(N_{lm}^{2h}D_m^{h}{\bf f})$ approximate $\bar{\partial}_l(N_{ll}\bar{\partial}_l{\bf F})$ and $\bar{\partial}_l(N_{lm}\bar{\partial}_m {\bf F})$, respectively. Here, ${Q}_l^{h}({N}_{ll}^h){\bf f}$ and ${D}_l^{h}({N}_{lm}^{h}{D}_m^{h}{\bf f})$ are defined similar as those in (\ref{L_operator}), but with the grid points in $I_{\Omega^f}\backslash I_{{\Gamma^f}}$.
 
-For the approximation at the interface $\Gamma$, we obtain the numerical solution by injection using a scaled interpolation operator
+For the approximation at the interface $\Gamma$, we obtain the numerical solution using a scaled interpolation operator
 \begin{equation}\label{continuous_sol}
 {\bf f}_{\bf i} = {\mathcal{P}}_{\bf i}({\bf c}),\quad {\bf i}\in I_{\Gamma^f},
 \end{equation}
 which imposes the continuity of the solution at the interface $\Gamma$. 
-For energy stability, the operator ${\mathcal{P}}$ must be in a specific form
+For energy stability, the operator ${\mathcal{P}}$ must be of a specific form
 %\[{\mathcal{P}} = (\mathcal{J}^h_\Gamma \bm{\Lambda}^h)^{-\frac{1}{2}}({\bf P}\otimes{\bf I})(\mathcal{J}^{2h}_\Gamma \bm{\Lambda}^{2h})^{\frac{1}{2}}.\]
 \begin{equation}\label{scaleP}
 {\mathcal{P}} = \left(({J}^h_\Gamma {\Lambda}^h)^{-\frac{1}{2}}{\bf P}({J}^{2h}_\Gamma {\Lambda}^{2h})^{\frac{1}{2}}\right)\otimes{\bf I}.
 \end{equation}
-Here, $J_{\Gamma}^h$ and $\Lambda^h$ are $n_1^{h}n_2^{h}\times n_1^{h}n_2^{h}$ diagonal matrices. The diagonal elements of $J_{\Gamma}^h$ and $\Lambda^{h}$ are $J^f$ and $\Lambda^f := |\nabla_x R^{f,(3)}|$ evaluated at fine grid points in $I_{\Gamma^f}$, respectively. Similarly, ${J}_{\Gamma}^{2h}$ and ${{\Lambda}^{2h}}$ are $n_1^{2h}n_2^{2h}\times n_1^{2h}n_2^{2h}$ diagonal matrices. The diagonal elements of $J_{\Gamma}^{2h}$ and $\Lambda^{2h}$ are $J^c$ and $\Lambda^c := |\nabla_x R^{c,(3)}|$ evaluated at coarse grid points in $I_{\Gamma^c}$, respectively. Finally, ${\bf P}$ is an interpolation operator of size $n_1^hn_2^h\times n_1^{2h}n_2^{2h}$ for scalar grid functions at $\Gamma^c$. Since the spatial discretization is fourth order accurate, we also use a fourth order interpolation. With mesh refinement ratio  $1:2$, the stencils ${\bf P}$ have four cases as illustrated in  Figure \ref{interpolation}. Consequently, the scaled interpolation operator $\mathcal{P}$ is also fourth order accurate.
+Here, $J_{\Gamma}^h$ and $\Lambda^h$ are $n_1^{h}n_2^{h}\times n_1^{h}n_2^{h}$ diagonal matrices with elements $J_{\Gamma,ll}^h = J^f({\bf x}_{\bf i})$ and $\Lambda_{ll}^h = |\nabla_xR^{f,(3)}({\bf x}_{\bf i})|$, $l = (j-1)n_1^h+i, {\bf i}\in I_{\Gamma^f}$. Similarly, ${J}_{\Gamma}^{2h}$ and ${{\Lambda}^{2h}}$ are $n_1^{2h}n_2^{2h}\times n_1^{2h}n_2^{2h}$ diagonal matrices with elements $J_{\Gamma,ll}^{2h} = J^c({\bf x}_{\bf i})$ and $\Lambda_{ll}^{2h} = |\nabla_xR^{c,(3)}({\bf x}_{\bf i})|$, $l = (j-1)n_1^{2h}+i, {\bf i}\in I_{\Gamma^c}$. Finally, ${\bf P}$ is an interpolation operator of size $n_1^hn_2^h\times n_1^{2h}n_2^{2h}$ for scalar grid functions at $\Gamma^c$. Since the spatial discretization is fourth order accurate, we also use a fourth order interpolation. With mesh refinement ratio  $1:2$, the stencils ${\bf P}$ have four cases as illustrated in  Figure \ref{interpolation}. Consequently, the scaled interpolation operator $\mathcal{P}$ is also fourth order accurate.
 
 In the implementation of our scheme, we use \eqref{continuous_sol} to obtain the solution at the interface of the fine domain. However, in the energy analysis in  Sec.~\ref{sec_energy}, it is more convenient to use the equivalent form
 %We note that \eqref{continuous_sol} is equivalent to 
@@ -125,10 +125,10 @@ The following condition imposes continuity of traction at the interface, the fir
 %= {\mathcal{R}}\Big((\Lambda^f_{\bf i}{ J}^f_{\bf i})^{-1}(\mathcal{A}_3^h{\bf f}_{\bf i}-h_3\omega_1{\bm \eta}_{\bf i})\Big), \quad {\bf i}\in I_{\Gamma^f},\quad {{\bf i}'}\in I_{\Gamma^c}.
 %\end{equation}
 \begin{equation}\label{continuous_traction}
-\left(\left((\Lambda^{2h}J^{2h})\otimes{\bf I}\right)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}\right)_{\bf i}
-= {\mathcal{R}}_{\bf i}\Big(\left((\Lambda^hJ^h)\otimes{\bf I}\right)^{-1}(\mathcal{A}_3^h{\bf f}-h_3\omega_1{\bm \eta})\Big), \quad {\bf i}\in I_{\Gamma^c}.
+\left(\left((\Lambda^{2h}J_{\Gamma}^{2h})\otimes{\bf I}\right)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}\right)_{\bf i}
+= {\mathcal{R}}_{\bf i}\Big(\left((\Lambda^hJ_{\Gamma}^h)\otimes{\bf I}\right)^{-1}(\mathcal{A}_3^h{\bf f}-h_3\omega_1{\bm \eta})\Big), \quad {\bf i}\in I_{\Gamma^c}.
 \end{equation}
-Here,  $\left((\Lambda^{2h}J^{2h})\otimes{\bf I}\right)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}$ and $\left((\Lambda^hJ^h)\otimes{\bf I}\right)^{-1}\mathcal{A}_3^h{\bf f}$ are approximations of the traction at the interface on the coarse grid and fine grid, respectively. $\wt{\mathcal{A}}_3^{2h}{\bf c}$ is a sum of three terms  $\wt{\mathcal{A}}_3^{2h}{\bf c}= {N}_{31}^{2h}{D}^{2h}_1{\bf c} + {N}_{32}^{2h}{D}^{2h}_2{\bf c} + {N}_{33}^{2h}\wt{\mathcal{D}}^{2h}_3{\bf c}$ given in Appendix \ref{appendix_cdomain}. $\mathcal{A}_3^h{\bf f}$ is defined analogously: ${\mathcal{A}}_3^{h}{\bf f}= {N}_{31}^{h}{D}^{h}_1{\bf f} + {N}_{32}^{h}{D}^{h}_2{\bf f} + {N}_{33}^{h}{\mathcal{D}}^{h}_3{\bf f}$ is given in Appendix \ref{appendix_cdomain}.   The operator $\mathcal{R}$ is a scaled restriction operator with the structure 
+Here,  $\left((\Lambda^{2h}J_{\Gamma}^{2h})\otimes{\bf I}\right)^{-1}\wt{\mathcal{A}}_3^{2h}{\bf c}$ and $\left((\Lambda^hJ_{\Gamma}^h)\otimes{\bf I}\right)^{-1}\mathcal{A}_3^h{\bf f}$ are approximations of the traction at the interface on the coarse grid and fine grid, respectively. The definitions of $\wt{\mathcal{A}}_3^{2h}{\bf c}$ and $\mathcal{A}_3^{h}{\bf f}$ are given in Appendix \ref{appendix_cdomain}. The operator $\mathcal{R}$ is a scaled restriction operator with the structure 
 \begin{equation}\label{scaleR}
  {\mathcal{R}} =  \left(({J}^{2h}_\Gamma{\Lambda}^{2h})^{-\frac{1}{2}}{\bf R}({J}^{h}_\Gamma {\Lambda}^h)^{\frac{1}{2}}\right)\otimes {\bf I},
  \end{equation}
@@ -150,15 +150,15 @@ Here,  $\left((\Lambda^{2h}J^{2h})\otimes{\bf I}\right)^{-1}\wt{\mathcal{A}}_3^{
 % where ${\bf R}$ is a restriction operator of size $n_1^{2h}n_2^{2h}\times n_1^hn_2^h$ for scalar grid funcitons. It is determined by the compatibility condition ${\bf R}=\frac{1}{4}{\bf P}^T$, see the stencils in Figure \ref{restriction}. As will be seen later, the compatibility condition, as well as the scaling of the interpolation and restrictions, are essential for energy stability \cite{Lundquist2018}. We want to remark that the condition \eqref{continuous_traction} determines the ghost points values in the coarse domain. 
 
  
-Let ${\bf u}$ and ${\bf v}$ be grid functions in the coarse domain $\Omega^c$, we define the discrete inner product at the interface by
+Let ${\bf u}$ and ${\bf v}$ be grid functions in the coarse domain $\Omega^c$. We define the discrete inner product at the interface by
 \begin{equation}\label{scalar_product_discrete_interface_c}
-\left<{\bf u}, {\bf v}\right>_{2h} = 4h_1h_2\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}{  J}_{i,j,n_3^{2h}}^{c}\Lambda^{c}_{i,j,n_3^{2h}}({\bf u}_{i,j,n_3^{2h}}\cdot {\bf v}_{i,j,n_3^{2h}}).
+\left<{\bf u}, {\bf v}\right>_{2h} = 4h_1h_2\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}{  J}_{\Gamma,ll}^{2h}\Lambda_{ll}^{2h}({\bf u}_{i,j,n_3^{2h}}\cdot {\bf v}_{i,j,n_3^{2h}})
 \end{equation}
-Similarly, the discrete inner product at the interface for fine domain $\Omega^f$ is defined as
+with $l = (j-1)n_1^{2h}+i$. Similarly, given $l = (j-1)n_1^h+j$, the discrete inner product at the interface for fine domain $\Omega^f$ is defined as
 \begin{equation}\label{scalar_product_discrete_interface_f}
-\left<{\bf u}, {\bf v}\right>_{h} = h_1h_2\sum_{i=1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}{  J}_{i,j,1}^{f}\Lambda^{f}_{i,j,1}({\bf u}_{i,j,1}\cdot {\bf v}_{i,j,1})
+\left<{\bf u}, {\bf v}\right>_{h} = h_1h_2\sum_{i=1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}{J}_{\Gamma,ll}^h\Lambda_{ll}^h({\bf u}_{i,j,1}\cdot {\bf v}_{i,j,1})
 \end{equation}
-with $\bf u$ and $\bf v$ are grid functions in fine domain $\Omega^f$. Then we have the following lemma for the interpolation and restriction operators.
+when $\bf u$ and $\bf v$ are grid functions in fine domain $\Omega^f$. Then we have the following lemma for the interpolation and restriction operators.
  
  \begin{lemma}\label{lemma1}
  	Let ${\bf c}$ and ${\bf f}$ be grid functions at the interface for coarse domain and fine domain, respectively. Then the interpolation operator $\mathcal{P}$ and the restriction operator $\mathcal{R}$ satisfy
@@ -183,9 +183,9 @@ with $\bf u$ and $\bf v$ are grid functions in fine domain $\Omega^f$. Then we h
  	%then
  	From \eqref{scalar_product_discrete_interface_c}--\eqref{scalar_product_discrete_interface_f}, the definition of $\mathcal{P}$ in \eqref{scaleP} and $\mathcal{R}$ in \eqref{scaleR}, we obtain
  	\begin{align*}
- 	\left<\mathcal{P}{\bf c}, {\bf f}\right>_h &= h_1h_2\left[\left((J_{\Gamma}^h\Lambda^h)^{\frac{1}{2}} {\bf P}(J_{\Gamma}^{2h}\Lambda^{2h})^{\frac{1}{2}}\otimes {\bf I}\right){\bf c}\right]^T\cdot{\bf f}\\
- 	& = 4h_1h_2 {\bf c}^T \cdot \left[\left((J_{\Gamma}^{2h}\Lambda^{2h})^{\frac{1}{2}}\frac{1}{4}{\bf P}^T(J_{\Gamma}^h\Lambda^h)^{\frac{1}{2}}\otimes {\bf I}\right) {\bf f}\right]\\
- 	& =4h_1h_2 {\bf c}^T \cdot \left[\left((J_{\Gamma}^{2h}\Lambda^{2h})^{\frac{1}{2}}{\bf R}(J_{\Gamma}^h\Lambda^h)^{\frac{1}{2}}\otimes {\bf I}\right) {\bf f}\right] = \left<{\bf c}, \mathcal{R}{\bf f}\right>_{2h}
+ 	\left<\mathcal{P}{\bf c}, {\bf f}\right>_h &= h_1h_2\left[\left((J_{\Gamma}^h\Lambda^h)^{\frac{1}{2}} {\bf P}(J_{\Gamma}^{2h}\Lambda^{2h})^{\frac{1}{2}}\otimes {\bf I}\right){\bf c}\right]^T{\bf f}\\
+ 	& = 4h_1h_2 {\bf c}^T  \left[\left((J_{\Gamma}^{2h}\Lambda^{2h})^{\frac{1}{2}}\frac{1}{4}{\bf P}^T(J_{\Gamma}^h\Lambda^h)^{\frac{1}{2}}\otimes {\bf I}\right) {\bf f}\right]\\
+ 	& =4h_1h_2 {\bf c}^T  \left[\left((J_{\Gamma}^{2h}\Lambda^{2h})^{\frac{1}{2}}{\bf R}(J_{\Gamma}^h\Lambda^h)^{\frac{1}{2}}\otimes {\bf I}\right) {\bf f}\right] = \left<{\bf c}, \mathcal{R}{\bf f}\right>_{2h}
  	\end{align*}
  \end{proof}
  

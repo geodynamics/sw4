@@ -1,6 +1,6 @@
 %!TEX root = SISC_elastic_3d.tex
 \section{Conclusion}
-We have developed a fourth order accurate finite difference method for the three dimensional elastic wave equations in heterogeneous media. To take into account discontinuous material property, we partition the domain into subdomains such that interfaces are aligned with material discontinuities such that the material property is smooth in each subdomain. Adjacent subdomains are coupled through physical interface conditions: continuity of displacements and continuity of traction.
+We have developed a fourth order accurate finite difference method for the three dimensional elastic wave equations in heterogeneous media. To take into account discontinuous material properties, we partition the domain into subdomains such that interfaces are aligned with material discontinuities such that the material property is smooth in each subdomain. Adjacent subdomains are coupled through physical interface conditions: continuity of displacements and continuity of traction.
 
 In a realistic setting, these subdomains have curved faces. We use a coordinate transformation and discretize the governing equations on curvilinear meshes. In addition, we allow nonconforming mesh refinement interfaces such that the mesh sizes in each block need not to be the same. With this important feature, we can choose the mesh sizes according to the velocity structure of the material and keep the grid points per wavelength almost the same in the entire domain. 
 

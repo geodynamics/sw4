@@ -1,6 +1,6 @@
 %!TEX root = SISC_elastic_3d.tex
 \subsection{Energy conservation test}\label{conserved_energy}
-To verify the energy conservation property of the scheme, we perform computation without external source term, but with a Gaussian initial profile centered at the origin of the computational domain. The computational domain is chosen to be the same as in Sec.~\ref{convergence_study}. The material property is heterogeneous and discontinuous: for the fine domain $\Omega^f$,  the density varies according to
+To verify the energy conservation property of the scheme, we perform computation without external source term, but with a Gaussian initial data centered at the origin of the computational domain. The computational domain is chosen to be the same as in Sec.~\ref{convergence_study}. The material property is heterogeneous and discontinuous: for the fine domain $\Omega^f$,  the density varies according to
 \[\rho^f(x^{(1)},x^{(2)},x^{(3)}) = 3 + \sin(2x^{(1)}+0.3)\cos(x^{(2)}+0.3)\sin(2x^{(3)}-0.2),\] 
 and material parameters satisfy
 \[\mu^f(x^{(1)},x^{(2)},x^{(3)}) = 2 + \cos(3x^{(1)}+0.1)\sin(3x^{(2)}+0.1)\sin(x^{(3)})^2,\]
@@ -10,7 +10,7 @@ for the coarse domain $\Omega^c$, the density varies according to
 and material parameters satisfy
 \[\mu^c(x^{(1)},x^{(2)},x^{(3)}) = 3 + \sin(3x^{(1)}+0.1)\sin(3x^{(2)}+0.1)\sin(x^{(3)}),\]
 \[\lambda^c(x^{(1)},x^{(2)},x^{(3)}) = 21 + \cos(x^{(1)}+0.1)\cos(x^{(2)}+0.1)\sin(3x^{(3)})^2.\]
-The initial Gaussian profile is given by ${\bf C}(\cdot,0) = {\bf F}(\cdot,0) = {\bf u}(\cdot,0) = (u_1(\cdot,0),u_2(\cdot,0),u_3(\cdot,0))^T$ with
+The initial Gaussian data is given by ${\bf C}(\cdot,0) = {\bf F}(\cdot,0) = {\bf u}(\cdot,0) = (u_1(\cdot,0),u_2(\cdot,0),u_3(\cdot,0))^T$ with
 \begin{align*}
 	u_1(\cdot,0) &= \mbox{exp}\left(-\frac{(x^{(1)}-\pi)^2}{0.1}\right)\mbox{exp}\left(-\frac{(x^{(2)}-\pi)^2}{0.1}\right)\mbox{exp}\left(-\frac{(x^{(3)}-\pi)^2}{0.1}\right),\\
 	u_2(\cdot,0) &= \mbox{exp}\left(-\frac{(x^{(1)}-\pi)^2}{0.2}\right)\mbox{exp}\left(-\frac{(x^{(2)}-\pi)^2}{0.2}\right)\mbox{exp}\left(-\frac{(x^{(3)}-\pi)^2}{0.2}\right),\\
