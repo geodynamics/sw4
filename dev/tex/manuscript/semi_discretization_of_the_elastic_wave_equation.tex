@@ -50,7 +50,7 @@ In the spatial discretization, we only use ghost points in the coarse domain and
 \begin{equation}\label{elastic_semi_c}
 \left(({\rho}^{2h}\otimes{\bf I})(J^{2h}\otimes {\bf I})\frac{d^2{{\bf c}}}{dt^2}\right)_{\bf i} = \wt{\mathcal{L}}^{2h}_{\bf i} {{\bf c}},\quad {\bf i}\in I_{\Omega^c},\quad t>0,
 \end{equation}
-where $\rho^{2h}$ and $J^{2h}$ are $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ diagonal matrices with the diagonal elements to be $\rho^c$ and $J^c$ evaluated at the coarse grid points in $\Omega^c$, respectively; the matrix ${\bf I}$ is a $3\times 3$ identity matrix because the spatial dimension of the governing equation is $3$; finally, the discrete spatial operator is
+where $\rho^{2h}$ and $J^{2h}$ are $n_1^{2h}n_2^{2h}n_3^{2h}\times n_1^{2h}n_2^{2h}n_3^{2h}$ diagonal matrices with the diagonal elements $\rho^{2h}_{\bf i} = \rho^c({\bf x}_{\bf i})$ and $J^{2h}_{\bf i} = J^c({\bf x}_{\bf i})$, ${\bf i}\in I_{\Omega^c}$; the matrix ${\bf I}$ is a $3\times 3$ identity matrix because the spatial dimension of the governing equation is $3$; finally, the discrete spatial operator is
 \begin{equation}\label{L_operator}
 \wt{\mathcal{L}}^{2h} {{\bf c}} = \left(\sum_{l=1}^2{Q}_l^{2h}({N}_{ll}^{2h}){\bf c}+\wt{{G}}_3^{2h}({N}_{33}^{2h}){{\bf c}}+\sum_{l=1}^3\sum_{m=1,m\neq l}^3{D}_l^{2h}({N}_{lm}^{2h}{D}_m^{2h}{\bf c})\right),
 \end{equation}
@@ -64,7 +64,7 @@ Next, we approximate the elastic wave equation (\ref{elastic_curvi_f}) on the fi
 \begin{equation}\label{elastic_semi_f}
 \left(({\rho}^{h}\otimes{\bf I})(J^h\otimes{\bf I})\frac{d^2{{\bf f}}}{dt^2}\right)_{\bf i} = {\mathcal{L}}^{h}_{\bf i} {{\bf f}},\quad {\bf i}\in I_{\Omega^f}\backslash I_{{\Gamma^f}},\quad t>0.
 \end{equation}
-Here, $\rho^{h}$ and $J^{h}$ are $n_1^{h}n_2^{h}n_3^{h}\times n_1^{h}n_2^{h}n_3^{h}$ diagonal matrices with the diagonal elements to be $\rho^f$ and $J^f$ evaluated at the fine grid points in $\Omega^f$, respectively. And the discrete spatial operator is
+Here, $\rho^{h}$ and $J^{h}$ are $n_1^{h}n_2^{h}n_3^{h}\times n_1^{h}n_2^{h}n_3^{h}$ diagonal matrices with the diagonal elements $\rho^h_{\bf i} = \rho^f({\bf x}_{\bf i})$ and $J^h_{\bf i} = J^f({\bf x}_{\bf i})$, ${\bf i}\in I_{\Omega^f}$. And the discrete spatial operator is
 \begin{equation}\label{Lf_operator}
 {\mathcal{L}}^{h} {{\bf f}} = \left(\sum_{l=1}^2{Q}_l^{h}({N}_{ll}^h){\bf f}+{G}_3^{h}({N}_{33}^h){\bf f}+\sum_{l=1}^3\sum_{m=1,m\neq l}^3{D}_l^{h}({N}_{lm}^{h}{D}_m^{h}{\bf f})\right),
 \end{equation}
@@ -80,7 +80,7 @@ For energy stability, the operator ${\mathcal{P}}$ must be of a specific form
 \begin{equation}\label{scaleP}
 {\mathcal{P}} = \left(({J}^h_\Gamma {\Lambda}^h)^{-\frac{1}{2}}{\bf P}({J}^{2h}_\Gamma {\Lambda}^{2h})^{\frac{1}{2}}\right)\otimes{\bf I}.
 \end{equation}
-Here, $J_{\Gamma}^h$ and $\Lambda^h$ are $n_1^{h}n_2^{h}\times n_1^{h}n_2^{h}$ diagonal matrices with elements $J_{\Gamma,{\bf i}}^h = J^f({\bf x}_{\bf i})$ and $\Lambda_{\bf i}^h = |\nabla_xR^{f,(3)}({\bf x}_{\bf i})|$, ${\bf i}\in I_{\Gamma^f}$. Similarly, ${J}_{\Gamma}^{2h}$ and ${{\Lambda}^{2h}}$ are $n_1^{2h}n_2^{2h}\times n_1^{2h}n_2^{2h}$ diagonal matrices with elements $J_{\Gamma,{\bf i}}^{2h} = J^c({\bf x}_{\bf i})$ and $\Lambda_{\bf i}^{2h} = |\nabla_xR^{c,(3)}({\bf x}_{\bf i})|$, ${\bf i}\in I_{\Gamma^c}$. Finally, ${\bf P}$ is an interpolation operator of size $n_1^hn_2^h\times n_1^{2h}n_2^{2h}$ for scalar grid functions at $\Gamma^c$. Since the spatial discretization is fourth order accurate, we also use a fourth order interpolation. With mesh refinement ratio  $1:2$, the stencils ${\bf P}$ have four cases as illustrated in  Figure \ref{interpolation}. Consequently, the scaled interpolation operator $\mathcal{P}$ is also fourth order accurate.
+Here, $J_{\Gamma}^h$ and $\Lambda^h$ are $n_1^{h}n_2^{h}\times n_1^{h}n_2^{h}$ diagonal matrices with diagonal elements $J_{\Gamma,{\bf i}}^h = J^f({\bf x}_{\bf i})$ and $\Lambda_{\bf i}^h = |\nabla_xR^{f,(3)}({\bf x}_{\bf i})|$, ${\bf i}\in I_{\Gamma^f}$. Similarly, ${J}_{\Gamma}^{2h}$ and ${{\Lambda}^{2h}}$ are $n_1^{2h}n_2^{2h}\times n_1^{2h}n_2^{2h}$ diagonal matrices with diagonal elements $J_{\Gamma,{\bf i}}^{2h} = J^c({\bf x}_{\bf i})$ and $\Lambda_{\bf i}^{2h} = |\nabla_xR^{c,(3)}({\bf x}_{\bf i})|$, ${\bf i}\in I_{\Gamma^c}$. Finally, ${\bf P}$ is an interpolation operator of size $n_1^hn_2^h\times n_1^{2h}n_2^{2h}$ for scalar grid functions at $\Gamma^c$. Since the spatial discretization is fourth order accurate, we also use a fourth order interpolation. With mesh refinement ratio  $1:2$, the stencils ${\bf P}$ have four cases as illustrated in  Figure \ref{interpolation}. Consequently, the scaled interpolation operator $\mathcal{P}$ is also fourth order accurate.
 
 In the implementation of our scheme, we use \eqref{continuous_sol} to obtain the solution at the interface of the fine domain. However, in the energy analysis in  Sec.~\ref{sec_energy}, it is more convenient to use the equivalent form
 %We note that \eqref{continuous_sol} is equivalent to 
