@@ -80,7 +80,7 @@ For energy stability, the operator ${\mathcal{P}}$ must be of a specific form
 \begin{equation}\label{scaleP}
 {\mathcal{P}} = \left(({J}^h_\Gamma {\Lambda}^h)^{-\frac{1}{2}}{\bf P}({J}^{2h}_\Gamma {\Lambda}^{2h})^{\frac{1}{2}}\right)\otimes{\bf I}.
 \end{equation}
-Here, $J_{\Gamma}^h$ and $\Lambda^h$ are $n_1^{h}n_2^{h}\times n_1^{h}n_2^{h}$ diagonal matrices with elements $J_{\Gamma,ll}^h = J^f({\bf x}_{\bf i})$ and $\Lambda_{ll}^h = |\nabla_xR^{f,(3)}({\bf x}_{\bf i})|$, $l = (j-1)n_1^h+i, {\bf i}\in I_{\Gamma^f}$. Similarly, ${J}_{\Gamma}^{2h}$ and ${{\Lambda}^{2h}}$ are $n_1^{2h}n_2^{2h}\times n_1^{2h}n_2^{2h}$ diagonal matrices with elements $J_{\Gamma,ll}^{2h} = J^c({\bf x}_{\bf i})$ and $\Lambda_{ll}^{2h} = |\nabla_xR^{c,(3)}({\bf x}_{\bf i})|$, $l = (j-1)n_1^{2h}+i, {\bf i}\in I_{\Gamma^c}$. Finally, ${\bf P}$ is an interpolation operator of size $n_1^hn_2^h\times n_1^{2h}n_2^{2h}$ for scalar grid functions at $\Gamma^c$. Since the spatial discretization is fourth order accurate, we also use a fourth order interpolation. With mesh refinement ratio  $1:2$, the stencils ${\bf P}$ have four cases as illustrated in  Figure \ref{interpolation}. Consequently, the scaled interpolation operator $\mathcal{P}$ is also fourth order accurate.
+Here, $J_{\Gamma}^h$ and $\Lambda^h$ are $n_1^{h}n_2^{h}\times n_1^{h}n_2^{h}$ diagonal matrices with elements $J_{\Gamma,{\bf i}}^h = J^f({\bf x}_{\bf i})$ and $\Lambda_{\bf i}^h = |\nabla_xR^{f,(3)}({\bf x}_{\bf i})|$, ${\bf i}\in I_{\Gamma^f}$. Similarly, ${J}_{\Gamma}^{2h}$ and ${{\Lambda}^{2h}}$ are $n_1^{2h}n_2^{2h}\times n_1^{2h}n_2^{2h}$ diagonal matrices with elements $J_{\Gamma,{\bf i}}^{2h} = J^c({\bf x}_{\bf i})$ and $\Lambda_{\bf i}^{2h} = |\nabla_xR^{c,(3)}({\bf x}_{\bf i})|$, ${\bf i}\in I_{\Gamma^c}$. Finally, ${\bf P}$ is an interpolation operator of size $n_1^hn_2^h\times n_1^{2h}n_2^{2h}$ for scalar grid functions at $\Gamma^c$. Since the spatial discretization is fourth order accurate, we also use a fourth order interpolation. With mesh refinement ratio  $1:2$, the stencils ${\bf P}$ have four cases as illustrated in  Figure \ref{interpolation}. Consequently, the scaled interpolation operator $\mathcal{P}$ is also fourth order accurate.
 
 In the implementation of our scheme, we use \eqref{continuous_sol} to obtain the solution at the interface of the fine domain. However, in the energy analysis in  Sec.~\ref{sec_energy}, it is more convenient to use the equivalent form
 %We note that \eqref{continuous_sol} is equivalent to 
@@ -152,11 +152,11 @@ Here,  $\left((\Lambda^{2h}J_{\Gamma}^{2h})\otimes{\bf I}\right)^{-1}\wt{\mathca
  
 Let ${\bf u}$ and ${\bf v}$ be grid functions in the coarse domain $\Omega^c$. We define the discrete inner product at the interface by
 \begin{equation}\label{scalar_product_discrete_interface_c}
-\left<{\bf u}, {\bf v}\right>_{2h} = 4h_1h_2\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}{  J}_{\Gamma,ll}^{2h}\Lambda_{ll}^{2h}({\bf u}_{i,j,n_3^{2h}}\cdot {\bf v}_{i,j,n_3^{2h}})
+\left<{\bf u}, {\bf v}\right>_{2h} = 4h_1h_2\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}{  J}_{\Gamma,i,j,n_3^{2h}}^{2h}\Lambda_{i,j,n_3^{2h}}^{2h}({\bf u}_{i,j,n_3^{2h}}\cdot {\bf v}_{i,j,n_3^{2h}}).
 \end{equation}
-with $l = (j-1)n_1^{2h}+i$. Similarly, given $l = (j-1)n_1^h+j$, the discrete inner product at the interface for fine domain $\Omega^f$ is defined as
+ Similarly, the discrete inner product at the interface for fine domain $\Omega^f$ is defined as
 \begin{equation}\label{scalar_product_discrete_interface_f}
-\left<{\bf u}, {\bf v}\right>_{h} = h_1h_2\sum_{i=1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}{J}_{\Gamma,ll}^h\Lambda_{ll}^h({\bf u}_{i,j,1}\cdot {\bf v}_{i,j,1})
+\left<{\bf u}, {\bf v}\right>_{h} = h_1h_2\sum_{i=1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}{J}_{\Gamma,i,j,1}^h\Lambda_{i,j,1}^h({\bf u}_{i,j,1}\cdot {\bf v}_{i,j,1})
 \end{equation}
 when $\bf u$ and $\bf v$ are grid functions in fine domain $\Omega^f$. Then we have the following lemma for the interpolation and restriction operators.
  
