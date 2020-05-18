@@ -2,13 +2,13 @@
 \subsection{Energy estimate}\label{sec_energy}
 In this section, we derive an energy estimate for the semi-discretization (\ref{elastic_semi_c}) and (\ref{fine_scheme}) in Sec.~\ref{semi_discrete_form}. Let ${\bf u}, {\bf v}$ be grid functions in the coarse domain $\Omega^c$ and define the three dimensional discrete scalar product in $\Omega^c$ as
 \begin{equation}\label{scalar_product_inner}
-({\bf v}, {\bf u})_{2h} = 8h_1h_2h_3\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}\sum_{k=1}^{n_3^{2h}}\omega_k{J}^{2h}_{ll}({\bf v}_{i,j,k}\cdot {\bf u}_{i,j,k})
+({\bf v}, {\bf u})_{2h} = 8h_1h_2h_3\sum_{i=1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}\sum_{k=1}^{n_3^{2h}}\omega_k{J}^{2h}_{i,j,k}({\bf v}_{i,j,k}\cdot {\bf u}_{i,j,k}).
 \end{equation}
-with $l = (k-1)n_1^{2h}n_2^{2h}+(j-1)n_1^{2h}+i$. Similarly, define the three dimensional discrete scalar product in $\Omega^f$ as
+ Similarly, define the three dimensional discrete scalar product in $\Omega^f$ as
 \begin{equation}\label{scalar_product_inner_f}
-({\bf v}, {\bf u})_{h} = h_1h_2h_3\sum_{i=1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}\sum_{k=1}^{n_3^{h}}\omega_k{J}^{h}_{ll}({\bf v}_{i,j,k}\cdot {\bf u}_{i,j,k}),
+({\bf v}, {\bf u})_{h} = h_1h_2h_3\sum_{i=1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}\sum_{k=1}^{n_3^{h}}\omega_k{J}^{h}_{i,j,k}({\bf v}_{i,j,k}\cdot {\bf u}_{i,j,k}),
 \end{equation}
-where $l = (k-1)n_1^{h}n_2^{h}+(j-1)n_1^{h}+i$, $\bf u$ and $\bf v$ are grid functions in the fine domain $\Omega^f$. Now, we are ready to state the energy estimate of the proposed schemes in Section \ref{semi_discrete_form}. 
+where $\bf u$ and $\bf v$ are grid functions in the fine domain $\Omega^f$. Now, we are ready to state the energy estimate of the proposed schemes in Section \ref{semi_discrete_form}. 
 \begin{theorem}\label{thm1}
 	The semi-discretization (\ref{elastic_semi_c}) and (\ref{fine_scheme}) is energy stable if the interface conditions \eqref{continuous_sol} and \eqref{continuous_traction} are satisfied.
 \end{theorem}
@@ -20,21 +20,21 @@ where $l = (k-1)n_1^{h}n_2^{h}+(j-1)n_1^{h}+i$, $\bf u$ and $\bf v$ are grid fun
 	%\end{equation}
 	\begin{eqnarray}\label{coarse_simple}
 	&&8h_1h_2h_3\sum_{i = 1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}\sum_{k=1}^{n_3^{2h}}\omega_k{\bf c}_t\cdot\left((\rho^{2h}\otimes{\bf I})(J^{2h}\otimes{\bf I})\frac{d^2{\bf c}}{dt^2}\right) \\
-	&=& 8h_1h_2h_3\sum_{i = 1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}\sum_{k=1}^{n_3^{2h}}\omega_kJ^{2h}_{ll}{\bf c}_t\cdot\left((\rho^{2h}\otimes{\bf I})\frac{d^2{\bf c}}{dt^2}\right), \quad  l = (k-1)n_1^{2h}n_2^{2h}+(j-1)n_1^{2h}+i \nonumber\\
+	&=& 8h_1h_2h_3\sum_{i = 1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}\sum_{k=1}^{n_3^{2h}}\omega_kJ^{2h}_{i,j,k}{\bf c}_t\cdot\left((\rho^{2h}\otimes{\bf I})\frac{d^2{\bf c}}{dt^2}\right),\nonumber\\
 	&=& ({\bf c}_t, (\rho^{2h}\otimes {\bf I}){\bf c}_{tt})_{2h} = ({\bf c}_t,(J^{2h}\otimes {\bf I})^{-1}\wt{\mathcal{L}}^{2h}{\bf c})_{2h} = -\mathcal{S}_{2h}({\bf c}_t,{\bf c}) + B_{2h}({\bf c}_t,{{\bf c}}),\nonumber
 	\end{eqnarray}
 	where $\mathcal{S}_{2h}({\bf c}_t,{\bf c})$ is a symmetric and positive definite bilinear form given in Appendix \ref{appendix_bf}, the boundary term $B_{2h} ({\bf c}_t,{\bf c})$ is given by
 	\begin{equation}\label{bounary_c1}
 	B_{2h} ({\bf c}_t,{\bf c}) = 4h_1h_2\sum_{{\bf i}\in I_{\Gamma^c}}\frac{d{\bf c}_{\bf i}}{dt}\cdot (\wt{A}_3^{2h}{\bf c}_{\bf i}).
 	\end{equation}
-	Forming the inner product between (\ref{fine_scheme}) and $h_1h_2h_3\omega_k{\bf f}_t$, and summing over $i,j,k$, based on \eqref{scalar_product_inner_f}, we obtain
+	Forming the inner product between (\ref{fine_scheme}) and $h_1h_2h_3\omega_k{\bf f}_t$, and summing over $i,j,k$, we obtain
 	%\begin{equation}\label{fine_simple}
 	%({\bf f}_t, (\rho^h\otimes {\bf I}){\bf f}_{tt})_h = ({\bf f}_t,(J^h\otimes {\bf I})^{-1}\hat{\mathcal{L}}^h{\bf f})_h = -\mathcal{S}_{h}({\bf f}_t,{\bf f}) + B_h({\bf f}_t,{\bf f}) 
 	%+h_1h_2h_3\omega_1\sum_{i = 1}^{n_1^h}\sum_{j=1}^{n_2^h} \frac{d{\bf f}_{i,j,1}}{dt}\cdot{\bm \eta}_{i,j,1}.
 	%\end{equation}
 	\begin{eqnarray}\label{fine_simple}
 	&&h_1h_2h_3\sum_{i = 1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}\sum_{k=1}^{n_3^{h}}\omega_k{\bf f}_t\cdot\left((\rho^{h}\otimes{\bf I})(J^{h}\otimes{\bf I})\frac{d^2{\bf f}}{dt^2}\right) \\
-	&=&\! h_1h_2h_3\sum_{i = 1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}\sum_{k=1}^{n_3^{h}}\omega_kJ^{h}_{ll}{\bf f}_t\cdot\left((\rho^{h}\otimes{\bf I})\frac{d^2{\bf f}}{dt^2}\right), \quad  l = (k-1)n_1^{h}n_2^{h}+(j-1)n_1^{h}+i \nonumber\\
+	&=&\! h_1h_2h_3\sum_{i = 1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}\sum_{k=1}^{n_3^{h}}\omega_kJ^{h}_{i,j,k}{\bf f}_t\cdot\left((\rho^{h}\otimes{\bf I})\frac{d^2{\bf f}}{dt^2}\right), \nonumber\\
 	&=&\! ({\bf f}_t, (\rho^{h}\otimes {\bf I}){\bf f}_{tt})_{h} \!=\! ({\bf f}_t,(J^{h}\otimes {\bf I})^{-1}\hat{\mathcal{L}}^{h}{\bf f})_{h} \!=\! -\mathcal{S}_{h}({\bf f}_t,{\bf f}) + B_{h}({\bf f}_t,{{\bf f}})+h_1h_2h_3\omega_1\sum_{i = 1}^{n_1^h}\sum_{j=1}^{n_2^h} \frac{d{\bf f}_{i,j,1}}{dt}\cdot{\bm \eta}_{i,j,1}.\nonumber
 	\end{eqnarray}
 Here, $\mathcal{S}_h$ is also a symmetric and positive definite bilinear form given in Appendix \ref{appendix_bf}. The boundary term $B_h ({\bf f}_t,{\bf f})$ has the following form
