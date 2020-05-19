@@ -44,7 +44,6 @@ void EW::bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
                    float_sw4* bforce4, float_sw4* bforce5, float_sw4* bforce6,
                    float_sw4 om, float_sw4 ph, float_sw4 cv, int curvilinear) {
   SW4_MARK_FUNCTION;
-  return;
   const float_sw4 d4a = 2.0 / 3.0;
   const float_sw4 d4b = -1.0 / 12.0;
   const size_t ni = ie - ib + 1;

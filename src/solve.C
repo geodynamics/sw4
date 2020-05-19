@@ -5099,7 +5099,7 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
 
    Sarray Lu(3,ib,ie,jb,je,nk,nk);
    Sarray Luca(3,ib,ie,jb,je,1,1);
-   Luca.set_to_zero();
+   //Luca.set_to_zero();
    float_sw4* Lup=Lu.c_ptr(), *Lucap=Luca.c_ptr();
    float_sw4 h = mGridSize[gcart];
    // for( int j=jb ; j <= je ; j++ )
@@ -5162,7 +5162,7 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
                        m_ghcof_no_gp, m_sg_str_x[gcurv], m_sg_str_y[gcurv], nk, '-');
 
 
-   rhs4th3wind_host( ibca, ieca, jbca, jeca, kbca, keca, nkca, m_onesided[gcart], m_acof, m_bope, m_ghcof, Lucap,
+   rhs4th3wind( ibca, ieca, jbca, jeca, kbca, keca, nkca, m_onesided[gcart], m_acof, m_bope, m_ghcof, Lucap,
                 a_U[gcart].c_ptr(), a_Mu[gcart].c_ptr(), a_Lambda[gcart].c_ptr(), h,
                 m_sg_str_x[gcart], m_sg_str_y[gcart], m_sg_str_z[gcart], '=', kbca, keca, 1, 1 );
    if( m_use_attenuation )

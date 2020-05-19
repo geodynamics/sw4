@@ -69,7 +69,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
  // 			     u3zim1,u3zim2,lau3zx,mu3xz,u3zjp2,u3zjp1,u3zjm1,u3zjm2,lau3zy, \
  // 			     mu3yz,mu1zx,u1zip2,u1zip1,u1zim1,u1zim2,	\
  // 			     u2zjp2,u2zjp1,u2zjm1,u2zjm2,mu2zy,lau1xz,lau2yz,kb,qb,mb,muz1,muz2,muz3,muz4)
-  std::cout<<"FLAGS "<<upper<<" "<<lower<<"\n";
+  //std::cout<<"FLAGS "<<upper<<" "<<lower<<"\n";
   {
     if (!upper && !lower) {
       RAJA::RangeSegment k_range(kfirstw, klastw + 1);
