@@ -232,6 +232,7 @@ void EW::freesurfcurvi_ci(int ib, int ie, int jb, int je, int kb, int ke,
                           float_sw4* __restrict__ a_met, float_sw4* s,
                           float_sw4* __restrict__ a_forcing) {
   SW4_MARK_FUNCTION;
+  return;
   const float_sw4 c1 = 2.0 / 3, c2 = -1.0 / 12;
 
   const int ni = ie - ib + 1;

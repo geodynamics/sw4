@@ -1426,6 +1426,9 @@ void CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<S
 
   void compute_icstresses(Sarray& a_Up, Sarray& B, int g, int kic,
                           float_sw4* a_str_x, float_sw4* a_str_y);
+  void compute_icstresses_cpu( Sarray& a_Up, Sarray& B, int g, int kic,
+			     float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop, 
+			       char op );
 void compute_icstresses2( Sarray& a_Up, Sarray& B, int kic, float_sw4 h, Sarray& a_mu, Sarray& a_lambda,
                              float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop, char op );
 

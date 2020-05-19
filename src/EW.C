@@ -1053,11 +1053,21 @@ void EW::assign_local_bcs() {
   }
 
   // Find out which boundaries need one sided approximation in mixed derivatives
-  for (g = 0; g < mNumberOfGrids; g++)
-    for (side = 4; side < 6; side++)
-      m_onesided[g][side] = (m_bcType[g][side] == bStressFree) ||
-                            (m_bcType[g][side] == bRefInterface) ||
-                            (m_bcType[g][side] == bAEInterface);
+  int ncurv = mNumberOfGrids - mNumberOfCartesianGrids;
+  for (g = 0; g < mNumberOfGrids; g++){
+    for(side=0 ; side < 4 ; side++ )
+        m_onesided[g][side]=0;
+    for(side=4 ; side < 6 ; side++ )
+        //        m_onesided[g][side] = (m_bcType[g][side] == bStressFree) || (m_bcType[g][side]== bCCInterface) ;
+        m_onesided[g][side] = (m_bcType[g][side] == bStressFree) ||
+           (m_bcType[g][side] == bRefInterface) || (m_bcType[g][side] == bAEInterface) || 
+	  (m_bcType[g][side] == bCCInterface &&  !(m_gridGenerator->curviCartIsSmooth(ncurv)) ); 
+    // Pre CURVIMR configuration
+    // for (side = 4; side < 6; side++)
+    //   m_onesided[g][side] = (m_bcType[g][side] == bStressFree) ||
+    //                         (m_bcType[g][side] == bRefInterface) ||
+    //                         (m_bcType[g][side] == bAEInterface);
+}
 }
 
 //-----------------------------------------------------------------------
@@ -2255,8 +2265,10 @@ void EW::initialData(float_sw4 a_t, vector<Sarray>& a_U,
                           alpha_ptr, &a_t, &om, &cv, &ph, &h, &zmin);
       }
     }
-    if (topographyExists()) {
-      int g = mNumberOfGrids - 1;
+    //    if (topographyExists()) {
+    for(int g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
+     {
+       //int g = mNumberOfGrids - 1;
       u_ptr = a_U[g].c_ptr();
       ifirst = m_iStart[g];
       ilast = m_iEnd[g];
@@ -2287,7 +2299,7 @@ void EW::initialData(float_sw4 a_t, vector<Sarray>& a_U,
                            alpha_ptr, &a_t, &om, &cv, &ph, mX[g].c_ptr(),
                            mY[g].c_ptr(), mZ[g].c_ptr());
       }
-    }
+     }
   } else if (m_rayleigh_wave_test) {
     double cr, lambda, mu, rho, alpha;
     for (int g = 0; g < mNumberOfCartesianGrids;

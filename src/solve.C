@@ -1414,6 +1414,7 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     bforce_side5_ptr = a_BCForcing[g][5];  // high-k bndry forcing array pointer
 
     if (usingSupergrid()) {
+      std::cout<<" THIS 1\n";
       if (m_croutines)
         bcfortsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, wind_ptr, nx,
                     ny, nz, u_ptr, h, bcType_ptr, m_sbop, mu_ptr, la_ptr, t,
@@ -1428,6 +1429,7 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                  &cv, m_sg_str_x[g], m_sg_str_y[g]);
       int side;
       if (topo == 1 && m_bcType[g][4] == bStressFree) {
+	std::cout<<" THIS 2\n";
         side = 5;
         if (m_croutines)
           freesurfcurvisg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
@@ -1441,6 +1443,7 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                           m_sg_str_y[g]);
       }
     } else {
+      std::cout<<" THIS 3 OFF \n ";
       if (m_croutines)
         bcfort_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, wind_ptr, nx, ny,
                   nz, u_ptr, h, bcType_ptr, m_sbop, mu_ptr, la_ptr, t,
@@ -1455,6 +1458,7 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                &cv, &topo);
       int side;
       if (topo == 1 && m_bcType[g][4] == bStressFree) {
+	std::cout<<" THIS 4 OFF \n";
         side = 5;
         if (m_croutines)
           freesurfcurvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
@@ -1466,6 +1470,7 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                         m_sbop, bforce_side4_ptr);
       }
       if (topo == 1 && m_bcType[g][5] == bStressFree) {
+	std::cout<<" THIS 5\n";
         side = 6;
         if (m_croutines)
           freesurfcurvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
@@ -1699,7 +1704,7 @@ void EW::update_curvilinear_cartesian_interface(vector<Sarray>& a_U) {
     int g = mNumberOfCartesianGrids - 1;
     int gc = mNumberOfGrids - 1;
     int nc = a_U[0].m_nc;
-    std::cout<<"CALL TO void EW::update_curvilinear_cartesian_interface\n";
+    //std::cout<<"CALL TO void EW::update_curvilinear_cartesian_interface\n";
 // inject solution values between lower boundary of gc and upper boundary of g
 #pragma omp parallel for
     for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
@@ -5081,7 +5086,7 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
 void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
                       vector<Sarray*>& a_Alpha, float_sw4 t )
 {
-  std::cout<<"CALL TO EW::CurviCartIC ON CPU \n";
+  //std::cout<<"CALL TO EW::CurviCartIC ON CPU \n";
    int gcurv=gcart+1;
    int ib=m_iStart[gcurv], ie=m_iEnd[gcurv];
    int jb=m_jStart[gcurv], je=m_jEnd[gcurv];
@@ -5094,16 +5099,20 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
 
    Sarray Lu(3,ib,ie,jb,je,nk,nk);
    Sarray Luca(3,ib,ie,jb,je,1,1);
+   Luca.set_to_zero();
    float_sw4* Lup=Lu.c_ptr(), *Lucap=Luca.c_ptr();
    float_sw4 h = mGridSize[gcart];
-   
-   // Injection into curvilinear grid
+   // for( int j=jb ; j <= je ; j++ )
+   //    for( int i=ib ; i <= ie ; i++ )
+   // 	for(int k=kb;k<=ke;k++) std::cout<<" CCIC "<<i<<j<<k<<" "<<a_U[gcurv](1,i,j,k)<<" "<<a_U[gcurv](2,i,j,k)<<" "<<a_U[gcurv](3,i,j,k)<<"\n";
+   // // Injection into curvilinear grid
    for( int j=jb ; j <= je ; j++ )
       for( int i=ib ; i <= ie ; i++ )
       {
          a_U[gcurv](1,i,j,nk) = a_U[gcart](1,i,j,1);
          a_U[gcurv](2,i,j,nk) = a_U[gcart](2,i,j,1);
          a_U[gcurv](3,i,j,nk) = a_U[gcart](3,i,j,1);
+	 
       }
    if( m_use_attenuation )
       for( int a=0 ; a < m_number_mechanisms ; a++)
@@ -5153,7 +5162,7 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
                        m_ghcof_no_gp, m_sg_str_x[gcurv], m_sg_str_y[gcurv], nk, '-');
 
 
-   rhs4th3wind( ibca, ieca, jbca, jeca, kbca, keca, nkca, m_onesided[gcart], m_acof, m_bope, m_ghcof, Lucap,
+   rhs4th3wind_host( ibca, ieca, jbca, jeca, kbca, keca, nkca, m_onesided[gcart], m_acof, m_bope, m_ghcof, Lucap,
                 a_U[gcart].c_ptr(), a_Mu[gcart].c_ptr(), a_Lambda[gcart].c_ptr(), h,
                 m_sg_str_x[gcart], m_sg_str_y[gcart], m_sg_str_z[gcart], '=', kbca, keca, 1, 1 );
    if( m_use_attenuation )
@@ -5189,7 +5198,8 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
          float_sw4 rhrat = mRho[gcurv](i,j,nk)/mRho[gcart](i,j,1);
          float_sw4 bcof = h*m_sbop[0]*istrxyc-m_ghcof[0]*rhrat*w1*mJ[gcurv](i,j,nk)*istrxy/(h*h);
          float_sw4 res = -h*h*Bca(1,i,j,1)*istrxyc+ w1*rhrat*mJ[gcurv](i,j,nk)*istrxy*Luca(1,i,j,1)
-               - w1*mJ[gcurv](i,j,nk)*istrxy*Lu(1,i,j,nk) + B(1,i,j,nk);            
+               - w1*mJ[gcurv](i,j,nk)*istrxy*Lu(1,i,j,nk) + B(1,i,j,nk);   
+	 std::cout<<"RESS "<<i<<" "<<j<<" "<<Luca(1,i,j,1)<<" "<<Lu(1,i,j,nk)<<" "<<B(1,i,j,nk)<<"\n";
          a_U[gcart](1,i,j,0) += res/(a_Mu[gcart](i,j,1)*bcof);
 
          res = -h*h*Bca(2,i,j,1)*istrxyc+ w1*rhrat*mJ[gcurv](i,j,nk)*istrxy*Luca(2,i,j,1)
@@ -5199,9 +5209,10 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
          res = -h*h*Bca(3,i,j,1)*istrxyc+ w1*rhrat*mJ[gcurv](i,j,nk)*istrxy*Luca(3,i,j,1)
                - w1*mJ[gcurv](i,j,nk)*istrxy*Lu(3,i,j,nk) + B(3,i,j,nk);            
          a_U[gcart](3,i,j,0) += res/((2*a_Mu[gcart](i,j,1)+a_Lambda[gcart](i,j,1))*bcof );
+
       }
 
-   bool debug=false;
+   bool debug=true;
    if( debug )
    {
       // Verify that interface condition is satisfied.
@@ -5214,9 +5225,9 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
                    a_U[gcart].c_ptr(), a_Mu[gcart].c_ptr(), a_Lambda[gcart].c_ptr(), h,
                    m_sg_str_x[gcart], m_sg_str_y[gcart], m_sg_str_z[gcart], '=', kbca, keca, 1, 1 );
    
-      //compute_icstresses( a_U[gcart], Bca, gcart, 1, m_sg_str_x[gcart], m_sg_str_y[gcart],m_sbop,'=' );
+      compute_icstresses_cpu( a_U[gcart], Bca, gcart, 1, m_sg_str_x[gcart], m_sg_str_y[gcart],m_sbop,'=' );
       // Modifed RAJA version
-compute_icstresses( a_U[gcart], Bca, gcart, 1, m_sg_str_x[gcart], m_sg_str_y[gcart]);
+      //compute_icstresses( a_U[gcart], Bca, gcart, 1, m_sg_str_x[gcart], m_sg_str_y[gcart]);
 
       compute_icstresses_curv( a_U[gcurv], B, nk, mMetric[gcurv], a_Mu[gcurv], a_Lambda[gcurv],
                                m_sg_str_x[gcurv], m_sg_str_y[gcurv], m_sbop_no_gp, '=' );
@@ -5299,7 +5310,9 @@ void EW::compute_icstresses2( Sarray& a_Up, Sarray& B, int kic, float_sw4 h,
          B(3,i,j,k) += sgn*ih*((2*a_mu(i,j,k)+a_lambda(i,j,k))*(wz) + a_lambda(i,j,k)*(
                              str_x(i)*( a2*(a_Up(1,i+2,j,k)-a_Up(1,i-2,j,k))+a1*(a_Up(1,i+1,j,k)-a_Up(1,i-1,j,k))) +
                              str_y(j)*( a2*(a_Up(2,i,j+2,k)-a_Up(2,i,j-2,k))+a1*(a_Up(2,i,j+1,k)-a_Up(2,i,j-1,k))) ) );
+
       }
+
 #undef str_x
 #undef str_y
 }
@@ -5340,6 +5353,7 @@ void EW::compute_icstresses_curv( Sarray& a_Up, Sarray& B, int kic,
             uz += sbop[m]*a_Up(1,i,j,k+kl*(m-1));
             vz += sbop[m]*a_Up(2,i,j,k+kl*(m-1));
             wz += sbop[m]*a_Up(3,i,j,k+kl*(m-1));
+	    //std::cout<<"UZ"<<m<<" "<<uz<<" "<<sbop[m]<<" "<<a_Up(1,i,j,k+kl*(m-1))<<"\n";
          }
          uz *=kl;
          vz *=kl;
@@ -5382,7 +5396,69 @@ void EW::compute_icstresses_curv( Sarray& a_Up, Sarray& B, int kic,
          B(1,i,j,k) += sgn*B1;
          B(2,i,j,k) += sgn*B2;
          B(3,i,j,k) += sgn*B3;
-         
+	 //std::cout<<"STTRESS C"<<i<<j<<k<<" "<<B(1,i,j,k)<<" "<<a_mu(i,j,k)<<" "<<mnrm<<" "<<uz<<"\n";
+      }
+   //std::cout<<"END OF STRESS C CALL\n";
+#undef str_x
+#undef str_y
+}
+//-----------------------------------------------------------------------
+void EW::compute_icstresses_cpu( Sarray& a_Up, Sarray& B, int g, int kic,
+			     float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop, 
+                             char op )
+{
+   const float_sw4 a1=2.0/3, a2=-1.0/12;
+   bool upper = (kic == 1);
+   int k=kic;
+   float_sw4 ih = 1/mGridSize[g];
+   int ifirst = a_Up.m_ib;
+   int jfirst = a_Up.m_jb;
+#define str_x(i) a_str_x[(i-ifirst)]   
+#define str_y(j) a_str_y[(j-jfirst)]   
+   float_sw4 sgn=1;
+   if( op == '=' )
+   {
+      B.set_value(0.0);
+      sgn = 1;
+   }
+   else if( op == '-' )
+      sgn =-1;
+
+#pragma omp parallel for
+   for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
+#pragma omp simd
+      for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
+      {
+	 float_sw4 uz, vz, wz;	 
+	 uz = vz = wz = 0;
+	 if( upper )
+	 {
+	    for( int m=0 ; m <= 5 ; m++ )
+	    {
+	       uz += sbop[m]*a_Up(1,i,j,k+m-1);
+	       vz += sbop[m]*a_Up(2,i,j,k+m-1);
+	       wz += sbop[m]*a_Up(3,i,j,k+m-1);
+	    }
+	 }
+	 else
+	 {
+	    for( int m=0 ; m <= 5 ; m++ )
+	    {
+	       uz -= sbop[m]*a_Up(1,i,j,k+1-m);
+	       vz -= sbop[m]*a_Up(2,i,j,k+1-m);
+	       wz -= sbop[m]*a_Up(3,i,j,k+1-m);
+	    }
+	 }
+         B(1,i,j,k) += sgn*ih*mMu[g](i,j,k)*(
+            str_x(i)*( a2*(a_Up(3,i+2,j,k)-a_Up(3,i-2,j,k))+
+                       a1*(a_Up(3,i+1,j,k)-a_Up(3,i-1,j,k))) + (uz)  );
+         B(2,i,j,k) += sgn*ih*mMu[g](i,j,k)*(
+            str_y(j)*( a2*(a_Up(3,i,j+2,k)-a_Up(3,i,j-2,k))+
+                       a1*(a_Up(3,i,j+1,k)-a_Up(3,i,j-1,k))) +
+            (vz)  );
+         B(3,i,j,k) += sgn*ih*((2*mMu[g](i,j,k)+mLambda[g](i,j,k))*(wz) + mLambda[g](i,j,k)*(
+                             str_x(i)*( a2*(a_Up(1,i+2,j,k)-a_Up(1,i-2,j,k))+a1*(a_Up(1,i+1,j,k)-a_Up(1,i-1,j,k))) +
+                             str_y(j)*( a2*(a_Up(2,i,j+2,k)-a_Up(2,i,j-2,k))+a1*(a_Up(2,i,j+1,k)-a_Up(2,i,j-1,k))) ) );
       }
 #undef str_x
 #undef str_y
