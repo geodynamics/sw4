@@ -22,7 +22,7 @@ For the problem proposed in Sec.~\ref{convergence_study}, the structure of the c
 	\end{center}
 		\caption{The condition number of the matrices in the conjugate gradient method, the block Jacobi method and the preconditioned conjugate gradient method}\label{condition_number}
 \end{table} 
-Table \ref{condition_number} shows the condition number of the original coefficient matrix, the block Jacobi matrix and the coefficient matrix after applying the preconditioner. We observe that the condition number for preconditioned conjugate gradient method is smallest and is consistent with the results of iteration number for different iterative methods: there are around $44$ iterations for the conjugate gradient method, $13$ iterations for the block Jacobi method and $9$ iterations for the preconditioned conjugate gradient method.
+Table \ref{condition_number} shows the condition number of the original coefficient matrix, the block Jacobi matrix and the coefficient matrix after applying the preconditioning matrix. We observe that the condition number for preconditioned conjugate gradient method is smallest and is consistent with the results of iteration number for different iterative methods: there are around $44$ iterations for the conjugate gradient method, $13$ iterations for the block Jacobi method and $9$ iterations for the preconditioned conjugate gradient method.
 
 In comparison, we have also performed an LU factorization for the linear system when the mesh size $2h = 2\pi/96$, and the computation takes 40.6 GB memory. In contrast, with the block Jacobi method, the peak memory usage is only 1.2 GB. For large-scale problems, the memory usage becomes infeasible for the LU factorization. 
 
