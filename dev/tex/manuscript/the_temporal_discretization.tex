@@ -40,13 +40,13 @@ Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf
 		}
 		\item{Evaluate the acceleration at all grid points 
 			\begin{equation*}
-			\underline{\wt{\bf c}}^n= \frac{\wt{\bf c}^{*,n+1}-2\wt{\bf c}^{n}+\wt{\bf c}^{n-1}}{\Delta^2_t},\ \ \ \
-			\underline{{\bf f}}^{n} = \frac{{\bf f}^{*,n+1}-2{\bf f}^{n}+{\bf f}^{n-1}}{\Delta^2_t}.
+			{\wt{\bf a}}_c^n= \frac{\wt{\bf c}^{*,n+1}-2\wt{\bf c}^{n}+\wt{\bf c}^{n-1}}{\Delta^2_t},\ \ \ \
+			{{\bf a}}_f^{n} = \frac{{\bf f}^{*,n+1}-2{\bf f}^{n}+{\bf f}^{n-1}}{\Delta^2_t}.
 			\end{equation*}
 		}
 		\item{Compute the corrector at the interior grid points
-			\[{\bf c}^{n+1}_{\bf i} = {\bf c}^{*,n+1}_{\bf i} + \frac{\Delta_t^4}{12}\left((\rho^{2h}\otimes{\bf I})(J^{2h}\otimes{\bf I})\right)^{-1}\wt{\mathcal{L}}^{2h}_{\bf i}\underline{{\bf{c}}}^{n},\quad {\bf i}\in I_{\Omega^c},\]
-			\[{\bf f}^{n+1}_{\bf i} = {\bf f}^{*,n+1}_{\bf i} + \frac{\Delta_t^4}{12}\left((\rho^{h}\otimes{\bf I})(J^h\otimes{\bf I})\right)^{-1}\hat{\mathcal{L}}^{h}_{\bf i}\underline{{\bf{f}}}^{n},\quad {\bf i}\in I_\Omega^f.\]
+			\[{\bf c}^{n+1}_{\bf i} = {\bf c}^{*,n+1}_{\bf i} + \frac{\Delta_t^4}{12}\left((\rho^{2h}\otimes{\bf I})(J^{2h}\otimes{\bf I})\right)^{-1}\wt{\mathcal{L}}^{2h}_{\bf i}{\bf a}_c^{n},\quad {\bf i}\in I_{\Omega^c},\]
+			\[{\bf f}^{n+1}_{\bf i} = {\bf f}^{*,n+1}_{\bf i} + \frac{\Delta_t^4}{12}\left((\rho^{h}\otimes{\bf I})(J^h\otimes{\bf I})\right)^{-1}\hat{\mathcal{L}}^{h}_{\bf i}{\bf a}_f^{n},\quad {\bf i}\in I_\Omega^f.\]
 		}
 		\item{At the interface $\Gamma$, the values ${\bf f}^{n+1}_{\bf i}$  are computed by the continuity of solution
 			\begin{equation*}
