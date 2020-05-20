@@ -3441,7 +3441,7 @@ void EW::add_ve_stresses(Sarray& a_Up, Sarray& B, int g, int kic, int a_mech,
 }
 
 //------------------------------------------------------------------------------
-void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
+void EW::cartesian_bc_forcing_new(float_sw4 t, vector<float_sw4**>& a_BCForcing,
                               vector<Source*>& a_sources)
 // assign the boundary forcing arrays a_BCForcing[g][side]
 {
@@ -3824,6 +3824,18 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
                                 &m_zmin[g]);
             }
           } else {
+	    if( curvilinear )
+	       {
+                  Sarray tau(6,ifirst,ilast,jfirst,jlast,1,1);
+		  twstensor_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+				k, t, om, cv, ph,
+				mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
+               // Compute boundary forcing for given stress tensor, tau.
+		  getsurfforcing_ci( ifirst, ilast, jfirst, jlast, kfirst,
+				     klast, k, mMetric[g].c_ptr(), mJ[g].c_ptr(),
+				     tau.c_ptr(), bforce_side5_ptr );
+	       }
+	    else {
             twfrsurfz(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &h, &k,
                       &t, &om, &cv, &ph, bforce_side5_ptr, mu_ptr, la_ptr,
                       &m_zmin[g]);
@@ -3833,6 +3845,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
               twfrsurfzatt(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
                            &h, &k, &t, &om, &cv, &ph, bforce_side5_ptr, mua_ptr,
                            laa_ptr, &m_zmin[g]);
+	    }
             }
           }  // end ! supergrid
 
@@ -5102,9 +5115,9 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
    //Luca.set_to_zero();
    float_sw4* Lup=Lu.c_ptr(), *Lucap=Luca.c_ptr();
    float_sw4 h = mGridSize[gcart];
-   // for( int j=jb ; j <= je ; j++ )
-   //    for( int i=ib ; i <= ie ; i++ )
-   // 	for(int k=kb;k<=ke;k++) std::cout<<" CCIC "<<i<<j<<k<<" "<<a_U[gcurv](1,i,j,k)<<" "<<a_U[gcurv](2,i,j,k)<<" "<<a_U[gcurv](3,i,j,k)<<"\n";
+    // for( int j=jb ; j <= je ; j++ )
+    //    for( int i=ib ; i <= ie ; i++ )
+    // 	for(int k=kb;k<=ke;k++) std::cout<<" CCIC "<<i<<j<<k<<" "<<a_U[gcurv](1,i,j,k)<<" "<<a_U[gcurv](2,i,j,k)<<" "<<a_U[gcurv](3,i,j,k)<<"\n";
    // // Injection into curvilinear grid
    for( int j=jb ; j <= je ; j++ )
       for( int i=ib ; i <= ie ; i++ )
@@ -5199,7 +5212,7 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
          float_sw4 bcof = h*m_sbop[0]*istrxyc-m_ghcof[0]*rhrat*w1*mJ[gcurv](i,j,nk)*istrxy/(h*h);
          float_sw4 res = -h*h*Bca(1,i,j,1)*istrxyc+ w1*rhrat*mJ[gcurv](i,j,nk)*istrxy*Luca(1,i,j,1)
                - w1*mJ[gcurv](i,j,nk)*istrxy*Lu(1,i,j,nk) + B(1,i,j,nk);   
-	 std::cout<<"RESS "<<i<<" "<<j<<" "<<Luca(1,i,j,1)<<" "<<Lu(1,i,j,nk)<<" "<<B(1,i,j,nk)<<"\n";
+	 //std::cout<<"RESS "<<i<<" "<<j<<" "<<Luca(1,i,j,1)<<" "<<Lu(1,i,j,nk)<<" "<<B(1,i,j,nk)<<"\n";
          a_U[gcart](1,i,j,0) += res/(a_Mu[gcart](i,j,1)*bcof);
 
          res = -h*h*Bca(2,i,j,1)*istrxyc+ w1*rhrat*mJ[gcurv](i,j,nk)*istrxy*Luca(2,i,j,1)
@@ -5209,10 +5222,10 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
          res = -h*h*Bca(3,i,j,1)*istrxyc+ w1*rhrat*mJ[gcurv](i,j,nk)*istrxy*Luca(3,i,j,1)
                - w1*mJ[gcurv](i,j,nk)*istrxy*Lu(3,i,j,nk) + B(3,i,j,nk);            
          a_U[gcart](3,i,j,0) += res/((2*a_Mu[gcart](i,j,1)+a_Lambda[gcart](i,j,1))*bcof );
-
+	 std::cout<<"CC_FINAL"<<i<<j<<" "<<a_U[gcart](1,i,j,0)<<" "<<a_U[gcart](2,i,j,0)<<" "<<a_U[gcart](3,i,j,0)<<"\n";
       }
 
-   bool debug=true;
+   bool debug=false;
    if( debug )
    {
       // Verify that interface condition is satisfied.
@@ -5239,7 +5252,7 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
             float_sw4 res = abs(-h*h*Bca(1,i,j,1)+ w1*rhrat*mJ[gcurv](i,j,nk)*Luca(1,i,j,1)
                     - w1*mJ[gcurv](i,j,nk)*Lu(1,i,j,nk) + B(1,i,j,nk));            
             resmax = res > resmax ? res:resmax;
-
+	    std::cout<<"RESSD "<<i<<" "<<j<<" "<<res<<" "<<mJ[gcurv](i,j,nk)<<" "<<Luca(1,i,j,1)<<" "<<Lu(1,i,j,nk)<<" "<<B(1,i,j,nk)<<"\n";
             res = abs(-h*h*Bca(2,i,j,1)+ w1*rhrat*mJ[gcurv](i,j,nk)*Luca(2,i,j,1)
                    - w1*mJ[gcurv](i,j,nk)*Lu(2,i,j,nk) + B(2,i,j,nk));            
             resmax = res > resmax ? res:resmax;
@@ -5353,7 +5366,7 @@ void EW::compute_icstresses_curv( Sarray& a_Up, Sarray& B, int kic,
             uz += sbop[m]*a_Up(1,i,j,k+kl*(m-1));
             vz += sbop[m]*a_Up(2,i,j,k+kl*(m-1));
             wz += sbop[m]*a_Up(3,i,j,k+kl*(m-1));
-	    //std::cout<<"UZ"<<m<<" "<<uz<<" "<<sbop[m]<<" "<<a_Up(1,i,j,k+kl*(m-1))<<"\n";
+	    std::cout<<"UZ"<<m<<" "<<uz<<" "<<sbop[m]<<" "<<a_Up(1,i,j,k+kl*(m-1))<<"\n";
          }
          uz *=kl;
          vz *=kl;
@@ -5462,4 +5475,487 @@ void EW::compute_icstresses_cpu( Sarray& a_Up, Sarray& B, int g, int kic,
       }
 #undef str_x
 #undef str_y
+}
+void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4 **> & a_BCForcing,
+			      vector<Source*>& a_sources )
+// assign the boundary forcing arrays a_BCForcing[g][side]
+{
+  int ifirst, ilast, jfirst, jlast, kfirst, klast, nz;
+  float_sw4 *mu_ptr, *la_ptr, h, zmin;
+  float_sw4 *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr, *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
+  int *wind_ptr;
+  float_sw4 om=0, ph=0, cv=0, omm;
+    
+  for(int g=0 ; g<mNumberOfGrids; g++ )
+  {
+    mu_ptr    = mMu[g].c_ptr();
+    la_ptr    = mLambda[g].c_ptr();
+
+    ifirst = m_iStart[g];
+    ilast  = m_iEnd[g];
+    jfirst = m_jStart[g];
+    jlast  = m_jEnd[g];
+    kfirst = m_kStart[g];
+    klast  = m_kEnd[g];
+    nz = m_global_nz[g];
+    
+    h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
+    zmin = m_zmin[g];
+    //    int curvilinear = topographyExists() && g == mNumberOfGrids-1;
+    int curvilinear = g > mNumberOfCartesianGrids-1;
+    
+    wind_ptr = m_BndryWindow[g];
+    
+// pointers to the six sides of the cube
+    bforce_side0_ptr = a_BCForcing[g][0]; // low-i bndry forcing array pointer
+    bforce_side1_ptr = a_BCForcing[g][1]; // high-i bndry forcing array pointer
+    bforce_side2_ptr = a_BCForcing[g][2]; // low-j bndry forcing array pointer
+    bforce_side3_ptr = a_BCForcing[g][3]; // high-j bndry forcing array pointer
+    bforce_side4_ptr = a_BCForcing[g][4]; // low-k bndry forcing array pointer
+    bforce_side5_ptr = a_BCForcing[g][5]; // high-k bndry forcing array pointer
+
+    if (m_twilight_forcing)
+    {
+       float_sw4 phc[21]; // move these angles to the EW class
+       om = m_twilight_forcing->m_omega;
+       ph = m_twilight_forcing->m_phase;
+       cv = m_twilight_forcing->m_c;
+       omm = m_twilight_forcing->m_momega;
+
+      // need to store all the phase angle constants somewhere
+      for (int i=0; i<21; i++)
+         phc[i] = i*10*M_PI/180;
+
+// the following code can probably be improved by introducing a loop over all sides,
+// but bStressFree is only implemented for side=4 and 5, so there must be some special cases
+      int k = 1;
+      if (m_bcType[g][0] == bDirichlet || m_bcType[g][0] == bSuperGrid )
+      {
+         if( !curvilinear )
+	 {
+//FTNC	    if( m_croutines )
+	       twdirbdry_ci( &wind_ptr[0], h, t, om, cv, ph, bforce_side0_ptr, m_zmin[g] );
+//FTNC	    else
+//FTNC	       twdirbdry( &wind_ptr[0], &h, &t, &om, &cv, &ph, bforce_side0_ptr, &m_zmin[g] );
+	 }
+	 else
+	 {
+//FTNC	    if( m_croutines )
+	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+			      &wind_ptr[0], t, om, cv, ph, bforce_side0_ptr,
+			      mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
+//FTNC	    else
+//FTNC	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC                                             &wind_ptr[0], &t, &om, &cv, &ph, bforce_side0_ptr,
+//FTNC					     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	 }
+      }
+
+      if (m_bcType[g][1] == bDirichlet || m_bcType[g][1] == bSuperGrid )
+      {
+         if( !curvilinear )
+	 {
+//FTNC	    if( m_croutines )
+	       twdirbdry_ci( &wind_ptr[6], h, t, om, cv, ph, bforce_side1_ptr, m_zmin[g] );
+//FTNC	    else
+//FTNC	       twdirbdry( &wind_ptr[6], &h, &t, &om, &cv, &ph, bforce_side1_ptr, &m_zmin[g] );
+	 }
+	 else
+	 {
+//FTNC	    if( m_croutines )
+	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+		       &wind_ptr[6], t, om, cv, ph, bforce_side1_ptr,
+		       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
+//FTNC	    else
+//FTNC	       twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			  &wind_ptr[6], &t, &om, &cv, &ph, bforce_side1_ptr,
+//FTNC			  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	 }
+      }
+
+      if (m_bcType[g][2] == bDirichlet || m_bcType[g][2] == bSuperGrid)
+      {
+	 if( !curvilinear )
+	 {
+//FTNC	    if( m_croutines )
+	       twdirbdry_ci( &wind_ptr[6*2], h, t, om, cv, ph, bforce_side2_ptr, m_zmin[g] );
+//FTNC	    else
+//FTNC	       twdirbdry( &wind_ptr[6*2], &h, &t, &om, &cv, &ph, bforce_side2_ptr, &m_zmin[g] );
+	 }
+         else
+	 {
+//FTNC	    if( m_croutines )
+	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+		       &wind_ptr[6*2], t, om, cv, ph, bforce_side2_ptr,
+		       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
+//FTNC	    else
+//FTNC	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			   &wind_ptr[6*2], &t, &om, &cv, &ph, bforce_side2_ptr,
+//FTNC			   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	 }
+      }
+
+      if (m_bcType[g][3] == bDirichlet || m_bcType[g][3] == bSuperGrid)
+      {
+         if( !curvilinear )
+	 {
+//FTNC	    if( m_croutines )
+	       twdirbdry_ci( &wind_ptr[6*3], h, t, om, cv, ph, bforce_side3_ptr, m_zmin[g] );
+//FTNC	    else
+//FTNC	       twdirbdry( &wind_ptr[6*3], &h, &t, &om, &cv, &ph, bforce_side3_ptr, &m_zmin[g] );
+	 }
+         else
+	 {
+//FTNC	    if( m_croutines )
+	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+		       &wind_ptr[6*3], t, om, cv, ph, bforce_side3_ptr,
+		       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
+//FTNC	    else
+//FTNC	       twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			  &wind_ptr[6*3], &t, &om, &cv, &ph, bforce_side3_ptr,
+//FTNC			  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	 }
+      }
+
+      if (m_bcType[g][4] == bDirichlet || m_bcType[g][4] == bSuperGrid)
+      {
+	 if( !curvilinear )
+	 {
+//FTNC	    if( m_croutines )
+	       twdirbdry_ci( &wind_ptr[6*4], h, t, om, cv, ph, bforce_side4_ptr, m_zmin[g] );
+//FTNC	    else
+//FTNC	       twdirbdry( &wind_ptr[6*4], &h, &t, &om, &cv, &ph, bforce_side4_ptr, &m_zmin[g] );
+	 }
+         else
+	 {
+//FTNC	    if( m_croutines )
+	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+		       &wind_ptr[6*4], t, om, cv, ph, bforce_side4_ptr,
+		       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
+//FTNC	    else
+//FTNC	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			   &wind_ptr[6*4], &t, &om, &cv, &ph, bforce_side4_ptr,
+//FTNC			   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	 }
+      }
+      else if (m_bcType[g][4] == bStressFree)
+      {
+	 k = 1;
+         if( m_anisotropic )
+         {
+// curvilinear anisotropic case is not yet implemented
+            CHECK_INPUT (!curvilinear, "cartesian_bc_forcing> bStressFree not implemented for anisotropic materials and curvilinear grids" <<endl);
+
+//FTNC	    if( m_croutines )
+	       tw_aniso_free_surf_z_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, k, t, om,
+					cv, ph, omm, phc, bforce_side4_ptr, h, m_zmin[g] );            
+//FTNC	    else
+//FTNC	       tw_aniso_free_surf_z( ifirst, ilast, jfirst, jlast, kfirst, klast, k, t, om,
+//FTNC				     cv, ph, omm, phc, bforce_side4_ptr, h, m_zmin[g] );            
+         }
+         else
+         { //isotropic stuff
+            
+            if( usingSupergrid() && !curvilinear )
+            {
+               float_sw4 omstrx = m_supergrid_taper_x[g].get_tw_omega();
+               float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega();
+//FTNC	       if( m_croutines )
+		  twfrsurfzsgstr_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+				  klast, h, k, t, om, cv, ph, omstrx, omstry,
+				  bforce_side4_ptr, mu_ptr, la_ptr, m_zmin[g] );
+//FTNC	       else
+//FTNC		  twfrsurfzsgstr( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+//FTNC				  &klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
+//FTNC				  bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g] );
+               if( m_use_attenuation )
+               {
+                  float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
+                  float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
+//FTNC		  if( m_croutines )
+		     twfrsurfzsgstratt_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+					   klast, h, k, t, om, cv, ph, omstrx, omstry,
+					   bforce_side4_ptr, mua_ptr, laa_ptr, m_zmin[g] );
+//FTNC		  else
+//FTNC		     twfrsurfzsgstratt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+//FTNC					&klast, &h, &k, &t, &om, &cv, &ph, &omstrx, &omstry,
+//FTNC					bforce_side4_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
+               }
+            }
+            else if( !usingSupergrid() && curvilinear )
+            {
+               // Stress tensor on boundary
+               Sarray tau(6,ifirst,ilast,jfirst,jlast,1,1);
+               // Get twilight stress tensor, tau.
+//FTNC	       if( m_croutines )
+		  twstensor_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+				k, t, om, cv, ph,
+				mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
+//FTNC	       else
+//FTNC		  twstensor( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			     &k, &t, &om, &cv, &ph,
+//FTNC			     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
+               // Compute boundary forcing for given stress tensor, tau.
+
+//FTNC	       if( m_croutines )
+		  getsurfforcing_ci( ifirst, ilast, jfirst, jlast, kfirst,
+				     klast, k, mMetric[g].c_ptr(), mJ[g].c_ptr(),
+				     tau.c_ptr(), bforce_side4_ptr );
+//FTNC	       else
+//FTNC		  getsurfforcing( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+//FTNC				  &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+//FTNC				  tau.c_ptr(), bforce_side4_ptr );
+
+               if( m_use_attenuation )
+               {
+                  float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
+                  float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
+//FTNC		  if( m_croutines )
+		     twstensoratt_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+				      k, t, om, cv, ph,
+				      mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr );
+//FTNC		  else
+//FTNC		     twstensoratt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC				   &k, &t, &om, &cv, &ph,
+//FTNC				   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr );
+//FTNC		  if( m_croutines )
+		     subsurfforcing_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, k,
+					mMetric[g].c_ptr(), mJ[g].c_ptr(), tau.c_ptr(), bforce_side4_ptr );
+//FTNC		  else
+//FTNC		     subsurfforcing( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+//FTNC				     &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+//FTNC				     tau.c_ptr(), bforce_side4_ptr );
+               }
+            }
+            else if( !usingSupergrid() && !curvilinear )
+            {
+//FTNC	       if( m_croutines )
+		  twfrsurfz_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+				klast, h, k, t, om, cv, ph,
+				bforce_side4_ptr, mu_ptr, la_ptr, m_zmin[g] );
+//FTNC	       else
+//FTNC		  twfrsurfz( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+//FTNC			     &klast, &h, &k, &t, &om, &cv, &ph,
+//FTNC			     bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g] );
+               if( m_use_attenuation )
+               {
+                  float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
+                  float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
+//FTNC		  if( m_croutines )
+		     twfrsurfzatt_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+				      klast, h, k, t, om, cv, ph,
+				      bforce_side4_ptr, mua_ptr, laa_ptr, m_zmin[g] );
+//FTNC		  else
+//FTNC		     twfrsurfzatt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+//FTNC				   &klast, &h, &k, &t, &om, &cv, &ph,
+//FTNC				   bforce_side4_ptr, mua_ptr, laa_ptr, &m_zmin[g] );
+	       
+               }
+            }
+            else if( usingSupergrid() && curvilinear )
+            {
+               float_sw4 omstrx = m_supergrid_taper_x[g].get_tw_omega();
+               float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega();
+
+               // Stress tensor on boundary
+               Sarray tau(6,ifirst,ilast,jfirst,jlast,1,1);
+               // Get twilight stress tensor, tau.
+//FTNC	       if( m_croutines )
+		  twstensorsg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+				  k, t, om, cv, ph,
+				  mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), tau.c_ptr(),
+				  mu_ptr, la_ptr, omstrx, omstry );
+//FTNC	       else
+//FTNC		  twstensorsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			       &k, &t, &om, &cv, &ph,
+//FTNC			       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
+//FTNC			       mu_ptr, la_ptr, &omstrx, &omstry );
+               // Compute boundary forcing for given stress tensor, tau.
+//FTNC	       if( m_croutines )
+		  getsurfforcingsg_ci( ifirst, ilast, jfirst, jlast, kfirst,
+				       klast, k, mMetric[g].c_ptr(), mJ[g].c_ptr(),
+				       tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g], bforce_side4_ptr );
+//FTNC	       else
+//FTNC		  getsurfforcingsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+//FTNC				    &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+//FTNC				    tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g], bforce_side4_ptr );
+
+               if( m_use_attenuation )
+               {
+                  float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
+                  float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
+//FTNC		  if( m_croutines )
+		  {
+		     twstensorsgatt_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+					k, t, om, cv, ph,
+					mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), tau.c_ptr(),
+					mua_ptr, laa_ptr, omstrx, omstry );
+		     subsurfforcingsg_ci( ifirst, ilast, jfirst, jlast, kfirst,
+					  klast, k, mMetric[g].c_ptr(), mJ[g].c_ptr(),
+					  tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g],
+					  bforce_side4_ptr );
+		  }
+//FTNC		  else
+//FTNC		  {
+//FTNC		     twstensorsgatt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC				     &k, &t, &om, &cv, &ph,
+//FTNC				     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
+//FTNC				     mua_ptr, laa_ptr, &omstrx, &omstry );
+//FTNC		     subsurfforcingsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
+//FTNC				       &klast, &k, mMetric.c_ptr(), mJ.c_ptr(),
+//FTNC				       tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g],
+//FTNC				       bforce_side4_ptr );
+//FTNC		  }
+               }
+            } // end supergrid && curvilinear
+         
+         } // end isotropic case
+         
+      } // end side==4 is bStressFree
+
+      if (m_bcType[g][5] == bDirichlet || m_bcType[g][5] == bSuperGrid)
+      {
+	 if( !curvilinear )
+	 {
+//FTNC	    if( m_croutines )
+	       twdirbdry_ci( &wind_ptr[6*5], h, t, om, cv, ph, bforce_side5_ptr, m_zmin[g] );
+//FTNC	    else
+//FTNC	       twdirbdry( &wind_ptr[6*5], &h, &t, &om, &cv, &ph, bforce_side5_ptr, &m_zmin[g] );
+	 }
+	 else
+	 {
+//FTNC	    if( m_croutines )
+	       twdirbdryc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+		       &wind_ptr[6*5], t, om, cv, ph, bforce_side5_ptr,
+		       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
+//FTNC	    else
+//FTNC	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			   &wind_ptr[6*5], &t, &om, &cv, &ph, bforce_side5_ptr,
+//FTNC			   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+	 }
+      }
+      else if (m_bcType[g][5] == bStressFree)
+      {
+	 k = nz;
+         if( m_anisotropic )
+         {
+// curvilinear anisotropic case is not yet implemented
+            CHECK_INPUT (!curvilinear, "cartesian_bc_forcing> bStressFree not implemented for anisotropic materials and curvilinear grids" <<endl);
+
+//FTNC	    if( m_croutines )
+	       tw_aniso_free_surf_z_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, k, t, om,
+					cv, ph, omm, phc, bforce_side5_ptr, h, m_zmin[g] );
+//FTNC	    else
+//FTNC	       tw_aniso_free_surf_z( ifirst, ilast, jfirst, jlast, kfirst, klast, k, t, om,
+//FTNC				     cv, ph, omm, phc, bforce_side5_ptr, h, m_zmin[g] );            
+         }
+         else
+         { //isotropic stuff
+
+            if( usingSupergrid() )
+            {
+               float_sw4 omstrx = m_supergrid_taper_x[g].get_tw_omega();
+               float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega();
+               twfrsurfzsgstr_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+			       klast, h, k, t, om, cv, ph, omstrx, omstry,
+			       bforce_side5_ptr, mu_ptr, la_ptr, m_zmin[g] );
+               if( m_use_attenuation )
+               {
+                  float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
+                  float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
+                  twfrsurfzsgstratt_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+				     klast, h, k, t, om, cv, ph, omstrx, omstry,
+				     bforce_side5_ptr, mua_ptr, laa_ptr, m_zmin[g] );
+	       
+               }
+            }
+            else
+            {
+	       if( curvilinear )
+	       {
+                  Sarray tau(6,ifirst,ilast,jfirst,jlast,1,1);
+		  twstensor_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+				k, t, om, cv, ph,
+				mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
+               // Compute boundary forcing for given stress tensor, tau.
+		  getsurfforcing_ci( ifirst, ilast, jfirst, jlast, kfirst,
+				     klast, k, mMetric[g].c_ptr(), mJ[g].c_ptr(),
+				     tau.c_ptr(), bforce_side5_ptr );
+	       }
+	       else
+	       {
+                  twfrsurfz_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+		   	        klast, h, k, t, om, cv, ph,
+			        bforce_side5_ptr, mu_ptr, la_ptr, m_zmin[g] );
+                  if( m_use_attenuation )
+                  {
+                     float_sw4* mua_ptr    = mMuVE[g][0].c_ptr();
+                     float_sw4* laa_ptr    = mLambdaVE[g][0].c_ptr();
+                     twfrsurfzatt_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+				klast, h, k, t, om, cv, ph,
+				bforce_side5_ptr, mua_ptr, laa_ptr, m_zmin[g] );
+                  }
+	       }
+            } // end ! supergrid
+            
+         }// end isotropic case
+         
+      } // end bStressFree on side 5
+      
+    }
+    else if (m_rayleigh_wave_test)
+    {
+      int q;
+      float_sw4 lambda, mu, rho, cr, omega, alpha;
+      
+      lambda = m_rayleigh_wave_test->m_lambda;
+      mu = m_rayleigh_wave_test->m_mu;
+      rho = m_rayleigh_wave_test->m_rho;
+      cr = m_rayleigh_wave_test->m_cr;
+      omega = m_rayleigh_wave_test->m_omega;
+      alpha = m_rayleigh_wave_test->m_alpha;
+
+// homogneous free surface bc (low-z)
+      for (q=0; q<3*m_NumberOfBCPoints[g][4]; q++)
+	bforce_side4_ptr[q] = 0.;
+
+// assign exact solution on bottom (high-z)
+      if (m_bcType[g][5] == bDirichlet)
+      {
+	raydirbdry( bforce_side5_ptr, &wind_ptr[6*5], &t, &lambda, &mu, &rho, &cr, 
+		    &omega, &alpha, &h, &zmin );
+      }
+
+     //  subroutine RAYDIRBDRY( bforce, wind, t, lambda, mu, rho, cr, 
+     // +     omega, alpha, h, zmin )
+    }
+    else if( m_point_source_test )
+    {
+       for( int side=0 ; side < 6 ; side++ )
+	  if( m_bcType[g][side] == bDirichlet )
+	     get_exact_point_source( a_BCForcing[g][side], t, g, *a_sources[0], &wind_ptr[6*side] );
+	  else
+	     for (int q=0; q<3*m_NumberOfBCPoints[g][side]; q++)
+		a_BCForcing[g][side][q] = 0.;
+
+    }
+    else
+    {
+// no boundary forcing
+// we can do the same loop for all types of bc. For bParallel boundaries, numberOfBCPoints=0
+      int q;
+      for (q=0; q<3*m_NumberOfBCPoints[g][0]; q++)
+	bforce_side0_ptr[q] = 0.;
+      for (q=0; q<3*m_NumberOfBCPoints[g][1]; q++)
+	bforce_side1_ptr[q] = 0.;
+      for (q=0; q<3*m_NumberOfBCPoints[g][2]; q++)
+	bforce_side2_ptr[q] = 0.;
+      for (q=0; q<3*m_NumberOfBCPoints[g][3]; q++)
+	bforce_side3_ptr[q] = 0.;
+      for (q=0; q<3*m_NumberOfBCPoints[g][4]; q++)
+	bforce_side4_ptr[q] = 0.;
+      for (q=0; q<3*m_NumberOfBCPoints[g][5]; q++)
+	bforce_side5_ptr[q] = 0.;
+    }
+  }
 }

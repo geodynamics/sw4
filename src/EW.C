@@ -331,8 +331,10 @@ void curvilinear4sg_ci(
     float_sw4* __restrict__ a_lambda, float_sw4* __restrict__ a_met,
     float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu, int* onesided,
     float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
-    float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_strx,
-    float_sw4* __restrict__ a_stry, char op);
+    float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_acof_no_gp, 
+    float_sw4* __restrict__ a_ghcof_no_gp,
+    float_sw4* __restrict__ a_strx,
+    float_sw4* __restrict__ a_stry, int nk,char op);
 void energy4_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                 int klast, int i1, int i2, int j1, int j2, int k1, int k2,
                 int* onesided, float_sw4* __restrict__ a_um,
@@ -4343,8 +4345,10 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
           tw_aniso_force(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
                          a_t, om, cv, ph, omm, phm, amprho, phc, h, zmin);
       }  // end for all Cartesian grids
-      if (topographyExists()) {
-        g = mNumberOfGrids - 1;
+      //if (topographyExists()) {
+      for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
+        {
+	  //g = mNumberOfGrids - 1;
         f_ptr = a_F[g].c_ptr();
         ifirst = m_iStart[g];
         ilast = m_iEnd[g];
@@ -4437,8 +4441,10 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
         }
       }  // end for all Cartesian grids
 
-      if (topographyExists()) {
-        g = mNumberOfGrids - 1;
+      //      if (topographyExists()) {
+for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
+        {
+	  //g = mNumberOfGrids - 1;
         f_ptr = a_F[g].c_ptr();
         ifirst = m_iStart[g];
         ilast = m_iEnd[g];
@@ -4967,8 +4973,10 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
       //       cout << "Second application of LU " << nn << " nans" << endl;
     }
   }
-  if (topographyExists()) {
-    g = mNumberOfGrids - 1;
+  //  if (topographyExists()) {
+  for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
+  {
+    //g = mNumberOfGrids - 1;
     a_Uacc[g].set_to_zero_async();
     uacc_ptr = a_Uacc[g].c_ptr();
     u_ptr = a_U[g].c_ptr();
@@ -4985,12 +4993,13 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     kfirst = m_kStart[g];
     klast = m_kEnd[g];
     onesided_ptr = m_onesided[g];
+    int nkg = m_global_nz[g];
     char op = '=';  // assign Uacc := L_u(u)
     if (m_croutines)
       curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr,
                         mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr,
-                        onesided_ptr, m_acof, m_bope, m_ghcof, m_sg_str_x[g],
-                        m_sg_str_y[g], op);
+                        onesided_ptr, m_acof, m_bope, m_ghcof, m_acof_no_gp, m_ghcof_no_gp,m_sg_str_x[g],
+                        m_sg_str_y[g], nkg,op);
     else {
       if (usingSupergrid())
         curvilinear4sg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, u_ptr,
@@ -5023,7 +5032,8 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
           curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                             alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
                             uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope,
-                            m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], op);
+                            m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp, 
+			    m_sg_str_x[g], m_sg_str_y[g], nkg,op);
         } else {
           if (usingSupergrid())
             curvilinear4sg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
@@ -8099,8 +8109,10 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
           tw_aniso_force(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
                          a_t, om, cv, ph, omm, phm, amprho, phc, h, zmin);
       }  // end for all Cartesian grids
-      if (topographyExists()) {
-        g = mNumberOfGrids - 1;
+      //if (topographyExists()) {
+for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
+        {
+	  //g = mNumberOfGrids - 1;
         f_ptr = a_F[g].c_ptr();
         ifirst = m_iStart[g];
         ilast = m_iEnd[g];
@@ -8193,8 +8205,10 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
         }
       }  // end for all Cartesian grids
 
-      if (topographyExists()) {
-        g = mNumberOfGrids - 1;
+      //if (topographyExists()) {
+      for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
+        {
+	  //g = mNumberOfGrids - 1;
         f_ptr = a_F[g].c_ptr();
         ifirst = m_iStart[g];
         ilast = m_iEnd[g];
