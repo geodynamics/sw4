@@ -268,8 +268,8 @@ class EW {
   // time stepping routines
   void simpleAttenuation(vector<Sarray>& a_Up);
   void enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
-                 vector<Sarray>& a_Lambda, vector<Sarray*>& a_AlphaVE, float_sw4 t,
-                 vector<float_sw4**>& a_BCForcing);
+                 vector<Sarray>& a_Lambda, vector<Sarray*>& a_AlphaVE,
+                 float_sw4 t, vector<float_sw4**>& a_BCForcing);
 
   void enforceBCfreeAtt(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                         vector<Sarray>& a_Um, vector<Sarray>& a_Mu,
@@ -292,7 +292,7 @@ class EW {
                             vector<Source*>& a_Source);
 
   void cartesian_bc_forcing_new(float_sw4 t, vector<float_sw4**>& a_BCForcing,
-                            vector<Source*>& a_Source);
+                                vector<Source*>& a_Source);
 
   void evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                vector<Sarray>& a_Lambda, vector<Sarray>& a_Lu,
@@ -1401,8 +1401,9 @@ class EW {
                   std::vector<Sarray>& a_Um, vector<Sarray*>& a_AlphaVEp,
                   float_sw4 t, vector<Sarray>& F,
                   std::vector<GridPointSource*>& point_sources);
-void CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, 
-                     vector<Sarray*>& a_AlphaVE, float_sw4 t );
+  void CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
+                   vector<Sarray>& a_Lambda, vector<Sarray*>& a_AlphaVE,
+                   float_sw4 t);
   void dirichlet_hom_ic(Sarray& U, int g, int k, bool inner);
   void dirichlet_twilight_ic(Sarray& U, int g, int kic, float_sw4 t);
 
@@ -1429,15 +1430,17 @@ void CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<S
 
   void compute_icstresses(Sarray& a_Up, Sarray& B, int g, int kic,
                           float_sw4* a_str_x, float_sw4* a_str_y);
-  void compute_icstresses_cpu( Sarray& a_Up, Sarray& B, int g, int kic,
-			     float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop, 
-			       char op );
-void compute_icstresses2( Sarray& a_Up, Sarray& B, int kic, float_sw4 h, Sarray& a_mu, Sarray& a_lambda,
-                             float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop, char op );
+  void compute_icstresses_cpu(Sarray& a_Up, Sarray& B, int g, int kic,
+                              float_sw4* a_str_x, float_sw4* a_str_y,
+                              float_sw4* sbop, char op);
+  void compute_icstresses2(Sarray& a_Up, Sarray& B, int kic, float_sw4 h,
+                           Sarray& a_mu, Sarray& a_lambda, float_sw4* a_str_x,
+                           float_sw4* a_str_y, float_sw4* sbop, char op);
 
-   void compute_icstresses_curv( Sarray& a_Up, Sarray& B, int kic,
-                                 Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
-                                 float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop, char op );
+  void compute_icstresses_curv(Sarray& a_Up, Sarray& B, int kic,
+                               Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
+                               float_sw4* a_str_x, float_sw4* a_str_y,
+                               float_sw4* sbop, char op);
   void add_ve_stresses(Sarray& a_Up, Sarray& B, int g, int kic, int a_a,
                        float_sw4* a_str_x, float_sw4* a_str_y);
 

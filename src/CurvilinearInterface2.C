@@ -906,10 +906,10 @@ void CurvilinearInterface2::lhs_Lu(Sarray& a_U, Sarray& a_lhs, Sarray& met,
            mucofw2 * a_U(3, i, j, 0)) *
           ijac;
       //	       r1 += istrxy*mucofu2*u(1,i,j,0) + mucofuv*u(2,i,j,0) +
-      //istry*mucofuw*u(3,i,j,0); 	       r2 += mucofuv*u(1,i,j,0) +
-      //istrxy*mucofv2*u(2,i,j,0) + istrx*mucofvw*u(3,i,j,0); 	       r3 +=
-      //istry*mucofuw*u(1,i,j,0) + istrx*mucofvw*u(2,i,j,0) +
-      //istrxy*mucofw2*u(3,i,j,0);
+      // istry*mucofuw*u(3,i,j,0); 	       r2 += mucofuv*u(1,i,j,0) +
+      // istrxy*mucofv2*u(2,i,j,0) + istrx*mucofvw*u(3,i,j,0); 	       r3 +=
+      // istry*mucofuw*u(1,i,j,0) + istrx*mucofvw*u(2,i,j,0) +
+      // istrxy*mucofw2*u(3,i,j,0);
     }
 #undef strx
 #undef stry

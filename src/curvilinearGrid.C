@@ -168,8 +168,8 @@ void meterr4c(int*, int*, int*, int*, int*, int*, double*, double*, double*,
 //   //    for (j=m_jStart[gTop]; j<=m_jEnd[gTop]; j++)
 //   //      for (i=m_iStart[gTop]; i<=m_iEnd[gTop]; i++)
 //   //      {
-//   // 	invert_curvilinear_grid_mapping(mX(i,j,k), mY(i,j,k), mZ(i,j,k), q0,
-//   r0,
+//   // 	invert_curvilinear_grid_mapping(mX(i,j,k), mY(i,j,k), mZ(i,j,k),
+//   q0, r0,
 //   // s0); 	dist += SQR(q0 - (double) i) + SQR(r0 - (double) j) + SQR(s0 -
 //   // (double) k);
 //   //      }
@@ -979,14 +979,14 @@ void EW::metric_derivatives_test() {
   //      metricexgh_ci( Bx, Nx, By, Ny, Bz, Nz, nzg, mX[g].c_ptr(),
   //      mY[g].c_ptr(), mZ[g].c_ptr(),
   //				    metex.c_ptr(), jacex.c_ptr(),
-  //m_grid_interpolation_order, m_zetaBreak, zmax, 				    m_GaussianAmp, m_GaussianXc,
-  //m_GaussianYc, m_GaussianLx, m_GaussianLy );
+  // m_grid_interpolation_order, m_zetaBreak, zmax,
+  // m_GaussianAmp, m_GaussianXc, m_GaussianYc, m_GaussianLx, m_GaussianLy );
   // FTNC   else
   // FTNC      metricexgh( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg,
   // mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), FTNC
   // metex.c_ptr(), jacex.c_ptr(), &m_grid_interpolation_order, &m_zetaBreak,
-  // &zmax, FTNC				    &m_GaussianAmp, &m_GaussianXc,
-  // &m_GaussianYc, &m_GaussianLx, &m_GaussianLy );
+  // &zmax, FTNC				    &m_GaussianAmp,
+  // &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy );
   communicate_array(metex, mNumberOfGrids - 1);
   communicate_array(jacex, mNumberOfGrids - 1);
 

@@ -176,10 +176,12 @@ void MaterialRfile::set_material_properties(std::vector<Sarray>& rho,
               //		   if( rhop[ind] < 1900 )
               //		   {
               //		      cout << "rho= " << rhop[ind] << " at " <<
-              //i << " " << j << " " << k << " gr= " << gr << 			 "wghx = " <<
-              //wghx[0] << " " << wghx[1] << " " << wghx[2] << " " << wghx[3] <<
-              //endl; 		      cout << "wghy = " << wghy[0] << " " << wghy[1] << " " <<
-              //wghy[2] << " " << wghy[3] << endl; 		      cout << "wghz = " << wghz[0]
+              // i << " " << j << " " << k << " gr= " << gr <<
+              // "wghx = " << wghx[0] << " " << wghx[1] << " " << wghx[2] << " "
+              // << wghx[3] <<
+              // endl; 		      cout << "wghy = " << wghy[0] << " " <<
+              // wghy[1] << " " << wghy[2] << " " << wghy[3] << endl;
+              // cout << "wghz = " << wghz[0]
               //<< " " << wghz[1] << " " << wghz[2] << " " << wghz[3] << endl;
               //		      cout << " r, s, t = " << r << " " << s <<
               //" " << t << endl;
@@ -189,13 +191,15 @@ void MaterialRfile::set_material_properties(std::vector<Sarray>& rho,
               //		   if( csp[ind] < 310 )
               //		   {
               //		      cout << "cs= " << csp[ind] << " at " << i
-              //<< " " << j << " " << k << " gr= " << gr << 			 "wghx = " << wghx[0]
+              //<< " " << j << " " << k << " gr= " << gr <<
+              //"wghx = " << wghx[0]
               //<< " " << wghx[1] << " " << wghx[2] << " " << wghx[3] << endl;
               //		      cout << "wghy = " << wghy[0] << " " <<
-              //wghy[1] << " " << wghy[2] << " " << wghy[3] << endl; 		      cout <<
-              //"wghz = " << wghz[0] << " " << wghz[1] << " " << wghz[2] << " "
-              //<< wghz[3] << endl; 		      cout << " r, s, t = " << r << " " << s << "
-              //" << t << endl;
+              // wghy[1] << " " << wghy[2] << " " << wghy[3] << endl;
+              // cout << "wghz = " << wghz[0] << " " << wghz[1] << " " << wghz[2]
+              //<< " "
+              //<< wghz[3] << endl; 		      cout << " r, s, t = " << r
+              //<< " " << s << " " << t << endl;
               //		   }
             } else {
               // bilinear intp.
@@ -276,10 +280,13 @@ void MaterialRfile::set_material_properties(std::vector<Sarray>& rho,
               }
               //		   if( rhop[ind] < 1900 )
               //		      cout << "rho= " << rhop[ind] << " at " <<
-              //i << " " << j << " " << k << " gr= " << gr << 			 "wghs = " << wghx
-              //<< " " << wghy << " " << wghz << endl; 		   if( csp[ind] < 310 ) 		      cout
+              // i << " " << j << " " << k << " gr= " << gr <<
+              // "wghs = " << wghx
+              //<< " " << wghy << " " << wghz << endl; 		   if( csp[ind]
+              //< 310 ) 		      cout
               //<< "cs= " << csp[ind] << " at " << i << " " << j << " " << k <<
-              //" gr= " << gr << 			 "wghs = " << wghx << " " << wghy << " " << wghz
+              //" gr= " << gr << 			 "wghs = " << wghx << "
+              //" << wghy << " " << wghz
               //<< endl;
             }
 
@@ -691,8 +698,9 @@ void MaterialRfile::read_rfile() {
     //	 for( int p=0 ; p < m_npatches ; p++ )
     //	 {
     //	    cout << "p= "<< p << " ncblock= " << ncblock[p] << " ifirst,ilast "
-    //<< m_ifirst[p] << " " << m_ilast[p] << 	       " jfirst,jlast " << m_jfirst[p] <<
-    //" " << m_jlast[p] << 	       " kfirst,klast " << m_kfirst[p] << " " << m_klast[p]
+    //<< m_ifirst[p] << " " << m_ilast[p] << 	       " jfirst,jlast " <<
+    //m_jfirst[p] << " " << m_jlast[p] << 	       " kfirst,klast " <<
+    //m_kfirst[p] << " " << m_klast[p]
     //<< endl;
     //	 }
     //      }
@@ -721,7 +729,7 @@ void MaterialRfile::read_rfile() {
         Parallel_IO* pio = new Parallel_IO(iread, mEW->usingParallelFS(),
                                            global, local, start, m_bufsize);
         //	 pio[p] = new Parallel_IO( iread, mEW->usingParallelFS(),
-        //global, local, start );
+        // global, local, start );
         // Read corresponding part of patches
         float_sw4* material_dble =
             SW4_NEW(Managed, double[mMaterial[p].m_npts]);
@@ -729,12 +737,12 @@ void MaterialRfile::read_rfile() {
           pio->read_array(&fd, ncblock[p], material_dble, pos0, "double",
                           swapbytes);
         //	       pio->read_array( &fd, ncblock[p], mMaterial[p].c_ptr(),
-        //pos0, "double", swapbytes );
+        // pos0, "double", swapbytes );
         else
           pio->read_array(&fd, ncblock[p], material_dble, pos0, "float",
                           swapbytes);
         //	       pio->read_array( &fd, ncblock[p], mMaterial[p].c_ptr(),
-        //pos0, "float", swapbytes );
+        // pos0, "float", swapbytes );
         delete pio;
         mMaterial[p].assign(material_dble, 0);
         // delete[] material_dble;

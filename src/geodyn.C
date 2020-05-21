@@ -2593,9 +2593,9 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
       //	       for( int c=1 ; c <= 3 ; c++ )
       //	       {
       //		  u[g](c,i,j0,k0-1) =
-      //cext1*u[g](c,i,j0,k0)+cext2*u[g](c,i,j0,k0+1)+cext3*u[g](c,i,j0,k0+2);
+      // cext1*u[g](c,i,j0,k0)+cext2*u[g](c,i,j0,k0+1)+cext3*u[g](c,i,j0,k0+2);
       //		  u[g](c,i,j1,k0-1) =
-      //cext1*u[g](c,i,j1,k0)+cext2*u[g](c,i,j1,k0+1)+cext3*u[g](c,i,j1,k0+2);
+      // cext1*u[g](c,i,j1,k0)+cext2*u[g](c,i,j1,k0+1)+cext3*u[g](c,i,j1,k0+2);
       //	       }
 
       Sarray& gd14 = m_geodyn_data1[4];
@@ -2869,7 +2869,7 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
                                                (strfact * m_geodyn_h) +
                                            1));
           //	       int kg0 = static_cast<int>(floor(((k-1)*h -
-          //m_geodyn_origin[2])/m_geodyn_h+1));
+          // m_geodyn_origin[2])/m_geodyn_h+1));
           if (ig0 >= m_geodyn_ni) ig0 = m_geodyn_ni - 1;
           if (ig0 <= 0) ig0 = 1;
           if (kg0 >= m_geodyn_nk) kg0 = m_geodyn_nk - 1;
@@ -3168,7 +3168,7 @@ void EW::bcsurf_curvilinear_2nd_order(int side, int i0, int i1, int j0, int j1,
                   << info << " from DGESV in bcsurf_curvilinear_2nd_order\n");
       //	 if( info != 0 )
       //	    cout << "ERROR: info = " << info << " from DGESV in
-      //bcsurf_curvilinear_2nd_order " << endl;
+      // bcsurf_curvilinear_2nd_order " << endl;
 
       u(1, i, j, k0 - 1) = u(1, i, j, k0) + b[0];
       u(2, i, j, k0 - 1) = u(2, i, j, k0) + b[1];

@@ -197,7 +197,7 @@ void MaterialPfile::set_material_properties(std::vector<Sarray> &rho,
 
               //		   cout << "x= " << x << " y= " << y << " depth=
               //" << depth << " vp = " << vp << " vs = " << vs << " rho = " <<
-              //density << endl;
+              // density << endl;
 
               if (m_qf) {
                 if (qp[g].is_defined()) qp[g](i, j, k) = qup;
@@ -702,7 +702,8 @@ void MaterialPfile::read_pfile() {
 
 //---------------------------------------------------------------------------------------
 // int MaterialPfile::get_material_pt( double x, double y, double z, double&
-// rho, double& cs, double& cp, 				    double& qs, double& qp )
+// rho, double& cs, double& cp, 				    double& qs, double& qp
+// )
 //  {
 //   int retval = 0;
 //   double zsed, zmoho;
@@ -750,7 +751,8 @@ void MaterialPfile::sample_latlon(double lats, double lons, float_sw4 zs,
 {
   // tmp
   // if (debug) printf("DEBUG::sample_latlon: lats=%e, lons=%e, zs=%e, dlon=%e,
-  // dlat=%e, m_h=%e\n", lats, lons, zs, 		    m_dlon, m_dlat, m_h);
+  // dlat=%e, m_h=%e\n", lats, lons, zs, 		    m_dlon, m_dlat,
+  // m_h);
 
   //  Check if lats and lons are out of range
   if (lats < m_latmin) {
@@ -848,7 +850,7 @@ void MaterialPfile::sample_latlon(double lats, double lons, float_sw4 zs,
       // linear interpolation factor ( what happens if two mZ values are
       // identical? )
       //	  double factor =
-      //(zs-mZ(i1+1,j1+1,k1))/(mZ(i1+1,j1+1,k1+1)-mZ(i1+1,j1+1,k1)); 	  if( factor
+      //(zs-mZ(i1+1,j1+1,k1))/(mZ(i1+1,j1+1,k1+1)-mZ(i1+1,j1+1,k1)); if( factor
       //< 0 ) 	     factor = 0;
       float_sw4 dz = mZ(i1 + 1, j1 + 1, k1 + 1) - mZ(i1 + 1, j1 + 1, k1);
       float_sw4 factor = 0;

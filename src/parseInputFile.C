@@ -745,11 +745,11 @@ void EW::processGrid(char* buffer) {
     //	token += 9;
     //        int ghost = atoi(token);
     //	CHECK_INPUT( ghost == 2 || ghost == 3, err << "Number of ghost points
-    //must be 2 or 3, not " << ghost );
+    // must be 2 or 3, not " << ghost );
 
     //	if( m_mesh_refinements && ghost == 2 )
     //	   CHECK_INPUT( false, err << "Number of ghost points must be 3 when
-    //using mesh refinement  "); 	m_ghost_points = ghost;
+    // using mesh refinement  "); 	m_ghost_points = ghost;
     //        m_ppadding = ghost;
     //     }
     //                        123456789
@@ -975,7 +975,8 @@ void EW::processGrid(char* buffer) {
         int nc = static_cast<int>(round(cubelen / h));
         h = cubelen / nc;
         //	   cout << "nc= " << nc << " cubelen= " << cubelen << " origin
-        //before " << 	      origin[0] << " " << origin[1] << " " << origin[2] << endl;
+        // before " << 	      origin[0] << " " << origin[1] << " " << origin[2]
+        // << endl;
         origin[0] -= h * (origin[0] / h - round(origin[0] / h));
         origin[1] -= h * (origin[1] / h - round(origin[1] / h));
         origin[2] -= h * (origin[2] / h - round(origin[2] / h));
@@ -2688,8 +2689,8 @@ void EW::processGlobalMaterial(char* buffer) {
 //  	 m_QueryType = token;
 // 	 CHECK_INPUT(strcmp(token, "FIXEDRES") == 0 ||
 // 		     strcmp(token, "MAXRES") == 0,
-// 		     err << "query can only be set to FIXEDRES or MAXRES, not: " <<
-// m_QueryType);
+// 		     err << "query can only be set to FIXEDRES or MAXRES, not: "
+// << m_QueryType);
 //       }
 //       else if (startswith("vsmin=", token))
 //       {
@@ -3521,7 +3522,8 @@ void EW::processCheckPoint(char* buffer) {
     //      {
     //	 token += 6; // skip cycle=
     //	 CHECK_INPUT( atoi(token) >= 0., err << "cycle must be a non-negative
-    //integer, not: " << token); 	 cycle = atoi(token); 	 timingSet = true;
+    // integer, not: " << token); 	 cycle = atoi(token); 	 timingSet =
+    // true;
     //      }
     if (startswith("cycleInterval=", token)) {
       token += 14;  // skip cycleInterval=
@@ -6855,8 +6857,8 @@ void EW::processObservationHDF5(
     //	{
     //	   int year,month,day,hour,minute,second,msecond, fail;
     //	   // Format: 01/04/2012:17:34:45.2343
-    //(Month/Day/Year:Hour:Min:Sec.fraction) 	   parsedate( token, year, month, day,
-    //hour, minute, second, msecond, fail ); 	   if( fail == 0 )
+    //(Month/Day/Year:Hour:Min:Sec.fraction) 	   parsedate( token, year, month,
+    //day, hour, minute, second, msecond, fail ); 	   if( fail == 0 )
     //	   {
     //              utcset = true;
     //	      utc[0] = year;
@@ -6869,7 +6871,7 @@ void EW::processObservationHDF5(
     //	   }
     //	   else
     //	      CHECK_INPUT(fail == 0 , "processObservation: Error in utc format.
-    //Give as mm/dd/yyyy:hh:mm:ss.ms "
+    // Give as mm/dd/yyyy:hh:mm:ss.ms "
     //			  << " or use utc=ignore" );
     //	}
     //     }
@@ -7087,8 +7089,8 @@ void EW::processObservation(char* buffer,
     //	{
     //	   int year,month,day,hour,minute,second,msecond, fail;
     //	   // Format: 01/04/2012:17:34:45.2343
-    //(Month/Day/Year:Hour:Min:Sec.fraction) 	   parsedate( token, year, month, day,
-    //hour, minute, second, msecond, fail ); 	   if( fail == 0 )
+    //(Month/Day/Year:Hour:Min:Sec.fraction) 	   parsedate( token, year, month,
+    //day, hour, minute, second, msecond, fail ); 	   if( fail == 0 )
     //	   {
     //              utcset = true;
     //	      utc[0] = year;
@@ -7101,7 +7103,7 @@ void EW::processObservation(char* buffer,
     //	   }
     //	   else
     //	      CHECK_INPUT(fail == 0 , "processObservation: Error in utc format.
-    //Give as mm/dd/yyyy:hh:mm:ss.ms "
+    // Give as mm/dd/yyyy:hh:mm:ss.ms "
     //			  << " or use utc=ignore" );
     //	}
     //     }
@@ -7422,8 +7424,8 @@ void EW::processCG(char* buffer) {
     //        token += 6;
     //        m_maxit = atoi(token);
     //        CHECK_INPUT(m_maxit >= 0,
-    //		    "cg command: maxit must be greater than or equal to 0, not " <<
-    //m_maxit );
+    //		    "cg command: maxit must be greater than or equal to 0, not "
+    //<< m_maxit );
     //     }
     //     else if( startswith("maxouterit=",token) )
     if (startswith("maxouterit=", token)) {
@@ -7987,7 +7989,7 @@ void EW::processMaterialRfile(char* buffer) {
   char* token = strtok(buffer, " \t");
   //  CHECK_INPUT(strcmp("rfile", token) == 0,
   //	      "ERROR: material data can only be set by an rfile line, not: " <<
-  //token);
+  // token);
 
   string err = token;
   err += " Error: ";
@@ -8050,7 +8052,7 @@ void EW::processMaterialSfile(char* buffer) {
   char* token = strtok(buffer, " \t");
   //  CHECK_INPUT(strcmp("rfile", token) == 0,
   //	      "ERROR: material data can only be set by an rfile line, not: " <<
-  //token);
+  // token);
 
   string err = token;
   err += " Error: ";

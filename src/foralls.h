@@ -75,8 +75,8 @@ class Range {
   Range(int istart, int iend) : start(istart), end(iend), tpb(N) {
     blocks = (end - start) / N;
     blocks = ((end - start) % N == 0) ? blocks : blocks + 1;
-    invalid=false;
-    if (blocks<=0) invalid=true;
+    invalid = false;
+    if (blocks <= 0) invalid = true;
   };
   int start;
   int end;
@@ -153,11 +153,12 @@ void forall3(int start0, int end0, int start1, int end1, int start2, int end2,
 
 template <typename T1, typename T2, typename T3, typename LoopBody>
 void forall3async(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
-  if (irange.invalid||jrange.invalid||krange.invalid) return;
+  if (irange.invalid || jrange.invalid || krange.invalid) return;
   dim3 tpb(irange.tpb, jrange.tpb, krange.tpb);
   dim3 blocks(irange.blocks, jrange.blocks, krange.blocks);
-  //std::cout<<"forall launch tpb"<<irange.tpb<<" "<<jrange.tpb<<" "<<krange.tpb<<"\n";
-  //std::cout<<"forall launch blocks"<<irange.blocks<<" "<<jrange.blocks<<" "<<krange.blocks<<"\n";
+  // std::cout<<"forall launch tpb"<<irange.tpb<<" "<<jrange.tpb<<"
+  // "<<krange.tpb<<"\n"; std::cout<<"forall launch blocks"<<irange.blocks<<"
+  // "<<jrange.blocks<<" "<<krange.blocks<<"\n";
 
   forall3kernel<<<blocks, tpb>>>(irange.start, irange.end, jrange.start,
                                  jrange.end, krange.start, krange.end, body);

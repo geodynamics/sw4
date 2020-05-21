@@ -331,10 +331,9 @@ void curvilinear4sg_ci(
     float_sw4* __restrict__ a_lambda, float_sw4* __restrict__ a_met,
     float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu, int* onesided,
     float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
-    float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_acof_no_gp, 
-    float_sw4* __restrict__ a_ghcof_no_gp,
-    float_sw4* __restrict__ a_strx,
-    float_sw4* __restrict__ a_stry, int nk,char op);
+    float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_acof_no_gp,
+    float_sw4* __restrict__ a_ghcof_no_gp, float_sw4* __restrict__ a_strx,
+    float_sw4* __restrict__ a_stry, int nk, char op);
 void energy4_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                 int klast, int i1, int i2, int j1, int j2, int k1, int k2,
                 int* onesided, float_sw4* __restrict__ a_um,
@@ -940,7 +939,8 @@ void EW::printPreamble(vector<Source*>& a_Sources, int event) const {
           numsrc++;
           myM0Sum += a_Sources[i]->getAmplitude();
           // if (i == 1)
-          //   std::cout << " SOURE " << i << " " << a_Sources[i]->getAmplitude()
+          //   std::cout << " SOURE " << i << " " <<
+          //   a_Sources[i]->getAmplitude()
           //             << "\n";
         }
       }
@@ -1056,20 +1056,22 @@ void EW::assign_local_bcs() {
 
   // Find out which boundaries need one sided approximation in mixed derivatives
   int ncurv = mNumberOfGrids - mNumberOfCartesianGrids;
-  for (g = 0; g < mNumberOfGrids; g++){
-    for(side=0 ; side < 4 ; side++ )
-        m_onesided[g][side]=0;
-    for(side=4 ; side < 6 ; side++ )
-        //        m_onesided[g][side] = (m_bcType[g][side] == bStressFree) || (m_bcType[g][side]== bCCInterface) ;
-        m_onesided[g][side] = (m_bcType[g][side] == bStressFree) ||
-           (m_bcType[g][side] == bRefInterface) || (m_bcType[g][side] == bAEInterface) || 
-	  (m_bcType[g][side] == bCCInterface &&  !(m_gridGenerator->curviCartIsSmooth(ncurv)) ); 
+  for (g = 0; g < mNumberOfGrids; g++) {
+    for (side = 0; side < 4; side++) m_onesided[g][side] = 0;
+    for (side = 4; side < 6; side++)
+      //        m_onesided[g][side] = (m_bcType[g][side] == bStressFree) ||
+      //        (m_bcType[g][side]== bCCInterface) ;
+      m_onesided[g][side] = (m_bcType[g][side] == bStressFree) ||
+                            (m_bcType[g][side] == bRefInterface) ||
+                            (m_bcType[g][side] == bAEInterface) ||
+                            (m_bcType[g][side] == bCCInterface &&
+                             !(m_gridGenerator->curviCartIsSmooth(ncurv)));
     // Pre CURVIMR configuration
     // for (side = 4; side < 6; side++)
     //   m_onesided[g][side] = (m_bcType[g][side] == bStressFree) ||
     //                         (m_bcType[g][side] == bRefInterface) ||
     //                         (m_bcType[g][side] == bAEInterface);
-}
+  }
 }
 
 //-----------------------------------------------------------------------
@@ -1984,8 +1986,8 @@ void EW::normOfDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
     }
     // need to exclude parallel overlap from L2 calculation
     int usesg = usingSupergrid();
-    //if (topographyExists() && g == mNumberOfGrids - 1) {
-    if( topographyExists() && g >= mNumberOfCartesianGrids ){
+    // if (topographyExists() && g == mNumberOfGrids - 1) {
+    if (topographyExists() && g >= mNumberOfCartesianGrids) {
       if (m_croutines)
         solerr3c_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, uex_ptr, u_ptr,
                     mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), mJ[g].c_ptr(),
@@ -2269,9 +2271,8 @@ void EW::initialData(float_sw4 a_t, vector<Sarray>& a_U,
       }
     }
     //    if (topographyExists()) {
-    for(int g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
-     {
-       //int g = mNumberOfGrids - 1;
+    for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+      // int g = mNumberOfGrids - 1;
       u_ptr = a_U[g].c_ptr();
       ifirst = m_iStart[g];
       ilast = m_iEnd[g];
@@ -2302,7 +2303,7 @@ void EW::initialData(float_sw4 a_t, vector<Sarray>& a_U,
                            alpha_ptr, &a_t, &om, &cv, &ph, mX[g].c_ptr(),
                            mY[g].c_ptr(), mZ[g].c_ptr());
       }
-     }
+    }
   } else if (m_rayleigh_wave_test) {
     double cr, lambda, mu, rho, alpha;
     for (int g = 0; g < mNumberOfCartesianGrids;
@@ -2409,9 +2410,10 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
       }
     }
     //   if (topographyExists()) {
-for(int g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ ) // curvilinear grids
-     {
-       //int g = mNumberOfGrids - 1;
+    for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids;
+         g++)  // curvilinear grids
+    {
+      // int g = mNumberOfGrids - 1;
       u_ptr = a_U[g].c_ptr();
       ifirst = m_iStart[g];
       ilast = m_iEnd[g];
@@ -2868,8 +2870,8 @@ void EW::get_exact_point_source(float_sw4* up, float_sw4 t, int g,
     //      m0  = source.getAmplitude();
     m0 = 1;
   }
-  //bool curvilinear = topographyExists() && g == mNumberOfGrids - 1;
-  bool curvilinear = topographyExists() && g > mNumberOfCartesianGrids-1;
+  // bool curvilinear = topographyExists() && g == mNumberOfGrids - 1;
+  bool curvilinear = topographyExists() && g > mNumberOfCartesianGrids - 1;
   // std::cout<<"CUYVT"<<curvilinear<<"\n";
   //   float_sw4* up = u.c_ptr();
   float_sw4 h = mGridSize[g];
@@ -4198,10 +4200,9 @@ void EW::exactRhsTwilight(float_sw4 a_t, vector<Sarray>& a_F) {
                      &h, &zmin);
     }
   }
-  //if (topographyExists()) {
-  for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
-  {
-    //g = mNumberOfGrids - 1;
+  // if (topographyExists()) {
+  for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+    // g = mNumberOfGrids - 1;
     f_ptr = a_F[g].c_ptr();
     ifirst = m_iStart[g];
     ilast = m_iEnd[g];
@@ -4283,8 +4284,7 @@ void EW::exactAccTwilight(float_sw4 a_t, vector<Sarray>& a_Uacc) {
                    &a_t, &om, &cv, &ph, &h, &zmin);
   }
   //  if (topographyExists()) {
-  for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
-  {
+  for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
     // g = mNumberOfGrids - 1;
     uacc_ptr = a_Uacc[g].c_ptr();
     ifirst = m_iStart[g];
@@ -4353,10 +4353,9 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
           tw_aniso_force(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
                          a_t, om, cv, ph, omm, phm, amprho, phc, h, zmin);
       }  // end for all Cartesian grids
-      //if (topographyExists()) {
-      for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
-        {
-	  //g = mNumberOfGrids - 1;
+      // if (topographyExists()) {
+      for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+        // g = mNumberOfGrids - 1;
         f_ptr = a_F[g].c_ptr();
         ifirst = m_iStart[g];
         ilast = m_iEnd[g];
@@ -4450,9 +4449,8 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
       }  // end for all Cartesian grids
 
       //      if (topographyExists()) {
-for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
-        {
-	  //g = mNumberOfGrids - 1;
+      for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+        // g = mNumberOfGrids - 1;
         f_ptr = a_F[g].c_ptr();
         ifirst = m_iStart[g];
         ilast = m_iEnd[g];
@@ -4631,7 +4629,7 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
   SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *f_ptr, om, ph, cv, h, zmin, omm, phm, amprho, ampmu, ampla;
-  //std::cout<<"FORCE_TT\n";
+  // std::cout<<"FORCE_TT\n";
   int g;
   // std::cerr<<"And now in force_tt\n";
   if (m_twilight_forcing) {
@@ -4670,9 +4668,8 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
       }  // end for all Cartesian grids
 
       // if (topographyExists()) {
-for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
-        {
-	  //g = mNumberOfGrids - 1;
+      for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+        // g = mNumberOfGrids - 1;
         f_ptr = a_F[g].c_ptr();
         ifirst = m_iStart[g];
         ilast = m_iEnd[g];
@@ -4766,9 +4763,8 @@ for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
         }
       }
       //     if (topographyExists()) {
-for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
-        {
-	  //g = mNumberOfGrids - 1;
+      for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+        // g = mNumberOfGrids - 1;
         f_ptr = a_F[g].c_ptr();
         ifirst = m_iStart[g];
         ilast = m_iEnd[g];
@@ -4885,7 +4881,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                  vector<Sarray>& a_Lambda, vector<Sarray>& a_Uacc,
                  vector<Sarray*>& a_AlphaVE) {
   SW4_MARK_FUNCTION;
-#ifdef PEEKS_GALORE 
+#ifdef PEEKS_GALORE
   SW4_PEEK;
   SYNC_DEVICE;
 #endif
@@ -4949,9 +4945,9 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     //    size_t nn=a_Uacc[g].count_nans();
     //    if( nn > 0 )
     //       cout << "First application of LU " << nn << " nans" << endl;
-#ifdef PEEKS_GALORE 
-  SW4_PEEK;
-  SYNC_DEVICE;
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_DEVICE;
 #endif
 
     if (m_use_attenuation && m_number_mechanisms > 0) {
@@ -4994,13 +4990,12 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     }
   }
   //  if (topographyExists()) {
-#ifdef PEEKS_GALORE 
+#ifdef PEEKS_GALORE
   SW4_PEEK;
   SYNC_DEVICE;
 #endif
-  for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
-  {
-    //g = mNumberOfGrids - 1;
+  for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+    // g = mNumberOfGrids - 1;
     a_Uacc[g].set_to_zero_async();
     uacc_ptr = a_Uacc[g].c_ptr();
     u_ptr = a_U[g].c_ptr();
@@ -5019,15 +5014,15 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     onesided_ptr = m_onesided[g];
     int nkg = m_global_nz[g];
     char op = '=';  // assign Uacc := L_u(u)
-#ifdef PEEKS_GALORE 
-  SW4_PEEK;
-  SYNC_DEVICE;
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_DEVICE;
 #endif
     if (m_croutines)
       curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr,
                         mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr,
-                        onesided_ptr, m_acof, m_bope, m_ghcof, m_acof_no_gp, m_ghcof_no_gp,m_sg_str_x[g],
-                        m_sg_str_y[g], nkg,op);
+                        onesided_ptr, m_acof, m_bope, m_ghcof, m_acof_no_gp,
+                        m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op);
     else {
       if (usingSupergrid())
         curvilinear4sg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, u_ptr,
@@ -5039,9 +5034,9 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                      mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr, onesided_ptr,
                      m_acof, m_bope, m_ghcof, &op);
     }
-#ifdef PEEKS_GALORE 
-  SW4_PEEK;
-  SYNC_DEVICE;
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_DEVICE;
 #endif
     if (m_use_attenuation && m_number_mechanisms > 0) {
       op = '-';  // Subtract Uacc := Uacc - L_a(alpha)
@@ -5064,8 +5059,8 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
           curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                             alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
                             uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope,
-                            m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp, 
-			    m_sg_str_x[g], m_sg_str_y[g], nkg,op);
+                            m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,
+                            m_sg_str_x[g], m_sg_str_y[g], nkg, op);
         } else {
           if (usingSupergrid())
             curvilinear4sg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
@@ -5081,9 +5076,9 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
       }
     }
     // SYNC_STREAM;
-#ifdef PEEKS_GALORE 
-  SW4_PEEK;
-  SYNC_DEVICE;
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_DEVICE;
 #endif
   }
   SYNC_STREAM;  // REQUIRED IF THERE IS NO SYNC IN curvilinear4sg_ci
@@ -5125,9 +5120,8 @@ void EW::evalRHSanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
                           m_sg_str_z[g]);
   }
   //  if (topographyExists()) {
-  for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
-  {
-    //g = mNumberOfGrids - 1;
+  for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+    // g = mNumberOfGrids - 1;
     uacc_ptr = a_Uacc[g].c_ptr();
     u_ptr = a_U[g].c_ptr();
     c_ptr = mCcurv.c_ptr();
@@ -5296,8 +5290,8 @@ void EW::updateMemVarPred(vector<Sarray*>& a_AlphaVEp,
       float_sw4 om = m_twilight_forcing->m_omega;
       float_sw4 ph = m_twilight_forcing->m_phase;
       float_sw4 cv = m_twilight_forcing->m_c;
-      //if (topographyExists() && g == mNumberOfGrids - 1)
-	if( topographyExists() && g >= mNumberOfCartesianGrids )
+      // if (topographyExists() && g == mNumberOfGrids - 1)
+      if (topographyExists() && g >= mNumberOfCartesianGrids)
         addMemVarPredCurvilinear(mX[g], mY[g], mZ[g], a_t, a_AlphaVEp[g][0],
                                  mOmegaVE[0], mDt, om, ph, cv);
       else {
@@ -5349,8 +5343,8 @@ void EW::updateMemVarCorr(vector<Sarray*>& a_AlphaVEp,
       double om = m_twilight_forcing->m_omega;
       double ph = m_twilight_forcing->m_phase;
       double cv = m_twilight_forcing->m_c;
-      if( topographyExists() && g >= mNumberOfCartesianGrids ){
-	//if (topographyExists() && g == mNumberOfGrids - 1) {
+      if (topographyExists() && g >= mNumberOfCartesianGrids) {
+        // if (topographyExists() && g == mNumberOfGrids - 1) {
         //            addMemVarCorrCurvilinear( mX, mY, mZ, a_t,
         //            a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
         addMemVarCorr2Curvilinear(mX[g], mY[g], mZ[g], a_t, a_AlphaVEp[g][0],
@@ -5414,8 +5408,8 @@ void EW::updateMemVarCorrNearInterface(Sarray& a_AlphaVEp, Sarray& a_AlphaVEm,
     double om = m_twilight_forcing->m_omega;
     double ph = m_twilight_forcing->m_phase;
     double cv = m_twilight_forcing->m_c;
-    if( topographyExists() && a_grid >= mNumberOfCartesianGrids ){
-      //if (topographyExists() && a_grid == mNumberOfGrids - 1) {
+    if (topographyExists() && a_grid >= mNumberOfCartesianGrids) {
+      // if (topographyExists() && a_grid == mNumberOfGrids - 1) {
       addMemVarCorr2Curvilinear(mX[a_grid], mY[a_grid], mZ[a_grid], a_t,
                                 a_AlphaVEp, mOmegaVE[0], mDt, om, ph, cv);
     } else {
@@ -6017,8 +6011,10 @@ void EW::testsourcediff(vector<Source*> GlobalSources, float_sw4 gradient[11],
   //   for( int m=0 ; m < gpsources.size() ; m++ )
   //   cout << "size of sources " << gpsources.size() << endl;
   for (int m = 0; m < gpsources.size() - 1; m++) {
-    gpsources[m]->add_to_gradient(kappa, eta, 0.63, mDt, gradient, mGridSize,
-                                  mJ[mNumberOfGrids - 1], topographyExists()); // mJ argument should be the whole vector of Sarrays
+    gpsources[m]->add_to_gradient(
+        kappa, eta, 0.63, mDt, gradient, mGridSize, mJ[mNumberOfGrids - 1],
+        topographyExists());  // mJ argument should be the whole vector of
+                              // Sarrays
     gpsources[m]->add_to_hessian(kappa, eta, 0.63, mDt, hessian, mGridSize);
   }
 }
@@ -6076,11 +6072,11 @@ void EW::compute_energy(float_sw4 dt, bool write_file, vector<Sarray>& Um,
     float_sw4 locenergy;
     int* onesided_ptr = m_onesided[g];
     //   if (topographyExists() && g == mNumberOfGrids - 1) {
-    if( topographyExists() && g >= mNumberOfCartesianGrids ){
-      
-      if( m_gridGenerator->curviCartIsSmooth( mNumberOfGrids-mNumberOfCartesianGrids )
-	     && g == mNumberOfCartesianGrids )
-	   kend--;
+    if (topographyExists() && g >= mNumberOfCartesianGrids) {
+      if (m_gridGenerator->curviCartIsSmooth(mNumberOfGrids -
+                                             mNumberOfCartesianGrids) &&
+          g == mNumberOfCartesianGrids)
+        kend--;
 
       if (m_croutines)
         energy4c_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
@@ -7316,8 +7312,7 @@ void EW::add_to_grad(vector<Sarray>& K, vector<Sarray>& Kacc,
     int* onesided_ptr = m_onesided[g];
     int nb = 4, wb = 6;
     //    if (topographyExists() && g == mNumberOfGrids - 1) {
-if( topographyExists() && g >= mNumberOfCartesianGrids )
-      {
+    if (topographyExists() && g >= mNumberOfCartesianGrids) {
       if (m_croutines) {
         addgradrhoc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, ifirstact,
                        ilastact, jfirstact, jlastact, kfirstact, klastact,
@@ -7993,9 +7988,8 @@ void EW::setup_viscoelastic_tw() {
                       la_ptr, &omm, &phm, &ampmu, &ampla, &h, &zmin);
   }
   //  if (topographyExists()) {
- for (g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++)
-   {
-     //g = mNumberOfGrids - 1;
+  for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+    // g = mNumberOfGrids - 1;
     mu_ptr = mMuVE[g][0].c_ptr();
     la_ptr = mLambdaVE[g][0].c_ptr();
     ifirst = m_iStart[g];
@@ -8160,10 +8154,9 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
           tw_aniso_force(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
                          a_t, om, cv, ph, omm, phm, amprho, phc, h, zmin);
       }  // end for all Cartesian grids
-      //if (topographyExists()) {
-for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
-        {
-	  //g = mNumberOfGrids - 1;
+         // if (topographyExists()) {
+      for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+        // g = mNumberOfGrids - 1;
         f_ptr = a_F[g].c_ptr();
         ifirst = m_iStart[g];
         ilast = m_iEnd[g];
@@ -8256,10 +8249,9 @@ for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
         }
       }  // end for all Cartesian grids
 
-      //if (topographyExists()) {
-      for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
-        {
-	  //g = mNumberOfGrids - 1;
+      // if (topographyExists()) {
+      for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+        // g = mNumberOfGrids - 1;
         f_ptr = a_F[g].c_ptr();
         ifirst = m_iStart[g];
         ilast = m_iEnd[g];
@@ -8367,7 +8359,7 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
   SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *f_ptr, om, ph, cv, h, zmin, omm, phm, amprho, ampmu, ampla;
-  //std::cout<<"FORCE_TT CALLED\n";
+  // std::cout<<"FORCE_TT CALLED\n";
   int g;
 
   if (m_twilight_forcing) {
@@ -8406,9 +8398,8 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
       }  // end for all Cartesian grids
 
       //      if (topographyExists()) {
-for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
-        {
-      //g = mNumberOfGrids - 1;
+      for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+        // g = mNumberOfGrids - 1;
         f_ptr = a_F[g].c_ptr();
         ifirst = m_iStart[g];
         ilast = m_iEnd[g];
@@ -8501,10 +8492,9 @@ for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
           }
         }
       }
-      //if (topographyExists()) {
-       for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
-        {
-      //g = mNumberOfGrids - 1;
+      // if (topographyExists()) {
+      for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+        // g = mNumberOfGrids - 1;
         f_ptr = a_F[g].c_ptr();
         ifirst = m_iStart[g];
         ilast = m_iEnd[g];

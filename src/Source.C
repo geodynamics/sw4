@@ -2865,7 +2865,8 @@ int Source::spline_interpolation() {
     // {
     // 	cout << "before spline interp" << endl;
     // 	cout << "npts = " << npts << " t0 = " << mPar[0] << " dt= " << 1/mFreq
-    // << endl; 	for( int i=0 ; i < npts ; i++ ) 	  cout << "fun[" << i
+    // << endl; 	for( int i=0 ; i < npts ; i++ ) 	  cout << "fun[" <<
+    // i
     // <<
     // "]
     // =
