@@ -137,6 +137,10 @@ void curvilinear4sg_ci(
 #if defined(ENABLE_CUDA)
 #define NO_COLLAPSE 1
 #endif
+#ifdef PEEKS_GALORE 
+      SW4_PEEK;
+      SYNC_DEVICE;
+#endif
 #if defined(NO_COLLAPSE)
       // LOOP -1
       // 32,4,2 is 4% slower. 32 4 4 does not fit
@@ -741,6 +745,14 @@ void curvilinear4sg_ci(
         lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
       });  // End of curvilinear4sg_ci LOOP -1
     }
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
 
 #if defined(NO_COLLAPSE)
     // LOOP 0
@@ -751,7 +763,7 @@ void curvilinear4sg_ci(
     Range<16> I(ifirst + 2, ilast - 1);  // 16.861ms for 64,2,2
     Range<4> J(jfirst + 2, jlast - 1);
     Range<4> K(kstart, kend+1); // Changed for CUrvi-MR Was klast-1
-
+    //std::cout<<"KSTART END"<<kstart<<" "<<kend<<"\n";
     // forall3GS(IS,JS,KS, [=]RAJA_DEVICE(int i,int j,int k){
 #pragma forceinline
     forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
@@ -1119,6 +1131,11 @@ void curvilinear4sg_ci(
       // 4 ops, tot=773
       lu(1, i, j, k) = a1 * lu(1, i, j, k) + sgn * r1 * ijac;
     });  // END OF LOOP 0
+
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
 #if defined(NO_COLLAPSE)
     // LOOP 1
     // RangeGS<256,4> IS(ifirst+2,ilast-1);
@@ -1484,6 +1501,10 @@ void curvilinear4sg_ci(
       // 4 ops, tot=1541
       lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
     });  // END OF LOOP 1
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
 #if defined(NO_COLLAPSE)
     // LOOP 2
     // RangeGS<256,4> IS(ifirst+2,ilast-1);
@@ -1856,7 +1877,10 @@ void curvilinear4sg_ci(
       lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
     });  // End of curvilinear4sg_ci LOOP 2
   }
-
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
 
       /// CURVIMR ADDITION
    if( onesided[5]==1 )
@@ -2355,7 +2379,10 @@ void curvilinear4sg_ci(
 	       lu(3,i,j,k) = a1*lu(3,i,j,k) + sgn*r3*ijac;
 	    }
    }
-      
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
       
   // SYNC_STREAM; // NOW BEING DONE at the end of evalRHS
 #undef mu

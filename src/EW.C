@@ -2407,8 +2407,10 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
                           alpha_ptr, &a_t, &om, &cv, &ph, &h, &zmin);
       }
     }
-    if (topographyExists()) {
-      int g = mNumberOfGrids - 1;
+    //   if (topographyExists()) {
+for(int g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ ) // curvilinear grids
+     {
+       //int g = mNumberOfGrids - 1;
       u_ptr = a_U[g].c_ptr();
       ifirst = m_iStart[g];
       ilast = m_iEnd[g];
@@ -4623,7 +4625,7 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
   SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *f_ptr, om, ph, cv, h, zmin, omm, phm, amprho, ampmu, ampla;
-
+  std::cout<<"FORCE_TT\n";
   int g;
   // std::cerr<<"And now in force_tt\n";
   if (m_twilight_forcing) {
@@ -4661,8 +4663,10 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
                             a_t, om, cv, ph, omm, phm, amprho, phc, h, zmin);
       }  // end for all Cartesian grids
 
-      if (topographyExists()) {
-        g = mNumberOfGrids - 1;
+      // if (topographyExists()) {
+for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
+        {
+	  //g = mNumberOfGrids - 1;
         f_ptr = a_F[g].c_ptr();
         ifirst = m_iStart[g];
         ilast = m_iEnd[g];
@@ -4755,8 +4759,10 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
           }
         }
       }
-      if (topographyExists()) {
-        g = mNumberOfGrids - 1;
+      //     if (topographyExists()) {
+for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
+        {
+	  //g = mNumberOfGrids - 1;
         f_ptr = a_F[g].c_ptr();
         ifirst = m_iStart[g];
         ilast = m_iEnd[g];
@@ -4873,6 +4879,10 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                  vector<Sarray>& a_Lambda, vector<Sarray>& a_Uacc,
                  vector<Sarray*>& a_AlphaVE) {
   SW4_MARK_FUNCTION;
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *uacc_ptr, *u_ptr, *mu_ptr, *la_ptr, h;
 
@@ -4933,6 +4943,10 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     //    size_t nn=a_Uacc[g].count_nans();
     //    if( nn > 0 )
     //       cout << "First application of LU " << nn << " nans" << endl;
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
 
     if (m_use_attenuation && m_number_mechanisms > 0) {
       op = '-';  // Subtract Uacc := Uacc - L_a(alpha)
@@ -4974,6 +4988,10 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     }
   }
   //  if (topographyExists()) {
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
   for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
   {
     //g = mNumberOfGrids - 1;
@@ -4995,6 +5013,10 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     onesided_ptr = m_onesided[g];
     int nkg = m_global_nz[g];
     char op = '=';  // assign Uacc := L_u(u)
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
     if (m_croutines)
       curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr,
                         mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr,
@@ -5011,6 +5033,10 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                      mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr, onesided_ptr,
                      m_acof, m_bope, m_ghcof, &op);
     }
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
     if (m_use_attenuation && m_number_mechanisms > 0) {
       op = '-';  // Subtract Uacc := Uacc - L_a(alpha)
       for (int a = 0; a < m_number_mechanisms; a++) {
@@ -5049,6 +5075,10 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
       }
     }
     // SYNC_STREAM;
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
   }
   SYNC_STREAM;  // REQUIRED IF THERE IS NO SYNC IN curvilinear4sg_ci
 }
@@ -8316,7 +8346,7 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
   SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *f_ptr, om, ph, cv, h, zmin, omm, phm, amprho, ampmu, ampla;
-
+  std::cout<<"FORCE_TT CALLED\n";
   int g;
 
   if (m_twilight_forcing) {

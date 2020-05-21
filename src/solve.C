@@ -334,6 +334,11 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     initialData(mTstart - mDt, Um, AlphaVEm);
   }
 
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
+
   if (!mQuiet && mVerbose && proc_zero())
     cout << "  Initial data has been assigned" << endl;
 
@@ -411,6 +416,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
                highZ[3 * g], highZ[3 * g + 1], highZ[3 * g + 2]);
       }
     }
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
 
     // test accuracy of forcing
     evalRHS(U, mMu, mLambda, Lu, AlphaVE);  // save Lu in composite grid 'Lu'
@@ -487,6 +496,11 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   if (m_use_attenuation && (m_number_mechanisms > 0)) {
     enforceBCfreeAtt2(U, mMu, mLambda, AlphaVE, BCForcing);
   }
+
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
 
   for( int g=mNumberOfCartesianGrids; g < mNumberOfGrids-1 ; g++ )
      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( U, t, AlphaVE );
@@ -617,6 +631,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
   }  // end m_energy_test ...
 
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
   if (m_moment_test) test_sources(point_sources, a_Sources, F, identsources);
 
   // save initial data on receiver records
@@ -636,6 +654,11 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
                                "");
     MPI_Barrier(MPI_COMM_WORLD);
   }
+#endif
+
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
 #endif
 
   for (int ts = 0; ts < a_TimeSeries.size(); ts++) {
@@ -707,7 +730,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   }
 
   if (!mQuiet && proc_zero()) cout << "  Begin time stepping..." << endl;
-
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
   // Prefetch Sarrays before starting time stepping
   SarrayVectorPrefetch(Up);
   SarrayVectorPrefetch(Um);
@@ -728,6 +754,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   // test: compute forcing for the first time step before the loop to get
   // started
   Force(t, F, point_sources, identsources);
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
   // end test
   std::chrono::high_resolution_clock::time_point t1, t2;
 #ifdef SW4_TRACK_MPI
@@ -771,18 +801,29 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       check_for_nan(F, 1, "F");
       check_for_nan(U, 1, "U");
     }
-
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
     // evaluate right hand side
     if (m_anisotropic)
       evalRHSanisotropic(U, mC, Lu);
     else
       evalRHS(U, mMu, mLambda, Lu, AlphaVE);  // save Lu in composite grid 'Lu'
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
 
     if (m_output_detailed_timing) time_measure[1] = MPI_Wtime();
 
     if (trace && m_myRank == dbgproc) cout << " after evalRHS" << endl;
 
     if (m_checkfornan) check_for_nan(Lu, 1, "Lu pred. ");
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
 
     // take predictor step, store in Up
     evalPredictor(Up, U, Um, mRho, Lu, F);
@@ -826,10 +867,18 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     if (m_output_detailed_timing) time_measure[5] = MPI_Wtime();
     SW4_MARK_END("COMM_WINDOW");
     // update ghost points in Up
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
     if (m_anisotropic)
       enforceBCanisotropic(Up, mC, t + mDt, BCForcing);
     else
       enforceBC(Up, mMu, mLambda, AlphaVEp, t + mDt, BCForcing);
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
 
     // NEW
     // Impose un-coupled free surface boundary condition with visco-elastic
@@ -874,6 +923,11 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       SW4_MARK_END("mOrder=2");
     } else  // 4th order time stepping
     {
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
+      std::cout<<"HERE ALOS 4th\n";
       SW4_MARK_BEGIN("MPI_WTIME");
       if (m_output_detailed_timing) time_measure[7] = MPI_Wtime();
       SW4_MARK_END("MPI_WTIME");
@@ -888,10 +942,14 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       // NOTE: true means call preliminary_corrector, which needs F_tt(t) & is
       // computed 5 lines down
       enforceIC(Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, true, F,
-                point_sources);
+		point_sources); // THIS IS TH ONE TO BE FIXED FOR UP MATCH
 
       if (m_output_detailed_timing) time_measure[9] = MPI_Wtime();
     }
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
     //
     // corrector step for
     // *** 4th order in time ***
@@ -901,7 +959,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
       // if( m_output_detailed_timing )
       //    time_measure[10] = MPI_Wtime();
-
+      std::cout<<"HERE 4th\n";
       evalDpDmInTime(Up, U, Um, Uacc);  // store result in Uacc
       if (trace && m_myRank == dbgproc) cout << " after evalDpDmInTime" << endl;
 
@@ -936,11 +994,13 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
       // add in super-grid damping terms
       if (usingSupergrid()) {
+	std::cout<<"SUPERGRID\n";
         addSuperGridDamping(Up, U, Um, mRho);
       }
 
       // Arben's simplified attenuation
       if (m_use_attenuation && m_number_mechanisms == 0) {
+	std::cout<<"ATTENUATION\n";
         simpleAttenuation(Up);
       }
 
@@ -1001,6 +1061,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       if (m_output_detailed_timing) time_measure[17] = MPI_Wtime();
 
     }  // end if mOrder == 4
+#ifdef PEEKS_GALORE 
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
 
     if (m_checkfornan) check_for_nan(Up, 1, "Up");
 
