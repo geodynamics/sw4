@@ -939,9 +939,9 @@ void EW::printPreamble(vector<Source*>& a_Sources, int event) const {
         if (a_Sources[i]->isMomentSource()) {
           numsrc++;
           myM0Sum += a_Sources[i]->getAmplitude();
-          if (i == 1)
-            std::cout << " SOURE " << i << " " << a_Sources[i]->getAmplitude()
-                      << "\n";
+          // if (i == 1)
+          //   std::cout << " SOURE " << i << " " << a_Sources[i]->getAmplitude()
+          //             << "\n";
         }
       }
       if (!mQuiet) {
@@ -1984,7 +1984,8 @@ void EW::normOfDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
     }
     // need to exclude parallel overlap from L2 calculation
     int usesg = usingSupergrid();
-    if (topographyExists() && g == mNumberOfGrids - 1) {
+    //if (topographyExists() && g == mNumberOfGrids - 1) {
+    if( topographyExists() && g >= mNumberOfCartesianGrids ){
       if (m_croutines)
         solerr3c_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, uex_ptr, u_ptr,
                     mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), mJ[g].c_ptr(),
@@ -2867,7 +2868,8 @@ void EW::get_exact_point_source(float_sw4* up, float_sw4 t, int g,
     //      m0  = source.getAmplitude();
     m0 = 1;
   }
-  bool curvilinear = topographyExists() && g == mNumberOfGrids - 1;
+  //bool curvilinear = topographyExists() && g == mNumberOfGrids - 1;
+  bool curvilinear = topographyExists() && g > mNumberOfCartesianGrids-1;
   // std::cout<<"CUYVT"<<curvilinear<<"\n";
   //   float_sw4* up = u.c_ptr();
   float_sw4 h = mGridSize[g];
@@ -4196,8 +4198,10 @@ void EW::exactRhsTwilight(float_sw4 a_t, vector<Sarray>& a_F) {
                      &h, &zmin);
     }
   }
-  if (topographyExists()) {
-    g = mNumberOfGrids - 1;
+  //if (topographyExists()) {
+  for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
+  {
+    //g = mNumberOfGrids - 1;
     f_ptr = a_F[g].c_ptr();
     ifirst = m_iStart[g];
     ilast = m_iEnd[g];
@@ -4278,8 +4282,10 @@ void EW::exactAccTwilight(float_sw4 a_t, vector<Sarray>& a_Uacc) {
       exactaccfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, uacc_ptr,
                    &a_t, &om, &cv, &ph, &h, &zmin);
   }
-  if (topographyExists()) {
-    g = mNumberOfGrids - 1;
+  //  if (topographyExists()) {
+  for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
+  {
+    // g = mNumberOfGrids - 1;
     uacc_ptr = a_Uacc[g].c_ptr();
     ifirst = m_iStart[g];
     ilast = m_iEnd[g];
@@ -5118,8 +5124,10 @@ void EW::evalRHSanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
                           m_bope, m_ghcof, &h, m_sg_str_x[g], m_sg_str_y[g],
                           m_sg_str_z[g]);
   }
-  if (topographyExists()) {
-    g = mNumberOfGrids - 1;
+  //  if (topographyExists()) {
+  for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
+  {
+    //g = mNumberOfGrids - 1;
     uacc_ptr = a_Uacc[g].c_ptr();
     u_ptr = a_U[g].c_ptr();
     c_ptr = mCcurv.c_ptr();
@@ -5288,7 +5296,8 @@ void EW::updateMemVarPred(vector<Sarray*>& a_AlphaVEp,
       float_sw4 om = m_twilight_forcing->m_omega;
       float_sw4 ph = m_twilight_forcing->m_phase;
       float_sw4 cv = m_twilight_forcing->m_c;
-      if (topographyExists() && g == mNumberOfGrids - 1)
+      //if (topographyExists() && g == mNumberOfGrids - 1)
+	if( topographyExists() && g >= mNumberOfCartesianGrids )
         addMemVarPredCurvilinear(mX[g], mY[g], mZ[g], a_t, a_AlphaVEp[g][0],
                                  mOmegaVE[0], mDt, om, ph, cv);
       else {
@@ -5340,7 +5349,8 @@ void EW::updateMemVarCorr(vector<Sarray*>& a_AlphaVEp,
       double om = m_twilight_forcing->m_omega;
       double ph = m_twilight_forcing->m_phase;
       double cv = m_twilight_forcing->m_c;
-      if (topographyExists() && g == mNumberOfGrids - 1) {
+      if( topographyExists() && g >= mNumberOfCartesianGrids ){
+	//if (topographyExists() && g == mNumberOfGrids - 1) {
         //            addMemVarCorrCurvilinear( mX, mY, mZ, a_t,
         //            a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
         addMemVarCorr2Curvilinear(mX[g], mY[g], mZ[g], a_t, a_AlphaVEp[g][0],
@@ -5404,7 +5414,8 @@ void EW::updateMemVarCorrNearInterface(Sarray& a_AlphaVEp, Sarray& a_AlphaVEm,
     double om = m_twilight_forcing->m_omega;
     double ph = m_twilight_forcing->m_phase;
     double cv = m_twilight_forcing->m_c;
-    if (topographyExists() && a_grid == mNumberOfGrids - 1) {
+    if( topographyExists() && a_grid >= mNumberOfCartesianGrids ){
+      //if (topographyExists() && a_grid == mNumberOfGrids - 1) {
       addMemVarCorr2Curvilinear(mX[a_grid], mY[a_grid], mZ[a_grid], a_t,
                                 a_AlphaVEp, mOmegaVE[0], mDt, om, ph, cv);
     } else {
@@ -6007,7 +6018,7 @@ void EW::testsourcediff(vector<Source*> GlobalSources, float_sw4 gradient[11],
   //   cout << "size of sources " << gpsources.size() << endl;
   for (int m = 0; m < gpsources.size() - 1; m++) {
     gpsources[m]->add_to_gradient(kappa, eta, 0.63, mDt, gradient, mGridSize,
-                                  mJ[mNumberOfGrids - 1], topographyExists());
+                                  mJ[mNumberOfGrids - 1], topographyExists()); // mJ argument should be the whole vector of Sarrays
     gpsources[m]->add_to_hessian(kappa, eta, 0.63, mDt, hessian, mGridSize);
   }
 }
@@ -6064,7 +6075,13 @@ void EW::compute_energy(float_sw4 dt, bool write_file, vector<Sarray>& Um,
     float_sw4* rho_ptr = mRho[g].c_ptr();
     float_sw4 locenergy;
     int* onesided_ptr = m_onesided[g];
-    if (topographyExists() && g == mNumberOfGrids - 1) {
+    //   if (topographyExists() && g == mNumberOfGrids - 1) {
+    if( topographyExists() && g >= mNumberOfCartesianGrids ){
+      
+      if( m_gridGenerator->curviCartIsSmooth( mNumberOfGrids-mNumberOfCartesianGrids )
+	     && g == mNumberOfCartesianGrids )
+	   kend--;
+
       if (m_croutines)
         energy4c_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                     m_kEnd[g], istart, iend, jstart, jend, kstart, kend,
@@ -7298,7 +7315,9 @@ void EW::add_to_grad(vector<Sarray>& K, vector<Sarray>& Kacc,
     float_sw4 h = mGridSize[g];
     int* onesided_ptr = m_onesided[g];
     int nb = 4, wb = 6;
-    if (topographyExists() && g == mNumberOfGrids - 1) {
+    //    if (topographyExists() && g == mNumberOfGrids - 1) {
+if( topographyExists() && g >= mNumberOfCartesianGrids )
+      {
       if (m_croutines) {
         addgradrhoc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, ifirstact,
                        ilastact, jfirstact, jlastact, kfirstact, klastact,
@@ -7973,8 +7992,10 @@ void EW::setup_viscoelastic_tw() {
       exactmatfortatt(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, mu_ptr,
                       la_ptr, &omm, &phm, &ampmu, &ampla, &h, &zmin);
   }
-  if (topographyExists()) {
-    g = mNumberOfGrids - 1;
+  //  if (topographyExists()) {
+ for (g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++)
+   {
+     //g = mNumberOfGrids - 1;
     mu_ptr = mMuVE[g][0].c_ptr();
     la_ptr = mLambdaVE[g][0].c_ptr();
     ifirst = m_iStart[g];
@@ -8384,8 +8405,10 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
                             a_t, om, cv, ph, omm, phm, amprho, phc, h, zmin);
       }  // end for all Cartesian grids
 
-      if (topographyExists()) {
-        g = mNumberOfGrids - 1;
+      //      if (topographyExists()) {
+for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
+        {
+      //g = mNumberOfGrids - 1;
         f_ptr = a_F[g].c_ptr();
         ifirst = m_iStart[g];
         ilast = m_iEnd[g];
@@ -8478,8 +8501,10 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
           }
         }
       }
-      if (topographyExists()) {
-        g = mNumberOfGrids - 1;
+      //if (topographyExists()) {
+       for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
+        {
+      //g = mNumberOfGrids - 1;
         f_ptr = a_F[g].c_ptr();
         ifirst = m_iStart[g];
         ilast = m_iEnd[g];
