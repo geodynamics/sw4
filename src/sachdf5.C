@@ -305,6 +305,10 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   if (env != NULL) 
       disablestripe = atoi(env);
 
+  // Cori Lustre has cscratch in path
+  if (path.find("cscratch") == std::string::npos) 
+      disablestripe = 1;
+
   // Set stripe parameters for time-series data
   if (disablestripe != 1) {
       env = getenv("SAC_LUSTRE_STRIPE_COUNT");
