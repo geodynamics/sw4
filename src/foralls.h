@@ -156,8 +156,8 @@ void forall3async(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
   if (irange.invalid||jrange.invalid||krange.invalid) return;
   dim3 tpb(irange.tpb, jrange.tpb, krange.tpb);
   dim3 blocks(irange.blocks, jrange.blocks, krange.blocks);
-  std::cout<<"forall launch tpb"<<irange.tpb<<" "<<jrange.tpb<<" "<<krange.tpb<<"\n";
-  std::cout<<"forall launch blocks"<<irange.blocks<<" "<<jrange.blocks<<" "<<krange.blocks<<"\n";
+  //std::cout<<"forall launch tpb"<<irange.tpb<<" "<<jrange.tpb<<" "<<krange.tpb<<"\n";
+  //std::cout<<"forall launch blocks"<<irange.blocks<<" "<<jrange.blocks<<" "<<krange.blocks<<"\n";
 
   forall3kernel<<<blocks, tpb>>>(irange.start, irange.end, jrange.start,
                                  jrange.end, krange.start, krange.end, body);

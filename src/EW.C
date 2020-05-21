@@ -4625,7 +4625,7 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
   SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *f_ptr, om, ph, cv, h, zmin, omm, phm, amprho, ampmu, ampla;
-  std::cout<<"FORCE_TT\n";
+  //std::cout<<"FORCE_TT\n";
   int g;
   // std::cerr<<"And now in force_tt\n";
   if (m_twilight_forcing) {
@@ -8346,7 +8346,7 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
   SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *f_ptr, om, ph, cv, h, zmin, omm, phm, amprho, ampmu, ampla;
-  std::cout<<"FORCE_TT CALLED\n";
+  //std::cout<<"FORCE_TT CALLED\n";
   int g;
 
   if (m_twilight_forcing) {

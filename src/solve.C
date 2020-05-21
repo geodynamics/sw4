@@ -927,7 +927,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   SW4_PEEK;
   SYNC_DEVICE;
 #endif
-      std::cout<<"HERE ALOS 4th\n";
+  //std::cout<<"HERE ALOS 4th\n";
       SW4_MARK_BEGIN("MPI_WTIME");
       if (m_output_detailed_timing) time_measure[7] = MPI_Wtime();
       SW4_MARK_END("MPI_WTIME");
@@ -959,7 +959,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
       // if( m_output_detailed_timing )
       //    time_measure[10] = MPI_Wtime();
-      std::cout<<"HERE 4th\n";
+      //std::cout<<"HERE 4th\n";
       evalDpDmInTime(Up, U, Um, Uacc);  // store result in Uacc
       if (trace && m_myRank == dbgproc) cout << " after evalDpDmInTime" << endl;
 
@@ -994,13 +994,13 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
       // add in super-grid damping terms
       if (usingSupergrid()) {
-	std::cout<<"SUPERGRID\n";
+	//std::cout<<"SUPERGRID\n";
         addSuperGridDamping(Up, U, Um, mRho);
       }
 
       // Arben's simplified attenuation
       if (m_use_attenuation && m_number_mechanisms == 0) {
-	std::cout<<"ATTENUATION\n";
+	//std::cout<<"ATTENUATION\n";
         simpleAttenuation(Up);
       }
 
@@ -1478,7 +1478,7 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     bforce_side5_ptr = a_BCForcing[g][5];  // high-k bndry forcing array pointer
 
     if (usingSupergrid()) {
-      std::cout<<" THIS 1\n";
+      //std::cout<<" THIS 1\n";
       if (m_croutines)
         bcfortsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, wind_ptr, nx,
                     ny, nz, u_ptr, h, bcType_ptr, m_sbop, mu_ptr, la_ptr, t,
@@ -1493,7 +1493,7 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                  &cv, m_sg_str_x[g], m_sg_str_y[g]);
       int side;
       if (topo == 1 && m_bcType[g][4] == bStressFree) {
-	std::cout<<" THIS 2\n";
+	//std::cout<<" THIS 2\n";
         side = 5;
         if (m_croutines)
           freesurfcurvisg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
@@ -1507,7 +1507,7 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                           m_sg_str_y[g]);
       }
     } else {
-      std::cout<<" THIS 3 OFF \n ";
+      //std::cout<<" THIS 3 OFF \n ";
       if (m_croutines)
         bcfort_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, wind_ptr, nx, ny,
                   nz, u_ptr, h, bcType_ptr, m_sbop, mu_ptr, la_ptr, t,
@@ -1522,7 +1522,7 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                &cv, &topo);
       int side;
       if (topo == 1 && m_bcType[g][4] == bStressFree) {
-	std::cout<<" THIS 4 OFF \n";
+	//std::cout<<" THIS 4 OFF \n";
         side = 5;
         if (m_croutines)
           freesurfcurvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
@@ -1534,7 +1534,7 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                         m_sbop, bforce_side4_ptr);
       }
       if (topo == 1 && m_bcType[g][5] == bStressFree) {
-	std::cout<<" THIS 5\n";
+	//std::cout<<" THIS 5\n";
         side = 6;
         if (m_croutines)
           freesurfcurvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
@@ -5286,7 +5286,9 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
          res = -h*h*Bca(3,i,j,1)*istrxyc+ w1*rhrat*mJ[gcurv](i,j,nk)*istrxy*Luca(3,i,j,1)
                - w1*mJ[gcurv](i,j,nk)*istrxy*Lu(3,i,j,nk) + B(3,i,j,nk);            
          a_U[gcart](3,i,j,0) += res/((2*a_Mu[gcart](i,j,1)+a_Lambda[gcart](i,j,1))*bcof );
+#ifdef CURVI_DEBUG
 	 std::cout<<"CC_FINAL"<<i<<j<<" "<<a_U[gcart](1,i,j,0)<<" "<<a_U[gcart](2,i,j,0)<<" "<<a_U[gcart](3,i,j,0)<<"\n";
+#endif
       }
 
    bool debug=false;
@@ -5430,7 +5432,9 @@ void EW::compute_icstresses_curv( Sarray& a_Up, Sarray& B, int kic,
             uz += sbop[m]*a_Up(1,i,j,k+kl*(m-1));
             vz += sbop[m]*a_Up(2,i,j,k+kl*(m-1));
             wz += sbop[m]*a_Up(3,i,j,k+kl*(m-1));
+#ifdef CURVI_DEBUG
 	    std::cout<<"UZ"<<m<<" "<<uz<<" "<<sbop[m]<<" "<<a_Up(1,i,j,k+kl*(m-1))<<"\n";
+#endif
          }
          uz *=kl;
          vz *=kl;
