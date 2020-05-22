@@ -3791,6 +3791,7 @@ void EW::processESSI3D( char* buffer )
    float_sw4 coordValue;
    float_sw4 coordBox[4];
    const float_sw4 zero=0.0;
+   int precision = 8;
    
    // Default is whole domain
    coordBox[0] = zero;
@@ -3856,6 +3857,15 @@ void EW::processESSI3D( char* buffer )
           depth = min(m_global_zmax, coordValue);
           depth = max(zero, depth);
       }
+      else if (startswith("precision=", token))
+      {
+          token += 10; // skip precision=
+          precision = atoi(token);
+          if (precision != 4 && precision != 8) 
+              badOption("essioutput precision", token);
+          if (proc_zero())
+              cout << "\nESSI ouput will use " << precision*8 << "-bit floating point values." << endl;
+      }
       else
       {
           badOption("essioutput", token);
@@ -3884,7 +3894,7 @@ void EW::processESSI3D( char* buffer )
       depth=0;
    }
 
-   ESSI3D* essi3d = new ESSI3D( this, filePrefix, dumpInterval, coordBox, depth );
+   ESSI3D* essi3d = new ESSI3D( this, filePrefix, dumpInterval, coordBox, depth, precision);
    addESSI3D( essi3d );
 }
 

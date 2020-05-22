@@ -50,7 +50,8 @@ ESSI3D::ESSI3D( EW* a_ew,
     const std::string& filePrefix,
     int dumpInterval,
     float_sw4 coordBox[6],
-    float_sw4 depth ):
+    float_sw4 depth,
+    int precision):
       mEW(a_ew),
       mFilePrefix(filePrefix),
       mFileName(""),
@@ -62,6 +63,7 @@ ESSI3D::ESSI3D( EW* a_ew,
       m_cycle(-1),
       m_dumpInterval(-1),
       mDepth(depth),
+      m_precision(precision),
       m_hdf5helper(NULL)
 {
   // volimage subdomain x,y corner coordinates
@@ -209,19 +211,28 @@ void ESSI3D::update_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt,
     vector<Sarray>& a_U, std::string& a_path, Sarray& a_Z )
 {
 #ifdef USE_HDF5
+  int o_cycle = a_cycle;
   double hdf5_time=MPI_Wtime();
   if (!m_fileOpen) // must be first call, open file and write
     open_vel_file(a_cycle, a_path, a_time, a_Z);
 
-  if ((a_cycle > 0) && // don't close and open on first cycle
-      (m_dumpInterval != -1) && // dump interval was set
-      (a_cycle%m_dumpInterval == 0)) // close, open new
-  {
-    close_vel_file();
-    open_vel_file(a_cycle, a_path, a_time, a_Z);
+  /* if ((a_cycle > 0) && // don't close and open on first cycle */
+  /*     (m_dumpInterval != -1) && // dump interval was set */
+  /*     (a_cycle%m_dumpInterval == 0)) // close, open new */
+  /* { */
+  /*   close_vel_file(); */
+  /*   open_vel_file(a_cycle, a_path, a_time, a_Z); */
+  /* } */
+
+  if (m_dumpInterval != -1) {
+      if (a_cycle % m_dumpInterval != 0 && a_cycle != mNumberOfTimeSteps) 
+        return;
+      a_cycle /= m_dumpInterval;
   }
+
   write_image_hdf5( a_cycle, a_path, a_time, a_U);
-  if (a_cycle == mNumberOfTimeSteps) // last time step
+
+  if (o_cycle == mNumberOfTimeSteps) // last time step
     close_vel_file();
 
   m_hdf5_time += (MPI_Wtime()-hdf5_time);
@@ -313,7 +324,7 @@ void ESSI3D::open_vel_file( int a_cycle, std::string& a_path,
 
   // Parameters for extendible dataset
   const int num_dims = 3 + 1; // 3 space + 1 time that will be extendible
-  hsize_t dims[num_dims]={0,0,0,H5S_UNLIMITED};
+  hsize_t dims[num_dims]={0,0,0,0};
   hsize_t slice_dims[num_dims];
   hsize_t block_dims[num_dims];
   hsize_t global_dims[num_dims];
@@ -360,7 +371,7 @@ void ESSI3D::open_vel_file( int a_cycle, std::string& a_path,
   if (a_path != ".")
     s << a_path;
   s << fileSuffix.str(); // string 's' is the file name including path
-  m_hdf5helper = new ESSI3DHDF5(s.str(), global, window, m_ihavearray);
+  m_hdf5helper = new ESSI3DHDF5(s.str(), global, window, m_ihavearray, m_precision);
   m_hdf5helper->set_ihavearray(m_ihavearray);
   /*
   if (debug && (myRank == 0))
@@ -391,8 +402,10 @@ void ESSI3D::open_vel_file( int a_cycle, std::string& a_path,
      cout << "Creating extendible hdf5 velocity fields..." << endl;
   */
 
-  if (m_dumpInterval > 0) 
-    m_hdf5helper->init_write_vel(m_dumpInterval);
+  if (m_dumpInterval > 0) {
+    int nstep = m_ntimestep / m_dumpInterval;
+    m_hdf5helper->init_write_vel(nstep);
+  }
   else
     m_hdf5helper->init_write_vel(m_ntimestep);
   m_hdf5_time += (MPI_Wtime()-hdf5_time);
