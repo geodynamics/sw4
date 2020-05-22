@@ -68,7 +68,7 @@ if fd ~= -1
     arr = fread(fd, ni(pnr)*nj(pnr)*nk(pnr)*nc(pnr),'float');
   else
     arr = fread(fd, ni(pnr)*nj(pnr)*nk(pnr)*nc(pnr),'double');
-  end;
+end;
 %  arr = reshape(arr,nc(pnr),ni(pnr),nj(pnr),nk(pnr));
 % "C"-order
   arr = reshape(arr,nc(pnr),nk(pnr),nj(pnr),ni(pnr));

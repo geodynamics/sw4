@@ -367,7 +367,10 @@ void TimeSeries::allocateRecordingArrays( int numberOfTimeSteps, float_sw4 start
   if (!m_myPoint) return; // only one processor saves each time series
   if (numberOfTimeSteps > 0)
   {
+    //std::cout << "num of time steps=" << numberOfTimeSteps << std::endl;
+
     mAllocatedSize = numberOfTimeSteps+1;
+    
     mLastTimeStep = -1;
     for (int q=0; q<m_nComp; q++)
     {
@@ -379,8 +382,12 @@ void TimeSeries::allocateRecordingArrays( int numberOfTimeSteps, float_sw4 start
     {
       for (int q=0; q<m_nComp; q++)
       {
-	if (mRecordedFloats[q]) delete [] mRecordedFloats[q];
-	mRecordedFloats[q] = new float[mAllocatedSize];
+      if (mRecordedFloats[q]) delete [] mRecordedFloats[q];
+      mRecordedFloats[q] = new float[mAllocatedSize];
+
+      //Wei added initializing arrays with zeros
+       for (int i = 0; i < mAllocatedSize; i++) mRecordedFloats[q][i] = 0.0;
+
       }
     }
   }
@@ -1892,20 +1899,29 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
       //  scale misfit and diff-source
       if( m_misfit_scaling == 1 )
       {
-	 if( scale_factor == 0 )
-	 {
-	    cout << "WARNING: Observation contains zero data" << endl;
-	    scale_factor=1;
-	 }
-	 float_sw4 iscale = 1/scale_factor;
-	 misfit *= iscale;
-	 if( compute_difference )
-	    for( int i=0 ; i <= mLastTimeStep ; i++ )
-	    {
-	       misfitsource[0][i] *= iscale;
-	       misfitsource[1][i] *= iscale;
-	       misfitsource[2][i] *= iscale;
-	    }
+         if( scale_factor == 0 )
+         {
+            cout << "WARNING: Observation contains zero data" << endl;
+            scale_factor=1;
+         }
+	      float_sw4 iscale = 1/scale_factor;
+	      misfit *= iscale;
+	      if( compute_difference )
+	      {
+
+            for( int i=0 ; i <= mLastTimeStep ; i++ )
+            {
+            misfitsource[0][i] *= iscale;
+            misfitsource[1][i] *= iscale;
+            misfitsource[2][i] *= iscale;
+
+           if(std::isnan(misfitsource[0][i]) || std::isnan(misfitsource[1][i]) || std::isnan(misfitsource[2][i])) {
+               std::cerr << "misfitsource has nan" << " i=" << i << " X=" << misfitsource[0][i] << " Y=" << misfitsource[1][i] 
+                << " Z=" << misfitsource[2][i] << std::endl;
+                MPI_Abort(MPI_COMM_WORLD, 1);
+              }
+            }
+         }
       }
    }
    else
@@ -2251,6 +2267,7 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
    {
       if( m_sacFormat )
       {
+      //std::cout << "forward done copy sac record" << std::endl;
 	 // Overwrite pointers, don't want to copy them.
 	 retval->mRecordedFloats = new float*[m_nComp];
 	 if( mAllocatedSize > 0 )
@@ -2269,14 +2286,22 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
       }
       else
       {
+        //std::cout << "forward done copy record" << std::endl;
 	 retval->mRecordedSol = new float_sw4*[m_nComp];
 	 if( mAllocatedSize > 0 )
 	 {
 	    for( int q=0 ; q < m_nComp ; q++ )
 	       retval->mRecordedSol[q] = new float_sw4[mAllocatedSize];
 	    for( int q=0 ; q < m_nComp ; q++ )
-	       for( int i=0 ; i < mAllocatedSize ; i++ )
-		  retval->mRecordedSol[q][i] = mRecordedSol[q][i];
+	       //for( int i=0 ; i < mAllocatedSize ; i++ )
+          for( int i=0 ; i < getNsteps(); i++ )
+		      {
+              retval->mRecordedSol[q][i] = mRecordedSol[q][i];
+             if(std::isnan(mRecordedSol[q][i])) {
+              std::cerr << "forward time record has nan" << " q=" << q << " i=" << i << std::endl;
+              MPI_Abort(MPI_COMM_WORLD,1);
+              }
+            }
 	 }
 	 else
 	 {
@@ -3281,6 +3306,8 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
     float_sw4 a21 =-m_salpha*deti;
     float_sw4 a22 = m_thynrm*deti;
 
+     //std::cout << "cartesian=" << cartesian << " npts=" << npts << " sw4npts=" << sw4npts << " downsample=" << downsample << std::endl;
+
     if (downsample > 1) {
       float *buf_0up = new float[sw4npts];
       float *buf_1up = new float[sw4npts];
@@ -3289,7 +3316,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
       float *nx = new float[sw4npts];
       for (int i = 0; i < npts; i++) 
           x[i] = i * downsample;
-
+      
       for (int i = 0; i < sw4npts; i++) 
           nx[i] = i;
 
@@ -3310,7 +3337,15 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
         return;
       }
 
-      for (int i = 0; i < mAllocatedSize; i++) {
+
+       // Wei added to zero out initially
+       for (int i = 0; i < mAllocatedSize; i++) {
+          mRecordedSol[0][i] = 0.0;
+          mRecordedSol[1][i] = 0.0;
+          mRecordedSol[2][i] = 0.0;
+        }
+      //for (int i = 0; i < mAllocatedSize; i++) {
+        for (int i = 0; i < sw4npts; i++) {
       /* for (int i = 0; i < npts; i++) { */
         if( cartesian ) {
           mRecordedSol[0][i] = (float_sw4)buf_0up[i];
@@ -3332,11 +3367,26 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
       delete[] nx;
     }
     else {
-      for (int i = 0; i < mAllocatedSize; i++) {
-        if( cartesian ) {
+       //std::cout << "size=" << mAllocatedSize << std::endl;
+
+       // added to zero out initially
+       for (int i = 0; i < mAllocatedSize; i++) {
+          mRecordedSol[0][i] = 0.0;
+          mRecordedSol[1][i] = 0.0;
+          mRecordedSol[2][i] = 0.0;
+        }
+        
+      //for (int i = 0; i < mAllocatedSize; i++) {
+      for (int i = 0; i < npts; i++) {
+        if(cartesian) {
           mRecordedSol[0][i] = (float_sw4)buf_0[i];
           mRecordedSol[1][i] = (float_sw4)buf_1[i];
           mRecordedSol[2][i] = (float_sw4)buf_2[i];
+         if(std::isnan(mRecordedSol[0][i]) || std::isnan(mRecordedSol[1][i]) || std::isnan(mRecordedSol[2][i])) {
+           std::cerr << "observation data has nan" << " i=" << i << " X=" << mRecordedSol[0][i] << " Y=" << mRecordedSol[1][i] 
+           << " Z=" << mRecordedSol[2][i] << std::endl;
+           MPI_Abort(MPI_COMM_WORLD, 1);
+          }
         }
         else {
           mRecordedSol[0][i] = a11*(float_sw4)buf_1[i] + a12*(float_sw4)buf_0[i];
@@ -3351,6 +3401,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
       mRecordedFloats[1][i] = (float) mRecordedSol[1][i];
       mRecordedFloats[2][i] = (float) mRecordedSol[2][i];
     }
+    
 
     delete[] buf_0;
     delete[] buf_1;

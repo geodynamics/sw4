@@ -449,6 +449,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   // Disable HDF5 file locking so we can have multiple writer to open and write different datasets of the same file
   setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
   if ( a_TimeSeries.size() > 0 && a_TimeSeries[0]->getUseHDF5()) {
+
     for (int tsi = 0; tsi < a_TimeSeries.size(); tsi++) 
       a_TimeSeries[tsi]->resetHDF5file();
     if(m_myRank == 0 && !m_check_point->do_restart()) 
@@ -456,7 +457,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     MPI_Barrier(MPI_COMM_WORLD);
   }
 #endif
-
+   
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
   {
 // can't compute a 2nd order accurate time derivative at this point

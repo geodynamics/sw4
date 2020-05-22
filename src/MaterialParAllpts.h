@@ -23,6 +23,8 @@ public:
 		      std::vector<Sarray>& a_lambda, 
 		      std::vector<Sarray>& a_gradrho, std::vector<Sarray>& a_gradmu,
 		      std::vector<Sarray>& a_gradlambda, int rank);
+   void smooth_gradient( std::vector<Sarray>& a_grad);
+
    void set_scalefactors( int nmpars, double* sfs, 
 			  double rho_ref, double mu_ref, double lambda_ref, double vs_ref, double vp_ref );
    //   void perturb_material( int ip, int jp, int kp, int grid, int var, double h, double* xs, double* xm );

@@ -158,6 +158,15 @@ void MaterialParAllpts::get_parameters( int nmd, double* xmd, int nms, double* x
    }
 }
 
+
+
+
+void MaterialParAllpts::smooth_gradient( std::vector<Sarray>& a_grad )
+{
+
+}
+
+
 //-----------------------------------------------------------------------
 void MaterialParAllpts::get_gradient( int nmd, double* xmd, int nms, double* xms, double* dfms, double* dfmd,
 				      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
@@ -341,6 +350,7 @@ void MaterialParAllpts::set_scalefactors( int nmpars, double* sfs,
       }
    }
 }
+
 
 //-----------------------------------------------------------------------
 void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* xms, 

@@ -269,9 +269,12 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
       }
    }
    cglen = sqrt(cglen);
+
    // p is scaled such that lambda=1 corresponds to the 
    // cg step x^{k+1} = x^k + cgstep*p^k unless maxstep is set lower.
    // i.e., maxstep is the maximum allowable relative change in x, ||x^{k+1}-x^k||/typx < maxstep
+
+
    if( cglen*cgstep > maxstep )
    {
       for( int i=0 ; i < nmpard ; i++ )
@@ -328,7 +331,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	 rellength = rlocal;
    }
    double minlambda = steptol/rellength;
-   //   cout << "steptol = " << steptol << " rellength " << rellength << " ns = " << ns << endl; 
+      cout << "steptol = " << steptol << " rellength " << rellength << " ns = " << ns << " minlambda=" << minlambda << endl; 
    double lambda = 1, fnewprev, lambdaprev;
    nstep_reductions = 0;
    
@@ -341,9 +344,13 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	 xsnew[i] = xs[i] + lambda*ps[i];
       for( int i=0; i < nmpard ; i++ )
 	 xmnew[i] = xm[i] + lambda*pm[i];
+
       int ng = simulation.mNumberOfGrids;
       vector<Sarray> rho(ng), mu(ng), la(ng);
 
+	  checkMinMax(nmpars, &xs[nspar], "linesearch: xs");
+	  checkMinMax(nmpars, &ps[nspar], "linesearch: ps");
+	  std::cout << "scaling lambda=" << lambda << std::endl;
 	  checkMinMax(nmpars, &xsnew[nspar], "linesearch: xsnew");
       mopt->m_mp->get_material( nmpard, xmnew, nmpars, &xsnew[nspar], rho, mu, la );
       int ret_code = simulation.check_material( rho, mu, la, ok );
@@ -372,6 +379,8 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	 xsnew[i] = xs[i]; /* + lambda*ps[i]; */
       for( int i=0 ; i < nmpard ; i++ )
 	 xmnew[i] = xm[i]; /* + lambda*pm[i];*/
+
+	  if( myRank == 0 ) std::cout << "retcode=3" << std::endl;
       compute_f( simulation, nspar, nmpars, xsnew, nmpard, xmnew, GlobalSources, GlobalTimeSeries,
 		 GlobalObservations, fnew, mopt );
       return;
@@ -380,10 +389,19 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
    bool lambdaprevdefined = false;
    while( retcode == 2 )
    {
+	  if( myRank == 0 ) std::cout << "retcode=2" << std::endl;
+
       for( int i=0; i < ns ; i++ )
 	 xsnew[i] = xs[i] + lambda*ps[i];
       for( int i=0; i < nmpard ; i++ )
 	 xmnew[i] = xm[i] + lambda*pm[i];
+
+    //if( myRank == 0 ) {  // Wei debugging
+	//  save_array_to_disk(ns, ps, "ps.bin"); // multi-component *ns
+	//  save_array_to_disk(ns, xsnew, "xsnew.bin"); // multi-component *ns
+    //}
+
+	  MPI_Barrier(MPI_COMM_WORLD); // Wei added for debugging
 
       compute_f( simulation, nspar, nmpars, xsnew, nmpard, xmnew, GlobalSources, GlobalTimeSeries,
 		 GlobalObservations, fnew, mopt );
@@ -423,6 +441,11 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	 }
 	 for( int i=0 ; i < ns ; i++ )
 	    ang += ps[i]*dfs[i];
+  
+    //if( myRank == 0 ) {  // Wei debugging
+	//  save_array_to_disk(ns, ps, "ps.bin"); // multi-component *ns
+    //}
+
 
 	 if( myRank == 0 )
 	 {
@@ -454,6 +477,11 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	 for( int i=0 ; i < nmpard ; i++ )
 	    xmnew[i] = xm[i] + pm[i];
 
+  
+    //if( myRank == 0 ) {  // Wei debugging
+	//  save_array_to_disk(ns, xsnew, "xsnew.bin"); // multi-component *ns
+    //}
+
 	 // Compute return value for fnew
 	    //            if( !testing && (xnew[2] < 0 && p[2] != 0) )
 	    //	    {
@@ -461,6 +489,8 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	    //	       for( int i=0 ; i < n ; i++ )
 	    //		  xnew[i] = x[i] + lambda*p[i];
 	    //	    }
+
+	 std::cout << "retcode=1" << std::endl;
 	 compute_f( simulation, nspar, nmpars, xsnew, nmpard, xmnew, GlobalSources,
 		    GlobalTimeSeries, GlobalObservations, fnew, mopt );
 	 return;
@@ -623,7 +653,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 	  cout << "ns=" << ns << endl;
       checkMinMax(ns, dfs, "gradient to update model perturbation (most critical): dfs");
 	  checkMinMax(nmpard, dfm, "dfm");
-	  save_array_to_disk(ns, dfs, "dfs.bin"); // multi-component *ns
+	  //save_array_to_disk(ns, dfs, "dfs.bin"); // multi-component *ns
     }
 
    if( mopt->m_output_ts )
@@ -895,7 +925,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 	    xam[i] = xm[i] + alpha*dm[i];   
       }
 
-     if(myRank ==0) checkMinMax(ns, xa, "updated model");
+
 
       // xa is now the new iterate
       // store x^{k+1}-x^k in d to save memory
@@ -920,6 +950,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
          MPI_Allreduce(&dxnormloc,&dxnorm,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
       } // end if nmpard > 0 (distributed parameters)      
       
+
       for( int i=0 ; i < ns ; i++ ) // src and shared material parameters
       {
 	 double locnorm = fabs(xs[i]-xa[i]);
@@ -937,6 +968,12 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
       //      if( myRank == 0 )
       //	 for( int i=0 ; i < ns ; i++ )
       //	    cout << " i="  << i << " " << ds[i] << " " << xs[i] << endl;
+
+
+    //if( myRank == 0 ) {
+	//  save_array_to_disk(ns, xs, "xs.bin");
+      //checkMinMax(ns, xa, "updated model");
+	//}
 
       compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 			GlobalObservations, f, dfps, dfpm, myRank, mopt, it );
@@ -1064,6 +1101,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 	 dfm[i] = dfpm[i];
    } // end while it<maxit && !converged
    
+   	 // if(myRank==0) save_array_to_disk(ns, dfs, "dfs_end.bin"); // multi-component *ns
 
    if( myRank == 0 )
    {

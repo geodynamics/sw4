@@ -111,7 +111,7 @@ void MaterialParCartesian::get_material( int nmd, double* xmd, int nms,
    double* lambdap=m_lambda.c_ptr();
    size_t ind =0;
 
-   cout << "MaterialParCartesian::get_material: nx=" << m_nx << " ny=" << m_ny << " nz=" << m_nz << " nms=" << nms << " nmd=" << nmd << endl;
+   //cout << "MaterialParCartesian::get_material: nx=" << m_nx << " ny=" << m_ny << " nz=" << m_nz << " nms=" << nms << " nmd=" << nmd << endl;
 
    for( int k=1 ; k <= m_nz ; k++ )
    for( int j=1 ; j <= m_ny ; j++ )

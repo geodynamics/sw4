@@ -24,6 +24,7 @@ public:
 		      std::vector<Sarray>& a_lambda,
 		      std::vector<Sarray>& a_gradrho, std::vector<Sarray>& a_gradmu,
 		      std::vector<Sarray>& a_gradlambda, int rank );
+   void smooth_gradient( std::vector<Sarray>& a_grad ) {};
    //   void perturb_material( int ip, int jp, int kp, int grid, int var, double h, double* xs, double* xm );
    ssize_t parameter_index( int ip, int jp, int kp, int grid, int var );
    ssize_t local_index( size_t ind_global );

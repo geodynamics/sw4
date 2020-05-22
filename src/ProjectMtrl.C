@@ -352,7 +352,7 @@ void checkmtrl( int ib,  int ie,  int jb,  int je,  int kb,  int ke,
    size_t nans =0;
    for( size_t ind=0 ; ind < nijk ; ind++ )
    {
-      if( isnan(rho[ind]) || isnan(mu[ind]) || isnan(lambda[ind]) )
+      if( std::isnan(rho[ind]) || std::isnan(mu[ind]) || std::isnan(lambda[ind]) )
 	 nans++;
 
       if( rho[ind]<rhmin )

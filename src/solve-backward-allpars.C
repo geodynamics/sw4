@@ -123,10 +123,14 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 
    // Backward time stepping loop
    //for( int currentTimeStep = mNumberOfTimeSteps[event] ; currentTimeStep >= beginCycle; currentTimeStep-- )
-   for( int currentTimeStep = mNumberOfTimeSteps[event] ; currentTimeStep >= 30; currentTimeStep-- )
+   for( int currentTimeStep = mNumberOfTimeSteps[event] ; currentTimeStep >= beginCycle; currentTimeStep-- )
    {    
       time_measure[0] = MPI_Wtime();
       evalRHS( K, a_Mu, a_Lambda, Lk, AlphaVE );
+
+      if(currentTimeStep == mNumberOfTimeSteps[event]-10) std::cout << "K min=" << K[0].minimum() << " max=" << K[0].maximum() << std::endl;
+
+
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          F[g].set_to_zero();
       evalPredictor( Km, K, Kp, a_Rho, Lk, F );
@@ -206,12 +210,13 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
   
       add_to_grad( K, Kacc, Um, U, Up, Uacc, gRho, gMu, gLambda );      
 
-      // add QC of backward propgating wavefields Kp
+      // add QC of backward propgating wavefields Kp via MPI_Allreduce
       update_images( currentTimeStep, t, Kp, K, Km, gRho, gMu, gLambda, a_Sources, currentTimeStep == mNumberOfTimeSteps[event] );
 
      //   gRho[0].save_to_disk("grho.bin");
-      gMu[0].save_to_disk("gmu.say");
-      gLambda[0].save_to_disk("glambda.say");
+
+      //gMu[0].save_to_disk("gmu.say");
+      //gLambda[0].save_to_disk("glambda.say"); // local size with halos during propagation
 
 
       time_measure[6] = MPI_Wtime();
@@ -226,7 +231,8 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       time_sum[4] += time_measure[5]-time_measure[4]; // Corrector, bc
       time_sum[5] += time_measure[6]-time_measure[5]; // Gradient accumulation
       time_sum[6] += time_measure[7]-time_measure[6]; // Cycle arrays
-   }
+   }  // end of backward time stepping
+
    time_sum[7] = MPI_Wtime() - time_start_solve; // Total solver time
    //   cout << "Final t = " << t << endl;
 
@@ -269,20 +275,21 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       }
    }
 
-
    communicate_arrays( gRho );
    communicate_arrays( gMu );
-   communicate_arrays( gLambda );
+   communicate_arrays( gLambda );  // exchange halo points among procs
     
- 
+   // cout << "gLambda size=" << gLambda.
+   // smooth gradeints here followed by a communicate_arrays update
+
 
     for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
        mImage3DFiles[i3]->force_write_image( t, 0, Up, a_Rho, a_Mu, a_Lambda, gRho, gMu, gLambda, mQp, mQs, mPath[event], mZ );
 
     for( int i2 = 0 ; i2 < mImageFiles.size() ; i2++ )
     {
-       if( mImageFiles[i2]->needs_mgrad() )
-	  mImageFiles[i2]->output_image( 0, t, mDt, Up, U, Um, a_Rho, a_Mu, a_Lambda, gRho, gMu, gLambda, a_Sources, 0 );
+       if( mImageFiles[i2]->needs_mgrad() )    // output model mimages
+	    mImageFiles[i2]->output_image( 0, t, mDt, Up, U, Um, a_Rho, a_Mu, a_Lambda, gRho, gMu, gLambda, a_Sources, 0 );
     }
    //   Up[0].save_to_disk("ubackedout.bin");
    //   U[0].save_to_disk("umbackedout.bin");
@@ -363,3 +370,4 @@ void EW::enforceDirichlet5( vector<Sarray> & a_U )
     //				       &kafirst, &kalast, u_ptr );
   }
 }
+

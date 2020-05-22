@@ -133,7 +133,7 @@ void MaterialParCartesianVp::get_material( int nmd, double* xmd, int nms,
             size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
 	    cpp[indm]  = xms[ind];
 	    ind++;
-	    if( isnan(cpp[indm]) )
+	    if( std::isnan(cpp[indm]) )
 	       cout << "ERROR parameter cp is Nan in get material at index " << indm << endl;
 	 }
    for( int g = 0 ; g < m_ew->mNumberOfGrids ; g++ )

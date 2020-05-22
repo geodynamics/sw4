@@ -84,6 +84,8 @@ public:
    EW(const string& name, vector<vector<Source*> > & a_GlobalUniqueSources, 
       vector<vector<TimeSeries*> > & a_GlobalTimeSeries, bool invproblem=false );
 ~EW();
+
+
 bool wasParsingSuccessful();
 bool isInitialized();
 

@@ -927,12 +927,22 @@ void Image::computeImagePvel(std::vector<Sarray> &mu, std::vector<Sarray> &lambd
       {
 	 gmin = 0;
 	 gmax = mEW->mNumberOfGrids-1;
-      }    
+      }   
+
+   //lambda[0].save_to_disk("lambda.say");
+   //mu[0].save_to_disk("mu.say");
+   //rho[0].save_to_disk("rho.say");
+
+
       for( int g=gmin ; g <= gmax ; g++ )
       {
 	 //	 size_t iField=0;
        size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
        size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
+           std::cout << "g=" << g << " ni=" << ni << " nij=" << nij << std::endl;
+           std::cout << "ix=" << mWindow[g][0] << "--" << mWindow[g][1] << " iy=" << mWindow[g][2] << "--" << mWindow[g][3] << 
+           " iz=" << mWindow[g][4] << "--" << mWindow[g][5] << std::endl;
+
 #pragma omp parallel for
 	 for( int kk = mWindow[g][4]; kk <= mWindow[g][5]; kk++)
 	    for (int jj = mWindow[g][2]; jj <= mWindow[g][3]; jj++)

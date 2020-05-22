@@ -423,6 +423,18 @@ void Sarray::set_to_zero()
       m_data[i] = 0;
 }
 
+void Sarray::checknan(char* tag)
+{
+#pragma omp parallel for
+   for( size_t i=0 ; i < m_npts ; i++ )
+   {
+      if(std::isnan(m_data[i])) {
+         std::cerr << tag << " has nan" << std::endl;
+         MPI_Abort(MPI_COMM_WORLD,1);
+      }
+   }
+}
+
 //-----------------------------------------------------------------------
 void Sarray::set_to_minusOne()
 {
@@ -894,6 +906,48 @@ void Sarray::save_to_disk( const char* fname )
    close(fd);
 }
 
+void Sarray::read_from_disk( const char* fname )
+{
+   int fd = open(fname, O_RDONLY, 0660 );
+   if( fd == -1 )
+      std::cout << "ERROR opening file" << fname << " for reading " << std::endl;
+   size_t nr = read(fd,&m_nc,sizeof(int));
+   if( nr != sizeof(int) )
+      std::cout << "Error reading nc from " << fname << std::endl;
+   nr = read(fd,&m_ni,sizeof(int));
+   if( nr != sizeof(int) )
+      std::cout << "Error reading ni from " << fname << std::endl;
+   nr = write(fd,&m_nj,sizeof(int));
+   if( nr != sizeof(int) )
+      std::cout << "Error reading nj from " << fname << std::endl;
+   nr = write(fd,&m_nk,sizeof(int));
+   if( nr != sizeof(int) )
+      std::cout << "Error reading nk from " << fname << std::endl;
+   size_t npts = m_nc*( (size_t)m_ni)*m_nj*( (size_t)m_nk);
+
+   cout << "Sarray: read_from_disk nc=" << m_nc << " ni=" << m_ni << " nj=" << m_nj << " nk=" << m_nk << endl;
+
+   if( m_corder )
+   {
+      float_sw4* ar = new float_sw4[npts];
+
+      nr = read(fd,ar,sizeof(float_sw4)*npts);
+
+      for( int k = 0 ; k < m_nk ; k++ )
+	    for( int j = 0 ; j < m_nj ; j++ )
+	      for( int i = 0 ; i < m_ni ; i++ )
+	       for( int c=0 ; c < m_nc ; c++ )
+		      m_data[i+m_ni*j+m_ni*m_nj*k+m_ni*m_nj*m_nk*c] = ar[c+m_nc*i+m_nc*m_ni*j+m_nc*m_ni*m_nj*k];  //ar c-first m_data c-last
+
+      delete[] ar;
+   }
+   else
+      nr = read(fd,m_data,sizeof(float_sw4)*npts);
+      if( nr != sizeof(float_sw4)*npts )
+      std::cout << "Error reading data array from " << fname << std::endl;
+   close(fd);
+}
+
 //-----------------------------------------------------------------------
 void Sarray::assign( const float* ar, int corder )
 {
@@ -1070,5 +1124,357 @@ void Sarray::transposeik( )
       m_data[i] = tmpar[i];
    delete[] tmpar;
 }
+
+void Sarray::gaussian_smooth_v1(int width, float decay)
+{
+    int i, j, k, ix, iy, iz;
+    int lenx, leny, lenz, halfx, halfy, halfz;
+    float sigmax, sigmay, sigmaz;  //smoothing radius in x and z direction
+    float grad_sum;
+    float norm;
+    int nx, ny, nz;
+
+   auto gauss =[](float_sw4 *s, float_sw4 sigma, int length, float_sw4 *g) {  
+         //1d Gauss function
+         //sigma decreases, gaussian decays faster and less smoothing
+         #pragma omp parallel for
+         for (int i = 0; i < length; i++)
+           g[i] = exp(-s[i]*s[i]/(2*sigma*sigma))/(sigma*sqrt(2*M_PI));  
+   };
+
+    nx = m_ni;
+    ny = m_nj;
+    nz = m_nk;
+
+    //input parameters
+    lenx = width;    // total spread of filter  21 81
+	 leny = width;
+    lenz = width/1.5;
+
+    sigmax = decay;   // width of gaussian decay  4
+	 sigmay = sigmax;
+    sigmaz = sigmax/1.5;
+
+    halfx = (lenx - 1)/2;
+    halfy = (leny - 1)/2;
+    halfz = (lenz - 1)/2;
+
+    //allocalate memory
+    Sarray grad_extend(0, nx+2*halfx-1, 0, ny+2*halfy-1, 0, nz+2*halfz-1);
+    Sarray    grad_tmp(0, nx+2*halfx-1, 0, ny+2*halfy-1, 0, nz+2*halfz-1);
+
+    
+    //extend model, center
+    #pragma omp parallel for
+        for (k = 0; k < nz; k++)
+        for (j = 0; j < ny; j++)
+	     for (i = 0; i < nx; i++)
+        {
+            grad_extend(i+halfx,j+halfy,k+halfz) = m_data[index(m_ib+i,m_jb+j,m_kb+k)];
+            
+        }
+    
+     //top and bottom
+     //top
+     #pragma omp parallel for
+     for (k = 0; k < halfz; k++)
+     for (j = halfy; j < ny + halfy; j++)
+	  for (i = halfx; i < nx + halfx; i++)
+      {
+         grad_extend(i,j,k) = grad_extend(i,j,halfz);
+      }
+      
+      //bottom
+      #pragma omp parallel for
+      for (k = nz + halfz; k < nz + 2*halfz; k++)
+      for (j = halfy; j < ny + halfy; j++)
+	   for (i = halfx; i < nx + halfx; i++)
+      {
+         grad_extend(i,j,k) = grad_extend(i,j,nz + halfz - 1);
+      }
+      
+
+     //left and right
+     #pragma omp parallel for
+     for (k = 0; k < nz + 2*halfz; k++)
+     for (j = halfy; j < ny + halfy; j++)
+     {
+         //left
+         for (i = 0; i < halfx; i++)
+         {
+             grad_extend(i,j,k) = grad_extend(halfx,j,k);
+         }
+         //right
+         for (i = nx + halfx; i < nx + 2*halfx; i++)
+         {
+             grad_extend(i,j,k) = grad_extend(nx + halfx - 1,j,k);
+         }
+     }
+    
+    //back and forth
+    #pragma omp parallel for
+     for (k = 0; k < nz + 2*halfz; k++)
+     {
+       for (j = 0; j < halfy; j++)
+       {
+         for (i = 0; i < nx + 2*halfx; i++)
+         {
+           grad_extend(i,j,k) = grad_extend(i,halfy,k);
+         }
+       }   
+       for (j = ny + halfy; j < ny + 2*halfy; j++)
+       {
+         for (i = 0; i < nx + 2*halfx; i++)
+         {
+            grad_extend(i,j,k) = grad_extend(i,ny + halfy - 1,k);
+         }
+        } 
+     }
+    //std::cout << "grad_extend min=" << grad_extend.minimum(1) << " max=" << grad_extend.maximum(1) << std::endl;
+
+
+    /*----------apply 2D Gaussian filter---------*/
+
+    grad_tmp.set_to_zero();
+
+
+float_sw4* sx = new float_sw4[lenx];
+float_sw4* gx = new float_sw4[lenx];
+	
+
+    #pragma omp parallel for
+    for (i = 0; i < lenx; i++) sx[i] = i - halfx;
+
+	     //convolve with 1D Gaussian function in x
+    gauss(sx, sigmax, lenx, gx);
+    delete[] sx;
+
+
+// convolve in x
+   #pragma omp parallel for
+    for (k = 0; k < nz + 2*halfz; k++)
+    for (j = 0; j < ny + 2*halfy; j++)
+    for (i = 0; i < nx; i++)
+    {
+       //extend in x first
+            
+            grad_sum = 0.0;
+            for (ix = 0; ix < lenx; ix++)
+            {
+                grad_sum = grad_sum + gx[ix] * grad_extend(i + lenx - 1 - ix,j,k);
+            }
+            grad_tmp(i + halfx,j,k) = grad_sum;
+    }
+
+
+   float_sw4* sy = new float_sw4[leny];
+   float_sw4* gy = new float_sw4[leny];
+    #pragma omp parallel for
+    for (j = 0; j < leny; j++) sy[j] = j - halfy;
+
+   gauss(sy, sigmay, leny, gy);
+   delete[] sy;
+    // convolve in y
+    #pragma omp parallel for
+    for (k = 0; k < nz + 2*halfz; k++)
+    for (j = 0; j < ny; j++)
+    for (i = 0; i < nx; i++)
+    {
+            grad_sum = 0.0;
+            for (iy = 0; iy < leny; iy++)
+            {
+                grad_sum = grad_sum + gy[iy] * grad_tmp(i + halfx,j + leny - 1 - iy,k);
+            }
+            grad_extend(i+halfx,j+halfy,k) = grad_sum;
+    }
+
+
+   float_sw4* sz = new float_sw4[lenz];
+	float_sw4* gz = new float_sw4[lenz];
+    #pragma omp parallel for
+    for (k = 0; k < lenz; k++) sz[k] = k - halfz;
+   
+   gauss(sz, sigmaz, lenz, gz);
+	 delete[] sz;
+
+    norm = 0.0;
+    #pragma omp parallel for
+      for (k = 0; k < lenz; k++)
+		for (j = 0; j < leny; j++)
+		for (i = 0; i < lenx; i++)
+		 {
+            norm = norm + (gx[i]*gy[j]*gz[k]);
+        }
+
+
+
+// convole in z
+   #pragma omp parallel for
+    for (k = 0; k < nz; k++)
+    for (j = 0; j < ny; j++)
+    for (i = 0; i < nx; i++)
+    {
+            grad_sum = 0.0;
+	         for (iz = 0; iz < lenz; iz++)
+                grad_sum = grad_sum + gz[iz] * grad_extend(i+halfx,j+halfy,k + lenz - 1 - iz);
+            
+            m_data[index(i+m_ib,j+m_jb,k+m_kb)] = grad_sum/norm;
+    }
+   delete[] gx;
+   delete[] gy;
+   delete[] gz;
+    /*-------------------------------------------*/
+    //std::cout << "smoothed grad min=" << minimum(1) << " max=" << maximum(1) << std::endl;
+
+//Free memory
+
+}
+
+
+void Sarray::gaussian_smooth(int width, float decay)
+{
+    int i, j, k, ix, iy, iz;
+    int lenx, leny, lenz, halfx, halfy, halfz;
+    float sigmax, sigmay, sigmaz;  //smoothing radius in x and z direction
+    float grad_sum;
+    float norm;
+    int nx, ny, nz;
+
+   auto gauss =[](float_sw4 *s, float_sw4 sigma, int length, float_sw4 *g) {  
+         //1d Gauss function
+         //sigma decreases, gaussian decays faster and less smoothing
+         for (int i = 0; i < length; i++)
+           g[i] = exp(-s[i]*s[i]/(2*sigma*sigma))/(sigma*sqrt(2*M_PI));  
+   };
+
+    nx = m_ni;
+    ny = m_nj;
+    nz = m_nk;
+    
+    std::cout << "m_ib=" << m_ib << " m_jb=" << m_jb << " m_kb=" << m_kb << " nx=" << nx << " ny=" << ny << " nz=" << nz << std::endl;
+
+    //input parameters
+    lenx = width;    // total spread of filter  21 81
+	 leny = width;
+    lenz = width;
+
+    sigmax = decay;   // width of gaussian decay  4
+	 sigmay = sigmax;
+    sigmaz = sigmax;
+
+    halfx = (lenx - 1)/2;
+    halfy = (leny - 1)/2;
+    halfz = (lenz - 1)/2;
+
+    //allocalate memory
+   
+   float_sw4* sx = new float_sw4[lenx];
+   float_sw4* gx = new float_sw4[lenx];
+
+    for (i = 0; i < lenx; i++) sx[i] = i - halfx;
+
+    gauss(sx, sigmax, lenx, gx);
+    delete[] sx;
+
+    float_sw4* grad_extend = new float_sw4[nx+2*halfx];
+
+// convolve in x
+
+    for (k = 0; k < nz; k++)
+     for (j = 0; j < ny; j++)
+    {
+         for (i = 0; i < nx; i++) grad_extend[i+halfx] = m_data[index(m_ib+i,m_jb+j,m_kb+k)];
+         for(i=0; i< halfx; i++) grad_extend[i] = grad_extend[halfx];
+         for(i= nx+halfx; i< nx+2*halfx; i++) grad_extend[i] = grad_extend[nx+halfx-1];
+
+         for (i = 0; i < nx; i++)
+         {
+                  grad_sum = 0.0;
+                  for (ix = 0; ix < lenx; ix++)
+                    grad_sum = grad_sum + gx[ix] * grad_extend[i + lenx - 1 - ix];
+                  
+                  m_data[index(m_ib+i,m_jb+j,m_kb+k)] = grad_sum;
+         }
+    }
+    
+
+   delete[] grad_extend;
+ 
+
+   float_sw4* sy = new float_sw4[leny];
+   float_sw4* gy = new float_sw4[leny];
+  
+    for (j = 0; j < leny; j++) sy[j] = j - halfy;
+   gauss(sy, sigmay, leny, gy);
+   delete[] sy;
+
+   grad_extend = new float_sw4[ny+2*halfy];
+
+    // convolve in y
+   
+    for (k = 0; k < nz; k++)
+       for (i = 0; i < nx; i++)
+    {   
+         for(j=0; j < ny; j++) grad_extend[j+halfy] = m_data[index(m_ib+i,m_jb+j,m_kb+k)];
+         for(j=0; j< halfy; j++) grad_extend[j] = grad_extend[halfy];
+         for(j= ny+halfy; j< ny+2*halfy; j++) grad_extend[j] = grad_extend[ny+halfy-1];
+
+         for (j = 0; j < ny; j++)
+         {
+            grad_sum = 0.0;
+            for (iy = 0; iy < leny; iy++)
+                grad_sum = grad_sum + gy[iy] * grad_extend[j + leny - 1 - iy];
+            
+            m_data[index(m_ib+i,m_jb+j,m_kb+k)] = grad_sum;
+         }
+    }
+   delete[] grad_extend;
+
+
+   float_sw4* sz = new float_sw4[lenz];
+	float_sw4* gz = new float_sw4[lenz];
+    for (k = 0; k < lenz; k++) sz[k] = k - halfz;
+    
+    gauss(sz, sigmaz, lenz, gz);
+	 delete[] sz;
+
+   norm = 0.0;
+      for (k = 0; k < lenz; k++)
+		for (j = 0; j < leny; j++)
+		for (i = 0; i < lenx; i++)
+		 {
+            norm = norm + (gx[i]*gz[k]);
+        }
+
+     delete[] gx;
+     //delete[] gy;
+
+   grad_extend = new float_sw4[nz+2*halfz];
+
+// convole in z
+
+    for (j = 0; j < ny; j++)
+       for (i = 0; i < nx; i++)
+    {
+
+         for(k=0; k< nz; k++) grad_extend[k+halfz] = m_data[index(m_ib+i,m_jb+j,m_kb+k)];
+         for(k=0; k< halfz; k++) grad_extend[k] = grad_extend[halfz];
+         for(k=nz+halfz; k<nz+2*halfz; k++) grad_extend[k] = grad_extend[nz+halfz-1];
+
+         for (k = 0; k < nz; k++)      
+         {
+            grad_sum = 0.0;
+	         for (iz = 0; iz < lenz; iz++)
+                grad_sum = grad_sum + gz[iz] * grad_extend[k + lenz - 1 - iz];
+            
+            m_data[index(i+m_ib,j+m_jb,k+m_kb)] = grad_sum/norm;
+         }
+    }
+   delete[] gz;
+   delete[] grad_extend;
+
+
+}
+
 
    

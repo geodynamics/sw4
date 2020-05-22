@@ -200,14 +200,14 @@ Parallel_IO::Parallel_IO( int iwrite, int pfs, int globalsizes[3], int localsize
    if( localsizes[0] < 1 || localsizes[1] < 1 || localsizes[2] < 1 )
       ihave_array = 0;
    init_pio( iwrite, pfs, ihave_array );
-   //   int myid;
-   //   MPI_Comm_rank( MPI_COMM_WORLD, &myid );
-    //   if( myid == 1 )
-   //   {
-   //   cout << "gsizes " << globalsizes[0] <<  " " << globalsizes[1] << " " << globalsizes[2] << endl;
-   //   cout << "lsizes " << localsizes[0] <<  " " << localsizes[1] << " " << localsizes[2] << endl;
+   int myid;
+   MPI_Comm_rank( MPI_COMM_WORLD, &myid );
+   if( myid == 1 )
+      {
+      cout << "gsizes " << globalsizes[0] <<  " " << globalsizes[1] << " " << globalsizes[2] << endl;
+      cout << "lsizes " << localsizes[0] <<  " " << localsizes[1] << " " << localsizes[2] << " halo=" << padding << endl;
    //   cout << "ssizes " << starts[0] <<  " " << starts[1] << " " << starts[2] << endl;
-   //   }
+      }
    init_array( globalsizes, localsizes, starts, nptsbuf, padding );
    if( m_data_comm != MPI_COMM_NULL )
    {

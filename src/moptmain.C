@@ -148,9 +148,15 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
 //	 simulation.solve( src, GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e );
+      std::cout << "compute_f forward solve" << std::endl;
       sw4_profile->time_stamp("forward solve" );
      simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e, mopt->m_nsteps_in_memory );
       sw4_profile->time_stamp("done forward solve" );
+      //std::cout << "done compute_f forward solve" << std::endl;
+
+     // Wei added sync here
+     MPI_Barrier(MPI_COMM_WORLD);
+
 //        Compute misfit
       if( mopt->m_misfit == Mopt::L2 )
       {
@@ -301,11 +307,20 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    if( !mopt->m_test_regularizer ){
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
+      std::cout << "compute_f_df forward solve" << std::endl;
       sw4_profile->time_stamp("forward solve" );
      simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory );
+      // check if U has nan
+      U[0].checknan("forward U");
       sw4_profile->time_stamp("done forward solve" );
-   //   simulation.solve( src, GlobalTimeSeries, mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true );
+      std::cout << "done compute_f_df forward solve" << std::endl;
 
+      //std::cout << "done compute_f_df forward solve" << std::endl;
+   //   simulation.solve( src, GlobalTimeSeries, mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true );
+     //Wei added sync
+
+     MPI_Barrier(MPI_COMM_WORLD);
+     
 // Compute misfit, 'diffs' will hold the source for the adjoint problem
 
 // 1. Copy computed time series into diffs[m]
@@ -314,7 +329,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       {
 	 if( mopt->m_output_ts && it >= 0 )
 	    GlobalTimeSeries[e][m]->writeFile();
-     TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc", true);  // add true to append filename substring
+     TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc", false);  // add true to append filename substring
 	  diffs.push_back(elem);
       }
 // 2. misfit function also updates diffs := this - observed
@@ -324,7 +339,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
      //cerr << "diffs size=" << GlobalTimeSeries[e].size() << endl;
      for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ ) {
 	     f += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
-        diffs[m]->writeFileUSGS();
+        //diffs[m]->writeFileUSGS();
         }
       }
       else if( mopt->m_misfit == Mopt::CROSSCORR )
@@ -335,23 +350,40 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 
       double dfsrc[11];
       get_source_pars( nspar, dfsrc, dfs );   
+      std::cout << "backward+adjoint solve" << std::endl;
+
       sw4_profile->time_stamp("backward+adjoint solve" );
       simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, e );
       sw4_profile->time_stamp("done backward+adjoint solve" );
-
       cout << "done adjoint solve: gLambda[0] npts=" << gLambda[0].npts() << " min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << endl;
-      cout << "done adjoint solve: lambda[0] npts=" << lambda[0].npts() << " min=" << lambda[0].minimum() << " max=" << lambda[0].maximum() << endl;
-
 
       //      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], &dfs[nspar], dfm, gRho, gMu, gLambda );
       //      mopt->m_mp->gradient_transformation( rho, mu, lambda, gRho, gMu, gLambda );
       
-      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfmevent, rho, mu, lambda, gRho, gMu, gLambda, myrank);
-      for( int m=0 ; m < nmpars ; m++ )
-	 dfs[m+nspar] += dfsevent[m];
-      for( int m=0 ; m < nmpard ; m++ )
-	 dfm[m] += dfmevent[m];
+      //gMu[0].save_to_disk("gMu_ini.say");
+      //gLambda[0].save_to_disk("gLambda_ini.say"); // local size with halos
+      //std::cout << "gMu_ini min=" << gMu[0].minimum() << " max=" << gMu[0].maximum() << std::endl;
+      //std::cout << "gLambda_ini min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << std::endl;
 
+      //gMu[0].save_to_disk("gMu.say");
+      //gLambda[0].save_to_disk("gLambda.say"); // local size with halos
+      //std::cout << "gMu min=" << gMu[0].minimum() << " max=" << gMu[0].maximum() << std::endl;
+      //std::cout << "gLambda min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << std::endl;
+
+      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfmevent, rho, mu, lambda, gRho, gMu, gLambda, myrank);
+
+      //gMu[0].save_to_disk("gMu_xform.say");
+      //gLambda[0].save_to_disk("gLambda_xform.say"); // local size with halos
+
+      //std::cout << "gMu_xform min=" << gMu[0].minimum() << " max=" << gMu[0].maximum() << std::endl;
+      //std::cout << "gLambda_xform min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << std::endl;
+    
+      for( int m=0 ; m < nmpars ; m++ )
+	      dfs[m+nspar] += dfsevent[m];
+      for( int m=0 ; m < nmpard ; m++ )
+	      dfm[m] += dfmevent[m];
+
+      
 // 3. Give back memory
       for( unsigned int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
 	 delete diffs[m];
@@ -1401,6 +1433,9 @@ int main(int argc, char **argv)
 			GlobalSources, GlobalTimeSeries,
 			GlobalObservations, myRank, mopt );
          
+         if(myRank==0) save_array_to_disk(nmpars, xs, "xs_lbfgs.bin"); 
+         if(myRank==0) save_array_to_disk(nmpard, xm, "xm_lbfgs.bin"); 
+
 	      else if( mopt->m_optmethod == 2 )
 		 nlcg( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		       GlobalObservations, myRank, mopt );

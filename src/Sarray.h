@@ -121,9 +121,11 @@ public:
    void side_plane_fortran( int side, int wind[6], int nGhost=1 );
    bool in_domain( int i, int j, int k );
    void set_to_zero();
+   void checknan(char* tag);
    void set_to_minusOne();
    void set_value( float_sw4 scalar );
    void set_to_random( float_sw4 llim =0.0, float_sw4 ulim = 1.0 );
+   void read_from_disk( const char* fname );
    void save_to_disk( const char* fname );
    int ncomp() const {return m_nc;}
    int npts() const  {return m_ni*m_nj*m_nk;}
@@ -155,6 +157,9 @@ public:
    void page_unlock( EWCuda* cu );
    Sarray* create_copy_on_device( EWCuda* cu );
    void define_offsets();
+   void gaussian_smooth_v1(int width, float decay);
+   void gaussian_smooth(int width, float decay);
+
 //   void write( char* filename, CartesianProcessGrid* cartcomm, std::vector<float_sw4> pars );
    int m_nc, m_ni, m_nj, m_nk;
 private:
