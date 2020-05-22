@@ -52,13 +52,13 @@ MaterialParCartesian::MaterialParCartesian( EW* a_ew, int nx, int ny, int nz, in
          m_zmax = zmax;
   // z decreases when g increases, so zmin is always smallest on the last grid:
       m_zmin = m_ew->m_zmin[g];
-      if( m_ew->topographyExists() && g == m_ew->mNumberOfGrids-1 )
+      if( m_ew->topographyExists() && g >= m_ew->mNumberOfCartesianGrids )
       {
          zmin = 1e38;
 	 for( int j= m_ew->m_jStartAct[g] ; j <= m_ew->m_jEndAct[g] ; j++ )
 	    for( int i= m_ew->m_iStartAct[g] ; i <= m_ew->m_iEndAct[g] ; i++ )
-	       if( m_ew->mZ(i,j,1) < zmin )
-		  zmin = m_ew->mZ(i,j,1);
+	       if( m_ew->mZ[g](i,j,1) < zmin )
+		  zmin = m_ew->mZ[g](i,j,1);
 	 MPI_Allreduce( &zmin, &m_zmin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD );
       }
    }

@@ -5621,7 +5621,7 @@ void EW::testsourcediff( vector<Source*> GlobalSources, float_sw4 gradient[11],
    //   cout << "size of sources " << gpsources.size() << endl;
    for( int m = 0 ; m < gpsources.size()-1 ; m++ )
    {
-      gpsources[m]->add_to_gradient( kappa, eta, 0.63, mDt, gradient, mGridSize, mJ[mNumberOfGrids-1],
+      gpsources[m]->add_to_gradient( kappa, eta, 0.63, mDt, gradient, mGridSize, mJ,
                                      topographyExists() ); // mJ argument should be the whole vector of Sarrays
       gpsources[m]->add_to_hessian( kappa, eta, 0.63, mDt, hessian, mGridSize );
    }

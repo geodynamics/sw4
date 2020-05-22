@@ -573,13 +573,13 @@ void EW::interpolate( int nx, int ny, int nz, double xmin, double ymin, double z
    double* rhogp = rhogrid.c_ptr();
    double* mugp = mugrid.c_ptr();
    double* lambdagp = lambdagrid.c_ptr();
-   if( topographyExists() && grid == mNumberOfGrids -1 )
+   if( topographyExists() && grid >= mNumberOfCartesianGrids )
    {
       interpolatemtrlc(nx, ny, nz, xmin, ymin, zmin, 
 		       hx, hy, hz, rhop, mup, lambdap,
 		       ifirst, ilast, jfirst, jlast, kfirst, klast,
 		       ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact, 
-		       rhogp, mugp, lambdagp, mGridSize[grid], mZ.c_ptr() );
+		       rhogp, mugp, lambdagp, mGridSize[grid], mZ[grid].c_ptr() );
    }
    else
    {
@@ -954,13 +954,13 @@ void EW::interpolation_gradient( int nx, int ny, int nz, double xmin, double ymi
    double* grhogp = gradrhogrid.c_ptr();
    double* gmugp = gradmugrid.c_ptr();
    double* glambdagp = gradlambdagrid.c_ptr();
-   if( topographyExists() && grid == mNumberOfGrids -1 )
+   if( topographyExists() && grid >= mNumberOfCartesianGrids )
    {
       gradientsc(nx, ny, nz, xmin, ymin, zmin, 
 		 hx, hy, hz, grhop, gmup, glambdap,
 		 ifirst, ilast, jfirst, jlast, kfirst, klast,
 		 ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact, 
-		 grhogp, gmugp, glambdagp, mGridSize[grid], mZ.c_ptr() );
+		 grhogp, gmugp, glambdagp, mGridSize[grid], mZ[grid].c_ptr() );
    }
    else
    {
