@@ -1879,7 +1879,7 @@ void curvilinear4sg_ci(
   SW4_PEEK;
   SYNC_DEVICE;
 #endif
-
+      SYNC_STREAM; // CURVI_CPU
   /// CURVIMR ADDITION
   if (onesided[5] == 1) {
 #pragma omp for

@@ -2433,6 +2433,7 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
                       &a_t, &om, &cv, &ph, mX[g].c_ptr(), mY[g].c_ptr(),
                       mZ[g].c_ptr());
       if (m_use_attenuation) {
+	//std::cout<<"THI IS THE ONE\n";
         // one mechanism is assumed
         float_sw4* alpha_ptr = a_AlphaVE[g][0].c_ptr();
         if (m_croutines)

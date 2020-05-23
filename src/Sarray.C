@@ -1421,3 +1421,21 @@ void Sarray::copy_kplane2(Sarray& u, int k) {
       }
   }
 }
+ void Sarray::swrite(std::string filename){
+   if (!of.is_open()){
+     int myRank=-1;
+     MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+     std::stringstream ss;
+     ss<<filename<<"_"<<myRank<<".dat";
+     std::cout<<"Opening "<<ss.str()<<"\n";
+     of.open(ss.str());
+   } else {
+     std::cout<<"File is open\n";
+   }
+
+   of<<" \n\n++++ "<<filename<<" \n\n";
+   for (int i=0;i < m_nc * m_ni * m_nj * m_nk; i++){
+     of<<i<<" "<<m_data[i]<<"\n";
+   }
+ }
+     

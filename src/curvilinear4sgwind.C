@@ -34,9 +34,12 @@
 #include <sys/types.h>
 
 #include "sw4.h"
+#include "Mspace.h"
+#include "policies.h"
 //#include <iostream>
 // using namespace std;
 void curvilinear4sgwind(
+		       
     int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
     int kfirstw, int klastw, float_sw4* __restrict__ a_u,
     float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda,
@@ -46,6 +49,7 @@ void curvilinear4sgwind(
     float_sw4* __restrict__ a_acof_no_gp, float_sw4* __restrict__ a_ghcof_no_gp,
     float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, int nk,
     char op) {
+  SYNC_STREAM; // CURVI_CPU
   // Routine with supergrid stretchings strx and stry. Evaluate Lu for kfirstw
   // <= k <= klastw. Assume that a_Lu is declared of size ifirst:ilast,
   // jfirst:jlast, kfirstw:klastw The other arrays have dimensions ifirst:ilast,

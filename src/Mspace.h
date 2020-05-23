@@ -172,5 +172,12 @@ void autopeel(Apc &apc, T first, Args &&... args) {
 }
 
 // END AUTOPEEL CODE
+template <class T>
+void Write(T &t, std::string filename){
+  for (auto &i: t){
+    i.swrite(filename);
+  }
+}
+
 
 #endif

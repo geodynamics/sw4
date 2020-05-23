@@ -239,6 +239,7 @@ class Sarray {
   void allocate_on_device(EWCuda* cu);
   void page_lock(EWCuda* cu);
   void page_unlock(EWCuda* cu);
+  void swrite(std::string filename);
   Sarray* create_copy_on_device(EWCuda* cu);
   void define_offsets();
   //   void write( char* filename, CartesianProcessGrid* cartcomm,
@@ -257,7 +258,7 @@ class Sarray {
  private:
   float_sw4* m_data;
   bool prefetched;
-
+  std::ofstream of;
   float_sw4* dev_data;
   inline int min(int i1, int i2) {
     if (i1 < i2)

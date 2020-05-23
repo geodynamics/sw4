@@ -301,6 +301,7 @@ void CurvilinearInterface2::init_arrays_att() {
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
                                       std::vector<Sarray*>& a_AlphaVE) {
+  SYNC_STREAM; // CURVI_CPU
   bool force_dirichlet = false;  //, check_stress_cont=false;
   //   int fg=0;
   //   if( force_dirichlet )

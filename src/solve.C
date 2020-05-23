@@ -387,6 +387,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     exactRhsTwilight(t, F);
     evalRHS(U, mMu, mLambda, Up, AlphaVE);  // save Lu in composite grid 'Up'
 
+
     // evaluate and print errors
     float_sw4* lowZ = new float_sw4[3 * mNumberOfGrids];
     float_sw4* interiorZ = new float_sw4[3 * mNumberOfGrids];
@@ -476,8 +477,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   // enforce bc on initial data
   // U
   // communicate across processor boundaries
+  //Write(U,"U");
   for (int g = 0; g < mNumberOfGrids; g++) communicate_array(U[g], g);
-
+  //Write(U,"U");
   //    U[0].save_to_disk("u-dbg0.bin");
   //    U[1].save_to_disk("u-dbg1.bin");
 
@@ -496,7 +498,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   if (m_use_attenuation && (m_number_mechanisms > 0)) {
     enforceBCfreeAtt2(U, mMu, mLambda, AlphaVE, BCForcing);
   }
-
+  //Write(Up,"Up");
 #ifdef PEEKS_GALORE
   SW4_PEEK;
   SYNC_DEVICE;
@@ -994,13 +996,13 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
       // add in super-grid damping terms
       if (usingSupergrid()) {
-        // std::cout<<"SUPERGRID\n";
+	//std::cout<<"SUPERGRID\n";
         addSuperGridDamping(Up, U, Um, mRho);
       }
 
       // Arben's simplified attenuation
       if (m_use_attenuation && m_number_mechanisms == 0) {
-        // std::cout<<"ATTENUATION\n";
+        //std::cout<<"ATTENUATION\n";
         simpleAttenuation(Up);
       }
 
@@ -1764,6 +1766,7 @@ void EW::update_curvilinear_cartesian_interface_raja(vector<Sarray>& a_U) {
 
 //-----------------------------------------------------------------------
 void EW::update_curvilinear_cartesian_interface(vector<Sarray>& a_U) {
+  SYNC_STREAM;
   if (topographyExists()) {
     int g = mNumberOfCartesianGrids - 1;
     int gc = mNumberOfGrids - 1;
@@ -5164,6 +5167,7 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                      vector<Sarray>& a_Lambda, vector<Sarray*>& a_Alpha,
                      float_sw4 t) {
   // std::cout<<"CALL TO EW::CurviCartIC ON CPU \n";
+  SYNC_STREAM; // FOR CURVI_CPU
   int gcurv = gcart + 1;
   int ib = m_iStart[gcurv], ie = m_iEnd[gcurv];
   int jb = m_jStart[gcurv], je = m_jEnd[gcurv];

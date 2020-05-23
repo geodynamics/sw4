@@ -131,7 +131,7 @@ void EW::solerr3c_ci(int ib, int ie, int jb, int je, int kb, int ke,
             size_t ind3 = ind + nijk * c;
             float_sw4 err = fabs(u[ind3] - uex[ind3]);
             liloc = liloc > err ? liloc : err;
-            xliloc = xliloc > uex[ind3] ? xliloc : uex[ind3];
+            xliloc = xliloc > fabs(uex[ind3]) ? xliloc : fabs(uex[ind3]);
             if (usesg != 1)
               l2loc += jac[ind] * err * err;
             else
