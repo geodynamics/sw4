@@ -2012,6 +2012,7 @@ void EW::normOfDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
     }
     if (linfLocal > diffInfLocal) diffInfLocal = linfLocal;
     if (xInfGrid > xInfLocal) xInfLocal = xInfGrid;
+    //std::cout<<"NORM"<<g<<" "<<xInfGrid<<" "<<xInfLocal<<"\n";
     diffL2Local += l2Local;
   }
   // communicate local results for global errors
@@ -2379,6 +2380,7 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
     for (int g = 0; g < mNumberOfCartesianGrids;
          g++)  // curvilinear case needs to be implemented
     {
+
       u_ptr = a_U[g].c_ptr();
       ifirst = m_iStart[g];
       ilast = m_iEnd[g];
@@ -2399,6 +2401,7 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
         twilightfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, u_ptr,
                      &a_t, &om, &cv, &ph, &h, &zmin);
       if (m_use_attenuation) {
+
         // one mechanism is assumed
         float_sw4* alpha_ptr = a_AlphaVE[g][0].c_ptr();
         if (m_croutines)
@@ -2413,6 +2416,7 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
     for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids;
          g++)  // curvilinear grids
     {
+ 
       // int g = mNumberOfGrids - 1;
       u_ptr = a_U[g].c_ptr();
       ifirst = m_iStart[g];
@@ -2433,6 +2437,7 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
                       &a_t, &om, &cv, &ph, mX[g].c_ptr(), mY[g].c_ptr(),
                       mZ[g].c_ptr());
       if (m_use_attenuation) {
+
 	//std::cout<<"THI IS THE ONE\n";
         // one mechanism is assumed
         float_sw4* alpha_ptr = a_AlphaVE[g][0].c_ptr();
@@ -2449,6 +2454,7 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
     retval = true;
   } else if (m_point_source_test) {
     for (int g = 0; g < mNumberOfGrids; g++) {
+
       size_t npts = a_U[g].m_npts;
       float_sw4* uexact = SW4_NEW(Managed, float_sw4[npts]);
       SW4_CheckDeviceError(cudaMemPrefetchAsync(
@@ -2461,9 +2467,11 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
     }
     retval = true;
   } else if (m_lamb_test) {
+
     get_exact_lamb2(a_U, a_t, *sources[0]);
     retval = true;
   } else if (m_rayleigh_wave_test) {
+
     double cr, lambda, mu, rho, alpha;
     for (int g = 0; g < mNumberOfCartesianGrids;
          g++)  // This case does not make sense with topography
@@ -2494,7 +2502,9 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
     retval = true;
   } else  // In general, the exact solution is unknown (m_energy_test falls into
           // this category)
+
   {
+
     retval = false;
   }
   return retval;

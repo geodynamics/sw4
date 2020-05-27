@@ -24,7 +24,7 @@ void EW::twilightfort_ci(int ifirst, int ilast, int jfirst, int jlast,
     for (int j = jfirst; j <= jlast; j++) {
       float_sw4 y = (j - 1) * h;
 #pragma ivdep
-#pragma simd
+      //#pragma simd
       for (int i = ifirst; i <= ilast; i++) {
         float_sw4 x = (i - 1) * h;
         size_t ind = base + i + ni * j + nij * k;
@@ -100,6 +100,7 @@ void EW::twilightfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
                         sin(om * z[ind] + ph);
         u[ind + 2 * nijk] = sin(om * x[ind] + ph) * sin(om * y[ind] + ph) *
                             sin(om * (z[ind] - cv * t));
+	//std::cout<<"TWI"<<i<<j<<k<<" "<<u[ind]<<" "<<u[ind+nijk]<<" "<<u[ind+2*nijk]<<"\n";
       }
 }
 
