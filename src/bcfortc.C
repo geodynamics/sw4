@@ -820,13 +820,22 @@ void EW::twdirbdryc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
   SW4_MARK_FUNCTION;
   size_t ni = ilast - ifirst + 1;
   size_t nij = ni * (jlast - jfirst + 1);
-  size_t qq = 0;
+  //size_t qq = 0;
   // #pragma omp parallel for qq variable will not work with OpenMP
-  for (int k = wind[4]; k <= wind[5]; k++) {
-    for (int j = wind[2]; j <= wind[3]; j++) {
-      for (int i = wind[0]; i <= wind[1]; i++) {
+  // for (int k = wind[4]; k <= wind[5]; k++) {
+  //   for (int j = wind[2]; j <= wind[3]; j++) {
+  //     for (int i = wind[0]; i <= wind[1]; i++) {
+
+  RAJA::RangeSegment k_range(wind[4],wind[5]+1);
+  RAJA::RangeSegment j_range(wind[2],wind[3]+1);
+  RAJA::RangeSegment i_range(wind[0],wind[1]+1);
+      RAJA::kernel<
+	DEFAULT_LOOP3>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
+                                                                      int k,
+                                                                      int j,
+                                                                      int i) {
         size_t ind = i - ifirst + ni * (j - jfirst) + nij * (k - kfirst);
-	qq=(i-wind[0])+(j-wind[2])*(wind[1]-wind[0]+1)+(k-wind[4])*(wind[1]-wind[0]+1)*(wind[3]-wind[2]+1);
+	size_t qq=(i-wind[0])+(j-wind[2])*(wind[1]-wind[0]+1)+(k-wind[4])*(wind[1]-wind[0]+1)*(wind[3]-wind[2]+1);
         bforce[3 * qq] = sin(om * (x[ind] - cv * t)) * sin(om * y[ind] + ph) *
                          sin(om * z[ind] + ph);
         bforce[1 + 3 * qq] = sin(om * x[ind] + ph) *
@@ -835,9 +844,7 @@ void EW::twdirbdryc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
         bforce[2 + 3 * qq] = sin(om * x[ind] + ph) * sin(om * y[ind] + ph) *
                              sin(om * (z[ind] - cv * t));
         //qq++;
-      }
-    }
-  }
+		       });
 }
 
 //-----------------------------------------------------------------------

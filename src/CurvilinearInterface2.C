@@ -227,6 +227,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   int three = 3;
   int info = 0;
   m_ipiv_block = new int[3 * msize];
+  SW4_MARK_BEGIN("DGETRF");
   for (size_t ind = 0; ind < msize; ind++) {
     F77_FUNC(dgetrf, DGETRF)
     (&three, &three, &m_mass_block[9 * ind], &three, &m_ipiv_block[3 * ind],
@@ -244,6 +245,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
       std::cerr << "\n";
     }
   }
+  SW4_MARK_END("DGETRF");
 }
 
 //-----------------------------------------------------------------------
@@ -435,9 +437,11 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
         size_t ind = (i - m_Mass_block.m_ib) + nimb * (j - m_Mass_block.m_jb);
         float_sw4 x[3] = {residual(1, i, j, 1), residual(2, i, j, 1),
                           residual(3, i, j, 1)};
+	SW4_MARK_BEGIN("DGETRS");
         F77_FUNC(dgetrs, DGETRS)
         (&trans, &three, &one, &m_mass_block[9 * ind], &three,
          &m_ipiv_block[3 * ind], x, &three, &info);
+	SW4_MARK_END("DGETRS");
         if (info != 0) {
           std::cerr << "SOLVE Fails at (i,j) equals" << i << "," << j
                     << " INFO = " << info << " "

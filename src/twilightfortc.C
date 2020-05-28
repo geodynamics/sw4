@@ -88,11 +88,19 @@ void EW::twilightfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t nij = ni * (jlast - jfirst + 1);
   const size_t nijk = nij * (klast - kfirst + 1);
   const size_t base = -(ifirst + ni * jfirst + nij * kfirst);
-#pragma omp parallel
-#pragma omp for
-  for (int k = kfirst; k <= klast; k++)
-    for (int j = jfirst; j <= jlast; j++)
-      for (int i = ifirst; i <= ilast; i++) {
+// #pragma omp parallel
+// #pragma omp for
+//   for (int k = kfirst; k <= klast; k++)
+//     for (int j = jfirst; j <= jlast; j++)
+//       for (int i = ifirst; i <= ilast; i++) {
+  RAJA::RangeSegment k_range(kfirst,klast+1);
+  RAJA::RangeSegment j_range(jfirst,jlast+1);
+  RAJA::RangeSegment i_range(ifirst,ilast+1);
+  RAJA::kernel<
+    DEFAULT_LOOP3>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
+										int k,
+										int j,
+										int i) {
         size_t ind = base + i + ni * j + nij * k;
         u[ind] = sin(om * (x[ind] - cv * t)) * sin(om * y[ind] + ph) *
                  sin(om * z[ind] + ph);
@@ -101,7 +109,7 @@ void EW::twilightfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
         u[ind + 2 * nijk] = sin(om * x[ind] + ph) * sin(om * y[ind] + ph) *
                             sin(om * (z[ind] - cv * t));
 	//std::cout<<"TWI"<<i<<j<<k<<" "<<u[ind]<<" "<<u[ind+nijk]<<" "<<u[ind+2*nijk]<<"\n";
-      }
+		   });
 }
 
 //-----------------------------------------------------------------------
