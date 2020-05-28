@@ -23,6 +23,7 @@ void curvilinear4sgwind(int, int, int, int, int, int, int, int, float_sw4*,
 
 //-----------------------------------------------------------------------
 CurvilinearInterface2::CurvilinearInterface2(int a_gc, EW* a_ew) {
+  SW4_MARK_FUNCTION;
   m_reltol = 1e-6;
   m_abstol = 1e-6;
   m_maxit = 30;
@@ -41,6 +42,7 @@ CurvilinearInterface2::CurvilinearInterface2(int a_gc, EW* a_ew) {
 
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
+  SW4_MARK_FUNCTION;
   // Homogeneous Dirichet at boundaries on sides. Do not apply at upper and
   // lower boundaries.
   for (int s = 0; s < 4; s++)
@@ -61,6 +63,7 @@ void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::copy_str(float_sw4* dest, float_sw4* src,
                                      int offset, int n, int nsw) {
+  SW4_MARK_FUNCTION;
   //
   // Copy supergrid stretching function array into an array with different
   // number of ghost points. The new values are filled in by constant
@@ -86,6 +89,7 @@ void CurvilinearInterface2::copy_str(float_sw4* dest, float_sw4* src,
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
                                         vector<float_sw4*>& a_stry) {
+  SW4_MARK_FUNCTION;
   for (int s = 0; s < 4; s++)
     m_isbndry[s] = m_ew->getLocalBcType(m_gc, s) != bProcessor;
 
@@ -244,6 +248,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
 
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::init_arrays_att() {
+  SW4_MARK_FUNCTION;
   // Attenuation material setup
   if (m_use_attenuation) {
     m_muve_c.resize(m_number_mechanisms);
@@ -484,6 +489,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
 
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::injection(Sarray& u_f, Sarray& u_c) {
+  SW4_MARK_FUNCTION;
   // Injection at the interface
 
   const float_sw4 a = 9.0 / 16;
@@ -548,6 +554,7 @@ void CurvilinearInterface2::injection(Sarray& u_f, Sarray& u_c) {
 
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::interface_block(Sarray& matrix) {
+  SW4_MARK_FUNCTION;
   const float_sw4 w1 = 17.0 / 48;
   matrix_Lu(m_ib, m_jb, matrix, m_met_c, m_jac_c, m_mu_c, m_lambda_c, m_strx_c,
             m_stry_c, m_ghcof[0]);
@@ -572,6 +579,7 @@ void CurvilinearInterface2::interface_block(Sarray& matrix) {
 
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::interface_lhs(Sarray& lhs, Sarray& uc) {
+  SW4_MARK_FUNCTION;
   const float_sw4 w1 = 17.0 / 48;
   lhs_Lu(uc, lhs, m_met_c, m_jac_c, m_mu_c, m_lambda_c, m_strx_c, m_stry_c,
          m_ghcof[0]);
@@ -607,6 +615,7 @@ void CurvilinearInterface2::interface_lhs(Sarray& lhs, Sarray& uc) {
 void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
                                           vector<Sarray>& Alpha_c,
                                           vector<Sarray>& Alpha_f) {
+  SW4_MARK_FUNCTION;
   Sarray utmp(3, uc.m_ib, uc.m_ie, uc.m_jb, uc.m_je, 0, 0);
 
   const float_sw4 w1 = 17.0 / 48;
@@ -712,6 +721,7 @@ void CurvilinearInterface2::compute_icstresses_curv(
     Sarray& a_Up, Sarray& B, int kic, Sarray& a_metric, Sarray& a_mu,
     Sarray& a_lambda, float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop,
     char op) {
+  SW4_MARK_FUNCTION;
   const float_sw4 a1 = 2.0 / 3, a2 = -1.0 / 12;
   const bool upper = (kic == 1);
   const int k = kic;
@@ -813,6 +823,7 @@ void CurvilinearInterface2::compute_icstresses_curv(
 void CurvilinearInterface2::lhs_icstresses_curv(
     Sarray& a_Up, Sarray& a_lhs, int kic, Sarray& a_metric, Sarray& a_mu,
     Sarray& a_lambda, float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop) {
+  SW4_MARK_FUNCTION;
   // As compute_icstresses_curv, but evaluates the ghost point part only
   //   const float_sw4 a1=2.0/3, a2=-1.0/12;
   const bool upper = (kic == 1);
@@ -867,6 +878,7 @@ void CurvilinearInterface2::lhs_Lu(Sarray& a_U, Sarray& a_lhs, Sarray& met,
                                    Sarray& jac, Sarray& mu, Sarray& la,
                                    float_sw4* a_str_x, float_sw4* a_str_y,
                                    float_sw4 ghcof) {
+  SW4_MARK_FUNCTION;
   const int ifirst = a_U.m_ib;
   const int jfirst = a_U.m_jb;
 #define strx(i) a_str_x[(i - ifirst)]
@@ -921,6 +933,7 @@ void CurvilinearInterface2::lhs_Lu(Sarray& a_U, Sarray& a_lhs, Sarray& met,
 void CurvilinearInterface2::mat_icstresses_curv(
     int ib, int jb, Sarray& a_mat, int kic, Sarray& a_metric, Sarray& a_mu,
     Sarray& a_lambda, float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop) {
+  SW4_MARK_FUNCTION;
   // As compute_icstresses_curv, but evaluates the matrix multiplying the ghost
   // point part
   //   const float_sw4 a1=2.0/3, a2=-1.0/12;
@@ -989,6 +1002,8 @@ void CurvilinearInterface2::matrix_Lu(int strib, int strjb, Sarray& a_mat,
                                       Sarray& met, Sarray& jac, Sarray& mu,
                                       Sarray& la, float_sw4* a_str_x,
                                       float_sw4* a_str_y, float_sw4 ghcof) {
+
+  SW4_MARK_FUNCTION;
 #define strx(i) a_str_x[(i - strib)]
 #define stry(j) a_str_y[(j - strjb)]
 #pragma omp parallel for
@@ -1036,6 +1051,7 @@ void CurvilinearInterface2::matrix_Lu(int strib, int strjb, Sarray& a_mat,
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::restprol2D(Sarray& Uc, Sarray& alpha, int kc,
                                        int kf) {
+  SW4_MARK_FUNCTION;
   //
   // Multiplies the diagonal element of the operator P^T*diag(alpha)*P
   //
@@ -1086,6 +1102,7 @@ void CurvilinearInterface2::restprol2D(Sarray& Uc, Sarray& alpha, int kc,
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::prolongate2D(Sarray& Uc, Sarray& Uf, int kc,
                                          int kf) {
+  SW4_MARK_FUNCTION;
   const float_sw4 i16 = 1.0 / 16;
   const float_sw4 i256 = 1.0 / 256;
   int ib1, ie1, ib2, ie2;
@@ -1182,6 +1199,7 @@ void CurvilinearInterface2::prolongate2D(Sarray& Uc, Sarray& Uf, int kc,
 
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::restrict2D(Sarray& Uc, Sarray& Uf, int kc, int kf) {
+  SW4_MARK_FUNCTION;
   int icb, ice, jcb, jce;
   if (Uf.m_ib % 2 == 0)
     icb = Uf.m_ib / 2 + 2;
@@ -1236,6 +1254,7 @@ void CurvilinearInterface2::restrict2D(Sarray& Uc, Sarray& Uf, int kc, int kf) {
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
                                               int kplane) {
+  SW4_MARK_FUNCTION;
   //
   // General ghost point exchange at processor boundaries.
   //
@@ -1368,6 +1387,7 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::communicate_array1d(float_sw4* u, int n, int dir,
                                                 int ngh) {
+  SW4_MARK_FUNCTION;
   //
   // Communicate one dimensional array in i- or j-direction
   // Input:  u - The array

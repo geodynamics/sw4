@@ -1,4 +1,5 @@
 #include "TestTwilight.h"
+#include "caliper.h"
 
 TestTwilight::TestTwilight(float_sw4 omega, float_sw4 c, float_sw4 phase,
                            float_sw4 momega, float_sw4 mphase, float_sw4 amprho,
@@ -14,6 +15,7 @@ TestTwilight::TestTwilight(float_sw4 omega, float_sw4 c, float_sw4 phase,
       m_sw4twilight(true) {}
 
 void TestTwilight::get_rho(Sarray& rho, Sarray& x, Sarray& y, Sarray& z) {
+SW4_MARK_FUNCTION;
   if (m_sw4twilight) {
     for (int k = rho.m_kb; k <= rho.m_ke; k++)
       for (int j = rho.m_jb; j <= rho.m_je; j++)
@@ -34,6 +36,7 @@ void TestTwilight::get_rho(Sarray& rho, Sarray& x, Sarray& y, Sarray& z) {
 
 void TestTwilight::get_mula(Sarray& mu, Sarray& lambda, Sarray& x, Sarray& y,
                             Sarray& z) {
+SW4_MARK_FUNCTION;
   if (m_sw4twilight) {
     for (int k = mu.m_kb; k <= mu.m_ke; k++)
       for (int j = mu.m_jb; j <= mu.m_je; j++)
@@ -63,6 +66,7 @@ void TestTwilight::get_mula(Sarray& mu, Sarray& lambda, Sarray& x, Sarray& y,
 
 void TestTwilight::get_ubnd(Sarray& u, Sarray& x, Sarray& y, Sarray& z,
                             float_sw4 t, int npts, int sides[6]) {
+SW4_MARK_FUNCTION;
   for (int s = 0; s < 6; s++)
     if (sides[s] == 1) {
       int kb = u.m_kb, ke = u.m_ke, jb = u.m_jb, je = u.m_je, ib = u.m_ib,
@@ -97,6 +101,7 @@ void TestTwilight::get_ubnd(Sarray& u, Sarray& x, Sarray& y, Sarray& z,
 
 void TestTwilight::get_ubnd(Sarray& u, float_sw4 h, float_sw4 zmin, float_sw4 t,
                             int npts, int sides[6]) {
+SW4_MARK_FUNCTION;
   for (int s = 0; s < 6; s++)
     if (sides[s] == 1) {
       int kb = u.m_kb, ke = u.m_ke, jb = u.m_jb, je = u.m_je, ib = u.m_ib,
@@ -132,6 +137,7 @@ void TestTwilight::get_ubnd(Sarray& u, float_sw4 h, float_sw4 zmin, float_sw4 t,
 
 void TestTwilight::get_mula_att(Sarray& muve, Sarray& lambdave, Sarray& x,
                                 Sarray& y, Sarray& z) {
+SW4_MARK_FUNCTION;
   if (m_sw4twilight) {
     for (int k = muve.m_kb; k <= muve.m_ke; k++)
       for (int j = muve.m_jb; j <= muve.m_je; j++)
@@ -151,6 +157,7 @@ void TestTwilight::get_mula_att(Sarray& muve, Sarray& lambdave, Sarray& x,
 
 void TestTwilight::get_bnd_att(Sarray& AlphaVE, Sarray& x, Sarray& y, Sarray& z,
                                float_sw4 t, int npts, int sides[6]) {
+SW4_MARK_FUNCTION;
   for (int s = 0; s < 6; s++)
     if (sides[s] == 1) {
       int kb = AlphaVE.m_kb, ke = AlphaVE.m_ke, jb = AlphaVE.m_jb,

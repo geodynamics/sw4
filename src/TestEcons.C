@@ -1,11 +1,12 @@
 #include <stdlib.h>
 
 #include "TestEcons.h"
-
+#include "caliper.h"
 TestEcons::TestEcons(float_sw4 amp, float_sw4 cpocs)
     : m_amp(amp), m_cpocs(cpocs) {}
 
 void TestEcons::get_rhobnd(Sarray& rho, int npts, int sides[6]) {
+  SW4_MARK_FUNCTION;
   // Fillin random numbers at ghost points.
   for (int s = 0; s < 5; s++)
     if (sides[s] == 1) {
@@ -27,6 +28,7 @@ void TestEcons::get_rhobnd(Sarray& rho, int npts, int sides[6]) {
 
 void TestEcons::get_mulabnd(Sarray& mu, Sarray& lambda, int npts,
                             int sides[6]) {
+SW4_MARK_FUNCTION;
   // Fillin random numbers at ghost points.
   for (int s = 0; s < 5; s++)
     if (sides[s] == 1) {
@@ -49,6 +51,7 @@ void TestEcons::get_mulabnd(Sarray& mu, Sarray& lambda, int npts,
 }
 
 void TestEcons::get_ubnd(Sarray& u, int npts, int sides[6]) {
+  SW4_MARK_FUNCTION;
   // Homogeneous Dirichet at boundaries
   for (int s = 0; s < 6; s++)
     if (sides[s] == 1) {

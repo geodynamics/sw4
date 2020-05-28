@@ -826,6 +826,7 @@ void EW::twdirbdryc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
     for (int j = wind[2]; j <= wind[3]; j++) {
       for (int i = wind[0]; i <= wind[1]; i++) {
         size_t ind = i - ifirst + ni * (j - jfirst) + nij * (k - kfirst);
+	qq=(i-wind[0])+(j-wind[2])*(wind[1]-wind[0]+1)+(k-wind[4])*(wind[1]-wind[0]+1)*(wind[3]-wind[2]+1);
         bforce[3 * qq] = sin(om * (x[ind] - cv * t)) * sin(om * y[ind] + ph) *
                          sin(om * z[ind] + ph);
         bforce[1 + 3 * qq] = sin(om * x[ind] + ph) *
@@ -833,7 +834,7 @@ void EW::twdirbdryc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                              sin(om * z[ind] + ph);
         bforce[2 + 3 * qq] = sin(om * x[ind] + ph) * sin(om * y[ind] + ph) *
                              sin(om * (z[ind] - cv * t));
-        qq++;
+        //qq++;
       }
     }
   }

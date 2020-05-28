@@ -407,6 +407,7 @@ void Sarray::define(const Sarray& u) {
 //-----------------------------------------------------------------------
 void Sarray::intersection(int ib, int ie, int jb, int je, int kb, int ke,
                           int wind[6]) {
+  SW4_MARK_FUNCTION;
   wind[0] = max(ib, m_ib);
   wind[1] = min(ie, m_ie);
   wind[2] = max(jb, m_jb);
@@ -1278,6 +1279,7 @@ float_sw4* memoize(Sarray& u, int c, int i, int j, int k) {
 }
 //-----------------------------------------------------------------------
 void Sarray::insert_intersection(Sarray& a_U) {
+  SW4_MARK_FUNCTION;
   // Assuming nc is the same for m_data and a_U.m_data.
   int wind[6];
   int ib = a_U.m_ib, ie = a_U.m_ie, jb = a_U.m_jb, je = a_U.m_je, kb = a_U.m_kb,
@@ -1391,6 +1393,7 @@ void Sarray::extrapolij(int npts) {
 void Sarray::copy_kplane2(Sarray& u, int k) {
   // Only check k-dimension, other dims do not have to match, only copy the
   // intersecting part.
+SW4_MARK_FUNCTION;
   if (!(u.m_kb <= k && k <= u.m_ke && m_kb <= k && k <= m_ke)) {
     cout << "Sarray::copy_kplane, ERROR k index " << k << " not in range "
          << endl;

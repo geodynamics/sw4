@@ -36,6 +36,8 @@
 #include "sw4.h"
 #include "Mspace.h"
 #include "policies.h"
+#include "caliper.h"
+#include "foralls.h"
 //#include <iostream>
 // using namespace std;
 void curvilinear4sgwind(
@@ -49,6 +51,7 @@ void curvilinear4sgwind(
     float_sw4* __restrict__ a_acof_no_gp, float_sw4* __restrict__ a_ghcof_no_gp,
     float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, int nk,
     char op) {
+  SW4_MARK_FUNCTION;
   SYNC_STREAM; // CURVI_CPU
   // Routine with supergrid stretchings strx and stry. Evaluate Lu for kfirstw
   // <= k <= klastw. Assume that a_Lu is declared of size ifirst:ilast,
@@ -169,16 +172,39 @@ void curvilinear4sgwind(
   //   << lower << " high(kb,ke)= " << khighb << " " << khighe << " low(kb,ke) =
   //   " << klowb << " " << klowe << std::endl; bool debug= (ifirst==105 &&
   //   ilast==137 && jfirst==105 && jlast==137); int idbg=108, jdbg=107;
-#pragma omp parallel
+  //#pragma omp parallel
   {
     if (lower) {
       // SBP Boundary closure terms
-#pragma omp for
-      for (int k = klowb; k <= klowe; k++)
-        for (int j = jfirst + 2; j <= jlast - 2; j++)
-#pragma omp simd
-#pragma ivdep
-          for (int i = ifirst + 2; i <= ilast - 2; i++) {
+// #pragma omp for
+//       for (int k = klowb; k <= klowe; k++)
+//         for (int j = jfirst + 2; j <= jlast - 2; j++)
+// #pragma omp simd
+// #pragma ivdep
+//           for (int i = ifirst + 2; i <= ilast - 2; i++) {
+#if defined(ENABLE_CUDA)
+#define NO_COLLAPSE 1
+#endif
+#ifdef PEEKS_GALORE
+      SW4_PEEK;
+      SYNC_DEVICE;
+#endif
+#if defined(NO_COLLAPSE)
+      
+      Range<16> I(ifirst + 2, ilast - 1);
+      Range<4> J(jfirst + 2, jlast - 1);
+      Range<6> K(klowb,klowe+1);
+      forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+#else
+	  RAJA::RangeSegment k_range(klowb,klowe+1);
+	  RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
+      RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
+      RAJA::kernel<
+          LOCAL_POL>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
+                                                                      int k,
+                                                                      int j,
+                                                                      int i) {
+#endif
             // 5 ops
             float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
             float_sw4 istry = 1 / (stry(j));
@@ -800,15 +826,31 @@ void curvilinear4sgwind(
             lu(1, i, j, k) = a1 * lu(1, i, j, k) + sgn * r1 * ijac;
             lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
             lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
-          }
+		     });
     }
     if (mid) {
-#pragma omp for
-      for (int k = kmidb; k <= kmide; k++)
-        for (int j = jfirst + 2; j <= jlast - 2; j++)
-#pragma omp simd
-#pragma ivdep
-          for (int i = ifirst + 2; i <= ilast - 2; i++) {
+// #pragma omp for
+//       for (int k = kmidb; k <= kmide; k++)
+//         for (int j = jfirst + 2; j <= jlast - 2; j++)
+// #pragma omp simd
+// #pragma ivdep
+//           for (int i = ifirst + 2; i <= ilast - 2; i++) {
+#if defined(NO_COLLAPSE)
+
+      Range<16> I(ifirst + 2, ilast - 1);
+      Range<4> J(jfirst + 2, jlast - 1);
+      Range<6> K(kmidb,kmide+1);
+      forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+#else
+	  RAJA::RangeSegment k_range(kmidb,kmide+1);
+	  RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
+      RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
+      RAJA::kernel<
+          LOCAL_POL>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
+                                                                      int k,
+                                                                      int j,
+                                                                      int i) {
+#endif
             // 5 ops
             float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
             float_sw4 istry = 1 / (stry(j));
@@ -2117,15 +2159,30 @@ void curvilinear4sgwind(
 
             // 4 ops, tot=2126
             lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
-          }
+		     });
     }
     if (upper) {
-#pragma omp for
-      for (int k = khighb; k <= khighe; k++)
-        for (int j = jfirst + 2; j <= jlast - 2; j++)
-#pragma omp simd
-#pragma ivdep
-          for (int i = ifirst + 2; i <= ilast - 2; i++) {
+// #pragma omp for
+//       for (int k = khighb; k <= khighe; k++)
+//         for (int j = jfirst + 2; j <= jlast - 2; j++)
+// #pragma omp simd
+// #pragma ivdep
+//           for (int i = ifirst + 2; i <= ilast - 2; i++) {
+#if defined(NO_COLLAPSE)
+      Range<16> I(ifirst + 2, ilast - 1);
+      Range<4> J(jfirst + 2, jlast - 1);
+      Range<6> K(khighb,khighe+1);
+      forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+#else
+	  RAJA::RangeSegment k_range(khighb,khighe+1);
+	  RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
+      RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
+      RAJA::kernel<
+          LOCAL_POL>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
+                                                                      int k,
+                                                                      int j,
+                                                                      int i) {
+#endif
             // 5 ops
             float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
             float_sw4 istry = 1 / (stry(j));
@@ -2752,9 +2809,15 @@ void curvilinear4sgwind(
             lu(1, i, j, k) = a1 * lu(1, i, j, k) + sgn * r1 * ijac;
             lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
             lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
-          }
-    }
-  }
+		     });
+		     }
+      SYNC_DEVICE;
+		     }
+#ifdef PEEKS_GALORE
+      SW4_PEEK;
+      SYNC_DEVICE;
+#endif
+
 #undef mu
 #undef la
 #undef jac
