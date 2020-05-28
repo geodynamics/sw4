@@ -1,0 +1,28 @@
+proj = yes
+FC = xlf
+LINKER = mpixlC
+CXX = $(PREP) nvcc
+ckernel=yes 
+openmp=no
+raja_cuda=yes
+RAJA_LOCATION = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-0.7.0/install_rzansel
+RAJA_LOCATION = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-0.7.0/install_rzansel10.1.168
+RAJA_LOCATION = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.10.1/install
+#RAJA_LOCATION =  /usr/workspace/wsrzd/ramesh/RAJA/RAJA-0.7.0/install_rzansel9.2.148
+PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/SW4/proj-5.0.0/install170818
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-0.3.2/install_rzansel
+UMPIRE_HOME=/usr/workspace/wsrzd/ramesh/UMPIRE/umpire-0.3.3/install_rzansel
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-0.3.3/install_rzansel10.1.168
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-1.1.0/install
+#UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-0.3.3/install_rzansel9.2.148
+HDF5_HOME = /p/gpfs1/ramesh/SW4/HDF_TEST/HDF/CMake-hdf5-1.12.0/build/HDF5-1.12.0-Linux/HDF_Group/HDF5/1.12.0
+HDF5_HOME = /p/gpfs1/ramesh/SW4/HDF_TEST/HDF/CMake-hdf5-1.10.6/build/HDF5-1.10.6-Linux/HDF_Group/HDF5/1.10.6
+CALIPER_LOCATION =/usr/workspace/wsrzd/ramesh/Caliper/Caliper/install
+EXTRA_FORT_FLAGS = 
+MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_RAJA_VERSION=7 -DSW4_PINNED_MPI_BUFFERS=1 -DENABLE_FFTW=1 -DSW4_USE_UMPIRE=1 -DUSE_HDF5=1 -I $(HDF5_HOME)/include -DENABLE_CALIPER=1
+LINKFLAGS =  -arch=sm_70
+EXTRA_CXX_FLAGS = -O3  -use_fast_math -DDISABLE_PREFETCH  -ccbin mpixlC -Xcompiler="-qmaxmem=-1 -qstrict" -std=c++11 --expt-extended-lambda -restrict -arch=sm_70 -I $(CUDA_HOME)/include -I$(RAJA_LOCATION)/include  -I$(CALIPER_LOCATION)/include --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA -dc -I$(PROJ_HOME)/include -I$(UMPIRE_HOME)/include $(MORE_FLAGS) -I $(FFTW_DIR)/include
+
+EXTRA_CXX_FLAGS2 = -O3  -use_fast_math -DDISABLE_PREFETCH -ccbin mpixlC -Xcompiler="-qmaxmem=-1 -qstrict" -std=c++11 --expt-extended-lambda -restrict -arch=sm_70 -I $(CUDA_HOME)/include -I$(RAJA_LOCATION)/include  --x cu  -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA   -I$(UMPIRE_HOME)/include $(MORE_FLAGS)
+
+EXTRA_LINK_FLAGS =  -dc -L /usr/tce/packages/xl/xl-2019.02.07/xlf/16.1.1/lib -lxlf90  -lxlfmath -L /usr/tcetmp/packages/blas/blas-3.6.0-xlf-15.1.5/lib -L /usr/tcetmp/packages/lapack/lapack-3.6.0-xlf-15.1.5/lib/  -llapack -lblas  -L $(CUDA_HOME)/lib64 -lcudart -lnvToolsExt -lcuda -L $(RAJA_LOCATION)/lib -lRAJA  -lcudadevrt -L $(PROJ_HOME)/lib64 -lproj -L /usr/lib64/nvidia -lnvidia-ml -L$(UMPIRE_HOME)/lib -lumpire -L $(FFTW_DIR)/lib -Wl,-rpath=$(FFTW_DIR)/lib -lfftw3_mpi -lfftw3 -L $(HDF5_HOME)/lib -Wl,-rpath=$(HDF5_HOME)/lib -lhdf5_hl -lhdf5 -Wl,-rpath=$(CALIPER_LOCATION)/lib64 -L $(CALIPER_LOCATION)/lib64 -lcaliper

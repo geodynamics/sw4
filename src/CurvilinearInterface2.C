@@ -5,7 +5,7 @@
 #include "Sarray.h"
 #include "TestEcons.h"
 #include "TestTwilight.h"
-
+#include "caliper.h"
 extern "C" {
 void F77_FUNC(dgetrf, DGETRF)(int*, int*, double*, int*, int*, int*);
 void F77_FUNC(dgetrs, DGETRS)(char*, int*, int*, double*, int*, int*, double*,
@@ -301,6 +301,7 @@ void CurvilinearInterface2::init_arrays_att() {
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
                                       std::vector<Sarray*>& a_AlphaVE) {
+  SW4_MARK_FUNCTION;
   SYNC_STREAM; // CURVI_CPU
   bool force_dirichlet = false;  //, check_stress_cont=false;
   //   int fg=0;

@@ -1879,6 +1879,7 @@ void curvilinear4sg_ci(
   SW4_PEEK;
   SYNC_DEVICE;
 #endif
+      SW4_MARK_BEGIN("CURVI::cuvilinear4sgc");
       SYNC_STREAM; // CURVI_CPU
   /// CURVIMR ADDITION
   if (onesided[5] == 1) {
@@ -2482,6 +2483,7 @@ void curvilinear4sg_ci(
           lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
         }
   }
+      SW4_MARK_END("CURVI::cuvilinear4sgc");
 #ifdef PEEKS_GALORE
   SW4_PEEK;
   SYNC_DEVICE;
