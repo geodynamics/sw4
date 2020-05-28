@@ -234,8 +234,6 @@ void GridGeneratorGaussianHill::generate_grid_and_met_old_gh( EW *a_ew, Sarray& 
    float_sw4 inzm1  = 1.0/(nz-1);
    float_sw4 izb    = 1.0/(m_zetaBreak*(nz-1));
    int m=m_grid_interpolation_order; // shorter name
-   std::cout << "in old grid gen nk= " << nz << " kmin = " << a_x.m_kb << " kmax= " << a_x.m_ke
-             << " m= " << m << std::endl;
    for (int k=a_x.m_kb; k<=a_x.m_ke; k++)
       for (int j=a_x.m_jb; j<=a_x.m_je; j++)
          for (int i=a_x.m_ib; i<=a_x.m_ie; i++)
