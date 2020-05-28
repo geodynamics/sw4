@@ -766,7 +766,7 @@ void curvilinear4sg_ci(
 #pragma forceinline
     forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
-    RAJA::RangeSegment k_range(kstart, klast - 1);
+    RAJA::RangeSegment k_range(kstart, kend+1);
     RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::kernel<
@@ -1880,15 +1880,32 @@ void curvilinear4sg_ci(
   SYNC_DEVICE;
 #endif
       SW4_MARK_BEGIN("CURVI::cuvilinear4sgc");
-      SYNC_STREAM; // CURVI_CPU
+      //SYNC_STREAM; // CURVI_CPU
   /// CURVIMR ADDITION
   if (onesided[5] == 1) {
-#pragma omp for
-    for (int k = nk - 5; k <= nk; k++)
-      for (int j = jfirst + 2; j <= jlast - 2; j++)
-#pragma omp simd
-#pragma ivdep
-        for (int i = ifirst + 2; i <= ilast - 2; i++) {
+// #pragma omp for
+//     for (int k = nk - 5; k <= nk; k++)
+//       for (int j = jfirst + 2; j <= jlast - 2; j++)
+// #pragma omp simd
+// #pragma ivdep
+//         for (int i = ifirst + 2; i <= ilast - 2; i++) {
+#if defined(NO_COLLAPSE)
+      // LOOP -1
+      // 32,4,2 is 4% slower. 32 4 4 does not fit
+      Range<16> II(ifirst + 2, ilast - 1);
+      Range<4> JJ(jfirst + 2, jlast - 1);
+      Range<6> KK(nk-5, nk+1);
+      forall3async(II, JJ, KK, [=] RAJA_DEVICE(int i, int j, int k) {
+#else
+      RAJA::RangeSegment kk_range(nk-5, nk+1);
+      RAJA::RangeSegment jk_range(jfirst + 2, jlast - 1);
+      RAJA::RangeSegment ik_range(ifirst + 2, ilast - 1);
+      RAJA::kernel<
+          LOCAL_POL>(RAJA::make_tuple(kk_range, jj_range, ii_range), [=] RAJA_DEVICE(
+                                                                      int k,
+                                                                      int j,
+                                                                      int i) {
+#endif
           // 5 ops
           float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
           float_sw4 istry = 1 / (stry(j));
@@ -2481,7 +2498,7 @@ void curvilinear4sg_ci(
           lu(1, i, j, k) = a1 * lu(1, i, j, k) + sgn * r1 * ijac;
           lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
           lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
-        }
+		     });
   }
       SW4_MARK_END("CURVI::cuvilinear4sgc");
 #ifdef PEEKS_GALORE
