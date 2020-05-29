@@ -1288,20 +1288,31 @@ void Sarray::insert_intersection(Sarray& a_U) {
   int nis = ie - ib + 1;
   int njs = je - jb + 1;
   int nks = ke - kb + 1;
-  size_t sind = 0, ind = 0;
+  
   if (m_corder) {
-    size_t totpts = static_cast<size_t>(m_ni) * m_nj * m_nk;
-    size_t totptss = static_cast<size_t>(nis) * njs * (nks);
-    for (int k = wind[4]; k <= wind[5]; k++)
-      for (int j = wind[2]; j <= wind[3]; j++)
-        for (int i = wind[0]; i <= wind[1]; i++) {
-          sind = (i - ib) + nis * (j - jb) + nis * njs * (k - kb);
-          ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
+    const size_t totpts = static_cast<size_t>(m_ni) * m_nj * m_nk;
+    const size_t totptss = static_cast<size_t>(nis) * njs * (nks);
+    float_sw4 *dst_m_data = m_data;
+    float_sw4 *src_m_data = a_U.m_data;
+    // for (int k = wind[4]; k <= wind[5]; k++)
+    //   for (int j = wind[2]; j <= wind[3]; j++)
+    //     for (int i = wind[0]; i <= wind[1]; i++) {
+    RAJA::RangeSegment k_range(wind[4],wind[5]+1);
+    RAJA::RangeSegment j_range(wind[2],wind[3]+1);
+    RAJA::RangeSegment i_range(wind[0],wind[1]+1);
+      RAJA::kernel<
+	DEFAULT_LOOP3>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
+                                                                      int k,
+                                                                      int j,
+                                                                      int i) {
+          size_t sind = (i - ib) + nis * (j - jb) + nis * njs * (k - kb);
+          size_t ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
           for (int c = 1; c <= m_nc; c++)
-            m_data[ind + totpts * (c - 1)] =
-                a_U.m_data[sind + totptss * (c - 1)];
-        }
+            dst_m_data[ind + totpts * (c - 1)] =
+                src_m_data[sind + totptss * (c - 1)];
+		       });
   } else {
+    size_t sind = 0, ind = 0;
     for (int k = wind[4]; k <= wind[5]; k++)
       for (int j = wind[2]; j <= wind[3]; j++)
         for (int i = wind[0]; i <= wind[1]; i++) {
