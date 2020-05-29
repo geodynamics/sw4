@@ -18,10 +18,12 @@ where $\bf u$ and $\bf v$ are grid functions in the fine domain $\Omega^f$. Now,
 	%\begin{equation}\label{coarse_simple}
 	%({\bf c}_t, (\rho^{2h}\otimes {\bf I}){\bf c}_{tt})_{2h} = ({\bf c}_t,(J^{2h}\otimes {\bf I})^{-1}\wt{\mathcal{L}}^{2h}{\bf c})_{2h} = -\mathcal{S}_{2h}({\bf c}_t,{\bf c}) + B_{2h}({\bf c}_t,{{\bf c}}),
 	%\end{equation}
+	\footnotesize
 	\begin{eqnarray}\label{coarse_simple}
 	&&8h_1h_2h_3\!\sum_{i = 1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}\sum_{k=1}^{n_3^{2h}}\!\omega_k{\bf c}_t\!\cdot\!\left(\!\!(\rho^{2h}\!\otimes{\bf I})(J^{2h}\!\otimes{\bf I})\frac{d^2{\bf c}}{dt^2}\!\right) \!\!=\! 8h_1h_2h_3\!\sum_{i = 1}^{n_1^{2h}}\sum_{j=1}^{n_2^{2h}}\sum_{k=1}^{n_3^{2h}}\!\omega_kJ^{2h}_{i,j,k}{\bf c}_t\!\cdot\!\left(\!\!(\rho^{2h}\otimes{\bf I})\frac{d^2{\bf c}}{dt^2}\!\right)\\
 	&=& ({\bf c}_t, (\rho^{2h}\otimes {\bf I}){\bf c}_{tt})_{2h} = ({\bf c}_t,(J^{2h}\otimes {\bf I})^{-1}\wt{\mathcal{L}}^{2h}{\bf c})_{2h} = -\mathcal{S}_{2h}({\bf c}_t,{\bf c}) + B_{2h}({\bf c}_t,{{\bf c}}),\nonumber
 	\end{eqnarray}
+	\normalsize
 	where $\mathcal{S}_{2h}({\bf c}_t,{\bf c})$ is a symmetric and positive definite bilinear form given in Appendix \ref{appendix_bf}, the boundary term $B_{2h} ({\bf c}_t,{\bf c})$ is given by
 	\begin{equation}\label{bounary_c1}
 	B_{2h} ({\bf c}_t,{\bf c}) = 4h_1h_2\sum_{{\bf i}\in I_{\Gamma^c}}\frac{d{\bf c}_{\bf i}}{dt}\cdot (\wt{A}_3^{2h}{\bf c})_{\bf i}.
@@ -31,10 +33,12 @@ where $\bf u$ and $\bf v$ are grid functions in the fine domain $\Omega^f$. Now,
 	%({\bf f}_t, (\rho^h\otimes {\bf I}){\bf f}_{tt})_h = ({\bf f}_t,(J^h\otimes {\bf I})^{-1}\hat{\mathcal{L}}^h{\bf f})_h = -\mathcal{S}_{h}({\bf f}_t,{\bf f}) + B_h({\bf f}_t,{\bf f}) 
 	%+h_1h_2h_3\omega_1\sum_{i = 1}^{n_1^h}\sum_{j=1}^{n_2^h} \frac{d{\bf f}_{i,j,1}}{dt}\cdot{\bm \eta}_{i,j,1}.
 	%\end{equation}
+\footnotesize
 	\begin{eqnarray}\label{fine_simple}
 	&&h_1h_2h_3\sum_{i = 1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}\sum_{k=1}^{n_3^{h}}\omega_k{\bf f}_t\!\cdot\!\left(\!(\rho^{h}\otimes{\bf I})(J^{h}\otimes{\bf I})\frac{d^2{\bf f}}{dt^2}\right) \!=\! h_1h_2h_3\sum_{i = 1}^{n_1^{h}}\sum_{j=1}^{n_2^{h}}\sum_{k=1}^{n_3^{h}}\omega_kJ^{h}_{i,j,k}{\bf f}_t\cdot\left(\!(\rho^{h}\otimes{\bf I})\frac{d^2{\bf f}}{dt^2}\right)\\
 	&=&\! ({\bf f}_t, (\rho^{h}\otimes {\bf I}){\bf f}_{tt})_{h} \!=\! ({\bf f}_t,(J^{h}\otimes {\bf I})^{-1}\hat{\mathcal{L}}^{h}{\bf f})_{h} \!=\! -\mathcal{S}_{h}({\bf f}_t,{\bf f}) + B_{h}({\bf f}_t,{{\bf f}})+h_1h_2h_3\omega_1\sum_{i = 1}^{n_1^h}\sum_{j=1}^{n_2^h} \frac{d{\bf f}_{i,j,1}}{dt}\cdot{\bm \eta}_{i,j,1}.\nonumber
 	\end{eqnarray}
+\normalsize
 Here, $\mathcal{S}_h$ is also a symmetric and positive definite bilinear form given in Appendix \ref{appendix_bf}. The boundary term $B_h ({\bf f}_t,{\bf f})$ has the following form
 	\begin{equation}\label{boundary_f1}
 	B_h ({\bf f}_t,{\bf f}) = -h_1h_2\sum_{{\bf i}\in I_{\Gamma^f}}\frac{d{\bf f}_{\bf i}}{dt}\cdot(A_3^h {\bf f})_{\bf i}.
