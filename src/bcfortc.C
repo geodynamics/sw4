@@ -814,21 +814,23 @@ void EW::twdirbdry_ci(int wind[6], float_sw4 h, float_sw4 t, float_sw4 om,
 
 //-----------------------------------------------------------------------
 void EW::twdirbdryc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                       int klast, int wind[6], float_sw4 t, float_sw4 om,
+                       int klast, int lwind[6], float_sw4 t, float_sw4 om,
                        float_sw4 cv, float_sw4 ph, float_sw4* bforce,
                        float_sw4* x, float_sw4* y, float_sw4* z) {
   SW4_MARK_FUNCTION;
-  size_t ni = ilast - ifirst + 1;
-  size_t nij = ni * (jlast - jfirst + 1);
+  const size_t ni = ilast - ifirst + 1;
+  const size_t nij = ni * (jlast - jfirst + 1);
   //size_t qq = 0;
   // #pragma omp parallel for qq variable will not work with OpenMP
   // for (int k = wind[4]; k <= wind[5]; k++) {
   //   for (int j = wind[2]; j <= wind[3]; j++) {
   //     for (int i = wind[0]; i <= wind[1]; i++) {
-
+  int wind[6];
+  for(int i=0;i<6;i++) wind[i]=lwind[i];
   RAJA::RangeSegment k_range(wind[4],wind[5]+1);
   RAJA::RangeSegment j_range(wind[2],wind[3]+1);
   RAJA::RangeSegment i_range(wind[0],wind[1]+1);
+
       RAJA::kernel<
 	DEFAULT_LOOP3>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
                                                                       int k,
@@ -845,6 +847,7 @@ void EW::twdirbdryc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                              sin(om * (z[ind] - cv * t));
         //qq++;
 		       });
+
 }
 
 //-----------------------------------------------------------------------

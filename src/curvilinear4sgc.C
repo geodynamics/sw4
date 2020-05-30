@@ -136,6 +136,7 @@ void curvilinear4sg_ci(
 #define NO_COLLAPSE 1
 #endif
 #ifdef PEEKS_GALORE
+      std::cout<<" ********* WARNING PEEKS GALORE MODE ******************\n";
       SW4_PEEK;
       SYNC_DEVICE;
 #endif

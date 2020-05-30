@@ -1297,6 +1297,14 @@ void Sarray::insert_intersection(Sarray& a_U) {
     // for (int k = wind[4]; k <= wind[5]; k++)
     //   for (int j = wind[2]; j <= wind[3]; j++)
     //     for (int i = wind[0]; i <= wind[1]; i++) {
+    const int lm_ib = m_ib;
+    const int lm_jb = m_jb;
+    const int lm_kb = m_kb;
+    const int lm_ni = m_ni;
+    const int lm_nj = m_nj;
+    const int lm_nk = m_nk;
+    const int lm_nc = m_nc;
+    std::cout<<"Calling interest \n"<<std::flush;
     RAJA::RangeSegment k_range(wind[4],wind[5]+1);
     RAJA::RangeSegment j_range(wind[2],wind[3]+1);
     RAJA::RangeSegment i_range(wind[0],wind[1]+1);
@@ -1306,8 +1314,9 @@ void Sarray::insert_intersection(Sarray& a_U) {
                                                                       int j,
                                                                       int i) {
           size_t sind = (i - ib) + nis * (j - jb) + nis * njs * (k - kb);
-          size_t ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
-          for (int c = 1; c <= m_nc; c++)
+          size_t ind = (i - lm_ib) + lm_ni * (j - lm_jb) + lm_ni * lm_nj * (k - lm_kb);
+	  //printf("IN INTERSECTU %d %d %d %d \n",m_nc,m_ni,m_nj,m_nk);
+          for (int c = 1; c <= lm_nc; c++)
             dst_m_data[ind + totpts * (c - 1)] =
                 src_m_data[sind + totptss * (c - 1)];
 		       });

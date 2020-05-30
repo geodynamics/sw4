@@ -129,6 +129,11 @@ void curvilinear4sgwind(
 #define acof_no_gp(i, j, k) a_acof_no_gp[(i - 1) + 6 * (j - 1) + 48 * (k - 1)]
 #define ghcof_no_gp(i) a_ghcof_no_gp[i - 1]
 
+#ifdef PEEKS_GALORE
+      SW4_PEEK;
+      SYNC_DEVICE;
+#endif
+
   bool lower = false, mid = false, upper = false;
   int klowb = 1, klowe = 0, kmidb = 1, kmide = 0, khighb = 1, khighe = 0;
   if (kfirstw <= 6) {
@@ -175,6 +180,7 @@ void curvilinear4sgwind(
   //#pragma omp parallel
   {
     if (lower) {
+      std::cout<<"CSGWIND lower \n"<<std::flush;
       // SBP Boundary closure terms
 // #pragma omp for
 //       for (int k = klowb; k <= klowe; k++)
@@ -193,7 +199,7 @@ void curvilinear4sgwind(
       
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
-      Range<6> K(klowb,klowe+1);
+      Range<4> K(klowb,klowe+1);
       forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
 	  RAJA::RangeSegment k_range(klowb,klowe+1);
@@ -827,8 +833,13 @@ void curvilinear4sgwind(
             lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
             lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
 		     });
+#ifdef PEEKS_GALORE
+      SW4_PEEK;
+      SYNC_DEVICE;
+#endif
     }
     if (mid) {
+      std::cout<<"CSGWIND mid\n"<<std::flush;
 // #pragma omp for
 //       for (int k = kmidb; k <= kmide; k++)
 //         for (int j = jfirst + 2; j <= jlast - 2; j++)
@@ -2162,6 +2173,7 @@ void curvilinear4sgwind(
 		     });
     }
     if (upper) {
+      std::cout<<"CSGWIND upper\n"<<std::flush;
 // #pragma omp for
 //       for (int k = khighb; k <= khighe; k++)
 //         for (int j = jfirst + 2; j <= jlast - 2; j++)

@@ -108,10 +108,10 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   m_kbf = m_nkf - 7;
   m_kef = m_nkf + 1;
 
-  m_strx_c = new float_sw4[m_ie - m_ib + 1];
-  m_stry_c = new float_sw4[m_je - m_jb + 1];
-  m_strx_f = new float_sw4[m_ief - m_ibf + 1];
-  m_stry_f = new float_sw4[m_jef - m_jbf + 1];
+  m_strx_c = SW4_NEW(Managed, float_sw4[m_ie - m_ib + 1]);
+  m_stry_c = SW4_NEW(Managed, float_sw4[m_je - m_jb + 1]);
+  m_strx_f = SW4_NEW(Managed, float_sw4[m_ief - m_ibf + 1]);
+  m_stry_f = SW4_NEW(Managed, float_sw4[m_jef - m_jbf + 1]);
 
   int ndif = m_nghost - (m_ew->m_iStartInt[m_gc] - m_ew->m_iStart[m_gc]);
   int nsw = m_ew->m_iEnd[m_gc] - m_ew->m_iStart[m_gc] + 1;
@@ -150,9 +150,11 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   m_met_c.define(4, m_ib, m_ie, m_jb, m_je, m_kb, m_ke);
   m_ew->m_gridGenerator->generate_grid_and_met(m_ew, m_gc, m_x_c, m_y_c, m_z_c,
                                                m_jac_c, m_met_c, false);
+  std::cout<<"HERE 1\n";
   m_met_c.insert_intersection(m_ew->mMetric[m_gc]);
+  std::cout<<"HERE 1.1\n"<<std::flush;
   m_jac_c.insert_intersection(m_ew->mJ[m_gc]);
-
+   std::cout<<"HERE 1.2\n"<<std::flush;
   communicate_array(m_met_c, true);
   communicate_array(m_jac_c, true);
 
@@ -320,6 +322,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   vector<Sarray> Alpha_c, Alpha_f;
 
   //  1. copy   a_U into U_f and U_c
+  std::cout<<"HERE 3\n";
   U_f.insert_intersection(a_U[m_gf]);
   U_c.insert_intersection(a_U[m_gc]);
   if (m_use_attenuation) {
