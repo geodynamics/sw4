@@ -116,7 +116,7 @@ def compare_energy(test_file_name, errTol, verbose):
     return success
 
 #------------------------------------------------
-def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
+def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     if verbose: print('os.uname=', os.uname())
     node_name = os.uname()[1]
     if verbose: print('node_name=', node_name)
@@ -127,20 +127,31 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
     if 'quartz' in node_name:
         if omp_threads<=0: omp_threads=2;
         if mpi_tasks<=0: mpi_tasks = int(36/omp_threads)
-        mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks) + " -c " + str(omp_threads)
+        # the following setting is needed to combine h5py and subprocess.run on LC
+        os.environ["PSM2_DEVICES"] = ""
+        if cpu_allocation == "":
+           mpirun_cmd="srun -ppdebug " + " -n " + str(mpi_tasks) + " -c " + str(omp_threads)
+        else:
+           mpirun_cmd="srun -ppdebug " + " -A " + cpu_allocation + " -n " + str(mpi_tasks) + " -c " + str(omp_threads)
     elif 'cab' in node_name:
         if omp_threads<=0: omp_threads=2;
         if mpi_tasks<=0: mpi_tasks = int(16/omp_threads)
         mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks) + " -c " + str(omp_threads)
     elif 'nid' in node_name: # the cori knl nodes are called nid
         if omp_threads<=0: omp_threads=4;
-        if mpi_tasks<=0: mpi_tasks = int(64/omp_threads) # use 64 hardware cores per node
+        if mpi_tasks<=0: mpi_tasks = int(64/omp_threads) # for KNL nodes, use 64 hardware cores per node
         sw_threads = 4*omp_threads # Cori uses hyperthreading by default
+        if mpi_tasks<=0: mpi_tasks = int(32/omp_threads) # for Haswell nodes
+        sw_threads = omp_threads 
         mpirun_cmd="srun --cpu_bind=cores -n " + str(mpi_tasks) + " -c " + str(sw_threads)
     elif 'fourier' in node_name:
         if omp_threads<=0: omp_threads=1;
         if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
+    elif 'batch' in node_name: # for summit
+        if omp_threads<=0: omp_threads=7;
+        if mpi_tasks<=0: mpi_tasks = 6
+        mpirun_cmd="jsrun -a1 -c7 -r6 -l CPU-CPU -d packed -b packed:7 -n " + str(mpi_tasks)
     # add more machine names here
     elif 'Linux' in sys_name:
         if omp_threads<=0: omp_threads=1;
@@ -159,11 +170,14 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
     return mpirun_cmd
 
 #------------------------------------------------
+def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mpi_tasks=0, omp_threads=0, cpu_allocation="", verbose=False, nohdf5=False):
 
-def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threads=0, verbose=False):
     assert sys.version_info >= (3,5) # named tuples in Python version >=3.3
+
     sep = '/'
-    pytest_dir = os.getcwd()
+    if pytest_dir == "none":
+        pytest_dir = os.getcwd()
+
     pytest_dir_list = pytest_dir.split(sep)
     sw4_base_list = pytest_dir_list[:-1] # discard the last sub-directory (pytest)
 
@@ -176,7 +190,7 @@ def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threa
         print("ERROR: directory", sw4_base_dir, "does not exists")
         return False
     if not os.path.isdir(optimize_dir):
-        print("ERROR: directory", optimize_dir, "does not exists (HINT: use -d 'sw4_exe_dir')")
+        print("ERROR: directory", optimize_dir, "does not exists (HINT: use -d 'sw4_exe_dir' or -p 'pytest_dir')")
         return False
     if not os.path.isdir(reference_dir):
         print("ERROR: directory", reference_dir, "does not exists")
@@ -188,6 +202,7 @@ def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threa
     if verbose: print('reference_dir =', reference_dir)          
     
     sw4_exe = optimize_dir + '/sw4'
+
     #print('sw4-exe = ', sw4_exe)
 
     # make sure sw4 is present in the optimize dir
@@ -196,7 +211,7 @@ def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threa
         return False
 
     # guess the mpi run command from the uname info
-    mpirun_cmd=guess_mpi_cmd(mpi_tasks, omp_threads, verbose)
+    mpirun_cmd=guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose)
 
     sw4_mpi_run = mpirun_cmd + ' ' + sw4_exe
     if (omp_threads>0):
@@ -207,21 +222,35 @@ def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threa
     num_test=0
     num_pass=0
     num_fail=0
+    all_dirs = ['energy', 'energy', 'energy', 'energy',
+                'meshrefine', 'meshrefine', 'meshrefine',
+                'attenuation', 'attenuation', 'pointsource',
+                'twilight', 'twilight', 'lamb',
+                'curvimeshrefine', 'curvimeshrefine', 'curvimeshrefine','curvimeshrefine',
+                'hdf5']
 
-    all_dirs = ['energy', 'energy', 'energy', 'energy', 'meshrefine', 'meshrefine', 'meshrefine', 'attenuation', 'attenuation', 'pointsource', 'twilight', 'twilight', 'lamb']
-    all_cases = ['energy-nomr-2nd', 'energy-mr-4th', 'energy-mr-sg-order2', 'energy-mr-sg-order4', 'refine-el', 'refine-att', 'refine-att-2nd', 'tw-att', 'tw-topo-att', 'pointsource-sg', 'flat-twi', 'gauss-twi', 'lamb']
-    all_results =['energy.log', 'energy.log', 'energy.log', 'energy.log', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'PointSourceErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt']
-    num_meshes =[1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 1] # default number of meshes for level 0
+    all_cases = ['energy-nomr-2nd', 'energy-mr-4th', 'energy-mr-sg-order2', 'energy-mr-sg-order4', 'refine-el', 'refine-att', 'refine-att-2nd', 'tw-att', 'tw-topo-att', 'pointsource-sg', 'flat-twi', 'gauss-twi', 'lamb','gausshill-el','gauss-sg-mr','energy','gausshill-att','loh1-h100-mr-hdf5']
+    
+    all_results =['energy.log', 'energy.log', 'energy.log', 'energy.log', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'PointSourceErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt','TwilightErr.txt','TwilightErr.txt','energy.log','TwilightErr.txt','hdf5.log']
+    num_meshes =[1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1] # default number of meshes for level 0
 
     # add more tests for higher values of the testing level
     if testing_level == 1:
-        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 2, 2, 3, 3, 2]
+        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 2, 2, 3, 3, 2, 2, 2, 1, 2, 1]
     elif testing_level == 2:
-        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3]
+        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 1]
+
     
     print("Running all tests for level", testing_level, "...")
     # run all tests
     for qq in range(len(all_dirs)):
+
+        # skip HDF5 test if specified
+        if qq == len(all_dirs)-1 and nohdf5 == True:
+            print("HDF5 test skipped")
+            break
+        elif qq == len(all_dirs)-1:
+            print("  Running HDF5 test, may take a few minutes ...")
     
         test_dir = all_dirs[qq]
         base_case = all_cases[qq]
@@ -293,7 +322,12 @@ def main_test(sw4_exe_dir="optimize_mp", testing_level=0, mpi_tasks=0, omp_threa
             #print('Test #', num_test, 'output dirs: local case_dir =', case_dir, 'ref_result =', ref_result)
 
 
-            if result_file == 'energy.log':
+            if result_file == 'hdf5.log':
+                import verify_hdf5
+                success = verify_hdf5.verify(pytest_dir, 1e-5)
+                if success == False:
+                    print('HDF5 test failed! (disable HDF5 test with -n option)')
+            elif result_file == 'energy.log':
                 success = compare_energy(case_dir + sep + result_file, 1e-10, verbose)
             else:
                 # compare output with reference result (always compare the last line)
@@ -324,8 +358,10 @@ if __name__ == "__main__":
     # default arguments
     testing_level=0
     verbose=False
+    nohdf5=False
     mpi_tasks=0 # machine dependent default
     omp_threads=0 #no threading by default
+    cpu_allocation=""
 
     parser=argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
@@ -334,7 +370,13 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mpitasks", type=int, help="number of mpi tasks")
     parser.add_argument("-t", "--ompthreads", type=int, help="number of omp threads per task")
     parser.add_argument("-d", "--sw4_exe_dir", help="name of directory for sw4 executable", default="optimize_mp")
+    parser.add_argument("-p", "--pytest_dir", help="full path to the directory of pytest (/path/sw4/pytest)", default="none")
+    parser.add_argument("-n", "--nohdf5", help="disable HDF5 test", action="store_true")
+    parser.add_argument("-A","--cpu_allocation", help="name of cpu bank/allocation",default="")
     args = parser.parse_args()
+    if args.nohdf5:
+        #print("HDF5 test disabled")
+        nohdf5=True
     if args.verbose:
         #print("verbose mode enabled")
         verbose=True
@@ -347,10 +389,16 @@ if __name__ == "__main__":
     if args.ompthreads:
         #print("OMP-threads specified=", args.ompthreads)
         if args.ompthreads > 0: omp_threads=args.ompthreads
+    if args.pytest_dir:
+        #print("sw4_exe specified=", args.sw4_exe)
+        pytest_dir=args.pytest_dir
     if args.sw4_exe_dir:
         #print("sw4_exe_dir specified=", args.sw4_exe_dir)
         sw4_exe_dir=args.sw4_exe_dir
+    if args.cpu_allocation:
+        #print("cpu_allocation specified=", args.cpu_allocation)
+        cpu_allocation=args.cpu_allocation
 
-    if not main_test(sw4_exe_dir, testing_level, mpi_tasks, omp_threads, verbose):
+    if not main_test(sw4_exe_dir, pytest_dir, testing_level, mpi_tasks, omp_threads, cpu_allocation, verbose, nohdf5):
         print("test_sw4 was unsuccessful")
 

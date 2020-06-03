@@ -1,4 +1,3 @@
-
 //  SW4 LICENSE
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
@@ -33,6 +32,7 @@
 #include "mpi.h"
 
 #include "EW.h"
+#include "GridGenerator.h"
 
 #include <cstring>
 
@@ -52,6 +52,7 @@
 
 #ifdef USE_HDF5
 #include "hdf5.h"
+#include "readhdf5.h"
 #endif
 
 extern "C" {
@@ -267,8 +268,9 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 			float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda,
 			float_sw4* __restrict__ a_met, float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu,
 			int* onesided, float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
-			float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
-			int nk, char op );
+			float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_acof_no_gp, 
+                        float_sw4* __restrict__ a_ghcof_no_gp,
+                        float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, int nk, char op );
 void energy4_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		 int i1, int i2, int j1, int j2, int k1, int k2, int* onesided,
 		 float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_up,
@@ -348,11 +350,15 @@ using namespace std;
 
 #define SQR(x) ((x)*(x))
 
+//#include "Farray.h"
+
+//int Farray::count = 0;
+
 // constructor
 EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
        vector<vector<TimeSeries*> > & a_GlobalTimeSeries, bool a_invproblem ): 
 //  m_epi_lat(0.0), m_epi_lon(0.0), m_epi_depth(0.0), m_epi_t0(0.0),
-  m_topo_zmax(0.0),
+//  m_topo_zmax(0.0),
   m_topoInputStyle(UNDEFINED), 
   mTopoImageFound(false),
   m_nx_base(0), m_ny_base(0), m_nz_base(0), m_h_base(0.0),
@@ -410,13 +416,13 @@ EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
   m_doubly_periodic(false),
   mbcsSet(false),
 
-  m_analytical_topo(false),
-  m_use_analytical_metric(false),
-  m_GaussianAmp(0.05),
-  m_GaussianLx(0.15),
-  m_GaussianLy(0.15),
-  m_GaussianXc(0.5),
-  m_GaussianYc(0.5),
+//  m_analytical_topo(false),
+//  m_use_analytical_metric(false),
+//  m_GaussianAmp(0.05),
+//  m_GaussianLx(0.15),
+//  m_GaussianLy(0.15),
+//  m_GaussianXc(0.5),
+//  m_GaussianYc(0.5),
 
   m_use_supergrid(false),
   m_sg_gp_thickness(30),
@@ -447,8 +453,8 @@ EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
   m_useVelocityThresholds(false),
   m_vpMin(0.),
   m_vsMin(0.),
-  m_grid_interpolation_order(3),
-  m_zetaBreak(0.95),
+//  m_grid_interpolation_order(3),
+//  m_zetaBreak(0.95),
   m_global_xmax(0.),
   m_global_ymax(0.),
   m_global_zmax(0.),
@@ -850,6 +856,7 @@ void EW::assign_local_bcs( )
      if( m_iscurvilinear[g+1] && m_iscurvilinear[g] ) // Acoustic/Elastic interface
 	m_bcType[g][4] = bAEInterface;
   }
+  int ncurv = mNumberOfGrids - mNumberOfCartesianGrids;
 
   m_bcType[0][5] = mbcGlobalType[5];
   for( g = 1 ; g < mNumberOfGrids ; g++ )
@@ -865,10 +872,38 @@ void EW::assign_local_bcs( )
   }
 
 // Find out which boundaries need one sided approximation in mixed derivatives
-  for( g= 0 ; g < mNumberOfGrids ; g++ )
-    for(side=4 ; side < 6 ; side++ )
-       m_onesided[g][side] = (m_bcType[g][side] == bStressFree) ||
-	  (m_bcType[g][side] == bRefInterface) || (m_bcType[g][side] == bAEInterface); 
+// DEBUG
+//  m_bcType[0][5]=bStressFree;
+//  m_bcType[0][4]=bCCInterface;
+//  m_bcType[1][5]=bCCInterface;
+//  m_bcType[1][4]=bStressFree;
+//  m_bcType[2][5]=bStressFree;
+//  m_bcType[2][4]=bStressFree;
+
+  for( g= 0 ; g < mNumberOfGrids ; g++ ) 
+  { 
+     for(side=0 ; side < 4 ; side++ )
+        m_onesided[g][side]=0;
+     for(side=4 ; side < 6 ; side++ )
+        //        m_onesided[g][side] = (m_bcType[g][side] == bStressFree) || (m_bcType[g][side]== bCCInterface) ;
+        m_onesided[g][side] = (m_bcType[g][side] == bStressFree) ||
+           (m_bcType[g][side] == bRefInterface) || (m_bcType[g][side] == bAEInterface) || 
+	  (m_bcType[g][side] == bCCInterface &&  !(m_gridGenerator->curviCartIsSmooth(ncurv)) ); 
+  }
+  bool debug=false;
+  if( m_myRank == 0 && debug )
+  {
+     for( g= 0 ; g < mNumberOfGrids ; g++ )
+     {
+        cout << "GRID: " << g << " onesided-k " << m_onesided[g][4] << " " << m_onesided[g][5]
+             << " bctype-k " << bc_name(m_bcType[g][4]) << " " << bc_name(m_bcType[g][5]) << endl; 
+     }
+     for( g= 0 ; g < mNumberOfGrids ; g++ )
+     {
+        cout << "GRID: " << g << " bctypes on I- and J-sides " << bc_name(m_bcType[g][0]) << ", " <<
+           bc_name(m_bcType[g][1]) << " , " << bc_name(m_bcType[g][2])  << " , " << bc_name(m_bcType[g][3])  << endl;
+     }
+  }
 }
 
 //-----------------------------------------------------------------------
@@ -966,28 +1001,33 @@ bool EW::getDepth( float_sw4 x, float_sw4 y, float_sw4 z, float_sw4 & depth)
   {
 // topography 
      float_sw4 zMinTilde;
-     int gCurv = mNumberOfGrids - 1;
-     float_sw4 h = mGridSize[gCurv];
-     float_sw4 q = x/h + 1.0;
-     float_sw4 r = y/h + 1.0;
+     //     int gCurv = mNumberOfGrids - 1;
+     //     float_sw4 h = mGridSize[gCurv];
+     //     float_sw4 q = x/h + 1.0;
+     //     float_sw4 r = y/h + 1.0;
 
 // define the depth for ghost points (in x or y) to equal the depth on the nearest boundary point
-     float_sw4 qMin = 1.0;
-     float_sw4 qMax = (float_sw4) m_global_nx[gCurv];
-     float_sw4 rMin = 1.0;
-     float_sw4 rMax = (float_sw4) m_global_ny[gCurv];
+//     float_sw4 qMin = 1.0;
+//     float_sw4 qMax = (float_sw4) m_global_nx[gCurv];
+//     float_sw4 rMin = 1.0;
+//     float_sw4 rMax = (float_sw4) m_global_ny[gCurv];
 
-     if (q<qMin) q=qMin;
-     if (q>qMax) q=qMax;
-     if (r<rMin) r=rMin;
-     if (r>rMax) r=rMax;
+//     if (q<qMin) q=qMin;
+//     if (q>qMax) q=qMax;
+//     if (r<rMin) r=rMin;
+//     if (r>rMax) r=rMax;
+     if (x<0) x=0;
+     if (x>m_global_xmax) x=m_global_xmax;
+     if (y<0) y=0;
+     if (y>m_global_ymax) y=m_global_ymax;
 
 // // evaluate elevation of topography on the grid (smoothed topo)
     success=true;
-    if (!interpolate_topography(q, r, zMinTilde, true))
+    if (!m_gridGenerator->interpolate_topography(this,x, y, zMinTilde, mTopoGridExt))
+    //    if (!interpolate_topography(q, r, zMinTilde, true))
     {
       cerr << "ERROR: getDepth: Unable to evaluate topography for x=" << x << " y= " << y << " on proc # " << getRank() << endl;
-      //            cerr << "q=" << q << " r=" << r << " qMin=" << qMin << " qMax=" << qMax << " rMin=" << rMin << " rMax=" << rMax << endl;
+      //      cerr << "q=" << q << " r=" << r << " qMin=" << qMin << " qMax=" << qMax << " rMin=" << rMin << " rMax=" << rMax << endl;
       // cerr << "Setting elevation of topography to ZERO" << endl;
       success = false;
 //      zMinTilde = 0;
@@ -1071,6 +1111,95 @@ void EW::computeGeographicCoord(double x, double y, double & longitude, double &
    //     cout << "ERROR: computeGeographicCoord, pj_inv failed with message " << pj_strerrno(pj_errno) << endl;
    // longitude = lonlat.u/deg2rad;
    // latitude  = lonlat.v/deg2rad;
+}
+
+//-------------------------------------------------------
+void EW::computeNearestTopoGridPoint(int & iNear, 
+                                   int & jNear, 
+                                   float_sw4 a_x, 
+                                   float_sw4 a_y)
+{
+   int g = mNumberOfGrids-1;
+   float_sw4 h = mGridSize[g];
+
+   iNear = static_cast<int>( floor(a_x/h) )+1;
+   if (a_x - (iNear-0.5)*h > 0.)
+      iNear++;
+
+   jNear = static_cast<int>( floor(a_y/h) )+1;
+   if (a_y - (jNear-0.5)*h > 0.)
+      jNear++;
+}
+
+//-------------------------------------------------------
+void EW::computeLowTopoGridPoint(int & iLow, 
+                                      int & jLow, 
+                                      float_sw4 a_x, 
+                                      float_sw4 a_y)
+{
+   int g = mNumberOfGrids-1;
+   float_sw4 h = mGridSize[g];
+
+   iLow = static_cast<int>( floor(a_x/h) )+1;
+   jLow = static_cast<int>( floor(a_y/h) )+1;
+}
+      
+//-----------------------------------------------------------------------
+int EW::computeNearestGridPoint2( int& a_i, int& a_j, int& a_k, int& a_g,
+                                  float_sw4 a_x, float_sw4 a_y, float_sw4 a_z )
+{
+   int success = 0;
+   if( a_z >= m_zmin[mNumberOfCartesianGrids-1] )
+   {
+      // point is in a Cartesian grid
+      int g=0;
+      while( g < mNumberOfCartesianGrids && a_z < m_zmin[g] )
+         g++;
+      a_g = g;
+      a_i = static_cast<int>( round( a_x/mGridSize[g]+1) );
+      a_j = static_cast<int>( round( a_y/mGridSize[g]+1) );
+      a_k = static_cast<int>( round( (a_z-m_zmin[g])/mGridSize[g]+1) );
+
+      VERIFY2(a_i >= 1-m_ghost_points && a_i <= m_global_nx[a_g]+m_ghost_points,
+              "Grid Error: i (" << a_i << ") is out of bounds: ( " << 1 << "," 
+              << m_global_nx[a_g] << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
+      VERIFY2(a_j >= 1-m_ghost_points && a_j <= m_global_ny[a_g]+m_ghost_points,
+              "Grid Error: j (" << a_j << ") is out of bounds: ( " << 1 << ","
+              << m_global_ny[a_g] << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
+      VERIFY2(a_k >= m_kStart[a_g] && a_k <= m_kEnd[a_g],
+              "Grid Error: k (" << a_k << ") is out of bounds: ( " << 1 << "," 
+              << m_kEnd[a_g]-m_ghost_points << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
+      success = interior_point_in_proc(a_i,a_j,a_g);
+   }
+   else
+   {
+      // point is in a curvilinear grid
+      //
+      // foundglobal= Grid point found in at least one processor.
+      // success  = Grid point found in my processor (found locally).
+      //
+      int g=mNumberOfCartesianGrids;
+      //  int foundglobal=0; 
+      success = 0;
+      float_sw4 q, r, s;
+      while( g < mNumberOfGrids && !success )
+      //      while( g < mNumberOfGrids && !foundglobal )
+      {
+         success = m_gridGenerator->
+            inverse_grid_mapping( this, a_x, a_y, a_z, g, q, r, s );
+         if( success )
+         {
+            a_g = g;
+            a_i = static_cast<int>( round( q ) );
+            a_j = static_cast<int>( round( r ) );
+            a_k = static_cast<int>( round( s ) );
+         }
+     //         MPI_Allreduce(&success,&foundglobal,1,MPI_INT,MPI_MAX,m_cartesian_communicator);
+         g++;
+      }
+      //      VERIFY2( foundglobal, "ERROR in EW:computeNearestGridPoint2, could not find curvilinear grid point");
+   }
+   return success;
 }
 
 //-------------------------------------------------------
@@ -1468,7 +1597,82 @@ void EW::saveGMTFile( vector<vector<Source*> > & a_GlobalUniqueSources, int even
          while (!sw4InputFile.eof())
          { 
             sw4InputFile.getline(buffer, 256);
-            if (startswith("rec", buffer) || startswith("sac", buffer))
+            if (startswith("rechdf5", buffer) || startswith("sachdf5", buffer)) {
+#ifdef USE_HDF5
+               bool cartCoordSet = false;
+               bool gridPointSet = false;
+               bool geoCoordSet = false;
+               bool statSet = false;
+               string filename="null";
+               string name="null";
+               int i=0,j=0,k=0;
+	       int ev=0;
+               double x=0.0, y=0.0, z=0.0;
+               double lat=0.0, lon=0.0;
+               // Get location and write to file
+               char* token = strtok(buffer, " \t");   
+               token = strtok(NULL, " \t"); // skip sac
+               while (token != NULL)
+               {
+                  // while there are tokens in the string still
+                  // NOTE: we skip all verify stmts as these have
+                  //       already been checked during initial parsing
+                  if (startswith("#", token) || startswith(" ", buffer))
+                     // Ignore commented lines and lines with just a space.
+                     break;
+                  else if (startswith("event=", token))
+                  {
+                     token += 6; // skip event=
+                     ev = atoi(token);
+                  }
+                  else if (startswith("infile=", token))
+                  {
+                     token += 7; 
+                     vector<string> stanamev;
+                     vector<double> xv;
+                     vector<double> yv;
+                     vector<double> zv;
+                     vector<int> is_nsewv;
+                     int nsta = 0;
+                     filename = token;
+
+                     readStationInfoHDF5(filename, &stanamev, &xv, &yv, &zv, &is_nsewv, &nsta);
+
+                     for (int i = 0; i < nsta; i++) {
+                       x = xv[i];
+                       y = yv[i];
+                       z = zv[i];
+                       lat = xv[i];
+                       lon = yv[i];
+                       name = stanamev[i];
+
+                       if (is_nsewv[i] == 0) 
+                           cartCoordSet = true;
+                       else 
+                           geoCoordSet = true;
+
+                       VERIFY(cartCoordSet || geoCoordSet);
+
+                       if (!geoCoordSet && cartCoordSet)
+                       {
+                         computeGeographicCoord(x, y, lon, lat);
+                       }
+                       if( ev == event )
+                       {
+                          numStations += 1;
+                       
+                       // Now have location
+                          stationstr << lon << " " << lat << " " << name << " CB" << endl; 
+                       }
+                     } // end for
+
+                  }
+
+                  token = strtok(NULL, " \t");
+               }
+#endif
+            } // token on sac line
+            else if (startswith("rec", buffer) || startswith("sac", buffer))
             {
 
                bool cartCoordSet = false;
@@ -1735,8 +1939,8 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_
 
   //  cout << "U(14,13,10) " << a_U[0](1,14,13,10) << " " << a_U[0](2,14,13,10) << " " << a_U[0](3,14,13,10) << endl;
 //tmp  
-//   if (proc_zero())
-//     printf("Inside normOfDifference\n");
+  // if (proc_zero())
+  //    printf("Inside normOfDifference\n");
   float_sw4 htop = mGridSize[mNumberOfGrids-1];
   float_sw4 hbot = mGridSize[0];
 
@@ -1804,8 +2008,6 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_
 //     printf("proc=%i, if= %i, il=%i, jf=%i, jl=%i, kf=%i, kl=%i\n", m_myRank, 
 // 	   ifirst, ilast, jfirst, jlast, kfirst, klast);
 
-
-
     if( m_point_source_test )
     {
        radius = 4*h;
@@ -1815,20 +2017,16 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_
     }
 // need to exclude parallel overlap from L2 calculation
     int usesg = usingSupergrid();
-    if( topographyExists() && g == mNumberOfGrids-1 )
+    if( topographyExists() && g >= mNumberOfCartesianGrids )
     {
 //FTNC       if( m_croutines )
 	  solerr3c_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
-		       uex_ptr, u_ptr, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mJ.c_ptr(),
+		       uex_ptr, u_ptr, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), mJ[g].c_ptr(),
 		       linfLocal, l2Local, xInfGrid, x0, y0, z0, radius,
 		       imin, imax, jmin, jmax, kmin, kmax,
 		       usesg, m_sg_str_x[g], m_sg_str_y[g] );
-//FTNC       else
-//FTNC	  solerr3c( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, 
-//FTNC		    uex_ptr, u_ptr, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), mJ.c_ptr(),
-//FTNC		    &linfLocal, &l2Local, &xInfGrid, &x0, &y0, &z0, &radius,
-//FTNC		    &imin, &imax, &jmin, &jmax, &kmin, &kmax,
-//FTNC		    &usesg, m_sg_str_x[g], m_sg_str_y[g] );
+	  //          if( m_myRank ==0)
+	  //             cout << "solution error at grid " << g << " is Linf= " << linfLocal << ", L2= " <<sqrt(l2Local) << endl;
     }
     else
     {
@@ -1849,6 +2047,9 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_
 		      y0, z0, radius,
 		      imin, imax, jmin, jmax, kmin, kmax, geocube,
                       i0, i1, j0, j1, k0, k1 );
+//          if( m_myRank ==0)
+//             cout << "solution error at grid " << g << " is Linf= " << linfLocal << ", L2= " <<sqrt(l2Local) << endl;
+
 //FTNC       else
 //FTNC	  solerr3( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &h,
 //FTNC		   uex_ptr, u_ptr, &linfLocal, &l2Local, &xInfGrid, &m_zmin[g], &x0,
@@ -1859,13 +2060,17 @@ void EW::normOfDifference( vector<Sarray> & a_Uex,  vector<Sarray> & a_U, float_
     if (linfLocal > diffInfLocal) diffInfLocal = linfLocal;
     if (xInfGrid > xInfLocal) xInfLocal = xInfGrid;
     diffL2Local += l2Local;
-  }
+  } // end for g...
+  
 // communicate local results for global errors
   MPI_Allreduce( &diffInfLocal, &diffInf, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator );
   MPI_Allreduce( &xInfLocal,    &xInf,    1, m_mpifloat, MPI_MAX, m_cartesian_communicator );
   MPI_Allreduce( &diffL2Local,  &diffL2,  1, m_mpifloat, MPI_SUM, m_cartesian_communicator );
 
   diffL2 = sqrt(diffL2);
+//tmp  
+  // if (proc_zero())
+  //    printf("End of normOfDifference\n");
 }
 
 //---------------------------------------------------------------------------
@@ -2110,9 +2315,9 @@ void EW::initialData(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Al
 //FTNC			      &klast, alpha_ptr, &a_t, &om, &cv, &ph, &h, &zmin );
 	}
      }
-     if( topographyExists() )
+//     if( topographyExists() )
+     for(int g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
      {
-	int g = mNumberOfGrids-1;
 	u_ptr    = a_U[g].c_ptr();
 	ifirst = m_iStart[g];
 	ilast  = m_iEnd[g];
@@ -2126,7 +2331,7 @@ void EW::initialData(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Al
 //FTNC	if( m_croutines )
 	   twilightfortc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 			     klast, u_ptr, a_t, om, cv, ph,
-			     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+			     mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 //FTNC	else
 //FTNC	   twilightfortc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 //FTNC			  &klast, u_ptr, &a_t, &om, &cv, &ph,
@@ -2138,13 +2343,13 @@ void EW::initialData(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Al
 //FTNC	   if( m_croutines )
 	      twilightfortattc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 				   klast, alpha_ptr, a_t, om, cv, ph,
-				   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+				   mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 //FTNC	   else
 //FTNC	      twilightfortattc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 //FTNC			       &klast, alpha_ptr, &a_t, &om, &cv, &ph,
 //FTNC			       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
 	}
-     }
+     } // end for g... (curvilinear)
   }
   else if( m_rayleigh_wave_test )
   {
@@ -2224,7 +2429,7 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
   
   if (m_twilight_forcing)
   {
-     for(int g=0 ; g<mNumberOfCartesianGrids; g++ ) // curvilinear case needs to be implemented
+     for(int g=0 ; g<mNumberOfCartesianGrids; g++ ) // curvilinear case is different
      {
 	u_ptr    = a_U[g].c_ptr();
 	ifirst = m_iStart[g];
@@ -2256,9 +2461,9 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
 //FTNC			      &klast, alpha_ptr, &a_t, &om, &cv, &ph, &h, &zmin );
 	}
      }
-     if( topographyExists() )
+//     if( topographyExists() )
+     for(int g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ ) // curvilinear grids
      {
-        int g = mNumberOfGrids-1;
 	u_ptr    = a_U[g].c_ptr();
 	ifirst = m_iStart[g];
 	ilast  = m_iEnd[g];
@@ -2272,7 +2477,7 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
 //FTNC	if( m_croutines )
 	   twilightfortc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 			     klast, u_ptr, a_t, om, cv, ph, 
-			     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+			     mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 //FTNC	else
 //FTNC	   twilightfortc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 //FTNC			  &klast, u_ptr, &a_t, &om, &cv, &ph, 
@@ -2284,13 +2489,14 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray> & a_U, vector<Sarray*> & a_Alpha
 //FTNC	   if( m_croutines )
 	      twilightfortattc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 				   klast, alpha_ptr, a_t, om, cv, ph,
-				   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+				   mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 //FTNC	   else
 //FTNC	      twilightfortattc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 //FTNC			       &klast, alpha_ptr, &a_t, &om, &cv, &ph,
 //FTNC			       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
 	}
-     }
+     } // end for g... (curvilinear)
+     
      retval = true;
   }
   else if( m_point_source_test )
@@ -2630,7 +2836,7 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
       //      m0  = source.getAmplitude();
       m0 = 1;
    }
-   bool curvilinear = topographyExists() && g == mNumberOfGrids-1;
+   bool curvilinear = topographyExists() && g > mNumberOfCartesianGrids-1;
    //   float_sw4* up = u.c_ptr();
    float_sw4 h   = mGridSize[g];
    float_sw4 eps = 1e-3*h;
@@ -2670,9 +2876,9 @@ void EW::get_exact_point_source( float_sw4* up, float_sw4 t, int g, Source& sour
             float_sw4 x,y,z;
 	    if( curvilinear )
 	    {
-               x = mX(i,j,k);
-	       y = mY(i,j,k);
-	       z = mZ(i,j,k);
+               x = mX[g](i,j,k);
+	       y = mY[g](i,j,k);
+	       z = mZ[g](i,j,k);
 	    }
 	    else
 	    {
@@ -3624,10 +3830,11 @@ void EW::exactRhsTwilight(float_sw4 a_t, vector<Sarray> & a_F)
 //FTNC			&klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, 
 //FTNC			&amprho, &ampmu, &ampla, &h, &zmin );
     }
-  }
-  if( topographyExists() )
+  } // end for g (Cartesian)
+  
+//  if( topographyExists() )
+  for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
   {
-     g = mNumberOfGrids-1;
      f_ptr  = a_F[g].c_ptr();
      ifirst = m_iStart[g];
      ilast  = m_iEnd[g];
@@ -3657,7 +3864,7 @@ void EW::exactRhsTwilight(float_sw4 a_t, vector<Sarray> & a_F)
 	   exactrhsfortsgc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 			       klast, f_ptr, a_t, om, cv, ph, omm, phm,
 			       amprho, ampmu, ampla, 
-			       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), 
+			       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), 
 			       omstrx, omstry, omstrz );
 //FTNC	else
 //FTNC	   exactrhsfortsgc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
@@ -3672,14 +3879,15 @@ void EW::exactRhsTwilight(float_sw4 a_t, vector<Sarray> & a_F)
 	   exactrhsfortc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 			     klast, f_ptr, a_t, om, cv, ph, omm, phm,
 			     amprho, ampmu, ampla,
-			     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+			     mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 //FTNC	else
 //FTNC	   exactrhsfortc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 //FTNC			  &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
 //FTNC			  &amprho, &ampmu, &ampla,
 //FTNC			  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
      }
-  }
+  } // end for g... (curvilinear)
+  
 }
 
 //---------------------------------------------------------------------------
@@ -3718,10 +3926,12 @@ void EW::exactAccTwilight(float_sw4 a_t, vector<Sarray> & a_Uacc)
 //FTNC       exactaccfort( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 //FTNC		     &klast, uacc_ptr, &a_t, &om, &cv, &ph,
 //FTNC		     &h, &zmin );
-  }
-  if( topographyExists() )
+  } // end for g... Cartesian
+
+//  if( topographyExists() )
+  for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
   {
-     g = mNumberOfGrids-1;
+//     g = mNumberOfGrids-1;
      uacc_ptr    = a_Uacc[g].c_ptr();
      ifirst = m_iStart[g];
      ilast  = m_iEnd[g];
@@ -3740,12 +3950,12 @@ void EW::exactAccTwilight(float_sw4 a_t, vector<Sarray> & a_Uacc)
 //FTNC     if( m_croutines )
 	exactaccfortc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 		       klast, uacc_ptr, a_t, om, cv, ph,
-		       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+		       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 //FTNC     else
 //FTNC	exactaccfortc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 //FTNC		       &klast, uacc_ptr, &a_t, &om, &cv, &ph,
 //FTNC		       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
-  }
+  } // end for g... (cirvilinear)  
 }
 
 //---------------------------------------------------------------------------
@@ -3795,9 +4005,9 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 //FTNC			     a_t, om, cv, ph, omm, phm,
 //FTNC			     amprho, phc, h, zmin);
         } // end for all Cartesian grids
-        if( topographyExists() )
+//        if( topographyExists() )
+        for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
         {
-           g = mNumberOfGrids-1;
            f_ptr    = a_F[g].c_ptr();
            ifirst = m_iStart[g];
            ilast  = m_iEnd[g];
@@ -3815,7 +4025,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 //FTNC	   if( m_croutines )
 	      tw_aniso_curvi_force_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
 				      a_t, om, cv, ph, omm, phm, amprho, phc,
-				      mX.c_ptr(), mY.c_ptr(), mZ.c_ptr());
+				      mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
 //FTNC	   else
 //FTNC	      tw_aniso_curvi_force(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
 //FTNC				   a_t, om, cv, ph, omm, phm, amprho, phc,
@@ -3896,9 +4106,9 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
            }
         } // end for all Cartesian grids
         
-        if( topographyExists() )
+//        if( topographyExists() )
+        for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
         {
-           g = mNumberOfGrids-1;
            f_ptr    = a_F[g].c_ptr();
            ifirst = m_iStart[g];
            ilast  = m_iEnd[g];
@@ -3923,7 +4133,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 		 forcingfortcsg_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 				 klast, f_ptr, a_t, om, cv, ph, omm, phm,
 				 amprho, ampmu, ampla,
-				 mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+				 mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
 				 omstrx, omstry, omstrz );
 //FTNC	      else
 //FTNC		 forcingfortcsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
@@ -3937,7 +4147,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 		    forcingfortsgattc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 				       klast, f_ptr, a_t, om, cv, ph, omm,
 				       phm, amprho, ampmu, ampla,
-				       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+				       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
 				       omstrx, omstry, omstrz );
 //FTNC		 else
 //FTNC		    forcingfortsgattc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
@@ -3953,7 +4163,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 		 forcingfortc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 			       klast, f_ptr, a_t, om, cv, ph, omm, 
 			       phm, amprho, ampmu, ampla,
-			       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+			       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 //FTNC	      else
 //FTNC		 forcingfortc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 //FTNC			       &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, 
@@ -3965,7 +4175,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 		    forcingfortattc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 					klast, f_ptr, a_t, om, cv, ph, omm, phm,
 					amprho, ampmu, ampla,
-					mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+					mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 //FTNC		 else
 //FTNC		    forcingfortattc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 //FTNC				     &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
@@ -3973,7 +4183,8 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> poi
 //FTNC				     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
 	      }
            }
-        }
+        } // end for g... (curvilinear)
+        
      } // end isotropic case
      
   } // end twilight
@@ -4068,9 +4279,9 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> 
 //FTNC				amprho, phc, h, zmin);
         } // end for all Cartesian grids
 
-        if( topographyExists() )
+//        if( topographyExists() )
+        for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
         {
-           g = mNumberOfGrids-1;
            f_ptr    = a_F[g].c_ptr();
            ifirst = m_iStart[g];
            ilast  = m_iEnd[g];
@@ -4087,12 +4298,11 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> 
 //FTNC	   if( m_croutines )
 	      tw_aniso_curvi_force_tt_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
 					 a_t, om, cv, ph, omm, phm, amprho, phc,
-					 mX.c_ptr(), mY.c_ptr(), mZ.c_ptr());
+					 mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
 //FTNC	   else
 //FTNC	      tw_aniso_curvi_force_tt(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
 //FTNC                                   a_t, om, cv, ph, omm, phm, amprho, phc,
 //FTNC                                   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr());
-
         } // end if topographyExists
                 
      }
@@ -4166,9 +4376,10 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> 
 	      }
            }
         }
-        if( topographyExists() )
+        //        if( topographyExists() )
+        for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
         {
-           g = mNumberOfGrids-1;
+           //           g = mNumberOfGrids-1;
            f_ptr    = a_F[g].c_ptr();
            ifirst = m_iStart[g];
            ilast  = m_iEnd[g];
@@ -4193,7 +4404,7 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> 
 		 forcingttfortcsg_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 				   klast, f_ptr, a_t, om, cv, ph, omm, phm,
 				   amprho, ampmu, ampla,
-				   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+				   mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
 				   omstrx, omstry, omstrz );
 //FTNC	      else
 //FTNC		 forcingttfortcsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
@@ -4206,7 +4417,7 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> 
 //FTNC		 if( m_croutines )
 		    forcingttfortsgattc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 					 klast, f_ptr, a_t, om, cv, ph, omm, phm, amprho, ampmu, ampla,
-					 mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+					 mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
 					 omstrx, omstry, omstrz );
 //FTNC		 else
 //FTNC		    forcingttfortsgattc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
@@ -4221,7 +4432,7 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> 
 		 forcingttfortc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 				    klast, f_ptr, a_t, om, cv, ph, omm, phm,
 				    amprho, ampmu, ampla,
-				    mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+				    mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 //FTNC	      else
 //FTNC		 forcingttfortc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 //FTNC				 &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
@@ -4232,7 +4443,7 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*> 
 //FTNC		 if( m_croutines )
 		    forcingttattfortc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
 					  klast, f_ptr, a_t, om, cv, ph, omm, phm,
-					  amprho, ampmu, ampla, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
+					  amprho, ampmu, ampla, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
 //FTNC		 else
 //FTNC		    forcingttattfortc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 //FTNC				       &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
@@ -4394,17 +4605,18 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
        //       cout << "Second application of LU " << nn << " nans" << endl;
 
     }
-  }
-  if( topographyExists() )
+  } // end for g... (Cartesian)
+   
+//  if( topographyExists() )
+  for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
   {
-     g = mNumberOfGrids-1;
      a_Uacc[g].set_to_zero();
      uacc_ptr = a_Uacc[g].c_ptr();
      u_ptr    = a_U[g].c_ptr();
      mu_ptr   = a_Mu[g].c_ptr();
      la_ptr   = a_Lambda[g].c_ptr();
-     float_sw4* met_ptr = mMetric.c_ptr();
-     float_sw4* jac_ptr = mJ.c_ptr();
+     float_sw4* met_ptr = mMetric[g].c_ptr();
+     float_sw4* jac_ptr = mJ[g].c_ptr();
      ifirst   = m_iStart[g];
      ilast    = m_iEnd[g];
      jfirst   = m_jStart[g];
@@ -4412,13 +4624,14 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
      kfirst   = m_kStart[g];
      klast    = m_kEnd[g];
      onesided_ptr = m_onesided[g];
-     int nk = m_global_nz[g];
+     int nkg = m_global_nz[g];
      char op = '='; // assign Uacc := L_u(u)
 //FTNC     if( m_croutines )
 	curvilinear4sg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
 			   u_ptr, mu_ptr, la_ptr, met_ptr, jac_ptr,
-			   uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
-			   m_sg_str_x[g], m_sg_str_y[g], nk, op );
+ 	                   uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
+			   m_acof_no_gp, m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op );
+	//			   m_acof, m_ghcof, m_sg_str_x[g], m_sg_str_y[g], nkg, op );
 //FTNC     else
 //FTNC     {
 //FTNC	if( usingSupergrid() )
@@ -4442,9 +4655,9 @@ void EW::evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_L
 //FTNC	  if( m_croutines )
 	  {
 	     curvilinear4sg_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
-			       alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
-			       uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp,
-                                m_sg_str_x[g], m_sg_str_y[g], nk, op );
+                                alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
+                                uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp,
+                                m_acof_no_gp, m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op );
 	  }	     
 //FTNC	  else
 //FTNC	  {
@@ -4493,20 +4706,19 @@ void EW::evalRHSanisotropic(vector<Sarray> & a_U, vector<Sarray>& a_C,
 			    klast, nz, u_ptr, uacc_ptr, c_ptr, onesided_ptr, 
 			    m_acof, m_bope, m_ghcof, h, m_sg_str_x[g],
 			    m_sg_str_y[g], m_sg_str_z[g] );
+  } // end for g... (Cartesian)
 //FTNC    else
 //FTNC       innerloopanisgstrvc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
 //FTNC			    &klast, &nz, u_ptr, uacc_ptr, c_ptr, onesided_ptr, 
 //FTNC			    m_acof, m_bope, m_ghcof, &h, m_sg_str_x[g],
 //FTNC			    m_sg_str_y[g], m_sg_str_z[g] );
-  }
-  if( topographyExists() )
+  for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
   {
-     g = mNumberOfGrids-1;
      uacc_ptr = a_Uacc[g].c_ptr();
      u_ptr    = a_U[g].c_ptr();
      c_ptr    = mCcurv.c_ptr();
-     float_sw4* met_ptr = mMetric.c_ptr();
-     float_sw4* jac_ptr = mJ.c_ptr();
+     float_sw4* met_ptr = mMetric[g].c_ptr();
+     float_sw4* jac_ptr = mJ[g].c_ptr();
      ifirst   = m_iStart[g];
      ilast    = m_iEnd[g];
      jfirst   = m_jStart[g];
@@ -4665,8 +4877,8 @@ void EW::updateMemVarPred( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_Alpha
 	 float_sw4 om = m_twilight_forcing->m_omega;
 	 float_sw4 ph = m_twilight_forcing->m_phase;
 	 float_sw4 cv = m_twilight_forcing->m_c;
-         if( topographyExists() && g == mNumberOfGrids-1 )
-            addMemVarPredCurvilinear( mX, mY, mZ, a_t,  a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+         if( topographyExists() && g >= mNumberOfCartesianGrids )
+            addMemVarPredCurvilinear( mX[g], mY[g], mZ[g], a_t,  a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
 	 else
          {
 // this routine comes from WPP
@@ -4712,15 +4924,14 @@ void EW::updateMemVarCorr( vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_Alpha
 	 float_sw4 om = m_twilight_forcing->m_omega;
 	 float_sw4 ph = m_twilight_forcing->m_phase;
 	 float_sw4 cv = m_twilight_forcing->m_c;
-         if( topographyExists() && g == mNumberOfGrids-1 )
+
+         if( topographyExists() && g >= mNumberOfCartesianGrids )
          {
-//            addMemVarCorrCurvilinear( mX, mY, mZ, a_t,  a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
-            addMemVarCorr2Curvilinear( mX, mY, mZ, a_t,  a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
+            addMemVarCorr2Curvilinear( mX[g], mY[g], mZ[g], a_t,  a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
          }
 	 else
          {
 //  It  works with SG stretching because no spatial derivatives occur in the forcing
-//            addMemVarCorrCart( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
 // NEW June 14, 2017
             addMemVarCorr2Cart( m_zmin[g], mGridSize[g], a_t, a_AlphaVEp[g][0], mOmegaVE[0], mDt, om, ph, cv);
          }
@@ -4771,9 +4982,9 @@ void EW::updateMemVarCorrNearInterface( Sarray& a_AlphaVEp, Sarray& a_AlphaVEm,
       float_sw4 om = m_twilight_forcing->m_omega;
       float_sw4 ph = m_twilight_forcing->m_phase;
       float_sw4 cv = m_twilight_forcing->m_c;
-      if( topographyExists() && a_grid == mNumberOfGrids-1 )
+      if( topographyExists() && a_grid >= mNumberOfCartesianGrids )
       {
-         addMemVarCorr2Curvilinear( mX, mY, mZ, a_t,  a_AlphaVEp, mOmegaVE[0], mDt, om, ph, cv);
+         addMemVarCorr2Curvilinear( mX[a_grid], mY[a_grid], mZ[a_grid], a_t,  a_AlphaVEp, mOmegaVE[0], mDt, om, ph, cv);
       }
       else
       {
@@ -4915,7 +5126,10 @@ void EW::update_images( int currentTimeStep, float_sw4 time, vector<Sarray> & a_
 		 || img->mMode == Image::CURLMAG || img->mMode == Image::CURLMAGDT )
 	    img->computeImageDivCurl( a_Up, a_U, a_Um, mDt, dminus );
 	 else if(img->mMode == Image::LAT || img->mMode == Image::LON )
+         {
+            int g=mNumberOfGrids-1; // top curvilinear is at the surface
 	    img->computeImageLatLon( mX, mY, mZ );
+         }
 	 else if(img->mMode == Image::TOPO )
 	 {
 	    if (topographyExists())
@@ -4968,7 +5182,10 @@ void EW::update_images( int currentTimeStep, float_sw4 time, vector<Sarray> & a_
 	    }
 	 }
          else if( img->mMode == Image::GRIDX || img->mMode == Image::GRIDY || img->mMode == Image::GRIDZ )
+         {
+            int g=mNumberOfGrids-1; // finest curvilinear grid for now. Needs to be generalized
 	    img->computeImageGrid(mX, mY, mZ );
+         }
          else if(img->mMode == Image::MAGDUDT )
 	 {
             if( dminus )
@@ -5189,8 +5406,10 @@ void EW::initialize_image_files( )
       if( mImageFiles[fIndex]->mMode == Image::GRIDX
        || mImageFiles[fIndex]->mMode == Image::GRIDY
        || mImageFiles[fIndex]->mMode == Image::GRIDZ )
+      {
 	 mImageFiles[fIndex]->computeImageGrid(mX, mY, mZ );
-
+      }
+   
    // Volume images
    Image3D::setSteps(maxNumberOfTimeSteps);
    //   Image3D::setSteps(mNumberOfTimeSteps);
@@ -5402,7 +5621,8 @@ void EW::testsourcediff( vector<Source*> GlobalSources, float_sw4 gradient[11],
    //   cout << "size of sources " << gpsources.size() << endl;
    for( int m = 0 ; m < gpsources.size()-1 ; m++ )
    {
-      gpsources[m]->add_to_gradient( kappa, eta, 0.63, mDt, gradient, mGridSize, mJ, topographyExists() );
+      gpsources[m]->add_to_gradient( kappa, eta, 0.63, mDt, gradient, mGridSize, mJ,
+                                     topographyExists() ); // mJ argument should be the whole vector of Sarrays
       gpsources[m]->add_to_hessian( kappa, eta, 0.63, mDt, hessian, mGridSize );
    }
 }
@@ -5463,12 +5683,17 @@ void EW::compute_energy( float_sw4 dt, bool write_file, vector<Sarray>& Um,
       float_sw4* rho_ptr = mRho[g].c_ptr();
       float_sw4 locenergy;
       int* onesided_ptr = m_onesided[g];
-      if( topographyExists() && g == mNumberOfGrids-1 )
+//      if( topographyExists() && g == mNumberOfGrids-1 )
+      if( topographyExists() && g >= mNumberOfCartesianGrids )
       {
+         if( m_gridGenerator->curviCartIsSmooth( mNumberOfGrids-mNumberOfCartesianGrids )
+	     && g == mNumberOfCartesianGrids )
+	   kend--;
+	   
 //FTNC	 if( m_croutines )
 	    energy4c_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
 			istart, iend, jstart, jend, kstart, kend, onesided_ptr,
-			um_ptr, u_ptr, up_ptr, rho_ptr, mJ.c_ptr(), locenergy );
+			um_ptr, u_ptr, up_ptr, rho_ptr, mJ[g].c_ptr(), locenergy );
 //FTNC	 else
 //FTNC	    energy4c(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
 //FTNC		     &istart, &iend, &jstart, &jend, &kstart, &kend, onesided_ptr,
@@ -6605,7 +6830,6 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
   start_time = MPI_Wtime();
 #ifdef USE_HDF5
   int verbose = mVerbose;
-  mVerbose = 2;
   std::string rname ="EW::extractTopographyFromSfile";
   Sarray gridElev;
   herr_t ierr;
@@ -6878,12 +7102,12 @@ bool EW::is_onesided( int g, int side ) const
    return m_onesided[g][side] == 1;
 }
 
-//-----------------------------------------------------------------------
-void EW::get_gridgen_info( int& order, float_sw4& zetaBreak ) const
-{
-   order = m_grid_interpolation_order;
-   zetaBreak = m_zetaBreak;
-}
+////-----------------------------------------------------------------------
+//void EW::get_gridgen_info( int& order, float_sw4& zetaBreak ) const
+//{
+//   order = m_grid_interpolation_order;
+//   zetaBreak = m_zetaBreak;
+//}
 
 //-----------------------------------------------------------------------
 //void EW::get_nr_of_material_parameters( int& nmvar )
@@ -7034,18 +7258,19 @@ void EW::add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& U
       float_sw4 h = mGridSize[g];
       int* onesided_ptr = m_onesided[g];
       int nb = 4, wb=6;
-      if( topographyExists() && g == mNumberOfGrids-1 )
+//      if( topographyExists() && g == mNumberOfGrids-1 )
+      if( topographyExists() && g >= mNumberOfCartesianGrids )
       {
 //FTNC	 if( m_croutines )
 	 {
 	    addgradrhoc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 			    ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
 			    k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
-			    mDt, mJ.c_ptr(), onesided_ptr );
+			    mDt, mJ[g].c_ptr(), onesided_ptr );
 	    addgradmulac_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 			     ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
 			     k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr, glambda_ptr, mDt, h,
-			     mMetric.c_ptr(), mJ.c_ptr(), onesided_ptr, nb, wb, m_bop );
+			     mMetric[g].c_ptr(), mJ[g].c_ptr(), onesided_ptr, nb, wb, m_bop );
 	 }
 //FTNC	 else
 //FTNC	 {
@@ -7167,8 +7392,30 @@ bool EW::check_for_nan( vector<Sarray>& a_U, int verbose, string name )
       {
 	 int cnan, inan, jnan, knan;
 	 a_U[g].count_nans(cnan,inan,jnan,knan);
-	 cout << "grid " << g << " array " << name << " found " << nn << "  nans. First nan at " <<
+	 cout << "proc " << m_myRank << " grid " << g << " array " << name << " found " << nn << "  nans. First nan at " <<
 	    cnan << " " << inan << " " << jnan << " " << knan << endl;
+      }
+   }
+   return retval;
+}
+
+//-----------------------------------------------------------------------
+bool EW::check_for_nan( vector<Sarray*>& a_U, int nmech, int verbose, string name )
+{
+   bool retval = false;
+   for( int a=0 ; a < nmech ; a++ )
+   {
+      for( int g=0 ; g<mNumberOfGrids; g++ )
+      {
+         size_t nn=a_U[g][a].count_nans();
+         retval = retval || nn > 0;
+         if( nn > 0 && verbose == 1 )
+         {
+            int cnan, inan, jnan, knan;
+            a_U[g][a].count_nans(cnan,inan,jnan,knan);
+            cout << "proc " << m_myRank << "mech= " << a<< " grid " << g << " array " << name << " found " << nn << "  nans. First nan at " <<
+	    cnan << " " << inan << " " << jnan << " " << knan << endl;
+         }
       }
    }
    return retval;
@@ -7553,9 +7800,9 @@ void EW::setup_viscoelastic_tw()
 //FTNC			   &klast, mu_ptr, la_ptr, &omm, &phm, 
 //FTNC			   &ampmu, &ampla, &h, &zmin );
    }
-   if (topographyExists())
+//   if (topographyExists())
+   for (g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++)
    {
-      g = mNumberOfGrids-1;
       mu_ptr  = mMuVE[g][0].c_ptr();
       la_ptr  = mLambdaVE[g][0].c_ptr();
       ifirst = m_iStart[g];
@@ -7568,9 +7815,9 @@ void EW::setup_viscoelastic_tw()
       phm = m_twilight_forcing->m_mphase;
       ampmu = m_twilight_forcing->m_ampmu;
       ampla = m_twilight_forcing->m_amplambda;
-      float_sw4* x_ptr= mX.c_ptr();
-      float_sw4* y_ptr= mY.c_ptr();
-      float_sw4* z_ptr= mZ.c_ptr();
+      float_sw4* x_ptr= mX[g].c_ptr();
+      float_sw4* y_ptr= mY[g].c_ptr();
+      float_sw4* z_ptr= mZ[g].c_ptr();
 //FTNC      if( m_croutines )
 	 exactmatfortattc_ci(ifirst, ilast, jfirst, jlast, kfirst, 
 			  klast, mu_ptr, la_ptr, omm, phm, 
@@ -7684,6 +7931,43 @@ void EW::sort_grid_point_sources( vector<GridPointSource*>& point_sources,
    //	    m_point_sources[i]->m_j0 << " " << 
    //	    m_point_sources[i]->m_k0 << std::endl;
 }
+//float_sw4 EW::curvilinear_interface_parameter( int gcurv )
+//{
+//   if( gcurv < 0 )
+//      return 0;
+//   else 
+//      return (m_topo_zmax-m_curviRefLev[gcurv])/m_topo_zmax;
+//}
+
+//#include "TestGrid.h"
+
+//TestGrid* EW::create_gaussianHill()
+//{
+//   return new TestGrid( m_topo_zmax, m_GaussianAmp, m_GaussianXc, m_GaussianYc, m_GaussianLx, m_GaussianLy );
+//}
+
+#include "TestTwilight.h"
+
+TestTwilight* EW::create_twilight()
+{
+   if( m_twilight_forcing != 0 )
+      return new TestTwilight( m_twilight_forcing->m_omega, m_twilight_forcing->m_c,
+                               m_twilight_forcing->m_phase, m_twilight_forcing->m_momega,
+                               m_twilight_forcing->m_mphase, m_twilight_forcing->m_amprho,
+                               m_twilight_forcing->m_ampmu, m_twilight_forcing->m_amplambda );
+   else
+      return 0;
+}
+
+#include "TestEcons.h"
+
+TestEcons* EW::create_energytest()
+{
+   if( m_energy_test != 0 )
+      return new TestEcons( m_energy_test->m_stochastic_amp, m_energy_test->m_cpcsratio );
+   else
+      return 0;
+}
 
 #include "AllDims.h"
 AllDims* EW::get_fine_alldimobject( )
@@ -7692,4 +7976,22 @@ AllDims* EW::get_fine_alldimobject( )
    AllDims* fine = new AllDims( m_proc_array[0], m_proc_array[1], 1, 1, m_global_nx[g], 
 		       1, m_global_ny[g], 1, m_global_nz[g], m_ghost_points, m_ppadding );
    return fine;
+}
+
+//-----------------------------------------------------------------------
+void EW::grid_information( int g )
+{
+   if( g >= mNumberOfCartesianGrids )
+   {
+      float_sw4 minJ = mJ[g].minimum();
+      float_sw4 maxJ = mJ[g].maximum();
+      float_sw4 minJglobal, maxJglobal;
+      MPI_Allreduce( &minJ, &minJglobal, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
+      MPI_Allreduce( &maxJ, &maxJglobal, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator);
+      if (mVerbose>3 && proc_zero())
+      std::cout <<  "*** Jacobian of metric, curvi grid g= " << g <<
+         " minJ = " <<  minJglobal << " maxJ = " << maxJglobal << std::endl;
+      m_minJacobian  = min(m_minJacobian, minJglobal);
+      m_maxJacobian  = max(m_maxJacobian, maxJglobal);
+   }
 }

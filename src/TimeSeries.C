@@ -46,6 +46,7 @@
 #include "Filter.h"
 
 #include "EW.h"
+#include "GridGenerator.h"
 
 #ifdef USE_HDF5
 #include "sachdf5.h"
@@ -118,6 +119,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   mIsRestart(false),
   m_compute_scalefactor(true),
   m_misfit_scaling(1),
+  m_readTime(0.0),
 #ifdef USE_HDF5
   m_sta_z(depth),
   m_fid_ptr(NULL),
@@ -125,18 +127,33 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_isIncAzWritten(false),
   m_nptsWritten(0),
   m_nsteps(0),
+  m_writeTime(0.0),
 #endif
   m_event(event)
 {
+ // 1. Adjust z if depth below topography is given
+   if (m_zRelativeToTopography && a_ew->topographyExists() ) 
+   {
+      a_ew->m_gridGenerator->interpolate_topography( a_ew, mX, mY, m_zTopo, a_ew->mTopoGridExt);
+      mZ += m_zTopo;
+   } 
+   else
+      m_zTopo = 0;
+   m_zRelativeToTopography = false;
+// 2. Find nearest grid point and its grid.
+   m_myPoint = a_ew->computeNearestGridPoint2( m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ );
+   //   if( m_myPoint )
+   //   cout << "station at ("<< mX  << " " << mY << " " << mZ <<" placed at grid point " <<
+   //      m_i0 << " " << m_j0 << " " << m_k0 << " in grid " << m_grid0 <<endl;
 // preliminary determination of nearest grid point ( before topodepth correction to mZ)
-   a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
+//   a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
 
 // quiet mode? Note that this flag can change in the EW object, so it is better to test for 
 // m_ew->getQuiet()
    mQuietMode = a_ew->getQuiet();
    
 // does this processor write this station?
-   m_myPoint = a_ew->interior_point_in_proc(m_i0, m_j0, m_grid0);
+//   m_myPoint = a_ew->interior_point_in_proc(m_i0, m_j0, m_grid0);
 
 // The following is a safety check to make sure only one processor writes each time series.
 // We could remove this check if we were certain that interior_point_in_proc() never lies
@@ -144,14 +161,6 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
    int counter;
    MPI_Allreduce( &iwrite, &counter, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
 
-   /* int myRank; */
-   /* MPI_Comm_rank(MPI_COMM_WORLD, &myRank); */
-   /* if (counter != 1 && m_myPoint == 1) { */
-   /*     cout << "Rank " << myRank << "has this point mX=" << mX << " mY=" << mY << " mZ=" << mZ << endl; */
-   /* } */
-   /* if (m_myPoint == 1) */ 
-   /*     cout << "Rank " << myRank << " has station mX=" << mX << " mY=" << mY << " mZ=" << mZ << endl; */
-   
    a_ew->get_utc( m_utc, m_event );
    //   int size;
    //   MPI_Comm_size(MPI_COMM_WORLD,&size);
@@ -172,32 +181,33 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 // from here on this processor writes this sac station and knows about its topography
 
 // evaluate z-coordinate of topography
-   float_sw4 q, r, s;
-   if (a_ew->topographyExists())
-   {
-      int gCurv = a_ew->mNumberOfGrids - 1;
-      float_sw4 h = a_ew->mGridSize[gCurv];
-      q = mX/h + 1.0;
-      r = mY/h + 1.0;
-// evaluate elevation of topography on the grid
-      if (!a_ew->interpolate_topography(q, r, m_zTopo, true))
-      {
-	 cerr << "Unable to evaluate topography for receiver station" << m_fileName << " mX= " << mX << " mY= " << mY << endl;
-	 cerr << "Setting topography to ZERO" << endl;
-	 m_zTopo = 0;
-      }
-   }
-   else
-   {
-      m_zTopo = 0; // no topography
-   }
+//   float_sw4 q, r, s;
+//   if (a_ew->topographyExists())
+//   {
+//      int gCurv = a_ew->mNumberOfGrids - 1;
+//      float_sw4 h = a_ew->mGridSize[gCurv];
+//      q = mX/h + 1.0;
+//      r = mY/h + 1.0;
+//// evaluate elevation of topography on the grid
+//      if (!a_ew->m_gridGenerator->interpolate_topography(a_ew,q, r, m_zTopo, a_ew->mTopoGridExt))
+//         //      if (!a_ew->interpolate_topography(q, r, m_zTopo, true))
+//      {
+//	 cerr << "Unable to evaluate topography for receiver station" << m_fileName << " mX= " << mX//// << " mY= " << mY << endl;
+//	 cerr << "Setting topography to ZERO" << endl;
+//	 m_zTopo = 0;
+//      }
+//   }
+//   else
+//   {
+//      m_zTopo = 0; // no topography
+//   }
 
 // if location was specified with topodepth, correct z-level  
-   if (m_zRelativeToTopography)
-   {
-      mZ += m_zTopo;
-      m_zRelativeToTopography = false; // set to false so the correction isn't repeated (e.g. by the copy function)
-   }
+//   if (m_zRelativeToTopography)
+//   {
+//      mZ += m_zTopo;
+//      m_zRelativeToTopography = false; // set to false so the correction isn't repeated (e.g. by the copy function)
+//   }
    float_sw4 rofftol = 1e-9;
    if(sizeof(float_sw4) == 4 )
       rofftol = 1e-5;
@@ -207,7 +217,6 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 // make sure the station is below the topography (z is positive downwards)
    if ( mZ < zMin)
    {
-      //      mIgnore = true;
       printf("Ignoring SAC station %s mX=%g, mY=%g, mZ=%g, because it is above the topography z=%g\n", 
 	     m_staName.c_str(),  mX,  mY, mZ, m_zTopo);
  // don't write this station
@@ -216,28 +225,30 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
    }
      
 // now we can find the closest grid point  
-   a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
-   if( m_grid0 == a_ew->mNumberOfGrids-1 && a_ew->topographyExists() )
-   {
-// Curvilinear
-      bool canBeInverted = a_ew->invert_curvilinear_grid_mapping( mX, mY, mZ, q, r, s );
-      if (a_ew->invert_curvilinear_grid_mapping( mX, mY, mZ, q, r, s )) // the inversion was successful
-      {
-	 m_k0 = (int)floor(s);
-	 if (s-(m_k0+0.5) > 0.) m_k0++;
-	 m_k0 = max(a_ew->m_kStartInt[m_grid0], m_k0);
-	 int Nz = a_ew->m_kEndInt[m_grid0];
-	 m_k0 = min(Nz, m_k0);
-      }
-      else
-      {
-	 cerr << "Can't invert curvilinear grid mapping for recevier station" << m_fileName << " mX= " << mX << " mY= " 
-	      << mY << " mZ= " << mZ << endl;
-	 cerr << "Placing the station on the surface (depth=0)." << endl;
-	 m_k0 = 1;
-      }
-   }
-   
+//   a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
+//   if( m_grid0 >= a_ew->mNumberOfCartesianGrids-1 && a_ew->topographyExists() )
+//   {
+//// Curvilinear
+//      bool canBeInverted = a_ew->m_gridGenerator->inverse_grid_mapping( a_ew, mX, mY, mZ, m_grid0, q, r, s );
+//      //      bool canBeInverted = a_ew->invert_curvilinear_grid_mapping( mX, mY, mZ, q, r, s );
+//      if (a_ew->m_gridGenerator->inverse_grid_mapping( a_ew, mX, mY, mZ, m_grid0, q, r, s )) // the inversion was successful
+//         //      if (a_ew->invert_curvilinear_grid_mapping( mX, mY, mZ, q, r, s )) // the inversion was successful
+//      {
+//	 m_k0 = (int)floor(s);
+//	 if (s-(m_k0+0.5) > 0.) m_k0++;
+//	 m_k0 = max(a_ew->m_kStartInt[m_grid0], m_k0);
+//	 int Nz = a_ew->m_kEndInt[m_grid0];
+//	 m_k0 = min(Nz, m_k0);
+//      }
+//      else
+//      {
+//	 cerr << "Can't invert curvilinear grid mapping for recevier station" << m_fileName << " mX= " << mX << " mY= " 
+//	      << mY << " mZ= " << mZ << endl;
+//	 cerr << "Placing the station on the surface (depth=0)." << endl;
+//	 m_k0 = 1;
+//      }
+//   }
+//   
 // actual location of station (nearest grid point)
    float_sw4 xG, yG, zG;
    xG = (m_i0-1)*a_ew->mGridSize[m_grid0];
@@ -248,7 +259,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
    }
    else
    {
-      zG = a_ew->mZ(m_i0, m_j0, m_k0);
+      zG = a_ew->mZ[m_grid0](m_i0, m_j0, m_k0);
    }
    
 // remember corrected location
@@ -462,6 +473,8 @@ void TimeSeries::writeFile( string suffix )
 {
   if (!m_myPoint) return;
 
+  double stime, etime;
+  stime = MPI_Wtime();
 // ------------------------------------------------------------------
 // We should add an argument to this function that describes how the
 // header and filename should be constructed
@@ -486,7 +499,8 @@ void TimeSeries::writeFile( string suffix )
   // Open the output HDF5 file if not already opened
   std::string h5fname, fidName;
   hid_t fid, grp = 0; 
-  float stlalodp[3], stxyz[3], origintime;
+  double stlalodp[3], stxyz[3];
+  float origintime;
   int myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
@@ -508,16 +522,16 @@ void TimeSeries::writeFile( string suffix )
         printf("TimeSeries::writeFile Error opening group [%s]\n", m_staName.c_str());
 
       if (grp > 0 && !m_isMetaWritten) {
-        stlalodp[0] = float(m_rec_lat);
-        stlalodp[1] = float(m_rec_lon);
-        stlalodp[2] = float(m_sta_z);
+        stlalodp[0] = double(m_rec_lat);
+        stlalodp[1] = double(m_rec_lon);
+        stlalodp[2] = double(m_sta_z);
 
-        openWriteAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_FLOAT, stlalodp);
+        openWriteAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_DOUBLE, stlalodp);
 
-        stxyz[0] = float(mX);
-        stxyz[1] = float(mY);
-        stxyz[2] = float(m_sta_z);
-        openWriteAttr(grp, "STX,STY,STZ", H5T_NATIVE_FLOAT, stxyz);
+        stxyz[0] = double(mX);
+        stxyz[1] = double(mY);
+        stxyz[2] = double(m_sta_z);
+        openWriteAttr(grp, "STX,STY,STZ", H5T_NATIVE_DOUBLE, stxyz);
 
         origintime = float(m_epi_time_offset);
         openWriteAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, &origintime);
@@ -991,17 +1005,6 @@ void TimeSeries::writeFile( string suffix )
 
   } // end if m_sacFormat || m_hdf5Format
   
-#ifdef USE_HDF5
-  if (m_hdf5Format) {
-    /* if (grp > 0) */ 
-    /*   H5Gflush(grp); */
-    if (grp > 0) 
-      H5Gclose(grp);
-    /* printf("Rank %d: Finished writing station data [%s]\n", myRank, m_staName.c_str()); */
-    /* fflush(stdout); */
-  }
-#endif
-
   if( m_usgsFormat )
   {
     filePrefix << "txt";
@@ -1012,6 +1015,19 @@ void TimeSeries::writeFile( string suffix )
 
     write_usgs_format( filePrefix.str() );
   }
+
+#ifdef USE_HDF5
+  if (m_hdf5Format) {
+    if (grp > 0) 
+      H5Gclose(grp);
+  }
+  etime = MPI_Wtime();
+  m_writeTime += (etime - stime);
+
+  /* printf("Rank %d: done written timeseries data of station [%s], %f seconds\n", myRank, m_staName.c_str(), etime - stime); */
+  /* fflush(stdout); */
+#endif
+
 
 }
 
@@ -1151,11 +1167,14 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
 {
   bool is_debug = false;
   /* is_debug = true; */
+  double stime, etime;
 
   hsize_t start, count;
   int ret = 1, prev_npts;
   int write_npts;
   float *write_data;
+
+  /* stime = MPI_Wtime(); */
 
   write_npts = npts;
   write_data = y;
@@ -1191,6 +1210,12 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
 
   if (mDownSample > 1) 
     delete [] write_data;
+
+  /* etime = MPI_Wtime(); */
+  /* int myRank; */
+  /* MPI_Comm_rank(MPI_COMM_WORLD, &myRank); */
+  /* printf("Rank %d: [%s], write_npts=%d, time=%f\n", myRank, var, count, etime-stime); */
+  /* fflush(stdout); */
 }
 #endif
 
@@ -2331,15 +2356,15 @@ float_sw4 TimeSeries::arrival_time( float_sw4 lod )
 //-----------------------------------------------------------------------
 void TimeSeries::use_as_forcing( int n, std::vector<Sarray>& f,
 				 std::vector<float_sw4> & h, float_sw4 dt,
-				 Sarray& Jac, bool topography_exists )
+				 vector<Sarray>& Jac, bool topography_exists )
 {
    // Use at grid point, n, in the grid of this object.
    if( m_myPoint )
    {
       float_sw4 normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
       float_sw4 ih3 = 1.0/(h[m_grid0]*h[m_grid0]*h[m_grid0]);
-      if( topography_exists && m_grid0 == h.size()-1 )
-	 ih3 = 1.0/Jac(m_i0,m_j0,m_k0);
+      if( topography_exists && m_grid0 >= m_ew->mNumberOfCartesianGrids )
+	 ih3 = 1.0/Jac[m_grid0](m_i0,m_j0,m_k0);
 
       //      float_sw4 ih3 = 1.0;
       float_sw4 iwgh = 1.0;
@@ -3171,7 +3196,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
   if (!m_myPoint) 
       return;
 
-  setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
+  /* setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1); */
   fid = H5Fopen(FileName.c_str(),  H5F_ACC_RDONLY, H5P_DEFAULT);
   if (fid < 0) {
     printf("%s Error opening file [%s]\n", __func__, FileName.c_str());
@@ -3564,9 +3589,10 @@ hid_t TimeSeries::openHDF5File(std::string suffix)
   }
  
   fapl = H5Pcreate(H5P_FILE_ACCESS);
-  H5Pset_fapl_sec2(fapl);
+  /* H5Pset_fapl_sec2(fapl); */
+  /* H5Pset_fapl_stdio(fapl); */
 
-  /* H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL); */
+  H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL);
   /* H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL); */
   /* H5Pset_coll_metadata_write(fapl, false); */
   /* H5Pset_all_coll_metadata_ops(fapl, false); */

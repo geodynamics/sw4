@@ -105,7 +105,7 @@ float_sw4 misfit2( TimeSeries& observed, TimeSeries* diff );
 void interpolate( TimeSeries& intpfrom );
 
 void use_as_forcing( int n, std::vector<Sarray>& f, std::vector<float_sw4> & h, float_sw4 dt,
-		     Sarray& Jac, bool topography_exists );
+		     vector<Sarray>& Jac, bool topography_exists );
 
 float_sw4 product( TimeSeries& ts ) const;
 float_sw4 product_wgh( TimeSeries& ts ) const;
@@ -152,7 +152,10 @@ void  readSACHDF5( EW *ew, string FileName, bool ignore_utc );
 hid_t openHDF5File(std::string suffix);
 void  write_hdf5_format( int npts, hid_t loc, float *y, float btime, float dt, char *var,
 		       float cmpinc, float cmpaz, bool makeCopy=false, bool isLast=false);
+double getWriteTime() {return m_writeTime;};
 #endif
+double getReadTime() {return m_readTime;};
+void addReadTime(double t) {m_readTime += t;};
 
 private:   
 TimeSeries();
@@ -266,7 +269,9 @@ float_sw4 m_scalefactor;
    int  m_nsteps;
    std::string m_fidName;
    TimeSeries *m_ts0Ptr;
+   double m_writeTime;
 #endif
+   double m_readTime;
 };
 
 

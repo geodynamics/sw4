@@ -44,11 +44,12 @@ ESSI3DHDF5* ESSI3DHDF5::nil=static_cast<ESSI3DHDF5*>(0);
 
 //-----------------------------------------------------------------------
 ESSI3DHDF5::ESSI3DHDF5(const std::string& filename, int (&global)[3],
-    int (&window)[6], bool ihavearray) :
+    int (&window)[6], bool ihavearray, int precision) :
   m_start_cycle(-1),
   m_end_cycle(-1),
   m_filename(filename),
-  m_ihavearray(ihavearray)
+  m_ihavearray(ihavearray),
+  m_precision(precision)
 {
 #ifdef USE_HDF5
   bool debug = false;
@@ -78,7 +79,7 @@ ESSI3DHDF5::ESSI3DHDF5(const std::string& filename, int (&global)[3],
 
   // Time step is 1st comp
   m_slice_dims[0] = 1; // write one time step
-  m_global_dims[0] = H5S_UNLIMITED; // Extendible dimension for cycle
+  m_global_dims[0] = 1; // Extendible dimension for cycle
   m_window_dims[0] = 1; // write one time step
   m_cycle_dims[0] = 1; // this will become cycle-1
 
@@ -86,7 +87,7 @@ ESSI3DHDF5::ESSI3DHDF5(const std::string& filename, int (&global)[3],
   for (int d=1; d < 4; d++)
   {
     m_window_dims[d] = m_window[2*(d-1)+1] - m_window[2*(d-1)] + 1;
-    m_global_dims[d] = H5S_UNLIMITED;
+    m_global_dims[d] = m_global[d-1];
     m_cycle_dims[d]  = m_global[d-1];
   }
 
@@ -238,7 +239,8 @@ void ESSI3DHDF5::write_topo(double* window_array)
   hsize_t z_dims = 3;
   // Modify dataset creation properties to enable chunking
   hid_t prop_id = H5Pcreate (H5P_DATASET_CREATE);
-  herr_t ierr = H5Pset_chunk (prop_id, z_dims, m_slice_dims);
+  herr_t ierr;
+  /* ierr = H5Pset_chunk (prop_id, z_dims, m_slice_dims); */
 
   // Create dataset for z field
   hid_t dataspace_id = H5Screate_simple(z_dims, &m_global_dims[1], NULL);
@@ -263,7 +265,7 @@ void ESSI3DHDF5::write_topo(double* window_array)
   cout << msg;
   */
 
-  hsize_t start[3]={-1,-1,-1};
+  hsize_t start[3]={0,0,0};
   start[0] = m_window[0]; // i window offset
   start[1] = m_window[2]; // j window offset
   start[2] = m_window[4]; // k local index lo relative to global
@@ -275,9 +277,9 @@ void ESSI3DHDF5::write_topo(double* window_array)
     cout << msg;
     cout.flush();
   }
-  hid_t window_id = H5Screate_simple(z_dims, m_window_dims, NULL);
+  hid_t window_id = H5Screate_simple(z_dims, &m_window_dims[1], NULL);
   ierr = H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, start, NULL,
-      m_window_dims, NULL);
+      &m_window_dims[1], NULL);
   if (ierr < 0)
   {
     cout << "Error from z H5Sselect_hyperslab" << endl;
@@ -323,6 +325,9 @@ void ESSI3DHDF5::init_write_vel(int ntimestep)
   MPI_Comm comm = MPI_COMM_WORLD;
   int myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+  hid_t dtype = H5T_NATIVE_DOUBLE;
+  if (m_precision == 4) 
+      dtype = H5T_NATIVE_FLOAT;
 
   if (debug)
   {
@@ -364,7 +369,7 @@ void ESSI3DHDF5::init_write_vel(int ntimestep)
     // Modify dataset creation properties to enable chunking
     char var[100];
     sprintf(var, "vel_%d ijk layout", c);
-    m_vel_dataset_id[c] = H5Dcreate2 (m_file_id, var, H5T_IEEE_F64LE,
+    m_vel_dataset_id[c] = H5Dcreate2 (m_file_id, var, dtype,
         m_vel_dataspace_id[c], H5P_DEFAULT, prop_id, H5P_DEFAULT);
   }
   H5Pclose(prop_id);
@@ -419,7 +424,7 @@ void ESSI3DHDF5::write_vel(double* window_array, int comp, int cycle)
   */
 
   m_vel_dataspace_id[comp] = H5Dget_space(m_vel_dataset_id[comp]);
-  hsize_t start[4]={-1,-1,-1,0};
+  hsize_t start[4]={0,0,0,0};
   start[0] = cycle - m_start_cycle;
   start[1] = m_window[0]; // local index lo relative to global
   start[2] = m_window[2]; // local index lo relative to global

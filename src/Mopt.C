@@ -107,8 +107,10 @@ bool Mopt::parseInputFileOpt( std::string filename )
 	    processNLCG(buffer);
          else if( startswith("mfsurf",buffer) )
 	    processMfsurf( buffer );
+         else if( startswith("mimagehdf5",buffer) )
+	    processMimage( buffer, true);
          else if( startswith("mimage",buffer) )
-	    processMimage( buffer );
+	    processMimage( buffer, false);
 	 else if (startswith("m3dimage", buffer))
 	   processM3Dimage(buffer);
          else if( startswith("mtypx",buffer) )
@@ -858,7 +860,7 @@ void Mopt::processMfsurf( char* buffer )
 }
 
 //-----------------------------------------------------------------------
-void Mopt::processMimage( char* buffer )
+void Mopt::processMimage( char* buffer, bool use_hdf5)
 {
    char* token = strtok(buffer, " \t");
    CHECK_INPUT(strcmp("mimage", token) == 0,
@@ -958,7 +960,7 @@ void Mopt::processMimage( char* buffer )
 		" to determine the image's 2D plane" << endl);
    double time=-1, timeInterval=-1;
    Image* i = new Image(m_ew, time, timeInterval, iter, iterInterval, 
-		 filePrefix, mode, locationType, coordValue, use_double);
+		 filePrefix, mode, locationType, coordValue, use_double, use_hdf5);
    i->computeGridPtIndex();
    i->allocatePlane();
    m_image_files.push_back(i);

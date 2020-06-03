@@ -3113,6 +3113,25 @@ The SRF file format is described on the SCEC wiki webpage:
 \verb+http://scec.usc.edu/scecpedia/Standard_Rupture_Format+
 \index{rupture parameters! file}
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{rupturehdf5}
+\index{command!rupturehdf5}
+\label{keyword:rupturehdf5}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{flushleft}
+\bf
+Syntax:\\ \tt rupturehdf5 file=...\\ 
+\bf
+Required parameters:\\ \rm name of SRF file in HDF5 format.
+\end{flushleft}
+The \verb+rupturehdf5+ command is similar to the \verb+rupture+ command, it reads a SRF-HDF5 file that is
+converted from a SRF file using the python script found at sw4/tools/srf2hdf5.py.
+
+The SRF-HDF5 file format is described in Section~\ref{sec:rupturehdf5-format}
+
+\index{rupturehdf5 parameters! file}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The material model [required]} 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -4001,6 +4020,22 @@ uzerr   & $z$-component of error (difference between computed and exact solution
 \end{tabular}
 \end{center}
 \index{image parameters!modes - uxexact, uyexact, uzexact, uxerr, uyerr, uzerr} 
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% image in HDF5 format
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{imagehdf5 [optional]}
+\index{command!imagehdf5}
+\label{keyword:imagehdf5}
+\begin{flushleft}
+\bf Syntax:\\ \tt imagehdf5 x=... y=... z=...
+time=... timeInterval=... cycle=... cycleInterval=... file=... mode=... precision=...\\ \bf Required
+parameters:\\ \rm Location of the image plane (x, y, or z) \\ Time for output (time, timeInterval,
+cycle, or cycleInterval)\\ \bf Notes: \\ imagehdf5 is identical to the image command, while writing the image data in an HDF5 file. One can easily read and plot the data using python function provided in the jupyter notebook at \verb+tools/plotimageh5.ipynb+
+\end{flushleft}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 3D images
@@ -5033,6 +5068,100 @@ GROUP "/" {
 }
 \end{verbatim}
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{SRF-HDF5}\label{sec:rupturehdf5-format}
+\index{fileformats!rupturehdf5}
+Based on the SRF (Standard Rupture Format), we have created the SRF-HDF5 format, which stores
+the same amount of information in a more compact HDF5 file that is smaller in size and can be read faster.
+
+To convert an existing SRF file into HDF5 format, we have provided a python script under {\tt tools/srf2hdf5.py} in the sw4 repository. 
+The script requires two command line parameters to specify the input SRF file and the output SRF-HDF5 file, e.g. {\tt python srf2hdf5.py rupture.srf rupture.h5}.
+
+The output of {\tt h5dump -A} header and metadata is below, the ``PLANE'' and ``VERSION'' attributes 
+store the header block of the SRF file, with the number of plane segments implicitly implied in the 
+dataspace of the ``PLANE'' attribute.
+
+The ``POINTS'' and ``SR1'' datasets store the data block of the SRF file. Different from the SRF format,
+where the slip rate at each time step for a direction follows immediately after each point source, 
+we concatenate all slip rates and put it in a single 1D dataset, which is optimized for data read.
+To access the slip rates of a particular point source, one needs to accumulate the number of rates
+before the desired one and calculate its offset in the ``SR1'' dataset. 
+
+Only ``SR1'' is converted in the SRF-HDF5 format as others (SR2 and SR3) are ignored by sw4.
+
+\begin{verbatim}
+HDF5 "m6.5-20.0x13.0.s500.v5.1.srf.h5" {
+GROUP "/" {
+   ATTRIBUTE "PLANE" {
+      DATATYPE  H5T_COMPOUND {
+         H5T_IEEE_F32LE "ELON";
+         H5T_IEEE_F32LE "ELAT";
+         H5T_STD_I32LE "NSTK";
+         H5T_STD_I32LE "NDIP";
+         H5T_IEEE_F32LE "LEN";
+         H5T_IEEE_F32LE "WID";
+         H5T_IEEE_F32LE "STK";
+         H5T_IEEE_F32LE "DIP";
+         H5T_IEEE_F32LE "DTOP";
+         H5T_IEEE_F32LE "SHYP";
+         H5T_IEEE_F32LE "DHYP";
+      }
+      DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
+      DATA {
+      (0): {
+            -122.218,
+            37.8433,
+            100,
+            65,
+            20,
+            13,
+            144,
+            90,
+            3,
+            -5,
+            8
+         }
+      }
+   }
+   ATTRIBUTE "VERSION" {
+      DATATYPE  H5T_IEEE_F32LE
+      DATASPACE  SCALAR
+      DATA {
+      (0): 2
+      }
+   }
+   DATASET "POINTS" {
+      DATATYPE  H5T_COMPOUND {
+         H5T_IEEE_F32LE "LON";
+         H5T_IEEE_F32LE "LAT";
+         H5T_IEEE_F32LE "DEP";
+         H5T_IEEE_F32LE "STK";
+         H5T_IEEE_F32LE "DIP";
+         H5T_IEEE_F32LE "AREA";
+         H5T_IEEE_F32LE "TINIT";
+         H5T_IEEE_F32LE "DT";
+         H5T_IEEE_F32LE "VS";
+         H5T_IEEE_F32LE "DEN";
+         H5T_IEEE_F32LE "RAKE";
+         H5T_IEEE_F32LE "SLIP1";
+         H5T_STD_I32LE "NT1";
+         H5T_IEEE_F32LE "SLIP2";
+         H5T_STD_I32LE "NT2";
+         H5T_IEEE_F32LE "SLIP3";
+         H5T_STD_I32LE "NT3";
+      }
+      DATASPACE  SIMPLE { ( 6500 ) / ( 6500 ) }
+   }
+   DATASET "SR1" {
+      DATATYPE  H5T_IEEE_F32LE
+      DATASPACE  SIMPLE { ( 144616 ) / ( 144616 ) }
+   }
+}
+}
+
+\end{verbatim}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{sac}\label{sec:sac-format}
 \index{fileformats!sac}
@@ -5351,6 +5480,82 @@ which currently remains Cartesian also for a curvilinear grid.
 %% {\tt gname} & char[$n_s$] & $n_s$ \\ \hline
 %% \end{tabular}
 %% \end{center}
+
+
+
+\section{imagehdf5}\label{sec:imagehdf5-format}
+\index{fileformats!imagehdf5}
+
+The image files in HDF5 format hold identical data as in the image files, but stored as HDF5 attributes and datasets. To improve the I/O efficiency, the header data as well as the patch data are stored in arrays instead of individually in the binary format (i.e. all the ni values of multiple patches are stored in the same HDF5 dataset, with its length equal to the number of patches).
+
+The output of \verb+h5dump -A imagehdf5.file+  is below:
+
+\begin{verbatim}
+HDF5 "image.cycle=0.y=40000.p.sw4img.h5" {
+GROUP "/" {
+   ATTRIBUTE "creationtime" {
+      DATATYPE  H5T_STRING {
+         STRSIZE 25;
+         STRPAD H5T_STR_NULLTERM;
+         CSET H5T_CSET_ASCII;
+         CTYPE H5T_C_S1;
+      }
+      DATASPACE  SCALAR
+      DATA {
+      (0): "Fri Jan 24 14:15:23 2020"
+      }
+   }
+   DATASET "coordinate" {
+      DATATYPE  H5T_IEEE_F64LE
+      DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
+   }
+   DATASET "grid" {
+      DATATYPE  H5T_IEEE_F32LE
+      DATASPACE  SIMPLE { ( 31031 ) / ( 31031 ) }
+   }
+   DATASET "grid_size" {
+      DATATYPE  H5T_IEEE_F64LE
+      DATASPACE  SIMPLE { ( 2 ) / ( 2 ) }
+   }
+   DATASET "gridinfo" {
+      DATATYPE  H5T_STD_I32LE
+      DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
+   }
+   DATASET "mode" {
+      DATATYPE  H5T_STD_I32LE
+      DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
+   }
+   DATASET "ni" {
+      DATATYPE  H5T_STD_I32LE
+      DATASPACE  SIMPLE { ( 2 ) / ( 2 ) }
+   }
+   DATASET "nj" {
+      DATATYPE  H5T_STD_I32LE
+      DATASPACE  SIMPLE { ( 2 ) / ( 2 ) }
+   }
+   DATASET "npatch" {
+      DATATYPE  H5T_STD_I32LE
+      DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
+   }
+   DATASET "patches" {
+      DATATYPE  H5T_IEEE_F32LE
+      DATASPACE  SIMPLE { ( 307307 ) / ( 307307 ) }
+   }
+   DATASET "plane" {
+      DATATYPE  H5T_STD_I32LE
+      DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
+   }
+   DATASET "time" {
+      DATATYPE  H5T_IEEE_F64LE
+      DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
+   }
+   DATASET "zmin" {
+      DATATYPE  H5T_IEEE_F64LE
+      DATASPACE  SIMPLE { ( 2 ) / ( 2 ) }
+   }
+}
+}
+\end{verbatim}
 
 
 \section{volimage}\label{sec:volimage-format}

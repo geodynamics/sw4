@@ -46,7 +46,7 @@ RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zma
    m_sigma = sigma;
    m_seed  = seed;
    m_vsmax = 1e38;
-
+   
 // Determine discretization based on correlation length.
    float_sw4 ppcl = 20; // grid points per correlation length
    m_nig = ppcl*(global_xmax)/corrlen;
@@ -144,7 +144,8 @@ void RandomizedMaterial::perturb_velocities( int g, Sarray& cs, Sarray& cp,
       //      cout << "intersection, z lims grid block " << zmin << " " << zmax << endl;
       //      cout << "intersection, z lims rand block " << m_zmin << " " << m_zmax << endl;
   // Grid block intersects random material block
-      bool curvilinear = g == mEW->mNumberOfGrids-1 && mEW->topographyExists();
+      //      bool curvilinear = g == mEW->mNumberOfGrids-1 && mEW->topographyExists(); // NOT verified for several curvilinear grids
+      bool curvilinear = g >= mEW->mNumberOfCartesianGrids;
       // Interpolate to sw4 grid
       for( int k=mEW->m_kStartInt[g] ; k <= mEW->m_kEndInt[g] ; k++ )
 	 for( int j=mEW->m_jStartInt[g] ; j <= mEW->m_jEndInt[g] ; j++ )
@@ -153,9 +154,9 @@ void RandomizedMaterial::perturb_velocities( int g, Sarray& cs, Sarray& cp,
 	       float_sw4 x = (i-1)*h, y=(j-1)*h, z= zmin + (k-1)*h;
 	       if( curvilinear )
 	       {
-		  x = mEW->mX(i,j,k);
-		  y = mEW->mY(i,j,k);
-		  z = mEW->mZ(i,j,k);
+		  x = mEW->mX[g](i,j,k);
+		  y = mEW->mY[g](i,j,k);
+		  z = mEW->mZ[g](i,j,k);
 	       }
 	       if( m_zmin <= z && z <= m_zmax )
 	       {
@@ -191,7 +192,7 @@ void RandomizedMaterial::perturb_velocities( int g, Sarray& cs, Sarray& cp,
 			      mRndMaterial.m_ib << " <= ip <= " << mRndMaterial.m_ie << "  " <<
 			      mRndMaterial.m_jb << " <= jp <= " << mRndMaterial.m_je << "  " <<
 			      mRndMaterial.m_kb << " <= kp <= " << mRndMaterial.m_ke << " y= " << y << " j= " << j<<endl );
-	       }
+                  }
 	    }
    }
 }

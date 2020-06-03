@@ -1,5 +1,5 @@
 #include "sw4.h"
-
+#include <iostream>
 #include "EW.h"
 //-----------------------------------------------------------------------
 void EW::solerr3_ci( int ib, int ie, int jb, int je, int kb, int ke,
@@ -16,6 +16,7 @@ void EW::solerr3_ci( int ib, int ie, int jb, int je, int kb, int ke,
    float_sw4 sradius2 = radius*radius;
    if( radius < 0 )
       sradius2 = -sradius2;
+   int imxerr, jmxerr, kmxerr;
    const size_t ni = ie-ib+1;
    const size_t nij = ni*(je-jb+1);
    const float_sw4 h3 = h*h*h;
@@ -40,6 +41,9 @@ void EW::solerr3_ci( int ib, int ie, int jb, int je, int kb, int ke,
 		     if( err > liloc )
 		     {
 			liloc = err;
+                        imxerr = i;
+                        jmxerr = j;
+                        kmxerr = k;
 		     }
 		     if( fabs(uex[ind])>xliloc )
 			xliloc = fabs(uex[ind]);
@@ -133,7 +137,7 @@ void EW::solerr3c_ci( int ib, int ie, int jb, int je, int kb, int ke,
    const size_t nij = ni*(je-jb+1);
    const size_t nijk = nij*(ke-kb+1);
    const size_t base  = -(ib+ni*jb+nij*kb);
-
+   int imxerr=0, jmxerr=0, kmxerr=0;
    for( int c=0 ; c<3 ;c++)
    {
       float_sw4 liloc=0, xliloc=0, l2loc=0;
@@ -149,18 +153,26 @@ void EW::solerr3c_ci( int ib, int ie, int jb, int je, int kb, int ke,
 		  {
 		     size_t ind3 = ind+nijk*c;
 		     float_sw4 err = fabs(u[ind3]-uex[ind3]);
-		     liloc = liloc > err ? liloc:err;
-		     xliloc = xliloc > uex[ind3] ? xliloc:uex[ind3];
+                     //		     liloc = liloc > err ? liloc:err;
+                     if( liloc < err )
+                     {
+                        liloc = err;
+                        imxerr = i;
+                        jmxerr = j;
+                        kmxerr = k;
+                     }
+		     xliloc = xliloc > fabs(uex[ind3]) ? xliloc:fabs(uex[ind3]);
 		     if( usesg != 1 )
 			l2loc += jac[ind]*err*err;
 		     else
 			l2loc += jac[ind]*err*err/(strx[i-ib]*stry[j-jb]);
 		  }
 	       }
-	 li = liloc>li?liloc:li;
-	 l2 += l2loc;
+	  li =  liloc> li? liloc: li;
 	 xli = xliloc>xli?xliloc:xli;
+	 l2 += l2loc;
    }
+   //   std::cout << "Max error on grid: " << li << " at (i,j,k)= " << imxerr << " " << jmxerr << " " << kmxerr << std::endl;
 }
 
 //-----------------------------------------------------------------------

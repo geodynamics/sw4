@@ -31,12 +31,14 @@
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
 
 #include "sw4.h"
-
+#include <sys/types.h>
 void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 			float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda,
 			float_sw4* __restrict__ a_met, float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu,
 			int* onesided, float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
-			float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry,
+			float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_acof_no_gp, 
+                        float_sw4* __restrict__ a_ghcof_no_gp,
+                        float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry,
 			int nk, char op )
 {
 //      subroutine CURVILINEAR4SG( ifirst, ilast, jfirst, jlast, kfirst,
@@ -58,6 +60,8 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
    if( op=='=' )
    {
       a1 = 0;
+      for(size_t i=0 ; i < static_cast<size_t>((ilast-ifirst+1))*(jlast-jfirst+1)*(klast-kfirst+1)*3; i++)
+         a_lu[i]=0;
       sgn= 1;
    }
    else if( op=='+')
@@ -96,8 +100,10 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 #define strx(i) a_strx[i-ifirst0]
 #define stry(j) a_stry[j-jfirst0]
 #define acof(i,j,k) a_acof[(i-1)+6*(j-1)+48*(k-1)]
-#define bope(i,j) a_bope[i-1+6*(j-1)]
+#define bope(i,j) a_bope[(i-1)+6*(j-1)]
 #define ghcof(i) a_ghcof[i-1]
+#define acof_no_gp(i,j,k) a_acof_no_gp[(i-1)+6*(j-1)+48*(k-1)]
+#define ghcof_no_gp(i) a_ghcof_no_gp[i-1]
 
 #pragma omp parallel
    {
@@ -1561,24 +1567,24 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 		  for( int m=nk-7 ; m <= nk ; m++ )
 		  {
 		     mucofu2 += 
-			acof(nk-k+1,nk-q+1,nk-m+1)*(
+			acof_no_gp(nk-k+1,nk-q+1,nk-m+1)*(
 		      (2*mu(i,j,m)+la(i,j,m) )*met(2,i,j,m)*strx(i)*met(2,i,j,m)*strx(i)
 		  	          + mu(i,j,m)*(met(3,i,j,m)*stry(j)*met(3,i,j,m)*stry(j)+
 					       met(4,i,j,m)*met(4,i,j,m) )
 				     );
 		     mucofv2 += 
-			acof(nk-k+1,nk-q+1,nk-m+1)*(
+			acof_no_gp(nk-k+1,nk-q+1,nk-m+1)*(
 		      (2*mu(i,j,m)+la(i,j,m) )*met(3,i,j,m)*stry(j)*met(3,i,j,m)*stry(j)
 			          + mu(i,j,m)*(met(2,i,j,m)*strx(i)*met(2,i,j,m)*strx(i)+
 				 	      met(4,i,j,m)*met(4,i,j,m) )
 				     );
 		     mucofw2 += 
-			acof(nk-k+1,nk-q+1,nk-m+1)*((2*mu(i,j,m)+la(i,j,m))*met(4,i,j,m)*met(4,i,j,m)
+			acof_no_gp(nk-k+1,nk-q+1,nk-m+1)*((2*mu(i,j,m)+la(i,j,m))*met(4,i,j,m)*met(4,i,j,m)
                             + mu(i,j,m)*( met(2,i,j,m)*strx(i)*met(2,i,j,m)*strx(i)+
 					  met(3,i,j,m)*stry(j)*met(3,i,j,m)*stry(j) ) );
-		     mucofuv += acof(nk-k+1,nk-q+1,nk-m+1)*(mu(i,j,m)+la(i,j,m))*met(2,i,j,m)*met(3,i,j,m);
-		     mucofuw += acof(nk-k+1,nk-q+1,nk-m+1)*(mu(i,j,m)+la(i,j,m))*met(2,i,j,m)*met(4,i,j,m);
-		     mucofvw += acof(nk-k+1,nk-q+1,nk-m+1)*(mu(i,j,m)+la(i,j,m))*met(3,i,j,m)*met(4,i,j,m);
+		     mucofuv += acof_no_gp(nk-k+1,nk-q+1,nk-m+1)*(mu(i,j,m)+la(i,j,m))*met(2,i,j,m)*met(3,i,j,m);
+		     mucofuw += acof_no_gp(nk-k+1,nk-q+1,nk-m+1)*(mu(i,j,m)+la(i,j,m))*met(2,i,j,m)*met(4,i,j,m);
+		     mucofvw += acof_no_gp(nk-k+1,nk-q+1,nk-m+1)*(mu(i,j,m)+la(i,j,m))*met(3,i,j,m)*met(4,i,j,m);
 		  }
 
 	  // Computing the second derivative,
@@ -1589,21 +1595,21 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 
 	       // Ghost point values, only nonzero for k=nk.
 // 72 ops., tot=4011
-	       mucofu2 = ghcof(nk-k+1)*((2*mu(i,j,nk)+la(i,j,nk))*
+	       mucofu2 = ghcof_no_gp(nk-k+1)*((2*mu(i,j,nk)+la(i,j,nk))*
 				   met(2,i,j,nk)*strx(i)*met(2,i,j,nk)*strx(i)
 				   + mu(i,j,nk)*(met(3,i,j,nk)*stry(j)*met(3,i,j,nk)*stry(j)+
 						met(4,i,j,nk)*met(4,i,j,nk) ));
-	       mucofv2 = ghcof(nk-k+1)*((2*mu(i,j,nk)+la(i,j,nk))*
+	       mucofv2 = ghcof_no_gp(nk-k+1)*((2*mu(i,j,nk)+la(i,j,nk))*
                                 met(3,i,j,nk)*stry(j)*met(3,i,j,nk)*stry(j)
 				   + mu(i,j,nk)*( met(2,i,j,nk)*strx(i)*met(2,i,j,nk)*strx(i)+
 						 met(4,i,j,nk)*met(4,i,j,nk) ) );
-	       mucofw2 = ghcof(nk-k+1)*((2*mu(i,j,nk)+la(i,j,nk))*met(4,i,j,nk)*met(4,i,j,nk)
+	       mucofw2 = ghcof_no_gp(nk-k+1)*((2*mu(i,j,nk)+la(i,j,nk))*met(4,i,j,nk)*met(4,i,j,nk)
                                   + mu(i,j,nk)*
 				( met(2,i,j,nk)*strx(i)*met(2,i,j,nk)*strx(i)+
 				  met(3,i,j,nk)*stry(j)*met(3,i,j,nk)*stry(j) ) );
-	       mucofuv = ghcof(nk-k+1)*(mu(i,j,nk)+la(i,j,nk))*met(2,i,j,nk)*met(3,i,j,nk);
-	       mucofuw = ghcof(nk-k+1)*(mu(i,j,nk)+la(i,j,nk))*met(2,i,j,nk)*met(4,i,j,nk);
-	       mucofvw = ghcof(nk-k+1)*(mu(i,j,nk)+la(i,j,nk))*met(3,i,j,nk)*met(4,i,j,nk);
+	       mucofuv = ghcof_no_gp(nk-k+1)*(mu(i,j,nk)+la(i,j,nk))*met(2,i,j,nk)*met(3,i,j,nk);
+	       mucofuw = ghcof_no_gp(nk-k+1)*(mu(i,j,nk)+la(i,j,nk))*met(2,i,j,nk)*met(4,i,j,nk);
+	       mucofvw = ghcof_no_gp(nk-k+1)*(mu(i,j,nk)+la(i,j,nk))*met(3,i,j,nk)*met(4,i,j,nk);
 	       r1 += istrxy*mucofu2*u(1,i,j,nk+1) + mucofuv*u(2,i,j,nk+1) + istry*mucofuw*u(3,i,j,nk+1);
 	       r2 += mucofuv*u(1,i,j,nk+1) + istrxy*mucofv2*u(2,i,j,nk+1) + istrx*mucofvw*u(3,i,j,nk+1);
 	       r3 += istry*mucofuw*u(1,i,j,nk+1) + istrx*mucofvw*u(2,i,j,nk+1) + istrxy*mucofw2*u(3,i,j,nk+1);
@@ -1917,6 +1923,8 @@ void curvilinear4sg_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst
 #undef strx
 #undef stry
 #undef acof
+#undef acof_no_gp
 #undef bope
 #undef ghcof
+#undef ghcof_no_gp
 }
