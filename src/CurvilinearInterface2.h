@@ -32,6 +32,15 @@ class CurvilinearInterface2 {
 
   float_sw4* m_mass_block;
   int* m_ipiv_block;
+
+#ifdef USE_MAGMA
+  float_sw4 *m_mass_block_gpu;
+  int* m_ipiv_block_gpu;
+  
+  float_sw4** dA_array;
+  magma_int_t** piv_array;
+#endif
+
 #if defined(ENABLE_CUDA)
   float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope, *m_ghcof;
   float_sw4 *m_acof_no_gp, *m_ghcof_no_gp, *m_sbop_no_gp;

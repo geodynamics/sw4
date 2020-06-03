@@ -348,8 +348,8 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   //   if( force_dirichlet )
   //      fg = 1;
 
-  Sarray U_f(3, m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef);
-  Sarray U_c(3, m_ib, m_ie, m_jb, m_je, m_kb, m_ke);
+  Sarray U_f(3, m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef,__FILE__,__LINE__);
+  Sarray U_c(3, m_ib, m_ie, m_jb, m_je, m_kb, m_ke,__FILE__,__LINE__);
   vector<Sarray> Alpha_c, Alpha_f;
 
   //  1. copy   a_U into U_f and U_c
@@ -426,22 +426,42 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   //std::cout<<"RHS SIZE "<<m_ib<<" "<<m_ie<<" "<<m_jb<<" "<<m_je<<" size = "<<asize<<"\n";
   interface_rhs(rhs, U_c, U_f, Alpha_c, Alpha_f);
 
+
+  SW4_MARK_BEGIN("IMPOSE_IC_CPU");
   // 4.b Left hand side, lhs*x
   Sarray lhs(rhs), residual(rhs);
   interface_lhs(lhs, U_c);
 
   // Initial residual
   float_sw4 maxresloc = 0;
-  for (int c = 1; c <= 3; c++)
-    for (int j = lhs.m_jb + 5; j <= lhs.m_je - 5; j++)
-      for (int i = lhs.m_ib + 5; i <= lhs.m_ie - 5; i++) {
-        residual(c, i, j, 1) = lhs(c, i, j, 1) + rhs(c, i, j, 1);
-        if (abs(residual(c, i, j, 1)) > maxresloc)
-          maxresloc = abs(residual(c, i, j, 1));
-      }
+  // for (int c = 1; c <= 3; c++)
+  //   for (int j = lhs.m_jb + 5; j <= lhs.m_je - 5; j++)
+  //     for (int i = lhs.m_ib + 5; i <= lhs.m_ie - 5; i++) {
+  //       residual(c, i, j, 1) = lhs(c, i, j, 1) + rhs(c, i, j, 1);
+  //       if (abs(residual(c, i, j, 1)) > maxresloc)
+  //         maxresloc = abs(residual(c, i, j, 1));
+  //     }
+  SW4_MARK_BEGIN("IMPOSE_IC_GPU1");
+  RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax(0);
+  SView &residualV = residual.getview();;
+  SView &lhsV = lhs.getview();
+  SView &rhsV = rhs.getview();
+  RAJA::RangeSegment j_range(lhs.m_jb + 5,lhs.m_je - 4);
+  RAJA::RangeSegment i_range(lhs.m_ib + 5,lhs.m_ie - 4);
+  RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
+      RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+	for (int c = 1; c <= 3; c++){
+	  residualV(c, i, j, 1) = lhsV(c, i, j, 1) + rhsV(c, i, j, 1);
+	  rmax.max(fabs(residualV(c, i, j, 1)));
+	}
+      });
+  
+  maxresloc = static_cast<float_sw4>(rmax.get());
+  SW4_MARK_END("IMPOSE_IC_GPU1");
   float_sw4 maxres = maxresloc;
   MPI_Allreduce(&maxresloc, &maxres, 1, m_ew->m_mpifloat, MPI_MAX,
                 m_ew->m_cartesian_communicator);
+  
 
   // 4.c Jacobi iteration
   float_sw4 scalef =
@@ -464,6 +484,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   //      convhist.push_back(reltol);
   //      convhist.push_back(abstol);
   //   }
+  SW4_MARK_BEGIN("IMPOSE_IC_JACOBI");
   while (maxres > m_reltol * maxres0 && scalef * maxres > m_abstol &&
          iter <= m_maxit) {
     iter++;
@@ -508,6 +529,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
     MPI_Allreduce(&maxresloc, &maxres, 1, m_ew->m_mpifloat, MPI_MAX,
                   m_ew->m_cartesian_communicator);
   }
+  SW4_MARK_END("IMPOSE_IC_JACOBI");
   //   convhist.push_back(maxres0);
   //   convhist.push_back(maxres);
   //   convhist.push_back(it);
@@ -518,6 +540,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
     std::cout << "     scaled res = " << scalef * maxres
               << " abstol= " << m_abstol << std::endl;
   }
+  SW4_MARK_END("IMPOSE_IC_CPU");
   // 5. Copy U_c and U_f back to a_U, only k=0 for U_c and k=n3f for U_f.
   a_U[m_gc].copy_kplane2(U_c, 0);      // have computed U_c:s ghost points
   a_U[m_gf].copy_kplane2(U_f, m_nkf);  // .. and U_f:s interface points
