@@ -82,11 +82,15 @@ void curvilinear4sgwind(
   float_sw4 sgn = 1;
   if (op == '=') {
     a1 = 0;
-    for (size_t i = 0;
-         i < static_cast<size_t>((ilast - ifirst + 1)) * (jlast - jfirst + 1) *
-                 (klastw - kfirstw + 1) * 3;
-         i++)
-      a_lu[i] = 0;
+    // for (size_t i = 0;
+    //      i < static_cast<size_t>((ilast - ifirst + 1)) * (jlast - jfirst + 1) *
+    //              (klastw - kfirstw + 1) * 3;
+    //      i++)
+    //   a_lu[i] = 0;
+    RAJA::forall<DEFAULT_LOOP1>(
+          RAJA::RangeSegment(0, static_cast<size_t>((ilast - ifirst + 1)) * (jlast - jfirst + 1) *
+                 (klastw - kfirstw + 1) * 3),
+          [=] RAJA_DEVICE(size_t i) { a_lu[i] = 0.; });
     sgn = 1;
   } else if (op == '+') {
     a1 = 1;
@@ -178,9 +182,15 @@ void curvilinear4sgwind(
   //   " << klowb << " " << klowe << std::endl; bool debug= (ifirst==105 &&
   //   ilast==137 && jfirst==105 && jlast==137); int idbg=108, jdbg=107;
   //#pragma omp parallel
+
+  using LOCAL_POL = DEFAULT_LOOP3;
+ 
   {
     if (lower) {
-      std::cout<<"CSGWIND lower \n"<<std::flush;
+      // std::cout<<"CSGWIND lower \n"<<std::flush;
+      // std::cout<<"LOWER I"<<ifirst+2<<" "<<ilast-2<<"\n";
+      // std::cout<<"LOWER J"<<jfirst+2<<" "<<jlast-2<<"\n";
+      // std::cout<<"LOWER K"<<klowb<<" "<<klowe<<"\n";
       // SBP Boundary closure terms
 // #pragma omp for
 //       for (int k = klowb; k <= klowe; k++)
@@ -199,24 +209,26 @@ void curvilinear4sgwind(
       
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
-      Range<4> K(klowb,klowe+1);
+      Range<1> K(klowb,klowe+1);
       forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
 	  RAJA::RangeSegment k_range(klowb,klowe+1);
 	  RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
-      RAJA::kernel<
+      RAJA::kernel< 
           LOCAL_POL>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
                                                                       int k,
                                                                       int j,
                                                                       int i) {
 #endif
+	       
+		       //printf("IN THE ROUTINE\n");
             // 5 ops
             float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
             float_sw4 istry = 1 / (stry(j));
             float_sw4 istrx = 1 / (strx(i));
             float_sw4 istrxy = istry * istrx;
-
+	    //printf("IN THE ROUTINE FURTHER 1 %d %d %d\n",i,j,k);
             float_sw4 r1 = 0, r2 = 0, r3 = 0;
 
             // pp derivative (u) (u-eq)
@@ -247,7 +259,8 @@ void curvilinear4sgwind(
                            mux3 * (u(1, i + 1, j, k) - u(1, i, j, k)) +
                            mux4 * (u(1, i + 2, j, k) - u(1, i, j, k))) *
                           istry;
-
+	    //printf("ARR1 %lf \n",r1);
+	    //printf("IN THE ROUTINE FURTHER 2 %d %d %d\n",i,j,k);
             // qq derivative (u) (u-eq)
             // 43 ops, tot=101
             cof1 = (mu(i, j - 2, k)) * met(1, i, j - 2, k) *
@@ -259,7 +272,7 @@ void curvilinear4sgwind(
                    met(1, i, j + 1, k) * stry(j + 1);
             cof5 = (mu(i, j + 2, k)) * met(1, i, j + 2, k) *
                    met(1, i, j + 2, k) * stry(j + 2);
-
+	    //printf("IN THE ROUTINE FURTHER 3 %d %d %d\n",i,j,k);
             mux1 = cof2 - tf * (cof3 + cof1);
             mux2 = cof1 + cof4 + 3 * (cof3 + cof2);
             mux3 = cof2 + cof5 + 3 * (cof4 + cof3);
@@ -271,7 +284,8 @@ void curvilinear4sgwind(
                            mux3 * (u(1, i, j + 1, k) - u(1, i, j, k)) +
                            mux4 * (u(1, i, j + 2, k) - u(1, i, j, k))) *
                           istrx;
-
+	    //printf("ARR2 %lf \n",r1);
+	    //printf("IN THE ROUTINE FURTHER 4 %d %d %d\n",i,j,k);
             // pp derivative (v) (v-eq)
             // 43 ops, tot=144
             cof1 = (mu(i - 2, j, k)) * met(1, i - 2, j, k) *
@@ -283,7 +297,8 @@ void curvilinear4sgwind(
                    met(1, i + 1, j, k) * strx(i + 1);
             cof5 = (mu(i + 2, j, k)) * met(1, i + 2, j, k) *
                    met(1, i + 2, j, k) * strx(i + 2);
-
+	    //printf("IN THE ROUTINE FURTHER 5% d %d %d\n",i,j,k);
+	    //return;
             mux1 = cof2 - tf * (cof3 + cof1);
             mux2 = cof1 + cof4 + 3 * (cof3 + cof2);
             mux3 = cof2 + cof5 + 3 * (cof4 + cof3);
@@ -295,7 +310,7 @@ void curvilinear4sgwind(
                            mux3 * (u(2, i + 1, j, k) - u(2, i, j, k)) +
                            mux4 * (u(2, i + 2, j, k) - u(2, i, j, k))) *
                           istry;
-
+	    //return;
             // qq derivative (v) (v-eq)
             // 53 ops, tot=197
             cof1 = (2 * mu(i, j - 2, k) + la(i, j - 2, k)) *
@@ -312,14 +327,14 @@ void curvilinear4sgwind(
             mux2 = cof1 + cof4 + 3 * (cof3 + cof2);
             mux3 = cof2 + cof5 + 3 * (cof4 + cof3);
             mux4 = cof4 - tf * (cof3 + cof5);
-
+	    //printf("IN THE ROUTINE FURTHER 6 %d %d %d\n",i,j,k);
             r2 = r2 + i6 *
                           (mux1 * (u(2, i, j - 2, k) - u(2, i, j, k)) +
                            mux2 * (u(2, i, j - 1, k) - u(2, i, j, k)) +
                            mux3 * (u(2, i, j + 1, k) - u(2, i, j, k)) +
                            mux4 * (u(2, i, j + 2, k) - u(2, i, j, k))) *
                           istrx;
-
+	    //return;
             // pp derivative (w) (w-eq)
             // 43 ops, tot=240
             cof1 = (mu(i - 2, j, k)) * met(1, i - 2, j, k) *
@@ -359,14 +374,14 @@ void curvilinear4sgwind(
             mux2 = cof1 + cof4 + 3 * (cof3 + cof2);
             mux3 = cof2 + cof5 + 3 * (cof4 + cof3);
             mux4 = cof4 - tf * (cof3 + cof5);
-
+	    
             r3 = r3 + i6 *
                           (mux1 * (u(3, i, j - 2, k) - u(3, i, j, k)) +
                            mux2 * (u(3, i, j - 1, k) - u(3, i, j, k)) +
                            mux3 * (u(3, i, j + 1, k) - u(3, i, j, k)) +
                            mux4 * (u(3, i, j + 2, k) - u(3, i, j, k))) *
                           istrx;
-
+	    // PROBLEM BELOW THIS LINE
             // All rr-derivatives at once
             // averaging the coefficient
             // 54*8*8+25*8 = 3656 ops, tot=3939
@@ -405,7 +420,7 @@ void curvilinear4sgwind(
                 mucofvw += acof(k, q, m) * (mu(i, j, m) + la(i, j, m)) *
                            met(3, i, j, m) * met(4, i, j, m);
               }
-
+	      // PROBLEM ABOVE HIS LINE
               // Computing the second derivative,
               r1 += istrxy * mucofu2 * u(1, i, j, q) + mucofuv * u(2, i, j, q) +
                     istry * mucofuw * u(3, i, j, q);
@@ -415,7 +430,7 @@ void curvilinear4sgwind(
                     istrx * mucofvw * u(2, i, j, q) +
                     istrxy * mucofw2 * u(3, i, j, q);
             }
-
+	    //printf("ARR3 %lf \n",r1);
             // Ghost point values, only nonzero for k=1.
             // 72 ops., tot=4011
             mucofu2 =
@@ -450,7 +465,8 @@ void curvilinear4sgwind(
             r3 += istry * mucofuw * u(1, i, j, 0) +
                   istrx * mucofvw * u(2, i, j, 0) +
                   istrxy * mucofw2 * u(3, i, j, 0);
-
+	    //printf("ARR4 %lf \n",r1);
+	    //return;
             // pq-derivatives (u-eq)
             // 38 ops., tot=4049
             r1 +=
@@ -502,7 +518,7 @@ void curvilinear4sgwind(
                          (c2 * (u(2, i - 1, j + 2, k) - u(2, i - 1, j - 2, k)) +
                           c1 *
                               (u(2, i - 1, j + 1, k) - u(2, i - 1, j - 1, k))));
-
+	    // ERROR EXITS BEFORE THIS LINE
             // pq-derivatives (v-eq)
             // 38 ops. , tot=4125
             r2 +=
@@ -560,6 +576,7 @@ void curvilinear4sgwind(
             float_sw4 dudrm2 = 0, dudrm1 = 0, dudrp1 = 0, dudrp2 = 0;
             float_sw4 dvdrm2 = 0, dvdrm1 = 0, dvdrp1 = 0, dvdrp2 = 0;
             float_sw4 dwdrm2 = 0, dwdrm1 = 0, dwdrp1 = 0, dwdrp2 = 0;
+	    // PROBLEM EXISTS BEFORE THIS LINE
             for (int q = 1; q <= 8; q++) {
               dudrm2 += bope(k, q) * u(1, i - 2, j, q);
               dvdrm2 += bope(k, q) * u(2, i - 2, j, q);
@@ -574,7 +591,7 @@ void curvilinear4sgwind(
               dvdrp1 += bope(k, q) * u(2, i + 1, j, q);
               dwdrp1 += bope(k, q) * u(3, i + 1, j, q);
             }
-
+	    // PROBLEM EXISTS BEFORE THIS LINE
             // rp derivatives (u-eq)
             // 67 ops, tot=4422
             r1 += (c2 * ((2 * mu(i + 2, j, k) + la(i + 2, j, k)) *
@@ -677,7 +694,6 @@ void curvilinear4sgwind(
               dvdrp1 += bope(k, q) * u(2, i, j + 1, q);
               dwdrp1 += bope(k, q) * u(3, i, j + 1, q);
             }
-
             // rq derivatives (u-eq)
             // 42 ops, tot=4736
             r1 +=
@@ -751,6 +767,7 @@ void curvilinear4sgwind(
 
             // pr and qr derivatives at once
             // in loop: 8*(53+53+43) = 1192 ops, tot=6037
+	    //return;
             for (int q = 1; q <= 8; q++) {
               // (u-eq)
               // 53 ops
@@ -827,8 +844,9 @@ void curvilinear4sgwind(
                              c1 * (u(2, i, j + 1, q) - u(2, i, j - 1, q))) *
                             istrx);
             }
-
+	    //printf("%d %d %d = %d %lf \n",i,j,k,base3w + (i) + ni * (j) + nij * (k) + nijkw*3,r1);
             // 12 ops, tot=6049
+
             lu(1, i, j, k) = a1 * lu(1, i, j, k) + sgn * r1 * ijac;
             lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
             lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
@@ -839,7 +857,12 @@ void curvilinear4sgwind(
 #endif
     }
     if (mid) {
-      std::cout<<"CSGWIND mid\n"<<std::flush;
+      //std::cout<<"CSGWIND mid\n"<<std::flush;
+#ifdef PEEKS_GALORE
+      SW4_PEEK;
+      SYNC_DEVICE;
+#endif
+
 // #pragma omp for
 //       for (int k = kmidb; k <= kmide; k++)
 //         for (int j = jfirst + 2; j <= jlast - 2; j++)
@@ -2171,9 +2194,19 @@ void curvilinear4sgwind(
             // 4 ops, tot=2126
             lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
 		     });
+#ifdef PEEKS_GALORE
+      SW4_PEEK;
+      SYNC_DEVICE;
+#endif
+
     }
     if (upper) {
-      std::cout<<"CSGWIND upper\n"<<std::flush;
+      //std::cout<<"CSGWIND upper\n"<<std::flush;
+#ifdef PEEKS_GALORE
+      SW4_PEEK;
+      SYNC_DEVICE;
+#endif
+
 // #pragma omp for
 //       for (int k = khighb; k <= khighe; k++)
 //         for (int j = jfirst + 2; j <= jlast - 2; j++)

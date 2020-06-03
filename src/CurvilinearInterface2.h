@@ -32,11 +32,14 @@ class CurvilinearInterface2 {
 
   float_sw4* m_mass_block;
   int* m_ipiv_block;
-
+#if defined(ENABLE_CUDA)
+  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope, *m_ghcof;
+  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp, *m_sbop_no_gp;
+#else
   float_sw4 m_acof[384], m_bope[48], m_ghcof[6], m_acof_no_gp[384],
       m_ghcof_no_gp[6];
   float_sw4 m_sbop[6], m_sbop_no_gp[6], m_bop[24];
-
+#endif
   void injection(Sarray& u_f, Sarray& u_c);
   void interface_block(Sarray& matrix);
   void interface_lhs(Sarray& lhs, Sarray& uc);
@@ -76,6 +79,7 @@ class CurvilinearInterface2 {
  public:
   CurvilinearInterface2(int a_gc, EW* a_ew);
   CurvilinearInterface2() {}
+  ~CurvilinearInterface2();
   void init_arrays(std::vector<float_sw4*>& a_strx,
                    std::vector<float_sw4*>& a_stry);
   //   void test1( EW* a_ew, int gc, std::vector<Sarray>& a_U );

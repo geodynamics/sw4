@@ -6,6 +6,8 @@
 #include "TestEcons.h"
 #include "TestTwilight.h"
 #include "caliper.h"
+#include <iostream>
+
 extern "C" {
 void F77_FUNC(dgetrf, DGETRF)(int*, int*, double*, int*, int*, int*);
 void F77_FUNC(dgetrs, DGETRS)(char*, int*, int*, double*, int*, int*, double*,
@@ -33,13 +35,42 @@ CurvilinearInterface2::CurvilinearInterface2(int a_gc, EW* a_ew) {
   m_etest = a_ew->create_energytest();
   m_tw = a_ew->create_twilight();
   m_nghost = 5;
+
+  #if defined(ENABLE_CUDA)
+  float_sw4* tmpa =
+      SW4_NEW(Managed, float_sw4[6 + 384 + 24 + 48 + 6 + 384 + 6 + 6]);
+  m_sbop = tmpa;  // PTR_PUSH(Managed,m_sbop);
+  m_acof = m_sbop + 6;
+  PTR_PUSH(Managed, m_acof, 384 * sizeof(float_sw4));
+  m_bop = m_acof + 384;
+  PTR_PUSH(Managed, m_bop, 24 * sizeof(float_sw4));
+  m_bope = m_bop + 24;
+  PTR_PUSH(Managed, m_bope, 48 * sizeof(float_sw4));
+  m_ghcof = m_bope + 48;
+  PTR_PUSH(Managed, m_ghcof, 6 * sizeof(float_sw4));
+
+  m_acof_no_gp = m_ghcof + 6;
+  PTR_PUSH(Managed, m_acof_no_gp, 384 * sizeof(float_sw4));
+  m_ghcof_no_gp = m_acof_no_gp + 384;
+  PTR_PUSH(Managed, m_ghcof_no_gp, 6 * sizeof(float_sw4));
+  m_sbop_no_gp = m_ghcof_no_gp + 6;
+  PTR_PUSH(Managed, m_sbop_no_gp, 6 * sizeof(float_sw4));
+#endif
+
   a_ew->GetStencilCoefficients(m_acof, m_ghcof, m_bop, m_bope, m_sbop);
   bndryOpNoGhostc(m_acof_no_gp, m_ghcof_no_gp, m_sbop_no_gp);
   for (int s = 0; s < 4; s++) m_isbndry[s] = true;
   m_use_attenuation = a_ew->usingAttenuation();
   m_number_mechanisms = a_ew->getNumberOfMechanisms();
+
+  
 }
 
+  CurvilinearInterface2::~CurvilinearInterface2(){
+#if defined(ENABLE_CUDA)
+    ::operator delete[](m_sbop, Managed);
+#endif
+  }
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
   SW4_MARK_FUNCTION;
@@ -150,11 +181,11 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   m_met_c.define(4, m_ib, m_ie, m_jb, m_je, m_kb, m_ke);
   m_ew->m_gridGenerator->generate_grid_and_met(m_ew, m_gc, m_x_c, m_y_c, m_z_c,
                                                m_jac_c, m_met_c, false);
-  std::cout<<"HERE 1\n";
+  //std::cout<<"HERE 1\n";
   m_met_c.insert_intersection(m_ew->mMetric[m_gc]);
-  std::cout<<"HERE 1.1\n"<<std::flush;
+  //std::cout<<"HERE 1.1\n"<<std::flush;
   m_jac_c.insert_intersection(m_ew->mJ[m_gc]);
-   std::cout<<"HERE 1.2\n"<<std::flush;
+  //std::cout<<"HERE 1.2\n"<<std::flush;
   communicate_array(m_met_c, true);
   communicate_array(m_jac_c, true);
 
@@ -322,7 +353,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   vector<Sarray> Alpha_c, Alpha_f;
 
   //  1. copy   a_U into U_f and U_c
-  std::cout<<"HERE 3\n";
+  //std::cout<<"HERE 3\n";
   U_f.insert_intersection(a_U[m_gf]);
   U_c.insert_intersection(a_U[m_gc]);
   if (m_use_attenuation) {
@@ -390,7 +421,9 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   // are uc's ghost points at k=0.
 
   // 4.a Form right hand side of equation
-  Sarray rhs(3, m_ib, m_ie, m_jb, m_je, 1, 1);
+  Sarray rhs(3, m_ib, m_ie, m_jb, m_je, 1, 1,__FILE__,__LINE__);
+  int asize = 3*(m_ie-m_ib+1)*(m_je-m_jb+1);
+  //std::cout<<"RHS SIZE "<<m_ib<<" "<<m_ie<<" "<<m_jb<<" "<<m_je<<" size = "<<asize<<"\n";
   interface_rhs(rhs, U_c, U_f, Alpha_c, Alpha_f);
 
   // 4.b Left hand side, lhs*x
@@ -634,7 +667,7 @@ void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
         utmp(c, i, j, 0) = uc(c, i, j, 0);
         uc(c, i, j, 0) = 0;
       }
-
+  //std::cout<<"CALL TO CURV4SGWIND A\n";
   int onesided[6] = {0, 0, 0, 0, 1, 1};
   // 2. Compute L(uc)/rhoc
   curvilinear4sgwind(m_ib, m_ie, m_jb, m_je, m_kb, m_ke, 1, 1, uc.c_ptr(),

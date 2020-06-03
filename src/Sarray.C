@@ -1304,7 +1304,7 @@ void Sarray::insert_intersection(Sarray& a_U) {
     const int lm_nj = m_nj;
     const int lm_nk = m_nk;
     const int lm_nc = m_nc;
-    std::cout<<"Calling interest \n"<<std::flush;
+    //std::cout<<"Calling interest \n"<<std::flush;
     RAJA::RangeSegment k_range(wind[4],wind[5]+1);
     RAJA::RangeSegment j_range(wind[2],wind[3]+1);
     RAJA::RangeSegment i_range(wind[0],wind[1]+1);

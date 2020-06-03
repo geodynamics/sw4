@@ -508,6 +508,7 @@ void CheckError(cudaError_t const err, const char *file, char const *const fun,
   if (err) {
     std::cerr << "CUDA Error Code[" << err << "]: " << cudaGetErrorString(err)
               << " " << file << " " << fun << " Line number:  " << line << "\n";
+    abort();
   }
 }
 #endif
