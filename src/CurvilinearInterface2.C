@@ -568,16 +568,21 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
 #endif
 
     lc=0;
-for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
-      for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
-	residual(1, i, j, 1) = x[3*lc+0];
-        residual(2, i, j, 1) = x[3*lc+1];
-        residual(3, i, j, 1) = x[3*lc+2];
-        U_c(1, i, j, 0) -= relax * residual(1, i, j, 1);
-        U_c(2, i, j, 0) -= relax * residual(2, i, j, 1);
-        U_c(3, i, j, 0) -= relax * residual(3, i, j, 1);
-	lc++;
-      }
+// for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
+//       for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
+SView &U_cV = U_c.getview();;
+RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
+					   RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+    // for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
+    //   for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
+         size_t ind = (i - l_ib) + nimb * (j - l_jb);
+	residualV(1, i, j, 1) = lx[3*ind+0];
+        residualV(2, i, j, 1) = lx[3*ind+1];
+        residualV(3, i, j, 1) = lx[3*ind+2];
+        U_cV(1, i, j, 0) -= relax * residualV(1, i, j, 1);
+        U_cV(2, i, j, 0) -= relax * residualV(2, i, j, 1);
+        U_cV(3, i, j, 0) -= relax * residualV(3, i, j, 1);
+  });
  
 #else
     for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
