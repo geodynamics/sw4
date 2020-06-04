@@ -250,6 +250,42 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   // Repackage Mass_block into array of fortran order.
   int nimb = (m_Mass_block.m_ie - m_Mass_block.m_ib + 1);
   size_t msize = nimb * (m_Mass_block.m_je - m_Mass_block.m_jb + 1);
+
+#ifdef USE_MAGMA
+  std::cout<<" USING MAGMA FOR DGETRF WITH BATCH SIZE "<<msize<<"\n";
+  m_mass_block = SW4_NEW(Managed,float_sw4[9 * msize]);
+  dA_array = SW4_NEW(Managed, float_sw4*[msize]);
+  m_ipiv_block = SW4_NEW(Managed, int[3 * msize]);
+  piv_array = SW4_NEW(Managed, int*[msize]);
+  magma_int_t *info = SW4_NEW(Managed, int[msize]);
+  // For use in solve 
+  dB_array = SW4_NEW(Managed,float_sw4*[msize]);
+  x = SW4_NEW(Managed,float_sw4[3*msize]);
+  // End for use in solver
+  for (int j = m_jb + m_nghost; j <= m_je - m_nghost; j++)
+    for (int i = m_ib + m_nghost; i <= m_ie - m_nghost; i++) {
+      size_t ind = (i - (m_ib + m_nghost)) + nimb * (j - (m_jb + m_nghost));
+      for (int c = 1; c <= 9; c++)
+        m_mass_block[c - 1 + 9 * ind] = m_Mass_block(c, i, j, 1);
+    }
+  for(int i=0;i<msize;i++){
+    dA_array[i] = &m_mass_block[i*9];
+    piv_array[i] = &m_ipiv_block[3*i];
+    info[i]=0;
+    dB_array[i]=&x[3*i]; 
+  }
+
+  magma_queue_create(0,&queue);
+ 
+  magma_int_t retval;
+  magma_int_t m =3;
+  retval = magma_dgetrf_batched(m,m,dA_array,m,piv_array,info,msize,queue);
+  if (retval!=MAGMA_SUCCESS){
+    std::cerr<<"MAGMA DGETRF BATCHED call failed"<<std::flush;
+    abort();
+  }
+ 
+#else
   m_mass_block = new float_sw4[9 * msize];
   for (int j = m_jb + m_nghost; j <= m_je - m_nghost; j++)
     for (int i = m_ib + m_nghost; i <= m_ie - m_nghost; i++) {
@@ -279,6 +315,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
     }
   }
   SW4_MARK_END("DGETRF");
+#endif
 }
 
 //-----------------------------------------------------------------------
@@ -489,6 +526,42 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
          iter <= m_maxit) {
     iter++;
     //      std::cout << "Iteration " << iter << " " << scalef*maxres << "\n";
+#ifdef USE_MAGMA
+    int lc=0;
+    int l_ib = m_Mass_block.m_ib;
+    int l_ie = m_Mass_block.m_ie;
+    int l_jb = m_Mass_block.m_jb;
+    int l_je = m_Mass_block.m_je;
+    for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
+      for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
+        size_t ind = (i - m_Mass_block.m_ib) + nimb * (j - m_Mass_block.m_jb);
+        for(int l=1;l<4;l++) x[l-1+3*lc] =residual(l, i, j, 1);
+	//dB_array[lc]=&x[3*lc]; // Move it to LU fact
+	lc++;
+      }
+    //std::cout<<"BATCH SIZE IN SOLVE IS "<<lc<<"\n";
+    //magma_int_t m_three = 3;
+    //magma_int_t m_one = 1;
+
+    magma_trans_t m_trans=MagmaNoTrans;
+    magma_int_t retval = magma_dgetrs_batched(m_trans,three,one,dA_array,three,piv_array,dB_array,three,lc,queue);
+    if (retval!=MAGMA_SUCCESS){
+      std::cerr<<"MAGMA DGETRS BATCHED call failed"<<std::flush;
+      abort();
+    }
+    lc=0;
+for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
+      for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
+	residual(1, i, j, 1) = x[3*lc+0];
+        residual(2, i, j, 1) = x[3*lc+1];
+        residual(3, i, j, 1) = x[3*lc+2];
+        U_c(1, i, j, 0) -= relax * residual(1, i, j, 1);
+        U_c(2, i, j, 0) -= relax * residual(2, i, j, 1);
+        U_c(3, i, j, 0) -= relax * residual(3, i, j, 1);
+	lc++;
+      }
+ 
+#else
     for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
       for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
         size_t ind = (i - m_Mass_block.m_ib) + nimb * (j - m_Mass_block.m_jb);
@@ -512,7 +585,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
         U_c(2, i, j, 0) -= relax * residual(2, i, j, 1);
         U_c(3, i, j, 0) -= relax * residual(3, i, j, 1);
       }
-
+#endif
     // 4.d Communicate U_c here (only k=0 plane)
     communicate_array(U_c, false, 0);
     interface_lhs(lhs, U_c);

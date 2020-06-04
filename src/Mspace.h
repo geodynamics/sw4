@@ -23,6 +23,10 @@
 #include "umpire/strategy/MonotonicAllocationStrategy.hpp"
 #include "umpire/util/Macros.hpp"
 #endif
+#ifdef USE_MAGMA
+#include "magma_v2.h"
+#endif
+
 #if defined(ENABLE_CUDA)
 #include <cuda_profiler_api.h>
 #include <nvml.h>

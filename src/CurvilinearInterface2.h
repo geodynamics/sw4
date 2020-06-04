@@ -5,6 +5,10 @@
 
 #include "TestEcons.h"
 #include "TestTwilight.h"
+#ifdef USE_MAGMA
+#include "magma_v2.h"
+#include "magma_dbatched.h"
+#endif
 
 class Sarray;
 class EW;
@@ -39,6 +43,9 @@ class CurvilinearInterface2 {
   
   float_sw4** dA_array;
   magma_int_t** piv_array;
+  magma_queue_t queue;
+  float_sw4** dB_array;
+  float_sw4* x;
 #endif
 
 #if defined(ENABLE_CUDA)

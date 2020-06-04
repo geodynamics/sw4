@@ -31,6 +31,12 @@ void presetGPUID() {
       printf("NVML SET CPU AFFINITY CALLED SUCCESFULLY\n");
   }
   printf("Device set to %d \n", global_variables.device);
+#ifdef USE_MAGMA
+  if (magma_init()!=MAGMA_SUCCESS){
+    std::cerr<<"ERROR MAGMA INIT FAILED\n";
+    abort();
+  }
+#endif
 #endif
 }
 
