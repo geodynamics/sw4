@@ -480,7 +480,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   //     }
   SW4_MARK_BEGIN("IMPOSE_IC_GPU1");
   RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax(0);
-  SView &residualV = residual.getview();;
+  SView &residualV = residual.getview();
   SView &lhsV = lhs.getview();
   SView &rhsV = rhs.getview();
   RAJA::RangeSegment j_range(lhs.m_jb + 5,lhs.m_je - 4);
@@ -532,23 +532,41 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
     int l_ie = m_Mass_block.m_ie;
     int l_jb = m_Mass_block.m_jb;
     int l_je = m_Mass_block.m_je;
-    for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
-      for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
-        size_t ind = (i - m_Mass_block.m_ib) + nimb * (j - m_Mass_block.m_jb);
-        for(int l=1;l<4;l++) x[l-1+3*lc] =residual(l, i, j, 1);
-	//dB_array[lc]=&x[3*lc]; // Move it to LU fact
-	lc++;
-      }
-    //std::cout<<"BATCH SIZE IN SOLVE IS "<<lc<<"\n";
+    SView &residualV = residual.getview();;
+    RAJA::RangeSegment j_range(l_jb,l_je+1);
+    RAJA::RangeSegment i_range(l_ib,l_ie+1);
+    
+    float_sw4 *lx = x;
+    RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
+					   RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+    // for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
+    //   for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
+         size_t ind = (i - l_ib) + nimb * (j - l_jb);
+	 for(int l=1;l<4;l++) lx[l-1+3*ind] =residualV(l, i, j, 1);
+					   });
+    //#define PEEKS_GALORE
+#ifdef PEEKS_GALORE
+      SW4_PEEK;
+      SYNC_DEVICE;
+#endif
+      //SYNC_STREAM;
+
     //magma_int_t m_three = 3;
     //magma_int_t m_one = 1;
-
+      magma_int_t batchsize=(l_ie-l_ib)+nimb*(l_je-l_jb)+1;
+      //std::cout<<"BATCH SIZE IN SOLVE IS "<<batchsize<<"\n";
     magma_trans_t m_trans=MagmaNoTrans;
-    magma_int_t retval = magma_dgetrs_batched(m_trans,three,one,dA_array,three,piv_array,dB_array,three,lc,queue);
+    magma_int_t retval = magma_dgetrs_batched(m_trans,three,one,dA_array,three,piv_array,dB_array,three,batchsize,queue);
     if (retval!=MAGMA_SUCCESS){
       std::cerr<<"MAGMA DGETRS BATCHED call failed"<<std::flush;
       abort();
     }
+
+#ifdef PEEKS_GALORE
+      SW4_PEEK;
+      SYNC_DEVICE;
+#endif
+
     lc=0;
 for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
       for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
