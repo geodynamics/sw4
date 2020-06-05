@@ -482,14 +482,23 @@ void Source::correct_Z_level(EW* a_ew) {
   if (m_myPoint) {
     // evaluate z-coordinate of topography
     // NOTE: we already tested for topography above
-    float_sw4 q, r;
-    int gCurv = a_ew->mNumberOfGrids - 1;
-    float_sw4 h = a_ew->mGridSize[gCurv];
-    q = mX0 / h + 1.0;
-    r = mY0 / h + 1.0;
-    // evaluate elevation of topography on the grid
-    if (!a_ew->interpolate_topography(q, r, zTopoLoc,
-                                      true))  // used the smoothed topography
+    // float_sw4 q, r;
+    // int gCurv = a_ew->mNumberOfGrids - 1;
+    // float_sw4 h = a_ew->mGridSize[gCurv];
+    // q = mX0 / h + 1.0;
+    // r = mY0 / h + 1.0;
+    // // evaluate elevation of topography on the grid
+    // if (!a_ew->interpolate_topography(q, r, zTopoLoc,
+    //                                   true))  // used the smoothed topography
+    // {
+    //   cerr << "Unable to evaluate topography for source at X= " << mX0
+    //        << " Y= " << mY0 << " Z= " << mZ0 << endl;
+    //   cerr << "Setting topography to ZERO" << endl;
+    //   zTopoLoc = 0;
+    // }
+    if (!a_ew->m_gridGenerator->interpolate_topography(
+            a_ew, mX0, mY0, zTopoLoc,
+            a_ew->mTopoGridExt))  // used the smoothed topography
     {
       cerr << "Unable to evaluate topography for source at X= " << mX0
            << " Y= " << mY0 << " Z= " << mZ0 << endl;
@@ -519,7 +528,10 @@ void Source::correct_Z_level(EW* a_ew) {
       // NOTE: we already tested for topography above
       float_sw4 q0, r0, s0;
       // find the k-index for the closest grid point
-      if (!a_ew->invert_curvilinear_grid_mapping(mX0, mY0, mZ0, q0, r0, s0)) {
+if (!a_ew->m_gridGenerator->inverse_grid_mapping(a_ew, mX0, mY0, mZ0, g,
+						 q0, r0, s0))
+  //if (!a_ew->invert_curvilinear_grid_mapping(mX0, mY0, mZ0, q0, r0, s0)) 
+	{
         cerr << "Unable to invert curvilinear mapping for source at X= " << mX0
              << " Y= " << mY0 << " Z= " << mZ0 << endl;
         cerr << "Setting s-parameter to 0" << endl;
@@ -1474,13 +1486,16 @@ void Source::set_grid_point_sources4(EW* a_EW,
   bool canBeInverted, curvilinear;
   float_sw4 normwgh[4] = {17.0 / 48.0, 59.0 / 48.0, 43.0 / 48.0, 49.0 / 48.0};
 
-  if (g == a_EW->mNumberOfGrids - 1 && a_EW->topographyExists()) {
+  //if (g == a_EW->mNumberOfGrids - 1 && a_EW->topographyExists()) {
+  if (g > a_EW->mNumberOfCartesianGrids - 1 && a_EW->topographyExists()) {
     // Curvilinear
     // Problem when the curvilinear mapping is NOT analytic:
     // This routine can only compute the 's' coordinate if (mX0, mY0) is owned
     // by this processor
-    canBeInverted =
-        a_EW->invert_curvilinear_grid_mapping(mX0, mY0, mZ0, q, r, s);
+    canBeInverted = a_EW->m_gridGenerator->inverse_grid_mapping(
+								a_EW, mX0, mY0, mZ0, g, q, r, s);
+    // canBeInverted =
+    //     a_EW->invert_curvilinear_grid_mapping(mX0, mY0, mZ0, q, r, s);
 
     // Broadcast the computed s to all processors.
     // First find out the ID of a processor that defines s ...
@@ -1503,7 +1518,11 @@ void Source::set_grid_point_sources4(EW* a_EW,
     // find_curvilinear_derivatives_at_point will fail
     if (s < 0.) {
       float_sw4 xTop, yTop, zTop;
-      a_EW->curvilinear_grid_mapping(q, r, 0., xTop, yTop, zTop);
+      a_EW->m_gridGenerator->grid_mapping(
+					  a_EW, q, r, 0., g, xTop, yTop,
+					  zTop); // IS IT CORRECT TO USE 'g' HERE???
+      //a_EW->curvilinear_grid_mapping(q, r, 0., xTop, yTop, zTop);
+      // IS IT CORRECT TO USE 'g' HERE???
       double lat, lon;
       a_EW->computeGeographicCoord(mX0, mY0, lon, lat);
       printf(
@@ -2053,7 +2072,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
     float_sw4 dsX0[3], dsY0[3], dsZ0[3];
     // Hessians of sX0[0]=sX, sX0[1]=sY, and sX0[2]=sZ wrt. (q,r,s), in order
     // qq,qr,qs,rr,rs,ss
-    // float_sw4  s2sX0[6], d2sY0[6], d2sZ0[6];
+    float_sw4  d2sX0[6], d2sY0[6], d2sZ0[6];
     if (!curvilinear) {
       // Cartesian case, constant metric
       qX0[0] = 1 / h;
@@ -2068,8 +2087,8 @@ void Source::set_grid_point_sources4(EW* a_EW,
       dsX0[0] = dsX0[1] = dsX0[2] = 0;
       dsY0[0] = dsY0[1] = dsY0[2] = 0;
       dsZ0[0] = dsZ0[1] = dsZ0[2] = 0;
-      // for( int i=0 ; i < 6  ; i++ )
-      //    d2sX0[i]=d2sY0[i] = d2sZ0[i] = 0;
+       for( int i=0 ; i < 6  ; i++ )
+          d2sX0[i]=d2sY0[i] = d2sZ0[i] = 0;
     } else {
       // Compute the curvilinear metric in the processor that owns the source.
       //   (ic, jc are undefined if canBeInverted is false.)
@@ -3058,7 +3077,8 @@ void Source::compute_metric_at_source(EW* a_EW, float_sw4 q, float_sw4 r,
     zq = zr = zs = 0;
     int order;
     float_sw4 zetaBreak;
-    a_EW->get_gridgen_info(order, zetaBreak);
+    //    a_EW->get_gridgen_info(order, zetaBreak);
+    a_EW->m_gridGenerator->get_gridgen_info(order, zetaBreak);
     float_sw4 zpar = (s - 1) / (zetaBreak * (Nz - 1));
     float_sw4 kBreak = 1 + zetaBreak * (Nz - 1);
 

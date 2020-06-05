@@ -130,9 +130,24 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
       m_writeTime(0.0),
 #endif
       m_event(event) {
+
+  // 1. Adjust z if depth below topography is given
+   if (m_zRelativeToTopography && a_ew->topographyExists() ) 
+   {
+      a_ew->m_gridGenerator->interpolate_topography( a_ew, mX, mY, m_zTopo, a_ew->mTopoGridExt);
+      mZ += m_zTopo;
+   } 
+   else
+      m_zTopo = 0;
+   m_zRelativeToTopography = false;
+// 2. Find nearest grid point and its grid.
+   m_myPoint = a_ew->computeNearestGridPoint2( m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ );
+   //   if( m_myPoint )
+   //   cout << "station at ("<< mX  << " " << mY << " " << mZ <<" placed at grid point " <<
+   //      m_i0 << " " << m_j0 << " " << m_k0 << " in grid " << m_grid0 <<endl;
   // preliminary determination of nearest grid point ( before topodepth
   // correction to mZ)
-  a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
+  //a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
 
   // quiet mode? Note that this flag can change in the EW object, so it is
   // better to test for m_ew->getQuiet()

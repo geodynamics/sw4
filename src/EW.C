@@ -1266,6 +1266,64 @@ void EW::computeGeographicCoord(double x, double y, double& longitude,
   // longitude = lonlat.u/deg2rad;
   // latitude  = lonlat.v/deg2rad;
 }
+//-----------------------------------------------------------------------
+int EW::computeNearestGridPoint2( int& a_i, int& a_j, int& a_k, int& a_g,
+                                  float_sw4 a_x, float_sw4 a_y, float_sw4 a_z )
+{
+   int success = 0;
+   if( a_z >= m_zmin[mNumberOfCartesianGrids-1] )
+   {
+      // point is in a Cartesian grid
+      int g=0;
+      while( g < mNumberOfCartesianGrids && a_z < m_zmin[g] )
+         g++;
+      a_g = g;
+      a_i = static_cast<int>( round( a_x/mGridSize[g]+1) );
+      a_j = static_cast<int>( round( a_y/mGridSize[g]+1) );
+      a_k = static_cast<int>( round( (a_z-m_zmin[g])/mGridSize[g]+1) );
+
+      VERIFY2(a_i >= 1-m_ghost_points && a_i <= m_global_nx[a_g]+m_ghost_points,
+              "Grid Error: i (" << a_i << ") is out of bounds: ( " << 1 << "," 
+              << m_global_nx[a_g] << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
+      VERIFY2(a_j >= 1-m_ghost_points && a_j <= m_global_ny[a_g]+m_ghost_points,
+              "Grid Error: j (" << a_j << ") is out of bounds: ( " << 1 << ","
+              << m_global_ny[a_g] << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
+      VERIFY2(a_k >= m_kStart[a_g] && a_k <= m_kEnd[a_g],
+              "Grid Error: k (" << a_k << ") is out of bounds: ( " << 1 << "," 
+              << m_kEnd[a_g]-m_ghost_points << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
+      success = interior_point_in_proc(a_i,a_j,a_g);
+   }
+   else
+   {
+      // point is in a curvilinear grid
+      //
+      // foundglobal= Grid point found in at least one processor.
+      // success  = Grid point found in my processor (found locally).
+      //
+      int g=mNumberOfCartesianGrids;
+      //  int foundglobal=0; 
+      success = 0;
+      float_sw4 q, r, s;
+      while( g < mNumberOfGrids && !success )
+      //      while( g < mNumberOfGrids && !foundglobal )
+      {
+         success = m_gridGenerator->
+            inverse_grid_mapping( this, a_x, a_y, a_z, g, q, r, s );
+         if( success )
+         {
+            a_g = g;
+            a_i = static_cast<int>( round( q ) );
+            a_j = static_cast<int>( round( r ) );
+            a_k = static_cast<int>( round( s ) );
+         }
+     //         MPI_Allreduce(&success,&foundglobal,1,MPI_INT,MPI_MAX,m_cartesian_communicator);
+         g++;
+      }
+      //      VERIFY2( foundglobal, "ERROR in EW:computeNearestGridPoint2, could not find curvilinear grid point");
+   }
+   return success;
+}
+
 
 //-------------------------------------------------------
 void EW::computeNearestGridPoint(int& a_i, int& a_j, int& a_k,

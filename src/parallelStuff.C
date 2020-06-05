@@ -125,86 +125,151 @@ void EW::setup2D_MPICommunications() {
   SW4_MARK_FUNCTION;
   if (mVerbose >= 2 && proc_zero())
     cout << "***inside setup2D_MPICommunications***" << endl;
-  // Define MPI datatypes for communication across processor boundaries
-  // For topography: finest grid (curvilinear) only, only one value per grid
-  // point (nc=1) get the size from the top Cartesian grid
+  // // Define MPI datatypes for communication across processor boundaries
+  // // For topography: finest grid (curvilinear) only, only one value per grid
+  // // point (nc=1) get the size from the top Cartesian grid
   int g = mNumberOfCartesianGrids - 1;
   int ni = m_iEnd[g] - m_iStart[g] + 1, nj = m_jEnd[g] - m_jStart[g] + 1;
-  MPI_Type_vector(nj, m_ppadding, ni, m_mpifloat, &m_send_type_2dfinest[0]);
-  MPI_Type_vector(1, m_ppadding * ni, ni * nj, m_mpifloat,
-                  &m_send_type_2dfinest[1]);
-  MPI_Type_commit(&m_send_type_2dfinest[0]);
-  MPI_Type_commit(&m_send_type_2dfinest[1]);
+  // MPI_Type_vector(nj, m_ppadding, ni, m_mpifloat, &m_send_type_2dfinest[0]);
+  // MPI_Type_vector(1, m_ppadding * ni, ni * nj, m_mpifloat,
+  //                 &m_send_type_2dfinest[1]);
+  // MPI_Type_commit(&m_send_type_2dfinest[0]);
+  // MPI_Type_commit(&m_send_type_2dfinest[1]);
 
-  // Extended number of padding points
+  // // Extended number of padding points
   ni = ni + 2 * m_ext_ghost_points;
   nj = nj + 2 * m_ext_ghost_points;
   int extpadding = m_ppadding + m_ext_ghost_points;
-  MPI_Type_vector(nj, extpadding, ni, m_mpifloat, &m_send_type_2dfinest_ext[0]);
-  MPI_Type_vector(1, extpadding * ni, ni * nj, m_mpifloat,
-                  &m_send_type_2dfinest_ext[1]);
+  // MPI_Type_vector(nj, extpadding, ni, m_mpifloat, &m_send_type_2dfinest_ext[0]);
+  // MPI_Type_vector(1, extpadding * ni, ni * nj, m_mpifloat,
+  //                 &m_send_type_2dfinest_ext[1]);
 
-  MPI_Type_commit(&m_send_type_2dfinest_ext[0]);
-  MPI_Type_commit(&m_send_type_2dfinest_ext[1]);
+  // MPI_Type_commit(&m_send_type_2dfinest_ext[0]);
+  // MPI_Type_commit(&m_send_type_2dfinest_ext[1]);
 
   send_type_2dfinest_ext.resize(2);
   bufs_type_2dfinest_ext.resize(2);
 
   make_type_2d(send_type_2dfinest_ext, bufs_type_2dfinest_ext, nj, extpadding,
-               ni, 0);
+                ni, 0);
   make_type_2d(send_type_2dfinest_ext, bufs_type_2dfinest_ext, 1,
                extpadding * ni, ni * nj, 1);
 
-  // For mesh refinement: 2D planes with three values per grid point (nc=3)
-  // Coarser grids
-  m_send_type_2dx.resize(mNumberOfCartesianGrids);
-  m_send_type_2dy.resize(mNumberOfCartesianGrids);
-  m_send_type_2dx1p.resize(mNumberOfCartesianGrids);  // padding=1
-  m_send_type_2dy1p.resize(mNumberOfCartesianGrids);
-  m_send_type_2dx3p.resize(mNumberOfCartesianGrids);  // padding=3
-  m_send_type_2dy3p.resize(mNumberOfCartesianGrids);
+  // // For mesh refinement: 2D planes with three values per grid point (nc=3)
+  // // Coarser grids
+  // m_send_type_2dx.resize(mNumberOfCartesianGrids);
+  // m_send_type_2dy.resize(mNumberOfCartesianGrids);
+  // m_send_type_2dx1p.resize(mNumberOfCartesianGrids);  // padding=1
+  // m_send_type_2dy1p.resize(mNumberOfCartesianGrids);
+  // m_send_type_2dx3p.resize(mNumberOfCartesianGrids);  // padding=3
+  // m_send_type_2dy3p.resize(mNumberOfCartesianGrids);
 
-  // Data for ASYNC_SEND_RECV
-  send_type_2dx.resize(mNumberOfCartesianGrids);
-  send_type_2dy.resize(mNumberOfCartesianGrids);
+  // // Data for ASYNC_SEND_RECV
+   send_type_2dx.resize(mNumberOfCartesianGrids);
+   send_type_2dy.resize(mNumberOfCartesianGrids);
 
-  bufs_type_2dx.resize(mNumberOfCartesianGrids);
-  bufs_type_2dy.resize(mNumberOfCartesianGrids);
+   bufs_type_2dx.resize(mNumberOfCartesianGrids);
+   bufs_type_2dy.resize(mNumberOfCartesianGrids);
 
-  for (int g = 0; g < mNumberOfCartesianGrids; g++) {
-    int ni = m_iEnd[g] - m_iStart[g] + 1, nj = m_jEnd[g] - m_jStart[g] + 1;
-    if (m_croutines) {
-      MPI_Type_vector(3 * nj, m_ppadding, ni, m_mpifloat, &m_send_type_2dx[g]);
-      MPI_Type_vector(3, m_ppadding * ni, ni * nj, m_mpifloat,
-                      &m_send_type_2dy[g]);
+   for (int g = 0; g < mNumberOfCartesianGrids; g++) {
+     ni = m_iEnd[g] - m_iStart[g] + 1; nj = m_jEnd[g] - m_jStart[g] + 1;
+  //   if (m_croutines) {
+  //     MPI_Type_vector(3 * nj, m_ppadding, ni, m_mpifloat, &m_send_type_2dx[g]);
+  //     MPI_Type_vector(3, m_ppadding * ni, ni * nj, m_mpifloat,
+  //                     &m_send_type_2dy[g]);
 
-      make_type_2d(send_type_2dx, bufs_type_2dx, 3 * nj, m_ppadding, ni, g);
-      make_type_2d(send_type_2dy, bufs_type_2dy, 3, m_ppadding * ni, ni * nj,
-                   g);
+       make_type_2d(send_type_2dx, bufs_type_2dx, 3 * nj, m_ppadding, ni, g);
+       make_type_2d(send_type_2dy, bufs_type_2dy, 3, m_ppadding * ni, ni * nj,
+                    g);
 
-      MPI_Type_vector(3 * nj, 1, ni, m_mpifloat, &m_send_type_2dx1p[g]);
-      MPI_Type_vector(3, ni, ni * nj, m_mpifloat, &m_send_type_2dy1p[g]);
-      MPI_Type_vector(3 * nj, 3, ni, m_mpifloat, &m_send_type_2dx3p[g]);
-      MPI_Type_vector(3, 3 * ni, ni * nj, m_mpifloat, &m_send_type_2dy3p[g]);
-    } else {
-      MPI_Type_vector(nj, 3 * m_ppadding, 3 * ni, m_mpifloat,
-                      &m_send_type_2dx[g]);
-      MPI_Type_vector(1, 3 * m_ppadding * ni, 3 * ni * nj, m_mpifloat,
-                      &m_send_type_2dy[g]);
-      MPI_Type_vector(nj, 3, 3 * ni, m_mpifloat, &m_send_type_2dx1p[g]);
-      MPI_Type_vector(1, 3 * ni, 3 * ni * nj, m_mpifloat,
-                      &m_send_type_2dy1p[g]);
-      MPI_Type_vector(nj, 3 * 3, 3 * ni, m_mpifloat, &m_send_type_2dx3p[g]);
-      MPI_Type_vector(1, 3 * 3 * ni, 3 * ni * nj, m_mpifloat,
-                      &m_send_type_2dy3p[g]);
-    }
-    MPI_Type_commit(&m_send_type_2dx[g]);
-    MPI_Type_commit(&m_send_type_2dy[g]);
-    MPI_Type_commit(&m_send_type_2dx1p[g]);
-    MPI_Type_commit(&m_send_type_2dy1p[g]);
-    MPI_Type_commit(&m_send_type_2dx3p[g]);
-    MPI_Type_commit(&m_send_type_2dy3p[g]);
-  }
+  //     MPI_Type_vector(3 * nj, 1, ni, m_mpifloat, &m_send_type_2dx1p[g]);
+  //     MPI_Type_vector(3, ni, ni * nj, m_mpifloat, &m_send_type_2dy1p[g]);
+  //     MPI_Type_vector(3 * nj, 3, ni, m_mpifloat, &m_send_type_2dx3p[g]);
+  //     MPI_Type_vector(3, 3 * ni, ni * nj, m_mpifloat, &m_send_type_2dy3p[g]);
+  //   } else {
+  //     MPI_Type_vector(nj, 3 * m_ppadding, 3 * ni, m_mpifloat,
+  //                     &m_send_type_2dx[g]);
+  //     MPI_Type_vector(1, 3 * m_ppadding * ni, 3 * ni * nj, m_mpifloat,
+  //                     &m_send_type_2dy[g]);
+  //     MPI_Type_vector(nj, 3, 3 * ni, m_mpifloat, &m_send_type_2dx1p[g]);
+  //     MPI_Type_vector(1, 3 * ni, 3 * ni * nj, m_mpifloat,
+  //                     &m_send_type_2dy1p[g]);
+  //     MPI_Type_vector(nj, 3 * 3, 3 * ni, m_mpifloat, &m_send_type_2dx3p[g]);
+  //     MPI_Type_vector(1, 3 * 3 * ni, 3 * ni * nj, m_mpifloat,
+  //                     &m_send_type_2dy3p[g]);
+  //   }
+  //   MPI_Type_commit(&m_send_type_2dx[g]);
+  //   MPI_Type_commit(&m_send_type_2dy[g]);
+  //   MPI_Type_commit(&m_send_type_2dx1p[g]);
+  //   MPI_Type_commit(&m_send_type_2dy1p[g]);
+  //   MPI_Type_commit(&m_send_type_2dx3p[g]);
+  //   MPI_Type_commit(&m_send_type_2dy3p[g]);
+   }
+
+// For topography: finest grid (curvilinear) only, only one value per grid point (nc=1)
+// get the size from the top curvlinear grid
+   g= mNumberOfGrids-1;
+   ni = m_iEnd[g]-m_iStart[g]+1; nj=m_jEnd[g]-m_jStart[g]+1;
+   MPI_Type_vector( nj, m_ppadding,    ni,    m_mpifloat, &m_send_type_2dfinest[0] );
+   MPI_Type_vector( 1,  m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type_2dfinest[1] );
+   MPI_Type_commit( &m_send_type_2dfinest[0] );
+   MPI_Type_commit( &m_send_type_2dfinest[1] );
+
+// Extended number of padding points
+   ni = ni + 2*m_ext_ghost_points;
+   nj = nj + 2*m_ext_ghost_points;
+   extpadding = m_ppadding + m_ext_ghost_points;
+   MPI_Type_vector( nj, extpadding,    ni,    m_mpifloat, &m_send_type_2dfinest_ext[0] );
+   MPI_Type_vector( 1,  extpadding*ni, ni*nj, m_mpifloat, &m_send_type_2dfinest_ext[1] );
+
+   MPI_Type_commit( &m_send_type_2dfinest_ext[0] );
+   MPI_Type_commit( &m_send_type_2dfinest_ext[1] );
+
+// NEW: July-2019 communicators for interface surfaces
+   int numSurfaces = mNumberOfGrids - mNumberOfCartesianGrids;
+   m_send_type_isurfx.resize(numSurfaces);
+   m_send_type_isurfy.resize(numSurfaces);
+
+   for (int iSurf = 0; iSurf < numSurfaces; iSurf++)
+   {
+      int g = mNumberOfCartesianGrids + iSurf;
+      int ni = m_iEnd[g]-m_iStart[g]+1 + 2*m_ext_ghost_points;
+      int nj = m_jEnd[g]-m_jStart[g]+1 + 2*m_ext_ghost_points;
+
+      MPI_Type_vector( nj, extpadding,     ni,     m_mpifloat, &m_send_type_isurfx[iSurf] );
+      MPI_Type_vector( 1,  extpadding*ni, ni*nj, m_mpifloat, &m_send_type_isurfy[iSurf] );
+
+      MPI_Type_commit( &m_send_type_isurfx[iSurf] );
+      MPI_Type_commit( &m_send_type_isurfy[iSurf] );
+   }
+   
+// For mesh refinement: 2D planes with three values per grid point (nc=3)
+// Coarser grids
+   m_send_type_2dx.resize(mNumberOfGrids);
+   m_send_type_2dy.resize(mNumberOfGrids);
+   m_send_type_2dx1p.resize(mNumberOfGrids);//padding=1
+   m_send_type_2dy1p.resize(mNumberOfGrids);
+   m_send_type_2dx3p.resize(mNumberOfGrids);//padding=3
+   m_send_type_2dy3p.resize(mNumberOfGrids);
+   for( int g = 0 ; g < mNumberOfGrids ; g++ )
+   {
+      int ni = m_iEnd[g]-m_iStart[g]+1, nj=m_jEnd[g]-m_jStart[g]+1;
+
+      MPI_Type_vector( 3*nj, m_ppadding,    ni,    m_mpifloat, &m_send_type_2dx[g] );
+      MPI_Type_vector( 3,    m_ppadding*ni, ni*nj, m_mpifloat, &m_send_type_2dy[g] );
+      MPI_Type_vector( 3*nj, 1,    ni,    m_mpifloat, &m_send_type_2dx1p[g] );
+      MPI_Type_vector( 3,    ni, ni*nj, m_mpifloat, &m_send_type_2dy1p[g] );
+      MPI_Type_vector( 3*nj, 3,  ni,    m_mpifloat, &m_send_type_2dx3p[g] );
+      MPI_Type_vector( 3,    3*ni, ni*nj, m_mpifloat, &m_send_type_2dy3p[g] );
+
+      MPI_Type_commit( &m_send_type_2dx[g] );
+      MPI_Type_commit( &m_send_type_2dy[g] );
+      MPI_Type_commit( &m_send_type_2dx1p[g] );
+      MPI_Type_commit( &m_send_type_2dy1p[g] );
+      MPI_Type_commit( &m_send_type_2dx3p[g] );
+      MPI_Type_commit( &m_send_type_2dy3p[g] );
+   }      
+
 }
 
 // -----------------------------
@@ -1498,7 +1563,10 @@ void EW::communicate_array_2d_isurf(Sarray& u, int iSurf) {
   int k = 1;
   int extpadding = m_ppadding + m_ext_ghost_points;
   // X-direction communication
-
+  std::cout<<"COMM "<<&u(1, ie - (2 * extpadding - 1),jb,k)<<" "<<iSurf<<" "
+	   <<&u(1, ib, jb, k)<<"\n"<<std::flush;
+  std::cout<<"NEIGHS"<<m_neighbor[0]<<" "<<m_neighbor[1]<<"\n"<<std::flush;
+  
   MPI_Sendrecv(&u(1, ie - (2 * extpadding - 1), jb, k), 1,
                m_send_type_isurfx[iSurf], m_neighbor[1], xtag1,
                &u(1, ib, jb, k), 1, m_send_type_isurfx[iSurf], m_neighbor[0],
