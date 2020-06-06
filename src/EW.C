@@ -8102,6 +8102,7 @@ void EW::compute_minvsoverh(float_sw4& minvsoh) {
     }
     minvs = sqrt(minvs);
     minvsohloc = minvs / mGridSize[g];
+    std::cout<<"Min Grid Size "<<minvs<<" "<<mGridSize[g]<<"\n";
     // get the global min for this grid
     MPI_Allreduce(&minvsohloc, &mMinVsOverH[g], 1, m_mpifloat, MPI_MIN,
                   m_cartesian_communicator);

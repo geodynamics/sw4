@@ -154,7 +154,7 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
   mQuietMode = a_ew->getQuiet();
 
   // does this processor write this station?
-  m_myPoint = a_ew->interior_point_in_proc(m_i0, m_j0, m_grid0);
+  //m_myPoint = a_ew->interior_point_in_proc(m_i0, m_j0, m_grid0);
 
   // The following is a safety check to make sure only one processor writes each
   // time series. We could remove this check if we were certain that
@@ -184,29 +184,29 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
   // topography
 
   // evaluate z-coordinate of topography
-  float_sw4 q, r, s;
-  if (a_ew->topographyExists()) {
-    int gCurv = a_ew->mNumberOfGrids - 1;
-    float_sw4 h = a_ew->mGridSize[gCurv];
-    q = mX / h + 1.0;
-    r = mY / h + 1.0;
-    // evaluate elevation of topography on the grid
-    if (!a_ew->interpolate_topography(q, r, m_zTopo, true)) {
-      cerr << "Unable to evaluate topography for receiver station" << m_fileName
-           << " mX= " << mX << " mY= " << mY << endl;
-      cerr << "Setting topography to ZERO" << endl;
-      m_zTopo = 0;
-    }
-  } else {
-    m_zTopo = 0;  // no topography
-  }
+  // float_sw4 q, r, s;
+  // if (a_ew->topographyExists()) {
+  //   int gCurv = a_ew->mNumberOfGrids - 1;
+  //   float_sw4 h = a_ew->mGridSize[gCurv];
+  //   q = mX / h + 1.0;
+  //   r = mY / h + 1.0;
+  //   // evaluate elevation of topography on the grid
+  //   if (!a_ew->interpolate_topography(q, r, m_zTopo, true)) {
+  //     cerr << "Unable to evaluate topography for receiver station" << m_fileName
+  //          << " mX= " << mX << " mY= " << mY << endl;
+  //     cerr << "Setting topography to ZERO" << endl;
+  //     m_zTopo = 0;
+  //   }
+  // } else {
+  //   m_zTopo = 0;  // no topography
+  // }
 
-  // if location was specified with topodepth, correct z-level
-  if (m_zRelativeToTopography) {
-    mZ += m_zTopo;
-    m_zRelativeToTopography = false;  // set to false so the correction isn't
-                                      // repeated (e.g. by the copy function)
-  }
+  // // if location was specified with topodepth, correct z-level
+  // if (m_zRelativeToTopography) {
+  //   mZ += m_zTopo;
+  //   m_zRelativeToTopography = false;  // set to false so the correction isn't
+  //                                     // repeated (e.g. by the copy function)
+  // }
   float_sw4 rofftol = 1e-9;
   if (sizeof(float_sw4) == 4) rofftol = 1e-5;
 
@@ -225,27 +225,27 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
   }
 
   // now we can find the closest grid point
-  a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
-  if (m_grid0 == a_ew->mNumberOfGrids - 1 && a_ew->topographyExists()) {
-    // Curvilinear
-    bool canBeInverted =
-        a_ew->invert_curvilinear_grid_mapping(mX, mY, mZ, q, r, s);
-    if (a_ew->invert_curvilinear_grid_mapping(
-            mX, mY, mZ, q, r, s))  // the inversion was successful
-    {
-      m_k0 = (int)floor(s);
-      if (s - (m_k0 + 0.5) > 0.) m_k0++;
-      m_k0 = max(a_ew->m_kStartInt[m_grid0], m_k0);
-      int Nz = a_ew->m_kEndInt[m_grid0];
-      m_k0 = min(Nz, m_k0);
-    } else {
-      cerr << "Can't invert curvilinear grid mapping for recevier station"
-           << m_fileName << " mX= " << mX << " mY= " << mY << " mZ= " << mZ
-           << endl;
-      cerr << "Placing the station on the surface (depth=0)." << endl;
-      m_k0 = 1;
-    }
-  }
+  // a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
+  // if (m_grid0 == a_ew->mNumberOfGrids - 1 && a_ew->topographyExists()) {
+  //   // Curvilinear
+  //   bool canBeInverted =
+  //       a_ew->invert_curvilinear_grid_mapping(mX, mY, mZ, q, r, s);
+  //   if (a_ew->invert_curvilinear_grid_mapping(
+  //           mX, mY, mZ, q, r, s))  // the inversion was successful
+  //   {
+  //     m_k0 = (int)floor(s);
+  //     if (s - (m_k0 + 0.5) > 0.) m_k0++;
+  //     m_k0 = max(a_ew->m_kStartInt[m_grid0], m_k0);
+  //     int Nz = a_ew->m_kEndInt[m_grid0];
+  //     m_k0 = min(Nz, m_k0);
+  //   } else {
+  //     cerr << "Can't invert curvilinear grid mapping for recevier station"
+  //          << m_fileName << " mX= " << mX << " mY= " << mY << " mZ= " << mZ
+  //          << endl;
+  //     cerr << "Placing the station on the surface (depth=0)." << endl;
+  //     m_k0 = 1;
+  //   }
+  // }
 
   // actual location of station (nearest grid point)
   float_sw4 xG, yG, zG;

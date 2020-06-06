@@ -1549,6 +1549,7 @@ void EW::communicate_array_2d_isurf(Sarray& u, int iSurf) {
   REQUIRE2(
       u.m_nc == 1,
       "Communicate array 2d isurf, only implemented for one-component arrays");
+  SYNC_STREAM;
   int g = mNumberOfCartesianGrids + iSurf;
   int ie = m_iEnd[g] + m_ext_ghost_points,
       ib = m_iStart[g] - m_ext_ghost_points;
@@ -1563,9 +1564,9 @@ void EW::communicate_array_2d_isurf(Sarray& u, int iSurf) {
   int k = 1;
   int extpadding = m_ppadding + m_ext_ghost_points;
   // X-direction communication
-  std::cout<<"COMM "<<&u(1, ie - (2 * extpadding - 1),jb,k)<<" "<<iSurf<<" "
-	   <<&u(1, ib, jb, k)<<"\n"<<std::flush;
-  std::cout<<"NEIGHS"<<m_neighbor[0]<<" "<<m_neighbor[1]<<"\n"<<std::flush;
+  //std::cout<<"COMM "<<&u(1, ie - (2 * extpadding - 1),jb,k)<<" "<<iSurf<<" "
+  //	   <<&u(1, ib, jb, k)<<"\n"<<std::flush;
+  //std::cout<<"NEIGHS"<<m_neighbor[0]<<" "<<m_neighbor[1]<<"\n"<<std::flush;
   
   MPI_Sendrecv(&u(1, ie - (2 * extpadding - 1), jb, k), 1,
                m_send_type_isurfx[iSurf], m_neighbor[1], xtag1,
