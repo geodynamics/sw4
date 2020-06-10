@@ -128,7 +128,7 @@ void EW::setup2D_MPICommunications() {
   // // Define MPI datatypes for communication across processor boundaries
   // // For topography: finest grid (curvilinear) only, only one value per grid
   // // point (nc=1) get the size from the top Cartesian grid
-  int g = mNumberOfCartesianGrids - 1;
+  int g = mNumberOfGrids - 1;
   int ni = m_iEnd[g] - m_iStart[g] + 1, nj = m_jEnd[g] - m_jStart[g] + 1;
   // MPI_Type_vector(nj, m_ppadding, ni, m_mpifloat, &m_send_type_2dfinest[0]);
   // MPI_Type_vector(1, m_ppadding * ni, ni * nj, m_mpifloat,
@@ -151,9 +151,9 @@ void EW::setup2D_MPICommunications() {
   bufs_type_2dfinest_ext.resize(2);
 
   make_type_2d(send_type_2dfinest_ext, bufs_type_2dfinest_ext, nj, extpadding,
-                ni, 0);
+	       ni, 0);
   make_type_2d(send_type_2dfinest_ext, bufs_type_2dfinest_ext, 1,
-               extpadding * ni, ni * nj, 1);
+               extpadding * ni, ni * nj, 1); 
 
   // // For mesh refinement: 2D planes with three values per grid point (nc=3)
   // // Coarser grids
@@ -1072,8 +1072,10 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount,
 #endif
   SW4_MARK_BEGIN("MPI_SENDRECV_ACTUAL");
 
-  if (sendto != MPI_PROC_NULL)
+  if (sendto != MPI_PROC_NULL){
     getbuffer_device(a, std::get<0>(buf), sendt, true);
+    //getbuffer_host(a, std::get<0>(buf), sendt);
+  }
     // std::cout<<"send_count "<<send_count<<" recv_count "<<recv_count<<"\n";
 
 #if defined(SW4_TRACK_MPI)
@@ -1113,6 +1115,7 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount,
 #endif
 
     putbuffer_device(b, std::get<1>(buf), recvt, true);
+    //putbuffer_host(b, std::get<1>(buf), recvt);
     // std::cout<<"RECEIVING :: "<<recvfrom<<" ";
     // for(int i=0;i<10;i++) std::cout<<std::get<1>(buf)[i]<<" ";
     // std::cout<<"\n";
