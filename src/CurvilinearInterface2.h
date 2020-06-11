@@ -46,6 +46,7 @@ class CurvilinearInterface2 {
   magma_queue_t queue;
   float_sw4** dB_array;
   float_sw4* x;
+  std::vector<int> subbatchsize,subbatchoffset;
 #endif
 
 #if defined(ENABLE_CUDA)

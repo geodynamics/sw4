@@ -72,7 +72,7 @@ void check_mem() {
 void print_hwm() {
   const int allocator_count = 3;
 #if defined(ENABLE_CUDA)
-
+  //std::cout<<"PRINT_HWM"<<std::flush;
   float hwm_local[allocator_count], hwm_global[allocator_count];
 #ifdef SW4_USE_UMPIRE
   hwm_local[0] = umpire::ResourceManager::getInstance()
@@ -112,6 +112,7 @@ void print_hwm() {
                  "the simulation\n";
     // std::cout<<" ~HOST MEM MAX
     // "<<global_variables.host_mem_hwm/1024.0/1024.0<<" MB\n";
+  //std::cout<<"PRINT_HWM DONE"<<std::flush;
 #endif  // ENABLE_CUDA
 }
 void *operator new(std::size_t size, Space loc) throw(std::bad_alloc) {

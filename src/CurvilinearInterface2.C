@@ -67,9 +67,24 @@ CurvilinearInterface2::CurvilinearInterface2(int a_gc, EW* a_ew) {
 }
 
   CurvilinearInterface2::~CurvilinearInterface2(){
+    std::cout<<"~CurvilinearInterface2()...\n"<<std::flush;
 #if defined(ENABLE_CUDA)
     ::operator delete[](m_sbop, Managed);
 #endif
+    ::operator delete[](m_strx_c,Managed);
+    ::operator delete[](m_stry_c,Managed);
+    ::operator delete[](m_strx_f,Managed);
+    ::operator delete[](m_stry_f,Managed);
+#ifdef USE_MAGMA
+    ::operator delete[](m_mass_block,Managed);
+    ::operator delete[](dA_array,Managed);
+    ::operator delete[](m_ipiv_block,Managed);
+    ::operator delete[](piv_array,Managed);
+    //::operator delete[](info,Managed);
+    ::operator delete[](dB_array,Managed);
+    ::operator delete[](x,Managed);
+#endif
+    std::cout<<"~CurvilinearInterface2().. Done\n"<<std::flush;
   }
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
@@ -279,12 +294,40 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
  
   magma_int_t retval;
   magma_int_t m =3;
+SW4_MARK_BEGIN("MAGMA_DGETRF");
   retval = magma_dgetrf_batched(m,m,dA_array,m,piv_array,info,msize,queue);
   if (retval!=MAGMA_SUCCESS){
-    std::cerr<<"MAGMA DGETRF BATCHED call failed"<<std::flush;
+    std::cerr<<"ERROR MAGMA DGETRF BATCHED call failed"<<std::flush;
     abort();
   }
- 
+  SW4_MARK_END("MAGMA_DGETRF");
+  int nfails  =0;
+  for (int i=0;i<msize;i++) if (info[i]!=0){
+      std::cerr<<"ERROR :: MAGMA DGETRF FAILED for i ="<<i<<" "<<info[i]<<"\n";
+      nfails++;
+    }
+  if (nfails!=0){
+    std::cerr<<"ERRROR Stopping due to failed LU decomposition\n";
+    abort();
+  }
+  ::operator delete[](info,Managed);
+  // Calculate the sub-batch sizes
+  const int maxbatchsize=65535;
+  for (int i=0;i<msize;i+=maxbatchsize){
+    subbatchsize.push_back(maxbatchsize);
+    subbatchoffset.push_back(i);
+  }
+  // The tail
+  subbatchsize.back()=msize%(subbatchoffset.back());
+  int sum=0;
+  for (int i=0;i<subbatchsize.size();i++) sum+=subbatchsize[i];
+  if (sum!=msize) {
+    std::cerr<<"Magma sub-batchsize calc is incorrect "<<sum<<"!="<<msize<<"\n";
+    abort();
+  }
+  for( int i=0;i<subbatchsize.size();i++){
+    std::cout<<"MAGMA Sub-batching "<<i<<" "<<subbatchoffset[i]<<" "<<subbatchsize[i]<<"\n";
+  }
 #else
   m_mass_block = new float_sw4[9 * msize];
   for (int j = m_jb + m_nghost; j <= m_je - m_nghost; j++)
@@ -554,14 +597,18 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
     //magma_int_t m_three = 3;
     //magma_int_t m_one = 1;
       magma_int_t batchsize=(l_ie-l_ib)+nimb*(l_je-l_jb)+1;
-      //std::cout<<"BATCH SIZE IN SOLVE IS "<<batchsize<<"\n";
+      //std::cout<<"BATCH SIZE IN SOLVE IS "<<batchsize<<"\n"<<std::flush;
     magma_trans_t m_trans=MagmaNoTrans;
-    magma_int_t retval = magma_dgetrs_batched(m_trans,three,one,dA_array,three,piv_array,dB_array,three,batchsize,queue);
+SW4_MARK_BEGIN("MAGMA_DGETRS");
+//magma_int_t retval = magma_dgetrs_batched(m_trans,three,one,dA_array,three,piv_array,dB_array,three,batchsize,queue);
+ magma_int_t retval;
+ for (int i=0;i<subbatchsize.size();i++)
+   retval = magma_dgetrs_batched(m_trans,three,one,dA_array+subbatchoffset[i],three,piv_array+subbatchoffset[i],dB_array+subbatchoffset[i],three,subbatchsize[i],queue);
     if (retval!=MAGMA_SUCCESS){
       std::cerr<<"MAGMA DGETRS BATCHED call failed"<<std::flush;
       abort();
     }
-
+SW4_MARK_END("MAGMA_DGETRS");
 #ifdef PEEKS_GALORE
       SW4_PEEK;
       SYNC_DEVICE;

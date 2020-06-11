@@ -735,6 +735,7 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
 
 // Destructor
 EW::~EW() {
+  //std::cout<<"EW::~EW() ...\n"<<std::flush;
 #if defined(ENABLE_CUDA)
   ::operator delete[](m_sbop, Managed);
 #endif
@@ -812,7 +813,7 @@ EW::~EW() {
   ofile.close();
   hfile.close();
 #endif
-
+  //std::cout<<"EW::~EW() DONE\n"<<std::flush;
   //  msgStream.close();
 }
 
