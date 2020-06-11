@@ -82,6 +82,15 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
    bool use_q = m_use_attenuation && xis[0].is_defined() && xip[0].is_defined();
    size_t outside=0, material=0;
    float_sw4 z_min = mInterface[0].minimum();
+
+   // Find the relative dimension size of upper and lower interface for each grid patch
+   int* ist = new int(m_npatches);
+   int* jst = new int(m_npatches);
+   for( int g=0 ; g < m_npatches ; g++ ) {
+     ist[g] = (int)ceil((double)mInterface[g].m_ni / mInterface[g+1].m_ni);
+     jst[g] = (int)ceil((double)mInterface[g].m_nj / mInterface[g+1].m_nj);
+   }
+
    for( int g=0 ; g < mEW->mNumberOfGrids ; g++ ) {
       bool curvilinear = mEW->topographyExists() && g >= mEW->mNumberOfCartesianGrids;
       size_t ni=mEW->m_iEnd[g]-mEW->m_iStart[g]+1;
@@ -106,21 +115,21 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
                 // (x, y, z) is the coordinate of current grid point
 		if( inside( x, y, z ) ) {
 		   material++;
-                   int i0, j0, k0, gr = m_npatches-1;
+                   int i0, j0, i1, j1, k0, gr = m_npatches-1;
                    float_sw4 tmph, down_z;
                    // gr is the patch id that has the current sw4 grid point's data
                    // need to use the interface value to determine which patch the current point is in
 		   while( gr >= 0 ) {
-                     i0     = static_cast<int>( trunc( 1 + (x-m_x0)/m_hh[gr] ) );
-                     j0     = static_cast<int>( trunc( 1 + (y-m_y0)/m_hh[gr] ) );
+                     i0 = i1 = static_cast<int>( trunc( 1 + (x-m_x0)/m_hh[gr] ) );
+                     j0 = j1 = static_cast<int>( trunc( 1 + (y-m_y0)/m_hh[gr] ) );
                      down_z = mInterface[gr+1](1, i0, j0, 1);
-                     // The top interface of a sfile patch is 2x larger than lower level except topest interface
-                     if (gr == 0) {
-                       z0 = mInterface[0](1, i0, j0, 1);
-                       break;
-                     }
-                     z0 = mInterface[gr](1, i0*2-1, j0*2-1, 1);
-                     if (z > z0) break;
+
+                     // Adjust the index if upper and lower interface have different dimension
+                     if (ist[gr] > 1) { i1 = i1*ist[gr]-1; }
+                     if (jst[gr] > 1) { j1 = j1*jst[gr]-1; }
+                     z0 = mInterface[gr](1, i1, j1, 1);
+
+                     if (gr == 0 || z > z0) break;
 		     gr--;
                    }
 
@@ -251,6 +260,9 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
     /* } */
 
    } // end for g...
+
+   delete [] ist;
+   delete [] jst;
 
    mEW->communicate_arrays( rho );
    mEW->communicate_arrays( cs );
@@ -595,6 +607,8 @@ void MaterialSfile::read_sfile()
      }
   }
 
+  bool roworder = true;
+
   // Read interfaces
   hid_t topo_grp, topo_id;
   mInterface.resize(m_npatches+1);
@@ -648,7 +662,8 @@ void MaterialSfile::read_sfile()
     /* printf("Rank %d: interface %d min = %.2f, max = %.2f\n", */ 
     /*         mEW->getRank(), p,  mInterface[p].minimum(), mInterface[p].maximum()); */
 
-    mInterface[p].transposeik();
+    if (roworder)
+      mInterface[p].transposeik();
 
     delete[] f_data;
     delete[] d_data;
@@ -656,7 +671,6 @@ void MaterialSfile::read_sfile()
   H5Gclose(topo_grp);
   intf_end = MPI_Wtime();
 
-  bool roworder = true;
   hid_t rho_id, cs_id, cp_id, qs_id, qp_id;
   for( int p = 0 ; p < m_npatches ; p++ ) {
     if( !m_isempty[p] ) {

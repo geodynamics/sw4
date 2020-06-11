@@ -5,6 +5,7 @@
 #include "MaterialParameterization.h"
 #include "Image.h"
 #include "Image3D.h"
+#include "SfileOutput.h"
 
 class EW;
 class MaterialParCartesian;
@@ -31,6 +32,7 @@ class Mopt
    void processMfsurf( char* buffer );
    void processMimage( char* buffer, bool use_hdf5 );
    void processM3Dimage( char* buffer );
+   void processSfileoutput( char* buffer );
    void processMtypx( char* buffer );
    void processMfileio( char* buffer );
    void processMregularize( char* buffer );
@@ -66,6 +68,7 @@ class Mopt
    MaterialParCartesian *m_mpcart0;   
    std::vector<Image*> m_image_files;
    std::vector<Image3D*> m_3dimage_files;
+   std::vector<SfileOutput*> m_sfiles;
    std::string m_scales_fname, m_scalem_fname;
    bool m_scales_file_given;
    std::string m_path;

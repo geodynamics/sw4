@@ -1166,12 +1166,13 @@ void Parallel_IO::setup_substeps( )
 
 #ifdef USE_HDF5
 //-----------------------------------------------------------------------
-void Parallel_IO::write_array_hdf5( const char *fname, const char *dname, int nc, void* array, hsize_t pos0, char* typ )
+void Parallel_IO::write_array_hdf5( const char *fname, const char *gname, const char *dname, int nc, void* array, hsize_t pos0, char* typ )
 {
 //
 //  Write array previously set up by constructing object.
 //
 // Input: fname - HDF5 file name
+//        gname - HDF5 group name
 //        dname - HDF5 dataset name
 //        nc    - Number of components per grid point of array.
 //        array - The data array, local in the processor.
@@ -1182,26 +1183,13 @@ void Parallel_IO::write_array_hdf5( const char *fname, const char *dname, int nc
    int i1, i2, j1, j2, k1, k2, nsi, nsj, nsk, nri, nrj, nrk;
    int b, i, mxsize, ii, jj, kk, c, niblock, njblock, nkblock;
    int il, jl, kl, tag, myid, retcode, gproc, ret;
-   hsize_t ind, ptr, sizew, offset, count;
+   hsize_t ind, ptr, sizew, offset, count, roffsets[3] = {0,0,0};
    MPI_Status status;
    MPI_Request* req;
    double* rbuf, *ribuf;
    float* rfbuf, *ribuff;
    bool debug =false;
-   hid_t dspace, filespace, dxpl, h5_fid, fapl, dset;
-
-   int alignment = 65536;
-   /* char *env = getenv("HDF5_ALIGNMENT_SIZE"); */
-   /* if (env != NULL) */ 
-   /*     alignment = atoi(env); */
-   /* if (alignment < 65536) */ 
-   /*     alignment = 65536; */
-
-   fapl = H5Pcreate(H5P_FILE_ACCESS);
-   /* H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL); */
-   H5Pset_alignment(fapl, 32767, alignment);
-   dxpl = H5Pcreate(H5P_DATASET_XFER);
-   H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
+   hid_t memspace, filespace, dxpl, h5_fid, fapl, dset, grp;
 
    if( m_data_comm != MPI_COMM_NULL )
    {
@@ -1315,6 +1303,9 @@ void Parallel_IO::write_array_hdf5( const char *fname, const char *dname, int nc
 	 kl = m_irecv.m_klow[0];
 	 ind = il-1+nig*(jl-1)+((off_t)nig)*njg*(kl-1);
          offset = pos0 + nc*ind;
+         roffsets[0] = il-1;
+         roffsets[1] = jl-1;
+         roffsets[2] = kl-1;
       }
 
       tag = 334;
@@ -1452,37 +1443,97 @@ void Parallel_IO::write_array_hdf5( const char *fname, const char *dname, int nc
             // Write to disk
 	    begin_sequential( m_write_comm );
 
-            /* cout << "Rank " << gproc <<" opening file [" << fname << "]" << endl; */
-            /* fflush(stdout); */
+            int alignment = 65536;
+            /* char *env = getenv("HDF5_ALIGNMENT_SIZE"); */
+            /* if (env != NULL) */ 
+            /*     alignment = atoi(env); */
+            /* if (alignment < 65536) */ 
+            /*     alignment = 65536; */
+         
+            fapl = H5Pcreate(H5P_FILE_ACCESS);
+            /* H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL); */
+            H5Pset_alignment(fapl, alignment, alignment);
+            dxpl = H5Pcreate(H5P_DATASET_XFER);
+            H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
+
+            /* cout << "Rank " << gproc <<" opening file [" << fname << "], [" << gname << "], [" << dname << "], kl=" << kl << endl; */
             h5_fid = H5Fopen(fname, H5F_ACC_RDWR, fapl);
             if (h5_fid < 0) 
                cout << "Rank " << gproc <<" error opening file [" << fname << "]" << endl;
-            H5Pclose(fapl);
 
-            dset = H5Dopen(h5_fid, dname, H5P_DEFAULT);
+            hid_t loc = h5_fid;
+            if (gname != NULL) {
+              grp = H5Gopen(h5_fid, gname, H5P_DEFAULT);
+              if (grp < 0) 
+                 cout << "Rank " << gproc <<" error opening [" << gname << "] group from file [" << fname << "]" << endl;
+              loc = grp;
+            }
+
+            dset = H5Dopen(loc, dname, H5P_DEFAULT);
             if (dset < 0) 
                cout << "Rank " << gproc <<" error opening [" << dname << "] dset from file [" << fname << "]" << endl;
 
             filespace = H5Dget_space(dset);
+            int ndim = H5Sget_simple_extent_ndims(filespace);
             count = ((hsize_t)nc)*niblock*njblock*nkblock;
-            H5Sselect_hyperslab (filespace, H5S_SELECT_SET, &offset, NULL, &count, NULL);
-            dspace = H5Screate_simple(1, &count, NULL);
             /* cout << "Rank " << gproc << ": writing to offset " << offset << " with " << count << " elements" << endl; */
+
+            hsize_t offsets[3] = {0,0,0};
+            hsize_t counts[3] = {1,1,1};
+            if (ndim == 1) {
+              counts[0] = count;
+              offsets[0] = offset;
+            }
+            else if (ndim == 2) {
+              counts[0] = niblock;
+              counts[1] = njblock * nc * nkblock;
+              offsets[0] = roffsets[0];
+              offsets[1] = roffsets[1] * roffsets[2];
+            }
+            else if (ndim == 3) {
+              counts[0] = niblock;
+              counts[1] = njblock;
+              counts[2] = nc * nkblock;
+              offsets[0] = roffsets[0];
+              offsets[1] = roffsets[1];
+              offsets[2] = roffsets[2];
+            }
+            else {
+              cout << "Error! Currently write_array_hdf5 cannot write ndim="<< ndim << " data!" << endl;
+            }
+
+            hsize_t total = niblock*njblock*nkblock*nc;
+            memspace = H5Screate_simple(1, &total, NULL);
+
+            H5Sselect_hyperslab (filespace, H5S_SELECT_SET, offsets, NULL, counts, NULL);
+
+            // Debug
+            /* hssize_t felem = H5Sget_select_npoints(filespace); */
+            /* hssize_t melem = H5Sget_select_npoints(memspace); */
+            /* cout << "Rank " << gproc << " file elem " << felem << ", mem elem " << melem << std::endl; */
+            /* cout << "Rank " << gproc << ": offsets " << offsets[0]<< ", " <<offsets[1]<< ", " <<offsets[2] << endl; */
+            /* cout << "Rank " << gproc << ": counts  " << counts[0]<< ", " <<counts[1]<< ", " <<counts[2] << endl; */
+
 	    if( flt == 0 ) 
-               ret  = H5Dwrite(dset, H5T_NATIVE_DOUBLE, dspace, filespace, dxpl, rbuf);
+               ret  = H5Dwrite(dset, H5T_NATIVE_DOUBLE, memspace, filespace, dxpl, rbuf);
 	    else 
-               ret  = H5Dwrite(dset, H5T_NATIVE_FLOAT, dspace, filespace, dxpl, rfbuf);
+               ret  = H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, dxpl, rfbuf);
             /* cout << "Rank " << gproc << " writing data " << rfbuf[0] << ", " << rfbuf[1] << ", ..., " << rfbuf[count-2] << ", " << rfbuf[count-1] << endl; */
 
             if (ret < 0) {
-                cout << "Parallel_IO::write_array_hdf5, error writing " << dname << " dataset, offset " << offset << "count" << count << endl;
+                cout << "Parallel_IO::write_array_hdf5, error writing " << dname << " dataset, offset " << offset << ", count" << count << endl;
                 MPI_Abort(MPI_COMM_WORLD,1);
             }
 
-            H5Sclose(dspace);
+            H5Sclose(memspace);
             H5Sclose(filespace);
             H5Dclose(dset);
+            if (gname != NULL && gname[0] != '/') 
+              H5Gclose(grp);
+            H5Pclose(fapl);
+            H5Pclose(dxpl);
             H5Fclose(h5_fid);
+
 	    end_sequential( m_write_comm );
 	 }
       }
@@ -1506,7 +1557,6 @@ void Parallel_IO::write_array_hdf5( const char *fname, const char *dname, int nc
 	 delete[] req;
       }
    } // End if( m_data_comm != MPI_COMM_NULL )
-   H5Pclose(dxpl);
 }
 #endif
 

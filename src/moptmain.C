@@ -468,6 +468,12 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
        mopt->m_3dimage_files[i3]->update_image( it, 0.0, 1.0, rho, rho, mu, lambda,
 						gRho, gMu, gLambda, rho, mu, mopt->m_path,
 						ew_ptr->mZ ); 
+
+     for( int i3=0 ; i3<mopt->m_sfiles.size() ; i3++ )
+       mopt->m_sfiles[i3]->update_image( it, 0.0, 1.0, rho, rho, mu, lambda,
+                                         gRho, gMu, gLambda, rho, mu, mopt->m_path,
+                                         ew_ptr->mZ ); 
+
    } // end if it>=0
    sw4_profile->time_stamp("Exit compute_f_and_df");   
 }
