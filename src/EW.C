@@ -5383,6 +5383,13 @@ void EW::addESSI3D(ESSI3D* i)
 }
 
 //-----------------------------------------------------------------------
+void EW::addSfileOutput(SfileOutput* i)
+{
+   mSfiles.push_back(i);
+}
+
+
+//-----------------------------------------------------------------------
 void EW::initialize_image_files( )
 {
    // In case of multiple events, prepare maximum number of time steps
@@ -5419,6 +5426,12 @@ void EW::initialize_image_files( )
    //   ESSI3D::setSteps(mNumberOfTimeSteps);
    for (unsigned int fIndex = 0; fIndex < mESSI3DFiles.size(); ++fIndex)
       mESSI3DFiles[fIndex]->setup( );
+
+   SfileOutput::setSteps(maxNumberOfTimeSteps);
+   //   SfileOutput::setSteps(mNumberOfTimeSteps);
+   for (unsigned int fIndex = 0; fIndex < mSfiles.size(); ++fIndex)
+      mSfiles[fIndex]->setup_images( );
+
 }
 
 //-----------------------------------------------------------------------
@@ -6921,6 +6934,7 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
     printf("  ni=%i, nj=%i\n", nitop, njtop);
   }
 
+  bool roworder=true;
 
   // Depending on the precision of the sfile and sw4, need to convert between float and doulbe
   void *in_data;
@@ -6959,7 +6973,6 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
   gridElev.define(1, nitop, 1, njtop, 1, 1);
   gridElev.assign(data);
 
-  bool roworder=true;
   if (m_myRank==0 && mVerbose >= 2) {
     printf("1st topo (float) data=%e, gridElev(1,1,1)=%e\n", data[0], gridElev(1,1,1));
     printf("last topo (float) data=%e, gridElev(ni,nj,1)=%e\n", data[nitop*njtop-1], gridElev(nitop,njtop,1));
