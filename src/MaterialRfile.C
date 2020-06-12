@@ -733,7 +733,7 @@ void MaterialRfile::read_rfile() {
         // global, local, start );
         // Read corresponding part of patches
         float_sw4* material_dble =
-            SW4_NEW(Managed, double[mMaterial[p].m_npts]);
+            SW4_NEW(Space::Managed, double[mMaterial[p].m_npts]);
         if (prec == 8)
           pio->read_array(&fd, ncblock[p], material_dble, pos0, "double",
                           swapbytes);
@@ -747,7 +747,7 @@ void MaterialRfile::read_rfile() {
         delete pio;
         mMaterial[p].assign(material_dble, 0);
         // delete[] material_dble;
-        ::operator delete[](material_dble, Managed);
+        ::operator delete[](material_dble, Space::Managed);
         if (roworder) mMaterial[p].transposeik();
       }
       pos0 += ncblock[p] * m_ni[p] * static_cast<size_t>(m_nj[p]) * m_nk[p] *

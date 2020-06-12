@@ -635,20 +635,20 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
     // Managed 3m 21s
     // Device 2m 15s
     // jsrun & lrun need additional flags like -M "-gpu "for Device and
-    // Managed to work.
+    // Space::Managed to work.
 
 #if defined(SW4_DEVICE_MPI_BUFFERS)
-  mpi_buffer_space = Device;
+  mpi_buffer_space = Space::Device;
   if (!m_myRank) std::cout << "Using MPI buffers in device memory\n";
 #elif defined(SW4_MANAGED_MPI_BUFFERS)
-  mpi_buffer_space = Managed;
+  mpi_buffer_space = Space::Managed;
   if (!m_myRank) std::cout << "Using MPI buffers in managed memory\n";
 #elif defined(SW4_PINNED_MPI_BUFFERS)
-  mpi_buffer_space = Pinned;
+  mpi_buffer_space = Space::Pinned;
   if (!m_myRank)
     std::cout << "Using MPI buffers in pinned memory(COMPILE OPTION)\n";
 #else
-  mpi_buffer_space = Pinned;
+  mpi_buffer_space = Space::Pinned;
   if (!m_myRank) std::cout << "Using MPI buffersin pinned memory(DEFAULT)\nn";
 #endif
 
@@ -713,23 +713,23 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
 
 #if defined(ENABLE_CUDA)
   float_sw4* tmpa =
-      SW4_NEW(Managed, float_sw4[6 + 384 + 24 + 48 + 6 + 384 + 6 + 6]);
-  m_sbop = tmpa;  // PTR_PUSH(Managed,m_sbop);
+      SW4_NEW(Space::Managed, float_sw4[6 + 384 + 24 + 48 + 6 + 384 + 6 + 6]);
+  m_sbop = tmpa;  // PTR_PUSH(Space::Managed,m_sbop);
   m_acof = m_sbop + 6;
-  PTR_PUSH(Managed, m_acof, 384 * sizeof(float_sw4));
+  PTR_PUSH(Space::Managed, m_acof, 384 * sizeof(float_sw4));
   m_bop = m_acof + 384;
-  PTR_PUSH(Managed, m_bop, 24 * sizeof(float_sw4));
+  PTR_PUSH(Space::Managed, m_bop, 24 * sizeof(float_sw4));
   m_bope = m_bop + 24;
-  PTR_PUSH(Managed, m_bope, 48 * sizeof(float_sw4));
+  PTR_PUSH(Space::Managed, m_bope, 48 * sizeof(float_sw4));
   m_ghcof = m_bope + 48;
-  PTR_PUSH(Managed, m_ghcof, 6 * sizeof(float_sw4));
+  PTR_PUSH(Space::Managed, m_ghcof, 6 * sizeof(float_sw4));
 
   m_acof_no_gp = m_ghcof + 6;
-  PTR_PUSH(Managed, m_acof_no_gp, 384 * sizeof(float_sw4));
+  PTR_PUSH(Space::Managed, m_acof_no_gp, 384 * sizeof(float_sw4));
   m_ghcof_no_gp = m_acof_no_gp + 384;
-  PTR_PUSH(Managed, m_ghcof_no_gp, 6 * sizeof(float_sw4));
+  PTR_PUSH(Space::Managed, m_ghcof_no_gp, 6 * sizeof(float_sw4));
   m_sbop_no_gp = m_ghcof_no_gp + 6;
-  PTR_PUSH(Managed, m_sbop_no_gp, 6 * sizeof(float_sw4));
+  PTR_PUSH(Space::Managed, m_sbop_no_gp, 6 * sizeof(float_sw4));
 #endif
 }
 
@@ -737,9 +737,9 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
 EW::~EW() {
   //std::cout<<"EW::~EW() ...\n"<<std::flush;
 #if defined(ENABLE_CUDA)
-  ::operator delete[](m_sbop, Managed);
+  ::operator delete[](m_sbop, Space::Managed);
 #endif
-  ::operator delete[](viewArrayActual, Managed);
+  ::operator delete[](viewArrayActual, Space::Managed);
 
   for (int m = 0; m < mNumberOfGrids; m += 4) {
     ::operator delete[](std::get<0>(bufs_type1[4 * m]), mpi_buffer_space);
@@ -749,16 +749,16 @@ EW::~EW() {
   }
 
   for (int m = 0; m < mNumberOfCartesianGrids; m++) {
-    ::operator delete[](std::get<0>(bufs_type_2dx[m]), Pinned);
-    ::operator delete[](std::get<0>(bufs_type_2dy[m]), Pinned);
+    ::operator delete[](std::get<0>(bufs_type_2dx[m]), Space::Pinned);
+    ::operator delete[](std::get<0>(bufs_type_2dy[m]), Space::Pinned);
   }
-  ::operator delete[](ForceVector, Managed);
-  ::operator delete[](ForceAddress, Managed);
+  ::operator delete[](ForceVector, Space::Managed);
+  ::operator delete[](ForceAddress, Space::Managed);
 
 #ifndef SW4_USE_UMPIRE
   // Delete the allocations stored in Sarray::static_map
   for (auto& i : Sarray::static_map) {
-    ::operator delete[](i.second, Managed);
+    ::operator delete[](i.second, Space::Managed);
   }
 #endif
 
@@ -2515,14 +2515,14 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
     for (int g = 0; g < mNumberOfGrids; g++) {
 
       size_t npts = a_U[g].m_npts;
-      float_sw4* uexact = SW4_NEW(Managed, float_sw4[npts]);
+      float_sw4* uexact = SW4_NEW(Space::Managed, float_sw4[npts]);
       SW4_CheckDeviceError(cudaMemPrefetchAsync(
           uexact, npts * sizeof(float_sw4), global_variables.device, 0));
       //       get_exact_point_source( a_U[g].c_ptr(), a_t, g, *sources[0] );
       get_exact_point_source(uexact, a_t, g, *sources[0]);
       a_U[g].prefetch();
       a_U[g].assign(uexact, 0);
-      ::operator delete[](uexact, Managed);
+      ::operator delete[](uexact, Space::Managed);
     }
     retval = true;
   } else if (m_lamb_test) {
@@ -3604,13 +3604,13 @@ void EW::get_exact_lamb2(vector<Sarray>& a_U, float_sw4 a_t, Source& a_source) {
     tfun = 2;
   // Fortran
   size_t npts = a_U[g].m_npts;
-  float_sw4* uexact = SW4_NEW(Managed, float_sw4[npts]);
+  float_sw4* uexact = SW4_NEW(Space::Managed, float_sw4[npts]);
   for (size_t i = 0; i < npts; i++) uexact[i] = 0;
   lambexact(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, uexact, &a_t,
             &mu, &cs, &x0, &y0, &fz, &h, &tfun);
   //	     a_U[g].c_ptr(), &a_t, &mu, &cs, &x0, &y0, &fz, &h, &tfun );
   a_U[g].assign(uexact, 0);
-  ::operator delete[](uexact, Managed);
+  ::operator delete[](uexact, Space::Managed);
   // test: output uz in one point
   // int i0=176, j0=151, k0=1;
   // if (m_iStart[g] <= i0 && i0 <= m_iEnd[g] && m_jStart[g] <= j0 && j0 <=
@@ -4612,8 +4612,8 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
       // std::cout<<getRank()<<" MFREE PRE-ALLOC"<<mfree/1024/1024.0<<" MB
       // "<<point_sources.size()<<","<<identsourc
       //	es.size()<<"\n";
-      GPS = SW4_NEW(Managed, GridPointSource * [point_sources.size()]);
-      idnts = SW4_NEW(Managed, int[identsources.size()]);
+      GPS = SW4_NEW(Space::Managed, GridPointSource * [point_sources.size()]);
+      idnts = SW4_NEW(Space::Managed, int[identsources.size()]);
       GPSL = GPS;
       idnts_local = idnts;
 
@@ -8172,8 +8172,8 @@ void EW::sort_grid_point_sources(vector<GridPointSource*>& point_sources,
     cout << "number of unique g.p. sources = " << nruniquetot << endl;
   }
 
-  ForceVector = SW4_NEW(Managed, float_sw4[nrunique * 3]);
-  ForceAddress = SW4_NEW(Managed, float_sw4 * [nrunique * 3]);
+  ForceVector = SW4_NEW(Space::Managed, float_sw4[nrunique * 3]);
+  ForceAddress = SW4_NEW(Space::Managed, float_sw4 * [nrunique * 3]);
 
   //   for( int s=0 ; s<m_identsources.size()-1 ; s++ )
   //      for( int i=m_identsources[s]; i< m_identsources[s+1] ; i++ )

@@ -26,7 +26,7 @@
 #ifdef USE_MAGMA
 #include "magma_v2.h"
 #endif
-
+#include <cstddef>
 #if defined(ENABLE_CUDA)
 #include <cuda_profiler_api.h>
 #include <nvml.h>
@@ -46,7 +46,13 @@ void prefetch_to_device(const float_sw4 *ptr);
 #endif
 void check_mem();
 void global_prefetch();
-enum Space { Host, Managed, Device, Pinned, Managed_temps, Space_Error };
+enum class Space : unsigned int  { Host, Managed, Device, Pinned, Managed_temps, Space_Error };
+template <typename Enumeration>
+auto as_int(Enumeration const value)
+    -> typename std::underlying_type<Enumeration>::type
+{
+    return static_cast<typename std::underlying_type<Enumeration>::type>(value);
+}
 Space GML(const void *ptr);
 void *operator new(std::size_t size, Space loc) throw(std::bad_alloc);
 void operator delete(void *ptr, Space loc) throw();

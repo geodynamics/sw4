@@ -883,7 +883,7 @@ void EW::make_type_2d(vector<std::tuple<int, int, int>>& send_type,
                       int i1, int j1, int k1, int g) {
   send_type[g] = std::make_tuple(i1, j1, k1);
 
-  float_sw4* tbuf = SW4_NEW(Pinned, float_sw4[i1 * j1 * 2]);
+  float_sw4* tbuf = SW4_NEW(Space::Pinned, float_sw4[i1 * j1 * 2]);
   bufs_type[g] = std::make_tuple(tbuf, tbuf + i1 * j1);
 }
 void EW::communicate_array_async(Sarray& u, int grid) {

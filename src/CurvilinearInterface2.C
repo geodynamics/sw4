@@ -38,23 +38,23 @@ CurvilinearInterface2::CurvilinearInterface2(int a_gc, EW* a_ew) {
 
   #if defined(ENABLE_CUDA)
   float_sw4* tmpa =
-      SW4_NEW(Managed, float_sw4[6 + 384 + 24 + 48 + 6 + 384 + 6 + 6]);
-  m_sbop = tmpa;  // PTR_PUSH(Managed,m_sbop);
+    SW4_NEW(Space::Managed, float_sw4[6 + 384 + 24 + 48 + 6 + 384 + 6 + 6]);
+  m_sbop = tmpa;  // PTR_PUSH(Space::Managed,m_sbop);
   m_acof = m_sbop + 6;
-  PTR_PUSH(Managed, m_acof, 384 * sizeof(float_sw4));
+  PTR_PUSH(Space::Managed, m_acof, 384 * sizeof(float_sw4));
   m_bop = m_acof + 384;
-  PTR_PUSH(Managed, m_bop, 24 * sizeof(float_sw4));
+  PTR_PUSH(Space::Managed, m_bop, 24 * sizeof(float_sw4));
   m_bope = m_bop + 24;
-  PTR_PUSH(Managed, m_bope, 48 * sizeof(float_sw4));
+  PTR_PUSH(Space::Managed, m_bope, 48 * sizeof(float_sw4));
   m_ghcof = m_bope + 48;
-  PTR_PUSH(Managed, m_ghcof, 6 * sizeof(float_sw4));
+  PTR_PUSH(Space::Managed, m_ghcof, 6 * sizeof(float_sw4));
 
   m_acof_no_gp = m_ghcof + 6;
-  PTR_PUSH(Managed, m_acof_no_gp, 384 * sizeof(float_sw4));
+  PTR_PUSH(Space::Managed, m_acof_no_gp, 384 * sizeof(float_sw4));
   m_ghcof_no_gp = m_acof_no_gp + 384;
-  PTR_PUSH(Managed, m_ghcof_no_gp, 6 * sizeof(float_sw4));
+  PTR_PUSH(Space::Managed, m_ghcof_no_gp, 6 * sizeof(float_sw4));
   m_sbop_no_gp = m_ghcof_no_gp + 6;
-  PTR_PUSH(Managed, m_sbop_no_gp, 6 * sizeof(float_sw4));
+  PTR_PUSH(Space::Managed, m_sbop_no_gp, 6 * sizeof(float_sw4));
 #endif
 
   a_ew->GetStencilCoefficients(m_acof, m_ghcof, m_bop, m_bope, m_sbop);
@@ -69,20 +69,20 @@ CurvilinearInterface2::CurvilinearInterface2(int a_gc, EW* a_ew) {
   CurvilinearInterface2::~CurvilinearInterface2(){
     std::cout<<"~CurvilinearInterface2()...\n"<<std::flush;
 #if defined(ENABLE_CUDA)
-    ::operator delete[](m_sbop, Managed);
+    ::operator delete[](m_sbop, Space::Managed);
 #endif
-    ::operator delete[](m_strx_c,Managed);
-    ::operator delete[](m_stry_c,Managed);
-    ::operator delete[](m_strx_f,Managed);
-    ::operator delete[](m_stry_f,Managed);
+    ::operator delete[](m_strx_c,Space::Managed);
+    ::operator delete[](m_stry_c,Space::Managed);
+    ::operator delete[](m_strx_f,Space::Managed);
+    ::operator delete[](m_stry_f,Space::Managed);
 #ifdef USE_MAGMA
-    ::operator delete[](m_mass_block,Managed);
-    ::operator delete[](dA_array,Managed);
-    ::operator delete[](m_ipiv_block,Managed);
-    ::operator delete[](piv_array,Managed);
-    //::operator delete[](info,Managed);
-    ::operator delete[](dB_array,Managed);
-    ::operator delete[](x,Managed);
+    ::operator delete[](m_mass_block,Space::Managed);
+    ::operator delete[](dA_array,Space::Managed);
+    ::operator delete[](m_ipiv_block,Space::Managed);
+    ::operator delete[](piv_array,Space::Managed);
+    //::operator delete[](info,Space::Managed);
+    ::operator delete[](dB_array,Space::Managed);
+    ::operator delete[](x,Space::Managed);
 #endif
     std::cout<<"~CurvilinearInterface2().. Done\n"<<std::flush;
   }
@@ -154,10 +154,10 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   m_kbf = m_nkf - 7;
   m_kef = m_nkf + 1;
 
-  m_strx_c = SW4_NEW(Managed, float_sw4[m_ie - m_ib + 1]);
-  m_stry_c = SW4_NEW(Managed, float_sw4[m_je - m_jb + 1]);
-  m_strx_f = SW4_NEW(Managed, float_sw4[m_ief - m_ibf + 1]);
-  m_stry_f = SW4_NEW(Managed, float_sw4[m_jef - m_jbf + 1]);
+  m_strx_c = SW4_NEW(Space::Managed, float_sw4[m_ie - m_ib + 1]);
+  m_stry_c = SW4_NEW(Space::Managed, float_sw4[m_je - m_jb + 1]);
+  m_strx_f = SW4_NEW(Space::Managed, float_sw4[m_ief - m_ibf + 1]);
+  m_stry_f = SW4_NEW(Space::Managed, float_sw4[m_jef - m_jbf + 1]);
 
   int ndif = m_nghost - (m_ew->m_iStartInt[m_gc] - m_ew->m_iStart[m_gc]);
   int nsw = m_ew->m_iEnd[m_gc] - m_ew->m_iStart[m_gc] + 1;
@@ -268,14 +268,14 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
 
 #ifdef USE_MAGMA
   std::cout<<" USING MAGMA FOR DGETRF WITH BATCH SIZE "<<msize<<"\n";
-  m_mass_block = SW4_NEW(Managed,float_sw4[9 * msize]);
-  dA_array = SW4_NEW(Managed, float_sw4*[msize]);
-  m_ipiv_block = SW4_NEW(Managed, int[3 * msize]);
-  piv_array = SW4_NEW(Managed, int*[msize]);
-  magma_int_t *info = SW4_NEW(Managed, int[msize]);
+  m_mass_block = SW4_NEW(Space::Managed,float_sw4[9 * msize]);
+  dA_array = SW4_NEW(Space::Managed, float_sw4*[msize]);
+  m_ipiv_block = SW4_NEW(Space::Managed, int[3 * msize]);
+  piv_array = SW4_NEW(Space::Managed, int*[msize]);
+  magma_int_t *info = SW4_NEW(Space::Managed, int[msize]);
   // For use in solve 
-  dB_array = SW4_NEW(Managed,float_sw4*[msize]);
-  x = SW4_NEW(Managed,float_sw4[3*msize]);
+  dB_array = SW4_NEW(Space::Managed,float_sw4*[msize]);
+  x = SW4_NEW(Space::Managed,float_sw4[3*msize]);
   // End for use in solver
   for (int j = m_jb + m_nghost; j <= m_je - m_nghost; j++)
     for (int i = m_ib + m_nghost; i <= m_ie - m_nghost; i++) {
@@ -310,7 +310,7 @@ SW4_MARK_BEGIN("MAGMA_DGETRF");
     std::cerr<<"ERRROR Stopping due to failed LU decomposition\n";
     abort();
   }
-  ::operator delete[](info,Managed);
+  ::operator delete[](info,Space::Managed);
   // Calculate the sub-batch sizes
   const int maxbatchsize=65535;
   for (int i=0;i<msize;i+=maxbatchsize){
@@ -509,7 +509,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
 
   SW4_MARK_BEGIN("IMPOSE_IC_CPU");
   // 4.b Left hand side, lhs*x
-  Sarray lhs(rhs), residual(rhs);
+  Sarray lhs(rhs,Space::Managed_temps), residual(rhs,Space::Managed_temps);
   interface_lhs(lhs, U_c);
 
   // Initial residual
@@ -808,7 +808,7 @@ void CurvilinearInterface2::interface_lhs(Sarray& lhs, Sarray& uc) {
   if (!m_tw) bnd_zero(prollhs, m_nghost);
   restrict2D(lhs, prollhs, 1, m_nkf);
 
-  Sarray Bc(lhs);
+  Sarray Bc(lhs,Space::Managed_temps);
   lhs_icstresses_curv(uc, Bc, 1, m_met_c, m_mu_c, m_lambda_c, m_strx_c,
                       m_stry_c, m_sbop);
   for (int c = 1; c <= 3; c++)
@@ -861,7 +861,7 @@ void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
   prolongate2D(rhs, prolrhs, 1, m_nkf);
 
   // 4. Compute L(uf)
-  Sarray Luf(prolrhs);
+  Sarray Luf(prolrhs,Space::Managed_temps);
   curvilinear4sgwind(m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef, m_nkf, m_nkf,
                      uf.c_ptr(), m_mu_f.c_ptr(), m_lambda_f.c_ptr(),
                      m_met_f.c_ptr(), m_jac_f.c_ptr(), Luf.c_ptr(), onesided,
@@ -877,7 +877,7 @@ void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
                          m_strx_f, m_stry_f, m_nkf, '-');
 
   // 5. Compute B(uf)
-  Sarray Bf(prolrhs);
+  Sarray Bf(prolrhs,Space::Managed_temps);
   compute_icstresses_curv(uf, Bf, m_nkf, m_met_f, m_mu_f, m_lambda_f, m_strx_f,
                           m_stry_f, m_sbop_no_gp, '=');
   if (m_use_attenuation)
@@ -901,7 +901,7 @@ void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
 
   // 7. Compute B(uc), and form rhs := rhs - B(uc) =
   // r(w1*J[gf]*(rhof*p(L(uc)/rhoc-L(uf))+B(uf))-B(uc)
-  Sarray Bc(rhs);
+  Sarray Bc(rhs,Space::Managed_temps);
   compute_icstresses_curv(uc, Bc, 1, m_met_c, m_mu_c, m_lambda_c, m_strx_c,
                           m_stry_c, m_sbop, '=');
   if (m_use_attenuation)

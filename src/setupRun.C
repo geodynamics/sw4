@@ -2088,19 +2088,19 @@ void EW::assign_supergrid_damping_arrays() {
 
   // allocate storage for 1-D damping coefficients on each grid
   for (g = 0; g < mNumberOfGrids; g++) {
-    m_sg_dc_x[g] = SW4_NEW(Managed, float_sw4[m_iEnd[g] - m_iStart[g] + 1]);
-    m_sg_dc_y[g] = SW4_NEW(Managed, float_sw4[m_jEnd[g] - m_jStart[g] + 1]);
-    m_sg_dc_z[g] = SW4_NEW(Managed, float_sw4[m_kEnd[g] - m_kStart[g] + 1]);
+    m_sg_dc_x[g] = SW4_NEW(Space::Managed, float_sw4[m_iEnd[g] - m_iStart[g] + 1]);
+    m_sg_dc_y[g] = SW4_NEW(Space::Managed, float_sw4[m_jEnd[g] - m_jStart[g] + 1]);
+    m_sg_dc_z[g] = SW4_NEW(Space::Managed, float_sw4[m_kEnd[g] - m_kStart[g] + 1]);
 
-    m_sg_str_x[g] = SW4_NEW(Managed, float_sw4[m_iEnd[g] - m_iStart[g] + 1]);
-    m_sg_str_y[g] = SW4_NEW(Managed, float_sw4[m_jEnd[g] - m_jStart[g] + 1]);
-    m_sg_str_z[g] = SW4_NEW(Managed, float_sw4[m_kEnd[g] - m_kStart[g] + 1]);
+    m_sg_str_x[g] = SW4_NEW(Space::Managed, float_sw4[m_iEnd[g] - m_iStart[g] + 1]);
+    m_sg_str_y[g] = SW4_NEW(Space::Managed, float_sw4[m_jEnd[g] - m_jStart[g] + 1]);
+    m_sg_str_z[g] = SW4_NEW(Space::Managed, float_sw4[m_kEnd[g] - m_kStart[g] + 1]);
 
     // new corner taper functions to reduce strength of damping near the edges
     // and corners
-    m_sg_corner_x[g] = SW4_NEW(Managed, float_sw4[m_iEnd[g] - m_iStart[g] + 1]);
-    m_sg_corner_y[g] = SW4_NEW(Managed, float_sw4[m_jEnd[g] - m_jStart[g] + 1]);
-    m_sg_corner_z[g] = SW4_NEW(Managed, float_sw4[m_kEnd[g] - m_kStart[g] + 1]);
+    m_sg_corner_x[g] = SW4_NEW(Space::Managed, float_sw4[m_iEnd[g] - m_iStart[g] + 1]);
+    m_sg_corner_y[g] = SW4_NEW(Space::Managed, float_sw4[m_jEnd[g] - m_jStart[g] + 1]);
+    m_sg_corner_z[g] = SW4_NEW(Space::Managed, float_sw4[m_kEnd[g] - m_kStart[g] + 1]);
   }
 
 #define dcx(i, g) (m_sg_dc_x[g])[i - m_iStart[g]]

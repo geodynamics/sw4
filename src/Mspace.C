@@ -105,7 +105,7 @@ void print_hwm() {
       // umpire::util::StatisticsDatabase::getDatabase()->printStatistics(std::cout);
     }
   if (Managed::hwm > 0)
-    std::cout << "Managed object count & HWM are " << Managed::ocount << " & "
+    std::cout << "Space::Managed object count & HWM are " << Managed::ocount << " & "
               << Managed::hwm << "\n";
   if (Managed::ocount != 0)
     std::cerr << "WARNING :: Managed object count should be zero at the end of "
@@ -117,8 +117,8 @@ void print_hwm() {
 }
 void *operator new(std::size_t size, Space loc) throw(std::bad_alloc) {
 #ifdef ENABLE_CUDA
-  if (loc == Managed) {
-    // std::cout<<"Managed allocation \n";
+  if (loc == Space::Managed) {
+    // std::cout<<"Space::Managed allocation \n";
     if (size == 0) size = 1;  // new has to return an valid pointer for 0 size.
     void *ptr;
 #ifndef SW4_USE_UMPIRE
@@ -149,12 +149,12 @@ void *operator new(std::size_t size, Space loc) throw(std::bad_alloc) {
     // SW4_CheckDeviceError(cudaMemset(ptr,0,size));
     return ptr;
 #endif
-  } else if (loc == Host) {
+  } else if (loc == Space::Host) {
     // std::cout<<"Calling my placement new \n";
     // global_variables.host_curr_mem+=size;
     // global_variables.host_max_mem=std::max(global_variables.host_max_mem,global_variables.host_curr_mem);
     return ::operator new(size);
-  } else if (loc == Device) {
+  } else if (loc == Space::Device) {
     // std::cout<<"Managed allocation \n";
     if (size == 0) size = 1;  // new has to return an valid pointer for 0 size.
     void *ptr;
@@ -163,12 +163,12 @@ void *operator new(std::size_t size, Space loc) throw(std::bad_alloc) {
       throw std::bad_alloc();
     } else
       return ptr;
-  } else if (loc == Pinned) {
+  } else if (loc == Space::Pinned) {
     if (size == 0) size = 1;  // new has to return an valid pointer for 0 size.
     void *ptr;
     SW4_CheckDeviceError(cudaHostAlloc(&ptr, size, cudaHostAllocMapped));
     return ptr;
-  } else if (loc == Managed_temps) {
+  } else if (loc == Space::Managed_temps) {
 #ifdef SW4_USE_UMPIRE
     umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
     auto allocator = rma.getAllocator("UM_pool_temps");
@@ -179,17 +179,17 @@ void *operator new(std::size_t size, Space loc) throw(std::bad_alloc) {
     return ptr;
 #else
     std::cerr << "Managed_temp location no defined\n";
-    return ::operator new(size, Managed);
+    return ::operator new(size, Space::Managed);
 #endif
   } else {
-    std::cerr << "Unknown memory space for allocation request " << loc << "\n";
+    std::cerr << "Unknown memory space for allocation request " << as_int(loc) << "\n";
     throw std::bad_alloc();
   }
 #else
-  if ((loc == Managed) || (loc == Device) || (loc == Pinned)) {
+  if ((loc == Space::Managed) || (loc == Space::Device) || (loc == Space::Pinned)) {
     // std::cout<<"Managed location not available yet \n";
     return ::operator new(size);
-  } else if (loc == Host) {
+  } else if (loc == Space::Host) {
     // std::cout<<"Calling my placement new \n";
     return ::operator new(size);
   } else {
@@ -213,7 +213,7 @@ void *operator new(std::size_t size, Space loc, char *file,
 
 void *operator new[](std::size_t size, Space loc) throw(std::bad_alloc) {
 #ifdef ENABLE_CUDA
-  if (loc == Managed) {
+  if (loc == Space::Managed) {
     // std::cout<<"Managed [] allocation \n";
     if (size == 0) size = 1;  // new has to return an valid pointer for 0 size.
     void *ptr;
@@ -240,12 +240,12 @@ void *operator new[](std::size_t size, Space loc) throw(std::bad_alloc) {
     // std::cout<<"PTR 2 "<<ptr<<"\n";
     return ptr;
 #endif
-  } else if (loc == Host) {
+  } else if (loc == Space::Host) {
     // std::cout<<"Calling my placement new \n";
     // global_variables.host_curr_mem+=size;
     // global_variables.host_max_mem=std::max(global_variables.host_max_mem,global_variables.host_curr_mem);
     return ::operator new(size);
-  } else if (loc == Device) {
+  } else if (loc == Space::Device) {
     // std::cout<<"Managed allocation \n";
     if (size == 0) size = 1;  // new has to return an valid pointer for 0 size.
     void *ptr;
@@ -254,12 +254,12 @@ void *operator new[](std::size_t size, Space loc) throw(std::bad_alloc) {
       throw std::bad_alloc();
     } else
       return ptr;
-  } else if (loc == Pinned) {
+  } else if (loc == Space::Pinned) {
     if (size == 0) size = 1;  // new has to return an valid pointer for 0 size.
     void *ptr;
     SW4_CheckDeviceError(cudaHostAlloc(&ptr, size, cudaHostAllocMapped));
     return ptr;
-  } else if (loc == Managed_temps) {
+  } else if (loc == Space::Managed_temps) {
 #if defined(SW4_USE_UMPIRE)
     umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
     auto allocator = rma.getAllocator("UM_pool_temps");
@@ -270,20 +270,20 @@ void *operator new[](std::size_t size, Space loc) throw(std::bad_alloc) {
     return ptr;
 #else
     std::cerr << " Memory location Managed_temps is not defined\n";
-    return ::operator new(size, Managed);
+    return ::operator new(size, Space::Managed);
 #endif
   } else {
     // cudaHostAlloc(&ptr,size+sizeof(size_t)*MEM_PAD_LEN,cudaHostAllocMapped));
-    std::cerr << "Unknown memory space for allocation request " << loc << "\n";
+    std::cerr << "Unknown memory space for allocation request " << as_int(loc) << "\n";
     throw std::bad_alloc();
   }
 
 #else  // !ENABLE_CUDA
-  if ((loc == Managed) || (loc == Device) || (loc == Pinned) ||
-      (loc == Managed_temps)) {
+  if ((loc == Space::Managed) || (loc == Space::Device) || (loc == Space::Pinned) ||
+      (loc == Space::Managed_temps)) {
     // std::cout<<"Managed location not available yet \n";
     return ::operator new(size);
-  } else if (loc == Host) {
+  } else if (loc == Space::Host) {
     // std::cout<<"Calling my placement new \n";
     return ::operator new(size);
   } else {
@@ -306,7 +306,7 @@ void *operator new[](std::size_t size, Space loc, const char *file, int line) {
 
 void operator delete(void *ptr, Space loc) throw() {
 #ifdef ENABLE_CUDA
-  if ((loc == Managed)) {
+  if ((loc == Space::Managed)) {
     // std::cout<<"Managed delete\n";
 #ifndef SW4_USE_UMPIRE
     pattr_t *ss = patpush(ptr, NULL);
@@ -320,19 +320,19 @@ void operator delete(void *ptr, Space loc) throw() {
     auto allocator = rma.getAllocator("UM_pool");
     allocator.deallocate(ptr);
 #endif
-  } else if (loc == Device) {
+  } else if (loc == Space::Device) {
     pattr_t *ss = patpush(ptr, NULL);
     if (ss != NULL) {
       global_variables.curr_mem -= ss->size;
       // global_variables.max_mem=std::max(global_variables.max_mem,global_variables.curr_mem);
     }
     SW4_CheckDeviceError(cudaFree(ptr));
-  } else if (loc == Pinned)
+  } else if (loc == Space::Pinned)
     SW4_CheckDeviceError(cudaFreeHost(ptr));
-  else if (loc == Host) {
+  else if (loc == Space::Host) {
     // std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
-  } else if (loc == Managed_temps) {
+  } else if (loc == Space::Managed_temps) {
 #if defined(SW4_USE_UMPIRE)
     umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
     auto allocator = rma.getAllocator("UM_pool_temps");
@@ -344,7 +344,7 @@ void operator delete(void *ptr, Space loc) throw() {
     std::cerr << "Unknown memory space for de-allocation request\n";
   }
 #else
-  if ((loc == Managed) || (loc == Device)) {
+  if ((loc == Space::Managed) || (loc == Space::Device)) {
     // std::cout<<"Managed delete not available yet \n";
     ::operator delete(ptr);
   } else if (loc == Host) {
@@ -359,7 +359,7 @@ void operator delete(void *ptr, Space loc) throw() {
 
 void operator delete[](void *ptr, Space loc) throw() {
 #ifdef ENABLE_CUDA
-  if (loc == Managed) {
+  if (loc == Space::Managed) {
 #ifndef SW4_USE_UMPIRE
     // std::cout<<"Managed [] delete\n";
     pattr_t *ss = patpush(ptr, NULL);
@@ -370,7 +370,7 @@ void operator delete[](void *ptr, Space loc) throw() {
     if (ptr == NULL) {
       std::cerr << "Null pointer passed to freee \n";
     } else {
-      if (GML(ptr) != Managed) {
+      if (GML(ptr) != Space::Managed) {
         std::cerr << " Wrong space " << GML(ptr) << " " << ptr << "\n";
         abort();
       } else {
@@ -382,7 +382,7 @@ void operator delete[](void *ptr, Space loc) throw() {
     auto allocator = rma.getAllocator("UM_pool");
     allocator.deallocate(ptr);
 #endif
-  } else if (loc == Device) {
+  } else if (loc == Space::Device) {
     // std::cout<<"Managed [] delete\n";
     pattr_t *ss = patpush(ptr, NULL);
     if (ss != NULL) {
@@ -391,26 +391,26 @@ void operator delete[](void *ptr, Space loc) throw() {
     }
     SW4_CheckDeviceError(cudaFree(ptr));
 
-  } else if (loc == Pinned)
+  } else if (loc == Space::Pinned)
     SW4_CheckDeviceError(cudaFreeHost(ptr));
-  else if (loc == Host) {
+  else if (loc == Space::Host) {
     // std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
-  } else if (loc == Managed_temps) {
+  } else if (loc == Space::Managed_temps) {
 #ifdef SW4_USE_UMPIRE
     umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
     auto allocator = rma.getAllocator("UM_pool_temps");
     allocator.deallocate(ptr);
 #endif
   } else {
-    std::cerr << "Unknown memory space for de-allocation request " << loc
+    std::cerr << "Unknown memory space for de-allocation request " << as_int(loc)
               << "\n";
   }
 #else
-  if ((loc == Managed) || (loc == Device) || (loc == Pinned)) {
+  if ((loc == Space::Managed) || (loc == Space::Device) || (loc == Space::Pinned)) {
     // std::cout<<"Managed delete not available yet \n";
     ::operator delete(ptr);
-  } else if (loc == Host) {
+  } else if (loc == Space::Host) {
     // std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
   } else {
@@ -433,15 +433,15 @@ void assert_check_managed(void *ptr, const char *file, int line) {
   if (ptr == NULL) return;
   pattr_t *ss = patpush(ptr, NULL);
   if (ss != NULL) {
-    if (ss->type != Managed) {
+    if (ss->type != Space::Managed) {
       std::cerr << "ASSERT_MANAGED FAILURE in line" << line << " of file "
-                << file << "type = " << ss->type << "pointer  =" << ptr << "\n";
+                << file << "type = " << as_int(ss->type) << "pointer  =" << ptr << "\n";
       std::cerr << "ASSERT_MANAGED failed on allocation from line" << ss->line
                 << "of " << ss->file << "\n";
     }
   } else {
     std::cerr << "ASSERT_MANAGED FAILURE in line" << line << " of file " << file
-              << "type = " << ss->type << "pointer  =" << ptr << "\n";
+              << "type = " << as_int(ss->type) << "pointer  =" << ptr << "\n";
     std::cerr << "No info in map\n Use PointerAttributes\n";
     // printf("Address not in map\n Calling PrintPointerAttributes\n");
     // if ( PointerAttributes(ptr)!=HYPRE_MANAGED_POINTER){
@@ -454,15 +454,15 @@ void assert_check_host(void *ptr, const char *file, int line) {
   if (ptr == NULL) return;
   pattr_t *ss = patpush(ptr, NULL);
   if (ss != NULL) {
-    if (ss->type != Host) {
+    if (ss->type != Space::Host) {
       std::cerr << "ASSERT_HOST FAILURE in line" << line << " of file " << file
-                << "type = " << ss->type << "pointer  =" << ptr << "\n";
+                << "type = " << as_int(ss->type) << "pointer  =" << ptr << "\n";
       std::cerr << "ASSERT_HOST failed on allocation from line" << ss->line
                 << "of " << ss->file << "\n";
     }
   } else {
     std::cerr << "ASSERT_HOST FAILURE in line" << line << " of file " << file
-              << "type = " << ss->type << "pointer  =" << ptr << "\n";
+              << "type = " << as_int(ss->type) << "pointer  =" << ptr << "\n";
     std::cerr << "Ptr not in map\n Use PointerAttribs or somesuch\n";
     // printf("Address not in map\n Calling PrintPointerAttributes\n");
     // if ( PointerAttributes(ptr)!=HYPRE_HOST_POINTER){
@@ -688,16 +688,16 @@ Space GML(const void *ptr) {
   if (cudaPointerGetAttributes(&attr, ptr) == cudaErrorInvalidValue) {
     // This shuld go away with Cuda 11
     std::cerr << "Invalid value in GML \n";
-    return Host;
+    return Space::Host;
   }
   if (attr.type == cudaMemoryTypeUnregistered) {
-    return Host;
+    return Space::Host;
   } else if (attr.type == cudaMemoryTypeHost) {
-    return Pinned;
+    return Space::Pinned;
   } else if (attr.type == cudaMemoryTypeDevice) {
-    return Device;
+    return Space::Device;
   } else if (attr.type == cudaMemoryTypeManaged) {
-    return Managed;
+    return Space::Managed;
   } else
-    return Space_Error;
+    return Space::Space_Error;
 }

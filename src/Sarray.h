@@ -94,22 +94,23 @@ class Sarray {
   Sarray(int nc, int iend, int jend, int kend);
   Sarray(int iend, int jend, int kend);
   Sarray(const Sarray& u);
+  Sarray(const Sarray&u, Space space);
   Sarray(Sarray& u, int nc = -1);
   Sarray();
   ~Sarray() {
 #ifndef SW4_USE_UMPIRE
-    if ((m_data != 0) && (!static_alloc)) ::operator delete[](m_data, Managed);
+    if ((m_data != 0) && (!static_alloc)) ::operator delete[](m_data, Space::Managed);
 #else
     if (m_data != 0) {
       if (static_alloc) {
         ::operator delete[](
             m_data,
-            Managed_temps);  // THIS NEEDS TO MATCH THE SPACE IN THE CTOR
+            Space::Managed_temps);  // THIS NEEDS TO MATCH THE SPACE IN THE CTOR
                              // umpire::ResourceManager &rma =
         // umpire::ResourceManager::getInstance(); auto allocator =
         // rma.getAllocator("UM_pool_small"); allocator.deallocate(m_data);
       } else
-        ::operator delete[](m_data, Managed);
+        ::operator delete[](m_data, Space::Managed);
     }
 #endif
   }
@@ -119,7 +120,7 @@ class Sarray {
   void define(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
               int kend);
   void define(int ibeg, int iend, int jbeg, int jend, int kbeg, int kend,
-              Space space = Managed);
+              Space space = Space::Managed);
   void define(const Sarray& u);
   inline float_sw4* c_ptr() { return m_data; }
 #ifdef SW4_CUDA

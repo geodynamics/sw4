@@ -71,12 +71,12 @@ Sarray::Sarray(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
     if (found != static_map.end())
       m_data = found->second;
     else {
-      m_data = SW4_NEW(Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
+      m_data = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
       static_map[ss.str()] = m_data;
     }
 #else
     m_data =
-        SW4_NEW(Managed_temps,
+        SW4_NEW(Space::Managed_temps,
                 float_sw4[m_nc * m_ni * m_nj *
                           m_nk]);  // THIS NEEDS TO MATCH THE SPACE IN THE DTOR
     // umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
@@ -112,7 +112,7 @@ Sarray::Sarray(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
   m_nj = m_je - m_jb + 1;
   m_nk = m_ke - m_kb + 1;
   if (m_nc * m_ni * m_nj * m_nk > 0)
-    m_data = SW4_NEW(Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
+    m_data = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
   else
     m_data = NULL;
   //   m_mpi_datatype_initialized = false;
@@ -135,7 +135,7 @@ Sarray::Sarray(int ibeg, int iend, int jbeg, int jend, int kbeg, int kend)
   m_nj = m_je - m_jb + 1;
   m_nk = m_ke - m_kb + 1;
   if (m_nc * m_ni * m_nj * m_nk > 0)
-    m_data = SW4_NEW(Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
+    m_data = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
   else
     m_data = NULL;
   //   m_mpi_datatype_initialized = false;
@@ -157,7 +157,7 @@ Sarray::Sarray(int nc, int iend, int jend, int kend) : static_alloc(false) {
   m_nj = m_je - m_jb + 1;
   m_nk = m_ke - m_kb + 1;
   if (m_nc * m_ni * m_nj * m_nk > 0)
-    m_data = SW4_NEW(Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
+    m_data = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
   else
     m_data = NULL;
   //   m_mpi_datatype_initialized = false;
@@ -179,7 +179,7 @@ Sarray::Sarray(int iend, int jend, int kend) : static_alloc(false) {
   m_nj = m_je - m_jb + 1;
   m_nk = m_ke - m_kb + 1;
   if (m_nc * m_ni * m_nj * m_nk > 0)
-    m_data = SW4_NEW(Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
+    m_data = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
   else
     m_data = NULL;
   //   m_mpi_datatype_initialized = false;
@@ -210,12 +210,35 @@ Sarray::Sarray(const Sarray& u) : static_alloc(false) {
   m_nj = m_je - m_jb + 1;
   m_nk = m_ke - m_kb + 1;
   if (m_nc * m_ni * m_nj * m_nk > 0)
-    m_data = SW4_NEW(Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
+    m_data = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
   else
     m_data = NULL;
   dev_data = NULL;
   define_offsets();
   prefetched = false;
+}
+//-----------------------------------------------------------------------
+Sarray::Sarray(const Sarray& u,Space space) {
+  m_nc = u.m_nc;
+  m_ib = u.m_ib;
+  m_ie = u.m_ie;
+  m_jb = u.m_jb;
+  m_je = u.m_je;
+  m_kb = u.m_kb;
+  m_ke = u.m_ke;
+  m_ni = m_ie - m_ib + 1;
+  m_nj = m_je - m_jb + 1;
+  m_nk = m_ke - m_kb + 1;
+  if (m_nc * m_ni * m_nj * m_nk > 0)
+    m_data = SW4_NEW(space, float_sw4[m_nc * m_ni * m_nj * m_nk]);
+  else
+    m_data = NULL;
+  dev_data = NULL;
+  define_offsets();
+  prefetched = false;
+  if (space==Space::Managed) static_alloc = false;
+  else if (space==Space::Managed_temps) static_alloc=true;
+  else std::cout<<"Warning :: Sarrays outside Space::Managed not fully supported \n";
 }
 
 //-----------------------------------------------------------------------
@@ -234,7 +257,7 @@ Sarray::Sarray(Sarray& u, int nc) : static_alloc(false) {
   m_nj = m_je - m_jb + 1;
   m_nk = m_ke - m_kb + 1;
   if (m_nc * m_ni * m_nj * m_nk > 0)
-    m_data = SW4_NEW(Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
+    m_data = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
   else
     m_data = NULL;
   //   m_mpi_datatype_initialized = false;
@@ -287,7 +310,7 @@ Sarray::Sarray(Sarray& u, int nc) : static_alloc(false) {
 
 //-----------------------------------------------------------------------
 void Sarray::define(int nc, int iend, int jend, int kend) {
-  if (m_data != NULL) ::operator delete[](m_data, Managed);
+  if (m_data != NULL) ::operator delete[](m_data, Space::Managed);
 
   m_nc = nc;
   m_ib = 1;
@@ -300,7 +323,7 @@ void Sarray::define(int nc, int iend, int jend, int kend) {
   m_nj = m_je - m_jb + 1;
   m_nk = m_ke - m_kb + 1;
   if (m_nc * m_ni * m_nj * m_nk > 0)
-    m_data = SW4_NEW(Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
+    m_data = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
   else
     m_data = NULL;
   //   m_mpi_datatype_initialized = false;
@@ -311,7 +334,7 @@ void Sarray::define(int nc, int iend, int jend, int kend) {
 
 //-----------------------------------------------------------------------
 void Sarray::define(int iend, int jend, int kend) {
-  if (m_data != NULL) ::operator delete[](m_data, Managed);
+  if (m_data != NULL) ::operator delete[](m_data, Space::Managed);
 
   m_nc = 1;
   m_ib = 1;
@@ -324,7 +347,7 @@ void Sarray::define(int iend, int jend, int kend) {
   m_nj = m_je - m_jb + 1;
   m_nk = m_ke - m_kb + 1;
   if (m_nc * m_ni * m_nj * m_nk > 0)
-    m_data = SW4_NEW(Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
+    m_data = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
   else
     m_data = NULL;
   //   m_mpi_datatype_initialized = false;
@@ -336,7 +359,7 @@ void Sarray::define(int iend, int jend, int kend) {
 //-----------------------------------------------------------------------
 void Sarray::define(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
                     int kend) {
-  if (m_data != NULL) ::operator delete[](m_data, Managed);
+  if (m_data != NULL) ::operator delete[](m_data, Space::Managed);
   m_nc = nc;
   m_ib = ibeg;
   m_ie = iend;
@@ -348,7 +371,7 @@ void Sarray::define(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
   m_nj = m_je - m_jb + 1;
   m_nk = m_ke - m_kb + 1;
   if (m_nc * m_ni * m_nj * m_nk > 0)
-    m_data = SW4_NEW(Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
+    m_data = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
   else
     m_data = NULL;
   dev_data = NULL;
@@ -384,7 +407,7 @@ void Sarray::define(int ibeg, int iend, int jbeg, int jend, int kbeg, int kend,
 
 //-----------------------------------------------------------------------
 void Sarray::define(const Sarray& u) {
-  if (m_data != NULL) ::operator delete[](m_data, Managed);
+  if (m_data != NULL) ::operator delete[](m_data, Space::Managed);
   m_nc = u.m_nc;
   m_ib = u.m_ib;
   m_ie = u.m_ie;
@@ -396,7 +419,7 @@ void Sarray::define(const Sarray& u) {
   m_nj = m_je - m_jb + 1;
   m_nk = m_ke - m_kb + 1;
   if (m_nc * m_ni * m_nj * m_nk > 0)
-    m_data = SW4_NEW(Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
+    m_data = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
   else
     m_data = NULL;
   dev_data = NULL;
@@ -658,7 +681,7 @@ size_t Sarray::count_nans(int& cfirst, int& ifirst, int& jfirst, int& kfirst) {
 
 //-----------------------------------------------------------------------
 void Sarray::copy(const Sarray& u) {
-  if (m_data != NULL) ::operator delete[](m_data, Managed);
+  if (m_data != NULL) ::operator delete[](m_data, Space::Managed);
 
   m_nc = u.m_nc;
   m_ib = u.m_ib;
@@ -671,7 +694,7 @@ void Sarray::copy(const Sarray& u) {
   m_nj = m_je - m_jb + 1;
   m_nk = m_ke - m_kb + 1;
   if (m_nc * m_ni * m_nj * m_nk > 0) {
-    m_data = SW4_NEW(Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
+    m_data = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
 #pragma omp parallel for
     for (int i = 0; i < m_nc * m_ni * m_nj * m_nk; i++) m_data[i] = u.m_data[i];
   } else
@@ -931,7 +954,7 @@ void Sarray::save_to_disk(const char* fname) {
     std::cout << "Error saving nk to " << fname << std::endl;
   size_t npts = m_nc * ((size_t)m_ni) * m_nj * ((size_t)m_nk);
   if (m_corder) {
-    float_sw4* ar = SW4_NEW(Host, float_sw4[npts]);
+    float_sw4* ar = SW4_NEW(Space::Host, float_sw4[npts]);
     for (int k = 0; k < m_nk; k++)
       for (int j = 0; j < m_nj; j++)
         for (int i = 0; i < m_ni; i++)
@@ -1149,7 +1172,7 @@ void Sarray::define_offsets() {
 //-----------------------------------------------------------------------
 void Sarray::transposeik() {
   // Transpose a_{i,j,k} := a_{k,j,i}
-  float_sw4* tmpar = SW4_NEW(Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
+  float_sw4* tmpar = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
   if (m_corder) {
     size_t npts = static_cast<size_t>(m_ni) * m_nj * m_nk;
 #pragma omp parallel for
@@ -1176,7 +1199,7 @@ void Sarray::transposeik() {
   for (size_t i = 0; i < m_ni * ((size_t)m_nj) * m_nk * m_nc; i++)
     m_data[i] = tmpar[i];
   //::operator delete[] tmpar;
-  ::operator delete[](tmpar, Managed);
+  ::operator delete[](tmpar, Space::Managed);
 }
 
 void Sarray::prefetch(int device) {
@@ -1302,7 +1325,7 @@ void Sarray::insert_intersection(Sarray& a_U) {
     const int lm_kb = m_kb;
     const int lm_ni = m_ni;
     const int lm_nj = m_nj;
-    const int lm_nk = m_nk;
+    //const int lm_nk = m_nk;
     const int lm_nc = m_nc;
     //std::cout<<"Calling interest \n"<<std::flush;
     RAJA::RangeSegment k_range(wind[4],wind[5]+1);

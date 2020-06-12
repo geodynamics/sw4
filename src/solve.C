@@ -93,7 +93,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       if (m_bcType[g][side] == bStressFree || m_bcType[g][side] == bDirichlet ||
           m_bcType[g][side] == bSuperGrid) {
         BCForcing[g][side] =
-            SW4_NEW(Managed, float_sw4[3 * m_NumberOfBCPoints[g][side]]);
+            SW4_NEW(Space::Managed, float_sw4[3 * m_NumberOfBCPoints[g][side]]);
       }
     }
 
@@ -1386,7 +1386,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   for (int g = 0; g < mNumberOfGrids; g++) {
     for (int side = 0; side < 6; side++)
       if (BCForcing[g][side] != NULL)
-        ::operator delete[](BCForcing[g][side], Managed);
+        ::operator delete[](BCForcing[g][side], Space::Managed);
     delete[] BCForcing[g];
   }
   int myRank;
@@ -5161,7 +5161,7 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
     }  // end if bcType[g][4] == bStressFree && topography
 
   }  // end for g=0,.
-     //::operator delete[](viewArray,Managed);
+     //::operator delete[](viewArray,Space::Managed);
 }
 void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                      vector<Sarray>& a_Lambda, vector<Sarray*>& a_Alpha,
