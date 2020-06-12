@@ -1328,21 +1328,46 @@ void Sarray::insert_intersection(Sarray& a_U) {
     //const int lm_nk = m_nk;
     const int lm_nc = m_nc;
     //std::cout<<"Calling interest \n"<<std::flush;
+using LOCAL_LOOP =
+    RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::Tile<
+        0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+        RAJA::statement::Tile<
+            1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
+            RAJA::statement::Tile<
+                2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
+                RAJA::statement::For<
+                    0, RAJA::cuda_thread_z_direct,
+                    RAJA::statement::For<
+                        1, RAJA::cuda_thread_y_direct,
+                        RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
+                                             RAJA::statement::Lambda<0>>>>>>>>>;
+#define NO_COLLAPSE 1
+#if defined(NO_COLLAPSE)
+    // LOOP 0
+    Range<32> I(wind[0],wind[1]+1); 
+    Range<32> J(wind[2],wind[3]+1);
+    Range<1> K(wind[4],wind[5]+1);
+    //std::cout<<" SIZE "<<wind[1]-wind[0]+1<<" "<<wind[3]+1-wind[2]<<" "<<wind[5]+1-wind[4]<<"\n";
+#pragma forceinline
+    forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+#else
+
     RAJA::RangeSegment k_range(wind[4],wind[5]+1);
     RAJA::RangeSegment j_range(wind[2],wind[3]+1);
     RAJA::RangeSegment i_range(wind[0],wind[1]+1);
       RAJA::kernel<
-	DEFAULT_LOOP3>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
+	LOCAL_LOOP>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
                                                                       int k,
                                                                       int j,
                                                                       int i) {
+#endif
           size_t sind = (i - ib) + nis * (j - jb) + nis * njs * (k - kb);
           size_t ind = (i - lm_ib) + lm_ni * (j - lm_jb) + lm_ni * lm_nj * (k - lm_kb);
 	  //printf("IN INTERSECTU %d %d %d %d \n",m_nc,m_ni,m_nj,m_nk);
           for (int c = 1; c <= lm_nc; c++)
             dst_m_data[ind + totpts * (c - 1)] =
                 src_m_data[sind + totptss * (c - 1)];
-		       });
+		    }); SYNC_STREAM;
   } else {
     size_t sind = 0, ind = 0;
     for (int k = wind[4]; k <= wind[5]; k++)

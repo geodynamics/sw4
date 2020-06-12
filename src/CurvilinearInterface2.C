@@ -662,13 +662,22 @@ RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
 
     // 4.e. Compute residual and its norm
     maxresloc = 0;
-    for (int c = 1; c <= 3; c++)
-      for (int j = lhs.m_jb + 5; j <= lhs.m_je - 5; j++)
-        for (int i = lhs.m_ib + 5; i <= lhs.m_ie - 5; i++) {
-          residual(c, i, j, 1) = lhs(c, i, j, 1) + rhs(c, i, j, 1);
-          if (abs(residual(c, i, j, 1)) > maxresloc)
-            maxresloc = abs(residual(c, i, j, 1));
-        }
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> raja_maxresloc(0);
+
+      // for (int j = lhs.m_jb + 5; j <= lhs.m_je - 5; j++)
+      //   for (int i = lhs.m_ib + 5; i <= lhs.m_ie - 5; i++) {
+    //RAJA::RangeSegment j_range(lhs.m_jb + 5,lhs.m_je - 4);
+    //RAJA::RangeSegment i_range(lhs.m_ib + 5,lhs.m_ie - 4);
+  RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
+      RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+	for (int c = 1; c <= 3; c++){
+          residualV(c, i, j, 1) = lhsV(c, i, j, 1) + rhsV(c, i, j, 1);
+	  raja_maxresloc.max(fabs(residualV(c, i, j, 1)));
+          // if (abs(residual(c, i, j, 1)) > maxresloc)
+          //   maxresloc = abs(residual(c, i, j, 1));
+	}
+      });
+  maxresloc = static_cast<float_sw4>(raja_maxresloc.get());
     MPI_Allreduce(&maxresloc, &maxres, 1, m_ew->m_mpifloat, MPI_MAX,
                   m_ew->m_cartesian_communicator);
   }
