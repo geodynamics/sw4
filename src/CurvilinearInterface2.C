@@ -923,7 +923,7 @@ void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearInterface2::compute_icstresses_curv(
+void CurvilinearInterface2::compute_icstresses_curv_host(
     Sarray& a_Up, Sarray& B, int kic, Sarray& a_metric, Sarray& a_mu,
     Sarray& a_lambda, float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop,
     char op) {
@@ -1622,4 +1622,128 @@ void CurvilinearInterface2::communicate_array1d(float_sw4* u, int n, int dir,
 
   MPI_Wait(&req1, &status);
   MPI_Wait(&req2, &status);
+}
+//-----------------------------------------------------------------------
+void CurvilinearInterface2::compute_icstresses_curv(Sarray& a_Up, Sarray& B, int kic,
+                                 Sarray& a_metric, Sarray& a_mu,
+                                 Sarray& a_lambda, float_sw4* a_str_x,
+                                 float_sw4* a_str_y, float_sw4* sbop, char op) {
+  const float_sw4 a1 = 2.0 / 3, a2 = -1.0 / 12;
+  const bool upper = (kic == 1);
+  const int k = kic;
+  const int kl = upper ? 1 : -1;
+  const int ifirst = a_Up.m_ib;
+  const int jfirst = a_Up.m_jb;
+#define str_x(i) a_str_x[(i - ifirst)]
+#define str_y(j) a_str_y[(j - jfirst)]
+  float_sw4 sgn = 1;
+  if (op == '=') {
+    B.set_value(0.0);
+    sgn = 1;
+  }
+  if (op == '-') {
+    sgn = -1;
+  }
+
+
+  SView &a_UpV =a_Up.getview();
+  SView &BV = B.getview();
+  SView &a_metricV = a_metric.getview();
+  SView &a_muV = a_mu.getview();
+  SView &a_lambdaV = a_lambda.getview();
+  
+  RAJA::RangeSegment j_range(B.m_jb + 2, B.m_je - 2+1);
+  RAJA::RangeSegment i_range(B.m_ib + 2, B.m_ie - 2+1);
+  RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
+      RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+// #pragma omp parallel for
+//   for (int j = B.m_jb + 2; j <= B.m_je - 2; j++)
+// #pragma omp simd
+//     for (int i = B.m_ib + 2; i <= B.m_ie - 2; i++) {
+      float_sw4 uz, vz, wz;
+      uz = vz = wz = 0;
+      for (int m = 0; m <= 5; m++) {
+        uz += sbop[m] * a_UpV(1, i, j, k + kl * (m - 1));
+        vz += sbop[m] * a_UpV(2, i, j, k + kl * (m - 1));
+        wz += sbop[m] * a_UpV(3, i, j, k + kl * (m - 1));
+#ifdef CURVI_DEBUG
+        std::cout << "UZ" << m << " " << uz << " " << sbop[m] << " "
+                  << a_Up(1, i, j, k + kl * (m - 1)) << "\n";
+#endif
+      }
+      uz *= kl;
+      vz *= kl;
+      wz *= kl;
+
+      // Normal terms
+      float_sw4 m2 = str_x(i) * a_metricV(2, i, j, k);
+      float_sw4 m3 = str_y(j) * a_metricV(3, i, j, k);
+      float_sw4 m4 = a_metricV(4, i, j, k);
+      float_sw4 un = m2 * uz + m3 * vz + m4 * wz;
+      float_sw4 mnrm = m2 * m2 + m3 * m3 + m4 * m4;
+      float_sw4 B1, B2, B3;
+
+      B1 = a_muV(i, j, k) * mnrm * uz +
+           (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m2 * un;
+      B2 = a_muV(i, j, k) * mnrm * vz +
+           (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m3 * un;
+      B3 = a_muV(i, j, k) * mnrm * wz +
+           (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m4 * un;
+
+      // Tangential terms
+      // p-derivatives
+      float_sw4 up1 =
+          str_x(i) * (a2 * (a_UpV(1, i + 2, j, k) - a_UpV(1, i - 2, j, k)) +
+                      a1 * (a_UpV(1, i + 1, j, k) - a_UpV(1, i - 1, j, k)));
+      float_sw4 up2 =
+          str_x(i) * (a2 * (a_UpV(2, i + 2, j, k) - a_UpV(2, i - 2, j, k)) +
+                      a1 * (a_UpV(2, i + 1, j, k) - a_UpV(2, i - 1, j, k)));
+      float_sw4 up3 =
+          str_x(i) * (a2 * (a_UpV(3, i + 2, j, k) - a_UpV(3, i - 2, j, k)) +
+                      a1 * (a_UpV(3, i + 1, j, k) - a_UpV(3, i - 1, j, k)));
+      B1 += a_metricV(1, i, j, k) *
+            ((2 * a_muV(i, j, k) + a_lambdaV(i, j, k)) * m2 * up1 +
+             a_muV(i, j, k) * (m3 * up2 + m4 * up3));
+      B2 += a_metricV(1, i, j, k) *
+            (a_lambdaV(i, j, k) * m3 * up1 + a_muV(i, j, k) * m2 * up2);
+      B3 += a_metricV(1, i, j, k) *
+            (a_lambdaV(i, j, k) * m4 * up1 + a_muV(i, j, k) * m2 * up3);
+
+      // q-derivatives
+      float_sw4 uq1 =
+          str_y(j) * (a2 * (a_UpV(1, i, j + 2, k) - a_UpV(1, i, j - 2, k)) +
+                      a1 * (a_UpV(1, i, j + 1, k) - a_UpV(1, i, j - 1, k)));
+      float_sw4 uq2 =
+          str_y(j) * (a2 * (a_UpV(2, i, j + 2, k) - a_UpV(2, i, j - 2, k)) +
+                      a1 * (a_UpV(2, i, j + 1, k) - a_UpV(2, i, j - 1, k)));
+      float_sw4 uq3 =
+          str_y(j) * (a2 * (a_UpV(3, i, j + 2, k) - a_UpV(3, i, j - 2, k)) +
+                      a1 * (a_UpV(3, i, j + 1, k) - a_UpV(3, i, j - 1, k)));
+      B1 += a_metricV(1, i, j, k) *
+            (a_lambdaV(i, j, k) * m2 * uq2 + a_muV(i, j, k) * m3 * uq1);
+      B2 += a_metricV(1, i, j, k) *
+            ((2 * a_muV(i, j, k) + a_lambdaV(i, j, k)) * m3 * uq2 +
+             a_muV(i, j, k) * (m2 * uq1 + m4 * uq3));
+      B3 += a_metricV(1, i, j, k) *
+            (a_lambdaV(i, j, k) * m4 * uq2 + a_muV(i, j, k) * m3 * uq3);
+
+      float_sw4 isgxy = 1.0 / (str_x(i) * str_y(j));
+      B1 *= isgxy;
+      B2 *= isgxy;
+      B3 *= isgxy;
+      //
+      BV(1, i, j, k) += sgn * B1;
+      BV(2, i, j, k) += sgn * B2;
+      BV(3, i, j, k) += sgn * B3;
+      // std::cout<<"STTRESS C"<<i<<j<<k<<" "<<B(1,i,j,k)<<" "<<a_muV(i,j,k)<<"
+      // "<<mnrm<<" "<<uz<<"\n";
+      });
+#ifdef PEEKS_GALORE
+      SW4_PEEK;
+      SYNC_DEVICE;
+#endif
+      SYNC_STREAM;
+    // std::cout<<"END OF STRESS C CALL\n";
+#undef str_x
+#undef str_y
 }
