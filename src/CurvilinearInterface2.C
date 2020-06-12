@@ -799,13 +799,22 @@ void CurvilinearInterface2::interface_lhs(Sarray& lhs, Sarray& uc) {
   lhs_Lu(uc, lhs, m_met_c, m_jac_c, m_mu_c, m_lambda_c, m_strx_c, m_stry_c,
          m_ghcof[0]);
 
-  for (int c = 1; c <= 3; c++)
-    for (int j = lhs.m_jb; j <= lhs.m_je; j++)
-      for (int i = lhs.m_ib; i <= lhs.m_ie; i++)
-        lhs(c, i, j, 1) /= m_rho_c(i, j, 1);
+  // for (int c = 1; c <= 3; c++)
+  //   for (int j = lhs.m_jb; j <= lhs.m_je; j++)
+  //     for (int i = lhs.m_ib; i <= lhs.m_ie; i++)
+  SView &lhsV = lhs.getview();
+  SView &m_rho_cV = m_rho_c.getview();
+  RAJA::RangeSegment j_range(lhs.m_jb ,lhs.m_je+1);
+  RAJA::RangeSegment i_range(lhs.m_ib,lhs.m_ie+1);
+  RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
+      RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+        for (int c = 1; c <= 3; c++) lhsV(c, i, j, 1) /= m_rho_cV(i, j, 1);});
+
+  SYNC_STREAM;
+
   if (!m_tw) bnd_zero(lhs, m_nghost);
 
-  Sarray prollhs(3, m_ibf, m_ief, m_jbf, m_jef, m_nkf, m_nkf);
+  Sarray prollhs(3, m_ibf, m_ief, m_jbf, m_jef, m_nkf, m_nkf,__FILE__,__LINE__);
   prolongate2D(lhs, prollhs, 1, m_nkf);
   for (int c = 1; c <= 3; c++)
     for (int j = prollhs.m_jb; j <= prollhs.m_je; j++)
@@ -1098,6 +1107,7 @@ void CurvilinearInterface2::lhs_Lu(Sarray& a_U, Sarray& a_lhs, Sarray& met,
   const int jfirst = a_U.m_jb;
 #define strx(i) a_str_x[(i - ifirst)]
 #define stry(j) a_str_y[(j - jfirst)]
+  
   for (int j = a_lhs.m_jb; j <= a_lhs.m_je; j++)
     for (int i = a_lhs.m_ib; i <= a_lhs.m_ie; i++) {
       float_sw4 ijac = ghcof / jac(i, j, 1);

@@ -59,7 +59,7 @@ class CurvilinearInterface2 {
 #endif
   void injection(Sarray& u_f, Sarray& u_c);
   void interface_block(Sarray& matrix);
-  void interface_lhs(Sarray& lhs, Sarray& uc);
+
   void interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
                      std::vector<Sarray>& Alpha_c,
                      std::vector<Sarray>& Alpha_f);
@@ -105,6 +105,7 @@ class CurvilinearInterface2 {
 
   void impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
                  std::vector<Sarray*>& a_AlphaVE);
+  void interface_lhs(Sarray& lhs, Sarray& uc);
   void compute_icstresses_curv(Sarray& a_Up, Sarray& B, int kic,
                                Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
                                float_sw4* a_str_x, float_sw4* a_str_y,
