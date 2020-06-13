@@ -72,9 +72,7 @@ class CurvilinearInterface2 {
                            Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
                            float_sw4* a_str_x, float_sw4* a_str_y,
                            float_sw4* sbop);
-  void lhs_Lu(Sarray& a_U, Sarray& a_lhs, Sarray& metric, Sarray& jac,
-              Sarray& mu, Sarray& lambda, float_sw4* a_str_x,
-              float_sw4* a_str_y, float_sw4 ghcof);
+ 
 
   void mat_icstresses_curv(int ib, int jb, Sarray& a_mat, int kic,
                            Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
@@ -110,6 +108,10 @@ class CurvilinearInterface2 {
                                Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
                                float_sw4* a_str_x, float_sw4* a_str_y,
                                float_sw4* sbop, char op);
+  void lhs_Lu(Sarray& a_U, Sarray& a_lhs, Sarray& metric, Sarray& jac,
+              Sarray& mu, Sarray& lambda, float_sw4* a_str_x,
+              float_sw4* a_str_y, float_sw4 ghcof);
+
 };
 
 #endif

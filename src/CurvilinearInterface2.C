@@ -1098,18 +1098,28 @@ void CurvilinearInterface2::lhs_icstresses_curv(
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearInterface2::lhs_Lu(Sarray& a_U, Sarray& a_lhs, Sarray& met,
-                                   Sarray& jac, Sarray& mu, Sarray& la,
+void CurvilinearInterface2::lhs_Lu(Sarray& a_Ua, Sarray& a_lhsa, Sarray& meta,
+                                   Sarray& jaca, Sarray& mua, Sarray& laa,
                                    float_sw4* a_str_x, float_sw4* a_str_y,
                                    float_sw4 ghcof) {
   SW4_MARK_FUNCTION;
-  const int ifirst = a_U.m_ib;
-  const int jfirst = a_U.m_jb;
+  const int ifirst = a_Ua.m_ib;
+  const int jfirst = a_Ua.m_jb;
 #define strx(i) a_str_x[(i - ifirst)]
 #define stry(j) a_str_y[(j - jfirst)]
-  
-  for (int j = a_lhs.m_jb; j <= a_lhs.m_je; j++)
-    for (int i = a_lhs.m_ib; i <= a_lhs.m_ie; i++) {
+
+  SView &a_lhs = a_lhsa.getview();
+  SView &jac = jaca.getview();
+  SView &mu = mua.getview();
+  SView &la = laa.getview();
+  SView &met = meta.getview();
+  SView &a_U = a_Ua.getview();
+  RAJA::RangeSegment j_range(a_lhsa.m_jb,a_lhsa.m_je+1);
+  RAJA::RangeSegment i_range(a_lhsa.m_ib,a_lhsa.m_ie+1);
+  RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
+      RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+  // for (int j = a_lhs.m_jb; j <= a_lhs.m_je; j++)
+  //   for (int i = a_lhs.m_ib; i <= a_lhs.m_ie; i++) {
       float_sw4 ijac = ghcof / jac(i, j, 1);
       float_sw4 mucofu2 = ((2 * mu(i, j, 1) + la(i, j, 1)) * met(2, i, j, 1) *
                                strx(i) * met(2, i, j, 1) * strx(i) +
@@ -1149,7 +1159,7 @@ void CurvilinearInterface2::lhs_Lu(Sarray& a_U, Sarray& a_lhs, Sarray& met,
       // istrxy*mucofv2*u(2,i,j,0) + istrx*mucofvw*u(3,i,j,0); 	       r3 +=
       // istry*mucofuw*u(1,i,j,0) + istrx*mucofvw*u(2,i,j,0) +
       // istrxy*mucofw2*u(3,i,j,0);
-    }
+      });
 #undef strx
 #undef stry
 }
