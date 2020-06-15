@@ -91,6 +91,22 @@ void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
   SW4_MARK_FUNCTION;
   // Homogeneous Dirichet at boundaries on sides. Do not apply at upper and
   // lower boundaries.
+
+using LOCAL_LOOP =
+    RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::Tile<
+        0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+        RAJA::statement::Tile<
+            1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+            RAJA::statement::Tile<
+                2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
+                RAJA::statement::For<
+                    0, RAJA::cuda_thread_z_direct,
+                    RAJA::statement::For<
+                        1, RAJA::cuda_thread_y_direct,
+                        RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
+                                             RAJA::statement::Lambda<0>>>>>>>>>;
+ int nc = u.m_nc;
+ SView &uV = u.getview();
   for (int s = 0; s < 4; s++)
     if (m_isbndry[s]) {
       int kb = u.m_kb, ke = u.m_ke, jb = u.m_jb, je = u.m_je, ib = u.m_ib,
@@ -99,11 +115,19 @@ void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
       if (s == 1) ib = ie - npts + 1;
       if (s == 2) je = jb + npts - 1;
       if (s == 3) jb = je - npts + 1;
-      for (int c = 1; c <= u.m_nc; c++)
-        for (int k = kb; k <= ke; k++)
-          for (int j = jb; j <= je; j++)
-            for (int i = ib; i <= ie; i++) u(c, i, j, k) = 0;
+      //for (int c = 1; c <= u.m_nc; c++)
+        // for (int k = kb; k <= ke; k++)
+        //   for (int j = jb; j <= je; j++)
+        //     for (int i = ib; i <= ie; i++) 
+	    RAJA::RangeSegment k_range(kb,ke+1);
+	    RAJA::RangeSegment j_range(jb,je+1);
+	    RAJA::RangeSegment i_range(ib,ie+1);
+  RAJA::kernel<LOCAL_LOOP>(
+			   RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(int k, int j, int i) {
+
+			     for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;});
     }
+  SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -451,9 +475,11 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   // 2a. Impose dirichlet conditions at ghost points
   int sides[6] = {m_isbndry[0], m_isbndry[1], m_isbndry[2], m_isbndry[3], 0, 0};
   if (m_tw != 0) {
+    //std::cout<<"THIS \n"<<std::flush;
     m_tw->get_ubnd(U_f, m_x_f, m_y_f, m_z_f, t, m_nghost, sides);
     m_tw->get_ubnd(U_c, m_x_c, m_y_c, m_z_c, t, m_nghost, sides);
     if (m_use_attenuation) {
+      //std::cout<<"AND THIS \n"<<std::flush;
       m_tw->get_bnd_att(Alpha_f[0], m_x_f, m_y_f, m_z_f, t, m_nghost, sides);
       m_tw->get_bnd_att(Alpha_c[0], m_x_c, m_y_c, m_z_c, t, m_nghost, sides);
     }

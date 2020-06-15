@@ -86,7 +86,7 @@ class CurvilinearInterface2 {
   void prolongate2D(Sarray& Uc, Sarray& Uf, int kc, int kf);
   void restrict2D(Sarray& Uc, Sarray& Uf, int kc, int kf);
   void restprol2D(Sarray& Uc, Sarray& alpha, int kc, int kf);
-  void bnd_zero(Sarray& u, int npts);
+ 
   void copy_str(float_sw4* dest, float_sw4* src, int offset, int n, int nsw);
   void communicate_array1d(float_sw4* u, int n, int dir, int ngh);
   void communicate_array(Sarray& u, bool allkplanes = true, int kplane = 0);
@@ -111,6 +111,7 @@ class CurvilinearInterface2 {
   void lhs_Lu(Sarray& a_U, Sarray& a_lhs, Sarray& metric, Sarray& jac,
               Sarray& mu, Sarray& lambda, float_sw4* a_str_x,
               float_sw4* a_str_y, float_sw4 ghcof);
+  void bnd_zero(Sarray& u, int npts);
 
 };
 

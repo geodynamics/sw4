@@ -53,6 +53,20 @@ SW4_MARK_FUNCTION;
 void TestEcons::get_ubnd(Sarray& u, int npts, int sides[6]) {
   SW4_MARK_FUNCTION;
   // Homogeneous Dirichet at boundaries
+using LOCAL_LOOP =
+    RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::Tile<
+        0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+        RAJA::statement::Tile<
+            1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
+            RAJA::statement::Tile<
+                2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
+                RAJA::statement::For<
+                    0, RAJA::cuda_thread_z_direct,
+                    RAJA::statement::For<
+                        1, RAJA::cuda_thread_y_direct,
+                        RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
+                                             RAJA::statement::Lambda<0>>>>>>>>>;
+SView &uV = u.getview();
   for (int s = 0; s < 6; s++)
     if (sides[s] == 1) {
       int kb = u.m_kb, ke = u.m_ke, jb = u.m_jb, je = u.m_je, ib = u.m_ib,
@@ -63,12 +77,19 @@ void TestEcons::get_ubnd(Sarray& u, int npts, int sides[6]) {
       if (s == 3) jb = je - npts + 1;
       if (s == 4) ke = kb + npts - 1;
       if (s == 5) kb = ke - npts + 1;
-      for (int k = kb; k <= ke; k++)
-        for (int j = jb; j <= je; j++)
-          for (int i = ib; i <= ie; i++) {
-            u(1, i, j, k) = 0;
-            u(2, i, j, k) = 0;
-            u(3, i, j, k) = 0;
-          }
+      // for (int k = kb; k <= ke; k++)
+      //   for (int j = jb; j <= je; j++)
+      //     for (int i = ib; i <= ie; i++) {
+ 
+      RAJA::RangeSegment k_range(kb,ke+1);
+	    RAJA::RangeSegment j_range(jb,je+1);
+	    RAJA::RangeSegment i_range(ib,ie+1);
+  RAJA::kernel<LOCAL_LOOP>(
+			   RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(int k, int j, int i) {
+            uV(1, i, j, k) = 0;
+            uV(2, i, j, k) = 0;
+            uV(3, i, j, k) = 0;
+			   });
     }
+  SYNC_STREAM;
 }
