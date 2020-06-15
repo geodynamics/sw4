@@ -7,7 +7,7 @@
 #include "TestTwilight.h"
 #include "caliper.h"
 #include <iostream>
-
+#include "policies.h"
 extern "C" {
 void F77_FUNC(dgetrf, DGETRF)(int*, int*, double*, int*, int*, int*);
 void F77_FUNC(dgetrs, DGETRS)(char*, int*, int*, double*, int*, int*, double*,
@@ -729,33 +729,55 @@ RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearInterface2::injection(Sarray& u_f, Sarray& u_c) {
+void CurvilinearInterface2::injection(Sarray& u_fA, Sarray& u_cA) {
   SW4_MARK_FUNCTION;
   // Injection at the interface
 
   const float_sw4 a = 9.0 / 16;
   const float_sw4 b = -1.0 / 16;
   //  const int ngh = m_nghost;
-  int i1 = u_c.m_ib + m_nghost - 1, i2 = u_c.m_ie - m_nghost + 1;
-  int j1 = u_c.m_jb + m_nghost - 1, j2 = u_c.m_je - m_nghost + 1;
+  int i1 = u_cA.m_ib + m_nghost - 1, i2 = u_cA.m_ie - m_nghost + 1;
+  int j1 = u_cA.m_jb + m_nghost - 1, j2 = u_cA.m_je - m_nghost + 1;
   if (m_isbndry[0]) i1++;
   if (m_isbndry[1]) i2 -= 2;
   if (m_isbndry[2]) j1++;
   if (m_isbndry[3]) j2 -= 2;
+  SView &u_f = u_fA.getview();
+  SView &u_c = u_cA.getview();
+using LOCAL_LOOP_ASYNC =
+    RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::Tile<
+        0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+        RAJA::statement::Tile<
+            1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
+            RAJA::statement::Tile<
+                2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
+                RAJA::statement::For<
+                    0, RAJA::cuda_thread_z_direct,
+                    RAJA::statement::For<
+                        1, RAJA::cuda_thread_y_direct,
+                        RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
+                                             RAJA::statement::Lambda<0>>>>>>>>>;
 
-  for (int l = 1; l <= u_c.m_nc; l++)
-    //    for (int j = u_c.m_jb+ngh-1; j <= u_c.m_je-ngh+1; j++)
-    //      for (int i = u_c.m_ib+ngh-1; i <= u_c.m_ie-ngh+1; i++)
-    for (int j = j1; j <= j2; j++)
-      for (int i = i1; i <= i2; i++) {
-        u_f(l, 2 * i - 1, 2 * j - 1, m_nkf) = u_c(l, i, j, 1);
-        u_f(l, 2 * i, 2 * j - 1, m_nkf) =
+  // for (int l = 1; l <= u_cA.m_nc; l++)
+  //   //    for (int j = u_c.m_jb+ngh-1; j <= u_c.m_je-ngh+1; j++)
+  //   //      for (int i = u_c.m_ib+ngh-1; i <= u_c.m_ie-ngh+1; i++)
+  //   for (int j = j1; j <= j2; j++)
+  //     for (int i = i1; i <= i2; i++) {
+ 
+ auto &lm_nkf=m_nkf;
+	RAJA::RangeSegment l_range(1,u_cA.m_nc+1);
+	RAJA::RangeSegment j_range(j1,j2+1);
+	RAJA::RangeSegment i_range(i1,i2+1);
+	RAJA::kernel<LOCAL_LOOP_ASYNC>(
+				 RAJA::make_tuple(l_range, j_range, i_range), [=] RAJA_DEVICE(int l, int j, int i) {
+        u_f(l, 2 * i - 1, 2 * j - 1, lm_nkf) = u_c(l, i, j, 1);
+        u_f(l, 2 * i, 2 * j - 1, lm_nkf) =
             b * u_c(l, i - 1, j, 1) + a * u_c(l, i, j, 1) +
             a * u_c(l, i + 1, j, 1) + b * u_c(l, i + 2, j, 1);
-        u_f(l, 2 * i - 1, 2 * j, m_nkf) =
+        u_f(l, 2 * i - 1, 2 * j, lm_nkf) =
             b * u_c(l, i, j - 1, 1) + a * u_c(l, i, j, 1) +
             a * u_c(l, i, j + 1, 1) + b * u_c(l, i, j + 2, 1);
-        u_f(l, 2 * i, 2 * j, m_nkf) =
+        u_f(l, 2 * i, 2 * j, lm_nkf) =
             b * (b * u_c(l, i - 1, j - 1, 1) + a * u_c(l, i, j - 1, 1) +
                  a * u_c(l, i + 1, j - 1, 1) + b * u_c(l, i + 2, j - 1, 1)) +
             a * (b * u_c(l, i - 1, j, 1) + a * u_c(l, i, j, 1) +
@@ -764,33 +786,49 @@ void CurvilinearInterface2::injection(Sarray& u_f, Sarray& u_c) {
                  a * u_c(l, i + 1, j + 1, 1) + b * u_c(l, i + 2, j + 1, 1)) +
             b * (b * u_c(l, i - 1, j + 2, 1) + a * u_c(l, i, j + 2, 1) +
                  a * u_c(l, i + 1, j + 2, 1) + b * u_c(l, i + 2, j + 2, 1));
-      }
+				 });
+
+	using LOCAL_LOOP2_ASYNC =
+    RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::For<
+        1, RAJA::cuda_block_x_loop,
+        RAJA::statement::For<0, RAJA::cuda_thread_x_loop,
+                             RAJA::statement::Lambda<0>>>>>;
   if (m_isbndry[1]) {
     int i = i2 + 1;
-    for (int l = 1; l <= u_c.m_nc; l++)
-      for (int j = j1; j <= j2; j++) {
-        u_f(l, 2 * i - 1, 2 * j - 1, m_nkf) = u_c(l, i, j, 1);
-        u_f(l, 2 * i - 1, 2 * j, m_nkf) =
+    // for (int l = 1; l <= u_c.m_nc; l++)
+    //   for (int j = j1; j <= j2; j++) {
+
+	RAJA::kernel<LOCAL_LOOP2_ASYNC>(
+				 RAJA::make_tuple(l_range, j_range), [=] RAJA_DEVICE(int l, int j) {
+        u_f(l, 2 * i - 1, 2 * j - 1, lm_nkf) = u_c(l, i, j, 1);
+        u_f(l, 2 * i - 1, 2 * j, lm_nkf) =
             b * u_c(l, i, j - 1, 1) + a * u_c(l, i, j, 1) +
             a * u_c(l, i, j + 1, 1) + b * u_c(l, i, j + 2, 1);
-      }
+				 });
   }
   if (m_isbndry[3]) {
     int j = j2 + 1;
-    for (int l = 1; l <= u_c.m_nc; l++)
-      for (int i = i1; i <= i2; i++) {
-        u_f(l, 2 * i - 1, 2 * j - 1, m_nkf) = u_c(l, i, j, 1);
-        u_f(l, 2 * i, 2 * j - 1, m_nkf) =
+    // for (int l = 1; l <= u_cA.m_nc; l++)
+    //   for (int i = i1; i <= i2; i++) {
+	RAJA::kernel<LOCAL_LOOP2_ASYNC>(
+					RAJA::make_tuple(l_range, i_range), [=] RAJA_DEVICE(int l, int i) {
+        u_f(l, 2 * i - 1, 2 * j - 1, lm_nkf) = u_c(l, i, j, 1);
+        u_f(l, 2 * i, 2 * j - 1, lm_nkf) =
             b * u_c(l, i - 1, j, 1) + a * u_c(l, i, j, 1) +
             a * u_c(l, i + 1, j, 1) + b * u_c(l, i + 2, j, 1);
-      }
+					});
   }
   if (m_isbndry[3] && m_isbndry[1]) {
     int i = i2 + 1;
     int j = j2 + 1;
-    for (int l = 1; l <= u_c.m_nc; l++)
-      u_f(l, 2 * i - 1, 2 * j - 1, m_nkf) = u_c(l, i, j, 1);
-  }
+    //for (int l = 1; l <= u_c.m_nc; l++)
+    RAJA::forall<DEFAULT_LOOP1_ASYNC>(
+				      RAJA::RangeSegment(1, u_cA.m_nc+1),
+				      [=] RAJA_DEVICE(int l) { 
+					u_f(l, 2 * i - 1, 2 * j - 1, lm_nkf) = u_c(l, i, j, 1);});
+  }      
+  SYNC_STREAM;
+  
 }
 
 //-----------------------------------------------------------------------
@@ -866,17 +904,27 @@ void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
                                           vector<Sarray>& Alpha_c,
                                           vector<Sarray>& Alpha_f) {
   SW4_MARK_FUNCTION;
-  Sarray utmp(3, uc.m_ib, uc.m_ie, uc.m_jb, uc.m_je, 0, 0);
+  Sarray utmp(3, uc.m_ib, uc.m_ie, uc.m_jb, uc.m_je, 0, 0,__FILE__,__LINE__);
 
   const float_sw4 w1 = 17.0 / 48;
   //  1. Set ghost points to zero, and save the old value to restore after, so
   //     that the routine does not change uc.
-  for (int c = 1; c <= 3; c++)
-    for (int j = uc.m_jb; j <= uc.m_je; j++)
-      for (int i = uc.m_ib; i <= uc.m_ie; i++) {
-        utmp(c, i, j, 0) = uc(c, i, j, 0);
-        uc(c, i, j, 0) = 0;
-      }
+  // for (int c = 1; c <= 3; c++)
+  //   for (int j = uc.m_jb; j <= uc.m_je; j++)
+  //     for (int i = uc.m_ib; i <= uc.m_ie; i++) {
+SW4_MARK_BEGIN("SAVE_GHOSTS");
+SView &ucV = uc.getview();
+SView &utmpV = utmp.getview();
+RAJA::RangeSegment j_range(uc.m_jb,uc.m_je+1);
+ RAJA::RangeSegment i_range(uc.m_ib,uc.m_ie+1);
+  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
+			   RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+			     for (int c = 1; c <= 3; c++){	     
+        utmpV(c, i, j, 0) = ucV(c, i, j, 0);
+        ucV(c, i, j, 0) = 0;
+			     }
+			   });
+  SW4_MARK_END("SAVE_GHOSTS");
   //std::cout<<"CALL TO CURV4SGWIND A\n";
   int onesided[6] = {0, 0, 0, 0, 1, 1};
   // 2. Compute L(uc)/rhoc
@@ -894,14 +942,23 @@ void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
                          m_bope, m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,
                          m_strx_c, m_stry_c, 8, '-');
 
-  for (int c = 1; c <= 3; c++)
-    for (int j = rhs.m_jb; j <= rhs.m_je; j++)
-      for (int i = rhs.m_ib; i <= rhs.m_ie; i++)
-        rhs(c, i, j, 1) /= m_rho_c(i, j, 1);
+  // for (int c = 1; c <= 3; c++)
+  //   for (int j = rhs.m_jb; j <= rhs.m_je; j++)
+  //     for (int i = rhs.m_ib; i <= rhs.m_ie; i++)
+  auto &rhsV = rhs.getview();
+  auto &m_rho_cV = m_rho_c.getview();
+
+  RAJA::RangeSegment j_range2(rhs.m_jb,rhs.m_je+1);
+ RAJA::RangeSegment i_range2(rhs.m_ib,rhs.m_ie+1);
+  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
+			   RAJA::make_tuple(j_range2, i_range2), [=] RAJA_DEVICE(int j, int i) {
+        for (int c = 1; c <= 3; c++) rhsV(c, i, j, 1) /= m_rho_cV(i, j, 1);
+			   });
+SYNC_STREAM;
   if (!m_tw) bnd_zero(rhs, m_nghost);
 
   // 3. Compute prolrhs := p(L(uc)/rhoc)
-  Sarray prolrhs(3, m_ibf, m_ief, m_jbf, m_jef, m_nkf, m_nkf);
+  Sarray prolrhs(3, m_ibf, m_ief, m_jbf, m_jef, m_nkf, m_nkf,__FILE__,__LINE__);
   prolongate2D(rhs, prolrhs, 1, m_nkf);
 
   // 4. Compute L(uf)
@@ -1411,51 +1468,71 @@ void CurvilinearInterface2::prolongate2D(Sarray& Uc, Sarray& Uf, int kc,
   else
     je2 = (Uf.m_je - 1) / 2;
   je2 = min(Uc.m_je - 2, je2);
+  auto &lm_nc = Uf.m_nc;
+  auto &UcV = Uc.getview();
+  auto &UfV = Uf.getview();
+  //#pragma omp parallel
+  //  {
+//     for (int c = 1; c <= Uf.m_nc; c++)
+// #pragma omp for
+//       for (int j = jb1; j <= je1; j++)
+// #pragma omp simd
+//         for (int i = ib1; i <= ie1; i++)
+    RAJA::RangeSegment j_range1(jb1,je1+1);
+    RAJA::RangeSegment i_range1(ib1,ie1+1);
+ RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
+			   RAJA::make_tuple(j_range1, i_range1), [=] RAJA_DEVICE(int j, int i) {
+          for (int c = 1; c <= lm_nc; c++) UfV(c, 2 * i - 1, 2 * j - 1, kf) = UcV(c, i, j, kc);
+			   });
 
-#pragma omp parallel
-  {
-    for (int c = 1; c <= Uf.m_nc; c++)
-#pragma omp for
-      for (int j = jb1; j <= je1; j++)
-#pragma omp simd
-        for (int i = ib1; i <= ie1; i++)
-          Uf(c, 2 * i - 1, 2 * j - 1, kf) = Uc(c, i, j, kc);
-    for (int c = 1; c <= Uf.m_nc; c++)
-#pragma omp for
-      for (int j = jb2; j <= je2; j++)
-#pragma omp simd
-        for (int i = ib1; i <= ie1; i++)
-          Uf(c, 2 * i - 1, 2 * j, kf) =
-              i16 * (-Uc(c, i, j - 1, kc) +
-                     9 * (Uc(c, i, j, kc) + Uc(c, i, j + 1, kc)) -
-                     Uc(c, i, j + 2, kc));
-    for (int c = 1; c <= Uf.m_nc; c++)
-#pragma omp for
-      for (int j = jb1; j <= je1; j++)
-#pragma omp simd
-        for (int i = ib2; i <= ie2; i++)
-          Uf(c, 2 * i, 2 * j - 1, kf) =
-              i16 * (-Uc(c, i - 1, j, kc) +
-                     9 * (Uc(c, i, j, kc) + Uc(c, i + 1, j, kc)) -
-                     Uc(c, i + 2, j, kc));
-    for (int c = 1; c <= Uf.m_nc; c++)
-#pragma omp for
-      for (int j = jb2; j <= je2; j++)
-#pragma omp simd
-        for (int i = ib2; i <= ie2; i++)
-          Uf(c, 2 * i, 2 * j, kf) =
-              i256 * (Uc(c, i - 1, j - 1, kc) -
-                      9 * (Uc(c, i, j - 1, kc) + Uc(c, i + 1, j - 1, kc)) +
-                      Uc(c, i + 2, j - 1, kc) +
-                      9 * (-Uc(c, i - 1, j, kc) +
-                           9 * (Uc(c, i, j, kc) + Uc(c, i + 1, j, kc)) -
-                           Uc(c, i + 2, j, kc) - Uc(c, i - 1, j + 1, kc) +
-                           9 * (Uc(c, i, j + 1, kc) + Uc(c, i + 1, j + 1, kc)) -
-                           Uc(c, i + 2, j + 1, kc)) +
-                      Uc(c, i - 1, j + 2, kc) -
-                      9 * (Uc(c, i, j + 2, kc) + Uc(c, i + 1, j + 2, kc)) +
-                      Uc(c, i + 2, j + 2, kc));
-  }
+ 
+//     for (int c = 1; c <= Uf.m_nc; c++)
+// #pragma omp for
+//       for (int j = jb2; j <= je2; j++)
+// #pragma omp simd
+//         for (int i = ib1; i <= ie1; i++)
+RAJA::RangeSegment j_range2(jb2,je2+1);
+ RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
+			   RAJA::make_tuple(j_range2, i_range1), [=] RAJA_DEVICE(int j, int i) {
+          for (int c = 1; c <= lm_nc; c++) UfV(c, 2 * i - 1, 2 * j, kf) =
+              i16 * (-UcV(c, i, j - 1, kc) +
+                     9 * (UcV(c, i, j, kc) + UcV(c, i, j + 1, kc)) -
+                     UcV(c, i, j + 2, kc));});
+ 
+//     for (int c = 1; c <= Uf.m_nc; c++)
+// #pragma omp for
+//       for (int j = jb1; j <= je1; j++)
+// #pragma omp simd
+//         for (int i = ib2; i <= ie2; i++)
+RAJA::RangeSegment i_range2(ib2,ie2+1);
+RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
+			   RAJA::make_tuple(j_range1, i_range2), [=] RAJA_DEVICE(int j, int i) {
+          for (int c = 1; c <= lm_nc; c++) UfV(c, 2 * i, 2 * j - 1, kf) =
+              i16 * (-UcV(c, i - 1, j, kc) +
+                     9 * (UcV(c, i, j, kc) + UcV(c, i + 1, j, kc)) -
+                     UcV(c, i + 2, j, kc));});
+ 
+//     for (int c = 1; c <= Uf.m_nc; c++)
+// #pragma omp for
+//       for (int j = jb2; j <= je2; j++)
+// #pragma omp simd
+//         for (int i = ib2; i <= ie2; i++)
+RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
+			   RAJA::make_tuple(j_range2, i_range2), [=] RAJA_DEVICE(int j, int i) {
+          for (int c = 1; c <= lm_nc; c++) UfV(c, 2 * i, 2 * j, kf) =
+              i256 * (UcV(c, i - 1, j - 1, kc) -
+                      9 * (UcV(c, i, j - 1, kc) + UcV(c, i + 1, j - 1, kc)) +
+                      UcV(c, i + 2, j - 1, kc) +
+                      9 * (-UcV(c, i - 1, j, kc) +
+                           9 * (UcV(c, i, j, kc) + UcV(c, i + 1, j, kc)) -
+                           UcV(c, i + 2, j, kc) - UcV(c, i - 1, j + 1, kc) +
+                           9 * (UcV(c, i, j + 1, kc) + UcV(c, i + 1, j + 1, kc)) -
+                           UcV(c, i + 2, j + 1, kc)) +
+                      UcV(c, i - 1, j + 2, kc) -
+                      9 * (UcV(c, i, j + 2, kc) + UcV(c, i + 1, j + 2, kc)) +
+                      UcV(c, i + 2, j + 2, kc));});
+ SYNC_STREAM;
+//}
 }
 
 //-----------------------------------------------------------------------

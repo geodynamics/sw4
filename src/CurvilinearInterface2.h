@@ -57,12 +57,10 @@ class CurvilinearInterface2 {
       m_ghcof_no_gp[6];
   float_sw4 m_sbop[6], m_sbop_no_gp[6], m_bop[24];
 #endif
-  void injection(Sarray& u_f, Sarray& u_c);
+
   void interface_block(Sarray& matrix);
 
-  void interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
-                     std::vector<Sarray>& Alpha_c,
-                     std::vector<Sarray>& Alpha_f);
+  
   
   void compute_icstresses_curv_host(Sarray& a_Up, Sarray& B, int kic,
 				    Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
@@ -83,7 +81,7 @@ class CurvilinearInterface2 {
                  Sarray& mu, Sarray& la, float_sw4* a_str_x, float_sw4* a_str_y,
                  float_sw4 ghcof);
 
-  void prolongate2D(Sarray& Uc, Sarray& Uf, int kc, int kf);
+
   void restrict2D(Sarray& Uc, Sarray& Uf, int kc, int kf);
   void restprol2D(Sarray& Uc, Sarray& alpha, int kc, int kf);
  
@@ -112,6 +110,11 @@ class CurvilinearInterface2 {
               Sarray& mu, Sarray& lambda, float_sw4* a_str_x,
               float_sw4* a_str_y, float_sw4 ghcof);
   void bnd_zero(Sarray& u, int npts);
+  void injection(Sarray& u_f, Sarray& u_c);
+  void interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
+                     std::vector<Sarray>& Alpha_c,
+		     std::vector<Sarray>& Alpha_f);
+  void prolongate2D(Sarray& Uc, Sarray& Uf, int kc, int kf);
 
 };
 
