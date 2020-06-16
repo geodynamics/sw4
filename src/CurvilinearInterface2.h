@@ -66,11 +66,7 @@ class CurvilinearInterface2 {
 				    Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
                                float_sw4* a_str_x, float_sw4* a_str_y,
                                float_sw4* sbop, char op);
-  void lhs_icstresses_curv(Sarray& a_Up, Sarray& a_lhs, int kic,
-                           Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
-                           float_sw4* a_str_x, float_sw4* a_str_y,
-                           float_sw4* sbop);
- 
+  
 
   void mat_icstresses_curv(int ib, int jb, Sarray& a_mat, int kic,
                            Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
@@ -116,6 +112,11 @@ class CurvilinearInterface2 {
 		     std::vector<Sarray>& Alpha_f);
   void prolongate2D(Sarray& Uc, Sarray& Uf, int kc, int kf);
   void restrict2D(Sarray& Uc, Sarray& Uf, int kc, int kf);
+  void lhs_icstresses_curv(Sarray& a_Up, Sarray& a_lhs, int kic,
+                           Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
+                           float_sw4* a_str_x, float_sw4* a_str_y,
+                           float_sw4* sbop);
+ 
 
 };
 
