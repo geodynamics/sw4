@@ -735,7 +735,7 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
 
 // Destructor
 EW::~EW() {
-  //std::cout<<"EW::~EW() ...\n"<<std::flush;
+  // std::cout<<"EW::~EW() ...\n"<<std::flush;
 #if defined(ENABLE_CUDA)
   ::operator delete[](m_sbop, Space::Managed);
 #endif
@@ -813,7 +813,7 @@ EW::~EW() {
   ofile.close();
   hfile.close();
 #endif
-  //std::cout<<"EW::~EW() DONE\n"<<std::flush;
+  // std::cout<<"EW::~EW() DONE\n"<<std::flush;
   //  msgStream.close();
 }
 
@@ -1268,63 +1268,63 @@ void EW::computeGeographicCoord(double x, double y, double& longitude,
   // latitude  = lonlat.v/deg2rad;
 }
 //-----------------------------------------------------------------------
-int EW::computeNearestGridPoint2( int& a_i, int& a_j, int& a_k, int& a_g,
-                                  float_sw4 a_x, float_sw4 a_y, float_sw4 a_z )
-{
-   int success = 0;
-   if( a_z >= m_zmin[mNumberOfCartesianGrids-1] )
-   {
-      // point is in a Cartesian grid
-      int g=0;
-      while( g < mNumberOfCartesianGrids && a_z < m_zmin[g] )
-         g++;
-      a_g = g;
-      a_i = static_cast<int>( round( a_x/mGridSize[g]+1) );
-      a_j = static_cast<int>( round( a_y/mGridSize[g]+1) );
-      a_k = static_cast<int>( round( (a_z-m_zmin[g])/mGridSize[g]+1) );
+int EW::computeNearestGridPoint2(int& a_i, int& a_j, int& a_k, int& a_g,
+                                 float_sw4 a_x, float_sw4 a_y, float_sw4 a_z) {
+  int success = 0;
+  if (a_z >= m_zmin[mNumberOfCartesianGrids - 1]) {
+    // point is in a Cartesian grid
+    int g = 0;
+    while (g < mNumberOfCartesianGrids && a_z < m_zmin[g]) g++;
+    a_g = g;
+    a_i = static_cast<int>(round(a_x / mGridSize[g] + 1));
+    a_j = static_cast<int>(round(a_y / mGridSize[g] + 1));
+    a_k = static_cast<int>(round((a_z - m_zmin[g]) / mGridSize[g] + 1));
 
-      VERIFY2(a_i >= 1-m_ghost_points && a_i <= m_global_nx[a_g]+m_ghost_points,
-              "Grid Error: i (" << a_i << ") is out of bounds: ( " << 1 << "," 
-              << m_global_nx[a_g] << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
-      VERIFY2(a_j >= 1-m_ghost_points && a_j <= m_global_ny[a_g]+m_ghost_points,
-              "Grid Error: j (" << a_j << ") is out of bounds: ( " << 1 << ","
-              << m_global_ny[a_g] << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
-      VERIFY2(a_k >= m_kStart[a_g] && a_k <= m_kEnd[a_g],
-              "Grid Error: k (" << a_k << ") is out of bounds: ( " << 1 << "," 
-              << m_kEnd[a_g]-m_ghost_points << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
-      success = interior_point_in_proc(a_i,a_j,a_g);
-   }
-   else
-   {
-      // point is in a curvilinear grid
-      //
-      // foundglobal= Grid point found in at least one processor.
-      // success  = Grid point found in my processor (found locally).
-      //
-      int g=mNumberOfCartesianGrids;
-      //  int foundglobal=0; 
-      success = 0;
-      float_sw4 q, r, s;
-      while( g < mNumberOfGrids && !success )
-      //      while( g < mNumberOfGrids && !foundglobal )
-      {
-         success = m_gridGenerator->
-            inverse_grid_mapping( this, a_x, a_y, a_z, g, q, r, s );
-         if( success )
-         {
-            a_g = g;
-            a_i = static_cast<int>( round( q ) );
-            a_j = static_cast<int>( round( r ) );
-            a_k = static_cast<int>( round( s ) );
-         }
-     //         MPI_Allreduce(&success,&foundglobal,1,MPI_INT,MPI_MAX,m_cartesian_communicator);
-         g++;
+    VERIFY2(
+        a_i >= 1 - m_ghost_points && a_i <= m_global_nx[a_g] + m_ghost_points,
+        "Grid Error: i (" << a_i << ") is out of bounds: ( " << 1 << ","
+                          << m_global_nx[a_g] << ")"
+                          << " x,y,z = " << a_x << " " << a_y << " " << a_z);
+    VERIFY2(
+        a_j >= 1 - m_ghost_points && a_j <= m_global_ny[a_g] + m_ghost_points,
+        "Grid Error: j (" << a_j << ") is out of bounds: ( " << 1 << ","
+                          << m_global_ny[a_g] << ")"
+                          << " x,y,z = " << a_x << " " << a_y << " " << a_z);
+    VERIFY2(a_k >= m_kStart[a_g] && a_k <= m_kEnd[a_g],
+            "Grid Error: k (" << a_k << ") is out of bounds: ( " << 1 << ","
+                              << m_kEnd[a_g] - m_ghost_points << ")"
+                              << " x,y,z = " << a_x << " " << a_y << " "
+                              << a_z);
+    success = interior_point_in_proc(a_i, a_j, a_g);
+  } else {
+    // point is in a curvilinear grid
+    //
+    // foundglobal= Grid point found in at least one processor.
+    // success  = Grid point found in my processor (found locally).
+    //
+    int g = mNumberOfCartesianGrids;
+    //  int foundglobal=0;
+    success = 0;
+    float_sw4 q, r, s;
+    while (g < mNumberOfGrids && !success)
+    //      while( g < mNumberOfGrids && !foundglobal )
+    {
+      success = m_gridGenerator->inverse_grid_mapping(this, a_x, a_y, a_z, g, q,
+                                                      r, s);
+      if (success) {
+        a_g = g;
+        a_i = static_cast<int>(round(q));
+        a_j = static_cast<int>(round(r));
+        a_k = static_cast<int>(round(s));
       }
-      //      VERIFY2( foundglobal, "ERROR in EW:computeNearestGridPoint2, could not find curvilinear grid point");
-   }
-   return success;
+      //         MPI_Allreduce(&success,&foundglobal,1,MPI_INT,MPI_MAX,m_cartesian_communicator);
+      g++;
+    }
+    //      VERIFY2( foundglobal, "ERROR in EW:computeNearestGridPoint2, could
+    //      not find curvilinear grid point");
+  }
+  return success;
 }
-
 
 //-------------------------------------------------------
 void EW::computeNearestGridPoint(int& a_i, int& a_j, int& a_k,
@@ -2071,7 +2071,7 @@ void EW::normOfDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
     }
     if (linfLocal > diffInfLocal) diffInfLocal = linfLocal;
     if (xInfGrid > xInfLocal) xInfLocal = xInfGrid;
-    //std::cout<<"NORM"<<g<<" "<<xInfGrid<<" "<<xInfLocal<<"\n";
+    // std::cout<<"NORM"<<g<<" "<<xInfGrid<<" "<<xInfLocal<<"\n";
     diffL2Local += l2Local;
   }
   // communicate local results for global errors
@@ -2439,7 +2439,6 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
     for (int g = 0; g < mNumberOfCartesianGrids;
          g++)  // curvilinear case needs to be implemented
     {
-
       u_ptr = a_U[g].c_ptr();
       ifirst = m_iStart[g];
       ilast = m_iEnd[g];
@@ -2460,7 +2459,6 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
         twilightfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, u_ptr,
                      &a_t, &om, &cv, &ph, &h, &zmin);
       if (m_use_attenuation) {
-
         // one mechanism is assumed
         float_sw4* alpha_ptr = a_AlphaVE[g][0].c_ptr();
         if (m_croutines)
@@ -2475,7 +2473,6 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
     for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids;
          g++)  // curvilinear grids
     {
- 
       // int g = mNumberOfGrids - 1;
       u_ptr = a_U[g].c_ptr();
       ifirst = m_iStart[g];
@@ -2496,8 +2493,7 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
                       &a_t, &om, &cv, &ph, mX[g].c_ptr(), mY[g].c_ptr(),
                       mZ[g].c_ptr());
       if (m_use_attenuation) {
-
-	//std::cout<<"THI IS THE ONE\n";
+        // std::cout<<"THI IS THE ONE\n";
         // one mechanism is assumed
         float_sw4* alpha_ptr = a_AlphaVE[g][0].c_ptr();
         if (m_croutines)
@@ -2513,7 +2509,6 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
     retval = true;
   } else if (m_point_source_test) {
     for (int g = 0; g < mNumberOfGrids; g++) {
-
       size_t npts = a_U[g].m_npts;
       float_sw4* uexact = SW4_NEW(Space::Managed, float_sw4[npts]);
       SW4_CheckDeviceError(cudaMemPrefetchAsync(
@@ -2526,11 +2521,9 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
     }
     retval = true;
   } else if (m_lamb_test) {
-
     get_exact_lamb2(a_U, a_t, *sources[0]);
     retval = true;
   } else if (m_rayleigh_wave_test) {
-
     double cr, lambda, mu, rho, alpha;
     for (int g = 0; g < mNumberOfCartesianGrids;
          g++)  // This case does not make sense with topography
@@ -2563,7 +2556,6 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
           // this category)
 
   {
-
     retval = false;
   }
   return retval;
@@ -8103,7 +8095,7 @@ void EW::compute_minvsoverh(float_sw4& minvsoh) {
     }
     minvs = sqrt(minvs);
     minvsohloc = minvs / mGridSize[g];
-    
+
     // get the global min for this grid
     MPI_Allreduce(&minvsohloc, &mMinVsOverH[g], 1, m_mpifloat, MPI_MIN,
                   m_cartesian_communicator);

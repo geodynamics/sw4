@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "CurvilinearInterface2.h"
 #include "EW.h"
 #include "F77_FUNC.h"
@@ -6,7 +8,6 @@
 #include "TestEcons.h"
 #include "TestTwilight.h"
 #include "caliper.h"
-#include <iostream>
 #include "policies.h"
 extern "C" {
 void F77_FUNC(dgetrf, DGETRF)(int*, int*, double*, int*, int*, int*);
@@ -36,9 +37,9 @@ CurvilinearInterface2::CurvilinearInterface2(int a_gc, EW* a_ew) {
   m_tw = a_ew->create_twilight();
   m_nghost = 5;
 
-  #if defined(ENABLE_CUDA)
+#if defined(ENABLE_CUDA)
   float_sw4* tmpa =
-    SW4_NEW(Space::Managed, float_sw4[6 + 384 + 24 + 48 + 6 + 384 + 6 + 6]);
+      SW4_NEW(Space::Managed, float_sw4[6 + 384 + 24 + 48 + 6 + 384 + 6 + 6]);
   m_sbop = tmpa;  // PTR_PUSH(Space::Managed,m_sbop);
   m_acof = m_sbop + 6;
   PTR_PUSH(Space::Managed, m_acof, 384 * sizeof(float_sw4));
@@ -62,51 +63,50 @@ CurvilinearInterface2::CurvilinearInterface2(int a_gc, EW* a_ew) {
   for (int s = 0; s < 4; s++) m_isbndry[s] = true;
   m_use_attenuation = a_ew->usingAttenuation();
   m_number_mechanisms = a_ew->getNumberOfMechanisms();
-
-  
 }
 
-  CurvilinearInterface2::~CurvilinearInterface2(){
-    std::cout<<"~CurvilinearInterface2()...\n"<<std::flush;
+CurvilinearInterface2::~CurvilinearInterface2() {
+  std::cout << "~CurvilinearInterface2()...\n" << std::flush;
 #if defined(ENABLE_CUDA)
-    ::operator delete[](m_sbop, Space::Managed);
+  ::operator delete[](m_sbop, Space::Managed);
 #endif
-    ::operator delete[](m_strx_c,Space::Managed);
-    ::operator delete[](m_stry_c,Space::Managed);
-    ::operator delete[](m_strx_f,Space::Managed);
-    ::operator delete[](m_stry_f,Space::Managed);
+  ::operator delete[](m_strx_c, Space::Managed);
+  ::operator delete[](m_stry_c, Space::Managed);
+  ::operator delete[](m_strx_f, Space::Managed);
+  ::operator delete[](m_stry_f, Space::Managed);
 #ifdef USE_MAGMA
-    ::operator delete[](m_mass_block,Space::Managed);
-    ::operator delete[](dA_array,Space::Managed);
-    ::operator delete[](m_ipiv_block,Space::Managed);
-    ::operator delete[](piv_array,Space::Managed);
-    //::operator delete[](info,Space::Managed);
-    ::operator delete[](dB_array,Space::Managed);
-    ::operator delete[](x,Space::Managed);
+  ::operator delete[](m_mass_block, Space::Managed);
+  ::operator delete[](dA_array, Space::Managed);
+  ::operator delete[](m_ipiv_block, Space::Managed);
+  ::operator delete[](piv_array, Space::Managed);
+  //::operator delete[](info,Space::Managed);
+  ::operator delete[](dB_array, Space::Managed);
+  ::operator delete[](x, Space::Managed);
 #endif
-    std::cout<<"~CurvilinearInterface2().. Done\n"<<std::flush;
-  }
+  std::cout << "~CurvilinearInterface2().. Done\n" << std::flush;
+}
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
   SW4_MARK_FUNCTION;
   // Homogeneous Dirichet at boundaries on sides. Do not apply at upper and
   // lower boundaries.
 
-using LOCAL_LOOP =
-    RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::Tile<
-        0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
-        RAJA::statement::Tile<
-            1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
-            RAJA::statement::Tile<
-                2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
-                RAJA::statement::For<
-                    0, RAJA::cuda_thread_z_direct,
-                    RAJA::statement::For<
-                        1, RAJA::cuda_thread_y_direct,
-                        RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
-                                             RAJA::statement::Lambda<0>>>>>>>>>;
- int nc = u.m_nc;
- SView &uV = u.getview();
+  using LOCAL_LOOP =
+      RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::Tile<
+          0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+          RAJA::statement::Tile<
+              1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+              RAJA::statement::Tile<
+                  2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
+                  RAJA::statement::For<
+                      0, RAJA::cuda_thread_z_direct,
+                      RAJA::statement::For<
+                          1, RAJA::cuda_thread_y_direct,
+                          RAJA::statement::For<
+                              2, RAJA::cuda_thread_x_direct,
+                              RAJA::statement::Lambda<0>>>>>>>>>;
+  int nc = u.m_nc;
+  SView& uV = u.getview();
   for (int s = 0; s < 4; s++)
     if (m_isbndry[s]) {
       int kb = u.m_kb, ke = u.m_ke, jb = u.m_jb, je = u.m_je, ib = u.m_ib,
@@ -115,17 +115,18 @@ using LOCAL_LOOP =
       if (s == 1) ib = ie - npts + 1;
       if (s == 2) je = jb + npts - 1;
       if (s == 3) jb = je - npts + 1;
-      //for (int c = 1; c <= u.m_nc; c++)
-        // for (int k = kb; k <= ke; k++)
-        //   for (int j = jb; j <= je; j++)
-        //     for (int i = ib; i <= ie; i++) 
-	    RAJA::RangeSegment k_range(kb,ke+1);
-	    RAJA::RangeSegment j_range(jb,je+1);
-	    RAJA::RangeSegment i_range(ib,ie+1);
-  RAJA::kernel<LOCAL_LOOP>(
-			   RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(int k, int j, int i) {
-
-			     for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;});
+      // for (int c = 1; c <= u.m_nc; c++)
+      // for (int k = kb; k <= ke; k++)
+      //   for (int j = jb; j <= je; j++)
+      //     for (int i = ib; i <= ie; i++)
+      RAJA::RangeSegment k_range(kb, ke + 1);
+      RAJA::RangeSegment j_range(jb, je + 1);
+      RAJA::RangeSegment i_range(ib, ie + 1);
+      RAJA::kernel<LOCAL_LOOP>(RAJA::make_tuple(k_range, j_range, i_range),
+                               [=] RAJA_DEVICE(int k, int j, int i) {
+                                 for (int c = 1; c <= nc; c++)
+                                   uV(c, i, j, k) = 0;
+                               });
     }
   SYNC_STREAM;
 }
@@ -220,11 +221,11 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   m_met_c.define(4, m_ib, m_ie, m_jb, m_je, m_kb, m_ke);
   m_ew->m_gridGenerator->generate_grid_and_met(m_ew, m_gc, m_x_c, m_y_c, m_z_c,
                                                m_jac_c, m_met_c, false);
-  //std::cout<<"HERE 1\n";
+  // std::cout<<"HERE 1\n";
   m_met_c.insert_intersection(m_ew->mMetric[m_gc]);
-  //std::cout<<"HERE 1.1\n"<<std::flush;
+  // std::cout<<"HERE 1.1\n"<<std::flush;
   m_jac_c.insert_intersection(m_ew->mJ[m_gc]);
-  //std::cout<<"HERE 1.2\n"<<std::flush;
+  // std::cout<<"HERE 1.2\n"<<std::flush;
   communicate_array(m_met_c, true);
   communicate_array(m_jac_c, true);
 
@@ -291,15 +292,15 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   size_t msize = nimb * (m_Mass_block.m_je - m_Mass_block.m_jb + 1);
 
 #ifdef USE_MAGMA
-  std::cout<<" USING MAGMA FOR DGETRF WITH BATCH SIZE "<<msize<<"\n";
-  m_mass_block = SW4_NEW(Space::Managed,float_sw4[9 * msize]);
-  dA_array = SW4_NEW(Space::Managed, float_sw4*[msize]);
+  std::cout << " USING MAGMA FOR DGETRF WITH BATCH SIZE " << msize << "\n";
+  m_mass_block = SW4_NEW(Space::Managed, float_sw4[9 * msize]);
+  dA_array = SW4_NEW(Space::Managed, float_sw4* [msize]);
   m_ipiv_block = SW4_NEW(Space::Managed, int[3 * msize]);
-  piv_array = SW4_NEW(Space::Managed, int*[msize]);
-  magma_int_t *info = SW4_NEW(Space::Managed, int[msize]);
-  // For use in solve 
-  dB_array = SW4_NEW(Space::Managed,float_sw4*[msize]);
-  x = SW4_NEW(Space::Managed,float_sw4[3*msize]);
+  piv_array = SW4_NEW(Space::Managed, int* [msize]);
+  magma_int_t* info = SW4_NEW(Space::Managed, int[msize]);
+  // For use in solve
+  dB_array = SW4_NEW(Space::Managed, float_sw4* [msize]);
+  x = SW4_NEW(Space::Managed, float_sw4[3 * msize]);
   // End for use in solver
   for (int j = m_jb + m_nghost; j <= m_je - m_nghost; j++)
     for (int i = m_ib + m_nghost; i <= m_ie - m_nghost; i++) {
@@ -307,50 +308,55 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
       for (int c = 1; c <= 9; c++)
         m_mass_block[c - 1 + 9 * ind] = m_Mass_block(c, i, j, 1);
     }
-  for(int i=0;i<msize;i++){
-    dA_array[i] = &m_mass_block[i*9];
-    piv_array[i] = &m_ipiv_block[3*i];
-    info[i]=0;
-    dB_array[i]=&x[3*i]; 
+  for (int i = 0; i < msize; i++) {
+    dA_array[i] = &m_mass_block[i * 9];
+    piv_array[i] = &m_ipiv_block[3 * i];
+    info[i] = 0;
+    dB_array[i] = &x[3 * i];
   }
 
-  magma_queue_create(0,&queue);
- 
+  magma_queue_create(0, &queue);
+
   magma_int_t retval;
-  magma_int_t m =3;
-SW4_MARK_BEGIN("MAGMA_DGETRF");
-  retval = magma_dgetrf_batched(m,m,dA_array,m,piv_array,info,msize,queue);
-  if (retval!=MAGMA_SUCCESS){
-    std::cerr<<"ERROR MAGMA DGETRF BATCHED call failed"<<std::flush;
+  magma_int_t m = 3;
+  SW4_MARK_BEGIN("MAGMA_DGETRF");
+  retval =
+      magma_dgetrf_batched(m, m, dA_array, m, piv_array, info, msize, queue);
+  if (retval != MAGMA_SUCCESS) {
+    std::cerr << "ERROR MAGMA DGETRF BATCHED call failed" << std::flush;
     abort();
   }
   SW4_MARK_END("MAGMA_DGETRF");
-  int nfails  =0;
-  for (int i=0;i<msize;i++) if (info[i]!=0){
-      std::cerr<<"ERROR :: MAGMA DGETRF FAILED for i ="<<i<<" "<<info[i]<<"\n";
+  int nfails = 0;
+  for (int i = 0; i < msize; i++)
+    if (info[i] != 0) {
+      std::cerr << "ERROR :: MAGMA DGETRF FAILED for i =" << i << " " << info[i]
+                << "\n";
       nfails++;
     }
-  if (nfails!=0){
-    std::cerr<<"ERRROR Stopping due to failed LU decomposition\n";
+  if (nfails != 0) {
+    std::cerr << "ERRROR Stopping due to failed LU decomposition\n";
     abort();
   }
-  ::operator delete[](info,Space::Managed);
+  ::operator delete[](info, Space::Managed);
   // Calculate the sub-batch sizes
-  const int maxbatchsize=65535;
-  for (int i=0;i<msize;i+=maxbatchsize){
+  const int maxbatchsize = 65535;
+  for (int i = 0; i < msize; i += maxbatchsize) {
     subbatchsize.push_back(maxbatchsize);
     subbatchoffset.push_back(i);
   }
   // The tail
-  subbatchsize.back()=msize%(subbatchoffset.back());
-  int sum=0;
-  for (int i=0;i<subbatchsize.size();i++) sum+=subbatchsize[i];
-  if (sum!=msize) {
-    std::cerr<<"Magma sub-batchsize calc is incorrect "<<sum<<"!="<<msize<<"\n";
+  subbatchsize.back() = msize % (subbatchoffset.back());
+  int sum = 0;
+  for (int i = 0; i < subbatchsize.size(); i++) sum += subbatchsize[i];
+  if (sum != msize) {
+    std::cerr << "Magma sub-batchsize calc is incorrect " << sum
+              << "!=" << msize << "\n";
     abort();
   }
-  for( int i=0;i<subbatchsize.size();i++){
-    std::cout<<"MAGMA Sub-batching "<<i<<" "<<subbatchoffset[i]<<" "<<subbatchsize[i]<<"\n";
+  for (int i = 0; i < subbatchsize.size(); i++) {
+    std::cout << "MAGMA Sub-batching " << i << " " << subbatchoffset[i] << " "
+              << subbatchsize[i] << "\n";
   }
 #else
   m_mass_block = new float_sw4[9 * msize];
@@ -446,18 +452,18 @@ void CurvilinearInterface2::init_arrays_att() {
 void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
                                       std::vector<Sarray*>& a_AlphaVE) {
   SW4_MARK_FUNCTION;
-  SYNC_STREAM; // CURVI_CPU
+  SYNC_STREAM;                   // CURVI_CPU
   bool force_dirichlet = false;  //, check_stress_cont=false;
   //   int fg=0;
   //   if( force_dirichlet )
   //      fg = 1;
 
-  Sarray U_f(3, m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef,__FILE__,__LINE__);
-  Sarray U_c(3, m_ib, m_ie, m_jb, m_je, m_kb, m_ke,__FILE__,__LINE__);
+  Sarray U_f(3, m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef, __FILE__, __LINE__);
+  Sarray U_c(3, m_ib, m_ie, m_jb, m_je, m_kb, m_ke, __FILE__, __LINE__);
   vector<Sarray> Alpha_c, Alpha_f;
 
   //  1. copy   a_U into U_f and U_c
-  //std::cout<<"HERE 3\n";
+  // std::cout<<"HERE 3\n";
   U_f.insert_intersection(a_U[m_gf]);
   U_c.insert_intersection(a_U[m_gc]);
   if (m_use_attenuation) {
@@ -475,11 +481,11 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   // 2a. Impose dirichlet conditions at ghost points
   int sides[6] = {m_isbndry[0], m_isbndry[1], m_isbndry[2], m_isbndry[3], 0, 0};
   if (m_tw != 0) {
-    //std::cout<<"THIS \n"<<std::flush;
+    // std::cout<<"THIS \n"<<std::flush;
     m_tw->get_ubnd(U_f, m_x_f, m_y_f, m_z_f, t, m_nghost, sides);
     m_tw->get_ubnd(U_c, m_x_c, m_y_c, m_z_c, t, m_nghost, sides);
     if (m_use_attenuation) {
-      //std::cout<<"AND THIS \n"<<std::flush;
+      // std::cout<<"AND THIS \n"<<std::flush;
       m_tw->get_bnd_att(Alpha_f[0], m_x_f, m_y_f, m_z_f, t, m_nghost, sides);
       m_tw->get_bnd_att(Alpha_c[0], m_x_c, m_y_c, m_z_c, t, m_nghost, sides);
     }
@@ -527,15 +533,15 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   // are uc's ghost points at k=0.
 
   // 4.a Form right hand side of equation
-  Sarray rhs(3, m_ib, m_ie, m_jb, m_je, 1, 1,__FILE__,__LINE__);
+  Sarray rhs(3, m_ib, m_ie, m_jb, m_je, 1, 1, __FILE__, __LINE__);
   //  int asize = 3*(m_ie-m_ib+1)*(m_je-m_jb+1);
-  //std::cout<<"RHS SIZE "<<m_ib<<" "<<m_ie<<" "<<m_jb<<" "<<m_je<<" size = "<<asize<<"\n";
+  // std::cout<<"RHS SIZE "<<m_ib<<" "<<m_ie<<" "<<m_jb<<" "<<m_je<<" size =
+  // "<<asize<<"\n";
   interface_rhs(rhs, U_c, U_f, Alpha_c, Alpha_f);
-
 
   SW4_MARK_BEGIN("IMPOSE_IC_CPU");
   // 4.b Left hand side, lhs*x
-  Sarray lhs(rhs,Space::Managed_temps), residual(rhs,Space::Managed_temps);
+  Sarray lhs(rhs, Space::Managed_temps), residual(rhs, Space::Managed_temps);
   interface_lhs(lhs, U_c);
 
   // Initial residual
@@ -549,25 +555,24 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   //     }
   SW4_MARK_BEGIN("IMPOSE_IC_GPU1");
   RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax(0);
-  SView &residualV = residual.getview();
-  SView &lhsV = lhs.getview();
-  SView &rhsV = rhs.getview();
-  RAJA::RangeSegment j_range(lhs.m_jb + 5,lhs.m_je - 4);
-  RAJA::RangeSegment i_range(lhs.m_ib + 5,lhs.m_ie - 4);
+  SView& residualV = residual.getview();
+  SView& lhsV = lhs.getview();
+  SView& rhsV = rhs.getview();
+  RAJA::RangeSegment j_range(lhs.m_jb + 5, lhs.m_je - 4);
+  RAJA::RangeSegment i_range(lhs.m_ib + 5, lhs.m_ie - 4);
   RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
       RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
-	for (int c = 1; c <= 3; c++){
-	  residualV(c, i, j, 1) = lhsV(c, i, j, 1) + rhsV(c, i, j, 1);
-	  rmax.max(fabs(residualV(c, i, j, 1)));
-	}
+        for (int c = 1; c <= 3; c++) {
+          residualV(c, i, j, 1) = lhsV(c, i, j, 1) + rhsV(c, i, j, 1);
+          rmax.max(fabs(residualV(c, i, j, 1)));
+        }
       });
-  
+
   maxresloc = static_cast<float_sw4>(rmax.get());
   SW4_MARK_END("IMPOSE_IC_GPU1");
   float_sw4 maxres = maxresloc;
   MPI_Allreduce(&maxresloc, &maxres, 1, m_ew->m_mpifloat, MPI_MAX,
                 m_ew->m_cartesian_communicator);
-  
 
   // 4.c Jacobi iteration
   float_sw4 scalef =
@@ -601,76 +606,83 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
     int l_ie = m_Mass_block.m_ie;
     int l_jb = m_Mass_block.m_jb;
     int l_je = m_Mass_block.m_je;
-    SView &residualV = residual.getview();;
-    RAJA::RangeSegment j_range(l_jb,l_je+1);
-    RAJA::RangeSegment i_range(l_ib,l_ie+1);
-    
-    float_sw4 *lx = x;
+    SView& residualV = residual.getview();
+    ;
+    RAJA::RangeSegment j_range(l_jb, l_je + 1);
+    RAJA::RangeSegment i_range(l_ib, l_ie + 1);
+
+    float_sw4* lx = x;
     RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
-					   RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
-    // for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
-    //   for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
-         size_t ind = (i - l_ib) + nimb * (j - l_jb);
-	 for(int l=1;l<4;l++) lx[l-1+3*ind] =residualV(l, i, j, 1);
-					   });
+        RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+          // for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
+          //   for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
+          size_t ind = (i - l_ib) + nimb * (j - l_jb);
+          for (int l = 1; l < 4; l++)
+            lx[l - 1 + 3 * ind] = residualV(l, i, j, 1);
+        });
     //#define PEEKS_GALORE
 #ifdef PEEKS_GALORE
-      SW4_PEEK;
-      SYNC_DEVICE;
+    SW4_PEEK;
+    SYNC_DEVICE;
 #endif
-      //SYNC_STREAM;
+    // SYNC_STREAM;
 
-    //magma_int_t m_three = 3;
-    //magma_int_t m_one = 1;
+    // magma_int_t m_three = 3;
+    // magma_int_t m_one = 1;
     //  magma_int_t batchsize=(l_ie-l_ib)+nimb*(l_je-l_jb)+1;
-      //std::cout<<"BATCH SIZE IN SOLVE IS "<<batchsize<<"\n"<<std::flush;
-    magma_trans_t m_trans=MagmaNoTrans;
-SW4_MARK_BEGIN("MAGMA_DGETRS");
-//magma_int_t retval = magma_dgetrs_batched(m_trans,three,one,dA_array,three,piv_array,dB_array,three,batchsize,queue);
- magma_int_t retval;
- for (int i=0;i<subbatchsize.size();i++)
-   retval = magma_dgetrs_batched(m_trans,three,one,dA_array+subbatchoffset[i],three,piv_array+subbatchoffset[i],dB_array+subbatchoffset[i],three,subbatchsize[i],queue);
-    if (retval!=MAGMA_SUCCESS){
-      std::cerr<<"MAGMA DGETRS BATCHED call failed"<<std::flush;
+    // std::cout<<"BATCH SIZE IN SOLVE IS "<<batchsize<<"\n"<<std::flush;
+    magma_trans_t m_trans = MagmaNoTrans;
+    SW4_MARK_BEGIN("MAGMA_DGETRS");
+    // magma_int_t retval =
+    // magma_dgetrs_batched(m_trans,three,one,dA_array,three,piv_array,dB_array,three,batchsize,queue);
+    magma_int_t retval;
+    for (int i = 0; i < subbatchsize.size(); i++)
+      retval = magma_dgetrs_batched(
+          m_trans, three, one, dA_array + subbatchoffset[i], three,
+          piv_array + subbatchoffset[i], dB_array + subbatchoffset[i], three,
+          subbatchsize[i], queue);
+    if (retval != MAGMA_SUCCESS) {
+      std::cerr << "MAGMA DGETRS BATCHED call failed" << std::flush;
       abort();
     }
-SW4_MARK_END("MAGMA_DGETRS");
+    SW4_MARK_END("MAGMA_DGETRS");
 #ifdef PEEKS_GALORE
-      SW4_PEEK;
-      SYNC_DEVICE;
+    SW4_PEEK;
+    SYNC_DEVICE;
 #endif
 
-      //   lc=0;
-// for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
-//       for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
-SView &U_cV = U_c.getview();;
-RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
-					   RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+    //   lc=0;
     // for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
-    //   for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
-         size_t ind = (i - l_ib) + nimb * (j - l_jb);
-	residualV(1, i, j, 1) = lx[3*ind+0];
-        residualV(2, i, j, 1) = lx[3*ind+1];
-        residualV(3, i, j, 1) = lx[3*ind+2];
-        U_cV(1, i, j, 0) -= relax * residualV(1, i, j, 1);
-        U_cV(2, i, j, 0) -= relax * residualV(2, i, j, 1);
-        U_cV(3, i, j, 0) -= relax * residualV(3, i, j, 1);
-  });
- 
+    //       for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
+    SView& U_cV = U_c.getview();
+    ;
+    RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
+        RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+          // for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
+          //   for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
+          size_t ind = (i - l_ib) + nimb * (j - l_jb);
+          residualV(1, i, j, 1) = lx[3 * ind + 0];
+          residualV(2, i, j, 1) = lx[3 * ind + 1];
+          residualV(3, i, j, 1) = lx[3 * ind + 2];
+          U_cV(1, i, j, 0) -= relax * residualV(1, i, j, 1);
+          U_cV(2, i, j, 0) -= relax * residualV(2, i, j, 1);
+          U_cV(3, i, j, 0) -= relax * residualV(3, i, j, 1);
+        });
+
 #else
-// WARNING THIS IS RUNNING ON THE HOST
- int info = 0;
-   char trans = 'N';
+    // WARNING THIS IS RUNNING ON THE HOST
+    int info = 0;
+    char trans = 'N';
     for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
       for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
         size_t ind = (i - m_Mass_block.m_ib) + nimb * (j - m_Mass_block.m_jb);
         float_sw4 x[3] = {residual(1, i, j, 1), residual(2, i, j, 1),
                           residual(3, i, j, 1)};
-	SW4_MARK_BEGIN("DGETRS");
+        SW4_MARK_BEGIN("DGETRS");
         F77_FUNC(dgetrs, DGETRS)
         (&trans, &three, &one, &m_mass_block[9 * ind], &three,
          &m_ipiv_block[3 * ind], x, &three, &info);
-	SW4_MARK_END("DGETRS");
+        SW4_MARK_END("DGETRS");
         if (info != 0) {
           std::cerr << "SOLVE Fails at (i,j) equals" << i << "," << j
                     << " INFO = " << info << " "
@@ -693,20 +705,20 @@ RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
     maxresloc = 0;
     RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> raja_maxresloc(0);
 
-      // for (int j = lhs.m_jb + 5; j <= lhs.m_je - 5; j++)
-      //   for (int i = lhs.m_ib + 5; i <= lhs.m_ie - 5; i++) {
-    //RAJA::RangeSegment j_range(lhs.m_jb + 5,lhs.m_je - 4);
-    //RAJA::RangeSegment i_range(lhs.m_ib + 5,lhs.m_ie - 4);
-  RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
-      RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
-	for (int c = 1; c <= 3; c++){
-          residualV(c, i, j, 1) = lhsV(c, i, j, 1) + rhsV(c, i, j, 1);
-	  raja_maxresloc.max(fabs(residualV(c, i, j, 1)));
-          // if (abs(residual(c, i, j, 1)) > maxresloc)
-          //   maxresloc = abs(residual(c, i, j, 1));
-	}
-      });
-  maxresloc = static_cast<float_sw4>(raja_maxresloc.get());
+    // for (int j = lhs.m_jb + 5; j <= lhs.m_je - 5; j++)
+    //   for (int i = lhs.m_ib + 5; i <= lhs.m_ie - 5; i++) {
+    // RAJA::RangeSegment j_range(lhs.m_jb + 5,lhs.m_je - 4);
+    // RAJA::RangeSegment i_range(lhs.m_ib + 5,lhs.m_ie - 4);
+    RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
+        RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+          for (int c = 1; c <= 3; c++) {
+            residualV(c, i, j, 1) = lhsV(c, i, j, 1) + rhsV(c, i, j, 1);
+            raja_maxresloc.max(fabs(residualV(c, i, j, 1)));
+            // if (abs(residual(c, i, j, 1)) > maxresloc)
+            //   maxresloc = abs(residual(c, i, j, 1));
+          }
+        });
+    maxresloc = static_cast<float_sw4>(raja_maxresloc.get());
     MPI_Allreduce(&maxresloc, &maxres, 1, m_ew->m_mpifloat, MPI_MAX,
                   m_ew->m_cartesian_communicator);
   }
@@ -745,34 +757,36 @@ void CurvilinearInterface2::injection(Sarray& u_fA, Sarray& u_cA) {
   if (m_isbndry[1]) i2 -= 2;
   if (m_isbndry[2]) j1++;
   if (m_isbndry[3]) j2 -= 2;
-  SView &u_f = u_fA.getview();
-  SView &u_c = u_cA.getview();
-using LOCAL_LOOP_ASYNC =
-    RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::Tile<
-        0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
-        RAJA::statement::Tile<
-            1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
-            RAJA::statement::Tile<
-                2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
-                RAJA::statement::For<
-                    0, RAJA::cuda_thread_z_direct,
-                    RAJA::statement::For<
-                        1, RAJA::cuda_thread_y_direct,
-                        RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
-                                             RAJA::statement::Lambda<0>>>>>>>>>;
+  SView& u_f = u_fA.getview();
+  SView& u_c = u_cA.getview();
+  using LOCAL_LOOP_ASYNC =
+      RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::Tile<
+          0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+          RAJA::statement::Tile<
+              1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
+              RAJA::statement::Tile<
+                  2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
+                  RAJA::statement::For<
+                      0, RAJA::cuda_thread_z_direct,
+                      RAJA::statement::For<
+                          1, RAJA::cuda_thread_y_direct,
+                          RAJA::statement::For<
+                              2, RAJA::cuda_thread_x_direct,
+                              RAJA::statement::Lambda<0>>>>>>>>>;
 
   // for (int l = 1; l <= u_cA.m_nc; l++)
   //   //    for (int j = u_c.m_jb+ngh-1; j <= u_c.m_je-ngh+1; j++)
   //   //      for (int i = u_c.m_ib+ngh-1; i <= u_c.m_ie-ngh+1; i++)
   //   for (int j = j1; j <= j2; j++)
   //     for (int i = i1; i <= i2; i++) {
- 
- auto &lm_nkf=m_nkf;
-	RAJA::RangeSegment l_range(1,u_cA.m_nc+1);
-	RAJA::RangeSegment j_range(j1,j2+1);
-	RAJA::RangeSegment i_range(i1,i2+1);
-	RAJA::kernel<LOCAL_LOOP_ASYNC>(
-				 RAJA::make_tuple(l_range, j_range, i_range), [=] RAJA_DEVICE(int l, int j, int i) {
+
+  auto& lm_nkf = m_nkf;
+  RAJA::RangeSegment l_range(1, u_cA.m_nc + 1);
+  RAJA::RangeSegment j_range(j1, j2 + 1);
+  RAJA::RangeSegment i_range(i1, i2 + 1);
+  RAJA::kernel<LOCAL_LOOP_ASYNC>(
+      RAJA::make_tuple(l_range, j_range, i_range),
+      [=] RAJA_DEVICE(int l, int j, int i) {
         u_f(l, 2 * i - 1, 2 * j - 1, lm_nkf) = u_c(l, i, j, 1);
         u_f(l, 2 * i, 2 * j - 1, lm_nkf) =
             b * u_c(l, i - 1, j, 1) + a * u_c(l, i, j, 1) +
@@ -789,49 +803,47 @@ using LOCAL_LOOP_ASYNC =
                  a * u_c(l, i + 1, j + 1, 1) + b * u_c(l, i + 2, j + 1, 1)) +
             b * (b * u_c(l, i - 1, j + 2, 1) + a * u_c(l, i, j + 2, 1) +
                  a * u_c(l, i + 1, j + 2, 1) + b * u_c(l, i + 2, j + 2, 1));
-				 });
+      });
 
-	using LOCAL_LOOP2_ASYNC =
-    RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::For<
-        1, RAJA::cuda_block_x_loop,
-        RAJA::statement::For<0, RAJA::cuda_thread_x_loop,
-                             RAJA::statement::Lambda<0>>>>>;
+  using LOCAL_LOOP2_ASYNC = RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<
+      RAJA::statement::For<1, RAJA::cuda_block_x_loop,
+                           RAJA::statement::For<0, RAJA::cuda_thread_x_loop,
+                                                RAJA::statement::Lambda<0>>>>>;
   if (m_isbndry[1]) {
     int i = i2 + 1;
     // for (int l = 1; l <= u_c.m_nc; l++)
     //   for (int j = j1; j <= j2; j++) {
 
-	RAJA::kernel<LOCAL_LOOP2_ASYNC>(
-				 RAJA::make_tuple(l_range, j_range), [=] RAJA_DEVICE(int l, int j) {
-        u_f(l, 2 * i - 1, 2 * j - 1, lm_nkf) = u_c(l, i, j, 1);
-        u_f(l, 2 * i - 1, 2 * j, lm_nkf) =
-            b * u_c(l, i, j - 1, 1) + a * u_c(l, i, j, 1) +
-            a * u_c(l, i, j + 1, 1) + b * u_c(l, i, j + 2, 1);
-				 });
+    RAJA::kernel<LOCAL_LOOP2_ASYNC>(
+        RAJA::make_tuple(l_range, j_range), [=] RAJA_DEVICE(int l, int j) {
+          u_f(l, 2 * i - 1, 2 * j - 1, lm_nkf) = u_c(l, i, j, 1);
+          u_f(l, 2 * i - 1, 2 * j, lm_nkf) =
+              b * u_c(l, i, j - 1, 1) + a * u_c(l, i, j, 1) +
+              a * u_c(l, i, j + 1, 1) + b * u_c(l, i, j + 2, 1);
+        });
   }
   if (m_isbndry[3]) {
     int j = j2 + 1;
     // for (int l = 1; l <= u_cA.m_nc; l++)
     //   for (int i = i1; i <= i2; i++) {
-	RAJA::kernel<LOCAL_LOOP2_ASYNC>(
-					RAJA::make_tuple(l_range, i_range), [=] RAJA_DEVICE(int l, int i) {
-        u_f(l, 2 * i - 1, 2 * j - 1, lm_nkf) = u_c(l, i, j, 1);
-        u_f(l, 2 * i, 2 * j - 1, lm_nkf) =
-            b * u_c(l, i - 1, j, 1) + a * u_c(l, i, j, 1) +
-            a * u_c(l, i + 1, j, 1) + b * u_c(l, i + 2, j, 1);
-					});
+    RAJA::kernel<LOCAL_LOOP2_ASYNC>(
+        RAJA::make_tuple(l_range, i_range), [=] RAJA_DEVICE(int l, int i) {
+          u_f(l, 2 * i - 1, 2 * j - 1, lm_nkf) = u_c(l, i, j, 1);
+          u_f(l, 2 * i, 2 * j - 1, lm_nkf) =
+              b * u_c(l, i - 1, j, 1) + a * u_c(l, i, j, 1) +
+              a * u_c(l, i + 1, j, 1) + b * u_c(l, i + 2, j, 1);
+        });
   }
   if (m_isbndry[3] && m_isbndry[1]) {
     int i = i2 + 1;
     int j = j2 + 1;
-    //for (int l = 1; l <= u_c.m_nc; l++)
+    // for (int l = 1; l <= u_c.m_nc; l++)
     RAJA::forall<DEFAULT_LOOP1_ASYNC>(
-				      RAJA::RangeSegment(1, u_cA.m_nc+1),
-				      [=] RAJA_DEVICE(int l) { 
-					u_f(l, 2 * i - 1, 2 * j - 1, lm_nkf) = u_c(l, i, j, 1);});
-  }      
+        RAJA::RangeSegment(1, u_cA.m_nc + 1), [=] RAJA_DEVICE(int l) {
+          u_f(l, 2 * i - 1, 2 * j - 1, lm_nkf) = u_c(l, i, j, 1);
+        });
+  }
   SYNC_STREAM;
-  
 }
 
 //-----------------------------------------------------------------------
@@ -869,55 +881,59 @@ void CurvilinearInterface2::interface_lhs(Sarray& lhs, Sarray& uc) {
   // for (int c = 1; c <= 3; c++)
   //   for (int j = lhs.m_jb; j <= lhs.m_je; j++)
   //     for (int i = lhs.m_ib; i <= lhs.m_ie; i++)
-  SView &lhsV = lhs.getview();
-  SView &m_rho_cV = m_rho_c.getview();
-  RAJA::RangeSegment j_range(lhs.m_jb ,lhs.m_je+1);
-  RAJA::RangeSegment i_range(lhs.m_ib,lhs.m_ie+1);
+  SView& lhsV = lhs.getview();
+  SView& m_rho_cV = m_rho_c.getview();
+  RAJA::RangeSegment j_range(lhs.m_jb, lhs.m_je + 1);
+  RAJA::RangeSegment i_range(lhs.m_ib, lhs.m_ie + 1);
   RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
       RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
 #pragma unroll
-        for (int c = 1; c <= 3; c++) lhsV(c, i, j, 1) /= m_rho_cV(i, j, 1);});
+        for (int c = 1; c <= 3; c++) lhsV(c, i, j, 1) /= m_rho_cV(i, j, 1);
+      });
 
   if (!m_tw) bnd_zero(lhs, m_nghost);
 
-  Sarray prollhs(3, m_ibf, m_ief, m_jbf, m_jef, m_nkf, m_nkf,__FILE__,__LINE__);
+  Sarray prollhs(3, m_ibf, m_ief, m_jbf, m_jef, m_nkf, m_nkf, __FILE__,
+                 __LINE__);
   prolongate2D(lhs, prollhs, 1, m_nkf);
   // for (int c = 1; c <= 3; c++)
   //   for (int j = prollhs.m_jb; j <= prollhs.m_je; j++)
   //     for (int i = prollhs.m_ib; i <= prollhs.m_ie; i++)
-  auto &prollhsV = prollhs.getview();
-  auto &m_jac_fV = m_jac_f.getview();
-  auto &m_rho_fV = m_rho_f.getview();
+  auto& prollhsV = prollhs.getview();
+  auto& m_jac_fV = m_jac_f.getview();
+  auto& m_rho_fV = m_rho_f.getview();
   float_sw4* lm_strx_f = m_strx_f;
   float_sw4* lm_stry_f = m_stry_f;
   int lm_ibf = m_ibf;
   int lm_jbf = m_jbf;
   int lm_nkf = m_nkf;
-RAJA::RangeSegment j_range2(prollhs.m_jb ,prollhs.m_je+1);
-  RAJA::RangeSegment i_range2(prollhs.m_ib,prollhs.m_ie+1);
+  RAJA::RangeSegment j_range2(prollhs.m_jb, prollhs.m_je + 1);
+  RAJA::RangeSegment i_range2(prollhs.m_ib, prollhs.m_ie + 1);
   RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
       RAJA::make_tuple(j_range2, i_range2), [=] RAJA_DEVICE(int j, int i) {
 #pragma unroll
-        for (int c = 1; c <= 3; c++)prollhsV(c, i, j, lm_nkf) = w1 * m_jac_fV(i, j, lm_nkf) *
-                                  m_rho_fV(i, j, lm_nkf) *
-                                  prollhsV(c, i, j, lm_nkf) /
-	  (lm_strx_f[i - lm_ibf] * lm_stry_f[j - lm_jbf]);});
-  
+        for (int c = 1; c <= 3; c++)
+          prollhsV(c, i, j, lm_nkf) =
+              w1 * m_jac_fV(i, j, lm_nkf) * m_rho_fV(i, j, lm_nkf) *
+              prollhsV(c, i, j, lm_nkf) /
+              (lm_strx_f[i - lm_ibf] * lm_stry_f[j - lm_jbf]);
+      });
+
   if (!m_tw) bnd_zero(prollhs, m_nghost);
   restrict2D(lhs, prollhs, 1, m_nkf);
 
-  Sarray Bc(lhs,Space::Managed_temps);
+  Sarray Bc(lhs, Space::Managed_temps);
   lhs_icstresses_curv(uc, Bc, 1, m_met_c, m_mu_c, m_lambda_c, m_strx_c,
                       m_stry_c, m_sbop);
   // for (int c = 1; c <= 3; c++)
   //   for (int j = lhs.m_jb; j <= lhs.m_je; j++)
   //     for (int i = lhs.m_ib; i <= lhs.m_ie; i++)
-  auto &BcV = Bc.getview();
+  auto& BcV = Bc.getview();
   RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
       RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
 #pragma unroll
-        for (int c = 1; c <= 3; c++) 
-	  lhsV(c, i, j, 1) -= BcV(c, i, j, 1);});
+        for (int c = 1; c <= 3; c++) lhsV(c, i, j, 1) -= BcV(c, i, j, 1);
+      });
   SYNC_STREAM;
 }
 
@@ -926,7 +942,7 @@ void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
                                           vector<Sarray>& Alpha_c,
                                           vector<Sarray>& Alpha_f) {
   SW4_MARK_FUNCTION;
-  Sarray utmp(3, uc.m_ib, uc.m_ie, uc.m_jb, uc.m_je, 0, 0,__FILE__,__LINE__);
+  Sarray utmp(3, uc.m_ib, uc.m_ie, uc.m_jb, uc.m_je, 0, 0, __FILE__, __LINE__);
 
   const float_sw4 w1 = 17.0 / 48;
   //  1. Set ghost points to zero, and save the old value to restore after, so
@@ -934,20 +950,20 @@ void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
   // for (int c = 1; c <= 3; c++)
   //   for (int j = uc.m_jb; j <= uc.m_je; j++)
   //     for (int i = uc.m_ib; i <= uc.m_ie; i++) {
-SW4_MARK_BEGIN("SAVE_GHOSTS");
-SView &ucV = uc.getview();
-SView &utmpV = utmp.getview();
-RAJA::RangeSegment j_range(uc.m_jb,uc.m_je+1);
- RAJA::RangeSegment i_range(uc.m_ib,uc.m_ie+1);
-  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
-			   RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
-			     for (int c = 1; c <= 3; c++){	     
-        utmpV(c, i, j, 0) = ucV(c, i, j, 0);
-        ucV(c, i, j, 0) = 0;
-			     }
-			   });
+  SW4_MARK_BEGIN("SAVE_GHOSTS");
+  SView& ucV = uc.getview();
+  SView& utmpV = utmp.getview();
+  RAJA::RangeSegment j_range(uc.m_jb, uc.m_je + 1);
+  RAJA::RangeSegment i_range(uc.m_ib, uc.m_ie + 1);
+  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(RAJA::make_tuple(j_range, i_range),
+                                     [=] RAJA_DEVICE(int j, int i) {
+                                       for (int c = 1; c <= 3; c++) {
+                                         utmpV(c, i, j, 0) = ucV(c, i, j, 0);
+                                         ucV(c, i, j, 0) = 0;
+                                       }
+                                     });
   SW4_MARK_END("SAVE_GHOSTS");
-  //std::cout<<"CALL TO CURV4SGWIND A\n";
+  // std::cout<<"CALL TO CURV4SGWIND A\n";
   int onesided[6] = {0, 0, 0, 0, 1, 1};
   // 2. Compute L(uc)/rhoc
   curvilinear4sgwind(m_ib, m_ie, m_jb, m_je, m_kb, m_ke, 1, 1, uc.c_ptr(),
@@ -967,24 +983,26 @@ RAJA::RangeSegment j_range(uc.m_jb,uc.m_je+1);
   // for (int c = 1; c <= 3; c++)
   //   for (int j = rhs.m_jb; j <= rhs.m_je; j++)
   //     for (int i = rhs.m_ib; i <= rhs.m_ie; i++)
-  auto &rhsV = rhs.getview();
-  auto &m_rho_cV = m_rho_c.getview();
+  auto& rhsV = rhs.getview();
+  auto& m_rho_cV = m_rho_c.getview();
 
-  RAJA::RangeSegment j_range2(rhs.m_jb,rhs.m_je+1);
- RAJA::RangeSegment i_range2(rhs.m_ib,rhs.m_ie+1);
-  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
-			   RAJA::make_tuple(j_range2, i_range2), [=] RAJA_DEVICE(int j, int i) {
-        for (int c = 1; c <= 3; c++) rhsV(c, i, j, 1) /= m_rho_cV(i, j, 1);
-			   });
-SYNC_STREAM;
+  RAJA::RangeSegment j_range2(rhs.m_jb, rhs.m_je + 1);
+  RAJA::RangeSegment i_range2(rhs.m_ib, rhs.m_ie + 1);
+  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(RAJA::make_tuple(j_range2, i_range2),
+                                     [=] RAJA_DEVICE(int j, int i) {
+                                       for (int c = 1; c <= 3; c++)
+                                         rhsV(c, i, j, 1) /= m_rho_cV(i, j, 1);
+                                     });
+  SYNC_STREAM;
   if (!m_tw) bnd_zero(rhs, m_nghost);
 
   // 3. Compute prolrhs := p(L(uc)/rhoc)
-  Sarray prolrhs(3, m_ibf, m_ief, m_jbf, m_jef, m_nkf, m_nkf,__FILE__,__LINE__);
+  Sarray prolrhs(3, m_ibf, m_ief, m_jbf, m_jef, m_nkf, m_nkf, __FILE__,
+                 __LINE__);
   prolongate2D(rhs, prolrhs, 1, m_nkf);
 
   // 4. Compute L(uf)
-  Sarray Luf(prolrhs,Space::Managed_temps);
+  Sarray Luf(prolrhs, Space::Managed_temps);
   curvilinear4sgwind(m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef, m_nkf, m_nkf,
                      uf.c_ptr(), m_mu_f.c_ptr(), m_lambda_f.c_ptr(),
                      m_met_f.c_ptr(), m_jac_f.c_ptr(), Luf.c_ptr(), onesided,
@@ -1000,7 +1018,7 @@ SYNC_STREAM;
                          m_strx_f, m_stry_f, m_nkf, '-');
 
   // 5. Compute B(uf)
-  Sarray Bf(prolrhs,Space::Managed_temps);
+  Sarray Bf(prolrhs, Space::Managed_temps);
   compute_icstresses_curv(uf, Bf, m_nkf, m_met_f, m_mu_f, m_lambda_f, m_strx_f,
                           m_stry_f, m_sbop_no_gp, '=');
   if (m_use_attenuation)
@@ -1018,29 +1036,31 @@ SYNC_STREAM;
   auto& m_rho_fV = m_rho_f.getview();
   auto& LufV = Luf.getview();
   auto& BfV = Bf.getview();
-  
+
   float_sw4* lm_strx_f = m_strx_f;
   float_sw4* lm_stry_f = m_stry_f;
   auto& lm_nkf = m_nkf;
   auto& lm_ibf = m_ibf;
   auto& lm_jbf = m_jbf;
-  RAJA::RangeSegment j_range3(prolrhs.m_jb,prolrhs.m_je+1);
-  RAJA::RangeSegment i_range3(prolrhs.m_ib,prolrhs.m_ie+1);
+  RAJA::RangeSegment j_range3(prolrhs.m_jb, prolrhs.m_je + 1);
+  RAJA::RangeSegment i_range3(prolrhs.m_ib, prolrhs.m_ie + 1);
   RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
-			   RAJA::make_tuple(j_range3, i_range3), [=] RAJA_DEVICE(int j, int i) {
-        for (int c = 1; c <= 3; c++) prolrhsV(c, i, j, lm_nkf) =
-            w1 * m_jac_fV(i, j, lm_nkf) *
-                (m_rho_fV(i, j, lm_nkf) * prolrhsV(c, i, j, lm_nkf) -
-                 LufV(c, i, j, lm_nkf)) /
-                (lm_strx_f[i - lm_ibf] * lm_stry_f[j - lm_jbf]) +
-				       BfV(c, i, j, lm_nkf);});
+      RAJA::make_tuple(j_range3, i_range3), [=] RAJA_DEVICE(int j, int i) {
+        for (int c = 1; c <= 3; c++)
+          prolrhsV(c, i, j, lm_nkf) =
+              w1 * m_jac_fV(i, j, lm_nkf) *
+                  (m_rho_fV(i, j, lm_nkf) * prolrhsV(c, i, j, lm_nkf) -
+                   LufV(c, i, j, lm_nkf)) /
+                  (lm_strx_f[i - lm_ibf] * lm_stry_f[j - lm_jbf]) +
+              BfV(c, i, j, lm_nkf);
+      });
   SYNC_STREAM;
   if (!m_tw) bnd_zero(prolrhs, m_nghost);
   restrict2D(rhs, prolrhs, 1, m_nkf);
 
   // 7. Compute B(uc), and form rhs := rhs - B(uc) =
   // r(w1*J[gf]*(rhof*p(L(uc)/rhoc-L(uf))+B(uf))-B(uc)
-  Sarray Bc(rhs,Space::Managed_temps);
+  Sarray Bc(rhs, Space::Managed_temps);
   compute_icstresses_curv(uc, Bc, 1, m_met_c, m_mu_c, m_lambda_c, m_strx_c,
                           m_stry_c, m_sbop, '=');
   if (m_use_attenuation)
@@ -1052,24 +1072,28 @@ SYNC_STREAM;
   // for (int c = 1; c <= 3; c++)
   //   for (int j = rhs.m_jb; j <= rhs.m_je; j++)
   //     for (int i = rhs.m_ib; i <= rhs.m_ie; i++)
-  auto &BcV = Bc.getview();
-RAJA::RangeSegment j_range4(rhs.m_jb,rhs.m_je+1);
-  RAJA::RangeSegment i_range4(rhs.m_ib,rhs.m_ie+1);
-  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
-			   RAJA::make_tuple(j_range4, i_range4), [=] RAJA_DEVICE(int j, int i) {
+  auto& BcV = Bc.getview();
+  RAJA::RangeSegment j_range4(rhs.m_jb, rhs.m_je + 1);
+  RAJA::RangeSegment i_range4(rhs.m_ib, rhs.m_ie + 1);
+  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(RAJA::make_tuple(j_range4, i_range4),
+                                     [=] RAJA_DEVICE(int j, int i) {
 #pragma unrollw
-			     for (int c = 1; c <= 3; c++) rhsV(c, i, j, 1) -= BcV(c, i, j, 1);});
+                                       for (int c = 1; c <= 3; c++)
+                                         rhsV(c, i, j, 1) -= BcV(c, i, j, 1);
+                                     });
 
   // 8. Restore ghost point values to U.
   // for (int c = 1; c <= 3; c++)
   //   for (int j = uc.m_jb; j <= uc.m_je; j++)
   //     for (int i = uc.m_ib; i <= uc.m_ie; i++)
-  RAJA::RangeSegment j_range5(uc.m_jb,uc.m_je+1);
-  RAJA::RangeSegment i_range5(uc.m_ib,uc.m_ie+1);
-  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
-			   RAJA::make_tuple(j_range5, i_range5), [=] RAJA_DEVICE(int j, int i) {
-#pragma unroll 
-			     for (int c = 1; c <= 3; c++)  ucV(c, i, j, 0) = utmpV(c, i, j, 0);});
+  RAJA::RangeSegment j_range5(uc.m_jb, uc.m_je + 1);
+  RAJA::RangeSegment i_range5(uc.m_ib, uc.m_ie + 1);
+  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(RAJA::make_tuple(j_range5, i_range5),
+                                     [=] RAJA_DEVICE(int j, int i) {
+#pragma unroll
+                                       for (int c = 1; c <= 3; c++)
+                                         ucV(c, i, j, 0) = utmpV(c, i, j, 0);
+                                     });
 
   SYNC_STREAM;
 }
@@ -1192,50 +1216,50 @@ void CurvilinearInterface2::lhs_icstresses_curv(
 #define str_x(i) a_str_x[(i - ifirst)]
 #define str_y(j) a_str_y[(j - jfirst)]
 
-// #pragma omp parallel for
-//   for (int j = a_lhs.m_jb; j <= a_lhs.m_je; j++)
-// #pragma omp simd
-//     for (int i = a_lhs.m_ib; i <= a_lhs.m_ie; i++) {
+  // #pragma omp parallel for
+  //   for (int j = a_lhs.m_jb; j <= a_lhs.m_je; j++)
+  // #pragma omp simd
+  //     for (int i = a_lhs.m_ib; i <= a_lhs.m_ie; i++) {
   auto& a_UpV = a_Up.getview();
   auto& a_metricV = a_metric.getview();
   auto& a_muV = a_mu.getview();
   auto& a_lambdaV = a_lambda.getview();
   auto& a_lhsV = a_lhs.getview();
-RAJA::RangeSegment j_range(a_lhs.m_jb,a_lhs.m_je+1);
-  RAJA::RangeSegment i_range(a_lhs.m_ib,a_lhs.m_ie+1);
+  RAJA::RangeSegment j_range(a_lhs.m_jb, a_lhs.m_je + 1);
+  RAJA::RangeSegment i_range(a_lhs.m_ib, a_lhs.m_ie + 1);
   RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
-			   RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
-      float_sw4 uz, vz, wz;
-      uz = vz = wz = 0;
-      if (upper) {
-        uz = sbop[0] * a_UpV(1, i, j, k - 1);
-        vz = sbop[0] * a_UpV(2, i, j, k - 1);
-        wz = sbop[0] * a_UpV(3, i, j, k - 1);
-      } else {
-        uz = -sbop[0] * a_UpV(1, i, j, k + 1);
-        vz = -sbop[0] * a_UpV(2, i, j, k + 1);
-        wz = -sbop[0] * a_UpV(3, i, j, k + 1);
-      }
+      RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+        float_sw4 uz, vz, wz;
+        uz = vz = wz = 0;
+        if (upper) {
+          uz = sbop[0] * a_UpV(1, i, j, k - 1);
+          vz = sbop[0] * a_UpV(2, i, j, k - 1);
+          wz = sbop[0] * a_UpV(3, i, j, k - 1);
+        } else {
+          uz = -sbop[0] * a_UpV(1, i, j, k + 1);
+          vz = -sbop[0] * a_UpV(2, i, j, k + 1);
+          wz = -sbop[0] * a_UpV(3, i, j, k + 1);
+        }
 
-      // Normal terms
-      float_sw4 m2 = str_x(i) * a_metricV(2, i, j, k);
-      float_sw4 m3 = str_y(j) * a_metricV(3, i, j, k);
-      float_sw4 m4 = a_metricV(4, i, j, k);
-      float_sw4 un = m2 * uz + m3 * vz + m4 * wz;
-      float_sw4 mnrm = m2 * m2 + m3 * m3 + m4 * m4;
+        // Normal terms
+        float_sw4 m2 = str_x(i) * a_metricV(2, i, j, k);
+        float_sw4 m3 = str_y(j) * a_metricV(3, i, j, k);
+        float_sw4 m4 = a_metricV(4, i, j, k);
+        float_sw4 un = m2 * uz + m3 * vz + m4 * wz;
+        float_sw4 mnrm = m2 * m2 + m3 * m3 + m4 * m4;
 
-      a_lhsV(1, i, j, k) = a_muV(i, j, k) * mnrm * uz +
-                          (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m2 * un;
-      a_lhsV(2, i, j, k) = a_muV(i, j, k) * mnrm * vz +
-                          (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m3 * un;
-      a_lhsV(3, i, j, k) = a_muV(i, j, k) * mnrm * wz +
-                          (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m4 * un;
+        a_lhsV(1, i, j, k) = a_muV(i, j, k) * mnrm * uz +
+                             (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m2 * un;
+        a_lhsV(2, i, j, k) = a_muV(i, j, k) * mnrm * vz +
+                             (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m3 * un;
+        a_lhsV(3, i, j, k) = a_muV(i, j, k) * mnrm * wz +
+                             (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m4 * un;
 
-      float_sw4 isgxy = 1.0 / (str_x(i) * str_y(j));
-      a_lhsV(1, i, j, k) *= isgxy;
-      a_lhsV(2, i, j, k) *= isgxy;
-      a_lhsV(3, i, j, k) *= isgxy;
-			   });
+        float_sw4 isgxy = 1.0 / (str_x(i) * str_y(j));
+        a_lhsV(1, i, j, k) *= isgxy;
+        a_lhsV(2, i, j, k) *= isgxy;
+        a_lhsV(3, i, j, k) *= isgxy;
+      });
   SYNC_STREAM;
 #undef str_x
 #undef str_y
@@ -1252,57 +1276,58 @@ void CurvilinearInterface2::lhs_Lu(Sarray& a_Ua, Sarray& a_lhsa, Sarray& meta,
 #define strx(i) a_str_x[(i - ifirst)]
 #define stry(j) a_str_y[(j - jfirst)]
 
-  SView &a_lhs = a_lhsa.getview();
-  SView &jac = jaca.getview();
-  SView &mu = mua.getview();
-  SView &la = laa.getview();
-  SView &met = meta.getview();
-  SView &a_U = a_Ua.getview();
-  RAJA::RangeSegment j_range(a_lhsa.m_jb,a_lhsa.m_je+1);
-  RAJA::RangeSegment i_range(a_lhsa.m_ib,a_lhsa.m_ie+1);
+  SView& a_lhs = a_lhsa.getview();
+  SView& jac = jaca.getview();
+  SView& mu = mua.getview();
+  SView& la = laa.getview();
+  SView& met = meta.getview();
+  SView& a_U = a_Ua.getview();
+  RAJA::RangeSegment j_range(a_lhsa.m_jb, a_lhsa.m_je + 1);
+  RAJA::RangeSegment i_range(a_lhsa.m_ib, a_lhsa.m_ie + 1);
   RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
       RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
-  // for (int j = a_lhs.m_jb; j <= a_lhs.m_je; j++)
-  //   for (int i = a_lhs.m_ib; i <= a_lhs.m_ie; i++) {
-      float_sw4 ijac = ghcof / jac(i, j, 1);
-      float_sw4 mucofu2 = ((2 * mu(i, j, 1) + la(i, j, 1)) * met(2, i, j, 1) *
-                               strx(i) * met(2, i, j, 1) * strx(i) +
-                           mu(i, j, 1) * (met(3, i, j, 1) * stry(j) *
-                                              met(3, i, j, 1) * stry(j) +
-                                          met(4, i, j, 1) * met(4, i, j, 1)));
-      float_sw4 mucofv2 = ((2 * mu(i, j, 1) + la(i, j, 1)) * met(3, i, j, 1) *
-                               stry(j) * met(3, i, j, 1) * stry(j) +
-                           mu(i, j, 1) * (met(2, i, j, 1) * strx(i) *
-                                              met(2, i, j, 1) * strx(i) +
-                                          met(4, i, j, 1) * met(4, i, j, 1)));
-      float_sw4 mucofw2 =
-          ((2 * mu(i, j, 1) + la(i, j, 1)) * met(4, i, j, 1) * met(4, i, j, 1) +
-           mu(i, j, 1) *
-               (met(2, i, j, 1) * strx(i) * met(2, i, j, 1) * strx(i) +
-                met(3, i, j, 1) * stry(j) * met(3, i, j, 1) * stry(j)));
-      float_sw4 mucofuv = (mu(i, j, 1) + la(i, j, 1)) * met(2, i, j, 1) *
-                          met(3, i, j, 1) * strx(i) * stry(j);
-      float_sw4 mucofuw = (mu(i, j, 1) + la(i, j, 1)) * met(2, i, j, 1) *
-                          met(4, i, j, 1) * strx(i);
-      float_sw4 mucofvw = (mu(i, j, 1) + la(i, j, 1)) * met(3, i, j, 1) *
-                          met(4, i, j, 1) * stry(j);
-      a_lhs(1, i, j, 1) =
-          (mucofu2 * a_U(1, i, j, 0) + mucofuv * a_U(2, i, j, 0) +
-           mucofuw * a_U(3, i, j, 0)) *
-          ijac;
-      a_lhs(2, i, j, 1) =
-          (mucofuv * a_U(1, i, j, 0) + mucofv2 * a_U(2, i, j, 0) +
-           mucofvw * a_U(3, i, j, 0)) *
-          ijac;
-      a_lhs(3, i, j, 1) =
-          (mucofuw * a_U(1, i, j, 0) + mucofvw * a_U(2, i, j, 0) +
-           mucofw2 * a_U(3, i, j, 0)) *
-          ijac;
-      //	       r1 += istrxy*mucofu2*u(1,i,j,0) + mucofuv*u(2,i,j,0) +
-      // istry*mucofuw*u(3,i,j,0); 	       r2 += mucofuv*u(1,i,j,0) +
-      // istrxy*mucofv2*u(2,i,j,0) + istrx*mucofvw*u(3,i,j,0); 	       r3 +=
-      // istry*mucofuw*u(1,i,j,0) + istrx*mucofvw*u(2,i,j,0) +
-      // istrxy*mucofw2*u(3,i,j,0);
+        // for (int j = a_lhs.m_jb; j <= a_lhs.m_je; j++)
+        //   for (int i = a_lhs.m_ib; i <= a_lhs.m_ie; i++) {
+        float_sw4 ijac = ghcof / jac(i, j, 1);
+        float_sw4 mucofu2 = ((2 * mu(i, j, 1) + la(i, j, 1)) * met(2, i, j, 1) *
+                                 strx(i) * met(2, i, j, 1) * strx(i) +
+                             mu(i, j, 1) * (met(3, i, j, 1) * stry(j) *
+                                                met(3, i, j, 1) * stry(j) +
+                                            met(4, i, j, 1) * met(4, i, j, 1)));
+        float_sw4 mucofv2 = ((2 * mu(i, j, 1) + la(i, j, 1)) * met(3, i, j, 1) *
+                                 stry(j) * met(3, i, j, 1) * stry(j) +
+                             mu(i, j, 1) * (met(2, i, j, 1) * strx(i) *
+                                                met(2, i, j, 1) * strx(i) +
+                                            met(4, i, j, 1) * met(4, i, j, 1)));
+        float_sw4 mucofw2 =
+            ((2 * mu(i, j, 1) + la(i, j, 1)) * met(4, i, j, 1) *
+                 met(4, i, j, 1) +
+             mu(i, j, 1) *
+                 (met(2, i, j, 1) * strx(i) * met(2, i, j, 1) * strx(i) +
+                  met(3, i, j, 1) * stry(j) * met(3, i, j, 1) * stry(j)));
+        float_sw4 mucofuv = (mu(i, j, 1) + la(i, j, 1)) * met(2, i, j, 1) *
+                            met(3, i, j, 1) * strx(i) * stry(j);
+        float_sw4 mucofuw = (mu(i, j, 1) + la(i, j, 1)) * met(2, i, j, 1) *
+                            met(4, i, j, 1) * strx(i);
+        float_sw4 mucofvw = (mu(i, j, 1) + la(i, j, 1)) * met(3, i, j, 1) *
+                            met(4, i, j, 1) * stry(j);
+        a_lhs(1, i, j, 1) =
+            (mucofu2 * a_U(1, i, j, 0) + mucofuv * a_U(2, i, j, 0) +
+             mucofuw * a_U(3, i, j, 0)) *
+            ijac;
+        a_lhs(2, i, j, 1) =
+            (mucofuv * a_U(1, i, j, 0) + mucofv2 * a_U(2, i, j, 0) +
+             mucofvw * a_U(3, i, j, 0)) *
+            ijac;
+        a_lhs(3, i, j, 1) =
+            (mucofuw * a_U(1, i, j, 0) + mucofvw * a_U(2, i, j, 0) +
+             mucofw2 * a_U(3, i, j, 0)) *
+            ijac;
+        //	       r1 += istrxy*mucofu2*u(1,i,j,0) + mucofuv*u(2,i,j,0) +
+        // istry*mucofuw*u(3,i,j,0); 	       r2 += mucofuv*u(1,i,j,0) +
+        // istrxy*mucofv2*u(2,i,j,0) + istrx*mucofvw*u(3,i,j,0); 	       r3
+        // += istry*mucofuw*u(1,i,j,0) + istrx*mucofvw*u(2,i,j,0) +
+        // istrxy*mucofw2*u(3,i,j,0);
       });
 #undef strx
 #undef stry
@@ -1381,7 +1406,6 @@ void CurvilinearInterface2::matrix_Lu(int strib, int strjb, Sarray& a_mat,
                                       Sarray& met, Sarray& jac, Sarray& mu,
                                       Sarray& la, float_sw4* a_str_x,
                                       float_sw4* a_str_y, float_sw4 ghcof) {
-
   SW4_MARK_FUNCTION;
 #define strx(i) a_str_x[(i - strib)]
 #define stry(j) a_str_y[(j - strjb)]
@@ -1529,71 +1553,78 @@ void CurvilinearInterface2::prolongate2D(Sarray& Uc, Sarray& Uf, int kc,
   else
     je2 = (Uf.m_je - 1) / 2;
   je2 = min(Uc.m_je - 2, je2);
-  auto &lm_nc = Uf.m_nc;
-  auto &UcV = Uc.getview();
-  auto &UfV = Uf.getview();
+  auto& lm_nc = Uf.m_nc;
+  auto& UcV = Uc.getview();
+  auto& UfV = Uf.getview();
   //#pragma omp parallel
   //  {
-//     for (int c = 1; c <= Uf.m_nc; c++)
-// #pragma omp for
-//       for (int j = jb1; j <= je1; j++)
-// #pragma omp simd
-//         for (int i = ib1; i <= ie1; i++)
-    RAJA::RangeSegment j_range1(jb1,je1+1);
-    RAJA::RangeSegment i_range1(ib1,ie1+1);
- RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
-			   RAJA::make_tuple(j_range1, i_range1), [=] RAJA_DEVICE(int j, int i) {
-          for (int c = 1; c <= lm_nc; c++) UfV(c, 2 * i - 1, 2 * j - 1, kf) = UcV(c, i, j, kc);
-			   });
+  //     for (int c = 1; c <= Uf.m_nc; c++)
+  // #pragma omp for
+  //       for (int j = jb1; j <= je1; j++)
+  // #pragma omp simd
+  //         for (int i = ib1; i <= ie1; i++)
+  RAJA::RangeSegment j_range1(jb1, je1 + 1);
+  RAJA::RangeSegment i_range1(ib1, ie1 + 1);
+  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
+      RAJA::make_tuple(j_range1, i_range1), [=] RAJA_DEVICE(int j, int i) {
+        for (int c = 1; c <= lm_nc; c++)
+          UfV(c, 2 * i - 1, 2 * j - 1, kf) = UcV(c, i, j, kc);
+      });
 
- 
-//     for (int c = 1; c <= Uf.m_nc; c++)
-// #pragma omp for
-//       for (int j = jb2; j <= je2; j++)
-// #pragma omp simd
-//         for (int i = ib1; i <= ie1; i++)
-RAJA::RangeSegment j_range2(jb2,je2+1);
- RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
-			   RAJA::make_tuple(j_range2, i_range1), [=] RAJA_DEVICE(int j, int i) {
-          for (int c = 1; c <= lm_nc; c++) UfV(c, 2 * i - 1, 2 * j, kf) =
+  //     for (int c = 1; c <= Uf.m_nc; c++)
+  // #pragma omp for
+  //       for (int j = jb2; j <= je2; j++)
+  // #pragma omp simd
+  //         for (int i = ib1; i <= ie1; i++)
+  RAJA::RangeSegment j_range2(jb2, je2 + 1);
+  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
+      RAJA::make_tuple(j_range2, i_range1), [=] RAJA_DEVICE(int j, int i) {
+        for (int c = 1; c <= lm_nc; c++)
+          UfV(c, 2 * i - 1, 2 * j, kf) =
               i16 * (-UcV(c, i, j - 1, kc) +
                      9 * (UcV(c, i, j, kc) + UcV(c, i, j + 1, kc)) -
-                     UcV(c, i, j + 2, kc));});
- 
-//     for (int c = 1; c <= Uf.m_nc; c++)
-// #pragma omp for
-//       for (int j = jb1; j <= je1; j++)
-// #pragma omp simd
-//         for (int i = ib2; i <= ie2; i++)
-RAJA::RangeSegment i_range2(ib2,ie2+1);
-RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
-			   RAJA::make_tuple(j_range1, i_range2), [=] RAJA_DEVICE(int j, int i) {
-          for (int c = 1; c <= lm_nc; c++) UfV(c, 2 * i, 2 * j - 1, kf) =
+                     UcV(c, i, j + 2, kc));
+      });
+
+  //     for (int c = 1; c <= Uf.m_nc; c++)
+  // #pragma omp for
+  //       for (int j = jb1; j <= je1; j++)
+  // #pragma omp simd
+  //         for (int i = ib2; i <= ie2; i++)
+  RAJA::RangeSegment i_range2(ib2, ie2 + 1);
+  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
+      RAJA::make_tuple(j_range1, i_range2), [=] RAJA_DEVICE(int j, int i) {
+        for (int c = 1; c <= lm_nc; c++)
+          UfV(c, 2 * i, 2 * j - 1, kf) =
               i16 * (-UcV(c, i - 1, j, kc) +
                      9 * (UcV(c, i, j, kc) + UcV(c, i + 1, j, kc)) -
-                     UcV(c, i + 2, j, kc));});
- 
-//     for (int c = 1; c <= Uf.m_nc; c++)
-// #pragma omp for
-//       for (int j = jb2; j <= je2; j++)
-// #pragma omp simd
-//         for (int i = ib2; i <= ie2; i++)
-RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
-			   RAJA::make_tuple(j_range2, i_range2), [=] RAJA_DEVICE(int j, int i) {
-          for (int c = 1; c <= lm_nc; c++) UfV(c, 2 * i, 2 * j, kf) =
-              i256 * (UcV(c, i - 1, j - 1, kc) -
-                      9 * (UcV(c, i, j - 1, kc) + UcV(c, i + 1, j - 1, kc)) +
-                      UcV(c, i + 2, j - 1, kc) +
-                      9 * (-UcV(c, i - 1, j, kc) +
-                           9 * (UcV(c, i, j, kc) + UcV(c, i + 1, j, kc)) -
-                           UcV(c, i + 2, j, kc) - UcV(c, i - 1, j + 1, kc) +
-                           9 * (UcV(c, i, j + 1, kc) + UcV(c, i + 1, j + 1, kc)) -
-                           UcV(c, i + 2, j + 1, kc)) +
-                      UcV(c, i - 1, j + 2, kc) -
-                      9 * (UcV(c, i, j + 2, kc) + UcV(c, i + 1, j + 2, kc)) +
-                      UcV(c, i + 2, j + 2, kc));});
- SYNC_STREAM;
-//}
+                     UcV(c, i + 2, j, kc));
+      });
+
+  //     for (int c = 1; c <= Uf.m_nc; c++)
+  // #pragma omp for
+  //       for (int j = jb2; j <= je2; j++)
+  // #pragma omp simd
+  //         for (int i = ib2; i <= ie2; i++)
+  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
+      RAJA::make_tuple(j_range2, i_range2), [=] RAJA_DEVICE(int j, int i) {
+        for (int c = 1; c <= lm_nc; c++)
+          UfV(c, 2 * i, 2 * j, kf) =
+              i256 *
+              (UcV(c, i - 1, j - 1, kc) -
+               9 * (UcV(c, i, j - 1, kc) + UcV(c, i + 1, j - 1, kc)) +
+               UcV(c, i + 2, j - 1, kc) +
+               9 * (-UcV(c, i - 1, j, kc) +
+                    9 * (UcV(c, i, j, kc) + UcV(c, i + 1, j, kc)) -
+                    UcV(c, i + 2, j, kc) - UcV(c, i - 1, j + 1, kc) +
+                    9 * (UcV(c, i, j + 1, kc) + UcV(c, i + 1, j + 1, kc)) -
+                    UcV(c, i + 2, j + 1, kc)) +
+               UcV(c, i - 1, j + 2, kc) -
+               9 * (UcV(c, i, j + 2, kc) + UcV(c, i + 1, j + 2, kc)) +
+               UcV(c, i + 2, j + 2, kc));
+      });
+  SYNC_STREAM;
+  //}
 }
 
 //-----------------------------------------------------------------------
@@ -1626,35 +1657,36 @@ void CurvilinearInterface2::restrict2D(Sarray& Uc, Sarray& Uf, int kc, int kf) {
   int lm_nc = Uf.m_nc;
   auto& UfV = Uf.getview();
   auto& UcV = Uc.getview();
-// #pragma omp parallel
-//   for (int c = 1; c <= Uf.m_nc; c++)
-// #pragma omp for
-//     for (int jc = jcb; jc <= jce; jc++)
-// #pragma omp simd
-//       for (int ic = icb; ic <= ice; ic++) {
-	RAJA::RangeSegment j_range(jcb,jce+1);
-	RAJA::RangeSegment i_range(icb,ice+1);
+  // #pragma omp parallel
+  //   for (int c = 1; c <= Uf.m_nc; c++)
+  // #pragma omp for
+  //     for (int jc = jcb; jc <= jce; jc++)
+  // #pragma omp simd
+  //       for (int ic = icb; ic <= ice; ic++) {
+  RAJA::RangeSegment j_range(jcb, jce + 1);
+  RAJA::RangeSegment i_range(icb, ice + 1);
   RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
-			   RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int jc, int ic) {
+      RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int jc, int ic) {
         int i = 2 * ic - 1, j = 2 * jc - 1;
-        for (int c = 1; c <= lm_nc; c++) UcV(c, ic, jc, kc) =
-            i1024 *
-            (UfV(c, i - 3, j - 3, kf) - 9 * UfV(c, i - 3, j - 1, kf) -
-             16 * UfV(c, i - 3, j, kf) - 9 * UfV(c, i - 3, j + 1, kf) +
-             UfV(c, i - 3, j + 3, kf) +
-             9 * (-UfV(c, i - 1, j - 3, kf) + 9 * UfV(c, i - 1, j - 1, kf) +
-                  16 * UfV(c, i - 1, j, kf) + 9 * UfV(c, i - 1, j + 1, kf) -
-                  UfV(c, i - 1, j + 3, kf)) +
-             16 * (-UfV(c, i, j - 3, kf) + 9 * UfV(c, i, j - 1, kf) +
-                   16 * UfV(c, i, j, kf) + 9 * UfV(c, i, j + 1, kf) -
-                   UfV(c, i, j + 3, kf)) +
-             9 * (-UfV(c, i + 1, j - 3, kf) + 9 * UfV(c, i + 1, j - 1, kf) +
-                  16 * UfV(c, i + 1, j, kf) + 9 * UfV(c, i + 1, j + 1, kf) -
-                  UfV(c, i + 1, j + 3, kf)) +
-             UfV(c, i + 3, j - 3, kf) - 9 * UfV(c, i + 3, j - 1, kf) -
-             16 * UfV(c, i + 3, j, kf) - 9 * UfV(c, i + 3, j + 1, kf) +
-             UfV(c, i + 3, j + 3, kf));
-			   });
+        for (int c = 1; c <= lm_nc; c++)
+          UcV(c, ic, jc, kc) =
+              i1024 *
+              (UfV(c, i - 3, j - 3, kf) - 9 * UfV(c, i - 3, j - 1, kf) -
+               16 * UfV(c, i - 3, j, kf) - 9 * UfV(c, i - 3, j + 1, kf) +
+               UfV(c, i - 3, j + 3, kf) +
+               9 * (-UfV(c, i - 1, j - 3, kf) + 9 * UfV(c, i - 1, j - 1, kf) +
+                    16 * UfV(c, i - 1, j, kf) + 9 * UfV(c, i - 1, j + 1, kf) -
+                    UfV(c, i - 1, j + 3, kf)) +
+               16 * (-UfV(c, i, j - 3, kf) + 9 * UfV(c, i, j - 1, kf) +
+                     16 * UfV(c, i, j, kf) + 9 * UfV(c, i, j + 1, kf) -
+                     UfV(c, i, j + 3, kf)) +
+               9 * (-UfV(c, i + 1, j - 3, kf) + 9 * UfV(c, i + 1, j - 1, kf) +
+                    16 * UfV(c, i + 1, j, kf) + 9 * UfV(c, i + 1, j + 1, kf) -
+                    UfV(c, i + 1, j + 3, kf)) +
+               UfV(c, i + 3, j - 3, kf) - 9 * UfV(c, i + 3, j - 1, kf) -
+               16 * UfV(c, i + 3, j, kf) - 9 * UfV(c, i + 3, j + 1, kf) +
+               UfV(c, i + 3, j + 3, kf));
+      });
   SYNC_STREAM;
 }
 
@@ -1825,10 +1857,10 @@ void CurvilinearInterface2::communicate_array1d(float_sw4* u, int n, int dir,
   MPI_Wait(&req2, &status);
 }
 //-----------------------------------------------------------------------
-void CurvilinearInterface2::compute_icstresses_curv(Sarray& a_Up, Sarray& B, int kic,
-                                 Sarray& a_metric, Sarray& a_mu,
-                                 Sarray& a_lambda, float_sw4* a_str_x,
-                                 float_sw4* a_str_y, float_sw4* sbop, char op) {
+void CurvilinearInterface2::compute_icstresses_curv(
+    Sarray& a_Up, Sarray& B, int kic, Sarray& a_metric, Sarray& a_mu,
+    Sarray& a_lambda, float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop,
+    char op) {
   const float_sw4 a1 = 2.0 / 3, a2 = -1.0 / 12;
   const bool upper = (kic == 1);
   const int k = kic;
@@ -1846,105 +1878,105 @@ void CurvilinearInterface2::compute_icstresses_curv(Sarray& a_Up, Sarray& B, int
     sgn = -1;
   }
 
+  SView& a_UpV = a_Up.getview();
+  SView& BV = B.getview();
+  SView& a_metricV = a_metric.getview();
+  SView& a_muV = a_mu.getview();
+  SView& a_lambdaV = a_lambda.getview();
 
-  SView &a_UpV =a_Up.getview();
-  SView &BV = B.getview();
-  SView &a_metricV = a_metric.getview();
-  SView &a_muV = a_mu.getview();
-  SView &a_lambdaV = a_lambda.getview();
-  
-  RAJA::RangeSegment j_range(B.m_jb + 2, B.m_je - 2+1);
-  RAJA::RangeSegment i_range(B.m_ib + 2, B.m_ie - 2+1);
+  RAJA::RangeSegment j_range(B.m_jb + 2, B.m_je - 2 + 1);
+  RAJA::RangeSegment i_range(B.m_ib + 2, B.m_ie - 2 + 1);
   RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
       RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
-// #pragma omp parallel for
-//   for (int j = B.m_jb + 2; j <= B.m_je - 2; j++)
-// #pragma omp simd
-//     for (int i = B.m_ib + 2; i <= B.m_ie - 2; i++) {
-      float_sw4 uz, vz, wz;
-      uz = vz = wz = 0;
-      for (int m = 0; m <= 5; m++) {
-        uz += sbop[m] * a_UpV(1, i, j, k + kl * (m - 1));
-        vz += sbop[m] * a_UpV(2, i, j, k + kl * (m - 1));
-        wz += sbop[m] * a_UpV(3, i, j, k + kl * (m - 1));
+        // #pragma omp parallel for
+        //   for (int j = B.m_jb + 2; j <= B.m_je - 2; j++)
+        // #pragma omp simd
+        //     for (int i = B.m_ib + 2; i <= B.m_ie - 2; i++) {
+        float_sw4 uz, vz, wz;
+        uz = vz = wz = 0;
+        for (int m = 0; m <= 5; m++) {
+          uz += sbop[m] * a_UpV(1, i, j, k + kl * (m - 1));
+          vz += sbop[m] * a_UpV(2, i, j, k + kl * (m - 1));
+          wz += sbop[m] * a_UpV(3, i, j, k + kl * (m - 1));
 #ifdef CURVI_DEBUG
-        std::cout << "UZ" << m << " " << uz << " " << sbop[m] << " "
-                  << a_Up(1, i, j, k + kl * (m - 1)) << "\n";
+          std::cout << "UZ" << m << " " << uz << " " << sbop[m] << " "
+                    << a_Up(1, i, j, k + kl * (m - 1)) << "\n";
 #endif
-      }
-      uz *= kl;
-      vz *= kl;
-      wz *= kl;
+        }
+        uz *= kl;
+        vz *= kl;
+        wz *= kl;
 
-      // Normal terms
-      float_sw4 m2 = str_x(i) * a_metricV(2, i, j, k);
-      float_sw4 m3 = str_y(j) * a_metricV(3, i, j, k);
-      float_sw4 m4 = a_metricV(4, i, j, k);
-      float_sw4 un = m2 * uz + m3 * vz + m4 * wz;
-      float_sw4 mnrm = m2 * m2 + m3 * m3 + m4 * m4;
-      float_sw4 B1, B2, B3;
+        // Normal terms
+        float_sw4 m2 = str_x(i) * a_metricV(2, i, j, k);
+        float_sw4 m3 = str_y(j) * a_metricV(3, i, j, k);
+        float_sw4 m4 = a_metricV(4, i, j, k);
+        float_sw4 un = m2 * uz + m3 * vz + m4 * wz;
+        float_sw4 mnrm = m2 * m2 + m3 * m3 + m4 * m4;
+        float_sw4 B1, B2, B3;
 
-      B1 = a_muV(i, j, k) * mnrm * uz +
-           (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m2 * un;
-      B2 = a_muV(i, j, k) * mnrm * vz +
-           (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m3 * un;
-      B3 = a_muV(i, j, k) * mnrm * wz +
-           (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m4 * un;
+        B1 = a_muV(i, j, k) * mnrm * uz +
+             (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m2 * un;
+        B2 = a_muV(i, j, k) * mnrm * vz +
+             (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m3 * un;
+        B3 = a_muV(i, j, k) * mnrm * wz +
+             (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m4 * un;
 
-      // Tangential terms
-      // p-derivatives
-      float_sw4 up1 =
-          str_x(i) * (a2 * (a_UpV(1, i + 2, j, k) - a_UpV(1, i - 2, j, k)) +
-                      a1 * (a_UpV(1, i + 1, j, k) - a_UpV(1, i - 1, j, k)));
-      float_sw4 up2 =
-          str_x(i) * (a2 * (a_UpV(2, i + 2, j, k) - a_UpV(2, i - 2, j, k)) +
-                      a1 * (a_UpV(2, i + 1, j, k) - a_UpV(2, i - 1, j, k)));
-      float_sw4 up3 =
-          str_x(i) * (a2 * (a_UpV(3, i + 2, j, k) - a_UpV(3, i - 2, j, k)) +
-                      a1 * (a_UpV(3, i + 1, j, k) - a_UpV(3, i - 1, j, k)));
-      B1 += a_metricV(1, i, j, k) *
-            ((2 * a_muV(i, j, k) + a_lambdaV(i, j, k)) * m2 * up1 +
-             a_muV(i, j, k) * (m3 * up2 + m4 * up3));
-      B2 += a_metricV(1, i, j, k) *
-            (a_lambdaV(i, j, k) * m3 * up1 + a_muV(i, j, k) * m2 * up2);
-      B3 += a_metricV(1, i, j, k) *
-            (a_lambdaV(i, j, k) * m4 * up1 + a_muV(i, j, k) * m2 * up3);
+        // Tangential terms
+        // p-derivatives
+        float_sw4 up1 =
+            str_x(i) * (a2 * (a_UpV(1, i + 2, j, k) - a_UpV(1, i - 2, j, k)) +
+                        a1 * (a_UpV(1, i + 1, j, k) - a_UpV(1, i - 1, j, k)));
+        float_sw4 up2 =
+            str_x(i) * (a2 * (a_UpV(2, i + 2, j, k) - a_UpV(2, i - 2, j, k)) +
+                        a1 * (a_UpV(2, i + 1, j, k) - a_UpV(2, i - 1, j, k)));
+        float_sw4 up3 =
+            str_x(i) * (a2 * (a_UpV(3, i + 2, j, k) - a_UpV(3, i - 2, j, k)) +
+                        a1 * (a_UpV(3, i + 1, j, k) - a_UpV(3, i - 1, j, k)));
+        B1 += a_metricV(1, i, j, k) *
+              ((2 * a_muV(i, j, k) + a_lambdaV(i, j, k)) * m2 * up1 +
+               a_muV(i, j, k) * (m3 * up2 + m4 * up3));
+        B2 += a_metricV(1, i, j, k) *
+              (a_lambdaV(i, j, k) * m3 * up1 + a_muV(i, j, k) * m2 * up2);
+        B3 += a_metricV(1, i, j, k) *
+              (a_lambdaV(i, j, k) * m4 * up1 + a_muV(i, j, k) * m2 * up3);
 
-      // q-derivatives
-      float_sw4 uq1 =
-          str_y(j) * (a2 * (a_UpV(1, i, j + 2, k) - a_UpV(1, i, j - 2, k)) +
-                      a1 * (a_UpV(1, i, j + 1, k) - a_UpV(1, i, j - 1, k)));
-      float_sw4 uq2 =
-          str_y(j) * (a2 * (a_UpV(2, i, j + 2, k) - a_UpV(2, i, j - 2, k)) +
-                      a1 * (a_UpV(2, i, j + 1, k) - a_UpV(2, i, j - 1, k)));
-      float_sw4 uq3 =
-          str_y(j) * (a2 * (a_UpV(3, i, j + 2, k) - a_UpV(3, i, j - 2, k)) +
-                      a1 * (a_UpV(3, i, j + 1, k) - a_UpV(3, i, j - 1, k)));
-      B1 += a_metricV(1, i, j, k) *
-            (a_lambdaV(i, j, k) * m2 * uq2 + a_muV(i, j, k) * m3 * uq1);
-      B2 += a_metricV(1, i, j, k) *
-            ((2 * a_muV(i, j, k) + a_lambdaV(i, j, k)) * m3 * uq2 +
-             a_muV(i, j, k) * (m2 * uq1 + m4 * uq3));
-      B3 += a_metricV(1, i, j, k) *
-            (a_lambdaV(i, j, k) * m4 * uq2 + a_muV(i, j, k) * m3 * uq3);
+        // q-derivatives
+        float_sw4 uq1 =
+            str_y(j) * (a2 * (a_UpV(1, i, j + 2, k) - a_UpV(1, i, j - 2, k)) +
+                        a1 * (a_UpV(1, i, j + 1, k) - a_UpV(1, i, j - 1, k)));
+        float_sw4 uq2 =
+            str_y(j) * (a2 * (a_UpV(2, i, j + 2, k) - a_UpV(2, i, j - 2, k)) +
+                        a1 * (a_UpV(2, i, j + 1, k) - a_UpV(2, i, j - 1, k)));
+        float_sw4 uq3 =
+            str_y(j) * (a2 * (a_UpV(3, i, j + 2, k) - a_UpV(3, i, j - 2, k)) +
+                        a1 * (a_UpV(3, i, j + 1, k) - a_UpV(3, i, j - 1, k)));
+        B1 += a_metricV(1, i, j, k) *
+              (a_lambdaV(i, j, k) * m2 * uq2 + a_muV(i, j, k) * m3 * uq1);
+        B2 += a_metricV(1, i, j, k) *
+              ((2 * a_muV(i, j, k) + a_lambdaV(i, j, k)) * m3 * uq2 +
+               a_muV(i, j, k) * (m2 * uq1 + m4 * uq3));
+        B3 += a_metricV(1, i, j, k) *
+              (a_lambdaV(i, j, k) * m4 * uq2 + a_muV(i, j, k) * m3 * uq3);
 
-      float_sw4 isgxy = 1.0 / (str_x(i) * str_y(j));
-      B1 *= isgxy;
-      B2 *= isgxy;
-      B3 *= isgxy;
-      //
-      BV(1, i, j, k) += sgn * B1;
-      BV(2, i, j, k) += sgn * B2;
-      BV(3, i, j, k) += sgn * B3;
-      // std::cout<<"STTRESS C"<<i<<j<<k<<" "<<B(1,i,j,k)<<" "<<a_muV(i,j,k)<<"
-      // "<<mnrm<<" "<<uz<<"\n";
+        float_sw4 isgxy = 1.0 / (str_x(i) * str_y(j));
+        B1 *= isgxy;
+        B2 *= isgxy;
+        B3 *= isgxy;
+        //
+        BV(1, i, j, k) += sgn * B1;
+        BV(2, i, j, k) += sgn * B2;
+        BV(3, i, j, k) += sgn * B3;
+        // std::cout<<"STTRESS C"<<i<<j<<k<<" "<<B(1,i,j,k)<<"
+        // "<<a_muV(i,j,k)<<"
+        // "<<mnrm<<" "<<uz<<"\n";
       });
 #ifdef PEEKS_GALORE
-      SW4_PEEK;
-      SYNC_DEVICE;
+  SW4_PEEK;
+  SYNC_DEVICE;
 #endif
-      SYNC_STREAM;
-    // std::cout<<"END OF STRESS C CALL\n";
+  SYNC_STREAM;
+  // std::cout<<"END OF STRESS C CALL\n";
 #undef str_x
 #undef str_y
 }

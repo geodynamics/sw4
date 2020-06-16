@@ -94,19 +94,20 @@ class Sarray {
   Sarray(int nc, int iend, int jend, int kend);
   Sarray(int iend, int jend, int kend);
   Sarray(const Sarray& u);
-  Sarray(const Sarray&u, Space space);
+  Sarray(const Sarray& u, Space space);
   Sarray(Sarray& u, int nc = -1);
   Sarray();
   ~Sarray() {
 #ifndef SW4_USE_UMPIRE
-    if ((m_data != 0) && (!static_alloc)) ::operator delete[](m_data, Space::Managed);
+    if ((m_data != 0) && (!static_alloc))
+      ::operator delete[](m_data, Space::Managed);
 #else
     if (m_data != 0) {
       if (static_alloc) {
         ::operator delete[](
             m_data,
             Space::Managed_temps);  // THIS NEEDS TO MATCH THE SPACE IN THE CTOR
-                             // umpire::ResourceManager &rma =
+                                    // umpire::ResourceManager &rma =
         // umpire::ResourceManager::getInstance(); auto allocator =
         // rma.getAllocator("UM_pool_small"); allocator.deallocate(m_data);
       } else

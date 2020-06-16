@@ -510,7 +510,7 @@ void rhs4th3wind_host(
               //		     {
               //			mucof  += acof(k,q,m)*mu(i,j,m);
               //			lap2mu +=
-              //acof(k,q,m)*(la(i,j,m)+2*mu(i,j,m));
+              // acof(k,q,m)*(la(i,j,m)+2*mu(i,j,m));
               //		     }
               lap2mu = acof(k, q, 1) * (la(i, j, 1) + 2 * mu(i, j, 1)) +
                        acof(k, q, 2) * (la(i, j, 2) + 2 * mu(i, j, 2)) +

@@ -33,7 +33,7 @@ void EW::solerr3_ci(int ib, int ie, int jb, int je, int kb, int ke, float_sw4 h,
             //			liloc = fabs(u[ind]-uex[ind]);
             if (err > liloc) liloc = err;
             if (fabs(uex[ind]) > xliloc) xliloc = fabs(uex[ind]);
-	    // if (uex[ind] > xliloc) xliloc = uex[ind]; // ORG PRE CURVIMR
+            // if (uex[ind] > xliloc) xliloc = uex[ind]; // ORG PRE CURVIMR
             //		     l2loc += h3*(u[ind]-uex[ind])*(u[ind]-uex[ind]);
             l2loc += h3 * err * err;
           }
@@ -41,7 +41,7 @@ void EW::solerr3_ci(int ib, int ie, int jb, int je, int kb, int ke, float_sw4 h,
     l2 += l2loc;
     li = liloc > li ? liloc : li;
     xli = xliloc > xli ? xliloc : xli;
-    //std::cout<<"SOL2 "<<c<<" "<<xli<<" "<<xliloc<<"\n";
+    // std::cout<<"SOL2 "<<c<<" "<<xli<<" "<<xliloc<<"\n";
   }
 }
 
@@ -133,9 +133,9 @@ void EW::solerr3c_ci(int ib, int ie, int jb, int je, int kb, int ke,
             size_t ind3 = ind + nijk * c;
             float_sw4 err = fabs(u[ind3] - uex[ind3]);
             liloc = liloc > err ? liloc : err;
-            xliloc = xliloc > fabs(uex[ind3]) ? xliloc : fabs(uex[ind3]); 
-	    //xliloc = xliloc > uex[ind3] ? xliloc : uex[ind3]; // ORG PRE CURVIMR
-	    //std::cout<<"SOL"<<ind3<<" "<<xliloc<<" "<<uex[ind3]<<"\n";
+            xliloc = xliloc > fabs(uex[ind3]) ? xliloc : fabs(uex[ind3]);
+            // xliloc = xliloc > uex[ind3] ? xliloc : uex[ind3]; // ORG PRE
+            // CURVIMR std::cout<<"SOL"<<ind3<<" "<<xliloc<<" "<<uex[ind3]<<"\n";
             if (usesg != 1)
               l2loc += jac[ind] * err * err;
             else

@@ -218,7 +218,7 @@ Sarray::Sarray(const Sarray& u) : static_alloc(false) {
   prefetched = false;
 }
 //-----------------------------------------------------------------------
-Sarray::Sarray(const Sarray& u,Space space) {
+Sarray::Sarray(const Sarray& u, Space space) {
   m_nc = u.m_nc;
   m_ib = u.m_ib;
   m_ie = u.m_ie;
@@ -236,9 +236,13 @@ Sarray::Sarray(const Sarray& u,Space space) {
   dev_data = NULL;
   define_offsets();
   prefetched = false;
-  if (space==Space::Managed) static_alloc = false;
-  else if (space==Space::Managed_temps) static_alloc=true;
-  else std::cout<<"Warning :: Sarrays outside Space::Managed not fully supported \n";
+  if (space == Space::Managed)
+    static_alloc = false;
+  else if (space == Space::Managed_temps)
+    static_alloc = true;
+  else
+    std::cout
+        << "Warning :: Sarrays outside Space::Managed not fully supported \n";
 }
 
 //-----------------------------------------------------------------------
@@ -1172,7 +1176,8 @@ void Sarray::define_offsets() {
 //-----------------------------------------------------------------------
 void Sarray::transposeik() {
   // Transpose a_{i,j,k} := a_{k,j,i}
-  float_sw4* tmpar = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
+  float_sw4* tmpar =
+      SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
   if (m_corder) {
     size_t npts = static_cast<size_t>(m_ni) * m_nj * m_nk;
 #pragma omp parallel for
@@ -1311,12 +1316,12 @@ void Sarray::insert_intersection(Sarray& a_U) {
   int nis = ie - ib + 1;
   int njs = je - jb + 1;
   int nks = ke - kb + 1;
-  
+
   if (m_corder) {
     const size_t totpts = static_cast<size_t>(m_ni) * m_nj * m_nk;
     const size_t totptss = static_cast<size_t>(nis) * njs * (nks);
-    float_sw4 *dst_m_data = m_data;
-    float_sw4 *src_m_data = a_U.m_data;
+    float_sw4* dst_m_data = m_data;
+    float_sw4* src_m_data = a_U.m_data;
     // for (int k = wind[4]; k <= wind[5]; k++)
     //   for (int j = wind[2]; j <= wind[3]; j++)
     //     for (int i = wind[0]; i <= wind[1]; i++) {
@@ -1325,49 +1330,51 @@ void Sarray::insert_intersection(Sarray& a_U) {
     const int lm_kb = m_kb;
     const int lm_ni = m_ni;
     const int lm_nj = m_nj;
-    //const int lm_nk = m_nk;
+    // const int lm_nk = m_nk;
     const int lm_nc = m_nc;
-    //std::cout<<"Calling interest \n"<<std::flush;
-using LOCAL_LOOP =
-    RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::Tile<
-        0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
-        RAJA::statement::Tile<
-            1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
+    // std::cout<<"Calling interest \n"<<std::flush;
+    using LOCAL_LOOP =
+        RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::Tile<
+            0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
             RAJA::statement::Tile<
-                2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
-                RAJA::statement::For<
-                    0, RAJA::cuda_thread_z_direct,
+                1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
+                RAJA::statement::Tile<
+                    2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
                     RAJA::statement::For<
-                        1, RAJA::cuda_thread_y_direct,
-                        RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
-                                             RAJA::statement::Lambda<0>>>>>>>>>;
+                        0, RAJA::cuda_thread_z_direct,
+                        RAJA::statement::For<
+                            1, RAJA::cuda_thread_y_direct,
+                            RAJA::statement::For<
+                                2, RAJA::cuda_thread_x_direct,
+                                RAJA::statement::Lambda<0>>>>>>>>>;
 #define NO_COLLAPSE 1
 #if defined(NO_COLLAPSE)
     // LOOP 0
-    Range<32> I(wind[0],wind[1]+1); 
-    Range<32> J(wind[2],wind[3]+1);
-    Range<1> K(wind[4],wind[5]+1);
-    //std::cout<<" SIZE "<<wind[1]-wind[0]+1<<" "<<wind[3]+1-wind[2]<<" "<<wind[5]+1-wind[4]<<"\n";
+    Range<32> I(wind[0], wind[1] + 1);
+    Range<32> J(wind[2], wind[3] + 1);
+    Range<1> K(wind[4], wind[5] + 1);
+    // std::cout<<" SIZE "<<wind[1]-wind[0]+1<<" "<<wind[3]+1-wind[2]<<"
+    // "<<wind[5]+1-wind[4]<<"\n";
 #pragma forceinline
     forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
 
-    RAJA::RangeSegment k_range(wind[4],wind[5]+1);
-    RAJA::RangeSegment j_range(wind[2],wind[3]+1);
-    RAJA::RangeSegment i_range(wind[0],wind[1]+1);
-      RAJA::kernel<
-	LOCAL_LOOP>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
-                                                                      int k,
-                                                                      int j,
-                                                                      int i) {
+    RAJA::RangeSegment k_range(wind[4], wind[5] + 1);
+    RAJA::RangeSegment j_range(wind[2], wind[3] + 1);
+    RAJA::RangeSegment i_range(wind[0], wind[1] + 1);
+    RAJA::kernel<LOCAL_LOOP>(
+        RAJA::make_tuple(k_range, j_range, i_range),
+        [=] RAJA_DEVICE(int k, int j, int i) {
 #endif
-          size_t sind = (i - ib) + nis * (j - jb) + nis * njs * (k - kb);
-          size_t ind = (i - lm_ib) + lm_ni * (j - lm_jb) + lm_ni * lm_nj * (k - lm_kb);
-	  //printf("IN INTERSECTU %d %d %d %d \n",m_nc,m_ni,m_nj,m_nk);
-          for (int c = 1; c <= lm_nc; c++)
-            dst_m_data[ind + totpts * (c - 1)] =
-                src_m_data[sind + totptss * (c - 1)];
-		    }); SYNC_STREAM;
+      size_t sind = (i - ib) + nis * (j - jb) + nis * njs * (k - kb);
+      size_t ind =
+          (i - lm_ib) + lm_ni * (j - lm_jb) + lm_ni * lm_nj * (k - lm_kb);
+      // printf("IN INTERSECTU %d %d %d %d \n",m_nc,m_ni,m_nj,m_nk);
+      for (int c = 1; c <= lm_nc; c++)
+        dst_m_data[ind + totpts * (c - 1)] =
+            src_m_data[sind + totptss * (c - 1)];
+    });
+    SYNC_STREAM;
   } else {
     size_t sind = 0, ind = 0;
     for (int k = wind[4]; k <= wind[5]; k++)
@@ -1461,7 +1468,7 @@ void Sarray::extrapolij(int npts) {
 void Sarray::copy_kplane2(Sarray& u, int k) {
   // Only check k-dimension, other dims do not have to match, only copy the
   // intersecting part.
-SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   if (!(u.m_kb <= k && k <= u.m_ke && m_kb <= k && k <= m_ke)) {
     cout << "Sarray::copy_kplane, ERROR k index " << k << " not in range "
          << endl;
@@ -1492,21 +1499,20 @@ SW4_MARK_FUNCTION;
       }
   }
 }
- void Sarray::swrite(std::string filename){
-   if (!of.is_open()){
-     int myRank=-1;
-     MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-     std::stringstream ss;
-     ss<<filename<<"_"<<myRank<<".dat";
-     std::cout<<"Opening "<<ss.str()<<"\n";
-     of.open(ss.str());
-   } else {
-     std::cout<<"File is open\n";
-   }
+void Sarray::swrite(std::string filename) {
+  if (!of.is_open()) {
+    int myRank = -1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+    std::stringstream ss;
+    ss << filename << "_" << myRank << ".dat";
+    std::cout << "Opening " << ss.str() << "\n";
+    of.open(ss.str());
+  } else {
+    std::cout << "File is open\n";
+  }
 
-   of<<" \n\n++++ "<<filename<<" \n\n";
-   for (int i=0;i < m_nc * m_ni * m_nj * m_nk; i++){
-     of<<i<<" "<<m_data[i]<<"\n";
-   }
- }
-     
+  of << " \n\n++++ " << filename << " \n\n";
+  for (int i = 0; i < m_nc * m_ni * m_nj * m_nk; i++) {
+    of << i << " " << m_data[i] << "\n";
+  }
+}

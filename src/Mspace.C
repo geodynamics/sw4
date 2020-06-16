@@ -32,8 +32,8 @@ void presetGPUID() {
   }
   printf("Device set to %d \n", global_variables.device);
 #ifdef USE_MAGMA
-  if (magma_init()!=MAGMA_SUCCESS){
-    std::cerr<<"ERROR MAGMA INIT FAILED\n";
+  if (magma_init() != MAGMA_SUCCESS) {
+    std::cerr << "ERROR MAGMA INIT FAILED\n";
     abort();
   }
 #endif
@@ -72,7 +72,7 @@ void check_mem() {
 void print_hwm() {
   const int allocator_count = 3;
 #if defined(ENABLE_CUDA)
-  //std::cout<<"PRINT_HWM"<<std::flush;
+  // std::cout<<"PRINT_HWM"<<std::flush;
   float hwm_local[allocator_count], hwm_global[allocator_count];
 #ifdef SW4_USE_UMPIRE
   hwm_local[0] = umpire::ResourceManager::getInstance()
@@ -105,14 +105,14 @@ void print_hwm() {
       // umpire::util::StatisticsDatabase::getDatabase()->printStatistics(std::cout);
     }
   if (Managed::hwm > 0)
-    std::cout << "Space::Managed object count & HWM are " << Managed::ocount << " & "
-              << Managed::hwm << "\n";
+    std::cout << "Space::Managed object count & HWM are " << Managed::ocount
+              << " & " << Managed::hwm << "\n";
   if (Managed::ocount != 0)
     std::cerr << "WARNING :: Managed object count should be zero at the end of "
                  "the simulation\n";
     // std::cout<<" ~HOST MEM MAX
     // "<<global_variables.host_mem_hwm/1024.0/1024.0<<" MB\n";
-  //std::cout<<"PRINT_HWM DONE"<<std::flush;
+    // std::cout<<"PRINT_HWM DONE"<<std::flush;
 #endif  // ENABLE_CUDA
 }
 void *operator new(std::size_t size, Space loc) throw(std::bad_alloc) {
@@ -182,11 +182,13 @@ void *operator new(std::size_t size, Space loc) throw(std::bad_alloc) {
     return ::operator new(size, Space::Managed);
 #endif
   } else {
-    std::cerr << "Unknown memory space for allocation request " << as_int(loc) << "\n";
+    std::cerr << "Unknown memory space for allocation request " << as_int(loc)
+              << "\n";
     throw std::bad_alloc();
   }
 #else
-  if ((loc == Space::Managed) || (loc == Space::Device) || (loc == Space::Pinned)) {
+  if ((loc == Space::Managed) || (loc == Space::Device) ||
+      (loc == Space::Pinned)) {
     // std::cout<<"Managed location not available yet \n";
     return ::operator new(size);
   } else if (loc == Space::Host) {
@@ -274,13 +276,14 @@ void *operator new[](std::size_t size, Space loc) throw(std::bad_alloc) {
 #endif
   } else {
     // cudaHostAlloc(&ptr,size+sizeof(size_t)*MEM_PAD_LEN,cudaHostAllocMapped));
-    std::cerr << "Unknown memory space for allocation request " << as_int(loc) << "\n";
+    std::cerr << "Unknown memory space for allocation request " << as_int(loc)
+              << "\n";
     throw std::bad_alloc();
   }
 
 #else  // !ENABLE_CUDA
-  if ((loc == Space::Managed) || (loc == Space::Device) || (loc == Space::Pinned) ||
-      (loc == Space::Managed_temps)) {
+  if ((loc == Space::Managed) || (loc == Space::Device) ||
+      (loc == Space::Pinned) || (loc == Space::Managed_temps)) {
     // std::cout<<"Managed location not available yet \n";
     return ::operator new(size);
   } else if (loc == Space::Host) {
@@ -403,11 +406,12 @@ void operator delete[](void *ptr, Space loc) throw() {
     allocator.deallocate(ptr);
 #endif
   } else {
-    std::cerr << "Unknown memory space for de-allocation request " << as_int(loc)
-              << "\n";
+    std::cerr << "Unknown memory space for de-allocation request "
+              << as_int(loc) << "\n";
   }
 #else
-  if ((loc == Space::Managed) || (loc == Space::Device) || (loc == Space::Pinned)) {
+  if ((loc == Space::Managed) || (loc == Space::Device) ||
+      (loc == Space::Pinned)) {
     // std::cout<<"Managed delete not available yet \n";
     ::operator delete(ptr);
   } else if (loc == Space::Host) {
@@ -435,7 +439,8 @@ void assert_check_managed(void *ptr, const char *file, int line) {
   if (ss != NULL) {
     if (ss->type != Space::Managed) {
       std::cerr << "ASSERT_MANAGED FAILURE in line" << line << " of file "
-                << file << "type = " << as_int(ss->type) << "pointer  =" << ptr << "\n";
+                << file << "type = " << as_int(ss->type) << "pointer  =" << ptr
+                << "\n";
       std::cerr << "ASSERT_MANAGED failed on allocation from line" << ss->line
                 << "of " << ss->file << "\n";
     }

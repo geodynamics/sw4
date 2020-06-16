@@ -67,7 +67,7 @@ void MaterialRfile::set_material_properties(std::vector<Sarray>& rho,
                                             std::vector<Sarray>& xip) {
   // Assume attenuation arrays defined on all grids if they are defined on grid
   // zero.
-  //std::cout<<" set_material_properties THIS IS CALLED\n";
+  // std::cout<<" set_material_properties THIS IS CALLED\n";
   bool use_q = m_use_attenuation && xis[0].is_defined() && xip[0].is_defined();
   size_t outside = 0, material = 0;
 
@@ -197,7 +197,8 @@ void MaterialRfile::set_material_properties(std::vector<Sarray>& rho,
               //<< " " << wghx[1] << " " << wghx[2] << " " << wghx[3] << endl;
               //		      cout << "wghy = " << wghy[0] << " " <<
               // wghy[1] << " " << wghy[2] << " " << wghy[3] << endl;
-              // cout << "wghz = " << wghz[0] << " " << wghz[1] << " " << wghz[2]
+              // cout << "wghz = " << wghz[0] << " " << wghz[1] << " " <<
+              // wghz[2]
               //<< " "
               //<< wghz[3] << endl; 		      cout << " r, s, t = " << r
               //<< " " << s << " " << t << endl;
@@ -700,8 +701,8 @@ void MaterialRfile::read_rfile() {
     //	 {
     //	    cout << "p= "<< p << " ncblock= " << ncblock[p] << " ifirst,ilast "
     //<< m_ifirst[p] << " " << m_ilast[p] << 	       " jfirst,jlast " <<
-    //m_jfirst[p] << " " << m_jlast[p] << 	       " kfirst,klast " <<
-    //m_kfirst[p] << " " << m_klast[p]
+    // m_jfirst[p] << " " << m_jlast[p] << 	       " kfirst,klast " <<
+    // m_kfirst[p] << " " << m_klast[p]
     //<< endl;
     //	 }
     //      }

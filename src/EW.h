@@ -516,13 +516,9 @@ class EW {
   void computeNearestGridPoint(int& a_i, int& a_j, int& a_k,
                                int& a_g,  // grid on which indices are located
                                float_sw4 a_x, float_sw4 a_y, float_sw4 a_z);
-int computeNearestGridPoint2(int & a_i, 
-			     int & a_j, 
-			     int & a_k,
-			     int & a_g, // grid on which indices are located
-			     float_sw4 a_x, 
-			     float_sw4 a_y, 
-			     float_sw4 a_z);
+  int computeNearestGridPoint2(int& a_i, int& a_j, int& a_k,
+                               int& a_g,  // grid on which indices are located
+                               float_sw4 a_x, float_sw4 a_y, float_sw4 a_z);
 
   void computeNearestSurfaceGridPoint(int& a_i, int& a_j, float_sw4 a_x,
                                       float_sw4 a_y, float_sw4 a_z);

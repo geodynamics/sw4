@@ -387,7 +387,6 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     exactRhsTwilight(t, F);
     evalRHS(U, mMu, mLambda, Up, AlphaVE);  // save Lu in composite grid 'Up'
 
-
     // evaluate and print errors
     float_sw4* lowZ = new float_sw4[3 * mNumberOfGrids];
     float_sw4* interiorZ = new float_sw4[3 * mNumberOfGrids];
@@ -477,9 +476,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   // enforce bc on initial data
   // U
   // communicate across processor boundaries
-  //Write(U,"U");
+  // Write(U,"U");
   for (int g = 0; g < mNumberOfGrids; g++) communicate_array(U[g], g);
-  //Write(U,"U");
+  // Write(U,"U");
   //    U[0].save_to_disk("u-dbg0.bin");
   //    U[1].save_to_disk("u-dbg1.bin");
 
@@ -498,7 +497,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   if (m_use_attenuation && (m_number_mechanisms > 0)) {
     enforceBCfreeAtt2(U, mMu, mLambda, AlphaVE, BCForcing);
   }
-  //Write(Up,"Up");
+  // Write(Up,"Up");
 #ifdef PEEKS_GALORE
   SW4_PEEK;
   SYNC_DEVICE;
@@ -996,13 +995,13 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
       // add in super-grid damping terms
       if (usingSupergrid()) {
-	//std::cout<<"SUPERGRID\n";
+        // std::cout<<"SUPERGRID\n";
         addSuperGridDamping(Up, U, Um, mRho);
       }
 
       // Arben's simplified attenuation
       if (m_use_attenuation && m_number_mechanisms == 0) {
-        //std::cout<<"ATTENUATION\n";
+        // std::cout<<"ATTENUATION\n";
         simpleAttenuation(Up);
       }
 
@@ -5167,7 +5166,7 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                      vector<Sarray>& a_Lambda, vector<Sarray*>& a_Alpha,
                      float_sw4 t) {
   // std::cout<<"CALL TO EW::CurviCartIC ON CPU \n";
-  SYNC_STREAM; // FOR CURVI_CPU
+  SYNC_STREAM;  // FOR CURVI_CPU
   int gcurv = gcart + 1;
   int ib = m_iStart[gcurv], ie = m_iEnd[gcurv];
   int jb = m_jStart[gcurv], je = m_jEnd[gcurv];
@@ -5452,105 +5451,105 @@ void EW::compute_icstresses_curv(Sarray& a_Up, Sarray& B, int kic,
     sgn = -1;
   }
 
+  SView& a_UpV = a_Up.getview();
+  SView& BV = B.getview();
+  SView& a_metricV = a_metric.getview();
+  SView& a_muV = a_mu.getview();
+  SView& a_lambdaV = a_lambda.getview();
 
-  SView &a_UpV =a_Up.getview();
-  SView &BV = B.getview();
-  SView &a_metricV = a_metric.getview();
-  SView &a_muV = a_mu.getview();
-  SView &a_lambdaV = a_lambda.getview();
-  
-  RAJA::RangeSegment j_range(B.m_jb + 2, B.m_je - 2+1);
-  RAJA::RangeSegment i_range(B.m_ib + 2, B.m_ie - 2+1);
+  RAJA::RangeSegment j_range(B.m_jb + 2, B.m_je - 2 + 1);
+  RAJA::RangeSegment i_range(B.m_ib + 2, B.m_ie - 2 + 1);
   RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
       RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
-// #pragma omp parallel for
-//   for (int j = B.m_jb + 2; j <= B.m_je - 2; j++)
-// #pragma omp simd
-//     for (int i = B.m_ib + 2; i <= B.m_ie - 2; i++) {
-      float_sw4 uz, vz, wz;
-      uz = vz = wz = 0;
-      for (int m = 0; m <= 5; m++) {
-        uz += sbop[m] * a_UpV(1, i, j, k + kl * (m - 1));
-        vz += sbop[m] * a_UpV(2, i, j, k + kl * (m - 1));
-        wz += sbop[m] * a_UpV(3, i, j, k + kl * (m - 1));
+        // #pragma omp parallel for
+        //   for (int j = B.m_jb + 2; j <= B.m_je - 2; j++)
+        // #pragma omp simd
+        //     for (int i = B.m_ib + 2; i <= B.m_ie - 2; i++) {
+        float_sw4 uz, vz, wz;
+        uz = vz = wz = 0;
+        for (int m = 0; m <= 5; m++) {
+          uz += sbop[m] * a_UpV(1, i, j, k + kl * (m - 1));
+          vz += sbop[m] * a_UpV(2, i, j, k + kl * (m - 1));
+          wz += sbop[m] * a_UpV(3, i, j, k + kl * (m - 1));
 #ifdef CURVI_DEBUG
-        std::cout << "UZ" << m << " " << uz << " " << sbop[m] << " "
-                  << a_Up(1, i, j, k + kl * (m - 1)) << "\n";
+          std::cout << "UZ" << m << " " << uz << " " << sbop[m] << " "
+                    << a_Up(1, i, j, k + kl * (m - 1)) << "\n";
 #endif
-      }
-      uz *= kl;
-      vz *= kl;
-      wz *= kl;
+        }
+        uz *= kl;
+        vz *= kl;
+        wz *= kl;
 
-      // Normal terms
-      float_sw4 m2 = str_x(i) * a_metricV(2, i, j, k);
-      float_sw4 m3 = str_y(j) * a_metricV(3, i, j, k);
-      float_sw4 m4 = a_metricV(4, i, j, k);
-      float_sw4 un = m2 * uz + m3 * vz + m4 * wz;
-      float_sw4 mnrm = m2 * m2 + m3 * m3 + m4 * m4;
-      float_sw4 B1, B2, B3;
+        // Normal terms
+        float_sw4 m2 = str_x(i) * a_metricV(2, i, j, k);
+        float_sw4 m3 = str_y(j) * a_metricV(3, i, j, k);
+        float_sw4 m4 = a_metricV(4, i, j, k);
+        float_sw4 un = m2 * uz + m3 * vz + m4 * wz;
+        float_sw4 mnrm = m2 * m2 + m3 * m3 + m4 * m4;
+        float_sw4 B1, B2, B3;
 
-      B1 = a_muV(i, j, k) * mnrm * uz +
-           (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m2 * un;
-      B2 = a_muV(i, j, k) * mnrm * vz +
-           (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m3 * un;
-      B3 = a_muV(i, j, k) * mnrm * wz +
-           (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m4 * un;
+        B1 = a_muV(i, j, k) * mnrm * uz +
+             (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m2 * un;
+        B2 = a_muV(i, j, k) * mnrm * vz +
+             (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m3 * un;
+        B3 = a_muV(i, j, k) * mnrm * wz +
+             (a_muV(i, j, k) + a_lambdaV(i, j, k)) * m4 * un;
 
-      // Tangential terms
-      // p-derivatives
-      float_sw4 up1 =
-          str_x(i) * (a2 * (a_UpV(1, i + 2, j, k) - a_UpV(1, i - 2, j, k)) +
-                      a1 * (a_UpV(1, i + 1, j, k) - a_UpV(1, i - 1, j, k)));
-      float_sw4 up2 =
-          str_x(i) * (a2 * (a_UpV(2, i + 2, j, k) - a_UpV(2, i - 2, j, k)) +
-                      a1 * (a_UpV(2, i + 1, j, k) - a_UpV(2, i - 1, j, k)));
-      float_sw4 up3 =
-          str_x(i) * (a2 * (a_UpV(3, i + 2, j, k) - a_UpV(3, i - 2, j, k)) +
-                      a1 * (a_UpV(3, i + 1, j, k) - a_UpV(3, i - 1, j, k)));
-      B1 += a_metricV(1, i, j, k) *
-            ((2 * a_muV(i, j, k) + a_lambdaV(i, j, k)) * m2 * up1 +
-             a_muV(i, j, k) * (m3 * up2 + m4 * up3));
-      B2 += a_metricV(1, i, j, k) *
-            (a_lambdaV(i, j, k) * m3 * up1 + a_muV(i, j, k) * m2 * up2);
-      B3 += a_metricV(1, i, j, k) *
-            (a_lambdaV(i, j, k) * m4 * up1 + a_muV(i, j, k) * m2 * up3);
+        // Tangential terms
+        // p-derivatives
+        float_sw4 up1 =
+            str_x(i) * (a2 * (a_UpV(1, i + 2, j, k) - a_UpV(1, i - 2, j, k)) +
+                        a1 * (a_UpV(1, i + 1, j, k) - a_UpV(1, i - 1, j, k)));
+        float_sw4 up2 =
+            str_x(i) * (a2 * (a_UpV(2, i + 2, j, k) - a_UpV(2, i - 2, j, k)) +
+                        a1 * (a_UpV(2, i + 1, j, k) - a_UpV(2, i - 1, j, k)));
+        float_sw4 up3 =
+            str_x(i) * (a2 * (a_UpV(3, i + 2, j, k) - a_UpV(3, i - 2, j, k)) +
+                        a1 * (a_UpV(3, i + 1, j, k) - a_UpV(3, i - 1, j, k)));
+        B1 += a_metricV(1, i, j, k) *
+              ((2 * a_muV(i, j, k) + a_lambdaV(i, j, k)) * m2 * up1 +
+               a_muV(i, j, k) * (m3 * up2 + m4 * up3));
+        B2 += a_metricV(1, i, j, k) *
+              (a_lambdaV(i, j, k) * m3 * up1 + a_muV(i, j, k) * m2 * up2);
+        B3 += a_metricV(1, i, j, k) *
+              (a_lambdaV(i, j, k) * m4 * up1 + a_muV(i, j, k) * m2 * up3);
 
-      // q-derivatives
-      float_sw4 uq1 =
-          str_y(j) * (a2 * (a_UpV(1, i, j + 2, k) - a_UpV(1, i, j - 2, k)) +
-                      a1 * (a_UpV(1, i, j + 1, k) - a_UpV(1, i, j - 1, k)));
-      float_sw4 uq2 =
-          str_y(j) * (a2 * (a_UpV(2, i, j + 2, k) - a_UpV(2, i, j - 2, k)) +
-                      a1 * (a_UpV(2, i, j + 1, k) - a_UpV(2, i, j - 1, k)));
-      float_sw4 uq3 =
-          str_y(j) * (a2 * (a_UpV(3, i, j + 2, k) - a_UpV(3, i, j - 2, k)) +
-                      a1 * (a_UpV(3, i, j + 1, k) - a_UpV(3, i, j - 1, k)));
-      B1 += a_metricV(1, i, j, k) *
-            (a_lambdaV(i, j, k) * m2 * uq2 + a_muV(i, j, k) * m3 * uq1);
-      B2 += a_metricV(1, i, j, k) *
-            ((2 * a_muV(i, j, k) + a_lambdaV(i, j, k)) * m3 * uq2 +
-             a_muV(i, j, k) * (m2 * uq1 + m4 * uq3));
-      B3 += a_metricV(1, i, j, k) *
-            (a_lambdaV(i, j, k) * m4 * uq2 + a_muV(i, j, k) * m3 * uq3);
+        // q-derivatives
+        float_sw4 uq1 =
+            str_y(j) * (a2 * (a_UpV(1, i, j + 2, k) - a_UpV(1, i, j - 2, k)) +
+                        a1 * (a_UpV(1, i, j + 1, k) - a_UpV(1, i, j - 1, k)));
+        float_sw4 uq2 =
+            str_y(j) * (a2 * (a_UpV(2, i, j + 2, k) - a_UpV(2, i, j - 2, k)) +
+                        a1 * (a_UpV(2, i, j + 1, k) - a_UpV(2, i, j - 1, k)));
+        float_sw4 uq3 =
+            str_y(j) * (a2 * (a_UpV(3, i, j + 2, k) - a_UpV(3, i, j - 2, k)) +
+                        a1 * (a_UpV(3, i, j + 1, k) - a_UpV(3, i, j - 1, k)));
+        B1 += a_metricV(1, i, j, k) *
+              (a_lambdaV(i, j, k) * m2 * uq2 + a_muV(i, j, k) * m3 * uq1);
+        B2 += a_metricV(1, i, j, k) *
+              ((2 * a_muV(i, j, k) + a_lambdaV(i, j, k)) * m3 * uq2 +
+               a_muV(i, j, k) * (m2 * uq1 + m4 * uq3));
+        B3 += a_metricV(1, i, j, k) *
+              (a_lambdaV(i, j, k) * m4 * uq2 + a_muV(i, j, k) * m3 * uq3);
 
-      float_sw4 isgxy = 1.0 / (str_x(i) * str_y(j));
-      B1 *= isgxy;
-      B2 *= isgxy;
-      B3 *= isgxy;
-      //
-      BV(1, i, j, k) += sgn * B1;
-      BV(2, i, j, k) += sgn * B2;
-      BV(3, i, j, k) += sgn * B3;
-      // std::cout<<"STTRESS C"<<i<<j<<k<<" "<<B(1,i,j,k)<<" "<<a_muV(i,j,k)<<"
-      // "<<mnrm<<" "<<uz<<"\n";
+        float_sw4 isgxy = 1.0 / (str_x(i) * str_y(j));
+        B1 *= isgxy;
+        B2 *= isgxy;
+        B3 *= isgxy;
+        //
+        BV(1, i, j, k) += sgn * B1;
+        BV(2, i, j, k) += sgn * B2;
+        BV(3, i, j, k) += sgn * B3;
+        // std::cout<<"STTRESS C"<<i<<j<<k<<" "<<B(1,i,j,k)<<"
+        // "<<a_muV(i,j,k)<<"
+        // "<<mnrm<<" "<<uz<<"\n";
       });
 #ifdef PEEKS_GALORE
-      SW4_PEEK;
-      SYNC_DEVICE;
+  SW4_PEEK;
+  SYNC_DEVICE;
 #endif
-      SYNC_STREAM;
-    // std::cout<<"END OF STRESS C CALL\n";
+  SYNC_STREAM;
+  // std::cout<<"END OF STRESS C CALL\n";
 #undef str_x
 #undef str_y
 }
@@ -5686,7 +5685,8 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
           // FTNC	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast,
           // &kfirst, &klast, FTNC &wind_ptr[0], &t, &om, &cv, &ph,
           // bforce_side0_ptr,
-          // FTNC					     mX.c_ptr(), mY.c_ptr(), mZ.c_ptr()
+          // FTNC					     mX.c_ptr(), mY.c_ptr(),
+          // mZ.c_ptr()
           // );
         }
       }
@@ -5705,8 +5705,8 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
                         &wind_ptr[6], t, om, cv, ph, bforce_side1_ptr,
                         mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
           // FTNC	    else
-          // FTNC	       twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-          // &klast,
+          // FTNC	       twdirbdryc(&ifirst, &ilast, &jfirst, &jlast,
+          // &kfirst, &klast,
           // FTNC			  &wind_ptr[6], &t, &om, &cv, &ph,
           // bforce_side1_ptr,
           // FTNC			  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
@@ -5749,8 +5749,8 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
                         &wind_ptr[6 * 3], t, om, cv, ph, bforce_side3_ptr,
                         mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
           // FTNC	    else
-          // FTNC	       twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-          // &klast,
+          // FTNC	       twdirbdryc(&ifirst, &ilast, &jfirst, &jlast,
+          // &kfirst, &klast,
           // FTNC			  &wind_ptr[6*3], &t, &om, &cv, &ph,
           // bforce_side3_ptr,
           // FTNC			  mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
@@ -5791,10 +5791,10 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
                                   k, t, om, cv, ph, omm, phc, bforce_side4_ptr,
                                   h, m_zmin[g]);
           // FTNC	    else
-          // FTNC	       tw_aniso_free_surf_z( ifirst, ilast, jfirst, jlast,
-          // kfirst, klast, k, t, om,
-          // FTNC				     cv, ph, omm, phc, bforce_side4_ptr, h,
-          // m_zmin[g] );
+          // FTNC	       tw_aniso_free_surf_z( ifirst, ilast, jfirst,
+          // jlast, kfirst, klast, k, t, om,
+          // FTNC				     cv, ph, omm, phc, bforce_side4_ptr,
+          // h, m_zmin[g] );
         } else {  // isotropic stuff
 
           if (usingSupergrid() && !curvilinear) {
@@ -5805,11 +5805,10 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
                               t, om, cv, ph, omstrx, omstry, bforce_side4_ptr,
                               mu_ptr, la_ptr, m_zmin[g]);
             // FTNC	       else
-            // FTNC		  twfrsurfzsgstr( &ifirst, &ilast, &jfirst, &jlast,
-            // &kfirst,
-            // FTNC				  &klast, &h, &k, &t, &om, &cv, &ph, &omstrx,
-            // &omstry,
-            // FTNC				  bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g]
+            // FTNC		  twfrsurfzsgstr( &ifirst, &ilast, &jfirst,
+            // &jlast, &kfirst, FTNC				  &klast, &h,
+            // &k, &t, &om, &cv, &ph, &omstrx, &omstry, FTNC
+            // bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g]
             // );
             if (m_use_attenuation) {
               float_sw4* mua_ptr = mMuVE[g][0].c_ptr();
@@ -5834,21 +5833,21 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
                          cv, ph, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
                          tau.c_ptr(), mu_ptr, la_ptr);
             // FTNC	       else
-            // FTNC		  twstensor( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-            // &klast, FTNC			     &k, &t, &om, &cv, &ph, FTNC
-            // mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mu_ptr, la_ptr );
-            // Compute boundary forcing for given stress tensor, tau.
+            // FTNC		  twstensor( &ifirst, &ilast, &jfirst, &jlast,
+            // &kfirst, &klast, FTNC			     &k, &t, &om, &cv,
+            // &ph, FTNC mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(),
+            // mu_ptr, la_ptr ); Compute boundary forcing for given stress
+            // tensor, tau.
 
             // FTNC	       if( m_croutines )
             getsurfforcing_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, k,
                               mMetric[g].c_ptr(), mJ[g].c_ptr(), tau.c_ptr(),
                               bforce_side4_ptr);
             // FTNC	       else
-            // FTNC		  getsurfforcing( &ifirst, &ilast, &jfirst, &jlast,
-            // &kfirst,
-            // FTNC				  &klast, &k, mMetric.c_ptr(),
-            // mJ.c_ptr(), FTNC				  tau.c_ptr(),
-            // bforce_side4_ptr );
+            // FTNC		  getsurfforcing( &ifirst, &ilast, &jfirst,
+            // &jlast, &kfirst, FTNC				  &klast, &k,
+            // mMetric.c_ptr(), mJ.c_ptr(), FTNC
+            // tau.c_ptr(), bforce_side4_ptr );
 
             if (m_use_attenuation) {
               float_sw4* mua_ptr = mMuVE[g][0].c_ptr();
@@ -5860,9 +5859,8 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
               // FTNC		  else
               // FTNC		     twstensoratt( &ifirst, &ilast, &jfirst,
               // &jlast, &kfirst, &klast, FTNC				   &k,
-              // &t, &om, &cv, &ph, FTNC				   mX.c_ptr(),
-              // mY.c_ptr(), mZ.c_ptr(), tau.c_ptr(), mua_ptr, laa_ptr ); FTNC
-              // if( m_croutines )
+              // &t, &om, &cv, &ph, FTNC mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
+              // tau.c_ptr(), mua_ptr, laa_ptr ); FTNC if( m_croutines )
               subsurfforcing_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, k,
                                 mMetric[g].c_ptr(), mJ[g].c_ptr(), tau.c_ptr(),
                                 bforce_side4_ptr);
@@ -5882,7 +5880,8 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
             // FTNC		  twfrsurfz( &ifirst, &ilast, &jfirst, &jlast,
             // &kfirst,
             // FTNC			     &klast, &h, &k, &t, &om, &cv, &ph,
-            // FTNC			     bforce_side4_ptr, mu_ptr, la_ptr, &m_zmin[g]
+            // FTNC			     bforce_side4_ptr, mu_ptr, la_ptr,
+            // &m_zmin[g]
             // );
             if (m_use_attenuation) {
               float_sw4* mua_ptr = mMuVE[g][0].c_ptr();
@@ -5911,22 +5910,20 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
                            mZ[g].c_ptr(), tau.c_ptr(), mu_ptr, la_ptr, omstrx,
                            omstry);
             // FTNC	       else
-            // FTNC		  twstensorsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-            // &klast, FTNC			       &k, &t, &om, &cv, &ph,
-            // FTNC			       mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
-            // tau.c_ptr(), FTNC			       mu_ptr, la_ptr, &omstrx,
-            // &omstry );
-            // Compute boundary forcing for given stress tensor, tau.
-            // FTNC	       if( m_croutines )
+            // FTNC		  twstensorsg( &ifirst, &ilast, &jfirst, &jlast,
+            // &kfirst, &klast, FTNC			       &k, &t, &om, &cv,
+            // &ph, FTNC			       mX.c_ptr(), mY.c_ptr(),
+            // mZ.c_ptr(), tau.c_ptr(), FTNC			       mu_ptr,
+            // la_ptr, &omstrx, &omstry ); Compute boundary forcing for given
+            // stress tensor, tau. FTNC	       if( m_croutines )
             getsurfforcingsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, k,
                                 mMetric[g].c_ptr(), mJ[g].c_ptr(), tau.c_ptr(),
                                 m_sg_str_x[g], m_sg_str_y[g], bforce_side4_ptr);
             // FTNC	       else
-            // FTNC		  getsurfforcingsg( &ifirst, &ilast, &jfirst, &jlast,
-            // &kfirst,
-            // FTNC				    &klast, &k, mMetric.c_ptr(),
-            // mJ.c_ptr(), FTNC				    tau.c_ptr(),
-            // m_sg_str_x[g], m_sg_str_y[g], bforce_side4_ptr );
+            // FTNC		  getsurfforcingsg( &ifirst, &ilast, &jfirst,
+            // &jlast, &kfirst, FTNC				    &klast, &k,
+            // mMetric.c_ptr(), mJ.c_ptr(), FTNC
+            // tau.c_ptr(), m_sg_str_x[g], m_sg_str_y[g], bforce_side4_ptr );
 
             if (m_use_attenuation) {
               float_sw4* mua_ptr = mMuVE[g][0].c_ptr();
@@ -5997,10 +5994,10 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
                                   k, t, om, cv, ph, omm, phc, bforce_side5_ptr,
                                   h, m_zmin[g]);
           // FTNC	    else
-          // FTNC	       tw_aniso_free_surf_z( ifirst, ilast, jfirst, jlast,
-          // kfirst, klast, k, t, om,
-          // FTNC				     cv, ph, omm, phc, bforce_side5_ptr, h,
-          // m_zmin[g] );
+          // FTNC	       tw_aniso_free_surf_z( ifirst, ilast, jfirst,
+          // jlast, kfirst, klast, k, t, om,
+          // FTNC				     cv, ph, omm, phc, bforce_side5_ptr,
+          // h, m_zmin[g] );
         } else {  // isotropic stuff
 
           if (usingSupergrid()) {

@@ -2088,19 +2088,28 @@ void EW::assign_supergrid_damping_arrays() {
 
   // allocate storage for 1-D damping coefficients on each grid
   for (g = 0; g < mNumberOfGrids; g++) {
-    m_sg_dc_x[g] = SW4_NEW(Space::Managed, float_sw4[m_iEnd[g] - m_iStart[g] + 1]);
-    m_sg_dc_y[g] = SW4_NEW(Space::Managed, float_sw4[m_jEnd[g] - m_jStart[g] + 1]);
-    m_sg_dc_z[g] = SW4_NEW(Space::Managed, float_sw4[m_kEnd[g] - m_kStart[g] + 1]);
+    m_sg_dc_x[g] =
+        SW4_NEW(Space::Managed, float_sw4[m_iEnd[g] - m_iStart[g] + 1]);
+    m_sg_dc_y[g] =
+        SW4_NEW(Space::Managed, float_sw4[m_jEnd[g] - m_jStart[g] + 1]);
+    m_sg_dc_z[g] =
+        SW4_NEW(Space::Managed, float_sw4[m_kEnd[g] - m_kStart[g] + 1]);
 
-    m_sg_str_x[g] = SW4_NEW(Space::Managed, float_sw4[m_iEnd[g] - m_iStart[g] + 1]);
-    m_sg_str_y[g] = SW4_NEW(Space::Managed, float_sw4[m_jEnd[g] - m_jStart[g] + 1]);
-    m_sg_str_z[g] = SW4_NEW(Space::Managed, float_sw4[m_kEnd[g] - m_kStart[g] + 1]);
+    m_sg_str_x[g] =
+        SW4_NEW(Space::Managed, float_sw4[m_iEnd[g] - m_iStart[g] + 1]);
+    m_sg_str_y[g] =
+        SW4_NEW(Space::Managed, float_sw4[m_jEnd[g] - m_jStart[g] + 1]);
+    m_sg_str_z[g] =
+        SW4_NEW(Space::Managed, float_sw4[m_kEnd[g] - m_kStart[g] + 1]);
 
     // new corner taper functions to reduce strength of damping near the edges
     // and corners
-    m_sg_corner_x[g] = SW4_NEW(Space::Managed, float_sw4[m_iEnd[g] - m_iStart[g] + 1]);
-    m_sg_corner_y[g] = SW4_NEW(Space::Managed, float_sw4[m_jEnd[g] - m_jStart[g] + 1]);
-    m_sg_corner_z[g] = SW4_NEW(Space::Managed, float_sw4[m_kEnd[g] - m_kStart[g] + 1]);
+    m_sg_corner_x[g] =
+        SW4_NEW(Space::Managed, float_sw4[m_iEnd[g] - m_iStart[g] + 1]);
+    m_sg_corner_y[g] =
+        SW4_NEW(Space::Managed, float_sw4[m_jEnd[g] - m_jStart[g] + 1]);
+    m_sg_corner_z[g] =
+        SW4_NEW(Space::Managed, float_sw4[m_kEnd[g] - m_kStart[g] + 1]);
   }
 
 #define dcx(i, g) (m_sg_dc_x[g])[i - m_iStart[g]]
@@ -2421,8 +2430,8 @@ void EW::perturb_velocities(vector<Sarray> &a_vs, vector<Sarray> &a_vp) {
     // &klast,
     // FTNC			   &nx, &ny, &nz, &ghost, pert_ptr, wgh_ptr,
     // &m_random_dist,
-    // FTNC			   &m_random_distz, &h, m_random_seed, saverand_ptr, &p,
-    // &pz
+    // FTNC			   &m_random_distz, &h, m_random_seed, saverand_ptr,
+    // &p, &pz
     // ); FTNC	    perturbvelocity( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
     // &klast,
     // FTNC			     vs_ptr, vp_ptr, pert_ptr, &m_random_amp,

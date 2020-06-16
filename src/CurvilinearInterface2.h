@@ -6,8 +6,8 @@
 #include "TestEcons.h"
 #include "TestTwilight.h"
 #ifdef USE_MAGMA
-#include "magma_v2.h"
 #include "magma_dbatched.h"
+#include "magma_v2.h"
 #endif
 
 class Sarray;
@@ -38,15 +38,15 @@ class CurvilinearInterface2 {
   int* m_ipiv_block;
 
 #ifdef USE_MAGMA
-  float_sw4 *m_mass_block_gpu;
+  float_sw4* m_mass_block_gpu;
   int* m_ipiv_block_gpu;
-  
+
   float_sw4** dA_array;
   magma_int_t** piv_array;
   magma_queue_t queue;
   float_sw4** dB_array;
   float_sw4* x;
-  std::vector<int> subbatchsize,subbatchoffset;
+  std::vector<int> subbatchsize, subbatchoffset;
 #endif
 
 #if defined(ENABLE_CUDA)
@@ -60,13 +60,11 @@ class CurvilinearInterface2 {
 
   void interface_block(Sarray& matrix);
 
-  
-  
   void compute_icstresses_curv_host(Sarray& a_Up, Sarray& B, int kic,
-				    Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
-                               float_sw4* a_str_x, float_sw4* a_str_y,
-                               float_sw4* sbop, char op);
-  
+                                    Sarray& a_metric, Sarray& a_mu,
+                                    Sarray& a_lambda, float_sw4* a_str_x,
+                                    float_sw4* a_str_y, float_sw4* sbop,
+                                    char op);
 
   void mat_icstresses_curv(int ib, int jb, Sarray& a_mat, int kic,
                            Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
@@ -77,10 +75,8 @@ class CurvilinearInterface2 {
                  Sarray& mu, Sarray& la, float_sw4* a_str_x, float_sw4* a_str_y,
                  float_sw4 ghcof);
 
-
-
   void restprol2D(Sarray& Uc, Sarray& alpha, int kc, int kf);
- 
+
   void copy_str(float_sw4* dest, float_sw4* src, int offset, int n, int nsw);
   void communicate_array1d(float_sw4* u, int n, int dir, int ngh);
   void communicate_array(Sarray& u, bool allkplanes = true, int kplane = 0);
@@ -109,15 +105,13 @@ class CurvilinearInterface2 {
   void injection(Sarray& u_f, Sarray& u_c);
   void interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
                      std::vector<Sarray>& Alpha_c,
-		     std::vector<Sarray>& Alpha_f);
+                     std::vector<Sarray>& Alpha_f);
   void prolongate2D(Sarray& Uc, Sarray& Uf, int kc, int kf);
   void restrict2D(Sarray& Uc, Sarray& Uf, int kc, int kf);
   void lhs_icstresses_curv(Sarray& a_Up, Sarray& a_lhs, int kic,
                            Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
                            float_sw4* a_str_x, float_sw4* a_str_y,
                            float_sw4* sbop);
- 
-
 };
 
 #endif

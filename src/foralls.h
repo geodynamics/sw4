@@ -141,7 +141,8 @@ void forall3(int start0, int end0, int start1, int end1, int start2, int end2,
   int block2 = (end2 - start2) / tpb2;
   block2 = ((end2 - start2) % tpb2 == 0) ? block2 : block2 + 1;
 
-  //std::cout << " BLOCKS " << block0 << " " << block1 << " " << block2 << "\n";
+  // std::cout << " BLOCKS " << block0 << " " << block1 << " " << block2 <<
+  // "\n";
   dim3 tpb(tpb0, tpb1, tpb2);
   dim3 blocks(block0, block1, block2);
 
@@ -156,8 +157,9 @@ void forall3async(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
   if (irange.invalid || jrange.invalid || krange.invalid) return;
   dim3 tpb(irange.tpb, jrange.tpb, krange.tpb);
   dim3 blocks(irange.blocks, jrange.blocks, krange.blocks);
-  //std::cout<<"forall launch tpb"<<irange.tpb<<" "<<jrange.tpb<<" "<<krange.tpb<<"\n"; 
-  //std::cout<<"forall launch blocks"<<irange.blocks<<" "<<jrange.blocks<<" "<<krange.blocks<<"\n";
+  // std::cout<<"forall launch tpb"<<irange.tpb<<" "<<jrange.tpb<<"
+  // "<<krange.tpb<<"\n"; std::cout<<"forall launch blocks"<<irange.blocks<<"
+  // "<<jrange.blocks<<" "<<krange.blocks<<"\n";
 
   forall3kernel<<<blocks, tpb>>>(irange.start, irange.end, jrange.start,
                                  jrange.end, krange.start, krange.end, body);

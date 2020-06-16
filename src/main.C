@@ -177,10 +177,10 @@ int main(int argc, char **argv) {
       usage(reason.str());
     }
 #ifdef USE_MAGMA
-  if (magma_finalize()!=MAGMA_SUCCESS){
-    std::cerr<<"ERROR MAGMA INIT FAILED\n";
-    abort();
-  }
+    if (magma_finalize() != MAGMA_SUCCESS) {
+      std::cerr << "ERROR MAGMA INIT FAILED\n";
+      abort();
+    }
 #endif
     // Stop MPI
     MPI_Finalize();
@@ -331,13 +331,13 @@ int main(int argc, char **argv) {
   print_hwm();
 
 #ifdef USE_MAGMA
-if (magma_finalize()!=MAGMA_SUCCESS){
-  std::cerr<<"ERROR MAGMA FINALIZE FAILED\n";
-  abort();
- } //else std::cout<<"MAGMA FINALIZE SUCCESSFULL\n"<<std::flush;
+  if (magma_finalize() != MAGMA_SUCCESS) {
+    std::cerr << "ERROR MAGMA FINALIZE FAILED\n";
+    abort();
+  }  // else std::cout<<"MAGMA FINALIZE SUCCESSFULL\n"<<std::flush;
 #endif
-// Stop MPI
-MPI_Finalize();
-//std::cout<<"MPI_Finalize done\n"<<std::flush;
+  // Stop MPI
+  MPI_Finalize();
+  // std::cout<<"MPI_Finalize done\n"<<std::flush;
   return status;
 }  // end of main

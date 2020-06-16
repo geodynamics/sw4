@@ -46,12 +46,18 @@ void prefetch_to_device(const float_sw4 *ptr);
 #endif
 void check_mem();
 void global_prefetch();
-enum class Space : unsigned int  { Host, Managed, Device, Pinned, Managed_temps, Space_Error };
+enum class Space : unsigned int {
+  Host,
+  Managed,
+  Device,
+  Pinned,
+  Managed_temps,
+  Space_Error
+};
 template <typename Enumeration>
-auto as_int(Enumeration const value)
-    -> typename std::underlying_type<Enumeration>::type
-{
-    return static_cast<typename std::underlying_type<Enumeration>::type>(value);
+auto as_int(Enumeration const value) ->
+    typename std::underlying_type<Enumeration>::type {
+  return static_cast<typename std::underlying_type<Enumeration>::type>(value);
 }
 Space GML(const void *ptr);
 void *operator new(std::size_t size, Space loc) throw(std::bad_alloc);
@@ -183,11 +189,10 @@ void autopeel(Apc &apc, T first, Args &&... args) {
 
 // END AUTOPEEL CODE
 template <class T>
-void Write(T &t, std::string filename){
-  for (auto &i: t){
+void Write(T &t, std::string filename) {
+  for (auto &i : t) {
     i.swrite(filename);
   }
 }
-
 
 #endif

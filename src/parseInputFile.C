@@ -6857,8 +6857,9 @@ void EW::processObservationHDF5(
     //	{
     //	   int year,month,day,hour,minute,second,msecond, fail;
     //	   // Format: 01/04/2012:17:34:45.2343
-    //(Month/Day/Year:Hour:Min:Sec.fraction) 	   parsedate( token, year, month,
-    //day, hour, minute, second, msecond, fail ); 	   if( fail == 0 )
+    //(Month/Day/Year:Hour:Min:Sec.fraction) 	   parsedate( token, year,
+    //month, day, hour, minute, second, msecond, fail ); 	   if( fail == 0
+    // )
     //	   {
     //              utcset = true;
     //	      utc[0] = year;
@@ -7089,8 +7090,9 @@ void EW::processObservation(char* buffer,
     //	{
     //	   int year,month,day,hour,minute,second,msecond, fail;
     //	   // Format: 01/04/2012:17:34:45.2343
-    //(Month/Day/Year:Hour:Min:Sec.fraction) 	   parsedate( token, year, month,
-    //day, hour, minute, second, msecond, fail ); 	   if( fail == 0 )
+    //(Month/Day/Year:Hour:Min:Sec.fraction) 	   parsedate( token, year,
+    //month, day, hour, minute, second, msecond, fail ); 	   if( fail == 0
+    // )
     //	   {
     //              utcset = true;
     //	      utc[0] = year;
