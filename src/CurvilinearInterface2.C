@@ -528,7 +528,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
 
   // 4.a Form right hand side of equation
   Sarray rhs(3, m_ib, m_ie, m_jb, m_je, 1, 1,__FILE__,__LINE__);
-  int asize = 3*(m_ie-m_ib+1)*(m_je-m_jb+1);
+  //  int asize = 3*(m_ie-m_ib+1)*(m_je-m_jb+1);
   //std::cout<<"RHS SIZE "<<m_ib<<" "<<m_ie<<" "<<m_jb<<" "<<m_je<<" size = "<<asize<<"\n";
   interface_rhs(rhs, U_c, U_f, Alpha_c, Alpha_f);
 
@@ -576,8 +576,8 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   //   int maxit = 30;
   //   float_sw4 reltol=1e-6, abstol=1e-6;
   int iter = 0;
-  int info = 0, three = 3, one = 1;
-  char trans = 'N';
+  int three = 3, one = 1;
+
   int nimb = m_Mass_block.m_ie - m_Mass_block.m_ib + 1;
   // Block Jacobi, lhs*x+rhs=0 and lhs=M+N --> M*xp+N*x+rhs=0 -->
   // M*(xp-x)+lhs*x+rhs=0
@@ -596,7 +596,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
     iter++;
     //      std::cout << "Iteration " << iter << " " << scalef*maxres << "\n";
 #ifdef USE_MAGMA
-    int lc=0;
+    //    int lc=0;
     int l_ib = m_Mass_block.m_ib;
     int l_ie = m_Mass_block.m_ie;
     int l_jb = m_Mass_block.m_jb;
@@ -622,7 +622,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
 
     //magma_int_t m_three = 3;
     //magma_int_t m_one = 1;
-      magma_int_t batchsize=(l_ie-l_ib)+nimb*(l_je-l_jb)+1;
+    //  magma_int_t batchsize=(l_ie-l_ib)+nimb*(l_je-l_jb)+1;
       //std::cout<<"BATCH SIZE IN SOLVE IS "<<batchsize<<"\n"<<std::flush;
     magma_trans_t m_trans=MagmaNoTrans;
 SW4_MARK_BEGIN("MAGMA_DGETRS");
@@ -640,7 +640,7 @@ SW4_MARK_END("MAGMA_DGETRS");
       SYNC_DEVICE;
 #endif
 
-    lc=0;
+      //   lc=0;
 // for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
 //       for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
 SView &U_cV = U_c.getview();;
@@ -658,6 +658,8 @@ RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
   });
  
 #else
+ int info = 0;
+   char trans = 'N';
     for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
       for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
         size_t ind = (i - m_Mass_block.m_ib) + nimb * (j - m_Mass_block.m_jb);
@@ -988,15 +990,31 @@ SYNC_STREAM;
                               '-');
 
   // 6. Form term prolrhs := r(w1*J[gf]*(rhof*p(L(uc)/rhoc-L(uf))+B(uf))
-  for (int c = 1; c <= 3; c++)
-    for (int j = prolrhs.m_jb; j <= prolrhs.m_je; j++)
-      for (int i = prolrhs.m_ib; i <= prolrhs.m_ie; i++)
-        prolrhs(c, i, j, m_nkf) =
-            w1 * m_jac_f(i, j, m_nkf) *
-                (m_rho_f(i, j, m_nkf) * prolrhs(c, i, j, m_nkf) -
-                 Luf(c, i, j, m_nkf)) /
-                (m_strx_f[i - m_ibf] * m_stry_f[j - m_jbf]) +
-            Bf(c, i, j, m_nkf);
+  // for (int c = 1; c <= 3; c++)
+  //   for (int j = prolrhs.m_jb; j <= prolrhs.m_je; j++)
+  //     for (int i = prolrhs.m_ib; i <= prolrhs.m_ie; i++)
+  auto& prolrhsV = prolrhs.getview();
+  auto& m_jac_fV = m_jac_f.getview();
+  auto& m_rho_fV = m_rho_f.getview();
+  auto& LufV = Luf.getview();
+  auto& BfV = Bf.getview();
+  
+  float_sw4* lm_strx_f = m_strx_f;
+  float_sw4* lm_stry_f = m_stry_f;
+  auto& lm_nkf = m_nkf;
+  auto& lm_ibf = m_ibf;
+  auto& lm_jbf = m_jbf;
+  RAJA::RangeSegment j_range3(prolrhs.m_jb,prolrhs.m_je+1);
+  RAJA::RangeSegment i_range3(prolrhs.m_ib,prolrhs.m_ie+1);
+  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
+			   RAJA::make_tuple(j_range3, i_range3), [=] RAJA_DEVICE(int j, int i) {
+        for (int c = 1; c <= 3; c++) prolrhsV(c, i, j, lm_nkf) =
+            w1 * m_jac_fV(i, j, lm_nkf) *
+                (m_rho_fV(i, j, lm_nkf) * prolrhsV(c, i, j, lm_nkf) -
+                 LufV(c, i, j, lm_nkf)) /
+                (lm_strx_f[i - lm_ibf] * lm_stry_f[j - lm_jbf]) +
+				       BfV(c, i, j, lm_nkf);});
+  SYNC_STREAM;
   if (!m_tw) bnd_zero(prolrhs, m_nghost);
   restrict2D(rhs, prolrhs, 1, m_nkf);
 
@@ -1562,31 +1580,39 @@ void CurvilinearInterface2::restrict2D(Sarray& Uc, Sarray& Uf, int kc, int kf) {
   jce = min(Uc.m_je, jce);
 
   const float_sw4 i1024 = 4.0 / 1024;  // Multiply r:=4*r
-#pragma omp parallel
-  for (int c = 1; c <= Uf.m_nc; c++)
-#pragma omp for
-    for (int jc = jcb; jc <= jce; jc++)
-#pragma omp simd
-      for (int ic = icb; ic <= ice; ic++) {
+  int lm_nc = Uf.m_nc;
+  auto& UfV = Uf.getview();
+  auto& UcV = Uc.getview();
+// #pragma omp parallel
+//   for (int c = 1; c <= Uf.m_nc; c++)
+// #pragma omp for
+//     for (int jc = jcb; jc <= jce; jc++)
+// #pragma omp simd
+//       for (int ic = icb; ic <= ice; ic++) {
+	RAJA::RangeSegment j_range(jcb,jce+1);
+	RAJA::RangeSegment i_range(icb,ice+1);
+  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
+			   RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int jc, int ic) {
         int i = 2 * ic - 1, j = 2 * jc - 1;
-        Uc(c, ic, jc, kc) =
+        for (int c = 1; c <= lm_nc; c++) UcV(c, ic, jc, kc) =
             i1024 *
-            (Uf(c, i - 3, j - 3, kf) - 9 * Uf(c, i - 3, j - 1, kf) -
-             16 * Uf(c, i - 3, j, kf) - 9 * Uf(c, i - 3, j + 1, kf) +
-             Uf(c, i - 3, j + 3, kf) +
-             9 * (-Uf(c, i - 1, j - 3, kf) + 9 * Uf(c, i - 1, j - 1, kf) +
-                  16 * Uf(c, i - 1, j, kf) + 9 * Uf(c, i - 1, j + 1, kf) -
-                  Uf(c, i - 1, j + 3, kf)) +
-             16 * (-Uf(c, i, j - 3, kf) + 9 * Uf(c, i, j - 1, kf) +
-                   16 * Uf(c, i, j, kf) + 9 * Uf(c, i, j + 1, kf) -
-                   Uf(c, i, j + 3, kf)) +
-             9 * (-Uf(c, i + 1, j - 3, kf) + 9 * Uf(c, i + 1, j - 1, kf) +
-                  16 * Uf(c, i + 1, j, kf) + 9 * Uf(c, i + 1, j + 1, kf) -
-                  Uf(c, i + 1, j + 3, kf)) +
-             Uf(c, i + 3, j - 3, kf) - 9 * Uf(c, i + 3, j - 1, kf) -
-             16 * Uf(c, i + 3, j, kf) - 9 * Uf(c, i + 3, j + 1, kf) +
-             Uf(c, i + 3, j + 3, kf));
-      }
+            (UfV(c, i - 3, j - 3, kf) - 9 * UfV(c, i - 3, j - 1, kf) -
+             16 * UfV(c, i - 3, j, kf) - 9 * UfV(c, i - 3, j + 1, kf) +
+             UfV(c, i - 3, j + 3, kf) +
+             9 * (-UfV(c, i - 1, j - 3, kf) + 9 * UfV(c, i - 1, j - 1, kf) +
+                  16 * UfV(c, i - 1, j, kf) + 9 * UfV(c, i - 1, j + 1, kf) -
+                  UfV(c, i - 1, j + 3, kf)) +
+             16 * (-UfV(c, i, j - 3, kf) + 9 * UfV(c, i, j - 1, kf) +
+                   16 * UfV(c, i, j, kf) + 9 * UfV(c, i, j + 1, kf) -
+                   UfV(c, i, j + 3, kf)) +
+             9 * (-UfV(c, i + 1, j - 3, kf) + 9 * UfV(c, i + 1, j - 1, kf) +
+                  16 * UfV(c, i + 1, j, kf) + 9 * UfV(c, i + 1, j + 1, kf) -
+                  UfV(c, i + 1, j + 3, kf)) +
+             UfV(c, i + 3, j - 3, kf) - 9 * UfV(c, i + 3, j - 1, kf) -
+             16 * UfV(c, i + 3, j, kf) - 9 * UfV(c, i + 3, j + 1, kf) +
+             UfV(c, i + 3, j + 3, kf));
+			   });
+  SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------

@@ -82,7 +82,7 @@ class CurvilinearInterface2 {
                  float_sw4 ghcof);
 
 
-  void restrict2D(Sarray& Uc, Sarray& Uf, int kc, int kf);
+
   void restprol2D(Sarray& Uc, Sarray& alpha, int kc, int kf);
  
   void copy_str(float_sw4* dest, float_sw4* src, int offset, int n, int nsw);
@@ -115,6 +115,7 @@ class CurvilinearInterface2 {
                      std::vector<Sarray>& Alpha_c,
 		     std::vector<Sarray>& Alpha_f);
   void prolongate2D(Sarray& Uc, Sarray& Uf, int kc, int kf);
+  void restrict2D(Sarray& Uc, Sarray& Uf, int kc, int kf);
 
 };
 
