@@ -1429,7 +1429,7 @@ void EW::processTopography(char* buffer) {
   float_sw4 GaussianAmp = 0.05, GaussianLx = 0.15, GaussianLy = 0.15,
             GaussianXc = 0.5, GaussianYc = 0.5;
   int grid_interpolation_order = 3;
-  bool use_analytical_metric = false, topo_zmax_given = false;
+  bool use_analytical_metric = false;// topo_zmax_given = false;
   bool always_new = false;
 
   token = strtok(NULL, " \t");
@@ -2072,9 +2072,9 @@ void EW::processTestLamb(char* buffer) {
   token = strtok(NULL, " \t");
 
   string err = "Testlamb Error: ";
-  float_sw4 x0 = 0.0, y0 = 0.0, z0 = 0.0;
-  float_sw4 cs = 1.0, rho = 1.0, cp = sqrt(3.0), fz = 1.0, freq = 1.0,
-            f0 = 1.0;  // the exact solution assumes freq = 1
+  //  float_sw4 x0 = 0.0, y0 = 0.0, z0 = 0.0,cs = 1.0, fz = 1.0, freq = 1.0, f0 = 1.0;  // the exact solution assumes freq = 1
+  float_sw4  rho = 1.0, cp = sqrt(3.0);
+            
 
   while (token != NULL) {
     if (startswith("#", token) || startswith(" ", buffer)) break;
@@ -2224,13 +2224,13 @@ bool EW::checkTestEnergyPeriodic(char* buffer) {
 //-----------------------------------------------------------------------
 void EW::processFileIO(char* buffer) {
   int printcycle = 100;
-  char* path = 0;
-  char* scenario = 0;
+  //  char* path = 0;
+  // char* scenario = 0;
   int nwriters = 8;
   bool pfs = false;
 
   int verbose = 0;
-  bool debug = false;
+  //  bool debug = false;
 
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("fileio", token) == 0,
@@ -2367,7 +2367,7 @@ void EW::processTime(char* buffer) {
   float_sw4 t = 0.0;
   int steps = -1;
   int year, month, day, hour, minute, second, msecond, fail;
-  bool refdateset = false, refeventdateset = false;
+  bool refdateset = false; // refeventdateset = false;
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("time", token) == 0,
               "ERROR: not a time line...: " << token);
@@ -2620,8 +2620,8 @@ void EW::processGlobalMaterial(char* buffer) {
   token = strtok(NULL, " \t");
 
   string err = "globalmaterial error: ";
-  int modelnr = 0;
-  float_sw4 frequency = 1;
+  //  int modelnr = 0;
+  // float_sw4 frequency = 1;
   float_sw4 vpmin = 0, vsmin = 0;
 
   while (token != NULL) {
@@ -2839,17 +2839,18 @@ void EW::processGeodynbc(char* buf) {
   string err = "geodynbc Error: ";
   string commandName = "geodynbc";
 
-  int faces = 6, nx = 0, ny = 0, nz = 0, nsteps = 0, filter = 0, adjust = 1;
-  float_sw4 x0, y0, z0, lat, lon, elev, az, timestep, rho = 0, vs = 0, vp = 0,
-                                                      freq;
-  float_sw4 srcx0, srcy0, srcz0, h, toff;
+  int faces = 6, nx = 0, ny = 0, nz = 0, nsteps = 0; // filter = 0, adjust = 1;
+  //float_sw4 x0, y0, z0, lat, lon, elev, az, timestep, rho = 0, vs = 0, vp = 0,
+  //  freq;
+  //float_sw4 srcx0, srcy0, srcz0, h, toff;
+  float_sw4 h,timestep;
 
-  bool timestepset = false, nstepsset = false, toffset = false;
+  bool timestepset = false, nstepsset = false; // toffset = false;
   char buffer[256];
   bool done = false;
   while (!geodynfile.eof() && !done) {
     geodynfile.getline(buffer, 256);
-    if (startswith("#", buffer) || startswith("\n", buffer) || buffer == "\0")
+    if (startswith("#", buffer) || startswith("\n", buffer) || !strncmp(buffer,"\0",1)) // strncmp not tested PBUGS
       break;
     if (startswith("begindata", buffer)) {
       done = true;
@@ -2878,28 +2879,28 @@ void EW::processGeodynbc(char* buf) {
           h = atof(token);
         } else if (startswith("x0=", token)) {
           token += 3;
-          x0 = atof(token);
+          //x0 = atof(token);
         } else if (startswith("y0=", token)) {
           token += 3;
-          y0 = atof(token);
+          //y0 = atof(token);
         } else if (startswith("z0=", token)) {
           token += 3;
-          z0 = atof(token);
+          //z0 = atof(token);
         } else if (startswith("lat=", token)) {
           token += 4;
-          lat = atof(token);
+          //lat = atof(token);
         } else if (startswith("lon=", token)) {
           token += 4;
-          lon = atof(token);
+          //lon = atof(token);
         } else if (startswith("elev=", token)) {
           token += 5;
-          elev = atof(token);
+          //elev = atof(token);
         } else if (startswith("az=", token)) {
           token += 3;
-          az = atof(token);
+          //az = atof(token);
         } else if (startswith("adjust=", token)) {
           token += 7;
-          adjust = strcmp(token, "yes") == 0;
+          //adjust = strcmp(token, "yes") == 0;
         } else {
           badOption("geodyn-grid", token);
         }
@@ -2920,8 +2921,8 @@ void EW::processGeodynbc(char* buf) {
           nstepsset = true;
         } else if (startswith("toff=", token)) {
           token += 5;
-          toff = atof(token);
-          toffset = true;
+          //toff = atof(token);
+          //toffset = true;
         } else {
           badOption("geodyn-time", token);
         }
@@ -2934,13 +2935,13 @@ void EW::processGeodynbc(char* buf) {
         if (startswith("#", token) || startswith(" ", buffer)) break;
         if (startswith("rho=", token)) {
           token += 4;
-          rho = atof(token);
+          //rho = atof(token);
         } else if (startswith("vs=", token)) {
           token += 3;
-          vs = atof(token);
+          //vs = atof(token);
         } else if (startswith("vp=", token)) {
           token += 3;
-          vp = atof(token);
+          //vp = atof(token);
         } else {
           badOption("geodyn-material", token);
         }
@@ -2953,22 +2954,22 @@ void EW::processGeodynbc(char* buf) {
         if (startswith("#", token) || startswith(" ", buffer)) break;
         if (startswith("filter=", token)) {
           token += 7;
-          if (strcmp(token, "butterworth") == 0)
-            filter = 1;
-          else
-            filter = 0;
+          // if (strcmp(token, "butterworth") == 0)
+          //   filter = 1;
+          // else
+          //   filter = 0;
         } else if (startswith("frequency=", token)) {
           token += 10;
-          freq = atof(token);
+          //freq = atof(token);
         } else if (startswith("x0=", token)) {
           token += 3;
-          srcx0 = atof(token);
+          //srcx0 = atof(token);
         } else if (startswith("y0=", token)) {
           token += 3;
-          srcy0 = atof(token);
+          //srcy0 = atof(token);
         } else if (startswith("z0=", token)) {
           token += 3;
-          srcz0 = atof(token);
+          //srcz0 = atof(token);
         } else {
           badOption("geodyn-source", token);
         }
@@ -3028,19 +3029,19 @@ void EW::geodynbcGetSizes(string filename, float_sw4 origin[3],
   string err = "geodynbc Error: ";
   string commandName = "geodynbc";
 
-  int nx = 0, ny = 0, nz = 0, faces = 6;
+  int nx = 0, ny = 0, nz = 0;// faces = 6;
   double x0, y0, z0, elev, h;
   adjust = 1;
 
   char buffer[256];
   bool done = false;
-  bool nxfound = false, nyfound = false, nzfound = false, x0found = false,
-       y0found = false, z0found = false;
+  bool nxfound = false, nyfound = false, nzfound = false;// x0found = false,
+  //       y0found = false, z0found = false;
   bool latfound = false, lonfound = false, azfound = false, hfound = false,
        elevfound = false;
   while (!geodynfile.eof() && !done) {
     geodynfile.getline(buffer, 256);
-    if (startswith("#", buffer) || startswith("\n", buffer) || buffer == "\0")
+    if (startswith("#", buffer) || startswith("\n", buffer) || !strncmp(buffer,"\0",1)) // strncomp not tested PBUGS
       break;
     if (startswith("begindata", buffer)) {
       done = true;
@@ -3054,7 +3055,7 @@ void EW::geodynbcGetSizes(string filename, float_sw4 origin[3],
         if (startswith("#", token) || startswith(" ", buffer)) break;
         if (startswith("faces=", token)) {
           token += 6;
-          faces = atoi(token);
+	  //          faces = atoi(token);
         } else if (startswith("nx=", token)) {
           token += 3;
           nx = atoi(token);
@@ -3074,15 +3075,15 @@ void EW::geodynbcGetSizes(string filename, float_sw4 origin[3],
         } else if (startswith("x0=", token)) {
           token += 3;
           x0 = atof(token);
-          x0found = true;
+	  //          x0found = true;
         } else if (startswith("y0=", token)) {
           token += 3;
           y0 = atof(token);
-          y0found = true;
+          //y0found = true;
         } else if (startswith("z0=", token)) {
           token += 3;
           z0 = atof(token);
-          z0found = true;
+	  // z0found = true;
         } else if (startswith("lat=", token)) {
           token += 4;
           lat = atof(token);
@@ -3507,8 +3508,8 @@ void EW::processCheckPoint(char* buffer) {
   token = strtok(NULL, " \t");
   string err = "CheckPoint Error: ";
   int cycle = -1, cycleInterval = 0;
-  float_sw4 time = 0.0, timeInterval = 0.0;
-  bool timingSet = false;
+  //  float_sw4 time = 0.0, timeInterval = 0.0;
+  //bool timingSet = false;
   string filePrefix = "checkpoint";
 
   string restartFileName, restartPath;
@@ -3531,7 +3532,7 @@ void EW::processCheckPoint(char* buffer) {
                   err << "cycleInterval must be a non-negative integer, not: "
                       << token);
       cycleInterval = atoi(token);
-      timingSet = true;
+      //      timingSet = true;
     } else if (startswith("file=", token)) {
       token += 5;  // skip file=
       filePrefix = token;
@@ -3837,7 +3838,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
   m_NumberOfBCPoints.resize(mNumberOfGrids);
   m_BndryWindow.resize(mNumberOfGrids);
 
-  int* wind;
+  //  int* wind;
 
   for (int g = 0; g < mNumberOfGrids; g++) {
     m_NumberOfBCPoints[g] = new int[6];
@@ -4285,7 +4286,7 @@ void EW::allocateCurvilinearArrays() {
   int jmin = mTopoGridExt.m_jb;
   int jmax = mTopoGridExt.m_je;
   float_sw4 maxd2zh = 0, maxd2z2h = 0, maxd3zh = 1.e-20, maxd3z2h = 1.e-20, d2h,
-            d3h, h3 = h * h * h;
+    d3h; // h3 = h * h * h;
   // grid size h
   for (int i = imin + 1; i <= imax - 1; i++)
     for (int j = jmin + 1; j <= jmax - 1; j++) {
@@ -4539,7 +4540,7 @@ void EW::processImage(char* buffer, bool use_hdf5) {
   // -----------------------------------------------------
   Image::ImageOrientation locationType = Image::UNDEFINED;
   float_sw4 coordValue;
-  int gridPointValue;
+  //  int gridPointValue;
   bool coordWasSet = false;
   bool use_double = false;
   bool mode_is_grid = false;
@@ -4876,7 +4877,7 @@ void EW::processSource(char* buffer,
   float_sw4 t0 = 0.0, f0 = 1.0, freq = 1.0;
   // Should be center of the grid
   double x = 0.0, y = 0.0, z = 0.0;
-  int i = 0, j = 0, k = 0;
+  //  int i = 0, j = 0, k = 0;
   float_sw4 mxx = 0.0, mxy = 0.0, mxz = 0.0, myy = 0.0, myz = 0.0, mzz = 0.0;
   float_sw4 strike = 0.0, dip = 0.0, rake = 0.0;
   float_sw4 fx = 0.0, fy = 0.0, fz = 0.0;
@@ -5210,6 +5211,12 @@ void EW::processSource(char* buffer,
     int utcsac[7], npts;
     string basename = dfile;
     string fname;
+    // PBUGS npts not set in original code. Set below to turnoff warning
+    npts = 1; // THis is potential bug source.
+    std::cerr<<" npts set randomly in parseinfput file line 5216."<<std::flush;
+    abort();
+    // END CHANGES
+
     if (isMomentType) {
       tDep = iDiscrete6moments;
       fname = basename + ".xx";
@@ -5543,16 +5550,17 @@ void EW::processRupture(char* buffer,
   stime = MPI_Wtime();
 
   float_sw4 m0 = 1.0;
-  float_sw4 t0 = 0.0, f0 = 1.0, freq = 1.0;
+  float_sw4 t0 = 0.0,  freq = 1.0;
+  //float_sw4 f0 = 1.0;
   // Should be center of the grid
   double x = 0.0, y = 0.0, z = 0.0;
-  int i = 0, j = 0, k = 0;
+  //  int i = 0, j = 0, k = 0;
   float_sw4 mxx = 0.0, mxy = 0.0, mxz = 0.0, myy = 0.0, myz = 0.0, mzz = 0.0;
-  float_sw4 strike = 0.0, dip = 0.0, rake = 0.0;
-  float_sw4 fx = 0.0, fy = 0.0, fz = 0.0;
+  //float_sw4 strike = 0.0, dip = 0.0, rake = 0.0;
+  //float_sw4 fx = 0.0, fy = 0.0, fz = 0.0;
   int event = 0;
 
-  double lat = 0.0, lon = 0.0;
+  //double lat = 0.0, lon = 0.0;
   bool topodepth = true;
 
   bool rfileset = false;
@@ -5939,7 +5947,7 @@ void EW::processMaterialBlock(char* buffer, int& blockCount) {
        z1set = false, z2set = false;
 
   float_sw4 x1 = 0.0, x2 = 0.0, y1 = 0.0, y2 = 0.0, z1 = 0.0, z2 = 0.0;
-  int i1 = -1, i2 = -1, j1 = -1, j2 = -1, k1 = -1, k2 = -1;
+  //  int i1 = -1, i2 = -1, j1 = -1, j2 = -1, k1 = -1, k2 = -1;
 
   string name = "Block";
 
@@ -6123,7 +6131,7 @@ void EW::processAnisotropicMaterialBlock(char* buffer, int& blockCount) {
        z1set = false, z2set = false;
 
   float_sw4 x1 = 0.0, x2 = 0.0, y1 = 0.0, y2 = 0.0, z1 = 0.0, z2 = 0.0;
-  int i1 = -1, i2 = -1, j1 = -1, j2 = -1, k1 = -1, k2 = -1;
+  //  int i1 = -1, i2 = -1, j1 = -1, j2 = -1, k1 = -1, k2 = -1;
 
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(
@@ -6792,11 +6800,11 @@ void EW::processReceiver(char* buffer,
 //-----------------------------------------------------------------------
 void EW::processObservationHDF5(
     char* buffer, vector<vector<TimeSeries*> >& a_GlobalTimeSeries) {
-  double x = 0.0, y = 0.0, z = 0.0;
-  double lat = 0.0, lon = 0.0, depth = 0.0;
+  //  double x = 0.0, y = 0.0, z = 0.0;
+  //double lat = 0.0, lon = 0.0, depth = 0.0;
   float_sw4 t0 = 0;
   float_sw4 scalefactor = 1;
-  bool cartCoordSet = false, geoCoordSet = false;
+  //bool cartCoordSet = false, geoCoordSet = false;
   string inhdf5file = "";
   string outhdf5file = "station";
   int writeEvery = 0;
@@ -6939,8 +6947,8 @@ void EW::processObservation(char* buffer,
 
   int writeEvery = 0;
 
-  bool dateSet = false;
-  bool timeSet = false;
+  //  bool dateSet = false;
+  //bool timeSet = false;
   bool topodepth = false;
 
   //  int utc[7];
@@ -7561,7 +7569,8 @@ void EW::processMaterialPfile(char* buffer) {
   // Used for pfiles
   string filename = "NONE";
   string directory = "NONE";
-  float_sw4 a_ppm = 0., vpmin_ppm = 0., vsmin_ppm = 0, rhomin_ppm = 0.;
+  float_sw4  vpmin_ppm = 0., vsmin_ppm = 0, rhomin_ppm = 0.;
+  //float_sw4 a_ppm = 0.;
   string cflatten = "NONE";
   bool flatten = false;
   bool coords_geographic = true;
@@ -7830,11 +7839,11 @@ void EW::processMaterialEtree(char* buffer) {
 }
 
 void EW::processMaterialIfile(char* buffer) {
-  bool x1set = false, x2set = false, y1set = false, y2set = false,
-       z1set = false, z2set = false;
+  // bool x1set = false, x2set = false, y1set = false, y2set = false,
+  //      z1set = false, z2set = false;
 
-  float_sw4 x1 = 0.0, x2 = 0.0, y1 = 0.0, y2 = 0.0, z1 = 0.0, z2 = 0.0;
-  int i1 = -1, i2 = -1, j1 = -1, j2 = -1, k1 = -1, k2 = -1;
+  //  float_sw4 x1 = 0.0, x2 = 0.0, y1 = 0.0, y2 = 0.0, z1 = 0.0, z2 = 0.0;
+  //  int i1 = -1, i2 = -1, j1 = -1, j2 = -1, k1 = -1, k2 = -1;
 
   string name = "Ifile";
 
@@ -7850,9 +7859,9 @@ void EW::processMaterialIfile(char* buffer) {
 
   token = strtok(NULL, " \t");
 
-  float_sw4 vp = -1, vs = -1, rho = -1, ps = -1, materialID = -1, freq = 1;
-  float_sw4 vpgrad = 0, vsgrad = 0, rhograd = 0;
-  float_sw4 vp2 = 0, vs2 = 0, rho2 = 0;
+  //  float_sw4 vp = -1, vs = -1, rho = -1, ps = -1, materialID = -1, freq = 1;
+  //float_sw4 vpgrad = 0, vsgrad = 0, rhograd = 0;
+  //float_sw4 vp2 = 0, vs2 = 0, rho2 = 0;
 
   bool gotFileName = false;
 
@@ -7981,11 +7990,11 @@ void EW::processMaterialRfile(char* buffer) {
   // Used for pfiles
   string filename = "NONE";
   string directory = "NONE";
-  float_sw4 a_ppm = 0., vpmin_ppm = 0., vsmin_ppm = 0, rhomin_ppm = 0.;
+  //  float_sw4 a_ppm = 0., vpmin_ppm = 0., vsmin_ppm = 0, rhomin_ppm = 0.;
   string cflatten = "NONE";
-  bool flatten = false;
-  bool coords_geographic = true;
-  int nstenc = 5;
+  //bool flatten = false;
+  //bool coords_geographic = true;
+  //int nstenc = 5;
   int bufsize = 200000;  // Parallel IO buffer, in number of grid points.
 
   char* token = strtok(buffer, " \t");
@@ -8044,12 +8053,12 @@ void EW::processMaterialSfile(char* buffer) {
   string name = "sfile";
   string filename = "NONE";
   string directory = "NONE";
-  float_sw4 a_ppm = 0., vpmin_ppm = 0., vsmin_ppm = 0, rhomin_ppm = 0.;
+  //  float_sw4 a_ppm = 0., vpmin_ppm = 0., vsmin_ppm = 0, rhomin_ppm = 0.;
   string cflatten = "NONE";
-  bool flatten = false;
-  bool coords_geographic = true;
-  int nstenc = 5;
-  int bufsize = 200000;  // Parallel IO buffer, in number of grid points.
+  //bool flatten = false;
+  //bool coords_geographic = true;
+  //int nstenc = 5;
+  //int bufsize = 200000;  // Parallel IO buffer, in number of grid points.
 
   char* token = strtok(buffer, " \t");
   //  CHECK_INPUT(strcmp("rfile", token) == 0,

@@ -497,7 +497,7 @@ void EW::setupRun(vector<vector<Source *> > &a_GlobalUniqueSources) {
     double *time_sums = new double[10 * no_of_procs()];
     MPI_Gather(times, 10, MPI_DOUBLE, time_sums, 10, MPI_DOUBLE, 0,
                MPI_COMM_WORLD);
-    bool printavgs = true;
+    //    bool printavgs = true;
     if (!mQuiet && proc_zero()) {
       double avgs[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
       for (int p = 0; p < no_of_procs(); p++)
@@ -874,7 +874,7 @@ void EW::compute_epicenter(vector<Source *> &a_GlobalUniqueSources, int e) {
 
 //-----------------------------------------------------------------------
 void EW::setupSBPCoeff() {
-  float_sw4 gh2;  // this coefficient is also stored in m_ghcof[0]
+  //  float_sw4 gh2;  // this coefficient is also stored in m_ghcof[0]
   if (mVerbose >= 2 && m_myRank == 0)
     cout << "Setting up SBP boundary stencils" << endl;
   // FTNC  if( m_croutines )
@@ -1146,7 +1146,7 @@ void EW::set_materials()
            << "******************************" << endl;
 
     // For some forcings (such as twilight forcing) the material is set here.
-    float_sw4 xP, yP, zP;
+    //    float_sw4 xP, yP, zP;
 
     int ifirst, ilast, jfirst, jlast, kfirst, klast;
     float_sw4 *rho_ptr, *mu_ptr, *la_ptr, h, zmin, omm, phm, amprho, ampmu,
@@ -1378,10 +1378,10 @@ void EW::set_anisotropic_materials() {
            << "******************************" << endl;
 
     // For some forcings (such as twilight forcing) the material is set here.
-    float_sw4 xP, yP, zP;
+    //    float_sw4 xP, yP, zP;
 
     int ifirst, ilast, jfirst, jlast, kfirst, klast, g;
-    float_sw4 *cm_ptr, *rho_ptr, h, zmin, omm, phm, amprho, ampmu, ampla;
+    float_sw4 *cm_ptr, *rho_ptr, h, zmin, omm, phm, amprho;// ampmu, ampla;
     float_sw4 phc[21];  // move these angles to the EW class
 
     // need to store all the phase angle constants somewhere
@@ -2068,8 +2068,8 @@ void EW::setup_supergrid() {
 
 //-----------------------------------------------------------------------
 void EW::assign_supergrid_damping_arrays() {
-  int g, i, j, k, topCartesian;
-  float_sw4 x, y, z;
+  int g, topCartesian;
+  //float_sw4 x, y, z;
 
   // resize the vectors for the pointers
   m_sg_dc_x.resize(mNumberOfGrids);
@@ -2321,7 +2321,7 @@ void EW::material_ic(vector<Sarray> &a_mtrl) {
       int g = mNumberOfCartesianGrids - 1;
       int gc = g + 1;
       int nc = a_mtrl[g].ncomp();
-      int q, i, j;
+      //      int q, i, j;
 // inject values between lower boundary of gc and upper boundary of g
 #pragma omp parallel for
       for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
@@ -2571,7 +2571,7 @@ void EW::checkpoint_twilight_test(vector<Sarray> &Um, vector<Sarray> &U,
 
     // check the accuracy of the initial data, store exact solution in Up,
     // ignore AlphaVE
-    float_sw4 errInf = 0, errL2 = 0, solInf = 0, solL2 = 0;
+    float_sw4 errInf = 0, errL2 = 0, solInf = 0; // solL2 = 0;
     exactSol(t, Up, AlphaVEp, a_Sources);
 
     normOfDifference(Up, U, errInf, errL2, solInf, a_Sources);

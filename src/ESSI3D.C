@@ -86,8 +86,8 @@ void ESSI3D::set_dump_interval(int a_dumpInterval) {
 //-----------------------------------------------------------------------
 void ESSI3D::setup() {
   const bool debug = false;
-  MPI_Comm comm = MPI_COMM_WORLD;
-  MPI_Info info = MPI_INFO_NULL;
+  //  MPI_Comm comm = MPI_COMM_WORLD;
+  //MPI_Info info = MPI_INFO_NULL;
   int myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
@@ -225,8 +225,8 @@ void ESSI3D::compute_image(Sarray& a_A, int a_comp) {
   int ju = mEW->m_jEnd[g];
   int kl = mEW->m_kStart[g];
   int ku = mEW->m_kEnd[g];
-  int ni = (iu - il + 1);
-  int nj = (ju - jl + 1);
+  //  int ni = (iu - il + 1);
+  // int nj = (ju - jl + 1);
 
   // int niw = (mWindow[1]-mWindow[0])+1;
   // int nijw=niw*((mWindow[3]-mWindow[2])+1);
@@ -274,35 +274,35 @@ void ESSI3D::define_pio_hdf5() {
 
 void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
                            Sarray& a_Z) {
-  herr_t ierr;
-  hid_t dataspace_id;
-  hid_t dataset_id;
-  hid_t prop_id;
+  //  herr_t ierr;
+  //hid_t dataspace_id;
+  //hid_t dataset_id;
+  //hid_t prop_id;
 
   // Parameters for extendible dataset
   const int num_dims = 3 + 1;  // 3 space + 1 time that will be extendible
   hsize_t dims[num_dims] = {0, 0, 0, H5S_UNLIMITED};
-  hsize_t slice_dims[num_dims];
-  hsize_t block_dims[num_dims];
-  hsize_t global_dims[num_dims];
+  //hsize_t slice_dims[num_dims];
+  //  hsize_t block_dims[num_dims];
+  // hsize_t global_dims[num_dims];
 
   int g = mEW->mNumberOfGrids - 1;
   int window[6], global[3];
   for (int d = 0; d < 3; d++) {
     dims[d] = mWindow[2 * d + 1] - mWindow[2 * d] + 1;
-    slice_dims[d] = dims[d];
-    block_dims[d] = dims[d];
-    global_dims[d] = mGlobalDims[2 * d + 1] - mGlobalDims[2 * d] + 1;
+    //slice_dims[d] = dims[d];
+    //block_dims[d] = dims[d];
+    //global_dims[d] = mGlobalDims[2 * d + 1] - mGlobalDims[2 * d] + 1;
 
     window[2 * d] = (m_ihavearray) ? (mWindow[2 * d] - mGlobalDims[2 * d]) : 0;
     window[2 * d + 1] =
         (m_ihavearray) ? (mWindow[2 * d + 1] - mGlobalDims[2 * d]) : -1;
     global[d] = mGlobalDims[2 * d + 1] - mGlobalDims[2 * d] + 1;
   }
-  slice_dims[0] = 1;              // Make sure we're chunking on slices
-  slice_dims[num_dims - 1] = 1;   // 1 time step per write
-  block_dims[num_dims - 1] = 1;   // 1 time step per write
-  global_dims[num_dims - 1] = 1;  // 1 time step per write
+  //slice_dims[0] = 1;              // Make sure we're chunking on slices
+  //slice_dims[num_dims - 1] = 1;   // 1 time step per write
+  //block_dims[num_dims - 1] = 1;   // 1 time step per write
+  //global_dims[num_dims - 1] = 1;  // 1 time step per write
 
   // Just to see what's being copied correctly
   for (int i = 0; i < dims[0]; i++)

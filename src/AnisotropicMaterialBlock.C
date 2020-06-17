@@ -163,7 +163,7 @@ void AnisotropicMaterialBlock::set_material_properties(std::vector<Sarray>& rho,
 
   if (mEW->topographyExists())  // curvilinear grid
   {
-    int gTop = mEW->mNumberOfGrids - 1;
+    //    int gTop = mEW->mNumberOfGrids - 1;
     for (int g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids; g++) {
 //    int g = mEW->mNumberOfGrids-1;
 

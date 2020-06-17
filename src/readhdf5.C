@@ -132,6 +132,7 @@ static herr_t traverse_func(hid_t loc_id, const char *grp_name,
   ASSERT(a_ew != NULL);
 
   status = H5Oget_info_by_name(loc_id, grp_name, &infobuf, H5P_DEFAULT);
+  if (status<0) printf("hdf5 status less than 0\n"); // PBUGS ADDED To SUPPRESS WARNINGs
   if (infobuf.type == H5O_TYPE_GROUP) {
     /* if (op_data->myRank == 0) */
     /*   printf ("Group: [%s] \n", grp_name); */
@@ -361,7 +362,7 @@ void readRuptureHDF5(char *fname,
   MPI_Comm_size(MPI_COMM_WORLD, &read_size);
 
   double stime, etime;
-  hid_t fid, grp, attr, ctype, dtype, dset, dspace, aspace, fapl;
+  hid_t fid, attr, ctype, dtype, dset, dspace, aspace, fapl;
 
   ctype = H5Tcreate(H5T_COMPOUND, 9 * sizeof(float) + 2 * sizeof(int));
   H5Tinsert(ctype, "ELON", 0, H5T_NATIVE_FLOAT);
@@ -532,9 +533,10 @@ void readRuptureHDF5(char *fname,
 
   double x = 0.0, y = 0.0, z = 0.0;
   float_sw4 m0 = 1.0;
-  float_sw4 t0 = 0.0, f0 = 1.0, freq = 1.0;
+  float_sw4 t0 = 0.0,  freq = 1.0;
+  //float_sw4 f0 = 1.0;
   float_sw4 mxx = 0.0, mxy = 0.0, mxz = 0.0, myy = 0.0, myz = 0.0, mzz = 0.0;
-  int isMomentType = -1;
+  //  int isMomentType = -1;
   bool topodepth = true;
   // Discrete source time function
   float_sw4 *par = NULL;
@@ -744,14 +746,14 @@ void readRuptureHDF5(char *fname,
     // read past discrete time series for u2
     if (nt2 > 0) {
       nu2++;
-      double dum;
+      //      double dum;
       if (world_rank == 0) printf("WARNING nt2=%i > 0 will be ignored\n", nt2);
     }  // end if nt2 > 0
 
     // read past discrete time series for u3
     if (nt3 > 0) {
       nu3++;
-      double dum;
+      //      double dum;
       if (world_rank == 0) printf("WARNING nt3=%i > 0 will be ignored\n", nt3);
     }  // end if nt3 > 0
 

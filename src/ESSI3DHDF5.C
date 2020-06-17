@@ -303,7 +303,7 @@ void ESSI3DHDF5::init_write_vel(int ntimestep) {
 #ifdef USE_HDF5
   /* bool debug=true; */
   bool debug = false;
-  MPI_Comm comm = MPI_COMM_WORLD;
+  //  MPI_Comm comm = MPI_COMM_WORLD;
   int myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 

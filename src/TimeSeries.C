@@ -1170,10 +1170,10 @@ void TimeSeries::write_hdf5_format(int npts, hid_t grp, float* y, float btime,
                                    bool isLast /*=false*/) {
   bool is_debug = false;
   /* is_debug = true; */
-  double stime, etime;
+  //  double stime, etime;
 
   hsize_t start, count;
-  int ret = 1, prev_npts;
+  int ret = 1;// prev_npts;
   int write_npts;
   float* write_data;
 
@@ -3015,10 +3015,10 @@ static int cubic_interp(float* xi, float* yi, int nin, float* xo, float* yo,
 }
 
 void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
-  bool debug = false;
+  //  bool debug = false;
   hid_t fid, grp;
-  char data[128];
-  hsize_t ndim, dims[4];
+  //char data[128];
+  //hsize_t ndim, dims[4];
   int ret;
 
   if (!m_myPoint) return;
@@ -3339,6 +3339,7 @@ float_sw4 TimeSeries::get_scalefactor() const { return m_scalefactor; }
 int TimeSeries::allocFid() {
   m_fid_ptr = new hid_t;
   *m_fid_ptr = 0;
+  return 0; // Added 6/16/202 in Raja code. not tested PBUGS
 }
 
 int TimeSeries::closeHDF5File() {

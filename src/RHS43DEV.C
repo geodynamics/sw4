@@ -41,7 +41,7 @@ void rhs4th3wind_host(
 
   const int ni = ilast - ifirst + 1;
   const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = nij * (klast - kfirst + 1);
+  //  const int nijk = nij * (klast - kfirst + 1);
   const int nijku = nij * (klastu - kfirstu + 1);
   const int nijkw = nij * (klastw - kfirstw + 1);
   const int base = -(ifirst + ni * jfirst + nij * kfirst);
@@ -72,7 +72,7 @@ void rhs4th3wind_host(
   // Assume only one of three cases, upper,lower,center
   //  if k-index runs over more than one this will not work
 
-  int i, j, k, kb, q, m, qb, mb;
+  int i, j, k, kb, q, qb, mb;
   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3,
       muz4;
   float_sw4 r1, r2, r3, mucof, mu1zz, mu2zz, mu3zz;

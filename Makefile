@@ -37,7 +37,7 @@ ifeq ($(optlevel),DEBUG)
    CXXFLAGS  = -g -I../src -DBZ_DEBUG
    CFLAGS    = -g
 else
-   FFLAGS   = -O3
+   FFLAGS   = -O2
 # AP (160419) Note that cmake uses -O3 instead of -O for CXX and C
    CXXFLAGS =  -I../src
    CXXFLAGS2 =  -I../src	

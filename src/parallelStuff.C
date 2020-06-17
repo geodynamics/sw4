@@ -905,7 +905,7 @@ void EW::communicate_array_async(Sarray& u, int grid) {
 #ifdef THREADED_MPI
   const int threaded_mpi = 1;
 #else
-  const int threaded_mpi = 0;
+  //  const int threaded_mpi = 0;
 #endif
   if (u.m_nc == 1) {
     int xtag1 = 345;

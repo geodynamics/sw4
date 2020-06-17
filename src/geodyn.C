@@ -1791,7 +1791,7 @@ void evalLu_DkpDip(int ib, int ie, int jb, int je, int kb, int ke, double* a_u,
   const size_t nlijk = nlij * (kle - klb + 1);
   const double ih2 = 1 / (h * h);
   const double half = 0.5;
-  const double fourth = 0.25;
+  //  const double fourth = 0.25;
 
   for (int k = klb; k <= kle; k++)
     for (int j = jlb; j <= jle; j++)
@@ -1899,7 +1899,7 @@ void evalLu_DkpDim(int ib, int ie, int jb, int je, int kb, int ke, double* a_u,
   const size_t nlijk = nlij * (kle - klb + 1);
   const double ih2 = 1 / (h * h);
   const double half = 0.5;
-  const double fourth = 0.25;
+  //  const double fourth = 0.25;
 
   for (int k = klb; k <= kle; k++)
     for (int j = jlb; j <= jle; j++)
@@ -2007,7 +2007,7 @@ void evalLu_DkpDjp(int ib, int ie, int jb, int je, int kb, int ke, double* a_u,
   const size_t nlijk = nlij * (kle - klb + 1);
   const double ih2 = 1 / (h * h);
   const double half = 0.5;
-  const double fourth = 0.25;
+  //  const double fourth = 0.25;
 
   for (int k = klb; k <= kle; k++)
     for (int j = jlb; j <= jle; j++)
@@ -2115,7 +2115,7 @@ void evalLu_DkpDjm(int ib, int ie, int jb, int je, int kb, int ke, double* a_u,
   const size_t nlijk = nlij * (kle - klb + 1);
   const double ih2 = 1 / (h * h);
   const double half = 0.5;
-  const double fourth = 0.25;
+  //  const double fourth = 0.25;
 
   for (int k = klb; k <= kle; k++)
     for (int j = jlb; j <= jle; j++)

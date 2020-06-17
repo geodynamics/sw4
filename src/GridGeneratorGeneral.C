@@ -96,6 +96,7 @@ void GridGeneratorGeneral::generate_grid_and_met_old(EW* a_ew, Sarray& a_x,
   ierr = a_ew->metric_ci(a_x.m_ib, a_x.m_ie, a_x.m_jb, a_x.m_je, a_x.m_kb,
                          a_x.m_ke, a_x.c_ptr(), a_y.c_ptr(), a_z.c_ptr(),
                          a_met.c_ptr(), a_jac.c_ptr());
+  if (ierr<-1) std::cerr<<"error in metric_ci"<<std::flush;
 }
 
 //-----------------------------------------------------------------------
@@ -177,6 +178,7 @@ void GridGeneratorGeneral::generate_grid_and_met_new(EW* a_ew, int g,
   ierr = a_ew->metric_ci(a_x.m_ib, a_x.m_ie, a_x.m_jb, a_x.m_je, a_x.m_kb,
                          a_x.m_ke, a_x.c_ptr(), a_y.c_ptr(), a_z.c_ptr(),
                          a_met.c_ptr(), a_jac.c_ptr());
+  if (ierr<0) std::cerr<<"error in metric_ci"<<std::flush;
 }
 
 //-----------------------------------------------------------------------

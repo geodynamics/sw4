@@ -1732,7 +1732,7 @@ void Parallel_IO::write_array_hdf5(const char* fname, const char* dname, int nc,
   int i1, i2, j1, j2, k1, k2, nsi, nsj, nsk, nri, nrj, nrk;
   int b, i, mxsize, ii, jj, kk, c, niblock, njblock, nkblock;
   int il, jl, kl, tag, myid, retcode, gproc, ret;
-  hsize_t ind, ptr, sizew, offset, count;
+  hsize_t ind, ptr, offset, count;
   MPI_Status status;
   MPI_Request* req;
   double *rbuf, *ribuf;
@@ -1751,17 +1751,17 @@ void Parallel_IO::write_array_hdf5(const char* fname, const char* dname, int nc,
     double* ar;
     double* sbuf;
     float* sbuff;
-    int flt, typsize;
+    int flt;// typsize;
     try {
       if (strcmp(typ, "float") == 0) {
         arf = static_cast<float*>(array);
         sbuff = new float[m_isend.m_maxbuf * nc];
         flt = 1;
-        typsize = sizeof(float);
+        //typsize = sizeof(float);
       } else if (strcmp(typ, "double") == 0) {
         ar = static_cast<double*>(array);
         sbuf = new double[m_isend.m_maxbuf * nc];
-        typsize = sizeof(double);
+        //typsize = sizeof(double);
         flt = 0;
       } else {
         // error return
@@ -1837,28 +1837,28 @@ void Parallel_IO::write_array_hdf5(const char* fname, const char* dname, int nc,
       ind = il - 1 + nig * (jl - 1) + ((off_t)nig) * njg * (kl - 1);
       offset = pos0 + nc * ind;
       /* sizew = lseek( *fid, pos0+nc*ind*typsize, SEEK_SET ); */
-      if (offset < 0) {
-        int eno = errno;
-        cout << "Error in write_array: could not go to write start position"
-             << endl;
-        if (eno == EBADF) cout << "errno = EBADF" << endl;
-        if (eno == EINVAL) cout << "errno = EINVAL" << endl;
-        if (eno == EOVERFLOW) cout << "errno = EOVERFLOW" << endl;
-        if (eno == ESPIPE) cout << "errno = ESPIPE" << endl;
-        cout << "errno = " << eno << endl;
-        cout << "Requested offset = " << pos0 + nc * ind << endl;
-        cout << "pos0 = " << pos0 << endl;
-        cout << "nc = " << nc << endl;
-        cout << "ind = " << ind << endl;
-        cout << "typsize = " << typsize << endl;
-        cout << "m_csteps = " << m_csteps << endl;
-        cout << "nglobal = " << nig << " " << njg << " " << nkg << endl;
-        cout << "m_irecv.m_ilow " << m_irecv.m_ilow[0] << endl;
-        cout << "m_irecv.m_jlow " << m_irecv.m_jlow[0] << endl;
-        cout << "m_irecv.m_klow " << m_irecv.m_klow[0] << endl;
-        cout << "m_irecv.m_ncomm[0] = " << m_irecv.m_ncomm[0] << endl;
-        //	    MPI_Abort(MPI_COMM_WORLD,1);
-      }
+      // if (offset < 0) {
+      //   int eno = errno;
+      //   cout << "Error in write_array: could not go to write start position"
+      //        << endl;
+      //   if (eno == EBADF) cout << "errno = EBADF" << endl;
+      //   if (eno == EINVAL) cout << "errno = EINVAL" << endl;
+      //   if (eno == EOVERFLOW) cout << "errno = EOVERFLOW" << endl;
+      //   if (eno == ESPIPE) cout << "errno = ESPIPE" << endl;
+      //   cout << "errno = " << eno << endl;
+      //   cout << "Requested offset = " << pos0 + nc * ind << endl;
+      //   cout << "pos0 = " << pos0 << endl;
+      //   cout << "nc = " << nc << endl;
+      //   cout << "ind = " << ind << endl;
+      //   cout << "typsize = " << typsize << endl;
+      //   cout << "m_csteps = " << m_csteps << endl;
+      //   cout << "nglobal = " << nig << " " << njg << " " << nkg << endl;
+      //   cout << "m_irecv.m_ilow " << m_irecv.m_ilow[0] << endl;
+      //   cout << "m_irecv.m_jlow " << m_irecv.m_jlow[0] << endl;
+      //   cout << "m_irecv.m_klow " << m_irecv.m_klow[0] << endl;
+      //   cout << "m_irecv.m_ncomm[0] = " << m_irecv.m_ncomm[0] << endl;
+      //   //	    MPI_Abort(MPI_COMM_WORLD,1);
+      // }
     }
 
     tag = 334;
