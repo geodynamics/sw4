@@ -1561,7 +1561,7 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                   t);
   }
 
-  // THE CALL BELOW IS MADE IN SOLVE IN THE RAJA VERSION
+  // THE CALL BELOW to enforceBCfreeAtt2 IS MADE IN SOLVE IN THE RAJA VERSION
   // AND HERE IN THE DEVELOPER BRANCH
   // Reimpose free surface condition with attenuation terms included
   // if( usingAttenuation() )
@@ -1708,11 +1708,12 @@ void EW::enforceBCanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
 }
 //
 void EW::update_curvilinear_cartesian_interface_raja(vector<Sarray>& a_U) {
+  //std::cout<<"EW::update_curvilinear_cartesian_interface_raja<\n";
   if (topographyExists()) {
-    int nc = 3;
+    const int nc = 3;
     int g = mNumberOfCartesianGrids - 1;
     int gc = mNumberOfGrids - 1;
-    int mgp = getNumberOfGhostPoints();
+    const int mgp = getNumberOfGhostPoints();
     //      float_sw4 nrm[3]={0,0,0};
     //      int q, i, j;
     // inject solution values between lower boundary of gc and upper boundary of
@@ -1744,6 +1745,7 @@ void EW::update_curvilinear_cartesian_interface_raja(vector<Sarray>& a_U) {
                q++)  // twice when m_ghost_points==1 (overwrites solution on the
                      // common grid line)
           {
+#pragma unroll
             for (int c = 1; c <= nc; c++)
               a_UgcV(c, i, j, kendgc - q) =
                   a_UgV(c, i, j, kstartg + 2 * mgp - q);
@@ -3509,7 +3511,7 @@ void EW::add_ve_stresses(Sarray& a_Up, Sarray& B, int g, int kic, int a_mech,
 }
 
 //------------------------------------------------------------------------------
-void EW::cartesian_bc_forcing_new(float_sw4 t, vector<float_sw4**>& a_BCForcing,
+void EW::cartesian_bc_forcing_olde(float_sw4 t, vector<float_sw4**>& a_BCForcing,
                                   vector<Source*>& a_sources)
 // assign the boundary forcing arrays a_BCForcing[g][side]
 {
@@ -5165,7 +5167,7 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
 void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                      vector<Sarray>& a_Lambda, vector<Sarray*>& a_Alpha,
                      float_sw4 t) {
-  // std::cout<<"CALL TO EW::CurviCartIC ON CPU \n";
+  //std::cout<<"CALL TO EW::CurviCartIC ON CPU \n";
   SYNC_STREAM;  // FOR CURVI_CPU
   int gcurv = gcart + 1;
   int ib = m_iStart[gcurv], ie = m_iEnd[gcurv];
@@ -6016,6 +6018,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
             }
           } else {
             if (curvilinear) {
+	      std::cout<<"NEW _CODE IS SOLVE 1\n";
               Sarray tau(6, ifirst, ilast, jfirst, jlast, 1, 1);
               twstensor_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, k, t,
                            om, cv, ph, mX[g].c_ptr(), mY[g].c_ptr(),
@@ -6078,19 +6081,34 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
       // no boundary forcing
       // we can do the same loop for all types of bc. For bParallel boundaries,
       // numberOfBCPoints=0
-      int q;
-      for (q = 0; q < 3 * m_NumberOfBCPoints[g][0]; q++)
-        bforce_side0_ptr[q] = 0.;
-      for (q = 0; q < 3 * m_NumberOfBCPoints[g][1]; q++)
-        bforce_side1_ptr[q] = 0.;
-      for (q = 0; q < 3 * m_NumberOfBCPoints[g][2]; q++)
-        bforce_side2_ptr[q] = 0.;
-      for (q = 0; q < 3 * m_NumberOfBCPoints[g][3]; q++)
-        bforce_side3_ptr[q] = 0.;
-      for (q = 0; q < 3 * m_NumberOfBCPoints[g][4]; q++)
-        bforce_side4_ptr[q] = 0.;
-      for (q = 0; q < 3 * m_NumberOfBCPoints[g][5]; q++)
-        bforce_side5_ptr[q] = 0.;
+      SW4_MARK_BEGIN("LOOP6");
+
+      // for (q=0; q<3*m_NumberOfBCPoints[g][0]; q++)
+      RAJA::forall<DEFAULT_LOOP1>(
+          RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][0]),
+          [=] RAJA_DEVICE(int q) { bforce_side0_ptr[q] = 0.; });
+      // for (q=0; q<3*m_NumberOfBCPoints[g][1]; q++)
+      RAJA::forall<DEFAULT_LOOP1>(
+          RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][1]),
+          [=] RAJA_DEVICE(int q) { bforce_side1_ptr[q] = 0.; });
+      // for (q=0; q<3*m_NumberOfBCPoints[g][2]; q++)
+      RAJA::forall<DEFAULT_LOOP1>(
+          RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][2]),
+          [=] RAJA_DEVICE(int q) { bforce_side2_ptr[q] = 0.; });
+      // for (q=0; q<3*m_NumberOfBCPoints[g][3]; q++)
+      RAJA::forall<DEFAULT_LOOP1>(
+          RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][3]),
+          [=] RAJA_DEVICE(int q) { bforce_side3_ptr[q] = 0.; });
+      // for (q=0; q<3*m_NumberOfBCPoints[g][4]; q++)
+      RAJA::forall<DEFAULT_LOOP1>(
+          RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][4]),
+          [=] RAJA_DEVICE(int q) { bforce_side4_ptr[q] = 0.; });
+      // for (q=0; q<3*m_NumberOfBCPoints[g][5]; q++)
+      RAJA::forall<DEFAULT_LOOP1>(
+          RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][5]),
+          [=] RAJA_DEVICE(int q) { bforce_side5_ptr[q] = 0.; });
+      SYNC_STREAM;
+      SW4_MARK_END("LOOP6");
     }
   }
 }

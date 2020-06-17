@@ -161,6 +161,7 @@ void CurvilinearInterface2::copy_str(float_sw4* dest, float_sw4* src,
 void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
                                         vector<float_sw4*>& a_stry) {
   SW4_MARK_FUNCTION;
+  std::cout<<"void CurvilinearInterface2::init_arrays \n";
   for (int s = 0; s < 4; s++)
     m_isbndry[s] = m_ew->getLocalBcType(m_gc, s) != bProcessor;
 

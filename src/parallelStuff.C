@@ -130,6 +130,7 @@ void EW::setup2D_MPICommunications() {
   // // point (nc=1) get the size from the top Cartesian grid
   int g = mNumberOfGrids - 1;
   int ni = m_iEnd[g] - m_iStart[g] + 1, nj = m_jEnd[g] - m_jStart[g] + 1;
+  std::cout<<"GRID = "<<g<<" size "<<ni<<" "<<nj<<"\n";
   // MPI_Type_vector(nj, m_ppadding, ni, m_mpifloat, &m_send_type_2dfinest[0]);
   // MPI_Type_vector(1, m_ppadding * ni, ni * nj, m_mpifloat,
   //                 &m_send_type_2dfinest[1]);
