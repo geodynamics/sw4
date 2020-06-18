@@ -5220,6 +5220,7 @@ void EW::update_images( int currentTimeStep, float_sw4 time, vector<Sarray> & a_
   //     img->write_images( currentTimeStep, mPath );
   //   }
   // }
+
 } // end EW::update_images()
 
 //-----------------------------------------------------------------------

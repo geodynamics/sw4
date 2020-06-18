@@ -4467,6 +4467,13 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    
 //   }
 
+// Wei added
+  for (int g=0; g<mNumberOfGrids; g++)
+     {
+       delete mMuVE[g];
+       delete mLambdaVE[g];
+     }
+   
 }
 
 //-----------------------------------------------------------------------

@@ -43,6 +43,9 @@
 #ifndef SW4_NOOMP
 #include <omp.h>
 #endif
+#include "MaterialParCartesian.h"
+#include "Mopt.h"
+
 #include "version.h"
 
 using namespace std;
@@ -201,6 +204,34 @@ main(int argc, char **argv)
       int ng=simulation.mNumberOfGrids;
       vector<DataPatches*> upred_saved(ng), ucorr_saved(ng);
       vector<Sarray> U(ng), Um(ng);
+
+/* for solveTT
+    Mopt* mopt = new Mopt( &simulation );
+    mopt->parseInputFileOpt( fileName );
+    MaterialParameterization* mp = mopt->m_mp;
+    int nmpars, nmpard, nmpard_global;
+	   mp->get_nr_of_parameters( nmpars, nmpard, nmpard_global );
+
+	   double* xm=NULL;
+           if( nmpard > 0 )
+	      xm = new double[nmpard];
+
+// nspar - Number of parameters in source description. These are always non-distributed (=shared)
+	   int nspar=mopt->m_nspar;
+// ns - Total number of non-distributed (=shared) parameters.
+           int ns = nmpars + nspar;
+	   double *xs = new double[ns];
+
+// Default initial guess, the input source, stored in GlobalSources[0], will do nothing if nspar=0.
+     double xspar[11];
+	   GlobalSources[0][0]->get_parameters(xspar);
+	   //get_source_pars( nspar, xspar, xs );
+
+// Initialize the material parameters
+      mp->get_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,simulation.mLambda );
+
+      if(myRank==0) simulation.solveTT( GlobalSources[0], GlobalTimeSeries[0], &xs[nspar], nmpars, 0);
+*/
       simulation.solve( GlobalSources[0], GlobalTimeSeries[0], simulation.mMu, 
 			simulation.mLambda, simulation.mRho, U, Um, upred_saved, 
 			ucorr_saved, false, 0, 0 );

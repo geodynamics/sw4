@@ -2900,6 +2900,12 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 		  mRecordedFloats[2][i] = (float) u3[i];
 	       }
 	    }
+
+       //Wei added
+   	delete[] u1;
+	   delete[] u2;
+	   delete[] u3;
+
 	 }
 	 else
 	 {
@@ -2937,7 +2943,10 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 	    cout << utc3[c] << " ";
 	 cout << endl;
       }
+
+
    }
+
 }
 
 //-----------------------------------------------------------------------

@@ -322,13 +322,15 @@ void MaterialParCartesianVsVp::get_gradient( int nmd, double* xmd, int nms, doub
    MPI_Allreduce( tmp, glambdap, npts, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
    delete[] tmp;
 
-   glambda.save_to_disk("glambda_ini.say");
+   //glambda.save_to_disk("glambda_ini.say");
    //gmu.save_to_disk("gmu_ini.say");
 
-   glambda.gaussian_smooth(21, 4.);
-   gmu.gaussian_smooth(21, 4.);
+   MPI_Barrier(MPI_COMM_WORLD);
+   glambda.gaussian_smooth(31, 5.);
+   gmu.gaussian_smooth(21, 3.);
+   MPI_Barrier(MPI_COMM_WORLD);
 
-   glambda.save_to_disk("glambda.say");
+   //glambda.save_to_disk("glambda.say");
    //gmu.save_to_disk("gmu.say");
 
    size_t ind =0;
@@ -351,6 +353,7 @@ void MaterialParCartesianVsVp::get_gradient( int nmd, double* xmd, int nms, doub
 	 }
       //std::cout << " nx=" << m_nx << " ny=" << m_ny << " nz=" << m_nz << " ind=" << ind << std::endl;
 
+std::cout << "reach end of get_gradient" << std::endl;
 
 }
 

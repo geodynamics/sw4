@@ -34,8 +34,6 @@ void usage(string thereason)
        << "Reason for message: " << thereason << endl;
 }
 
-
-
 //-----------------------------------------------------------------------
 void set_source_pars( int nspar, double srcpars[11], double* xs )
 {
@@ -119,6 +117,8 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    //   src[0]->get_parameters( srcpars );
    //   set_source_pars( nspar, srcpars, xs );
    //   src[0]->set_parameters( srcpars );
+
+   std::cout << "Enter compute_f" << std::endl;
 
    sw4_profile->time_stamp("Enter compute_f");
 // Translate one-dimensional parameter vector xm to material data (rho,mu,lambda)
@@ -257,6 +257,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 //-----------------------------------------------------------------------
 {
    int verbose = 0;
+      std::cout << "Enter compute_f_and_df" << std::endl;
    sw4_profile->time_stamp("Enter compute_f_and_df");
    // source optimization
    //   vector<Source*> src(1);
@@ -309,6 +310,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    {
       std::cout << "compute_f_df forward solve" << std::endl;
       sw4_profile->time_stamp("forward solve" );
+     //if(myrank==0) simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], xs, e);
      simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory );
       // check if U has nan
       U[0].checknan("forward U");
@@ -329,7 +331,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       {
 	 if( mopt->m_output_ts && it >= 0 )
 	    GlobalTimeSeries[e][m]->writeFile();
-     TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc", false);  // add true to append filename substring
+     TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc", false);  // Wei add true to append filename substring
 	  diffs.push_back(elem);
       }
 // 2. misfit function also updates diffs := this - observed
@@ -386,7 +388,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       
 // 3. Give back memory
       for( unsigned int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
-	 delete diffs[m];
+	        delete diffs[m];
       diffs.clear();
    }
    double mftmp = f;
@@ -1433,14 +1435,19 @@ int main(int argc, char **argv)
 			GlobalSources, GlobalTimeSeries,
 			GlobalObservations, myRank, mopt );
          
-         if(myRank==0) save_array_to_disk(nmpars, xs, "xs_lbfgs.bin"); 
-         if(myRank==0) save_array_to_disk(nmpard, xm, "xm_lbfgs.bin"); 
+
+
+         //if(myRank==0) save_array_to_disk(nmpars, xs, "xs_lbfgs.bin"); 
+         //if(myRank==0) save_array_to_disk(nmpard, xm, "xm_lbfgs.bin"); 
 
 	      else if( mopt->m_optmethod == 2 )
 		 nlcg( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		       GlobalObservations, myRank, mopt );
 	      sw4_profile->time_stamp("Done optimizer");
 	      sw4_profile->flush();
+
+         //Wei added to assure memory release prior to next event
+         MPI_Barrier(MPI_COMM_WORLD);
 	   }
            else
 	      if( myRank == 0 )

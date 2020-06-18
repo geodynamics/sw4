@@ -41,6 +41,8 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    int ifirst, ilast, jfirst, jlast, kfirst, klast;
    for( int g = 0; g <mNumberOfGrids; g++ )
    {
+
+
       BCForcing[g] = new double *[6];
       for(int side=0; side < 6; side++)
       {
@@ -320,9 +322,18 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 	 if( BCForcing[g][side] != NULL )
 	    delete[] BCForcing[g][side];
       delete[] BCForcing[g];
+
+   //Wei added
+      if(AlphaVE[g]!=nullptr) delete[] AlphaVE[g];
+      if(AlphaVEp[g]!=nullptr) delete[] AlphaVEp[g];
+      if(AlphaVEm[g]!=nullptr) delete[] AlphaVEm[g];
+
    }
    for( int s=0 ; s < point_sources.size() ; s++ )
       delete point_sources[s];
+
+   // Wei added
+      MPI_Barrier(MPI_COMM_WORLD);
 }
 
 //-----------------------------------------------------------------------

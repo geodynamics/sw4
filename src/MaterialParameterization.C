@@ -87,6 +87,7 @@ void MaterialParameterization::write_parameters( const char* filename,
       if( nr != nms*sizeof(double) )
 	 cout << "Error in MaterialParameterization::write_parameters "
 	      << " could not write parameters " << endl;
+
       close(fd);
       bool write_ascii=true;
       if( write_ascii )

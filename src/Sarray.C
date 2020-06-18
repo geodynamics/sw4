@@ -1351,7 +1351,7 @@ void Sarray::gaussian_smooth(int width, float decay)
     ny = m_nj;
     nz = m_nk;
     
-    std::cout << "m_ib=" << m_ib << " m_jb=" << m_jb << " m_kb=" << m_kb << " nx=" << nx << " ny=" << ny << " nz=" << nz << std::endl;
+    std::cout << "gaussian_smooth: m_ib=" << m_ib << " m_jb=" << m_jb << " m_kb=" << m_kb << " nx=" << nx << " ny=" << ny << " nz=" << nz << std::endl;
 
     //input parameters
     lenx = width;    // total spread of filter  21 81
@@ -1397,7 +1397,6 @@ void Sarray::gaussian_smooth(int width, float decay)
          }
     }
     
-
    delete[] grad_extend;
  
 
@@ -1443,11 +1442,11 @@ void Sarray::gaussian_smooth(int width, float decay)
 		for (j = 0; j < leny; j++)
 		for (i = 0; i < lenx; i++)
 		 {
-            norm = norm + (gx[i]*gz[k]);
+            norm = norm + (gx[i]*gy[j]*gz[k]);
         }
 
      delete[] gx;
-     //delete[] gy;
+     delete[] gy;
 
    grad_extend = new float_sw4[nz+2*halfz];
 

@@ -142,10 +142,10 @@ Source::Source(EW *a_ew,
 // Correct source location for discrepancy between raw and smoothed topography
    correct_Z_level( a_ew ); // also sets the ignore flag for sources that are above the topography
 
-   if (a_ew->getVerbosity()>=3 && a_ew->proc_zero())
-  {
+   //if (a_ew->getVerbosity()>=3 && a_ew->proc_zero())
+  //{
     printf("Moment source at x=%e, y=%e, z=%e is centered at grid point i=%d, j=%d, k=%d, in grid=%d\n", mX0, mY0, mZ0, m_i0, m_j0, m_k0, m_grid);
-  }
+  //}
   
 
 }
@@ -1311,6 +1311,9 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    bool canBeInverted, curvilinear;
    float_sw4 normwgh[4]={17.0/48.0, 59.0/48.0, 43.0/48.0, 49.0/48.0 };
 
+   //Wei added
+   std::cout << "point source mX0=" << mX0 << " mY0=" << mY0 << " nZ0=" << mZ0 << std::endl;
+
    if( g == a_EW->mNumberOfGrids-1 && a_EW->topographyExists() )
    {
 // Curvilinear
@@ -1384,6 +1387,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    ic = static_cast<int>(floor(q));
    jc = static_cast<int>(floor(r));
    kc = static_cast<int>(floor(s));
+
 
 // Bias stencil away from boundary, no source at ghost/padding points
    if( ic <= 2 )    ic = 3;

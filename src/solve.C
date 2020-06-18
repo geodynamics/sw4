@@ -73,6 +73,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    {
       for( int g = 0; g <mNumberOfGrids; g++ )
       {
+      if(AlphaVE[g]!=nullptr) delete AlphaVE[g];
+	   if(AlphaVEp[g]!=nullptr) delete AlphaVEp[g];
+      if(AlphaVEm[g]!=nullptr) delete AlphaVEm[g];
+
 	 AlphaVE[g]  = new Sarray[m_number_mechanisms];
 	 AlphaVEp[g] = new Sarray[m_number_mechanisms];
 	 AlphaVEm[g] = new Sarray[m_number_mechanisms];
@@ -158,6 +162,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       }
       if( save_sides )
       {
+         //Wei add memory release
+      if(Upred_saved_sides[g]!=nullptr) delete Upred_saved_sides[g];
+	   if(Ucorr_saved_sides[g]!=nullptr) delete Ucorr_saved_sides[g];
+
 	 Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt );
 	 Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt );
      //     cout << "sides saved for i=[" << imin << " , " << imax << "] j=[" << jmin << " , " << jmax << "] k=[" << 1 << " , " << kmax << "]"<< endl;
@@ -546,6 +554,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 
   double time_start_solve = MPI_Wtime();
   print_execution_time( time_start_init, time_start_solve, "initial data phase" );
+
 
 // BEGIN TIME STEPPING LOOP
   if ( !mQuiet && proc_zero() )
@@ -1118,7 +1127,16 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    for( int s = 0 ; s < point_sources.size(); s++ )
       delete point_sources[s];
 
+// Wei added
+      for( int g = 0; g <mNumberOfGrids; g++ )
+      {
+	    delete[] AlphaVE[g];
+	    delete[] AlphaVEp[g];
+	    delete[] AlphaVEm[g];
+      }
+
    MPI_Barrier(MPI_COMM_WORLD);
+
 
 } // end EW::solve()
 

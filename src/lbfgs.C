@@ -620,6 +620,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
       const string convfile = mopt->m_path + "convergence.log";
       fd = fopen(convfile.c_str(),"w");
       fprintf(fd, "it  max-nrm-gradient  max-nrm-update   misfit       step-length-reductions\n");
+      fflush(fd);  //Wei added
 
       const string parafile = mopt->m_path + "parameters.log";
       if( nspar > 0 )
@@ -894,7 +895,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 	 int retcode;
          double fp;
 	 if( myRank == 0 )
-	    cout << "Line search.. " << endl;
+	    cout << "Line search...  iteration= " << it << endl;
 
 	 linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
 		     nspar, nmpars, xs, nmpard_global, nmpard, xm, f, dfs, dfm, da, dam,
@@ -1019,6 +1020,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 
 // Save shared material parameters, for restart.
       mopt->m_mp->write_parameters(parfile.c_str(),nmpars,xs);
+	
 
 // Check that wave speeds do not become too high or too low.
 //      simulation.material_correction( nmpard, xm );
@@ -1113,6 +1115,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
    delete[] rho;
    if( ns > 0 )
    {
+	  std::cout << "delete dfs" << std::endl;
       delete[] s;
       delete[] y;
       delete[] dftemp;
