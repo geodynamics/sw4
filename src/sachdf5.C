@@ -56,7 +56,7 @@
 
 int createAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id) {
   hid_t attr, dcpl;
-  //  herr_t ret;
+  herr_t ret;
 
 #ifdef USE_DSET_ATTR
   dcpl = H5Pcreate(H5P_DATASET_CREATE);
@@ -194,7 +194,7 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data,
                   bool isLast) {
   bool is_debug = false;
   /* is_debug = true; */
-  //double stime, etime, etime1;
+  double stime, etime, etime1;
   hid_t dset, filespace, dxpl;
   herr_t ret;
 
@@ -275,13 +275,11 @@ int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
                              float_sw4 delta, string suffix) {
   bool is_debug = false;
 
-  hid_t fid, grp, attr_space1, attr_space3, dset_space, dset, dcpl;
-  //hid_t attr; 
+  hid_t fid, grp, attr, attr_space1, attr_space3, dset_space, dset, dcpl;
   herr_t ret;
   hsize_t dims1 = 1, dims3 = 3, total_dims;
   double start_time, elapsed_time;
-  //float stxyz[3],o,stlonlatdep[3];
-  float_sw4 dt;
+  float stxyz[3], stlonlatdep[3], o, dt;
   std::string dset_names[10];
   TimeSeries::receiverMode mode;
   bool xyzcomponent;
