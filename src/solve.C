@@ -5179,8 +5179,8 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   int nk = m_global_nz[gcurv];
   int nkca = m_global_nz[gcart];
 
-  Sarray Lu(3, ib, ie, jb, je, nk, nk);
-  Sarray Luca(3, ib, ie, jb, je, 1, 1);
+  Sarray Lu(3, ib, ie, jb, je, nk, nk,__FILE__,__LINE__);
+  Sarray Luca(3, ib, ie, jb, je, 1, 1,__FILE__,__LINE__);
   // Luca.set_to_zero();
   float_sw4 *Lup = Lu.c_ptr(), *Lucap = Luca.c_ptr();
   float_sw4 h = mGridSize[gcart];
@@ -5190,20 +5190,31 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   // "<<a_U[gcurv](1,i,j,k)<<" "<<a_U[gcurv](2,i,j,k)<<"
   // "<<a_U[gcurv](3,i,j,k)<<"\n";
   // // Injection into curvilinear grid
-  for (int j = jb; j <= je; j++)
-    for (int i = ib; i <= ie; i++) {
-      a_U[gcurv](1, i, j, nk) = a_U[gcart](1, i, j, 1);
-      a_U[gcurv](2, i, j, nk) = a_U[gcart](2, i, j, 1);
-      a_U[gcurv](3, i, j, nk) = a_U[gcart](3, i, j, 1);
-    }
+  // for (int j = jb; j <= je; j++)
+  //   for (int i = ib; i <= ie; i++) {
+  auto& a_U_gcurv = a_U[gcurv].getview();
+  auto& a_U_gcart = a_U[gcart].getview();
+  RAJA::RangeSegment j_range(jb, je + 1);
+      RAJA::RangeSegment i_range(ib, ie + 1);
+      RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(RAJA::make_tuple(j_range, i_range),
+                               [=] RAJA_DEVICE(int j, int i) {
+      a_U_gcurv(1, i, j, nk) = a_U_gcart(1, i, j, 1);
+      a_U_gcurv(2, i, j, nk) = a_U_gcart(2, i, j, 1);
+      a_U_gcurv(3, i, j, nk) = a_U_gcart(3, i, j, 1);
+					 });
   if (m_use_attenuation)
-    for (int a = 0; a < m_number_mechanisms; a++)
-      for (int j = jb; j <= je; j++)
-        for (int i = ib; i <= ie; i++) {
-          a_Alpha[gcurv][a](1, i, j, nk) = a_Alpha[gcart][a](1, i, j, 1);
-          a_Alpha[gcurv][a](2, i, j, nk) = a_Alpha[gcart][a](2, i, j, 1);
-          a_Alpha[gcurv][a](3, i, j, nk) = a_Alpha[gcart][a](3, i, j, 1);
-        }
+    for (int a = 0; a < m_number_mechanisms; a++){
+      auto& a_Alpha_gcurv = a_Alpha[gcurv][a].getview();
+      auto& a_Alpha_gcart = a_Alpha[gcart][a].getview();
+      // for (int j = jb; j <= je; j++)
+      //   for (int i = ib; i <= ie; i++) {
+	  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(RAJA::make_tuple(j_range, i_range),
+					     [=] RAJA_DEVICE(int j, int i) {
+          a_Alpha_gcurv(1, i, j, nk) = a_Alpha_gcart(1, i, j, 1);
+          a_Alpha_gcurv(2, i, j, nk) = a_Alpha_gcart(2, i, j, 1);
+          a_Alpha_gcurv(3, i, j, nk) = a_Alpha_gcart(3, i, j, 1);
+					     });
+    }
 
   bool force_dirichlet = false;
   if (force_dirichlet) {
@@ -5220,15 +5231,19 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     return;
   }
   // Initial guess
-  for (int j = jb + 2; j <= je - 2; j++)
-    for (int i = ib + 2; i <= ie - 2; i++) {
+  //  for (int j = jb + 2; j <= je - 2; j++)
+  //  for (int i = ib + 2; i <= ie - 2; i++) {
+RAJA::RangeSegment j_range2(jb+2, je -2+ 1);
+      RAJA::RangeSegment i_range2(ib+2, ie - 2 + 1);
+      RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(RAJA::make_tuple(j_range2, i_range2),
+                               [=] RAJA_DEVICE(int j, int i) {
       //         a_U[gcart](1,i,j,0)=a_U[gcart](1,i,j,1);
       //         a_U[gcart](2,i,j,0)=a_U[gcart](2,i,j,1);
       //         a_U[gcart](3,i,j,0)=a_U[gcart](3,i,j,1);
-      a_U[gcart](1, i, j, 0) = 0;
-      a_U[gcart](2, i, j, 0) = 0;
-      a_U[gcart](3, i, j, 0) = 0;
-    }
+      a_U_gcart(1, i, j, 0) = 0;
+      a_U_gcart(2, i, j, 0) = 0;
+      a_U_gcart(3, i, j, 0) = 0;
+					 });
 
   curvilinear4sgwind(
       ib, ie, jb, je, kb, ke, nk, nk, a_U[gcurv].c_ptr(), a_Mu[gcurv].c_ptr(),
@@ -5268,7 +5283,7 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                           m_sg_str_x[gcart], m_sg_str_y[gcart], m_sbop_no_gp,
                           '-');
 
-  Sarray B(3, ib, ie, jb, je, nk, nk);
+  Sarray B(3, ib, ie, jb, je, nk, nk,__FILE__,__LINE__);
   compute_icstresses_curv(a_U[gcurv], B, nk, mMetric[gcurv], a_Mu[gcurv],
                           a_Lambda[gcurv], m_sg_str_x[gcurv], m_sg_str_y[gcurv],
                           m_sbop_no_gp, '=');
@@ -5280,42 +5295,61 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                               m_sbop_no_gp, '-');
 
   float_sw4 w1 = 17.0 / 48.0;
-  for (int j = jb + 2; j <= je - 2; j++)
-    for (int i = ib + 2; i <= ie - 2; i++) {
+  //  for (int j = jb + 2; j <= je - 2; j++)
+  //  for (int i = ib + 2; i <= ie - 2; i++) {
+  float_sw4* m_sg_str_x_gcurv = m_sg_str_x[gcurv];
+  float_sw4* m_sg_str_y_gcurv = m_sg_str_y[gcurv];
+  float_sw4* m_sg_str_x_gcart = m_sg_str_x[gcart];
+  float_sw4* m_sg_str_y_gcart = m_sg_str_y[gcart];
+  auto& mRho_gcurv = mRho[gcurv].getview();
+  auto& mRho_gcart = mRho[gcart].getview();
+  auto& m_sbop0 = m_sbop[0];
+  auto& m_ghcof0 = m_ghcof[0];
+  auto& mJ_gcurv = mJ[gcurv].getview();
+  auto&  BcaV = Bca.getview();
+  auto& LucaV = Luca.getview();
+  auto& LuV = Lu.getview();
+  auto& BV= B.getview();
+  //auto& a_U_gcart = a_U[gcart].getview()  
+  auto& a_Mu_gcart = a_Mu[gcart].getview();
+  auto& a_Lambda_gcart = a_Lambda[gcart].getview();
+RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(RAJA::make_tuple(j_range2, i_range2),
+                               [=] RAJA_DEVICE(int j, int i) {
+      //         a_U[gcart](1,i,j,0)=a_U[gcart](1,i,j,1);
       float_sw4 istrxy =
-          1 / (m_sg_str_x[gcurv][i - ib] * m_sg_str_y[gcurv][j - jb]);
+          1 / (m_sg_str_x_gcurv[i - ib] * m_sg_str_y_gcurv[j - jb]);
       float_sw4 istrxyc =
-          1 / (m_sg_str_x[gcart][i - ib] * m_sg_str_y[gcart][j - jb]);
-      float_sw4 rhrat = mRho[gcurv](i, j, nk) / mRho[gcart](i, j, 1);
-      float_sw4 bcof = h * m_sbop[0] * istrxyc - m_ghcof[0] * rhrat * w1 *
-                                                     mJ[gcurv](i, j, nk) *
+          1 / (m_sg_str_x_gcart[i - ib] * m_sg_str_y_gcart[j - jb]);
+      float_sw4 rhrat = mRho_gcurv(i, j, nk) / mRho_gcart(i, j, 1);
+      float_sw4 bcof = h * m_sbop0 * istrxyc - m_ghcof0 * rhrat * w1 *
+                                                     mJ_gcurv(i, j, nk) *
                                                      istrxy / (h * h);
       float_sw4 res =
-          -h * h * Bca(1, i, j, 1) * istrxyc +
-          w1 * rhrat * mJ[gcurv](i, j, nk) * istrxy * Luca(1, i, j, 1) -
-          w1 * mJ[gcurv](i, j, nk) * istrxy * Lu(1, i, j, nk) + B(1, i, j, nk);
+          -h * h * BcaV(1, i, j, 1) * istrxyc +
+          w1 * rhrat * mJ_gcurv(i, j, nk) * istrxy * LucaV(1, i, j, 1) -
+          w1 * mJ_gcurv(i, j, nk) * istrxy * LuV(1, i, j, nk) + BV(1, i, j, nk);
       // std::cout<<"RESS "<<i<<" "<<j<<" "<<Luca(1,i,j,1)<<" "<<Lu(1,i,j,nk)<<"
       // "<<B(1,i,j,nk)<<"\n";
-      a_U[gcart](1, i, j, 0) += res / (a_Mu[gcart](i, j, 1) * bcof);
+      a_U_gcart(1, i, j, 0) += res / (a_Mu_gcart(i, j, 1) * bcof);
 
-      res = -h * h * Bca(2, i, j, 1) * istrxyc +
-            w1 * rhrat * mJ[gcurv](i, j, nk) * istrxy * Luca(2, i, j, 1) -
-            w1 * mJ[gcurv](i, j, nk) * istrxy * Lu(2, i, j, nk) +
-            B(2, i, j, nk);
-      a_U[gcart](2, i, j, 0) += res / (a_Mu[gcart](i, j, 1) * bcof);
+      res = -h * h * BcaV(2, i, j, 1) * istrxyc +
+            w1 * rhrat * mJ_gcurv(i, j, nk) * istrxy * LucaV(2, i, j, 1) -
+            w1 * mJ_gcurv(i, j, nk) * istrxy * LuV(2, i, j, nk) +
+            BV(2, i, j, nk);
+      a_U_gcart(2, i, j, 0) += res / (a_Mu_gcart(i, j, 1) * bcof);
 
-      res = -h * h * Bca(3, i, j, 1) * istrxyc +
-            w1 * rhrat * mJ[gcurv](i, j, nk) * istrxy * Luca(3, i, j, 1) -
-            w1 * mJ[gcurv](i, j, nk) * istrxy * Lu(3, i, j, nk) +
-            B(3, i, j, nk);
-      a_U[gcart](3, i, j, 0) +=
-          res / ((2 * a_Mu[gcart](i, j, 1) + a_Lambda[gcart](i, j, 1)) * bcof);
+      res = -h * h * BcaV(3, i, j, 1) * istrxyc +
+            w1 * rhrat * mJ_gcurv(i, j, nk) * istrxy * LucaV(3, i, j, 1) -
+            w1 * mJ_gcurv(i, j, nk) * istrxy * LuV(3, i, j, nk) +
+            BV(3, i, j, nk);
+      a_U_gcart(3, i, j, 0) +=
+          res / ((2 * a_Mu_gcart(i, j, 1) + a_Lambda_gcart(i, j, 1)) * bcof);
 #ifdef CURVI_DEBUG
-      std::cout << "CC_FINAL" << i << j << " " << a_U[gcart](1, i, j, 0) << " "
-                << a_U[gcart](2, i, j, 0) << " " << a_U[gcart](3, i, j, 0)
-                << "\n";
+      // std::cout << "CC_FINAL" << i << j << " " << a_U[gcart](1, i, j, 0) << " "
+      //           << a_U[gcart](2, i, j, 0) << " " << a_U[gcart](3, i, j, 0)
+      //           << "\n";
 #endif
-    }
+				   });
 
   bool debug = false;
   if (debug) {
@@ -6084,27 +6118,27 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
       SW4_MARK_BEGIN("LOOP6");
 
       // for (q=0; q<3*m_NumberOfBCPoints[g][0]; q++)
-      RAJA::forall<DEFAULT_LOOP1>(
+      RAJA::forall<DEFAULT_LOOP1_ASYNC>(
           RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][0]),
           [=] RAJA_DEVICE(int q) { bforce_side0_ptr[q] = 0.; });
       // for (q=0; q<3*m_NumberOfBCPoints[g][1]; q++)
-      RAJA::forall<DEFAULT_LOOP1>(
+      RAJA::forall<DEFAULT_LOOP1_ASYNC>(
           RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][1]),
           [=] RAJA_DEVICE(int q) { bforce_side1_ptr[q] = 0.; });
       // for (q=0; q<3*m_NumberOfBCPoints[g][2]; q++)
-      RAJA::forall<DEFAULT_LOOP1>(
+      RAJA::forall<DEFAULT_LOOP1_ASYNC>(
           RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][2]),
           [=] RAJA_DEVICE(int q) { bforce_side2_ptr[q] = 0.; });
       // for (q=0; q<3*m_NumberOfBCPoints[g][3]; q++)
-      RAJA::forall<DEFAULT_LOOP1>(
+      RAJA::forall<DEFAULT_LOOP1_ASYNC>(
           RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][3]),
           [=] RAJA_DEVICE(int q) { bforce_side3_ptr[q] = 0.; });
       // for (q=0; q<3*m_NumberOfBCPoints[g][4]; q++)
-      RAJA::forall<DEFAULT_LOOP1>(
+      RAJA::forall<DEFAULT_LOOP1_ASYNC>(
           RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][4]),
           [=] RAJA_DEVICE(int q) { bforce_side4_ptr[q] = 0.; });
       // for (q=0; q<3*m_NumberOfBCPoints[g][5]; q++)
-      RAJA::forall<DEFAULT_LOOP1>(
+      RAJA::forall<DEFAULT_LOOP1_ASYNC>(
           RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][5]),
           [=] RAJA_DEVICE(int q) { bforce_side5_ptr[q] = 0.; });
       SYNC_STREAM;
