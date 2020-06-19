@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
   auto allocator = rma.getAllocator("UM");
   // auto device_allocator = rma.getAllocator("DEVICE");
 
-  const size_t pool_size = static_cast<size_t>(13) * 1024 * 1024 * 1024;
+  const size_t pool_size = static_cast<size_t>(15) * 1024 * 1024 * 1024; //+102*1024*1024;
 
   auto pref_allocator = rma.makeAllocator<umpire::strategy::AllocationAdvisor>(
       "preferred_location_device", allocator, "PREFERRED_LOCATION",
@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
       rma.makeAllocator<umpire::strategy::DynamicPool, true>(
           string("UM_pool_temps"), pref_allocator, pool_size_small);
 
-  const size_t object_pool_size = static_cast<size_t>(1024) * 1024 * 1024;
+  const size_t object_pool_size = static_cast<size_t>(500) * 1024 * 1024;
 
   // rma.makeAllocator<umpire::strategy::MonotonicAllocationStrategy,false>(string("UM_object_pool"),
   //					   object_pool_size,allocator);

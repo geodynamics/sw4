@@ -2531,6 +2531,7 @@ void dpdmtfort_ci(int ib, int ie, int jb, int je, int kb, int ke,
   SW4_MARK_FUNCTION;
   const size_t npts =
       static_cast<size_t>((ie - ib + 1)) * (je - jb + 1) * (ke - kb + 1);
+  //std::cout<<"DPDMT SIZE IS "<<npts*3<<"\n";
   // #pragma omp parallel for
   // #pragma ivdep
   // #pragma simd
