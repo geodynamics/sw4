@@ -63,6 +63,8 @@ CurvilinearInterface2::CurvilinearInterface2(int a_gc, EW* a_ew) {
   for (int s = 0; s < 4; s++) m_isbndry[s] = true;
   m_use_attenuation = a_ew->usingAttenuation();
   m_number_mechanisms = a_ew->getNumberOfMechanisms();
+  // Allocate space for MPI buffers
+  
 }
 
 CurvilinearInterface2::~CurvilinearInterface2() {
@@ -184,6 +186,8 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   m_stry_c = SW4_NEW(Space::Managed, float_sw4[m_je - m_jb + 1]);
   m_strx_f = SW4_NEW(Space::Managed, float_sw4[m_ief - m_ibf + 1]);
   m_stry_f = SW4_NEW(Space::Managed, float_sw4[m_jef - m_jbf + 1]);
+
+  allocate_mpi_buffers();
 
   int ndif = m_nghost - (m_ew->m_iStartInt[m_gc] - m_ew->m_iStart[m_gc]);
   int nsw = m_ew->m_iEnd[m_gc] - m_ew->m_iStart[m_gc] + 1;
@@ -453,11 +457,12 @@ void CurvilinearInterface2::init_arrays_att() {
 void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
                                       std::vector<Sarray*>& a_AlphaVE) {
   SW4_MARK_FUNCTION;
-  SYNC_STREAM;                   // CURVI_CPU
+  //SYNC_STREAM;                   // CURVI_CPU
   bool force_dirichlet = false;  //, check_stress_cont=false;
   //   int fg=0;
   //   if( force_dirichlet )
   //      fg = 1;
+  SW4_MARK_BEGIN("IMPOSE_IC_1");
 
   Sarray U_f(3, m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef, __FILE__, __LINE__);
   Sarray U_c(3, m_ib, m_ie, m_jb, m_je, m_kb, m_ke, __FILE__, __LINE__);
@@ -479,6 +484,8 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
       Alpha_c[a].insert_intersection(a_AlphaVE[m_gc][a]);
     }
   }
+  SW4_MARK_END("IMPOSE_IC_1");
+  SW4_MARK_BEGIN("IMPOSE_IC_2");
   // 2a. Impose dirichlet conditions at ghost points
   int sides[6] = {m_isbndry[0], m_isbndry[1], m_isbndry[2], m_isbndry[3], 0, 0};
   if (m_tw != 0) {
@@ -517,7 +524,8 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
         bnd_zero(Alpha_f[a], m_nghost);
       }
   }
-
+  SW4_MARK_END("IMPOSE_IC_2");
+  SW4_MARK_BEGIN("IMPOSE_IC_3");
   // 3. Inject U_f := U_c on interface
   communicate_array(U_c, true);
   injection(U_f, U_c);
@@ -539,8 +547,8 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   // std::cout<<"RHS SIZE "<<m_ib<<" "<<m_ie<<" "<<m_jb<<" "<<m_je<<" size =
   // "<<asize<<"\n";
   interface_rhs(rhs, U_c, U_f, Alpha_c, Alpha_f);
-
-  SW4_MARK_BEGIN("IMPOSE_IC_CPU");
+  SW4_MARK_END("IMPOSE_IC_3");
+  SW4_MARK_BEGIN("IMPOSE_IC_4");
   // 4.b Left hand side, lhs*x
   Sarray lhs(rhs, Space::Managed_temps), residual(rhs, Space::Managed_temps);
   interface_lhs(lhs, U_c);
@@ -554,7 +562,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   //       if (abs(residual(c, i, j, 1)) > maxresloc)
   //         maxresloc = abs(residual(c, i, j, 1));
   //     }
-  SW4_MARK_BEGIN("IMPOSE_IC_GPU1");
+
   RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax(0);
   SView& residualV = residual.getview();
   SView& lhsV = lhs.getview();
@@ -570,11 +578,13 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
       });
 
   maxresloc = static_cast<float_sw4>(rmax.get());
-  SW4_MARK_END("IMPOSE_IC_GPU1");
+  
   float_sw4 maxres = maxresloc;
   MPI_Allreduce(&maxresloc, &maxres, 1, m_ew->m_mpifloat, MPI_MAX,
                 m_ew->m_cartesian_communicator);
-
+  SW4_MARK_END("IMPOSE_IC_4");
+ 
+  SW4_MARK_BEGIN("IMPOSE_IC_JACOBI");
   // 4.c Jacobi iteration
   float_sw4 scalef =
       (m_ew->m_global_nx[m_gc] - 1) *
@@ -596,7 +606,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   //      convhist.push_back(reltol);
   //      convhist.push_back(abstol);
   //   }
-  SW4_MARK_BEGIN("IMPOSE_IC_JACOBI");
+
   while (maxres > m_reltol * maxres0 && scalef * maxres > m_abstol &&
          iter <= m_maxit) {
     iter++;
@@ -734,7 +744,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
     std::cout << "     scaled res = " << scalef * maxres
               << " abstol= " << m_abstol << std::endl;
   }
-  SW4_MARK_END("IMPOSE_IC_CPU");
+  SW4_MARK_BEGIN("IMPOSE_IC_5");
   // 5. Copy U_c and U_f back to a_U, only k=0 for U_c and k=n3f for U_f.
   a_U[m_gc].copy_kplane2(U_c, 0);      // have computed U_c:s ghost points
   a_U[m_gf].copy_kplane2(U_f, m_nkf);  // .. and U_f:s interface points
@@ -742,6 +752,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
     for (int a = 0; a < m_number_mechanisms; a++)
       a_AlphaVE[m_gf][a].copy_kplane2(Alpha_f[a], m_nkf);
   }
+  SW4_MARK_END("IMPOSE_IC_5");
 }
 
 //-----------------------------------------------------------------------
@@ -1692,7 +1703,7 @@ void CurvilinearInterface2::restrict2D(Sarray& Uc, Sarray& Uf, int kc, int kf) {
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
+void CurvilinearInterface2::communicate_array_org(Sarray& u, bool allkplanes,
                                               int kplane) {
   SW4_MARK_FUNCTION;
   //
@@ -1716,7 +1727,12 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
   size_t npts1 = ng * nj * nk;
   size_t npts2 = ni * ng * nk;
   size_t nptsmax = max(npts1, npts2);
-  float_sw4* tmp = new float_sw4[4 * nptsmax * u.m_nc];
+  //float_sw4* tmp = new float_sw4[4 * nptsmax * u.m_nc];
+  float_sw4* tmp = m_mpi_buffer_space;
+  if ((4 * nptsmax * u.m_nc)>m_mpi_buffer_size){
+    std::cerr<<"MPI buffer size exceeded\n Aborting\n";
+    abort();
+  }
   sbuf1 = &tmp[0];
   rbuf1 = &tmp[nptsmax * u.m_nc];
   sbuf2 = &tmp[2 * nptsmax * u.m_nc];
@@ -1821,12 +1837,13 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
 
   MPI_Wait(&req3, &status);
   MPI_Wait(&req4, &status);
-  delete[] tmp;
+  //delete[] tmp;
 }
 
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::communicate_array1d(float_sw4* u, int n, int dir,
                                                 int ngh) {
+  // WARNING :: This is using managed memory. Needs -M -gpu flag for safety
   SW4_MARK_FUNCTION;
   //
   // Communicate one dimensional array in i- or j-direction
@@ -1980,4 +1997,221 @@ void CurvilinearInterface2::compute_icstresses_curv(
   // std::cout<<"END OF STRESS C CALL\n";
 #undef str_x
 #undef str_y
+}
+void CurvilinearInterface2::allocate_mpi_buffers(){
+  int ni = m_ief-m_ibf+1;
+  int nj = m_jef-m_jbf+1;
+  int nk = m_kef-m_kbf+1;
+  int ng = m_nghost;
+  
+  size_t npts1 = ng * nj * nk;
+  size_t npts2 = ni * ng * nk;
+    
+  m_mpi_buffer_size = max(npts1, npts2)*4*4; // Asumming u.m_nc is never more than 4
+  
+  m_mpi_buffer_space = SW4_NEW(Space::Pinned, float_sw4[m_mpi_buffer_size]);
+}
+//-----------------------------------------------------------------------
+void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
+                                              int kplane) {
+  SW4_MARK_FUNCTION;
+  //
+  // General ghost point exchange at processor boundaries.
+  //
+  // Excplicit copy to buffers, not using fancy MPI-datatypes or sendrecv.
+  //
+  int kb = u.m_kb;
+  int ke = u.m_ke;
+  if (!allkplanes) ke = kb = kplane;
+  const int ng = m_nghost;
+  const int ni = (u.m_ie - u.m_ib + 1);
+  const int nj = (u.m_je - u.m_jb + 1);
+  const int nk = ke - kb + 1;
+  float_sw4 *sbuf1, *sbuf2, *rbuf1, *rbuf2;
+
+  MPI_Request req1, req2, req3, req4;
+  MPI_Status status;
+  int tag1 = 203, tag2 = 204;
+
+  size_t npts1 = ng * nj * nk;
+  size_t npts2 = ni * ng * nk;
+  size_t nptsmax = max(npts1, npts2);
+  //float_sw4* tmp = new float_sw4[4 * nptsmax * u.m_nc];
+  float_sw4* tmp = m_mpi_buffer_space;
+  if ((4 * nptsmax * u.m_nc)>m_mpi_buffer_size){
+    std::cerr<<"MPI buffer size exceeded\n Aborting\n";
+    abort();
+  }
+  sbuf1 = &tmp[0];
+  rbuf1 = &tmp[nptsmax * u.m_nc];
+  sbuf2 = &tmp[2 * nptsmax * u.m_nc];
+  rbuf2 = &tmp[3 * nptsmax * u.m_nc];
+
+  // i-direction communication
+  MPI_Irecv(rbuf1, npts1 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[1], tag1,
+            m_ew->m_cartesian_communicator, &req1);
+  MPI_Irecv(rbuf2, npts1 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[0], tag2,
+            m_ew->m_cartesian_communicator, &req2);
+  if (m_ew->m_neighbor[0] != MPI_PROC_NULL)
+    for (int c = 1; c <= u.m_nc; c++)
+      for (int k = kb; k <= ke; k++)
+        for (int j = u.m_jb; j <= u.m_je; j++)
+          for (int i = u.m_ib + ng; i <= u.m_ib + 2 * ng - 1; i++) {
+            size_t ind =
+                i - (u.m_ib + ng) + ng * (j - u.m_jb) + ng * nj * (k - kb);
+            sbuf1[ind + npts1 * (c - 1)] = u(c, i, j, k);
+          }
+  MPI_Isend(sbuf1, npts1 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[0], tag1,
+            m_ew->m_cartesian_communicator, &req3);
+  if (m_ew->m_neighbor[1] != MPI_PROC_NULL)
+    for (int c = 1; c <= u.m_nc; c++)
+      for (int k = kb; k <= ke; k++)
+        for (int j = u.m_jb; j <= u.m_je; j++)
+          for (int i = u.m_ie - 2 * ng + 1; i <= u.m_ie - ng; i++) {
+            size_t ind = i - (u.m_ie - 2 * ng + 1) + ng * (j - u.m_jb) +
+                         ng * nj * (k - kb);
+            sbuf2[ind + npts1 * (c - 1)] = u(c, i, j, k);
+          }
+  MPI_Isend(sbuf2, npts1 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[1], tag2,
+            m_ew->m_cartesian_communicator, &req4);
+  MPI_Wait(&req1, &status);
+  if (m_ew->m_neighbor[1] != MPI_PROC_NULL)
+    for (int c = 1; c <= u.m_nc; c++)
+      for (int k = kb; k <= ke; k++)
+        for (int j = u.m_jb; j <= u.m_je; j++)
+          for (int i = u.m_ie - ng + 1; i <= u.m_ie; i++) {
+            size_t ind =
+                i - (u.m_ie - ng + 1) + ng * (j - u.m_jb) + ng * nj * (k - kb);
+            u(c, i, j, k) = rbuf1[ind + npts1 * (c - 1)];
+          }
+  MPI_Wait(&req2, &status);
+  if (m_ew->m_neighbor[0] != MPI_PROC_NULL)
+    for (int c = 1; c <= u.m_nc; c++)
+      for (int k = kb; k <= ke; k++)
+        for (int j = u.m_jb; j <= u.m_je; j++)
+          for (int i = u.m_ib; i <= u.m_ib + ng - 1; i++) {
+            size_t ind = i - u.m_ib + ng * (j - u.m_jb) + ng * nj * (k - kb);
+            u(c, i, j, k) = rbuf2[ind + npts1 * (c - 1)];
+          }
+
+  MPI_Wait(&req3, &status);
+  MPI_Wait(&req4, &status);
+
+  // j-direction communication
+  MPI_Irecv(rbuf1, npts2 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[3], tag1,
+            m_ew->m_cartesian_communicator, &req1);
+  MPI_Irecv(rbuf2, npts2 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[2], tag2,
+            m_ew->m_cartesian_communicator, &req2);
+
+
+  using LOCAL_POL =
+    RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::Tile<
+        0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+        RAJA::statement::Tile<
+            1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+            RAJA::statement::Tile<
+                2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
+                RAJA::statement::For<
+                    0, RAJA::cuda_thread_z_direct,
+                    RAJA::statement::For<
+                        1, RAJA::cuda_thread_y_direct,
+                        RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
+                                             RAJA::statement::Lambda<0>>>>>>>>>;
+
+
+  int ib = u.m_ib;
+  int jb = u.m_jb;
+  int lm_nc = u.m_nc;
+  auto& uV = u.getview();
+  RAJA::RangeSegment k_range(kb,ke+1);
+  if (m_ew->m_neighbor[2] != MPI_PROC_NULL){
+    // for (int c = 1; c <= u.m_nc; c++)
+    //   for (int k = kb; k <= ke; k++)
+    //     for (int j = u.m_jb + ng; j <= u.m_jb + 2 * ng - 1; j++)
+    //       for (int i = u.m_ib; i <= u.m_ie; i++) {
+
+	    RAJA::RangeSegment j_range1(u.m_jb + ng,u.m_jb + 2 * ng - 1+1);
+	    RAJA::RangeSegment i_range1(u.m_ib, u.m_ie+1);
+	    RAJA::kernel<
+	      LOCAL_POL>(RAJA::make_tuple(k_range, j_range1, i_range1), [=] RAJA_DEVICE(
+										      int k,
+										      int j,
+										      int i) {
+		       
+			   for (int c = 1; c <= lm_nc; c++){
+			     size_t ind =
+                i - ib + ni * (j - (jb + ng)) + ng * ni * (k - kb);
+            sbuf1[ind + npts2 * (c - 1)] = uV(c, i, j, k);
+			   }
+			 });
+	  }
+  
+  MPI_Isend(sbuf1, npts2 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[2], tag1,
+            m_ew->m_cartesian_communicator, &req3);
+  
+  int je = u.m_je;
+  if (m_ew->m_neighbor[3] != MPI_PROC_NULL){
+    // for (int c = 1; c <= u.m_nc; c++)
+    //   for (int k = kb; k <= ke; k++)
+    //     for (int j = u.m_je - 2 * ng + 1; j <= u.m_je - ng; j++)
+    //       for (int i = u.m_ib; i <= u.m_ie; i++) {
+	    RAJA::RangeSegment j_range2(u.m_je - 2 * ng + 1,u.m_je - ng+1);
+	    RAJA::RangeSegment i_range2(u.m_ib, u.m_ie+1);
+	    RAJA::kernel<
+	      LOCAL_POL>(RAJA::make_tuple(k_range, j_range2, i_range2), [=] RAJA_DEVICE(
+										      int k,
+										      int j,
+										      int i) {
+            for (int c = 1; c <= lm_nc; c++){
+			   size_t ind = i - ib + ni * (j - (je - 2 * ng + 1)) +
+                         ng * ni * (k - kb);
+            sbuf2[ind + npts2 * (c - 1)] = uV(c, i, j, k);
+	    }
+			 });
+  }
+  MPI_Isend(sbuf2, npts2 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[3], tag2,
+            m_ew->m_cartesian_communicator, &req4);
+  MPI_Wait(&req1, &status);
+  if (m_ew->m_neighbor[3] != MPI_PROC_NULL){
+    // for (int c = 1; c <= u.m_nc; c++){
+    //   for (int k = kb; k <= ke; k++)
+    //     for (int j = u.m_je - ng + 1; j <= u.m_je; j++)
+    //       for (int i = u.m_ib; i <= u.m_ie; i++) {
+	    RAJA::RangeSegment j_range3(u.m_je - ng + 1, u.m_je+1);
+	    RAJA::RangeSegment i_range3(u.m_ib, u.m_ie+1);
+	    RAJA::kernel<
+	      LOCAL_POL>(RAJA::make_tuple(k_range, j_range3, i_range3), [=] RAJA_DEVICE(
+										      int k,
+										      int j,
+										      int i) {
+            for (int c = 1; c <= lm_nc; c++){
+			   size_t ind =
+                i - ib + ni * (j - (je - ng + 1)) + ng * ni * (k - kb);
+            uV(c, i, j, k) = rbuf1[ind + npts2 * (c - 1)];
+	    }
+			 });
+    }
+  MPI_Wait(&req2, &status);
+if (m_ew->m_neighbor[2] != MPI_PROC_NULL){
+    // for (int c = 1; c <= u.m_nc; c++)
+    //   for (int k = kb; k <= ke; k++)
+    //     for (int j = u.m_jb; j <= u.m_jb + ng - 1; j++)
+    //       for (int i = u.m_ib; i <= u.m_ie; i++) {
+	    RAJA::RangeSegment j_range4(u.m_jb, u.m_jb + ng - 1+1);
+	    RAJA::RangeSegment i_range4(u.m_ib, u.m_ie+1);
+	    RAJA::kernel<
+	      LOCAL_POL>(RAJA::make_tuple(k_range, j_range4, i_range4), [=] RAJA_DEVICE(
+										      int k,
+										      int j,
+										      int i) {
+for (int c = 1; c <= lm_nc; c++){
+            size_t ind = i - ib + ni * (j - jb) + ng * ni * (k - kb);
+            uV(c, i, j, k) = rbuf2[ind + npts2 * (c - 1)];
+ }
+			 });
+			 }
+
+  MPI_Wait(&req3, &status);
+  MPI_Wait(&req4, &status);
+  //delete[] tmp;
 }

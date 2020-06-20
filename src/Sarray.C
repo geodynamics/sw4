@@ -1224,7 +1224,7 @@ void Sarray::prefetch(int device) {
 #endif  // #if defined(DISABLE_PREFETCH)
 }
 void Sarray::forceprefetch(int device) {
-#if defined(DISABLE_PREFETCH)
+#if defined(DISABLE_PREFETCH2)
   return;
 #else
 #if defined(ENABLE_CUDA)

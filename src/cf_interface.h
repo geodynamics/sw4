@@ -216,7 +216,7 @@ void corrfort_ci(int ib, int ie, int jb, int je, int kb, int ke,
 void dpdmtfort_ci(int ib, int ie, int jb, int je, int kb, int ke,
                   float_sw4* __restrict__ up, float_sw4* __restrict__ u,
                   float_sw4* __restrict__ um, float_sw4* __restrict__ u2,
-                  float_sw4 dt2i);
+                  float_sw4 dt2i,int rank);
 
 void rhouttlumf_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                    int klast, int nz, float_sw4* __restrict__ a_uacc,

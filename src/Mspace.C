@@ -3,7 +3,7 @@
 #include "Mspace.h"
 #include "caliper.h"
 struct global_variable_holder_struct global_variables = {0, 0, 0, 0,
-                                                         0, 0, 0, 1};
+                                                         0, 0, 0, 1,0};
 using namespace std;
 
 void presetGPUID() {

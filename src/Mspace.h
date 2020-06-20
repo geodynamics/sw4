@@ -79,6 +79,7 @@ struct global_variable_holder_struct {
   size_t host_max_mem;
   int device;
   int num_devices;
+  bool firstCycle;
   std::vector<std::tuple<char *, size_t>> massprefetch;
 };
 

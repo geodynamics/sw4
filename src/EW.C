@@ -5065,8 +5065,10 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     la_ptr = a_Lambda[g].c_ptr();
     float_sw4* met_ptr = mMetric[g].c_ptr();
     float_sw4* jac_ptr = mJ[g].c_ptr();
-    mMetric[g].forceprefetch();
-    mJ[g].forceprefetch();
+    if (global_variables.firstCycle){
+      mMetric[g].forceprefetch();
+      mJ[g].forceprefetch();
+    }
     ifirst = m_iStart[g];
     ilast = m_iEnd[g];
     jfirst = m_jStart[g];
@@ -5306,15 +5308,17 @@ void EW::evalDpDmInTime(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     kfirst = m_kStart[g];
     klast = m_kEnd[g];
     dt2i = 1. / (mDt * mDt);
-    a_Up[g].prefetch();
-    a_U[g].prefetch();
-    a_Um[g].prefetch();
-    a_Uacc[g].prefetch();
+    if (global_variables.firstCycle){
+      a_Up[g].forceprefetch();
+      a_U[g].forceprefetch();
+      a_Um[g].forceprefetch();
+      a_Uacc[g].forceprefetch();
+    }
     //  subroutine dpdmtfort(ifirst, ilast, jfirst, jlast, kfirst, klast,
     // +     up, u, um, u2, dt2i)
     if (m_croutines)
       dpdmtfort_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr, u_ptr,
-                   um_ptr, uacc_ptr, dt2i);
+                   um_ptr, uacc_ptr, dt2i,getRank());
     else
       dpdmtfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, up_ptr,
                 u_ptr, um_ptr, uacc_ptr, &dt2i);
@@ -8991,4 +8995,13 @@ TestEcons* EW::create_energytest() {
                          m_energy_test->m_cpcsratio);
   else
     return 0;
+}
+void EW::load_balance(){
+  for(int g=0;g<mNumberOfGrids;g++){
+    size_t local_size = (m_kEndInt[g]-m_kStartInt[g]+1)*(m_jEndInt[g]-m_jStartInt[g]+1)*(m_iEndInt[g]-m_iStartInt[g]+1);
+    size_t global_size = m_global_nx[g]*m_global_ny[g]*m_global_nz[g];
+
+    float perc = static_cast<float>(local_size)/global_size*100.0;
+    std::cout<<getRank()<<" Grid # "<<g<<" "<<perc<<"%\n";
+  }
 }

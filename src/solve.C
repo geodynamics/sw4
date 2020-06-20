@@ -766,6 +766,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 #endif
   // BEGIN TIME STEPPING LOOP
   // PROFILER_START;
+  //load_balance();
   SW4_MARK_BEGIN("TIME_STEPPING");
 #ifdef SW4_TRACK_MPI
   // bool cudaProfilerOn = false;
@@ -773,6 +774,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   for (int currentTimeStep = beginCycle;
        currentTimeStep <= mNumberOfTimeSteps[event]; currentTimeStep++) {
     time_measure[0] = MPI_Wtime();
+    global_variables.firstCycle=currentTimeStep == beginCycle;
     if (currentTimeStep == mNumberOfTimeSteps[event]) t1 = SW4_CHRONO_NOW;
     if (currentTimeStep == (beginCycle + 10)) {
       PROFILER_START;

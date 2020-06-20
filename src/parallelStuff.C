@@ -895,7 +895,7 @@ void EW::make_type_2d(vector<std::tuple<int, int, int>>& send_type,
 }
 void EW::communicate_array_async(Sarray& u, int grid) {
   SW4_MARK_FUNCTION;
-  u.forceprefetch();
+  //u.forceprefetch();
   // u.prefetch(cudaCpuDeviceId);
   REQUIRE2(u.m_nc == 1 || u.m_nc == 3 || u.m_nc == 4,
            "Communicate array, only implemented for nc=1,3, and 4 "
