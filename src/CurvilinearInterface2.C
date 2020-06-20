@@ -76,6 +76,7 @@ CurvilinearInterface2::~CurvilinearInterface2() {
   ::operator delete[](m_stry_c, Space::Managed);
   ::operator delete[](m_strx_f, Space::Managed);
   ::operator delete[](m_stry_f, Space::Managed);
+  ::operator delete[](m_mpi_buffer_space, Space::Pinned);
 #ifdef USE_MAGMA
   ::operator delete[](m_mass_block, Space::Managed);
   ::operator delete[](dA_array, Space::Managed);
