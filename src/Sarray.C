@@ -362,7 +362,7 @@ void Sarray::define(int iend, int jend, int kend) {
 
 //-----------------------------------------------------------------------
 void Sarray::define(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
-                    int kend) {
+                    int kend,Space space) {
   if (m_data != NULL) ::operator delete[](m_data, Space::Managed);
   m_nc = nc;
   m_ib = ibeg;
@@ -375,12 +375,19 @@ void Sarray::define(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
   m_nj = m_je - m_jb + 1;
   m_nk = m_ke - m_kb + 1;
   if (m_nc * m_ni * m_nj * m_nk > 0)
-    m_data = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
+    m_data = SW4_NEW(space, float_sw4[m_nc * m_ni * m_nj * m_nk]);
   else
     m_data = NULL;
   dev_data = NULL;
   define_offsets();
   prefetched = false;
+  if (space == Space::Managed)
+    static_alloc = false;
+  else if (space == Space::Managed_temps)
+    static_alloc = true;
+  else
+    std::cout
+        << "ERROR :: Sarrays outside Space::Managed not fully supported \n";
 }
 
 //-----------------------------------------------------------------------
@@ -388,7 +395,7 @@ void Sarray::define(int ibeg, int iend, int jbeg, int jend, int kbeg, int kend,
                     Space space) {
   if (m_data != NULL)
     ::operator delete[](
-        m_data, space);  // This is potential bug sincewe dont know the space
+        m_data, space);  // This is potential bug since we dont know the space
                          // that m_data was originally allocated in. PBUGS
   m_nc = 1;
   m_ib = ibeg;
@@ -407,7 +414,15 @@ void Sarray::define(int ibeg, int iend, int jbeg, int jend, int kbeg, int kend,
   dev_data = NULL;
   define_offsets();
   prefetched = false;
+  if (space == Space::Managed)
+    static_alloc = false;
+  else if (space == Space::Managed_temps)
+    static_alloc = true;
+  else
+    std::cout
+        << "ERROR :: Sarrays outside Space::Managed not fully supported \n";
 }
+
 
 //-----------------------------------------------------------------------
 void Sarray::define(const Sarray& u) {
@@ -1481,18 +1496,41 @@ void Sarray::copy_kplane2(Sarray& u, int k) {
   int wind[6];
   intersection(u.m_ib, u.m_ie, u.m_jb, u.m_je, u.m_kb, u.m_ke, wind);
   if (m_corder) {
+    int lm_nc = m_nc;
+    int lm_ib = m_ib;
+    int lm_ni = m_ni;
+    int lm_jb = m_jb;
+    int lm_nj = m_nj;
+    int lm_kb = m_kb;
+
+    int ulm_ib = u.m_ib;
+    int ulm_ni = u.m_ni;
+    int ulm_jb = u.m_jb;
+    int ulm_nj = u.m_nj;
+    int ulm_kb = u.m_kb;
+
+    float_sw4* lm_data = m_data;
+    float_sw4* ulm_data = u.m_data;
     size_t nijk = m_ni * m_nj * m_nk;
     size_t unijk = u.m_ni * u.m_nj * u.m_nk;
-    for (int c = 0; c < m_nc; c++)
-      for (int j = wind[2]; j <= wind[3]; j++)
-        for (int i = wind[0]; i <= wind[1]; i++) {
+    // for (int c = 0; c < m_nc; c++)
+    //   for (int j = wind[2]; j <= wind[3]; j++)
+    //     for (int i = wind[0]; i <= wind[1]; i++) {
+	  RAJA::RangeSegment j_range(wind[2], wind[3] + 1);
+	  RAJA::RangeSegment i_range(wind[0], wind[1] + 1);
+	  RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
+						 RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
           size_t ind =
-              (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
-          size_t uind = (i - u.m_ib) + u.m_ni * (j - u.m_jb) +
-                        u.m_ni * u.m_nj * (k - u.m_kb);
-          m_data[ind + c * nijk] = u.m_data[uind + c * unijk];
-        }
+              (i - lm_ib) + lm_ni * (j - lm_jb) + lm_ni * lm_nj * (k - lm_kb);
+	  
+          size_t uind = (i - ulm_ib) + ulm_ni * (j - ulm_jb) +
+                        ulm_ni * ulm_nj * (k - ulm_kb);
+	  
+          for (int c = 0; c < lm_nc; c++) lm_data[ind + c * nijk] = ulm_data[uind + c * unijk];
+						 });
+	  SYNC_STREAM;
   } else {
+    std::cout<<"WARNING Sarray::copy_kplane2 running on CPU !!\n"<<std::flush;
     for (int j = wind[2]; j <= wind[3]; j++)
       for (int i = wind[0]; i <= wind[1]; i++) {
         size_t ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);

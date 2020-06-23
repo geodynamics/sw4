@@ -130,7 +130,7 @@ void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
                                    uV(c, i, j, k) = 0;
                                });
     }
-  SYNC_STREAM;
+  //SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -478,8 +478,8 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
     //      Alpha_c = new Sarray[m_number_mechanisms];
     //      Alpha_f = new Sarray[m_number_mechanisms];
     for (int a = 0; a < m_number_mechanisms; a++) {
-      Alpha_f[a].define(3, m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef);
-      Alpha_c[a].define(3, m_ib, m_ie, m_jb, m_je, m_kb, m_ke);
+      Alpha_f[a].define(3, m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef,Space::Managed_temps);
+      Alpha_c[a].define(3, m_ib, m_ie, m_jb, m_je, m_kb, m_ke,Space::Managed_temps);
       Alpha_f[a].insert_intersection(a_AlphaVE[m_gf][a]);
       Alpha_c[a].insert_intersection(a_AlphaVE[m_gc][a]);
     }
@@ -666,7 +666,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
     // for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
     //       for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
     SView& U_cV = U_c.getview();
-    ;
+    
     RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
         RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
           // for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
@@ -855,7 +855,7 @@ void CurvilinearInterface2::injection(Sarray& u_fA, Sarray& u_cA) {
           u_f(l, 2 * i - 1, 2 * j - 1, lm_nkf) = u_c(l, i, j, 1);
         });
   }
-  SYNC_STREAM;
+  //SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -1089,7 +1089,7 @@ void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
   RAJA::RangeSegment i_range4(rhs.m_ib, rhs.m_ie + 1);
   RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(RAJA::make_tuple(j_range4, i_range4),
                                      [=] RAJA_DEVICE(int j, int i) {
-#pragma unrollw
+#pragma unroll
                                        for (int c = 1; c <= 3; c++)
                                          rhsV(c, i, j, 1) -= BcV(c, i, j, 1);
                                      });
@@ -1467,6 +1467,7 @@ void CurvilinearInterface2::matrix_Lu(int strib, int strjb, Sarray& a_mat,
 void CurvilinearInterface2::restprol2D(Sarray& Uc, Sarray& alpha, int kc,
                                        int kf) {
   SW4_MARK_FUNCTION;
+  SYNC_STREAM;
   //
   // Multiplies the diagonal element of the operator P^T*diag(alpha)*P
   //

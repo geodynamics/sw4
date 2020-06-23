@@ -158,6 +158,7 @@ void TestTwilight::get_mula_att(Sarray& muve, Sarray& lambdave, Sarray& x,
 void TestTwilight::get_bnd_att(Sarray& AlphaVE, Sarray& x, Sarray& y, Sarray& z,
                                float_sw4 t, int npts, int sides[6]) {
   SW4_MARK_FUNCTION;
+  std::cout<<"WARNING TestTwilight::get_bnd_att running on CPU\n"<<std::flush;
   for (int s = 0; s < 6; s++)
     if (sides[s] == 1) {
       int kb = AlphaVE.m_kb, ke = AlphaVE.m_ke, jb = AlphaVE.m_jb,
