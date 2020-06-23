@@ -841,16 +841,16 @@ void Image::computeImageLatLon(std::vector<Sarray>& a_X,
             size_t iField = (ii - mWindow[g][0]) + ni * (jj - mWindow[g][2]) +
                             nij * (kk - mWindow[g][4]);
             double latP, lonP, xP, yP, val;
-	    //double zP;
+            // double zP;
             if (g > topCartesian)  // curvilinear grid
             {
               xP = a_X[g](ii, jj, kk);
               yP = a_Y[g](ii, jj, kk);
-              //zP = a_Z[g](ii, jj, kk);
+              // zP = a_Z[g](ii, jj, kk);
             } else {
               xP = (ii - 1) * mEW->mGridSize[g];
               yP = (jj - 1) * mEW->mGridSize[g];
-              //zP = (kk - 1) * mEW->mGridSize[g] + mEW->m_zmin[g];
+              // zP = (kk - 1) * mEW->mGridSize[g] + mEW->m_zmin[g];
             }
             mEW->computeGeographicCoord(xP, yP, lonP, latP);
             if (mMode == Image::LAT)
@@ -988,7 +988,7 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
   stime = MPI_Wtime();
 #ifdef USE_HDF5
   hid_t h5_fid, dset, dtype, attr_space1, dset_space;
-  //hid_t grd,attr,fapl;
+  // hid_t grd,attr,fapl;
 #endif
   // plane_in_proc returns true for z=const lpanes, because all processors have
   // a part in these planes
@@ -3572,10 +3572,10 @@ void Image::computeCurl(std::vector<Sarray>& a_U,
             for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
               size_t iField = (i - mWindow[g][0]) + ni * (j - mWindow[g][2]) +
                               nij * (k - mWindow[g][4]);
-              float_sw4  duydq = 0.0, duzdq = 0.0;
-              float_sw4 duxdr = 0.,  duzdr = 0.0;
+              float_sw4 duydq = 0.0, duzdq = 0.0;
+              float_sw4 duxdr = 0., duzdr = 0.0;
               float_sw4 duxds = 0., duyds = 0.0, duzds = 0.0;
-	      //float_sw4 duxdq = 0., duydr = 0.0; 
+              // float_sw4 duxdq = 0., duydr = 0.0;
               if (i == 1) {
                 // duxdq = -2.25 * a_U[g](1, i, j, k) +
                 //         (4 + fs) * a_U[g](1, i + 1, j, k) -
@@ -3598,10 +3598,10 @@ void Image::computeCurl(std::vector<Sarray>& a_U,
               }
               if (i == 2) {
                 // duxdq =
-                //     -os * a_U[g](1, i - 1, j, k) - 1.25 * a_U[g](1, i, j, k) +
-                //     (1 + ft) * a_U[g](1, i + 1, j, k) -
-                //     ft * a_U[g](1, i + 2, j, k) + 0.5 * a_U[g](1, i + 3, j, k) -
-                //     ot * a_U[g](1, i + 4, j, k);
+                //     -os * a_U[g](1, i - 1, j, k) - 1.25 * a_U[g](1, i, j, k)
+                //     + (1 + ft) * a_U[g](1, i + 1, j, k) - ft * a_U[g](1, i +
+                //     2, j, k) + 0.5 * a_U[g](1, i + 3, j, k) - ot * a_U[g](1,
+                //     i + 4, j, k);
                 duydq =
                     -os * a_U[g](2, i - 1, j, k) - 1.25 * a_U[g](2, i, j, k) +
                     (1 + ft) * a_U[g](2, i + 1, j, k) -
@@ -3616,8 +3616,8 @@ void Image::computeCurl(std::vector<Sarray>& a_U,
                 // duxdq =
                 //     os * a_U[g](1, i + 1, j, k) + 1.25 * a_U[g](1, i, j, k) -
                 //     (1 + ft) * a_U[g](1, i - 1, j, k) +
-                //     ft * a_U[g](1, i - 2, j, k) - 0.5 * a_U[g](1, i - 3, j, k) +
-                //     ot * a_U[g](1, i - 4, j, k);
+                //     ft * a_U[g](1, i - 2, j, k) - 0.5 * a_U[g](1, i - 3, j,
+                //     k) + ot * a_U[g](1, i - 4, j, k);
                 duydq =
                     os * a_U[g](2, i + 1, j, k) + 1.25 * a_U[g](2, i, j, k) -
                     (1 + ft) * a_U[g](2, i - 1, j, k) +
@@ -3648,8 +3648,10 @@ void Image::computeCurl(std::vector<Sarray>& a_U,
                         (1 + ot) * a_U[g](3, i - 4, j, k) -
                         os * a_U[g](3, i - 5, j, k);
               } else {
-                // duxdq = c1 * (a_U[g](1, i + 1, j, k) - a_U[g](1, i - 1, j, k)) +
-                //         c2 * (a_U[g](1, i + 2, j, k) - a_U[g](1, i - 2, j, k));
+                // duxdq = c1 * (a_U[g](1, i + 1, j, k) - a_U[g](1, i - 1, j,
+                // k)) +
+                //         c2 * (a_U[g](1, i + 2, j, k) - a_U[g](1, i - 2, j,
+                //         k));
                 duydq = c1 * (a_U[g](2, i + 1, j, k) - a_U[g](2, i - 1, j, k)) +
                         c2 * (a_U[g](2, i + 2, j, k) - a_U[g](2, i - 2, j, k));
                 duzdq = c1 * (a_U[g](3, i + 1, j, k) - a_U[g](3, i - 1, j, k)) +
@@ -3683,10 +3685,10 @@ void Image::computeCurl(std::vector<Sarray>& a_U,
                     ft * a_U[g](1, i, j + 2, k) + 0.5 * a_U[g](1, i, j + 3, k) -
                     ot * a_U[g](1, i, j + 4, k);
                 // duydr =
-                //     -os * a_U[g](2, i, j - 1, k) - 1.25 * a_U[g](2, i, j, k) +
-                //     (1 + ft) * a_U[g](2, i, j + 1, k) -
-                //     ft * a_U[g](2, i, j + 2, k) + 0.5 * a_U[g](2, i, j + 3, k) -
-                //     ot * a_U[g](2, i, j + 4, k);
+                //     -os * a_U[g](2, i, j - 1, k) - 1.25 * a_U[g](2, i, j, k)
+                //     + (1 + ft) * a_U[g](2, i, j + 1, k) - ft * a_U[g](2, i, j
+                //     + 2, k) + 0.5 * a_U[g](2, i, j + 3, k) - ot * a_U[g](2,
+                //     i, j + 4, k);
                 duzdr =
                     -os * a_U[g](3, i, j - 1, k) - 1.25 * a_U[g](3, i, j, k) +
                     (1 + ft) * a_U[g](3, i, j + 1, k) -
@@ -3701,8 +3703,8 @@ void Image::computeCurl(std::vector<Sarray>& a_U,
                 // duydr =
                 //     os * a_U[g](2, i, j + 1, k) + 1.25 * a_U[g](2, i, j, k) -
                 //     (1 + ft) * a_U[g](2, i, j - 1, k) +
-                //     ft * a_U[g](2, i, j - 2, k) - 0.5 * a_U[g](2, i, j - 3, k) +
-                //     ot * a_U[g](2, i, j - 4, k);
+                //     ft * a_U[g](2, i, j - 2, k) - 0.5 * a_U[g](2, i, j - 3,
+                //     k) + ot * a_U[g](2, i, j - 4, k);
                 duzdr =
                     os * a_U[g](3, i, j + 1, k) + 1.25 * a_U[g](3, i, j, k) -
                     (1 + ft) * a_U[g](3, i, j - 1, k) +
@@ -3730,8 +3732,10 @@ void Image::computeCurl(std::vector<Sarray>& a_U,
               } else {
                 duxdr = c1 * (a_U[g](1, i, j + 1, k) - a_U[g](1, i, j - 1, k)) +
                         c2 * (a_U[g](1, i, j + 2, k) - a_U[g](1, i, j - 2, k));
-                // duydr = c1 * (a_U[g](2, i, j + 1, k) - a_U[g](2, i, j - 1, k)) +
-                //         c2 * (a_U[g](2, i, j + 2, k) - a_U[g](2, i, j - 2, k));
+                // duydr = c1 * (a_U[g](2, i, j + 1, k) - a_U[g](2, i, j - 1,
+                // k)) +
+                //         c2 * (a_U[g](2, i, j + 2, k) - a_U[g](2, i, j - 2,
+                //         k));
                 duzdr = c1 * (a_U[g](3, i, j + 1, k) - a_U[g](3, i, j - 1, k)) +
                         c2 * (a_U[g](3, i, j + 2, k) - a_U[g](3, i, j - 2, k));
               }

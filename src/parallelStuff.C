@@ -130,7 +130,7 @@ void EW::setup2D_MPICommunications() {
   // // point (nc=1) get the size from the top Cartesian grid
   int g = mNumberOfGrids - 1;
   int ni = m_iEnd[g] - m_iStart[g] + 1, nj = m_jEnd[g] - m_jStart[g] + 1;
-  //std::cout<<"GRID = "<<g<<" size "<<ni<<" "<<nj<<"\n";
+  // std::cout<<"GRID = "<<g<<" size "<<ni<<" "<<nj<<"\n";
   // MPI_Type_vector(nj, m_ppadding, ni, m_mpifloat, &m_send_type_2dfinest[0]);
   // MPI_Type_vector(1, m_ppadding * ni, ni * nj, m_mpifloat,
   //                 &m_send_type_2dfinest[1]);
@@ -895,7 +895,7 @@ void EW::make_type_2d(vector<std::tuple<int, int, int>>& send_type,
 }
 void EW::communicate_array_async(Sarray& u, int grid) {
   SW4_MARK_FUNCTION;
-  //u.forceprefetch();
+  // u.forceprefetch();
   // u.prefetch(cudaCpuDeviceId);
   REQUIRE2(u.m_nc == 1 || u.m_nc == 3 || u.m_nc == 4,
            "Communicate array, only implemented for nc=1,3, and 4 "

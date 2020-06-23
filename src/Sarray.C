@@ -509,7 +509,11 @@ void Sarray::set_to_zero_async() {
   //    for( size_t i=0 ; i < m_npts ; i++ )
   prefetch();
   float_sw4* lm_data = m_data;
+  // using TEST = SW4_POLICIES::SW4_POLICY<int,int>::type;
+  // using NEWP =
+  // SW4_POLICIES::SW4_POLICY<SW4_POLICIES::CUDA,SW4_POLICIES::DEFAULT>::type;
   RAJA::forall<DEFAULT_LOOP1_ASYNC>(
+      // RAJA::forall<NEWP>(
       RAJA::RangeSegment(0, m_npts),
       [=] RAJA_DEVICE(size_t i) { lm_data[i] = 0; });
 }

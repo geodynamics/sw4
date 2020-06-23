@@ -2087,7 +2087,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
       dsX0[0] = dsX0[1] = dsX0[2] = 0;
       dsY0[0] = dsY0[1] = dsY0[2] = 0;
       dsZ0[0] = dsZ0[1] = dsZ0[2] = 0;
-      //for (int i = 0; i < 6; i++) d2sX0[i] = d2sY0[i] = d2sZ0[i] = 0;
+      // for (int i = 0; i < 6; i++) d2sX0[i] = d2sY0[i] = d2sZ0[i] = 0;
     } else {
       // Compute the curvilinear metric in the processor that owns the source.
       //   (ic, jc are undefined if canBeInverted is false.)

@@ -558,8 +558,8 @@ int MaterialIfile::getMaterialID(double lat, double lon, float_sw4 depth) {
   // 1. Interpolate in the grid file to get elevations on the computational grid
   double deltaLat = (m_materialLatMax - m_materialLatMin) / m_Nlat;
   double deltaLon = (m_materialLonMax - m_materialLonMin) / m_Nlon;
-  //double eInterp;
-  double  xi, eta;
+  // double eInterp;
+  double xi, eta;
   int i0, j0;
   if (lat > m_materialLatMax || lat < m_materialLatMin ||
       lon > m_materialLonMax || lon < m_materialLonMin) {

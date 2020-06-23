@@ -132,7 +132,8 @@ static herr_t traverse_func(hid_t loc_id, const char *grp_name,
   ASSERT(a_ew != NULL);
 
   status = H5Oget_info_by_name(loc_id, grp_name, &infobuf, H5P_DEFAULT);
-  if (status<0) printf("hdf5 status less than 0\n"); // PBUGS ADDED To SUPPRESS WARNINGs
+  if (status < 0)
+    printf("hdf5 status less than 0\n");  // PBUGS ADDED To SUPPRESS WARNINGs
   if (infobuf.type == H5O_TYPE_GROUP) {
     /* if (op_data->myRank == 0) */
     /*   printf ("Group: [%s] \n", grp_name); */
@@ -533,8 +534,8 @@ void readRuptureHDF5(char *fname,
 
   double x = 0.0, y = 0.0, z = 0.0;
   float_sw4 m0 = 1.0;
-  float_sw4 t0 = 0.0,  freq = 1.0;
-  //float_sw4 f0 = 1.0;
+  float_sw4 t0 = 0.0, freq = 1.0;
+  // float_sw4 f0 = 1.0;
   float_sw4 mxx = 0.0, mxy = 0.0, mxz = 0.0, myy = 0.0, myz = 0.0, mzz = 0.0;
   //  int isMomentType = -1;
   bool topodepth = true;

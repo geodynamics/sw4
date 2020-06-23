@@ -1381,7 +1381,7 @@ void EW::set_anisotropic_materials() {
     //    float_sw4 xP, yP, zP;
 
     int ifirst, ilast, jfirst, jlast, kfirst, klast, g;
-    float_sw4 *cm_ptr, *rho_ptr, h, zmin, omm, phm, amprho;// ampmu, ampla;
+    float_sw4 *cm_ptr, *rho_ptr, h, zmin, omm, phm, amprho;  // ampmu, ampla;
     float_sw4 phc[21];  // move these angles to the EW class
 
     // need to store all the phase angle constants somewhere
@@ -2069,7 +2069,7 @@ void EW::setup_supergrid() {
 //-----------------------------------------------------------------------
 void EW::assign_supergrid_damping_arrays() {
   int g, topCartesian;
-  //float_sw4 x, y, z;
+  // float_sw4 x, y, z;
 
   // resize the vectors for the pointers
   m_sg_dc_x.resize(mNumberOfGrids);
@@ -2430,8 +2430,8 @@ void EW::perturb_velocities(vector<Sarray> &a_vs, vector<Sarray> &a_vp) {
     // &klast,
     // FTNC			   &nx, &ny, &nz, &ghost, pert_ptr, wgh_ptr,
     // &m_random_dist,
-    // FTNC			   &m_random_distz, &h, m_random_seed, saverand_ptr,
-    // &p, &pz
+    // FTNC			   &m_random_distz, &h, m_random_seed,
+    // saverand_ptr, &p, &pz
     // ); FTNC	    perturbvelocity( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
     // &klast,
     // FTNC			     vs_ptr, vp_ptr, pert_ptr, &m_random_amp,
@@ -2571,7 +2571,7 @@ void EW::checkpoint_twilight_test(vector<Sarray> &Um, vector<Sarray> &U,
 
     // check the accuracy of the initial data, store exact solution in Up,
     // ignore AlphaVE
-    float_sw4 errInf = 0, errL2 = 0, solInf = 0; // solL2 = 0;
+    float_sw4 errInf = 0, errL2 = 0, solInf = 0;  // solL2 = 0;
     exactSol(t, Up, AlphaVEp, a_Sources);
 
     normOfDifference(Up, U, errInf, errL2, solInf, a_Sources);

@@ -38,7 +38,7 @@ class CurvilinearInterface2 {
   int* m_ipiv_block;
   float_sw4* m_mpi_buffer_space;
   size_t m_mpi_buffer_size;
-  
+
 #ifdef USE_MAGMA
   float_sw4* m_mass_block_gpu;
   int* m_ipiv_block_gpu;
@@ -81,10 +81,11 @@ class CurvilinearInterface2 {
 
   void copy_str(float_sw4* dest, float_sw4* src, int offset, int n, int nsw);
   void communicate_array1d(float_sw4* u, int n, int dir, int ngh);
+
   
-  void communicate_array_org(Sarray& u, bool allkplanes = true, int kplane = 0);
   void init_arrays_att();
   void allocate_mpi_buffers();
+
  public:
   CurvilinearInterface2(int a_gc, EW* a_ew);
   CurvilinearInterface2() {}
@@ -116,6 +117,7 @@ class CurvilinearInterface2 {
                            float_sw4* a_str_x, float_sw4* a_str_y,
                            float_sw4* sbop);
   void communicate_array(Sarray& u, bool allkplanes = true, int kplane = 0);
+  void communicate_array_org(Sarray& u, bool allkplanes = true, int kplane = 0);
 };
 
 #endif

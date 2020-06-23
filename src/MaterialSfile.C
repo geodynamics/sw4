@@ -629,7 +629,7 @@ void MaterialSfile::read_sfile() {
   }
 
   // Read interfaces
-  hid_t topo_grp; // topo_id;
+  hid_t topo_grp;  // topo_id;
   mInterface.resize(m_npatches + 1);
   char intf_name[32];
   void *in_data;
@@ -637,7 +637,7 @@ void MaterialSfile::read_sfile() {
   topo_grp = H5Gopen(file_id, "Z_interfaces", H5P_DEFAULT);
   ASSERT(topo_grp >= 0);
 
-  //intf_start = MPI_Wtime();
+  // intf_start = MPI_Wtime();
   for (int p = 0; p < m_npatches + 1; p++) {
     sprintf(intf_name, "z_values_%d", p);
     dataset_id = H5Dopen(topo_grp, intf_name, H5P_DEFAULT);
@@ -692,7 +692,7 @@ void MaterialSfile::read_sfile() {
     delete[] d_data;
   }
   H5Gclose(topo_grp);
-  //intf_end = MPI_Wtime();
+  // intf_end = MPI_Wtime();
 
   bool roworder = true;
   hid_t rho_id, cs_id, cp_id, qs_id, qp_id;
@@ -737,10 +737,10 @@ void MaterialSfile::read_sfile() {
         ASSERT(qs_id >= 0);
       }
 
-      //hsize_t h5_global[3];
+      // hsize_t h5_global[3];
       hsize_t h5_count[3], h5_start[3];
       for (int i = 0; i < 3; i++) {
-        //h5_global[i] = (hsize_t)global[i];
+        // h5_global[i] = (hsize_t)global[i];
         h5_count[i] = (hsize_t)local[i];
         h5_start[i] = (hsize_t)start[i];
       }

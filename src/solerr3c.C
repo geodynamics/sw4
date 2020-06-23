@@ -135,7 +135,8 @@ void EW::solerr3c_ci(int ib, int ie, int jb, int je, int kb, int ke,
             liloc = liloc > err ? liloc : err;
             xliloc = xliloc > fabs(uex[ind3]) ? xliloc : fabs(uex[ind3]);
             // xliloc = xliloc > uex[ind3] ? xliloc : uex[ind3]; // ORG PRE
-            // CURVIMR std::cout<<"SOL"<<ind3<<" "<<xliloc<<" "<<uex[ind3]<<"\n";
+            // CURVIMR std::cout<<"SOL"<<ind3<<" "<<xliloc<<"
+            // "<<uex[ind3]<<"\n";
             if (usesg != 1)
               l2loc += jac[ind] * err * err;
             else

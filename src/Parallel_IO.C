@@ -1751,17 +1751,17 @@ void Parallel_IO::write_array_hdf5(const char* fname, const char* dname, int nc,
     double* ar;
     double* sbuf;
     float* sbuff;
-    int flt;// typsize;
+    int flt;  // typsize;
     try {
       if (strcmp(typ, "float") == 0) {
         arf = static_cast<float*>(array);
         sbuff = new float[m_isend.m_maxbuf * nc];
         flt = 1;
-        //typsize = sizeof(float);
+        // typsize = sizeof(float);
       } else if (strcmp(typ, "double") == 0) {
         ar = static_cast<double*>(array);
         sbuf = new double[m_isend.m_maxbuf * nc];
-        //typsize = sizeof(double);
+        // typsize = sizeof(double);
         flt = 0;
       } else {
         // error return

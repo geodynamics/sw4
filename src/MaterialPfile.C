@@ -702,8 +702,8 @@ void MaterialPfile::read_pfile() {
 
 //---------------------------------------------------------------------------------------
 // int MaterialPfile::get_material_pt( double x, double y, double z, double&
-// rho, double& cs, double& cp, 				    double& qs, double&
-// qp
+// rho, double& cs, double& cp, 				    double& qs,
+// double& qp
 // )
 //  {
 //   int retval = 0;

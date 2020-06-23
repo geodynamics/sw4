@@ -766,7 +766,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 #endif
   // BEGIN TIME STEPPING LOOP
   // PROFILER_START;
-  //load_balance();
+  // load_balance();
   SW4_MARK_BEGIN("TIME_STEPPING");
 #ifdef SW4_TRACK_MPI
   // bool cudaProfilerOn = false;
@@ -774,7 +774,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   for (int currentTimeStep = beginCycle;
        currentTimeStep <= mNumberOfTimeSteps[event]; currentTimeStep++) {
     time_measure[0] = MPI_Wtime();
-    global_variables.firstCycle=currentTimeStep == beginCycle;
+    global_variables.firstCycle = currentTimeStep == beginCycle;
     if (currentTimeStep == mNumberOfTimeSteps[event]) t1 = SW4_CHRONO_NOW;
     if (currentTimeStep == (beginCycle + 10)) {
       PROFILER_START;
@@ -1710,7 +1710,7 @@ void EW::enforceBCanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
 }
 //
 void EW::update_curvilinear_cartesian_interface_raja(vector<Sarray>& a_U) {
-  //std::cout<<"EW::update_curvilinear_cartesian_interface_raja<\n";
+  // std::cout<<"EW::update_curvilinear_cartesian_interface_raja<\n";
   if (topographyExists()) {
     const int nc = 3;
     int g = mNumberOfCartesianGrids - 1;
@@ -3513,8 +3513,9 @@ void EW::add_ve_stresses(Sarray& a_Up, Sarray& B, int g, int kic, int a_mech,
 }
 
 //------------------------------------------------------------------------------
-void EW::cartesian_bc_forcing_olde(float_sw4 t, vector<float_sw4**>& a_BCForcing,
-                                  vector<Source*>& a_sources)
+void EW::cartesian_bc_forcing_olde(float_sw4 t,
+                                   vector<float_sw4**>& a_BCForcing,
+                                   vector<Source*>& a_sources)
 // assign the boundary forcing arrays a_BCForcing[g][side]
 {
   SW4_MARK_FUNCTION;
@@ -5169,7 +5170,7 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
 void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                      vector<Sarray>& a_Lambda, vector<Sarray*>& a_Alpha,
                      float_sw4 t) {
-  //std::cout<<"CALL TO EW::CurviCartIC ON CPU \n";
+  // std::cout<<"CALL TO EW::CurviCartIC ON CPU \n";
   SYNC_STREAM;  // FOR CURVI_CPU
   int gcurv = gcart + 1;
   int ib = m_iStart[gcurv], ie = m_iEnd[gcurv];
@@ -5181,8 +5182,8 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   int nk = m_global_nz[gcurv];
   int nkca = m_global_nz[gcart];
 
-  Sarray Lu(3, ib, ie, jb, je, nk, nk,__FILE__,__LINE__);
-  Sarray Luca(3, ib, ie, jb, je, 1, 1,__FILE__,__LINE__);
+  Sarray Lu(3, ib, ie, jb, je, nk, nk, __FILE__, __LINE__);
+  Sarray Luca(3, ib, ie, jb, je, 1, 1, __FILE__, __LINE__);
   // Luca.set_to_zero();
   float_sw4 *Lup = Lu.c_ptr(), *Lucap = Luca.c_ptr();
   float_sw4 h = mGridSize[gcart];
@@ -5197,25 +5198,25 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   auto& a_U_gcurv = a_U[gcurv].getview();
   auto& a_U_gcart = a_U[gcart].getview();
   RAJA::RangeSegment j_range(jb, je + 1);
-      RAJA::RangeSegment i_range(ib, ie + 1);
-      RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(RAJA::make_tuple(j_range, i_range),
-                               [=] RAJA_DEVICE(int j, int i) {
-      a_U_gcurv(1, i, j, nk) = a_U_gcart(1, i, j, 1);
-      a_U_gcurv(2, i, j, nk) = a_U_gcart(2, i, j, 1);
-      a_U_gcurv(3, i, j, nk) = a_U_gcart(3, i, j, 1);
-					 });
+  RAJA::RangeSegment i_range(ib, ie + 1);
+  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
+      RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+        a_U_gcurv(1, i, j, nk) = a_U_gcart(1, i, j, 1);
+        a_U_gcurv(2, i, j, nk) = a_U_gcart(2, i, j, 1);
+        a_U_gcurv(3, i, j, nk) = a_U_gcart(3, i, j, 1);
+      });
   if (m_use_attenuation)
-    for (int a = 0; a < m_number_mechanisms; a++){
+    for (int a = 0; a < m_number_mechanisms; a++) {
       auto& a_Alpha_gcurv = a_Alpha[gcurv][a].getview();
       auto& a_Alpha_gcart = a_Alpha[gcart][a].getview();
       // for (int j = jb; j <= je; j++)
       //   for (int i = ib; i <= ie; i++) {
-	  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(RAJA::make_tuple(j_range, i_range),
-					     [=] RAJA_DEVICE(int j, int i) {
-          a_Alpha_gcurv(1, i, j, nk) = a_Alpha_gcart(1, i, j, 1);
-          a_Alpha_gcurv(2, i, j, nk) = a_Alpha_gcart(2, i, j, 1);
-          a_Alpha_gcurv(3, i, j, nk) = a_Alpha_gcart(3, i, j, 1);
-					     });
+      RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
+          RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+            a_Alpha_gcurv(1, i, j, nk) = a_Alpha_gcart(1, i, j, 1);
+            a_Alpha_gcurv(2, i, j, nk) = a_Alpha_gcart(2, i, j, 1);
+            a_Alpha_gcurv(3, i, j, nk) = a_Alpha_gcart(3, i, j, 1);
+          });
     }
 
   bool force_dirichlet = false;
@@ -5235,17 +5236,17 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   // Initial guess
   //  for (int j = jb + 2; j <= je - 2; j++)
   //  for (int i = ib + 2; i <= ie - 2; i++) {
-RAJA::RangeSegment j_range2(jb+2, je -2+ 1);
-      RAJA::RangeSegment i_range2(ib+2, ie - 2 + 1);
-      RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(RAJA::make_tuple(j_range2, i_range2),
-                               [=] RAJA_DEVICE(int j, int i) {
-      //         a_U[gcart](1,i,j,0)=a_U[gcart](1,i,j,1);
-      //         a_U[gcart](2,i,j,0)=a_U[gcart](2,i,j,1);
-      //         a_U[gcart](3,i,j,0)=a_U[gcart](3,i,j,1);
-      a_U_gcart(1, i, j, 0) = 0;
-      a_U_gcart(2, i, j, 0) = 0;
-      a_U_gcart(3, i, j, 0) = 0;
-					 });
+  RAJA::RangeSegment j_range2(jb + 2, je - 2 + 1);
+  RAJA::RangeSegment i_range2(ib + 2, ie - 2 + 1);
+  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(RAJA::make_tuple(j_range2, i_range2),
+                                     [=] RAJA_DEVICE(int j, int i) {
+                                       //         a_U[gcart](1,i,j,0)=a_U[gcart](1,i,j,1);
+                                       //         a_U[gcart](2,i,j,0)=a_U[gcart](2,i,j,1);
+                                       //         a_U[gcart](3,i,j,0)=a_U[gcart](3,i,j,1);
+                                       a_U_gcart(1, i, j, 0) = 0;
+                                       a_U_gcart(2, i, j, 0) = 0;
+                                       a_U_gcart(3, i, j, 0) = 0;
+                                     });
 
   curvilinear4sgwind(
       ib, ie, jb, je, kb, ke, nk, nk, a_U[gcurv].c_ptr(), a_Mu[gcurv].c_ptr(),
@@ -5285,7 +5286,7 @@ RAJA::RangeSegment j_range2(jb+2, je -2+ 1);
                           m_sg_str_x[gcart], m_sg_str_y[gcart], m_sbop_no_gp,
                           '-');
 
-  Sarray B(3, ib, ie, jb, je, nk, nk,__FILE__,__LINE__);
+  Sarray B(3, ib, ie, jb, je, nk, nk, __FILE__, __LINE__);
   compute_icstresses_curv(a_U[gcurv], B, nk, mMetric[gcurv], a_Mu[gcurv],
                           a_Lambda[gcurv], m_sg_str_x[gcurv], m_sg_str_y[gcurv],
                           m_sbop_no_gp, '=');
@@ -5308,50 +5309,52 @@ RAJA::RangeSegment j_range2(jb+2, je -2+ 1);
   auto& m_sbop0 = m_sbop[0];
   auto& m_ghcof0 = m_ghcof[0];
   auto& mJ_gcurv = mJ[gcurv].getview();
-  auto&  BcaV = Bca.getview();
+  auto& BcaV = Bca.getview();
   auto& LucaV = Luca.getview();
   auto& LuV = Lu.getview();
-  auto& BV= B.getview();
-  //auto& a_U_gcart = a_U[gcart].getview()  
+  auto& BV = B.getview();
+  // auto& a_U_gcart = a_U[gcart].getview()
   auto& a_Mu_gcart = a_Mu[gcart].getview();
   auto& a_Lambda_gcart = a_Lambda[gcart].getview();
-RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(RAJA::make_tuple(j_range2, i_range2),
-                               [=] RAJA_DEVICE(int j, int i) {
-      //         a_U[gcart](1,i,j,0)=a_U[gcart](1,i,j,1);
-      float_sw4 istrxy =
-          1 / (m_sg_str_x_gcurv[i - ib] * m_sg_str_y_gcurv[j - jb]);
-      float_sw4 istrxyc =
-          1 / (m_sg_str_x_gcart[i - ib] * m_sg_str_y_gcart[j - jb]);
-      float_sw4 rhrat = mRho_gcurv(i, j, nk) / mRho_gcart(i, j, 1);
-      float_sw4 bcof = h * m_sbop0 * istrxyc - m_ghcof0 * rhrat * w1 *
+  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
+      RAJA::make_tuple(j_range2, i_range2), [=] RAJA_DEVICE(int j, int i) {
+        //         a_U[gcart](1,i,j,0)=a_U[gcart](1,i,j,1);
+        float_sw4 istrxy =
+            1 / (m_sg_str_x_gcurv[i - ib] * m_sg_str_y_gcurv[j - jb]);
+        float_sw4 istrxyc =
+            1 / (m_sg_str_x_gcart[i - ib] * m_sg_str_y_gcart[j - jb]);
+        float_sw4 rhrat = mRho_gcurv(i, j, nk) / mRho_gcart(i, j, 1);
+        float_sw4 bcof = h * m_sbop0 * istrxyc - m_ghcof0 * rhrat * w1 *
                                                      mJ_gcurv(i, j, nk) *
                                                      istrxy / (h * h);
-      float_sw4 res =
-          -h * h * BcaV(1, i, j, 1) * istrxyc +
-          w1 * rhrat * mJ_gcurv(i, j, nk) * istrxy * LucaV(1, i, j, 1) -
-          w1 * mJ_gcurv(i, j, nk) * istrxy * LuV(1, i, j, nk) + BV(1, i, j, nk);
-      // std::cout<<"RESS "<<i<<" "<<j<<" "<<Luca(1,i,j,1)<<" "<<Lu(1,i,j,nk)<<"
-      // "<<B(1,i,j,nk)<<"\n";
-      a_U_gcart(1, i, j, 0) += res / (a_Mu_gcart(i, j, 1) * bcof);
+        float_sw4 res =
+            -h * h * BcaV(1, i, j, 1) * istrxyc +
+            w1 * rhrat * mJ_gcurv(i, j, nk) * istrxy * LucaV(1, i, j, 1) -
+            w1 * mJ_gcurv(i, j, nk) * istrxy * LuV(1, i, j, nk) +
+            BV(1, i, j, nk);
+        // std::cout<<"RESS "<<i<<" "<<j<<" "<<Luca(1,i,j,1)<<"
+        // "<<Lu(1,i,j,nk)<<"
+        // "<<B(1,i,j,nk)<<"\n";
+        a_U_gcart(1, i, j, 0) += res / (a_Mu_gcart(i, j, 1) * bcof);
 
-      res = -h * h * BcaV(2, i, j, 1) * istrxyc +
-            w1 * rhrat * mJ_gcurv(i, j, nk) * istrxy * LucaV(2, i, j, 1) -
-            w1 * mJ_gcurv(i, j, nk) * istrxy * LuV(2, i, j, nk) +
-            BV(2, i, j, nk);
-      a_U_gcart(2, i, j, 0) += res / (a_Mu_gcart(i, j, 1) * bcof);
+        res = -h * h * BcaV(2, i, j, 1) * istrxyc +
+              w1 * rhrat * mJ_gcurv(i, j, nk) * istrxy * LucaV(2, i, j, 1) -
+              w1 * mJ_gcurv(i, j, nk) * istrxy * LuV(2, i, j, nk) +
+              BV(2, i, j, nk);
+        a_U_gcart(2, i, j, 0) += res / (a_Mu_gcart(i, j, 1) * bcof);
 
-      res = -h * h * BcaV(3, i, j, 1) * istrxyc +
-            w1 * rhrat * mJ_gcurv(i, j, nk) * istrxy * LucaV(3, i, j, 1) -
-            w1 * mJ_gcurv(i, j, nk) * istrxy * LuV(3, i, j, nk) +
-            BV(3, i, j, nk);
-      a_U_gcart(3, i, j, 0) +=
-          res / ((2 * a_Mu_gcart(i, j, 1) + a_Lambda_gcart(i, j, 1)) * bcof);
+        res = -h * h * BcaV(3, i, j, 1) * istrxyc +
+              w1 * rhrat * mJ_gcurv(i, j, nk) * istrxy * LucaV(3, i, j, 1) -
+              w1 * mJ_gcurv(i, j, nk) * istrxy * LuV(3, i, j, nk) +
+              BV(3, i, j, nk);
+        a_U_gcart(3, i, j, 0) +=
+            res / ((2 * a_Mu_gcart(i, j, 1) + a_Lambda_gcart(i, j, 1)) * bcof);
 #ifdef CURVI_DEBUG
-      // std::cout << "CC_FINAL" << i << j << " " << a_U[gcart](1, i, j, 0) << " "
-      //           << a_U[gcart](2, i, j, 0) << " " << a_U[gcart](3, i, j, 0)
-      //           << "\n";
+    // std::cout << "CC_FINAL" << i << j << " " << a_U[gcart](1, i, j, 0) << " "
+    //           << a_U[gcart](2, i, j, 0) << " " << a_U[gcart](3, i, j, 0)
+    //           << "\n";
 #endif
-				   });
+      });
 
   bool debug = false;
   if (debug) {
@@ -5723,8 +5726,8 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
           // FTNC	       twdirbdryc( &ifirst, &ilast, &jfirst, &jlast,
           // &kfirst, &klast, FTNC &wind_ptr[0], &t, &om, &cv, &ph,
           // bforce_side0_ptr,
-          // FTNC					     mX.c_ptr(), mY.c_ptr(),
-          // mZ.c_ptr()
+          // FTNC					     mX.c_ptr(),
+          // mY.c_ptr(), mZ.c_ptr()
           // );
         }
       }
@@ -5831,8 +5834,8 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
           // FTNC	    else
           // FTNC	       tw_aniso_free_surf_z( ifirst, ilast, jfirst,
           // jlast, kfirst, klast, k, t, om,
-          // FTNC				     cv, ph, omm, phc, bforce_side4_ptr,
-          // h, m_zmin[g] );
+          // FTNC				     cv, ph, omm, phc,
+          // bforce_side4_ptr, h, m_zmin[g] );
         } else {  // isotropic stuff
 
           if (usingSupergrid() && !curvilinear) {
@@ -6034,8 +6037,8 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
           // FTNC	    else
           // FTNC	       tw_aniso_free_surf_z( ifirst, ilast, jfirst,
           // jlast, kfirst, klast, k, t, om,
-          // FTNC				     cv, ph, omm, phc, bforce_side5_ptr,
-          // h, m_zmin[g] );
+          // FTNC				     cv, ph, omm, phc,
+          // bforce_side5_ptr, h, m_zmin[g] );
         } else {  // isotropic stuff
 
           if (usingSupergrid()) {
@@ -6054,7 +6057,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
             }
           } else {
             if (curvilinear) {
-	      std::cout<<"NEW _CODE IS SOLVE 1\n";
+              std::cout << "NEW _CODE IS SOLVE 1\n";
               Sarray tau(6, ifirst, ilast, jfirst, jlast, 1, 1);
               twstensor_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, k, t,
                            om, cv, ph, mX[g].c_ptr(), mY[g].c_ptr(),

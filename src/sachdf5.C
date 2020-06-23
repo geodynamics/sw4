@@ -194,7 +194,7 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data,
                   bool isLast) {
   bool is_debug = false;
   /* is_debug = true; */
-  //double stime, etime, etime1;
+  // double stime, etime, etime1;
   hid_t dset, filespace, dxpl;
   herr_t ret;
 
@@ -274,8 +274,8 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data,
 int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
                              float_sw4 delta, string suffix) {
   bool is_debug = false;
-  //hid_t attr;
-  hid_t fid, grp,  attr_space1, attr_space3, dset_space, dset, dcpl;
+  // hid_t attr;
+  hid_t fid, grp, attr_space1, attr_space3, dset_space, dset, dcpl;
   herr_t ret;
   hsize_t dims1 = 1, dims3 = 3, total_dims;
   double start_time, elapsed_time;

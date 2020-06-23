@@ -308,3 +308,9 @@ test:
 format:
 	clang-format -style Google -i src/*.C
 	clang-format -style Google -i src/*.h
+ptest: 
+	cd $(builddir); $(CXX) -std=c++11 --expt-extended-lambda -arch=sm_70 -I$(RAJA_LOCATION)/include -x cu -c -dc ../src/Policies.C
+	cd $(builddir); nvcc -arch=sm_70 -dlink -o file_link.o Policies.o
+	cd $(builddir); nvcc -arch=sm_70 -o p file_link.o Policies.o -L $(RAJA_LOCATION)/lib -lRAJA
+tags:
+	etags -o src/TAGS src/*.C src/*.h 

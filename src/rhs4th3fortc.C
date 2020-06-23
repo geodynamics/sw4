@@ -2527,22 +2527,24 @@ void corrfort_ci(int ib, int ie, int jb, int je, int kb, int ke,
 void dpdmtfort_ci(int ib, int ie, int jb, int je, int kb, int ke,
                   float_sw4* __restrict__ up, float_sw4* __restrict__ u,
                   float_sw4* __restrict__ um, float_sw4* __restrict__ u2,
-                  float_sw4 dt2i,int rank) {
+                  float_sw4 dt2i, int rank) {
   SW4_MARK_FUNCTION;
   const size_t npts =
       static_cast<size_t>((ie - ib + 1)) * (je - jb + 1) * (ke - kb + 1);
-  //std::cout<<"DPDMT SIZE IS "<<npts*3<<"\n";
+  // std::cout<<"DPDMT SIZE IS "<<npts*3<<"\n";
   // #pragma omp parallel for
   // #pragma ivdep
   // #pragma simd
   //   for( size_t i = 0 ; i < 3*npts ; i++ )
-  //auto t1 = SW4_CHRONO_NOW;
+  // auto t1 = SW4_CHRONO_NOW;
   RAJA::forall<DPDMTFORT_LOOP_POL>(RAJA::RangeSegment(0, 3 * npts),
                                    [=] RAJA_DEVICE(size_t i) {
                                      u2[i] = dt2i * (up[i] - 2 * u[i] + um[i]);
                                    });  // SYNC_STREAM;
-  //auto t2 = SW4_CHRONO_NOW;
-  //std::cout<<rank<<"D PDMT TIME "<<3*npts<<" "<<std::chrono::duration_cast<std::chrono::microseconds>(t2 -t1).count()<<"\n";
+  // auto t2 = SW4_CHRONO_NOW;
+  // std::cout<<rank<<"D PDMT TIME "<<3*npts<<"
+  // "<<std::chrono::duration_cast<std::chrono::microseconds>(t2
+  // -t1).count()<<"\n";
 }
 
 //-----------------------------------------------------------------------
