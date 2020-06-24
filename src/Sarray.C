@@ -563,6 +563,16 @@ void Sarray::set_value(float_sw4 scalar) {
       RAJA::RangeSegment(0, m_npts),
       [=] RAJA_DEVICE(size_t i) { lm_data[i] = scalar; });
 }
+//-----------------------------------------------------------------------
+void Sarray::set_value_async(float_sw4 scalar) {
+  SW4_MARK_FUNCTION;
+  // #pragma omp parallel for
+  //    for( size_t i=0 ; i < m_npts ; i++ )
+  float_sw4* lm_data = m_data;
+  RAJA::forall<DEFAULT_LOOP1_ASYNC>(
+      RAJA::RangeSegment(0, m_npts),
+      [=] RAJA_DEVICE(size_t i) { lm_data[i] = scalar; });
+}
 
 //-----------------------------------------------------------------------
 void Sarray::set_to_random(float_sw4 llim, float_sw4 ulim) {

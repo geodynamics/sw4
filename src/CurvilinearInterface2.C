@@ -946,7 +946,7 @@ void CurvilinearInterface2::interface_lhs(Sarray& lhs, Sarray& uc) {
 #pragma unroll
         for (int c = 1; c <= 3; c++) lhsV(c, i, j, 1) -= BcV(c, i, j, 1);
       });
-  SYNC_STREAM;
+  //SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -1005,7 +1005,7 @@ void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
                                        for (int c = 1; c <= 3; c++)
                                          rhsV(c, i, j, 1) /= m_rho_cV(i, j, 1);
                                      });
-  SYNC_STREAM;
+  //SYNC_STREAM;
   if (!m_tw) bnd_zero(rhs, m_nghost);
 
   // 3. Compute prolrhs := p(L(uc)/rhoc)
@@ -1066,7 +1066,7 @@ void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
                   (lm_strx_f[i - lm_ibf] * lm_stry_f[j - lm_jbf]) +
               BfV(c, i, j, lm_nkf);
       });
-  SYNC_STREAM;
+  //SYNC_STREAM;
   if (!m_tw) bnd_zero(prolrhs, m_nghost);
   restrict2D(rhs, prolrhs, 1, m_nkf);
 
@@ -1127,6 +1127,7 @@ void CurvilinearInterface2::compute_icstresses_curv_host(
   float_sw4 sgn = 1;
   if (op == '=') {
     B.set_value(0.0);
+    SYNC_STREAM;
     sgn = 1;
   }
   if (op == '-') {
@@ -1272,7 +1273,7 @@ void CurvilinearInterface2::lhs_icstresses_curv(
         a_lhsV(2, i, j, k) *= isgxy;
         a_lhsV(3, i, j, k) *= isgxy;
       });
-  SYNC_STREAM;
+  //SYNC_STREAM;
 #undef str_x
 #undef str_y
 }
@@ -1890,7 +1891,7 @@ void CurvilinearInterface2::compute_icstresses_curv(
 #define str_y(j) a_str_y[(j - jfirst)]
   float_sw4 sgn = 1;
   if (op == '=') {
-    B.set_value(0.0);
+    B.set_value_async(0.0);
     sgn = 1;
   }
   if (op == '-') {
