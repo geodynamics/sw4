@@ -1552,17 +1552,18 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   }
 #define SW4_RAJA_CURVIMR
 #ifdef SW4_RAJA_CURVIMR
+  SW4_MARK_BEGIN("CURVI in EnforceBC");
   // NEW CURVI MR CODE
   // Interface condition between curvilinear and top Cartesian grid
   if (mNumberOfGrids - mNumberOfCartesianGrids > 0) {
     if (m_gridGenerator->curviCartIsSmooth(mNumberOfGrids -
                                            mNumberOfCartesianGrids))
-      update_curvilinear_cartesian_interface_raja(a_U);
+      update_curvilinear_cartesian_interface(a_U);
     else
       CurviCartIC(mNumberOfCartesianGrids - 1, a_U, a_Mu, a_Lambda, a_AlphaVE,
                   t);
   }
-
+  SW4_MARK_END("CURVI in EnforceBC");
   // THE CALL BELOW to enforceBCfreeAtt2 IS MADE IN SOLVE IN THE RAJA VERSION
   // AND HERE IN THE DEVELOPER BRANCH
   // Reimpose free surface condition with attenuation terms included
@@ -1709,8 +1710,9 @@ void EW::enforceBCanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
   update_curvilinear_cartesian_interface(a_U);
 }
 //
-void EW::update_curvilinear_cartesian_interface_raja(vector<Sarray>& a_U) {
-  // std::cout<<"EW::update_curvilinear_cartesian_interface_raja<\n";
+void EW::update_curvilinear_cartesian_interface(vector<Sarray>& a_U) {
+  SW4_MARK_FUNCTION;
+  //std::cout<<"EW::update_curvilinear_cartesian_interface_raja<\n"<<std::flush;
   if (topographyExists()) {
     const int nc = 3;
     int g = mNumberOfCartesianGrids - 1;
@@ -1768,7 +1770,8 @@ void EW::update_curvilinear_cartesian_interface_raja(vector<Sarray>& a_U) {
 }
 
 //-----------------------------------------------------------------------
-void EW::update_curvilinear_cartesian_interface(vector<Sarray>& a_U) {
+void EW::update_curvilinear_cartesian_interface_org(vector<Sarray>& a_U) {
+  SW4_MARK_FUNCTION;
   SYNC_STREAM;
   if (topographyExists()) {
     int g = mNumberOfCartesianGrids - 1;
@@ -5170,8 +5173,10 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
 void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                      vector<Sarray>& a_Lambda, vector<Sarray*>& a_Alpha,
                      float_sw4 t) {
-  // std::cout<<"CALL TO EW::CurviCartIC ON CPU \n";
+  SW4_MARK_FUNCTION;
+  //std::cout<<"CALL TO EW::CurviCartIC ON CPU \n"<<std::flush;
   SYNC_STREAM;  // FOR CURVI_CPU
+  SW4_MARK_BEGIN("CurviCartIC::PART 1");
   int gcurv = gcart + 1;
   int ib = m_iStart[gcurv], ie = m_iEnd[gcurv];
   int jb = m_jStart[gcurv], je = m_jEnd[gcurv];
@@ -5218,7 +5223,8 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
             a_Alpha_gcurv(3, i, j, nk) = a_Alpha_gcart(3, i, j, 1);
           });
     }
-
+  SW4_MARK_END("CurviCartIC::PART 1");
+  SW4_MARK_BEGIN("CurviCartIC::PART 2");
   bool force_dirichlet = false;
   if (force_dirichlet) {
     TestTwilight* tw = create_twilight();
@@ -5247,6 +5253,8 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                                        a_U_gcart(2, i, j, 0) = 0;
                                        a_U_gcart(3, i, j, 0) = 0;
                                      });
+  SW4_MARK_END("CurviCartIC::PART 2");
+  SW4_MARK_BEGIN("CurviCartIC::PART 3");
 
   curvilinear4sgwind(
       ib, ie, jb, je, kb, ke, nk, nk, a_U[gcurv].c_ptr(), a_Mu[gcurv].c_ptr(),
@@ -5262,6 +5270,9 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
           m_acof_no_gp, m_bope, m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,
           m_sg_str_x[gcurv], m_sg_str_y[gcurv], nk, '-');
 
+  SW4_MARK_END("CurviCartIC::PART 3");
+  SW4_MARK_BEGIN("CurviCartIC::PART 4");
+
   rhs4th3wind(ibca, ieca, jbca, jeca, kbca, keca, nkca, m_onesided[gcart],
               m_acof, m_bope, m_ghcof, Lucap, a_U[gcart].c_ptr(),
               a_Mu[gcart].c_ptr(), a_Lambda[gcart].c_ptr(), h,
@@ -5275,7 +5286,10 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                   mLambdaVE[gcart][a].c_ptr(), h, m_sg_str_x[gcart],
                   m_sg_str_y[gcart], m_sg_str_z[gcart], '-', kbca, keca, 1, 1);
 
-  Sarray Bca(3, ib, ie, jb, je, 1, 1);
+  SW4_MARK_END("CurviCartIC::PART 4");
+  SW4_MARK_BEGIN("CurviCartIC::PART 5");
+
+  Sarray Bca(3, ib, ie, jb, je, 1, 1,__FILE__,__LINE__);
   compute_icstresses2(a_U[gcart], Bca, 1, mGridSize[gcart], a_Mu[gcart],
                       a_Lambda[gcart], m_sg_str_x[gcart], m_sg_str_y[gcart],
                       m_sbop, '=');
@@ -5285,6 +5299,9 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                           mMuVE[gcart][a], mLambdaVE[gcart][a],
                           m_sg_str_x[gcart], m_sg_str_y[gcart], m_sbop_no_gp,
                           '-');
+
+  SW4_MARK_END("CurviCartIC::PART 5");
+  SW4_MARK_BEGIN("CurviCartIC::PART 6");
 
   Sarray B(3, ib, ie, jb, je, nk, nk, __FILE__, __LINE__);
   compute_icstresses_curv(a_U[gcurv], B, nk, mMetric[gcurv], a_Mu[gcurv],
@@ -5296,6 +5313,9 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                               mMuVE[gcurv][a], mLambdaVE[gcurv][a],
                               m_sg_str_x[gcurv], m_sg_str_y[gcurv],
                               m_sbop_no_gp, '-');
+  
+  SW4_MARK_END("CurviCartIC::PART 6");
+  SW4_MARK_BEGIN("CurviCartIC::PART 7");
 
   float_sw4 w1 = 17.0 / 48.0;
   //  for (int j = jb + 2; j <= je - 2; j++)
@@ -5356,6 +5376,9 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
 #endif
       });
 
+  SW4_MARK_END("CurviCartIC::PART 7");
+  //SW4_MARK_BEGIN("CurviCartIC::PART 8");
+
   bool debug = false;
   if (debug) {
     // Verify that interface condition is satisfied.
@@ -5403,14 +5426,15 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
         resmax = res > resmax ? res : resmax;
       }
     cout << "resmax = " << resmax << endl;
-  }
+  } // end of if(debug)
 }
 //-----------------------------------------------------------------------
 void EW::compute_icstresses2(Sarray& a_Up, Sarray& B, int kic, float_sw4 h,
                              Sarray& a_mu, Sarray& a_lambda, float_sw4* a_str_x,
                              float_sw4* a_str_y, float_sw4* sbop, char op) {
+  SW4_MARK_FUNCTION;
   const float_sw4 a1 = 2.0 / 3, a2 = -1.0 / 12;
-  bool upper = (kic == 1);
+  const bool upper = (kic == 1);
   int k = kic;
   float_sw4 ih = 1 / h;
   int ifirst = a_Up.m_ib;
@@ -5420,51 +5444,58 @@ void EW::compute_icstresses2(Sarray& a_Up, Sarray& B, int kic, float_sw4 h,
 
   float_sw4 sgn = 1;
   if (op == '=') {
-    B.set_value(0.0);
+    B.set_value_async(0.0);
     sgn = 1;
   } else if (op == '-')
     sgn = -1;
-
-#pragma omp parallel for
-  for (int j = B.m_jb + 2; j <= B.m_je - 2; j++)
-#pragma omp simd
-    for (int i = B.m_ib + 2; i <= B.m_ie - 2; i++) {
+  auto &a_UpV =a_Up.getview();
+  auto &BV = B.getview();
+  auto &a_muV = a_mu.getview();
+  auto &a_lambdaV = a_lambda.getview();
+// #pragma omp parallel for
+//   for (int j = B.m_jb + 2; j <= B.m_je - 2; j++)
+// #pragma omp simd
+//     for (int i = B.m_ib + 2; i <= B.m_ie - 2; i++) {
+      RAJA::RangeSegment j_range(B.m_jb + 2, B.m_je - 2 + 1);
+      RAJA::RangeSegment i_range(B.m_ib + 2, B.m_ie - 2 + 1);
+      RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
+					RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
       float_sw4 uz, vz, wz;
       uz = vz = wz = 0;
       if (upper) {
         for (int m = 0; m <= 5; m++) {
-          uz += sbop[m] * a_Up(1, i, j, k + m - 1);
-          vz += sbop[m] * a_Up(2, i, j, k + m - 1);
-          wz += sbop[m] * a_Up(3, i, j, k + m - 1);
+          uz += sbop[m] * a_UpV(1, i, j, k + m - 1);
+          vz += sbop[m] * a_UpV(2, i, j, k + m - 1);
+          wz += sbop[m] * a_UpV(3, i, j, k + m - 1);
         }
       } else {
         for (int m = 0; m <= 5; m++) {
-          uz -= sbop[m] * a_Up(1, i, j, k + 1 - m);
-          vz -= sbop[m] * a_Up(2, i, j, k + 1 - m);
-          wz -= sbop[m] * a_Up(3, i, j, k + 1 - m);
+          uz -= sbop[m] * a_UpV(1, i, j, k + 1 - m);
+          vz -= sbop[m] * a_UpV(2, i, j, k + 1 - m);
+          wz -= sbop[m] * a_UpV(3, i, j, k + 1 - m);
         }
       }
-      B(1, i, j, k) +=
-          sgn * ih * a_mu(i, j, k) *
-          (str_x(i) * (a2 * (a_Up(3, i + 2, j, k) - a_Up(3, i - 2, j, k)) +
-                       a1 * (a_Up(3, i + 1, j, k) - a_Up(3, i - 1, j, k))) +
+      BV(1, i, j, k) +=
+          sgn * ih * a_muV(i, j, k) *
+          (str_x(i) * (a2 * (a_UpV(3, i + 2, j, k) - a_UpV(3, i - 2, j, k)) +
+                       a1 * (a_UpV(3, i + 1, j, k) - a_UpV(3, i - 1, j, k))) +
            (uz));
-      B(2, i, j, k) +=
-          sgn * ih * a_mu(i, j, k) *
-          (str_y(j) * (a2 * (a_Up(3, i, j + 2, k) - a_Up(3, i, j - 2, k)) +
-                       a1 * (a_Up(3, i, j + 1, k) - a_Up(3, i, j - 1, k))) +
+      BV(2, i, j, k) +=
+          sgn * ih * a_muV(i, j, k) *
+          (str_y(j) * (a2 * (a_UpV(3, i, j + 2, k) - a_UpV(3, i, j - 2, k)) +
+                       a1 * (a_UpV(3, i, j + 1, k) - a_UpV(3, i, j - 1, k))) +
            (vz));
-      B(3, i, j, k) +=
+      BV(3, i, j, k) +=
           sgn * ih *
-          ((2 * a_mu(i, j, k) + a_lambda(i, j, k)) * (wz) +
-           a_lambda(i, j, k) *
+          ((2 * a_muV(i, j, k) + a_lambdaV(i, j, k)) * (wz) +
+           a_lambdaV(i, j, k) *
                (str_x(i) *
-                    (a2 * (a_Up(1, i + 2, j, k) - a_Up(1, i - 2, j, k)) +
-                     a1 * (a_Up(1, i + 1, j, k) - a_Up(1, i - 1, j, k))) +
+                    (a2 * (a_UpV(1, i + 2, j, k) - a_UpV(1, i - 2, j, k)) +
+                     a1 * (a_UpV(1, i + 1, j, k) - a_UpV(1, i - 1, j, k))) +
                 str_y(j) *
-                    (a2 * (a_Up(2, i, j + 2, k) - a_Up(2, i, j - 2, k)) +
-                     a1 * (a_Up(2, i, j + 1, k) - a_Up(2, i, j - 1, k)))));
-    }
+                    (a2 * (a_UpV(2, i, j + 2, k) - a_UpV(2, i, j - 2, k)) +
+                     a1 * (a_UpV(2, i, j + 1, k) - a_UpV(2, i, j - 1, k)))));
+					});
 
 #undef str_x
 #undef str_y
@@ -5475,6 +5506,7 @@ void EW::compute_icstresses_curv(Sarray& a_Up, Sarray& B, int kic,
                                  Sarray& a_metric, Sarray& a_mu,
                                  Sarray& a_lambda, float_sw4* a_str_x,
                                  float_sw4* a_str_y, float_sw4* sbop, char op) {
+  SW4_MARK_FUNCTION;
   const float_sw4 a1 = 2.0 / 3, a2 = -1.0 / 12;
   const bool upper = (kic == 1);
   const int k = kic;
@@ -5598,6 +5630,8 @@ void EW::compute_icstresses_curv(Sarray& a_Up, Sarray& B, int kic,
 void EW::compute_icstresses_cpu(Sarray& a_Up, Sarray& B, int g, int kic,
                                 float_sw4* a_str_x, float_sw4* a_str_y,
                                 float_sw4* sbop, char op) {
+  SW4_MARK_FUNCTION;
+  SYNC_STREAM;
   const float_sw4 a1 = 2.0 / 3, a2 = -1.0 / 12;
   bool upper = (kic == 1);
   int k = kic;
@@ -5660,6 +5694,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
                               vector<Source*>& a_sources)
 // assign the boundary forcing arrays a_BCForcing[g][side]
 {
+  SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast, nz;
   float_sw4 *mu_ptr, *la_ptr, h, zmin;
   float_sw4 *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr,

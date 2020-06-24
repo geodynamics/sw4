@@ -221,7 +221,7 @@ class EW {
 
   void default_bcs();
   void update_curvilinear_cartesian_interface(vector<Sarray>& a_U);
-  void update_curvilinear_cartesian_interface_raja(vector<Sarray>& a_U);
+  void update_curvilinear_cartesian_interface_org(vector<Sarray>& a_U);
 
   void set_twilight_forcing(ForcingTwilight* a_forcing);
   // perhaps these functions should be in the ForcingTwilight class?

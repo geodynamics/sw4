@@ -53,6 +53,7 @@ bool Sarray::m_corder = false;
 // better way to do this.
 Sarray::Sarray(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
                int kend, const char* file, int line) {
+  //SW4_MARK_FUNCTION;
   m_nc = nc;
   m_ib = ibeg;
   m_ie = iend;
@@ -216,6 +217,10 @@ Sarray::Sarray(const Sarray& u) : static_alloc(false) {
   dev_data = NULL;
   define_offsets();
   prefetched = false;
+// #ifdef __CUDA_ARCH__
+//   printf("Creating a device object \n");
+//   bool device_object=true;
+// #endif
 }
 //-----------------------------------------------------------------------
 Sarray::Sarray(const Sarray& u, Space space) {
