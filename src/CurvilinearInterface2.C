@@ -486,16 +486,17 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
 	 {
 	    size_t ind=(i-m_Mass_block.m_ib)+nimb*(j-m_Mass_block.m_jb);
             //	    float_sw4 x[3]={residual(1,i,j,1),residual(2,i,j,1),residual(3,i,j,1)};
-            float_sw4 x[3];
-            x[0] = m_mass_block[9*ind  ]*residual(1,i,j,1)+
-                   m_mass_block[9*ind+3]*residual(2,i,j,1)+
-                   m_mass_block[9*ind+6]*residual(3,i,j,1);
-            x[1] = m_mass_block[9*ind+1]*residual(1,i,j,1)+
-                   m_mass_block[9*ind+4]*residual(2,i,j,1)+
-                   m_mass_block[9*ind+7]*residual(3,i,j,1);
-            x[2] = m_mass_block[9*ind+2]*residual(1,i,j,1)+
-                   m_mass_block[9*ind+5]*residual(2,i,j,1)+
-                   m_mass_block[9*ind+8]*residual(3,i,j,1);
+            float_sw4 x1, x2, x3;
+            float_sw4 b1=residual(1,i,j,1), b2=residual(2,i,j,1), b3=residual(3,i,j,1);
+            x1 = m_mass_block[9*ind  ]*b1+
+                 m_mass_block[9*ind+3]*b2+
+                 m_mass_block[9*ind+6]*b3;
+            x2 = m_mass_block[9*ind+1]*b1+
+                 m_mass_block[9*ind+4]*b2+
+                 m_mass_block[9*ind+7]*b3;
+            x3 = m_mass_block[9*ind+2]*b1+
+                 m_mass_block[9*ind+5]*b2+
+                 m_mass_block[9*ind+8]*b3;
             // 	    F77_FUNC(dgetrs,DGETRS)(&trans, &three, &one, &m_mass_block[9*ind], &three,
             //		    &m_ipiv_block[3*ind], x, &three, &info );
   	    if (info != 0)
@@ -505,12 +506,15 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
                          << "\n";
                abort();
 	    }
-	    residual(1,i,j,1) = x[0];
-	    residual(2,i,j,1) = x[1];
-	    residual(3,i,j,1) = x[2];
-	    U_c(1,i,j,0) -= relax*residual(1,i,j,1);
-	    U_c(2,i,j,0) -= relax*residual(2,i,j,1);
-	    U_c(3,i,j,0) -= relax*residual(3,i,j,1);
+	    residual(1,i,j,1) = x1;
+	    residual(2,i,j,1) = x2;
+	    residual(3,i,j,1) = x3;
+	    U_c(1,i,j,0) -= relax*x1;
+	    U_c(2,i,j,0) -= relax*x2;
+	    U_c(3,i,j,0) -= relax*x3;
+            //	    U_c(1,i,j,0) -= relax*residual(1,i,j,1);
+            //	    U_c(2,i,j,0) -= relax*residual(2,i,j,1);
+            //	    U_c(3,i,j,0) -= relax*residual(3,i,j,1);
 	 }
 
   // 4.d Communicate U_c here (only k=0 plane)
