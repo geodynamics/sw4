@@ -8,6 +8,7 @@
 
 extern "C" {
    void F77_FUNC(dgetrf,DGETRF)(int*,  int*, double*, int*, int*, int*);
+   void F77_FUNC(dgetri,DGETRI)(int*, double*, int*, int*, double*, int*, int* );
    void F77_FUNC(dgetrs,DGETRS)(char*, int*, int*, double*, int*, int*, double*, int*, int*);
 }
 
@@ -240,6 +241,9 @@ void CurvilinearInterface2::init_arrays( vector<float_sw4*>& a_strx,
    int three    = 3;
    int info     = 0;
    m_ipiv_block = new int[3*msize];
+   int lwork=9;
+   double* work=new double[lwork];
+
    for( size_t ind=0 ; ind < msize; ind++ )
    {
       F77_FUNC(dgetrf,DGETRF)(&three, &three, &m_mass_block[9*ind], &three,
@@ -256,7 +260,22 @@ void CurvilinearInterface2::init_arrays( vector<float_sw4*>& a_strx,
 	      std::cerr << m_Mass_block(m +3*(l-1), i, j,1) << ",";
 	    std::cerr << "\n";
       }
+      F77_FUNC(dgetri,DGETRI)(&three, &m_mass_block[9*ind], &three,
+			      &m_ipiv_block[3*ind], work, &lwork, &info );
+      if( info != 0)
+      {
+	 int j = ind/m_Mass_block.m_ni+m_Mass_block.m_jb;
+	 int i = ind + m_Mass_block.m_ib - m_Mass_block.m_ni*(j - m_Mass_block.m_jb);
+         std::cerr << "DGETRI Fails at (i,j) equals" << i << "," << j
+                   << " info = " << info << " " << m_Mass_block(info+3*(info-1), i, j,1)
+                      << "\n";
+         for (int l = 1; l <= 3; l++) 
+            for (int m = 1; m <= 3; m++)
+	      std::cerr << m_Mass_block(m +3*(l-1), i, j,1) << ",";
+	    std::cerr << "\n";
+      }
    }
+   delete[] work;
 }
 
 //-----------------------------------------------------------------------
@@ -466,9 +485,19 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
          for( int i=m_Mass_block.m_ib ; i <= m_Mass_block.m_ie ; i++ )
 	 {
 	    size_t ind=(i-m_Mass_block.m_ib)+nimb*(j-m_Mass_block.m_jb);
-	    float_sw4 x[3]={residual(1,i,j,1),residual(2,i,j,1),residual(3,i,j,1)};
- 	    F77_FUNC(dgetrs,DGETRS)(&trans, &three, &one, &m_mass_block[9*ind], &three,
-		    &m_ipiv_block[3*ind], x, &three, &info );
+            //	    float_sw4 x[3]={residual(1,i,j,1),residual(2,i,j,1),residual(3,i,j,1)};
+            float_sw4 x[3];
+            x[0] = m_mass_block[9*ind  ]*residual(1,i,j,1)+
+                   m_mass_block[9*ind+3]*residual(2,i,j,1)+
+                   m_mass_block[9*ind+6]*residual(3,i,j,1);
+            x[1] = m_mass_block[9*ind+1]*residual(1,i,j,1)+
+                   m_mass_block[9*ind+4]*residual(2,i,j,1)+
+                   m_mass_block[9*ind+7]*residual(3,i,j,1);
+            x[2] = m_mass_block[9*ind+2]*residual(1,i,j,1)+
+                   m_mass_block[9*ind+5]*residual(2,i,j,1)+
+                   m_mass_block[9*ind+8]*residual(3,i,j,1);
+            // 	    F77_FUNC(dgetrs,DGETRS)(&trans, &three, &one, &m_mass_block[9*ind], &three,
+            //		    &m_ipiv_block[3*ind], x, &three, &info );
   	    if (info != 0)
 	    {
                std::cerr << "SOLVE Fails at (i,j) equals" << i << "," << j
