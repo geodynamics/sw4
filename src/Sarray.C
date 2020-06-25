@@ -53,7 +53,7 @@ bool Sarray::m_corder = false;
 // better way to do this.
 Sarray::Sarray(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
                int kend, const char* file, int line) {
-  //SW4_MARK_FUNCTION;
+  // SW4_MARK_FUNCTION;
   m_nc = nc;
   m_ib = ibeg;
   m_ie = iend;
@@ -217,10 +217,10 @@ Sarray::Sarray(const Sarray& u) : static_alloc(false) {
   dev_data = NULL;
   define_offsets();
   prefetched = false;
-// #ifdef __CUDA_ARCH__
-//   printf("Creating a device object \n");
-//   bool device_object=true;
-// #endif
+  // #ifdef __CUDA_ARCH__
+  //   printf("Creating a device object \n");
+  //   bool device_object=true;
+  // #endif
 }
 //-----------------------------------------------------------------------
 Sarray::Sarray(const Sarray& u, Space space) {
@@ -367,7 +367,7 @@ void Sarray::define(int iend, int jend, int kend) {
 
 //-----------------------------------------------------------------------
 void Sarray::define(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
-                    int kend,Space space) {
+                    int kend, Space space) {
   if (m_data != NULL) ::operator delete[](m_data, Space::Managed);
   m_nc = nc;
   m_ib = ibeg;
@@ -427,7 +427,6 @@ void Sarray::define(int ibeg, int iend, int jbeg, int jend, int kbeg, int kend,
     std::cout
         << "ERROR :: Sarrays outside Space::Managed not fully supported \n";
 }
-
 
 //-----------------------------------------------------------------------
 void Sarray::define(const Sarray& u) {
@@ -1531,21 +1530,23 @@ void Sarray::copy_kplane2(Sarray& u, int k) {
     // for (int c = 0; c < m_nc; c++)
     //   for (int j = wind[2]; j <= wind[3]; j++)
     //     for (int i = wind[0]; i <= wind[1]; i++) {
-	  RAJA::RangeSegment j_range(wind[2], wind[3] + 1);
-	  RAJA::RangeSegment i_range(wind[0], wind[1] + 1);
-	  RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
-						 RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+    RAJA::RangeSegment j_range(wind[2], wind[3] + 1);
+    RAJA::RangeSegment i_range(wind[0], wind[1] + 1);
+    RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
+        RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
           size_t ind =
               (i - lm_ib) + lm_ni * (j - lm_jb) + lm_ni * lm_nj * (k - lm_kb);
-	  
+
           size_t uind = (i - ulm_ib) + ulm_ni * (j - ulm_jb) +
                         ulm_ni * ulm_nj * (k - ulm_kb);
-	  
-          for (int c = 0; c < lm_nc; c++) lm_data[ind + c * nijk] = ulm_data[uind + c * unijk];
-						 });
-	  SYNC_STREAM;
+
+          for (int c = 0; c < lm_nc; c++)
+            lm_data[ind + c * nijk] = ulm_data[uind + c * unijk];
+        });
+    SYNC_STREAM;
   } else {
-    std::cout<<"WARNING Sarray::copy_kplane2 running on CPU !!\n"<<std::flush;
+    std::cout << "WARNING Sarray::copy_kplane2 running on CPU !!\n"
+              << std::flush;
     for (int j = wind[2]; j <= wind[3]; j++)
       for (int i = wind[0]; i <= wind[1]; i++) {
         size_t ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);

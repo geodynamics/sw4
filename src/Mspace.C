@@ -706,64 +706,60 @@ Space GML(const void *ptr) {
   } else
     return Space::Space_Error;
 }
-void invert(float_sw4* A, int msize){
+void invert(float_sw4 *A, int msize) {
   float_sw4 B[9];
   float_sw4 Prod[9];
-#define M(i,j,d) A[(d*9)+(i-1)+(j-1)*3]
-#define P(i,j) Prod[(j-1)+(i-1)*3]
-#define I(i,j) B[(j-1)+(i-1)*3]
+#define M(i, j, d) A[(d * 9) + (i - 1) + (j - 1) * 3]
+#define P(i, j) Prod[(j - 1) + (i - 1) * 3]
+#define I(i, j) B[(j - 1) + (i - 1) * 3]
 
-  for (int c=0;c<msize;c++){
-    float_sw4 dA = 
-    M(1,1,c)*M(2,2,c)*M(3,3,c)+
-    M(1,2,c)*M(2,3,c)*M(3,1,c)+
-    M(1,3,c)*M(2,1,c)*M(3,2,c)-
-    M(1,3,c)*M(2,2,c)*M(3,1,c)-
-    M(1,2,c)*M(2,1,c)*M(3,3,c)-
-    M(1,1,c)*M(2,3,c)*M(3,2,c);
+  for (int c = 0; c < msize; c++) {
+    float_sw4 dA = M(1, 1, c) * M(2, 2, c) * M(3, 3, c) +
+                   M(1, 2, c) * M(2, 3, c) * M(3, 1, c) +
+                   M(1, 3, c) * M(2, 1, c) * M(3, 2, c) -
+                   M(1, 3, c) * M(2, 2, c) * M(3, 1, c) -
+                   M(1, 2, c) * M(2, 1, c) * M(3, 3, c) -
+                   M(1, 1, c) * M(2, 3, c) * M(3, 2, c);
 
-    I(1,1) = M(2,2,c)*M(3,3,c)-M(2,3,c)*M(3,2,c);
-    I(1,2) = M(1,3,c)*M(3,2,c)-M(1,2,c)*M(3,3,c);
-    I(1,3) = M(1,2,c)*M(2,3,c)-M(2,2,c)*M(1,3,c);
-    
-    I(2,1) = M(2,3,c)*M(3,1,c)-M(3,3,c)*M(2,1,c);
-    I(2,2) = M(1,1,c)*M(3,3,c)-M(3,1,c)*M(1,3,c);
-    I(2,3) = M(1,3,c)*M(2,1,c)-M(2,3,c)*M(1,1,c);
-    
-    I(3,1) = M(2,1,c)*M(3,2,c)-M(3,1,c)*M(2,2,c);
-    I(3,2) = M(1,2,c)*M(3,1,c)-M(3,2,c)*M(1,1,c);
-    I(3,3) = M(1,1,c)*M(2,2,c)-M(2,1,c)*M(1,2,c);
-    
-    
-    
+    I(1, 1) = M(2, 2, c) * M(3, 3, c) - M(2, 3, c) * M(3, 2, c);
+    I(1, 2) = M(1, 3, c) * M(3, 2, c) - M(1, 2, c) * M(3, 3, c);
+    I(1, 3) = M(1, 2, c) * M(2, 3, c) - M(2, 2, c) * M(1, 3, c);
+
+    I(2, 1) = M(2, 3, c) * M(3, 1, c) - M(3, 3, c) * M(2, 1, c);
+    I(2, 2) = M(1, 1, c) * M(3, 3, c) - M(3, 1, c) * M(1, 3, c);
+    I(2, 3) = M(1, 3, c) * M(2, 1, c) - M(2, 3, c) * M(1, 1, c);
+
+    I(3, 1) = M(2, 1, c) * M(3, 2, c) - M(3, 1, c) * M(2, 2, c);
+    I(3, 2) = M(1, 2, c) * M(3, 1, c) - M(3, 2, c) * M(1, 1, c);
+    I(3, 3) = M(1, 1, c) * M(2, 2, c) - M(2, 1, c) * M(1, 2, c);
+
 #ifdef DEBUG
-for (int i=1;i<4;i++){
-      for (int j=1;j<4;j++){
-	float_sw4 sum = 0.0;
-	for(int k=1;k<4;k++){
-	  sum += M(i,k,c)*I(k,j);
-	}
-	P(i,j)=sum/dA;
+    for (int i = 1; i < 4; i++) {
+      for (int j = 1; j < 4; j++) {
+        float_sw4 sum = 0.0;
+        for (int k = 1; k < 4; k++) {
+          sum += M(i, k, c) * I(k, j);
+        }
+        P(i, j) = sum / dA;
       }
     }
- 
-    for(int i=1;i<4;i++) {
-      for(int j=1;j<4;j++){
-	std::cout<<P(i,j)<<",";
+
+    for (int i = 1; i < 4; i++) {
+      for (int j = 1; j < 4; j++) {
+        std::cout << P(i, j) << ",";
       }
-      std::cout<<"\n";
+      std::cout << "\n";
     }
-    std::cout<<"_______________________\n";
+    std::cout << "_______________________\n";
 #endif
 
-    for (int i=1;i<4;i++){
-      for (int j=1;j<4;j++){
-	M(j,i,c) = I(i,j)/dA;
+    for (int i = 1; i < 4; i++) {
+      for (int j = 1; j < 4; j++) {
+        M(j, i, c) = I(i, j) / dA;
       }
     }
-    }
+  }
 #undef M
 #undef P
 #undef I
-    }
-    
+}

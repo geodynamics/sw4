@@ -195,5 +195,5 @@ void Write(T &t, std::string filename) {
     i.swrite(filename);
   }
 }
-void invert(float_sw4* A, int N);
+void invert(float_sw4 *A, int N);
 #endif

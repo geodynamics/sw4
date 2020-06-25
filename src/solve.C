@@ -1712,7 +1712,7 @@ void EW::enforceBCanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
 //
 void EW::update_curvilinear_cartesian_interface(vector<Sarray>& a_U) {
   SW4_MARK_FUNCTION;
-  //std::cout<<"EW::update_curvilinear_cartesian_interface_raja<\n"<<std::flush;
+  // std::cout<<"EW::update_curvilinear_cartesian_interface_raja<\n"<<std::flush;
   if (topographyExists()) {
     const int nc = 3;
     int g = mNumberOfCartesianGrids - 1;
@@ -5174,7 +5174,7 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                      vector<Sarray>& a_Lambda, vector<Sarray*>& a_Alpha,
                      float_sw4 t) {
   SW4_MARK_FUNCTION;
-  //std::cout<<"CALL TO EW::CurviCartIC ON CPU \n"<<std::flush;
+  // std::cout<<"CALL TO EW::CurviCartIC ON CPU \n"<<std::flush;
   SYNC_STREAM;  // FOR CURVI_CPU
   SW4_MARK_BEGIN("CurviCartIC::PART 1");
   int gcurv = gcart + 1;
@@ -5289,7 +5289,7 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   SW4_MARK_END("CurviCartIC::PART 4");
   SW4_MARK_BEGIN("CurviCartIC::PART 5");
 
-  Sarray Bca(3, ib, ie, jb, je, 1, 1,__FILE__,__LINE__);
+  Sarray Bca(3, ib, ie, jb, je, 1, 1, __FILE__, __LINE__);
   compute_icstresses2(a_U[gcart], Bca, 1, mGridSize[gcart], a_Mu[gcart],
                       a_Lambda[gcart], m_sg_str_x[gcart], m_sg_str_y[gcart],
                       m_sbop, '=');
@@ -5313,7 +5313,7 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                               mMuVE[gcurv][a], mLambdaVE[gcurv][a],
                               m_sg_str_x[gcurv], m_sg_str_y[gcurv],
                               m_sbop_no_gp, '-');
-  
+
   SW4_MARK_END("CurviCartIC::PART 6");
   SW4_MARK_BEGIN("CurviCartIC::PART 7");
 
@@ -5377,7 +5377,7 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
       });
 
   SW4_MARK_END("CurviCartIC::PART 7");
-  //SW4_MARK_BEGIN("CurviCartIC::PART 8");
+  // SW4_MARK_BEGIN("CurviCartIC::PART 8");
 
   bool debug = false;
   if (debug) {
@@ -5426,7 +5426,7 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
         resmax = res > resmax ? res : resmax;
       }
     cout << "resmax = " << resmax << endl;
-  } // end of if(debug)
+  }  // end of if(debug)
 }
 //-----------------------------------------------------------------------
 void EW::compute_icstresses2(Sarray& a_Up, Sarray& B, int kic, float_sw4 h,
@@ -5448,54 +5448,54 @@ void EW::compute_icstresses2(Sarray& a_Up, Sarray& B, int kic, float_sw4 h,
     sgn = 1;
   } else if (op == '-')
     sgn = -1;
-  auto &a_UpV =a_Up.getview();
-  auto &BV = B.getview();
-  auto &a_muV = a_mu.getview();
-  auto &a_lambdaV = a_lambda.getview();
-// #pragma omp parallel for
-//   for (int j = B.m_jb + 2; j <= B.m_je - 2; j++)
-// #pragma omp simd
-//     for (int i = B.m_ib + 2; i <= B.m_ie - 2; i++) {
-      RAJA::RangeSegment j_range(B.m_jb + 2, B.m_je - 2 + 1);
-      RAJA::RangeSegment i_range(B.m_ib + 2, B.m_ie - 2 + 1);
-      RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
-					RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
-      float_sw4 uz, vz, wz;
-      uz = vz = wz = 0;
-      if (upper) {
-        for (int m = 0; m <= 5; m++) {
-          uz += sbop[m] * a_UpV(1, i, j, k + m - 1);
-          vz += sbop[m] * a_UpV(2, i, j, k + m - 1);
-          wz += sbop[m] * a_UpV(3, i, j, k + m - 1);
+  auto& a_UpV = a_Up.getview();
+  auto& BV = B.getview();
+  auto& a_muV = a_mu.getview();
+  auto& a_lambdaV = a_lambda.getview();
+  // #pragma omp parallel for
+  //   for (int j = B.m_jb + 2; j <= B.m_je - 2; j++)
+  // #pragma omp simd
+  //     for (int i = B.m_ib + 2; i <= B.m_ie - 2; i++) {
+  RAJA::RangeSegment j_range(B.m_jb + 2, B.m_je - 2 + 1);
+  RAJA::RangeSegment i_range(B.m_ib + 2, B.m_ie - 2 + 1);
+  RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(
+      RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+        float_sw4 uz, vz, wz;
+        uz = vz = wz = 0;
+        if (upper) {
+          for (int m = 0; m <= 5; m++) {
+            uz += sbop[m] * a_UpV(1, i, j, k + m - 1);
+            vz += sbop[m] * a_UpV(2, i, j, k + m - 1);
+            wz += sbop[m] * a_UpV(3, i, j, k + m - 1);
+          }
+        } else {
+          for (int m = 0; m <= 5; m++) {
+            uz -= sbop[m] * a_UpV(1, i, j, k + 1 - m);
+            vz -= sbop[m] * a_UpV(2, i, j, k + 1 - m);
+            wz -= sbop[m] * a_UpV(3, i, j, k + 1 - m);
+          }
         }
-      } else {
-        for (int m = 0; m <= 5; m++) {
-          uz -= sbop[m] * a_UpV(1, i, j, k + 1 - m);
-          vz -= sbop[m] * a_UpV(2, i, j, k + 1 - m);
-          wz -= sbop[m] * a_UpV(3, i, j, k + 1 - m);
-        }
-      }
-      BV(1, i, j, k) +=
-          sgn * ih * a_muV(i, j, k) *
-          (str_x(i) * (a2 * (a_UpV(3, i + 2, j, k) - a_UpV(3, i - 2, j, k)) +
-                       a1 * (a_UpV(3, i + 1, j, k) - a_UpV(3, i - 1, j, k))) +
-           (uz));
-      BV(2, i, j, k) +=
-          sgn * ih * a_muV(i, j, k) *
-          (str_y(j) * (a2 * (a_UpV(3, i, j + 2, k) - a_UpV(3, i, j - 2, k)) +
-                       a1 * (a_UpV(3, i, j + 1, k) - a_UpV(3, i, j - 1, k))) +
-           (vz));
-      BV(3, i, j, k) +=
-          sgn * ih *
-          ((2 * a_muV(i, j, k) + a_lambdaV(i, j, k)) * (wz) +
-           a_lambdaV(i, j, k) *
-               (str_x(i) *
-                    (a2 * (a_UpV(1, i + 2, j, k) - a_UpV(1, i - 2, j, k)) +
-                     a1 * (a_UpV(1, i + 1, j, k) - a_UpV(1, i - 1, j, k))) +
-                str_y(j) *
-                    (a2 * (a_UpV(2, i, j + 2, k) - a_UpV(2, i, j - 2, k)) +
-                     a1 * (a_UpV(2, i, j + 1, k) - a_UpV(2, i, j - 1, k)))));
-					});
+        BV(1, i, j, k) +=
+            sgn * ih * a_muV(i, j, k) *
+            (str_x(i) * (a2 * (a_UpV(3, i + 2, j, k) - a_UpV(3, i - 2, j, k)) +
+                         a1 * (a_UpV(3, i + 1, j, k) - a_UpV(3, i - 1, j, k))) +
+             (uz));
+        BV(2, i, j, k) +=
+            sgn * ih * a_muV(i, j, k) *
+            (str_y(j) * (a2 * (a_UpV(3, i, j + 2, k) - a_UpV(3, i, j - 2, k)) +
+                         a1 * (a_UpV(3, i, j + 1, k) - a_UpV(3, i, j - 1, k))) +
+             (vz));
+        BV(3, i, j, k) +=
+            sgn * ih *
+            ((2 * a_muV(i, j, k) + a_lambdaV(i, j, k)) * (wz) +
+             a_lambdaV(i, j, k) *
+                 (str_x(i) *
+                      (a2 * (a_UpV(1, i + 2, j, k) - a_UpV(1, i - 2, j, k)) +
+                       a1 * (a_UpV(1, i + 1, j, k) - a_UpV(1, i - 1, j, k))) +
+                  str_y(j) *
+                      (a2 * (a_UpV(2, i, j + 2, k) - a_UpV(2, i, j - 2, k)) +
+                       a1 * (a_UpV(2, i, j + 1, k) - a_UpV(2, i, j - 1, k)))));
+      });
 
 #undef str_x
 #undef str_y

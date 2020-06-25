@@ -119,7 +119,7 @@ class Sarray {
   void define(int iend, int jend, int kend);
   void define(int nc, int iend, int jend, int kend);
   void define(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
-              int kend,Space space = Space::Managed);
+              int kend, Space space = Space::Managed);
   void define(int ibeg, int iend, int jbeg, int jend, int kbeg, int kend,
               Space space = Space::Managed);
   void define(const Sarray& u);

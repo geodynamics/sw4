@@ -134,7 +134,7 @@ void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
                                    uV(c, i, j, k) = 0;
                                });
     }
-  //SYNC_STREAM;
+  // SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -299,7 +299,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   // Repackage Mass_block into array of fortran order.
   int nimb = (m_Mass_block.m_ie - m_Mass_block.m_ib + 1);
   size_t msize = nimb * (m_Mass_block.m_je - m_Mass_block.m_jb + 1);
-  std::cout<<"Bathc size in setup is "<<msize<<"\n";
+  std::cout << "Bathc size in setup is " << msize << "\n";
   //#define USE_DIRECT_INVERSE 1
 #ifdef USE_DIRECT_INVERSE
   std::cout << " USING DIRECT INVERSE \n";
@@ -311,9 +311,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
       for (int c = 1; c <= 9; c++)
         m_mass_block[c - 1 + 9 * ind] = m_Mass_block(c, i, j, 1);
     }
-  invert(m_mass_block,msize);
-
-
+  invert(m_mass_block, msize);
 
 #endif
 
@@ -500,8 +498,10 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
     //      Alpha_c = new Sarray[m_number_mechanisms];
     //      Alpha_f = new Sarray[m_number_mechanisms];
     for (int a = 0; a < m_number_mechanisms; a++) {
-      Alpha_f[a].define(3, m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef,Space::Managed_temps);
-      Alpha_c[a].define(3, m_ib, m_ie, m_jb, m_je, m_kb, m_ke,Space::Managed_temps);
+      Alpha_f[a].define(3, m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef,
+                        Space::Managed_temps);
+      Alpha_c[a].define(3, m_ib, m_ie, m_jb, m_je, m_kb, m_ke,
+                        Space::Managed_temps);
       Alpha_f[a].insert_intersection(a_AlphaVE[m_gf][a]);
       Alpha_c[a].insert_intersection(a_AlphaVE[m_gc][a]);
     }
@@ -653,22 +653,23 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
           for (int l = 1; l < 4; l++)
             lx[l - 1 + 3 * ind] = residualV(l, i, j, 1);
         });
-    size_t batchsize=(l_ie-l_ib)+nimb*(l_je-l_jb)+1;
-    //std::cout<<"Batch size in solve is "<<batchsize<<"\n";
-SW4_MARK_BEGIN("MATVEC");
+    size_t batchsize = (l_ie - l_ib) + nimb * (l_je - l_jb) + 1;
+    // std::cout<<"Batch size in solve is "<<batchsize<<"\n";
+    SW4_MARK_BEGIN("MATVEC");
     RAJA::forall<DEFAULT_LOOP1_ASYNC>(
-				      RAJA::RangeSegment(0,batchsize), [=] RAJA_DEVICE(int l) {
-					int base = l*9;
-					float_sw4 sum=0.0;
-					float_sw4 res[3];
-					for(int k=0;k<3;k++){
-					  sum=0.0;
-					  for(int i=0;i<3;i++) sum+=m_mass_block[base+k*3+i]*lx[l*3+i];
-					  res[k]=sum;
-					}
-					for(int k=0;k<3;k++) lx[l*3+k]=res[k];
-});
-SW4_MARK_END("MATVEC");
+        RAJA::RangeSegment(0, batchsize), [=] RAJA_DEVICE(int l) {
+          int base = l * 9;
+          float_sw4 sum = 0.0;
+          float_sw4 res[3];
+          for (int k = 0; k < 3; k++) {
+            sum = 0.0;
+            for (int i = 0; i < 3; i++)
+              sum += m_mass_block[base + k * 3 + i] * lx[l * 3 + i];
+            res[k] = sum;
+          }
+          for (int k = 0; k < 3; k++) lx[l * 3 + k] = res[k];
+        });
+    SW4_MARK_END("MATVEC");
 #endif
 #ifdef USE_MAGMA
     //    int lc=0;
@@ -726,7 +727,7 @@ SW4_MARK_END("MATVEC");
     // for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
     //       for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
     SView& U_cV = U_c.getview();
-    
+
     RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
         RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
           // for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
@@ -915,7 +916,7 @@ void CurvilinearInterface2::injection(Sarray& u_fA, Sarray& u_cA) {
           u_f(l, 2 * i - 1, 2 * j - 1, lm_nkf) = u_c(l, i, j, 1);
         });
   }
-  //SYNC_STREAM;
+  // SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -1006,7 +1007,7 @@ void CurvilinearInterface2::interface_lhs(Sarray& lhs, Sarray& uc) {
 #pragma unroll
         for (int c = 1; c <= 3; c++) lhsV(c, i, j, 1) -= BcV(c, i, j, 1);
       });
-  //SYNC_STREAM;
+  // SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -1065,7 +1066,7 @@ void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
                                        for (int c = 1; c <= 3; c++)
                                          rhsV(c, i, j, 1) /= m_rho_cV(i, j, 1);
                                      });
-  //SYNC_STREAM;
+  // SYNC_STREAM;
   if (!m_tw) bnd_zero(rhs, m_nghost);
 
   // 3. Compute prolrhs := p(L(uc)/rhoc)
@@ -1126,7 +1127,7 @@ void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
                   (lm_strx_f[i - lm_ibf] * lm_stry_f[j - lm_jbf]) +
               BfV(c, i, j, lm_nkf);
       });
-  //SYNC_STREAM;
+  // SYNC_STREAM;
   if (!m_tw) bnd_zero(prolrhs, m_nghost);
   restrict2D(rhs, prolrhs, 1, m_nkf);
 
@@ -1333,7 +1334,7 @@ void CurvilinearInterface2::lhs_icstresses_curv(
         a_lhsV(2, i, j, k) *= isgxy;
         a_lhsV(3, i, j, k) *= isgxy;
       });
-  //SYNC_STREAM;
+  // SYNC_STREAM;
 #undef str_x
 #undef str_y
 }
@@ -2110,8 +2111,7 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
   sbuf2 = &tmp[2 * nptsmax * u.m_nc];
   rbuf2 = &tmp[3 * nptsmax * u.m_nc];
 
-
-   using LOCAL_POL =
+  using LOCAL_POL =
       RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::Tile<
           0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
           RAJA::statement::Tile<
@@ -2126,91 +2126,88 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
                               2, RAJA::cuda_thread_x_direct,
                               RAJA::statement::Lambda<0>>>>>>>>>;
 
-   int ib = u.m_ib;
-   int ie = u.m_ie;
-   int jb = u.m_jb;
-   int lm_nc = u.m_nc;
-   auto& uV = u.getview();
-   RAJA::RangeSegment k_range(kb, ke + 1);
-
+  int ib = u.m_ib;
+  int ie = u.m_ie;
+  int jb = u.m_jb;
+  int lm_nc = u.m_nc;
+  auto& uV = u.getview();
+  RAJA::RangeSegment k_range(kb, ke + 1);
 
   // i-direction communication
   MPI_Irecv(rbuf1, npts1 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[1], tag1,
             m_ew->m_cartesian_communicator, &req1);
   MPI_Irecv(rbuf2, npts1 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[0], tag2,
             m_ew->m_cartesian_communicator, &req2);
-  if (m_ew->m_neighbor[0] != MPI_PROC_NULL){
+  if (m_ew->m_neighbor[0] != MPI_PROC_NULL) {
     // for (int c = 1; c <= u.m_nc; c++)
     //   for (int k = kb; k <= ke; k++)
     //     for (int j = u.m_jb; j <= u.m_je; j++)
     //       for (int i = u.m_ib + ng; i <= u.m_ib + 2 * ng - 1; i++) {
-    RAJA::RangeSegment j_range1(u.m_jb, u.m_je +1 );
-    RAJA::RangeSegment i_range1(u.m_ib + ng, u.m_ib + 2 * ng - 1 + 1 );
+    RAJA::RangeSegment j_range1(u.m_jb, u.m_je + 1);
+    RAJA::RangeSegment i_range1(u.m_ib + ng, u.m_ib + 2 * ng - 1 + 1);
     RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
                             [=] RAJA_DEVICE(int k, int j, int i) {
-			      size_t ind =
-				  i - (ib + ng) + ng * (j - jb) + ng * nj * (k - kb);
-			      for (int c = 1; c <= lm_nc; c++) {
-				
-				sbuf1[ind + npts1 * (c - 1)] = uV(c, i, j, k);}
-			    });
+                              size_t ind = i - (ib + ng) + ng * (j - jb) +
+                                           ng * nj * (k - kb);
+                              for (int c = 1; c <= lm_nc; c++) {
+                                sbuf1[ind + npts1 * (c - 1)] = uV(c, i, j, k);
+                              }
+                            });
   }
   MPI_Isend(sbuf1, npts1 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[0], tag1,
             m_ew->m_cartesian_communicator, &req3);
-  if (m_ew->m_neighbor[1] != MPI_PROC_NULL){
+  if (m_ew->m_neighbor[1] != MPI_PROC_NULL) {
     // for (int c = 1; c <= u.m_nc; c++)
     //   for (int k = kb; k <= ke; k++)
     //     for (int j = u.m_jb; j <= u.m_je; j++)
     //       for (int i = u.m_ie - 2 * ng + 1; i <= u.m_ie - ng; i++) {
-    RAJA::RangeSegment j_range1(u.m_jb, u.m_je +1 );
-    RAJA::RangeSegment i_range1(u.m_ie - 2 * ng + 1, u.m_ie - ng + 1 );
+    RAJA::RangeSegment j_range1(u.m_jb, u.m_je + 1);
+    RAJA::RangeSegment i_range1(u.m_ie - 2 * ng + 1, u.m_ie - ng + 1);
     RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
                             [=] RAJA_DEVICE(int k, int j, int i) {
-size_t ind = i - (ie - 2 * ng + 1) + ng * (j - jb) +
-                         ng * nj * (k - kb);
-			      for (int c = 1; c <= lm_nc; c++) {
-            
-            sbuf2[ind + npts1 * (c - 1)] = uV(c, i, j, k);
-			      }
-			    });
+                              size_t ind = i - (ie - 2 * ng + 1) +
+                                           ng * (j - jb) + ng * nj * (k - kb);
+                              for (int c = 1; c <= lm_nc; c++) {
+                                sbuf2[ind + npts1 * (c - 1)] = uV(c, i, j, k);
+                              }
+                            });
   }
   MPI_Isend(sbuf2, npts1 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[1], tag2,
             m_ew->m_cartesian_communicator, &req4);
   MPI_Wait(&req1, &status);
-  if (m_ew->m_neighbor[1] != MPI_PROC_NULL){
+  if (m_ew->m_neighbor[1] != MPI_PROC_NULL) {
     // for (int c = 1; c <= u.m_nc; c++)
     //   for (int k = kb; k <= ke; k++)
     //     for (int j = u.m_jb; j <= u.m_je; j++)
     //       for (int i = u.m_ie - ng + 1; i <= u.m_ie; i++) {
-    RAJA::RangeSegment j_range1(u.m_jb, u.m_je +1 );
+    RAJA::RangeSegment j_range1(u.m_jb, u.m_je + 1);
     RAJA::RangeSegment i_range1(u.m_ie - ng + 1, u.m_ie + 1);
     RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
                             [=] RAJA_DEVICE(int k, int j, int i) {
-size_t ind =
-                i - (ie - ng + 1) + ng * (j - jb) + ng * nj * (k - kb);
-			      for (int c = 1; c <= lm_nc; c++) {
-            
-            uV(c, i, j, k) = rbuf1[ind + npts1 * (c - 1)];
-			      }
-			    });
+                              size_t ind = i - (ie - ng + 1) + ng * (j - jb) +
+                                           ng * nj * (k - kb);
+                              for (int c = 1; c <= lm_nc; c++) {
+                                uV(c, i, j, k) = rbuf1[ind + npts1 * (c - 1)];
+                              }
+                            });
   }
   MPI_Wait(&req2, &status);
-  if (m_ew->m_neighbor[0] != MPI_PROC_NULL){
+  if (m_ew->m_neighbor[0] != MPI_PROC_NULL) {
     // for (int c = 1; c <= u.m_nc; c++)
     //   for (int k = kb; k <= ke; k++)
     //     for (int j = u.m_jb; j <= u.m_je; j++)
     //       for (int i = u.m_ib; i <= u.m_ib + ng - 1; i++) {
-    RAJA::RangeSegment j_range1(u.m_jb, u.m_je +1 );
+    RAJA::RangeSegment j_range1(u.m_jb, u.m_je + 1);
     RAJA::RangeSegment i_range1(u.m_ib, u.m_ib + ng - 1 + 1);
     RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
                             [=] RAJA_DEVICE(int k, int j, int i) {
-size_t ind = i - ib + ng * (j - jb) + ng * nj * (k - kb);
-			      for (int c = 1; c <= lm_nc; c++) {
-				
-            uV(c, i, j, k) = rbuf2[ind + npts1 * (c - 1)];
-			      }
-			    });
-			    }
+                              size_t ind =
+                                  i - ib + ng * (j - jb) + ng * nj * (k - kb);
+                              for (int c = 1; c <= lm_nc; c++) {
+                                uV(c, i, j, k) = rbuf2[ind + npts1 * (c - 1)];
+                              }
+                            });
+  }
 
   MPI_Wait(&req3, &status);
   MPI_Wait(&req4, &status);
@@ -2221,9 +2218,6 @@ size_t ind = i - ib + ng * (j - jb) + ng * nj * (k - kb);
   MPI_Irecv(rbuf2, npts2 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[2], tag2,
             m_ew->m_cartesian_communicator, &req2);
 
- 
-
-  
   if (m_ew->m_neighbor[2] != MPI_PROC_NULL) {
     // for (int c = 1; c <= u.m_nc; c++)
     //   for (int k = kb; k <= ke; k++)
@@ -2234,10 +2228,9 @@ size_t ind = i - ib + ng * (j - jb) + ng * nj * (k - kb);
     RAJA::RangeSegment i_range1(u.m_ib, u.m_ie + 1);
     RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
                             [=] RAJA_DEVICE(int k, int j, int i) {
-			      size_t ind = i - ib + ni * (j - (jb + ng)) +
-                                             ng * ni * (k - kb);
+                              size_t ind = i - ib + ni * (j - (jb + ng)) +
+                                           ng * ni * (k - kb);
                               for (int c = 1; c <= lm_nc; c++) {
-                                
                                 sbuf1[ind + npts2 * (c - 1)] = uV(c, i, j, k);
                               }
                             });
@@ -2256,11 +2249,10 @@ size_t ind = i - ib + ng * (j - jb) + ng * nj * (k - kb);
     RAJA::RangeSegment i_range2(u.m_ib, u.m_ie + 1);
     RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(k_range, j_range2, i_range2),
                             [=] RAJA_DEVICE(int k, int j, int i) {
-			      size_t ind = i - ib +
-				ni * (j - (je - 2 * ng + 1)) +
-				ng * ni * (k - kb);
+                              size_t ind = i - ib +
+                                           ni * (j - (je - 2 * ng + 1)) +
+                                           ng * ni * (k - kb);
                               for (int c = 1; c <= lm_nc; c++) {
-                                
                                 sbuf2[ind + npts2 * (c - 1)] = uV(c, i, j, k);
                               }
                             });
@@ -2277,10 +2269,9 @@ size_t ind = i - ib + ng * (j - jb) + ng * nj * (k - kb);
     RAJA::RangeSegment i_range3(u.m_ib, u.m_ie + 1);
     RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(k_range, j_range3, i_range3),
                             [=] RAJA_DEVICE(int k, int j, int i) {
-			      size_t ind = i - ib + ni * (j - (je - ng + 1)) +
-                                             ng * ni * (k - kb);
+                              size_t ind = i - ib + ni * (j - (je - ng + 1)) +
+                                           ng * ni * (k - kb);
                               for (int c = 1; c <= lm_nc; c++) {
-                                
                                 uV(c, i, j, k) = rbuf1[ind + npts2 * (c - 1)];
                               }
                             });
@@ -2295,10 +2286,9 @@ size_t ind = i - ib + ng * (j - jb) + ng * nj * (k - kb);
     RAJA::RangeSegment i_range4(u.m_ib, u.m_ie + 1);
     RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(k_range, j_range4, i_range4),
                             [=] RAJA_DEVICE(int k, int j, int i) {
-size_t ind =
-                                    i - ib + ni * (j - jb) + ng * ni * (k - kb);
+                              size_t ind =
+                                  i - ib + ni * (j - jb) + ng * ni * (k - kb);
                               for (int c = 1; c <= lm_nc; c++) {
-                                
                                 uV(c, i, j, k) = rbuf2[ind + npts2 * (c - 1)];
                               }
                             });
