@@ -85,6 +85,10 @@ CurvilinearInterface2::~CurvilinearInterface2() {
   ::operator delete[](dB_array, Space::Managed);
   ::operator delete[](x, Space::Managed);
 #endif
+#ifdef USE_DIRECT_INVERSE
+  ::operator delete[](m_mass_block, Space::Managed);
+  ::operator delete[](x, Space::Managed);
+#endif
   std::cout << "~CurvilinearInterface2().. Done\n" << std::flush;
 }
 //-----------------------------------------------------------------------
@@ -295,6 +299,23 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   // Repackage Mass_block into array of fortran order.
   int nimb = (m_Mass_block.m_ie - m_Mass_block.m_ib + 1);
   size_t msize = nimb * (m_Mass_block.m_je - m_Mass_block.m_jb + 1);
+  std::cout<<"Bathc size in setup is "<<msize<<"\n";
+  //#define USE_DIRECT_INVERSE 1
+#ifdef USE_DIRECT_INVERSE
+  std::cout << " USING DIRECT INVERSE \n";
+  m_mass_block = SW4_NEW(Space::Managed, float_sw4[9 * msize]);
+  x = SW4_NEW(Space::Managed, float_sw4[3 * msize]);
+  for (int j = m_jb + m_nghost; j <= m_je - m_nghost; j++)
+    for (int i = m_ib + m_nghost; i <= m_ie - m_nghost; i++) {
+      size_t ind = (i - (m_ib + m_nghost)) + nimb * (j - (m_jb + m_nghost));
+      for (int c = 1; c <= 9; c++)
+        m_mass_block[c - 1 + 9 * ind] = m_Mass_block(c, i, j, 1);
+    }
+  invert(m_mass_block,msize);
+
+
+
+#endif
 
 #ifdef USE_MAGMA
   std::cout << " USING MAGMA FOR DGETRF WITH BATCH SIZE " << msize << "\n";
@@ -363,7 +384,8 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
     std::cout << "MAGMA Sub-batching " << i << " " << subbatchoffset[i] << " "
               << subbatchsize[i] << "\n";
   }
-#else
+#endif
+#ifdef USE_LAPACK_ON_CPU
   m_mass_block = new float_sw4[9 * msize];
   for (int j = m_jb + m_nghost; j <= m_je - m_nghost; j++)
     for (int i = m_ib + m_nghost; i <= m_ie - m_nghost; i++) {
@@ -611,6 +633,43 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
          iter <= m_maxit) {
     iter++;
     //      std::cout << "Iteration " << iter << " " << scalef*maxres << "\n";
+
+#ifdef USE_DIRECT_INVERSE
+    int l_ib = m_Mass_block.m_ib;
+    int l_ie = m_Mass_block.m_ie;
+    int l_jb = m_Mass_block.m_jb;
+    int l_je = m_Mass_block.m_je;
+    SView& residualV = residual.getview();
+    ;
+    RAJA::RangeSegment j_range(l_jb, l_je + 1);
+    RAJA::RangeSegment i_range(l_ib, l_ie + 1);
+
+    float_sw4* lx = x;
+    RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
+        RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+          // for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
+          //   for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
+          size_t ind = (i - l_ib) + nimb * (j - l_jb);
+          for (int l = 1; l < 4; l++)
+            lx[l - 1 + 3 * ind] = residualV(l, i, j, 1);
+        });
+    size_t batchsize=(l_ie-l_ib)+nimb*(l_je-l_jb)+1;
+    //std::cout<<"Batch size in solve is "<<batchsize<<"\n";
+SW4_MARK_BEGIN("MATVEC");
+    RAJA::forall<DEFAULT_LOOP1_ASYNC>(
+				      RAJA::RangeSegment(0,batchsize), [=] RAJA_DEVICE(int l) {
+					int base = l*9;
+					float_sw4 sum=0.0;
+					float_sw4 res[3];
+					for(int k=0;k<3;k++){
+					  sum=0.0;
+					  for(int i=0;i<3;i++) sum+=m_mass_block[base+k*3+i]*lx[l*3+i];
+					  res[k]=sum;
+					}
+					for(int k=0;k<3;k++) lx[l*3+k]=res[k];
+});
+SW4_MARK_END("MATVEC");
+#endif
 #ifdef USE_MAGMA
     //    int lc=0;
     int l_ib = m_Mass_block.m_ib;
@@ -661,7 +720,8 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
     SW4_PEEK;
     SYNC_DEVICE;
 #endif
-
+#endif
+#ifndef USE_LAPACK_ON_CPU
     //   lc=0;
     // for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
     //       for (int i = m_Mass_block.m_ib; i <= m_Mass_block.m_ie; i++) {
@@ -679,8 +739,8 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
           U_cV(2, i, j, 0) -= relax * residualV(2, i, j, 1);
           U_cV(3, i, j, 0) -= relax * residualV(3, i, j, 1);
         });
-
-#else
+#endif
+#ifdef USE_LAPACK_ON_CPU
     // WARNING THIS IS RUNNING ON THE HOST
     int info = 0;
     char trans = 'N';

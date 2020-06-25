@@ -51,6 +51,11 @@ class CurvilinearInterface2 {
   std::vector<int> subbatchsize, subbatchoffset;
 #endif
 
+#ifdef USE_DIRECT_INVERSE
+  float_sw4* m_mass_block_gpu;
+  float_sw4* x;
+#endif
+
 #if defined(ENABLE_CUDA)
   float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope, *m_ghcof;
   float_sw4 *m_acof_no_gp, *m_ghcof_no_gp, *m_sbop_no_gp;
