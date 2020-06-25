@@ -52,6 +52,7 @@
 #include "Image.h"
 #include "Image3D.h"
 #include "ESSI3D.h"
+#include "SfileOutput.h"
 
 #include "boundaryConditionTypes.h"
 #include "ForcingTwilight.h"
@@ -102,6 +103,8 @@ void setGoalTime(float_sw4 t,int event=0);
 //double getCurrentTime(){return mTime;}
 void setNumberSteps(int steps,int event=0); // remove???
 int getNumberOfSteps(int event=0) const;
+float_sw4 getGlobalZmin() { return m_global_zmin; }
+float_sw4 getGlobalZmax() { return m_global_zmax; }
 int getNumberOfEvents() const;
 int findNumberOfEvents();
 
@@ -146,6 +149,7 @@ void processTwilight(char* buffer);
 void processFileIO(char* buffer);
 void processImage(char* buffer, bool usehdf5);
 void processImage3D(char* buffer);
+void processSfileOutput(char* buffer);
 void processESSI3D(char* buffer);
 void deprecatedImageMode(int value, const char* name) const;
 void processTestPointSource(char* buffer);
@@ -402,6 +406,7 @@ void checkTopo(Sarray& field);
 void addImage(Image* i);
 void addImage3D(Image3D* i);
 void addESSI3D(ESSI3D* i);
+void addSfileOutput(SfileOutput* i);
 void setIO_timing(bool iotiming);
 void setParallel_IO(bool pfs, int nwriters);
 
@@ -1519,6 +1524,7 @@ float mSACFileErrorTolerance;
 vector<Image*> mImageFiles; 
 vector<Image3D*> mImage3DFiles;
 vector<ESSI3D*> mESSI3DFiles; 
+vector<SfileOutput*> mSfiles;
 bool m_iotiming;
 
 // time data

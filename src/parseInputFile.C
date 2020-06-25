@@ -51,6 +51,7 @@
 #include "Filter.h"
 #include "Image3D.h"
 #include "ESSI3D.h"
+#include "SfileOutput.h"
 #include "sacutils.h"
 //#include "TestGrid.h"
 #include "GridGeneratorGaussianHill.h"
@@ -533,6 +534,8 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 	 processMaterialPfile( buffer );
        else if (startswith("rfile", buffer))
 	 processMaterialRfile( buffer );
+       else if (startswith("sfileoutput", buffer))
+          processSfileOutput(buffer);
        else if (startswith("sfile", buffer))
 	 processMaterialSfile( buffer );
        else if (startswith("vimaterial", buffer))
@@ -3657,6 +3660,97 @@ void EW::processMaterial( char* buffer )
    mat->setSqrtCoefficients( vp1o2, vs1o2, rho1o2 );
    addMaterialProperty( mat );
 }
+
+//-----------------------------------------------------------------------
+void EW::processSfileOutput( char* buffer )
+{
+   int cycle=-1, cycleInterval=0;
+   int sampleFactor = 1;
+   float_sw4 time=0.0, timeInterval=0.0;
+   bool timingSet = false;
+   float_sw4 tStart = -999.99;
+   string filePrefix="sfileoutput";
+   bool use_double = false;
+  
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("sfileoutput", token) == 0, "ERROR: Not a sfileoutput line...: " << token );
+
+   token = strtok(NULL, " \t");
+   string err = "sfileoutput Error: ";
+   while (token != NULL)
+   {
+     // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+	 // Ignore commented lines and lines with just a space.
+	 break;
+      if (startswith("time=", token) )
+      {
+	 token += 5; // skip time=
+	 CHECK_INPUT( atof(token) >= 0.,"Processing sfileoutput command: time must be a non-negative number, not: " << token);
+	 time = atof(token);
+	 timingSet = true;
+      }
+      else if (startswith("timeInterval=", token) )
+      {
+	 token += 13; // skip timeInterval=
+	 CHECK_INPUT( atof(token) >= 0.,"Processing sfileoutput command: timeInterval must be a non-negative number, not: " << token);
+	 timeInterval = atof(token);
+	 timingSet = true;
+      }
+      else if (startswith("startTime=", token) )
+      {
+	 token += 10; // skip startTime=
+	 tStart = atof(token);
+      }
+      else if (startswith("sampleFactor=", token) )
+      {
+	 token += 13; 
+	 CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: sampleFactor must be a non-negative integer, not: " << token);
+	 sampleFactor = atoi(token);
+      }
+      else if (startswith("cycle=", token) )
+      {
+	 token += 6; // skip cycle=
+	 CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: cycle must be a non-negative integer, not: " << token);
+	 cycle = atoi(token);
+	 timingSet = true;
+      }
+      else if (startswith("cycleInterval=", token) )
+      {
+	 token += 14; // skip cycleInterval=
+	 CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: cycleInterval must be a non-negative integer, not: " << token);
+	 cycleInterval = atoi(token);
+	 timingSet = true;
+      }
+      else if (startswith("file=", token))
+      {
+	 token += 5; // skip file=
+	 filePrefix = token;
+      }
+      else if( startswith("precision=",token) )
+      {
+	 token += 10;
+	 CHECK_INPUT( startswith("double",token) || startswith("float",token),
+		      "Processing sfileoutput command: precision must be float or double, not '" << token );
+	 use_double =  startswith("double",token);
+      }
+      else
+      {
+	 badOption("sfileoutput", token);
+      }
+      token = strtok(NULL, " \t");
+   }
+
+   if( !m_inverse_problem)
+   {
+      CHECK_INPUT( timingSet, "Processing sfileoutput command: " << 
+		   "at least one timing mechanism must be set: cycle, time, cycleInterval or timeInterval"  << endl );
+      SfileOutput* sfile = new SfileOutput( this, time, timeInterval, cycle, cycleInterval, 
+ 			       tStart, filePrefix, sampleFactor, use_double);
+      addSfileOutput( sfile );
+   }
+}
+
 
 //-----------------------------------------------------------------------
 void EW::processImage3D( char* buffer )

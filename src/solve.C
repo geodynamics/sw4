@@ -526,6 +526,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     mESSI3DFiles[i3]->set_ntimestep(mNumberOfTimeSteps[event]);
     mESSI3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mPath[event], mZ[gg] );// not verified for several cuvilinear grids
   }
+
+  for( int i3 = 0 ; i3 < mSfiles.size() ; i3++ )
+    mSfiles[i3]->update_image( beginCycle-1, t, mDt, U, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[event], mZ );
+
 // NOTE: time stepping loop starts at currentTimeStep = beginCycle; ends at currentTimeStep <= mNumberOfTimeSteps
 
   FILE *lf=NULL;
@@ -939,6 +943,11 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
       mESSI3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mPath[event], mZ[gg] ); // not verified for several cuvilinear grids
     double time_essi=MPI_Wtime()-time_essi_tmp;
+
+    for( int i3 = 0 ; i3 < mSfiles.size() ; i3++ )
+      mSfiles[i3]->update_image( currentTimeStep, t, mDt, Up, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, 
+				       mQp, mQs, mPath[event], mZ ); // mRho, a_Mu, mLambda occur twice because we don't use gradRho etc.
+
 
 // save the current solution on receiver records (time-derivative require Up and Um for a 2nd order
 // approximation, so do this before cycling the arrays)

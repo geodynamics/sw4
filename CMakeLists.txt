@@ -108,7 +108,7 @@ SET(SW4_SRC_C_FILES src/main.C src/EW.C src/Sarray.C src/version.C src/parseInpu
     src/TestRayleighWave.C src/MaterialPfile.C src/Filter.C src/Polynomial.C
     src/SecondOrderSection.C src/time_functions.C src/Qspline.C
     src/EtreeFile.C src/MaterialIfile.C src/GeographicProjection.C 
-    src/Image3D.C src/MaterialVolimagefile.C
+    src/Image3D.C src/MaterialVolimagefile.C src/SfileOutput.C
     src/MaterialRfile.C src/MaterialSfile.C src/AnisotropicMaterialBlock.C src/sacutils.C
     src/consintp.C src/addmemvarforcing2.C src/ESSI3D.C src/ESSI3DHDF5.C  src/sachdf5.C src/readhdf5.C)
 

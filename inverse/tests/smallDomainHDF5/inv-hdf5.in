@@ -92,3 +92,6 @@ mimage mode=lambda z=1000 cycleInterval=1
 mimage mode=rho z=5000 cycleInterval=1 
 mimage mode=mu z=5000 cycleInterval=1 
 mimage mode=lambda z=5000 cycleInterval=1 
+
+# Output sfile every second
+sfileoutput file=sfileoutput sampleFactor=2 timeInterval=1

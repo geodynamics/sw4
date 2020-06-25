@@ -1197,7 +1197,6 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
    {
 #ifdef USE_HDF5
       int ret, ltype;
-      hid_t fapl;
       hsize_t dims, dims1 = 1, total_elem = 0;
       setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
       int alignment = 65536;
@@ -1210,7 +1209,7 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
       H5Pset_alignment(fapl, 32767, alignment);
       h5_fid = H5Fcreate((const char*)(s.str().c_str()), H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
       if (h5_fid < 0) 
-	VERIFY2(0, "ERROR: Image::writeImagePlane_2, error opening HDF5 file " << s.str() << " for writing header");
+	VERIFY2(0, "ERROR: Image::writeImagePlane_2, error creating HDF5 file " << s.str() << " for writing header");
 
       H5Pclose(fapl);
       /* cout << "Rank " << mEW->getRank() << " created new file [" << s.str() << "]" << endl; */
@@ -1469,14 +1468,13 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
             if( m_double )
             {
                char dblStr[]="double";	  
-               m_pio[g-glow]->write_array_hdf5( (const char*)(s.str().c_str()), "patches", 1, m_doubleField[g], offset, dblStr );
-               /* m_pio[g-glow]->write_array_hdf5( dset, 1, m_doubleField[g], offset, dblStr ); */
+               m_pio[g-glow]->write_array_hdf5( (const char*)(s.str().c_str()), NULL, "patches", 1, m_doubleField[g], offset, dblStr );
                offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]);
             }
             else
             {
                char fltStr[]="float";
-               m_pio[g-glow]->write_array_hdf5( (const char*)(s.str().c_str()), "patches", 1, m_floatField[g], offset, fltStr );
+               m_pio[g-glow]->write_array_hdf5( (const char*)(s.str().c_str()), NULL, "patches", 1, m_floatField[g], offset, fltStr );
                offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]);
             }
          }
@@ -1516,15 +1514,13 @@ void Image::add_grid_to_file_hdf5( const char* fname, bool iwrite, size_t offset
          if( m_double )
          {
             char dblStr[]="double";	  
-            m_pio[g]->write_array_hdf5(fname, "grid", 1, m_gridimage->m_doubleField[g], offset, dblStr );
-	 /* m_pio[g]->write_array_hdf5(dset, 1, m_gridimage->m_doubleField[g], offset, dblStr ); */
+            m_pio[g]->write_array_hdf5(fname, NULL, "grid", 1, m_gridimage->m_doubleField[g], offset, dblStr );
             offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]*sizeof(double));
          }
          else
          {
             char fltStr[]="float";
-            m_pio[g]->write_array_hdf5(fname, "grid", 1, m_gridimage->m_floatField[g], offset, fltStr );
-            /* m_pio[g]->write_array_hdf5(dset, 1, m_gridimage->m_floatField[g], offset, fltStr ); */
+            m_pio[g]->write_array_hdf5(fname, NULL, "grid", 1, m_gridimage->m_floatField[g], offset, fltStr );
             offset += (globalSizes[0]*globalSizes[1]*globalSizes[2]*sizeof(float));
          }
       }
