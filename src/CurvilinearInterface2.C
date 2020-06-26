@@ -299,7 +299,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   // Repackage Mass_block into array of fortran order.
   int nimb = (m_Mass_block.m_ie - m_Mass_block.m_ib + 1);
   size_t msize = nimb * (m_Mass_block.m_je - m_Mass_block.m_jb + 1);
-  std::cout << "Bathc size in setup is " << msize << "\n";
+  //std::cout << "Batch size in setup is " << msize << "\n";
   //#define USE_DIRECT_INVERSE 1
 #ifdef USE_DIRECT_INVERSE
   std::cout << " USING DIRECT INVERSE \n";
