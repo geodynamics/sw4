@@ -374,7 +374,7 @@ void operator delete[](void *ptr, Space loc) throw() {
       std::cerr << "Null pointer passed to freee \n";
     } else {
       if (GML(ptr) != Space::Managed) {
-        std::cerr << " Wrong space " << GML(ptr) << " " << ptr << "\n";
+        std::cerr << " Wrong space " << as_int(GML(ptr)) << " " << ptr << "\n";
         abort();
       } else {
         SW4_CheckDeviceError(cudaFree(ptr));
