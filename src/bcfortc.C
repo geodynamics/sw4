@@ -302,49 +302,7 @@ void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
   const size_t nij = ni * (je - jb + 1);
   const size_t npts =
       static_cast<size_t>((ie - ib + 1)) * (je - jb + 1) * (ke - kb + 1);
-#ifdef ENABLE_CUDA
 
-#if SW4_RAJA_VERSION == 6
-  using BCFORT_EXEC_POL2_ASYNC =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::For<
-          0, RAJA::cuda_threadblock_exec<4>,
-          RAJA::statement::For<
-              1, RAJA::cuda_threadblock_exec<4>,
-              RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
-                                   RAJA::statement::Lambda<0>>>>>>;
-
-#elif SW4_RAJA_VERSION == 7
-
-  using BCFORT_EXEC_POL2_ASYNC =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::Tile<
-          0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
-          RAJA::statement::Tile<
-              1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_x_loop,
-              RAJA::statement::Tile<
-                  2, RAJA::statement::tile_fixed<64>, RAJA::cuda_block_z_loop,
-                  RAJA::statement::For<
-                      0, RAJA::cuda_thread_y_direct,
-                      RAJA::statement::For<
-                          1, RAJA::cuda_thread_x_direct,
-                          RAJA::statement::For<
-                              2, RAJA::cuda_thread_z_direct,
-                              RAJA::statement::Lambda<0>>>>>>>>>;
-
-#endif
-
-  // Policy below produces much lower GPU faults: 700 instead of 1000 but no
-  // real difference in runtime. The faults could be coming from some code in
-  // the RAJA nested loops
-  using BCFORT_EXEC_POL2_X =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::For<
-          2, RAJA::cuda_block_exec,
-          RAJA::statement::For<
-              1, RAJA::cuda_block_exec,
-              RAJA::statement::For<0, RAJA::cuda_thread_exec,
-                                   RAJA::statement::Lambda<0>>>>>>;
-#else
-  using BCFORT_EXEC_POL2_ASYNC = DEFAULT_LOOP3;
-#endif
   for (int s = 0; s < 6; s++) {
     if (bccnd[s] == bDirichlet || bccnd[s] == bSuperGrid) {
       // std::cout<<"SET 1 "<<s<<"\n";
@@ -653,31 +611,7 @@ void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
       REQUIRE2(s == 4 || s == 5, "EW::bcfort_ci,  ERROR: Free surface condition"
                                      << " not implemented for side " << s
                                      << endl);
-#ifdef ENABLE_CUDA
 
-#if SW4_RAJA_VERSION == 6
-      using BCFORT_EXEC_POL3_ASYNC = RAJA::KernelPolicy<
-          RAJA::statement::CudaKernelAsync<RAJA::statement::For<
-              0, RAJA::cuda_threadblock_exec<16>,
-              RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
-                                   RAJA::statement::Lambda<0>>>>>;
-
-#elif SW4_RAJA_VERSION == 7
-      using BCFORT_EXEC_POL3_ASYNC = RAJA::KernelPolicy<
-          RAJA::statement::CudaKernelAsync<RAJA::statement::Tile<
-              0, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
-              RAJA::statement::Tile<
-                  1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
-                  RAJA::statement::For<
-                      0, RAJA::cuda_thread_x_direct,
-                      RAJA::statement::For<1, RAJA::cuda_thread_y_direct,
-                                           RAJA::statement::Lambda<0>>>>>>>;
-
-#endif
-
-#else
-      using BCFORT_EXEC_POL3_ASYNC = DEFAULT_LOOP2;
-#endif
       if (s == 4) {
         // PREFETCH(bforce5);
         int k = 1, kl = 1;
