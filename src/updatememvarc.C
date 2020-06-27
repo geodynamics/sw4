@@ -89,25 +89,7 @@ void memvar_pred_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   RAJA::RangeSegment k_range(k1, k2 + 1);
   RAJA::RangeSegment c_range(0, 3);
 
-#ifdef ENABLE_CUDA
-  using LOCAL_POL3 =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::For<
-          0, RAJA::cuda_threadblock_exec<1>,
-          RAJA::statement::For<
-              1, RAJA::cuda_threadblock_exec<1>,
-              RAJA::statement::For<2, RAJA::cuda_threadblock_exec<1024>,
-                                   RAJA::statement::Lambda<0>>>>>>;
 
-  using LOCAL_POL3_X =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::For<
-          0, RAJA::cuda_block_exec,
-          RAJA::statement::For<
-              1, RAJA::cuda_block_exec,
-              RAJA::statement::For<2, RAJA::cuda_thread_exec,
-                                   RAJA::statement::Lambda<0>>>>>>;
-#else
-  using LOCAL_POL3 = DEFAULT_LOOP3;
-#endif
   // Note both POL3 and POL3X_ take about the same time on Hayward with 16 ranks
 #ifdef ENABLE_CUDA
 #define NO_COLLAPSE 1
@@ -118,7 +100,7 @@ void memvar_pred_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   Range<4> K(k1, k2 + 1);
   forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
-  RAJA::kernel<LOCAL_POL3>(
+  RAJA::kernel<MPFC_POL_ASYNC>(
       RAJA::make_tuple(k_range, j_range, i_range),
       [=] RAJA_DEVICE(int k, int j, int i) {
 #endif
@@ -131,24 +113,7 @@ void memvar_pred_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
 
   return;
 
-  // Note older code, needs to be removed at some point
-  // using LOCAL_POL =
-  // RAJA::KernelPolicy<
-  // RAJA::statement::CudaKernel<
-  //   RAJA::statement::For<1, RAJA::cuda_threadblock_exec<1>,
-  // 			 RAJA::statement::For<2, RAJA::cuda_threadblock_exec<1>,
-  // 					      RAJA::statement::For<0,
-  // RAJA::cuda_threadblock_exec<1024>,
-  // RAJA::statement::For<3, RAJA::seq_exec,
-  // RAJA::statement::Lambda<0>
-  // >>>>>>;
-
-  //  RAJA::kernel<DEFAULT_LOOP4>(
-  // 				  RAJA::make_tuple(c_range,k_range,j_range,i_range),
-  // 				  [=]RAJA_DEVICE (int c,int k, int j,int i) {
-  // 				    size_t ind = base+i+ni*j+nij*k+c*nijk;
-  // 	       alp[ind] = icp*(-cm*alm[ind] + u[ind] );
-  // }); SYNC_STREAM;
+ 
 }
 
 //-----------------------------------------------------------------------
@@ -202,19 +167,7 @@ void memvar_corr_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   RAJA::RangeSegment k_range(k1, k2 + 1);
   RAJA::RangeSegment c_range(0, 3);
 
-#ifdef ENABLE_CUDA
 
-  using LOCAL_POL3 =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::For<
-          0, RAJA::cuda_threadblock_exec<1>,
-          RAJA::statement::For<
-              1, RAJA::cuda_threadblock_exec<1>,
-              RAJA::statement::For<2, RAJA::cuda_threadblock_exec<1024>,
-                                   RAJA::statement::Lambda<0>>>>>>;
-#else
-  using LOCAL_POL3 = DEFAULT_LOOP3;
-
-#endif
 #ifdef ENABLE_CUDA
 #define NO_COLLAPSE 1
 #endif
@@ -224,7 +177,7 @@ void memvar_corr_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   Range<4> K(k1, k2 + 1);
   forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
-  RAJA::kernel<LOCAL_POL3>(
+  RAJA::kernel<MPFC_POL_ASYNC>(
       RAJA::make_tuple(k_range, j_range, i_range),
       [=] RAJA_DEVICE(int k, int j, int i) {
 #endif
@@ -241,28 +194,8 @@ void memvar_corr_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   });  // SYNC_STREAM;
 
   return;
-
-  // using LOCAL_POL  =
-  //   RAJA::KernelPolicy<
-  //   RAJA::statement::CudaKernel<
-  //     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<64>,
-  // 			 RAJA::statement::For<1, RAJA::cuda_threadblock_exec<4>,
-  // 					      RAJA::statement::For<2,
-  // RAJA::cuda_threadblock_exec<4>,
-  //   RAJA::statement::For<3, RAJA::seq_exec,
-  // 								   RAJA::statement::Lambda<0>
-  // >>>>>>;
-  // RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(i_range,j_range,k_range,c_range),
-  // 			    [=]RAJA_DEVICE (int i,int j, int k,int c) {
-  // 			    size_t ind = base+i+ni*j+nij*k;
-  // 			    // Note that alp is ASSIGNED by this formula
-  // 			    alp[ind+c*nijk] = icp*( cm*alm[ind+c*nijk] +
-  // u[ind+c*nijk]
-  // + i6* ( dto*dto*u[ind+c*nijk] +
-  // dto*(up[ind+c*nijk]-um[ind+c*nijk]) +
-  // (up[ind+c*nijk]-2*u[ind+c*nijk]+um[ind+c*nijk]) ) );
-  // 			}); SYNC_STREAM;
-}
+    }
+ 
 
 //-----------------------------------------------------------------------
 void memvar_corr_fort_wind_ci(
