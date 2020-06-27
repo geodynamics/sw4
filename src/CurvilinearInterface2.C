@@ -97,20 +97,6 @@ void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
   // Homogeneous Dirichet at boundaries on sides. Do not apply at upper and
   // lower boundaries.
 
-  using LOCAL_LOOP =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::Tile<
-          0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
-          RAJA::statement::Tile<
-              1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
-              RAJA::statement::Tile<
-                  2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
-                  RAJA::statement::For<
-                      0, RAJA::cuda_thread_z_direct,
-                      RAJA::statement::For<
-                          1, RAJA::cuda_thread_y_direct,
-                          RAJA::statement::For<
-                              2, RAJA::cuda_thread_x_direct,
-                              RAJA::statement::Lambda<0>>>>>>>>>;
   int nc = u.m_nc;
   SView& uV = u.getview();
   for (int s = 0; s < 4; s++)
@@ -128,7 +114,7 @@ void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
       RAJA::RangeSegment k_range(kb, ke + 1);
       RAJA::RangeSegment j_range(jb, je + 1);
       RAJA::RangeSegment i_range(ib, ie + 1);
-      RAJA::kernel<LOCAL_LOOP>(RAJA::make_tuple(k_range, j_range, i_range),
+      RAJA::kernel<BZ_POL_ASYNC>(RAJA::make_tuple(k_range, j_range, i_range),
                                [=] RAJA_DEVICE(int k, int j, int i) {
                                  for (int c = 1; c <= nc; c++)
                                    uV(c, i, j, k) = 0;
@@ -832,21 +818,7 @@ void CurvilinearInterface2::injection(Sarray& u_fA, Sarray& u_cA) {
   if (m_isbndry[3]) j2 -= 2;
   SView& u_f = u_fA.getview();
   SView& u_c = u_cA.getview();
-  using LOCAL_LOOP_ASYNC =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::Tile<
-          0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
-          RAJA::statement::Tile<
-              1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
-              RAJA::statement::Tile<
-                  2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
-                  RAJA::statement::For<
-                      0, RAJA::cuda_thread_z_direct,
-                      RAJA::statement::For<
-                          1, RAJA::cuda_thread_y_direct,
-                          RAJA::statement::For<
-                              2, RAJA::cuda_thread_x_direct,
-                              RAJA::statement::Lambda<0>>>>>>>>>;
-
+ 
   // for (int l = 1; l <= u_cA.m_nc; l++)
   //   //    for (int j = u_c.m_jb+ngh-1; j <= u_c.m_je-ngh+1; j++)
   //   //      for (int i = u_c.m_ib+ngh-1; i <= u_c.m_ie-ngh+1; i++)
@@ -857,7 +829,7 @@ void CurvilinearInterface2::injection(Sarray& u_fA, Sarray& u_cA) {
   RAJA::RangeSegment l_range(1, u_cA.m_nc + 1);
   RAJA::RangeSegment j_range(j1, j2 + 1);
   RAJA::RangeSegment i_range(i1, i2 + 1);
-  RAJA::kernel<LOCAL_LOOP_ASYNC>(
+  RAJA::kernel<INJ_POL_ASYNC>(
       RAJA::make_tuple(l_range, j_range, i_range),
       [=] RAJA_DEVICE(int l, int j, int i) {
         u_f(l, 2 * i - 1, 2 * j - 1, lm_nkf) = u_c(l, i, j, 1);
@@ -878,16 +850,13 @@ void CurvilinearInterface2::injection(Sarray& u_fA, Sarray& u_cA) {
                  a * u_c(l, i + 1, j + 2, 1) + b * u_c(l, i + 2, j + 2, 1));
       });
 
-  using LOCAL_LOOP2_ASYNC = RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<
-      RAJA::statement::For<1, RAJA::cuda_block_x_loop,
-                           RAJA::statement::For<0, RAJA::cuda_thread_x_loop,
-                                                RAJA::statement::Lambda<0>>>>>;
+  
   if (m_isbndry[1]) {
     int i = i2 + 1;
     // for (int l = 1; l <= u_c.m_nc; l++)
     //   for (int j = j1; j <= j2; j++) {
 
-    RAJA::kernel<LOCAL_LOOP2_ASYNC>(
+    RAJA::kernel<INJ_POL2_ASYNC>(
         RAJA::make_tuple(l_range, j_range), [=] RAJA_DEVICE(int l, int j) {
           u_f(l, 2 * i - 1, 2 * j - 1, lm_nkf) = u_c(l, i, j, 1);
           u_f(l, 2 * i - 1, 2 * j, lm_nkf) =
@@ -899,7 +868,7 @@ void CurvilinearInterface2::injection(Sarray& u_fA, Sarray& u_cA) {
     int j = j2 + 1;
     // for (int l = 1; l <= u_cA.m_nc; l++)
     //   for (int i = i1; i <= i2; i++) {
-    RAJA::kernel<LOCAL_LOOP2_ASYNC>(
+    RAJA::kernel<INJ_POL2_ASYNC>(
         RAJA::make_tuple(l_range, i_range), [=] RAJA_DEVICE(int l, int i) {
           u_f(l, 2 * i - 1, 2 * j - 1, lm_nkf) = u_c(l, i, j, 1);
           u_f(l, 2 * i, 2 * j - 1, lm_nkf) =
@@ -2111,20 +2080,8 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
   sbuf2 = &tmp[2 * nptsmax * u.m_nc];
   rbuf2 = &tmp[3 * nptsmax * u.m_nc];
 
-  using LOCAL_POL =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::Tile<
-          0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
-          RAJA::statement::Tile<
-              1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
-              RAJA::statement::Tile<
-                  2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
-                  RAJA::statement::For<
-                      0, RAJA::cuda_thread_z_direct,
-                      RAJA::statement::For<
-                          1, RAJA::cuda_thread_y_direct,
-                          RAJA::statement::For<
-                              2, RAJA::cuda_thread_x_direct,
-                              RAJA::statement::Lambda<0>>>>>>>>>;
+ 
+      
 
   int ib = u.m_ib;
   int ie = u.m_ie;
@@ -2145,7 +2102,7 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     //       for (int i = u.m_ib + ng; i <= u.m_ib + 2 * ng - 1; i++) {
     RAJA::RangeSegment j_range1(u.m_jb, u.m_je + 1);
     RAJA::RangeSegment i_range1(u.m_ib + ng, u.m_ib + 2 * ng - 1 + 1);
-    RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
+    RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
                             [=] RAJA_DEVICE(int k, int j, int i) {
                               size_t ind = i - (ib + ng) + ng * (j - jb) +
                                            ng * nj * (k - kb);
@@ -2163,7 +2120,7 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     //       for (int i = u.m_ie - 2 * ng + 1; i <= u.m_ie - ng; i++) {
     RAJA::RangeSegment j_range1(u.m_jb, u.m_je + 1);
     RAJA::RangeSegment i_range1(u.m_ie - 2 * ng + 1, u.m_ie - ng + 1);
-    RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
+    RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
                             [=] RAJA_DEVICE(int k, int j, int i) {
                               size_t ind = i - (ie - 2 * ng + 1) +
                                            ng * (j - jb) + ng * nj * (k - kb);
@@ -2182,7 +2139,7 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     //       for (int i = u.m_ie - ng + 1; i <= u.m_ie; i++) {
     RAJA::RangeSegment j_range1(u.m_jb, u.m_je + 1);
     RAJA::RangeSegment i_range1(u.m_ie - ng + 1, u.m_ie + 1);
-    RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
+    RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
                             [=] RAJA_DEVICE(int k, int j, int i) {
                               size_t ind = i - (ie - ng + 1) + ng * (j - jb) +
                                            ng * nj * (k - kb);
@@ -2199,7 +2156,7 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     //       for (int i = u.m_ib; i <= u.m_ib + ng - 1; i++) {
     RAJA::RangeSegment j_range1(u.m_jb, u.m_je + 1);
     RAJA::RangeSegment i_range1(u.m_ib, u.m_ib + ng - 1 + 1);
-    RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
+    RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
                             [=] RAJA_DEVICE(int k, int j, int i) {
                               size_t ind =
                                   i - ib + ng * (j - jb) + ng * nj * (k - kb);
@@ -2226,7 +2183,7 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
 
     RAJA::RangeSegment j_range1(u.m_jb + ng, u.m_jb + 2 * ng - 1 + 1);
     RAJA::RangeSegment i_range1(u.m_ib, u.m_ie + 1);
-    RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
+    RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
                             [=] RAJA_DEVICE(int k, int j, int i) {
                               size_t ind = i - ib + ni * (j - (jb + ng)) +
                                            ng * ni * (k - kb);
@@ -2247,7 +2204,7 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     //       for (int i = u.m_ib; i <= u.m_ie; i++) {
     RAJA::RangeSegment j_range2(u.m_je - 2 * ng + 1, u.m_je - ng + 1);
     RAJA::RangeSegment i_range2(u.m_ib, u.m_ie + 1);
-    RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(k_range, j_range2, i_range2),
+    RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range2, i_range2),
                             [=] RAJA_DEVICE(int k, int j, int i) {
                               size_t ind = i - ib +
                                            ni * (j - (je - 2 * ng + 1)) +
@@ -2267,7 +2224,7 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     //       for (int i = u.m_ib; i <= u.m_ie; i++) {
     RAJA::RangeSegment j_range3(u.m_je - ng + 1, u.m_je + 1);
     RAJA::RangeSegment i_range3(u.m_ib, u.m_ie + 1);
-    RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(k_range, j_range3, i_range3),
+    RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range3, i_range3),
                             [=] RAJA_DEVICE(int k, int j, int i) {
                               size_t ind = i - ib + ni * (j - (je - ng + 1)) +
                                            ng * ni * (k - kb);
@@ -2284,7 +2241,7 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     //       for (int i = u.m_ib; i <= u.m_ie; i++) {
     RAJA::RangeSegment j_range4(u.m_jb, u.m_jb + ng - 1 + 1);
     RAJA::RangeSegment i_range4(u.m_ib, u.m_ie + 1);
-    RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(k_range, j_range4, i_range4),
+    RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range4, i_range4),
                             [=] RAJA_DEVICE(int k, int j, int i) {
                               size_t ind =
                                   i - ib + ni * (j - jb) + ng * ni * (k - kb);

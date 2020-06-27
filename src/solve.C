@@ -2255,31 +2255,7 @@ void EW::check_displacement_continuity(Sarray& Uf, Sarray& Uc, int gf, int gc) {
 //-----------------------------------------------------------------------
 void EW::dirichlet_hom_ic(Sarray& U, int g, int k, bool inner) {
   SW4_MARK_FUNCTION;
-#ifdef ENABLE_CUDA
 
-#if SW4_RAJA_VERSION == 6
-  using LOCAL_POL =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::For<
-          0, RAJA::cuda_block_exec,
-          RAJA::statement::For<
-              1, RAJA::cuda_block_exec,
-              RAJA::statement::For<2, RAJA::cuda_thread_exec,
-                                   RAJA::statement::Lambda<0>>>>>>;
-#elif SW4_RAJA_VERSION == 7
-
-  using LOCAL_POL =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::For<
-          0, RAJA::cuda_block_x_loop,
-          RAJA::statement::For<
-              1, RAJA::cuda_block_y_loop,
-              RAJA::statement::For<2, RAJA::cuda_thread_x_loop,
-                                   RAJA::statement::Lambda<0>>>>>>;
-
-#endif
-
-#else
-  using LOCAL_POL = DEFAULT_LOOP3;
-#endif
   RAJA::RangeSegment c_range(1, U.m_nc + 1);
   SView& UV = U.getview();
   // zero out all ghost points
@@ -2294,7 +2270,7 @@ void EW::dirichlet_hom_ic(Sarray& U, int g, int k, bool inner) {
       // 	 for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
       // 	    for( int i=m_iStart[g] ; i <= 0 ; i++ )
       // 	       for( int c=1 ; c <= U.m_nc ; c++ )
-      RAJA::kernel<LOCAL_POL>(
+      RAJA::kernel<DHI_POL_ASYNC>(
           RAJA::make_tuple(c_range, jall, izero),
           [=] RAJA_DEVICE(int c, int j, int i) { UV(c, i, j, k) = 0; });
     }
@@ -2307,7 +2283,7 @@ void EW::dirichlet_hom_ic(Sarray& U, int g, int k, bool inner) {
       // 		  U(c,i,j,k) = 0;
 
       RAJA::RangeSegment iend(m_iEndInt[g] + 1, m_iEnd[g] + 1);
-      RAJA::kernel<LOCAL_POL>(
+      RAJA::kernel<DHI_POL_ASYNC>(
           RAJA::make_tuple(c_range, jall, iend),
           [=] RAJA_DEVICE(int c, int j, int i) { UV(c, i, j, k) = 0; });
     }
@@ -2318,7 +2294,7 @@ void EW::dirichlet_hom_ic(Sarray& U, int g, int k, bool inner) {
       // 	    for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
       // 	       for( int c=1 ; c <= U.m_nc ; c++ )
       // 		  U(c,i,j,k) = 0;
-      RAJA::kernel<LOCAL_POL>(
+      RAJA::kernel<DHI_POL_ASYNC>(
           RAJA::make_tuple(c_range, jzero, iall),
           [=] RAJA_DEVICE(int c, int j, int i) { UV(c, i, j, k) = 0; });
     }
@@ -2330,7 +2306,7 @@ void EW::dirichlet_hom_ic(Sarray& U, int g, int k, bool inner) {
       // 	       for( int c=1 ; c <= U.m_nc ; c++ )
       // 		  U(c,i,j,k) = 0;
       RAJA::RangeSegment jend(m_jEndInt[g] + 1, m_jEnd[g] + 1);
-      RAJA::kernel<LOCAL_POL>(
+      RAJA::kernel<DHI_POL_ASYNC>(
           RAJA::make_tuple(c_range, jend, iall),
           [=] RAJA_DEVICE(int c, int j, int i) { UV(c, i, j, k) = 0; });
     }
@@ -2361,7 +2337,7 @@ void EW::dirichlet_hom_ic(Sarray& U, int g, int k, bool inner) {
     // 	    for( int c=1 ; c <= U.m_nc ; c++ )
     // 	       U(c,i,j,k) = 0;
     //    }
-    RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(c_range, j_range, i_range),
+    RAJA::kernel<DHI_POL_ASYNC>(RAJA::make_tuple(c_range, j_range, i_range),
                             [=] RAJA_DEVICE(int c, int j, int i) {
                               UV(c, i, j, k) = 0;
                             });  // SYNC_STREAM;
@@ -2893,28 +2869,9 @@ void EW::gridref_initial_guess(Sarray& u, int g, bool upper) {
 
   // for( int j=jb ; j <= je ; j++ )
   //    for( int i=ib ; i <= ie ; i++ )
-#ifdef ENABLE_CUDA
 
-#if SW4_RAJA_VERSION == 6
-  using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<
-      RAJA::statement::For<0, RAJA::cuda_block_exec,
-                           RAJA::statement::For<1, RAJA::cuda_thread_exec,
-                                                RAJA::statement::Lambda<0>>>>>;
 
-#elif SW4_RAJA_VERSION == 7
-
-  using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<
-      RAJA::statement::For<0, RAJA::cuda_block_x_loop,
-                           RAJA::statement::For<1, RAJA::cuda_thread_x_loop,
-                                                RAJA::statement::Lambda<0>>>>>;
-
-#endif
-
-#else
-  using LOCAL_POL = DEFAULT_LOOP2;
-#endif
-
-  RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(j_range, i_range),
+  RAJA::kernel<GIG_POL_ASYNC>(RAJA::make_tuple(j_range, i_range),
                           [=] RAJA_DEVICE(int j, int i) {
                             uV(1, i, j, k) = uV(1, i, j, k + s);
                             uV(2, i, j, k) = uV(2, i, j, k + s);
@@ -3454,24 +3411,9 @@ void EW::add_ve_stresses(Sarray& a_Up, Sarray& B, int g, int kic, int a_mech,
 //    for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
 // #pragma omp simd
 //       for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
-#ifdef ENABLE_CUDA
-  using LOCAL_POL_ASYNC =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernelFixedAsync<
-          256,
-          RAJA::statement::Tile<
-              0, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
-              RAJA::statement::Tile<
-                  1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
-                  RAJA::statement::For<
-                      0, RAJA::cuda_thread_y_direct,
-                      RAJA::statement::For<1, RAJA::cuda_thread_x_direct,
-                                           RAJA::statement::Lambda<0>>>>>>>;
-#else
-  using LOCAL_POL_ASYNC = DEFAULT_LOOP2;
-#endif
 
   RAJA::kernel<
-      LOCAL_POL_ASYNC>(RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(
+      AVS_POL_ASYNC>(RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(
                                                                int j, int i) {
     float_sw4 uz = 0, vz = 0, wz = 0;
     if (upper) {
@@ -4782,32 +4724,7 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
   // AP: Apr. 3, 2017: Decoupled enforcement of the free surface bc with PC time
   // stepping for memory variables
   int sg = usingSupergrid();
-#ifdef ENABLE_CUDA
 
-#if SW4_RAJA_VERION == 6
-  using LOCAL_POL =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::For<
-          0, RAJA::cuda_threadblock_exec<16>,
-          RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
-                               RAJA::statement::Lambda<0>>>>>;
-
-#elif SW4_RAJA_VERSION == 7
-
-  using LOCAL_POL =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::Tile<
-          0, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
-          RAJA::statement::Tile<
-              1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
-              RAJA::statement::For<
-                  0, RAJA::cuda_thread_x_direct,
-                  RAJA::statement::For<1, RAJA::cuda_thread_y_direct,
-                                       RAJA::statement::Lambda<0>>>>>>>;
-
-#endif
-
-#else
-  using LOCAL_POL = DEFAULT_LOOP2;
-#endif
   SView* viewArray = viewArrayActual;
   SView* viewArray2 = viewArrayActual + m_number_mechanisms;
   SView* viewArray3 = viewArrayActual + 2 * m_number_mechanisms;
@@ -4877,7 +4794,7 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
         RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
         RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
         RAJA::kernel<
-            LOCAL_POL>(RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(
+            EBFA_POL>(RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(
                                                                int j, int i) {
           float_sw4 g1, g2, g3, acof, bcof;
           int ind = i - ifirst + ni * (j - jfirst);
@@ -4984,6 +4901,7 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
     }  // end if bcType[g][4] == bStressFree
     if (m_bcType[g][5] == bStressFree) {
       SW4_MARK_BEGIN("enforceBCfreeAtt2::SET 2");
+    std:;cerr<<"WARNING :: CODE EXECUTING ON CPU solve.C Line 4929 \n";
       int nk = m_global_nz[g];
       // const float_sw4 i6  = 1.0/6;
       const float_sw4 d4a = 2.0 / 3;

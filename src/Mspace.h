@@ -60,9 +60,9 @@ auto as_int(Enumeration const value) ->
   return static_cast<typename std::underlying_type<Enumeration>::type>(value);
 }
 Space GML(const void *ptr);
-void *operator new(std::size_t size, Space loc) throw(std::bad_alloc);
+void *operator new(std::size_t size, Space loc) throw();
 void operator delete(void *ptr, Space loc) throw();
-void *operator new[](std::size_t size, Space loc) throw(std::bad_alloc);
+void *operator new[](std::size_t size, Space loc) throw();
 void *operator new[](std::size_t size, Space loc, const char *file, int line);
 void operator delete[](void *ptr, Space loc) throw();
 void operator delete(void *ptr, Space loc, const char *file, int line) throw();

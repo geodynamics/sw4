@@ -21,42 +21,11 @@ void addMemVarPredCart(float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha,
   //       for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
   //       {
   SView &alphaV = alpha.getview();
-#ifdef ENABLE_CUDA
 
-#if SW4_RAJA_VERSION == 6
-  using LOCAL_POL =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::For<
-          0, RAJA::cuda_threadblock_exec<4>,
-          RAJA::statement::For<
-              1, RAJA::cuda_threadblock_exec<4>,
-              RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
-                                   RAJA::statement::Lambda<0>>>>>>;
-#elif SW4_RAJA_VERSION == 7
-
-  using LOCAL_POL =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::Tile<
-          0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
-          RAJA::statement::Tile<
-              1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_x_loop,
-              RAJA::statement::Tile<
-                  2, RAJA::statement::tile_fixed<64>, RAJA::cuda_block_z_loop,
-                  RAJA::statement::For<
-                      0, RAJA::cuda_thread_y_loop,
-                      RAJA::statement::For<
-                          1, RAJA::cuda_thread_x_loop,
-                          RAJA::statement::For<
-                              2, RAJA::cuda_thread_z_loop,
-                              RAJA::statement::Lambda<0>>>>>>>>>;
-
-#endif
-
-#else
-  using LOCAL_POL = DEFAULT_LOOP3;
-#endif
   RAJA::RangeSegment k_range(alpha.m_kb, alpha.m_ke + 1);
   RAJA::RangeSegment j_range(alpha.m_jb, alpha.m_je + 1);
   RAJA::RangeSegment i_range(alpha.m_ib, alpha.m_ie + 1);
-  RAJA::kernel<LOCAL_POL>(
+  RAJA::kernel<AMVPCa_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
       [=] RAJA_DEVICE(int k, int j, int i) {
         float_sw4 x = (i - 1) * h;
@@ -159,43 +128,11 @@ void addMemVarPredCurvilinear(Sarray &a_X, Sarray &a_Y, Sarray &a_Z,
   SView &a_XV = a_X.getview();
   SView &a_YV = a_Y.getview();
   SView &a_ZV = a_Z.getview();
-#ifdef ENABLE_CUDA
 
-#if SW4_RAJA_VERSION == 6
-  using LOCAL_POL =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::For<
-          0, RAJA::cuda_threadblock_exec<4>,
-          RAJA::statement::For<
-              1, RAJA::cuda_threadblock_exec<4>,
-              RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
-                                   RAJA::statement::Lambda<0>>>>>>;
-
-#elif SW4_RAJA_VERSION == 7
-
-  using LOCAL_POL =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::Tile<
-          0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
-          RAJA::statement::Tile<
-              1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_x_loop,
-              RAJA::statement::Tile<
-                  2, RAJA::statement::tile_fixed<64>, RAJA::cuda_block_z_loop,
-                  RAJA::statement::For<
-                      0, RAJA::cuda_thread_y_loop,
-                      RAJA::statement::For<
-                          1, RAJA::cuda_thread_x_loop,
-                          RAJA::statement::For<
-                              2, RAJA::cuda_thread_z_loop,
-                              RAJA::statement::Lambda<0>>>>>>>>>;
-
-#endif
-
-#else
-  using LOCAL_POL = DEFAULT_LOOP3;
-#endif
   RAJA::RangeSegment k_range(a_X.m_kb, a_X.m_ke + 1);
   RAJA::RangeSegment j_range(a_X.m_jb, a_X.m_je + 1);
   RAJA::RangeSegment i_range(a_X.m_ib, a_X.m_ie + 1);
-  RAJA::kernel<LOCAL_POL>(
+  RAJA::kernel<AMVPCu_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
       [=] RAJA_DEVICE(int k, int j, int i) {
         float_sw4 x = a_XV(i, j, k);
@@ -594,42 +531,11 @@ void addMemVarCorr2Cart(float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha,
   //          for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
   //          {
   SView &alphaV = alpha.getview();
-#ifdef ENABLE_CUDA
 
-#if SW4_RAJA_VERSION == 6
-  using LOCAL_POL =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::For<
-          0, RAJA::cuda_threadblock_exec<4>,
-          RAJA::statement::For<
-              1, RAJA::cuda_threadblock_exec<4>,
-              RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
-                                   RAJA::statement::Lambda<0>>>>>>;
-#elif SW4_RAJA_VERSION == 7
-
-  using LOCAL_POL =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::Tile<
-          0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
-          RAJA::statement::Tile<
-              1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_x_loop,
-              RAJA::statement::Tile<
-                  2, RAJA::statement::tile_fixed<64>, RAJA::cuda_block_z_loop,
-                  RAJA::statement::For<
-                      0, RAJA::cuda_thread_y_loop,
-                      RAJA::statement::For<
-                          1, RAJA::cuda_thread_x_loop,
-                          RAJA::statement::For<
-                              2, RAJA::cuda_thread_z_loop,
-                              RAJA::statement::Lambda<0>>>>>>>>>;
-
-#endif
-
-#else
-  using LOCAL_POL = DEFAULT_LOOP3;
-#endif
   RAJA::RangeSegment k_range(alpha.m_kb, alpha.m_ke + 1);
   RAJA::RangeSegment j_range(alpha.m_jb, alpha.m_je + 1);
   RAJA::RangeSegment i_range(alpha.m_ib, alpha.m_ie + 1);
-  RAJA::kernel<LOCAL_POL>(
+  RAJA::kernel<AMVC2Ca_POL_ASYNC>(
       RAJA::make_tuple(k_range, j_range, i_range),
       [=] RAJA_DEVICE(int k, int j, int i) {
         float_sw4 x, y, z;
@@ -815,44 +721,11 @@ void addMemVarCorr2Curvilinear(Sarray &a_X, Sarray &a_Y, Sarray &a_Z,
   SView &a_XV = a_X.getview();
   SView &a_YV = a_Y.getview();
   SView &a_ZV = a_Z.getview();
-#ifdef ENABLE_CUDA
 
-#if SW4_RAJA_VERSION == 6
-
-  using LOCAL_POL =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::For<
-          0, RAJA::cuda_threadblock_exec<4>,
-          RAJA::statement::For<
-              1, RAJA::cuda_threadblock_exec<4>,
-              RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
-                                   RAJA::statement::Lambda<0>>>>>>;
-
-#elif SW4_RAJA_VERSION == 7
-
-  using LOCAL_POL =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::Tile<
-          0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
-          RAJA::statement::Tile<
-              1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_x_loop,
-              RAJA::statement::Tile<
-                  2, RAJA::statement::tile_fixed<64>, RAJA::cuda_block_z_loop,
-                  RAJA::statement::For<
-                      0, RAJA::cuda_thread_y_loop,
-                      RAJA::statement::For<
-                          1, RAJA::cuda_thread_x_loop,
-                          RAJA::statement::For<
-                              2, RAJA::cuda_thread_z_loop,
-                              RAJA::statement::Lambda<0>>>>>>>>>;
-
-#endif
-
-#else
-  using LOCAL_POL = DEFAULT_LOOP3;
-#endif
   RAJA::RangeSegment k_range(alpha.m_kb, alpha.m_ke + 1);
   RAJA::RangeSegment j_range(alpha.m_jb, alpha.m_je + 1);
   RAJA::RangeSegment i_range(alpha.m_ib, alpha.m_ie + 1);
-  RAJA::kernel<LOCAL_POL>(
+  RAJA::kernel<AMVC2Cu_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
       [=] RAJA_DEVICE(int k, int j, int i) {
         float_sw4 x, y, z;

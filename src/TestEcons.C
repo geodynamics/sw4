@@ -53,20 +53,7 @@ void TestEcons::get_mulabnd(Sarray& mu, Sarray& lambda, int npts,
 void TestEcons::get_ubnd(Sarray& u, int npts, int sides[6]) {
   SW4_MARK_FUNCTION;
   // Homogeneous Dirichet at boundaries
-  using LOCAL_LOOP =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::Tile<
-          0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
-          RAJA::statement::Tile<
-              1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
-              RAJA::statement::Tile<
-                  2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
-                  RAJA::statement::For<
-                      0, RAJA::cuda_thread_z_direct,
-                      RAJA::statement::For<
-                          1, RAJA::cuda_thread_y_direct,
-                          RAJA::statement::For<
-                              2, RAJA::cuda_thread_x_direct,
-                              RAJA::statement::Lambda<0>>>>>>>>>;
+      
   SView& uV = u.getview();
   for (int s = 0; s < 6; s++)
     if (sides[s] == 1) {
@@ -85,7 +72,7 @@ void TestEcons::get_ubnd(Sarray& u, int npts, int sides[6]) {
       RAJA::RangeSegment k_range(kb, ke + 1);
       RAJA::RangeSegment j_range(jb, je + 1);
       RAJA::RangeSegment i_range(ib, ie + 1);
-      RAJA::kernel<LOCAL_LOOP>(RAJA::make_tuple(k_range, j_range, i_range),
+      RAJA::kernel<TGU_POL_ASYNC>(RAJA::make_tuple(k_range, j_range, i_range),
                                [=] RAJA_DEVICE(int k, int j, int i) {
                                  uV(1, i, j, k) = 0;
                                  uV(2, i, j, k) = 0;

@@ -2965,44 +2965,6 @@ void EW::get_exact_point_source(float_sw4* up, float_sw4 t, int g,
   float_sw4 m_zming = m_zmin[g];
 
   ASSERT_MANAGED(up);
-#ifdef ENABLE_CUDA
-#if SW4_RAJA_VERSION == 6
-  using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
-      256, RAJA::statement::For<
-               0, RAJA::cuda_threadblock_exec<4>,
-               RAJA::statement::For<
-                   1, RAJA::cuda_threadblock_exec<4>,
-                   RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
-                                        RAJA::statement::Lambda<0>>>>>>;
-#endif
-#if SW4_RAJA_VERSION == 7
-
-  // printf("Is this the problems %d %d %d\n",kmax-kmin,jmax-jmin,imax-imin);
-  using LOCAL_POL = RAJA::KernelPolicy<
-      // RAJA::statement::CudaKernelExt<RAJA::cuda_explicit_launch<false, 0,
-      // 256>,
-      RAJA::statement::CudaKernelFixed<
-          256,
-          // RAJA::statement::CudaKernel<
-          // RAJA::statement::CudaKernelOcc<
-          RAJA::statement::Tile<
-              0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
-              RAJA::statement::Tile<
-                  1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_x_loop,
-                  RAJA::statement::Tile<
-                      2, RAJA::statement::tile_fixed<16>,
-                      RAJA::cuda_block_z_loop,
-                      RAJA::statement::For<
-                          0, RAJA::cuda_thread_y_direct,
-                          RAJA::statement::For<
-                              1, RAJA::cuda_thread_x_direct,
-                              RAJA::statement::For<
-                                  2, RAJA::cuda_thread_z_direct,
-                                  RAJA::statement::Lambda<0>>>>>>>>>;
-#endif
-#else
-  using LOCAL_POL = DEFAULT_LOOP3;
-#endif
 
   SView& mXV = mX[g].getview();
   SView& mYV = mY[g].getview();
@@ -3019,7 +2981,7 @@ void EW::get_exact_point_source(float_sw4* up, float_sw4 t, int g,
   RAJA::RangeSegment i_range(imin, imax + 1);
   // std::cout<<"Size "<<(kmax+1-kmin)*(jmax+1-jmin)*(imax+1-imin)<<"\n";
   SW4_MARK_BEGIN("get_exact_point_source::loop");
-  RAJA::kernel<LOCAL_POL>(
+  RAJA::kernel<GEPS_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
       [=] RAJA_DEVICE(int k, int j, int i) {
         // #pragma omp parallel for

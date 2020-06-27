@@ -1075,48 +1075,12 @@ void Sarray::assign(const double* ar, int corder) {
     prefetch();
     PREFETCH(ar);
     float_sw4* mdata = m_data;
-#ifdef ENABLE_CUDA
 
-#if SW4_RAJA_VERSION == 6
-    using ASSIGN_POL =
-        RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::For<
-            1, RAJA::cuda_threadblock_exec<4>,
-            RAJA::statement::For<
-                2, RAJA::cuda_threadblock_exec<4>,
-                RAJA::statement::For<
-                    3, RAJA::cuda_threadblock_exec<64>,
-                    RAJA::statement::For<0, RAJA::seq_exec,
-                                         RAJA::statement::Lambda<0>>>>>>>;
-#endif
-
-#if SW4_RAJA_VERSION == 7
-
-    using ASSIGN_POL =
-        RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::Tile<
-            1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
-            RAJA::statement::Tile<
-                3, RAJA::statement::tile_fixed<64>, RAJA::cuda_block_x_loop,
-                RAJA::statement::Tile<
-                    2, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
-                    RAJA::statement::For<
-                        1, RAJA::cuda_thread_y_direct,
-                        RAJA::statement::For<
-                            3, RAJA::cuda_thread_x_direct,
-                            RAJA::statement::For<
-                                2, RAJA::cuda_thread_z_direct,
-                                RAJA::statement::For<
-                                    0, RAJA::seq_exec,
-                                    RAJA::statement::Lambda<0>>>>>>>>>>;
-#endif
-
-#else
-    using ASSIGN_POL = DEFAULT_LOOP4;
-#endif
     RAJA::RangeSegment i_range(0, mni);
     RAJA::RangeSegment j_range(0, mnj);
     RAJA::RangeSegment k_range(0, mnk);
     RAJA::RangeSegment c_range(0, mnc);
-    RAJA::kernel<ASSIGN_POL>(
+    RAJA::kernel<SAA_POL>(
         RAJA::make_tuple(c_range, k_range, j_range, i_range),
         [=] RAJA_DEVICE(int c, int k, int j, int i) {
           mdata[i + mni * j + mni * mnj * k + mni * mnj * mnk * c] =
@@ -1368,20 +1332,7 @@ void Sarray::insert_intersection(Sarray& a_U) {
     // const int lm_nk = m_nk;
     const int lm_nc = m_nc;
     // std::cout<<"Calling interest \n"<<std::flush;
-    using LOCAL_LOOP =
-        RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::Tile<
-            0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
-            RAJA::statement::Tile<
-                1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
-                RAJA::statement::Tile<
-                    2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
-                    RAJA::statement::For<
-                        0, RAJA::cuda_thread_z_direct,
-                        RAJA::statement::For<
-                            1, RAJA::cuda_thread_y_direct,
-                            RAJA::statement::For<
-                                2, RAJA::cuda_thread_x_direct,
-                                RAJA::statement::Lambda<0>>>>>>>>>;
+        
 #define NO_COLLAPSE 1
 #if defined(NO_COLLAPSE)
     // LOOP 0
@@ -1397,7 +1348,7 @@ void Sarray::insert_intersection(Sarray& a_U) {
     RAJA::RangeSegment k_range(wind[4], wind[5] + 1);
     RAJA::RangeSegment j_range(wind[2], wind[3] + 1);
     RAJA::RangeSegment i_range(wind[0], wind[1] + 1);
-    RAJA::kernel<LOCAL_LOOP>(
+    RAJA::kernel<SII_POL>(
         RAJA::make_tuple(k_range, j_range, i_range),
         [=] RAJA_DEVICE(int k, int j, int i) {
 #endif

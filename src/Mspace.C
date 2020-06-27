@@ -115,7 +115,7 @@ void print_hwm() {
     // std::cout<<"PRINT_HWM DONE"<<std::flush;
 #endif  // ENABLE_CUDA
 }
-void *operator new(std::size_t size, Space loc) throw(std::bad_alloc) {
+void *operator new(std::size_t size, Space loc) throw() {
 #ifdef ENABLE_CUDA
   if (loc == Space::Managed) {
     // std::cout<<"Space::Managed allocation \n";
@@ -213,7 +213,7 @@ void *operator new(std::size_t size, Space loc, char *file,
   return ret;
 }
 
-void *operator new[](std::size_t size, Space loc) throw(std::bad_alloc) {
+void *operator new[](std::size_t size, Space loc) throw() {
 #ifdef ENABLE_CUDA
   if (loc == Space::Managed) {
     // std::cout<<"Managed [] allocation \n";
