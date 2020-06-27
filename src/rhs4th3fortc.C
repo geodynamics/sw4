@@ -1094,37 +1094,8 @@ void rhs4th3fortsgstr_ci(
     float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry,
     float_sw4* __restrict__ a_strz, char op) {
   SW4_MARK_FUNCTION;
-  // using XRHS_POL =
-  //   RAJA::KernelPolicy<
-  //   RAJA::statement::CudaKernel<
-  //     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>,
-  // 			    RAJA::statement::For<1,
-  // RAJA::cuda_threadblock_exec<4>,
-  // RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
-  // RAJA::statement::Lambda<0> >>>>>;
-#ifdef ENABLE_CUDA
-#if SW4_RAJA_VERSION == 6
-  using XRHS_POL2 =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::For<
-          0, RAJA::cuda_block_exec,
-          RAJA::statement::For<
-              1, RAJA::cuda_block_exec,
-              RAJA::statement::For<2, RAJA::cuda_thread_exec,
-                                   RAJA::statement::Lambda<0>>>>>>;
-#elif SW4_RAJA_VERSION == 7
 
-  using XRHS_POL2 =
-      RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::For<
-          0, RAJA::cuda_block_x_loop,
-          RAJA::statement::For<
-              1, RAJA::cuda_block_y_loop,
-              RAJA::statement::For<2, RAJA::cuda_thread_x_loop,
-                                   RAJA::statement::Lambda<0>>>>>>;
 
-#endif
-#else
-  using XRHS_POL2 = XRHS_POL;
-#endif
   // Xrhs4th3fortsgstr_ci<XRHS_POL2>(ifirst,ilast,jfirst,jlast,kfirst,klast,nk,onesided,a_acof,a_bope,a_ghcof,a_lu,a_u,a_mu,a_lambda,h,a_strx,a_stry,a_strz,op);
   // return;
   // This would work to create multi-dimensional C arrays:
@@ -1220,16 +1191,7 @@ void rhs4th3fortsgstr_ci(
   // PREFETCH(a_strx);
   // PREFETCH(a_stry);
   // PREFETCH(a_strz);
-  // using RHS_POL =
-  //   RAJA::KernelPolicy<
-  //   RAJA::statement::CudaKernel<
-  //     RAJA::statement::For<0, RAJA::cuda_threadblock_exec<4>,
-  // 			    RAJA::statement::For<1,
-  // RAJA::cuda_threadblock_exec<4>,
-  // RAJA::statement::For<2, RAJA::cuda_threadblock_exec<64>,
-  // RAJA::statement::Lambda<0> >>>>>;
-
-  // using RHS_POL = XRHS_POL;
+  
   using RHS_POL = XRHS_POL_ASYNC;
   {
     // #pragma omp parallel private(k,i,j,mux1,mux2,mux3,mux4,muy1,muy2,muy3,muy4,\
@@ -1578,43 +1540,10 @@ void rhs4th3fortsgstr_ci(
       SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP2");
       // printf("START LOOP2 \n");
 
-      // using LOCAL_POL_ASYNC_OLDE = RAJA::KernelPolicy<
-      //   RAJA::statement::CudaKernelAsync<
-      //     RAJA::statement::Tile<0, RAJA::statement::tile_fixed<6>,
-      //     RAJA::cuda_block_z_loop,
-      // RAJA::statement::Tile<1, RAJA::statement::tile_fixed<4>,
-      // RAJA::cuda_block_y_loop, 		      RAJA::statement::Tile<2,
-      // RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
-      //   RAJA::statement::For<0, RAJA::cuda_thread_z_loop,
-      //     RAJA::statement::For<1, RAJA::cuda_thread_y_loop,
-      // 			 RAJA::statement::For<2,
-      // RAJA::cuda_thread_x_loop,
-      // RAJA::statement::Lambda<0> >>>>>>>>;
+      
 
-#ifdef ENABLE_CUDA
-      using LOCAL_POL_ASYNC =
-          RAJA::KernelPolicy<RAJA::statement::CudaKernelFixedAsync<
-              256,
-              RAJA::statement::Tile<
-                  0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
-                  RAJA::statement::Tile<
-                      1, RAJA::statement::tile_fixed<4>,
-                      RAJA::cuda_block_y_loop,
-                      RAJA::statement::Tile<
-                          2, RAJA::statement::tile_fixed<16>,
-                          RAJA::cuda_block_x_loop,
-                          RAJA::statement::For<
-                              0, RAJA::cuda_thread_z_direct,
-                              RAJA::statement::For<
-                                  1, RAJA::cuda_thread_y_direct,
-                                  RAJA::statement::For<
-                                      2, RAJA::cuda_thread_x_direct,
-                                      RAJA::statement::Lambda<0>>>>>>>>>;
-#else
-      using LOCAL_POL_ASYNC = XRHS_POL;
-#endif
 
-      RAJA::kernel<LOCAL_POL_ASYNC>(
+      RAJA::kernel<RHS4TH3_POL_ASYNC>(
           RAJA::make_tuple(k_range, j_range, i_range),
           [=] RAJA_DEVICE(int k, int j, int i) {
             float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
@@ -1954,41 +1883,12 @@ void rhs4th3fortsgstr_ci(
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
 
       SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP3");
-#ifdef ENABLE_CUDA
-      using LOCAL_POL_ASYNC1 = RAJA::KernelPolicy<
-          // RAJA::statement::CudaKernelExt<RAJA::cuda_explicit_launch<true, 0,
-          // 256>,
-          RAJA::statement::CudaKernelFixedAsync<
-              256,
-              RAJA::statement::Tile<
-                  0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
-                  RAJA::statement::Tile<
-                      1, RAJA::statement::tile_fixed<4>,
-                      RAJA::cuda_block_y_loop,
-                      RAJA::statement::Tile<
-                          2, RAJA::statement::tile_fixed<16>,
-                          RAJA::cuda_block_x_loop,
-                          RAJA::statement::For<
-                              0, RAJA::cuda_thread_z_direct,
-                              RAJA::statement::For<
-                                  1, RAJA::cuda_thread_y_direct,
-                                  RAJA::statement::For<
-                                      2, RAJA::cuda_thread_x_direct,
-                                      RAJA::statement::Lambda<0>>>>>>>>>;
 
-      // 	using LOCAL_POL_ASYNC2 =
-      // RAJA::KernelPolicy<
-      // 	  RAJA::statement::CudaKernelFixedAsync<256,
-      //   RAJA::statement::For<0, RAJA::cuda_block_y_loop,
-      // 			    RAJA::statement::For<1,
-      // RAJA::cuda_block_x_loop,
-      // RAJA::statement::For<2, RAJA::cuda_thread_x_loop,
-      // RAJA::statement::Lambda<0> >>>>>;
-#else
-      using LOCAL_POL_ASYNC1 = XRHS_POL;
-#endif
 
-      RAJA::kernel<LOCAL_POL_ASYNC1>(
+      
+
+
+      RAJA::kernel<RHS4TH3_POL2_ASYNC>(
           RAJA::make_tuple(k_range, j_range, i_range),
           [=] RAJA_DEVICE(int k, int j, int i) {
             float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
@@ -3030,21 +2930,7 @@ void ve_bndry_stress_curvi_ci(
 // #pragma ivdep
 // 	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
 // 	 {
-#ifdef ENABLE_CUDA
-    using LOCAL_POL_ORIG =
-        RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::For<
-            0, RAJA::cuda_threadblock_exec<16>,
-            RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
-                                 RAJA::statement::Lambda<0>>>>>;
 
-    using LOCAL_POL =
-        RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::For<
-            0, RAJA::cuda_block_exec,
-            RAJA::statement::For<1, RAJA::cuda_block_exec,
-                                 RAJA::statement::Lambda<0>>>>>;
-#else
-    using LOCAL_POL = DEFAULT_LOOP2;
-#endif
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
     SW4_MARK_END("HOST CODE");
@@ -3056,7 +2942,7 @@ void ve_bndry_stress_curvi_ci(
     Range<4> J(jfirst + 2, jlast - 1);
     forall2async(I, J, [=] RAJA_DEVICE(int i, int j) {
 #else
-    RAJA::kernel<LOCAL_POL>(RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(
+    RAJA::kernel<VBSC_POL>(RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(
                                                                     int j,
                                                                     int i) {
 #endif
@@ -3225,35 +3111,10 @@ void att_free_curvi_ci(
 // #pragma ivdep
 // 	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
 // 	 {
-#ifdef ENABLE_CUDA
 
-#if SW4_RAJA_VERSION == 6
-    using LOCAL_POL_ASYNC = RAJA::KernelPolicy<
-        RAJA::statement::CudaKernelAsync<RAJA::statement::For<
-            0, RAJA::cuda_threadblock_exec<16>,
-            RAJA::statement::For<1, RAJA::cuda_threadblock_exec<16>,
-                                 RAJA::statement::Lambda<0>>>>>;
-#elif SW4_RAJA_VERSION == 7
-
-    using LOCAL_POL_ASYNC = RAJA::KernelPolicy<
-        RAJA::statement::CudaKernelAsync<RAJA::statement::Tile<
-            0, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
-            RAJA::statement::Tile<
-                1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,
-                RAJA::statement::For<
-                    0, RAJA::cuda_thread_x_direct,
-                    RAJA::statement::For<1, RAJA::cuda_thread_y_direct,
-                                         RAJA::statement::Lambda<0>>>>>>>;
-
-#endif
-#else
-
-    using LOCAL_POL_ASYNC = DEFAULT_LOOP2;
-
-#endif
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
-    RAJA::kernel<LOCAL_POL_ASYNC>(
+    RAJA::kernel<AFCC_POL_ASYNC>(
         RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
           float_sw4 sgx = 1, sgy = 1, isgx = 1, isgy = 1;
           if (usesg == 1) {
