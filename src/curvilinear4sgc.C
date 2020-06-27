@@ -136,9 +136,9 @@ void curvilinear4sg_ci(
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
       RAJA::kernel<
           CURV_POL>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
-                                                                      int k,
-                                                                      int j,
-                                                                      int i) {
+                                                                     int k,
+                                                                     int j,
+                                                                     int i) {
 #endif
         // float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2,
         // muz3, muz4; float_sw4 r1, r2, r3;
@@ -755,9 +755,8 @@ void curvilinear4sg_ci(
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::kernel<
         CURV_POL>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
-                                                                    int k,
-                                                                    int j,
-                                                                    int i) {
+                                                                   int k, int j,
+                                                                   int i) {
 #endif
       // #pragma omp for
       //    for( int k= kstart; k <= klast-2 ; k++ )
@@ -1137,9 +1136,8 @@ void curvilinear4sg_ci(
     // RAJA::RangeSegment i_range(ifirst+2,ilast-1);
     RAJA::kernel<
         CURV_POL>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
-                                                                    int k,
-                                                                    int j,
-                                                                    int i) {
+                                                                   int k, int j,
+                                                                   int i) {
 #endif
       float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
       float_sw4 istry = 1 / (stry(j));
@@ -1506,9 +1504,8 @@ void curvilinear4sg_ci(
     // RAJA::RangeSegment i_range(ifirst+2,ilast-1);
     RAJA::kernel<
         CURV_POL>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
-                                                                    int k,
-                                                                    int j,
-                                                                    int i) {
+                                                                   int k, int j,
+                                                                   int i) {
 #endif
       float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
       float_sw4 istry = 1 / (stry(j));
@@ -1886,9 +1883,9 @@ void curvilinear4sg_ci(
     RAJA::RangeSegment ii_range(ifirst + 2, ilast - 1);
     RAJA::kernel<
         CURV_POL>(RAJA::make_tuple(kk_range, jj_range, ii_range), [=] RAJA_DEVICE(
-                                                                       int k,
-                                                                       int j,
-                                                                       int i) {
+                                                                      int k,
+                                                                      int j,
+                                                                      int i) {
 #endif
       // 5 ops
       float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
@@ -2566,9 +2563,9 @@ void curvilinear4sg_ci(
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
       RAJA::kernel<
           CURV_POL>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
-                                                                      int k,
-                                                                      int j,
-                                                                      int i) {
+                                                                     int k,
+                                                                     int j,
+                                                                     int i) {
 #endif
         // float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2,
         // muz3, muz4; float_sw4 r1, r2, r3;
@@ -3169,9 +3166,8 @@ void curvilinear4sg_ci(
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::kernel<
         CURV_POL>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
-                                                                    int k,
-                                                                    int j,
-                                                                    int i) {
+                                                                   int k, int j,
+                                                                   int i) {
 #endif
       // #pragma omp for
       //    for( int k= kstart; k <= klast-2 ; k++ )

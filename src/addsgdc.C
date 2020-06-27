@@ -373,16 +373,16 @@ void EW::addsgd4c_ci(
     const size_t nij = ni * (jlast - jfirst + 1);
     const size_t npts = nij * (klast - kfirst + 1);
 
-// #pragma omp parallel
-//       {
-//       for( int c=0 ; c < 3 ; c++ )
-// #pragma omp for
-//       for( int k=kfirst+2; k <= klast-2 ; k++ )
-// 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
-// #pragma simd
-// #pragma ivdep
-// 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
-// 	    {
+    // #pragma omp parallel
+    //       {
+    //       for( int c=0 ; c < 3 ; c++ )
+    // #pragma omp for
+    //       for( int k=kfirst+2; k <= klast-2 ; k++ )
+    // 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
+    // #pragma simd
+    // #pragma ivdep
+    // 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
+    // 	    {
 
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);

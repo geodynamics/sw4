@@ -53,7 +53,7 @@ void TestEcons::get_mulabnd(Sarray& mu, Sarray& lambda, int npts,
 void TestEcons::get_ubnd(Sarray& u, int npts, int sides[6]) {
   SW4_MARK_FUNCTION;
   // Homogeneous Dirichet at boundaries
-      
+
   SView& uV = u.getview();
   for (int s = 0; s < 6; s++)
     if (sides[s] == 1) {
@@ -73,11 +73,11 @@ void TestEcons::get_ubnd(Sarray& u, int npts, int sides[6]) {
       RAJA::RangeSegment j_range(jb, je + 1);
       RAJA::RangeSegment i_range(ib, ie + 1);
       RAJA::kernel<TGU_POL_ASYNC>(RAJA::make_tuple(k_range, j_range, i_range),
-                               [=] RAJA_DEVICE(int k, int j, int i) {
-                                 uV(1, i, j, k) = 0;
-                                 uV(2, i, j, k) = 0;
-                                 uV(3, i, j, k) = 0;
-                               });
+                                  [=] RAJA_DEVICE(int k, int j, int i) {
+                                    uV(1, i, j, k) = 0;
+                                    uV(2, i, j, k) = 0;
+                                    uV(3, i, j, k) = 0;
+                                  });
     }
   SYNC_STREAM;
 }

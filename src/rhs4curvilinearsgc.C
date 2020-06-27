@@ -43,14 +43,14 @@ void EW::freesurfcurvisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
   }
 
   float_sw4 s0i = 1 / s[0];
-// #pragma omp parallel for
-//    for( int j= jb+2; j<=je-2 ; j++ )
-//    {
+  // #pragma omp parallel for
+  //    for( int j= jb+2; j<=je-2 ; j++ )
+  //    {
 
-// #pragma ivdep
-// #pragma simd
-//       for( int i= ib+2; i<=ie-2 ; i++ )
-//       {
+  // #pragma ivdep
+  // #pragma simd
+  //       for( int i= ib+2; i<=ie-2 ; i++ )
+  //       {
 
   RAJA::RangeSegment i_range(ib + 2, ie - 1);
   RAJA::RangeSegment j_range(jb + 2, je - 1);

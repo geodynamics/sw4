@@ -543,8 +543,8 @@ void Sarray::set_to_zero() {
   prefetch();
   float_sw4* lm_data = m_data;
   RAJA::forall<DEFAULT_LOOP1>(RAJA::RangeSegment(0, m_npts),
-       [=] RAJA_DEVICE(size_t i) { lm_data[i] = 0; });
-  //forallX<32,size_t>(0,m_npts,[=] RAJA_DEVICE(size_t i) { lm_data[i] = 0; });
+                              [=] RAJA_DEVICE(size_t i) { lm_data[i] = 0; });
+  // forallX<32,size_t>(0,m_npts,[=] RAJA_DEVICE(size_t i) { lm_data[i] = 0; });
   // forallX is 1ms slower than RAJA ( 249 vs 248 ms)
 }
 
@@ -1332,7 +1332,7 @@ void Sarray::insert_intersection(Sarray& a_U) {
     // const int lm_nk = m_nk;
     const int lm_nc = m_nc;
     // std::cout<<"Calling interest \n"<<std::flush;
-        
+
 #define NO_COLLAPSE 1
 #if defined(NO_COLLAPSE)
     // LOOP 0

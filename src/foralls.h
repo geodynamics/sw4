@@ -407,7 +407,8 @@ void forall3asyncAT(T1 &range3, LoopBody &&body) {
 template <typename T, typename Func>
 __global__ void forallgskernel(T start, T N, Func f) {
   for (T i = start + threadIdx.x + blockIdx.x * blockDim.x; i < N;
-       i += blockDim.x * gridDim.x) f(i);
+       i += blockDim.x * gridDim.x)
+    f(i);
 }
 template <int N, typename T, typename LoopBody>
 void forallX(T start, T end, LoopBody &&body) {
@@ -417,15 +418,15 @@ void forallX(T start, T end, LoopBody &&body) {
   int tpb = N;
   int blocks = (end - start) / tpb;
   blocks = ((end - start) % tpb == 0) ? blocks : blocks + 1;
-  if ((blocks*tpb)<=80*2048){
+  if ((blocks * tpb) <= 80 * 2048) {
     printf("Launching the kernel blocks= %d tpb= %d with N %d\n", blocks, tpb,
-	   N);
+           N);
     forallkernel<<<blocks, tpb>>>(start, end, body);
   } else {
-    printf("Max resident count exceeded %d >163840 \n",blocks*tpb);
-    blocks=80*2048/tpb;
+    printf("Max resident count exceeded %d >163840 \n", blocks * tpb);
+    blocks = 80 * 2048 / tpb;
     printf("Launching the GS kernel blocks= %d tpb= %dwith N %d\n", blocks, tpb,
-	   N);
+           N);
     forallgskernel<<<blocks, tpb>>>(start, end, body);
     cudaDeviceSynchronize();
   }

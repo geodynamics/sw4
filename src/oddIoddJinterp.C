@@ -411,7 +411,6 @@ void oddIoddJinterpJacobiOpt(
   RAJA::RangeSegment j_range(jcb, jce + 1);
   RAJA::RangeSegment i_range(icb, ice + 1);
 
-
   // ODDIODDJ_EXEC_POL1 is slighly faster than LOCAL_EXEC_POL 73 vs 85 ms
   SW4_MARK_BEGIN("OddIOddJLOOP 1");
   RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(

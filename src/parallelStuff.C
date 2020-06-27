@@ -1176,7 +1176,6 @@ void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
 
 #ifndef UNRAJA
 
-
   RAJA::RangeSegment k_range(0, bl);
   RAJA::RangeSegment i_range(0, count);
   RAJA::kernel<BUFFER_POL>(RAJA::make_tuple(k_range, i_range),
@@ -1224,7 +1223,6 @@ void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
   int stride = std::get<2>(mtype);
   // std::cout<<"putbuffer_device...";
   // PREFETCHFORCED(buf);
-
 
   RAJA::RangeSegment k_range(0, bl);
   RAJA::RangeSegment i_range(0, count);

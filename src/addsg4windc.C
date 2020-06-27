@@ -120,7 +120,6 @@ void addsg4wind_ci(float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
   // 	   for( int i=ifirst+2 ; i<= ilast-2; i++ )
   // 	   {
 
-
   RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
   RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
   RAJA::RangeSegment k_range(kwindb, kwinde + 1);

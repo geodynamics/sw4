@@ -115,10 +115,10 @@ void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
       RAJA::RangeSegment j_range(jb, je + 1);
       RAJA::RangeSegment i_range(ib, ie + 1);
       RAJA::kernel<BZ_POL_ASYNC>(RAJA::make_tuple(k_range, j_range, i_range),
-                               [=] RAJA_DEVICE(int k, int j, int i) {
-                                 for (int c = 1; c <= nc; c++)
-                                   uV(c, i, j, k) = 0;
-                               });
+                                 [=] RAJA_DEVICE(int k, int j, int i) {
+                                   for (int c = 1; c <= nc; c++)
+                                     uV(c, i, j, k) = 0;
+                                 });
     }
   // SYNC_STREAM;
 }
@@ -285,7 +285,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   // Repackage Mass_block into array of fortran order.
   int nimb = (m_Mass_block.m_ie - m_Mass_block.m_ib + 1);
   size_t msize = nimb * (m_Mass_block.m_je - m_Mass_block.m_jb + 1);
-  //std::cout << "Batch size in setup is " << msize << "\n";
+  // std::cout << "Batch size in setup is " << msize << "\n";
   //#define USE_DIRECT_INVERSE 1
 #ifdef USE_DIRECT_INVERSE
   std::cout << " USING DIRECT INVERSE \n";
@@ -818,7 +818,7 @@ void CurvilinearInterface2::injection(Sarray& u_fA, Sarray& u_cA) {
   if (m_isbndry[3]) j2 -= 2;
   SView& u_f = u_fA.getview();
   SView& u_c = u_cA.getview();
- 
+
   // for (int l = 1; l <= u_cA.m_nc; l++)
   //   //    for (int j = u_c.m_jb+ngh-1; j <= u_c.m_je-ngh+1; j++)
   //   //      for (int i = u_c.m_ib+ngh-1; i <= u_c.m_ie-ngh+1; i++)
@@ -850,7 +850,6 @@ void CurvilinearInterface2::injection(Sarray& u_fA, Sarray& u_cA) {
                  a * u_c(l, i + 1, j + 2, 1) + b * u_c(l, i + 2, j + 2, 1));
       });
 
-  
   if (m_isbndry[1]) {
     int i = i2 + 1;
     // for (int l = 1; l <= u_c.m_nc; l++)
@@ -2080,9 +2079,6 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
   sbuf2 = &tmp[2 * nptsmax * u.m_nc];
   rbuf2 = &tmp[3 * nptsmax * u.m_nc];
 
- 
-      
-
   int ib = u.m_ib;
   int ie = u.m_ie;
   int jb = u.m_jb;
@@ -2103,13 +2099,13 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     RAJA::RangeSegment j_range1(u.m_jb, u.m_je + 1);
     RAJA::RangeSegment i_range1(u.m_ib + ng, u.m_ib + 2 * ng - 1 + 1);
     RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
-                            [=] RAJA_DEVICE(int k, int j, int i) {
-                              size_t ind = i - (ib + ng) + ng * (j - jb) +
-                                           ng * nj * (k - kb);
-                              for (int c = 1; c <= lm_nc; c++) {
-                                sbuf1[ind + npts1 * (c - 1)] = uV(c, i, j, k);
-                              }
-                            });
+                         [=] RAJA_DEVICE(int k, int j, int i) {
+                           size_t ind = i - (ib + ng) + ng * (j - jb) +
+                                        ng * nj * (k - kb);
+                           for (int c = 1; c <= lm_nc; c++) {
+                             sbuf1[ind + npts1 * (c - 1)] = uV(c, i, j, k);
+                           }
+                         });
   }
   MPI_Isend(sbuf1, npts1 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[0], tag1,
             m_ew->m_cartesian_communicator, &req3);
@@ -2121,13 +2117,13 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     RAJA::RangeSegment j_range1(u.m_jb, u.m_je + 1);
     RAJA::RangeSegment i_range1(u.m_ie - 2 * ng + 1, u.m_ie - ng + 1);
     RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
-                            [=] RAJA_DEVICE(int k, int j, int i) {
-                              size_t ind = i - (ie - 2 * ng + 1) +
-                                           ng * (j - jb) + ng * nj * (k - kb);
-                              for (int c = 1; c <= lm_nc; c++) {
-                                sbuf2[ind + npts1 * (c - 1)] = uV(c, i, j, k);
-                              }
-                            });
+                         [=] RAJA_DEVICE(int k, int j, int i) {
+                           size_t ind = i - (ie - 2 * ng + 1) + ng * (j - jb) +
+                                        ng * nj * (k - kb);
+                           for (int c = 1; c <= lm_nc; c++) {
+                             sbuf2[ind + npts1 * (c - 1)] = uV(c, i, j, k);
+                           }
+                         });
   }
   MPI_Isend(sbuf2, npts1 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[1], tag2,
             m_ew->m_cartesian_communicator, &req4);
@@ -2140,13 +2136,13 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     RAJA::RangeSegment j_range1(u.m_jb, u.m_je + 1);
     RAJA::RangeSegment i_range1(u.m_ie - ng + 1, u.m_ie + 1);
     RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
-                            [=] RAJA_DEVICE(int k, int j, int i) {
-                              size_t ind = i - (ie - ng + 1) + ng * (j - jb) +
-                                           ng * nj * (k - kb);
-                              for (int c = 1; c <= lm_nc; c++) {
-                                uV(c, i, j, k) = rbuf1[ind + npts1 * (c - 1)];
-                              }
-                            });
+                         [=] RAJA_DEVICE(int k, int j, int i) {
+                           size_t ind = i - (ie - ng + 1) + ng * (j - jb) +
+                                        ng * nj * (k - kb);
+                           for (int c = 1; c <= lm_nc; c++) {
+                             uV(c, i, j, k) = rbuf1[ind + npts1 * (c - 1)];
+                           }
+                         });
   }
   MPI_Wait(&req2, &status);
   if (m_ew->m_neighbor[0] != MPI_PROC_NULL) {
@@ -2157,13 +2153,13 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     RAJA::RangeSegment j_range1(u.m_jb, u.m_je + 1);
     RAJA::RangeSegment i_range1(u.m_ib, u.m_ib + ng - 1 + 1);
     RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
-                            [=] RAJA_DEVICE(int k, int j, int i) {
-                              size_t ind =
-                                  i - ib + ng * (j - jb) + ng * nj * (k - kb);
-                              for (int c = 1; c <= lm_nc; c++) {
-                                uV(c, i, j, k) = rbuf2[ind + npts1 * (c - 1)];
-                              }
-                            });
+                         [=] RAJA_DEVICE(int k, int j, int i) {
+                           size_t ind =
+                               i - ib + ng * (j - jb) + ng * nj * (k - kb);
+                           for (int c = 1; c <= lm_nc; c++) {
+                             uV(c, i, j, k) = rbuf2[ind + npts1 * (c - 1)];
+                           }
+                         });
   }
 
   MPI_Wait(&req3, &status);
@@ -2184,13 +2180,13 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     RAJA::RangeSegment j_range1(u.m_jb + ng, u.m_jb + 2 * ng - 1 + 1);
     RAJA::RangeSegment i_range1(u.m_ib, u.m_ie + 1);
     RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
-                            [=] RAJA_DEVICE(int k, int j, int i) {
-                              size_t ind = i - ib + ni * (j - (jb + ng)) +
-                                           ng * ni * (k - kb);
-                              for (int c = 1; c <= lm_nc; c++) {
-                                sbuf1[ind + npts2 * (c - 1)] = uV(c, i, j, k);
-                              }
-                            });
+                         [=] RAJA_DEVICE(int k, int j, int i) {
+                           size_t ind = i - ib + ni * (j - (jb + ng)) +
+                                        ng * ni * (k - kb);
+                           for (int c = 1; c <= lm_nc; c++) {
+                             sbuf1[ind + npts2 * (c - 1)] = uV(c, i, j, k);
+                           }
+                         });
   }
 
   MPI_Isend(sbuf1, npts2 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[2], tag1,
@@ -2205,14 +2201,13 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     RAJA::RangeSegment j_range2(u.m_je - 2 * ng + 1, u.m_je - ng + 1);
     RAJA::RangeSegment i_range2(u.m_ib, u.m_ie + 1);
     RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range2, i_range2),
-                            [=] RAJA_DEVICE(int k, int j, int i) {
-                              size_t ind = i - ib +
-                                           ni * (j - (je - 2 * ng + 1)) +
-                                           ng * ni * (k - kb);
-                              for (int c = 1; c <= lm_nc; c++) {
-                                sbuf2[ind + npts2 * (c - 1)] = uV(c, i, j, k);
-                              }
-                            });
+                         [=] RAJA_DEVICE(int k, int j, int i) {
+                           size_t ind = i - ib + ni * (j - (je - 2 * ng + 1)) +
+                                        ng * ni * (k - kb);
+                           for (int c = 1; c <= lm_nc; c++) {
+                             sbuf2[ind + npts2 * (c - 1)] = uV(c, i, j, k);
+                           }
+                         });
   }
   MPI_Isend(sbuf2, npts2 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[3], tag2,
             m_ew->m_cartesian_communicator, &req4);
@@ -2225,13 +2220,13 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     RAJA::RangeSegment j_range3(u.m_je - ng + 1, u.m_je + 1);
     RAJA::RangeSegment i_range3(u.m_ib, u.m_ie + 1);
     RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range3, i_range3),
-                            [=] RAJA_DEVICE(int k, int j, int i) {
-                              size_t ind = i - ib + ni * (j - (je - ng + 1)) +
-                                           ng * ni * (k - kb);
-                              for (int c = 1; c <= lm_nc; c++) {
-                                uV(c, i, j, k) = rbuf1[ind + npts2 * (c - 1)];
-                              }
-                            });
+                         [=] RAJA_DEVICE(int k, int j, int i) {
+                           size_t ind = i - ib + ni * (j - (je - ng + 1)) +
+                                        ng * ni * (k - kb);
+                           for (int c = 1; c <= lm_nc; c++) {
+                             uV(c, i, j, k) = rbuf1[ind + npts2 * (c - 1)];
+                           }
+                         });
   }
   MPI_Wait(&req2, &status);
   if (m_ew->m_neighbor[2] != MPI_PROC_NULL) {
@@ -2242,13 +2237,13 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     RAJA::RangeSegment j_range4(u.m_jb, u.m_jb + ng - 1 + 1);
     RAJA::RangeSegment i_range4(u.m_ib, u.m_ie + 1);
     RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range4, i_range4),
-                            [=] RAJA_DEVICE(int k, int j, int i) {
-                              size_t ind =
-                                  i - ib + ni * (j - jb) + ng * ni * (k - kb);
-                              for (int c = 1; c <= lm_nc; c++) {
-                                uV(c, i, j, k) = rbuf2[ind + npts2 * (c - 1)];
-                              }
-                            });
+                         [=] RAJA_DEVICE(int k, int j, int i) {
+                           size_t ind =
+                               i - ib + ni * (j - jb) + ng * ni * (k - kb);
+                           for (int c = 1; c <= lm_nc; c++) {
+                             uV(c, i, j, k) = rbuf2[ind + npts2 * (c - 1)];
+                           }
+                         });
   }
 
   MPI_Wait(&req3, &status);

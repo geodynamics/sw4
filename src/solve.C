@@ -2338,9 +2338,9 @@ void EW::dirichlet_hom_ic(Sarray& U, int g, int k, bool inner) {
     // 	       U(c,i,j,k) = 0;
     //    }
     RAJA::kernel<DHI_POL_ASYNC>(RAJA::make_tuple(c_range, j_range, i_range),
-                            [=] RAJA_DEVICE(int c, int j, int i) {
-                              UV(c, i, j, k) = 0;
-                            });  // SYNC_STREAM;
+                                [=] RAJA_DEVICE(int c, int j, int i) {
+                                  UV(c, i, j, k) = 0;
+                                });  // SYNC_STREAM;
   }
 }
 
@@ -2870,13 +2870,12 @@ void EW::gridref_initial_guess(Sarray& u, int g, bool upper) {
   // for( int j=jb ; j <= je ; j++ )
   //    for( int i=ib ; i <= ie ; i++ )
 
-
   RAJA::kernel<GIG_POL_ASYNC>(RAJA::make_tuple(j_range, i_range),
-                          [=] RAJA_DEVICE(int j, int i) {
-                            uV(1, i, j, k) = uV(1, i, j, k + s);
-                            uV(2, i, j, k) = uV(2, i, j, k + s);
-                            uV(3, i, j, k) = uV(3, i, j, k + s);
-                          });  // SYNC_STREAM;
+                              [=] RAJA_DEVICE(int j, int i) {
+                                uV(1, i, j, k) = uV(1, i, j, k + s);
+                                uV(2, i, j, k) = uV(2, i, j, k + s);
+                                uV(3, i, j, k) = uV(3, i, j, k + s);
+                              });  // SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -3406,15 +3405,15 @@ void EW::add_ve_stresses(Sarray& a_Up, Sarray& B, int g, int kic, int a_mech,
 
   RAJA::RangeSegment j_range(B.m_jb + 2, B.m_je - 2 + 1);
   RAJA::RangeSegment i_range(B.m_ib + 2, B.m_ie - 2 + 1);
-// NEW July 21: use new operators WITHOUT ghost points (m_sbop -> m_sbop_no_gp)
-// #pragma omp parallel for
-//    for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
-// #pragma omp simd
-//       for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
+  // NEW July 21: use new operators WITHOUT ghost points (m_sbop ->
+  // m_sbop_no_gp) #pragma omp parallel for
+  //    for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
+  // #pragma omp simd
+  //       for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
 
   RAJA::kernel<
       AVS_POL_ASYNC>(RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(
-                                                               int j, int i) {
+                                                             int j, int i) {
     float_sw4 uz = 0, vz = 0, wz = 0;
     if (upper) {
       for (int m = 0; m <= 5; m++) {
@@ -4795,7 +4794,7 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
         RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
         RAJA::kernel<
             EBFA_POL>(RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(
-                                                               int j, int i) {
+                                                              int j, int i) {
           float_sw4 g1, g2, g3, acof, bcof;
           int ind = i - ifirst + ni * (j - jfirst);
           float_sw4 a4ci, b4ci, a4cj, b4cj;
@@ -4901,7 +4900,8 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
     }  // end if bcType[g][4] == bStressFree
     if (m_bcType[g][5] == bStressFree) {
       SW4_MARK_BEGIN("enforceBCfreeAtt2::SET 2");
-    std:;cerr<<"WARNING :: CODE EXECUTING ON CPU solve.C Line 4929 \n";
+    std:;
+      cerr << "WARNING :: CODE EXECUTING ON CPU solve.C Line 4929 \n";
       int nk = m_global_nz[g];
       // const float_sw4 i6  = 1.0/6;
       const float_sw4 d4a = 2.0 / 3;

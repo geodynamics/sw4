@@ -1095,7 +1095,6 @@ void rhs4th3fortsgstr_ci(
     float_sw4* __restrict__ a_strz, char op) {
   SW4_MARK_FUNCTION;
 
-
   // Xrhs4th3fortsgstr_ci<XRHS_POL2>(ifirst,ilast,jfirst,jlast,kfirst,klast,nk,onesided,a_acof,a_bope,a_ghcof,a_lu,a_u,a_mu,a_lambda,h,a_strx,a_stry,a_strz,op);
   // return;
   // This would work to create multi-dimensional C arrays:
@@ -1191,7 +1190,7 @@ void rhs4th3fortsgstr_ci(
   // PREFETCH(a_strx);
   // PREFETCH(a_stry);
   // PREFETCH(a_strz);
-  
+
   using RHS_POL = XRHS_POL_ASYNC;
   {
     // #pragma omp parallel private(k,i,j,mux1,mux2,mux3,mux4,muy1,muy2,muy3,muy4,\
@@ -1540,9 +1539,6 @@ void rhs4th3fortsgstr_ci(
       SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP2");
       // printf("START LOOP2 \n");
 
-      
-
-
       RAJA::kernel<RHS4TH3_POL_ASYNC>(
           RAJA::make_tuple(k_range, j_range, i_range),
           [=] RAJA_DEVICE(int k, int j, int i) {
@@ -1883,10 +1879,6 @@ void rhs4th3fortsgstr_ci(
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
 
       SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP3");
-
-
-      
-
 
       RAJA::kernel<RHS4TH3_POL2_ASYNC>(
           RAJA::make_tuple(k_range, j_range, i_range),
@@ -2925,11 +2917,11 @@ void ve_bndry_stress_curvi_ci(
   //#pragma omp parallel
   {
     //
-// #pragma omp for
-//       for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
-// #pragma ivdep
-// 	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
-// 	 {
+    // #pragma omp for
+    //       for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
+    // #pragma ivdep
+    // 	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
+    // 	 {
 
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
@@ -2943,8 +2935,8 @@ void ve_bndry_stress_curvi_ci(
     forall2async(I, J, [=] RAJA_DEVICE(int i, int j) {
 #else
     RAJA::kernel<VBSC_POL>(RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(
-                                                                    int j,
-                                                                    int i) {
+                                                                   int j,
+                                                                   int i) {
 #endif
       float_sw4 sgx = 1, sgy = 1, isgx = 1, isgy = 1;
       if (usesg == 1) {
@@ -3106,11 +3098,11 @@ void att_free_curvi_ci(
   {
     //     float_sw4 sgx = 1, sgy = 1, isgx = 1, isgy = 1;
     float_sw4 s0i = 1 / sbop[0];
-// #pragma omp for
-//       for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
-// #pragma ivdep
-// 	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
-// 	 {
+    // #pragma omp for
+    //       for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
+    // #pragma ivdep
+    // 	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
+    // 	 {
 
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
