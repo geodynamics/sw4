@@ -210,8 +210,8 @@ void EW::forcingttfortsg_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t nij = ni * (jlast - jfirst + 1);
   const size_t nijk = nij * (klast - kfirst + 1);
   const size_t base = -(ifirst + ni * jfirst + nij * kfirst);
-// #pragma omp parallel
-//    {
+  // #pragma omp parallel
+  //    {
 
   RAJA::RangeSegment k_range(kfirst, klast + 1);
   RAJA::RangeSegment j_range(jfirst, jlast + 1);
@@ -417,8 +417,8 @@ void EW::forcingfortcsg_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t nij = ni * (jlast - jfirst + 1);
   const size_t nijk = nij * (klast - kfirst + 1);
   const size_t base = -(ifirst + ni * jfirst + nij * kfirst);
-// #pragma omp parallel
-//    {
+  // #pragma omp parallel
+  //    {
 
   RAJA::RangeSegment k_range(kfirst, klast + 1);
   RAJA::RangeSegment j_range(jfirst, jlast + 1);
@@ -607,8 +607,8 @@ void EW::forcingttfortcsg_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t nij = ni * (jlast - jfirst + 1);
   const size_t nijk = nij * (klast - kfirst + 1);
   const size_t base = -(ifirst + ni * jfirst + nij * kfirst);
-// #pragma omp parallel
-//    {
+  // #pragma omp parallel
+  //    {
 
   RAJA::RangeSegment k_range(kfirst, klast + 1);
   RAJA::RangeSegment j_range(jfirst, jlast + 1);
@@ -986,8 +986,8 @@ void EW::forcingttfortsgatt_ci(
   const size_t nij = ni * (jlast - jfirst + 1);
   const size_t nijk = nij * (klast - kfirst + 1);
   const size_t base = -(ifirst + ni * jfirst + nij * kfirst);
-// #pragma omp parallel
-//    {
+  // #pragma omp parallel
+  //    {
 
   RAJA::RangeSegment k_range(kfirst, klast + 1);
   RAJA::RangeSegment j_range(jfirst, jlast + 1);
@@ -1212,8 +1212,8 @@ void EW::forcingfortsgattc_ci(
   const size_t nij = ni * (jlast - jfirst + 1);
   const size_t nijk = nij * (klast - kfirst + 1);
   const size_t base = -(ifirst + ni * jfirst + nij * kfirst);
-// #pragma omp parallel
-//    {
+  // #pragma omp parallel
+  //    {
 
   RAJA::RangeSegment k_range(kfirst, klast + 1);
   RAJA::RangeSegment j_range(jfirst, jlast + 1);
@@ -1388,8 +1388,8 @@ void EW::forcingttfortsgattc_ci(
   const size_t nij = ni * (jlast - jfirst + 1);
   const size_t nijk = nij * (klast - kfirst + 1);
   const size_t base = -(ifirst + ni * jfirst + nij * kfirst);
-// #pragma omp parallel
-//    {
+  // #pragma omp parallel
+  //    {
 
   RAJA::RangeSegment k_range(kfirst, klast + 1);
   RAJA::RangeSegment j_range(jfirst, jlast + 1);

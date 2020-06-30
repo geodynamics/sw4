@@ -600,7 +600,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   //   int maxit = 30;
   //   float_sw4 reltol=1e-6, abstol=1e-6;
   int iter = 0;
-  //int three = 3, one = 1;
+  // int three = 3, one = 1;
 
   int nimb = m_Mass_block.m_ie - m_Mass_block.m_ib + 1;
   // Block Jacobi, lhs*x+rhs=0 and lhs=M+N --> M*xp+N*x+rhs=0 -->

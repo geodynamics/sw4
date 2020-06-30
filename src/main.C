@@ -44,8 +44,8 @@
 
 #include "EW.h"
 #include "Mspace.h"
-#include "version.h"
 #include "policies.h"
+#include "version.h"
 #ifdef ENABLE_CUDA
 #include "cuda_profiler_api.h"
 #include "nvToolsExtCuda.h"

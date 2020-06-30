@@ -49,52 +49,52 @@ void CheckPoint::set_checkpoint_file(767,29307
 CurvilinearInterface2.C,1903
 CurvilinearInterface2::CurvilinearInterface2(28,955
 CurvilinearInterface2::~CurvilinearInterface2(69,2387
-void CurvilinearInterface2::bnd_zero(91,3340
-void CurvilinearInterface2::copy_str(137,5339
-void CurvilinearInterface2::init_arrays(163,6415
-void CurvilinearInterface2::init_arrays_att(400,15763
-void CurvilinearInterface2::impose_ic(457,18140
-void CurvilinearInterface2::injection(759,30201
-void CurvilinearInterface2::interface_block(862,34768
-void CurvilinearInterface2::interface_lhs(887,35824
-void CurvilinearInterface2::interface_rhs(953,38384
-void CurvilinearInterface2::compute_icstresses_curv_host(1114,45970
-#define str_x(1125,46412
-#define str_y(1126,46451
-#undef str_x1212,49718
-#undef str_y1213,49731
-void CurvilinearInterface2::lhs_icstresses_curv(1217,49821
-#define str_x(1228,50317
-#define str_y(1229,50356
-#undef str_x1276,52253
-#undef str_y1277,52266
-void CurvilinearInterface2::lhs_Lu(1281,52356
-#define strx(1288,52724
-#define stry(1289,52762
-#undef strx1344,55659
-#undef stry1345,55671
-void CurvilinearInterface2::mat_icstresses_curv(1349,55760
-#define str_x(1359,56217
-#define str_y(1360,56252
-#undef str_x1412,58381
-#undef str_y1413,58394
-void CurvilinearInterface2::matrix_Lu(1417,58484
-#define strx(1422,58803
-#define stry(1423,58840
-#undef strx1462,60862
-#undef stry1463,60874
-void CurvilinearInterface2::restprol2D(1467,60963
-void CurvilinearInterface2::prolongate2D(1518,63228
-void CurvilinearInterface2::restrict2D(1643,67300
-void CurvilinearInterface2::communicate_array_org(1706,69665
-void CurvilinearInterface2::communicate_array1d(1844,75428
-void CurvilinearInterface2::compute_icstresses_curv(1878,76731
-#define str_x(1888,77147
-#define str_y(1889,77186
-#undef str_x1998,81511
-#undef str_y1999,81524
-void CurvilinearInterface2::allocate_mpi_buffers(2001,81539
-void CurvilinearInterface2::communicate_array(2016,82017
+void CurvilinearInterface2::bnd_zero(95,3468
+void CurvilinearInterface2::copy_str(127,4716
+void CurvilinearInterface2::init_arrays(153,5792
+void CurvilinearInterface2::init_arrays_att(406,15792
+void CurvilinearInterface2::impose_ic(463,18169
+void CurvilinearInterface2::injection(807,31840
+void CurvilinearInterface2::interface_block(892,35337
+void CurvilinearInterface2::interface_lhs(917,36393
+void CurvilinearInterface2::interface_rhs(983,38956
+void CurvilinearInterface2::compute_icstresses_curv_host(1144,46547
+#define str_x(1155,46989
+#define str_y(1156,47028
+#undef str_x1243,50312
+#undef str_y1244,50325
+void CurvilinearInterface2::lhs_icstresses_curv(1248,50415
+#define str_x(1259,50911
+#define str_y(1260,50950
+#undef str_x1307,52850
+#undef str_y1308,52863
+void CurvilinearInterface2::lhs_Lu(1312,52953
+#define strx(1319,53321
+#define stry(1320,53359
+#undef strx1375,56256
+#undef stry1376,56268
+void CurvilinearInterface2::mat_icstresses_curv(1380,56357
+#define str_x(1390,56814
+#define str_y(1391,56849
+#undef str_x1443,58978
+#undef str_y1444,58991
+void CurvilinearInterface2::matrix_Lu(1448,59081
+#define strx(1453,59400
+#define stry(1454,59437
+#undef strx1493,61459
+#undef stry1494,61471
+void CurvilinearInterface2::restprol2D(1498,61560
+void CurvilinearInterface2::prolongate2D(1550,63840
+void CurvilinearInterface2::restrict2D(1675,67912
+void CurvilinearInterface2::communicate_array_org(1738,70277
+void CurvilinearInterface2::communicate_array1d(1876,76040
+void CurvilinearInterface2::compute_icstresses_curv(1910,77343
+#define str_x(1920,77759
+#define str_y(1921,77798
+#undef str_x2030,82129
+#undef str_y2031,82142
+void CurvilinearInterface2::allocate_mpi_buffers(2033,82157
+void CurvilinearInterface2::communicate_array(2048,82635
 
 ESSI3D.C,711
 int ESSI3D::mPreceedZeros 45,1555
@@ -130,146 +130,144 @@ void ESSI3DHDF5::init_write_vel(302,10099
 void ESSI3DHDF5::write_vel(358,11941
 void ESSI3DHDF5::close_file(443,14742
 
-EW.C,5738
+EW.C,5598
 #define SQR(428,25602
 EW::EW(431,25645
-EW::~EW(737,34683
-bool EW::isInitialized(821,37831
-bool EW::wasParsingSuccessful(824,37938
-void EW::printTime(827,38076
-void EW::printPreamble(835,38443
-void EW::switch_on_checkfornan(969,43829
-void EW::assign_local_bcs(972,43963
-void EW::initializePaddingCells(1081,48595
-void EW::check_dimensions(1094,48920
-bool EW::proc_zero(1122,49910
-int EW::no_of_procs(1125,50040
-string EW::bc_name(1128,50164
-bool EW::getDepth(1152,50878
-void EW::computeCartesianCoord(1198,52412
-void EW::computeGeographicCoord(1241,54209
-int EW::computeNearestGridPoint2(1271,55467
-void EW::computeNearestGridPoint(1330,58012
-void EW::computeNearestLowGridPoint(1425,61642
-bool EW::interior_point_in_proc(1493,64040
-bool EW::point_in_proc(1507,64565
-bool EW::point_in_proc_ext(1522,65051
-void EW::getGlobalBoundingBox(1538,65671
-void EW::setGMTOutput(1548,65939
-void EW::saveGMTFile(1556,66165
-void EW::print_execution_time(1841,77653
-void EW::print_execution_times(1866,78309
-void EW::finalizeIO(1941,80797
-void EW::default_bcs(1949,81073
-void EW::normOfDifference(1955,81321
-void EW::normOfDifferenceGhostPoints(2089,86546
-void EW::normOfSurfaceDifference(2143,88426
-void EW::bndryInteriorDifference(2231,91134
-void EW::test_RhoUtt_Lu(2261,92219
-void EW::initialData(2296,93526
-bool EW::exactSol(2431,98646
-RAJA_HOST_DEVICE float_sw4 EW::SmoothWave(2566,103816
-RAJA_HOST_DEVICE float_sw4 EW::VerySmoothBump(2586,104617
-RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::C6SmoothBump(2606,105448
-RAJA_HOST_DEVICE float_sw4 EW::d_SmoothWave_dt(2617,105920
-RAJA_HOST_DEVICE float_sw4 EW::d_VerySmoothBump_dt(2637,106760
-RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::d_C6SmoothBump_dt(2658,107647
-RAJA_HOST_DEVICE float_sw4 EW::SWTP(2670,108197
-RAJA_HOST_DEVICE float_sw4 EW::VSBTP(2705,109450
-RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::C6SBTP(2747,111364
-RAJA_HOST_DEVICE float_sw4 EW::SmoothWave_x_T_Integral(2760,112013
-RAJA_HOST_DEVICE float_sw4 EW::VerySmoothBump_x_T_Integral(2789,112865
-RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::C6SmoothBump_x_T_Integral(2819,113793
-RAJA_HOST_DEVICE float_sw4 EW::Gaussian(2846,114491
-RAJA_HOST_DEVICE float_sw4 EW::d_Gaussian_dt(2854,114814
-RAJA_HOST_DEVICE float_sw4 EW::Gaussian_x_T_Integral(2863,115185
-void EW::get_exact_point_source(2887,116356
-complex<float_sw4> asin(3540,139753
-complex<float_sw4> atan(3546,139957
-complex<double> atan2(3552,140154
-void EW::get_exact_lamb2(3571,140738
-void EW::get_exact_lamb(3614,142267
-double EW::G4_Integral(3684,144414
-double EW::G3_Integral(3698,145061
-double EW::G2_Integral(3845,153030
-void EW::exactRhsTwilight(4215,173721
-void EW::exactAccTwilight(4315,177963
-void EW::Force(4377,180153
-    typedef RAJA::cuda_exec<32, true> FORCE_LOOP_ASYNC;4659,192473
-void EW::Force_tt(4688,193364
-    typedef RAJA::cuda_exec<1024, true> FORCETT_LOOP_ASYNC;4915,203566
-void EW::evalRHS(4942,204426
-void EW::evalRHSanisotropic(5152,212781
-void EW::evalPredictor(5213,215056
-void EW::evalCorrector(5255,216369
-void EW::evalDpDmInTime(5289,217465
-void EW::updateMemVarPred(5329,218778
-void EW::updateMemVarCorr(5376,220654
-void EW::updateMemVarCorrNearInterface(5433,223033
-void EW::evalDpDmInTimeAtt(5493,225526
-void EW::side_plane(5528,226854
-void EW::update_images(5556,227605
-void EW::addImage(5855,239758
-void EW::addImage3D(5858,239891
-void EW::addESSI3D(5860,240029
-void EW::initialize_image_files(5862,240164
-void EW::set_sg_thickness(5897,241617
-void EW::set_sg_width(5907,242057
-void EW::set_sg_damping(5916,242375
-void EW::set_global_bcs(5925,242728
-void EW::set_prefilter(5935,243146
-void EW::set_threshold_velocities(5944,243558
-void EW::average_speeds(5951,243777
-void EW::layered_speeds(6010,246252
-void EW::testsourcediff(6051,247608
-void EW::get_scalefactors(6089,249035
-bool EW::compute_sf(6094,249216
-void EW::compute_guess(6097,249348
-void EW::get_cgparameters(6107,249744
-void EW::compute_energy(6121,250282
-float_sw4 EW::scalarProduct(6179,252898
-void EW::get_utc(6218,254454
-void EW::print_utc(6223,254636
-void EW::extractTopographyFromGridFile(6232,254949
-void EW::extractTopographyFromCartesianFile(6442,262427
-void EW::extractTopographyFromImageFile(6665,270331
-void EW::extractTopographyFromEfile(6803,275294
-void EW::extractTopographyFromRfile(6878,278327
-bool EW::is_onesided(7236,290096
-void EW::get_gridgen_info(7239,290252
-void EW::get_nr_of_material_parameters(7245,290462
-void EW::parameters_to_material(7258,290961
-void EW::material_to_parameters(7286,291891
-void EW::get_material_parameter(7307,292627
-void EW::get_scale_factors(7327,293269
-void EW::add_to_grad(7350,293971
-void EW::perturb_mtrl(7428,297900
-void EW::perturb_mtrl(7449,298883
-void EW::get_optmethod(7470,299810
-void EW::set_epicenter(7476,299985
-void EW::get_epicenter(7485,300306
-bool EW::check_for_nan(7494,300631
-void EW::check_min_max_int(7512,301259
-void EW::material_correction(7541,302315
-void EW::project_material(7592,304153
-void EW::check_material(7646,306054
-void EW::extrapolateTopo(7726,308908
-void EW::checkTopo(7775,310469
-void EW::setup_attenuation_relaxation(7792,311015
-void EW::setup_viscoelastic(7843,312814
-#define a(7877,313787
-#undef a8016,319444
-void EW::setup_viscoelastic_tw(8021,319534
-void EW::compute_minvsoverh(8085,321921
-bool less_than(8115,323030
-void EW::sort_grid_point_sources(8120,323214
-void EW::Force(8183,325739
-void EW::Force_tt(8423,336233
-AllDims* EW::get_fine_alldimobject(8680,347441
-void EW::extractTopographyFromSfile(8688,347823
-TestTwilight* EW::create_twilight(8979,357299
-TestEcons* EW::create_energytest(8992,357713
-void EW::load_balance(8999,357911
+EW::~EW(737,34678
+bool EW::isInitialized(821,37825
+bool EW::wasParsingSuccessful(824,37932
+void EW::printTime(827,38070
+void EW::printPreamble(835,38437
+void EW::switch_on_checkfornan(969,43823
+void EW::assign_local_bcs(972,43957
+void EW::initializePaddingCells(1081,48589
+void EW::check_dimensions(1094,48914
+bool EW::proc_zero(1122,49904
+int EW::no_of_procs(1125,50034
+string EW::bc_name(1128,50158
+bool EW::getDepth(1152,50872
+void EW::computeCartesianCoord(1198,52406
+void EW::computeGeographicCoord(1241,54203
+int EW::computeNearestGridPoint2(1271,55461
+void EW::computeNearestGridPoint(1330,58006
+void EW::computeNearestLowGridPoint(1425,61636
+bool EW::interior_point_in_proc(1493,64034
+bool EW::point_in_proc(1507,64559
+bool EW::point_in_proc_ext(1522,65045
+void EW::getGlobalBoundingBox(1538,65665
+void EW::setGMTOutput(1548,65933
+void EW::saveGMTFile(1556,66159
+void EW::print_execution_time(1841,77647
+void EW::print_execution_times(1866,78303
+void EW::finalizeIO(1941,80791
+void EW::default_bcs(1949,81067
+void EW::normOfDifference(1955,81315
+void EW::normOfDifferenceGhostPoints(2089,86540
+void EW::normOfSurfaceDifference(2143,88420
+void EW::bndryInteriorDifference(2231,91128
+void EW::test_RhoUtt_Lu(2261,92213
+void EW::initialData(2296,93520
+bool EW::exactSol(2431,98640
+RAJA_HOST_DEVICE float_sw4 EW::SmoothWave(2568,103842
+RAJA_HOST_DEVICE float_sw4 EW::VerySmoothBump(2588,104643
+RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::C6SmoothBump(2608,105474
+RAJA_HOST_DEVICE float_sw4 EW::d_SmoothWave_dt(2619,105946
+RAJA_HOST_DEVICE float_sw4 EW::d_VerySmoothBump_dt(2639,106786
+RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::d_C6SmoothBump_dt(2660,107673
+RAJA_HOST_DEVICE float_sw4 EW::SWTP(2672,108223
+RAJA_HOST_DEVICE float_sw4 EW::VSBTP(2707,109476
+RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::C6SBTP(2749,111390
+RAJA_HOST_DEVICE float_sw4 EW::SmoothWave_x_T_Integral(2762,112039
+RAJA_HOST_DEVICE float_sw4 EW::VerySmoothBump_x_T_Integral(2791,112891
+RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::C6SmoothBump_x_T_Integral(2821,113819
+RAJA_HOST_DEVICE float_sw4 EW::Gaussian(2848,114517
+RAJA_HOST_DEVICE float_sw4 EW::d_Gaussian_dt(2856,114840
+RAJA_HOST_DEVICE float_sw4 EW::Gaussian_x_T_Integral(2865,115211
+void EW::get_exact_point_source(2889,116382
+complex<float_sw4> asin(3504,138131
+complex<float_sw4> atan(3510,138335
+complex<double> atan2(3516,138532
+void EW::get_exact_lamb2(3535,139116
+void EW::get_exact_lamb(3578,140645
+double EW::G4_Integral(3648,142792
+double EW::G3_Integral(3662,143439
+double EW::G2_Integral(3809,151408
+void EW::exactRhsTwilight(4179,172099
+void EW::exactAccTwilight(4279,176341
+void EW::Force(4341,178531
+void EW::Force_tt(4652,191777
+void EW::evalRHS(4906,202874
+void EW::evalRHSanisotropic(5116,211228
+void EW::evalPredictor(5177,213503
+void EW::evalCorrector(5219,214816
+void EW::evalDpDmInTime(5253,215912
+void EW::updateMemVarPred(5293,217225
+void EW::updateMemVarCorr(5340,219101
+void EW::updateMemVarCorrNearInterface(5397,221480
+void EW::evalDpDmInTimeAtt(5457,223973
+void EW::side_plane(5492,225301
+void EW::update_images(5520,226052
+void EW::addImage(5819,238205
+void EW::addImage3D(5822,238338
+void EW::addESSI3D(5824,238476
+void EW::initialize_image_files(5826,238611
+void EW::set_sg_thickness(5861,240064
+void EW::set_sg_width(5871,240504
+void EW::set_sg_damping(5880,240822
+void EW::set_global_bcs(5889,241175
+void EW::set_prefilter(5899,241593
+void EW::set_threshold_velocities(5908,242005
+void EW::average_speeds(5915,242224
+void EW::layered_speeds(5974,244699
+void EW::testsourcediff(6015,246055
+void EW::get_scalefactors(6053,247482
+bool EW::compute_sf(6058,247663
+void EW::compute_guess(6061,247795
+void EW::get_cgparameters(6071,248191
+void EW::compute_energy(6085,248729
+float_sw4 EW::scalarProduct(6143,251345
+void EW::get_utc(6182,252901
+void EW::print_utc(6187,253083
+void EW::extractTopographyFromGridFile(6196,253396
+void EW::extractTopographyFromCartesianFile(6406,260874
+void EW::extractTopographyFromImageFile(6629,268778
+void EW::extractTopographyFromEfile(6767,273741
+void EW::extractTopographyFromRfile(6842,276774
+bool EW::is_onesided(7200,288543
+void EW::get_gridgen_info(7203,288699
+void EW::get_nr_of_material_parameters(7209,288909
+void EW::parameters_to_material(7222,289408
+void EW::material_to_parameters(7250,290338
+void EW::get_material_parameter(7271,291074
+void EW::get_scale_factors(7291,291716
+void EW::add_to_grad(7314,292418
+void EW::perturb_mtrl(7392,296347
+void EW::perturb_mtrl(7413,297330
+void EW::get_optmethod(7434,298257
+void EW::set_epicenter(7440,298432
+void EW::get_epicenter(7449,298753
+bool EW::check_for_nan(7458,299078
+void EW::check_min_max_int(7476,299706
+void EW::material_correction(7505,300762
+void EW::project_material(7556,302600
+void EW::check_material(7610,304501
+void EW::extrapolateTopo(7690,307355
+void EW::checkTopo(7739,308916
+void EW::setup_attenuation_relaxation(7756,309462
+void EW::setup_viscoelastic(7807,311261
+#define a(7841,312234
+#undef a7980,317891
+void EW::setup_viscoelastic_tw(7985,317981
+void EW::compute_minvsoverh(8049,320368
+bool less_than(8079,321477
+void EW::sort_grid_point_sources(8084,321661
+void EW::Force(8147,324186
+void EW::Force_tt(8387,334680
+AllDims* EW::get_fine_alldimobject(8644,345888
+void EW::extractTopographyFromSfile(8652,346270
+TestTwilight* EW::create_twilight(8943,355746
+TestEcons* EW::create_energytest(8956,356160
+void EW::load_balance(8963,356358
 
 EtreeFile.C,467
 const char* EtreeFile::mQueryKeys[EtreeFile::mQueryKeys49,1733
@@ -487,49 +485,33 @@ MaterialVolimagefile.C,112
 MaterialVolimagefile::MaterialVolimagefile(39,1522
 void MaterialVolimagefile::set_material_properties(55,1982
 
-Mspace.C,1533
-struct global_variable_holder_struct global_variables 5,67
-void presetGPUID(9,231
-  const char *file;::file44,1460
-  int line;::line45,1480
-  size_t size;::size46,1492
-  Space type;::type47,1507
-} pattr_t;48,1521
-pattr_t *patpush(patpush50,1533
-void check_mem(65,1912
-void print_hwm(72,2118
-void *operator new(operator new118,4184
-void *operator new(operator new203,7551
-void *operator new[](operator new[]216,7925
-void *operator new[](operator new[]298,11297
-void operator delete(operator delete310,11631
-void operator delete[](operator delete[]363,13463
-void operator delete(operator delete427,15557
-void operator delete[](operator delete[]430,15671
-void assert_check_managed(436,15855
-void assert_check_host(458,16844
-void ptr_push(479,17807
-ssize_t getsize(489,18025
-void prefetch_to_device(501,18217
-void CheckError(518,18712
-void *Managed::operator new(Managed::operator new529,19051
-void *Managed::operator new[](Managed::operator new[]548,19678
-void Managed::operator delete(Managed::operator delete565,20169
-void Managed::operator delete[](Managed::operator delete[]583,20709
-size_t Managed::ocount 602,21291
-size_t Managed::hwm 603,21319
-std::string line(609,21494
-std::string line(614,21623
-std::string line(621,21816
-std::string line(626,21951
-std::string line(632,22155
-Apc::Apc(638,22291
-Apc::~Apc(643,22410
-void global_prefetch(653,22617
-#define PREFETCH_ALL 666,23240
-std::vector<int> factors(679,23635
-std::vector<int> factors(685,23772
-Space GML(691,23924
+Mspace.C,1050
+struct global_variable_holder_struct global_variables 6,89
+void presetGPUID(10,253
+    const char *file;::file67,2144
+    int line;::line68,2166
+    size_t size;::size69,2180
+    Space type;::type70,2197
+  } pattr_t;71,2213
+  void *operator new(operator new147,5115
+  void *operator new(operator new239,8745
+  void *operator new[](operator new[]252,9143
+  void *operator new[](operator new[]341,12712
+  void operator delete(operator delete354,13091
+  void operator delete[](operator delete[]407,14999
+  void operator delete(operator delete474,17273
+  void operator delete[](operator delete[]478,17416
+  void *Managed::operator new(Managed::operator new612,21958
+  void *Managed::operator new[](Managed::operator new[]631,22614
+  void Managed::operator delete(Managed::operator delete648,23128
+  void Managed::operator delete[](Managed::operator delete[]666,23701
+#define PREFETCH_ALL 750,26405
+#define M(799,27932
+#define I(800,27986
+#define P(824,29070
+#undef M850,29710
+#undef P851,29719
+#undef I852,29728
 
 Parallel_IO.C,644
 Comminfo::Comminfo(51,1662
@@ -605,79 +587,80 @@ void RandomizedMaterial::repad_sarray(583,22295
 void RandomizedMaterial::comm_sarray(623,23859
 void RandomizedMaterial::set_vsmax(681,26244
 
-Sarray.C,2672
+Sarray.C,2713
 std::unordered_map<std::string, float_sw4*> Sarray::static_map 46,1602
 bool Sarray::m_corder 49,1742
 Sarray::Sarray(54,2027
-Sarray::Sarray(101,3446
-Sarray::Sarray(125,4073
-Sarray::Sarray(148,4676
-Sarray::Sarray(170,5245
-Sarray::Sarray(192,5805
-Sarray::Sarray(201,6078
-Sarray::Sarray(221,6607
-Sarray::Sarray(249,7343
-void Sarray::define(316,9488
-void Sarray::define(340,10108
-void Sarray::define(364,10719
-void Sarray::define(387,11354
-void Sarray::define(413,12117
-void Sarray::intersection(435,12697
-void Sarray::side_plane(449,13197
-void Sarray::side_plane_fortran(483,14080
-void Sarray::set_to_zero_async(506,14696
-void Sarray::set_to_zero(520,15187
-void Sarray::set_to_minusOne(531,15573
-void Sarray::set_value(542,15965
-void Sarray::set_to_random(553,16339
-bool Sarray::in_domain(562,16686
-float_sw4 Sarray::maximum(568,16903
-float_sw4 Sarray::minimum(593,17781
-float_sw4 Sarray::sum(617,18583
-size_t Sarray::count_nans(638,19285
-size_t Sarray::count_nans(648,19626
-void Sarray::copy(691,20936
-void Sarray::extract_subarray(714,21584
-void Sarray::insert_subarray(744,22839
-void Sarray::insert_subarray(775,24115
-void Sarray::extract_subarrayIK(807,25428
-void Sarray::insert_subarrayIK(839,26702
-void Sarray::copy_kplane(873,28026
-#define NO_COLLAPSE 901,28858
-void Sarray::save_to_disk(947,30594
-void Sarray::assign(982,32079
-void Sarray::assign(1011,33308
-void Sarray::extract(1115,37525
-void Sarray::assign(1143,38667
-void Sarray::assign(1150,38909
-void Sarray::define_offsets(1157,39152
-void Sarray::transposeik(1181,40049
-void Sarray::prefetch(1214,41218
-void Sarray::forceprefetch(1230,41609
-SView::SView(1245,41984
-SView::SView(1248,42080
-    : data{data}, base{base1250,42189
-    : data{data}, base{base}, offc{offc1250,42189
-    : data{data}, base{base}, offc{offc}, offi{offi1250,42189
-    : data{data}, base{base}, offc{offc}, offi{offi}, offj{offj1250,42189
-SView::SView(1251,42269
-void SView::set(1261,42558
-void SarrayVectorPrefetch(1271,42850
-void SarrayVectorPrefetch(1275,42974
-void SarrayVectorPrefetch(1279,43100
-typedef std::tuple<uintptr_t,uintptr_t1285,43268
-typedef std::tuple<uintptr_t, int,1285,43268
-typedef std::tuple<uintptr_t, int, int,1285,43268
-typedef std::tuple<uintptr_t, int, int, int,1285,43268
-typedef std::tuple<uintptr_t, int, int, int, int> mkey_t;1285,43268
-struct key_hash 1287,43327
-  std::size_t operator()(key_hash::operator()1288,43395
-float_sw4* memoize(1293,43558
-void Sarray::insert_intersection(1313,44182
-#define NO_COLLAPSE 1354,45966
-void Sarray::extrapolij(1395,47493
-void Sarray::copy_kplane2(1472,50793
-void Sarray::swrite(1506,52156
+Sarray::Sarray(102,3470
+Sarray::Sarray(126,4097
+Sarray::Sarray(149,4700
+Sarray::Sarray(171,5269
+Sarray::Sarray(193,5829
+Sarray::Sarray(202,6102
+Sarray::Sarray(227,6787
+Sarray::Sarray(255,7523
+void Sarray::define(322,9668
+void Sarray::define(346,10288
+void Sarray::define(370,10899
+void Sarray::define(400,11760
+void Sarray::define(433,12746
+void Sarray::intersection(455,13326
+void Sarray::side_plane(469,13826
+void Sarray::side_plane_fortran(503,14709
+void Sarray::set_to_zero_async(526,15325
+void Sarray::set_to_zero(540,15816
+void Sarray::set_to_minusOne(553,16337
+void Sarray::set_value(564,16729
+void Sarray::set_value_async(574,17102
+void Sarray::set_to_random(585,17488
+bool Sarray::in_domain(594,17835
+float_sw4 Sarray::maximum(600,18052
+float_sw4 Sarray::minimum(625,18930
+float_sw4 Sarray::sum(649,19732
+size_t Sarray::count_nans(670,20434
+size_t Sarray::count_nans(680,20775
+void Sarray::copy(723,22085
+void Sarray::extract_subarray(746,22733
+void Sarray::insert_subarray(776,23988
+void Sarray::insert_subarray(807,25264
+void Sarray::extract_subarrayIK(839,26577
+void Sarray::insert_subarrayIK(871,27851
+void Sarray::copy_kplane(905,29175
+#define NO_COLLAPSE 933,30007
+void Sarray::save_to_disk(979,31743
+void Sarray::assign(1014,33228
+void Sarray::assign(1043,34457
+void Sarray::extract(1111,37170
+void Sarray::assign(1139,38312
+void Sarray::assign(1146,38554
+void Sarray::define_offsets(1153,38797
+void Sarray::transposeik(1177,39694
+void Sarray::prefetch(1210,40863
+void Sarray::forceprefetch(1226,41254
+SView::SView(1241,41629
+SView::SView(1244,41725
+    : data{data}, base{base1246,41834
+    : data{data}, base{base}, offc{offc1246,41834
+    : data{data}, base{base}, offc{offc}, offi{offi1246,41834
+    : data{data}, base{base}, offc{offc}, offi{offi}, offj{offj1246,41834
+SView::SView(1247,41914
+void SView::set(1257,42203
+void SarrayVectorPrefetch(1267,42495
+void SarrayVectorPrefetch(1271,42619
+void SarrayVectorPrefetch(1275,42745
+typedef std::tuple<uintptr_t,uintptr_t1281,42913
+typedef std::tuple<uintptr_t, int,1281,42913
+typedef std::tuple<uintptr_t, int, int,1281,42913
+typedef std::tuple<uintptr_t, int, int, int,1281,42913
+typedef std::tuple<uintptr_t, int, int, int, int> mkey_t;1281,42913
+struct key_hash 1283,42972
+  std::size_t operator()(key_hash::operator()1284,43040
+float_sw4* memoize(1289,43203
+void Sarray::insert_intersection(1309,43827
+#define NO_COLLAPSE 1337,44824
+void Sarray::extrapolij(1378,46348
+void Sarray::copy_kplane2(1455,49648
+void Sarray::swrite(1514,51745
 
 SecondOrderSection.C,186
 SecondOrderSection::SecondOrderSection(42,1506
@@ -831,9 +814,9 @@ hid_t TimeSeries::openHDF5File(3370,120932
 
 addmemvarforcing2.C,147
 void addMemVarPredCart(7,168
-void addMemVarPredCurvilinear(142,4779
-void addMemVarCorr2Cart(582,18184
-void addMemVarCorr2Curvilinear(799,25179
+void addMemVarPredCurvilinear(111,3537
+void addMemVarCorr2Cart(519,15699
+void addMemVarCorr2Curvilinear(705,21454
 
 addsg4windc.C,313
 void addsg4wind_ci(47,1772
@@ -851,7 +834,7 @@ void addsg4wind_ci(47,1772
 #define strz(111,4821
 #define coz(112,4856
 
-addsgdc.C,2198
+addsgdc.C,2171
 void EW::addsgd4_ci(42,1737
 #define rho(53,2319
 #define up(55,2405
@@ -866,92 +849,92 @@ void EW::addsgd4_ci(42,1737
 #define strz(67,2911
 #define dcz(68,2948
 #define coz(69,2983
-#undef rho274,12849
-#undef up275,12860
-#undef u276,12870
-#undef um277,12879
-#undef strx278,12889
-#undef dcx279,12901
-#undef cox280,12912
-#undef stry281,12923
-#undef dcy282,12935
-#undef coy283,12946
-#undef strz284,12957
-#undef dcz285,12969
-#undef coz286,12980
-void EW::addsgd6_ci(291,13072
-#define rho(302,13654
-#define up(304,13740
-#define u(306,13838
-#define um(308,13934
-#define strx(310,14032
-#define dcx(311,14069
-#define cox(312,14104
-#define stry(313,14139
-#define dcy(314,14176
-#define coy(315,14211
-#define strz(316,14246
-#define dcz(317,14283
-#define coz(318,14318
-#undef rho423,20697
-#undef up424,20708
-#undef u425,20718
-#undef um426,20727
-#undef strx427,20737
-#undef dcx428,20749
-#undef cox429,20760
-#undef stry430,20771
-#undef dcy431,20783
-#undef coy432,20794
-#undef strz433,20805
-#undef dcz434,20817
-#undef coz435,20828
-void EW::addsgd4c_ci(440,20920
-#define rho(450,21436
-#define up(452,21522
-#define u(454,21620
-#define um(456,21716
-#define jac(458,21814
-#define strx(460,21900
-#define dcx(461,21937
-#define cox(462,21972
-#define stry(463,22007
-#define dcy(464,22044
-#define coy(465,22079
-#undef rho595,28272
-#undef up596,28283
-#undef u597,28293
-#undef um598,28302
-#undef strx599,28312
-#undef dcx600,28324
-#undef cox601,28335
-#undef stry602,28346
-#undef dcy603,28358
-#undef coy604,28369
-#undef jac605,28380
-void EW::addsgd6c_ci(610,28472
-#define rho(620,28988
-#define up(622,29074
-#define u(624,29172
-#define um(626,29268
-#define jac(628,29366
-#define strx(630,29452
-#define dcx(631,29489
-#define cox(632,29524
-#define stry(633,29559
-#define dcy(634,29596
-#define coy(635,29631
-#undef rho719,34636
-#undef up720,34647
-#undef u721,34657
-#undef um722,34666
-#undef strx723,34676
-#undef dcx724,34688
-#undef cox725,34699
-#undef stry726,34710
-#undef dcy727,34722
-#undef coy728,34733
-#undef jac729,34744
+#undef rho179,8387
+#undef up180,8398
+#undef u181,8408
+#undef um182,8417
+#undef strx183,8427
+#undef dcx184,8439
+#undef cox185,8450
+#undef stry186,8461
+#undef dcy187,8473
+#undef coy188,8484
+#undef strz189,8495
+#undef dcz190,8507
+#undef coz191,8518
+void EW::addsgd6_ci(196,8610
+#define rho(207,9192
+#define up(209,9278
+#define u(211,9376
+#define um(213,9472
+#define strx(215,9570
+#define dcx(216,9607
+#define cox(217,9642
+#define stry(218,9677
+#define dcy(219,9714
+#define coy(220,9749
+#define strz(221,9784
+#define dcz(222,9821
+#define coz(223,9856
+#undef rho328,16235
+#undef up329,16246
+#undef u330,16256
+#undef um331,16265
+#undef strx332,16275
+#undef dcx333,16287
+#undef cox334,16298
+#undef stry335,16309
+#undef dcy336,16321
+#undef coy337,16332
+#undef strz338,16343
+#undef dcz339,16355
+#undef coz340,16366
+void EW::addsgd4c_ci(345,16458
+#define rho(355,16974
+#define up(357,17060
+#define u(359,17158
+#define um(361,17254
+#define jac(363,17352
+#define strx(365,17438
+#define dcx(366,17475
+#define cox(367,17510
+#define stry(368,17545
+#define dcy(369,17582
+#define coy(370,17617
+#undef rho442,21180
+#undef up443,21191
+#undef u444,21201
+#undef um445,21210
+#undef strx446,21220
+#undef dcx447,21232
+#undef cox448,21243
+#undef stry449,21254
+#undef dcy450,21266
+#undef coy451,21277
+#undef jac452,21288
+void EW::addsgd6c_ci(457,21380
+#define rho(467,21896
+#define up(469,21982
+#define u(471,22080
+#define um(473,22176
+#define jac(475,22274
+#define strx(477,22360
+#define dcx(478,22397
+#define cox(479,22432
+#define stry(480,22467
+#define dcy(481,22504
+#define coy(482,22539
+#undef rho566,27544
+#undef up567,27555
+#undef u568,27565
+#undef um569,27574
+#undef strx570,27584
+#undef dcx571,27596
+#undef cox572,27607
+#undef stry573,27618
+#undef dcy574,27630
+#undef coy575,27641
+#undef jac576,27652
 
 anisomtrltocurvilinearc.C,150
 void EW::anisomtrltocurvilinear_ci(36,1470
@@ -964,23 +947,23 @@ void EW::anisomtrltocurvilinear_ci(36,1470
 bcfortanisgc.C,31
 void EW::bcfortanisg_ci(9,166
 
-bcfortc.C,590
+bcfortc.C,589
 void EW::bcfort_ci(39,1533
 void EW::bcfortsg_ci(290,12937
-void EW::twdirbdry_ci(780,35715
-void EW::twdirbdryc_ci(816,37296
-void EW::twfrsurfz_ci(853,39058
-void EW::twfrsurfzatt_ci(913,41357
-void EW::twfrsurfzsgstr_ci(969,43431
-void EW::twfrsurfzsgstratt_ci(1027,45549
-void EW::twfrsurfz_wind_ci(1090,47893
-void EW::twfrsurfzsg_wind_ci(1149,50071
-void EW::twfrsurfz_att_wind_ci(1211,52365
-void EW::twfrsurfzsg_att_wind_ci(1271,54686
-void EW::twstensor_ci(1337,57028
-void EW::twstensorsg_ci(1389,59002
-void EW::twstensoratt_ci(1450,61287
-void EW::twstensorsgatt_ci(1513,63661
+void EW::twdirbdry_ci(714,32876
+void EW::twdirbdryc_ci(750,34457
+void EW::twfrsurfz_ci(787,36219
+void EW::twfrsurfzatt_ci(847,38518
+void EW::twfrsurfzsgstr_ci(903,40592
+void EW::twfrsurfzsgstratt_ci(961,42710
+void EW::twfrsurfz_wind_ci(1024,45054
+void EW::twfrsurfzsg_wind_ci(1083,47232
+void EW::twfrsurfz_att_wind_ci(1145,49526
+void EW::twfrsurfzsg_att_wind_ci(1205,51847
+void EW::twstensor_ci(1271,54189
+void EW::twstensorsg_ci(1323,56163
+void EW::twstensoratt_ci(1384,58448
+void EW::twstensorsgatt_ci(1447,60822
 
 bcfreesurfcurvanic.C,37
 void EW::bcfreesurfcurvani_ci(9,166
@@ -1065,44 +1048,44 @@ void curvilinear4sg_ci(41,1524
 #define ghcof(103,4081
 #define acof_no_gp(104,4113
 #define ghcof_no_gp(105,4192
-#define NO_COLLAPSE 136,5275
-#undef mu2487,128378
-#undef la2488,128388
-#undef jac2489,128398
-#undef u2490,128409
-#undef lu2491,128418
-#undef met2492,128428
-#undef strx2493,128439
-#undef stry2494,128451
-#undef acof2495,128463
-#undef bope2496,128475
-#undef ghcof2497,128487
-#undef acof_no_gp2498,128500
-#undef ghcof_no_gp2499,128518
-void curvilinear4sg_ci(2502,128545
-#define mu(2553,130410
-#define la(2554,130470
-#define jac(2555,130534
-#define u(2556,130596
-#define lu(2557,130671
-#define met(2558,130748
-#define strx(2559,130827
-#define stry(2560,130863
-#define acof(2561,130899
-#define bope(2562,130966
-#define ghcof(2563,131013
-#define NO_COLLAPSE 2591,131991
-#undef mu4199,218537
-#undef la4200,218547
-#undef jac4201,218557
-#undef u4202,218568
-#undef lu4203,218577
-#undef met4204,218587
-#undef strx4205,218598
-#undef stry4206,218610
-#undef acof4207,218622
-#undef bope4208,218634
-#undef ghcof4209,218646
+#define NO_COLLAPSE 119,4516
+#undef mu2467,127398
+#undef la2468,127408
+#undef jac2469,127418
+#undef u2470,127429
+#undef lu2471,127438
+#undef met2472,127448
+#undef strx2473,127459
+#undef stry2474,127471
+#undef acof2475,127483
+#undef bope2476,127495
+#undef ghcof2477,127507
+#undef acof_no_gp2478,127520
+#undef ghcof_no_gp2479,127538
+void curvilinear4sg_ci(2482,127565
+#define mu(2533,129430
+#define la(2534,129490
+#define jac(2535,129554
+#define u(2536,129616
+#define lu(2537,129691
+#define met(2538,129768
+#define strx(2539,129847
+#define stry(2540,129883
+#define acof(2541,129919
+#define bope(2542,129986
+#define ghcof(2543,130033
+#define NO_COLLAPSE 2554,130247
+#undef mu4161,216718
+#undef la4162,216728
+#undef jac4163,216738
+#undef u4164,216749
+#undef lu4165,216758
+#undef met4166,216768
+#undef strx4167,216779
+#undef stry4168,216791
+#undef acof4169,216803
+#undef bope4170,216815
+#undef ghcof4171,216827
 
 curvilinear4sgwind.C,680
 void curvilinear4sgwind(43,1551
@@ -1410,9 +1393,9 @@ void innerloopanisgstrvc_ci(5,36
 #define ghcof(37,1541
 
 main.C,67
-void signal_handler(60,1882
-void usage(68,2028
-int main(80,2406
+void signal_handler(61,1904
+void usage(69,2050
+int main(81,2428
 
 material.C,669
 void EW::convert_material_to_mulambda(36,1470
@@ -1492,30 +1475,30 @@ void oddIoddJinterpJacobiOpt(266,12916
 #define UcNew(361,17195
 #define Uf(367,17502
 #define UfNew(374,17815
-#undef Unextf684,33103
-#undef Mufs685,33117
-#undef Mlfs686,33129
-#undef Morf687,33141
-#undef Mlrf688,33153
-#undef Morc689,33165
-#undef Mlrc690,33177
-#undef Mucs691,33189
-#undef Mlcs692,33201
-#undef Unextc693,33213
-#undef Bc694,33227
-#undef BfRestrict695,33237
-#undef Uc696,33255
-#undef Uf697,33265
-#undef UfNew698,33275
-void oddIoddJinterp(702,33395
-#define strc_x(715,34224
-#define strc_y(716,34271
-#define strf_x(719,34350
-#define strf_y(720,34397
-#undef strc_x943,45617
-#undef strc_y944,45631
-#undef strf_x945,45645
-#undef strf_y946,45659
+#undef Unextf673,32608
+#undef Mufs674,32622
+#undef Mlfs675,32634
+#undef Morf676,32646
+#undef Mlrf677,32658
+#undef Morc678,32670
+#undef Mlrc679,32682
+#undef Mucs680,32694
+#undef Mlcs681,32706
+#undef Unextc682,32718
+#undef Bc683,32732
+#undef BfRestrict684,32742
+#undef Uc685,32760
+#undef Uf686,32770
+#undef UfNew687,32780
+void oddIoddJinterp(691,32900
+#define strc_x(704,33729
+#define strc_y(705,33776
+#define strf_x(708,33855
+#define strf_y(709,33902
+#undef strc_x932,45122
+#undef strc_y933,45136
+#undef strf_x934,45150
+#undef strf_y935,45164
 
 parallelStuff.C,1086
 bool EW::proc_decompose_2d(40,1570
@@ -1523,28 +1506,28 @@ void EW::coarsen1d(70,2601
 void EW::decomp1d(102,3462
 void EW::setup2D_MPICommunications(124,4053
 void EW::setupMPICommunications(283,11123
-void EW::communicate_array(449,17220
-void EW::communicate_array(460,17759
-void EW::communicate_arrays(575,23803
-void EW::communicate_array_2d(581,23966
-void EW::communicate_array_2d(587,24154
-void EW::communicate_array_2d_ext(652,27355
-void EW::communicate_array_2d_ext(658,27531
-void EW::communicate_array_2d_ext_async(700,29346
-void EW::communicate_array_2d_asym(742,31248
-void EW::communicate_array_2dfinest(836,36068
-void EW::make_type(872,37766
-void EW::make_type_2d(888,38571
-void EW::communicate_array_async(896,38944
-void EW::AMPI_Sendrecv(1056,46111
-void EW::getbuffer_device(1162,49876
-void EW::getbuffer_host(1225,51898
-void EW::putbuffer_device(1238,52314
-void EW::putbuffer_host(1281,53861
-void EW::communicate_array_2d_async(1293,54249
-void EW::communicate_array_2d_async_memo(1362,57770
-void EW::AMPI_Sendrecv2(1434,61369
-void EW::communicate_array_2d_isurf(1558,65765
+void EW::communicate_array(449,17219
+void EW::communicate_array(460,17758
+void EW::communicate_arrays(575,23802
+void EW::communicate_array_2d(581,23964
+void EW::communicate_array_2d(587,24152
+void EW::communicate_array_2d_ext(652,27351
+void EW::communicate_array_2d_ext(658,27527
+void EW::communicate_array_2d_ext_async(700,29342
+void EW::communicate_array_2d_asym(742,31244
+void EW::communicate_array_2dfinest(836,36064
+void EW::make_type(872,37762
+void EW::make_type_2d(888,38567
+void EW::communicate_array_async(896,38940
+void EW::AMPI_Sendrecv(1056,46107
+void EW::getbuffer_device(1162,49872
+void EW::getbuffer_host(1205,51192
+void EW::putbuffer_device(1218,51608
+void EW::putbuffer_host(1242,52450
+void EW::communicate_array_2d_async(1254,52838
+void EW::communicate_array_2d_async_memo(1323,56359
+void EW::AMPI_Sendrecv2(1395,59958
+void EW::communicate_array_2d_isurf(1519,64354
 
 parseInputFile.C,2733
 #define SQR(74,2216
@@ -1776,7 +1759,7 @@ void EW::addbstressc_ci(501,20734
 #undef sgstrx660,27413
 #undef sgstry661,27427
 
-rhs4curvilinearsgc.C,951
+rhs4curvilinearsgc.C,944
 void EW::freesurfcurvisg_ci(9,167
 #define mu(28,1062
 #define la(29,1120
@@ -1785,39 +1768,39 @@ void EW::freesurfcurvisg_ci(9,167
 #define forcing(32,1332
 #define strx(33,1411
 #define stry(34,1442
-#undef mu188,7929
-#undef la189,7939
-#undef met190,7949
-#undef u191,7960
-#undef forcing192,7969
-#undef strx193,7984
-#undef stry194,7996
-void EW::getsurfforcingsg_ci(198,8085
-#define met(214,8801
-#define jac(215,8880
-#define forcing(216,8942
-#define tau(218,9088
-#define strx(219,9157
-#define stry(220,9192
-#undef met244,10131
-#undef jac245,10142
-#undef forcing246,10153
-#undef tau247,10168
-#undef strx248,10179
-#undef stry249,10191
-void EW::subsurfforcingsg_ci(253,10280
-#define met(269,10996
-#define jac(270,11075
-#define forcing(271,11137
-#define tau(273,11283
-#define strx(274,11352
-#define stry(275,11387
-#undef met299,12329
-#undef jac300,12340
-#undef forcing301,12351
-#undef tau302,12366
-#undef strx303,12377
-#undef stry304,12389
+#undef mu165,7012
+#undef la166,7022
+#undef met167,7032
+#undef u168,7043
+#undef forcing169,7052
+#undef strx170,7067
+#undef stry171,7079
+void EW::getsurfforcingsg_ci(175,7168
+#define met(191,7884
+#define jac(192,7963
+#define forcing(193,8025
+#define tau(195,8171
+#define strx(196,8240
+#define stry(197,8275
+#undef met221,9214
+#undef jac222,9225
+#undef forcing223,9236
+#undef tau224,9251
+#undef strx225,9262
+#undef stry226,9274
+void EW::subsurfforcingsg_ci(230,9363
+#define met(246,10079
+#define jac(247,10158
+#define forcing(248,10220
+#define tau(250,10366
+#define strx(251,10435
+#define stry(252,10470
+#undef met276,11412
+#undef jac277,11423
+#undef forcing278,11434
+#undef tau279,11449
+#undef strx280,11460
+#undef stry281,11472
 
 rhs4th3fortc.C,3716
 void rhs4th3fort_ci(17,289
@@ -1842,129 +1825,129 @@ void rhs4th3fort_ci(17,289
 #undef bope1083,57155
 #undef ghcof1084,57167
 void rhs4th3fortsgstr_ci(1088,57257
-#define mu(1137,59367
-#define la(1138,59425
-#define u(1140,59512
-#define lu(1141,59585
-#define strx(1142,59660
-#define stry(1143,59696
-#define strz(1144,59732
-#define acof(1145,59768
-#define bope(1146,59835
-#define ghcof(1147,59882
-#define ltu(1148,59914
-#define NO_COLLAPSE 1253,63311
-#undef mu2324,120006
-#undef la2325,120016
-#undef u2326,120026
-#undef lu2327,120035
-#undef strx2328,120045
-#undef stry2329,120057
-#undef strz2330,120069
-#undef acof2331,120081
-#undef bope2332,120093
-#undef ghcof2333,120105
-void rhserrfort_ci(2337,120195
-#define fo(2342,120504
-#define u2(2343,120579
-#undef fo2389,122090
-#undef u22390,122100
-void rhouttlumf_ci(2394,122187
-#define fo(2400,122565
-#define uacc(2401,122640
-#define lu(2402,122719
-#define rho(2403,122794
-#undef fo2452,124479
-#undef uacc2453,124489
-#undef lu2454,124501
-#undef rho2455,124511
-void predfort_ci(2459,124599
-void corrfort_ci(2504,126585
-void dpdmtfort_ci(2527,127552
-void dpdmtfortatt_ci(2551,128633
-void satt_ci(2637,131456
-void solveattfreeac_ci(2656,132140
-#define alpha(2660,132379
-#define up(2661,132460
-#undef alpha2690,133389
-#undef up2691,133402
-void solveattfreec_ci(2695,133489
-#define u(2703,133940
-#define met(2704,134013
-#define mu(2705,134090
-#define la(2706,134148
-#define muve(2707,134206
-#define lambdave(2708,134254
-#define sgstrx(2709,134306
-#define sgstry(2710,134343
-#define bforcerhs(2711,134380
-#undef u2758,136259
-#undef mu2759,136268
-#undef la2760,136278
-#undef met2761,136288
-#undef muve2762,136299
-#undef lambdave2763,136311
-#undef sgstrx2764,136327
-#undef sgstry2765,136341
-#undef bforcerhs2766,136355
-void addbstresswresc_ci(2770,136449
-#define u(2781,137129
-#define um(2782,137202
-#define met(2783,137277
-#define alphap(2784,137354
-#define alpham(2786,137441
-#define muve(2788,137528
-#define lave(2789,137590
-#define muvebnd(2790,137652
-#define lambdavebnd(2791,137706
-#define sgstrx(2792,137768
-#define sgstry(2793,137805
-#define bforcerhs(2796,137972
-#define memforce(2797,138048
-#undef u2970,145659
-#undef um2971,145668
-#undef met2972,145678
-#undef alphap2973,145689
-#undef alpham2974,145703
-#undef muve2975,145717
-#undef lave2976,145729
-#undef muvebnd2977,145741
-#undef lambdavebnd2978,145756
-#undef sgstrx2979,145775
-#undef sgstry2980,145789
-#undef bforcerhs2981,145803
-#undef memforce2982,145820
-void ve_bndry_stress_curvi_ci(2986,145913
-#define alphap(2994,146376
-#define muve(2996,146463
-#define lave(2997,146525
-#define met(2998,146587
-#define sgstrx(2999,146664
-#define sgstry(3000,146701
-#define bforcerhs(3003,146868
-#define NO_COLLAPSE 3052,148449
-#undef alphap3183,154697
-#undef muve3184,154711
-#undef lave3185,154723
-#undef met3186,154735
-#undef sgstrx3187,154746
-#undef sgstry3188,154760
-#undef bforcerhs3189,154774
-void att_free_curvi_ci(3192,154866
-#define u(3199,155268
-#define mu(3200,155341
-#define la(3201,155399
-#define met(3202,155461
-#define sgstrx(3203,155538
-#define sgstry(3204,155575
-#define bforcerhs(3205,155612
-#undef u3370,162966
-#undef mu3371,162975
-#undef la3372,162985
-#undef met3373,162995
-#undef sgstrx3374,163006
-#undef sgstry3375,163020
-#undef bforcerhs3376,163034
+#define mu(1107,58247
+#define la(1108,58305
+#define u(1110,58392
+#define lu(1111,58465
+#define strx(1112,58540
+#define stry(1113,58576
+#define strz(1114,58612
+#define acof(1115,58648
+#define bope(1116,58715
+#define ghcof(1117,58762
+#define ltu(1118,58794
+#define NO_COLLAPSE 1214,61837
+#undef mu2216,115359
+#undef la2217,115369
+#undef u2218,115379
+#undef lu2219,115388
+#undef strx2220,115398
+#undef stry2221,115410
+#undef strz2222,115422
+#undef acof2223,115434
+#undef bope2224,115446
+#undef ghcof2225,115458
+void rhserrfort_ci(2229,115548
+#define fo(2234,115857
+#define u2(2235,115932
+#undef fo2281,117443
+#undef u22282,117453
+void rhouttlumf_ci(2286,117540
+#define fo(2292,117918
+#define uacc(2293,117993
+#define lu(2294,118072
+#define rho(2295,118147
+#undef fo2344,119832
+#undef uacc2345,119842
+#undef lu2346,119854
+#undef rho2347,119864
+void predfort_ci(2351,119952
+void corrfort_ci(2396,121938
+void dpdmtfort_ci(2419,122905
+void dpdmtfortatt_ci(2443,123986
+void satt_ci(2529,126809
+void solveattfreeac_ci(2548,127493
+#define alpha(2552,127732
+#define up(2553,127813
+#undef alpha2582,128742
+#undef up2583,128755
+void solveattfreec_ci(2587,128842
+#define u(2595,129293
+#define met(2596,129366
+#define mu(2597,129443
+#define la(2598,129501
+#define muve(2599,129559
+#define lambdave(2600,129607
+#define sgstrx(2601,129659
+#define sgstry(2602,129696
+#define bforcerhs(2603,129733
+#undef u2650,131612
+#undef mu2651,131621
+#undef la2652,131631
+#undef met2653,131641
+#undef muve2654,131652
+#undef lambdave2655,131664
+#undef sgstrx2656,131680
+#undef sgstry2657,131694
+#undef bforcerhs2658,131708
+void addbstresswresc_ci(2662,131802
+#define u(2673,132482
+#define um(2674,132555
+#define met(2675,132630
+#define alphap(2676,132707
+#define alpham(2678,132794
+#define muve(2680,132881
+#define lave(2681,132943
+#define muvebnd(2682,133005
+#define lambdavebnd(2683,133059
+#define sgstrx(2684,133121
+#define sgstry(2685,133158
+#define bforcerhs(2688,133325
+#define memforce(2689,133401
+#undef u2862,141012
+#undef um2863,141021
+#undef met2864,141031
+#undef alphap2865,141042
+#undef alpham2866,141056
+#undef muve2867,141070
+#undef lave2868,141082
+#undef muvebnd2869,141094
+#undef lambdavebnd2870,141109
+#undef sgstrx2871,141128
+#undef sgstry2872,141142
+#undef bforcerhs2873,141156
+#undef memforce2874,141173
+void ve_bndry_stress_curvi_ci(2878,141266
+#define alphap(2886,141729
+#define muve(2888,141816
+#define lave(2889,141878
+#define met(2890,141940
+#define sgstrx(2891,142017
+#define sgstry(2892,142054
+#define bforcerhs(2895,142221
+#define NO_COLLAPSE 2930,143206
+#undef alphap3061,149451
+#undef muve3062,149465
+#undef lave3063,149477
+#undef met3064,149489
+#undef sgstrx3065,149500
+#undef sgstry3066,149514
+#undef bforcerhs3067,149528
+void att_free_curvi_ci(3070,149620
+#define u(3077,150022
+#define mu(3078,150095
+#define la(3079,150153
+#define met(3080,150215
+#define sgstrx(3081,150292
+#define sgstry(3082,150329
+#define bforcerhs(3083,150366
+#undef u3223,156773
+#undef mu3224,156782
+#undef la3225,156792
+#undef met3226,156802
+#undef sgstrx3227,156813
+#undef sgstry3228,156827
+#undef bforcerhs3229,156841
 
 rhs4th3windc.C,237
 void rhs4th3wind(14,261
@@ -2105,60 +2088,60 @@ void EW::solerr3c_ci(103,4262
 void EW::meterr4c_ci(158,6669
 void EW::meterr4c_ci(191,8092
 
-solve.C,1878
+solve.C,1877
 #define SQR(55,1981
 void EW::solve(58,2080
-void EW::cycleSolutionArrays(1411,51708
-void EW::enforceBC(1431,52536
-#define SW4_RAJA_CURVIMR1553,58274
-void EW::enforceBCanisotropic(1633,61530
-void EW::update_curvilinear_cartesian_interface_raja(1712,65158
-void EW::update_curvilinear_cartesian_interface(1771,67685
-void EW::enforceIC(1801,68943
-void EW::enforceIC2(1976,77255
-void EW::check_corrector(2135,84322
-void EW::check_displacement_continuity(2181,86803
-void EW::dirichlet_hom_ic(2253,89704
-void EW::dirichlet_twilight_ic(2369,93847
-void EW::dirichlet_LRic(2393,94883
-void EW::dirichlet_LRstress(2524,100690
-void EW::gridref_initial_guess(2858,116445
-void EW::compute_preliminary_corrector(2923,118337
-void EW::compute_preliminary_predictor(3146,128440
-void EW::compute_icstresses(3330,136803
-#define str_x(3339,137140
-#define str_y(3340,137179
-#undef str_x3423,140269
-#undef str_y3424,140282
-void EW::add_ve_stresses(3428,140372
-#define str_x(3438,140716
-#define str_y(3439,140755
-#undef str_x3511,143826
-#undef str_y3512,143839
-void EW::cartesian_bc_forcing_olde(3516,143936
-void EW::test_sources(4208,174252
-void EW::testSourceDiscretization(4298,177347
-void EW::extractRecordData(4377,180315
-void EW::addSuperGridDamping(4661,193500
-void EW::simpleAttenuation(4741,197320
-void EW::enforceBCfreeAtt2(4774,198226
-void EW::CurviCartIC(5170,218584
-void EW::compute_icstresses2(5409,230113
-#define str_x(5418,230513
-#define str_y(5419,230552
-#undef str_x5469,232311
-#undef str_y5470,232324
-void EW::compute_icstresses_curv(5474,232414
-#define str_x(5484,232897
-#define str_y(5485,232936
-#undef str_x5594,237261
-#undef str_y5595,237274
-void EW::compute_icstresses_cpu(5598,237363
-#define str_x(5607,237745
-#define str_y(5608,237784
-#undef str_x5656,239551
-#undef str_y5657,239564
-void EW::cartesian_bc_forcing(5659,239579
+void EW::cycleSolutionArrays(1411,51700
+void EW::enforceBC(1431,52528
+#define SW4_RAJA_CURVIMR1553,58266
+void EW::enforceBCanisotropic(1634,61594
+void EW::update_curvilinear_cartesian_interface(1713,65222
+void EW::update_curvilinear_cartesian_interface_org(1773,67777
+void EW::enforceIC(1804,69060
+void EW::enforceIC2(1979,77372
+void EW::check_corrector(2138,84439
+void EW::check_displacement_continuity(2184,86920
+void EW::dirichlet_hom_ic(2256,89821
+void EW::dirichlet_twilight_ic(2348,93183
+void EW::dirichlet_LRic(2372,94219
+void EW::dirichlet_LRstress(2503,100026
+void EW::gridref_initial_guess(2837,115781
+void EW::compute_preliminary_corrector(2882,116998
+void EW::compute_preliminary_predictor(3105,127101
+void EW::compute_icstresses(3289,135464
+#define str_x(3298,135801
+#define str_y(3299,135840
+#undef str_x3382,138930
+#undef str_y3383,138943
+void EW::add_ve_stresses(3387,139033
+#define str_x(3397,139377
+#define str_y(3398,139416
+#undef str_x3455,141847
+#undef str_y3456,141860
+void EW::cartesian_bc_forcing_olde(3460,141957
+void EW::test_sources(4152,172273
+void EW::testSourceDiscretization(4242,175368
+void EW::extractRecordData(4321,178336
+void EW::addSuperGridDamping(4605,191521
+void EW::simpleAttenuation(4685,195341
+void EW::enforceBCfreeAtt2(4718,196247
+void EW::CurviCartIC(5090,215774
+void EW::compute_icstresses2(5349,227985
+#define str_x(5359,228412
+#define str_y(5360,228451
+#undef str_x5417,230697
+#undef str_y5418,230710
+void EW::compute_icstresses_curv(5422,230800
+#define str_x(5433,231304
+#define str_y(5434,231343
+#undef str_x5543,235668
+#undef str_y5544,235681
+void EW::compute_icstresses_cpu(5547,235770
+#define str_x(5558,236188
+#define str_y(5559,236227
+#undef str_x5607,237994
+#undef str_y5608,238007
+void EW::cartesian_bc_forcing(5610,238022
 
 testsrcc.C,26
 void EW::testsrc_ci(3,33
@@ -2347,22 +2330,22 @@ void EW::forcingttattfortc_ci(2275,90837
 void EW::addmemvarforcingc_ci(2440,97180
 void EW::memvarforcesurfc_ci(2572,102238
 
-twilightsgfortc.C,318
+twilightsgfortc.C,317
 void EW::forcingfortsg_ci(8,195
 void EW::forcingttfortsg_ci(200,7390
-void EW::forcingfortcsg_ci(438,16398
-void EW::forcingttfortcsg_ci(659,24774
-void EW::forcingfortsgatt_ci(893,33704
-void EW::forcingttfortsgatt_ci(1074,40700
-void EW::forcingfortsgattc_ci(1329,50552
-void EW::forcingttfortsgattc_ci(1537,58556
+void EW::forcingfortcsg_ci(407,15153
+void EW::forcingttfortcsg_ci(596,22283
+void EW::forcingfortsgatt_ci(798,29967
+void EW::forcingttfortsgatt_ci(979,36963
+void EW::forcingfortsgattc_ci(1203,45570
+void EW::forcingttfortsgattc_ci(1379,52328
 
-updatememvarc.C,169
+updatememvarc.C,168
 void memvar_pred_fort_ci(41,1505
-#define NO_COLLAPSE 113,4191
-void memvar_corr_fort_ci(155,5553
-#define NO_COLLAPSE 219,7969
-void memvar_corr_fort_wind_ci(268,9780
+#define NO_COLLAPSE 94,3418
+void memvar_corr_fort_ci(117,4066
+#define NO_COLLAPSE 168,6044
+void memvar_corr_fort_wind_ci(196,6984
 
 velsumc.C,25
 void EW::velsum_ci(4,54
@@ -2468,7 +2451,7 @@ class CheckPoint 15,219
   std::vector<int*> mGlobalDims;CheckPoint::mGlobalDims81,2593
   std::vector<bool> m_ihavearray;CheckPoint::m_ihavearray83,2726
 
-CurvilinearInterface2.h,6165
+CurvilinearInterface2.h,6293
 #define SW4_CURVILINEARINTERFACE22,34
 class CurvilinearInterface2 16,237
   EW* m_ew;CurvilinearInterface2::m_ew17,267
@@ -2534,23 +2517,25 @@ class CurvilinearInterface2 16,237
   float_sw4* x;CurvilinearInterface2::x50,1185
   std::vector<int> subbatchsize,CurvilinearInterface2::subbatchsize51,1201
   std::vector<int> subbatchsize, subbatchoffset;CurvilinearInterface2::subbatchoffset51,1201
-  float_sw4 *m_sbop,CurvilinearInterface2::m_sbop55,1283
-  float_sw4 *m_sbop, *m_acof,CurvilinearInterface2::m_acof55,1283
-  float_sw4 *m_sbop, *m_acof, *m_bop,CurvilinearInterface2::m_bop55,1283
-  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope,CurvilinearInterface2::m_bope55,1283
-  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope, *m_ghcof;CurvilinearInterface2::m_ghcof55,1283
-  float_sw4 *m_acof_no_gp,CurvilinearInterface2::m_acof_no_gp56,1340
-  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp,CurvilinearInterface2::m_ghcof_no_gp56,1340
-  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp, *m_sbop_no_gp;CurvilinearInterface2::m_sbop_no_gp56,1340
-  float_sw4 m_acof[CurvilinearInterface2::m_acof58,1404
-  float_sw4 m_acof[384], m_bope[CurvilinearInterface2::m_bope58,1404
-  float_sw4 m_acof[384], m_bope[48], m_ghcof[CurvilinearInterface2::m_ghcof58,1404
-  float_sw4 m_acof[384], m_bope[48], m_ghcof[6], m_acof_no_gp[CurvilinearInterface2::m_acof_no_gp58,1404
-      m_ghcof_no_gp[CurvilinearInterface2::m_ghcof_no_gp59,1472
-  float_sw4 m_sbop[CurvilinearInterface2::m_sbop60,1496
-  float_sw4 m_sbop[6], m_sbop_no_gp[CurvilinearInterface2::m_sbop_no_gp60,1496
-  float_sw4 m_sbop[6], m_sbop_no_gp[6], m_bop[CurvilinearInterface2::m_bop60,1496
-  CurvilinearInterface2(CurvilinearInterface2::CurvilinearInterface291,2778
+  float_sw4* m_mass_block_gpu;CurvilinearInterface2::m_mass_block_gpu55,1284
+  float_sw4* x;CurvilinearInterface2::x56,1315
+  float_sw4 *m_sbop,CurvilinearInterface2::m_sbop60,1364
+  float_sw4 *m_sbop, *m_acof,CurvilinearInterface2::m_acof60,1364
+  float_sw4 *m_sbop, *m_acof, *m_bop,CurvilinearInterface2::m_bop60,1364
+  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope,CurvilinearInterface2::m_bope60,1364
+  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope, *m_ghcof;CurvilinearInterface2::m_ghcof60,1364
+  float_sw4 *m_acof_no_gp,CurvilinearInterface2::m_acof_no_gp61,1421
+  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp,CurvilinearInterface2::m_ghcof_no_gp61,1421
+  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp, *m_sbop_no_gp;CurvilinearInterface2::m_sbop_no_gp61,1421
+  float_sw4 m_acof[CurvilinearInterface2::m_acof63,1485
+  float_sw4 m_acof[384], m_bope[CurvilinearInterface2::m_bope63,1485
+  float_sw4 m_acof[384], m_bope[48], m_ghcof[CurvilinearInterface2::m_ghcof63,1485
+  float_sw4 m_acof[384], m_bope[48], m_ghcof[6], m_acof_no_gp[CurvilinearInterface2::m_acof_no_gp63,1485
+      m_ghcof_no_gp[CurvilinearInterface2::m_ghcof_no_gp64,1553
+  float_sw4 m_sbop[CurvilinearInterface2::m_sbop65,1577
+  float_sw4 m_sbop[6], m_sbop_no_gp[CurvilinearInterface2::m_sbop_no_gp65,1577
+  float_sw4 m_sbop[6], m_sbop_no_gp[6], m_bop[CurvilinearInterface2::m_bop65,1577
+  CurvilinearInterface2(CurvilinearInterface2::CurvilinearInterface295,2778
 
 DataPatches.h,856
 #define DATAPATCHES_H34,1401
@@ -2619,7 +2604,7 @@ class ESSI3DHDF5 44,1528
   hid_t m_vel_dataset_id[ESSI3DHDF5::m_vel_dataset_id88,2786
   hid_t m_vel_dataspace_id[ESSI3DHDF5::m_vel_dataspace_id89,2815
 
-EW.h,24926
+EW.h,24918
 #define EW_H35,1404
 using namespace std;76,2276
 class EW 78,2298
@@ -2632,409 +2617,409 @@ class EW 78,2298
   void setDebugIO(EW::setDebugIO208,8573
   void set_testing_mode(EW::set_testing_mode219,9022
   bool get_testing_mode(EW::get_testing_mode220,9089
-  const string& getOutputPath(EW::getOutputPath383,17164
-  const string& getObservationPath(EW::getObservationPath387,17376
-  const string& getName(EW::getName388,17451
-  boundaryConditionType getLocalBcType(EW::getLocalBcType391,17599
-  void add_mtrl_block(EW::add_mtrl_block395,17693
-  void addMaterialProperty(EW::addMaterialProperty406,18097
-  bool usingSupergrid(EW::usingSupergrid425,18866
-  bool topographyExists(EW::topographyExists564,24525
-  bool usingAttenuation(EW::usingAttenuation565,24584
-  enum InputMode EW::InputMode651,28069
-    UNDEFINED,EW::InputMode::UNDEFINED652,28088
-    Efile,EW::InputMode::Efile653,28103
-    GaussianHill,EW::InputMode::GaussianHill654,28114
-    GridFile,EW::InputMode::GridFile655,28132
-    CartesianGrid,EW::InputMode::CartesianGrid656,28146
-    TopoImage,EW::InputMode::TopoImage657,28165
-    Rfile,EW::InputMode::Rfile658,28180
-    SfileEW::InputMode::Sfile659,28191
-  int getNumberOfCartesianGrids(EW::getNumberOfCartesianGrids663,28277
-  int getNumberOfGrids(EW::getNumberOfGrids664,28348
-  int getNumberOfGhostPoints(EW::getNumberOfGhostPoints665,28401
-  int getNumberOfParallelPaddingPoints(EW::getNumberOfParallelPaddingPoints666,28460
-  float_sw4 getLonOrigin(EW::getLonOrigin667,28525
-  float_sw4 getLatOrigin(EW::getLatOrigin668,28576
-  float_sw4 getGridAzimuth(EW::getGridAzimuth669,28627
-  float_sw4 getMetersPerDegree(EW::getMetersPerDegree670,28676
-  bool usingParallelFS(EW::usingParallelFS671,28739
-  int getNumberOfWritersPFS(EW::getNumberOfWritersPFS672,28783
-  float_sw4 getTimeStep(EW::getTimeStep673,28837
-  int getNumberOfTimeSteps(EW::getNumberOfTimeSteps675,28956
-  int getNumberOfMechanisms(EW::getNumberOfMechanisms678,29049
-  string getPath(EW::getPath727,31982
-  const float_sw4 NO_TOPO;EW::NO_TOPO1512,80874
-  int mNumberOfGrids,EW::mNumberOfGrids1518,81009
-  int mNumberOfGrids, mNumberOfCartesianGrids;EW::mNumberOfCartesianGrids1518,81009
-  vector<float_sw4> mGridSize;EW::mGridSize1522,81147
-  vector<int> m_iStart,EW::m_iStart1525,81260
-  vector<int> m_iStart, m_iEnd,EW::m_iEnd1525,81260
-  vector<int> m_iStart, m_iEnd, m_jStart,EW::m_jStart1525,81260
-  vector<int> m_iStart, m_iEnd, m_jStart, m_jEnd,EW::m_jEnd1525,81260
-  vector<int> m_iStart, m_iEnd, m_jStart, m_jEnd, m_kStart,EW::m_kStart1525,81260
-  vector<int> m_iStart, m_iEnd, m_jStart, m_jEnd, m_kStart, m_kEnd;EW::m_kEnd1525,81260
-  vector<int> m_iStartAct,EW::m_iStartAct1529,81434
-  vector<int> m_iStartAct, m_iEndAct,EW::m_iEndAct1529,81434
-  vector<int> m_iStartAct, m_iEndAct, m_jStartAct,EW::m_jStartAct1529,81434
-  vector<int> m_iStartAct, m_iEndAct, m_jStartAct, m_jEndAct,EW::m_jEndAct1529,81434
-  vector<int> m_iStartAct, m_iEndAct, m_jStartAct, m_jEndAct, m_kStartAct,EW::m_kStartAct1529,81434
-      m_kEndAct;EW::m_kEndAct1530,81509
-  vector<int> m_iStartActGlobal,EW::m_iStartActGlobal1531,81526
-  vector<int> m_iStartActGlobal, m_iEndActGlobal,EW::m_iEndActGlobal1531,81526
-  vector<int> m_iStartActGlobal, m_iEndActGlobal, m_jStartActGlobal,EW::m_jStartActGlobal1531,81526
-      m_jEndActGlobal;EW::m_jEndActGlobal1532,81595
-  vector<int> m_kStartActGlobal,EW::m_kStartActGlobal1533,81618
-  vector<int> m_kStartActGlobal, m_kEndActGlobal;EW::m_kEndActGlobal1533,81618
-  vector<int> m_global_nx,EW::m_global_nx1536,81750
-  vector<int> m_global_nx, m_global_ny,EW::m_global_ny1536,81750
-  vector<int> m_global_nx, m_global_ny, m_global_nz;EW::m_global_nz1536,81750
-  vector<int> m_iStartInt,EW::m_iStartInt1540,81923
-  vector<int> m_iStartInt, m_iEndInt,EW::m_iEndInt1540,81923
-  vector<int> m_iStartInt, m_iEndInt, m_jStartInt,EW::m_jStartInt1540,81923
-  vector<int> m_iStartInt, m_iEndInt, m_jStartInt, m_jEndInt,EW::m_jEndInt1540,81923
-  vector<int> m_iStartInt, m_iEndInt, m_jStartInt, m_jEndInt, m_kStartInt,EW::m_kStartInt1540,81923
-      m_kEndInt;EW::m_kEndInt1541,81998
-  int m_paddingCells[EW::m_paddingCells1545,82169
-  vector<float_sw4> m_zmin;EW::m_zmin1549,82350
-  vector<Sarray> mX,EW::mX1553,82517
-  vector<Sarray> mX, mY,EW::mY1553,82517
-  vector<Sarray> mX, mY, mZ;EW::mZ1553,82517
-  vector<Sarray> mJ;EW::mJ1554,82596
-  vector<Sarray> mMetric;EW::mMetric1556,82726
-  GridGenerator* m_gridGenerator;EW::m_gridGenerator1558,82753
-  bool m_prefilter_sources,EW::m_prefilter_sources1561,82811
-  bool m_prefilter_sources, m_filter_observations;EW::m_filter_observations1561,82811
-  Filter* m_filter_ptr;EW::m_filter_ptr1564,82910
-  Filter* m_filterobs_ptr;EW::m_filterobs_ptr1566,82963
-  int m_opttest;EW::m_opttest1569,83086
-  Sarray mTopo,EW::mTopo1577,83511
-  Sarray mTopo, mTopoGridExt;EW::mTopoGridExt1577,83511
-  vector<Sarray> m_curviInterface;EW::m_curviInterface1581,83647
-  vector<MaterialProperty*> m_materials;EW::m_materials1584,83759
-  MPI_Comm m_cartesian_communicator;EW::m_cartesian_communicator1585,83800
-  ofstream msgStream;EW::msgStream1587,83838
-  vector<Sarray> mMu;EW::mMu1590,83924
-  vector<Sarray> mLambda;EW::mLambda1591,83946
-  vector<Sarray> mRho;EW::mRho1592,83972
-  vector<Sarray*> mMuVE,EW::mMuVE1593,83995
-  vector<Sarray*> mMuVE, mLambdaVE;EW::mLambdaVE1593,83995
-  vector<Sarray> mC;EW::mC1594,84056
-  Sarray mCcurv;EW::mCcurv1595,84128
-  vector<Sarray> m_Morf,EW::m_Morf1598,84257
-  vector<Sarray> m_Morf, m_Mlrf,EW::m_Mlrf1598,84257
-  vector<Sarray> m_Morf, m_Mlrf, m_Mufs,EW::m_Mufs1598,84257
-  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs,EW::m_Mlfs1598,84257
-  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc,EW::m_Morc1598,84257
-  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc,EW::m_Mlrc1598,84257
-  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs,EW::m_Mucs1598,84257
-  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs, m_Mlcs;EW::m_Mlcs1598,84257
-  vector<float_sw4> m_curviRefLev;EW::m_curviRefLev1600,84339
-  int m_nevent;EW::m_nevent1607,84559
-  int m_nevents_specified;EW::m_nevents_specified1609,84666
-  map<EW::map1610,84733
-  map<string, int> m_event_names;EW::m_event_names1610,84733
-  vector<float_sw4> m_epi_lat,EW::m_epi_lat1613,84783
-  vector<float_sw4> m_epi_lat, m_epi_lon,EW::m_epi_lon1613,84783
-  vector<float_sw4> m_epi_lat, m_epi_lon, m_epi_depth,EW::m_epi_depth1613,84783
-  vector<float_sw4> m_epi_lat, m_epi_lon, m_epi_depth, m_epi_t0;EW::m_epi_t01613,84783
-  GeographicProjection* m_geoproj;EW::m_geoproj1617,84909
-  ForcingTwilight* m_twilight_forcing;EW::m_twilight_forcing1619,84945
-  TestPointSource* m_point_source_test;EW::m_point_source_test1620,84984
-  bool m_moment_test;EW::m_moment_test1621,85024
-  TestEnergy* m_energy_test;EW::m_energy_test1622,85046
-  TestLamb* m_lamb_test;EW::m_lamb_test1623,85075
-  TestRayleighWave* m_rayleigh_wave_test;EW::m_rayleigh_wave_test1624,85100
-  vector<MaterialData*> m_mtrlblocks;EW::m_mtrlblocks1626,85143
-  vector<AnisotropicMaterial*> m_anisotropic_mtrlblocks;EW::m_anisotropic_mtrlblocks1627,85181
-  boundaryConditionType mbcGlobalType[EW::mbcGlobalType1631,85341
-      m_bcType;EW::m_bcType1634,85523
-  float_sw4 mTstart;EW::mTstart1636,85662
-  float_sw4 mDt;EW::mDt1637,85683
-  EtreeFile* mEtreeFile;EW::mEtreeFile1638,85700
-  bool m_doubly_periodic;EW::m_doubly_periodic1640,85726
-  int m_proc_array[EW::m_proc_array1642,85753
-  bool mbcsSet;EW::mbcsSet1644,85777
-  bool m_analytical_topo,EW::m_analytical_topo1648,85910
-  bool m_analytical_topo, m_use_analytical_metric;EW::m_use_analytical_metric1648,85910
-  float_sw4 m_GaussianAmp,EW::m_GaussianAmp1649,85961
-  float_sw4 m_GaussianAmp, m_GaussianLx,EW::m_GaussianLx1649,85961
-  float_sw4 m_GaussianAmp, m_GaussianLx, m_GaussianLy,EW::m_GaussianLy1649,85961
-  float_sw4 m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc,EW::m_GaussianXc1649,85961
-      m_GaussianYc;EW::m_GaussianYc1650,86030
-  bool m_useVelocityThresholds;EW::m_useVelocityThresholds1659,86346
-  float_sw4 m_vpMin,EW::m_vpMin1660,86378
-  float_sw4 m_vpMin, m_vsMin;EW::m_vsMin1660,86378
-  int m_grid_interpolation_order;EW::m_grid_interpolation_order1663,86472
-  float_sw4 m_zetaBreak;EW::m_zetaBreak1664,86506
-  float_sw4 m_minJacobian,EW::m_minJacobian1667,86568
-  float_sw4 m_minJacobian, m_maxJacobian;EW::m_maxJacobian1667,86568
-  string m_scenario;EW::m_scenario1669,86611
-  float_sw4 m_frequency_limit;EW::m_frequency_limit1672,86661
-  bool m_limit_frequency;EW::m_limit_frequency1673,86692
-  int m_ppw;EW::m_ppw1674,86718
-  bool m_pfs;EW::m_pfs1677,86755
-  int m_nwriters;EW::m_nwriters1678,86769
-  bool m_use_supergrid;EW::m_use_supergrid1681,86803
-  int m_sg_gp_thickness;EW::m_sg_gp_thickness1682,86827
-  int m_sg_damping_order;EW::m_sg_damping_order1683,86878
-  float_sw4 m_supergrid_damping_coefficient;EW::m_supergrid_damping_coefficient1684,86942
-  float_sw4 m_supergrid_width;EW::m_supergrid_width1685,86987
-  bool m_use_sg_width;EW::m_use_sg_width1686,87046
-  vector<SuperGrid> m_supergrid_taper_x,EW::m_supergrid_taper_x1687,87105
-  vector<SuperGrid> m_supergrid_taper_x, m_supergrid_taper_y;EW::m_supergrid_taper_y1687,87105
-  vector<SuperGrid> m_supergrid_taper_z;EW::m_supergrid_taper_z1688,87167
-  vector<string> mPath,EW::mPath1691,87249
-  vector<string> mPath, mObsPath;EW::mObsPath1691,87249
-  string mTempPath;EW::mTempPath1692,87295
-  vector<int*> m_NumberOfBCPoints;EW::m_NumberOfBCPoints1695,87360
-  vector<int*> m_BndryWindow;EW::m_BndryWindow1698,87469
-  bool m_use_attenuation,EW::m_use_attenuation1701,87570
-  bool m_use_attenuation, m_att_use_max_frequency;EW::m_att_use_max_frequency1701,87570
-  int m_number_mechanisms;EW::m_number_mechanisms1702,87621
-  float_sw4 m_velo_omega,EW::m_velo_omega1703,87648
-  float_sw4 m_velo_omega, m_min_omega,EW::m_min_omega1703,87648
-  float_sw4 m_velo_omega, m_min_omega, m_max_omega,EW::m_max_omega1703,87648
-  float_sw4 m_velo_omega, m_min_omega, m_max_omega, m_att_max_frequency,EW::m_att_max_frequency1703,87648
-      m_att_ppw;EW::m_att_ppw1704,87721
-  float_sw4 m_qmultiplier;EW::m_qmultiplier1705,87738
-  vector<Sarray> mQp,EW::mQp1707,87766
-  vector<Sarray> mQp, mQs;EW::mQs1707,87766
-  vector<float_sw4> mOmegaVE;EW::mOmegaVE1710,87860
-  bool m_anisotropic;EW::m_anisotropic1713,87917
-  bool m_randomize;EW::m_randomize1716,87975
-  int m_random_seed[EW::m_random_seed1717,87995
-  float_sw4 m_random_dist,EW::m_random_dist1718,88019
-  float_sw4 m_random_dist, m_random_distz,EW::m_random_distz1718,88019
-  float_sw4 m_random_dist, m_random_distz, m_random_amp,EW::m_random_amp1718,88019
-  float_sw4 m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad,EW::m_random_amp_grad1718,88019
-      m_random_sdlimit;EW::m_random_sdlimit1719,88095
-  vector<RandomizedMaterial*> m_random_blocks;EW::m_random_blocks1720,88119
-  float_sw4 m_global_xmax,EW::m_global_xmax1736,88754
-  float_sw4 m_global_xmax, m_global_ymax,EW::m_global_ymax1736,88754
-  float_sw4 m_global_xmax, m_global_ymax, m_global_zmin,EW::m_global_zmin1736,88754
-  float_sw4 m_global_xmax, m_global_ymax, m_global_zmin, m_global_zmax;EW::m_global_zmax1736,88754
-  int mMaterialExtrapolate;EW::mMaterialExtrapolate1740,88929
-  int m_nx_base,EW::m_nx_base1743,89002
-  int m_nx_base, m_ny_base,EW::m_ny_base1743,89002
-  int m_nx_base, m_ny_base, m_nz_base;EW::m_nz_base1743,89002
-  float_sw4 m_h_base;EW::m_h_base1744,89041
-  vector<bool> m_iscurvilinear;EW::m_iscurvilinear1745,89063
-  vector<float_sw4> m_refinementBoundaries;EW::m_refinementBoundaries1746,89095
-  InputMode m_topoInputStyle;EW::m_topoInputStyle1747,89139
-  string m_topoFileName,EW::m_topoFileName1748,89169
-  string m_topoFileName, m_topoExtFileName,EW::m_topoExtFileName1748,89169
-  string m_topoFileName, m_topoExtFileName, m_QueryType;EW::m_QueryType1748,89169
-  bool mTopoImageFound;EW::mTopoImageFound1749,89226
-  float_sw4 m_topo_zmax;EW::m_topo_zmax1750,89250
-  int m_maxIter;EW::m_maxIter1751,89275
-  float_sw4 m_EFileResolution;EW::m_EFileResolution1752,89292
-  int m_myRank,EW::m_myRank1757,89433
-  int m_myRank, m_nProcs;EW::m_nProcs1757,89433
-  string mName;EW::mName1759,89460
-  string mGMTFileName;EW::mGMTFileName1761,89502
-  bool mWriteGMTOutput;EW::mWriteGMTOutput1763,89526
-  int mPlotFrequency;EW::mPlotFrequency1764,89550
-  int mNumFiles;EW::mNumFiles1765,89572
-  int mVerbose;EW::mVerbose1766,89589
-  bool mQuiet;EW::mQuiet1767,89605
-  bool mDebugIO;EW::mDebugIO1769,89621
-  bool mHomogeneous;EW::mHomogeneous1770,89638
-  bool mCompareSACFiles;EW::mCompareSACFiles1773,89703
-  float mSACFileErrorTolerance;EW::mSACFileErrorTolerance1774,89728
-  vector<Image*> mImageFiles;EW::mImageFiles1777,89782
-  vector<Image3D*> mImage3DFiles;EW::mImage3DFiles1778,89812
-  vector<ESSI3D*> mESSI3DFiles;EW::mESSI3DFiles1779,89846
-  bool m_iotiming;EW::m_iotiming1780,89878
-  vector<bool> mTimeIsSet;EW::mTimeIsSet1783,89913
-  vector<float_sw4> mTmax;EW::mTmax1784,89940
-  vector<int> mNumberOfTimeSteps;EW::mNumberOfTimeSteps1786,89968
-  int m_update_boundary_function;EW::m_update_boundary_function1789,90019
-  int mOrder;EW::mOrder1794,90124
-  float_sw4 mCFL,EW::mCFL1798,90313
-  float_sw4 mCFL, mCFLmax;EW::mCFLmax1798,90313
-  vector<int*> m_onesided;EW::m_onesided1801,90386
-  float_sw4 m_curlcoeff,EW::m_curlcoeff1802,90413
-  float_sw4 m_curlcoeff, m_d4coeff,EW::m_d4coeff1802,90413
-  float_sw4 m_curlcoeff, m_d4coeff, m_d4_cfl;EW::m_d4_cfl1802,90413
-  vector<float_sw4*> m_sg_dc_x,EW::m_sg_dc_x1805,90531
-  vector<float_sw4*> m_sg_dc_x, m_sg_dc_y,EW::m_sg_dc_y1805,90531
-  vector<float_sw4*> m_sg_dc_x, m_sg_dc_y, m_sg_dc_z;EW::m_sg_dc_z1805,90531
-  vector<float_sw4*> m_sg_str_x,EW::m_sg_str_x1806,90585
-  vector<float_sw4*> m_sg_str_x, m_sg_str_y,EW::m_sg_str_y1806,90585
-  vector<float_sw4*> m_sg_str_x, m_sg_str_y, m_sg_str_z;EW::m_sg_str_z1806,90585
-  vector<float_sw4*> m_sg_corner_x,EW::m_sg_corner_x1807,90642
-  vector<float_sw4*> m_sg_corner_x, m_sg_corner_y,EW::m_sg_corner_y1807,90642
-  vector<float_sw4*> m_sg_corner_x, m_sg_corner_y, m_sg_corner_z;EW::m_sg_corner_z1807,90642
-  bool m_energy_log,EW::m_energy_log1819,91027
-  bool m_energy_log, m_energy_print;EW::m_energy_print1819,91027
-  float_sw4 m_saved_energy;EW::m_saved_energy1820,91064
-  string m_energy_logfile;EW::m_energy_logfile1821,91092
-  vector<float_sw4> m_energy;EW::m_energy1822,91119
-  bool m_do_timing;EW::m_do_timing1827,91291
-  int m_timing_print;EW::m_timing_print1828,91311
-  bool m_output_detailed_timing;EW::m_output_detailed_timing1829,91333
-  bool m_output_load;EW::m_output_load1830,91366
-  int m_projection_cycle;EW::m_projection_cycle1832,91389
-  bool m_checkfornan;EW::m_checkfornan1834,91416
-  float_sw4 m_max_error[EW::m_max_error1837,91452
-  float_sw4 m_max_error[3], m_l2_error[EW::m_l2_error1837,91452
-  string m_error_log_file;EW::m_error_log_file1839,91496
-  bool m_error_log,EW::m_error_log1840,91523
-  bool m_error_log, m_error_print;EW::m_error_print1840,91523
-  int m_inner_loop;EW::m_inner_loop1841,91558
-  bool m_mesh_refinements;EW::m_mesh_refinements1845,91639
-  bool m_matrices_decomposed;EW::m_matrices_decomposed1846,91666
-  float_sw4 m_citol,EW::m_citol1847,91696
-  float_sw4 m_citol, m_cirelfact;EW::m_cirelfact1847,91696
-  int m_cimaxiter;EW::m_cimaxiter1848,91730
-  vector<float_sw4*> m_cimat1;EW::m_cimat11850,91750
-  vector<float_sw4*> m_cimat2;EW::m_cimat21851,91781
-  vector<int*> m_ciipiv1;EW::m_ciipiv11852,91812
-  vector<int*> m_ciipiv2;EW::m_ciipiv21853,91838
-  bool m_do_geodynbc;EW::m_do_geodynbc1859,91932
-  std::vector<float_sw4*> m_geo_usgh;EW::m_geo_usgh1860,91954
-  std::vector<int*> m_geodyn_dims;EW::m_geodyn_dims1861,92013
-  std::vector<Sarray> m_geodyn_data1;EW::m_geodyn_data11862,92048
-  std::vector<Sarray> m_geodyn_data2;EW::m_geodyn_data21863,92086
-  double m_geodyn_origin[EW::m_geodyn_origin1864,92124
-  double m_geodyn_origin[3], m_geodyn_h,EW::m_geodyn_h1864,92124
-  double m_geodyn_origin[3], m_geodyn_h, m_geodyn_dt;EW::m_geodyn_dt1864,92124
-  int m_geodyn_step,EW::m_geodyn_step1865,92178
-  int m_geodyn_step, m_geodyn_maxsteps,EW::m_geodyn_maxsteps1865,92178
-  int m_geodyn_step, m_geodyn_maxsteps, m_geodyn_blocksize;EW::m_geodyn_blocksize1865,92178
-  int m_geodyn_ni,EW::m_geodyn_ni1866,92238
-  int m_geodyn_ni, m_geodyn_nj,EW::m_geodyn_nj1866,92238
-  int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk,EW::m_geodyn_nk1866,92238
-  int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk, m_geodyn_faces;EW::m_geodyn_faces1866,92238
-  std::string m_geodyn_filename;EW::m_geodyn_filename1867,92299
-  std::ifstream m_geodynfile;EW::m_geodynfile1868,92332
-  bool m_geodyn_iwillread,EW::m_geodyn_iwillread1869,92362
-  bool m_geodyn_iwillread, m_geodyn_past_end;EW::m_geodyn_past_end1869,92362
-  bool m_geodynbc_found,EW::m_geodynbc_found1872,92439
-  bool m_geodynbc_found, m_geodynbc_center;EW::m_geodynbc_center1872,92439
-  std::string m_geodynbc_filename;EW::m_geodynbc_filename1873,92483
-  float_sw4 m_ibc_origin[EW::m_ibc_origin1874,92518
-  int mPrintInterval;EW::mPrintInterval1876,92548
-  double mGeoAz;EW::mGeoAz1878,92612
-  double mLonOrigin,EW::mLonOrigin1879,92629
-  double mLonOrigin, mLatOrigin;EW::mLatOrigin1879,92629
-  float_sw4 mMetersPerDegree,EW::mMetersPerDegree1882,92695
-  float_sw4 mMetersPerDegree, mMetersPerLongitude;EW::mMetersPerLongitude1882,92695
-  bool mConstMetersPerLongitude;EW::mConstMetersPerLongitude1883,92746
-  bool mParsingSuccessful,EW::mParsingSuccessful1886,92825
-  bool mParsingSuccessful, mIsInitialized,EW::mIsInitialized1886,92825
-  bool mParsingSuccessful, mIsInitialized, mSourcesOK;EW::mSourcesOK1886,92825
-  bool m_testing;EW::m_testing1887,92880
-  bool m_inverse_problem;EW::m_inverse_problem1890,92946
-  bool m_iniguess_pos,EW::m_iniguess_pos1891,93011
-  bool m_iniguess_pos, m_iniguess_t0fr,EW::m_iniguess_t0fr1891,93011
-  bool m_iniguess_pos, m_iniguess_t0fr, m_iniguess_mom,EW::m_iniguess_mom1891,93011
-      m_iniguess_shifts;EW::m_iniguess_shifts1892,93067
-  bool m_output_initial_seismograms;EW::m_output_initial_seismograms1893,93121
-  bool m_compute_scalefactors;EW::m_compute_scalefactors1894,93158
-  int m_maxit,EW::m_maxit1895,93189
-  int m_maxit, m_maxrestart;EW::m_maxrestart1895,93189
-  float_sw4 m_tolerance;EW::m_tolerance1896,93218
-  float_sw4 m_scalefactors[EW::m_scalefactors1897,93243
-  int m_cgstepselection,EW::m_cgstepselection1898,93275
-  int m_cgstepselection, m_cgvarcase;EW::m_cgvarcase1898,93275
-  bool m_cgfletcherreeves,EW::m_cgfletcherreeves1899,93313
-  bool m_cgfletcherreeves, m_do_linesearch;EW::m_do_linesearch1899,93313
-  bool m_opt_testing;EW::m_opt_testing1900,93357
-  int m_opt_method,EW::m_opt_method1901,93379
-  int m_opt_method, m_lbfgs_m;EW::m_lbfgs_m1901,93379
-  float_sw4 m_perturb;EW::m_perturb1903,93441
-  int m_iperturb,EW::m_iperturb1904,93464
-  int m_iperturb, m_jperturb,EW::m_jperturb1904,93464
-  int m_iperturb, m_jperturb, m_kperturb,EW::m_kperturb1904,93464
-  int m_iperturb, m_jperturb, m_kperturb, m_pervar;EW::m_pervar1904,93464
-  vector<float_sw4> mMinVsOverH;EW::mMinVsOverH1907,93578
-  int m_ext_ghost_points;EW::m_ext_ghost_points1909,93612
-  int m_ghost_points;EW::m_ghost_points1910,93638
-  int m_ppadding;EW::m_ppadding1911,93660
-  float_sw4 *m_sbop,EW::m_sbop1915,93766
-  float_sw4 *m_sbop, *m_acof,EW::m_acof1915,93766
-  float_sw4 *m_sbop, *m_acof, *m_bop,EW::m_bop1915,93766
-  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope,EW::m_bope1915,93766
-  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope, *m_ghcof;EW::m_ghcof1915,93766
-  float_sw4 *m_acof_no_gp,EW::m_acof_no_gp1916,93823
-  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp,EW::m_ghcof_no_gp1916,93823
-  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp, *m_sbop_no_gp;EW::m_sbop_no_gp1916,93823
-  float_sw4 m_sbop[EW::m_sbop1918,93887
-  float_sw4 m_sbop[6], m_acof[EW::m_acof1918,93887
-  float_sw4 m_sbop[6], m_acof[384], m_bop[EW::m_bop1918,93887
-  float_sw4 m_sbop[6], m_acof[384], m_bop[24], m_bope[EW::m_bope1918,93887
-  float_sw4 m_sbop[6], m_acof[384], m_bop[24], m_bope[48], m_ghcof[EW::m_ghcof1918,93887
-  float_sw4 m_acof_no_gp[EW::m_acof_no_gp1919,93958
-  float_sw4 m_acof_no_gp[384], m_ghcof_no_gp[EW::m_ghcof_no_gp1919,93958
-  float_sw4 m_acof_no_gp[384], m_ghcof_no_gp[6], m_sbop_no_gp[EW::m_sbop_no_gp1919,93958
-  SView* viewArrayActual;EW::viewArrayActual1925,94247
-  vector<CurvilinearInterface2*> m_cli2;EW::m_cli21927,94274
-  vector<MPI_Datatype> m_send_type1;EW::m_send_type11930,94340
-  vector<MPI_Datatype> m_send_type3;EW::m_send_type31931,94377
-  vector<MPI_Datatype> m_send_type4;EW::m_send_type41932,94414
-  vector<MPI_Datatype> m_send_type21;EW::m_send_type211933,94463
-  MPI_Datatype m_send_type_2dfinest[EW::m_send_type_2dfinest1934,94517
-  MPI_Datatype m_send_type_2dfinest_ext[EW::m_send_type_2dfinest_ext1935,94557
-  vector<MPI_Datatype> m_send_type_isurfx;EW::m_send_type_isurfx1938,94644
-  vector<MPI_Datatype> m_send_type_isurfy;EW::m_send_type_isurfy1939,94687
-  vector<MPI_Datatype> m_send_type_2dx;EW::m_send_type_2dx1941,94731
-  vector<MPI_Datatype> m_send_type_2dy;EW::m_send_type_2dy1942,94771
-  vector<MPI_Datatype> m_send_type_2dx3p;EW::m_send_type_2dx3p1943,94811
-  vector<MPI_Datatype> m_send_type_2dy3p;EW::m_send_type_2dy3p1944,94853
-  vector<MPI_Datatype> m_send_type_2dx1p;EW::m_send_type_2dx1p1945,94895
-  vector<MPI_Datatype> m_send_type_2dy1p;EW::m_send_type_2dy1p1946,94937
-  vector<EW::vector1949,95024
-  vector<std::tuple<int, int, int>> send_type1;EW::send_type11949,95024
-  vector<EW::vector1950,95072
-  vector<std::tuple<int, int, int>> send_type3;EW::send_type31950,95072
-  vector<EW::vector1951,95120
-  vector<std::tuple<int, int, int>> send_type4;EW::send_type41951,95120
-  vector<EW::vector1952,95168
-  vector<std::tuple<int, int, int>> send_type21;EW::send_type211952,95168
-  vector<EW::vector1954,95218
-  vector<std::tuple<int, int, int>> send_type_2dx;EW::send_type_2dx1954,95218
-  vector<EW::vector1955,95269
-  vector<std::tuple<int, int, int>> send_type_2dy;EW::send_type_2dy1955,95269
-  vector<EW::vector1957,95321
-  vector<std::tuple<int, int, int>> send_type_2dfinest_ext;EW::send_type_2dfinest_ext1957,95321
-  vector<EW::vector1959,95382
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type1;EW::bufs_type11959,95382
-  vector<EW::vector1960,95439
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type3;EW::bufs_type31960,95439
-  vector<EW::vector1961,95496
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type4;EW::bufs_type41961,95496
-  vector<EW::vector1962,95553
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type21;EW::bufs_type211962,95553
-  vector<EW::vector1964,95612
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type_2dx;EW::bufs_type_2dx1964,95612
-  vector<EW::vector1965,95672
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type_2dy;EW::bufs_type_2dy1965,95672
-  vector<EW::vector1967,95733
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type_2dfinest_ext;EW::bufs_type_2dfinest_ext1967,95733
-  Space mpi_buffer_space;EW::mpi_buffer_space1969,95803
-  float_sw4* ForceVector;EW::ForceVector1972,95881
-  float_sw4** ForceAddress;EW::ForceAddress1973,95907
-  int* idnts;EW::idnts1974,95935
-  GridPointSource** GPS;EW::GPS1975,95949
-  StatMachine<EW::StatMachine1980,96134
-  StatMachine<size_t, double> sm;EW::sm1980,96134
-  StatMachine<EW::StatMachine1981,96168
-  StatMachine<size_t, double> sm2;EW::sm21981,96168
-  StatMachine<EW::StatMachine1982,96203
-  StatMachine<int, double> coll_sm;EW::coll_sm1982,96203
-  StatMachine<EW::StatMachine1983,96239
-  StatMachine<int, double> step_sm;EW::step_sm1983,96239
-  StatMachine<EW::StatMachine1984,96275
-  StatMachine<int, double> host_sm;EW::host_sm1984,96275
-  int m_neighbor[EW::m_neighbor1987,96327
-  MPI_Datatype m_mpifloat;EW::m_mpifloat1988,96348
-  bool m_topography_exists;EW::m_topography_exists1990,96376
-  vector<vector<int>> m_utc0;EW::m_utc01995,96514
-  bool m_croutines;EW::m_croutines2001,96669
-  CheckPoint* m_check_point;EW::m_check_point2005,96763
-  bool cudaProfilerOn;EW::cudaProfilerOn2006,96792
+  const string& getOutputPath(EW::getOutputPath383,17163
+  const string& getObservationPath(EW::getObservationPath387,17375
+  const string& getName(EW::getName388,17450
+  boundaryConditionType getLocalBcType(EW::getLocalBcType391,17598
+  void add_mtrl_block(EW::add_mtrl_block395,17692
+  void addMaterialProperty(EW::addMaterialProperty406,18096
+  bool usingSupergrid(EW::usingSupergrid425,18865
+  bool topographyExists(EW::topographyExists564,24524
+  bool usingAttenuation(EW::usingAttenuation565,24583
+  enum InputMode EW::InputMode651,28068
+    UNDEFINED,EW::InputMode::UNDEFINED652,28087
+    Efile,EW::InputMode::Efile653,28102
+    GaussianHill,EW::InputMode::GaussianHill654,28113
+    GridFile,EW::InputMode::GridFile655,28131
+    CartesianGrid,EW::InputMode::CartesianGrid656,28145
+    TopoImage,EW::InputMode::TopoImage657,28164
+    Rfile,EW::InputMode::Rfile658,28179
+    SfileEW::InputMode::Sfile659,28190
+  int getNumberOfCartesianGrids(EW::getNumberOfCartesianGrids663,28276
+  int getNumberOfGrids(EW::getNumberOfGrids664,28347
+  int getNumberOfGhostPoints(EW::getNumberOfGhostPoints665,28400
+  int getNumberOfParallelPaddingPoints(EW::getNumberOfParallelPaddingPoints666,28459
+  float_sw4 getLonOrigin(EW::getLonOrigin667,28524
+  float_sw4 getLatOrigin(EW::getLatOrigin668,28575
+  float_sw4 getGridAzimuth(EW::getGridAzimuth669,28626
+  float_sw4 getMetersPerDegree(EW::getMetersPerDegree670,28675
+  bool usingParallelFS(EW::usingParallelFS671,28738
+  int getNumberOfWritersPFS(EW::getNumberOfWritersPFS672,28782
+  float_sw4 getTimeStep(EW::getTimeStep673,28836
+  int getNumberOfTimeSteps(EW::getNumberOfTimeSteps675,28955
+  int getNumberOfMechanisms(EW::getNumberOfMechanisms678,29048
+  string getPath(EW::getPath727,31981
+  const float_sw4 NO_TOPO;EW::NO_TOPO1512,80873
+  int mNumberOfGrids,EW::mNumberOfGrids1518,81008
+  int mNumberOfGrids, mNumberOfCartesianGrids;EW::mNumberOfCartesianGrids1518,81008
+  vector<float_sw4> mGridSize;EW::mGridSize1522,81146
+  vector<int> m_iStart,EW::m_iStart1525,81259
+  vector<int> m_iStart, m_iEnd,EW::m_iEnd1525,81259
+  vector<int> m_iStart, m_iEnd, m_jStart,EW::m_jStart1525,81259
+  vector<int> m_iStart, m_iEnd, m_jStart, m_jEnd,EW::m_jEnd1525,81259
+  vector<int> m_iStart, m_iEnd, m_jStart, m_jEnd, m_kStart,EW::m_kStart1525,81259
+  vector<int> m_iStart, m_iEnd, m_jStart, m_jEnd, m_kStart, m_kEnd;EW::m_kEnd1525,81259
+  vector<int> m_iStartAct,EW::m_iStartAct1529,81433
+  vector<int> m_iStartAct, m_iEndAct,EW::m_iEndAct1529,81433
+  vector<int> m_iStartAct, m_iEndAct, m_jStartAct,EW::m_jStartAct1529,81433
+  vector<int> m_iStartAct, m_iEndAct, m_jStartAct, m_jEndAct,EW::m_jEndAct1529,81433
+  vector<int> m_iStartAct, m_iEndAct, m_jStartAct, m_jEndAct, m_kStartAct,EW::m_kStartAct1529,81433
+      m_kEndAct;EW::m_kEndAct1530,81508
+  vector<int> m_iStartActGlobal,EW::m_iStartActGlobal1531,81525
+  vector<int> m_iStartActGlobal, m_iEndActGlobal,EW::m_iEndActGlobal1531,81525
+  vector<int> m_iStartActGlobal, m_iEndActGlobal, m_jStartActGlobal,EW::m_jStartActGlobal1531,81525
+      m_jEndActGlobal;EW::m_jEndActGlobal1532,81594
+  vector<int> m_kStartActGlobal,EW::m_kStartActGlobal1533,81617
+  vector<int> m_kStartActGlobal, m_kEndActGlobal;EW::m_kEndActGlobal1533,81617
+  vector<int> m_global_nx,EW::m_global_nx1536,81749
+  vector<int> m_global_nx, m_global_ny,EW::m_global_ny1536,81749
+  vector<int> m_global_nx, m_global_ny, m_global_nz;EW::m_global_nz1536,81749
+  vector<int> m_iStartInt,EW::m_iStartInt1540,81922
+  vector<int> m_iStartInt, m_iEndInt,EW::m_iEndInt1540,81922
+  vector<int> m_iStartInt, m_iEndInt, m_jStartInt,EW::m_jStartInt1540,81922
+  vector<int> m_iStartInt, m_iEndInt, m_jStartInt, m_jEndInt,EW::m_jEndInt1540,81922
+  vector<int> m_iStartInt, m_iEndInt, m_jStartInt, m_jEndInt, m_kStartInt,EW::m_kStartInt1540,81922
+      m_kEndInt;EW::m_kEndInt1541,81997
+  int m_paddingCells[EW::m_paddingCells1545,82168
+  vector<float_sw4> m_zmin;EW::m_zmin1549,82349
+  vector<Sarray> mX,EW::mX1553,82516
+  vector<Sarray> mX, mY,EW::mY1553,82516
+  vector<Sarray> mX, mY, mZ;EW::mZ1553,82516
+  vector<Sarray> mJ;EW::mJ1554,82595
+  vector<Sarray> mMetric;EW::mMetric1556,82725
+  GridGenerator* m_gridGenerator;EW::m_gridGenerator1558,82752
+  bool m_prefilter_sources,EW::m_prefilter_sources1561,82810
+  bool m_prefilter_sources, m_filter_observations;EW::m_filter_observations1561,82810
+  Filter* m_filter_ptr;EW::m_filter_ptr1564,82909
+  Filter* m_filterobs_ptr;EW::m_filterobs_ptr1566,82962
+  int m_opttest;EW::m_opttest1569,83085
+  Sarray mTopo,EW::mTopo1577,83510
+  Sarray mTopo, mTopoGridExt;EW::mTopoGridExt1577,83510
+  vector<Sarray> m_curviInterface;EW::m_curviInterface1581,83646
+  vector<MaterialProperty*> m_materials;EW::m_materials1584,83758
+  MPI_Comm m_cartesian_communicator;EW::m_cartesian_communicator1585,83799
+  ofstream msgStream;EW::msgStream1587,83837
+  vector<Sarray> mMu;EW::mMu1590,83923
+  vector<Sarray> mLambda;EW::mLambda1591,83945
+  vector<Sarray> mRho;EW::mRho1592,83971
+  vector<Sarray*> mMuVE,EW::mMuVE1593,83994
+  vector<Sarray*> mMuVE, mLambdaVE;EW::mLambdaVE1593,83994
+  vector<Sarray> mC;EW::mC1594,84055
+  Sarray mCcurv;EW::mCcurv1595,84127
+  vector<Sarray> m_Morf,EW::m_Morf1598,84256
+  vector<Sarray> m_Morf, m_Mlrf,EW::m_Mlrf1598,84256
+  vector<Sarray> m_Morf, m_Mlrf, m_Mufs,EW::m_Mufs1598,84256
+  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs,EW::m_Mlfs1598,84256
+  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc,EW::m_Morc1598,84256
+  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc,EW::m_Mlrc1598,84256
+  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs,EW::m_Mucs1598,84256
+  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs, m_Mlcs;EW::m_Mlcs1598,84256
+  vector<float_sw4> m_curviRefLev;EW::m_curviRefLev1600,84338
+  int m_nevent;EW::m_nevent1607,84558
+  int m_nevents_specified;EW::m_nevents_specified1609,84665
+  map<EW::map1610,84732
+  map<string, int> m_event_names;EW::m_event_names1610,84732
+  vector<float_sw4> m_epi_lat,EW::m_epi_lat1613,84782
+  vector<float_sw4> m_epi_lat, m_epi_lon,EW::m_epi_lon1613,84782
+  vector<float_sw4> m_epi_lat, m_epi_lon, m_epi_depth,EW::m_epi_depth1613,84782
+  vector<float_sw4> m_epi_lat, m_epi_lon, m_epi_depth, m_epi_t0;EW::m_epi_t01613,84782
+  GeographicProjection* m_geoproj;EW::m_geoproj1617,84908
+  ForcingTwilight* m_twilight_forcing;EW::m_twilight_forcing1619,84944
+  TestPointSource* m_point_source_test;EW::m_point_source_test1620,84983
+  bool m_moment_test;EW::m_moment_test1621,85023
+  TestEnergy* m_energy_test;EW::m_energy_test1622,85045
+  TestLamb* m_lamb_test;EW::m_lamb_test1623,85074
+  TestRayleighWave* m_rayleigh_wave_test;EW::m_rayleigh_wave_test1624,85099
+  vector<MaterialData*> m_mtrlblocks;EW::m_mtrlblocks1626,85142
+  vector<AnisotropicMaterial*> m_anisotropic_mtrlblocks;EW::m_anisotropic_mtrlblocks1627,85180
+  boundaryConditionType mbcGlobalType[EW::mbcGlobalType1631,85340
+      m_bcType;EW::m_bcType1634,85522
+  float_sw4 mTstart;EW::mTstart1636,85661
+  float_sw4 mDt;EW::mDt1637,85682
+  EtreeFile* mEtreeFile;EW::mEtreeFile1638,85699
+  bool m_doubly_periodic;EW::m_doubly_periodic1640,85725
+  int m_proc_array[EW::m_proc_array1642,85752
+  bool mbcsSet;EW::mbcsSet1644,85776
+  bool m_analytical_topo,EW::m_analytical_topo1648,85909
+  bool m_analytical_topo, m_use_analytical_metric;EW::m_use_analytical_metric1648,85909
+  float_sw4 m_GaussianAmp,EW::m_GaussianAmp1649,85960
+  float_sw4 m_GaussianAmp, m_GaussianLx,EW::m_GaussianLx1649,85960
+  float_sw4 m_GaussianAmp, m_GaussianLx, m_GaussianLy,EW::m_GaussianLy1649,85960
+  float_sw4 m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc,EW::m_GaussianXc1649,85960
+      m_GaussianYc;EW::m_GaussianYc1650,86029
+  bool m_useVelocityThresholds;EW::m_useVelocityThresholds1659,86345
+  float_sw4 m_vpMin,EW::m_vpMin1660,86377
+  float_sw4 m_vpMin, m_vsMin;EW::m_vsMin1660,86377
+  int m_grid_interpolation_order;EW::m_grid_interpolation_order1663,86471
+  float_sw4 m_zetaBreak;EW::m_zetaBreak1664,86505
+  float_sw4 m_minJacobian,EW::m_minJacobian1667,86567
+  float_sw4 m_minJacobian, m_maxJacobian;EW::m_maxJacobian1667,86567
+  string m_scenario;EW::m_scenario1669,86610
+  float_sw4 m_frequency_limit;EW::m_frequency_limit1672,86660
+  bool m_limit_frequency;EW::m_limit_frequency1673,86691
+  int m_ppw;EW::m_ppw1674,86717
+  bool m_pfs;EW::m_pfs1677,86754
+  int m_nwriters;EW::m_nwriters1678,86768
+  bool m_use_supergrid;EW::m_use_supergrid1681,86802
+  int m_sg_gp_thickness;EW::m_sg_gp_thickness1682,86826
+  int m_sg_damping_order;EW::m_sg_damping_order1683,86877
+  float_sw4 m_supergrid_damping_coefficient;EW::m_supergrid_damping_coefficient1684,86941
+  float_sw4 m_supergrid_width;EW::m_supergrid_width1685,86986
+  bool m_use_sg_width;EW::m_use_sg_width1686,87045
+  vector<SuperGrid> m_supergrid_taper_x,EW::m_supergrid_taper_x1687,87104
+  vector<SuperGrid> m_supergrid_taper_x, m_supergrid_taper_y;EW::m_supergrid_taper_y1687,87104
+  vector<SuperGrid> m_supergrid_taper_z;EW::m_supergrid_taper_z1688,87166
+  vector<string> mPath,EW::mPath1691,87248
+  vector<string> mPath, mObsPath;EW::mObsPath1691,87248
+  string mTempPath;EW::mTempPath1692,87294
+  vector<int*> m_NumberOfBCPoints;EW::m_NumberOfBCPoints1695,87359
+  vector<int*> m_BndryWindow;EW::m_BndryWindow1698,87468
+  bool m_use_attenuation,EW::m_use_attenuation1701,87569
+  bool m_use_attenuation, m_att_use_max_frequency;EW::m_att_use_max_frequency1701,87569
+  int m_number_mechanisms;EW::m_number_mechanisms1702,87620
+  float_sw4 m_velo_omega,EW::m_velo_omega1703,87647
+  float_sw4 m_velo_omega, m_min_omega,EW::m_min_omega1703,87647
+  float_sw4 m_velo_omega, m_min_omega, m_max_omega,EW::m_max_omega1703,87647
+  float_sw4 m_velo_omega, m_min_omega, m_max_omega, m_att_max_frequency,EW::m_att_max_frequency1703,87647
+      m_att_ppw;EW::m_att_ppw1704,87720
+  float_sw4 m_qmultiplier;EW::m_qmultiplier1705,87737
+  vector<Sarray> mQp,EW::mQp1707,87765
+  vector<Sarray> mQp, mQs;EW::mQs1707,87765
+  vector<float_sw4> mOmegaVE;EW::mOmegaVE1710,87859
+  bool m_anisotropic;EW::m_anisotropic1713,87916
+  bool m_randomize;EW::m_randomize1716,87974
+  int m_random_seed[EW::m_random_seed1717,87994
+  float_sw4 m_random_dist,EW::m_random_dist1718,88018
+  float_sw4 m_random_dist, m_random_distz,EW::m_random_distz1718,88018
+  float_sw4 m_random_dist, m_random_distz, m_random_amp,EW::m_random_amp1718,88018
+  float_sw4 m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad,EW::m_random_amp_grad1718,88018
+      m_random_sdlimit;EW::m_random_sdlimit1719,88094
+  vector<RandomizedMaterial*> m_random_blocks;EW::m_random_blocks1720,88118
+  float_sw4 m_global_xmax,EW::m_global_xmax1736,88753
+  float_sw4 m_global_xmax, m_global_ymax,EW::m_global_ymax1736,88753
+  float_sw4 m_global_xmax, m_global_ymax, m_global_zmin,EW::m_global_zmin1736,88753
+  float_sw4 m_global_xmax, m_global_ymax, m_global_zmin, m_global_zmax;EW::m_global_zmax1736,88753
+  int mMaterialExtrapolate;EW::mMaterialExtrapolate1740,88928
+  int m_nx_base,EW::m_nx_base1743,89001
+  int m_nx_base, m_ny_base,EW::m_ny_base1743,89001
+  int m_nx_base, m_ny_base, m_nz_base;EW::m_nz_base1743,89001
+  float_sw4 m_h_base;EW::m_h_base1744,89040
+  vector<bool> m_iscurvilinear;EW::m_iscurvilinear1745,89062
+  vector<float_sw4> m_refinementBoundaries;EW::m_refinementBoundaries1746,89094
+  InputMode m_topoInputStyle;EW::m_topoInputStyle1747,89138
+  string m_topoFileName,EW::m_topoFileName1748,89168
+  string m_topoFileName, m_topoExtFileName,EW::m_topoExtFileName1748,89168
+  string m_topoFileName, m_topoExtFileName, m_QueryType;EW::m_QueryType1748,89168
+  bool mTopoImageFound;EW::mTopoImageFound1749,89225
+  float_sw4 m_topo_zmax;EW::m_topo_zmax1750,89249
+  int m_maxIter;EW::m_maxIter1751,89274
+  float_sw4 m_EFileResolution;EW::m_EFileResolution1752,89291
+  int m_myRank,EW::m_myRank1757,89432
+  int m_myRank, m_nProcs;EW::m_nProcs1757,89432
+  string mName;EW::mName1759,89459
+  string mGMTFileName;EW::mGMTFileName1761,89501
+  bool mWriteGMTOutput;EW::mWriteGMTOutput1763,89525
+  int mPlotFrequency;EW::mPlotFrequency1764,89549
+  int mNumFiles;EW::mNumFiles1765,89571
+  int mVerbose;EW::mVerbose1766,89588
+  bool mQuiet;EW::mQuiet1767,89604
+  bool mDebugIO;EW::mDebugIO1769,89620
+  bool mHomogeneous;EW::mHomogeneous1770,89637
+  bool mCompareSACFiles;EW::mCompareSACFiles1773,89702
+  float mSACFileErrorTolerance;EW::mSACFileErrorTolerance1774,89727
+  vector<Image*> mImageFiles;EW::mImageFiles1777,89781
+  vector<Image3D*> mImage3DFiles;EW::mImage3DFiles1778,89811
+  vector<ESSI3D*> mESSI3DFiles;EW::mESSI3DFiles1779,89845
+  bool m_iotiming;EW::m_iotiming1780,89877
+  vector<bool> mTimeIsSet;EW::mTimeIsSet1783,89912
+  vector<float_sw4> mTmax;EW::mTmax1784,89939
+  vector<int> mNumberOfTimeSteps;EW::mNumberOfTimeSteps1786,89967
+  int m_update_boundary_function;EW::m_update_boundary_function1789,90018
+  int mOrder;EW::mOrder1794,90123
+  float_sw4 mCFL,EW::mCFL1798,90312
+  float_sw4 mCFL, mCFLmax;EW::mCFLmax1798,90312
+  vector<int*> m_onesided;EW::m_onesided1801,90385
+  float_sw4 m_curlcoeff,EW::m_curlcoeff1802,90412
+  float_sw4 m_curlcoeff, m_d4coeff,EW::m_d4coeff1802,90412
+  float_sw4 m_curlcoeff, m_d4coeff, m_d4_cfl;EW::m_d4_cfl1802,90412
+  vector<float_sw4*> m_sg_dc_x,EW::m_sg_dc_x1805,90530
+  vector<float_sw4*> m_sg_dc_x, m_sg_dc_y,EW::m_sg_dc_y1805,90530
+  vector<float_sw4*> m_sg_dc_x, m_sg_dc_y, m_sg_dc_z;EW::m_sg_dc_z1805,90530
+  vector<float_sw4*> m_sg_str_x,EW::m_sg_str_x1806,90584
+  vector<float_sw4*> m_sg_str_x, m_sg_str_y,EW::m_sg_str_y1806,90584
+  vector<float_sw4*> m_sg_str_x, m_sg_str_y, m_sg_str_z;EW::m_sg_str_z1806,90584
+  vector<float_sw4*> m_sg_corner_x,EW::m_sg_corner_x1807,90641
+  vector<float_sw4*> m_sg_corner_x, m_sg_corner_y,EW::m_sg_corner_y1807,90641
+  vector<float_sw4*> m_sg_corner_x, m_sg_corner_y, m_sg_corner_z;EW::m_sg_corner_z1807,90641
+  bool m_energy_log,EW::m_energy_log1819,91026
+  bool m_energy_log, m_energy_print;EW::m_energy_print1819,91026
+  float_sw4 m_saved_energy;EW::m_saved_energy1820,91063
+  string m_energy_logfile;EW::m_energy_logfile1821,91091
+  vector<float_sw4> m_energy;EW::m_energy1822,91118
+  bool m_do_timing;EW::m_do_timing1827,91290
+  int m_timing_print;EW::m_timing_print1828,91310
+  bool m_output_detailed_timing;EW::m_output_detailed_timing1829,91332
+  bool m_output_load;EW::m_output_load1830,91365
+  int m_projection_cycle;EW::m_projection_cycle1832,91388
+  bool m_checkfornan;EW::m_checkfornan1834,91415
+  float_sw4 m_max_error[EW::m_max_error1837,91451
+  float_sw4 m_max_error[3], m_l2_error[EW::m_l2_error1837,91451
+  string m_error_log_file;EW::m_error_log_file1839,91495
+  bool m_error_log,EW::m_error_log1840,91522
+  bool m_error_log, m_error_print;EW::m_error_print1840,91522
+  int m_inner_loop;EW::m_inner_loop1841,91557
+  bool m_mesh_refinements;EW::m_mesh_refinements1845,91638
+  bool m_matrices_decomposed;EW::m_matrices_decomposed1846,91665
+  float_sw4 m_citol,EW::m_citol1847,91695
+  float_sw4 m_citol, m_cirelfact;EW::m_cirelfact1847,91695
+  int m_cimaxiter;EW::m_cimaxiter1848,91729
+  vector<float_sw4*> m_cimat1;EW::m_cimat11850,91749
+  vector<float_sw4*> m_cimat2;EW::m_cimat21851,91780
+  vector<int*> m_ciipiv1;EW::m_ciipiv11852,91811
+  vector<int*> m_ciipiv2;EW::m_ciipiv21853,91837
+  bool m_do_geodynbc;EW::m_do_geodynbc1859,91931
+  std::vector<float_sw4*> m_geo_usgh;EW::m_geo_usgh1860,91953
+  std::vector<int*> m_geodyn_dims;EW::m_geodyn_dims1861,92012
+  std::vector<Sarray> m_geodyn_data1;EW::m_geodyn_data11862,92047
+  std::vector<Sarray> m_geodyn_data2;EW::m_geodyn_data21863,92085
+  double m_geodyn_origin[EW::m_geodyn_origin1864,92123
+  double m_geodyn_origin[3], m_geodyn_h,EW::m_geodyn_h1864,92123
+  double m_geodyn_origin[3], m_geodyn_h, m_geodyn_dt;EW::m_geodyn_dt1864,92123
+  int m_geodyn_step,EW::m_geodyn_step1865,92177
+  int m_geodyn_step, m_geodyn_maxsteps,EW::m_geodyn_maxsteps1865,92177
+  int m_geodyn_step, m_geodyn_maxsteps, m_geodyn_blocksize;EW::m_geodyn_blocksize1865,92177
+  int m_geodyn_ni,EW::m_geodyn_ni1866,92237
+  int m_geodyn_ni, m_geodyn_nj,EW::m_geodyn_nj1866,92237
+  int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk,EW::m_geodyn_nk1866,92237
+  int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk, m_geodyn_faces;EW::m_geodyn_faces1866,92237
+  std::string m_geodyn_filename;EW::m_geodyn_filename1867,92298
+  std::ifstream m_geodynfile;EW::m_geodynfile1868,92331
+  bool m_geodyn_iwillread,EW::m_geodyn_iwillread1869,92361
+  bool m_geodyn_iwillread, m_geodyn_past_end;EW::m_geodyn_past_end1869,92361
+  bool m_geodynbc_found,EW::m_geodynbc_found1872,92438
+  bool m_geodynbc_found, m_geodynbc_center;EW::m_geodynbc_center1872,92438
+  std::string m_geodynbc_filename;EW::m_geodynbc_filename1873,92482
+  float_sw4 m_ibc_origin[EW::m_ibc_origin1874,92517
+  int mPrintInterval;EW::mPrintInterval1876,92547
+  double mGeoAz;EW::mGeoAz1878,92611
+  double mLonOrigin,EW::mLonOrigin1879,92628
+  double mLonOrigin, mLatOrigin;EW::mLatOrigin1879,92628
+  float_sw4 mMetersPerDegree,EW::mMetersPerDegree1882,92694
+  float_sw4 mMetersPerDegree, mMetersPerLongitude;EW::mMetersPerLongitude1882,92694
+  bool mConstMetersPerLongitude;EW::mConstMetersPerLongitude1883,92745
+  bool mParsingSuccessful,EW::mParsingSuccessful1886,92824
+  bool mParsingSuccessful, mIsInitialized,EW::mIsInitialized1886,92824
+  bool mParsingSuccessful, mIsInitialized, mSourcesOK;EW::mSourcesOK1886,92824
+  bool m_testing;EW::m_testing1887,92879
+  bool m_inverse_problem;EW::m_inverse_problem1890,92945
+  bool m_iniguess_pos,EW::m_iniguess_pos1891,93010
+  bool m_iniguess_pos, m_iniguess_t0fr,EW::m_iniguess_t0fr1891,93010
+  bool m_iniguess_pos, m_iniguess_t0fr, m_iniguess_mom,EW::m_iniguess_mom1891,93010
+      m_iniguess_shifts;EW::m_iniguess_shifts1892,93066
+  bool m_output_initial_seismograms;EW::m_output_initial_seismograms1893,93120
+  bool m_compute_scalefactors;EW::m_compute_scalefactors1894,93157
+  int m_maxit,EW::m_maxit1895,93188
+  int m_maxit, m_maxrestart;EW::m_maxrestart1895,93188
+  float_sw4 m_tolerance;EW::m_tolerance1896,93217
+  float_sw4 m_scalefactors[EW::m_scalefactors1897,93242
+  int m_cgstepselection,EW::m_cgstepselection1898,93274
+  int m_cgstepselection, m_cgvarcase;EW::m_cgvarcase1898,93274
+  bool m_cgfletcherreeves,EW::m_cgfletcherreeves1899,93312
+  bool m_cgfletcherreeves, m_do_linesearch;EW::m_do_linesearch1899,93312
+  bool m_opt_testing;EW::m_opt_testing1900,93356
+  int m_opt_method,EW::m_opt_method1901,93378
+  int m_opt_method, m_lbfgs_m;EW::m_lbfgs_m1901,93378
+  float_sw4 m_perturb;EW::m_perturb1903,93440
+  int m_iperturb,EW::m_iperturb1904,93463
+  int m_iperturb, m_jperturb,EW::m_jperturb1904,93463
+  int m_iperturb, m_jperturb, m_kperturb,EW::m_kperturb1904,93463
+  int m_iperturb, m_jperturb, m_kperturb, m_pervar;EW::m_pervar1904,93463
+  vector<float_sw4> mMinVsOverH;EW::mMinVsOverH1907,93577
+  int m_ext_ghost_points;EW::m_ext_ghost_points1909,93611
+  int m_ghost_points;EW::m_ghost_points1910,93637
+  int m_ppadding;EW::m_ppadding1911,93659
+  float_sw4 *m_sbop,EW::m_sbop1915,93765
+  float_sw4 *m_sbop, *m_acof,EW::m_acof1915,93765
+  float_sw4 *m_sbop, *m_acof, *m_bop,EW::m_bop1915,93765
+  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope,EW::m_bope1915,93765
+  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope, *m_ghcof;EW::m_ghcof1915,93765
+  float_sw4 *m_acof_no_gp,EW::m_acof_no_gp1916,93822
+  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp,EW::m_ghcof_no_gp1916,93822
+  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp, *m_sbop_no_gp;EW::m_sbop_no_gp1916,93822
+  float_sw4 m_sbop[EW::m_sbop1918,93886
+  float_sw4 m_sbop[6], m_acof[EW::m_acof1918,93886
+  float_sw4 m_sbop[6], m_acof[384], m_bop[EW::m_bop1918,93886
+  float_sw4 m_sbop[6], m_acof[384], m_bop[24], m_bope[EW::m_bope1918,93886
+  float_sw4 m_sbop[6], m_acof[384], m_bop[24], m_bope[48], m_ghcof[EW::m_ghcof1918,93886
+  float_sw4 m_acof_no_gp[EW::m_acof_no_gp1919,93957
+  float_sw4 m_acof_no_gp[384], m_ghcof_no_gp[EW::m_ghcof_no_gp1919,93957
+  float_sw4 m_acof_no_gp[384], m_ghcof_no_gp[6], m_sbop_no_gp[EW::m_sbop_no_gp1919,93957
+  SView* viewArrayActual;EW::viewArrayActual1925,94246
+  vector<CurvilinearInterface2*> m_cli2;EW::m_cli21927,94273
+  vector<MPI_Datatype> m_send_type1;EW::m_send_type11930,94339
+  vector<MPI_Datatype> m_send_type3;EW::m_send_type31931,94376
+  vector<MPI_Datatype> m_send_type4;EW::m_send_type41932,94413
+  vector<MPI_Datatype> m_send_type21;EW::m_send_type211933,94462
+  MPI_Datatype m_send_type_2dfinest[EW::m_send_type_2dfinest1934,94516
+  MPI_Datatype m_send_type_2dfinest_ext[EW::m_send_type_2dfinest_ext1935,94556
+  vector<MPI_Datatype> m_send_type_isurfx;EW::m_send_type_isurfx1938,94643
+  vector<MPI_Datatype> m_send_type_isurfy;EW::m_send_type_isurfy1939,94686
+  vector<MPI_Datatype> m_send_type_2dx;EW::m_send_type_2dx1941,94730
+  vector<MPI_Datatype> m_send_type_2dy;EW::m_send_type_2dy1942,94770
+  vector<MPI_Datatype> m_send_type_2dx3p;EW::m_send_type_2dx3p1943,94810
+  vector<MPI_Datatype> m_send_type_2dy3p;EW::m_send_type_2dy3p1944,94852
+  vector<MPI_Datatype> m_send_type_2dx1p;EW::m_send_type_2dx1p1945,94894
+  vector<MPI_Datatype> m_send_type_2dy1p;EW::m_send_type_2dy1p1946,94936
+  vector<EW::vector1949,95023
+  vector<std::tuple<int, int, int>> send_type1;EW::send_type11949,95023
+  vector<EW::vector1950,95071
+  vector<std::tuple<int, int, int>> send_type3;EW::send_type31950,95071
+  vector<EW::vector1951,95119
+  vector<std::tuple<int, int, int>> send_type4;EW::send_type41951,95119
+  vector<EW::vector1952,95167
+  vector<std::tuple<int, int, int>> send_type21;EW::send_type211952,95167
+  vector<EW::vector1954,95217
+  vector<std::tuple<int, int, int>> send_type_2dx;EW::send_type_2dx1954,95217
+  vector<EW::vector1955,95268
+  vector<std::tuple<int, int, int>> send_type_2dy;EW::send_type_2dy1955,95268
+  vector<EW::vector1957,95320
+  vector<std::tuple<int, int, int>> send_type_2dfinest_ext;EW::send_type_2dfinest_ext1957,95320
+  vector<EW::vector1959,95381
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type1;EW::bufs_type11959,95381
+  vector<EW::vector1960,95438
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type3;EW::bufs_type31960,95438
+  vector<EW::vector1961,95495
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type4;EW::bufs_type41961,95495
+  vector<EW::vector1962,95552
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type21;EW::bufs_type211962,95552
+  vector<EW::vector1964,95611
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type_2dx;EW::bufs_type_2dx1964,95611
+  vector<EW::vector1965,95671
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type_2dy;EW::bufs_type_2dy1965,95671
+  vector<EW::vector1967,95732
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type_2dfinest_ext;EW::bufs_type_2dfinest_ext1967,95732
+  Space mpi_buffer_space;EW::mpi_buffer_space1969,95802
+  float_sw4* ForceVector;EW::ForceVector1972,95880
+  float_sw4** ForceAddress;EW::ForceAddress1973,95906
+  int* idnts;EW::idnts1974,95934
+  GridPointSource** GPS;EW::GPS1975,95948
+  StatMachine<EW::StatMachine1980,96133
+  StatMachine<size_t, double> sm;EW::sm1980,96133
+  StatMachine<EW::StatMachine1981,96167
+  StatMachine<size_t, double> sm2;EW::sm21981,96167
+  StatMachine<EW::StatMachine1982,96202
+  StatMachine<int, double> coll_sm;EW::coll_sm1982,96202
+  StatMachine<EW::StatMachine1983,96238
+  StatMachine<int, double> step_sm;EW::step_sm1983,96238
+  StatMachine<EW::StatMachine1984,96274
+  StatMachine<int, double> host_sm;EW::host_sm1984,96274
+  int m_neighbor[EW::m_neighbor1987,96326
+  MPI_Datatype m_mpifloat;EW::m_mpifloat1988,96347
+  bool m_topography_exists;EW::m_topography_exists1990,96375
+  vector<vector<int>> m_utc0;EW::m_utc01995,96513
+  bool m_croutines;EW::m_croutines2001,96668
+  CheckPoint* m_check_point;EW::m_check_point2005,96762
+  bool ProfilerOn;EW::ProfilerOn2006,96791
 
 EtreeFile.h,1753
 #define ETREE_FILE34,1398
@@ -3549,47 +3534,47 @@ enum class Space 49,1317
   Pinned,53,1380
   Managed_temps,54,1390
   Space_Error55,1407
-struct global_variable_holder_struct 73,2212
-  size_t gpu_memory_hwm;global_variable_holder_struct::gpu_memory_hwm74,2251
-  size_t curr_mem;global_variable_holder_struct::curr_mem75,2276
-  size_t max_mem;global_variable_holder_struct::max_mem76,2295
-  size_t host_mem_hwm;global_variable_holder_struct::host_mem_hwm77,2313
-  size_t host_curr_mem;global_variable_holder_struct::host_curr_mem78,2336
-  size_t host_max_mem;global_variable_holder_struct::host_max_mem79,2360
-  int device;global_variable_holder_struct::device80,2383
-  int num_devices;global_variable_holder_struct::num_devices81,2397
-  bool firstCycle;global_variable_holder_struct::firstCycle82,2416
-  std::vector<global_variable_holder_struct::std::vector83,2435
-  std::vector<std::tuple<char *, size_t>> massprefetch;global_variable_holder_struct::massprefetch83,2435
-#define SW4_TRACK_MEMORY_ALLOCATIONS 88,2576
-#define SW4_NEW(91,2664
-#define ASSERT_MANAGED(94,2764
-#define ASSERT_HOST(96,2843
-#define ASSERT_MANAGED(100,2923
-#define ASSERT_HOST(102,2952
-#define PREFETCH(105,2985
-#define PTR_PUSH(110,3166
-#define SW4_NEW(117,3340
-#define ASSERT_MANAGED(119,3385
-#define ASSERT_HOST(121,3414
-#define PTR_PUSH(123,3440
-#define PREFETCH(125,3475
-class Managed 131,3594
-  static size_t ocount;Managed::ocount133,3619
-  static size_t hwm;Managed::hwm134,3643
-  Managed(Managed::Managed139,3741
-  ~Managed(Managed::~Managed140,3756
-#define SW4_CHRONO_NOW 153,3975
-#define SW4_CHRONO_DURATION_MS(155,4041
-#define SW4_CHRONO_DURATION_US(157,4167
-class Apc 161,4311
-  std::ofstream ofile;Apc::ofile163,4332
-  int counter;Apc::counter164,4355
-template <typename T,169,4400
-void autopeel(179,4660
-template <typename T,184,4747
-void autopeel(185,4787
-void Write(193,4966
+struct global_variable_holder_struct 73,2184
+  size_t gpu_memory_hwm;global_variable_holder_struct::gpu_memory_hwm74,2223
+  size_t curr_mem;global_variable_holder_struct::curr_mem75,2248
+  size_t max_mem;global_variable_holder_struct::max_mem76,2267
+  size_t host_mem_hwm;global_variable_holder_struct::host_mem_hwm77,2285
+  size_t host_curr_mem;global_variable_holder_struct::host_curr_mem78,2308
+  size_t host_max_mem;global_variable_holder_struct::host_max_mem79,2332
+  int device;global_variable_holder_struct::device80,2355
+  int num_devices;global_variable_holder_struct::num_devices81,2369
+  bool firstCycle;global_variable_holder_struct::firstCycle82,2388
+  std::vector<global_variable_holder_struct::std::vector83,2407
+  std::vector<std::tuple<char *, size_t>> massprefetch;global_variable_holder_struct::massprefetch83,2407
+#define SW4_TRACK_MEMORY_ALLOCATIONS 88,2548
+#define SW4_NEW(91,2636
+#define ASSERT_MANAGED(94,2736
+#define ASSERT_HOST(96,2815
+#define ASSERT_MANAGED(100,2895
+#define ASSERT_HOST(102,2924
+#define PREFETCH(105,2957
+#define PTR_PUSH(110,3138
+#define SW4_NEW(117,3312
+#define ASSERT_MANAGED(119,3357
+#define ASSERT_HOST(121,3386
+#define PTR_PUSH(123,3412
+#define PREFETCH(125,3447
+class Managed 131,3566
+  static size_t ocount;Managed::ocount133,3591
+  static size_t hwm;Managed::hwm134,3615
+  Managed(Managed::Managed139,3713
+  ~Managed(Managed::~Managed140,3728
+#define SW4_CHRONO_NOW 153,3947
+#define SW4_CHRONO_DURATION_MS(155,4013
+#define SW4_CHRONO_DURATION_US(157,4139
+class Apc 161,4283
+  std::ofstream ofile;Apc::ofile163,4304
+  int counter;Apc::counter164,4327
+template <typename T,169,4372
+void autopeel(179,4632
+template <typename T,184,4719
+void autopeel(185,4759
+void Write(193,4938
 
 Parallel_IO.h,2034
 #define EW_WPPPIO_H35,1411
@@ -3736,7 +3721,7 @@ Require.h,464
 #define REQUIRE(116,4210
 #define VERIFY(117,4245
 
-Sarray.h,2777
+Sarray.h,2778
 #define EW_SARRAY_H35,1411
 using std::string;49,1633
 class SView 54,1682
@@ -3752,49 +3737,49 @@ class SView 54,1682
   RAJA_HOST_DEVICE void print(SView::print80,2502
 class Sarray 87,2700
   ~Sarray(Sarray::~Sarray100,3247
-  inline float_sw4* c_ptr(Sarray::c_ptr126,4267
-  __host__ __device__ inline float_sw4* dev_ptr(Sarray::dev_ptr128,4330
-  inline float_sw4* dev_ptr(Sarray::dev_ptr130,4407
-  void reference(Sarray::reference132,4465
-  void reference_dev(Sarray::reference_dev136,4553
-  inline bool in_range(Sarray::in_range141,4780
-  inline float_sw4& operator()(Sarray::operator()145,4958
-  inline float_sw4& operator()(Sarray::operator()158,5681
-  inline bool is_defined(Sarray::is_defined172,6297
-  int m_ib,Sarray::m_ib173,6351
-  int m_ib, m_ie,Sarray::m_ie173,6351
-  int m_ib, m_ie, m_jb,Sarray::m_jb173,6351
-  int m_ib, m_ie, m_jb, m_je,Sarray::m_je173,6351
-  int m_ib, m_ie, m_jb, m_je, m_kb,Sarray::m_kb173,6351
-  int m_ib, m_ie, m_jb, m_je, m_kb, m_ke;Sarray::m_ke173,6351
-  static bool m_corder;Sarray::m_corder174,6393
-  ssize_t m_base;Sarray::m_base175,6417
-  size_t m_offi,Sarray::m_offi176,6435
-  size_t m_offi, m_offj,Sarray::m_offj176,6435
-  size_t m_offi, m_offj, m_offk,Sarray::m_offk176,6435
-  size_t m_offi, m_offj, m_offk, m_offc,Sarray::m_offc176,6435
-  size_t m_offi, m_offj, m_offk, m_offc, m_npts;Sarray::m_npts176,6435
-  size_t index(Sarray::index179,6583
-  __host__ __device__ size_t index(Sarray::index183,6708
-  size_t index(Sarray::index187,6854
-  void getnonzero(Sarray::getnonzero191,6981
-  int ncomp(Sarray::ncomp207,7637
-  int npts(Sarray::npts208,7674
-  int m_nc,Sarray::m_nc249,9501
-  int m_nc, m_ni,Sarray::m_ni249,9501
-  int m_nc, m_ni, m_nj,Sarray::m_nj249,9501
-  int m_nc, m_ni, m_nj, m_nk;Sarray::m_nk249,9501
-  inline SView& getview(Sarray::getview252,9602
-  SView view;Sarray::view256,9670
-  static std::unordered_map<Sarray::std::unordered_map257,9684
-  static std::unordered_map<std::string, float_sw4*> static_map;Sarray::static_map257,9684
-  bool static_alloc;Sarray::static_alloc258,9749
-  float_sw4* m_data;Sarray::m_data261,9781
-  bool prefetched;Sarray::prefetched262,9802
-  std::ofstream of;Sarray::of263,9821
-  float_sw4* dev_data;Sarray::dev_data264,9841
-  inline int min(Sarray::min265,9864
-  inline int max(Sarray::max271,9963
+  inline float_sw4* c_ptr(Sarray::c_ptr126,4297
+  __host__ __device__ inline float_sw4* dev_ptr(Sarray::dev_ptr128,4360
+  inline float_sw4* dev_ptr(Sarray::dev_ptr130,4437
+  void reference(Sarray::reference132,4495
+  void reference_dev(Sarray::reference_dev136,4583
+  inline bool in_range(Sarray::in_range141,4810
+  inline float_sw4& operator()(Sarray::operator()145,4988
+  inline float_sw4& operator()(Sarray::operator()158,5711
+  inline bool is_defined(Sarray::is_defined172,6327
+  int m_ib,Sarray::m_ib173,6381
+  int m_ib, m_ie,Sarray::m_ie173,6381
+  int m_ib, m_ie, m_jb,Sarray::m_jb173,6381
+  int m_ib, m_ie, m_jb, m_je,Sarray::m_je173,6381
+  int m_ib, m_ie, m_jb, m_je, m_kb,Sarray::m_kb173,6381
+  int m_ib, m_ie, m_jb, m_je, m_kb, m_ke;Sarray::m_ke173,6381
+  static bool m_corder;Sarray::m_corder174,6423
+  ssize_t m_base;Sarray::m_base175,6447
+  size_t m_offi,Sarray::m_offi176,6465
+  size_t m_offi, m_offj,Sarray::m_offj176,6465
+  size_t m_offi, m_offj, m_offk,Sarray::m_offk176,6465
+  size_t m_offi, m_offj, m_offk, m_offc,Sarray::m_offc176,6465
+  size_t m_offi, m_offj, m_offk, m_offc, m_npts;Sarray::m_npts176,6465
+  size_t index(Sarray::index179,6613
+  __host__ __device__ size_t index(Sarray::index183,6738
+  size_t index(Sarray::index187,6884
+  void getnonzero(Sarray::getnonzero191,7011
+  int ncomp(Sarray::ncomp208,7709
+  int npts(Sarray::npts209,7746
+  int m_nc,Sarray::m_nc250,9573
+  int m_nc, m_ni,Sarray::m_ni250,9573
+  int m_nc, m_ni, m_nj,Sarray::m_nj250,9573
+  int m_nc, m_ni, m_nj, m_nk;Sarray::m_nk250,9573
+  inline SView& getview(Sarray::getview253,9674
+  SView view;Sarray::view257,9742
+  static std::unordered_map<Sarray::std::unordered_map258,9756
+  static std::unordered_map<std::string, float_sw4*> static_map;Sarray::static_map258,9756
+  bool static_alloc;Sarray::static_alloc259,9821
+  float_sw4* m_data;Sarray::m_data262,9853
+  bool prefetched;Sarray::prefetched263,9874
+  std::ofstream of;Sarray::of264,9893
+  float_sw4* dev_data;Sarray::dev_data265,9913
+  inline int min(Sarray::min266,9936
+  inline int max(Sarray::max272,10035
 
 SecondOrderSection.h,207
 #define SECOND_ORDER_SECTION_H35,1423
@@ -4107,90 +4092,185 @@ struct date_time 64,2867
   int minute;73,2992
   float second;74,3006
 
-foralls.h,3226
-__global__ void forallkernel(14,271
-void forall(19,441
-void forallasync(28,784
-template <int N,37,1109
-void forall(38,1145
-__global__ void forallkernelB(49,1508
-void forallB(63,1932
-class Range 73,2206
-  Range(Range::Range75,2229
-  int start;Range::start81,2452
-  int end;Range::end82,2465
-  int blocks;Range::blocks83,2476
-  int tpb;Range::tpb84,2490
-  bool invalid;Range::invalid85,2501
-template <int N,88,2521
-class RangeGS 89,2545
-  RangeGS(RangeGS::RangeGS91,2570
-  int start;RangeGS::start92,2651
-  int end;RangeGS::end93,2664
-  int blocks;RangeGS::blocks94,2675
-  int tpb;RangeGS::tpb95,2689
-__global__ void forall3kernel(99,2729
-template <int N,108,3181
-__global__ void forall3kernel(109,3213
-__global__ void forall3gskernel(119,3690
-void forall3(131,4209
-template <typename T1,155,5042
-template <typename T1, typename T2,155,5042
-template <typename T1, typename T2, typename T3,155,5042
-void forall3async(156,5110
-template <typename T1,167,5706
-template <typename T1, typename T2,167,5706
-template <typename T1, typename T2, typename T3,167,5706
-void forall3(168,5774
-template <typename T1,177,6144
-template <typename T1, typename T2,177,6144
-template <typename T1, typename T2, typename T3,177,6144
-void forall3GSasync(178,6212
-template <typename T1,186,6554
-template <typename T1, typename T2,186,6554
-template <typename T1, typename T2, typename T3,186,6554
-void forall3GS(187,6622
-__global__ void forall2kernel(199,7033
-template <typename T1,206,7341
-template <typename T1, typename T2,206,7341
-void forall2async(207,7396
-template <typename T1,215,7673
-template <typename T1, typename T2,215,7673
-void forall2(216,7728
-template <int N,227,8064
-template <int N, int M,227,8064
-class RangeAT 228,8095
-  RangeAT(RangeAT::RangeAT230,8120
-  static std::map<RangeAT::std::map306,11320
-  static std::map<std::tuple<int, int, int>, std::tuple<dim3, dim3>> map;RangeAT::map306,11320
-  static std::map<RangeAT::std::map307,11394
-      confs;RangeAT::confs309,11494
-  static std::map<RangeAT::std::map310,11507
-  static std::map<std::tuple<int, int, int>, float> mintime;RangeAT::mintime310,11507
-  static std::map<RangeAT::std::map311,11568
-  static std::map<std::tuple<int, int, int>, int> vloca;RangeAT::vloca311,11568
-  static std::map<RangeAT::std::map312,11625
-  static std::map<std::tuple<int, int, int>, std::ofstream> files;RangeAT::files312,11625
-  static dim3 mint,RangeAT::mint313,11692
-  static dim3 mint, minb;RangeAT::minb313,11692
-  int istart,RangeAT::istart314,11718
-  int istart, jstart,RangeAT::jstart314,11718
-  int istart, jstart, kstart;RangeAT::kstart314,11718
-  int iend,RangeAT::iend315,11748
-  int iend, jend,RangeAT::jend315,11748
-  int iend, jend, kend;RangeAT::kend315,11748
-  int ib,RangeAT::ib316,11772
-  int ib, jb,RangeAT::jb316,11772
-  int ib, jb, kb;RangeAT::kb316,11772
-  int ic,RangeAT::ic317,11790
-  int ic, jc,RangeAT::jc317,11790
-  int ic, jc, kc;RangeAT::kc317,11790
-  int blocks;RangeAT::blocks318,11808
-  int tpb;RangeAT::tpb319,11822
-template <int N,322,11837
-template <int N, typename T1,322,11837
-void forall3asyncAT(323,11886
-#define SW4_VERBOSE333,12295
+cuda_foralls.h,3423
+#define __CUDA_FORALLS_H__2,27
+__global__ void forallkernel(16,325
+void forall(21,495
+void forallasync(30,838
+template <int N,39,1163
+void forall(40,1199
+__global__ void forallkernelB(51,1562
+void forallB(65,1986
+class Range 75,2260
+  Range(Range::Range77,2283
+  int start;Range::start83,2506
+  int end;Range::end84,2519
+  int blocks;Range::blocks85,2530
+  int tpb;Range::tpb86,2544
+  bool invalid;Range::invalid87,2555
+template <int N,90,2575
+class RangeGS 91,2599
+  RangeGS(RangeGS::RangeGS93,2624
+  int start;RangeGS::start94,2705
+  int end;RangeGS::end95,2718
+  int blocks;RangeGS::blocks96,2729
+  int tpb;RangeGS::tpb97,2743
+__global__ void forall3kernel(101,2783
+template <int N,110,3235
+__global__ void forall3kernel(111,3267
+__global__ void forall3gskernel(121,3744
+void forall3(133,4263
+template <typename T1,157,5096
+template <typename T1, typename T2,157,5096
+template <typename T1, typename T2, typename T3,157,5096
+void forall3async(158,5164
+template <typename T1,169,5760
+template <typename T1, typename T2,169,5760
+template <typename T1, typename T2, typename T3,169,5760
+void forall3(170,5828
+template <typename T1,179,6198
+template <typename T1, typename T2,179,6198
+template <typename T1, typename T2, typename T3,179,6198
+void forall3GSasync(180,6266
+template <typename T1,188,6608
+template <typename T1, typename T2,188,6608
+template <typename T1, typename T2, typename T3,188,6608
+void forall3GS(189,6676
+__global__ void forall2kernel(201,7087
+template <typename T1,208,7395
+template <typename T1, typename T2,208,7395
+void forall2async(209,7450
+template <typename T1,217,7727
+template <typename T1, typename T2,217,7727
+void forall2(218,7782
+template <int N,229,8118
+template <int N, int M,229,8118
+class RangeAT 230,8149
+  RangeAT(RangeAT::RangeAT232,8174
+  static std::map<RangeAT::std::map308,11374
+  static std::map<std::tuple<int, int, int>, std::tuple<dim3, dim3>> map;RangeAT::map308,11374
+  static std::map<RangeAT::std::map309,11448
+      confs;RangeAT::confs311,11548
+  static std::map<RangeAT::std::map312,11561
+  static std::map<std::tuple<int, int, int>, float> mintime;RangeAT::mintime312,11561
+  static std::map<RangeAT::std::map313,11622
+  static std::map<std::tuple<int, int, int>, int> vloca;RangeAT::vloca313,11622
+  static std::map<RangeAT::std::map314,11679
+  static std::map<std::tuple<int, int, int>, std::ofstream> files;RangeAT::files314,11679
+  static dim3 mint,RangeAT::mint315,11746
+  static dim3 mint, minb;RangeAT::minb315,11746
+  int istart,RangeAT::istart316,11772
+  int istart, jstart,RangeAT::jstart316,11772
+  int istart, jstart, kstart;RangeAT::kstart316,11772
+  int iend,RangeAT::iend317,11802
+  int iend, jend,RangeAT::jend317,11802
+  int iend, jend, kend;RangeAT::kend317,11802
+  int ib,RangeAT::ib318,11826
+  int ib, jb,RangeAT::jb318,11826
+  int ib, jb, kb;RangeAT::kb318,11826
+  int ic,RangeAT::ic319,11844
+  int ic, jc,RangeAT::jc319,11844
+  int ic, jc, kc;RangeAT::kc319,11844
+  int blocks;RangeAT::blocks320,11862
+  int tpb;RangeAT::tpb321,11876
+template <int N,324,11891
+template <int N, typename T1,324,11891
+void forall3asyncAT(325,11940
+#define SW4_VERBOSE335,12349
+template <typename T,409,15526
+__global__ void forallgskernel(410,15563
+template <int N,415,15733
+template <int N, typename T,415,15733
+void forallX(416,15781
+
+cuda_policies.h,3039
+#define __CUDA_POLICIES_H__2,28
+#define SW4_FORCEINLINE 5,82
+#define SYNC_DEVICE 6,122
+#define SYNC_STREAM 7,188
+#define SW4_PEEK 8,255
+#define SW4_MALLOC_MANAGED(10,318
+#define SW4_MALLOC_DEVICE(11,389
+#define SW4_MALLOC_PINNED(12,452
+#define SW4_FREE_MANAGED(15,544
+#define SW4_FREE_DEVICE(16,592
+#define SW4_FREE_PINNED(17,639
+#define SW4_DEVICE_SUCCESS 19,691
+typedef RAJA::cuda_exec<1024> DEFAULT_LOOP1;21,783
+typedef RAJA::cuda_exec<1024, true> DEFAULT_LOOP1_ASYNC;22,828
+using REDUCTION_POLICY 23,885
+typedef RAJA::cuda_exec<1024> PREDFORT_LOOP_POL;25,930
+typedef RAJA::cuda_exec<512, true> PREDFORT_LOOP_POL_ASYNC;26,979
+typedef RAJA::cuda_exec<1024> CORRFORT_LOOP_POL;28,1040
+typedef RAJA::cuda_exec<512, true> CORRFORT_LOOP_POL_ASYNC;29,1089
+typedef RAJA::cuda_exec<1024> DPDMTFORT_LOOP_POL;31,1150
+typedef RAJA::cuda_exec<256, true> DPDMTFORT_LOOP_POL_ASYNC;33,1201
+typedef RAJA::cuda_exec<1024> SARRAY_LOOP_POL1;35,1263
+using DEFAULT_LOOP2X 37,1312
+using DEFAULT_LOOP2X_ASYNC 42,1590
+using DEFAULT_LOOP3 48,1853
+using SARRAY_LOOP_POL2 62,2576
+using ICSTRESS_EXEC_POL 88,3745
+using ICSTRESS_EXEC_POL_ASYNC 98,4235
+using RHS4_EXEC_POL 117,5074
+using RHS4_EXEC_POL_ASYNC_OLDE 131,5797
+using RHS4_EXEC_POL_ASYNC 145,6530
+using CONSINTP_EXEC_POL1 162,7351
+using ODDIODDJ_EXEC_POL1_ASYNC 172,7846
+using ODDIODDJ_EXEC_POL2_ASYNC 184,8407
+using EVENIODDJ_EXEC_POL_ASYNC 186,8462
+using EVENIEVENJ_EXEC_POL_ASYNC 192,8729
+using ODDIEVENJ_EXEC_POL1_ASYNC 194,8790
+using ODDIEVENJ_EXEC_POL2_ASYNC 196,8850
+using XRHS_POL 198,8906
+using XRHS_POL_ASYNC 206,9225
+using TWILIGHTSG_POL 214,9561
+using CONSINTP_EXEC_POL4 228,10285
+using CONSINTP_EXEC_POL5 230,10332
+using PRELIM_CORR_EXEC_POL1 232,10379
+using PRELIM_CORR_EXEC_POL1_ASYNC 233,10425
+using PRELIM_PRED_EXEC_POL1 235,10484
+using PRELIM_PRED_EXEC_POL1_ASYNC 236,10533
+using ENFORCEBC_CORR_EXEC_POL1 240,10652
+using BCFORT_EXEC_POL1 252,11208
+using BCFORT_EXEC_POL2 253,11248
+using ENERGY4CI_EXEC_POL 255,11293
+using DHI_POL_ASYNC 258,11357
+using GIG_POL_ASYNC 266,11692
+using AVS_POL_ASYNC 271,11974
+using EBFA_POL 281,12515
+using GEPS_POL 292,13043
+using BZ_POL_ASYNC 314,14055
+using INJ_POL_ASYNC 329,14818
+using INJ_POL2_ASYNC 343,15547
+using CA_POL 350,15875
+using SAA_POL 366,16610
+using SII_POL 384,17477
+using TGU_POL_ASYNC 399,18219
+using AMVPCa_POL 414,18974
+using AMVPCu_POL 428,19688
+using AMVC2Ca_POL_ASYNC 442,20402
+using AMVC2Cu_POL 456,21123
+using ASG4WC_POL_ASYNC 471,21858
+using ADDSGD_POL_ASYNC 482,22292
+using ADDSGD_POL2_ASYNC 501,23218
+using BCFORT_EXEC_POL2_ASYNC 521,24167
+using BCFORT_EXEC_POL3_ASYNC 535,24904
+using CURV_POL_ORG 546,25432
+using CURV_POL 553,25754
+using BUFFER_POL 555,25808
+using RHS4CU_POL_ASYNC 561,26113
+using XRHS_POL2 572,26632
+using RHS4TH3_POL_ASYNC 579,26957
+using RHS4TH3_POL2_ASYNC 596,27776
+using VBSC_POL 631,29247
+using AFCC_POL_ASYNC 636,29514
+using MPFC_POL_ASYNC 647,30032
+using FORCE_LOOP_ASYNC 656,30402
+using FORCETT_LOOP_ASYNC 657,30454
+
+foralls.h,30
+#define __SW4_FORALL_H__2,25
 
 forallsdecl.h,821
 #define __FORALLSDECL_H__ 2,26
@@ -4216,11 +4296,265 @@ template <int N,17,623
 template <int N, int M,17,623
 std::map<std::tuple<int, int, int>, std::ofstream> RangeAT<N, M, L>::files;files18,654
 
+hip_foralls.h,3220
+#define __HIP_FORALLS_H__2,26
+__global__ void forallkernel(17,324
+void forall(22,494
+void forallasync(33,943
+template <int N,43,1343
+void forall(44,1379
+__global__ void forallkernelB(56,1817
+void forallB(70,2241
+class Range 81,2591
+  Range(Range::Range83,2614
+  int start;Range::start87,2779
+  int end;Range::end88,2792
+  int blocks;Range::blocks89,2803
+  int tpb;Range::tpb90,2817
+template <int N,93,2832
+class RangeGS 94,2856
+  RangeGS(RangeGS::RangeGS96,2881
+  int start;RangeGS::start97,2962
+  int end;RangeGS::end98,2975
+  int blocks;RangeGS::blocks99,2986
+  int tpb;RangeGS::tpb100,3000
+__global__ void forall3kernel(104,3040
+template <int N,113,3492
+__global__ void forall3kernel(114,3524
+__global__ void forall3gskernel(124,4001
+void forall3(136,4520
+template <typename T1,161,5444
+template <typename T1, typename T2,161,5444
+template <typename T1, typename T2, typename T3,161,5444
+void forall3async(162,5512
+template <typename T1,171,6012
+template <typename T1, typename T2,171,6012
+template <typename T1, typename T2, typename T3,171,6012
+void forall3(172,6080
+template <typename T1,181,6449
+template <typename T1, typename T2,181,6449
+template <typename T1, typename T2, typename T3,181,6449
+void forall3GSasync(182,6517
+template <typename T1,191,6888
+template <typename T1, typename T2,191,6888
+template <typename T1, typename T2, typename T3,191,6888
+void forall3GS(192,6956
+__global__ void forall2kernel(204,7366
+template <typename T1,211,7674
+template <typename T1, typename T2,211,7674
+void forall2async(212,7729
+template <typename T1,222,8116
+template <typename T1, typename T2,222,8116
+void forall2(223,8171
+template <int N,234,8506
+template <int N, int M,234,8506
+class RangeAT 235,8537
+  RangeAT(RangeAT::RangeAT237,8562
+  static std::map<RangeAT::std::map313,11762
+  static std::map<std::tuple<int, int, int>, std::tuple<dim3, dim3>> map;RangeAT::map313,11762
+  static std::map<RangeAT::std::map314,11836
+      confs;RangeAT::confs316,11936
+  static std::map<RangeAT::std::map317,11949
+  static std::map<std::tuple<int, int, int>, float> mintime;RangeAT::mintime317,11949
+  static std::map<RangeAT::std::map318,12010
+  static std::map<std::tuple<int, int, int>, int> vloca;RangeAT::vloca318,12010
+  static std::map<RangeAT::std::map319,12067
+  static std::map<std::tuple<int, int, int>, std::ofstream> files;RangeAT::files319,12067
+  static dim3 mint,RangeAT::mint320,12134
+  static dim3 mint, minb;RangeAT::minb320,12134
+  int istart,RangeAT::istart321,12160
+  int istart, jstart,RangeAT::jstart321,12160
+  int istart, jstart, kstart;RangeAT::kstart321,12160
+  int iend,RangeAT::iend322,12190
+  int iend, jend,RangeAT::jend322,12190
+  int iend, jend, kend;RangeAT::kend322,12190
+  int ib,RangeAT::ib323,12214
+  int ib, jb,RangeAT::jb323,12214
+  int ib, jb, kb;RangeAT::kb323,12214
+  int ic,RangeAT::ic324,12232
+  int ic, jc,RangeAT::jc324,12232
+  int ic, jc, kc;RangeAT::kc324,12232
+  int blocks;RangeAT::blocks325,12250
+  int tpb;RangeAT::tpb326,12264
+template <int N,329,12279
+template <int N, typename T1,329,12279
+void forall3asyncAT(330,12328
+#define SW4_VERBOSE340,12734
+
+hip_policies.h,3029
+#define __HIP_POLICIES_H__2,27
+#define SW4_FORCEINLINE 5,80
+#define SYNC_DEVICE 6,120
+#define SYNC_STREAM 7,185
+#define SW4_PEEK 8,251
+#define SW4_MALLOC_MANAGED(10,313
+#define SW4_MALLOC_DEVICE(11,383
+#define SW4_MALLOC_PINNED(12,445
+#define SW4_FREE_MANAGED(15,535
+#define SW4_FREE_DEVICE(16,582
+#define SW4_FREE_PINNED(17,628
+#define SW4_DEVICE_SUCCESS 19,679
+typedef RAJA::hip_exec<1024> DEFAULT_LOOP1;21,769
+typedef RAJA::hip_exec<1024, true> DEFAULT_LOOP1_ASYNC;22,813
+using REDUCTION_POLICY 23,869
+typedef RAJA::hip_exec<1024> PREDFORT_LOOP_POL;25,913
+typedef RAJA::hip_exec<512, true> PREDFORT_LOOP_POL_ASYNC;26,961
+typedef RAJA::hip_exec<1024> CORRFORT_LOOP_POL;28,1021
+typedef RAJA::hip_exec<512, true> CORRFORT_LOOP_POL_ASYNC;29,1069
+typedef RAJA::hip_exec<1024> DPDMTFORT_LOOP_POL;31,1129
+typedef RAJA::hip_exec<256, true> DPDMTFORT_LOOP_POL_ASYNC;33,1179
+typedef RAJA::hip_exec<1024> SARRAY_LOOP_POL1;35,1240
+using DEFAULT_LOOP2X 37,1288
+using DEFAULT_LOOP2X_ASYNC 42,1563
+using DEFAULT_LOOP3 47,1849
+using SARRAY_LOOP_POL2 61,2565
+using ICSTRESS_EXEC_POL 87,3723
+using ICSTRESS_EXEC_POL_ASYNC 97,4208
+using RHS4_EXEC_POL 116,5038
+using RHS4_EXEC_POL_ASYNC_OLDE 130,5754
+using RHS4_EXEC_POL_ASYNC 144,6480
+using CONSINTP_EXEC_POL1 161,7294
+using ODDIODDJ_EXEC_POL1_ASYNC 171,7784
+using ODDIODDJ_EXEC_POL2_ASYNC 182,8367
+using EVENIODDJ_EXEC_POL_ASYNC 184,8422
+using EVENIEVENJ_EXEC_POL_ASYNC 190,8686
+using ODDIEVENJ_EXEC_POL1_ASYNC 192,8747
+using ODDIEVENJ_EXEC_POL2_ASYNC 194,8807
+using XRHS_POL 196,8863
+using XRHS_POL_ASYNC 204,9178
+using TWILIGHTSG_POL 212,9510
+using CONSINTP_EXEC_POL4 226,10227
+using CONSINTP_EXEC_POL5 228,10274
+using PRELIM_CORR_EXEC_POL1 230,10321
+using PRELIM_CORR_EXEC_POL1_ASYNC 231,10367
+using PRELIM_PRED_EXEC_POL1 233,10426
+using PRELIM_PRED_EXEC_POL1_ASYNC 234,10475
+using ENFORCEBC_CORR_EXEC_POL1 238,10594
+using BCFORT_EXEC_POL1 249,11172
+using BCFORT_EXEC_POL2 250,11212
+using ENERGY4CI_EXEC_POL 252,11257
+using DHI_POL_ASYNC 255,11321
+using GIG_POL_ASYNC 263,11652
+using AVS_POL_ASYNC 268,11931
+using EBFA_POL 278,12467
+using GEPS_POL 289,12990
+using BZ_POL_ASYNC 311,13991
+using INJ_POL_ASYNC 326,14747
+using INJ_POL2_ASYNC 340,15469
+using CA_POL 347,15794
+using SAA_POL 363,16522
+using SII_POL 381,17382
+using TGU_POL_ASYNC 396,18117
+using AMVPCa_POL 411,18865
+using AMVPCu_POL 425,19572
+using AMVC2Ca_POL_ASYNC 439,20279
+using AMVC2Cu_POL 453,20993
+using ASG4WC_POL_ASYNC 468,21721
+using ADDSGD_POL_ASYNC 479,22151
+using ADDSGD_POL2_ASYNC 498,23070
+using BCFORT_EXEC_POL2_ASYNC 518,24012
+using BCFORT_EXEC_POL3_ASYNC 532,24742
+using CURV_POL_ORG 543,25265
+using CURV_POL 550,25583
+using BUFFER_POL 552,25637
+using RHS4CU_POL_ASYNC 558,25939
+using XRHS_POL2 569,26453
+using RHS4TH3_POL_ASYNC 576,26774
+using RHS4TH3_POL2_ASYNC 593,27586
+using VBSC_POL 628,29043
+using AFCC_POL_ASYNC 633,29307
+using MPFC_POL_ASYNC 644,29820
+using FORCE_LOOP_ASYNC 653,30186
+using FORCETT_LOOP_ASYNC 654,30237
+
 impose_cartesian_bc.h,38
 #define impose_cartesian_bc_h34,1409
 
 nearlyEqual.h,30
 #define NEARLYEQUAL_H34,1401
+
+omp_policies.h,2834
+#define __OMP_POLICIES_H__2,27
+#define SW4_FORCEINLINE4,55
+using REDUCTION_POLICY 6,80
+using DEFAULT_LOOP1 8,124
+using DEFAULT_LOOP1_ASYNC 9,175
+using DEFAULT_LOOP2 11,233
+using DEFAULT_LOOP2X 15,408
+using DEFAULT_LOOP2X_ASYNC 16,446
+using DEFAULT_LOOP3 18,491
+using DEFAULT_LOOP4 24,725
+using ADDSGD_POL_ASYNC 33,1058
+using XRHS_POL 42,1394
+using XRHS_POL_ASYNC 47,1622
+using RHS4_EXEC_POL 49,1656
+using RHS4_EXEC_POL_ASYNC 50,1688
+using ICSTRESS_EXEC_POL 52,1727
+using ICSTRESS_EXEC_POL_ASYNC 53,1768
+using CONSINTP_EXEC_POL1 55,1816
+using CONSINTP_EXEC_POL3 57,1859
+using CONSINTP_EXEC_POL4 59,1902
+using PRELIM_CORR_EXEC_POL1 61,1945
+using PRELIM_CORR_EXEC_POL1_ASYNC 62,1990
+using PRELIM_PRED_EXEC_POL1 64,2042
+using PRELIM_PRED_EXEC_POL1_ASYNC 65,2087
+using ENFORCEBC_CORR_EXEC_POL1 67,2139
+using GEPS_EXEC_POL 70,2233
+typedef RAJA::omp_parallel_for_exec SARRAY_LOOP_POL1;72,2271
+using SARRAY_LOOP_POL2 74,2326
+typedef RAJA::omp_parallel_for_exec PREDFORT_LOOP_POL;76,2367
+typedef RAJA::omp_parallel_for_exec PREDFORT_LOOP_POL_ASYNC;77,2422
+typedef RAJA::omp_parallel_for_exec CORRFORT_LOOP_POL;79,2484
+typedef RAJA::omp_parallel_for_exec CORRFORT_LOOP_POL_ASYNC;80,2539
+typedef RAJA::omp_parallel_for_exec DPDMTFORT_LOOP_POL;82,2601
+typedef RAJA::omp_parallel_for_exec DPDMTFORT_LOOP_POL_ASYNC;83,2657
+using DPDMT_WIND_LOOP_POL 85,2720
+using DPDMT_WIND_LOOP_POL_ASYNC 86,2763
+using COPY_KPLANE_EXEC_POL 88,2813
+using ENERGY4CI_EXEC_POL 92,2904
+using ODDIODDJ_EXEC_POL1_ASYNC 102,3436
+using ODDIODDJ_EXEC_POL2_ASYNC 104,3485
+using ODDIEVENJ_EXEC_POL1_ASYNC 106,3534
+using ODDIEVENJ_EXEC_POL2 108,3584
+using BCFORT_EXEC_POL1 110,3628
+using BCFORT_EXEC_POL2 112,3669
+using EVENIODDJ_EXEC_POL_ASYNC 114,3710
+using EVENIEVENJ_EXEC_POL_ASYNC 116,3759
+using TWILIGHTSG_POL 118,3809
+#define SYNC_DEVICE119,3847
+#define SYNC_STREAM120,3867
+using DHI_POL_ASYNC 123,3909
+using GIG_POL 125,3947
+using AVS_POL_ASYNC 127,3979
+using EBFA_POL 129,4017
+using GEPS_POL 132,4093
+using BZ_POL_ASYNC 136,4154
+using INJ_POL_ASYNC 140,4232
+using INJ_POL2_ASYNC 142,4270
+uing CA_POL 145,4353
+using SAA_POL 149,4402
+using SII_POL 152,4466
+using TGU_POL_ASYNC 155,4522
+using AMVPCa_POL 158,4585
+using AMVPCu_POL 159,4619
+using AMVC2Ca_POL_ASYNC 160,4653
+using AMVC2Cu_POL 161,4694
+using ASG4WC_POL_ASYNC 164,4750
+using ADDSGD_POL_ASYNC 167,4807
+using ADDSGD_POL2_ASYNC 169,4848
+using BCFORT_EXEC_POL2_ASYNC 172,4906
+using BCFORT_EXEC_POL3_ASYNC 173,4952
+using CURV_POL 175,5022
+using BUFFER_POL 178,5072
+using RHS4CU_POL_ASYNC 181,5133
+using XRHS_POL2 184,5195
+using RHS4TH3_POL_ASYNC 185,5223
+using RHS4TH3_POL2_ASYNC 186,5259
+using VBSC_POL 188,5297
+using AFCC_POL 190,5330
+using MPFC_POL_ASYNC 192,5363
+using FORCE_LOOP_ASYNC 195,5413
+using FORCETT_LOOP_ASYNC 196,5467
 
 optimizedcuda.h,200
 #define __OPTIMIZEDCUDA_RHS__2,30
@@ -4233,134 +4567,10 @@ __launch_bounds__(10,295
 #undef u708,32710
 #undef up709,32719
 
-policies.h,4982
-#define __POLICIES_H__2,23
-#define SW4_FORCEINLINE 6,91
-#define SYNC_DEVICE 7,131
-#define SYNC_STREAM 8,197
-#define SW4_PEEK 9,264
-typedef RAJA::cuda_exec<1024> DEFAULT_LOOP1;11,379
-typedef RAJA::cuda_exec<1024, true> DEFAULT_LOOP1_ASYNC;12,424
-using REDUCTION_POLICY 13,481
-typedef RAJA::cuda_exec<1024> PREDFORT_LOOP_POL;15,526
-typedef RAJA::cuda_exec<512, true> PREDFORT_LOOP_POL_ASYNC;16,575
-typedef RAJA::cuda_exec<1024> CORRFORT_LOOP_POL;18,636
-typedef RAJA::cuda_exec<512, true> CORRFORT_LOOP_POL_ASYNC;19,685
-typedef RAJA::cuda_exec<1024> DPDMTFORT_LOOP_POL;21,746
-typedef RAJA::cuda_exec<256, true> DPDMTFORT_LOOP_POL_ASYNC;23,797
-typedef RAJA::cuda_exec<1024> SARRAY_LOOP_POL1;25,859
-using XRHS_POL 29,935
-using XRHS_POL_ASYNC 37,1254
-using DEFAULT_LOOP2 45,1584
-using DEFAULT_LOOP2X 51,1850
-using DEFAULT_LOOP2X_ASYNC 56,2124
-using DEFAULT_LOOP3 62,2383
-using DEFAULT_LOOP4 69,2733
-using RHS4_EXEC_POL 78,3163
-using RHS4_EXEC_POL_ASYNC 86,3514
-using ICSTRESS_EXEC_POL 94,3876
-using ICSTRESS_EXEC_POL_ASYNC 100,4146
-using CONSINTP_EXEC_POL1 106,4427
-using CONSINTP_EXEC_POL3 116,4885
-using CONSINTP_EXEC_POL4 123,5169
-using CONSINTP_EXEC_POL5 130,5397
-using PRELIM_CORR_EXEC_POL1 136,5626
-using PRELIM_CORR_EXEC_POL1_ASYNC 137,5672
-using PRELIM_PRED_EXEC_POL1 144,5912
-using PRELIM_PRED_EXEC_POL1_ASYNC 145,5961
-using ENFORCEBC_CORR_EXEC_POL1 147,6023
-using GEPS_EXEC_POL 154,6301
-using SARRAY_LOOP_POL2 161,6580
-using DPDMT_WIND_LOOP_POL 171,7014
-using DPDMT_WIND_LOOP_POL_ASYNC 172,7060
-using COPY_KPLANE_EXEC_POL 204,8422
-using ENERGY4CI_EXEC_POL 212,8753
-using ODDIODDJ_EXEC_POL1_ASYNC 225,9298
-using ODDIODDJ_EXEC_POL2 235,9762
-using ODDIEVENJ_EXEC_POL1 242,10053
-using ODDIEVENJ_EXEC_POL2 248,10289
-using BCFORT_EXEC_POL1 255,10581
-using BCFORT_EXEC_POL2 262,10863
-using EVENIODDJ_EXEC_POL_ASYNC 268,11088
-using EVENIEVENJ_EXEC_POL 274,11351
-using TWILIGHTSG_POL 276,11406
-using DEFAULT_LOOP2X 286,11787
-using DEFAULT_LOOP2X_ASYNC 291,12065
-using DEFAULT_LOOP3 297,12328
-using SARRAY_LOOP_POL2 311,13051
-using ICSTRESS_EXEC_POL 337,14220
-using ICSTRESS_EXEC_POL_ASYNC 347,14710
-using RHS4_EXEC_POL 366,15549
-using RHS4_EXEC_POL_ASYNC_OLDE 380,16272
-using RHS4_EXEC_POL_ASYNC 394,17005
-using CONSINTP_EXEC_POL1 411,17826
-using ODDIODDJ_EXEC_POL1_ASYNC 421,18321
-using ODDIODDJ_EXEC_POL2_ASYNC 433,18882
-using EVENIODDJ_EXEC_POL_ASYNC 435,18937
-using EVENIEVENJ_EXEC_POL_ASYNC 441,19204
-using ODDIEVENJ_EXEC_POL1_ASYNC 443,19265
-using ODDIEVENJ_EXEC_POL2_ASYNC 445,19325
-using XRHS_POL 447,19381
-using XRHS_POL_ASYNC 455,19700
-using TWILIGHTSG_POL 463,20036
-using CONSINTP_EXEC_POL4 477,20760
-using CONSINTP_EXEC_POL5 479,20807
-using PRELIM_CORR_EXEC_POL1 481,20854
-using PRELIM_CORR_EXEC_POL1_ASYNC 482,20900
-using PRELIM_PRED_EXEC_POL1 484,20959
-using PRELIM_PRED_EXEC_POL1_ASYNC 485,21008
-using ENFORCEBC_CORR_EXEC_POL1 489,21127
-using BCFORT_EXEC_POL1 501,21683
-using BCFORT_EXEC_POL2 502,21723
-using ENERGY4CI_EXEC_POL 504,21768
-#define SW4_FORCEINLINE514,22011
-using REDUCTION_POLICY 516,22036
-using DEFAULT_LOOP1 518,22080
-using DEFAULT_LOOP1_ASYNC 519,22131
-using DEFAULT_LOOP2 521,22189
-using DEFAULT_LOOP2X 525,22364
-using DEFAULT_LOOP2X_ASYNC 526,22402
-using DEFAULT_LOOP3 528,22447
-using DEFAULT_LOOP4 534,22681
-using ADDSGD_POL_ASYNC 543,23014
-using XRHS_POL 552,23350
-using XRHS_POL_ASYNC 557,23578
-using RHS4_EXEC_POL 559,23612
-using RHS4_EXEC_POL_ASYNC 560,23644
-using ICSTRESS_EXEC_POL 562,23683
-using ICSTRESS_EXEC_POL_ASYNC 563,23724
-using CONSINTP_EXEC_POL1 565,23772
-using CONSINTP_EXEC_POL3 567,23815
-using CONSINTP_EXEC_POL4 569,23858
-using PRELIM_CORR_EXEC_POL1 571,23901
-using PRELIM_CORR_EXEC_POL1_ASYNC 572,23946
-using PRELIM_PRED_EXEC_POL1 574,23998
-using PRELIM_PRED_EXEC_POL1_ASYNC 575,24043
-using ENFORCEBC_CORR_EXEC_POL1 577,24095
-using GEPS_EXEC_POL 580,24189
-typedef RAJA::omp_parallel_for_exec SARRAY_LOOP_POL1;582,24227
-using SARRAY_LOOP_POL2 584,24282
-typedef RAJA::omp_parallel_for_exec PREDFORT_LOOP_POL;586,24323
-typedef RAJA::omp_parallel_for_exec PREDFORT_LOOP_POL_ASYNC;587,24378
-typedef RAJA::omp_parallel_for_exec CORRFORT_LOOP_POL;589,24440
-typedef RAJA::omp_parallel_for_exec CORRFORT_LOOP_POL_ASYNC;590,24495
-typedef RAJA::omp_parallel_for_exec DPDMTFORT_LOOP_POL;592,24557
-typedef RAJA::omp_parallel_for_exec DPDMTFORT_LOOP_POL_ASYNC;593,24613
-using DPDMT_WIND_LOOP_POL 595,24676
-using DPDMT_WIND_LOOP_POL_ASYNC 596,24719
-using COPY_KPLANE_EXEC_POL 598,24769
-using ENERGY4CI_EXEC_POL 602,24860
-using ODDIODDJ_EXEC_POL1_ASYNC 612,25392
-using ODDIODDJ_EXEC_POL2_ASYNC 614,25441
-using ODDIEVENJ_EXEC_POL1_ASYNC 616,25490
-using ODDIEVENJ_EXEC_POL2 618,25540
-using BCFORT_EXEC_POL1 620,25584
-using BCFORT_EXEC_POL2 622,25625
-using EVENIODDJ_EXEC_POL_ASYNC 624,25666
-using EVENIEVENJ_EXEC_POL_ASYNC 626,25715
-using TWILIGHTSG_POL 628,25765
-#define SYNC_DEVICE629,25803
-#define SYNC_STREAM630,25823
+policies.h,90
+#define __SW4_POLICIES_H__2,27
+#define ENABLE_GPU 5,103
+#define ENABLE_GPU_ERROR 9,180
 
 readhdf5.h,28
 #define _READHDF5_H34,1399
