@@ -217,6 +217,7 @@ Sarray::Sarray(const Sarray& u) : static_alloc(false) {
   dev_data = NULL;
   define_offsets();
   prefetched = false;
+  // for HIP use __HIP_DEVICE_COMPILE__
   // #ifdef __CUDA_ARCH__
   //   printf("Creating a device object \n");
   //   bool device_object=true;

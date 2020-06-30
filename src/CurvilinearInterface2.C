@@ -600,7 +600,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   //   int maxit = 30;
   //   float_sw4 reltol=1e-6, abstol=1e-6;
   int iter = 0;
-  int three = 3, one = 1;
+  //int three = 3, one = 1;
 
   int nimb = m_Mass_block.m_ie - m_Mass_block.m_ib + 1;
   // Block Jacobi, lhs*x+rhs=0 and lhs=M+N --> M*xp+N*x+rhs=0 -->
@@ -688,6 +688,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
     // magma_int_t m_one = 1;
     //  magma_int_t batchsize=(l_ie-l_ib)+nimb*(l_je-l_jb)+1;
     // std::cout<<"BATCH SIZE IN SOLVE IS "<<batchsize<<"\n"<<std::flush;
+    int three = 3, one = 1;
     magma_trans_t m_trans = MagmaNoTrans;
     SW4_MARK_BEGIN("MAGMA_DGETRS");
     // magma_int_t retval =

@@ -780,7 +780,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       PROFILER_START;
 #ifdef SW4_TRACK_MPI
       t6 = SW4_CHRONO_NOW;
-      cudaProfilerOn = true;
+      ProfilerOn = true;
 #endif
     }
 #ifdef SW4_TRACK_MPI
@@ -1240,7 +1240,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     }
 #ifdef SW4_TRACK_MPI
     std::chrono::high_resolution_clock::time_point t4 = SW4_CHRONO_NOW;
-    if (cudaProfilerOn) step_sm.insert(0, SW4_CHRONO_DURATION_MS(t3, t4));
+    if (ProfilerOn) step_sm.insert(0, SW4_CHRONO_DURATION_MS(t3, t4));
 #endif
     if (currentTimeStep == mNumberOfTimeSteps[event]) {
       t2 = SW4_CHRONO_NOW;
@@ -4900,8 +4900,7 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
     }  // end if bcType[g][4] == bStressFree
     if (m_bcType[g][5] == bStressFree) {
       SW4_MARK_BEGIN("enforceBCfreeAtt2::SET 2");
-    std:;
-      cerr << "WARNING :: CODE EXECUTING ON CPU solve.C Line 4929 \n";
+      std::cerr << "WARNING :: CODE EXECUTING ON CPU solve.C Line 4929 \n";
       int nk = m_global_nz[g];
       // const float_sw4 i6  = 1.0/6;
       const float_sw4 d4a = 2.0 / 3;

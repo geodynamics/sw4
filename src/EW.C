@@ -616,7 +616,7 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
       NO_TOPO(1e38),
       ForceVector(NULL),
       ForceAddress(NULL),
-      cudaProfilerOn(false) {
+      ProfilerOn(false) {
   MPI_Comm_rank(MPI_COMM_WORLD, &m_myRank);
   MPI_Comm_size(MPI_COMM_WORLD, &m_nProcs);
 
@@ -711,7 +711,7 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
     // sprintf(fname,"sw4-error-log-p%i.txt", m_myRank);
     // msgStream.open(fname);
 
-#if defined(ENABLE_CUDA)
+#if defined(ENABLE_GPU)
   float_sw4* tmpa =
       SW4_NEW(Space::Managed, float_sw4[6 + 384 + 24 + 48 + 6 + 384 + 6 + 6]);
   m_sbop = tmpa;  // PTR_PUSH(Space::Managed,m_sbop);
@@ -736,7 +736,7 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
 // Destructor
 EW::~EW() {
   // std::cout<<"EW::~EW() ...\n"<<std::flush;
-#if defined(ENABLE_CUDA)
+#if defined(ENABLE_GPU)
   ::operator delete[](m_sbop, Space::Managed);
 #endif
   ::operator delete[](viewArrayActual, Space::Managed);
@@ -2511,8 +2511,10 @@ bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
     for (int g = 0; g < mNumberOfGrids; g++) {
       size_t npts = a_U[g].m_npts;
       float_sw4* uexact = SW4_NEW(Space::Managed, float_sw4[npts]);
+#if defined(ENABLE_CUDA)
       SW4_CheckDeviceError(cudaMemPrefetchAsync(
           uexact, npts * sizeof(float_sw4), global_variables.device, 0));
+#endif
       //       get_exact_point_source( a_U[g].c_ptr(), a_t, g, *sources[0] );
       get_exact_point_source(uexact, a_t, g, *sources[0]);
       a_U[g].prefetch();
@@ -4617,11 +4619,11 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
 
       firstcall = false;
     }
-#ifdef ENABLE_CUDA
-    typedef RAJA::cuda_exec<32, true> FORCE_LOOP_ASYNC;
-#else
-    using FORCE_LOOP_ASYNC = RAJA::omp_parallel_for_exec;
-#endif
+// #ifdef ENABLE_CUDA
+//     typedef RAJA::cuda_exec<32, true> FORCE_LOOP_ASYNC;
+// #else
+//     using FORCE_LOOP_ASYNC = RAJA::omp_parallel_for_exec;
+// #endif
     GPSL = GPS;
     idnts_local = idnts;
     float_sw4** ForceAddress_copy = ForceAddress;
@@ -4873,11 +4875,11 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
     int* idnts_local = idnts;
 
     float_sw4** ForceAddress_copy = ForceAddress;
-#ifdef ENABLE_CUDA
-    typedef RAJA::cuda_exec<1024, true> FORCETT_LOOP_ASYNC;
-#else
-    using FORCETT_LOOP_ASYNC = RAJA::omp_parallel_for_exec;
-#endif
+// #ifdef ENABLE_CUDA
+//     typedef RAJA::cuda_exec<1024, true> FORCETT_LOOP_ASYNC;
+// #else
+//     using FORCETT_LOOP_ASYNC = RAJA::omp_parallel_for_exec;
+// #endif
 
     for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
     SW4_MARK_BEGIN("FORCE_TT::DEVICE");
@@ -4927,7 +4929,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     a_U[g].prefetch();
     a_Mu[g].prefetch();
     a_Lambda[g].prefetch();
-#ifdef ENABLE_CUDA
+#ifdef ENABLE_GPU
     prefetch_to_device(m_sg_str_x[g]);
     prefetch_to_device(m_sg_str_y[g]);
     prefetch_to_device(m_sg_str_z[g]);

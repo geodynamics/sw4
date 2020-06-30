@@ -191,4 +191,8 @@ using AFCC_POL = DEFAULT_LOOP2;
 
 using MPFC_POL_ASYNC = DEFAULT_LOOP3; 
 
+// in EW.C
+using FORCE_LOOP_ASYNC = RAJA::omp_parallel_for_exec;
+using FORCETT_LOOP_ASYNC = RAJA::omp_parallel_for_exec;
+
 #endif

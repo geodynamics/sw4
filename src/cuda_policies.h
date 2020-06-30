@@ -6,6 +6,17 @@
 #define SYNC_DEVICE SW4_CheckDeviceError(cudaDeviceSynchronize())
 #define SYNC_STREAM SW4_CheckDeviceError(cudaStreamSynchronize(0))
 #define SW4_PEEK SW4_CheckDeviceError(cudaPeekAtLastError());
+
+
+#define SW4_MALLOC_MANAGED(addr,size) (cudaMallocManaged(addr,size))
+#define SW4_MALLOC_DEVICE(addr,size) (cudaMalloc(addr,size))
+#define SW4_MALLOC_PINNED(addr,size) (cudaHostAlloc(addr,size,cudaHostAllocMapped))
+
+#define SW4_FREE_MANAGED(addr) (cudaFree(addr))
+#define SW4_FREE_DEVICE(addr) (cudaFree(addr))
+#define SW4_FREE_PINNED(addr) (cudaFreeHost(addr))
+
+#define SW4_DEVICE_SUCCESS cudaSuccess
 //   SW4_CheckDeviceError(cudaStreamSynchronize(0));
 typedef RAJA::cuda_exec<1024> DEFAULT_LOOP1;
 typedef RAJA::cuda_exec<1024, true> DEFAULT_LOOP1_ASYNC;
@@ -639,4 +650,9 @@ using MPFC_POL_ASYNC = RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA:
               1, RAJA::cuda_threadblock_exec<1>,
               RAJA::statement::For<2, RAJA::cuda_threadblock_exec<1024>,
                                    RAJA::statement::Lambda<0>>>>>>;
+
+
+// IN EW.C
+using FORCE_LOOP_ASYNC = RAJA::cuda_exec<32, true>; 
+using FORCETT_LOOP_ASYNC = RAJA::cuda_exec<1024, true>;
 #endif

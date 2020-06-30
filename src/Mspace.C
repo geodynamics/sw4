@@ -2,11 +2,25 @@
 
 #include "Mspace.h"
 #include "caliper.h"
+#include "policies.h"
 struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0,
                                                          0, 0, 1, 0};
 using namespace std;
 
 void presetGPUID() {
+#if defined(ENABLE_GPU_ERROR)
+  std::cerr<<" Compilation error. Both ENABLE_CUDA and ENABLE_HIP are defined\n";
+  abort();
+#endif // ENABLE_GPU_ERROR 
+#if defined(ENABLE_GPU)
+
+#ifdef USE_MAGMA
+  if (magma_init() != MAGMA_SUCCESS) {
+    std::cerr << "ERROR MAGMA INIT FAILED\n";
+    abort();
+  }
+#endif // USE_MAGMA
+
 #ifdef ENABLE_CUDA
   int devices_per_node = 4;
   SW4_CheckDeviceError(cudaGetDeviceCount(&devices_per_node));
@@ -30,14 +44,25 @@ void presetGPUID() {
     else
       printf("NVML SET CPU AFFINITY CALLED SUCCESFULLY\n");
   }
-  printf("Device set to %d \n", global_variables.device);
-#ifdef USE_MAGMA
-  if (magma_init() != MAGMA_SUCCESS) {
-    std::cerr << "ERROR MAGMA INIT FAILED\n";
-    abort();
-  }
-#endif
-#endif
+  
+
+
+#endif // ENABLE_CUDA
+
+#ifdef ENABLE_HIP
+  int devices_per_node = 4;
+  SW4_CheckDeviceError(hipGetDeviceCount(&devices_per_node));
+  global_variables.num_devices = devices_per_node;
+  if (devices_per_node > 1) {
+    char *crank = getenv("OMPI_COMM_WORLD_LOCAL_RANK");
+    int device = atoi(crank) % devices_per_node;
+    global_variables.device = device;
+    printf(" presetGPU Called ::  LOCAL RANK %d \n", device);
+#endif // ENABLE_HIP
+
+
+printf("Device set to %d \n", global_variables.device);
+#endif // ENABLE_GPU
 }
 
 typedef struct {
@@ -64,7 +89,12 @@ pattr_t *patpush(void *ptr, pattr_t *ss) {
 
 void check_mem() {
   size_t mfree, mtotal;
+#if defined(ENABLE_CUDA)
   SW4_CheckDeviceError(cudaMemGetInfo(&mfree, &mtotal));
+#endif
+#if defined(ENABLE_HIP)
+  SW4_CheckDeviceError(hipMemGetInfo(&mfree, &mtotal));
+#endif
   global_variables.gpu_memory_hwm =
       std::max((mtotal - mfree), global_variables.gpu_memory_hwm);
 }
@@ -116,13 +146,13 @@ void print_hwm() {
 #endif  // ENABLE_CUDA
 }
 void *operator new(std::size_t size, Space loc) throw() {
-#ifdef ENABLE_CUDA
+#ifdef ENABLE_GPU
   if (loc == Space::Managed) {
     // std::cout<<"Space::Managed allocation \n";
     if (size == 0) size = 1;  // new has to return an valid pointer for 0 size.
     void *ptr;
 #ifndef SW4_USE_UMPIRE
-    if (cudaMallocManaged(&ptr, size) != cudaSuccess) {
+    if (SW4_MALLOC_MANAGED(&ptr, size) != SW4_DEVICE_SUCCESS) {
       std::cerr << "Mananged memory allocation failed " << size << "\n";
       throw std::bad_alloc();
     } else {
@@ -130,25 +160,29 @@ void *operator new(std::size_t size, Space loc) throw() {
       global_variables.curr_mem += size;
       global_variables.max_mem =
           std::max(global_variables.max_mem, global_variables.curr_mem);
+#if defined(ENABLE_CUDA)
       SW4_CheckDeviceError(cudaMemAdvise(ptr, size,
                                          cudaMemAdviseSetPreferredLocation,
                                          global_variables.device));
+#endif
       if (ptr == NULL) {
         std::cerr << "NULL POINTER \n" << std::flush;
         abort();
       }
       return ptr;
     }
-#else
+#else // SW4_USE_UMPIRE
     umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
     auto allocator = rma.getAllocator("UM_pool");
     ptr = static_cast<void *>(allocator.allocate(size));
+#if defined(ENABLE_CUDA)
     SW4_CheckDeviceError(cudaMemAdvise(
         ptr, size, cudaMemAdviseSetPreferredLocation, global_variables.device));
+#endif
     // std::cout<<"PTR 1 "<<ptr<<"\n";
     // SW4_CheckDeviceError(cudaMemset(ptr,0,size));
     return ptr;
-#endif
+#endif // SW4_USE_UMPIRE
   } else if (loc == Space::Host) {
     // std::cout<<"Calling my placement new \n";
     // global_variables.host_curr_mem+=size;
@@ -158,7 +192,7 @@ void *operator new(std::size_t size, Space loc) throw() {
     // std::cout<<"Managed allocation \n";
     if (size == 0) size = 1;  // new has to return an valid pointer for 0 size.
     void *ptr;
-    if (cudaMalloc(&ptr, size) != cudaSuccess) {
+    if (SW4_MALLOC_DEVICE(&ptr, size) != SW4_DEVICE_SUCCESS) {
       std::cerr << "Device memory allocation failed " << size << "\n";
       throw std::bad_alloc();
     } else
@@ -166,7 +200,7 @@ void *operator new(std::size_t size, Space loc) throw() {
   } else if (loc == Space::Pinned) {
     if (size == 0) size = 1;  // new has to return an valid pointer for 0 size.
     void *ptr;
-    SW4_CheckDeviceError(cudaHostAlloc(&ptr, size, cudaHostAllocMapped));
+    SW4_CheckDeviceError(SW4_MALLOC_PINNED(&ptr, size));
     return ptr;
   } else if (loc == Space::Managed_temps) {
 #ifdef SW4_USE_UMPIRE
@@ -178,7 +212,7 @@ void *operator new(std::size_t size, Space loc) throw() {
     // SW4_CheckDeviceError(cudaMemset(ptr,0,size));
     return ptr;
 #else
-    std::cerr << "Managed_temp location no defined\n";
+    //std::cerr << "Managed_temp location no defined\n";
     return ::operator new(size, Space::Managed);
 #endif
   } else {
@@ -186,7 +220,7 @@ void *operator new(std::size_t size, Space loc) throw() {
               << "\n";
     throw std::bad_alloc();
   }
-#else
+#else // NOT ENABLE_GPU
   if ((loc == Space::Managed) || (loc == Space::Device) ||
       (loc == Space::Pinned)) {
     // std::cout<<"Managed location not available yet \n";
@@ -198,7 +232,7 @@ void *operator new(std::size_t size, Space loc) throw() {
     std::cerr << "Unknown memory space for allocation request\n";
     throw std::bad_alloc();
   }
-#endif
+#endif // ENABE_GPU
 }
 void *operator new(std::size_t size, Space loc, char *file,
                    int line) throw(std::bad_alloc) {
@@ -214,13 +248,13 @@ void *operator new(std::size_t size, Space loc, char *file,
 }
 
 void *operator new[](std::size_t size, Space loc) throw() {
-#ifdef ENABLE_CUDA
+#ifdef ENABLE_GPU
   if (loc == Space::Managed) {
     // std::cout<<"Managed [] allocation \n";
     if (size == 0) size = 1;  // new has to return an valid pointer for 0 size.
     void *ptr;
 #ifndef SW4_USE_UMPIRE
-    if (cudaMallocManaged(&ptr, size) != cudaSuccess) {
+    if (SW4_MALLOC_MANAGED(&ptr, size) != SW4_DEVICE_SUCCESS) {
       std::cerr << "Managed memory allocation failed " << size << "\n";
       throw std::bad_alloc();
     } else {
@@ -228,17 +262,21 @@ void *operator new[](std::size_t size, Space loc) throw() {
       global_variables.curr_mem += size;
       global_variables.max_mem =
           std::max(global_variables.max_mem, global_variables.curr_mem);
+#if defined(ENABLE_CUDA)
       SW4_CheckDeviceError(cudaMemAdvise(ptr, size,
                                          cudaMemAdviseSetPreferredLocation,
                                          global_variables.device));
+#endif
       return ptr;
     }
 #else
     umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
     auto allocator = rma.getAllocator("UM_pool");
     ptr = static_cast<void *>(allocator.allocate(size));
+#if defined(ENABLE_CUDA)
     SW4_CheckDeviceError(cudaMemAdvise(
         ptr, size, cudaMemAdviseSetPreferredLocation, global_variables.device));
+#endif
     // std::cout<<"PTR 2 "<<ptr<<"\n";
     return ptr;
 #endif
@@ -251,7 +289,7 @@ void *operator new[](std::size_t size, Space loc) throw() {
     // std::cout<<"Managed allocation \n";
     if (size == 0) size = 1;  // new has to return an valid pointer for 0 size.
     void *ptr;
-    if (cudaMalloc(&ptr, size) != cudaSuccess) {
+    if (SW4_MALLOC_DEVICE(&ptr, size) != SW4_DEVICE_SUCCESS) {
       std::cerr << "Device memory allocation failed " << size << "\n";
       throw std::bad_alloc();
     } else
@@ -259,7 +297,7 @@ void *operator new[](std::size_t size, Space loc) throw() {
   } else if (loc == Space::Pinned) {
     if (size == 0) size = 1;  // new has to return an valid pointer for 0 size.
     void *ptr;
-    SW4_CheckDeviceError(cudaHostAlloc(&ptr, size, cudaHostAllocMapped));
+    SW4_CheckDeviceError(SW4_MALLOC_PINNED(&ptr, size));
     return ptr;
   } else if (loc == Space::Managed_temps) {
 #if defined(SW4_USE_UMPIRE)
@@ -281,7 +319,7 @@ void *operator new[](std::size_t size, Space loc) throw() {
     throw std::bad_alloc();
   }
 
-#else  // !ENABLE_CUDA
+#else  // !ENABLE_GPU
   if ((loc == Space::Managed) || (loc == Space::Device) ||
       (loc == Space::Pinned) || (loc == Space::Managed_temps)) {
     // std::cout<<"Managed location not available yet \n";
@@ -293,7 +331,7 @@ void *operator new[](std::size_t size, Space loc) throw() {
     std::cerr << "Unknown memory space for allocation request " << loc << "\n";
     throw std::bad_alloc();
   }
-#endif
+#endif // ENABLE_GPU
 }
 void *operator new[](std::size_t size, Space loc, const char *file, int line) {
   // std::cout<<"Calling tracking new from "<<line<<" of "<<file<<"\n";
@@ -308,7 +346,7 @@ void *operator new[](std::size_t size, Space loc, const char *file, int line) {
 }
 
 void operator delete(void *ptr, Space loc) throw() {
-#ifdef ENABLE_CUDA
+#ifdef ENABLE_GPU
   if ((loc == Space::Managed)) {
     // std::cout<<"Managed delete\n";
 #ifndef SW4_USE_UMPIRE
@@ -317,7 +355,7 @@ void operator delete(void *ptr, Space loc) throw() {
       global_variables.curr_mem -= ss->size;
       // global_variables.max_mem=std::max(global_variables.max_mem,global_variables.curr_mem);
     }
-    SW4_CheckDeviceError(cudaFree(ptr));
+    SW4_CheckDeviceError(SW4_FREE_MANAGED(ptr));
 #else
     umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
     auto allocator = rma.getAllocator("UM_pool");
@@ -329,9 +367,9 @@ void operator delete(void *ptr, Space loc) throw() {
       global_variables.curr_mem -= ss->size;
       // global_variables.max_mem=std::max(global_variables.max_mem,global_variables.curr_mem);
     }
-    SW4_CheckDeviceError(cudaFree(ptr));
+    SW4_CheckDeviceError(SW4_FREE_MANAGED(ptr));
   } else if (loc == Space::Pinned)
-    SW4_CheckDeviceError(cudaFreeHost(ptr));
+    SW4_CheckDeviceError(SW4_FREE_PINNED(ptr));
   else if (loc == Space::Host) {
     // std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
@@ -361,7 +399,7 @@ void operator delete(void *ptr, Space loc) throw() {
 }
 
 void operator delete[](void *ptr, Space loc) throw() {
-#ifdef ENABLE_CUDA
+#ifdef ENABLE_GPU
   if (loc == Space::Managed) {
 #ifndef SW4_USE_UMPIRE
     // std::cout<<"Managed [] delete\n";
@@ -377,7 +415,7 @@ void operator delete[](void *ptr, Space loc) throw() {
         std::cerr << " Wrong space " << as_int(GML(ptr)) << " " << ptr << "\n";
         abort();
       } else {
-        SW4_CheckDeviceError(cudaFree(ptr));
+        SW4_CheckDeviceError(SW4_FREE_MANAGED(ptr));
       }
     }
 #else
@@ -392,10 +430,10 @@ void operator delete[](void *ptr, Space loc) throw() {
       global_variables.curr_mem -= ss->size;
       // global_variables.max_mem=std::max(global_variables.max_mem,curr_mem);
     }
-    SW4_CheckDeviceError(cudaFree(ptr));
+    SW4_CheckDeviceError(SW4_FREE_DEVICE(ptr));
 
   } else if (loc == Space::Pinned)
-    SW4_CheckDeviceError(cudaFreeHost(ptr));
+    SW4_CheckDeviceError(SW4_FREE_PINNED(ptr));
   else if (loc == Space::Host) {
     // std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
@@ -404,6 +442,8 @@ void operator delete[](void *ptr, Space loc) throw() {
     umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
     auto allocator = rma.getAllocator("UM_pool_temps");
     allocator.deallocate(ptr);
+#else
+    SW4_CheckDeviceError(SW4_FREE_MANAGED(ptr));
 #endif
   } else {
     std::cerr << "Unknown memory space for de-allocation request "
@@ -499,6 +539,7 @@ ssize_t getsize(void *ptr) {
 #if defined(ENABLE_CUDA)
 
 void prefetch_to_device(const float_sw4 *ptr) {
+
 #if defined(DISABLE_PREFETCH)
   return;
 #else
@@ -512,7 +553,8 @@ void prefetch_to_device(const float_sw4 *ptr) {
     }  // else std::cerr<<"Zero size prefetch \n";
   } else
     std::cerr << "NO prefetch due to unknown address\n";
-#endif
+#endif // DISABLE_PREFETCH
+
 }
 
 void CheckError(cudaError_t const err, const char *file, char const *const fun,
@@ -525,7 +567,39 @@ void CheckError(cudaError_t const err, const char *file, char const *const fun,
 }
 #endif
 
-#if defined(ENABLE_CUDA)
+#if defined(ENABLE_HIP)
+
+void prefetch_to_device(const float_sw4 *ptr) {
+  return;
+#if defined(DISABLE_PREFETCH)
+  return;
+#else
+  // if (ptr == NULL) return;
+  // pattr_t *ss = patpush((void *)ptr, NULL);
+  // if (ss != NULL) {
+  //   if (ss->size > 0) {
+  //     SW4_MARK_BEGIN(" prefetch_to_device");
+  //     SW4_CheckDeviceError(cudaMemPrefetchAsync(ptr, ss->size, 0, 0));
+  //     SW4_MARK_END(" prefetch_to_device");
+  //   }  // else std::cerr<<"Zero size prefetch \n";
+  // } else
+  //   std::cerr << "NO prefetch due to unknown address\n";
+#endif
+}
+
+void CheckError(hipError_t const err, const char *file, char const *const fun,
+                const int line) {
+  if (err) {
+    std::cerr << "HIP Error Code[" << err << "]: " << hipGetErrorString(err)
+              << " " << file << " " << fun << " Line number:  " << line << "\n";
+    abort();
+  }
+}
+#endif // ENABLE_HIP
+
+
+
+#if defined(ENABLE_GPU)
 void *Managed::operator new(size_t len) {
   void *ptr;
   ocount++;
@@ -539,7 +613,7 @@ void *Managed::operator new(size_t len) {
   auto allocator = rma.getAllocator("UM_object_pool");
   ptr = static_cast<void *>(allocator.allocate(len));
 #else
-  SW4_CheckDeviceError(cudaMallocManaged(&ptr, len));
+  SW4_CheckDeviceError(SW4_MALLOC_MANAGED(&ptr, len));
 #endif
   // SW4_CheckDeviceError(cudaDeviceSynchronize());
   return ptr;
@@ -556,7 +630,7 @@ void *Managed::operator new[](size_t len) {
   // ptr=SW4_NEW(Space::Managed,char[len]);
 #else
 
-  SW4_CheckDeviceError(cudaMallocManaged(&ptr, len));
+  SW4_CheckDeviceError(SW4_MALLOC_MANAGED(&ptr, len));
 #endif
   // SW4_CheckDeviceError(cudaDeviceSynchronize());
   return ptr;
@@ -568,7 +642,7 @@ void Managed::operator delete(void *ptr) {
   //::operator delete(ptr,Space::Managed);
   ocount--;
 
-  // WARNING DELETES ARE NOOPS. WORAROUND FOR SUPER SLOW DEALLOCS IN UMPIRE
+  // WARNING DELETES ARE NOOPS. WORKAROUND FOR SUPER SLOW DEALLOCS IN UMPIRE
   return;
   umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
   auto allocator = rma.getAllocator("UM_object_pool");
@@ -576,7 +650,7 @@ void Managed::operator delete(void *ptr) {
   allocator.deallocate(ptr);
   // std::cout<<"DTOR 1 "<<mem_total<<"\n";
 #else
-  SW4_CheckDeviceError(cudaFree(ptr));
+  SW4_CheckDeviceError(SW4_FREE_MANAGED(ptr));
 #endif
 }
 
@@ -593,7 +667,7 @@ void Managed::operator delete[](void *ptr) {
   // mem_total+=1;
   // std::cout<<"DTOR 2 "<<mem_total<<"\n";
 #else
-  SW4_CheckDeviceError(cudaFree(ptr));
+  SW4_CheckDeviceError(SW4_FREE_MANAGED(ptr));
 #endif
 }
 #endif
@@ -651,6 +725,7 @@ Apc::~Apc() {
 
 // END AUTOPEEL CODE
 void global_prefetch() {
+#if defined(ENABLE_CUDA)
 #ifdef SW4_MASS_PREFETCH
   int count = 0;
   std::vector<std::string> allocators = {"UM_pool", "UM_pool_temps",
@@ -674,7 +749,9 @@ void global_prefetch() {
     SW4_CheckDeviceError(cudaStreamSynchronize(0));
     count++;
   }
-#endif
+#endif // SW4_MASS_PREFETCH
+
+#endif // ENABLE_CUDA
 }
 std::vector<int> factors(int N) {
   std::vector<int> v;
@@ -688,6 +765,7 @@ std::vector<int> factors(int N, int start) {
     if (N % i == 0) v.push_back(i);
   return v;
 }
+// GML needs to be hipified
 Space GML(const void *ptr) {
   struct cudaPointerAttributes attr;
   if (cudaPointerGetAttributes(&attr, ptr) == cudaErrorInvalidValue) {
@@ -708,9 +786,8 @@ Space GML(const void *ptr) {
 }
 void invert(float_sw4 *A, int msize) {
   float_sw4 B[9];
-  float_sw4 Prod[9];
+
 #define M(i, j, d) A[(d * 9) + (i - 1) + (j - 1) * 3]
-#define P(i, j) Prod[(j - 1) + (i - 1) * 3]
 #define I(i, j) B[(j - 1) + (i - 1) * 3]
 
   for (int c = 0; c < msize; c++) {
@@ -734,6 +811,8 @@ void invert(float_sw4 *A, int msize) {
     I(3, 3) = M(1, 1, c) * M(2, 2, c) - M(2, 1, c) * M(1, 2, c);
 
 #ifdef DEBUG
+    float_sw4 Prod[9];
+#define P(i, j) Prod[(j - 1) + (i - 1) * 3]
     for (int i = 1; i < 4; i++) {
       for (int j = 1; j < 4; j++) {
         float_sw4 sum = 0.0;

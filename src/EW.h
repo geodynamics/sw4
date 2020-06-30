@@ -2003,7 +2003,7 @@ class EW {
   // Checkpointing and restart
   //   CheckPoint* m_restart_check_point;
   CheckPoint* m_check_point;
-  bool cudaProfilerOn;
+  bool ProfilerOn;
   void load_balance();
 };
 
