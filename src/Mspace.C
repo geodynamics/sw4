@@ -154,7 +154,7 @@ void presetGPUID() {
 #ifndef SW4_USE_UMPIRE
       if (SW4_MALLOC_MANAGED(&ptr, size) != SW4_DEVICE_SUCCESS) {
         std::cerr << "Mananged memory allocation failed " << size << "\n";
-        throw std::bad_alloc();
+        throw();
       } else {
         check_mem();
         global_variables.curr_mem += size;
@@ -195,7 +195,8 @@ void presetGPUID() {
       void *ptr;
       if (SW4_MALLOC_DEVICE(&ptr, size) != SW4_DEVICE_SUCCESS) {
         std::cerr << "Device memory allocation failed " << size << "\n";
-        throw std::bad_alloc();
+        abort();
+        //throw();
       } else
         return ptr;
     } else if (loc == Space::Pinned) {
@@ -220,7 +221,8 @@ void presetGPUID() {
     } else {
       std::cerr << "Unknown memory space for allocation request " << as_int(loc)
                 << "\n";
-      throw std::bad_alloc();
+      //throw std::bad_alloc();
+      abort();
     }
 #else   // NOT ENABLE_GPU
   if ((loc == Space::Managed) || (loc == Space::Device) ||
@@ -232,12 +234,13 @@ void presetGPUID() {
     return ::operator new(size);
   } else {
     std::cerr << "Unknown memory space for allocation request\n";
-    throw std::bad_alloc();
+    abort();
+    //throw std::bad_alloc();
   }
 #endif  // ENABE_GPU
   }
   void *operator new(std::size_t size, Space loc, char *file,
-                     int line) throw(std::bad_alloc) {
+                     int line) throw() {
     std::cout << "Calling tracking new from " << line << " of " << file << "\n";
     pattr_t *ss = new pattr_t;
     ss->file = file;
@@ -259,7 +262,8 @@ void presetGPUID() {
 #ifndef SW4_USE_UMPIRE
       if (SW4_MALLOC_MANAGED(&ptr, size) != SW4_DEVICE_SUCCESS) {
         std::cerr << "Managed memory allocation failed " << size << "\n";
-        throw std::bad_alloc();
+        abort();
+        //throw std::bad_alloc();
       } else {
         check_mem();
         global_variables.curr_mem += size;
@@ -295,7 +299,8 @@ void presetGPUID() {
       void *ptr;
       if (SW4_MALLOC_DEVICE(&ptr, size) != SW4_DEVICE_SUCCESS) {
         std::cerr << "Device memory allocation failed " << size << "\n";
-        throw std::bad_alloc();
+        abort();
+        //throw std::bad_alloc();
       } else
         return ptr;
     } else if (loc == Space::Pinned) {
@@ -321,7 +326,8 @@ void presetGPUID() {
       // cudaHostAlloc(&ptr,size+sizeof(size_t)*MEM_PAD_LEN,cudaHostAllocMapped));
       std::cerr << "Unknown memory space for allocation request " << as_int(loc)
                 << "\n";
-      throw std::bad_alloc();
+	abort();
+      //throw std::bad_alloc();
     }
 
 #else   // !ENABLE_GPU
