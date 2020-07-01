@@ -38,7 +38,8 @@
 #include "sw4.h"
 #define SPLIT_VERSION
 #ifdef SPLIT_VERSION
-void curvilinear4sg_ci(
+template<int N>
+void curvilinear4sgX_ci(
     int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,
     float_sw4* __restrict__ a_lambda, float_sw4* __restrict__ a_met,
@@ -128,7 +129,7 @@ void curvilinear4sg_ci(
       // 32,4,2 is 4% slower. 32 4 4 does not fit
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
-      Range<6> K(1, 6 + 1);
+      Range<4> K(1, 6 + 1);
       forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
       RAJA::RangeSegment k_range(1, 6 + 1);
@@ -722,11 +723,14 @@ void curvilinear4sg_ci(
         }
 
         // 12 ops, tot=6049
-        lu(1, i, j, k) = a1 * lu(1, i, j, k) + sgn * r1 * ijac;
-        lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
+	if (N==1)
+	  lu(1, i, j, k) = a1 * lu(1, i, j, k) + sgn * r1 * ijac;
+	if (N==2)
+	  lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
+	if (N==3)
         lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
       });  // End of curvilinear4sg_ci LOOP -1
-    }
+	}
 #ifdef PEEKS_GALORE
     SW4_PEEK;
     SYNC_DEVICE;
@@ -736,6 +740,7 @@ void curvilinear4sg_ci(
     SYNC_DEVICE;
 #endif
 
+	if (N==1){
 #if defined(NO_COLLAPSE)
     // LOOP 0
     RangeGS<256, 4> IS(ifirst + 2, ilast - 1);
@@ -1858,6 +1863,7 @@ void curvilinear4sg_ci(
       lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
     });  // End of curvilinear4sg_ci LOOP 2
   }
+      }
 #ifdef PEEKS_GALORE
   SW4_PEEK;
   SYNC_DEVICE;
@@ -2464,9 +2470,12 @@ void curvilinear4sg_ci(
       }
 
       // 12 ops, tot=6049
-      lu(1, i, j, k) = a1 * lu(1, i, j, k) + sgn * r1 * ijac;
-      lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
-      lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
+      if (N==1)
+	lu(1, i, j, k) = a1 * lu(1, i, j, k) + sgn * r1 * ijac;
+      if (N==2)
+	lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
+      if (N==3)
+	lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
 		  
     });
   }
@@ -2490,6 +2499,15 @@ void curvilinear4sg_ci(
 #undef ghcof
 #undef acof_no_gp
 #undef ghcof_no_gp
+curvilinear4sgX_ci<N-1>(
+    ifirst, ilast, jfirst, jlast, kfirst, klast,
+    a_u,   a_mu,
+      a_lambda,   a_met,
+      a_jac,   a_lu, onesided,
+      a_acof,   a_bope,
+      a_ghcof,   a_acof_no_gp,
+      a_ghcof_no_gp,   a_strx,
+      a_stry, nk, op) ;
 }
 #else
 void curvilinear4sg_ci(
@@ -4184,3 +4202,13 @@ void curvilinear4sg_ci(
 #undef ghcof
 }
 #endif
+template<>
+void curvilinear4sgX_ci<0>(
+    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+    float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,
+    float_sw4* __restrict__ a_lambda, float_sw4* __restrict__ a_met,
+    float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu, int* onesided,
+    float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
+    float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_acof_no_gp,
+    float_sw4* __restrict__ a_ghcof_no_gp, float_sw4* __restrict__ a_strx,
+    float_sw4* __restrict__ a_stry, int nk, char op) {}

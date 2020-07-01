@@ -38,8 +38,14 @@
 #include "startEnd.h"
 #include "version.h"
 
+
+
 #ifdef USE_HDF5
 #include "hdf5.h"
+#endif
+#if defined(SW4_EXPT_1)
+// Experimental template based spliiing along I,J,K
+#include "curvilinear4sgc.h"
 #endif
 
 extern "C" {
@@ -5046,12 +5052,21 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     SW4_PEEK;
     SYNC_DEVICE;
 #endif
-    if (m_croutines)
+    if (m_croutines){
+#if defined(SW4_EXPT_1)
+      curvilinear4sgX_ci<3>(ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr,
+                        mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr,
+                        onesided_ptr, m_acof, m_bope, m_ghcof, m_acof_no_gp,
+                        m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op);
+#else
       curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr,
                         mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr,
                         onesided_ptr, m_acof, m_bope, m_ghcof, m_acof_no_gp,
                         m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op);
-    else {
+#endif
+
+      
+    }else {
       if (usingSupergrid())
         curvilinear4sg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, u_ptr,
                        mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr, onesided_ptr,
@@ -5084,11 +5099,20 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
             once = true;
           }
 #endif
-          curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
+
+#if defined(SW4_EXPT_1)
+          curvilinear4sgX_ci<3>(ifirst, ilast, jfirst, jlast, kfirst, klast,
                             alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
                             uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope,
                             m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,
                             m_sg_str_x[g], m_sg_str_y[g], nkg, op);
+#else
+	  curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                            alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
+                            uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope,
+                            m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,
+                            m_sg_str_x[g], m_sg_str_y[g], nkg, op);
+#endif
         } else {
           if (usingSupergrid())
             curvilinear4sg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
