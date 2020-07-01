@@ -748,7 +748,9 @@ void curvilinear4sg_ci(
     // std::cout<<"KSTART END"<<kstart<<" "<<kend<<"\n";
     // forall3GS(IS,JS,KS, [=]RAJA_DEVICE(int i,int j,int k){
 #pragma forceinline
-    forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+	forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+	//forall3X<256>(ifirst + 2, ilast - 1,jfirst + 2, jlast - 1,kstart, kend + 1,
+	//	      [=] RAJA_DEVICE(int i, int j, int k) {
 #else
     RAJA::RangeSegment k_range(kstart, kend + 1);
     RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
@@ -1876,7 +1878,17 @@ void curvilinear4sg_ci(
     Range<16> II(ifirst + 2, ilast - 1);
     Range<4> JJ(jfirst + 2, jlast - 1);
     Range<6> KK(nk - 5, nk + 1);
-    forall3async(II, JJ, KK, [=] RAJA_DEVICE(int i, int j, int k) {
+    // Register count goes upto 254. Runtime goes up by factor of 2.8X
+//     Range<16> JJ2(jfirst + 2, jlast - 1);
+//     forall2async(II, JJ2,[=] RAJA_DEVICE(int i, int j) {
+// #pragma unroll 
+// 	for (int kk=-5;kk<1;kk++){
+// 	  int k=nk+kk;
+	forall3async(II, JJ, KK, [=] RAJA_DEVICE(int i, int j, int k) {
+	// forall3X results in a 2.5X slowdown eben though registers drop from
+	// 168 to 130
+	//forall3X<256>(ifirst + 2, ilast - 1,jfirst + 2, jlast - 1,nk-5,nk+1,
+	//    [=] RAJA_DEVICE(int i, int j, int k) {
 #else
     RAJA::RangeSegment kk_range(nk - 5, nk + 1);
     RAJA::RangeSegment jj_range(jfirst + 2, jlast - 1);
@@ -2455,6 +2467,7 @@ void curvilinear4sg_ci(
       lu(1, i, j, k) = a1 * lu(1, i, j, k) + sgn * r1 * ijac;
       lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
       lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
+		  
     });
   }
   SW4_MARK_END("CURVI::cuvilinear4sgc");

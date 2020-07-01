@@ -436,4 +436,31 @@ void forallX(T start, T end, LoopBody &&body) {
 
 #endif
 
+
+template <int N, typename LoopBody>
+void forall3X(int start0, int end0, int start1, int end1, int start2, int end2,
+             LoopBody &&body) {
+
+  int tpbb = N;
+  int tpb0 = 8;
+  int tpb1 = 8;
+  int tpb2 = tpbb / (tpb0 * tpb1);
+
+  int blockss = 80*2048/ tpbb;
+  int block0 = 20;
+  int block1 = 8;
+  int block2 = blockss/(block0*block1);
+  
+
+  // std::cout << " BLOCKS " << block0 << " " << block1 << " " << block2 <<
+  // "\n";
+  dim3 tpb(tpb0, tpb1, tpb2);
+  dim3 blocks(block0, block1, block2);
+
+  //printf("Launching the kernel 3d \n");
+  forall3gskernel<<<blocks, tpb>>>(start0, end0, start1, end1, start2, end2,
+                                 body);
+  // cudaDeviceSynchronize();
+}
+
 #endif  // Guards
