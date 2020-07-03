@@ -127,6 +127,9 @@ void curvilinear4sgX_ci(
 #if defined(NO_COLLAPSE)
       // LOOP -1
       // 32,4,2 is 4% slower. 32 4 4 does not fit
+
+      // With split, regoster usage goes to 254,254,255 for N=1,3 from an original of 166
+      // Subsquently code slows down.
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
       Range<4> K(1, 6 + 1);
@@ -160,25 +163,29 @@ void curvilinear4sgX_ci(
 
         // pp derivative (u) (u-eq)
         // 53 ops, tot=58
-        float_sw4 cof1 = (2 * mu(i - 2, j, k) + la(i - 2, j, k)) *
+	float_sw4 cof1,cof2,cof3,cof4,cof5;
+	float_sw4 mux1,mux2,mux3,mux4;
+
+	if (N==1){
+        cof1 = (2 * mu(i - 2, j, k) + la(i - 2, j, k)) *
                          met(1, i - 2, j, k) * met(1, i - 2, j, k) *
                          strx(i - 2);
-        float_sw4 cof2 = (2 * mu(i - 1, j, k) + la(i - 1, j, k)) *
+        cof2 = (2 * mu(i - 1, j, k) + la(i - 1, j, k)) *
                          met(1, i - 1, j, k) * met(1, i - 1, j, k) *
                          strx(i - 1);
-        float_sw4 cof3 = (2 * mu(i, j, k) + la(i, j, k)) * met(1, i, j, k) *
+        cof3 = (2 * mu(i, j, k) + la(i, j, k)) * met(1, i, j, k) *
                          met(1, i, j, k) * strx(i);
-        float_sw4 cof4 = (2 * mu(i + 1, j, k) + la(i + 1, j, k)) *
+        cof4 = (2 * mu(i + 1, j, k) + la(i + 1, j, k)) *
                          met(1, i + 1, j, k) * met(1, i + 1, j, k) *
                          strx(i + 1);
-        float_sw4 cof5 = (2 * mu(i + 2, j, k) + la(i + 2, j, k)) *
+        cof5 = (2 * mu(i + 2, j, k) + la(i + 2, j, k)) *
                          met(1, i + 2, j, k) * met(1, i + 2, j, k) *
                          strx(i + 2);
 
-        float_sw4 mux1 = cof2 - tf * (cof3 + cof1);
-        float_sw4 mux2 = cof1 + cof4 + 3 * (cof3 + cof2);
-        float_sw4 mux3 = cof2 + cof5 + 3 * (cof4 + cof3);
-        float_sw4 mux4 = cof4 - tf * (cof3 + cof5);
+        mux1 = cof2 - tf * (cof3 + cof1);
+        mux2 = cof1 + cof4 + 3 * (cof3 + cof2);
+        mux3 = cof2 + cof5 + 3 * (cof4 + cof3);
+        mux4 = cof4 - tf * (cof3 + cof5);
 
         r1 = r1 + i6 *
                       (mux1 * (u(1, i - 2, j, k) - u(1, i, j, k)) +
@@ -210,7 +217,8 @@ void curvilinear4sgX_ci(
                        mux3 * (u(1, i, j + 1, k) - u(1, i, j, k)) +
                        mux4 * (u(1, i, j + 2, k) - u(1, i, j, k))) *
                       istrx;
-
+	} 
+	if (N==2){
         // pp derivative (v) (v-eq)
         // 43 ops, tot=144
         cof1 = (mu(i - 2, j, k)) * met(1, i - 2, j, k) * met(1, i - 2, j, k) *
@@ -259,6 +267,10 @@ void curvilinear4sgX_ci(
                        mux4 * (u(2, i, j + 2, k) - u(2, i, j, k))) *
                       istrx;
 
+	}
+
+
+	if (N==3){
         // pp derivative (w) (w-eq)
         // 43 ops, tot=240
         cof1 = (mu(i - 2, j, k)) * met(1, i - 2, j, k) * met(1, i - 2, j, k) *
@@ -305,6 +317,7 @@ void curvilinear4sgX_ci(
                        mux3 * (u(3, i, j + 1, k) - u(3, i, j, k)) +
                        mux4 * (u(3, i, j + 2, k) - u(3, i, j, k))) *
                       istrx;
+	}
 
         // All rr-derivatives at once
         // averaging the coefficient
@@ -346,10 +359,13 @@ void curvilinear4sgX_ci(
           }
 
           // Computing the second derivative,
+	  if (N==1)
           r1 += istrxy * mucofu2 * u(1, i, j, q) + mucofuv * u(2, i, j, q) +
                 istry * mucofuw * u(3, i, j, q);
+	  if (N==2)
           r2 += mucofuv * u(1, i, j, q) + istrxy * mucofv2 * u(2, i, j, q) +
                 istrx * mucofvw * u(3, i, j, q);
+	  if (N==3)
           r3 += istry * mucofuw * u(1, i, j, q) +
                 istrx * mucofvw * u(2, i, j, q) +
                 istrxy * mucofw2 * u(3, i, j, q);
@@ -381,14 +397,19 @@ void curvilinear4sgX_ci(
                   met(4, i, j, 1);
         mucofvw = ghcof(k) * (mu(i, j, 1) + la(i, j, 1)) * met(3, i, j, 1) *
                   met(4, i, j, 1);
+	if (N==1)
         r1 += istrxy * mucofu2 * u(1, i, j, 0) + mucofuv * u(2, i, j, 0) +
               istry * mucofuw * u(3, i, j, 0);
+	if (N==2)
         r2 += mucofuv * u(1, i, j, 0) + istrxy * mucofv2 * u(2, i, j, 0) +
               istrx * mucofvw * u(3, i, j, 0);
+	if (N==3)
         r3 += istry * mucofuw * u(1, i, j, 0) +
               istrx * mucofvw * u(2, i, j, 0) +
               istrxy * mucofw2 * u(3, i, j, 0);
 
+
+	if(N==1){
         // pq-derivatives (u-eq)
         // 38 ops., tot=4049
         r1 +=
@@ -421,6 +442,8 @@ void curvilinear4sgX_ci(
                       (c2 * (u(2, i - 1, j + 2, k) - u(2, i - 1, j - 2, k)) +
                        c1 * (u(2, i - 1, j + 1, k) - u(2, i - 1, j - 1, k))));
 
+	}
+	if (N==2){
         // pq-derivatives (v-eq)
         // 38 ops. , tot=4125
         r2 +=
@@ -452,12 +475,14 @@ void curvilinear4sgX_ci(
                   mu(i - 1, j, k) * met(1, i - 1, j, k) * met(1, i - 1, j, k) *
                       (c2 * (u(1, i - 1, j + 2, k) - u(1, i - 1, j - 2, k)) +
                        c1 * (u(1, i - 1, j + 1, k) - u(1, i - 1, j - 1, k))));
+	}
 
         // rp - derivatives
         // 24*8 = 192 ops, tot=4355
         float_sw4 dudrm2 = 0, dudrm1 = 0, dudrp1 = 0, dudrp2 = 0;
         float_sw4 dvdrm2 = 0, dvdrm1 = 0, dvdrp1 = 0, dvdrp2 = 0;
         float_sw4 dwdrm2 = 0, dwdrm1 = 0, dwdrp1 = 0, dwdrp2 = 0;
+
         for (int q = 1; q <= 8; q++) {
           dudrm2 += bope(k, q) * u(1, i - 2, j, q);
           dvdrm2 += bope(k, q) * u(2, i - 2, j, q);
@@ -475,6 +500,7 @@ void curvilinear4sgX_ci(
 
         // rp derivatives (u-eq)
         // 67 ops, tot=4422
+	if (N==1)
         r1 += (c2 * ((2 * mu(i + 2, j, k) + la(i + 2, j, k)) *
                          met(2, i + 2, j, k) * met(1, i + 2, j, k) *
                          strx(i + 2) * dudrp2 +
@@ -507,6 +533,7 @@ void curvilinear4sgX_ci(
 
         // rp derivatives (v-eq)
         // 42 ops, tot=4464
+	if (N==2)
         r2 += c2 * (mu(i + 2, j, k) * met(3, i + 2, j, k) *
                         met(1, i + 2, j, k) * dudrp2 +
                     mu(i + 2, j, k) * met(2, i + 2, j, k) *
@@ -526,6 +553,7 @@ void curvilinear4sgX_ci(
 
         // rp derivatives (w-eq)
         // 38 ops, tot=4502
+	if (N==3)
         r3 += istry * (c2 * (mu(i + 2, j, k) * met(4, i + 2, j, k) *
                                  met(1, i + 2, j, k) * dudrp2 +
                              mu(i + 2, j, k) * met(2, i + 2, j, k) *
@@ -575,6 +603,7 @@ void curvilinear4sgX_ci(
 
         // rq derivatives (u-eq)
         // 42 ops, tot=4736
+	if (N==1)
         r1 += c2 * (mu(i, j + 2, k) * met(3, i, j + 2, k) *
                         met(1, i, j + 2, k) * dudrp2 * stry(j + 2) * istrx +
                     mu(i, j + 2, k) * met(2, i, j + 2, k) *
@@ -594,6 +623,7 @@ void curvilinear4sgX_ci(
 
         // rq derivatives (v-eq)
         // 70 ops, tot=4806
+	if (N==2)
         r2 += c2 * (la(i, j + 2, k) * met(2, i, j + 2, k) *
                         met(1, i, j + 2, k) * dudrp2 +
                     (2 * mu(i, j + 2, k) + la(i, j + 2, k)) *
@@ -625,6 +655,7 @@ void curvilinear4sgX_ci(
 
         // rq derivatives (w-eq)
         // 39 ops, tot=4845
+	if (N==3)
         r3 += (c2 * (mu(i, j + 2, k) * met(3, i, j + 2, k) *
                          met(1, i, j + 2, k) * dwdrp2 * stry(j + 2) +
                      mu(i, j + 2, k) * met(4, i, j + 2, k) *
@@ -648,6 +679,7 @@ void curvilinear4sgX_ci(
         for (int q = 1; q <= 8; q++) {
           // (u-eq)
           // 53 ops
+	  if (N==1)
           r1 += bope(k, q) *
                 (
                     // pr
@@ -674,6 +706,7 @@ void curvilinear4sgX_ci(
 
           // (v-eq)
           // 53 ops
+	  if (N==2)
           r2 += bope(k, q) *
                 (
                     // pr
@@ -700,6 +733,7 @@ void curvilinear4sgX_ci(
 
           // (w-eq)
           // 43 ops
+	  if (N==3)
           r3 += bope(k, q) *
                 (
                     // pr
@@ -1882,14 +1916,19 @@ void curvilinear4sgX_ci(
     // LOOP -1
     // 32,4,2 is 4% slower. 32 4 4 does not fit
     Range<16> II(ifirst + 2, ilast - 1);
-    Range<4> JJ(jfirst + 2, jlast - 1);
-    Range<6> KK(nk - 5, nk + 1);
+    Range<8> JJ(jfirst + 2, jlast - 1);
+    Range<4> KK(nk - 5, nk + 1);
     // Register count goes upto 254. Runtime goes up by factor of 2.8X
 //     Range<16> JJ2(jfirst + 2, jlast - 1);
 //     forall2async(II, JJ2,[=] RAJA_DEVICE(int i, int j) {
 // #pragma unroll 
 // 	for (int kk=-5;kk<1;kk++){
 // 	  int k=nk+kk;
+
+
+    // Register usage goes to 168,168,126 for N=1,3 from original value of 168
+    // Hence code suffers significant slowdown.
+    
     forall3async(II, JJ, KK, [=] RAJA_DEVICE(int i, int j, int k) {
 	// forall3X results in a 2.5X slowdown even though registers drop from
 	// 168 to 130
@@ -1912,24 +1951,27 @@ void curvilinear4sgX_ci(
       float_sw4 istrxy = istry * istrx;
 
       float_sw4 r1 = 0, r2 = 0, r3 = 0;
+      float_sw4 cof1,cof2,cof3,cof4,cof5;
+      float_sw4 mux1,mux2,mux3,mux4;
 
       // pp derivative (u) (u-eq)
       // 53 ops, tot=58
-      float_sw4 cof1 = (2 * mu(i - 2, j, k) + la(i - 2, j, k)) *
+      if (N==1){
+      cof1 = (2 * mu(i - 2, j, k) + la(i - 2, j, k)) *
                        met(1, i - 2, j, k) * met(1, i - 2, j, k) * strx(i - 2);
-      float_sw4 cof2 = (2 * mu(i - 1, j, k) + la(i - 1, j, k)) *
+      cof2 = (2 * mu(i - 1, j, k) + la(i - 1, j, k)) *
                        met(1, i - 1, j, k) * met(1, i - 1, j, k) * strx(i - 1);
-      float_sw4 cof3 = (2 * mu(i, j, k) + la(i, j, k)) * met(1, i, j, k) *
+      cof3 = (2 * mu(i, j, k) + la(i, j, k)) * met(1, i, j, k) *
                        met(1, i, j, k) * strx(i);
-      float_sw4 cof4 = (2 * mu(i + 1, j, k) + la(i + 1, j, k)) *
+      cof4 = (2 * mu(i + 1, j, k) + la(i + 1, j, k)) *
                        met(1, i + 1, j, k) * met(1, i + 1, j, k) * strx(i + 1);
-      float_sw4 cof5 = (2 * mu(i + 2, j, k) + la(i + 2, j, k)) *
+      cof5 = (2 * mu(i + 2, j, k) + la(i + 2, j, k)) *
                        met(1, i + 2, j, k) * met(1, i + 2, j, k) * strx(i + 2);
 
-      float_sw4 mux1 = cof2 - tf * (cof3 + cof1);
-      float_sw4 mux2 = cof1 + cof4 + 3 * (cof3 + cof2);
-      float_sw4 mux3 = cof2 + cof5 + 3 * (cof4 + cof3);
-      float_sw4 mux4 = cof4 - tf * (cof3 + cof5);
+      mux1 = cof2 - tf * (cof3 + cof1);
+      mux2 = cof1 + cof4 + 3 * (cof3 + cof2);
+      mux3 = cof2 + cof5 + 3 * (cof4 + cof3);
+      mux4 = cof4 - tf * (cof3 + cof5);
 
       r1 = r1 + i6 *
                     (mux1 * (u(1, i - 2, j, k) - u(1, i, j, k)) +
@@ -1961,9 +2003,10 @@ void curvilinear4sgX_ci(
                      mux3 * (u(1, i, j + 1, k) - u(1, i, j, k)) +
                      mux4 * (u(1, i, j + 2, k) - u(1, i, j, k))) *
                     istrx;
-
+      }
       // pp derivative (v) (v-eq)
       // 43 ops, tot=144
+      if (N==2){
       cof1 = (mu(i - 2, j, k)) * met(1, i - 2, j, k) * met(1, i - 2, j, k) *
              strx(i - 2);
       cof2 = (mu(i - 1, j, k)) * met(1, i - 1, j, k) * met(1, i - 1, j, k) *
@@ -2009,7 +2052,8 @@ void curvilinear4sgX_ci(
                      mux3 * (u(2, i, j + 1, k) - u(2, i, j, k)) +
                      mux4 * (u(2, i, j + 2, k) - u(2, i, j, k))) *
                     istrx;
-
+      }
+      if (N==3){
       // pp derivative (w) (w-eq)
       // 43 ops, tot=240
       cof1 = (mu(i - 2, j, k)) * met(1, i - 2, j, k) * met(1, i - 2, j, k) *
@@ -2033,7 +2077,7 @@ void curvilinear4sgX_ci(
                      mux3 * (u(3, i + 1, j, k) - u(3, i, j, k)) +
                      mux4 * (u(3, i + 2, j, k) - u(3, i, j, k))) *
                     istry;
-
+     
       // qq derivative (w) (w-eq)
       // 43 ops, tot=283
       cof1 = (mu(i, j - 2, k)) * met(1, i, j - 2, k) * met(1, i, j - 2, k) *
@@ -2056,11 +2100,12 @@ void curvilinear4sgX_ci(
                      mux3 * (u(3, i, j + 1, k) - u(3, i, j, k)) +
                      mux4 * (u(3, i, j + 2, k) - u(3, i, j, k))) *
                     istrx;
-
+      }
       // All rr-derivatives at once
       // averaging the coefficient
       // 54*8*8+25*8 = 3656 ops, tot=3939
       float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2;
+#pragma unroll 1
       for (int q = nk - 7; q <= nk; q++) {
         mucofu2 = 0;
         mucofuv = 0;
@@ -2068,6 +2113,7 @@ void curvilinear4sgX_ci(
         mucofvw = 0;
         mucofv2 = 0;
         mucofw2 = 0;
+#pragma unroll 8
         for (int m = nk - 7; m <= nk; m++) {
           mucofu2 += acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
                      ((2 * mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
@@ -2100,10 +2146,13 @@ void curvilinear4sgX_ci(
         }
 
         // Computing the second derivative,
+	if (N==1)
         r1 += istrxy * mucofu2 * u(1, i, j, q) + mucofuv * u(2, i, j, q) +
               istry * mucofuw * u(3, i, j, q);
+	if (N==2)
         r2 += mucofuv * u(1, i, j, q) + istrxy * mucofv2 * u(2, i, j, q) +
               istrx * mucofvw * u(3, i, j, q);
+	if (N==3)
         r3 += istry * mucofuw * u(1, i, j, q) +
               istrx * mucofvw * u(2, i, j, q) +
               istrxy * mucofw2 * u(3, i, j, q);
@@ -2135,17 +2184,21 @@ void curvilinear4sgX_ci(
                 met(2, i, j, nk) * met(4, i, j, nk);
       mucofvw = ghcof_no_gp(nk - k + 1) * (mu(i, j, nk) + la(i, j, nk)) *
                 met(3, i, j, nk) * met(4, i, j, nk);
+      if (N==1)
       r1 += istrxy * mucofu2 * u(1, i, j, nk + 1) +
             mucofuv * u(2, i, j, nk + 1) + istry * mucofuw * u(3, i, j, nk + 1);
+      if (N==2)
       r2 += mucofuv * u(1, i, j, nk + 1) +
             istrxy * mucofv2 * u(2, i, j, nk + 1) +
             istrx * mucofvw * u(3, i, j, nk + 1);
+      if (N==3)
       r3 += istry * mucofuw * u(1, i, j, nk + 1) +
             istrx * mucofvw * u(2, i, j, nk + 1) +
             istrxy * mucofw2 * u(3, i, j, nk + 1);
 
       // pq-derivatives (u-eq)
       // 38 ops., tot=4049
+      if (N==1){
       r1 += c2 * (mu(i, j + 2, k) * met(1, i, j + 2, k) * met(1, i, j + 2, k) *
                       (c2 * (u(2, i + 2, j + 2, k) - u(2, i - 2, j + 2, k)) +
                        c1 * (u(2, i + 1, j + 2, k) - u(2, i - 1, j + 2, k))) -
@@ -2173,9 +2226,10 @@ void curvilinear4sgX_ci(
                   la(i - 1, j, k) * met(1, i - 1, j, k) * met(1, i - 1, j, k) *
                       (c2 * (u(2, i - 1, j + 2, k) - u(2, i - 1, j - 2, k)) +
                        c1 * (u(2, i - 1, j + 1, k) - u(2, i - 1, j - 1, k))));
-
+      }
       // pq-derivatives (v-eq)
       // 38 ops. , tot=4125
+      if (N==2){
       r2 += c2 * (la(i, j + 2, k) * met(1, i, j + 2, k) * met(1, i, j + 2, k) *
                       (c2 * (u(1, i + 2, j + 2, k) - u(1, i - 2, j + 2, k)) +
                        c1 * (u(1, i + 1, j + 2, k) - u(1, i - 1, j + 2, k))) -
@@ -2203,12 +2257,13 @@ void curvilinear4sgX_ci(
                   mu(i - 1, j, k) * met(1, i - 1, j, k) * met(1, i - 1, j, k) *
                       (c2 * (u(1, i - 1, j + 2, k) - u(1, i - 1, j - 2, k)) +
                        c1 * (u(1, i - 1, j + 1, k) - u(1, i - 1, j - 1, k))));
-
+      }
       // rp - derivatives
       // 24*8 = 192 ops, tot=4355
       float_sw4 dudrm2 = 0, dudrm1 = 0, dudrp1 = 0, dudrp2 = 0;
       float_sw4 dvdrm2 = 0, dvdrm1 = 0, dvdrp1 = 0, dvdrp2 = 0;
       float_sw4 dwdrm2 = 0, dwdrm1 = 0, dwdrp1 = 0, dwdrp2 = 0;
+#pragma unroll 8
       for (int q = nk - 7; q <= nk; q++) {
         dudrm2 -= bope(nk - k + 1, nk - q + 1) * u(1, i - 2, j, q);
         dvdrm2 -= bope(nk - k + 1, nk - q + 1) * u(2, i - 2, j, q);
@@ -2226,6 +2281,7 @@ void curvilinear4sgX_ci(
 
       // rp derivatives (u-eq)
       // 67 ops, tot=4422
+      if (N==1)
       r1 +=
           (c2 *
                ((2 * mu(i + 2, j, k) + la(i + 2, j, k)) * met(2, i + 2, j, k) *
@@ -2257,6 +2313,7 @@ void curvilinear4sgX_ci(
 
       // rp derivatives (v-eq)
       // 42 ops, tot=4464
+      if (N==2)
       r2 += c2 * (mu(i + 2, j, k) * met(3, i + 2, j, k) * met(1, i + 2, j, k) *
                       dudrp2 +
                   mu(i + 2, j, k) * met(2, i + 2, j, k) * met(1, i + 2, j, k) *
@@ -2276,6 +2333,7 @@ void curvilinear4sgX_ci(
 
       // rp derivatives (w-eq)
       // 38 ops, tot=4502
+      if (N==3)
       r3 += istry * (c2 * (mu(i + 2, j, k) * met(4, i + 2, j, k) *
                                met(1, i + 2, j, k) * dudrp2 +
                            mu(i + 2, j, k) * met(2, i + 2, j, k) *
@@ -2308,6 +2366,7 @@ void curvilinear4sgX_ci(
       dwdrm1 = 0;
       dwdrp1 = 0;
       dwdrp2 = 0;
+#pragma unroll 8
       for (int q = nk - 7; q <= nk; q++) {
         dudrm2 -= bope(nk - k + 1, nk - q + 1) * u(1, i, j - 2, q);
         dvdrm2 -= bope(nk - k + 1, nk - q + 1) * u(2, i, j - 2, q);
@@ -2325,6 +2384,7 @@ void curvilinear4sgX_ci(
 
       // rq derivatives (u-eq)
       // 42 ops, tot=4736
+      if (N==1)
       r1 += c2 * (mu(i, j + 2, k) * met(3, i, j + 2, k) * met(1, i, j + 2, k) *
                       dudrp2 * stry(j + 2) * istrx +
                   mu(i, j + 2, k) * met(2, i, j + 2, k) * met(1, i, j + 2, k) *
@@ -2344,6 +2404,7 @@ void curvilinear4sgX_ci(
 
       // rq derivatives (v-eq)
       // 70 ops, tot=4806
+      if (N==2)
       r2 +=
           c2 * (la(i, j + 2, k) * met(2, i, j + 2, k) * met(1, i, j + 2, k) *
                     dudrp2 +
@@ -2372,6 +2433,7 @@ void curvilinear4sgX_ci(
 
       // rq derivatives (w-eq)
       // 39 ops, tot=4845
+      if (N==3)
       r3 += (c2 * (mu(i, j + 2, k) * met(3, i, j + 2, k) * met(1, i, j + 2, k) *
                        dwdrp2 * stry(j + 2) +
                    mu(i, j + 2, k) * met(4, i, j + 2, k) * met(1, i, j + 2, k) *
@@ -2392,9 +2454,11 @@ void curvilinear4sgX_ci(
 
       // pr and qr derivatives at once
       // in loop: 8*(53+53+43) = 1192 ops, tot=6037
+#pragma unroll 8
       for (int q = nk - 7; q <= nk; q++) {
         // (u-eq)
         // 53 ops
+	if (N==1)
         r1 -= bope(nk - k + 1, nk - q + 1) *
               (
                   // pr
@@ -2421,6 +2485,7 @@ void curvilinear4sgX_ci(
 
         // (v-eq)
         // 53 ops
+	if (N==2)
         r2 -= bope(nk - k + 1, nk - q + 1) *
               (
                   // pr
@@ -2447,6 +2512,7 @@ void curvilinear4sgX_ci(
 
         // (w-eq)
         // 43 ops
+	if (N==3)
         r3 -= bope(nk - k + 1, nk - q + 1) *
               (
                   // pr
@@ -2767,6 +2833,7 @@ void curvilinear4sg_ci(
         // averaging the coefficient
         // 54*8*8+25*8 = 3656 ops, tot=3939
         float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2;
+#pragma unroll 8
         for (int q = 1; q <= 8; q++) {
           mucofu2 = 0;
           mucofuv = 0;

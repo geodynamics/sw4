@@ -129,6 +129,7 @@ void curvilinear4sg_ci(
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
       Range<6> K(1, 6 + 1);
+      // Uses 166 registers, no spills
       forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
       RAJA::RangeSegment k_range(1, 6 + 1);
@@ -309,6 +310,7 @@ void curvilinear4sg_ci(
         // averaging the coefficient
         // 54*8*8+25*8 = 3656 ops, tot=3939
         float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2;
+	//#pragma unroll 1 // slowdown due to register spills
         for (int q = 1; q <= 8; q++) {
           mucofu2 = 0;
           mucofuv = 0;
@@ -316,6 +318,7 @@ void curvilinear4sg_ci(
           mucofvw = 0;
           mucofv2 = 0;
           mucofw2 = 0;
+	  //#pragma unroll 1 // slowdown due to register spills
           for (int m = 1; m <= 8; m++) {
             mucofu2 += acof(k, q, m) *
                        ((2 * mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
@@ -457,6 +460,7 @@ void curvilinear4sg_ci(
         float_sw4 dudrm2 = 0, dudrm1 = 0, dudrp1 = 0, dudrp2 = 0;
         float_sw4 dvdrm2 = 0, dvdrm1 = 0, dvdrp1 = 0, dvdrp2 = 0;
         float_sw4 dwdrm2 = 0, dwdrm1 = 0, dwdrp1 = 0, dwdrp2 = 0;
+	//#pragma unroll 1
         for (int q = 1; q <= 8; q++) {
           dudrm2 += bope(k, q) * u(1, i - 2, j, q);
           dvdrm2 += bope(k, q) * u(2, i - 2, j, q);
@@ -557,6 +561,7 @@ void curvilinear4sg_ci(
         dwdrm1 = 0;
         dwdrp1 = 0;
         dwdrp2 = 0;
+	//#pragma unroll 1
         for (int q = 1; q <= 8; q++) {
           dudrm2 += bope(k, q) * u(1, i, j - 2, q);
           dvdrm2 += bope(k, q) * u(2, i, j - 2, q);
@@ -644,6 +649,7 @@ void curvilinear4sg_ci(
 
         // pr and qr derivatives at once
         // in loop: 8*(53+53+43) = 1192 ops, tot=6037
+	//#pragma unroll 1 
         for (int q = 1; q <= 8; q++) {
           // (u-eq)
           // 53 ops
@@ -747,6 +753,7 @@ void curvilinear4sg_ci(
     Range<4> K(kstart, kend + 1);  // Changed for CUrvi-MR Was klast-1
     // std::cout<<"KSTART END"<<kstart<<" "<<kend<<"\n";
     // forall3GS(IS,JS,KS, [=]RAJA_DEVICE(int i,int j,int k){
+	// Use 168 regissters , no spills
 #pragma forceinline
 	forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 	//forall3X<256>(ifirst + 2, ilast - 1,jfirst + 2, jlast - 1,kstart, kend + 1,
@@ -1130,6 +1137,7 @@ void curvilinear4sg_ci(
     // Range<2>K(kstart,klast-1);
 
     // forall3GS(IS,JS,KS, [=]RAJA_DEVICE(int i,int j,int k){
+    // Uses 254 reisters, no spills
 #pragma forceinline
     forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
@@ -1498,6 +1506,7 @@ void curvilinear4sg_ci(
     // Range<2>K(kstart,klast-1);
 
     // forall3GS(IS,JS,KS, [=]RAJA_DEVICE(int i,int j,int k){
+    // Uses 255 registers, no spills
 #pragma forceinline
     forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
@@ -1872,6 +1881,8 @@ void curvilinear4sg_ci(
 // #pragma omp simd
 // #pragma ivdep
 //         for (int i = ifirst + 2; i <= ilast - 2; i++) {
+
+//    const int UNROLL_LEN=1;
 #if defined(NO_COLLAPSE)
     // LOOP -1
     // 32,4,2 is 4% slower. 32 4 4 does not fit
@@ -1884,6 +1895,8 @@ void curvilinear4sg_ci(
 // #pragma unroll 
 // 	for (int kk=-5;kk<1;kk++){
 // 	  int k=nk+kk;
+// Uses 240 registers, no spills
+#pragma forceinline 
     forall3async(II, JJ, KK, [=] RAJA_DEVICE(int i, int j, int k) {
 	// forall3X results in a 2.5X slowdown even though registers drop from
 	// 168 to 130
@@ -1899,6 +1912,7 @@ void curvilinear4sg_ci(
                                                                       int j,
                                                                       int i) {
 #endif
+
       // 5 ops
       float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
       float_sw4 istry = 1 / (stry(j));
@@ -2055,6 +2069,7 @@ void curvilinear4sg_ci(
       // averaging the coefficient
       // 54*8*8+25*8 = 3656 ops, tot=3939
       float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2;
+      //#pragma unroll 8
       for (int q = nk - 7; q <= nk; q++) {
         mucofu2 = 0;
         mucofuv = 0;
@@ -2062,6 +2077,7 @@ void curvilinear4sg_ci(
         mucofvw = 0;
         mucofv2 = 0;
         mucofw2 = 0;
+	//#pragma unroll 8
         for (int m = nk - 7; m <= nk; m++) {
           mucofu2 += acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
                      ((2 * mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
@@ -2203,6 +2219,7 @@ void curvilinear4sg_ci(
       float_sw4 dudrm2 = 0, dudrm1 = 0, dudrp1 = 0, dudrp2 = 0;
       float_sw4 dvdrm2 = 0, dvdrm1 = 0, dvdrp1 = 0, dvdrp2 = 0;
       float_sw4 dwdrm2 = 0, dwdrm1 = 0, dwdrp1 = 0, dwdrp2 = 0;
+      //#pragma unroll 8
       for (int q = nk - 7; q <= nk; q++) {
         dudrm2 -= bope(nk - k + 1, nk - q + 1) * u(1, i - 2, j, q);
         dvdrm2 -= bope(nk - k + 1, nk - q + 1) * u(2, i - 2, j, q);
@@ -2302,6 +2319,7 @@ void curvilinear4sg_ci(
       dwdrm1 = 0;
       dwdrp1 = 0;
       dwdrp2 = 0;
+      //#pragma unroll 8
       for (int q = nk - 7; q <= nk; q++) {
         dudrm2 -= bope(nk - k + 1, nk - q + 1) * u(1, i, j - 2, q);
         dvdrm2 -= bope(nk - k + 1, nk - q + 1) * u(2, i, j - 2, q);
@@ -2386,6 +2404,7 @@ void curvilinear4sg_ci(
 
       // pr and qr derivatives at once
       // in loop: 8*(53+53+43) = 1192 ops, tot=6037
+      //#pragma unroll 8
       for (int q = nk - 7; q <= nk; q++) {
         // (u-eq)
         // 53 ops
@@ -2749,6 +2768,7 @@ void curvilinear4sg_ci(
         // averaging the coefficient
         // 54*8*8+25*8 = 3656 ops, tot=3939
         float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2;
+#pragma unroll UNROLL_LEN
         for (int q = 1; q <= 8; q++) {
           mucofu2 = 0;
           mucofuv = 0;
@@ -2897,6 +2917,7 @@ void curvilinear4sg_ci(
         float_sw4 dudrm2 = 0, dudrm1 = 0, dudrp1 = 0, dudrp2 = 0;
         float_sw4 dvdrm2 = 0, dvdrm1 = 0, dvdrp1 = 0, dvdrp2 = 0;
         float_sw4 dwdrm2 = 0, dwdrm1 = 0, dwdrp1 = 0, dwdrp2 = 0;
+#pragma unroll UNROLL_LEN
         for (int q = 1; q <= 8; q++) {
           dudrm2 += bope(k, q) * u(1, i - 2, j, q);
           dvdrm2 += bope(k, q) * u(2, i - 2, j, q);

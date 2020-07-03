@@ -202,7 +202,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        oddIevenJinterp.o evenIevenJinterp.o CheckPoint.o Mspace.o RandomizedMaterial.o AllDims.o Patch.o ESSI3D.o \
 	MaterialSfile.o MaterialInvtest.o geodyn.o ESSI3DHDF5.o sachdf5.o readhdf5.o CurvilinearInterface2.o \
 	TestEcons.o TestTwilight.o  curvilinear4sgwind.o GridGeneratorGeneral.o GridGeneratorGaussianHill.o \
-	GridGenerator.o RHS43DEV.o
+	GridGenerator.o RHS43DEV.o 
 
 
 # new C-routines converted from fortran
@@ -235,7 +235,7 @@ sw4: $(FSW4) $(FOBJ)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); nvcc  -arch=sm_70 -dlink -o file_link.o $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart -lnvidia-ml
+	cd $(builddir); nvcc -dlink -o file_link.o $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart -lnvidia-ml
 	cd $(builddir); $(LINKER) $(LINKFLAGS) -o $@ main.o file_link.o $(OBJ) $(QUADPACK) $(linklibs)
 # test: linking with openmp for the routine rhs4sgcurv.o
 #	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)

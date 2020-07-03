@@ -2087,6 +2087,11 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
   auto& uV = u.getview();
   RAJA::RangeSegment k_range(kb, ke + 1);
 
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_DEVICE;
+#endif
+
   // i-direction communication
   MPI_Irecv(rbuf1, npts1 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[1], tag1,
             m_ew->m_cartesian_communicator, &req1);
@@ -2107,6 +2112,10 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
                              sbuf1[ind + npts1 * (c - 1)] = uV(c, i, j, k);
                            }
                          });
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_DEVICE;
+#endif
   }
   MPI_Isend(sbuf1, npts1 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[0], tag1,
             m_ew->m_cartesian_communicator, &req3);
@@ -2125,6 +2134,10 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
                              sbuf2[ind + npts1 * (c - 1)] = uV(c, i, j, k);
                            }
                          });
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_DEVICE;
+#endif
   }
   MPI_Isend(sbuf2, npts1 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[1], tag2,
             m_ew->m_cartesian_communicator, &req4);
@@ -2144,6 +2157,10 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
                              uV(c, i, j, k) = rbuf1[ind + npts1 * (c - 1)];
                            }
                          });
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_DEVICE;
+#endif
   }
   MPI_Wait(&req2, &status);
   if (m_ew->m_neighbor[0] != MPI_PROC_NULL) {
@@ -2161,6 +2178,10 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
                              uV(c, i, j, k) = rbuf2[ind + npts1 * (c - 1)];
                            }
                          });
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_DEVICE;
+#endif
   }
 
   MPI_Wait(&req3, &status);
@@ -2188,6 +2209,10 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
                              sbuf1[ind + npts2 * (c - 1)] = uV(c, i, j, k);
                            }
                          });
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_DEVICE;
+#endif
   }
 
   MPI_Isend(sbuf1, npts2 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[2], tag1,
@@ -2209,6 +2234,10 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
                              sbuf2[ind + npts2 * (c - 1)] = uV(c, i, j, k);
                            }
                          });
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_DEVICE;
+#endif
   }
   MPI_Isend(sbuf2, npts2 * u.m_nc, m_ew->m_mpifloat, m_ew->m_neighbor[3], tag2,
             m_ew->m_cartesian_communicator, &req4);
@@ -2228,6 +2257,10 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
                              uV(c, i, j, k) = rbuf1[ind + npts2 * (c - 1)];
                            }
                          });
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_DEVICE;
+#endif
   }
   MPI_Wait(&req2, &status);
   if (m_ew->m_neighbor[2] != MPI_PROC_NULL) {
@@ -2245,6 +2278,10 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
                              uV(c, i, j, k) = rbuf2[ind + npts2 * (c - 1)];
                            }
                          });
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_DEVICE;
+#endif
   }
 
   MPI_Wait(&req3, &status);
