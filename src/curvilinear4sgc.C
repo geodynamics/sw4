@@ -130,7 +130,8 @@ void curvilinear4sg_ci(
       Range<4> J(jfirst + 2, jlast - 1);
       Range<6> K(1, 6 + 1);
       // Uses 166 registers, no spills
-      forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+      Tclass<1> tag1;
+      forall3async<__LINE__>(tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1> t, int i, int j, int k) {
 #else
       RAJA::RangeSegment k_range(1, 6 + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
@@ -754,8 +755,9 @@ void curvilinear4sg_ci(
     // std::cout<<"KSTART END"<<kstart<<" "<<kend<<"\n";
     // forall3GS(IS,JS,KS, [=]RAJA_DEVICE(int i,int j,int k){
 	// Use 168 regissters , no spills
+      Tclass<2> tag2;
 #pragma forceinline
-	forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+	forall3async<__LINE__>(tag2,I, J, K, [=] RAJA_DEVICE(Tclass<2> t, int i, int j, int k) {
 	//forall3X<256>(ifirst + 2, ilast - 1,jfirst + 2, jlast - 1,kstart, kend + 1,
 	//	      [=] RAJA_DEVICE(int i, int j, int k) {
 #else
@@ -1138,8 +1140,9 @@ void curvilinear4sg_ci(
 
     // forall3GS(IS,JS,KS, [=]RAJA_DEVICE(int i,int j,int k){
     // Uses 254 reisters, no spills
+      Tclass<3> tag3;
 #pragma forceinline
-    forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+    forall3async<__LINE__>(tag3, I, J, K, [=] RAJA_DEVICE(Tclass<3> t, int i, int j, int k) {
 #else
     // RAJA::RangeSegment k_range(kstart,klast-1);
     // RAJA::RangeSegment j_range(jfirst+2,jlast-1);
@@ -1507,8 +1510,9 @@ void curvilinear4sg_ci(
 
     // forall3GS(IS,JS,KS, [=]RAJA_DEVICE(int i,int j,int k){
     // Uses 255 registers, no spills
+      Tclass<4> tag4;
 #pragma forceinline
-    forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+    forall3async<__LINE__>(tag4, I, J, K, [=] RAJA_DEVICE(Tclass<4> t, int i, int j, int k) {
 #else
     // RAJA::RangeSegment k_range(kstart,klast-1);
     // RAJA::RangeSegment j_range(jfirst+2,jlast-1);
@@ -1896,8 +1900,9 @@ void curvilinear4sg_ci(
 // 	for (int kk=-5;kk<1;kk++){
 // 	  int k=nk+kk;
 // Uses 240 registers, no spills
+      Tclass<5> tag5;
 #pragma forceinline 
-    forall3async(II, JJ, KK, [=] RAJA_DEVICE(int i, int j, int k) {
+    forall3async<__LINE__>(tag5, II, JJ, KK, [=] RAJA_DEVICE(Tclass<5> t, int i, int j, int k) {
 	// forall3X results in a 2.5X slowdown even though registers drop from
 	// 168 to 130
 	//forall3X<256>(ifirst + 2, ilast - 1,jfirst + 2, jlast - 1,nk-5,nk+1,

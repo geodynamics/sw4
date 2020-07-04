@@ -116,6 +116,15 @@ __global__ void forall3kernel(const int start0, const int N0, const int start1,
   int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
   if ((tid0 < N0) && (tid1 < N1) && (tid2 < N2)) f(tid0, tid1, tid2);
 }
+template <int N, typename Tag, typename Func>
+__global__ void forall3kernel(Tag t , const int start0, const int N0, const int start1,
+                              const int N1, const int start2, const int N2,
+                              Func f) {
+  int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
+  int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
+  int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
+  if ((tid0 < N0) && (tid1 < N1) && (tid2 < N2)) f(t, tid0, tid1, tid2);
+}
 
 template <typename Func>
 __global__ void forall3gskernel(int start0, int N0, int start1, int N1,
@@ -473,8 +482,6 @@ void forall3X(int start0, int end0, int start1, int end1, int start2, int end2,
                                  body);
   // cudaDeviceSynchronize();
 }
-
-
 template <int N, typename T1, typename T2, typename T3, typename LoopBody>
 void forall3async(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
   if (irange.invalid || jrange.invalid || krange.invalid) return;
@@ -483,8 +490,24 @@ void forall3async(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
   // std::cout<<"forall launch tpb"<<irange.tpb<<" "<<jrange.tpb<<"
   // "<<krange.tpb<<"\n"; std::cout<<"forall launch blocks"<<irange.blocks<<"
   // "<<jrange.blocks<<" "<<krange.blocks<<"\n";
+  forall3kernel<N><<<blocks, tpb>>>(irange.start, irange.end, jrange.start,
+                                 jrange.end, krange.start, krange.end, body);
+}
 
-  forall3kernel<<<blocks, tpb>>>(irange.start, irange.end, jrange.start,
+
+template <int N>
+class Tclass{
+	};
+
+template <int N, typename Tag, typename T1, typename T2, typename T3, typename LoopBody>
+void forall3async(Tag& t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
+  if (irange.invalid || jrange.invalid || krange.invalid) return;
+  dim3 tpb(irange.tpb, jrange.tpb, krange.tpb);
+  dim3 blocks(irange.blocks, jrange.blocks, krange.blocks);
+  // std::cout<<"forall launch tpb"<<irange.tpb<<" "<<jrange.tpb<<"
+  // "<<krange.tpb<<"\n"; std::cout<<"forall launch blocks"<<irange.blocks<<"
+  // "<<jrange.blocks<<" "<<krange.blocks<<"\n";
+  forall3kernel<N><<<blocks, tpb>>>(t, irange.start, irange.end, jrange.start,
                                  jrange.end, krange.start, krange.end, body);
 }
 
