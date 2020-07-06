@@ -1,7 +1,9 @@
 #ifndef __OMP_POLICIES_H__
 #define __OMP_POLICIES_H__
+#include "RAJA/RAJA.hpp"
 
 #define SW4_FORCEINLINE
+#define SW4_PEEK
 
 using REDUCTION_POLICY = RAJA::omp_reduce;
 
@@ -142,7 +144,7 @@ using INJ_POL_ASYNC = DEFAULT_LOOP3;
 using INJ_POL2_ASYNC = DEFAULT_LOOP2;
 // CurvilinearInterface2::communicate_array
 
-uing CA_POL = DEFAULT_LOOP3;
+using CA_POL = DEFAULT_LOOP3;
 
 // Sarray::assign
 
@@ -152,7 +154,7 @@ using SAA_POL = DEFAULT_LOOP4;
 using SII_POL = DEFAULT_LOOP3;
 
 // TestEcons::get_ubnd(
-using TGU_POL_ASYNC = DEFAUL_LOOP3;
+using TGU_POL_ASYNC = DEFAULT_LOOP3;
 
 // in addmemvarforcing2.C
 using AMVPCa_POL = DEFAULT_LOOP3;
@@ -164,7 +166,7 @@ using AMVC2Cu_POL = DEFAULT_LOOP3;
 using ASG4WC_POL_ASYNC = DEFAULT_LOOP4;
 
 // In addsgdc.C
-using ADDSGD_POL_ASYNC = DEFAULT_LOOP4;
+//using ADDSGD_POL_ASYNC = DEFAULT_LOOP4;
 
 using ADDSGD_POL2_ASYNC = DEFAULT_LOOP4;
 
@@ -194,5 +196,9 @@ using MPFC_POL_ASYNC = DEFAULT_LOOP3;
 // in EW.C
 using FORCE_LOOP_ASYNC = RAJA::omp_parallel_for_exec;
 using FORCETT_LOOP_ASYNC = RAJA::omp_parallel_for_exec;
+
+using GIG_POL_ASYNC = DEFAULT_LOOP2;
+using AFCC_POL_ASYNC = DEFAULT_LOOP2; 
+
 
 #endif

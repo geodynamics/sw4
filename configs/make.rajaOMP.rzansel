@@ -1,0 +1,17 @@
+proj = yes
+FC = xlf
+LINKER = mpixlC
+CXX = $(PREP) mpixlC
+ckernel=yes 
+openmp=yes
+raja_cuda=no
+RAJA_LOCATION = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.11.0/install_openmp
+PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/SW4/proj-5.0.0/install170818
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-1.1.0/install_openmp
+CALIPER_LOCATION =/usr/workspace/wsrzd/ramesh/Caliper/Caliper/install
+EXTRA_FORT_FLAGS = 
+LINKFLAGS =  -fopenmp
+EXTRA_CXX_FLAGS =  -O3 -g -std=c++11 -fopenmp -I$(RAJA_LOCATION)/include  -I$(CALIPER_LOCATION)/include -DENABLE_CALIPER -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -I$(PROJ_HOME)/include -DUSE_DIRECT_INVERSE=1 
+EXTRA_CXX_FLAGS2 =  -O3 -g -std=c++11 -fopenmp -I$(RAJA_LOCATION)/include  -I$(CALIPER_LOCATION)/include -DENABLE_CALIPER -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -I$(PROJ_HOME)/include
+
+EXTRA_LINK_FLAGS =  -L /usr/tce/packages/xl/xl-2020.03.18/xlf/16.1.1/lib -lxlf90  -L /usr/tcetmp/packages/lapack/lapack-3.9.0-xl-2020.03.18/lib -llapack -lblas  -L $(RAJA_LOCATION)/lib -lRAJA  -Wl,-rpath=$(CALIPER_LOCATION)/lib64 -L $(CALIPER_LOCATION)/lib64 -lcaliper -L $(PROJ_HOME)/lib64 -lproj -L$(UMPIRE_HOME)/lib -lumpire -lxlfmath

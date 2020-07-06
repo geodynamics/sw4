@@ -1333,8 +1333,9 @@ void Sarray::insert_intersection(Sarray& a_U) {
     // const int lm_nk = m_nk;
     const int lm_nc = m_nc;
     // std::cout<<"Calling interest \n"<<std::flush;
-
+#ifdef ENABLE_GPU
 #define NO_COLLAPSE 1
+#endif
 #if defined(NO_COLLAPSE)
     // LOOP 0
     Range<32> I(wind[0], wind[1] + 1);

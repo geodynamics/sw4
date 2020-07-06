@@ -916,28 +916,28 @@ void EW::communicate_array_async(Sarray& u, int grid) {
     // X-direction communication
     // for (int i=0;i<4;i++)std::cout<<m_neighbor[i]<<" ";
     // std::cout<<"\n";
-#pragma omp parallel default(shared) if (threaded_mpi)
-#pragma omp sections
+    //#pragma omp parallel default(shared) if (threaded_mpi)
+    //#pragma omp sections
     {
-#pragma omp section
+      //#pragma omp section
       AMPI_Sendrecv(&u(ie - (2 * m_ppadding - 1), jb, kb), 1,
                     send_type1[2 * grid], m_neighbor[1], xtag1, &u(ib, jb, kb),
                     1, send_type1[2 * grid], m_neighbor[0], xtag1,
                     bufs_type1[4 * grid], m_cartesian_communicator, &status);
-#pragma omp section
+      //#pragma omp section
       AMPI_Sendrecv(&u(ib + m_ppadding, jb, kb), 1, send_type1[2 * grid],
                     m_neighbor[0], xtag2, &u(ie - (m_ppadding - 1), jb, kb), 1,
                     send_type1[2 * grid], m_neighbor[1], xtag2,
                     bufs_type1[4 * grid + 1], m_cartesian_communicator,
                     &status);
       // Y-direction communication
-#pragma omp section
+      //#pragma omp section
       AMPI_Sendrecv(&u(ib, je - (2 * m_ppadding - 1), kb), 1,
                     send_type1[2 * grid + 1], m_neighbor[3], ytag1,
                     &u(ib, jb, kb), 1, send_type1[2 * grid + 1], m_neighbor[2],
                     ytag1, bufs_type1[4 * grid + 2], m_cartesian_communicator,
                     &status);
-#pragma omp section
+      //#pragma omp section
       AMPI_Sendrecv(&u(ib, jb + m_ppadding, kb), 1, send_type1[2 * grid + 1],
                     m_neighbor[2], ytag2, &u(ib, je - (m_ppadding - 1), kb), 1,
                     send_type1[2 * grid + 1], m_neighbor[3], ytag2,
@@ -949,30 +949,30 @@ void EW::communicate_array_async(Sarray& u, int grid) {
     int xtag2 = 346;
     int ytag1 = 347;
     int ytag2 = 348;
-#pragma omp parallel default(shared) if (threaded_mpi)
-#pragma omp sections
+    //#pragma omp parallel default(shared) if (threaded_mpi)
+    //#pragma omp sections
     {
       // X-direction communication
-#pragma omp section
+      //#pragma omp section
       AMPI_Sendrecv(&u(1, ie - (2 * m_ppadding - 1), jb, kb), 1,
                     send_type3[2 * grid], m_neighbor[1], xtag1,
                     &u(1, ib, jb, kb), 1, send_type3[2 * grid], m_neighbor[0],
                     xtag1, bufs_type3[4 * grid], m_cartesian_communicator,
                     &status);
-#pragma omp section
+      //#pragma omp section
       AMPI_Sendrecv(&u(1, ib + m_ppadding, jb, kb), 1, send_type3[2 * grid],
                     m_neighbor[0], xtag2, &u(1, ie - (m_ppadding - 1), jb, kb),
                     1, send_type3[2 * grid], m_neighbor[1], xtag2,
                     bufs_type3[4 * grid + 1], m_cartesian_communicator,
                     &status);
       // Y-direction communication
-#pragma omp section
+      //#pragma omp section
       AMPI_Sendrecv(&u(1, ib, je - (2 * m_ppadding - 1), kb), 1,
                     send_type3[2 * grid + 1], m_neighbor[3], ytag1,
                     &u(1, ib, jb, kb), 1, send_type3[2 * grid + 1],
                     m_neighbor[2], ytag1, bufs_type3[4 * grid + 2],
                     m_cartesian_communicator, &status);
-#pragma omp section
+      //#pragma omp section
       AMPI_Sendrecv(&u(1, ib, jb + m_ppadding, kb), 1, send_type3[2 * grid + 1],
                     m_neighbor[2], ytag2, &u(1, ib, je - (m_ppadding - 1), kb),
                     1, send_type3[2 * grid + 1], m_neighbor[3], ytag2,
@@ -984,30 +984,30 @@ void EW::communicate_array_async(Sarray& u, int grid) {
     int xtag2 = 346;
     int ytag1 = 347;
     int ytag2 = 348;
-#pragma omp parallel default(shared) if (threaded_mpi)
-#pragma omp sections
+    //#pragma omp parallel default(shared) if (threaded_mpi)
+    //#pragma omp sections
     {
       // X-direction communication
-#pragma omp section
-      AMPI_Sendrecv(&u(1, ie - (2 * m_ppadding - 1), jb, kb), 1,
+      //#pragma omp section
+            AMPI_Sendrecv(&u(1, ie - (2 * m_ppadding - 1), jb, kb), 1,
                     send_type4[2 * grid], m_neighbor[1], xtag1,
                     &u(1, ib, jb, kb), 1, send_type4[2 * grid], m_neighbor[0],
                     xtag1, bufs_type4[4 * grid], m_cartesian_communicator,
                     &status);
-#pragma omp section
+	    //#pragma omp section
       AMPI_Sendrecv(&u(1, ib + m_ppadding, jb, kb), 1, send_type4[2 * grid],
                     m_neighbor[0], xtag2, &u(1, ie - (m_ppadding - 1), jb, kb),
                     1, send_type4[2 * grid], m_neighbor[1], xtag2,
                     bufs_type4[4 * grid + 1], m_cartesian_communicator,
                     &status);
-#pragma omp section
+      //#pragma omp section
       // Y-direction communication
       AMPI_Sendrecv(&u(1, ib, je - (2 * m_ppadding - 1), kb), 1,
                     send_type4[2 * grid + 1], m_neighbor[3], ytag1,
                     &u(1, ib, jb, kb), 1, send_type4[2 * grid + 1],
                     m_neighbor[2], ytag1, bufs_type4[4 * grid + 2],
                     m_cartesian_communicator, &status);
-#pragma omp section
+      //#pragma omp section
       AMPI_Sendrecv(&u(1, ib, jb + m_ppadding, kb), 1, send_type4[2 * grid + 1],
                     m_neighbor[2], ytag2, &u(1, ib, je - (m_ppadding - 1), kb),
                     1, send_type4[2 * grid + 1], m_neighbor[3], ytag2,
@@ -1020,30 +1020,30 @@ void EW::communicate_array_async(Sarray& u, int grid) {
     int xtag2 = 346;
     int ytag1 = 347;
     int ytag2 = 348;
-#pragma omp parallel default(shared) if (threaded_mpi)
-#pragma omp sections
+    //#pragma omp parallel default(shared) if (threaded_mpi)
+    //#pragma omp sections
     {
       // X-direction communication
-#pragma omp section
+      //#pragma omp section
       AMPI_Sendrecv(&u(1, ie - (2 * m_ppadding - 1), jb, kb), 1,
                     send_type21[2 * grid], m_neighbor[1], xtag1,
                     &u(1, ib, jb, kb), 1, send_type21[2 * grid], m_neighbor[0],
                     xtag1, bufs_type21[4 * grid], m_cartesian_communicator,
                     &status);
-#pragma omp section
+      //#pragma omp section
       AMPI_Sendrecv(&u(1, ib + m_ppadding, jb, kb), 1, send_type21[2 * grid],
                     m_neighbor[0], xtag2, &u(1, ie - (m_ppadding - 1), jb, kb),
                     1, send_type21[2 * grid], m_neighbor[1], xtag2,
                     bufs_type21[4 * grid + 1], m_cartesian_communicator,
                     &status);
-#pragma omp section
+      //#pragma omp section
       // Y-direction communication
       AMPI_Sendrecv(&u(1, ib, je - (2 * m_ppadding - 1), kb), 1,
                     send_type21[2 * grid + 1], m_neighbor[3], ytag1,
                     &u(1, ib, jb, kb), 1, send_type21[2 * grid + 1],
                     m_neighbor[2], ytag1, bufs_type21[4 * grid + 2],
                     m_cartesian_communicator, &status);
-#pragma omp section
+      //#pragma omp section
       AMPI_Sendrecv(
           &u(1, ib, jb + m_ppadding, kb), 1, send_type21[2 * grid + 1],
           m_neighbor[2], ytag2, &u(1, ib, je - (m_ppadding - 1), kb), 1,

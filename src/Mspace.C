@@ -339,7 +339,7 @@ void presetGPUID() {
     // std::cout<<"Calling my placement new \n";
     return ::operator new(size);
   } else {
-    std::cerr << "Unknown memory space for allocation request " << loc << "\n";
+    std::cerr << "Unknown memory space for allocation request " << as_int(loc) << "\n";
     throw std::bad_alloc();
   }
 #endif  // ENABLE_GPU
@@ -400,11 +400,11 @@ void presetGPUID() {
   if ((loc == Space::Managed) || (loc == Space::Device)) {
     // std::cout<<"Managed delete not available yet \n";
     ::operator delete(ptr);
-  } else if (loc == Host) {
+  } else if (loc == Space::Host) {
     // std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
   } else {
-    std::cerr << "Unknown memory space for de-allocation request " << loc
+    std::cerr << "Unknown memory space for de-allocation request " << as_int(loc)
               << "\n";
   }
 #endif
@@ -471,7 +471,7 @@ void presetGPUID() {
     // std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
   } else {
-    std::cerr << "Unknown memory space for de-allocation request " << loc
+    std::cerr << "Unknown memory space for de-allocation request " << as_int(loc)
               << "\n";
   }
 #endif
@@ -781,6 +781,7 @@ void presetGPUID() {
     return v;
   }
   // GML needs to be hipified
+#ifdef ENABLE_CUDA
   Space GML(const void *ptr) {
     struct cudaPointerAttributes attr;
     if (cudaPointerGetAttributes(&attr, ptr) == cudaErrorInvalidValue) {
@@ -799,6 +800,11 @@ void presetGPUID() {
     } else
       return Space::Space_Error;
   }
+#endif
+
+
+
+
   void invert(float_sw4 * A, int msize) {
     float_sw4 B[9];
 

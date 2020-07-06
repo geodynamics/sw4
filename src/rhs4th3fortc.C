@@ -2247,7 +2247,7 @@ void rhserrfort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
     for (int k = 1; k <= 6; k++)
       for (int j = jfirst + 2; j <= jlast - 2; j++)
         for (int i = ifirst + 2; i <= ilast - 2; i++) {
-          float_sw4 er = abs(fo(c, i, j, k) - u2(c, i, j, k));
+          float_sw4 er = std::abs(fo(c, i, j, k) - u2(c, i, j, k));
           if (lowz < er) lowz = er;
         }
     lowZ[c - 1] = lowz;
@@ -2260,7 +2260,7 @@ void rhserrfort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
     for (int k = 7; k <= nz - 6; k++)
       for (int j = jfirst + 2; j <= jlast - 2; j++)
         for (int i = ifirst + 2; i <= ilast - 2; i++) {
-          float_sw4 er = abs(fo(c, i, j, k) - u2(c, i, j, k));
+          float_sw4 er = std::abs(fo(c, i, j, k) - u2(c, i, j, k));
           if (interz < er) interz = er;
         }
     interZ[c - 1] = interz;
@@ -2273,7 +2273,7 @@ void rhserrfort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
     for (int k = nz - 5; k <= nz; k++)
       for (int j = jfirst + 2; j <= jlast - 2; j++)
         for (int i = ifirst + 2; i <= ilast - 2; i++) {
-          float_sw4 er = abs(fo(c, i, j, k) - u2(c, i, j, k));
+          float_sw4 er = std::abs(fo(c, i, j, k) - u2(c, i, j, k));
           if (highz < er) highz = er;
         }
     highZ[c - 1] = highz;
@@ -2307,7 +2307,7 @@ void rhouttlumf_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
     for (int k = 1; k <= 6; k++)
       for (int j = jfirst + 2; j <= jlast - 2; j++)
         for (int i = ifirst + 2; i <= ilast - 2; i++) {
-          float_sw4 er = abs(rho(i, j, k) * uacc(c, i, j, k) - lu(c, i, j, k) -
+          float_sw4 er = std::abs(rho(i, j, k) * uacc(c, i, j, k) - lu(c, i, j, k) -
                              fo(c, i, j, k));
           if (lowz < er) lowz = er;
         }
@@ -2321,7 +2321,7 @@ void rhouttlumf_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
     for (int k = 7; k <= nz - 6; k++)
       for (int j = jfirst + 2; j <= jlast - 2; j++)
         for (int i = ifirst + 2; i <= ilast - 2; i++) {
-          float_sw4 er = abs(rho(i, j, k) * uacc(c, i, j, k) - lu(c, i, j, k) -
+          float_sw4 er = std::abs(rho(i, j, k) * uacc(c, i, j, k) - lu(c, i, j, k) -
                              fo(c, i, j, k));
           if (interz < er) interz = er;
         }
@@ -2335,7 +2335,7 @@ void rhouttlumf_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
     for (int k = nz - 5; k <= nz; k++)
       for (int j = jfirst + 2; j <= jlast - 2; j++)
         for (int i = ifirst + 2; i <= ilast - 2; i++) {
-          float_sw4 er = abs(rho(i, j, k) * uacc(c, i, j, k) - lu(c, i, j, k) -
+          float_sw4 er = std::abs(rho(i, j, k) * uacc(c, i, j, k) - lu(c, i, j, k) -
                              fo(c, i, j, k));
           if (highz < er) highz = er;
         }
