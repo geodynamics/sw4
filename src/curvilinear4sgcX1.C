@@ -127,7 +127,7 @@ void curvilinear4sgX1_ci(
     // 32,4,2 is 4% slower. 32 4 4 does not fit
     Range<16> II(ifirst + 2, ilast - 1);
     Range<4> JJ(jfirst + 2, jlast - 1);
-    Range<6> KK(nk - 5, nk + 1);
+    Range<4> KK(nk - 5, nk + 1);
     // Register count goes upto 254. Runtime goes up by factor of 2.8X
 //     Range<16> JJ2(jfirst + 2, jlast - 1);
 //     forall2async(II, JJ2,[=] RAJA_DEVICE(int i, int j) {

@@ -38,6 +38,8 @@
 #include "foralls.h"
 #include "policies.h"
 #include "sw4.h"
+// 90 GB/s on V100 !! with 16 4 4
+// 500 GBs on V100 with 16 16 4. But this is slower fro long runs !!
 void memvar_pred_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
                          int kfirst, int klast, float_sw4* __restrict__ alp,
                          float_sw4* __restrict__ alm, float_sw4* __restrict__ u,
@@ -104,7 +106,7 @@ void memvar_pred_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
       [=] RAJA_DEVICE(int k, int j, int i) {
 #endif
     size_t ind = base + i + ni * j + nij * k;
-#pragma unroll
+#pragma unroll 3
     for (int c = 0; c < 3; c++)
       alp[ind + c * nijk] =
           icp * (-cm * alm[ind + c * nijk] + u[ind + c * nijk]);
@@ -114,6 +116,7 @@ void memvar_pred_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
+// 618 Gb/s on V100
 void memvar_corr_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
                          int kfirst, int klast, float_sw4* __restrict__ alp,
                          float_sw4* __restrict__ alm,
@@ -179,7 +182,7 @@ void memvar_corr_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
 #endif
     size_t ind = base + i + ni * j + nij * k;
     // Note that alp is ASSIGNED by this formula
-#pragma unroll
+#pragma unroll 3
     for (int c = 0; c < 3; c++)
       alp[ind + c * nijk] =
           icp * (cm * alm[ind + c * nijk] + u[ind + c * nijk] +
@@ -193,6 +196,7 @@ void memvar_corr_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
+// 565 GB/s on V100
 void memvar_corr_fort_wind_ci(
     int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
     float_sw4* __restrict__ alp, int d1b, int d1e, int d2b, int d2e, int d3b,

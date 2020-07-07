@@ -38,6 +38,15 @@
 #include "sw4.h"
 #define SPLIT_VERSION
 #ifdef SPLIT_VERSION
+void curvilinear4sgX1_ci(
+    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+    float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,
+    float_sw4* __restrict__ a_lambda, float_sw4* __restrict__ a_met,
+    float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu, int* onesided,
+    float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
+    float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_acof_no_gp,
+    float_sw4* __restrict__ a_ghcof_no_gp, float_sw4* __restrict__ a_strx,
+    float_sw4* __restrict__ a_stry, int nk, char op);
 void curvilinear4sg_ci(
     int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,
@@ -73,6 +82,18 @@ void curvilinear4sg_ci(
     a1 = 1;
     sgn = -1;
   }
+  // Used ony for timing the routine. SPlit version of the onesides[5]==1 loop
+  // curvilinear4sgX1_ci(
+  // 		      ifirst, ilast, jfirst, jlast, kfirst, klast,
+  // 		      a_u,   a_mu,
+  // 		      a_lambda,   a_met,
+  // 		      a_jac,   a_lu, onesided,
+  // 		      a_acof,   a_bope,
+  // 		      a_ghcof,   a_acof_no_gp,
+  // 		      a_ghcof_no_gp,   a_strx,
+  // 		      a_stry, nk, op) ;
+
+
 
   const float_sw4 i6 = 1.0 / 6;
   const float_sw4 tf = 0.75;
@@ -2514,6 +2535,7 @@ void curvilinear4sg_ci(
 #undef ghcof
 #undef acof_no_gp
 #undef ghcof_no_gp
+
 }
 #else
 void curvilinear4sg_ci(
