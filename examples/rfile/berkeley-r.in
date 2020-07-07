@@ -1,7 +1,7 @@
 # SW4 input file for testing the rfile command
 
 # set pfs=1 if you are on a parallel file system
-fileio path=berk-r pfs=1 verbose=1
+fileio path=berk-r pfs=0 verbose=2
 
 # grid size is set in the grid command
 # DO NOT CHANGE AZ!
@@ -13,7 +13,7 @@ grid x=12e3 y=12e3 z=5e3 nx=601 lat=37.93 lon=-122.25 az=143.6380001671 proj=tme
 topography input=rfile zmax=2e3 order=3 file=berkeley.rfile
 
 #time steps=0 
-time t=10 
+time t=1 
 
 # Verison 8.3 of USGS model in rfile format
 # CHECK PATH TO RFILE
@@ -48,125 +48,4 @@ image mode=p x=2.5e3 cycle=0 file=berk
 source x=2.5e3 y=2.5e3 z=1e3 strike=142.1 rake=180 dip=95.6 m0=1.7162e+17 t0=27.116 freq=7.62985 type=Liu
 
 # record time histories
-# rec x=2.5e3 y=2.5e3 depth=0 file=sta1 usgsformat=1 sacformat=0
-rec usgsformat=1 sacformat=0 x=1000 y=1000 z=0 sta=sta0 file=sta0
-rec usgsformat=1 sacformat=0 x=1000 y=2000 z=0 sta=sta1 file=sta1
-rec usgsformat=1 sacformat=0 x=1000 y=3000 z=0 sta=sta2 file=sta2
-rec usgsformat=1 sacformat=0 x=1000 y=4000 z=0 sta=sta3 file=sta3
-rec usgsformat=1 sacformat=0 x=1000 y=5000 z=0 sta=sta4 file=sta4
-rec usgsformat=1 sacformat=0 x=1000 y=6000 z=0 sta=sta5 file=sta5
-rec usgsformat=1 sacformat=0 x=1000 y=7000 z=0 sta=sta6 file=sta6
-rec usgsformat=1 sacformat=0 x=1000 y=8000 z=0 sta=sta7 file=sta7
-rec usgsformat=1 sacformat=0 x=1000 y=9000 z=0 sta=sta8 file=sta8
-rec usgsformat=1 sacformat=0 x=1000 y=10000 z=0 sta=sta9 file=sta9
-rec usgsformat=1 sacformat=0 x=1000 y=11000 z=0 sta=sta10 file=sta10
-rec usgsformat=1 sacformat=0 x=2000 y=1000 z=0 sta=sta11 file=sta11
-rec usgsformat=1 sacformat=0 x=2000 y=2000 z=0 sta=sta12 file=sta12
-rec usgsformat=1 sacformat=0 x=2000 y=3000 z=0 sta=sta13 file=sta13
-rec usgsformat=1 sacformat=0 x=2000 y=4000 z=0 sta=sta14 file=sta14
-rec usgsformat=1 sacformat=0 x=2000 y=5000 z=0 sta=sta15 file=sta15
-rec usgsformat=1 sacformat=0 x=2000 y=6000 z=0 sta=sta16 file=sta16
-rec usgsformat=1 sacformat=0 x=2000 y=7000 z=0 sta=sta17 file=sta17
-rec usgsformat=1 sacformat=0 x=2000 y=8000 z=0 sta=sta18 file=sta18
-rec usgsformat=1 sacformat=0 x=2000 y=9000 z=0 sta=sta19 file=sta19
-rec usgsformat=1 sacformat=0 x=2000 y=10000 z=0 sta=sta20 file=sta20
-rec usgsformat=1 sacformat=0 x=2000 y=11000 z=0 sta=sta21 file=sta21
-rec usgsformat=1 sacformat=0 x=3000 y=1000 z=0 sta=sta22 file=sta22
-rec usgsformat=1 sacformat=0 x=3000 y=2000 z=0 sta=sta23 file=sta23
-rec usgsformat=1 sacformat=0 x=3000 y=3000 z=0 sta=sta24 file=sta24
-rec usgsformat=1 sacformat=0 x=3000 y=4000 z=0 sta=sta25 file=sta25
-rec usgsformat=1 sacformat=0 x=3000 y=5000 z=0 sta=sta26 file=sta26
-rec usgsformat=1 sacformat=0 x=3000 y=6000 z=0 sta=sta27 file=sta27
-rec usgsformat=1 sacformat=0 x=3000 y=7000 z=0 sta=sta28 file=sta28
-rec usgsformat=1 sacformat=0 x=3000 y=8000 z=0 sta=sta29 file=sta29
-rec usgsformat=1 sacformat=0 x=3000 y=9000 z=0 sta=sta30 file=sta30
-rec usgsformat=1 sacformat=0 x=3000 y=10000 z=0 sta=sta31 file=sta31
-rec usgsformat=1 sacformat=0 x=3000 y=11000 z=0 sta=sta32 file=sta32
-rec usgsformat=1 sacformat=0 x=4000 y=1000 z=0 sta=sta33 file=sta33
-rec usgsformat=1 sacformat=0 x=4000 y=2000 z=0 sta=sta34 file=sta34
-rec usgsformat=1 sacformat=0 x=4000 y=3000 z=0 sta=sta35 file=sta35
-rec usgsformat=1 sacformat=0 x=4000 y=4000 z=0 sta=sta36 file=sta36
-rec usgsformat=1 sacformat=0 x=4000 y=5000 z=0 sta=sta37 file=sta37
-rec usgsformat=1 sacformat=0 x=4000 y=6000 z=0 sta=sta38 file=sta38
-rec usgsformat=1 sacformat=0 x=4000 y=7000 z=0 sta=sta39 file=sta39
-rec usgsformat=1 sacformat=0 x=4000 y=8000 z=0 sta=sta40 file=sta40
-rec usgsformat=1 sacformat=0 x=4000 y=9000 z=0 sta=sta41 file=sta41
-rec usgsformat=1 sacformat=0 x=4000 y=10000 z=0 sta=sta42 file=sta42
-rec usgsformat=1 sacformat=0 x=4000 y=11000 z=0 sta=sta43 file=sta43
-rec usgsformat=1 sacformat=0 x=5000 y=1000 z=0 sta=sta44 file=sta44
-rec usgsformat=1 sacformat=0 x=5000 y=2000 z=0 sta=sta45 file=sta45
-rec usgsformat=1 sacformat=0 x=5000 y=3000 z=0 sta=sta46 file=sta46
-rec usgsformat=1 sacformat=0 x=5000 y=4000 z=0 sta=sta47 file=sta47
-rec usgsformat=1 sacformat=0 x=5000 y=5000 z=0 sta=sta48 file=sta48
-rec usgsformat=1 sacformat=0 x=5000 y=6000 z=0 sta=sta49 file=sta49
-rec usgsformat=1 sacformat=0 x=5000 y=7000 z=0 sta=sta50 file=sta50
-rec usgsformat=1 sacformat=0 x=5000 y=8000 z=0 sta=sta51 file=sta51
-rec usgsformat=1 sacformat=0 x=5000 y=9000 z=0 sta=sta52 file=sta52
-rec usgsformat=1 sacformat=0 x=5000 y=10000 z=0 sta=sta53 file=sta53
-rec usgsformat=1 sacformat=0 x=5000 y=11000 z=0 sta=sta54 file=sta54
-rec usgsformat=1 sacformat=0 x=6000 y=1000 z=0 sta=sta55 file=sta55
-rec usgsformat=1 sacformat=0 x=6000 y=2000 z=0 sta=sta56 file=sta56
-rec usgsformat=1 sacformat=0 x=6000 y=3000 z=0 sta=sta57 file=sta57
-rec usgsformat=1 sacformat=0 x=6000 y=4000 z=0 sta=sta58 file=sta58
-rec usgsformat=1 sacformat=0 x=6000 y=5000 z=0 sta=sta59 file=sta59
-rec usgsformat=1 sacformat=0 x=6000 y=6000 z=0 sta=sta60 file=sta60
-rec usgsformat=1 sacformat=0 x=6000 y=7000 z=0 sta=sta61 file=sta61
-rec usgsformat=1 sacformat=0 x=6000 y=8000 z=0 sta=sta62 file=sta62
-rec usgsformat=1 sacformat=0 x=6000 y=9000 z=0 sta=sta63 file=sta63
-rec usgsformat=1 sacformat=0 x=6000 y=10000 z=0 sta=sta64 file=sta64
-rec usgsformat=1 sacformat=0 x=6000 y=11000 z=0 sta=sta65 file=sta65
-rec usgsformat=1 sacformat=0 x=7000 y=1000 z=0 sta=sta66 file=sta66
-rec usgsformat=1 sacformat=0 x=7000 y=2000 z=0 sta=sta67 file=sta67
-rec usgsformat=1 sacformat=0 x=7000 y=3000 z=0 sta=sta68 file=sta68
-rec usgsformat=1 sacformat=0 x=7000 y=4000 z=0 sta=sta69 file=sta69
-rec usgsformat=1 sacformat=0 x=7000 y=5000 z=0 sta=sta70 file=sta70
-rec usgsformat=1 sacformat=0 x=7000 y=6000 z=0 sta=sta71 file=sta71
-rec usgsformat=1 sacformat=0 x=7000 y=7000 z=0 sta=sta72 file=sta72
-rec usgsformat=1 sacformat=0 x=7000 y=8000 z=0 sta=sta73 file=sta73
-rec usgsformat=1 sacformat=0 x=7000 y=9000 z=0 sta=sta74 file=sta74
-rec usgsformat=1 sacformat=0 x=7000 y=10000 z=0 sta=sta75 file=sta75
-rec usgsformat=1 sacformat=0 x=7000 y=11000 z=0 sta=sta76 file=sta76
-rec usgsformat=1 sacformat=0 x=8000 y=1000 z=0 sta=sta77 file=sta77
-rec usgsformat=1 sacformat=0 x=8000 y=2000 z=0 sta=sta78 file=sta78
-rec usgsformat=1 sacformat=0 x=8000 y=3000 z=0 sta=sta79 file=sta79
-rec usgsformat=1 sacformat=0 x=8000 y=4000 z=0 sta=sta80 file=sta80
-rec usgsformat=1 sacformat=0 x=8000 y=5000 z=0 sta=sta81 file=sta81
-rec usgsformat=1 sacformat=0 x=8000 y=6000 z=0 sta=sta82 file=sta82
-rec usgsformat=1 sacformat=0 x=8000 y=7000 z=0 sta=sta83 file=sta83
-rec usgsformat=1 sacformat=0 x=8000 y=8000 z=0 sta=sta84 file=sta84
-rec usgsformat=1 sacformat=0 x=8000 y=9000 z=0 sta=sta85 file=sta85
-rec usgsformat=1 sacformat=0 x=8000 y=10000 z=0 sta=sta86 file=sta86
-rec usgsformat=1 sacformat=0 x=8000 y=11000 z=0 sta=sta87 file=sta87
-rec usgsformat=1 sacformat=0 x=9000 y=1000 z=0 sta=sta88 file=sta88
-rec usgsformat=1 sacformat=0 x=9000 y=2000 z=0 sta=sta89 file=sta89
-rec usgsformat=1 sacformat=0 x=9000 y=3000 z=0 sta=sta90 file=sta90
-rec usgsformat=1 sacformat=0 x=9000 y=4000 z=0 sta=sta91 file=sta91
-rec usgsformat=1 sacformat=0 x=9000 y=5000 z=0 sta=sta92 file=sta92
-rec usgsformat=1 sacformat=0 x=9000 y=6000 z=0 sta=sta93 file=sta93
-rec usgsformat=1 sacformat=0 x=9000 y=7000 z=0 sta=sta94 file=sta94
-rec usgsformat=1 sacformat=0 x=9000 y=8000 z=0 sta=sta95 file=sta95
-rec usgsformat=1 sacformat=0 x=9000 y=9000 z=0 sta=sta96 file=sta96
-rec usgsformat=1 sacformat=0 x=9000 y=10000 z=0 sta=sta97 file=sta97
-rec usgsformat=1 sacformat=0 x=9000 y=11000 z=0 sta=sta98 file=sta98
-rec usgsformat=1 sacformat=0 x=10000 y=1000 z=0 sta=sta99 file=sta99
-rec usgsformat=1 sacformat=0 x=10000 y=2000 z=0 sta=sta100 file=sta100
-rec usgsformat=1 sacformat=0 x=10000 y=3000 z=0 sta=sta101 file=sta101
-rec usgsformat=1 sacformat=0 x=10000 y=4000 z=0 sta=sta102 file=sta102
-rec usgsformat=1 sacformat=0 x=10000 y=5000 z=0 sta=sta103 file=sta103
-rec usgsformat=1 sacformat=0 x=10000 y=6000 z=0 sta=sta104 file=sta104
-rec usgsformat=1 sacformat=0 x=10000 y=7000 z=0 sta=sta105 file=sta105
-rec usgsformat=1 sacformat=0 x=10000 y=8000 z=0 sta=sta106 file=sta106
-rec usgsformat=1 sacformat=0 x=10000 y=9000 z=0 sta=sta107 file=sta107
-rec usgsformat=1 sacformat=0 x=10000 y=10000 z=0 sta=sta108 file=sta108
-rec usgsformat=1 sacformat=0 x=10000 y=11000 z=0 sta=sta109 file=sta109
-rec usgsformat=1 sacformat=0 x=11000 y=1000 z=0 sta=sta110 file=sta110
-rec usgsformat=1 sacformat=0 x=11000 y=2000 z=0 sta=sta111 file=sta111
-rec usgsformat=1 sacformat=0 x=11000 y=3000 z=0 sta=sta112 file=sta112
-rec usgsformat=1 sacformat=0 x=11000 y=4000 z=0 sta=sta113 file=sta113
-rec usgsformat=1 sacformat=0 x=11000 y=5000 z=0 sta=sta114 file=sta114
-rec usgsformat=1 sacformat=0 x=11000 y=6000 z=0 sta=sta115 file=sta115
-rec usgsformat=1 sacformat=0 x=11000 y=7000 z=0 sta=sta116 file=sta116
-rec usgsformat=1 sacformat=0 x=11000 y=8000 z=0 sta=sta117 file=sta117
-rec usgsformat=1 sacformat=0 x=11000 y=9000 z=0 sta=sta118 file=sta118
-rec usgsformat=1 sacformat=0 x=11000 y=10000 z=0 sta=sta119 file=sta119
-rec usgsformat=1 sacformat=0 x=11000 y=11000 z=0 sta=sta120 file=sta120
+rec x=2.5e3 y=2.5e3 depth=0 file=sta1 usgsformat=1 sacformat=0
