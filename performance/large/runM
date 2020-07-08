@@ -1,0 +1,1 @@
+lrun -T4 nvprof -o ProfileMemvar_%q\{OMPI_COMM_WORLD_RANK\} --kernels ::memvar:25 -m double_precision_fu_utilization,flop_dp_efficiency,dram_utilization,dram_read_throughput ./sw4 small3.in

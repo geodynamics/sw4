@@ -1,0 +1,4 @@
+export CUDA_LAUNCH_BLOCKING=1
+export CALI_SERVICES_ENABLE=nvprof
+rm Profile31_*
+lrun -T4 -M -gpu nsys profile --trace=cuda,nvtx,mpi --sample=cpu  --stats=true  -o NsysProfile3_%q\{OMPI_COMM_WORLD_RANK\} ./sw4 small3.in

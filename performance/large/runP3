@@ -1,0 +1,9 @@
+export CUDA_LAUNCH_BLOCKING=1
+export CALI_SERVICES_ENABLE=nvprof
+rm Profile31UU_*
+lrun -T4 -M -gpu nvprof -o Profile31UU_%q\{OMPI_COMM_WORLD_RANK\} ./sw4 small3.in
+#./profiletest.py Profile31X_0 >& PROF31_0
+./blam4.py Profile31UU_0
+~/bin/runtime3.py Profile31UU_0 | grep curvilinear4sg_ci
+echo "*********************************"
+~/bin/runtime3.py Profile31_0 | grep curvilinear4sg_ci
