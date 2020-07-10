@@ -172,6 +172,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
 	 for( int i=0 ; i < nmpard ; i++ )
 	    xam[i] = xm[i] + h*dm[i];
 
+     // trial xas
 	 compute_f_and_df( simulation, nspar, nmpars, xas, nmpard, xam, GlobalSources, GlobalTimeSeries,
 			   GlobalObservations, fp, dfps, dfpm, myRank, mopt );
          dtHd  = 0;
@@ -206,6 +207,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
 			nspar, nmpars, xs, nmpard_global, nmpard, xm, f, dfs, dfm, das, dam,
 			fabs(alpha), 1.0, tolerance, xas, xam, fp, sfs, sfm, myRank,
 			retcode, nreductions, testing, dfps, dfpm, mopt );
+
             if( myRank == 0 && verbose > 2 )
 	       cout << " .. return code "  << retcode << " misfit changed from " << f << " to " << fp << endl;
 	 }
@@ -247,6 +249,8 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
 	       dxnorm = locnorm;
 	    xs[i]  = xas[i];
 	 }
+	 
+	 // xs updated with +alpha*ds
 	 compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 			   GlobalObservations, f, dfps, dfpm, myRank, mopt, it );
 
@@ -369,7 +373,8 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
       }
       j++;
       done = rnorm < tolerance;
-   }
+   }  // CG iteration
+
    mopt->m_mp->write_parameters(parfile.c_str(),nmpars,xs);
 
    if( myRank == 0 )

@@ -24,6 +24,9 @@
 #include <sachdf5.h>
 #endif
 
+
+double t0;
+
 void usage(string thereason)
 {
   cout << endl
@@ -118,7 +121,6 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    //   set_source_pars( nspar, srcpars, xs );
    //   src[0]->set_parameters( srcpars );
 
-   std::cout << "Enter compute_f" << std::endl;
 
    sw4_profile->time_stamp("Enter compute_f");
 // Translate one-dimensional parameter vector xm to material data (rho,mu,lambda)
@@ -148,11 +150,11 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
 //	 simulation.solve( src, GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e );
-      std::cout << "compute_f forward solve" << std::endl;
+      std::cout << "compute_f forward solve" << " time from t0=" << MPI_Wtime()-t0 << std::endl;
       sw4_profile->time_stamp("forward solve" );
      simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e, mopt->m_nsteps_in_memory );
-      sw4_profile->time_stamp("done forward solve" );
-      //std::cout << "done compute_f forward solve" << std::endl;
+      sw4_profile->time_stamp("done forward solve" ); 
+      std::cout << "done compute_f forward solve" << " time from t0=" << MPI_Wtime()-t0 << std::endl;
 
      // Wei added sync here
      MPI_Barrier(MPI_COMM_WORLD);
@@ -257,7 +259,6 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 //-----------------------------------------------------------------------
 {
    int verbose = 0;
-      std::cout << "Enter compute_f_and_df" << std::endl;
    sw4_profile->time_stamp("Enter compute_f_and_df");
    // source optimization
    //   vector<Source*> src(1);
@@ -308,14 +309,15 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    if( !mopt->m_test_regularizer ){
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
-      std::cout << "compute_f_df forward solve" << std::endl;
+      std::cout << "compute_f_df forward solve"  << " time from t0=" << MPI_Wtime()-t0 << std::endl;
       sw4_profile->time_stamp("forward solve" );
-     //if(myrank==0) simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], xs, e);
+      //if(myrank==0) simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], xs, e);
+
      simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory );
       // check if U has nan
       U[0].checknan("forward U");
       sw4_profile->time_stamp("done forward solve" );
-      std::cout << "done compute_f_df forward solve" << std::endl;
+      std::cout << "done compute_f_df forward solve" << " time from t0=" << MPI_Wtime()-t0 << std::endl;
 
       //std::cout << "done compute_f_df forward solve" << std::endl;
    //   simulation.solve( src, GlobalTimeSeries, mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true );
@@ -352,12 +354,12 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 
       double dfsrc[11];
       get_source_pars( nspar, dfsrc, dfs );   
-      std::cout << "backward+adjoint solve" << std::endl;
+      std::cout << "backward+adjoint solve" << " time from t0=" << MPI_Wtime()-t0 << std::endl;
 
       sw4_profile->time_stamp("backward+adjoint solve" );
       simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, e );
       sw4_profile->time_stamp("done backward+adjoint solve" );
-      cout << "done adjoint solve: gLambda[0] npts=" << gLambda[0].npts() << " min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << endl;
+      cout << "done adjoint solve:" << " time from t0=" << MPI_Wtime()-t0 << " gLambda[0] npts=" << gLambda[0].npts() << " min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << endl;
 
       //      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], &dfs[nspar], dfm, gRho, gMu, gLambda );
       //      mopt->m_mp->gradient_transformation( rho, mu, lambda, gRho, gMu, gLambda );
@@ -1147,6 +1149,8 @@ int main(int argc, char **argv)
   int myRank, nProcs;
   int status = start_minv( argc, argv, fileName, myRank, nProcs );
   
+  t0 = MPI_Wtime();
+
   if( status == 0 )
   {
 // Save the source description here
@@ -1430,21 +1434,23 @@ int main(int argc, char **argv)
 	   {
 // Run optimizer (default)
 	      sw4_profile->time_stamp("Start optimizer");
+         cout << " start lbfgs time from t0=" << MPI_Wtime()-t0 << endl;
 	      if( mopt->m_optmethod == 1 )
 		 lbfgs( simulation, nspar, nmpars, xs, nmpard, xm, 
 			GlobalSources, GlobalTimeSeries,
 			GlobalObservations, myRank, mopt );
-         
 
 
          //if(myRank==0) save_array_to_disk(nmpars, xs, "xs_lbfgs.bin"); 
          //if(myRank==0) save_array_to_disk(nmpard, xm, "xm_lbfgs.bin"); 
 
 	      else if( mopt->m_optmethod == 2 )
-		 nlcg( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
+		  nlcg( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		       GlobalObservations, myRank, mopt );
 	      sw4_profile->time_stamp("Done optimizer");
 	      sw4_profile->flush();
+
+         cout << " done optimizer time from t0=" << MPI_Wtime()-t0 << endl;
 
          //Wei added to assure memory release prior to next event
          MPI_Barrier(MPI_COMM_WORLD);
@@ -1458,6 +1464,7 @@ int main(int argc, char **argv)
 	      cout << "============================================================" << endl
 		   << " sw4mopt ( Material/Source estimation solver) finished! " << endl
 		   << "============================================================" << endl;
+         cout << " time from t0=" << MPI_Wtime()-t0 << endl;
 	   }
 	}
      }

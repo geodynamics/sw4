@@ -539,6 +539,8 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
       } // end else (do reduce the step size)
       
    }
+
+   cout << " Line search done" << endl;
 }
 
 //-----------------------------------------------------------------------
@@ -649,6 +651,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
    compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		     GlobalObservations, f, dfs, dfm, myRank, mopt, 0 );
     
+
 	if( myRank == 0 ) {
       cout << "initial misfit f=" << f << endl;
 	  cout << "ns=" << ns << endl;
@@ -676,6 +679,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 		    GlobalTimeSeries[e][m]->writeFile( "_ini" );
      }
    }
+
    if( myRank == 0 )
    {
       cout << "Initial misfit= "  << f << endl;
@@ -902,12 +906,14 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 		     fabs(alpha), 10.0, tolerance, xa, xam, fp, sf, sfm, myRank,
 		     retcode, nreductions, testing, dfps, dfpm, mopt );
 
+	if( myRank == 0 )  cout << "Line search done...  retcode= " << retcode << endl;
+
          if( retcode == 3 )
-	 {
+	 	{
             if( myRank == 0 )
 	       cout << "ERROR exit, could not find a steplength that gives a valid material model" << endl;
-	    it = maxit+1; // should terminate the iteration
-	 }
+	    	it = maxit+1; // should terminate the iteration
+	 	}
 
 	 if( myRank == 0 )
          {
@@ -920,10 +926,10 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
       }
       else
       {
-	 for( int i=0 ; i < ns ; i++ )
-	    xa[i] = xs[i] + alpha*ds[i];   // updated model
-	 for( int i=0 ; i < nmpard ; i++ )
-	    xam[i] = xm[i] + alpha*dm[i];   
+		for( int i=0 ; i < ns ; i++ )
+			xa[i] = xs[i] + alpha*ds[i];   // updated model
+		for( int i=0 ; i < nmpard ; i++ )
+			xam[i] = xm[i] + alpha*dm[i];   
       }
 
 
@@ -933,38 +939,38 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
       double dxnorm = 0;
       if( nmpard_global > 0 )
       {
-	 for( int i=0 ; i < nmpard ; i++ ) // distributed parameters
-	 {
-	    double locnorm = fabs(xm[i]-xam[i]);
-// why scaling?
-	    // if( fabs(xam[i])> sfm[i] )
-	    //    locnorm /= fabs(xam[i]);
-	    // else
-	    //    locnorm /= sfm[i];
-	    if( locnorm > dxnorm )
-	       dxnorm = locnorm;
-	    dmsave[i] = dm[i];
-	    dm[i] = xam[i] - xm[i];
-	    xm[i]  = xam[i];
-	 }
-         double dxnormloc=dxnorm;
-         MPI_Allreduce(&dxnormloc,&dxnorm,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+			for( int i=0 ; i < nmpard ; i++ ) // distributed parameters
+			{
+				double locnorm = fabs(xm[i]-xam[i]);
+		// why scaling?
+				// if( fabs(xam[i])> sfm[i] )
+				//    locnorm /= fabs(xam[i]);
+				// else
+				//    locnorm /= sfm[i];
+				if( locnorm > dxnorm )
+				dxnorm = locnorm;
+				dmsave[i] = dm[i];
+				dm[i] = xam[i] - xm[i];
+				xm[i]  = xam[i];
+			}
+				double dxnormloc=dxnorm;
+				MPI_Allreduce(&dxnormloc,&dxnorm,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
       } // end if nmpard > 0 (distributed parameters)      
       
 
       for( int i=0 ; i < ns ; i++ ) // src and shared material parameters
       {
-	 double locnorm = fabs(xs[i]-xa[i]);
-// why scaling?
-	 // if( fabs(xa[i])> sf[i] )
-	 //    locnorm /= fabs(xa[i]);
-	 // else
-	 //    locnorm /= sf[i];
-	 if( locnorm > dxnorm )
-	    dxnorm = locnorm;
-         dssave[i] = ds[i];
-	 ds[i] = xa[i] - xs[i];
-	 xs[i]  = xa[i];
+			double locnorm = fabs(xs[i]-xa[i]);
+		// why scaling?
+			// if( fabs(xa[i])> sf[i] )
+			//    locnorm /= fabs(xa[i]);
+			// else
+			//    locnorm /= sf[i];
+			if( locnorm > dxnorm )
+				dxnorm = locnorm;
+				dssave[i] = ds[i];
+			ds[i] = xa[i] - xs[i];
+			xs[i]  = xa[i];
       }
       //      if( myRank == 0 )
       //	 for( int i=0 ; i < ns ; i++ )
@@ -984,13 +990,13 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
       double sc[2]={0,0};
       if( nmpard_global > 0 )
       {
-         double sctmp[2]={0,0};
-	 for( int i=0 ; i < nmpard ; i++ )
-	 {
-	    sctmp[0] += dmsave[i]*dfm[i];
-	    sctmp[1] += dmsave[i]*dfpm[i];
-	 }
-         MPI_Allreduce(sctmp,sc,2,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+			double sctmp[2]={0,0};
+		for( int i=0 ; i < nmpard ; i++ )
+		{
+			sctmp[0] += dmsave[i]*dfm[i];
+			sctmp[1] += dmsave[i]*dfpm[i];
+		}
+			MPI_Allreduce(sctmp,sc,2,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
       }
       for( int i=0 ; i < ns ; i++ )
       {
@@ -998,7 +1004,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
          sc[1] += dssave[i]*dfps[i];
       }
       if( verbose >= 2 &&  myRank == 0 )
-	 cout << "Wolfe condition " <<  sc[1] << " " << sc[0] << " quotient " << sc[1]/sc[0] << " should be >= beta " << endl;
+	   cout << "Wolfe condition " <<  sc[1] << " " << sc[0] << " quotient " << sc[1]/sc[0] << " should be >= beta " << endl;
 
       rnorm = 0;
       if( nmpard_global > 0 )
@@ -1098,9 +1104,9 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
       // Advance one iteration
       it++;
       for( int i=0 ; i < ns ; i++ )
-	 dfs[i] = dfps[i];
+	     dfs[i] = dfps[i];
       for( int i=0 ; i < nmpard ; i++ )
-	 dfm[i] = dfpm[i];
+	    dfm[i] = dfpm[i];
    } // end while it<maxit && !converged
    
    	 // if(myRank==0) save_array_to_disk(ns, dfs, "dfs_end.bin"); // multi-component *ns

@@ -202,7 +202,7 @@ void MaterialParCartesianVsVp::get_parameters( int nmd, double* xmd, int nms,
 					   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
 {
 
-   if(m_myrank==0) cout << ">>>>>>>>> get_parameters: offset from ref model option m_init=" << m_init << endl;
+   if(m_myrank==0) cout << ">>>>>>>>> get_parameters: offset from reference model option m_init=" << m_init << endl;
 
    if( m_init == 0 )
    {
