@@ -179,28 +179,68 @@ void forall3X(int start0, int end0, int start1, int end1, int start2, int end2,
                                  body);
   // cudaDeviceSynchronize();
 }
-template <typename LoopBody>
-void forall3X<64>(int start0, int end0, int start1, int end1, int start2, int end2,
-             LoopBody &&body) {
 
-  int tpbb =64;
-  int tpb0 = 16;
-  int tpb1 = 16;
-  int tpb2 = tpbb / (tpb0 * tpb1);
+// template <typename LoopBody>
+// void forall3X<64>(int start0, int end0, int start1, int end1, int start2, int end2,
+//              LoopBody &&body) {
 
-  int blockss = 80*2048/ tpbb;
-  int block0 = 4;
-  int block1 = 4;
-  int block2 = blockss/(block0*block1);
+//   int tpbb =64;
+//   int tpb0 = 16;
+//   int tpb1 = 16;
+//   int tpb2 = tpbb / (tpb0 * tpb1);
+
+//   int blockss = 80*2048/ tpbb;
+//   int block0 = 4;
+//   int block1 = 4;
+//   int block2 = blockss/(block0*block1);
   
 
-  // std::cout << " BLOCKS " << block0 << " " << block1 << " " << block2 <<
-  // "\n";
-  dim3 tpb(tpb0, tpb1, tpb2);
-  dim3 blocks(block0, block1, block2);
+//   // std::cout << " BLOCKS " << block0 << " " << block1 << " " << block2 <<
+//   // "\n";
+//   dim3 tpb(tpb0, tpb1, tpb2);
+//   dim3 blocks(block0, block1, block2);
 
-  //printf("Launching the kernel 3d \n");
-  forall3gskernel<<<blocks, tpb>>>(start0, end0, start1, end1, start2, end2,
-                                 body);
-  // cudaDeviceSynchronize();
-}
+//   //printf("Launching the kernel 3d \n");
+//   forall3gskernel<<<blocks, tpb>>>(start0, end0, start1, end1, start2, end2,
+//                                  body);
+//   // cudaDeviceSynchronize();
+// }
+
+class Parray{
+public:
+  int ni,nj,nk,nc;
+  double *data;
+  Parray(int nii, int nji, int nki,int nci):ni(nii),nj(nji),nk(nki),nc(nci){
+    cudaMallocManaged(&data,ni*nj*nk*nc*sizeof(double));
+    std::cout<<"Created Parray ("<<ni<<" "<<nj<<" "<<nk<<" "<<nk<<" "<<nc<<")\n";
+  }
+  void set(double value){
+    double *l_data = data;
+    forall(0,ni*nj*nk*nc,[=]__device__(int i){
+	l_data[i]=value;
+      });
+  }
+  __device__ inline double& operator()(int i, int j, int k,int c) const {
+    return data[ i+ni*j+ni*nj*k+ni*nj*nk*c];
+  }
+  __device__ inline double& operator()(unsigned int I, unsigned int J) const {
+    int i = (I>>8) & 0x00ff;
+    int j = I & 0x00ff;
+    int k = (J>>8) & 0x00ff;
+    int c =  J& 0x00ff;
+    //printf("%d %d %d %d \n",i,j,k,c);
+    return data[ i+ni*j+ni*nj*k+ni*nj*nk*c];
+  }
+  int offset(int i, int j, int k, int c){
+    return i+ni*j+ni*nj*k+ni*nj*nk*c;
+  }
+  int offset2(unsigned int I, unsigned int J){
+    int i = (I>>8) & 0x00ff;
+    int j = I & 0x00ff;
+    int k = (J>>8) & 0x00ff;
+    int c =  J& 0x00ff;
+    //printf("%d %d %d %d \n",i,j,k,c);
+    return i+ni*j+ni*nj*k+ni*nj*nk*c;
+  }
+    
+};

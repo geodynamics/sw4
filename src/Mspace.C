@@ -145,6 +145,7 @@ void presetGPUID() {
 #endif  // ENABLE_CUDA
   }
   void *operator new(std::size_t size, Space loc) throw() {
+  SW4_MARK_FUNCTION;
 #ifdef ENABLE_GPU
     if (loc == Space::Managed) {
       // std::cout<<"Space::Managed allocation \n";
@@ -241,6 +242,7 @@ void presetGPUID() {
   }
   void *operator new(std::size_t size, Space loc, char *file,
                      int line) throw() {
+  SW4_MARK_FUNCTION;
     std::cout << "Calling tracking new from " << line << " of " << file << "\n";
     pattr_t *ss = new pattr_t;
     ss->file = file;
@@ -253,6 +255,7 @@ void presetGPUID() {
   }
 
   void *operator new[](std::size_t size, Space loc) throw() {
+  SW4_MARK_FUNCTION;
 #ifdef ENABLE_GPU
     if (loc == Space::Managed) {
       // std::cout<<"Managed [] allocation \n";
@@ -346,6 +349,7 @@ void presetGPUID() {
   }
   void *operator new[](std::size_t size, Space loc, const char *file,
                        int line) {
+  SW4_MARK_FUNCTION;
     // std::cout<<"Calling tracking new from "<<line<<" of "<<file<<"\n";
     pattr_t *ss = new pattr_t;
     ss->file = file;
@@ -616,6 +620,7 @@ void presetGPUID() {
 
 #if defined(ENABLE_GPU)
   void *Managed::operator new(size_t len) {
+  SW4_MARK_FUNCTION;
     void *ptr;
     ocount++;
     hwm = std::max(hwm, ocount);

@@ -4900,7 +4900,7 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
     }  // end if bcType[g][4] == bStressFree
     if (m_bcType[g][5] == bStressFree) {
       SW4_MARK_BEGIN("enforceBCfreeAtt2::SET 2");
-      std::cerr << "WARNING :: CODE EXECUTING ON CPU solve.C Line 4929 \n";
+      //std::cerr << "WARNING :: CODE EXECUTING ON CPU solve.C Line 4929 \n";
       int nk = m_global_nz[g];
       // const float_sw4 i6  = 1.0/6;
       const float_sw4 d4a = 2.0 / 3;

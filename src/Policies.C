@@ -2,11 +2,13 @@
 #include "Policies.h"
 #include "RAJA/RAJA.hpp"
 int main() {
+#ifdef POLICY_TEST
   std::cout << "Hello policies\n";
   const int M = 500;
   const int N = M*M*M;
   //double *d = new double[N];
   double *d,*a,*b;
+
   cudaMallocManaged(&d,N*sizeof(double));
   cudaMallocManaged(&a,N*sizeof(double));
   cudaMallocManaged(&b,N*sizeof(double));
@@ -87,8 +89,99 @@ int main() {
 }
 
 
-
-
-
   cudaStreamSynchronize(0);
+#endif
+  // INtrinsics tests using Parray;
+
+  const int N=10;
+
+  Parray Aa(N,N,N,N);
+  Parray Ba(N,N,N,N);
+  Parray Ca(N,N,N,N);
+  forall3(0,N,0,N,0,N,[=]__device__(int i, int j, int k){
+      for (int c=0;c<N;c++) Aa(i,j,k,c)=i+j*N+k*N*N+c*N*N*N;
+      for (int c=0;c<N;c++) Ba(i,j,k,c)=-(i+j*N+k*N*N+c*N*N*N);
+      for (int c=0;c<N;c++) Ca(i,j,k,c)=-1.0;
+  });
+
+forall3(1,N-1,1,N-1,1,N-1,[=]__device__(int i, int j, int k){
+    for (int c=0;c<N;c++) Ca(i,j,k,c)+=Aa(i,j,k,c)+Ba(i,j,k,c)+Ba(i-1,j,k,c)+Ba(i,j-1,k,c)+Ba(i,j,k-1,c);
+  });
+    
+
+
+ cudaStreamSynchronize(0);
+ const int V=Ca.offset(N/2,N/2,N/2,N/2);
+ std::cout<<" Exact value is "<<Ca.data[V]<<" A = "<<Aa.data[V]<<" B = "<<Ba.data[V]<<"\n";
+ unsigned int I;
+ for (int i=0;i<N;i++) for(int j=0;j<N;j++){
+ I = (i<<8)^j;
+ I=i;
+ //std::cout<<sizeof(int)<<" "<<i<<" "<<j<<" "<<" In hex "<<std::hex<<I<<"\n";
+ I=i<<8;
+ //std::cout<<std::dec<<sizeof(int)<<" "<<i<<" "<<j<<" "<<" In hex "<<std::hex<<I<<"\n";
+ I=I^j;
+ //std::cout<<std::dec<<sizeof(int)<<" "<<i<<" "<<j<<" "<<" In hex "<<std::hex<<I<<"\n";
+ int jj = I & 0x00ff;
+ int ii = (I>>8) & 0xff;
+ if ((i!=ii) || (j!=jj)){
+     std::cout<<std::dec<<sizeof(int)<<" OUT  "<<ii<<" "<<jj<<" "<<" In hex "<<std::hex<<I<<"\n";
+   }
+   }
+ for (int l=0;l<5;l++){
+   Ca.set(-1.0);
+forall3(1,N-1,1,N-1,1,N-1,[=]__device__(int i, int j, int k){
+    unsigned int I;
+    unsigned int J,JJ;
+    const unsigned int p10 = 0x0100, p01=0x0001;
+    I = (i<<8)^j;
+    JJ = (k<<8);
+    unsigned int IM = __vsub2(I,p10);
+    unsigned int JM = __vsub2(I,p01);
+    unsigned int KM = __vsub2(JJ,p10);
+      for (int c=0;c<N;c++) {
+	J=JJ^c;
+	
+	Ca(I,J)+=Aa(I,J)+Ba(I,J)+Ba(IM,J)+Ba(JM,J)+Ba(I,KM^c);
+      }
+  });
+ cudaStreamSynchronize(0);
+ std::cout<<" Mid value is "<<Ca.data[V]<<" A = "<<Aa.data[V]<<" B = "<<Ba.data[V]<<"\n";
+ }
+
+
+ for (int l=0;l<7;l++){
+   //Ca.set(-1.0);
+forall3(1,N-1,1,N-1,1,N-1,[=]__device__(int i, int j, int k){
+    unsigned int I;
+    unsigned int J,JJ;
+    const unsigned int p10 = 0x0100, p01=0x0001;
+    I = (i<<8)^j;
+    JJ = (k<<8);
+      for (int c=0;c<N;c++) {
+	J=JJ^c;
+	Ca(I,J)+=Aa(i,j,k,c)+Ba(i,j,k,c)+Ba(i-1,j,k,c)+Ba(i,j-1,k,c)+Ba(i,j,k-1,c);
+      }
+  });
+//cudaStreamSynchronize(0);
+//std::cout<<" Baseline value is "<<Ca.data[V]<<" A = "<<Aa.data[V]<<" B = "<<Ba.data[V]<<"\n";
+
+ }
+  cudaStreamSynchronize(0);
+
+
+  // int lc=0;
+  // for (int i=1;i<N-1;i++) for(int j=1;j<N-1;j++) for( int k=1;k<N-1;k++) for(int c=1;c<N-1;c++){
+
+  // 	  unsigned int I = (i<<8)^j;
+  // 	  unsigned int J = (k<<8);
+  // 	    J=J^c;
+  // 	  int o1 = Ca.offset(i,j,k,c);
+  // 	  int o2 = Ca.offset2(I,J);
+  // 	  if (o1!=o2){
+  // 	    std::cout<<"MISMATCH "<<o1<<" "<<o2<<"\n";
+  // 	    break;
+  // 	  } else lc++;
+  // 	}
+  // std::cout<<" lc is "<<lc<<"\n";
 }

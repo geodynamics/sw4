@@ -1,0 +1,18 @@
+proj = yes
+FC = gfortran
+LINKER = mpicxx
+CXX = $(PREP) mpicxx
+ckernel=yes 
+openmp=yes
+raja_cuda=no
+RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2019/RAJA-v0.10.0/install_gcc_openmp
+PROJ_HOME = /usr/workspace/wsb/ramesh/Project6/Proj/proj-5.0.0/install
+UMPIRE_HOME = /usr/workspace/wsb/ramesh/Umpire/umpire-1.1.0/install_gcc_openmp
+CALIPER_LOCATION = /usr/workspace/wsb/ramesh/Caliper/July2020/Caliper/install
+LAPACK_HOME=
+EXTRA_FORT_FLAGS = 
+LINKFLAGS =  -fopenmp
+EXTRA_CXX_FLAGS =  -g -fprofile-arcs -ftest-coverage -std=c++11 -fopenmp -I$(RAJA_LOCATION)/include  -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -I$(PROJ_HOME)/include -DUSE_DIRECT_INVERSE=1 
+EXTRA_CXX_FLAGS2 =  -g -fprofile-arcs -ftest-coverage -std=c++11 -fopenmp -I$(RAJA_LOCATION)/include  -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -I$(PROJ_HOME)/include -DUSE_DIRECT_INVERSE=1
+
+EXTRA_LINK_FLAGS =  -fprofile-arcs -L /usr/tce/packages/xl/xl-2020.03.18/xlf/16.1.1/lib -L /usr/tcetmp/packages/lapack/lapack-3.9.0-gcc-7.3.1/lib -llapack -lblas  -L $(RAJA_LOCATION)/lib -lRAJA  -L $(PROJ_HOME)/lib -lproj -L$(UMPIRE_HOME)/lib -lumpire -lgfortran
