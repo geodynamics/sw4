@@ -156,7 +156,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
     elif 'lassen' in node_name:
         os.environ["PSM2_DEVICES"] = ""
         if mpi_tasks<=0: mpi_tasks = 4
-        mpirun_cmd="lrun -T1 "
+        mpirun_cmd="lrun -T4 "
         #mpirun_cmd="jsrun -g4 -c40 -a4 -n" + str(mpi_tasks) # Simulate Summit runs with -g4
     # add more machine names here
     elif 'Linux' in sys_name:

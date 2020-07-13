@@ -4,6 +4,7 @@
 # -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir -t omp-threads
 
 import os, sys, argparse, subprocess
+import verify_hdf5
 
 #----(Currently not used)--------------------------------------------
 def run_checks(checks):
@@ -326,7 +327,7 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
 
 
             if result_file == 'hdf5.log':
-                import verify_hdf5
+                sys.path.append(os.getcwd())
                 success = verify_hdf5.verify(pytest_dir, 1e-5)
                 if success == False:
                     print('HDF5 test failed! (disable HDF5 test with -n option)')
