@@ -1,0 +1,75 @@
+# Use gcc lapack
+FC = gfortran
+LINKER = mpicxx
+CXX = $(PREP) nvcc
+
+proj = yes
+ckernel=yes 
+openmp=no
+raja_cuda=yes
+umpire = yes
+fftw = yes
+hdf5= yes
+spill_warns = yes
+caliper= yes
+
+RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-0.7.0/install_rzansel
+RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-0.7.0/install_rzansel10.1.168
+RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.10.1/install_fresh
+RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.11.0/install_clang
+#RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.11.0/install
+
+
+PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/SW4/proj-5.0.0/install170818
+
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-0.3.2/install_rzansel
+UMPIRE_HOME=/usr/workspace/wsrzd/ramesh/UMPIRE/umpire-0.3.3/install_rzansel
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-0.3.3/install_rzansel10.1.168
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-1.1.0/install
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-3.0.0/install_clang
+
+HDF5_HOME = /p/gpfs1/ramesh/SW4/HDF_TEST/HDF/CMake-hdf5-1.12.0/build/HDF5-1.12.0-Linux/HDF_Group/HDF5/1.12.0
+HDF5_HOME = /p/gpfs1/ramesh/SW4/HDF_TEST/HDF/CMake-hdf5-1.10.6/build/HDF5-1.10.6-Linux/HDF_Group/HDF5/1.10.6
+
+CALIPER_HOME =/usr/workspace/wsrzd/ramesh/Caliper/Caliper/install
+
+EXTRA_FORT_FLAGS = 
+
+
+MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_PINNED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC}
+MORE_LINK_FLAGS = 
+
+ifeq ($(umpire),yes)
+MORE_FLAGS+= -DSW4_USE_UMPIRE=1 -I $(UMPIRE_HOME)/include
+MORE_LINK_FLAGS+=  -L$(UMPIRE_HOME)/lib -lumpire
+endif 
+
+ifeq ($(fftw),yes)
+MORE_FLAGS+= -DENABLE_FFTW=1 -I $(FFTW_DIR)/include
+MORE_LINK_FLAGS+=-L $(FFTW_DIR)/lib -Wl,-rpath=$(FFTW_DIR)/lib -lfftw3_mpi -lfftw3
+endif 
+
+ifeq ($(hdf5),yes)
+MORE_FLAGS+= -DUSE_HDF5=1 -I $(HDF5_HOME)/include
+MORE_LINK_FLAGS+= -L $(HDF5_HOME)/lib -Wl,-rpath=$(HDF5_HOME)/lib -lhdf5_hl -lhdf5
+endif 
+
+ifeq ($(spill_warns),yes)
+MORE_FLAGS+=  -Xptxas -v,--warn-on-spills
+endif 
+
+ifeq ($(caliper),yes)
+MORE_FLAGS+= -DENABLE_CALIPER=1 -I$(CALIPER_HOME)/include
+MORE_LINK_FLAGS+= -Wl,-rpath=$(CALIPER_HOME)/lib64 -L $(CALIPER_HOME)/lib64 -lcaliper
+endif 
+
+ifeq ($(proj),yes)
+MORE_FLAGS+= -I$(PROJ_HOME)/include
+MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib64  -L$(PROJ_HOME)/lib64 -lproj
+endif 
+
+LINKFLAGS =  -arch=sm_70
+
+EXTRA_CXX_FLAGS =  -O3 -lineinfo -use_fast_math $(MORE_FLAGS) -DDISABLE_PREFETCH  -ccbin mpicxx -Xcompiler="" -std=c++11 --expt-extended-lambda -restrict -arch=sm_70 -I $(CUDA_HOME)/include -I$(RAJA_HOME)/include  --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA -dc 
+
+EXTRA_LINK_FLAGS =   -dc -Wl,-rpath=${LAPACK_DIR} -L ${LAPACK_DIR}  -llapack -lblas  -L $(CUDA_HOME)/lib64 -lcudart -lnvToolsExt -lcuda -L $(RAJA_HOME)/lib -lRAJA  -lcudadevrt -L$(PROJ_HOME)/lib64 -lproj -L/usr/lib64/nvidia -lnvidia-ml  $(MORE_LINK_FLAGS) -lgfortran
