@@ -154,8 +154,9 @@ void presetGPUID() {
       void *ptr;
 #ifndef SW4_USE_UMPIRE
       if (SW4_MALLOC_MANAGED(&ptr, size) != SW4_DEVICE_SUCCESS) {
-        std::cerr << "Mananged memory allocation failed " << size << "\n";
-        throw();
+        std::cerr << "Managed memory allocation failed " << size << "\n";
+        abort();
+        //throw();
       } else {
         check_mem();
         global_variables.curr_mem += size;

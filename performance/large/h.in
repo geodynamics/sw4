@@ -24,8 +24,8 @@ attenuation phasefreq=2.0 nmech=3 maxfreq=3.0
 #topography input=rfile zmax=2.5e3 order=3 file=rfile/USGSBayAreaVM-08.3.0-corder.rfile
 
 # Coral runs
-rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/autofs/nccs-svm1_proj/gen007/rameshp/SW4
-topography input=rfile zmax=2.5e3 order=3 file=/autofs/nccs-svm1_proj/gen007/rameshp/SW4/USGSBayAreaVM-08.3.0-corder.rfile
+rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/usr/workspace/wsrzd/ramesh/Project6/SW4/sw4/performance/large
+topography input=rfile zmax=2.5e3 order=3 file=/usr/workspace/wsrzd/ramesh/Project6/SW4/sw4/performance/large/USGSBayAreaVM-08.3.0-corder.rfile
 
 # NEED TO CORRECT THE CORNER FREQ FOR H=100
 prefilter fc2=0.5 type=lowpass passes=2 order=2
