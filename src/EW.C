@@ -7773,7 +7773,165 @@ void EW::setup_viscoelastic( )
 		} // end for g,k,j,i
 #undef a
     }
+
 }
+
+//-----------------------------------------------------------------------
+void EW::reverse_setup_viscoelastic( )
+{
+// number of collocation points
+    int n = m_number_mechanisms;
+    int nc = 2*n-1;
+    float_sw4 mu, lambda;
+
+    if( n > 0 )
+    {
+// collocation frequencies
+       vector<float_sw4> omc(nc);
+       if( n > 1 )
+       {
+	  float_sw4 r = pow( m_max_omega/m_min_omega, 1.0/(n-1) );
+	  omc[0] = mOmegaVE[0];
+	  for (int k=0; k<=2*n-2; k++)
+	     omc[k] = m_min_omega*pow(r,0.5*k);
+       }
+       else
+	  omc[0] = mOmegaVE[0];
+
+// use base 0 indexing of matrix
+#define a(i,j) a_[i+j*nc]
+       for( int g = 0 ; g < mNumberOfGrids; g++ )
+#pragma omp parallel for
+	  for(int k=m_kStart[g]; k<= m_kEnd[g]; k++ )
+	     for(int j=m_jStart[g]; j<= m_jEnd[g]; j++ )
+		for(int i=m_iStart[g]; i<= m_iEnd[g]; i++ )
+		{
+
+                   double *a_=new double[n*nc];
+                   double *beta=new double[nc];
+                   double *gamma=new double[nc];
+                   int lwork = 3*n;
+                   double *work=new double[lwork];
+                   char trans='N';
+                   int info=0, nrhs=1, lda=nc, ldb=nc;
+
+                   float_sw4 mu_tmp = mMu[g](i,j,k);
+                   float_sw4 lambda_tmp = mLambda[g](i,j,k);
+                   float_sw4 qs = mQs[g](i,j,k);
+                   float_sw4 qp = mQp[g](i,j,k);
+
+            //
+            // qs gives beta coefficients
+            //
+                   for (int q=0; q<nc; q++)
+                   {
+                      beta[q] = 1./qs;
+                      for (int nu=0; nu<n; nu++)
+                      {
+                         a(q,nu) = (omc[q]*mOmegaVE[nu] + SQR(mOmegaVE[nu])/qs)/(SQR(mOmegaVE[nu]) + SQR(omc[q]));
+                      }
+                   }
+            // solve the system in least squares sense
+                   F77_FUNC(dgels,DGELS)(trans, nc, n, nrhs, a_, lda, beta, ldb, work, lwork, info);
+                   if (info!= 0)
+                   {
+                      printf("reverse_setup_viscoelastic:: solving for qs=%e, processor=%i, dgels returned error code = %i\n", qs, m_myRank, info);
+                      MPI_Abort(MPI_COMM_WORLD, 1);
+                   }
+            // check that sum(beta) < 1
+                   float_sw4 bsum=0.;
+                   for (int nu=0; nu<n; nu++)
+                      bsum += beta[nu];
+                   if (bsum>=1.)
+                   {
+                      printf("reverse_setup_viscoelastic:: sum(beta)=%e >= 1 for g=%i, i=%i, j=%i, k=%i\n", bsum, g, i, j, k);
+                      MPI_Abort(MPI_COMM_WORLD, 1);
+                   }
+
+            // calculate unrelaxed mu_0
+                   float_sw4 rem = 0., imm = 0.;
+                   for (int nu=0; nu<n; nu++)
+                   {
+                      rem += beta[nu]*SQR(mOmegaVE[nu])/(SQR(mOmegaVE[nu]) + SQR(m_velo_omega));
+                      imm += beta[nu]*mOmegaVE[nu]*m_velo_omega/(SQR(mOmegaVE[nu]) + SQR(m_velo_omega));
+                   }
+                   rem = 1 - rem;
+                   float_sw4 mmag = sqrt(SQR(rem)+SQR(imm));
+            // should also divide by cos^2(delta/2), where delta is the loss-angle, but this makes minimal difference for Q>25
+                   float_sw4 mu_0 = mu_tmp/mmag; 
+            // calculate viscoelastic mu:
+                   /* for (int nu=0; nu<n; nu++) */
+                   /* { */
+                   /*    mMuVE[g][nu](i,j,k) = mu_0 * beta[nu]; */
+                   /* } */
+                   // reverse the value
+                   mu = mu_tmp * mmag;
+                   mMu[g](i,j,k) = mu;
+
+            //
+            // qp gives gamma coefficients
+            //
+                   for (int q=0; q<nc; q++)
+                   {
+                      gamma[q] = 1./qp;
+                      for (int nu=0; nu<n; nu++)
+                      {
+                         a(q,nu) = (omc[q]*mOmegaVE[nu] + SQR(mOmegaVE[nu])/qp)/(SQR(mOmegaVE[nu]) + SQR(omc[q]));
+                      }
+                   }
+
+            // solve the system in least squares sense
+                   F77_FUNC(dgels,DGELS)(trans, nc, n, nrhs, a_, lda, gamma, ldb, work, lwork, info);
+                   if (info!= 0)
+                   {
+                      printf("reverse_setup_viscoelastic:: solving for qp=%e, processor=%i, dgels returned error code = %i\n", qp, m_myRank, info);
+                      MPI_Abort(MPI_COMM_WORLD, 1);
+                   }
+            // check that sum(gamma) < 1
+                   bsum=0.;
+                   for (int nu=0; nu<n; nu++)
+                      bsum += gamma[nu];
+                   if (bsum>=1.)
+                   {
+                      printf("reverse_setup_viscoelastic:: sum(gamma)=%e >= 1 for g=%i, i=%i, j=%i, k=%i\n", bsum, g, i, j, k);
+                      MPI_Abort(MPI_COMM_WORLD, 1);
+                   }
+
+            // calculate unrelaxed kappa_0
+                   rem = 0., imm = 0.;
+                   for (int nu=0; nu<n; nu++)
+                   {
+                      rem += gamma[nu]*SQR(mOmegaVE[nu])/(SQR(mOmegaVE[nu]) + SQR(m_velo_omega));
+                      imm += gamma[nu]*mOmegaVE[nu]*m_velo_omega/(SQR(mOmegaVE[nu]) + SQR(m_velo_omega));
+                   }
+                   rem = 1 - rem;
+                   mmag = sqrt(SQR(rem)+SQR(imm));
+            // should also divide by cos^2(delta/2), where delta is the loss-angle, but this makes minimal difference for Q>25
+                   /* float_sw4 kappa_tmp = lambda_tmp + 2*mu_tmp; */
+                   /* float_sw4 kappa_0 = kappa_tmp/mmag; */ 
+            // calculate viscoelastic lambdaVE = kappaVE - 2*muVE:
+                   /* for (int nu=0; nu<n; nu++) */
+                   /* { */
+                   /*    kappa_tmp = kappa_0 * gamma[nu]; */
+                   /*    mLambdaVE[g][nu](i,j,k) = kappa_tmp - 2*mMuVE[g][nu](i,j,k); */
+                   /* } */
+            // save the unrelaxed value
+                   /* mLambda[g](i,j,k) = kappa_0 - 2*mu_0; */
+
+                   lambda = (2*mu_tmp + lambda_tmp)*mmag - 2*mu;
+                   mLambda[g](i,j,k) = lambda;
+
+       delete[] a_;
+       delete[] beta;
+       delete[] gamma;
+       delete[] work;
+
+		} // end for g,k,j,i
+#undef a
+    }
+
+}
+
 
 //-----------------------------------------------------------------------
 void EW::setup_viscoelastic_tw()

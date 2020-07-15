@@ -61,9 +61,10 @@ MaterialSfile::MaterialSfile( EW* a_ew, const string a_file, const string a_dire
 {
    mCoversAllPoints = false;
    // Check that the depths make sense
-   if (a_ew != NULL)
+   if (a_ew != NULL) {
      m_use_attenuation = a_ew->usingAttenuation();
      read_sfile();
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -313,6 +314,7 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
       //           << endl;
       cout << endl
 	   << "sfile command: outside = " << outsideSum << ", material = " << materialSum << endl;
+
 }
 
 
@@ -917,9 +919,9 @@ void MaterialSfile::material_check( bool water )
 	 //	 if( mEW->getRank()==0 )
       {
 	 if( p== 1 && !water )
-	    cout << "R-file limits, away from water: " << endl;
+	    cout << "S-file limits, away from water: " << endl;
 	 else if( p== 1 )
-	    cout << "R-file limits : " << endl;
+	    cout << "S-file limits : " << endl;
 	 cout << "  Patch no " << p << " : " << endl;
 	 cout << "    cp    min and max " << cminstot[1] << " " << cmaxstot[1] << endl;
 	 cout << "    cs    min and max " << cminstot[0] << " " << cmaxstot[0] << endl;

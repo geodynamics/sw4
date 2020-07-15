@@ -347,10 +347,15 @@ void Image3D::update_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt, vecto
 			    vector<Sarray>& a_Qp, vector<Sarray>& a_Qs,
 			    std::string a_path, std::vector<Sarray>& a_Z )
 {
+   double stime, etime;
    if( timeToWrite( a_time, a_cycle, a_dt ) )
    {
       compute_image( a_U, a_Rho, a_Mu, a_Lambda, a_gRho, a_gMu, a_gLambda, a_Qp, a_Qs );
+      stime = MPI_Wtime();
       write_image( a_cycle, a_path, a_time, a_Z );
+      etime = MPI_Wtime();
+      if( m_parallel_io[0]->proc_zero() )
+        printf("  Write volimage takes %e seconds\n", etime-stime);
    }
 }
                             
@@ -361,8 +366,13 @@ void Image3D::force_write_image( float_sw4 a_time, int a_cycle, vector<Sarray>& 
 			    vector<Sarray>& a_Qp, vector<Sarray>& a_Qs,
                                  std::string a_path, std::vector<Sarray>& a_Z )
 {
+   double stime, etime;
    compute_image( a_U, a_Rho, a_Mu, a_Lambda, a_gRho, a_gMu, a_gLambda, a_Qp, a_Qs );
+   stime = MPI_Wtime();
    write_image( a_cycle, a_path, a_time, a_Z );
+   etime = MPI_Wtime();
+   if( m_parallel_io[0]->proc_zero() )
+     printf("  Write volimage takes %e seconds\n", etime-stime);
 }
                             
 //-----------------------------------------------------------------------

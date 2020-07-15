@@ -82,6 +82,7 @@ public:
 			   vector<Sarray>& a_Qp, vector<Sarray>& a_Qs,
 			   std::string a_path, std::vector<Sarray> & a_Z );
 
+
 protected:
    bool timeToWrite( float_sw4 time, int cycle, float_sw4 dt );
 
@@ -89,7 +90,7 @@ protected:
 		       std::vector<Sarray>& a_Mu, std::vector<Sarray>& a_Lambda,
 		       std::vector<Sarray>& a_gRho, std::vector<Sarray>& a_gMu,
 		       std::vector<Sarray>& a_gLambda,
-     		       std::vector<Sarray>& a_Qp, std::vector<Sarray>& a_Qs );
+     		       std::vector<Sarray>& a_Qp, std::vector<Sarray>& a_Qs, std::vector<Sarray>& a_Z );
 
    void write_image( const char* fname, std::vector<Sarray>& a_Z );
 
