@@ -395,7 +395,7 @@ void set_anisotropic_materials();
 void setup_attenuation_relaxation(float_sw4 minvsoh );
 void setup_viscoelastic();
 void setup_viscoelastic_tw();
-void reverse_setup_viscoelastic(int g, int i, int j, int k, float_sw4 &mu, float_sw4 &lambda);
+void reverse_setup_viscoelastic();
 void *use_twilight_forcing() { return m_twilight_forcing;};
 
 void extrapolateInZ(int g, Sarray& field, bool lowk, bool highk );

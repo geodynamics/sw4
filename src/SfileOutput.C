@@ -443,12 +443,12 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 down_z = (double)a_Z[gz](i,j,t);
 
                 double down_mu = (*data2)(1,i,j,t), down_lambda = (*data3)(1,i,j,t), up_mu = (*data2)(1,i,j,t-1), up_lambda = (*data3)(1,i,j,t-1);
-                if (mEW->usingAttenuation()) {
-                 if( NULL == mEW->use_twilight_forcing() ) {
-                    mEW->reverse_setup_viscoelastic(gz, i, j, t, down_mu, down_lambda);
-                    mEW->reverse_setup_viscoelastic(gz, i, j, t-1, up_mu, up_lambda);
-                 }
-                }
+                /* if (mEW->usingAttenuation()) { */
+                /*  if( NULL == mEW->use_twilight_forcing() ) { */
+                /*     mEW->reverse_setup_viscoelastic(gz, i, j, t, down_mu, down_lambda); */
+                /*     mEW->reverse_setup_viscoelastic(gz, i, j, t-1, up_mu, up_lambda); */
+                /*  } */
+                /* } */
                 up_v   = sqrt((2.0*up_mu + up_lambda)/((*data1)(1,i,j,t-1)));
                 down_v = sqrt((2.0*down_mu + down_lambda)/((*data1)(1,i,j,t)));
 
@@ -477,14 +477,14 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 down_z = (double)a_Z[gz](i,j,t);
 
                 double down_mu = (*data2)(1,i,j,t), down_lambda = (*data3)(1,i,j,t), up_mu = (*data2)(1,i,j,t-1), up_lambda = (*data3)(1,i,j,t-1);
-                if (mEW->usingAttenuation()) {
-                 if( NULL == mEW->use_twilight_forcing() ) {
-                    mEW->reverse_setup_viscoelastic(gz, i, j, t, down_mu, down_lambda);
-                    mEW->reverse_setup_viscoelastic(gz, i, j, t-1, up_mu, up_lambda);
-                    /* if (i==1&&j==1&&gz==1) */ 
-                    /*   printf("after reverse (1,1,%d) mu=%f, lambda=%f\n", t, down_mu, down_lambda); */
-                 }
-                }
+                /* if (mEW->usingAttenuation()) { */
+                /*  if( NULL == mEW->use_twilight_forcing() ) { */
+                /*     mEW->reverse_setup_viscoelastic(gz, i, j, t, down_mu, down_lambda); */
+                /*     mEW->reverse_setup_viscoelastic(gz, i, j, t-1, up_mu, up_lambda); */
+                /*     /1* if (i==1&&j==1&&gz==1) *1/ */ 
+                /*     /1*   printf("after reverse (1,1,%d) mu=%f, lambda=%f\n", t, down_mu, down_lambda); *1/ */
+                /*  } */
+                /* } */
                 up_v   = sqrt((2.0*up_mu + up_lambda)/((*data1)(1,i,j,t-1)));
                 down_v = sqrt((2.0*down_mu + down_lambda)/((*data1)(1,i,j,t)));
                 // Linear interp
@@ -520,12 +520,12 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 down_z = (double)a_Z[gz](i,j,t);
 
                 double down_mu = (*data2)(1,i,j,t), down_lambda = (*data3)(1,i,j,t), up_mu = (*data2)(1,i,j,t-1), up_lambda = (*data3)(1,i,j,t-1);
-                if (mEW->usingAttenuation()) {
-                  if( NULL == mEW->use_twilight_forcing() ) {
-                     mEW->reverse_setup_viscoelastic(gz, i, j, t, down_mu, down_lambda);
-                     mEW->reverse_setup_viscoelastic(gz, i, j, t-1, up_mu, up_lambda);
-                  }
-                }
+                /* if (mEW->usingAttenuation()) { */
+                /*   if( NULL == mEW->use_twilight_forcing() ) { */
+                /*      mEW->reverse_setup_viscoelastic(gz, i, j, t, down_mu, down_lambda); */
+                /*      mEW->reverse_setup_viscoelastic(gz, i, j, t-1, up_mu, up_lambda); */
+                /*   } */
+                /* } */
                 up_v   = sqrt(up_mu/((*data1)(1,i,j,t-1)));
                 down_v = sqrt(down_mu/((*data1)(1,i,j,t)));
                 // Linear interp
@@ -553,12 +553,12 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 down_z = (double)a_Z[gz](i,j,t);
 
                 double down_mu = (*data2)(1,i,j,t), down_lambda = (*data3)(1,i,j,t), up_mu = (*data2)(1,i,j,t-1), up_lambda = (*data3)(1,i,j,t-1);
-                if (mEW->usingAttenuation()) {
-                  if( NULL == mEW->use_twilight_forcing() ) {
-                     mEW->reverse_setup_viscoelastic(gz, i, j, t, down_mu, down_lambda);
-                     mEW->reverse_setup_viscoelastic(gz, i, j, t-1, up_mu, up_lambda);
-                  }
-                }
+                /* if (mEW->usingAttenuation()) { */
+                /*   if( NULL == mEW->use_twilight_forcing() ) { */
+                /*      mEW->reverse_setup_viscoelastic(gz, i, j, t, down_mu, down_lambda); */
+                /*      mEW->reverse_setup_viscoelastic(gz, i, j, t-1, up_mu, up_lambda); */
+                /*   } */
+                /* } */
                 up_v   = sqrt(up_mu/((*data1)(1,i,j,t-1)));
                 down_v = sqrt(down_mu/((*data1)(1,i,j,t)));
 
