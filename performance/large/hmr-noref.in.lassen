@@ -1,16 +1,16 @@
 # SW4 input RUN: Hayward_scenario_M6.5_s500_3Drfile_h25m
 
 # using parallel i/o
-fileio path=hayward-att-h270-ref-result pfs=1 nwriters=32 verbose=1
+fileio path=hayward-att-h255-ref-result pfs=1 nwriters=32 verbose=1
 
 # Grid coords:
 # DON'T CHANGE AZ
-grid x=100e3 y=100e3 z=30e3 h=270  lat=38.33 lon=-122.075 az=143.6380001671 proj=tmerc datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
-refinement zmax=950
-refinement zmax=5e3
+grid x=100e3 y=100e3 z=38.5e3 h=255  lat=38.33 lon=-122.075 az=143.6380001671 proj=tmerc datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
+#refinement zmax=950
+refinement zmax=13539
 
 time t=9.0
-#time steps=10
+#time steps=1
 
 globalmaterial  vpmin=866 vsmin=500
 
@@ -28,11 +28,11 @@ attenuation phasefreq=2.0 nmech=3 maxfreq=3.0
 #rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/usr/workspace/wsrzd/ramesh/Project6/SW4/sw4/performance/large
 #topography input=rfile zmax=2.5e3 order=3 file=/usr/workspace/wsrzd/ramesh/Project6/SW4/sw4/performance/large/USGSBayAreaVM-08.3.0-corder.rfile
 
+#rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/usr/workspace/wsrzd/ramesh/Project6/SW4/sw4/performance/large
+#topography input=rfile zmax=11039 order=3 file=/usr/workspace/wsrzd/ramesh/Project6/SW4/sw4/performance/large/USGSBayAreaVM-08.3.0-corder.rfile gridgenerator=new
+#
 rfile filename=USGSBayAreaVM-08.3.0-corder.rfile directory=/usr/workspace/wsb/ramesh/Project6/SW4/sw4_new_raja/sw4/performance/large
-topography input=rfile zmax=2.5e3 order=3 file=/usr/workspace/wsb/ramesh/Project6/SW4/sw4_new_raja/sw4/performance/large/USGSBayArea
-VM-08.3.0-corder.rfile
-#rfile filename=USGSBayAreaVM-08.3.0-corder.rfile
-#topography input=rfile zmax=2.5e3 order=3 file=USGSBayAreaVM-08.3.0-corder.rfile
+topography input=rfile zmax=11039 order=3 file=/usr/workspace/wsb/ramesh/Project6/SW4/sw4_new_raja/sw4/performance/large/USGSBayAreaVM-08.3.0-corder.rfile gridgenerator=new
 
 # NEED TO CORRECT THE CORNER FREQ FOR H=100
 #prefilter fc2=0.5 type=lowpass passes=2 order=2
