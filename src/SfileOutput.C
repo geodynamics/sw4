@@ -371,7 +371,7 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
 
     if( mMode == RHO || mMode == QP || mMode == QS ) { // these modes just copy the values straight from the array
       if( m_double ) {
-        /* #pragma omp parallel for */
+        #pragma omp parallel for
         for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
           for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
             for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st ) {
@@ -396,7 +396,7 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
             }
       }
       else {
-        /* #pragma omp parallel for */
+        #pragma omp parallel for
         for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
           for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
             for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st ) {
@@ -424,7 +424,7 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
     }
     else if( mMode == P ) {
       if( m_double ) {
-        /* #pragma omp parallel for */
+        #pragma omp parallel for
         for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
           for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
             for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st ) {
@@ -458,7 +458,7 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
             }
       }
       else {
-        /* #pragma omp parallel for */
+        #pragma omp parallel for
         for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
           for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
             for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st ) {
@@ -501,7 +501,7 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
     }
     else if( mMode == S ) {
       if( m_double ) {
-        /* #pragma omp parallel for */
+        #pragma omp parallel for
         for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
           for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
             for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st ) {
@@ -534,7 +534,7 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
             }
       }
       else {
-        /* #pragma omp parallel for */
+        #pragma omp parallel for
         for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
           for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
             for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st ) {
@@ -616,16 +616,16 @@ void SfileOutput::gen_fname(std::string &path, int cycle, std::string& fname)
 {
   fname = path;
   fname += mFilePrefix;
-  fname += ".cycle=";
-  int temp = static_cast<int>(pow(10.0, mPreceedZeros - 1));
-  int testcycle = cycle;
-  if (cycle == 0)
-    testcycle=1;
-  while (testcycle < temp) {
-    fname += "0";
-    temp /= 10;
-  }
-  fname += std::to_string(cycle);
+  /* fname += ".cycle="; */
+  /* int temp = static_cast<int>(pow(10.0, mPreceedZeros - 1)); */
+  /* int testcycle = cycle; */
+  /* if (cycle == 0) */
+  /*   testcycle=1; */
+  /* while (testcycle < temp) { */
+  /*   fname += "0"; */
+  /*   temp /= 10; */
+  /* } */
+  /* fname += std::to_string(cycle); */
   fname += ".sfile";
 }
 

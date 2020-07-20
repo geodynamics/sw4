@@ -941,6 +941,7 @@ void EW::set_materials()
     for( unsigned int b = 0 ; b < m_mtrlblocks.size() ; b++ )
        if (m_mtrlblocks[b]->coversAllPoints())
 	  lastAllCoveringBlock=b;
+
 // tmp
     if (proc_zero())
     {

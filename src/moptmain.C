@@ -469,11 +469,6 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 						gRho, gMu, gLambda, rho, mu, mopt->m_path,
 						ew_ptr->mZ ); 
 
-     for( int i3=0 ; i3<mopt->m_sfiles.size() ; i3++ )
-       mopt->m_sfiles[i3]->update_image( it, 0.0, 1.0, rho, rho, mu, lambda,
-                                         gRho, gMu, gLambda, rho, mu, mopt->m_path,
-                                         ew_ptr->mZ ); 
-
    } // end if it>=0
    sw4_profile->time_stamp("Exit compute_f_and_df");   
 }
@@ -1403,6 +1398,9 @@ int main(int argc, char **argv)
 	      if( myRank == 0 )
 		 cout << "ERROR: m_opttest = " << mopt->m_opttest << " is not a valid choice" << endl;
 
+           for( int i3=0 ; i3<mopt->m_sfiles.size() ; i3++ )
+             mopt->m_sfiles[i3]->force_write_image( 0, 0, simulation.mRho, simulation.mRho, simulation.mMu, simulation.mLambda, simulation.mRho, simulation.mMu, simulation.mLambda, simulation.mRho, simulation.mLambda, simulation.getOutputPath(), simulation.mZ ); 
+
 	   if( myRank == 0 )
 	   {
 	      cout << "============================================================" << endl
@@ -1411,6 +1409,7 @@ int main(int argc, char **argv)
 	   }
 	}
      }
+
   }
   else if( status == 1 )
      cout  << "============================================================" << endl

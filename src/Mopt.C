@@ -972,7 +972,7 @@ void Mopt::processMimage( char* buffer, bool use_hdf5)
 //-----------------------------------------------------------------------
 void Mopt::processSfileoutput( char* buffer )
 {
-   int cycle=-1, cycleInterval=0;
+   int cycle=0, cycleInterval=0;
    int sampleFactor = 1;
    float_sw4 time=0.0, timeInterval=0.0;
    bool timingSet = false;
@@ -991,45 +991,45 @@ void Mopt::processSfileoutput( char* buffer )
       if (startswith("#", token) || startswith(" ", buffer))
 	 // Ignore commented lines and lines with just a space.
 	 break;
-      if (startswith("time=", token) )
-      {
-	 token += 5; // skip time=
-	 CHECK_INPUT( atof(token) >= 0.,"Processing sfileoutput command: time must be a non-negative number, not: " << token);
-	 time = atof(token);
-	 timingSet = true;
-      }
-      else if (startswith("timeInterval=", token) )
-      {
-	 token += 13; // skip timeInterval=
-	 CHECK_INPUT( atof(token) >= 0.,"Processing sfileoutput command: timeInterval must be a non-negative number, not: " << token);
-	 timeInterval = atof(token);
-	 timingSet = true;
-      }
-      else if (startswith("startTime=", token) )
-      {
-	 token += 10; // skip startTime=
-	 tStart = atof(token);
-      }
+      /* if (startswith("time=", token) ) */
+      /* { */
+	 /* token += 5; // skip time= */
+	 /* CHECK_INPUT( atof(token) >= 0.,"Processing sfileoutput command: time must be a non-negative number, not: " << token); */
+	 /* time = atof(token); */
+	 /* timingSet = true; */
+      /* } */
+      /* else if (startswith("timeInterval=", token) ) */
+      /* { */
+	 /* token += 13; // skip timeInterval= */
+	 /* CHECK_INPUT( atof(token) >= 0.,"Processing sfileoutput command: timeInterval must be a non-negative number, not: " << token); */
+	 /* timeInterval = atof(token); */
+	 /* timingSet = true; */
+      /* } */
+      /* else if (startswith("startTime=", token) ) */
+      /* { */
+	 /* token += 10; // skip startTime= */
+	 /* tStart = atof(token); */
+      /* } */
       else if (startswith("sampleFactor=", token) )
       {
 	 token += 13; 
 	 CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: sampleFactor must be a non-negative integer, not: " << token);
 	 sampleFactor = atoi(token);
       }
-      else if (startswith("cycle=", token) )
-      {
-	 token += 6; // skip cycle=
-	 CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: cycle must be a non-negative integer, not: " << token);
-	 cycle = atoi(token);
-	 timingSet = true;
-      }
-      else if (startswith("cycleInterval=", token) )
-      {
-	 token += 14; // skip cycleInterval=
-	 CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: cycleInterval must be a non-negative integer, not: " << token);
-	 cycleInterval = atoi(token);
-	 timingSet = true;
-      }
+      /* else if (startswith("cycle=", token) ) */
+      /* { */
+	 /* token += 6; // skip cycle= */
+	 /* CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: cycle must be a non-negative integer, not: " << token); */
+	 /* cycle = atoi(token); */
+	 /* timingSet = true; */
+      /* } */
+      /* else if (startswith("cycleInterval=", token) ) */
+      /* { */
+	 /* token += 14; // skip cycleInterval= */
+	 /* CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: cycleInterval must be a non-negative integer, not: " << token); */
+	 /* cycleInterval = atoi(token); */
+	 /* timingSet = true; */
+      /* } */
       else if (startswith("file=", token))
       {
 	 token += 5; // skip file=
@@ -1049,8 +1049,6 @@ void Mopt::processSfileoutput( char* buffer )
       token = strtok(NULL, " \t");
    }
 
-   CHECK_INPUT( timingSet, "Processing sfileoutput command: " << 
-     	   "at least one timing mechanism must be set: cycle, time, cycleInterval or timeInterval"  << endl );
    SfileOutput* sfile = new SfileOutput( m_ew, time, timeInterval, cycle, cycleInterval, 
      		       tStart, filePrefix, sampleFactor, use_double);
    sfile->setup_images( );

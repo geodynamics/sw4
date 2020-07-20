@@ -82,7 +82,7 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
 // Assume attenuation arrays defined on all grids if they are defined on grid zero.
    bool use_q = m_use_attenuation && xis[0].is_defined() && xip[0].is_defined();
    size_t outside=0, material=0;
-   float_sw4 z_min = mInterface[0].minimum();
+   float_sw4 z_min = m_zminloc;
 
    // Find the relative dimension size of upper and lower interface for each grid patch
    int* ist = new int(m_npatches);
