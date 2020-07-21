@@ -1398,8 +1398,14 @@ int main(int argc, char **argv)
 	      if( myRank == 0 )
 		 cout << "ERROR: m_opttest = " << mopt->m_opttest << " is not a valid choice" << endl;
 
-           for( int i3=0 ; i3<mopt->m_sfiles.size() ; i3++ )
-             mopt->m_sfiles[i3]->force_write_image( 0, 0, simulation.mRho, simulation.mRho, simulation.mMu, simulation.mLambda, simulation.mRho, simulation.mMu, simulation.mLambda, simulation.mRho, simulation.mLambda, simulation.getOutputPath(), simulation.mZ ); 
+           {
+              int ng = simulation.mNumberOfGrids;
+              vector<Sarray> rho(ng), mu(ng), lambda(ng);
+              mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
+
+              for( int i3=0 ; i3<mopt->m_sfiles.size() ; i3++ )
+                mopt->m_sfiles[i3]->force_write_image( 0, 0, rho, rho, mu, lambda, rho, mu, lambda, rho, lambda, simulation.getOutputPath(), simulation.mZ ); 
+           }
 
 	   if( myRank == 0 )
 	   {

@@ -973,7 +973,8 @@ void Mopt::processMimage( char* buffer, bool use_hdf5)
 void Mopt::processSfileoutput( char* buffer )
 {
    int cycle=0, cycleInterval=0;
-   int sampleFactor = 1;
+   int sampleFactorV = 1;
+   int sampleFactorH = 1;
    float_sw4 time=0.0, timeInterval=0.0;
    bool timingSet = false;
    float_sw4 tStart = -999.99;
@@ -1010,11 +1011,23 @@ void Mopt::processSfileoutput( char* buffer )
 	 /* token += 10; // skip startTime= */
 	 /* tStart = atof(token); */
       /* } */
+      else if (startswith("sampleFactorH=", token) )
+      {
+	 token += 14; 
+	 CHECK_INPUT( atoi(token) >= 1,"Processing sfileoutput command: sampleFactorH must be a positive integer, not: " << token);
+	 sampleFactorH = atoi(token);
+      }
+      else if (startswith("sampleFactorV=", token) )
+      {
+	 token += 14; 
+	 CHECK_INPUT( atoi(token) >= 1,"Processing sfileoutput command: sampleFactorV must be a positive integer, not: " << token);
+	 sampleFactorV= atoi(token);
+      }
       else if (startswith("sampleFactor=", token) )
       {
 	 token += 13; 
-	 CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: sampleFactor must be a non-negative integer, not: " << token);
-	 sampleFactor = atoi(token);
+	 CHECK_INPUT( atoi(token) >= 1,"Processing sfileoutput command: sampleFactor must be a positive integer, not: " << token);
+	 sampleFactorH = sampleFactorV = atoi(token);
       }
       /* else if (startswith("cycle=", token) ) */
       /* { */
@@ -1050,7 +1063,7 @@ void Mopt::processSfileoutput( char* buffer )
    }
 
    SfileOutput* sfile = new SfileOutput( m_ew, time, timeInterval, cycle, cycleInterval, 
-     		       tStart, filePrefix, sampleFactor, use_double);
+     		       tStart, filePrefix, sampleFactorH, sampleFactorV, use_double);
    sfile->setup_images( );
    m_sfiles.push_back(sfile);
 }

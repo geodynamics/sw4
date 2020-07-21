@@ -62,7 +62,8 @@ public:
                 int cycleInterval,
                 float_sw4 tstart,
                 const std::string& filePrefix, 
-                int sampleFactor,
+                int sampleFactor_h,
+                int sampleFactor_v,
                 bool doubleMode);
    ~SfileOutput();
 
@@ -110,7 +111,9 @@ protected:
 
    int mWritingCycle;
    int mCycleInterval;
-   int mImageSamplingFactor;
+   /* int mImageSamplingFactor; */
+   int mSampleH;
+   int mSampleV;
 
    std::string mFileName;
    /* std::string m_modestring; */

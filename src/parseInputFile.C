@@ -3665,7 +3665,8 @@ void EW::processMaterial( char* buffer )
 void EW::processSfileOutput( char* buffer )
 {
    int cycle=-1, cycleInterval=0;
-   int sampleFactor = 1;
+   int sampleFactorH = 1;
+   int sampleFactorV = 1;
    float_sw4 time=0.0, timeInterval=0.0;
    bool timingSet = false;
    float_sw4 tStart = -999.99;
@@ -3702,11 +3703,23 @@ void EW::processSfileOutput( char* buffer )
 	 /* token += 10; // skip startTime= */
 	 /* tStart = atof(token); */
       /* } */
-      if (startswith("sampleFactor=", token) )
+      else if (startswith("sampleFactorH=", token) )
+      {
+	 token += 14; 
+	 CHECK_INPUT( atoi(token) >= 1,"Processing sfileoutput command: sampleFactorH must be a positive integer, not: " << token);
+	 sampleFactorH = atoi(token);
+      }
+      else if (startswith("sampleFactorV=", token) )
+      {
+	 token += 14; 
+	 CHECK_INPUT( atoi(token) >= 1,"Processing sfileoutput command: sampleFactorV must be a positive integer, not: " << token);
+	 sampleFactorV= atoi(token);
+      }
+      else if (startswith("sampleFactor=", token) )
       {
 	 token += 13; 
-	 CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: sampleFactor must be a non-negative integer, not: " << token);
-	 sampleFactor = atoi(token);
+	 CHECK_INPUT( atoi(token) >= 1,"Processing sfileoutput command: sampleFactor must be a positive integer, not: " << token);
+	 sampleFactorH = sampleFactorV = atoi(token);
       }
       /* else if (startswith("cycle=", token) ) */
       /* { */
@@ -3746,7 +3759,7 @@ void EW::processSfileOutput( char* buffer )
       /* CHECK_INPUT( timingSet, "Processing sfileoutput command: " << */ 
 		   /* "at least one timing mechanism must be set: cycle, time, cycleInterval or timeInterval"  << endl ); */
       SfileOutput* sfile = new SfileOutput( this, time, timeInterval, cycle, cycleInterval, 
- 			       tStart, filePrefix, sampleFactor, use_double);
+ 			       tStart, filePrefix, sampleFactorH, sampleFactorV, use_double);
       addSfileOutput( sfile );
    }
 }
