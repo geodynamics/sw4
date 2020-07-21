@@ -682,8 +682,8 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
   for( int g=0 ; g < ng ; g++ )
     iwrite = iwrite || m_parallel_io[g]->i_write();
 
-  int stV = mSampleH;
-  int stH = mSampleV;
+  int stV = mSampleV;
+  int stH = mSampleH;
 
   int alignment = 65536;
   setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
