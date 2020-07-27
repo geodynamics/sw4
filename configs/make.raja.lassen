@@ -8,17 +8,16 @@ openmp=no
 raja_cuda=yes
 umpire = yes
 fftw = yes
-hdf5= no
+hdf5= yes
 spill_warns = no
 caliper= no
-
 RAJA_HOME = /usr/workspace/wsb/ramesh/RAJA/2019/RAJA-v0.10.0/install_gcc_cuda243
+#RAJA_HOME = /usr/workspace/wsb/ramesh/RAJA/2019/RAJA-v0.11.0/install
 PROJ_HOME = /usr/workspace/wsb/ramesh/Project6/Proj/proj-5.0.0/install/
 UMPIRE_HOME = /usr/workspace/wsb/ramesh/Umpire/umpire-1.1.0/install_gcc_cuda243
 CALIPER_HOME = /usr/workspace/wsb/ramesh/Caliper/July2020/Caliper/install
 
-HDF5_HOME = /p/gpfs1/ramesh/SW4/HDF_TEST/HDF/CMake-hdf5-1.12.0/build/HDF5-1.12.0-Linux/HDF_Group/HDF5/1.12.0
-HDF5_HOME = /p/gpfs1/ramesh/SW4/HDF_TEST/HDF/CMake-hdf5-1.10.6/build/HDF5-1.10.6-Linux/HDF_Group/HDF5/1.10.6
+HDF5_HOME = /p/gpfs1/ramesh/SW4/HDF_TEST/CMake-hdf5-1.10.6/build/HDF5-1.10.6-Linux/HDF_Group/HDF5/1.10.6
 
 CALIPER_HOME =/usr/workspace/wsrzd/ramesh/Caliper/Caliper/install
 

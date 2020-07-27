@@ -14,7 +14,7 @@ Build instructions for Power9/V100 machines ( Summit, Lassen, Sierra etc)
 
 2. build and install RAJA using the following invocations in the build directory:
    ml cmake cuda gcc/6.4.0 ( Summit only)
-   mkir build  && cd build
+   mkdir build  && cd build
    cmake -DCMAKE_INSTALL_PREFIX=../install -DENABLE_CUDA=On -DENABLE_OPENMP=Off ../
    make install
 
@@ -44,7 +44,20 @@ Build instructions for Power9/V100 machines ( Summit, Lassen, Sierra etc)
    ml netlib-lapack/3.8.0 ( Summit only)
    make -j 4
    ** Sometimes parallel make will fail due to a race condition. Redoing make will fix this **
-
+8. To use HDF features, enable HDF5 in the make.inc add paths to HDF5 on your machine
+ 
+   To compile HDF5, download CMake-hdf5-1.10.6.tar.gz from https://www.hdfgroup.org/downloads/hdf5/
+   Add MPI=On to the build-unix.sh file so that it looks like this:
+	ctest -S HDF5config.cmake,BUILD_GENERATOR=Unix,MPI=On -C Release -V -O hdf5.log
+   Edit HDF5options.cmake to add te following ( Works on LLNL machines with lrun) to the
+	if (DEFINED MPI) section.
+    set (ADD_BUILD_OPTIONS "${ADD_BUILD_OPTIONS} -DMPIEXEC_EXECUTABLE:STRING=lrun")
+    set (ADD_BUILD_OPTIONS "${ADD_BUILD_OPTIONS} -DMPIEXEC_NUMPROC_FLAG:STRING=-T")
+    set (ADD_BUILD_OPTIONS "${ADD_BUILD_OPTIONS} -DMPIEXEC_MAX_NUMPROCS:STRING=4")
+    
+    On a compute node run build-unix.sh
+    After its done compiling and testing, take tar.gz file from build and install
+    Modify the HDF5_HOME dir in make.inc 
 
 Running SW4 on Summit:
 -------------------------------
