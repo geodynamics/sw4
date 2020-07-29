@@ -626,11 +626,11 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
     int l_jb = m_Mass_block.m_jb;
     int l_je = m_Mass_block.m_je;
     SView& residualV = residual.getview();
-    ;
     RAJA::RangeSegment j_range(l_jb, l_je + 1);
     RAJA::RangeSegment i_range(l_ib, l_ie + 1);
 
     float_sw4* lx = x;
+    float_sw4* lm_mass_block = m_mass_block;
     RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
         RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
           // for (int j = m_Mass_block.m_jb; j <= m_Mass_block.m_je; j++)
@@ -650,12 +650,16 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
           for (int k = 0; k < 3; k++) {
             sum = 0.0;
             for (int i = 0; i < 3; i++)
-              sum += m_mass_block[base + k * 3 + i] * lx[l * 3 + i];
+              sum += lm_mass_block[base + k * 3 + i] * lx[l * 3 + i];
             res[k] = sum;
           }
           for (int k = 0; k < 3; k++) lx[l * 3 + k] = res[k];
         });
     SW4_MARK_END("MATVEC");
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_DEVICE;
+#endif
 #endif
 #ifdef USE_MAGMA
     //    int lc=0;
@@ -727,6 +731,10 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
           U_cV(2, i, j, 0) -= relax * residualV(2, i, j, 1);
           U_cV(3, i, j, 0) -= relax * residualV(3, i, j, 1);
         });
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_DEVICE;
+#endif
 #endif
 #ifdef USE_LAPACK_ON_CPU
     // WARNING THIS IS RUNNING ON THE HOST
