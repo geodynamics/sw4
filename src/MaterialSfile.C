@@ -110,11 +110,18 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
 		   z = mEW->m_zmin[g] + (k-1)*mEW->mGridSize[g];
 
                 // Deal with some values on top grid that exceeds the topogrophy interface
-                if (g == mEW->mNumberOfGrids - 1 && k > 0 && z < z_min) 
+                if (g == mEW->mNumberOfGrids - 1 && z < z_min) 
                   z = z_min;
 
                 // (x, y, z) is the coordinate of current grid point
-		if( inside( x, y, z ) ) {
+		/* if( inside( x, y, z ) ) { */
+		if( m_zminloc <= z && z <= m_zmaxloc ) {
+                   // Extend the material value if simulation grid is larger than material grid
+                   if (x > m_xmaxloc)
+                       x = m_xmaxloc;
+                   if (y > m_ymaxloc)
+                       y = m_ymaxloc;
+                       
 		   material++;
                    int i0, j0, i1, j1, k0, gr = m_npatches-1;
                    float_sw4 tmph, down_z;
