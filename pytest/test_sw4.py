@@ -324,7 +324,16 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
 
             if result_file == 'hdf5.log':
                 import verify_hdf5
-                success = verify_hdf5.verify(pytest_dir, 1e-5)
+                success = True
+                sw4_stdout_file = open(case_dir + '.out', 'r')
+                for line in sw4_stdout_file:
+                    if "not compiled with HDF5" in line or "without sw4 compiled with HDF5" in line:
+                        success = False
+                        print('SW4 is not compiled with HDF5 library!')
+                        break;
+                sw4_stdout_file.close()
+                if success == True:
+                    success = verify_hdf5.verify(pytest_dir, 1e-5)
                 if success == False:
                     print('HDF5 test failed! (disable HDF5 test with -n option)')
             elif result_file == 'energy.log':
