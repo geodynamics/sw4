@@ -7782,7 +7782,6 @@ void EW::reverse_setup_viscoelastic( )
 // number of collocation points
     int n = m_number_mechanisms;
     int nc = 2*n-1;
-    float_sw4 mu, lambda;
 
     if( n > 0 )
     {
@@ -7807,6 +7806,7 @@ void EW::reverse_setup_viscoelastic( )
 		for(int i=m_iStart[g]; i<= m_iEnd[g]; i++ )
 		{
 
+                   float_sw4 mu, lambda;
                    double *a_=new double[n*nc];
                    double *beta=new double[nc];
                    double *gamma=new double[nc];
@@ -7920,11 +7920,14 @@ void EW::reverse_setup_viscoelastic( )
 
                    lambda = (2*mu_tmp + lambda_tmp)*mmag - 2*mu;
                    mLambda[g](i,j,k) = lambda;
+                   /* if (mLambda[g](i,j,k) < 0) { */
+                   /*     printf("ERROR, lambda < 0, %f\n", mLambda[g](i,j,k) ); */
+                   /* } */
 
-       delete[] a_;
-       delete[] beta;
-       delete[] gamma;
-       delete[] work;
+                   delete[] a_;
+                   delete[] beta;
+                   delete[] gamma;
+                   delete[] work;
 
 		} // end for g,k,j,i
 #undef a
