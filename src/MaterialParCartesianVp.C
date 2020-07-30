@@ -210,6 +210,7 @@ void MaterialParCartesianVp::get_parameters( int nmd, double* xmd, int nms,
 					   double* xms, std::vector<Sarray>& a_rho, 
 					   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
 {
+      std::cout << "CVp::get_parameters" << std::endl;
    if( m_init == 0 )
    {
       for( int i=0 ; i < nms ; i++ )

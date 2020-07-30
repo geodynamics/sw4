@@ -139,6 +139,7 @@ main(int argc, char **argv)
 // Save the time series here
   vector<vector<TimeSeries*> > GlobalTimeSeries;
 
+
 // make a new simulation object by reading the input file 'fileName'
   EW simulation(fileName, GlobalSources, GlobalTimeSeries );
 
@@ -205,36 +206,40 @@ main(int argc, char **argv)
       vector<DataPatches*> upred_saved(ng), ucorr_saved(ng);
       vector<Sarray> U(ng), Um(ng);
 
-// for solveTT
 /*
+// for solveTT
+
     Mopt* mopt = new Mopt( &simulation );
+
     mopt->parseInputFileOpt( fileName );
-    MaterialParameterization* mp = mopt->m_mp;
+
     int nmpars, nmpard, nmpard_global;
+
+// Select material parameterization
+     MaterialParameterization* mp = mopt->m_mp;
 	   mp->get_nr_of_parameters( nmpars, nmpard, nmpard_global );
 
-	   double* xm=NULL;
-           if( nmpard > 0 )
-	      xm = new double[nmpard];
+    std::cout << "solveTT...nmpard=" << nmpard << " nmpars=" << nmpars << std::endl;
+
+	    double* xm;
 
 // nspar - Number of parameters in source description. These are always non-distributed (=shared)
-	   int nspar=mopt->m_nspar;
+	   int nspar=mopt->m_nspar;  // 0
+
 // ns - Total number of non-distributed (=shared) parameters.
            int ns = nmpars + nspar;
 	   double *xs = new double[ns];
 
-// Default initial guess, the input source, stored in GlobalSources[0], will do nothing if nspar=0.
-     double xspar[11];
-	   GlobalSources[0][0]->get_parameters(xspar);
-	   //get_source_pars( nspar, xspar, xs );
+// Initialize the material parameters  xs=0 for init=0 interpolate partitioned model to coarse vel and populate parm grid of xs
 
-// Initialize the material parameters  xs=0 for init=0
-      mp->get_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,simulation.mLambda );
-*/
-    std::cout << "solveTT..." << std::endl;
+    std::cout << "solveTT...get_parameters" << std::endl;
 
-    //simulation.solveTT( GlobalSources[0], GlobalTimeSeries[0], simulation.mMu, simulation.mLambda, simulation.mRho, 0);
+    mp->get_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,simulation.mLambda);
 
+    simulation.solveTT( GlobalSources[0], GlobalTimeSeries[0], xs, nmpars, 0);
+    if(nmpard>0) delete[] xm;
+    delete[] xs;
+*/   
 
       simulation.solve( GlobalSources[0], GlobalTimeSeries[0], simulation.mMu, 
 			simulation.mLambda, simulation.mRho, U, Um, upred_saved, 

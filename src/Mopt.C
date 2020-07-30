@@ -176,6 +176,7 @@ void Mopt::processMaterialAllpts( char* buffer )
       {
 	 token += 5;
 	 int len=strlen(token);
+
 	 if( strncmp("velocity",token,len)==0 )
 	    variables = 1;
 	 else if( strncmp("vsvp",token,len)==0 )
@@ -221,6 +222,8 @@ void Mopt::processMaterialParCart( char* buffer )
       {
 	 token += 5;
 	 int len=strlen(token);
+        std::cout << "strlen(token)=" << len << " token=" << token << std::endl;
+
 	 vel    =strncmp("velocity",token,len)==0;
 	 vponly =strncmp("vponly",token,len)==0;
 	 vsvp   =strncmp("vsvp",token,len)==0;
@@ -242,7 +245,9 @@ void Mopt::processMaterialParCart( char* buffer )
       }
       else if( startswith("init=",token) )
       {
+
          token += 5;
+
 	 if( strcmp(token,"0")==0 )
             init = 0;
 	 else if( strcmp(token,"sineperturbation")==0 )

@@ -123,6 +123,9 @@ void MaterialParAllpts::get_parameters( int nmd, double* xmd, int nms, double* x
 					vector<Sarray>& a_mu, vector<Sarray>& a_lambda )
 {
    size_t gp, ind;
+
+   std::cout << " ParAllpts::get_parameters" << std::endl;
+   
    for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
    {
       if( g == 0 )

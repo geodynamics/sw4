@@ -201,8 +201,10 @@ void MaterialParCartesianVsVp::get_parameters( int nmd, double* xmd, int nms,
 					   double* xms, std::vector<Sarray>& a_rho, 
 					   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
 {
-
+   std::cout << "CVsVp::get_parameters" << std::endl;
    if(m_myrank==0) cout << ">>>>>>>>> get_parameters: offset from reference model option m_init=" << m_init << endl;
+   std::cout << "rho min=" << a_rho[0].minimum() << " max=" << a_rho[0].maximum() << std::endl;
+
 
    if( m_init == 0 )
    {
