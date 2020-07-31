@@ -80,6 +80,7 @@ struct global_variable_holder_struct {
   int device;
   int num_devices;
   bool firstCycle;
+  int current_step;
   std::vector<std::tuple<char *, size_t>> massprefetch;
 };
 

@@ -104,12 +104,12 @@ int main(int argc, char **argv) {
       static_cast<size_t>(15) * 1024 * 1024 * 1024;  //+102*1024*1024;
 
   auto pref_allocator = rma.makeAllocator<umpire::strategy::AllocationAdvisor>(
-      "preferred_location_device", allocator, "PREFERRED_LOCATION",
+									       "preferred_location_device", allocator, "PREFERRED_LOCATION", 
       global_variables.device);
 
   auto pooled_allocator =
       rma.makeAllocator<umpire::strategy::DynamicPool, true>(
-          string("UM_pool"), allocator, pool_size);
+          string("UM_pool"), pref_allocator, pool_size);
 
   const size_t pool_size_small = static_cast<size_t>(250) * 1024 * 1024;
 
