@@ -200,10 +200,10 @@ main(int argc, char **argv)
 // run the simulation
       int ng=simulation.mNumberOfGrids;
       vector<DataPatches*> upred_saved(ng), ucorr_saved(ng);
-      vector<Sarray> U(ng), Um(ng);
+      vector<Sarray> U(ng), Um(ng), ph(ng);
       simulation.solve( GlobalSources[0], GlobalTimeSeries[0], simulation.mMu, 
 			simulation.mLambda, simulation.mRho, U, Um, upred_saved, 
-			ucorr_saved, false, 0, 0 );
+			ucorr_saved, false, 0, 0, 0, ph );
 
 // save all time series
       

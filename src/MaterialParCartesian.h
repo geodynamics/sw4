@@ -24,6 +24,9 @@ public:
 		      std::vector<Sarray>& a_lambda,
 		      std::vector<Sarray>& a_gradrho, std::vector<Sarray>& a_gradmu,
 		      std::vector<Sarray>& a_gradlambda );
+   void interpolate_pseudohessian(int nmpars, double* phs, int nmpard, double* phm, 
+                                  std::vector<Sarray>& phgrid);
+
    //   void perturb_material( int ip, int jp, int kp, int grid, int var, double h, double* xs, double* xm );
    ssize_t parameter_index( int ip, int jp, int kp, int grid, int var );
    ssize_t local_index( size_t ind_global );
@@ -31,6 +34,7 @@ public:
 			   std::vector<Sarray>& a_lambda, std::string fname );
    void projectl2( std::vector<Sarray>& mtrl, float_sw4* rhs );
    void subtract_base_mtrl( int nms, double* xms );
+   int get_varcase(){return 1;}
 };
 
 #endif

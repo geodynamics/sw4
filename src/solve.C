@@ -43,6 +43,29 @@ void curvilinear4sgwind( int, int, int, int, int, int, int, int, float_sw4*, flo
                          float_sw4*, float_sw4*, float_sw4*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
                          float_sw4*, float_sw4*, float_sw4*, int, char );
 
+void add_pseudohessian_terms1(  int ifirst, int ilast, int jfirst, int jlast, 
+                               int kfirst, int klast,
+                               int ifirstact, int ilastact, int jfirstact, int jlastact, 
+                               int kfirstact, int klastact, 
+                               float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_u,
+                               float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_rho,
+                               float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda,
+                               float_sw4 h, float_sw4 dt, int onesided[6], int varcase,
+                               float_sw4* __restrict__ a_bope, 
+                               float_sw4* __restrict__ a_acof, float_sw4* a_ghcof,
+                               float_sw4* __restrict__ a_ph );
+void add_pseudohessian_terms2(  int ifirst, int ilast, int jfirst, int jlast, 
+                               int kfirst, int klast,
+                               int ifirstact, int ilastact, int jfirstact, int jlastact, 
+                               int kfirstact, int klastact, 
+                               float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_u,
+                               float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_rho,
+                               float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda,
+                               float_sw4 h, float_sw4 dt, int onesided[6], int varcase,
+                               float_sw4* __restrict__ a_bope, 
+                               float_sw4* __restrict__ a_acof, float_sw4* a_ghcof,
+                               float_sw4* __restrict__ a_ph );
+
 #ifdef USE_HDF5
 #include "sachdf5.h"
 #endif
@@ -55,7 +78,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 		vector<Sarray>& U, vector<Sarray>& Um,
 		vector<DataPatches*>& Upred_saved_sides,
    		vector<DataPatches*>& Ucorr_saved_sides, bool save_sides,
-		int event, int nsteps_in_memory )
+		int event, int nsteps_in_memory, int varcase, vector<Sarray>& PseudoHessian )
 {
    // Experimental
   //   int nsteps_in_memory=50;
@@ -483,6 +506,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 
   if( m_moment_test )
      test_sources( point_sources, a_Sources, F, identsources );
+
 
 // save initial data on receiver records
   vector<float_sw4> uRec;
@@ -1006,6 +1030,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 // // Energy evaluation, requires all three time levels present, do before cycle arrays.
     if( m_energy_test )
        compute_energy( mDt, currentTimeStep == mNumberOfTimeSteps[event], Um, U, Up, currentTimeStep, event );
+
+// Accumulate pseudo-Hessian terms
+    if( varcase > 0 )
+       addtoPseudoHessian( Um, U, Up, a_Rho, a_Mu, a_Lambda, mDt, varcase, PseudoHessian );
 
 // cycle the solution arrays
     cycleSolutionArrays(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp);
@@ -4685,4 +4713,25 @@ void EW::enforceBCfreeAtt2( vector<Sarray>& a_Up, vector<Sarray>& a_Mu, vector<S
       } // end if bcType[g][4] == bStressFree && topography
       
    }  // end for g=0,.
+}
+
+//-----------------------------------------------------------------------
+void EW::addtoPseudoHessian( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarray>& Up, 
+                             vector<Sarray>& aRho, vector<Sarray>& aMu, vector<Sarray>& aLambda, 
+                             float_sw4 dt, int varcase, vector<Sarray>& PseudoHess )
+{
+   for( int g=0 ; g < mNumberOfCartesianGrids ;g++ )
+   {
+      add_pseudohessian_terms2( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], 
+                               m_kStart[g], m_kEnd[g], m_iStartAct[g], m_iEndAct[g],
+                               m_jStartAct[g], m_jEndAct[g], m_kStartAct[g], m_kEndAct[g],
+                               Um[g].c_ptr(), U[g].c_ptr(), Up[g].c_ptr(), aRho[g].c_ptr(),
+                               aMu[g].c_ptr(), aLambda[g].c_ptr(), mGridSize[g], dt,
+                               m_onesided[g], varcase, m_bope, m_acof, m_ghcof,
+                               PseudoHess[g].c_ptr() );
+   }
+   for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids ; g++ )
+   {
+      // NYI
+   }
 }

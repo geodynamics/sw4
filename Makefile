@@ -225,7 +225,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        evenIevenJinterp.o CheckPoint.o geodyn.o AllDims.o Patch.o RandomizedMaterial.o \
        MaterialInvtest.o sw4-prof.o sachdf5.o readhdf5.o TestTwilight.o \
        curvilinear4sgwind.o TestEcons.o GridGenerator.o GridGeneratorGeneral.o  \
-       GridGeneratorGaussianHill.o CurvilinearInterface2.o SfileOutput.o
+       GridGeneratorGaussianHill.o CurvilinearInterface2.o SfileOutput.o pseudohess.o
 
 
 # Fortran routines (lamb_exact_numquad needs QUADPACK)

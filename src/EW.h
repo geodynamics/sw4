@@ -114,7 +114,8 @@ void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTim
 	    vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, vector<Sarray>& a_Rho,
 	    vector<Sarray>& U, vector<Sarray>& Um,
 	    vector<DataPatches*>& Upred_saved_sides,
-	    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides, int event, int save_steps );
+	    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides, int event, int save_steps,
+            int varcase, vector<Sarray>& pseudoHessian );
 
 void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, float_sw4 gradient[11], float_sw4 hessian[121] );
    //void solve_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
@@ -741,6 +742,10 @@ void interpolate_base_to_coarse_vel( int nx, int ny, int nz, double xmin, double
 void update_and_transform_material( int g, Sarray& rho, Sarray& mu, Sarray& lambda );
 
 void transform_gradient( Sarray& rho, Sarray& mu, Sarray& lambda, Sarray& grho, Sarray& gmu, Sarray& glambda );
+
+void addtoPseudoHessian( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarray>& Up, 
+                         vector<Sarray>& aRho, vector<Sarray>& aMu, vector<Sarray>& aLambda, 
+                         float_sw4 dt, int varcase, vector<Sarray>& PseudoHess );
 
 // Functions to impose conditions at grid refinement interface:
    // void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,

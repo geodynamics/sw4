@@ -142,7 +142,7 @@ void MaterialParCartesian::interpolate_parameters( int nmd, double* xmd, int nms
    double* lambdap=m_lambda.c_ptr();
    size_t ind =0;
    double rhmin=100000,mumin=100000,lamin=100000;
-   double rhmax=-100000,mumax=-100000,lamax=-100000; 
+   double rhmax=-100000,mumax=-100000,lamax=-100000;
    for( int k=1 ; k <= m_nz ; k++ )
       for( int j=1 ; j <= m_ny ; j++ )
 	 for( int i=1 ; i <= m_nx ; i++ )
@@ -282,6 +282,31 @@ void MaterialParCartesian::get_gradient( int nmd, double* xmd, int nms, double* 
 	    dfs[3*ind+2] = glambdap[indm];
 	    ind++;
 	 }
+}
+
+//-----------------------------------------------------------------------
+void MaterialParCartesian::interpolate_pseudohessian( int nmpars, double* phs,
+                                                      int nmpard, double* phm,
+                                                      vector<Sarray>& phgrid )
+{
+   int ig, jg, kg, g;
+   size_t ind=0;
+   for( int k=1 ; k <= m_nz ; k++ )
+      for( int j=1 ; j <= m_ny ; j++ )
+	 for( int i=1 ; i <= m_nx ; i++ )
+	 {
+            float_sw4 x = m_xmin + i*m_hx;
+	    float_sw4 y = m_ymin + j*m_hy;
+	    float_sw4 z = m_zmin + k*m_hz;
+            m_ew->computeNearestLowGridPoint( ig, jg, kg, g, x, y, z );
+            if( m_ew->interior_point_in_proc( ig, jg, g) )
+	    {
+               phs[ind*3  ] = phgrid[g](1,ig,jg,kg);
+               phs[ind*3+1] = phgrid[g](2,ig,jg,kg);
+               phs[ind*3+2] = phgrid[g](3,ig,jg,kg);
+            }
+            ind++;
+         }
 }
 
 //-----------------------------------------------------------------------

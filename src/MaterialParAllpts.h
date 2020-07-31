@@ -26,6 +26,8 @@ public:
    void set_scalefactors( int nmpars, double* sfs, 
 			  double rho_ref, double mu_ref, double lambda_ref, double vs_ref, double vp_ref );
    //   void perturb_material( int ip, int jp, int kp, int grid, int var, double h, double* xs, double* xm );
+   void interpolate_pseudohessian(int nmpars, double* phs, int nmpard, double* phm, 
+                                  std::vector<Sarray>& phgrid);
    ssize_t parameter_index( int ip, int jp, int kp, int grid, int var );
    ssize_t local_index( size_t ind_global );
 
@@ -35,6 +37,7 @@ public:
 			 std::vector<Sarray>& a_lambda, double& mf_reg,
 			 double* sfd, double* sfs, bool compute_derivative, 
 			 double* dmfd_reg, double* dmfs_reg );
+   int get_varcase();
 };
 
 #endif

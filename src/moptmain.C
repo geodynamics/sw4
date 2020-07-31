@@ -85,6 +85,87 @@ void get_source_pars( int nspar, double srcpars[11], double* xs )
 }
 
 //-----------------------------------------------------------------------
+void  normalize_gradient_ph( vector<Sarray>& pseudo_hessian, 
+                                    vector<Sarray>& gRho,
+                                    vector<Sarray>& gMu, 
+                                    vector<Sarray>& gLambda, 
+                                    float_sw4 eps, int phcase )
+{
+   int g=0;
+   int ib=pseudo_hessian[g].m_ib, ie=pseudo_hessian[g].m_ie;
+   int jb=pseudo_hessian[g].m_jb, je=pseudo_hessian[g].m_je;
+   int kb=pseudo_hessian[g].m_kb, ke=pseudo_hessian[g].m_ke;   
+   // q&d for single grid VsVp case
+   float_sw4 maxnorm[3]={0,0,0};
+
+   for( int k=kb ; k <= ke ;k++)
+      for( int j=jb ; j <= je ;j++)
+         for( int i=ib ; i <= ie ;i++)
+            for( int c=0 ; c < 3; c++ )
+         {
+            if( pseudo_hessian[g](c,i,j,k) > maxnorm[c] )
+               maxnorm[c] = pseudo_hessian[g](c,i,j,k);
+         }
+   
+   float_sw4 mxnormloc[3]={maxnorm[0],maxnorm[1],maxnorm[2]};
+   MPI_Allreduce( mxnormloc,maxnorm,3,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+   for( int k=kb ; k <= ke ;k++)
+      for( int j=jb ; j <= je ;j++)
+         for( int i=ib ; i <= ie ;i++)
+         {
+            gRho[g](i,j,k)    /= pseudo_hessian[g](1,i,j,k)/maxnorm[0]+eps;
+            gMu[g](i,j,k)     /= pseudo_hessian[g](2,i,j,k)/maxnorm[1]+eps;
+            gLambda[g](i,j,k) /= pseudo_hessian[g](3,i,j,k)/maxnorm[2]+eps;            
+         }
+}
+
+//-----------------------------------------------------------------------
+void normalize_pseudohessian( int nmpars, float_sw4* phs, int nmpard, 
+                              float_sw4* phd, float_sw4 eps, int phcase )
+{
+   float_sw4 mxnorm[3]={0,0,0};
+   int ncomp;
+   if( phcase==1 || phcase==2 )
+      ncomp=3;
+   else if( phcase==3 )
+      ncomp=2;
+   else
+      ncomp=1;
+   for( int m=0; m < nmpars ; m++ )
+      if( std::isnan(phs[m]) )
+         std::cout << "ph is nan at m= " << m << std::endl;
+
+   int npts=nmpars/ncomp;
+   for( int m=0; m < npts ; m++ )
+      for( int c=0; c < ncomp ; c++ )
+      {
+         if( mxnorm[c]< phs[m*ncomp+c] )
+            mxnorm[c]=phs[m*ncomp+c];
+      }
+   npts = nmpard/ncomp;
+   for( int m=0; m < npts ; m++ )
+      for( int c=0; c < ncomp ; c++ )
+      {
+         if( mxnorm[c]< phd[m*ncomp+c] )
+            mxnorm[c]=phd[m*ncomp+c];
+      }
+   if( nmpard > 0 )
+   {
+      float_sw4 mxnormloc[3]={mxnorm[0],mxnorm[1],mxnorm[2]};
+      MPI_Allreduce( mxnormloc,mxnorm,3,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+   }
+   //   std::cout << "mxnorm = " << mxnorm[0] << " " << mxnorm[1] << " " << mxnorm[2] << std::endl;
+   npts=nmpars/ncomp;
+   for( int m=0; m < npts ; m++ )
+      for( int c=0; c < ncomp ; c++ )
+         phs[m*ncomp+c] /= mxnorm[c]+eps;
+   npts = nmpard/ncomp;
+   for( int m=0; m < npts ; m++ )
+      for( int c=0; c < ncomp ; c++ )
+         phd[m*ncomp+c] /= mxnorm[c]+eps;
+}
+
+//-----------------------------------------------------------------------
 void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 		int nmpard, double* xm,
 		vector<vector<Source*> >& GlobalSources,
@@ -142,14 +223,14 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 // inside solve_allpars. U and Um are final time solutions, to be used as 'initial' data
 // when reconstructing U backwards.
    vector<DataPatches*> upred_saved(ng), ucorr_saved(ng);
-   vector<Sarray> U(ng), Um(ng);
+   vector<Sarray> U(ng), Um(ng), ph(ng);
    mf = 0;
    if( !mopt->m_test_regularizer ){
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
 //	 simulation.solve( src, GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e );
       sw4_profile->time_stamp("forward solve" );
-     simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e, mopt->m_nsteps_in_memory );
+      simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e, mopt->m_nsteps_in_memory, 0, ph );
       sw4_profile->time_stamp("done forward solve" );
 //        Compute misfit
       if( mopt->m_misfit == Mopt::L2 )
@@ -282,6 +363,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    vector<DataPatches*> upred_saved(ng), ucorr_saved(ng);
    vector<Sarray> U(ng), Um(ng);
    vector<Sarray> gRho(ng), gMu(ng), gLambda(ng);
+   vector<Sarray> pseudo_hessian(ng);
    f = 0;
    
    float_sw4 *dfsevent, *dfmevent;
@@ -294,58 +376,85 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       dfs[m+nspar] = 0;
    for( int m=0 ; m < nmpard ; m++ )
       dfm[m] = 0;
-   if( !mopt->m_test_regularizer ){
-   for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
+   if( !mopt->m_test_regularizer )
    {
-      sw4_profile->time_stamp("forward solve" );
-     simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory );
-      sw4_profile->time_stamp("done forward solve" );
-   //   simulation.solve( src, GlobalTimeSeries, mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true );
+      mopt->init_pseudohessian( pseudo_hessian );
+      int phcase = mopt->get_pseudo_hessian_case();
+      for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
+      {
+         sw4_profile->time_stamp("forward solve" );
+         simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory, phcase, pseudo_hessian );
+         sw4_profile->time_stamp("done forward solve" );
 
 // Compute misfit, 'diffs' will hold the source for the adjoint problem
 
 // 1. Copy computed time series into diffs[m]
-      vector<TimeSeries*> diffs;
-      for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
-      {
-	 if( mopt->m_output_ts && it >= 0 )
-	    GlobalTimeSeries[e][m]->writeFile();
-	 TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc" );
-	 diffs.push_back(elem);
-      }
+         vector<TimeSeries*> diffs;
+         for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
+         {
+            if( mopt->m_output_ts && it >= 0 )
+               GlobalTimeSeries[e][m]->writeFile();
+            TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc" );
+            diffs.push_back(elem);
+         }
 // 2. misfit function also updates diffs := this - observed
-      if( mopt->m_misfit == Mopt::L2 )
-      {
-	 double dshift, ddshift, dd1shift;
-	 for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
-	    f += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
-      }
-      else if( mopt->m_misfit == Mopt::CROSSCORR )
-      {
-	 for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
-	    f += GlobalTimeSeries[e][m]->misfit2( *GlobalObservations[e][m], diffs[m] );
-      }
+         if( mopt->m_misfit == Mopt::L2 )
+         {
+            double dshift, ddshift, dd1shift;
+            for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
+               f += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
+         }
+         else if( mopt->m_misfit == Mopt::CROSSCORR )
+         {
+            for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
+               f += GlobalTimeSeries[e][m]->misfit2( *GlobalObservations[e][m], diffs[m] );
+         }
 
-      double dfsrc[11];
-      get_source_pars( nspar, dfsrc, dfs );   
-      sw4_profile->time_stamp("backward+adjoint solve" );
-      simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, e );
-      sw4_profile->time_stamp("done backward+adjoint solve" );
-      //      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], &dfs[nspar], dfm, gRho, gMu, gLambda );
-      //      mopt->m_mp->gradient_transformation( rho, mu, lambda, gRho, gMu, gLambda );
-      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfmevent, rho, mu, lambda, gRho, gMu, gLambda );
-      for( int m=0 ; m < nmpars ; m++ )
-	 dfs[m+nspar] += dfsevent[m];
-      for( int m=0 ; m < nmpard ; m++ )
-	 dfm[m] += dfmevent[m];
+         double dfsrc[11];
+         get_source_pars( nspar, dfsrc, dfs );   
+         sw4_profile->time_stamp("backward+adjoint solve" );
+         simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, e );
+         sw4_profile->time_stamp("done backward+adjoint solve" );
+         mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfmevent, rho, mu, lambda, gRho, gMu, gLambda );
+         for( int m=0 ; m < nmpars ; m++ )
+            dfs[m+nspar] += dfsevent[m];
+         for( int m=0 ; m < nmpard ; m++ )
+            dfm[m] += dfmevent[m];
 
 // 3. Give back memory
-      for( unsigned int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
-	 delete diffs[m];
-      diffs.clear();
-   }
-   double mftmp = f;
-   MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+         for( unsigned int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
+            delete diffs[m];
+         diffs.clear();
+      }
+      double mftmp = f;
+      MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+      if( phcase > 0 )
+      {
+// Interpolate pseudo-hessian to parameter grid
+         float_sw4* phs=0, *phm=0;
+         if( nmpars > 0 )
+            phs = new float_sw4[nmpars];
+         if(  nmpard > 0 )
+            phm = new float_sw4[nmpard];
+         mopt->m_mp->interpolate_pseudohessian( nmpars, phs, nmpard, phm, pseudo_hessian);
+         float_sw4 eps=1e-3;
+         normalize_pseudohessian( nmpars, phs, nmpard, phm, eps, phcase );
+// ..scale the gradient
+
+         float_sw4* sfs=mopt->m_sfs;
+         for( int m=0 ; m < nmpars ; m++ )
+            dfs[m+nspar] *= 1.0/phs[m];
+         float_sw4* sfm=mopt->m_sfm;
+         for( int m=0 ; m < nmpard ; m++ )
+            dfm[m] *= 1.0/phm[m];
+// ..and give back memory
+         if( phs != 0 )
+            delete[] phs;
+         if( phm != 0 )
+            delete[] phm;
+         // For plotting purpose:
+         normalize_gradient_ph( pseudo_hessian, gRho, gMu, gLambda, eps, phcase );
+      }
    }
 // add in a Tikhonov regularizing term:
    bool tikhonovreg=false;
