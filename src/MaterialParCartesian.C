@@ -305,8 +305,20 @@ void MaterialParCartesian::interpolate_pseudohessian( int nmpars, double* phs,
                phs[ind*3+1] = phgrid[g](2,ig,jg,kg);
                phs[ind*3+2] = phgrid[g](3,ig,jg,kg);
             }
+            else
+            {
+               phs[ind*3  ] = 0;
+               phs[ind*3+1] = 0;
+               phs[ind*3+2] = 0;
+            }
             ind++;
          }
+   int npts = m_nx*m_ny*m_nz;
+   float_sw4* tmp =new float_sw4[3*npts];
+   for( int i=0 ; i < 3*npts ; i++ )
+      tmp[i] = phs[i];
+   MPI_Allreduce( tmp, phs, 3*npts, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   delete[] tmp;
 }
 
 //-----------------------------------------------------------------------

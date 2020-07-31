@@ -331,11 +331,17 @@ void MaterialParCartesianVp::interpolate_pseudohessian( int nmpars, double* phs,
 	    float_sw4 z = m_zmin + k*m_hz;
             m_ew->computeNearestLowGridPoint( ig, jg, kg, g, x, y, z );
             if( m_ew->interior_point_in_proc( ig, jg, g) )
-	    {
                phs[ind  ] = phgrid[g](3,ig,jg,kg);
-            }
+            else
+               phs[ind]=0;
             ind++;
          }
+   int npts = m_nx*m_ny*m_nz;
+   float_sw4* tmp =new float_sw4[npts];
+   for( int i=0 ; i < npts ; i++ )
+      tmp[i] = phs[i];
+   MPI_Allreduce( tmp, phs, npts, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   delete[] tmp;
 }
 
 //-----------------------------------------------------------------------
