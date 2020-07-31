@@ -61,9 +61,10 @@ MaterialSfile::MaterialSfile( EW* a_ew, const string a_file, const string a_dire
 {
    mCoversAllPoints = false;
    // Check that the depths make sense
-   if (a_ew != NULL)
+   if (a_ew != NULL) {
      m_use_attenuation = a_ew->usingAttenuation();
      read_sfile();
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -81,7 +82,7 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
 // Assume attenuation arrays defined on all grids if they are defined on grid zero.
    bool use_q = m_use_attenuation && xis[0].is_defined() && xip[0].is_defined();
    size_t outside=0, material=0;
-   float_sw4 z_min = mInterface[0].minimum();
+   float_sw4 z_min = m_zminloc;
 
    // Find the relative dimension size of upper and lower interface for each grid patch
    int* ist = new int(m_npatches);
@@ -109,11 +110,18 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
 		   z = mEW->m_zmin[g] + (k-1)*mEW->mGridSize[g];
 
                 // Deal with some values on top grid that exceeds the topogrophy interface
-                if (g == mEW->mNumberOfGrids - 1 && k > 0 && z < z_min) 
+                if (g == mEW->mNumberOfGrids - 1 && z < z_min) 
                   z = z_min;
 
                 // (x, y, z) is the coordinate of current grid point
-		if( inside( x, y, z ) ) {
+		/* if( inside( x, y, z ) ) { */
+		if( m_zminloc <= z && z <= m_zmaxloc ) {
+                   // Extend the material value if simulation grid is larger than material grid
+                   if (x > m_xmaxloc)
+                       x = m_xmaxloc;
+                   if (y > m_ymaxloc)
+                       y = m_ymaxloc;
+                       
 		   material++;
                    int i0, j0, i1, j1, k0, gr = m_npatches-1;
                    float_sw4 tmph, down_z;
@@ -313,6 +321,7 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
       //           << endl;
       cout << endl
 	   << "sfile command: outside = " << outsideSum << ", material = " << materialSum << endl;
+
 }
 
 
@@ -917,9 +926,9 @@ void MaterialSfile::material_check( bool water )
 	 //	 if( mEW->getRank()==0 )
       {
 	 if( p== 1 && !water )
-	    cout << "R-file limits, away from water: " << endl;
+	    cout << "S-file limits, away from water: " << endl;
 	 else if( p== 1 )
-	    cout << "R-file limits : " << endl;
+	    cout << "S-file limits : " << endl;
 	 cout << "  Patch no " << p << " : " << endl;
 	 cout << "    cp    min and max " << cminstot[1] << " " << cmaxstot[1] << endl;
 	 cout << "    cs    min and max " << cminstot[0] << " " << cmaxstot[0] << endl;

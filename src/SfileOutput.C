@@ -53,7 +53,8 @@ SfileOutput::SfileOutput( EW* a_ew,
                           int cycleInterval,
                           float_sw4 tstart,
                           const std::string& filePrefix,
-                          int sampleFactor,
+                          int sampleFactorH,
+                          int sampleFactorV,
                           bool doubleMode ):
   mTime(time),
   mEW(a_ew),
@@ -62,10 +63,9 @@ SfileOutput::SfileOutput( EW* a_ew,
   mWritingCycle(cycle),
   mCycleInterval(cycleInterval),
   mFilePrefix(filePrefix),
-  mImageSamplingFactor(sampleFactor),
-  /* mMode(mode), */
+  mSampleH(sampleFactorH),
+  mSampleV(sampleFactorV),
   mFileName(""),
-  //   mCycle(-1),
   mNextTime(0.0),
   mStartTime(tstart),
   m_isDefinedMPIWriters(false),
@@ -135,19 +135,32 @@ void SfileOutput::setup_images( )
     m_ihavearray[g] = true;
 
     // Coarsen grid a number of levels
-    if( mImageSamplingFactor > 1 && m_ihavearray[g] ) {
-      for( int dim=0; dim < 3; dim++ ) {
-        int remainder = (mWindow[g][2*dim] -mGlobalDims[g][2*dim])% mImageSamplingFactor;
+    if( mSampleH > 1 && m_ihavearray[g] ) {
+      for( int dim=0; dim < 2; dim++ ) {
+        int remainder = (mWindow[g][2*dim] -mGlobalDims[g][2*dim])% mSampleH;
         if( remainder != 0 )
-          mWindow[g][2*dim] += mImageSamplingFactor-remainder;
-        remainder = (mWindow[g][2*dim+1] -mGlobalDims[g][2*dim])% mImageSamplingFactor;
+          mWindow[g][2*dim] += mSampleH - remainder;
+        remainder = (mWindow[g][2*dim+1] -mGlobalDims[g][2*dim])% mSampleH;
         if( remainder != 0 )
           mWindow[g][2*dim+1] -= remainder;
 
-        remainder = (mGlobalDims[g][2*dim+1] -mGlobalDims[g][2*dim])% mImageSamplingFactor;
+        remainder = (mGlobalDims[g][2*dim+1] -mGlobalDims[g][2*dim])% mSampleH;
         if( remainder != 0 )
           mGlobalDims[g][2*dim+1] -= remainder;
       }
+      for( int dim=2; dim < 3; dim++ ) {
+        int remainder = (mWindow[g][2*dim] -mGlobalDims[g][2*dim])% mSampleV;
+        if( remainder != 0 )
+          mWindow[g][2*dim] += mSampleV - remainder;
+        remainder = (mWindow[g][2*dim+1] -mGlobalDims[g][2*dim])% mSampleV;
+        if( remainder != 0 )
+          mWindow[g][2*dim+1] -= remainder;
+
+        remainder = (mGlobalDims[g][2*dim+1] -mGlobalDims[g][2*dim])% mSampleV;
+        if( remainder != 0 )
+          mGlobalDims[g][2*dim+1] -= remainder;
+      }
+
     }
   }
 
@@ -167,9 +180,9 @@ void SfileOutput::setup_images( )
     m_doubleField.resize( mEW->mNumberOfGrids );
     for( int g = 0 ; g < mEW->mNumberOfGrids ; g++ ) {
       if( m_ihavearray[g] ) {
-        size_t npts     = ((size_t)(mWindow[g][1] - mWindow[g][0])/mImageSamplingFactor + 1)*
-                          ( (mWindow[g][3] - mWindow[g][2])/mImageSamplingFactor + 1)*
-                          ( (mWindow[g][5] - mWindow[g][4])/mImageSamplingFactor + 1 + m_extraz[g]);
+        size_t npts     = ((size_t)(mWindow[g][1] - mWindow[g][0])/mSampleH + 1)*
+                          ( (mWindow[g][3] - mWindow[g][2])/mSampleH + 1)*
+                          ( (mWindow[g][5] - mWindow[g][4])/mSampleV + 1 + m_extraz[g]);
         m_doubleField[g] = new double[npts];
       }
       else
@@ -180,9 +193,9 @@ void SfileOutput::setup_images( )
     m_floatField.resize( mEW->mNumberOfGrids );
     for( int g = 0 ; g < mEW->mNumberOfGrids ; g++ ) {
       if( m_ihavearray[g] ) {
-        size_t npts     = ((size_t)(mWindow[g][1] - mWindow[g][0])/mImageSamplingFactor + 1)*
-                          ( (mWindow[g][3] - mWindow[g][2])/mImageSamplingFactor + 1)*
-                          ( (mWindow[g][5] - mWindow[g][4])/mImageSamplingFactor + 1 + m_extraz[g]);
+        size_t npts     = ((size_t)(mWindow[g][1] - mWindow[g][0])/mSampleH + 1)*
+                          ( (mWindow[g][3] - mWindow[g][2])/mSampleH + 1)*
+                          ( (mWindow[g][5] - mWindow[g][4])/mSampleV + 1 + m_extraz[g]);
         m_floatField[g] = new float[npts];
       }
       else
@@ -200,10 +213,15 @@ void SfileOutput::define_pio( )
   m_parallel_io = new Parallel_IO*[ghigh-glow+1];
   for( int g=glow ; g < ghigh ; g++ ) {
     int global[3], local[3], start[3];
-    for( int dim=0 ; dim < 3 ; dim++ ) {
-      global[dim] = (mGlobalDims[g][2*dim+1]-mGlobalDims[g][2*dim])/mImageSamplingFactor+1;
-      local[dim]  = (mWindow[g][2*dim+1]-mWindow[g][2*dim])/mImageSamplingFactor+1;
-      start[dim]  = (mWindow[g][2*dim]-mGlobalDims[g][2*dim])/mImageSamplingFactor;
+    for( int dim=0 ; dim < 2 ; dim++ ) {
+      global[dim] = (mGlobalDims[g][2*dim+1]-mGlobalDims[g][2*dim])/mSampleH+1;
+      local[dim]  = (mWindow[g][2*dim+1]-mWindow[g][2*dim])/mSampleH+1;
+      start[dim]  = (mWindow[g][2*dim]-mGlobalDims[g][2*dim])/mSampleH;
+    }
+    for( int dim=2 ; dim < 3 ; dim++ ) {
+      global[dim] = (mGlobalDims[g][2*dim+1]-mGlobalDims[g][2*dim])/mSampleV+1;
+      local[dim]  = (mWindow[g][2*dim+1]-mWindow[g][2*dim])/mSampleV+1;
+      start[dim]  = (mWindow[g][2*dim]-mGlobalDims[g][2*dim])/mSampleV;
     }
     global[2] += m_extraz[g];
     local[2]  += m_extraz[g];
@@ -311,7 +329,7 @@ void SfileOutput::force_write_image( float_sw4 a_time, int a_cycle, vector<Sarra
 
   for (int varid = 0; varid < nvar; varid++) {
     mMode = vars[varid];
-    compute_image( a_U, a_Rho, a_Mu, a_Lambda, a_gRho, a_gMu, a_gLambda, a_Qp, a_Qs );
+    compute_image( a_U, a_Rho, a_Mu, a_Lambda, a_gRho, a_gMu, a_gLambda, a_Qp, a_Qs, a_Z );
     stime = MPI_Wtime();
     write_image(fname.c_str(), a_Z );
     etime = MPI_Wtime();
@@ -328,20 +346,30 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                                  vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
                                  vector<Sarray>& a_gRho, vector<Sarray>& a_gMu,
                                  vector<Sarray>& a_gLambda,
-                                 vector<Sarray>& a_Qp, vector<Sarray>& a_Qs )
+                                 vector<Sarray>& a_Qp, vector<Sarray>& a_Qs, std::vector<Sarray>& a_Z )
 {
-// Introduce 'st' to simplify the variable name
-  int st = mImageSamplingFactor;
-  for( int g=0 ; g < mEW->mNumberOfGrids ; g++ ) {
-    int il = mEW->m_iStart[g];
-    int iu = mEW->m_iEnd[g];
-    int jl = mEW->m_jStart[g];
-    int ju = mEW->m_jEnd[g];
-    int kl = mEW->m_kStart[g];
-    int ku = mEW->m_kEnd[g];
+  int stH = mSampleH;
+  int stV = mSampleV;
+  double my_z, up_z, down_z, up_v, down_v;
 
-    int nkw = (mWindow[g][5]-mWindow[g][4])/st+1;
-    int njkw=nkw*((mWindow[g][3]-mWindow[g][2])/st+1);
+  /* if (mMode== RHO && m_parallel_io[0]->proc_zero()) { */
+  /*     for( int g=mEW->mNumberOfCartesianGrids ; g < mEW->mNumberOfGrids ; g++ ) { */
+  /*       cout << "g="<< g << ", a_Z.m_kb="<< a_Z[g].m_kb << ", a_Z.m_ke=" << a_Z[g].m_ke << ", gz=" << mWindow[g][5] << endl; */
+  /*       cout << "kend, kstart: " << mEW->m_kEndInt[g] << ", " << mEW->m_kStartInt[g]; */
+  /*       printf("Z values\n"); */
+  /*       for (int j = 0; j <= a_Z[g].m_ke; j++) { */
+  /*         printf("(1,1,%d): %f\n", j, a_Z[g](1,1,j)); */
+  /*       } */
+  /*     } */
+  /* } */
+
+  for( int g=0 ; g < mEW->mNumberOfGrids ; g++ ) {
+    int nkw = (mWindow[g][5]-mWindow[g][4])/stV+1;
+    int njkw=nkw*((mWindow[g][3]-mWindow[g][2])/stH+1);
+    int gz = g;
+    /* int ku = mWindow[gz][5]; */
+    int kl = mEW->m_kStartInt[gz];
+    int ku = mEW->m_kEndInt[gz];
 
     Sarray *data1 = NULL, *data2 = NULL, *data3 = NULL;
     if( mMode == RHO )
@@ -350,73 +378,211 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
       data1 = &a_Qp[g];
     else if( mMode == QS )
       data1 = &a_Qs[g];
-    else if( mMode == P) {
+    else if( mMode == P || mMode == S) {
       data1 = &a_Rho[g];
       data2 = &a_Mu[g];
       data3 = &a_Lambda[g];
     }
-    else if( mMode == S) {
-      data1 = &a_Rho[g];
-      data2 = &a_Mu[g];
-    }
+
+    /* printf("g=%d, mWindow (%d, %d, %d, %d, %d, %d)\n", g, mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5]); */
+    /* fflush(stdout); */
 
     if( mMode == RHO || mMode == QP || mMode == QS ) { // these modes just copy the values straight from the array
       if( m_double ) {
         #pragma omp parallel for
-        for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
-          for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
-            for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st ) {
-              size_t ind = (k-mWindow[g][4])/st+nkw*(j-mWindow[g][2])/st+njkw*(i-mWindow[g][0])/st;
-              m_doubleField[g][ind] = (double)((*data1)(1,i,j,k));
+        for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=stV )
+          for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=stH )
+            for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=stH ) {
+              size_t ind = (k-mWindow[g][4])/stV+nkw*(j-mWindow[g][2])/stH+njkw*(i-mWindow[g][0])/stH;
+              if (g < mEW->mNumberOfCartesianGrids) 
+                m_doubleField[g][ind] = (double)((*data1)(1,i,j,k));
+              else {
+                double z_kl = -mEW->mTopo(i,j,1);
+                double z_ku = a_Z[gz](i,j,ku);
+                my_z = z_kl + (z_ku - z_kl)*(k-1)/(double)(ku-1);
+                int t = 1;
+                while (my_z >= a_Z[gz](i,j,t) && t < mWindow[g][5]) {
+                  t++;
+                }
+                up_z   = (double)a_Z[gz](i,j,t-1);
+                down_z = (double)a_Z[gz](i,j,t);
+                up_v   = (double)((*data1)(1,i,j,t-1));
+                down_v = (double)((*data1)(1,i,j,t));
+                // Linear interp
+                m_doubleField[g][ind] = up_v + (down_v-up_v)*(my_z-up_z)/(down_z-up_z);
+              }
             }
       }
       else {
         #pragma omp parallel for
-        for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
-          for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
-            for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st ) {
-              size_t ind = (k-mWindow[g][4])/st+nkw*(j-mWindow[g][2])/st+njkw*(i-mWindow[g][0])/st;
-              m_floatField[g][ind] = (float)((*data1)(1,i,j,k));
+        for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=stV )
+          for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=stH )
+            for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=stH ) {
+              size_t ind = (k-mWindow[g][4])/stV+nkw*(j-mWindow[g][2])/stH+njkw*(i-mWindow[g][0])/stH;
+              if (g < mEW->mNumberOfCartesianGrids) 
+                m_floatField[g][ind] = (float)((*data1)(1,i,j,k));
+              else {
+                // debug
+                double z_kl = -mEW->mTopo(i,j,1);
+                double z_ku = a_Z[gz](i,j,ku);
+                my_z = z_kl + (z_ku - z_kl)*(k-1)/(double)(ku-1);
+                int t = 1;
+                while (my_z >= a_Z[gz](i,j,t) && t < mWindow[g][5]) {
+                  t++;
+                }
+                up_z   = (double)a_Z[gz](i,j,t-1);
+                down_z = (double)a_Z[gz](i,j,t);
+                up_v   = (double)((*data1)(1,i,j,t-1));
+                down_v = (double)((*data1)(1,i,j,t));
+                // Linear interp
+                m_floatField[g][ind] = up_v + (down_v-up_v)*(my_z-up_z)/(down_z-up_z);
+              }
             }
       }
     }
     else if( mMode == P ) {
       if( m_double ) {
         #pragma omp parallel for
-        for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
-          for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
-            for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st ) {
-              size_t ind = (k-mWindow[g][4])/st+nkw*(j-mWindow[g][2])/st+njkw*(i-mWindow[g][0])/st;
-              m_doubleField[g][ind] = (double)sqrt((2*((*data2)(1,i,j,k)) +((*data3)(1,i,j,k)))/((*data1)(1,i,j,k)));
+        for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=stV )
+          for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=stH )
+            for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=stH ) {
+              size_t ind = (k-mWindow[g][4])/stV+nkw*(j-mWindow[g][2])/stH+njkw*(i-mWindow[g][0])/stH;
+              if (g < mEW->mNumberOfCartesianGrids) 
+                m_doubleField[g][ind] = (double)sqrt((2*((*data2)(1,i,j,k)) +((*data3)(1,i,j,k)))/((*data1)(1,i,j,k)));
+              else {
+                double z_kl = -mEW->mTopo(i,j,1);
+                double z_ku = a_Z[gz](i,j,ku);
+                my_z = z_kl + (z_ku - z_kl)*(k-1)/(double)(ku-1);
+                int t = 1;
+                while (my_z >= a_Z[gz](i,j,t) && t < mWindow[g][5]) {
+                  t++;
+                }
+                up_z   = (double)a_Z[gz](i,j,t-1);
+                down_z = (double)a_Z[gz](i,j,t);
+
+                double down_mu = (*data2)(1,i,j,t), down_lambda = (*data3)(1,i,j,t), up_mu = (*data2)(1,i,j,t-1), up_lambda = (*data3)(1,i,j,t-1);
+                /* if (mEW->usingAttenuation()) { */
+                /*  if( NULL == mEW->use_twilight_forcing() ) { */
+                /*     mEW->reverse_setup_viscoelastic(gz, i, j, t, down_mu, down_lambda); */
+                /*     mEW->reverse_setup_viscoelastic(gz, i, j, t-1, up_mu, up_lambda); */
+                /*  } */
+                /* } */
+                up_v   = sqrt((2.0*up_mu + up_lambda)/((*data1)(1,i,j,t-1)));
+                down_v = sqrt((2.0*down_mu + down_lambda)/((*data1)(1,i,j,t)));
+
+                // Linear interp
+                m_doubleField[g][ind] = up_v + (down_v-up_v)*(my_z-up_z)/(down_z-up_z);
+              }
             }
       }
       else {
         #pragma omp parallel for
-        for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
-          for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
-            for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st ) {
-              size_t ind = (k-mWindow[g][4])/st+nkw*(j-mWindow[g][2])/st+njkw*(i-mWindow[g][0])/st;
-              m_floatField[g][ind] = (float)sqrt((2*((*data2)(1,i,j,k)) +((*data3)(1,i,j,k)))/((*data1)(1,i,j,k)));
+        for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=stV )
+          for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=stH )
+            for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=stH ) {
+              size_t ind = (k-mWindow[g][4])/stV+nkw*(j-mWindow[g][2])/stH+njkw*(i-mWindow[g][0])/stH;
+              if (g < mEW->mNumberOfCartesianGrids) 
+                m_floatField[g][ind] = (float)sqrt((2.0*((*data2)(1,i,j,k)) +((*data3)(1,i,j,k)))/((*data1)(1,i,j,k)));
+              else {
+                double z_kl = -mEW->mTopo(i,j,1);
+                double z_ku = a_Z[gz](i,j,ku);
+                my_z = z_kl + (z_ku - z_kl)*(k-1)/(double)(ku-1);
+                int t = 1;
+                while (my_z >= a_Z[gz](i,j,t) && t < mWindow[g][5]) {
+                  t++;
+                }
+                up_z   = (double)a_Z[gz](i,j,t-1);
+                down_z = (double)a_Z[gz](i,j,t);
+
+                double down_mu = (*data2)(1,i,j,t), down_lambda = (*data3)(1,i,j,t), up_mu = (*data2)(1,i,j,t-1), up_lambda = (*data3)(1,i,j,t-1);
+                /* if (mEW->usingAttenuation()) { */
+                /*  if( NULL == mEW->use_twilight_forcing() ) { */
+                /*     mEW->reverse_setup_viscoelastic(gz, i, j, t, down_mu, down_lambda); */
+                /*     mEW->reverse_setup_viscoelastic(gz, i, j, t-1, up_mu, up_lambda); */
+                /*     /1* if (i==1&&j==1&&gz==1) *1/ */ 
+                /*     /1*   printf("after reverse (1,1,%d) mu=%f, lambda=%f\n", t, down_mu, down_lambda); *1/ */
+                /*  } */
+                /* } */
+                up_v   = sqrt((2.0*up_mu + up_lambda)/((*data1)(1,i,j,t-1)));
+                down_v = sqrt((2.0*down_mu + down_lambda)/((*data1)(1,i,j,t)));
+                // Linear interp
+                m_floatField[g][ind] = up_v + (down_v-up_v)*(my_z-up_z)/(down_z-up_z);
+                /* // TODO: debug */
+                /* if (i==1&&j==1&&gz==1) { */
+                /*     printf("k=%d, my_z=%f, up_z=%f, down_z=%f, up_v[%d]=%f, down_v[%d]=%f, my_v=%f\n", */ 
+                /*             k, my_z, up_z, down_z, t-1, up_v, t, down_v, m_floatField[g][ind]); */
+                /* } */
+
+              }
             }
       }
     }
     else if( mMode == S ) {
       if( m_double ) {
         #pragma omp parallel for
-        for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
-          for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
-            for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st ) {
-              size_t ind = (k-mWindow[g][4])/st+nkw*(j-mWindow[g][2])/st+njkw*(i-mWindow[g][0])/st;
-              m_doubleField[g][ind] = (double)sqrt(((*data2)(1,i,j,k))/((*data1)(1,i,j,k)));
+        for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=stV )
+          for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=stH )
+            for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=stH ) {
+              size_t ind = (k-mWindow[g][4])/stV+nkw*(j-mWindow[g][2])/stH+njkw*(i-mWindow[g][0])/stH;
+              if (g < mEW->mNumberOfCartesianGrids) 
+                m_doubleField[g][ind] = (double)sqrt(((*data2)(1,i,j,k))/((*data1)(1,i,j,k)));
+              else {
+                double z_kl = -mEW->mTopo(i,j,1);
+                double z_ku = a_Z[gz](i,j,ku);
+                my_z = z_kl + (z_ku - z_kl)*(k-1)/(double)(ku-1);
+                int t = 1;
+                while (my_z >= a_Z[gz](i,j,t) && t < mWindow[g][5]) {
+                  t++;
+                }
+                up_z   = (double)a_Z[gz](i,j,t-1);
+                down_z = (double)a_Z[gz](i,j,t);
+
+                double down_mu = (*data2)(1,i,j,t), down_lambda = (*data3)(1,i,j,t), up_mu = (*data2)(1,i,j,t-1), up_lambda = (*data3)(1,i,j,t-1);
+                /* if (mEW->usingAttenuation()) { */
+                /*   if( NULL == mEW->use_twilight_forcing() ) { */
+                /*      mEW->reverse_setup_viscoelastic(gz, i, j, t, down_mu, down_lambda); */
+                /*      mEW->reverse_setup_viscoelastic(gz, i, j, t-1, up_mu, up_lambda); */
+                /*   } */
+                /* } */
+                up_v   = sqrt(up_mu/((*data1)(1,i,j,t-1)));
+                down_v = sqrt(down_mu/((*data1)(1,i,j,t)));
+                // Linear interp
+                m_doubleField[g][ind] = up_v + (down_v-up_v)*(my_z-up_z)/(down_z-up_z);
+              }
             }
       }
       else {
         #pragma omp parallel for
-        for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
-          for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
-            for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st ) {
-              size_t ind = (k-mWindow[g][4])/st+nkw*(j-mWindow[g][2])/st+njkw*(i-mWindow[g][0])/st;
-              m_floatField[g][ind] = (float)sqrt(((*data2)(1,i,j,k))/((*data1)(1,i,j,k)));
+        for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=stV )
+          for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=stH )
+            for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=stH ) {
+              size_t ind = (k-mWindow[g][4])/stV+nkw*(j-mWindow[g][2])/stH+njkw*(i-mWindow[g][0])/stH;
+              if (g < mEW->mNumberOfCartesianGrids) 
+                m_floatField[g][ind] = (float)sqrt(((*data2)(1,i,j,k))/((*data1)(1,i,j,k)));
+              else {
+                double z_kl = -mEW->mTopo(i,j,1);
+                double z_ku = a_Z[gz](i,j,ku);
+                my_z = z_kl + (z_ku - z_kl)*(k-1)/(double)(ku-1);
+                int t = 1;
+                while (my_z >= a_Z[gz](i,j,t) && t < mWindow[g][5]) {
+                  t++;
+                }
+                up_z   = (double)a_Z[gz](i,j,t-1);
+                down_z = (double)a_Z[gz](i,j,t);
+
+                double down_mu = (*data2)(1,i,j,t), down_lambda = (*data3)(1,i,j,t), up_mu = (*data2)(1,i,j,t-1), up_lambda = (*data3)(1,i,j,t-1);
+                /* if (mEW->usingAttenuation()) { */
+                /*   if( NULL == mEW->use_twilight_forcing() ) { */
+                /*      mEW->reverse_setup_viscoelastic(gz, i, j, t, down_mu, down_lambda); */
+                /*      mEW->reverse_setup_viscoelastic(gz, i, j, t-1, up_mu, up_lambda); */
+                /*   } */
+                /* } */
+                up_v   = sqrt(up_mu/((*data1)(1,i,j,t-1)));
+                down_v = sqrt(down_mu/((*data1)(1,i,j,t)));
+
+                // Linear interp
+                m_floatField[g][ind] = up_v + (down_v-up_v)*(my_z-up_z)/(down_z-up_z);
+              }
             }
       }
     }
@@ -424,22 +590,22 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
     //Extrapolate extra point in z
     if( m_extraz[g] == 1 ) {
       /* cout << "g=" << g << ", need extrapolate extra z" << endl; */
-      int k = mWindow[g][5]+st;
+      int k = mWindow[g][5]+stV;
       size_t ind, ind_1, ind_2, npts;
-      npts = ( (size_t)(mWindow[g][1] - mWindow[g][0])/st + 1 )*( (mWindow[g][3] - mWindow[g][2])/st + 1)*( (mWindow[g][5] - mWindow[g][4])/st + 1 + m_extraz[g]);
+      npts = ( (size_t)(mWindow[g][1] - mWindow[g][0])/stH + 1 )*( (mWindow[g][3] - mWindow[g][2])/stH + 1)*( (mWindow[g][5] - mWindow[g][4])/stV + 1 + m_extraz[g]);
 
       // Linear extrapolation assumes that
       // mWindow[g][5]-st>=mWindow[g][4], i.e. mWindow[g][5] -mWindow[g][4]>=st.
       int ok = 2;
-      if( mWindow[g][5] -mWindow[g][4] < st )
+      if( mWindow[g][5] -mWindow[g][4] < stV )
         ok = 1;
 
       if( m_double ) {
-        for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+= st )
-          for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+= st ) {
-            ind = (k-mWindow[g][4])/st+nkw*(j-mWindow[g][2])/st+njkw*(i-mWindow[g][0])/st;
-            ind_1 = (k-1-mWindow[g][4])/st+nkw*(j-mWindow[g][2])/st+njkw*(i-mWindow[g][0])/st;
-            ind_2 = (k-ok-mWindow[g][4])/st+nkw*(j-mWindow[g][2])/st+njkw*(i-mWindow[g][0])/st;
+        for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+= stH )
+          for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+= stH ) {
+            ind = (k-mWindow[g][4])/stV+nkw*(j-mWindow[g][2])/stH+njkw*(i-mWindow[g][0])/stH;
+            ind_1 = (k-1-mWindow[g][4])/stV+nkw*(j-mWindow[g][2])/stH+njkw*(i-mWindow[g][0])/stH;
+            ind_2 = (k-ok-mWindow[g][4])/stV+nkw*(j-mWindow[g][2])/stH+njkw*(i-mWindow[g][0])/stH;
 #ifdef BZ_DEBUG
             ASSERT(ind < npts);
 #endif
@@ -448,11 +614,11 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
 
       }
       else {
-        for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+= st )
-          for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+= st ) {
-            ind = (k-mWindow[g][4])/st+nkw*(j-mWindow[g][2])/st+njkw*(i-mWindow[g][0])/st;
-            ind_1 = (k-1-mWindow[g][4])/st+nkw*(j-mWindow[g][2])/st+njkw*(i-mWindow[g][0])/st;
-            ind_2 = (k-ok-mWindow[g][4])/st+nkw*(j-mWindow[g][2])/st+njkw*(i-mWindow[g][0])/st;
+        for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+= stH )
+          for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+= stH ) {
+            ind = (k-mWindow[g][4])/stV+nkw*(j-mWindow[g][2])/stH+njkw*(i-mWindow[g][0])/stH;
+            ind_1 = (k-1-mWindow[g][4])/stV+nkw*(j-mWindow[g][2])/stH+njkw*(i-mWindow[g][0])/stH;
+            ind_2 = (k-ok-mWindow[g][4])/stV+nkw*(j-mWindow[g][2])/stH+njkw*(i-mWindow[g][0])/stH;
 #ifdef BZ_DEBUG
             ASSERT(ind < npts);
 #endif
@@ -468,16 +634,16 @@ void SfileOutput::gen_fname(std::string &path, int cycle, std::string& fname)
 {
   fname = path;
   fname += mFilePrefix;
-  fname += ".cycle=";
-  int temp = static_cast<int>(pow(10.0, mPreceedZeros - 1));
-  int testcycle = cycle;
-  if (cycle == 0)
-    testcycle=1;
-  while (testcycle < temp) {
-    fname += "0";
-    temp /= 10;
-  }
-  fname += std::to_string(cycle);
+  /* fname += ".cycle="; */
+  /* int temp = static_cast<int>(pow(10.0, mPreceedZeros - 1)); */
+  /* int testcycle = cycle; */
+  /* if (cycle == 0) */
+  /*   testcycle=1; */
+  /* while (testcycle < temp) { */
+  /*   fname += "0"; */
+  /*   temp /= 10; */
+  /* } */
+  /* fname += std::to_string(cycle); */
   fname += ".sfile";
 }
 
@@ -516,7 +682,8 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
   for( int g=0 ; g < ng ; g++ )
     iwrite = iwrite || m_parallel_io[g]->i_write();
 
-  int st = mImageSamplingFactor;
+  int stV = mSampleV;
+  int stH = mSampleH;
 
   int alignment = 65536;
   setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
@@ -532,7 +699,7 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
     if (h5_fid < 0)
       VERIFY2(0, "ERROR: SfileOutput::write_image, error creating HDF5 file " << fname << " for writing header");
 
-    std::cout << "writing Sfile to " << fname << ", with sampleFactor=" << st << std::endl;
+    std::cout << "writing Sfile to " << fname << ", with horizontal sample factor=" << stH << ", vertical sample factor=" << stV << std::endl;
 
     attr_space1 = H5Screate(H5S_SCALAR);
     attr_space2 = H5Screate_simple(1, &dims2, NULL);
@@ -551,7 +718,7 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
     H5Aclose(attr);
 
     aname = "Coarsest horizontal grid spacing";
-    double spacing = mEW->mGridSize[ng-1]*mImageSamplingFactor;
+    double spacing = mEW->mGridSize[ng-1]*stH;
     attr = H5Acreate(h5_fid, aname, H5T_NATIVE_DOUBLE, attr_space1, H5P_DEFAULT, H5P_DEFAULT);
     if( attr < 0 )
       VERIFY2(0, "ERROR: SfileOutput::write_image, error creating " << aname);
@@ -590,8 +757,8 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
 
     // Top interface (topo)
     hsize_t globalSize[3];
-    globalSize[0] = (hsize_t)(mGlobalDims[ng-1][1]-mGlobalDims[ng-1][0])/st+1;
-    globalSize[1] = (hsize_t)(mGlobalDims[ng-1][3]-mGlobalDims[ng-1][2])/st+1;
+    globalSize[0] = (hsize_t)(mGlobalDims[ng-1][1]-mGlobalDims[ng-1][0])/stH+1;
+    globalSize[1] = (hsize_t)(mGlobalDims[ng-1][3]-mGlobalDims[ng-1][2])/stH+1;
     sprintf(dname, "z_values_%d", 0);
 
     dspace = H5Screate_simple(2, globalSize, NULL);
@@ -610,8 +777,8 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
     // Create interfaces other than top one
     for(int g = ng-1; g >= 0; g--) {
       sprintf(dname, "z_values_%d", ng-g);
-      globalSize[0] = (hsize_t)(mGlobalDims[g][1]-mGlobalDims[g][0])/st+1;
-      globalSize[1] = (hsize_t)(mGlobalDims[g][3]-mGlobalDims[g][2])/st+1;
+      globalSize[0] = (hsize_t)(mGlobalDims[g][1]-mGlobalDims[g][0])/stH+1;
+      globalSize[1] = (hsize_t)(mGlobalDims[g][3]-mGlobalDims[g][2])/stH+1;
 
       dspace = H5Screate_simple(2, globalSize, NULL);
       dcpl = H5Pcreate(H5P_DATASET_CREATE);
@@ -627,7 +794,7 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
 
       dset = H5Dcreate(grp, dname, H5T_NATIVE_FLOAT, dspace, H5P_DEFAULT, dcpl, H5P_DEFAULT);
 
-      /* double h = (double) mEW->mGridSize[g]*mImageSamplingFactor; */
+      /* double h = (double) mEW->mGridSize[g]*stH; */
       /* aname = "Horizontal grid size"; */
       /* attr = H5Acreate(dset, aname, H5T_NATIVE_DOUBLE, attr_space1, H5P_DEFAULT, H5P_DEFAULT); */
       /* if( attr < 0 ) */
@@ -652,7 +819,7 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
       if( grp2 < 0 )
         VERIFY2(0, "ERROR: SfileOutput::write_image, error creating " << gname);
 
-      double h = (double) mEW->mGridSize[g]*mImageSamplingFactor;
+      double h = (double) mEW->mGridSize[g]*stH;
       aname = "Horizontal grid size";
       attr = H5Acreate(grp2, aname, H5T_NATIVE_DOUBLE, attr_space1, H5P_DEFAULT, H5P_DEFAULT);
       if( attr < 0 )
@@ -668,9 +835,9 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
       H5Awrite(attr, H5T_NATIVE_INT, &ncomp);
       H5Aclose(attr);
 
-      globalSize[0] = (hsize_t)(mGlobalDims[g][1]-mGlobalDims[g][0])/st+1;
-      globalSize[1] = (hsize_t)(mGlobalDims[g][3]-mGlobalDims[g][2])/st+1;
-      globalSize[2] = (hsize_t)(mGlobalDims[g][5]-mGlobalDims[g][4])/st+1+m_extraz[g];
+      globalSize[0] = (hsize_t)(mGlobalDims[g][1]-mGlobalDims[g][0])/stH+1;
+      globalSize[1] = (hsize_t)(mGlobalDims[g][3]-mGlobalDims[g][2])/stH+1;
+      globalSize[2] = (hsize_t)(mGlobalDims[g][5]-mGlobalDims[g][4])/stV+1+m_extraz[g];
       dspace = H5Screate_simple(3, globalSize, NULL);
 
       dset = H5Dcreate(grp2, "Cp", H5T_NATIVE_FLOAT, dspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -720,20 +887,20 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
       bool is_topo = (g == ng-1);
       if (is_topo) real_g = g;
 
-      float_sw4* zp = a_Z[real_g].c_ptr();
-      size_t npts = ((size_t)(mGlobalDims[real_g][1]-mGlobalDims[real_g][0])/st+1)*
-                    ((mGlobalDims[real_g][3]-mGlobalDims[real_g][2])/st+1);
+      size_t npts = ((size_t)(mGlobalDims[real_g][1]-mGlobalDims[real_g][0])/stH+1)*
+                    ((mGlobalDims[real_g][3]-mGlobalDims[real_g][2])/stH+1);
 
-      int nj = (int)(mWindow[real_g][3]-mWindow[real_g][2])/st+1;
+      int nj = (int)(mWindow[real_g][3]-mWindow[real_g][2])/stH+1;
       int nk = mWindow[real_g][5];
       float* zfp = new float[npts];
       #pragma omp parallel for
-        for( int j=mWindow[real_g][2] ; j <= mWindow[real_g][3] ; j+=st )
-          for( int i=mWindow[real_g][0] ; i <= mWindow[real_g][1] ; i+=st ) {
-            size_t ind = (size_t)(j-mWindow[real_g][2])/st+nj*(i-mWindow[real_g][0])/st;
+        for( int j=mWindow[real_g][2] ; j <= mWindow[real_g][3] ; j+=stH )
+          for( int i=mWindow[real_g][0] ; i <= mWindow[real_g][1] ; i+=stH ) {
+            size_t ind = (size_t)(j-mWindow[real_g][2])/stH+nj*(i-mWindow[real_g][0])/stH;
             /* ASSERT(ind < npts); */
             if (is_topo)
-              zfp[ind] = (float) a_Z[real_g](i,j,1);
+              zfp[ind] = (float) -mEW->mTopo(i,j,1);
+              /* zfp[ind] = (float) a_Z[real_g](i,j,1); */
             else
               zfp[ind] = (float) a_Z[real_g](i,j,nk);
           }
@@ -752,10 +919,10 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
         MPI_Abort(MPI_COMM_WORLD,1);
       }
   
-      offsets[0] = mWindow[real_g][0]/st == 0 ? 0 : ceil((double)mWindow[real_g][0]/st) - 1; 
-      offsets[1] = mWindow[real_g][2]/st == 0 ? 0 : ceil((double)mWindow[real_g][2]/st) - 1; 
-      counts[0]  = (hsize_t)(mWindow[real_g][1]-mWindow[real_g][0])/st + 1;
-      counts[1]  = (hsize_t)(mWindow[real_g][3]-mWindow[real_g][2])/st + 1;
+      offsets[0] = mWindow[real_g][0]/stH == 0 ? 0 : ceil((double)mWindow[real_g][0]/stH) - 1; 
+      offsets[1] = mWindow[real_g][2]/stH == 0 ? 0 : ceil((double)mWindow[real_g][2]/stH) - 1; 
+      counts[0]  = (hsize_t)(mWindow[real_g][1]-mWindow[real_g][0])/stH + 1;
+      counts[1]  = (hsize_t)(mWindow[real_g][3]-mWindow[real_g][2])/stH + 1;
 
       filespace = H5Dget_space(dset);
       H5Sselect_hyperslab (filespace, H5S_SELECT_SET, offsets, NULL, counts, NULL);
@@ -797,13 +964,13 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
       MPI_Abort(MPI_COMM_WORLD,1);
     }
 
-    offsets[0] = mWindow[g][0]/st == 0 ? 0 : ceil((double)mWindow[g][0]/st) - 1; 
-    offsets[1] = mWindow[g][2]/st == 0 ? 0 : ceil((double)mWindow[g][2]/st) - 1; 
-    offsets[2] = mWindow[g][4]/st == 0 ? 0 : ceil((double)mWindow[g][4]/st) - 1; 
+    offsets[0] = mWindow[g][0]/stH == 0 ? 0 : ceil((double)mWindow[g][0]/stH) - 1; 
+    offsets[1] = mWindow[g][2]/stH == 0 ? 0 : ceil((double)mWindow[g][2]/stH) - 1; 
+    offsets[2] = mWindow[g][4]/stV == 0 ? 0 : ceil((double)mWindow[g][4]/stV) - 1; 
 
-    counts[0]  = (hsize_t)(mWindow[g][1]-mWindow[g][0])/st + 1;
-    counts[1]  = (hsize_t)(mWindow[g][3]-mWindow[g][2])/st + 1;
-    counts[2]  = (hsize_t)(mWindow[g][5]-mWindow[g][4])/st + 1;
+    counts[0]  = (hsize_t)(mWindow[g][1]-mWindow[g][0])/stH + 1;
+    counts[1]  = (hsize_t)(mWindow[g][3]-mWindow[g][2])/stH + 1;
+    counts[2]  = (hsize_t)(mWindow[g][5]-mWindow[g][4])/stV + 1;
 
     filespace = H5Dget_space(dset);
     H5Sselect_hyperslab (filespace, H5S_SELECT_SET, offsets, NULL, counts, NULL);

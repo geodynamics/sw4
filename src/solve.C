@@ -38,6 +38,8 @@
 //#include "CurvilinearInterface.h"
 #include "TestTwilight.h"
 #include "CurvilinearInterface2.h"
+#include "SfileOutput.h"
+
 
 void curvilinear4sgwind( int, int, int, int, int, int, int, int, float_sw4*, float_sw4*, float_sw4*,
                          float_sw4*, float_sw4*, float_sw4*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
@@ -551,9 +553,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     mESSI3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mPath[event], mZ[gg] );// not verified for several cuvilinear grids
   }
 
-  for( int i3 = 0 ; i3 < mSfiles.size() ; i3++ )
-    mSfiles[i3]->update_image( beginCycle-1, t, mDt, U, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[event], mZ );
-
 // NOTE: time stepping loop starts at currentTimeStep = beginCycle; ends at currentTimeStep <= mNumberOfTimeSteps
 
   FILE *lf=NULL;
@@ -968,11 +967,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       mESSI3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mPath[event], mZ[gg] ); // not verified for several cuvilinear grids
     double time_essi=MPI_Wtime()-time_essi_tmp;
 
-    for( int i3 = 0 ; i3 < mSfiles.size() ; i3++ )
-      mSfiles[i3]->update_image( currentTimeStep, t, mDt, Up, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, 
-				       mQp, mQs, mPath[event], mZ ); // mRho, a_Mu, mLambda occur twice because we don't use gradRho etc.
-
-
 // save the current solution on receiver records (time-derivative require Up and Um for a 2nd order
 // approximation, so do this before cycling the arrays)
     for (int ts=0; ts<a_TimeSeries.size(); ts++)
@@ -1122,6 +1116,16 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    MPI_Reduce(&total_time, &all_total_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
    if( m_myRank == 0 && all_total_time > 0.1)
      cout << "  ==> Max wallclock time to write images is " << all_total_time << " seconds." << endl;
+
+
+   // Write sfile after time stepping
+   // reverse setup_viscoelastic when needed
+   if ( usingAttenuation() && NULL == use_twilight_forcing() )
+     reverse_setup_viscoelastic();
+
+   for( int ii = 0 ; ii < mSfiles.size() ; ii++ )
+     mSfiles[ii]->force_write_image( t, mNumberOfTimeSteps[event], Up, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[event], mZ ); 
+
 #endif
 
    print_execution_time( time_start_solve, time_end_solve, "time stepping phase" );
@@ -1179,7 +1183,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
          
       }
    } // end if exactSol
-   
+
 // close error log file for testing
   if ((m_lamb_test || m_point_source_test || m_rayleigh_wave_test || m_error_log) && proc_zero() )
   {
