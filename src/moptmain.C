@@ -1294,8 +1294,8 @@ int main(int argc, char **argv)
 
 
 // solveTT
-//       mp->get_base_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,simulation.mLambda );
-//       simulation.solveTT( GlobalSources[0], GlobalTimeSeries[0], xs, nmpars, 0, myRank);
+       mp->get_base_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,simulation.mLambda );
+       simulation.solveTT( GlobalSources[0], GlobalTimeSeries[0], xs, nmpars, 0, myRank);
 
    //           string parname = simulation.getOutputPath() + "mtrlpar-init.bin";
            string parname = mopt->m_path + "mtrlpar-init.bin";
