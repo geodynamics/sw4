@@ -53,6 +53,16 @@ public:
    void write_parameters( int nms, double* xms ); // Only shared parameters for now
    void read_parameters( int nms, double* xms ); // Only shared parameters for now
    void set_path( std::string path ){m_path = path;}
+
+   virtual double getXmin() const =0;
+   virtual double getDx() const =0;
+   virtual int getNX() const =0;
+   virtual double getYmin() const =0;
+   virtual double getDy() const =0;
+   virtual int getNY() const =0;
+   virtual double getZmin() const =0;
+   virtual double getDz() const =0;
+   virtual int getNZ() const =0;
 };
 
 #endif

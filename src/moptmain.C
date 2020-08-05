@@ -1193,6 +1193,9 @@ int main(int argc, char **argv)
 // Make observations aware of the utc reference time, if set.
 // Filter observed data if required
 	   GlobalTimeSeries.resize(GlobalObservations.size());
+
+      std::cout << "Global Observations size max of e=" << GlobalObservations.size() << std::endl;
+
 	   for( int e=0 ; e < GlobalObservations.size() ; e++ )
 	   {
 	      for( int m = 0; m < GlobalObservations[e].size(); m++ )
@@ -1295,7 +1298,10 @@ int main(int argc, char **argv)
 
 // solveTT
        mp->get_base_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,simulation.mLambda );
-       simulation.solveTT( GlobalSources[0], GlobalTimeSeries[0], xs, nmpars, 0, myRank);
+
+       std::cout << "GlobalTimeSeries size=" << GlobalTimeSeries[0].size() << std::endl;
+
+       if(myRank==0) simulation.solveTT( GlobalSources[0], GlobalTimeSeries[0], xs, nmpars, mp, 0);
 
    //           string parname = simulation.getOutputPath() + "mtrlpar-init.bin";
            string parname = mopt->m_path + "mtrlpar-init.bin";

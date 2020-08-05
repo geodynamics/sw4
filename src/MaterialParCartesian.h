@@ -38,6 +38,17 @@ public:
 			   std::vector<Sarray>& a_lambda, std::string fname );
    void projectl2( std::vector<Sarray>& mtrl, float_sw4* rhs );
    void subtract_base_mtrl( int nms, double* xms );
+
+   double getXmin() const { return m_xmin; }
+   double getDx() const { return m_hx; }
+   int getNX() const { return m_nx; }
+   double getYmin() const { return m_ymin; }
+   double getDy() const { return m_hy; }
+   int getNY() const { return m_ny; }
+   double getZmin() const { return m_zmin; }
+   double getDz() const { return m_hz; }
+   int getNZ() const { return m_nz; }  
+
 };
 
 #endif
