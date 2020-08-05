@@ -20,9 +20,6 @@ public:
 			      std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )=0;
    virtual void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
 				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )=0;
-   virtual void get_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
-				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )=0;
-
    virtual void get_gradient( int nmd, double* xmd, int nms, double* xms, double* dfs, double* dfm,
 			      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
 			      std::vector<Sarray>& a_lambda,

@@ -224,7 +224,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        AnisotropicMaterialBlock.o  sacutils.o  DataPatches.o addmemvarforcing2.o \
        consintp.o  oddIoddJinterp.o evenIoddJinterp.o MaterialInvtest.o \
        oddIevenJinterp.o evenIevenJinterp.o CheckPoint.o geodyn.o AllDims.o Patch.o RandomizedMaterial.o  \
-       sw4-prof.o sachdf5.o readhdf5.o util.o solveTT.o
+       sw4-prof.o sachdf5.o readhdf5.o util.o
 
 # Fortran routines (lamb_exact_numquad needs QUADPACK)
  OBJ +=  rayleighfort.o lamb_exact_numquad.o 
@@ -242,9 +242,8 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
 #OBJOPT = optmain.o linsolvelu.o solve-backward.o ConvParOutput.o 
 
 # Material optimization
-MOBJOPT  = moptmain.o solve-backward-allpars.o lbfgs.o nlcg.o  $(MOBJ)
-
-MOBJ     = ProjectMtrl.o MaterialParameterization.o Mopt.o MaterialParCartesian.o InterpolateMaterial.o \
+MOBJOPT  = moptmain.o solve-backward-allpars.o lbfgs.o nlcg.o ProjectMtrl.o \
+           MaterialParameterization.o Mopt.o MaterialParCartesian.o InterpolateMaterial.o \
 	   MaterialParCartesianVels.o MaterialParCartesianVp.o MParGridFile.o MaterialParCartesianVsVp.o \
            MaterialParAllpts.o
 
@@ -269,7 +268,7 @@ sw4: $(FSW4) $(FOBJ)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ main.o  $(OBJ) $(QUADPACK) $(MOBJ) $(linklibs)
+	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
 # test: linking with openmp for the routine rhs4sgcurv.o
 #	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
 	@cat wave.txt
