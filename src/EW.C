@@ -5847,6 +5847,8 @@ void EW::addImage3D(Image3D* i) { mImage3DFiles.push_back(i); }
 //-----------------------------------------------------------------------
 void EW::addESSI3D(ESSI3D* i) { mESSI3DFiles.push_back(i); }
 //-----------------------------------------------------------------------
+void EW::addSfileOutput(SfileOutput* i) { mSfiles.push_back(i); }
+//-----------------------------------------------------------------------
 void EW::initialize_image_files() {
   // In case of multiple events, prepare maximum number of time steps
   int maxNumberOfTimeSteps = 0;
@@ -5879,6 +5881,11 @@ void EW::initialize_image_files() {
   //   ESSI3D::setSteps(mNumberOfTimeSteps);
   for (unsigned int fIndex = 0; fIndex < mESSI3DFiles.size(); ++fIndex)
     mESSI3DFiles[fIndex]->setup();
+
+   SfileOutput::setSteps(maxNumberOfTimeSteps);
+   //   SfileOutput::setSteps(mNumberOfTimeSteps);
+   for (unsigned int fIndex = 0; fIndex < mSfiles.size(); ++fIndex)
+     mSfiles[fIndex]->setup_images();
 }
 
 //-----------------------------------------------------------------------
@@ -8006,6 +8013,165 @@ void EW::setup_viscoelastic() {
 }
 
 //-----------------------------------------------------------------------
+void EW::reverse_setup_viscoelastic( )
+{
+// number of collocation points
+    int n = m_number_mechanisms;
+    int nc = 2*n-1;
+
+    if( n > 0 )
+    {
+// collocation frequencies
+       vector<float_sw4> omc(nc);
+       if( n > 1 )
+       {
+	  float_sw4 r = pow( m_max_omega/m_min_omega, 1.0/(n-1) );
+	  omc[0] = mOmegaVE[0];
+	  for (int k=0; k<=2*n-2; k++)
+	     omc[k] = m_min_omega*pow(r,0.5*k);
+       }
+       else
+	  omc[0] = mOmegaVE[0];
+
+// use base 0 indexing of matrix
+#define a(i,j) a_[i+j*nc]
+       for( int g = 0 ; g < mNumberOfGrids; g++ )
+#pragma omp parallel for
+	  for(int k=m_kStart[g]; k<= m_kEnd[g]; k++ )
+	     for(int j=m_jStart[g]; j<= m_jEnd[g]; j++ )
+		for(int i=m_iStart[g]; i<= m_iEnd[g]; i++ )
+		{
+
+                   float_sw4 mu, lambda;
+                   double *a_=new double[n*nc];
+                   double *beta=new double[nc];
+                   double *gamma=new double[nc];
+                   int lwork = 3*n;
+                   double *work=new double[lwork];
+                   char trans='N';
+                   int info=0, nrhs=1, lda=nc, ldb=nc;
+
+                   float_sw4 mu_tmp = mMu[g](i,j,k);
+                   float_sw4 lambda_tmp = mLambda[g](i,j,k);
+                   float_sw4 qs = mQs[g](i,j,k);
+                   float_sw4 qp = mQp[g](i,j,k);
+
+            //
+            // qs gives beta coefficients
+            //
+                   for (int q=0; q<nc; q++)
+                   {
+                      beta[q] = 1./qs;
+                      for (int nu=0; nu<n; nu++)
+                      {
+                         a(q,nu) = (omc[q]*mOmegaVE[nu] + SQR(mOmegaVE[nu])/qs)/(SQR(mOmegaVE[nu]) + SQR(omc[q]));
+                      }
+                   }
+            // solve the system in least squares sense
+                   F77_FUNC(dgels,DGELS)(trans, nc, n, nrhs, a_, lda, beta, ldb, work, lwork, info);
+                   if (info!= 0)
+                   {
+                      printf("reverse_setup_viscoelastic:: solving for qs=%e, processor=%i, dgels returned error code = %i\n", qs, m_myRank, info);
+                      MPI_Abort(MPI_COMM_WORLD, 1);
+                   }
+            // check that sum(beta) < 1
+                   float_sw4 bsum=0.;
+                   for (int nu=0; nu<n; nu++)
+                      bsum += beta[nu];
+                   if (bsum>=1.)
+                   {
+                      printf("reverse_setup_viscoelastic:: sum(beta)=%e >= 1 for g=%i, i=%i, j=%i, k=%i\n", bsum, g, i, j, k);
+                      MPI_Abort(MPI_COMM_WORLD, 1);
+                   }
+
+            // calculate unrelaxed mu_0
+                   float_sw4 rem = 0., imm = 0.;
+                   for (int nu=0; nu<n; nu++)
+                   {
+                      rem += beta[nu]*SQR(mOmegaVE[nu])/(SQR(mOmegaVE[nu]) + SQR(m_velo_omega));
+                      imm += beta[nu]*mOmegaVE[nu]*m_velo_omega/(SQR(mOmegaVE[nu]) + SQR(m_velo_omega));
+                   }
+                   rem = 1 - rem;
+                   float_sw4 mmag = sqrt(SQR(rem)+SQR(imm));
+            // should also divide by cos^2(delta/2), where delta is the loss-angle, but this makes minimal difference for Q>25
+                   /* float_sw4 mu_0 = mu_tmp/mmag; */ 
+            // calculate viscoelastic mu:
+                   /* for (int nu=0; nu<n; nu++) */
+                   /* { */
+                   /*    mMuVE[g][nu](i,j,k) = mu_0 * beta[nu]; */
+                   /* } */
+                   // reverse the value
+                   mu = mu_tmp * mmag;
+                   mMu[g](i,j,k) = mu;
+
+            //
+            // qp gives gamma coefficients
+            //
+                   for (int q=0; q<nc; q++)
+                   {
+                      gamma[q] = 1./qp;
+                      for (int nu=0; nu<n; nu++)
+                      {
+                         a(q,nu) = (omc[q]*mOmegaVE[nu] + SQR(mOmegaVE[nu])/qp)/(SQR(mOmegaVE[nu]) + SQR(omc[q]));
+                      }
+                   }
+
+            // solve the system in least squares sense
+                   F77_FUNC(dgels,DGELS)(trans, nc, n, nrhs, a_, lda, gamma, ldb, work, lwork, info);
+                   if (info!= 0)
+                   {
+                      printf("reverse_setup_viscoelastic:: solving for qp=%e, processor=%i, dgels returned error code = %i\n", qp, m_myRank, info);
+                      MPI_Abort(MPI_COMM_WORLD, 1);
+                   }
+            // check that sum(gamma) < 1
+                   bsum=0.;
+                   for (int nu=0; nu<n; nu++)
+                      bsum += gamma[nu];
+                   if (bsum>=1.)
+                   {
+                      printf("reverse_setup_viscoelastic:: sum(gamma)=%e >= 1 for g=%i, i=%i, j=%i, k=%i\n", bsum, g, i, j, k);
+                      MPI_Abort(MPI_COMM_WORLD, 1);
+                   }
+
+            // calculate unrelaxed kappa_0
+                   rem = 0., imm = 0.;
+                   for (int nu=0; nu<n; nu++)
+                   {
+                      rem += gamma[nu]*SQR(mOmegaVE[nu])/(SQR(mOmegaVE[nu]) + SQR(m_velo_omega));
+                      imm += gamma[nu]*mOmegaVE[nu]*m_velo_omega/(SQR(mOmegaVE[nu]) + SQR(m_velo_omega));
+                   }
+                   rem = 1 - rem;
+                   mmag = sqrt(SQR(rem)+SQR(imm));
+            // should also divide by cos^2(delta/2), where delta is the loss-angle, but this makes minimal difference for Q>25
+                   /* float_sw4 kappa_tmp = lambda_tmp + 2*mu_tmp; */
+                   /* float_sw4 kappa_0 = kappa_tmp/mmag; */ 
+            // calculate viscoelastic lambdaVE = kappaVE - 2*muVE:
+                   /* for (int nu=0; nu<n; nu++) */
+                   /* { */
+                   /*    kappa_tmp = kappa_0 * gamma[nu]; */
+                   /*    mLambdaVE[g][nu](i,j,k) = kappa_tmp - 2*mMuVE[g][nu](i,j,k); */
+                   /* } */
+            // save the unrelaxed value
+                   /* mLambda[g](i,j,k) = kappa_0 - 2*mu_0; */
+
+                   lambda = (2*mu_tmp + lambda_tmp)*mmag - 2*mu;
+                   mLambda[g](i,j,k) = lambda;
+                   /* if (mLambda[g](i,j,k) < 0) { */
+                   /*     printf("ERROR, lambda < 0, %f\n", mLambda[g](i,j,k) ); */
+                   /* } */
+
+                   delete[] a_;
+                   delete[] beta;
+                   delete[] gamma;
+                   delete[] work;
+
+		} // end for g,k,j,i
+#undef a
+    }
+
+}
+
+//-----------------------------------------------------------------------
 void EW::setup_viscoelastic_tw() {
   SW4_MARK_FUNCTION;
   // Set twilight testing values for the attenuation material (mu,lambda).
@@ -8673,34 +8839,33 @@ AllDims* EW::get_fine_alldimobject() {
   return fine;
 }
 //-----------------------------------------------------------------------
-void EW::extractTopographyFromSfile(std::string a_topoFileName) {
-#ifdef USE_HDF5
+void EW::extractTopographyFromSfile( std::string a_topoFileName )
+{
   double start_time, end_time;
   start_time = MPI_Wtime();
-  //  int verbose = mVerbose;
-  std::string rname = "EW::extractTopographyFromSfile";
+#ifdef USE_HDF5
+  /* int verbose = mVerbose; */
+  std::string rname ="EW::extractTopographyFromSfile";
   Sarray gridElev;
   herr_t ierr;
-  hid_t file_id, dataset_id, datatype_id, h5_dtype, group_id, dataspace_id,
-      attr_id;  // plist_id;
+  hid_t file_id, dataset_id, datatype_id, h5_dtype, group_id, dataspace_id, attr_id; //, plist_id;
   int prec;
   double lonlataz[3];
 
   /* plist_id = H5Pcreate(H5P_FILE_ACCESS); */
   /* H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL); */
   /* file_id = H5Fopen(a_topoFileName.c_str(), H5F_ACC_RDONLY, plist_id); */
-  if (m_myRank == 0) {
+  if (m_myRank==0 ) {
     file_id = H5Fopen(a_topoFileName.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     if (file_id < 0) {
-      cout << "Could not open hdf5 file: " << a_topoFileName.c_str() << endl;
-      MPI_Abort(MPI_COMM_WORLD, file_id);
+       cout << "Could not open hdf5 file: " << a_topoFileName.c_str()<< endl;
+       MPI_Abort(MPI_COMM_WORLD, file_id);
     }
   }
 
   // Origin longitude, latitude, azimuth
-  if (m_myRank == 0) {
-    attr_id =
-        H5Aopen(file_id, "Origin longitude, latitude, azimuth", H5P_DEFAULT);
+  if (m_myRank==0 ) {
+    attr_id = H5Aopen(file_id, "Origin longitude, latitude, azimuth", H5P_DEFAULT);
     ASSERT(attr_id >= 0);
     ierr = H5Aread(attr_id, H5T_NATIVE_DOUBLE, lonlataz);
     ASSERT(ierr >= 0);
@@ -8710,15 +8875,13 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
 
   double alpha = lonlataz[2], lon0 = lonlataz[0], lat0 = lonlataz[1];
 
-  CHECK_INPUT(fabs(alpha - mGeoAz) < 1e-6,
-              "ERROR: Sfile azimuth must be equal to coordinate system azimuth"
-                  << " azimuth on sfile = " << alpha
-                  << " azimuth of coordinate sytem = " << mGeoAz
-                  << " difference = " << alpha - mGeoAz);
+  CHECK_INPUT( fabs(alpha-mGeoAz) < 1e-6, "ERROR: Sfile azimuth must be equal to coordinate system azimuth" <<
+               " azimuth on sfile = " << alpha << " azimuth of coordinate sytem = " << mGeoAz << 
+               " difference = " << alpha-mGeoAz );
 
   // Ngrids - int, number of 3D grids in the file
   int npatches;
-  if (m_myRank == 0) {
+  if (m_myRank==0 ) {
     attr_id = H5Aopen(file_id, "ngrids", H5P_DEFAULT);
     ierr = H5Aread(attr_id, H5T_NATIVE_INT, &npatches);
     ASSERT(ierr >= 0);
@@ -8726,14 +8889,14 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
   }
   MPI_Bcast(&npatches, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  if (m_myRank == 0 && mVerbose >= 2) {
+  if (m_myRank==0 && mVerbose >= 2) {
     printf("Sfile header: \n");
     printf("              azimuth=%e, lon0=%e, lat0=%e\n", alpha, lon0, lat0);
     printf("              nblocks=%i\n", npatches);
   }
 
   double hh;
-  if (m_myRank == 0) {
+  if (m_myRank==0 ) {
     attr_id = H5Aopen(file_id, "Coarsest horizontal grid spacing", H5P_DEFAULT);
     ASSERT(attr_id >= 0);
     ierr = H5Aread(attr_id, H5T_NATIVE_DOUBLE, &hh);
@@ -8746,7 +8909,7 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
   hsize_t dims[2];
   char intf_name[32];
 
-  if (m_myRank == 0) {
+  if (m_myRank==0 ) {
     group_id = H5Gopen(file_id, "Z_interfaces", H5P_DEFAULT);
     ASSERT(group_id >= 0);
 
@@ -8767,28 +8930,29 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
 
   int nitop = (int)dims[0], njtop = (int)dims[1];
 
-  if (m_myRank == 0 && mVerbose >= 2) {
+  if (m_myRank==0 && mVerbose >= 2) {
     printf("Topography header\n");
     printf("  hh=%e\n", hh);
     printf("  ni=%i, nj=%i\n", nitop, njtop);
   }
 
-  // Depending on the precision of the sfile and sw4, need to convert between
-  // float and doulbe
-  void* in_data;
-  float* f_data = new float[nitop * njtop];
-  double* d_data = new double[nitop * njtop];
+  bool roworder=true;
+
+  // Depending on the precision of the sfile and sw4, need to convert between float and doulbe
+  void *in_data;
+  float  *f_data = new float[nitop * njtop];
+  double *d_data = new double[nitop * njtop];
   if (prec == 4) {
-    h5_dtype = H5T_NATIVE_FLOAT;
-    in_data = (void*)f_data;
-  } else if (prec == 8) {
-    h5_dtype = H5T_NATIVE_DOUBLE;
-    in_data = (void*)d_data;
+      h5_dtype = H5T_NATIVE_FLOAT;
+      in_data = (void*)f_data;
+  }
+  else if (prec == 8) {
+      h5_dtype = H5T_NATIVE_DOUBLE;
+      in_data = (void*)d_data;
   }
 
-  if (m_myRank == 0) {
-    ierr =
-        H5Dread(dataset_id, h5_dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, in_data);
+  if (m_myRank==0 ) {
+    ierr = H5Dread(dataset_id, h5_dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, in_data);
     ASSERT(ierr >= 0);
     H5Dclose(dataset_id);
     H5Gclose(group_id);
@@ -8796,171 +8960,156 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
   }
   MPI_Bcast(in_data, nitop * njtop * prec, MPI_CHAR, 0, MPI_COMM_WORLD);
 
-  float_sw4* data = new float_sw4[nitop * njtop];
+  float_sw4 *data = new float_sw4[nitop * njtop];
   for (int i = 0; i < nitop * njtop; i++) {
-    if (prec == 4)
-      data[i] = -(float_sw4)f_data[i];
-    else if (prec == 8)
-      data[i] = -(float_sw4)d_data[i];
+      if (prec == 4) 
+          data[i] = -(float_sw4)f_data[i];
+      else if (prec == 8) 
+          data[i] = -(float_sw4)d_data[i];
   }
 
   delete[] f_data;
   delete[] d_data;
 
+ 
   gridElev.define(1, nitop, 1, njtop, 1, 1);
   gridElev.assign(data);
 
-  bool roworder = true;
-  if (m_myRank == 0 && mVerbose >= 2) {
-    printf("1st topo (float) data=%e, gridElev(1,1,1)=%e\n", data[0],
-           gridElev(1, 1, 1));
-    printf("last topo (float) data=%e, gridElev(ni,nj,1)=%e\n",
-           data[nitop * njtop - 1], gridElev(nitop, njtop, 1));
+  if (m_myRank==0 && mVerbose >= 2) {
+    printf("1st topo (float) data=%e, gridElev(1,1,1)=%e\n", data[0], gridElev(1,1,1));
+    printf("last topo (float) data=%e, gridElev(ni,nj,1)=%e\n", data[nitop*njtop-1], gridElev(nitop,njtop,1));
     // get min and max
-    float tmax = -9e-10, tmin = 9e+10;
-    for (int q = 0; q < nitop * njtop; q++) {
-      if (data[q] > tmax) tmax = data[q];
-      if (data[q] < tmin) tmin = data[q];
+    float tmax=-9e-10, tmin=9e+10;
+    for (int q=0; q<nitop*njtop; q++) {
+      if (data[q]>tmax) tmax=data[q];
+      if (data[q]<tmin) tmin=data[q];	     
     }
     printf("topo max (float)=%e, min (float)=%e\n", tmax, tmin);
   }
   delete[] data;
-
-  if (roworder) gridElev.transposeik();
+ 
+  if( roworder )
+    gridElev.transposeik();
 
   // ---------- done reading
 
   // ---------- origin on file
-  double x0, y0;  // Origin on grid file
+  double x0, y0; // Origin on grid file
   computeCartesianCoord(x0, y0, lon0, lat0);
   if (m_myRank == 0 && mVerbose >= 2) {
-    printf("mat-lon0=%e mat-lat0=%e, comp-x0=%e, commp-y0=%e\n", lon0, lat0, x0,
-           y0);
+    printf("mat-lon0=%e mat-lat0=%e, comp-x0=%e, commp-y0=%e\n", lon0, lat0, x0, y0);
   }
 
   // Topography read, next interpolate to the computational grid
-  int topLevel = mNumberOfGrids - 1;
+  int topLevel=mNumberOfGrids-1;
 
-  float_sw4 topomax = -1e30, topomin = 1e30;
-#pragma omp parallel for reduction(max : topomax) reduction(min : topomin)
+  float_sw4 topomax=-1e30, topomin=1e30;
+#pragma omp parallel for reduction(max:topomax) reduction(min:topomin)      
   for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
     for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j) {
-      float_sw4 x = (i - 1) * mGridSize[topLevel];
-      float_sw4 y = (j - 1) * mGridSize[topLevel];
-      int i0 = static_cast<int>(trunc(1 + (x - x0) / hh));
-      int j0 = static_cast<int>(trunc(1 + (y - y0) / hh));
-      // test
-      float_sw4 xmat0 = (i0 - 1) * hh, ymat0 = (j0 - 1) * hh;
+      float_sw4 x = (i-1)*mGridSize[topLevel];
+      float_sw4 y = (j-1)*mGridSize[topLevel];
+      int i0 = static_cast<int>( trunc( 1 + (x-x0)/hh ));
+      int j0 = static_cast<int>( trunc( 1 + (y-y0)/hh ));
+// test
+      float_sw4 xmat0 = (i0-1)*hh, ymat0 = (j0-1)*hh;
       float_sw4 xmatx = x - x0, ymaty = y - y0;
-
-      if (mVerbose >= 3) {
-        if (xmatx < xmat0 || xmatx > xmat0 + hh)
-          printf("WARNING: i0=%i is out of bounds for x=%e, xmatx=%e\n", i0, x,
-                 xmatx);
-        if (ymaty < ymat0 || ymaty > ymat0 + hh)
-          printf("WARNING: i0=%i is out of bounds for y=%e, ymaty=%e\n", i0, y,
-                 ymaty);
+      
+      if (mVerbose>=3) {
+        if (xmatx<xmat0 || xmatx>xmat0+hh) 
+          printf("WARNING: i0=%i is out of bounds for x=%e, xmatx=%e\n", i0, x, xmatx);
+        if (ymaty<ymat0 || ymaty>ymat0+hh) 
+          printf("WARNING: i0=%i is out of bounds for y=%e, ymaty=%e\n", i0, y, ymaty);
       }
-
-      bool extrapol = false;
-      if (i0 < -1) {
+      
+      bool extrapol=false;
+      if( i0 < -1 ) {
         extrapol = true;
         i0 = 1;
-      } else if (i0 < 2)
+      }
+      else if( i0 < 2 )
         i0 = 2;
-
-      if (i0 > nitop + 1) {
+        
+      if( i0 > nitop+1 ) {
         extrapol = true;
         i0 = nitop;
-      } else if (i0 > nitop - 2)
-        i0 = nitop - 2;
-
-      if (j0 < -1) {
+      }
+      else if( i0 > nitop-2 )
+        i0 = nitop-2;
+        
+      if( j0 < -1 ) {
         extrapol = true;
         j0 = 1;
-      } else if (j0 < 2)
+      }
+      else if( j0 < 2 )
         j0 = 2;
 
-      if (j0 > njtop + 1) {
+      if( j0 > njtop+1 ) {
         extrapol = true;
         j0 = njtop;
-      } else if (j0 > njtop - 2)
-        j0 = njtop - 2;
-
-      if (!extrapol) {
-        float_sw4 q = (x - x0 - (i0 - 1) * hh) / hh;
-        float_sw4 r = (y - y0 - (j0 - 1) * hh) / hh;
-        float_sw4 Qim1, Qi, Qip1, Qip2, Rjm1, Rj, Rjp1, Rjp2, tjm1, tj, tjp1,
-            tjp2;
-        Qim1 = (q) * (q - 1) * (q - 2) / (-6.);
-        Qi = (q + 1) * (q - 1) * (q - 2) / (2.);
-        Qip1 = (q + 1) * (q) * (q - 2) / (-2.);
-        Qip2 = (q + 1) * (q) * (q - 1) / (6.);
-
-        Rjm1 = (r) * (r - 1) * (r - 2) / (-6.);
-        Rj = (r + 1) * (r - 1) * (r - 2) / (2.);
-        Rjp1 = (r + 1) * (r) * (r - 2) / (-2.);
-        Rjp2 = (r + 1) * (r) * (r - 1) / (6.);
-
-        if (mVerbose >= 3) {
-          if (i0 < 2 || i0 > nitop - 2)
-            printf("WARNING: topo interp out of bounds i0=%i, nitop=%i\n", i0,
-                   nitop);
-          if (j0 < 2 || j0 > njtop - 2)
-            printf("WARNING: topo interp out of bounds j0=%i, njtop=%i\n", j0,
-                   njtop);
-        }
-
-        tjm1 = Qim1 * gridElev(i0 - 1, j0 - 1, 1) +
-               Qi * gridElev(i0, j0 - 1, 1) +
-               Qip1 * gridElev(i0 + 1, j0 - 1, 1) +
-               Qip2 * gridElev(i0 + 2, j0 - 1, 1);
-        tj = Qim1 * gridElev(i0 - 1, j0, 1) + Qi * gridElev(i0, j0, 1) +
-             Qip1 * gridElev(i0 + 1, j0, 1) + Qip2 * gridElev(i0 + 2, j0, 1);
-        tjp1 = Qim1 * gridElev(i0 - 1, j0 + 1, 1) +
-               Qi * gridElev(i0, j0 + 1, 1) +
-               Qip1 * gridElev(i0 + 1, j0 + 1, 1) +
-               Qip2 * gridElev(i0 + 2, j0 + 1, 1);
-        tjp2 = Qim1 * gridElev(i0 - 1, j0 + 2, 1) +
-               Qi * gridElev(i0, j0 + 2, 1) +
-               Qip1 * gridElev(i0 + 1, j0 + 2, 1) +
-               Qip2 * gridElev(i0 + 2, j0 + 2, 1);
-        mTopo(i, j, 1) = Rjm1 * tjm1 + Rj * tj + Rjp1 * tjp1 + Rjp2 * tjp2;
-      } else {
-        if (mVerbose >= 3)
-          printf(
-              "INFO: topo extrapolated for i=%i, j=%i, x=%e, y=%e, i0=%i, "
-              "j0=%i\n",
-              i, j, x, y, i0, j0);
-
-        mTopo(i, j, 1) = gridElev(i0, j0, 1);
       }
+      else if( j0 > njtop-2 )
+        j0 = njtop-2;
 
+      if( !extrapol ) {
+        float_sw4 q = (x - x0 - (i0-1)*hh)/hh;
+        float_sw4 r = (y - y0 - (j0-1)*hh)/hh;
+        float_sw4 Qim1, Qi, Qip1, Qip2, Rjm1, Rj, Rjp1, Rjp2, tjm1, tj, tjp1, tjp2;
+        Qim1 = (q)*(q-1)*(q-2)/(-6.);
+        Qi   = (q+1)*(q-1)*(q-2)/(2.);
+        Qip1 = (q+1)*(q)*(q-2)/(-2.);
+        Qip2 = (q+1)*(q)*(q-1)/(6.);
+
+        Rjm1 = (r)*(r-1)*(r-2)/(-6.);
+        Rj   = (r+1)*(r-1)*(r-2)/(2.);
+        Rjp1 = (r+1)*(r)*(r-2)/(-2.);
+        Rjp2 = (r+1)*(r)*(r-1)/(6.);
+
+        if (mVerbose>=3) {
+          if (i0<2 || i0>nitop-2) printf("WARNING: topo interp out of bounds i0=%i, nitop=%i\n", i0, nitop);
+          if (j0<2 || j0>njtop-2) printf("WARNING: topo interp out of bounds j0=%i, njtop=%i\n", j0, njtop);
+        }
+        
+        tjm1 = Qim1*gridElev(i0-1,j0-1,1) +    Qi*gridElev(i0,  j0-1,1)
+          +  Qip1*gridElev(i0+1,j0-1,1) +  Qip2*gridElev(i0+2,j0-1,1);
+        tj   = Qim1*gridElev(i0-1,j0,  1) +    Qi*gridElev(i0,  j0,  1)
+          +  Qip1*gridElev(i0+1,j0,  1) +  Qip2*gridElev(i0+2,j0,  1);
+        tjp1 = Qim1*gridElev(i0-1,j0+1,1) +    Qi*gridElev(i0,  j0+1,1)
+          +  Qip1*gridElev(i0+1,j0+1,1) +  Qip2*gridElev(i0+2,j0+1,1);
+        tjp2 = Qim1*gridElev(i0-1,j0+2,1) +    Qi*gridElev(i0,  j0+2,1)
+          +  Qip1*gridElev(i0+1,j0+2,1) +  Qip2*gridElev(i0+2,j0+2,1);
+        mTopo(i,j,1) = Rjm1*tjm1 + Rj*tj + Rjp1*tjp1 + Rjp2*tjp2;
+      }
+      else {
+        if (mVerbose>=3)
+          printf("INFO: topo extrapolated for i=%i, j=%i, x=%e, y=%e, i0=%i, j0=%i\n", i, j, x, y, i0, j0);
+        
+        mTopo(i,j,1) = gridElev(i0,j0,1);
+      }
+      
       // test
-      if (mTopo(i, j, 1) > topomax) topomax = mTopo(i, j, 1);
-      if (mTopo(i, j, 1) < topomin) topomin = mTopo(i, j, 1);
-
-    }  // end for j
-  }    // end for i
+      if (mTopo(i,j,1)>topomax) topomax=mTopo(i,j,1);
+      if (mTopo(i,j,1)<topomin) topomin=mTopo(i,j,1);
+        
+    }// end for j
+  }// end for i
 
   MPI_Barrier(MPI_COMM_WORLD);
   end_time = MPI_Wtime();
-  if (m_myRank == 0)
-    printf("Read topography from sfile time=%e seconds\n",
-           end_time - start_time);
-
+  if (m_myRank==0)
+    printf("Read topography from sfile time=%e seconds\n", end_time-start_time);
+  
   // test
-  if (m_myRank == 0 && mVerbose >= 2) {
+  if (m_myRank==0 && mVerbose>=2) {
     printf("Topo variation on comp grid: max=%e min=%e\n", topomax, topomin);
   }
 #else
-  if (m_myRank == 0)
-    printf(
-        "WARNING: sw4 not compiled with hdf5=yes, ignoring read sfile, "
-        "abort!\n");
+  if (m_myRank==0)
+    printf("WARNING: sw4 not compiled with hdf5=yes, ignoring read sfile, abort!\n");
   MPI_Abort(MPI_COMM_WORLD, -1);
 #endif
 }
+
 // CURVI_MR_CODE ADDED HERE
 #include "TestTwilight.h"
 
