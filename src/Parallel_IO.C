@@ -2048,32 +2048,6 @@ void Parallel_IO::read_array( int* fid, int nc, float_sw4* array, off_t pos0,
 	 
 	 ind = il-1+((off_t)nig)*(jl-1)+((off_t)nig)*njg*(kl-1);
 	 sizew = lseek( *fid, pos0+nc*ind*typsize, SEEK_SET );
-	 if( sizew == -1 )
-	 {
-	    int eno = errno;
-	    cout << "Error in read_array: could not go to read start position" << endl;
-	    if( eno == EBADF )
-	       cout << "errno = EBADF" << endl;
-	    if( eno == EINVAL )
-	       cout << "errno = EINVAL" << endl;
-	    if( eno == EOVERFLOW )
-	       cout << "errno = EOVERFLOW" << endl;
-	    if( eno == ESPIPE )
-	       cout << "errno = ESPIPE" << endl;
-	    cout << "errno = " << eno << endl;
-            cout << "Requested offset = " << pos0+nc*ind*typsize << endl;
-            cout << "pos0 = " << pos0 << endl;
-	    cout << "nc = " << nc << endl;
-	    cout << "ind = " << ind << endl;
-	    cout << "typsize = " << typsize << endl;
-            cout << "m_csteps = " << m_csteps << endl;
-	    cout << "nglobal = " << nig << " " << njg << " " << nkg << endl;
-	    cout << "m_irecv.m_ilow " << m_irecv.m_ilow[0] << endl;
-	    cout << "m_irecv.m_jlow " << m_irecv.m_jlow[0] << endl;
-	    cout << "m_irecv.m_klow " << m_irecv.m_klow[0] << endl;
-            cout << "m_irecv.m_ncomm[0] = " << m_irecv.m_ncomm[0] << endl;
-	    //	    MPI_Abort(MPI_COMM_WORLD,1);
-	 }
       }
 
       tag = 334;
