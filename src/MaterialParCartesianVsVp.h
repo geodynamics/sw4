@@ -24,10 +24,8 @@ public:
 		      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
 		      std::vector<Sarray>& a_lambda,
 		      std::vector<Sarray>& a_gradrho, std::vector<Sarray>& a_gradmu,
-		      std::vector<Sarray>& a_gradlambda, int rank );
-   void smooth_gradient( std::vector<Sarray>& a_grad );
-   void gaussian_smooth(Sarray& grad, int width, float decay);
-   void gauss(float_sw4 *s, float_sw4 sigma, int length, float_sw4 *g);
+		      std::vector<Sarray>& a_gradlambda);
+   void smooth_gradient(double* dfs);
    //   void gradient_transformation( std::vector<Sarray>& a_rho,
    //				 std::vector<Sarray>& a_mu,
    //				 std::vector<Sarray>& a_lambda,

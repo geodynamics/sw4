@@ -241,7 +241,7 @@ void MaterialParCartesian::get_gradient( int nmd, double* xmd, int nms, double* 
 					 std::vector<Sarray>& a_lambda,
 					 std::vector<Sarray>& a_gradrho,
 					 std::vector<Sarray>& a_gradmu,
-					 std::vector<Sarray>& a_gradlambda, int rank )
+					 std::vector<Sarray>& a_gradlambda)
 {
    Sarray grho(0,m_nx+1,0,m_ny+1,0,m_nz+1), gmu(0,m_nx+1,0,m_ny+1,0,m_nz+1);
    Sarray glambda(0,m_nx+1,0,m_ny+1,0,m_nz+1);
@@ -285,6 +285,13 @@ void MaterialParCartesian::get_gradient( int nmd, double* xmd, int nms, double* 
 	    dfs[3*ind+2] = glambdap[indm];
 	    ind++;
 	 }
+}
+
+
+void MaterialParCartesian::smooth_gradient(double* dfs)
+{
+
+
 }
 
 //-----------------------------------------------------------------------

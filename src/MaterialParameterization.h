@@ -24,8 +24,8 @@ public:
 			      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
 			      std::vector<Sarray>& a_lambda,
 			      std::vector<Sarray>& a_gradrho, std::vector<Sarray>& a_gradmu,
-			      std::vector<Sarray>& a_gradlambda, int rank )=0;
-
+			      std::vector<Sarray>& a_gradlambda)=0;
+   virtual void smooth_gradient(double* dfs)=0;
    //   virtual void gradient_transformation( std::vector<Sarray>& a_rho,    std::vector<Sarray>& a_mu,
    //					 std::vector<Sarray>& a_lambda, std::vector<Sarray>& a_gradrho, 
    //					 std::vector<Sarray>& a_gradmu, std::vector<Sarray>& a_gradlambda ){};

@@ -263,7 +263,7 @@ void MaterialParCartesianVels::get_gradient( int nmd, double* xmd, int nms, doub
 					 std::vector<Sarray>& a_lambda,
 					 std::vector<Sarray>& a_gradrho,
 					 std::vector<Sarray>& a_gradmu,
-					 std::vector<Sarray>& a_gradlambda, int rank )
+					 std::vector<Sarray>& a_gradlambda)
 {
    //
    // Computes gradient with respect to the material parameterization from given
@@ -325,6 +325,13 @@ void MaterialParCartesianVels::get_gradient( int nmd, double* xmd, int nms, doub
 	    //	    dfs[3*ind+2] = 2*rho*cp*glambdap[indm];
 	    //	    ind++;
 	 }
+}
+
+
+void MaterialParCartesianVels::smooth_gradient(double* dfs)
+{
+
+
 }
 
 //-----------------------------------------------------------------------
