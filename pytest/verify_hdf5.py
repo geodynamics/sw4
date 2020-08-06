@@ -131,7 +131,99 @@ def read_sw4img_hdf5(fname):
     return np.array(pdata)
 
 
+def read_essi(fname):
+    essi = h5py.File(fname)
+    data0 = essi["vel_0 ijk layout"][:]
+    data1 = essi["vel_1 ijk layout"][:]
+    data2 = essi["vel_2 ijk layout"][:]
+    
+    essi.close()
+    return data0, data1, data2
+
+
 def verify(pytest_dir, tolerance):
+    ref_dir = pytest_dir + '/hdf5/loh1-h100-mr-1/'
+    hdf5_dir = os.getcwd() + '/loh1-h100-mr-1-hdf5/'
+    verify = True
+    nsta = 0
+    for i in range(1,11):
+        sta_name = 'sta%02d' % i
+        #print(sta_name)
+        usgs_fname = ref_dir + sta_name + '.txt'
+        hdf5_fname = hdf5_dir + 'sta.h5'
+        usgs_t, usgs_x, usgs_y, usgs_z = read_sac_usgs(usgs_fname)
+        hdf5_t, hdf5_x, hdf5_y, hdf5_z = read_sac_hdf5(hdf5_fname, sta_name)
+        if np.max(hdf5_t-usgs_t) > tolerance or np.min(hdf5_t-usgs_t) < -tolerance:
+            verify = False
+            print ("Station [%s] time data not match!" % sta_name)
+            return False
+        if np.max(hdf5_x-usgs_x) > tolerance or np.min(hdf5_x-usgs_x) < -tolerance:
+            verify = False
+            print ("Station [%s] x data not match!" % sta_name)
+            print(hdf5_x-usgs_x)
+            return False
+        if np.max(hdf5_y-usgs_y) > tolerance or np.min(hdf5_y-usgs_y) < -tolerance:
+            verify = False
+            print ("Station [%s] y data not match!" % sta_name)
+            return False
+        if np.max(hdf5_z-usgs_z) > tolerance or np.min(hdf5_z-usgs_z) < -tolerance:
+            verify = False
+            print ("Station [%s] z data not match!" % sta_name)  
+            return False
+        nsta += 1
+
+    # if verify == 1:
+    #     print ('All %d stations data match!' % nsta)
+
+    nimg = 0
+    for filename in os.listdir(ref_dir):
+        if filename.endswith(".sw4img"):
+            nimg += 1
+            #print(filename)
+            sw4img_file = ref_dir + filename
+            h5img_file  = hdf5_dir + filename + '.h5'
+            sw4_pdata = read_sw4img(sw4img_file)
+            h5_pdata = read_sw4img_hdf5(h5img_file)
+            if len(h5_pdata) != len(h5_pdata):
+                print("Image sizes are diferent! %d/%d" % (len(sw4_pdata), len(h5_pdata)))
+                verify = False
+                return False
+            else:
+                if np.max(h5_pdata-sw4_pdata) > tolerance or np.min(h5_pdata-sw4_pdata) < -tolerance:
+                    print ("Image data [%s] does not match!" % sw4img_file)        
+                    verify = False
+                    return False
+                    
+    # if verify == 1:
+    #     print ('All %d images data match!' % nimg)
+
+    essi_fname = hdf5_dir + 'essioutput.cycle=000.essi'
+    data0, data1, data2 = read_essi(essi_fname)
+    sum0 = np.sum(data0)
+    sum1 = np.sum(data1)
+    sum2 = np.sum(data2)
+    min0 = np.min(data0)
+    min1 = np.min(data1)
+    min2 = np.min(data2)
+    max0 = np.max(data0)
+    max1 = np.max(data1)
+    max2 = np.max(data2)
+    # larger tolerance for sum data
+    if np.absolute(sum0+93573.17) > tolerance*1e4 or np.absolute(sum1+93573.17) > tolerance*1e4 or np.absolute(sum2+25479.352) > tolerance*1e4:
+        print ("ESSI data sum not match!", sum0, sum1, sum2)
+        return False
+
+    if np.absolute(min0+7.4462595) > tolerance or np.absolute(min1+7.4462595) > tolerance or np.absolute(min2+3.6428568) > tolerance:
+        print ("ESSI data min not match!", min0, min1, min2)
+        return False
+
+    if np.absolute(max0-6.706221) > tolerance or np.absolute(max1-6.706221) > tolerance or np.absolute(max2-2.7557883) > tolerance:
+        print ("ESSI data max not match!", max0, max1, max2)
+        return False
+
+    return verify
+
+def verify_sac_image(pytest_dir, tolerance):
     ref_dir = pytest_dir + '/hdf5/loh1-h100-mr-1/'
     hdf5_dir = os.getcwd() + '/loh1-h100-mr-1-hdf5/'
     verify = True
@@ -182,4 +274,5 @@ def verify(pytest_dir, tolerance):
                     
     # if verify == 1:
     #     print ('All %d images data match!' % nimg)
+
     return verify
