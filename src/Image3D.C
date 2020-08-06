@@ -345,12 +345,17 @@ void Image3D::update_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt, vecto
 			    vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 			    vector<Sarray>& a_gRho, vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
 			    vector<Sarray>& a_Qp, vector<Sarray>& a_Qs,
-			    std::string a_path, Sarray& a_Z )
+			    std::string a_path, std::vector<Sarray>& a_Z )
 {
+   double stime, etime;
    if( timeToWrite( a_time, a_cycle, a_dt ) )
    {
       compute_image( a_U, a_Rho, a_Mu, a_Lambda, a_gRho, a_gMu, a_gLambda, a_Qp, a_Qs );
+      stime = MPI_Wtime();
       write_image( a_cycle, a_path, a_time, a_Z );
+      etime = MPI_Wtime();
+      if( m_parallel_io[0]->proc_zero() )
+        printf("  Write volimage takes %e seconds\n", etime-stime);
    }
 }
                             
@@ -359,10 +364,15 @@ void Image3D::force_write_image( float_sw4 a_time, int a_cycle, vector<Sarray>& 
 			    vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 			    vector<Sarray>& a_gRho, vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
 			    vector<Sarray>& a_Qp, vector<Sarray>& a_Qs,
-			    std::string a_path, Sarray& a_Z )
+                                 std::string a_path, std::vector<Sarray>& a_Z )
 {
-  compute_image( a_U, a_Rho, a_Mu, a_Lambda, a_gRho, a_gMu, a_gLambda, a_Qp, a_Qs );
+   double stime, etime;
+   compute_image( a_U, a_Rho, a_Mu, a_Lambda, a_gRho, a_gMu, a_gLambda, a_Qp, a_Qs );
+   stime = MPI_Wtime();
    write_image( a_cycle, a_path, a_time, a_Z );
+   etime = MPI_Wtime();
+   if( m_parallel_io[0]->proc_zero() )
+     printf("  Write volimage takes %e seconds\n", etime-stime);
 }
                             
 //-----------------------------------------------------------------------
@@ -658,7 +668,7 @@ void Image3D::compute_file_suffix( int cycle, std::stringstream& fileSuffix )
 
 //-----------------------------------------------------------------------
 void Image3D::write_image( int cycle, std::string &path, float_sw4 t,
-			   Sarray& a_Z )
+			   std::vector<Sarray>& a_Z )
 {
   //File format: 
   //
@@ -803,58 +813,63 @@ void Image3D::write_image( int cycle, std::string &path, float_sw4 t,
    // Add curvilinear grid, if needed
    if( gridinfo == 1 )
    {
-      int g = ng-1;
-      float_sw4* zp = a_Z.c_ptr();
-      size_t npts = ((size_t)(mGlobalDims[g][1]-mGlobalDims[g][0])/st+1)*
-	 ((mGlobalDims[g][3]-mGlobalDims[g][2])/st+1)*
-	 ((mGlobalDims[g][5]-mGlobalDims[g][4])/st+1+m_extraz[g]);
+      for (int g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids; g++)
+      {
+//      int g = ng-1;
+         float_sw4* zp = a_Z[g].c_ptr();
+         size_t npts = ((size_t)(mGlobalDims[g][1]-mGlobalDims[g][0])/st+1)*
+            ((mGlobalDims[g][3]-mGlobalDims[g][2])/st+1)*
+            ((mGlobalDims[g][5]-mGlobalDims[g][4])/st+1+m_extraz[g]);
 
-      if( !mEW->usingParallelFS() || g == 0 )
-	 m_parallel_io[g]->writer_barrier();
+         if( !mEW->usingParallelFS() || g == 0 )
+            m_parallel_io[g]->writer_barrier();
       
-      size_t nptsloc  = ((size_t)(mWindow[g][1] - mWindow[g][0])/mImageSamplingFactor + 1)*
-	 ( (mWindow[g][3] - mWindow[g][2])/mImageSamplingFactor + 1)*
-	 ( (mWindow[g][5] - mWindow[g][4])/mImageSamplingFactor + 1 + m_extraz[g]);
+         size_t nptsloc  = ((size_t)(mWindow[g][1] - mWindow[g][0])/mImageSamplingFactor + 1)*
+            ( (mWindow[g][3] - mWindow[g][2])/mImageSamplingFactor + 1)*
+            ( (mWindow[g][5] - mWindow[g][4])/mImageSamplingFactor + 1 + m_extraz[g]);
 
-      int ni = (mWindow[g][1]-mWindow[g][0])/st+1;
-      int nij=ni*((mWindow[g][3]-mWindow[g][2])/st+1);
-      if( m_double )
-      {
-	 double* zfp = new double[nptsloc];
+         int ni = (mWindow[g][1]-mWindow[g][0])/st+1;
+         int nij=ni*((mWindow[g][3]-mWindow[g][2])/st+1);
+         if( m_double )
+         {
+            double* zfp = new double[nptsloc];
 #pragma omp parallel for
 	    for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
 	       for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
 		  for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st )
 		  {
 		     size_t ind = (i-mWindow[g][0])/st+ni*(j-mWindow[g][2])/st+nij*(k-mWindow[g][4])/st;
-		     zfp[ind] = (double) a_Z(i,j,k);
+		     zfp[ind] = (double) a_Z[g](i,j,k);
 		  }
 	    //	 for( size_t i = 0; i < nptsloc ; i++ )
 	    //	    zfp[i] = zp[i];
-	char cprec[]="double";
-	m_parallel_io[g]->write_array( &fid, 1, zfp, offset, cprec );
-	offset += npts*sizeof(double);
-	delete[] zfp;
-      }
-      else
-      {
-	 float* zfp = new float[nptsloc];
+            char cprec[]="double";
+            m_parallel_io[g]->write_array( &fid, 1, zfp, offset, cprec );
+            offset += npts*sizeof(double);
+            delete[] zfp;
+         }
+         else
+         {
+            float* zfp = new float[nptsloc];
 #pragma omp parallel for
 	    for( int k=mWindow[g][4] ; k <= mWindow[g][5] ; k+=st )
 	       for( int j=mWindow[g][2] ; j <= mWindow[g][3] ; j+=st )
 		  for( int i=mWindow[g][0] ; i <= mWindow[g][1] ; i+=st )
 		  {
 		     size_t ind = (i-mWindow[g][0])/st+ni*(j-mWindow[g][2])/st+nij*(k-mWindow[g][4])/st;
-		     zfp[ind] = (float) a_Z(i,j,k);
+		     zfp[ind] = (float) a_Z[g](i,j,k);
 		  }
 	    //	 for( size_t i = 0; i < nptsloc ; i++ )
 	    //	    zfp[i] = zp[i];
-	char cprec[]="float";
-	m_parallel_io[g]->write_array( &fid, 1, zfp, offset, cprec );
-	offset += npts*sizeof(float);
-	delete[] zfp;
-      }
-   }
+            char cprec[]="float";
+            m_parallel_io[g]->write_array( &fid, 1, zfp, offset, cprec );
+            offset += npts*sizeof(float);
+            delete[] zfp;
+         }
+      } // end for g (curvilinear)
+      
+   } // end if grid info
+   
    if( iwrite )
       close(fid);
 }

@@ -154,17 +154,27 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
     hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
     H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, dxpl, &isnsew);
-    H5Pclose(dxpl);
     H5Dclose(attr);
     if (isnsew == 0) {
         nsew = false;
         geoCoordSet = false;
     }
 
-    /* if (H5Lexists(grp, "STX,STY,STZ", H5P_DEFAULT) == true) { */
-    /*   nsew = false; */
-    /*   geoCoordSet = false; */
-    /* } */
+    if (H5Lexists(grp, "WindowL", H5P_DEFAULT) > 0) {
+        op_data->winlset = true;
+        attr = H5Dopen(grp, "WindowL", H5P_DEFAULT);
+        H5Dread(attr, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, dxpl, &op_data->winl);
+        H5Dclose(attr);
+    }
+
+    if (H5Lexists(grp, "WindowR", H5P_DEFAULT) > 0) {
+        op_data->winrset = true;
+        attr = H5Dopen(grp, "WindowR", H5P_DEFAULT);
+        H5Dread(attr, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, dxpl, &op_data->winr);
+        H5Dclose(attr);
+    }
+
+    H5Pclose(dxpl);
 
     if (nsew) {
       // STLA,STLO,STDP
@@ -286,7 +296,6 @@ void readStationHDF5(EW* ew, string inFileName, string outFileName, int writeEve
   hid_t fid, fapl;
 
   struct traverse_data_t tData;
-  //memset(&tData, 0, sizeof(struct traverse_data_t));
   tData.myRank = ew->getRank();
   tData.ew = ew;
   tData.inFileName  = inFileName;

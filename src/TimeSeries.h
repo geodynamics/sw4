@@ -105,7 +105,7 @@ float_sw4 misfit2( TimeSeries& observed, TimeSeries* diff );
 void interpolate( TimeSeries& intpfrom );
 
 void use_as_forcing( int n, std::vector<Sarray>& f, std::vector<float_sw4> & h, float_sw4 dt,
-		     Sarray& Jac, bool topography_exists );
+		     vector<Sarray>& Jac, bool topography_exists );
 
 float_sw4 product( TimeSeries& ts ) const;
 float_sw4 product_wgh( TimeSeries& ts ) const;

@@ -61,9 +61,10 @@ MaterialSfile::MaterialSfile( EW* a_ew, const string a_file, const string a_dire
 {
    mCoversAllPoints = false;
    // Check that the depths make sense
-   if (a_ew != NULL)
+   if (a_ew != NULL) {
      m_use_attenuation = a_ew->usingAttenuation();
      read_sfile();
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -81,9 +82,18 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
 // Assume attenuation arrays defined on all grids if they are defined on grid zero.
    bool use_q = m_use_attenuation && xis[0].is_defined() && xip[0].is_defined();
    size_t outside=0, material=0;
-   float_sw4 z_min = mInterface[0].minimum();
+   float_sw4 z_min = m_zminloc;
+
+   // Find the relative dimension size of upper and lower interface for each grid patch
+   int* ist = new int(m_npatches);
+   int* jst = new int(m_npatches);
+   for( int g=0 ; g < m_npatches ; g++ ) {
+     ist[g] = (int)ceil((double)mInterface[g].m_ni / mInterface[g+1].m_ni);
+     jst[g] = (int)ceil((double)mInterface[g].m_nj / mInterface[g+1].m_nj);
+   }
+
    for( int g=0 ; g < mEW->mNumberOfGrids ; g++ ) {
-      bool curvilinear = mEW->topographyExists() && g == mEW->mNumberOfGrids-1;
+      bool curvilinear = mEW->topographyExists() && g >= mEW->mNumberOfCartesianGrids;
       size_t ni=mEW->m_iEnd[g]-mEW->m_iStart[g]+1;
       size_t nj=mEW->m_jEnd[g]-mEW->m_jStart[g]+1;
 #pragma omp parallel for reduction(+:material,outside)
@@ -95,32 +105,39 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
 		float_sw4 y = (j-1)*mEW->mGridSize[g];
 		float_sw4 z;
 		if( curvilinear )
-		   z = mEW->mZ(i,j,k);
+		   z = mEW->mZ[g](i,j,k);
 		else
 		   z = mEW->m_zmin[g] + (k-1)*mEW->mGridSize[g];
 
                 // Deal with some values on top grid that exceeds the topogrophy interface
-                if (g == mEW->mNumberOfGrids - 1 && k > 0 && z < z_min) 
+                if (g == mEW->mNumberOfGrids - 1 && z < z_min) 
                   z = z_min;
 
                 // (x, y, z) is the coordinate of current grid point
-		if( inside( x, y, z ) ) {
+		/* if( inside( x, y, z ) ) { */
+		if( m_zminloc <= z && z <= m_zmaxloc ) {
+                   // Extend the material value if simulation grid is larger than material grid
+                   if (x > m_xmaxloc)
+                       x = m_xmaxloc;
+                   if (y > m_ymaxloc)
+                       y = m_ymaxloc;
+                       
 		   material++;
-                   int i0, j0, k0, gr = m_npatches-1;
+                   int i0, j0, i1, j1, k0, gr = m_npatches-1;
                    float_sw4 tmph, down_z;
                    // gr is the patch id that has the current sw4 grid point's data
                    // need to use the interface value to determine which patch the current point is in
 		   while( gr >= 0 ) {
-                     i0     = static_cast<int>( trunc( 1 + (x-m_x0)/m_hh[gr] ) );
-                     j0     = static_cast<int>( trunc( 1 + (y-m_y0)/m_hh[gr] ) );
+                     i0 = i1 = static_cast<int>( trunc( 1 + (x-m_x0)/m_hh[gr] ) );
+                     j0 = j1 = static_cast<int>( trunc( 1 + (y-m_y0)/m_hh[gr] ) );
                      down_z = mInterface[gr+1](1, i0, j0, 1);
-                     // The top interface of a sfile patch is 2x larger than lower level except topest interface
-                     if (gr == 0) {
-                       z0 = mInterface[0](1, i0, j0, 1);
-                       break;
-                     }
-                     z0 = mInterface[gr](1, i0*2-1, j0*2-1, 1);
-                     if (z > z0) break;
+
+                     // Adjust the index if upper and lower interface have different dimension
+                     if (ist[gr] > 1) { i1 = i1*ist[gr]-1; }
+                     if (jst[gr] > 1) { j1 = j1*jst[gr]-1; }
+                     z0 = mInterface[gr](1, i1, j1, 1);
+
+                     if (gr == 0 || z > z0) break;
 		     gr--;
                    }
 
@@ -252,6 +269,9 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
 
    } // end for g...
 
+   delete [] ist;
+   delete [] jst;
+
    mEW->communicate_arrays( rho );
    mEW->communicate_arrays( cs );
    mEW->communicate_arrays( cp );
@@ -301,6 +321,7 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
       //           << endl;
       cout << endl
 	   << "sfile command: outside = " << outsideSum << ", material = " << materialSum << endl;
+
 }
 
 
@@ -327,14 +348,14 @@ void MaterialSfile::read_sfile()
         ymin =  (mEW->m_jStart[g]-1)*h;
      if( ymax < (mEW->m_jEnd[g]-1)*h )
         ymax =  (mEW->m_jEnd[g]-1)*h;
-     if( mEW->topographyExists() && g == mEW->mNumberOfGrids-1 ) {
+     if( mEW->topographyExists() && g >= mEW->mNumberOfCartesianGrids ) {
         int kb=mEW->m_kStart[g], ke=mEW->m_kEnd[g];
         for( int j=mEW->m_jStart[g] ; j <= mEW->m_jEnd[g] ; j++ ) {
            for( int i=mEW->m_iStart[g] ; i <= mEW->m_iEnd[g] ; i++ ) {
-              if( zmin > mEW->mZ(i,j,kb) )
-                  zmin = mEW->mZ(i,j,kb);
-              if( zmax < mEW->mZ(i,j,ke) )
-                  zmax = mEW->mZ(i,j,ke);
+              if( zmin > mEW->mZ[g](i,j,kb) )
+                  zmin = mEW->mZ[g](i,j,kb);
+              if( zmax < mEW->mZ[g](i,j,ke) )
+                  zmax = mEW->mZ[g](i,j,ke);
            }
         }
      }
@@ -595,6 +616,8 @@ void MaterialSfile::read_sfile()
      }
   }
 
+  bool roworder = true;
+
   // Read interfaces
   hid_t topo_grp, topo_id;
   mInterface.resize(m_npatches+1);
@@ -648,7 +671,8 @@ void MaterialSfile::read_sfile()
     /* printf("Rank %d: interface %d min = %.2f, max = %.2f\n", */ 
     /*         mEW->getRank(), p,  mInterface[p].minimum(), mInterface[p].maximum()); */
 
-    mInterface[p].transposeik();
+    if (roworder)
+      mInterface[p].transposeik();
 
     delete[] f_data;
     delete[] d_data;
@@ -656,7 +680,6 @@ void MaterialSfile::read_sfile()
   H5Gclose(topo_grp);
   intf_end = MPI_Wtime();
 
-  bool roworder = true;
   hid_t rho_id, cs_id, cp_id, qs_id, qp_id;
   for( int p = 0 ; p < m_npatches ; p++ ) {
     if( !m_isempty[p] ) {
@@ -903,9 +926,9 @@ void MaterialSfile::material_check( bool water )
 	 //	 if( mEW->getRank()==0 )
       {
 	 if( p== 1 && !water )
-	    cout << "R-file limits, away from water: " << endl;
+	    cout << "S-file limits, away from water: " << endl;
 	 else if( p== 1 )
-	    cout << "R-file limits : " << endl;
+	    cout << "S-file limits : " << endl;
 	 cout << "  Patch no " << p << " : " << endl;
 	 cout << "    cp    min and max " << cminstot[1] << " " << cmaxstot[1] << endl;
 	 cout << "    cs    min and max " << cminstot[0] << " " << cmaxstot[0] << endl;

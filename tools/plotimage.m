@@ -1,3 +1,4 @@
+%-*-octave-*--
 %
 % PLOTIMAGE
 %

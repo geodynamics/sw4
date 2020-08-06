@@ -52,13 +52,13 @@ MaterialParCartesian::MaterialParCartesian( EW* a_ew, int nx, int ny, int nz, in
          m_zmax = zmax;
   // z decreases when g increases, so zmin is always smallest on the last grid:
       m_zmin = m_ew->m_zmin[g];
-      if( m_ew->topographyExists() && g == m_ew->mNumberOfGrids-1 )
+      if( m_ew->topographyExists() && g >= m_ew->mNumberOfCartesianGrids )
       {
          zmin = 1e38;
 	 for( int j= m_ew->m_jStartAct[g] ; j <= m_ew->m_jEndAct[g] ; j++ )
 	    for( int i= m_ew->m_iStartAct[g] ; i <= m_ew->m_iEndAct[g] ; i++ )
-	       if( m_ew->mZ(i,j,1) < zmin )
-		  zmin = m_ew->mZ(i,j,1);
+	       if( m_ew->mZ[g](i,j,1) < zmin )
+		  zmin = m_ew->mZ[g](i,j,1);
 	 MPI_Allreduce( &zmin, &m_zmin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD );
       }
    }
@@ -145,7 +145,7 @@ void MaterialParCartesian::interpolate_parameters( int nmd, double* xmd, int nms
    double* lambdap=m_lambda.c_ptr();
    size_t ind =0;
    double rhmin=100000,mumin=100000,lamin=100000;
-   double rhmax=-100000,mumax=-100000,lamax=-100000; 
+   double rhmax=-100000,mumax=-100000,lamax=-100000;
    for( int k=1 ; k <= m_nz ; k++ )
       for( int j=1 ; j <= m_ny ; j++ )
 	 for( int i=1 ; i <= m_nx ; i++ )
@@ -285,6 +285,43 @@ void MaterialParCartesian::get_gradient( int nmd, double* xmd, int nms, double* 
 	    dfs[3*ind+2] = glambdap[indm];
 	    ind++;
 	 }
+}
+
+//-----------------------------------------------------------------------
+void MaterialParCartesian::interpolate_pseudohessian( int nmpars, double* phs,
+                                                      int nmpard, double* phm,
+                                                      vector<Sarray>& phgrid )
+{
+   int ig, jg, kg, g;
+   size_t ind=0;
+   for( int k=1 ; k <= m_nz ; k++ )
+      for( int j=1 ; j <= m_ny ; j++ )
+	 for( int i=1 ; i <= m_nx ; i++ )
+	 {
+            float_sw4 x = m_xmin + i*m_hx;
+	    float_sw4 y = m_ymin + j*m_hy;
+	    float_sw4 z = m_zmin + k*m_hz;
+            m_ew->computeNearestLowGridPoint( ig, jg, kg, g, x, y, z );
+            if( m_ew->interior_point_in_proc( ig, jg, g) )
+	    {
+               phs[ind*3  ] = phgrid[g](1,ig,jg,kg);
+               phs[ind*3+1] = phgrid[g](2,ig,jg,kg);
+               phs[ind*3+2] = phgrid[g](3,ig,jg,kg);
+            }
+            else
+            {
+               phs[ind*3  ] = 0;
+               phs[ind*3+1] = 0;
+               phs[ind*3+2] = 0;
+            }
+            ind++;
+         }
+   int npts = m_nx*m_ny*m_nz;
+   float_sw4* tmp =new float_sw4[3*npts];
+   for( int i=0 ; i < 3*npts ; i++ )
+      tmp[i] = phs[i];
+   MPI_Allreduce( tmp, phs, 3*npts, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   delete[] tmp;
 }
 
 //-----------------------------------------------------------------------

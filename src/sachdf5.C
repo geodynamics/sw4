@@ -78,7 +78,7 @@ int createAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id)
     return 1;
 }
 
-int createWriteAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id, void *data)
+int createWriteAttr(hid_t loc, char const *name, hid_t type_id, hid_t space_id, void *data)
 {
     hid_t attr, dcpl;
     herr_t ret;
@@ -304,6 +304,10 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   env = getenv("DISABLE_LUSTRE_STRIPE");
   if (env != NULL) 
       disablestripe = atoi(env);
+
+  // Cori Lustre has cscratch in path
+  if (path.find("cscratch") == std::string::npos) 
+      disablestripe = 1;
 
   // Set stripe parameters for time-series data
   if (disablestripe != 1) {

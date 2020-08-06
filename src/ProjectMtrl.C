@@ -433,12 +433,12 @@ void EW::material_correction( int nmpar, float_sw4* xm )
       float_sw4* mup = mMu[g].c_ptr();
       float_sw4* lap = mLambda[g].c_ptr();
 
-      if( topographyExists() && g == mNumberOfGrids-1 )
+      if( topographyExists() && g >= mNumberOfCartesianGrids )
       {
 	 // Curvilinear 
 	 projectmtrlc( ifirst,    ilast,    jfirst,    jlast,    kfirst,    klast,
 		       ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
-		       rhop, mup, lap, mDt, mMetric.c_ptr(), mJ.c_ptr(), mCFLmax, 
+		       rhop, mup, lap, mDt, mMetric[g].c_ptr(), mJ[g].c_ptr(), mCFLmax, 
 		       vsmin, rhoscale, muscale, lascale, info );
       }
       else
@@ -485,12 +485,12 @@ void EW::project_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
       float_sw4* mup  = a_mu[g].c_ptr();
       float_sw4* lap  = a_lambda[g].c_ptr();
 
-      if( topographyExists() && g == mNumberOfGrids-1 )
+      if( topographyExists() && g >= mNumberOfCartesianGrids )
       {
 	 // Curvilinear 
 	 projectmtrlc( ifirst,    ilast,    jfirst,    jlast,    kfirst,    klast,
 		       ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
-		       rhop, mup, lap, mDt, mMetric.c_ptr(), mJ.c_ptr(), mCFLmax, 
+		       rhop, mup, lap, mDt, mMetric[g].c_ptr(), mJ[g].c_ptr(), mCFLmax, 
 		       vsmin, rhoscale, muscale, lascale, infogrid );
       }
       else

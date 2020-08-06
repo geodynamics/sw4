@@ -130,6 +130,7 @@ public:
    int ncomp() const {return m_nc;}
    int npts() const  {return m_ni*m_nj*m_nk;}
    void copy( const Sarray& u );
+   float_sw4 absmax( int c=1 );
    float_sw4 maximum( int c=1 );
    float_sw4 minimum( int c=1 );
    float_sw4 sum( int c=1 );
@@ -142,14 +143,19 @@ public:
 
    void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, double* ar );
    void insert_subarray( int ib, int ie, int jb, int je, int kb, int ke, float* ar );
+   void insert_intersection( Sarray& a_U );
    void insert_subarrayIK( int ib, int ie, int jb, int je, int kb, int ke, float_sw4* ar );
    void copy_kplane( Sarray& u, int k );
+   void copy_kplane2( Sarray& u, int k );
    void assign( const float* ar, int corder );
    void assign(  const double* ar, int corder );
    void extract( double* ar, int corder );
    void assign( const float* ar );
    void assign( const double* ar );
    void transposeik();
+   void transposeij();
+   void extrapolij( int npts );
+   void swap12();
    void copy_to_device( EWCuda* cu, bool async=false, int st=0 );
    void copy_from_device( EWCuda* cu, bool async=false, int st=0 );
    void allocate_on_device( EWCuda* cu );
@@ -157,9 +163,8 @@ public:
    void page_unlock( EWCuda* cu );
    Sarray* create_copy_on_device( EWCuda* cu );
    void define_offsets();
-   void gaussian_smooth_v1(int width, float decay);
    void gaussian_smooth(int width, float decay);
-
+   void transform_coordsystem();
 //   void write( char* filename, CartesianProcessGrid* cartcomm, std::vector<float_sw4> pars );
    int m_nc, m_ni, m_nj, m_nk;
 private:

@@ -144,28 +144,29 @@ void RandomizedMaterial::perturb_velocities( int g, Sarray& cs, Sarray& cp,
       //      cout << "intersection, z lims grid block " << zmin << " " << zmax << endl;
       //      cout << "intersection, z lims rand block " << m_zmin << " " << m_zmax << endl;
   // Grid block intersects random material block
-      bool curvilinear = g == mEW->mNumberOfGrids-1 && mEW->topographyExists();
+      //      bool curvilinear = g == mEW->mNumberOfGrids-1 && mEW->topographyExists(); // NOT verified for several curvilinear grids
+      bool curvilinear = g >= mEW->mNumberOfCartesianGrids;
       // Interpolate to sw4 grid
       for( int k=mEW->m_kStartInt[g] ; k <= mEW->m_kEndInt[g] ; k++ )
 	 for( int j=mEW->m_jStartInt[g] ; j <= mEW->m_jEndInt[g] ; j++ )
 	    for( int i=mEW->m_iStartInt[g] ; i <= mEW->m_iEndInt[g] ; i++ )
 	    {
-		  float_sw4 x = (i-1)*h, y=(j-1)*h, z= zmin + (k-1)*h;
-		  if( curvilinear )
-		  {
-		     x = mEW->mX(i,j,k);
-		     y = mEW->mY(i,j,k);
-		     z = mEW->mZ(i,j,k);
-		  }
-		  if( m_zmin <= z && z <= m_zmax )
-		  {
-		     int ip = x/m_hh, jp=y/m_hh, kp=(z-m_zmin)/m_hv;
-		     if( ip >= mRndMaterial.m_ib && ip <= mRndMaterial.m_ie-1 &&
-			 jp >= mRndMaterial.m_jb && jp <= mRndMaterial.m_je-1 &&
-			 kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke-1 )
-		     {
-			float_sw4 wghi= (x-ip*m_hh)/m_hh, wghj=(y-jp*m_hh)/m_hh, wghk=(z-(m_zmin+kp*m_hv))/m_hv;
-			float_sw4 rndpert =(1-wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp)  + wghi*mRndMaterial(ip+1,jp,  kp))  +
+	       float_sw4 x = (i-1)*h, y=(j-1)*h, z= zmin + (k-1)*h;
+	       if( curvilinear )
+	       {
+		  x = mEW->mX[g](i,j,k);
+		  y = mEW->mY[g](i,j,k);
+		  z = mEW->mZ[g](i,j,k);
+	       }
+	       if( m_zmin <= z && z <= m_zmax )
+	       {
+	       int ip = x/m_hh, jp=y/m_hh, kp=(z-m_zmin)/m_hv;
+	       if( ip >= mRndMaterial.m_ib && ip <= mRndMaterial.m_ie-1 &&
+		   jp >= mRndMaterial.m_jb && jp <= mRndMaterial.m_je-1 &&
+		   kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke-1 )
+	       {
+		  float_sw4 wghi= (x-ip*m_hh)/m_hh, wghj=(y-jp*m_hh)/m_hh, wghk=(z-(m_zmin+kp*m_hv))/m_hv;
+		  float_sw4 rndpert =(1-wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp)  + wghi*mRndMaterial(ip+1,jp,  kp))  +
 					    (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp)  + wghi*mRndMaterial(ip+1,jp+1,kp))) +
 		     (wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp+1)+ wghi*mRndMaterial(ip+1,jp,  kp+1))+
 			     (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp+1)+ wghi*mRndMaterial(ip+1,jp+1,kp+1)));

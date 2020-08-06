@@ -144,7 +144,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          communicate_array( Km[g], g );
       cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
-      enforceBC( Km, a_Mu, a_Lambda, t-mDt, BCForcing );
+      enforceBC( Km, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
 
       time_measure[2] = MPI_Wtime();
 
@@ -169,7 +169,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          communicate_array( Km[g], g );
       //      cartesian_bc_forcing( t-mDt, BCForcing );
-      enforceBC( Km, a_Mu, a_Lambda, t-mDt, BCForcing );
+      enforceBC( Km, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
 
       // U-backward solution, predictor
       evalRHS( U, a_Mu, a_Lambda, Lk, AlphaVE );
@@ -178,7 +178,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          communicate_array( Um[g], g );
       cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
-      enforceBC( Um, a_Mu, a_Lambda, t-mDt, BCForcing );
+      enforceBC( Um, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
       
      // U-backward solution, corrector
       evalDpDmInTime( Up, U, Um, Uacc ); 
@@ -186,7 +186,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       // set boundary data on Uacc, from forward solver
       for( int g=0 ; g < mNumberOfGrids ; g++ )
 	 Upred_saved[g]->pop( Uacc[g], currentTimeStep );
-      enforceBC( Uacc, a_Mu, a_Lambda, t, BCForcing );
+      enforceBC( Uacc, a_Mu, a_Lambda, AlphaVEm, t, BCForcing );
 
       evalRHS( Uacc, a_Mu, a_Lambda, Lk, AlphaVEm );
       Force_tt( t, F, point_sources, identsources );
@@ -199,7 +199,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          communicate_array( Um[g], g );
       cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
-      enforceBC( Um, a_Mu, a_Lambda, t-mDt, BCForcing );
+      enforceBC( Um, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
 
       time_measure[5] = MPI_Wtime();
 

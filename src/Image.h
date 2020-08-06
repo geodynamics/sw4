@@ -88,8 +88,8 @@ void computeImageQuantity(std::vector<Sarray> &a_mu, int a_nComp);
 void computeImagePvel(std::vector<Sarray> &mu, std::vector<Sarray> &lambda,
 		      std::vector<Sarray> &rho );
 void computeImageSvel(std::vector<Sarray> &mu, std::vector<Sarray> &rho );
-void computeImageGrid( Sarray &a_X, Sarray &a_Y, Sarray &a_Z );
-void computeImageLatLon( Sarray &a_X, Sarray &a_Y, Sarray &a_Z );
+   void computeImageGrid( std::vector<Sarray> &a_X, std::vector<Sarray> &a_Y, std::vector<Sarray> &a_Z );
+   void computeImageLatLon( std::vector<Sarray> &a_X, std::vector<Sarray> &a_Y, std::vector<Sarray> &a_Z );
 void computeImageDivCurl( std::vector<Sarray> &a_Up, std::vector<Sarray>& a_U,
 			  std::vector<Sarray> &a_Um, float_sw4 dt, int dminus );
 void computeImageMagdt( std::vector<Sarray> &a_Up, std::vector<Sarray> &a_Um, float_sw4 dt );
@@ -128,6 +128,9 @@ void writeImagePlane_2(int cycle, std::string &a_path, float_sw4 time );
 void add_grid_filenames_to_file( const char* fname );
 void add_grid_to_file( const char* fname, bool iwrite, size_t offset );
 void add_grid_to_file_hdf5( const char* fname, bool iwrite, size_t offset );
+
+// several curvilinear grids (MR)
+void add_grids_to_file( const char* fname, bool iwrite, size_t offset );
 
 bool plane_in_proc(int a_gridIndexCoarsest);
 void initializeIO();

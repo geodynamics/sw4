@@ -223,6 +223,43 @@ void MaterialParAllpts::get_gradient( int nmd, double* xmd, int nms, double* xms
 
 }
 
+//-----------------------------------------------------------------------
+void MaterialParAllpts::interpolate_pseudohessian( int nmpars, double* phs, 
+                                                   int nmpard, double* phm, 
+                                                   vector<Sarray>& phgrid )
+{
+   size_t gp, ind;
+   for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
+   {
+      if( g == 0 )
+	 gp = 0;
+      else
+	 gp = gp + m_nc*ind;
+      ind =0;
+      for( int k=m_ew->m_kStartAct[g]; k <= m_ew->m_kEndAct[g]; k++ )
+	 for( int j=m_ew->m_jStartAct[g]; j <= m_ew->m_jEndAct[g]; j++ )
+	    for( int i=m_ew->m_iStartAct[g]; i <= m_ew->m_iEndAct[g]; i++ )
+            {
+               if(  m_variables == RML || m_variables == RCSCP )
+               {
+                  phm[gp+ind*3  ] = phgrid[g](1,i,j,k);
+                  phm[gp+ind*3+1] = phgrid[g](2,i,j,k);
+                  phm[gp+ind*3+2] = phgrid[g](3,i,j,k);
+               }
+               else if( m_variables == CSCP )
+               {
+                  phm[gp+ind*2  ] = phgrid[g](2,i,j,k);
+                  phm[gp+ind*2+1] = phgrid[g](3,i,j,k);
+               }
+               else if( m_variables == CP )
+               {
+                  phm[gp+ind] = phgrid[g](3,i,j,k);
+               }
+               ind++;
+            }
+   }
+}
+
 ////-----------------------------------------------------------------------
 //void MaterialParAllpts::perturb_material( int ip, int jp, int kp, int grid,
 //					  int var, double h, double* xs, double* xm )
@@ -635,4 +672,19 @@ void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* 
 	 dmfd_reg[i] *= regcoeff*inpts;
    }
 #undef SQR
+}
+
+//-----------------------------------------------------------------------
+int MaterialParAllpts::get_varcase()
+{
+   if( m_variables == RML )
+      return 1;
+   else if( m_variables == RCSCP )
+      return 2;
+   else if( m_variables == CSCP )
+      return 3;
+   else if( m_variables == CP )
+      return 4;
+   else
+      return 0;
 }

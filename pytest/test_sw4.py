@@ -116,7 +116,7 @@ def compare_energy(test_file_name, errTol, verbose):
     return success
 
 #------------------------------------------------
-def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
+def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     if verbose: print('os.uname=', os.uname())
     node_name = os.uname()[1]
     if verbose: print('node_name=', node_name)
@@ -129,7 +129,10 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
         if mpi_tasks<=0: mpi_tasks = int(36/omp_threads)
         # the following setting is needed to combine h5py and subprocess.run on LC
         os.environ["PSM2_DEVICES"] = ""
-        mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks) + " -c " + str(omp_threads)
+        if cpu_allocation == "":
+           mpirun_cmd="srun -ppdebug " + " -n " + str(mpi_tasks) + " -c " + str(omp_threads)
+        else:
+           mpirun_cmd="srun -ppdebug " + " -A " + cpu_allocation + " -n " + str(mpi_tasks) + " -c " + str(omp_threads)
     elif 'cab' in node_name:
         if omp_threads<=0: omp_threads=2;
         if mpi_tasks<=0: mpi_tasks = int(16/omp_threads)
@@ -167,8 +170,8 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
     return mpirun_cmd
 
 #------------------------------------------------
+def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mpi_tasks=0, omp_threads=0, cpu_allocation="", verbose=False, nohdf5=False):
 
-def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mpi_tasks=0, omp_threads=0, verbose=False, nohdf5=False):
     assert sys.version_info >= (3,5) # named tuples in Python version >=3.3
 
     sep = '/'
@@ -208,7 +211,7 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
         return False
 
     # guess the mpi run command from the uname info
-    mpirun_cmd=guess_mpi_cmd(mpi_tasks, omp_threads, verbose)
+    mpirun_cmd=guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose)
 
     sw4_mpi_run = mpirun_cmd + ' ' + sw4_exe
     if (omp_threads>0):
@@ -219,17 +222,24 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
     num_test=0
     num_pass=0
     num_fail=0
+    all_dirs = ['energy', 'energy', 'energy', 'energy',
+                'meshrefine', 'meshrefine', 'meshrefine',
+                'attenuation', 'attenuation', 'pointsource',
+                'twilight', 'twilight', 'lamb',
+                'curvimeshrefine', 'curvimeshrefine', 'curvimeshrefine','curvimeshrefine',
+                'hdf5']
 
-    all_dirs = ['energy', 'energy', 'energy', 'energy', 'meshrefine', 'meshrefine', 'meshrefine', 'attenuation', 'attenuation', 'pointsource', 'twilight', 'twilight', 'lamb', 'hdf5']
-    all_cases = ['energy-nomr-2nd', 'energy-mr-4th', 'energy-mr-sg-order2', 'energy-mr-sg-order4', 'refine-el', 'refine-att', 'refine-att-2nd', 'tw-att', 'tw-topo-att', 'pointsource-sg', 'flat-twi', 'gauss-twi', 'lamb', 'loh1-h100-mr-hdf5']
-    all_results =['energy.log', 'energy.log', 'energy.log', 'energy.log', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'PointSourceErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt', 'hdf5.log']
-    num_meshes =[1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 1, 1] # default number of meshes for level 0
+    all_cases = ['energy-nomr-2nd', 'energy-mr-4th', 'energy-mr-sg-order2', 'energy-mr-sg-order4', 'refine-el', 'refine-att', 'refine-att-2nd', 'tw-att', 'tw-topo-att', 'pointsource-sg', 'flat-twi', 'gauss-twi', 'lamb','gausshill-el','gauss-sg-mr','energy','gausshill-att','loh1-h100-mr-hdf5']
+    
+    all_results =['energy.log', 'energy.log', 'energy.log', 'energy.log', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'PointSourceErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt','TwilightErr.txt','TwilightErr.txt','energy.log','TwilightErr.txt','hdf5.log']
+    num_meshes =[1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1] # default number of meshes for level 0
 
     # add more tests for higher values of the testing level
     if testing_level == 1:
-        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 2, 2, 3, 3, 2, 1]
+        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 2, 2, 3, 3, 2, 2, 2, 1, 2, 1]
     elif testing_level == 2:
-        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 1]
+        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 1]
+
     
     print("Running all tests for level", testing_level, "...")
     # run all tests
@@ -314,7 +324,16 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
 
             if result_file == 'hdf5.log':
                 import verify_hdf5
-                success = verify_hdf5.verify(pytest_dir, 1e-5)
+                success = True
+                sw4_stdout_file = open(case_dir + '.out', 'r')
+                for line in sw4_stdout_file:
+                    if "not compiled with HDF5" in line or "without sw4 compiled with HDF5" in line:
+                        success = False
+                        print('SW4 is not compiled with HDF5 library!')
+                        break;
+                sw4_stdout_file.close()
+                if success == True:
+                    success = verify_hdf5.verify(pytest_dir, 1e-5)
                 if success == False:
                     print('HDF5 test failed! (disable HDF5 test with -n option)')
             elif result_file == 'energy.log':
@@ -351,6 +370,7 @@ if __name__ == "__main__":
     nohdf5=False
     mpi_tasks=0 # machine dependent default
     omp_threads=0 #no threading by default
+    cpu_allocation=""
 
     parser=argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
@@ -361,6 +381,7 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--sw4_exe_dir", help="name of directory for sw4 executable", default="optimize_mp")
     parser.add_argument("-p", "--pytest_dir", help="full path to the directory of pytest (/path/sw4/pytest)", default="none")
     parser.add_argument("-n", "--nohdf5", help="disable HDF5 test", action="store_true")
+    parser.add_argument("-A","--cpu_allocation", help="name of cpu bank/allocation",default="")
     args = parser.parse_args()
     if args.nohdf5:
         #print("HDF5 test disabled")
@@ -383,7 +404,10 @@ if __name__ == "__main__":
     if args.sw4_exe_dir:
         #print("sw4_exe_dir specified=", args.sw4_exe_dir)
         sw4_exe_dir=args.sw4_exe_dir
+    if args.cpu_allocation:
+        #print("cpu_allocation specified=", args.cpu_allocation)
+        cpu_allocation=args.cpu_allocation
 
-    if not main_test(sw4_exe_dir, pytest_dir, testing_level, mpi_tasks, omp_threads, verbose, nohdf5):
+    if not main_test(sw4_exe_dir, pytest_dir, testing_level, mpi_tasks, omp_threads, cpu_allocation, verbose, nohdf5):
         print("test_sw4 was unsuccessful")
 

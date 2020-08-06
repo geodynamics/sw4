@@ -49,13 +49,13 @@ MaterialParCartesianVp::MaterialParCartesianVp( EW* a_ew, int nx, int ny, int nz
          m_zmax = zmax;
   // z decreases when g increases, so zmin is always smallest on the last grid:
       m_zmin = m_ew->m_zmin[g];
-      if( m_ew->topographyExists() && g == m_ew->mNumberOfGrids-1 )
+      if( m_ew->topographyExists() && g >= m_ew->mNumberOfCartesianGrids )
       {
          zmin = 1e38;
 	 for( int j= m_ew->m_jStartAct[g] ; j <= m_ew->m_jEndAct[g] ; j++ )
 	    for( int i= m_ew->m_iStartAct[g] ; i <= m_ew->m_iEndAct[g] ; i++ )
-	       if( m_ew->mZ(i,j,1) < zmin )
-		  zmin = m_ew->mZ(i,j,1);
+	       if( m_ew->mZ[g](i,j,1) < zmin )
+		  zmin = m_ew->mZ[g](i,j,1);
 	 MPI_Allreduce( &zmin, &m_zmin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD );
       }
    }
@@ -315,6 +315,35 @@ void MaterialParCartesianVp::get_gradient( int nmd, double* xmd, int nms, double
 	    dfs[ind] = glambdap[indm]+gmup[indm]/m_ratio+cof*grhop[indm]*m_gamma;
 	    ind++;
 	 }
+}
+
+//-----------------------------------------------------------------------
+void MaterialParCartesianVp::interpolate_pseudohessian( int nmpars, double* phs,
+                                                        int nmpard, double* phm,
+                                                        vector<Sarray>& phgrid )
+{
+   int ig, jg, kg, g;
+   size_t ind=0;
+   for( int k=1 ; k <= m_nz ; k++ )
+      for( int j=1 ; j <= m_ny ; j++ )
+	 for( int i=1 ; i <= m_nx ; i++ )
+	 {
+            float_sw4 x = m_xmin + i*m_hx;
+	    float_sw4 y = m_ymin + j*m_hy;
+	    float_sw4 z = m_zmin + k*m_hz;
+            m_ew->computeNearestLowGridPoint( ig, jg, kg, g, x, y, z );
+            if( m_ew->interior_point_in_proc( ig, jg, g) )
+               phs[ind  ] = phgrid[g](3,ig,jg,kg);
+            else
+               phs[ind]=0;
+            ind++;
+         }
+   int npts = m_nx*m_ny*m_nz;
+   float_sw4* tmp =new float_sw4[npts];
+   for( int i=0 ; i < npts ; i++ )
+      tmp[i] = phs[i];
+   MPI_Allreduce( tmp, phs, npts, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   delete[] tmp;
 }
 
 //-----------------------------------------------------------------------

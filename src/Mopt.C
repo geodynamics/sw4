@@ -10,6 +10,7 @@
 
 #include "EW.h"
 
+#include "SfileOutput.h"
 #include "Mopt.h"
 
 //-----------------------------------------------------------------------
@@ -46,6 +47,7 @@ Mopt::Mopt( EW* a_ew )
    m_output_ts = false;
    m_test_regularizer = false;
    m_do_profiling = false;
+   m_use_pseudohessian = false;
    m_tolerance = 1e-12;
    m_var    = 0;
    m_var2   = 0;
@@ -113,6 +115,8 @@ bool Mopt::parseInputFileOpt( std::string filename )
 	    processMimage( buffer, false);
 	 else if (startswith("m3dimage", buffer))
 	   processM3Dimage(buffer);
+	 else if (startswith("sfileoutput", buffer))
+	   processSfileoutput(buffer);
          else if( startswith("mtypx",buffer) )
 	    processMtypx( buffer );
          else if( startswith("fileio",buffer) )
@@ -388,6 +392,13 @@ void Mopt::processMrun( char* buffer )
 	 int n = strlen(token);
 	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 )
 	    m_do_profiling = true;
+      }
+      else if( startswith("pseudohessian=",token) )
+      {
+         token += 14;
+	 int n = strlen(token);
+	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 )
+	    m_use_pseudohessian = true;
       }
       else
          badOption("mrun",token);
@@ -967,6 +978,107 @@ void Mopt::processMimage( char* buffer, bool use_hdf5)
 }
 
 //-----------------------------------------------------------------------
+void Mopt::processSfileoutput( char* buffer )
+{
+   int cycle=0, cycleInterval=0;
+   int sampleFactorV = 1;
+   int sampleFactorH = 1;
+   float_sw4 time=0.0, timeInterval=0.0;
+   bool timingSet = false;
+   float_sw4 tStart = -999.99;
+   string filePrefix="sfileoutput";
+   bool use_double = false;
+  
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("sfileoutput", token) == 0, "ERROR: Not a sfileoutput line...: " << token );
+
+   token = strtok(NULL, " \t");
+   string err = "sfileoutput Error: ";
+   while (token != NULL)
+   {
+     // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+	 // Ignore commented lines and lines with just a space.
+	 break;
+      /* if (startswith("time=", token) ) */
+      /* { */
+	 /* token += 5; // skip time= */
+	 /* CHECK_INPUT( atof(token) >= 0.,"Processing sfileoutput command: time must be a non-negative number, not: " << token); */
+	 /* time = atof(token); */
+	 /* timingSet = true; */
+      /* } */
+      /* else if (startswith("timeInterval=", token) ) */
+      /* { */
+	 /* token += 13; // skip timeInterval= */
+	 /* CHECK_INPUT( atof(token) >= 0.,"Processing sfileoutput command: timeInterval must be a non-negative number, not: " << token); */
+	 /* timeInterval = atof(token); */
+	 /* timingSet = true; */
+      /* } */
+      /* else if (startswith("startTime=", token) ) */
+      /* { */
+	 /* token += 10; // skip startTime= */
+	 /* tStart = atof(token); */
+      /* } */
+      else if (startswith("sampleFactorH=", token) )
+      {
+	 token += 14; 
+	 CHECK_INPUT( atoi(token) >= 1,"Processing sfileoutput command: sampleFactorH must be a positive integer, not: " << token);
+	 sampleFactorH = atoi(token);
+      }
+      else if (startswith("sampleFactorV=", token) )
+      {
+	 token += 14; 
+	 CHECK_INPUT( atoi(token) >= 1,"Processing sfileoutput command: sampleFactorV must be a positive integer, not: " << token);
+	 sampleFactorV= atoi(token);
+      }
+      else if (startswith("sampleFactor=", token) )
+      {
+	 token += 13; 
+	 CHECK_INPUT( atoi(token) >= 1,"Processing sfileoutput command: sampleFactor must be a positive integer, not: " << token);
+	 sampleFactorH = sampleFactorV = atoi(token);
+      }
+      /* else if (startswith("cycle=", token) ) */
+      /* { */
+	 /* token += 6; // skip cycle= */
+	 /* CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: cycle must be a non-negative integer, not: " << token); */
+	 /* cycle = atoi(token); */
+	 /* timingSet = true; */
+      /* } */
+      /* else if (startswith("cycleInterval=", token) ) */
+      /* { */
+	 /* token += 14; // skip cycleInterval= */
+	 /* CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: cycleInterval must be a non-negative integer, not: " << token); */
+	 /* cycleInterval = atoi(token); */
+	 /* timingSet = true; */
+      /* } */
+      else if (startswith("file=", token))
+      {
+	 token += 5; // skip file=
+	 filePrefix = token;
+      }
+      else if( startswith("precision=",token) )
+      {
+	 token += 10;
+	 CHECK_INPUT( startswith("double",token) || startswith("float",token),
+		      "Processing sfileoutput command: precision must be float or double, not '" << token );
+	 use_double =  startswith("double",token);
+      }
+      else
+      {
+	 badOption("sfileoutput", token);
+      }
+      token = strtok(NULL, " \t");
+   }
+
+   SfileOutput* sfile = new SfileOutput( m_ew, time, timeInterval, cycle, cycleInterval, 
+     		       tStart, filePrefix, sampleFactorH, sampleFactorV, use_double);
+   sfile->setup_images( );
+   m_sfiles.push_back(sfile);
+}
+
+
+
+//-----------------------------------------------------------------------
 void Mopt::processM3Dimage( char* buffer )
 {
    int iter=-1, iterInterval=0;
@@ -1123,4 +1235,28 @@ void Mopt::set_typx( int nmpar, double* sf, double* typx )
       else
 	 typx[i+2] = m_lambdasffactor*sf[i+2];
    }
+}
+
+//-----------------------------------------------------------------------
+void Mopt::init_pseudohessian( vector<Sarray>& ph )
+{
+   if( m_use_pseudohessian )
+   {
+      for( int g=0 ; g < m_ew->mNumberOfCartesianGrids ; g++ )
+      {
+         ph[g].define(3,m_ew->m_iStart[g],m_ew->m_iEnd[g],
+                        m_ew->m_jStart[g],m_ew->m_jEnd[g],
+                        m_ew->m_kStart[g],m_ew->m_kEnd[g] );
+         ph[g].set_to_zero();
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
+int Mopt::get_pseudo_hessian_case( )
+{
+   if( m_use_pseudohessian )
+      return m_mp->get_varcase();
+   else
+      return 0;
 }
