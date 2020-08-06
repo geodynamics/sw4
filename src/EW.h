@@ -45,6 +45,7 @@
 #include "CheckPoint.h"
 #include "DataPatches.h"
 #include "ESSI3D.h"
+#include "SfileOutput.h"
 #include "EtreeFile.h"
 #include "Filter.h"
 #include "ForcingTwilight.h"
@@ -96,6 +97,8 @@ class EW {
   // int getNumberOfSteps() const;
   int getNumberOfSteps(int event = 0) const;
   int getNumberOfEvents() const;
+  float_sw4 getGlobalZmin() { return m_global_zmin; }
+  float_sw4 getGlobalZmax() { return m_global_zmax; }
   int findNumberOfEvents();
 
   void setupRun(vector<vector<Source*>>& a_GlobalUniqueSources);
@@ -147,6 +150,7 @@ class EW {
   void processImage(char* buffer, bool usehdf5);
   void processImage3D(char* buffer);
   void processESSI3D(char* buffer);
+  void processSfileOutput(char* buffer);
   void deprecatedImageMode(int value, const char* name) const;
   void processTestPointSource(char* buffer);
   void processTestRayleigh(char* buffer);
@@ -456,6 +460,8 @@ class EW {
   void setup_attenuation_relaxation(float_sw4 minvsoh);
   void setup_viscoelastic();
   void setup_viscoelastic_tw();
+  void reverse_setup_viscoelastic();
+  void *use_twilight_forcing() { return m_twilight_forcing;};
 
   void extrapolateInZ(int g, Sarray& field, bool lowk, bool highk);
   void extrapolateInXY(vector<Sarray>& field);
@@ -467,6 +473,7 @@ class EW {
   void addImage(Image* i);
   void addImage3D(Image3D* i);
   void addESSI3D(ESSI3D* i);
+  void addSfileOutput(SfileOutput* i);
   void setIO_timing(bool iotiming);
   void setParallel_IO(bool pfs, int nwriters);
 
@@ -1777,6 +1784,7 @@ class EW {
   vector<Image*> mImageFiles;
   vector<Image3D*> mImage3DFiles;
   vector<ESSI3D*> mESSI3DFiles;
+  vector<SfileOutput*> mSfiles;
   bool m_iotiming;
 
   // time data

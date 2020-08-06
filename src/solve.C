@@ -44,6 +44,7 @@
 
 #ifdef USE_HDF5
 #include "sachdf5.h"
+#include "SfileOutput.h"
 #endif
 
 void curvilinear4sgwind(int, int, int, int, int, int, int, int, float_sw4*,
@@ -1304,6 +1305,15 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   if (m_myRank == 0)
     cout << "  ==> Max wallclock time to write images is " << all_total_time
          << " seconds." << endl;
+  // Write sfile after time stepping
+  // reverse setup_viscoelastic when needed
+  if ( usingAttenuation() && NULL == use_twilight_forcing() )
+    reverse_setup_viscoelastic();
+
+  for( int ii = 0 ; ii < mSfiles.size() ; ii++ )
+    mSfiles[ii]->force_write_image( t, mNumberOfTimeSteps[event], Up, mRho, 
+            mMu, mLambda, mRho, mMu, mLambda, mQp, mQs, mPath[event], mZ ); 
+
 #endif
 
   print_execution_time(time_start_solve, time_end_solve, "solver phase");
