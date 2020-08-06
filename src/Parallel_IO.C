@@ -1184,7 +1184,6 @@ void Parallel_IO::write_array_hdf5( const char *fname, const char *gname, const 
    int b, i, mxsize, ii, jj, kk, c, niblock, njblock, nkblock;
    int il, jl, kl, tag, myid, retcode, gproc, ret;
    hsize_t ind, ptr, offset, count, roffsets[3] = {0,0,0};
-   off_t sizew;
    MPI_Status status;
    MPI_Request* req;
    double* rbuf, *ribuf;
@@ -2053,7 +2052,7 @@ void Parallel_IO::read_array( int* fid, int nc, float_sw4* array, off_t pos0,
 	 if( sizew == -1 )
 	 {
 	    int eno = errno;
-	    cout << "Error in write_array: could not go to write start position" << endl;
+	    cout << "Error in read_array: could not go to read start position" << endl;
 	    if( eno == EBADF )
 	       cout << "errno = EBADF" << endl;
 	    if( eno == EINVAL )
@@ -2076,7 +2075,6 @@ void Parallel_IO::read_array( int* fid, int nc, float_sw4* array, off_t pos0,
             cout << "m_irecv.m_ncomm[0] = " << m_irecv.m_ncomm[0] << endl;
 	    //	    MPI_Abort(MPI_COMM_WORLD,1);
 	 }
-
       }
 
       tag = 334;
