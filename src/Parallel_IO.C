@@ -1183,7 +1183,8 @@ void Parallel_IO::write_array_hdf5( const char *fname, const char *gname, const 
    int i1, i2, j1, j2, k1, k2, nsi, nsj, nsk, nri, nrj, nrk;
    int b, i, mxsize, ii, jj, kk, c, niblock, njblock, nkblock;
    int il, jl, kl, tag, myid, retcode, gproc, ret;
-   hsize_t ind, ptr, sizew, offset, count, roffsets[3] = {0,0,0};
+   hsize_t ind, ptr, offset, count, roffsets[3] = {0,0,0};
+   off_t sizew;
    MPI_Status status;
    MPI_Request* req;
    double* rbuf, *ribuf;
@@ -1953,7 +1954,8 @@ void Parallel_IO::read_array( int* fid, int nc, float_sw4* array, off_t pos0,
    int i1, i2, j1, j2, k1, k2, nsi, nsj, nsk, nri, nrj, nrk;
    int b, i, mxsize, ii, jj, kk, c, niblock, njblock, nkblock;
    int il, jl, kl, tag, myid, retcode, gproc, s;
-   size_t ind, ptr, sizew;
+   size_t ind, ptr;
+   off_t sizew;
    MPI_Status status;
    MPI_Request* req;
 
