@@ -492,7 +492,7 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
       else if (startswith("rfile", buffer))
         processMaterialRfile(buffer);
       else if (startswith("sfileoutput", buffer))
-          processSfileOutput(buffer);
+        processSfileOutput(buffer);
       else if (startswith("sfile", buffer))
         processMaterialSfile(buffer);
       else if (startswith("vimaterial", buffer))
@@ -3275,106 +3275,111 @@ void EW::processMaterial(char* buffer) {
 }
 
 //-----------------------------------------------------------------------
-void EW::processSfileOutput( char* buffer )
-{
-   int cycle=-1, cycleInterval=0;
-   int sampleFactorH = 1;
-   int sampleFactorV = 1;
-   float_sw4 time=0.0, timeInterval=0.0;
-   /* bool timingSet = false; */
-   float_sw4 tStart = -999.99;
-   string filePrefix="sfileoutput";
-   bool use_double = false;
-  
-   char* token = strtok(buffer, " \t");
-   CHECK_INPUT(strcmp("sfileoutput", token) == 0, "ERROR: Not a sfileoutput line...: " << token );
+void EW::processSfileOutput(char* buffer) {
+  int cycle = -1, cycleInterval = 0;
+  int sampleFactorH = 1;
+  int sampleFactorV = 1;
+  float_sw4 time = 0.0, timeInterval = 0.0;
+  /* bool timingSet = false; */
+  float_sw4 tStart = -999.99;
+  string filePrefix = "sfileoutput";
+  bool use_double = false;
 
-   token = strtok(NULL, " \t");
-   string err = "sfileoutput Error: ";
-   while (token != NULL)
-   {
-     // while there are tokens in the string still
-      if (startswith("#", token) || startswith(" ", buffer))
-	 // Ignore commented lines and lines with just a space.
-	 break;
-      /* if (startswith("time=", token) ) */
-      /* { */
-	 /* token += 5; // skip time= */
-	 /* CHECK_INPUT( atof(token) >= 0.,"Processing sfileoutput command: time must be a non-negative number, not: " << token); */
-	 /* time = atof(token); */
-	 /* timingSet = true; */
-      /* } */
-      /* else if (startswith("timeInterval=", token) ) */
-      /* { */
-	 /* token += 13; // skip timeInterval= */
-	 /* CHECK_INPUT( atof(token) >= 0.,"Processing sfileoutput command: timeInterval must be a non-negative number, not: " << token); */
-	 /* timeInterval = atof(token); */
-	 /* timingSet = true; */
-      /* } */
-      /* else if (startswith("startTime=", token) ) */
-      /* { */
-	 /* token += 10; // skip startTime= */
-	 /* tStart = atof(token); */
-      /* } */
-      else if (startswith("sampleFactorH=", token) )
-      {
-	 token += 14; 
-	 CHECK_INPUT( atoi(token) >= 1,"Processing sfileoutput command: sampleFactorH must be a positive integer, not: " << token);
-	 sampleFactorH = atoi(token);
-      }
-      else if (startswith("sampleFactorV=", token) )
-      {
-	 token += 14; 
-	 CHECK_INPUT( atoi(token) >= 1,"Processing sfileoutput command: sampleFactorV must be a positive integer, not: " << token);
-	 sampleFactorV= atoi(token);
-      }
-      else if (startswith("sampleFactor=", token) )
-      {
-	 token += 13; 
-	 CHECK_INPUT( atoi(token) >= 1,"Processing sfileoutput command: sampleFactor must be a positive integer, not: " << token);
-	 sampleFactorH = sampleFactorV = atoi(token);
-      }
-      /* else if (startswith("cycle=", token) ) */
-      /* { */
-	 /* token += 6; // skip cycle= */
-	 /* CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: cycle must be a non-negative integer, not: " << token); */
-	 /* cycle = atoi(token); */
-	 /* timingSet = true; */
-      /* } */
-      /* else if (startswith("cycleInterval=", token) ) */
-      /* { */
-	 /* token += 14; // skip cycleInterval= */
-	 /* CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: cycleInterval must be a non-negative integer, not: " << token); */
-	 /* cycleInterval = atoi(token); */
-	 /* timingSet = true; */
-      /* } */
-      else if (startswith("file=", token))
-      {
-	 token += 5; // skip file=
-	 filePrefix = token;
-      }
-      else if( startswith("precision=",token) )
-      {
-	 token += 10;
-	 CHECK_INPUT( startswith("double",token) || startswith("float",token),
-		      "Processing sfileoutput command: precision must be float or double, not '" << token );
-	 use_double =  startswith("double",token);
-      }
-      else
-      {
-	 badOption("sfileoutput", token);
-      }
-      token = strtok(NULL, " \t");
-   }
+  char* token = strtok(buffer, " \t");
+  CHECK_INPUT(strcmp("sfileoutput", token) == 0,
+              "ERROR: Not a sfileoutput line...: " << token);
 
-   if( !m_inverse_problem)
-   {
-      /* CHECK_INPUT( timingSet, "Processing sfileoutput command: " << */ 
-		   /* "at least one timing mechanism must be set: cycle, time, cycleInterval or timeInterval"  << endl ); */
-      SfileOutput* sfile = new SfileOutput( this, time, timeInterval, cycle, cycleInterval, 
- 			       tStart, filePrefix, sampleFactorH, sampleFactorV, use_double);
-      addSfileOutput( sfile );
-   }
+  token = strtok(NULL, " \t");
+  string err = "sfileoutput Error: ";
+  while (token != NULL) {
+    // while there are tokens in the string still
+    if (startswith("#", token) || startswith(" ", buffer))
+      // Ignore commented lines and lines with just a space.
+      break;
+    /* if (startswith("time=", token) ) */
+    /* { */
+    /* token += 5; // skip time= */
+    /* CHECK_INPUT( atof(token) >= 0.,"Processing sfileoutput command: time must
+     * be a non-negative number, not: " << token); */
+    /* time = atof(token); */
+    /* timingSet = true; */
+    /* } */
+    /* else if (startswith("timeInterval=", token) ) */
+    /* { */
+    /* token += 13; // skip timeInterval= */
+    /* CHECK_INPUT( atof(token) >= 0.,"Processing sfileoutput command:
+     * timeInterval must be a non-negative number, not: " << token); */
+    /* timeInterval = atof(token); */
+    /* timingSet = true; */
+    /* } */
+    /* else if (startswith("startTime=", token) ) */
+    /* { */
+    /* token += 10; // skip startTime= */
+    /* tStart = atof(token); */
+    /* } */
+    else if (startswith("sampleFactorH=", token)) {
+      token += 14;
+      CHECK_INPUT(atoi(token) >= 1,
+                  "Processing sfileoutput command: sampleFactorH must be a "
+                  "positive integer, not: "
+                      << token);
+      sampleFactorH = atoi(token);
+    } else if (startswith("sampleFactorV=", token)) {
+      token += 14;
+      CHECK_INPUT(atoi(token) >= 1,
+                  "Processing sfileoutput command: sampleFactorV must be a "
+                  "positive integer, not: "
+                      << token);
+      sampleFactorV = atoi(token);
+    } else if (startswith("sampleFactor=", token)) {
+      token += 13;
+      CHECK_INPUT(atoi(token) >= 1,
+                  "Processing sfileoutput command: sampleFactor must be a "
+                  "positive integer, not: "
+                      << token);
+      sampleFactorH = sampleFactorV = atoi(token);
+    }
+    /* else if (startswith("cycle=", token) ) */
+    /* { */
+    /* token += 6; // skip cycle= */
+    /* CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: cycle
+       must be a non-negative integer, not: " << token); */
+    /* cycle = atoi(token); */
+    /* timingSet = true; */
+    /* } */
+    /* else if (startswith("cycleInterval=", token) ) */
+    /* { */
+    /* token += 14; // skip cycleInterval= */
+    /* CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command:
+       cycleInterval must be a non-negative integer, not: " << token); */
+    /* cycleInterval = atoi(token); */
+    /* timingSet = true; */
+    /* } */
+    else if (startswith("file=", token)) {
+      token += 5;  // skip file=
+      filePrefix = token;
+    } else if (startswith("precision=", token)) {
+      token += 10;
+      CHECK_INPUT(startswith("double", token) || startswith("float", token),
+                  "Processing sfileoutput command: precision must be float or "
+                  "double, not '"
+                      << token);
+      use_double = startswith("double", token);
+    } else {
+      badOption("sfileoutput", token);
+    }
+    token = strtok(NULL, " \t");
+  }
+
+  if (!m_inverse_problem) {
+    /* CHECK_INPUT( timingSet, "Processing sfileoutput command: " << */
+    /* "at least one timing mechanism must be set: cycle, time, cycleInterval or
+     * timeInterval"  << endl ); */
+    SfileOutput* sfile =
+        new SfileOutput(this, time, timeInterval, cycle, cycleInterval, tStart,
+                        filePrefix, sampleFactorH, sampleFactorV, use_double);
+    addSfileOutput(sfile);
+  }
 }
 
 //-----------------------------------------------------------------------
@@ -3521,118 +3526,101 @@ void EW::processImage3D(char* buffer) {
 }
 
 //-----------------------------------------------------------------------
-void EW::processESSI3D( char* buffer )
-{
-   int dumpInterval=-1;
-   string filePrefix="essioutput";
-   float_sw4 coordValue;
-   float_sw4 coordBox[4];
-   const float_sw4 zero=0.0;
-   int precision = 8;
-   
-   // Default is whole domain
-   coordBox[0] = zero;
-   coordBox[1] = m_global_xmax;
-   coordBox[2] = zero;
+void EW::processESSI3D(char* buffer) {
+  int dumpInterval = -1;
+  string filePrefix = "essioutput";
+  float_sw4 coordValue;
+  float_sw4 coordBox[4];
+  const float_sw4 zero = 0.0;
+  int precision = 8;
 
-   coordBox[3] = m_global_ymax;
-   float_sw4 depth = -999.99; // default not specified
+  // Default is whole domain
+  coordBox[0] = zero;
+  coordBox[1] = m_global_xmax;
+  coordBox[2] = zero;
 
-   char* token = strtok(buffer, " \t");
-   CHECK_INPUT(strcmp("essioutput", token) == 0, "ERROR: Not a essioutput line...: " << token );
+  coordBox[3] = m_global_ymax;
+  float_sw4 depth = -999.99;  // default not specified
 
-   token = strtok(NULL, " \t");
-   string err = "essioutput Error: ";
-   while (token != NULL)
-   {
-     // while there are tokens in the string still
-      if (startswith("#", token) || startswith(" ", buffer))
-         // Ignore commented lines and lines with just a space.
-         break;
-      else if (startswith("file=", token))
-      {
-         token += 5; // skip file=
-         filePrefix = token;
-      }
-      else if (startswith("dumpInterval=", token))
-      {
-          token += 13; // skip dumpInterval=
-          dumpInterval = atoi(token);
-      }
-      else if (startswith("xmin=", token))
-      {
-          token += 5; // skip xmin=
-          coordValue = atof(token);
-          coordBox[0] = min(m_global_xmax, coordValue);
-          coordBox[0] = max(zero, coordBox[0]);
-      }
-      else if (startswith("xmax=", token))
-      {
-          token += 5; // skip xmax=
-          coordValue = atof(token);
-          coordBox[1] = min(m_global_xmax, coordValue);
-          coordBox[1] = max(zero, coordBox[1]);
-      }
-      else if (startswith("ymin=", token))
-      {
-          token += 5; // skip ymin=
-          coordValue = atof(token);
-          coordBox[2] = min(m_global_ymax, coordValue);
-          coordBox[2] = max(zero, coordBox[2]);
-      }
-      else if (startswith("ymax=", token))
-      {
-          token += 5; // skip ymax=
-          coordValue = atof(token);
-          coordBox[3] = min(m_global_ymax, coordValue);
-          coordBox[3] = max(zero, coordBox[3]);
-      }
-      else if (startswith("depth=", token))
-      {
-          token += 6; // skip depth=
-          coordValue = atof(token);
-          depth = min(m_global_zmax, coordValue);
-          depth = max(zero, depth);
-      }
-      else if (startswith("precision=", token))
-      {
-          token += 10; // skip precision=
-          precision = atoi(token);
-          if (precision != 4 && precision != 8) 
-              badOption("essioutput precision", token);
-          if (proc_zero())
-              cout << "\nESSI ouput will use " << precision*8 << "-bit floating point values." << endl;
-      }
-      else
-      {
-          badOption("essioutput", token);
-      }
-      token = strtok(NULL, " \t");
-   }
+  char* token = strtok(buffer, " \t");
+  CHECK_INPUT(strcmp("essioutput", token) == 0,
+              "ERROR: Not a essioutput line...: " << token);
 
-   // Check the specified min/max values make sense
-   for (int d=0; d < 2*2; d+=2)
-   {
-      if (coordBox[d+1] < coordBox[d])
-      {
-         char coordName[2] = {'x','y'};
-         if (proc_zero())
-           cout << "ERROR: essioutput subdomain " << coordName[d] <<
-              " coordinate max value " << coordBox[d+1] <<
-              " is less than min value " << coordBox[d] << endl;
-         MPI_Abort(MPI_COMM_WORLD, 1);
-      }
-   }
+  token = strtok(NULL, " \t");
+  string err = "essioutput Error: ";
+  while (token != NULL) {
+    // while there are tokens in the string still
+    if (startswith("#", token) || startswith(" ", buffer))
+      // Ignore commented lines and lines with just a space.
+      break;
+    else if (startswith("file=", token)) {
+      token += 5;  // skip file=
+      filePrefix = token;
+    } else if (startswith("dumpInterval=", token)) {
+      token += 13;  // skip dumpInterval=
+      dumpInterval = atoi(token);
+    } else if (startswith("xmin=", token)) {
+      token += 5;  // skip xmin=
+      coordValue = atof(token);
+      coordBox[0] = min(m_global_xmax, coordValue);
+      coordBox[0] = max(zero, coordBox[0]);
+    } else if (startswith("xmax=", token)) {
+      token += 5;  // skip xmax=
+      coordValue = atof(token);
+      coordBox[1] = min(m_global_xmax, coordValue);
+      coordBox[1] = max(zero, coordBox[1]);
+    } else if (startswith("ymin=", token)) {
+      token += 5;  // skip ymin=
+      coordValue = atof(token);
+      coordBox[2] = min(m_global_ymax, coordValue);
+      coordBox[2] = max(zero, coordBox[2]);
+    } else if (startswith("ymax=", token)) {
+      token += 5;  // skip ymax=
+      coordValue = atof(token);
+      coordBox[3] = min(m_global_ymax, coordValue);
+      coordBox[3] = max(zero, coordBox[3]);
+    } else if (startswith("depth=", token)) {
+      token += 6;  // skip depth=
+      coordValue = atof(token);
+      depth = min(m_global_zmax, coordValue);
+      depth = max(zero, depth);
+    } else if (startswith("precision=", token)) {
+      token += 10;  // skip precision=
+      precision = atoi(token);
+      if (precision != 4 && precision != 8)
+        badOption("essioutput precision", token);
+      if (proc_zero())
+        cout << "\nESSI ouput will use " << precision * 8
+             << "-bit floating point values." << endl;
+    } else {
+      badOption("essioutput", token);
+    }
+    token = strtok(NULL, " \t");
+  }
 
-   // Use depth if zmin/zmax values are specified
-   if ((depth < 0) && proc_zero())
-   {
-      cout << "WARNING: essioutput depth not specified or less than zero, setting to zero" << endl;
-      depth=0;
-   }
+  // Check the specified min/max values make sense
+  for (int d = 0; d < 2 * 2; d += 2) {
+    if (coordBox[d + 1] < coordBox[d]) {
+      char coordName[2] = {'x', 'y'};
+      if (proc_zero())
+        cout << "ERROR: essioutput subdomain " << coordName[d]
+             << " coordinate max value " << coordBox[d + 1]
+             << " is less than min value " << coordBox[d] << endl;
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+  }
 
-   ESSI3D* essi3d = new ESSI3D( this, filePrefix, dumpInterval, coordBox, depth, precision);
-   addESSI3D( essi3d );
+  // Use depth if zmin/zmax values are specified
+  if ((depth < 0) && proc_zero()) {
+    cout << "WARNING: essioutput depth not specified or less than zero, "
+            "setting to zero"
+         << endl;
+    depth = 0;
+  }
+
+  ESSI3D* essi3d =
+      new ESSI3D(this, filePrefix, dumpInterval, coordBox, depth, precision);
+  addESSI3D(essi3d);
 }
 
 //-----------------------------------------------------------------------
@@ -4658,310 +4646,340 @@ void EW::deprecatedImageMode(int value, const char* name) const {
 }
 
 //-----------------------------------------------------------------------
-void EW::processImage(char* buffer, bool use_hdf5)
-{
-   int cycle=-1, cycleInterval=0;
-//   int pfs = 0, nwriters=1;
-   Image::ImageMode mode=Image::RHO;
-   float_sw4 time=0.0, timeInterval=0.0;
-   bool timingSet = false;
-   string filePrefix="image";
+void EW::processImage(char* buffer, bool use_hdf5) {
+  int cycle = -1, cycleInterval = 0;
+  //   int pfs = 0, nwriters=1;
+  Image::ImageMode mode = Image::RHO;
+  float_sw4 time = 0.0, timeInterval = 0.0;
+  bool timingSet = false;
+  string filePrefix = "image";
 
-   // -----------------------------------------------------
-   // It is only valid to set one of the following:
-   //   x, or y, or z
-   // 
-   // The selection of one coordinate specifies plane which will be output to disk.
-   // It is an error to select more than one.
-   // -----------------------------------------------------
-  Image::ImageOrientation locationType=Image::UNDEFINED;
+  // -----------------------------------------------------
+  // It is only valid to set one of the following:
+  //   x, or y, or z
+  //
+  // The selection of one coordinate specifies plane which will be output to
+  // disk. It is an error to select more than one.
+  // -----------------------------------------------------
+  Image::ImageOrientation locationType = Image::UNDEFINED;
   float_sw4 coordValue;
   /* int gridPointValue; */
   bool coordWasSet = false;
   bool use_double = false;
   bool mode_is_grid = false;
-  
+
   char* token = strtok(buffer, " \t");
-  if ( strcmp("image", token) != 0 && strcmp("imagehdf5", token) != 0 )
-  {
-    cerr << "Processing image command: " << "ERROR: not an image line...: " << token;
-    MPI_Abort( MPI_COMM_WORLD, 1 );
+  if (strcmp("image", token) != 0 && strcmp("imagehdf5", token) != 0) {
+    cerr << "Processing image command: "
+         << "ERROR: not an image line...: " << token;
+    MPI_Abort(MPI_COMM_WORLD, 1);
   }
-  
+
   token = strtok(NULL, " \t");
 
   string err = "Image Error: ";
 
-  if (mVerbose >=4 && proc_zero())
+  if (mVerbose >= 4 && proc_zero())
     cout << "********Parsing image command*********" << endl;
-  while (token != NULL)
-  {
+  while (token != NULL) {
     // while there are tokens in the string still
     if (startswith("#", token) || startswith(" ", buffer))
       // Ignore commented lines and lines with just a space.
       break;
-    if (startswith("time=", token) )
-    {
-      token += 5; // skip time=
-      if (atof(token) < 0.)	      
-      {
-	cerr << "Processing image command: " << "time must be a non-negative number, not: " << token;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+    if (startswith("time=", token)) {
+      token += 5;  // skip time=
+      if (atof(token) < 0.) {
+        cerr << "Processing image command: "
+             << "time must be a non-negative number, not: " << token;
+        MPI_Abort(MPI_COMM_WORLD, 1);
       }
       time = atof(token);
       timingSet = true;
-    }
-    else if (startswith("timeInterval=", token) )
-    {
-      token += 13; // skip timeInterval=
-      if (atof(token) <= 0.)	      
-      {
-	cerr << "Processing image command: " << "timeInterval must be a positive number, not: " << token;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+    } else if (startswith("timeInterval=", token)) {
+      token += 13;  // skip timeInterval=
+      if (atof(token) <= 0.) {
+        cerr << "Processing image command: "
+             << "timeInterval must be a positive number, not: " << token;
+        MPI_Abort(MPI_COMM_WORLD, 1);
       }
       timeInterval = atof(token);
       timingSet = true;
-    }
-    else if (startswith("cycle=", token) )
-    {
-      token += 6; // skip cycle=
-      if (atoi(token) < 0)	      
-      {
-	cerr << "Processing image command: " << "cycle must be a non-negative integer, not: " << token;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+    } else if (startswith("cycle=", token)) {
+      token += 6;  // skip cycle=
+      if (atoi(token) < 0) {
+        cerr << "Processing image command: "
+             << "cycle must be a non-negative integer, not: " << token;
+        MPI_Abort(MPI_COMM_WORLD, 1);
       }
       cycle = atoi(token);
       timingSet = true;
-    }
-    else if (startswith("cycleInterval=", token) )
-    {
-      token += 14; // skip cycleInterval=
-      if (atoi(token) <= 0)	      
-      {
-	cerr << "Processing image command: " << "cycleInterval must be a positive integer, not: " << token;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+    } else if (startswith("cycleInterval=", token)) {
+      token += 14;  // skip cycleInterval=
+      if (atoi(token) <= 0) {
+        cerr << "Processing image command: "
+             << "cycleInterval must be a positive integer, not: " << token;
+        MPI_Abort(MPI_COMM_WORLD, 1);
       }
       cycleInterval = atoi(token);
       timingSet = true;
-    }
-    else if (startswith("file=", token))
-    {
-      token += 5; // skip file=
+    } else if (startswith("file=", token)) {
+      token += 5;  // skip file=
       filePrefix = token;
-    }
-    else if (startswith("mode=", token))
-    {
-      token += 5; // skip mode=
-      if (strcmp(token, "ux") == 0)        mode = Image::UX;
-      else if (strcmp(token, "uy") == 0)   mode = Image::UY;
-      else if (strcmp(token, "uz") == 0)   mode = Image::UZ;
-      else if (strcmp(token, "rho") == 0)   mode = Image::RHO;
-      else if (strcmp(token, "lambda") == 0)   mode = Image::LAMBDA;
-      else if (strcmp(token, "mu") == 0)   mode = Image::MU;
-      else if (strcmp(token, "uxexact") == 0)   mode = Image::UXEXACT;
-      else if (strcmp(token, "uyexact") == 0)   mode = Image::UYEXACT;
-      else if (strcmp(token, "uzexact") == 0)   mode = Image::UZEXACT;
-      else if (strcmp(token, "p") == 0)   mode = Image::P;
-      else if (strcmp(token, "s") == 0)   mode = Image::S;
-      else if (strcmp(token, "div") == 0)   mode = Image::DIV;
-      else if (strcmp(token, "curl") == 0)   mode = Image::CURLMAG;
-//      else if (strcmp(token, "curlmag") == 0)   mode = Image::CURLMAG; // strange name, remove ??
-      else if (strcmp(token, "veldiv") == 0)   mode = Image::DIVDT;
-      else if (strcmp(token, "divdudt") == 0)   mode = Image::DIVDT;
-      else if (strcmp(token, "velcurl") == 0)   mode = Image::CURLMAGDT;
-      else if (strcmp(token, "curldudt") == 0)   mode = Image::CURLMAGDT;
-      else if (strcmp(token, "lat") == 0)   mode = Image::LAT;
-      else if (strcmp(token, "lon") == 0)   mode = Image::LON;
-      else if (strcmp(token, "hvelmax") == 0) mode = Image::HMAXDUDT;
-      else if (strcmp(token, "hmaxdudt") == 0) mode = Image::HMAXDUDT;
-      else if (strcmp(token, "hmax") == 0) mode = Image::HMAX;
-      else if (strcmp(token, "vvelmax") == 0) mode = Image::VMAXDUDT;
-      else if (strcmp(token, "vmaxdudt") == 0) mode = Image::VMAXDUDT;
-      else if (strcmp(token, "vmax") == 0) mode = Image::VMAX;
-      else if (strcmp(token, "topo") == 0) mode = Image::TOPO;
-      else if (strcmp(token, "grid") == 0) mode_is_grid=true;
-      else if (strcmp(token, "gridx") == 0) mode = Image::GRIDX;
-      else if (strcmp(token, "gridy") == 0) mode = Image::GRIDY;
-      else if (strcmp(token, "gridz") == 0) mode = Image::GRIDZ;
-      else if (strcmp(token, "uxerr") == 0)   mode = Image::UXERR;
-      else if (strcmp(token, "uyerr") == 0)   mode = Image::UYERR;
-      else if (strcmp(token, "uzerr") == 0)   mode = Image::UZERR;
+    } else if (startswith("mode=", token)) {
+      token += 5;  // skip mode=
+      if (strcmp(token, "ux") == 0)
+        mode = Image::UX;
+      else if (strcmp(token, "uy") == 0)
+        mode = Image::UY;
+      else if (strcmp(token, "uz") == 0)
+        mode = Image::UZ;
+      else if (strcmp(token, "rho") == 0)
+        mode = Image::RHO;
+      else if (strcmp(token, "lambda") == 0)
+        mode = Image::LAMBDA;
+      else if (strcmp(token, "mu") == 0)
+        mode = Image::MU;
+      else if (strcmp(token, "uxexact") == 0)
+        mode = Image::UXEXACT;
+      else if (strcmp(token, "uyexact") == 0)
+        mode = Image::UYEXACT;
+      else if (strcmp(token, "uzexact") == 0)
+        mode = Image::UZEXACT;
+      else if (strcmp(token, "p") == 0)
+        mode = Image::P;
+      else if (strcmp(token, "s") == 0)
+        mode = Image::S;
+      else if (strcmp(token, "div") == 0)
+        mode = Image::DIV;
+      else if (strcmp(token, "curl") == 0)
+        mode = Image::CURLMAG;
+      //      else if (strcmp(token, "curlmag") == 0)   mode = Image::CURLMAG;
+      //      // strange name, remove ??
+      else if (strcmp(token, "veldiv") == 0)
+        mode = Image::DIVDT;
+      else if (strcmp(token, "divdudt") == 0)
+        mode = Image::DIVDT;
+      else if (strcmp(token, "velcurl") == 0)
+        mode = Image::CURLMAGDT;
+      else if (strcmp(token, "curldudt") == 0)
+        mode = Image::CURLMAGDT;
+      else if (strcmp(token, "lat") == 0)
+        mode = Image::LAT;
+      else if (strcmp(token, "lon") == 0)
+        mode = Image::LON;
+      else if (strcmp(token, "hvelmax") == 0)
+        mode = Image::HMAXDUDT;
+      else if (strcmp(token, "hmaxdudt") == 0)
+        mode = Image::HMAXDUDT;
+      else if (strcmp(token, "hmax") == 0)
+        mode = Image::HMAX;
+      else if (strcmp(token, "vvelmax") == 0)
+        mode = Image::VMAXDUDT;
+      else if (strcmp(token, "vmaxdudt") == 0)
+        mode = Image::VMAXDUDT;
+      else if (strcmp(token, "vmax") == 0)
+        mode = Image::VMAX;
+      else if (strcmp(token, "topo") == 0)
+        mode = Image::TOPO;
+      else if (strcmp(token, "grid") == 0)
+        mode_is_grid = true;
+      else if (strcmp(token, "gridx") == 0)
+        mode = Image::GRIDX;
+      else if (strcmp(token, "gridy") == 0)
+        mode = Image::GRIDY;
+      else if (strcmp(token, "gridz") == 0)
+        mode = Image::GRIDZ;
+      else if (strcmp(token, "uxerr") == 0)
+        mode = Image::UXERR;
+      else if (strcmp(token, "uyerr") == 0)
+        mode = Image::UYERR;
+      else if (strcmp(token, "uzerr") == 0)
+        mode = Image::UZERR;
       // else if (strcmp(token, "fx") == 0)   mode = Image::FX;
       // else if (strcmp(token, "fy") == 0)   mode = Image::FY;
       // else if (strcmp(token, "fz") == 0)   mode = Image::FZ;
-      else if (strcmp(token, "velmag") == 0)   mode = Image::MAGDUDT;
-      else if (strcmp(token, "magdudt") == 0)   mode = Image::MAGDUDT;
-      else if (strcmp(token, "mag") == 0)   mode = Image::MAG;
-      else if (strcmp(token, "hvelmag") == 0)   mode = Image::HMAGDUDT;
-      else if (strcmp(token, "hmagdudt") == 0)   mode = Image::HMAGDUDT;
-      else if (strcmp(token, "hmag") == 0)   mode = Image::HMAG;
-      else if (strcmp(token, "gradrho") == 0)   mode = Image::GRADRHO;
-      else if (strcmp(token, "gradmu") == 0)   mode = Image::GRADMU;
-      else if (strcmp(token, "gradlambda") == 0)   mode = Image::GRADLAMBDA;
-      else if (strcmp(token, "gradp") == 0)   mode = Image::GRADP;
-      else if (strcmp(token, "grads") == 0)   mode = Image::GRADS;
-      else if (strcmp(token, "qp") == 0) mode = Image::QP;
-      else if (strcmp(token, "qs") == 0) mode = Image::QS;
+      else if (strcmp(token, "velmag") == 0)
+        mode = Image::MAGDUDT;
+      else if (strcmp(token, "magdudt") == 0)
+        mode = Image::MAGDUDT;
+      else if (strcmp(token, "mag") == 0)
+        mode = Image::MAG;
+      else if (strcmp(token, "hvelmag") == 0)
+        mode = Image::HMAGDUDT;
+      else if (strcmp(token, "hmagdudt") == 0)
+        mode = Image::HMAGDUDT;
+      else if (strcmp(token, "hmag") == 0)
+        mode = Image::HMAG;
+      else if (strcmp(token, "gradrho") == 0)
+        mode = Image::GRADRHO;
+      else if (strcmp(token, "gradmu") == 0)
+        mode = Image::GRADMU;
+      else if (strcmp(token, "gradlambda") == 0)
+        mode = Image::GRADLAMBDA;
+      else if (strcmp(token, "gradp") == 0)
+        mode = Image::GRADP;
+      else if (strcmp(token, "grads") == 0)
+        mode = Image::GRADS;
+      else if (strcmp(token, "qp") == 0)
+        mode = Image::QP;
+      else if (strcmp(token, "qs") == 0)
+        mode = Image::QS;
       //      else if (strcmp(token, "hvel") == 0) mode = Image::HVEL;
-      else
-      {
-	  cerr << "Processing image command: " << "mode must be one of the following: " << endl
-	       << "ux|uy|uz|rho|lambda|mu" << endl 
-               << "|p|s|div|curl|veldiv|divdudt|velcurl|curldudt " << endl
-	       << "|lat|lon|hmaxdudt|hvelmax|hmax|vmaxdudt|vvelmax|vmax|topo|grid|gridx|gridy|gridz " << endl
-	       << "|magdudt|velmag|mag|hvelmag|hmagdudt|hmag" << endl
-	       << "|uxexact|uyexact|uzexact|uxerr|uyerr|uzerr|gradrho|gradmu|gradlambda|gradp|grads|qp|qs|" << endl
-	       << "*not: " << token << endl;
-	  MPI_Abort( MPI_COMM_WORLD, 1 );
+      else {
+        cerr << "Processing image command: "
+             << "mode must be one of the following: " << endl
+             << "ux|uy|uz|rho|lambda|mu" << endl
+             << "|p|s|div|curl|veldiv|divdudt|velcurl|curldudt " << endl
+             << "|lat|lon|hmaxdudt|hvelmax|hmax|vmaxdudt|vvelmax|vmax|topo|"
+                "grid|gridx|gridy|gridz "
+             << endl
+             << "|magdudt|velmag|mag|hvelmag|hmagdudt|hmag" << endl
+             << "|uxexact|uyexact|uzexact|uxerr|uyerr|uzerr|gradrho|gradmu|"
+                "gradlambda|gradp|grads|qp|qs|"
+             << endl
+             << "*not: " << token << endl;
+        MPI_Abort(MPI_COMM_WORLD, 1);
       }
-    }
-    else if( startswith("precision=",token) )
-    {
+    } else if (startswith("precision=", token)) {
       token += 10;
-      if ( !(strcmp(token,"double")==0 || strcmp(token,"float")==0) )
-      {
-	cerr << "Processing image command: " << " precision must be float or double, not " << token << endl;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+      if (!(strcmp(token, "double") == 0 || strcmp(token, "float") == 0)) {
+        cerr << "Processing image command: "
+             << " precision must be float or double, not " << token << endl;
+        MPI_Abort(MPI_COMM_WORLD, 1);
       }
-      use_double =  strcmp(token,"double")==0;
-    }
-    else if (startswith("x=", token))
-    {
-      token += 2; // skip x=
-      if ( coordWasSet )
-      {
-	cerr << "Processing image command: " << "cannot set a coordinate location twice, x and " << 
-	  locationType << " were both set." << endl;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+      use_double = strcmp(token, "double") == 0;
+    } else if (startswith("x=", token)) {
+      token += 2;  // skip x=
+      if (coordWasSet) {
+        cerr << "Processing image command: "
+             << "cannot set a coordinate location twice, x and " << locationType
+             << " were both set." << endl;
+        MPI_Abort(MPI_COMM_WORLD, 1);
       }
-      coordWasSet=true;
-      locationType=Image::X;
+      coordWasSet = true;
+      locationType = Image::X;
       coordValue = atof(token);
-      if ( coordValue < 0.0 || coordValue > m_global_xmax )
-      {
-	cerr << "Processing image command: " << "x value must be within the computational domain 0<=x<=" 
-	     << m_global_xmax << ", not x=: " << coordValue << endl;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+      if (coordValue < 0.0 || coordValue > m_global_xmax) {
+        cerr << "Processing image command: "
+             << "x value must be within the computational domain 0<=x<="
+             << m_global_xmax << ", not x=: " << coordValue << endl;
+        MPI_Abort(MPI_COMM_WORLD, 1);
       }
     }
-     
-    else if (startswith("y=", token))
-    {
-      token += 2; // skip y=
-      if ( coordWasSet )
-      {
-	cerr << "Processing image command: " << "cannot set a coordinate location twice, y and " 
-	     << locationType << " were both set." << endl;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+
+    else if (startswith("y=", token)) {
+      token += 2;  // skip y=
+      if (coordWasSet) {
+        cerr << "Processing image command: "
+             << "cannot set a coordinate location twice, y and " << locationType
+             << " were both set." << endl;
+        MPI_Abort(MPI_COMM_WORLD, 1);
       }
-      coordWasSet=true;
-      locationType=Image::Y;
+      coordWasSet = true;
+      locationType = Image::Y;
       coordValue = atof(token);
-      if ( coordValue < 0.0 || coordValue > m_global_ymax )
-      {
-	cerr << "Processing image command: " << "y value must be within the computational domain 0<=y<=" 
-	     << m_global_ymax << ", not y= " << coordValue << endl;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+      if (coordValue < 0.0 || coordValue > m_global_ymax) {
+        cerr << "Processing image command: "
+             << "y value must be within the computational domain 0<=y<="
+             << m_global_ymax << ", not y= " << coordValue << endl;
+        MPI_Abort(MPI_COMM_WORLD, 1);
       }
-    }
-    else if (startswith("z=", token))
-    {
-      token += 2; // skip z=
-      if ( coordWasSet )
-      {
-	cerr << "Processing image command: " << "cannot set a coordinate location twice, z and " 
-	     << locationType << " were both set." << endl;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+    } else if (startswith("z=", token)) {
+      token += 2;  // skip z=
+      if (coordWasSet) {
+        cerr << "Processing image command: "
+             << "cannot set a coordinate location twice, z and " << locationType
+             << " were both set." << endl;
+        MPI_Abort(MPI_COMM_WORLD, 1);
       }
-      coordWasSet=true;
-      locationType=Image::Z;
+      coordWasSet = true;
+      locationType = Image::Z;
       coordValue = atof(token);
-      if ( coordValue < 0.0 || coordValue > m_global_zmax )
-      {
-	cerr << "Processing image command: " << "z value must be within the computational domain 0<=z<=" 
-	     << m_global_zmax << ", not z= " << coordValue << endl;
-	MPI_Abort( MPI_COMM_WORLD, 1 );
+      if (coordValue < 0.0 || coordValue > m_global_zmax) {
+        cerr << "Processing image command: "
+             << "z value must be within the computational domain 0<=z<="
+             << m_global_zmax << ", not z= " << coordValue << endl;
+        MPI_Abort(MPI_COMM_WORLD, 1);
       }
-    }
-    else
-    {
+    } else {
       badOption("image", token);
     }
     token = strtok(NULL, " \t");
   }
-  
-  if ( !timingSet )
-  {
-    cerr << "Processing image command: " << "at least one timing mechanism must be set: cycle, time, cycleInterval or timeInterval" << endl;
-    MPI_Abort( MPI_COMM_WORLD, 1 );
+
+  if (!timingSet) {
+    cerr << "Processing image command: "
+         << "at least one timing mechanism must be set: cycle, time, "
+            "cycleInterval or timeInterval"
+         << endl;
+    MPI_Abort(MPI_COMM_WORLD, 1);
   }
-  
+
   // if topographic image, set flag
   // if (mode == Image::TOPO)
   // {
   //   mTopoImageFound = true;
   // }
 
-
-
-   bool forwardgrad = !m_inverse_problem && (mode == Image::GRADRHO ||mode == Image::GRADMU ||mode == Image::GRADLAMBDA ||
-					     mode == Image::GRADP   ||mode == Image::GRADS);
-   if( forwardgrad && proc_zero() )
-   {
-      cout << "WARNING: images of material gradients can not be computed by the forward solver" << endl;
-      cout << "   image will not be created " << endl;
-   }
-   if( !forwardgrad )
-   {
-  // Set up the image object
-      Image* i;
-      if (coordWasSet)
-      {
-	 if( mode_is_grid )
-	 {
-	    if( locationType == Image::X )
-	    {
-	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			 filePrefix, Image::GRIDY, locationType, coordValue, use_double, use_hdf5);
-	       addImage(i);
-	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			 filePrefix, Image::GRIDZ, locationType, coordValue, use_double, use_hdf5);
-	       addImage(i);
-	    }
-	    else if( locationType == Image::Y )
-	    {
-	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			 filePrefix, Image::GRIDX, locationType, coordValue, use_double, use_hdf5);
-	       addImage(i);
-	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			 filePrefix, Image::GRIDZ, locationType, coordValue, use_double, use_hdf5);
-	       addImage(i);
-	    }
-	    else if( locationType == Image::Z )
-	    {
-	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			 filePrefix, Image::GRIDX, locationType, coordValue, use_double, use_hdf5);
-	       addImage(i);
-	       i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			     filePrefix, Image::GRIDY, locationType, coordValue, use_double, use_hdf5);
-	       addImage(i);
-	    }
-	 }
-	 else
-	 {
-	    i = new Image(this, time, timeInterval, cycle, cycleInterval, 
-			  filePrefix, mode, locationType, coordValue, use_double, use_hdf5);
-	    addImage(i);
-	 }
+  bool forwardgrad =
+      !m_inverse_problem && (mode == Image::GRADRHO || mode == Image::GRADMU ||
+                             mode == Image::GRADLAMBDA ||
+                             mode == Image::GRADP || mode == Image::GRADS);
+  if (forwardgrad && proc_zero()) {
+    cout << "WARNING: images of material gradients can not be computed by the "
+            "forward solver"
+         << endl;
+    cout << "   image will not be created " << endl;
+  }
+  if (!forwardgrad) {
+    // Set up the image object
+    Image* i;
+    if (coordWasSet) {
+      if (mode_is_grid) {
+        if (locationType == Image::X) {
+          i = new Image(this, time, timeInterval, cycle, cycleInterval,
+                        filePrefix, Image::GRIDY, locationType, coordValue,
+                        use_double, use_hdf5);
+          addImage(i);
+          i = new Image(this, time, timeInterval, cycle, cycleInterval,
+                        filePrefix, Image::GRIDZ, locationType, coordValue,
+                        use_double, use_hdf5);
+          addImage(i);
+        } else if (locationType == Image::Y) {
+          i = new Image(this, time, timeInterval, cycle, cycleInterval,
+                        filePrefix, Image::GRIDX, locationType, coordValue,
+                        use_double, use_hdf5);
+          addImage(i);
+          i = new Image(this, time, timeInterval, cycle, cycleInterval,
+                        filePrefix, Image::GRIDZ, locationType, coordValue,
+                        use_double, use_hdf5);
+          addImage(i);
+        } else if (locationType == Image::Z) {
+          i = new Image(this, time, timeInterval, cycle, cycleInterval,
+                        filePrefix, Image::GRIDX, locationType, coordValue,
+                        use_double, use_hdf5);
+          addImage(i);
+          i = new Image(this, time, timeInterval, cycle, cycleInterval,
+                        filePrefix, Image::GRIDY, locationType, coordValue,
+                        use_double, use_hdf5);
+          addImage(i);
+        }
+      } else {
+        i = new Image(this, time, timeInterval, cycle, cycleInterval,
+                      filePrefix, mode, locationType, coordValue, use_double,
+                      use_hdf5);
+        addImage(i);
       }
-      else 
-      {
-	 cerr << "Processing image command: " << "one of the coordinate (x,y,z) option must be set to determine the image's 2D plane" << endl;
-	 MPI_Abort( MPI_COMM_WORLD, 1 );
-      }
-   }
+    } else {
+      cerr << "Processing image command: "
+           << "one of the coordinate (x,y,z) option must be set to determine "
+              "the image's 2D plane"
+           << endl;
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+  }
 
-  if (mVerbose >=4 && proc_zero())
+  if (mVerbose >= 4 && proc_zero())
     cout << "********Done parsing image command*********" << endl;
 }
 
@@ -5570,22 +5588,24 @@ void EW::processSource(char* buffer,
 }
 
 //----------------------------------------------------------------------------
-void EW::processRuptureHDF5(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSources )
-{
+void EW::processRuptureHDF5(char* buffer,
+                            vector<vector<Source*> >& a_GlobalUniqueSources) {
 #ifdef USE_HDF5
   int event = 0;
-  bool rfileset=false;
+  bool rfileset = false;
   char rfile[100];
   double stime, etime;
   stime = MPI_Wtime();
 
-// bounding box
-// only check the z>zmin when we have topography. For a flat free surface, we will remove sources too 
-// close or above the surface in the call to mGlobalUniqueSources[i]->correct_Z_level()
+  // bounding box
+  // only check the z>zmin when we have topography. For a flat free surface, we
+  // will remove sources too close or above the surface in the call to
+  // mGlobalUniqueSources[i]->correct_Z_level()
   float_sw4 xmin = 0.;
   float_sw4 ymin = 0.;
   float_sw4 zmin;
-  if (topographyExists()) // topography command must be read before the source command
+  if (topographyExists())  // topography command must be read before the source
+                           // command
     zmin = m_global_zmin;
   else
     zmin = -m_global_zmax;
@@ -5593,57 +5613,54 @@ void EW::processRuptureHDF5(char* buffer, vector<vector<Source*> > & a_GlobalUni
   string err = "Rupture Error: ";
 
   char* token = strtok(buffer, " \t");
-  REQUIRE2(strcmp("rupturehdf5", token) == 0, "ERROR: not a rupturehdf5 line...: " << token);
+  REQUIRE2(strcmp("rupturehdf5", token) == 0,
+           "ERROR: not a rupturehdf5 line...: " << token);
   token = strtok(NULL, " \t");
 
-  while (token != NULL)
-    {
-      // while there are tokens in the string still
-      if (startswith("#", token) || startswith(" ", buffer))
-          // Ignore commented lines and lines with just a space.
-          break;
-      if (startswith("file=",token))
-      {
-	token += 5; // read past 'file='
-         strncpy(rfile, token,100);
-	 rfileset = true;
+  while (token != NULL) {
+    // while there are tokens in the string still
+    if (startswith("#", token) || startswith(" ", buffer))
+      // Ignore commented lines and lines with just a space.
+      break;
+    if (startswith("file=", token)) {
+      token += 5;  // read past 'file='
+      strncpy(rfile, token, 100);
+      rfileset = true;
+    } else if (startswith("event=", token)) {
+      token += 6;
+      //	 event = atoi(token);
+      //	 CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no.
+      //"<< event << " out of range" );
+      // Ignore if no events given
+      if (m_nevents_specified > 0) {
+        map<string, int>::iterator it = m_event_names.find(token);
+        CHECK_INPUT(it != m_event_names.end(),
+                    err << "event with name " << token << " not found");
+        event = it->second;
       }
-      else if(startswith("event=",token))
-      {
-	 token += 6;
-	 //	 event = atoi(token);
-	 //	 CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
-	// Ignore if no events given
-	 if( m_nevents_specified > 0 )
-	 {
-	    map<string,int>::iterator it = m_event_names.find(token);
-	    CHECK_INPUT( it != m_event_names.end(), 
-		     err << "event with name "<< token << " not found" );
-	    event = it->second;
-	 }
-      }
-      else
-      {
-         badOption("rupturehdf5", token);
-      }
-      token = strtok(NULL, " \t");
+    } else {
+      badOption("rupturehdf5", token);
     }
+    token = strtok(NULL, " \t");
+  }
 
-
-  if( rfileset)
-    readRuptureHDF5(rfile, a_GlobalUniqueSources, this, event, m_global_xmax, m_global_ymax, m_global_zmax, mGeoAz, xmin, ymin, zmin, mVerbose, m_nwriters);
-
+  if (rfileset)
+    readRuptureHDF5(rfile, a_GlobalUniqueSources, this, event, m_global_xmax,
+                    m_global_ymax, m_global_zmax, mGeoAz, xmin, ymin, zmin,
+                    mVerbose, m_nwriters);
 
   etime = MPI_Wtime();
-  
+
   if (proc_zero())
-      cout << "Process rupture data, took " << etime-stime << "seconds." << endl;
+    cout << "Process rupture data, took " << etime - stime << "seconds."
+         << endl;
 #else
   if (proc_zero())
-    cout << "Using HDF5 rupture input but sw4 is not compiled with HDF5!"<< endl;
+    cout << "Using HDF5 rupture input but sw4 is not compiled with HDF5!"
+         << endl;
 #endif
 
-} // end processRuptureHDF5()
+}  // end processRuptureHDF5()
 
 //----------------------------------------------------------------------------
 void EW::processRupture(char* buffer,
@@ -6504,601 +6521,553 @@ void EW::processAnisotropicMaterialBlock(char* buffer, int& blockCount) {
 }
 
 //-----------------------------------------------------------------------
-void EW::processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries)
-{
+void EW::processReceiverHDF5(char* buffer,
+                             vector<vector<TimeSeries*> >& a_GlobalTimeSeries) {
   string inFileName = "station";
-  string fileName   = "station_out";
-  string staName    = "station";
-  int writeEvery    = 1000;
-  int downSample    = 1;
-  int event         = 0;
-  TimeSeries::receiverMode mode=TimeSeries::Displacement;
+  string fileName = "station_out";
+  string staName = "station";
+  int writeEvery = 1000;
+  int downSample = 1;
+  int event = 0;
+  TimeSeries::receiverMode mode = TimeSeries::Displacement;
   double stime, etime;
   stime = MPI_Wtime();
 
   char* token = strtok(buffer, " \t");
 
-  CHECK_INPUT(strcmp("rechdf5", token) == 0 || strcmp("sachdf5", token) == 0, "ERROR: not a rechdf5 line...: " << token);
+  CHECK_INPUT(strcmp("rechdf5", token) == 0 || strcmp("sachdf5", token) == 0,
+              "ERROR: not a rechdf5 line...: " << token);
   token = strtok(NULL, " \t");
 
   string err = "RECEIVER Error: ";
 
-  while (token != NULL)
-  {
-     if (startswith("#", token) || startswith(" ", buffer))
-        // Ignore commented lines and lines with just a space.
-        break;
+  while (token != NULL) {
+    if (startswith("#", token) || startswith(" ", buffer))
+      // Ignore commented lines and lines with just a space.
+      break;
 
-     if(startswith("infile=", token))
-     {
-        token += 7; // skip infile=
-        inFileName= token;
-     }
-     else if(startswith("outfile=", token))
-     {
-        token += 8; // skip outfile=
-        fileName = token;
-     }
-     else if (startswith("writeEvery=", token))
-     {
-       token += strlen("writeEvery=");
-       writeEvery = atoi(token);
-       CHECK_INPUT(writeEvery >= 0,
-	       err << "rechdf5 command: writeEvery must be set to a non-negative integer, not: " << token);
-     }
-     else if (startswith("downSample=", token) || startswith("downsample=", token))
-     {
-       token += strlen("downsample=");
-       downSample = atoi(token);
-       CHECK_INPUT(downSample >= 1,
-	       err << "rechdf5 command: downsample must be set to an integer greater or equal than 1, not: " << token);
-     }
-     else if(startswith("event=",token))
-     {
-	token += 6;
-	// Ignore if no events given
-	if( m_nevents_specified > 0 )
-	{
-	   map<string,int>::iterator it = m_event_names.find(token);
-	   CHECK_INPUT( it != m_event_names.end(), 
-		     err << "event with name "<< token << " not found" );
-	   event = it->second;
-	}
-     }
-     else if( startswith("variables=", token) )
-     {
-       token += strlen("variables=");
+    if (startswith("infile=", token)) {
+      token += 7;  // skip infile=
+      inFileName = token;
+    } else if (startswith("outfile=", token)) {
+      token += 8;  // skip outfile=
+      fileName = token;
+    } else if (startswith("writeEvery=", token)) {
+      token += strlen("writeEvery=");
+      writeEvery = atoi(token);
+      CHECK_INPUT(writeEvery >= 0, err << "rechdf5 command: writeEvery must be "
+                                          "set to a non-negative integer, not: "
+                                       << token);
+    } else if (startswith("downSample=", token) ||
+               startswith("downsample=", token)) {
+      token += strlen("downsample=");
+      downSample = atoi(token);
+      CHECK_INPUT(downSample >= 1,
+                  err << "rechdf5 command: downsample must be set to an "
+                         "integer greater or equal than 1, not: "
+                      << token);
+    } else if (startswith("event=", token)) {
+      token += 6;
+      // Ignore if no events given
+      if (m_nevents_specified > 0) {
+        map<string, int>::iterator it = m_event_names.find(token);
+        CHECK_INPUT(it != m_event_names.end(),
+                    err << "event with name " << token << " not found");
+        event = it->second;
+      }
+    } else if (startswith("variables=", token)) {
+      token += strlen("variables=");
 
-       if( strcmp("displacement",token)==0 )
-	 mode = TimeSeries::Displacement;
-       else if( strcmp("velocity",token)==0 )
-	 mode = TimeSeries::Velocity;
-       else if( strcmp("div",token)==0 )
-	 mode = TimeSeries::Div;
-       else if( strcmp("curl",token)==0 )
-	 mode = TimeSeries::Curl;
-       else if( strcmp("strains",token)==0 )
-	 mode = TimeSeries::Strains;
-       else if( strcmp("displacementgradient",token)==0 )
-	 mode = TimeSeries::DisplacementGradient;
-       else
-       {
-	 if (proc_zero())
-	   cout << "receiver command: variables=" << token << " not understood" << endl
-		<< "using default mode (displacement)" << endl << endl;
-	 mode = TimeSeries::Displacement;
-       }
-       
-     }
-     else
-     {
-        badOption("receiver", token);
-     }
-     token = strtok(NULL, " \t");
+      if (strcmp("displacement", token) == 0)
+        mode = TimeSeries::Displacement;
+      else if (strcmp("velocity", token) == 0)
+        mode = TimeSeries::Velocity;
+      else if (strcmp("div", token) == 0)
+        mode = TimeSeries::Div;
+      else if (strcmp("curl", token) == 0)
+        mode = TimeSeries::Curl;
+      else if (strcmp("strains", token) == 0)
+        mode = TimeSeries::Strains;
+      else if (strcmp("displacementgradient", token) == 0)
+        mode = TimeSeries::DisplacementGradient;
+      else {
+        if (proc_zero())
+          cout << "receiver command: variables=" << token << " not understood"
+               << endl
+               << "using default mode (displacement)" << endl
+               << endl;
+        mode = TimeSeries::Displacement;
+      }
+
+    } else {
+      badOption("receiver", token);
+    }
+    token = strtok(NULL, " \t");
   }
 
 #ifdef USE_HDF5
   bool is_obs = false;
-  readStationHDF5(this, inFileName, fileName, writeEvery, downSample, mode, event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax, is_obs, false, false, 0, 0, false, false, false, 0, false, 0);
+  readStationHDF5(this, inFileName, fileName, writeEvery, downSample, mode,
+                  event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax,
+                  is_obs, false, false, 0, 0, false, false, false, 0, false, 0);
 #else
   if (proc_zero())
-    cout << "Using HDF5 station input but sw4 is not compiled with HDF5!"<< endl;
+    cout << "Using HDF5 station input but sw4 is not compiled with HDF5!"
+         << endl;
 #endif
   etime = MPI_Wtime();
-  if (a_GlobalTimeSeries.size() > 0 && a_GlobalTimeSeries[0].size() > 0) 
-    a_GlobalTimeSeries[0][0]->addReadTime(etime-stime);
+  if (a_GlobalTimeSeries.size() > 0 && a_GlobalTimeSeries[0].size() > 0)
+    a_GlobalTimeSeries[0][0]->addReadTime(etime - stime);
 }
 
-
 //-----------------------------------------------------------------------
-void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries)
-{
-  double x=0.0, y=0.0, z=0.0;
+void EW::processReceiver(char* buffer,
+                         vector<vector<TimeSeries*> >& a_GlobalTimeSeries) {
+  double x = 0.0, y = 0.0, z = 0.0;
   double lat = 0.0, lon = 0.0, depth = 0.0;
   bool cartCoordSet = false, geoCoordSet = false;
   string fileName = "station";
   string hdf5FileName = "station.hdf5";
   string staName = "station";
-  bool staNameGiven=false;
+  bool staNameGiven = false;
   double stime, etime;
   stime = MPI_Wtime();
-  
+
   int writeEvery = 1000;
   int downSample = 1;
 
   bool topodepth = false;
 
-  bool usgsformat = 0, sacformat = 1, hdf5format = 0; // default is to write sac files
-  TimeSeries::receiverMode mode=TimeSeries::Displacement;
+  bool usgsformat = 0, sacformat = 1,
+       hdf5format = 0;  // default is to write sac files
+  TimeSeries::receiverMode mode = TimeSeries::Displacement;
 
   char* token = strtok(buffer, " \t");
-  bool nsew=false; 
-  int event=0;
-  //int vel=0;
+  bool nsew = false;
+  int event = 0;
+  // int vel=0;
 
-// tmp
-//  cerr << "******************** INSIDE process receiver *********************" << endl;
+  // tmp
+  //  cerr << "******************** INSIDE process receiver
+  //  *********************" << endl;
 
-  CHECK_INPUT(strcmp("rec", token) == 0 || strcmp("sac", token) == 0, "ERROR: not a rec line...: " << token);
+  CHECK_INPUT(strcmp("rec", token) == 0 || strcmp("sac", token) == 0,
+              "ERROR: not a rec line...: " << token);
   token = strtok(NULL, " \t");
 
   string err = "RECEIVER Error: ";
 
-//* testing
+  //* testing
   // if (proc_zero())
-  //   cout << "start parsing of receiver command, token:" << token << "(end token)" << endl;
+  //   cout << "start parsing of receiver command, token:" << token << "(end
+  //   token)" << endl;
 
-  while (token != NULL)
-  {
-     // while there are tokens in the string still
-     //     cout << m_myRank << " token " << token <<"x"<<endl;
+  while (token != NULL) {
+    // while there are tokens in the string still
+    //     cout << m_myRank << " token " << token <<"x"<<endl;
 
-     if (startswith("#", token) || startswith(" ", buffer))
-        // Ignore commented lines and lines with just a space.
-        break;
-     if (startswith("x=", token))
-     {
-        CHECK_INPUT(!geoCoordSet,
-                err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
-        token += 2; // skip x=
-        cartCoordSet = true;
-        x = atof(token);
-        CHECK_INPUT(x >= 0.0,
-		    "receiver command: x must be greater than or equal to 0, not " << x);
-        CHECK_INPUT(x <= m_global_xmax,
-		    "receiver command: x must be less than or equal to xmax, not " << x);
-     }
-     else if (startswith("y=", token))
-     {
-        CHECK_INPUT(!geoCoordSet,
-                err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
-        token += 2; // skip y=
-        cartCoordSet = true;
-        y = atof(token);
-        CHECK_INPUT(y >= 0.0,
-                "receiver command: y must be greater than or equal to 0, not " << y);
-        CHECK_INPUT(y <= m_global_ymax,
-		    "receiver command: y must be less than or equal to ymax, not " << y);
-     }
-     else if (startswith("lat=", token))
-     {
-        CHECK_INPUT(!cartCoordSet,
-                err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
-        token += 4; // skip lat=
-        lat = atof(token);
-        CHECK_INPUT(lat >= -90.0,
-                "receiver command: lat must be greater than or equal to -90 degrees, not " 
-                << lat);
-        CHECK_INPUT(lat <= 90.0,
-                "receiver command: lat must be less than or equal to 90 degrees, not "
-                << lat);
-        geoCoordSet = true;
-     }
-     else if (startswith("lon=", token))
-     {
-        CHECK_INPUT(!cartCoordSet,
-                err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
-        token += 4; // skip lon=
-        lon = atof(token);
-        CHECK_INPUT(lon >= -180.0,
-                "receiver command: lon must be greater or equal to -180 degrees, not " 
-                << lon);
-        CHECK_INPUT(lon <= 180.0,
-                "receiver command: lon must be less than or equal to 180 degrees, not "
-                << lon);
-        geoCoordSet = true;
-     }
-     else if (startswith("z=", token))
-     {
-       token += 2; // skip z=
-       depth = z = atof(token);
-       topodepth = false; // absolute depth (below mean sea level)
-       CHECK_INPUT(z <= m_global_zmax,
-		   "receiver command: z must be less than or equal to zmax, not " << z);
-     }
-     else if (startswith("depth=", token))
-     {
-        token += 6; // skip depth=
-       z = depth = atof(token);
-       topodepth = true; // by depth we here mean depth below topography
-       CHECK_INPUT(depth >= 0.0,
-	       err << "receiver command: depth must be greater than or equal to zero");
-       CHECK_INPUT(depth <= m_global_zmax,
-		   "receiver command: depth must be less than or equal to zmax, not " << depth);
-     }
-//                        1234567890
-     else if (startswith("topodepth=", token))
-     {
-        token += 10; // skip topodepth=
-       z = depth = atof(token);
-       topodepth = true; // by depth we here mean depth below topography
-       CHECK_INPUT(depth >= 0.0,
-	       err << "receiver command: depth must be greater than or equal to zero");
-       CHECK_INPUT(depth <= m_global_zmax,
-		   "receiver command: depth must be less than or equal to zmax, not " << depth);
-     }
-     else if(startswith("hdf5file=", token))
-     {
-        token += 9; // skip file=
-        hdf5FileName = token;
-     }
-     else if(startswith("file=", token))
-     {
-        token += 5; // skip file=
-        fileName = token;
-     }
-     else if (startswith("sta=", token))
-     {
-        token += strlen("sta=");
-        staName = token;
-	staNameGiven=true;
-     }
-     else if( startswith("nsew=", token) )
-     {
-        token += strlen("nsew=");
-        nsew = atoi(token) == 1;
-     }
-     // else if( startswith("velocity=", token) )
-     // {
-     //    token += strlen("velocity=");
-     //    vel = atoi(token);
-     // }
-     else if (startswith("writeEvery=", token))
-     {
-       token += strlen("writeEvery=");
-       writeEvery = atoi(token);
-       CHECK_INPUT(writeEvery >= 0,
-	       err << "sac command: writeEvery must be set to a non-negative integer, not: " << token);
-     }
-     else if (startswith("downSample=", token) || startswith("downsample=", token))
-     {
-       token += strlen("downSample=");
-       downSample = atoi(token);
-       CHECK_INPUT(downSample >= 1,
-	       err << "sac command: downSample must be set to an integer greater or equal than 1, not: " << token);
-     }
-     else if(startswith("event=",token))
-     {
-	token += 6;
-	//	event = atoi(token);
-	//	CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
-	// Ignore if no events given
-	if( m_nevents_specified > 0 )
-	{
-	   map<string,int>::iterator it = m_event_names.find(token);
-	   CHECK_INPUT( it != m_event_names.end(), 
-		     err << "event with name "<< token << " not found" );
-	   event = it->second;
-	}
-     }
-     else if( startswith("usgsformat=", token) )
-     {
-        token += strlen("usgsformat=");
-        usgsformat = atoi(token);
-     }
-     else if( startswith("sacformat=", token) )
-     {
-        token += strlen("sacformat=");
-        sacformat = atoi(token);
-     }
-     else if( startswith("hdf5format=", token) )
-     {
-        token += strlen("hdf5format=");
-        hdf5format = atoi(token);
-        // Write 64k data (16384 steps) each time for better HDF5 I/O performance
-        if (writeEvery == 1000) 
-            writeEvery = 16383;
-     }
-     else if( startswith("variables=", token) )
-     {
-//* testing
-       // if (proc_zero())
-       // 	 printf("Inside rec command, before parsing 'variables=', token:'%s'(end token)\n", token);
-       
-       token += strlen("variables=");
+    if (startswith("#", token) || startswith(" ", buffer))
+      // Ignore commented lines and lines with just a space.
+      break;
+    if (startswith("x=", token)) {
+      CHECK_INPUT(!geoCoordSet,
+                  err << "receiver command: Cannot set both a geographical "
+                         "(lat, lon) and a cartesian (x,y) coordinate");
+      token += 2;  // skip x=
+      cartCoordSet = true;
+      x = atof(token);
+      CHECK_INPUT(
+          x >= 0.0,
+          "receiver command: x must be greater than or equal to 0, not " << x);
+      CHECK_INPUT(
+          x <= m_global_xmax,
+          "receiver command: x must be less than or equal to xmax, not " << x);
+    } else if (startswith("y=", token)) {
+      CHECK_INPUT(!geoCoordSet,
+                  err << "receiver command: Cannot set both a geographical "
+                         "(lat, lon) and a cartesian (x,y) coordinate");
+      token += 2;  // skip y=
+      cartCoordSet = true;
+      y = atof(token);
+      CHECK_INPUT(
+          y >= 0.0,
+          "receiver command: y must be greater than or equal to 0, not " << y);
+      CHECK_INPUT(
+          y <= m_global_ymax,
+          "receiver command: y must be less than or equal to ymax, not " << y);
+    } else if (startswith("lat=", token)) {
+      CHECK_INPUT(!cartCoordSet,
+                  err << "receiver command: Cannot set both a geographical "
+                         "(lat, lon) and a cartesian (x,y) coordinate");
+      token += 4;  // skip lat=
+      lat = atof(token);
+      CHECK_INPUT(lat >= -90.0,
+                  "receiver command: lat must be greater than or equal to -90 "
+                  "degrees, not "
+                      << lat);
+      CHECK_INPUT(
+          lat <= 90.0,
+          "receiver command: lat must be less than or equal to 90 degrees, not "
+              << lat);
+      geoCoordSet = true;
+    } else if (startswith("lon=", token)) {
+      CHECK_INPUT(!cartCoordSet,
+                  err << "receiver command: Cannot set both a geographical "
+                         "(lat, lon) and a cartesian (x,y) coordinate");
+      token += 4;  // skip lon=
+      lon = atof(token);
+      CHECK_INPUT(
+          lon >= -180.0,
+          "receiver command: lon must be greater or equal to -180 degrees, not "
+              << lon);
+      CHECK_INPUT(lon <= 180.0,
+                  "receiver command: lon must be less than or equal to 180 "
+                  "degrees, not "
+                      << lon);
+      geoCoordSet = true;
+    } else if (startswith("z=", token)) {
+      token += 2;  // skip z=
+      depth = z = atof(token);
+      topodepth = false;  // absolute depth (below mean sea level)
+      CHECK_INPUT(
+          z <= m_global_zmax,
+          "receiver command: z must be less than or equal to zmax, not " << z);
+    } else if (startswith("depth=", token)) {
+      token += 6;  // skip depth=
+      z = depth = atof(token);
+      topodepth = true;  // by depth we here mean depth below topography
+      CHECK_INPUT(depth >= 0.0, err << "receiver command: depth must be "
+                                       "greater than or equal to zero");
+      CHECK_INPUT(
+          depth <= m_global_zmax,
+          "receiver command: depth must be less than or equal to zmax, not "
+              << depth);
+    }
+    //                        1234567890
+    else if (startswith("topodepth=", token)) {
+      token += 10;  // skip topodepth=
+      z = depth = atof(token);
+      topodepth = true;  // by depth we here mean depth below topography
+      CHECK_INPUT(depth >= 0.0, err << "receiver command: depth must be "
+                                       "greater than or equal to zero");
+      CHECK_INPUT(
+          depth <= m_global_zmax,
+          "receiver command: depth must be less than or equal to zmax, not "
+              << depth);
+    } else if (startswith("hdf5file=", token)) {
+      token += 9;  // skip file=
+      hdf5FileName = token;
+    } else if (startswith("file=", token)) {
+      token += 5;  // skip file=
+      fileName = token;
+    } else if (startswith("sta=", token)) {
+      token += strlen("sta=");
+      staName = token;
+      staNameGiven = true;
+    } else if (startswith("nsew=", token)) {
+      token += strlen("nsew=");
+      nsew = atoi(token) == 1;
+    }
+    // else if( startswith("velocity=", token) )
+    // {
+    //    token += strlen("velocity=");
+    //    vel = atoi(token);
+    // }
+    else if (startswith("writeEvery=", token)) {
+      token += strlen("writeEvery=");
+      writeEvery = atoi(token);
+      CHECK_INPUT(writeEvery >= 0, err << "sac command: writeEvery must be set "
+                                          "to a non-negative integer, not: "
+                                       << token);
+    } else if (startswith("downSample=", token) ||
+               startswith("downsample=", token)) {
+      token += strlen("downSample=");
+      downSample = atoi(token);
+      CHECK_INPUT(downSample >= 1,
+                  err << "sac command: downSample must be set to an integer "
+                         "greater or equal than 1, not: "
+                      << token);
+    } else if (startswith("event=", token)) {
+      token += 6;
+      //	event = atoi(token);
+      //	CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no.
+      //"<< event << " out of range" );
+      // Ignore if no events given
+      if (m_nevents_specified > 0) {
+        map<string, int>::iterator it = m_event_names.find(token);
+        CHECK_INPUT(it != m_event_names.end(),
+                    err << "event with name " << token << " not found");
+        event = it->second;
+      }
+    } else if (startswith("usgsformat=", token)) {
+      token += strlen("usgsformat=");
+      usgsformat = atoi(token);
+    } else if (startswith("sacformat=", token)) {
+      token += strlen("sacformat=");
+      sacformat = atoi(token);
+    } else if (startswith("hdf5format=", token)) {
+      token += strlen("hdf5format=");
+      hdf5format = atoi(token);
+      // Write 64k data (16384 steps) each time for better HDF5 I/O performance
+      if (writeEvery == 1000) writeEvery = 16383;
+    } else if (startswith("variables=", token)) {
+      //* testing
+      // if (proc_zero())
+      // 	 printf("Inside rec command, before parsing 'variables=',
+      // token:'%s'(end token)\n", token);
 
-//* testing
-       // if (proc_zero())
-       // 	 printf("Inside rec command, after parsing 'variables=', token:'%s'(end token)\n", token);
+      token += strlen("variables=");
 
-       if( strcmp("displacement",token)==0 )
-       {
-	 mode = TimeSeries::Displacement;
-       }
-       else if( strcmp("velocity",token)==0 )
-       {
-	 mode = TimeSeries::Velocity;
-       }
-       else if( strcmp("div",token)==0 )
-       {
-	 mode = TimeSeries::Div;
-       }
-       else if( strcmp("curl",token)==0 )
-       {
-	 mode = TimeSeries::Curl;
-       }
-       else if( strcmp("strains",token)==0 )
-       {
-	 mode = TimeSeries::Strains;
-       }
-       else if( strcmp("displacementgradient",token)==0 )
-       {
-	 mode = TimeSeries::DisplacementGradient;
-       }
-       else
-       {
-	 if (proc_zero())
-	   cout << "receiver command: variables=" << token << " not understood" << endl
-		<< "using default mode (displacement)" << endl << endl;
-	 mode = TimeSeries::Displacement;
-       }
-       
-     }
-     else
-     {
-        badOption("receiver", token);
-     }
-     token = strtok(NULL, " \t");
-//* testing
-     // if (proc_zero())
-     //   cout << "rec command: Bottom of while loop, token:" << token << "(end token)" << endl;
-     
-  }  
+      //* testing
+      // if (proc_zero())
+      // 	 printf("Inside rec command, after parsing 'variables=',
+      // token:'%s'(end token)\n", token);
+
+      if (strcmp("displacement", token) == 0) {
+        mode = TimeSeries::Displacement;
+      } else if (strcmp("velocity", token) == 0) {
+        mode = TimeSeries::Velocity;
+      } else if (strcmp("div", token) == 0) {
+        mode = TimeSeries::Div;
+      } else if (strcmp("curl", token) == 0) {
+        mode = TimeSeries::Curl;
+      } else if (strcmp("strains", token) == 0) {
+        mode = TimeSeries::Strains;
+      } else if (strcmp("displacementgradient", token) == 0) {
+        mode = TimeSeries::DisplacementGradient;
+      } else {
+        if (proc_zero())
+          cout << "receiver command: variables=" << token << " not understood"
+               << endl
+               << "using default mode (displacement)" << endl
+               << endl;
+        mode = TimeSeries::Displacement;
+      }
+
+    } else {
+      badOption("receiver", token);
+    }
+    token = strtok(NULL, " \t");
+    //* testing
+    // if (proc_zero())
+    //   cout << "rec command: Bottom of while loop, token:" << token << "(end
+    //   token)" << endl;
+  }
   //  cout << "end receiver " << m_myRank << endl;
 
-  if (geoCoordSet)
-  {
+  if (geoCoordSet) {
     computeCartesianCoord(x, y, lon, lat);
-// check if (x,y) is within the computational domain
+    // check if (x,y) is within the computational domain
   }
 
-  if (!staNameGiven)
-    staName = fileName;
+  if (!staNameGiven) staName = fileName;
 
-  bool inCurvilinear=false;
-// we are in or above the curvilinear grid 
-  if ( topographyExists() && z < m_zmin[mNumberOfCartesianGrids-1])
-  {
+  bool inCurvilinear = false;
+  // we are in or above the curvilinear grid
+  if (topographyExists() && z < m_zmin[mNumberOfCartesianGrids - 1]) {
     inCurvilinear = true;
   }
-      
-// check if (x,y,z) is not in the global bounding box
-  if ( !( (inCurvilinear || z >= 0) && x>=0 && x<=m_global_xmax && y>=0 && y<=m_global_ymax))
-  {
-// The location of this station was outside the domain, so don't include it in the global list
-    if (m_myRank == 0 && getVerbosity() > 0)
-    {
+
+  // check if (x,y,z) is not in the global bounding box
+  if (!((inCurvilinear || z >= 0) && x >= 0 && x <= m_global_xmax && y >= 0 &&
+        y <= m_global_ymax)) {
+    // The location of this station was outside the domain, so don't include it
+    // in the global list
+    if (m_myRank == 0 && getVerbosity() > 0) {
       stringstream receivererr;
-  
-      receivererr << endl 
-		  << "***************************************************" << endl
-		  << " WARNING:  RECEIVER positioned outside grid!" << endl;
-      receivererr << " No RECEIVER file will be generated for file = " << fileName << endl;
-      if (geoCoordSet)
-      {
-	receivererr << " @ lon=" << lon << " lat=" << lat << " depth=" << depth << endl << endl;
+
+      receivererr << endl
+                  << "***************************************************"
+                  << endl
+                  << " WARNING:  RECEIVER positioned outside grid!" << endl;
+      receivererr << " No RECEIVER file will be generated for file = "
+                  << fileName << endl;
+      if (geoCoordSet) {
+        receivererr << " @ lon=" << lon << " lat=" << lat << " depth=" << depth
+                    << endl
+                    << endl;
+      } else {
+        receivererr << " @ x=" << x << " y=" << y << " z=" << z << endl << endl;
       }
-      else
-      {
-	receivererr << " @ x=" << x << " y=" << y << " z=" << z << endl << endl;
-      }
-      
-      receivererr << "***************************************************" << endl;
+
+      receivererr << "***************************************************"
+                  << endl;
       cerr << receivererr.str();
       cerr.flush();
     }
-  }
-  else
-  {
-
-    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, hdf5FileName, x, y, depth, 
-					topodepth, writeEvery, downSample, !nsew, event );
+  } else {
+    TimeSeries* ts_ptr =
+        new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat,
+                       hdf5format, hdf5FileName, x, y, depth, topodepth,
+                       writeEvery, downSample, !nsew, event);
 #if USE_HDF5
     if (hdf5format) {
-      if(a_GlobalTimeSeries[event].size() == 0) {
+      if (a_GlobalTimeSeries[event].size() == 0) {
         ts_ptr->allocFid();
         ts_ptr->setTS0Ptr(ts_ptr);
-      }
-      else {
+      } else {
         ts_ptr->setFidPtr(a_GlobalTimeSeries[event][0]->getFidPtr());
         ts_ptr->setTS0Ptr(a_GlobalTimeSeries[event][0]);
       }
     }
 #endif
 
-// include the receiver in the global list
+    // include the receiver in the global list
     a_GlobalTimeSeries[event].push_back(ts_ptr);
   }
 
   etime = MPI_Wtime();
-  if (a_GlobalTimeSeries.size() > 0 && a_GlobalTimeSeries[0].size() > 0) 
-    a_GlobalTimeSeries[0][0]->addReadTime(etime-stime);
-  
+  if (a_GlobalTimeSeries.size() > 0 && a_GlobalTimeSeries[0].size() > 0)
+    a_GlobalTimeSeries[0][0]->addReadTime(etime - stime);
 }
 
 //-----------------------------------------------------------------------
-void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries)
-{
+void EW::processObservationHDF5(
+    char* buffer, vector<vector<TimeSeries*> >& a_GlobalTimeSeries) {
   /* double x=0.0, y=0.0, z=0.0; */
   /* double lat = 0.0, lon = 0.0, depth = 0.0; */
   float_sw4 t0 = 0;
-  float_sw4 scalefactor=1;
+  float_sw4 scalefactor = 1;
   /* bool cartCoordSet = false, geoCoordSet = false; */
   string inhdf5file = "";
   string outhdf5file = "station";
   int writeEvery = 0;
   int downSample = 1;
-  TimeSeries::receiverMode mode=TimeSeries::Displacement;
+  TimeSeries::receiverMode mode = TimeSeries::Displacement;
   float_sw4 winl, winr;
-  bool winlset=false, winrset=false;
-  char exclstr[4]={'\0','\0','\0','\0'};
-  bool usex=true, usey=true, usez=true;
-  bool scalefactor_set=false;
-  int event=0;
+  bool winlset = false, winrset = false;
+  char exclstr[4] = {'\0', '\0', '\0', '\0'};
+  bool usex = true, usey = true, usez = true;
+  bool scalefactor_set = false;
+  int event = 0;
 
   char* token = strtok(buffer, " \t");
   m_filter_observations = true;
 
-  CHECK_INPUT(strcmp("observationhdf5", token) == 0 || strcmp("obshdf5", token) == 0, "ERROR: not an observation line...: " << token);
+  CHECK_INPUT(
+      strcmp("observationhdf5", token) == 0 || strcmp("obshdf5", token) == 0,
+      "ERROR: not an observation line...: " << token);
   token = strtok(NULL, " \t");
 
   string err = "OBSERVATION Error: ";
 
-  while (token != NULL)
-  {
-     if (startswith("#", token) || startswith(" ", buffer))
-        // Ignore commented lines and lines with just a space.
-        break;
-     else if(startswith("hdf5file=", token))
-     {
-        token += 9; // skip hdf5file=
-        inhdf5file = token;
-     }
-     else if(startswith("outhdf5file=", token))
-     {
-        token += 12; // skip outhdf5file=
-        outhdf5file = token;
-     }
-     else if(startswith("event=",token))
-     {
-	token += 6;
-	//	event = atoi(token);
-	//	CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
-	// Ignore if no events given
-	if( m_nevents_specified > 0 )
-	{
-	   map<string,int>::iterator it = m_event_names.find(token);
-	   CHECK_INPUT( it != m_event_names.end(), 
-		     err << "event with name "<< token << " not found" );
-	   event = it->second;
-	}
-     }
-     // (small) shifts of the observation in time can be used to compensate for incorrect velocites
-     // in the material model
-     else if(startswith("shift=", token))
-     {
-        token += 6; // skip shift=
-        t0 = atof(token);
-     }
-     //     else if( startswith("utc=",token) )
-     //     {
-     //	token += 4;
-     //        if( strcmp("ignore",token)==0 || strcmp("off",token)==0 )
-     //	   ignore_utc = true;
-     //	else
-     //	{
-     //	   int year,month,day,hour,minute,second,msecond, fail;
-     //	   // Format: 01/04/2012:17:34:45.2343  (Month/Day/Year:Hour:Min:Sec.fraction)
-     //	   parsedate( token, year, month, day, hour, minute, second, msecond, fail );
-     //	   if( fail == 0 )
-     //	   {
-     //              utcset = true;
-     //	      utc[0] = year;
-     //	      utc[1] = month;
-     //	      utc[2] = day;
-     //	      utc[3] = hour;
-     //	      utc[4] = minute;
-     //	      utc[5] = second;
-     //	      utc[6] = msecond;
-     //	   }
-     //	   else
-     //	      CHECK_INPUT(fail == 0 , "processObservation: Error in utc format. Give as mm/dd/yyyy:hh:mm:ss.ms "
-     //			  << " or use utc=ignore" );
-     //	}
-     //     }
-     else if( startswith("windowL=",token))
-     {
-        token += 8;
-        winl = atof(token);
-        winlset = true;
-     }
-     else if( startswith("windowR=",token))
-     {
-        token += 8;
-        winr = atof(token);
-        winrset = true;
-     }
-     else if( startswith("exclude=",token) )
-     {
-        token += 8;
-	strncpy(exclstr,token,4);
+  while (token != NULL) {
+    if (startswith("#", token) || startswith(" ", buffer))
+      // Ignore commented lines and lines with just a space.
+      break;
+    else if (startswith("hdf5file=", token)) {
+      token += 9;  // skip hdf5file=
+      inhdf5file = token;
+    } else if (startswith("outhdf5file=", token)) {
+      token += 12;  // skip outhdf5file=
+      outhdf5file = token;
+    } else if (startswith("event=", token)) {
+      token += 6;
+      //	event = atoi(token);
+      //	CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no.
+      //"<< event << " out of range" );
+      // Ignore if no events given
+      if (m_nevents_specified > 0) {
+        map<string, int>::iterator it = m_event_names.find(token);
+        CHECK_INPUT(it != m_event_names.end(),
+                    err << "event with name " << token << " not found");
+        event = it->second;
+      }
+    }
+    // (small) shifts of the observation in time can be used to compensate for
+    // incorrect velocites in the material model
+    else if (startswith("shift=", token)) {
+      token += 6;  // skip shift=
+      t0 = atof(token);
+    }
+    //     else if( startswith("utc=",token) )
+    //     {
+    //	token += 4;
+    //        if( strcmp("ignore",token)==0 || strcmp("off",token)==0 )
+    //	   ignore_utc = true;
+    //	else
+    //	{
+    //	   int year,month,day,hour,minute,second,msecond, fail;
+    //	   // Format: 01/04/2012:17:34:45.2343
+    //(Month/Day/Year:Hour:Min:Sec.fraction) 	   parsedate( token, year, month,
+    //day, hour, minute, second, msecond, fail ); 	   if( fail == 0 )
+    //	   {
+    //              utcset = true;
+    //	      utc[0] = year;
+    //	      utc[1] = month;
+    //	      utc[2] = day;
+    //	      utc[3] = hour;
+    //	      utc[4] = minute;
+    //	      utc[5] = second;
+    //	      utc[6] = msecond;
+    //	   }
+    //	   else
+    //	      CHECK_INPUT(fail == 0 , "processObservation: Error in utc format.
+    // Give as mm/dd/yyyy:hh:mm:ss.ms "
+    //			  << " or use utc=ignore" );
+    //	}
+    //     }
+    else if (startswith("windowL=", token)) {
+      token += 8;
+      winl = atof(token);
+      winlset = true;
+    } else if (startswith("windowR=", token)) {
+      token += 8;
+      winr = atof(token);
+      winrset = true;
+    } else if (startswith("exclude=", token)) {
+      token += 8;
+      strncpy(exclstr, token, 4);
 
-	int c=0;
-	while( c < 3 && exclstr[c] != '\0' )
-	{
-	   if( exclstr[c] == 'x' || exclstr[c] == 'e' )
-	      usex=false;
-	   if( exclstr[c] == 'y' || exclstr[c] == 'n' )
-	      usey=false;
-	   if( exclstr[c] == 'z' || exclstr[c] == 'u' )
-	      usez=false;
-	   c++;
-	}
-     }
-     else if(startswith("filter=", token))
-     {
-        token += 7; // skip filter=
-        if( strcmp(token,"0")==0 || strcmp(token,"no")==0 )
-	   m_filter_observations = false;
-     }
-     else if( startswith("scalefactor=",token) )
-     {
-	token += 12;
-	scalefactor = atof(token);
-	scalefactor_set = true;
-     }
-     else
-     {
-        badOption("observation", token);
-     }
-     token = strtok(NULL, " \t");
-  }  
+      int c = 0;
+      while (c < 3 && exclstr[c] != '\0') {
+        if (exclstr[c] == 'x' || exclstr[c] == 'e') usex = false;
+        if (exclstr[c] == 'y' || exclstr[c] == 'n') usey = false;
+        if (exclstr[c] == 'z' || exclstr[c] == 'u') usez = false;
+        c++;
+      }
+    } else if (startswith("filter=", token)) {
+      token += 7;  // skip filter=
+      if (strcmp(token, "0") == 0 || strcmp(token, "no") == 0)
+        m_filter_observations = false;
+    } else if (startswith("scalefactor=", token)) {
+      token += 12;
+      scalefactor = atof(token);
+      scalefactor_set = true;
+    } else {
+      badOption("observation", token);
+    }
+    token = strtok(NULL, " \t");
+  }
 
   // Read from HDF5 file, and create time series data
 #ifdef USE_HDF5
   bool is_obs = true;
-  readStationHDF5(this, inhdf5file, outhdf5file, writeEvery, downSample, mode, event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax, is_obs, winlset, winrset, winl, winr, usex, usey, usez, t0, scalefactor_set,  scalefactor);
+  readStationHDF5(this, inhdf5file, outhdf5file, writeEvery, downSample, mode,
+                  event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax,
+                  is_obs, winlset, winrset, winl, winr, usex, usey, usez, t0,
+                  scalefactor_set, scalefactor);
 
 #else
   if (proc_zero())
-    cout << "Using HDF5 station input but sw4 is not compiled with HDF5!"<< endl;
+    cout << "Using HDF5 station input but sw4 is not compiled with HDF5!"
+         << endl;
   return;
 #endif
-
 }
 
 //-----------------------------------------------------------------------
-void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries)
-{
-  double x=0.0, y=0.0, z=0.0;
+void EW::processObservation(char* buffer,
+                            vector<vector<TimeSeries*> >& a_GlobalTimeSeries) {
+  double x = 0.0, y = 0.0, z = 0.0;
   double lat = 0.0, lon = 0.0, depth = 0.0;
   float_sw4 t0 = 0;
-  float_sw4 scalefactor=1;
+  float_sw4 scalefactor = 1;
   bool cartCoordSet = false, geoCoordSet = false;
   string fileName = "rec";
   string staName = "station";
-  bool staNameGiven=false;
-  
+  bool staNameGiven = false;
+
   int writeEvery = 0;
 
   /* bool dateSet = false; */
@@ -7113,362 +7082,347 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
   string sacfile1, sacfile2, sacfile3;
   string hdf5file = "";
 
-  bool usgsformat = 1, sacformat=0, hdf5format = 0;
-  TimeSeries::receiverMode mode=TimeSeries::Displacement;
+  bool usgsformat = 1, sacformat = 0, hdf5format = 0;
+  TimeSeries::receiverMode mode = TimeSeries::Displacement;
   float_sw4 winl, winr;
-  bool winlset=false, winrset=false;
-  char exclstr[4]={'\0','\0','\0','\0'};
-  bool usex=true, usey=true, usez=true;
-  bool usgsfileset=false, sf1set=false, sf2set=false, sf3set=false;
-  bool scalefactor_set=false;
-  int event=0;
+  bool winlset = false, winrset = false;
+  char exclstr[4] = {'\0', '\0', '\0', '\0'};
+  bool usex = true, usey = true, usez = true;
+  bool usgsfileset = false, sf1set = false, sf2set = false, sf3set = false;
+  bool scalefactor_set = false;
+  int event = 0;
 
   char* token = strtok(buffer, " \t");
   m_filter_observations = true;
 
-  CHECK_INPUT(strcmp("observation", token) == 0, "ERROR: not an observation line...: " << token);
+  CHECK_INPUT(strcmp("observation", token) == 0,
+              "ERROR: not an observation line...: " << token);
   token = strtok(NULL, " \t");
 
   string err = "OBSERVATION Error: ";
 
-  while (token != NULL)
-  {
-     if (startswith("#", token) || startswith(" ", buffer))
-        // Ignore commented lines and lines with just a space.
-        break;
-     if (startswith("x=", token))
-     {
-        CHECK_INPUT(!geoCoordSet,
-                err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
-        token += 2; // skip x=
-        cartCoordSet = true;
-        x = atof(token);
-        CHECK_INPUT(x >= 0.0,
-		    "observation command: x must be greater than or equal to 0, not " << x);
-        CHECK_INPUT(x <= m_global_xmax,
-		    "observation command: x must be less than or equal to xmax, not " << x);
-     }
-     else if (startswith("y=", token))
-     {
-        CHECK_INPUT(!geoCoordSet,
-                err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
-        token += 2; // skip y=
-        cartCoordSet = true;
-        y = atof(token);
-        CHECK_INPUT(y >= 0.0,
-                "observation command: y must be greater than or equal to 0, not " << y);
-        CHECK_INPUT(y <= m_global_ymax,
-		    "observation command: y must be less than or equal to ymax, not " << y);
-     }
-     else if (startswith("lat=", token))
-     {
-        CHECK_INPUT(!cartCoordSet,
-                err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
-        token += 4; // skip lat=
-        lat = atof(token);
-        CHECK_INPUT(lat >= -90.0,
-                "observation command: lat must be greater than or equal to -90 degrees, not " 
-                << lat);
-        CHECK_INPUT(lat <= 90.0,
-                "observation command: lat must be less than or equal to 90 degrees, not "
-                << lat);
-        geoCoordSet = true;
-     }
-     else if (startswith("lon=", token))
-     {
-        CHECK_INPUT(!cartCoordSet,
-                err << "observation command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
-        token += 4; // skip lon=
-        lon = atof(token);
-        CHECK_INPUT(lon >= -180.0,
-                "observation command: lon must be greater or equal to -180 degrees, not " 
-                << lon);
-        CHECK_INPUT(lon <= 180.0,
-                "observation command: lon must be less than or equal to 180 degrees, not "
-                << lon);
-        geoCoordSet = true;
-     }
-     else if (startswith("z=", token))
-     {
-       token += 2; // skip z=
-// depth is currently the same as z
-       depth = z = atof(token);
-       topodepth = false;
-       CHECK_INPUT(z <= m_global_zmax,
-		   "observation command: z must be less than or equal to zmax, not " << z);
-     }
-     else if (startswith("depth=", token))
-     {
-        token += 6; // skip depth=
-       z = depth = atof(token);
-       topodepth = true;
-       CHECK_INPUT(depth >= 0.0,
-	       err << "observation command: depth must be greater than or equal to zero");
-       CHECK_INPUT(depth <= m_global_zmax,
-		   "observation command: depth must be less than or equal to zmax, not " << depth);
-// by depth we here mean depth below topography
-     }
-     else if(startswith("file=", token))
-     {
-        token += 5; // skip file=
-        fileName = token;
-        usgsfileset = true;
-     }
-     else if(startswith("event=",token))
-     {
-	token += 6;
-	//	event = atoi(token);
-	//	CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
-	// Ignore if no events given
-	if( m_nevents_specified > 0 )
-	{
-	   map<string,int>::iterator it = m_event_names.find(token);
-	   CHECK_INPUT( it != m_event_names.end(), 
-		     err << "event with name "<< token << " not found" );
-	   event = it->second;
-	}
-     }
-     else if (startswith("sta=", token))
-     {
-        token += strlen("sta=");
-        staName = token;
-	staNameGiven=true;
-     }
-// (small) shifts of the observation in time can be used to compensate for incorrect velocites
-// in the material model
-     else if(startswith("shift=", token))
-     {
-        token += 6; // skip shift=
-        t0 = atof(token);
-     }
-     //     else if( startswith("utc=",token) )
-     //     {
-     //	token += 4;
-     //        if( strcmp("ignore",token)==0 || strcmp("off",token)==0 )
-     //	   ignore_utc = true;
-     //	else
-     //	{
-     //	   int year,month,day,hour,minute,second,msecond, fail;
-     //	   // Format: 01/04/2012:17:34:45.2343  (Month/Day/Year:Hour:Min:Sec.fraction)
-     //	   parsedate( token, year, month, day, hour, minute, second, msecond, fail );
-     //	   if( fail == 0 )
-     //	   {
-     //              utcset = true;
-     //	      utc[0] = year;
-     //	      utc[1] = month;
-     //	      utc[2] = day;
-     //	      utc[3] = hour;
-     //	      utc[4] = minute;
-     //	      utc[5] = second;
-     //	      utc[6] = msecond;
-     //	   }
-     //	   else
-     //	      CHECK_INPUT(fail == 0 , "processObservation: Error in utc format. Give as mm/dd/yyyy:hh:mm:ss.ms "
-     //			  << " or use utc=ignore" );
-     //	}
-     //     }
-     else if( startswith("windowL=",token))
-     {
-        token += 8;
-        winl = atof(token);
-        winlset = true;
-     }
-     else if( startswith("windowR=",token))
-     {
-        token += 8;
-        winr = atof(token);
-        winrset = true;
-     }
-     else if( startswith("exclude=",token) )
-     {
-        token += 8;
-	strncpy(exclstr,token,4);
+  while (token != NULL) {
+    if (startswith("#", token) || startswith(" ", buffer))
+      // Ignore commented lines and lines with just a space.
+      break;
+    if (startswith("x=", token)) {
+      CHECK_INPUT(!geoCoordSet,
+                  err << "observation command: Cannot set both a geographical "
+                         "(lat, lon) and a cartesian (x,y) coordinate");
+      token += 2;  // skip x=
+      cartCoordSet = true;
+      x = atof(token);
+      CHECK_INPUT(
+          x >= 0.0,
+          "observation command: x must be greater than or equal to 0, not "
+              << x);
+      CHECK_INPUT(
+          x <= m_global_xmax,
+          "observation command: x must be less than or equal to xmax, not "
+              << x);
+    } else if (startswith("y=", token)) {
+      CHECK_INPUT(!geoCoordSet,
+                  err << "observation command: Cannot set both a geographical "
+                         "(lat, lon) and a cartesian (x,y) coordinate");
+      token += 2;  // skip y=
+      cartCoordSet = true;
+      y = atof(token);
+      CHECK_INPUT(
+          y >= 0.0,
+          "observation command: y must be greater than or equal to 0, not "
+              << y);
+      CHECK_INPUT(
+          y <= m_global_ymax,
+          "observation command: y must be less than or equal to ymax, not "
+              << y);
+    } else if (startswith("lat=", token)) {
+      CHECK_INPUT(!cartCoordSet,
+                  err << "observation command: Cannot set both a geographical "
+                         "(lat, lon) and a cartesian (x,y) coordinate");
+      token += 4;  // skip lat=
+      lat = atof(token);
+      CHECK_INPUT(lat >= -90.0,
+                  "observation command: lat must be greater than or equal to "
+                  "-90 degrees, not "
+                      << lat);
+      CHECK_INPUT(lat <= 90.0,
+                  "observation command: lat must be less than or equal to 90 "
+                  "degrees, not "
+                      << lat);
+      geoCoordSet = true;
+    } else if (startswith("lon=", token)) {
+      CHECK_INPUT(!cartCoordSet,
+                  err << "observation command: Cannot set both a geographical "
+                         "(lat, lon) and a cartesian (x,y) coordinate");
+      token += 4;  // skip lon=
+      lon = atof(token);
+      CHECK_INPUT(lon >= -180.0,
+                  "observation command: lon must be greater or equal to -180 "
+                  "degrees, not "
+                      << lon);
+      CHECK_INPUT(lon <= 180.0,
+                  "observation command: lon must be less than or equal to 180 "
+                  "degrees, not "
+                      << lon);
+      geoCoordSet = true;
+    } else if (startswith("z=", token)) {
+      token += 2;  // skip z=
+                   // depth is currently the same as z
+      depth = z = atof(token);
+      topodepth = false;
+      CHECK_INPUT(
+          z <= m_global_zmax,
+          "observation command: z must be less than or equal to zmax, not "
+              << z);
+    } else if (startswith("depth=", token)) {
+      token += 6;  // skip depth=
+      z = depth = atof(token);
+      topodepth = true;
+      CHECK_INPUT(depth >= 0.0, err << "observation command: depth must be "
+                                       "greater than or equal to zero");
+      CHECK_INPUT(
+          depth <= m_global_zmax,
+          "observation command: depth must be less than or equal to zmax, not "
+              << depth);
+      // by depth we here mean depth below topography
+    } else if (startswith("file=", token)) {
+      token += 5;  // skip file=
+      fileName = token;
+      usgsfileset = true;
+    } else if (startswith("event=", token)) {
+      token += 6;
+      //	event = atoi(token);
+      //	CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no.
+      //"<< event << " out of range" );
+      // Ignore if no events given
+      if (m_nevents_specified > 0) {
+        map<string, int>::iterator it = m_event_names.find(token);
+        CHECK_INPUT(it != m_event_names.end(),
+                    err << "event with name " << token << " not found");
+        event = it->second;
+      }
+    } else if (startswith("sta=", token)) {
+      token += strlen("sta=");
+      staName = token;
+      staNameGiven = true;
+    }
+    // (small) shifts of the observation in time can be used to compensate for
+    // incorrect velocites in the material model
+    else if (startswith("shift=", token)) {
+      token += 6;  // skip shift=
+      t0 = atof(token);
+    }
+    //     else if( startswith("utc=",token) )
+    //     {
+    //	token += 4;
+    //        if( strcmp("ignore",token)==0 || strcmp("off",token)==0 )
+    //	   ignore_utc = true;
+    //	else
+    //	{
+    //	   int year,month,day,hour,minute,second,msecond, fail;
+    //	   // Format: 01/04/2012:17:34:45.2343
+    //(Month/Day/Year:Hour:Min:Sec.fraction) 	   parsedate( token, year, month,
+    //day, hour, minute, second, msecond, fail ); 	   if( fail == 0 )
+    //	   {
+    //              utcset = true;
+    //	      utc[0] = year;
+    //	      utc[1] = month;
+    //	      utc[2] = day;
+    //	      utc[3] = hour;
+    //	      utc[4] = minute;
+    //	      utc[5] = second;
+    //	      utc[6] = msecond;
+    //	   }
+    //	   else
+    //	      CHECK_INPUT(fail == 0 , "processObservation: Error in utc format.
+    // Give as mm/dd/yyyy:hh:mm:ss.ms "
+    //			  << " or use utc=ignore" );
+    //	}
+    //     }
+    else if (startswith("windowL=", token)) {
+      token += 8;
+      winl = atof(token);
+      winlset = true;
+    } else if (startswith("windowR=", token)) {
+      token += 8;
+      winr = atof(token);
+      winrset = true;
+    } else if (startswith("exclude=", token)) {
+      token += 8;
+      strncpy(exclstr, token, 4);
 
-	int c=0;
-	while( c < 3 && exclstr[c] != '\0' )
-	{
-	   if( exclstr[c] == 'x' || exclstr[c] == 'e' )
-	      usex=false;
-	   if( exclstr[c] == 'y' || exclstr[c] == 'n' )
-	      usey=false;
-	   if( exclstr[c] == 'z' || exclstr[c] == 'u' )
-	      usez=false;
-	   c++;
-	}
-     }
-     else if(startswith("filter=", token))
-     {
-        token += 7; // skip filter=
-        if( strcmp(token,"0")==0 || strcmp(token,"no")==0 )
-	   m_filter_observations = false;
-     }
-     else if( startswith("sacfile1=",token) )
-     {
-        token += 9;
-        sacfile1 += token;
-	sf1set = true;
-     }
-     else if( startswith("sacfile2=",token) )
-     {
-        token += 9;
-        sacfile2 += token;
-	sf2set = true;
-     }
-     else if( startswith("sacfile3=",token) )
-     {
-        token += 9;
-        sacfile3 += token;
-	sf3set = true;
-     }
-     else if( startswith("scalefactor=",token) )
-     {
-	token += 12;
-	scalefactor = atof(token);
-	scalefactor_set = true;
-     }
-     else
-     {
-        badOption("observation", token);
-     }
-     token = strtok(NULL, " \t");
-  }  
+      int c = 0;
+      while (c < 3 && exclstr[c] != '\0') {
+        if (exclstr[c] == 'x' || exclstr[c] == 'e') usex = false;
+        if (exclstr[c] == 'y' || exclstr[c] == 'n') usey = false;
+        if (exclstr[c] == 'z' || exclstr[c] == 'u') usez = false;
+        c++;
+      }
+    } else if (startswith("filter=", token)) {
+      token += 7;  // skip filter=
+      if (strcmp(token, "0") == 0 || strcmp(token, "no") == 0)
+        m_filter_observations = false;
+    } else if (startswith("sacfile1=", token)) {
+      token += 9;
+      sacfile1 += token;
+      sf1set = true;
+    } else if (startswith("sacfile2=", token)) {
+      token += 9;
+      sacfile2 += token;
+      sf2set = true;
+    } else if (startswith("sacfile3=", token)) {
+      token += 9;
+      sacfile3 += token;
+      sf3set = true;
+    } else if (startswith("scalefactor=", token)) {
+      token += 12;
+      scalefactor = atof(token);
+      scalefactor_set = true;
+    } else {
+      badOption("observation", token);
+    }
+    token = strtok(NULL, " \t");
+  }
 
   // Make sure either one usgsfile or three sac files are input.
-  if( usgsfileset )
-  {
-     CHECK_INPUT( !sf1set && !sf2set && !sf3set, "processObservation, Error: can not give both usgs file and sacfiles" );
-  }
-  else
-  {
-     CHECK_INPUT( sf1set && sf2set && sf3set, "processObservation, Error: must give at least three sac files" );
+  if (usgsfileset) {
+    CHECK_INPUT(
+        !sf1set && !sf2set && !sf3set,
+        "processObservation, Error: can not give both usgs file and sacfiles");
+  } else {
+    CHECK_INPUT(
+        sf1set && sf2set && sf3set,
+        "processObservation, Error: must give at least three sac files");
 
-// Find a name for the SAC station
-     int l = sacfile1.length();
-     if( sacfile1.substr(l-4,4) == ".sac" )
-        fileName = sacfile1.substr(0,l-4);
-     else
-	fileName = sacfile1;
+    // Find a name for the SAC station
+    int l = sacfile1.length();
+    if (sacfile1.substr(l - 4, 4) == ".sac")
+      fileName = sacfile1.substr(0, l - 4);
+    else
+      fileName = sacfile1;
 
-// Read sac header to figure out the position
-// Use only one of the files, more thorough checking later, in TimeSeries.readSACfile.
-     float_sw4 latlon[2];
-     if( m_myRank == 0 )
-     {
-        string fname= mObsPath[event];
-	fname += sacfile1;
-	FILE* fd=fopen(fname.c_str(),"r");
-	CHECK_INPUT( fd != NULL, "processObservation: ERROR: sac file " << sacfile1 << " could not be opened" );
-        float float70[70];
-	size_t nr = fread(float70, sizeof(float), 70, fd );
-        CHECK_INPUT( nr == 70, "processObservation: ERROR, could not read float part of header of " << sacfile1 );
-        latlon[0] = float70[31];
-        latlon[1] = float70[32];
-        CHECK_INPUT( latlon[0] != -12345 && latlon[1] != -12345, 
-                       "processObservation: ERROR, sac file does not contain station coordinates " << sacfile1);
-	fclose(fd);
-     }
-     MPI_Bcast( latlon, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD );
-     if( geoCoordSet && ( fabs(lat-latlon[0])<1e-10 && fabs(lon-latlon[1])<1e-10 ))
-     {
-        if( m_myRank == 0 )
-	   cout << "processObservation: WARNING station (lat,lon) on sac file do not match input (lat,lon)" << endl;
-     }
-     if( !cartCoordSet && !geoCoordSet )
-     {
-	geoCoordSet = true;
-	lat = latlon[0];
-	lon = latlon[1];
-     }
+    // Read sac header to figure out the position
+    // Use only one of the files, more thorough checking later, in
+    // TimeSeries.readSACfile.
+    float_sw4 latlon[2];
+    if (m_myRank == 0) {
+      string fname = mObsPath[event];
+      fname += sacfile1;
+      FILE* fd = fopen(fname.c_str(), "r");
+      CHECK_INPUT(fd != NULL, "processObservation: ERROR: sac file "
+                                  << sacfile1 << " could not be opened");
+      float float70[70];
+      size_t nr = fread(float70, sizeof(float), 70, fd);
+      CHECK_INPUT(
+          nr == 70,
+          "processObservation: ERROR, could not read float part of header of "
+              << sacfile1);
+      latlon[0] = float70[31];
+      latlon[1] = float70[32];
+      CHECK_INPUT(latlon[0] != -12345 && latlon[1] != -12345,
+                  "processObservation: ERROR, sac file does not contain "
+                  "station coordinates "
+                      << sacfile1);
+      fclose(fd);
+    }
+    MPI_Bcast(latlon, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    if (geoCoordSet &&
+        (fabs(lat - latlon[0]) < 1e-10 && fabs(lon - latlon[1]) < 1e-10)) {
+      if (m_myRank == 0)
+        cout << "processObservation: WARNING station (lat,lon) on sac file do "
+                "not match input (lat,lon)"
+             << endl;
+    }
+    if (!cartCoordSet && !geoCoordSet) {
+      geoCoordSet = true;
+      lat = latlon[0];
+      lon = latlon[1];
+    }
   }
-  if (geoCoordSet)
-  {
+  if (geoCoordSet) {
     computeCartesianCoord(x, y, lon, lat);
-// check if (x,y) is within the computational domain
+    // check if (x,y) is within the computational domain
   }
 
-  if (!staNameGiven)
-    staName = fileName;
+  if (!staNameGiven) staName = fileName;
 
-  bool inCurvilinear=false;
-//
-// AP: This test is incorrect because we don't know the elevation of the observation
-//
-// we are in or above the curvilinear grid 
-  if ( topographyExists() && z < m_zmin[mNumberOfCartesianGrids-1])
-  {
+  bool inCurvilinear = false;
+  //
+  // AP: This test is incorrect because we don't know the elevation of the
+  // observation
+  //
+  // we are in or above the curvilinear grid
+  if (topographyExists() && z < m_zmin[mNumberOfCartesianGrids - 1]) {
     inCurvilinear = true;
   }
-      
-// check if (x,y,z) is not in the global bounding box
-  if ( !( (inCurvilinear || z >= 0) && x>=0 && x<=m_global_xmax && y>=0 && y<=m_global_ymax))
-  {
-// The location of this station was outside the domain, so don't include it in the global list
-    if (m_myRank == 0 && getVerbosity() > 0)
-    {
+
+  // check if (x,y,z) is not in the global bounding box
+  if (!((inCurvilinear || z >= 0) && x >= 0 && x <= m_global_xmax && y >= 0 &&
+        y <= m_global_ymax)) {
+    // The location of this station was outside the domain, so don't include it
+    // in the global list
+    if (m_myRank == 0 && getVerbosity() > 0) {
       stringstream observationerr;
-  
-      observationerr << endl 
-		     << "***************************************************" << endl
-		     << " WARNING:  OBSERVATION positioned outside grid!" << endl;
-      observationerr << " No OBSERVATION file will be generated for file = " << fileName << endl;
-      if (geoCoordSet)
-      {
-	observationerr << " @ lon=" << lon << " lat=" << lat << " depth=" << depth << endl << endl;
+
+      observationerr << endl
+                     << "***************************************************"
+                     << endl
+                     << " WARNING:  OBSERVATION positioned outside grid!"
+                     << endl;
+      observationerr << " No OBSERVATION file will be generated for file = "
+                     << fileName << endl;
+      if (geoCoordSet) {
+        observationerr << " @ lon=" << lon << " lat=" << lat
+                       << " depth=" << depth << endl
+                       << endl;
+      } else {
+        observationerr << " @ x=" << x << " y=" << y << " z=" << z << endl
+                       << endl;
       }
-      else
-      {
-	observationerr << " @ x=" << x << " y=" << y << " z=" << z << endl << endl;
-      }
-      
-      observationerr << "***************************************************" << endl;
+
+      observationerr << "***************************************************"
+                     << endl;
       cerr << observationerr.str();
       cerr.flush();
     }
-  }
-  else
-  {
-    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, hdf5file, x, y, depth, 
-					topodepth, writeEvery, 1, true, event );
-    // Read in file. 
-    // ignore_utc=true, ignores UTC read from file, instead uses the default utc = simulation utc as reference.
+  } else {
+    TimeSeries* ts_ptr = new TimeSeries(
+        this, fileName, staName, mode, sacformat, usgsformat, hdf5format,
+        hdf5file, x, y, depth, topodepth, writeEvery, 1, true, event);
+    // Read in file.
+    // ignore_utc=true, ignores UTC read from file, instead uses the default utc
+    // = simulation utc as reference.
     //        This is useful for synthetic data.
 
-    if( usgsfileset )
-       ts_ptr->readFile( this, false );
+    if (usgsfileset)
+      ts_ptr->readFile(this, false);
     else
-       ts_ptr->readSACfiles( this, sacfile1.c_str(), sacfile2.c_str(), sacfile3.c_str(), false );
+      ts_ptr->readSACfiles(this, sacfile1.c_str(), sacfile2.c_str(),
+                           sacfile3.c_str(), false);
 
-// Set reference UTC to simulation UTC, for easier plotting.
+    // Set reference UTC to simulation UTC, for easier plotting.
     ts_ptr->set_utc_to_simulation_utc();
 
-// Set window, in simulation time
-    if( winlset || winrset )
-    {
-       if( winlset && !winrset )
-	  winr = 1e38;
-       if( !winlset && winrset )
-	  winl = -1;
-       ts_ptr->set_window( winl, winr );
+    // Set window, in simulation time
+    if (winlset || winrset) {
+      if (winlset && !winrset) winr = 1e38;
+      if (!winlset && winrset) winl = -1;
+      ts_ptr->set_window(winl, winr);
     }
 
-// Exclude some components
-    if( !usex || !usey || !usez )
-       ts_ptr->exclude_component( usex, usey, usez );
+    // Exclude some components
+    if (!usex || !usey || !usez) ts_ptr->exclude_component(usex, usey, usez);
 
-// Add extra shift from command line, use with care.
-    if( t0 != 0 )
-       ts_ptr->add_shift( t0 );
+    // Add extra shift from command line, use with care.
+    if (t0 != 0) ts_ptr->add_shift(t0);
 
-// Set scale factor if given
-    if( scalefactor_set )
-       ts_ptr->set_scalefactor( scalefactor );
+    // Set scale factor if given
+    if (scalefactor_set) ts_ptr->set_scalefactor(scalefactor);
 
-// include the observation in the global list
+    // include the observation in the global list
     a_GlobalTimeSeries[event].push_back(ts_ptr);
   }
 }
-
-
 
 //-----------------------------------------------------------------------
 void EW::processScaleFactors(char* buffer) {

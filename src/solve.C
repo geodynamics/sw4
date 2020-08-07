@@ -43,8 +43,8 @@
 #endif
 
 #ifdef USE_HDF5
-#include "sachdf5.h"
 #include "SfileOutput.h"
+#include "sachdf5.h"
 #endif
 
 void curvilinear4sgwind(int, int, int, int, int, int, int, int, float_sw4*,
@@ -776,7 +776,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
        currentTimeStep <= mNumberOfTimeSteps[event]; currentTimeStep++) {
     time_measure[0] = MPI_Wtime();
     global_variables.firstCycle = currentTimeStep == beginCycle;
-    global_variables.current_step = currentTimeStep ;
+    global_variables.current_step = currentTimeStep;
     if (currentTimeStep == mNumberOfTimeSteps[event]) t1 = SW4_CHRONO_NOW;
     if (currentTimeStep == (beginCycle + 10)) {
       PROFILER_START;
@@ -1307,12 +1307,13 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
          << " seconds." << endl;
   // Write sfile after time stepping
   // reverse setup_viscoelastic when needed
-  if ( usingAttenuation() && NULL == use_twilight_forcing() )
+  if (usingAttenuation() && NULL == use_twilight_forcing())
     reverse_setup_viscoelastic();
 
-  for( int ii = 0 ; ii < mSfiles.size() ; ii++ )
-    mSfiles[ii]->force_write_image( t, mNumberOfTimeSteps[event], Up, mRho, 
-            mMu, mLambda, mRho, mMu, mLambda, mQp, mQs, mPath[event], mZ ); 
+  for (int ii = 0; ii < mSfiles.size(); ii++)
+    mSfiles[ii]->force_write_image(t, mNumberOfTimeSteps[event], Up, mRho, mMu,
+                                   mLambda, mRho, mMu, mLambda, mQp, mQs,
+                                   mPath[event], mZ);
 
 #endif
 
@@ -4911,7 +4912,7 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
     }  // end if bcType[g][4] == bStressFree
     if (m_bcType[g][5] == bStressFree) {
       SW4_MARK_BEGIN("enforceBCfreeAtt2::SET 2");
-      //std::cerr << "WARNING :: CODE EXECUTING ON CPU solve.C Line 4929 \n";
+      // std::cerr << "WARNING :: CODE EXECUTING ON CPU solve.C Line 4929 \n";
       int nk = m_global_nz[g];
       // const float_sw4 i6  = 1.0/6;
       const float_sw4 d4a = 2.0 / 3;

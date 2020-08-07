@@ -145,7 +145,7 @@ void presetGPUID() {
 #endif  // ENABLE_CUDA
   }
   void *operator new(std::size_t size, Space loc) throw() {
-  SW4_MARK_FUNCTION;
+    SW4_MARK_FUNCTION;
 #ifdef ENABLE_GPU
     if (loc == Space::Managed) {
       // std::cout<<"Space::Managed allocation \n";
@@ -156,7 +156,7 @@ void presetGPUID() {
       if (SW4_MALLOC_MANAGED(&ptr, size) != SW4_DEVICE_SUCCESS) {
         std::cerr << "Managed memory allocation failed " << size << "\n";
         abort();
-        //throw();
+        // throw();
       } else {
         check_mem();
         global_variables.curr_mem += size;
@@ -198,7 +198,7 @@ void presetGPUID() {
       if (SW4_MALLOC_DEVICE(&ptr, size) != SW4_DEVICE_SUCCESS) {
         std::cerr << "Device memory allocation failed " << size << "\n";
         abort();
-        //throw();
+        // throw();
       } else
         return ptr;
     } else if (loc == Space::Pinned) {
@@ -223,7 +223,7 @@ void presetGPUID() {
     } else {
       std::cerr << "Unknown memory space for allocation request " << as_int(loc)
                 << "\n";
-      //throw std::bad_alloc();
+      // throw std::bad_alloc();
       abort();
     }
 #else   // NOT ENABLE_GPU
@@ -237,13 +237,13 @@ void presetGPUID() {
   } else {
     std::cerr << "Unknown memory space for allocation request\n";
     abort();
-    //throw std::bad_alloc();
+    // throw std::bad_alloc();
   }
 #endif  // ENABE_GPU
   }
   void *operator new(std::size_t size, Space loc, char *file,
                      int line) throw() {
-  SW4_MARK_FUNCTION;
+    SW4_MARK_FUNCTION;
     std::cout << "Calling tracking new from " << line << " of " << file << "\n";
     pattr_t *ss = new pattr_t;
     ss->file = file;
@@ -256,7 +256,7 @@ void presetGPUID() {
   }
 
   void *operator new[](std::size_t size, Space loc) throw() {
-  SW4_MARK_FUNCTION;
+    SW4_MARK_FUNCTION;
 #ifdef ENABLE_GPU
     if (loc == Space::Managed) {
       // std::cout<<"Managed [] allocation \n";
@@ -267,7 +267,7 @@ void presetGPUID() {
       if (SW4_MALLOC_MANAGED(&ptr, size) != SW4_DEVICE_SUCCESS) {
         std::cerr << "Managed memory allocation failed " << size << "\n";
         abort();
-        //throw std::bad_alloc();
+        // throw std::bad_alloc();
       } else {
         check_mem();
         global_variables.curr_mem += size;
@@ -304,7 +304,7 @@ void presetGPUID() {
       if (SW4_MALLOC_DEVICE(&ptr, size) != SW4_DEVICE_SUCCESS) {
         std::cerr << "Device memory allocation failed " << size << "\n";
         abort();
-        //throw std::bad_alloc();
+        // throw std::bad_alloc();
       } else
         return ptr;
     } else if (loc == Space::Pinned) {
@@ -330,8 +330,8 @@ void presetGPUID() {
       // cudaHostAlloc(&ptr,size+sizeof(size_t)*MEM_PAD_LEN,cudaHostAllocMapped));
       std::cerr << "Unknown memory space for allocation request " << as_int(loc)
                 << "\n";
-	abort();
-      //throw std::bad_alloc();
+      abort();
+      // throw std::bad_alloc();
     }
 
 #else   // !ENABLE_GPU
@@ -343,14 +343,15 @@ void presetGPUID() {
     // std::cout<<"Calling my placement new \n";
     return ::operator new(size);
   } else {
-    std::cerr << "Unknown memory space for allocation request " << as_int(loc) << "\n";
+    std::cerr << "Unknown memory space for allocation request " << as_int(loc)
+              << "\n";
     throw std::bad_alloc();
   }
 #endif  // ENABLE_GPU
   }
   void *operator new[](std::size_t size, Space loc, const char *file,
                        int line) {
-  SW4_MARK_FUNCTION;
+    SW4_MARK_FUNCTION;
     // std::cout<<"Calling tracking new from "<<line<<" of "<<file<<"\n";
     pattr_t *ss = new pattr_t;
     ss->file = file;
@@ -409,8 +410,8 @@ void presetGPUID() {
     // std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
   } else {
-    std::cerr << "Unknown memory space for de-allocation request " << as_int(loc)
-              << "\n";
+    std::cerr << "Unknown memory space for de-allocation request "
+              << as_int(loc) << "\n";
   }
 #endif
   }
@@ -476,8 +477,8 @@ void presetGPUID() {
     // std:cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
   } else {
-    std::cerr << "Unknown memory space for de-allocation request " << as_int(loc)
-              << "\n";
+    std::cerr << "Unknown memory space for de-allocation request "
+              << as_int(loc) << "\n";
   }
 #endif
   }
@@ -621,7 +622,7 @@ void presetGPUID() {
 
 #if defined(ENABLE_GPU)
   void *Managed::operator new(size_t len) {
-  SW4_MARK_FUNCTION;
+    SW4_MARK_FUNCTION;
     void *ptr;
     ocount++;
     hwm = std::max(hwm, ocount);
@@ -807,9 +808,6 @@ void presetGPUID() {
       return Space::Space_Error;
   }
 #endif
-
-
-
 
   void invert(float_sw4 * A, int msize) {
     float_sw4 B[9];

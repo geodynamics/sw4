@@ -45,7 +45,6 @@
 #include "CheckPoint.h"
 #include "DataPatches.h"
 #include "ESSI3D.h"
-#include "SfileOutput.h"
 #include "EtreeFile.h"
 #include "Filter.h"
 #include "ForcingTwilight.h"
@@ -58,6 +57,7 @@
 #include "Mspace.h"
 #include "RandomizedMaterial.h"
 #include "Sarray.h"
+#include "SfileOutput.h"
 #include "Source.h"
 #include "SuperGrid.h"
 #include "TestEnergy.h"
@@ -461,7 +461,7 @@ class EW {
   void setup_viscoelastic();
   void setup_viscoelastic_tw();
   void reverse_setup_viscoelastic();
-  void *use_twilight_forcing() { return m_twilight_forcing;};
+  void* use_twilight_forcing() { return m_twilight_forcing; };
 
   void extrapolateInZ(int g, Sarray& field, bool lowk, bool highk);
   void extrapolateInXY(vector<Sarray>& field);

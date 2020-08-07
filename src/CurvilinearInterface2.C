@@ -2096,8 +2096,8 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
   RAJA::RangeSegment k_range(kb, ke + 1);
 
 #ifdef PEEKS_GALORE
-    SW4_PEEK;
-    SYNC_DEVICE;
+  SW4_PEEK;
+  SYNC_DEVICE;
 #endif
 
   // i-direction communication

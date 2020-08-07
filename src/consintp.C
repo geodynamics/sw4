@@ -300,7 +300,8 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
   // Start iteration
   SW4_MARK_BEGIN("CONSINTP ITERATION");
   while (jacerr > m_citol && it < m_cimaxiter) {
-    //std::cout<<" Time step "<<global_variables.current_step<<" iter = "<<it<<"\n";
+    // std::cout<<" Time step "<<global_variables.current_step<<" iter =
+    // "<<it<<"\n";
     //
     // REMARK: check jump condition in the presence of stretching function;
     // stretching function may be different in the fine and coarse grids!
@@ -388,11 +389,11 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
           m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf,
           mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
     SW4_MARK_BEGIN("CONSINTP::COMM_ARRAY2D");
-    //std::cout<<"UFF "<<Uf.c_ptr()<<"\n"<<std::flush;
+    // std::cout<<"UFF "<<Uf.c_ptr()<<"\n"<<std::flush;
     communicate_array_2d(Uf, gf, nkf + 1);
-    //std::cout<<"UCC "<<Uc.c_ptr()<<"\n"<<std::flush;
+    // std::cout<<"UCC "<<Uc.c_ptr()<<"\n"<<std::flush;
     communicate_array_2d(Uc, gc, 0);
-    //std::cout<<"UCC doNe\n"<<std::flush;
+    // std::cout<<"UCC doNe\n"<<std::flush;
     SW4_MARK_END("CONSINTP::COMM_ARRAY2D");
     float_sw4 jacerrtmp = 0;
     for (int q = 0; q < 6; q++) {

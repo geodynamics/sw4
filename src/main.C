@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
       static_cast<size_t>(15) * 1024 * 1024 * 1024;  //+102*1024*1024;
 
   auto pref_allocator = rma.makeAllocator<umpire::strategy::AllocationAdvisor>(
-									       "preferred_location_device", allocator, "PREFERRED_LOCATION", 
+      "preferred_location_device", allocator, "PREFERRED_LOCATION",
       global_variables.device);
 
   auto pooled_allocator =

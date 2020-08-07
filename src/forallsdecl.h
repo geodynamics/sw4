@@ -22,7 +22,6 @@ template <int N, int M, int L>
 std::map<std::tuple<int, int, int>, std::vector<std::tuple<dim3, dim3>>>
     RangeAT<N, M, L>::confs;
 
-
 template <int N, int M, int L>
 std::map<std::tuple<int, int, int>, std::ofstream> RangeAT<N, M, L>::files;
 

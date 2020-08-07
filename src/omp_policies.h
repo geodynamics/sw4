@@ -166,7 +166,7 @@ using AMVC2Cu_POL = DEFAULT_LOOP3;
 using ASG4WC_POL_ASYNC = DEFAULT_LOOP4;
 
 // In addsgdc.C
-//using ADDSGD_POL_ASYNC = DEFAULT_LOOP4;
+// using ADDSGD_POL_ASYNC = DEFAULT_LOOP4;
 
 using ADDSGD_POL2_ASYNC = DEFAULT_LOOP4;
 
@@ -198,7 +198,6 @@ using FORCE_LOOP_ASYNC = RAJA::omp_parallel_for_exec;
 using FORCETT_LOOP_ASYNC = RAJA::omp_parallel_for_exec;
 
 using GIG_POL_ASYNC = DEFAULT_LOOP2;
-using AFCC_POL_ASYNC = DEFAULT_LOOP2; 
-
+using AFCC_POL_ASYNC = DEFAULT_LOOP2;
 
 #endif

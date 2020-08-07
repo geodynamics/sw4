@@ -1529,15 +1529,21 @@ void Sarray::swrite(std::string filename) {
     of << i << " " << m_data[i] << "\n";
   }
 }
-void Sarray::GetAtt(char *file, int line){
-short int data=-999;
+void Sarray::GetAtt(char* file, int line) {
+  short int data = -999;
 
-if( cuMemRangeGetAttribute(&data,4,CU_MEM_RANGE_ATTRIBUTE_PREFERRED_LOCATION,(CUdeviceptr)m_data,m_nc*m_ni*m_nj*m_nk*sizeof(float_sw4))!=CUDA_SUCCESS){
-std::cerr<<" cuMemRangeGetAttributes failed\n";
-} else {
-if (data!=0) {
-  std::cout<<m_data<<" PREF LOCATION IS DEVICE "<<data<<" in "<<file<<" line "<<line<<" CPU = "<<CU_DEVICE_CPU<<" INV = "<<CU_DEVICE_INVALID <<"\n"<<std::flush;
-//abort();
-}
-}
+  if (cuMemRangeGetAttribute(
+          &data, 4, CU_MEM_RANGE_ATTRIBUTE_PREFERRED_LOCATION,
+          (CUdeviceptr)m_data,
+          m_nc * m_ni * m_nj * m_nk * sizeof(float_sw4)) != CUDA_SUCCESS) {
+    std::cerr << " cuMemRangeGetAttributes failed\n";
+  } else {
+    if (data != 0) {
+      std::cout << m_data << " PREF LOCATION IS DEVICE " << data << " in "
+                << file << " line " << line << " CPU = " << CU_DEVICE_CPU
+                << " INV = " << CU_DEVICE_INVALID << "\n"
+                << std::flush;
+      // abort();
+    }
+  }
 }

@@ -989,12 +989,12 @@ void EW::communicate_array_async(Sarray& u, int grid) {
     {
       // X-direction communication
       //#pragma omp section
-            AMPI_Sendrecv(&u(1, ie - (2 * m_ppadding - 1), jb, kb), 1,
+      AMPI_Sendrecv(&u(1, ie - (2 * m_ppadding - 1), jb, kb), 1,
                     send_type4[2 * grid], m_neighbor[1], xtag1,
                     &u(1, ib, jb, kb), 1, send_type4[2 * grid], m_neighbor[0],
                     xtag1, bufs_type4[4 * grid], m_cartesian_communicator,
                     &status);
-	    //#pragma omp section
+      //#pragma omp section
       AMPI_Sendrecv(&u(1, ib + m_ppadding, jb, kb), 1, send_type4[2 * grid],
                     m_neighbor[0], xtag2, &u(1, ie - (m_ppadding - 1), jb, kb),
                     1, send_type4[2 * grid], m_neighbor[1], xtag2,
@@ -1270,8 +1270,8 @@ void EW::communicate_array_2d_async(Sarray& u, int g, int k) {
   if (m_croutines && u.m_ke - u.m_kb + 1 != 1) {
     SW4_MARK_BEGIN("comm_array_2d_async::ALLOC");
     Sarray u2d(3, u.m_ib, u.m_ie, u.m_jb, u.m_je, k, k, __FILE__, __LINE__);
-    //u2d.GetAtt(__FILE__,__LINE__);
-    //u.GetAtt(__FILE__,__LINE__);
+    // u2d.GetAtt(__FILE__,__LINE__);
+    // u.GetAtt(__FILE__,__LINE__);
     SW4_MARK_END("comm_array_2d_async::ALLOC");
     u2d.copy_kplane(u, k);
     SW4_MARK_BEGIN("comm_array_2d_async::MPI-1");

@@ -117,9 +117,9 @@ __global__ void forall3kernel(const int start0, const int N0, const int start1,
   if ((tid0 < N0) && (tid1 < N1) && (tid2 < N2)) f(tid0, tid1, tid2);
 }
 template <int N, typename Tag, typename Func>
-__global__ void forall3kernel(Tag t , const int start0, const int N0, const int start1,
-                              const int N1, const int start2, const int N2,
-                              Func f) {
+__global__ void forall3kernel(Tag t, const int start0, const int N0,
+                              const int start1, const int N1, const int start2,
+                              const int N2, Func f) {
   int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
   int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
   int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
@@ -171,16 +171,21 @@ void forall3async(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
   // std::cout<<"forall launch tpb"<<irange.tpb<<" "<<jrange.tpb<<"
   // "<<krange.tpb<<"\n"; std::cout<<"forall launch blocks"<<irange.blocks<<"
   // "<<jrange.blocks<<" "<<krange.blocks<<"\n";
-  
-  int minGridSize,maxBlockSize;
-  if (cudaOccupancyMaxPotentialBlockSize(&minGridSize,&maxBlockSize,forall3kernel<LoopBody>,0,0)!=cudaSuccess){
-    std::cerr<<"cudaOccupancyMaxPotentialBlockSize Failed\n";
+
+  int minGridSize, maxBlockSize;
+  if (cudaOccupancyMaxPotentialBlockSize(&minGridSize, &maxBlockSize,
+                                         forall3kernel<LoopBody>, 0,
+                                         0) != cudaSuccess) {
+    std::cerr << "cudaOccupancyMaxPotentialBlockSize Failed\n";
     abort();
   } else {
-    //std::cerr<<"Min grid size "<<minGridSize<<" maxblock size "<<maxBlockSize<<"\n";
+    // std::cerr<<"Min grid size "<<minGridSize<<" maxblock size
+    // "<<maxBlockSize<<"\n";
   }
-  if ((irange.tpb*jrange.tpb*krange.tpb)>maxBlockSize){
-    std::cerr<<" Block size too large in forall3async"<<(irange.tpb*jrange.tpb*krange.tpb)<<" > "<<maxBlockSize<<"n"<<std::flush;
+  if ((irange.tpb * jrange.tpb * krange.tpb) > maxBlockSize) {
+    std::cerr << " Block size too large in forall3async"
+              << (irange.tpb * jrange.tpb * krange.tpb) << " > " << maxBlockSize
+              << "n" << std::flush;
     abort();
   }
   forall3kernel<<<blocks, tpb>>>(irange.start, irange.end, jrange.start,
@@ -456,30 +461,27 @@ void forallX(T start, T end, LoopBody &&body) {
 
 #endif
 
-
 template <int N, typename LoopBody>
 void forall3X(int start0, int end0, int start1, int end1, int start2, int end2,
-             LoopBody &&body) {
-
+              LoopBody &&body) {
   int tpbb = N;
   int tpb0 = 8;
   int tpb1 = 8;
   int tpb2 = tpbb / (tpb0 * tpb1);
 
-  int blockss = 80*2048/ tpbb;
+  int blockss = 80 * 2048 / tpbb;
   int block0 = 20;
   int block1 = 8;
-  int block2 = blockss/(block0*block1);
-  
+  int block2 = blockss / (block0 * block1);
 
   // std::cout << " BLOCKS " << block0 << " " << block1 << " " << block2 <<
   // "\n";
   dim3 tpb(tpb0, tpb1, tpb2);
   dim3 blocks(block0, block1, block2);
 
-  //printf("Launching the kernel 3d \n");
+  // printf("Launching the kernel 3d \n");
   forall3gskernel<<<blocks, tpb>>>(start0, end0, start1, end1, start2, end2,
-                                 body);
+                                   body);
   // cudaDeviceSynchronize();
 }
 template <int N, typename T1, typename T2, typename T3, typename LoopBody>
@@ -491,16 +493,15 @@ void forall3async(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
   // "<<krange.tpb<<"\n"; std::cout<<"forall launch blocks"<<irange.blocks<<"
   // "<<jrange.blocks<<" "<<krange.blocks<<"\n";
   forall3kernel<N><<<blocks, tpb>>>(irange.start, irange.end, jrange.start,
-                                 jrange.end, krange.start, krange.end, body);
+                                    jrange.end, krange.start, krange.end, body);
 }
 
-
 template <int N>
-class Tclass{
-	};
+class Tclass {};
 
-template <int N, typename Tag, typename T1, typename T2, typename T3, typename LoopBody>
-void forall3async(Tag& t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
+template <int N, typename Tag, typename T1, typename T2, typename T3,
+          typename LoopBody>
+void forall3async(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
   if (irange.invalid || jrange.invalid || krange.invalid) return;
   dim3 tpb(irange.tpb, jrange.tpb, krange.tpb);
   dim3 blocks(irange.blocks, jrange.blocks, krange.blocks);
@@ -508,7 +509,7 @@ void forall3async(Tag& t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
   // "<<krange.tpb<<"\n"; std::cout<<"forall launch blocks"<<irange.blocks<<"
   // "<<jrange.blocks<<" "<<krange.blocks<<"\n";
   forall3kernel<N><<<blocks, tpb>>>(t, irange.start, irange.end, jrange.start,
-                                 jrange.end, krange.start, krange.end, body);
+                                    jrange.end, krange.start, krange.end, body);
 }
 
 #endif  // Guards

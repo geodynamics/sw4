@@ -144,20 +144,19 @@ using RHS4_EXEC_POL_ASYNC_OLDE =
 
 using RHS4_EXEC_POL_ASYNC =
     RAJA::KernelPolicy<RAJA::statement::CudaKernelFixedAsync<
-        256,
-        RAJA::statement::Tile<
-            0, RAJA::tile_fixed<4>, RAJA::cuda_block_z_loop,
-            RAJA::statement::Tile<
-                1, RAJA::tile_fixed<4>, RAJA::cuda_block_y_loop,
-                RAJA::statement::Tile<
-                    2, RAJA::tile_fixed<16>, RAJA::cuda_block_x_loop,
-                    RAJA::statement::For<
-                        0, RAJA::cuda_thread_z_direct,
-                        RAJA::statement::For<
-                            1, RAJA::cuda_thread_y_direct,
-                            RAJA::statement::For<
-                                2, RAJA::cuda_thread_x_direct,
-                                RAJA::statement::Lambda<0>>>>>>>>>;
+        256, RAJA::statement::Tile<
+                 0, RAJA::tile_fixed<4>, RAJA::cuda_block_z_loop,
+                 RAJA::statement::Tile<
+                     1, RAJA::tile_fixed<4>, RAJA::cuda_block_y_loop,
+                     RAJA::statement::Tile<
+                         2, RAJA::tile_fixed<16>, RAJA::cuda_block_x_loop,
+                         RAJA::statement::For<
+                             0, RAJA::cuda_thread_z_direct,
+                             RAJA::statement::For<
+                                 1, RAJA::cuda_thread_y_direct,
+                                 RAJA::statement::For<
+                                     2, RAJA::cuda_thread_x_direct,
+                                     RAJA::statement::Lambda<0>>>>>>>>>;
 
 using CONSINTP_EXEC_POL1 =
     RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::Tile<
@@ -171,15 +170,14 @@ using CONSINTP_EXEC_POL1 =
 
 using ODDIODDJ_EXEC_POL1_ASYNC =
     RAJA::KernelPolicy<RAJA::statement::CudaKernelFixedAsync<
-        256,
-        RAJA::statement::Tile<
-            0, RAJA::tile_fixed<16>, RAJA::cuda_block_y_loop,
-            RAJA::statement::Tile<
-                1, RAJA::tile_fixed<16>, RAJA::cuda_block_x_loop,
-                RAJA::statement::For<
-                    0, RAJA::cuda_thread_y_direct,
-                    RAJA::statement::For<1, RAJA::cuda_thread_x_direct,
-                                         RAJA::statement::Lambda<0>>>>>>>;
+        256, RAJA::statement::Tile<
+                 0, RAJA::tile_fixed<16>, RAJA::cuda_block_y_loop,
+                 RAJA::statement::Tile<
+                     1, RAJA::tile_fixed<16>, RAJA::cuda_block_x_loop,
+                     RAJA::statement::For<
+                         0, RAJA::cuda_thread_y_direct,
+                         RAJA::statement::For<1, RAJA::cuda_thread_x_direct,
+                                              RAJA::statement::Lambda<0>>>>>>>;
 
 using ODDIODDJ_EXEC_POL2_ASYNC = RHS4_EXEC_POL_ASYNC;
 
@@ -239,15 +237,14 @@ using PRELIM_PRED_EXEC_POL1_ASYNC = ICSTRESS_EXEC_POL_ASYNC;
 
 using ENFORCEBC_CORR_EXEC_POL1 =
     RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
-        256,
-        RAJA::statement::Tile<
-            1, RAJA::tile_fixed<16>, RAJA::cuda_block_x_loop,
-            RAJA::statement::Tile<
-                0, RAJA::tile_fixed<16>, RAJA::cuda_block_y_loop,
-                RAJA::statement::For<
-                    1, RAJA::cuda_thread_x_direct,
-                    RAJA::statement::For<0, RAJA::cuda_thread_y_direct,
-                                         RAJA::statement::Lambda<0>>>>>>>;
+        256, RAJA::statement::Tile<
+                 1, RAJA::tile_fixed<16>, RAJA::cuda_block_x_loop,
+                 RAJA::statement::Tile<
+                     0, RAJA::tile_fixed<16>, RAJA::cuda_block_y_loop,
+                     RAJA::statement::For<
+                         1, RAJA::cuda_thread_x_direct,
+                         RAJA::statement::For<0, RAJA::cuda_thread_y_direct,
+                                              RAJA::statement::Lambda<0>>>>>>>;
 
 using BCFORT_EXEC_POL1 = RHS4_EXEC_POL;
 using BCFORT_EXEC_POL2 = ICSTRESS_EXEC_POL;
@@ -481,41 +478,39 @@ using ASG4WC_POL_ASYNC =
 // In addsgdc.C
 using ADDSGD_POL_ASYNC =
     RAJA::KernelPolicy<RAJA::statement::CudaKernelFixedAsync<
-        256,
-        RAJA::statement::Tile<
-            1, RAJA::tile_fixed<4>, RAJA::cuda_block_y_loop,
-            RAJA::statement::Tile<
-                3, RAJA::tile_fixed<64>, RAJA::cuda_block_x_loop,
-                RAJA::statement::Tile<
-                    2, RAJA::tile_fixed<1>, RAJA::cuda_block_z_loop,
-                    RAJA::statement::For<
-                        1, RAJA::cuda_thread_y_loop,
-                        RAJA::statement::For<
-                            3, RAJA::cuda_thread_x_loop,
-                            RAJA::statement::For<
-                                2, RAJA::cuda_thread_z_loop,
-                                RAJA::statement::For<
-                                    0, RAJA::seq_exec,
-                                    RAJA::statement::Lambda<0>>>>>>>>>>;
+        256, RAJA::statement::Tile<
+                 1, RAJA::tile_fixed<4>, RAJA::cuda_block_y_loop,
+                 RAJA::statement::Tile<
+                     3, RAJA::tile_fixed<64>, RAJA::cuda_block_x_loop,
+                     RAJA::statement::Tile<
+                         2, RAJA::tile_fixed<1>, RAJA::cuda_block_z_loop,
+                         RAJA::statement::For<
+                             1, RAJA::cuda_thread_y_loop,
+                             RAJA::statement::For<
+                                 3, RAJA::cuda_thread_x_loop,
+                                 RAJA::statement::For<
+                                     2, RAJA::cuda_thread_z_loop,
+                                     RAJA::statement::For<
+                                         0, RAJA::seq_exec,
+                                         RAJA::statement::Lambda<0>>>>>>>>>>;
 
 using ADDSGD_POL2_ASYNC =
     RAJA::KernelPolicy<RAJA::statement::CudaKernelFixedAsync<
-        256,
-        RAJA::statement::Tile<
-            1, RAJA::tile_fixed<4>, RAJA::cuda_block_y_loop,
-            RAJA::statement::Tile<
-                3, RAJA::tile_fixed<16>, RAJA::cuda_block_x_loop,
-                RAJA::statement::Tile<
-                    2, RAJA::tile_fixed<4>, RAJA::cuda_block_z_loop,
-                    RAJA::statement::For<
-                        1, RAJA::cuda_thread_y_direct,
-                        RAJA::statement::For<
-                            3, RAJA::cuda_thread_x_direct,
-                            RAJA::statement::For<
-                                2, RAJA::cuda_thread_z_direct,
-                                RAJA::statement::For<
-                                    0, RAJA::seq_exec,
-                                    RAJA::statement::Lambda<0>>>>>>>>>>;
+        256, RAJA::statement::Tile<
+                 1, RAJA::tile_fixed<4>, RAJA::cuda_block_y_loop,
+                 RAJA::statement::Tile<
+                     3, RAJA::tile_fixed<16>, RAJA::cuda_block_x_loop,
+                     RAJA::statement::Tile<
+                         2, RAJA::tile_fixed<4>, RAJA::cuda_block_z_loop,
+                         RAJA::statement::For<
+                             1, RAJA::cuda_thread_y_direct,
+                             RAJA::statement::For<
+                                 3, RAJA::cuda_thread_x_direct,
+                                 RAJA::statement::For<
+                                     2, RAJA::cuda_thread_z_direct,
+                                     RAJA::statement::For<
+                                         0, RAJA::seq_exec,
+                                         RAJA::statement::Lambda<0>>>>>>>>>>;
 
 // in bcforce.C
 using BCFORT_EXEC_POL2_ASYNC =
@@ -547,7 +542,7 @@ using CURV_POL_ORG =
     RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::For<
         0, RAJA::cuda_block_x_direct,
         RAJA::statement::For<
-  1, RAJA::cuda_block_y_direct,
+            1, RAJA::cuda_block_y_direct,
             RAJA::statement::For<2, RAJA::cuda_block_z_direct,
                                  RAJA::statement::Lambda<0>>>>>>;
 using CURV_POL = DEFAULT_LOOP3;
@@ -578,37 +573,35 @@ using XRHS_POL2 =
                                  RAJA::statement::Lambda<0>>>>>>;
 using RHS4TH3_POL_ASYNC =
     RAJA::KernelPolicy<RAJA::statement::CudaKernelFixedAsync<
-        256,
-        RAJA::statement::Tile<
-            0, RAJA::tile_fixed<4>, RAJA::cuda_block_z_loop,
-            RAJA::statement::Tile<
-                1, RAJA::tile_fixed<4>, RAJA::cuda_block_y_loop,
-                RAJA::statement::Tile<
-                    2, RAJA::tile_fixed<16>, RAJA::cuda_block_x_loop,
-                    RAJA::statement::For<
-                        0, RAJA::cuda_thread_z_direct,
-                        RAJA::statement::For<
-                            1, RAJA::cuda_thread_y_direct,
-                            RAJA::statement::For<
-                                2, RAJA::cuda_thread_x_direct,
-                                RAJA::statement::Lambda<0>>>>>>>>>;
+        256, RAJA::statement::Tile<
+                 0, RAJA::tile_fixed<4>, RAJA::cuda_block_z_loop,
+                 RAJA::statement::Tile<
+                     1, RAJA::tile_fixed<4>, RAJA::cuda_block_y_loop,
+                     RAJA::statement::Tile<
+                         2, RAJA::tile_fixed<16>, RAJA::cuda_block_x_loop,
+                         RAJA::statement::For<
+                             0, RAJA::cuda_thread_z_direct,
+                             RAJA::statement::For<
+                                 1, RAJA::cuda_thread_y_direct,
+                                 RAJA::statement::For<
+                                     2, RAJA::cuda_thread_x_direct,
+                                     RAJA::statement::Lambda<0>>>>>>>>>;
 
 using RHS4TH3_POL2_ASYNC =
     RAJA::KernelPolicy<RAJA::statement::CudaKernelFixedAsync<
-        256,
-        RAJA::statement::Tile<
-            0, RAJA::tile_fixed<4>, RAJA::cuda_block_z_loop,
-            RAJA::statement::Tile<
-                1, RAJA::tile_fixed<4>, RAJA::cuda_block_y_loop,
-                RAJA::statement::Tile<
-                    2, RAJA::tile_fixed<16>, RAJA::cuda_block_x_loop,
-                    RAJA::statement::For<
-                        0, RAJA::cuda_thread_z_direct,
-                        RAJA::statement::For<
-                            1, RAJA::cuda_thread_y_direct,
-                            RAJA::statement::For<
-                                2, RAJA::cuda_thread_x_direct,
-                                RAJA::statement::Lambda<0>>>>>>>>>;
+        256, RAJA::statement::Tile<
+                 0, RAJA::tile_fixed<4>, RAJA::cuda_block_z_loop,
+                 RAJA::statement::Tile<
+                     1, RAJA::tile_fixed<4>, RAJA::cuda_block_y_loop,
+                     RAJA::statement::Tile<
+                         2, RAJA::tile_fixed<16>, RAJA::cuda_block_x_loop,
+                         RAJA::statement::For<
+                             0, RAJA::cuda_thread_z_direct,
+                             RAJA::statement::For<
+                                 1, RAJA::cuda_thread_y_direct,
+                                 RAJA::statement::For<
+                                     2, RAJA::cuda_thread_x_direct,
+                                     RAJA::statement::Lambda<0>>>>>>>>>;
 
 /* using RHS4TH3_POL2_ASYNC = RAJA::statement::CudaKernelFixedAsync< */
 /*   256, */
@@ -645,7 +638,7 @@ using AFCC_POL_ASYNC =
 
 // In updatememvarc.C
 using MPFC_POL_ASYNC = DEFAULT_LOOP3;
-    
+
 // IN EW.C
 using FORCE_LOOP_ASYNC = RAJA::cuda_exec<32, true>;
 using FORCETT_LOOP_ASYNC = RAJA::cuda_exec<1024, true>;

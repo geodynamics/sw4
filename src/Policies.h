@@ -33,9 +33,6 @@ class Policy2 {
 }  // namespace Policies
 #endif
 
-
-
-
 template <typename Func>
 __global__ void forallkernel(int start, int N, Func f) {
   int tid = start + threadIdx.x + blockIdx.x * blockDim.x;
@@ -60,11 +57,6 @@ void forallasync(int start, int end, LoopBody &&body) {
   // cudaDeviceSynchronize();
 }
 
-
-
-
-
-
 template <typename T, typename Func>
 __global__ void forallgskernel(T start, T N, Func f) {
   for (T i = start + threadIdx.x + blockIdx.x * blockDim.x; i < N;
@@ -80,20 +72,21 @@ void forallX(T start, T end, LoopBody &&body) {
   int blocks = (end - start) / tpb;
   blocks = ((end - start) % tpb == 0) ? blocks : blocks + 1;
   /* if ((blocks * tpb) <= 80 * 2048) { */
-  /*   printf("Launching the kernel blocks= %d tpb= %d with N %d\n", blocks, tpb, */
+  /*   printf("Launching the kernel blocks= %d tpb= %d with N %d\n", blocks,
+   * tpb, */
   /*          N); */
   /*   forallkernel<<<blocks, tpb>>>(start, end, body); */
   /* } else { */
   /*   printf("Max resident count exceeded %d >163840 \n", blocks * tpb); */
-    blocks = 80 * 2048 / tpb;
-    //    blocks = 80*32 / tpb; // Really bad idea
-    /* printf("Launching the GS kernel blocks= %d tpb= %dwith N %d\n", blocks, tpb, */
-    /*        N); */
-    forallgskernel<<<blocks, tpb>>>(start, end, body);
-    //cudaDeviceSynchronize();
-    // }
+  blocks = 80 * 2048 / tpb;
+  //    blocks = 80*32 / tpb; // Really bad idea
+  /* printf("Launching the GS kernel blocks= %d tpb= %dwith N %d\n", blocks,
+   * tpb, */
+  /*        N); */
+  forallgskernel<<<blocks, tpb>>>(start, end, body);
+  // cudaDeviceSynchronize();
+  // }
 }
-
 
 // 3D kernels
 
@@ -148,40 +141,39 @@ void forall3(int start0, int end0, int start1, int end1, int start2, int end2,
   dim3 tpb(tpb0, tpb1, tpb2);
   dim3 blocks(block0, block1, block2);
 
-  //printf("Launching the kernel 3d \n");
+  // printf("Launching the kernel 3d \n");
   forall3kernel<<<blocks, tpb>>>(start0, end0, start1, end1, start2, end2,
                                  body);
-  //cudaDeviceSynchronize();
+  // cudaDeviceSynchronize();
 }
 
 template <int N, typename LoopBody>
 void forall3X(int start0, int end0, int start1, int end1, int start2, int end2,
-             LoopBody &&body) {
-
+              LoopBody &&body) {
   int tpbb = N;
   int tpb0 = 16;
   int tpb1 = 16;
   int tpb2 = tpbb / (tpb0 * tpb1);
 
-  int blockss = 80*2048/ tpbb;
+  int blockss = 80 * 2048 / tpbb;
   int block0 = 4;
   int block1 = 4;
-  int block2 = blockss/(block0*block1);
-  
+  int block2 = blockss / (block0 * block1);
 
   // std::cout << " BLOCKS " << block0 << " " << block1 << " " << block2 <<
   // "\n";
   dim3 tpb(tpb0, tpb1, tpb2);
   dim3 blocks(block0, block1, block2);
 
-  //printf("Launching the kernel 3d \n");
+  // printf("Launching the kernel 3d \n");
   forall3gskernel<<<blocks, tpb>>>(start0, end0, start1, end1, start2, end2,
-                                 body);
+                                   body);
   // cudaDeviceSynchronize();
 }
 
 // template <typename LoopBody>
-// void forall3X<64>(int start0, int end0, int start1, int end1, int start2, int end2,
+// void forall3X<64>(int start0, int end0, int start1, int end1, int start2, int
+// end2,
 //              LoopBody &&body) {
 
 //   int tpbb =64;
@@ -193,7 +185,6 @@ void forall3X(int start0, int end0, int start1, int end1, int start2, int end2,
 //   int block0 = 4;
 //   int block1 = 4;
 //   int block2 = blockss/(block0*block1);
-  
 
 //   // std::cout << " BLOCKS " << block0 << " " << block1 << " " << block2 <<
 //   // "\n";
@@ -206,41 +197,40 @@ void forall3X(int start0, int end0, int start1, int end1, int start2, int end2,
 //   // cudaDeviceSynchronize();
 // }
 
-class Parray{
-public:
-  int ni,nj,nk,nc;
+class Parray {
+ public:
+  int ni, nj, nk, nc;
   double *data;
-  Parray(int nii, int nji, int nki,int nci):ni(nii),nj(nji),nk(nki),nc(nci){
-    cudaMallocManaged(&data,ni*nj*nk*nc*sizeof(double));
-    std::cout<<"Created Parray ("<<ni<<" "<<nj<<" "<<nk<<" "<<nk<<" "<<nc<<")\n";
+  Parray(int nii, int nji, int nki, int nci)
+      : ni(nii), nj(nji), nk(nki), nc(nci) {
+    cudaMallocManaged(&data, ni * nj * nk * nc * sizeof(double));
+    std::cout << "Created Parray (" << ni << " " << nj << " " << nk << " " << nk
+              << " " << nc << ")\n";
   }
-  void set(double value){
+  void set(double value) {
     double *l_data = data;
-    forall(0,ni*nj*nk*nc,[=]__device__(int i){
-	l_data[i]=value;
-      });
+    forall(0, ni * nj * nk * nc, [=] __device__(int i) { l_data[i] = value; });
   }
-  __device__ inline double& operator()(int i, int j, int k,int c) const {
-    return data[ i+ni*j+ni*nj*k+ni*nj*nk*c];
+  __device__ inline double &operator()(int i, int j, int k, int c) const {
+    return data[i + ni * j + ni * nj * k + ni * nj * nk * c];
   }
-  __device__ inline double& operator()(unsigned int I, unsigned int J) const {
-    int i = (I>>8) & 0x00ff;
+  __device__ inline double &operator()(unsigned int I, unsigned int J) const {
+    int i = (I >> 8) & 0x00ff;
     int j = I & 0x00ff;
-    int k = (J>>8) & 0x00ff;
-    int c =  J& 0x00ff;
-    //printf("%d %d %d %d \n",i,j,k,c);
-    return data[ i+ni*j+ni*nj*k+ni*nj*nk*c];
+    int k = (J >> 8) & 0x00ff;
+    int c = J & 0x00ff;
+    // printf("%d %d %d %d \n",i,j,k,c);
+    return data[i + ni * j + ni * nj * k + ni * nj * nk * c];
   }
-  int offset(int i, int j, int k, int c){
-    return i+ni*j+ni*nj*k+ni*nj*nk*c;
+  int offset(int i, int j, int k, int c) {
+    return i + ni * j + ni * nj * k + ni * nj * nk * c;
   }
-  int offset2(unsigned int I, unsigned int J){
-    int i = (I>>8) & 0x00ff;
+  int offset2(unsigned int I, unsigned int J) {
+    int i = (I >> 8) & 0x00ff;
     int j = I & 0x00ff;
-    int k = (J>>8) & 0x00ff;
-    int c =  J& 0x00ff;
-    //printf("%d %d %d %d \n",i,j,k,c);
-    return i+ni*j+ni*nj*k+ni*nj*nk*c;
+    int k = (J >> 8) & 0x00ff;
+    int c = J & 0x00ff;
+    // printf("%d %d %d %d \n",i,j,k,c);
+    return i + ni * j + ni * nj * k + ni * nj * nk * c;
   }
-    
 };
