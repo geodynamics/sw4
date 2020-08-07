@@ -40,7 +40,7 @@ Build instructions for Power9/V100 machines ( Summit, Lassen, Sierra etc)
    Edit make.inc and point RAJA_LOCATION and UMPIRE_HOME to the install locations from Step 2 and 3
    Point PROJ_HOME to the location of the Proj library
    ml fftw
-   ml xl
+   ml gcc
    ml netlib-lapack/3.8.0 ( Summit only)
    make -j 4
    ** Sometimes parallel make will fail due to a race condition. Redoing make will fix this **

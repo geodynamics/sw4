@@ -132,7 +132,7 @@ def read_sw4img_hdf5(fname):
 
 
 def read_essi(fname):
-    essi = h5py.File(fname)
+    essi = h5py.File(fname,'r')
     data0 = essi["vel_0 ijk layout"][:]
     data1 = essi["vel_1 ijk layout"][:]
     data2 = essi["vel_2 ijk layout"][:]
