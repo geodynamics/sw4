@@ -348,10 +348,10 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
       int ng = simulation.mNumberOfGrids;
       vector<Sarray> rho(ng), mu(ng), la(ng);
 
-	  checkMinMax(nmpars, &xs[nspar], "linesearch: xs");
-	  checkMinMax(nmpars, &ps[nspar], "linesearch: ps");
+	  //checkMinMax(nmpars, &xs[nspar], "linesearch: xs");
+	  //checkMinMax(nmpars, &ps[nspar], "linesearch: ps");
 	  std::cout << "scaling lambda=" << lambda << std::endl;
-	  checkMinMax(nmpars, &xsnew[nspar], "linesearch: xsnew");
+	  //checkMinMax(nmpars, &xsnew[nspar], "linesearch: xsnew");
       mopt->m_mp->get_material( nmpard, xmnew, nmpars, &xsnew[nspar], rho, mu, la );
       int ret_code = simulation.check_material( rho, mu, la, ok );
       if( !ok )
@@ -1121,7 +1121,6 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
    delete[] rho;
    if( ns > 0 )
    {
-	  std::cout << "delete dfs" << std::endl;
       delete[] s;
       delete[] y;
       delete[] dftemp;

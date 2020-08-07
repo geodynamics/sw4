@@ -193,7 +193,7 @@ void DataPatches::push( Sarray& u, int n )
       size_t ni=static_cast<size_t>(u.m_ni);
       size_t nj=static_cast<size_t>(u.m_nj);
       const size_t ntot=ni*nj*u.m_nk;
-      float_sw4* uptr=u.c_ptr();
+      double* uptr=u.c_ptr();
       for( int p=0 ; p < m_npatches ; p++ )
       {
  	 size_t ptr = m_dataptr[p];
@@ -343,7 +343,7 @@ void DataPatches::pop( Sarray& u, int n )
       {
 	 size_t ptr = m_dataptr[p];
 	 size_t ind = 0, indu;
-         float_sw4* uptr = u.c_ptr();
+         double* uptr = u.c_ptr();
 	 for( int k=m_dims[6*p+4] ; k <= m_dims[6*p+5] ; k++ )
 	    for( int j=m_dims[6*p+2] ; j <= m_dims[6*p+3] ; j++ )
 	       for( int i=m_dims[6*p] ; i <= m_dims[6*p+1] ; i++ )

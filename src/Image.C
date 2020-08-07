@@ -953,9 +953,9 @@ void Image::computeImagePvel(std::vector<Sarray> &mu, std::vector<Sarray> &lambd
 	 //	 size_t iField=0;
        size_t ni = (mWindow[g][1]-mWindow[g][0]+1);
        size_t nij= (mWindow[g][1]-mWindow[g][0]+1)*(mWindow[g][3]-mWindow[g][2]+1);
-           std::cout << "g=" << g << " ni=" << ni << " nij=" << nij << std::endl;
-           std::cout << "ix=" << mWindow[g][0] << "--" << mWindow[g][1] << " iy=" << mWindow[g][2] << "--" << mWindow[g][3] << 
-           " iz=" << mWindow[g][4] << "--" << mWindow[g][5] << std::endl;
+           //std: :cout << "g=" << g << " ni=" << ni << " nij=" << nij << std::endl;
+           //std::cout << "ix=" << mWindow[g][0] << "--" << mWindow[g][1] << " iy=" << mWindow[g][2] << "--" << mWindow[g][3] << 
+           //" iz=" << mWindow[g][4] << "--" << mWindow[g][5] << std::endl;
 
 #pragma omp parallel for
 	 for( int kk = mWindow[g][4]; kk <= mWindow[g][5]; kk++)

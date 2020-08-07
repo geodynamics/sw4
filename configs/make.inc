@@ -4,7 +4,7 @@
 # assumes module load intel
 # FC = mpiifort
   FC = mpif90
-  CXX = mpicxx -std=c++11
+  CXX = mpicxx 
   MKL_PATH = /usr/tce/packages/mkl/mkl-2019.0/lib
   HDF5ROOT   = ${HDF5}
   FFTWHOME = /usr/tce/packages/fftw/fftw-3.3.8-mvapich2-2.3-intel-19.0.3
