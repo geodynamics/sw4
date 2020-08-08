@@ -59,6 +59,9 @@ void EW::solveTT( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSerie
 
 std::cout << "source x0=" << a_Sources[0]->getX0() << " y0=" << a_Sources[0]->getY0() << " z0=" << a_Sources[0]->getZ0() << std::endl;
 
+float *cp =(float*)malloc(nmpars/3*sizeof(float));
+float *cs =(float*)malloc(nmpars/3*sizeof(float));
+
 float *sp =(float*)malloc(nmpars/3*sizeof(float));
 float *ss =(float*)malloc(nmpars/3*sizeof(float));
 float* timep =(float*)malloc(nmpars/3*sizeof(float));
@@ -68,28 +71,28 @@ int *inflag =(int*)malloc(nmpars/3*sizeof(int));
 float_sw4 cpmin, cpmax;
 float_sw4 csmin, csmax;
 
-//cpmin=1e20; cpmax=-1e20;
-//csmin=1e20; csmax=-1e20;
+cpmin=1e20; cpmax=-1e20;
+csmin=1e20; csmax=-1e20;
 
 //#pragma omp parallel for
 	 for( size_t i = 0 ; i < nmpars/3 ; i++ )
 	 {
-	       //cs[i] = xs[3*i+1]; 
-          //cp[i] = xs[3*i+2];
+	       cs[i] = xs[3*i+1]; 
+          cp[i] = xs[3*i+2];
 
           ss[i] = 1./xs[3*i+1];
           ss[i] = ss[i]*ss[i];
-          sp[i] = 1./xs[2*i+2];
+          sp[i] = 1./xs[3*i+2];
           sp[i] = sp[i]*sp[i];
           
-          //if(cp[i]<cpmin) cpmin=cp[i];
-          //if(cp[i]>cpmax) cpmax=cp[i];
-          //if(cs[i]<csmin) csmin=cs[i];
-          //if(cs[i]>csmax) csmax=cs[i];
+          if(cp[i]<cpmin) cpmin=cp[i];
+          if(cp[i]>cpmax) cpmax=cp[i];
+          if(cs[i]<csmin) csmin=cs[i];
+          if(cs[i]>csmax) csmax=cs[i];
 	 }
 
-//std::cout << "solveTT cpmin=" << cpmin << " cpmax=" << cpmax << std::endl;
-//std::cout << "solveTT csmin=" << csmin << " csmax=" << csmax << std::endl;
+std::cout << "solveTT cpmin=" << cpmin << " cpmax=" << cpmax << std::endl;
+std::cout << "solveTT csmin=" << csmin << " csmax=" << csmax << std::endl;
 
 int ntr = a_TimeSeries.size();
 std::cout << "nmpars=" << nmpars << " number of traces=" << ntr << std::endl;
@@ -98,7 +101,6 @@ std::cout << "nmpars=" << nmpars << " number of traces=" << ntr << std::endl;
    ny = mp->getNY();
    nz = mp->getNZ();
 
-// each rank has the complete trace info
 std::cout << "mp xmin=" << mp->getXmin() << " hx=" << mp->getDx() << " nx=" << mp->getNX() << std::endl;
     bool plane[3]={false,false,false};
 
