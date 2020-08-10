@@ -29,7 +29,7 @@ void fastmarch (float* time                /* time */,
         int order                  /* accuracy order (1,2,3) */);
 
 void fastmarch_close (void);
-void checkMinMax(float* data, int n);
+
 
 //--------------------------------------------------------------------
 void EW::solveTT( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
@@ -127,10 +127,9 @@ std::cout << "mp xmin=" << mp->getXmin() << " hx=" << mp->getDx() << " nx=" << m
                 1,1,1,                // box around the source
                 2);                   // accuracy order (1,2,3) 
 
-
        fastmarch_close();
 
-   //checkMinMax(timep, nmpars/3);
+   //checkMinMax(nmpars/3, timep, "timep");
 
    for(int ig=0; ig<ntr; ig++) {
    //
@@ -150,15 +149,4 @@ std::cout << "mp xmin=" << mp->getXmin() << " hx=" << mp->getDx() << " nx=" << m
 std::cout << "solveTT completed" << std::endl;
    
    MPI_Abort(MPI_COMM_WORLD,0);
-}
-
-void checkMinMax(float* data, int n)
-{
-   float min=1e20;
-   float max=-1e20;
-   for(int i=0; i<n; i++) {
-      if(data[i]<min) min=data[i];
-      if(data[i]>max) max=data[i];
-   }
-   std::cout << "min=" << min << " max=" << max << std::endl;
 }
