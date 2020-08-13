@@ -1919,7 +1919,7 @@ class EW {
   int m_ppadding;
 
 // coefficients for boundary modified 4th order SBP operators
-#if defined(ENABLE_CUDA)
+#if defined(ENABLE_GPU)
   float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope, *m_ghcof;
   float_sw4 *m_acof_no_gp, *m_ghcof_no_gp, *m_sbop_no_gp;
 #else

@@ -929,7 +929,7 @@ void Sarray::copy_kplane(Sarray& u, int k) {
     // SW4_MARK_END("CK_PREF");
     size_t ind_start = mni * mnj * (k - mkb);
     size_t uind_start = mni * mnj * (k - um_kb);
-#ifdef ENABLE_CUDA
+#ifdef ENABLE_GPU
 #define NO_COLLAPSE 1
 #endif
 #if defined(NO_COLLAPSE)
@@ -1531,7 +1531,7 @@ void Sarray::swrite(std::string filename) {
 }
 void Sarray::GetAtt(char* file, int line) {
   short int data = -999;
-
+#ifdef ENABLE_CUDA
   if (cuMemRangeGetAttribute(
           &data, 4, CU_MEM_RANGE_ATTRIBUTE_PREFERRED_LOCATION,
           (CUdeviceptr)m_data,
@@ -1546,4 +1546,5 @@ void Sarray::GetAtt(char* file, int line) {
       // abort();
     }
   }
+  #endif
 }

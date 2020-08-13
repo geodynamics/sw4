@@ -12,6 +12,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+#include "policies.h"
 #ifdef SW4_USE_UMPIRE
 #include "umpire/ResourceManager.hpp"
 //#include "umpire/Umpire.hpp"
@@ -141,7 +142,7 @@ class Managed {
   ~Managed() {
     // mem_total=0;
   }
-#if defined(ENABLE_CUDA)
+#if defined(ENABLE_GPU)
   void *operator new(size_t len);
 
   void *operator new[](size_t len);

@@ -57,6 +57,7 @@ void presetGPUID() {
     int device = atoi(crank) % devices_per_node;
     global_variables.device = device;
     printf(" presetGPU Called ::  LOCAL RANK %d \n", device);
+  }
 #endif  // ENABLE_HIP
 
     printf("Device set to %d \n", global_variables.device);
@@ -365,7 +366,7 @@ void presetGPUID() {
 
   void operator delete(void *ptr, Space loc) throw() {
 #ifdef ENABLE_GPU
-    if ((loc == Space::Managed)) {
+    if (loc == Space::Managed) {
       // std::cout<<"Managed delete\n";
 #ifndef SW4_USE_UMPIRE
       pattr_t *ss = patpush(ptr, NULL);

@@ -12,7 +12,7 @@
 #include "policies.h"
 std::vector<int> factors(int N);
 std::vector<int> factors(int N, int start);
-#ifdef ENABLE_CUDA
+#ifdef ENABLE_HIP
 template <typename Func>
 __global__ void forallkernel(int start, int N, Func f) {
   int tid = start + threadIdx.x + blockIdx.x * blockDim.x;
@@ -59,7 +59,7 @@ __global__ void forallkernelB(int start, int N, Func f) {
   for (int i = tid; i < N; i += B * blockDim.x * gridDim.x) {
     f(i);
     // int ii=i+blockDim.x * gridDim.x;
-#pragma unroll(B - 1)
+#pragma unroll B - 1
     for (int ii = 1; ii < B; ii++) {
       int iii = i + ii * blockDim.x * gridDim.x;
       if (iii < N) f(iii);

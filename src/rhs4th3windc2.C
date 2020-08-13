@@ -107,7 +107,7 @@ void dpdmt_wind(int ib, int ie, int jb, int je, int kb_tt, int ke_tt, int kb_u,
 //       }
 //     }
 //   }
-#ifdef ENABLE_CUDA
+#ifdef ENABLE_GPU
 #define NO_COLLAPSE 1
 #endif
 #if defined(NO_COLLAPSE)

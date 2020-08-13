@@ -4934,7 +4934,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     a_U[g].prefetch();
     a_Mu[g].prefetch();
     a_Lambda[g].prefetch();
-#ifdef ENABLE_GPU
+#ifdef ENABLE_CUDA
     prefetch_to_device(m_sg_str_x[g]);
     prefetch_to_device(m_sg_str_y[g]);
     prefetch_to_device(m_sg_str_z[g]);

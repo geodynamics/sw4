@@ -92,7 +92,7 @@ void memvar_pred_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   RAJA::RangeSegment c_range(0, 3);
 
   // Note both POL3 and POL3X_ take about the same time on Hayward with 16 ranks
-#ifdef ENABLE_CUDA
+#ifdef ENABLE_GPU
 #define NO_COLLAPSE 1
 #endif
 #if defined(NO_COLLAPSE)
@@ -167,7 +167,7 @@ void memvar_corr_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   RAJA::RangeSegment k_range(k1, k2 + 1);
   RAJA::RangeSegment c_range(0, 3);
 
-#ifdef ENABLE_CUDA
+#ifdef ENABLE_GPU
 #define NO_COLLAPSE 1
 #endif
 #if defined(NO_COLLAPSE)
