@@ -39,7 +39,7 @@ endif
 
 ifeq ($(hdf5),yes)
 MORE_FLAGS+= -DUSE_HDF5=1 -I $(HDF5_HOME)/include
-MORE_LINK_FLAGS+= -L $(HDF5_HOME)/lib -Wl,-rpath=$(HDF5_HOME)/lib -lhdf5_hl -lhdf5
+MORE_LINK_FLAGS+= -L $(HDF5_HOME)/lib -Wl,-rpath=$(HDF5_HOME)/lib -lhdf5_hl -lhdf5 -lz -lsz
 endif 
 
 ifeq ($(spill_warns),yes)
