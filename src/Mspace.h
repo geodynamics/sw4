@@ -33,6 +33,7 @@
 #include <nvml.h>
 
 #include "cuda_runtime.h"
+bool mpi_supports_device_buffers();
 void CheckError(cudaError_t const err, const char *file, char const *const fun,
                 const int line);
 void prefetch_to_device(const float_sw4 *ptr);

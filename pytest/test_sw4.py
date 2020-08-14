@@ -149,15 +149,15 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
         if omp_threads<=0: omp_threads=7;
         if mpi_tasks<=0: mpi_tasks = 6
         mpirun_cmd="jsrun -a1 -c7 -r6 -l CPU-CPU -d packed -b packed:7 -n " + str(mpi_tasks)
-        mpirun_cmd="jsrun -a1 -c7 -g1 -l CPU-CPU -d packed -b packed:7 -n " + str(mpi_tasks)
+        mpirun_cmd="jsrun -a1 -c7 -g1 -l CPU-CPU -d packed -b packed:7 -M -gpu -n " + str(mpi_tasks)
     elif 'rzansel' in node_name:
         os.environ["PSM2_DEVICES"] = ""
         if mpi_tasks<=0: mpi_tasks = 4
-        mpirun_cmd="lrun -T4 "
+        mpirun_cmd="lrun -T4 -M -gpu"
     elif 'lassen' in node_name:
         os.environ["PSM2_DEVICES"] = ""
         if mpi_tasks<=0: mpi_tasks = 4
-        mpirun_cmd="lrun -T4 "
+        mpirun_cmd="lrun -T4 -M -gpu"
         #mpirun_cmd="jsrun -g4 -c40 -a4 -n" + str(mpi_tasks) # Simulate Summit runs with -g4
     # add more machine names here
     elif 'Linux' in sys_name:

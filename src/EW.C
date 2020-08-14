@@ -644,9 +644,17 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
 #if defined(SW4_DEVICE_MPI_BUFFERS)
   mpi_buffer_space = Space::Device;
   if (!m_myRank) std::cout << "Using MPI buffers in device memory\n";
+  if (!mpi_supports_device_buffers()){
+    std::cerr<<"SW4 must be run using the -M -gpu flag with Device buffers\n";
+    abort();
+  }
 #elif defined(SW4_MANAGED_MPI_BUFFERS)
   mpi_buffer_space = Space::Managed;
   if (!m_myRank) std::cout << "Using MPI buffers in managed memory\n";
+  if (!mpi_supports_device_buffers()){
+    std::cerr<<"SW4 must be run using the -M -gpu flag with Managed buffers\n";
+    abort();
+  }
 #elif defined(SW4_PINNED_MPI_BUFFERS)
   mpi_buffer_space = Space::Pinned;
   if (!m_myRank)

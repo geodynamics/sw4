@@ -3,6 +3,7 @@
 #include "Mspace.h"
 #include "caliper.h"
 #include "policies.h"
+#include <mpi-ext.h>
 struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0,
                                                          0, 0, 1, 0};
 using namespace std;
@@ -867,4 +868,19 @@ void presetGPUID() {
 #undef M
 #undef P
 #undef I
+  }
+
+
+#if defined(ENABLE_CUDA)
+#if defined(SMPI_VERSION)
+bool mpi_supports_device_buffers(){
+    return MPIX_Query_cuda_support()==1;
+//   printf("Running using Spectrum MPI SMPI_VERSION \n");
+//   if (MPIX_Query_cuda_support())
+//     std::cout<<"Running with support for device buffer\n";
+//   else
+//     std::cout<<"Running WITHOUT support for device buffer\n";
+#endif
+#endif
+  return false;
   }
