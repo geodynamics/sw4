@@ -4,6 +4,7 @@
 #include "caliper.h"
 #include "policies.h"
 #include <mpi-ext.h>
+#include "GridPointSource.h"
 struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0,
                                                          0, 0, 1, 0};
 using namespace std;
@@ -134,9 +135,10 @@ void presetGPUID() {
         std::cout << i << " Global Device HWM is " << hwm_global[i] << " GB\n";
         // umpire::util::StatisticsDatabase::getDatabase()->printStatistics(std::cout);
       }
-    if (Managed::hwm > 0)
+    if (Managed::hwm > 0){
       std::cout << "Space::Managed object count & HWM are " << Managed::ocount
-                << " & " << Managed::hwm << "\n";
+                << " & " << Managed::hwm << " Size = "<<Managed::hwm*sizeof(GridPointSource)/1024.0/1024.0<<" MB Each object = "<<sizeof(GridPointSource)<<"\n";
+}
     if (Managed::ocount != 0)
       std::cerr
           << "WARNING :: Managed object count should be zero at the end of "

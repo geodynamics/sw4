@@ -131,6 +131,7 @@ ssize_t getsize(const void *ptr);
 #endif
 
 // THIS WILL HAVE TO BE MODIFIED FOR NON_GPU MACHINES
+// Used in GridPointSource
 class Managed {
  public:
   static size_t ocount;
