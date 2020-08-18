@@ -194,6 +194,7 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int nd
     double stime, etime, etime1;
     hid_t dset, filespace, dxpl;
     herr_t ret;
+    hsize_t dims[3];
 
     /* stime = MPI_Wtime(); */
 
@@ -210,13 +211,11 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int nd
     }
 
 
-    /* if (start[0] == 0) { */
-    /*     filespace = H5S_ALL; */
-    /* } */
-    /* else { */
-        filespace = H5Dget_space(dset);
-        H5Sselect_hyperslab (filespace, H5S_SELECT_SET, start, NULL, count, NULL);
-    /* } */
+    filespace = H5Dget_space(dset);
+    H5Sget_simple_extent_dims(filespace, dims, NULL);
+    if (dims[0] < start[0] + count[0])
+        count[0] = dims[0] - start[0];
+    H5Sselect_hyperslab (filespace, H5S_SELECT_SET, start, NULL, count, NULL);
 
     ret  = H5Dwrite(dset, type_id, H5S_ALL, filespace, dxpl, data);
     if (ret < 0) {
