@@ -504,7 +504,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   SYNC_DEVICE;
 #endif
 
-  //Commented out for checking restarts
+  // Commented out for checking restarts
   for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++)
     m_cli2[g - mNumberOfCartesianGrids]->impose_ic(U, t, AlphaVE);
 
@@ -762,7 +762,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   SYNC_DEVICE;
 #endif
   // end test
-  std::chrono::high_resolution_clock::time_point t1, t2,ft1,ft2;
+  std::chrono::high_resolution_clock::time_point t1, t2, ft1, ft2;
 #ifdef SW4_TRACK_MPI
   std::chrono::high_resolution_clock::time_point t3, t6;
 #endif
@@ -776,7 +776,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   for (int currentTimeStep = beginCycle;
        currentTimeStep <= mNumberOfTimeSteps[event]; currentTimeStep++) {
     time_measure[0] = MPI_Wtime();
-    if (currentTimeStep==beginCycle) ft1 = SW4_CHRONO_NOW;
+    if (currentTimeStep == beginCycle) ft1 = SW4_CHRONO_NOW;
     global_variables.firstCycle = currentTimeStep == beginCycle;
     global_variables.current_step = currentTimeStep;
     if (currentTimeStep == mNumberOfTimeSteps[event]) t1 = SW4_CHRONO_NOW;
@@ -1246,7 +1246,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     std::chrono::high_resolution_clock::time_point t4 = SW4_CHRONO_NOW;
     if (ProfilerOn) step_sm.insert(0, SW4_CHRONO_DURATION_MS(t3, t4));
 #endif
-     
+
     if (currentTimeStep == mNumberOfTimeSteps[event]) {
       t2 = SW4_CHRONO_NOW;
 #ifdef SW4_TRACK_MPI
@@ -1273,18 +1273,20 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   SW4_MARK_END("TIME_STEPPING");
 
   // Calculate stats for first time step
-  float fstep_local = std::chrono::duration_cast<std::chrono::milliseconds>(ft2 - ft1).count();
-  float fstep_max,fstep_min,fstep_avg;
+  float fstep_local =
+      std::chrono::duration_cast<std::chrono::milliseconds>(ft2 - ft1).count();
+  float fstep_max, fstep_min, fstep_avg;
   MPI_Reduce(&fstep_local, &fstep_max, 1, MPI_FLOAT, MPI_MAX, 0,
-               MPI_COMM_WORLD);
+             MPI_COMM_WORLD);
   MPI_Reduce(&fstep_local, &fstep_min, 1, MPI_FLOAT, MPI_MIN, 0,
-               MPI_COMM_WORLD);
+             MPI_COMM_WORLD);
   MPI_Reduce(&fstep_local, &fstep_avg, 1, MPI_FLOAT, MPI_SUM, 0,
-	   MPI_COMM_WORLD);
-  fstep_avg/=m_nProcs;
-  if (m_myRank == 0) cout<<"First time step :: min"<<fstep_min<<"  max "<<fstep_max<<" mean "<<fstep_avg<<"\n";
+             MPI_COMM_WORLD);
+  fstep_avg /= m_nProcs;
+  if (m_myRank == 0)
+    cout << "First time step :: min" << fstep_min << "  max " << fstep_max
+         << " mean " << fstep_avg << "\n";
   // End calculate stats for first time step
-
 
   // cudaProfilerStop();
   if (!mQuiet && proc_zero()) cout << "  Time stepping finished..." << endl;

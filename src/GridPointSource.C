@@ -57,8 +57,14 @@ GridPointSource::GridPointSource(float_sw4 frequency, float_sw4 t0, int N,
       m_j0(M),
       m_k0(L),
       m_grid(G),
-      mTimeDependence(tDep),
+      mTimeDependence(tDep)
+#if defined(SOURCE_INVERSION)
+      ,
       mNcyc(ncyc) {
+#else
+{
+#endif
+
   // Copy only pointers, not memory.
   // mPar, mIpar will no longer be changed by this class, they should
   // be set correctly in Source.
@@ -74,6 +80,7 @@ GridPointSource::GridPointSource(float_sw4 frequency, float_sw4 t0, int N,
 
   initializeTimeFunction();
 
+#if defined(SOURCE_INVERSION)
   m_derivative = -1;
 
   m_jacobian_known = jacobian != NULL;
@@ -90,6 +97,7 @@ GridPointSource::GridPointSource(float_sw4 frequency, float_sw4 t0, int N,
     }
     m_hessian_known = true;
   }
+#endif
 }
 
 //-----------------------------------------------------------------------
@@ -336,7 +344,13 @@ void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) {
     afunv[5] = mTimeFunc(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
   }
 
-  if (m_derivative == -1) {
+  int lm_derivative;
+#if defined(SOURCE_INVERSION)
+  lm_derivative = m_derivative;
+#else
+  lm_derivative = -1;
+#endif
+  if (lm_derivative == -1) {
     if (mTimeDependence != iDiscrete6moments) {
       fxyz[0] = mForces[0] * afun;
       fxyz[1] = mForces[1] * afun;
@@ -349,21 +363,24 @@ void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) {
       fxyz[2] =
           mForces[0] * afunv[2] + mForces[1] * afunv[4] + mForces[2] * afunv[5];
     }
-  } else if (m_derivative >= 0 && m_derivative <= 8) {
+  } else if (lm_derivative >= 0 && lm_derivative <= 8) {
+#if defined(SOURCE_INVERSION)
     fxyz[0] = m_jacobian[m_derivative * 3] * afun;
     fxyz[1] = m_jacobian[m_derivative * 3 + 1] * afun;
     fxyz[2] = m_jacobian[m_derivative * 3 + 2] * afun;
-  } else if (m_derivative == 9) {
+#endif
+  } else if (lm_derivative == 9) {
     afun = -mTimeFunc_t(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
     fxyz[0] = mForces[0] * afun;
     fxyz[1] = mForces[1] * afun;
     fxyz[2] = mForces[2] * afun;
-  } else if (m_derivative == 10) {
+  } else if (lm_derivative == 10) {
     afun = mTimeFunc_om(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
     fxyz[0] = mForces[0] * afun;
     fxyz[1] = mForces[1] * afun;
     fxyz[2] = mForces[2] * afun;
-  } else if (m_derivative == 11) {
+  } else if (lm_derivative == 11) {
+#if defined(SOURCE_INVERSION)
     fxyz[0] = fxyz[1] = fxyz[2] = 0;
     int i;
     for (i = 0; i < 9; i++) {
@@ -381,6 +398,7 @@ void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) {
     fxyz[0] += afun * mForces[0] * m_dir[i];
     fxyz[1] += afun * mForces[1] * m_dir[i];
     fxyz[2] += afun * mForces[2] * m_dir[i];
+#endif
   }
 }
 
@@ -416,6 +434,7 @@ void GridPointSource::getFxyztt(float_sw4 t, float_sw4* fxyz) const {
   }
 
   //  float_sw4 afun = mTimeFunc_tt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
+#if defined(SOURCE_INVERSION)
   if (m_derivative == -1) {
     if (mTimeDependence != iDiscrete6moments) {
       fxyz[0] = mForces[0] * afun;
@@ -462,16 +481,36 @@ void GridPointSource::getFxyztt(float_sw4 t, float_sw4* fxyz) const {
     fxyz[1] += afun * mForces[1] * m_dir[i];
     fxyz[2] += afun * mForces[2] * m_dir[i];
   }
+#else
+  if (mTimeDependence != iDiscrete6moments) {
+    fxyz[0] = mForces[0] * afun;
+    fxyz[1] = mForces[1] * afun;
+    fxyz[2] = mForces[2] * afun;
+  } else {
+    fxyz[0] =
+        mForces[0] * afunv[0] + mForces[1] * afunv[1] + mForces[2] * afunv[2];
+    fxyz[1] =
+        mForces[0] * afunv[1] + mForces[1] * afunv[3] + mForces[2] * afunv[4];
+    fxyz[2] =
+        mForces[0] * afunv[2] + mForces[1] * afunv[4] + mForces[2] * afunv[5];
+  }
+#endif
 }
 
 //-----------------------------------------------------------------------
 void GridPointSource::set_derivative(int der, const float_sw4 dir[11]) {
+#if defined(SOURCE_INVERSION)
   if (der >= 0 && der <= 11) m_derivative = der;
   for (int i = 0; i < 11; i++) m_dir[i] = dir[i];
+#endif
 }
 
 //-----------------------------------------------------------------------
-void GridPointSource::set_noderivative() { m_derivative = -1; }
+void GridPointSource::set_noderivative() {
+#if defined(SOURCE_INVERSION)
+  m_derivative = -1;
+#endif
+}
 
 //-----------------------------------------------------------------------
 void GridPointSource::limitFrequency(float_sw4 max_freq) {
@@ -525,6 +564,7 @@ void GridPointSource::add_to_gradient(std::vector<Sarray>& kappa,
                                       float_sw4 dt, float_sw4 gradient[11],
                                       std::vector<float_sw4>& h, Sarray& Jac,
                                       bool topography_exists) {
+#if defined(SOURCE_INVERSION)
   if (m_jacobian_known) {
     float_sw4 normwgh[4] = {17.0 / 48.0, 59.0 / 48.0, 43.0 / 48.0, 49.0 / 48.0};
     float_sw4 dt2o12 = dt * dt / 12.0;
@@ -576,6 +616,11 @@ void GridPointSource::add_to_gradient(std::vector<Sarray>& kappa,
     gradient[10] -=
         dgom * (kap1 * mForces[0] + kap2 * mForces[1] + kap3 * mForces[2]) * h3;
   }
+#else
+  std::cerr << "This routine is disabled. Compile with -DSOURCE_INVERSION=1\n"
+            << std::flush;
+  abort();
+#endif
 }
 
 //-----------------------------------------------------------------------
@@ -585,6 +630,7 @@ void GridPointSource::add_to_hessian(std::vector<Sarray>& kappa,
                                      std::vector<float_sw4>& h)
 // Add upper part of symmetric matrix
 {
+#if defined(SOURCE_INVERSION)
   if (m_hessian_known && m_jacobian_known) {
     float_sw4 normwgh[4] = {17.0 / 48.0, 59.0 / 48.0, 43.0 / 48.0, 49.0 / 48.0};
     float_sw4 dt2o12 = dt * dt / 12.0;
@@ -689,6 +735,7 @@ void GridPointSource::add_to_hessian(std::vector<Sarray>& kappa,
     j = 10;
     hessian[m + 11 * j] -= (cmfact * d2gdomdom + cmfact0 * dgdttomom) * h3;
   }
+#endif
 }
 
 //-----------------------------------------------------------------------
@@ -700,10 +747,12 @@ void GridPointSource::print_info() const {
   cout << "Forces = " << mForces[0] << " " << mForces[1] << " " << mForces[2]
        << endl;
   cout << " jac = \n";
+#if defined(SOURCE_INVERSION)
   for (int c = 0; c < 3; c++) {
     for (int m = 0; m < 9; m++) cout << m_jacobian[c + 3 * m] << " ";
     cout << endl;
   }
+#endif
   cout << "Time dep " << mTimeDependence << endl;
   cout << "--------------------------------------------------------------------"
           "---"

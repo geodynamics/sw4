@@ -12,6 +12,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+
 #include "policies.h"
 #ifdef SW4_USE_UMPIRE
 #include "umpire/ResourceManager.hpp"

@@ -100,7 +100,11 @@ class GridPointSource : public Managed {
   void initializeTimeFunction();
   float_sw4 mForces[3];
   void print_vals() {
+#if defined(SOURCE_INVERSION)
     std::cout << "DERDEP " << m_derivative << "," << mTimeDependence << "\n";
+#else
+    std::cout << "TIME DEP " << mTimeDependence << "\n";
+#endif
   };
 
  private:
@@ -136,6 +140,7 @@ class GridPointSource : public Managed {
   int* mIpar;
   int mNpar, mNipar;
 
+#if defined(SOURCE_INVERSION)
   int mNcyc;
   //  float_sw4 m_min_exponent;
   int m_derivative;
@@ -144,6 +149,7 @@ class GridPointSource : public Managed {
   bool m_hessian_known;
   float_sw4 m_hesspos1[9], m_hesspos2[9], m_hesspos3[9], m_dddp[9];
   float_sw4 m_dir[11];
+#endif
 };
 
 #endif

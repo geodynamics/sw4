@@ -1546,5 +1546,5 @@ void Sarray::GetAtt(char* file, int line) {
       // abort();
     }
   }
-  #endif
+#endif
 }

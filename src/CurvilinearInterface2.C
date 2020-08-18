@@ -28,8 +28,9 @@ void curvilinear4sgwind(int, int, int, int, int, int, int, int, float_sw4*,
 CurvilinearInterface2::CurvilinearInterface2(int a_gc, EW* a_ew) {
   SW4_MARK_FUNCTION;
 
-  if (!mpi_supports_device_buffers()){
-    std::cerr<<"**** ERROR::    Curvilinear Mesh Refinement cases must be run with the -M -gpu flag****************\n";
+  if (!mpi_supports_device_buffers()) {
+    std::cerr << "**** ERROR::    Curvilinear Mesh Refinement cases must be "
+                 "run with the -M -gpu flag****************\n";
     abort();
   }
 

@@ -148,7 +148,7 @@ void curvilinear4sgX1_ci(
                                                                       int i) {
 #endif
       // 5 ops
-      //const int UNROLL_LEN = 1;
+      // const int UNROLL_LEN = 1;
       float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
       float_sw4 istry = 1 / (stry(j));
       float_sw4 istrx = 1 / (strx(i));

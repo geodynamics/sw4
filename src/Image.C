@@ -462,7 +462,7 @@ void Image::define_pio() {
     int global[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g],
                      mEW->m_global_nz[g]};
     //		       mEW->m_kEnd[g] - mEW->m_kStart[g] -
-    //2*mEW->m_ghost_points+1}
+    // 2*mEW->m_ghost_points+1}
     //;
     int local[3];
     local[0] = mWindow[g][1] - mWindow[g][0] + 1;
