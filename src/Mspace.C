@@ -860,7 +860,6 @@ void invert(float_sw4 *A, int msize) {
 #undef I
 }
 
-
 bool mpi_supports_device_buffers() {
 #if defined(ENABLE_CUDA)
 #if defined(SMPI_VERSION)
