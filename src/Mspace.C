@@ -1,3 +1,4 @@
+#include <mpi.h>
 #include <mpi-ext.h>
 
 #include <unordered_map>
