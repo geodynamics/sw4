@@ -34,7 +34,7 @@ CALIPER_HOME =/usr/workspace/wsrzd/ramesh/Caliper/Caliper/install
 
 EXTRA_FORT_FLAGS = -qstrict
 
-
+# --verbose -res-usage to find resource usage
 MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_PINNED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC}
 MORE_LINK_FLAGS = 
 
