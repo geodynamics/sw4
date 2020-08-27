@@ -457,6 +457,14 @@ void TimeSeries::recordData(vector<float_sw4> & u)
 
 }
 
+void TimeSeries::writeFile(FILE *fid )
+{
+  if (!m_myPoint) return;
+  fwrite(&mX, sizeof(float_sw4), 1, fid);
+  fwrite(&mY, sizeof(float_sw4), 1, fid);
+  fwrite(mRecordedSol[0], sizeof(float_sw4), mLastTimeStep+1, fid);  // X component
+}
+
    
 //----------------------------------------------------------------------
 void TimeSeries::writeFile( string suffix )
@@ -1681,6 +1689,8 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
       {
 	aw = M_PI/(m_winR-m_winL);
 	bw = -aw*0.5*(m_winR+m_winL);
+   std::cout << "winL=" << m_winL << " winR=" << m_winR << std::endl;
+
       }
       if( compute_difference )
       {
@@ -3665,4 +3675,15 @@ hid_t TimeSeries::openHDF5File(std::string suffix)
   return *m_fid_ptr;
 }
 
+
 #endif
+
+float_sw4 TimeSeries::getMaxValue(const int comp) const
+{
+float_sw4 max_value = -1e20;
+
+  for(int i=0; i<mLastTimeStep; i++) {
+   if(mRecordedSol[comp][i] > max_value) max_value = mRecordedSol[comp][i];
+  }
+return max_value;
+}

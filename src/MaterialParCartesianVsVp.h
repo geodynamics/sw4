@@ -14,6 +14,8 @@ private:
    Sarray m_cs, m_cp; // ?needed now ? 
    void interpolate_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
 				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
+   void interpolate_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
+				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
 public:
    MaterialParCartesianVsVp( EW* a_ew, int nx, int ny, int nz, int init, char* fname );
    void get_material( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
@@ -21,7 +23,7 @@ public:
    void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
 			std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
    void get_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
-				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda ) {};
+				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
    void get_gradient( int nmd, double* xmd, int nms, double* xms, double* dfs, double* dfm,
 		      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
 		      std::vector<Sarray>& a_lambda,

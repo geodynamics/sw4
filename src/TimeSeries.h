@@ -65,6 +65,7 @@ void recordData(vector<float_sw4> & u);
 
 void writeFile( string suffix="" );
 void writeFileUSGS( string suffix="" );
+void writeFile( FILE *fid);
 
 void readFile( EW* ew, bool ignore_utc );
 
@@ -109,6 +110,7 @@ void use_as_forcing( int n, std::vector<Sarray>& f, std::vector<float_sw4> & h, 
 
 float_sw4 product( TimeSeries& ts ) const;
 float_sw4 product_wgh( TimeSeries& ts ) const;
+float_sw4 getMaxValue(const int comp) const;
 
    //void reset_utc( int utc[7] );
 void set_utc_to_simulation_utc();

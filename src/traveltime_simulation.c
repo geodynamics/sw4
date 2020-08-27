@@ -109,8 +109,6 @@ void traveltime_simulation(int VERBOSE, int FREE_SURFACE, int SOURCE_TYPE,
 
        }
 
-
-
        //if(myid==0) {
        //fp=fopen("tt.bin", "wb");
        // fwrite(time, sizeof(float), nx*nz, fp);
@@ -130,7 +128,6 @@ void traveltime_simulation(int VERBOSE, int FREE_SURFACE, int SOURCE_TYPE,
 
        for (ig = 0; ig < nreceivers; ig++)
        {
-
            irx = ireceivers[ig][0];
            irz = ireceivers[ig][1];
 

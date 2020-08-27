@@ -132,11 +132,24 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    mopt->m_mp->get_nr_of_parameters( nms, nmd, nmpard_global );
    if( nms != nmpars || nmd != nmpard )
       cout << "compute_f: WARNING, inconsistent number of material parameters" << endl;
-   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
+
+   // solveTT
+   double *coarse = new double[nmpars];
+   mopt->m_mp->get_base_parameters(nmpard,xm,nmpars,coarse,simulation.mRho,simulation.mMu,simulation.mLambda );
+   checkMinMax(nmpars/2, coarse, "coarse:");
+   for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
+   {
+     if(simulation.getRank()==0) simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 0);
+   }
+   delete[] coarse;
+   
+   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda ); // xs->mu/lambda->base
    int ok=1;
    if( mopt->m_mcheck )
       simulation.check_material( rho, mu, lambda, ok );
    VERIFY2( ok, "ERROR: compute_f Material check failed\n" );
+
+
 // Old
  //   simulation.parameters_to_material( nm, xm, rho, mu, lambda );
 
@@ -281,6 +294,17 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    if( nms != nmpars || nmd != nmpard )
       cout << "compute_f_and_df: WARNING, inconsistent number of material parameters" << endl;
 
+
+   // solveTT
+   double *coarse = new double[nmpars];
+   mopt->m_mp->get_base_parameters(nmpard,xm,nmpars,coarse,simulation.mRho,simulation.mMu,simulation.mLambda );
+   checkMinMax(nmpars/2, coarse, "coarse2:");
+   for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
+   {
+     if(myrank==0) simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 0);
+   }
+   delete[] coarse;
+
    checkMinMax(nmpars, &xs[nspar], "compute_f_and_df: xs");
    mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
 
@@ -311,7 +335,6 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    {
       std::cout << "compute_f_df forward solve"  << " time from t0=" << MPI_Wtime()-t0 << std::endl;
       sw4_profile->time_stamp("forward solve" );
-      //if(myrank==0) simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], xs, e);
 
      simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory );
       // check if U has nan
@@ -320,7 +343,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       std::cout << "done compute_f_df forward solve" << " time from t0=" << MPI_Wtime()-t0 << std::endl;
 
       //std::cout << "done compute_f_df forward solve" << std::endl;
-   //   simulation.solve( src, GlobalTimeSeries, mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true );
+      //   simulation.solve( src, GlobalTimeSeries, mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true );
      //Wei added sync
 
      MPI_Barrier(MPI_COMM_WORLD);
@@ -329,6 +352,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 
 // 1. Copy computed time series into diffs[m]
       vector<TimeSeries*> diffs;
+   
+
       for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
       {
 	 if( mopt->m_output_ts && it >= 0 )
@@ -341,10 +366,38 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       {
 	 double dshift, ddshift, dd1shift;
      //cerr << "diffs size=" << GlobalTimeSeries[e].size() << endl;
+     //FILE *fid = fopen("diff.bin", "wb");
+
+#ifdef USE_HDF5   
+      for (int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ ) 
+         diffs[m]->resetHDF5file();
+      if(myrank == 0) 
+         createTimeSeriesHDF5File(diffs, GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "_adj.h5");
+      MPI_Barrier(MPI_COMM_WORLD);            
+#endif
      for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ ) {
 	     f += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
+      // QC adj source by wei
+      #if USE_HDF5
+                 // Allocate HDF5 fid for later file write
+                   if(m == 0) { 
+                     diffs[0]->allocFid();
+                     diffs[0]->setTS0Ptr(diffs[0]);
+                   }
+                   else {
+                     diffs[m]->setFidPtr(diffs[0]->getFidPtr());
+                     diffs[m]->setTS0Ptr(diffs[0]);
+                   } 
+
+        diffs[m]->writeFile("_adj.h5");
+        if(diffs[m]->myPoint()) std::cout << "m=" << m << " adj max=" << diffs[m]->getMaxValue(0) << std::endl;
+      #endif
+
         //diffs[m]->writeFileUSGS();
+        //diffs[m]->writeFile(fid);
         }
+        //fclose(fid);
+        std::cout << ">>>>>>>>>>>>>>>>>>> adj source written to files" << std::endl;
       }
       else if( mopt->m_misfit == Mopt::CROSSCORR )
       {
@@ -1292,16 +1345,14 @@ int main(int argc, char **argv)
 	   GlobalSources[0][0]->get_parameters(xspar);
 	   get_source_pars( nspar, xspar, xs );
 
+      std::cout << "nmpars=" << nmpars << std::endl;
+// solveTT
+       //mp->get_base_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,simulation.mLambda );
+       //std::cout << "GlobalTimeSeries size=" << GlobalTimeSeries[0].size() << std::endl;
+       //if(myRank==0) simulation.solveTT(GlobalSources[0], GlobalTimeSeries[0], xs, nmpars, mp, 0);
+
 // Initialize the material parameters
       mp->get_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,simulation.mLambda );
-
-
-// solveTT
-       mp->get_base_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,simulation.mLambda );
-
-       std::cout << "GlobalTimeSeries size=" << GlobalTimeSeries[0].size() << std::endl;
-
-       if(myRank==0) simulation.solveTT( GlobalSources[0], GlobalTimeSeries[0], xs, nmpars, mp, 0);
 
    //           string parname = simulation.getOutputPath() + "mtrlpar-init.bin";
            string parname = mopt->m_path + "mtrlpar-init.bin";
@@ -1446,6 +1497,7 @@ int main(int argc, char **argv)
 	   {
 // Run optimizer (default)
 	      sw4_profile->time_stamp("Start optimizer");
+
          cout << " start lbfgs time from t0=" << MPI_Wtime()-t0 << endl;
 	      if( mopt->m_optmethod == 1 )
 		 lbfgs( simulation, nspar, nmpars, xs, nmpard, xm, 

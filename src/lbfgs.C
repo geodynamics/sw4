@@ -1121,7 +1121,6 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
    delete[] rho;
    if( ns > 0 )
    {
-	  std::cout << "delete dfs" << std::endl;
       delete[] s;
       delete[] y;
       delete[] dftemp;
