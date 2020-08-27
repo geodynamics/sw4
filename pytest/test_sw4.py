@@ -227,18 +227,18 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
                 'attenuation', 'attenuation', 'pointsource',
                 'twilight', 'twilight', 'lamb',
                 'curvimeshrefine', 'curvimeshrefine', 'curvimeshrefine','curvimeshrefine',
-                'hdf5']
+                'hdf5', 'hdf5']
 
-    all_cases = ['energy-nomr-2nd', 'energy-mr-4th', 'energy-mr-sg-order2', 'energy-mr-sg-order4', 'refine-el', 'refine-att', 'refine-att-2nd', 'tw-att', 'tw-topo-att', 'pointsource-sg', 'flat-twi', 'gauss-twi', 'lamb','gausshill-el','gauss-sg-mr','energy','gausshill-att','loh1-h100-mr-hdf5']
+    all_cases = ['energy-nomr-2nd', 'energy-mr-4th', 'energy-mr-sg-order2', 'energy-mr-sg-order4', 'refine-el', 'refine-att', 'refine-att-2nd', 'tw-att', 'tw-topo-att', 'pointsource-sg', 'flat-twi', 'gauss-twi', 'lamb','gausshill-el','gauss-sg-mr','energy','gausshill-att','loh1-h100-mr-hdf5','loh1-h100-mr-hdf5-sfile']
     
-    all_results =['energy.log', 'energy.log', 'energy.log', 'energy.log', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'PointSourceErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt','TwilightErr.txt','TwilightErr.txt','energy.log','TwilightErr.txt','hdf5.log']
-    num_meshes =[1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1] # default number of meshes for level 0
+    all_results =['energy.log', 'energy.log', 'energy.log', 'energy.log', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'PointSourceErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt','TwilightErr.txt','TwilightErr.txt','energy.log','TwilightErr.txt','hdf5.log','hdf5-sfile.log']
+    num_meshes =[1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1] # default number of meshes for level 0
 
     # add more tests for higher values of the testing level
     if testing_level == 1:
-        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 2, 2, 3, 3, 2, 2, 2, 1, 2, 1]
+        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 2, 2, 3, 3, 2, 2, 2, 1, 2, 1, 1]
     elif testing_level == 2:
-        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 1]
+        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 1, 1]
 
     
     print("Running all tests for level", testing_level, "...")
@@ -246,10 +246,10 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
     for qq in range(len(all_dirs)):
 
         # skip HDF5 test if specified
-        if qq == len(all_dirs)-1 and nohdf5 == True:
+        if qq == len(all_dirs)-2 and nohdf5 == True:
             print("HDF5 test skipped")
             break
-        elif qq == len(all_dirs)-1:
+        elif qq == len(all_dirs)-2:
             print("  Running HDF5 test, may take a few minutes ...")
     
         test_dir = all_dirs[qq]
@@ -327,7 +327,7 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
                 success = True
                 sw4_stdout_file = open(case_dir + '.out', 'r')
                 for line in sw4_stdout_file:
-                    if "not compiled with HDF5" in line or "without sw4 compiled with HDF5" in line:
+                    if "Error" in line or "not compiled with HDF5" in line or "without sw4 compiled with HDF5" in line:
                         success = False
                         print('SW4 is not compiled with HDF5 library!')
                         break;
@@ -336,6 +336,21 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
                     success = verify_hdf5.verify(pytest_dir, 1e-5)
                 if success == False:
                     print('HDF5 test failed! (disable HDF5 test with -n option)')
+            elif result_file == 'hdf5-sfile.log':
+                import verify_hdf5
+                success = True
+                sw4_stdout_file = open(case_dir + '.out', 'r')
+                for line in sw4_stdout_file:
+                    if "Error" in line or "not compiled with HDF5" in line or "without sw4 compiled with HDF5" in line:
+                        success = False
+                        print('SW4 is not compiled with HDF5 library!')
+                        break;
+                sw4_stdout_file.close()
+                if success == True:
+                    success = verify_hdf5.verify_sac_image(pytest_dir, 1e-5)
+                if success == False:
+                    print('HDF5 test failed! (disable HDF5 test with -n option)')
+
             elif result_file == 'energy.log':
                 success = compare_energy(case_dir + sep + result_file, 1e-10, verbose)
             else:

@@ -705,7 +705,7 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
     attr_space2 = H5Screate_simple(1, &dims2, NULL);
     attr_space3 = H5Screate_simple(1, &dims3, NULL);
 
-    char *aname;
+    const char *aname;
     aname = "Origin longitude, latitude, azimuth";
     double lonlataz[3];
     lonlataz[0] = mEW->getLonOrigin();
