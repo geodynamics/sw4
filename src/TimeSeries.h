@@ -70,6 +70,7 @@ void writeFile( FILE *fid);
 void readFile( EW* ew, bool ignore_utc );
 
 float_sw4 **getRecordingArray(){ return mRecordedSol; }
+float **getRecordingArrayFloats(){ return mRecordedFloats; }
 
 int getNsteps() const {return mLastTimeStep+1;}
 int getDownSample() const {return mDownSample;}
@@ -79,6 +80,7 @@ bool myPoint(){ return m_myPoint; }
 receiverMode getMode(){ return m_mode; }
 
 int getUseHDF5(){ return m_hdf5Format; }
+int getUseSAC(){ return m_sacFormat; }
 
 float_sw4 getX() const {return mX;}
 float_sw4 getY() const {return mY;}
@@ -110,7 +112,7 @@ void use_as_forcing( int n, std::vector<Sarray>& f, std::vector<float_sw4> & h, 
 
 float_sw4 product( TimeSeries& ts ) const;
 float_sw4 product_wgh( TimeSeries& ts ) const;
-float_sw4 getMaxValue(const int comp) const;
+float getMaxValue(const int comp) const;
 
    //void reset_utc( int utc[7] );
 void set_utc_to_simulation_utc();

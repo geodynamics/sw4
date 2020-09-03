@@ -351,16 +351,26 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 // Compute misfit, 'diffs' will hold the source for the adjoint problem
 
 // 1. Copy computed time series into diffs[m]
+     
+     std::cout << "diffs declared" << std::endl;
+
       vector<TimeSeries*> diffs;
-   
 
       for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
       {
-	 if( mopt->m_output_ts && it >= 0 )
-	    GlobalTimeSeries[e][m]->writeFile();
-     TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc", false);  // Wei add true to append filename substring
-	  diffs.push_back(elem);
+	    if( mopt->m_output_ts && it >= 0 )
+	       GlobalTimeSeries[e][m]->writeFile();
+       TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc", false);  // Wei add true to append filename substring
+	    diffs.push_back(elem);
       }
+
+            if(myrank == 0) 
+                  createTimeSeriesHDF5File(diffs, GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "_adj.h5");
+            MPI_Barrier(MPI_COMM_WORLD); 
+
+       std::cout << "GlobalTimeSeries[e][0] Nsteps=" <<  GlobalTimeSeries[e][0]->getNsteps() << " hdf5Format=" << diffs[0]->getUseHDF5() << std::endl;
+
+
 // 2. misfit function also updates diffs := this - observed
       if( mopt->m_misfit == Mopt::L2 )
       {
@@ -368,13 +378,6 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
      //cerr << "diffs size=" << GlobalTimeSeries[e].size() << endl;
      //FILE *fid = fopen("diff.bin", "wb");
 
-#ifdef USE_HDF5   
-      for (int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ ) 
-         diffs[m]->resetHDF5file();
-      if(myrank == 0) 
-         createTimeSeriesHDF5File(diffs, GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "_adj.h5");
-      MPI_Barrier(MPI_COMM_WORLD);            
-#endif
      for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ ) {
 	     f += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
       // QC adj source by wei
@@ -390,7 +393,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
                    } 
 
         diffs[m]->writeFile("_adj.h5");
-        if(diffs[m]->myPoint()) std::cout << "m=" << m << " adj max=" << diffs[m]->getMaxValue(0) << std::endl;
+        if(diffs[m]->myPoint()) std::cout << "m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
+            << " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;
       #endif
 
         //diffs[m]->writeFileUSGS();

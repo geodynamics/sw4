@@ -146,8 +146,8 @@ std::cout << "mp xmin=" << mp->getXmin() << " hx=" << mp->getDx() << " nx=" << m
     ix = (a_TimeSeries[ig]->getX() - mp->getXmin())/mp->getDx()+0.5;
     iy = (a_TimeSeries[ig]->getY() - mp->getYmin())/mp->getDy()+0.5;
     iz = (a_TimeSeries[ig]->getZ() - mp->getZmin())/mp->getDz()+0.5;
-    std::cout << "trace ig=" << ig+1 << " x=" << a_TimeSeries[ig]->getX() << " y=" << a_TimeSeries[ig]->getY() <<  " tp=" 
-       << timep[iz*nx*ny+iy*nx+ix] << " ts=" << times[iz*nx*ny+iy*nx+ix] << std::endl;
+    //std::cout << "trace ig=" << ig+1 << " x=" << a_TimeSeries[ig]->getX() << " y=" << a_TimeSeries[ig]->getY() <<  " tp=" 
+    //   << timep[iz*nx*ny+iy*nx+ix] << " ts=" << times[iz*nx*ny+iy*nx+ix] << std::endl;
 
    // set window 
        a_TimeSeries[ig]->set_window(times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+2.5);
