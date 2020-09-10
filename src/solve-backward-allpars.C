@@ -46,7 +46,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       BCForcing[g] = new double *[6];
       for(int side=0; side < 6; side++)
       {
-	 BCForcing[g][side]=NULL;
+	   BCForcing[g][side]=NULL;
          if (m_bcType[g][side] == bStressFree || m_bcType[g][side] == bDirichlet ||
 	     m_bcType[g][side] == bSuperGrid)
          {
@@ -130,8 +130,8 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       time_measure[0] = MPI_Wtime();
       evalRHS( K, a_Mu, a_Lambda, Lk, AlphaVE );
 
-      if(currentTimeStep == mNumberOfTimeSteps[event]-10) std::cout << "K min=" << K[0].minimum() << " max=" << K[0].maximum() << std::endl;
-
+      if(currentTimeStep == mNumberOfTimeSteps[event]-10) 
+        std::cout << "mNumberOfGrids=" << mNumberOfGrids << " K min=" << K[0].minimum() << " max=" << K[0].maximum() << std::endl;
 
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          F[g].set_to_zero();
@@ -150,7 +150,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 
     // Corrector
       for( int s= 0 ; s < a_TimeSeries.size() ; s++ )
-	 a_TimeSeries[s]->use_as_forcing( currentTimeStep-1, F, mGridSize, mDt, mJ, topographyExists() );
+	     a_TimeSeries[s]->use_as_forcing( currentTimeStep-1, F, mGridSize, mDt, mJ, topographyExists() );
 
       evalDpDmInTime( Kp, K, Km, Kacc ); 
       evalRHS( Kacc, a_Mu, a_Lambda, Lk, AlphaVEm );

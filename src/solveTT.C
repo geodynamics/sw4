@@ -34,32 +34,12 @@ void fastmarch_close (void);
 
 //--------------------------------------------------------------------
 void EW::solveTT( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
-		double* xs, int nmpars, MaterialParameterization* mp, int event)
+		double* xs, int nmpars, MaterialParameterization* mp, int event, int myrank)
 {
    int ix, iy, iz, nx, ny, nz, n;
    nx = mp->getNX();
    ny = mp->getNY();
    nz = mp->getNZ();
-
-// Set the number of time steps, allocate the recording arrays, and set reference time in all time series objects  
-//#pragma omp parallel for
-
-  for (int ts=0; ts<a_TimeSeries.size(); ts++)
-  {
-
-     a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps[event]+1, mTstart, mDt); // AP: added one to mNumber...
-     // In forward solve, the output receivers will use the same UTC as the
-     // global reference utc0, therefore, set station utc equal reference utc.
-     //     if( m_utc0set )
-     //	a_TimeSeries[ts]->set_station_utc( m_utc0 );
-  }
-  // the Source objects get discretized into GridPointSource objects
-  vector<GridPointSource*> point_sources;
-
-// Transfer source terms to each individual grid as point sources at grid points.
-  for( unsigned int i=0 ; i < a_Sources.size() ; i++ )
-      a_Sources[i]->set_grid_point_sources4( this, point_sources );
-
 
 std::cout << "source x0=" << a_Sources[event]->getX0() << " y0=" << a_Sources[event]->getY0() << " z0=" << a_Sources[event]->getZ0() << std::endl;
 n= nmpars/nx/ny/nz;
@@ -102,10 +82,10 @@ std::cout << "solveTT cpmin=" << cpmin << " cpmax=" << cpmax << std::endl;
 std::cout << "solveTT csmin=" << csmin << " csmax=" << csmax << std::endl;
 
 int ntr = a_TimeSeries.size();
-std::cout << "nmpars=" << nmpars << " number of traces=" << ntr << std::endl;
+//std::cout << "nmpars=" << nmpars << " number of traces=" << ntr << std::endl;
 
 
-std::cout << "mp xmin=" << mp->getXmin() << " hx=" << mp->getDx() << " nx=" << mp->getNX() << std::endl;
+//std::cout << "mp xmin=" << mp->getXmin() << " hx=" << mp->getDx() << " nx=" << mp->getNX() << std::endl;
     bool plane[3]={false,false,false};
 
        fastmarch_init(mp->getNZ(),mp->getNY(),mp->getNX());     // nx fast 
@@ -138,9 +118,11 @@ std::cout << "mp xmin=" << mp->getXmin() << " hx=" << mp->getDx() << " nx=" << m
    char file[STRINGSIZE];
    FILE *fd;
 
+   if(myrank==0) {     
    sprintf(file, "time_event_%d.txt", event);
    fd = fopen(file, "w");
-
+   }
+   
    for(int ig=0; ig<ntr; ig++) {
    //
     ix = (a_TimeSeries[ig]->getX() - mp->getXmin())/mp->getDx()+0.5;
@@ -151,12 +133,14 @@ std::cout << "mp xmin=" << mp->getXmin() << " hx=" << mp->getDx() << " nx=" << m
 
    // set window 
        a_TimeSeries[ig]->set_window(times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+2.5);
-       fprintf(fd, "%d   %d\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
+
+       if(myrank==0) fprintf(fd, "%d   %d\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
                event, ig+1, a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
                timep[iz*nx*ny+iy*nx+ix], timep[iz*nx*ny+iy*nx+ix]+2.0, times[iz*nx*ny+iy*nx+ix], times[iz*nx*ny+iy*nx+ix]+2.0);
 
    } 
-   fclose(fd);
+   if(myrank==0) fclose(fd);
+
 
    if(timep) free(timep);
    if(times) free(times);

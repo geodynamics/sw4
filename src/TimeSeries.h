@@ -91,7 +91,9 @@ float_sw4 getLon() const {return m_rec_lon;}
 
 float_sw4 getXaz() const {return m_x_azimuth;}
 
-float_sw4 getMshift() const {return m_shift;}
+float_sw4 getMshift() const {return m_shift; }
+
+float_sw4 get_t0() const { return m_t0; }
 
 int getMUTC(int i) const {return m_utc[i];}
 
@@ -112,7 +114,7 @@ void use_as_forcing( int n, std::vector<Sarray>& f, std::vector<float_sw4> & h, 
 
 float_sw4 product( TimeSeries& ts ) const;
 float_sw4 product_wgh( TimeSeries& ts ) const;
-float getMaxValue(const int comp) const;
+float_sw4 getMaxValue(const int comp) const;
 
    //void reset_utc( int utc[7] );
 void set_utc_to_simulation_utc();
@@ -132,6 +134,7 @@ std::string gethdf5FileName(){return m_hdf5Name;}
 std::string getPath(){return m_path;}
 float_sw4 getDt() {return m_dt;}
 float_sw4 getLastTimeStep() {return mLastTimeStep;}
+int getUseWin() const { return m_use_win; }
 
 void set_scalefactor( float_sw4 value );
 bool get_compute_scalefactor() const;

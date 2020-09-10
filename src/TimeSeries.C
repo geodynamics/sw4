@@ -1695,7 +1695,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
       {
 	aw = M_PI/(m_winR-m_winL);
 	bw = -aw*0.5*(m_winR+m_winL);
-   std::cout << "winL=" << m_winL << " winR=" << m_winR << std::endl;
+   //std::cout << "winL=" << m_winL << " winR=" << m_winR << " use_win=" << m_use_win << std::endl;
 
       }
       if( compute_difference )
@@ -1735,6 +1735,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 
       //      cout << "in misfit last step = " << mLastTimeStep << " m_t0= " << m_t0 << " m_shift = " << m_shift << endl;
       //      cout << "in misfit t0fr= = " << t0fr << endl;
+
       for( int i= 0 ; i <= mLastTimeStep ; i++ )
       {
 	 wghv = 1;
@@ -1763,14 +1764,21 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	 }
 
 // Windowing and component selection
-         float_sw4 wghx, wghy, wghz;
+         float_sw4 wghx, wghy, wghz, tau;
+         tau = m_dt*20;
+
 	 wghx = wghy = wghz = wghv;
-         if( m_use_win )
+ 
+      if( m_use_win )
 	 {
 	   if( t < m_winL || t > m_winR ) 
 	     wghx = wghy = wghz = 0;
 	   else
-	     wghx = wghy = wghz = pow(cos(aw*t+bw),10.0)*wghv;
+         wghx=wghy=wghz= 0.5*tanhf((t-m_winL)/tau) - 0.5*tanhf((t-m_winR)/tau);
+	     // wghx = wghy = wghz = pow(cos(aw*t+bw),10.0)*wghv;  // previous implementation
+
+      //std::cout << "i=" << i << " t=" << t << " wghx=" << wghx << std::endl;
+
 	 }
          if( !m_use_x )
 	    wghx = 0;
@@ -1778,7 +1786,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	    wghy = 0;
          if( !m_use_z )
 	    wghz = 0;
-
+      
 	 // If too far past the end of observed, set to zero.
 	 //	 if( ie > nfrsteps + order/2 )
          if( ie > nfrsteps+1 )
@@ -1865,6 +1873,8 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 		  ddmf[0] += ddwgh[m-mmin]*observed.mRecordedFloats[0][m]*idtfr2;
 		  ddmf[1] += ddwgh[m-mmin]*observed.mRecordedFloats[1][m]*idtfr2;
 		  ddmf[2] += ddwgh[m-mmin]*observed.mRecordedFloats[2][m]*idtfr2;
+
+
 	       }
 	    }
 	 }
@@ -1889,7 +1899,6 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	       misfitsource[0][i] = wghx*(mRecordedSol[0][i]-mf[0]);
 	       misfitsource[1][i] = wghy*(mRecordedSol[1][i]-mf[1]);
 	       misfitsource[2][i] = wghz*(mRecordedSol[2][i]-mf[2]);
-
          //wei 
           misfitsource_float[0][i]= (float)(mRecordedSol[0][i]-mf[0]);
           misfitsource_float[1][i]= (float)(mRecordedSol[1][i]-mf[1]);
@@ -1918,10 +1927,10 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	       misfitsource[0][i] = wghx*(mRecordedFloats[0][i]-mf[0]);
 	       misfitsource[1][i] = wghy*(mRecordedFloats[1][i]-mf[1]);
 	       misfitsource[2][i] = wghz*(mRecordedFloats[2][i]-mf[2]);
-          //wei 
-          misfitsource_float[0][i]= (float)(mRecordedFloats[0][i]-mf[0]);
-          misfitsource_float[1][i]= (float)(mRecordedFloats[1][i]-mf[1]);
-          misfitsource_float[2][i]= (float)(mRecordedFloats[2][i]-mf[2]);
+          //wei for hdf5 output
+          misfitsource_float[0][i]= (float)(misfitsource[0][i]);
+          misfitsource_float[1][i]= (float)(misfitsource[1][i]);
+          misfitsource_float[2][i]= (float)(misfitsource[2][i]);
 	    }
 	 }
 	 scale_factor += wghx*mf[0]*mf[0]+wghy*mf[1]*mf[1]+wghz*mf[2]*mf[2];
@@ -1954,8 +1963,8 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
               }
             }
          }
-      }
-   }
+      }  // loop over t by i
+   } 
    else
       misfit = 0;
    return 0.5*misfit;
@@ -2083,7 +2092,9 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 	 return;
       }
 // Windowing and component selection
-      float_sw4 wghx, wghy, wghz;
+      float_sw4 wghx, wghy, wghz, tau;
+      tau = m_dt*20;
+
       wghx = wghy = wghz = wghv;
       if( m_use_win )
       {
@@ -2091,7 +2102,8 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 	 if( t-tshift < m_winL || t-tshift > m_winR ) 
 	    wghx = wghy = wghz = 0;
 	 else
-	   wghx = wghy = wghz = pow(cos(aw*(t-tshift)+bw),5.0)*wghv;
+      wghx=wghy=wghz= 0.5*tanhf((t-m_winL)/tau) - 0.5*tanhf((t-m_winR)/tau);
+	   //wghx = wghy = wghz = pow(cos(aw*(t-tshift)+bw),5.0)*wghv;
       }
       if( !m_use_x )
 	 wghx = 0;
@@ -2414,6 +2426,7 @@ void TimeSeries::use_as_forcing( int n, std::vector<Sarray>& f,
 				 std::vector<float_sw4> & h, float_sw4 dt,
 				 Sarray& Jac, bool topography_exists )
 {
+
    // Use at grid point, n, in the grid of this object.
    if( m_myPoint )
    {
@@ -2432,10 +2445,12 @@ void TimeSeries::use_as_forcing( int n, std::vector<Sarray>& f,
       //      n = static_cast<int>(round( (t-m_t0)/m_dt ));
       if( n >= 0 && n <= mLastTimeStep )
       {
+
 	 f[m_grid0](1,m_i0,m_j0,m_k0) -= mRecordedSol[0][n]*ih3;
 	 f[m_grid0](2,m_i0,m_j0,m_k0) -= mRecordedSol[1][n]*ih3;
 	 f[m_grid0](3,m_i0,m_j0,m_k0) -= mRecordedSol[2][n]*ih3;
       }
+    
    }
 }
 
@@ -3715,7 +3730,7 @@ hid_t TimeSeries::openHDF5File(std::string suffix)
 
 #endif
 
-float TimeSeries::getMaxValue(const int comp) const
+float_sw4 TimeSeries::getMaxValue(const int comp) const
 {
 float_sw4 max_value = -1e20;
 float maxf =-1e20;
@@ -3725,5 +3740,5 @@ float maxf =-1e20;
    if(mRecordedSol[comp][i] > max_value) max_value = mRecordedSol[comp][i];
    if(mRecordedFloats[comp][i] > maxf) maxf = mRecordedFloats[comp][i];
   }
-return maxf;
+return max_value;
 }
