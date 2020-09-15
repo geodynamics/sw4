@@ -81,7 +81,7 @@ energy_interior = energy_interior(a:end);
 %energy_bdry = energy_bdry(a:end);
 figure(3)
 plot(times,(energy_interior-energy_interior(1))/energy_interior(1))
-axis([0 120 -5e-14 2e-14])
+axis([0 150 -7e-14 2e-14])
 set(gca,'fontsize',24)
 xlabel('t')
 ylabel('(E(t)-E(0))/E(0)')

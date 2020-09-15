@@ -163,6 +163,7 @@ program condition_number
 
   ! construct preconditioner
   call Interface_preconditioner(Mass_pre)
+
   !
   do j = 1,n2_c
     do i = 1,n1_c
@@ -170,6 +171,8 @@ program condition_number
          (j-1)*3*n1_c+(i-1)*3+1:(j-1)*3*n1_c+(i-1)*3+3) = Mass_pre(:,:,i,j)
     end do
   end do
+  call print_array_to_file(3*n1_c*n2_c,3*n1_c*n2_c,1,Mass_pre0,'Mass_pre.txt')
+
   !
   do j = 1,n2_c
      do i = 1,n1_c
@@ -560,6 +563,7 @@ contains
           Mass_pre(3,3,k,l) = Mass_pre(3,3,k,l)-Sb(0)*Jacobian_c(k,l,n3_c)&
           *((2.d0*mu_c(k,l,n3_c)+lambda_c(k,l,n3_c))*XI33_c(k,l,n3_c)**2+mu_c(k,l,n3_c)&
           *(XI13_c(k,l,n3_c)**2+XI23_c(k,l,n3_c)**2))/h3_c/int_cof_c(k,l)
+
        end do
     end do
   !

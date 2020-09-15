@@ -157,6 +157,7 @@ program Elastic_3D_Interface_conforming_static_reorder1
   ! Each set consists of n1_c*n2_c equations
 
   call Interface_system(Mass)
+  call print_array_to_file(3*n1_c*n2_c,3*n1_c*n2_c,1,Mass,'Mass.txt')
 
   ! lu factorization
   call dgetrf(3*n1_c*n2_c,3*n1_c*n2_c,Mass,3*n1_c*n2_c,IPIV,INFO)
@@ -775,6 +776,9 @@ contains
                     Mass((l-1)*3*n1_c+(k-1)*3+iset,(j-1)*3*n1_c+(i-1)*3+jj) = Mass_r(k,l,i,j)*int_cof
                  end do
               end do
+              !if ((iset .eq. 1) .and. (jj .eq. 2)) then
+              !print *, Mass((l-1)*3*n1_c+(k-1)*3+1,(l-1)*3*n1_c+(k-1)*3+2)
+              !end if
            end do
         end do
         do j = 1, n2_c
@@ -782,6 +786,7 @@ contains
               Mass((j-1)*3*n1_c+(i-1)*3+iset,(j-1)*3*n1_c+(i-1)*3+jj) = &
                   Mass((j-1)*3*n1_c+(i-1)*3+iset,(j-1)*3*n1_c+(i-1)*3+jj) &
                   -Sb(0)*N33_c(i,j,n3_c,iset,jj)/h3_c/int_cof_c(i,j)
+              !print *, Mass((j-1)*3*n1_c+(i-1)*3+1,(j-1)*3*n1_c+(i-1)*3+2)
            end do
         end do
         Mass_p = 0.d0

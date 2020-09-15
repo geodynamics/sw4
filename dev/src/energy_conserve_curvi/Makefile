@@ -40,4 +40,4 @@ $(BINDIR)/energy.x: $(OBJS)
 energy_4th_20200108.f90: problemsetup_new_3d.mod SBP_operator.mod
 
 clean:
-	rm -rf *.x *.o *.a *.mod *.txt s0* f0* smultivar.0* fmultivar.0* *__genmod.f90 *~ *#
+	rm -rf *.x *.o *.a *.mod s0* f0* smultivar.0* fmultivar.0* *__genmod.f90 *~ *#

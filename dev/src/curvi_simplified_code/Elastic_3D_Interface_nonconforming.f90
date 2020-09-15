@@ -166,6 +166,7 @@ program Elastic_3D_Interface_nonconforming1
   ! Each set consists of n1_c*n2_c equations
 
   call Interface_system(Mass)
+  call print_array_to_file(3*n1_c*n2_c,3*n1_c*n2_c,1,Mass,'Mass.txt')
 
   ! lu factorization
   call dgetrf(3*n1_c*n2_c,3*n1_c*n2_c,Mass,3*n1_c*n2_c,IPIV,INFO)

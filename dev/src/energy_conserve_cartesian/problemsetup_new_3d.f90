@@ -4,7 +4,7 @@ module problemsetup_new_3d
 
   integer, parameter :: dp = real64
   real(dp),parameter :: pi = dacos(-1.d0)
-  real(dp),parameter :: tn = 1.d0
+  real(dp),parameter :: tn = 1.5d0
   integer, parameter :: nrg = 2
 
   ! parameters for generating meshes

@@ -1,0 +1,34 @@
+%!TEX root = SISC_elastic_3d.tex
+\subsection{Iterative methods}\label{iterative_section}
+In this section, we use the same example as in Sec.~\ref{convergence_study}. For the proposed scheme (\ref{elastic_semi_c}, \ref{fine_scheme}, \ref{continuous_sol}, \ref{continuous_traction}), we need to solve linear systems with $3n_1^{2h}n_2^{2h}$ unknown ghost point values on the coarse grid. At each time step, two linear systems with the same matrix are solved for the continuity of traction at the interface $\Gamma$. 
+
+We investigate three iterative methods: the block Jacobi method, the conjugate gradient method  and the preconditioned conjugate gradient method. We note that the coefficient matrix of the linear system arising from the continuity of traction at interface $\Gamma$ is not symmetric for this test problem. However, our experiment shows that both the conjugate gradient method and the preconditioned conjugate gradient method converge.
+
+For the problem proposed in Sec.~\ref{convergence_study}, the structure of the coefficient matrix of the linear system arising in (\ref{continuous_traction}) is shown in Figure \ref{Mass_matrix}, which is determined by the interpolation operator ${\mathcal{P}}$ and restriction operator ${\mathcal{R}}$. In this example, we use $n_1^{2h} = n_2^{2h}=13, n_3^{2h} = 7$. We choose the entries indicated by red color in Figure \ref{Mass_matrix} to be the block Jacobi matrix in the block Jacobi iterative method and the preconditioning matrix in the preconditioned conjugate gradient  method. The absolute error tolerance is set to be $10^{-7}$ for all three iterative methods and $h_1 = h_2 = h_3 = h$.
+
+\begin{table}[htbp]
+	\begin{center}
+		\begin{tabular}{|c|c c c|}
+			\hline
+			$2h$   & ~~~~ CG ~~~~& Block Jacobi & Preconditioned CG  \\
+			\hline
+			$2\pi/24$ &37.78& 24.96& 4.01\\
+			\hline
+			$2\pi/48$ &38.61 & 25.38 & 2.87\\
+			\hline 
+			$2\pi/96$ &39.14 &25.43 & 2.25\\
+			\hline
+		\end{tabular}
+	\end{center}
+		\caption{The condition number of the matrices in the conjugate gradient method, the block Jacobi method and the preconditioned conjugate gradient method}\label{condition_number}
+\end{table} 
+Table \ref{condition_number} shows the condition number of the original coefficient matrix, the block Jacobi matrix and the coefficient matrix after applying the preconditioning matrix. We observe that the condition number for preconditioned conjugate gradient method is smallest and is consistent with the results of iteration number for different iterative methods: there are around $44$ iterations for the conjugate gradient method, $13$ iterations for the block Jacobi method and $9$ iterations for the preconditioned conjugate gradient method.
+
+In comparison, we have also performed an LU factorization for the linear system when the mesh size $2h = 2\pi/96$, and the computation takes 40.6 GB memory. In contrast, with the block Jacobi method, the peak memory usage is only 1.2 GB. For large-scale problems, the memory usage becomes infeasible for the LU factorization. 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.45\textwidth,trim={0.6cm 1cm 1cm 1.2cm}, clip]{Mass_matrix.eps}
+	\includegraphics[width=0.45\textwidth,trim={0.6cm 1cm 1cm 1.2cm}, clip]{Mass_diagonal_matrix.eps}
+	\caption{The left panel is the structure of the coefficient matrix of the linear system (\ref{continuous_traction}).  The right panel shows a close-up of one diagonal block.}\label{Mass_matrix}
+\end{figure}
