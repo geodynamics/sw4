@@ -119,6 +119,8 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_compute_scalefactor(true),
   m_misfit_scaling(1),
   m_readTime(0.0),
+  m_winL2(-1.0),
+  m_winR2(-1.0),
 #ifdef USE_HDF5
   m_sta_z(depth),
   m_fid_ptr(NULL),
@@ -1764,21 +1766,30 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	 }
 
 // Windowing and component selection
-         float_sw4 wghx, wghy, wghz, tau;
-         tau = m_dt*20;
+    float_sw4 wghx, wghy, wghz, tau;
+    float_sw4 wghx2, wghy2, wghz2;
+    tau = m_dt*20;
 
 	 wghx = wghy = wghz = wghv;
  
-      if( m_use_win )
+   if( m_use_win )
 	 {
-	   if( t < m_winL || t > m_winR ) 
-	     wghx = wghy = wghz = 0;
-	   else
-         wghx=wghy=wghz= 0.5*tanhf((t-m_winL)/tau) - 0.5*tanhf((t-m_winR)/tau);
+       // single window
+	      if( t < m_winL || t > m_winR ) 
+	         wghx = wghy = wghz = 0;
+	      else
+            wghx=wghy=wghz= 0.5*tanhf((t-m_winL)/tau) - 0.5*tanhf((t-m_winR)/tau);   //windowing of waveform
 	     // wghx = wghy = wghz = pow(cos(aw*t+bw),10.0)*wghv;  // previous implementation
+      
+      if(m_winL2>0 || m_winR2>0) {  // if 2nd window exists
+         if( t < m_winL2 || t > m_winR2 ) 
+	         wghx2 = wghy2 = wghz2 = 0;
+	      else
+            wghx2=wghy2=wghz2= 0.5*tanhf((t-m_winL2)/tau) - 0.5*tanhf((t-m_winR2)/tau);   //windowing of waveform
 
-      //std::cout << "i=" << i << " t=" << t << " wghx=" << wghx << std::endl;
-
+         wghx = (wghx >= wghx2? wghx : wghx2);  // take the maximum of either window weight
+         wghz = wghy = wghx;
+        } // if 2nd window exists
 	 }
          if( !m_use_x )
 	    wghx = 0;
@@ -2798,6 +2809,15 @@ void TimeSeries::set_window( float_sw4 winl, float_sw4 winr )
    m_use_win = true;
    m_winL = winl;
    m_winR = winr;
+}
+
+void TimeSeries::set_window( float_sw4 winl, float_sw4 winr, float_sw4 winl2, float_sw4 winr2 )
+{
+   m_use_win = true;
+   m_winL = winl;
+   m_winR = winr;
+   m_winL2 = winl2;
+   m_winR2 = winr2;
 }
 
 //-----------------------------------------------------------------------

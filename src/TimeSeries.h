@@ -121,6 +121,7 @@ void set_utc_to_simulation_utc();
 void filter_data( Filter* filter_ptr );
 void print_timeinfo() const;
 void set_window( float_sw4 winl, float_sw4 winr );
+void set_window( float_sw4 winl, float_sw4 winr, float_sw4 winl2, float_sw4 winr2);
 void exclude_component( bool usex, bool usey, bool usez );
 void readSACfiles( EW* ew, const char* sac1, const char* sac2, const char* sac3, bool ignore_utc );
 void isRestart();
@@ -252,6 +253,8 @@ float_sw4 m_scalefactor;
 
 // Window for optimization, m_winL, m_winR given relative simulation time zero.
    float_sw4 m_winL, m_winR;
+// add another set of window
+   float_sw4 m_winL2, m_winR2;
    bool   m_use_win, m_use_x, m_use_y, m_use_z;
 
 // quiet mode?
