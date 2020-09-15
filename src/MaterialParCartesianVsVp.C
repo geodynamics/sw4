@@ -142,9 +142,10 @@ void MaterialParCartesianVsVp::get_material( int nmd, double* xmd, int nms,
    {
       //      m_ew->interpolate( m_nx, m_ny, m_nz, m_xmin, m_ymin, m_zmin, m_hx, m_hy, m_hz, m_rho, m_mu,
       //			 m_lambda, g, a_rho[g], a_mu[g], a_lambda[g], false );
-      // interpolate init model perturbation to the ref model
+      // interpolate init model perturbation to the ref model      cs/cp->mu/lambda
       m_ew->interpolate( m_nx, m_ny, m_nz, m_xmin, m_ymin, m_zmin, m_hx, m_hy, m_hz, m_rho, m_cs,
-			 m_cp, g, a_rho[g], a_mu[g], a_lambda[g], false );
+			 m_cp, g, a_rho[g], a_mu[g], a_lambda[g], false ); 
+      // add mu/lambda update to the base      
       m_ew->update_and_transform_material( g, a_rho[g], a_mu[g], a_lambda[g] );
    }
 }
@@ -495,3 +496,63 @@ void MaterialParCartesianVsVp::subtract_base_mtrl( int nms, double* xms )
    
 }
 
+void MaterialParCartesianVsVp::get_base_parameters( int nmd, double* xmd, int nms,
+					   double* xms, std::vector<Sarray>& a_rho, 
+					   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
+{
+   std::cout << "VsVp::get_base_parameters" << std::endl;
+   
+   interpolate_base_parameters( nmd, xmd, nms, xms, a_rho, a_mu, a_lambda );
+   
+}
+
+void MaterialParCartesianVsVp::interpolate_base_parameters( int nmd, double* xmd, int nms,
+						   double* xms, std::vector<Sarray>& a_rho, 
+			 std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
+{
+   // Interpolates the difference a_rho-(m_ew->mRho), into local rho. i.e., m_rho = I(a_rho-(m_ew->mRho))
+   // where a_rho,mRho are on the computational grid, rho on the parameter grid.
+   //                             similarly for cs, cp
+   // m_cs = I( a_cs-mCs)
+   // m_cp = I( a_cp-mCp)
+   //
+   std::cout << "nx=" << m_nx << " ny=" << m_ny << " nz=" << m_nz  << std::endl;
+   std::cout << "rho min=" << a_rho[0].minimum() << " max=" << a_rho[0].maximum() << std::endl;
+   std::cout << "lambda min=" << a_lambda[0].minimum() << " max=" << a_lambda[0].maximum() << std::endl;
+   std::cout << "mu min=" << a_mu[0].minimum() << " max=" << a_mu[0].maximum() << std::endl;
+
+   m_ew->interpolate_base_to_coarse_vel( m_nx, m_ny, m_nz, m_xmin, m_ymin, m_zmin, m_hx, m_hy, m_hz,
+				    m_rho, m_cs, m_cp);
+
+   std::cout << "ew->interpolate_base_to_coarse_vel done" << std::endl;
+
+   //float_sw4* rhop=m_rho.c_ptr();
+   float_sw4* csp =m_cs.c_ptr();
+   float_sw4* cpp =m_cp.c_ptr();
+   size_t ind =0;
+   double csmin=100000,cpmin=100000;
+   double csmax=-100000,cpmax=-100000;
+
+   for( int k=1 ; k <= m_nz ; k++ )
+      for( int j=1 ; j <= m_ny ; j++ )
+	      for( int i=1 ; i <= m_nx ; i++ )
+	      {
+            size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
+            xms[2*ind] = csp[indm];
+	         xms[2*ind+1] = cpp[indm];
+            
+            if( csp[indm]<csmin )
+               csmin = csp[indm];
+            if( cpp[indm]<cpmin )
+               cpmin = cpp[indm];
+            
+            if( csp[indm]>csmax )
+               csmax = csp[indm];
+            if( cpp[indm]>cpmax )
+               cpmax = cpp[indm];
+            ind++;
+	    }
+
+    std::cout << "cpmin=" << cpmin << " cpmax=" << cpmax << " csmin=" << csmin << " csmax=" << csmax << std::endl;
+
+}

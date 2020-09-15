@@ -65,10 +65,12 @@ void recordData(vector<float_sw4> & u);
 
 void writeFile( string suffix="" );
 void writeFileUSGS( string suffix="" );
+void writeFile( FILE *fid);
 
 void readFile( EW* ew, bool ignore_utc );
 
 float_sw4 **getRecordingArray(){ return mRecordedSol; }
+float **getRecordingArrayFloats(){ return mRecordedFloats; }
 
 int getNsteps() const {return mLastTimeStep+1;}
 int getDownSample() const {return mDownSample;}
@@ -78,6 +80,7 @@ bool myPoint(){ return m_myPoint; }
 receiverMode getMode(){ return m_mode; }
 
 int getUseHDF5(){ return m_hdf5Format; }
+int getUseSAC(){ return m_sacFormat; }
 
 float_sw4 getX() const {return mX;}
 float_sw4 getY() const {return mY;}
@@ -88,7 +91,9 @@ float_sw4 getLon() const {return m_rec_lon;}
 
 float_sw4 getXaz() const {return m_x_azimuth;}
 
-float_sw4 getMshift() const {return m_shift;}
+float_sw4 getMshift() const {return m_shift; }
+
+float_sw4 get_t0() const { return m_t0; }
 
 int getMUTC(int i) const {return m_utc[i];}
 
@@ -109,12 +114,14 @@ void use_as_forcing( int n, std::vector<Sarray>& f, std::vector<float_sw4> & h, 
 
 float_sw4 product( TimeSeries& ts ) const;
 float_sw4 product_wgh( TimeSeries& ts ) const;
+float_sw4 getMaxValue(const int comp) const;
 
    //void reset_utc( int utc[7] );
 void set_utc_to_simulation_utc();
 void filter_data( Filter* filter_ptr );
 void print_timeinfo() const;
 void set_window( float_sw4 winl, float_sw4 winr );
+void set_window( float_sw4 winl, float_sw4 winr, float_sw4 winl2, float_sw4 winr2);
 void exclude_component( bool usex, bool usey, bool usez );
 void readSACfiles( EW* ew, const char* sac1, const char* sac2, const char* sac3, bool ignore_utc );
 void isRestart();
@@ -128,6 +135,7 @@ std::string gethdf5FileName(){return m_hdf5Name;}
 std::string getPath(){return m_path;}
 float_sw4 getDt() {return m_dt;}
 float_sw4 getLastTimeStep() {return mLastTimeStep;}
+int getUseWin() const { return m_use_win; }
 
 void set_scalefactor( float_sw4 value );
 bool get_compute_scalefactor() const;
@@ -245,6 +253,8 @@ float_sw4 m_scalefactor;
 
 // Window for optimization, m_winL, m_winR given relative simulation time zero.
    float_sw4 m_winL, m_winR;
+// add another set of window
+   float_sw4 m_winL2, m_winR2;
    bool   m_use_win, m_use_x, m_use_y, m_use_z;
 
 // quiet mode?

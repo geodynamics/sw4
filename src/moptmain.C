@@ -213,11 +213,27 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    mopt->m_mp->get_nr_of_parameters( nms, nmd, nmpard_global );
    if( nms != nmpars || nmd != nmpard )
       cout << "compute_f: WARNING, inconsistent number of material parameters" << endl;
-   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
+
+   // solveTT
+   double *coarse = new double[nmpars];
+   mopt->m_mp->get_base_parameters(nmpard,xm,nmpars,coarse,simulation.mRho,simulation.mMu,simulation.mLambda );
+   checkMinMax(nmpars/2, coarse, "coarse:");
+   for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
+   {
+     simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 0, simulation.getRank());
+   }
+   delete[] coarse;
+   MPI_Barrier(MPI_COMM_WORLD);
+
+
+
+   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda ); // xs->mu/lambda->base
    int ok=1;
    if( mopt->m_mcheck )
       simulation.check_material( rho, mu, lambda, ok );
    VERIFY2( ok, "ERROR: compute_f Material check failed\n" );
+
+
 // Old
  //   simulation.parameters_to_material( nm, xm, rho, mu, lambda );
 
@@ -363,6 +379,18 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    if( nms != nmpars || nmd != nmpard )
       cout << "compute_f_and_df: WARNING, inconsistent number of material parameters" << endl;
 
+
+   // solveTT
+   double *coarse = new double[nmpars];
+   mopt->m_mp->get_base_parameters(nmpard,xm,nmpars,coarse,simulation.mRho,simulation.mMu,simulation.mLambda );
+   checkMinMax(nmpars/2, coarse, "coarse2:");
+   for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
+   {
+     simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 0, myrank);
+   }
+    MPI_Barrier(MPI_COMM_WORLD);
+   delete[] coarse;
+
    checkMinMax(nmpars, &xs[nspar], "compute_f_and_df: xs");
    mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
 
@@ -389,64 +417,74 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       dfs[m+nspar] = 0;
    for( int m=0 ; m < nmpard ; m++ )
       dfm[m] = 0;
-   if( !mopt->m_test_regularizer )
+  if( !mopt->m_test_regularizer ){
+   for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
-      mopt->init_pseudohessian( pseudo_hessian );
-      int phcase = mopt->get_pseudo_hessian_case();
-      for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
-      {
-         std::cout << "compute_f_df forward solve"  << " time from t0=" << MPI_Wtime()-t0 << std::endl;
-         sw4_profile->time_stamp("forward solve" );
-         simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory, phcase, pseudo_hessian );
-         sw4_profile->time_stamp("done forward solve" );
-         std::cout << "done compute_f_df forward solve" << " time from t0=" << MPI_Wtime()-t0 << std::endl;
+      std::cout << "compute_f_df forward solve"  << " time from t0=" << MPI_Wtime()-t0 << std::endl;
+      sw4_profile->time_stamp("forward solve" );
 
+     simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory );
+      // check if U has nan
+      U[0].checknan("forward U");
+      sw4_profile->time_stamp("done forward solve" );
+      std::cout << "done compute_f_df forward solve" << " time from t0=" << MPI_Wtime()-t0 << std::endl;
 
+      //std::cout << "done compute_f_df forward solve" << std::endl;
+      //   simulation.solve( src, GlobalTimeSeries, mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true );
      //Wei added sync
+
      MPI_Barrier(MPI_COMM_WORLD);
+     
      
 // Compute misfit, 'diffs' will hold the source for the adjoint problem
 
 // 1. Copy computed time series into diffs[m]
-         vector<TimeSeries*> diffs;
-         for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
-         {
-            if( mopt->m_output_ts && it >= 0 )
-               GlobalTimeSeries[e][m]->writeFile();
-            TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc" );
-            diffs.push_back(elem);
-         }
+     
+      vector<TimeSeries*> diffs;
+
+      for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
+      {
+	    if( mopt->m_output_ts && it >= 0 )
+	       GlobalTimeSeries[e][m]->writeFile();
+       TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc", false);  // Wei add true to append filename substring
+	    diffs.push_back(elem);
+      }
+
+            if(myrank == 0) 
+                  createTimeSeriesHDF5File(diffs, GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "_adj.h5");
+            MPI_Barrier(MPI_COMM_WORLD); 
+
+       std::cout << "GlobalTimeSeries[e][0] Nsteps=" <<  GlobalTimeSeries[e][0]->getNsteps() << " hdf5Format=" << diffs[0]->getUseHDF5() << std::endl;
+
+
 // 2. misfit function also updates diffs := this - observed
-         if( mopt->m_misfit == Mopt::L2 )
-         {
-            double dshift, ddshift, dd1shift;
-            for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
-               f += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
-         }
-         else if( mopt->m_misfit == Mopt::CROSSCORR )
-         {
-            for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
-               f += GlobalTimeSeries[e][m]->misfit2( *GlobalObservations[e][m], diffs[m] );
-         }
+      if( mopt->m_misfit == Mopt::L2 )
+      {
+	 double dshift, ddshift, dd1shift;
 
-         double dfsrc[11];
-         get_source_pars( nspar, dfsrc, dfs ); 
-         std::cout << "backward+adjoint solve" << " time from t0=" << MPI_Wtime()-t0 << std::endl;  
-         sw4_profile->time_stamp("backward+adjoint solve" );
-         simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, e );
-         sw4_profile->time_stamp("done backward+adjoint solve" );
-         cout << "done adjoint solve:" << " time from t0=" << MPI_Wtime()-t0 << " gLambda[0] npts=" << gLambda[0].npts() << " min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << endl;
-         mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfmevent, rho, mu, lambda, gRho, gMu, gLambda );
+     for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ ) {
+	     f += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
+      // QC adj source by wei
+      #if USE_HDF5
+                 // Allocate HDF5 fid for later file write
+                   if(m == 0) { 
+                     diffs[0]->allocFid();
+                     diffs[0]->setTS0Ptr(diffs[0]);
+                   }
+                   else {
+                     diffs[m]->setFidPtr(diffs[0]->getFidPtr());
+                     diffs[m]->setTS0Ptr(diffs[0]);
+                   } 
+        diffs[m]->writeFile("_adj.h5");
+        //if(diffs[m]->myPoint()) std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
+        //    << " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;
 
-         for( int m=0 ; m < nmpars ; m++ )
-            dfs[m+nspar] += dfsevent[m];
-         for( int m=0 ; m < nmpard ; m++ )
-            dfm[m] += dfmevent[m];
+      #endif
 
-// 3. Give back memory
-         for( unsigned int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
-            delete diffs[m];
-         diffs.clear();
+        //diffs[m]->writeFileUSGS();
+        }
+
+        std::cout << ">>>>>>>>>>>>>>>>>>> adj source written to files" << std::endl;
       }
       double mftmp = f;
       MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
@@ -481,6 +519,56 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          // For plotting purpose:
          normalize_gradient_ph( pseudo_hessian, gRho, gMu, gLambda, eps, phcase );
       }
+
+      double dfsrc[11];
+      get_source_pars( nspar, dfsrc, dfs );   
+      std::cout << "backward+adjoint solve" << " time from t0=" << MPI_Wtime()-t0 << std::endl;
+
+      sw4_profile->time_stamp("backward+adjoint solve" );
+
+        for( int m = 0 ; m < diffs.size() ; m++ ) {
+         if(diffs[m]->myPoint()) std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
+            << " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;
+        }
+
+      simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, e );
+      sw4_profile->time_stamp("done backward+adjoint solve" );
+      cout << "done adjoint solve:" << " time from t0=" << MPI_Wtime()-t0 << " gLambda[0] npts=" << gLambda[0].npts() << " min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << endl;
+
+      //      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], &dfs[nspar], dfm, gRho, gMu, gLambda );
+      //      mopt->m_mp->gradient_transformation( rho, mu, lambda, gRho, gMu, gLambda );
+      
+      //gMu[0].save_to_disk("gMu_ini.say");
+      //gLambda[0].save_to_disk("gLambda_ini.say"); // local size with halos
+      //std::cout << "gMu_ini min=" << gMu[0].minimum() << " max=" << gMu[0].maximum() << std::endl;
+      //std::cout << "gLambda_ini min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << std::endl;
+
+      //gMu[0].save_to_disk("gMu.say");
+      //gLambda[0].save_to_disk("gLambda.say"); // local size with halos
+      //std::cout << "gMu min=" << gMu[0].minimum() << " max=" << gMu[0].maximum() << std::endl;
+      //std::cout << "gLambda min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << std::endl;
+
+      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfmevent, rho, mu, lambda, gRho, gMu, gLambda, myrank);
+
+      //gMu[0].save_to_disk("gMu_xform.say");
+      //gLambda[0].save_to_disk("gLambda_xform.say"); // local size with halos
+
+      //std::cout << "gMu_xform min=" << gMu[0].minimum() << " max=" << gMu[0].maximum() << std::endl;
+      //std::cout << "gLambda_xform min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << std::endl;
+    
+      for( int m=0 ; m < nmpars ; m++ )
+	      dfs[m+nspar] += dfsevent[m];
+      for( int m=0 ; m < nmpard ; m++ )
+	      dfm[m] += dfmevent[m];
+
+      
+// 3. Give back memory
+      for( unsigned int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
+	        delete diffs[m];
+      diffs.clear();
+   }
+   double mftmp = f;
+   MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
    }
 // add in a Tikhonov regularizing term:
    bool tikhonovreg=false;
@@ -1280,6 +1368,9 @@ int main(int argc, char **argv)
 // Make observations aware of the utc reference time, if set.
 // Filter observed data if required
 	   GlobalTimeSeries.resize(GlobalObservations.size());
+
+      std::cout << "Global Observations size max of e=" << GlobalObservations.size() << std::endl;
+
 	   for( int e=0 ; e < GlobalObservations.size() ; e++ )
 	   {
 	      for( int m = 0; m < GlobalObservations[e].size(); m++ )
@@ -1376,9 +1467,16 @@ int main(int argc, char **argv)
 	   GlobalSources[0][0]->get_parameters(xspar);
 	   get_source_pars( nspar, xspar, xs );
 
+      std::cout << "nmpars=" << nmpars << std::endl;
+// solveTT
+       //mp->get_base_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,simulation.mLambda );
+       //std::cout << "GlobalTimeSeries size=" << GlobalTimeSeries[0].size() << std::endl;
+       //if(myRank==0) simulation.solveTT(GlobalSources[0], GlobalTimeSeries[0], xs, nmpars, mp, 0);
+
 // Initialize the material parameters
-           mp->get_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,simulation.mLambda );
-	   //           string parname = simulation.getOutputPath() + "mtrlpar-init.bin";
+      mp->get_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,simulation.mLambda );
+
+   //           string parname = simulation.getOutputPath() + "mtrlpar-init.bin";
            string parname = mopt->m_path + "mtrlpar-init.bin";
 	   mp->write_parameters(parname.c_str(),nmpars,&xs[nspar]);
 
@@ -1521,6 +1619,7 @@ int main(int argc, char **argv)
 	   {
 // Run optimizer (default)
 	      sw4_profile->time_stamp("Start optimizer");
+
          cout << " start lbfgs time from t0=" << MPI_Wtime()-t0 << endl;
 	      if( mopt->m_optmethod == 1 )
 		 lbfgs( simulation, nspar, nmpars, xs, nmpard, xm, 

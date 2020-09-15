@@ -19,6 +19,10 @@ public:
 		      std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
    void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
 			std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
+         
+   void get_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
+			std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda ) {};
+
    void get_gradient( int nmd, double* xmd, int nms, double* xms, double* dfs, double* dfm,
 		      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
 		      std::vector<Sarray>& a_lambda,
@@ -36,7 +40,17 @@ public:
 			   std::vector<Sarray>& a_lambda, std::string fname );
    void projectl2( std::vector<Sarray>& mtrl, float_sw4* rhs );
    void subtract_base_mtrl( int nms, double* xms );
-   int get_varcase(){return 1;}
+
+   double getXmin() const { return m_xmin; }
+   double getDx() const { return m_hx; }
+   int getNX() const { return m_nx; }
+   double getYmin() const { return m_ymin; }
+   double getDy() const { return m_hy; }
+   int getNY() const { return m_ny; }
+   double getZmin() const { return m_zmin; }
+   double getDz() const { return m_hz; }
+   int getNZ() const { return m_nz; }  
+
 };
 
 #endif

@@ -14,12 +14,16 @@ private:
    Sarray m_cs, m_cp; // ?needed now ? 
    void interpolate_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
 				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
+   void interpolate_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
+				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
 public:
    MaterialParCartesianVsVp( EW* a_ew, int nx, int ny, int nz, int init, char* fname );
    void get_material( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
 		      std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
    void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
 			std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
+   void get_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
+				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
    void get_gradient( int nmd, double* xmd, int nms, double* xms, double* dfs, double* dfm,
 		      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
 		      std::vector<Sarray>& a_lambda,
@@ -40,7 +44,16 @@ public:
    void set_scalefactors( int nmpars, double* sfs, double rho_ref, double mu_ref, double lambda_ref, 
 			  double vs_ref, double vp_ref );
    void subtract_base_mtrl( int nms, double* xms );
-   int get_varcase(){return 3;}
+
+      double getXmin() const { return m_xmin; }
+   double getDx() const { return m_hx; }
+   int getNX() const { return m_nx; }
+   double getYmin() const { return m_ymin; }
+   double getDy() const { return m_hy; }
+   int getNY() const { return m_ny; }
+   double getZmin() const { return m_zmin; }
+   double getDz() const { return m_hz; }
+   int getNZ() const { return m_nz; }  
 };
 
 #endif

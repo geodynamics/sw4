@@ -18,6 +18,9 @@ public:
 					 std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
    void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
 					   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
+   void get_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
+				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda ) {};
+
    void get_gradient( int nmd, double* xmd, int nms, double* xms, double* dfms, double* dfmd,
 		      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
 		      std::vector<Sarray>& a_lambda, 
@@ -38,7 +41,16 @@ public:
 			 std::vector<Sarray>& a_lambda, double& mf_reg,
 			 double* sfd, double* sfs, bool compute_derivative, 
 			 double* dmfd_reg, double* dmfs_reg );
-   int get_varcase();
+
+   double getXmin() const {};
+   double getDx() const {};
+   int getNX() const {};
+   double getYmin() const {};
+   double getDy() const {};
+   int getNY() const {};
+   double getZmin() const {};
+   double getDz() const {};
+   int getNZ() const {};
 };
 
 #endif

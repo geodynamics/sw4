@@ -20,6 +20,9 @@ public:
 			      std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )=0;
    virtual void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
 				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )=0;
+   virtual void get_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
+				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )=0;
+
    virtual void get_gradient( int nmd, double* xmd, int nms, double* xms, double* dfs, double* dfm,
 			      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
 			      std::vector<Sarray>& a_lambda,
@@ -54,6 +57,16 @@ public:
    void write_parameters( int nms, double* xms ); // Only shared parameters for now
    void read_parameters( int nms, double* xms ); // Only shared parameters for now
    void set_path( std::string path ){m_path = path;}
+
+   virtual double getXmin() const =0;
+   virtual double getDx() const =0;
+   virtual int getNX() const =0;
+   virtual double getYmin() const =0;
+   virtual double getDy() const =0;
+   virtual int getNY() const =0;
+   virtual double getZmin() const =0;
+   virtual double getDz() const =0;
+   virtual int getNZ() const =0;
 };
 
 #endif
