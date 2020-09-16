@@ -17,14 +17,14 @@
 
 We would like to thank you for the time and help in handling and carefully reading our submission and providing encouraging and constructive comments.  We have revised our paper accordingly and improved its context in several courses. 
 
-Major change includes an 
+Major change includes an extra simulation on
 
-We have also carefully proofread the manuscript, polished its writing and corrected the typos and grammatical errors.  Here are the comments from reviewer \#2 in bold followed by our responses.
+We have also carefully proofread the manuscript, polished its writing and corrected the typos and grammatical errors.  Here are the comments from reviewer \#1 in bold followed by our responses.
 
 \begin{enumerate}
-\item \textbf{How do you deal with an interface of really any shape, for example a spherical cavity? }: 
+\item \textbf{How do you deal with an interface of really any shape, for example a spherical cavity?}: We can always divide computational domain into small computational domains, each one has six faces. Then mapping the curvrved subdomains into reference doamin.
 
-\item  \textbf{At the interface between two different grids (but with identical physical properties), are parasitic reflections zero? It is likely that parasitic modes are generated; see for example the work of Collino-Fouquet-Joly ("A conservative space-time mesh refinement method for the 1-D wave equation") or Rodriguez-Joly. The maps in figure 6 are not convincing: cuts with and without interface would be much better suited}: 
+\item  \textbf{At the interface between two different grids (but with identical physical properties), are parasitic reflections zero? It is likely that parasitic modes are generated; see for example the work of Collino-Fouquet-Joly ("A conservative space-time mesh refinement method for the 1-D wave equation") or Rodriguez-Joly. The maps in figure 6 are not convincing: cuts with and without interface would be much better suited}: For figure 6, the reference solutions are actually obtained from a homogeneous Cartesian grid, we don't consider any interface there. From the picutures, we observe small reflections when mesh grids are coarse. But when we refine the mesh, the reflections become smaller. Ideally, we will not have reflection generated from curved interfaces when mesh size is samll enough. 
 
 \end{enumerate}
 
