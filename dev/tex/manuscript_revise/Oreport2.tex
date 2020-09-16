@@ -1,0 +1,46 @@
+%\documentclass[12pt,reqno]{amsart}
+\documentclass[twoside,11pt]{article}
+\usepackage{amsmath,amssymb,amsthm,amsfonts}
+\topmargin=-0.5in \oddsidemargin3mm \evensidemargin3mm
+\textheight225mm \textwidth160mm
+\usepackage{xcolor}
+ \usepackage{natbib}
+\usepackage{graphicx}
+\linespread{1.125}
+\begin{document}
+
+\begin{center}
+{\Large \textbf{Responses to Referee Report (Reviewer \#2)}}
+\end{center}
+
+\noindent{Dear editor and referees of the SIAM Journal on Scientific Computing},
+
+We would like to thank you for the time and help in handling and carefully reading our submission and providing encouraging and constructive comments.  We have revised our paper accordingly and improved its context in several courses. 
+
+Major change includes an 
+
+We have also carefully proofread the manuscript, polished its writing and corrected the typos and grammatical errors.  Here are the comments from reviewer \#2 in bold followed by our responses.
+
+\begin{enumerate}
+\item \textbf{The first major concern of this reviewer, is the rather complicated notations adopted by the authors. I think the authors are trying to use a much more compact notations. This does not really work for (me) the reader. Using variables and parameters with mul- tiple subscripts and superscripts, at the same time, makes the presentation cumbersome, and stands in the way of the reader. For this reason I was not able to read all the analysis, but I think the analysis is correct since it based on the author’s previous papers} \cite{petersson2009stable,wang2019fourth,petersson2015wave}: 
+
+\item  \textbf{The use of method of manufactured solution might be useful to check the correctness of code but it is not sufficient to verify the accuracy of method in a seemingly realistic setting. The manufactured solutions may not exhibit the properties of the real solutions, for example large gradients, in the presence of discontinuous material properties. As the authors are aware, there are community developed benchmark problems, with ana- lytical solutions, to test the accuracy of simulation codes for seismic wave propagation problems. In particular the LOH1 benchmark problem of SCEC (Southern California Earthquake Center) –see also http://www.sismowine.org/model.html – with discontinu- ous wave-speeds and density should be a good candidate for this test}: 
+
+\item  \textbf{The authors should explicitly mention that the scheme is semi-implicit, since it in- volves numerical solutions of linear algebraic systems to impose the interface/boundary conditions. The solutions of systems of linear algebraic problem will certainly be non- trivial for large scale simulation of seismic waves in realistic 3D settings. The authors should explain how the implicit part of the scheme will affect parallel scalability which is necessary for large scale simulation, and in particular in 3D. For several reasons, purely explicit schemes seem to be preferable for large scale wave propagation problems. How will the semi-implicit method developed here compare with purely explicit schemes such as those developed in} \cite{virta2014acoustic,duru2014stable}: 
+
+\item  \textbf{To me, the theoretical results presented in the paper are direct extensions of} \cite{wang2019fourth} \textbf{to 3D and/or} \cite{petersson2009stable} \textbf{to 4th order accuracy. The theory in the paper is not really novel. And since the method has been implemented in SW4, which is a scalable open source produc- tion software: Are there problems that were difficult/impossible for SW4 that are now accessible using the new method? The numerical examples presented are too simplistic, in my opinion. I expected to see a much more interesting simulations of scenarios closer to realistic settings. This will help make the case for} \cite{wang2019fourth}\textbf{, and its extensions to 3D}: 
+
+\item \textbf{In the introduction the unstaggered grid methods} \cite{kozdon2013simulation,duru2016dynamic} \textbf{are worth mentioning}
+
+\end{enumerate}
+
+Again, we appreciate you all for the time in handling and scrutinizing our manuscript, and thanks for considering our submission to this journal.
+
+Sincerely, 
+
+All authors
+
+\bibliography{revier1.bib}
+\bibliographystyle{plain}
+
+\end{document}
