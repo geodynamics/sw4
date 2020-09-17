@@ -22,9 +22,11 @@ Major change includes an extra simulation on
 We have also carefully proofread the manuscript, polished its writing and corrected the typos and grammatical errors.  Here are the comments from reviewer \#1 in bold followed by our responses.
 
 \begin{enumerate}
-\item \textbf{How do you deal with an interface of really any shape, for example a spherical cavity?}: We can always divide computational domain into small computational domains, each one has six faces. Then mapping the curvrved subdomains into reference doamin.
+\item \textbf{How do you deal with an interface of really any shape, for example a spherical cavity?}\\
+ We have added in the introduction section how interfaces can be constructed in the general setting. We divide the computational domain into subdomains such that each subdomain has four sides in 2D and six faces in 3D. We then map each curved subdomain into a reference doamin.
 
-\item  \textbf{At the interface between two different grids (but with identical physical properties), are parasitic reflections zero? It is likely that parasitic modes are generated; see for example the work of Collino-Fouquet-Joly ("A conservative space-time mesh refinement method for the 1-D wave equation") or Rodriguez-Joly. The maps in figure 6 are not convincing: cuts with and without interface would be much better suited}: For figure 6, the reference solutions are actually obtained from a homogeneous Cartesian grid, we don't consider any interface there. From the picutures, we observe small reflections when mesh grids are coarse. But when we refine the mesh, the reflections become smaller. Ideally, we will not have reflection generated from curved interfaces when mesh size is samll enough. 
+\item  \textbf{At the interface between two different grids (but with identical physical properties), are parasitic reflections zero? It is likely that parasitic modes are generated; see for example the work of Collino-Fouquet-Joly ("A conservative space-time mesh refinement method for the 1-D wave equation") or Rodriguez-Joly. The maps in figure 6 are not convincing: cuts with and without interface would be much better suited}\\
+ For Figure 6, the reference solutions are actually obtained from a uniform Cartesian grid without using any interface. This information has been added to the caption of Figure 6 and 7. From the picutures, we observe small reflections when mesh grids are coarse. But when we refine the mesh, we observe that the reflections become smaller. Because the method converges with fourth order, the amplitude of reflections decreases fast with mesh refinement. %Ideally, we will not have reflection generated from curved interfaces when mesh size is samll enough. 
 
 \end{enumerate}
 
