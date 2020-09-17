@@ -47,6 +47,10 @@
 #include "sachdf5.h"
 #endif
 
+#ifdef SW4_TRACK_MPI
+bool StatMachineBase::ProfilerOn(false);
+#endif
+
 void curvilinear4sgwind(int, int, int, int, int, int, int, int, float_sw4*,
                         float_sw4*, float_sw4*, float_sw4*, float_sw4*,
                         float_sw4*, int*, float_sw4*, float_sw4*, float_sw4*,
@@ -785,6 +789,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 #ifdef SW4_TRACK_MPI
       t6 = SW4_CHRONO_NOW;
       ProfilerOn = true;
+      StatMachineBase::ProfilerOn = true;
 #endif
     }
 #ifdef SW4_TRACK_MPI
@@ -1244,7 +1249,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     }
 #ifdef SW4_TRACK_MPI
     std::chrono::high_resolution_clock::time_point t4 = SW4_CHRONO_NOW;
-    if (ProfilerOn) step_sm.insert(0, SW4_CHRONO_DURATION_MS(t3, t4));
+    //if (ProfilerOn) step_sm.insert(0, SW4_CHRONO_DURATION_MS(t3, t4));
+    step_sm.insert(0, SW4_CHRONO_DURATION_MS(t3, t4));
 #endif
 
     if (currentTimeStep == mNumberOfTimeSteps[event]) {

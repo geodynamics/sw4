@@ -2,16 +2,22 @@
 #define __STATMACHINE__
 #include <unordered_map>
 
+class StatMachineBase{
+ public:
+  static bool ProfilerOn;
+};
 template <typename T1, typename T2>
-class StatMachine {
+  class StatMachine:public StatMachineBase {
  public:
   std::unordered_map<T1, std::vector<T2> > map;
   void insert(T1 arg1, T2 arg2) {
-    auto got = map.find(arg1);
-    if (got == map.end()) {
-      map.emplace(arg1, std::vector<T2>());
+    if (ProfilerOn){
+      auto got = map.find(arg1);
+      if (got == map.end()) {
+	map.emplace(arg1, std::vector<T2>());
+      }
+      map[arg1].push_back(arg2);
     }
-    map[arg1].push_back(arg2);
   }
   void print(ofstream &ofile) {
     ofile << "#Key Mean Median Min Max Count\n";
