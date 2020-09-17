@@ -160,7 +160,7 @@ void CurvilinearInterface2::copy_str(float_sw4* dest, float_sw4* src,
 void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
                                         vector<float_sw4*>& a_stry) {
   SW4_MARK_FUNCTION;
-  std::cout << "void CurvilinearInterface2::init_arrays \n";
+  //std::cout << "void CurvilinearInterface2::init_arrays \n";
   for (int s = 0; s < 4; s++)
     m_isbndry[s] = m_ew->getLocalBcType(m_gc, s) != bProcessor;
 
@@ -295,7 +295,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   // std::cout << "Batch size in setup is " << msize << "\n";
   //#define USE_DIRECT_INVERSE 1
 #ifdef USE_DIRECT_INVERSE
-  std::cout << " USING DIRECT INVERSE \n";
+  //std::cout << " USING DIRECT INVERSE \n";
   m_mass_block = SW4_NEW(Space::Managed, float_sw4[9 * msize]);
   x = SW4_NEW(Space::Managed, float_sw4[3 * msize]);
   for (int j = m_jb + m_nghost; j <= m_je - m_nghost; j++)
@@ -801,10 +801,10 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   //   convhist.push_back(maxres);
   //   convhist.push_back(it);
   if (maxres > m_reltol * maxres0 && scalef * maxres > m_abstol) {
-    std::cout << "WARNING, no convergence in curvilinear interface, res = "
+    std::cerr << "WARNING, no convergence in curvilinear interface, res = "
               << maxres << " reltol= " << m_reltol
               << " initial res = " << maxres0 << std::endl;
-    std::cout << "     scaled res = " << scalef * maxres
+    std::cerr << "     scaled res = " << scalef * maxres
               << " abstol= " << m_abstol << std::endl;
   }
   SW4_MARK_BEGIN("IMPOSE_IC_5");

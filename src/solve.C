@@ -1148,7 +1148,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       m_check_point->write_checkpoint(t, currentTimeStep, U, Up, AlphaVE,
                                       AlphaVEp);
       double time_chkpt_tmp = MPI_Wtime() - time_chkpt;
-      if (mVerbose >= 2)
+      if (mVerbose >= 0)
 
       {
         MPI_Allreduce(&time_chkpt_tmp, &time_chkpt, 1, MPI_DOUBLE, MPI_MAX,
