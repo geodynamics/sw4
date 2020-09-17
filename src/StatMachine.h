@@ -24,36 +24,38 @@ template <typename T1, typename T2>
 
     for (auto it : map) {
       ofile << it.first << " ";
-      std::sort(it.second.begin(), it.second.end());
+      std::vector<T2> copy(it.second);
+      std::sort(copy.begin(), copy.end());
       T2 sum(0);
-      for (auto v : it.second) sum += v;
-      sum = sum / it.second.size();
-      ofile << sum << " " << it.second[it.second.size() / 2] << " "
-            << it.second[0] << " " << it.second.back() << " "
-            << it.second.size() << "\n";
+      for (auto v : copy) sum += v;
+      sum = sum / copy.size();
+      ofile << sum << " " << copy[copy.size() / 2] << " "
+            << copy[0] << " " << copy.back() << " "
+            << copy.size() << "\n";
     }
   }
   template <typename Func1, typename Func2>
-  void print(ofstream &ofile, Func1 &&f1, Func2 &&f2) {
-    ofile << "#Key Mean Median Min Max Psum Count\n";
+    void print(ofstream &ofile, Func1 &&f1, Func2 &&f2,std::string &&str) {
+    ofile << "#Key Mean Median Min Max Psum Count "<<str<<"\n";
     T2 grand_total(0);
     for (auto it : map) {
-      std::sort(it.second.begin(), it.second.end());
+      std::vector<T2> copy(it.second);
+      std::sort(copy.begin(), copy.end());
       ofile << f1(it.first) << " ";
       T2 sum(0);
-      for (auto v : it.second) {
+      for (auto v : copy) {
         sum += v;
         grand_total += v;
       }
       T2 psum = sum;
-      sum = sum / it.second.size();
+      sum = sum / copy.size();
       ofile << f2(it.first, sum) << " "
-            << f2(it.first, it.second[it.second.size() / 2]) << " "
-            << f2(it.first, it.second[0]) << " "
-            << f2(it.first, it.second.back()) << " " << psum << " "
-            << it.second.size() << "\n";
+            << f2(it.first, copy[it.second.size() / 2]) << " "
+            << f2(it.first, copy[0]) << " "
+            << f2(it.first, copy.back()) << " " << psum << " "
+            << copy.size() << "\n";
     }
-    ofile << "# Grand total " << grand_total << "\n";
+    ofile << "# Grand total " << grand_total << " "<<str<<" \n";
   }
   void printhistory(ofstream &ofile) {
     int c = 0;
