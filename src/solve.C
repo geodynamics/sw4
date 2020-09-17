@@ -1258,7 +1258,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 #ifdef SW4_TRACK_MPI
       std::cout
           << "Clean time stepping time "
-          << std::chrono::duration_cast<std::chrono::seconds>(t2 - t6).count()
+          << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t6).count()
           << " s \n";
 #endif
       if (proc_zero()) {

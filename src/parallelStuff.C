@@ -1065,10 +1065,11 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount,
 
   int recv_count = std::get<0>(recvt) * std::get<1>(recvt);
   int send_count = std::get<0>(sendt) * std::get<1>(sendt);
+  std::chrono::high_resolution_clock::time_point t1, t2;
   SW4_MARK_END("THE REST");
 #if defined(ENABLE_MPI_TIMING_BARRIER)
 #if defined(SW4_TRACK_MPI)
-  std::chrono::high_resolution_clock::time_point t1, t2;
+
   t1 = SW4_CHRONO_NOW;
 #endif
   MPI_Barrier(MPI_COMM_WORLD);
@@ -1406,10 +1407,11 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount,
 
   int recv_count = std::get<0>(recvt) * std::get<1>(recvt);
   int send_count = std::get<0>(sendt) * std::get<1>(sendt);
+  std::chrono::high_resolution_clock::time_point t1, t2;
   SW4_MARK_END("THE REST2");
 #if defined(ENABLE_MPI_TIMING_BARRIER)
 #if defined(SW4_TRACK_MPI)
-  std::chrono::high_resolution_clock::time_point t1, t2;
+
   t1 = SW4_CHRONO_NOW;
 #endif
   MPI_Barrier(MPI_COMM_WORLD);
