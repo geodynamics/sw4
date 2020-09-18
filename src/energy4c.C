@@ -130,14 +130,24 @@ void energy4c_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 #define um(c, i, j, k) a_um[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 #define u(c, i, j, k) a_u[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 #define up(c, i, j, k) a_up[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
-  const float_sw4 normwgh[4] = {17.0 / 48, 59.0 / 48, 43.0 / 48, 49.0 / 48};
-  float_sw4 energy = 0;
-#pragma omp parallel for reduction(+ : energy)
-  for (int k = k1; k <= k2; k++)
-    for (int j = j1; j <= j2; j++)
-#pragma simd
-#pragma ivdep
-      for (int i = i1; i <= i2; i++) {
+  
+  //float_sw4 energy = 0;
+  const bool onesided4 = onesided[4] == 1;
+  const bool onesided5 = onesided[5] == 1;
+  RAJA::ReduceSum<REDUCTION_POLICY, float_sw4> energy(0.0);
+  RAJA::RangeSegment k_range(k1, k2 + 1);
+  RAJA::RangeSegment j_range(j1, j2 + 1);
+  RAJA::RangeSegment i_range(i1, i2 + 1);
+  RAJA::kernel<ENERGY4CI_EXEC_POL>(
+      RAJA::make_tuple(k_range, j_range, i_range),
+      [=] RAJA_DEVICE(int k, int j, int i) {
+// #pragma omp parallel for reduction(+ : energy)
+//   for (int k = k1; k <= k2; k++)
+//     for (int j = j1; j <= j2; j++)
+// #pragma simd
+// #pragma ivdep
+//       for (int i = i1; i <= i2; i++) {
+	const float_sw4 normwgh[4] = {17.0 / 48, 59.0 / 48, 43.0 / 48, 49.0 / 48};
         float_sw4 term =
             ((up(1, i, j, k) - u(1, i, j, k)) *
                  (up(1, i, j, k) - u(1, i, j, k)) +
@@ -153,9 +163,9 @@ void energy4c_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                  (up(3, i, j, k) - 2 * u(3, i, j, k) + um(3, i, j, k))) *
             rho(i, j, k) * jac(i, j, k);
         float_sw4 normfact = 1;
-        if (k <= 4 && onesided[4] == 1) normfact = normwgh[k - 1];
-        if (k >= k2 - 3 && onesided[5] == 1) normfact = normwgh[k2 - k];
+        if (k <= 4 && onesided4) normfact = normwgh[k - 1];
+        if (k >= k2 - 3 && onesided5) normfact = normwgh[k2 - k];
         energy += normfact * term;
-      }
-  a_energy = energy;
+      });
+  a_energy = static_cast<float_sw4>(energy.get());
 }
