@@ -223,7 +223,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        MaterialVolimagefile.o MaterialRfile.o MaterialSfile.o AnisotropicMaterialBlock.o sacutils.o \
        DataPatches.o addmemvarforcing2.o consintp.o oddIoddJinterp.o evenIoddJinterp.o oddIevenJinterp.o \
        evenIevenJinterp.o CheckPoint.o geodyn.o AllDims.o Patch.o RandomizedMaterial.o \
-       MaterialInvtest.o sw4-prof.o sachdf5.o readhdf5.o TestTwilight.o \
+       MaterialInvtest.o sw4-prof.o sachdf5.o readhdf5.o TestTwilight.o TestPointSource.o \
        curvilinear4sgwind.o TestEcons.o GridGenerator.o GridGeneratorGeneral.o  \
        GridGeneratorGaussianHill.o CurvilinearInterface2.o SfileOutput.o pseudohess.o
 

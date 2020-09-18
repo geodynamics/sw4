@@ -11,6 +11,7 @@ class CurvilinearInterface2
    EW* m_ew;
    TestTwilight* m_tw;
    TestEcons* m_etest;
+   TestPointSource* m_psource;
 
    int m_nghost, m_ib, m_ie, m_jb, m_je, m_ibf, m_ief, m_jbf, m_jef, m_nkf;
    int m_kb, m_ke, m_kbf, m_kef;
@@ -33,11 +34,10 @@ class CurvilinearInterface2
    float_sw4 m_acof[384], m_bope[48], m_ghcof[6], m_acof_no_gp[384], m_ghcof_no_gp[6];
    float_sw4 m_sbop[6], m_sbop_no_gp[6], m_bop[24];
 
-   void injection(Sarray &u_f, Sarray &u_c );
    void interface_block( Sarray& matrix );
    void interface_lhs( Sarray& lhs, Sarray& uc );
-   void interface_rhs( Sarray& rhs, Sarray& uc, Sarray& uf, std::vector<Sarray>& Alpha_c, 
-                       std::vector<Sarray>& Alpha_f );
+   void interface_rhs( Sarray& rhs, Sarray& uc, Sarray& uf, Sarray& fc, Sarray& ff,
+                       std::vector<Sarray>& Alpha_c, std::vector<Sarray>& Alpha_f );
    void compute_icstresses_curv( Sarray& a_Up, Sarray& B, int kic,
 				 Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
 				 float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop, char op );
@@ -56,7 +56,7 @@ class CurvilinearInterface2
 		   Sarray& mu, Sarray& la, 
 		   float_sw4* a_str_x, float_sw4* a_str_y, float_sw4 ghcof );
 
-   void prolongate2D( Sarray& Uc, Sarray& Uf, int kc, int kf );
+   void injection(Sarray &u_f, Sarray &u_c );
    void restrict2D( Sarray& Uc, Sarray& Uf, int kc, int kf );
    void restprol2D( Sarray& Uc, Sarray& alpha, int kc, int kf );
    void bnd_zero( Sarray& u, int npts );
@@ -71,7 +71,11 @@ public:
    //   void test1( EW* a_ew, int gc, std::vector<Sarray>& a_U );
    //   void test2( EW* a_ew, int gc, std::vector<Sarray>& a_U );
    
-   void impose_ic( std::vector<Sarray>& a_U, float_sw4 t, std::vector<Sarray*>& a_AlphaVE );
+   void impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
+                   std::vector<Sarray>& a_F, 
+                   std::vector<Sarray*>& a_AlphaVE );
+
+   void prolongate2D( Sarray& Uc, Sarray& Uf, int kc, int kf );
 };
 
 #endif

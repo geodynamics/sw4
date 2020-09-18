@@ -1,6 +1,6 @@
 Final time
 8.000000e-01
 Displacement variables (errInf, errL2, solInf)
-  5.6843637e-04   7.8636444e-04   9.9992568e-01
+  5.6850521e-04   7.8627524e-04   9.9992568e-01
 Attenuation variables (errInf, errL2, solInf)
-  5.0268258e-04   7.3444272e-04   9.9970141e-01
+  5.0276979e-04   7.3439657e-04   9.9970141e-01

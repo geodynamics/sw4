@@ -265,6 +265,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 // the Source objects get discretized into GridPointSource objects
   vector<GridPointSource*> point_sources;
 
+  if( m_point_source_test )
+     m_point_source_test->set_source( a_Sources[0] );
+
 // Transfer source terms to each individual grid as point sources at grid points.
   for( unsigned int i=0 ; i < a_Sources.size() ; i++ )
       a_Sources[i]->set_grid_point_sources4( this, point_sources );
@@ -448,7 +451,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
      enforceBC( U, a_Mu, a_Lambda, AlphaVE, t, BCForcing );   
 
   for( int g=mNumberOfCartesianGrids; g < mNumberOfGrids-1 ; g++ )
-     m_cli2[g-mNumberOfCartesianGrids]->impose_ic( U, t, AlphaVE );
+     m_cli2[g-mNumberOfCartesianGrids]->impose_ic( U, t, F, AlphaVE );
 
 // Impose un-coupled free surface boundary condition with visco-elastic terms for 'Up'
 //  if( m_use_attenuation && (m_number_mechanisms > 0) )
@@ -473,7 +476,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
      enforceBC( Um, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
 
   for( int g=mNumberOfCartesianGrids; g < mNumberOfGrids-1 ; g++ )
-     m_cli2[g-mNumberOfCartesianGrids]->impose_ic( Um, t-mDt, AlphaVEm );
+     m_cli2[g-mNumberOfCartesianGrids]->impose_ic( Um, t-mDt, F, AlphaVEm );
 
 // Impose un-coupled free surface boundary condition with visco-elastic terms for 'Up'
 //  if( m_use_attenuation && (m_number_mechanisms > 0) )
@@ -1794,7 +1797,7 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
    for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
    {
      //         m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt );
-      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt, a_AlphaVEp );
+      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt, F, a_AlphaVEp );
       //      check_ic_conditions( g, a_Up );
    }
 } // enforceIC
@@ -2035,7 +2038,7 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
    for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
    {
      //      m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt );
-      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt, a_AlphaVEp );
+      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt, F, a_AlphaVEp );
    }
 
 }// end enforceIC2
@@ -4054,7 +4057,7 @@ void EW::testSourceDiscretization( int kx[3], int ky[3], int kz[3],
     printf("Inside testSourceDiscretization\n");
   
   // Impose source
-  for( int g=0 ; g<mNumberOfGrids; g++ )
+  for( int g=0 ; g < mNumberOfGrids; g++ )
      F[g].set_to_zero();
 #pragma omp parallel for
   for( int r=0 ; r < identsources.size()-1 ; r++ )
@@ -4077,15 +4080,22 @@ void EW::testSourceDiscretization( int kx[3], int ky[3], int kz[3],
      F[g](2,i,j,k) += f2;
      F[g](3,i,j,k) += f3;
   }
-  //  for( int s= 0 ; s < point_sources.size() ; s++ ) 
-  //  {
-  //     float_sw4 fxyz[3];
-  //     point_sources[s]->getFxyz_notime( fxyz );
-  //     int g = point_sources[s]->m_grid;
-  //     F[g](1,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[0];
-  //     F[g](2,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[1];
-  //     F[g](3,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[2];
-  //  }
+  for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
+  {
+     communicate_array( F[g], g );
+     m_cli2[g-mNumberOfCartesianGrids]->prolongate2D( F[g], F[g+1], 1, m_global_nz[g+1] );
+  }
+  int ncurv=mNumberOfGrids-mNumberOfCartesianGrids;
+  if( ncurv > 0 && !m_gridGenerator->curviCartIsSmooth(ncurv) )
+  {
+     int g=mNumberOfCartesianGrids;
+     int Nz=m_global_nz[g];
+     for( int j=m_jStartInt[g] ; j <= m_jEndInt[g] ; j++ )
+        for( int i=m_iStartInt[g] ; i <= m_iEndInt[g] ; i++ )
+           for( int c=1; c<= 3; c++)
+              F[g](c,i,j,Nz) = F[g-1](c,i,j,1);
+  }
+
   float_sw4 momgrid[3]={0,0,0};
   for(g=0 ; g<mNumberOfGrids; g++ )
   {
@@ -4095,7 +4105,7 @@ void EW::testSourceDiscretization( int kx[3], int ky[3], int kz[3],
     jlast  = m_jEnd[g];
     kfirst = m_kStart[g];
     klast  = m_kEnd[g];  
-    h      = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
+    h      = mGridSize[g];
     float_sw4* f_ptr = F[g].c_ptr();
     int wind[6];
     wind[0] = m_iStartInt[g];
@@ -4104,15 +4114,17 @@ void EW::testSourceDiscretization( int kx[3], int ky[3], int kz[3],
     wind[3] = m_jEndInt[g];
     wind[4] = m_kStartInt[g];
     wind[5] = m_kEndInt[g];
-    int nz = m_global_nz[g];
-//FTNC    if( m_croutines )
+    int nz  = m_global_nz[g];
+    if( g <= mNumberOfCartesianGrids-1 )
        testsrc_ci( f_ptr, ifirst, ilast, jfirst, jlast, kfirst, klast,
 		   nz, wind, m_zmin[g], h, kx, ky, kz, momgrid );
-//FTNC    else
-//FTNC       testsrc( f_ptr, &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-//FTNC		&nz, wind, &m_zmin[g], &h, kx, ky, kz, momgrid );
+    else
+       testsrcc_ci( f_ptr, ifirst, ilast, jfirst, jlast, kfirst, klast,
+                    nz, g, wind, kx, ky, kz, momgrid );
   }
   MPI_Allreduce( momgrid, moments, 3, m_mpifloat, MPI_SUM, m_cartesian_communicator );
+  //  std::cout << " After reduce = " << moments[0] << std::endl;
+  //  REQUIRE2(false,"CONTROLLED EXIT")
 }
 
 //-----------------------------------------------------------------------

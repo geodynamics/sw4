@@ -29,6 +29,7 @@ CurvilinearInterface2::CurvilinearInterface2( int a_gc, EW* a_ew )
    m_ew = a_ew;
    m_etest = a_ew->create_energytest();
    m_tw    = a_ew->create_twilight();
+   m_psource = a_ew->get_point_source_test();
    m_nghost = 5;
    a_ew->GetStencilCoefficients( m_acof, m_ghcof, m_bop, m_bope, m_sbop );
    bndryOpNoGhostc( m_acof_no_gp, m_ghcof_no_gp, m_sbop_no_gp );
@@ -348,6 +349,7 @@ void CurvilinearInterface2::init_arrays_att()
 
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
+                                       std::vector<Sarray>& a_F,
                                        std::vector<Sarray*>& a_AlphaVE )
 {
    bool force_dirichlet = false; //, check_stress_cont=false;
@@ -357,11 +359,16 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
 
    Sarray U_f(3,m_ibf,m_ief,m_jbf,m_jef,m_kbf,m_kef);
    Sarray U_c(3,m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
+   Sarray F_f(3,m_ibf,m_ief,m_jbf,m_jef,m_nkf,m_nkf);
+   Sarray F_c(3,m_ib,m_ie,m_jb,m_je,1,1);
    vector<Sarray> Alpha_c, Alpha_f;
 
 //  1. copy   a_U into U_f and U_c
    U_f.insert_intersection(a_U[m_gf]);
    U_c.insert_intersection(a_U[m_gc]);
+   //   F_f.insert_intersection(a_F[m_gf]);
+   //   F_c.insert_intersection(a_F[m_gc]);
+
    if( m_use_attenuation )
    {
       Alpha_c.resize(m_number_mechanisms);
@@ -409,6 +416,11 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
       m_etest->get_ubnd( U_f, m_nghost, sides );
       m_etest->get_ubnd( U_c, m_nghost, sides );
    }
+   else if( m_psource != 0 )
+   {
+      m_psource->ubnd( U_f, m_x_f, m_y_f, m_z_f, t, m_ew->mGridSize[m_gf], m_nghost, sides );
+      m_psource->ubnd( U_c, m_x_c, m_y_c, m_z_c, t, m_ew->mGridSize[m_gc], m_nghost, sides );
+   }
    else
    {
       bnd_zero( U_c, m_nghost );
@@ -439,7 +451,7 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
 
    // 4.a Form right hand side of equation
    Sarray rhs(3,m_ib,m_ie,m_jb,m_je,1,1);
-   interface_rhs( rhs, U_c, U_f, Alpha_c, Alpha_f );
+   interface_rhs( rhs, U_c, U_f, F_c, F_f, Alpha_c, Alpha_f );
 
    // 4.b Left hand side, lhs*x
    Sarray lhs(rhs), residual(rhs);
@@ -519,7 +531,9 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
    //   convhist.push_back(maxres0);
    //   convhist.push_back(maxres);
    //   convhist.push_back(it);
-   if( maxres > m_reltol*maxres0 && scalef*maxres > m_abstol )
+   //   if( m_ew->getRank() == 0 )
+   //      cout << "maxres " <<  maxres << " scaled " << scalef*maxres  << " rellim " << m_reltol*maxres0 << " it= " << iter << endl;
+   if( (maxres > m_reltol*maxres0 && scalef*maxres > m_abstol) && m_ew->getRank()==0 )
    {
       std::cout << "WARNING, no convergence in curvilinear interface, res = " 
                 << maxres << " reltol= " << m_reltol << " initial res = " << maxres0 
@@ -637,7 +651,7 @@ void CurvilinearInterface2::injection(Sarray &u_f, Sarray &u_c )
    for( int j=alpha.m_jb ; j <= alpha.m_je ; j++ )
      for( int i=alpha.m_ib ; i <= alpha.m_ie ; i++ )
        alpha(i,j,m_nkf) = w1*m_jac_f(i,j,m_nkf)*m_rho_f(i,j,m_nkf)/(m_strx_f[i-m_ibf]*m_stry_f[j-m_jbf]);
-   if( !m_tw )
+   if( !m_tw && !m_psource )
       bnd_zero(alpha,m_nghost);
    restprol2D( matrix, alpha, 1, m_nkf );
 
@@ -656,7 +670,7 @@ void CurvilinearInterface2::interface_lhs( Sarray& lhs, Sarray& uc )
       for( int j=lhs.m_jb ; j <= lhs.m_je ; j++ )
          for( int i=lhs.m_ib ; i <= lhs.m_ie ; i++ )
 	    lhs(c,i,j,1) /= m_rho_c(i,j,1);
-   if( !m_tw )
+   if( !m_tw && !m_psource )
       bnd_zero(lhs,m_nghost);
 
 
@@ -667,7 +681,7 @@ void CurvilinearInterface2::interface_lhs( Sarray& lhs, Sarray& uc )
          for( int i=prollhs.m_ib ; i <= prollhs.m_ie ; i++ )
 	   prollhs(c,i,j,m_nkf) = w1*m_jac_f(i,j,m_nkf)*m_rho_f(i,j,m_nkf)*prollhs(c,i,j,m_nkf)/
 	     (m_strx_f[i-m_ibf]*m_stry_f[j-m_jbf]);
-   if( !m_tw )
+   if( !m_tw && !m_psource )
       bnd_zero(prollhs,m_nghost);
    restrict2D( lhs, prollhs, 1, m_nkf );
 
@@ -681,6 +695,7 @@ void CurvilinearInterface2::interface_lhs( Sarray& lhs, Sarray& uc )
 
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::interface_rhs( Sarray& rhs, Sarray& uc, Sarray& uf,
+                                           Sarray& fc, Sarray& ff,
                              vector<Sarray>& Alpha_c, vector<Sarray>& Alpha_f )
 {
    Sarray utmp(3,uc.m_ib,uc.m_ie,uc.m_jb,uc.m_je,0,0);
@@ -714,8 +729,10 @@ void CurvilinearInterface2::interface_rhs( Sarray& rhs, Sarray& uc, Sarray& uf,
    for( int c=1 ; c <= 3; c++ )
       for( int j=rhs.m_jb ; j <= rhs.m_je ; j++ )
          for( int i=rhs.m_ib ; i <= rhs.m_ie ; i++ )
+            //            rhs(c,i,j,1) = (rhs(c,i,j,1)+fc(c,i,j,1))/m_rho_c(i,j,1);
             rhs(c,i,j,1) /= m_rho_c(i,j,1);
-   if( !m_tw )
+
+   if( !m_tw && !m_psource )
       bnd_zero(rhs,m_nghost);
 
 // 3. Compute prolrhs := p(L(uc)/rhoc)
@@ -750,8 +767,9 @@ void CurvilinearInterface2::interface_rhs( Sarray& rhs, Sarray& uc, Sarray& uf,
       for( int j=prolrhs.m_jb ; j <= prolrhs.m_je ; j++ )
          for( int i=prolrhs.m_ib ; i <= prolrhs.m_ie ; i++ )
             prolrhs(c,i,j,m_nkf) = w1*m_jac_f(i,j,m_nkf)*( m_rho_f(i,j,m_nkf)*prolrhs(c,i,j,m_nkf)-
-                   Luf(c,i,j,m_nkf))/(m_strx_f[i-m_ibf]*m_stry_f[j-m_jbf])+Bf(c,i,j,m_nkf);
-   if( !m_tw )
+Luf(c,i,j,m_nkf))/(m_strx_f[i-m_ibf]*m_stry_f[j-m_jbf])+Bf(c,i,j,m_nkf);
+                                                           //                 Luf(c,i,j,m_nkf)-ff(c,i,j,m_nkf))/(m_strx_f[i-m_ibf]*m_stry_f[j-m_jbf])+Bf(c,i,j,m_nkf);   
+   if( !m_tw && !m_psource )
       bnd_zero(prolrhs,m_nghost);
    restrict2D( rhs, prolrhs, 1, m_nkf );
 
