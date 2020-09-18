@@ -647,6 +647,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   // save initial data on receiver records
   vector<float_sw4> uRec;
 
+  SYNC_STREAM; // SYNC BEFORE CPU OPS
 #if USE_HDF5
   // Tang: if write HDF5 data and not restart, have rank 0 create the HDF5 file
   // with all necessary groups, attributes, and datasets Disable HDF5 file
@@ -939,7 +940,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       SW4_PEEK;
       SYNC_DEVICE;
 #endif
-      // std::cout<<"HERE ALOS 4th\n";
+  
       SW4_MARK_BEGIN("MPI_WTIME");
       if (m_output_detailed_timing) time_measure[7] = MPI_Wtime();
       SW4_MARK_END("MPI_WTIME");
@@ -971,7 +972,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
       // if( m_output_detailed_timing )
       //    time_measure[10] = MPI_Wtime();
-      // std::cout<<"HERE 4th\n";
+      
       evalDpDmInTime(Up, U, Um, Uacc);  // store result in Uacc
       if (trace && m_myRank == dbgproc) cout << " after evalDpDmInTime" << endl;
 
@@ -5349,7 +5350,7 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                 a_Mu[gcart].c_ptr(), a_Lambda[gcart].c_ptr(), h,
                 m_sg_str_x[gcart], m_sg_str_y[gcart], m_sg_str_z[gcart], '=',
                 kbca, keca, 1, 1);
-
+    SYNC_STREAM;
     compute_icstresses_cpu(a_U[gcart], Bca, gcart, 1, m_sg_str_x[gcart],
                            m_sg_str_y[gcart], m_sbop, '=');
     // Modifed RAJA version
@@ -5934,7 +5935,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
             float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega();
 
             // Stress tensor on boundary
-            Sarray tau(6, ifirst, ilast, jfirst, jlast, 1, 1);
+            Sarray tau(6, ifirst, ilast, jfirst, jlast, 1, 1,__FILE__,__LINE__);
             // Get twilight stress tensor, tau.
             // FTNC	       if( m_croutines )
             twstensorsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, k, t,

@@ -31,7 +31,7 @@
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 #include <sys/types.h>
-
+#include "caliper.h"
 #include "sw4.h"
 
 void scalar_prod_ci(int is, int ie, int js, int je, int ks, int ke, int i1,
@@ -40,6 +40,7 @@ void scalar_prod_ci(int is, int ie, int js, int je, int ks, int ke, int i1,
                     float_sw4* __restrict__ a_strx,
                     float_sw4* __restrict__ a_stry,
                     float_sw4* __restrict__ a_strz, float_sw4& sc_prod) {
+  SW4_MARK_FUNCTION;
   // is,ie,js,je,ks,ke declared size
   // i1,i2,j1,j2,k1,k2 domain over which scalar product is computed
   const int ni = ie - is + 1;
@@ -53,7 +54,6 @@ void scalar_prod_ci(int is, int ie, int js, int je, int ks, int ke, int i1,
   //#define stry(j) a_stry[j-js]
   //#define strz(k) a_strz[k-ks]
   const float_sw4 normwgh[4] = {17.0 / 48, 59.0 / 48, 43.0 / 48, 49.0 / 48};
-
   float_sw4 scprod_loc = 0;
 #pragma omp parallel for reduction(+ : scprod_loc)
   for (int k = k1; k <= k2; k++)

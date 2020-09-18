@@ -1682,7 +1682,7 @@ void CurvilinearInterface2::prolongate2D(Sarray& Uc, Sarray& Uf, int kc,
                9 * (UcV(c, i, j + 2, kc) + UcV(c, i + 1, j + 2, kc)) +
                UcV(c, i + 2, j + 2, kc));
       });
-  SYNC_STREAM;
+  //SYNC_STREAM;
   //}
 }
 
@@ -1746,7 +1746,7 @@ void CurvilinearInterface2::restrict2D(Sarray& Uc, Sarray& Uf, int kc, int kf) {
                16 * UfV(c, i + 3, j, kf) - 9 * UfV(c, i + 3, j + 1, kf) +
                UfV(c, i + 3, j + 3, kf));
       });
-  SYNC_STREAM;
+  // SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
