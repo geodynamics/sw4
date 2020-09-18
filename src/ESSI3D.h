@@ -68,7 +68,7 @@ public:
    void update_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt,
        std::vector<Sarray>& a_U, std::string& a_path, Sarray& a_Z );
 
-   void force_write_image( float_sw4 a_time, int a_cycle, vector<Sarray>& a_U,
+   void force_write_image( float_sw4 a_time, int a_cycle, std::vector<Sarray>& a_U,
        std::string& a_path, Sarray& a_Z );
 
 protected:
@@ -83,7 +83,7 @@ protected:
        Sarray& a_Z);
    void close_vel_file();
    void write_image_hdf5( int cycle, std::string& path, float_sw4 t,
-       vector<Sarray>& a_U );
+       std::vector<Sarray>& a_U );
    void define_pio_hdf5( );
 #endif
 

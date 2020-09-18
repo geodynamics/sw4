@@ -4216,24 +4216,16 @@ file & name of output file for gmt c-shell commands & string & sw4.gmt.csh  \\ \
 
 \begin{flushleft}
 \bf Syntax:\\ \tt 
-sfileoutput file=... sampleFactor=... precision=... 
-         time=... timeInterval=... cycle=... cycleInterval=... startTime=... \\
+sfileoutput file=... sampleFactor=...  sampleFactorH=... sampleFactorV=...  \\
 \bf Required parameter:\\
 \rm File name prefix: (file).
-\rm Time for output: (time, timeInterval, cycle, or cycleInterval).
 \end{flushleft}
 %
-The \verb+sfileoutput+ command in \emph{SW4} allows you to save 3D volumetric sdata on file. These files
+The \verb+sfileoutput+ command in \emph{SW4} allows you to save 3D volumetric material data on a HDF5 file (sfile). These files
 can be read by the python/Jupyter script in \verb+tools/plot_sfile.ipynb+. 
 Be aware that these files can be {\em very} large if \verb+sampleFactor+ is not set properly. 
-The output occurs at certain time levels during the simulation. The time levels are
-controlled by the parameters {\bf time=...}, {\bf timeInterval=...}, {\bf cycle=...}, or {\bf
-  cycleInterval=...}, which have the same meaning as in the image command. In addition, the {\bf
-  startTime=...} option can be used in conjunction with {\bf cycleInterval} or {\bf timeInterval} to
-only output data after a specified time level in the simulation. The options {\bf file=...} 
-and {\bf precision=...} have the same meaning as the corresponding parameters in the
-image command. The {\bf sampleFactor=...} option sets the sub-sampling factor to the output, a 
-\verb+sampleFactor=n+ will result in approximately $1/n^3$ of the file size from \verb+sampleFactor=1+.
+The output is written out at the end of SW4 run. The {\bf sampleFactor=...} option sets the sub-sampling factor to the output, a \verb+sampleFactor=n+ will result in approximately $1/n^3$ of the file size from \verb+sampleFactor=1+. 
+Users can also set different sample factor in horizontal (\verb+sampleFactorH+) and vertical directions (\verb+sampleFactorV+). As the material data is often very sensitive on the vertical direction, it is advisable to set \verb+sampleFactorV+ to 1 and \verb+sampleFactorH+ to 2 or a larger value.
 The \verb+sfileoutput+ command produces files with extension \verb+.sfile+.
 
 The file format is described in Section~\ref{sec:sfile-format}.
@@ -4243,19 +4235,14 @@ The file format is described in Section~\ref{sec:sfile-format}.
 \multicolumn{5}{|c|}{\bf sfileoutput command options}\\ \hline
 {\bf Option} & {\bf Description}          & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline 
 \hline
-file        & file name header of image                          & string & none & sfileoutput \\ \hline
-sampleFactor  & specifies the sub-sampling factor & int & none & 1 \\  \hline
-precision   & precision of image data on file (float/double)     & string & none & float \\ \hline
-time          & simulation time to output image, will be closest depending on dt taken & real  & sec.  & none \\ \hline
-timeInterval  & simulation time interval to output series of images                    & real  & sec.  & none \\ \hline
-cycle         & time-step cycle to output image                                        & int   & none  & none \\ \hline
-cycleInterval & time-step cycle interval to output a series of images                  & int   & none & none \\ \hline
-startTime     & only output data after this time level (only used with {\bf cycleInterval} or {\bf
- timeInterval}) & real & s & -999.9 \\ \hline 
+file        & file name of sfile                          & string & none & "sfileoutput" \\ \hline
+sampleFactor  & specifies the sub-sampling factor for both horizontal and vertical directions & int & none & 1 \\  \hline
+sampleFactorH  & specifies the sub-sampling factor in the horizontal direction & int & none & 1 \\  \hline
+sampleFactorV  & specifies the sub-sampling factor in the vertical direction & int & none & 1 \\  \hline
+
 \end{tabular}
 \end{center}
-\index{sfileoutput parameters!file, sampleFactor, precision}
-\index{sfileoutput parameters!timing - cycle, cycleInterval, time, timeInterval, startTime}
+\index{sfileoutput parameters!file, sampleFactor, sampleFactorH, sampleFactorV}
 %
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

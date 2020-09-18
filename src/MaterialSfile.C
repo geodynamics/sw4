@@ -85,8 +85,8 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
    float_sw4 z_min = m_zminloc;
 
    // Find the relative dimension size of upper and lower interface for each grid patch
-   int* ist = new int(m_npatches);
-   int* jst = new int(m_npatches);
+   int* ist = new int[m_npatches];
+   int* jst = new int[m_npatches];
    for( int g=0 ; g < m_npatches ; g++ ) {
      ist[g] = (int)ceil((double)mInterface[g].m_ni / mInterface[g+1].m_ni);
      jst[g] = (int)ceil((double)mInterface[g].m_nj / mInterface[g+1].m_nj);
