@@ -41,6 +41,11 @@
 #include "Sarray.h"
 #include "Parallel_IO.h"
 
+#define SW4_ZFP_MODE_RATE       1
+#define SW4_ZFP_MODE_PRECISION  2
+#define SW4_ZFP_MODE_ACCURACY   3
+#define SW4_ZFP_MODE_REVERSIBLE 4
+
 class EW;
 class ESSI3DHDF5;
 
@@ -50,11 +55,14 @@ public:
    static ESSI3D* nil;
 
    ESSI3D( EW * a_ew,
-     const std::string& filePrefix,
+      const std::string& filePrefix,
       int dumpInterval,
       float_sw4 coordBox[4],
       float_sw4 depth,
-      int precision);
+      int precision,
+      int ZFPmode,
+      double ZFPpar
+      );
    ~ESSI3D();
 
    void set_dump_interval( int a_dumpInterval );
@@ -104,6 +112,9 @@ protected:
 
    bool m_fileOpen;
 
+   int m_ZFPmode;
+   double m_ZFPpar;
+
    static int mPreceedZeros; // number of digits for unique time step in file names
    static int mNumberOfTimeSteps; // number of time steps for the whole sim
 
@@ -120,6 +131,7 @@ private:
    int mWindow[6]; // Local in processor start + end indices for (i,j,k) for last curvilinear grid
    int mGlobalDims[6]; // Global start + end indices for (i,j,k) for last curvilinear grid
    double* m_doubleField;
+   float* m_floatField;
    bool m_ihavearray;
    int m_ntimestep;
 };

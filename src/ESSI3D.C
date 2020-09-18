@@ -51,7 +51,9 @@ ESSI3D::ESSI3D( EW* a_ew,
     int dumpInterval,
     float_sw4 coordBox[6],
     float_sw4 depth,
-    int precision):
+    int precision,
+    int ZFPmode,
+    double ZFPpar):
       mEW(a_ew),
       mFilePrefix(filePrefix),
       mFileName(""),
@@ -64,6 +66,8 @@ ESSI3D::ESSI3D( EW* a_ew,
       m_dumpInterval(-1),
       mDepth(depth),
       m_precision(precision),
+      m_ZFPmode(ZFPmode),
+      m_ZFPpar(ZFPpar),
       m_hdf5helper(NULL)
 {
   // volimage subdomain x,y corner coordinates
@@ -76,8 +80,12 @@ ESSI3D::ESSI3D( EW* a_ew,
 //-----------------------------------------------------------------------
 ESSI3D::~ESSI3D()
 {
-  if( m_memallocated )
-    delete[] m_doubleField;
+  if( m_memallocated ) {
+    if (m_precision == 4) 
+      delete[] m_floatField;
+    else if (m_precision == 8) 
+      delete[] m_doubleField;
+  }
 
   if (m_hdf5helper != NULL)
     delete m_hdf5helper;
@@ -172,11 +180,17 @@ void ESSI3D::setup( )
   {
     size_t npts = ((size_t)(mWindow[1] - mWindow[0]) + 1)*
       ( (mWindow[3] - mWindow[2]) + 1)* ( (mWindow[5] - mWindow[4]) + 1);
-    m_doubleField = new double[npts];
+    if (m_precision == 4) 
+      m_floatField = new float[npts];
+    else if (m_precision == 8) 
+      m_doubleField = new double[npts];
   }
   else
   {
-    m_doubleField = new double[1];
+    if (m_precision == 4) 
+      m_floatField = new float[1];
+    else if (m_precision == 8) 
+      m_doubleField = new double[1];
   }
   m_memallocated = true;
 #ifdef USE_HDF5
@@ -279,7 +293,10 @@ void ESSI3D::compute_image( Sarray& a_A, int a_comp )
     // HDF5 expects k major, then j, i
     // size_t ind = (i-mWindow[0])+niw*(j-mWindow[2])+nijw*(k-mWindow[4]);
     size_t ind = njkw*(i-mWindow[0])+nkw*(j-mWindow[2])+(k-mWindow[4]);
-    m_doubleField[ind]= (double) a_A(c,i,j,k);
+    if (m_precision == 4) 
+      m_floatField[ind]= (float) a_A(c,i,j,k);
+    else if (m_precision == 8) 
+      m_doubleField[ind]= (double) a_A(c,i,j,k);
   }
 }
 
@@ -347,14 +364,17 @@ void ESSI3D::open_vel_file( int a_cycle, std::string& a_path,
   block_dims[num_dims-1] = 1; // 1 time step per write
   global_dims[num_dims-1] = 1; // 1 time step per write
 
-  // Just to see what's being copied correctly
-  for( int i=0 ; i < dims[0]; i++ )
-  for( int j=0 ; j < dims[1]; j++ )
-  for( int k=0 ; k < dims[2]; k++ )
-  {
-     size_t ind = i+dims[0]*(j +dims[1]*k);
-     m_doubleField[ind]= (double) ind;
-  }
+  /* // Just to see what's being copied correctly */
+  /* for( int i=0 ; i < dims[0]; i++ ) */
+  /* for( int j=0 ; j < dims[1]; j++ ) */
+  /* for( int k=0 ; k < dims[2]; k++ ) */
+  /* { */
+  /*   size_t ind = i+dims[0]*(j +dims[1]*k); */
+  /*   if (m_precision == 4) */ 
+  /*     m_floatField[ind]= (float) ind; */
+  /*   else if (m_precision == 8) */ 
+  /*     m_doubleField[ind]= (double) ind; */
+  /* } */
 
   /*
   if (debug && (myRank == 0))
@@ -394,7 +414,10 @@ void ESSI3D::open_vel_file( int a_cycle, std::string& a_path,
   if (mEW->topographyExists())
   {
     compute_image(a_Z, 0);
-    m_hdf5helper->write_topo(m_doubleField);
+    if (m_precision == 4) 
+      m_hdf5helper->write_topo(m_floatField);
+    else if (m_precision == 8) 
+      m_hdf5helper->write_topo(m_doubleField);
   }
 
   /*
@@ -404,10 +427,17 @@ void ESSI3D::open_vel_file( int a_cycle, std::string& a_path,
 
   if (m_dumpInterval > 0) {
     int nstep = m_ntimestep / m_dumpInterval;
-    m_hdf5helper->init_write_vel(nstep);
+    if (m_ZFPmode > 0) 
+      m_hdf5helper->init_write_vel_compression(nstep, m_ZFPmode, m_ZFPpar);
+    else
+      m_hdf5helper->init_write_vel(nstep);
   }
-  else
-    m_hdf5helper->init_write_vel(m_ntimestep);
+  else{
+    if (m_ZFPmode > 0) 
+      m_hdf5helper->init_write_vel_compression(m_ntimestep, m_ZFPmode, m_ZFPpar);
+    else
+      m_hdf5helper->init_write_vel(m_ntimestep);
+  }
   m_hdf5_time += (MPI_Wtime()-hdf5_time);
 
   m_fileOpen = true;
@@ -432,23 +462,22 @@ void ESSI3D::write_image_hdf5( int cycle, std::string &path, float_sw4 t,
 {
   // Top grid only
   int g = mEW->mNumberOfGrids-1;
-  compute_image(a_U[g], 0);
-  m_hdf5helper->write_vel(m_doubleField, 0, cycle);
-  compute_image(a_U[g], 1);
-  m_hdf5helper->write_vel(m_doubleField, 1, cycle);
-  compute_image(a_U[g], 2);
-  m_hdf5helper->write_vel(m_doubleField, 2, cycle);
 
-  /*
-  MPI_Barrier(MPI_COMM_WORLD);
-  if (m_fileOpen)
-  {
-    if (debug && (myRank == 0))
-      cout << "Closing hdf5 file: " << s.str() << endl;
-
-    m_hdf5helper->close_file();
-    m_fileOpen = false;
+  for (int i = 0; i < 3; i++) {
+    compute_image(a_U[g], i);
+    if (m_ZFPmode > 0) {
+      if (m_precision == 4) 
+        m_hdf5helper->write_vel_compression((void*)m_floatField, i, cycle);
+      else if (m_precision == 8) 
+        m_hdf5helper->write_vel_compression((void*)m_doubleField, i, cycle);
+    }
+    else {
+      if (m_precision == 4) 
+        m_hdf5helper->write_vel((void*)m_floatField, i, cycle);
+      else if (m_precision == 8) 
+        m_hdf5helper->write_vel((void*)m_doubleField, i, cycle);
+    }
   }
-  */
+
 }
 #endif // ifdef USE_HDF5

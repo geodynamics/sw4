@@ -1,8 +1,8 @@
 #-----------------------------------------------------------------------
 # Usage:
 #   Default is: debug=no prec=double openmp=yes hdf5=no fftw=no
-# make sw4     [debug=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [fftw=yes/no]
-# make sw4mopt [debug=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [fftw=yes/no]
+# make sw4     [debug=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [fftw=yes/no]
+# make sw4mopt [debug=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [fftw=yes/no]
 #
 # This Makefile asumes that the following environmental variables have been assigned,
 # see note below.
@@ -13,6 +13,8 @@
 #
 # SW4ROOT = path to third party libraries (used when etree=yes and proj=yes). 
 # HDF5ROOT = path to hdf5 library and include files (used when hdf5=yes).
+# H5ZROOT = path to H5Z-ZFP library and include files (used when zfp=yes).
+# ZFPROOT = path to ZFP library and include files (used when zfp=yes).
 # FFTWROOT = path to fftw library and include files (used when fftw=yes).
 # Note: third party libraries should have include files in $(SW4ROOT)/include, libraries in $(SW4ROOT)/lib
 # Note: HDF5ROOT and FFTWROOT can be left undefined if these libraries are 
@@ -190,6 +192,11 @@ ifeq ($(hdf5),yes)
    # PROVIDE HDF5ROOT in configs/make.xyz, e.g.
    CXXFLAGS  += -I$(HDF5ROOT)/include -DUSE_HDF5
    EXTRA_LINK_FLAGS += -L$(HDF5ROOT)/lib -lhdf5_hl -lhdf5
+endif
+
+ifeq ($(zfp),yes)
+   CXXFLAGS  += -I$(H5ZROOT)/include -I$(ZFPROOT)/include -DUSE_ZFP
+   EXTRA_LINK_FLAGS += -L$(H5ZROOT)/lib -L$(ZFPROOT)/lib -lh5zzfp -lzfp 
 endif
 
 ifdef EXTRA_LINK_FLAGS

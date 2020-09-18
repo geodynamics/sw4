@@ -3899,6 +3899,8 @@ void EW::processESSI3D( char* buffer )
    float_sw4 coordBox[4];
    const float_sw4 zero=0.0;
    int precision = 8;
+   int ZFPmode = 0;
+   double ZFPpar;
    
    // Default is whole domain
    coordBox[0] = zero;
@@ -3971,7 +3973,38 @@ void EW::processESSI3D( char* buffer )
           if (precision != 4 && precision != 8) 
               badOption("essioutput precision", token);
           if (proc_zero())
-              cout << "\nESSI ouput will use " << precision*8 << "-bit floating point values." << endl;
+            cout << "\nESSI ouput will use " << precision*8 << "-bit floating point values." << endl;
+      }
+      else if (startswith("zfp-rate=", token))
+      {
+          token += 9;
+          ZFPmode = SW4_ZFP_MODE_RATE;
+          ZFPpar = atof(token);
+          if (proc_zero())
+            cout << "\nESSI ouput will use ZFP rate=" << ZFPpar << endl;
+      }
+      else if (startswith("zfp-precision=", token))
+      {
+          token += 14;
+          ZFPmode = SW4_ZFP_MODE_PRECISION;
+          ZFPpar = atof(token);
+          if (proc_zero())
+            cout << "\nESSI ouput will use ZFP precision=" << ZFPpar << endl;
+      }
+      else if (startswith("zfp-accuracy=", token))
+      {
+          token += 13;
+          ZFPmode = SW4_ZFP_MODE_ACCURACY;
+          ZFPpar = atof(token);
+          if (proc_zero())
+            cout << "\nESSI ouput will use ZFP accuracy=" << ZFPpar << endl;
+      }
+      else if (startswith("zfp-reversible=", token))
+      {
+          token += 15;
+          ZFPmode = SW4_ZFP_MODE_REVERSIBLE;
+          if (proc_zero())
+            cout << "\nESSI ouput will use ZFP reversible mode" << endl;
       }
       else
       {
@@ -4001,7 +4034,7 @@ void EW::processESSI3D( char* buffer )
       depth=0;
    }
 
-   ESSI3D* essi3d = new ESSI3D( this, filePrefix, dumpInterval, coordBox, depth, precision);
+   ESSI3D* essi3d = new ESSI3D( this, filePrefix, dumpInterval, coordBox, depth, precision, ZFPmode, ZFPpar);
    addESSI3D( essi3d );
 }
 
