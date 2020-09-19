@@ -52,7 +52,7 @@ void curvilinear4sgwind(
     float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, int nk,
     char op) {
   SW4_MARK_FUNCTION;
-  //SYNC_STREAM;  // CURVI_CPU
+  // SYNC_STREAM;  // CURVI_CPU
   // Routine with supergrid stretchings strx and stry. Evaluate Lu for kfirstw
   // <= k <= klastw. Assume that a_Lu is declared of size ifirst:ilast,
   // jfirst:jlast, kfirstw:klastw The other arrays have dimensions ifirst:ilast,
@@ -2481,7 +2481,7 @@ void curvilinear4sgwind(
         lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
       });
     }
-	//SYNC_DEVICE;
+    // SYNC_DEVICE;
   }
 #ifdef PEEKS_GALORE
   SW4_PEEK;

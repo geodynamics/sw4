@@ -1498,7 +1498,7 @@ void Sarray::copy_kplane2(Sarray& u, int k) {
           for (int c = 0; c < lm_nc; c++)
             lm_data[ind + c * nijk] = ulm_data[uind + c * unijk];
         });
-    //SYNC_STREAM;
+    // SYNC_STREAM;
   } else {
     std::cout << "WARNING Sarray::copy_kplane2 running on CPU !!\n"
               << std::flush;

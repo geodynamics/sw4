@@ -64,7 +64,7 @@ void presetGPUID() {
   }
 #endif  // ENABLE_HIP
 
-  //printf("Device set to %d \n", global_variables.device);
+  // printf("Device set to %d \n", global_variables.device);
 #endif  // ENABLE_GPU
 }
 
@@ -106,7 +106,8 @@ void print_hwm() {
   const int allocator_count = 3;
 #if defined(ENABLE_CUDA)
   // std::cout<<"PRINT_HWM"<<std::flush;
-  float hwm_local[allocator_count+1], hwm_global[allocator_count+1],hwm_global_min[allocator_count+1];
+  float hwm_local[allocator_count + 1], hwm_global[allocator_count + 1],
+      hwm_global_min[allocator_count + 1];
 #ifdef SW4_USE_UMPIRE
   hwm_local[0] = umpire::ResourceManager::getInstance()
                      .getAllocator("UM_pool")
@@ -120,11 +121,12 @@ void print_hwm() {
                      .getAllocator("UM_object_pool")
                      .getHighWatermark() /
                  1024.0 / 1024.0 / 1024.0;
-  hwm_local[allocator_count]=0;
-  for(int i=0;i<allocator_count;i++) hwm_local[allocator_count]+=hwm_local[i];
-  // std::cout<<getRank()<<" Umpire HWM
-  // "<<umpire::ResourceManager::getInstance().getAllocator("UM_pool").getHighWatermark()/1024/1024<<"
-  // MB\n";
+  hwm_local[allocator_count] = 0;
+  for (int i = 0; i < allocator_count; i++)
+    hwm_local[allocator_count] += hwm_local[i];
+    // std::cout<<getRank()<<" Umpire HWM
+    // "<<umpire::ResourceManager::getInstance().getAllocator("UM_pool").getHighWatermark()/1024/1024<<"
+    // MB\n";
 #else
   hwm_local[0] = global_variables.gpu_memory_hwm / 1024.0 / 1024.0 / 1024.0;
   // std::cout<<getRank()<<" GPU Memory HWM =
@@ -132,28 +134,31 @@ void print_hwm() {
   // std::cout<<getRank()<<" GPU Memory Max =
   // "<<global_variables.max_mem/1024/1024<<" MB \n";
 #endif
-  MPI_Allreduce(&hwm_local, &hwm_global, allocator_count+1, MPI_FLOAT, MPI_MAX,
-                MPI_COMM_WORLD);
-  MPI_Allreduce(&hwm_local, &hwm_global_min, allocator_count+1, MPI_FLOAT, MPI_MIN,
-                MPI_COMM_WORLD);
+  MPI_Allreduce(&hwm_local, &hwm_global, allocator_count + 1, MPI_FLOAT,
+                MPI_MAX, MPI_COMM_WORLD);
+  MPI_Allreduce(&hwm_local, &hwm_global_min, allocator_count + 1, MPI_FLOAT,
+                MPI_MIN, MPI_COMM_WORLD);
   for (int i = 0; i < allocator_count; i++)
     if (hwm_local[i] == hwm_global[i]) {
-      std::cout << i << " MAX Global Device HWM is " << hwm_global[i] << " GB\n";
+      std::cout << i << " MAX Global Device HWM is " << hwm_global[i]
+                << " GB\n";
     }
 
   for (int i = 0; i < allocator_count; i++)
     if (hwm_local[i] == hwm_global_min[i]) {
-      std::cout << i << " MIN Global Device HWM is " << hwm_global_min[i] << " GB\n";
+      std::cout << i << " MIN Global Device HWM is " << hwm_global_min[i]
+                << " GB\n";
     }
 
-  if (hwm_local[allocator_count] == hwm_global[allocator_count]) 
-    std::cout <<" MAX Total Global Device HWM is " << hwm_global[allocator_count] << " GB\n";
+  if (hwm_local[allocator_count] == hwm_global[allocator_count])
+    std::cout << " MAX Total Global Device HWM is "
+              << hwm_global[allocator_count] << " GB\n";
 
-  if (hwm_local[allocator_count] == hwm_global_min[allocator_count]) 
-    std::cout <<" MIN Total Global Device HWM is " << hwm_global_min[allocator_count] << " GB\n";
-      
-      
-      // umpire::util::StatisticsDatabase::getDatabase()->printStatistics(std::cout);
+  if (hwm_local[allocator_count] == hwm_global_min[allocator_count])
+    std::cout << " MIN Total Global Device HWM is "
+              << hwm_global_min[allocator_count] << " GB\n";
+
+  // umpire::util::StatisticsDatabase::getDatabase()->printStatistics(std::cout);
   if (Managed::hwm > 0) {
     std::cout << "Space::Managed object count & HWM are " << Managed::ocount
               << " & " << Managed::hwm << " Size = "

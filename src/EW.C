@@ -800,28 +800,31 @@ EW::~EW() {
       ofile, [=](size_t size) -> double { return size * 8 / 1024.0; },
       [=](size_t size, double time) -> double {
         return size / time * 8 * 1.0e6 / 1024 / 1024 / 1024;
-      },"Sendrecv");
+      },
+      "Sendrecv");
   sm2.print(
       ofile, [=](size_t size) -> double { return size * 8 / 1024.0; },
       [=](size_t size, double time) -> double {
         return size / time * 8 * 1.0e6 / 1024 / 1024 / 1024;
-      },"SendRecv2");
+      },
+      "SendRecv2");
   coll_sm.printhistory(bfile);  // This needs to be done before print in which
                                 // the history gets sorted
   coll_sm.print(
       ofile, [=](int size) -> double { return size; },
-      [=](int size, double time) -> double { return time; },"Barrier");
+      [=](int size, double time) -> double { return time; }, "Barrier");
   step_sm.printhistory(hfile);  // This needs to be done before print in which
                                 // the history gets sorted
   host_sm.print(
       ofile, [=](size_t size) -> double { return size * 8 / 1024.0; },
       [=](size_t size, double time) -> double {
         return size / time * 8 * 1.0e6 / 1024 / 1024 / 1024;
-      },"Host");
+      },
+      "Host");
 
   step_sm.print(
       ofile, [=](size_t size) -> double { return size; },
-      [=](size_t size, double time) -> double { return time; },"STEP_ms");
+      [=](size_t size, double time) -> double { return time; }, "STEP_ms");
 
   ofile.close();
   hfile.close();

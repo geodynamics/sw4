@@ -647,7 +647,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   // save initial data on receiver records
   vector<float_sw4> uRec;
 
-  SYNC_STREAM; // SYNC BEFORE CPU OPS
+  SYNC_STREAM;  // SYNC BEFORE CPU OPS
 #if USE_HDF5
   // Tang: if write HDF5 data and not restart, have rank 0 create the HDF5 file
   // with all necessary groups, attributes, and datasets Disable HDF5 file
@@ -940,7 +940,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       SW4_PEEK;
       SYNC_DEVICE;
 #endif
-  
+
       SW4_MARK_BEGIN("MPI_WTIME");
       if (m_output_detailed_timing) time_measure[7] = MPI_Wtime();
       SW4_MARK_END("MPI_WTIME");
@@ -972,7 +972,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
       // if( m_output_detailed_timing )
       //    time_measure[10] = MPI_Wtime();
-      
+
       evalDpDmInTime(Up, U, Um, Uacc);  // store result in Uacc
       if (trace && m_myRank == dbgproc) cout << " after evalDpDmInTime" << endl;
 
@@ -1250,17 +1250,18 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     }
 #ifdef SW4_TRACK_MPI
     std::chrono::high_resolution_clock::time_point t4 = SW4_CHRONO_NOW;
-    //if (ProfilerOn) step_sm.insert(0, SW4_CHRONO_DURATION_MS(t3, t4));
+    // if (ProfilerOn) step_sm.insert(0, SW4_CHRONO_DURATION_MS(t3, t4));
     step_sm.insert(0, SW4_CHRONO_DURATION_MS(t3, t4));
 #endif
 
     if (currentTimeStep == mNumberOfTimeSteps[event]) {
       t2 = SW4_CHRONO_NOW;
 #ifdef SW4_TRACK_MPI
-      std::cout
-          << "Clean time stepping time "
-          << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t6).count()
-          << " s \n";
+      std::cout << "Clean time stepping time "
+                << std::chrono::duration_cast<std::chrono::milliseconds>(t2 -
+                                                                         t6)
+                       .count()
+                << " s \n";
 #endif
       if (proc_zero()) {
         std::cout << " Time for the last time step is "
@@ -5935,7 +5936,8 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
             float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega();
 
             // Stress tensor on boundary
-            Sarray tau(6, ifirst, ilast, jfirst, jlast, 1, 1,__FILE__,__LINE__);
+            Sarray tau(6, ifirst, ilast, jfirst, jlast, 1, 1, __FILE__,
+                       __LINE__);
             // Get twilight stress tensor, tau.
             // FTNC	       if( m_croutines )
             twstensorsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, k, t,

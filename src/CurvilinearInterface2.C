@@ -160,7 +160,7 @@ void CurvilinearInterface2::copy_str(float_sw4* dest, float_sw4* src,
 void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
                                         vector<float_sw4*>& a_stry) {
   SW4_MARK_FUNCTION;
-  //std::cout << "void CurvilinearInterface2::init_arrays \n";
+  // std::cout << "void CurvilinearInterface2::init_arrays \n";
   for (int s = 0; s < 4; s++)
     m_isbndry[s] = m_ew->getLocalBcType(m_gc, s) != bProcessor;
 
@@ -295,7 +295,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   // std::cout << "Batch size in setup is " << msize << "\n";
   //#define USE_DIRECT_INVERSE 1
 #ifdef USE_DIRECT_INVERSE
-  //std::cout << " USING DIRECT INVERSE \n";
+  // std::cout << " USING DIRECT INVERSE \n";
   m_mass_block = SW4_NEW(Space::Managed, float_sw4[9 * msize]);
   x = SW4_NEW(Space::Managed, float_sw4[3 * msize]);
   for (int j = m_jb + m_nghost; j <= m_je - m_nghost; j++)
@@ -1682,7 +1682,7 @@ void CurvilinearInterface2::prolongate2D(Sarray& Uc, Sarray& Uf, int kc,
                9 * (UcV(c, i, j + 2, kc) + UcV(c, i + 1, j + 2, kc)) +
                UcV(c, i + 2, j + 2, kc));
       });
-  //SYNC_STREAM;
+  // SYNC_STREAM;
   //}
 }
 
