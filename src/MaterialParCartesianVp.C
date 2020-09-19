@@ -317,13 +317,6 @@ void MaterialParCartesianVp::get_gradient( int nmd, double* xmd, int nms, double
 	 }
 }
 
-
-void MaterialParCartesianVp::smooth_gradient(double* dfs)
-{
-
-
-}
-
 //-----------------------------------------------------------------------
 void MaterialParCartesianVp::interpolate_pseudohessian( int nmpars, double* phs,
                                                         int nmpard, double* phm,

@@ -14,21 +14,26 @@ private:
    Sarray m_cs, m_cp; // ?needed now ? 
    void interpolate_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
 				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
+   void interpolate_base_parameters( int nmd, double* xmd, int nms,
+						   double* xms, std::vector<Sarray>& a_rho, 
+			 std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
+
 public:
    MaterialParCartesianVels( EW* a_ew, int nx, int ny, int nz, int init, char* fname );
    void get_material( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
 		      std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
    void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
 			std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
+   void get_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
+			std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
    void get_gradient( int nmd, double* xmd, int nms, double* xms, double* dfs, double* dfm,
 		      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
 		      std::vector<Sarray>& a_lambda,
 		      std::vector<Sarray>& a_gradrho, std::vector<Sarray>& a_gradmu,
 		      std::vector<Sarray>& a_gradlambda);
-   void smooth_gradient(double* dfs);
    void interpolate_pseudohessian(int nmpars, double* phs, int nmpard, double* phm, 
                                   std::vector<Sarray>& phgrid);
-
+   void smooth_gradient(double* dfs) {};
    //   void gradient_transformation( std::vector<Sarray>& a_rho,
    //				 std::vector<Sarray>& a_mu,
    //				 std::vector<Sarray>& a_lambda,
@@ -40,7 +45,8 @@ public:
    void set_scalefactors( int nmpars, double* sfs, double rho_ref, double mu_ref, double lambda_ref, 
 			  double vs_ref, double vp_ref );
    void subtract_base_mtrl( int nms, double* xms );
-   
+   int get_varcase(){return 2;}
+
    double getXmin() const { return m_xmin; }
    double getDx() const { return m_hx; }
    int getNX() const { return m_nx; }

@@ -26,7 +26,9 @@ public:
 		      std::vector<Sarray>& a_lambda, 
 		      std::vector<Sarray>& a_gradrho, std::vector<Sarray>& a_gradmu,
 		      std::vector<Sarray>& a_gradlambda);
-   void smooth_gradient(double* dfms);
+   void smooth_gradient(double* dfs) {};
+
+
    void set_scalefactors( int nmpars, double* sfs, 
 			  double rho_ref, double mu_ref, double lambda_ref, double vs_ref, double vp_ref );
    //   void perturb_material( int ip, int jp, int kp, int grid, int var, double h, double* xs, double* xm );
@@ -41,6 +43,7 @@ public:
 			 std::vector<Sarray>& a_lambda, double& mf_reg,
 			 double* sfd, double* sfs, bool compute_derivative, 
 			 double* dmfd_reg, double* dmfs_reg );
+   int get_varcase();
 
    double getXmin() const {};
    double getDx() const {};

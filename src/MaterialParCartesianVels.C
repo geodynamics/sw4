@@ -195,6 +195,65 @@ void MaterialParCartesianVels::interpolate_parameters( int nmd, double* xmd, int
 	 }
 }
 
+
+// added by Wei
+//-----------------------------------------------------------------------
+// Input base material not the difference on grid(s) (a_rho,a_mu,a_lambda), output corresponding
+// parameter vector (xmd,xms). 
+//-----------------------------------------------------------------------
+void MaterialParCartesianVels::interpolate_base_parameters( int nmd, double* xmd, int nms,
+						   double* xms, std::vector<Sarray>& a_rho, 
+			 std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
+{
+   // Interpolates the difference a_rho-(m_ew->mRho), into local rho. i.e., m_rho = I(a_rho-(m_ew->mRho))
+   // where a_rho,mRho are on the computational grid, rho on the parameter grid.
+   //                             similarly for cs, cp
+   // m_cs = I( a_cs-mCs)
+   // m_cp = I( a_cp-mCp)
+   //
+   std::cout << "nx=" << m_nx << " ny=" << m_ny << " nz=" << m_nz  << std::endl;
+   std::cout << "rho min=" << a_rho[0].minimum() << " max=" << a_rho[0].maximum() << std::endl;
+   std::cout << "lambda min=" << a_lambda[0].minimum() << " max=" << a_lambda[0].maximum() << std::endl;
+   std::cout << "mu min=" << a_mu[0].minimum() << " max=" << a_mu[0].maximum() << std::endl;
+
+   m_ew->interpolate_base_to_coarse_vel( m_nx, m_ny, m_nz, m_xmin, m_ymin, m_zmin, m_hx, m_hy, m_hz,
+				    m_rho, m_cs, m_cp);
+
+   float_sw4* rhop=m_rho.c_ptr();
+   float_sw4* csp =m_cs.c_ptr();
+   float_sw4* cpp =m_cp.c_ptr();
+   size_t ind =0;
+   double rhmin=100000,csmin=100000,cpmin=100000;
+   double rhmax=-100000,csmax=-100000,cpmax=-100000;
+
+   for( int k=1 ; k <= m_nz ; k++ )
+      for( int j=1 ; j <= m_ny ; j++ )
+	      for( int i=1 ; i <= m_nx ; i++ )
+	      {
+            size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
+            xms[3*ind]   = rhop[indm];
+            xms[3*ind+1] = csp[indm];
+	         xms[3*ind+2] = cpp[indm];
+            if( rhop[indm]<rhmin )
+               rhmin = rhop[indm];
+            if( csp[indm]<csmin )
+               csmin = csp[indm];
+            if( cpp[indm]<cpmin )
+               cpmin = cpp[indm];
+            if( rhop[indm]>rhmax )
+               rhmax = rhop[indm];
+            if( csp[indm]>csmax )
+               csmax = csp[indm];
+            if( cpp[indm]>cpmax )
+               cpmax = cpp[indm];
+            ind++;
+	    }
+
+    std::cout << "cpmin=" << cpmin << " cpmax=" << cpmax << " csmin=" << csmin << " csmax=" << csmax << std::endl;
+
+}
+
+
 //-----------------------------------------------------------------------
 void MaterialParCartesianVels::get_parameters( int nmd, double* xmd, int nms,
 					   double* xms, std::vector<Sarray>& a_rho, 
@@ -254,6 +313,69 @@ void MaterialParCartesianVels::get_parameters( int nmd, double* xmd, int nms,
    }
 
 }
+
+//-----------------------------------------------------------------------
+void MaterialParCartesianVels::get_base_parameters( int nmd, double* xmd, int nms,
+					   double* xms, std::vector<Sarray>& a_rho, 
+					   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
+{
+   std::cout << "CVels::get_parameters m_init=" << m_init  << std::endl;
+   
+   if( m_init == 0 )
+   {
+      for( int i=0 ; i < nms ; i++ )
+	 xms[i] = 0;
+   }
+   else if( m_init == 1 )
+   {
+      //      cout << " hx, hy, hz " << m_hx  <<  " " << m_hy << " " << m_hz << endl;
+      //      cout << " nx, ny, nz " << m_nx  <<  " " << m_ny << " " << m_nz << endl;
+      //      cout << " xmin, xmax " << m_xmin  <<  " " << m_xmax << endl;
+      //      cout << " ymin, ymax " << m_ymin  <<  " " << m_ymax << endl;
+   // Test data for sine perturbed constant material
+      double ep=0.01;
+      double om = M_PI*2;
+      size_t ind =0;
+      for( int k=1 ; k <= m_nz ; k++ )
+	 for( int j=1 ; j <= m_ny ; j++ )
+	    for( int i=1 ; i <= m_nx ; i++ )
+	    {
+	       double x = i*m_hx + m_xmin;
+	       double y = j*m_hy + m_ymin;
+	       double z = k*m_hz + m_zmin;
+	    
+	       double rho = 1+ep*sin(om*x+0.13)*sin(om*y)*sin(om*z);
+	       double cs  = 2+ep*cos(om*x)*sin(om*y)*cos(om*z+0.01);
+	       double cp  = 4+ep*sin(om*x+0.4)*sin(om*y)*cos(om*z+0.1);
+	       double mu = cs*cs*rho;
+	       double lambda = rho*(cp*cp-2*cs*cs);
+	       xms[3*ind]   = rho-1;
+	       xms[3*ind+1] = cs-2;
+	       xms[3*ind+2] = cp-4;
+	       ind++;
+	    }
+   }
+   else if( m_init == 2 )
+   {
+      read_parameters( nms, xms );
+   }
+   else if( m_init == 3 )
+   {
+      interpolate_base_parameters( nmd, xmd, nms, xms, a_rho, a_mu, a_lambda );
+   }
+   else if( m_init == 4 )
+   {
+     cout << "M_filename = " << m_filename << endl;
+      MParGridFile mpfile( m_filename );
+      mpfile.interpolate_to_other( xms, 2, m_nx, m_ny, m_nz, m_hx, m_hy, m_hz, m_xmin, m_ymin, m_zmin );
+      for( int i=0 ; i < 54 ; i++)
+	cout << i << " mtrl " << xms[i] << endl;
+      if( !mpfile.is_update() )
+	 subtract_base_mtrl( nms, xms );
+   }
+
+}
+
 
 //-----------------------------------------------------------------------
 void MaterialParCartesianVels::get_gradient( int nmd, double* xmd, int nms, double* xms,
@@ -325,13 +447,6 @@ void MaterialParCartesianVels::get_gradient( int nmd, double* xmd, int nms, doub
 	    //	    dfs[3*ind+2] = 2*rho*cp*glambdap[indm];
 	    //	    ind++;
 	 }
-}
-
-
-void MaterialParCartesianVels::smooth_gradient(double* dfs)
-{
-
-
 }
 
 //-----------------------------------------------------------------------

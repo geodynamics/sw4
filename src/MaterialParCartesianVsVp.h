@@ -30,6 +30,8 @@ public:
 		      std::vector<Sarray>& a_gradrho, std::vector<Sarray>& a_gradmu,
 		      std::vector<Sarray>& a_gradlambda);
    void smooth_gradient(double* dfs);
+
+
    //   void gradient_transformation( std::vector<Sarray>& a_rho,
    //				 std::vector<Sarray>& a_mu,
    //				 std::vector<Sarray>& a_lambda,
@@ -44,8 +46,9 @@ public:
    void set_scalefactors( int nmpars, double* sfs, double rho_ref, double mu_ref, double lambda_ref, 
 			  double vs_ref, double vp_ref );
    void subtract_base_mtrl( int nms, double* xms );
+   int get_varcase(){return 3;}
 
-      double getXmin() const { return m_xmin; }
+   double getXmin() const { return m_xmin; }
    double getDx() const { return m_hx; }
    int getNX() const { return m_nx; }
    double getYmin() const { return m_ymin; }

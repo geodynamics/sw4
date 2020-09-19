@@ -159,12 +159,6 @@ void MaterialParAllpts::get_parameters( int nmd, double* xmd, int nms, double* x
 }
 
 
-void MaterialParAllpts::smooth_gradient(double* dfs)
-{
-
-
-}
-
 
 //-----------------------------------------------------------------------
 void MaterialParAllpts::get_gradient( int nmd, double* xmd, int nms, double* xms, double* dfms, double* dfmd,

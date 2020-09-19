@@ -321,10 +321,10 @@ void MaterialParCartesianVsVp::get_gradient( int nmd, double* xmd, int nms, doub
    MPI_Allreduce( tmp, glambdap, npts, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
    delete[] tmp;
 
-   //MPI_Barrier(MPI_COMM_WORLD);
-   //glambda.gaussian_smooth(31, 5.);
-   //gmu.gaussian_smooth(21, 3.);
-   //MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Barrier(MPI_COMM_WORLD);
+   glambda.gaussian_smooth(31, 5.);
+   gmu.gaussian_smooth(21, 3.);
+   MPI_Barrier(MPI_COMM_WORLD);
 
    //glambda.save_to_disk("glambda.say");
    //gmu.save_to_disk("gmu.say");
@@ -352,46 +352,7 @@ void MaterialParCartesianVsVp::get_gradient( int nmd, double* xmd, int nms, doub
 }
 
 
-//-----------------------------------------------------------------------
-void MaterialParCartesianVsVp::smooth_gradient(double* dfs)
-{
-   Sarray gmu(0,m_nx+1,0,m_ny+1,0,m_nz+1);
-   Sarray glambda(0,m_nx+1,0,m_ny+1,0,m_nz+1);
 
-   double* gmup=gmu.c_ptr();
-   double* glambdap=glambda.c_ptr();
-
-   size_t ind =0;
-   for( int k=1 ; k <= m_nz ; k++ )
-    for( int j=1 ; j <= m_ny ; j++ )
-	 for( int i=1 ; i <= m_nx ; i++ )
-	 {
-        size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
-	     gmup[indm] = dfs[2*ind];
-	     glambdap[indm] = dfs[2*ind+1];
-	     ind++;
-	 }
-
-   MPI_Barrier(MPI_COMM_WORLD);
-   glambda.gaussian_smooth(31, 5.);
-   gmu.gaussian_smooth(21, 3.);
-   MPI_Barrier(MPI_COMM_WORLD);
-
-   //glambda.save_to_disk("glambda.say");
-   //gmu.save_to_disk("gmu.say");
-   ind =0;
-   for( int k=1 ; k <= m_nz ; k++ )
-    for( int j=1 ; j <= m_ny ; j++ )
-	 for( int i=1 ; i <= m_nx ; i++ )
-	 {
-      size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
-	    dfs[2*ind  ] = gmup[indm];
-	    dfs[2*ind+1] = glambdap[indm];
-	    ind++;
-	 }
-std::cout << "reach end of smooth_gradient" << std::endl;
-
-}
 
 
 //-----------------------------------------------------------------------
@@ -554,5 +515,47 @@ void MaterialParCartesianVsVp::interpolate_base_parameters( int nmd, double* xmd
 	    }
 
     std::cout << "cpmin=" << cpmin << " cpmax=" << cpmax << " csmin=" << csmin << " csmax=" << csmax << std::endl;
+
+}
+
+
+//-----------------------------------------------------------------------
+void MaterialParCartesianVsVp::smooth_gradient(double* dfs)
+{
+   Sarray gmu(0,m_nx+1,0,m_ny+1,0,m_nz+1);
+   Sarray glambda(0,m_nx+1,0,m_ny+1,0,m_nz+1);
+
+   double* gmup=gmu.c_ptr();
+   double* glambdap=glambda.c_ptr();
+
+   size_t ind =0;
+   for( int k=1 ; k <= m_nz ; k++ )
+    for( int j=1 ; j <= m_ny ; j++ )
+	 for( int i=1 ; i <= m_nx ; i++ )
+	 {
+        size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
+	     gmup[indm] = dfs[2*ind];
+	     glambdap[indm] = dfs[2*ind+1];
+	     ind++;
+	 }
+
+   MPI_Barrier(MPI_COMM_WORLD);
+   glambda.gaussian_smooth(31, 5.);
+   gmu.gaussian_smooth(21, 3.);
+   MPI_Barrier(MPI_COMM_WORLD);
+
+   //glambda.save_to_disk("glambda.say");
+   //gmu.save_to_disk("gmu.say");
+   ind =0;
+   for( int k=1 ; k <= m_nz ; k++ )
+    for( int j=1 ; j <= m_ny ; j++ )
+	 for( int i=1 ; i <= m_nx ; i++ )
+	 {
+      size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
+	    dfs[2*ind  ] = gmup[indm];
+	    dfs[2*ind+1] = glambdap[indm];
+	    ind++;
+	 }
+std::cout << "reach end of smooth_gradient" << std::endl;
 
 }

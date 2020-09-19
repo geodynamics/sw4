@@ -220,7 +220,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    checkMinMax(nmpars/2, coarse, "coarse:");
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
-     simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 0, simulation.getRank());
+     //simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 0, simulation.getRank());
    }
    delete[] coarse;
    MPI_Barrier(MPI_COMM_WORLD);
@@ -250,7 +250,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
       std::cout << "compute_f forward solve" << " time from t0=" << MPI_Wtime()-t0 << std::endl;
       sw4_profile->time_stamp("forward solve" );
       simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, 
-        false, e, mopt->m_nsteps_in_memory, 0, ph );
+      false, e, mopt->m_nsteps_in_memory, 0, ph );
       sw4_profile->time_stamp("done forward solve" ); 
       std::cout << "done compute_f forward solve" << " time from t0=" << MPI_Wtime()-t0 << std::endl;
 
@@ -386,7 +386,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    checkMinMax(nmpars/2, coarse, "coarse2:");
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
-     simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 0, myrank);
+     //simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 0, myrank);
    }
     MPI_Barrier(MPI_COMM_WORLD);
    delete[] coarse;
@@ -418,12 +418,15 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    for( int m=0 ; m < nmpard ; m++ )
       dfm[m] = 0;
   if( !mopt->m_test_regularizer ){
+        mopt->init_pseudohessian( pseudo_hessian );
+        int phcase = mopt->get_pseudo_hessian_case();
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
       std::cout << "compute_f_df forward solve"  << " time from t0=" << MPI_Wtime()-t0 << std::endl;
       sw4_profile->time_stamp("forward solve" );
+       simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, 
+     mopt->m_nsteps_in_memory, phcase, pseudo_hessian );
 
-     simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory );
       // check if U has nan
       U[0].checknan("forward U");
       sw4_profile->time_stamp("done forward solve" );
@@ -548,7 +551,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       //std::cout << "gMu min=" << gMu[0].minimum() << " max=" << gMu[0].maximum() << std::endl;
       //std::cout << "gLambda min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << std::endl;
 
-      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfmevent, rho, mu, lambda, gRho, gMu, gLambda, myrank);
+      mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfmevent, 
+      rho, mu, lambda, gRho, gMu, gLambda);
 
       //gMu[0].save_to_disk("gMu_xform.say");
       //gLambda[0].save_to_disk("gLambda_xform.say"); // local size with halos
@@ -1468,10 +1472,7 @@ int main(int argc, char **argv)
 	   get_source_pars( nspar, xspar, xs );
 
       std::cout << "nmpars=" << nmpars << std::endl;
-// solveTT
-       //mp->get_base_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,simulation.mLambda );
-       //std::cout << "GlobalTimeSeries size=" << GlobalTimeSeries[0].size() << std::endl;
-       //if(myRank==0) simulation.solveTT(GlobalSources[0], GlobalTimeSeries[0], xs, nmpars, mp, 0);
+
 
 // Initialize the material parameters
       mp->get_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,simulation.mLambda );

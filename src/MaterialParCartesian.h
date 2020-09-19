@@ -28,8 +28,7 @@ public:
 		      std::vector<Sarray>& a_lambda,
 		      std::vector<Sarray>& a_gradrho, std::vector<Sarray>& a_gradmu,
 		      std::vector<Sarray>& a_gradlambda);
-   void smooth_gradient(double* dfs);
-   void smooth_gradient( std::vector<Sarray>& a_grad ) {};
+   void smooth_gradient(double* dfs) {};
    void interpolate_pseudohessian(int nmpars, double* phs, int nmpard, double* phm, 
                                   std::vector<Sarray>& phgrid);
 
@@ -40,6 +39,7 @@ public:
 			   std::vector<Sarray>& a_lambda, std::string fname );
    void projectl2( std::vector<Sarray>& mtrl, float_sw4* rhs );
    void subtract_base_mtrl( int nms, double* xms );
+   int get_varcase(){return 1;}
 
    double getXmin() const { return m_xmin; }
    double getDx() const { return m_hx; }

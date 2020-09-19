@@ -30,8 +30,7 @@ public:
 		      std::vector<Sarray>& a_lambda,
 		      std::vector<Sarray>& a_gradrho, std::vector<Sarray>& a_gradmu,
 		      std::vector<Sarray>& a_gradlambda);
-   void smooth_gradient(double* dfs);
-   void smooth_gradient( std::vector<Sarray>& a_grad ) {};
+   void smooth_gradient(double* dfs) {};
    void interpolate_pseudohessian(int nmpars, double* phs, int nmpard, double* phm, 
                                   std::vector<Sarray>& phgrid);
 
@@ -46,7 +45,7 @@ public:
    ssize_t local_index( size_t ind_global );
    void set_scalefactors( int nmpars, double* sfs, double rho_ref, double mu_ref, double lambda_ref, 
 			  double vs_ref, double vp_ref );
-
+   int get_varcase(){return 4;}
    double getXmin() const { return m_xmin; }
    double getDx() const { return m_hx; }
    int getNX() const { return m_nx; }
