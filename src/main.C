@@ -86,11 +86,11 @@ int main(int argc, char **argv) {
   // bool checkmode = false;
 
   stringstream reason;
-  presetGPUID();
   // Initialize MPI...
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
+  presetGPUID();
 #if defined(SW4_SIGNAL_CHECKPOINT)
   std::signal(SIGUSR1, signal_handler);
 #endif
@@ -330,7 +330,7 @@ int main(int argc, char **argv) {
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
 
-  print_hwm();
+  print_hwm(myRank);
 
 #ifdef USE_MAGMA
   if (magma_finalize() != MAGMA_SUCCESS) {

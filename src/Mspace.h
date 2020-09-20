@@ -72,7 +72,7 @@ void operator delete(void *ptr, Space loc, const char *file, int line) throw();
 void operator delete[](void *ptr, Space loc, const char *file,
                        int line) throw();
 void presetGPUID();
-void print_hwm();
+void print_hwm(int rank);
 struct global_variable_holder_struct {
   size_t gpu_memory_hwm;
   size_t curr_mem;

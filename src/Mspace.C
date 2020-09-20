@@ -102,7 +102,7 @@ void check_mem() {
       std::max((mtotal - mfree), global_variables.gpu_memory_hwm);
 }
 
-void print_hwm() {
+void print_hwm(int rank) {
   const int allocator_count = 3;
 #if defined(ENABLE_CUDA)
   // std::cout<<"PRINT_HWM"<<std::flush;
@@ -134,29 +134,29 @@ void print_hwm() {
   // std::cout<<getRank()<<" GPU Memory Max =
   // "<<global_variables.max_mem/1024/1024<<" MB \n";
 #endif
-  MPI_Allreduce(&hwm_local, &hwm_global, allocator_count + 1, MPI_FLOAT,
-                MPI_MAX, MPI_COMM_WORLD);
-  MPI_Allreduce(&hwm_local, &hwm_global_min, allocator_count + 1, MPI_FLOAT,
-                MPI_MIN, MPI_COMM_WORLD);
-  for (int i = 0; i < allocator_count; i++)
-    if (hwm_local[i] == hwm_global[i]) {
+  float hwm_total;
+  MPI_Reduce(&hwm_local, &hwm_global, allocator_count + 1, MPI_FLOAT,
+                MPI_MAX, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&hwm_local, &hwm_global_min, allocator_count + 1, MPI_FLOAT,
+                MPI_MIN, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&hwm_local[allocator_count], &hwm_total, 1, MPI_FLOAT,
+                MPI_SUM, 0, MPI_COMM_WORLD);
+  if (!rank){
+  for (int i = 0; i < allocator_count; i++){
+      std::cout << i << " MIN Global Device HWM is " << hwm_global_min[i]
+                << " GB\n";
       std::cout << i << " MAX Global Device HWM is " << hwm_global[i]
                 << " GB\n";
     }
 
-  for (int i = 0; i < allocator_count; i++)
-    if (hwm_local[i] == hwm_global_min[i]) {
-      std::cout << i << " MIN Global Device HWM is " << hwm_global_min[i]
-                << " GB\n";
-    }
 
-  if (hwm_local[allocator_count] == hwm_global[allocator_count])
     std::cout << " MAX Total Global Device HWM is "
               << hwm_global[allocator_count] << " GB\n";
 
-  if (hwm_local[allocator_count] == hwm_global_min[allocator_count])
     std::cout << " MIN Total Global Device HWM is "
               << hwm_global_min[allocator_count] << " GB\n";
+    std::cout<<" Total device memory used "<<hwm_total<<" GB\n";
+}
 
   // umpire::util::StatisticsDatabase::getDatabase()->printStatistics(std::cout);
   if (Managed::hwm > 0) {
