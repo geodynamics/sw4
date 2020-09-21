@@ -1,12 +1,14 @@
 #include <mpi.h>
 #include <mpi-ext.h>
 
+#include <iomanip>
 #include <unordered_map>
 
 #include "GridPointSource.h"
 #include "Mspace.h"
 #include "caliper.h"
 #include "policies.h"
+
 struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0,
                                                          0, 0, 1, 0};
 using namespace std;
@@ -135,32 +137,32 @@ void print_hwm(int rank) {
   // "<<global_variables.max_mem/1024/1024<<" MB \n";
 #endif
   float hwm_total;
-  MPI_Reduce(&hwm_local, &hwm_global, allocator_count + 1, MPI_FLOAT,
-                MPI_MAX, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&hwm_local, &hwm_global, allocator_count + 1, MPI_FLOAT, MPI_MAX,
+             0, MPI_COMM_WORLD);
   MPI_Reduce(&hwm_local, &hwm_global_min, allocator_count + 1, MPI_FLOAT,
-                MPI_MIN, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&hwm_local[allocator_count], &hwm_total, 1, MPI_FLOAT,
-                MPI_SUM, 0, MPI_COMM_WORLD);
-  if (!rank){
-  for (int i = 0; i < allocator_count; i++){
-      std::cout << i << " MIN Global Device HWM is " << hwm_global_min[i]
-                << " GB\n";
-      std::cout << i << " MAX Global Device HWM is " << hwm_global[i]
+             MPI_MIN, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&hwm_local[allocator_count], &hwm_total, 1, MPI_FLOAT, MPI_SUM, 0,
+             MPI_COMM_WORLD);
+  if (!rank) {
+    for (int i = 0; i < allocator_count; i++) {
+      std::cerr << std::setprecision(2) << i << " MIN Global Device HWM is "
+                << hwm_global_min[i] << " GB\n";
+      std::cerr << i << " MAX Global Device HWM is " << hwm_global[i]
                 << " GB\n";
     }
 
+    std::cout << std::fixed << std::setprecision(2)
+              << " Min & Max per-device memory HWM  "
+              << hwm_global_min[allocator_count] << ","
+              << hwm_global[allocator_count] << " GB\n"
+              << std::flush;
 
-    std::cout << " MAX Total Global Device HWM is "
-              << hwm_global[allocator_count] << " GB\n";
-
-    std::cout << " MIN Total Global Device HWM is "
-              << hwm_global_min[allocator_count] << " GB\n";
-    std::cout<<" Total device memory used "<<hwm_total<<" GB\n";
-}
+    std::cout << " Total device memory used " << hwm_total << " GB\n";
+  }
 
   // umpire::util::StatisticsDatabase::getDatabase()->printStatistics(std::cout);
   if (Managed::hwm > 0) {
-    std::cout << "Space::Managed object count & HWM are " << Managed::ocount
+    std::cerr << "Space::Managed object count & HWM are " << Managed::ocount
               << " & " << Managed::hwm << " Size = "
               << Managed::hwm * sizeof(GridPointSource) / 1024.0 / 1024.0
               << " MB Each object = " << sizeof(GridPointSource) << "\n";
