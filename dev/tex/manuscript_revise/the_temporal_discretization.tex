@@ -4,13 +4,13 @@ The equations are advanced in time with an explicit fourth order accurate predic
 \begin{equation*}
 \Delta_t\leq C_{\text{cfl}}\min\{h_1,h_2,h_3\}/\sqrt{\kappa_{\max}},
 \end{equation*}
-where $C_{\text{cfl}} = 1.3$ and
+where %$C_{\text{cfl}} = 1.3$ and
 $\kappa_{\text{max}}$ is the maximum eigenvalue of the matrices 
 \[T_{\bf i}^{\{f,c\}} = \frac{1}{\rho^{\{f,c\}}({\bf r}_{\bf i})}\left(\begin{array}{ccc}
 Tr(N_{11}^{\{f,c\}}({\bf r}_{\bf i})) &  Tr(N_{12}^{\{f,c\}}({\bf r}_{\bf i}))& Tr(N_{13}^{\{f,c\}}({\bf r}_{\bf i}))\\
 Tr(N_{21}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{22}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{23}^{\{f,c\}}({\bf r}_{\bf i}))\\
 Tr(N_{31}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{32}^{\{f,c\}}({\bf r}_{\bf i})) & Tr(N_{33}^{\{f,c\}}({\bf r}_{\bf i}))\end{array}\right), \]
-where $Tr(N_{lm}^{\{f,c\}}({\bf r}_{\bf i}))$ represents the trace of $3\times3$ matrix $N_{lm}^{\{f,c\}}({\bf r}_{\bf i})$. Note that $\kappa_{\text{max}}$ is related to the material properties $\mu^{\{f,c\}}, \lambda^{\{f,c\}}$ and $\rho^{\{f,c\}}$. The notation $\{\cdot,\cdot\}$ represents the component-wise identities. In the following, we give detailed procedures about how we apply the fourth order time integrator to the semidiscretizations (\ref{elastic_semi_c}) and  (\ref{fine_scheme}). 
+and $Tr(N_{lm}^{\{f,c\}}({\bf r}_{\bf i}))$ represents the trace of $3\times3$ matrix $N_{lm}^{\{f,c\}}({\bf r}_{\bf i})$. Note that $\kappa_{\text{max}}$ is related to the material properties $\mu^{\{f,c\}}, \lambda^{\{f,c\}}$ and $\rho^{\{f,c\}}$. The notation $\{\cdot,\cdot\}$ represents the component-wise identities. We choose the Courant number $C_{\text{cfl}} = 1.3$, which has been shown to work well in practical problems \cite{petersson2015wave,sjogreen2012fourth}. The Courant number shall not be chosen too close to the stability limit so that noticeable reflections at mesh refinement interfaces can be avoided \cite{Collino2003}. In the following, we give detailed procedures about how we apply the fourth order time integrator to the semidiscretizations (\ref{elastic_semi_c}) and  (\ref{fine_scheme}). 
 
 Let ${\bf c}^{n}$ and ${\bf f}^{n}$ denote the numerical approximations of ${\bf C}({\bf x},t_n), {\bf x}\in\Omega^c$ and ${\bf F}({\bf x},t_n), {\bf x}\in\Omega^f$, respectively. Here, $t_n = n\Delta_t, n = 0,1,\cdots$ and $\Delta_t > 0$ is a constant time step. We present the fourth order time integrator with predictor and corrector in  Algorithm \ref{first_alg}.
 ~\\
