@@ -1632,10 +1632,6 @@ void EW::computeDT()
    {
       for (g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++)
       {
-//     g = mNumberOfGrids-1;
-//         float_sw4 la, mu, la2mu;
-
-// do consider ghost points (especially the ghost line above the topography might be important)
 #pragma omp parallel for reduction(min:dtCurv)
          for (int k=m_kStartInt[g]; k<=m_kEndInt[g]; k++)
             for (int j=m_jStart[g]; j<=m_jEnd[g]; j++)

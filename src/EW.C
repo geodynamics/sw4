@@ -1190,10 +1190,13 @@ int EW::computeNearestGridPoint2( int& a_i, int& a_j, int& a_k, int& a_g,
          if( success )
          {
             a_g = g;
-            a_i = static_cast<int>( round( q ) );
-            a_j = static_cast<int>( round( r ) );
+            //            a_i = static_cast<int>( round( q ) );
+            //            a_j = static_cast<int>( round( r ) );
+            a_i = static_cast<int>( floor( q ) );
+            a_j = static_cast<int>( floor( r ) );
             a_k = static_cast<int>( round( s ) );
          }
+
      //         MPI_Allreduce(&success,&foundglobal,1,MPI_INT,MPI_MAX,m_cartesian_communicator);
          g++;
       }
@@ -8121,6 +8124,7 @@ void EW::sort_grid_point_sources( vector<GridPointSource*>& point_sources,
 //   return new TestGrid( m_topo_zmax, m_GaussianAmp, m_GaussianXc, m_GaussianYc, m_GaussianLx, m_GaussianLy );
 //}
 
+//-----------------------------------------------------------------------
 #include "TestTwilight.h"
 
 TestTwilight* EW::create_twilight()
@@ -8134,6 +8138,7 @@ TestTwilight* EW::create_twilight()
       return 0;
 }
 
+//-----------------------------------------------------------------------
 #include "TestEcons.h"
 
 TestEcons* EW::create_energytest()
@@ -8144,6 +8149,13 @@ TestEcons* EW::create_energytest()
       return 0;
 }
 
+//-----------------------------------------------------------------------
+TestPointSource* EW::get_point_source_test()
+{
+   return m_point_source_test;
+}
+
+//-----------------------------------------------------------------------
 #include "AllDims.h"
 AllDims* EW::get_fine_alldimobject( )
 {
