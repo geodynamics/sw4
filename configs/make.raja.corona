@@ -15,6 +15,7 @@ RAJA_LOCATION = /home/users/coe0145/RAJA/RAJA/install_rocm_default
 RAJA_LOCATION = /home/users/coe0145/RAJA/RAJA/install_no_gpu_rdc
 RAJA_LOCATION = /home/users/coe0145/RAJA/RAJA_11/RAJA-v0.11.0/install2
 RAJA_LOCATION = /usr/workspace/wsb/ramesh/CORAL2/CORONA/RAJA/install
+RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2020/RAJA-v0.12.1/install_corona
 #RAJA_LOCATION = /home/users/coe0145/RAJA/Dev/raja/install
 PROJ_HOME = /gpfs/alpine/geo130/proj-shared/sw4_raja/LIBS/proj-5.0.0/install_12_27_2018
 PROJ_HOME = /home/users/coe0145/Umpire/Proj5/proj-5.0.0/install
@@ -24,9 +25,10 @@ PROJ_HOME = /usr/workspace/wsb/ramesh/CORAL2/CORONA/proj-5.0.0/install
 UMPIRE_HOME = /home/users/coe0145/Umpire/Umpire2/Umpire/installx3
 UMPIRE_HOME = /home/users/coe0145/Umpire/Umpire4/Umpire/install
 UMPIRE_HOME = /usr/workspace/wsb/ramesh/CORAL2/CORONA/Umpire/install
+UMPIRE_HOME = /usr/workspace/wsb/ramesh/Umpire/umpire-4.0.1/install_corona
 CALIPER_LOCATION = /gpfs/alpine/geo130/proj-shared/sw4_raja/LIBS/Caliper/install_summit
 HIP_ROOT_DIR = $(HIP_PATH)
-GCC_LINK_LINE = -L $(HIP_ROOT_DIR)/lib -lhip_hcc -lhsa-runtime64  -lm -lstdc++ -lgfortran
+GCC_LINK_LINE = -L $(HIP_ROOT_DIR)/lib -lhsa-runtime64  -lm -lstdc++ -lgfortran -ldl
 CUDA_HOME = $(OLCF_CUDA_ROOT)
 MPI_HOME =  /opt/openmpi/4.0/gnu
 EXTRA_FORT_FLAGS = 
@@ -36,4 +38,4 @@ EXTRA_CXX_FLAGS =  -O3  -x hip -DDISABLE_PREFETCH  -std=c++11 -I $(CUDA_HOME)/in
 
 EXTRA_CXX_FLAGS2 =  -O3  -DDISABLE_PREFETCH -std=c++11 -I $(CUDA_HOME)/include -I$(UMPIRE_HOME)/include -I$(RAJA_LOCATION)/include  -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_HIP   $(MORE_FLAGS)
 
-EXTRA_LINK_FLAGS = -O3  -std=c++11 -L $(BLASDIR)/lib/ -L $(LAPACK_DIR)/lib64  -lgfortran -llapack -lblas  -L $(RAJA_LOCATION)/lib -lRAJA -L $(PROJ_HOME)/lib64 -lproj -L $(MPI_HOME)/lib -lmpi -L $(UMPIRE_HOME)/lib -lumpire $(GCC_LINK_LINE) 
+EXTRA_LINK_FLAGS = -fgpu-rdc  -O3  -std=c++11 -L $(BLASDIR)/lib/ -L $(LAPACK_DIR)/lib64  -lgfortran -llapack -lblas  -L $(RAJA_LOCATION)/lib -lRAJA -L $(PROJ_HOME)/lib64 -lproj -L $(MPI_HOME)/lib -lmpi -L $(UMPIRE_HOME)/lib -lumpire $(GCC_LINK_LINE) 
