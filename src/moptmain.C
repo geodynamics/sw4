@@ -214,7 +214,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    if( nms != nmpars || nmd != nmpard )
       cout << "compute_f: WARNING, inconsistent number of material parameters" << endl;
 
-   // solveTT
+//solveTT
    double *coarse = new double[nmpars];
    mopt->m_mp->get_base_parameters(nmpard,xm,nmpars,coarse,simulation.mRho,simulation.mMu,simulation.mLambda );
    checkMinMax(nmpars/2, coarse, "coarse:");
@@ -224,8 +224,6 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    }
    delete[] coarse;
    MPI_Barrier(MPI_COMM_WORLD);
-
-
 
    mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda ); // xs->mu/lambda->base
    int ok=1;
@@ -417,6 +415,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       dfs[m+nspar] = 0;
    for( int m=0 ; m < nmpard ; m++ )
       dfm[m] = 0;
+
   if( !mopt->m_test_regularizer ){
         mopt->init_pseudohessian( pseudo_hessian );
         int phcase = mopt->get_pseudo_hessian_case();
@@ -489,39 +488,16 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 
         std::cout << ">>>>>>>>>>>>>>>>>>> adj source written to files" << std::endl;
       }
+      else if( mopt->m_misfit == Mopt::CROSSCORR )
+         {
+            for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
+               f += GlobalTimeSeries[e][m]->misfit2( *GlobalObservations[e][m], diffs[m] );
+         }
+
+
       double mftmp = f;
       MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-      if( phcase > 0 )
-      {
-// Interpolate pseudo-hessian to parameter grid
-         float_sw4* phs=0, *phm=0;
-         if( nmpars > 0 )
-            phs = new float_sw4[nmpars];
-         if(  nmpard > 0 )
-            phm = new float_sw4[nmpard];
-         mopt->m_mp->interpolate_pseudohessian( nmpars, phs, nmpard, phm, pseudo_hessian);
-         float_sw4 eps=1e-3;
-         normalize_pseudohessian( nmpars, phs, nmpard, phm, eps, phcase );
-// ..scale the gradient
 
-         float_sw4* sfs=mopt->m_sfs;
-         for( int m=0 ; m < nmpars ; m++ )
-            dfs[m+nspar] *= 1.0/phs[m];
-         float_sw4* sfm=mopt->m_sfm;
-         for( int m=0 ; m < nmpard ; m++ )
-            dfm[m] *= 1.0/phm[m];
-
-// precondition gradients further with gaussian smoothing
-         //mopt->m_mp->smooth_gradient(dfs);
-
-// ..and give back memory
-         if( phs != 0 )
-            delete[] phs;
-         if( phm != 0 )
-            delete[] phm;
-         // For plotting purpose:
-         normalize_gradient_ph( pseudo_hessian, gRho, gMu, gLambda, eps, phcase );
-      }
 
       double dfsrc[11];
       get_source_pars( nspar, dfsrc, dfs );   
@@ -573,7 +549,41 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    }
    double mftmp = f;
    MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-   }
+   
+
+         if( phcase > 0 )
+      {
+// Interpolate pseudo-hessian to parameter grid
+         float_sw4* phs=0, *phm=0;
+         if( nmpars > 0 )
+            phs = new float_sw4[nmpars];
+         if(  nmpard > 0 )
+            phm = new float_sw4[nmpard];
+         mopt->m_mp->interpolate_pseudohessian( nmpars, phs, nmpard, phm, pseudo_hessian);
+         float_sw4 eps=1e-3;
+         normalize_pseudohessian( nmpars, phs, nmpard, phm, eps, phcase );
+// ..scale the gradient
+
+         float_sw4* sfs=mopt->m_sfs;
+         for( int m=0 ; m < nmpars ; m++ )
+            dfs[m+nspar] *= 1.0/phs[m];
+         float_sw4* sfm=mopt->m_sfm;
+         for( int m=0 ; m < nmpard ; m++ )
+            dfm[m] *= 1.0/phm[m];
+
+// precondition gradients further with gaussian smoothing
+         //mopt->m_mp->smooth_gradient(dfs);
+
+// ..and give back memory
+         if( phs != 0 )
+            delete[] phs;
+         if( phm != 0 )
+            delete[] phm;
+         // For plotting purpose:
+         normalize_gradient_ph( pseudo_hessian, gRho, gMu, gLambda, eps, phcase );
+      }
+  }
+  
 // add in a Tikhonov regularizing term:
    bool tikhonovreg=false;
    if( tikhonovreg )
