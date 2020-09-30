@@ -494,263 +494,262 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle)
 #endif
 }
 
-void ESSI3DHDF5::init_write_vel_compression(int ntimestep, int ZFPmode, double ZFPpar)
-{
-#ifdef USE_HDF5
-  /* bool debug=true; */
-  bool debug=false;
-  MPI_Comm comm = MPI_COMM_WORLD;
-  int myRank, nProc;
-  hid_t my_dspace, my_dset;
-  hid_t dtype = H5T_NATIVE_DOUBLE;
-  if (m_precision == 4) 
-    dtype = H5T_NATIVE_FLOAT;
+/* void ESSI3DHDF5::init_write_vel_compression(int ntimestep, int ZFPmode, double ZFPpar) */
+/* { */
+/* #ifdef USE_HDF5 */
+/*   /1* bool debug=true; *1/ */
+/*   bool debug=false; */
+/*   MPI_Comm comm = MPI_COMM_WORLD; */
+/*   int myRank, nProc; */
+/*   hid_t my_dspace, my_dset; */
+/*   hid_t dtype = H5T_NATIVE_DOUBLE; */
+/*   if (m_precision == 4) */ 
+/*     dtype = H5T_NATIVE_FLOAT; */
 
-  hsize_t num_vel=3;
-  hsize_t num_dims=4;
-  hsize_t start_count[6], my_count[4], my_start[4], v_start[4], my_chunk[4], my_size;
-  hid_t prop_id, vspace, vdset, vdcpl[3];
+/*   hsize_t num_vel=3; */
+/*   hsize_t num_dims=4; */
+/*   hsize_t start_count[6], my_count[4], my_start[4], v_start[4], my_chunk[4], my_size; */
+/*   hid_t prop_id, vspace, vdset, vdcpl[3]; */
 
-  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-  MPI_Comm_size(MPI_COMM_WORLD, &nProc);
+/*   MPI_Comm_rank(MPI_COMM_WORLD, &myRank); */
+/*   MPI_Comm_size(MPI_COMM_WORLD, &nProc); */
 
-  if (debug)
-  {
-    char msg[1000];
-    sprintf(msg, "Rank %d creating vel dataspaces size = %d %d %d\n", myRank,
-        (int) m_global_dims[0], (int) m_global_dims[1], (int) m_global_dims[2]);
-    cout << msg;
-  }
+/*   if (debug) */
+/*   { */
+/*     char msg[1000]; */
+/*     sprintf(msg, "Rank %d creating vel dataspaces size = %d %d %d\n", myRank, */
+/*         (int) m_global_dims[0], (int) m_global_dims[1], (int) m_global_dims[2]); */
+/*     cout << msg; */
+/*   } */
 
-  // local index lo relative to global
-  start_count[0] = m_window[0]; 
-  start_count[1] = m_window[2];
-  start_count[2] = m_window[4];
+/*   // local index lo relative to global */
+/*   start_count[0] = m_window[0]; */ 
+/*   start_count[1] = m_window[2]; */
+/*   start_count[2] = m_window[4]; */
 
-  // local size
-  start_count[3] = m_window_dims[1];
-  start_count[4] = m_window_dims[2];
-  start_count[5] = m_window_dims[3];
+/*   // local size */
+/*   start_count[3] = m_window_dims[1]; */
+/*   start_count[4] = m_window_dims[2]; */
+/*   start_count[5] = m_window_dims[3]; */
 
-  m_all_start_count = (hsize_t*)malloc(sizeof(hsize_t)*nProc*6);
-  if (m_all_start_count == NULL) {
-    printf("ESSI3DHDF5::init_write_vel_compression error with malloc, abort!\n");
-    MPI_Abort(comm, -1);
-  }
+/*   m_all_start_count = (hsize_t*)malloc(sizeof(hsize_t)*nProc*6); */
+/*   if (m_all_start_count == NULL) { */
+/*     printf("ESSI3DHDF5::init_write_vel_compression error with malloc, abort!\n"); */
+/*     MPI_Abort(comm, -1); */
+/*   } */
 
-  MPI_Allgather(start_count, 6, MPI_UNSIGNED_LONG_LONG, m_all_start_count, 6, MPI_UNSIGNED_LONG_LONG, comm);
+/*   MPI_Allgather(start_count, 6, MPI_UNSIGNED_LONG_LONG, m_all_start_count, 6, MPI_UNSIGNED_LONG_LONG, comm); */
 
-  if (ntimestep > 0) 
-    m_cycle_dims[0]  = ntimestep + 1;
-  else {
-    printf("Error with m_ntimestep=%d!\n", ntimestep);
-    MPI_Abort(comm, -1);
-  }
+/*   if (ntimestep > 0) */ 
+/*     m_cycle_dims[0]  = ntimestep + 1; */
+/*   else { */
+/*     printf("Error with m_ntimestep=%d!\n", ntimestep); */
+/*     MPI_Abort(comm, -1); */
+/*   } */
 
-  // create virtual dataset
-  prop_id = H5Pcreate (H5P_DATASET_CREATE);
+/*   // create virtual dataset */
+/*   prop_id = H5Pcreate (H5P_DATASET_CREATE); */
 
-  vdcpl[0] = H5Pcreate (H5P_DATASET_CREATE);
-  vdcpl[1] = H5Pcreate (H5P_DATASET_CREATE);
-  vdcpl[2] = H5Pcreate (H5P_DATASET_CREATE);
+/*   vdcpl[0] = H5Pcreate (H5P_DATASET_CREATE); */
+/*   vdcpl[1] = H5Pcreate (H5P_DATASET_CREATE); */
+/*   vdcpl[2] = H5Pcreate (H5P_DATASET_CREATE); */
 
-  // Every rank needs to participate dataset create process
-  char dname[1024];
-  my_start[0] = my_start[1] = my_start[2] = my_start[3] = 0;
+/*   // Every rank needs to participate dataset create process */
+/*   char dname[1024]; */
+/*   my_start[0] = my_start[1] = my_start[2] = my_start[3] = 0; */
 
-  for (int i = 0; i < nProc; i++) {
-    v_start[0] = 0;
-    v_start[1] = m_all_start_count[i*6];
-    v_start[2] = m_all_start_count[i*6+1];
-    v_start[3] = m_all_start_count[i*6+2];
+/*   for (int i = 0; i < nProc; i++) { */
+/*     v_start[0] = 0; */
+/*     v_start[1] = m_all_start_count[i*6]; */
+/*     v_start[2] = m_all_start_count[i*6+1]; */
+/*     v_start[3] = m_all_start_count[i*6+2]; */
 
-    my_count[0] = ntimestep + 1;
-    my_count[1] = m_all_start_count[i*6+3];
-    my_count[2] = m_all_start_count[i*6+4];
-    my_count[3] = m_all_start_count[i*6+5];
+/*     my_count[0] = ntimestep + 1; */
+/*     my_count[1] = m_all_start_count[i*6+3]; */
+/*     my_count[2] = m_all_start_count[i*6+4]; */
+/*     my_count[3] = m_all_start_count[i*6+5]; */
 
-    my_size = my_count[1] * my_count[2] * my_count[3];
-    if (my_size == 0)
-      continue;
+/*     my_size = my_count[1] * my_count[2] * my_count[3]; */
+/*     if (my_size == 0) */
+/*       continue; */
 
-    my_chunk[0] = 1;
-    my_chunk[1] = my_count[1];
-    my_chunk[2] = my_count[2];
-    my_chunk[3] = my_count[3];
+/*     my_chunk[0] = 1; */
+/*     my_chunk[1] = my_count[1]; */
+/*     my_chunk[2] = my_count[2]; */
+/*     my_chunk[3] = my_count[3]; */
 
-    for (int c = 0; c < num_vel; c++) {
+/*     for (int c = 0; c < num_vel; c++) { */
 
-      sprintf(dname, "vel_%d_%llu_%llu_%llu", c, v_start[1], v_start[2], v_start[3]);
-      my_dspace = H5Screate_simple(num_dims, my_count, my_count);
+/*       sprintf(dname, "vel_%d_%llu_%llu_%llu", c, v_start[1], v_start[2], v_start[3]); */
+/*       my_dspace = H5Screate_simple(num_dims, my_count, my_count); */
 
-      // Single chunk per rank per timestep for now
-      H5Pset_chunk (prop_id, num_dims, my_chunk);
-#ifdef USE_ZFP
-      if (ZFPmode == SW4_ZFP_MODE_RATE) {
-        H5Pset_zfp_rate(prop_id, ZFPpar);
-      }
-      else if (ZFPmode == SW4_ZFP_MODE_PRECISION) {
-        H5Pset_zfp_precision(prop_id, ZFPpar);
-      }
-      else if (ZFPmode == SW4_ZFP_MODE_ACCURACY) {
-        H5Pset_zfp_accuracy(prop_id, ZFPpar);
-      }
-      else if (ZFPmode == SW4_ZFP_MODE_REVERSIBLE) {
-        H5Pset_zfp_reversible(prop_id);
-      }
-      else {
-        cout << "Error with ZFP mode, no compression is used!" << endl;
-      }
-#endif
+/*       // Single chunk per rank per timestep for now */
+/*       H5Pset_chunk (prop_id, num_dims, my_chunk); */
+/* #ifdef USE_ZFP */
+/*       if (ZFPmode == SW4_ZFP_MODE_RATE) { */
+/*         H5Pset_zfp_rate(prop_id, ZFPpar); */
+/*       } */
+/*       else if (ZFPmode == SW4_ZFP_MODE_PRECISION) { */
+/*         H5Pset_zfp_precision(prop_id, ZFPpar); */
+/*       } */
+/*       else if (ZFPmode == SW4_ZFP_MODE_ACCURACY) { */
+/*         H5Pset_zfp_accuracy(prop_id, ZFPpar); */
+/*       } */
+/*       else if (ZFPmode == SW4_ZFP_MODE_REVERSIBLE) { */
+/*         H5Pset_zfp_reversible(prop_id); */
+/*       } */
+/*       else { */
+/*         cout << "Error with ZFP mode, no compression is used!" << endl; */
+/*       } */
+/* #endif */
 
-      my_dset = H5Dcreate(m_file_id, dname, dtype, my_dspace, H5P_DEFAULT, prop_id, H5P_DEFAULT);
+/*       my_dset = H5Dcreate(m_file_id, dname, dtype, my_dspace, H5P_DEFAULT, prop_id, H5P_DEFAULT); */
 
-      // Global virtual dset
-      vspace = H5Screate_simple(num_dims, m_cycle_dims, m_cycle_dims);
-      H5Sselect_hyperslab(vspace, H5S_SELECT_SET, v_start, NULL, my_count, NULL);
-      H5Pset_virtual(vdcpl[c], vspace, const_cast<char*>(m_filename.c_str()), dname, my_dspace);
+/*       // Global virtual dset */
+/*       vspace = H5Screate_simple(num_dims, m_cycle_dims, m_cycle_dims); */
+/*       H5Sselect_hyperslab(vspace, H5S_SELECT_SET, v_start, NULL, my_count, NULL); */
+/*       H5Pset_virtual(vdcpl[c], vspace, const_cast<char*>(m_filename.c_str()), dname, my_dspace); */
 
-      /* if (i != myRank) { */
-        H5Sclose(my_dspace);
-        H5Dclose(my_dset);
-      /* } */
-      /* else { */
-      /*   m_vel_dataspace_id[c] = my_dspace; */
-      /*   m_vel_dataset_id[c]   = my_dset; */
-      /* } */
-    }
-  }
-
-
-  for (int c = 0; c < num_vel; c++) {
-    sprintf(dname, "vel_%d ijk layout", c);
-    vdset = H5Dcreate(m_file_id, dname, dtype, vspace, H5P_DEFAULT, vdcpl[c], H5P_DEFAULT);
-
-    H5Dclose(vdset);
-  }
-
-  if (debug )
-     cout << "Rank" << myRank << "Done creating vel" << endl;
+/*       /1* if (i != myRank) { *1/ */
+/*         H5Sclose(my_dspace); */
+/*         H5Dclose(my_dset); */
+/*       /1* } *1/ */
+/*       /1* else { *1/ */
+/*       /1*   m_vel_dataspace_id[c] = my_dspace; *1/ */
+/*       /1*   m_vel_dataset_id[c]   = my_dset; *1/ */
+/*       /1* } *1/ */
+/*     } */
+/*   } */
 
 
-  H5Pclose(prop_id);
-  H5Pclose(vdcpl[0]);
-  H5Pclose(vdcpl[1]);
-  H5Pclose(vdcpl[2]);
+/*   for (int c = 0; c < num_vel; c++) { */
+/*     sprintf(dname, "vel_%d ijk layout", c); */
+/*     vdset = H5Dcreate(m_file_id, dname, dtype, vspace, H5P_DEFAULT, vdcpl[c], H5P_DEFAULT); */
 
-#endif
-}
+/*     H5Dclose(vdset); */
+/*   } */
 
-void ESSI3DHDF5::write_vel_compression(void* window_array, int comp, int cycle)
-{
-#ifdef USE_HDF5
-  /* bool debug=true; */
-  bool debug=false;
-  bool enable_timing = false;
-  MPI_Comm comm = MPI_COMM_WORLD;
-  int myRank, nProc;
-  herr_t ierr;
-  hid_t window_id, dxpl, dset, dspace, fspace;
-  double write_time_start, write_time;
-  int write_size = m_precision;
-  hsize_t vel_dims=4, start[4]={0,0,0,0}, count[4]={0,0,0,0};
-  char dname[1024];
-  hid_t dtype = H5T_NATIVE_DOUBLE;
-  if (m_precision == 4) 
-    dtype = H5T_NATIVE_FLOAT;
+/*   if (debug ) */
+/*      cout << "Rank" << myRank << "Done creating vel" << endl; */
 
-  m_end_cycle = cycle; // save for header for later when we close the file
 
-  ASSERT(m_all_start_count != NULL);
+/*   H5Pclose(prop_id); */
+/*   H5Pclose(vdcpl[0]); */
+/*   H5Pclose(vdcpl[1]); */
+/*   H5Pclose(vdcpl[2]); */
 
-  dxpl = H5Pcreate(H5P_DATASET_XFER);
-  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE);
+/* #endif */
+/* } */
 
-  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-  MPI_Comm_size(MPI_COMM_WORLD, &nProc);
+/* void ESSI3DHDF5::write_vel_compression(void* window_array, int comp, int cycle) */
+/* { */
+/* #ifdef USE_HDF5 */
+/*   /1* bool debug=true; *1/ */
+/*   bool debug=false; */
+/*   bool enable_timing = false; */
+/*   MPI_Comm comm = MPI_COMM_WORLD; */
+/*   int myRank, nProc; */
+/*   herr_t ierr; */
+/*   hid_t window_id, dxpl, dset, dspace, fspace; */
+/*   double write_time_start, write_time; */
+/*   int write_size = m_precision; */
+/*   hsize_t vel_dims=4, start[4]={0,0,0,0}, count[4]={0,0,0,0}; */
+/*   char dname[1024]; */
+/*   hid_t dtype = H5T_NATIVE_DOUBLE; */
+/*   if (m_precision == 4) */ 
+/*     dtype = H5T_NATIVE_FLOAT; */
 
-  if (enable_timing) 
-    write_time_start = MPI_Wtime();
+/*   m_end_cycle = cycle; // save for header for later when we close the file */
 
-  start[0] = cycle - m_start_cycle;
-  count[0] = 1;
+/*   ASSERT(m_all_start_count != NULL); */
 
-  for (int curProc = 0; curProc < nProc; curProc++) {
-    /* start[1] = m_all_start_count[curProc*6]; */
-    /* start[2] = m_all_start_count[curProc*6+1]; */
-    /* start[3] = m_all_start_count[curProc*6+2]; */
-    count[1] = m_all_start_count[curProc*6+3];
-    count[2] = m_all_start_count[curProc*6+4];
-    count[3] = m_all_start_count[curProc*6+5];
+/*   dxpl = H5Pcreate(H5P_DATASET_XFER); */
+/*   H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE); */
 
-    write_size = m_precision;
-    for (int i = 0; i < 4; i++) 
-      write_size *= count[i];
+/*   MPI_Comm_rank(MPI_COMM_WORLD, &myRank); */
+/*   MPI_Comm_size(MPI_COMM_WORLD, &nProc); */
+
+/*   if (enable_timing) */ 
+/*     write_time_start = MPI_Wtime(); */
+
+/*   start[0] = cycle - m_start_cycle; */
+/*   count[0] = 1; */
+
+/*   for (int curProc = 0; curProc < nProc; curProc++) { */
+/*     /1* start[1] = m_all_start_count[curProc*6]; *1/ */
+/*     /1* start[2] = m_all_start_count[curProc*6+1]; *1/ */
+/*     /1* start[3] = m_all_start_count[curProc*6+2]; *1/ */
+/*     count[1] = m_all_start_count[curProc*6+3]; */
+/*     count[2] = m_all_start_count[curProc*6+4]; */
+/*     count[3] = m_all_start_count[curProc*6+5]; */
+
+/*     write_size = m_precision; */
+/*     for (int i = 0; i < 4; i++) */ 
+/*       write_size *= count[i]; */
     
-    if (write_size == 0) 
-      continue;
+/*     if (write_size == 0) */ 
+/*       continue; */
 
-    sprintf(dname, "vel_%d_%llu_%llu_%llu", comp, m_all_start_count[curProc*6], 
-            m_all_start_count[curProc*6+1], m_all_start_count[curProc*6+2]);
+/*     sprintf(dname, "vel_%d_%llu_%llu_%llu", comp, m_all_start_count[curProc*6], */ 
+/*             m_all_start_count[curProc*6+1], m_all_start_count[curProc*6+2]); */
 
-    dset = H5Dopen(m_file_id, dname, H5P_DEFAULT);
-    if (dset < 0) {
-      cout << "Error from vel dset open!" << endl;
-      MPI_Abort(comm, -1);
-    }
+/*     dset = H5Dopen(m_file_id, dname, H5P_DEFAULT); */
+/*     if (dset < 0) { */
+/*       cout << "Error from vel dset open!" << endl; */
+/*       MPI_Abort(comm, -1); */
+/*     } */
 
-    // Everyone needs to participate the dataset write when filter is enabled
-    dspace = H5Screate_simple(vel_dims, count, count);
-    fspace = H5Dget_space(dset);
-    if (fspace == 0) {
-        cout << "Error with fspace" << endl;
-        MPI_Abort(comm,ierr);
-    }
+/*     // Everyone needs to participate the dataset write when filter is enabled */
+/*     dspace = H5Screate_simple(vel_dims, count, count); */
+/*     fspace = H5Dget_space(dset); */
+/*     if (fspace == 0) { */
+/*         cout << "Error with fspace" << endl; */
+/*         MPI_Abort(comm,ierr); */
+/*     } */
 
-    if (curProc == myRank) {
+/*     if (curProc == myRank) { */
 
-      // debug
-      /* fprintf(stderr, "Rank %d, [%s],  start: %llu, %llu, %llu, %llu, count: %llu, %llu, %llu, %llu \n", */ 
-      /*         myRank, dname, start[0], start[1], start[2], start[3], count[0], count[1], count[2], count[3]); */
+/*       // debug */
+/*       /1* fprintf(stderr, "Rank %d, [%s],  start: %llu, %llu, %llu, %llu, count: %llu, %llu, %llu, %llu \n", *1/ */ 
+/*       /1*         myRank, dname, start[0], start[1], start[2], start[3], count[0], count[1], count[2], count[3]); *1/ */
 
-      ierr = H5Sselect_hyperslab(fspace, H5S_SELECT_SET, start, NULL, count, NULL);
-      if (ierr < 0) {
-        cout << "Error from vel H5Sselect_hyperslab" << endl;
-        MPI_Abort(comm,ierr);
-      }
-    }
-    else {
-      H5Sselect_none(fspace);
-      H5Sselect_none(dspace);
-    }
+/*       ierr = H5Sselect_hyperslab(fspace, H5S_SELECT_SET, start, NULL, count, NULL); */
+/*       if (ierr < 0) { */
+/*         cout << "Error from vel H5Sselect_hyperslab" << endl; */
+/*         MPI_Abort(comm,ierr); */
+/*       } */
+/*     } */
+/*     else { */
+/*       H5Sselect_none(fspace); */
+/*       H5Sselect_none(dspace); */
+/*     } */
 
-    ierr = H5Dwrite(dset, dtype, dspace, fspace, dxpl, window_array);
-    if (ierr < 0) {
-      cout << "Error from vel H5Dwrite " << endl;
-      MPI_Abort(comm,ierr);
-    }
-    if (debug )
-     cout << "Rank" << myRank << "Done writing vel" << endl;
+/*     ierr = H5Dwrite(dset, dtype, dspace, fspace, dxpl, window_array); */
+/*     if (ierr < 0) { */
+/*       cout << "Error from vel H5Dwrite " << endl; */
+/*       MPI_Abort(comm,ierr); */
+/*     } */
+/*     if (debug ) */
+/*      cout << "Rank" << myRank << "Done writing vel" << endl; */
  
-    H5Dclose(dset);
-    H5Sclose(dspace);
-    H5Sclose(fspace);
-  }
+/*     H5Dclose(dset); */
+/*     H5Sclose(dspace); */
+/*     H5Sclose(fspace); */
+/*   } */
 
   
-  if (enable_timing) {
-    write_time = MPI_Wtime() - write_time_start;
-    if (cycle % 100  == 0) {
-      printf("rank=%d, cycle=%d, comp=%d, write size=%fMB, write time=%f\n", 
-              myRank, cycle, comp, write_size/1048576.0, write_time);
-      fflush(stdout);
-    }
-  }
+/*   if (enable_timing) { */
+/*     write_time = MPI_Wtime() - write_time_start; */
+/*     if (cycle % 100  == 0) { */
+/*       printf("rank=%d, cycle=%d, comp=%d, write size=%fMB, write time=%f\n", */ 
+/*               myRank, cycle, comp, write_size/1048576.0, write_time); */
+/*       fflush(stdout); */
+/*     } */
+/*   } */
 
-  H5Pclose(dxpl);
-#endif
-}
-
+/*   H5Pclose(dxpl); */
+/* #endif */
+/* } */
 
 void ESSI3DHDF5::close_file()
 {
@@ -784,3 +783,210 @@ void ESSI3DHDF5::close_file()
 #endif
 }
 
+void ESSI3DHDF5::init_write_vel_compression(int ntimestep, int ZFPmode, double ZFPpar)
+{
+  bool debug=false;
+  /* debug=true; */
+
+#ifdef USE_HDF5
+  MPI_Comm comm = MPI_COMM_WORLD;
+  int myRank, nProc;
+
+  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+  MPI_Comm_size(MPI_COMM_WORLD, &nProc);
+
+  hid_t dtype = H5T_NATIVE_DOUBLE;
+  if (m_precision == 4) 
+      dtype = H5T_NATIVE_FLOAT;
+
+  if (debug && myRank == 0) {
+    char msg[1000];
+    sprintf(msg, "Rank %d creating vel dataspaces size = %d %d %d\n", myRank,
+        (int) m_global_dims[0], (int) m_global_dims[1], (int) m_global_dims[2]);
+    cout << msg;
+  }
+
+  hsize_t my_chunk[4]={0,0,0,0};
+
+  MPI_Allreduce(&m_window_dims[1], &my_chunk[1], 3, MPI_UNSIGNED_LONG_LONG, MPI_MAX, comm);
+
+  my_chunk[0] = 1;
+  for (int i = 1; i < 4; i++) {
+    if (my_chunk[i] > 4) 
+      my_chunk[i] = ((hsize_t)(my_chunk[i]/4))*4;
+  }
+
+  // Create the extendible velocity data space and chunk
+  hsize_t num_vel=3;
+  hsize_t num_dims=4;
+  // m_xvel_dataspace_id = H5Screate_simple(num_dims, m_global_dims, dims);
+  hid_t prop_id = H5Pcreate (H5P_DATASET_CREATE);
+  herr_t ierr = H5Pset_chunk (prop_id, num_dims, my_chunk);
+  if (debug && myRank == 0) {
+    printf("Chunk sizes:\n");
+    for (int i = 0; i < num_dims; i++) 
+      printf("%llu  ", my_chunk[i]);
+    printf("\n");
+    fflush(stdout);
+  }
+
+#ifdef USE_ZFP
+      if (ZFPmode == SW4_ZFP_MODE_RATE) {
+        H5Pset_zfp_rate(prop_id, ZFPpar);
+      }
+      else if (ZFPmode == SW4_ZFP_MODE_PRECISION) {
+        H5Pset_zfp_precision(prop_id, ZFPpar);
+      }
+      else if (ZFPmode == SW4_ZFP_MODE_ACCURACY) {
+        H5Pset_zfp_accuracy(prop_id, ZFPpar);
+      }
+      else if (ZFPmode == SW4_ZFP_MODE_REVERSIBLE) {
+        H5Pset_zfp_reversible(prop_id);
+      }
+      else {
+        cout << "Error with ZFP mode, no compression is used!" << endl;
+      }
+#endif
+
+  if (ntimestep > 0) 
+    m_cycle_dims[0]  = ntimestep + 1;
+  else
+    printf("Error with m_ntimestep=%d!\n", ntimestep);
+
+  for (int c=0; c < num_vel; c++)
+  {
+    m_vel_dataspace_id[c] =
+      H5Screate_simple(num_dims, m_cycle_dims, m_cycle_dims);
+      /* H5Screate_simple(num_dims, m_cycle_dims, m_global_dims); */
+    // Modify dataset creation properties to enable chunking
+    char var[100];
+    sprintf(var, "vel_%d ijk layout", c);
+    m_vel_dataset_id[c] = H5Dcreate2 (m_file_id, var, dtype,
+        m_vel_dataspace_id[c], H5P_DEFAULT, prop_id, H5P_DEFAULT);
+    if (m_vel_dataset_id[c] < 0) {
+      printf("Error with H5Dcreate!\n");
+      MPI_Abort(comm,ierr);
+    }
+  }
+  H5Pclose(prop_id);
+  if (debug )
+    cout << "Rank" << myRank << "Done creating vel" << endl;
+#endif
+}
+
+void ESSI3DHDF5::write_vel_compression(void* window_array, int comp, int cycle)
+{
+  bool enable_timing = false;
+  bool debug=false;
+  /* debug=true; */
+#ifdef USE_HDF5
+
+  herr_t ierr;
+  double write_time_start, write_time;
+  int myRank;
+  int write_size = m_precision;
+  m_end_cycle = cycle; // save for header for later when we close the file
+
+  MPI_Comm comm = MPI_COMM_WORLD;
+  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+
+  hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
+  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE);
+
+  hid_t dtype = H5T_NATIVE_DOUBLE;
+  if (m_precision == 4) 
+    dtype = H5T_NATIVE_FLOAT;
+
+  for (int i = 0; i < 4; i++) 
+      write_size *= m_window_dims[i];
+  
+  /* if (write_size == 0) */ 
+  /*     return; */
+  
+  if (enable_timing) 
+    write_time_start = MPI_Wtime();
+  // Loop over slices and write a new time step
+
+  m_cycle_dims[0] = cycle - m_start_cycle + 1;
+  /* ierr = H5Dset_extent(m_vel_dataset_id[comp], m_cycle_dims); */
+  /* if (ierr < -1) */
+  /* { */
+  /*   cout << "Error from H5Dset_extent " << endl; */
+  /*   MPI_Abort(comm,ierr); */
+  /* } */
+  hsize_t vel_dims=4;
+  hid_t window_id = H5Screate_simple(vel_dims, m_window_dims, NULL);
+  // MPI_Barrier(comm);
+  char msg[1000];
+  /*
+  if (debug)
+     cout << "Rank " << myRank <<
+       " in write_vel: starting slab loop" << endl;
+  sprintf(msg, "Rank %d writing vel hyperslab = (%d:%d %d:%d %d:%d %d)\n",
+      myRank, m_window[0], m_window[1], m_window[2], m_window[3],
+      m_window[4], m_window[5], );
+  cout << msg;
+  */
+
+  m_vel_dataspace_id[comp] = H5Dget_space(m_vel_dataset_id[comp]);
+  hsize_t start[4]={0,0,0,0};
+  start[0] = cycle - m_start_cycle;
+  start[1] = m_window[0]; // local index lo relative to global
+  start[2] = m_window[2]; // local index lo relative to global
+  start[3] = m_window[4]; // local index lo relative to global
+  if (debug)
+  {
+    sprintf(msg, "Rank %d writing vel dataset index = %d %d %d %d\n",
+      myRank, (int) start[0], (int) start[1], (int) start[2], (int) start[3]);
+    cout << msg;
+  }
+
+  hsize_t my_size = 1;
+  for (int i = 0; i < vel_dims; i++) 
+    my_size *= m_window_dims[i];
+
+  if (my_size == 0) {
+    H5Sselect_none(m_vel_dataspace_id[comp]);
+    H5Sselect_none(window_id);
+  }
+  else {
+    ierr = H5Sselect_hyperslab(m_vel_dataspace_id[comp], H5S_SELECT_SET,
+              start, NULL, m_window_dims, NULL);
+    if (ierr < 0)
+    {
+      cout << "Error from vel H5Sselect_hyperslab" << endl;
+      MPI_Abort(comm,ierr);
+    }
+  }
+
+  if (debug)
+  {
+    char msg[1000];
+    sprintf(msg, "Writing vel array Rank %d\n", myRank);
+    cout << msg;
+    cout.flush();
+  }
+
+  ierr = H5Dwrite(m_vel_dataset_id[comp], dtype, window_id,
+      m_vel_dataspace_id[comp], dxpl, window_array);
+  if (ierr < 0)
+  {
+    cout << "Error from vel H5Dwrite " << endl;
+    MPI_Abort(comm,ierr);
+  }
+  if (debug )
+     cout << "Rank" << myRank << "Done writing vel" << endl;
+  // H5Sclose(slice_id);
+  
+  if (enable_timing) {
+    write_time = MPI_Wtime() - write_time_start;
+    if (cycle % 100  == 0) {
+      printf("rank=%d, cycle=%d, comp=%d, write size=%fMB, write time=%f\n", 
+              myRank, cycle, comp, write_size/1048576.0, write_time);
+      fflush(stdout);
+    }
+  }
+
+  H5Pclose(dxpl);
+#endif
+}
