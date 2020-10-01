@@ -374,10 +374,16 @@ void Mopt::processMrun( char* buffer )
       else if( startswith("misfit=",token) )
       {
 	 token += 7;
+     std::cout << "token=" << token << std::endl;
 	 if( strcmp(token,"l2")==0 )
-	    m_misfit = L2;
+	   { 
+         m_misfit = L2;
+      }
 	 else if( strcmp(token,"crosscorr")==0 )
-	    m_misfit = CROSSCORR;
+	    { 
+          m_misfit = CROSSCORR;
+          std::cout << "CROSSCORR selected" << std::endl;
+       }
 	 else
 	    CHECK_INPUT(false,"ERROR, mrun misfit= " << token << " not understood" << endl);
       }

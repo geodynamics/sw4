@@ -1785,7 +1785,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 // Windowing and component selection
     float_sw4 wghx, wghy, wghz, tau;
     float_sw4 wghx2, wghy2, wghz2;
-    tau = m_dt*20;
+    tau = m_dt*2;
 
 	 wghx = wghy = wghz = wghv;
  
@@ -1807,6 +1807,9 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
          wghx = (wghx >= wghx2? wghx : wghx2);  // take the maximum of either window weight
          wghz = wghy = wghx;
         } // if 2nd window exists
+
+        //std::cout << "time=" << t << " winR2=" << m_winR2 << " wghx=" << wghx << std::endl;
+
 	 }
          if( !m_use_x )
 	    wghx = 0;
@@ -2120,8 +2123,8 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 	 return;
       }
 // Windowing and component selection
-      float_sw4 wghx, wghy, wghz, tau;
-      tau = m_dt*20;
+      float_sw4 wghx, wghy, wghz, wghx2, wghy2, wghz2,tau;
+      tau = m_dt*2;
 
       wghx = wghy = wghz = wghv;
       if( m_use_win )
@@ -2132,6 +2135,17 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 	 else
       wghx=wghy=wghz= 0.5*tanhf((t-m_winL)/tau) - 0.5*tanhf((t-m_winR)/tau);
 	   //wghx = wghy = wghz = pow(cos(aw*(t-tshift)+bw),5.0)*wghv;
+
+       if(m_winL2>0 || m_winR2>0) {  // if 2nd window exists
+         if( t < m_winL2 || t > m_winR2 ) 
+	         wghx2 = wghy2 = wghz2 = 0;
+	      else
+            wghx2=wghy2=wghz2= 0.5*tanhf((t-m_winL2)/tau) - 0.5*tanhf((t-m_winR2)/tau);   //windowing of waveform
+
+         wghx = (wghx >= wghx2? wghx : wghx2);  // take the maximum of either window weight
+         wghz = wghy = wghx;
+        } // if 2nd window exists
+
       }
       if( !m_use_x )
 	 wghx = 0;
@@ -2527,11 +2541,20 @@ float_sw4 TimeSeries::product_wgh( TimeSeries& ts ) const
 	 }
 
 // Windowing and component selection
-         float_sw4 wghx, wghy, wghz;
-	 wghx = wghy = wghz = wghv;
+         float_sw4 wghx, wghy, wghz, wghx2, wghy2, wghz2;
+	    wghx = wghy = wghz = wghv;
          float_sw4 t = m_t0 + i*m_dt;
          if( m_use_win && (t < m_winL || t > m_winR) )
 	    wghx = wghy = wghz = 0;
+
+        if(m_winL2>0 || m_winR2>0) {  // if 2nd window exists
+         if( t < m_winL2 || t > m_winR2 ) 
+	         wghx2 = wghy2 = wghz2 = 0;
+	      
+         wghx = (wghx >= wghx2? wghx : wghx2);  // take the maximum of either window weight
+         wghz = wghy = wghx;
+        } // if 2nd window exists
+
          if( !m_use_x )
 	    wghx = 0;
          if( !m_use_y )

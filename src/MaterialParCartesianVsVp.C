@@ -539,6 +539,7 @@ void MaterialParCartesianVsVp::smooth_gradient(double* dfs)
 	     ind++;
 	 }
 
+
    MPI_Barrier(MPI_COMM_WORLD);
    glambda.gaussian_smooth(31, 5.);
    gmu.gaussian_smooth(21, 3.);

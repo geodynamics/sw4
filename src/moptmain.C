@@ -220,7 +220,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    checkMinMax(nmpars/2, coarse, "coarse:");
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
-     //simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 0, simulation.getRank());
+     simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 0, simulation.getRank());
    }
    delete[] coarse;
    MPI_Barrier(MPI_COMM_WORLD);
@@ -384,7 +384,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    checkMinMax(nmpars/2, coarse, "coarse2:");
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
-     //simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 0, myrank);
+     simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 0, myrank);
    }
     MPI_Barrier(MPI_COMM_WORLD);
    delete[] coarse;
@@ -416,9 +416,11 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    for( int m=0 ; m < nmpard ; m++ )
       dfm[m] = 0;
 
-  if( !mopt->m_test_regularizer ){
+  if( !mopt->m_test_regularizer )
+  {
         mopt->init_pseudohessian( pseudo_hessian );
         int phcase = mopt->get_pseudo_hessian_case();
+
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
       std::cout << "compute_f_df forward solve"  << " time from t0=" << MPI_Wtime()-t0 << std::endl;
@@ -453,7 +455,12 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       }
 
             if(myrank == 0) 
-                  createTimeSeriesHDF5File(diffs, GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "_adj.h5");
+            {
+              if( mopt->m_misfit == Mopt::L2 )
+                  createTimeSeriesHDF5File(diffs, GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "_adj_l2.h5");
+              if(mopt->m_misfit == Mopt::CROSSCORR)
+                  createTimeSeriesHDF5File(diffs, GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "_adj_cross.h5");
+            }
             MPI_Barrier(MPI_COMM_WORLD); 
 
        std::cout << "GlobalTimeSeries[e][0] Nsteps=" <<  GlobalTimeSeries[e][0]->getNsteps() << " hdf5Format=" << diffs[0]->getUseHDF5() << std::endl;
@@ -464,7 +471,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       {
 	 double dshift, ddshift, dd1shift;
 
-     for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ ) {
+     for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ ) 
+     {
 	     f += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
       // QC adj source by wei
       #if USE_HDF5
@@ -477,13 +485,10 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
                      diffs[m]->setFidPtr(diffs[0]->getFidPtr());
                      diffs[m]->setTS0Ptr(diffs[0]);
                    } 
-        diffs[m]->writeFile("_adj.h5");
+        diffs[m]->writeFile("_adj_l2.h5");
         //if(diffs[m]->myPoint()) std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
         //    << " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;
-
       #endif
-
-        //diffs[m]->writeFileUSGS();
         }
 
         std::cout << ">>>>>>>>>>>>>>>>>>> adj source written to files" << std::endl;
@@ -491,13 +496,24 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       else if( mopt->m_misfit == Mopt::CROSSCORR )
          {
             for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
+            {
                f += GlobalTimeSeries[e][m]->misfit2( *GlobalObservations[e][m], diffs[m] );
+      #if USE_HDF5
+                 // Allocate HDF5 fid for later file write
+                   if(m == 0) { 
+                     diffs[0]->allocFid();
+                     diffs[0]->setTS0Ptr(diffs[0]);
+                   }
+                   else {
+                     diffs[m]->setFidPtr(diffs[0]->getFidPtr());
+                     diffs[m]->setTS0Ptr(diffs[0]);
+                   } 
+        diffs[m]->writeFile("_adj_cross.h5");
+        //if(diffs[m]->myPoint()) std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
+        //    << " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;
+      #endif
          }
-
-
-      double mftmp = f;
-      MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-
+      } // end of Mopt
 
       double dfsrc[11];
       get_source_pars( nspar, dfsrc, dfs );   
@@ -536,22 +552,23 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       //std::cout << "gMu_xform min=" << gMu[0].minimum() << " max=" << gMu[0].maximum() << std::endl;
       //std::cout << "gLambda_xform min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << std::endl;
     
+    mopt->m_mp->smooth_gradient(dfsevent); // needs to act on dfsevent instead of dfs
+
       for( int m=0 ; m < nmpars ; m++ )
 	      dfs[m+nspar] += dfsevent[m];
       for( int m=0 ; m < nmpard ; m++ )
 	      dfm[m] += dfmevent[m];
 
-      
 // 3. Give back memory
       for( unsigned int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
 	        delete diffs[m];
       diffs.clear();
-   }
+   }  // over all events
+
    double mftmp = f;
    MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
    
-
-         if( phcase > 0 )
+      if( phcase > 0 )
       {
 // Interpolate pseudo-hessian to parameter grid
          float_sw4* phs=0, *phm=0;
@@ -582,7 +599,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          // For plotting purpose:
          normalize_gradient_ph( pseudo_hessian, gRho, gMu, gLambda, eps, phcase );
       }
-  }
+  } 
   
 // add in a Tikhonov regularizing term:
    bool tikhonovreg=false;
