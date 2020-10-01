@@ -57,6 +57,7 @@ public:
    ESSI3D( EW * a_ew,
       const std::string& filePrefix,
       int dumpInterval,
+      int bufferInterval,
       float_sw4 coordBox[4],
       float_sw4 depth,
       int precision,
@@ -66,6 +67,7 @@ public:
    ~ESSI3D();
 
    void set_dump_interval( int a_dumpInterval );
+   void set_buffer_interval( int a_bufferInterval );
    void setup( );
 
    double getHDF5Timings();
@@ -80,7 +82,7 @@ public:
        std::string& a_path, Sarray& a_Z );
 
 protected:
-   void compute_image( Sarray& a_U, int a_comp );
+   void compute_image( Sarray& a_U, int a_comp, int cycle );
 
    void write_image( int cycle, std::string& path, float_sw4 t, Sarray& a_Z );
 
@@ -128,6 +130,8 @@ private:
 
    int m_cycle;
    int m_dumpInterval; // Note: this cycle interval to start a new file
+   int m_bufferInterval; // Note: number of steps to buffer data before writting out
+   int m_nbufstep;
    int mWindow[6]; // Local in processor start + end indices for (i,j,k) for last curvilinear grid
    int mGlobalDims[6]; // Global start + end indices for (i,j,k) for last curvilinear grid
    double* m_doubleField;
