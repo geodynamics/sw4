@@ -85,10 +85,16 @@ ESSI3D::ESSI3D( EW* a_ew,
 ESSI3D::~ESSI3D()
 {
   if( m_memallocated ) {
-    if (m_precision == 4) 
+    if (m_precision == 4) {
+      for (int i = 0; i < 3; i++) 
+        delete [] m_floatField[i];
       delete[] m_floatField;
-    else if (m_precision == 8) 
+    }
+    else if (m_precision == 8) {
+      for (int i = 0; i < 3; i++) 
+        delete [] m_doubleField[i];
       delete[] m_doubleField;
+    }
   }
 
   if (m_hdf5helper != NULL)
@@ -192,17 +198,29 @@ void ESSI3D::setup( )
       ( (mWindow[3] - mWindow[2]) + 1)* ( (mWindow[5] - mWindow[4]) + 1);
     npts *= m_bufferInterval;
 
-    if (m_precision == 4) 
-      m_floatField = new float[npts];
-    else if (m_precision == 8) 
-      m_doubleField = new double[npts];
+    if (m_precision == 4) {
+      m_floatField = new float*[3];
+      for (int i = 0; i < 3; i++) 
+        m_floatField[i] = new float[npts];
+    }
+    else if (m_precision == 8) {
+      m_doubleField = new double*[3];
+      for (int i = 0; i < 3; i++) 
+        m_doubleField[i] = new double[npts];
+    }
   }
   else
   {
-    if (m_precision == 4) 
-      m_floatField = new float[1];
-    else if (m_precision == 8) 
-      m_doubleField = new double[1];
+    if (m_precision == 4) {
+      m_floatField = new float*[3];
+      for (int i = 0; i < 3; i++) 
+        m_floatField[i] = new float[1];
+    }
+    else if (m_precision == 8) {
+      m_doubleField = new double*[3];
+      for (int i = 0; i < 3; i++) 
+        m_doubleField[i] = new double[1];
+    }
   }
   m_memallocated = true;
 #ifdef USE_HDF5
@@ -297,7 +315,7 @@ void ESSI3D::compute_image( Sarray& a_A, int a_comp, int cycle )
   size_t nkw = (mWindow[5]-mWindow[4])+1;
   size_t njkw=nkw*((mWindow[3]-mWindow[2])+1);
   size_t nijkw=njkw*((mWindow[1]-mWindow[0])+1);
-  const int c  = a_comp+1; 
+  const int c  = a_comp+1;  // a_A array is 1-based
 #pragma omp parallel for
   for( int k=mWindow[4] ; k <= mWindow[5] ; k++ )
   for( int j=mWindow[2] ; j <= mWindow[3] ; j++ )
@@ -308,13 +326,11 @@ void ESSI3D::compute_image( Sarray& a_A, int a_comp, int cycle )
     size_t ind = njkw*(i-mWindow[0])+nkw*(j-mWindow[2])+(k-mWindow[4]);
     ind += m_nbufstep * nijkw;
     if (m_precision == 4) 
-      m_floatField[ind]= (float) a_A(c,i,j,k);
+      m_floatField[a_comp][ind]= (float) a_A(c,i,j,k);
     else if (m_precision == 8) 
-      m_doubleField[ind]= (double) a_A(c,i,j,k);
+      m_doubleField[a_comp][ind]= (double) a_A(c,i,j,k);
   }
 
-  m_nbufstep++;
-  m_nbufstep %= m_bufferInterval;
 }
 
 //-----------------------------------------------------------------------
@@ -432,9 +448,9 @@ void ESSI3D::open_vel_file( int a_cycle, std::string& a_path,
   {
     compute_image(a_Z, 0, 0);
     if (m_precision == 4) 
-      m_hdf5helper->write_topo(m_floatField);
+      m_hdf5helper->write_topo(m_floatField[0]);
     else if (m_precision == 8) 
-      m_hdf5helper->write_topo(m_doubleField);
+      m_hdf5helper->write_topo(m_doubleField[0]);
     m_nbufstep = 0;
   }
 
@@ -444,15 +460,15 @@ void ESSI3D::open_vel_file( int a_cycle, std::string& a_path,
   */
 
   if (m_dumpInterval > 0) {
-    int nstep = m_ntimestep / m_dumpInterval;
+    int nstep = (int)ceil(m_ntimestep / m_dumpInterval);
     if (m_ZFPmode > 0) 
-      m_hdf5helper->init_write_vel_compression(nstep, m_ZFPmode, m_ZFPpar, m_dumpInterval);
+      m_hdf5helper->init_write_vel_compression(nstep, m_ZFPmode, m_ZFPpar, m_bufferInterval);
     else
       m_hdf5helper->init_write_vel(nstep);
   }
   else{
     if (m_ZFPmode > 0) 
-      m_hdf5helper->init_write_vel_compression(m_ntimestep, m_ZFPmode, m_ZFPpar, m_dumpInterval);
+      m_hdf5helper->init_write_vel_compression(m_ntimestep, m_ZFPmode, m_ZFPpar, m_bufferInterval);
     else
       m_hdf5helper->init_write_vel(m_ntimestep);
   }
@@ -480,25 +496,39 @@ void ESSI3D::write_image_hdf5( int cycle, std::string &path, float_sw4 t,
 {
   // Top grid only
   int g = mEW->mNumberOfGrids-1;
+  int doWrite = 0;
+
+  int myRank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
   for (int i = 0; i < 3; i++) {
     compute_image(a_U[g], i, cycle);
-    if (cycle > 0 && (m_nbufstep == m_bufferInterval || cycle == m_ntimestep-1)) {
+    if (cycle > 0 && (m_nbufstep == m_bufferInterval-1 || cycle == m_ntimestep)) {
       if (m_ZFPmode > 0) {
         if (m_precision == 4) 
-          m_hdf5helper->write_vel_compression((void*)m_floatField, i, cycle, m_nbufstep);
+          m_hdf5helper->write_vel_compression((void*)m_floatField[i], i, cycle, m_nbufstep);
         else if (m_precision == 8) 
-          m_hdf5helper->write_vel_compression((void*)m_doubleField, i, cycle, m_nbufstep);
+          m_hdf5helper->write_vel_compression((void*)m_doubleField[i], i, cycle, m_nbufstep);
       }
       else {
         if (m_precision == 4) 
-          m_hdf5helper->write_vel((void*)m_floatField, i, cycle, m_nbufstep);
+          m_hdf5helper->write_vel((void*)m_floatField[i], i, cycle, m_nbufstep);
         else if (m_precision == 8) 
-          m_hdf5helper->write_vel((void*)m_doubleField, i, cycle, m_nbufstep);
+          m_hdf5helper->write_vel((void*)m_doubleField[i], i, cycle, m_nbufstep);
       }
-      m_nbufstep = 0;
+      doWrite++;
     }
   }
 
+  m_nbufstep++;
+  m_nbufstep %= m_bufferInterval;
+
+  if (!(doWrite == 3 || doWrite == 0)) 
+    fprintf(stderr, "Error with essioutput write_image_hdf5, not all variables are written correctly!\n");
+
+  if (doWrite == 3) {
+    m_nbufstep = 0;
+    printf("Rank %d: write_image_hdf5 cycle=%d, m_nbufstep=%d\n", myRank, cycle, m_nbufstep);
+  }
 }
 #endif // ifdef USE_HDF5

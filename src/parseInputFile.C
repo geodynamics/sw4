@@ -3893,7 +3893,7 @@ void EW::processImage3D( char* buffer )
 //-----------------------------------------------------------------------
 void EW::processESSI3D( char* buffer )
 {
-   int dumpInterval=-1, bufferInterval=-1;
+   int dumpInterval=-1, bufferInterval=1;
    string filePrefix="essioutput";
    float_sw4 coordValue;
    float_sw4 coordBox[4];
