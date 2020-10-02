@@ -59,7 +59,7 @@ public:
   void write_vel(void* window_array, int comp, int cycle, int nstep);
 
   void init_write_vel_compression(int ntimestep, int ZFPmode, double ZFPpar, int dumpInterval);
-  void write_vel_compression(void* window_array, int comp, int cycle, int nstep);
+  /* void write_vel_compression(void* window_array, int comp, int cycle, int nstep); */
 
   const std::string& filename() {return m_filename;};
   void set_ihavearray(bool ihavearray) {m_ihavearray=ihavearray;};

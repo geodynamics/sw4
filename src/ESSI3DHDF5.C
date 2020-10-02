@@ -345,15 +345,7 @@ void ESSI3DHDF5::init_write_vel(int ntimestep)
   if (m_precision == 4) 
       dtype = H5T_NATIVE_FLOAT;
 
-  if (debug)
-  {
-    char msg[1000];
-    sprintf(msg, "Rank %d creating vel dataspaces size = %d %d %d\n", myRank,
-        (int) m_global_dims[0], (int) m_global_dims[1], (int) m_global_dims[2]);
-    cout << msg;
-  }
   // Create the extendible velocity data space and chunk
-  hsize_t num_vel=3;
   hsize_t num_dims=4;
   // m_xvel_dataspace_id = H5Screate_simple(num_dims, m_global_dims, dims);
   hid_t prop_id = H5Pcreate (H5P_DATASET_CREATE);
@@ -370,14 +362,14 @@ void ESSI3DHDF5::init_write_vel(int ntimestep)
   else
     printf("Error with m_ntimestep=%d!\n", ntimestep);
 
-  /* if (myRank == 0) { */
-  /*     printf("m_cycle_dims sizes:\n"); */
-  /*     for (int i = 0; i < num_dims; i++) */ 
-  /*         printf("%llu  ", m_cycle_dims[i]); */
-  /* } */
-  /* printf("\n"); */
+  if (debug) {
+    char msg[1000];
+    sprintf(msg, "Rank %d creating vel dataspaces size = %d %d %d %d\n", myRank,
+        (int) m_cycle_dims[0], (int) m_cycle_dims[1], (int) m_cycle_dims[2], (int) m_cycle_dims[3]);
+    cout << msg;
+  }
 
-  for (int c=0; c < num_vel; c++)
+  for (int c=0; c < 3; c++)
   {
     m_vel_dataspace_id[c] =
       H5Screate_simple(num_dims, m_cycle_dims, m_cycle_dims);
@@ -394,111 +386,111 @@ void ESSI3DHDF5::init_write_vel(int ntimestep)
 #endif
 }
 
-void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep)
-{
-#ifdef USE_HDF5
-  /* bool debug=true; */
-  bool enable_timing = false;
-  bool debug=false;
-  MPI_Comm comm = MPI_COMM_WORLD;
-  int myRank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-  herr_t ierr;
-  double write_time_start, write_time;
-  int write_size = m_precision;
-  m_end_cycle = cycle; // save for header for later when we close the file
-  hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
-  hid_t dtype = H5T_NATIVE_DOUBLE;
-  if (m_precision == 4) 
-    dtype = H5T_NATIVE_FLOAT;
+/* void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) */
+/* { */
+/* #ifdef USE_HDF5 */
+/*   /1* bool debug=true; *1/ */
+/*   bool enable_timing = false; */
+/*   bool debug=false; */
+/*   MPI_Comm comm = MPI_COMM_WORLD; */
+/*   int myRank; */
+/*   MPI_Comm_rank(MPI_COMM_WORLD, &myRank); */
+/*   herr_t ierr; */
+/*   double write_time_start, write_time; */
+/*   int write_size = m_precision; */
+/*   m_end_cycle = cycle; // save for header for later when we close the file */
+/*   hid_t dxpl = H5Pcreate(H5P_DATASET_XFER); */
+/*   hid_t dtype = H5T_NATIVE_DOUBLE; */
+/*   if (m_precision == 4) */ 
+/*     dtype = H5T_NATIVE_FLOAT; */
 
-  for (int i = 0; i < 4; i++) 
-      write_size *= m_window_dims[i];
+/*   for (int i = 0; i < 4; i++) */ 
+/*       write_size *= m_window_dims[i]; */
   
-  if (write_size == 0) 
-      return;
+/*   if (write_size == 0) */ 
+/*       return; */
   
-  if (enable_timing) 
-    write_time_start = MPI_Wtime();
-  // Loop over slices and write a new time step
+/*   if (enable_timing) */ 
+/*     write_time_start = MPI_Wtime(); */
+/*   // Loop over slices and write a new time step */
 
-  /* m_cycle_dims[0] = cycle - m_start_cycle + 1; */
-  /* ierr = H5Dset_extent(m_vel_dataset_id[comp], m_cycle_dims); */
-  /* if (ierr < -1) */
-  /* { */
-  /*   cout << "Error from H5Dset_extent " << endl; */
-  /*   MPI_Abort(comm,ierr); */
-  /* } */
-  hsize_t vel_dims=4;
-  hsize_t buf_window_dims[4];
-  buf_window_dims[0] = nstep;
-  buf_window_dims[1] = m_window_dims[1];
-  buf_window_dims[2] = m_window_dims[2];
-  buf_window_dims[3] = m_window_dims[3];
-  /* hid_t window_id = H5Screate_simple(vel_dims, m_window_dims, NULL); */
-  hid_t window_id = H5Screate_simple(vel_dims, buf_window_dims, NULL);
-  // MPI_Barrier(comm);
-  char msg[1000];
-  /*
-  if (debug)
-     cout << "Rank " << myRank <<
-       " in write_vel: starting slab loop" << endl;
-  sprintf(msg, "Rank %d writing vel hyperslab = (%d:%d %d:%d %d:%d %d)\n",
-      myRank, m_window[0], m_window[1], m_window[2], m_window[3],
-      m_window[4], m_window[5], );
-  cout << msg;
-  */
+/*   /1* m_cycle_dims[0] = cycle - m_start_cycle + 1; *1/ */
+/*   /1* ierr = H5Dset_extent(m_vel_dataset_id[comp], m_cycle_dims); *1/ */
+/*   /1* if (ierr < -1) *1/ */
+/*   /1* { *1/ */
+/*   /1*   cout << "Error from H5Dset_extent " << endl; *1/ */
+/*   /1*   MPI_Abort(comm,ierr); *1/ */
+/*   /1* } *1/ */
+/*   hsize_t vel_dims=4; */
+/*   hsize_t buf_window_dims[4]; */
+/*   buf_window_dims[0] = nstep; */
+/*   buf_window_dims[1] = m_window_dims[1]; */
+/*   buf_window_dims[2] = m_window_dims[2]; */
+/*   buf_window_dims[3] = m_window_dims[3]; */
+/*   /1* hid_t window_id = H5Screate_simple(vel_dims, m_window_dims, NULL); *1/ */
+/*   hid_t window_id = H5Screate_simple(vel_dims, buf_window_dims, NULL); */
+/*   // MPI_Barrier(comm); */
+/*   char msg[1000]; */
+/*   /* */
+/*   if (debug) */
+/*      cout << "Rank " << myRank << */
+/*        " in write_vel: starting slab loop" << endl; */
+/*   sprintf(msg, "Rank %d writing vel hyperslab = (%d:%d %d:%d %d:%d %d)\n", */
+/*       myRank, m_window[0], m_window[1], m_window[2], m_window[3], */
+/*       m_window[4], m_window[5], ); */
+/*   cout << msg; */
+/*   *1/ */
 
-  m_vel_dataspace_id[comp] = H5Dget_space(m_vel_dataset_id[comp]);
-  hsize_t start[4]={0,0,0,0}; 
-  start[0] = cycle - m_start_cycle;
-  start[1] = m_window[0]; // local index lo relative to global
-  start[2] = m_window[2]; // local index lo relative to global
-  start[3] = m_window[4]; // local index lo relative to global
-  if (debug)
-  {
-    sprintf(msg, "Rank %d writing vel dataset index = %d %d %d %d\n",
-        myRank,
-        (int) start[0], (int) start[1], (int) start[2], (int) start[3]);
-    cout << msg;
-  }
-  ierr = H5Sselect_hyperslab(m_vel_dataspace_id[comp], H5S_SELECT_SET,
-            start, NULL, buf_window_dims, NULL);
-  if (ierr < 0)
-  {
-    cout << "Error from vel H5Sselect_hyperslab" << endl;
-    MPI_Abort(comm,ierr);
-  }
-  if (debug)
-  {
-    char msg[1000];
-    sprintf(msg, "Writing vel array Rank %d\n", myRank);
-    cout << msg;
-    cout.flush();
-  }
-  ierr = H5Dwrite(m_vel_dataset_id[comp], dtype, window_id,
-      m_vel_dataspace_id[comp], dxpl, window_array);
-  if (ierr < 0)
-  {
-    cout << "Error from vel H5Dwrite " << endl;
-    MPI_Abort(comm,ierr);
-  }
-  if (debug )
-     cout << "Rank" << myRank << "Done writing vel" << endl;
-  // H5Sclose(slice_id);
+/*   m_vel_dataspace_id[comp] = H5Dget_space(m_vel_dataset_id[comp]); */
+/*   hsize_t start[4]={0,0,0,0}; */ 
+/*   start[0] = cycle - m_start_cycle; */
+/*   start[1] = m_window[0]; // local index lo relative to global */
+/*   start[2] = m_window[2]; // local index lo relative to global */
+/*   start[3] = m_window[4]; // local index lo relative to global */
+/*   if (debug) */
+/*   { */
+/*     sprintf(msg, "Rank %d writing vel dataset index = %d %d %d %d\n", */
+/*         myRank, */
+/*         (int) start[0], (int) start[1], (int) start[2], (int) start[3]); */
+/*     cout << msg; */
+/*   } */
+/*   ierr = H5Sselect_hyperslab(m_vel_dataspace_id[comp], H5S_SELECT_SET, */
+/*             start, NULL, buf_window_dims, NULL); */
+/*   if (ierr < 0) */
+/*   { */
+/*     cout << "Error from vel H5Sselect_hyperslab" << endl; */
+/*     MPI_Abort(comm,ierr); */
+/*   } */
+/*   if (debug) */
+/*   { */
+/*     char msg[1000]; */
+/*     sprintf(msg, "Writing vel array Rank %d\n", myRank); */
+/*     cout << msg; */
+/*     cout.flush(); */
+/*   } */
+/*   ierr = H5Dwrite(m_vel_dataset_id[comp], dtype, window_id, */
+/*       m_vel_dataspace_id[comp], dxpl, window_array); */
+/*   if (ierr < 0) */
+/*   { */
+/*     cout << "Error from vel H5Dwrite " << endl; */
+/*     MPI_Abort(comm,ierr); */
+/*   } */
+/*   if (debug ) */
+/*      cout << "Rank" << myRank << "Done writing vel" << endl; */
+/*   // H5Sclose(slice_id); */
   
-  if (enable_timing) {
-    write_time = MPI_Wtime() - write_time_start;
-    if (cycle % 100  == 0) {
-      printf("rank=%d, cycle=%d, comp=%d, write size=%fMB, write time=%f\n", 
-              myRank, cycle, comp, write_size/1048576.0, write_time);
-      fflush(stdout);
-    }
-  }
+/*   if (enable_timing) { */
+/*     write_time = MPI_Wtime() - write_time_start; */
+/*     if (cycle % 100  == 0) { */
+/*       printf("rank=%d, cycle=%d, comp=%d, write size=%fMB, write time=%f\n", */ 
+/*               myRank, cycle, comp, write_size/1048576.0, write_time); */
+/*       fflush(stdout); */
+/*     } */
+/*   } */
 
-  H5Pclose(dxpl);
-#endif
-}
+/*   H5Pclose(dxpl); */
+/* #endif */
+/* } */
 
 /* void ESSI3DHDF5::init_write_vel_compression(int ntimestep, int ZFPmode, double ZFPpar) */
 /* { */
@@ -512,7 +504,6 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep)
 /*   if (m_precision == 4) */ 
 /*     dtype = H5T_NATIVE_FLOAT; */
 
-/*   hsize_t num_vel=3; */
 /*   hsize_t num_dims=4; */
 /*   hsize_t start_count[6], my_count[4], my_start[4], v_start[4], my_chunk[4], my_size; */
 /*   hid_t prop_id, vspace, vdset, vdcpl[3]; */
@@ -584,7 +575,7 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep)
 /*     my_chunk[2] = my_count[2]; */
 /*     my_chunk[3] = my_count[3]; */
 
-/*     for (int c = 0; c < num_vel; c++) { */
+/*     for (int c = 0; c < 3; c++) { */
 
 /*       sprintf(dname, "vel_%d_%llu_%llu_%llu", c, v_start[1], v_start[2], v_start[3]); */
 /*       my_dspace = H5Screate_simple(num_dims, my_count, my_count); */
@@ -628,7 +619,7 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep)
 /*   } */
 
 
-/*   for (int c = 0; c < num_vel; c++) { */
+/*   for (int c = 0; c < 3; c++) { */
 /*     sprintf(dname, "vel_%d ijk layout", c); */
 /*     vdset = H5Dcreate(m_file_id, dname, dtype, vspace, H5P_DEFAULT, vdcpl[c], H5P_DEFAULT); */
 
@@ -795,7 +786,6 @@ void ESSI3DHDF5::init_write_vel_compression(int ntimestep, int ZFPmode, double Z
   debug=true;
 
 #ifdef USE_HDF5
-  MPI_Comm comm = MPI_COMM_WORLD;
   int myRank, nProc;
 
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
@@ -805,28 +795,21 @@ void ESSI3DHDF5::init_write_vel_compression(int ntimestep, int ZFPmode, double Z
   if (m_precision == 4) 
       dtype = H5T_NATIVE_FLOAT;
 
-  if (debug && myRank == 0) {
-    char msg[1000];
-    sprintf(msg, "Rank %d creating vel dataspaces size = %d %d %d\n", myRank,
-        (int) m_global_dims[0], (int) m_global_dims[1], (int) m_global_dims[2]);
-    cout << msg;
-  }
-
-  hsize_t my_chunk[4]={0,0,0,0};
-
-  MPI_Allreduce(&m_window_dims[1], &my_chunk[1], 3, MPI_UNSIGNED_LONG_LONG, MPI_MAX, comm);
-
-  my_chunk[0] = bufferInterval;
-  for (int i = 1; i < 4; i++) {
-    if (my_chunk[i] > 4) 
-      my_chunk[i] = ((hsize_t)(my_chunk[i]/4))*4;
-  }
-
   // Create the extendible velocity data space and chunk
-  hsize_t num_vel=3;
   hsize_t num_dims=4;
   // m_xvel_dataspace_id = H5Screate_simple(num_dims, m_global_dims, dims);
   hid_t prop_id = H5Pcreate (H5P_DATASET_CREATE);
+
+#ifdef USE_ZFP
+  hsize_t my_chunk[4]={0,0,0,0};
+  MPI_Allreduce(&m_window_dims[1], &my_chunk[1], 3, MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
+
+  my_chunk[0] = bufferInterval;
+  for (int i = 1; i < 4; i++) {
+    if (my_chunk[i] > 8) 
+      my_chunk[i] = ((hsize_t)(my_chunk[i]/8))*4;
+  }
+
   herr_t ierr = H5Pset_chunk (prop_id, num_dims, my_chunk);
   if (debug && myRank == 0) {
     printf("nts=%d\nChunk sizes:\n", ntimestep);
@@ -836,22 +819,21 @@ void ESSI3DHDF5::init_write_vel_compression(int ntimestep, int ZFPmode, double Z
     fflush(stdout);
   }
 
-#ifdef USE_ZFP
-      if (ZFPmode == SW4_ZFP_MODE_RATE) {
-        H5Pset_zfp_rate(prop_id, ZFPpar);
-      }
-      else if (ZFPmode == SW4_ZFP_MODE_PRECISION) {
-        H5Pset_zfp_precision(prop_id, ZFPpar);
-      }
-      else if (ZFPmode == SW4_ZFP_MODE_ACCURACY) {
-        H5Pset_zfp_accuracy(prop_id, ZFPpar);
-      }
-      else if (ZFPmode == SW4_ZFP_MODE_REVERSIBLE) {
-        H5Pset_zfp_reversible(prop_id);
-      }
-      else {
-        cout << "Error with ZFP mode, no compression is used!" << endl;
-      }
+  if (ZFPmode == SW4_ZFP_MODE_RATE) {
+    H5Pset_zfp_rate(prop_id, ZFPpar);
+  }
+  else if (ZFPmode == SW4_ZFP_MODE_PRECISION) {
+    H5Pset_zfp_precision(prop_id, ZFPpar);
+  }
+  else if (ZFPmode == SW4_ZFP_MODE_ACCURACY) {
+    H5Pset_zfp_accuracy(prop_id, ZFPpar);
+  }
+  else if (ZFPmode == SW4_ZFP_MODE_REVERSIBLE) {
+    H5Pset_zfp_reversible(prop_id);
+  }
+  else {
+    cout << "Error with ZFP mode, no compression is used!" << endl;
+  }
 #endif
 
   if (ntimestep > 0) 
@@ -859,19 +841,22 @@ void ESSI3DHDF5::init_write_vel_compression(int ntimestep, int ZFPmode, double Z
   else
     printf("Error with m_ntimestep=%d!\n", ntimestep);
 
-  for (int c=0; c < num_vel; c++)
-  {
-    m_vel_dataspace_id[c] =
-      H5Screate_simple(num_dims, m_cycle_dims, m_cycle_dims);
-      /* H5Screate_simple(num_dims, m_cycle_dims, m_global_dims); */
-    // Modify dataset creation properties to enable chunking
+  if (debug && myRank == 0) {
+    char msg[1000];
+    sprintf(msg, "Rank %d creating vel dataspaces size = %d %d %d %d\n", myRank,
+        (int) m_cycle_dims[0], (int) m_cycle_dims[1], (int) m_cycle_dims[2], (int) m_cycle_dims[3]);
+    cout << msg;
+    fflush(stdout);
+  }
+
+  for (int c=0; c<3; c++) {
+    m_vel_dataspace_id[c] = H5Screate_simple(num_dims, m_cycle_dims, m_cycle_dims);
     char var[100];
     sprintf(var, "vel_%d ijk layout", c);
-    m_vel_dataset_id[c] = H5Dcreate2 (m_file_id, var, dtype,
-        m_vel_dataspace_id[c], H5P_DEFAULT, prop_id, H5P_DEFAULT);
+    m_vel_dataset_id[c] = H5Dcreate2 (m_file_id, var, dtype, m_vel_dataspace_id[c], H5P_DEFAULT, prop_id, H5P_DEFAULT);
     if (m_vel_dataset_id[c] < 0) {
       printf("Error with H5Dcreate!\n");
-      MPI_Abort(comm,ierr);
+      MPI_Abort(MPI_COMM_WORLD, -1);
     }
   }
   H5Pclose(prop_id);
@@ -880,7 +865,7 @@ void ESSI3DHDF5::init_write_vel_compression(int ntimestep, int ZFPmode, double Z
 #endif
 }
 
-void ESSI3DHDF5::write_vel_compression(void* window_array, int comp, int cycle, int nstep)
+void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep)
 {
   bool enable_timing = false;
   bool debug=false;
@@ -911,11 +896,7 @@ void ESSI3DHDF5::write_vel_compression(void* window_array, int comp, int cycle, 
 
   /* m_cycle_dims[0] = cycle - m_start_cycle + 1; */
 
-  if (cycle - m_start_cycle + nstep > m_cycle_dims[0]) 
-    nstep = m_cycle_dims[0] - cycle + m_start_cycle;
-
   hsize_t vel_dims=4;
-
   hsize_t buf_window_dims[4];
   buf_window_dims[0] = nstep;
   buf_window_dims[1] = m_window_dims[1];
@@ -926,7 +907,7 @@ void ESSI3DHDF5::write_vel_compression(void* window_array, int comp, int cycle, 
 
   m_vel_dataspace_id[comp] = H5Dget_space(m_vel_dataset_id[comp]);
   hsize_t start[4]={0,0,0,0};
-  start[0] = cycle - m_start_cycle;
+  start[0] = cycle - m_start_cycle - nstep + 1;
   start[1] = m_window[0]; // local index lo relative to global
   start[2] = m_window[2]; // local index lo relative to global
   start[3] = m_window[4]; // local index lo relative to global
@@ -946,8 +927,7 @@ void ESSI3DHDF5::write_vel_compression(void* window_array, int comp, int cycle, 
     H5Sselect_none(window_id);
   }
   else {
-    ierr = H5Sselect_hyperslab(m_vel_dataspace_id[comp], H5S_SELECT_SET,
-              start, NULL, buf_window_dims, NULL);
+    ierr = H5Sselect_hyperslab(m_vel_dataspace_id[comp], H5S_SELECT_SET, start, NULL, buf_window_dims, NULL);
     if (ierr < 0) {
       cout << "Error from vel H5Sselect_hyperslab" << endl;
       MPI_Abort(comm,ierr);
@@ -955,8 +935,7 @@ void ESSI3DHDF5::write_vel_compression(void* window_array, int comp, int cycle, 
   }
 
   ierr = H5Dwrite(m_vel_dataset_id[comp], dtype, window_id, m_vel_dataspace_id[comp], dxpl, window_array);
-  if (ierr < 0)
-  {
+  if (ierr < 0) {
     cout << "Error from vel H5Dwrite " << endl;
     MPI_Abort(comm,ierr);
   }

@@ -4018,6 +4018,11 @@ void EW::processESSI3D( char* buffer )
       token = strtok(NULL, " \t");
    }
 
+#ifndef USE_ZFP
+   if (ZFPmode != 0 && proc_zero()) 
+      cout << "WARNING: SW4 is not compiled with ZFP but ZFP command is used " << endl;
+#endif
+
    // Check the specified min/max values make sense
    for (int d=0; d < 2*2; d+=2)
    {

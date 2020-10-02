@@ -138,7 +138,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
   a_ew = op_data->ew;
   ASSERT(a_ew != NULL);
 
-  status = H5Oget_info_by_name (loc_id, grp_name, &infobuf, H5P_DEFAULT);
+  status = H5Oget_info_by_name(loc_id, grp_name, &infobuf, H5P_DEFAULT);
   if (infobuf.type == H5O_TYPE_GROUP) {
     /* if (op_data->myRank == 0) */
     /*   printf ("Group: [%s] \n", grp_name); */
@@ -353,7 +353,7 @@ static herr_t traverse_func2 (hid_t loc_id, const char *grp_name, const H5L_info
 
   struct traverse_data2_t *op_data = (struct traverse_data2_t *)operator_data;
 
-  status = H5Oget_info_by_name (loc_id, grp_name, &infobuf, H5P_DEFAULT);
+  status = H5Oget_info_by_name(loc_id, grp_name, &infobuf, H5P_DEFAULT);
   if (infobuf.type == H5O_TYPE_GROUP) {
     /* if (op_data->myRank == 0) */
     /*   printf ("Group: [%s] \n", grp_name); */

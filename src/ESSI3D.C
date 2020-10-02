@@ -497,25 +497,20 @@ void ESSI3D::write_image_hdf5( int cycle, std::string &path, float_sw4 t,
   // Top grid only
   int g = mEW->mNumberOfGrids-1;
   int doWrite = 0;
-
   int myRank;
+
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
   for (int i = 0; i < 3; i++) {
     compute_image(a_U[g], i, cycle);
     if (cycle > 0 && (m_nbufstep == m_bufferInterval-1 || cycle == m_ntimestep)) {
-      if (m_ZFPmode > 0) {
-        if (m_precision == 4) 
-          m_hdf5helper->write_vel_compression((void*)m_floatField[i], i, cycle, m_nbufstep+1);
-        else if (m_precision == 8) 
-          m_hdf5helper->write_vel_compression((void*)m_doubleField[i], i, cycle, m_nbufstep+1);
-      }
-      else {
-        if (m_precision == 4) 
-          m_hdf5helper->write_vel((void*)m_floatField[i], i, cycle, m_nbufstep+1);
-        else if (m_precision == 8) 
-          m_hdf5helper->write_vel((void*)m_doubleField[i], i, cycle, m_nbufstep+1);
-      }
+      if (m_precision == 4) 
+        m_hdf5helper->write_vel((void*)m_floatField[i], i, cycle, m_nbufstep+1);
+        /* m_hdf5helper->write_vel_compression((void*)m_floatField[i], i, cycle, m_nbufstep+1); */
+      else if (m_precision == 8) 
+        m_hdf5helper->write_vel((void*)m_doubleField[i], i, cycle, m_nbufstep+1);
+        /* m_hdf5helper->write_vel_compression((void*)m_doubleField[i], i, cycle, m_nbufstep+1); */
+
       doWrite++;
     }
   }
@@ -527,8 +522,8 @@ void ESSI3D::write_image_hdf5( int cycle, std::string &path, float_sw4 t,
     fprintf(stderr, "Error with essioutput write_image_hdf5, not all variables are written correctly!\n");
 
   if (doWrite == 3) {
+    printf("Rank %d: write_image_hdf5 cycle=%d/%d, m_nbufstep=%d\n", myRank, cycle, m_ntimestep, m_nbufstep);
     m_nbufstep = 0;
-    printf("Rank %d: write_image_hdf5 cycle=%d, m_nbufstep=%d\n", myRank, cycle, m_nbufstep);
   }
 }
 #endif // ifdef USE_HDF5
