@@ -506,15 +506,15 @@ void ESSI3D::write_image_hdf5( int cycle, std::string &path, float_sw4 t,
     if (cycle > 0 && (m_nbufstep == m_bufferInterval-1 || cycle == m_ntimestep)) {
       if (m_ZFPmode > 0) {
         if (m_precision == 4) 
-          m_hdf5helper->write_vel_compression((void*)m_floatField[i], i, cycle, m_nbufstep);
+          m_hdf5helper->write_vel_compression((void*)m_floatField[i], i, cycle, m_nbufstep+1);
         else if (m_precision == 8) 
-          m_hdf5helper->write_vel_compression((void*)m_doubleField[i], i, cycle, m_nbufstep);
+          m_hdf5helper->write_vel_compression((void*)m_doubleField[i], i, cycle, m_nbufstep+1);
       }
       else {
         if (m_precision == 4) 
-          m_hdf5helper->write_vel((void*)m_floatField[i], i, cycle, m_nbufstep);
+          m_hdf5helper->write_vel((void*)m_floatField[i], i, cycle, m_nbufstep+1);
         else if (m_precision == 8) 
-          m_hdf5helper->write_vel((void*)m_doubleField[i], i, cycle, m_nbufstep);
+          m_hdf5helper->write_vel((void*)m_doubleField[i], i, cycle, m_nbufstep+1);
       }
       doWrite++;
     }
