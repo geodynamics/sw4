@@ -568,7 +568,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    double mftmp = f;
    MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
    
-      if( phcase > 0 )
+      if( phcase > 0)
       {
 // Interpolate pseudo-hessian to parameter grid
          float_sw4* phs=0, *phm=0;
@@ -576,7 +576,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
             phs = new float_sw4[nmpars];
          if(  nmpard > 0 )
             phm = new float_sw4[nmpard];
-         mopt->m_mp->interpolate_pseudohessian( nmpars, phs, nmpard, phm, pseudo_hessian);
+         mopt->m_mp->interpolate_pseudohessian(nmpars, phs, nmpard, phm, pseudo_hessian);
          float_sw4 eps=1e-3;
          normalize_pseudohessian( nmpars, phs, nmpard, phm, eps, phcase );
 // ..scale the gradient

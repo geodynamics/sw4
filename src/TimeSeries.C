@@ -1958,6 +1958,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	       misfitsource[0][i] = wghx*(mRecordedFloats[0][i]-mf[0]);
 	       misfitsource[1][i] = wghy*(mRecordedFloats[1][i]-mf[1]);
 	       misfitsource[2][i] = wghz*(mRecordedFloats[2][i]-mf[2]);
+
           //wei for hdf5 output
           misfitsource_float[0][i]= (float)(misfitsource[0][i]);
           misfitsource_float[1][i]= (float)(misfitsource[1][i]);
@@ -2133,14 +2134,14 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 	 if( t-tshift < m_winL || t-tshift > m_winR ) 
 	    wghx = wghy = wghz = 0;
 	 else
-      wghx=wghy=wghz= 0.5*tanhf((t-m_winL)/tau) - 0.5*tanhf((t-m_winR)/tau);
+      wghx=wghy=wghz= 0.5*tanhf((t-tshift-m_winL)/tau) - 0.5*tanhf((t-tshift-m_winR)/tau);
 	   //wghx = wghy = wghz = pow(cos(aw*(t-tshift)+bw),5.0)*wghv;
 
        if(m_winL2>0 || m_winR2>0) {  // if 2nd window exists
-         if( t < m_winL2 || t > m_winR2 ) 
+         if( t-tshift < m_winL2 || t-tshift > m_winR2 ) 
 	         wghx2 = wghy2 = wghz2 = 0;
 	      else
-            wghx2=wghy2=wghz2= 0.5*tanhf((t-m_winL2)/tau) - 0.5*tanhf((t-m_winR2)/tau);   //windowing of waveform
+            wghx2=wghy2=wghz2= 0.5*tanhf((t-tshift-m_winL2)/tau) - 0.5*tanhf((t-tshift-m_winR2)/tau);   //windowing of waveform
 
          wghx = (wghx >= wghx2? wghx : wghx2);  // take the maximum of either window weight
          wghz = wghy = wghx;
@@ -2183,17 +2184,29 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 	 for( int m = mmin ; m <= mmax ; m++ )
 	 {
 	    // Window observed data
-	    float_sw4 wghxobs, wghyobs, wghzobs;
-	    wghxobs=wghyobs=wghzobs=1;
+	    float_sw4 wghxobs, wghyobs, wghzobs, wghxobs2, wghyobs2, wghzobs2;
+	    wghxobs=wghyobs=wghzobs=1.;
 	    if( m_use_win )
 	    {
 	       double tobs = m*dtfr+t0fr; // t_n+tshift in Observation time 
 	       // Window data in this object w(t_n+tshift)
 	       if( tobs < m_winL || tobs > m_winR ) 
-		  wghxobs = wghyobs = wghzobs = 0;
+		       wghxobs = wghyobs = wghzobs = 0.;
 	       else
-		  wghxobs = wghyobs = wghzobs = pow(cos(aw*(tobs)+bw),5.0);
-	    }
+             wghxobs=wghyobs=wghzobs= 0.5*tanhf((tobs-m_winL)/tau) - 0.5*tanhf((tobs-m_winR)/tau);
+             //wghxobs = wghyobs = wghzobs = pow(cos(aw*(tobs)+bw),5.0);
+
+          if(m_winL2>0 || m_winR2>0) {  // if 2nd window exists
+             if( tobs < m_winL2 || tobs > m_winR2 ) 
+	              wghxobs2 = wghyobs2 = wghzobs2 = 0.;
+	          else
+                 wghxobs2=wghyobs2=wghzobs2= 0.5*tanhf((t-m_winL2)/tau) - 0.5*tanhf((t-m_winR2)/tau);   //windowing of waveform
+
+             wghxobs = (wghxobs >= wghxobs2? wghxobs : wghxobs2);  // take the maximum of either window weight
+             wghzobs = wghyobs = wghxobs;
+           } // if 2nd window exists
+ 
+	    } // if use_win
 
 	    if( observed.m_usgsFormat )
 	    {
