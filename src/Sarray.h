@@ -138,7 +138,7 @@ class Sarray {
   //   inline float_sw4& operator()( int c, int i, int j, int k )
   //   {return
   //   m_data[c-1+m_nc*(i-m_ib)+m_nc*m_ni*(j-m_jb)+m_nc*m_ni*m_nj*(k-m_kb)];}
-  inline bool in_range(int c, int i, int j, int k) {
+  inline bool in_range(int c, int i, int j, int k) const {
     return 1 <= c && c <= m_nc && m_ib <= i && i <= m_ie && m_jb <= j &&
            j <= m_je && m_kb <= k && k <= m_ke;
   }

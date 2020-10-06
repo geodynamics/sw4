@@ -4157,7 +4157,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
 
       // number of extra ghost points to allow highly accurate interpolation;
       // needed for the source discretization
-      m_ext_ghost_points = 2;
+      m_ext_ghost_points = 8;
 
       // Allocate interface the interface surface for this curvilinear grid
       m_curviInterface[g - mNumberOfCartesianGrids].define(

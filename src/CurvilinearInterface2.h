@@ -5,6 +5,7 @@
 
 #include "TestEcons.h"
 #include "TestTwilight.h"
+#include "TestPointSource.h"
 #ifdef USE_MAGMA
 #include "magma_dbatched.h"
 #include "magma_v2.h"
@@ -17,6 +18,7 @@ class CurvilinearInterface2 {
   EW* m_ew;
   TestTwilight* m_tw;
   TestEcons* m_etest;
+  TestPointSource* m_psource;
 
   int m_nghost, m_ib, m_ie, m_jb, m_je, m_ibf, m_ief, m_jbf, m_jef, m_nkf;
   int m_kb, m_ke, m_kbf, m_kef;

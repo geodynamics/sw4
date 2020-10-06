@@ -1611,10 +1611,8 @@ void EW::computeDT() {
 //     g = mNumberOfGrids-1;
 //         float_sw4 la, mu, la2mu;
 
-// do consider ghost points (especially the ghost line above the topography
-// might be important)
 #pragma omp parallel for reduction(min : dtCurv)
-      for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
+      for (int k = m_kStartInt[g]; k <= m_kEndInt[g]; k++)
         for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
           for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
             int N = 3, LDZ = 1, INFO;

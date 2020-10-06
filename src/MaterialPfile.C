@@ -240,8 +240,8 @@ void MaterialPfile::set_material_properties(std::vector<Sarray> &rho,
         for (int k = kLow; k <= mEW->m_kEnd[g];
              ++k)  // don't attempt querying the pfile above the topography
                    // (start at k=1 for top grid)
-          for (int j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; ++j)
-            for (int i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g]; ++i) {
+          for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j)
+            for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i) {
               float_sw4 x = mEW->mX[g](i, j, k);
               float_sw4 y = mEW->mY[g](i, j, k);
               float_sw4 z = mEW->mZ[g](i, j, k);
@@ -285,8 +285,8 @@ void MaterialPfile::set_material_properties(std::vector<Sarray> &rho,
         for (int k = kLow; k <= mEW->m_kEnd[g];
              ++k)  // don't attempt querying the pfile above the topography
                    // (start at k=1)
-          for (int j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; ++j)
-            for (int i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g]; ++i) {
+          for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j)
+            for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i) {
               float_sw4 x = mEW->mX[g](i, j, k);
               float_sw4 y = mEW->mY[g](i, j, k);
               float_sw4 z = mEW->mZ[g](i, j, k);
@@ -309,8 +309,14 @@ void MaterialPfile::set_material_properties(std::vector<Sarray> &rho,
                 outside++;
             }  // end for i,j,k
       }
+      mEW->communicate_array(rho[g], g);
+      mEW->communicate_array(cs[g], g);
+      mEW->communicate_array(cp[g], g);
+      if (m_qf) {
+         if (qp[g].is_defined()) mEW->communicate_array(qp[g], g);
+         if (qs[g].is_defined()) mEW->communicate_array(qs[g], g);
+      }
     }  // end for g (curvilinear)
-
   }  // end if topographyExists()
 
   //  extrapolation is now done in WPP2:set_materials()

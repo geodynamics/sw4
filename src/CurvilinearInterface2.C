@@ -43,6 +43,7 @@ CurvilinearInterface2::CurvilinearInterface2(int a_gc, EW* a_ew) {
   m_ew = a_ew;
   m_etest = a_ew->create_energytest();
   m_tw = a_ew->create_twilight();
+  m_psource = a_ew->get_point_source_test();
   m_nghost = 5;
 
 #if defined(ENABLE_CUDA)
@@ -531,7 +532,11 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   } else if (m_etest != 0) {
     m_etest->get_ubnd(U_f, m_nghost, sides);
     m_etest->get_ubnd(U_c, m_nghost, sides);
-  } else {
+  } else if( m_psource != 0 ) {
+    m_psource->ubnd( U_f, m_x_f, m_y_f, m_z_f, t, m_ew->mGridSize[m_gf], m_nghost, sides );
+    m_psource->ubnd( U_c, m_x_c, m_y_c, m_z_c, t, m_ew->mGridSize[m_gc], m_nghost, sides );
+  }
+    else {
     bnd_zero(U_c, m_nghost);
     bnd_zero(U_f, m_nghost);
     if (m_use_attenuation)
@@ -921,7 +926,7 @@ void CurvilinearInterface2::interface_block(Sarray& matrix) {
     for (int i = alpha.m_ib; i <= alpha.m_ie; i++)
       alpha(i, j, m_nkf) = w1 * m_jac_f(i, j, m_nkf) * m_rho_f(i, j, m_nkf) /
                            (m_strx_f[i - m_ibf] * m_stry_f[j - m_jbf]);
-  if (!m_tw) bnd_zero(alpha, m_nghost);
+  if (!m_tw && !m_psource) bnd_zero(alpha, m_nghost);
   restprol2D(matrix, alpha, 1, m_nkf);
 
   // Add -B(uc) contribution to block matrix
@@ -949,7 +954,7 @@ void CurvilinearInterface2::interface_lhs(Sarray& lhs, Sarray& uc) {
         for (int c = 1; c <= 3; c++) lhsV(c, i, j, 1) /= m_rho_cV(i, j, 1);
       });
 
-  if (!m_tw) bnd_zero(lhs, m_nghost);
+  if (!m_tw && !m_psource) bnd_zero(lhs, m_nghost);
 
   Sarray prollhs(3, m_ibf, m_ief, m_jbf, m_jef, m_nkf, m_nkf, __FILE__,
                  __LINE__);
@@ -977,7 +982,7 @@ void CurvilinearInterface2::interface_lhs(Sarray& lhs, Sarray& uc) {
               (lm_strx_f[i - lm_ibf] * lm_stry_f[j - lm_jbf]);
       });
 
-  if (!m_tw) bnd_zero(prollhs, m_nghost);
+  if (!m_tw && !m_psource) bnd_zero(prollhs, m_nghost);
   restrict2D(lhs, prollhs, 1, m_nkf);
 
   Sarray Bc(lhs, Space::Managed_temps);
@@ -1052,7 +1057,7 @@ void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
                                          rhsV(c, i, j, 1) /= m_rho_cV(i, j, 1);
                                      });
   // SYNC_STREAM;
-  if (!m_tw) bnd_zero(rhs, m_nghost);
+  if (!m_tw && !m_psource) bnd_zero(rhs, m_nghost);
 
   // 3. Compute prolrhs := p(L(uc)/rhoc)
   Sarray prolrhs(3, m_ibf, m_ief, m_jbf, m_jef, m_nkf, m_nkf, __FILE__,
@@ -1113,7 +1118,7 @@ void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
               BfV(c, i, j, lm_nkf);
       });
   // SYNC_STREAM;
-  if (!m_tw) bnd_zero(prolrhs, m_nghost);
+  if (!m_tw && !m_psource) bnd_zero(prolrhs, m_nghost);
   restrict2D(rhs, prolrhs, 1, m_nkf);
 
   // 7. Compute B(uc), and form rhs := rhs - B(uc) =

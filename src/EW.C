@@ -1293,8 +1293,8 @@ int EW::computeNearestGridPoint2(int& a_i, int& a_j, int& a_k, int& a_g,
     int g = 0;
     while (g < mNumberOfCartesianGrids && a_z < m_zmin[g]) g++;
     a_g = g;
-    a_i = static_cast<int>(round(a_x / mGridSize[g] + 1));
-    a_j = static_cast<int>(round(a_y / mGridSize[g] + 1));
+    a_i = static_cast<int>(floor(a_x / mGridSize[g] + 1));
+    a_j = static_cast<int>(floor(a_y / mGridSize[g] + 1));
     a_k = static_cast<int>(round((a_z - m_zmin[g]) / mGridSize[g] + 1));
 
     VERIFY2(
@@ -1330,8 +1330,8 @@ int EW::computeNearestGridPoint2(int& a_i, int& a_j, int& a_k, int& a_g,
                                                       r, s);
       if (success) {
         a_g = g;
-        a_i = static_cast<int>(round(q));
-        a_j = static_cast<int>(round(r));
+        a_i = static_cast<int>(floor(q));
+        a_j = static_cast<int>(floor(r));
         a_k = static_cast<int>(round(s));
       }
       //         MPI_Allreduce(&success,&foundglobal,1,MPI_INT,MPI_MAX,m_cartesian_communicator);
@@ -9165,6 +9165,10 @@ TestEcons* EW::create_energytest() {
                          m_energy_test->m_cpcsratio);
   else
     return 0;
+}
+TestPointSource* EW::get_point_source_test()
+{
+   return m_point_source_test;
 }
 void EW::load_balance() {
   for (int g = 0; g < mNumberOfGrids; g++) {
