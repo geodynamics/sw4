@@ -947,7 +947,9 @@ void EW::printPreamble(vector<Source*>& a_Sources, int event) const {
     } else {
       float_sw4 myM0Sum = 0;
       int numsrc = 0;  //, ignoredSources=0;
+#ifndef SW4_NOOMP
 #pragma omp parallel for reduction(+ : numsrc, myM0Sum)
+#endif
       for (unsigned int i = 0; i < a_Sources.size(); ++i) {
         if (a_Sources[i]->isMomentSource()) {
           numsrc++;
@@ -3620,7 +3622,9 @@ void EW::get_exact_lamb(vector<Sarray>& a_U, float_sw4 a_t, Source& a_source) {
   // z = 0.0;
 
 // loop over all points in the horizontal plane
+#ifndef SW4_NOOMP
 #pragma omp parallel for
+#endif
   for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
     for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
       double x = (i - 1) * h;
@@ -4351,6 +4355,7 @@ void EW::exactAccTwilight(float_sw4 a_t, vector<Sarray>& a_Uacc) {
   }
 }
 
+#ifndef FORCE_OMP
 //---------------------------------------------------------------------------
 void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
                vector<GridPointSource*>& point_sources,
@@ -4604,7 +4609,9 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
         // SW4_CheckDeviceError(cudaMemGetInfo(&mfree,&mtotal));
         // std::cout<<getRank()<<" MFREE POST-ALLOC"<<mfree/1024/1024.0<<" MB
         // \n";
+#ifndef SW4_NOOMP
 #pragma omp parallel for
+#endif
       for (int r = 0; r < identsources.size() - 1; r++) {
         int index = r * 3;
         int s0 = identsources[r];
@@ -4651,7 +4658,9 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
           for (int s = idnts_local[r]; s < idnts_local[r + 1]; s++) {
             float_sw4 fxyz[3];
             GPSL[s]->getFxyz(a_t, fxyz);
+#ifndef SW4_NOOMP
 #pragma unroll
+#endif
             for (int i = 0; i < 3; i++)
               *ForceAddress_copy[index + i] += fxyz[i];
           }
@@ -4904,7 +4913,9 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
           for (int s = idnts_local[r]; s < idnts_local[r + 1]; s++) {
             float_sw4 fxyz[3];
             GPSL[s]->getFxyztt(a_t, fxyz);
+#ifndef SW4_NOOMP
 #pragma unroll
+#endif
             for (int i = 0; i < 3; i++)
               *ForceAddress_copy[index + i] += fxyz[i];
           }
@@ -4914,6 +4925,8 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
     SW4_MARK_END("FORCE_TT::DEVICE");
   }
 }
+
+#endif /* ifdef FORCE_OMP */
 
 //---------------------------------------------------------------------------
 // perhaps a better name would be evalLu ??
@@ -5644,7 +5657,9 @@ void EW::update_images(int currentTimeStep, float_sw4 time,
             int nc = Uex[g].ncomp();
             float_sw4* uxp = Uex[g].c_ptr();
             float_sw4* up = a_Up[g].c_ptr();
+#ifndef SW4_NOOMP
 #pragma omp parallel for
+#endif
             for (size_t i = 0; i < n * nc; i++) uxp[i] = up[i] - uxp[i];
           }
         }
@@ -6080,7 +6095,7 @@ void EW::testsourcediff(vector<Source*> GlobalSources, float_sw4 gradient[11],
   //   cout << "size of sources " << gpsources.size() << endl;
   for (int m = 0; m < gpsources.size() - 1; m++) {
     gpsources[m]->add_to_gradient(
-        kappa, eta, 0.63, mDt, gradient, mGridSize, mJ[mNumberOfGrids - 1],
+        kappa, eta, 0.63, mDt, gradient, mGridSize, mJ,
         topographyExists());  // mJ argument should be the whole vector of
                               // Sarrays
     gpsources[m]->add_to_hessian(kappa, eta, 0.63, mDt, hessian, mGridSize);
@@ -6542,7 +6557,9 @@ void EW::extractTopographyFromCartesianFile(string a_topoFileName) {
       1.01 * mGridSize[topLevel];  // change this to 2 grid sizes because there
                                    // are double ghost points?
 
+#ifndef SW4_NOOMP
 #pragma omp parallel for
+#endif
   for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
     for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j) {
       float_sw4 xP = (i - 1) * mGridSize[topLevel];
@@ -6763,7 +6780,9 @@ void EW::extractTopographyFromImageFile(string a_topoFileName) {
                 "Number of image floats read: "
                     << nread << ", is different from header npts: " << npts);
 // copy data to local mTopo array
+#ifndef SW4_NOOMP
 #pragma omp parallel for
+#endif
     for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
       for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
         if (i >= ib && i <= ib + ni - 1 && j >= jb && j <= jb + nj - 1) {
@@ -6783,7 +6802,9 @@ void EW::extractTopographyFromImageFile(string a_topoFileName) {
                 "Number of image double read: "
                     << nread << ", is different from header npts: " << npts);
 // copy data to local mTopo array
+#ifndef SW4_NOOMP
 #pragma omp parallel for
+#endif
     for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
       for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
         if (i >= ib && i <= ib + ni - 1 && j >= jb && j <= jb + nj - 1) {
@@ -7119,7 +7140,9 @@ void EW::extractTopographyFromRfile(std::string a_topoFileName) {
     int topLevel = mNumberOfGrids - 1;
 
     float_sw4 topomax = -1e99, topomin = 1e99;
+#ifndef SW4_NOOMP
 #pragma omp parallel for reduction(max : topomax) reduction(min : topomin)
+#endif
     for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
       for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j) {
         float_sw4 x = (i - 1) * mGridSize[topLevel];
@@ -7538,256 +7561,84 @@ void EW::check_min_max_int(vector<Sarray>& a_U) {
   delete[] mn;
 }
 
-#ifdef ENABLE_OPT
 //-----------------------------------------------------------------------
-void EW::material_correction(int nmpar, float_sw4* xm)
-// routine to enforce material speed limits and positive density
+void EW::extrapolateTopo(Sarray& field)
 {
-  SW4_MARK_FUNCTION;
-  float_sw4 vsmin = -1;
-  if (m_useVelocityThresholds) vsmin = m_vsMin;
-  float_sw4 rhoscale = 1, muscale = 1, lascale = 1;
-
-  parameters_to_material(nmpar, xm, mRho, mMu, mLambda);
-  for (int g = 0; g < mNumberOfGrids; g++) {
-    int info;
-    int ifirst = m_iStart[g];
-    int ilast = m_iEnd[g];
-    int jfirst = m_jStart[g];
-    int jlast = m_jEnd[g];
-    int kfirst = m_kStart[g];
-    int klast = m_kEnd[g];
-    int ifirstact = m_iStartAct[g];
-    int ilastact = m_iEndAct[g];
-    int jfirstact = m_jStartAct[g];
-    int jlastact = m_jEndAct[g];
-    int kfirstact = m_kStartAct[g];
-    int klastact = m_kEndAct[g];
-
-    float_sw4* rhop = mRho[g].c_ptr();
-    float_sw4* mup = mMu[g].c_ptr();
-    float_sw4* lap = mLambda[g].c_ptr();
-
-    if (topographyExists() && g == mNumberOfGrids - 1) {
-      // Curvilinear
-      F77_FUNC(projectmtrlc, PROJECTMTRLC)
-      (&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &ifirstact, &ilastact,
-       &jfirstact, &jlastact, &kfirstact, &klastact, rhop, mup, lap, &mDt,
-       mMetric.c_ptr(), mJ[g].c_ptr(), &mCFLmax, &vsmin, &rhoscale, &muscale,
-       &lascale, &info);
-    } else {
-      // Cartesian
-      F77_FUNC(projectmtrl, PROJECTMTRL)
-      (&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &ifirstact, &ilastact,
-       &jfirstact, &jlastact, &kfirstact, &klastact, rhop, mup, lap, &mDt,
-       &mGridSize[g], &mCFLmax, &vsmin, &rhoscale, &muscale, &lascale, &info);
-    }
-    if (info != 0)
-      cout << "Grid " << g << " info = " << info << " from projectmtrl" << endl;
-  }
-  material_to_parameters(nmpar, xm, mRho, mMu, mLambda);
-}
-#endif
-
-#ifdef ENABLE_OPT
-//-----------------------------------------------------------------------
-void EW::project_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
-                          vector<Sarray>& a_lambda, int& info)
-// routine to enforce material speed limits and positive density
-{
-  SW4_MARK_FUNCTION;
-  float_sw4 vsmin = -1;
-  if (m_useVelocityThresholds) vsmin = m_vsMin;
-  float_sw4 rhoscale = 1, muscale = 1, lascale = 1;
-  info = 0;
-  for (int g = 0; g < mNumberOfGrids; g++) {
-    int infogrid;
-    int ifirst = m_iStart[g];
-    int ilast = m_iEnd[g];
-    int jfirst = m_jStart[g];
-    int jlast = m_jEnd[g];
-    int kfirst = m_kStart[g];
-    int klast = m_kEnd[g];
-    int ifirstact = m_iStartAct[g];
-    int ilastact = m_iEndAct[g];
-    int jfirstact = m_jStartAct[g];
-    int jlastact = m_jEndAct[g];
-    int kfirstact = m_kStartAct[g];
-    int klastact = m_kEndAct[g];
-
-    float_sw4* rhop = a_rho[g].c_ptr();
-    float_sw4* mup = a_mu[g].c_ptr();
-    float_sw4* lap = a_lambda[g].c_ptr();
-
-    if (topographyExists() && g == mNumberOfGrids - 1) {
-      // Curvilinear
-      F77_FUNC(projectmtrlc, PROJECTMTRLC)
-      (&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &ifirstact, &ilastact,
-       &jfirstact, &jlastact, &kfirstact, &klastact, rhop, mup, lap, &mDt,
-       mMetric.c_ptr(), mJ[g].c_ptr(), &mCFLmax, &vsmin, &rhoscale, &muscale,
-       &lascale, &infogrid);
-    } else {
-      // Cartesian
-      F77_FUNC(projectmtrl, PROJECTMTRL)
-      (&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &ifirstact, &ilastact,
-       &jfirstact, &jlastact, &kfirstact, &klastact, rhop, mup, lap, &mDt,
-       &mGridSize[g], &mCFLmax, &vsmin, &rhoscale, &muscale, &lascale,
-       &infogrid);
-    }
-    if (infogrid != 0) {
-      cout << "Grid " << g << " info = " << infogrid << " from projectmtrl"
-           << endl;
-      if (info == 0) info = infogrid;
-    }
-  }
-}
-#endif
-
-#ifdef ENABLE_OPT
-//-----------------------------------------------------------------------
-void EW::check_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
-                        vector<Sarray>& a_lambda, int& ok) {
-  ok = 1;
-  for (int g = 0; g < mNumberOfGrids; g++) {
-    int infogrid;
-    int ifirst = m_iStart[g];
-    int ilast = m_iEnd[g];
-    int jfirst = m_jStart[g];
-    int jlast = m_jEnd[g];
-    int kfirst = m_kStart[g];
-    int klast = m_kEnd[g];
-
-    float_sw4 limits[10];
-
-    float_sw4* rhop = a_rho[g].c_ptr();
-    float_sw4* mup = a_mu[g].c_ptr();
-    float_sw4* lap = a_lambda[g].c_ptr();
-
-    //      if( topographyExists() && g == mNumberOfGrids-1 )
-    //      {
-    //	 // Curvilinear
-    //	 F77_FUNC(projectmtrlc,PROJECTMTRLC)( &ifirst, &ilast, &jfirst, &jlast,
-    //&kfirst, &klast, 					    &ifirstact,
-    //&ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,  rhop, mup, lap,
-    //&mDt, mMetric.c_ptr(),
-    // mJ[g].c_ptr(), 					      &mCFLmax, &vsmin,
-    // &rhoscale, &muscale, &lascale, &infogrid );
-    //      }
-    //      else
-    //      {
-    // Cartesian
-    F77_FUNC(checkmtrl, CHECKMTRL)
-    (&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, rhop, mup, lap, &mDt,
-     &mGridSize[g], limits);
-    float_sw4 local[5] = {limits[0], limits[2], limits[4], limits[7],
-                          limits[8]};
-    float_sw4 global[5];
-    MPI_Allreduce(local, global, 5, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-    limits[0] = global[0];
-    limits[2] = global[1];
-    limits[4] = global[2];
-    limits[7] = global[3];
-    limits[8] = global[4];
-    local[0] = limits[1];
-    local[1] = limits[3];
-    local[2] = limits[5];
-    local[3] = limits[6];
-    local[4] = limits[9];
-    MPI_Allreduce(local, global, 5, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-    limits[1] = global[0];
-    limits[3] = global[1];
-    limits[5] = global[2];
-    limits[6] = global[3];
-    limits[9] = global[4];
-    if (proc_zero()) {
-      cout << limits[0] << " <=   rho    <= " << limits[1] << " (grid " << g
-           << ")" << endl;
-      cout << limits[2] << " <=    mu    <= " << limits[3] << " (grid " << g
-           << ")" << endl;
-      cout << limits[4] << " <=  lambda  <= " << limits[5] << " (grid " << g
-           << ")" << endl;
-
-      if (limits[0] < 0)
-        cout << "rho_min = " << limits[0] << " on grid " << g << endl;
-      if (limits[2] < 0)
-        cout << "mu_min = " << limits[2] << " on grid " << g << endl;
-      if (limits[4] < 0)
-        cout << "lambda_min = " << limits[4] << " on grid " << g << endl;
-      if (limits[6] < 0)
-        cout << " cfl_max  is imaginary on grid " << g << endl;
-      else
-        cout << " cfl_max = " << sqrt(limits[6]) << " on grid " << g << endl;
-    }
-    ok = ok && (limits[0] > 0 && limits[2] > 0 &&
-                limits[6] < mCFLmax * mCFLmax && limits[8] > 0);
-  }
-}
-#endif
-
-//-----------------------------------------------------------------------
-void EW::extrapolateTopo(Sarray& field) {
-  int k = 1;                   // field is assumed to be a 2-D array
-  int g = mNumberOfGrids - 1;  // top grid
+  int k=1; // field is assumed to be a 2-D array
+  int g= mNumberOfGrids-1; // top grid
   int nExtrap = 0;
-
-  if (m_iStartInt[g] == 1) {
-    for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-      for (int i = m_iStart[g]; i < 1; i++)
-        if (field(i, j, k) == NO_TOPO) {
-          field(i, j, k) = field(1, j, k);
+  
+  if( m_iStartInt[g] == 1 )
+  {
+    for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+      for( int i=m_iStart[g] ; i < 1 ; i++ )
+        if( field(i,j,k) == NO_TOPO )
+        {
+          field(i,j,k) = field(1,j,k);
+          nExtrap += 1;
+        }
+    
+  }
+  
+  if( m_iEndInt[g] == m_global_nx[g] )
+  {
+    for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+      for( int i=m_iEndInt[g]+1 ; i <= m_iEnd[g] ; i++ )
+        if( field(i,j,k) == NO_TOPO )
+        {
+          field(i,j,k) = field(m_iEndInt[g],j,k);
           nExtrap += 1;
         }
   }
-
-  if (m_iEndInt[g] == m_global_nx[g]) {
-    for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-      for (int i = m_iEndInt[g] + 1; i <= m_iEnd[g]; i++)
-        if (field(i, j, k) == NO_TOPO) {
-          field(i, j, k) = field(m_iEndInt[g], j, k);
+  
+  if( m_jStartInt[g] == 1 )
+  {
+    for( int j=m_jStart[g] ; j < 1 ; j++ )
+      for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+        if( field(i,j,k) == NO_TOPO )
+        {
+          field(i,j,k) = field(i,1,k);
           nExtrap += 1;
         }
   }
-
-  if (m_jStartInt[g] == 1) {
-    for (int j = m_jStart[g]; j < 1; j++)
-      for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
-        if (field(i, j, k) == NO_TOPO) {
-          field(i, j, k) = field(i, 1, k);
+  
+  if( m_jEndInt[g] == m_global_ny[g] )
+  {
+    for( int j=m_jEndInt[g]+1 ; j <= m_jEnd[g] ; j++ )
+      for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+        if( field(i,j,k) == NO_TOPO)
+        {
+          field(i,j,k) = field(i,m_jEndInt[g],k);
           nExtrap += 1;
         }
   }
-
-  if (m_jEndInt[g] == m_global_ny[g]) {
-    for (int j = m_jEndInt[g] + 1; j <= m_jEnd[g]; j++)
-      for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
-        if (field(i, j, k) == NO_TOPO) {
-          field(i, j, k) = field(i, m_jEndInt[g], k);
-          nExtrap += 1;
-        }
-  }
-  int nExtrapGlobal = 0;
-  MPI_Allreduce(&nExtrap, &nExtrapGlobal, 1, MPI_INT, MPI_SUM,
-                m_cartesian_communicator);
-
-  if (nExtrapGlobal > 0 && proc_zero())
+  int nExtrapGlobal=0;
+  MPI_Allreduce( &nExtrap, &nExtrapGlobal, 1, MPI_INT, MPI_SUM, m_cartesian_communicator );
+  
+  if ( nExtrapGlobal > 0 && proc_zero())
     printf("*** extrapolated topography to %i ghost points\n", nExtrapGlobal);
+  
 }
 
 //-----------------------------------------------------------------------
-void EW::checkTopo(Sarray& field) {
-  bool topo_ok = true;
-  int k = 1;                   // field is a 2-D array
-  int g = mNumberOfGrids - 1;  // top grid
+void EW::checkTopo(Sarray& field)
+{
+  bool topo_ok=true;
+  int k=1; // field is a 2-D array
+  int g= mNumberOfGrids-1; // top grid
 
-  for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-    for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
-      if (field(i, j, k) == NO_TOPO) {
-        // print some msg is verbose is high enough?
+  for( int j=m_jStart[g];   j <= m_jEnd[g]; j++ )
+    for( int i=m_iStart[g]; i <= m_iEnd[g]; i++ )
+    {
+      if (field(i,j,k) == NO_TOPO)
+      {
+// print some msg is verbose is high enough?
         topo_ok = false;
       }
+      
     }
-
-  CHECK_INPUT(topo_ok, "There are undefined values in the topography array")
+  
+  CHECK_INPUT(topo_ok,"There are undefined values in the topography array")
 }
 
 //-----------------------------------------------------------------------
@@ -7880,7 +7731,9 @@ void EW::setup_viscoelastic() {
 
     // loop over all grid points in all grids
     for (g = 0; g < mNumberOfGrids; g++)
+#ifndef SW4_NOOMP
 #pragma omp parallel for
+#endif
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
         for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
           for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
@@ -8039,7 +7892,9 @@ void EW::reverse_setup_viscoelastic() {
 // use base 0 indexing of matrix
 #define a(i, j) a_[i + j * nc]
     for (int g = 0; g < mNumberOfGrids; g++)
+#ifndef SW4_NOOMP
 #pragma omp parallel for
+#endif
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
         for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
           for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
@@ -8258,7 +8113,9 @@ void EW::compute_minvsoverh(float_sw4& minvsoh) {
     float_sw4* rho = mRho[g].c_ptr();
     size_t npts = mMu[g].npts();
     float_sw4 minvs = mu[0] / rho[0];
+#ifndef SW4_NOOMP
 #pragma omp parallel for reduction(min : minvs)
+#endif
     for (int i = 0; i < npts; i++) {
       if (mu[i] < minvs * rho[i]) minvs = mu[i] / rho[i];
     }
@@ -8345,9 +8202,10 @@ void EW::sort_grid_point_sources(vector<GridPointSource*>& point_sources,
   //	    m_point_sources[i]->m_k0 << std::endl;
 }
 #ifdef FORCE_OMP
+
 void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
-               vector<GridPointSource*> point_sources,
-               vector<int> identsources) {
+               vector<GridPointSource*>& point_sources,
+               vector<int>& identsources) {
   SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *f_ptr, om, ph, cv, h, zmin, omm, phm, amprho, ampmu, ampla;
@@ -8562,7 +8420,9 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
     // Default: m_point_source_test, m_lamb_test or full seismic case
     for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero();
 
+#ifndef SW4_NOOMP
 #pragma omp parallel for
+#endif
     for (int r = 0; r < identsources.size() - 1; r++) {
       int s0 = identsources[r];
       int g = point_sources[s0]->m_grid;
@@ -8586,8 +8446,8 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
 
 //---------------------------------------------------------------------------
 void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
-                  vector<GridPointSource*> point_sources,
-                  vector<int> identsources) {
+                  vector<GridPointSource*>& point_sources,
+                  vector<int>& identsources) {
   SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *f_ptr, om, ph, cv, h, zmin, omm, phm, amprho, ampmu, ampla;
@@ -8806,7 +8666,9 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
     // Default: m_point_source_test, m_lamb_test or full seismic case
     for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero();
 
+#ifndef SW4_NOOMP
 #pragma omp parallel for
+#endif
     for (int r = 0; r < identsources.size() - 1; r++) {
       int s0 = identsources[r];
       int g = point_sources[s0]->m_grid;
@@ -9020,7 +8882,9 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
   int topLevel = mNumberOfGrids - 1;
 
   float_sw4 topomax = -1e30, topomin = 1e30;
+#ifndef SW4_NOOMP
 #pragma omp parallel for reduction(max : topomax) reduction(min : topomin)
+#endif
   for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
     for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j) {
       float_sw4 x = (i - 1) * mGridSize[topLevel];

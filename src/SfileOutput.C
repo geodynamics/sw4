@@ -656,9 +656,9 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
             ind_2 = (k - ok - mWindow[g][4]) / stV +
                     nkw * (j - mWindow[g][2]) / stH +
                     njkw * (i - mWindow[g][0]) / stH;
-#ifdef BZ_DEBUG
-            ASSERT(ind < npts);
-#endif
+/* #ifdef BZ_DEBUG */
+/*             ASSERT(ind < npts); */
+/* #endif */
             m_doubleField[g][ind] =
                 2 * m_doubleField[g][ind_1] - m_doubleField[g][ind_2];
           }
@@ -674,9 +674,9 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
             ind_2 = (k - ok - mWindow[g][4]) / stV +
                     nkw * (j - mWindow[g][2]) / stH +
                     njkw * (i - mWindow[g][0]) / stH;
-#ifdef BZ_DEBUG
-            ASSERT(ind < npts);
-#endif
+/* #ifdef BZ_DEBUG */
+/*             ASSERT(ind < npts); */
+/* #endif */
             m_floatField[g][ind] =
                 2 * m_floatField[g][ind_1] - m_floatField[g][ind_2];
           }

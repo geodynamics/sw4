@@ -105,6 +105,14 @@ class EW {
 
   void solve(vector<Source*>& a_GlobalSources,
              vector<TimeSeries*>& a_GlobalTimeSeries, int event);
+
+  void solve_mopt(vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
+                      vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, vector<Sarray>& a_Rho,
+                      vector<Sarray>& U, vector<Sarray>& Um,
+                      vector<DataPatches*>& Upred_saved_sides,
+                      vector<DataPatches*>& Ucorr_saved_sides, bool save_sides,
+                      int event, int nsteps_in_memory, int varcase, vector<Sarray>& PseudoHessian );
+
   void solve_backward(vector<Source*>& a_Sources,
                       vector<TimeSeries*>& a_TimeSeries, float_sw4 gradient[11],
                       float_sw4 hessian[121]);
@@ -123,7 +131,7 @@ class EW {
                               vector<DataPatches*>& Upred_saved_sides,
                               vector<DataPatches*>& Ucorr_saved_sides,
                               float_sw4 gradients[11], vector<Sarray>& gRho,
-                              vector<Sarray>& gMu, vector<Sarray>& gLambda);
+                              vector<Sarray>& gMu, vector<Sarray>& gLambda, int event);
   // int nmpar, float_sw4* gradientm );
 
   bool parseInputFile(vector<vector<Source*>>& a_GlobalSources,
@@ -341,12 +349,9 @@ class EW {
   void addSuperGridDamping(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                            vector<Sarray>& a_Um, vector<Sarray>& a_Rho);
 
-  void cycleSolutionArrays(vector<Sarray>& a_Um, vector<Sarray>& a_U,
-                           vector<Sarray>& a_Up, vector<Sarray*>& a_AlphaVEm,
-                           vector<Sarray*>& a_AlphaVE,
-                           vector<Sarray*>& a_AlphaVEp);
-  void cycleSolutionArrays(vector<Sarray>& a_Um, vector<Sarray>& a_U,
-                           vector<Sarray>& a_Up);
+  void cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector<Sarray> & a_Up, 
+                         vector<Sarray*> & a_AlphaVEm, vector<Sarray*> & a_AlphaVE, vector<Sarray*> & a_AlphaVEp);
+  void cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector<Sarray> & a_Up ); 
 
   void bndryInteriorDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
                                float_sw4 lowZ[3], float_sw4 interiorZ[3],
@@ -613,25 +618,34 @@ class EW {
 
   void impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um, float_sw4 t,
                              vector<float_sw4**>& bforcing);
+  void advance_geodyn_time( float_sw4 t );
 
   void get_geodyn_timelevel(vector<Sarray>& geodyndata);
 
   void copy_geodyn_timelevel(vector<Sarray>& geodyndata1,
                              vector<Sarray>& geodyndata2);
 
-  void geodyn_second_ghost_point(vector<Sarray>& geodyndata1,
-                                 vector<Sarray>& geodyndata2,
-                                 vector<Sarray>& rho, vector<Sarray>& mu,
-                                 vector<Sarray>& lambda,
-                                 vector<Sarray>& forcing, double t,
-                                 vector<Sarray>& U, vector<Sarray>& Um,
-                                 int crf);
+  void geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vector<Sarray>& lambda,
+                                  vector<Sarray>& forcing, float_sw4 t, vector<Sarray>& U,
+                                  vector<Sarray>& Um, int crf );
+
+  void geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarray>& mu, vector<Sarray>& lambda,
+                                              vector<Sarray>& forcing, float_sw4 t, vector<Sarray>& U,
+                                              vector<Sarray>& Um, int crf );
+
+  void geodyn_up_from_uacc( vector<Sarray>& Up, vector<Sarray>& Uacc,
+                            vector<Sarray>& U, vector<Sarray>& Um, float_sw4 dt );
+
+  void save_geoghost( vector<Sarray>& U );
+  void restore_geoghost( vector<Sarray>& U );
 
   void geodynbcGetSizes(string filename, float_sw4 origin[3],
                         float_sw4& cubelen, float_sw4& zcubelen,
                         bool& found_latlon, double& lat, double& lon,
                         double& az, int& adjust);
+
   void geodynFindFile(char* buffer);
+
   void bcsurf_curvilinear_2nd_order(int side, int i0, int i1, int j0, int j1,
                                     int k0, int g, Sarray& u,
                                     float_sw4* bforcing);
@@ -756,15 +770,15 @@ class EW {
   void get_material_parameter(int nmpar, float_sw4* xm);
   void get_scale_factors(int nmpar, float_sw4* xm);
 
-#ifdef ENABLE_OPT
+/* #ifdef ENABLE_OPT */
   void material_correction(int nmpar, float_sw4* xm);
 
   void project_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
                         vector<Sarray>& a_lambda, int& info);
 
-  void check_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
-                      vector<Sarray>& a_lambda, int& ok);
-#endif
+  int check_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
+                      vector<Sarray>& a_lambda, int& ok, int verbose=1);
+/* #endif */
 
   void check_anisotropic_material(vector<Sarray>& rho, vector<Sarray>& c);
 
@@ -803,14 +817,14 @@ class EW {
   void interpolate(int nx, int ny, int nz, float_sw4 xmin, float_sw4 ymin,
                    float_sw4 zmin, float_sw4 hx, float_sw4 hy, float_sw4 hz,
                    Sarray& rho, Sarray& mu, Sarray& lambda, int grid,
-                   Sarray& rhogrid, Sarray& mugrid, Sarray& lambdagrid);
+                   Sarray& rhogrid, Sarray& mugrid, Sarray& lambdagrid, bool update);
 
   void interpolate_to_coarse(int nx, int ny, int nz, float_sw4 xmin,
                              float_sw4 ymin, float_sw4 zmin, float_sw4 hx,
                              float_sw4 hy, float_sw4 hz, Sarray& rho,
                              Sarray& mu, Sarray& lambda,
                              vector<Sarray>& rhogrid, vector<Sarray>& mugrid,
-                             vector<Sarray>& lambdagrid);
+                             vector<Sarray>& lambdagrid, bool update);
 
   void interpolation_gradient(int nx, int ny, int nz, float_sw4 xmin,
                               float_sw4 ymin, float_sw4 zmin, float_sw4 hx,
@@ -818,6 +832,27 @@ class EW {
                               Sarray& gradmu, Sarray& gradlambda, int grid,
                               Sarray& gradrhogrid, Sarray& gradmugrid,
                               Sarray& gradlambdagrid);
+
+  void interpolate_to_coarse_vel( int nx, int ny, int nz, double xmin, double ymin,
+                                  double zmin, double hx, double hy, double hz,
+                                   Sarray& rho, Sarray& cs, Sarray& cp,
+                                   vector<Sarray>& rhogrid, vector<Sarray>& mugrid,
+                                   vector<Sarray>& lambdagrid );
+
+  void interpolate_base_to_coarse( int nx, int ny, int nz, double xmin, double ymin,
+                                   double zmin, double hx, double hy, double hz,
+                                   Sarray& rho, Sarray& mu, Sarray& lambda );
+  void interpolate_base_to_coarse_vel( int nx, int ny, int nz, double xmin, double ymin,
+                                       double zmin, double hx, double hy, double hz,
+                                       Sarray& rho, Sarray& cs, Sarray& cp );
+  void update_and_transform_material( int g, Sarray& rho, Sarray& mu, Sarray& lambda );
+
+  void transform_gradient( Sarray& rho, Sarray& mu, Sarray& lambda, Sarray& grho, Sarray& gmu, Sarray& glambda );
+
+  void addtoPseudoHessian( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarray>& Up, 
+                           vector<Sarray>& aRho, vector<Sarray>& aMu, vector<Sarray>& aLambda, 
+                           float_sw4 dt, int varcase, vector<Sarray>& PseudoHess );
+
 
   // Functions to impose conditions at grid refinement interface:
   // void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U,

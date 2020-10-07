@@ -79,7 +79,7 @@ class GridPointSource : public Managed {
 
   void add_to_gradient(std::vector<Sarray>& kappa, std::vector<Sarray>& eta,
                        float_sw4 t, float_sw4 dt, float_sw4 gradient[11],
-                       std::vector<float_sw4>& h, Sarray& Jac,
+                       std::vector<float_sw4>& h, std::vector<Sarray>& Jac,
                        bool topography_exists);
   void add_to_hessian(std::vector<Sarray>& kappa, std::vector<Sarray>& eta,
                       float_sw4 t, float_sw4 dt, float_sw4 hessian[121],

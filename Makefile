@@ -202,7 +202,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        oddIevenJinterp.o evenIevenJinterp.o CheckPoint.o Mspace.o RandomizedMaterial.o AllDims.o Patch.o ESSI3D.o \
 	MaterialSfile.o MaterialInvtest.o geodyn.o ESSI3DHDF5.o sachdf5.o readhdf5.o CurvilinearInterface2.o \
 	TestEcons.o TestTwilight.o  curvilinear4sgwind.o GridGeneratorGeneral.o GridGeneratorGaussianHill.o \
-	GridGenerator.o RHS43DEV.o curvilinear4sgcX1.o SfileOutput.o
+	GridGenerator.o RHS43DEV.o curvilinear4sgcX1.o SfileOutput.o pseudohess.o DataPatches.o sw4-prof.o
 
 
 # new C-routines converted from fortran
@@ -210,7 +210,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
         computedtanisoc.o curvilinear4sgc.o gradientsc.o randomfield3dc.o innerloop-ani-sgstr-vcc.o ilanisocurvc.o \
         rhs4curvilinearc.o rhs4curvilinearsgc.o rhs4th3fortc.o solerr3c.o testsrcc.o \
         tw_aniso_forcec.o tw_aniso_force_ttc.o velsumc.o twilightfortc.o twilightsgfortc.o tw_ani_stiffc.o \
-        anisomtrltocurvilinearc.o scalar_prodc.o updatememvarc.o addsg4windc.o bndryOpNoGhostc.o rhs4th3windc2.o
+        anisomtrltocurvilinearc.o scalar_prodc.o updatememvarc.o addsg4windc.o bndryOpNoGhostc.o rhs4th3windc2.o 
 
 ifeq ($(fortran),yes)
   OBJ += rhs4th3windfort.o
@@ -218,12 +218,21 @@ else
   OBJ += rhs4th3windc.o 
 endif
 
+# Material optimization
+MOBJOPT  = moptmain.o solve-backward-allpars.o lbfgs.o nlcg.o ProjectMtrl.o \
+           MaterialParameterization.o Mopt.o MaterialParCartesian.o InterpolateMaterial.o \
+	   MaterialParCartesianVels.o MaterialParCartesianVp.o MParGridFile.o MaterialParCartesianVsVp.o \
+           MaterialParAllpts.o
+
 
 # OpenMP & C-version of the F-77 routine curvilinear4sg() is in rhs4sgcurv.o
 
 # prefix object files with build directory
 FSW4 = $(addprefix $(builddir)/,$(OBJSW4))
 FOBJ = $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
+
+# Material optimization
+FMOBJOPT = $(addprefix $(builddir)/,$(MOBJOPT)) $(addprefix $(builddir)/,$(QUADPACK))
 
 # prefix
 ifeq ($(raja_cuda),yes)
@@ -235,11 +244,29 @@ sw4: $(FSW4) $(FOBJ)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); nvcc -dlink -o file_link.o main.o $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart -lnvidia-ml
+	cd $(builddir); nvcc $(NVCCLINKFLAGS) -dlink -o file_link.o main.o $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart -lnvidia-ml
 	cd $(builddir); $(LINKER) $(LINKFLAGS) -o $@ main.o file_link.o $(OBJ) $(QUADPACK) $(linklibs)
 # test: linking with openmp for the routine rhs4sgcurv.o
 #	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
 	@cat wave.txt
+	@echo "*** Build directory: " $(builddir) " ***"
+
+
+sw4mopt: $(FOBJ) $(FMOBJOPT) 
+	@echo "*** Configuration file: '" $(foundincfile) "' ***"
+	@echo "********* User configuration variables **************"
+	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
+	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
+	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
+	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
+	@echo "******************************************************"
+	# cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(MOBJOPT) $(OBJ) $(QUADPACK) $(linklibs)
+	cd $(builddir); nvcc $(NVCCLINKFLAGS) -dlink -o moptfile_link.o $(MOBJOPT) $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart -lnvidia-ml
+	cd $(builddir); $(LINKER) $(LINKFLAGS) -o $@ moptfile_link.o $(MOBJOPT) $(OBJ) $(QUADPACK) $(linklibs)
+	# cd $(builddir); $(LINKER) $(LINKFLAGS) -o $@ moptmain.o moptfile_link.o $(MOBJOPT) $(OBJ) $(QUADPACK) $(linklibs)
+	@echo " "
+	@echo "******* sw4mopt was built successfully *******" 
+	@echo " "
 	@echo "*** Build directory: " $(builddir) " ***"
 else
 sw4: $(FSW4) $(FOBJ)
@@ -254,6 +281,20 @@ sw4: $(FSW4) $(FOBJ)
 # test: linking with openmp for the routine rhs4sgcurv.o
 #	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
 	@cat wave.txt
+	@echo "*** Build directory: " $(builddir) " ***"
+
+sw4mopt: $(FOBJ) $(FMOBJOPT) 
+	@echo "*** Configuration file: '" $(foundincfile) "' ***"
+	@echo "********* User configuration variables **************"
+	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
+	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
+	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
+	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
+	@echo "******************************************************"
+	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(MOBJOPT) $(OBJ) $(QUADPACK) $(linklibs)
+	@echo " "
+	@echo "******* sw4mopt was built successfully *******" 
+	@echo " "
 	@echo "*** Build directory: " $(builddir) " ***"
 endif
 # tarball
