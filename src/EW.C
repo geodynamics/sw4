@@ -1156,8 +1156,8 @@ int EW::computeNearestGridPoint2( int& a_i, int& a_j, int& a_k, int& a_g,
       while( g < mNumberOfCartesianGrids && a_z < m_zmin[g] )
          g++;
       a_g = g;
-      a_i = static_cast<int>( round( a_x/mGridSize[g]+1) );
-      a_j = static_cast<int>( round( a_y/mGridSize[g]+1) );
+      a_i = static_cast<int>( floor( a_x/mGridSize[g]+1) );
+      a_j = static_cast<int>( floor( a_y/mGridSize[g]+1) );
       a_k = static_cast<int>( round( (a_z-m_zmin[g])/mGridSize[g]+1) );
 
       VERIFY2(a_i >= 1-m_ghost_points && a_i <= m_global_nx[a_g]+m_ghost_points,
