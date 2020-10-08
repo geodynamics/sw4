@@ -134,7 +134,7 @@ void curvilinear4sg_ci(
     if (onesided[4] == 1) {
       kstart = 7;
       // SBP Boundary closure terms
-#if defined(ENABLE_CUDA)
+#if defined(ENABLE_CUDA) || defined(ENABLE_HIP)
 #define NO_COLLAPSE 1
 #endif
 #ifdef PEEKS_GALORE
