@@ -462,15 +462,19 @@ void ESSI3D::open_vel_file( int a_cycle, std::string& a_path,
   if (m_dumpInterval > 0) {
     int nstep = (int)ceil(m_ntimestep / m_dumpInterval);
     if (m_ZFPmode > 0) 
-      m_hdf5helper->init_write_vel_compression(nstep, m_ZFPmode, m_ZFPpar, m_bufferInterval);
+      m_hdf5helper->init_write_vel(nstep, m_ZFPmode, m_ZFPpar, m_bufferInterval);
+      /* m_hdf5helper->init_write_vel_compression(nstep, m_ZFPmode, m_ZFPpar, m_bufferInterval); */
     else
-      m_hdf5helper->init_write_vel(nstep);
+      /* m_hdf5helper->init_write_vel(nstep); */
+      m_hdf5helper->init_write_vel(nstep, 0, 0.0, m_bufferInterval);
   }
   else{
     if (m_ZFPmode > 0) 
-      m_hdf5helper->init_write_vel_compression(m_ntimestep, m_ZFPmode, m_ZFPpar, m_bufferInterval);
+      m_hdf5helper->init_write_vel(m_ntimestep, m_ZFPmode, m_ZFPpar, m_bufferInterval);
+      /* m_hdf5helper->init_write_vel_compression(m_ntimestep, m_ZFPmode, m_ZFPpar, m_bufferInterval); */
     else
-      m_hdf5helper->init_write_vel(m_ntimestep);
+      /* m_hdf5helper->init_write_vel(m_ntimestep); */
+      m_hdf5helper->init_write_vel(m_ntimestep, 0, 0.0, m_bufferInterval);
   }
   m_hdf5_time += (MPI_Wtime()-hdf5_time);
 
@@ -498,6 +502,8 @@ void ESSI3D::write_image_hdf5( int cycle, std::string &path, float_sw4 t,
   int g = mEW->mNumberOfGrids-1;
   int doWrite = 0;
   int myRank;
+  bool debug = false;
+  /* debug = true; */
 
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
@@ -522,7 +528,8 @@ void ESSI3D::write_image_hdf5( int cycle, std::string &path, float_sw4 t,
     fprintf(stderr, "Error with essioutput write_image_hdf5, not all variables are written correctly!\n");
 
   if (doWrite == 3) {
-    printf("Rank %d: write_image_hdf5 cycle=%d/%d, m_nbufstep=%d\n", myRank, cycle, m_ntimestep, m_nbufstep);
+    if (debug) 
+      fprintf(stderr, "Rank %d: write_image_hdf5 cycle=%d/%d, m_nbufstep=%d\n", myRank, cycle, m_ntimestep, m_nbufstep);
     m_nbufstep = 0;
   }
 }
