@@ -103,8 +103,8 @@ void  normalize_gradient_ph( vector<Sarray>& pseudo_hessian,
          for( int i=ib ; i <= ie ;i++)
             for( int c=0 ; c < 3; c++ )
          {
-            if( pseudo_hessian[g](c,i,j,k) > maxnorm[c] )
-               maxnorm[c] = pseudo_hessian[g](c,i,j,k);
+            if( pseudo_hessian[g](c+1,i,j,k) > maxnorm[c] )
+               maxnorm[c] = pseudo_hessian[g](c+1,i,j,k);
          }
    
    float_sw4 mxnormloc[3]={maxnorm[0],maxnorm[1],maxnorm[2]};
@@ -158,11 +158,11 @@ void normalize_pseudohessian( int nmpars, float_sw4* phs, int nmpard,
    npts=nmpars/ncomp;
    for( int m=0; m < npts ; m++ )
       for( int c=0; c < ncomp ; c++ )
-         phs[m*ncomp+c] /= mxnorm[c]+eps;
+         phs[m*ncomp+c] = phs[m*ncomp+c]/mxnorm[c]+eps;
    npts = nmpard/ncomp;
    for( int m=0; m < npts ; m++ )
       for( int c=0; c < ncomp ; c++ )
-         phd[m*ncomp+c] /= mxnorm[c]+eps;
+         phd[m*ncomp+c] = phd[m*ncomp+c]/mxnorm[c]+eps;
 }
 
 //-----------------------------------------------------------------------

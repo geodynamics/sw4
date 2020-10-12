@@ -1736,7 +1736,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 
 
 	 float_sw4 t  = m_t0 + m_shift + i*m_dt;
-	 float_sw4 ir = (t-t0fr)/dtfr;
+	 float_sw4 ir = round((t-t0fr)/dtfr);
 	 int ie   = static_cast<int>(ir);
 	 //	 int mmin = ie-order/2+1;
 	 //	 int mmax = ie+order/2;
@@ -1771,7 +1771,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 
 	 // If too far past the end of observed, set to zero.
 	 //	 if( ie > nfrsteps + order/2 )
-         if( ie > nfrsteps+1 )
+         if( ie > nfrsteps-1 )
 	 {
 	    mf[0]   = mf[1]   = mf[2]   = 0;
             dmf[0]  = dmf[1]  = dmf[2]  = 0;
@@ -1814,8 +1814,8 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	    }
 	    else if( ie > nfrsteps-3 )
 	    {
-	       mmin = nfrsteps-4;
-	       mmax = nfrsteps;
+	       mmin = nfrsteps-5;
+	       mmax = nfrsteps-1;
 	       ai   = ir - (mmin+2);
 	       getwgh5( ai, wgh, dwgh, ddwgh );
 	    }
@@ -3349,7 +3349,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
       delete[] nx;
     }
     else {
-      for (int i = 0; i < mAllocatedSize; i++) {
+      for (int i = 0; i < mAllocatedSize-1; i++) {
         if( cartesian ) {
           mRecordedSol[0][i] = (float_sw4)buf_0[i];
           mRecordedSol[1][i] = (float_sw4)buf_1[i];

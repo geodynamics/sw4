@@ -152,6 +152,15 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
         if omp_threads<=0: omp_threads=7;
         if mpi_tasks<=0: mpi_tasks = 6
         mpirun_cmd="jsrun -a1 -c7 -r6 -l CPU-CPU -d packed -b packed:7 -n " + str(mpi_tasks)
+        mpirun_cmd="jsrun -a1 -c7 -g1 -l CPU-CPU -d packed -b packed:7 -M -gpu -n " + str(mpi_tasks)
+    elif 'rzansel' in node_name:
+        os.environ["PSM2_DEVICES"] = ""
+        if mpi_tasks<=0: mpi_tasks = 4
+        mpirun_cmd="lrun -T4 -M -gpu"
+    elif 'lassen' in node_name:
+        os.environ["PSM2_DEVICES"] = ""
+        if mpi_tasks<=0: mpi_tasks = 4
+        mpirun_cmd="lrun -T4 -M -gpu"
     # add more machine names here
     elif 'Linux' in sys_name:
         if omp_threads<=0: omp_threads=1;
@@ -222,6 +231,7 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
     num_test=0
     num_pass=0
     num_fail=0
+
     all_dirs = ['energy', 'energy', 'energy', 'energy',
                 'meshrefine', 'meshrefine', 'meshrefine',
                 'attenuation', 'attenuation', 'pointsource',
@@ -350,7 +360,6 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
                     success = verify_hdf5.verify_sac_image(pytest_dir, 1e-5)
                 if success == False:
                     print('HDF5 test failed! (disable HDF5 test with -n option)')
-
             elif result_file == 'energy.log':
                 success = compare_energy(case_dir + sep + result_file, 1e-10, verbose)
             else:
