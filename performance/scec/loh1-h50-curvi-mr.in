@@ -22,9 +22,9 @@
 #developer ctol=1e-10 cmaxit=100 crelax=0.92
 developer reporttiming=on
 
-grid h=50 x=30000 y=30000 z=17000 # extrapolate=1 # what does extrapolate do with the new MR?
+grid h=50 x=30000 y=30000 z=17000 extrapolate=1 # extrapolate=1 makes the material properties discontinuous
 time t=9 #18
-fileio path=loh1-h50-curvi-mr-ne
+fileio path=loh1-h50-curvi-mr-e
 
 # mesh refinement along material jump (50*20 = 1000)
 refinement zmax=1000 
