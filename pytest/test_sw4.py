@@ -222,6 +222,7 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
     num_test=0
     num_pass=0
     num_fail=0
+    num_skip=0
     all_dirs = ['energy', 'energy', 'energy', 'energy',
                 'meshrefine', 'meshrefine', 'meshrefine',
                 'attenuation', 'attenuation', 'pointsource',
@@ -240,139 +241,142 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
     elif testing_level == 2:
         num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 1, 1]
 
-    
     print("Running all tests for level", testing_level, "...")
     # run all tests
     for qq in range(len(all_dirs)):
 
-        # skip HDF5 test if specified
-        if qq == len(all_dirs)-2 and nohdf5 == True:
-            print("HDF5 test skipped")
-            break
-        elif qq == len(all_dirs)-2:
-            print("  Running HDF5 test, may take a few minutes ...")
-    
         test_dir = all_dirs[qq]
         base_case = all_cases[qq]
         result_file = all_results[qq]
 
-        #make a local test directory
-        if not os.path.exists(test_dir):
-            os.mkdir(test_dir)
+        if qq == len(all_dirs)-2:
+            print("  Running HDF5 test, may take a few minutes ...")
 
-        os.chdir(test_dir) # change to the new local directory
-
-        # put all test cases in a list and add a for loop for each test_dir
-        for ii in range(num_meshes[qq]):
+        # skip HDF5 test if specified
+        if 'hdf5' in base_case and nohdf5 == True:
+            num_skip = num_skip+1
             num_test = num_test+1
-        
-            case_dir = base_case + '-' + str(ii+1)
-            test_case = case_dir + '.in'
-            if verbose: 
-                print('Starting test #', num_test, 'in directory:', test_dir, 'with input file:', test_case)
+            print('Test #', num_test, "Input file:", base_case+'-'+str(1)+'.in', 'SKIPPED')
+        else:
+            #make a local test directory
+            if not os.path.exists(test_dir):
+                os.mkdir(test_dir)
 
-            sw4_input_file = reference_dir + sep + test_dir + sep + test_case
-            #print('sw4_input_file = ', sw4_input_file)
+            os.chdir(test_dir) # change to the new local directory
 
-            sw4_stdout_file = case_dir + '.out'
+            # put all test cases in a list and add a for loop for each test_dir
+            for ii in range(num_meshes[qq]):
+                num_test = num_test+1
             
-            local_dir = pytest_dir + sep + test_dir
-            #print('local_dir = ', local_dir)
-            # pipe stdout and stderr to a temporary file
-            run_cmd = mpirun_cmd.split() + [
-                sw4_exe,
-                sw4_input_file
-            ]
+                case_dir = base_case + '-' + str(ii+1)
+                test_case = case_dir + '.in'
+                if verbose: 
+                    print('Starting test #', num_test, 'in directory:', test_dir, 'with input file:', test_case)
 
-            sw4_stdout_file = open(case_dir + '.out', 'wt')
-            sw4_stderr_file = open(case_dir + '.err', 'wt')
+                sw4_input_file = reference_dir + sep + test_dir + sep + test_case
+                #print('sw4_input_file = ', sw4_input_file)
 
-            # pipe stdout and stderr to a temporary file
-#            run_cmd = sw4_mpi_run + ' ' + sw4_input_file + ' >& ' + sw4_stdout_file
+                sw4_stdout_file = case_dir + '.out'
+                
+                local_dir = pytest_dir + sep + test_dir
+                #print('local_dir = ', local_dir)
+                # pipe stdout and stderr to a temporary file
+                run_cmd = mpirun_cmd.split() + [
+                    sw4_exe,
+                    sw4_input_file
+                ]
 
-            # run sw4
-            run_dir = os.getcwd()
-            #print('Running sw4 from directory:', run_dir)
+                sw4_stdout_file = open(case_dir + '.out', 'wt')
+                sw4_stderr_file = open(case_dir + '.err', 'wt')
 
-# assign OMP_NUM_THREADS
-            status = subprocess.run(
-                run_cmd,
-                stdout=sw4_stdout_file,
-                stderr=sw4_stderr_file,
-            )
+                # pipe stdout and stderr to a temporary file
+#                run_cmd = sw4_mpi_run + ' ' + sw4_input_file + ' >& ' + sw4_stdout_file
 
-            sw4_stdout_file.close()
-            sw4_stderr_file.close()
+                # run sw4
+                run_dir = os.getcwd()
+                #print('Running sw4 from directory:', run_dir)
 
-            # status = os.system(run_cmd)
-            # if status!=0:
-            #     print('ERROR: Test', test_case, ': sw4 returned non-zero exit status=', status, 'aborting test')
-            #     print('run_cmd=', run_cmd)
-            #     print("DID YOU USE THE CORRECT SW4 EXECUTABLE? (SPECIFY DIRECTORY WITH -d OPTION)")
-            #     return False # bail out
+# assign     OMP_NUM_THREADS
+                status = subprocess.run(
+                    run_cmd,
+                    stdout=sw4_stdout_file,
+                    stderr=sw4_stderr_file,
+                )
 
-            if status.returncode!=0:
-                print('ERROR: Test', test_case, ': sw4 returned non-zero exit status=', status.returncode, 'aborting test')
-                print('run_cmd=', run_cmd)
-                print("DID YOU USE THE CORRECT SW4 EXECUTABLE? (SPECIFY DIRECTORY WITH -d OPTION)")
-                return False # bail out
-
-
-            ref_result = reference_dir + sep + test_dir + sep + case_dir + sep + result_file
-            #print('Test #', num_test, 'output dirs: local case_dir =', case_dir, 'ref_result =', ref_result)
-
-
-            if result_file == 'hdf5.log':
-                import verify_hdf5
-                success = True
-                sw4_stdout_file = open(case_dir + '.out', 'r')
-                for line in sw4_stdout_file:
-                    if "Error" in line or "not compiled with HDF5" in line or "without sw4 compiled with HDF5" in line:
-                        success = False
-                        print('SW4 is not compiled with HDF5 library!')
-                        break;
                 sw4_stdout_file.close()
-                if success == True:
-                    success = verify_hdf5.verify(pytest_dir, 1e-5)
-                if success == False:
-                    print('HDF5 test failed! (disable HDF5 test with -n option)')
-            elif result_file == 'hdf5-sfile.log':
-                import verify_hdf5
-                success = True
-                sw4_stdout_file = open(case_dir + '.out', 'r')
-                for line in sw4_stdout_file:
-                    if "Error" in line or "not compiled with HDF5" in line or "without sw4 compiled with HDF5" in line:
-                        success = False
-                        print('SW4 is not compiled with HDF5 library!')
-                        break;
-                sw4_stdout_file.close()
-                if success == True:
-                    success = verify_hdf5.verify_sac_image(pytest_dir, 1e-5)
-                if success == False:
-                    print('HDF5 test failed! (disable HDF5 test with -n option)')
+                sw4_stderr_file.close()
 
-            elif result_file == 'energy.log':
-                success = compare_energy(case_dir + sep + result_file, 1e-10, verbose)
-            else:
-                # compare output with reference result (always compare the last line)
-                success = compare_one_line(ref_result , case_dir + sep + result_file, 1e-5, 1e-10, -1, verbose)
-                if success and 'attenuation' in test_dir:
-                    # also compare the 3rd last line in the files
-                    success = compare_one_line(ref_result , case_dir + sep + result_file, 1e-5, 1e-10, -3, verbose)
+                # status = os.system(run_cmd)
+                # if status!=0:
+                #     print('ERROR: Test', test_case, ': sw4 returned non-zero exit status=', status, 'aborting test')
+                #     print('run_cmd=', run_cmd)
+                #     print("DID YOU USE THE CORRECT SW4 EXECUTABLE? (SPECIFY DIRECTORY WITH -d OPTION)")
+                #     return False # bail out
 
-            if success:        
-                print('Test #', num_test, "Input file:", test_case, 'PASSED')
-                num_pass += 1
-            else:
-                print('Test #', num_test, "Input file:", test_case, 'FAILED')
-                num_fail += 1
-            
-        # end for qq in all_dirs[qq]
+                if status.returncode!=0:
+                    print('ERROR: Test', test_case, ': sw4 returned non-zero exit status=', status.returncode, 'aborting test')
+                    print('run_cmd=', run_cmd)
+                    print("DID YOU USE THE CORRECT SW4 EXECUTABLE? (SPECIFY DIRECTORY WITH -d OPTION)")
+                    return False # bail out
 
-        os.chdir('..') # change back to the parent directory
+
+                ref_result = reference_dir + sep + test_dir + sep + case_dir + sep + result_file
+                #print('Test #', num_test, 'output dirs: local case_dir =', case_dir, 'ref_result =', ref_result)
+
+
+                if result_file == 'hdf5.log':
+                    import verify_hdf5
+                    success = True
+                    sw4_stdout_file = open(case_dir + '.out', 'r')
+                    for line in sw4_stdout_file:
+                        if "Error" in line or "not compiled with HDF5" in line or "without sw4 compiled with HDF5" in line:
+                            success = False
+                            print('  SW4 is not compiled with HDF5 library!')
+                            break;
+                    sw4_stdout_file.close()
+                    if success == True:
+                        success = verify_hdf5.verify(pytest_dir, 1e-5)
+                    if success == False:
+                        # print('HDF5 test failed! (disable HDF5 test with -n option)')
+                        nohdf5 = True
+                elif result_file == 'hdf5-sfile.log':
+                    import verify_hdf5
+                    success = True
+                    sw4_stdout_file = open(case_dir + '.out', 'r')
+                    for line in sw4_stdout_file:
+                        if "Error" in line or "not compiled with HDF5" in line or "without sw4 compiled with HDF5" in line:
+                            success = False
+                            print('  SW4 is not compiled with HDF5 library!')
+                            break;
+                    sw4_stdout_file.close()
+                    if success == True:
+                        success = verify_hdf5.verify_sac_image(pytest_dir, 1e-5)
+                    if success == False:
+                        # print('HDF5 test failed! (disable HDF5 test with -n option)')
+                        nohdf5 = True
+
+                elif result_file == 'energy.log':
+                    success = compare_energy(case_dir + sep + result_file, 1e-10, verbose)
+                else:
+                    # compare output with reference result (always compare the last line)
+                    success = compare_one_line(ref_result , case_dir + sep + result_file, 1e-5, 1e-10, -1, verbose)
+                    if success and 'attenuation' in test_dir:
+                        # also compare the 3rd last line in the files
+                        success = compare_one_line(ref_result , case_dir + sep + result_file, 1e-5, 1e-10, -3, verbose)
+
+                if success:        
+                    print('Test #', num_test, "Input file:", test_case, 'PASSED')
+                    num_pass += 1
+                else:
+                    print('Test #', num_test, "Input file:", test_case, 'FAILED')
+                    num_fail += 1
+                
+            # end for qq in all_dirs[qq]
+
+            os.chdir('..') # change back to the parent directory
 
     # end for all cases in the test_dir
-    print('Out of', num_test, 'tests,', num_fail, 'failed and ', num_pass, 'passed')
+    print('Out of', num_test, 'tests,', num_fail, 'failed,', num_pass, 'passed, and', num_skip, 'skipped')
     # normal termination
     return True
     
