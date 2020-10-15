@@ -990,7 +990,8 @@ void EW::set_materials()
 // extrapolate material properties to mesh refinement boundaries (e.g. for doing the LOH cases more accurately)
     if (!mQuiet && proc_zero() && mVerbose>=3)
     {
-      printf("setMaterials> mMaterialExtrapolate = %i, mNumberOfCartesianGrids=%i\n", mMaterialExtrapolate, mNumberOfCartesianGrids);
+      printf("setMaterials> mMaterialExtrapolate = %i, mNumberOfCartesianGrids=%i, mNumberOfGrids=%i\n",
+	     mMaterialExtrapolate, mNumberOfCartesianGrids, mNumberOfGrids);
     }
     
     if (mMaterialExtrapolate > 0 && mNumberOfCartesianGrids > 1)
@@ -1062,6 +1063,79 @@ void EW::set_materials()
 	
       } // end for g      
     } // end if mMaterialExtrapolate > 0 ...
+    
+// repeat for the curvilinear grids
+    int NumberOfCurviGrids = mNumberOfGrids - mNumberOfCartesianGrids;
+    
+    if (mMaterialExtrapolate > 0 && NumberOfCurviGrids > 1)
+    {
+      int kFrom;
+      for (g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++)
+      {
+	if (g < mNumberOfGrids-1) // extrapolate to top
+	{
+	  kFrom = m_kStartInt[g]+mMaterialExtrapolate;
+
+	  if (!mQuiet && proc_zero() && mVerbose>=3)
+	    printf("setMaterials> top extrapol, g=%i, kFrom=%d, kStart=%d, kStartInt=%d\n", g, kFrom, m_kStart[g], m_kStartInt[g]);
+
+	  for (int k = m_kStart[g]; k < kFrom; ++k)
+#pragma omp parallel for
+	    for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
+	      for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
+	      {
+		mRho[g](i,j,k)    = mRho[g](i,j,kFrom);
+		mMu[g](i,j,k)     = mMu[g](i,j,kFrom);
+		mLambda[g](i,j,k) = mLambda[g](i,j,kFrom);
+	      }
+
+	  if( m_use_attenuation )
+	  {
+	    for (int k = m_kStart[g]; k < kFrom; ++k)
+#pragma omp parallel for
+	      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
+		for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
+		{
+		  mQs[g](i,j,k) = mQs[g](i,j,kFrom);
+		  mQp[g](i,j,k) = mQp[g](i,j,kFrom);
+		}
+	  }
+	  
+	} // end extrapolate to top
+
+	if (g > mNumberOfCartesianGrids) // extrapolate to bottom
+	{
+	  kFrom = m_kEndInt[g]-mMaterialExtrapolate;
+
+	  if (!mQuiet && proc_zero() && mVerbose>=3)
+	    printf("setMaterials> bottom extrapol, g=%i, kFrom=%i, kEnd=%d, kEndInt=%d\n", g, kFrom, m_kEnd[g], m_kEndInt[g]);
+
+	  for (int k = kFrom+1; k <= m_kEnd[g]; ++k)
+#pragma omp parallel for
+	    for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
+	      for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
+	      {
+		mRho[g](i,j,k)    = mRho[g](i,j,kFrom);
+		mMu[g](i,j,k)     = mMu[g](i,j,kFrom);
+		mLambda[g](i,j,k) = mLambda[g](i,j,kFrom);
+	      }
+
+	  if( m_use_attenuation )
+	  {
+	    for (int k = kFrom+1; k <= m_kEnd[g]; ++k)
+#pragma omp parallel for
+	      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
+		for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
+		{
+		  mQs[g](i,j,k) = mQs[g](i,j,kFrom);
+		  mQp[g](i,j,k) = mQp[g](i,j,kFrom);
+		}
+	  }
+	  
+	} // end extrapolate to bottom
+	
+      } // end for g      
+    } // end if mMaterialExtrapolate > 0 and NumberOfCurviGrids > 1
     
 // tmp
 //    printf("\n useVelocityThresholds=%i vpMin=%e vsMin=%e\n\n", m_useVelocityThresholds, m_vpMin, m_vsMin);
@@ -1632,12 +1706,8 @@ void EW::computeDT()
    {
       for (g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++)
       {
-//     g = mNumberOfGrids-1;
-//         float_sw4 la, mu, la2mu;
-
-// do consider ghost points (especially the ghost line above the topography might be important)
 #pragma omp parallel for reduction(min:dtCurv)
-         for (int k=m_kStart[g]; k<=m_kEnd[g]; k++)
+         for (int k=m_kStartInt[g]; k<=m_kEndInt[g]; k++)
             for (int j=m_jStart[g]; j<=m_jEnd[g]; j++)
                for (int i=m_iStart[g]; i<=m_iEnd[g]; i++)
                {

@@ -114,7 +114,8 @@ void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTim
 	    vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, vector<Sarray>& a_Rho,
 	    vector<Sarray>& U, vector<Sarray>& Um,
 	    vector<DataPatches*>& Upred_saved_sides,
-	    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides, int event, int save_steps );
+	    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides, int event, int save_steps,
+            int varcase, vector<Sarray>& pseudoHessian );
 
 void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, float_sw4 gradient[11], float_sw4 hessian[121] );
    //void solve_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
@@ -744,6 +745,10 @@ void update_and_transform_material( int g, Sarray& rho, Sarray& mu, Sarray& lamb
 
 void transform_gradient( Sarray& rho, Sarray& mu, Sarray& lambda, Sarray& grho, Sarray& gmu, Sarray& glambda );
 
+void addtoPseudoHessian( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarray>& Up, 
+                         vector<Sarray>& aRho, vector<Sarray>& aMu, vector<Sarray>& aLambda, 
+                         float_sw4 dt, int varcase, vector<Sarray>& PseudoHess );
+
 // Functions to impose conditions at grid refinement interface:
    // void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
    //                 vector<Sarray*>& a_AlphaVEp,
@@ -958,6 +963,10 @@ void meterr4c_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 void testsrc_ci( float_sw4* __restrict__ f, int ib, int ie, int jb, int je, int kb, int ke,
 		 int nk, int wind[6], float_sw4 zmin, float_sw4 h, int kx[3], 
 		 int ky[3], int kz[3], float_sw4 mom[3] );
+void testsrcc_ci( float_sw4* __restrict__ f, int ib, int ie, int jb, int je, 
+                  int kb, int ke, int nk, int g, int wind[6], 
+                  int kx[3], int ky[3], int kz[3], float_sw4 mom[3] );
+
 void tw_aniso_force_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, 
 			int klast, float_sw4* fo, float_sw4 t,float_sw4 om,float_sw4 cv,
 			float_sw4 ph, float_sw4 omm,float_sw4 phm,float_sw4 amprho,
@@ -1284,6 +1293,7 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    //   TestGrid* create_gaussianHill();
    TestTwilight* create_twilight();
    TestEcons* create_energytest();
+   TestPointSource* get_point_source_test();
    AllDims* get_fine_alldimobject( );
    void grid_information( int g );
    void check_ic_conditions( int gc, vector<Sarray>& a_U );

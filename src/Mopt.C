@@ -47,6 +47,7 @@ Mopt::Mopt( EW* a_ew )
    m_output_ts = false;
    m_test_regularizer = false;
    m_do_profiling = false;
+   m_use_pseudohessian = false;
    m_tolerance = 1e-12;
    m_var    = 0;
    m_var2   = 0;
@@ -391,6 +392,13 @@ void Mopt::processMrun( char* buffer )
 	 int n = strlen(token);
 	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 )
 	    m_do_profiling = true;
+      }
+      else if( startswith("pseudohessian=",token) )
+      {
+         token += 14;
+	 int n = strlen(token);
+	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 )
+	    m_use_pseudohessian = true;
       }
       else
          badOption("mrun",token);
@@ -1227,4 +1235,28 @@ void Mopt::set_typx( int nmpar, double* sf, double* typx )
       else
 	 typx[i+2] = m_lambdasffactor*sf[i+2];
    }
+}
+
+//-----------------------------------------------------------------------
+void Mopt::init_pseudohessian( vector<Sarray>& ph )
+{
+   if( m_use_pseudohessian )
+   {
+      for( int g=0 ; g < m_ew->mNumberOfCartesianGrids ; g++ )
+      {
+         ph[g].define(3,m_ew->m_iStart[g],m_ew->m_iEnd[g],
+                        m_ew->m_jStart[g],m_ew->m_jEnd[g],
+                        m_ew->m_kStart[g],m_ew->m_kEnd[g] );
+         ph[g].set_to_zero();
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
+int Mopt::get_pseudo_hessian_case( )
+{
+   if( m_use_pseudohessian )
+      return m_mp->get_varcase();
+   else
+      return 0;
 }

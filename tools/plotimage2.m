@@ -23,7 +23,7 @@ end;
 if nargin < 3
    nc=21;
    [cv0, np, plane, mx, mn] = imageinfo(fil,nc,0,machineformat);
-#   printf("data min=%e, max=%e\n", mn, mx);
+%   printf("data min=%e, max=%e\n", mn, mx);
    mn = max(0.006,mx/20);
    if mx<5*mn
      mx = 5*mn;
@@ -127,7 +127,8 @@ axis([x1min x1max x2min x2max]);
 hold off;
 axis ij; % flip z-axis to point downwards
 axis equal;
-caxis([0.0, mx]);
+%caxis([0.0, mx]);
+caxis([mn, mx]);
 colorbar;
 set(gca,"fontsize",16);
 #title_str=sprintf("Time=%g", t);

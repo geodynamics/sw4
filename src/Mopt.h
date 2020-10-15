@@ -20,6 +20,7 @@ class Mopt
    double m_typrho, m_typmu, m_typlambda;
    bool m_typrhoset, m_typmuset, m_typlambdaset;
    double m_rhosffactor, m_musffactor, m_lambdasffactor;
+   bool m_use_pseudohessian;
 
    void badOption(string name, char* option) const;
    bool startswith(const char begin[], char *line);
@@ -46,6 +47,8 @@ class Mopt
    void set_sourcescalefactors( int nspar, double* sfs );
    void set_dscalefactors( );
    void set_typx( int nmpar, double* sf, double* typx );
+   void init_pseudohessian( vector<Sarray>& ph );
+   int get_pseudo_hessian_case();
    const string& getPath() const {return m_path;}
    EW* get_EWptr() const {return m_ew;}
    void set_baseMat(double* xs, double* xm );

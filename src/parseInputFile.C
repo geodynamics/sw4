@@ -409,7 +409,6 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 // setup communicators for 3D solutions on all grids
   setupMPICommunications();
 
-
 // Make curvilinear grid and compute metric
   for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids ; g++ )
      m_gridGenerator->generate_grid_and_met( this, g, mX[g], mY[g], mZ[g], mJ[g], mMetric[g] );
@@ -430,7 +429,6 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
   //        setup_metric();
   //     }
   //  }
-
 // output grid size info
   if (m_myRank == 0)
   {
@@ -457,7 +455,6 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
   while (!inputFile.eof())
   {
      inputFile.getline(buffer, 256);
-
      if (strlen(buffer) > 0) // empty lines produce this
      {
        if (startswith("#", buffer) || 
@@ -4604,7 +4601,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
          }
 
          // number of extra ghost points to allow highly accurate interpolation; needed for the source discretization
-         m_ext_ghost_points = 2;
+         m_ext_ghost_points = 8;
 
 // Allocate interface the interface surface for this curvilinear grid
          m_curviInterface[g-mNumberOfCartesianGrids].define(m_iStart[g]-m_ext_ghost_points, m_iEnd[g]+m_ext_ghost_points,
@@ -5956,7 +5953,6 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
     // global version (gets real coordinates)
     sourcePtr = new Source(this, freq, t0, x, y, z, fx, fy, fz, tDep, formstring, topodepth, ncyc,
 			   par, npar, ipar, nipar, false ); // false is correctStrengthForMu
-
     //...and add it to the list of forcing terms
     if (sourcePtr->ignore())
     {
@@ -5966,6 +5962,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
     {
       a_GlobalUniqueSources[event].push_back(sourcePtr);
     }
+
   }	  
   if( npar > 0 )
      delete[] par;
