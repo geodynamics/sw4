@@ -1,4 +1,7 @@
 #include "sw4.h"
+#include "Mspace.h"
+#include "caliper.h"
+#include "policies.h"
 
 void addgradrho_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                    int klast, int ifirstact, int ilastact, int jfirstact,
@@ -115,6 +118,9 @@ void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                     float_sw4* __restrict__ a_glambda, float_sw4 dt,
                     float_sw4 h, int onesided[6], int nb, int wb,
                     float_sw4* __restrict__ a_bop) {
+
+  SW4_MARK_FUNCTION;
+
   const float_sw4 h3 = h * h * h;
   const float_sw4 ih2 = 1.0 / (h * h);
   const float_sw4 dt2o12 = dt * dt / 12;
@@ -142,19 +148,28 @@ void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 #define bop(q, k) a_bop[q - 1 + 4 * (k - 1)]
 
   int kstart = kfirstact;
-#pragma omp parallel
+/* #pragma omp parallel */
   {
     if (kfirstact <= 4 && onesided[4] == 1) {
+
       kstart = 5;
       float_sw4 w8[4] = {0, 0, 1, 1};
       float_sw4 w6m[4] = {0, 0, al1, al1 + al2};
       float_sw4 w6p[4] = {0, al1, al1 + al2, al1 + al2 + al3};
-#pragma omp for
-      for (int k = kfirstact; k <= 4; k++)
-        for (int j = jfirstact; j <= jlastact; j++)
-#pragma ivdep
-#pragma simd
-          for (int i = ifirstact; i <= ilastact; i++) {
+
+      RAJA::RangeSegment k_range(kfirstact, 5);
+      RAJA::RangeSegment j_range(jfirstact, jlastact + 1);
+      RAJA::RangeSegment i_range(ifirstact, ilastact + 1);
+      RAJA::kernel<DEFAULT_LOOP3>(
+          RAJA::make_tuple(k_range, j_range, i_range),
+          [=] RAJA_DEVICE(int k, int j, int i) {
+
+/* #pragma omp for */
+      /* for (int k = kfirstact; k <= 4; k++) */
+        /* for (int j = jfirstact; j <= jlastact; j++) */
+/* #pragma ivdep */
+/* #pragma simd */
+          /* for (int i = ifirstact; i <= ilastact; i++) { */
             float_sw4 normfact = h3 * wgh[k - 1];
             // Diagonal terms
             float_sw4 dux = d4b * (u(1, i + 2, j, k) - u(1, i - 2, j, k)) +
@@ -540,15 +555,23 @@ void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                 gmu(i, j, k + 1) = gmu(i, j, k + 1) + 2 * pd;
               }
             }
-          }
-    }
+          /* } */
+      }); // end RAJA kernel
+    } // end if (kfirstact <= 4 && onesided[4] == 1)
 
-#pragma omp for
-    for (int k = kstart; k <= klastact; k++)
-      for (int j = jfirstact; j <= jlastact; j++)
-#pragma ivdep
-#pragma simd
-        for (int i = ifirstact; i <= ilastact; i++) {
+/* #pragma omp for */
+    /* for (int k = kstart; k <= klastact; k++) */
+    /*   for (int j = jfirstact; j <= jlastact; j++) */
+/* #pragma ivdep */
+/* #pragma simd */
+        /* for (int i = ifirstact; i <= ilastact; i++) { */
+      RAJA::RangeSegment k_range(kstart, klastact + 1);
+      RAJA::RangeSegment j_range(jfirstact, jlastact + 1);
+      RAJA::RangeSegment i_range(ifirstact, ilastact + 1);
+      RAJA::kernel<DEFAULT_LOOP3>(
+          RAJA::make_tuple(k_range, j_range, i_range),
+          [=] RAJA_DEVICE(int k, int j, int i) {
+
           float_sw4 normfact = h3;
           // Diagonal terms
           float_sw4 dux = d4b * (u(1, i + 2, j, k) - u(1, i - 2, j, k)) +
@@ -911,7 +934,8 @@ void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                h3 * ih2;
           glambda(i, j, k) = glambda(i, j, k) + pd;
           gmu(i, j, k) = gmu(i, j, k) + 2 * pd;
-        }
+        /* } */
+      }); // End RAJA kernel
   }
 }
 

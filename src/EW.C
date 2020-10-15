@@ -7377,6 +7377,10 @@ void EW::add_to_grad(vector<Sarray>& K, vector<Sarray>& Kacc,
                      vector<Sarray>& Uacc, vector<Sarray>& gRho,
                      vector<Sarray>& gMu, vector<Sarray>& gLambda) {
   SW4_MARK_FUNCTION;
+#ifdef PEEKS_GALORE
+  SW4_PEEK;
+  SYNC_DEVICE;
+#endif
   for (int g = 0; g < mNumberOfGrids; g++) {
     int ifirst = m_iStart[g];
     int ilast = m_iEnd[g];
@@ -7402,6 +7406,7 @@ void EW::add_to_grad(vector<Sarray>& K, vector<Sarray>& Kacc,
     float_sw4 h = mGridSize[g];
     int* onesided_ptr = m_onesided[g];
     int nb = 4, wb = 6;
+
     //    if (topographyExists() && g == mNumberOfGrids - 1) {
     if (topographyExists() && g >= mNumberOfCartesianGrids) {
       if (m_croutines) {
@@ -7431,6 +7436,17 @@ void EW::add_to_grad(vector<Sarray>& K, vector<Sarray>& Kacc,
                       ilastact, jfirstact, jlastact, kfirstact, klastact, k_ptr,
                       ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr, mDt, h,
                       onesided_ptr);
+        K[g].prefetch();
+        Kacc[g].prefetch();
+        Um[g].prefetch();
+        U[g].prefetch();
+        Up[g].prefetch();
+        Uacc[g].prefetch();
+        gRho[g].prefetch();
+        gMu[g].prefetch();
+        gLambda[g].prefetch();
+
+        // RAJA kernel
         addgradmula_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, ifirstact,
                        ilastact, jfirstact, jlastact, kfirstact, klastact,
                        k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr, glambda_ptr, mDt,
@@ -7447,6 +7463,11 @@ void EW::add_to_grad(vector<Sarray>& K, vector<Sarray>& Kacc,
       }
     }
   }
+
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_DEVICE;
+#endif
 }
 
 //-----------------------------------------------------------------------

@@ -205,8 +205,7 @@ void  MaterialParameterization::get_regularizer( int nmd, double* xmd, int nms, 
 		      double* dmfd_reg, double* dmfs_reg )
 {
    mf_reg=0;
-printf("MaterialParameterization::get_regularizer regcoeff=%e\n", regcoeff);
-   if( fabs(regcoeff) < 10e-12 )
+   if( fabs(regcoeff) < 1e-6 )
       return;
 
 // Default, Tikhonov regularizing term:

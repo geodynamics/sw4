@@ -1719,7 +1719,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 
 	 // If too far past the end of observed, set to zero.
 	 //	 if( ie > nfrsteps + order/2 )
-         if( ie > nfrsteps+1 )
+         if( ie > nfrsteps-1 )
 	 {
 	    mf[0]   = mf[1]   = mf[2]   = 0;
             dmf[0]  = dmf[1]  = dmf[2]  = 0;
