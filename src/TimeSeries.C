@@ -3263,7 +3263,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
     float dt, tstart;
     readAttrFloat(fid, "DELTA", &dt);
 
-    sw4npts =  (npts-1) * downsample;
+    sw4npts =  (npts-1) * downsample + 1;
 
     // Only allocate arrays if we aren't doing a restart
     if(!mIsRestart) {
@@ -3327,8 +3327,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
         return;
       }
 
-      for (int i = 0; i < mAllocatedSize; i++) {
-      /* for (int i = 0; i < npts; i++) { */
+      for (int i = 0; i < sw4npts; i++) {
         if( cartesian ) {
           mRecordedSol[0][i] = (float_sw4)buf_0up[i];
           mRecordedSol[1][i] = (float_sw4)buf_1up[i];
@@ -3349,7 +3348,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
       delete[] nx;
     }
     else {
-      for (int i = 0; i < mAllocatedSize; i++) {
+      for (int i = 0; i < sw4npts; i++) {
         if( cartesian ) {
           mRecordedSol[0][i] = (float_sw4)buf_0[i];
           mRecordedSol[1][i] = (float_sw4)buf_1[i];
@@ -3363,7 +3362,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
       }
     }
 
-    for (int i = 0; i < mAllocatedSize; i++) {
+    for (int i = 0; i < sw4npts; i++) {
       mRecordedFloats[0][i] = (float) mRecordedSol[0][i];
       mRecordedFloats[1][i] = (float) mRecordedSol[1][i];
       mRecordedFloats[2][i] = (float) mRecordedSol[2][i];
