@@ -90,22 +90,35 @@ int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
-  presetGPUID();
+  presetGPUID(myRank);
 #if defined(SW4_SIGNAL_CHECKPOINT)
   std::signal(SIGUSR1, signal_handler);
 #endif
 
 #ifdef SW4_USE_UMPIRE
   umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
+#ifdef ENABLE_HIP
+  auto allocator = rma.getAllocator("DEVICE");
+#else
   auto allocator = rma.getAllocator("UM");
+#endif
   // auto device_allocator = rma.getAllocator("DEVICE");
-
+#ifdef ENABLE_HIP
+  const size_t pool_size =
+      static_cast<size_t>(1) * 1024 * 1024 * 1024;  //+102*1024*1024;
+#else
   const size_t pool_size =
       static_cast<size_t>(15) * 1024 * 1024 * 1024;  //+102*1024*1024;
+#endif 
 
+
+#ifdef ENABLE_HIP
+  auto pref_allocator = allocator;
+#else
   auto pref_allocator = rma.makeAllocator<umpire::strategy::AllocationAdvisor>(
       "preferred_location_device", allocator, "PREFERRED_LOCATION",
       global_variables.device);
+#endif
 
   auto pooled_allocator =
       rma.makeAllocator<umpire::strategy::DynamicPool, true>(

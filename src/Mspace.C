@@ -15,7 +15,7 @@ struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0,
                                                          0, 0, 1, 0};
 using namespace std;
 
-void presetGPUID() {
+void presetGPUID(int mpi_rank) {
 #if defined(ENABLE_GPU_ERROR)
   std::cerr
       << " Compilation error. Both ENABLE_CUDA and ENABLE_HIP are defined\n";
@@ -59,12 +59,19 @@ void presetGPUID() {
 #ifdef ENABLE_HIP
   int devices_per_node = 4;
   SW4_CheckDeviceError(hipGetDeviceCount(&devices_per_node));
+  printf("NUmber of device is %d\n",devices_per_node);
+  fflush(stdout);
   global_variables.num_devices = devices_per_node;
   if (devices_per_node > 1) {
-    char *crank = getenv("OMPI_COMM_WORLD_LOCAL_RANK");
+    char *crank = getenv("SLURM_PROC");
+    printf("Return fro GETENV IS %s\n",crank);
+  fflush(stdout);
     int device = atoi(crank) % devices_per_node;
+    device=mpi_rank%devices_per_node;
     global_variables.device = device;
     printf(" presetGPU Called ::  LOCAL RANK %d \n", device);
+  fflush(stdout);
+    SW4_CheckDeviceError(hipSetDevice(device));
   }
 #endif  // ENABLE_HIP
 
