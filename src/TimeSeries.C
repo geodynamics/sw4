@@ -389,7 +389,7 @@ void TimeSeries::allocateRecordingArrays( int numberOfTimeSteps, float_sw4 start
     for (int q=0; q<m_nComp; q++)
     {
       if (mRecordedSol[q]) delete [] mRecordedSol[q];
-      mRecordedSol[q] = new float_sw4[mAllocatedSize];
+      mRecordedSol[q] = new float_sw4[mAllocatedSize]();
     }
 
     if (m_sacFormat || m_hdf5Format)
@@ -397,7 +397,7 @@ void TimeSeries::allocateRecordingArrays( int numberOfTimeSteps, float_sw4 start
       for (int q=0; q<m_nComp; q++)
       {
 	if (mRecordedFloats[q]) delete [] mRecordedFloats[q];
-	mRecordedFloats[q] = new float[mAllocatedSize];
+	mRecordedFloats[q] = new float[mAllocatedSize]();
       }
     }
   }
