@@ -1047,9 +1047,10 @@ void Sarray::assign(const double* ar, int corder) {
     // #pragma omp parallel for
     //       for( size_t i=0 ; i < m_ni*((size_t) m_nj)*m_nk*m_nc ; i++ )
     const size_t end = m_ni * ((size_t)m_nj) * m_nk * m_nc;
+    auto mdata = m_data;
     RAJA::forall<SARRAY_LOOP_POL1>(
         RAJA::RangeSegment(0, end),
-        [=] RAJA_DEVICE(size_t i) { m_data[i] = ar[i]; });
+        [=] RAJA_DEVICE(size_t i) { mdata[i] = ar[i]; });
   } else if (m_corder) {
     // Class array in corder, input array in fortran order,
     // #pragma omp parallel for
@@ -1094,6 +1095,11 @@ void Sarray::assign(const double* ar, int corder) {
     // 	 for( int j=0 ; j <m_nj ; j++ )
     // 	    for( int k=0 ; k <m_nk ; k++ )
     // 	       for( int c=0 ; c < m_nc ; c++ )
+    float_sw4* mdata = m_data;
+    int mni = m_ni;
+    int mnj = m_nj;
+    int mnk = m_nk;
+    int mnc = m_nc;
     RAJA::RangeSegment i_range(0, m_ni);
     RAJA::RangeSegment j_range(0, m_nj);
     RAJA::RangeSegment k_range(0, m_nk);
@@ -1101,8 +1107,8 @@ void Sarray::assign(const double* ar, int corder) {
     RAJA::kernel<SARRAY_LOOP_POL2>(
         RAJA::make_tuple(i_range, j_range, k_range, c_range),
         [=] RAJA_DEVICE(int i, int j, int k, int c) {
-          m_data[c + m_nc * i + m_nc * m_ni * j + m_nc * m_ni * m_nj * k] =
-              ar[i + m_ni * j + m_ni * m_nj * k + m_ni * m_nj * m_nk * c];
+          mdata[c + mnc * i + mnc * mni * j + mnc * mni * mnj * k] =
+              ar[i + mni * j + mni * mnj * k + mni * mnj * mnk * c];
         });  // SYNC_STREAM;
   }
 }

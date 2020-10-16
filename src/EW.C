@@ -2903,6 +2903,11 @@ RAJA_HOST_DEVICE float_sw4 EW::Gaussian_x_T_Integral(float_sw4 t, float_sw4 R,
 //-----------------------------------------------------------------------
 // void EW::get_exact_point_source( Sarray& u, float_sw4 t, int g, Source&
 // source )
+#ifdef ENABLE_HIP
+void EW::get_exact_point_source(float_sw4* up, float_sw4 t, int g,
+                                Source& source, int* wind) {
+}
+#else
 void EW::get_exact_point_source(float_sw4* up, float_sw4 t, int g,
                                 Source& source, int* wind) {
   SW4_MARK_FUNCTION;
@@ -3513,6 +3518,7 @@ void EW::get_exact_point_source(float_sw4* up, float_sw4 t, int g,
   SYNC_STREAM;
   SW4_MARK_END("get_exact_point_source::loop");
 }
+#endif
 
 #include <cmath>
 #include <complex>
@@ -4355,6 +4361,12 @@ void EW::exactAccTwilight(float_sw4 a_t, vector<Sarray>& a_Uacc) {
 }
 
 //---------------------------------------------------------------------------
+#ifdef ENABLE_HIP
+void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
+               vector<GridPointSource*>& point_sources,
+               vector<int>& identsources) {
+}
+#else
 void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
                vector<GridPointSource*>& point_sources,
                vector<int>& identsources) {
@@ -4664,8 +4676,13 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
     SW4_MARK_END("FORCE::DEVICE");
   }
 }
-
+#endif
 //---------------------------------------------------------------------------
+#ifdef ENABLE_HIP
+void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
+                  vector<GridPointSource*>& point_sources,
+                  vector<int>& identsources) {}
+#else
 void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
                   vector<GridPointSource*>& point_sources,
                   vector<int>& identsources) {
@@ -4917,6 +4934,7 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
     SW4_MARK_END("FORCE_TT::DEVICE");
   }
 }
+#endif
 
 //---------------------------------------------------------------------------
 // perhaps a better name would be evalLu ??

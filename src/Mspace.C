@@ -1,5 +1,7 @@
 #include <mpi.h>
+#ifdef ENABLE_CUDA
 #include <mpi-ext.h>
+#endif
 
 #include <iomanip>
 #include <unordered_map>
