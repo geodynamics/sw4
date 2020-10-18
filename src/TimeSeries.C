@@ -3269,7 +3269,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
     if(!mIsRestart) {
       // Assumes starting from time 0 and timestep 0
       tstart = 0;
-      allocateRecordingArrays( sw4npts, m_t0+tstart, (float_sw4)dt);
+      allocateRecordingArrays( sw4npts, m_t0+tstart, (float_sw4)(dt/downsample));
     }
     else {
       m_nptsWritten = npts;
