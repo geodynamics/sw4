@@ -389,7 +389,7 @@ void TimeSeries::allocateRecordingArrays( int numberOfTimeSteps, float_sw4 start
     for (int q=0; q<m_nComp; q++)
     {
       if (mRecordedSol[q]) delete [] mRecordedSol[q];
-      mRecordedSol[q] = new float_sw4[mAllocatedSize];
+      mRecordedSol[q] = new float_sw4[mAllocatedSize]();
     }
 
     if (m_sacFormat || m_hdf5Format)
@@ -397,7 +397,7 @@ void TimeSeries::allocateRecordingArrays( int numberOfTimeSteps, float_sw4 start
       for (int q=0; q<m_nComp; q++)
       {
 	if (mRecordedFloats[q]) delete [] mRecordedFloats[q];
-	mRecordedFloats[q] = new float[mAllocatedSize];
+	mRecordedFloats[q] = new float[mAllocatedSize]();
       }
     }
   }
@@ -3269,7 +3269,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
     if(!mIsRestart) {
       // Assumes starting from time 0 and timestep 0
       tstart = 0;
-      allocateRecordingArrays( sw4npts, m_t0+tstart, tstart);
+      allocateRecordingArrays( sw4npts, m_t0+tstart, (float_sw4)(dt/downsample));
     }
     else {
       m_nptsWritten = npts;
@@ -3280,7 +3280,6 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
        return;
     }
 
-    m_dt = dt / downsample;
     mLastTimeStep = sw4npts - 1;
 
     float *buf_0 = new float[npts];
@@ -3327,8 +3326,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
         return;
       }
 
-      for (int i = 0; i < mAllocatedSize; i++) {
-      /* for (int i = 0; i < npts; i++) { */
+      for (int i = 0; i < sw4npts; i++) {
         if( cartesian ) {
           mRecordedSol[0][i] = (float_sw4)buf_0up[i];
           mRecordedSol[1][i] = (float_sw4)buf_1up[i];
@@ -3349,7 +3347,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
       delete[] nx;
     }
     else {
-      for (int i = 0; i < mAllocatedSize-1; i++) {
+      for (int i = 0; i < sw4npts; i++) {
         if( cartesian ) {
           mRecordedSol[0][i] = (float_sw4)buf_0[i];
           mRecordedSol[1][i] = (float_sw4)buf_1[i];
@@ -3363,7 +3361,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
       }
     }
 
-    for (int i = 0; i < mAllocatedSize; i++) {
+    for (int i = 0; i < sw4npts; i++) {
       mRecordedFloats[0][i] = (float) mRecordedSol[0][i];
       mRecordedFloats[1][i] = (float) mRecordedSol[1][i];
       mRecordedFloats[2][i] = (float) mRecordedSol[2][i];
