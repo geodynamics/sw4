@@ -53,8 +53,8 @@ ESSI3D::ESSI3D( EW* a_ew,
     float_sw4 coordBox[6],
     float_sw4 depth,
     int precision,
-    int ZFPmode,
-    double ZFPpar):
+    int compressionMode,
+    double compressionPar):
       mEW(a_ew),
       mFilePrefix(filePrefix),
       mFileName(""),
@@ -69,8 +69,8 @@ ESSI3D::ESSI3D( EW* a_ew,
       m_nbufstep(0),
       mDepth(depth),
       m_precision(precision),
-      m_ZFPmode(ZFPmode),
-      m_ZFPpar(ZFPpar),
+      m_compressionMode(compressionMode),
+      m_compressionPar(compressionPar),
       m_hdf5helper(NULL)
 {
   // volimage subdomain x,y corner coordinates
@@ -461,17 +461,17 @@ void ESSI3D::open_vel_file( int a_cycle, std::string& a_path,
 
   if (m_dumpInterval > 0) {
     int nstep = (int)ceil(m_ntimestep / m_dumpInterval);
-    if (m_ZFPmode > 0) 
-      m_hdf5helper->init_write_vel(nstep, m_ZFPmode, m_ZFPpar, m_bufferInterval);
-      /* m_hdf5helper->init_write_vel_compression(nstep, m_ZFPmode, m_ZFPpar, m_bufferInterval); */
+    if (m_compressionMode > 0) 
+      m_hdf5helper->init_write_vel(nstep, m_compressionMode, m_compressionPar, m_bufferInterval);
+      /* m_hdf5helper->init_write_vel_compression(nstep, m_compressionMode, m_compressionPar, m_bufferInterval); */
     else
       /* m_hdf5helper->init_write_vel(nstep); */
       m_hdf5helper->init_write_vel(nstep, 0, 0.0, m_bufferInterval);
   }
   else{
-    if (m_ZFPmode > 0) 
-      m_hdf5helper->init_write_vel(m_ntimestep, m_ZFPmode, m_ZFPpar, m_bufferInterval);
-      /* m_hdf5helper->init_write_vel_compression(m_ntimestep, m_ZFPmode, m_ZFPpar, m_bufferInterval); */
+    if (m_compressionMode > 0) 
+      m_hdf5helper->init_write_vel(m_ntimestep, m_compressionMode, m_compressionPar, m_bufferInterval);
+      /* m_hdf5helper->init_write_vel_compression(m_ntimestep, m_compressioncompressionM, m_compressionPar, m_bufferInterval); */
     else
       /* m_hdf5helper->init_write_vel(m_ntimestep); */
       m_hdf5helper->init_write_vel(m_ntimestep, 0, 0.0, m_bufferInterval);

@@ -45,6 +45,8 @@
 #define SW4_ZFP_MODE_PRECISION  2
 #define SW4_ZFP_MODE_ACCURACY   3
 #define SW4_ZFP_MODE_REVERSIBLE 4
+#define SW4_SZIP                5
+#define SW4_ZLIB                6
 
 class EW;
 class ESSI3DHDF5;
@@ -61,8 +63,8 @@ public:
       float_sw4 coordBox[4],
       float_sw4 depth,
       int precision,
-      int ZFPmode,
-      double ZFPpar
+      int compressionMode,
+      double compressionPar
       );
    ~ESSI3D();
 
@@ -114,8 +116,8 @@ protected:
 
    bool m_fileOpen;
 
-   int m_ZFPmode;
-   double m_ZFPpar;
+   int m_compressionMode;
+   double m_compressionPar;
 
    static int mPreceedZeros; // number of digits for unique time step in file names
    static int mNumberOfTimeSteps; // number of time steps for the whole sim

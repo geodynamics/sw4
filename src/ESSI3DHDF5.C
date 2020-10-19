@@ -337,7 +337,7 @@ void ESSI3DHDF5::write_topo(void* window_array)
 
 #ifdef WRITE_SEP_DSET
 
-void ESSI3DHDF5::init_write_vel(int ntimestep, int ZFPmode, double ZFPpar, int bufferInterval)
+void ESSI3DHDF5::init_write_vel(int ntimestep, int compressionMode, double compressionPar, int bufferInterval)
 {
   bool debug=false;
   /* debug=true; */
@@ -423,23 +423,30 @@ void ESSI3DHDF5::init_write_vel(int ntimestep, int ZFPmode, double ZFPpar, int b
 
     prop_id = H5Pcreate (H5P_DATASET_CREATE);
 
+    if (compressionMode > 0) {
+      // Single chunk per rank per timestep for now
+      H5Pset_chunk(prop_id, num_dims, my_chunk);
+      if (compressionMode == SW4_SZIP) {
+        H5Pset_szip(prop_id, H5_SZIP_NN_OPTION_MASK, 32);
+      }
+      else if (compressionMode == SW4_ZLIB) {
+        H5Pset_deflate(prop_id, (int)compressionPar); 
+      }
 #ifdef USE_ZFP
-    // Single chunk per rank per timestep for now
-    H5Pset_chunk(prop_id, num_dims, my_chunk);
-
-    if (ZFPmode == SW4_ZFP_MODE_RATE) {
-      H5Pset_zfp_rate(prop_id, ZFPpar);
-    }
-    else if (ZFPmode == SW4_ZFP_MODE_PRECISION) {
-      H5Pset_zfp_precision(prop_id, (unsigned int)ZFPpar);
-    }
-    else if (ZFPmode == SW4_ZFP_MODE_ACCURACY) {
-      H5Pset_zfp_accuracy(prop_id, ZFPpar);
-    }
-    else if (ZFPmode == SW4_ZFP_MODE_REVERSIBLE) {
-      H5Pset_zfp_reversible(prop_id);
-    }
+      if (compressionMode == SW4_ZFP_MODE_RATE) {
+        H5Pset_zfp_rate(prop_id, compressionPar);
+      }
+      else if (compressionMode == SW4_ZFP_MODE_PRECISION) {
+        H5Pset_zfp_precision(prop_id, (unsigned int)compressionPar);
+      }
+      else if (compressionMode == SW4_ZFP_MODE_ACCURACY) {
+        H5Pset_zfp_accuracy(prop_id, compressionPar);
+      }
+      else if (compressionMode == SW4_ZFP_MODE_REVERSIBLE) {
+        H5Pset_zfp_reversible(prop_id);
+      }
 #endif
+    }
 
     for (int c = 0; c < 3; c++) {
 
@@ -592,10 +599,10 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep)
 
 #else
 
-void ESSI3DHDF5::init_write_vel(int ntimestep, int ZFPmode, double ZFPpar, int bufferInterval)
+void ESSI3DHDF5::init_write_vel(int ntimestep, int compressionMode, double compressionPar, int bufferInterval)
 {
   bool debug=false;
-  /* debug=true; */
+  debug=true;
 
 #ifdef USE_HDF5
   int myRank, nProc;
@@ -613,12 +620,11 @@ void ESSI3DHDF5::init_write_vel(int ntimestep, int ZFPmode, double ZFPpar, int b
   hid_t prop_id = H5Pcreate (H5P_DATASET_CREATE);
   H5Pset_alloc_time(prop_id, H5D_ALLOC_TIME_LATE);
 
-#ifdef USE_ZFP
   hsize_t my_chunk[4]={0,0,0,0};
   /* else { */
   /*   cout << "Error with ZFP mode, no compression is used!" << endl; */
   /* } */
-  if (ZFPmode > 0) {
+  if (compressionMode > 0) {
     MPI_Allreduce(&m_window_dims[1], &my_chunk[1], 3, MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
 
     // Keep last dimension (z)
@@ -633,7 +639,7 @@ void ESSI3DHDF5::init_write_vel(int ntimestep, int ZFPmode, double ZFPpar, int b
 
     H5Pset_chunk (prop_id, num_dims, my_chunk);
 
-    if (myRank == 0) {
+    if (debug && myRank == 0) {
       printf("nts=%d\nChunk sizes:\n", ntimestep);
       for (int i = 0; i < num_dims; i++) 
         printf("%llu  ", my_chunk[i]);
@@ -641,20 +647,27 @@ void ESSI3DHDF5::init_write_vel(int ntimestep, int ZFPmode, double ZFPpar, int b
       fflush(stdout);
     }
 
-    if (ZFPmode == SW4_ZFP_MODE_RATE) {
-      H5Pset_zfp_rate(prop_id, ZFPpar);
+    if (compressionMode == SW4_SZIP) {
+      H5Pset_szip(prop_id, H5_SZIP_NN_OPTION_MASK, 32);
     }
-    else if (ZFPmode == SW4_ZFP_MODE_PRECISION) {
-      H5Pset_zfp_precision(prop_id, (unsigned int)ZFPpar);
+    else if (compressionMode == SW4_ZLIB) {
+      H5Pset_deflate(prop_id, (int)compressionPar); 
     }
-    else if (ZFPmode == SW4_ZFP_MODE_ACCURACY) {
-      H5Pset_zfp_accuracy(prop_id, ZFPpar);
+#ifdef USE_ZFP
+    else if (compressionMode == SW4_ZFP_MODE_RATE) {
+      H5Pset_zfp_rate(prop_id, compressionPar);
     }
-    else if (ZFPmode == SW4_ZFP_MODE_REVERSIBLE) {
+    else if (compressionMode == SW4_ZFP_MODE_PRECISION) {
+      H5Pset_zfp_precision(prop_id, (unsigned int)compressionPar);
+    }
+    else if (compressionMode == SW4_ZFP_MODE_ACCURACY) {
+      H5Pset_zfp_accuracy(prop_id, compressionPar);
+    }
+    else if (compressionMode == SW4_ZFP_MODE_REVERSIBLE) {
       H5Pset_zfp_reversible(prop_id);
     }
-  }
 #endif
+  }
 
   if (ntimestep > 0) 
     m_cycle_dims[0]  = ntimestep + 1;
@@ -680,8 +693,8 @@ void ESSI3DHDF5::init_write_vel(int ntimestep, int ZFPmode, double ZFPpar, int b
     }
   }
   H5Pclose(prop_id);
-  if (debug )
-    cout << "Rank" << myRank << "Done creating vel" << endl;
+  /* if (debug ) */
+  /*   cout << "Rank" << myRank << " done creating vel" << endl; */
 #endif
 }
 
@@ -689,7 +702,7 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep)
 {
   bool enable_timing = false;
   bool debug=false;
-  /* debug=true; */
+  debug=true;
 #ifdef USE_HDF5
 
   herr_t ierr;
@@ -733,9 +746,12 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep)
   start[3] = m_window[4]; // local index lo relative to global
 
   if (debug) {
-    printf("Rank %d: cycle=%d, nstep=%d, writing vel start = %d %d %d %d, size = %d %d %d %d\n",
+    time_t now;
+    time(&now);
+    printf("Rank %d: cycle=%d, nstep=%d, writing vel start = %d %d %d %d, size = %d %d %d %d, time: %s\n",
            myRank, cycle, nstep, (int) start[0], (int) start[1], (int) start[2], (int) start[3],
-           (int) buf_window_dims[0], (int) buf_window_dims[1], (int) buf_window_dims[2], (int) buf_window_dims[3]);
+           (int) buf_window_dims[0], (int) buf_window_dims[1], (int) buf_window_dims[2], (int) buf_window_dims[3],
+           ctime(&now));
   }
 
   hsize_t my_size = 1;
