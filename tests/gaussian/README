@@ -1,0 +1,7 @@
+This contains a data set for testing FWI of a 3D gaussian velocity anomaly.
+
+data: 5 input shots from the exact model
+invall.in: inversion input script for sw4mopt
+homo.rfile: initial model for FWI
+gaussian.rfile: exact model for the input data
+
