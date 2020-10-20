@@ -104,8 +104,8 @@ void  normalize_gradient_ph( vector<Sarray>& pseudo_hessian,
          for( int i=ib ; i <= ie ;i++)
             for( int c=0 ; c < 3; c++ )
          {
-            if( pseudo_hessian[g](c,i,j,k) > maxnorm[c] )
-               maxnorm[c] = pseudo_hessian[g](c,i,j,k);
+            if( pseudo_hessian[g](c+1,i,j,k) > maxnorm[c] )
+               maxnorm[c] = pseudo_hessian[g](c+1,i,j,k);
          }
    
    float_sw4 mxnormloc[3]={maxnorm[0],maxnorm[1],maxnorm[2]};
@@ -159,11 +159,11 @@ void normalize_pseudohessian( int nmpars, float_sw4* phs, int nmpard,
    npts=nmpars/ncomp;
    for( int m=0; m < npts ; m++ )
       for( int c=0; c < ncomp ; c++ )
-         phs[m*ncomp+c] /= mxnorm[c]+eps;
+         phs[m*ncomp+c] = phs[m*ncomp+c]/mxnorm[c]+eps;
    npts = nmpard/ncomp;
    for( int m=0; m < npts ; m++ )
       for( int c=0; c < ncomp ; c++ )
-         phd[m*ncomp+c] /= mxnorm[c]+eps;
+         phd[m*ncomp+c] = phd[m*ncomp+c]/mxnorm[c]+eps;
 }
 
 //-----------------------------------------------------------------------
@@ -579,12 +579,12 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          mopt->m_mp->interpolate_pseudohessian(nmpars, phs, nmpard, phm, pseudo_hessian);
          float_sw4 eps=1e-3;
          normalize_pseudohessian( nmpars, phs, nmpard, phm, eps, phcase );
-// ..scale the gradient
 
-         float_sw4* sfs=mopt->m_sfs;
+// ..scale the gradient
+         //         float_sw4* sfs=mopt->m_sfs;
          for( int m=0 ; m < nmpars ; m++ )
             dfs[m+nspar] *= 1.0/phs[m];
-         float_sw4* sfm=mopt->m_sfm;
+         //         float_sw4* sfm=mopt->m_sfm;
          for( int m=0 ; m < nmpard ; m++ )
             dfm[m] *= 1.0/phm[m];
 
@@ -592,10 +592,11 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          //mopt->m_mp->smooth_gradient(dfs);
 
 // ..and give back memory
-         if( phs != 0 )
+         if( nmpars> 0 )
             delete[] phs;
-         if( phm != 0 )
+         if( nmpard> 0 )
             delete[] phm;
+
          // For plotting purpose:
          normalize_gradient_ph( pseudo_hessian, gRho, gMu, gLambda, eps, phcase );
       }
@@ -712,8 +713,6 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
        } // end if time to write
      } // end for all images
      
-     
-   
      // 3D images
      EW *ew_ptr = mopt->get_EWptr();
      

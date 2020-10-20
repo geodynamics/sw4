@@ -338,7 +338,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
    // Restrict step size to inside of domain (physical range of material parameters)
    int ok=0;
    int ntries = 0;
-   while( !ok && ntries < 30 )// AP reduced to 10 from 30
+   while( !ok && ntries < 30 )
    {
       for( int i=0; i < ns ; i++ )
 	 xsnew[i] = xs[i] + lambda*ps[i];
@@ -1142,5 +1142,6 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
       delete[] dam;
       delete[] xam;
       delete[] dfpm;
+      delete[] dmsave;
    }
 }

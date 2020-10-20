@@ -142,15 +142,15 @@ Source::Source(EW *a_ew,
       mPar[1] = mNcyc;
    }
 
-   a_ew->computeNearestGridPoint2(m_i0,m_j0,m_k0,m_grid,mX0,mY0,mZ0);
+   //   a_ew->computeNearestGridPoint2(m_i0,m_j0,m_k0,m_grid,mX0,mY0,mZ0);
 
 // Correct source location for discrepancy between raw and smoothed topography
    correct_Z_level( a_ew ); // also sets the ignore flag for sources that are above the topography
-
-   //if (a_ew->getVerbosity()>=3 && a_ew->proc_zero())
-  //{
+   compute_grid_point( a_ew ); 
+  if (a_ew->getVerbosity()>=3 && a_ew->proc_zero())
+  {
     printf("Moment source at x=%e, y=%e, z=%e is centered at grid point i=%d, j=%d, k=%d, in grid=%d\n", mX0, mY0, mZ0, m_i0, m_j0, m_k0, m_grid);
-  //}
+  }
   
 
 }
@@ -221,10 +221,11 @@ Source::Source(EW *a_ew, float_sw4 frequency, float_sw4 t0,
      mPar[1] = mNcyc;
   }
 
-  a_ew->computeNearestGridPoint2(m_i0,m_j0,m_k0,m_grid,mX0,mY0,mZ0);
+  //  a_ew->computeNearestGridPoint2(m_i0,m_j0,m_k0,m_grid,mX0,mY0,mZ0);
 
 // Correct source location for discrepancy between raw and smoothed topography
   correct_Z_level( a_ew ); // also sets the ignore flag for sources that are above the topography
+   compute_grid_point( a_ew );
 }
 
 //-----------------------------------------------------------------------
@@ -371,7 +372,9 @@ float_sw4 Source::getAmplitude() const
 ostream& operator<<( ostream& output, const Source& s ) 
 {
   output << s.mName << (s.isMomentSource()? " moment":" force") << " source term" << endl;
-   output << "   Location (X,Y,Z) = " << s.mX0 << "," << s.mY0 << "," << s.mZ0 << " in grid no " << s.m_grid << endl;
+   output << "   Location (X,Y,Z) = " << s.mX0 << "," << s.mY0 << "," << s.mZ0 << 
+    " at grid point " << s.m_i0 << " " << s.m_j0 << " " << s.m_k0 << " in grid no " << s.m_grid  <<
+         endl;
    output << "   Strength " << s.getAmplitude();
    output << "   t0 = " << s.mT0 << " freq = " << s.mFreq << endl;
    if( s.mIsMomentSource )
@@ -546,7 +549,7 @@ void Source::correct_Z_level( EW *a_ew )
 
 // does this processor know about topography at this location?
   m_myPoint = success && a_ew->interior_point_in_proc(i, j, g);
-   
+
   if( !a_ew->topographyExists() ) // this is the easy case w/o topography
   {
     m_zTopo = 0.;
@@ -610,12 +613,25 @@ void Source::correct_Z_level( EW *a_ew )
     mZ0 += m_zTopo;
     m_zRelativeToTopography = false; // set to false so the correction isn't repeated (for whatever reason)
   }
+  //  if( m_myPoint )
+  //  {
+  //     int iloc, jloc, kloc, gloc;
+  //     int success = a_ew->computeNearestGridPoint2( iloc, jloc, kloc, gloc, mX0, mY0, mZ0 );
+  //     if( success != 1 || i != iloc || j != jloc )
+  //     {
+  //        std::cout << "ZCorr " << a_ew->getRank() << " i= " << i <<  " j= " << j <<  " k= " << k <<  
+  //        " g= " << g <<  " " << m_myPoint << " " << success << " " << mX0
+  //               << " " << mY0 << " " << mZ0 << std::endl;
+  //        std::cout << " iloc, jloc, kloc = " << iloc << " " << jloc<< " " <<
+  //           kloc << std::endl;
+  //     }        
+  //  }
 
-// if we are in the curvilinear grid, calculate k-index for source location
-  int k0Loc=-99999;
-  if( m_myPoint )
-     k0Loc=k;
-  MPI_Allreduce( &k0Loc, &m_k0, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+  //// if we are in the curvilinear grid, calculate k-index for source location
+  //  int k0Loc=-99999;
+  //  if( m_myPoint )
+  //     k0Loc=k;
+  //  MPI_Allreduce( &k0Loc, &m_k0, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
 
   //  if (m_myPoint && g > a_ew->mNumberOfCartesianGrids - 1)
   //  {
@@ -652,6 +668,34 @@ void Source::correct_Z_level( EW *a_ew )
 
 // tmp
 //   printf("Exiting correct_Z_level()\n");
+}
+
+//-----------------------------------------------------------------------
+void Source::compute_grid_point( EW* a_ew )
+{
+  // Sets values (m_i0,m_j0,m_k0) and m_grid.
+  // Should be called after the topographic correction of mZ0
+   int i, j, k, g;
+   int success = a_ew->computeNearestGridPoint2( i, j, k, g, mX0, mY0, mZ0 );
+   m_myPoint = success && a_ew->interior_point_in_proc(i, j, g);
+
+   int inds[4]={-9999,-9999,-9999,-9999};
+   if( m_myPoint )
+   {
+      inds[0] = i;
+      inds[1] = j;
+      inds[2] = k;
+      inds[3] = g;
+   }
+   int indsg[4]={0,0,0,0};
+   MPI_Allreduce( inds, indsg, 4, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+   m_i0 = indsg[0];
+   m_j0 = indsg[1];
+   m_k0 = indsg[2];
+   m_grid=indsg[3];
+   //   std::cout << a_ew->getRank() << " mypoint = " << m_myPoint 
+   //             << " (i,j,k)= " << m_i0 <<" " << m_j0 << " " << m_k0 << " grid= "
+   //             << m_grid << std::endl;
 }
 
 //-----------------------------------------------------------------------
@@ -2852,10 +2896,10 @@ Source* Source::copy( std::string a_name )
       a_name = mName;
 
    Source* retval = new Source();
-   retval->m_i0 = m_i0;
-   retval->m_j0 = m_j0;
-   retval->m_k0 = m_k0;
-   retval->m_grid = m_grid;
+   //   retval->m_i0 = m_i0;
+   //   retval->m_j0 = m_j0;
+   //   retval->m_k0 = m_k0;
+   //   retval->m_grid = m_grid;
    retval->mName = a_name;
    retval->mIsMomentSource = mIsMomentSource;
    retval->mForces.push_back(mForces[0]);

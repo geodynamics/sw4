@@ -138,6 +138,7 @@ public:
   Source();
 
   void correct_Z_level( EW *a_ew );
+  void compute_grid_point( EW *a_ew );
   void compute_metric_at_source( EW* a_EW, float_sw4 q, float_sw4 r, float_sw4 s, int ic, int jc, int kc,
 				 int g, float_sw4& zq, float_sw4& zr, float_sw4& zs, float_sw4& zqq, float_sw4& zqr,
 				 float_sw4& zqs, float_sw4& zrr, float_sw4& zrs, float_sw4& zss ) const;
