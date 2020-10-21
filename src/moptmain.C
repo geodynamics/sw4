@@ -552,6 +552,36 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       //std::cout << "gMu_xform min=" << gMu[0].minimum() << " max=" << gMu[0].maximum() << std::endl;
       //std::cout << "gLambda_xform min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << std::endl;
     
+    if( phcase > 0)
+      {
+// Interpolate pseudo-hessian to parameter grid
+         float_sw4* phs=0, *phm=0;
+         if( nmpars > 0 )
+            phs = new float_sw4[nmpars];
+         if(  nmpard > 0 )
+            phm = new float_sw4[nmpard];
+         mopt->m_mp->interpolate_pseudohessian(nmpars, phs, nmpard, phm, pseudo_hessian);
+         float_sw4 eps=1e-3;
+         normalize_pseudohessian( nmpars, phs, nmpard, phm, eps, phcase );
+
+// ..scale the gradient
+         //         float_sw4* sfs=mopt->m_sfs;
+         for( int m=0 ; m < nmpars ; m++ )
+            dfsevent[m+nspar] *= 1.0/phs[m];
+         for( int m=0 ; m < nmpard ; m++ )
+            dfmevent[m] *= 1.0/phm[m];
+
+// ..and give back memory
+         if( nmpars> 0 )
+            delete[] phs;
+         if( nmpard> 0 )
+            delete[] phm;
+
+         // For plotting purpose:
+         normalize_gradient_ph( pseudo_hessian, gRho, gMu, gLambda, eps, phcase );
+      }  // if pH scaling
+
+
     mopt->m_mp->smooth_gradient(dfsevent); // needs to act on dfsevent instead of dfs
 
       for( int m=0 ; m < nmpars ; m++ )
@@ -568,6 +598,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    double mftmp = f;
    MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
    
+   /*
       if( phcase > 0)
       {
 // Interpolate pseudo-hessian to parameter grid
@@ -599,8 +630,10 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 
          // For plotting purpose:
          normalize_gradient_ph( pseudo_hessian, gRho, gMu, gLambda, eps, phcase );
-      }
-  } 
+      }  // if pH scaling
+ */
+
+  } // test_regularizer
   
 // add in a Tikhonov regularizing term:
    bool tikhonovreg=false;
