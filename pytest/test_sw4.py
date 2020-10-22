@@ -166,7 +166,9 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     elif 'Linux' in sys_name:
         if omp_threads<=0: omp_threads=1;
         if mpi_tasks<=0: mpi_tasks = 1
-        mpirun_cmd="mpirun -np " + str(mpi_tasks)
+        mpirun_cmd="srun -n 4 "
+    elif 'redwood' in sys_name:
+        mpirun_cmd="srun -n 4 "
     elif 'Darwin' in sys_name:
         if omp_threads<=0: omp_threads=1;
         if mpi_tasks<=0: mpi_tasks = 4

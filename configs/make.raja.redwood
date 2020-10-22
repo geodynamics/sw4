@@ -26,7 +26,7 @@ UMPIRE_HOME = /home/users/coe0145/Umpire/Umpire2/Umpire/installx3
 UMPIRE_HOME = /home/users/coe0145/Umpire/Umpire4/Umpire/install
 UMPIRE_HOME = /usr/workspace/wsb/ramesh/CORAL2/CORONA/Umpire/install
 UMPIRE_HOME = /usr/workspace/wsb/ramesh/Umpire/umpire-4.0.1/install_corona
-UMPIRE_HOME = /home/users/coe0145/Umpire/DEV/Umpire/install
+UMPIRE_HOME = /home/users/coe0145/Umpire/DEV/Umpire/install2
 CALIPER_LOCATION = /gpfs/alpine/geo130/proj-shared/sw4_raja/LIBS/Caliper/install_summit
 HIP_ROOT_DIR = $(HIP_PATH)
 HSA_ROOT_DIR = /opt/rocm-3.8.0/hsa
@@ -35,6 +35,7 @@ CUDA_HOME = $(OLCF_CUDA_ROOT)
 MPI_HOME =  /opt/cray/pe/cray-mvapich2/2.3.4/infiniband/cray/10.0
 MPI_HOME = /cm/shared/apps/mpich/ge/gcc/64/3.3.2
 MPI_HOME = /opt/cray/pe/cray-mvapich2_nogpu/2.3.4/infiniband/cray/10.0
+MPI_HOME = /opt/cray/pe/cray-mvapich2_nogpu/2.3.3/infiniband/cray/10.0
 EXTRA_FORT_FLAGS = 
 MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_RAJA_VERSION=7 -DSW4_PINNED_MPI_BUFFERS=1 -DSW4_USE_UMPIRE=1 -I$(MPI_HOME)/include -I${ROCM_PATH}/include -isystem /opt/rocm-3.8.0/llvm/lib/clang/11.0.0/include/.. -isystem /opt/rocm-3.8.0/hsa/include -isystem /opt/rocm-3.8.0/hip/include -D__HIP_ARCH_GFX906__=1 --cuda-gpu-arch=gfx906 --hip-device-lib-path=/opt/rocm-3.8.0/lib -O2 -x hip -Wno-inconsistent-missing-override --amdgpu-target=gfx906 -fgpu-rdc -DUSE_DIRECT_INVERSE=1
 LINKFLAGS =  -std=c++11  
