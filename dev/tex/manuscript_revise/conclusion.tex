@@ -8,4 +8,4 @@ The finite difference discretizations satisfy a summation-by-parts property. At 
 
 To obtain values of the ghost points, a system of linear equations must be solved. In our formulation, we only use ghost points from the coarse domain, which is more efficient than the traditional approach of using ghost points from both domains.  For large-scale simulations in three dimensions, the LU factorization cannot be used due to memory limitations. We have studied and compared three iterative methods for solving the linear system.
 
-We are currently incorporating the curvilinear mesh refinement algorithm into the open source code SW4 \cite{SW4}. This will enable the algorithm to be used for solving realistic seismic wave propagation problems on large parallel, distributed memory, machines.
+Our proposed method has been implemented in the open source code SW4 \cite{SW4}, which can be used to solve realistic seismic wave propagation problems on large parallel, distributed memory, machines. We have tested the benchmark problem LOH.1 and verified the improved efficiency. 
