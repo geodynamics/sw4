@@ -130,6 +130,7 @@ void ESSI3DHDF5::create_file()
   MPI_Info info = MPI_INFO_NULL;
   hid_t prop_id = H5Pcreate(H5P_FILE_ACCESS);
   H5Pset_fapl_mpio(prop_id, comm, info);
+  H5Pset_coll_metadata_write(prop_id, 1);
   m_file_id = H5Fcreate( const_cast<char*>(m_filename.c_str()),
       H5F_ACC_TRUNC, H5P_DEFAULT, prop_id);
   if (m_file_id < 0)
@@ -602,7 +603,7 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep)
 void ESSI3DHDF5::init_write_vel(int ntimestep, int compressionMode, double compressionPar, int bufferInterval)
 {
   bool debug=false;
-  debug=true;
+  /* debug=true; */
 
 #ifdef USE_HDF5
   int myRank, nProc;
@@ -702,7 +703,7 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep)
 {
   bool enable_timing = false;
   bool debug=false;
-  debug=true;
+  /* debug=true; */
 #ifdef USE_HDF5
 
   herr_t ierr;
@@ -775,13 +776,13 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep)
     cout << "Error from vel H5Dwrite " << endl;
     MPI_Abort(comm,ierr);
   }
-  if (debug )
-     cout << "Rank" << myRank << " Done writing vel_" << comp << endl;
+  /* if (debug ) */
+  /*    cout << "Rank" << myRank << " Done writing vel_" << comp << endl; */
   // H5Sclose(slice_id);
   
   if (enable_timing) {
     write_time = MPI_Wtime() - write_time_start;
-    if (cycle % 100  == 0) {
+    if (cycle % 100  == 0 && comp == 0) {
       printf("rank=%d, cycle=%d, comp=%d, write size=%fMB, write time=%f\n", 
               myRank, cycle, comp, write_size/1048576.0, write_time);
       fflush(stdout);
