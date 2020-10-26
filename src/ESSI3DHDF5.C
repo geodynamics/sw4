@@ -248,13 +248,7 @@ void ESSI3DHDF5::write_topo(void* window_array)
         (int) m_global_dims[0], (int) m_global_dims[1], (int) m_global_dims[2]);
     cout << msg;
   }
-  /*
-  if (m_ihavearray)
-    sprintf(msg, "Rank %d creating z dataspace size = %d %d %d\n", myRank,
-        (int) m_global_dims[0], (int) m_global_dims[1], (int) m_global_dims[2]);
-  else
-    sprintf(msg, "Rank %d exiting z write\n", myRank);
-  */
+
   hsize_t z_dims = 3;
   // Modify dataset creation properties to enable chunking
   hid_t prop_id = H5Pcreate (H5P_DATASET_CREATE);
@@ -322,22 +316,14 @@ void ESSI3DHDF5::write_topo(void* window_array)
 
   ierr = H5Sclose(dataspace_id);
   ierr = H5Dclose(dataset_id);
-  /*
-  MPI_Barrier(comm);
-  if (debug && (myRank == 0))
-     cout << "In write_topo_real: done writing data" << endl;
-  */
 
-  /*
-  MPI_Barrier(comm);
-  */
   if (debug && (myRank == 0))
      cout << "Done writing hdf5 z coordinate: " << m_filename << endl;
 #endif
 }
 
 #ifdef WRITE_SEP_DSET
-
+// Not used 
 void ESSI3DHDF5::init_write_vel(int ntimestep, int compressionMode, double compressionPar, int bufferInterval)
 {
   bool debug=false;
@@ -407,9 +393,6 @@ void ESSI3DHDF5::init_write_vel(int ntimestep, int compressionMode, double compr
       continue;
 
     my_chunk[0] = bufferInterval;
-    /* my_chunk[1] = my_count[1]; */
-    /* my_chunk[2] = my_count[2]; */
-    /* my_chunk[3] = my_count[3]; */
     my_chunk[1] = 4;
     my_chunk[2] = 4;
     my_chunk[3] = 4;
@@ -489,6 +472,7 @@ void ESSI3DHDF5::init_write_vel(int ntimestep, int compressionMode, double compr
 #endif
 }
 
+// Not used 
 void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep)
 {
   bool enable_timing = false;
@@ -525,9 +509,6 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep)
   count[0] = nstep;
 
   for (int curProc = 0; curProc < nProc; curProc++) {
-    /* start[1] = m_all_start_count[curProc*6]; */
-    /* start[2] = m_all_start_count[curProc*6+1]; */
-    /* start[3] = m_all_start_count[curProc*6+2]; */
     count[1] = m_all_start_count[curProc*6+3];
     count[2] = m_all_start_count[curProc*6+4];
     count[3] = m_all_start_count[curProc*6+5];
@@ -576,8 +557,6 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep)
       cout << "Error from vel H5Dwrite " << endl;
       MPI_Abort(comm,ierr);
     }
-    /* if (debug ) */
-    /*  cout << "Rank" << myRank << " Done writing vel" << endl; */
  
     H5Dclose(dset);
     H5Sclose(dspace);
@@ -599,7 +578,7 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep)
 }
 
 #else
-
+// In use
 void ESSI3DHDF5::init_write_vel(int ntimestep, int compressionMode, double compressionPar, int bufferInterval)
 {
   bool debug=false;
@@ -622,9 +601,7 @@ void ESSI3DHDF5::init_write_vel(int ntimestep, int compressionMode, double compr
   H5Pset_alloc_time(prop_id, H5D_ALLOC_TIME_LATE);
 
   hsize_t my_chunk[4]={0,0,0,0};
-  /* else { */
-  /*   cout << "Error with ZFP mode, no compression is used!" << endl; */
-  /* } */
+
   if (compressionMode > 0) {
     MPI_Allreduce(&m_window_dims[1], &my_chunk[1], 3, MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
 
@@ -694,11 +671,10 @@ void ESSI3DHDF5::init_write_vel(int ntimestep, int compressionMode, double compr
     }
   }
   H5Pclose(prop_id);
-  /* if (debug ) */
-  /*   cout << "Rank" << myRank << " done creating vel" << endl; */
 #endif
 }
 
+// In use
 void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep)
 {
   bool enable_timing = false;
@@ -776,9 +752,6 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep)
     cout << "Error from vel H5Dwrite " << endl;
     MPI_Abort(comm,ierr);
   }
-  /* if (debug ) */
-  /*    cout << "Rank" << myRank << " Done writing vel_" << comp << endl; */
-  // H5Sclose(slice_id);
   
   if (enable_timing) {
     write_time = MPI_Wtime() - write_time_start;
