@@ -1078,5 +1078,6 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
       delete[] dam;
       delete[] xam;
       delete[] dfpm;
+      delete[] dmsave;
    }
 }

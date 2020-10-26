@@ -459,6 +459,9 @@ void add_pseudohessian_terms2( int ifirst, int ilast, int jfirst, int jlast,
 #define SQR(x) ((x)*(x))   
 
 
+#define srcla(c,i,j,k) srcla_[(i+2)+5*(j+2)+25*(k-1)+(c-1)*250]
+#define srcmu(c,i,j,k) srcmu_[(i+2)+5*(j+2)+25*(k-1)+(c-1)*250]
+
    float_sw4* srcmu_=new float_sw4[750];
    float_sw4* srcla_=new float_sw4[750];
 
@@ -475,10 +478,6 @@ void add_pseudohessian_terms2( int ifirst, int ilast, int jfirst, int jlast,
 #pragma ivdep
             for( int l=ifirstact; l <= ilastact; l++ )
             {
-
-#define srcla(c,i,j,k) srcla_[(i+2)+5*(j+2)+25*(k+2)+(c-1)*250]
-#define srcmu(c,i,j,k) srcmu_[(i+2)+5*(j+2)+25*(k+2)+(c-1)*250]
-
                //	 srcla_ = srcpla[s];
                //	 srcmu_ = srcpmu[s];
 	 for( int c=0; c<3*5*5*10 ; c++)

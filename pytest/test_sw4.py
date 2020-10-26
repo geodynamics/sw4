@@ -259,8 +259,6 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
         base_case = all_cases[qq]
         result_file = all_results[qq]
 
-        os.chdir(test_dir) # change to the new local directory
-
         if base_case == 'loh1-h100-mr-hdf5':
             print("  Running HDF5 test, may take a few minutes ...")
 
@@ -274,6 +272,8 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
             #make a local test directory
             if not os.path.exists(test_dir):
                 os.mkdir(test_dir)
+
+            os.chdir(test_dir) # change to the new local directory
 
             # put all test cases in a list and add a for loop for each test_dir
             for ii in range(num_meshes[qq]):
