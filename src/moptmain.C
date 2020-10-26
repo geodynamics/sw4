@@ -248,17 +248,21 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 	    //	       exit(0);
 	 }
       }
-   }
-   int myRank;
-   MPI_Comm_rank(MPI_COMM_WORLD,&myRank);
-   double mftmp = mf;
-   MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-// Give back memory
+
+      // Give back memory
    for( unsigned int g=0 ; g < ng ; g++ )
    {
       delete upred_saved[g];
       delete ucorr_saved[g];
    }
+
+   }  // loop over events
+   
+   int myRank;
+   MPI_Comm_rank(MPI_COMM_WORLD,&myRank);
+   double mftmp = mf;
+   MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+
    }
 // add in a Tikhonov regularizing term:
    bool tikhonovreg=false;
@@ -425,7 +429,15 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          for( unsigned int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
             delete diffs[m];
          diffs.clear();
-      }
+      
+         // release memory used by boundary conditions for each event
+         for( unsigned int g=0 ; g < ng ; g++ )
+         {
+            delete upred_saved[g];
+            delete ucorr_saved[g];
+         }
+
+      }  // loop over events
       double mftmp = f;
       MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
       if( phcase > 0 )
@@ -526,11 +538,6 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    if( nmpard > 0 )
       delete[] dfmevent;
 
-   for( unsigned int g=0 ; g < ng ; g++ )
-   {
-      delete upred_saved[g];
-      delete ucorr_saved[g];
-   }
    //   delete src[0];
 
    sw4_profile->time_stamp("Save images");   
