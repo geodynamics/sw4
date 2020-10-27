@@ -1,0 +1,16 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{The anisotropic elastic wave equation}{}% 2
+\BOOKMARK [1][-]{section.10}{The spatial discretization}{}% 3
+\BOOKMARK [2][-]{subsection.11}{SBP operators in 1D}{section.10}% 4
+\BOOKMARK [2][-]{figure.19}{Semi-discretization of the elastic wave equation}{section.10}% 5
+\BOOKMARK [2][-]{subsection.43}{Energy estimate}{section.10}% 6
+\BOOKMARK [1][-]{section.53}{The temporal discretization}{}% 7
+\BOOKMARK [1][-]{section.57}{Numerical Experiments}{}% 8
+\BOOKMARK [2][-]{subsection.58}{Verification of convergence rate}{section.57}% 9
+\BOOKMARK [2][-]{subsection.62}{Iterative methods}{section.57}% 10
+\BOOKMARK [2][-]{subsection.67}{Gaussian source}{section.57}% 11
+\BOOKMARK [2][-]{subsection.73}{Energy conservation test}{section.57}% 12
+\BOOKMARK [1][-]{section.76}{Conclusion}{}% 13
+\BOOKMARK [1][-]{appendix.78}{Appendix A. Terms in the spatial discretization}{}% 14
+\BOOKMARK [1][-]{appendix.79}{Appendix B. Bilinear form}{}% 15
+\BOOKMARK [1][-]{appendix.79}{References}{}% 16
