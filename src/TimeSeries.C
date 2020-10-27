@@ -380,13 +380,13 @@ void TimeSeries::allocateRecordingArrays(int numberOfTimeSteps,
     mLastTimeStep = -1;
     for (int q = 0; q < m_nComp; q++) {
       if (mRecordedSol[q]) delete[] mRecordedSol[q];
-      mRecordedSol[q] = new float_sw4[mAllocatedSize];
+      mRecordedSol[q] = new float_sw4[mAllocatedSize]();
     }
 
     if (m_sacFormat || m_hdf5Format) {
       for (int q = 0; q < m_nComp; q++) {
         if (mRecordedFloats[q]) delete[] mRecordedFloats[q];
-        mRecordedFloats[q] = new float[mAllocatedSize];
+        mRecordedFloats[q] = new float[mAllocatedSize]();
       }
     }
   }
@@ -3038,7 +3038,8 @@ static int cubic_interp(float* xi, float* yi, int nin, float* xo, float* yo,
 }
 
 void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
-  /* bool debug = false; */
+  bool debug = false;
+  /* debug = true; */
   hid_t fid, grp;
   /* char data[128]; */
   /* hsize_t ndim, dims[4]; */
@@ -3119,7 +3120,7 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
     if (!mIsRestart) {
       // Assumes starting from time 0 and timestep 0
       tstart = 0;
-      allocateRecordingArrays(sw4npts, m_t0 + tstart, tstart);
+      allocateRecordingArrays(sw4npts, m_t0 + tstart, (float_sw4)dt/downsample);
     } else {
       m_nptsWritten = npts;
     }
@@ -3129,7 +3130,10 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
       return;
     }
 
-    m_dt = dt / downsample;
+    if (debug) {
+      printf("sw4npts=%d, downsample=%d, npts=%d, mAllocatedSize=%d, dt=%f\n", sw4npts, downsample, npts, mAllocatedSize, dt);
+    }
+
     mLastTimeStep = sw4npts - 1;
 
     float* buf_0 = new float[npts];
@@ -3139,6 +3143,21 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
     readHDF5Data(grp, dset_names[0].c_str(), npts, buf_0);
     readHDF5Data(grp, dset_names[1].c_str(), npts, buf_1);
     readHDF5Data(grp, dset_names[2].c_str(), npts, buf_2);
+
+    if (debug) {
+      int myRank;
+      MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+      if (myRank == 0) {
+        printf("Station %s read x(%d):", m_staName.c_str(), npts);
+        for (int i = 0; i < npts; i++) {
+          if (i % 10 == 0)
+            printf("\n [%d]", i);
+          printf(" %e", buf_0[i]);
+        }
+        printf("\n");
+      }
+    }
+
 
     // Mapping to invert (e,n) to (x,y) components, Only needed in the
     // non-cartesian case.
@@ -3175,8 +3194,22 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
         return;
       }
 
-      for (int i = 0; i < mAllocatedSize; i++) {
-        /* for (int i = 0; i < npts; i++) { */
+      if (debug) {
+        int myRank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+        if (myRank == 0) {
+          printf("Station %s interpolated x(%d):", m_staName.c_str(), sw4npts);
+          for (int i = 0; i < sw4npts; i++) {
+            if (i % 10 == 0)
+              printf("\n [%d]", i);
+            printf(" %e", buf_0up[i]);
+          }
+          printf("\n");
+        }
+      }
+
+
+      for (int i = 0; i < sw4npts; i++) {
         if (cartesian) {
           mRecordedSol[0][i] = (float_sw4)buf_0up[i];
           mRecordedSol[1][i] = (float_sw4)buf_1up[i];
@@ -3196,7 +3229,7 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
       delete[] x;
       delete[] nx;
     } else {
-      for (int i = 0; i < mAllocatedSize; i++) {
+      for (int i = 0; i < sw4npts; i++) {
         if (cartesian) {
           mRecordedSol[0][i] = (float_sw4)buf_0[i];
           mRecordedSol[1][i] = (float_sw4)buf_1[i];
@@ -3211,10 +3244,24 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
       }
     }
 
-    for (int i = 0; i < mAllocatedSize; i++) {
+    for (int i = 0; i < sw4npts; i++) {
       mRecordedFloats[0][i] = (float)mRecordedSol[0][i];
       mRecordedFloats[1][i] = (float)mRecordedSol[1][i];
       mRecordedFloats[2][i] = (float)mRecordedSol[2][i];
+    }
+
+    if (debug) {
+      int myRank;
+      MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+      if (myRank == 0) {
+        printf("Station %s x(%d):", m_staName.c_str(), sw4npts);
+        for (int i = 0; i < sw4npts; i++) {
+          if (i % 10 == 0)
+            printf("\n [%d]", i);
+          printf(" %e", mRecordedFloats[0][i]);
+        }
+        printf("\n");
+      }
     }
 
     delete[] buf_0;
