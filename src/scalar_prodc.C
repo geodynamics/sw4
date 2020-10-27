@@ -32,6 +32,8 @@
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 #include <sys/types.h>
 
+#include "caliper.h"
+#include "policies.h"
 #include "sw4.h"
 
 void scalar_prod_ci(int is, int ie, int js, int je, int ks, int ke, int i1,
@@ -40,6 +42,7 @@ void scalar_prod_ci(int is, int ie, int js, int je, int ks, int ke, int i1,
                     float_sw4* __restrict__ a_strx,
                     float_sw4* __restrict__ a_stry,
                     float_sw4* __restrict__ a_strz, float_sw4& sc_prod) {
+  SW4_MARK_FUNCTION;
   // is,ie,js,je,ks,ke declared size
   // i1,i2,j1,j2,k1,k2 domain over which scalar product is computed
   const int ni = ie - is + 1;
@@ -52,13 +55,23 @@ void scalar_prod_ci(int is, int ie, int js, int je, int ks, int ke, int i1,
   //#define strx(i) a_strx[i-is]
   //#define stry(j) a_stry[j-js]
   //#define strz(k) a_strz[k-ks]
-  const float_sw4 normwgh[4] = {17.0 / 48, 59.0 / 48, 43.0 / 48, 49.0 / 48};
 
-  float_sw4 scprod_loc = 0;
-#pragma omp parallel for reduction(+ : scprod_loc)
-  for (int k = k1; k <= k2; k++)
-    for (int j = j1; j <= j2; j++)
-      for (int i = i1; i <= i2; i++) {
+  // float_sw4 scprod_loc = 0;
+  const bool onesided4 = onesided[4] == 1;
+  const bool onesided5 = onesided[5] == 1;
+  RAJA::ReduceSum<REDUCTION_POLICY, float_sw4> scprod_loc(0.0);
+  RAJA::RangeSegment k_range(k1, k2 + 1);
+  RAJA::RangeSegment j_range(j1, j2 + 1);
+  RAJA::RangeSegment i_range(i1, i2 + 1);
+  RAJA::kernel<ENERGY4CI_EXEC_POL>(
+      RAJA::make_tuple(k_range, j_range, i_range),
+      [=] RAJA_DEVICE(int k, int j, int i) {
+        const float_sw4 normwgh[4] = {17.0 / 48, 59.0 / 48, 43.0 / 48,
+                                      49.0 / 48};
+        // #pragma omp parallel for reduction(+ : scprod_loc)
+        //   for (int k = k1; k <= k2; k++)
+        //     for (int j = j1; j <= j2; j++)
+        //       for (int i = i1; i <= i2; i++) {
         size_t ind = base + i + ni * j + nij * k;
         // NOTE: the scalar product is scaled by the stretching
         //	    float_sw4 term =(u(1,i,j,k)*v(1,i,j,k) +
@@ -69,9 +82,9 @@ void scalar_prod_ci(int is, int ie, int js, int je, int ks, int ke, int i1,
              a_u[ind + 2 * nijk] * a_v[ind + 2 * nijk]) /
             (a_strx[i - is] * a_stry[j - js] * a_strz[k - ks]);
         float_sw4 normfact = 1;
-        if (k <= 4 && onesided[4] == 1) normfact = normwgh[k - 1];
-        if (k >= k2 - 3 && onesided[5] == 1) normfact = normwgh[k2 - k];
+        if (k <= 4 && onesided4) normfact = normwgh[k - 1];
+        if (k >= k2 - 3 && onesided5) normfact = normwgh[k2 - k];
         scprod_loc += normfact * term;
-      }
-  sc_prod = scprod_loc;
+      });
+  sc_prod = static_cast<float_sw4>(scprod_loc.get());
 }

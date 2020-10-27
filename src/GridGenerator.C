@@ -245,3 +245,12 @@ void GridGenerator::fill_topo(Sarray& topo, float_sw4 h) {
   std::cout << "GridGenerator: Exact topography is not available \n"
             << std::endl;
 }
+//-----------------------------------------------------------------------
+void GridGenerator::grid_mapping_diff( EW* a_ew, float_sw4 q, float_sw4 r, float_sw4 s, int g, 
+                                   int ic, int jc, int kc,
+                                   float_sw4& zq, float_sw4& zr, float_sw4& zs,
+                                   float_sw4& zqq, float_sw4& zqr, float_sw4& zqs,
+                                   float_sw4& zrr, float_sw4& zrs, float_sw4& zss )
+{
+   std::cout <<  "GridGenerator: grid_mapping_diff NYI " << std::endl;
+}

@@ -1,17 +1,21 @@
 #include <mpi.h>
+#ifdef ENABLE_CUDA
 #include <mpi-ext.h>
+#endif
 
+#include <iomanip>
 #include <unordered_map>
 
 #include "GridPointSource.h"
 #include "Mspace.h"
 #include "caliper.h"
 #include "policies.h"
+
 struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0,
                                                          0, 0, 1, 0};
 using namespace std;
 
-void presetGPUID() {
+void presetGPUID(int mpi_rank) {
 #if defined(ENABLE_GPU_ERROR)
   std::cerr
       << " Compilation error. Both ENABLE_CUDA and ENABLE_HIP are defined\n";
@@ -55,16 +59,23 @@ void presetGPUID() {
 #ifdef ENABLE_HIP
   int devices_per_node = 4;
   SW4_CheckDeviceError(hipGetDeviceCount(&devices_per_node));
+  printf("NUmber of device is %d\n",devices_per_node);
+  fflush(stdout);
   global_variables.num_devices = devices_per_node;
   if (devices_per_node > 1) {
-    char *crank = getenv("OMPI_COMM_WORLD_LOCAL_RANK");
+    char *crank = getenv("SLURM_PROC");
+    printf("Return fro GETENV IS %s\n",crank);
+  fflush(stdout);
     int device = atoi(crank) % devices_per_node;
+    device=mpi_rank%devices_per_node;
     global_variables.device = device;
     printf(" presetGPU Called ::  LOCAL RANK %d \n", device);
+  fflush(stdout);
+    SW4_CheckDeviceError(hipSetDevice(device));
   }
 #endif  // ENABLE_HIP
 
-  printf("Device set to %d \n", global_variables.device);
+  // printf("Device set to %d \n", global_variables.device);
 #endif  // ENABLE_GPU
 }
 
@@ -102,11 +113,12 @@ void check_mem() {
       std::max((mtotal - mfree), global_variables.gpu_memory_hwm);
 }
 
-void print_hwm() {
+void print_hwm(int rank) {
   const int allocator_count = 3;
 #if defined(ENABLE_CUDA)
   // std::cout<<"PRINT_HWM"<<std::flush;
-  float hwm_local[allocator_count], hwm_global[allocator_count];
+  float hwm_local[allocator_count + 1], hwm_global[allocator_count + 1],
+      hwm_global_min[allocator_count + 1];
 #ifdef SW4_USE_UMPIRE
   hwm_local[0] = umpire::ResourceManager::getInstance()
                      .getAllocator("UM_pool")
@@ -120,9 +132,12 @@ void print_hwm() {
                      .getAllocator("UM_object_pool")
                      .getHighWatermark() /
                  1024.0 / 1024.0 / 1024.0;
-  // std::cout<<getRank()<<" Umpire HWM
-  // "<<umpire::ResourceManager::getInstance().getAllocator("UM_pool").getHighWatermark()/1024/1024<<"
-  // MB\n";
+  hwm_local[allocator_count] = 0;
+  for (int i = 0; i < allocator_count; i++)
+    hwm_local[allocator_count] += hwm_local[i];
+    // std::cout<<getRank()<<" Umpire HWM
+    // "<<umpire::ResourceManager::getInstance().getAllocator("UM_pool").getHighWatermark()/1024/1024<<"
+    // MB\n";
 #else
   hwm_local[0] = global_variables.gpu_memory_hwm / 1024.0 / 1024.0 / 1024.0;
   // std::cout<<getRank()<<" GPU Memory HWM =
@@ -130,15 +145,33 @@ void print_hwm() {
   // std::cout<<getRank()<<" GPU Memory Max =
   // "<<global_variables.max_mem/1024/1024<<" MB \n";
 #endif
-  MPI_Allreduce(&hwm_local, &hwm_global, allocator_count, MPI_FLOAT, MPI_MAX,
-                MPI_COMM_WORLD);
-  for (int i = 0; i < allocator_count; i++)
-    if (hwm_local[i] == hwm_global[i]) {
-      std::cout << i << " Global Device HWM is " << hwm_global[i] << " GB\n";
-      // umpire::util::StatisticsDatabase::getDatabase()->printStatistics(std::cout);
+  float hwm_total;
+  MPI_Reduce(&hwm_local, &hwm_global, allocator_count + 1, MPI_FLOAT, MPI_MAX,
+             0, MPI_COMM_WORLD);
+  MPI_Reduce(&hwm_local, &hwm_global_min, allocator_count + 1, MPI_FLOAT,
+             MPI_MIN, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&hwm_local[allocator_count], &hwm_total, 1, MPI_FLOAT, MPI_SUM, 0,
+             MPI_COMM_WORLD);
+  if (!rank) {
+    for (int i = 0; i < allocator_count; i++) {
+      std::cerr << std::setprecision(2) << i << " MIN Global Device HWM is "
+                << hwm_global_min[i] << " GB\n";
+      std::cerr << i << " MAX Global Device HWM is " << hwm_global[i]
+                << " GB\n";
     }
+
+    std::cout << std::fixed << std::setprecision(2)
+              << " Min & Max per-device memory HWM  "
+              << hwm_global_min[allocator_count] << ","
+              << hwm_global[allocator_count] << " GB\n"
+              << std::flush;
+
+    std::cout << " Total device memory used " << hwm_total << " GB\n";
+  }
+
+  // umpire::util::StatisticsDatabase::getDatabase()->printStatistics(std::cout);
   if (Managed::hwm > 0) {
-    std::cout << "Space::Managed object count & HWM are " << Managed::ocount
+    std::cerr << "Space::Managed object count & HWM are " << Managed::ocount
               << " & " << Managed::hwm << " Size = "
               << Managed::hwm * sizeof(GridPointSource) / 1024.0 / 1024.0
               << " MB Each object = " << sizeof(GridPointSource) << "\n";

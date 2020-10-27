@@ -1,3 +1,4 @@
+#include "RAJA/RAJA.hpp"
 #ifndef __SW4_POLICIES_H__
 #define __SW4_POLICIES_H__
 
@@ -10,7 +11,11 @@
 #endif
 
 #ifdef ENABLE_CUDA
+#if RAJA_VERSION_MINOR>11
+#include "cuda_policies12.h"
+#else
 #include "cuda_policies.h"
+#endif
 #endif
 
 #ifdef ENABLE_HIP

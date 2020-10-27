@@ -76,5 +76,5 @@ imagehdf5 mode=mag z=0 file=surf timeInterval=0.5
 # no point saving uz and ux on this plane, because they are zero by symmetry
 imagehdf5 mode=uy y=15e3 file=ver timeInterval=0.5
 
-checkpoint cycleInterval=100 restartpath=loh1-h100-mr-1-hdf5 file=loh1_hdf5_restart
+checkpoint cycleInterval=100 restartpath=loh1-h100-mr-1-hdf5-cr file=loh1_hdf5_restart
 

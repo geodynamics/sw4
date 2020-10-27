@@ -800,28 +800,31 @@ EW::~EW() {
       ofile, [=](size_t size) -> double { return size * 8 / 1024.0; },
       [=](size_t size, double time) -> double {
         return size / time * 8 * 1.0e6 / 1024 / 1024 / 1024;
-      });
+      },
+      "Sendrecv");
   sm2.print(
       ofile, [=](size_t size) -> double { return size * 8 / 1024.0; },
       [=](size_t size, double time) -> double {
         return size / time * 8 * 1.0e6 / 1024 / 1024 / 1024;
-      });
+      },
+      "SendRecv2");
   coll_sm.printhistory(bfile);  // This needs to be done before print in which
                                 // the history gets sorted
   coll_sm.print(
       ofile, [=](int size) -> double { return size; },
-      [=](int size, double time) -> double { return time; });
+      [=](int size, double time) -> double { return time; }, "Barrier");
   step_sm.printhistory(hfile);  // This needs to be done before print in which
                                 // the history gets sorted
   host_sm.print(
       ofile, [=](size_t size) -> double { return size * 8 / 1024.0; },
       [=](size_t size, double time) -> double {
         return size / time * 8 * 1.0e6 / 1024 / 1024 / 1024;
-      });
+      },
+      "Host");
 
   step_sm.print(
       ofile, [=](size_t size) -> double { return size; },
-      [=](size_t size, double time) -> double { return time; });
+      [=](size_t size, double time) -> double { return time; }, "STEP_ms");
 
   ofile.close();
   hfile.close();
@@ -1292,8 +1295,8 @@ int EW::computeNearestGridPoint2(int& a_i, int& a_j, int& a_k, int& a_g,
     int g = 0;
     while (g < mNumberOfCartesianGrids && a_z < m_zmin[g]) g++;
     a_g = g;
-    a_i = static_cast<int>(round(a_x / mGridSize[g] + 1));
-    a_j = static_cast<int>(round(a_y / mGridSize[g] + 1));
+    a_i = static_cast<int>(floor(a_x / mGridSize[g] + 1));
+    a_j = static_cast<int>(floor(a_y / mGridSize[g] + 1));
     a_k = static_cast<int>(round((a_z - m_zmin[g]) / mGridSize[g] + 1));
 
     VERIFY2(
@@ -1329,8 +1332,8 @@ int EW::computeNearestGridPoint2(int& a_i, int& a_j, int& a_k, int& a_g,
                                                       r, s);
       if (success) {
         a_g = g;
-        a_i = static_cast<int>(round(q));
-        a_j = static_cast<int>(round(r));
+        a_i = static_cast<int>(floor(q));
+        a_j = static_cast<int>(floor(r));
         a_k = static_cast<int>(round(s));
       }
       //         MPI_Allreduce(&success,&foundglobal,1,MPI_INT,MPI_MAX,m_cartesian_communicator);
@@ -2902,6 +2905,11 @@ RAJA_HOST_DEVICE float_sw4 EW::Gaussian_x_T_Integral(float_sw4 t, float_sw4 R,
 //-----------------------------------------------------------------------
 // void EW::get_exact_point_source( Sarray& u, float_sw4 t, int g, Source&
 // source )
+#ifdef ENABLE_HIP
+void EW::get_exact_point_source(float_sw4* up, float_sw4 t, int g,
+                                Source& source, int* wind) {
+}
+#else
 void EW::get_exact_point_source(float_sw4* up, float_sw4 t, int g,
                                 Source& source, int* wind) {
   SW4_MARK_FUNCTION;
@@ -3512,6 +3520,7 @@ void EW::get_exact_point_source(float_sw4* up, float_sw4 t, int g,
   SYNC_STREAM;
   SW4_MARK_END("get_exact_point_source::loop");
 }
+#endif
 
 #include <cmath>
 #include <complex>
@@ -4357,6 +4366,12 @@ void EW::exactAccTwilight(float_sw4 a_t, vector<Sarray>& a_Uacc) {
 
 #ifndef FORCE_OMP
 //---------------------------------------------------------------------------
+#ifdef ENABLE_HIP
+void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
+               vector<GridPointSource*>& point_sources,
+               vector<int>& identsources) {
+}
+#else
 void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
                vector<GridPointSource*>& point_sources,
                vector<int>& identsources) {
@@ -4670,8 +4685,13 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
     SW4_MARK_END("FORCE::DEVICE");
   }
 }
-
+#endif
 //---------------------------------------------------------------------------
+#ifdef ENABLE_HIP
+void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
+                  vector<GridPointSource*>& point_sources,
+                  vector<int>& identsources) {}
+#else
 void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
                   vector<GridPointSource*>& point_sources,
                   vector<int>& identsources) {
@@ -4925,6 +4945,7 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
     SW4_MARK_END("FORCE_TT::DEVICE");
   }
 }
+#endif
 
 #endif /* ifdef FORCE_OMP */
 
@@ -9047,6 +9068,10 @@ TestEcons* EW::create_energytest() {
                          m_energy_test->m_cpcsratio);
   else
     return 0;
+}
+TestPointSource* EW::get_point_source_test()
+{
+   return m_point_source_test;
 }
 void EW::load_balance() {
   for (int g = 0; g < mNumberOfGrids; g++) {

@@ -27,12 +27,13 @@ void curvilinear4sgwind(int, int, int, int, int, int, int, int, float_sw4*,
 //-----------------------------------------------------------------------
 CurvilinearInterface2::CurvilinearInterface2(int a_gc, EW* a_ew) {
   SW4_MARK_FUNCTION;
-
+#if defined(ENABLE_CUDA)
   if (!mpi_supports_device_buffers()) {
     std::cerr << "**** ERROR::    Curvilinear Mesh Refinement cases must be "
                  "run with the -M -gpu flag****************\n";
     abort();
   }
+#endif
 
   m_reltol = 1e-6;
   m_abstol = 1e-6;
@@ -42,6 +43,7 @@ CurvilinearInterface2::CurvilinearInterface2(int a_gc, EW* a_ew) {
   m_ew = a_ew;
   m_etest = a_ew->create_energytest();
   m_tw = a_ew->create_twilight();
+  m_psource = a_ew->get_point_source_test();
   m_nghost = 5;
 
 #if defined(ENABLE_CUDA)
@@ -160,7 +162,7 @@ void CurvilinearInterface2::copy_str(float_sw4* dest, float_sw4* src,
 void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
                                         vector<float_sw4*>& a_stry) {
   SW4_MARK_FUNCTION;
-  std::cout << "void CurvilinearInterface2::init_arrays \n";
+  // std::cout << "void CurvilinearInterface2::init_arrays \n";
   for (int s = 0; s < 4; s++)
     m_isbndry[s] = m_ew->getLocalBcType(m_gc, s) != bProcessor;
 
@@ -295,7 +297,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   // std::cout << "Batch size in setup is " << msize << "\n";
   //#define USE_DIRECT_INVERSE 1
 #ifdef USE_DIRECT_INVERSE
-  std::cout << " USING DIRECT INVERSE \n";
+  // std::cout << " USING DIRECT INVERSE \n";
   m_mass_block = SW4_NEW(Space::Managed, float_sw4[9 * msize]);
   x = SW4_NEW(Space::Managed, float_sw4[3 * msize]);
   for (int j = m_jb + m_nghost; j <= m_je - m_nghost; j++)
@@ -530,7 +532,11 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   } else if (m_etest != 0) {
     m_etest->get_ubnd(U_f, m_nghost, sides);
     m_etest->get_ubnd(U_c, m_nghost, sides);
-  } else {
+  } else if( m_psource != 0 ) {
+    m_psource->ubnd( U_f, m_x_f, m_y_f, m_z_f, t, m_ew->mGridSize[m_gf], m_nghost, sides );
+    m_psource->ubnd( U_c, m_x_c, m_y_c, m_z_c, t, m_ew->mGridSize[m_gc], m_nghost, sides );
+  }
+    else {
     bnd_zero(U_c, m_nghost);
     bnd_zero(U_f, m_nghost);
     if (m_use_attenuation)
@@ -801,10 +807,10 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   //   convhist.push_back(maxres);
   //   convhist.push_back(it);
   if (maxres > m_reltol * maxres0 && scalef * maxres > m_abstol) {
-    std::cout << "WARNING, no convergence in curvilinear interface, res = "
+    std::cerr << "WARNING, no convergence in curvilinear interface, res = "
               << maxres << " reltol= " << m_reltol
               << " initial res = " << maxres0 << std::endl;
-    std::cout << "     scaled res = " << scalef * maxres
+    std::cerr << "     scaled res = " << scalef * maxres
               << " abstol= " << m_abstol << std::endl;
   }
   SW4_MARK_BEGIN("IMPOSE_IC_5");
@@ -920,7 +926,7 @@ void CurvilinearInterface2::interface_block(Sarray& matrix) {
     for (int i = alpha.m_ib; i <= alpha.m_ie; i++)
       alpha(i, j, m_nkf) = w1 * m_jac_f(i, j, m_nkf) * m_rho_f(i, j, m_nkf) /
                            (m_strx_f[i - m_ibf] * m_stry_f[j - m_jbf]);
-  if (!m_tw) bnd_zero(alpha, m_nghost);
+  if (!m_tw && !m_psource) bnd_zero(alpha, m_nghost);
   restprol2D(matrix, alpha, 1, m_nkf);
 
   // Add -B(uc) contribution to block matrix
@@ -948,7 +954,7 @@ void CurvilinearInterface2::interface_lhs(Sarray& lhs, Sarray& uc) {
         for (int c = 1; c <= 3; c++) lhsV(c, i, j, 1) /= m_rho_cV(i, j, 1);
       });
 
-  if (!m_tw) bnd_zero(lhs, m_nghost);
+  if (!m_tw && !m_psource) bnd_zero(lhs, m_nghost);
 
   Sarray prollhs(3, m_ibf, m_ief, m_jbf, m_jef, m_nkf, m_nkf, __FILE__,
                  __LINE__);
@@ -976,7 +982,7 @@ void CurvilinearInterface2::interface_lhs(Sarray& lhs, Sarray& uc) {
               (lm_strx_f[i - lm_ibf] * lm_stry_f[j - lm_jbf]);
       });
 
-  if (!m_tw) bnd_zero(prollhs, m_nghost);
+  if (!m_tw && !m_psource) bnd_zero(prollhs, m_nghost);
   restrict2D(lhs, prollhs, 1, m_nkf);
 
   Sarray Bc(lhs, Space::Managed_temps);
@@ -1051,7 +1057,7 @@ void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
                                          rhsV(c, i, j, 1) /= m_rho_cV(i, j, 1);
                                      });
   // SYNC_STREAM;
-  if (!m_tw) bnd_zero(rhs, m_nghost);
+  if (!m_tw && !m_psource) bnd_zero(rhs, m_nghost);
 
   // 3. Compute prolrhs := p(L(uc)/rhoc)
   Sarray prolrhs(3, m_ibf, m_ief, m_jbf, m_jef, m_nkf, m_nkf, __FILE__,
@@ -1112,7 +1118,7 @@ void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
               BfV(c, i, j, lm_nkf);
       });
   // SYNC_STREAM;
-  if (!m_tw) bnd_zero(prolrhs, m_nghost);
+  if (!m_tw && !m_psource) bnd_zero(prolrhs, m_nghost);
   restrict2D(rhs, prolrhs, 1, m_nkf);
 
   // 7. Compute B(uc), and form rhs := rhs - B(uc) =
@@ -1682,7 +1688,7 @@ void CurvilinearInterface2::prolongate2D(Sarray& Uc, Sarray& Uf, int kc,
                9 * (UcV(c, i, j + 2, kc) + UcV(c, i + 1, j + 2, kc)) +
                UcV(c, i + 2, j + 2, kc));
       });
-  SYNC_STREAM;
+  // SYNC_STREAM;
   //}
 }
 
@@ -1746,7 +1752,7 @@ void CurvilinearInterface2::restrict2D(Sarray& Uc, Sarray& Uf, int kc, int kf) {
                16 * UfV(c, i + 3, j, kf) - 9 * UfV(c, i + 3, j + 1, kf) +
                UfV(c, i + 3, j + 3, kf));
       });
-  SYNC_STREAM;
+  // SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------

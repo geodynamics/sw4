@@ -636,10 +636,11 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
       /* cout << "g=" << g << ", need extrapolate extra z" << endl; */
       int k = mWindow[g][5] + stV;
       size_t ind, ind_1, ind_2;  // npts;
-      // npts = ((size_t)(mWindow[g][1] - mWindow[g][0]) / stH + 1) *
-      //      ((mWindow[g][3] - mWindow[g][2]) / stH + 1) *
-      //     ((mWindow[g][5] - mWindow[g][4]) / stV + 1 + m_extraz[g]);
-
+#ifdef BZ_DEBUG
+      size_t npts = ((size_t)(mWindow[g][1] - mWindow[g][0]) / stH + 1) *
+            ((mWindow[g][3] - mWindow[g][2]) / stH + 1) *
+           ((mWindow[g][5] - mWindow[g][4]) / stV + 1 + m_extraz[g]);
+#endif
       // Linear extrapolation assumes that
       // mWindow[g][5]-st>=mWindow[g][4], i.e. mWindow[g][5] -mWindow[g][4]>=st.
       int ok = 2;
