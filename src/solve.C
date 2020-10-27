@@ -57,7 +57,6 @@ void curvilinear4sgwind(int, int, int, int, int, int, int, int, float_sw4*,
                         float_sw4*, float_sw4*, float_sw4*, float_sw4*, int,
                         char);
 
-<<<<<<< HEAD
 void add_pseudohessian_terms1(  int ifirst, int ilast, int jfirst, int jlast, 
                                int kfirst, int klast,
                                int ifirstact, int ilastact, int jfirstact, int jlastact, 
@@ -80,8 +79,6 @@ void add_pseudohessian_terms2(  int ifirst, int ilast, int jfirst, int jlast,
                                float_sw4* __restrict__ a_bope, 
                                float_sw4* __restrict__ a_acof, float_sw4* a_ghcof,
                                float_sw4* __restrict__ a_ph );
-=======
->>>>>>> raja
 
 #define SQR(x) ((x) * (x))
 
