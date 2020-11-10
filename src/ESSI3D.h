@@ -47,6 +47,7 @@
 #define SW4_ZFP_MODE_REVERSIBLE 4
 #define SW4_SZIP                5
 #define SW4_ZLIB                6
+#define SW4_SZ                  7
 
 class EW;
 class ESSI3DHDF5;

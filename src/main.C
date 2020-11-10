@@ -50,6 +50,10 @@
 #include "H5Zzfp_props.h"
 #endif
 
+#ifdef USE_SZ
+#include "H5Z_SZ.h"
+#endif
+
 using namespace std;
 
 void usage(string thereason)
@@ -143,6 +147,13 @@ main(int argc, char **argv)
 
 #ifdef USE_ZFP
   H5Z_zfp_initialize();
+#endif
+
+#ifdef USE_SZ
+  char *cfgFile = getenv("SZ_CONFIG_FILE");
+  if (NULL == cfgFile)
+    cfgFile = "sz.config";
+  H5Z_SZ_Init(cfgFile);
 #endif
 
 // make a new simulation object by reading the input file 'fileName'
@@ -253,8 +264,13 @@ main(int argc, char **argv)
   
 
 #ifdef USE_ZFP
-    H5Z_zfp_finalize();
+  H5Z_zfp_finalize();
 #endif
+
+#ifdef USE_SZ
+  H5Z_SZ_Finalize();
+#endif
+
 // Stop MPI
   MPI_Finalize();
   return status;

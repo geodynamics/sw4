@@ -4028,6 +4028,13 @@ void EW::processESSI3D( char* buffer )
           if (proc_zero())
             cout << "SSI ouput will use SZIP" << endl;
       }
+      else if (startswith("sz=", token))
+      {
+          token += 5;
+          compressionMode = SW4_SZ;
+          if (proc_zero())
+            cout << "SSI ouput will use SZ with configuration file [" << getenv("SZ_CONFIG_FILE") << "]" << endl;
+      }
       else
       {
           badOption("ssioutput", token);
@@ -4038,6 +4045,11 @@ void EW::processESSI3D( char* buffer )
 #ifndef USE_ZFP
    if (compressionMode != 0 && proc_zero()) 
       cout << "WARNING: SW4 is not compiled with ZFP but ZFP command is used " << endl;
+#endif
+
+#ifndef USE_SZ
+   if (compressionMode != 0 && proc_zero()) 
+      cout << "WARNING: SW4 is not compiled with SZ but SZ command is used " << endl;
 #endif
 
    if (compressionMode != 0 && bufferInterval == 1) 

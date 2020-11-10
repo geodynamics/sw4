@@ -1,8 +1,8 @@
 #-----------------------------------------------------------------------
 # Usage:
-#   Default is: debug=no prec=double openmp=yes hdf5=no fftw=no
-# make sw4     [debug=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [fftw=yes/no]
-# make sw4mopt [debug=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [fftw=yes/no]
+#   Default is: debug=no profile=no prec=double openmp=yes hdf5=no fftw=no
+# make sw4     [debug=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
+# make sw4mopt [debug=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
 #
 # This Makefile asumes that the following environmental variables have been assigned,
 # see note below.
@@ -15,6 +15,7 @@
 # HDF5ROOT = path to hdf5 library and include files (used when hdf5=yes).
 # H5ZROOT = path to H5Z-ZFP library and include files (used when zfp=yes).
 # ZFPROOT = path to ZFP library and include files (used when zfp=yes).
+# SZROOT = path to SZ library and include files (used when sz=yes).
 # FFTWROOT = path to fftw library and include files (used when fftw=yes).
 # Note: third party libraries should have include files in $(SW4ROOT)/include, libraries in $(SW4ROOT)/lib
 # Note: HDF5ROOT and FFTWROOT can be left undefined if these libraries are 
@@ -35,9 +36,14 @@
 #-----------------------------------------------------------------------
 
 ifeq ($(debug),yes)
+   profile := "no"
    optlevel = DEBUG
+else ifeq ($(profile),yes)
+   debug := "no"
+   optlevel = PROFILE
 else
    debug := "no"
+   profile := "no"
    optlevel = OPTIMIZE
 endif
 
@@ -45,6 +51,10 @@ ifeq ($(optlevel),DEBUG)
    FFLAGS    = -g -O0
    CXXFLAGS  = -g -I../src -DBZ_DEBUG -O0 -std=c++11
    CFLAGS    = -g -O0
+else ifeq ($(optlevel),PROFILE)
+   FFLAGS   = -g -O3
+   CXXFLAGS = -g -O3 -I../src -std=c++11
+   CFLAGS   = -g -O3 
 else
    FFLAGS   = -O3
 # AP (160419) Note that cmake uses -O3 instead of -O for CXX and C
@@ -57,6 +67,7 @@ fullpath := $(shell pwd)
 HOSTNAME := $(shell hostname)
 UNAME := $(shell uname)
 
+profiledir := profile
 debugdir := debug
 optdir := optimize
 
@@ -148,6 +159,7 @@ ifeq ($(openmp),no)
 else
    debugdir := $(debugdir)_mp
    optdir   := $(optdir)_mp
+   profiledir   := $(profiledir)_mp
    CXXFLAGS += -fopenmp
    FFLAGS   += -fopenmp
 endif
@@ -182,6 +194,7 @@ endif
 ifeq ($(prec),single)
    debugdir := $(debugdir)_sp
    optdir   := $(optdir)_sp
+   profiledir   := $(profiledir)_sp
    CXXFLAGS += -I../src/float
 else
    CXXFLAGS += -I../src/double
@@ -199,12 +212,19 @@ ifeq ($(zfp),yes)
    EXTRA_LINK_FLAGS += -L$(H5ZROOT)/lib -L$(ZFPROOT)/lib -lh5zzfp -lzfp 
 endif
 
+ifeq ($(sz),yes)
+   CXXFLAGS  += -I$(SZROOT)/include -DUSE_SZ
+   EXTRA_LINK_FLAGS += -L$(SZROOT)/lib -lSZ -lzlib -lzstd -lhdf5sz
+endif
+
 ifdef EXTRA_LINK_FLAGS
    linklibs += $(EXTRA_LINK_FLAGS)
 endif
 
 ifeq ($(optlevel),DEBUG)
    builddir = $(debugdir)
+else ifeq ($(optlevel),PROFILE)
+   builddir = $(profiledir)
 else
    builddir = $(optdir)
 endif
@@ -272,7 +292,7 @@ FMOBJOPT = $(addprefix $(builddir)/,$(MOBJOPT)) $(addprefix $(builddir)/,$(QUADP
 sw4: $(FSW4) $(FOBJ)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
-	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
+	@echo "debug=" $(debug) " profile=" $(profile) " hdf5=" $(hdf5) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT)
 	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
@@ -286,7 +306,7 @@ sw4: $(FSW4) $(FOBJ)
 sw4mopt: $(FOBJ) $(FMOBJOPT) 
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
-	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
+	@echo "debug=" $(debug) " profile=" $(profile) " hdf5=" $(hdf5) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
 	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
@@ -339,7 +359,9 @@ $(builddir)/RandomizedMaterial.o:src/RandomizedMaterial.C
 clean:
 	/bin/mkdir -p $(optdir)
 	/bin/mkdir -p $(debugdir)
-	cd $(optdir); /bin/rm -f sw4 sw4mopt *.o; cd ../$(debugdir); /bin/rm -f sw4 sw4mopt *.o
+	/bin/mkdir -p $(profiledir)
+	cd $(optdir); /bin/rm -f sw4 sw4mopt *.o; cd ../$(debugdir); /bin/rm -f sw4 sw4mopt *.o; cd ../$(profiledir); /bin/rm -f sw4 sw4mopt *.o
+
 
 # Special rule for the target test
 test:

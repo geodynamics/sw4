@@ -34,13 +34,13 @@
 
 #include "ESSI3DHDF5.h"
 
-#ifdef USE_HDF5
-#include "hdf5.h"
-#endif
-
 #ifdef USE_ZFP
 #include "H5Zzfp_lib.h"
 #include "H5Zzfp_props.h"
+#endif
+
+#ifdef USE_SZ
+#include "H5Z_SZ.h"
 #endif
 
 /* #define WRITE_SEP_DSET 1 */
@@ -131,6 +131,7 @@ void ESSI3DHDF5::create_file()
   hid_t prop_id = H5Pcreate(H5P_FILE_ACCESS);
   H5Pset_fapl_mpio(prop_id, comm, info);
   H5Pset_coll_metadata_write(prop_id, 1);
+  H5Pset_all_coll_metadata_ops(prop_id, 1);
   m_file_id = H5Fcreate( const_cast<char*>(m_filename.c_str()),
       H5F_ACC_TRUNC, H5P_DEFAULT, prop_id);
   if (m_file_id < 0)
@@ -417,7 +418,7 @@ void ESSI3DHDF5::init_write_vel(int ntimestep, int compressionMode, double compr
         H5Pset_deflate(prop_id, (int)compressionPar); 
       }
 #ifdef USE_ZFP
-      if (compressionMode == SW4_ZFP_MODE_RATE) {
+      else if (compressionMode == SW4_ZFP_MODE_RATE) {
         H5Pset_zfp_rate(prop_id, compressionPar);
       }
       else if (compressionMode == SW4_ZFP_MODE_PRECISION) {
@@ -643,6 +644,17 @@ void ESSI3DHDF5::init_write_vel(int ntimestep, int compressionMode, double compr
     }
     else if (compressionMode == SW4_ZFP_MODE_REVERSIBLE) {
       H5Pset_zfp_reversible(prop_id);
+    }
+#endif
+#ifdef USE_SZ
+    else if (compressionMode == SW4_SZ) {
+      size_t cd_nelmts; 
+      unsigned int *cd_values = NULL;
+      int dataType = SZ_DOUBLE;
+      if (m_precision == 4) 
+        dtype = SZ_FLOAT;
+      SZ_metaDataToCdArray(&cd_nelmts, &cd_values, dataType, 0, m_cycle_dims[3], m_cycle_dims[2], m_cycle_dims[1], m_cycle_dims[0]);
+      H5Pset_filter(prop_id, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
     }
 #endif
   }
