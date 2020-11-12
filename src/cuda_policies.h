@@ -46,7 +46,7 @@ using DEFAULT_LOOP2X_ASYNC =
                              RAJA::statement::Lambda<0>>>>>;
 
 using DEFAULT_LOOP3 =
-    RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::Tile<
+    RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<256,RAJA::statement::Tile<
         0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
         RAJA::statement::Tile<
             1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,

@@ -144,10 +144,18 @@ void curvilinear4sg_ci(
 #endif
 #if defined(NO_COLLAPSE)
       // LOOP -1
+      //
       // 32,4,2 is 4% slower. 32 4 4 does not fit
+#ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
       Range<6> K(1, 6 + 1);
+#endif
+#ifdef ENABLE_HIP
+      Range<64> I(ifirst + 2, ilast - 1);
+      Range<2> J(jfirst + 2, jlast - 1);
+      Range<2> K(1, 6 + 1);
+#endif
       // Uses 166 registers, no spills
       Tclass<1> tag1;
       forall3async<__LINE__>(
@@ -810,10 +818,16 @@ void curvilinear4sg_ci(
     RangeGS<256, 4> IS(ifirst + 2, ilast - 1);
     RangeGS<1, 1> JS(jfirst + 2, jlast - 1);
     RangeGS<1, 1> KS(kstart, klast - 1);
-
+#ifdef ENABLE_CUDA
     Range<16> I(ifirst + 2, ilast - 1);  // 16.861ms for 64,2,2
     Range<4> J(jfirst + 2, jlast - 1);
     Range<4> K(kstart, kend + 1);  // Changed for CUrvi-MR Was klast-1
+#endif
+#ifdef ENABLE_HIP
+    Range<64> I(ifirst + 2, ilast - 1);  // 16.861ms for 64,2,2
+    Range<2> J(jfirst + 2, jlast - 1);
+    Range<2> K(kstart, kend + 1);  // Changed for CUrvi-MR Was klast-1
+#endif
     // std::cout<<"KSTART END"<<kstart<<" "<<kend<<"\n";
     // forall3GS(IS,JS,KS, [=]RAJA_DEVICE(int i,int j,int k){
     // Use 168 regissters , no spills
@@ -2084,9 +2098,16 @@ void curvilinear4sg_ci(
 #if defined(NO_COLLAPSE)
     // LOOP -1
     // 32,4,2 is 4% slower. 32 4 4 does not fit
+#ifdef ENABLE_CUDA
     Range<16> II(ifirst + 2, ilast - 1);
     Range<4> JJ(jfirst + 2, jlast - 1);
     Range<6> KK(nk - 5, nk + 1);
+#endif
+#ifdef ENABLE_HIP
+    Range<64> II(ifirst + 2, ilast - 1);
+    Range<2> JJ(jfirst + 2, jlast - 1);
+    Range<2> KK(nk - 5, nk + 1);
+#endif
     // Register count goes upto 254. Runtime goes up by factor of 2.8X
     //     Range<16> JJ2(jfirst + 2, jlast - 1);
     //     forall2async(II, JJ2,[=] RAJA_DEVICE(int i, int j) {
