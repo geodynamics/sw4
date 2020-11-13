@@ -114,12 +114,12 @@ using ICSTRESS_EXEC_POL_ASYNC =
 // RAJA::statement::Lambda<0> >>>>>;
 
 using RHS4_EXEC_POL =
-    RAJA::KernelPolicy<RAJA::statement::HipKernel<RAJA::statement::Tile<
-        0, RAJA::tile_fixed<4>, RAJA::hip_block_y_loop,
+    RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<256,RAJA::statement::Tile<
+        0, RAJA::tile_fixed<2>, RAJA::hip_block_y_loop,
         RAJA::statement::Tile<
-            1, RAJA::tile_fixed<4>, RAJA::hip_block_x_loop,
+            1, RAJA::tile_fixed<64>, RAJA::hip_block_x_loop,
             RAJA::statement::Tile<
-                2, RAJA::tile_fixed<16>, RAJA::hip_block_z_loop,
+                2, RAJA::tile_fixed<2>, RAJA::hip_block_z_loop,
                 RAJA::statement::For<
                     0, RAJA::hip_thread_y_direct,
                     RAJA::statement::For<

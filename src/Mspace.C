@@ -115,7 +115,7 @@ void check_mem() {
 
 void print_hwm(int rank) {
   const int allocator_count = 3;
-#if defined(ENABLE_CUDA)
+#if defined(ENABLE_CUDA) || defined(ENABLE_HIP)
   // std::cout<<"PRINT_HWM"<<std::flush;
   float hwm_local[allocator_count + 1], hwm_global[allocator_count + 1],
       hwm_global_min[allocator_count + 1];
