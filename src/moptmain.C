@@ -220,12 +220,13 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    checkMinMax(nmpars/2, coarse, "coarse:");
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
-     simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 0, simulation.getRank());
+     simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, mopt->get_wave_mode(), 0, simulation.getRank());
    }
    delete[] coarse;
    MPI_Barrier(MPI_COMM_WORLD);
-
-   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda ); // xs->mu/lambda->base
+   
+   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda, 
+       mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode()); // xs->mu/lambda->base
    int ok=1;
    if( mopt->m_mcheck )
       simulation.check_material( rho, mu, lambda, ok );
@@ -384,13 +385,14 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    checkMinMax(nmpars/2, coarse, "coarse2:");
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
-     simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 0, myrank);
+     simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, mopt->get_wave_mode(), 0, myrank);
    }
     MPI_Barrier(MPI_COMM_WORLD);
    delete[] coarse;
 
    checkMinMax(nmpars, &xs[nspar], "compute_f_and_df: xs");
-   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
+   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda,
+     mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode());
 
    if( mopt->m_mcheck )
       simulation.check_material( rho, mu, lambda, ok, 2 );
@@ -552,6 +554,9 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       //std::cout << "gMu_xform min=" << gMu[0].minimum() << " max=" << gMu[0].maximum() << std::endl;
       //std::cout << "gLambda_xform min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << std::endl;
     
+      //save_array_to_disk(nmpars, dfsevent, "dfsevent.bin");
+
+      //mopt->m_mp->smooth_gradient(dfsevent); // needs to act on dfsevent instead of dfs
     if( phcase > 0)
       {
 // Interpolate pseudo-hessian to parameter grid
@@ -564,13 +569,19 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          float_sw4 eps=1e-3;
          normalize_pseudohessian( nmpars, phs, nmpard, phm, eps, phcase );
 
+         std::cout << "nmpars=" << nmpars << std::endl;
+         
+         //mopt->m_mp->smooth_gradient(phs); // smooth phs
+         //save_array_to_disk(nmpars, phs, "phs.bin");
+
 // ..scale the gradient
-         //         float_sw4* sfs=mopt->m_sfs;
+         //  float_sw4* sfs=mopt->m_sfs;
          for( int m=0 ; m < nmpars ; m++ )
             dfsevent[m+nspar] *= 1.0/phs[m];
          for( int m=0 ; m < nmpard ; m++ )
             dfmevent[m] *= 1.0/phm[m];
 
+         //save_array_to_disk(nmpars, dfsevent, "dfsevent_scaled.bin");
 // ..and give back memory
          if( nmpars> 0 )
             delete[] phs;
@@ -578,11 +589,11 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
             delete[] phm;
 
          // For plotting purpose:
-         normalize_gradient_ph( pseudo_hessian, gRho, gMu, gLambda, eps, phcase );
+      //normalize_gradient_ph( pseudo_hessian, gRho, gMu, gLambda, eps, phcase );
       }  // if pH scaling
 
-
     mopt->m_mp->smooth_gradient(dfsevent); // needs to act on dfsevent instead of dfs
+    //save_array_to_disk(nmpars, dfsevent, "dfsevent_smoothed.bin");
 
       for( int m=0 ; m < nmpars ; m++ )
 	      dfs[m+nspar] += dfsevent[m];
@@ -1177,7 +1188,8 @@ void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
 
 	 int ng=simulation.mNumberOfGrids;
 	 vector<Sarray> rho(ng), mu(ng), lambda(ng);
-	 mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
+	 mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda,
+      mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode());
 
 	 for( int im=0 ; im < mopt->m_image_files.size() ; im++ )
 	 {
@@ -1708,7 +1720,8 @@ int main(int argc, char **argv)
            {
               int ng = simulation.mNumberOfGrids;
               vector<Sarray> rho(ng), mu(ng), lambda(ng);
-              mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
+              mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda,
+                mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode());
 
               for( int i3=0 ; i3<mopt->m_sfiles.size() ; i3++ )
                 mopt->m_sfiles[i3]->force_write_image( 0, 0, rho, rho, mu, lambda, rho, mu, lambda, rho, lambda, simulation.getOutputPath(), simulation.mZ ); 

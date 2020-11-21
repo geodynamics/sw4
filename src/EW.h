@@ -123,7 +123,7 @@ void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTim
             int varcase, vector<Sarray>& pseudoHessian );
 
 void solveTT( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries,
-	    double* xs, int nmpars, MaterialParameterization* mp, int event, int myrank);
+	    double* xs, int nmpars, MaterialParameterization* mp, int wave_mode, int event, int myrank);
 
 void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, float_sw4 gradient[11], float_sw4 hessian[121] );
    //void solve_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
@@ -749,7 +749,8 @@ void interpolate_base_to_coarse_vel( int nx, int ny, int nz, double xmin, double
 				     double zmin, double hx, double hy, double hz,
 				     Sarray& rho, Sarray& cs, Sarray& cp );
 
-void update_and_transform_material( int g, Sarray& rho, Sarray& mu, Sarray& lambda );
+void update_and_transform_material( int g, Sarray& rho, Sarray& mu, Sarray& lambda,
+                    float_sw4 vp_min, float_sw4 vp_max, float_sw4 vs_min, float_sw4 vs_max, int wave_mode);
 
 void transform_gradient( Sarray& rho, Sarray& mu, Sarray& lambda, Sarray& grho, Sarray& gmu, Sarray& glambda );
 

@@ -69,7 +69,7 @@ void EW::check_materials()
 
    // Minimum allowed  cp/cs, positive definite operator requires cp/cs > sqrt(4/3) = 1.155...
    //   lambda >0 requires cp/cs > sqrt(2)
-  const float_sw4 mincpcsratio = 1.2;
+  const float_sw4 mincpcsratio = 1.15;  // 1.2
   const float_sw4 la_min_fact = mincpcsratio*mincpcsratio-2;
   
   float_sw4 mins[8],maxs[8];

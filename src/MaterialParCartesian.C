@@ -104,7 +104,8 @@ MaterialParCartesian::MaterialParCartesian( EW* a_ew, int nx, int ny, int nz, in
 //-----------------------------------------------------------------------
 void MaterialParCartesian::get_material( int nmd, double* xmd, int nms,
 					 double* xms, vector<Sarray>& a_rho,
-					 vector<Sarray>& a_mu, vector<Sarray>& a_lambda )
+					 vector<Sarray>& a_mu, vector<Sarray>& a_lambda,
+                float_sw4 vp_min, float_sw4 vp_max, float_sw4 vs_min, float_sw4 vs_max,int wave_mode)
 {
    double* rhop=m_rho.c_ptr();
    double* mup=m_mu.c_ptr();

@@ -2,6 +2,7 @@
 #ifndef SW4_NOOMP
 #include <omp.h>
 #endif
+#include <cfloat>
 
 //-----------------------------------------------------------------------
 void interpolatemtrl( int nx, int  ny, int nz, float_sw4 xmin, float_sw4 ymin,
@@ -976,7 +977,8 @@ void EW::interpolation_gradient( int nx, int ny, int nz, double xmin, double ymi
 }
 
 //-----------------------------------------------------------------------
-void EW::update_and_transform_material( int g, Sarray& rho, Sarray& mu, Sarray& lambda )
+void EW::update_and_transform_material( int g, Sarray& rho, Sarray& mu, Sarray& lambda,
+float_sw4 vp_min, float_sw4 vp_max, float_sw4 vs_min, float_sw4 vs_max, int wave_mode)
 {
    // Input (rho,mu,lambda) on grid g contains (rho,cs,cp) update from base material.
    // This routine returns (rho,mu,lambda) computed by adding the input update variables
@@ -987,17 +989,45 @@ void EW::update_and_transform_material( int g, Sarray& rho, Sarray& mu, Sarray& 
    float_sw4* m_rho=mRho[g].c_ptr();
    float_sw4* m_mu=mMu[g].c_ptr();
    float_sw4* m_la=mLambda[g].c_ptr();
+
+   float_sw4 cs_min, cs_max;
+      cs_min=FLT_MAX;
+      cs_max=FLT_MIN;
+
    for( size_t ind=0 ; ind < rho.m_npts ; ind++ )
    {
       // Add base material to update in velocity variables
-      float_sw4 cs = sqrt(m_mu[ind]/m_rho[ind])              + mup[ind];
-      float_sw4 cp = sqrt((2*m_mu[ind]+m_la[ind])/m_rho[ind])+ lap[ind];
+	  float_sw4 cs, cp;
+	  if(wave_mode>0)  // S-wave or both
+	     cs = sqrt(m_mu[ind]/m_rho[ind])              + mup[ind];
+	  else
+         cs = sqrt(m_mu[ind]/m_rho[ind]);     
+	  
+	  
+	  if(vs_min>0 && cs<vs_min) cs=vs_min;  // global velocity constraints
+	  if(vs_max>0 && cs>vs_max) cs=vs_max;
+
+      if(wave_mode==0 || wave_mode==2)  // P-wave or both
+         cp = sqrt((2*m_mu[ind]+m_la[ind])/m_rho[ind])+ lap[ind];
+	  else
+	     cp = sqrt((2*m_mu[ind]+m_la[ind])/m_rho[ind]);
+
+	  if(vp_min>0 && cp<vp_min) cp=vp_min;
+	  if(vp_max>0 && cp>vp_max) cp=vp_max;
+
       float_sw4 rho= m_rho[ind]                             + rhop[ind];
+
+	    if(cs<cs_min) cs_min=cs;
+        if(cs>cs_max) cs_max=cs;
+
       // return total material as Lame parameters
       rhop[ind]= rho;
-      mup[ind] = cs*cs*rho;
+      mup[ind] = cs*cs*rho;      // update vs if S mode
       lap[ind] = (cp*cp-2*cs*cs)*rho;
+	 
    }
+    cout<< ">>>>>>>>>>>>>>>> get_material: vs_min=" << vs_min << " vs_max=" << vs_max << " cs_min=" << cs_min << " cs_max=" << cs_max << endl;
+
 }
 
 //-----------------------------------------------------------------------

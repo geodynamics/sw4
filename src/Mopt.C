@@ -48,6 +48,11 @@ Mopt::Mopt( EW* a_ew )
    m_test_regularizer = false;
    m_do_profiling = false;
    m_use_pseudohessian = false;
+   m_vp_min = -100.; // default to negative, only positive ones in effect
+   m_vp_max = -100.;
+   m_vs_min = -100.;
+   m_vs_max = -100.;
+   m_wave_mode=2;  // default to both P and S waves otherwise 0 for P and 1 for S only
    m_tolerance = 1e-12;
    m_var    = 0;
    m_var2   = 0;
@@ -188,10 +193,10 @@ void Mopt::processMaterialAllpts( char* buffer )
 	    variables = 3;
 	 else
 	    variables = 0;
-      }
+      }      
       else
       {
-	 badOption("mpallpts", token);
+	     badOption("mpallpts", token);
       }
       token = strtok(NULL, " \t");
    }
@@ -261,13 +266,33 @@ void Mopt::processMaterialParCart( char* buffer )
       }
       else if( startswith("filetype=",token) )
       {
-	 token += 9;
-	 CHECK_INPUT(strcmp(token,"mpar")==0 || strcmp(token,"mpc")==0, 
-                   "ERROR: processing mparcart, file type " << token << "not recognized" );
-	 if( strcmp(token,"mpc")== 0 )
-	 {
-	    mparcartfile = true;
-	 }
+         token += 9;
+         CHECK_INPUT(strcmp(token,"mpar")==0 || strcmp(token,"mpc")==0, 
+                        "ERROR: processing mparcart, file type " << token << "not recognized" );
+         if( strcmp(token,"mpc")== 0 )
+         {
+            mparcartfile = true;
+         }
+      }
+      else if( startswith("vp_min=",token) )
+      {
+	   token += 7;
+	   m_vp_min = atof(token);
+      }
+      else if( startswith("vp_max=",token) )
+      {
+	   token += 7;
+	   m_vp_max = atof(token);
+      }
+      else if( startswith("vs_min=",token) )
+      {
+	   token += 7;
+	   m_vs_min = atof(token);
+      }      
+      else if( startswith("vs_max=",token) )
+      {
+	   token += 7;
+	   m_vs_max = atof(token);
       }
       else
       {
@@ -405,6 +430,14 @@ void Mopt::processMrun( char* buffer )
 	 int n = strlen(token);
 	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 )
 	    m_use_pseudohessian = true;
+      }
+      else if( startswith("wave_mode=",token) )
+      {
+         token += 10;
+	 int n = strlen(token);
+	   if( strncmp("P",token,n)== 0 || strncmp("p",token,n)==0) m_wave_mode = 0;
+      else if(strncmp("S",token,n)== 0 || strncmp("s",token,n)==0) m_wave_mode = 1;
+      else m_wave_mode=2;
       }
       else
          badOption("mrun",token);
@@ -1266,3 +1299,5 @@ int Mopt::get_pseudo_hessian_case( )
    else
       return 0;
 }
+
+

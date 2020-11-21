@@ -340,10 +340,21 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
    int ntries = 0;
    while( !ok && ntries < 30 )
    {
-      for( int i=0; i < ns ; i++ )
-	 xsnew[i] = xs[i] + lambda*ps[i];
+
+       for( int i=0; i < ns ; i++ )
+	     xsnew[i] = xs[i] + lambda*ps[i];
+        //S-wave only P +1
+		//float_sw4 min, max;
+
+	    //for( int i=nspar; i< nspar+nmpars/2; i++)    // first half for Vs
+	        //{
+			//	xsnew[2*i] = xs[2*i] + lambda*ps[2*i];  
+
+			//} 
+        
+
       for( int i=0; i < nmpard ; i++ )
-	 xmnew[i] = xm[i] + lambda*pm[i];
+	      xmnew[i] = xm[i] + lambda*pm[i];
 
       int ng = simulation.mNumberOfGrids;
       vector<Sarray> rho(ng), mu(ng), la(ng);
@@ -352,7 +363,8 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	  //checkMinMax(nmpars, &ps[nspar], "linesearch: ps");
 	  std::cout << "scaling lambda=" << lambda << std::endl;
 	  //checkMinMax(nmpars, &xsnew[nspar], "linesearch: xsnew");
-      mopt->m_mp->get_material( nmpard, xmnew, nmpars, &xsnew[nspar], rho, mu, la );
+      mopt->m_mp->get_material( nmpard, xmnew, nmpars, &xsnew[nspar], rho, mu, la, 
+	    mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode());
       int ret_code = simulation.check_material( rho, mu, la, ok );
       if( !ok )
       {
@@ -392,9 +404,14 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	  if( myRank == 0 ) std::cout << "retcode=2" << std::endl;
 
       for( int i=0; i < ns ; i++ )
-	 xsnew[i] = xs[i] + lambda*ps[i];
+	     xsnew[i] = xs[i] + lambda*ps[i];
+
+        // S-wave only
+	     //for( int i=nspar; i< nspar+nmpars/2; i++)
+	     //     xsnew[2*i] = xs[2*i] + lambda*ps[2*i];
+
       for( int i=0; i < nmpard ; i++ )
-	 xmnew[i] = xm[i] + lambda*pm[i];
+	     xmnew[i] = xm[i] + lambda*pm[i];
 
     //if( myRank == 0 ) {  // Wei debugging
 	//  save_array_to_disk(ns, ps, "ps.bin"); // multi-component *ns
@@ -472,10 +489,15 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	 }
 	 retcode = 1;
 	    // Take a full step
-	 for( int i=0 ; i < ns ; i++ )
-	    xsnew[i] = xs[i] + ps[i];
-	 for( int i=0 ; i < nmpard ; i++ )
-	    xmnew[i] = xm[i] + pm[i];
+	    for( int i=0 ; i < ns ; i++ )
+	       xsnew[i] = xs[i] + ps[i];
+
+		//S-wave only
+		//for( int i=nspar; i< nspar+nmpars/2; i++)
+	         //xsnew[2*i] = xs[2*i] + ps[2*i];
+
+	    for( int i=0 ; i < nmpard ; i++ )
+	       xmnew[i] = xm[i] + pm[i];
 
   
     //if( myRank == 0 ) {  // Wei debugging
@@ -924,8 +946,10 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
          }
          
       }
-      else
+      else   // no line-search
       {
+		cout << " update model w/o linesearch" << endl;
+
 		for( int i=0 ; i < ns ; i++ )
 			xa[i] = xs[i] + alpha*ds[i];   // updated model
 		for( int i=0 ; i < nmpard ; i++ )

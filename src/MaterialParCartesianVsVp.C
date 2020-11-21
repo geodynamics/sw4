@@ -110,7 +110,8 @@ MaterialParCartesianVsVp::MaterialParCartesianVsVp( EW* a_ew, int nx, int ny, in
 //-----------------------------------------------------------------------
 void MaterialParCartesianVsVp::get_material( int nmd, double* xmd, int nms,
 					     double* xms, vector<Sarray>& a_rho,
-					     vector<Sarray>& a_mu, vector<Sarray>& a_lambda )
+					     vector<Sarray>& a_mu, vector<Sarray>& a_lambda,
+                    float_sw4 vp_min, float_sw4 vp_max, float_sw4 vs_min, float_sw4 vs_max,int wave_mode)
 {
    // 1.  (rho,cs,cp) := x
    // 2.  (a_rho,a_cs,a_cp) := I(rho,cs,cp)  where I(rho,cs,cp) is interpolation to f.d. grid.
@@ -146,7 +147,7 @@ void MaterialParCartesianVsVp::get_material( int nmd, double* xmd, int nms,
       m_ew->interpolate( m_nx, m_ny, m_nz, m_xmin, m_ymin, m_zmin, m_hx, m_hy, m_hz, m_rho, m_cs,
 			 m_cp, g, a_rho[g], a_mu[g], a_lambda[g], false ); 
       // add mu/lambda update to the base      
-      m_ew->update_and_transform_material( g, a_rho[g], a_mu[g], a_lambda[g] );
+      m_ew->update_and_transform_material( g, a_rho[g], a_mu[g], a_lambda[g], vp_min, vp_max, vs_min, vs_max, wave_mode);
    }
 }
 
@@ -528,6 +529,9 @@ void MaterialParCartesianVsVp::smooth_gradient(double* dfs)
    double* gmup=gmu.c_ptr();
    double* glambdap=glambda.c_ptr();
 
+
+   std::cout << "smooth_gradient: m_nx=" << m_nx << " m_ny=" << m_ny << " m_nz=" << m_nz << std::endl;
+   
    size_t ind =0;
    for( int k=1 ; k <= m_nz ; k++ )
     for( int j=1 ; j <= m_ny ; j++ )

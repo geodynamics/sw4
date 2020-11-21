@@ -56,7 +56,8 @@ MaterialParAllpts::MaterialParAllpts( EW* a_ew, char* fname, int variables )
 
 //-----------------------------------------------------------------------
 void MaterialParAllpts::get_material( int nmd, double* xmd, int nms, double* xms, vector<Sarray>& a_rho,
-				      vector<Sarray>& a_mu, vector<Sarray>& a_lambda )
+				      vector<Sarray>& a_mu, vector<Sarray>& a_lambda,
+					  float_sw4 vp_min, float_sw4 vp_max, float_sw4 vs_min, float_sw4 vs_max,int wave_mode)
 {
    size_t gp, ind;
    for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )

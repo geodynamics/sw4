@@ -34,7 +34,7 @@ void fastmarch_close (void);
 
 //--------------------------------------------------------------------
 void EW::solveTT( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
-		double* xs, int nmpars, MaterialParameterization* mp, int event, int myrank)
+		double* xs, int nmpars, MaterialParameterization* mp, int wave_mode, int event, int myrank)
 {
    int ix, iy, iz, nx, ny, nz, n;
    nx = mp->getNX();
@@ -132,15 +132,36 @@ int ntr = a_TimeSeries.size();
     //   << timep[iz*nx*ny+iy*nx+ix] << " ts=" << times[iz*nx*ny+iy*nx+ix] << std::endl;
 
    // set window 
-       a_TimeSeries[ig]->set_window(timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+3.0, 
-       times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+3.0);
+   switch(wave_mode) {
+   case 0:  // P-wave only
+       a_TimeSeries[ig]->set_window(timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+2.5, 
+       timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+2.5);
 
        if(myrank==0) fprintf(fd, "%d   %d\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
                event, ig+1, a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
-               timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+3.0, 
-               times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+3.0);
+               timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+2.5, 
+               timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+2.5);
+         break;
+   case 1:  // S-wave only
+       a_TimeSeries[ig]->set_window(times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+2.5, 
+       times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+2.5);
 
-   } 
+       if(myrank==0) fprintf(fd, "%d   %d\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
+               event, ig+1, a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
+               times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+2.5, 
+               times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+2.5);
+         break;
+   default:
+       a_TimeSeries[ig]->set_window(timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+2.5, 
+       times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+2.5);
+
+       if(myrank==0) fprintf(fd, "%d   %d\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
+               event, ig+1, a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
+               timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+2.5, 
+               times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+2.5);
+     }
+   }  // loop over traces
+
    if(myrank==0) fclose(fd);
 
 

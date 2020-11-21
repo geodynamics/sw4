@@ -3,6 +3,7 @@
 
 #include "MParGridFile.h"
 
+
 //-----------------------------------------------------------------------
 //  Parameterize the material on a Cartesian coarse grid, with
 //  cp as the parameter, let cs=cp/r and rho=gamma*cp, for constants r, gamma
@@ -116,7 +117,8 @@ MaterialParCartesianVp::MaterialParCartesianVp( EW* a_ew, int nx, int ny, int nz
 //-----------------------------------------------------------------------
 void MaterialParCartesianVp::get_material( int nmd, double* xmd, int nms,
 					   double* xms, vector<Sarray>& a_rho,
-					   vector<Sarray>& a_mu, vector<Sarray>& a_lambda )
+					   vector<Sarray>& a_mu, vector<Sarray>& a_lambda,
+                  float_sw4 vp_min, float_sw4 vp_max, float_sw4 vs_min, float_sw4 vs_max,int wave_mode)
 {
  // 1.  cp := x
  // 2.  a_cp := I(cp)  where I(cp) is interpolation to f.d. grid.
@@ -127,10 +129,10 @@ void MaterialParCartesianVp::get_material( int nmd, double* xmd, int nms,
   cout << "MaterialParCartesianVp::get_material: nx=" << m_nx << " ny=" << m_ny << " nz=" << m_nz << " nms=" << nms << " nmd=" << nmd << endl;
 
    for( int k=1 ; k <= m_nz ; k++ )
-      for( int j=1 ; j <= m_ny ; j++ )
+    for( int j=1 ; j <= m_ny ; j++ )
 	 for( int i=1 ; i <= m_nx ; i++ )
 	 {
-            size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
+       size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
 	    cpp[indm]  = xms[ind];
 	    ind++;
 	    if( std::isnan(cpp[indm]) )
@@ -157,17 +159,20 @@ void MaterialParCartesianVp::get_material( int nmd, double* xmd, int nms,
       if( m_fixrho )
 	 cof = 1;
 
+
       for( size_t ind=0 ; ind < a_rho[g].m_npts ; ind++ )
       {
       // Add base material to update in velocity variables
          float_sw4 cp = sqrt((2*muB[ind]+laB[ind])/rhoB[ind]) + lap[ind];
-	 float_sw4 cs = cp/m_ratio;
+	      float_sw4 cs = cp/m_ratio;
          float_sw4 rho= cp*m_gamma;
+       
       // return total material as Lam'e parameters
          rhop[ind]= rho*(1-cof)+rhoB[ind]*cof;
          mup[ind] = cs*cs*rhop[ind];
          lap[ind] = (cp*cp-2*cs*cs)*rhop[ind];
       }
+
    }
 }
 
