@@ -891,7 +891,9 @@ void EW::processGrid(char* buffer) {
       proj0 << " +lat_0=" << mLatOrigin;
     }
   }
-
+  
+  // Setting h from whi file stepsize is problematic for mesh refinement  
+  /*
   float_sw4 cubelen, zcubelen;
   if (m_geodynbc_found) {
     // Set SW4 grid spacing based on Geodyn cube data
@@ -1079,6 +1081,7 @@ void EW::processGrid(char* buffer) {
       }
     }
   }
+  */
   if (!m_doubly_periodic) {
     if (proc_zero() && mVerbose >= 3)
       printf("**** Setting up the grid for a non-periodic problem\n");
