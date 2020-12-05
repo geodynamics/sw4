@@ -892,20 +892,23 @@ void EW::processGrid(char* buffer) {
     }
   }
   
-  // Setting h from whi file stepsize is problematic for mesh refinement  
-  /*
-  float_sw4 cubelen, zcubelen;
+  float_sw4 cubelen, zcubelen, hcube;
   if (m_geodynbc_found) {
     // Set SW4 grid spacing based on Geodyn cube data
+    // SRF: setting h from whi file stepsize is problematic for mesh refinement
+    // since grid[n] h is not necessarily grid[0] h, which is where geodynbc is set.
+    // Fix will be to have geodynbcGetSizes return hcube so that origin can be set,
+    // but not to set initial h. Which is already correctly set from grid.
 
     float_sw4 origin[3] = {0, 0, 0};
     double ibclat, ibclon, ibcaz;
 
     bool found_latlon;
     int adjust;
-    geodynbcGetSizes(m_geodynbc_filename, origin, cubelen, zcubelen,
+    geodynbcGetSizes(m_geodynbc_filename, origin, cubelen, zcubelen, hcube
                      found_latlon, ibclat, ibclon, ibcaz, adjust);
     // Use approximate h
+    /*
     if (h == 0.0) {
       if (nx > 0)
         h = x / (nx - 1);
@@ -914,6 +917,7 @@ void EW::processGrid(char* buffer) {
       else
         h = y / (ny - 1);
     }
+    */
 
     // rounding of cube position to two decimals (prec=100), three (prec=1000)
     // etc..
@@ -927,18 +931,22 @@ void EW::processGrid(char* buffer) {
       // lat-lon corner of cube given
       if (adjust == 1 || origin[2] == 0) {
         // h based on cube length only, adjust z-position of cube
-        int nc = static_cast<int>(round(cubelen) / h);
+        /* 
+        int nc = static_cast<int>(round(cubelen) / hcube);
         h = cubelen / nc;
-        origin[2] -= h * (origin[2] / h - round(origin[2] / h));
+        */
+        origin[2] -= hcube * (origin[2] / hcube - round(origin[2] / hcube));
       } else {
         // h based on cube length and z-position of cube
+        /*
         int a = static_cast<int>(round(origin[2] * prec));
         int b = static_cast<int>(round((origin[2] + zcubelen) * prec));
         //
         int d = gcd(a, b);
         int n1 = a / d;
-        int k = static_cast<int>(round(origin[2] / (n1 * h)));
+        int k = static_cast<int>(round(origin[2] / (n1 * hcube)));
         h = origin[2] / (k * n1);
+        */
       }
       // Geographic origin adjustment:
       double gridLat = mLatOrigin;
@@ -952,8 +960,8 @@ void EW::processGrid(char* buffer) {
       float_sw4 y = metersPerDegree *
                     (-sin(phi) * (ibclat - gridLat) +
                      cos(ibclat * deg2rad) * (ibclon - gridLon) * cos(phi));
-      x -= h * (x / h - round(x / h));
-      y -= h * (y / h - round(y / h));
+      x -= hcube * (x / hcube - round(x / hcube));
+      y -= hcube * (y / hcube - round(y / hcube));
       gridLat = ibclat - (x * cos(phi) - y * sin(phi)) / metersPerDegree;
       gridLon = ibclon - (x * sin(phi) + y * cos(phi)) /
                              (metersPerDegree * cos(ibclat * deg2rad));
@@ -969,21 +977,23 @@ void EW::processGrid(char* buffer) {
         // origin.
         float_sw4 xlen = x;
         float_sw4 ylen = y;
-        if (xlen == 0) xlen = h * (nx - 1);
-        if (ylen == 0) ylen = h * (ny - 1);
+        if (xlen == 0) xlen = hcube * (nx - 1);
+        if (ylen == 0) ylen = hcube * (ny - 1);
         origin[0] = 0.5 * (xlen - cubelen);
         origin[1] = 0.5 * (ylen - cubelen);
       }
       if (adjust == 1) {
         // h based on cube length only, adjust cube position
-        int nc = static_cast<int>(round(cubelen / h));
+        /*
+        int nc = static_cast<int>(round(cubelen / hcube));
         h = cubelen / nc;
+        */
         //	   cout << "nc= " << nc << " cubelen= " << cubelen << " origin
         // before " << 	      origin[0] << " " << origin[1] << " " << origin[2]
         // << endl;
-        origin[0] -= h * (origin[0] / h - round(origin[0] / h));
-        origin[1] -= h * (origin[1] / h - round(origin[1] / h));
-        origin[2] -= h * (origin[2] / h - round(origin[2] / h));
+        origin[0] -= hcube * (origin[0] / hcube - round(origin[0] / hcube));
+        origin[1] -= hcube * (origin[1] / hcube - round(origin[1] / hcube));
+        origin[2] -= hcube * (origin[2] / hcube - round(origin[2] / hcube));
         //	   cout << " origin after " <<
         //	      origin[0] << " " << origin[1] << " " << origin[2] << endl;
 
@@ -1081,7 +1091,7 @@ void EW::processGrid(char* buffer) {
       }
     }
   }
-  */
+  
   if (!m_doubly_periodic) {
     if (proc_zero() && mVerbose >= 3)
       printf("**** Setting up the grid for a non-periodic problem\n");
@@ -3026,7 +3036,7 @@ void EW::geodynFindFile(char* buffer) {
 
 //-----------------------------------------------------------------------
 void EW::geodynbcGetSizes(string filename, float_sw4 origin[3],
-                          float_sw4& cubelen, float_sw4& zcubelen,
+                          float_sw4& cubelen, float_sw4& zcubelen, float_sw4& hcube,
                           bool& found_latlon, double& lat, double& lon,
                           double& az, int& adjust) {
   ifstream geodynfile(m_geodynbc_filename.c_str());
@@ -3150,6 +3160,8 @@ void EW::geodynbcGetSizes(string filename, float_sw4 origin[3],
 
   zcubelen = cubelen;
   if (nzfound) zcubelen = (nz - 1) * h;
+  
+  if(hfound) hcube = h;
 }
 
 //-----------------------------------------------------------------------
