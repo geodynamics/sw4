@@ -13,6 +13,8 @@ build/
 
 optimize/
 
+optimize_quartz_mp/
+
 debug/
 
 *.o
