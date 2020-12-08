@@ -11,9 +11,7 @@ build/
 
 *.synctex.gz
 
-optimize/
-
-optimize_quartz_mp/
+optimize*/
 
 debug/
 
