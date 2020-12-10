@@ -61,9 +61,9 @@ void add_pseudohessian_terms1(  int ifirst, int ilast, int jfirst, int jlast,
     // SBP boundary operators
       kstart = nb+1;
       for( int k=kfirstact; k <= nb; k++ )
-#pragma omp parallel for
+/* #pragma omp parallel for */
          for( int j=jfirstact; j <= jlastact; j++ )
-#pragma ivdep
+/* #pragma ivdep */
             for( int i=ifirstact; i <= ilastact; i++ )
             {
                float_sw4 dxx = d4b*(u(1,i+2,j,k)+u(1,i-2,j,k)) + 
@@ -252,10 +252,10 @@ void add_pseudohessian_terms1(  int ifirst, int ilast, int jfirst, int jlast,
             }
    }
    // Interior
-#pragma omp parallel for
+/* #pragma omp parallel for */
    for( int k=kstart ; k <= klastact; k++ )
       for( int j=jfirstact; j <= jlastact; j++ )
-#pragma ivdep
+/* #pragma ivdep */
          for( int i=ifirstact; i <= ilastact; i++ )
          {
             float_sw4 dxx = d4b*(u(1,i+2,j,k)+u(1,i-2,j,k)) + 
@@ -473,9 +473,9 @@ void add_pseudohessian_terms2( int ifirst, int ilast, int jfirst, int jlast,
       // SBP boundary operators
       kstart = nb+1;
       for( int n=kfirstact; n <= nb; n++ )
-#pragma omp parallel for
+/* #pragma omp parallel for */
          for( int m=jfirstact; m <= jlastact; m++ )
-#pragma ivdep
+/* #pragma ivdep */
             for( int l=ifirstact; l <= ilastact; l++ )
             {
                //	 srcla_ = srcpla[s];
@@ -893,10 +893,10 @@ void add_pseudohessian_terms2( int ifirst, int ilast, int jfirst, int jlast,
 #define srcmu(c,i,j,k) srcmu_[(i+2)+5*(j+2)+25*(k+2)+(c-1)*125]
 
      // Interior operators
-#pragma omp parallel for
+/* #pragma omp parallel for */
    for( int n=kstart; n <= klastact; n++ )
       for( int m=jfirstact; m <= jlastact; m++ )
-#pragma ivdep
+/* #pragma ivdep */
          for( int l=ifirstact; l <= ilastact; l++ )
          {
 
