@@ -225,8 +225,9 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    delete[] coarse;
    MPI_Barrier(MPI_COMM_WORLD);
    
+   //rho, mu lambda are local volumes, xs assigned to base mu/lambda
    mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda, 
-       mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode()); // xs->mu/lambda->base
+       mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode()); 
    int ok=1;
    if( mopt->m_mcheck )
       simulation.check_material( rho, mu, lambda, ok );
@@ -273,17 +274,18 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 	    //	       exit(0);
 	 }
       }
+      // Give back memory
+      for( unsigned int g=0 ; g < ng ; g++ )
+      {
+         delete upred_saved[g];
+         delete ucorr_saved[g];
+      }
    }
    int myRank;
    MPI_Comm_rank(MPI_COMM_WORLD,&myRank);
    double mftmp = mf;
    MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-// Give back memory
-   for( unsigned int g=0 ; g < ng ; g++ )
-   {
-      delete upred_saved[g];
-      delete ucorr_saved[g];
-   }
+
    }
 // add in a Tikhonov regularizing term:
    bool tikhonovreg=false;
@@ -380,7 +382,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 
 
    // solveTT
-   double *coarse = new double[nmpars];
+   double *coarse = new double[nmpars]; // globally shared base model for computing TT
    mopt->m_mp->get_base_parameters(nmpard,xm,nmpars,coarse,simulation.mRho,simulation.mMu,simulation.mLambda );
    checkMinMax(nmpars/2, coarse, "coarse2:");
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
@@ -391,6 +393,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    delete[] coarse;
 
    checkMinMax(nmpars, &xs[nspar], "compute_f_and_df: xs");
+   //rho,mu,lambda local volumes get updated
    mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda,
      mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode());
 
@@ -403,7 +406,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 // when reconstructing U backwards.
    vector<DataPatches*> upred_saved(ng), ucorr_saved(ng);
    vector<Sarray> U(ng), Um(ng);
-   vector<Sarray> gRho(ng), gMu(ng), gLambda(ng);
+   vector<Sarray> gRho(ng), gMu(ng), gLambda(ng);  // gradients of model parms
    vector<Sarray> pseudo_hessian(ng);
    f = 0;
    
@@ -435,8 +438,6 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       sw4_profile->time_stamp("done forward solve" );
       std::cout << "done compute_f_df forward solve" << " time from t0=" << MPI_Wtime()-t0 << std::endl;
 
-      //std::cout << "done compute_f_df forward solve" << std::endl;
-      //   simulation.solve( src, GlobalTimeSeries, mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true );
      //Wei added sync
 
      MPI_Barrier(MPI_COMM_WORLD);
@@ -592,7 +593,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       //normalize_gradient_ph( pseudo_hessian, gRho, gMu, gLambda, eps, phcase );
       }  // if pH scaling
 
-    mopt->m_mp->smooth_gradient(dfsevent); // needs to act on dfsevent instead of dfs
+   
+    mopt->m_mp->smooth_gradient(dfsevent, rho, mu, lambda, GlobalSources[e]); // needs to act on dfsevent instead of dfs
     //save_array_to_disk(nmpars, dfsevent, "dfsevent_smoothed.bin");
 
       for( int m=0 ; m < nmpars ; m++ )
@@ -604,6 +606,13 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       for( unsigned int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
 	        delete diffs[m];
       diffs.clear();
+
+   for( unsigned int g=0 ; g < ng ; g++ )
+   {
+      delete upred_saved[g];
+      delete ucorr_saved[g];
+   }
+
    }  // over all events
 
    double mftmp = f;
@@ -714,12 +723,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    if( nmpard > 0 )
       delete[] dfmevent;
 
-   for( unsigned int g=0 ; g < ng ; g++ )
-   {
-      delete upred_saved[g];
-      delete ucorr_saved[g];
-   }
-   //   delete src[0];
+
+
 
    sw4_profile->time_stamp("Save images");   
    if( it >= 0 )

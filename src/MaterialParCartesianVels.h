@@ -34,7 +34,7 @@ public:
 		      std::vector<Sarray>& a_gradlambda);
    void interpolate_pseudohessian(int nmpars, double* phs, int nmpard, double* phm, 
                                   std::vector<Sarray>& phgrid);
-   void smooth_gradient(double* dfs) {};
+   void smooth_gradient(double* dfs, std::vector<Sarray>& a_Rho, std::vector<Sarray>& a_Mu, std::vector<Sarray>& a_Lambda, std::vector<Source*>& a_Sources) {};
    //   void gradient_transformation( std::vector<Sarray>& a_rho,
    //				 std::vector<Sarray>& a_mu,
    //				 std::vector<Sarray>& a_lambda,

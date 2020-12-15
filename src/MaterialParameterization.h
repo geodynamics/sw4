@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <Sarray.h>
+#include <Source.h>
 
 class EW;
 
@@ -18,7 +19,7 @@ public:
    MaterialParameterization( EW* a_ew, char* fname );
    virtual void get_material( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
 			      std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda, 
-               float_sw4 vp_min, float_sw4 vp_max, float_sw4 vs_min, float_sw4 vs_max,int wave_mode)=0;
+               float_sw4 vp_min=-100, float_sw4 vp_max=-100, float_sw4 vs_min=-100, float_sw4 vs_max=-100,int wave_mode=2)=0;
    virtual void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
 				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )=0;
    virtual void get_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
@@ -29,7 +30,7 @@ public:
 			      std::vector<Sarray>& a_lambda,
 			      std::vector<Sarray>& a_gradrho, std::vector<Sarray>& a_gradmu,
 			      std::vector<Sarray>& a_gradlambda)=0;
-   virtual void smooth_gradient(double* dfs)=0;
+   virtual void smooth_gradient(double* dfs, std::vector<Sarray>& a_Rho, std::vector<Sarray>& a_Mu, std::vector<Sarray>& a_Lambda, std::vector<Source*>& a_Sources)=0;
    //   virtual void gradient_transformation( std::vector<Sarray>& a_rho,    std::vector<Sarray>& a_mu,
    //					 std::vector<Sarray>& a_lambda, std::vector<Sarray>& a_gradrho, 
    //					 std::vector<Sarray>& a_gradmu, std::vector<Sarray>& a_gradlambda ){};

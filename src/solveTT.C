@@ -55,18 +55,20 @@ float* timep =(float*)malloc(nmpars/n*sizeof(float));
 float* times =(float*)malloc(nmpars/n*sizeof(float));
 int *inflag =(int*)malloc(nmpars/n*sizeof(int));
 
+
 float_sw4 cpmin, cpmax;
 float_sw4 csmin, csmax;
 
 cpmin=1e20; cpmax=-1e20;
 csmin=1e20; csmax=-1e20;
 
+
 //#pragma omp parallel for
 	 for( size_t i = 0 ; i < nmpars/n ; i++ )
 	 {
-	       cs[i] = xs[n*i+n-2]; 
+	      cs[i] = xs[n*i+n-2]; 
           cp[i] = xs[n*i+n-1];
-
+          
           ss[i] = 1./xs[n*i+n-2];
           ss[i] = ss[i]*ss[i];
           sp[i] = 1./xs[n*i+n-1];
@@ -123,6 +125,10 @@ int ntr = a_TimeSeries.size();
    fd = fopen(file, "w");
    }
    
+
+    float_sw4 win;
+    win = 2*(a_Sources[event]->getFrequency()>0? 1.0/a_Sources[event]->getFrequency() : 1.0);
+
    for(int ig=0; ig<ntr; ig++) {
    //
     ix = (a_TimeSeries[ig]->getX() - mp->getXmin())/mp->getDx()+0.5;
@@ -131,25 +137,27 @@ int ntr = a_TimeSeries.size();
     //std::cout << "trace ig=" << ig+1 << " x=" << a_TimeSeries[ig]->getX() << " y=" << a_TimeSeries[ig]->getY() <<  " tp=" 
     //   << timep[iz*nx*ny+iy*nx+ix] << " ts=" << times[iz*nx*ny+iy*nx+ix] << std::endl;
 
+
+
    // set window 
    switch(wave_mode) {
    case 0:  // P-wave only
-       a_TimeSeries[ig]->set_window(timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+2.5, 
-       timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+2.5);
+       a_TimeSeries[ig]->set_window(timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+win, 
+       timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+win);
 
        if(myrank==0) fprintf(fd, "%d   %d\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
                event, ig+1, a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
-               timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+2.5, 
-               timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+2.5);
+               timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+win, 
+               timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+win);
          break;
    case 1:  // S-wave only
-       a_TimeSeries[ig]->set_window(times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+2.5, 
-       times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+2.5);
+       a_TimeSeries[ig]->set_window(times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+win, 
+       times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+win);
 
        if(myrank==0) fprintf(fd, "%d   %d\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
                event, ig+1, a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
-               times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+2.5, 
-               times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+2.5);
+               times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+win, 
+               times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+win);
          break;
    default:
        a_TimeSeries[ig]->set_window(timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+2.5, 
@@ -157,8 +165,8 @@ int ntr = a_TimeSeries.size();
 
        if(myrank==0) fprintf(fd, "%d   %d\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
                event, ig+1, a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
-               timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+2.5, 
-               times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+2.5);
+               timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+win, 
+               times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+win);
      }
    }  // loop over traces
 
@@ -167,10 +175,12 @@ int ntr = a_TimeSeries.size();
 
    if(timep) free(timep);
    if(times) free(times);
+   if(cp) free(cp);
+   if(cs) free(cs);
    if(sp) free(sp);
    if(ss) free(ss);
    if(inflag) free(inflag);
-
+   
 std::cout << "solveTT completed" << std::endl;
  
 }

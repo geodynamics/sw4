@@ -343,15 +343,6 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 
        for( int i=0; i < ns ; i++ )
 	     xsnew[i] = xs[i] + lambda*ps[i];
-        //S-wave only P +1
-		//float_sw4 min, max;
-
-	    //for( int i=nspar; i< nspar+nmpars/2; i++)    // first half for Vs
-	        //{
-			//	xsnew[2*i] = xs[2*i] + lambda*ps[2*i];  
-
-			//} 
-        
 
       for( int i=0; i < nmpard ; i++ )
 	      xmnew[i] = xm[i] + lambda*pm[i];
@@ -366,6 +357,8 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
       mopt->m_mp->get_material( nmpard, xmnew, nmpars, &xsnew[nspar], rho, mu, la, 
 	    mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode());
       int ret_code = simulation.check_material( rho, mu, la, ok );
+
+	  
       if( !ok )
       {
          if (myRank == 0)
@@ -405,10 +398,6 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 
       for( int i=0; i < ns ; i++ )
 	     xsnew[i] = xs[i] + lambda*ps[i];
-
-        // S-wave only
-	     //for( int i=nspar; i< nspar+nmpars/2; i++)
-	     //     xsnew[2*i] = xs[2*i] + lambda*ps[2*i];
 
       for( int i=0; i < nmpard ; i++ )
 	     xmnew[i] = xm[i] + lambda*pm[i];
@@ -491,10 +480,6 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	    // Take a full step
 	    for( int i=0 ; i < ns ; i++ )
 	       xsnew[i] = xs[i] + ps[i];
-
-		//S-wave only
-		//for( int i=nspar; i< nspar+nmpars/2; i++)
-	         //xsnew[2*i] = xs[2*i] + ps[2*i];
 
 	    for( int i=0 ; i < nmpard ; i++ )
 	       xmnew[i] = xm[i] + pm[i];

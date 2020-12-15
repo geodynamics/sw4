@@ -521,7 +521,7 @@ void MaterialParCartesianVsVp::interpolate_base_parameters( int nmd, double* xmd
 
 
 //-----------------------------------------------------------------------
-void MaterialParCartesianVsVp::smooth_gradient(double* dfs)
+void MaterialParCartesianVsVp::smooth_gradient(double* dfs, std::vector<Sarray>& a_Rho, std::vector<Sarray>& a_Mu, std::vector<Sarray>& a_Lambda, std::vector<Source*>& a_Sources)
 {
    Sarray gmu(0,m_nx+1,0,m_ny+1,0,m_nz+1);
    Sarray glambda(0,m_nx+1,0,m_ny+1,0,m_nz+1);
@@ -529,10 +529,15 @@ void MaterialParCartesianVsVp::smooth_gradient(double* dfs)
    double* gmup=gmu.c_ptr();
    double* glambdap=glambda.c_ptr();
 
-
-   std::cout << "smooth_gradient: m_nx=" << m_nx << " m_ny=" << m_ny << " m_nz=" << m_nz << std::endl;
+   int count=0;
+   float_sw4 cpavg=0.;
+   float_sw4 csavg=0.;
    
-   size_t ind =0;
+   // find dominant wavelength
+   int isz= (a_Sources[0]->getZ0() - m_zmin)/m_hz+0.5;
+   std::cout << "smooth_gradient: sz=" << a_Sources[0]->getZ0() << " isz=" << isz << " m_nx=" << m_nx << " m_ny=" << m_ny << " m_nz=" << m_nz << std::endl;
+   
+   size_t ind=0;
    for( int k=1 ; k <= m_nz ; k++ )
     for( int j=1 ; j <= m_ny ; j++ )
 	 for( int i=1 ; i <= m_nx ; i++ )
@@ -540,13 +545,53 @@ void MaterialParCartesianVsVp::smooth_gradient(double* dfs)
         size_t indm = i+(m_nx+2)*j + (m_nx+2)*(m_ny+2)*k;
 	     gmup[indm] = dfs[2*ind];
 	     glambdap[indm] = dfs[2*ind+1];
-	     ind++;
+        ind++;
 	 }
 
+for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
+   {
+   
+      float_sw4* rhop = a_Rho[g].c_ptr();
+      float_sw4* mup  = a_Mu[g].c_ptr();
+      float_sw4* lap  = a_Lambda[g].c_ptr();
 
+      for(int i=0; i< a_Rho[g].m_npts; i++) {
+           cpavg += sqrt((lap[i]+2*mup[i])/rhop[i]);
+           csavg += sqrt(mup[i]/rhop[i]);
+           count++;
+      }
+      
+   } // for all grids
+
+      cpavg /= count;
+      csavg /= count;
+
+    std::cout << "solveTT cpavg=" <<  cpavg << " count=" << count << std::endl;
+    std::cout << "solveTT csavg=" <<  csavg << " count=" << count << std::endl;
+
+    
+    // find averages from all procs
+    double local[2]={cpavg, csavg};
+    double global[2];
+
+      MPI_Allreduce(local, global, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+
+      cpavg=global[0]/m_ew->no_of_procs();
+      csavg=global[1]/m_ew->no_of_procs();
+   
+      //if( proc_zero() && verbose > 1 )
+   
+   int cp_len = cpavg / (a_Sources[0]->getFrequency()*m_hx) /2 * 2+1;  // make it odd
+   int cs_len = csavg / (a_Sources[0]->getFrequency()*m_hx) /2 * 2+1;
+   
+
+    std::cout << "solveTT  reduced cpavg=" <<  cpavg << " cp_len=" << cp_len <<  std::endl;
+    std::cout << "solveTT  reduced csavg=" <<  csavg << " cs_len=" << cs_len <<  std::endl;
+
+  
    MPI_Barrier(MPI_COMM_WORLD);
-   glambda.gaussian_smooth(31, 5.);
-   gmu.gaussian_smooth(21, 3.);
+   glambda.gaussian_smooth(cp_len, 5.);  // default 31
+   gmu.gaussian_smooth(cs_len, 3.);      // default 21
    MPI_Barrier(MPI_COMM_WORLD);
 
    //glambda.save_to_disk("glambda.say");

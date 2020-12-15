@@ -327,8 +327,9 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       if(AlphaVE[g]!=nullptr) delete[] AlphaVE[g];
       if(AlphaVEp[g]!=nullptr) delete[] AlphaVEp[g];
       if(AlphaVEm[g]!=nullptr) delete[] AlphaVEm[g];
+   } // loop g
 
-   }
+
    for( int s=0 ; s < point_sources.size() ; s++ )
       delete point_sources[s];
 

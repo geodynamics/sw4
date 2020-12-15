@@ -226,10 +226,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       }
       if( save_sides )
       {
-         //Wei add memory release
-      if(Upred_saved_sides[g]!=nullptr) delete Upred_saved_sides[g];
-	   if(Ucorr_saved_sides[g]!=nullptr) delete Ucorr_saved_sides[g];
-
+   
 	 Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt );
 	 Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt );
      //     cout << "sides saved for i=[" << imin << " , " << imax << "] j=[" << jmin << " , " << jmax << "] k=[" << 1 << " , " << kmax << "]"<< endl;
@@ -1216,6 +1213,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 	    delete[] BCForcing[g][side];
       delete[] BCForcing[g];
    }
+
+   std::cout << "BCForcing clear" << std::endl;
+   //BCForcing.clear();
+
    for( int s = 0 ; s < point_sources.size(); s++ )
       delete point_sources[s];
 
@@ -1226,6 +1227,20 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 	    delete[] AlphaVEp[g];
 	    delete[] AlphaVEm[g];
       }
+
+         //std::cout << "Alpha clear" << std::endl;
+   //AlphaVE.clear();
+   //AlphaVEp.clear();
+   // AlphaVEm.clear();   
+
+   //std::cout << "F clear" << std::endl;
+   //F.clear();
+   //Lu.clear();
+   //Uacc.clear();
+   //Up.clear();
+   //Um.clear();
+   //U.clear();
+
 
    MPI_Barrier(MPI_COMM_WORLD);
 
