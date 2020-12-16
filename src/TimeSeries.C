@@ -387,7 +387,6 @@ void TimeSeries::allocateRecordingArrays( int numberOfTimeSteps, float_sw4 start
   if (numberOfTimeSteps > 0)
   {
     //std::cout << "num of time steps=" << numberOfTimeSteps << std::endl;
-    
     mAllocatedSize = numberOfTimeSteps+1;
     
     mLastTimeStep = -1;
@@ -1985,9 +1984,6 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
             misfitsource[0][i] *= iscale;
             misfitsource[1][i] *= iscale;
             misfitsource[2][i] *= iscale;
-          //misfitsource_float[0][i]= (float)misfitsource[0][i];
-          //misfitsource_float[1][i]= (float)misfitsource[1][i];
-          //misfitsource_float[2][i]= (float)misfitsource[2][i];
            if(std::isnan(misfitsource[0][i]) || std::isnan(misfitsource[1][i]) || std::isnan(misfitsource[2][i])) {
                std::cerr << "misfitsource has nan" << " i=" << i << " X=" << misfitsource[0][i] << " Y=" << misfitsource[1][i] 
                 << " Z=" << misfitsource[2][i] << std::endl;
@@ -2410,7 +2406,7 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
 	       retval->mRecordedFloats[q] = new float[mAllocatedSize];
 	    for( int q=0 ; q < m_nComp ; q++ )
 	       for( int i=0 ; i < mAllocatedSize ; i++ )
-		  retval->mRecordedFloats[q][i] = mRecordedFloats[q][i];
+	          retval->mRecordedFloats[q][i] = mRecordedFloats[q][i];
       }
 	 }
 	 else
@@ -3521,7 +3517,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
         }
         
       //for (int i = 0; i < mAllocatedSize; i++) {
-      for (int i = 0; i < sw4npts; i++) {
+      for (int i = 0; i < npts; i++) {
         if(cartesian) {
           mRecordedSol[0][i] = (float_sw4)buf_0[i];
           mRecordedSol[1][i] = (float_sw4)buf_1[i];

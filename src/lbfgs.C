@@ -345,7 +345,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	     xsnew[i] = xs[i] + lambda*ps[i];
 
       for( int i=0; i < nmpard ; i++ )
-	      xmnew[i] = xm[i] + lambda*pm[i];
+	 xmnew[i] = xm[i] + lambda*pm[i];
 
       int ng = simulation.mNumberOfGrids;
       vector<Sarray> rho(ng), mu(ng), la(ng);
@@ -401,6 +401,13 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 
       for( int i=0; i < nmpard ; i++ )
 	     xmnew[i] = xm[i] + lambda*pm[i];
+
+    //if( myRank == 0 ) {  // Wei debugging
+	//  save_array_to_disk(ns, ps, "ps.bin"); // multi-component *ns
+	//  save_array_to_disk(ns, xsnew, "xsnew.bin"); // multi-component *ns
+    //}
+
+	  MPI_Barrier(MPI_COMM_WORLD); // Wei added for debugging
 
     //if( myRank == 0 ) {  // Wei debugging
 	//  save_array_to_disk(ns, ps, "ps.bin"); // multi-component *ns
@@ -483,6 +490,11 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 
 	    for( int i=0 ; i < nmpard ; i++ )
 	       xmnew[i] = xm[i] + pm[i];
+
+  
+    //if( myRank == 0 ) {  // Wei debugging
+	//  save_array_to_disk(ns, xsnew, "xsnew.bin"); // multi-component *ns
+    //}
 
   
     //if( myRank == 0 ) {  // Wei debugging

@@ -602,6 +602,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       for( int m=0 ; m < nmpard ; m++ )
 	      dfm[m] += dfmevent[m];
 
+      
 // 3. Give back memory
       for( unsigned int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
 	        delete diffs[m];
