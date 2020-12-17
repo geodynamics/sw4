@@ -3517,7 +3517,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
         }
         
       //for (int i = 0; i < mAllocatedSize; i++) {
-      for (int i = 0; i < npts; i++) {
+      for (int i = 0; i < sw4npts; i++) {
         if(cartesian) {
           mRecordedSol[0][i] = (float_sw4)buf_0[i];
           mRecordedSol[1][i] = (float_sw4)buf_1[i];
