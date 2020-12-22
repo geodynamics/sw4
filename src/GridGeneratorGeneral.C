@@ -653,7 +653,8 @@ bool GridGeneratorGeneral::inverse_grid_mapping_new(EW* a_ew, float_sw4 x,
         fabs(y - (j - 1) * h) < 1.e-9 * h) {
       ztop = m_curviInterface[grel](i, j, 1);
     } else {
-      if (g == a_ew->mNumberOfGrids - 1) {
+       //      if (g == a_ew->mNumberOfGrids - 1) {
+       if( true ) {
         // Use same interpolation order as for interpolate_topography.
         float_sw4 a6cofi[8], a6cofj[8];
         gettopowgh(q - i, a6cofi);
