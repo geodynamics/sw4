@@ -11,9 +11,9 @@ build/
 
 *.gz
 
-optimize/
+optimize*/
 
-debug/
+debug*/
 
 *.o
 
