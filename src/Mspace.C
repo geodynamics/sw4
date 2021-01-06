@@ -15,7 +15,7 @@ struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0,
                                                          0, 0, 1, 0};
 using namespace std;
 
-void presetGPUID(int mpi_rank) {
+void presetGPUID(int mpi_rank,int local_rank, int local_size) {
 #if defined(ENABLE_GPU_ERROR)
   std::cerr
       << " Compilation error. Both ENABLE_CUDA and ENABLE_HIP are defined\n";
@@ -34,9 +34,16 @@ void presetGPUID(int mpi_rank) {
   int devices_per_node = 4;
   SW4_CheckDeviceError(cudaGetDeviceCount(&devices_per_node));
   global_variables.num_devices = devices_per_node;
+  int device;
   if (devices_per_node > 1) {
-    char *crank = getenv("OMPI_COMM_WORLD_LOCAL_RANK");
-    int device = atoi(crank) % devices_per_node;
+    //char *crank = getenv("SLURM_LOCALID");
+    //int device = atoi(crank) % devices_per_node;
+    if (local_size==devices_per_node){
+    device = local_rank;
+    } else {
+    device = local_rank%devices_per_node;
+    std::cerr<<"WARNING :: There are "<<devices_per_node<<" devices per node and "<<local_size<<" ranks per node\n";
+    }
     global_variables.device = device;
     printf(" presetGPU Called ::  LOCAL RANK %d \n", device);
     SW4_CheckDeviceError(cudaSetDevice(device));
@@ -904,5 +911,6 @@ bool mpi_supports_device_buffers() {
 //     std::cout<<"Running WITHOUT support for device buffer\n";
 #endif
 #endif
+  return true;
   return false;
 }
