@@ -911,6 +911,5 @@ bool mpi_supports_device_buffers() {
 //     std::cout<<"Running WITHOUT support for device buffer\n";
 #endif
 #endif
-  return true;
   return false;
 }

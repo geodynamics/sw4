@@ -92,10 +92,12 @@ int main(int argc, char **argv) {
 
   MPI_Info info;
   MPI_Comm shared_comm;
+  MPI_Info_create(&info);
   MPI_Comm_split_type(MPI_COMM_WORLD,MPI_COMM_TYPE_SHARED,myRank,info,&shared_comm);
   int local_rank=-1,local_size=-1;
   MPI_Comm_rank(shared_comm,&local_rank);
   MPI_Comm_size(shared_comm,&local_size);
+  MPI_Info_free(&info);
 
   presetGPUID(myRank,local_rank,local_size);
 #if defined(SW4_SIGNAL_CHECKPOINT)
