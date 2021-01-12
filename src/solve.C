@@ -1214,9 +1214,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       delete[] BCForcing[g];
    }
 
-   std::cout << "BCForcing clear" << std::endl;
-   //BCForcing.clear();
-
    for( int s = 0 ; s < point_sources.size(); s++ )
       delete point_sources[s];
 

@@ -160,8 +160,8 @@ int ntr = a_TimeSeries.size();
                times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+win);
          break;
    default:
-       a_TimeSeries[ig]->set_window(timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+2.5, 
-       times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+2.5);
+       a_TimeSeries[ig]->set_window(timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+win, 
+       times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+win);
 
        if(myrank==0) fprintf(fd, "%d   %d\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
                event, ig+1, a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),

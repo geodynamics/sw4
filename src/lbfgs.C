@@ -659,6 +659,9 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
       checkMinMax(ns, xs, "xs");
 	  checkMinMax(nmpard, xm, "xm");
     }
+    
+
+
 
    compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		     GlobalObservations, f, dfs, dfm, myRank, mopt, 0 );

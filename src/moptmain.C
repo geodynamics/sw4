@@ -447,7 +447,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 
 // 1. Copy computed time series into diffs[m]
      
-      vector<TimeSeries*> diffs;
+      vector<TimeSeries*> diffs; // station# * npts
 
       for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
       {
@@ -466,7 +466,6 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
             }
             MPI_Barrier(MPI_COMM_WORLD); 
 
-       std::cout << "GlobalTimeSeries[e][0] Nsteps=" <<  GlobalTimeSeries[e][0]->getNsteps() << " hdf5Format=" << diffs[0]->getUseHDF5() << std::endl;
 
 
 // 2. misfit function also updates diffs := this - observed
@@ -489,8 +488,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
                      diffs[m]->setTS0Ptr(diffs[0]);
                    } 
         diffs[m]->writeFile("_adj_l2.h5");
-        //if(diffs[m]->myPoint()) std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
-        //    << " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;
+        if(diffs[m]->myPoint()) std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
+            << " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;
       #endif
         }
 
@@ -500,6 +499,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          {
             for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
             {
+
                f += GlobalTimeSeries[e][m]->misfit2( *GlobalObservations[e][m], diffs[m] );
       #if USE_HDF5
                  // Allocate HDF5 fid for later file write
@@ -512,8 +512,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
                      diffs[m]->setTS0Ptr(diffs[0]);
                    } 
         diffs[m]->writeFile("_adj_cross.h5");
-        //if(diffs[m]->myPoint()) std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
-        //    << " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;
+        if(diffs[m]->myPoint()) std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
+            << " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;
       #endif
          }
       } // end of Mopt
@@ -523,10 +523,13 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       std::cout << "backward+adjoint solve" << " time from t0=" << MPI_Wtime()-t0 << std::endl;
 
       sw4_profile->time_stamp("backward+adjoint solve" );
-
+      
         for( int m = 0 ; m < diffs.size() ; m++ ) {
-         if(diffs[m]->myPoint()) std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
-            << " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;
+         if(diffs[m]->myPoint() && myrank==0) {
+            diffs[m]->getMaxValue(0);
+            //std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
+            //<< " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;
+            }
         }
 
       simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, e );
@@ -1457,6 +1460,13 @@ int main(int argc, char **argv)
 	      for( int m = 0; m < GlobalObservations[e].size(); m++ )
 	      {
 	      //	      simulation.set_utcref( *GlobalObservations[m] );
+
+         	
+    if(myRank==0 && GlobalObservations[e][m]->myPoint()) 
+	     std::cout << "e=" << e << " m=" << m << " GlobalObservations[e][m] Nsteps=" <<  
+		     GlobalObservations[e][m]->getNsteps() << " dt=" << 
+		     GlobalObservations[e][m]->getDt() << std::endl;
+     
 		 GlobalObservations[e][m]->writeFileUSGS("_obs");
 		 if( simulation.m_prefilter_sources && simulation.m_filter_observations )
 		 {
