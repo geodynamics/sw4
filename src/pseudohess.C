@@ -52,9 +52,10 @@ void add_pseudohessian_terms2( int ifirst, int ilast, int jfirst, int jlast,
       // SBP boundary operators
       kstart = nb+1;
       for( int n=kfirstact; n <= nb; n++ )
+
 //#pragma omp parallel for
          for( int m=jfirstact; m <= jlastact; m++ )
-#pragma ivdep
+/* #pragma ivdep */
             for( int l=ifirstact; l <= ilastact; l++ )
             {
                //	 srcla_ = srcpla[s];
@@ -478,7 +479,7 @@ void add_pseudohessian_terms2( int ifirst, int ilast, int jfirst, int jlast,
 //#pragma omp parallel for
    for( int n=kstart; n <= klastact; n++ )
       for( int m=jfirstact; m <= jlastact; m++ )
-#pragma ivdep
+/* #pragma ivdep */
          for( int l=ifirstact; l <= ilastact; l++ )
          {
 

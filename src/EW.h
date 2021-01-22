@@ -576,7 +576,7 @@ void geodyn_up_from_uacc( vector<Sarray>& Up, vector<Sarray>& Uacc,
 void save_geoghost( vector<Sarray>& U );
 void restore_geoghost( vector<Sarray>& U );
 void geodynbcGetSizes( string filename, float_sw4 origin[3], float_sw4 &cubelen,
-		       float_sw4& zcubelen, bool &found_latlon, double& lat, 
+		       float_sw4& zcubelen, float_sw4& hcube, bool &found_latlon, double& lat, 
 		       double& lon, double& az, int& adjust );
 
 void geodynFindFile(char* buffer);

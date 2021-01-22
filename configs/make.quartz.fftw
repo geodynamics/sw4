@@ -1,7 +1,5 @@
   etree = no
   proj = yes
-  fftw = yes
-  hdf5 = yes
   SW4ROOT = /usr/apps/wpp
 # assumes module load intel
 # FC = mpiifort
@@ -9,6 +7,8 @@
   CXX = mpicxx
   MKL_PATH = /usr/tce/packages/mkl/mkl-2019.0/lib
   HDF5ROOT   = ${HDF5}
+
+  fftw = yes
   FFTWHOME = /usr/tce/packages/fftw/fftw-3.3.8-mvapich2-2.3-intel-19.0.3
 
 EXTRA_LINK_FLAGS = -Wl,-rpath=$(FFTWHOME)/lib -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -lifcore
