@@ -32,43 +32,43 @@ void MaterialParameterization::get_nr_of_parameters( int& nms, int& nmd,
 }
 
 //-----------------------------------------------------------------------
-void MaterialParameterization::store_material( vector<Sarray>& a_rho,
-					       vector<Sarray>& a_mu,
-					       vector<Sarray>& a_lambda )
-{
-   for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
-   {
-      m_ew->mRho[g].copy( a_rho[g] );
-      m_ew->mMu[g].copy( a_mu[g] );
-      m_ew->mLambda[g].copy( a_lambda[g] );
-   }
-}
+//void MaterialParameterization::store_material( vector<Sarray>& a_rho,
+//					       vector<Sarray>& a_mu,
+//					       vector<Sarray>& a_lambda )
+//{
+//   for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
+//   {
+//      m_ew->mRho[g].copy( a_rho[g] );
+//      m_ew->mMu[g].copy( a_mu[g] );
+//      m_ew->mLambda[g].copy( a_lambda[g] );
+//   }
+//}
 
 //-----------------------------------------------------------------------
-void MaterialParameterization::constrain_material( int nmd, double* xmd,
-						   int nms, double* xms )
-{
-   VERIFY2( nmd== m_nmd && nms == m_nms, "MP::constrain_material: Error in sizes");
-   int ng = m_ew->mNumberOfGrids;
-   vector<Sarray> rho, mu, lambda;
-   rho.resize(ng);
-   mu.resize(ng);
-   lambda.resize(ng);
-   for( int g=0; g < ng ; g++ )
-   {
-      rho[g].define(m_ew->m_iStart[g],m_ew->m_iEnd[g],m_ew->m_jStart[g],
-		    m_ew->m_jEnd[g], m_ew->m_kStart[g], m_ew->m_kEnd[g] );
-      mu[g].define(m_ew->m_iStart[g],m_ew->m_iEnd[g],m_ew->m_jStart[g],
-		    m_ew->m_jEnd[g], m_ew->m_kStart[g], m_ew->m_kEnd[g] );
-      lambda[g].define(m_ew->m_iStart[g],m_ew->m_iEnd[g],m_ew->m_jStart[g],
-		    m_ew->m_jEnd[g], m_ew->m_kStart[g], m_ew->m_kEnd[g] );
-   }
-   get_material( nmd, xmd, nms, xms, rho, mu, lambda );
-   int info;
-   m_ew->project_material( rho, mu, lambda, info );
-   if( info != 0 )
-      get_parameters( nmd, xmd, nms, xms, rho, mu, lambda );
-}
+//void MaterialParameterization::constrain_material( int nmd, double* xmd,
+//						   int nms, double* xms )
+//{
+//   VERIFY2( nmd== m_nmd && nms == m_nms, "MP::constrain_material: Error in sizes");
+//   int ng = m_ew->mNumberOfGrids;
+//   vector<Sarray> rho, mu, lambda;
+//   rho.resize(ng);
+//   mu.resize(ng);
+//   lambda.resize(ng);
+//   for( int g=0; g < ng ; g++ )
+//   {
+//      rho[g].define(m_ew->m_iStart[g],m_ew->m_iEnd[g],m_ew->m_jStart[g],
+//		    m_ew->m_jEnd[g], m_ew->m_kStart[g], m_ew->m_kEnd[g] );
+//      mu[g].define(m_ew->m_iStart[g],m_ew->m_iEnd[g],m_ew->m_jStart[g],
+//		    m_ew->m_jEnd[g], m_ew->m_kStart[g], m_ew->m_kEnd[g] );
+//      lambda[g].define(m_ew->m_iStart[g],m_ew->m_iEnd[g],m_ew->m_jStart[g],
+//		    m_ew->m_jEnd[g], m_ew->m_kStart[g], m_ew->m_kEnd[g] );
+//   }
+//   get_material( nmd, xmd, nms, xms, rho, mu, lambda );
+//   int info;
+//   m_ew->project_material( rho, mu, lambda, info );
+//   if( info != 0 )
+//      get_parameters( nmd, xmd, nms, xms, rho, mu, lambda );
+//}
 
 //-----------------------------------------------------------------------
 void MaterialParameterization::write_parameters( const char* filename,
@@ -119,6 +119,30 @@ void MaterialParameterization::write_parameters( int nms, double* xms )
 	      << " could not write parameters " << endl;
       close(fd);
    }
+}
+
+//-----------------------------------------------------------------------
+void MaterialParameterization::write_parameters_dist( const char* outfile,
+                                                      int nmd, double* xmd )
+{
+   if( nmd > 0 )
+   {
+      std::stringstream fid;
+      fid << m_myrank << "\0";
+      string fname = m_path + outfile + fid.str(); 
+      int fd=open(fname.c_str(),O_CREAT|O_TRUNC|O_WRONLY,0660);
+      //      int fd=open(m_filename,O_CREAT|O_TRUNC|O_WRONLY,0660);
+      size_t nr=write(fd,&nmd,sizeof(int));
+      if( nr != sizeof(int) )
+	 cout << "Error in MaterialParameterization::write_parameters_dist "
+	      << " could not write size " << endl;
+      nr=write(fd,xmd,nmd*sizeof(double));
+      if( nr != nmd*sizeof(double) )
+	 cout << "Error in MaterialParameterization::write_parameters_dist "
+	      << " could not write parameters " << endl;
+      close(fd);
+   }
+
 }
 
 //-----------------------------------------------------------------------
@@ -178,11 +202,11 @@ void MaterialParameterization::read_parameters( int nms, double* xms )
 }
 
 //-----------------------------------------------------------------------
-void MaterialParameterization::parameters_from_basematerial( int nmd, double* xmd,
-							 int nms, double* xms )
-{
-   get_parameters( nmd, xmd, nms, xms, m_ew->mRho, m_ew->mMu, m_ew->mLambda );
-}
+//void MaterialParameterization::parameters_from_basematerial( int nmd, double* xmd,
+//							 int nms, double* xms )
+//{
+//   get_parameters( nmd, xmd, nms, xms, m_ew->mRho, m_ew->mMu, m_ew->mLambda );
+//}
 
 //-----------------------------------------------------------------------
 void MaterialParameterization::set_scalefactors( int nmpars, double* sfs, 
@@ -205,7 +229,7 @@ void  MaterialParameterization::get_regularizer( int nmd, double* xmd, int nms, 
 		      double* dmfd_reg, double* dmfs_reg )
 {
    mf_reg = 0;
-   if( fabs(regcoeff) < 1e-6 )
+   if( fabs(regcoeff) < 1e-12 )
       return;
 
 // Default, Tikhonov regularizing term:
@@ -239,7 +263,9 @@ void  MaterialParameterization::get_regularizer( int nmd, double* xmd, int nms, 
    {
       double tikhonov=0;
       for (int q=0; q<m_nms; q++)
+      {
 	 tikhonov +=  SQR( (xms[q] - xms0[q])/sfs[q]);
+      }
       mf_reg += tcoff*tikhonov;
 
       double tikhonovd = 0;

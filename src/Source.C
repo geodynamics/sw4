@@ -549,7 +549,7 @@ void Source::correct_Z_level( EW *a_ew )
 
 // does this processor know about topography at this location?
   m_myPoint = success && a_ew->interior_point_in_proc(i, j, g);
-
+  
   if( !a_ew->topographyExists() ) // this is the easy case w/o topography
   {
     m_zTopo = 0.;

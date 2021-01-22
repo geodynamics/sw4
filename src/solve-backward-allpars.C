@@ -138,6 +138,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
          communicate_array( Km[g], g );
       cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
       enforceBC( Km, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
+      //      enforceDirichlet5( Km );
 
       time_measure[2] = MPI_Wtime();
 
@@ -163,6 +164,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
          communicate_array( Km[g], g );
       //      cartesian_bc_forcing( t-mDt, BCForcing );
       enforceBC( Km, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
+      //      enforceDirichlet5( Km );
 
       // U-backward solution, predictor
       evalRHS( U, a_Mu, a_Lambda, Lk, AlphaVE );
@@ -334,7 +336,8 @@ void EW::enforceDirichlet5( vector<Sarray> & a_U )
        for( int j=jfirst ; j <= jlast ; j++ )
 	  for( int i=ifirst ; i <= ilast ; i++ )
 	     a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
-    for( int k=kfirst ; k <= klast ; k++ )
+
+    for( int k=kfirst ; k <= kalast ; k++ )
     {
        for( int j=jfirst ; j <= jafirst-1 ; j++ )
 	  for( int i=ifirst ; i <= ilast ; i++ )

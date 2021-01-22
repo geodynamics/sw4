@@ -45,17 +45,6 @@ void curvilinear4sgwind( int, int, int, int, int, int, int, int, float_sw4*, flo
                          float_sw4*, float_sw4*, float_sw4*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
                          float_sw4*, float_sw4*, float_sw4*, int, char );
 
-void add_pseudohessian_terms1(  int ifirst, int ilast, int jfirst, int jlast, 
-                               int kfirst, int klast,
-                               int ifirstact, int ilastact, int jfirstact, int jlastact, 
-                               int kfirstact, int klastact, 
-                               float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_u,
-                               float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_rho,
-                               float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda,
-                               float_sw4 h, float_sw4 dt, int onesided[6], int varcase,
-                               float_sw4* __restrict__ a_bope, 
-                               float_sw4* __restrict__ a_acof, float_sw4* a_ghcof,
-                               float_sw4* __restrict__ a_ph );
 void add_pseudohessian_terms2(  int ifirst, int ilast, int jfirst, int jlast, 
                                int kfirst, int klast,
                                int ifirstact, int ilastact, int jfirstact, int jlastact, 
@@ -111,6 +100,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 	 AlphaVEm[g] = new Sarray[m_number_mechanisms];
       }
    }
+
    int ifirst, ilast, jfirst, jlast, kfirst, klast;
    for( int g = 0; g <mNumberOfGrids; g++ )
    {
@@ -129,7 +119,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       jlast = m_jEnd[g];
       kfirst = m_kStart[g];
       klast = m_kEnd[g];
-
       F[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       Lu[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       Uacc[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
@@ -4748,6 +4737,6 @@ void EW::addtoPseudoHessian( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarra
    }
    for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids ; g++ )
    {
-      // NYI
+      // curvilinear grids, NYI
    }
 }
