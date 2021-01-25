@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "MaterialParCart.h"
 #include "MaterialParCartesian.h"
 #include "MaterialParCartesianVels.h"
 #include "MaterialParCartesianVp.h"
@@ -211,8 +212,9 @@ void Mopt::processMaterialParCart( char* buffer )
    token = strtok(NULL, " \t");
 
    bool vel = false, vponly=false, vsvp=false, mparcartfile =false;
+   //   bool shared=false;
    int nx=3, ny=3, nz=3, init=0;
-   double ratio=1.732, gamma=1;
+   double ratio=1.732, gamma=1, amp=0.1, omega=2*M_PI;
    char file[256]= " \0"; //shut up memory checker
 
    while (token != NULL)
@@ -269,6 +271,23 @@ void Mopt::processMaterialParCart( char* buffer )
 	    mparcartfile = true;
 	 }
       }
+      else if( startswith("amplitude=",token) )
+      {
+         token += 10;
+         amp = atof(token);
+      }
+      else if( startswith("omega=",token) )
+      {
+         token += 6;
+         omega = atof(token);
+      }
+      //      else if( startswith("shared=",token) )
+      //      {
+      //         token += 7;
+      //         shared = strcmp(token,"1") == 0   ||
+      //                  strcmp(token,"yes") == 0 || 
+      //                  strcmp(token,"on") == 0;
+      //      }
       else
       {
 	 badOption("mparcart", token);
@@ -283,15 +302,26 @@ void Mopt::processMaterialParCart( char* buffer )
    if( m_mp != NULL )
       cout << "Error: more than one material parameterization command" << endl;
 
-   if (vel)
-      m_mp = new MaterialParCartesianVels( m_ew, nx, ny, nz, init, file );
-   else if( vponly )
-      m_mp = new MaterialParCartesianVp( m_ew, nx, ny, nz, init, file, ratio, gamma, true );
+   int varcase=1;
+   if( vel )
+      varcase=2;
    else if( vsvp )
-      m_mp = new MaterialParCartesianVsVp( m_ew, nx, ny, nz, init, file );
-   else
-      m_mp = new MaterialParCartesian( m_ew, nx, ny, nz, init, file );
-
+      varcase=3;
+   else if( vponly )
+      varcase=4;
+   //   if( !shared )
+      m_mp = new MaterialParCart( m_ew, nx, ny, nz, init, varcase, file, amp, omega );
+      //   else
+      //   {
+      //   if (vel)
+      //      m_mp = new MaterialParCartesianVels( m_ew, nx, ny, nz, init, file );
+      //   else if( vponly )
+      //      m_mp = new MaterialParCartesianVp( m_ew, nx, ny, nz, init, file, ratio, gamma, true );
+      //   else if( vsvp )
+      //      m_mp = new MaterialParCartesianVsVp( m_ew, nx, ny, nz, init, file );
+      //   else
+      //      m_mp = new MaterialParCartesian( m_ew, nx, ny, nz, init, file );
+      //   }
    // use for material projection only:
    m_mpcart0 = new MaterialParCartesian( m_ew, nx, ny, nz, 0, "");
 } // end processMaterialParCart
@@ -327,6 +357,8 @@ void Mopt::processMrun( char* buffer )
 	    m_opttest = 6;
 	 else if( strcmp(token,"projectmtrl") == 0 )
 	    m_opttest = 7;
+	 else if( strcmp(token,"testmtrl") == 0 )
+	    m_opttest = 8;
 	 else if( strcmp(token,"minvert+src11") == 0 )
 	 {
 	    m_opttest = 1;

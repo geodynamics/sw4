@@ -162,6 +162,7 @@ public:
    Sarray* create_copy_on_device( EWCuda* cu );
    void define_offsets();
    void transform_coordsystem();
+   void add( Sarray& ar );
 //   void write( char* filename, CartesianProcessGrid* cartcomm, std::vector<float_sw4> pars );
    int m_nc, m_ni, m_nj, m_nk;
 private:

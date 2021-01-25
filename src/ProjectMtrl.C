@@ -518,7 +518,7 @@ int EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
    ok = 1;
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
-      int infogrid;
+      //      int infogrid;
       int ifirst = m_iStart[g];
       int ilast  = m_iEnd[g];
       int jfirst = m_jStart[g];
@@ -558,6 +558,7 @@ int EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
       limits[4]=global[2];
       limits[7]=global[3];
       limits[8]=global[4];
+
       local[0]=limits[1];
       local[1]=limits[3];
       local[2]=limits[5];
@@ -575,13 +576,13 @@ int EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
          cout << limits[2] << " <=    mu    <= " << limits[3] << " (grid " << g << ")" << endl;
          cout << limits[4] << " <=  lambda  <= " << limits[5] << " (grid " << g << ")" << endl;
 
-	 if( limits[0] < 0 )
+	 if( limits[0] <= 0 )
 	    cout << "rho_min = " << limits[0] << " on grid " << g << endl;
-	 if( limits[2] < 0 )
+	 if( limits[2] <= 0 )
 	    cout << "mu_min = " << limits[2] << " on grid " << g << endl;
 	 if( limits[4] < 0 )
 	    cout << "lambda_min = " << limits[4] << " on grid " << g << endl;
-         if( limits[6] < 0 )
+         if( limits[6] <= 0 )
 	    cout << " cfl_max  is imaginary on grid " << g << endl;
          else
 	    cout << " cfl_max = " << sqrt(limits[6]) << " on grid " << g << endl;
