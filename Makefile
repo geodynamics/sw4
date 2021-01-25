@@ -1,8 +1,8 @@
 #-----------------------------------------------------------------------
 # Usage:
-#   Default is: debug=no profile=no prec=double openmp=yes hdf5=no fftw=no
-# make sw4     [debug=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
-# make sw4mopt [debug=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
+#   Default is: debug=no proj=yes profile=no prec=double openmp=yes hdf5=no fftw=no
+# make sw4     [debug=yes/no] [proj=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
+# make sw4mopt [debug=yes/no] [proj=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
 #
 # This Makefile asumes that the following environmental variables have been assigned,
 # see note below.
@@ -60,6 +60,12 @@ else
 # AP (160419) Note that cmake uses -O3 instead of -O for CXX and C
    CXXFLAGS = -O3 -I../src -std=c++11
    CFLAGS   = -O3 
+endif
+
+ifeq ($(proj),no)
+    proj := "no"
+else
+    proj := "yes"
 endif
 
 fullpath := $(shell pwd)
