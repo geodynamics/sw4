@@ -1188,6 +1188,11 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
       if (j >= write_npts) 
         break;
       write_data[j++] = y[i];
+#if defined(BZ_DEBUG) || defined(USE_HDF5_ZERO_SAC_CHECK)
+      if (i > 0 && y[i-1] != 0 && y[i] == 0) {
+        fprintf(stderr, "SACHDF5 possible zero value error, y[%d]=%e, y[%d]=%e\n", i-1, y[i-1], i, y[i]);
+      }
+#endif
     }
   }
 

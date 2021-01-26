@@ -409,6 +409,7 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 // setup communicators for 3D solutions on all grids
   setupMPICommunications();
 
+
 // Make curvilinear grid and compute metric
   for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids ; g++ )
      m_gridGenerator->generate_grid_and_met( this, g, mX[g], mY[g], mZ[g], mJ[g], mMetric[g] );
@@ -429,6 +430,7 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
   //        setup_metric();
   //     }
   //  }
+
 // output grid size info
   if (m_myRank == 0)
   {
@@ -455,6 +457,7 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
   while (!inputFile.eof())
   {
      inputFile.getline(buffer, 256);
+
      if (strlen(buffer) > 0) // empty lines produce this
      {
        if (startswith("#", buffer) || 
@@ -558,6 +561,8 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
          processImage(buffer, false);
        else if (startswith("volimage", buffer))
           processImage3D(buffer);
+       else if (startswith("ssioutput", buffer))
+          processESSI3D(buffer);
        else if (startswith("essioutput", buffer))
           processESSI3D(buffer);
        else if (startswith("boundary_conditions", buffer))
@@ -3901,12 +3906,14 @@ void EW::processImage3D( char* buffer )
 //-----------------------------------------------------------------------
 void EW::processESSI3D( char* buffer )
 {
-   int dumpInterval=-1;
-   string filePrefix="essioutput";
+   int dumpInterval=-1, bufferInterval=1;
+   string filePrefix="ssioutput";
    float_sw4 coordValue;
    float_sw4 coordBox[4];
    const float_sw4 zero=0.0;
    int precision = 8;
+   int compressionMode = 0;
+   double compressionPar;
    
    // Default is whole domain
    coordBox[0] = zero;
@@ -3917,10 +3924,10 @@ void EW::processESSI3D( char* buffer )
    float_sw4 depth = -999.99; // default not specified
 
    char* token = strtok(buffer, " \t");
-   CHECK_INPUT(strcmp("essioutput", token) == 0, "ERROR: Not a essioutput line...: " << token );
+   CHECK_INPUT(strcmp("ssioutput", token) == 0 || strcmp("essioutput", token) == 0, "ERROR: Not a essioutput/ssioutput line...: " << token );
 
    token = strtok(NULL, " \t");
-   string err = "essioutput Error: ";
+   string err = "ssioutput Error: ";
    while (token != NULL)
    {
      // while there are tokens in the string still
@@ -3936,6 +3943,11 @@ void EW::processESSI3D( char* buffer )
       {
           token += 13; // skip dumpInterval=
           dumpInterval = atoi(token);
+      }
+      else if (startswith("bufferInterval=", token))
+      {
+          token += 15; // skip bufferInterval=
+          bufferInterval = atoi(token);
       }
       else if (startswith("xmin=", token))
       {
@@ -3977,16 +3989,82 @@ void EW::processESSI3D( char* buffer )
           token += 10; // skip precision=
           precision = atoi(token);
           if (precision != 4 && precision != 8) 
-              badOption("essioutput precision", token);
+              badOption("ssioutput precision", token);
           if (proc_zero())
-              cout << "\nESSI ouput will use " << precision*8 << "-bit floating point values." << endl;
+            cout << "SSI ouput will use " << precision*8 << "-bit floating point values." << endl;
+      }
+      else if (startswith("zfp-rate=", token))
+      {
+          token += 9;
+          compressionMode = SW4_ZFP_MODE_RATE;
+          compressionPar = atof(token);
+          if (proc_zero())
+            cout << "SSI ouput will use ZFP rate=" << compressionPar << endl;
+      }
+      else if (startswith("zfp-precision=", token))
+      {
+          token += 14;
+          compressionMode = SW4_ZFP_MODE_PRECISION;
+          compressionPar = atof(token);
+          if (proc_zero())
+            cout << "SSI ouput will use ZFP precision=" << compressionPar << endl;
+      }
+      else if (startswith("zfp-accuracy=", token))
+      {
+          token += 13;
+          compressionMode = SW4_ZFP_MODE_ACCURACY;
+          compressionPar = atof(token);
+          if (proc_zero())
+            cout << "SSI ouput will use ZFP accuracy=" << compressionPar << endl;
+      }
+      else if (startswith("zfp-reversible=", token))
+      {
+          token += 15;
+          compressionMode = SW4_ZFP_MODE_REVERSIBLE;
+          if (proc_zero())
+            cout << "SSI ouput will use ZFP reversible mode" << endl;
+      }
+      else if (startswith("zlib=", token))
+      {
+          token += 5;
+          compressionMode = SW4_ZLIB;
+          compressionPar = atof(token);
+          if (proc_zero())
+            cout << "SSI ouput will use ZLIB level=" << (int)compressionPar << endl;
+      }
+      else if (startswith("szip=", token))
+      {
+          token += 5;
+          compressionMode = SW4_SZIP;
+          if (proc_zero())
+            cout << "SSI ouput will use SZIP" << endl;
+      }
+      else if (startswith("sz=", token))
+      {
+          token += 5;
+          compressionMode = SW4_SZ;
+          if (proc_zero())
+            cout << "SSI ouput will use SZ with configuration file [" << getenv("SZ_CONFIG_FILE") << "]" << endl;
       }
       else
       {
-          badOption("essioutput", token);
+          badOption("ssioutput", token);
       }
       token = strtok(NULL, " \t");
    }
+
+#ifndef USE_ZFP
+   if (compressionMode != 0 && proc_zero()) 
+      cout << "WARNING: SW4 is not compiled with ZFP but ZFP command is used " << endl;
+#endif
+
+#ifndef USE_SZ
+   if (compressionMode != 0 && proc_zero()) 
+      cout << "WARNING: SW4 is not compiled with SZ but SZ command is used " << endl;
+#endif
+
+   if (compressionMode != 0 && bufferInterval == 1) 
+     bufferInterval = 100;
 
    // Check the specified min/max values make sense
    for (int d=0; d < 2*2; d+=2)
@@ -3995,7 +4073,7 @@ void EW::processESSI3D( char* buffer )
       {
          char coordName[2] = {'x','y'};
          if (proc_zero())
-           cout << "ERROR: essioutput subdomain " << coordName[d] <<
+           cout << "ERROR: ssioutput subdomain " << coordName[d] <<
               " coordinate max value " << coordBox[d+1] <<
               " is less than min value " << coordBox[d] << endl;
          MPI_Abort(MPI_COMM_WORLD, 1);
@@ -4005,11 +4083,11 @@ void EW::processESSI3D( char* buffer )
    // Use depth if zmin/zmax values are specified
    if ((depth < 0) && proc_zero())
    {
-      cout << "WARNING: essioutput depth not specified or less than zero, setting to zero" << endl;
+      cout << "WARNING: ssioutput depth not specified or less than zero, setting to zero" << endl;
       depth=0;
    }
 
-   ESSI3D* essi3d = new ESSI3D( this, filePrefix, dumpInterval, coordBox, depth, precision);
+   ESSI3D* essi3d = new ESSI3D( this, filePrefix, dumpInterval, bufferInterval, coordBox, depth, precision, compressionMode, compressionPar);
    addESSI3D( essi3d );
 }
 

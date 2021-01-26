@@ -49,7 +49,6 @@
 #include "readhdf5.h"
 
 #ifdef USE_HDF5
-
 #include "hdf5.h"
 
 struct traverse_data_t {
@@ -125,7 +124,11 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
 {
   hid_t grp, dset, attr;
   herr_t status;
+#if H5_VERSION_GE(1,12,0)
+  H5O_info1_t infobuf;
+#else
   H5O_info_t infobuf;
+#endif
   EW *a_ew;
   double data[3];
   double lon, lat, depth, x, y, z;
@@ -138,7 +141,11 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
   a_ew = op_data->ew;
   ASSERT(a_ew != NULL);
 
-  status = H5Oget_info_by_name (loc_id, grp_name, &infobuf, H5P_DEFAULT);
+#if H5_VERSION_GE(1,12,0)
+  status = H5Oget_info_by_name1(loc_id, grp_name, &infobuf, H5P_DEFAULT);
+#else
+  status = H5Oget_info_by_name(loc_id, grp_name, &infobuf, H5P_DEFAULT);
+#endif
   if (infobuf.type == H5O_TYPE_GROUP) {
     /* if (op_data->myRank == 0) */
     /*   printf ("Group: [%s] \n", grp_name); */
@@ -345,7 +352,11 @@ static herr_t traverse_func2 (hid_t loc_id, const char *grp_name, const H5L_info
 {
   hid_t grp, dset, attr;
   herr_t status;
+#if H5_VERSION_GE(1,12,0)
+  H5O_info1_t infobuf;
+#else
   H5O_info_t infobuf;
+#endif
   float data[3];
   int isnsew;
 
@@ -353,7 +364,11 @@ static herr_t traverse_func2 (hid_t loc_id, const char *grp_name, const H5L_info
 
   struct traverse_data2_t *op_data = (struct traverse_data2_t *)operator_data;
 
-  status = H5Oget_info_by_name (loc_id, grp_name, &infobuf, H5P_DEFAULT);
+#if H5_VERSION_GE(1,12,0)
+  status = H5Oget_info_by_name1(loc_id, grp_name, &infobuf, H5P_DEFAULT);
+#else
+  status = H5Oget_info_by_name(loc_id, grp_name, &infobuf, H5P_DEFAULT);
+#endif
   if (infobuf.type == H5O_TYPE_GROUP) {
     /* if (op_data->myRank == 0) */
     /*   printf ("Group: [%s] \n", grp_name); */
