@@ -544,6 +544,12 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    {
       cout.precision(16);  
       cout << " Misfit (objective functional) is f = " << f << endl;
+      /* Output dfm and f to a file when test mode */
+      FILE *fp;
+      fp = fopen("dfm.bin", "w+");
+      fwrite(dfm, sizeof(int), nmpars, fp);
+      fclose(fp);
+      cout << "written dfm to dfm.bin" << f << endl;
    }
 
 // Get gradient by solving the adjoint problem:
