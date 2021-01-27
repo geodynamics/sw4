@@ -1,0 +1,56 @@
+grid h=200 x=13000 y=13000 z=13000 lon=-118.0  lat=37.0  az=90. 
+supergrid gp=15
+
+fileio verbose=1 path=nlcg_output temppath=tmp pfs=1
+
+rfile filename=homo.rfile directory=./
+
+#events
+event path=nlcg_output obspath=data name=shot5
+#event path=nlcg_output obspath=data name=shot1
+#event path=nlcg_output obspath=data name=shot2
+#event path=nlcg_output obspath=data name=shot3
+#event path=nlcg_output obspath=data name=shot4
+
+time t=12.0 utcstart=04/02/2020:00:0:00.000  event=shot5
+#time t=12.0 utcstart=04/02/2020:00:0:00.000  event=shot1
+#time t=12.0 utcstart=04/02/2020:00:0:00.000  event=shot2
+#time t=10.0 utcstart=04/02/2020:00:0:00.000  event=shot3
+#time t=12.0 utcstart=04/02/2020:00:0:00.000  event=shot4
+
+
+observationhdf5 hdf5file=data/obs5.h5 outhdf5file=invshot5.h5 event=shot5
+#observationhdf5 hdf5file=data/obs1.h5 outhdf5file=invshot1.h5 event=shot1
+#observationhdf5 hdf5file=data/obs2.h5 outhdf5file=invshot2.h5 event=shot2
+#observationhdf5 hdf5file=data/obs3.h5 outhdf5file=invshot3.h5 event=shot3
+#observationhdf5 hdf5file=data/obs4.h5 outhdf5file=invshot4.h5 event=shot4
+
+
+source x=10000.   y=6500.  z=8000.  Mzz=1.0 m0=1e15  t0=1.0 type=Ricker freq=1.0 event=shot5
+#source x=2500.    y=6500.  z=8000.  Mzz=1.0 m0=1e15  t0=1.0 type=Ricker freq=1.0 event=shot1
+#source x=4500.    y=6500.  z=8000.  Mzz=1.0 m0=1e15  t0=1.0 type=Ricker freq=1.0 event=shot2
+#source x=6500.    y=6500.  z=8000.  Mzz=1.0 m0=1e15  t0=1.0 type=Ricker freq=1.0 event=shot3
+#source x=8500.    y=6500.  z=8000.  Mzz=1.0 m0=1e15  t0=1.0 type=Ricker freq=1.0 event=shot4
+
+developer cfl=1.2
+
+mparcart nx=97 ny=97 nz=114 init=0  type=vsvp
+#mpallpts type=vsvp
+#97x97x114
+
+mrun task=minvert mcheck=on tsoutput=on savesteps=1500 misfit=l2 pseudohessian=on
+#lbfgs nvectors=35 maxit=5 tolerance=1e-12 linesearch=on ihess0=scale-factors
+#mscalefactors  vs=1333  vp=2000 
+
+nlcg maxit=1 maxsubit=2 tolerance=1e-12 linesearch=on
+
+#mimage mode=rho y=6500 iterInterval=1
+#mimage mode=p   y=6500 iterInterval=1
+#mimage mode=s   y=6500 iterInterval=1
+
+#mimage mode=rho z=3000 iterInterval=1
+#mimage mode=p   z=3000 iterInterval=1
+#mimage mode=s   z=3000 iterInterval=1
+
+
+#sfileoutput file=model_update.sfile 
