@@ -138,10 +138,9 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
         mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks) + " -c " + str(omp_threads)
     elif 'nid' in node_name: # the cori knl nodes are called nid
         if omp_threads<=0: omp_threads=4;
-        if mpi_tasks<=0: mpi_tasks = int(64/omp_threads) # for KNL nodes, use 64 hardware cores per node
+        # if mpi_tasks<=0: mpi_tasks = int(64/omp_threads) # for KNL nodes, use 64 hardware cores per node
         sw_threads = 4*omp_threads # Cori uses hyperthreading by default
-        if mpi_tasks<=0: mpi_tasks = int(32/omp_threads) # for Haswell nodes
-        sw_threads = omp_threads 
+        if mpi_tasks<=0: mpi_tasks = int(4/omp_threads) # for Haswell nodes
         mpirun_cmd="srun --cpu_bind=cores -n " + str(mpi_tasks) + " -c " + str(sw_threads)
     elif 'fourier' in node_name:
         if omp_threads<=0: omp_threads=1;
@@ -193,8 +192,13 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", mpi_tasks=0, omp_th
 
     sw4_base_dir = sep.join(sw4_base_list)
     optimize_dir =  sw4_base_dir + sep + sw4_exe_dir
-    reference_dir = pytest_dir + pytest_dir_name + sep + '/reference'
+    reference_dir = pytest_dir + sep + 'reference'
 
+    if verbose: print('pytest_dir =', pytest_dir)
+    if verbose: print('sw4_base_dir =', sw4_base_dir)
+    if verbose: print('optimize_dir =', optimize_dir)          
+    if verbose: print('reference_dir =', reference_dir)          
+    
     # make sure the directories are there
     if not os.path.isdir(sw4_base_dir):
         print("ERROR: directory", sw4_base_dir, "does not exists")
@@ -205,11 +209,6 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", mpi_tasks=0, omp_th
     if not os.path.isdir(reference_dir):
         print("ERROR: directory", reference_dir, "does not exists")
         return False
-    
-    if verbose: print('pytest_dir =', pytest_dir)
-    if verbose: print('sw4_base_dir =', sw4_base_dir)
-    if verbose: print('optimize_dir =', optimize_dir)          
-    if verbose: print('reference_dir =', reference_dir)          
     
     sw4_exe = optimize_dir + '/sw4mopt'
 
