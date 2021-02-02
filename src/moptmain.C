@@ -815,6 +815,18 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
    vector<Image*> im;
    compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		     GlobalObservations, f, dfs, dfm, myRank, mopt ); //mp, false, false, im );
+   // Compute max-norm of gradient
+   double dfnorm=0;
+   if( nmpard_global > 0 )
+   {
+      double dfnormloc=0;
+      for( int i=0 ; i < nmpard ; i++ )
+         dfnormloc = dfnormloc>fabs(dfm[i])?dfnormloc:fabs(dfm[i]);
+      MPI_Allreduce( &dfnormloc, &dfnorm, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+   }
+   for( int i=0 ; i < ns ; i++ )
+      dfnorm = dfnorm>fabs(dfs[i])?dfnorm:fabs(dfs[i]);
+      
    if( myRank == 0 )
    {
      printf("Unperturbed objective function f=%e\n", f);
@@ -878,12 +890,12 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
       double xmsave;
       if( myRank == 0 )
          cout << "Rank    h     df/dx-adjoint df/dx-d.diff   abs.error     rel.error " <<endl;
-      //      for( size_t indg = 0 ; indg < nmpard_global ; indg++ )
-      for( int jg=32 ; jg <= 95 ; jg++ )
+      for( size_t indg = 0 ; indg < nmpard_global ; indg++ )
+         //      for( int jg=32 ; jg <= 95 ; jg++ )
       {
-         //         ssize_t ind = mopt->m_mp->local_index(indg);
-         int var=0;
-         ssize_t ind = mopt->m_mp->parameter_index(70,jg,10,0,var);
+         ssize_t ind = mopt->m_mp->local_index(indg);
+         //         int var=0;
+         //         ssize_t ind = mopt->m_mp->parameter_index(70,jg,10,0,var);
          //         int var, locvar=-1;
          double x0;
 	 if( ind >=0 )
@@ -932,7 +944,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
              setw(12) << dfan                    << " " << 
              setw(12) << dfnum                   << " " << 
              setw(12) << fabs(dfan-dfnum)        << " " << 
-             setw(12) << fabs((dfan-dfnum)/dfan) << endl;
+             setw(12) << fabs((dfan-dfnum)/dfnorm) << endl;
             //	   cout << "( " << myRank << "), f = " << fp << " h= " << h << " dfan = " << dfan << " dfnum = " << dfnum << " err = " << dfan-dfnum << " relerr= " << (dfan-dfnum)/dfnum << endl;
 	    dftest << ind << " " << fp << " " << h << " " << dfan << " " << dfnum << " " << dfan-dfnum << endl;
 	 }

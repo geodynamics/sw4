@@ -687,6 +687,7 @@ void MaterialParCart::interpolate_parameters( int nmd, double* xmd,
    }
    else 
    {
+//always update=true
       interpolate_to_coarse_vel( a_rho, a_mu, a_lambda, m_rho, m_cs, m_cp );
    }
 
