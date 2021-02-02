@@ -277,6 +277,17 @@ void EW::setup2D_MPICommunications() {
     MPI_Type_commit(&m_send_type_2dx3p[g]);
     MPI_Type_commit(&m_send_type_2dy3p[g]);
   }
+
+#ifdef SW4_STAGED_MPI_BUFFERS
+  void *ptr;
+  if (cudaMalloc(&ptr, global_variables.buffer_size*8)!=cudaSuccess){
+    std::cerr<<"cudaMalloc failed in line 387 of parallelStuff.C\n";
+    abort();
+  } else {
+    std::cout<<"Device buffer of size "<<global_variables.buffer_size*8<<" bytes allocated in 2D\n";
+    global_variables.device_buffer=(float_sw4*)ptr;
+  }
+#endif
 }
 
 // -----------------------------
@@ -443,6 +454,18 @@ void EW::setupMPICommunications() {
   //	 MPI_Send( &dum, 1, MPI_INT, myid+1, tag, m_cartesian_communicator );
   //      fileout.close();
   //   }
+
+
+#ifdef SW4_STAGED_MPI_BUFFERS
+  void *ptr;
+  if (cudaMalloc(&ptr, global_variables.buffer_size*8)!=cudaSuccess){
+    std::cerr<<"cudaMalloc failed in line 387 of parallelStuff.C\n";
+    abort();
+  } else {
+    std::cout<<"Device buffer of size "<<global_variables.buffer_size*8<<" bytes allocated\n";
+    global_variables.device_buffer=(float_sw4*)ptr;
+  }
+#endif
 }
 
 #if defined(ENABLE_GPU)
@@ -884,6 +907,8 @@ void EW::make_type(vector<std::tuple<int, int, int>>& send_type,
   bufs_type[4 * g + 2] = std::make_tuple(tbuf, tbuf + i2 * j2);
   bufs_type[4 * g + 3] =
       std::make_tuple(tbuf + 2 * i2 * j2, tbuf + 3 * i2 * j2);
+
+  global_variables.buffer_size = std::max<size_t>(global_variables.buffer_size,std::max<size_t>(i1*j1,i2*j2));
 }
 void EW::make_type_2d(vector<std::tuple<int, int, int>>& send_type,
                       vector<std::tuple<float_sw4*, float_sw4*>>& bufs_type,
@@ -892,6 +917,9 @@ void EW::make_type_2d(vector<std::tuple<int, int, int>>& send_type,
 
   float_sw4* tbuf = SW4_NEW(Space::Pinned, float_sw4[i1 * j1 * 2]);
   bufs_type[g] = std::make_tuple(tbuf, tbuf + i1 * j1);
+  
+  global_variables.buffer_size = std::max<size_t>(global_variables.buffer_size,i1*j1);
+  
 }
 void EW::communicate_array_async(Sarray& u, int grid) {
   SW4_MARK_FUNCTION;
@@ -1175,8 +1203,34 @@ void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
   // for larger messages, host copy is slower.
   // if (bl*count*8>2048){
 
-#ifndef UNRAJA
 
+#ifdef SW4_STAGED_MPI_BUFFERS
+
+  // Code for the staged option. Local device buffer + copy to pinned host buffer
+  // A single large local buffer is used. Allocated in the 2D and 3D setup routines
+  float_sw4 *lbuf = global_variables.device_buffer;
+#ifndef UNRAJA
+  RAJA::RangeSegment k_range(0, bl);
+  RAJA::RangeSegment i_range(0, count);
+  RAJA::kernel<BUFFER_POL>(RAJA::make_tuple(k_range, i_range),
+                           [=] RAJA_DEVICE(int k, int i) {
+                             lbuf[k + i * bl] = data[i * stride + k];
+                           });
+#else
+  Range<16> k_range(0, bl);
+  Range<16> i_range(0, count);
+  forall2async(i_range, k_range, [=] RAJA_DEVICE(int i, int k) {
+    lbuf[k + i * bl] = data[i * stride + k];
+  });
+#endif
+  if (async)
+    SW4_CheckDeviceError(cudaMemcpyAsync(buf,lbuf,count*bl*8,cudaMemcpyDeviceToHost,0));
+  else
+    SW4_CheckDeviceError(cudaMemcpy(buf,lbuf,count*bl*8,cudaMemcpyDeviceToHost));
+#else
+
+  // Code for PINNED,DEVICE AND MANAGED BUFFERS
+#ifndef UNRAJA
   RAJA::RangeSegment k_range(0, bl);
   RAJA::RangeSegment i_range(0, count);
   RAJA::kernel<BUFFER_POL>(RAJA::make_tuple(k_range, i_range),
@@ -1191,11 +1245,15 @@ void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
   });
 #endif
 
-  // SW4_PEEK;
-  // SYNC_STREAM;
   if (!async) {
     SYNC_STREAM;
   }
+
+#endif 
+
+  // SW4_PEEK;
+  // SYNC_STREAM;
+  
   // } else {
   //   std::cout<<bl*count*8<<"\ bytes n";
   //   for(int i=0;i<count;i++) for(int k=0;k<bl;k++)

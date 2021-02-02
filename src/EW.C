@@ -660,9 +660,13 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
   mpi_buffer_space = Space::Pinned;
   if (!m_myRank)
     std::cout << "Using MPI buffers in pinned memory(COMPILE OPTION)\n";
+#elif defined(SW4_STAGED_MPI_BUFFERS)
+ mpi_buffer_space = Space::Pinned;
+  if (!m_myRank)
+    std::cout << "Using staged MPI buffers (COMPILE OPTION)\n";
 #else
   mpi_buffer_space = Space::Pinned;
-  if (!m_myRank) std::cout << "Using MPI buffersin pinned memory(DEFAULT)\nn";
+  if (!m_myRank) std::cout << "Using MPI buffers in pinned memory(DEFAULT)\nn";
 #endif
 
   m_check_point = new CheckPoint(this);

@@ -12,7 +12,7 @@
 #include "policies.h"
 
 struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0,
-                                                         0, 0, 1, 0};
+                                                         0, 0, 1, 0,0,0,0};
 using namespace std;
 
 void presetGPUID(int mpi_rank,int local_rank, int local_size) {

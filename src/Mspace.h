@@ -84,6 +84,8 @@ struct global_variable_holder_struct {
   int num_devices;
   bool firstCycle;
   int current_step;
+  size_t buffer_size;
+  float_sw4 *device_buffer; 
   std::vector<std::tuple<char *, size_t>> massprefetch;
 };
 
