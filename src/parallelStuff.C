@@ -1283,6 +1283,39 @@ void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
   // std::cout<<"putbuffer_device...";
   // PREFETCHFORCED(buf);
 
+  // The STAGED option
+#ifdef SW4_STAGED_MPI_BUFFERS
+  float_sw4 *lbuf = global_variables.device_buffer;
+  SW4_CheckDeviceError(cudaMemcpyAsync(lbuf,buf,count*bl*8,cudaMemcpyHostToDevice,0));
+#ifndef UNRAJA
+  Range<16> k_range(0, bl);
+  Range<16> i_range(0, count);
+  forall2async(i_range, k_range, [=] RAJA_DEVICE(int i, int k) {
+      data[i * stride + k] = lbuf[k + i * bl];
+                           });
+#else
+  RAJA::RangeSegment k_range(0, bl);
+  RAJA::RangeSegment i_range(0, count);
+  RAJA::kernel<BUFFER_POL>(RAJA::make_tuple(k_range, i_range),
+                           [=] RAJA_DEVICE(int k, int i) {
+                             // RAJA::forall<DEFAULT_LOOP1> (0,count,[=]
+                             // RAJA_DEVICE(int i){
+                             data[i * stride + k] = lbuf[k + i * bl];
+                           });
+#endif
+
+
+  // The PINNED, DEVICE and MANAGED cases
+#else
+
+
+#ifndef UNRAJA
+Range<16> k_range(0, bl);
+  Range<16> i_range(0, count);
+  forall2async(i_range, k_range, [=] RAJA_DEVICE(int i, int k) {
+      data[i * stride + k] = buf[k + i * bl];
+                           });
+#else
   RAJA::RangeSegment k_range(0, bl);
   RAJA::RangeSegment i_range(0, count);
   RAJA::kernel<BUFFER_POL>(RAJA::make_tuple(k_range, i_range),
@@ -1291,6 +1324,10 @@ void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
                              // RAJA_DEVICE(int i){
                              data[i * stride + k] = buf[k + i * bl];
                            });
+#endif
+
+  
+#endif
   // SW4_PEEK;
   // SYNC_STREAM;
   if (!async) {
