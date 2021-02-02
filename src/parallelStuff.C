@@ -280,6 +280,10 @@ void EW::setup2D_MPICommunications() {
 
 #ifdef SW4_STAGED_MPI_BUFFERS
   void *ptr;
+#ifdef SW4_USE_UMPIRE
+  
+  global_variables.device_buffer=SW4_NEW(Space::Managed_temps,float_sw4[global_variables.buffer_size]);
+#else
   if (cudaMalloc(&ptr, global_variables.buffer_size*8)!=cudaSuccess){
     std::cerr<<"cudaMalloc failed in line 387 of parallelStuff.C\n";
     abort();
@@ -287,6 +291,7 @@ void EW::setup2D_MPICommunications() {
     std::cout<<"Device buffer of size "<<global_variables.buffer_size*8<<" bytes allocated in 2D\n";
     global_variables.device_buffer=(float_sw4*)ptr;
   }
+#endif
 #endif
 }
 
@@ -457,6 +462,12 @@ void EW::setupMPICommunications() {
 
 
 #ifdef SW4_STAGED_MPI_BUFFERS
+#ifdef SW4_USE_UMPIRE
+  if (global_variables.device_buffer!=0){
+    ::operator delete[](global_variables.device_buffer, Space::Managed_temps);
+  }
+  global_variables.device_buffer=SW4_NEW(Space::Managed_temps,float_sw4[global_variables.buffer_size]);
+#else
   void *ptr;
   if (cudaMalloc(&ptr, global_variables.buffer_size*8)!=cudaSuccess){
     std::cerr<<"cudaMalloc failed in line 387 of parallelStuff.C\n";
@@ -465,6 +476,7 @@ void EW::setupMPICommunications() {
     std::cout<<"Device buffer of size "<<global_variables.buffer_size*8<<" bytes allocated\n";
     global_variables.device_buffer=(float_sw4*)ptr;
   }
+#endif
 #endif
 }
 

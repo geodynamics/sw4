@@ -772,6 +772,7 @@ EW::~EW() {
   ::operator delete[](ForceVector, Space::Managed);
   ::operator delete[](ForceAddress, Space::Managed);
 
+  ::operator delete[](global_variables.device_buffer, Space::Managed_temps);
 #ifndef SW4_USE_UMPIRE
   // Delete the allocations stored in Sarray::static_map
   for (auto& i : Sarray::static_map) {
