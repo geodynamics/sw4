@@ -933,14 +933,14 @@ void Sarray::copy_kplane(Sarray& u, int k) {
 #define NO_COLLAPSE 1
 #endif
 #if defined(NO_COLLAPSE)
-    Range<16> I(m_ib, m_ie + 1);
-    Range<4> J(m_jb, m_je + 1);
-    Range<1> C(0, m_nc);
+    Range<16> I(0, m_ie + 1-m_ib);
+    Range<4> J(0, m_je + 1-m_jb);
+    Range<4> C(0, m_nc);
     forall3(I, J, C, [=] RAJA_DEVICE(int i, int j, int c) {
 #else
     RAJA::RangeSegment c_range(0, m_nc);
-    RAJA::RangeSegment j_range(m_jb, m_je + 1);
-    RAJA::RangeSegment i_range(m_ib, m_ie + 1);
+    RAJA::RangeSegment j_range(0, m_je-m_jb + 1);
+    RAJA::RangeSegment i_range(0, m_ie-m_ib + 1);
 
     // RAJA::RangeSegment j_range(0,m_je+1-m_jb);
     // RAJA::RangeSegment i_range(0,m_ie+1-m_ib); // This is slower and uses 38
@@ -953,9 +953,9 @@ void Sarray::copy_kplane(Sarray& u, int k) {
       // 	 for( int j=m_jb ; j<=m_je ; j++ )
       // 	    for( int i=m_ib ; i <= m_ie ; i++ )
       // 	    {
-      size_t ind = (i - mib) + mni * (j - mjb) + ind_start;  // mni*mnj*(k-mkb);
+      size_t ind = (i ) + mni * (j ) + ind_start;  // mni*mnj*(k-mkb);
       size_t uind =
-          (i - mib) + mni * (j - mjb) + uind_start;  // mni*mnj*(k-um_kb);
+          (i ) + mni * (j ) + uind_start;  // mni*mnj*(k-um_kb);
 
       // size_t ind = i+ mni*j + ind_start; // mni*mnj*(k-mkb);
       // size_t uind = i + mni*j + uind_start; // mni*mnj*(k-um_kb);
