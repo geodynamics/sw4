@@ -96,7 +96,7 @@ using ICSTRESS_EXEC_POL =
                                      RAJA::statement::Lambda<0>>>>>>>;
 
 using ICSTRESS_EXEC_POL_ASYNC =
-    RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::Tile<
+  RAJA::KernelPolicy<RAJA::statement::CudaKernelFixedAsync<256,RAJA::statement::Tile<
         0, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
         RAJA::statement::Tile<
             1, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_y_loop,

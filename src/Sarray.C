@@ -923,6 +923,7 @@ void Sarray::copy_kplane(Sarray& u, int k) {
     int mkb = m_kb;
     int mni = m_ni;
     int mnj = m_nj;
+    int mnc = m_nc;
     // SW4_MARK_BEGIN("CK_PREF");
     // prefetch();
     // u.prefetch();
@@ -937,6 +938,7 @@ void Sarray::copy_kplane(Sarray& u, int k) {
     Range<4> J(0, m_je + 1-m_jb);
     Range<4> C(0, m_nc);
     forall3(I, J, C, [=] RAJA_DEVICE(int i, int j, int c) {
+    //forall2(I, J, [=] RAJA_DEVICE(int i, int j ) {
 #else
     RAJA::RangeSegment c_range(0, m_nc);
     RAJA::RangeSegment j_range(0, m_je-m_jb + 1);
@@ -959,6 +961,7 @@ void Sarray::copy_kplane(Sarray& u, int k) {
 
       // size_t ind = i+ mni*j + ind_start; // mni*mnj*(k-mkb);
       // size_t uind = i + mni*j + uind_start; // mni*mnj*(k-um_kb);
+      //for (int c=0;c<3;c++)
       lm_data[ind + c * nijk] = um_data[uind + c * unijk];
     });  // SYNC_STREAM;
   } else {
