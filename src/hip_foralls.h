@@ -36,7 +36,8 @@ void forallasync(int start, int end, LoopBody &&body) {
   blocks = ((end - start) % tpb == 0) ? blocks : blocks + 1;
   // printf("Launching the kernel blocks= %d tpb= %d \n",blocks,tpb);
   // forallkernel<<<blocks, tpb>>>(start, end, body);
-  hipLaunchKernelGGL(forallkernel<LoopBody>, blocks, tpb, 0, 0, start, end, body);
+  hipLaunchKernelGGL(forallkernel<LoopBody>, blocks, tpb, 0, 0, start, end,
+                     body);
   // hipDeviceSynchronize();
 }
 
@@ -45,10 +46,11 @@ void forall(int start, int end, LoopBody &&body) {
   int tpb = 1024;
   int blocks = (end - start) / tpb;
   blocks = ((end - start) % tpb == 0) ? blocks : blocks + 1;
-  //printf("Launching the kernel blocks= %d tpb= %d on line %d\n", blocks, tpb,
-     //    N);
+  // printf("Launching the kernel blocks= %d tpb= %d on line %d\n", blocks, tpb,
+  //    N);
   // forallkernel<<<blocks, tpb>>>(start, end, body);
-  hipLaunchKernelGGL(forallkernel<LoopBody>, blocks, tpb, 0, 0, start, end, body);
+  hipLaunchKernelGGL(forallkernel<LoopBody>, blocks, tpb, 0, 0, start, end,
+                     body);
   hipDeviceSynchronize();
 }
 
@@ -71,9 +73,10 @@ void forallB(int start, int end, LoopBody &&body) {
   int tpb = 1024;
   int blocks = 52;
   // blocks=((end-start)%tpb==0)?blocks:blocks+1;
-  //printf("Launching the kernel\n");
+  // printf("Launching the kernel\n");
   // forallkernelB<<<blocks, tpb>>>(start, end, body);
-  hipLaunchKernelGGL(forallkernelB<LoopBody>, blocks, tpb, 0, 0, start, end, body);
+  hipLaunchKernelGGL(forallkernelB<LoopBody>, blocks, tpb, 0, 0, start, end,
+                     body);
   hipDeviceSynchronize();
 }
 
@@ -149,11 +152,12 @@ void forall3(int start0, int end0, int start1, int end1, int start2, int end2,
   int block2 = (end2 - start2) / tpb2;
   block2 = ((end2 - start2) % tpb2 == 0) ? block2 : block2 + 1;
 
-//  std::cout << " BLOCKS " << block0 << " " << block1 << " " << block2 << "\n";
+  //  std::cout << " BLOCKS " << block0 << " " << block1 << " " << block2 <<
+  //  "\n";
   dim3 tpb(tpb0, tpb1, tpb2);
   dim3 blocks(block0, block1, block2);
 
- // printf("Launching the kernel 3d \n");
+  // printf("Launching the kernel 3d \n");
   // forall3kernel<<<blocks, tpb>>>(start0, end0, start1, end1, start2, end2,
   // body);
   hipLaunchKernelGGL(forall3kernel, blocks, tpb, 0, 0, start0, end0, start1,
@@ -416,10 +420,8 @@ void forall3asyncAT(T1 &range3, LoopBody &&body) {
 
 #endif
 
-
 template <int N>
 class Tclass {};
-
 
 template <int N, typename Tag, typename Func>
 __global__ void forall3kernel(Tag t, const int start0, const int N0,
@@ -437,17 +439,20 @@ void forall3async(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
   if (irange.invalid || jrange.invalid || krange.invalid) return;
   dim3 tpb(irange.tpb, jrange.tpb, krange.tpb);
   dim3 blocks(irange.blocks, jrange.blocks, krange.blocks);
-  //std::cout<<"forall launch tpb"<<irange.tpb<<" "<<jrange.tpb<<"  "<<krange.tpb<<"\n"; 
-  //std::cout<<"forall launch blocks"<<irange.blocks<<"  "<<jrange.blocks<<" "<<krange.blocks<<"\n";
-  // forall3kernel<N><<<blocks, tpb>>>(t, irange.start, irange.end, jrange.start,
-  //                                   jrange.end, krange.start, krange.end, body);
-  //std::cout<<hipGetErrorString(hipPeekAtLastError())<<"\n"<<std::flush;
-  //std::cout<<"Launching kernel..."<<std::flush;
-  hipLaunchKernelGGL(forall3kernel<N>, blocks, tpb, 0, 0, t, irange.start, irange.end,
-                     jrange.start, jrange.end, krange.start, krange.end, body);
+  // std::cout<<"forall launch tpb"<<irange.tpb<<" "<<jrange.tpb<<"
+  // "<<krange.tpb<<"\n"; std::cout<<"forall launch blocks"<<irange.blocks<<"
+  // "<<jrange.blocks<<" "<<krange.blocks<<"\n";
+  // forall3kernel<N><<<blocks, tpb>>>(t, irange.start, irange.end,
+  // jrange.start,
+  //                                   jrange.end, krange.start, krange.end,
+  //                                   body);
+  // std::cout<<hipGetErrorString(hipPeekAtLastError())<<"\n"<<std::flush;
+  // std::cout<<"Launching kernel..."<<std::flush;
+  hipLaunchKernelGGL(forall3kernel<N>, blocks, tpb, 0, 0, t, irange.start,
+                     irange.end, jrange.start, jrange.end, krange.start,
+                     krange.end, body);
   hipStreamSynchronize(0);
   ////std::cout<<"Done\n"<<std::flush;
 }
-
 
 #endif  // Guards

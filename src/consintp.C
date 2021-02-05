@@ -319,14 +319,13 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
     if (m_croutines)  // tmp
                       // optimized version for updating odd i and odd j
       oddIoddJinterpJacobiOpt(
-			      rmax1,rmax2,rmax3,
-			      Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), UcNew.c_ptr(),
-          m_Mufs[gf].c_ptr(), m_Mlfs[gf].c_ptr(), m_Morc[gc].c_ptr(),
-          m_Mlrc[gc].c_ptr(), m_Mucs[gc].c_ptr(), m_Mlcs[gc].c_ptr(),
-          m_Morf[gf].c_ptr(), m_Mlrf[gf].c_ptr(), Unextf.c_ptr(),
-          BfRestrict.c_ptr(), Unextc.c_ptr(), Bc.c_ptr(), m_iStart.data(),
-          m_iEnd.data(), m_jStart.data(), m_jEnd.data(), m_kStart.data(),
-          m_kEnd.data(), m_iStartInt.data(), m_iEndInt.data(),
+          rmax1, rmax2, rmax3, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(),
+          UcNew.c_ptr(), m_Mufs[gf].c_ptr(), m_Mlfs[gf].c_ptr(),
+          m_Morc[gc].c_ptr(), m_Mlrc[gc].c_ptr(), m_Mucs[gc].c_ptr(),
+          m_Mlcs[gc].c_ptr(), m_Morf[gf].c_ptr(), m_Mlrf[gf].c_ptr(),
+          Unextf.c_ptr(), BfRestrict.c_ptr(), Unextc.c_ptr(), Bc.c_ptr(),
+          m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(),
+          m_kStart.data(), m_kEnd.data(), m_iStartInt.data(), m_iEndInt.data(),
           m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf, mDt, hf, hc, cof,
           relax, m_sbop, m_ghcof);
     else
@@ -338,8 +337,7 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
                            m_iStartInt.data(), m_iEndInt.data(),
                            m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf,
                            mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
-    
-    
+
     //
     // Enforce continuity of displacements along the interface (for fine ghost
     // points in between coarse points)
@@ -347,14 +345,13 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
     if (m_croutines)  // tmp
                       // optimized version for updating odd i and even j
       oddIevenJinterpJacobiOpt(
-			       rmax4,rmax5,rmax6,
-          Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), m_Morc[gc].c_ptr(),
-          m_Mlrc[gc].c_ptr(), m_Morf[gf].c_ptr(), m_Mlrf[gf].c_ptr(),
-          Unextf.c_ptr(), UnextcInterp.c_ptr(), m_iStart.data(), m_iEnd.data(),
-          m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(),
-          m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(),
-          m_jEndInt.data(), gf, gc, nkf, mDt, hf, hc, cof, relax, m_sbop,
-          m_ghcof);
+          rmax4, rmax5, rmax6, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(),
+          m_Morc[gc].c_ptr(), m_Mlrc[gc].c_ptr(), m_Morf[gf].c_ptr(),
+          m_Mlrf[gf].c_ptr(), Unextf.c_ptr(), UnextcInterp.c_ptr(),
+          m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(),
+          m_kStart.data(), m_kEnd.data(), m_iStartInt.data(), m_iEndInt.data(),
+          m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf, mDt, hf, hc, cof,
+          relax, m_sbop, m_ghcof);
     else
       oddIevenJinterpJacobi(
           rmax, Uf, UfNew, Uc, m_Morc[gc], m_Mlrc[gc], m_Morf[gf], m_Mlrf[gf],
@@ -363,20 +360,16 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
           m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf,
           mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
 
-    
-
-
     if (m_croutines)
       // optimized version for updating even i and odd j
       evenIoddJinterpJacobiOpt(
-			       rmax4,rmax5,rmax6,
-          Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), m_Morc[gc].c_ptr(),
-          m_Mlrc[gc].c_ptr(), m_Morf[gf].c_ptr(), m_Mlrf[gf].c_ptr(),
-          Unextf.c_ptr(), UnextcInterp.c_ptr(), m_iStart.data(), m_iEnd.data(),
-          m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(),
-          m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(),
-          m_jEndInt.data(), gf, gc, nkf, mDt, hf, hc, cof, relax, m_sbop,
-          m_ghcof);
+          rmax4, rmax5, rmax6, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(),
+          m_Morc[gc].c_ptr(), m_Mlrc[gc].c_ptr(), m_Morf[gf].c_ptr(),
+          m_Mlrf[gf].c_ptr(), Unextf.c_ptr(), UnextcInterp.c_ptr(),
+          m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(),
+          m_kStart.data(), m_kEnd.data(), m_iStartInt.data(), m_iEndInt.data(),
+          m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf, mDt, hf, hc, cof,
+          relax, m_sbop, m_ghcof);
     else
       evenIoddJinterpJacobi(
           rmax, Uf, UfNew, Uc, m_Morc[gc], m_Mlrc[gc], m_Morf[gf], m_Mlrf[gf],
@@ -385,19 +378,16 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
           m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf,
           mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
 
-    
-
     if (m_croutines)
       // optimized version for updating even i and even j
       evenIevenJinterpJacobiOpt(
-				rmax4,rmax5,rmax6,
-          Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), m_Morc[gc].c_ptr(),
-          m_Mlrc[gc].c_ptr(), m_Morf[gf].c_ptr(), m_Mlrf[gf].c_ptr(),
-          Unextf.c_ptr(), UnextcInterp.c_ptr(), m_iStart.data(), m_iEnd.data(),
-          m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(),
-          m_iStartInt.data(), m_iEndInt.data(), m_jStartInt.data(),
-          m_jEndInt.data(), gf, gc, nkf, mDt, hf, hc, cof, relax, m_sbop,
-          m_ghcof);
+          rmax4, rmax5, rmax6, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(),
+          m_Morc[gc].c_ptr(), m_Mlrc[gc].c_ptr(), m_Morf[gf].c_ptr(),
+          m_Mlrf[gf].c_ptr(), Unextf.c_ptr(), UnextcInterp.c_ptr(),
+          m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(),
+          m_kStart.data(), m_kEnd.data(), m_iStartInt.data(), m_iEndInt.data(),
+          m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf, mDt, hf, hc, cof,
+          relax, m_sbop, m_ghcof);
     else
       evenIevenJinterpJacobi(
           rmax, Uf, UfNew, Uc, m_Morc[gc], m_Mlrc[gc], m_Morf[gf], m_Mlrf[gf],
@@ -405,7 +395,6 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
           m_jEnd.data(), m_kStart.data(), m_kEnd.data(), m_iStartInt.data(),
           m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf,
           mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
-
 
     rmax[0] = std::max(rmax[0], static_cast<float_sw4>(rmax1.get()));
     rmax[1] = std::max(rmax[1], static_cast<float_sw4>(rmax2.get()));

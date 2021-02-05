@@ -279,17 +279,19 @@ void EW::setup2D_MPICommunications() {
   }
 
 #ifdef SW4_STAGED_MPI_BUFFERS
-  void *ptr;
+  void* ptr;
 #ifdef SW4_USE_UMPIRE
-  
-  global_variables.device_buffer=SW4_NEW(Space::Managed_temps,float_sw4[global_variables.buffer_size]);
+
+  global_variables.device_buffer =
+      SW4_NEW(Space::Managed_temps, float_sw4[global_variables.buffer_size]);
 #else
-  if (cudaMalloc(&ptr, global_variables.buffer_size*8)!=cudaSuccess){
-    std::cerr<<"cudaMalloc failed in line 387 of parallelStuff.C\n";
+  if (cudaMalloc(&ptr, global_variables.buffer_size * 8) != cudaSuccess) {
+    std::cerr << "cudaMalloc failed in line 387 of parallelStuff.C\n";
     abort();
   } else {
-    std::cout<<"Device buffer of size "<<global_variables.buffer_size*8<<" bytes allocated in 2D\n";
-    global_variables.device_buffer=(float_sw4*)ptr;
+    std::cout << "Device buffer of size " << global_variables.buffer_size * 8
+              << " bytes allocated in 2D\n";
+    global_variables.device_buffer = (float_sw4*)ptr;
   }
 #endif
 #endif
@@ -460,21 +462,22 @@ void EW::setupMPICommunications() {
   //      fileout.close();
   //   }
 
-
 #ifdef SW4_STAGED_MPI_BUFFERS
 #ifdef SW4_USE_UMPIRE
-  if (global_variables.device_buffer!=0){
+  if (global_variables.device_buffer != 0) {
     ::operator delete[](global_variables.device_buffer, Space::Managed_temps);
   }
-  global_variables.device_buffer=SW4_NEW(Space::Managed_temps,float_sw4[global_variables.buffer_size]);
+  global_variables.device_buffer =
+      SW4_NEW(Space::Managed_temps, float_sw4[global_variables.buffer_size]);
 #else
-  void *ptr;
-  if (cudaMalloc(&ptr, global_variables.buffer_size*8)!=cudaSuccess){
-    std::cerr<<"cudaMalloc failed in line 387 of parallelStuff.C\n";
+  void* ptr;
+  if (cudaMalloc(&ptr, global_variables.buffer_size * 8) != cudaSuccess) {
+    std::cerr << "cudaMalloc failed in line 387 of parallelStuff.C\n";
     abort();
   } else {
-    std::cout<<"Device buffer of size "<<global_variables.buffer_size*8<<" bytes allocated\n";
-    global_variables.device_buffer=(float_sw4*)ptr;
+    std::cout << "Device buffer of size " << global_variables.buffer_size * 8
+              << " bytes allocated\n";
+    global_variables.device_buffer = (float_sw4*)ptr;
   }
 #endif
 #endif
@@ -920,7 +923,8 @@ void EW::make_type(vector<std::tuple<int, int, int>>& send_type,
   bufs_type[4 * g + 3] =
       std::make_tuple(tbuf + 2 * i2 * j2, tbuf + 3 * i2 * j2);
 
-  global_variables.buffer_size = std::max<size_t>(global_variables.buffer_size,std::max<size_t>(i1*j1,i2*j2));
+  global_variables.buffer_size = std::max<size_t>(
+      global_variables.buffer_size, std::max<size_t>(i1 * j1, i2 * j2));
 }
 void EW::make_type_2d(vector<std::tuple<int, int, int>>& send_type,
                       vector<std::tuple<float_sw4*, float_sw4*>>& bufs_type,
@@ -929,9 +933,9 @@ void EW::make_type_2d(vector<std::tuple<int, int, int>>& send_type,
 
   float_sw4* tbuf = SW4_NEW(Space::Pinned, float_sw4[i1 * j1 * 2]);
   bufs_type[g] = std::make_tuple(tbuf, tbuf + i1 * j1);
-  
-  global_variables.buffer_size = std::max<size_t>(global_variables.buffer_size,i1*j1);
-  
+
+  global_variables.buffer_size =
+      std::max<size_t>(global_variables.buffer_size, i1 * j1);
 }
 void EW::communicate_array_async(Sarray& u, int grid) {
   SW4_MARK_FUNCTION;
@@ -1215,12 +1219,12 @@ void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
   // for larger messages, host copy is slower.
   // if (bl*count*8>2048){
 
-
 #ifdef SW4_STAGED_MPI_BUFFERS
 
-  // Code for the staged option. Local device buffer + copy to pinned host buffer
-  // A single large local buffer is used. Allocated in the 2D and 3D setup routines
-  float_sw4 *lbuf = global_variables.device_buffer;
+  // Code for the staged option. Local device buffer + copy to pinned host
+  // buffer A single large local buffer is used. Allocated in the 2D and 3D
+  // setup routines
+  float_sw4* lbuf = global_variables.device_buffer;
 #ifndef UNRAJA
   RAJA::RangeSegment k_range(0, bl);
   RAJA::RangeSegment i_range(0, count);
@@ -1236,9 +1240,11 @@ void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
   });
 #endif
   if (async)
-    SW4_CheckDeviceError(cudaMemcpyAsync(buf,lbuf,count*bl*8,cudaMemcpyDeviceToHost,0));
+    SW4_CheckDeviceError(
+        cudaMemcpyAsync(buf, lbuf, count * bl * 8, cudaMemcpyDeviceToHost, 0));
   else
-    SW4_CheckDeviceError(cudaMemcpy(buf,lbuf,count*bl*8,cudaMemcpyDeviceToHost));
+    SW4_CheckDeviceError(
+        cudaMemcpy(buf, lbuf, count * bl * 8, cudaMemcpyDeviceToHost));
 #else
 
   // Code for PINNED,DEVICE AND MANAGED BUFFERS
@@ -1261,11 +1267,11 @@ void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
     SYNC_STREAM;
   }
 
-#endif 
+#endif
 
   // SW4_PEEK;
   // SYNC_STREAM;
-  
+
   // } else {
   //   std::cout<<bl*count*8<<"\ bytes n";
   //   for(int i=0;i<count;i++) for(int k=0;k<bl;k++)
@@ -1297,14 +1303,15 @@ void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
 
   // The STAGED option
 #ifdef SW4_STAGED_MPI_BUFFERS
-  float_sw4 *lbuf = global_variables.device_buffer;
-  SW4_CheckDeviceError(cudaMemcpyAsync(lbuf,buf,count*bl*8,cudaMemcpyHostToDevice,0));
+  float_sw4* lbuf = global_variables.device_buffer;
+  SW4_CheckDeviceError(
+      cudaMemcpyAsync(lbuf, buf, count * bl * 8, cudaMemcpyHostToDevice, 0));
 #ifndef UNRAJA
   Range<16> k_range(0, bl);
   Range<16> i_range(0, count);
   forall2async(i_range, k_range, [=] RAJA_DEVICE(int i, int k) {
-      data[i * stride + k] = lbuf[k + i * bl];
-                           });
+    data[i * stride + k] = lbuf[k + i * bl];
+  });
 #else
   RAJA::RangeSegment k_range(0, bl);
   RAJA::RangeSegment i_range(0, count);
@@ -1316,17 +1323,15 @@ void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
                            });
 #endif
 
-
   // The PINNED, DEVICE and MANAGED cases
 #else
 
-
 #ifndef UNRAJA
-Range<16> k_range(0, bl);
+  Range<16> k_range(0, bl);
   Range<16> i_range(0, count);
   forall2async(i_range, k_range, [=] RAJA_DEVICE(int i, int k) {
-      data[i * stride + k] = buf[k + i * bl];
-                           });
+    data[i * stride + k] = buf[k + i * bl];
+  });
 #else
   RAJA::RangeSegment k_range(0, bl);
   RAJA::RangeSegment i_range(0, count);
@@ -1338,7 +1343,6 @@ Range<16> k_range(0, bl);
                            });
 #endif
 
-  
 #endif
   // SW4_PEEK;
   // SYNC_STREAM;

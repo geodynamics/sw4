@@ -1608,8 +1608,8 @@ void EW::computeDT() {
   float_sw4 dtCurv = 1.e18;
   if (topographyExists()) {
     for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
-//     g = mNumberOfGrids-1;
-//         float_sw4 la, mu, la2mu;
+      //     g = mNumberOfGrids-1;
+      //         float_sw4 la, mu, la2mu;
 
 #pragma omp parallel for reduction(min : dtCurv)
       for (int k = m_kStartInt[g]; k <= m_kEndInt[g]; k++)

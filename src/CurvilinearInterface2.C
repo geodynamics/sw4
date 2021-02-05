@@ -532,11 +532,12 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   } else if (m_etest != 0) {
     m_etest->get_ubnd(U_f, m_nghost, sides);
     m_etest->get_ubnd(U_c, m_nghost, sides);
-  } else if( m_psource != 0 ) {
-    m_psource->ubnd( U_f, m_x_f, m_y_f, m_z_f, t, m_ew->mGridSize[m_gf], m_nghost, sides );
-    m_psource->ubnd( U_c, m_x_c, m_y_c, m_z_c, t, m_ew->mGridSize[m_gc], m_nghost, sides );
-  }
-    else {
+  } else if (m_psource != 0) {
+    m_psource->ubnd(U_f, m_x_f, m_y_f, m_z_f, t, m_ew->mGridSize[m_gf],
+                    m_nghost, sides);
+    m_psource->ubnd(U_c, m_x_c, m_y_c, m_z_c, t, m_ew->mGridSize[m_gc],
+                    m_nghost, sides);
+  } else {
     bnd_zero(U_c, m_nghost);
     bnd_zero(U_f, m_nghost);
     if (m_use_attenuation)

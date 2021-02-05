@@ -11,11 +11,11 @@
 #include "caliper.h"
 #include "policies.h"
 
-struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0,
-                                                         0, 0, 1, 0,0,0,0};
+struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0, 0,
+                                                         0, 1, 0, 0, 0, 0};
 using namespace std;
 
-void presetGPUID(int mpi_rank,int local_rank, int local_size) {
+void presetGPUID(int mpi_rank, int local_rank, int local_size) {
 #if defined(ENABLE_GPU_ERROR)
   std::cerr
       << " Compilation error. Both ENABLE_CUDA and ENABLE_HIP are defined\n";
@@ -36,13 +36,15 @@ void presetGPUID(int mpi_rank,int local_rank, int local_size) {
   global_variables.num_devices = devices_per_node;
   int device;
   if (devices_per_node > 1) {
-    //char *crank = getenv("SLURM_LOCALID");
-    //int device = atoi(crank) % devices_per_node;
-    if (local_size==devices_per_node){
-    device = local_rank;
+    // char *crank = getenv("SLURM_LOCALID");
+    // int device = atoi(crank) % devices_per_node;
+    if (local_size == devices_per_node) {
+      device = local_rank;
     } else {
-    device = local_rank%devices_per_node;
-    std::cerr<<"WARNING :: There are "<<devices_per_node<<" devices per node and "<<local_size<<" ranks per node\n";
+      device = local_rank % devices_per_node;
+      std::cerr << "WARNING :: There are " << devices_per_node
+                << " devices per node and " << local_size
+                << " ranks per node\n";
     }
     global_variables.device = device;
     printf(" presetGPU Called ::  LOCAL RANK %d \n", device);
@@ -66,18 +68,18 @@ void presetGPUID(int mpi_rank,int local_rank, int local_size) {
 #ifdef ENABLE_HIP
   int devices_per_node = 4;
   SW4_CheckDeviceError(hipGetDeviceCount(&devices_per_node));
-  printf("NUmber of device is %d\n",devices_per_node);
+  printf("NUmber of device is %d\n", devices_per_node);
   fflush(stdout);
   global_variables.num_devices = devices_per_node;
   if (devices_per_node > 1) {
     char *crank = getenv("SLURM_PROC");
-    printf("Return fro GETENV IS %s\n",crank);
-  fflush(stdout);
+    printf("Return fro GETENV IS %s\n", crank);
+    fflush(stdout);
     int device = atoi(crank) % devices_per_node;
-    device=mpi_rank%devices_per_node;
+    device = mpi_rank % devices_per_node;
     global_variables.device = device;
     printf(" presetGPU Called ::  LOCAL RANK %d \n", device);
-  fflush(stdout);
+    fflush(stdout);
     SW4_CheckDeviceError(hipSetDevice(device));
   }
 #endif  // ENABLE_HIP
@@ -270,7 +272,7 @@ void *operator new(std::size_t size, Space loc) throw() {
     // throw std::bad_alloc();
     abort();
   }
-#else   // NOT ENABLE_GPU
+#else  // NOT ENABLE_GPU
   if ((loc == Space::Managed) || (loc == Space::Device) ||
       (loc == Space::Pinned)) {
     // std::cout<<"Managed location not available yet \n";
@@ -374,7 +376,7 @@ void *operator new[](std::size_t size, Space loc) throw() {
     // throw std::bad_alloc();
   }
 
-#else   // !ENABLE_GPU
+#else  // !ENABLE_GPU
   if ((loc == Space::Managed) || (loc == Space::Device) ||
       (loc == Space::Pinned) || (loc == Space::Managed_temps)) {
     // std::cout<<"Managed location not available yet \n";
