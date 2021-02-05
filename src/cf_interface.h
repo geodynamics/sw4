@@ -54,7 +54,10 @@ void evenIevenJinterpJacobi(float_sw4 rmax[6], Sarray& Uf, Sarray& UfNew,
                             float_sw4 a_ghcof[]);
 
 void evenIevenJinterpJacobiOpt(
-    float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
+RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax1, 
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax2,
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax3,
+    float_sw4* __restrict__ a_uf,
     float_sw4* __restrict__ a_ufnew, float_sw4* __restrict__ a_uc,
     float_sw4* __restrict__ a_morc, float_sw4* __restrict__ a_mlrc,
     float_sw4* __restrict__ a_morf, float_sw4* __restrict__ a_mlrf,
@@ -76,7 +79,10 @@ void oddIoddJinterpJacobi(
     float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[], float_sw4 a_ghcof[]);
 
 void oddIoddJinterpJacobiOpt(
-    float_sw4 rmax[3], float_sw4* __restrict__ a_uf,
+RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax1, 
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax2,
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax3,
+    float_sw4* __restrict__ a_uf,
     float_sw4* __restrict__ a_ufnew, float_sw4* __restrict__ a_uc,
     float_sw4* __restrict__ a_ucnew, float_sw4* __restrict__ a_mufs,
     float_sw4* __restrict__ a_mlfs, float_sw4* __restrict__ a_morc,
@@ -114,7 +120,10 @@ void oddIevenJinterpJacobi(float_sw4 rmax[6], Sarray& Uf, Sarray& UfNew,
                            float_sw4 a_ghcof[]);
 
 void oddIevenJinterpJacobiOpt(
-    float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
+			      RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax1, 
+			      RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax2,
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax3,
+    float_sw4* __restrict__ a_uf,
     float_sw4* __restrict__ a_ufnew, float_sw4* __restrict__ a_uc,
     float_sw4* __restrict__ a_morc, float_sw4* __restrict__ a_mlrc,
     float_sw4* __restrict__ a_morf, float_sw4* __restrict__ a_mlrf,
@@ -162,7 +171,10 @@ void evenIoddJinterpJacobi(float_sw4 rmax[6], Sarray& Uf, Sarray& UfNext,
                            float_sw4 a_ghcof[]);
 
 void evenIoddJinterpJacobiOpt(
-    float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
+RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax1, 
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax2,
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax3,
+    float_sw4* __restrict__ a_uf,
     float_sw4* __restrict__ a_ufnew, float_sw4* __restrict__ a_uc,
     float_sw4* __restrict__ a_morc, float_sw4* __restrict__ a_mlrc,
     float_sw4* __restrict__ a_morf, float_sw4* __restrict__ a_mlrf,

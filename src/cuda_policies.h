@@ -183,11 +183,14 @@ using ODDIODDJ_EXEC_POL1_ASYNC =
 
 using ODDIODDJ_EXEC_POL2_ASYNC = RHS4_EXEC_POL_ASYNC;
 
-using EVENIODDJ_EXEC_POL_ASYNC =
+// Check this
+using EVENIODDJ_EXEC_POL_ASYNC_ORG =
     RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::For<
         1, RAJA::cuda_block_x_loop,
         RAJA::statement::For<0, RAJA::cuda_thread_x_loop,
                              RAJA::statement::Lambda<0>>>>>;
+
+using EVENIODDJ_EXEC_POL_ASYNC = ODDIODDJ_EXEC_POL1_ASYNC;
 
 using EVENIEVENJ_EXEC_POL_ASYNC = EVENIODDJ_EXEC_POL_ASYNC;
 

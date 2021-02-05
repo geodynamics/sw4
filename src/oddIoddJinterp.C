@@ -264,7 +264,10 @@ void oddIoddJinterpJacobi(
 
 // optimized version using macros instead of Sarray indexing
 void oddIoddJinterpJacobiOpt(
-    float_sw4 rmax[3], float_sw4 *__restrict__ a_uf,
+		RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax1, 
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax2,
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax3,	     
+    float_sw4 *__restrict__ a_uf,
     float_sw4 *__restrict__ a_ufnew, float_sw4 *__restrict__ a_uc,
     float_sw4 *__restrict__ a_ucnew, float_sw4 *__restrict__ a_mufs,
     float_sw4 *__restrict__ a_mlfs, float_sw4 *__restrict__ a_morc,
@@ -400,9 +403,9 @@ void oddIoddJinterpJacobiOpt(
   const float_sw4 i1024 = 1.0 / 1024;
 
   // residuals
-  RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax1(0);
-  RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax2(0);
-  RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax3(0);
+  // RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax1(0);
+  // RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax2(0);
+  // RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax3(0);
 
   // RAJA::ReduceMax<RAJA::seq_reduce,float_sw4> rmax1(0);
   // RAJA::ReduceMax<RAJA::seq_reduce,float_sw4> rmax2(0);
@@ -667,9 +670,9 @@ void oddIoddJinterpJacobiOpt(
       });
   // SYNC_STREAM;
   SW4_MARK_END("OddIOddJLOOP 2");
-  rmax[0] = static_cast<float_sw4>(rmax1.get());
-  rmax[1] = static_cast<float_sw4>(rmax2.get());
-  rmax[2] = static_cast<float_sw4>(rmax3.get());
+  // rmax[0] = static_cast<float_sw4>(rmax1.get());
+  // rmax[1] = static_cast<float_sw4>(rmax2.get());
+  // rmax[2] = static_cast<float_sw4>(rmax3.get());
 #undef Unextf
 #undef Mufs
 #undef Mlfs

@@ -4,7 +4,7 @@
 #include "caliper.h"
 #include "sw4.h"
 //--------------------- Jacobi ------------------------
-void evenIevenJinterpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew,
+void evenIevenJinterpJacobi(float_sw4 rmax[6],Sarray &Uf, Sarray &UfNew,
                             Sarray &Uc, Sarray &Morc, Sarray &Mlrc,
                             Sarray &Morf, Sarray &Mlrf, Sarray &Unextf,
                             Sarray &UnextcInterp, int a_iStart[], int a_iEnd[],
@@ -181,7 +181,10 @@ void evenIevenJinterpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew,
 
 // ---------- Optimized version -----------
 void evenIevenJinterpJacobiOpt(
-    float_sw4 rmax[6], float_sw4 *__restrict__ a_uf,
+			       RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax1, 
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax2,
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax3,	     
+    float_sw4 *__restrict__ a_uf,
     float_sw4 *__restrict__ a_ufnew, float_sw4 *__restrict__ a_uc,
     float_sw4 *__restrict__ a_morc, float_sw4 *__restrict__ a_mlrc,
     float_sw4 *__restrict__ a_morf, float_sw4 *__restrict__ a_mlrf,
@@ -282,7 +285,7 @@ void evenIevenJinterpJacobiOpt(
 
   // residuals
   // float_sw4 rmax1=0, rmax2=0, rmax3=0;
-  RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax1(0), rmax2(0), rmax3(0);
+  //RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax1(0), rmax2(0), rmax3(0);
 
   RAJA::TypedRangeStrideSegment<long> j_srange(jfb, jfe + 1, 2);
   RAJA::TypedRangeStrideSegment<long> i_srange(ifb, ife + 1, 2);
@@ -427,9 +430,9 @@ void evenIevenJinterpJacobiOpt(
                                  Uf(c, i, j, nkf + 1) = UfNew(c, i, j, nkf + 1);
                                });  // SYNC_STREAM;
 
-  rmax[3] = std::max(rmax[3], static_cast<float_sw4>(rmax1.get()));
-  rmax[4] = std::max(rmax[4], static_cast<float_sw4>(rmax2.get()));
-  rmax[5] = std::max(rmax[5], static_cast<float_sw4>(rmax3.get()));
+  // rmax[3] = std::max(rmax[3], static_cast<float_sw4>(rmax1.get()));
+  // rmax[4] = std::max(rmax[4], static_cast<float_sw4>(rmax2.get()));
+  // rmax[5] = std::max(rmax[5], static_cast<float_sw4>(rmax3.get()));
 
 #undef Unextf
 #undef UnextcInterp

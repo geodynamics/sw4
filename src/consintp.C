@@ -309,10 +309,18 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
     // for i=2*ic-1 and j=2*jc-1: Enforce continuity of displacements and normal
     // stresses along the interface
 
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax1(0);
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax2(0);
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax3(0);
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax4(0);
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax5(0);
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax6(0);
+
     if (m_croutines)  // tmp
                       // optimized version for updating odd i and odd j
       oddIoddJinterpJacobiOpt(
-          rmax, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), UcNew.c_ptr(),
+			      rmax1,rmax2,rmax3,
+			      Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), UcNew.c_ptr(),
           m_Mufs[gf].c_ptr(), m_Mlfs[gf].c_ptr(), m_Morc[gc].c_ptr(),
           m_Mlrc[gc].c_ptr(), m_Mucs[gc].c_ptr(), m_Mlcs[gc].c_ptr(),
           m_Morf[gf].c_ptr(), m_Mlrf[gf].c_ptr(), Unextf.c_ptr(),
@@ -330,7 +338,8 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
                            m_iStartInt.data(), m_iEndInt.data(),
                            m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf,
                            mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
-
+    
+    
     //
     // Enforce continuity of displacements along the interface (for fine ghost
     // points in between coarse points)
@@ -338,7 +347,8 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
     if (m_croutines)  // tmp
                       // optimized version for updating odd i and even j
       oddIevenJinterpJacobiOpt(
-          rmax, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), m_Morc[gc].c_ptr(),
+			       rmax4,rmax5,rmax6,
+          Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), m_Morc[gc].c_ptr(),
           m_Mlrc[gc].c_ptr(), m_Morf[gf].c_ptr(), m_Mlrf[gf].c_ptr(),
           Unextf.c_ptr(), UnextcInterp.c_ptr(), m_iStart.data(), m_iEnd.data(),
           m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(),
@@ -353,10 +363,14 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
           m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf,
           mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
 
+    
+
+
     if (m_croutines)
       // optimized version for updating even i and odd j
       evenIoddJinterpJacobiOpt(
-          rmax, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), m_Morc[gc].c_ptr(),
+			       rmax4,rmax5,rmax6,
+          Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), m_Morc[gc].c_ptr(),
           m_Mlrc[gc].c_ptr(), m_Morf[gf].c_ptr(), m_Mlrf[gf].c_ptr(),
           Unextf.c_ptr(), UnextcInterp.c_ptr(), m_iStart.data(), m_iEnd.data(),
           m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(),
@@ -371,10 +385,13 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
           m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf,
           mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
 
+    
+
     if (m_croutines)
       // optimized version for updating even i and even j
       evenIevenJinterpJacobiOpt(
-          rmax, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), m_Morc[gc].c_ptr(),
+				rmax4,rmax5,rmax6,
+          Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(), m_Morc[gc].c_ptr(),
           m_Mlrc[gc].c_ptr(), m_Morf[gf].c_ptr(), m_Mlrf[gf].c_ptr(),
           Unextf.c_ptr(), UnextcInterp.c_ptr(), m_iStart.data(), m_iEnd.data(),
           m_jStart.data(), m_jEnd.data(), m_kStart.data(), m_kEnd.data(),
@@ -388,6 +405,15 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
           m_jEnd.data(), m_kStart.data(), m_kEnd.data(), m_iStartInt.data(),
           m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf,
           mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
+
+
+    rmax[0] = std::max(rmax[0], static_cast<float_sw4>(rmax1.get()));
+    rmax[1] = std::max(rmax[1], static_cast<float_sw4>(rmax2.get()));
+    rmax[2] = std::max(rmax[2], static_cast<float_sw4>(rmax3.get()));
+
+    rmax[3] = std::max(rmax[3], static_cast<float_sw4>(rmax4.get()));
+    rmax[4] = std::max(rmax[4], static_cast<float_sw4>(rmax5.get()));
+    rmax[5] = std::max(rmax[5], static_cast<float_sw4>(rmax6.get()));
     SW4_MARK_BEGIN("CONSINTP::COMM_ARRAY2D");
     // std::cout<<"UFF "<<Uf.c_ptr()<<"\n"<<std::flush;
     communicate_array_2d(Uf, gf, nkf + 1);

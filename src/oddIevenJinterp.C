@@ -153,7 +153,10 @@ void oddIevenJinterpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew,
 }  // end oddIevenJinterpJacobi
 
 void oddIevenJinterpJacobiOpt(
-    float_sw4 rmax[6], float_sw4 *__restrict__ a_uf,
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax1, 
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax2,
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax3,
+    float_sw4 *__restrict__ a_uf,
     float_sw4 *__restrict__ a_ufnew, float_sw4 *__restrict__ a_uc,
     float_sw4 *__restrict__ a_morc, float_sw4 *__restrict__ a_mlrc,
     float_sw4 *__restrict__ a_morf, float_sw4 *__restrict__ a_mlrf,
@@ -253,10 +256,10 @@ void oddIevenJinterpJacobiOpt(
   // const float_sw4 i1024 = 1.0/1024;
 
   // residuals
-
-  RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax1(0);
-  RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax2(0);
-  RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax3(0);
+  //  RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rrmax[3]={};
+  //RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax1(0);
+  //RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax2(0);
+  //RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax3(0);
 
   // Lines below are not correct , incorrect stride
   RAJA::RangeSegment j_range(jfb, jfe + 1);
@@ -384,9 +387,9 @@ void oddIevenJinterpJacobiOpt(
   // 		       });
 
   // SYNC_STREAM;
-  rmax[3] = std::max(rmax[3], static_cast<float_sw4>(rmax1.get()));
-  rmax[4] = std::max(rmax[4], static_cast<float_sw4>(rmax2.get()));
-  rmax[5] = std::max(rmax[5], static_cast<float_sw4>(rmax3.get()));
+  //rmax[3] = std::max(rmax[3], static_cast<float_sw4>(rmax1.get()));
+  //rmax[4] = std::max(rmax[4], static_cast<float_sw4>(rmax2.get()));
+  //rmax[5] = std::max(rmax[5], static_cast<float_sw4>(rmax3.get()));
 
   // rmax[3]=rmax1;
   // rmax[4]=rmax2;
