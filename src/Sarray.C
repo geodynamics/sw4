@@ -1556,3 +1556,16 @@ void Sarray::GetAtt(char* file, int line) {
   }
 #endif
 }
+ void mset_to_zero_async(Sarray &S0, Sarray &S1, Sarray &S2, Sarray &S3){
+   float_sw4 *m0 = S0.m_data;
+   float_sw4 *m1 = S1.m_data;
+   float_sw4 *m2 = S2.m_data;
+   float_sw4 *m3 = S3.m_data;
+   size_t zero=0;
+   multiforall<1024>(
+		   zero, S0.m_npts,[=] RAJA_DEVICE(size_t i) { m0[i] = 0; },
+		   zero, S1.m_npts,[=] RAJA_DEVICE(size_t i) { m1[i] = 0; },
+		   zero, S2.m_npts,[=] RAJA_DEVICE(size_t i) { m2[i] = 0; },
+		   zero, S3.m_npts,[=] RAJA_DEVICE(size_t i) { m3[i] = 0; });
+ }
+   

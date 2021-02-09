@@ -517,4 +517,40 @@ void forall3async(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
                                     jrange.end, krange.start, krange.end, body);
 }
 
+
+template <typename T, typename F0, typename F1, typename F2, typename F3>
+  __global__ void multiforallkernel(T start0, T end0, F0 f0,
+			      T start1, T end1, F1 f1,
+			      T start2, T end2, F2 f2,
+			      T start3, T end3, F3 f3
+			      ) {
+  for (T i = start0 + threadIdx.x + blockIdx.x * blockDim.x; i < end0;
+       i += blockDim.x * gridDim.x)
+    f0(i);
+  for (T i = start1 + threadIdx.x + blockIdx.x * blockDim.x; i < end1;
+       i += blockDim.x * gridDim.x)
+    f1(i);
+  for (T i = start2 + threadIdx.x + blockIdx.x * blockDim.x; i < end2;
+       i += blockDim.x * gridDim.x)
+    f2(i);
+  for (T i = start3 + threadIdx.x + blockIdx.x * blockDim.x; i < end3;
+       i += blockDim.x * gridDim.x)
+    f3(i);
+}
+template<int N, typename T, typename LB0, typename LB1, typename LB2, typename LB3>
+  void multiforall(T start0, T end0, LB0 &&body0, 
+		   T start1, T end1, LB1 &&body1,
+		   T start2, T end2, LB2 &&body2, 
+		   T start3, T end3, LB3 &&body3)
+{
+		   
+  int blocks=80 * 2048/N; // WARNING HARDWIRED FOR V100
+  multiforallkernel<<<blocks,N>>>(start0,end0,body0,
+				  start1,end1, body1,
+				  start2,end2, body2,
+				  start3,end3, body3);
+				 
+}
+				 
+  
 #endif  // Guards
