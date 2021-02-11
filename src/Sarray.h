@@ -263,6 +263,7 @@ class Sarray {
   float_sw4* m_data;
   bool prefetched;
   friend void mset_to_zero_async(Sarray &A, Sarray &B, Sarray &C, Sarray &D);
+  friend void vset_to_zero_async(std::vector<Sarray>& v, int N);
   std::ofstream of;
   float_sw4* dev_data;
   inline int min(int i1, int i2) {

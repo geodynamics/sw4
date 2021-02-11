@@ -517,7 +517,7 @@ void forall3async(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
                                     jrange.end, krange.start, krange.end, body);
 }
 
-
+// The multiforall for kernel fusion
 template <typename T, typename F0, typename F1, typename F2, typename F3>
   __global__ void multiforallkernel(T start0, T end0, F0 f0,
 			      T start1, T end1, F1 f1,
@@ -551,6 +551,46 @@ template<int N, typename T, typename LB0, typename LB1, typename LB2, typename L
 				  start3,end3, body3);
 				 
 }
-				 
+
+// Generalized mforall kernel
+template<typename T, typename LoopBody>
+  __device__ void runner(T start, T end, LoopBody f)
+{ 
+  //printf("End %zu \n ",end);
+  for (T i = start + threadIdx.x + blockIdx.x * blockDim.x; i < end;
+       i += blockDim.x * gridDim.x)
+    f(i);
+}
+template<typename T, typename LoopBody, class ...Args>
+  __device__ void runner(T start, T end, LoopBody f, Args... args)
+{ 
+  //printf("End %zu \n ",end);
+  for (T i = start + threadIdx.x + blockIdx.x * blockDim.x; i < end;
+       i += blockDim.x * gridDim.x)
+    f(i);
+  runner(args...);
+}
+template<typename T, typename LoopBody, class ...Args>
+  __global__ void gmforallkernel(T start, T end, LoopBody body, Args... args){
+  runner(start,end,body,args...);
+}
+
+
+
+// Generalized mforall 
+template<int N, typename T, typename LoopBody>
+  void gmforall(T start, T end, LoopBody &&body){
+  std::cout<<"Final call "<<start<<"\n";
+}
+
+template<int N, typename T, typename LoopBody, class ...Args>
+  void gmforall(T start, T end, LoopBody &&body, Args... args){
+  //std::cout<<"Start is "<<start<<"\n";
+  int blocks=80 * 2048/N; // WARNING HARDWIRED FOR V100
+  //multiforallkernel<<<blocks,N>>>(start,end, body, args...);
+  gmforallkernel<<<blocks,N>>>(start,end, body, args...);
+}
+
+
   
 #endif  // Guards
