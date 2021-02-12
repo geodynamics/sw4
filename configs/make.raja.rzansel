@@ -10,7 +10,7 @@ umpire = yes
 fftw = yes
 hdf5= yes
 spill_warns = yes
-caliper= yes
+caliper= no
 
 RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-0.7.0/install_rzansel
 RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-0.7.0/install_rzansel10.1.168
@@ -35,7 +35,7 @@ CALIPER_HOME =/usr/workspace/wsrzd/ramesh/Caliper/Caliper/install
 EXTRA_FORT_FLAGS = -qstrict
 
 # --verbose -res-usage to find resource usage
-MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_PINNED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC}
+MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_STAGED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC} -DUNRAJA=1 
 MORE_LINK_FLAGS = 
 
 ifeq ($(umpire),yes)
