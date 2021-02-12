@@ -556,7 +556,6 @@ template<int N, typename T, typename LB0, typename LB1, typename LB2, typename L
 template<typename T, typename LoopBody>
   __device__ void runner(T start, T end, LoopBody f)
 { 
-  //printf("End %zu \n ",end);
   for (T i = start + threadIdx.x + blockIdx.x * blockDim.x; i < end;
        i += blockDim.x * gridDim.x)
     f(i);
@@ -564,7 +563,6 @@ template<typename T, typename LoopBody>
 template<typename T, typename LoopBody, class ...Args>
   __device__ void runner(T start, T end, LoopBody f, Args... args)
 { 
-  //printf("End %zu \n ",end);
   for (T i = start + threadIdx.x + blockIdx.x * blockDim.x; i < end;
        i += blockDim.x * gridDim.x)
     f(i);
@@ -578,10 +576,6 @@ template<typename T, typename LoopBody, class ...Args>
 
 
 // Generalized mforall 
-template<int N, typename T, typename LoopBody>
-  void gmforall(T start, T end, LoopBody &&body){
-  std::cout<<"Final call "<<start<<"\n";
-}
 
 template<int N, typename T, typename LoopBody, class ...Args>
   void gmforall(T start, T end, LoopBody &&body, Args... args){

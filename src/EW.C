@@ -4660,6 +4660,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
     float_sw4** ForceAddress_copy = ForceAddress;
 
     for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
+    //vset_to_zero_async(a_F,mNumberOfGrids);
     SW4_MARK_BEGIN("FORCE::DEVICE");
 
     RAJA::forall<FORCE_LOOP_ASYNC>(
@@ -4918,6 +4919,7 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
     // #endif
 
     for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
+    //vset_to_zero_async(a_F,mNumberOfGrids);
     SW4_MARK_BEGIN("FORCE_TT::DEVICE");
 
     RAJA::forall<FORCETT_LOOP_ASYNC>(

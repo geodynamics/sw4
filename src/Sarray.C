@@ -1563,22 +1563,22 @@ void Sarray::GetAtt(char* file, int line) {
    float_sw4 *m3 = S3.m_data;
    
    size_t zero=0;
-   // multiforall<1024>(
-   // 		   zero, S0.m_npts,[=] RAJA_DEVICE(size_t i) { m0[i] = 0; },
-   // 		   zero, S1.m_npts,[=] RAJA_DEVICE(size_t i) { m1[i] = 0; },
-   // 		   zero, S2.m_npts,[=] RAJA_DEVICE(size_t i) { m2[i] = 0; },
-   // 		   zero, S3.m_npts,[=] RAJA_DEVICE(size_t i) { m3[i] = 0; });
-   gmforall<1024>(
-		  zero, S0.m_npts,[=] RAJA_DEVICE(size_t i) { 
-		    m0[i] = 0; 
-		  },
-		  zero, S1.m_npts,[=] RAJA_DEVICE(size_t i) { 
-		    m1[i] = 0; 
-		   },
-		  zero, S2.m_npts,[=] RAJA_DEVICE(size_t i) { m2[i] = 0;
-		   },
-		  zero, S3.m_npts,[=] RAJA_DEVICE(size_t i) { m3[i] = 0; 
-		   });
+   multiforall<1024>(
+   		   zero, S0.m_npts,[=] RAJA_DEVICE(size_t i) { m0[i] = 0; },
+   		   zero, S1.m_npts,[=] RAJA_DEVICE(size_t i) { m1[i] = 0; },
+   		   zero, S2.m_npts,[=] RAJA_DEVICE(size_t i) { m2[i] = 0; },
+   		   zero, S3.m_npts,[=] RAJA_DEVICE(size_t i) { m3[i] = 0; });
+   // gmforall<256>(
+   // 		  zero, S0.m_npts,[=] RAJA_DEVICE(size_t i) { 
+   // 		    m0[i] = 0; 
+   // 		  },
+   // 		  zero, S1.m_npts,[=] RAJA_DEVICE(size_t i) { 
+   // 		    m1[i] = 0; 
+   // 		   },
+   // 		  zero, S2.m_npts,[=] RAJA_DEVICE(size_t i) { m2[i] = 0;
+   // 		   },
+   // 		  zero, S3.m_npts,[=] RAJA_DEVICE(size_t i) { m3[i] = 0; 
+   // 		   });
    
  }
  void vset_to_zero_async(std::vector<Sarray>& v, int N){
@@ -1588,6 +1588,13 @@ void Sarray::GetAtt(char* file, int line) {
    size_t zero=0;
 
    switch(N) {
+   case 1:
+     m0 = v[0].m_data;
+
+     gmforall<1024>(
+		    zero, v[0].m_npts,[=] RAJA_DEVICE(size_t i) { m0[i] = 0; });
+     
+     break;
 
    case 2:
      m0 = v[0].m_data;
@@ -1602,7 +1609,7 @@ void Sarray::GetAtt(char* file, int line) {
      m0 = v[0].m_data;
      m1 = v[1].m_data;
      m2 = v[2].m_data;
-     gmforall<1024>(
+     gmforall<256>(
 		    zero, v[0].m_npts,[=] RAJA_DEVICE(size_t i) { m0[i] = 0; },
 		    zero, v[1].m_npts,[=] RAJA_DEVICE(size_t i) { m1[i] = 0; },
 		    zero, v[2].m_npts,[=] RAJA_DEVICE(size_t i) { m2[i] = 0; });
@@ -1614,7 +1621,7 @@ void Sarray::GetAtt(char* file, int line) {
      m1 = v[1].m_data;
      m2 = v[2].m_data;
      m3 = v[3].m_data;
-     gmforall<1024>(
+     gmforall<256>(
 		    zero, v[0].m_npts,[=] RAJA_DEVICE(size_t i) { m0[i] = 0; },
 		    zero, v[1].m_npts,[=] RAJA_DEVICE(size_t i) { m1[i] = 0; },
 		    zero, v[2].m_npts,[=] RAJA_DEVICE(size_t i) { m2[i] = 0; },
@@ -1622,7 +1629,7 @@ void Sarray::GetAtt(char* file, int line) {
      
      break;
    default:
-     std::cerr<<"ERROR:: vset_to_zero_async not implemented for "<<N<<"grids\n";
+     std::cerr<<"ERROR:: vset_to_zero_async not implemented for "<<N<<" grids\n";
      abort();
    }
  }
