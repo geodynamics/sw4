@@ -554,20 +554,21 @@ template<int N, typename T, typename LB0, typename LB1, typename LB2, typename L
 
 // Generalized mforall kernel
 template<typename T, typename LoopBody>
-  __device__ void runner(T start, T end, LoopBody f)
+  __device__ inline void runner(T start, T end, LoopBody f)
 { 
   for (T i = start + threadIdx.x + blockIdx.x * blockDim.x; i < end;
        i += blockDim.x * gridDim.x)
     f(i);
 }
 template<typename T, typename LoopBody, class ...Args>
-  __device__ void runner(T start, T end, LoopBody f, Args... args)
+  __device__ inline void runner(T start, T end, LoopBody f, Args... args)
 { 
   for (T i = start + threadIdx.x + blockIdx.x * blockDim.x; i < end;
        i += blockDim.x * gridDim.x)
     f(i);
   runner(args...);
 }
+
 template<typename T, typename LoopBody, class ...Args>
   __global__ void gmforallkernel(T start, T end, LoopBody body, Args... args){
   runner(start,end,body,args...);

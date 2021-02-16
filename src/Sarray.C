@@ -1581,8 +1581,13 @@ void Sarray::GetAtt(char* file, int line) {
    // 		   });
    
  }
+ int aligned(double*p){
+   for (int i=16;i<=2048;i*=2) if ((long int)p%i!=0) return i/2;
+   return 2048;
+ }
  void vset_to_zero_async(std::vector<Sarray>& v, int N){
-
+   //for(int i=0;i<N;i++)
+   // std::cout<<"SIZES "<<v[i].m_npts<<"\n";
 
    float_sw4 *m0,*m1,*m2,*m3;
    size_t zero=0;
@@ -1591,7 +1596,7 @@ void Sarray::GetAtt(char* file, int line) {
    case 1:
      m0 = v[0].m_data;
 
-     gmforall<1024>(
+     gmforall<512>(
 		    zero, v[0].m_npts,[=] RAJA_DEVICE(size_t i) { m0[i] = 0; });
      
      break;
@@ -1600,7 +1605,7 @@ void Sarray::GetAtt(char* file, int line) {
      m0 = v[0].m_data;
      m1 = v[1].m_data;
 
-     gmforall<1024>(
+     gmforall<512>(
 		    zero, v[0].m_npts,[=] RAJA_DEVICE(size_t i) { m0[i] = 0; },
 		    zero, v[1].m_npts,[=] RAJA_DEVICE(size_t i) { m1[i] = 0; });
      break;
@@ -1609,7 +1614,7 @@ void Sarray::GetAtt(char* file, int line) {
      m0 = v[0].m_data;
      m1 = v[1].m_data;
      m2 = v[2].m_data;
-     gmforall<256>(
+     gmforall<512>(
 		    zero, v[0].m_npts,[=] RAJA_DEVICE(size_t i) { m0[i] = 0; },
 		    zero, v[1].m_npts,[=] RAJA_DEVICE(size_t i) { m1[i] = 0; },
 		    zero, v[2].m_npts,[=] RAJA_DEVICE(size_t i) { m2[i] = 0; });
@@ -1617,11 +1622,13 @@ void Sarray::GetAtt(char* file, int line) {
      break;
      
    case 4:
+     
      m0 = v[0].m_data;
      m1 = v[1].m_data;
      m2 = v[2].m_data;
      m3 = v[3].m_data;
-     gmforall<256>(
+     //std::cout<<"ALIGNMENT "<<aligned(m0)<<" "<<aligned(m1)<<" "<<aligned(m2)<<" "<<aligned(m3)<<"\n"<<std::flush;
+     gmforall<512>(
 		    zero, v[0].m_npts,[=] RAJA_DEVICE(size_t i) { m0[i] = 0; },
 		    zero, v[1].m_npts,[=] RAJA_DEVICE(size_t i) { m1[i] = 0; },
 		    zero, v[2].m_npts,[=] RAJA_DEVICE(size_t i) { m2[i] = 0; },
@@ -1634,5 +1641,5 @@ void Sarray::GetAtt(char* file, int line) {
    }
  }
    
-   
+ 
    

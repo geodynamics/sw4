@@ -1885,8 +1885,8 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     Bc.set_to_zero_async();
 #else
     mset_to_zero_async(Unextf,Bf,Unextc,Bc);
-    SW4_PEEK;
-    SYNC_DEVICE;
+    //SW4_PEEK;
+    //SYNC_DEVICE;
 #endif
     
     // to compute the corrector we need the acceleration in the vicinity of the
