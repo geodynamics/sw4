@@ -1563,22 +1563,22 @@ void Sarray::GetAtt(char* file, int line) {
    float_sw4 *m3 = S3.m_data;
    
    size_t zero=0;
-   multiforall<1024>(
+  multiforall<512>(
    		   zero, S0.m_npts,[=] RAJA_DEVICE(size_t i) { m0[i] = 0; },
    		   zero, S1.m_npts,[=] RAJA_DEVICE(size_t i) { m1[i] = 0; },
    		   zero, S2.m_npts,[=] RAJA_DEVICE(size_t i) { m2[i] = 0; },
    		   zero, S3.m_npts,[=] RAJA_DEVICE(size_t i) { m3[i] = 0; });
-   // gmforall<256>(
-   // 		  zero, S0.m_npts,[=] RAJA_DEVICE(size_t i) { 
-   // 		    m0[i] = 0; 
-   // 		  },
-   // 		  zero, S1.m_npts,[=] RAJA_DEVICE(size_t i) { 
-   // 		    m1[i] = 0; 
-   // 		   },
-   // 		  zero, S2.m_npts,[=] RAJA_DEVICE(size_t i) { m2[i] = 0;
-   // 		   },
-   // 		  zero, S3.m_npts,[=] RAJA_DEVICE(size_t i) { m3[i] = 0; 
-   // 		   });
+    // gmforall<512>(
+    // 		  zero, S0.m_npts,[=] RAJA_DEVICE(size_t i) { 
+    // 		    m0[i] = 0; 
+    // 		  },
+    // 		  zero, S1.m_npts,[=] RAJA_DEVICE(size_t i) { 
+    // 		    m1[i] = 0; 
+    // 		   },
+    // 		  zero, S2.m_npts,[=] RAJA_DEVICE(size_t i) { m2[i] = 0;
+    // 		   },
+    // 		  zero, S3.m_npts,[=] RAJA_DEVICE(size_t i) { m3[i] = 0; 
+    // 		   });
    
  }
  int aligned(double*p){

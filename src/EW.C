@@ -4956,10 +4956,10 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   int* onesided_ptr;
 
   int g, nz;
-
+  vset_to_zero_async(a_Uacc,mNumberOfGrids);
   for (g = 0; g < mNumberOfCartesianGrids; g++) {
-    a_Uacc[g].prefetch();
-    a_Uacc[g].set_to_zero_async();
+    //a_Uacc[g].prefetch();
+    //a_Uacc[g].set_to_zero_async();
     uacc_ptr = a_Uacc[g].c_ptr();
     u_ptr = a_U[g].c_ptr();
     mu_ptr = a_Mu[g].c_ptr();
@@ -5061,7 +5061,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
 #endif
   for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
     // g = mNumberOfGrids - 1;
-    a_Uacc[g].set_to_zero_async();
+    //a_Uacc[g].set_to_zero_async(); // Being done above
     uacc_ptr = a_Uacc[g].c_ptr();
     u_ptr = a_U[g].c_ptr();
     mu_ptr = a_Mu[g].c_ptr();
