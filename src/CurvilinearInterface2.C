@@ -257,7 +257,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
     m_mu_f.insert_intersection(m_ew->mMu[m_gf]);
     m_lambda_c.insert_intersection(m_ew->mLambda[m_gc]);
     m_lambda_f.insert_intersection(m_ew->mLambda[m_gf]);
-
+    SYNC_STREAM;
     int extra_ghost = m_nghost - m_ew->getNumberOfGhostPoints();
     if (extra_ghost > 0) {
       if (m_etest != 0) {
@@ -439,6 +439,7 @@ void CurvilinearInterface2::init_arrays_att() {
         m_muve_f[a].insert_intersection(m_ew->mMuVE[m_gf][a]);
         m_lambdave_f[a].insert_intersection(m_ew->mLambdaVE[m_gf][a]);
       }
+      SYNC_STREAM;
       int extra_ghost = m_nghost - m_ew->getNumberOfGhostPoints();
       if (extra_ghost > 0) {
         if (m_etest != 0) {

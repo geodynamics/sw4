@@ -1370,7 +1370,7 @@ void Sarray::insert_intersection(Sarray& a_U) {
         dst_m_data[ind + totpts * (c - 1)] =
             src_m_data[sind + totptss * (c - 1)];
     });
-    SYNC_STREAM;
+    //SYNC_STREAM;
   } else {
     size_t sind = 0, ind = 0;
     for (int k = wind[4]; k <= wind[5]; k++)

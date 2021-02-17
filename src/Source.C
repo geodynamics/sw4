@@ -3256,6 +3256,7 @@ void Source::get_mr_psources(EW* a_EW, int g, float_sw4 q, float_sw4 r,
     else {
       zg.insert_intersection(a_EW->mZ[g]);
       Jg.insert_intersection(a_EW->mJ[g]);
+      SYNC_STREAM;
     }
     int kll, kul;
     if (gref == g + 1) {
@@ -3273,6 +3274,7 @@ void Source::get_mr_psources(EW* a_EW, int g, float_sw4 q, float_sw4 r,
     else {
       zgref.insert_intersection(a_EW->mZ[gref]);
       Jref.insert_intersection(a_EW->mJ[gref]);
+      SYNC_STREAM;
     }
 
     int nrhs = 1;
@@ -3879,6 +3881,7 @@ void Source::get_cc_psources(EW* a_EW, int g, float_sw4 q, float_sw4 r,
       else {
         zg.insert_intersection(a_EW->mZ[g]);
         Jg.insert_intersection(a_EW->mJ[g]);
+	SYNC_STREAM;
       }
       int kll = 1;
       int kul = 5;
@@ -3914,6 +3917,7 @@ void Source::get_cc_psources(EW* a_EW, int g, float_sw4 q, float_sw4 r,
       else {
         zgref.insert_intersection(a_EW->mZ[gref]);
         Jgref.insert_intersection(a_EW->mJ[gref]);
+	SYNC_STREAM;
       }
     }
 
