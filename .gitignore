@@ -9,7 +9,7 @@ build/
 
 *.toc
 
-*.synctex.gz
+*.gz
 
 optimize/
 

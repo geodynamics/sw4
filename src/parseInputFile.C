@@ -896,16 +896,13 @@ void EW::processGrid(char* buffer) {
   if (m_geodynbc_found) {
     // Set SW4 grid spacing based on Geodyn cube data
     // SRF: setting h from whi file stepsize is problematic for mesh refinement
-    // since grid[n] h is not necessarily grid[0] h, which is where geodynbc is set.
-    // Fix will be to have geodynbcGetSizes return hcube so that origin can be set,
-    // but not to set initial h. Which is already correctly set from grid.
 
     float_sw4 origin[3] = {0, 0, 0};
     double ibclat, ibclon, ibcaz;
 
     bool found_latlon;
     int adjust;
-    geodynbcGetSizes(m_geodynbc_filename, origin, cubelen, zcubelen, hcube
+    geodynbcGetSizes(m_geodynbc_filename, origin, cubelen, zcubelen, hcube,
                      found_latlon, ibclat, ibclon, ibcaz, adjust);
     // Use approximate h
     /*
