@@ -19,3 +19,5 @@ debug*/
 
 *.make
 
+configs/make.inc
+
