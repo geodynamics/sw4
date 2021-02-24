@@ -1086,9 +1086,9 @@ class EW {
                   int kb, int ke, int nk, int wind[6], float_sw4 zmin,
                   float_sw4 h, int kx[3], int ky[3], int kz[3],
                   float_sw4 mom[3]);
-void testsrcc_ci( float_sw4* __restrict__ f, int ib, int ie, int jb, int je, 
-                  int kb, int ke, int nk, int g, int wind[6], 
-                  int kx[3], int ky[3], int kz[3], float_sw4 mom[3] );
+  void testsrcc_ci(float_sw4* __restrict__ f, int ib, int ie, int jb, int je,
+                   int kb, int ke, int nk, int g, int wind[6], int kx[3],
+                   int ky[3], int kz[3], float_sw4 mom[3]);
   void tw_aniso_force_ci(int ifirst, int ilast, int jfirst, int jlast,
                          int kfirst, int klast, float_sw4* fo, float_sw4 t,
                          float_sw4 om, float_sw4 cv, float_sw4 ph,

@@ -4,8 +4,8 @@
 #include <vector>
 
 #include "TestEcons.h"
-#include "TestTwilight.h"
 #include "TestPointSource.h"
+#include "TestTwilight.h"
 #ifdef USE_MAGMA
 #include "magma_dbatched.h"
 #include "magma_v2.h"

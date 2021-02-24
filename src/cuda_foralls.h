@@ -171,23 +171,28 @@ void forall3async(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
   // std::cout<<"forall launch tpb"<<irange.tpb<<" "<<jrange.tpb<<"
   // "<<krange.tpb<<"\n"; std::cout<<"forall launch blocks"<<irange.blocks<<"
   // "<<jrange.blocks<<" "<<krange.blocks<<"\n";
+  static int firstcall = 0;
+  if (!firstcall) {
+    firstcall = 1;
+    int minGridSize, maxBlockSize;
+    if (cudaOccupancyMaxPotentialBlockSize(&minGridSize, &maxBlockSize,
+                                           forall3kernel<LoopBody>, 0,
+                                           0) != cudaSuccess) {
+      std::cerr << "cudaOccupancyMaxPotentialBlockSize Failed\n";
+      abort();
+    } else {
+      // std::cerr<<"Min grid size "<<minGridSize<<" maxblock
+      // size"<<maxBlockSize<<" Actual grid =
+      // "<<irange.blocks*jrange.blocks*krange.blocks<<"\n";
+    }
+    if ((irange.tpb * jrange.tpb * krange.tpb) > maxBlockSize) {
+      std::cerr << " Block size too large in forall3async"
+                << (irange.tpb * jrange.tpb * krange.tpb) << " > "
+                << maxBlockSize << "n" << std::flush;
+      abort();
+    }
+  }
 
-  int minGridSize, maxBlockSize;
-  if (cudaOccupancyMaxPotentialBlockSize(&minGridSize, &maxBlockSize,
-                                         forall3kernel<LoopBody>, 0,
-                                         0) != cudaSuccess) {
-    std::cerr << "cudaOccupancyMaxPotentialBlockSize Failed\n";
-    abort();
-  } else {
-    // std::cerr<<"Min grid size "<<minGridSize<<" maxblock size
-    // "<<maxBlockSize<<"\n";
-  }
-  if ((irange.tpb * jrange.tpb * krange.tpb) > maxBlockSize) {
-    std::cerr << " Block size too large in forall3async"
-              << (irange.tpb * jrange.tpb * krange.tpb) << " > " << maxBlockSize
-              << "n" << std::flush;
-    abort();
-  }
   forall3kernel<<<blocks, tpb>>>(irange.start, irange.end, jrange.start,
                                  jrange.end, krange.start, krange.end, body);
 }

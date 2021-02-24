@@ -54,16 +54,18 @@ void evenIevenJinterpJacobi(float_sw4 rmax[6], Sarray& Uf, Sarray& UfNew,
                             float_sw4 a_ghcof[]);
 
 void evenIevenJinterpJacobiOpt(
-    float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
-    float_sw4* __restrict__ a_ufnew, float_sw4* __restrict__ a_uc,
-    float_sw4* __restrict__ a_morc, float_sw4* __restrict__ a_mlrc,
-    float_sw4* __restrict__ a_morf, float_sw4* __restrict__ a_mlrf,
-    float_sw4* __restrict__ a_unextf, float_sw4* __restrict__ a_uncint,
-    int a_iStart[], int a_iEnd[], int a_jStart[], int a_jEnd[], int a_kStart[],
-    int a_kEnd[], int a_iStartInt[], int a_iEndInt[], int a_jStartInt[],
-    int a_jEndInt[], int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf,
-    float_sw4 hc, float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[],
-    float_sw4 a_ghcof[]);
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4>& rmax1,
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4>& rmax2,
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4>& rmax3,
+    float_sw4* __restrict__ a_uf, float_sw4* __restrict__ a_ufnew,
+    float_sw4* __restrict__ a_uc, float_sw4* __restrict__ a_morc,
+    float_sw4* __restrict__ a_mlrc, float_sw4* __restrict__ a_morf,
+    float_sw4* __restrict__ a_mlrf, float_sw4* __restrict__ a_unextf,
+    float_sw4* __restrict__ a_uncint, int a_iStart[], int a_iEnd[],
+    int a_jStart[], int a_jEnd[], int a_kStart[], int a_kEnd[],
+    int a_iStartInt[], int a_iEndInt[], int a_jStartInt[], int a_jEndInt[],
+    int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc,
+    float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[], float_sw4 a_ghcof[]);
 
 void oddIoddJinterpJacobi(
     float_sw4 rmax[3], Sarray& Uf, Sarray& UfNew, Sarray& Uc, Sarray& UcNew,
@@ -76,19 +78,22 @@ void oddIoddJinterpJacobi(
     float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[], float_sw4 a_ghcof[]);
 
 void oddIoddJinterpJacobiOpt(
-    float_sw4 rmax[3], float_sw4* __restrict__ a_uf,
-    float_sw4* __restrict__ a_ufnew, float_sw4* __restrict__ a_uc,
-    float_sw4* __restrict__ a_ucnew, float_sw4* __restrict__ a_mufs,
-    float_sw4* __restrict__ a_mlfs, float_sw4* __restrict__ a_morc,
-    float_sw4* __restrict__ a_mlrc, float_sw4* __restrict__ a_mucs,
-    float_sw4* __restrict__ a_mlcs, float_sw4* __restrict__ a_morf,
-    float_sw4* __restrict__ a_mlrf, float_sw4* __restrict__ a_unextf,
-    float_sw4* __restrict__ a_bfr, float_sw4* __restrict__ a_unextc,
-    float_sw4* __restrict__ a_bc, int a_iStart[], int a_iEnd[], int a_jStart[],
-    int a_jEnd[], int a_kStart[], int a_kEnd[], int a_iStartInt[],
-    int a_iEndInt[], int a_jStartInt[], int a_jEndInt[], int gf, int gc,
-    int nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc, float_sw4 cof,
-    float_sw4 relax, float_sw4 a_sbop[], float_sw4 a_ghcof[]);
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4>& rmax1,
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4>& rmax2,
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4>& rmax3,
+    float_sw4* __restrict__ a_uf, float_sw4* __restrict__ a_ufnew,
+    float_sw4* __restrict__ a_uc, float_sw4* __restrict__ a_ucnew,
+    float_sw4* __restrict__ a_mufs, float_sw4* __restrict__ a_mlfs,
+    float_sw4* __restrict__ a_morc, float_sw4* __restrict__ a_mlrc,
+    float_sw4* __restrict__ a_mucs, float_sw4* __restrict__ a_mlcs,
+    float_sw4* __restrict__ a_morf, float_sw4* __restrict__ a_mlrf,
+    float_sw4* __restrict__ a_unextf, float_sw4* __restrict__ a_bfr,
+    float_sw4* __restrict__ a_unextc, float_sw4* __restrict__ a_bc,
+    int a_iStart[], int a_iEnd[], int a_jStart[], int a_jEnd[], int a_kStart[],
+    int a_kEnd[], int a_iStartInt[], int a_iEndInt[], int a_jStartInt[],
+    int a_jEndInt[], int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf,
+    float_sw4 hc, float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[],
+    float_sw4 a_ghcof[]);
 
 void evenIevenJinterp(float_sw4 rmax[6], Sarray& Uf, Sarray& Muf,
                       Sarray& Lambdaf, Sarray& Rhof, Sarray& Uc, Sarray& Muc,
@@ -114,11 +119,14 @@ void oddIevenJinterpJacobi(float_sw4 rmax[6], Sarray& Uf, Sarray& UfNew,
                            float_sw4 a_ghcof[]);
 
 void oddIevenJinterpJacobiOpt(
-    float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
-    float_sw4* __restrict__ a_ufnew, float_sw4* __restrict__ a_uc,
-    float_sw4* __restrict__ a_morc, float_sw4* __restrict__ a_mlrc,
-    float_sw4* __restrict__ a_morf, float_sw4* __restrict__ a_mlrf,
-    float_sw4* __restrict__ a_unextf, float_sw4* __restrict__ a_uncint,
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4>& rmax1,
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4>& rmax2,
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4>& rmax3,
+    float_sw4* __restrict__ a_uf, float_sw4* __restrict__ a_ufnew,
+    float_sw4* __restrict__ a_uc, float_sw4* __restrict__ a_morc,
+    float_sw4* __restrict__ a_mlrc, float_sw4* __restrict__ a_morf,
+    float_sw4* __restrict__ a_mlrf, float_sw4* __restrict__ a_unextf,
+    float_sw4* __restrict__ a_uncint,
     //			      Sarray &UnextcInterp,
     int a_iStart[], int a_iEnd[], int a_jStart[], int a_jEnd[], int a_kStart[],
     int a_kEnd[], int a_iStartInt[], int a_iEndInt[], int a_jStartInt[],
@@ -162,16 +170,18 @@ void evenIoddJinterpJacobi(float_sw4 rmax[6], Sarray& Uf, Sarray& UfNext,
                            float_sw4 a_ghcof[]);
 
 void evenIoddJinterpJacobiOpt(
-    float_sw4 rmax[6], float_sw4* __restrict__ a_uf,
-    float_sw4* __restrict__ a_ufnew, float_sw4* __restrict__ a_uc,
-    float_sw4* __restrict__ a_morc, float_sw4* __restrict__ a_mlrc,
-    float_sw4* __restrict__ a_morf, float_sw4* __restrict__ a_mlrf,
-    float_sw4* __restrict__ a_unextf, float_sw4* __restrict__ a_uncint,
-    int a_iStart[], int a_iEnd[], int a_jStart[], int a_jEnd[], int a_kStart[],
-    int a_kEnd[], int a_iStartInt[], int a_iEndInt[], int a_jStartInt[],
-    int a_jEndInt[], int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf,
-    float_sw4 hc, float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[],
-    float_sw4 a_ghcof[]);
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4>& rmax1,
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4>& rmax2,
+    RAJA::ReduceMax<REDUCTION_POLICY, float_sw4>& rmax3,
+    float_sw4* __restrict__ a_uf, float_sw4* __restrict__ a_ufnew,
+    float_sw4* __restrict__ a_uc, float_sw4* __restrict__ a_morc,
+    float_sw4* __restrict__ a_mlrc, float_sw4* __restrict__ a_morf,
+    float_sw4* __restrict__ a_mlrf, float_sw4* __restrict__ a_unextf,
+    float_sw4* __restrict__ a_uncint, int a_iStart[], int a_iEnd[],
+    int a_jStart[], int a_jEnd[], int a_kStart[], int a_kEnd[],
+    int a_iStartInt[], int a_iEndInt[], int a_jStartInt[], int a_jEndInt[],
+    int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc,
+    float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[], float_sw4 a_ghcof[]);
 
 void oddIoddJinterp(float_sw4 rmax[3], Sarray& Uf, Sarray& Muf, Sarray& Lambdaf,
                     Sarray& Rhof, Sarray& Uc, Sarray& Muc, Sarray& Lambdac,

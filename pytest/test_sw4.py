@@ -157,6 +157,10 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
         os.environ["PSM2_DEVICES"] = ""
         if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="lrun -T4 -M -gpu"
+    elif 'rzwhamo' in node_name:
+        os.environ["PSM2_DEVICES"] = ""
+        if mpi_tasks<=0: mpi_tasks = 4
+        mpirun_cmd="srun -p nvidia -n2 "
     elif 'lassen' in node_name:
         os.environ["PSM2_DEVICES"] = ""
         if mpi_tasks<=0: mpi_tasks = 4
