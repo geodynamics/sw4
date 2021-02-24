@@ -3158,7 +3158,7 @@ void EW::geodynbcGetSizes(string filename, float_sw4 origin[3],
   zcubelen = cubelen;
   if (nzfound) zcubelen = (nz - 1) * h;
   
-  if(hfound) hcube = h;
+  if (hfound) hcube = h;
 }
 
 //-----------------------------------------------------------------------
