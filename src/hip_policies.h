@@ -44,8 +44,9 @@ using DEFAULT_LOOP2X_ASYNC = RAJA::KernelPolicy<RAJA::statement::HipKernelAsync<
                          RAJA::statement::For<0, RAJA::hip_thread_x_loop,
                                               RAJA::statement::Lambda<0>>>>>;
 
-using DEFAULT_LOOP3 =
-    RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<256,RAJA::statement::Tile<
+using DEFAULT_LOOP3 = RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<
+    256,
+    RAJA::statement::Tile<
         0, RAJA::tile_fixed<2>, RAJA::hip_block_z_loop,
         RAJA::statement::Tile<
             1, RAJA::tile_fixed<2>, RAJA::hip_block_y_loop,
@@ -113,8 +114,9 @@ using ICSTRESS_EXEC_POL_ASYNC =
 // RAJA::hip_threadblock_exec<16 >,
 // RAJA::statement::Lambda<0> >>>>>;
 
-using RHS4_EXEC_POL =
-    RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<256,RAJA::statement::Tile<
+using RHS4_EXEC_POL = RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<
+    256,
+    RAJA::statement::Tile<
         0, RAJA::tile_fixed<2>, RAJA::hip_block_y_loop,
         RAJA::statement::Tile<
             1, RAJA::tile_fixed<64>, RAJA::hip_block_x_loop,

@@ -660,9 +660,12 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
   mpi_buffer_space = Space::Pinned;
   if (!m_myRank)
     std::cout << "Using MPI buffers in pinned memory(COMPILE OPTION)\n";
+#elif defined(SW4_STAGED_MPI_BUFFERS)
+  mpi_buffer_space = Space::Pinned;
+  if (!m_myRank) std::cout << "Using staged MPI buffers (COMPILE OPTION)\n";
 #else
   mpi_buffer_space = Space::Pinned;
-  if (!m_myRank) std::cout << "Using MPI buffersin pinned memory(DEFAULT)\nn";
+  if (!m_myRank) std::cout << "Using MPI buffers in pinned memory(DEFAULT)\nn";
 #endif
 
   m_check_point = new CheckPoint(this);
@@ -768,6 +771,7 @@ EW::~EW() {
   ::operator delete[](ForceVector, Space::Managed);
   ::operator delete[](ForceAddress, Space::Managed);
 
+  ::operator delete[](global_variables.device_buffer, Space::Managed_temps);
 #ifndef SW4_USE_UMPIRE
   // Delete the allocations stored in Sarray::static_map
   for (auto& i : Sarray::static_map) {
@@ -2905,8 +2909,7 @@ RAJA_HOST_DEVICE float_sw4 EW::Gaussian_x_T_Integral(float_sw4 t, float_sw4 R,
 // source )
 #ifdef ENABLE_HIP
 void EW::get_exact_point_source(float_sw4* up, float_sw4 t, int g,
-                                Source& source, int* wind) {
-}
+                                Source& source, int* wind) {}
 #else
 void EW::get_exact_point_source(float_sw4* up, float_sw4 t, int g,
                                 Source& source, int* wind) {
@@ -4364,8 +4367,7 @@ void EW::exactAccTwilight(float_sw4 a_t, vector<Sarray>& a_Uacc) {
 #ifdef ENABLE_HIP
 void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
                vector<GridPointSource*>& point_sources,
-               vector<int>& identsources) {
-}
+               vector<int>& identsources) {}
 #else
 void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
                vector<GridPointSource*>& point_sources,
@@ -9184,10 +9186,7 @@ TestEcons* EW::create_energytest() {
   else
     return 0;
 }
-TestPointSource* EW::get_point_source_test()
-{
-   return m_point_source_test;
-}
+TestPointSource* EW::get_point_source_test() { return m_point_source_test; }
 void EW::load_balance() {
   for (int g = 0; g < mNumberOfGrids; g++) {
     size_t local_size = (m_kEndInt[g] - m_kStartInt[g] + 1) *

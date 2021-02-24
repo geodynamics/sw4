@@ -71,7 +71,7 @@ void operator delete[](void *ptr, Space loc) throw();
 void operator delete(void *ptr, Space loc, const char *file, int line) throw();
 void operator delete[](void *ptr, Space loc, const char *file,
                        int line) throw();
-void presetGPUID(int mpi_rank);
+void presetGPUID(int mpi_rank, int local_rank, int local_size);
 void print_hwm(int rank);
 struct global_variable_holder_struct {
   size_t gpu_memory_hwm;
@@ -84,6 +84,8 @@ struct global_variable_holder_struct {
   int num_devices;
   bool firstCycle;
   int current_step;
+  size_t buffer_size;
+  float_sw4 *device_buffer;
   std::vector<std::tuple<char *, size_t>> massprefetch;
 };
 
@@ -187,7 +189,7 @@ void autopeel(Apc &apc, T only) {
 }
 
 template <typename T, typename... Args>
-void autopeel(Apc &apc, T first, Args &&... args) {
+void autopeel(Apc &apc, T first, Args &&...args) {
   apc.ofile << line(first, apc.counter);
   apc.counter++;
   autopeel(apc, args...);

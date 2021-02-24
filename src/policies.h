@@ -11,7 +11,7 @@
 #endif
 
 #ifdef ENABLE_CUDA
-#if RAJA_VERSION_MINOR>11
+#if RAJA_VERSION_MINOR > 11
 #include "cuda_policies12.h"
 #else
 #include "cuda_policies.h"
