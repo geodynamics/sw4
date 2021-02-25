@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
   // auto pooled_allocator_small =static_cast<size_t>(250)*1024*1024;
   auto pooled_allocator_small =
       rma.makeAllocator<umpire::strategy::DynamicPool, true>(
-          string("UM_pool_temps"), pref_allocator, pool_size_small,1024*1024);
+							     string("UM_pool_temps"), pref_allocator, pool_size_small,1024*1024);
 
   const size_t object_pool_size = static_cast<size_t>(500) * 1024 * 1024;
 

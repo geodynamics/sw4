@@ -543,8 +543,12 @@ void Sarray::set_to_zero() {
   //    for( size_t i=0 ; i < m_npts ; i++ )
   prefetch();
   float_sw4* lm_data = m_data;
+#ifdef RAJA_ONLY
   RAJA::forall<DEFAULT_LOOP1>(RAJA::RangeSegment(0, m_npts),
                               [=] RAJA_DEVICE(size_t i) { lm_data[i] = 0; });
+#else
+  forall(0,m_npts,[=] RAJA_DEVICE(size_t i) { lm_data[i] = 0.0; });
+#endif
   // forallX<32,size_t>(0,m_npts,[=] RAJA_DEVICE(size_t i) { lm_data[i] = 0; });
   // forallX is 1ms slower than RAJA ( 249 vs 248 ms)
 }
@@ -556,8 +560,16 @@ void Sarray::set_to_minusOne() {
   //    for( size_t i=0 ; i < m_npts ; i++ )
   prefetch();
   float_sw4* lm_data = m_data;
+#ifdef RAJA_ONLY
+
   RAJA::forall<DEFAULT_LOOP1>(RAJA::RangeSegment(0, m_npts),
                               [=] RAJA_DEVICE(size_t i) { lm_data[i] = -1.; });
+  
+#else
+  forall(0,m_npts,[=] RAJA_DEVICE(size_t i) { lm_data[i] = -1.; });
+#endif
+  //SW4_PEEK;
+  //SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------

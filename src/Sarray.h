@@ -71,7 +71,7 @@ class SView {
   void set(Sarray& x);
   RAJA_HOST_DEVICE inline float_sw4& operator()(int c, int i, int j,
                                                 int k) const {
-    return data[base + c * offc + i * offi + j * offj + k * offk];
+    return data[base + c * offc + i * offi + j * offj + k * offk]; // When will this overflow if at all PBUGS
   }
 
   RAJA_HOST_DEVICE inline float_sw4& operator()(int i, int j, int k) const {
