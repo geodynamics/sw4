@@ -547,7 +547,7 @@ void Sarray::set_to_zero() {
   RAJA::forall<DEFAULT_LOOP1>(RAJA::RangeSegment(0, m_npts),
                               [=] RAJA_DEVICE(size_t i) { lm_data[i] = 0; });
 #else
-  forall(0,m_npts,[=] RAJA_DEVICE(size_t i) { lm_data[i] = 0.0; });
+  forall(0, m_npts, [=] RAJA_DEVICE(size_t i) { lm_data[i] = 0.0; });
 #endif
   // forallX<32,size_t>(0,m_npts,[=] RAJA_DEVICE(size_t i) { lm_data[i] = 0; });
   // forallX is 1ms slower than RAJA ( 249 vs 248 ms)
@@ -564,12 +564,12 @@ void Sarray::set_to_minusOne() {
 
   RAJA::forall<DEFAULT_LOOP1>(RAJA::RangeSegment(0, m_npts),
                               [=] RAJA_DEVICE(size_t i) { lm_data[i] = -1.; });
-  
+
 #else
-  forall(0,m_npts,[=] RAJA_DEVICE(size_t i) { lm_data[i] = -1.; });
+  forall(0, m_npts, [=] RAJA_DEVICE(size_t i) { lm_data[i] = -1.; });
 #endif
-  //SW4_PEEK;
-  //SYNC_STREAM;
+  // SW4_PEEK;
+  // SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
@@ -1382,7 +1382,7 @@ void Sarray::insert_intersection(Sarray& a_U) {
         dst_m_data[ind + totpts * (c - 1)] =
             src_m_data[sind + totptss * (c - 1)];
     });
-    //SYNC_STREAM;
+    // SYNC_STREAM;
   } else {
     size_t sind = 0, ind = 0;
     for (int k = wind[4]; k <= wind[5]; k++)
@@ -1568,90 +1568,89 @@ void Sarray::GetAtt(char* file, int line) {
   }
 #endif
 }
- void mset_to_zero_async(Sarray &S0, Sarray &S1, Sarray &S2, Sarray &S3){
-   float_sw4 *m0 = S0.m_data;
-   float_sw4 *m1 = S1.m_data;
-   float_sw4 *m2 = S2.m_data;
-   float_sw4 *m3 = S3.m_data;
-   
-   size_t zero=0;
+void mset_to_zero_async(Sarray& S0, Sarray& S1, Sarray& S2, Sarray& S3) {
+  float_sw4* m0 = S0.m_data;
+  float_sw4* m1 = S1.m_data;
+  float_sw4* m2 = S2.m_data;
+  float_sw4* m3 = S3.m_data;
+
+  size_t zero = 0;
   multiforall<512>(
-   		   zero, S0.m_npts,[=] RAJA_DEVICE(size_t i) { m0[i] = 0; },
-   		   zero, S1.m_npts,[=] RAJA_DEVICE(size_t i) { m1[i] = 0; },
-   		   zero, S2.m_npts,[=] RAJA_DEVICE(size_t i) { m2[i] = 0; },
-   		   zero, S3.m_npts,[=] RAJA_DEVICE(size_t i) { m3[i] = 0; });
-    // gmforall<512>(
-    // 		  zero, S0.m_npts,[=] RAJA_DEVICE(size_t i) { 
-    // 		    m0[i] = 0; 
-    // 		  },
-    // 		  zero, S1.m_npts,[=] RAJA_DEVICE(size_t i) { 
-    // 		    m1[i] = 0; 
-    // 		   },
-    // 		  zero, S2.m_npts,[=] RAJA_DEVICE(size_t i) { m2[i] = 0;
-    // 		   },
-    // 		  zero, S3.m_npts,[=] RAJA_DEVICE(size_t i) { m3[i] = 0; 
-    // 		   });
-   
- }
- int aligned(double*p){
-   for (int i=16;i<=2048;i*=2) if ((long int)p%i!=0) return i/2;
-   return 2048;
- }
- void vset_to_zero_async(std::vector<Sarray>& v, int N){
-   //for(int i=0;i<N;i++)
-   // std::cout<<"SIZES "<<v[i].m_npts<<"\n";
+      zero, S0.m_npts, [=] RAJA_DEVICE(size_t i) { m0[i] = 0; }, zero,
+      S1.m_npts, [=] RAJA_DEVICE(size_t i) { m1[i] = 0; }, zero, S2.m_npts,
+      [=] RAJA_DEVICE(size_t i) { m2[i] = 0; }, zero, S3.m_npts,
+      [=] RAJA_DEVICE(size_t i) { m3[i] = 0; });
+  // gmforall<512>(
+  // 		  zero, S0.m_npts,[=] RAJA_DEVICE(size_t i) {
+  // 		    m0[i] = 0;
+  // 		  },
+  // 		  zero, S1.m_npts,[=] RAJA_DEVICE(size_t i) {
+  // 		    m1[i] = 0;
+  // 		   },
+  // 		  zero, S2.m_npts,[=] RAJA_DEVICE(size_t i) { m2[i] = 0;
+  // 		   },
+  // 		  zero, S3.m_npts,[=] RAJA_DEVICE(size_t i) { m3[i] = 0;
+  // 		   });
+}
+int aligned(double* p) {
+  for (int i = 16; i <= 2048; i *= 2)
+    if ((long int)p % i != 0) return i / 2;
+  return 2048;
+}
+void vset_to_zero_async(std::vector<Sarray>& v, int N) {
+  // for(int i=0;i<N;i++)
+  // std::cout<<"SIZES "<<v[i].m_npts<<"\n";
 
-   float_sw4 *m0,*m1,*m2,*m3;
-   size_t zero=0;
+  float_sw4 *m0, *m1, *m2, *m3;
+  size_t zero = 0;
 
-   switch(N) {
-   case 1:
-     m0 = v[0].m_data;
+  switch (N) {
+    case 1:
+      m0 = v[0].m_data;
 
-     gmforall<512>(
-		    zero, v[0].m_npts,[=] RAJA_DEVICE(size_t i) { m0[i] = 0; });
-     
-     break;
+      gmforall<512>(zero, v[0].m_npts,
+                    [=] RAJA_DEVICE(size_t i) { m0[i] = 0; });
 
-   case 2:
-     m0 = v[0].m_data;
-     m1 = v[1].m_data;
+      break;
 
-     gmforall<512>(
-		    zero, v[0].m_npts,[=] RAJA_DEVICE(size_t i) { m0[i] = 0; },
-		    zero, v[1].m_npts,[=] RAJA_DEVICE(size_t i) { m1[i] = 0; });
-     break;
-     
-   case 3:
-     m0 = v[0].m_data;
-     m1 = v[1].m_data;
-     m2 = v[2].m_data;
-     gmforall<512>(
-		    zero, v[0].m_npts,[=] RAJA_DEVICE(size_t i) { m0[i] = 0; },
-		    zero, v[1].m_npts,[=] RAJA_DEVICE(size_t i) { m1[i] = 0; },
-		    zero, v[2].m_npts,[=] RAJA_DEVICE(size_t i) { m2[i] = 0; });
-     
-     break;
-     
-   case 4:
-     
-     m0 = v[0].m_data;
-     m1 = v[1].m_data;
-     m2 = v[2].m_data;
-     m3 = v[3].m_data;
-     //std::cout<<"ALIGNMENT "<<aligned(m0)<<" "<<aligned(m1)<<" "<<aligned(m2)<<" "<<aligned(m3)<<"\n"<<std::flush;
-     gmforall<512>(
-		    zero, v[0].m_npts,[=] RAJA_DEVICE(size_t i) { m0[i] = 0; },
-		    zero, v[1].m_npts,[=] RAJA_DEVICE(size_t i) { m1[i] = 0; },
-		    zero, v[2].m_npts,[=] RAJA_DEVICE(size_t i) { m2[i] = 0; },
-		    zero, v[3].m_npts,[=] RAJA_DEVICE(size_t i) { m3[i] = 0; });
-     
-     break;
-   default:
-     std::cerr<<"ERROR:: vset_to_zero_async not implemented for "<<N<<" grids\n";
-     abort();
-   }
- }
-   
- 
-   
+    case 2:
+      m0 = v[0].m_data;
+      m1 = v[1].m_data;
+
+      gmforall<512>(
+          zero, v[0].m_npts, [=] RAJA_DEVICE(size_t i) { m0[i] = 0; }, zero,
+          v[1].m_npts, [=] RAJA_DEVICE(size_t i) { m1[i] = 0; });
+      break;
+
+    case 3:
+      m0 = v[0].m_data;
+      m1 = v[1].m_data;
+      m2 = v[2].m_data;
+      gmforall<512>(
+          zero, v[0].m_npts, [=] RAJA_DEVICE(size_t i) { m0[i] = 0; }, zero,
+          v[1].m_npts, [=] RAJA_DEVICE(size_t i) { m1[i] = 0; }, zero,
+          v[2].m_npts, [=] RAJA_DEVICE(size_t i) { m2[i] = 0; });
+
+      break;
+
+    case 4:
+
+      m0 = v[0].m_data;
+      m1 = v[1].m_data;
+      m2 = v[2].m_data;
+      m3 = v[3].m_data;
+      // std::cout<<"ALIGNMENT "<<aligned(m0)<<" "<<aligned(m1)<<"
+      // "<<aligned(m2)<<" "<<aligned(m3)<<"\n"<<std::flush;
+      gmforall<512>(
+          zero, v[0].m_npts, [=] RAJA_DEVICE(size_t i) { m0[i] = 0; }, zero,
+          v[1].m_npts, [=] RAJA_DEVICE(size_t i) { m1[i] = 0; }, zero,
+          v[2].m_npts, [=] RAJA_DEVICE(size_t i) { m2[i] = 0; }, zero,
+          v[3].m_npts, [=] RAJA_DEVICE(size_t i) { m3[i] = 0; });
+
+      break;
+    default:
+      std::cerr << "ERROR:: vset_to_zero_async not implemented for " << N
+                << " grids\n";
+      abort();
+  }
+}

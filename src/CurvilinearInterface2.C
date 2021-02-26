@@ -8,8 +8,8 @@
 #include "TestEcons.h"
 #include "TestTwilight.h"
 #include "caliper.h"
-#include "policies.h"
 #include "foralls.h"
+#include "policies.h"
 extern "C" {
 void F77_FUNC(dgetrf, DGETRF)(int*, int*, double*, int*, int*, int*);
 void F77_FUNC(dgetrs, DGETRS)(char*, int*, int*, double*, int*, int*, double*,
@@ -29,11 +29,14 @@ void curvilinear4sgwind(int, int, int, int, int, int, int, int, float_sw4*,
 CurvilinearInterface2::CurvilinearInterface2(int a_gc, EW* a_ew) {
   SW4_MARK_FUNCTION;
 #if defined(ENABLE_CUDA)
+#if defined(SW4_MANAGED_MPI_BUFFERS)
   if (!mpi_supports_device_buffers()) {
-    std::cerr << "**** ERROR::    Curvilinear Mesh Refinement cases must be "
+    std::cerr << "**** ERROR::   SW4_MANAGED_MPI_BUFFERS selected at compile "
+                 "time. Cases must be "
                  "run with the -M -gpu flag****************\n";
-//    abort();
+    abort();
   }
+#endif
 #endif
 
   m_reltol = 1e-6;
@@ -103,27 +106,22 @@ CurvilinearInterface2::~CurvilinearInterface2() {
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearInterface2::bnd_zero_host( Sarray& u, int npts )
-{
-// Homogeneous Dirichet at boundaries on sides. Do not apply at upper and lower boundaries.
-   for( int s=0 ; s < 4 ; s++ )
-      if( m_isbndry[s] )
-      {
-         int kb=u.m_kb, ke=u.m_ke, jb=u.m_jb, je=u.m_je, ib=u.m_ib, ie=u.m_ie;
-         if( s == 0 )
-            ie = ib+npts-1;
-         if( s == 1 )
-            ib = ie-npts+1;
-         if( s == 2 )
-            je = jb+npts-1;
-         if( s == 3 )
-            jb = je-npts+1;
-         for(int c=1 ; c <= u.m_nc ; c++)
-         for( int k=kb ; k <= ke ; k++ )
-            for( int j=jb ; j <= je ; j++ )
-               for( int i=ib ; i <= ie ; i++ )
-                  u(c,i,j,k)=0;
-      }
+void CurvilinearInterface2::bnd_zero_host(Sarray& u, int npts) {
+  // Homogeneous Dirichet at boundaries on sides. Do not apply at upper and
+  // lower boundaries.
+  for (int s = 0; s < 4; s++)
+    if (m_isbndry[s]) {
+      int kb = u.m_kb, ke = u.m_ke, jb = u.m_jb, je = u.m_je, ib = u.m_ib,
+          ie = u.m_ie;
+      if (s == 0) ie = ib + npts - 1;
+      if (s == 1) ib = ie - npts + 1;
+      if (s == 2) je = jb + npts - 1;
+      if (s == 3) jb = je - npts + 1;
+      for (int c = 1; c <= u.m_nc; c++)
+        for (int k = kb; k <= ke; k++)
+          for (int j = jb; j <= je; j++)
+            for (int i = ib; i <= ie; i++) u(c, i, j, k) = 0;
+    }
 }
 
 //-----------------------------------------------------------------------
@@ -155,95 +153,52 @@ void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
                                    for (int c = 1; c <= nc; c++)
                                      uV(c, i, j, k) = 0;
                                  });
-
     }
-  // SYNC_STREAM;
+    // SYNC_STREAM;
 #else
-  class MRange start[4],end[4];
-  std::vector<MRange> st,en;
+  class MRange start[4], end[4];
+  std::vector<MRange> st, en;
   for (int s = 0; s < 4; s++)
     if (m_isbndry[s]) {
       int kb = u.m_kb, ke = u.m_ke, jb = u.m_jb, je = u.m_je, ib = u.m_ib,
-	ie = u.m_ie;
+          ie = u.m_ie;
       if (s == 0) ie = ib + npts - 1;
       if (s == 1) ib = ie - npts + 1;
       if (s == 2) je = jb + npts - 1;
       if (s == 3) jb = je - npts + 1;
 
-
-
-      // RAJA::RangeSegment k_range(kb, ke + 1);
-      // RAJA::RangeSegment j_range(jb, je + 1);
-      // RAJA::RangeSegment i_range(ib, ie + 1);
-      // RAJA::kernel<BZ_POL_ASYNC>(RAJA::make_tuple(k_range, j_range, i_range),
-      //                            [=] RAJA_DEVICE(int k, int j, int i) {
-      //                              for (int c = 1; c <= nc; c++)
-      //                                uV(c, i, j, k) = 0;
-      //                            });
-
-      // Range<16> I(ib,ie+1);
-      // Range<16> J(jb,je+1);
-      // Range<4> K(kb,ke+1);
-
-      // forall3async(
-      //      I, J, K, [=] RAJA_DEVICE( int i, int j, int k) {
-      //  	    for (int c = 1; c <= nc; c++) uV(c, i, j, k) = -1.0;});
-       // SYNC_STREAM;
-      
-
-      start[s]={ib,jb,kb};
+      start[s] = {ib, jb, kb};
       st.push_back(start[s]);
-      end[s]={ie+1,je+1,ke+1};
+      end[s] = {ie + 1, je + 1, ke + 1};
       en.push_back(end[s]);
-      //std::cout<<"START ("<<s<<"::"<<start[s].i<<" "<<start[s].j<<" "<<start[s].k<<")("<<end[s].i<<" "<<end[s].j<<" "<<end[s].k<<")\n";
+
     } else {
-      start[s]=end[s]={0,0,0};
+      start[s] = end[s] = {0, 0, 0};
     }
-  // gmforall3<16,16,4>(
-  // 		     start[0],end[0],[=] RAJA_DEVICE(int i, int j, int k){ for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;},
-  // 		     start[1],end[1],[=] RAJA_DEVICE(int i, int j, int k){ for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;},
-  // 		     start[2],end[2],[=] RAJA_DEVICE(int i, int j, int k){ for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;},
-  // 		     start[3],end[3],[=] RAJA_DEVICE(int i, int j, int k){ for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;});
 
-  if (st.size()==2){
-    gmforall3<8,8,4>(
-    		     st[0],en[0],[=] RAJA_DEVICE(int i, int j, int k){ for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0; 
-    		       //printf("INSIDE %d %d %d \n",i,j,k);
-    		     },
-    		       st[1],en[1],[=] RAJA_DEVICE(int i, int j, int k){ for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;});
-
-    
-
-    // gmforall3<8,8,4>(
-    // 		     st[0],en[0],[=] RAJA_DEVICE(int i, int j, int k){ for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0; 
-    // 		       //printf("INSIDE %d %d %d \n",i,j,k);
-    //  		     });
-    //  gmforall3<8,8,4>(
-    // 	       st[1],en[1],[=] RAJA_DEVICE(int i, int j, int k){ for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;});
-    // SW4_PEEK;
-    // SYNC_STREAM;
-    
-    // for(int n=0;n<2;n++){
-    //   int nzc=0;
-    //   for(int i=st[n].i;i<en[n].i;i++) for (int j=st[n].j;j<en[n].j;j++) for(int k=st[n].k;k<en[n].k;k++) for(int c =1; c<=nc;c++) 
-    // 													    if (u(c,i,j,k)!=0.0) {
-    // 													      nzc++;
-    // 													      std::cout<<"NZ "<<c<<" "<<i<<" "<<j<<" "<<k<<" "<<u(c,i,j,k)<<"\n";
-    // 													    }
-    //   int s=n;
-    //   std::cout<<"NC = "<<nc<<" START ("<<s<<"::"<<st[s].i<<" "<<st[s].j<<" "<<st[s].k<<")("<<en[s].i<<" "<<en[s].j<<" "<<en[s].k<<")  NZER COUNT "<<nzc<<"\n"<<std::flush;
-    //   if (nzc!=0) abort();
-    //													    }
-    
-  } else {
-    std::cerr<<" ERROR SIZE "<<st.size()<<"\n";
+  if (st.size() == 1) {
+    gmforall3<16, 16, 1>(st[0], en[0], [=] RAJA_DEVICE(int i, int j, int k) {
+      for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
+    });
+  }
+  else if(st.size() == 2) {
+    gmforall3<16, 16, 1>(
+        st[0], en[0],
+        [=] RAJA_DEVICE(int i, int j, int k) {
+          for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
+        },
+        st[1], en[1],
+        [=] RAJA_DEVICE(int i, int j, int k) {
+          for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
+        });
+  }
+  else {
+    std::cerr << " ERROR SIZE in CurvilinearInterface2::bnd_zero" << st.size()
+              << "\n";
     abort();
   }
-  
-  
-  
+
 #endif
-	    
 }
 
 //-----------------------------------------------------------------------
@@ -311,26 +266,29 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   int nsw = m_ew->m_iEnd[m_gc] - m_ew->m_iStart[m_gc] + 1;
   copy_str(lm_strx_c, a_strx[m_gc], ndif, m_ie - m_ib + 1, nsw);
   communicate_array1d(lm_strx_c, m_ie - m_ib + 1, 0, m_nghost);
-  cudaMemcpyAsync(m_strx_c,lm_strx_c,(m_ie - m_ib + 1)*sizeof(double),cudaMemcpyHostToDevice,0);
+  cudaMemcpyAsync(m_strx_c, lm_strx_c, (m_ie - m_ib + 1) * sizeof(double),
+                  cudaMemcpyHostToDevice, 0);
 
   ndif = m_nghost - (m_ew->m_iStartInt[m_gf] - m_ew->m_iStart[m_gf]);
   nsw = m_ew->m_iEnd[m_gf] - m_ew->m_iStart[m_gf] + 1;
   copy_str(lm_strx_f, a_strx[m_gf], ndif, m_ief - m_ibf + 1, nsw);
   communicate_array1d(lm_strx_f, m_ief - m_ibf + 1, 0, m_nghost);
-  cudaMemcpyAsync(m_strx_f,lm_strx_f,(m_ief - m_ibf + 1)*sizeof(double),cudaMemcpyHostToDevice,0);
+  cudaMemcpyAsync(m_strx_f, lm_strx_f, (m_ief - m_ibf + 1) * sizeof(double),
+                  cudaMemcpyHostToDevice, 0);
 
   ndif = m_nghost - (m_ew->m_jStartInt[m_gc] - m_ew->m_jStart[m_gc]);
   nsw = m_ew->m_jEnd[m_gc] - m_ew->m_jStart[m_gc] + 1;
   copy_str(lm_stry_c, a_stry[m_gc], ndif, m_je - m_jb + 1, nsw);
   communicate_array1d(lm_stry_c, m_je - m_jb + 1, 1, m_nghost);
-  cudaMemcpyAsync(m_stry_c,lm_stry_c,(m_je - m_jb + 1)*sizeof(double),cudaMemcpyHostToDevice,0);
-  
+  cudaMemcpyAsync(m_stry_c, lm_stry_c, (m_je - m_jb + 1) * sizeof(double),
+                  cudaMemcpyHostToDevice, 0);
 
   ndif = m_nghost - (m_ew->m_jStartInt[m_gf] - m_ew->m_jStart[m_gf]);
   nsw = m_ew->m_jEnd[m_gf] - m_ew->m_jStart[m_gf] + 1;
   copy_str(lm_stry_f, a_stry[m_gf], ndif, m_jef - m_jbf + 1, nsw);
   communicate_array1d(lm_stry_f, m_jef - m_jbf + 1, 1, m_nghost);
-  cudaMemcpyAsync(m_stry_f,lm_stry_f,(m_jef - m_jbf + 1)*sizeof(double),cudaMemcpyHostToDevice,0);
+  cudaMemcpyAsync(m_stry_f, lm_stry_f, (m_jef - m_jbf + 1) * sizeof(double),
+                  cudaMemcpyHostToDevice, 0);
 
   SYNC_STREAM;
 
@@ -1055,8 +1013,9 @@ void CurvilinearInterface2::interface_block(Sarray& matrix) {
     for (int i = alpha.m_ib; i <= alpha.m_ie; i++)
       alpha(i, j, m_nkf) = w1 * m_jac_f(i, j, m_nkf) * m_rho_f(i, j, m_nkf) /
                            (m_strx_f[i - m_ibf] * m_stry_f[j - m_jbf]);
-  if (!m_tw && !m_psource) bnd_zero_host(alpha, m_nghost); // This should be done on host
- 
+  if (!m_tw && !m_psource)
+    bnd_zero_host(alpha, m_nghost);  // This should be done on host
+
   restprol2D(matrix, alpha, 1, m_nkf);
 
   // Add -B(uc) contribution to block matrix

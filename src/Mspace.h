@@ -21,10 +21,10 @@
 #include "umpire/strategy/DynamicPool.hpp"
 //#include "umpire/strategy/MixedPool.hpp"
 //#include "umpire/util/StatisticsDatabase.hpp"
+#include "umpire/strategy/AlignedAllocator.hpp"
 #include "umpire/strategy/AllocationAdvisor.hpp"
 #include "umpire/strategy/MonotonicAllocationStrategy.hpp"
 #include "umpire/util/Macros.hpp"
-#include "umpire/strategy/AlignedAllocator.hpp"
 #endif
 #ifdef USE_MAGMA
 #include "magma_v2.h"

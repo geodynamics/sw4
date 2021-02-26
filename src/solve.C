@@ -1877,18 +1877,18 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     Sarray Unextc(3, ibc, iec, jbc, jec, kc, kc, __FILE__,
                   __LINE__);  // only needs k=kc (on the interface)
     Sarray Bc(3, ibc, iec, jbc, jec, kc, kc, __FILE__, __LINE__);
-#define FUSED_KERNELS 1 
+#define FUSED_KERNELS 1
 #ifndef FUSED_KERNELS
     Unextf.set_to_zero_async();
     Bf.set_to_zero_async();
     Unextc.set_to_zero_async();
     Bc.set_to_zero_async();
 #else
-    mset_to_zero_async(Unextf,Bf,Unextc,Bc);
-    //SW4_PEEK;
-    //SYNC_DEVICE;
+    mset_to_zero_async(Unextf, Bf, Unextc, Bc);
+    // SW4_PEEK;
+    // SYNC_DEVICE;
 #endif
-    
+
     // to compute the corrector we need the acceleration in the vicinity of the
     // interface
     Sarray Uf_tt(3, ibf, ief, jbf, jef, kf - 7, kf + 1, __FILE__, __LINE__);
@@ -2982,9 +2982,10 @@ void EW::compute_preliminary_corrector(
   char op = '=';
   int nz = m_global_nz[g];
   Sarray Lutt(3, ib, ie, jb, je, kic, kic, __FILE__, __LINE__);
-  // Following line commented out since array elemenst are ssigned and not updated.
-  //Lutt.set_to_zero_async();  // Keep memory checker happy
-                             // Note: 6 first arguments of the function call:
+  // Following line commented out since array elemenst are ssigned and not
+  // updated.
+  // Lutt.set_to_zero_async();  // Keep memory checker happy
+  // Note: 6 first arguments of the function call:
   // (ib,ie), (jb,je), (kb,ke) is the declared size of mMu and mLambda in the
   // (i,j,k)-directions, respectively
 
@@ -3171,8 +3172,8 @@ void EW::compute_preliminary_predictor(
 
   // Compute L(Up) at k=kic.
   Sarray Lu(3, ib, ie, jb, je, kic, kic, __FILE__, __LINE__);
-  // Commented out for speed 
-  //Lu.set_to_zero_async();  // Keep memory checker happy
+  // Commented out for speed
+  // Lu.set_to_zero_async();  // Keep memory checker happy
   char op = '=';
   int nz = m_global_nz[g];
   // Note: 6 first arguments of the function call:

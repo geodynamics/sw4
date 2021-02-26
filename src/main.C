@@ -124,7 +124,8 @@ int main(int argc, char **argv) {
 #ifdef ENABLE_HIP
   auto pref_allocator = allocator;
 #else
-  // auto aligned_allocator = rma.makeAllocator<umpire::strategy::AlignedAllocator>(
+  // auto aligned_allocator =
+  // rma.makeAllocator<umpire::strategy::AlignedAllocator>(
   //   "aligned_allocator", allocator, 256);
   auto pref_allocator = rma.makeAllocator<umpire::strategy::AllocationAdvisor>(
       "preferred_location_device", allocator, "PREFERRED_LOCATION",
@@ -133,7 +134,7 @@ int main(int argc, char **argv) {
 
   auto pooled_allocator =
       rma.makeAllocator<umpire::strategy::DynamicPool, true>(
-							     string("UM_pool"), pref_allocator, pool_size,1024*1024,512);
+          string("UM_pool"), pref_allocator, pool_size, 1024 * 1024, 512);
 
   const size_t pool_size_small = static_cast<size_t>(250) * 1024 * 1024;
 
@@ -144,7 +145,8 @@ int main(int argc, char **argv) {
   // auto pooled_allocator_small =static_cast<size_t>(250)*1024*1024;
   auto pooled_allocator_small =
       rma.makeAllocator<umpire::strategy::DynamicPool, true>(
-							     string("UM_pool_temps"), pref_allocator, pool_size_small,1024*1024);
+          string("UM_pool_temps"), pref_allocator, pool_size_small, 1024 * 1024,
+          512);
 
   const size_t object_pool_size = static_cast<size_t>(500) * 1024 * 1024;
 

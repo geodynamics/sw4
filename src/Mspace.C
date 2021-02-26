@@ -227,7 +227,8 @@ void *operator new(std::size_t size, Space loc) throw() {
     ptr = static_cast<void *>(allocator.allocate(size));
 #if defined(ENABLE_CUDA)
     //    SW4_CheckDeviceError(cudaMemAdvise(
-    //     ptr, size, cudaMemAdviseSetPreferredLocation, global_variables.device));
+    //     ptr, size, cudaMemAdviseSetPreferredLocation,
+    //     global_variables.device));
 #endif
     // std::cout<<"PTR 1 "<<ptr<<"\n";
     // SW4_CheckDeviceError(cudaMemset(ptr,0,size));

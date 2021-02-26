@@ -71,7 +71,8 @@ class SView {
   void set(Sarray& x);
   RAJA_HOST_DEVICE inline float_sw4& operator()(int c, int i, int j,
                                                 int k) const {
-    return data[base + c * offc + i * offi + j * offj + k * offk]; // When will this overflow if at all PBUGS
+    return data[base + c * offc + i * offi + j * offj +
+                k * offk];  // When will this overflow if at all PBUGS
   }
 
   RAJA_HOST_DEVICE inline float_sw4& operator()(int i, int j, int k) const {
@@ -262,7 +263,7 @@ class Sarray {
  private:
   float_sw4* m_data;
   bool prefetched;
-  friend void mset_to_zero_async(Sarray &A, Sarray &B, Sarray &C, Sarray &D);
+  friend void mset_to_zero_async(Sarray& A, Sarray& B, Sarray& C, Sarray& D);
   friend void vset_to_zero_async(std::vector<Sarray>& v, int N);
   std::ofstream of;
   float_sw4* dev_data;
@@ -288,5 +289,5 @@ void SarrayVectorPrefetch(std::vector<Sarray*>& v, int n);
 
 float_sw4* memoize(Sarray& u, int c, int i, int j, int k);
 
-void mset_to_zero_async(Sarray &S0, Sarray &S1, Sarray &S2, Sarray &S3);
+void mset_to_zero_async(Sarray& S0, Sarray& S1, Sarray& S2, Sarray& S3);
 #endif

@@ -4659,8 +4659,8 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
     idnts_local = idnts;
     float_sw4** ForceAddress_copy = ForceAddress;
 
-    //for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
-    vset_to_zero_async(a_F,mNumberOfGrids);
+    // for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
+    vset_to_zero_async(a_F, mNumberOfGrids);
     SW4_MARK_BEGIN("FORCE::DEVICE");
 
     RAJA::forall<FORCE_LOOP_ASYNC>(
@@ -4918,8 +4918,8 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
     //     using FORCETT_LOOP_ASYNC = RAJA::omp_parallel_for_exec;
     // #endif
 
-    //for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
-    vset_to_zero_async(a_F,mNumberOfGrids);
+    // for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
+    vset_to_zero_async(a_F, mNumberOfGrids);
     SW4_MARK_BEGIN("FORCE_TT::DEVICE");
 
     RAJA::forall<FORCETT_LOOP_ASYNC>(
@@ -4956,10 +4956,10 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   int* onesided_ptr;
 
   int g, nz;
-  vset_to_zero_async(a_Uacc,mNumberOfGrids);
+  vset_to_zero_async(a_Uacc, mNumberOfGrids);
   for (g = 0; g < mNumberOfCartesianGrids; g++) {
-    //a_Uacc[g].prefetch();
-    //a_Uacc[g].set_to_zero_async();
+    // a_Uacc[g].prefetch();
+    // a_Uacc[g].set_to_zero_async();
     uacc_ptr = a_Uacc[g].c_ptr();
     u_ptr = a_U[g].c_ptr();
     mu_ptr = a_Mu[g].c_ptr();
@@ -5061,7 +5061,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
 #endif
   for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
     // g = mNumberOfGrids - 1;
-    //a_Uacc[g].set_to_zero_async(); // Being done above
+    // a_Uacc[g].set_to_zero_async(); // Being done above
     uacc_ptr = a_Uacc[g].c_ptr();
     u_ptr = a_U[g].c_ptr();
     mu_ptr = a_Mu[g].c_ptr();
