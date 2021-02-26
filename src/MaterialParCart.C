@@ -13,7 +13,6 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
      // Material represented on a coarse Cartesian grid, covering the 'active' domain.
      // points are x_0,..,x_{nx+1}, where x_0 and x_{nx+1} are fixed at zero.
    // the parameter vector represents offsets from a reference material, stored in (mRho,mMu,mLambda) in EW.
-
    m_variables = varcase;
    m_ratio = 1.732;   
    m_init = init;
@@ -90,9 +89,9 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
       ncomp=1;
 
 // Global grid is determined.
-   m_global = compute_overlap();
+   bool dbg=false;
+   m_global = compute_overlap(dbg);
 
-   bool dbg=true;
    if( dbg )
    {
       std::stringstream name;
@@ -259,7 +258,7 @@ void MaterialParCart::find_lims( int ib, int ie, int iepm, int ibpp,
 }
 
 //-----------------------------------------------------------------------
-bool MaterialParCart::compute_overlap()
+bool MaterialParCart::compute_overlap(bool dbg)
 {
 // Material coarse grid limits in this processor
    int icb=10000000, ice=-100, jcb=10000000, jce=-100, kcb=10000000, kce=-100;
@@ -415,10 +414,13 @@ bool MaterialParCart::compute_overlap()
    int go_global = 0;
    if( ibpp<iepm || jbpp < jepm )
    {
-      std::cout << "making Material parameterization global  ib,ie = " << m_ib << " "<<m_ie
-                << " iepm= " << iepm << " ibpp= " << ibpp << std::endl;
-      std::cout << "              jb,je = " << m_jb << " "<<m_je
-                << " jepm= " << jepm << " jbpp= " << jbpp << std::endl;
+      if( dbg )
+      {
+         std::cout << "making Material parameterization global  ib,ie = " << m_ib << " "<<m_ie
+                   << " iepm= " << iepm << " ibpp= " << ibpp << std::endl;
+         std::cout << "              jb,je = " << m_jb << " "<<m_je
+                   << " jepm= " << jepm << " jbpp= " << jbpp << std::endl;
+      }
       go_global = 1;
    }
    int tmp=go_global;
@@ -435,6 +437,8 @@ bool MaterialParCart::compute_overlap()
       m_ieint=m_nx;
       m_jeint=m_ny;
       m_keint=m_nz;
+      if( m_myrank == 0 )
+         std::cout << "Making material parameterization global" << std::endl;
    }
    else
    {
