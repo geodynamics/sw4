@@ -930,12 +930,12 @@ void Sarray::copy_kplane(Sarray& u, int k) {
     int um_kb = u.m_kb;
     ASSERT_MANAGED(m_data);
     ASSERT_MANAGED(um_data);
-    int mib = m_ib;
-    int mjb = m_jb;
+    //    int mib = m_ib;
+    // int mjb = m_jb;
     int mkb = m_kb;
     int mni = m_ni;
     int mnj = m_nj;
-    int mnc = m_nc;
+    //int mnc = m_nc;
     // SW4_MARK_BEGIN("CK_PREF");
     // prefetch();
     // u.prefetch();

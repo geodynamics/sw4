@@ -427,12 +427,12 @@ void GridGeneratorGaussianHill::generate_z_and_j(EW* a_ew, int g, Sarray& z,
 
         // Upper and lower interfaces for this grid
         float_sw4 Ztop = s1 * (-tau) + (1 - s1) * m_topo_zmax;
-        float_sw4 Ztopp = s1 * (-taup);
-        float_sw4 Ztopq = s1 * (-tauq);
+	//        float_sw4 Ztopp = s1 * (-taup);
+	// float_sw4 Ztopq = s1 * (-tauq);
 
         float_sw4 Zbot = s0 * (-tau) + (1 - s0) * m_topo_zmax;
-        float_sw4 Zbotp = s0 * (-taup);
-        float_sw4 Zbotq = s0 * (-tauq);
+	//  float_sw4 Zbotp = s0 * (-taup);
+	// float_sw4 Zbotq = s0 * (-tauq);
 
         // Linear interpolation in the vertical direction
         float_sw4 Nz_real =
