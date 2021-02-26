@@ -172,17 +172,15 @@ void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
       end[s] = {ie + 1, je + 1, ke + 1};
       en.push_back(end[s]);
 
-    } else {
-      start[s] = end[s] = {0, 0, 0};
-    }
+    } 
 
   if (st.size() == 1) {
-    gmforall3<16, 16, 1>(st[0], en[0], [=] RAJA_DEVICE(int i, int j, int k) {
+    gmforall3async<16, 16, 1>(st[0], en[0], [=] RAJA_DEVICE(int i, int j, int k) {
       for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
     });
   }
   else if(st.size() == 2) {
-    gmforall3<16, 16, 1>(
+    gmforall3async<16, 16, 1>(
         st[0], en[0],
         [=] RAJA_DEVICE(int i, int j, int k) {
           for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;

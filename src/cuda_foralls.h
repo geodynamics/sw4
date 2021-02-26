@@ -574,7 +574,7 @@ void gmforall(T start, T end, LoopBody &&body, Args... args) {
   gmforallkernel<<<blocks, N>>>(start, end, body, args...);
 }
 
-// Generalized gmforall3
+// Generalized gmforall3async
 
 class MRange {
  public:
@@ -611,10 +611,10 @@ __global__ void gmforallkernel3(T start, T end, LoopBody body, Args... args) {
 }
 
 template <int I, int J, int K, typename T, typename LoopBody, class... Args>
-void gmforall3(T &start, T &end, LoopBody &&body, Args... args) {
+void gmforall3async(T &start, T &end, LoopBody &&body, Args... args) {
   //  int blocks=80 * 2048/N; // WARNING HARDWIRED FOR V100
   dim3 tpb(I, J, K);
-  dim3 blocks(64 / I, 64 / J, 40 / K);  // WANING HARDWIRED FOR V100 PBUGS
+  dim3 blocks(64 / I, 64 / J, 40 / K);  // WARNING HARDWIRED FOR V100 PBUGS
 
   gmforallkernel3<<<blocks, tpb>>>(start, end, body, args...);
 }
