@@ -422,7 +422,11 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          {
             double dshift, ddshift, dd1shift;
             for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
-               f += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
+            {
+               double mflocal = GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
+               //               std::cout << "localf(m) = " << mflocal << std::endl;
+               f += mflocal;
+            }
          }
          else if( mopt->m_misfit == Mopt::CROSSCORR )
          {
@@ -878,12 +882,12 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
       double xmsave;
       if( myRank == 0 )
          cout << "Rank    h     df/dx-adjoint df/dx-d.diff   abs.error     rel.error " <<endl;
-      //      for( size_t indg = 0 ; indg < nmpard_global ; indg++ )
-      for( int jg=32 ; jg <= 95 ; jg++ )
+      for( size_t indg = 0 ; indg < nmpard_global ; indg++ )
+         //      for( int jg=32 ; jg <= 95 ; jg++ )
       {
-         //         ssize_t ind = mopt->m_mp->local_index(indg);
+         ssize_t ind = mopt->m_mp->local_index(indg);
          int var=0;
-         ssize_t ind = mopt->m_mp->parameter_index(70,jg,10,0,var);
+         //         ssize_t ind = mopt->m_mp->parameter_index(70,jg,10,0,var);
          //         int var, locvar=-1;
          double x0;
 	 if( ind >=0 )
