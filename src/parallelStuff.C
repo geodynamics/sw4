@@ -913,7 +913,8 @@ void EW::make_type(vector<std::tuple<int, int, int>>& send_type,
                    int i1, int j1, int k1, int i2, int j2, int k2, int g) {
   send_type[2 * g] = std::make_tuple(i1, j1, k1);
   send_type[2 * g + 1] = std::make_tuple(i2, j2, k2);
-  // std::cout<<"MAKE_TYPE"<<i1<<" "<<j1<<" "<<i2<<" "<<j2<<"\n";
+  //std::cout<<"MAKE_TYPE"<<i1<<" "<<j1<<" "<<i2<<" "<<j2<<"\n"<<std::flush;
+  
   float_sw4* tbuf =
       SW4_NEW(mpi_buffer_space, float_sw4[i1 * j1 * 4 + i2 * j2 * 4]);
   bufs_type[4 * g + 0] = std::make_tuple(tbuf, tbuf + i1 * j1);
@@ -931,7 +932,7 @@ void EW::make_type_2d(vector<std::tuple<int, int, int>>& send_type,
                       vector<std::tuple<float_sw4*, float_sw4*>>& bufs_type,
                       int i1, int j1, int k1, int g) {
   send_type[g] = std::make_tuple(i1, j1, k1);
-
+  
   float_sw4* tbuf = SW4_NEW(Space::Pinned, float_sw4[i1 * j1 * 2]);
   bufs_type[g] = std::make_tuple(tbuf, tbuf + i1 * j1);
 

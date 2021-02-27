@@ -560,16 +560,28 @@ void Sarray::set_to_minusOne() {
   //    for( size_t i=0 ; i < m_npts ; i++ )
   prefetch();
   float_sw4* lm_data = m_data;
+
+
+#ifdef PEEKS_GALORE
+  SYNC_STREAM;
+  SW4_PEEK;
+  SYNC_STREAM;
+#endif
+
 #ifdef RAJA_ONLY
 
   RAJA::forall<DEFAULT_LOOP1>(RAJA::RangeSegment(0, m_npts),
                               [=] RAJA_DEVICE(size_t i) { lm_data[i] = -1.; });
 
 #else
-  forall(0, m_npts, [=] RAJA_DEVICE(size_t i) { lm_data[i] = -1.; });
+  forall(0, m_npts, [=] RAJA_DEVICE(size_t i) { lm_data[i] = -1.; }); // cuda-memcheck fails here with -M -gpu. 2/26/2021. Works on X86 machines
 #endif
-  // SW4_PEEK;
-  // SYNC_STREAM;
+
+#ifdef PEEKS_GALORE
+  SYNC_STREAM;
+  SW4_PEEK;
+  SYNC_STREAM;
+#endif
 }
 
 //-----------------------------------------------------------------------

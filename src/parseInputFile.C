@@ -313,7 +313,8 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
   // setup 2D communicators on the finest grid so that we can smooth the
   // topography
   setup2D_MPICommunications();
-
+  SW4_PEEK;
+  SYNC_STREAM;
   // deal with topography
   if (m_topography_exists) {
     // 1. read topography from efile
@@ -353,7 +354,10 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
       // portion of the grid)
       m_gridGenerator->assignInterfaceSurfaces(this, mTopoGridExt);
     }
-
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_STREAM;
+#endif
     // // 3. Figure out the number of grid points in the vertical direction and
     // allocate solution arrays on the curvilinear grid
     allocateCurvilinearArrays();  // need to assign  m_global_nz[g] = klast -
@@ -366,7 +370,10 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
            << endl
            << endl;
   }
-
+#ifdef PEEKS_GALORE
+  SW4_PEEK;
+  SYNC_STREAM;
+#endif
   // setup communicators for 3D solutions on all grids
   setupMPICommunications();
 
