@@ -173,8 +173,9 @@ void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
       en.push_back(end[s]);
 
     } 
-
-  if (st.size() == 1) {
+  if (st.size() == 0) {
+}
+  else if (st.size() == 1) {
     gmforall3async<16, 16, 1>(st[0], en[0], [=] RAJA_DEVICE(int i, int j, int k) {
       for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
     });
@@ -191,7 +192,7 @@ void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
         });
   }
   else {
-    std::cerr << " ERROR SIZE in CurvilinearInterface2::bnd_zero" << st.size()
+    std::cerr << " ERROR SIZE in CurvilinearInterface2::bnd_zero 0 " << st.size()
               << "\n";
     abort();
   }

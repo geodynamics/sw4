@@ -10,7 +10,7 @@ refinement zmax=950
 refinement zmax=5e3
 
 #time t=9.0
-time steps=110
+time steps=510
 
 globalmaterial  vpmin=866 vsmin=500
 
@@ -69,7 +69,7 @@ source x=50e3 y=50e3 depth=3e3 freq=2.5 type=Gaussian t0=2.4 m0=1.7e17 strike=14
 # image z=0 mode=grid file=image cycle=0
 
 # record 1 station for verification
-rec file=sta1 lon=-122.25 lat=37.85 depth=0 sacformat=0 usgsformat=1
+#rec file=sta1 lon=-122.25 lat=37.85 depth=0 sacformat=0 usgsformat=1
 
 # SF Bay Area stations
 #rec sta=BK.BDM lon=-121.8655 lat=37.9540 depth=0 file=BK.BDM nsew=1 sacformat=0 usgsformat=1

@@ -13,4 +13,6 @@ module unload darshan-runtime
 module load gcc
 module load hdf5
 date
-jsrun -n 12 -g1 -c6 -a1 --smpiargs="-gpu" nvprof --profile-from-start off -f -o Prof2_%q\{OMPI_COMM_WORLD_RANK\} ./sw4 hmr4.in.summit
+jsrun -n 12 -g1 -c6 -a1 --smpiargs="-gpu" ./sw4p hmr4.in.summit
+jsrun -n 12 -g1 -c6 -a1 --smpiargs="-gpu" ./sw4s hmr4.in.summit
+jsrun -n 12 -g1 -c6 -a1 --smpiargs="-gpu" ./sw4sold hmr4.in.summit
