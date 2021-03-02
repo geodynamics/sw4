@@ -1741,7 +1741,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 
 
 	 float_sw4 t  = m_t0 + m_shift + i*m_dt;
-	 float_sw4 ir = round((t-t0fr)/dtfr);
+	 float_sw4 ir = ((t-t0fr)/dtfr);
 	 int ie   = static_cast<int>(ir);
 	 //	 int mmin = ie-order/2+1;
 	 //	 int mmax = ie+order/2;
@@ -1811,8 +1811,8 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
             float_sw4 ai, wgh[6], dwgh[6], ddwgh[6];
             if( ie < 3 )
 	    {
-	       mmin = 1;
-	       mmax = 5;
+	       mmin = 0;
+	       mmax = 4;
 	       ai   = ir - (mmin+2);
 	       getwgh5( ai, wgh, dwgh, ddwgh );
             
