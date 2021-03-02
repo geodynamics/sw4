@@ -158,7 +158,7 @@ void DataPatches::add_patch( int wind[6] )
 {
    //   int myid;
    //   MPI_Comm_rank(MPI_COMM_WORLD,&myid);
-   //   if( myid==1 )
+   //   if( myid==2 )
    //   {
    //      cout << "adding patch = " << wind[0] << " " << wind[1] <<
    //	 " " << wind[2] << " " << wind[3] << " " << wind[4] << " " << wind[5] << endl;

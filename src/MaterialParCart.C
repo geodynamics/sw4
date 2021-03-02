@@ -96,7 +96,7 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
 // Global grid is determined.
    m_global = compute_overlap();
 
-   bool dbg=true;
+   bool dbg=false;
    if( dbg )
    {
       std::stringstream name;
@@ -419,10 +419,10 @@ bool MaterialParCart::compute_overlap()
    int go_global = 0;
    if( ibpp<iepm || jbpp < jepm )
    {
-      std::cout << "making Material parameterization global  ib,ie = " << m_ib << " "<<m_ie
-                << " iepm= " << iepm << " ibpp= " << ibpp << std::endl;
-      std::cout << "              jb,je = " << m_jb << " "<<m_je
-                << " jepm= " << jepm << " jbpp= " << jbpp << std::endl;
+      //      std::cout << "making Material parameterization global  ib,ie = " << m_ib << " "<<m_ie
+      //                << " iepm= " << iepm << " ibpp= " << ibpp << std::endl;
+      //      std::cout << "              jb,je = " << m_jb << " "<<m_je
+      //                << " jepm= " << jepm << " jbpp= " << jbpp << std::endl;
       go_global = 1;
    }
    int tmp=go_global;
@@ -439,6 +439,8 @@ bool MaterialParCart::compute_overlap()
       m_ieint=m_nx;
       m_jeint=m_ny;
       m_keint=m_nz;
+      if( m_myrank == 0 )
+         std::cout << "making Material parameterization global  " << std::endl;
    }
    else
    {

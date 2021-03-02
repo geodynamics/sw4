@@ -73,6 +73,11 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       gRho[g].set_to_zero();
       gMu[g].set_to_zero();
       gLambda[g].set_to_zero();
+      //      cout << getRank() << " Dimensions in proc: "<< ifirst << " " << ilast << " " << jfirst 
+      //           << " " << jlast << " " << kfirst << " " << klast << endl;
+      //      cout << getRank() << " active region: "<< m_iStartAct[0] << " " << m_iEndAct[0] << " " 
+      //           << m_jStartAct[0] << " " << m_jEndAct[0] << " " << m_kStartAct[0] << " " << m_kEndAct[0]
+      //           << endl; 
    }
 
 
@@ -180,7 +185,10 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 
       // set boundary data on Uacc, from forward solver
       for( int g=0 ; g < mNumberOfGrids ; g++ )
+      {
 	 Upred_saved[g]->pop( Uacc[g], currentTimeStep );
+         //         communicate_array( Uacc[g], g );
+      }
       enforceBC( Uacc, a_Mu, a_Lambda, AlphaVEm, t, BCForcing );
 
       evalRHS( Uacc, a_Mu, a_Lambda, Lk, AlphaVEm );
