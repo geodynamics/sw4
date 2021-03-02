@@ -213,7 +213,7 @@ void Mopt::processMaterialParCart( char* buffer )
    token = strtok(NULL, " \t");
 
    bool vel = false, vponly=false, vsvp=false, mparcartfile =false;
-   //   bool shared=false;
+   bool shared=false;
    int nx=3, ny=3, nz=3, init=0;
    double ratio=1.732, gamma=1, amp=0.1, omega=2*M_PI;
    char file[256]= " \0"; //shut up memory checker
@@ -282,13 +282,13 @@ void Mopt::processMaterialParCart( char* buffer )
          token += 6;
          omega = atof(token);
       }
-      //      else if( startswith("shared=",token) )
-      //      {
-      //         token += 7;
-      //         shared = strcmp(token,"1") == 0   ||
-      //                  strcmp(token,"yes") == 0 || 
-      //                  strcmp(token,"on") == 0;
-      //      }
+      else if( startswith("shared=",token) )
+      {
+         token += 7;
+         shared = strcmp(token,"1") == 0   ||
+                  strcmp(token,"yes") == 0 || 
+                  strcmp(token,"on") == 0;
+      }
       else
       {
 	 badOption("mparcart", token);
@@ -313,19 +313,19 @@ void Mopt::processMaterialParCart( char* buffer )
       varcase=3;
    else if( vponly )
       varcase=4;
-   //   if( !shared )
+   if( !shared )
       m_mp = new MaterialParCart( m_ew, nx, ny, nz, init, varcase, file, amp, omega );
-      //   else
-      //   {
-      //   if (vel)
-      //      m_mp = new MaterialParCartesianVels( m_ew, nx, ny, nz, init, file );
-      //   else if( vponly )
-      //      m_mp = new MaterialParCartesianVp( m_ew, nx, ny, nz, init, file, ratio, gamma, true );
-      //   else if( vsvp )
-      //      m_mp = new MaterialParCartesianVsVp( m_ew, nx, ny, nz, init, file );
-      //   else
-      //      m_mp = new MaterialParCartesian( m_ew, nx, ny, nz, init, file );
-      //   }
+   else
+   {
+      if (vel)
+         m_mp = new MaterialParCartesianVels( m_ew, nx, ny, nz, init, file );
+      else if( vponly )
+         m_mp = new MaterialParCartesianVp( m_ew, nx, ny, nz, init, file, ratio, gamma, true );
+      else if( vsvp )
+         m_mp = new MaterialParCartesianVsVp( m_ew, nx, ny, nz, init, file );
+      else
+         m_mp = new MaterialParCartesian( m_ew, nx, ny, nz, init, file );
+   }
    // use for material projection only:
    m_mpcart0 = new MaterialParCartesian( m_ew, nx, ny, nz, 0, "");
 } // end processMaterialParCart

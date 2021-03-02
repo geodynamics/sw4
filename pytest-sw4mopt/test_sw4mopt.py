@@ -1,19 +1,9 @@
 #!/usr/bin/env python3
 
 # Arguments:
-# -h: help, -v: verbose mode, -m mpi-tasks, -d sw4mopt-exe-dir -t omp-threads
+# -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir -t omp-threads
 
-import os, sys, argparse, subprocess
-
-#----(Currently not used)--------------------------------------------
-def run_checks(checks):
-    fail = False
-    for elem in checks:
-        pass_check = (checks[elem][0] > checks[elem][1])
-        print("%(check)s    tolerance: %(tol)f   calculated: %(val)f    pass: %(pass)s" %
-                {"check": elem, "tol": checks[elem][0], "val": checks[elem][1], "pass": pass_check})
-        if not pass_check: fail = True
-    return fail
+import os, sys, argparse, subprocess, time
 
 #------------------------------------------------
 def compare_one_line(base_file_name, test_file_name, errTol, absErrLimit, lineNum, verbose):
@@ -123,100 +113,77 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     sys_name = os.uname()[0]
     if verbose: print('sys_name=', sys_name)
 
+
     if 'quartz' in node_name:
         if omp_threads<=0: omp_threads=2;
         if mpi_tasks<=0: mpi_tasks = int(36/omp_threads)
-        # the following setting is needed to combine h5py and subprocess.run on LC
-        os.environ["PSM2_DEVICES"] = ""
         if cpu_allocation == "":
-           mpirun_cmd="srun -ppdebug " + " -n " + str(mpi_tasks) + " -c " + str(omp_threads)
+           mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks) + " -c " + str(omp_threads)
         else:
-           mpirun_cmd="srun -ppdebug " + " -A " + cpu_allocation + " -n " + str(mpi_tasks) + " -c " + str(omp_threads)
+           mpirun_cmd="srun -ppdebug -A " + cpu_allocation + " -n " + str(mpi_tasks) + " -c " + str(omp_threads)
     elif 'cab' in node_name:
         if omp_threads<=0: omp_threads=2;
         if mpi_tasks<=0: mpi_tasks = int(16/omp_threads)
         mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks) + " -c " + str(omp_threads)
     elif 'nid' in node_name: # the cori knl nodes are called nid
         if omp_threads<=0: omp_threads=4;
-        # if mpi_tasks<=0: mpi_tasks = int(64/omp_threads) # for KNL nodes, use 64 hardware cores per node
+        if mpi_tasks<=0: mpi_tasks = int(64/omp_threads) # use 64 hardware cores per node
         sw_threads = 4*omp_threads # Cori uses hyperthreading by default
-        if mpi_tasks<=0: mpi_tasks = int(4/omp_threads) # for Haswell nodes
         mpirun_cmd="srun --cpu_bind=cores -n " + str(mpi_tasks) + " -c " + str(sw_threads)
     elif 'fourier' in node_name:
-        if omp_threads<=0: omp_threads=1;
         if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
-    elif 'batch' in node_name: # for summit
-        if omp_threads<=0: omp_threads=7;
-        if mpi_tasks<=0: mpi_tasks = 6
-        mpirun_cmd="jsrun -a1 -c7 -r6 -l CPU-CPU -d packed -b packed:7 -n " + str(mpi_tasks)
-        mpirun_cmd="jsrun -a1 -c7 -g1 -l CPU-CPU -d packed -b packed:7 -M -gpu -n " + str(mpi_tasks)
-    elif 'rzansel' in node_name:
-        os.environ["PSM2_DEVICES"] = ""
-        if mpi_tasks<=0: mpi_tasks = 4
-        mpirun_cmd="lrun -T4 -M -gpu"
-    elif 'lassen' in node_name:
-        os.environ["PSM2_DEVICES"] = ""
-        if mpi_tasks<=0: mpi_tasks = 4
-        mpirun_cmd="lrun -T4 -M -gpu"
+    elif 'ray' in node_name:
+        if mpi_tasks<=0: mpi_tasks = 16
+        mpirun_cmd="mpirun -gpu -np " + str(mpi_tasks)+" mpibind"
+    elif 'sierra' in node_name:
+        if mpi_tasks<=0: mpi_tasks = 16
+        mpirun_cmd="lrun -T16 -p" + str(mpi_tasks)
     # add more machine names here
     elif 'Linux' in sys_name:
-        if omp_threads<=0: omp_threads=1;
         if mpi_tasks<=0: mpi_tasks = 1
-        mpirun_cmd="mpirun -np " + str(mpi_tasks)
-    elif 'Darwin' in sys_name:
-        if omp_threads<=0: omp_threads=1;
-        if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
     else:
         #default mpi command
-        if omp_threads<=0: omp_threads=1;
         if mpi_tasks<=0: mpi_tasks = 1
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
 
     return mpirun_cmd
 
 #------------------------------------------------
-def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", mpi_tasks=0, omp_threads=0, cpu_allocation="", verbose=False):
-
+def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=0, cpu_allocation="", verbose=False):
     assert sys.version_info >= (3,5) # named tuples in Python version >=3.3
-
     sep = '/'
-    if pytest_dir == "none":
-        pytest_dir = os.getcwd()
-
+    pytest_dir = os.getcwd()
     pytest_dir_list = pytest_dir.split(sep)
     sw4_base_list = pytest_dir_list[:-1] # discard the last sub-directory (pytest)
 
-    pytest_dir_name = "pytest-sw4mopt"
-
     sw4_base_dir = sep.join(sw4_base_list)
     optimize_dir =  sw4_base_dir + sep + sw4_exe_dir
-    reference_dir = pytest_dir + sep + 'reference'
+    reference_dir = pytest_dir + '/reference'
 
-    if verbose: print('pytest_dir =', pytest_dir)
-    if verbose: print('sw4_base_dir =', sw4_base_dir)
-    if verbose: print('optimize_dir =', optimize_dir)          
-    if verbose: print('reference_dir =', reference_dir)          
-    
     # make sure the directories are there
     if not os.path.isdir(sw4_base_dir):
         print("ERROR: directory", sw4_base_dir, "does not exists")
         return False
     if not os.path.isdir(optimize_dir):
-        print("ERROR: directory", optimize_dir, "does not exists (HINT: use -d 'sw4_exe_dir' or -p 'pytest_dir')")
+        print("ERROR: directory", optimize_dir, "does not exists (HINT: use -d 'sw4_exe_dir')")
         return False
     if not os.path.isdir(reference_dir):
         print("ERROR: directory", reference_dir, "does not exists")
         return False
     
+    if verbose: print('pytest_dir =', pytest_dir)
+    if verbose: print('sw4_base_dir =', sw4_base_dir)
+    if verbose: print('optimize_dir =', optimize_dir)          
+    if verbose: print('reference_dir =', reference_dir)          
+    
     sw4_exe = optimize_dir + '/sw4mopt'
-
     #print('sw4-exe = ', sw4_exe)
 
     # make sure sw4 is present in the optimize dir
     if not os.path.isfile(sw4_exe):
-        print("ERROR: the file", sw4_exe, "does not exists (DID YOU FORGET TO BUILD SW4?)")
+        print("ERROR: the file", sw4_exe, "does not exists (DID YOU FORGET TO BUILD SW4MOPT?)")
         return False
 
     # guess the mpi run command from the uname info
@@ -231,17 +198,19 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", mpi_tasks=0, omp_th
     num_test=0
     num_pass=0
     num_fail=0
-    num_skip=0
 
-    all_dirs = ['gaussian', 'gaussian']
-    all_cases = ['gaussian-lbfgs', 'gaussian-nlcg']
-    all_results =['gaussian-lbfgs.log', 'gaussian-nlcg.log']
-
-    # run all tests
+    all_dirs    = ['gradtest','hesstest','misfitcurve','onepoint', 'gausian', 'gausian']
+    all_cases   = ['grad','hesstest','misfit1d','inv', 'gaussian-lbfgs', 'gaussian-nlcg']
+    all_results = ['GradientTest.txt', 'Hessian.txt', 'Misfit1d.txt', 'convergence.log', 'gaussian-lbfgs.log', 'gaussian-nlcg.log']
+    all_abslim  = [1e-10, 1e-20, 1e-10, 1e-10]
+    num_meshes  = [1, 1, 1, 1] # default number of meshes for level 0
+    
+    print("Running all tests for level", testing_level, "...")
+# run all tests
     for qq in range(len(all_dirs)):
-   
-        test_dir = os.getcwd() + sep + 'reference' + sep + all_dirs[qq]
-        case_dir = all_cases[qq]
+    
+        test_dir = all_dirs[qq]
+        base_case = all_cases[qq]
         result_file = all_results[qq]
 
         #make a local test directory
@@ -250,78 +219,92 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", mpi_tasks=0, omp_th
 
         os.chdir(test_dir) # change to the new local directory
 
-        num_test = num_test+1
-    
-        test_case = case_dir + '.in'
-        if verbose: 
-            print('Starting test #', num_test, 'in directory:', test_dir, 'with input file:', test_case)
-
-        sw4_input_file = test_dir + sep + test_case
-        #print('sw4_input_file = ', sw4_input_file)
-
-        local_dir = pytest_dir + sep + test_dir
-        #print('local_dir = ', local_dir)
-        # pipe stdout and stderr to a temporary file
-        run_cmd = mpirun_cmd.split() + [
-            sw4_exe,
-            sw4_input_file
-        ]
-
-        sw4_stdout_file = open(case_dir + '.out', 'wt')
-        sw4_stderr_file = open(case_dir + '.err', 'wt')
-
-        # pipe stdout and stderr to a temporary file
-        # run_cmd = sw4_mpi_run + ' ' + sw4_input_file + ' >& ' + sw4_stdout_file
-
-        # run sw4
-        run_dir = os.getcwd()
-        # print('Running sw4 from directory:', run_dir)
-
-        status = subprocess.run(
-            run_cmd,
-            stdout=sw4_stdout_file,
-            stderr=sw4_stderr_file,
-        )
-
-        sw4_stdout_file.close()
-        sw4_stderr_file.close()
-
-        if status.returncode!=0:
-            print('ERROR: Test', test_case, ': sw4 returned non-zero exit status=', status.returncode, 'aborting test')
-            print('run_cmd=', run_cmd)
-            print("DID YOU USE THE CORRECT SW4 EXECUTABLE? (SPECIFY DIRECTORY WITH -d OPTION)")
-            return False # bail out
-
-
-        ref_result = reference_dir + sep + test_dir + sep + case_dir + sep + result_file
-        #print('Test #', num_test, 'output dirs: local case_dir =', case_dir, 'ref_result =', ref_result)
-
-        success = False
-
-        if all_cases[qq] == 'gaussian-lbfgs':
-            with open(case_dir + '.out') as f:
-                lines = [line.rstrip() for line in f]
-            if lines[-4].split()[1] == '32.8476':
-                success = True
-        elif all_cases[qq] == 'gaussian-nlcg':
-            with open(case_dir + '.out') as f:
-                lines = [line.rstrip() for line in f]
-            if lines[-4].split()[1] == '50.0037':
-                success = True
-
-        if success:        
-            print('Test #', num_test, "Input file:", test_case, 'PASSED')
-            num_pass += 1
-        else:
-            print('Test #', num_test, "Input file:", test_case, 'FAILED')
-            num_fail += 1
+        # put all test cases in a list and add a for loop for each test_dir
+        for ii in range(num_meshes[qq]):
+            num_test = num_test+1
         
+            case_file = base_case
+            test_case = case_file + '.in'
+            if verbose: 
+                print('Starting test #', num_test, 'in directory:', test_dir, 'with input file:', test_case)
+
+            sw4_input_file = reference_dir + sep + test_dir + sep + test_case
+            #print('sw4_input_file = ', sw4_input_file)
+
+            sw4_stdout_file = case_file + '.out'
+            
+            local_dir = pytest_dir + sep + test_dir
+            #print('local_dir = ', local_dir)
+            # pipe stdout and stderr to a temporary file
+            run_cmd = mpirun_cmd.split() + [
+                sw4_exe,
+                sw4_input_file
+            ]
+
+            sw4_stdout_file = open(case_file + '.out', 'wt')
+            sw4_stderr_file = open(case_file + '.err', 'wt')
+
+            # pipe stdout and stderr to a temporary file
+#            run_cmd = sw4_mpi_run + ' ' + sw4_input_file + ' >& ' + sw4_stdout_file
+
+            # run sw4mopt
+            run_dir = os.getcwd()
+            #print('Running sw4mopt from directory:', run_dir)
+            # assign OMP_NUM_THREADS
+            start=time.time()
+            status = subprocess.run(
+                run_cmd,
+                stdout=sw4_stdout_file,
+                stderr=sw4_stderr_file,
+            )
+            end = time.time()-start
+            sw4_stdout_file.close()
+            sw4_stderr_file.close()
+            print(sw4_input_file, "Total time",end)
+
+            if status.returncode!=0:
+                print('ERROR: Test', test_case, ': sw4mopt returned non-zero exit status=', status.returncode, 'aborting test')
+                print('run_cmd=', run_cmd)
+                print("DID YOU USE THE CORRECT SW4MOPT EXECUTABLE? (SPECIFY DIRECTORY WITH -d OPTION)")
+                return False # bail out
+
+            ref_result = reference_dir + sep + test_dir + sep + 'run1' + sep + result_file
+            #print('Test #', num_test, 'output dirs: local case_file =', case_file, 'ref_result =', ref_result)
+
+            if result_file == 'energy.log':
+                success = compare_energy('run1' + sep + result_file, 1e-10, verbose)
+            else:
+                # compare output with reference result (always compare the last line)
+                success = compare_one_line(ref_result , 'run1' + sep + result_file, 1e-5, all_abslim[qq], -1, verbose)
+                if success and 'attenuation' in test_dir:
+                    # also compare the 3rd last line in the files
+                    success = compare_one_line(ref_result , 'run1' + sep + result_file, 1e-5, all_abslim[qq], -3, verbose)
+            if success:        
+                print('Test #', num_test, "Input file:", test_case, 'PASSED')
+                num_pass += 1
+            else:
+                print('Test #', num_test, "Input file:", test_case, 'FAILED')
+                num_fail += 1
+            
         # end for qq in all_dirs[qq]
 
-        os.chdir('../..') # change back to the parent directory
+        # cleanup tmp dir
+        listOfTmpFiles = os.listdir(path='tmp');
+#        print('listOfTmpFiles:', listOfTmpFiles);
+        for fname in listOfTmpFiles:
+            fullName = os.path.join("tmp",fname);
+            print('fileName = ', fullName);
+            os.remove(fullName); # remove each file in the tmp dir
+        #end for
+        os.rmdir("tmp");
+        if verbose: 
+            print('Done removing tmp dir');
+        
+        os.chdir('..') # change back to the parent directory
+
 
     # end for all cases in the test_dir
-    print('Out of', num_test, 'tests,', num_fail, 'failed,', num_pass, 'passed, and', num_skip, 'skipped')
+    print('Out of', num_test, 'tests,', num_fail, 'failed and ', num_pass, 'passed')
     # normal termination
     return True
     
@@ -329,32 +312,32 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", mpi_tasks=0, omp_th
 if __name__ == "__main__":
     assert sys.version_info >= (3,5) # named tuples in Python version >=3.3
     # default arguments
+    testing_level=0
     verbose=False
     mpi_tasks=0 # machine dependent default
     omp_threads=0 #no threading by default
-    cpu_allocation=""
 
     parser=argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
+    parser.add_argument("-l", "--level", type=int, choices=[0, 1, 2], 
+                        help="testing level")
     parser.add_argument("-m", "--mpitasks", type=int, help="number of mpi tasks")
     parser.add_argument("-t", "--ompthreads", type=int, help="number of omp threads per task")
-    parser.add_argument("-d", "--sw4_exe_dir", help="name of directory for sw4 executable", default="optimize_mp")
-    parser.add_argument("-p", "--pytest_dir", help="full path to the directory of pytest (/path/sw4/pytest)", default="none")
+    parser.add_argument("-d", "--sw4_exe_dir", help="name of directory for sw4 executable", default="optimize")
     parser.add_argument("-A","--cpu_allocation", help="name of cpu bank/allocation",default="")
     args = parser.parse_args()
-
     if args.verbose:
         #print("verbose mode enabled")
         verbose=True
+    if args.level:
+        #print("Testing level specified=", args.level)
+        testing_level=args.level
     if args.mpitasks:
         #print("MPI-tasks specified=", args.mpitasks)
         if args.mpitasks > 0: mpi_tasks=args.mpitasks
     if args.ompthreads:
         #print("OMP-threads specified=", args.ompthreads)
         if args.ompthreads > 0: omp_threads=args.ompthreads
-    if args.pytest_dir:
-        #print("sw4_exe specified=", args.sw4_exe)
-        pytest_dir=args.pytest_dir
     if args.sw4_exe_dir:
         #print("sw4_exe_dir specified=", args.sw4_exe_dir)
         sw4_exe_dir=args.sw4_exe_dir
@@ -362,6 +345,5 @@ if __name__ == "__main__":
         #print("cpu_allocation specified=", args.cpu_allocation)
         cpu_allocation=args.cpu_allocation
 
-    if not main_test(sw4_exe_dir, pytest_dir, mpi_tasks, omp_threads, cpu_allocation, verbose):
-        print("test_sw4mopt was unsuccessful")
-
+    if not main_test(sw4_exe_dir, testing_level, mpi_tasks, omp_threads, cpu_allocation, verbose):
+        print("test_sw4 was unsuccessful")
