@@ -1,0 +1,47 @@
+# modules loaded should look like
+#1) texlive/2016   2) StdEnv (S)   3) opt   4) rocm/3.9.0   5) openmpi-gnu/4.0   6) gnu/8.2.1
+#use make -f Makefile.hipcc
+proj = yes
+FC = gfortran
+LINKER = hipcc
+CXX = $(PREP) hipcc
+ckernel=yes 
+openmp=no
+raja_cuda=yes
+RAJA_LOCATION = /home/users/coe0145/RAJA/Dev2/raja/install_rocm3.9
+RAJA_LOCATION = /home/users/coe0145/RAJA/Dev2/raja/install_906
+RAJA_LOCATION = /usr/workspace/wsrzd/ramesh/Project6/2021/HIP/RAJA-v0.13.0/install
+PROJ_HOME = /gpfs/alpine/geo130/proj-shared/sw4_raja/LIBS/proj-5.0.0/install_12_27_2018
+PROJ_HOME = /home/users/coe0145/Umpire/Proj5/proj-5.0.0/install
+PROJ_HOME = /usr/workspace/wsb/ramesh/CORAL2/CORONA/proj-5.0.0/install
+PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/HIP/proj-5.0.0/install
+#UMPIRE_HOME = /gpfs/alpine/geo130/proj-shared/sw4_raja/LIBS/Umpire/install_summit_gcc4.8.5
+#UMPIRE_HOME = /gpfs/alpine/geo130/proj-shared/sw4_raja/LIBS/Umpire/install_summit_xl
+UMPIRE_HOME = /home/users/coe0145/Umpire/Umpire2/Umpire/installx3
+UMPIRE_HOME = /home/users/coe0145/Umpire/Umpire4/Umpire/install
+UMPIRE_HOME = /usr/workspace/wsb/ramesh/CORAL2/CORONA/Umpire/install
+UMPIRE_HOME = /usr/workspace/wsb/ramesh/Umpire/umpire-4.0.1/install_corona
+UMPIRE_HOME = /home/users/coe0145/Umpire/DEV/Umpire/install2
+UMPIRE_HOME = /home/users/coe0145/Umpire/DEV/Umpire/install_rocm3.9
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/HIP/umpire-5.0.0/install_rocn4.0.1
+CALIPER_LOCATION = /gpfs/alpine/geo130/proj-shared/sw4_raja/LIBS/Caliper/install_summit
+HIP_ROOT_DIR = $(HIP_PATH)
+HSA_ROOT_DIR = /opt/rocm-4.0.1/hsa
+GCC_LINK_LINE = -L $(HIP_ROOT_DIR)/lib -L $(HSA_ROOT_DIR)/lib -lhsa-runtime64  -lm -lstdc++ -lgfortran -ldl
+CUDA_HOME = $(OLCF_CUDA_ROOT)
+MPI_HOME =  /opt/cray/pe/cray-mvapich2/2.3.4/infiniband/cray/10.0
+MPI_HOME = /cm/shared/apps/mpich/ge/gcc/64/3.3.2
+MPI_HOME = /opt/cray/pe/cray-mvapich2_nogpu/2.3.4/infiniband/cray/10.0
+MPI_HOME = /opt/cray/pe/cray-mvapich2_nogpu/2.3.3/infiniband/cray/10.0
+MPI_HOME = /opt/cray/pe/cray-mvapich2_nogpu/2.3.5/infiniband/cray/10.0
+LAPACK_DIR = /opt/cray/pe/libsci/20.03.1/CRAY/8.5/x86_64/lib
+LAPACK_LIB = /opt/cray/pe/libsci/default/CRAY/8.5/x86_64/lib/
+LAPACK_INC = /opt/cray/pe/libsci/20.03.1/CRAY/8.5/x86_64/include
+EXTRA_FORT_FLAGS = 
+MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_RAJA_VERSION=7 -DSW4_STAGED_MPI_BUFFERS=1 -DSW4_USE_UMPIRE=1 -I$(MPI_HOME)/include -I${ROCM_PATH}/include -isystem /opt/rocm-4.0.1/llvm/lib/clang/12.0.0/include/.. -isystem /opt/rocm-4.0.1/hsa/include -isystem /opt/rocm-4.0.1/hip/include -D__HIP_ARCH_GFX906__=1 --cuda-gpu-arch=gfx906 -O2 -x hip -Wno-inconsistent-missing-override --amdgpu-target=gfx906 -fgpu-rdc -DUSE_DIRECT_INVERSE=1 --rocm-path=/opt/rocm-4.0.1 -DRAJA_ONLY=1 
+LINKFLAGS =  -std=c++11  
+EXTRA_CXX_FLAGS =  -O3  -x hip -DDISABLE_PREFETCH  -std=c++11 -I $(CUDA_HOME)/include -I$(UMPIRE_HOME)/include -I$(RAJA_LOCATION)/include  -I$(CALIPER_LOCATION)/include -DUSE_NVTX -DRAJA_USE_CUDA -DSW5_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_HIP -I$(PROJ_HOME)/include $(MORE_FLAGS) -Wno-inconsistent-missing-override  --rocm-path=/opt/rocm-4.0.1
+
+EXTRA_CXX_FLAGS2 =  -O3  -DDISABLE_PREFETCH -std=c++11 -I $(CUDA_HOME)/include -I$(UMPIRE_HOME)/include -I$(RAJA_LOCATION)/include  -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_HIP   $(MORE_FLAGS)
+
+EXTRA_LINK_FLAGS = -fgpu-rdc  -O3  -std=c++11 -L $(LAPACK_LIB)  -lgfortran -lsci_cray  -L $(RAJA_LOCATION)/lib -lRAJA -L $(PROJ_HOME)/lib64 -lproj -L $(MPI_HOME)/lib -lmpi -L $(UMPIRE_HOME)/lib -lumpire $(GCC_LINK_LINE) -v --amdgpu-target=gfx906

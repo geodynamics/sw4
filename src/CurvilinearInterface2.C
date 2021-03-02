@@ -265,29 +265,54 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   int nsw = m_ew->m_iEnd[m_gc] - m_ew->m_iStart[m_gc] + 1;
   copy_str(lm_strx_c, a_strx[m_gc], ndif, m_ie - m_ib + 1, nsw);
   communicate_array1d(lm_strx_c, m_ie - m_ib + 1, 0, m_nghost);
+#ifdef ENABLE_CUDA
   cudaMemcpyAsync(m_strx_c, lm_strx_c, (m_ie - m_ib + 1) * sizeof(double),
                   cudaMemcpyHostToDevice, 0);
+#endif
+#ifdef ENABLE_HIP
+  hipMemcpyAsync(m_strx_c, lm_strx_c, (m_ie - m_ib + 1) * sizeof(double),
+                  hipMemcpyHostToDevice, 0);
+#endif
 
   ndif = m_nghost - (m_ew->m_iStartInt[m_gf] - m_ew->m_iStart[m_gf]);
   nsw = m_ew->m_iEnd[m_gf] - m_ew->m_iStart[m_gf] + 1;
   copy_str(lm_strx_f, a_strx[m_gf], ndif, m_ief - m_ibf + 1, nsw);
   communicate_array1d(lm_strx_f, m_ief - m_ibf + 1, 0, m_nghost);
+#ifdef ENABLE_CUDA
   cudaMemcpyAsync(m_strx_f, lm_strx_f, (m_ief - m_ibf + 1) * sizeof(double),
                   cudaMemcpyHostToDevice, 0);
+#endif
+#ifdef ENABLE_HIP
+  hipMemcpyAsync(m_strx_f, lm_strx_f, (m_ief - m_ibf + 1) * sizeof(double),
+                  hipMemcpyHostToDevice, 0);
+#endif
 
   ndif = m_nghost - (m_ew->m_jStartInt[m_gc] - m_ew->m_jStart[m_gc]);
   nsw = m_ew->m_jEnd[m_gc] - m_ew->m_jStart[m_gc] + 1;
   copy_str(lm_stry_c, a_stry[m_gc], ndif, m_je - m_jb + 1, nsw);
   communicate_array1d(lm_stry_c, m_je - m_jb + 1, 1, m_nghost);
+#ifdef ENABLE_CUDA
   cudaMemcpyAsync(m_stry_c, lm_stry_c, (m_je - m_jb + 1) * sizeof(double),
                   cudaMemcpyHostToDevice, 0);
+#endif
+#ifdef ENABLE_HP
+  hipMemcpyAsync(m_stry_c, lm_stry_c, (m_je - m_jb + 1) * sizeof(double),
+                  hipMemcpyHostToDevice, 0);
+#endif
 
   ndif = m_nghost - (m_ew->m_jStartInt[m_gf] - m_ew->m_jStart[m_gf]);
   nsw = m_ew->m_jEnd[m_gf] - m_ew->m_jStart[m_gf] + 1;
   copy_str(lm_stry_f, a_stry[m_gf], ndif, m_jef - m_jbf + 1, nsw);
   communicate_array1d(lm_stry_f, m_jef - m_jbf + 1, 1, m_nghost);
+#ifdef ENABLE_CUDA
   cudaMemcpyAsync(m_stry_f, lm_stry_f, (m_jef - m_jbf + 1) * sizeof(double),
                   cudaMemcpyHostToDevice, 0);
+#endif
+#ifdef ENABLE_HIP
+  hipMemcpyAsync(m_stry_f, lm_stry_f, (m_jef - m_jbf + 1) * sizeof(double),
+                  hipMemcpyHostToDevice, 0);
+#endif
+
 
   SYNC_STREAM;
 
