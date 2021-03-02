@@ -101,6 +101,7 @@ int main(int argc, char **argv) {
   MPI_Info_free(&info);
 
   presetGPUID(myRank, local_rank, local_size);
+
 #if defined(SW4_SIGNAL_CHECKPOINT)
   std::signal(SIGUSR1, signal_handler);
 #endif

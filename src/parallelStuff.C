@@ -1241,13 +1241,24 @@ void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
     lbuf[k + i * bl] = data[i * stride + k];
   });
 #endif
+
+#if defined(ENABLE_CUDA)
   if (async)
     SW4_CheckDeviceError(
         cudaMemcpyAsync(buf, lbuf, count * bl * 8, cudaMemcpyDeviceToHost, 0));
   else
     SW4_CheckDeviceError(
         cudaMemcpy(buf, lbuf, count * bl * 8, cudaMemcpyDeviceToHost));
-#else
+#elseif defined(ENABLE_HIP)
+  if (async)
+    SW4_CheckDeviceError(
+        hipMemcpyAsync(buf, lbuf, count * bl * 8, hipMemcpyDeviceToHost, 0));
+  else
+    SW4_CheckDeviceError(
+        hipMemcpy(buf, lbuf, count * bl * 8, hipMemcpyDeviceToHost));
+#endif
+
+#else // #ifdef SW4_STAGED_MPI_BUFFERS
 
   // Code for PINNED,DEVICE AND MANAGED BUFFERS
 #ifndef UNRAJA
@@ -1306,8 +1317,15 @@ void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
   // The STAGED option
 #ifdef SW4_STAGED_MPI_BUFFERS
   float_sw4* lbuf = global_variables.device_buffer;
+
+#if defined(ENABLE_CUDA)
   SW4_CheckDeviceError(
       cudaMemcpyAsync(lbuf, buf, count * bl * 8, cudaMemcpyHostToDevice, 0));
+#elseif defined(ENABLE_HIP)
+SW4_CheckDeviceError(
+      hipMemcpyAsync(lbuf, buf, count * bl * 8, hipMemcpyHostToDevice, 0));
+#endif
+  
 #ifndef UNRAJA
   Range<16> k_range(0, bl);
   Range<16> i_range(0, count);

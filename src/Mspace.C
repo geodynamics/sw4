@@ -47,7 +47,7 @@ void presetGPUID(int mpi_rank, int local_rank, int local_size) {
                 << " ranks per node\n";
     }
     global_variables.device = device;
-    printf(" presetGPU Called ::  LOCAL RANK %d \n", device);
+    printf(" CUDA presetGPU Called ::  LOCAL RANK %d \n", device);
     SW4_CheckDeviceError(cudaSetDevice(device));
     SW4_CheckDeviceError(cudaFree(NULL));
     char uuid[80];
@@ -68,17 +68,26 @@ void presetGPUID(int mpi_rank, int local_rank, int local_size) {
 #ifdef ENABLE_HIP
   int devices_per_node = 4;
   SW4_CheckDeviceError(hipGetDeviceCount(&devices_per_node));
-  printf("NUmber of device is %d\n", devices_per_node);
+  printf("Number of devices is %d\n", devices_per_node);
   fflush(stdout);
   global_variables.num_devices = devices_per_node;
   if (devices_per_node > 1) {
-    char *crank = getenv("SLURM_PROC");
-    printf("Return fro GETENV IS %s\n", crank);
-    fflush(stdout);
-    int device = atoi(crank) % devices_per_node;
-    device = mpi_rank % devices_per_node;
+    // char *crank = getenv("SLURM_LOCALID");
+    // printf("Return from GETENV IS %s\n", crank);
+    // fflush(stdout);
+    // int device = atoi(crank) % devices_per_node;
+    // device = mpi_rank % devices_per_node;
+    int device;
+    if (local_size == devices_per_node) {
+      device = local_rank;
+    } else {
+      device = local_rank % devices_per_node;
+      std::cerr << "WARNING :: There are " << devices_per_node
+                << " devices per node and " << local_size
+                << " ranks per node\n";
+    }
     global_variables.device = device;
-    printf(" presetGPU Called ::  LOCAL RANK %d \n", device);
+    printf(" HIP presetGPU Called ::  LOCAL RANK %d \n", device);
     fflush(stdout);
     SW4_CheckDeviceError(hipSetDevice(device));
   }
