@@ -187,7 +187,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       for( int g=0 ; g < mNumberOfGrids ; g++ )
       {
 	 Upred_saved[g]->pop( Uacc[g], currentTimeStep );
-         //         communicate_array( Uacc[g], g );
+         communicate_array( Uacc[g], g );
       }
       enforceBC( Uacc, a_Mu, a_Lambda, AlphaVEm, t, BCForcing );
 
