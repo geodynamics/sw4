@@ -1,4 +1,4 @@
-grid h=200 x=13000 y=13000 z=13000 lon=-118.0  lat=37.0  az=90. 
+grid h=100 x=13000 y=13000 z=13000 lon=-118.0  lat=37.0  az=90. 
 supergrid gp=15
 
 fileio verbose=1 path=nlcg_output temppath=tmp pfs=1
@@ -38,7 +38,7 @@ mparcart nx=97 ny=97 nz=114 init=0  type=vsvp
 #mpallpts type=vsvp
 #97x97x114
 
-mrun task=minvert mcheck=on tsoutput=on savesteps=1500 misfit=l2 pseudohessian=on
+mrun task=minvert mcheck=on tsoutput=on savesteps=1500 misfit=l2 pseudohessian=on writedfm=on
 #lbfgs nvectors=35 maxit=5 tolerance=1e-12 linesearch=on ihess0=scale-factors
 #mscalefactors  vs=1333  vp=2000 
 
