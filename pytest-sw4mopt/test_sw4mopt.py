@@ -117,9 +117,9 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     if 'quartz' in node_name:
         if omp_threads<=0: omp_threads=2;
         if mpi_tasks<=0: mpi_tasks = int(36/omp_threads)
-        if cpu_allocation == "";
+        if cpu_allocation == "":
            mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks) + " -c " + str(omp_threads)
-        else
+        else:
            mpirun_cmd="srun -ppdebug -A " + cpu_allocation + " -n " + str(mpi_tasks) + " -c " + str(omp_threads)
     elif 'cab' in node_name:
         if omp_threads<=0: omp_threads=2;
@@ -324,8 +324,7 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--mpitasks", type=int, help="number of mpi tasks")
     parser.add_argument("-t", "--ompthreads", type=int, help="number of omp threads per task")
     parser.add_argument("-d", "--sw4_exe_dir", help="name of directory for sw4 executable", default="optimize")
-    parser.add_argument("-A","--cpu_allocation", help="name of cpu bank/allocation",defau
-lt="")
+    parser.add_argument("-A","--cpu_allocation", help="name of cpu bank/allocation",default="")
     args = parser.parse_args()
     if args.verbose:
         #print("verbose mode enabled")
