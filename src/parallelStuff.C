@@ -1249,7 +1249,7 @@ void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
   else
     SW4_CheckDeviceError(
         cudaMemcpy(buf, lbuf, count * bl * 8, cudaMemcpyDeviceToHost));
-#elseif defined(ENABLE_HIP)
+#elif defined(ENABLE_HIP)
   if (async)
     SW4_CheckDeviceError(
         hipMemcpyAsync(buf, lbuf, count * bl * 8, hipMemcpyDeviceToHost, 0));
@@ -1321,7 +1321,7 @@ void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
 #if defined(ENABLE_CUDA)
   SW4_CheckDeviceError(
       cudaMemcpyAsync(lbuf, buf, count * bl * 8, cudaMemcpyHostToDevice, 0));
-#elseif defined(ENABLE_HIP)
+#elif defined(ENABLE_HIP)
 SW4_CheckDeviceError(
       hipMemcpyAsync(lbuf, buf, count * bl * 8, hipMemcpyHostToDevice, 0));
 #endif
