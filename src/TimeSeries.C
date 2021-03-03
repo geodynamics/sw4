@@ -2083,15 +2083,15 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 	 float_sw4 ai, wgh[6], dwgh[6], ddwgh[6];
 	 if( ie < 3 )
 	 {
-	    mmin = 1;
-	    mmax = 5;
+	    mmin = 0;
+	    mmax = 4;
 	    ai   = ir - (mmin+2);
 	    getwgh5( ai, wgh, dwgh, ddwgh );
 	 }
 	 else if( ie > nfrsteps-3 )
 	 {
-	    mmin = nfrsteps-4;
-	    mmax = nfrsteps;
+	    mmin = nfrsteps-5;
+	    mmax = nfrsteps-1;
 	    ai   = ir - (mmin+2);
 	    getwgh5( ai, wgh, dwgh, ddwgh );
 	 }
