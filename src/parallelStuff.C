@@ -497,6 +497,7 @@ void EW::communicate_array(Sarray& u, int grid) {
 #else
 //-----------------------------------------------------------------------
 void EW::communicate_array(Sarray& u, int grid) {
+  std::cout<<"void EW::communicate_array(Sarray& u, int grid"<<std::flush;
   SW4_MARK_FUNCTION;
   // The async version using either device or managed memory works
   // spectrum-mpi/2018.02.05 on Ray. And it is slower on the Hayward case:
@@ -687,6 +688,9 @@ void EW::communicate_array_2d(Sarray& u, int g, int k) {
   }
 }
 #endif  // if defined(ENABLE_GPU)
+
+
+
 #if defined(ENABLE_GPU)
 void EW::communicate_array_2d_ext(Sarray& u) {
   communicate_array_2d_ext_async(u);
@@ -908,12 +912,12 @@ void EW::communicate_array_2dfinest(Sarray& u) {
                m_send_type_2dfinest[1], m_neighbor[3], ytag2,
                m_cartesian_communicator, &status);
 }
+//-----------------------------------------------------------------------
 void EW::make_type(vector<std::tuple<int, int, int>>& send_type,
                    vector<std::tuple<float_sw4*, float_sw4*>>& bufs_type,
                    int i1, int j1, int k1, int i2, int j2, int k2, int g) {
   send_type[2 * g] = std::make_tuple(i1, j1, k1);
   send_type[2 * g + 1] = std::make_tuple(i2, j2, k2);
-  //std::cout<<"MAKE_TYPE"<<i1<<" "<<j1<<" "<<i2<<" "<<j2<<"\n"<<std::flush;
   
   float_sw4* tbuf =
       SW4_NEW(mpi_buffer_space, float_sw4[i1 * j1 * 4 + i2 * j2 * 4]);
@@ -928,6 +932,7 @@ void EW::make_type(vector<std::tuple<int, int, int>>& send_type,
   global_variables.buffer_size = std::max<size_t>(
       global_variables.buffer_size, std::max<size_t>(i1 * j1, i2 * j2));
 }
+//-----------------------------------------------------------------------
 void EW::make_type_2d(vector<std::tuple<int, int, int>>& send_type,
                       vector<std::tuple<float_sw4*, float_sw4*>>& bufs_type,
                       int i1, int j1, int k1, int g) {
@@ -939,6 +944,7 @@ void EW::make_type_2d(vector<std::tuple<int, int, int>>& send_type,
   global_variables.buffer_size =
       std::max<size_t>(global_variables.buffer_size, i1 * j1);
 }
+//-----------------------------------------------------------------------
 void EW::communicate_array_async(Sarray& u, int grid) {
   SW4_MARK_FUNCTION;
   // u.forceprefetch();
@@ -1061,7 +1067,7 @@ void EW::communicate_array_async(Sarray& u, int grid) {
                     &status);
     }
   } else if (u.m_nc == 21) {
-    std::cout << "This is happening\n";
+    std::cerr<< "WARNING:: untested u.m_nc=21 branch being used \n";
     int xtag1 = 345;
     int xtag2 = 346;
     int ytag1 = 347;
@@ -1099,6 +1105,7 @@ void EW::communicate_array_async(Sarray& u, int grid) {
   }
   // u.prefetch();
 }
+//-----------------------------------------------------------------------
 void EW::AMPI_Sendrecv(float_sw4* a, int scount,
                        std::tuple<int, int, int>& sendt, int sendto, int stag,
                        float_sw4* b, int rcount,
@@ -1130,7 +1137,6 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount,
     getbuffer_device(a, std::get<0>(buf), sendt, true);
     // getbuffer_host(a, std::get<0>(buf), sendt);
   }
-  // std::cout<<"send_count "<<send_count<<" recv_count "<<recv_count<<"\n";
 
 #if defined(SW4_TRACK_MPI)
 #if defined(ENABLE_MPI_TIMING_BARRIER)
@@ -1206,6 +1212,7 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount,
   sm.insert(size, SW4_CHRONO_DURATION_US(t1, t2));
 #endif
 }
+//-----------------------------------------------------------------------
 void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
                           std::tuple<int, int, int>& mtype, bool async) {
   SW4_MARK_FUNCTION;
@@ -1292,6 +1299,7 @@ void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
   // }
   // std::cout<<"Done\n";
 }
+//-----------------------------------------------------------------------
 void EW::getbuffer_host(float_sw4* data, float_sw4* buf,
                         std::tuple<int, int, int>& mtype) {
   SW4_MARK_FUNCTION;
@@ -1304,7 +1312,7 @@ void EW::getbuffer_host(float_sw4* data, float_sw4* buf,
     for (int k = 0; k < bl; k++) buf[k + i * bl] = data[i * stride + k];
   // std::cout<<"Done\n";
 }
-
+//-----------------------------------------------------------------------
 void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
                           std::tuple<int, int, int>& mtype, bool async) {
   SW4_MARK_FUNCTION;
@@ -1371,6 +1379,7 @@ SW4_CheckDeviceError(
   }
   // std::cout<<"Done\n";
 }
+//-----------------------------------------------------------------------
 void EW::putbuffer_host(float_sw4* data, float_sw4* buf,
                         std::tuple<int, int, int>& mtype) {
   SW4_MARK_FUNCTION;
@@ -1382,7 +1391,7 @@ void EW::putbuffer_host(float_sw4* data, float_sw4* buf,
   for (int i = 0; i < count; i++)
     for (int k = 0; k < bl; k++) data[i * stride + k] = buf[k + i * bl];
 }
-
+//-----------------------------------------------------------------------
 void EW::communicate_array_2d_async(Sarray& u, int g, int k) {
   SW4_MARK_FUNCTION;
   REQUIRE2(u.m_nc == 3,
@@ -1453,7 +1462,7 @@ void EW::communicate_array_2d_async(Sarray& u, int g, int k) {
     SW4_MARK_END("comm_array_2d_async::MPI-2");
   }
 }
-
+//-----------------------------------------------------------------------
 void EW::communicate_array_2d_async_memo(Sarray& u, int g, int k) {
   SW4_MARK_FUNCTION;
   REQUIRE2(u.m_nc == 3,
@@ -1526,6 +1535,7 @@ void EW::communicate_array_2d_async_memo(Sarray& u, int g, int k) {
     SW4_MARK_END("comm_array_2d_async::MPI-2");
   }
 }
+//-----------------------------------------------------------------------
 void EW::AMPI_Sendrecv2(float_sw4* a, int scount,
                         std::tuple<int, int, int>& sendt, int sendto, int stag,
                         float_sw4* b, int rcount,
@@ -1652,6 +1662,7 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount,
 }
 //-----------------------------------------------------------------------
 void EW::communicate_array_2d_isurf(Sarray& u, int iSurf) {
+  SW4_MARK_FUNCTION;
   REQUIRE2(
       u.m_nc == 1,
       "Communicate array 2d isurf, only implemented for one-component arrays");
