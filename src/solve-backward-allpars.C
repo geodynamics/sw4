@@ -179,7 +179,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
          communicate_array( Um[g], g );
       cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
       enforceBC( Um, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
-      
+
      // U-backward solution, corrector
       evalDpDmInTime( Up, U, Um, Uacc ); 
 

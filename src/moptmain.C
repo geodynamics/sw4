@@ -463,6 +463,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
       if( phcase > 0 )
       {
+         simulation.communicate_arrays( pseudo_hessian );
 // Interpolate pseudo-hessian to parameter grid
          float_sw4* phs=0, *phm=0;
          if( nmpars > 0 )
@@ -516,9 +517,9 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 	 f += tcoff*tikhonov;
       }
    }
-   else
+   else if( mopt->m_reg_coeff != 0 )
    {
-      double mf_reg;
+      double mf_reg=0;
       for( int m=0 ; m < nmpars ; m++ )
          dfsevent[m] = 0;
       for( int m=0 ; m < nmpard ; m++ )
