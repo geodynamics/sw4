@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
   MPI_Comm_size(shared_comm, &local_size);
   MPI_Info_free(&info);
 
-  presetGPUID(myRank, local_rank, local_size);
+  int device=presetGPUID(myRank, local_rank, local_size);
 
 #if defined(SW4_SIGNAL_CHECKPOINT)
   std::signal(SIGUSR1, signal_handler);
@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
 #ifdef SW4_USE_UMPIRE
   umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
 #ifdef ENABLE_HIP
-  auto allocator = rma.getAllocator("DEVICE::" + std::to_string(myRank));
+  auto allocator = rma.getAllocator("DEVICE::" + std::to_string(device));
 #else
   auto allocator = rma.getAllocator("UM");
 #endif

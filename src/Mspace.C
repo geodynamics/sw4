@@ -15,7 +15,8 @@ struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0, 0,
                                                          0, 1, 0, 0, 0, 0};
 using namespace std;
 
-void presetGPUID(int mpi_rank, int local_rank, int local_size) {
+int presetGPUID(int mpi_rank, int local_rank, int local_size) {
+  int device=-1;
 #if defined(ENABLE_GPU_ERROR)
   std::cerr
       << " Compilation error. Both ENABLE_CUDA and ENABLE_HIP are defined\n";
@@ -34,7 +35,6 @@ void presetGPUID(int mpi_rank, int local_rank, int local_size) {
   int devices_per_node = 4;
   SW4_CheckDeviceError(cudaGetDeviceCount(&devices_per_node));
   global_variables.num_devices = devices_per_node;
-  int device;
   if (devices_per_node > 1) {
     // char *crank = getenv("SLURM_LOCALID");
     // int device = atoi(crank) % devices_per_node;
@@ -77,7 +77,6 @@ void presetGPUID(int mpi_rank, int local_rank, int local_size) {
     // fflush(stdout);
     // int device = atoi(crank) % devices_per_node;
     // device = mpi_rank % devices_per_node;
-    int device;
     if (local_size == devices_per_node) {
       device = local_rank;
     } else {
@@ -95,6 +94,7 @@ void presetGPUID(int mpi_rank, int local_rank, int local_size) {
 
   // printf("Device set to %d \n", global_variables.device);
 #endif  // ENABLE_GPU
+  return device;
 }
 
 typedef struct {
