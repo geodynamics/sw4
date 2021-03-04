@@ -544,14 +544,15 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       }
    }
 
-   // Tang: write out dfm  when requested
-   if (mopt->m_write_dfm && it == mopt->m_maxit) {
+   // Tang: write out dfm  when requested, note nlcg start it=0, lbfgs start it=1
+   int writeit = mopt->m_optmethod == 2 ? mopt->m_maxit-1 : mopt->m_maxit;
+   if (mopt->m_write_dfm && it == writeit) {
        if(nmpard > 0) {
           std::string dfm_fname = simulation.getOutputPath() + "/dfm.h5";
           mopt->m_mp->write_dfm_hdf5(dfm, dfm_fname, MPI_COMM_WORLD);
           if (myrank == 0) 
              std::cout << "Written dfm to " << dfm_fname << endl;
-          printf("Rank %d, nmpard %d, it %d\n", myrank, nmpard, it);
+          /* printf("Rank %d, nmpard %d, it %d\n", myrank, nmpard, it); */
        }
        else
           std::cout << "Requested to write dfm but nmpard = 0, no data is written" << endl;

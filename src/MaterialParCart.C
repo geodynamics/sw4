@@ -1706,11 +1706,11 @@ void MaterialParCart::write_dfm_hdf5(double *dfm, std::string fname, MPI_Comm co
     count[2] = (m_ieint - m_ibint + 1) * ncomp;
 
     hsize_t total = count[0]*count[1]*count[2];
-    printf("Rank %d, Global: %llu %llu %llu, ncomp %d\n", m_myrank, dims[0], dims[1], dims[2], ncomp);
-    printf("Rank %d, Local start: %llu %llu %llu count: %llu %llu %llu, total %llu\n", 
-            m_myrank, start[0], start[1], start[2], count[0], count[1], count[2], total);
-    printf("Rank %d, %f %f, %f %f\n", m_myrank, dfm[0], dfm[1], dfm[total-2], dfm[total-1]);
-    fflush(stdout);
+    /* printf("Rank %d, Global: %llu %llu %llu, ncomp %d\n", m_myrank, dims[0], dims[1], dims[2], ncomp); */
+    /* printf("Rank %d, Local start: %llu %llu %llu count: %llu %llu %llu, total %llu\n", */ 
+    /*         m_myrank, start[0], start[1], start[2], count[0], count[1], count[2], total); */
+    /* printf("Rank %d, %f %f, %f %f\n", m_myrank, dfm[0], dfm[1], dfm[total-2], dfm[total-1]); */
+    /* fflush(stdout); */
 
     dspace = H5Screate_simple(3, dims, NULL);
     mspace = H5Screate_simple(3, count, NULL);
