@@ -207,6 +207,11 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     elif 'sierra' in node_name:
         if mpi_tasks<=0: mpi_tasks = 16
         mpirun_cmd="lrun -T16 -p" + str(mpi_tasks)
+    elif 'batch' in node_name: # for summit
+        if omp_threads<=0: omp_threads=7;
+        if mpi_tasks<=0: mpi_tasks = 6
+        mpirun_cmd="jsrun -a1 -c7 -r6 -l CPU-CPU -d packed -b packed:7 -n " + str(mpi_tasks)
+        # mpirun_cmd="jsrun -a1 -c7 -g1 -l CPU-CPU -d packed -b packed:7 -M -gpu -n " + str(mpi_tasks)
     # add more machine names here
     elif 'Linux' in sys_name:
         if mpi_tasks<=0: mpi_tasks = 1
