@@ -1739,3 +1739,67 @@ void MaterialParCart::write_dfm_hdf5(double *dfm, std::string fname, MPI_Comm co
        std::cout << "Warning: calling write_dfm_hdf5 without compiling SW4 with HDF5!" << endl;
 #endif
 }
+
+//-----------------------------------------------------------------------
+void MaterialParCart::interpolate_pseudohessian( int nmpars, double* phs,
+                                                 int nmpard, double* phm,
+                                                 vector<Sarray>& phgrid )
+{
+   int ncomp=3;
+   if( m_variables == 3 )
+      ncomp=2;
+   else if( m_variables == 4 )
+      ncomp=1;
+   double* ph;
+   if( nmpard > 0 )
+      ph = phm;
+   else
+      ph = phs;
+
+   int ig, jg, kg, g;
+   for( int ijk=0 ; ijk < ncomp*(m_keint-m_kbint+1)*(m_jeint-m_jbint+1)*(m_ieint-m_ibint+1); ijk++ )
+      ph[ijk]=0;
+
+   size_t ind=0;
+   for( int k=m_kbint ; k <= m_keint ; k++ )
+      for( int j=m_jbint ; j <= m_jeint ; j++ )
+	 for( int i=m_ibint ; i <= m_ieint ; i++ )
+	 {
+            float_sw4 x = m_xmin + i*m_hx;
+	    float_sw4 y = m_ymin + j*m_hy;
+	    float_sw4 z = m_zmin + k*m_hz;
+            m_ew->computeNearestGridPoint( ig, jg, kg, g, x, y, z );
+            if( m_ew->point_in_proc( ig, jg, g) )
+	    {
+               if( ncomp == 3 )
+               {
+                  ph[ind*3  ] = phgrid[g](1,ig,jg,kg);
+                  ph[ind*3+1] = phgrid[g](2,ig,jg,kg);
+                  ph[ind*3+2] = phgrid[g](3,ig,jg,kg);
+               }
+               else if( ncomp == 2 )
+               {
+                  ph[ind*2  ] = phgrid[g](2,ig,jg,kg);
+                  ph[ind*2+1] = phgrid[g](3,ig,jg,kg);
+               }
+               else 
+                  ph[ind] = phgrid[g](3,ig,jg,kg);
+            }
+            //            else
+            //            {
+            //               std::cout << "MaterialParCart::interpolate_hessian, error point "
+            //                         << ig << " " << jg << " " << kg << " not in processor " << 
+            //                  "Material grid point " << i << " " << j << " " k << endl;
+            //            }
+            ind++;
+         }
+   if( m_global )
+   {
+      int npts = m_nx*m_ny*m_nz;
+      float_sw4* tmp =new float_sw4[ncomp*npts];
+      for( int i=0 ; i < ncomp*npts ; i++ )
+         tmp[i] = ph[i];
+      MPI_Allreduce( tmp, ph, ncomp*npts, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      delete[] tmp;
+   }
+}

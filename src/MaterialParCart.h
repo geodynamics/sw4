@@ -66,7 +66,7 @@ public:
 		      std::vector<Sarray>& a_gradlambda );
 
    virtual void interpolate_pseudohessian(int nmpars, double* phs, int nmpard, double* phm, 
-                                          std::vector<Sarray>& phgrid){};
+                                          std::vector<Sarray>& phgrid);
 
    virtual void set_scalefactors( int nmpars, double* sfs, double rho_ref, 
                                   double mu_ref, double lambda_ref, 
