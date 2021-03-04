@@ -5,6 +5,10 @@
 #include <fstream>
 #include <sstream>
 
+#ifdef USE_HDF5
+#include <hdf5.h>
+#endif
+
 MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, int varcase, 
                                   char* fname, float_sw4 amp, float_sw4 omega )
    : MaterialParameterization( a_ew, fname )
@@ -1662,6 +1666,78 @@ void MaterialParCart::interpolate_to_coarse_vel( vector<Sarray>& rhogrid,
       communicate(cs);
       communicate(cp);
    }
+}
+
+void MaterialParCart::write_dfm_hdf5(double *dfm, std::string fname, MPI_Comm comm)
+{
+#ifdef USE_HDF5
+    hid_t fid, dset, fapl, dxpl, dspace, mspace;
+    hsize_t dims[3], start[3], count[3];
+    int ret;
+
+    int ncomp=3;
+    if(m_variables == 3)
+        ncomp=2;
+    else if(m_variables == 4)
+        ncomp=1;
+
+    fapl = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
+
+    dxpl = H5Pcreate(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE);
+
+    fid = H5Fcreate(fname.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
+    if (fid < 0) {
+        std::cout << "Error with dfm file createion!" << endl;
+        return;
+    }
+
+    dims[0] = m_nz;
+    dims[1] = m_ny;
+    dims[2] = m_nx*ncomp;
+
+    start[0] = m_kbint - 1;
+    start[1] = m_jbint - 1;
+    start[2] = (m_ibint - 1)*ncomp;
+
+    count[0] = m_keint - m_kbint + 1;
+    count[1] = m_jeint - m_jbint + 1;
+    count[2] = (m_ieint - m_ibint + 1) * ncomp;
+
+    hsize_t total = count[0]*count[1]*count[2];
+    /* printf("Rank %d, Global: %llu %llu %llu, ncomp %d\n", m_myrank, dims[0], dims[1], dims[2], ncomp); */
+    /* printf("Rank %d, Local start: %llu %llu %llu count: %llu %llu %llu, total %llu\n", */ 
+    /*         m_myrank, start[0], start[1], start[2], count[0], count[1], count[2], total); */
+    /* printf("Rank %d, %f %f, %f %f\n", m_myrank, dfm[0], dfm[1], dfm[total-2], dfm[total-1]); */
+    /* fflush(stdout); */
+
+    dspace = H5Screate_simple(3, dims, NULL);
+    mspace = H5Screate_simple(3, count, NULL);
+
+    dset = H5Dcreate(fid, "dfm", H5T_NATIVE_DOUBLE, dspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if (dset < 0) {
+        std::cout << "Error with dfm dset createion!" << endl;
+        return;
+    }
+
+    H5Sselect_hyperslab(dspace, H5S_SELECT_SET, start, NULL, count, NULL);
+
+    ret = H5Dwrite(dset, H5T_NATIVE_DOUBLE, mspace, dspace, dxpl, dfm);
+    if (dset < 0) {
+        std::cout << "Error with dfm dset createion!" << endl;
+    }
+
+    H5Dclose(dset);
+    H5Sclose(dspace);
+    H5Sclose(mspace);
+    H5Pclose(fapl);
+    H5Pclose(dxpl);
+    H5Fclose(fid);
+#else
+   if( m_myrank == 0 )
+       std::cout << "Warning: calling write_dfm_hdf5 without compiling SW4 with HDF5!" << endl;
+#endif
 }
 
 //-----------------------------------------------------------------------

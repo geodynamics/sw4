@@ -44,6 +44,7 @@ public:
 				 double* sfd, double* sfs, bool compute_derivative, 
 				 double* dmfd_reg, double* dmfs_reg );
    virtual int get_varcase()=0; 
+   virtual void write_dfm_hdf5(double* dfm, std::string fname,  MPI_Comm comm)=0;
    void get_nr_of_parameters( int& nms, int& nmd, int& nmd_global ) const;
    //   void parameters_from_basematerial( int nmd, double* xmd, int nms, double* xms );
    //   void store_material( std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );

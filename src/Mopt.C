@@ -75,6 +75,7 @@ Mopt::Mopt( EW* a_ew )
    m_mpcart0 = NULL;
    m_mp = NULL;
    m_nsteps_in_memory = 10;
+   m_write_dfm = false;
 }  
 
 //-----------------------------------------------------------------------
@@ -302,6 +303,9 @@ void Mopt::processMaterialParCart( char* buffer )
    if( m_mp != NULL )
       cout << "Error: more than one material parameterization command" << endl;
 
+   // Make sure the material grid is coarser than the global grid
+   VERIFY2( nx <= m_ew->m_global_nx[0] && ny <= m_ew->m_global_ny[0] && nz <= m_ew->m_global_nz[0], "MaterialParCart: The material grid must be coarser than the global grid")
+
    int varcase=1;
    if( vel )
       varcase=2;
@@ -431,6 +435,13 @@ void Mopt::processMrun( char* buffer )
 	 int n = strlen(token);
 	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 )
 	    m_use_pseudohessian = true;
+      }
+      else if( startswith("writedfm=",token) )
+      {
+         token += 9;
+	 int n = strlen(token);
+	 if( strncmp("yes",token,n)== 0 || strncmp("1",token,n)== 0 || strncmp("on",token,n)==0 )
+	    m_write_dfm = true;
       }
       else
          badOption("mrun",token);

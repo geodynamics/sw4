@@ -3,7 +3,8 @@
 # Arguments:
 # -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir -t omp-threads
 
-import os, sys, argparse, subprocess, time
+import os, sys, argparse, subprocess, time, h5py, numpy
+os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 
 #------------------------------------------------
 def compare_one_line(base_file_name, test_file_name, errTol, absErrLimit, lineNum, verbose):
@@ -106,6 +107,73 @@ def compare_energy(test_file_name, errTol, verbose):
     return success
 
 #------------------------------------------------
+def compare_misfit(base_file_name, test_file_name, errTol, lineNum, verbose):
+
+    success = True
+
+    base_file = open(base_file_name)
+    test_file = open(test_file_name)
+
+    if not base_file:
+        print("ERROR: compare_misfit failed to open reference file!", base_file_name);
+        return False
+    elif not test_file:
+        print("ERROR: compare_misfit failed to open result file!", test_file_name);
+        return False
+
+    base_data = base_file.readlines() #reads all lines in the file
+    test_data = test_file.readlines()
+
+    base_line = base_data[lineNum]
+    test_line = test_data[lineNum]
+
+    base_misfit = float(base_line.split('=')[1])
+    test_misfit = float(test_line.split('=')[1])
+
+    if abs(base_misfit-test_misfit) > errTol: 
+        success = False
+        if verbose:
+            print("INFO: mistfit difference is", abs(base_misfit-test_misfit));
+
+    base_file.close()
+    test_file.close()
+    
+    return success
+
+#------------------------------------------------
+def compare_dfm_hdf5(fname_res, fname_ref, errTol, verbose):
+
+    success = True;
+
+    f1 = h5py.File(fname_res, 'r')
+    f2 = h5py.File(fname_ref, 'r')
+
+    if not f1:
+        print("ERROR: compare_dfm_hdf5 failed to open result HDF5 file!", fname_res);
+        return False
+    elif not f2:
+        print("ERROR: compare_dfm_hdf5 failed to open reference HDF5 file!", fname_ref);
+        return False
+    else:
+        d1 = f1['dfm'][:]
+        d2 = f2['dfm'][:]
+        
+        if d1.shape != d2.shape:
+            print("ERROR: compare_dfm_hdf5 result and reference dfm dataset have different shapes!", d1.shape, d2.shape);
+            return False
+
+        if numpy.max(numpy.abs(d1 - d2)) > errTol: 
+            success = False
+            if verbose:
+                print("INFO: max error is ", numpy.max(numpy.abs(d1 - d2)));
+
+        f1.close()
+        f2.close()
+    
+    return success
+
+
+#------------------------------------------------
 def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     if verbose: print('os.uname=', os.uname())
     node_name = os.uname()[1]
@@ -127,8 +195,8 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
         mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks) + " -c " + str(omp_threads)
     elif 'nid' in node_name: # the cori knl nodes are called nid
         if omp_threads<=0: omp_threads=4;
-        if mpi_tasks<=0: mpi_tasks = int(64/omp_threads) # use 64 hardware cores per node
-        sw_threads = 4*omp_threads # Cori uses hyperthreading by default
+        if mpi_tasks<=0: mpi_tasks = int(32/omp_threads) # use 64 hardware cores per node
+        sw_threads = omp_threads # Cori uses hyperthreading by default
         mpirun_cmd="srun --cpu_bind=cores -n " + str(mpi_tasks) + " -c " + str(sw_threads)
     elif 'fourier' in node_name:
         if mpi_tasks<=0: mpi_tasks = 4
@@ -139,6 +207,11 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     elif 'sierra' in node_name:
         if mpi_tasks<=0: mpi_tasks = 16
         mpirun_cmd="lrun -T16 -p" + str(mpi_tasks)
+    elif 'batch' in node_name: # for summit
+        if omp_threads<=0: omp_threads=7;
+        if mpi_tasks<=0: mpi_tasks = 6
+        mpirun_cmd="jsrun -a1 -c7 -r6 -l CPU-CPU -d packed -b packed:7 -n " + str(mpi_tasks)
+        # mpirun_cmd="jsrun -a1 -c7 -g1 -l CPU-CPU -d packed -b packed:7 -M -gpu -n " + str(mpi_tasks)
     # add more machine names here
     elif 'Linux' in sys_name:
         if mpi_tasks<=0: mpi_tasks = 1
@@ -199,11 +272,11 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
     num_pass=0
     num_fail=0
 
-    all_dirs    = ['gradtest','hesstest','misfitcurve','onepoint']
-    all_cases   = ['grad','hesstest','misfit1d','inv']
-    all_results = ['GradientTest.txt', 'Hessian.txt', 'Misfit1d.txt', 'convergence.log']
-    all_abslim  = [1e-10, 1e-20, 1e-10, 1e-10]
-    num_meshes  = [1, 1, 1, 1] # default number of meshes for level 0
+    all_dirs    = ['gaussian', 'gaussian', 'gradtest','hesstest','misfitcurve','onepoint']
+    all_cases   = ['gaussian-lbfgs', 'gaussian-nlcg', 'grad','hesstest','misfit1d','inv']
+    all_results = ['gaussian-lbfgs.out', 'gaussian-nlcg.out', 'GradientTest.txt', 'Hessian.txt', 'Misfit1d.txt', 'convergence.log']
+    all_abslim  = [1e-10, 1e-10, 1e-10, 1e-20, 1e-10, 1e-10]
+    num_meshes  = [1, 1, 1, 1, 1, 1] # default number of meshes for level 0
     
     print("Running all tests for level", testing_level, "...")
 # run all tests
@@ -247,6 +320,12 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
             # pipe stdout and stderr to a temporary file
 #            run_cmd = sw4_mpi_run + ' ' + sw4_input_file + ' >& ' + sw4_stdout_file
 
+            if result_file == 'gaussian-lbfgs.out' or result_file == 'gaussian-nlcg.out':
+                if not os.path.isfile("./data/obs5.h5"):
+                    os.symlink(reference_dir + sep + test_dir + sep + "data", "./data")
+                if not os.path.isfile("./homo.rfile"):
+                    os.symlink(reference_dir + sep + test_dir + sep + "homo.rfile", "./homo.rfile")
+
             # run sw4mopt
             run_dir = os.getcwd()
             #print('Running sw4mopt from directory:', run_dir)
@@ -273,6 +352,24 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
 
             if result_file == 'energy.log':
                 success = compare_energy('run1' + sep + result_file, 1e-10, verbose)
+            elif result_file == 'gaussian-lbfgs.out':
+                ref_h5 = reference_dir + sep + test_dir + sep + 'run1' + sep + 'lbfgs.dfm.h5'
+                # print('ref_h5:', ref_h5)
+                my_h5 = './lbfgs_output/dfm.h5'
+                # print('my file:', my_h5)
+                success = compare_dfm_hdf5(my_h5, ref_h5, all_abslim[qq], verbose)
+                if success: 
+                    # compare the mistfit value
+                    ref_result = reference_dir + sep + test_dir + sep + result_file
+                    success = compare_misfit(ref_result, result_file, 1e-5, -4, verbose)
+            elif result_file == 'gaussian-nlcg.out':
+                ref_h5 = reference_dir + sep + test_dir + sep + 'run1' + sep + 'nlcg.dfm.h5'
+                my_h5 = './nlcg_output/dfm.h5'
+                success = compare_dfm_hdf5(my_h5, ref_h5, all_abslim[qq], verbose)
+                if success: 
+                    # compare the mistfit value
+                    ref_result = reference_dir + sep + test_dir + sep + result_file
+                    success = compare_misfit(ref_result, result_file, 1e-5, -4, verbose)
             else:
                 # compare output with reference result (always compare the last line)
                 success = compare_one_line(ref_result , 'run1' + sep + result_file, 1e-5, all_abslim[qq], -1, verbose)
@@ -316,6 +413,7 @@ if __name__ == "__main__":
     verbose=False
     mpi_tasks=0 # machine dependent default
     omp_threads=0 #no threading by default
+    cpu_allocation=""
 
     parser=argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
@@ -347,4 +445,3 @@ if __name__ == "__main__":
 
     if not main_test(sw4_exe_dir, testing_level, mpi_tasks, omp_threads, cpu_allocation, verbose):
         print("test_sw4 was unsuccessful")
-
