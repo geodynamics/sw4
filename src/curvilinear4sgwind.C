@@ -828,9 +828,18 @@ void curvilinear4sgwind(
 //           for (int i = ifirst + 2; i <= ilast - 2; i++) {
 #if defined(NO_COLLAPSE)
 
+#ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
       Range<6> K(kmidb, kmide + 1);
+#endif
+
+#ifdef ENABLE_HIP
+      Range<64> I(ifirst + 2, ilast - 1);
+      Range<2> J(jfirst + 2, jlast - 1);
+      Range<2> K(kmidb, kmide + 1);
+#endif
+
       forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
       RAJA::RangeSegment k_range(kmidb, kmide + 1);
@@ -1883,9 +1892,19 @@ void curvilinear4sgwind(
 // #pragma ivdep
 //           for (int i = ifirst + 2; i <= ilast - 2; i++) {
 #if defined(NO_COLLAPSE)
+
+#ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
       Range<6> K(khighb, khighe + 1);
+#endif
+
+#ifdef ENABLE_HIP
+      Range<64> I(ifirst + 2, ilast - 1);
+      Range<2> J(jfirst + 2, jlast - 1);
+      Range<2> K(khighb, khighe + 1);
+#endif
+
       forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
       RAJA::RangeSegment k_range(khighb, khighe + 1);

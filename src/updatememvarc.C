@@ -89,7 +89,7 @@ void memvar_pred_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::RangeSegment j_range(jfirst, jlast + 1);
   RAJA::RangeSegment k_range(k1, k2 + 1);
-  RAJA::RangeSegment c_range(0, 3);
+  //  RAJA::RangeSegment c_range(0, 3);
 
   // Note both POL3 and POL3X_ take about the same time on Hayward with 16 ranks
 #ifdef ENABLE_GPU
@@ -165,7 +165,7 @@ void memvar_corr_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::RangeSegment j_range(jfirst, jlast + 1);
   RAJA::RangeSegment k_range(k1, k2 + 1);
-  RAJA::RangeSegment c_range(0, 3);
+  //  RAJA::RangeSegment c_range(0, 3);
 
 #ifdef ENABLE_GPU
 #define NO_COLLAPSE 1
@@ -256,7 +256,7 @@ void memvar_corr_fort_wind_ci(
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::RangeSegment j_range(jfirst, jlast + 1);
   RAJA::RangeSegment k_range(k1, k2 + 1);
-  RAJA::RangeSegment c_range(0, 3);
+  //  RAJA::RangeSegment c_range(0, 3);
 
   RAJA::kernel<XRHS_POL_ASYNC>(
       RAJA::make_tuple(k_range, j_range, i_range),

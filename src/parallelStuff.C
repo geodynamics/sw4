@@ -1685,25 +1685,29 @@ void EW::communicate_array_2d_isurf(Sarray& u, int iSurf) {
   //	   <<&u(1, ib, jb, k)<<"\n"<<std::flush;
   // std::cout<<"NEIGHS"<<m_neighbor[0]<<" "<<m_neighbor[1]<<"\n"<<std::flush;
 
-  MPI_Sendrecv(&u(1, ie - (2 * extpadding - 1), jb, k), 1,
+  Sarray uC(u,Space::Host);
+  uC = u;
+
+  MPI_Sendrecv(&uC(1, ie - (2 * extpadding - 1), jb, k), 1,
                m_send_type_isurfx[iSurf], m_neighbor[1], xtag1,
-               &u(1, ib, jb, k), 1, m_send_type_isurfx[iSurf], m_neighbor[0],
+               &uC(1, ib, jb, k), 1, m_send_type_isurfx[iSurf], m_neighbor[0],
                xtag1, m_cartesian_communicator, &status);
 
-  MPI_Sendrecv(&u(1, ib + extpadding, jb, k), 1, m_send_type_isurfx[iSurf],
-               m_neighbor[0], xtag2, &u(1, ie - (extpadding - 1), jb, k), 1,
+  MPI_Sendrecv(&uC(1, ib + extpadding, jb, k), 1, m_send_type_isurfx[iSurf],
+               m_neighbor[0], xtag2, &uC(1, ie - (extpadding - 1), jb, k), 1,
                m_send_type_isurfx[iSurf], m_neighbor[1], xtag2,
                m_cartesian_communicator, &status);
 
   // Y-direction communication
 
-  MPI_Sendrecv(&u(1, ib, je - (2 * extpadding - 1), k), 1,
+  MPI_Sendrecv(&uC(1, ib, je - (2 * extpadding - 1), k), 1,
                m_send_type_isurfy[iSurf], m_neighbor[3], ytag1,
-               &u(1, ib, jb, k), 1, m_send_type_isurfy[iSurf], m_neighbor[2],
+               &uC(1, ib, jb, k), 1, m_send_type_isurfy[iSurf], m_neighbor[2],
                ytag1, m_cartesian_communicator, &status);
 
-  MPI_Sendrecv(&u(1, ib, jb + extpadding, k), 1, m_send_type_isurfy[iSurf],
-               m_neighbor[2], ytag2, &u(1, ib, je - (extpadding - 1), k), 1,
+  MPI_Sendrecv(&uC(1, ib, jb + extpadding, k), 1, m_send_type_isurfy[iSurf],
+               m_neighbor[2], ytag2, &uC(1, ib, je - (extpadding - 1), k), 1,
                m_send_type_isurfy[iSurf], m_neighbor[3], ytag2,
                m_cartesian_communicator, &status);
+  u=uC;
 }

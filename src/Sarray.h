@@ -87,6 +87,7 @@ class SView {
 
 class Sarray {
  public:
+  Space space;
   //   Sarray( CartesianProcessGrid* cartcomm, int nc=1 );
   Sarray(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend,
          const char* file, int line);
@@ -101,7 +102,7 @@ class Sarray {
   ~Sarray() {
 #ifndef SW4_USE_UMPIRE
     if ((m_data != 0) && (!static_alloc))
-      ::operator delete[](m_data, Space::Managed);
+      ::operator delete[](m_data, space);
 #else
     if (m_data != 0) {
       if (static_alloc) {
@@ -112,11 +113,20 @@ class Sarray {
         // umpire::ResourceManager::getInstance(); auto allocator =
         // rma.getAllocator("UM_pool_small"); allocator.deallocate(m_data);
       } else
-        ::operator delete[](m_data, Space::Managed);
+        ::operator delete[](m_data, space);
     }
 #endif
   }
   //   void define( CartesianProcessGrid* cartcomm, int nc );
+  inline Sarray &operator=( Sarray & rhs){
+    if (this==&rhs) return *this;
+    if ((this->space==Space::Device)||(rhs.space==Space::Device)){
+      std::cerr<<"Sarray::operator= node implemented from device memory\n";
+      abort();
+    }
+    for(int i=0;i<m_npts;i++) this->m_data[i]=rhs.m_data[i]; // Assumes Space is host or Managed, never device PBUGS
+    return *this;
+  }
   void define(int iend, int jend, int kend);
   void define(int nc, int iend, int jend, int kend);
   void define(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
