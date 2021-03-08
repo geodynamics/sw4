@@ -21,12 +21,12 @@
 # use default values for the mesh refinement iteration
 #developer ctol=1e-10 cmaxit=100 crelax=0.92
 
-grid h=100 x=30000 y=30000 z=17000 extrapolate=1
-time t=5
+grid h=200 x=30000 y=30000 z=17000 extrapolate=1
+time t=9
 fileio path=loh1-h100-mr-2-hdf5
 
 # mesh refinement along material jump (50*20 = 1000)
-refinement zmax=1000
+# refinement zmax=1000
 
 #specify the width of the super grid damping layer (30 is the default)
 supergrid gp=30
