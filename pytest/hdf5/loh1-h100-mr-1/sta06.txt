@@ -1,6 +1,6 @@
 # Author: SW4
 # Scenario: test
-# Date: UTC  03/10/2021:22:48:52.000
+# Date: UTC  03/15/2021:21:3:27.000
 # Bandwith (Hz): 1.234000e+00
 # Station: sta06
 # Target location (WGS84 longitude, latitude) (deg): -1.177768e+02 3.716709e+01

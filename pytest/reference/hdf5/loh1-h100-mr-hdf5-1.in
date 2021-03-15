@@ -72,17 +72,15 @@ essioutput file=essioutput xmin=10000 xmax=12000 ymin=10000 ymax=12000 depth=200
 sfileoutput file=sfileoutputh2v1 sampleFactorH=2 sampleFactorV=1
 
 # material images
-imagehdf5 mode=mu z=0 file=hor cycle=0
-imagehdf5 mode=lambda z=0 file=hor cycle=0
-imagehdf5 mode=rho z=0 file=hor cycle=0
+imagehdf5 mode=mu z=0 file=hor cycle=268
+imagehdf5 mode=lambda z=0 file=hor cycle=268
+imagehdf5 mode=rho z=0 file=hor cycle=268
 
-imagehdf5 mode=lambda y=15e3 file=ver cycle=0
-imagehdf5 mode=mu y=15e3 file=ver cycle=0
-imagehdf5 mode=rho y=15e3 file=ver cycle=0
+imagehdf5 mode=lambda y=15e3 file=ver cycle=268
+imagehdf5 mode=mu y=15e3 file=ver cycle=268
+imagehdf5 mode=rho y=15e3 file=ver cycle=268
 
 # solution images
-imagehdf5 mode=mag z=0 file=surf timeInterval=0.5
+imagehdf5 mode=mag z=0 file=surf cycle=268
 # no point saving uz and ux on this plane, because they are zero by symmetry
-imagehdf5 mode=uy y=15e3 file=ver timeInterval=0.5
-
-
+imagehdf5 mode=uy y=15e3 file=ver cycle=268
