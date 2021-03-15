@@ -2509,7 +2509,9 @@ void curvilinear4sgwind(
         lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
         lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
       });
+#ifdef ENABLE_HIP
 std::cout<<"THIRD LOOP DONE\n"<<std::flush;
+#endif
     }
     // SYNC_DEVICE;
   }
