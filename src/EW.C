@@ -7903,17 +7903,18 @@ void EW::setup_viscoelastic() {
 // use base 0 indexing of matrix
 #define a(i, j) a_[i + j * nc]
 
+    double* a_ = new float_sw4[n * nc];
+    double* beta = new double[nc];
+    double* gamma = new double[nc];
+    int lwork = 3 * n;
+    double* work = new double[lwork];
     // loop over all grid points in all grids
     for (g = 0; g < mNumberOfGrids; g++)
 #pragma omp parallel for
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
         for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
           for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
-            double* a_ = new float_sw4[n * nc];
-            double* beta = new double[nc];
-            double* gamma = new double[nc];
-            int lwork = 3 * n;
-            double* work = new double[lwork];
+            
             char trans = 'N';
             int info = 0, nrhs = 1, lda = nc, ldb = nc;
 
@@ -8034,12 +8035,14 @@ void EW::setup_viscoelastic() {
             //     for (q=0; q<n; q++)
             //       printf("beta[%i]=%e ", q, b[q]);
             //     printf("\n");
-            delete[] a_;
-            delete[] beta;
-            delete[] gamma;
-            delete[] work;
+            
 
           }  // end for g,k,j,i
+
+    delete[] a_;
+    delete[] beta;
+    delete[] gamma;
+    delete[] work;
 #undef a
   }
 }

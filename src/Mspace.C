@@ -440,7 +440,7 @@ void operator delete(void *ptr, Space loc) throw() {
   } else if (loc == Space::Pinned)
     SW4_CheckDeviceError(SW4_FREE_PINNED(ptr));
   else if (loc == Space::Host) {
-    std:cout<<"Calling my placement delete\n";
+    //std::cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
   } else if (loc == Space::Managed_temps) {
 #if defined(SW4_USE_UMPIRE)
@@ -505,7 +505,7 @@ void operator delete[](void *ptr, Space loc) throw() {
     SW4_CheckDeviceError(SW4_FREE_PINNED(ptr));
   else if (loc == Space::Host) {
     // std:cout<<"Calling my placement delete\n";
-    ::operator delete(ptr);
+    ::operator delete[](ptr);
   } else if (loc == Space::Managed_temps) {
 #ifdef SW4_USE_UMPIRE
     umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();

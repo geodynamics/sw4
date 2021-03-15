@@ -119,6 +119,7 @@ class Sarray {
   }
   //   void define( CartesianProcessGrid* cartcomm, int nc );
   inline Sarray &operator=( Sarray & rhs){
+    //std::cout<<"opertaot=\n"<<std::flush;
     if (this==&rhs) return *this;
     if ((this->space==Space::Device)||(rhs.space==Space::Device)){
       std::cerr<<"Sarray::operator= node implemented from device memory\n";
@@ -212,6 +213,7 @@ class Sarray {
   void set_to_zero();
   void set_to_zero_async();
   void set_to_minusOne();
+  void set_to_minusOneHost();
   void set_value(float_sw4 scalar);
   void set_value_async(float_sw4 scalar);
   void set_to_random(float_sw4 llim = 0.0, float_sw4 ulim = 1.0);
@@ -262,6 +264,7 @@ class Sarray {
   int m_nc, m_ni, m_nj, m_nk;
   void prefetch(int device = 0);
   void forceprefetch(int device = 0);
+  void switch_space(Space space_in);
   inline SView& getview() {
     // prefetch();
     return view;

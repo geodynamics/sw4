@@ -84,6 +84,16 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   // AlphaVE.resize(mNumberOfGrids);
   // AlphaVEm.resize(mNumberOfGrids);
   // AlphaVEp.resize(mNumberOfGrids);
+
+  // New space switching
+  for (int g = 0; g < mNumberOfGrids; g++) {
+    mMu[g].switch_space(Space::Managed);
+    mLambda[g].switch_space(Space::Managed);
+    }
+  // End space switching
+
+
+
   if (m_use_attenuation && m_number_mechanisms > 0) {
     for (int g = 0; g < mNumberOfGrids; g++) {
       AlphaVE[g] = new Sarray[m_number_mechanisms];

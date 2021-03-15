@@ -484,20 +484,23 @@ void EW::setupMPICommunications() {
 #endif
 }
 
-#if defined(ENABLE_GPU)
+
 void EW::communicate_array(Sarray& u, int grid) {
   // The async version using either device or managed memory works
   // spectrum-mpi/2018.02.05 on Ray. And it is slower on the Hayward case:
   // baseline communicate_array ( without -gpu) : 25 minutes 20 secs
   // communicate_array_async with device buffers and -gpu 29 minutes 18 secs
   // communicate_array_async with UM buffers and -gpu 29 minutes 20 secs
+#if defined(ENABLE_GPU)
   communicate_array_async(u, grid);
+#else
+  communicate_array_hostu, grid);
+#endif
   return;
 }
-#else
 //-----------------------------------------------------------------------
-void EW::communicate_array(Sarray& u, int grid) {
-  std::cout<<"void EW::communicate_array(Sarray& u, int grid"<<std::flush;
+void EW::communicate_array_host(Sarray& u, int grid) {
+  //std::cout<<"void EW::communicate_array(Sarray& u, int grid"<<std::flush;
   SW4_MARK_FUNCTION;
   // The async version using either device or managed memory works
   // spectrum-mpi/2018.02.05 on Ray. And it is slower on the Hayward case:
@@ -610,13 +613,17 @@ void EW::communicate_array(Sarray& u, int grid) {
                  m_cartesian_communicator, &status);
   }
 }
-#endif
 //-----------------------------------------------------------------------
 void EW::communicate_arrays(vector<Sarray>& u) {
   SW4_MARK_FUNCTION;
   for (int g = 0; g < u.size(); g++) communicate_array(u[g], g);
 }
 
+//-----------------------------------------------------------------------
+void EW::communicate_host_arrays(vector<Sarray>& u) {
+  SW4_MARK_FUNCTION;
+  for (int g = 0; g < u.size(); g++) communicate_array_host(u[g], g);
+}
 #if defined(ENABLE_GPU)
 void EW::communicate_array_2d(Sarray& u, int g, int k) {
   communicate_array_2d_async(u, g, k);
@@ -1685,6 +1692,7 @@ void EW::communicate_array_2d_isurf(Sarray& u, int iSurf) {
   //	   <<&u(1, ib, jb, k)<<"\n"<<std::flush;
   // std::cout<<"NEIGHS"<<m_neighbor[0]<<" "<<m_neighbor[1]<<"\n"<<std::flush;
 
+  //std::cout<<"COMM2 SURF START\n"<<std::flush;
   Sarray uC(u,Space::Host);
   uC = u;
 
@@ -1710,4 +1718,5 @@ void EW::communicate_array_2d_isurf(Sarray& u, int iSurf) {
                m_send_type_isurfy[iSurf], m_neighbor[3], ytag2,
                m_cartesian_communicator, &status);
   u=uC;
+  //std::cout<<"COMM2 SURF END\n"<<std::flush;
 }

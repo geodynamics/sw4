@@ -404,6 +404,8 @@ void Sarray::define(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
     static_alloc = false;
   else if (space == Space::Managed_temps)
     static_alloc = true;
+  else if (space == Space::Host)
+    static_alloc = false;
   else
     std::cout
         << "ERROR :: Sarrays outside Space::Managed not fully supported \n";
@@ -438,6 +440,8 @@ void Sarray::define(int ibeg, int iend, int jbeg, int jend, int kbeg, int kend,
     static_alloc = false;
   else if (space == Space::Managed_temps)
     static_alloc = true;
+  else if (space == Space::Host)
+    static_alloc = false;
   else
     std::cout
         << "ERROR :: Sarrays outside Space::Managed not fully supported \n";
@@ -597,6 +601,12 @@ void Sarray::set_to_minusOne() {
   SW4_PEEK;
   SYNC_STREAM;
 #endif
+}
+//-----------------------------------------------------------------------
+void Sarray::set_to_minusOneHost() {
+  SW4_MARK_FUNCTION;
+  // #pragma omp parallel for
+  for( size_t i=0 ; i < m_npts ; i++ ) m_data[i]=-1.0;
 }
 
 //-----------------------------------------------------------------------
@@ -1560,6 +1570,7 @@ void Sarray::copy_kplane2(Sarray& u, int k) {
       }
   }
 }
+//----------------------------------------------------------------------
 void Sarray::swrite(std::string filename) {
   if (!of.is_open()) {
     int myRank = -1;
@@ -1577,6 +1588,7 @@ void Sarray::swrite(std::string filename) {
     of << i << " " << m_data[i] << "\n";
   }
 }
+//----------------------------------------------------------------------
 void Sarray::GetAtt(char* file, int line) {
   short int data = -999;
 #ifdef ENABLE_CUDA
@@ -1596,6 +1608,26 @@ void Sarray::GetAtt(char* file, int line) {
   }
 #endif
 }
+//----------------------------------------------------------------------
+void Sarray::switch_space(Space new_space){
+#ifdef ENABLE_GPU
+
+  //std::cout<<"Switching from "<<as_int(space)<<" to "<<as_int(new_space)<<"\n"<<std::flush;
+   if (space==new_space) return;
+   
+   float_sw4* n_data = SW4_NEW(new_space, float_sw4[m_nc * m_ni * m_nj * m_nk]);
+
+   spacecopy(n_data, m_data, new_space, space, m_nc * m_ni * m_nj * m_nk);
+
+   
+   ::operator delete[](m_data, space);
+   reference(n_data);
+   space= new_space;
+   //view.set(*this);
+   //std::cout<<"Switching from "<<as_int(space)<<" to "<<as_int(new_space)<<" DONE\n"<<std::flush;
+#endif
+ }
+//----------------------------------------------------------------------
 void mset_to_zero_async(Sarray& S0, Sarray& S1, Sarray& S2, Sarray& S3) {
   float_sw4* m0 = S0.m_data;
   float_sw4* m1 = S1.m_data;
