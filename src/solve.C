@@ -86,6 +86,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   // AlphaVEp.resize(mNumberOfGrids);
 
   // New space switching
+SW4_MARK_BEGIN("Solve::Host->Managed");
   for (int g = 0; g < mNumberOfGrids; g++) {
     mMu[g].switch_space(Space::Managed);
     mLambda[g].switch_space(Space::Managed);
@@ -94,6 +95,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       mLambdaVE[g][a].switch_space(Space::Managed);
     }
   }
+SW4_MARK_END("Solve::Host->Managed");
   // End space switching
 
 
