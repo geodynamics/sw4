@@ -215,6 +215,7 @@ class Sarray {
   void set_to_minusOne();
   void set_to_minusOneHost();
   void set_value(float_sw4 scalar);
+  void set_valueHost(float_sw4 scalar);
   void set_value_async(float_sw4 scalar);
   void set_to_random(float_sw4 llim = 0.0, float_sw4 ulim = 1.0);
   void save_to_disk(const char* fname);

@@ -4310,11 +4310,11 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
            a++)  // the simplest attenuation model only uses Q, not MuVE or
                  // LambdaVE
       {
-        mMuVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
-        mLambdaVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
+        mMuVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast,Space::Host);
+        mLambdaVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast,Space::Host);
         // initialize the viscoelastic material coefficients to -1
-        mMuVE[g][a].set_to_minusOne();
-        mLambdaVE[g][a].set_to_minusOne();
+        mMuVE[g][a].set_to_minusOneHost();
+        mLambdaVE[g][a].set_to_minusOneHost();
       }
       // initialize Qp and Qs to -1
       mQs[g].set_to_minusOneHost();
@@ -4635,11 +4635,11 @@ void EW::allocateCurvilinearArrays() {
            a++)  // the simplest attenuation model has m_number_mechanisms = 0
       {
         mMuVE[g][a].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                           m_kStart[g], m_kEnd[g]);
-        mMuVE[g][a].set_to_minusOne();
+                           m_kStart[g], m_kEnd[g],Space::Host);
+        mMuVE[g][a].set_to_minusOneHost();
         mLambdaVE[g][a].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                               m_kStart[g], m_kEnd[g]);
-        mLambdaVE[g][a].set_to_minusOne();
+                               m_kStart[g], m_kEnd[g],Space::Host);
+        mLambdaVE[g][a].set_to_minusOneHost();
       }  // end for a...
     }    // end if attenuation
   }      // end for g...

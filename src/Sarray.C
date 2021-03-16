@@ -610,6 +610,12 @@ void Sarray::set_to_minusOneHost() {
 }
 
 //-----------------------------------------------------------------------
+void Sarray::set_valueHost(float_sw4 scalar) {
+  SW4_MARK_FUNCTION;
+  // #pragma omp parallel for
+  for( size_t i=0 ; i < m_npts ; i++ ) m_data[i]=scalar;
+}
+//-----------------------------------------------------------------------
 void Sarray::set_value(float_sw4 scalar) {
   SW4_MARK_FUNCTION;
   // #pragma omp parallel for

@@ -1126,8 +1126,8 @@ void EW::set_materials()
         //	  for( unsigned int b=0 ; b < m_random_blocks.size() ; b++ )
         //	     m_random_blocks[b]->perturb_velocities( g, mMu[g],
         // mLambda[g], mGridSize[g], m_zmin[g], zmax );
-        communicate_array(mMu[g], g);
-        communicate_array(mLambda[g], g);
+        communicate_array_host(mMu[g], g);
+        communicate_array_host(mLambda[g], g);
       }
     }
     convert_material_to_mulambda();
@@ -1227,20 +1227,20 @@ void EW::set_materials()
   else if (m_point_source_test) {
     for (g = 0; g < mNumberOfGrids; g++) {
       mRho[g].set_value(m_point_source_test->m_rho);
-      mMu[g].set_value(m_point_source_test->m_mu);
-      mLambda[g].set_value(m_point_source_test->m_lambda);
+      mMu[g].set_valueHost(m_point_source_test->m_mu);
+      mLambda[g].set_valueHost(m_point_source_test->m_lambda);
     }
   } else if (m_lamb_test) {
     for (g = 0; g < mNumberOfGrids; g++) {
       mRho[g].set_value(m_lamb_test->m_rho);
-      mMu[g].set_value(m_lamb_test->m_mu);
-      mLambda[g].set_value(m_lamb_test->m_lambda);
+      mMu[g].set_valueHost(m_lamb_test->m_mu);
+      mLambda[g].set_valueHost(m_lamb_test->m_lambda);
     }
   } else if (m_rayleigh_wave_test) {
     for (g = 0; g < mNumberOfGrids; g++) {
       mRho[g].set_value(m_rayleigh_wave_test->m_rho);
-      mMu[g].set_value(m_rayleigh_wave_test->m_mu);
-      mLambda[g].set_value(m_rayleigh_wave_test->m_lambda);
+      mMu[g].set_valueHost(m_rayleigh_wave_test->m_mu);
+      mLambda[g].set_valueHost(m_rayleigh_wave_test->m_lambda);
     }
   } else if (m_energy_test) {
     float_sw4 cpocs = m_energy_test->m_cpcsratio;
@@ -1276,8 +1276,8 @@ void EW::set_materials()
     // in different processors.
     for (g = 0; g < mNumberOfGrids; g++) {
       communicate_array(mRho[g], g);
-      communicate_array(mMu[g], g);
-      communicate_array(mLambda[g], g);
+      communicate_array_host(mMu[g], g);
+      communicate_array_host(mLambda[g], g);
     }
   }
 

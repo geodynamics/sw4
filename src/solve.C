@@ -89,7 +89,11 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   for (int g = 0; g < mNumberOfGrids; g++) {
     mMu[g].switch_space(Space::Managed);
     mLambda[g].switch_space(Space::Managed);
+    for (int a = 0; a < m_number_mechanisms;a++){
+      mMuVE[g][a].switch_space(Space::Managed);
+      mLambdaVE[g][a].switch_space(Space::Managed);
     }
+  }
   // End space switching
 
 
