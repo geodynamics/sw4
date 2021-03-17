@@ -3533,6 +3533,7 @@ int TimeSeries::allocFid()
 {
   m_fid_ptr = new hid_t;
   *m_fid_ptr = 0;
+  return 0;
 }
 
 int TimeSeries::closeHDF5File()
@@ -3560,6 +3561,7 @@ void TimeSeries::resetHDF5file()
   m_nptsWritten = 0;
   m_isMetaWritten = m_isIncAzWritten = false;
   closeHDF5File();
+  return;
 }
 
 hid_t TimeSeries::openHDF5File(std::string suffix)
