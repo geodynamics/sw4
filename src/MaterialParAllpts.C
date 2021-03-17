@@ -417,7 +417,7 @@ void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* 
    if( m_variables == RCSCP )
       o = 1;
    int myrank;
-   MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
+   MPI_Comm_rank(m_ew->m_1d_communicator,&myrank);
 
    mf_reg = 0;
    for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
@@ -667,9 +667,9 @@ void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* 
       ind0 += m_npts_per_grid[g];
    }
    double mf_reg_tmp=mf_reg;
-   MPI_Allreduce( &mf_reg_tmp, &mf_reg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   MPI_Allreduce( &mf_reg_tmp, &mf_reg, 1, MPI_DOUBLE, MPI_SUM, m_ew->m_1d_communicator);
    int npts_tmp = npts;
-   MPI_Allreduce( &npts_tmp, &npts, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+   MPI_Allreduce( &npts_tmp, &npts, 1, MPI_INT, MPI_SUM, m_ew->m_1d_communicator );
 
    double inpts = 1.0/npts;
    mf_reg = 0.125*regcoeff*mf_reg*inpts;

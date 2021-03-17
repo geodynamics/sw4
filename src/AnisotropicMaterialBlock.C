@@ -239,8 +239,8 @@ void AnisotropicMaterialBlock::set_material_properties( std::vector<Sarray> & rh
      
   } // end if topographyExists
   int outsideSum, materialSum;
-  MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
-  MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+  MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0, mEW->m_cartesian_communicator );
+  MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, mEW->m_cartesian_communicator );
 
   if (mEW->proc_zero()) 
     cout << "block command: outside = " << outsideSum << ", " << "material = " << materialSum << endl;

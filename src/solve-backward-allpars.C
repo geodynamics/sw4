@@ -37,6 +37,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    AlphaVEp.resize(mNumberOfGrids);
 
    BCForcing.resize(mNumberOfGrids);
+   int eglobal=local_to_global_event(event);
 
    int ifirst, ilast, jfirst, jlast, kfirst, klast;
    for( int g = 0; g <mNumberOfGrids; g++ )
@@ -278,7 +279,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    //   gLambda[0].save_to_disk("glambda.bin");
 
     for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
-       mImage3DFiles[i3]->force_write_image( t, 0, Up, a_Rho, a_Mu, a_Lambda, gRho, gMu, gLambda, mQp, mQs, mPath[event], mZ );
+       mImage3DFiles[i3]->force_write_image( t, 0, Up, a_Rho, a_Mu, a_Lambda, gRho, gMu, gLambda, mQp, mQs, mPath[eglobal], mZ );
 
     for( int i2 = 0 ; i2 < mImageFiles.size() ; i2++ )
     {

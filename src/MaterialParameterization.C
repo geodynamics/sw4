@@ -14,8 +14,8 @@ using namespace std;
 //-----------------------------------------------------------------------
 MaterialParameterization::MaterialParameterization( EW* a_ew, char* fname )
 {
-   MPI_Comm_rank( MPI_COMM_WORLD, &m_myrank );
    m_ew = a_ew;
+   MPI_Comm_rank( m_ew->m_1d_communicator, &m_myrank );
    int n = strlen(fname)+1;
    m_filename = new char[n];
    strcpy(m_filename,fname);
@@ -167,7 +167,7 @@ void MaterialParameterization::read_parameters( const char* filename,
 	 errflag = 1;
       close(fd);
    }
-   MPI_Bcast( xptr, npars, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+   MPI_Bcast( xptr, npars, MPI_DOUBLE, 0, m_ew->m_1d_communicator );
    VERIFY2( errflag == 0, "Error no " << errflag << " in MaterialParameterization::read_parameters");
 }
 
@@ -254,6 +254,8 @@ void  MaterialParameterization::get_regularizer( int nmd, double* xmd, int nms, 
       {
 	 tikhonov +=  SQR( (xms[q] - xms0[q])/sfs[q]);
 	 dmfs_reg[q]   = 2*tcoff*(xms[q] - xms0[q])/SQR(sfs[q]);
+         //	 tikhonov +=  SQR( (xms[q] - xms0[q]));
+         //	 dmfs_reg[q]   = 2*tcoff*(xms[q] - xms0[q]);
 	 //         cout << " q = " << q << " sfs = " << sfs[q] << " " << xms0[q] << " " << xms[q] << endl;
       }
       mf_reg += tcoff*tikhonov;
@@ -264,8 +266,10 @@ void  MaterialParameterization::get_regularizer( int nmd, double* xmd, int nms, 
       {
 	 tikhonovd += SQR( (xmd[q] - xmd0[q])/sfd[q]);
 	 dmfd_reg[q] = 2*tcoff*(xmd[q] - xmd0[q])/SQR(sfd[q]);
+         //	 tikhonovd += SQR( (xmd[q] - xmd0[q]));
+         //	 dmfd_reg[q] = 2*tcoff*(xmd[q] - xmd0[q]);
       }
-      MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, m_ew->m_1d_communicator );
       mf_reg += tcoff*tikhonov;
    }
    else
@@ -273,14 +277,16 @@ void  MaterialParameterization::get_regularizer( int nmd, double* xmd, int nms, 
       double tikhonov=0;
       for (int q=0; q<m_nms; q++)
       {
-	 tikhonov +=  SQR( (xms[q] - xms0[q])/sfs[q]);
+         //	 tikhonov +=  SQR( (xms[q] - xms0[q])/sfs[q]);
+	 tikhonov +=  SQR( (xms[q] - xms0[q]));
       }
       mf_reg += tcoff*tikhonov;
 
       double tikhonovd = 0;
       for (int q=0; q<m_nmd; q++)
 	 tikhonovd += SQR( (xmd[q] - xmd0[q])/sfd[q]);
-      MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      //	 tikhonovd += SQR( (xmd[q] - xmd0[q]));
+      MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, m_ew->m_1d_communicator );
       mf_reg += tcoff*tikhonov;
    }
 #undef SQR

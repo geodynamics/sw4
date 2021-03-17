@@ -106,7 +106,11 @@ int getNumberOfSteps(int event=0) const;
 float_sw4 getGlobalZmin() { return m_global_zmin; }
 float_sw4 getGlobalZmax() { return m_global_zmax; }
 int getNumberOfEvents() const;
+int getNumberOfLocalEvents() const;
 int findNumberOfEvents();
+bool event_is_in_proc( int e ) const;
+int global_to_local_event( int e ) const;
+int local_to_global_event( int e ) const;
 
 void setupRun( vector<vector<Source*> > & a_GlobalUniqueSources );
 
@@ -308,6 +312,7 @@ void computeDTanisotropic();
    //bool inTestSourceMode() { return mTestSource; }
    //bool inTestLambMode() { return mTestLamb; }
 bool proc_zero() const;
+bool proc_zero_evzero() const;
 int no_of_procs() const;
 void create_directory(const string& path);
 void initialize_image_files();
@@ -1363,7 +1368,7 @@ int m_opttest;
 
 // material description used with material surfaces and the ifile command
 vector<MaterialProperty*> m_materials;
-MPI_Comm m_cartesian_communicator;
+MPI_Comm m_cartesian_communicator, m_1d_communicator, m_cross_communicator;
 
 ofstream msgStream;
 
@@ -1386,6 +1391,9 @@ void revvector( int npts, float_sw4* v );
 
 int m_nevent; // Number of events, needed for multiple event material optimization.
 int m_nevents_specified; // Number of event lines in input file
+bool m_events_parallel; // Process events in parallel
+int m_eStart, m_eEnd;
+int m_event_in_proc; // Event number [0,nevent) in this proc, when using parallel events
 map<string,int> m_event_names;
 
 // epicenter
