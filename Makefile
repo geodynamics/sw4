@@ -148,8 +148,8 @@ ifeq ($(openmp),no)
 else
    debugdir := $(debugdir)_mp
    optdir   := $(optdir)_mp
-   CXXFLAGS += -fopenmp
-   FFLAGS   += -fopenmp
+   CXXFLAGS += 
+   FFLAGS   += 
 endif
 
 # fortran=no is default

@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
 
   // auto pooled_allocator_small =static_cast<size_t>(250)*1024*1024;
   auto pooled_allocator_small =
-      rma.makeAllocator<umpire::strategy::QuickPool, true>(
+      rma.makeAllocator<umpire::strategy::DynamicPool, true>(
           string("UM_pool_temps"), pref_allocator, pool_size_small, 1024 * 1024,
           512);
 
@@ -278,7 +278,7 @@ int main(int argc, char **argv) {
       } else {
         if (myRank == 0) {
           int nth = 1;
-#ifndef SW4_NOOMP
+#ifdef _OPENMP
 #pragma omp parallel
           {
             if (omp_get_thread_num() == 0) {

@@ -1,4 +1,4 @@
-
+#include "caliper.h"
 #include "EW.h"
 #include "GridGeneratorGaussianHill.h"
 
@@ -13,6 +13,7 @@ GridGeneratorGaussianHill::GridGeneratorGaussianHill(
       m_yc(yc),
       m_lx(lx),
       m_ly(ly) {
+SW4_MARK_FUNCTION;
   m_ixl2 = 1 / (m_lx * m_lx);
   m_iyl2 = 1 / (m_ly * m_ly);
 }
@@ -21,6 +22,7 @@ GridGeneratorGaussianHill::GridGeneratorGaussianHill(
 bool GridGeneratorGaussianHill::grid_mapping(EW* a_ew, float_sw4 q, float_sw4 r,
                                              float_sw4 s, int g, float_sw4& x,
                                              float_sw4& y, float_sw4& z) {
+SW4_MARK_FUNCTION;
   float_sw4 h = a_ew->mGridSize[g];
   x = (q - 1) * h;
   y = (r - 1) * h;
@@ -63,6 +65,7 @@ bool GridGeneratorGaussianHill::inverse_grid_mapping(EW* a_ew, float_sw4 x,
                                                      int g, float_sw4& q,
                                                      float_sw4& r,
                                                      float_sw4& s) {
+SW4_MARK_FUNCTION;
   float_sw4 h = a_ew->mGridSize[g];
   q = x / h + 1;
   r = y / h + 1;
@@ -141,6 +144,7 @@ void GridGeneratorGaussianHill::grid_mapping_diff(
     int kc, float_sw4& zq, float_sw4& zr, float_sw4& zs, float_sw4& zqq,
     float_sw4& zqr, float_sw4& zqs, float_sw4& zrr, float_sw4& zrs,
     float_sw4& zss) {
+SW4_MARK_FUNCTION;
   float_sw4 h = a_ew->mGridSize[g];
   //   x = (q-1)*h;
   //   y = (r-1)*h;
@@ -250,6 +254,7 @@ void GridGeneratorGaussianHill::generate_grid_and_met(
 void GridGeneratorGaussianHill::generate_grid_and_met_new_gh(
     EW* a_ew, int g, Sarray& a_x, Sarray& a_y, Sarray& a_z, Sarray& a_jac,
     Sarray& a_met) {
+SW4_MARK_FUNCTION;
   int iSurfTop = g - a_ew->mNumberOfCartesianGrids;
   if (0 <= iSurfTop &&
       iSurfTop <= a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids - 1) {
@@ -314,6 +319,7 @@ void GridGeneratorGaussianHill::generate_grid_and_met_new_gh(
 void GridGeneratorGaussianHill::generate_grid_and_met_old_gh(
     EW* a_ew, Sarray& a_x, Sarray& a_y, Sarray& a_z, Sarray& a_jac,
     Sarray& a_met) {
+SW4_MARK_FUNCTION;
   int g = a_ew->mNumberOfGrids - 1;
   float_sw4 h = a_ew->mGridSize[g];
   int nz = a_ew->m_global_nz[g];
@@ -375,6 +381,7 @@ bool GridGeneratorGaussianHill::interpolate_topography(EW* a_ew, float_sw4 x,
                                                        float_sw4 y,
                                                        float_sw4& z,
                                                        Sarray& topo) {
+SW4_MARK_FUNCTION;
   //   float_sw4 h = a_ew->mGridSize[a_ew->mNumberOfGrids-1];
   //   float_sw4 x = (q-1)*h;
   //   float_sw4 y = (r-1)*h;
@@ -386,6 +393,7 @@ bool GridGeneratorGaussianHill::interpolate_topography(EW* a_ew, float_sw4 x,
 //-----------------------------------------------------------------------
 bool GridGeneratorGaussianHill::exact_metric(EW* a_ew, int g, Sarray& a_jac,
                                              Sarray& a_met) {
+SW4_MARK_FUNCTION;
   Sarray x(a_jac), y(a_jac), z(a_jac);
   int ncurv = a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids;
   if (m_always_new || ncurv > 1)
@@ -397,6 +405,7 @@ bool GridGeneratorGaussianHill::exact_metric(EW* a_ew, int g, Sarray& a_jac,
 
 //-----------------------------------------------------------------------
 void GridGeneratorGaussianHill::fill_topo(Sarray& topo, float_sw4 h) {
+SW4_MARK_FUNCTION;
   for (int i = topo.m_ib; i <= topo.m_ie; ++i)
     for (int j = topo.m_jb; j <= topo.m_je; ++j) {
       float_sw4 x = (i - 1) * h;
@@ -410,6 +419,7 @@ void GridGeneratorGaussianHill::fill_topo(Sarray& topo, float_sw4 h) {
 //-----------------------------------------------------------------------
 void GridGeneratorGaussianHill::generate_z_and_j(EW* a_ew, int g, Sarray& z,
                                                  Sarray& J) {
+  SW4_MARK_FUNCTION;
   int iSurfTop = g - a_ew->mNumberOfCartesianGrids;
   if (0 <= iSurfTop &&
       iSurfTop <= a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids - 1) {
