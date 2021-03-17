@@ -7215,7 +7215,7 @@ void EW::processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_Glob
     writeEvery = (int)writeEvery / downSample;
     writeEvery *= downSample;
     if (proc_zero())
-      cout << "receiver command: writeEvery=" << writeEvery << " is not a factor of downsample, "
+      cout << "receiver command: writeEvery=" << writeEvery << " is not a multiple of downsample, "
           << downSample << "adjustding writeEvery to " << writeEvery << endl;
   }
   readStationHDF5(this, inFileName, fileName, writeEvery, downSample, mode, event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax, is_obs, false, false, 0, 0, false, false, false, 0, false, 0);
@@ -7529,7 +7529,7 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
       writeEvery = (int)writeEvery / downSample;
       writeEvery *= downSample;
       if (proc_zero())
-        cout << "receiver command: writeEvery=" << writeEvery << " is not a factor of downsample, "
+        cout << "receiver command: writeEvery=" << writeEvery << " is not a multiple of downsample, "
             << downSample << "adjustding writeEvery to " << writeEvery << endl;
     }
 
