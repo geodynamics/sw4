@@ -1188,6 +1188,11 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
       if (j >= write_npts) 
         break;
       write_data[j++] = y[i];
+#if defined(BZ_DEBUG) || defined(USE_HDF5_ZERO_SAC_CHECK)
+      if (i > 0 && y[i-1] != 0 && y[i] == 0) {
+        fprintf(stderr, "SACHDF5 possible zero value error, y[%d]=%e, y[%d]=%e\n", i-1, y[i-1], i, y[i]);
+      }
+#endif
     }
   }
 
@@ -1736,7 +1741,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 
 
 	 float_sw4 t  = m_t0 + m_shift + i*m_dt;
-	 float_sw4 ir = round((t-t0fr)/dtfr);
+	 float_sw4 ir = ((t-t0fr)/dtfr);
 	 int ie   = static_cast<int>(ir);
 	 //	 int mmin = ie-order/2+1;
 	 //	 int mmax = ie+order/2;
@@ -1806,8 +1811,8 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
             float_sw4 ai, wgh[6], dwgh[6], ddwgh[6];
             if( ie < 3 )
 	    {
-	       mmin = 1;
-	       mmax = 5;
+	       mmin = 0;
+	       mmax = 4;
 	       ai   = ir - (mmin+2);
 	       getwgh5( ai, wgh, dwgh, ddwgh );
             
@@ -2078,15 +2083,15 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 	 float_sw4 ai, wgh[6], dwgh[6], ddwgh[6];
 	 if( ie < 3 )
 	 {
-	    mmin = 1;
-	    mmax = 5;
+	    mmin = 0;
+	    mmax = 4;
 	    ai   = ir - (mmin+2);
 	    getwgh5( ai, wgh, dwgh, ddwgh );
 	 }
 	 else if( ie > nfrsteps-3 )
 	 {
-	    mmin = nfrsteps-4;
-	    mmax = nfrsteps;
+	    mmin = nfrsteps-5;
+	    mmax = nfrsteps-1;
 	    ai   = ir - (mmin+2);
 	    getwgh5( ai, wgh, dwgh, ddwgh );
 	 }

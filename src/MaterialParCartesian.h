@@ -34,7 +34,8 @@ public:
 			   std::vector<Sarray>& a_lambda, std::string fname );
    void projectl2( std::vector<Sarray>& mtrl, float_sw4* rhs );
    void subtract_base_mtrl( int nms, double* xms );
-   int get_varcase(){return 1;}
+   int get_varcase(){return 1;};
+   void write_dfm_hdf5(double* dfm, std::string fname,  MPI_Comm comm) {printf("%s not supported!\n", __func__);}
 };
 
 #endif

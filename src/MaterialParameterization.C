@@ -147,59 +147,68 @@ void MaterialParameterization::write_parameters_dist( const char* outfile,
 
 //-----------------------------------------------------------------------
 void MaterialParameterization::read_parameters( const char* filename,
-						int nms, double* xms )
+						int npars, double* xptr )
 {
+   // Assumes global distribution of xptr. 
+   // Read from one processor, and broadcast to all.
    int errflag = 0;
    if( m_myrank == 0 )
    {
       int fd=open(filename,O_RDONLY );
-      int nms_read;
-      size_t nr = read(fd,&nms_read,sizeof(int));
-      if( nms_read == nms && nr == sizeof(int) && nms_read == m_nms )
+      int npars_read;
+      size_t nr = read(fd,&npars_read,sizeof(int));
+      if( npars_read == npars && nr == sizeof(int) )
       {
-	 nr = read(fd,xms,nms*sizeof(double));
-         if( nr != nms*sizeof(double) )
+	 nr = read(fd,xptr,npars*sizeof(double));
+         if( nr != npars*sizeof(double) )
 	    errflag = 2;
       }
-      else if( nms_read != m_nms )
-	 errflag = 3;
       else
 	 errflag = 1;
       close(fd);
    }
-   MPI_Bcast( xms, nms, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+   MPI_Bcast( xptr, npars, MPI_DOUBLE, 0, MPI_COMM_WORLD );
    VERIFY2( errflag == 0, "Error no " << errflag << " in MaterialParameterization::read_parameters");
 }
 
 //-----------------------------------------------------------------------
-void MaterialParameterization::read_parameters( int nms, double* xms )
+void MaterialParameterization::read_parameters( int npars, double* xptr )
 {
-   int errflag = 0;
-   if( m_myrank == 0 )
-   {
-      //      string fname = m_path + m_filename;
-      string fname = m_filename;
-      int fd=open(fname.c_str(),O_RDONLY );
-      //      int fd=open(m_filename,O_RDONLY );
-      //      VERIFY2( fd != -1, "Error opening file " << m_filename << " in MaterialParameterization::read_parameters"<<endl);
-      VERIFY2( fd != -1, "Error opening file " << fname << " in MaterialParameterization::read_parameters"<<endl);
-      int nms_read;
-      size_t nr = read(fd,&nms_read,sizeof(int));
-      if( nms_read == nms && nr == sizeof(int) && nms_read == m_nms )
-      {
-	 nr = read(fd,xms,nms*sizeof(double));
-         if( nr != nms*sizeof(double) )
-	    errflag = 2;
-      }
-      else if( nms_read != m_nms )
-	 errflag = 3;
-      else
-	 errflag = 1;
-      close(fd);
-   }
-   MPI_Bcast( xms, nms, MPI_DOUBLE, 0, MPI_COMM_WORLD );
-   VERIFY2( errflag == 0, "Error no " << errflag << " in MaterialParameterization::read_parameters"<<endl);
+   read_parameters( m_filename, npars, xptr );
 }
+
+////-----------------------------------------------------------------------
+//void MaterialParameterization::read_parameters( int nms, double* xms )
+//{
+//   int errflag = 0;
+//   if( m_myrank == 0 )
+//   {
+//      //      string fname = m_path + m_filename;
+//      string fname = m_filename;
+//      int fd=open(fname.c_str(),O_RDONLY );
+//      //      int fd=open(m_filename,O_RDONLY );
+//      //      VERIFY2( fd != -1, "Error opening file " << m_filename << " in MaterialParameterization::read_parameters"<<endl);
+//      VERIFY2( fd != -1, "Error opening file " << fname << " in MaterialParameterization::read_parameters"<<endl);
+//      int nms_read;
+//      size_t nr = read(fd,&nms_read,sizeof(int));
+//      if( nms_read == nms && nr == sizeof(int) && nms_read == m_nms )
+//      {
+//	 nr = read(fd,xms,nms*sizeof(double));
+//         if( nr != nms*sizeof(double) )
+//	    errflag = 2;
+//      }
+//      else if( nms_read != m_nms )
+//      {
+//	 errflag = 3;
+//      std::cout << "nms_read = " << nms_read << " m_nms= " << m_nms << " nms= " << nms << std::endl;
+//      }
+//      else
+//	 errflag = 1;
+//      close(fd);
+//   }
+//   MPI_Bcast( xms, nms, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+//   VERIFY2( errflag == 0, "Error no " << errflag << " in MaterialParameterization::read_parameters"<<endl);
+//}
 
 //-----------------------------------------------------------------------
 //void MaterialParameterization::parameters_from_basematerial( int nmd, double* xmd,

@@ -422,7 +422,11 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          {
             double dshift, ddshift, dd1shift;
             for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
-               f += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
+            {
+               double mflocal = GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
+               //               std::cout << "localf(m) = " << mflocal << std::endl;
+               f += mflocal;
+            }
          }
          else if( mopt->m_misfit == Mopt::CROSSCORR )
          {
@@ -459,6 +463,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
       if( phcase > 0 )
       {
+         simulation.communicate_arrays( pseudo_hessian );
 // Interpolate pseudo-hessian to parameter grid
          float_sw4* phs=0, *phm=0;
          if( nmpars > 0 )
@@ -512,9 +517,9 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 	 f += tcoff*tikhonov;
       }
    }
-   else
+   else if( mopt->m_reg_coeff != 0 )
    {
-      double mf_reg;
+      double mf_reg=0;
       for( int m=0 ; m < nmpars ; m++ )
          dfsevent[m] = 0;
       for( int m=0 ; m < nmpard ; m++ )
@@ -538,6 +543,20 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 	 for( int m=0 ; m < nmpard ; m++ )
 	    dfm[m] += dfmevent[m];
       }
+   }
+
+   // Tang: write out dfm  when requested, note nlcg start it=0, lbfgs start it=1
+   int writeit = mopt->m_optmethod == 2 ? mopt->m_maxit-1 : mopt->m_maxit;
+   if (mopt->m_write_dfm && it == writeit) {
+       if(nmpard > 0) {
+          std::string dfm_fname = simulation.getOutputPath() + "/dfm.h5";
+          mopt->m_mp->write_dfm_hdf5(dfm, dfm_fname, MPI_COMM_WORLD);
+          if (myrank == 0) 
+             std::cout << "Written dfm to " << dfm_fname << endl;
+          /* printf("Rank %d, nmpard %d, it %d\n", myrank, nmpard, it); */
+       }
+       else
+          std::cout << "Requested to write dfm but nmpard = 0, no data is written" << endl;
    }
 
    if( myrank == 0 && verbose >= 1 )
@@ -808,153 +827,134 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
    else
    {
 
-
    //   int sharedpars = 1;
-   double f, fp;
+      double f, fp, fm;
       
-   vector<Image*> im;
-   compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-		     GlobalObservations, f, dfs, dfm, myRank, mopt ); //mp, false, false, im );
+      vector<Image*> im;
+      compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources,
+                        GlobalTimeSeries, GlobalObservations, f, dfs, dfm, myRank,
+                        mopt ); //mp, false, false, im );
    // Compute max-norm of gradient
-   double dfnorm=0;
-   if( nmpard_global > 0 )
-   {
-      double dfnormloc=0;
-      for( int i=0 ; i < nmpard ; i++ )
-         dfnormloc = dfnormloc>fabs(dfm[i])?dfnormloc:fabs(dfm[i]);
-      MPI_Allreduce( &dfnormloc, &dfnorm, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-   }
-   for( int i=0 ; i < ns ; i++ )
-      dfnorm = dfnorm>fabs(dfs[i])?dfnorm:fabs(dfs[i]);
+      double dfnorm=0;
+      if( nmpard_global > 0 )
+      {
+         double dfnormloc=0;
+         for( int i=0 ; i < nmpard ; i++ )
+            dfnormloc = dfnormloc>fabs(dfm[i])?dfnormloc:fabs(dfm[i]);
+         MPI_Allreduce( &dfnormloc, &dfnorm, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+      }
+      for( int i=0 ; i < ns ; i++ )
+         dfnorm = dfnorm>fabs(dfs[i])?dfnorm:fabs(dfs[i]);
       
-   if( myRank == 0 )
-   {
-     printf("Unperturbed objective function f=%e\n", f);
-   }
-   
-   double h=1e-6;
-
-   std::ofstream dftest;
-   if( (ns>0 || nmpard_global > 0) && myRank == 0 )
-   {
-      //      string fname = simulation.getOutputPath()+"GradientTest.txt";
-      string fname = mopt->m_path+"GradientTest.txt";
-      dftest.open(fname.c_str());
-   }
-   double exafactor=10;
-   if( ns>0 )
-   {
-      double* sf = mopt->m_sfs;
       if( myRank == 0 )
       {
-	printf("Gradient testing shared parameters :\n");
-	printf("Param#  f-perturbed     step-size     f'-adjoint      f'-div-diff    error \n");
+         printf("Unperturbed objective function f=%e\n", f);
       }
-      
-      for( int ind=0 ; ind < ns ; ind++ )
+   
+      double h=1e-6;
+
+      std::ofstream dftest;
+      if( (ns>0 || nmpard_global > 0) && myRank == 0 )
       {
+      //      string fname = simulation.getOutputPath()+"GradientTest.txt";
+         string fname = mopt->m_path+"GradientTest.txt";
+         dftest.open(fname.c_str());
+      }
+      double exafactor=10;
+      if( ns>0 )
+      {
+         double* sf = mopt->m_sfs;
+         if( myRank == 0 )
+         {
+            printf("Gradient testing shared parameters :\n");
+            printf("Param#  f-perturbed     step-size     f'-adjoint      f'-div-diff    error \n");
+         }
+         for( int ind=0 ; ind < ns ; ind++ )
+         {
          //	 h = 3e-8*sf[ind]; // multiply step length by scale factor
-         h = std::max(1.0,fabs(xs[ind]))*3e-8;
-         h *= exafactor;
+            h = std::max(1.0,fabs(xs[ind]))*3e-8;
+            h *= exafactor;
+            double x0=xs[ind];
+            xs[ind] = x0+h;
+            compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, 
+                       GlobalTimeSeries, GlobalObservations, fp, mopt );
+            xs[ind] = x0-h;
+            compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, 
+                       GlobalTimeSeries, GlobalObservations, fm, mopt );
+            xs[ind]=x0;
+            double dfnum  = (fp-fm)/(2*h);
+            double dfan   = dfs[ind];
+            double relerr = fabs(dfan-dfnum)/(fabs(dfan)+1e-10);
 
-	 xs[ind] += h;
-	 compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, 
-                    GlobalTimeSeries, GlobalObservations, fp, mopt );
-	 double dfnum = (fp-f)/h;
-	 double dfan  = dfs[ind];
-         double relerr = fabs(dfan-dfnum)/(fabs(dfan)+1e-10);
 
-	 if( myRank == 0/* && relerr > 1e-6*/ )
-	 {
-	   printf("%4d  %13.6e  %13.6e  %13.6e  %13.6e  %13.6e\n", ind, fp, h, dfan, dfnum, dfan-dfnum);
+            if( myRank == 0/* && relerr > 1e-6*/ )
+            {
+               printf("%4d  %13.6e  %13.6e  %13.6e  %13.6e  %13.6e\n", ind, fp, h, dfan, dfnum, dfan-dfnum);
 	   
             // cout << " ind = " << ind << "f = " << fp << " h= " << h << " dfan = " << dfan
 	    // 	 << " dfnum = " << dfnum << " err = " << dfan-dfnum << endl;
-	 }
-	 if( myRank == 0 )
-	 {
-	   dftest << ind << " " << fp << " " << h << " " << dfan << " " << dfnum << " " << dfan-dfnum << endl;
-	 }
-	 xs[ind] -= h; // reset parameter #ind
-	 if( ind > 0 && (ind % 100 == 0) && myRank == 0 )
-	    cout << "Done ind = " << ind << endl;
+            }
+            if( myRank == 0 )
+            {
+               dftest << ind << " " << fp << " " << h << " " << dfan << " " << dfnum << endl;//" " << dfan-dfnum << endl;
+            }
+            if( ind > 0 && (ind % 100 == 0) && myRank == 0 )
+               cout << "Done ind = " << ind << endl;
+         }
       }
-   }
-   if( nmpard_global > 0 )
-   {
-      double* sf = mopt->m_sfm;
-      if( myRank == 0 )
-	 cout << "Gradient testing distributed parameters :" << endl;
+      if( nmpard_global > 0 )
+      {
+         double* sf = mopt->m_sfm;
+         if( myRank == 0 )
+            cout << "Gradient testing distributed parameters :" << endl;
       //      mopt->m_mp->get_gradient( nmpard, xm, nmpars, xm, dfs, dfm, rho0, mu0, lambda0,
       //                                rho1, mu1, lambda1 );
-      double xmsave;
-      if( myRank == 0 )
-         cout << "Rank    h     df/dx-adjoint df/dx-d.diff   abs.error     rel.error " <<endl;
-      for( size_t indg = 0 ; indg < nmpard_global ; indg++ )
+         double xmsave;
+         if( myRank == 0 )
+            cout << "Rank    h     df/dx-adjoint df/dx-d.diff   abs.error     rel.error " <<endl;
+         for( size_t indg = 0 ; indg < nmpard_global ; indg++ )
          //      for( int jg=32 ; jg <= 95 ; jg++ )
-      {
-         ssize_t ind = mopt->m_mp->local_index(indg);
-         //         int var=0;
-         //         ssize_t ind = mopt->m_mp->parameter_index(70,jg,10,0,var);
-         //         int var, locvar=-1;
-         double x0;
-	 if( ind >=0 )
          {
+            ssize_t ind = mopt->m_mp->local_index(indg);
+            double x0;
+            if( ind >=0 )
+            {
             // 	    h = 3e-8*sf[ind];
-            h = std::max(1.0,fabs(xm[ind]))*3e-8;
-            h *= exafactor;
-            x0 = xm[ind];
-	    xm[ind] += h;
-            //            locvar = ind %3;
-	 }
-         //         MPI_Allreduce( &locvar, &var, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
-	 compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-   	  	    GlobalObservations, fp, mopt );
-         // Degug
-         //         mopt->m_mp->get_material( nmpard, xm, nmpars, xs, rho1, mu1, lambda1 );
-         //         simulation.communicate_arrays(rho1);
-         //         simulation.communicate_arrays(mu1);
-         //         simulation.communicate_arrays(lambda1);
-         //         double dfnum;
-         //         if( var==0 )
-         //            dfnum = sumdiff(simulation,0,rho1[0],rho0[0])/h;
-         //         else if( var==1 )
-         //            dfnum = sumdiff(simulation,0,mu1[0],mu0[0])/h;
-         //         else if( var==2 )
-         //            dfnum = sumdiff(simulation,0,lambda1[0],lambda0[0])/h;
-         //         // End debug, else
-	 if( ind >=0 )
-         {
-            xm[ind] = x0-h;
+               h = std::max(1.0,fabs(xm[ind]))*3e-8;
+               h *= exafactor;
+               x0 = xm[ind];
+               xm[ind] += h;
+            }
+            compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, 
+                       GlobalTimeSeries, GlobalObservations, fp, mopt );
+            if( ind >=0 )
+               xm[ind] = x0-h;
+            double fm;
+            compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, 
+                       GlobalTimeSeries, GlobalObservations, fm, mopt );
+
+            double dfnum = (fp-fm)/(2*h);
+            double dfan;
+            if( ind >=0 )
+               dfan = dfm[ind];
+            if( ind >= 0 )
+            {	    
+               cout << myRank << " " << 
+                  setw(12) <<  h                      << " " <<
+                  setw(12) << dfan                    << " " << 
+                  setw(12) << dfnum                   << " " << 
+                  setw(12) << fabs(dfan-dfnum)        << " " << 
+                  setw(12) << fabs((dfan-dfnum)/dfan) << endl;
+               dftest << ind << " " << fp << " " << h << " " << dfan << " " << dfnum << endl;//" " << dfan-dfnum << endl;
+            }
+            if( ind >= 0 )
+               xm[ind] = x0;
+            if( indg > 0 && (indg % 100 == 0) && myRank == 0 )
+               cout << "Done ind = " << indg << endl;
          }
-         double fm;
-	 compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-   	  	    GlobalObservations, fm, mopt );
-
-	 double dfnum = (fp-fm)/(2*h);
-	 double dfan;
-	 if( ind >=0 )
-	    dfan = dfm[ind];
-
-	 //	 if( myRank == 0 )
-	 if( ind >= 0 )
-	 {	    
-            cout << myRank << " " << 
-             setw(12) <<  h                      << " " <<
-             setw(12) << dfan                    << " " << 
-             setw(12) << dfnum                   << " " << 
-             setw(12) << fabs(dfan-dfnum)        << " " << 
-             setw(12) << fabs((dfan-dfnum)/dfnorm) << endl;
-            //	   cout << "( " << myRank << "), f = " << fp << " h= " << h << " dfan = " << dfan << " dfnum = " << dfnum << " err = " << dfan-dfnum << " relerr= " << (dfan-dfnum)/dfnum << endl;
-	    dftest << ind << " " << fp << " " << h << " " << dfan << " " << dfnum << " " << dfan-dfnum << endl;
-	 }
-         if( ind >= 0 )
-            xm[ind] = x0;
-         //	    xm[ind] -= h;
       }
-   }
-   if( dftest.is_open() )
-      dftest.close();
+      if( dftest.is_open() )
+         dftest.close();
    }
    if( ns > 0 )
       delete[] dfs;
@@ -1212,6 +1212,10 @@ void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
 {
    double* fcn = new double[npts];
    //   ssize_t ind=mp->parameter_index(i,j,k,0,var);
+
+   int nms, nmd, nmpard_global;
+   mopt->m_mp->get_nr_of_parameters( nms, nmd, nmpard_global ) ;
+
    int ind=mp->parameter_index(i,j,k,0,var);
    double xoriginal;
    bool ascii_output = true;
@@ -1219,16 +1223,24 @@ void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
    string lfname = mopt->m_path+"mflocal.txt";
    ofstream localmfout;
 
-   int tmp=ind;
-   MPI_Allreduce(&tmp,&ind,1,MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-   if( ind == -1 )
-   {
-      if( myRank == 0 )
-	 cout << "misfit_curve: ERROR: index out of range " << endl;
-      return;
-   }
+   //   int tmp=ind;
+   //   MPI_Allreduce(&tmp,&ind,1,MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+   //   if( ind == -1 )
+   //   {
+   //      if( myRank == 0 )
+   //	 cout << "misfit_curve: ERROR: index out of range " << endl;
+   //      return;
+   //   }
 
-   xoriginal = xs[ind];
+   double* xptr;
+   if( nmpard_global > 0 )
+      xptr = xm;
+   else
+      xptr = xs;
+
+   if( ind >= 0 )
+      xoriginal = xptr[ind];
+
 // Output materials
    if( mopt->m_misfit1d_images )
    {
@@ -1238,7 +1250,9 @@ void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
 	    p = pmin;
 	 else
 	    p = pmin + static_cast<double>(m)/(npts-1)*(pmax-pmin);
-	 xs[ind] = xoriginal+p;
+
+         if( ind >= 0 )
+            xptr[ind] = xoriginal+p;
 
 	 int ng=simulation.mNumberOfGrids;
 	 vector<Sarray> rho(ng), mu(ng), lambda(ng);
@@ -1273,7 +1287,8 @@ void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
 	 else
 	    p = pmin + static_cast<double>(m)/(npts-1)*(pmax-pmin);
 
-	 xs[ind] = xoriginal+p;
+         if( ind >= 0 )
+            xptr[ind] = xoriginal+p;
 	 double f;
 	 compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		    GlobalObservations, f, mopt );
@@ -1517,6 +1532,7 @@ int main(int argc, char **argv)
                  // Allocate HDF5 fid for later file write
                  if (elem->getUseHDF5()) {
                    if(m == 0) { 
+                     setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
                      elem->allocFid();
                      elem->setTS0Ptr(elem);
                    }

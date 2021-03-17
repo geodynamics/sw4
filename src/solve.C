@@ -192,27 +192,41 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       //     string upred_name = "/tmp/" + logname + "/upred" + procno.str() + ".bin";
       //     string ucorr_name = "/tmp/" + logname + "/ucorr" + procno.str() + ".bin";
       int imin, imax, jmin, jmax, kmax;
-      if( m_iStartAct[g] <= m_iEndAct[g] && m_iStartAct[g] <= m_iEndAct[g] && m_iStartAct[g] <= m_iEndAct[g]  )
-      {
-	 imin = m_iStartAct[g]-1;
-	 imax = m_iEndAct[g]+1;
-	 jmin = m_jStartAct[g]-1;
-	 jmax = m_jEndAct[g]+1;
-	 kmax = m_kEndAct[g]+1;
-      }
-      else
-      {
-	// empty active domain
-	 imin =  0;
-	 imax = -1;
-	 jmin =  0;
-	 jmax = -1;
-	 kmax = -1;
-      }
+      imin = m_iStartActGlobal[g]-1;
+      imax = m_iEndActGlobal[g]+1;
+      jmin = m_jStartActGlobal[g]-1;
+      jmax = m_jEndActGlobal[g]+1;
+      kmax = m_kEndActGlobal[g]+1;
+      int npad[6]={0,0,0,0,0,0};
+      if( m_iStart[g] > 1 )
+         npad[0] = m_ppadding;
+      if( m_iEnd[g] < m_global_nx[g] )
+         npad[1] = m_ppadding;
+      if( m_jStart[g] > 1 )
+         npad[2] = m_ppadding;
+      if( m_jEnd[g] < m_global_ny[g] )
+         npad[3] = m_ppadding;
+      //      if( m_iStartAct[g] <= m_iEndAct[g] && m_iStartAct[g] <= m_iEndAct[g] && m_iStartAct[g] <= m_iEndAct[g]  )
+      //      {
+      //	 imin = m_iStartAct[g]-1;
+      //	 imax = m_iEndAct[g]+1;
+      //	 jmin = m_jStartAct[g]-1;
+      //	 jmax = m_jEndAct[g]+1;
+      //	 kmax = m_kEndAct[g]+1;
+      //      }
+      //      else
+      //      {
+      //	// empty active domain
+      //	 imin =  0;
+      //	 imax = -1;
+      //	 jmin =  0;
+      //	 jmax = -1;
+      //	 kmax = -1;
+      //      }
       if( save_sides )
       {
-	 Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt );
-	 Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt );
+	 Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt,npad );
+	 Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt,npad );
      //     cout << "sides saved for i=[" << imin << " , " << imax << "] j=[" << jmin << " , " << jmax << "] k=[" << 1 << " , " << kmax << "]"<< endl;
 	 size_t maxsizeloc = Upred_saved_sides[g]->get_noofpoints();
 	 size_t maxsize;
