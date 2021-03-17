@@ -7211,6 +7211,13 @@ void EW::processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_Glob
 
 #ifdef USE_HDF5
   bool is_obs = false;
+  if (writeEvery % downSample != 0) {
+    writeEvery = (int)writeEvery / downSample;
+    writeEvery *= downSample;
+    if (proc_zero())
+      cout << "receiver command: writeEvery=" << writeEvery << " is not a factor of downsample, "
+          << downSample << "adjustding writeEvery to " << writeEvery << endl;
+  }
   readStationHDF5(this, inFileName, fileName, writeEvery, downSample, mode, event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax, is_obs, false, false, 0, 0, false, false, false, 0, false, 0);
 #else
   if (proc_zero())
@@ -7416,9 +7423,6 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
      {
         token += strlen("hdf5format=");
         hdf5format = atoi(token);
-        // Write 64k data (16384 steps) each time for better HDF5 I/O performance
-        if (writeEvery == 1000) 
-            writeEvery = 16383;
      }
      else if( startswith("variables=", token) )
      {
@@ -7521,6 +7525,13 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
   }
   else
   {
+    if (writeEvery % downSample != 0) {
+      writeEvery = (int)writeEvery / downSample;
+      writeEvery *= downSample;
+      if (proc_zero())
+        cout << "receiver command: writeEvery=" << writeEvery << " is not a factor of downsample, "
+            << downSample << "adjustding writeEvery to " << writeEvery << endl;
+    }
 
     TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, hdf5FileName, x, y, depth, 
 					topodepth, writeEvery, downSample, !nsew, event );
