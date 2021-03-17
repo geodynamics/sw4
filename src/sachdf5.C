@@ -526,7 +526,6 @@ int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
 
     for (int i = 0; i < ndset; i++) {
       total_dims = (hsize_t)(totalSteps / TimeSeries[ts]->getDownSample());
-      if (totalSteps % TimeSeries[ts]->getDownSample() != 0) total_dims++;
       if (total_dims == 0) {
         printf("%s: Error with dataset length 0\n", __func__);
         return -1;
