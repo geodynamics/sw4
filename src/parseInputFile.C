@@ -6619,7 +6619,7 @@ void EW::processReceiverHDF5(char* buffer,
     writeEvery = (int)writeEvery / downSample;
     writeEvery *= downSample;
     if (proc_zero())
-      cout << "receiver command: writeEvery=" << writeEvery << " is not a factor of downsample, "
+      cout << "receiver command: writeEvery=" << writeEvery << " is not a multiple of downsample, "
           << downSample << "adjustding writeEvery to " << writeEvery << endl;
   }
   readStationHDF5(this, inFileName, fileName, writeEvery, downSample, mode,
@@ -6913,7 +6913,7 @@ void EW::processReceiver(char* buffer,
       writeEvery = (int)writeEvery / downSample;
       writeEvery *= downSample;
       if (proc_zero())
-        cout << "receiver command: writeEvery=" << writeEvery << " is not a factor of downsample, "
+        cout << "receiver command: writeEvery=" << writeEvery << " is not a multiple of downsample, "
             << downSample << "adjustding writeEvery to " << writeEvery << endl;
     }
 
