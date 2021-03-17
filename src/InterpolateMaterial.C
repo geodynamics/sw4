@@ -775,11 +775,11 @@ void EW::interpolate_to_coarse_vel( int nx, int ny, int nz, double xmin, double 
 	 }
    Sarray tmp;
    tmp.copy(rho);
-   MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_SUM,m_1d_communicator);
    tmp.copy(cs);
-   MPI_Allreduce(tmp.c_ptr(),cs.c_ptr(),cs.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(tmp.c_ptr(),cs.c_ptr(),cs.npts(),MPI_DOUBLE,MPI_SUM,m_1d_communicator);
    tmp.copy(cp);
-   MPI_Allreduce(tmp.c_ptr(),cp.c_ptr(),cp.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(tmp.c_ptr(),cp.c_ptr(),cp.npts(),MPI_DOUBLE,MPI_SUM,m_1d_communicator);
 }
 
 //-----------------------------------------------------------------------
@@ -839,11 +839,11 @@ void EW::interpolate_base_to_coarse( int nx, int ny, int nz, double xmin, double
 	 }
    Sarray tmp;
    tmp.copy(rho);
-   MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_SUM,m_1d_communicator);
    tmp.copy(mu);
-   MPI_Allreduce(tmp.c_ptr(),mu.c_ptr(),mu.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(tmp.c_ptr(),mu.c_ptr(),mu.npts(),MPI_DOUBLE,MPI_SUM,m_1d_communicator);
    tmp.copy(lambda);
-   MPI_Allreduce(tmp.c_ptr(),lambda.c_ptr(),lambda.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(tmp.c_ptr(),lambda.c_ptr(),lambda.npts(),MPI_DOUBLE,MPI_SUM,m_1d_communicator);
 }
 
 //-----------------------------------------------------------------------
@@ -921,11 +921,11 @@ void EW::interpolate_base_to_coarse_vel( int nx, int ny, int nz, double xmin, do
 	 }
    Sarray tmp;
    tmp.copy(rho);
-   MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_SUM,m_1d_communicator);
    tmp.copy(cs);
-   MPI_Allreduce(tmp.c_ptr(),cs.c_ptr(),cs.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(tmp.c_ptr(),cs.c_ptr(),cs.npts(),MPI_DOUBLE,MPI_SUM,m_1d_communicator);
    tmp.copy(cp);
-   MPI_Allreduce(tmp.c_ptr(),cp.c_ptr(),cp.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(tmp.c_ptr(),cp.c_ptr(),cp.npts(),MPI_DOUBLE,MPI_SUM,m_1d_communicator);
 }
 
 //-----------------------------------------------------------------------

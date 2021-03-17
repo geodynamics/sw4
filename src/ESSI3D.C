@@ -101,10 +101,10 @@ void ESSI3D::set_dump_interval( int a_dumpInterval )
 void ESSI3D::setup( )
 {
   const bool debug = false;
-  MPI_Comm comm = MPI_COMM_WORLD;
+  MPI_Comm comm = mEW->m_cartesian_communicator;
   MPI_Info info = MPI_INFO_NULL;
   int myRank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+  MPI_Comm_rank(mEW->m_cartesian_communicator, &myRank);
 
   int g=mEW->mNumberOfGrids-1; // top curvilinear grid only
   m_ihavearray = true; // gets negated if we don't, below
@@ -440,7 +440,7 @@ void ESSI3D::write_image_hdf5( int cycle, std::string &path, float_sw4 t,
   m_hdf5helper->write_vel(m_doubleField, 2, cycle);
 
   /*
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(mEW->m_cartesian_communicator);
   if (m_fileOpen)
   {
     if (debug && (myRank == 0))

@@ -257,7 +257,8 @@ void SfileOutput::define_pio( )
         iwrite = 1;
 //      std::cout << "Define PIO: grid " << g << " myid = " << myid << " iwrite= " << iwrite << " start= "
     //		<< start[0] << " " << start[1] << " " << start[2] << std::endl;
-    m_parallel_io[g-glow] = new Parallel_IO( iwrite, mEW->usingParallelFS(), global, local, start );
+    m_parallel_io[g-glow] = new Parallel_IO( iwrite, mEW->usingParallelFS(), global, local, start,
+                                             mEW->m_1d_communicator );
     delete[] owners;
   }
   m_isDefinedMPIWriters = true;

@@ -13,7 +13,7 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
      // Material represented on a coarse Cartesian grid, covering the 'active' domain.
      // points are x_0,..,x_{nx+1}, where x_0 and x_{nx+1} are fixed at zero.
    // the parameter vector represents offsets from a reference material, stored in (mRho,mMu,mLambda) in EW.
-
+   int verbose=0;
    m_variables = varcase;
    m_ratio = 1.732;   
    m_init = init;
@@ -36,7 +36,7 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
       xmax = (m_ew->m_iEndActGlobal[g]-1)*hf;
       ymax = (m_ew->m_jEndActGlobal[g]-1)*hf;
       zmax = m_ew->m_zmin[g] + (m_ew->m_kEndAct[g]-1)*hf;
-      if( m_myrank == 0 )
+      if( m_myrank == 0 && verbose > 0 )
          std::cout << "active region, index = " <<
             m_ew->m_iStartActGlobal[g] << " " <<
             m_ew->m_iEndActGlobal[g] << " " <<
@@ -64,7 +64,7 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
 	    for( int i= m_ew->m_iStartAct[g] ; i <= m_ew->m_iEndAct[g] ; i++ )
 	       if( m_ew->mZ[g](i,j,1) < zmin )
 		  zmin = m_ew->mZ[g](i,j,1);
-	 MPI_Allreduce( &zmin, &m_zmin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD );
+	 MPI_Allreduce( &zmin, &m_zmin, 1, MPI_DOUBLE, MPI_MIN, m_ew->m_1d_communicator );
       }
    }
 
@@ -76,7 +76,7 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
    m_hz = (m_zmax-m_zmin)/nz;
    m_zmin = m_zmin-m_hz;
 
-   if( m_myrank == 0 )
+   if( m_myrank == 0 && verbose > 0 )
    {
      cout << " xmin, xmax = " << m_xmin << " " << m_xmax << " hx = " << m_hx << endl;
      cout << " ymin, ymax = " << m_ymin << " " << m_ymax << " hy = " << m_hy << endl;
@@ -92,7 +92,7 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
 // Global grid is determined.
    m_global = compute_overlap();
 
-   bool dbg=true;
+   bool dbg=false;
    if( dbg )
    {
       std::stringstream name;
@@ -422,7 +422,7 @@ bool MaterialParCart::compute_overlap()
       go_global = 1;
    }
    int tmp=go_global;
-   MPI_Allreduce( &tmp, &go_global, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+   MPI_Allreduce( &tmp, &go_global, 1, MPI_INT, MPI_MAX, m_ew->m_1d_communicator );
    //   // DEBUG
    //   go_global=1;
    if( go_global )
@@ -1303,15 +1303,15 @@ void MaterialParCart::get_gradient_shared( int nms, double* xms, double* dfs,
    double* tmp = new double[npts];
    for( int i=0 ; i < npts ; i++ )
       tmp[i] = grhop[i];
-   MPI_Allreduce( tmp, grhop, npts, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   MPI_Allreduce( tmp, grhop, npts, MPI_DOUBLE, MPI_SUM, m_ew->m_1d_communicator );
 
    for( int i=0 ; i < npts ; i++ )
       tmp[i] = gmup[i];
-   MPI_Allreduce( tmp, gmup, npts, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   MPI_Allreduce( tmp, gmup, npts, MPI_DOUBLE, MPI_SUM, m_ew->m_1d_communicator );
 
    for( int i=0 ; i < npts ; i++ )
       tmp[i] = glambdap[i];
-   MPI_Allreduce( tmp, glambdap, npts, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   MPI_Allreduce( tmp, glambdap, npts, MPI_DOUBLE, MPI_SUM, m_ew->m_1d_communicator );
    delete[] tmp;
 
    if( m_variables == 1 || m_variables == 2 )
@@ -1537,11 +1537,11 @@ void MaterialParCart::interpolate_to_coarse( vector<Sarray>& rhogrid,
    {
       Sarray tmp;
       tmp.copy(rho);
-      MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+      MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_MAX,m_ew->m_1d_communicator);
       tmp.copy(mu);
-      MPI_Allreduce(tmp.c_ptr(),mu.c_ptr(),mu.npts(),MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+      MPI_Allreduce(tmp.c_ptr(),mu.c_ptr(),mu.npts(),MPI_DOUBLE,MPI_MAX,m_ew->m_1d_communicator);
       tmp.copy(lambda);
-      MPI_Allreduce(tmp.c_ptr(),lambda.c_ptr(),lambda.npts(),MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+      MPI_Allreduce(tmp.c_ptr(),lambda.c_ptr(),lambda.npts(),MPI_DOUBLE,MPI_MAX,m_ew->m_1d_communicator);
    }
    else
    {
@@ -1649,11 +1649,11 @@ void MaterialParCart::interpolate_to_coarse_vel( vector<Sarray>& rhogrid,
    {
       Sarray tmp;
       tmp.copy(rho);
-      MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+      MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_MAX,m_ew->m_1d_communicator);
       tmp.copy(cs);
-      MPI_Allreduce(tmp.c_ptr(),cs.c_ptr(),cs.npts(),MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+      MPI_Allreduce(tmp.c_ptr(),cs.c_ptr(),cs.npts(),MPI_DOUBLE,MPI_MAX,m_ew->m_1d_communicator);
       tmp.copy(cp);
-      MPI_Allreduce(tmp.c_ptr(),cp.c_ptr(),cp.npts(),MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+      MPI_Allreduce(tmp.c_ptr(),cp.c_ptr(),cp.npts(),MPI_DOUBLE,MPI_MAX,m_ew->m_1d_communicator);
    }
    else
    {

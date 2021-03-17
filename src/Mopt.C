@@ -35,7 +35,7 @@ Mopt::Mopt( EW* a_ew )
    m_misfitscale = 1;
    m_vsscale     = 1;
    m_vpscale     = 1;
-   MPI_Comm_rank( MPI_COMM_WORLD, &m_myrank );
+   MPI_Comm_rank( m_ew->m_1d_communicator, &m_myrank );
    m_optmethod = 1;
    m_nbfgs_vectors = 10;
    m_ihess_guess = 2;
@@ -82,7 +82,7 @@ bool Mopt::parseInputFileOpt( std::string filename )
 {
    char buffer[256];
    ifstream inputFile;
-   MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Barrier(m_ew->m_1d_communicator);
 
    inputFile.open(filename.c_str());
    if (!inputFile.is_open())
@@ -129,7 +129,7 @@ bool Mopt::parseInputFileOpt( std::string filename )
       }
    }
    inputFile.close();
-   MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Barrier(m_ew->m_1d_communicator);
    m_ew->create_directory(m_path);
    m_mp->set_path(m_path);
 
@@ -532,7 +532,7 @@ void Mopt::processMregularize( char* buffer )
    int n;
    CHECK_INPUT(strcmp("regularize", token) == 0, "ERROR: not a regularize line...: " << token);
    token = strtok(NULL, " \t");
-   double scale_coeff = 1;
+   //   double scale_coeff = 1;
 
    string err = "Regularize Error: ";
 
@@ -543,7 +543,8 @@ void Mopt::processMregularize( char* buffer )
       if(startswith("coeff=", token)) 
       {
 	 token += 6;
-	 scale_coeff = atof(token);
+         //	 scale_coeff = atof(token);
+         m_reg_coeff = atof(token);
       }
       else if( startswith("testmode=",token))
       {
@@ -558,7 +559,7 @@ void Mopt::processMregularize( char* buffer )
          badOption("regularize",token);
       token = strtok(NULL, " \t");
    }
-   m_reg_coeff = scale_coeff;
+   //   m_reg_coeff = scale_coeff;
    
 }// end processMregularize
 
@@ -615,7 +616,7 @@ void Mopt::set_sscalefactors( )
 	    for( int i=0 ; i < my_nmpars ; i++ )
 	       sfs[i] *= imf;
 	 }
-	 MPI_Bcast( sfs, my_nmpars, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+	 MPI_Bcast( sfs, my_nmpars, MPI_DOUBLE, 0, m_ew->m_1d_communicator );
 	 VERIFY2( errflag == 0, "Error no " << errflag << " in Mopt::set_sscalefactors");
       }
    }

@@ -131,6 +131,9 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 #endif
   m_event(event)
 {
+   m_global_event = a_ew->local_to_global_event(m_event);
+   m_path         = a_ew->getPath(m_global_event);
+
  // 1. Adjust z if depth below topography is given
    if (m_zRelativeToTopography && a_ew->topographyExists() ) 
    {
@@ -159,7 +162,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 // We could remove this check if we were certain that interior_point_in_proc() never lies
    int iwrite = m_myPoint ? 1 : 0;
    int counter;
-   MPI_Allreduce( &iwrite, &counter, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+   MPI_Allreduce( &iwrite, &counter, 1, MPI_INT, MPI_SUM, a_ew->m_1d_communicator );
 
    a_ew->get_utc( m_utc, m_event );
    //   int size;
@@ -502,7 +505,7 @@ void TimeSeries::writeFile( string suffix )
   double stlalodp[3], stxyz[3];
   float origintime;
   int myRank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+  MPI_Comm_rank(m_ew->m_1d_communicator, &myRank);
 
   // create a new function to write metadata only
   if( m_hdf5Format )
@@ -1368,8 +1371,8 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
 //building the file name...
 // 
    stringstream filePrefix;
-   if( ew->getObservationPath(m_event) != "./" )
-      filePrefix << ew->getObservationPath(m_event);
+   if( ew->getObservationPath(m_global_event) != "./" )
+      filePrefix << ew->getObservationPath(m_global_event);
    else if( mIsRestart )
       filePrefix << ew->getPath() << "/";
    filePrefix << m_fileName << ".txt" ;
@@ -1736,7 +1739,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 
 
 	 float_sw4 t  = m_t0 + m_shift + i*m_dt;
-	 float_sw4 ir = round((t-t0fr)/dtfr);
+	 float_sw4 ir = (t-t0fr)/dtfr;
 	 int ie   = static_cast<int>(ir);
 	 //	 int mmin = ie-order/2+1;
 	 //	 int mmax = ie+order/2;
@@ -1942,7 +1945,7 @@ float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
       float_sw4 tlim = 2, fmax = -1e38, tmax=0;
       float_sw4 f, df, ddf;
       if( dbg )
-	cout << m_event << "Compute maxshift \n 1. scan through time points " << endl;
+	cout << m_global_event << "Compute maxshift \n 1. scan through time points " << endl;
       for( int n=0 ; n < noptpt ; n++ )
       {
 	 float_sw4 tshift = -tlim + n*2*tlim/(noptpt-1);
@@ -1953,7 +1956,7 @@ float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
 	    tmax = tshift;
 	 }
 	 if( dbg )
-	   cout << m_event << "ts= " << tshift << " f= " << f << endl;
+	   cout << m_global_event << "ts= " << tshift << " f= " << f << endl;
       }
       // 2. Use maximum from 1 to start Newton iteration for solving f'(tshift) = 0
       int maxit=10, it=0;
@@ -1961,7 +1964,7 @@ float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
       float_sw4 err=tol+1;
       float_sw4 t1 = tmax;
       if( dbg )
-	cout << m_event << " 2. Newton iteration" << endl;
+	cout << m_global_event << " 2. Newton iteration" << endl;
       while( it < maxit && err > tol )
       {
 	 shiftfunc( observed, t1, f, df, ddf );
@@ -1970,7 +1973,7 @@ float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
 	 t1=tnew;
 	 it++;
 	 if( dbg )
-	   cout << m_event << " it " << it << " err " << err << endl;
+	   cout << m_global_event << " it " << it << " err " << err << endl;
       }
       if( f > fmax )
       {
@@ -1985,7 +1988,7 @@ float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
 	 }
       }
       if( dbg )
-	cout << m_event << " Found optimal time shift = " << tmax << " df= " << df << " f= " << f << " fmax= " << fmax << endl;
+	cout << m_global_event << " Found optimal time shift = " << tmax << " df= " << df << " f= " << f << " fmax= " << fmax << endl;
       return tmax;
    }
    else
@@ -2085,8 +2088,8 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 	 }
 	 else if( ie > nfrsteps-3 )
 	 {
-	    mmin = nfrsteps-4;
-	    mmax = nfrsteps;
+	    mmin = nfrsteps-5;
+	    mmax = nfrsteps-1;
 	    ai   = ir - (mmin+2);
 	    getwgh5( ai, wgh, dwgh, ddwgh );
 	 }
@@ -2742,11 +2745,11 @@ void TimeSeries::readSACfiles( EW *ew, const char* sac1,
 			       const char* sac2, const char* sac3, bool ignore_utc )
 {
    string file1, file2, file3;
-   if( ew->getObservationPath(m_event) != "./" )
+   if( ew->getObservationPath(m_global_event) != "./" )
    {
-      file1 += ew->getObservationPath(m_event);
-      file2 += ew->getObservationPath(m_event);
-      file3 += ew->getObservationPath(m_event);
+      file1 += ew->getObservationPath(m_global_event);
+      file2 += ew->getObservationPath(m_global_event);
+      file3 += ew->getObservationPath(m_global_event);
    }
    file1 += sac1;
    file2 += sac2;
