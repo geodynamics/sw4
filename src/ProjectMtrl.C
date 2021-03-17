@@ -552,7 +552,7 @@ int EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 
       float_sw4 local[5]={limits[0],limits[2],limits[4],limits[7],limits[8]};
       float_sw4 global[5];
-      MPI_Allreduce( local, global, 5, m_mpifloat, MPI_MIN, MPI_COMM_WORLD );
+      MPI_Allreduce( local, global, 5, m_mpifloat, MPI_MIN, m_1d_communicator );
       limits[0]=global[0];
       limits[2]=global[1];
       limits[4]=global[2];
@@ -564,7 +564,7 @@ int EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
       local[2]=limits[5];
       local[3]=limits[6];
       local[4]=limits[9];
-      MPI_Allreduce( local, global, 5, m_mpifloat, MPI_MAX, MPI_COMM_WORLD );
+      MPI_Allreduce( local, global, 5, m_mpifloat, MPI_MAX, m_1d_communicator );
       limits[1]=global[0];
       limits[3]=global[1];
       limits[5]=global[2];

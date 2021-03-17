@@ -264,7 +264,7 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
              int& outside, int& material)             
 {
    int myRank;
-   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+   MPI_Comm_rank(mEw->m_1d_communicator, &myRank);
 
    float NODATAVAL = cencalvm::storage::Payload::NODATAVAL;
 
@@ -578,8 +578,8 @@ void EtreeFile::set_material_properties(std::vector<Sarray> & rho,
    setupEFile();
 
    int myRank, comm_size;
-   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-   MPI_Comm_size(MPI_COMM_WORLD,&comm_size);
+   MPI_Comm_rank(mEw->m_1d_communicator, &myRank);
+   MPI_Comm_size(mEw->m_1d_communicator,&comm_size);
 
    //Report
    if (myRank == 0)
@@ -618,7 +618,7 @@ void EtreeFile::set_material_properties(std::vector<Sarray> & rho,
 	    readEFile(rho, cs, cp, qs, qp,
 		      outside, material );
          } 
-         MPI_Barrier (MPI_COMM_WORLD);
+         MPI_Barrier (mEw->m_1d_communicator);
       }
    }
    else if ( mAccess == "parallel")
@@ -659,7 +659,7 @@ void EtreeFile::set_material_properties(std::vector<Sarray> & rho,
 
    // Summarize the warnings
    int warningSum = 0;
-   MPI_Reduce(&warningCount, &warningSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+   MPI_Reduce(&warningCount, &warningSum, 1, MPI_INT, MPI_SUM, 0, mEw->m_1d_communicator);
 
    if (myRank == 0 && warningSum > 0)
       cout << endl
@@ -675,8 +675,8 @@ void EtreeFile::set_material_properties(std::vector<Sarray> & rho,
 
    // Summarize the data
    int materialSum, outsideSum;
-   MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0,MPI_COMM_WORLD);
-   MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0,MPI_COMM_WORLD);
+   MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0,mEw->m_1d_communicator);
+   MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0,mEw->m_1d_communicator);
 
    if (myRank == 0)
       cout << endl 

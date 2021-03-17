@@ -88,10 +88,11 @@ void get_source_pars( int nspar, double srcpars[11], double* xs )
 
 //-----------------------------------------------------------------------
 void  normalize_gradient_ph( vector<Sarray>& pseudo_hessian, 
-                                    vector<Sarray>& gRho,
-                                    vector<Sarray>& gMu, 
-                                    vector<Sarray>& gLambda, 
-                                    float_sw4 eps, int phcase )
+                             vector<Sarray>& gRho,
+                             vector<Sarray>& gMu, 
+                             vector<Sarray>& gLambda, 
+                             float_sw4 eps, int phcase,
+                             MPI_Comm comm )
 {
    int g=0;
    int ib=pseudo_hessian[g].m_ib, ie=pseudo_hessian[g].m_ie;
@@ -110,7 +111,7 @@ void  normalize_gradient_ph( vector<Sarray>& pseudo_hessian,
          }
    
    float_sw4 mxnormloc[3]={maxnorm[0],maxnorm[1],maxnorm[2]};
-   MPI_Allreduce( mxnormloc,maxnorm,3,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+   MPI_Allreduce( mxnormloc,maxnorm,3,MPI_DOUBLE,MPI_MAX,comm);
    for( int k=kb ; k <= ke ;k++)
       for( int j=jb ; j <= je ;j++)
          for( int i=ib ; i <= ie ;i++)
@@ -123,7 +124,7 @@ void  normalize_gradient_ph( vector<Sarray>& pseudo_hessian,
 
 //-----------------------------------------------------------------------
 void normalize_pseudohessian( int nmpars, float_sw4* phs, int nmpard, 
-                              float_sw4* phd, float_sw4 eps, int phcase )
+                              float_sw4* phd, float_sw4 eps, int phcase, MPI_Comm comm )
 {
    float_sw4 mxnorm[3]={0,0,0};
    int ncomp;
@@ -154,7 +155,7 @@ void normalize_pseudohessian( int nmpars, float_sw4* phs, int nmpard,
    if( nmpard > 0 )
    {
       float_sw4 mxnormloc[3]={mxnorm[0],mxnorm[1],mxnorm[2]};
-      MPI_Allreduce( mxnormloc,mxnorm,3,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+      MPI_Allreduce( mxnormloc,mxnorm,3,MPI_DOUBLE,MPI_MAX,comm);
    }
    //   std::cout << "mxnorm = " << mxnorm[0] << " " << mxnorm[1] << " " << mxnorm[2] << std::endl;
    npts=nmpars/ncomp;
@@ -237,7 +238,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    vector<Sarray> U(ng), Um(ng), ph(ng);
    mf = 0;
    if( !mopt->m_test_regularizer ){
-   for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
+   for( int e=0 ; e < simulation.getNumberOfLocalEvents() ; e++ )
    {
 //	 simulation.solve( src, GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e );
       sw4_profile->time_stamp("forward solve" );
@@ -272,10 +273,12 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 
    }  // loop over events
    
-   int myRank;
-   MPI_Comm_rank(MPI_COMM_WORLD,&myRank);
+   //   int myRank;
+   //   MPI_Comm_rank(MPI_COMM_WORLD,&myRank);
    double mftmp = mf;
-   MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,simulation.m_1d_communicator);
+   mftmp=mf;
+   MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,simulation.m_cross_communicator);
 
    }
 // add in a Tikhonov regularizing term:
@@ -295,13 +298,13 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 	 double tikhonovd = 0;
 	 for (int q=0; q<nmpard; q++)
 	    tikhonovd += SQR( (xm[q] - mopt->m_xm0[q])/mopt->m_sfm[q]);
-	 MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	 MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, simulation.m_1d_communicator );
 	 mf += tcoff*tikhonov;
       }
    }
-   else
+   else if( mopt->m_reg_coeff != 0 )
    {
-      double mf_reg;
+      double mf_reg=0;
       double* dmfs, *dmfd;
       mopt->m_mp->get_regularizer( nmpard, xm, nmpars, xs, mopt->m_xm0, mopt->m_xs0,
 				   mopt->m_reg_coeff, rho, mu, lambda, mf_reg, mopt->m_sfm,
@@ -401,7 +404,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    {
       mopt->init_pseudohessian( pseudo_hessian );
       int phcase = mopt->get_pseudo_hessian_case();
-      for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
+      for( int e=0 ; e < simulation.getNumberOfLocalEvents() ; e++ )
       {
          sw4_profile->time_stamp("forward solve" );
          simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory, phcase, pseudo_hessian );
@@ -423,9 +426,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
             double dshift, ddshift, dd1shift;
             for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
             {
-               double mflocal = GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
-               //               std::cout << "localf(m) = " << mflocal << std::endl;
-               f += mflocal;
+               f += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
             }
          }
          else if( mopt->m_misfit == Mopt::CROSSCORR )
@@ -458,9 +459,21 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          }
 
       }  // loop over events
-
       double mftmp = f;
-      MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+      MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,simulation.m_1d_communicator);
+
+      mftmp=f;
+      MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,simulation.m_cross_communicator);
+      if( nmpars > 0 )
+      {
+         for( int m=0 ; m < nmpars ; m++ )
+            dfsevent[m] = dfs[m+nspar];
+         MPI_Allreduce(dfsevent,&dfs[nspar],nmpars,MPI_DOUBLE,MPI_SUM,simulation.m_cross_communicator);
+      }
+      for( int m=0 ; m < nmpard ; m++ )
+         dfmevent[m] = dfm[m];
+      MPI_Allreduce(dfmevent,dfm,nmpard,MPI_DOUBLE,MPI_SUM,simulation.m_cross_communicator);
+
       if( phcase > 0 )
       {
          simulation.communicate_arrays( pseudo_hessian );
@@ -472,7 +485,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
             phm = new float_sw4[nmpard];
          mopt->m_mp->interpolate_pseudohessian( nmpars, phs, nmpard, phm, pseudo_hessian);
          float_sw4 eps=1e-3;
-         normalize_pseudohessian( nmpars, phs, nmpard, phm, eps, phcase );
+         normalize_pseudohessian( nmpars, phs, nmpard, phm, eps, phcase, simulation.m_1d_communicator );
 
 // ..scale the gradient
          //         float_sw4* sfs=mopt->m_sfs;
@@ -488,8 +501,9 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          if( nmpard> 0 )
             delete[] phm;
 
-         // For plotting purpose:
-         normalize_gradient_ph( pseudo_hessian, gRho, gMu, gLambda, eps, phcase );
+       // For plotting purpose:
+         normalize_gradient_ph( pseudo_hessian, gRho, gMu, gLambda, eps, phcase,
+                                simulation.m_1d_communicator );
       }
    }
 // add in a Tikhonov regularizing term:
@@ -513,7 +527,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 	    tikhonovd += SQR( (xm[q] - mopt->m_xm0[q])/mopt->m_sfm[q]);
 	    dfm[q] += 2*tcoff*(xm[q] - mopt->m_xm0[q])/SQR(mopt->m_sfm[q]);
 	 }
-	 MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	 MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, simulation.m_1d_communicator );
 	 f += tcoff*tikhonov;
       }
    }
@@ -535,7 +549,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 	 for( int m=0 ; m < nmpard ; m++ )
 	    dfm[m] = dfmevent[m];
       }
-      else
+      else 
       {
 	 f += mf_reg;
 	 for( int m=0 ; m < nmpars ; m++ )
@@ -680,7 +694,7 @@ double sumdiff( EW& simulation, int g, Sarray& u1, Sarray& u2 )
          for( int i=i1 ; i <= i2 ; i++ )      
             locsum += u1(i,j,k)-u2(i,j,k);
    double sum;
-   MPI_Allreduce( &locsum, &sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   MPI_Allreduce( &locsum, &sum, 1, MPI_DOUBLE, MPI_SUM, simulation.m_1d_communicator );
    return sum;
 }
 
@@ -768,7 +782,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	    xptr[ind] += h;
             locvar = ind % ncomp;
 	 }
-         MPI_Allreduce( &locvar, &var, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+         MPI_Allreduce( &locvar, &var, 1, MPI_INT, MPI_MAX, simulation.m_1d_communicator);
 
          mopt->m_mp->get_material( nmpard, xm, nmpars, xs, rho1, mu1, lambda1 );
          simulation.communicate_arrays(rho1);
@@ -831,9 +845,9 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
       double f, fp, fm;
       
       vector<Image*> im;
-      compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources,
-                        GlobalTimeSeries, GlobalObservations, f, dfs, dfm, myRank,
-                        mopt ); //mp, false, false, im );
+      compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, 
+                        GlobalTimeSeries, GlobalObservations, f, dfs, dfm, 
+                        simulation.getRank(), mopt ); //mp, false, false, im );
    // Compute max-norm of gradient
       double dfnorm=0;
       if( nmpard_global > 0 )
@@ -841,7 +855,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
          double dfnormloc=0;
          for( int i=0 ; i < nmpard ; i++ )
             dfnormloc = dfnormloc>fabs(dfm[i])?dfnormloc:fabs(dfm[i]);
-         MPI_Allreduce( &dfnormloc, &dfnorm, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+         MPI_Allreduce( &dfnormloc, &dfnorm, 1, MPI_DOUBLE, MPI_MAX, simulation.m_1d_communicator);
       }
       for( int i=0 ; i < ns ; i++ )
          dfnorm = dfnorm>fabs(dfs[i])?dfnorm:fabs(dfs[i]);
@@ -904,6 +918,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
       }
       if( nmpard_global > 0 )
       {
+         int procevent = simulation.no_of_procs();
          double* sf = mopt->m_sfm;
          if( myRank == 0 )
             cout << "Gradient testing distributed parameters :" << endl;
@@ -929,27 +944,28 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
                        GlobalTimeSeries, GlobalObservations, fp, mopt );
             if( ind >=0 )
                xm[ind] = x0-h;
+
             double fm;
-            compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, 
+            compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources,
                        GlobalTimeSeries, GlobalObservations, fm, mopt );
 
             double dfnum = (fp-fm)/(2*h);
             double dfan;
             if( ind >=0 )
                dfan = dfm[ind];
-            if( ind >= 0 )
+            if( ind >= 0 && myRank < procevent )
             {	    
                cout << myRank << " " << 
                   setw(12) <<  h                      << " " <<
                   setw(12) << dfan                    << " " << 
                   setw(12) << dfnum                   << " " << 
                   setw(12) << fabs(dfan-dfnum)        << " " << 
-                  setw(12) << fabs((dfan-dfnum)/dfan) << endl;
-               dftest << ind << " " << fp << " " << h << " " << dfan << " " << dfnum << endl;//" " << dfan-dfnum << endl;
+                  setw(12) << fabs((dfan-dfnum)/dfnorm) << endl;
+               dftest << indg << " " << fp << " " << h << " " << dfan << " " << dfnum << " " << dfan-dfnum << endl;
             }
             if( ind >= 0 )
                xm[ind] = x0;
-            if( indg > 0 && (indg % 100 == 0) && myRank == 0 )
+            if( indg > 0 && (indg % 100 == 0) && (myRank == 0 && myRank < procevent))
                cout << "Done ind = " << indg << endl;
          }
       }
@@ -982,7 +998,7 @@ void hessian_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
 
    vector<Image*> im;
    compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-		     GlobalObservations, f, dfs, dfm, myRank, mopt ); //mp, false, false, im );
+		     GlobalObservations, f, dfs, dfm, simulation.getRank(), mopt ); //mp, false, false, im );
 
    double* dfsp;
    if( ns > 0 )
@@ -1113,7 +1129,7 @@ void hessian_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
       int nptsbuf = 1000000;
       int iwrite = myRank == 0 || ( myRank % 8 == 0 );
 
-      Parallel_IO* pio = new Parallel_IO(1,1,globsize,locsize,start,nptsbuf,0);
+      Parallel_IO* pio = new Parallel_IO(1,1,globsize,locsize,start,simulation.m_1d_communicator,nptsbuf,0);
       int fid;
       //      string fname = simulation.getOutputPath()+"hessian.bin";
       string fname = mopt->m_path+"hessian.bin";
@@ -1223,15 +1239,6 @@ void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
    string lfname = mopt->m_path+"mflocal.txt";
    ofstream localmfout;
 
-   //   int tmp=ind;
-   //   MPI_Allreduce(&tmp,&ind,1,MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-   //   if( ind == -1 )
-   //   {
-   //      if( myRank == 0 )
-   //	 cout << "misfit_curve: ERROR: index out of range " << endl;
-   //      return;
-   //   }
-
    double* xptr;
    if( nmpard_global > 0 )
       xptr = xm;
@@ -1309,7 +1316,7 @@ void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
 		  else if(  mopt->m_misfit == Mopt::CROSSCORR )
 		     mf = GlobalTimeSeries[e][s]->misfit2( *GlobalObservations[e][s], NULL );
 		  double mftmp = mf;
-		  MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+		  MPI_Allreduce(&mftmp,&mf,1,MPI_DOUBLE,MPI_SUM,simulation.m_1d_communicator);
 		  if( myRank == 0 )
 		  {
 		     cout << "     Event " << e+1 << " station " << s+1 << " misfit is " << mf << endl;
@@ -1725,7 +1732,7 @@ int main(int argc, char **argv)
               double f;
 	      compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 			 GlobalObservations, f, mopt );
-	      for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ ) 
+	      for( int e=0 ; e < simulation.getNumberOfLocalEvents() ; e++ ) 
               {
 #ifdef USE_HDF5
                  // Tang: need to create a HDF5 file before writing
@@ -1734,7 +1741,7 @@ int main(int argc, char **argv)
                      GlobalTimeSeries[e][tsi]->resetHDF5file();
                    if(myRank == 0) 
                      createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "");
-                   MPI_Barrier(MPI_COMM_WORLD);
+                   MPI_Barrier(simulation.m_1d_communicator);
                  }
 #endif
 		 for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )

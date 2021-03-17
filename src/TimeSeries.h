@@ -257,7 +257,7 @@ float_sw4 m_scalefactor;
    EW * m_ew;
 
 // Event no. (in case of multiple events)
-   int m_event;
+   int m_event, m_global_event;
 
 // HDF5 file id for all SAC data
 #ifdef USE_HDF5

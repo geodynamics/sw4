@@ -223,8 +223,8 @@ void CheckPoint::define_pio( )
       int iwrite = 0;
       int nrwriters = mEW->getNumberOfWritersPFS();
       int nproc=0, myid=0;
-      MPI_Comm_size( MPI_COMM_WORLD, &nproc );
-      MPI_Comm_rank( MPI_COMM_WORLD, &myid);
+      MPI_Comm_size( mEW->m_cartesian_communicator, &nproc );
+      MPI_Comm_rank( mEW->m_cartesian_communicator, &myid);
 
       // new hack 
       int* owners = new int[nproc];
@@ -268,7 +268,7 @@ void CheckPoint::define_pio( )
       }      
       if (mEW->proc_zero())
          cout << "Creating a Parallel_IO object for grid g = " << g << endl;
-      m_parallel_io[g-glow] = new Parallel_IO( iwrite, mEW->usingParallelFS(), global, local, start, m_bufsize );
+      m_parallel_io[g-glow] = new Parallel_IO( iwrite, mEW->usingParallelFS(), global, local, start, mEW->m_1d_communicator, m_bufsize );
 // tmp
       if (mEW->proc_zero())
          cout << "Done creating the Parallel_IO object" << endl;
@@ -369,7 +369,7 @@ void CheckPoint::write_checkpoint( float_sw4 a_time, int a_cycle, vector<Sarray>
       CHECK_INPUT(fid != -1, "CheckPoint::write_file: Error opening: " << s.str() );
       int myid;
 
-      MPI_Comm_rank( MPI_COMM_WORLD, &myid );
+      MPI_Comm_rank( mEW->m_cartesian_communicator, &myid );
       std::cout << "writing check point on file " << s.str() << " using " <<
 	 m_parallel_io[0]->n_writers() << " writers" << std::endl;
       write_header( fid, a_time, a_cycle, hsize );
@@ -377,7 +377,7 @@ void CheckPoint::write_checkpoint( float_sw4 a_time, int a_cycle, vector<Sarray>
    }
    //   m_parallel_io[0]->writer_barrier();
    int bcast_root = m_parallel_io[0]->proc_zero_rank_in_comm_world();
-   MPI_Bcast( &hsize, 1, MPI_INT, bcast_root, MPI_COMM_WORLD );
+   MPI_Bcast( &hsize, 1, MPI_INT, bcast_root, mEW->m_cartesian_communicator );
    off_t offset = hsize;
 
    // Open file from all writers
@@ -496,7 +496,7 @@ void CheckPoint::read_checkpoint( float_sw4& a_time, int& a_cycle,
       CHECK_INPUT(fid != -1, "CheckPoint::read_checkpoint: Error opening: " << s.str() );
       int myid;
 
-      MPI_Comm_rank( MPI_COMM_WORLD, &myid );
+      MPI_Comm_rank( mEW->m_cartesian_communicator, &myid );
       std::cout << "reading check point on file " << s.str() << endl;
       read_header( fid, a_time, a_cycle, hsize );
    }
@@ -504,9 +504,9 @@ void CheckPoint::read_checkpoint( float_sw4& a_time, int& a_cycle,
 
    // Broadcast read information to all other processors.
    int bcast_root = m_parallel_io[0]->proc_zero_rank_in_comm_world();
-   MPI_Bcast( &a_cycle, 1, MPI_INT,         bcast_root, MPI_COMM_WORLD );
-   MPI_Bcast( &a_time,  1, mEW->m_mpifloat, bcast_root, MPI_COMM_WORLD );
-   MPI_Bcast( &hsize, 1, MPI_INT, bcast_root, MPI_COMM_WORLD );
+   MPI_Bcast( &a_cycle, 1, MPI_INT,         bcast_root, mEW->m_cartesian_communicator );
+   MPI_Bcast( &a_time,  1, mEW->m_mpifloat, bcast_root, mEW->m_cartesian_communicator );
+   MPI_Bcast( &hsize, 1, MPI_INT, bcast_root, mEW->m_cartesian_communicator );
    off_t offset = hsize;
 
    // Open file from all readers
@@ -616,7 +616,7 @@ float_sw4 CheckPoint::getDt()
 	 "CheckPoint::getDt, error reading time step from restart file\n");
       close(fid);
    }
-   MPI_Bcast( &dt, 1, mEW->m_mpifloat, 0, MPI_COMM_WORLD );      
+   MPI_Bcast( &dt, 1, mEW->m_mpifloat, 0, mEW->m_cartesian_communicator );      
    return dt;
 }
 

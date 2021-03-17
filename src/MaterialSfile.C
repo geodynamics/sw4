@@ -291,21 +291,21 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
    MPI_Type_size(MPI_LONG_LONG,&mpisizelonglong );
    MPI_Type_size(MPI_INT,&mpisizeint );
    if( sizeof(size_t) == mpisizelong ) {
-      MPI_Reduce(&material, &materialSum, 1, MPI_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
-      MPI_Reduce(&outside,   &outsideSum, 1, MPI_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
+      MPI_Reduce(&material, &materialSum, 1, MPI_LONG, MPI_SUM, 0, mEW->m_1d_communicator );
+      MPI_Reduce(&outside,   &outsideSum, 1, MPI_LONG, MPI_SUM, 0, mEW->m_1d_communicator );
    }
    else if( sizeof(size_t) == mpisizelonglong ) {
-      MPI_Reduce(&material, &materialSum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
-      MPI_Reduce(&outside,   &outsideSum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
+      MPI_Reduce(&material, &materialSum, 1, MPI_LONG_LONG, MPI_SUM, 0, mEW->m_1d_communicator );
+      MPI_Reduce(&outside,   &outsideSum, 1, MPI_LONG_LONG, MPI_SUM, 0, mEW->m_1d_communicator );
    }
    else if( sizeof(size_t) == mpisizeint ) {
-      MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
-      MPI_Reduce(&outside,   &outsideSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+      MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, mEW->m_1d_communicator );
+      MPI_Reduce(&outside,   &outsideSum, 1, MPI_INT, MPI_SUM, 0, mEW->m_1d_communicator );
    }
    else {
       int materialsumi, outsidesumi, materiali=material, outsidei=outside;
-      MPI_Reduce(&materiali, &materialsumi, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
-      MPI_Reduce(&outsidei,   &outsidesumi, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+      MPI_Reduce(&materiali, &materialsumi, 1, MPI_INT, MPI_SUM, 0, mEW->m_1d_communicator );
+      MPI_Reduce(&outsidei,   &outsidesumi, 1, MPI_INT, MPI_SUM, 0, mEW->m_1d_communicator );
       materialSum=materialsumi;
       outsideSum=outsidesumi;
    }
@@ -386,7 +386,7 @@ void MaterialSfile::read_sfile()
   dxpl = H5Pcreate(H5P_DATASET_XFER);
   /* H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE); */
   H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
-  H5Pset_fapl_mpio(plist_id, MPI_COMM_WORLD, MPI_INFO_NULL);
+  H5Pset_fapl_mpio(plist_id, mEW->m_1d_communicator, MPI_INFO_NULL);
   file_id = H5Fopen(fname.c_str(), H5F_ACC_RDONLY, plist_id);
   if (file_id < 0) {
      cout << "Could not open hdf5 file: " << fname.c_str()<< endl;
@@ -589,7 +589,7 @@ void MaterialSfile::read_sfile()
   vector<int> isempty(m_npatches), isemptymin(m_npatches);
   for( int p=0 ; p < m_npatches ; p++ )
      isempty[p] = m_isempty[p];
-  MPI_Allreduce( &isempty[0], &isemptymin[0], m_npatches, MPI_INT, MPI_MIN, MPI_COMM_WORLD );
+  MPI_Allreduce( &isempty[0], &isemptymin[0], m_npatches, MPI_INT, MPI_MIN, mEW->m_1d_communicator );
   for( int p=0 ; p < m_npatches ; p++ )
      m_isempty[p] = (isemptymin[p] == 1);
 
@@ -662,7 +662,7 @@ void MaterialSfile::read_sfile()
       ierr = H5Dread(dataset_id, h5_dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, in_data);
       ASSERT(ierr >= 0);
     }
-    MPI_Bcast(in_data, dim[0] * dim[1] * prec, MPI_CHAR, 0, MPI_COMM_WORLD);
+    MPI_Bcast(in_data, dim[0] * dim[1] * prec, MPI_CHAR, 0, mEW->m_1d_communicator);
     H5Dclose(dataset_id);
 
     if (prec == 4) { mInterface[p].assign(f_data); }
@@ -918,10 +918,10 @@ void MaterialSfile::material_check( bool water )
 	    }
       double cmins[4]={csmin,cpmin,cratmin,rhomin}, cmaxs[4]={csmax,cpmax,cratmax,rhomax};
       double cminstot[4], cmaxstot[4];
-      MPI_Reduce(cmins, cminstot, 4, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD );
-      MPI_Reduce(cmaxs, cmaxstot, 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD );
+      MPI_Reduce(cmins, cminstot, 4, MPI_DOUBLE, MPI_MIN, 0, mEW->m_1d_communicator );
+      MPI_Reduce(cmaxs, cmaxstot, 4, MPI_DOUBLE, MPI_MAX, 0, mEW->m_1d_communicator );
       int myid;
-      MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+      MPI_Comm_rank(mEW->m_1d_communicator,&myid);
       if( myid == 0 )
 	 //	 if( mEW->getRank()==0 )
       {
