@@ -445,3 +445,4 @@ if __name__ == "__main__":
 
     if not main_test(sw4_exe_dir, testing_level, mpi_tasks, omp_threads, cpu_allocation, verbose):
         print("test_sw4 was unsuccessful")
+        sys.exit(-1)
