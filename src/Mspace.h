@@ -208,36 +208,36 @@ void Write(T &t, std::string filename) {
 }
 void invert(float_sw4 *A, int N);
 
-template<class T>
-void spacecopy(T* &dst, T* &src, Space dst_space, Space src_space,size_t size){
-
-  if (src_space==Space::Host){
+template <class T>
+void spacecopy(T *&dst, T *&src, Space dst_space, Space src_space,
+               size_t size) {
+  if (src_space == Space::Host) {
 #ifdef ENABLE_CUDA
     SW4_CheckDeviceError(
-			 cudaMemcpy(dst, src, size*sizeof(T), cudaMemcpyHostToDevice));
+        cudaMemcpy(dst, src, size * sizeof(T), cudaMemcpyHostToDevice));
 #elif ENABLE_HIP
     SW4_CheckDeviceError(
-			 hipMemcpy(dst, src, size*sizeof(T), hipMemcpyHostToDevice));
+        hipMemcpy(dst, src, size * sizeof(T), hipMemcpyHostToDevice));
 #else
-    std::cout<<"ERROR is Mspace:;copy:: undefined copy operation\n";
+    std::cout << "ERROR is Mspace:;copy:: undefined copy operation\n";
 #endif
     return;
   }
 
-  if (dst_space==Space::Host){
+  if (dst_space == Space::Host) {
 #ifdef ENABLE_CUDA
     SW4_CheckDeviceError(
-			 cudaMemcpy(dst, src, size*sizeof(T), cudaMemcpyDeviceToHost));
+        cudaMemcpy(dst, src, size * sizeof(T), cudaMemcpyDeviceToHost));
 #elif ENABLE_HIP
     SW4_CheckDeviceError(
-			 hipMemcpy(dst, src, size*sizeof(T), hipMemcpyDeviceToHost));
+        hipMemcpy(dst, src, size * sizeof(T), hipMemcpyDeviceToHost));
 #else
-    std::cout<<"ERROR is Mspace:;copy:: undefined copy operation\n";
+    std::cout << "ERROR is Mspace:;copy:: undefined copy operation\n";
 #endif
     return;
   }
 
-  std::cout<<"ERROR :: Undefined Mspace::copy operation from "<<as_int(src_space)<<" to "<<as_int(dst_space)<<"\n";
-    
+  std::cout << "ERROR :: Undefined Mspace::copy operation from "
+            << as_int(src_space) << " to " << as_int(dst_space) << "\n";
 }
 #endif

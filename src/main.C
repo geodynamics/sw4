@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
   MPI_Comm_size(shared_comm, &local_size);
   MPI_Info_free(&info);
 
-  int device=presetGPUID(myRank, local_rank, local_size);
+  int device = presetGPUID(myRank, local_rank, local_size);
 
 #if defined(SW4_SIGNAL_CHECKPOINT)
   std::signal(SIGUSR1, signal_handler);

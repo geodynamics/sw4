@@ -1,6 +1,6 @@
-#include "caliper.h"
 #include "EW.h"
 #include "GridGeneratorGeneral.h"
+#include "caliper.h"
 
 //-----------------------------------------------------------------------
 GridGeneratorGeneral::GridGeneratorGeneral(float_sw4 topo_zmax, bool always_new,
@@ -14,7 +14,7 @@ void GridGeneratorGeneral::generate_grid_and_met(EW* a_ew, int g, Sarray& a_x,
                                                  Sarray& a_y, Sarray& a_z,
                                                  Sarray& a_jac, Sarray& a_met,
                                                  bool a_comm) {
-SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   int ncurv = a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids;
   if (m_always_new || ncurv > 1)
     generate_grid_and_met_new(a_ew, g, a_x, a_y, a_z, a_jac, a_met);
@@ -30,7 +30,7 @@ SW4_MARK_FUNCTION;
 bool GridGeneratorGeneral::grid_mapping(EW* a_ew, float_sw4 q, float_sw4 r,
                                         float_sw4 s, int g, float_sw4& x,
                                         float_sw4& y, float_sw4& z) {
-SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   int ncurv = a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids;
   if (m_always_new || ncurv > 1) {
     // New mapping.
@@ -50,7 +50,7 @@ bool GridGeneratorGeneral::inverse_grid_mapping(EW* a_ew, float_sw4 x,
                                                 float_sw4 y, float_sw4 z, int g,
                                                 float_sw4& q, float_sw4& r,
                                                 float_sw4& s) {
-SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   int ncurv = a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids;
   if (m_always_new || ncurv > 1) {
     // New mapping.
@@ -81,7 +81,7 @@ void GridGeneratorGeneral::grid_mapping_diff(EW* a_ew, float_sw4 q, float_sw4 r,
                                              float_sw4& zrs, float_sw4& zss)
 
 {
-SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   int ncurv = a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids;
   if (m_always_new || ncurv > 1) {
     // New mapping.
@@ -104,7 +104,7 @@ void GridGeneratorGeneral::generate_grid_and_met_old(EW* a_ew, Sarray& a_x,
                                                      Sarray& a_y, Sarray& a_z,
                                                      Sarray& a_jac,
                                                      Sarray& a_met) {
-SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   // Curvilinear grid that smoothly transitions to Cartesian at bottom.
   // Single top curvilinear grid only.
   int g = a_ew->mNumberOfGrids - 1;
@@ -144,7 +144,7 @@ void GridGeneratorGeneral::generate_grid_and_met_new(EW* a_ew, int g,
                                                      Sarray& a_x, Sarray& a_y,
                                                      Sarray& a_z, Sarray& a_jac,
                                                      Sarray& a_met) {
-SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   int ng = a_ew->mNumberOfGrids;
   int ncg = a_ew->mNumberOfCartesianGrids;
   int ref = 1;
@@ -198,7 +198,7 @@ SW4_MARK_FUNCTION;
 //-----------------------------------------------------------------------
 void GridGeneratorGeneral::assignInterfaceSurfaces(EW* a_ew,
                                                    Sarray& TopoGridExt) {
-SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   int ng = a_ew->mNumberOfGrids;
   int ncg = a_ew->mNumberOfCartesianGrids;
   m_curviInterface.resize(ng - ncg);
@@ -276,7 +276,7 @@ bool GridGeneratorGeneral::grid_mapping_old(float_sw4 q, float_sw4 r,
                                             float_sw4& y, float_sw4& z,
                                             Sarray& TopoGridExt, float_sw4 h,
                                             int Nz) {
-SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   //
   // Return (x,y) corresponding to (q,r).
   // Return true and assign (X0,Y0,Z0) corresponding to (q,r,s) if (q,r) is
@@ -348,7 +348,7 @@ SW4_MARK_FUNCTION;
 bool GridGeneratorGeneral::inverse_grid_mapping_old(
     EW* a_ew, float_sw4 x, float_sw4 y, float_sw4 z, int g, float_sw4& q,
     float_sw4& r, float_sw4& s, Sarray& TopoGridExt, float_sw4 h, int Nz) {
-SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   //
   // If (X0, Y0, Z0) is on the curvilinear grid and (X0, Y0) is on this
   // processor: Return true and assigns (q,r,s) corresponding to point
@@ -534,7 +534,7 @@ bool GridGeneratorGeneral::grid_mapping_new(EW* a_ew, float_sw4 q, float_sw4 r,
                                             float_sw4 s, int g, float_sw4& x,
                                             float_sw4& y, float_sw4& z,
                                             float_sw4 h, int Nz) {
-SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   //
   // Return (x,y) corresponding to (q,r).
   // Return true and assign (x,y,z) corresponding to (q,r,s) if (q,r) is inside
@@ -630,7 +630,7 @@ bool GridGeneratorGeneral::inverse_grid_mapping_new(EW* a_ew, float_sw4 x,
                                                     int g, float_sw4& q,
                                                     float_sw4& r, float_sw4& s,
                                                     float_sw4 h, int Nz) {
-SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   //
   // If (X0, Y0, Z0) is in the curvilinear grid g and (X0, Y0) is on this
   // processor: Return true and assigns (q,r,s) corresponding to point
@@ -732,7 +732,7 @@ void GridGeneratorGeneral::grid_mapping_diff_new(
     int kc, float_sw4& zq, float_sw4& zr, float_sw4& zs, float_sw4& zqq,
     float_sw4& zqr, float_sw4& zqs, float_sw4& zrr, float_sw4& zrs,
     float_sw4& zss, float_sw4 h, int Nz) {
-SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   // Computes derivatives of the grid mapping z=z(q,r,s) at the given location
   // (q,r,s).
   //
@@ -856,7 +856,7 @@ SW4_MARK_FUNCTION;
 void GridGeneratorGeneral::getmetwgh(float_sw4 ai, float_sw4 wgh[8],
                                      float_sw4 dwgh[8], float_sw4 ddwgh[8],
                                      float_sw4 dddwgh[8]) const {
-SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   float_sw4 pol = ai * ai * ai * ai * ai * ai * ai *
                   (-251 + 135 * ai + 25 * ai * ai - 33 * ai * ai * ai +
                    6 * ai * ai * ai * ai) /
@@ -963,7 +963,7 @@ SW4_MARK_FUNCTION;
 //-----------------------------------------------------------------------
 void GridGeneratorGeneral::generate_z_and_j(EW* a_ew, int g, Sarray& z,
                                             Sarray& J) {
-SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   int ng = a_ew->mNumberOfGrids;
   int ncg = a_ew->mNumberOfCartesianGrids;
   int ref = 1;

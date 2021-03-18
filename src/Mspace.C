@@ -16,7 +16,7 @@ struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0, 0,
 using namespace std;
 
 int presetGPUID(int mpi_rank, int local_rank, int local_size) {
-  int device=-1;
+  int device = -1;
 #if defined(ENABLE_GPU_ERROR)
   std::cerr
       << " Compilation error. Both ENABLE_CUDA and ENABLE_HIP are defined\n";
@@ -440,7 +440,7 @@ void operator delete(void *ptr, Space loc) throw() {
   } else if (loc == Space::Pinned)
     SW4_CheckDeviceError(SW4_FREE_PINNED(ptr));
   else if (loc == Space::Host) {
-    //std::cout<<"Calling my placement delete\n";
+    // std::cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
   } else if (loc == Space::Managed_temps) {
 #if defined(SW4_USE_UMPIRE)

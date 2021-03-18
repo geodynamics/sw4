@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdio>
+
 #include "caliper.h"
 #include "cf_interface.h"
 #include "sw4.h"

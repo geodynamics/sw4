@@ -101,8 +101,7 @@ class Sarray {
   Sarray();
   ~Sarray() {
 #ifndef SW4_USE_UMPIRE
-    if ((m_data != 0) && (!static_alloc))
-      ::operator delete[](m_data, space);
+    if ((m_data != 0) && (!static_alloc)) ::operator delete[](m_data, space);
 #else
     if (m_data != 0) {
       if (static_alloc) {
@@ -118,14 +117,16 @@ class Sarray {
 #endif
   }
   //   void define( CartesianProcessGrid* cartcomm, int nc );
-  inline Sarray &operator=( Sarray & rhs){
-    //std::cout<<"opertaot=\n"<<std::flush;
-    if (this==&rhs) return *this;
-    if ((this->space==Space::Device)||(rhs.space==Space::Device)){
-      std::cerr<<"Sarray::operator= node implemented from device memory\n";
+  inline Sarray& operator=(Sarray& rhs) {
+    // std::cout<<"opertaot=\n"<<std::flush;
+    if (this == &rhs) return *this;
+    if ((this->space == Space::Device) || (rhs.space == Space::Device)) {
+      std::cerr << "Sarray::operator= node implemented from device memory\n";
       abort();
     }
-    for(int i=0;i<m_npts;i++) this->m_data[i]=rhs.m_data[i]; // Assumes Space is host or Managed, never device PBUGS
+    for (int i = 0; i < m_npts; i++)
+      this->m_data[i] = rhs.m_data[i];  // Assumes Space is host or Managed,
+                                        // never device PBUGS
     return *this;
   }
   void define(int iend, int jend, int kend);

@@ -64,11 +64,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
                int event) {
   SW4_MARK_FUNCTION;
 #ifdef _OPENMP
-  if (omp_pause_resource_all(omp_pause_hard)){
-	std::cerr<<"OMP_pause_resource failed\n";
-	}
+  if (omp_pause_resource_all(omp_pause_hard)) {
+    std::cerr << "OMP_pause_resource failed\n";
+  }
 #endif
-
 
   // solution arrays
   vector<Sarray> F(mNumberOfGrids), Lu(mNumberOfGrids), Uacc(mNumberOfGrids),
@@ -93,19 +92,17 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   // AlphaVEp.resize(mNumberOfGrids);
 
   // New space switching
-SW4_MARK_BEGIN("Solve::Host->Managed");
+  SW4_MARK_BEGIN("Solve::Host->Managed");
   for (int g = 0; g < mNumberOfGrids; g++) {
     mMu[g].switch_space(Space::Managed);
     mLambda[g].switch_space(Space::Managed);
-    for (int a = 0; a < m_number_mechanisms;a++){
+    for (int a = 0; a < m_number_mechanisms; a++) {
       mMuVE[g][a].switch_space(Space::Managed);
       mLambdaVE[g][a].switch_space(Space::Managed);
     }
   }
-SW4_MARK_END("Solve::Host->Managed");
+  SW4_MARK_END("Solve::Host->Managed");
   // End space switching
-
-
 
   if (m_use_attenuation && m_number_mechanisms > 0) {
     for (int g = 0; g < mNumberOfGrids; g++) {

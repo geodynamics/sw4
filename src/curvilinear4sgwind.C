@@ -215,7 +215,7 @@ void curvilinear4sgwind(
       Range<1> K(klowb, klowe + 1);
 #endif
 #ifdef ENABLE_HIP
-      std::cout<<"FIRST LOOP\n"<<std::flush;
+      std::cout << "FIRST LOOP\n" << std::flush;
       Range<8> I(ifirst + 2, ilast - 1);
       Range<8> J(jfirst + 2, jlast - 1);
       Range<4> K(klowb, klowe + 1);
@@ -822,7 +822,7 @@ void curvilinear4sgwind(
 #endif
     }
     if (mid) {
-      std::cout<<"CSGWIND mid\n"<<std::flush;
+      std::cout << "CSGWIND mid\n" << std::flush;
 #ifdef PEEKS_GALORE
       SW4_PEEK;
       SYNC_DEVICE;
@@ -843,7 +843,7 @@ void curvilinear4sgwind(
 #endif
 
 #ifdef ENABLE_HIP
-      std::cout<<"SECOND LOOP\n"<<std::flush;
+      std::cout << "SECOND LOOP\n" << std::flush;
       Range<32> I(ifirst + 2, ilast - 1);
       Range<2> J(jfirst + 2, jlast - 1);
       Range<2> K(kmidb, kmide + 1);
@@ -1909,7 +1909,7 @@ void curvilinear4sgwind(
 #endif
 
 #ifdef ENABLE_HIP
-      std::cout<<"THIRD LOOP\n"<<std::flush;
+      std::cout << "THIRD LOOP\n" << std::flush;
       Range<16> I(ifirst + 2, ilast - 1);
       Range<2> J(jfirst + 2, jlast - 1);
       Range<2> K(khighb, khighe + 1);
@@ -2510,7 +2510,7 @@ void curvilinear4sgwind(
         lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
       });
 #ifdef ENABLE_HIP
-std::cout<<"THIRD LOOP DONE\n"<<std::flush;
+      std::cout << "THIRD LOOP DONE\n" << std::flush;
 #endif
     }
     // SYNC_DEVICE;

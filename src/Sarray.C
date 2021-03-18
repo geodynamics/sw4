@@ -231,7 +231,7 @@ Sarray::Sarray(const Sarray& u) : static_alloc(false) {
 }
 //-----------------------------------------------------------------------
 Sarray::Sarray(const Sarray& u, Space space_in) {
-  space=space_in;
+  space = space_in;
   m_nc = u.m_nc;
   m_ib = u.m_ib;
   m_ie = u.m_ie;
@@ -275,7 +275,7 @@ Sarray::Sarray(Sarray& u, int nc) : static_alloc(false) {
   m_ni = m_ie - m_ib + 1;
   m_nj = m_je - m_jb + 1;
   m_nk = m_ke - m_kb + 1;
-  space=Space::Managed;
+  space = Space::Managed;
   if (m_nc * m_ni * m_nj * m_nk > 0)
     m_data = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
   else
@@ -428,7 +428,7 @@ void Sarray::define(int ibeg, int iend, int jbeg, int jend, int kbeg, int kend,
   m_ni = m_ie - m_ib + 1;
   m_nj = m_je - m_jb + 1;
   m_nk = m_ke - m_kb + 1;
-  space=space_in;
+  space = space_in;
   if (m_nc * m_ni * m_nj * m_nk > 0)
     m_data = SW4_NEW(space, float_sw4[m_nc * m_ni * m_nj * m_nk]);
   else
@@ -460,7 +460,7 @@ void Sarray::define(const Sarray& u) {
   m_ni = m_ie - m_ib + 1;
   m_nj = m_je - m_jb + 1;
   m_nk = m_ke - m_kb + 1;
-  space=Space::Managed;
+  space = Space::Managed;
   if (m_nc * m_ni * m_nj * m_nk > 0)
     m_data = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
   else
@@ -580,7 +580,6 @@ void Sarray::set_to_minusOne() {
   prefetch();
   float_sw4* lm_data = m_data;
 
-
 #ifdef PEEKS_GALORE
   SYNC_STREAM;
   SW4_PEEK;
@@ -593,7 +592,10 @@ void Sarray::set_to_minusOne() {
                               [=] RAJA_DEVICE(size_t i) { lm_data[i] = -1.; });
 
 #else
-  forall(0, m_npts, [=] RAJA_DEVICE(size_t i) { lm_data[i] = -1.; }); // cuda-memcheck fails here with -M -gpu. 2/26/2021. Works on X86 machines
+  forall(0, m_npts, [=] RAJA_DEVICE(size_t i) {
+    lm_data[i] = -1.;
+  });  // cuda-memcheck fails here with -M -gpu. 2/26/2021. Works on X86
+       // machines
 #endif
 
 #ifdef PEEKS_GALORE
@@ -606,14 +608,14 @@ void Sarray::set_to_minusOne() {
 void Sarray::set_to_minusOneHost() {
   SW4_MARK_FUNCTION;
   // #pragma omp parallel for
-  for( size_t i=0 ; i < m_npts ; i++ ) m_data[i]=-1.0;
+  for (size_t i = 0; i < m_npts; i++) m_data[i] = -1.0;
 }
 
 //-----------------------------------------------------------------------
 void Sarray::set_valueHost(float_sw4 scalar) {
   SW4_MARK_FUNCTION;
   // #pragma omp parallel for
-  for( size_t i=0 ; i < m_npts ; i++ ) m_data[i]=scalar;
+  for (size_t i = 0; i < m_npts; i++) m_data[i] = scalar;
 }
 //-----------------------------------------------------------------------
 void Sarray::set_value(float_sw4 scalar) {
@@ -788,7 +790,7 @@ void Sarray::copy(const Sarray& u) {
   m_ni = m_ie - m_ib + 1;
   m_nj = m_je - m_jb + 1;
   m_nk = m_ke - m_kb + 1;
-  space=Space::Managed;
+  space = Space::Managed;
   if (m_nc * m_ni * m_nj * m_nk > 0) {
     m_data = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
 #pragma omp parallel for
@@ -979,7 +981,7 @@ void Sarray::copy_kplane(Sarray& u, int k) {
     int mkb = m_kb;
     int mni = m_ni;
     int mnj = m_nj;
-    //int mnc = m_nc;
+    // int mnc = m_nc;
     // SW4_MARK_BEGIN("CK_PREF");
     // prefetch();
     // u.prefetch();
@@ -1615,24 +1617,25 @@ void Sarray::GetAtt(char* file, int line) {
 #endif
 }
 //----------------------------------------------------------------------
-void Sarray::switch_space(Space new_space){
+void Sarray::switch_space(Space new_space) {
 #ifdef ENABLE_GPU
 
-  //std::cout<<"Switching from "<<as_int(space)<<" to "<<as_int(new_space)<<"\n"<<std::flush;
-   if (space==new_space) return;
-   
-   float_sw4* n_data = SW4_NEW(new_space, float_sw4[m_nc * m_ni * m_nj * m_nk]);
+  // std::cout<<"Switching from "<<as_int(space)<<" to
+  // "<<as_int(new_space)<<"\n"<<std::flush;
+  if (space == new_space) return;
 
-   spacecopy(n_data, m_data, new_space, space, m_nc * m_ni * m_nj * m_nk);
+  float_sw4* n_data = SW4_NEW(new_space, float_sw4[m_nc * m_ni * m_nj * m_nk]);
 
-   
-   ::operator delete[](m_data, space);
-   reference(n_data);
-   space= new_space;
-   //view.set(*this);
-   //std::cout<<"Switching from "<<as_int(space)<<" to "<<as_int(new_space)<<" DONE\n"<<std::flush;
+  spacecopy(n_data, m_data, new_space, space, m_nc * m_ni * m_nj * m_nk);
+
+  ::operator delete[](m_data, space);
+  reference(n_data);
+  space = new_space;
+  // view.set(*this);
+  // std::cout<<"Switching from "<<as_int(space)<<" to "<<as_int(new_space)<<"
+  // DONE\n"<<std::flush;
 #endif
- }
+}
 //----------------------------------------------------------------------
 void mset_to_zero_async(Sarray& S0, Sarray& S1, Sarray& S2, Sarray& S3) {
   float_sw4* m0 = S0.m_data;
@@ -1724,7 +1727,7 @@ void vset_to_zero_async(std::vector<Sarray>& v, int N) {
           v[1].m_npts, [=] RAJA_DEVICE(size_t i) { m1[i] = 0; }, zero,
           v[2].m_npts, [=] RAJA_DEVICE(size_t i) { m2[i] = 0; }, zero,
           v[3].m_npts, [=] RAJA_DEVICE(size_t i) { m3[i] = 0; }, zero,
-	  v[4].m_npts, [=] RAJA_DEVICE(size_t i) { m4[i] = 0; });
+          v[4].m_npts, [=] RAJA_DEVICE(size_t i) { m4[i] = 0; });
 
       break;
     case 6:
@@ -1741,7 +1744,7 @@ void vset_to_zero_async(std::vector<Sarray>& v, int N) {
           v[2].m_npts, [=] RAJA_DEVICE(size_t i) { m2[i] = 0; }, zero,
           v[3].m_npts, [=] RAJA_DEVICE(size_t i) { m3[i] = 0; }, zero,
           v[4].m_npts, [=] RAJA_DEVICE(size_t i) { m4[i] = 0; }, zero,
-	  v[5].m_npts, [=] RAJA_DEVICE(size_t i) { m5[i] = 0; });
+          v[5].m_npts, [=] RAJA_DEVICE(size_t i) { m5[i] = 0; });
 
     default:
       std::cerr << "ERROR:: vset_to_zero_async not implemented for " << N

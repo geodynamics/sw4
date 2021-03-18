@@ -7931,14 +7931,12 @@ void EW::setup_viscoelastic() {
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
         for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
           for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
-            
-
 #ifdef _OPENMP
-    double* a_ = new float_sw4[n * nc];
-    double* beta = new double[nc];
-    double* gamma = new double[nc];
-    int lwork = 3 * n;
-    double* work = new double[lwork];
+            double* a_ = new float_sw4[n * nc];
+            double* beta = new double[nc];
+            double* gamma = new double[nc];
+            int lwork = 3 * n;
+            double* work = new double[lwork];
 #endif
             char trans = 'N';
             int info = 0, nrhs = 1, lda = nc, ldb = nc;
@@ -8060,12 +8058,12 @@ void EW::setup_viscoelastic() {
             //     for (q=0; q<n; q++)
             //       printf("beta[%i]=%e ", q, b[q]);
             //     printf("\n");
-            
+
 #ifdef _OPENMP
-	    delete[] a_;
-	    delete[] beta;
-	    delete[] gamma;
-	    delete[] work;
+            delete[] a_;
+            delete[] beta;
+            delete[] gamma;
+            delete[] work;
 #endif
           }  // end for g,k,j,i
 #ifndef _OPENMP

@@ -31,10 +31,11 @@
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 #include <cstring>
-#include "caliper.h"
+
 #include "CurvilinearInterface2.h"
 #include "EW.h"
 #include "GridGenerator.h"
+#include "caliper.h"
 
 // making directories
 #include <errno.h>
@@ -907,7 +908,7 @@ void EW::set_materials()
 // After materials are set, call check_materials to make sure (mu,lambda,rho)
 // values make sense
 {
- SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   int g;
   if (!m_testing) {
     // If material surfaces (Ifiles) are defined, sort them wrt their IDs
@@ -1290,7 +1291,7 @@ void EW::set_materials()
 
 //-----------------------------------------------------------------------
 void EW::set_anisotropic_materials() {
- SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   if (!m_testing) {
     int lastAllCoveringBlock = 0;
     for (unsigned int b = 0; b < m_anisotropic_mtrlblocks.size(); b++)
@@ -1481,7 +1482,7 @@ void EW::set_anisotropic_materials() {
 
 //-----------------------------------------------------------------------
 void EW::check_anisotropic_material(vector<Sarray> &rho, vector<Sarray> &c) {
- SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   float_sw4 rhomin = 1e38, rhomax = -1e38;
   float_sw4 eigmin = 1e38, eigmax = -1e38;
   float_sw4 rhominloc, rhomaxloc, eigminloc, eigmaxloc;
@@ -1577,7 +1578,7 @@ void EW::create_directory(const string &path) {
 
 //-----------------------------------------------------------------------
 void EW::computeDT() {
- SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   if (!mQuiet && mVerbose >= 1 && proc_zero()) {
     printf("*** computing the time step ***\n");
   }
@@ -1770,7 +1771,7 @@ void EW::computeDT() {
 void EW::computeDTanisotropic()  // NOT completely updated for several
                                  // curvilinear grids
 {
- SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   if (!mQuiet && mVerbose >= 1 && proc_zero()) {
     printf("*** computing the time step ***\n");
   }
@@ -1962,7 +1963,7 @@ int EW::mkdirs(const string &path) {
 
 //-----------------------------------------------------------------------
 void EW::setup_supergrid() {
- SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   if (mVerbose >= 3 && proc_zero())
     cout << "*** Inside setup_supergrid ***" << endl;
 
@@ -2074,7 +2075,7 @@ void EW::setup_supergrid() {
 
 //-----------------------------------------------------------------------
 void EW::assign_supergrid_damping_arrays() {
- SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   int g, topCartesian;
   // float_sw4 x, y, z;
 
@@ -2321,7 +2322,7 @@ void EW::assign_supergrid_damping_arrays() {
 
 //-----------------------------------------------------------------------
 void EW::material_ic(vector<Sarray> &a_mtrl) {
- SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   // interface between curvilinear and top Cartesian grid
   if (topographyExists()) {
     if (m_gridGenerator->curviCartIsSmooth(mNumberOfGrids -
@@ -2358,7 +2359,7 @@ void EW::material_ic(vector<Sarray> &a_mtrl) {
 
 //-----------------------------------------------------------------------
 void EW::perturb_velocities(vector<Sarray> &a_vs, vector<Sarray> &a_vp) {
- SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   int g = mNumberOfGrids - 1;
   int p = m_random_dist / mGridSize[g] + 1;
   int pz = m_random_distz / mGridSize[g] + 1;
@@ -2452,7 +2453,7 @@ void EW::perturb_velocities(vector<Sarray> &a_vs, vector<Sarray> &a_vp) {
 
 //-----------------------------------------------------------------------
 void EW::getDtFromRestartFile() {
- SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   //   VERIFY2( m_check_point->mDoRestart,
   //	    "Error in EW::getDtFromRestartFile: there is no restart command");
   mDt = m_check_point->getDt();
@@ -2575,7 +2576,7 @@ void EW::checkpoint_twilight_test(vector<Sarray> &Um, vector<Sarray> &U,
                                   vector<Sarray *> AlphaVE,
                                   vector<Sarray *> AlphaVEp,
                                   vector<Source *> a_Sources, float_sw4 t) {
- SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   if (m_twilight_forcing && m_check_point->do_restart() &&
       getVerbosity() >= 3) {
     if (proc_zero()) printf("Checking the accuracy of the checkpoint data\n");

@@ -1184,10 +1184,9 @@ void TimeSeries::write_hdf5_format(int npts, hid_t grp, float* y, float btime,
   write_data = y;
 
   if (mDownSample > 1) {
-    write_npts = (int) npts / mDownSample;
+    write_npts = (int)npts / mDownSample;
     write_data = new float[write_npts];
-    for (int i = 0; i < write_npts; i++) 
-      write_data[i] = y[i*mDownSample];
+    for (int i = 0; i < write_npts; i++) write_data[i] = y[i * mDownSample];
   }
 
   // write only new data

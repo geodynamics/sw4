@@ -477,14 +477,14 @@ template <int N, typename T, typename LB0, typename LB1, typename LB2,
           typename LB3>
 void multiforall(T start0, T end0, LB0 &&body0, T start1, T end1, LB1 &&body1,
                  T start2, T end2, LB2 &&body2, T start3, T end3, LB3 &&body3) {
-  //int blocks = 80 * 2048 / N;  // WARNING HARDWIRED FOR V100
+  // int blocks = 80 * 2048 / N;  // WARNING HARDWIRED FOR V100
 
-  dim3 tpb(N,1,1);
-  dim3 blocks(80 * 2048 / N,1,1);
-  hipLaunchKernelGGL(multiforallkernel,blocks,tpb,0,0,start0, end0, body0, start1, end1, body1,
-                                   start2, end2, body2, start3, end3, body3);
+  dim3 tpb(N, 1, 1);
+  dim3 blocks(80 * 2048 / N, 1, 1);
+  hipLaunchKernelGGL(multiforallkernel, blocks, tpb, 0, 0, start0, end0, body0,
+                     start1, end1, body1, start2, end2, body2, start3, end3,
+                     body3);
 }
-
 
 // Generalized mforall kernel
 template <typename T, typename LoopBody>
@@ -511,12 +511,12 @@ __global__ void gmforallkernel(T start, T end, LoopBody body, Args... args) {
 template <int N, typename T, typename LoopBody, class... Args>
 void gmforall(T start, T end, LoopBody &&body, Args... args) {
   // std::cout<<"Start is "<<start<<"\n";
-  dim3 tpb(N,1,1);
-  dim3 blocks(80 * 2048 / N,1,1);
-  //int blocks = 80 * 2048 / N;  // WARNING HARDWIRED FOR V100
+  dim3 tpb(N, 1, 1);
+  dim3 blocks(80 * 2048 / N, 1, 1);
+  // int blocks = 80 * 2048 / N;  // WARNING HARDWIRED FOR V100
   // multiforallkernel<<<blocks,N>>>(start,end, body, args...);
-  //gmforallkernel<<<blocks, N>>>(start, end, body, args...);
-  hipLaunchKernelGGL(gmforallkernel, blocks, tpb, 0, 0, start, end, body, args...);
-  
+  // gmforallkernel<<<blocks, N>>>(start, end, body, args...);
+  hipLaunchKernelGGL(gmforallkernel, blocks, tpb, 0, 0, start, end, body,
+                     args...);
 }
 #endif  // Guards

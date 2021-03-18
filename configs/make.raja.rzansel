@@ -81,4 +81,4 @@ LINKFLAGS =  -arch=sm_70
 
 EXTRA_CXX_FLAGS =  -O3 -use_fast_math $(MORE_FLAGS) -DDISABLE_PREFETCH  -ccbin mpixlC -std=c++14 --expt-extended-lambda -restrict -arch=sm_70 -I $(CUDA_HOME)/include -I$(RAJA_HOME)/include  --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA -dc 
 
-EXTRA_LINK_FLAGS =   -dc -L /usr/tce/packages/xl/xl-2019.02.07/xlf/16.1.1/lib -lxlf90  -lxlfmath -Wl,-rpath=${LAPACK_DIR} -L ${LAPACK_DIR}  -llapack -lblas  -L $(CUDA_HOME)/lib64 -lcudart -lnvToolsExt -lcuda -L $(RAJA_HOME)/lib -lRAJA  -lcudadevrt -L/usr/lib64/nvidia -lnvidia-ml  $(MORE_LINK_FLAGS) -qsmp=omp
+EXTRA_LINK_FLAGS =   -dc -L /usr/tce/packages/xl/xl-2019.02.07/xlf/16.1.1/lib -lxlf90  -lxlfmath -Wl,-rpath=${LAPACK_DIR} -L ${LAPACK_DIR}  -llapack -lblas  -L $(CUDA_HOME)/lib64 -lcudart -lnvToolsExt -lcuda -L $(RAJA_HOME)/lib -lRAJA  -lcudadevrt -L/usr/lib64/nvidia -lnvidia-ml  $(MORE_LINK_FLAGS) 

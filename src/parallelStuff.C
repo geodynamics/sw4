@@ -285,7 +285,7 @@ void EW::setup2D_MPICommunications() {
   global_variables.device_buffer =
       SW4_NEW(Space::Managed_temps, float_sw4[global_variables.buffer_size]);
 #else
-    void* ptr;
+  void* ptr;
   if (cudaMalloc(&ptr, global_variables.buffer_size * 8) != cudaSuccess) {
     std::cerr << "cudaMalloc failed in line 387 of parallelStuff.C\n";
     abort();
@@ -484,7 +484,6 @@ void EW::setupMPICommunications() {
 #endif
 }
 
-
 void EW::communicate_array(Sarray& u, int grid) {
   // The async version using either device or managed memory works
   // spectrum-mpi/2018.02.05 on Ray. And it is slower on the Hayward case:
@@ -500,7 +499,7 @@ void EW::communicate_array(Sarray& u, int grid) {
 }
 //-----------------------------------------------------------------------
 void EW::communicate_array_host(Sarray& u, int grid) {
-  //std::cout<<"void EW::communicate_array(Sarray& u, int grid"<<std::flush;
+  // std::cout<<"void EW::communicate_array(Sarray& u, int grid"<<std::flush;
   SW4_MARK_FUNCTION;
   // The async version using either device or managed memory works
   // spectrum-mpi/2018.02.05 on Ray. And it is slower on the Hayward case:
@@ -695,8 +694,6 @@ void EW::communicate_array_2d(Sarray& u, int g, int k) {
   }
 }
 #endif  // if defined(ENABLE_GPU)
-
-
 
 #if defined(ENABLE_GPU)
 void EW::communicate_array_2d_ext(Sarray& u) {
@@ -925,7 +922,7 @@ void EW::make_type(vector<std::tuple<int, int, int>>& send_type,
                    int i1, int j1, int k1, int i2, int j2, int k2, int g) {
   send_type[2 * g] = std::make_tuple(i1, j1, k1);
   send_type[2 * g + 1] = std::make_tuple(i2, j2, k2);
-  
+
   float_sw4* tbuf =
       SW4_NEW(mpi_buffer_space, float_sw4[i1 * j1 * 4 + i2 * j2 * 4]);
   bufs_type[4 * g + 0] = std::make_tuple(tbuf, tbuf + i1 * j1);
@@ -944,7 +941,7 @@ void EW::make_type_2d(vector<std::tuple<int, int, int>>& send_type,
                       vector<std::tuple<float_sw4*, float_sw4*>>& bufs_type,
                       int i1, int j1, int k1, int g) {
   send_type[g] = std::make_tuple(i1, j1, k1);
-  
+
   float_sw4* tbuf = SW4_NEW(Space::Pinned, float_sw4[i1 * j1 * 2]);
   bufs_type[g] = std::make_tuple(tbuf, tbuf + i1 * j1);
 
@@ -1074,7 +1071,7 @@ void EW::communicate_array_async(Sarray& u, int grid) {
                     &status);
     }
   } else if (u.m_nc == 21) {
-    std::cerr<< "WARNING:: untested u.m_nc=21 branch being used \n";
+    std::cerr << "WARNING:: untested u.m_nc=21 branch being used \n";
     int xtag1 = 345;
     int xtag2 = 346;
     int ytag1 = 347;
@@ -1272,7 +1269,7 @@ void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
         hipMemcpy(buf, lbuf, count * bl * 8, hipMemcpyDeviceToHost));
 #endif
 
-#else // #ifdef SW4_STAGED_MPI_BUFFERS
+#else  // #ifdef SW4_STAGED_MPI_BUFFERS
 
   // Code for PINNED,DEVICE AND MANAGED BUFFERS
 #ifndef UNRAJA
@@ -1337,10 +1334,10 @@ void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
   SW4_CheckDeviceError(
       cudaMemcpyAsync(lbuf, buf, count * bl * 8, cudaMemcpyHostToDevice, 0));
 #elif defined(ENABLE_HIP)
-SW4_CheckDeviceError(
+  SW4_CheckDeviceError(
       hipMemcpyAsync(lbuf, buf, count * bl * 8, hipMemcpyHostToDevice, 0));
 #endif
-  
+
 #ifndef UNRAJA
   Range<16> k_range(0, bl);
   Range<16> i_range(0, count);
@@ -1692,8 +1689,8 @@ void EW::communicate_array_2d_isurf(Sarray& u, int iSurf) {
   //	   <<&u(1, ib, jb, k)<<"\n"<<std::flush;
   // std::cout<<"NEIGHS"<<m_neighbor[0]<<" "<<m_neighbor[1]<<"\n"<<std::flush;
 
-  //std::cout<<"COMM2 SURF START\n"<<std::flush;
-  Sarray uC(u,Space::Host);
+  // std::cout<<"COMM2 SURF START\n"<<std::flush;
+  Sarray uC(u, Space::Host);
   uC = u;
 
   MPI_Sendrecv(&uC(1, ie - (2 * extpadding - 1), jb, k), 1,
@@ -1717,6 +1714,6 @@ void EW::communicate_array_2d_isurf(Sarray& u, int iSurf) {
                m_neighbor[2], ytag2, &uC(1, ib, je - (extpadding - 1), k), 1,
                m_send_type_isurfy[iSurf], m_neighbor[3], ytag2,
                m_cartesian_communicator, &status);
-  u=uC;
-  //std::cout<<"COMM2 SURF END\n"<<std::flush;
+  u = uC;
+  // std::cout<<"COMM2 SURF END\n"<<std::flush;
 }

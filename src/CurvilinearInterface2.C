@@ -171,16 +171,15 @@ void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
       st.push_back(start[s]);
       end[s] = {ie + 1, je + 1, ke + 1};
       en.push_back(end[s]);
-
-    } 
+    }
   if (st.size() == 0) {
-}
-  else if (st.size() == 1) {
-    gmforall3async<16, 16, 1>(st[0], en[0], [=] RAJA_DEVICE(int i, int j, int k) {
-      for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
-    });
-  }
-  else if(st.size() == 2) {
+  } else if (st.size() == 1) {
+    gmforall3async<16, 16, 1>(st[0], en[0],
+                              [=] RAJA_DEVICE(int i, int j, int k) {
+                                for (int c = 1; c <= nc; c++)
+                                  uV(c, i, j, k) = 0;
+                              });
+  } else if (st.size() == 2) {
     gmforall3async<16, 16, 1>(
         st[0], en[0],
         [=] RAJA_DEVICE(int i, int j, int k) {
@@ -190,10 +189,9 @@ void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
         [=] RAJA_DEVICE(int i, int j, int k) {
           for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
         });
-  }
-  else {
-    std::cerr << " ERROR SIZE in CurvilinearInterface2::bnd_zero 0 " << st.size()
-              << "\n";
+  } else {
+    std::cerr << " ERROR SIZE in CurvilinearInterface2::bnd_zero 0 "
+              << st.size() << "\n";
     abort();
   }
 
@@ -271,7 +269,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
 #endif
 #ifdef ENABLE_HIP
   hipMemcpyAsync(m_strx_c, lm_strx_c, (m_ie - m_ib + 1) * sizeof(double),
-                  hipMemcpyHostToDevice, 0);
+                 hipMemcpyHostToDevice, 0);
 #endif
 
   ndif = m_nghost - (m_ew->m_iStartInt[m_gf] - m_ew->m_iStart[m_gf]);
@@ -284,7 +282,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
 #endif
 #ifdef ENABLE_HIP
   hipMemcpyAsync(m_strx_f, lm_strx_f, (m_ief - m_ibf + 1) * sizeof(double),
-                  hipMemcpyHostToDevice, 0);
+                 hipMemcpyHostToDevice, 0);
 #endif
 
   ndif = m_nghost - (m_ew->m_jStartInt[m_gc] - m_ew->m_jStart[m_gc]);
@@ -297,7 +295,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
 #endif
 #ifdef ENABLE_HP
   hipMemcpyAsync(m_stry_c, lm_stry_c, (m_je - m_jb + 1) * sizeof(double),
-                  hipMemcpyHostToDevice, 0);
+                 hipMemcpyHostToDevice, 0);
 #endif
 
   ndif = m_nghost - (m_ew->m_jStartInt[m_gf] - m_ew->m_jStart[m_gf]);
@@ -310,9 +308,8 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
 #endif
 #ifdef ENABLE_HIP
   hipMemcpyAsync(m_stry_f, lm_stry_f, (m_jef - m_jbf + 1) * sizeof(double),
-                  hipMemcpyHostToDevice, 0);
+                 hipMemcpyHostToDevice, 0);
 #endif
-
 
   SYNC_STREAM;
 
