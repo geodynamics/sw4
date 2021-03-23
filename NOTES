@@ -1,1 +1,6 @@
 The biggest allocation in an hmr3.in run with 13GB max per device is 760569040 Bytes. Indexing for this array(doubles) goes upto 95071130. On a 128 GB device, the indexing would go to a max of 936084973 . No int overflow problems until devices of more than 256 GB.
+
+
+RAJA loops with reductions called from evenIevenJacobiOpt and siblings in consintp take about 20% more time than the version with no reduction. The iterations
+take about 14 iterations. There is scope for running 10 iterations without reductions  and MPI_Allreduces but the speed improvement potential is about 1% with increased
+complexity.
