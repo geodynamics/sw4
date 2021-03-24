@@ -5511,7 +5511,8 @@ void EW::compute_icstresses_curv(Sarray& a_Up, Sarray& B, int kic,
 #define str_y(j) a_str_y[(j - jfirst)]
   float_sw4 sgn = 1;
   if (op == '=') {
-    B.set_value(0.0);
+    //B.set_value(0.0);
+    B.set_to_zero_async();
     sgn = 1;
   }
   if (op == '-') {
