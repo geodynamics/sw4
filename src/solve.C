@@ -64,11 +64,11 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
                int event) {
   SW4_MARK_FUNCTION;
 #ifdef _OPENMP
-  if (omp_pause_resource_all(omp_pause_hard)) {
-    std::cerr << "OMP_pause_resource failed\n";
-  }
+  //if (omp_pause_resource_all(omp_pause_hard)) {
+  //  std::cerr << "OMP_pause_resource failed\n";
+  // }
 #endif
-
+  //print_hwm(getRank());
   // solution arrays
   vector<Sarray> F(mNumberOfGrids), Lu(mNumberOfGrids), Uacc(mNumberOfGrids),
       Up(mNumberOfGrids), Um(mNumberOfGrids), U(mNumberOfGrids);

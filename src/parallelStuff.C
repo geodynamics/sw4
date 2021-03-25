@@ -1312,6 +1312,7 @@ void EW::getbuffer_host(float_sw4* data, float_sw4* buf,
   int stride = std::get<2>(mtype);
 
   // std::cout<<bl*count*8<<"\ bytes n";
+#pragma omp parallel for collapse(2)
   for (int i = 0; i < count; i++)
     for (int k = 0; k < bl; k++) buf[k + i * bl] = data[i * stride + k];
   // std::cout<<"Done\n";
@@ -1391,7 +1392,7 @@ void EW::putbuffer_host(float_sw4* data, float_sw4* buf,
   int bl = std::get<1>(mtype);
   int stride = std::get<2>(mtype);
   // std::cout<<"putbuffer_device...";
-
+#pragma omp parallel for collapse(2)
   for (int i = 0; i < count; i++)
     for (int k = 0; k < bl; k++) data[i * stride + k] = buf[k + i * bl];
 }

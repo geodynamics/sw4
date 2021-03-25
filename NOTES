@@ -4,3 +4,5 @@ The biggest allocation in an hmr3.in run with 13GB max per device is 760569040 B
 RAJA loops with reductions called from evenIevenJacobiOpt and siblings in consintp take about 20% more time than the version with no reduction. The iterations
 take about 14 iterations. There is scope for running 10 iterations without reductions  and MPI_Allreduces but the speed improvement potential is about 1% with increased
 complexity.
+
+Memory usage before solve is 2.89GB per device . After 1 time step, the HWM maxes at 12.89GB. Case :hmr3.in 
