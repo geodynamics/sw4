@@ -1182,21 +1182,10 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
   write_npts = npts;
   write_data = y;
   if (mDownSample > 1) {
-    write_npts = write_npts/mDownSample;
-    if (write_npts % mDownSample != 0) 
-      write_npts++;
+    write_npts = (int) npts / mDownSample;
     write_data = new float[write_npts];
-    int j = 0;
-    for (int i = 0; i < npts; i += mDownSample) {
-      if (j >= write_npts) 
-        break;
-      write_data[j++] = y[i];
-#if defined(BZ_DEBUG) || defined(USE_HDF5_ZERO_SAC_CHECK)
-      if (i > 0 && y[i-1] != 0 && y[i] == 0) {
-        fprintf(stderr, "SACHDF5 possible zero value error, y[%d]=%e, y[%d]=%e\n", i-1, y[i-1], i, y[i]);
-      }
-#endif
-    }
+    for (int i = 0; i < write_npts; i++) 
+      write_data[i] = y[i*mDownSample];
   }
 
   // write only new data
