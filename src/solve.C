@@ -1899,6 +1899,8 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     Sarray Unextc(3, ibc, iec, jbc, jec, kc, kc, __FILE__,
                   __LINE__);  // only needs k=kc (on the interface)
     Sarray Bc(3, ibc, iec, jbc, jec, kc, kc, __FILE__, __LINE__);
+
+    
 #define FUSED_KERNELS 1
 #ifndef FUSED_KERNELS
     Unextf.set_to_zero_async();
@@ -1917,6 +1919,7 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     Sarray Uc_tt(3, ibc, iec, jbc, jec, kc - 1, kc + 7, __FILE__, __LINE__);
     // reuse Utt to hold the acceleration of the memory variables
     SW4_MARK_END("enforceIC::Allocs");
+    
     // Set to zero the ghost point values that are unknowns when solving the
     // interface condition. Assume that Dirichlet data is already set on ghost
     // points on the (supergrid) sides, which are not treated as unknown
@@ -1931,6 +1934,7 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     if (predictor)  // In the predictor step, (Unextc, Unextf) represent the
                     // displacement after the corrector step
     {
+      SW4_MARK_BEGIN("enforceIC::PREDICTOR");
       //  REMARK: June 15, 2017: if predictor == true, the memory variable
       //  a_alphaVEp holds the predicted
       // (2nd order) values on entry. However, the interior contribution to the
@@ -1950,9 +1954,11 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
         // dirichlet conditions for Unextc in super-grid layer at time t+dt
         dirichlet_LRic(Unextc, g, kc, time + mDt, 1);
       }
+      SW4_MARK_END("enforceIC::PREDICTOR");
     } else  // In the corrector step, (Unextc, Unextf) represent the
             // displacement after next predictor step
     {
+      SW4_MARK_BEGIN("enforceIC::CORRECTOR");
       compute_preliminary_predictor(a_Up[g + 1], a_U[g + 1], a_AlphaVEp[g + 1],
                                     Unextf, g + 1, kf, time + mDt, F[g + 1],
                                     point_sources);
@@ -1963,13 +1969,18 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
         // dirichlet conditions for Unextc in super-grid layer at time t+2*dt
         dirichlet_LRic(Unextc, g, kc, time + 2 * mDt, 1);
       }
+      SW4_MARK_END("enforceIC::CORRECTOR");
     }
 
+
+    SW4_MARK_BEGIN("enforceIC::COMPUTE_ICSTRESSES");
     compute_icstresses(a_Up[g + 1], Bf, g + 1, kf, m_sg_str_x[g + 1],
                        m_sg_str_y[g + 1]);
     compute_icstresses(a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g]);
+    SW4_MARK_END("enforceIC::COMPUTE_ICSTRESSES");
 
     // NEW June 13, 2017: add in the visco-elastic boundary traction
+    SW4_MARK_BEGIN("enforceIC::AD_VE_STRESSES");
     if (m_use_attenuation && m_number_mechanisms > 0) {
       for (int a = 0; a < m_number_mechanisms; a++) {
         // the visco-elastic stresses depend on the predictor values of AlphaVEp
@@ -1980,14 +1991,15 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                         m_sg_str_y[g]);
       }
     }
-
+    SW4_MARK_END("enforceIC::AD_VE_STRESSES");
+    SW4_MARK_BEGIN("enforceIC::DIRICHLET_LRSTRESS");
     // from enforceIC2()
     if (!m_doubly_periodic) {
       //  dirichlet condition for Bf in the super-grid layer at time t+dt (also
       //  works with twilight)
       dirichlet_LRstress(Bf, g + 1, kf, time + mDt, 1);
     }
-
+    SW4_MARK_END("enforceIC::DIRICHLET_LRSTRESS");
     SW4_MARK_BEGIN("enforceIC::MPI2DCOMM");
 #if defined(SW4_TRACK_MPI)
     {
@@ -2039,6 +2051,7 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
       dirichlet_LRic(a_Up[g], g, kc - 1, time + mDt, 1);
     }
   }  // end for g...
+  SW4_MARK_BEGIN("enforceIC::IMPOSE_IC");
   for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++) {
     //         m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up,
     //         time+mDt );
@@ -2046,6 +2059,7 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                                                    a_AlphaVEp);
     //      check_ic_conditions( g, a_Up );
   }
+  SW4_MARK_END("enforceIC::IMPOSE_IC");
 
 }  // enforceIC
 
