@@ -812,6 +812,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     if (currentTimeStep == (beginCycle + 2)) print_hwm(getRank());
     if (currentTimeStep == (beginCycle + 10)) {
       PROFILER_START;
+      SW4_MARK_BEGIN("CLEAN_TIME");
 #ifdef SW4_TRACK_MPI
       t6 = SW4_CHRONO_NOW;
       ProfilerOn = true;
@@ -1303,6 +1304,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       SYNC_DEVICE;
     }
   }  // end time stepping loop
+  SW4_MARK_END("CLEAN_TIME");
   SW4_MARK_END("TIME_STEPPING");
 
   // Calculate stats for first time step
