@@ -145,8 +145,8 @@ int ntr = a_TimeSeries.size();
        a_TimeSeries[ig]->set_window(timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+win, 
        timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+win);
 
-       if(myrank==0) fprintf(fd, "%d   %d\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
-               event, ig+1, a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
+       if(myrank==0) fprintf(fd, "%d   %d\t%s\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
+               event, ig+1, a_TimeSeries[ig]->getStationName(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
                timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+win, 
                timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+win);
          break;
@@ -154,8 +154,8 @@ int ntr = a_TimeSeries.size();
        a_TimeSeries[ig]->set_window(times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+win, 
        times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+win);
 
-       if(myrank==0) fprintf(fd, "%d   %d\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
-               event, ig+1, a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
+       if(myrank==0) fprintf(fd, "%d   %d\t%s\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
+               event, ig+1, a_TimeSeries[ig]->getStationName(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
                times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+win, 
                times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+win);
          break;
@@ -163,8 +163,8 @@ int ntr = a_TimeSeries.size();
        a_TimeSeries[ig]->set_window(timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+win, 
        times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+win);
 
-       if(myrank==0) fprintf(fd, "%d   %d\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
-               event, ig+1, a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
+       if(myrank==0) fprintf(fd, "%d   %d\t%s\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
+               event, ig+1, a_TimeSeries[ig]->getStationName(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
                timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+win, 
                times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+win);
      }

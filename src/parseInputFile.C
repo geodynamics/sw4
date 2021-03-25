@@ -7136,6 +7136,11 @@ void EW::processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_Glob
   etime = MPI_Wtime();
   if (a_GlobalTimeSeries.size() > 0 && a_GlobalTimeSeries[0].size() > 0) 
     a_GlobalTimeSeries[0][0]->addReadTime(etime-stime);
+
+
+     //for( int m = 0 ; m < a_GlobalTimeSeries[0].size() ; m++ ) 
+     //   cout << "reading obs: station=" << a_GlobalTimeSeries[0][m]->getStationName() << " start time=" << a_GlobalTimeSeries[0][m]->getStartTime() << " shift=" <<  a_GlobalTimeSeries[0][m]->getTimeShift() << endl;
+
 }
 
 //-----------------------------------------------------------------------

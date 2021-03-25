@@ -1195,7 +1195,9 @@ int EW::computeNearestGridPoint2( int& a_i, int& a_j, int& a_k, int& a_g,
             a_i = static_cast<int>( floor( q ) );
             a_j = static_cast<int>( floor( r ) );
             a_k = static_cast<int>( round( s ) );
+
          }
+
 
      //         MPI_Allreduce(&success,&foundglobal,1,MPI_INT,MPI_MAX,m_cartesian_communicator);
          g++;

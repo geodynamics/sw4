@@ -85,6 +85,10 @@ int getUseSAC(){ return m_sacFormat; }
 float_sw4 getX() const {return mX;}
 float_sw4 getY() const {return mY;}
 float_sw4 getZ() const {return mZ;}
+float_sw4 getZtopo() const {return m_zTopo;}
+bool getZtype() const {return m_zRelativeToTopography;}
+float_sw4 getStartTime() const { return m_t0;}
+float_sw4 getTimeShift() const { return m_shift;}
 
 float_sw4 getLat() const {return m_rec_lat;}
 float_sw4 getLon() const {return m_rec_lon;}
@@ -94,6 +98,7 @@ float_sw4 getXaz() const {return m_x_azimuth;}
 float_sw4 getMshift() const {return m_shift; }
 
 float_sw4 get_t0() const { return m_t0; }
+void print_utc();
 
 int getMUTC(int i) const {return m_utc[i];}
 
@@ -115,6 +120,7 @@ void use_as_forcing( int n, std::vector<Sarray>& f, std::vector<float_sw4> & h, 
 float_sw4 product( TimeSeries& ts ) const;
 float_sw4 product_wgh( TimeSeries& ts ) const;
 float_sw4 getMaxValue(const int comp) const;
+float_sw4 getMinValue(const int comp) const;
 
    //void reset_utc( int utc[7] );
 void set_utc_to_simulation_utc();

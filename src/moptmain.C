@@ -27,6 +27,8 @@
 
 double t0;
 
+float_sw4 checkTimeSeriesLimits(vector<TimeSeries*>& v)  ;
+
 void usage(string thereason)
 {
   cout << endl
@@ -376,6 +378,9 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    int nms, nmd, nmpard_global;
    int ok=1;
 
+     //for( int m = 0 ; m < GlobalObservations[0].size() ; m++ ) 
+        //if(GlobalObservations[0][m]->myPoint()) cout << "obs check station=" << GlobalObservations[0][m]->getStationName() << " start time=" << GlobalObservations[0][m]->getStartTime() << " shift=" <<  GlobalObservations[0][m]->getTimeShift() << endl;
+
    mopt->m_mp->get_nr_of_parameters( nms, nmd, nmpard_global );
    if( nms != nmpars || nmd != nmpard )
       cout << "compute_f_and_df: WARNING, inconsistent number of material parameters" << endl;
@@ -437,9 +442,10 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       U[0].checknan("forward U");
       sw4_profile->time_stamp("done forward solve" );
       std::cout << "done compute_f_df forward solve" << " time from t0=" << MPI_Wtime()-t0 << std::endl;
-
+      
+      //check simulation limits
+     cout << "forward modeling GlobalTimeSeries max=" << checkTimeSeriesLimits(GlobalTimeSeries[e]) << endl;
      //Wei added sync
-
      MPI_Barrier(MPI_COMM_WORLD);
      
      
@@ -456,6 +462,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
        TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc", false);  // Wei add true to append filename substring
 	    diffs.push_back(elem);
       }
+      //for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
+            //if(diffs[m]->myPoint()) std::cout << "rank=" << myrank << " m=" << m << " max copy of syn=" << diffs[m]->getMaxValue(0) << std::endl;
 
             if(myrank == 0) 
             {
@@ -465,8 +473,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
                   createTimeSeriesHDF5File(diffs, GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "_adj_cross.h5");
             }
             MPI_Barrier(MPI_COMM_WORLD); 
-
-
+      
+      cout << "copy of GlobalTimeSeries max=" << checkTimeSeriesLimits(diffs) << endl;
 
 // 2. misfit function also updates diffs := this - observed
       if( mopt->m_misfit == Mopt::L2 )
@@ -475,6 +483,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 
      for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ ) 
      {
+
 	     f += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
       // QC adj source by wei
       #if USE_HDF5
@@ -499,8 +508,11 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          {
             for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
             {
+        //cout << "obs start time=" << GlobalObservations[e][m]->getStartTime() << " shift=" <<  GlobalObservations[e][m]->getTimeShift() << endl;
+        //cout << "syn start time=" << GlobalTimeSeries[e][m]->getStartTime() << " shift=" <<  GlobalTimeSeries[e][m]->getTimeShift() << endl;
 
                f += GlobalTimeSeries[e][m]->misfit2( *GlobalObservations[e][m], diffs[m] );
+
       #if USE_HDF5
                  // Allocate HDF5 fid for later file write
                    if(m == 0) { 
@@ -544,8 +556,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       //std::cout << "gMu_ini min=" << gMu[0].minimum() << " max=" << gMu[0].maximum() << std::endl;
       //std::cout << "gLambda_ini min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << std::endl;
 
-      //gMu[0].save_to_disk("gMu.say");
-      //gLambda[0].save_to_disk("gLambda.say"); // local size with halos
+      gMu[0].save_to_disk("gMu.say");
+      gLambda[0].save_to_disk("gLambda.say"); // local size with halos
       //std::cout << "gMu min=" << gMu[0].minimum() << " max=" << gMu[0].maximum() << std::endl;
       //std::cout << "gLambda min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << std::endl;
 
@@ -1463,9 +1475,9 @@ int main(int argc, char **argv)
 
          	
     if(myRank==0 && GlobalObservations[e][m]->myPoint()) 
-	     std::cout << "e=" << e << " m=" << m << " GlobalObservations[e][m] Nsteps=" <<  
-		     GlobalObservations[e][m]->getNsteps() << " dt=" << 
-		     GlobalObservations[e][m]->getDt() << std::endl;
+	     //std::cout << "e=" << e << " m=" << m << " GlobalObservations[e][m] Nsteps=" <<  
+		  //   GlobalObservations[e][m]->getNsteps() << " dt=" << 
+		  //   GlobalObservations[e][m]->getDt() << " zTopo=" << GlobalObservations[e][m]->getZtopo() << std::endl;
      
 		 GlobalObservations[e][m]->writeFileUSGS("_obs");
 		 if( simulation.m_prefilter_sources && simulation.m_filter_observations )
@@ -1477,6 +1489,8 @@ int main(int argc, char **argv)
 
 //  First copy observations to GlobalTimeSeries, later, solve will insert 
 //  the simulation time step and start time into GlobalTimeSeries.
+
+      std::cout << "Copy observations to GlobalTimeSeries" << std::endl;
 	      for( int m = 0; m < GlobalObservations[e].size(); m++ )
 	      {
 		 TimeSeries *elem = GlobalObservations[e][m]->copy( &simulation, "_out", true );
@@ -1768,4 +1782,16 @@ int main(int argc, char **argv)
 } 
 
 
-   
+float_sw4 checkTimeSeriesLimits(vector<TimeSeries* >& v)  
+{
+float_sw4 value;
+float_sw4 fmax=-1e20;   
+   for(vector<TimeSeries*>::iterator it = v.begin(); it != v.end(); ++it)
+   {
+      if((*it)->myPoint()) {
+         value =(*it)->getMaxValue(0);
+         if(value>fmax) fmax=value;
+         }
+   }
+return fmax;
+}

@@ -184,7 +184,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       lat = data[0];
       lon = data[1];
       z   = data[2];
-      topodepth = true;
+      topodepth = true;  
     }
     else {
       // X, Y, Z
@@ -199,7 +199,13 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
 
     depth = z;
     if (geoCoordSet)
+      {
+     
       a_ew->computeCartesianCoord(x, y, lon, lat);
+      int myRank;
+      MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+      if(myRank==0) cout << "HDF5 read: lon=" << lon << " lat=" << lat << " x=" << x << " y=" << y << endl;
+      }
 
     bool inCurvilinear=false;
     // we are in or above the curvilinear grid 
