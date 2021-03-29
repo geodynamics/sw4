@@ -134,15 +134,13 @@ void curvilinear4sg_ci(
     if (onesided[4] == 1) {
       kstart = 7;
       // SBP Boundary closure terms
-#if defined(ENABLE_CUDA) || defined(ENABLE_HIP)
-#define NO_COLLAPSE 1
-#endif
+
 #ifdef PEEKS_GALORE
       std::cout << " ********* WARNING PEEKS GALORE MODE ******************\n";
       SW4_PEEK;
       SYNC_DEVICE;
 #endif
-#if defined(NO_COLLAPSE)
+#if !defined(RAJA_ONLY)
       // LOOP -1
       //
       // 32,4,2 is 4% slower. 32 4 4 does not fit
@@ -813,7 +811,7 @@ void curvilinear4sg_ci(
     SYNC_DEVICE;
 #endif
 
-#if defined(NO_COLLAPSE)
+#if !defined(RAJA_ONLY)
     // LOOP 0
     RangeGS<256, 4> IS(ifirst + 2, ilast - 1);
     RangeGS<1, 1> JS(jfirst + 2, jlast - 1);
@@ -1255,7 +1253,7 @@ void curvilinear4sg_ci(
     SW4_PEEK;
     SYNC_DEVICE;
 #endif
-#if defined(NO_COLLAPSE)
+#if !defined(RAJA_ONLY)
     // LOOP 1
     // RangeGS<256,4> IS(ifirst+2,ilast-1);
     // RangeGS<1,1>JS(jfirst+2,jlast-1);
@@ -1663,7 +1661,7 @@ void curvilinear4sg_ci(
     SW4_PEEK;
     SYNC_DEVICE;
 #endif
-#if defined(NO_COLLAPSE)
+#if !defined(RAJA_ONLY)
     // LOOP 2
     // RangeGS<256,4> IS(ifirst+2,ilast-1);
     // RangeGS<1,1>JS(jfirst+2,jlast-1);
@@ -2095,7 +2093,7 @@ void curvilinear4sg_ci(
 //         for (int i = ifirst + 2; i <= ilast - 2; i++) {
 
 //    const int UNROLL_LEN=1;
-#if defined(NO_COLLAPSE)
+#if !defined(RAJA_ONLY)
     // LOOP -1
     // 32,4,2 is 4% slower. 32 4 4 does not fit
 #ifdef ENABLE_CUDA
@@ -2824,8 +2822,8 @@ void curvilinear4sg_ci(
     if (onesided[4] == 1) {
       kstart = 7;
       // SBP Boundary closure terms
-#define NO_COLLAPSE 1
-#if defined(NO_COLLAPSE)
+
+#if !defined(RAJA_ONLY)
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
       Range<4> K(1, 6 + 1);
@@ -3430,7 +3428,7 @@ void curvilinear4sg_ci(
       });  // End of curvilinear4sg_ci LOOP 1
     }
 
-#if defined(NO_COLLAPSE)
+#if !defined(RAJA_ONLY)
     RangeGS<16, 16> I(ifirst + 2, ilast - 1);
     RangeGS<4, 16> J(jfirst + 2, jlast - 1);
     RangeGS<4, 4> K(kstart, klast - 1);

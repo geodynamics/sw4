@@ -544,22 +544,15 @@ void Sarray::side_plane_fortran(int side, int wind[6], int nGhost) {
 //-----------------------------------------------------------------------
 void Sarray::set_to_zero_async() {
   SW4_MARK_FUNCTION;
-  // #pragma omp parallel for
-  //    for( size_t i=0 ; i < m_npts ; i++ )
   prefetch();
   float_sw4* lm_data = m_data;
-  // using TEST = SW4_POLICIES::SW4_POLICY<int,int>::type;
-  // using NEWP =
-  // SW4_POLICIES::SW4_POLICY<SW4_POLICIES::CUDA,SW4_POLICIES::DEFAULT>::type;
   RAJA::forall<DEFAULT_LOOP1_ASYNC>(
-      // RAJA::forall<NEWP>(
-      RAJA::RangeSegment(0, m_npts),
+				    RAJA::RangeSegment(0, m_npts),
       [=] RAJA_DEVICE(size_t i) { lm_data[i] = 0; });
 }
+//-----------------------------------------------------------------------
 void Sarray::set_to_zero() {
   SW4_MARK_FUNCTION;
-  // #pragma omp parallel for
-  //    for( size_t i=0 ; i < m_npts ; i++ )
   prefetch();
   float_sw4* lm_data = m_data;
 #ifdef RAJA_ONLY
@@ -568,15 +561,13 @@ void Sarray::set_to_zero() {
 #else
   forall(0, m_npts, [=] RAJA_DEVICE(size_t i) { lm_data[i] = 0.0; });
 #endif
-  // forallX<32,size_t>(0,m_npts,[=] RAJA_DEVICE(size_t i) { lm_data[i] = 0; });
-  // forallX is 1ms slower than RAJA ( 249 vs 248 ms)
+
 }
 
 //-----------------------------------------------------------------------
 void Sarray::set_to_minusOne() {
   SW4_MARK_FUNCTION;
-  // #pragma omp parallel for
-  //    for( size_t i=0 ; i < m_npts ; i++ )
+  
   prefetch();
   float_sw4* lm_data = m_data;
 
@@ -607,21 +598,19 @@ void Sarray::set_to_minusOne() {
 //-----------------------------------------------------------------------
 void Sarray::set_to_minusOneHost() {
   SW4_MARK_FUNCTION;
-  // #pragma omp parallel for
+#pragma omp parallel for
   for (size_t i = 0; i < m_npts; i++) m_data[i] = -1.0;
 }
 
 //-----------------------------------------------------------------------
 void Sarray::set_valueHost(float_sw4 scalar) {
   SW4_MARK_FUNCTION;
-  // #pragma omp parallel for
+#pragma omp parallel for
   for (size_t i = 0; i < m_npts; i++) m_data[i] = scalar;
 }
 //-----------------------------------------------------------------------
 void Sarray::set_value(float_sw4 scalar) {
   SW4_MARK_FUNCTION;
-  // #pragma omp parallel for
-  //    for( size_t i=0 ; i < m_npts ; i++ )
   float_sw4* lm_data = m_data;
   RAJA::forall<DEFAULT_LOOP1>(
       RAJA::RangeSegment(0, m_npts),
@@ -630,8 +619,6 @@ void Sarray::set_value(float_sw4 scalar) {
 //-----------------------------------------------------------------------
 void Sarray::set_value_async(float_sw4 scalar) {
   SW4_MARK_FUNCTION;
-  // #pragma omp parallel for
-  //    for( size_t i=0 ; i < m_npts ; i++ )
   float_sw4* lm_data = m_data;
   RAJA::forall<DEFAULT_LOOP1_ASYNC>(
       RAJA::RangeSegment(0, m_npts),
@@ -988,26 +975,25 @@ void Sarray::copy_kplane(Sarray& u, int k) {
     // SW4_MARK_END("CK_PREF");
     size_t ind_start = mni * mnj * (k - mkb);
     size_t uind_start = mni * mnj * (k - um_kb);
-#ifdef ENABLE_GPU
-#define NO_COLLAPSE 1
-#endif
-#if defined(NO_COLLAPSE)
-    Range<16> I(0, m_ie + 1 - m_ib);
-    Range<4> J(0, m_je + 1 - m_jb);
-    Range<4> C(0, m_nc);
-    forall3(I, J, C, [=] RAJA_DEVICE(int i, int j, int c) {
-    // forall2(I, J, [=] RAJA_DEVICE(int i, int j ) {
-#else
+
+#if defined(RAJA_ONLY)
     RAJA::RangeSegment c_range(0, m_nc);
     RAJA::RangeSegment j_range(0, m_je - m_jb + 1);
     RAJA::RangeSegment i_range(0, m_ie - m_ib + 1);
 
-    // RAJA::RangeSegment j_range(0,m_je+1-m_jb);
-    // RAJA::RangeSegment i_range(0,m_ie+1-m_ib); // This is slower and uses 38
-    // registers instead of 37
     RAJA::kernel<COPY_KPLANE_EXEC_POL>(
         RAJA::make_tuple(c_range, j_range, i_range),
         [=] RAJA_DEVICE(int c, int j, int i) {
+    
+    
+#else
+	  Range<16> I(0, m_ie + 1 - m_ib);
+    Range<4> J(0, m_je + 1 - m_jb);
+    Range<4> C(0, m_nc);
+    forall3(I, J, C, [=] RAJA_DEVICE(int i, int j, int c) {
+    // forall2(I, J, [=] RAJA_DEVICE(int i, int j ) {
+
+
 #endif
       // for( int c=0 ; c < m_nc ; c++ )
       // 	 for( int j=m_jb ; j<=m_je ; j++ )
@@ -1399,16 +1385,13 @@ void Sarray::insert_intersection(Sarray& a_U) {
     // const int lm_nk = m_nk;
     const int lm_nc = m_nc;
     // std::cout<<"Calling interest \n"<<std::flush;
-#ifdef ENABLE_GPU
-#define NO_COLLAPSE 1
-#endif
-#if defined(NO_COLLAPSE)
-    // LOOP 0
+
+#if !defined(RAJA_ONLY)
+
     Range<32> I(wind[0], wind[1] + 1);
     Range<32> J(wind[2], wind[3] + 1);
     Range<1> K(wind[4], wind[5] + 1);
-    // std::cout<<" SIZE "<<wind[1]-wind[0]+1<<" "<<wind[3]+1-wind[2]<<"
-    // "<<wind[5]+1-wind[4]<<"\n";
+
 #pragma forceinline
     forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
@@ -1423,7 +1406,7 @@ void Sarray::insert_intersection(Sarray& a_U) {
       size_t sind = (i - ib) + nis * (j - jb) + nis * njs * (k - kb);
       size_t ind =
           (i - lm_ib) + lm_ni * (j - lm_jb) + lm_ni * lm_nj * (k - lm_kb);
-      // printf("IN INTERSECTU %d %d %d %d \n",m_nc,m_ni,m_nj,m_nk);
+      
       for (int c = 1; c <= lm_nc; c++)
         dst_m_data[ind + totpts * (c - 1)] =
             src_m_data[sind + totptss * (c - 1)];
@@ -1644,6 +1627,11 @@ void mset_to_zero_async(Sarray& S0, Sarray& S1, Sarray& S2, Sarray& S3) {
   float_sw4* m3 = S3.m_data;
 
   size_t zero = 0;
+
+#if defined(RAJA_ONLY)
+  std::cerr<<"ERROR:: mset_to_zero called in in RAJA_ONLY compilation. Aborting..\n";
+  abort();
+#else
   multiforall<512>(
       zero, S0.m_npts, [=] RAJA_DEVICE(size_t i) { m0[i] = 0; }, zero,
       S1.m_npts, [=] RAJA_DEVICE(size_t i) { m1[i] = 0; }, zero, S2.m_npts,
@@ -1660,6 +1648,7 @@ void mset_to_zero_async(Sarray& S0, Sarray& S1, Sarray& S2, Sarray& S3) {
   // 		   },
   // 		  zero, S3.m_npts,[=] RAJA_DEVICE(size_t i) { m3[i] = 0;
   // 		   });
+#endif
 }
 int aligned(double* p) {
   for (int i = 16; i <= 2048; i *= 2)
@@ -1672,6 +1661,11 @@ void vset_to_zero_async(std::vector<Sarray>& v, int N) {
 
   float_sw4 *m0, *m1, *m2, *m3, *m4, *m5;
   size_t zero = 0;
+
+#if defined(RAJA_ONLY)
+  std::cerr<<"ERROR:: vset_to_zero_async called in in RAJA_ONLY compilation. Aborting..\n";
+  abort();
+#else
 
   switch (N) {
     case 1:
@@ -1751,4 +1745,6 @@ void vset_to_zero_async(std::vector<Sarray>& v, int N) {
                 << " grids\n";
       abort();
   }
+
+#endif
 }

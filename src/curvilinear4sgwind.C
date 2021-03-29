@@ -200,15 +200,12 @@ void curvilinear4sgwind(
 // #pragma omp simd
 // #pragma ivdep
 //           for (int i = ifirst + 2; i <= ilast - 2; i++) {
-#if defined(ENABLE_CUDA)
-#define NO_COLLAPSE 1
-#endif
-#define NO_COLLAPSE 1
+
 #ifdef PEEKS_GALORE
       SW4_PEEK;
       SYNC_DEVICE;
 #endif
-#if defined(NO_COLLAPSE)
+#if !defined(RAJA_ONLY)
 #ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
@@ -834,7 +831,7 @@ void curvilinear4sgwind(
 // #pragma omp simd
 // #pragma ivdep
 //           for (int i = ifirst + 2; i <= ilast - 2; i++) {
-#if defined(NO_COLLAPSE)
+#if !defined(RAJA_ONLY)
 
 #ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
@@ -1900,7 +1897,7 @@ void curvilinear4sgwind(
 // #pragma omp simd
 // #pragma ivdep
 //           for (int i = ifirst + 2; i <= ilast - 2; i++) {
-#if defined(NO_COLLAPSE)
+#if !defined(RAJA_ONLY)
 
 #ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);

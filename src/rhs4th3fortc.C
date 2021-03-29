@@ -1210,10 +1210,8 @@ void rhs4th3fortsgstr_ci(
     RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP1");
-#ifdef ENABLE_CUDA
-#define NO_COLLAPSE 1
-#endif
-#if defined(NO_COLLAPSE)
+
+#if !defined(RAJA_ONLY)
 
 #ifdef SW4_AUTOTUNE
     RangeAT<384, __LINE__, 1> IJK_AT(ifirst + 2, ilast - 1, jfirst + 2,
@@ -2926,10 +2924,8 @@ void ve_bndry_stress_curvi_ci(
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
     SW4_MARK_END("HOST CODE");
-#ifdef ENABLE_GPU
-#define NO_COLLAPSE 1
-#endif
-#ifdef NO_COLLAPSE
+
+#if !defined(RAJA_ONLY)
     Range<16> I(ifirst + 2, ilast - 1);
     Range<4> J(jfirst + 2, jlast - 1);
     forall2async(I, J, [=] RAJA_DEVICE(int i, int j) {
