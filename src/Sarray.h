@@ -71,7 +71,8 @@ class SView {
   void set(Sarray& x);
   RAJA_HOST_DEVICE inline float_sw4& operator()(int c, int i, int j,
                                                 int k) const {
-    return data[base + c * offc + i * offi + j * offj + k * offk];
+    return data[base + c * offc + i * offi + j * offj +
+                k * offk];  // When will this overflow if at all PBUGS
   }
 
   RAJA_HOST_DEVICE inline float_sw4& operator()(int i, int j, int k) const {
@@ -86,6 +87,7 @@ class SView {
 
 class Sarray {
  public:
+  Space space;
   //   Sarray( CartesianProcessGrid* cartcomm, int nc=1 );
   Sarray(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend,
          const char* file, int line);
@@ -99,8 +101,7 @@ class Sarray {
   Sarray();
   ~Sarray() {
 #ifndef SW4_USE_UMPIRE
-    if ((m_data != 0) && (!static_alloc))
-      ::operator delete[](m_data, Space::Managed);
+    if ((m_data != 0) && (!static_alloc)) ::operator delete[](m_data, space);
 #else
     if (m_data != 0) {
       if (static_alloc) {
@@ -111,11 +112,23 @@ class Sarray {
         // umpire::ResourceManager::getInstance(); auto allocator =
         // rma.getAllocator("UM_pool_small"); allocator.deallocate(m_data);
       } else
-        ::operator delete[](m_data, Space::Managed);
+        ::operator delete[](m_data, space);
     }
 #endif
   }
   //   void define( CartesianProcessGrid* cartcomm, int nc );
+  inline Sarray& operator=(Sarray& rhs) {
+    // std::cout<<"opertaot=\n"<<std::flush;
+    if (this == &rhs) return *this;
+    if ((this->space == Space::Device) || (rhs.space == Space::Device)) {
+      std::cerr << "Sarray::operator= node implemented from device memory\n";
+      abort();
+    }
+    for (int i = 0; i < m_npts; i++)
+      this->m_data[i] = rhs.m_data[i];  // Assumes Space is host or Managed,
+                                        // never device PBUGS
+    return *this;
+  }
   void define(int iend, int jend, int kend);
   void define(int nc, int iend, int jend, int kend);
   void define(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
@@ -201,7 +214,9 @@ class Sarray {
   void set_to_zero();
   void set_to_zero_async();
   void set_to_minusOne();
+  void set_to_minusOneHost();
   void set_value(float_sw4 scalar);
+  void set_valueHost(float_sw4 scalar);
   void set_value_async(float_sw4 scalar);
   void set_to_random(float_sw4 llim = 0.0, float_sw4 ulim = 1.0);
   void save_to_disk(const char* fname);
@@ -251,6 +266,7 @@ class Sarray {
   int m_nc, m_ni, m_nj, m_nk;
   void prefetch(int device = 0);
   void forceprefetch(int device = 0);
+  void switch_space(Space space_in);
   inline SView& getview() {
     // prefetch();
     return view;
@@ -262,6 +278,8 @@ class Sarray {
  private:
   float_sw4* m_data;
   bool prefetched;
+  friend void mset_to_zero_async(Sarray& A, Sarray& B, Sarray& C, Sarray& D);
+  friend void vset_to_zero_async(std::vector<Sarray>& v, int N);
   std::ofstream of;
   float_sw4* dev_data;
   inline int min(int i1, int i2) {
@@ -285,4 +303,6 @@ void SarrayVectorPrefetch(std::vector<Sarray*>& v);
 void SarrayVectorPrefetch(std::vector<Sarray*>& v, int n);
 
 float_sw4* memoize(Sarray& u, int c, int i, int j, int k);
+
+void mset_to_zero_async(Sarray& S0, Sarray& S1, Sarray& S2, Sarray& S3);
 #endif

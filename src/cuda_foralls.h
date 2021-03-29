@@ -19,7 +19,7 @@ __global__ void forallkernel(int start, int N, Func f) {
 }
 template <typename LoopBody>
 void forall(int start, int end, LoopBody &&body) {
-  int tpb = 32;
+  int tpb = 1024;
   int blocks = (end - start) / tpb;
   blocks = ((end - start) % tpb == 0) ? blocks : blocks + 1;
   // printf("Launching the kernel blocks= %d tpb= %d \n",blocks,tpb);
@@ -515,6 +515,108 @@ void forall3async(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
   // "<<jrange.blocks<<" "<<krange.blocks<<"\n";
   forall3kernel<N><<<blocks, tpb>>>(t, irange.start, irange.end, jrange.start,
                                     jrange.end, krange.start, krange.end, body);
+}
+
+// The multiforall for kernel fusion
+template <typename T, typename F0, typename F1, typename F2, typename F3>
+__global__ void multiforallkernel(T start0, T end0, F0 f0, T start1, T end1,
+                                  F1 f1, T start2, T end2, F2 f2, T start3,
+                                  T end3, F3 f3) {
+  for (T i = start0 + threadIdx.x + blockIdx.x * blockDim.x; i < end0;
+       i += blockDim.x * gridDim.x)
+    f0(i);
+  for (T i = start1 + threadIdx.x + blockIdx.x * blockDim.x; i < end1;
+       i += blockDim.x * gridDim.x)
+    f1(i);
+  for (T i = start2 + threadIdx.x + blockIdx.x * blockDim.x; i < end2;
+       i += blockDim.x * gridDim.x)
+    f2(i);
+  for (T i = start3 + threadIdx.x + blockIdx.x * blockDim.x; i < end3;
+       i += blockDim.x * gridDim.x)
+    f3(i);
+}
+template <int N, typename T, typename LB0, typename LB1, typename LB2,
+          typename LB3>
+void multiforall(T start0, T end0, LB0 &&body0, T start1, T end1, LB1 &&body1,
+                 T start2, T end2, LB2 &&body2, T start3, T end3, LB3 &&body3) {
+  int blocks = 80 * 2048 / N;  // WARNING HARDWIRED FOR V100
+  multiforallkernel<<<blocks, N>>>(start0, end0, body0, start1, end1, body1,
+                                   start2, end2, body2, start3, end3, body3);
+}
+
+// Generalized mforall kernel
+template <typename T, typename LoopBody>
+__device__ inline void runner(T start, T end, LoopBody f) {
+  for (T i = start + threadIdx.x + blockIdx.x * blockDim.x; i < end;
+       i += blockDim.x * gridDim.x)
+    f(i);
+}
+template <typename T, typename LoopBody, class... Args>
+__device__ inline void runner(T start, T end, LoopBody f, Args... args) {
+  for (T i = start + threadIdx.x + blockIdx.x * blockDim.x; i < end;
+       i += blockDim.x * gridDim.x)
+    f(i);
+  runner(args...);
+}
+
+template <typename T, typename LoopBody, class... Args>
+__global__ void gmforallkernel(T start, T end, LoopBody body, Args... args) {
+  runner(start, end, body, args...);
+}
+
+// Generalized mforall
+
+template <int N, typename T, typename LoopBody, class... Args>
+void gmforall(T start, T end, LoopBody &&body, Args... args) {
+  // std::cout<<"Start is "<<start<<"\n";
+  int blocks = 80 * 2048 / N;  // WARNING HARDWIRED FOR V100
+  // multiforallkernel<<<blocks,N>>>(start,end, body, args...);
+  gmforallkernel<<<blocks, N>>>(start, end, body, args...);
+}
+
+// Generalized gmforall3async
+
+class MRange {
+ public:
+  int i, j, k;
+};
+
+template <typename T, typename LoopBody>
+__device__ inline void runner3(T start, T end, LoopBody f) {
+  for (decltype(start.i) i = start.i + threadIdx.x + blockIdx.x * blockDim.x;
+       i < end.i; i += blockDim.x * gridDim.x)
+    for (decltype(start.j) j = start.j + threadIdx.y + blockIdx.y * blockDim.y;
+         j < end.j; j += blockDim.y * gridDim.y)
+      for (decltype(start.k) k =
+               start.k + threadIdx.z + blockIdx.z * blockDim.z;
+           k < end.k; k += blockDim.z * gridDim.z)
+        f(i, j, k);
+}
+template <typename T, typename LoopBody, class... Args>
+__device__ inline void runner3(T start, T end, LoopBody f, Args... args) {
+  for (decltype(start.i) i = start.i + threadIdx.x + blockIdx.x * blockDim.x;
+       i < end.i; i += blockDim.x * gridDim.x)
+    for (decltype(start.j) j = start.j + threadIdx.y + blockIdx.y * blockDim.y;
+         j < end.j; j += blockDim.y * gridDim.y)
+      for (decltype(start.k) k =
+               start.k + threadIdx.z + blockIdx.z * blockDim.z;
+           k < end.k; k += blockDim.z * gridDim.z)
+        f(i, j, k);
+  runner3(args...);
+}
+
+template <typename T, typename LoopBody, class... Args>
+__global__ void gmforallkernel3(T start, T end, LoopBody body, Args... args) {
+  runner3(start, end, body, args...);
+}
+
+template <int I, int J, int K, typename T, typename LoopBody, class... Args>
+void gmforall3async(T &start, T &end, LoopBody &&body, Args... args) {
+  //  int blocks=80 * 2048/N; // WARNING HARDWIRED FOR V100
+  dim3 tpb(I, J, K);
+  dim3 blocks(64 / I, 64 / J, 40 / K);  // WARNING HARDWIRED FOR V100 PBUGS
+
+  gmforallkernel3<<<blocks, tpb>>>(start, end, body, args...);
 }
 
 #endif  // Guards

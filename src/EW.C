@@ -990,6 +990,7 @@ void EW::switch_on_checkfornan() { m_checkfornan = true; }
 
 //-----------------------------------------------------------------------
 void EW::assign_local_bcs() {
+  SW4_MARK_FUNCTION;
   // This routine assigns m_bcType[g][b], b=0,1,2,3, based on mbcGlobalType,
   // taking parallel overlap boundaries into account
 
@@ -1099,6 +1100,7 @@ void EW::assign_local_bcs() {
 // Note that the padding cell array is no longer needed.
 // use m_iStartInt[g], m_iEndInt[g] to get the range of interior points
 void EW::initializePaddingCells() {
+  SW4_MARK_FUNCTION;
   int g = mNumberOfGrids - 1;
 
   for (int aa = 0; aa < 4; aa++) {
@@ -1112,6 +1114,7 @@ void EW::initializePaddingCells() {
 
 //-----------------------------------------------------------------------
 void EW::check_dimensions() {
+  SW4_MARK_FUNCTION;
   for (int g = 0; g < mNumberOfGrids; g++) {
     int nz = m_kEndInt[g] - m_kStartInt[g] + 1;
     int nzmin;
@@ -1170,6 +1173,7 @@ string EW::bc_name(const boundaryConditionType bc) const {
 
 //-----------------------------------------------------------------------
 bool EW::getDepth(float_sw4 x, float_sw4 y, float_sw4 z, float_sw4& depth) {
+  SW4_MARK_FUNCTION;
   // get the depth below the free surface
   bool success = false;
 
@@ -1217,6 +1221,7 @@ bool EW::getDepth(float_sw4 x, float_sw4 y, float_sw4 z, float_sw4& depth) {
 
 //-----------------------------------------------------------------------
 void EW::computeCartesianCoord(double& x, double& y, double lon, double lat) {
+  SW4_MARK_FUNCTION;
   // -----------------------------------------------------------------
   // Compute the cartesian coordinate given the geographic coordinate
   // -----------------------------------------------------------------
@@ -1291,6 +1296,7 @@ void EW::computeGeographicCoord(double x, double y, double& longitude,
 //-----------------------------------------------------------------------
 int EW::computeNearestGridPoint2(int& a_i, int& a_j, int& a_k, int& a_g,
                                  float_sw4 a_x, float_sw4 a_y, float_sw4 a_z) {
+  SW4_MARK_FUNCTION;
   int success = 0;
   if (a_z >= m_zmin[mNumberOfCartesianGrids - 1]) {
     // point is in a Cartesian grid
@@ -1351,6 +1357,7 @@ int EW::computeNearestGridPoint2(int& a_i, int& a_j, int& a_k, int& a_g,
 void EW::computeNearestGridPoint(int& a_i, int& a_j, int& a_k,
                                  int& a_g,  // grid on which indices are located
                                  float_sw4 a_x, float_sw4 a_y, float_sw4 a_z) {
+  SW4_MARK_FUNCTION;
   bool breakLoop = false;
 
   for (int g = 0; g < mNumberOfGrids; g++) {
@@ -1447,6 +1454,7 @@ void EW::computeNearestLowGridPoint(
     int& a_i, int& a_j, int& a_k,
     int& a_g,  // grid on which indices are located
     float_sw4 a_x, float_sw4 a_y, float_sw4 a_z) {
+  SW4_MARK_FUNCTION;
   bool breakLoop = false;
 
   for (int g = 0; g < mNumberOfGrids; g++) {
@@ -1512,6 +1520,7 @@ void EW::computeNearestLowGridPoint(
 
 //-----------------------------------------------------------------------
 bool EW::interior_point_in_proc(int a_i, int a_j, int a_g) {
+  SW4_MARK_FUNCTION;
   // NOT TAKING PARALLEL GHOST POINTS INTO ACCOUNT!
   // Determine if grid point with index (a_i, a_j) on grid a_g is an interior
   // grid point on this processor
@@ -1541,6 +1550,7 @@ bool EW::point_in_proc(int a_i, int a_j, int a_g) {
 
 //-----------------------------------------------------------------------
 bool EW::point_in_proc_ext(int a_i, int a_j, int a_g) {
+  SW4_MARK_FUNCTION;
   // TAKING PARALLEL GHOST POINTS+EXTRA GHOST POINTS INTO ACCOUNT!
   // Determine if grid point with index (a_i, a_j) on grid a_g is a grid point
   // on this processor
@@ -1557,6 +1567,7 @@ bool EW::point_in_proc_ext(int a_i, int a_j, int a_g) {
 
 //-----------------------------------------------------------------------
 void EW::getGlobalBoundingBox(float_sw4 bbox[6]) {
+  SW4_MARK_FUNCTION;
   bbox[0] = 0.;
   bbox[1] = m_global_xmax;
   bbox[2] = 0.;
@@ -1576,6 +1587,7 @@ void EW::setGMTOutput(string filename, string wppfilename) {
 //-----------------------------------------------------------------------
 void EW::saveGMTFile(vector<vector<Source*>>& a_GlobalUniqueSources,
                      int event) {
+  SW4_MARK_FUNCTION;
   // this routine needs to be updated (at least for the etree info)
   if (!mWriteGMTOutput) return;
 
@@ -2165,6 +2177,7 @@ void EW::normOfSurfaceDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
                                  float_sw4& diffInf, float_sw4& diffL2,
                                  float_sw4& solInf, float_sw4& solL2,
                                  vector<Source*>& a_globalSources) {
+  SW4_MARK_FUNCTION;
   int g;
   float_sw4 absDiff, absSol;
   float_sw4 h, diffInfLocal = 0, diffL2Local = 0, solInfLocal = 0,
@@ -2252,6 +2265,7 @@ void EW::normOfSurfaceDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
 void EW::bndryInteriorDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
                                  float_sw4* lowZ, float_sw4* interiorZ,
                                  float_sw4* highZ) {
+  SW4_MARK_FUNCTION;
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nz;
   float_sw4 *uex_ptr, *u_ptr, h;
 
@@ -2316,6 +2330,7 @@ void EW::test_RhoUtt_Lu(vector<Sarray>& a_Uacc, vector<Sarray>& a_Lu,
 //---------------------------------------------------------------------------
 void EW::initialData(float_sw4 a_t, vector<Sarray>& a_U,
                      vector<Sarray*>& a_AlphaVE) {
+  SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *u_ptr, om, ph, cv, h, zmin;
 
@@ -4659,7 +4674,8 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
     idnts_local = idnts;
     float_sw4** ForceAddress_copy = ForceAddress;
 
-    for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
+    // for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
+    vset_to_zero_async(a_F, mNumberOfGrids);
     SW4_MARK_BEGIN("FORCE::DEVICE");
 
     RAJA::forall<FORCE_LOOP_ASYNC>(
@@ -4917,7 +4933,8 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
     //     using FORCETT_LOOP_ASYNC = RAJA::omp_parallel_for_exec;
     // #endif
 
-    for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
+    // for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
+    vset_to_zero_async(a_F, mNumberOfGrids);
     SW4_MARK_BEGIN("FORCE_TT::DEVICE");
 
     RAJA::forall<FORCETT_LOOP_ASYNC>(
@@ -4954,10 +4971,10 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   int* onesided_ptr;
 
   int g, nz;
-
+  vset_to_zero_async(a_Uacc, mNumberOfGrids);
   for (g = 0; g < mNumberOfCartesianGrids; g++) {
-    a_Uacc[g].prefetch();
-    a_Uacc[g].set_to_zero_async();
+    // a_Uacc[g].prefetch();
+    // a_Uacc[g].set_to_zero_async();
     uacc_ptr = a_Uacc[g].c_ptr();
     u_ptr = a_U[g].c_ptr();
     mu_ptr = a_Mu[g].c_ptr();
@@ -5059,7 +5076,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
 #endif
   for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
     // g = mNumberOfGrids - 1;
-    a_Uacc[g].set_to_zero_async();
+    // a_Uacc[g].set_to_zero_async(); // Being done above
     uacc_ptr = a_Uacc[g].c_ptr();
     u_ptr = a_U[g].c_ptr();
     mu_ptr = a_Mu[g].c_ptr();
@@ -7901,17 +7918,26 @@ void EW::setup_viscoelastic() {
 // use base 0 indexing of matrix
 #define a(i, j) a_[i + j * nc]
 
+#ifndef _OPENMP
+    double* a_ = new float_sw4[n * nc];
+    double* beta = new double[nc];
+    double* gamma = new double[nc];
+    int lwork = 3 * n;
+    double* work = new double[lwork];
+#endif
     // loop over all grid points in all grids
     for (g = 0; g < mNumberOfGrids; g++)
 #pragma omp parallel for
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
         for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
           for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+#ifdef _OPENMP
             double* a_ = new float_sw4[n * nc];
             double* beta = new double[nc];
             double* gamma = new double[nc];
             int lwork = 3 * n;
             double* work = new double[lwork];
+#endif
             char trans = 'N';
             int info = 0, nrhs = 1, lda = nc, ldb = nc;
 
@@ -8032,12 +8058,20 @@ void EW::setup_viscoelastic() {
             //     for (q=0; q<n; q++)
             //       printf("beta[%i]=%e ", q, b[q]);
             //     printf("\n");
+
+#ifdef _OPENMP
             delete[] a_;
             delete[] beta;
             delete[] gamma;
             delete[] work;
-
+#endif
           }  // end for g,k,j,i
+#ifndef _OPENMP
+    delete[] a_;
+    delete[] beta;
+    delete[] gamma;
+    delete[] work;
+#endif
 #undef a
   }
 }

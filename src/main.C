@@ -100,7 +100,8 @@ int main(int argc, char **argv) {
   MPI_Comm_size(shared_comm, &local_size);
   MPI_Info_free(&info);
 
-  presetGPUID(myRank, local_rank, local_size);
+  int device = presetGPUID(myRank, local_rank, local_size);
+
 #if defined(SW4_SIGNAL_CHECKPOINT)
   std::signal(SIGUSR1, signal_handler);
 #endif
@@ -108,7 +109,7 @@ int main(int argc, char **argv) {
 #ifdef SW4_USE_UMPIRE
   umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
 #ifdef ENABLE_HIP
-  auto allocator = rma.getAllocator("DEVICE::" + std::to_string(myRank));
+  auto allocator = rma.getAllocator("DEVICE::" + std::to_string(device));
 #else
   auto allocator = rma.getAllocator("UM");
 #endif
@@ -124,6 +125,9 @@ int main(int argc, char **argv) {
 #ifdef ENABLE_HIP
   auto pref_allocator = allocator;
 #else
+  // auto aligned_allocator =
+  // rma.makeAllocator<umpire::strategy::AlignedAllocator>(
+  //   "aligned_allocator", allocator, 256);
   auto pref_allocator = rma.makeAllocator<umpire::strategy::AllocationAdvisor>(
       "preferred_location_device", allocator, "PREFERRED_LOCATION",
       global_variables.device);
@@ -131,7 +135,7 @@ int main(int argc, char **argv) {
 
   auto pooled_allocator =
       rma.makeAllocator<umpire::strategy::DynamicPool, true>(
-          string("UM_pool"), pref_allocator, pool_size);
+          string("UM_pool"), pref_allocator, pool_size, 1024 * 1024, 512);
 
   const size_t pool_size_small = static_cast<size_t>(250) * 1024 * 1024;
 
@@ -142,7 +146,8 @@ int main(int argc, char **argv) {
   // auto pooled_allocator_small =static_cast<size_t>(250)*1024*1024;
   auto pooled_allocator_small =
       rma.makeAllocator<umpire::strategy::DynamicPool, true>(
-          string("UM_pool_temps"), pref_allocator, pool_size_small);
+          string("UM_pool_temps"), pref_allocator, pool_size_small, 1024 * 1024,
+          512);
 
   const size_t object_pool_size = static_cast<size_t>(500) * 1024 * 1024;
 
@@ -273,7 +278,7 @@ int main(int argc, char **argv) {
       } else {
         if (myRank == 0) {
           int nth = 1;
-#ifndef SW4_NOOMP
+#ifdef _OPENMP
 #pragma omp parallel
           {
             if (omp_get_thread_num() == 0) {

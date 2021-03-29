@@ -1,6 +1,6 @@
-
 #include "EW.h"
 #include "GridGenerator.h"
+#include "caliper.h"
 
 //-----------------------------------------------------------------------
 int GridGenerator::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
@@ -9,6 +9,7 @@ int GridGenerator::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
                              float_sw4* __restrict__ a_z,
                              float_sw4* __restrict__ a_met,
                              float_sw4* __restrict__ a_jac) {
+  SW4_MARK_FUNCTION;
   const float_sw4 c1 = 2.0 / 3, c2 = -1.0 / 12;
   const float_sw4 fs = 5.0 / 6, ot = 1.0 / 12, ft = 4.0 / 3, os = 1.0 / 6,
                   d3 = 14.0 / 3;
@@ -132,6 +133,7 @@ int GridGenerator::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
 //-----------------------------------------------------------------------
 bool GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
                                            float_sw4& z, Sarray& topo) {
+  SW4_MARK_FUNCTION;
   // Interpolate the topography
   //
   // if (q,r) is on this processor then
@@ -188,6 +190,7 @@ bool GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
 
 //-----------------------------------------------------------------------
 void GridGenerator::gettopowgh(float_sw4 ai, float_sw4 wgh[8]) const {
+  SW4_MARK_FUNCTION;
   float_sw4 pol = ai * ai * ai * ai * ai * ai * ai *
                   (-251 + 135 * ai + 25 * ai * ai - 33 * ai * ai * ai +
                    6 * ai * ai * ai * ai) /

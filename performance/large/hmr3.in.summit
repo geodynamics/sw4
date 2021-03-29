@@ -5,12 +5,12 @@ fileio path=hayward-att-h270-ref-result pfs=1 nwriters=32 verbose=1
 
 # Grid coords:
 # DON'T CHANGE AZ
-grid x=100e3 y=100e3 z=30e3 h=171  lat=38.33 lon=-122.075 az=143.6380001671 proj=tmerc datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
+grid x=100e3 y=100e3 z=30e3 h=270  lat=38.33 lon=-122.075 az=143.6380001671 proj=tmerc datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
 refinement zmax=950
 refinement zmax=5e3
 
-#time t=9.0
-time steps=510
+time t=9.0
+#time steps=10
 
 globalmaterial  vpmin=866 vsmin=500
 
@@ -69,7 +69,7 @@ source x=50e3 y=50e3 depth=3e3 freq=2.5 type=Gaussian t0=2.4 m0=1.7e17 strike=14
 # image z=0 mode=grid file=image cycle=0
 
 # record 1 station for verification
-#rec file=sta1 lon=-122.25 lat=37.85 depth=0 sacformat=0 usgsformat=1
+rec file=sta1 lon=-122.25 lat=37.85 depth=0 sacformat=0 usgsformat=1
 
 # SF Bay Area stations
 #rec sta=BK.BDM lon=-121.8655 lat=37.9540 depth=0 file=BK.BDM nsew=1 sacformat=0 usgsformat=1

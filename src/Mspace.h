@@ -21,6 +21,7 @@
 #include "umpire/strategy/DynamicPool.hpp"
 //#include "umpire/strategy/MixedPool.hpp"
 //#include "umpire/util/StatisticsDatabase.hpp"
+#include "umpire/strategy/AlignedAllocator.hpp"
 #include "umpire/strategy/AllocationAdvisor.hpp"
 #include "umpire/strategy/MonotonicAllocationStrategy.hpp"
 #include "umpire/util/Macros.hpp"
@@ -43,7 +44,10 @@ void prefetch_to_device(const float_sw4 *ptr);
 #define PROFILER_START SW4_CheckDeviceError(cudaProfilerStart())
 #define PROFILER_STOP SW4_CheckDeviceError(cudaProfilerStop())
 #else
-#define SW4_CheckDeviceError(err)
+void CheckError(hipError_t const err, const char *file, char const *const fun,
+                const int line);
+#define SW4_CheckDeviceError(err) \
+  CheckError(err, __FILE__, __FUNCTION__, __LINE__)
 #define PROFILER_START
 #define PROFILER_STOP
 #endif
@@ -71,7 +75,7 @@ void operator delete[](void *ptr, Space loc) throw();
 void operator delete(void *ptr, Space loc, const char *file, int line) throw();
 void operator delete[](void *ptr, Space loc, const char *file,
                        int line) throw();
-void presetGPUID(int mpi_rank, int local_rank, int local_size);
+int presetGPUID(int mpi_rank, int local_rank, int local_size);
 void print_hwm(int rank);
 struct global_variable_holder_struct {
   size_t gpu_memory_hwm;
@@ -203,4 +207,37 @@ void Write(T &t, std::string filename) {
   }
 }
 void invert(float_sw4 *A, int N);
+
+template <class T>
+void spacecopy(T *&dst, T *&src, Space dst_space, Space src_space,
+               size_t size) {
+  if (src_space == Space::Host) {
+#ifdef ENABLE_CUDA
+    SW4_CheckDeviceError(
+        cudaMemcpy(dst, src, size * sizeof(T), cudaMemcpyHostToDevice));
+#elif ENABLE_HIP
+    SW4_CheckDeviceError(
+        hipMemcpy(dst, src, size * sizeof(T), hipMemcpyHostToDevice));
+#else
+    std::cout << "ERROR is Mspace:;copy:: undefined copy operation\n";
+#endif
+    return;
+  }
+
+  if (dst_space == Space::Host) {
+#ifdef ENABLE_CUDA
+    SW4_CheckDeviceError(
+        cudaMemcpy(dst, src, size * sizeof(T), cudaMemcpyDeviceToHost));
+#elif ENABLE_HIP
+    SW4_CheckDeviceError(
+        hipMemcpy(dst, src, size * sizeof(T), hipMemcpyDeviceToHost));
+#else
+    std::cout << "ERROR is Mspace:;copy:: undefined copy operation\n";
+#endif
+    return;
+  }
+
+  std::cout << "ERROR :: Undefined Mspace::copy operation from "
+            << as_int(src_space) << " to " << as_int(dst_space) << "\n";
+}
 #endif

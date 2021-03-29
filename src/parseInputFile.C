@@ -313,7 +313,8 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
   // setup 2D communicators on the finest grid so that we can smooth the
   // topography
   setup2D_MPICommunications();
-
+  SW4_PEEK;
+  SYNC_STREAM;
   // deal with topography
   if (m_topography_exists) {
     // 1. read topography from efile
@@ -353,7 +354,10 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
       // portion of the grid)
       m_gridGenerator->assignInterfaceSurfaces(this, mTopoGridExt);
     }
-
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_STREAM;
+#endif
     // // 3. Figure out the number of grid points in the vertical direction and
     // allocate solution arrays on the curvilinear grid
     allocateCurvilinearArrays();  // need to assign  m_global_nz[g] = klast -
@@ -366,7 +370,10 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
            << endl
            << endl;
   }
-
+#ifdef PEEKS_GALORE
+  SW4_PEEK;
+  SYNC_STREAM;
+#endif
   // setup communicators for 3D solutions on all grids
   setupMPICommunications();
 
@@ -4290,11 +4297,12 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
       mC[g].set_to_minusOne();
     } else {
       // elastic material
-      mMu[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
-      mLambda[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
+      mMu[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Host);
+      mLambda[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                        Space::Host);
       // initialize the material coefficients to -1
-      mMu[g].set_to_minusOne();
-      mLambda[g].set_to_minusOne();
+      mMu[g].set_to_minusOneHost();
+      mLambda[g].set_to_minusOneHost();
       // allocate space for material coefficient arrays needed by MR
       m_Morc[g].define(ifirst, ilast, jfirst, jlast, 1, 1);
       m_Mlrc[g].define(ifirst, ilast, jfirst, jlast, 1, 1);
@@ -4309,21 +4317,23 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
     }
     // viscoelastic material coefficients & memory variables
     if (m_use_attenuation) {
-      mQs[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
-      mQp[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
+      mQs[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Host);
+      mQp[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Host);
       for (int a = 0; a < m_number_mechanisms;
            a++)  // the simplest attenuation model only uses Q, not MuVE or
                  // LambdaVE
       {
-        mMuVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
-        mLambdaVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
+        mMuVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                           Space::Host);
+        mLambdaVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                               Space::Host);
         // initialize the viscoelastic material coefficients to -1
-        mMuVE[g][a].set_to_minusOne();
-        mLambdaVE[g][a].set_to_minusOne();
+        mMuVE[g][a].set_to_minusOneHost();
+        mLambdaVE[g][a].set_to_minusOneHost();
       }
       // initialize Qp and Qs to -1
-      mQs[g].set_to_minusOne();
-      mQp[g].set_to_minusOne();
+      mQs[g].set_to_minusOneHost();
+      mQp[g].set_to_minusOneHost();
     }
 
     // go to the next coarser grid
@@ -4621,30 +4631,30 @@ void EW::allocateCurvilinearArrays() {
       mCcurv.set_to_minusOne();
     } else {
       mMu[g].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
-                    m_kEnd[g]);
-      mMu[g].set_to_minusOne();
+                    m_kEnd[g], Space::Host);
+      mMu[g].set_to_minusOneHost();
       mLambda[g].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                        m_kStart[g], m_kEnd[g]);
-      mLambda[g].set_to_minusOne();
+                        m_kStart[g], m_kEnd[g], Space::Host);
+      mLambda[g].set_to_minusOneHost();
     }
     // viscoelastic material coefficients
     if (m_use_attenuation) {
       // initialize the viscoelastic material coefficients to -1
       mQs[g].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
-                    m_kEnd[g]);
-      mQs[g].set_to_minusOne();
+                    m_kEnd[g], Space::Host);
+      mQs[g].set_to_minusOneHost();
       mQp[g].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
-                    m_kEnd[g]);
-      mQp[g].set_to_minusOne();
+                    m_kEnd[g], Space::Host);
+      mQp[g].set_to_minusOneHost();
       for (int a = 0; a < m_number_mechanisms;
            a++)  // the simplest attenuation model has m_number_mechanisms = 0
       {
         mMuVE[g][a].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                           m_kStart[g], m_kEnd[g]);
-        mMuVE[g][a].set_to_minusOne();
+                           m_kStart[g], m_kEnd[g], Space::Host);
+        mMuVE[g][a].set_to_minusOneHost();
         mLambdaVE[g][a].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                               m_kStart[g], m_kEnd[g]);
-        mLambdaVE[g][a].set_to_minusOne();
+                               m_kStart[g], m_kEnd[g], Space::Host);
+        mLambdaVE[g][a].set_to_minusOneHost();
       }  // end for a...
     }    // end if attenuation
   }      // end for g...
@@ -6619,6 +6629,15 @@ void EW::processReceiverHDF5(char* buffer,
 
 #ifdef USE_HDF5
   bool is_obs = false;
+  // Adjust writeEvery so it is always a multiple of downsample
+  if (writeEvery % downSample != 0) {
+    writeEvery = (int)writeEvery / downSample;
+    writeEvery *= downSample;
+    if (proc_zero())
+      cout << "receiver command: writeEvery=" << writeEvery
+           << " is not a multiple of downsample, " << downSample
+           << "adjustding writeEvery to " << writeEvery << endl;
+  }
   readStationHDF5(this, inFileName, fileName, writeEvery, downSample, mode,
                   event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax,
                   is_obs, false, false, 0, 0, false, false, false, 0, false, 0);
@@ -6820,8 +6839,6 @@ void EW::processReceiver(char* buffer,
     } else if (startswith("hdf5format=", token)) {
       token += strlen("hdf5format=");
       hdf5format = atoi(token);
-      // Write 64k data (16384 steps) each time for better HDF5 I/O performance
-      if (writeEvery == 1000) writeEvery = 16383;
     } else if (startswith("variables=", token)) {
       //* testing
       // if (proc_zero())
@@ -6908,6 +6925,15 @@ void EW::processReceiver(char* buffer,
       cerr.flush();
     }
   } else {
+    if (writeEvery % downSample != 0) {
+      writeEvery = (int)writeEvery / downSample;
+      writeEvery *= downSample;
+      if (proc_zero())
+        cout << "receiver command: writeEvery=" << writeEvery
+             << " is not a multiple of downsample, " << downSample
+             << "adjustding writeEvery to " << writeEvery << endl;
+    }
+
     TimeSeries* ts_ptr =
         new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat,
                        hdf5format, hdf5FileName, x, y, depth, topodepth,

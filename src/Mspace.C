@@ -15,7 +15,8 @@ struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0, 0,
                                                          0, 1, 0, 0, 0, 0};
 using namespace std;
 
-void presetGPUID(int mpi_rank, int local_rank, int local_size) {
+int presetGPUID(int mpi_rank, int local_rank, int local_size) {
+  int device = -1;
 #if defined(ENABLE_GPU_ERROR)
   std::cerr
       << " Compilation error. Both ENABLE_CUDA and ENABLE_HIP are defined\n";
@@ -34,7 +35,6 @@ void presetGPUID(int mpi_rank, int local_rank, int local_size) {
   int devices_per_node = 4;
   SW4_CheckDeviceError(cudaGetDeviceCount(&devices_per_node));
   global_variables.num_devices = devices_per_node;
-  int device;
   if (devices_per_node > 1) {
     // char *crank = getenv("SLURM_LOCALID");
     // int device = atoi(crank) % devices_per_node;
@@ -47,7 +47,7 @@ void presetGPUID(int mpi_rank, int local_rank, int local_size) {
                 << " ranks per node\n";
     }
     global_variables.device = device;
-    printf(" presetGPU Called ::  LOCAL RANK %d \n", device);
+    printf(" CUDA presetGPU Called ::  LOCAL RANK %d \n", device);
     SW4_CheckDeviceError(cudaSetDevice(device));
     SW4_CheckDeviceError(cudaFree(NULL));
     char uuid[80];
@@ -68,17 +68,25 @@ void presetGPUID(int mpi_rank, int local_rank, int local_size) {
 #ifdef ENABLE_HIP
   int devices_per_node = 4;
   SW4_CheckDeviceError(hipGetDeviceCount(&devices_per_node));
-  printf("NUmber of device is %d\n", devices_per_node);
+  printf("Number of devices is %d\n", devices_per_node);
   fflush(stdout);
   global_variables.num_devices = devices_per_node;
   if (devices_per_node > 1) {
-    char *crank = getenv("SLURM_PROC");
-    printf("Return fro GETENV IS %s\n", crank);
-    fflush(stdout);
-    int device = atoi(crank) % devices_per_node;
-    device = mpi_rank % devices_per_node;
+    // char *crank = getenv("SLURM_LOCALID");
+    // printf("Return from GETENV IS %s\n", crank);
+    // fflush(stdout);
+    // int device = atoi(crank) % devices_per_node;
+    // device = mpi_rank % devices_per_node;
+    if (local_size == devices_per_node) {
+      device = local_rank;
+    } else {
+      device = local_rank % devices_per_node;
+      std::cerr << "WARNING :: There are " << devices_per_node
+                << " devices per node and " << local_size
+                << " ranks per node\n";
+    }
     global_variables.device = device;
-    printf(" presetGPU Called ::  LOCAL RANK %d \n", device);
+    printf(" HIP presetGPU Called ::  LOCAL RANK %d \n", device);
     fflush(stdout);
     SW4_CheckDeviceError(hipSetDevice(device));
   }
@@ -86,6 +94,7 @@ void presetGPUID(int mpi_rank, int local_rank, int local_size) {
 
   // printf("Device set to %d \n", global_variables.device);
 #endif  // ENABLE_GPU
+  return device;
 }
 
 typedef struct {
@@ -226,8 +235,9 @@ void *operator new(std::size_t size, Space loc) throw() {
     auto allocator = rma.getAllocator("UM_pool");
     ptr = static_cast<void *>(allocator.allocate(size));
 #if defined(ENABLE_CUDA)
-    SW4_CheckDeviceError(cudaMemAdvise(
-        ptr, size, cudaMemAdviseSetPreferredLocation, global_variables.device));
+    //    SW4_CheckDeviceError(cudaMemAdvise(
+    //     ptr, size, cudaMemAdviseSetPreferredLocation,
+    //     global_variables.device));
 #endif
     // std::cout<<"PTR 1 "<<ptr<<"\n";
     // SW4_CheckDeviceError(cudaMemset(ptr,0,size));
@@ -430,7 +440,7 @@ void operator delete(void *ptr, Space loc) throw() {
   } else if (loc == Space::Pinned)
     SW4_CheckDeviceError(SW4_FREE_PINNED(ptr));
   else if (loc == Space::Host) {
-    // std:cout<<"Calling my placement delete\n";
+    // std::cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
   } else if (loc == Space::Managed_temps) {
 #if defined(SW4_USE_UMPIRE)
@@ -495,7 +505,7 @@ void operator delete[](void *ptr, Space loc) throw() {
     SW4_CheckDeviceError(SW4_FREE_PINNED(ptr));
   else if (loc == Space::Host) {
     // std:cout<<"Calling my placement delete\n";
-    ::operator delete(ptr);
+    ::operator delete[](ptr);
   } else if (loc == Space::Managed_temps) {
 #ifdef SW4_USE_UMPIRE
     umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();

@@ -447,7 +447,9 @@ class EW {
   void setupMPICommunications();
   void setup2D_MPICommunications();
   void communicate_array(Sarray& u, int grid);
+  void communicate_array_host(Sarray& u, int grid);
   void communicate_arrays(vector<Sarray>& u);
+  void communicate_host_arrays(vector<Sarray>& u);
   void communicate_array_2dfinest(Sarray& u);
   void communicate_array_2d(Sarray& u, int g, int k);
   void communicate_array_2d_asym(Sarray& u, int g, int k);

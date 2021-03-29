@@ -10,11 +10,11 @@
 #define SW4_MALLOC_MANAGED(addr, size) (hipMallocManaged(addr, size))
 #define SW4_MALLOC_DEVICE(addr, size) (hipMalloc(addr, size))
 #define SW4_MALLOC_PINNED(addr, size) \
-  (hipHostAlloc(addr, size, hipHostAllocMapped))
+  (hipHostMalloc(addr, size, hipHostMallocDefault))
 
 #define SW4_FREE_MANAGED(addr) (hipFree(addr))
 #define SW4_FREE_DEVICE(addr) (hipFree(addr))
-#define SW4_FREE_PINNED(addr) (hipFreeHost(addr))
+#define SW4_FREE_PINNED(addr) (hipHostFree(addr))
 
 #define SW4_DEVICE_SUCCESS hipSuccess
 //   SW4_CheckDeviceError(hipStreamSynchronize(0));

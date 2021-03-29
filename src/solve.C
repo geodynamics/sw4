@@ -63,6 +63,12 @@ void curvilinear4sgwind(int, int, int, int, int, int, int, int, float_sw4*,
 void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
                int event) {
   SW4_MARK_FUNCTION;
+#ifdef _OPENMP
+  //if (omp_pause_resource_all(omp_pause_hard)) {
+  //  std::cerr << "OMP_pause_resource failed\n";
+  // }
+#endif
+  //print_hwm(getRank());
   // solution arrays
   vector<Sarray> F(mNumberOfGrids), Lu(mNumberOfGrids), Uacc(mNumberOfGrids),
       Up(mNumberOfGrids), Um(mNumberOfGrids), U(mNumberOfGrids);
@@ -84,6 +90,20 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   // AlphaVE.resize(mNumberOfGrids);
   // AlphaVEm.resize(mNumberOfGrids);
   // AlphaVEp.resize(mNumberOfGrids);
+
+  // New space switching
+  SW4_MARK_BEGIN("Solve::Host->Managed");
+  for (int g = 0; g < mNumberOfGrids; g++) {
+    mMu[g].switch_space(Space::Managed);
+    mLambda[g].switch_space(Space::Managed);
+    for (int a = 0; a < m_number_mechanisms; a++) {
+      mMuVE[g][a].switch_space(Space::Managed);
+      mLambdaVE[g][a].switch_space(Space::Managed);
+    }
+  }
+  SW4_MARK_END("Solve::Host->Managed");
+  // End space switching
+
   if (m_use_attenuation && m_number_mechanisms > 0) {
     for (int g = 0; g < mNumberOfGrids; g++) {
       AlphaVE[g] = new Sarray[m_number_mechanisms];
@@ -792,6 +812,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     if (currentTimeStep == (beginCycle + 2)) print_hwm(getRank());
     if (currentTimeStep == (beginCycle + 10)) {
       PROFILER_START;
+      SW4_MARK_BEGIN("CLEAN_TIME");
 #ifdef SW4_TRACK_MPI
       t6 = SW4_CHRONO_NOW;
       ProfilerOn = true;
@@ -1283,6 +1304,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       SYNC_DEVICE;
     }
   }  // end time stepping loop
+  SW4_MARK_END("CLEAN_TIME");
   SW4_MARK_END("TIME_STEPPING");
 
   // Calculate stats for first time step
@@ -1877,17 +1899,27 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     Sarray Unextc(3, ibc, iec, jbc, jec, kc, kc, __FILE__,
                   __LINE__);  // only needs k=kc (on the interface)
     Sarray Bc(3, ibc, iec, jbc, jec, kc, kc, __FILE__, __LINE__);
+
+    
+#define FUSED_KERNELS 1
+#ifndef FUSED_KERNELS
     Unextf.set_to_zero_async();
     Bf.set_to_zero_async();
-    // std::cout<<"BF ARRAY "<<Bf.c_ptr()<<"\n";
     Unextc.set_to_zero_async();
     Bc.set_to_zero_async();
+#else
+    mset_to_zero_async(Unextf, Bf, Unextc, Bc);
+    // SW4_PEEK;
+    // SYNC_DEVICE;
+#endif
+
     // to compute the corrector we need the acceleration in the vicinity of the
     // interface
     Sarray Uf_tt(3, ibf, ief, jbf, jef, kf - 7, kf + 1, __FILE__, __LINE__);
     Sarray Uc_tt(3, ibc, iec, jbc, jec, kc - 1, kc + 7, __FILE__, __LINE__);
     // reuse Utt to hold the acceleration of the memory variables
     SW4_MARK_END("enforceIC::Allocs");
+    
     // Set to zero the ghost point values that are unknowns when solving the
     // interface condition. Assume that Dirichlet data is already set on ghost
     // points on the (supergrid) sides, which are not treated as unknown
@@ -1902,6 +1934,7 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     if (predictor)  // In the predictor step, (Unextc, Unextf) represent the
                     // displacement after the corrector step
     {
+      SW4_MARK_BEGIN("enforceIC::PREDICTOR");
       //  REMARK: June 15, 2017: if predictor == true, the memory variable
       //  a_alphaVEp holds the predicted
       // (2nd order) values on entry. However, the interior contribution to the
@@ -1921,9 +1954,11 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
         // dirichlet conditions for Unextc in super-grid layer at time t+dt
         dirichlet_LRic(Unextc, g, kc, time + mDt, 1);
       }
+      SW4_MARK_END("enforceIC::PREDICTOR");
     } else  // In the corrector step, (Unextc, Unextf) represent the
             // displacement after next predictor step
     {
+      SW4_MARK_BEGIN("enforceIC::CORRECTOR");
       compute_preliminary_predictor(a_Up[g + 1], a_U[g + 1], a_AlphaVEp[g + 1],
                                     Unextf, g + 1, kf, time + mDt, F[g + 1],
                                     point_sources);
@@ -1934,13 +1969,18 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
         // dirichlet conditions for Unextc in super-grid layer at time t+2*dt
         dirichlet_LRic(Unextc, g, kc, time + 2 * mDt, 1);
       }
+      SW4_MARK_END("enforceIC::CORRECTOR");
     }
 
+
+    SW4_MARK_BEGIN("enforceIC::COMPUTE_ICSTRESSES");
     compute_icstresses(a_Up[g + 1], Bf, g + 1, kf, m_sg_str_x[g + 1],
                        m_sg_str_y[g + 1]);
     compute_icstresses(a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g]);
+    SW4_MARK_END("enforceIC::COMPUTE_ICSTRESSES");
 
     // NEW June 13, 2017: add in the visco-elastic boundary traction
+    SW4_MARK_BEGIN("enforceIC::AD_VE_STRESSES");
     if (m_use_attenuation && m_number_mechanisms > 0) {
       for (int a = 0; a < m_number_mechanisms; a++) {
         // the visco-elastic stresses depend on the predictor values of AlphaVEp
@@ -1951,14 +1991,15 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                         m_sg_str_y[g]);
       }
     }
-
+    SW4_MARK_END("enforceIC::AD_VE_STRESSES");
+    SW4_MARK_BEGIN("enforceIC::DIRICHLET_LRSTRESS");
     // from enforceIC2()
     if (!m_doubly_periodic) {
       //  dirichlet condition for Bf in the super-grid layer at time t+dt (also
       //  works with twilight)
       dirichlet_LRstress(Bf, g + 1, kf, time + mDt, 1);
     }
-
+    SW4_MARK_END("enforceIC::DIRICHLET_LRSTRESS");
     SW4_MARK_BEGIN("enforceIC::MPI2DCOMM");
 #if defined(SW4_TRACK_MPI)
     {
@@ -2010,6 +2051,7 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
       dirichlet_LRic(a_Up[g], g, kc - 1, time + mDt, 1);
     }
   }  // end for g...
+  SW4_MARK_BEGIN("enforceIC::IMPOSE_IC");
   for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++) {
     //         m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up,
     //         time+mDt );
@@ -2017,6 +2059,7 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                                                    a_AlphaVEp);
     //      check_ic_conditions( g, a_Up );
   }
+  SW4_MARK_END("enforceIC::IMPOSE_IC");
 
 }  // enforceIC
 
@@ -2975,8 +3018,10 @@ void EW::compute_preliminary_corrector(
   char op = '=';
   int nz = m_global_nz[g];
   Sarray Lutt(3, ib, ie, jb, je, kic, kic, __FILE__, __LINE__);
-  Lutt.set_to_zero_async();  // Keep memory checker happy
-                             // Note: 6 first arguments of the function call:
+  // Following line commented out since array elemenst are ssigned and not
+  // updated.
+  // Lutt.set_to_zero_async();  // Keep memory checker happy
+  // Note: 6 first arguments of the function call:
   // (ib,ie), (jb,je), (kb,ke) is the declared size of mMu and mLambda in the
   // (i,j,k)-directions, respectively
 
@@ -3163,7 +3208,8 @@ void EW::compute_preliminary_predictor(
 
   // Compute L(Up) at k=kic.
   Sarray Lu(3, ib, ie, jb, je, kic, kic, __FILE__, __LINE__);
-  Lu.set_to_zero_async();  // Keep memory checker happy
+  // Commented out for speed
+  // Lu.set_to_zero_async();  // Keep memory checker happy
   char op = '=';
   int nz = m_global_nz[g];
   // Note: 6 first arguments of the function call:
@@ -5481,7 +5527,8 @@ void EW::compute_icstresses_curv(Sarray& a_Up, Sarray& B, int kic,
 #define str_y(j) a_str_y[(j - jfirst)]
   float_sw4 sgn = 1;
   if (op == '=') {
-    B.set_value(0.0);
+    //B.set_value(0.0);
+    B.set_to_zero_async();
     sgn = 1;
   }
   if (op == '-') {

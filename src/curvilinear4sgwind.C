@@ -136,6 +136,7 @@ void curvilinear4sgwind(
 #define ghcof_no_gp(i) a_ghcof_no_gp[i - 1]
 
 #ifdef PEEKS_GALORE
+  SYNC_DEVICE;
   SW4_PEEK;
   SYNC_DEVICE;
 #endif
@@ -186,7 +187,6 @@ void curvilinear4sgwind(
   //#pragma omp parallel
 
   using LOCAL_POL = DEFAULT_LOOP3;
-
   {
     if (lower) {
       // std::cout<<"CSGWIND lower \n"<<std::flush;
@@ -203,15 +203,23 @@ void curvilinear4sgwind(
 #if defined(ENABLE_CUDA)
 #define NO_COLLAPSE 1
 #endif
+#define NO_COLLAPSE 1
 #ifdef PEEKS_GALORE
       SW4_PEEK;
       SYNC_DEVICE;
 #endif
 #if defined(NO_COLLAPSE)
-
+#ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
       Range<1> K(klowb, klowe + 1);
+#endif
+#ifdef ENABLE_HIP
+      std::cout << "FIRST LOOP\n" << std::flush;
+      Range<8> I(ifirst + 2, ilast - 1);
+      Range<8> J(jfirst + 2, jlast - 1);
+      Range<4> K(klowb, klowe + 1);
+#endif
       forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
       RAJA::RangeSegment k_range(klowb, klowe + 1);
@@ -814,7 +822,7 @@ void curvilinear4sgwind(
 #endif
     }
     if (mid) {
-      // std::cout<<"CSGWIND mid\n"<<std::flush;
+      std::cout << "CSGWIND mid\n" << std::flush;
 #ifdef PEEKS_GALORE
       SW4_PEEK;
       SYNC_DEVICE;
@@ -828,9 +836,19 @@ void curvilinear4sgwind(
 //           for (int i = ifirst + 2; i <= ilast - 2; i++) {
 #if defined(NO_COLLAPSE)
 
+#ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
       Range<6> K(kmidb, kmide + 1);
+#endif
+
+#ifdef ENABLE_HIP
+      std::cout << "SECOND LOOP\n" << std::flush;
+      Range<32> I(ifirst + 2, ilast - 1);
+      Range<2> J(jfirst + 2, jlast - 1);
+      Range<2> K(kmidb, kmide + 1);
+#endif
+
       forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
       RAJA::RangeSegment k_range(kmidb, kmide + 1);
@@ -1883,9 +1901,20 @@ void curvilinear4sgwind(
 // #pragma ivdep
 //           for (int i = ifirst + 2; i <= ilast - 2; i++) {
 #if defined(NO_COLLAPSE)
+
+#ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
       Range<6> K(khighb, khighe + 1);
+#endif
+
+#ifdef ENABLE_HIP
+      std::cout << "THIRD LOOP\n" << std::flush;
+      Range<16> I(ifirst + 2, ilast - 1);
+      Range<2> J(jfirst + 2, jlast - 1);
+      Range<2> K(khighb, khighe + 1);
+#endif
+
       forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
       RAJA::RangeSegment k_range(khighb, khighe + 1);
@@ -2480,6 +2509,9 @@ void curvilinear4sgwind(
         lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
         lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
       });
+#ifdef ENABLE_HIP
+      std::cout << "THIRD LOOP DONE\n" << std::flush;
+#endif
     }
     // SYNC_DEVICE;
   }

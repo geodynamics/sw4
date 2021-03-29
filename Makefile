@@ -148,8 +148,8 @@ ifeq ($(openmp),no)
 else
    debugdir := $(debugdir)_mp
    optdir   := $(optdir)_mp
-   CXXFLAGS += -fopenmp
-   FFLAGS   += -fopenmp
+   CXXFLAGS += 
+   FFLAGS   += 
 endif
 
 # fortran=no is default
@@ -236,7 +236,7 @@ sw4: $(FSW4) $(FOBJ)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); nvcc -dlink -o file_link.o main.o $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart -lnvidia-ml
+	cd $(builddir); nvcc  -dlink -o file_link.o main.o $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart -lnvidia-ml
 	cd $(builddir); $(LINKER) $(LINKFLAGS) -o $@ main.o file_link.o $(OBJ) $(QUADPACK) $(linklibs)
 # test: linking with openmp for the routine rhs4sgcurv.o
 #	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
