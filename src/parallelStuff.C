@@ -1239,7 +1239,7 @@ void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
   // buffer A single large local buffer is used. Allocated in the 2D and 3D
   // setup routines
   float_sw4* lbuf = global_variables.device_buffer;
-#ifndef UNRAJA
+#if defined(RAJA_ONLY)
   RAJA::RangeSegment k_range(0, bl);
   RAJA::RangeSegment i_range(0, count);
   RAJA::kernel<BUFFER_POL>(RAJA::make_tuple(k_range, i_range),
@@ -1273,7 +1273,7 @@ void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
 #else  // #ifdef SW4_STAGED_MPI_BUFFERS
 
   // Code for PINNED,DEVICE AND MANAGED BUFFERS
-#ifndef UNRAJA
+#if defined(RAJA_ONLY)
   RAJA::RangeSegment k_range(0, bl);
   RAJA::RangeSegment i_range(0, count);
   RAJA::kernel<BUFFER_POL>(RAJA::make_tuple(k_range, i_range),
@@ -1340,7 +1340,7 @@ void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
       hipMemcpyAsync(lbuf, buf, count * bl * 8, hipMemcpyHostToDevice, 0));
 #endif
 
-#ifndef UNRAJA
+#if !defined(RAJA_ONLY)
   Range<16> k_range(0, bl);
   Range<16> i_range(0, count);
   forall2async(i_range, k_range, [=] RAJA_DEVICE(int i, int k) {
@@ -1360,7 +1360,7 @@ void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
   // The PINNED, DEVICE and MANAGED cases
 #else
 
-#ifndef UNRAJA
+#if !defined(RAJA_ONLY)
   Range<16> k_range(0, bl);
   Range<16> i_range(0, count);
   forall2async(i_range, k_range, [=] RAJA_DEVICE(int i, int k) {
