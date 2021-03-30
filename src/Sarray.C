@@ -1621,17 +1621,20 @@ void Sarray::switch_space(Space new_space) {
 }
 //----------------------------------------------------------------------
 void mset_to_zero_async(Sarray& S0, Sarray& S1, Sarray& S2, Sarray& S3) {
+  
+
+#if defined(RAJA_ONLY)
+  S0.set_to_zero_async();
+  S1.set_to_zero_async();
+  S2.set_to_zero_async();
+  S3.set_to_zero_async();
+#else
   float_sw4* m0 = S0.m_data;
   float_sw4* m1 = S1.m_data;
   float_sw4* m2 = S2.m_data;
   float_sw4* m3 = S3.m_data;
 
   size_t zero = 0;
-
-#if defined(RAJA_ONLY)
-  std::cerr<<"ERROR:: mset_to_zero called in in RAJA_ONLY compilation. Aborting..\n";
-  abort();
-#else
   multiforall<512>(
       zero, S0.m_npts, [=] RAJA_DEVICE(size_t i) { m0[i] = 0; }, zero,
       S1.m_npts, [=] RAJA_DEVICE(size_t i) { m1[i] = 0; }, zero, S2.m_npts,
@@ -1659,13 +1662,14 @@ void vset_to_zero_async(std::vector<Sarray>& v, int N) {
   // for(int i=0;i<N;i++)
   // std::cout<<"SIZES "<<v[i].m_npts<<"\n";
 
+  
+#if defined(RAJA_ONLY)
+  for (int g = 0; g < N; g++) v[g].set_to_zero_async();
+  
+#else
   float_sw4 *m0, *m1, *m2, *m3, *m4, *m5;
   size_t zero = 0;
 
-#if defined(RAJA_ONLY)
-  std::cerr<<"ERROR:: vset_to_zero_async called in in RAJA_ONLY compilation. Aborting..\n";
-  abort();
-#else
 
   switch (N) {
     case 1:

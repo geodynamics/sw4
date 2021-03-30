@@ -101,7 +101,9 @@ int main(int argc, char **argv) {
   MPI_Info_free(&info);
 
   int device = presetGPUID(myRank, local_rank, local_size);
-
+#if defined(RAJA_ONLY)
+  if (!myRank) std::cout<<"*** WARNING *** RAJA_ONLY build, might be slower than default\n";
+#endif
 #if defined(SW4_SIGNAL_CHECKPOINT)
   std::signal(SIGUSR1, signal_handler);
 #endif

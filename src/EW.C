@@ -42,7 +42,7 @@
 #include "hdf5.h"
 #endif
 #if defined(SW4_EXPT_1)
-// Experimental template based spliiing along I,J,K
+// Experimental template based splitting along I,J,K
 #include "curvilinear4sgc.h"
 #endif
 
@@ -4674,7 +4674,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
     idnts_local = idnts;
     float_sw4** ForceAddress_copy = ForceAddress;
 
-    // for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
+    //for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
     vset_to_zero_async(a_F, mNumberOfGrids);
     SW4_MARK_BEGIN("FORCE::DEVICE");
 
@@ -9194,7 +9194,7 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
         "WARNING: sw4 not compiled with hdf5=yes, ignoring read sfile, "
         "abort!\n");
   MPI_Abort(MPI_COMM_WORLD, -1);
-#endif
+#endif // #ifdef USE_HDF5
 }
 
 // CURVI_MR_CODE ADDED HERE
