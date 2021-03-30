@@ -49,8 +49,7 @@ endif
 
 ifeq ($(proj),yes)
 MORE_FLAGS+= -I$(PROJ_HOME)/include
-#MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib  -L$(PROJ_HOME)/lib -lproj
-MORE_LINK_FLAGS+= -L$(PROJ_HOME)/lib64 -lproj
+MORE_LINK_FLAGS+= -L$(PROJ_HOME)/lib -lproj
 endif 
 
 LINKFLAGS =  -arch=sm_70
