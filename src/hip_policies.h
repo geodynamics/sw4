@@ -59,7 +59,7 @@ using DEFAULT_LOOP3 = RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<
                         RAJA::statement::For<2, RAJA::hip_thread_x_direct,
                                              RAJA::statement::Lambda<0>>>>>>>>>;
 
-using DEFAULT_LOOP3 = RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<
+using DEFAULT_LOOP3_ASYNC = RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<
     256,
     RAJA::statement::Tile<
         0, RAJA::tile_fixed<2>, RAJA::hip_block_z_loop,
