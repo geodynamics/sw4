@@ -212,13 +212,14 @@ void curvilinear4sgwind(
       Range<1> K(klowb, klowe + 1);
 #endif
 #ifdef ENABLE_HIP
-      std::cout << "FIRST LOOP\n" << std::flush;
+      std::cout << "FIRST LOOP NO RAJA\n" << std::flush;
       Range<8> I(ifirst + 2, ilast - 1);
       Range<8> J(jfirst + 2, jlast - 1);
       Range<4> K(klowb, klowe + 1);
 #endif
       forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
+	  std::cout << "FIRST LOOP\n" << std::flush;
       RAJA::RangeSegment k_range(klowb, klowe + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);

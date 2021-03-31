@@ -486,6 +486,8 @@ void multiforall(T start0, T end0, LB0 &&body0, T start1, T end1, LB1 &&body1,
                      body3);
 }
 
+
+
 // Generalized mforall kernel
 template <typename T, typename LoopBody>
 __device__ inline void runner(T start, T end, LoopBody f) {
@@ -519,4 +521,51 @@ void gmforall(T start, T end, LoopBody &&body, Args... args) {
   hipLaunchKernelGGL(gmforallkernel, blocks, tpb, 0, 0, start, end, body,
                      args...);
 }
+
+
+// Generalized gmforall3async
+
+class MRange {
+ public:
+  int i, j, k;
+};
+
+template <typename T, typename LoopBody>
+__device__ inline void runner3(T start, T end, LoopBody f) {
+  for (decltype(start.i) i = start.i + threadIdx.x + blockIdx.x * blockDim.x;
+       i < end.i; i += blockDim.x * gridDim.x)
+    for (decltype(start.j) j = start.j + threadIdx.y + blockIdx.y * blockDim.y;
+         j < end.j; j += blockDim.y * gridDim.y)
+      for (decltype(start.k) k =
+               start.k + threadIdx.z + blockIdx.z * blockDim.z;
+           k < end.k; k += blockDim.z * gridDim.z)
+        f(i, j, k);
+}
+template <typename T, typename LoopBody, class... Args>
+__device__ inline void runner3(T start, T end, LoopBody f, Args... args) {
+  for (decltype(start.i) i = start.i + threadIdx.x + blockIdx.x * blockDim.x;
+       i < end.i; i += blockDim.x * gridDim.x)
+    for (decltype(start.j) j = start.j + threadIdx.y + blockIdx.y * blockDim.y;
+         j < end.j; j += blockDim.y * gridDim.y)
+      for (decltype(start.k) k =
+               start.k + threadIdx.z + blockIdx.z * blockDim.z;
+           k < end.k; k += blockDim.z * gridDim.z)
+        f(i, j, k);
+  runner3(args...);
+}
+
+template <typename T, typename LoopBody, class... Args>
+__global__ void gmforallkernel3(T start, T end, LoopBody body, Args... args) {
+  runner3(start, end, body, args...);
+}
+
+template <int I, int J, int K, typename T, typename LoopBody, class... Args>
+void gmforall3async(T &start, T &end, LoopBody &&body, Args... args) {
+  //  int blocks=80 * 2048/N; // WARNING HARDWIRED FOR V100
+  dim3 tpb(I, J, K);
+  dim3 blocks(64 / I, 64 / J, 40 / K);  // WARNING HARDWIRED FOR V100 PBUGS
+
+  gmforallkernel3<<<blocks, tpb>>>(start, end, body, args...);
+}
+
 #endif  // Guards
