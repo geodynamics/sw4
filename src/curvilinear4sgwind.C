@@ -212,14 +212,12 @@ void curvilinear4sgwind(
       Range<1> K(klowb, klowe + 1);
 #endif
 #ifdef ENABLE_HIP
-      std::cout << "FIRST LOOP NO RAJA\n" << std::flush;
       Range<8> I(ifirst + 2, ilast - 1);
       Range<8> J(jfirst + 2, jlast - 1);
       Range<4> K(klowb, klowe + 1);
 #endif
       forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
-	  std::cout << "FIRST LOOP\n" << std::flush;
       RAJA::RangeSegment k_range(klowb, klowe + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
@@ -841,7 +839,6 @@ void curvilinear4sgwind(
 #endif
 
 #ifdef ENABLE_HIP
-      std::cout << "SECOND LOOP\n" << std::flush;
       Range<32> I(ifirst + 2, ilast - 1);
       Range<2> J(jfirst + 2, jlast - 1);
       Range<2> K(kmidb, kmide + 1);
@@ -1907,7 +1904,6 @@ void curvilinear4sgwind(
 #endif
 
 #ifdef ENABLE_HIP
-      std::cout << "THIRD LOOP\n" << std::flush;
       Range<16> I(ifirst + 2, ilast - 1);
       Range<2> J(jfirst + 2, jlast - 1);
       Range<2> K(khighb, khighe + 1);
@@ -2507,9 +2503,7 @@ void curvilinear4sgwind(
         lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
         lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
       });
-#ifdef ENABLE_HIP
-      std::cout << "THIRD LOOP DONE\n" << std::flush;
-#endif
+
     }
     // SYNC_DEVICE;
   }

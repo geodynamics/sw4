@@ -50,7 +50,7 @@ CurvilinearInterface2::CurvilinearInterface2(int a_gc, EW* a_ew) {
   m_psource = a_ew->get_point_source_test();
   m_nghost = 5;
 
-#if defined(ENABLE_CUDA)
+#if defined(ENABLE_GPU)
   float_sw4* tmpa =
       SW4_NEW(Space::Managed, float_sw4[6 + 384 + 24 + 48 + 6 + 384 + 6 + 6]);
   m_sbop = tmpa;  // PTR_PUSH(Space::Managed,m_sbop);
