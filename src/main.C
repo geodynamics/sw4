@@ -64,6 +64,7 @@ void signal_handler(int signal) {
 }
 #endif
 
+
 using namespace std;
 
 void usage(string thereason) {
@@ -99,11 +100,9 @@ int main(int argc, char **argv) {
   MPI_Comm_rank(shared_comm, &local_rank);
   MPI_Comm_size(shared_comm, &local_size);
   MPI_Info_free(&info);
-
+  
   int device = presetGPUID(myRank, local_rank, local_size);
-#if defined(RAJA_ONLY)
-  if (!myRank) std::cout<<"*** WARNING *** RAJA_ONLY build, might be slower than default\n";
-#endif
+
 #if defined(SW4_SIGNAL_CHECKPOINT)
   std::signal(SIGUSR1, signal_handler);
 #endif
@@ -372,3 +371,4 @@ int main(int argc, char **argv) {
   // std::cout<<"MPI_Finalize done\n"<<std::flush;
   return status;
 }  // end of main
+

@@ -35,6 +35,7 @@
 #include "version.h"
 
 using namespace std;
+const char* compiler_options();
 
 namespace ewversion {
 
@@ -70,8 +71,75 @@ std::string getVersionInfo() {
       << "  Compiler:    " << compiler << std::endl
       << "  3rd party include dir: " << incdir
       << ", and library dir: " << libdir << std::endl
+      << "  Options:     " << compiler_options()<<std::endl
       << "----------------------------------------------------------------"
       << std::endl;
   return versioninfo.str();
 }
 };  // namespace ewversion
+
+
+
+
+// Print library versions and compiler options
+// ! Indicates options that slow down the code
+//
+#include "RAJA/RAJA.hpp"
+#if defined(SW4_USE_UMPIRE)
+#include "umpire/config.hpp"
+#endif
+const char* compiler_options(){
+
+  
+  std::stringstream opts;
+
+  opts<<"RAJA("<<RAJA_VERSION_MAJOR<<"."<<RAJA_VERSION_MINOR<<"."<<RAJA_VERSION_PATCHLEVEL<<"):  ";
+
+#if defined(SW4_USE_UMPIRE)
+  opts<<"UMPIRE("<<UMPIRE_VERSION_MAJOR<<"."<<UMPIRE_VERSION_MINOR<<"."<<UMPIRE_VERSION_PATCH<<"):\n\t\t";
+#else
+  opts<<"NO_UMPIRE(!):";
+#endif
+
+
+#if defined(ENABLE_PROJ4)
+  opts<<"PROJ4: ";
+#endif
+
+#if defined(RAJA_ONLY)
+  opts<<"RAJA_ONLY(!): ";
+#endif
+
+#if defined(_OPENMP)
+  opts<<"OPENMP: ";
+#endif
+
+#if defined(SW4_STAGED_MPI_BUFFERS)
+  opts<<"STAGED_MPI_BUFFERS: ";
+#endif
+
+#if defined(SW4_MANAGED_MPI_BUFFERS)
+  opts<<"MANAGED_MPI_BUFFERS: ";
+#endif
+
+#if defined(SW4_PINNED_MPI_BUFFERS)
+  opts<<"PINNED_MPI_BUFFERS: ";
+#endif
+
+#if defined(SW4_DEVICE_MPI_BUFFERS)
+  opts<<"DEVICE_MPI_BUFFERS: ";
+#endif
+
+#if defined(USE_HDF5)
+  opts<<"HDF5: ";
+#endif
+
+#if defined(ENABLE_CALIPER)
+  opts<<"CALIPER(!): ";
+#endif
+
+#if defined(ENABLE_FFTW)
+  opts<<"FFTW: ";
+#endif
+  return opts.str().c_str();
+}
