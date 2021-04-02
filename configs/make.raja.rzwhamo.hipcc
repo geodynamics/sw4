@@ -13,6 +13,7 @@ spill_warns = no
 caliper=no
 raja_only=no
 dbg=no
+register_count=no # Does not result in proper executable. grep -i vgpr in the device .s files
 
 RAJA_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/HIP/RAJA-v0.13.0/install
 
@@ -35,8 +36,7 @@ MPI_HOME = /opt/cray/pe/cray-mvapich2_nogpu/2.3.5/infiniband/cray/10.0
 
 EXTRA_FORT_FLAGS = 
 
-MORE_FLAGS = -DENABLE_HIP=1 -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_STAGED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC} -I$(MPI_HOME)/include -I${ROCM_PATH}/include -isystem /opt/rocm-4.0.1/llvm/lib/clang/12.0.0/include/.. -isystem /opt/rocm-4.0.1/hsa/include -isystem /opt/rocm-4.0.1/hip/include -D__HIP_ARCH_GFX906__=1 --cuda-gpu-arch=gfx906 -O2 -x hip -Wno-inconsistent-missing-override --amdgpu-target=gfx906 --rocm-path=/opt/rocm-4.0.1 --save-temps -fgpu-rdc
-
+MORE_FLAGS = -DENABLE_HIP=1 -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_STAGED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC} -I$(MPI_HOME)/include -I${ROCM_PATH}/include -isystem /opt/rocm-4.0.1/llvm/lib/clang/12.0.0/include/.. -isystem /opt/rocm-4.0.1/hsa/include -isystem /opt/rocm-4.0.1/hip/include -D__HIP_ARCH_GFX906__=1 --cuda-gpu-arch=gfx906 -O2 -x hip -Wno-inconsistent-missing-override --amdgpu-target=gfx906 --rocm-path=/opt/rocm-4.0.1 
 MORE_LINK_FLAGS = -fgpu-rdc  -O3  -std=c++11 -L $(LAPACK_LIB)  -lgfortran -lsci_cray  -L $(RAJA_HOME)/lib -lRAJA -L $(PROJ_HOME)/lib64 -lproj -L $(MPI_HOME)/lib -lmpi -L $(UMPIRE_HOME)/lib -lumpire $(GCC_LINK_LINE) --amdgpu-target=gfx906
 
 ifeq ($(umpire),yes)
@@ -81,6 +81,13 @@ endif
 
 ifeq ($(dbg),yes)
 MORE_FLAGS+=  -ggdb -DPEEKS_GALORE=1 
+endif 
+
+ifeq ($(register_count),yes)
+MORE_FLAGS+=  --save-temps
+else
+MORE_FLAGS+= -fgpu-rdc
+MORE_LINK_FLAGS+= -fgpu-rdc
 endif 
 
 

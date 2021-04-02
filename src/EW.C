@@ -1608,10 +1608,10 @@ void EW::saveGMTFile(vector<vector<Source*>>& a_GlobalUniqueSources,
     computeGeographicCoord(0.0, m_global_ymax, lonNW, latNW);
 
     // Round up/down
-    double minx = min(lonSW, min(lonSE, min(lonNE, lonNW)));
-    double maxx = max(lonSW, max(lonSE, max(lonNE, lonNW)));
-    double miny = min(latSW, min(latSE, min(latNE, latNW)));
-    double maxy = max(latSW, max(latSE, max(latNE, latNW)));
+    double minx = std::min(lonSW, std::min(lonSE, std::min(lonNE, lonNW)));
+    double maxx = std::max(lonSW, std::max(lonSE, std::max(lonNE, lonNW)));
+    double miny = std::min(latSW, std::min(latSE, std::min(latNE, latNW)));
+    double maxy = std::max(latSW, std::max(latSE, std::max(latNE, latNW)));
     double margin = 0.1 * fabs(maxy - miny);
 
     // tmp
@@ -3665,17 +3665,17 @@ void EW::get_exact_lamb(vector<Sarray>& a_U, float_sw4 a_t, Source& a_source) {
           double tau = t * beta / R;
           double r = R;
           if (tau > gamma) {
-            uz += G4_Integral(min(max(0.0, tau - gamma), beta / r), tau, r,
+            uz += G4_Integral(std::min(std::max(0.0, tau - gamma), beta / r), tau, r,
                               beta) -
                   G4_Integral(0.0, tau, r, beta);
           }
           if (tau > 1 && tau < beta / r + gamma) {
-            uz += G3_Integral(min(tau - 1, beta / r), tau, r, beta) -
-                  G3_Integral(max(0.0, tau - gamma), tau, r, beta);
+            uz += G3_Integral(std::min(tau - 1, beta / r), tau, r, beta) -
+	      G3_Integral(std::max(0.0, tau - gamma), tau, r, beta);
           }
           if (tau > 1 / sqrt(3.) && tau < beta / r + 1) {
-            uz += G2_Integral(min(tau - 1 / sqrt(3.), beta / r), tau, r, beta) -
-                  G2_Integral(max(tau - 1, 0.0), tau, r, beta);
+            uz += G2_Integral(std::min(tau - 1 / sqrt(3.), beta / r), tau, r, beta) -
+	      G2_Integral(std::max(tau - 1, 0.0), tau, r, beta);
           }
           uz *= -fz / (M_PI * M_PI * mu) * alpha * alpha / (beta * beta * beta);
         }

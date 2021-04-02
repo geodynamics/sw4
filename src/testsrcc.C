@@ -27,39 +27,39 @@ void EW::testsrc_ci(float_sw4* __restrict__ f, int ib, int ie, int jb, int je,
         if (kx[0] == 0)
           x1 = 1;
         else
-          x1 = pow(x, kx[0]);
+          x1 = std::pow(x, kx[0]);
         if (kx[1] == 0)
           x2 = 1;
         else
-          x2 = pow(x, kx[1]);
+          x2 = std::pow(x, kx[1]);
         if (kx[2] == 0)
           x3 = 1;
         else
-          x3 = pow(x, kx[2]);
+          x3 = std::pow(x, kx[2]);
         if (ky[0] == 0)
           y1 = 1;
         else
-          y1 = pow(y, ky[0]);
+          y1 = std::pow(y, ky[0]);
         if (ky[1] == 0)
           y2 = 1;
         else
-          y2 = pow(y, ky[1]);
+          y2 = std::pow(y, ky[1]);
         if (ky[2] == 0)
           y3 = 1;
         else
-          y3 = pow(y, ky[2]);
+          y3 = std::pow(y, ky[2]);
         if (kz[0] == 0)
           z1 = 1;
         else
-          z1 = pow(z, kz[0]);
+          z1 = std::pow(z, kz[0]);
         if (kz[1] == 0)
           z2 = 1;
         else
-          z2 = pow(z, kz[1]);
+          z2 = std::pow(z, kz[1]);
         if (kz[2] == 0)
           z3 = 1;
         else
-          z3 = pow(z, kz[2]);
+          z3 = std::pow(z, kz[2]);
         size_t ind = base + i + ni * j + nij * k;
         mom1 += x1 * y1 * z1 * f[ind] * normfact;
         mom2 += x2 * y2 * z2 * f[ind + nijk] * normfact;
@@ -100,39 +100,39 @@ void EW::testsrcc_ci(float_sw4* __restrict__ f, int ib, int ie, int jb, int je,
         if (kx[0] == 0)
           x1 = 1;
         else
-          x1 = pow(x, kx[0]);
+          x1 = std::pow(x, kx[0]);
         if (kx[1] == 0)
           x2 = 1;
         else
-          x2 = pow(x, kx[1]);
+          x2 = std::pow(x, kx[1]);
         if (kx[2] == 0)
           x3 = 1;
         else
-          x3 = pow(x, kx[2]);
+          x3 = std::pow(x, kx[2]);
         if (ky[0] == 0)
           y1 = 1;
         else
-          y1 = pow(y, ky[0]);
+          y1 = std::pow(y, ky[0]);
         if (ky[1] == 0)
           y2 = 1;
         else
-          y2 = pow(y, ky[1]);
+          y2 = std::pow(y, ky[1]);
         if (ky[2] == 0)
           y3 = 1;
         else
-          y3 = pow(y, ky[2]);
+          y3 = std::pow(y, ky[2]);
         if (kz[0] == 0)
           z1 = 1;
         else
-          z1 = pow(z, kz[0]);
+          z1 = std::pow(z, kz[0]);
         if (kz[1] == 0)
           z2 = 1;
         else
-          z2 = pow(z, kz[1]);
+          z2 = std::pow(z, kz[1]);
         if (kz[2] == 0)
           z3 = 1;
         else
-          z3 = pow(z, kz[2]);
+          z3 = std::pow(z, kz[2]);
         size_t ind = base + i + ni * j + nij * k;
         mom1 += x1 * y1 * z1 * f[ind] * normfact;
         mom2 += x2 * y2 * z2 * f[ind + nijk] * normfact;
