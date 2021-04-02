@@ -4175,6 +4175,7 @@ void EW::processCheckPoint(char* buffer)
           token += 9;
           compressionMode = SW4_ZFP_MODE_RATE;
           compressionPar = atof(token);
+          useHDF5 = true;
           if (proc_zero())
             cout << "Checkpoint will use ZFP rate=" << compressionPar << endl;
       }
@@ -4183,6 +4184,7 @@ void EW::processCheckPoint(char* buffer)
           token += 14;
           compressionMode = SW4_ZFP_MODE_PRECISION;
           compressionPar = atof(token);
+          useHDF5 = true;
           if (proc_zero())
             cout << "Checkpoint will use ZFP precision=" << compressionPar << endl;
       }
@@ -4191,6 +4193,7 @@ void EW::processCheckPoint(char* buffer)
           token += 13;
           compressionMode = SW4_ZFP_MODE_ACCURACY;
           compressionPar = atof(token);
+          useHDF5 = true;
           if (proc_zero())
             cout << "Checkpoint will use ZFP accuracy=" << compressionPar << endl;
       }
@@ -4198,6 +4201,7 @@ void EW::processCheckPoint(char* buffer)
       {
           token += 15;
           compressionMode = SW4_ZFP_MODE_REVERSIBLE;
+          useHDF5 = true;
           if (proc_zero())
             cout << "Checkpoint will use ZFP reversible mode" << endl;
       }
@@ -4206,6 +4210,7 @@ void EW::processCheckPoint(char* buffer)
           token += 5;
           compressionMode = SW4_ZLIB;
           compressionPar = atof(token);
+          useHDF5 = true;
           if (proc_zero())
             cout << "Checkpoint will use ZLIB level=" << (int)compressionPar << endl;
       }
@@ -4213,6 +4218,7 @@ void EW::processCheckPoint(char* buffer)
       {
           token += 5;
           compressionMode = SW4_SZIP;
+          useHDF5 = true;
           if (proc_zero())
             cout << "Checkpoint will use SZIP" << endl;
       }
@@ -4220,6 +4226,7 @@ void EW::processCheckPoint(char* buffer)
       {
           token += 5;
           compressionMode = SW4_SZ;
+          useHDF5 = true;
           if (proc_zero())
             cout << "Checkpoint will use SZ with configuration file [" << getenv("SZ_CONFIG_FILE") << "]" << endl;
       }

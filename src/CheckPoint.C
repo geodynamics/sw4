@@ -1032,6 +1032,7 @@ void CheckPoint::write_checkpoint_hdf5( float_sw4 a_time, int a_cycle, vector<Sa
    H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
    H5Pset_all_coll_metadata_ops(fapl, 1);
    H5Pset_coll_metadata_write(fapl, 1);
+   H5Pset_alignment(fapl, 32767, 16777216);
 
    double elapsed_time = MPI_Wtime();
 
@@ -1057,7 +1058,8 @@ void CheckPoint::write_checkpoint_hdf5( float_sw4 a_time, int a_cycle, vector<Sa
    H5Pset_alloc_time(prop_id, H5D_ALLOC_TIME_LATE);
 
    // TODO, determine chunk size
-   hsize_t my_chunk[1]={1024};
+   hsize_t my_chunk[1];
+   my_chunk[0] = (m_double ? 2097152 : 4194304);
    char *env_char = NULL;
    env_char = getenv("CHECKPOINT_CHUNK_X");
    if (env_char != NULL) 
