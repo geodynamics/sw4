@@ -35,7 +35,7 @@
 #include "version.h"
 
 using namespace std;
-const char* compiler_options();
+std::string compiler_options();
 
 namespace ewversion {
 
@@ -88,7 +88,7 @@ std::string getVersionInfo() {
 #if defined(SW4_USE_UMPIRE)
 #include "umpire/config.hpp"
 #endif
-const char* compiler_options(){
+std::string compiler_options(){
 
   
   std::stringstream opts;
