@@ -398,8 +398,8 @@ bool GridGeneratorGeneral::inverse_grid_mapping_old( EW* a_ew,
  // 1. Compute q and r
    q = x/h + 1.0;
    r = y/h + 1.0;
-   int i= static_cast<int>(round(q));
-   int j= static_cast<int>(round(r));   
+   int i= static_cast<int>(floor(q));
+   int j= static_cast<int>(floor(r));   
    if( a_ew->interior_point_in_proc( i, j, g ) )
    {
       s = 0.;   
