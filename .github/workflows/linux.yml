@@ -32,6 +32,8 @@ jobs:
           ./test_sw4.py -m 2 -t 2 -u 1
           # Run 2nd HDF5 test
           ./test_sw4.py -m 2 -t 2 -u 2
+          # Run 3rd HDF5 test
+          ./test_sw4.py -m 2 -t 2 -u 3
 
   # SW4mopt:
   #   runs-on: ubuntu-latest

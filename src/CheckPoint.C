@@ -1032,7 +1032,15 @@ void CheckPoint::write_checkpoint_hdf5( float_sw4 a_time, int a_cycle, vector<Sa
    H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
    H5Pset_all_coll_metadata_ops(fapl, 1);
    H5Pset_coll_metadata_write(fapl, 1);
-   H5Pset_alignment(fapl, 32767, 16777216);
+
+   int alignment = 65536;
+   char *env = getenv("HDF5_ALIGNMENT_SIZE");
+   if (env != NULL) 
+       alignment = atoi(env);
+   if (alignment < 65536) 
+       alignment = 65536;
+         
+   H5Pset_alignment(fapl, 65536, alignment);
 
    double elapsed_time = MPI_Wtime();
 
