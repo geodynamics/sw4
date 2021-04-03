@@ -119,7 +119,7 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
   SW4_MARK_BEGIN("CONSINTP_LOOP1");
   RAJA::kernel<CONSINTP_EXEC_POL1>(
       RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
-  // #pragma omp parallel for
+
   //    for( int j=m_jStart[gf] ; j<=m_jEnd[gf] ; j++ )
   //       for( int i=m_iStart[gf] ; i<=m_iEnd[gf] ; i++ )
   //       {
@@ -209,7 +209,7 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
   //    SView &UnextcV = Unextc.getview();
   //    Unextc.prefetch();
   SW4_MARK_BEGIN("CONSINTP_LOOP4");
-#pragma omp parallel
+  //#pragma omp parallel
   // for (int c=1; c<=3; c++)
   {
     // this works but is a bit awkward
