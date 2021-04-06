@@ -1042,8 +1042,6 @@ void CheckPoint::write_checkpoint_hdf5( float_sw4 a_time, int a_cycle, vector<Sa
          
    H5Pset_alignment(fapl, 65536, alignment);
 
-   double elapsed_time = MPI_Wtime();
-
    fid = H5Fcreate( const_cast<char*>(s.str().c_str()), H5F_ACC_TRUNC, H5P_DEFAULT, fapl); 
    CHECK_INPUT(fid > 0, "CheckPoint::write_file: Error opening: " << s.str() );
 
@@ -1172,9 +1170,6 @@ void CheckPoint::write_checkpoint_hdf5( float_sw4 a_time, int a_cycle, vector<Sa
    H5Pclose(fapl);
    H5Pclose(dxpl);
    H5Fclose(fid);
-   elapsed_time = MPI_Wtime() - elapsed_time;
-   if (myrank == 0)
-       std::cout << "Done writing checkpoint file, took " << elapsed_time << " seconds." << std::endl;
 } // end write_checkpoint_hdf5()
 
 //-----------------------------------------------------------------------
@@ -1205,8 +1200,6 @@ void CheckPoint::read_checkpoint_hdf5( float_sw4& a_time, int& a_cycle,
 
    dxpl = H5Pcreate(H5P_DATASET_XFER);
    H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE);
-
-   double elapsed_time = MPI_Wtime();
 
    fid = H5Fopen( const_cast<char*>(s.str().c_str()), H5F_ACC_RDONLY, fapl); 
    CHECK_INPUT(fid > 0, "CheckPoint::read_checkpoint_hdf5: Error opening: " << s.str() );
@@ -1281,8 +1274,5 @@ void CheckPoint::read_checkpoint_hdf5( float_sw4& a_time, int& a_cycle,
    H5Pclose(fapl);
    H5Pclose(dxpl);
    H5Fclose(fid);
-   elapsed_time = MPI_Wtime() - elapsed_time;
-   if (myrank == 0)
-       std::cout << "Done reading checkpoint file, took " << elapsed_time << " seconds." << std::endl;
 }
 #endif
