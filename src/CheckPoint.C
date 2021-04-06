@@ -626,7 +626,7 @@ float_sw4 CheckPoint::getDt()
          CHECK_INPUT( ret >= 0,"CheckPoint::read_header_hdf5: Error reading dt" );
          H5Fclose(fid);
 #else
-         if (proc_zero())
+         if (m_parallel_io[0]->proc_zero())
              cout << "Configured to restart with HDF5 but SW4 is not compiled with HDF5!" << endl;
 #endif
       }
