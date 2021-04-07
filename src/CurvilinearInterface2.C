@@ -189,7 +189,43 @@ void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
         [=] RAJA_DEVICE(int i, int j, int k) {
           for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
         });
+  } else if (st.size() == 3) { // NOT TESTED PBUGS
+    gmforall3async<16, 16, 1>(
+        st[0], en[0],
+        [=] RAJA_DEVICE(int i, int j, int k) {
+          for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
+        },
+        st[1], en[1],
+        [=] RAJA_DEVICE(int i, int j, int k) {
+          for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
+        },
+	st[2], en[2],
+        [=] RAJA_DEVICE(int i, int j, int k) {
+          for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
+        }
+			      );
+  } else if (st.size() == 4) { // NOT TESTED PBUGS
+    gmforall3async<16, 16, 1>(
+        st[0], en[0],
+        [=] RAJA_DEVICE(int i, int j, int k) {
+          for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
+        },
+        st[1], en[1],
+        [=] RAJA_DEVICE(int i, int j, int k) {
+          for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
+        },
+	st[2], en[2],
+        [=] RAJA_DEVICE(int i, int j, int k) {
+          for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
+        },
+	st[3], en[3],
+        [=] RAJA_DEVICE(int i, int j, int k) {
+          for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
+        }
+			      );
+    
   } else {
+    
     std::cerr << " ERROR SIZE in CurvilinearInterface2::bnd_zero 0 "
               << st.size() << "\n";
     abort();

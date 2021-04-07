@@ -107,6 +107,7 @@ class RangeGS {
 };
 
 template <typename Func>
+__launch_bounds__(256)
 __global__ void forall3kernel(const int start0, const int N0, const int start1,
                               const int N1, const int start2, const int N2,
                               Func f) {
@@ -117,6 +118,7 @@ __global__ void forall3kernel(const int start0, const int N0, const int start1,
 }
 
 template <int N, typename Func>
+__launch_bounds__(256)
 __global__ void forall3kernel(const int start0, const int N0, const int start1,
                               const int N1, const int start2, const int N2,
                               Func f) {
@@ -424,6 +426,7 @@ template <int N>
 class Tclass {};
 
 template <int N, typename Tag, typename Func>
+__launch_bounds__(256)
 __global__ void forall3kernel(Tag t, const int start0, const int N0,
                               const int start1, const int N1, const int start2,
                               const int N2, Func f) {
