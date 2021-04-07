@@ -1041,6 +1041,7 @@ void CheckPoint::write_checkpoint_hdf5( float_sw4 a_time, int a_cycle, vector<Sa
        alignment = 65536;
          
    H5Pset_alignment(fapl, 65536, alignment);
+   H5Pset_libver_bounds(fapl, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST);
 
    fid = H5Fcreate( const_cast<char*>(s.str().c_str()), H5F_ACC_TRUNC, H5P_DEFAULT, fapl); 
    CHECK_INPUT(fid > 0, "CheckPoint::write_file: Error opening: " << s.str() );
@@ -1197,6 +1198,7 @@ void CheckPoint::read_checkpoint_hdf5( float_sw4& a_time, int& a_cycle,
    H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
    H5Pset_all_coll_metadata_ops(fapl, 1);
    H5Pset_coll_metadata_write(fapl, 1);
+   H5Pset_libver_bounds(fapl, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST);
 
    dxpl = H5Pcreate(H5P_DATASET_XFER);
    H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE);
