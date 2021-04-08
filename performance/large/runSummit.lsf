@@ -11,5 +11,6 @@ module unload darshan-runtime
 module load gcc
 module load hdf5
 date
-jsrun -n 4 -g1 -c6 -a1  ./sw4 hmr3.in.summit
-jsrun -n 4 -g1 -c6 -a1  ./sw4 h.in.summit
+export OMP_NUM_THREADS=10
+jsrun -n 4 -g1 -c10 -a1  ./sw4 hmr3.in.summit
+jsrun -n 4 -g1 -c10 -a1  ./sw4 h.in.summit

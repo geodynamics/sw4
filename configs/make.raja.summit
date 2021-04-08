@@ -8,14 +8,16 @@ openmp=no
 raja_cuda=yes
 umpire = yes
 fftw = yes
-hdf5= no
+hdf5= yes
 spill_warns = no
 caliper= no
 RAJA_HOME = /gpfs/alpine/geo130/proj-shared/AUGUST_CAMPAIGN/RAJA-v0.11.0/install
+RAJA_HOME = /autofs/nccs-svm1_proj/geo130/ramesh/RAJA-v0.11.0/install
 
 PROJ_HOME = /gpfs/alpine/geo130/proj-shared/AUGUST_CAMPAIGN/proj-5.0.0/install
 
 UMPIRE_HOME = /gpfs/alpine/geo130/proj-shared/AUGUST_CAMPAIGN/umpire-3.0.0/install
+UMPIRE_HOME = /autofs/nccs-svm1_proj/geo130/ramesh/umpire-3.0.0/install
 
 CALIPER_HOME = /usr/workspace/wsb/ramesh/Caliper/July2020/Caliper/install
 
@@ -26,7 +28,7 @@ CALIPER_HOME =/usr/workspace/wsrzd/ramesh/Caliper/Caliper/install
 EXTRA_FORT_FLAGS = 
 LAPACK_DIR = $(OLCF_NETLIB_LAPACK_ROOT)
 
-MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_PINNED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC} -DSW4_MASS_PREFETCH=1
+MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_STAGED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC} -DSW4_MASS_PREFETCH=1
 MORE_LINK_FLAGS = 
 
 ifeq ($(umpire),yes)
@@ -40,13 +42,20 @@ MORE_LINK_FLAGS+=-L $(OLCF_FFTW_ROOT)/lib -Wl,-rpath=$(OLCF_FFTW_ROOT)/lib -lfft
 endif 
 
 ifeq ($(hdf5),yes)
-MORE_FLAGS+= -DUSE_HDF5=1 -I $(HDF5_HOME)/include
-MORE_LINK_FLAGS+= -L $(HDF5_HOME)/lib -Wl,-rpath=$(HDF5_HOME)/lib -lhdf5_hl -lhdf5
+MORE_FLAGS+= -DUSE_HDF5=1 -I $(OLCF_HDF5_ROOT)/include
+MORE_LINK_FLAGS+= -L $(OLCF_HDF5_ROOT)/lib -Wl,-rpath=$(OLCF_HDF5_ROOT)/lib -lhdf5_hl -lhdf5
 endif 
 
 ifeq ($(spill_warns),yes)
 MORE_FLAGS+=  -Xptxas -v,--warn-on-spills
 endif 
+
+ifeq ($(openmp),yes)
+MORE_FLAGS+=  -Xcompiler="-fopenmp"
+MORE_LINK_FLAGS+= -fopenmp
+else
+MORE_FLAGS+=  -Xcompiler=" "
+endif
 
 ifeq ($(caliper),yes)
 MORE_FLAGS+= -DENABLE_CALIPER=1 -I$(CALIPER_HOME)/include
@@ -59,8 +68,9 @@ MORE_FLAGS+= -I$(PROJ_HOME)/include
 MORE_LINK_FLAGS+= -L$(PROJ_HOME)/lib64 -lproj
 endif 
 
+DLINKFLAGS =  -arch=sm_70
 LINKFLAGS =  
 CUDA_HOME = $(OLCF_CUDA_ROOT)
-EXTRA_CXX_FLAGS =  -O3 -lineinfo -use_fast_math $(MORE_FLAGS) -DDISABLE_PREFETCH  -ccbin mpicxx -Xcompiler="" -std=c++11 --expt-extended-lambda -restrict -arch=sm_70 -I $(CUDA_HOME)/include -I$(RAJA_HOME)/include  --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA -dc 
+EXTRA_CXX_FLAGS =  -O3 -lineinfo -use_fast_math $(MORE_FLAGS) -DDISABLE_PREFETCH  -ccbin mpicxx -std=c++11 --expt-extended-lambda -restrict -arch=sm_70 -I $(CUDA_HOME)/include -I$(RAJA_HOME)/include  --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA -dc 
 
 EXTRA_LINK_FLAGS =   -dc -L $(OLCF_XLF_ROOT)/lib -Wl,-rpath=${LAPACK_DIR} -L ${LAPACK_DIR}  -llapack -lblas  -L $(CUDA_HOME)/lib64 -lcudart -lnvToolsExt -lcuda -L $(RAJA_HOME)/lib -lRAJA  -lcudadevrt -L$(PROJ_HOME)/lib64 -lproj -L/usr/lib64/nvidia -lnvidia-ml  $(MORE_LINK_FLAGS) -lgfortran
