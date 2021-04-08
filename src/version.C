@@ -88,6 +88,9 @@ std::string getVersionInfo() {
 #if defined(SW4_USE_UMPIRE)
 #include "umpire/config.hpp"
 #endif
+#if defined(USE_HDF5)
+#include "H5public.h"
+#endif
 std::string compiler_options(){
 
   
