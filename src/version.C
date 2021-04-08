@@ -131,7 +131,8 @@ std::string compiler_options(){
 #endif
 
 #if defined(USE_HDF5)
-  opts<<"HDF5: ";
+#include "H5public.h"
+  opts<<"HDF5("<<H5_VERS_MAJOR<<"."<<H5_VERS_MINOR<<"."<<H5_VERS_RELEASE<<"."<<H5_VERS_SUBRELEASE<<")";
 #endif
 
 #if defined(ENABLE_CALIPER)
