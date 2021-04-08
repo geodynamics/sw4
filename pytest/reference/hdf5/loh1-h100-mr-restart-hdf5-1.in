@@ -22,7 +22,7 @@
 #developer ctol=1e-10 cmaxit=100 crelax=0.92
 
 grid h=200 x=30000 y=30000 z=17000 extrapolate=1
-time t=9
+time steps=268
 fileio path=loh1-h100-mr-1-hdf5
 
 # mesh refinement along material jump (50*20 = 1000)
