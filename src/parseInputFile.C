@@ -4074,12 +4074,12 @@ void EW::processESSI3D( char* buffer )
    }
 
 #ifndef USE_ZFP
-   if (compressionMode != 0 && proc_zero()) 
+   if (compressionMode > 0 && compressionMode < 5 && proc_zero())
       cout << "WARNING: SW4 is not compiled with ZFP but ZFP command is used " << endl;
 #endif
 
 #ifndef USE_SZ
-   if (compressionMode != 0 && proc_zero()) 
+   if (compressionMode == SW4_SZ && proc_zero())
       cout << "WARNING: SW4 is not compiled with SZ but SZ command is used " << endl;
 #endif
 
@@ -4242,6 +4242,17 @@ void EW::processCheckPoint(char* buffer)
       }
       token = strtok(NULL, " \t");
    }
+
+#ifndef USE_ZFP
+   if (compressionMode > 0 && compressionMode < 5 && proc_zero())
+      cout << "WARNING: SW4 is not compiled with ZFP but ZFP command is used " << endl;
+#endif
+
+#ifndef USE_SZ
+   if (compressionMode == SW4_SZ && proc_zero())
+      cout << "WARNING: SW4 is not compiled with SZ but SZ command is used " << endl;
+#endif
+
    if( m_check_point == CheckPoint::nil )
       m_check_point = new CheckPoint(this);
    if( cycleInterval > 0 )
