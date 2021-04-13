@@ -1752,3 +1752,16 @@ void vset_to_zero_async(std::vector<Sarray>& v, int N) {
 
 #endif
 }
+ float_sw4 Sarray::norm(){
+   float_sw4 *sum;
+   sum = SW4_NEW(Space::Managed_temps,float_sw4[1]);
+   float_sw4* lm_data = m_data;
+   RAJA::forall<DEFAULT_LOOP1>(
+				     RAJA::RangeSegment(0, m_npts),
+				     [=] RAJA_DEVICE(size_t i) {
+				       RAJA::atomicAdd< RAJA::auto_atomic >(sum, lm_data[i]*lm_data[i]);
+				     });
+   float_sw4 retval=*sum;
+   ::operator delete[](sum, Space::Managed_temps);
+   return retval;
+ }

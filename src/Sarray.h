@@ -267,6 +267,7 @@ class Sarray {
   void prefetch(int device = 0);
   void forceprefetch(int device = 0);
   void switch_space(Space space_in);
+  float_sw4 norm();
   inline SView& getview() {
     // prefetch();
     return view;

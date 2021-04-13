@@ -4380,9 +4380,12 @@ void EW::exactAccTwilight(float_sw4 a_t, vector<Sarray>& a_Uacc) {
 
 //---------------------------------------------------------------------------
 #ifdef ENABLE_HIP
+// Awaiting device function pointer support in HIP
 void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
                vector<GridPointSource*>& point_sources,
-               vector<int>& identsources) {}
+               vector<int>& identsources) {
+  for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero();
+}
 #else
 void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
                vector<GridPointSource*>& point_sources,
@@ -4697,9 +4700,12 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
 #endif
 //---------------------------------------------------------------------------
 #ifdef ENABLE_HIP
+// Awaiting device function pointer support in HIP
 void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
                   vector<GridPointSource*>& point_sources,
-                  vector<int>& identsources) {}
+                  vector<int>& identsources) {
+  for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero();
+}
 #else
 void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
                   vector<GridPointSource*>& point_sources,

@@ -41,7 +41,6 @@
 //#include <iostream>
 // using namespace std;
 void curvilinear4sgwind(
-
     int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
     int kfirstw, int klastw, float_sw4* __restrict__ a_u,
     float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda,

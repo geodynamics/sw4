@@ -68,6 +68,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   //  std::cerr << "OMP_pause_resource failed\n";
   // }
 #endif
+
+#ifdef SW4_NORM_TRACE
+  std::ofstream norm_trace_file("Norms.dat");
+#endif
   //print_hwm(getRank());
   // solution arrays
   vector<Sarray> F(mNumberOfGrids), Lu(mNumberOfGrids), Uacc(mNumberOfGrids),
@@ -1027,7 +1031,23 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
       if (m_checkfornan) check_for_nan(Lu, 1, "L(uacc) ");
 
+#ifdef SW4_NORM_TRACE
+    if (!getRank()){
+      for (int g = 0; g < mNumberOfGrids; g++) {
+	norm_trace_file<<"PreEvalCorrector Up["<<g<<"] "<<Up[g].norm()<<" "<<Lu[g].norm()<<" "<<F[g].norm()<<"\n";
+      }
+    }
+#endif
+
       evalCorrector(Up, mRho, Lu, F);
+
+#ifdef SW4_NORM_TRACE
+    if (!getRank()){
+      for (int g = 0; g < mNumberOfGrids; g++) {
+      norm_trace_file<<"PostEvalCorrector Up,Lu,F["<<g<<"] "<<Up[g].norm()<<" "<<Lu[g].norm()<<" "<<F[g].norm()<<"\n";
+      }
+    }
+#endif
 
       if (m_output_detailed_timing) time_measure[12] = MPI_Wtime();
 
@@ -1089,6 +1109,15 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
       if (trace && m_myRank == dbgproc) cout << " after Forcing" << endl;
       // end test
+
+
+#ifdef SW4_NORM_TRACE
+    if (!getRank()){
+      for (int g = 0; g < mNumberOfGrids; g++) {
+	norm_trace_file<<"PreENFORCIC Up["<<g<<"] "<<Up[g].norm()<<"\n";
+      }
+    }
+#endif
 
       // interface conditions for the corrector
       // June 14, 2017: adding AlphaVE & AlphaVEm
@@ -1216,6 +1245,14 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
     // cycle the solution arrays
     cycleSolutionArrays(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp);
+
+#ifdef SW4_NORM_TRACE
+    if (!getRank()){
+      for (int g = 0; g < mNumberOfGrids; g++) {
+	norm_trace_file<<"Up["<<g<<"] "<<Up[g].norm()<<"\n";
+      }
+    }
+#endif
 
     if (m_output_detailed_timing) time_measure[19] = MPI_Wtime();
 

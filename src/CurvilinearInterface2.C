@@ -894,6 +894,9 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
 #endif
 #endif
 #ifdef USE_LAPACK_ON_CPU
+    int one = 1;
+    int three = 3; 
+    
     // WARNING THIS IS RUNNING ON THE HOST
     int info = 0;
     char trans = 'N';
