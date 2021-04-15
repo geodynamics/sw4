@@ -159,10 +159,14 @@ void GridGeneratorGeneral::generate_grid_and_met_new( EW *a_ew, int g, Sarray& a
    float_sw4 h0 = 2.0*h;
    float_sw4 Nz_real = static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
    float_sw4 iNz_real = 1.0/Nz_real;
-   float_sw4 scaleFact= 0;
+   float_sw4 scaleFact= 0, scaleRatio=0;
    if( g > ncg )
+   {
       scaleFact = (m_topo_zmax - a_ew->m_curviRefLev[g-1-ncg])/m_topo_zmax;
-            
+      scaleRatio = (m_topo_zmax - a_ew->m_curviRefLev[g-1-ncg])/
+         (m_topo_zmax - a_ew->m_curviRefLev[g-ncg]);
+
+   }        
 #pragma omp parallel for
    for (int j=a_x.m_jb; j<=a_x.m_je; j++)
       for (int i=a_x.m_ib; i<=a_x.m_ie; i++)
@@ -178,8 +182,10 @@ void GridGeneratorGeneral::generate_grid_and_met_new( EW *a_ew, int g, Sarray& a
          }
          else
          {
-            Zbot = scaleFact*m_curviInterface[ng-1-ncg](ref*(i-1)+1,ref*(j-1)+1, 1) +
-                                          (1.0 - scaleFact)* m_topo_zmax;
+            Zbot = scaleRatio*Ztop-(1-scaleRatio)*m_topo_zmax;
+            //            Zbot = scaleFact*m_curviInterface[ng-1-ncg](ref*(i-1)+1,ref*(j-1)+1, 1) +
+            //                                          (1.0 - scaleFact)* m_topo_zmax;
+
 // Bottom interface is non-planar (curvilinear)
 //            int iLow = static_cast<int>( floor(X0/h0) )+1 ;
 //            int jLow = static_cast<int>( floor(Y0/h0) )+1;

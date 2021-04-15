@@ -4333,11 +4333,24 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
       ny_finest_w_ghost = refFact*m_ny_base + 2*m_ghost_points;
 
    int proc_max[2];
+   bool old_decomp=true;
 // this info is obtained by the contructor
 //   MPI_Comm_size( MPI_COMM_WORLD, &nprocs  );
-   proc_decompose_2d( nx_finest_w_ghost, ny_finest_w_ghost, m_nProcs, proc_max );
-   
-   MPI_Cart_create( m_1d_communicator, 2, proc_max, is_periodic, true, &m_cartesian_communicator );
+   if( old_decomp )
+   {
+      proc_decompose_2d( nx_finest_w_ghost, ny_finest_w_ghost, m_nProcs, proc_max );
+      MPI_Cart_create( m_1d_communicator, 2, proc_max, is_periodic, true, &m_cartesian_communicator );
+   }
+   else
+   {
+      int mynewid=my_node_core_id( nx_finest_w_ghost, ny_finest_w_ghost, proc_max );  
+      MPI_Comm renumbered_world;
+      MPI_Comm_split( MPI_COMM_WORLD, 0, mynewid, &renumbered_world );   
+      MPI_Cart_create( renumbered_world, 2, proc_max, is_periodic, true, &m_cartesian_communicator );
+      std::cout << "old/new ranks " << getRank() << "/" << mynewid << std::endl;
+   }
+
+
    int my_proc_coords[2];
    MPI_Cart_get( m_cartesian_communicator, 2, proc_max, is_periodic, my_proc_coords );
    MPI_Cart_shift( m_cartesian_communicator, 0, 1, m_neighbor, m_neighbor+1 );
