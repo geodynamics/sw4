@@ -182,7 +182,7 @@ void GridGeneratorGeneral::generate_grid_and_met_new( EW *a_ew, int g, Sarray& a
          }
          else
          {
-            Zbot = scaleRatio*Ztop-(1-scaleRatio)*m_topo_zmax;
+            Zbot = scaleRatio*Ztop+(1-scaleRatio)*m_topo_zmax;
             //            Zbot = scaleFact*m_curviInterface[ng-1-ncg](ref*(i-1)+1,ref*(j-1)+1, 1) +
             //                                          (1.0 - scaleFact)* m_topo_zmax;
 
@@ -226,8 +226,14 @@ void GridGeneratorGeneral::generate_grid_and_met_new( EW *a_ew, int g, Sarray& a
             a_x(i,j,k) = X0;
             a_y(i,j,k) = Y0;
             a_z(i,j,k) = (1.0- zeta)*Ztop + zeta*Zbot;
-         } 
+         }
+         if( i== 184 && j==1153 )
+         {
+            for( int k=-2 ; k <= 4 ;k++ )
+               cout << "z(184,1153," << k << ")=" << a_z(i,j,k) << " ztop= " << Ztop << " zbot= " << Zbot << endl;
+         }
       }
+   cout << "Grid " << g <<  " x.kb= " << a_x.m_kb << " x.ke= " << a_x.m_ke << std::endl;
 // make sure all processors have made their grid before we continue
 //   a_ew->communicate_array( a_z, g ); 
 
