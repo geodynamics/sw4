@@ -546,7 +546,6 @@ void Source::correct_Z_level( EW *a_ew )
   int i,j,k,g;
 // preliminary determination of the nearest grid point (already did this in the constructor)
   int success = a_ew->computeNearestGridPoint2( i, j, k, g, mX0, mY0, mZ0 );
-
 // does this processor know about topography at this location?
   m_myPoint = success && a_ew->interior_point_in_proc(i, j, g);
   

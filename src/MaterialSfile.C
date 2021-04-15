@@ -91,7 +91,6 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
      ist[g] = (int)ceil((double)mInterface[g].m_ni / mInterface[g+1].m_ni);
      jst[g] = (int)ceil((double)mInterface[g].m_nj / mInterface[g+1].m_nj);
    }
-
    for( int g=0 ; g < mEW->mNumberOfGrids ; g++ ) {
       bool curvilinear = mEW->topographyExists() && g >= mEW->mNumberOfCartesianGrids;
       size_t ni=mEW->m_iEnd[g]-mEW->m_iStart[g]+1;
@@ -130,6 +129,15 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
 		   while( gr >= 0 ) {
                      i0 = i1 = static_cast<int>( trunc( 1 + (x-m_x0)/m_hh[gr] ) );
                      j0 = j1 = static_cast<int>( trunc( 1 + (y-m_y0)/m_hh[gr] ) );
+		     if( i0 <= m_ifirst[gr] )  i0 = m_ifirst[gr];
+		     if( i0 >= m_ilast[gr]-1 ) i0 = m_ilast[gr]-1;
+		     if( j0 <= m_jfirst[gr] )  j0 = m_jfirst[gr];
+		     if( j0 >= m_jlast[gr]-1 ) j0 = m_jlast[gr]-1;
+		     if( i1 <= m_ifirst[gr] )  i1 = m_ifirst[gr];
+		     if( i1 >= m_ilast[gr]-1 ) i1 = m_ilast[gr]-1;
+		     if( j1 <= m_jfirst[gr] )  j1 = m_jfirst[gr];
+		     if( j1 >= m_jlast[gr]-1 ) j1 = m_jlast[gr]-1;
+
                      down_z = mInterface[gr+1](1, i0, j0, 1);
 
                      // Adjust the index if upper and lower interface have different dimension
@@ -181,21 +189,21 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> & rho,
                    // Debug
                    // weights should be within [0, 1]
                    if (wghx > 1 || wghx < 0) { 
-                       printf("g=%d, sw4 (%d, %d, %d), mat (%d, %d, %d) wghx = %.2f\n", gr, i, j, k, i0, j0, k0, wghx);
+		      //                       printf("g=%d, sw4 (%d, %d, %d), mat (%d, %d, %d) wghx = %.2f\n", gr, i, j, k, i0, j0, k0, wghx);
                        if (wghx > 1) wghx = 1;
                        if (wghx < 0) wghx = 0;
                    }
 
                    if (wghy > 1 || wghy < 0) { 
-                       printf("g=%d, sw4 (%d, %d, %d), mat (%d, %d, %d) wghy = %.2f\n", gr, i, j, k, i0, j0, k0, wghy);
+		      //                       printf("g=%d, sw4 (%d, %d, %d), mat (%d, %d, %d) wghy = %.2f\n", gr, i, j, k, i0, j0, k0, wghy);
                        if (wghy > 1) wghy = 1;
                        if (wghy < 0) wghy = 0;
                    }
 
                    if (wghz > 1 || wghz < 0) { 
                        if (wghz > 1.001 || wghz < -0.001) 
-                         printf("g=%d, sw4 (%d, %d, %d), mat (%d, %d, %d) wghz = %.2f, z=%.2f, z0=%.2f\n", 
-                                 gr, i, j, k, i0, j0, k0, wghz, z, z0);
+			  //                         printf("g=%d, sw4 (%d, %d, %d), mat (%d, %d, %d) wghz = %.2f, z=%.2f, z0=%.2f\n", 
+			  //                                 gr, i, j, k, i0, j0, k0, wghz, z, z0);
                        if (wghz > 1) wghz = 1;
                        if (wghz < 0) wghz = 0;
                    }
