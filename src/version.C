@@ -71,7 +71,7 @@ std::string getVersionInfo() {
       << "  Compiler:    " << compiler << std::endl
       << "  3rd party include dir: " << incdir
       << ", and library dir: " << libdir << std::endl
-      << "  Options:     " << compiler_options()<<std::endl
+      <<  compiler_options()<<std::endl
       << "----------------------------------------------------------------"
       << std::endl;
   return versioninfo.str();
@@ -95,8 +95,8 @@ std::string compiler_options(){
 
   
   std::stringstream opts;
-
-  opts<<"RAJA("<<RAJA_VERSION_MAJOR<<"."<<RAJA_VERSION_MINOR<<"."<<RAJA_VERSION_PATCHLEVEL<<"):  ";
+  opts<<"  Version:      "<<VERSION<<"\n";
+  opts<<"  Options:      "<<"RAJA("<<RAJA_VERSION_MAJOR<<"."<<RAJA_VERSION_MINOR<<"."<<RAJA_VERSION_PATCHLEVEL<<"):  ";
 
 #if defined(SW4_USE_UMPIRE)
   opts<<"UMPIRE("<<UMPIRE_VERSION_MAJOR<<"."<<UMPIRE_VERSION_MINOR<<"."<<UMPIRE_VERSION_PATCH<<"):\n\t\t";
@@ -145,5 +145,14 @@ std::string compiler_options(){
 #if defined(ENABLE_FFTW)
   opts<<"FFTW: ";
 #endif
-  return opts.str().c_str();
+
+  opts<<"\n\t\t";
+#ifdef ENABLE_HIP
+  opts<<"HIP("<<HIP_VERSION_MAJOR<<"."<<HIP_VERSION_MINOR<<"."<<HIP_VERSION_PATCH<<")\n";
+#elif ENABLE_CUDA
+  opts<<"CUDA("<<CUDA_VERSION<<")\n";
+#else
+  opts<<"Unknown programming model\n";
+#endif
+  return opts.str();
 }

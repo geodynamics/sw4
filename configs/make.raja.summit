@@ -2,6 +2,8 @@ FC = gfortran
 LINKER = mpicxx
 CXX = $(PREP) nvcc
 
+GIT_VERSION := "$(shell git describe --abbrev=4 --dirty --always --tags)"
+
 proj = yes
 ckernel=yes 
 openmp=no
