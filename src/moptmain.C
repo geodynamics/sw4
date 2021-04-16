@@ -94,32 +94,34 @@ void  normalize_gradient_ph( vector<Sarray>& pseudo_hessian,
                              float_sw4 eps, int phcase,
                              MPI_Comm comm )
 {
-   int g=0;
-   int ib=pseudo_hessian[g].m_ib, ie=pseudo_hessian[g].m_ie;
-   int jb=pseudo_hessian[g].m_jb, je=pseudo_hessian[g].m_je;
-   int kb=pseudo_hessian[g].m_kb, ke=pseudo_hessian[g].m_ke;   
-   // q&d for single grid VsVp case
-   float_sw4 maxnorm[3]={0,0,0};
+   int ng=gRho.size();
+   for( int g=0 ; g < ng ;g++)
+   {
+      int ib=pseudo_hessian[g].m_ib, ie=pseudo_hessian[g].m_ie;
+      int jb=pseudo_hessian[g].m_jb, je=pseudo_hessian[g].m_je;
+      int kb=pseudo_hessian[g].m_kb, ke=pseudo_hessian[g].m_ke;   
 
-   for( int k=kb ; k <= ke ;k++)
-      for( int j=jb ; j <= je ;j++)
-         for( int i=ib ; i <= ie ;i++)
-            for( int c=0 ; c < 3; c++ )
-         {
-            if( pseudo_hessian[g](c+1,i,j,k) > maxnorm[c] )
-               maxnorm[c] = pseudo_hessian[g](c+1,i,j,k);
-         }
+      float_sw4 maxnorm[3]={0,0,0};
+      for( int k=kb ; k <= ke ;k++)
+         for( int j=jb ; j <= je ;j++)
+            for( int i=ib ; i <= ie ;i++)
+               for( int c=0 ; c < 3; c++ )
+               {
+                  if( pseudo_hessian[g](c+1,i,j,k) > maxnorm[c] )
+                     maxnorm[c] = pseudo_hessian[g](c+1,i,j,k);
+               }
    
-   float_sw4 mxnormloc[3]={maxnorm[0],maxnorm[1],maxnorm[2]};
-   MPI_Allreduce( mxnormloc,maxnorm,3,MPI_DOUBLE,MPI_MAX,comm);
-   for( int k=kb ; k <= ke ;k++)
-      for( int j=jb ; j <= je ;j++)
-         for( int i=ib ; i <= ie ;i++)
-         {
-            gRho[g](i,j,k)    /= pseudo_hessian[g](1,i,j,k)/maxnorm[0]+eps;
-            gMu[g](i,j,k)     /= pseudo_hessian[g](2,i,j,k)/maxnorm[1]+eps;
-            gLambda[g](i,j,k) /= pseudo_hessian[g](3,i,j,k)/maxnorm[2]+eps;            
-         }
+      float_sw4 mxnormloc[3]={maxnorm[0],maxnorm[1],maxnorm[2]};
+      MPI_Allreduce( mxnormloc,maxnorm,3,MPI_DOUBLE,MPI_MAX,comm);
+      for( int k=kb ; k <= ke ;k++)
+         for( int j=jb ; j <= je ;j++)
+            for( int i=ib ; i <= ie ;i++)
+            {
+               gRho[g](i,j,k)    /= pseudo_hessian[g](1,i,j,k)/maxnorm[0]+eps;
+               gMu[g](i,j,k)     /= pseudo_hessian[g](2,i,j,k)/maxnorm[1]+eps;
+               gLambda[g](i,j,k) /= pseudo_hessian[g](3,i,j,k)/maxnorm[2]+eps;            
+            }
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -1618,7 +1620,7 @@ int main(int argc, char **argv)
 	   //           string parname = simulation.getOutputPath() + "mtrlpar-init.bin";
            string parname = mopt->m_path + "mtrlpar-init.bin";
            mp->write_parameters(parname.c_str(),nmpars,&xs[nspar]);
-           mp->write_parameters_dist("mtrlpar-init.bin",nmpard,xm);
+           //           mp->write_parameters_dist("mtrlpar-init.bin",nmpard,xm);
 
 // store initial material parameters in mp->m_xs0 (needed for Tikhonov regularization)
            mopt->set_baseMat(xs,xm);
@@ -1776,9 +1778,24 @@ int main(int argc, char **argv)
                     image->computeImagePvel(mu, lambda, rho);
                  else if(image->mMode == Image::S )
                     image->computeImageSvel(mu, rho);
+	 //	    string path = simulation.getOutputPath();
+	 //	    image->writeImagePlane_2( it, path, 0 );
                  image->writeImagePlane_2( 0, mopt->m_path, 0 );
               }
 
+           }
+           else if( mopt->m_opttest == 9 )
+           {
+              // Compute and save gradient if images are defined)
+              double f;
+              double* dfs, *dfm;
+              if( nspar > 0 )
+                 dfs =new double[nspar];
+              if( nmpard > 0 )
+                 dfm =new double[nmpard];
+              compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, 
+                                GlobalSources, GlobalTimeSeries, GlobalObservations, 
+                                f, dfs, dfm, myRank, mopt, 0 );
            }
            else if( mopt->m_opttest == 1 )
 	   {

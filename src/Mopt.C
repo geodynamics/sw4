@@ -125,8 +125,8 @@ bool Mopt::parseInputFileOpt( std::string filename )
 	    processMfileio( buffer );
          else if( startswith("regularize",buffer) )
 	    processMregularize( buffer );
-         else if( startswith("refinement",buffer) )
-	    CHECK_INPUT(false,"ERROR: sw4mopt does not support mesh refinement");
+         //         else if( startswith("refinement",buffer) )
+         //	    CHECK_INPUT(false,"ERROR: sw4mopt does not support mesh refinement");
       }
    }
    inputFile.close();
@@ -363,6 +363,8 @@ void Mopt::processMrun( char* buffer )
 	    m_opttest = 7;
 	 else if( strcmp(token,"testmtrl") == 0 )
 	    m_opttest = 8;
+	 else if( strcmp(token,"computegrad") == 0 )
+	    m_opttest = 9;
 	 else if( strcmp(token,"minvert+src11") == 0 )
 	 {
 	    m_opttest = 1;
@@ -426,15 +428,30 @@ void Mopt::processMrun( char* buffer )
       {
 	 token += 10;
 	 int n = strlen(token);
-	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 )
+	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 || strncmp("1",token,n)== 0)
 	    m_do_profiling = true;
       }
       else if( startswith("pseudohessian=",token) )
       {
          token += 14;
 	 int n = strlen(token);
-	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 )
+	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 || strncmp("1",token,n)== 0)
 	    m_use_pseudohessian = true;
+      }
+      else if( startswith("zerosrc=",token) )
+      {
+         token += 8;
+	 int n = strlen(token);
+	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 || strncmp("1",token,n)== 0 )
+            m_ew->set_zerograd();
+         //	    m_zerograd_at_src = true;
+      }
+      else if( startswith("zerosrcpad=",token) )
+      {
+         token += 11;
+	 int n = strlen(token);
+         m_ew->set_zerograd_pad(atoi(token));
+         //         m_zerograd_pad = atoi(token);
       }
       else if( startswith("writedfm=",token) )
       {

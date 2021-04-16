@@ -1301,6 +1301,11 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void checkpoint_twilight_test( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarray>& Up,
 				  vector<Sarray*> AlphaVEm, vector<Sarray*> AlphaVE,
 				  vector<Sarray*> AlphaVEp, vector<Source*> a_Sources, float_sw4 t );
+   void set_to_zero_at_source( vector<Sarray> & a_U, vector<GridPointSource*> point_sources,
+                               vector<int> identsources, int padding );
+
+   void set_zerograd();
+   void set_zerograd_pad(int pad);
    //   TestGrid* create_gaussianHill();
    TestTwilight* create_twilight();
    TestEcons* create_energytest();
@@ -1674,9 +1679,12 @@ int m_cgstepselection, m_cgvarcase;
 bool m_cgfletcherreeves, m_do_linesearch;
 bool m_opt_testing;
 int m_opt_method, m_lbfgs_m;
+bool m_zerograd_at_src;
+int m_zerograd_pad;
    // perturbations for testing
 float_sw4 m_perturb;
 int m_iperturb, m_jperturb, m_kperturb, m_pervar;
+
 
 // Number of grid points per wave length, P = min Vs/(f*h) 
 vector<float_sw4> mMinVsOverH;

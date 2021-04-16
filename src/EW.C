@@ -531,6 +531,8 @@ EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
   m_randomize(false),
   m_anisotropic(false),
   m_croutines(true),
+  m_zerograd_at_src(false),
+  m_zerograd_pad(0),
   NO_TOPO(1e38)
 {
    MPI_Comm_rank(MPI_COMM_WORLD, &m_myRank);
@@ -8269,4 +8271,43 @@ void EW::grid_information( int g )
       m_minJacobian  = min(m_minJacobian, minJglobal);
       m_maxJacobian  = max(m_maxJacobian, maxJglobal);
    }
+}
+
+//-----------------------------------------------------------------------
+void EW::set_to_zero_at_source( vector<Sarray> & a_U, 
+                                vector<GridPointSource*> point_sources,
+                                vector<int> identsources, int padding )
+{
+#pragma omp parallel for
+     for( int r=0 ; r < identsources.size()-1 ; r++ )
+     {
+	int s0=identsources[r];
+	int g= point_sources[s0]->m_grid;	
+	int i0= point_sources[s0]->m_i0;
+	int j0= point_sources[s0]->m_j0;
+	int k0= point_sources[s0]->m_k0;
+        int klow  = k0-padding > a_U[g].m_kb ? k0-padding:a_U[g].m_kb;
+        int khigh = k0+padding < a_U[g].m_ke ? k0+padding:a_U[g].m_ke;
+        int jlow  = j0-padding > a_U[g].m_jb ? j0-padding:a_U[g].m_jb;
+        int jhigh = j0+padding < a_U[g].m_je ? j0+padding:a_U[g].m_je;
+        int ilow  = i0-padding > a_U[g].m_ib ? i0-padding:a_U[g].m_ib;
+        int ihigh = i0+padding < a_U[g].m_ie ? i0+padding:a_U[g].m_ie;
+
+        for( int k=klow ; k<= khigh ;k++ )
+           for( int j=jlow ; j<= jhigh ;j++ )
+              for( int i=ilow ; i<= ihigh ;i++ )
+                 for( int c=1 ; c <= a_U[g].m_nc ;c++ )
+                    a_U[g](c,i,j,k) = 0;
+     }
+}
+//-----------------------------------------------------------------------
+void EW::set_zerograd()
+{
+   m_zerograd_at_src =true;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_zerograd_pad( int pad )
+{
+   m_zerograd_pad = pad;
 }

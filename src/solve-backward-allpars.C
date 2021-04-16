@@ -269,6 +269,12 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 	 cout << "   Max norm of backed out Um = " << umx[0]  <<  " " << umx[1]  <<  " " << umx[2]  << endl;
       }
    }
+   if( m_zerograd_at_src )
+   {
+      set_to_zero_at_source( gRho, point_sources, identsources, m_zerograd_pad );
+      set_to_zero_at_source( gMu, point_sources, identsources, m_zerograd_pad );
+      set_to_zero_at_source( gLambda, point_sources, identsources, m_zerograd_pad );
+   }
    communicate_arrays( gRho );
    communicate_arrays( gMu );
    communicate_arrays( gLambda );

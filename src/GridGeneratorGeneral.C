@@ -147,44 +147,24 @@ void GridGeneratorGeneral::generate_grid_and_met_old( EW *a_ew, Sarray& a_x, Sar
 void GridGeneratorGeneral::generate_grid_and_met_new( EW *a_ew, int g, Sarray& a_x, Sarray& a_y, Sarray& a_z,
                                            Sarray& a_jac, Sarray& a_met )
 {
-   int ng=a_ew->mNumberOfGrids;
    int ncg=a_ew->mNumberOfCartesianGrids;
-   int ref=1;
-   for( int grid=ng-1 ; grid > g ; grid-- )
-      ref *= 2;
-
-   int iSurfTop = g - a_ew->mNumberOfCartesianGrids;
-   int iSurfBot = iSurfTop - 1;
    float_sw4 h = a_ew->mGridSize[g]; 
-   float_sw4 h0 = 2.0*h;
    float_sw4 Nz_real = static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
    float_sw4 iNz_real = 1.0/Nz_real;
    float_sw4 scaleRatio=0;
    if( g > ncg )
-   {
       scaleRatio = (m_topo_zmax - a_ew->m_curviRefLev[g-1-ncg])/
                    (m_topo_zmax - a_ew->m_curviRefLev[g-ncg]);
 
-   }        
 #pragma omp parallel for
    for (int j=a_x.m_jb; j<=a_x.m_je; j++)
       for (int i=a_x.m_ib; i<=a_x.m_ie; i++)
       {
          float_sw4 X0  = (i-1)*h;
          float_sw4 Y0  = (j-1)*h;
-         float_sw4 Ztop = m_curviInterface[iSurfTop](i,j,1);
-         float_sw4 Zbot;
-         if (iSurfBot < 0)
-         {
-// Bottom interface of g=mNumberOfCartesianGrids is flat with z=m_topo_zmax
-            Zbot = m_topo_zmax;
-         }
-         else
-         {
-// Bottom interface is scaled version of the top interface:
-            Zbot = scaleRatio*Ztop+(1-scaleRatio)*m_topo_zmax;
-         }
-#pragma omp parallel for
+         float_sw4 Ztop = m_curviInterface[g-ncg](i,j,1);
+         float_sw4 Zbot = scaleRatio*Ztop+(1-scaleRatio)*m_topo_zmax;
+#pragma omp simd
          for (int k=a_x.m_kb; k <= a_x.m_ke; k++)
          {
 // Linear interpolation in the vertical direction
@@ -194,8 +174,6 @@ void GridGeneratorGeneral::generate_grid_and_met_new( EW *a_ew, int g, Sarray& a
             a_z(i,j,k) = (1.0- zeta)*Ztop + zeta*Zbot;
          }
       }
-// make sure all processors have made their grid before we continue
-//   a_ew->communicate_array( a_z, g ); 
 
 // Compute metric
    int ierr=0;
