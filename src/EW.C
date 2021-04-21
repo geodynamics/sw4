@@ -4379,7 +4379,7 @@ void EW::exactAccTwilight(float_sw4 a_t, vector<Sarray>& a_Uacc) {
 }
 
 //---------------------------------------------------------------------------
-#ifdef ENABLE_HIP
+#ifdef NO_DEVICE_FUNCTION_POINTERS
 // Awaiting device function pointer support in HIP
 void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
                vector<GridPointSource*>& point_sources,
@@ -4699,7 +4699,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
 }
 #endif
 //---------------------------------------------------------------------------
-#ifdef ENABLE_HIP
+#ifdef NO_DEVICE_FUNCTION_POINTERS
 // Awaiting device function pointer support in HIP
 void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
                   vector<GridPointSource*>& point_sources,
@@ -7909,9 +7909,9 @@ void EW::setup_viscoelastic() {
 
     // tmp: print omega and omc
     if (proc_zero() && mVerbose >= 1) {
-      for (k = 0; k < n; k++) printf("omega[%i]=%e ", k, mOmegaVE[k]);
+      for (k = 0; k < n; k++) printf("omega[%i]=%18.12e ", k, mOmegaVE[k]);
       printf("\n");
-      for (k = 0; k < nc; k++) printf("omc[%i]=%e ", k, omc[k]);
+      for (k = 0; k < nc; k++) printf("omc[%i]=%118.12e", k, omc[k]);
       printf("\n\n");
     }
 
@@ -7937,6 +7937,9 @@ void EW::setup_viscoelastic() {
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
         for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
           for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+	    // Code for locating libsci errors on RZNevada April 21 2021
+	    //int ijk=i+j+k;
+	    //bool doit=(ijk==(m_iStart[g]+m_jStart[g]+m_kStart[g]))&&(!getRank());
 #ifdef _OPENMP
             double* a_ = new float_sw4[n * nc];
             double* beta = new double[nc];
@@ -7958,10 +7961,13 @@ void EW::setup_viscoelastic() {
             //
             for (int q = 0; q < nc; q++) {
               beta[q] = 1. / qs;
+              ///if (doit)std::cout<<"M["<<q<<","<<qs<<"]=";
               for (int nu = 0; nu < n; nu++) {
-                a(q, nu) = (omc[q] * mOmegaVE[nu] + SQR(mOmegaVE[nu]) / qs) /
+                double tmp = a(q, nu) = (omc[q] * mOmegaVE[nu] + SQR(mOmegaVE[nu]) / qs) /
                            (SQR(mOmegaVE[nu]) + SQR(omc[q]));
+                //if (doit)std::cout<<a(q,nu)<<","<<mOmegaVE[nu]<<":";
               }
+	      //if (doit)std::cout<<"\n";
             }
             // solve the system in least squares sense
             F77_FUNC(dgels, DGELS)

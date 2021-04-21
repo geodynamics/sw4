@@ -16,7 +16,7 @@ struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0, 0,
 using namespace std;
 
 int presetGPUID(int mpi_rank, int local_rank, int local_size) {
-  int device = -1;
+  int device = 0;
 #if defined(ENABLE_GPU_ERROR)
   std::cerr
       << " Compilation error. Both ENABLE_CUDA and ENABLE_HIP are defined\n";
@@ -63,7 +63,7 @@ int presetGPUID(int mpi_rank, int local_rank, int local_size) {
       printf("NVML SET CPU AFFINITY CALLED SUCCESFULLY\n");
   }
 
-#endif  // ENABLE_CUDA
+#endif  // ENDIF ENABLE_CUDA
 
 #ifdef ENABLE_HIP
   int devices_per_node = 4;
@@ -90,10 +90,10 @@ int presetGPUID(int mpi_rank, int local_rank, int local_size) {
     fflush(stdout);
     SW4_CheckDeviceError(hipSetDevice(device));
   }
-#endif  // ENABLE_HIP
+#endif  // ENDIF ENABLE_HIP
 
   // printf("Device set to %d \n", global_variables.device);
-#endif  // ENABLE_GPU
+#endif  // ENDIF ENABLE_GPU
   return device;
 }
 

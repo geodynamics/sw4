@@ -1614,7 +1614,6 @@ void Sarray::switch_space(Space new_space) {
   ::operator delete[](m_data, space);
   reference(n_data);
   space = new_space;
-  // view.set(*this);
   // std::cout<<"Switching from "<<as_int(space)<<" to "<<as_int(new_space)<<"
   // DONE\n"<<std::flush;
 #endif
