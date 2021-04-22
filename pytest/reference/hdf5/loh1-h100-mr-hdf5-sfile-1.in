@@ -22,8 +22,8 @@
 #developer ctol=1e-10 cmaxit=100 crelax=0.92
 
 grid h=200 x=30000 y=30000 z=17000 extrapolate=1
-time t=9
-fileio path=loh1-h100-mr-2-hdf5
+time steps=268
+fileio path=loh1-h100-mr-1-hdf5
 
 # mesh refinement along material jump (50*20 = 1000)
 # refinement zmax=1000
@@ -87,3 +87,5 @@ imagehdf5 mode=rho y=15e3 file=ver cycle=268
 imagehdf5 mode=mag z=0 file=surf cycle=268
 # no point saving uz and ux on this plane, because they are zero by symmetry
 imagehdf5 mode=uy y=15e3 file=ver cycle=268
+
+checkpoint cycleInterval=200 file=loh1_hdf5_restart hdf5=yes

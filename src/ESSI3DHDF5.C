@@ -132,6 +132,7 @@ void ESSI3DHDF5::create_file()
   H5Pset_fapl_mpio(prop_id, comm, info);
   H5Pset_coll_metadata_write(prop_id, 1);
   H5Pset_all_coll_metadata_ops(prop_id, 1);
+  H5Pset_libver_bounds(prop_id, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST);
   m_file_id = H5Fcreate( const_cast<char*>(m_filename.c_str()),
       H5F_ACC_TRUNC, H5P_DEFAULT, prop_id);
   if (m_file_id < 0)

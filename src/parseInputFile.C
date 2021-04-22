@@ -4074,12 +4074,12 @@ void EW::processESSI3D( char* buffer )
    }
 
 #ifndef USE_ZFP
-   if (compressionMode != 0 && proc_zero()) 
+   if (compressionMode > 0 && compressionMode < 5 && proc_zero())
       cout << "WARNING: SW4 is not compiled with ZFP but ZFP command is used " << endl;
 #endif
 
 #ifndef USE_SZ
-   if (compressionMode != 0 && proc_zero()) 
+   if (compressionMode == SW4_SZ && proc_zero())
       cout << "WARNING: SW4 is not compiled with SZ but SZ command is used " << endl;
 #endif
 
@@ -4124,7 +4124,9 @@ void EW::processCheckPoint(char* buffer)
    string filePrefix = "checkpoint";
 
    string restartFileName, restartPath;
-   bool   restartFileGiven = false, restartPathGiven=false;
+   bool   restartFileGiven = false, restartPathGiven=false, useHDF5 = false;
+   int compressionMode = 0;
+   double compressionPar;
 
    size_t bufsize=10000000;
 
@@ -4163,6 +4165,72 @@ void EW::processCheckPoint(char* buffer)
 	 restartPath = token;
 	 restartPathGiven = true;
       }
+      else if (startswith("hdf5=", token))
+      {
+	 token += 5; // skip hdf5=
+	 useHDF5 = strcmp("yes",token)==0||strcmp("true",token)==0||strcmp("1",token)==0||strcmp("on",token)==0;
+      }
+      else if (startswith("zfp-rate=", token))
+      {
+          token += 9;
+          compressionMode = SW4_ZFP_MODE_RATE;
+          compressionPar = atof(token);
+          useHDF5 = true;
+          if (proc_zero())
+            cout << "Checkpoint will use ZFP rate=" << compressionPar << endl;
+      }
+      else if (startswith("zfp-precision=", token))
+      {
+          token += 14;
+          compressionMode = SW4_ZFP_MODE_PRECISION;
+          compressionPar = atof(token);
+          useHDF5 = true;
+          if (proc_zero())
+            cout << "Checkpoint will use ZFP precision=" << compressionPar << endl;
+      }
+      else if (startswith("zfp-accuracy=", token))
+      {
+          token += 13;
+          compressionMode = SW4_ZFP_MODE_ACCURACY;
+          compressionPar = atof(token);
+          useHDF5 = true;
+          if (proc_zero())
+            cout << "Checkpoint will use ZFP accuracy=" << compressionPar << endl;
+      }
+      else if (startswith("zfp-reversible=", token))
+      {
+          token += 15;
+          compressionMode = SW4_ZFP_MODE_REVERSIBLE;
+          useHDF5 = true;
+          if (proc_zero())
+            cout << "Checkpoint will use ZFP reversible mode" << endl;
+      }
+      else if (startswith("zlib=", token))
+      {
+          token += 5;
+          compressionMode = SW4_ZLIB;
+          compressionPar = atof(token);
+          useHDF5 = true;
+          if (proc_zero())
+            cout << "Checkpoint will use ZLIB level=" << (int)compressionPar << endl;
+      }
+      else if (startswith("szip=", token))
+      {
+          token += 5;
+          compressionMode = SW4_SZIP;
+          useHDF5 = true;
+          if (proc_zero())
+            cout << "Checkpoint will use SZIP" << endl;
+      }
+      else if (startswith("sz=", token))
+      {
+          token += 5;
+          compressionMode = SW4_SZ;
+          useHDF5 = true;
+          if (proc_zero())
+            cout << "Checkpoint will use SZ with configuration file [" << getenv("SZ_CONFIG_FILE") << "]" << endl;
+      }
+
       else if (startswith("bufsize=", token))
       {
 	 token += 8; // skip bufsize=
@@ -4174,10 +4242,21 @@ void EW::processCheckPoint(char* buffer)
       }
       token = strtok(NULL, " \t");
    }
+
+#ifndef USE_ZFP
+   if (compressionMode > 0 && compressionMode < 5 && proc_zero())
+      cout << "WARNING: SW4 is not compiled with ZFP but ZFP command is used " << endl;
+#endif
+
+#ifndef USE_SZ
+   if (compressionMode == SW4_SZ && proc_zero())
+      cout << "WARNING: SW4 is not compiled with SZ but SZ command is used " << endl;
+#endif
+
    if( m_check_point == CheckPoint::nil )
       m_check_point = new CheckPoint(this);
    if( cycleInterval > 0 )
-      m_check_point->set_checkpoint_file( filePrefix, cycle, cycleInterval, bufsize );
+      m_check_point->set_checkpoint_file( filePrefix, cycle, cycleInterval, bufsize, useHDF5, compressionMode, compressionPar );
    if( restartFileGiven )
    {
       m_check_point->set_restart_file( restartFileName, bufsize );

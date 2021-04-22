@@ -205,7 +205,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    }
 
 // Set the number of time steps, allocate the recording arrays, and set reference time in all time series objects  
-#pragma omp parallel for
+/* #pragma omp parallel for */
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
   {
      a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps[event]+1, mTstart, mDt); // AP: added one to mNumber...
@@ -326,8 +326,16 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   if( m_check_point->do_restart() )
   {
      double timeRestartBegin = MPI_Wtime();
-     m_check_point->read_checkpoint( t, beginCycle, Um, U,
-				     AlphaVEm, AlphaVE );
+     if (!m_check_point->useHDF5())
+        m_check_point->read_checkpoint( t, beginCycle, Um, U, AlphaVEm, AlphaVE );
+#ifdef USE_HDF5
+     else
+        m_check_point->read_checkpoint_hdf5( t, beginCycle, Um, U, AlphaVEm, AlphaVE );
+#else
+     else
+         if (proc_zero())
+             cout << "Configured to restart with HDF5 but SW4 is not compiled with HDF5!" << endl;
+#endif
 // tmp
      if (proc_zero())
         printf("After reading checkpoint data: beginCycle=%d, t=%e\n", beginCycle, t);
@@ -955,7 +963,17 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     if( m_check_point->timeToWrite( t, currentTimeStep, mDt ) )
     {
        double time_chkpt=MPI_Wtime();
-       m_check_point->write_checkpoint( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
+
+       if (!m_check_point->useHDF5())
+          m_check_point->write_checkpoint( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
+#ifdef USE_HDF5
+       else
+          m_check_point->write_checkpoint_hdf5( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
+#else
+     else
+         if (proc_zero())
+             cout << "Configured to checkpoint with HDF5 but SW4 is not compiled with HDF5!" << endl;
+#endif
        double time_chkpt_tmp =MPI_Wtime()-time_chkpt;
        if( m_output_detailed_timing )
        {
