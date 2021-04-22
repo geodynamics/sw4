@@ -7909,9 +7909,9 @@ void EW::setup_viscoelastic() {
 
     // tmp: print omega and omc
     if (proc_zero() && mVerbose >= 1) {
-      for (k = 0; k < n; k++) printf("omega[%i]=%18.12e ", k, mOmegaVE[k]);
+      for (k = 0; k < n; k++) printf("omega[%i]=%e ", k, mOmegaVE[k]);
       printf("\n");
-      for (k = 0; k < nc; k++) printf("omc[%i]=%118.12e", k, omc[k]);
+      for (k = 0; k < nc; k++) printf("omc[%i]=%e", k, omc[k]);
       printf("\n\n");
     }
 
