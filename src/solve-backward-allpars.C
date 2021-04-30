@@ -278,6 +278,12 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    communicate_arrays( gRho );
    communicate_arrays( gMu );
    communicate_arrays( gLambda );
+   if( m_filter_gradient )
+   {
+      heat_kernel_filter( gRho,    m_gradfilter_ep, m_gradfilter_it );
+      heat_kernel_filter( gMu,     m_gradfilter_ep, m_gradfilter_it );
+      heat_kernel_filter( gLambda, m_gradfilter_ep, m_gradfilter_it );
+   }
    
 
    //   gRho[0].save_to_disk("grho.bin");

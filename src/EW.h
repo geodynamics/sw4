@@ -1303,12 +1303,17 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
 				  vector<Sarray*> AlphaVEp, vector<Source*> a_Sources, float_sw4 t );
    void set_to_zero_at_source( vector<Sarray> & a_U, vector<GridPointSource*> point_sources,
                                vector<int> identsources, int padding );
-
    void set_zerograd();
    void set_zerograd_pad(int pad);
+   void filter_bc( Sarray& ufi, Sarray& u, int g, float_sw4 ep );
+   void heat_kernel_filter( vector<Sarray>& u, float_sw4 ep, int nit );
+   void set_filtergrad();
+   void set_filterit(int filterit);
+   void set_filterpar(float_sw4 filterpar);
+
    //   TestGrid* create_gaussianHill();
    TestTwilight* create_twilight();
-   TestEcons* create_energytest();
+   TestEcons* create_energytest();   
    TestPointSource* get_point_source_test();
    AllDims* get_fine_alldimobject( );
    void grid_information( int g );
@@ -1679,8 +1684,10 @@ int m_cgstepselection, m_cgvarcase;
 bool m_cgfletcherreeves, m_do_linesearch;
 bool m_opt_testing;
 int m_opt_method, m_lbfgs_m;
-bool m_zerograd_at_src;
-int m_zerograd_pad;
+bool m_zerograd_at_src, m_filter_gradient;
+int m_zerograd_pad, m_gradfilter_it;
+float_sw4 m_gradfilter_ep;
+
    // perturbations for testing
 float_sw4 m_perturb;
 int m_iperturb, m_jperturb, m_kperturb, m_pervar;

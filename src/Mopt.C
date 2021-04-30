@@ -449,9 +449,30 @@ void Mopt::processMrun( char* buffer )
       else if( startswith("zerosrcpad=",token) )
       {
          token += 11;
-	 int n = strlen(token);
          m_ew->set_zerograd_pad(atoi(token));
-         //         m_zerograd_pad = atoi(token);
+      }
+      else if( startswith("filtergrad=",token) )
+      {
+	 int n = strlen(token);
+	 bool filtergrad =  strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 || strncmp("1",token,n)== 0;
+         m_ew->set_filtergrad();
+      }
+      else if( startswith("filteriterations=",token) )
+      {
+         token += 17;
+	 int filterit = atoi(token);
+         m_ew->set_filterit(filterit);
+      }
+      else if( startswith("filterparameter=",token) )
+      {
+         token += 16;
+         float_sw4 filterpar = atof(token);
+         if( filterpar > 1.0/6.0 || filterpar < 0 )
+         {
+            // Filter will be unstable, reset value
+            filterpar = 1.0/12.0;
+         }
+         m_ew->set_filterpar(filterpar);
       }
       else if( startswith("writedfm=",token) )
       {

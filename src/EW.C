@@ -532,7 +532,10 @@ EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
   m_anisotropic(false),
   m_croutines(true),
   m_zerograd_at_src(false),
-  m_zerograd_pad(0),
+  m_zerograd_pad(2),
+  m_filter_gradient(false),
+  m_gradfilter_ep(0.08),
+  m_gradfilter_it(5),
   NO_TOPO(1e38)
 {
    MPI_Comm_rank(MPI_COMM_WORLD, &m_myRank);
@@ -8310,4 +8313,126 @@ void EW::set_zerograd()
 void EW::set_zerograd_pad( int pad )
 {
    m_zerograd_pad = pad;
+}
+
+//-----------------------------------------------------------------------
+void EW::filter_bc( Sarray& ufi, Sarray& u, int g, float_sw4 ep )
+{
+   // Boundary smoothing on top and bottom, don't need to impose
+   // boundary conditions at i and j domain boundaries, 
+         int ks=m_kStart[g], ke=m_kEnd[g];
+#pragma omp parallel for
+         for( int j=m_jStart[g]+1; j<= m_jEnd[g]-1; j++ )
+            for( int i=m_iStart[g]+1; i<= m_iEnd[g]-1; i++ )
+               for( int c=1 ; c <= u.m_nc; c++)
+               {
+                  ufi(c,i,j,ks) = ep*(u(c,i+1,j,ks)+u(c,i-1,j,ks)+u(c,i,j+1,ks)+
+                                      u(c,i,j-1,ks))+
+                        (1-6*ep)*u(c,i,j,ks);
+                  ufi(c,i,j,ke) = ep*(u(c,i+1,j,ke)+u(c,i-1,j,ke)+u(c,i,j+1,ke)+
+                                      u(c,i,j-1,ke))+
+                        (1-6*ep)*u(c,i,j,ke);
+               }
+       // No smoothing at supergrid boundaries
+         int is=m_iStart[g], ie=m_iEnd[g];
+#pragma omp parallel for
+         for( int k=m_kStart[g]; k<= m_kEnd[g]; k++ )
+            for( int j=m_jStart[g]+1; j<= m_jEnd[g]-1; j++ )
+               for( int c=1 ; c <= u.m_nc; c++)
+               {
+                  ufi(c,is,j,k) = u(c,is,j,k);
+                  ufi(c,ie,j,k) = u(c,ie,j,k);
+               }
+         int js=m_jStart[g], je=m_jEnd[g];
+#pragma omp parallel for
+         for( int k=m_kStart[g]; k<= m_kEnd[g]; k++ )
+            for( int i=m_iStart[g]; i<= m_iEnd[g]; i++ )
+               for( int c=1 ; c <= u.m_nc; c++)
+               {
+                  ufi(c,i,js,k) = u(c,i,js,k);
+                  ufi(c,i,je,k) = u(c,i,je,k);
+               }
+
+}
+
+//-----------------------------------------------------------------------
+void EW::heat_kernel_filter( vector<Sarray>& u, float_sw4 ep, int nit )
+{
+   // Filter input array u, to use for gradient filtering.
+   // Input: u   - Array to filter
+   //        ep  - Filter parameter
+   //        nit - Number of iterations
+   // Output u  - Filtered array
+   //
+
+// Two iterations between communication, because always at least 5pt overlap,
+// take care of odd number of iterations first.
+   if( nit % 2 == 1 )
+   {
+      for( int g=0 ; g < mNumberOfGrids ; g++ )
+      {
+         Sarray utmp(u[g]);
+#pragma omp parallel for
+         for( int k=m_kStart[g]+1; k<= m_kEnd[g]-1; k++ )
+            for( int j=m_jStart[g]+1; j<= m_jEnd[g]-1; j++ )
+               for( int i=m_iStart[g]+1; i<= m_iEnd[g]-1; i++ )
+                  for( int c=1 ; c <= u[g].m_nc; c++)
+                     utmp(c,i,j,k) = ep*(u[g](c,i+1,j,k)+u[g](c,i-1,j,k)+u[g](c,i,j+1,k)+
+                                         u[g](c,i,j-1,k)+u[g](c,i,j,k+1)+u[g](c,i,j,k-1))+
+                        (1-6*ep)*u[g](c,i,j,k);
+         filter_bc( utmp, u[g], g, ep );
+         u[g].copy(utmp);
+      }
+      communicate_arrays(u);
+   }
+   for( int it=1; it <= nit/2 ;it++)
+   {
+
+      for( int g=0 ; g < mNumberOfGrids ; g++ )
+      {
+         Sarray utmp(u[g]);
+
+    // First iteration
+#pragma omp parallel for
+         for( int k=m_kStart[g]+1; k<= m_kEnd[g]-1; k++ )
+            for( int j=m_jStart[g]+1; j<= m_jEnd[g]-1; j++ )
+               for( int i=m_iStart[g]+1; i<= m_iEnd[g]-1; i++ )
+                  for( int c=1 ; c <= u[g].m_nc; c++)
+                     utmp(c,i,j,k) = ep*(u[g](c,i+1,j,k)+u[g](c,i-1,j,k)+u[g](c,i,j+1,k)+
+                                         u[g](c,i,j-1,k)+u[g](c,i,j,k+1)+u[g](c,i,j,k-1))+
+                        (1-6*ep)*u[g](c,i,j,k);
+
+         filter_bc( utmp, u[g], g, ep );
+
+    // Second iteration
+#pragma omp parallel for
+         for( int k=m_kStart[g]+1; k<= m_kEnd[g]-1; k++ )
+            for( int j=m_jStart[g]+2; j<= m_jEnd[g]-2; j++ )
+               for( int i=m_iStart[g]+2; i<= m_iEnd[g]-2; i++ )
+                  for( int c=1 ; c <= u[g].m_nc; c++)
+                     u[g](c,i,j,k) = ep*(utmp(c,i+1,j,k)+utmp(c,i-1,j,k)+utmp(c,i,j+1,k)+
+                                         utmp(c,i,j-1,k)+utmp(c,i,j,k+1)+utmp(c,i,j,k-1))+
+                        (1-6*ep)*utmp(c,i,j,k);
+         filter_bc( u[g], utmp, g, ep );
+      }
+      communicate_arrays(u);
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::set_filtergrad()
+{
+   m_filter_gradient = true;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_filterit(int filterit)
+{
+   m_gradfilter_it = filterit;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_filterpar(float_sw4 filterpar)
+{
+   m_gradfilter_ep = filterpar;
 }

@@ -464,6 +464,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       double mftmp = f;
       MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,simulation.m_1d_communicator);
 
+      // Sum gradient from different events, when these are executed
+      // on different processor partitions.
       mftmp=f;
       MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,simulation.m_cross_communicator);
       if( nmpars > 0 )
