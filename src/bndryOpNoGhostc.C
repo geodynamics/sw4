@@ -21,7 +21,7 @@ void bndryOpNoGhostc(float_sw4* acof_no_gp, float_sw4* ghcof_no_gp,
 
   // the coeff for all ghost points are zero (don't divided by them!)
   for (int k = 0; k < 6; k++) ghcof_no_gp[k] = 0;
-
+  
   // boundary normal derivative, not using ghost points
   // sb = (-25*f(1)/12 + 4*f(2) - 3*f(3) + 4*f(4)/3 - f(5)/4)/h(q);
   sbop_no_gp[0] = 0;

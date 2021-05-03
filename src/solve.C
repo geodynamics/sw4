@@ -30,7 +30,9 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
-
+#ifdef SW4_USE_CMEM
+__constant__ double tex_acof[384];
+#endif
 #include "EW.h"
 #include "Mspace.h"
 #include "caliper.h"
@@ -51,6 +53,7 @@
 bool StatMachineBase::ProfilerOn(false);
 #endif
 
+void check_ghcof_no_gp(double *ghcof_no_gp);
 void curvilinear4sgwind(int, int, int, int, int, int, int, int, float_sw4*,
                         float_sw4*, float_sw4*, float_sw4*, float_sw4*,
                         float_sw4*, int*, float_sw4*, float_sw4*, float_sw4*,
@@ -63,6 +66,11 @@ void curvilinear4sgwind(int, int, int, int, int, int, int, int, float_sw4*,
 void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
                int event) {
   SW4_MARK_FUNCTION;
+  check_ghcof_no_gp(m_ghcof_no_gp);
+#ifdef SW4_USE_CMEM
+//std::cout<<"Copying acof to constant device memory\n";
+//SW4_CheckDeviceError(cudaMemcpyToSymbol(tex_acof, m_acof, 384*sizeof(double)));
+#endif
 #ifdef _OPENMP
   //if (omp_pause_resource_all(omp_pause_hard)) {
   //  std::cerr << "OMP_pause_resource failed\n";
@@ -6234,4 +6242,13 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
       SW4_MARK_END("LOOP6");
     }
   }
+}
+void check_ghcof_no_gp(double *ghcof_no_gp){
+#ifdef SW4_GHCOF_NO_GP_IS_ZERO
+  for(int i=0;i<6;i++) if (ghcof_no_gp[i]!=0.0){
+      std::cerr<<"ERROR :: ghcof_no_gp["<<i<<"] is "<<ghcof_no_gp<<"\n";
+      std::cerr<<"ERROR :: RECOMPILE WITH SW4_GHCOF_NO_GP_IS_ZERO undefined\n";
+      abort();
+    }
+#endif
 }

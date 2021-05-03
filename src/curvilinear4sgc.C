@@ -30,7 +30,9 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
-
+#ifdef SW4_USE_CMEM
+extern __constant__ double tex_acof[384];
+#endif
 #include "Mspace.h"
 #include "caliper.h"
 #include "foralls.h"
@@ -117,7 +119,11 @@ void curvilinear4sg_ci(
 #define met(c, i, j, k) a_met[base4 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 #define strx(i) a_strx[i - ifirst0]
 #define stry(j) a_stry[j - jfirst0]
+#ifdef SW4_USE_CMEM
+#define acof(i, j, k) tex_acof[(i - 1) + 6 * (j - 1) + 48 * (k - 1)]
+#else
 #define acof(i, j, k) a_acof[(i - 1) + 6 * (j - 1) + 48 * (k - 1)]
+#endif
 #define bope(i, j) a_bope[i - 1 + 6 * (j - 1)]
 #define ghcof(i) a_ghcof[i - 1]
 #define acof_no_gp(i, j, k) a_acof_no_gp[(i - 1) + 6 * (j - 1) + 48 * (k - 1)]
@@ -125,7 +131,9 @@ void curvilinear4sg_ci(
 
   // PREFETCH(a_mu);
   // PREFETCH(a_lambda);
-
+#ifdef SW4_USE_CMEM
+  cudaMemcpyToSymbol(tex_acof, a_acof, 384*sizeof(double));
+#endif
   //#pragma omp parallel
   {
     int kstart = kfirst + 2;
@@ -181,7 +189,6 @@ void curvilinear4sg_ci(
             float_sw4 istrxy = istry * istrx;
 
             float_sw4 r1 = 0, r2 = 0, r3 = 0;
-
             // pp derivative (u) (u-eq)
             // 53 ops, tot=58
             float_sw4 cof1 = (2 * mu(i - 2, j, k) + la(i - 2, j, k)) *
@@ -344,6 +351,9 @@ void curvilinear4sg_ci(
               mucofw2 = 0;
               //#pragma unroll 1 // slowdown due to register spills
               for (int m = 1; m <= 8; m++) {
+#ifdef SW4_USE_CMEM
+if (acof(k,q,m)!=0.0){
+#endif
                 mucofu2 += acof(k, q, m) *
                            ((2 * mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
                                 strx(i) * met(2, i, j, m) * strx(i) +
@@ -369,6 +379,9 @@ void curvilinear4sg_ci(
                            met(2, i, j, m) * met(4, i, j, m);
                 mucofvw += acof(k, q, m) * (mu(i, j, m) + la(i, j, m)) *
                            met(3, i, j, m) * met(4, i, j, m);
+#ifdef SW4_USE_CMEM
+}
+#endif
               }
 
               // Computing the second derivative,
@@ -2341,6 +2354,7 @@ void curvilinear4sg_ci(
 
           // Ghost point values, only nonzero for k=nk.
           // 72 ops., tot=4011
+#ifndef SW4_GHCOF_NO_GP_IS_ZERO
           mucofu2 = ghcof_no_gp(nk - k + 1) *
                     ((2 * mu(i, j, nk) + la(i, j, nk)) * met(2, i, j, nk) *
                          strx(i) * met(2, i, j, nk) * strx(i) +
@@ -2375,7 +2389,7 @@ void curvilinear4sg_ci(
           r3 += istry * mucofuw * u(1, i, j, nk + 1) +
                 istrx * mucofvw * u(2, i, j, nk + 1) +
                 istrxy * mucofw2 * u(3, i, j, nk + 1);
-
+#endif
           // pq-derivatives (u-eq)
           // 38 ops., tot=4049
           r1 +=
