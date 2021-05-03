@@ -150,7 +150,7 @@ AllDims::AllDims( AllDims* fine, int ibg, int ieg, int jbg, int jeg,
    m_myid3di = fine->m_myid3di;
    m_myid3dj = fine->m_myid3dj;
    m_myid3dk = fine->m_myid3dk;
-   MPI_Comm_dup( m_communicator, &(fine->m_communicator) );
+   MPI_Comm_dup( fine->m_communicator, &m_communicator );
 
    m_ibg = ibg-nghost;
    m_ieg = ieg+nghost;

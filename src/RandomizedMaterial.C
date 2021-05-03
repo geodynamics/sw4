@@ -410,15 +410,12 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g,
       std::cout << "imnrm = "  << imnrm << std::endl;
    delete[] uc;
 
-
    AllDims* sw4dims= mEW->get_fine_alldimobject( );
    AllDims sarobj( sw4dims, 0, n1g-1, 0, n2g-1, 0, n3g-1, 0, 0 );
    //   AllDims sarobj(m_nproc2d[0], m_nproc2d[1], 1, 0, n1g-1, 0, n2g-1, 0, n3g-1, 0, 0 );
-
    sarobj.getdims_nopad(dims);
    mRndMaterial.define(dims[0],dims[1],dims[2],dims[3],dims[4],dims[5]);
    redistribute_array<float_sw4>( *dimobj, sarobj, u, mRndMaterial.c_ptr() );
-
    delete[] u;
 #else
    cout << "ERROR: Can not generate random material without FFTW" << endl;
