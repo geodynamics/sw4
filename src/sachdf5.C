@@ -416,6 +416,8 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   if (downsample < 1) downsample = 1;
 
   dt = (float)delta * downsample;
+  std::cout << "createTimeSeriesHDF5File sffix=" << suffix << " dt=" << dt << std::endl;
+  
   createWriteAttr(fid, "DELTA", H5T_NATIVE_FLOAT, attr_space1, &dt);
   createWriteAttr(fid, "DOWNSAMPLE", H5T_NATIVE_INT, attr_space1, &downsample);
 

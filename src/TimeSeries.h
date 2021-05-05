@@ -66,6 +66,7 @@ void recordData(vector<float_sw4> & u);
 void writeFile( string suffix="" );
 void writeFileUSGS( string suffix="" );
 void writeFile( FILE *fid);
+void syncSolFloats();
 
 void readFile( EW* ew, bool ignore_utc );
 

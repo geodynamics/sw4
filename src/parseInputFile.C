@@ -2601,7 +2601,8 @@ void EW::parsedate( char* datestr, int& year, int& month, int& day, int& hour, i
       if( fsec < 0 )
 	 fail = 8;
       second = static_cast<int>(trunc(fsec));
-      msecond = static_cast<int>( round((fsec-second)*1000));
+      //msecond = static_cast<int>( round((fsec-second)*1000));
+      msecond = static_cast<int>( round((fsec-second)*1000000));
       if( second < 0 || second > 60 )
 	 fail = 7;
       //      cout << " second = " << second << " msecond = " << msecond <<endl;
@@ -7490,7 +7491,7 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
   int event=0;
 
   char* token = strtok(buffer, " \t");
-  m_filter_observations = true;
+  m_filter_observations =  true;   
 
   CHECK_INPUT(strcmp("observationhdf5", token) == 0 || strcmp("obshdf5", token) == 0, "ERROR: not an observation line...: " << token);
   token = strtok(NULL, " \t");
@@ -7657,7 +7658,7 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
   int event=0;
 
   char* token = strtok(buffer, " \t");
-  m_filter_observations = true;
+  m_filter_observations = true;  
 
   CHECK_INPUT(strcmp("observation", token) == 0, "ERROR: not an observation line...: " << token);
   token = strtok(NULL, " \t");

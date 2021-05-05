@@ -222,7 +222,8 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    checkMinMax(nmpars/2, coarse, "coarse:");
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
-     simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, mopt->get_wave_mode(), 0, simulation.getRank());
+     simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
+     mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), 0, simulation.getRank());
    }
    delete[] coarse;
    MPI_Barrier(MPI_COMM_WORLD);
@@ -392,7 +393,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    checkMinMax(nmpars/2, coarse, "coarse2:");
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
-     simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, mopt->get_wave_mode(), 0, myrank);
+     simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
+     mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), 0, myrank);
    }
     MPI_Barrier(MPI_COMM_WORLD);
    delete[] coarse;
@@ -462,15 +464,16 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
        TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc", false);  // Wei add true to append filename substring
 	    diffs.push_back(elem);
       }
+
       //for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
             //if(diffs[m]->myPoint()) std::cout << "rank=" << myrank << " m=" << m << " max copy of syn=" << diffs[m]->getMaxValue(0) << std::endl;
 
             if(myrank == 0) 
             {
               if( mopt->m_misfit == Mopt::L2 )
-                  createTimeSeriesHDF5File(diffs, GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "_adj_l2.h5");
+                  createTimeSeriesHDF5File(diffs, GlobalTimeSeries[e][0]->getNsteps(), simulation.getTimeStep(), "_adj_l2.h5");
               if(mopt->m_misfit == Mopt::CROSSCORR)
-                  createTimeSeriesHDF5File(diffs, GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "_adj_cross.h5");
+                  createTimeSeriesHDF5File(diffs, GlobalTimeSeries[e][0]->getNsteps(), simulation.getTimeStep(), "_adj_cross.h5");
             }
             MPI_Barrier(MPI_COMM_WORLD); 
       
@@ -495,7 +498,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
                    else {
                      diffs[m]->setFidPtr(diffs[0]->getFidPtr());
                      diffs[m]->setTS0Ptr(diffs[0]);
-                   } 
+                   }
+
         diffs[m]->writeFile("_adj_l2.h5");
         if(diffs[m]->myPoint()) std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
             << " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;
@@ -523,9 +527,12 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
                      diffs[m]->setFidPtr(diffs[0]->getFidPtr());
                      diffs[m]->setTS0Ptr(diffs[0]);
                    } 
-        diffs[m]->writeFile("_adj_cross.h5");
-        if(diffs[m]->myPoint()) std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
+        diffs[m]->syncSolFloats();
+        diffs[m]->writeFile("_adj_cross.h5");  // myPoint checked internally
+        if(diffs[m]->myPoint()) {
+           std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
             << " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;
+        }
       #endif
          }
       } // end of Mopt
@@ -533,6 +540,10 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       double dfsrc[11];
       get_source_pars( nspar, dfsrc, dfs );   
       std::cout << "backward+adjoint solve" << " time from t0=" << MPI_Wtime()-t0 << std::endl;
+
+      // debug break for windowing 
+      //MPI_Barrier(MPI_COMM_WORLD);
+      //MPI_Abort(MPI_COMM_WORLD, 1);
 
       sw4_profile->time_stamp("backward+adjoint solve" );
       
@@ -1702,7 +1713,7 @@ int main(int argc, char **argv)
                    for (int tsi = 0; tsi < GlobalTimeSeries[e].size(); tsi++) 
                      GlobalTimeSeries[e][tsi]->resetHDF5file();
                    if(myRank == 0) 
-                     createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "");
+                     createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][0]->getNsteps(), simulation.getTimeStep(), "");
                    MPI_Barrier(MPI_COMM_WORLD);
                  }
 #endif

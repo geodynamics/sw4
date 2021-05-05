@@ -54,6 +54,9 @@ class Mopt
    float_sw4 get_vs_min() const { return m_vs_min; }
    float_sw4 get_vs_max() const { return m_vs_max; }
    int get_wave_mode() const { return m_wave_mode; }
+   float get_twin_shift() const { return m_twin_shift; }
+   float get_twin_scale() const { return m_twin_scale; }
+
    const string& getPath() const {return m_path;}
    EW* get_EWptr() const {return m_ew;}
    void set_baseMat(double* xs, double* xm );
@@ -75,6 +78,7 @@ class Mopt
    // FWI workflow options
    float_sw4 m_vp_min, m_vp_max, m_vs_min, m_vs_max;  // global velocity constraints
    int m_wave_mode; // 0: P  1: S  2: both
+   float m_twin_shift, m_twin_scale;
     
    MaterialParameterization *m_mp;   
    MaterialParCartesian *m_mpcart0;   

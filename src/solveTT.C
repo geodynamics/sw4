@@ -34,7 +34,7 @@ void fastmarch_close (void);
 
 //--------------------------------------------------------------------
 void EW::solveTT( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
-		double* xs, int nmpars, MaterialParameterization* mp, int wave_mode, int event, int myrank)
+		double* xs, int nmpars, MaterialParameterization* mp, int wave_mode, float twinshift, float twinscale, int event, int myrank)
 {
    int ix, iy, iz, nx, ny, nz, n;
    nx = mp->getNX();
@@ -44,6 +44,7 @@ void EW::solveTT( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSerie
 std::cout << "source x0=" << a_Sources[event]->getX0() << " y0=" << a_Sources[event]->getY0() << " z0=" << a_Sources[event]->getZ0() << std::endl;
 n= nmpars/nx/ny/nz;
 
+std::cout << "mp->xmin=" << mp->getXmin() << " ymin=" << mp->getYmin() << " zmin=" << mp->getZmin() << std::endl;
 std::cout << "nx=" << nx << " ny=" << ny << " nz=" << nz << " n=" << n << std::endl;
 
 float *cp =(float*)malloc(nmpars/n*sizeof(float));
@@ -121,13 +122,14 @@ int ntr = a_TimeSeries.size();
    FILE *fd;
 
    if(myrank==0) {     
-   sprintf(file, "time_event_%d.txt", event);
+   sprintf(file, "%s/time_event_%d.txt", a_TimeSeries[0]->getPath(),event);
    fd = fopen(file, "w");
    }
    
 
     float_sw4 win;
     win = 2*(a_Sources[event]->getFrequency()>0? 1.0/a_Sources[event]->getFrequency() : 1.0);
+    win *= twinscale;  // expand or shrink 
 
    for(int ig=0; ig<ntr; ig++) {
    //
@@ -137,36 +139,35 @@ int ntr = a_TimeSeries.size();
     //std::cout << "trace ig=" << ig+1 << " x=" << a_TimeSeries[ig]->getX() << " y=" << a_TimeSeries[ig]->getY() <<  " tp=" 
     //   << timep[iz*nx*ny+iy*nx+ix] << " ts=" << times[iz*nx*ny+iy*nx+ix] << std::endl;
 
-
-
    // set window 
    switch(wave_mode) {
    case 0:  // P-wave only
-       a_TimeSeries[ig]->set_window(timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+win, 
-       timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+win);
+       a_TimeSeries[ig]->set_window(timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win, 
+       timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win);
 
        if(myrank==0) fprintf(fd, "%d   %d\t%s\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
                event, ig+1, a_TimeSeries[ig]->getStationName(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
-               timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+win, 
-               timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+win);
+               timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win, 
+               timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win);
          break;
    case 1:  // S-wave only
-       a_TimeSeries[ig]->set_window(times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+win, 
-       times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+win);
+       a_TimeSeries[ig]->set_window(times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win, 
+       times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win);
 
        if(myrank==0) fprintf(fd, "%d   %d\t%s\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
                event, ig+1, a_TimeSeries[ig]->getStationName(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
-               times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+win, 
-               times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+win);
+               times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win, 
+               times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win);
+
          break;
    default:
-       a_TimeSeries[ig]->set_window(timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+win, 
-       times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+win);
+       a_TimeSeries[ig]->set_window(timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win, 
+       times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win);
 
        if(myrank==0) fprintf(fd, "%d   %d\t%s\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
                event, ig+1, a_TimeSeries[ig]->getStationName(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
-               timep[iz*nx*ny+iy*nx+ix]+0.1, timep[iz*nx*ny+iy*nx+ix]+win, 
-               times[iz*nx*ny+iy*nx+ix]+0.1, times[iz*nx*ny+iy*nx+ix]+win);
+               timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win, 
+               times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win);
      }
    }  // loop over traces
 

@@ -684,8 +684,10 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
        if (GlobalTimeSeries[e].size() > 0 && GlobalTimeSeries[e][0]->getUseHDF5()) {
          for (int tsi = 0; tsi < GlobalTimeSeries[e].size(); tsi++) 
            GlobalTimeSeries[e][tsi]->resetHDF5file();
-         if(myRank == 0) 
-           createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "_ini");
+         if(myRank == 0)  {
+		std::cout << " creating ini hdf5 dt=" << GlobalTimeSeries[e][0]->getDt() << std::endl;
+           createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][0]->getNsteps(), simulation.getTimeStep(), "_ini");
+		 }
          MPI_Barrier(MPI_COMM_WORLD);
        }
 #endif

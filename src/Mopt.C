@@ -53,6 +53,8 @@ Mopt::Mopt( EW* a_ew )
    m_vs_min = -100.;
    m_vs_max = -100.;
    m_wave_mode=2;  // default to both P and S waves otherwise 0 for P and 1 for S only
+   m_twin_shift=0.0;
+   m_twin_scale=1.0; 
    m_tolerance = 1e-12;
    m_var    = 0;
    m_var2   = 0;
@@ -433,11 +435,21 @@ void Mopt::processMrun( char* buffer )
       }
       else if( startswith("wave_mode=",token) )
       {
-         token += 10;
+      token += 10;
 	 int n = strlen(token);
 	   if( strncmp("P",token,n)== 0 || strncmp("p",token,n)==0) m_wave_mode = 0;
       else if(strncmp("S",token,n)== 0 || strncmp("s",token,n)==0) m_wave_mode = 1;
       else m_wave_mode=2;
+      }
+      else if( startswith("twinshift=",token) )  // [-1, 1] of win size
+      {
+         token += 10;
+	   m_twin_shift = atof(token);
+      }
+      else if( startswith("twinscale=",token) )  // scale of win size
+      {
+         token += 10;
+	   m_twin_scale = atof(token);
       }
       else
          badOption("mrun",token);

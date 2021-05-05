@@ -422,7 +422,6 @@ void TimeSeries::allocateRecordingArrays( int numberOfTimeSteps, float_sw4 start
 
   // Move this time series to always start at 'startTime'. Perhaps this should be done elsewhere ?
   m_shift = startTime-m_t0;
-
   m_dt = timeStep;
 }
 
@@ -483,6 +482,23 @@ void TimeSeries::recordData(vector<float_sw4> & u)
 
    if (mWriteEvery > 0 && mLastTimeStep > 0 && mLastTimeStep % mWriteEvery == 0)
       writeFile();
+
+}
+
+void TimeSeries::syncSolFloats()
+{
+   if (!m_myPoint) return;
+   //float vmin=1e20;
+   //float vmax=-1e20;
+   for( int i=0 ; i <= mLastTimeStep ; i++ )
+	   {
+	      mRecordedFloats[0][i] = (float)mRecordedSol[0][i];
+	      mRecordedFloats[1][i] = (float)mRecordedSol[1][i];
+	      mRecordedFloats[2][i] = (float)mRecordedSol[2][i];
+         //if(mRecordedFloats[0][i]<vmin) vmin=mRecordedFloats[0][i];
+         //if(mRecordedFloats[0][i]>vmax) vmax=mRecordedFloats[0][i];
+	   }
+//std::cout << "Sol->FLoats min=" << vmin << " max=" << vmax << std::endl;
 
 }
 
@@ -560,8 +576,9 @@ void TimeSeries::writeFile( string suffix )
         stxyz[2] = double(m_sta_z);
         openWriteAttr(grp, "STX,STY,STZ", H5T_NATIVE_DOUBLE, stxyz);
 
-        origintime = float(m_epi_time_offset);
+        origintime = float(m_epi_time_offset);  // set by firstSource->getOffset() mT0
         openWriteAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, &origintime);
+        //std::cout << "m_epi_time_offset=" << m_epi_time_offset << " hdf5 origintime=" << origintime << std::endl;
 
         m_isMetaWritten = true;
       }
@@ -851,6 +868,7 @@ void TimeSeries::writeFile( string suffix )
 	     write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[2], (float) m_shift, (float) m_dt,
 	          	const_cast<char*>(zfield.c_str()), updownang, 0.0, makeCopy, true);
              m_isIncAzWritten = true;
+
            }
 #endif
 	}
@@ -1766,16 +1784,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 
       //      cout << "in misfit last step = " << mLastTimeStep << " m_t0= " << m_t0 << " m_shift = " << m_shift << endl;
       //      cout << "in misfit t0fr= = " << t0fr << endl;
-    if( m_use_win )
-      {
-         //if(m_winL < m_t0) m_winL=m_t0;
-         //if(m_winR > mLastTimeStep*m_dt) m_winR=mLastTimeStep*m_dt;
-         
-         if(m_winL2>0 || m_winR2>0) {  // if 2nd window exists
-          //if(m_winL2 < m_t0) m_winL2=m_t0;
-          //if(m_winR2 > mLastTimeStep*m_dt) m_winR2=mLastTimeStep*m_dt;
-         }
-      }
+
        
    for( int i= 0 ; i <= mLastTimeStep ; i++ )
    {
@@ -2036,6 +2045,8 @@ float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
       int noptpt = 40;
       float_sw4 tlim = 2, fmax = -1e38, tmax=0;
       float_sw4 f, df, ddf;
+
+
       if( dbg )
 	cout << m_event << "Compute maxshift \n 1. scan through time points " << endl;
       for( int n=0 ; n < noptpt ; n++ )
@@ -2043,6 +2054,7 @@ float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
 	 float_sw4 tshift = -tlim + n*2*tlim/(noptpt-1);
 
 	 shiftfunc( observed, tshift, f, df, ddf );
+    
 	 if( f > fmax )
 	 {
 	    fmax = f;
@@ -2108,6 +2120,10 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
    float_sw4 mf[3], dmf[3], ddmf[3];
    func = dfunc = ddfunc = 0;
    bool compute_adjsrc = adjsrc != NULL;
+   float tau;
+
+   // tentatively disable Z component or exclude=z in data entry
+   //m_use_z = false;
 
 
    //   float_sw4 scale_factor=0;
@@ -2126,29 +2142,96 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
    if( mLastTimeStep-p+1 > 1 )
       istart = mLastTimeStep-p+1;
 
-     if( m_use_win )
+    // allocate space for a copy
+    float** obs_windowed = new float*[observed.m_nComp];
+	 if(nfrsteps > 0 )
+	 {
+	    for( int q=0 ; q < observed.m_nComp; q++ )
+	       obs_windowed[q] = new float[nfrsteps+1];
+    }
+
+   if(compute_adjsrc) {
+    for( int i= 0 ; i <= mLastTimeStep ; i++ ) {
+         adjsrc[0][i] = 0.0;
+         adjsrc[1][i] = 0.0;
+         adjsrc[2][i] = 0.0;
+    }}
+
+
+   tau = 2*dtfr;
+   for( int i= 0 ; i <=observed.mLastTimeStep ; i++ )  // loop over observation points
+   {
+    float_sw4 wghxobs, wghyobs, wghzobs, wghxobs2, wghyobs2, wghzobs2;
+	    wghxobs=wghyobs=wghzobs=1.;
+       
+	    if( m_use_win )
+	    {
+	       double tobs = i*dtfr+t0fr; // t_n+tshift in Observation time 
+
+	       // Window data in this object w(t_n+tshift)
+	       if( tobs < m_winL || tobs > m_winR ) 
+		       wghxobs = wghyobs = wghzobs = 0.;
+	       else
+             wghxobs=wghyobs=wghzobs= 0.5*tanhf((tobs-m_winL)/tau) - 0.5*tanhf((tobs-m_winR)/tau);
+             //wghxobs = wghyobs = wghzobs = pow(cos(aw*(tobs)+bw),5.0);
+
+          if(m_winL2>0 || m_winR2>0) {  // if 2nd window exists
+             if( tobs < m_winL2 || tobs > m_winR2 )  
+	              wghxobs2 = wghyobs2 = wghzobs2 = 0.;
+	          else
+                 wghxobs2=wghyobs2=wghzobs2= 0.5*tanhf((tobs-m_winL2)/tau) - 0.5*tanhf((tobs-m_winR2)/tau);   //windowing of waveform
+
+             wghxobs = (wghxobs >= wghxobs2? wghxobs : wghxobs2);  // take the maximum of either window weight
+             wghzobs = wghyobs = wghxobs;
+           } // if 2nd window exists
+           //cout << "i=" << i << " tobs=" << tobs << " winL=" << m_winL << " winR=" << m_winR << " wghxobs=" << wghxobs << endl;
+	    } // if use_win
+      if( !m_use_x )
+	       wghxobs = 0;
+      if( !m_use_y )
+	       wghyobs = 0;
+      if( !m_use_z )
+	       wghzobs = 0;
+
+
+      if( observed.m_usgsFormat ) {
+       obs_windowed[0][i] = observed.mRecordedSol[0][i];
+       obs_windowed[1][i] = observed.mRecordedSol[1][i];
+       obs_windowed[2][i] = observed.mRecordedSol[2][i];
+      }
+      else
       {
-         //if(m_winL < m_t0) m_winL=m_t0;
-         //if(m_winR > mLastTimeStep*m_dt) m_winR=mLastTimeStep*m_dt;
-         
-         if(m_winL2>0 || m_winR2>0) {  // if 2nd window exists
-          //if(m_winL2 < m_t0) m_winL2=m_t0;
-          if(m_winR2 > mLastTimeStep*m_dt) {
-             //m_winR2=mLastTimeStep*m_dt;
-             //cout << "lastTimeStep=" << mLastTimeStep << " dt=" << m_dt << " final windows winL=" << m_winL << " winR=" << m_winR << " winL2=" << m_winL2 << " winR2=" << m_winR2 << endl;
-             }
-         }
+       obs_windowed[0][i] = observed.mRecordedFloats[0][i];
+       obs_windowed[1][i] = observed.mRecordedFloats[1][i];
+       obs_windowed[2][i] = observed.mRecordedFloats[2][i];
       }
 
-   for( int i= 0 ; i <= mLastTimeStep ; i++ )
+
+   if( !compute_adjsrc ) {
+        obs_windowed[0][i] *= wghxobs;
+        obs_windowed[1][i] *= wghxobs;
+        obs_windowed[2][i] *= wghxobs;     
+   }
+
+     //if( compute_adjsrc ) {
+     //   if(i <= mLastTimeStep) {
+     //    adjsrc[0][i] = obs_windowed[0][i];
+     //    adjsrc[1][i] = obs_windowed[1][i];
+     //    adjsrc[2][i] = obs_windowed[2][i];
+     //   }
+     // }
+   }
+
+   tau = m_dt*5;
+   for( int i= 0 ; i <= mLastTimeStep ; i++ )  // loop over simulation points
    {
       wghv = 1;
       if( i >= istart )
       {
-	 float_sw4 arg = (mLastTimeStep-i)/(p-1.0);
-	 wghv = arg*arg*arg*arg*(35-84*arg+70*arg*arg-20*arg*arg*arg);
+	   float_sw4 arg = (mLastTimeStep-i)/(p-1.0);
+	   wghv = arg*arg*arg*arg*(35-84*arg+70*arg*arg-20*arg*arg*arg);
       }
-      float_sw4 t  = m_t0 + m_shift + i*m_dt + tshift;
+      float_sw4 t  = m_t0 + m_shift + i*m_dt + tshift;   
       float_sw4 ir = (t-t0fr)/dtfr;
 
       //if(t<t0fr) cout << "t=" << t << " t0fr=" << t0fr << " dtfr=" << dtfr << " ir=" << ir << endl;
@@ -2169,13 +2252,11 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 	 return;
       }
 // Windowing and component selection
-      float_sw4 wghx, wghy, wghz, wghx2, wghy2, wghz2,tau;
-      tau = m_dt*2;
-
+      float_sw4 wghx, wghy, wghz, wghx2, wghy2, wghz2;
+      
       wghx = wghy = wghz = wghv;
       if( m_use_win )
-      {
-         
+      { 
 	 // Window data in this object w(t_n)
 	 if( t-tshift < m_winL || t-tshift > m_winR ) 
 	    wghx = wghy = wghz = 0;
@@ -2193,14 +2274,13 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
          wghx = (wghx >= wghx2? wghx : wghx2);  // take the maximum of either window weight
          wghz = wghy = wghx;
         } // if 2nd window exists
-
       }
       if( !m_use_x )
-	 wghx = 0;
+	      wghx = 0;
       if( !m_use_y )
-	 wghy = 0;
+	      wghy = 0;
       if( !m_use_z )
-	 wghz = 0;
+	      wghz = 0;
 
 // Set to zero before the starting point of the observations, or past end of observed data.
       mf[0]   = mf[1]   = mf[2]   = 0;
@@ -2229,70 +2309,29 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 	    ai = ir-(mmin+2);
 	    getwgh( ai, wgh, dwgh, ddwgh );
 	 }
+
 	 for( int m = mmin ; m <= mmax ; m++ )
 	 {
-	    // Window observed data
-	    float_sw4 wghxobs, wghyobs, wghzobs, wghxobs2, wghyobs2, wghzobs2;
-	    wghxobs=wghyobs=wghzobs=1.;
-	    if( m_use_win )
-	    {
-	       double tobs = m*dtfr+t0fr; // t_n+tshift in Observation time 
+          mf[0]   += wgh[m-mmin]*obs_windowed[0][m];
+	       mf[1]   += wgh[m-mmin]*obs_windowed[1][m];
+	       mf[2]   += wgh[m-mmin]*obs_windowed[2][m];
 
-	       // Window data in this object w(t_n+tshift)
-	       if( tobs < m_winL || tobs > m_winR ) 
-		       wghxobs = wghyobs = wghzobs = 0.;
-	       else
-             wghxobs=wghyobs=wghzobs= 0.5*tanhf((tobs-m_winL)/tau) - 0.5*tanhf((tobs-m_winR)/tau);
-             //wghxobs = wghyobs = wghzobs = pow(cos(aw*(tobs)+bw),5.0);
+	       dmf[0]  += dwgh[m-mmin]*obs_windowed[0][m]*idtfr;
+	       dmf[1]  += dwgh[m-mmin]*obs_windowed[1][m]*idtfr;
+	       dmf[2]  += dwgh[m-mmin]*obs_windowed[2][m]*idtfr;
 
-          if(m_winL2>0 || m_winR2>0) {  // if 2nd window exists
-             if( tobs < m_winL2 || tobs > m_winR2 )  
-	              wghxobs2 = wghyobs2 = wghzobs2 = 0.;
-	          else
-                 wghxobs2=wghyobs2=wghzobs2= 0.5*tanhf((t-m_winL2)/tau) - 0.5*tanhf((t-m_winR2)/tau);   //windowing of waveform
-
-             wghxobs = (wghxobs >= wghxobs2? wghxobs : wghxobs2);  // take the maximum of either window weight
-             wghzobs = wghyobs = wghxobs;
-           } // if 2nd window exists
-           //cout << "tobs=" << tobs << " wghxobs=" << wghxobs << " wghx=" << wghx << endl;
-	    } // if use_win
-
-	    if( observed.m_usgsFormat )
-	    {
-	       mf[0]   += wgh[m-mmin]*observed.mRecordedSol[0][m]*wghxobs;
-	       mf[1]   += wgh[m-mmin]*observed.mRecordedSol[1][m]*wghyobs;
-	       mf[2]   += wgh[m-mmin]*observed.mRecordedSol[2][m]*wghzobs;
-
-	       dmf[0]  += dwgh[m-mmin]*observed.mRecordedSol[0][m]*idtfr*wghxobs;
-	       dmf[1]  += dwgh[m-mmin]*observed.mRecordedSol[1][m]*idtfr*wghyobs;
-	       dmf[2]  += dwgh[m-mmin]*observed.mRecordedSol[2][m]*idtfr*wghzobs;
-
-	       ddmf[0] += ddwgh[m-mmin]*observed.mRecordedSol[0][m]*idtfr2*wghxobs;
-	       ddmf[1] += ddwgh[m-mmin]*observed.mRecordedSol[1][m]*idtfr2*wghyobs;
-	       ddmf[2] += ddwgh[m-mmin]*observed.mRecordedSol[2][m]*idtfr2*wghzobs;
-	    }
-	    else
-	    {
-	       mf[0]   += wgh[m-mmin]*observed.mRecordedFloats[0][m]*wghxobs;
-	       mf[1]   += wgh[m-mmin]*observed.mRecordedFloats[1][m]*wghyobs;
-	       mf[2]   += wgh[m-mmin]*observed.mRecordedFloats[2][m]*wghzobs;
-
-	       dmf[0]  += dwgh[m-mmin]*observed.mRecordedFloats[0][m]*idtfr*wghxobs;
-	       dmf[1]  += dwgh[m-mmin]*observed.mRecordedFloats[1][m]*idtfr*wghyobs;
-	       dmf[2]  += dwgh[m-mmin]*observed.mRecordedFloats[2][m]*idtfr*wghzobs;
-
-	       ddmf[0] += ddwgh[m-mmin]*observed.mRecordedFloats[0][m]*idtfr2*wghxobs;
-	       ddmf[1] += ddwgh[m-mmin]*observed.mRecordedFloats[1][m]*idtfr2*wghyobs;
-	       ddmf[2] += ddwgh[m-mmin]*observed.mRecordedFloats[2][m]*idtfr2*wghzobs;
-
-	     }
+	       ddmf[0] += ddwgh[m-mmin]*obs_windowed[0][m]*idtfr2;
+	       ddmf[1] += ddwgh[m-mmin]*obs_windowed[1][m]*idtfr2;
+	       ddmf[2] += ddwgh[m-mmin]*obs_windowed[2][m]*idtfr2;
+	     
 	    } // m loop
       } // ie nfrsteps
 
-
+     // correlation
       if( m_usgsFormat )
       {
-	 func += ( mf[0]*mRecordedSol[0][i]*wghx + 
+	
+    func += ( mf[0]*mRecordedSol[0][i]*wghx + 
 		   mf[1]*mRecordedSol[1][i]*wghy + 
 		   mf[2]*mRecordedSol[2][i]*wghz   );
 	 dfunc += ( dmf[0]*mRecordedSol[0][i]*wghx + 
@@ -2301,48 +2340,57 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 	 ddfunc += ( ddmf[0]*mRecordedSol[0][i]*wghx + 
 		     ddmf[1]*mRecordedSol[1][i]*wghy + 
 		     ddmf[2]*mRecordedSol[2][i]*wghz   );
+         
       }
       else
       {
-         func += (   mf[0]*mRecordedFloats[0][i]*wghx + 
+
+         
+      func += (   mf[0]*mRecordedFloats[0][i]*wghx + 
                      mf[1]*mRecordedFloats[1][i]*wghy + 
                      mf[2]*mRecordedFloats[2][i]*wghz );
-        dfunc += (  dmf[0]*mRecordedFloats[0][i]*wghx + 
+      dfunc += (  dmf[0]*mRecordedFloats[0][i]*wghx + 
                     dmf[1]*mRecordedFloats[1][i]*wghy + 
                     dmf[2]*mRecordedFloats[2][i]*wghz );
        ddfunc += ( ddmf[0]*mRecordedFloats[0][i]*wghx + 
                    ddmf[1]*mRecordedFloats[1][i]*wghy + 
                    ddmf[2]*mRecordedFloats[2][i]*wghz );
-
+                   
       }
       //scale_factor += wghx*mf[0]*mf[0] + wghy*mf[1]*mf[1] + wghz*mf[2]*mf[2];
 
+    
       if( compute_adjsrc )
       {
          adjsrc[0][i] = -tshift*wghx*dmf[0];
          adjsrc[1][i] = -tshift*wghy*dmf[1];
-         adjsrc[2][i] = -tshift*wghz*dmf[2];
+         adjsrc[2][i] = -tshift*wghz*dmf[2];  
 
       }
 
-   } // loop over npts
+    }  // loop ovr simulation points
 
-   if( compute_adjsrc )
-   {
-   float amin, amax;
-   //amin=1e20;
-   //amax=-1e20;
-   
+
+     if( compute_adjsrc )
+     {
       float_sw4 iddf=1/ddfunc;
       for( int i= 0 ; i <= mLastTimeStep ; i++ )      
       {
       adjsrc[0][i] *= iddf;
       adjsrc[1][i] *= iddf;
       adjsrc[2][i] *= iddf;
-      //if(adjsrc[0][i] < amin) amin = adjsrc[0][i];
-      //if(adjsrc[0][i] > amax) amax = adjsrc[0][i];
       }
-      //cout << "m_use_win=" << m_use_win << " mLastTimeStep=" << mLastTimeStep << " adjsrc min=" << amin << " max=" << amax << endl;
+     }
+
+
+   if(obs_windowed) 
+   {
+    for (int q=0; q<observed.m_nComp; q++)
+    {
+      if (obs_windowed[q]) 
+      delete [] obs_windowed[q];
+    }
+    delete [] obs_windowed;
    }
 
 }
@@ -2358,16 +2406,18 @@ float_sw4 TimeSeries::misfit2( TimeSeries& observed, TimeSeries* diff )
    float_sw4 misfit = 0;
    if( m_myPoint )
    {
-      cout << "misfit2: observed.m_t0=" << observed.m_t0 << " observed.m_shift=" << observed.m_shift << endl;
+      cout << "misfit2: observed.m_t0=" << observed.m_t0 << " observed.m_shift=" << observed.m_shift << " obs m_dt=" << 
+      observed.m_dt <<  " obs.nsteps=" << observed.getLastTimeStep()+1 << " diff m_t0=" << m_t0 << " m_shift=" << m_shift << " m_dt=" << m_dt 
+      << " nsteps=" << mLastTimeStep+1 << endl;
 
       if( abs(m_t0+m_shift-(observed.m_t0+observed.m_shift)) > 100 )
 	 cout <<"WARNING: Mismatch between observation start time and simulation start time is large. " << 
                     "Station Tstart = " << m_t0+m_shift << 
                " Observation Tstart = " << observed.m_t0+observed.m_shift << endl;
 
-      float_sw4 ms=compute_maxshift( observed );
+      float_sw4 maxshift=compute_maxshift( observed );
 
-      misfit = 0.5*ms*ms;
+      misfit = 0.5*maxshift*maxshift;
 
       if( diff != NULL )
       {
@@ -2380,7 +2430,7 @@ float_sw4 TimeSeries::misfit2( TimeSeries& observed, TimeSeries* diff )
 	 
     misfitsource = diff->getRecordingArray();
     
-	 shiftfunc( observed, ms, f, df, ddf, misfitsource );
+	 shiftfunc( observed, maxshift, f, df, ddf, misfitsource );
     
 
       }
@@ -2431,6 +2481,8 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
    retval->m_use_win = m_use_win;
    retval->m_winL = m_winL;
    retval->m_winR = m_winR;
+   retval->m_winL2 = m_winL2;
+   retval->m_winR2 = m_winR2;
    retval->m_use_x = m_use_x;
    retval->m_use_y = m_use_y;
    retval->m_use_z = m_use_z;
@@ -3455,8 +3507,8 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
     print_utc();
 
     m_t0 = utc_distance( utcrefsim, m_utc );
-   
-    //cout << "readsachdf5: utcrefsim=" << utcrefsim << " m_utc=" << m_utc << " m_t0=" << m_t0 << endl;
+    
+    cout << "readsachdf5:  m_t0=" << m_t0 << endl;
   }
 
   // dt may be downsampled 
