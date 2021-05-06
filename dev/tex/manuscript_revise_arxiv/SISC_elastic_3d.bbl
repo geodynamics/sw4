@@ -1,0 +1,108 @@
+\begin{thebibliography}{10}
+
+\bibitem{Almquist2019}
+{\sc M.~Almquist, S.~Wang, and J.~Werpers}, {\em Order-preserving interpolation
+  for summation-by-parts operators at nonconforming grid interfaces}, SIAM J.
+  Sci. Comput., 41 (2019), pp.~A1201--A1227.
+
+\bibitem{Carpenter1994}
+{\sc M.~H. Carpenter, D.~Gottlieb, and S.~Abarbanel}, {\em Time--stable
+  boundary conditions for finite--difference schemes solving hyperbolic
+  systems: methodology and application to high--order compact schemes}, J.
+  Comput. Phys., 111 (1994), pp.~220--236.
+
+\bibitem{Collino2003}
+{\sc F.~Collino, T.~Fouquet, and P.~Joly}, {\em A conservative space-time mesh
+  refinement method for the 1-{D} wave equation. {P}art {II}: {A}nalysis},
+  Numer. Math., 95 (2003), pp.~223--251.
+
+\bibitem{Day2001}
+{\sc S.~M. Day, J.~Bielak, D.~Dreger, S.~Larsen, R.~Graves, A.~Pitarka, and
+  K.~B. Olsen}, {\em Test of 3d elastodynamic codes: Lifelines project task
+  1a01}, Technical report, Pacific Earthquake Engineering Center,  (2001).
+
+\bibitem{Duru2016}
+{\sc K.~Duru and E.~M. Dunham}, {\em Dynamic earthquake rupture simulations on
+  nonplanar faults embedded in 3{D} geometrically complex, heterogeneous
+  elastic solids}, J. Comput. Phys., 305 (2016), pp.~185--207.
+
+\bibitem{duru2014stable}
+{\sc K.~Duru and K.~Virta}, {\em Stable and high order accurate difference
+  methods for the elastic wave equation in discontinuous media}, J. Comput.
+  Phys., 279 (2014), pp.~37--62.
+
+\bibitem{Hagstrom2012}
+{\sc T.~Hagstrom and G.~Hagstrom}, {\em Grid stabilization of high--order
+  one--sided differencing {II}: second--order wave equations}, J. Comput.
+  Phys., 231 (2012), pp.~7907--7931.
+
+\bibitem{Kozdon2013}
+{\sc J.~E. Kozdon, E.~M. Dunham, and J.~Nordstr\"{o}m}, {\em Simulation of
+  dynamic earthquake ruptures in complex geometries using high-order fnite
+  difference methods}, J. Sci. Comput., 55 (2013), pp.~92--124.
+
+\bibitem{Kreiss1972}
+{\sc H.~O. Kreiss and J.~Oliger}, {\em {C}omparison of accurate methods for the
+  integration of hyperbolic equations}, Tellus, 24 (1972), pp.~199--215.
+
+\bibitem{Kreiss1974}
+{\sc H.~O. Kreiss and G.~Scherer}, {\em Finite element and finite difference
+  methods for hyperbolic partial differential equations}, Mathematical Aspects
+  of Finite Elements in Partial Differential Equations, Symposium Proceedings,
+  (1974), pp.~195--212.
+
+\bibitem{Lundquist2018}
+{\sc T.~Lundquist, A.~Malan, and J.~Nordstr\"om}, {\em A hybrid framework for
+  coupling arbitrary summation-by-parts schemes on general meshes}, J. Comput.
+  Phys., 362 (2018), pp.~49--68.
+
+\bibitem{Mattsson2012}
+{\sc K.~Mattsson}, {\em Summation by parts operators for finite difference
+  approximations of second--derivatives with variable coefficient}, J. Sci.
+  Comput., 51 (2012), pp.~650--682.
+
+\bibitem{OReilly2020}
+{\sc O.~O'Reilly and N.~A. Petersson}, {\em Energy conservative {SBP}
+  discretizations of the acoustic wave equation in covariant form on staggered
+  curvilinear grids}, J. Comput. Phys., 411 (2020), p.~109386.
+
+\bibitem{petersson2015wave}
+{\sc N.~A. Petersson and B.~Sj{\"o}green}, {\em Wave propagation in anisotropic
+  elastic materials and curvilinear coordinates using a summation-by-parts
+  finite difference method}, J. Comput. Phys., 299 (2015), pp.~820--841.
+
+\bibitem{SW4}
+{\sc N.~A. Petersson and B.~Sj\"ogreen}, {\em User's guide to sw4, version
+  2.0}, Tech. report LLNLSM-741439, Lawrence Livermore National Laboratory
+  (source code available from http://geodynamics.org/cig),  (2016).
+
+\bibitem{sjogreen2012fourth}
+{\sc B.~Sj{\"o}green and N.~A. Petersson}, {\em A fourth order accurate finite
+  difference scheme for the elastic wave equation in second order formulation},
+  J. Sci. Comput., 52 (2012), pp.~17--48.
+
+\bibitem{Strand1994}
+{\sc B.~Strand}, {\em Summation by parts for finite difference approximations
+  for d/dx}, J. Comput. Phys., 110 (1994), pp.~47--67.
+
+\bibitem{thompson1985numerical}
+{\sc J.~F. Thompson, Z.~U. Warsi, and C.~W. Mastin}, {\em Numerical grid
+  generation: foundations and applications}, vol.~45, North-holland Amsterdam,
+  1985.
+
+\bibitem{Wang2017}
+{\sc S.~Wang and G.~Kreiss}, {\em Convergence of summation--by--parts finite
+  difference methods for the wave equation}, J. Sci. Comput., 71 (2017),
+  pp.~219--245.
+
+\bibitem{Wang2018b}
+{\sc S.~Wang, A.~Nissen, and G.~Kreiss}, {\em Convergence of finite difference
+  methods for the wave equation in two space dimensions}, Math. Comp., 87
+  (2018), pp.~2737--2763.
+
+\bibitem{wang2018fourth}
+{\sc S.~Wang and N.~A. Petersson}, {\em Fourth order finite difference methods
+  for the wave equation with mesh refinement interfaces}, SIAM J. Sci. Comput.,
+  41 (2019), pp.~A3246--A3275.
+
+\end{thebibliography}

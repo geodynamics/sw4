@@ -1,0 +1,88 @@
+%!TEX root = SISC_elastic_3d.tex
+\section{The anisotropic elastic wave equation}
+We consider the time dependent anisotropic elastic wave equation in a three dimensional domain ${\bf x}\in\Omega$, where ${\bf x} = (x^{(1)},x^{(2)},x^{(3)})^T$ are the Cartesian coordinates. The domain $\Omega$ is partitioned into two subdomains $\Omega^f$ and $\Omega^c$, with an interface $\Gamma = \Omega^f\cap\Omega^c$. The material property is assumed to be smooth in each subdomain, but may be discontinuous at the interface $\Gamma$. Without loss of generality, we may assume that the wave speed is slower in $\Omega^f$ than in $\Omega^c$, which motivates us to use a fine mesh in $\Omega^f$ and a coarse mesh in $\Omega^c$. We further assume that both $\Omega^f$ and $\Omega^c$ have six, possibly curved boundary faces. Denote ${\bf r} = (r^{(1)},r^{(2)},r^{(3)})^T$, the parameter coordinates, and  introduce smooth one-to-one mappings 
+\begin{equation}\label{mapping}
+{\bf x}= {\bf X}^{f}({\bf r}) :  [0,1]^3 \rightarrow \Omega^{f} \subset \mathbb{R}^3 \ \ \ \mbox{and} \ \ \ {\bf x} = {\bf X}^{c}({\bf r}) :  [0,1]^3 \rightarrow \Omega^{c} \subset \mathbb{R}^3.
+\end{equation}
+Let the inverse of the mappings in (\ref{mapping}) be ${\bf r} = {\bf R}^f({\bf x})$ with components ${\bf R}^f({\bf x}) = (R^{f,(1)}, R^{f,(2)}, R^{f,(3)})^T$ and ${\bf r} = {\bf R}^c({\bf x})$ with components ${\bf R}^c({\bf x}) = (R^{c,(1)}, R^{c,(2)}, R^{c,(3)})^T$, respectively. Note that we do not compute the components of the inverse mapping ${\bf R}^c$ and ${\bf R}^f$ in this paper, the definitions here are for the convenience of the rest of the contents.
+ 
+We further assume that the interface $\Gamma$ corresponds to $r^{(3)} = 1$ for the coarse domain and $r^{(3)} = 0$ for the fine domain. Then the elastic wave equation in the coarse domain $\Omega^c$ in terms of the displacement vector ${\bf C} = {\bf C}({\bf r}, t)$ can be written in curvilinear coordinates as (see \cite{petersson2015wave})
+\begin{align}\label{elastic_curvi}
+	\rho^c\frac{\partial^2{\bf C}}{\partial^2 t} = \frac{1}{J^c}\left[\bar{\partial}_1(A_1^c\nabla_r{\bf C}) + \bar{\partial}_2(A_2^c\nabla_r{\bf C}) +\bar{\partial}_3(A_3^c\nabla_r{\bf C}) \right],\ \ \  {\bf r}\in[0,1]^3,\ \ \  t\geq0,
+\end{align}
+where $\rho^c$ is the density function in the coarse domain $\Omega^c$.  We define
+\begin{align*} 
+A_k^c\nabla_r{\bf C} = \sum_{j = 1}^3 N_{kj}^c\bar{\partial}_j {\bf C}, \ \ \ k = 1,2,3,
+\end{align*}
+with $\nabla_r  = (\bar{\partial}_1, \bar{\partial}_2, \bar{\partial}_3)^T$,  $\bar{\partial}_i =\frac{\partial}{\partial r^{(i)}}$, for $i = 1,2,3$ and
+\begin{equation}\label{N_definition}
+	N_{ij}^c = J^c\sum_{l,k = 1}^3\xi_{li}^cO_l^TQ^cO_k\xi_{kj}^c, \ \ i,j = 1,2,3,
+\end{equation}
+where, 
+\[ O_{1}^T = \left(\begin{array}{cccccc}
+1 & 0 & 0 &0 & 0 & 0\\
+0 & 0 & 0 &0 & 0 & 1\\
+0 & 0 & 0 &0 & 1 & 0\end{array}\right), \ \  O_{2}^T = \left(\begin{array}{cccccc}
+0 & 0 & 0 &0 & 0 & 1\\
+0 & 1 & 0 &0 & 0 & 0\\
+0 & 0 & 0 &1 & 0 & 0\end{array}\right),  \ \ O_{3}^T = \left(\begin{array}{cccccc}
+0 & 0 & 0 &0 & 1 & 0\\
+0 & 0 & 0 &1 & 0 & 0\\
+0 & 0 & 1 &0 & 0 & 0\end{array}\right),\]
+$Q^c$ is a $6\times 6$ stiffness matrices which is symmetric and positive definite and $\xi_{kj} = \frac{\partial r^{(j)}}{\partial x^{(k)}}$. Further, Define $M^c_{lk} = O_l^TQO_k$, then $M_{ii}^c$ are also symmetric positive definite and $M_{ij}^c = M_{ji}^T$. In particular, for the isotropic elastic wave equation, we have
+\[ M_{11}^c = \left(\begin{array}{ccc}
+2\mu^c+\lambda^c & 0 & 0\\
+0 & \mu^c & 0\\
+0 & 0 & \mu^c\end{array}\right),\ \ \  M_{12}^c = \left(\begin{array}{ccc}
+0 & \lambda^c & 0\\
+\mu^c & 0 & 0\\
+0 & 0 & 0\end{array}\right), \]
+\begin{equation}\label{M_definition}
+M_{22}^c = \left(\begin{array}{ccc}
+\mu^c & 0 & 0\\
+0 & 2\mu^c+\lambda^c & 0\\
+0 & 0 & \mu^c\end{array}\right),\ \ \ M_{13}^c = \left(\begin{array}{ccc}
+0 & 0 & \lambda^c\\
+0 & 0 & 0\\
+\mu^c & 0 & 0\end{array}\right),
+\end{equation}
+\[\ M_{33}^c = \left(\begin{array}{ccc}
+\mu^c & 0 & 0\\
+0 & \mu^c & 0\\
+0 & 0 & 2\mu^c+\lambda^c\end{array}\right),\ \ \ M_{23}^c = \left(\begin{array}{ccc}
+0 & 0 & 0\\
+0 & 0 & \lambda^c\\
+0 & \mu^c & 0\end{array}\right),\]
+\[ M_{31}^c = (M_{13}^c)^T, \ \ \  M_{32}^c =(M_{23}^c)^T, \ \ \ M_{21}^c =(M_{12}^c)^T.\]
+Here, $\lambda^c$ and $\mu^c$ are the first and second Lam{\'{e}} parameters, respectively. 
+
+From (\ref{N_definition}) we find that even in the isotropic case the matrices $N_{ij}^c$ are full. Hence, wave propagation in isotropic media has anisotropic properties in curvilinear coordinates. In both isotropic and anisotropic material, the matrices $N_{ii}^c$, $i = 1,2,3$, are symmetric positive definite and $N_{ij}^c=\big(N_{ji}^c\big)^T$, $i,j=1,2,3$. 
+
+Last, $J^c$ is the Jacobian of the coordinate transformation with
+\[J^c = \mbox{det} \left(\bar{\partial}_1 {\bf X}^c, \bar{\partial}_2 {\bf X}^c, \bar{\partial}_3 {\bf X}^c\right)\in (0,\infty).\] 
+Denote the unit outward normal ${\bf n}_i^{c,\pm} = (n_i^{c,\pm,1},n_i^{c,\pm,2},n_i^{c,\pm,3})$, $i = 1,2,3$, for the boundaries of the subdomain $\Omega^c$, then
+\begin{align}\label{outward_normal}
+{\bf n}_i^{c,\pm}  = \pm \frac{\nabla_x R^{c,(i)}}{|\nabla_x R^{c,(i)}|}.
+\end{align}
+Here, $\nabla_x = (\partial_1, \partial_2, \partial_3)^T$, $\partial_i = \frac{\partial}{\partial
+  x^{(i)}}$, $i = 1,2,3$. Here, $'+'$ corresponds to $r^{(i)} = 1$ and $'-'$ corresponds to $r^{(i)}
+= 0$. The relation between covariant basis vectors $\bar{\partial}_i {\bf X}^c, i = 1,2,3$ and
+contravariant basis vectors $\nabla_x R^{c,(i)}, i = 1,2,3$ can be found in \cite{petersson2015wave,
+  thompson1985numerical}. The elastic wave equation in curvilinear coordinates for the fine domain
+in terms of the displacement vector ${\bf F} = {\bf F}({\bf r}, t)$ is defined in the same way as in
+the coarse domain. We have
+\begin{align}\label{elastic_curvi_f}
+	\rho^f\frac{\partial^2{\bf F}}{\partial^2 t} &= \frac{1}{J^f}\left[\bar{\partial}_1(A_1^f\nabla_r{\bf F}) + \bar{\partial}_2(A_2^f\nabla_r{\bf F}) + \bar{\partial}_3(A_3^f\nabla_r{\bf F}) \right], \ \ \  {\bf r}\in [0,1]^3,\ \ \  t\geq0.
+\end{align}
+
+At the interface $\Gamma$, suitable physical interface conditions are the continuity of the traction vectors and the continuity of the displacement vectors,
+\begin{equation}\label{interface_cond}
+\frac{A_3^c\nabla_r{\bf C}}{J^c\Lambda^c}= \frac{A_3^f\nabla_r{\bf F}}{J^f\Lambda^f}, \quad {\bf F} = {\bf C},
+\end{equation}
+where
+\begin{equation}\label{lambda_cf}
+\Lambda^c = \big|\nabla_x R^{c,(3)}\big| , \ \ \ \ \Lambda^f = \big|\nabla_x R^{f,(3)}\big|. 
+\end{equation}
+Together with suitable physical boundary conditions, the problem (\ref{elastic_curvi}, \ref{elastic_curvi_f}) is well-posed \cite{duru2014stable, petersson2015wave}.
+
+

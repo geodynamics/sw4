@@ -1,0 +1,166 @@
+\documentclass[review,onefignum,onetabnum]{siamart171218}
+
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{epstopdf}
+%\usepackage{algorithmic}
+\ifpdf
+  \DeclareGraphicsExtensions{.eps,.pdf,.png,.jpg}
+\else
+  \DeclareGraphicsExtensions{.eps}
+\fi
+
+%\usepackage[latin1]{inputenc}
+%\usepackage[english]{babel}
+%\usepackage{amsmath}
+%\usepackage{amssymb}
+%\usepackage{ifpdf}
+%%\ifpdf
+%%  \usepackage[pdftex]{graphicx}
+%  %\usepackage{epstopdf}
+%%\else
+%%  \usepackage[dvips]{graphicx}
+%%\fi
+%%\usepackage{subfigure}
+%%\usepackage{sidecap}
+%\usepackage[pdftitle={The PDF title},
+%  pdfauthor={Your Name},
+%  pdffitwindow=true,
+%  breaklinks=true,
+%  colorlinks=true,
+%  urlcolor=blue,
+%  linkcolor=red,
+%  citecolor=red,  
+%  anchorcolor=red]{hyperref}
+%%\usepackage{pdfpages}
+%%\usepackage{algorithm}
+%%\usepackage{algorithmic}
+%%\usepackage{natbib} % what is this???
+%\usepackage{cases}
+%\usepackage{booktabs}
+%\usepackage{subfig}
+%\usepackage{accents}
+
+\usepackage{color,url}
+\usepackage{enumitem}
+\usepackage{graphicx}
+
+\usepackage{graphicx,psfrag}
+\usepackage{epic}
+%\usepackage{eepic}
+\usepackage{amssymb}
+\usepackage{afterpage}
+\usepackage{epsfig}
+\usepackage{pstricks}
+\usepackage{stmaryrd,url}
+\usepackage{tikz,amsmath}
+\usepackage{ulem}
+\usepackage{algorithm,algpseudocode}
+\usepackage{footmisc}
+\usepackage{bm}
+\usepackage{amsfonts}
+\usepackage{mathrsfs}
+\usepackage[top=1.0in,bottom=1.0in,left=1.0in,right=1.0in]{geometry}
+
+\makeatletter
+\newenvironment{breakablealgorithm}
+{% \begin{breakablealgorithm}
+	\begin{center}
+		\refstepcounter{algorithm}% New algorithm
+		\hrule height.8pt depth0pt \kern2pt% \@fs@pre for \@fs@ruled 
+		\renewcommand{\caption}[2][\relax]{% Make a new \caption
+			{\raggedright\textbf{\ALG@name~\thealgorithm} ##2\par}%
+			\ifx\relax##1\relax % #1 is \relax
+			\addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##2}%
+			\else % #1 is not \relax
+			\addcontentsline{loa}{algorithm}{\protect\numberline{\thealgorithm}##1}%
+			\fi
+			\kern2pt\hrule\kern2pt
+		}
+	}{% \end{breakablealgorithm}
+		\kern2pt\hrule\relax% \@fs@post for \@fs@ruled 
+	\end{center}
+}
+
+\setlength{\topmargin}{-15 mm}
+\setlength{\oddsidemargin}{0 mm}
+\setlength{\evensidemargin}{0 mm}
+\setlength{\textwidth}{160 mm}
+\setlength{\textheight}{225 mm}
+
+\newcommand{\f}{\frac}
+\newcommand{\p}{\partial}
+\newcommand{\bs}{\boldsymbol}
+\newcommand{\wt}{\widetilde}
+%\newcommand\munderbar[1]{\underaccent{\widebar}{#1}}
+\newcommand\ubar[1]{\underline{#1}}
+\newsiamremark{remark}{Remark}
+
+\newcommand{\colorone}[1]{{\color{red} #1}}
+\newcommand{\colortwo}[1]{{\color{blue} #1}}
+
+% Sets running headers as well as PDF title and authors
+\headers{Finite difference methods for elastic wave equation}{L. Zhang, S. Wang and N. A. Petersson}
+\title{Elastic wave propagation in curvilinear coordinates with mesh refinement interfaces by a fourth order finite difference method}
+
+
+\begin{document}
+\author{Lu Zhang\thanks{Department of Applied Physics and Applied Mathematics, Columbia University, New York, NY 10027, USA. \href{mailto:lz2784@columbia.edu}{Email: lz2784@columbia.edu}}\and Siyang Wang\thanks{Division of Applied Mathematics, UKK, M\"alardalen University, V\"aster\aa s, 
+    Sweden. \href{mailto:siyang.wang@mdh.se}{Email: siyang.wang@mdh.se}}\and N. Anders
+  Petersson\thanks{Center for Applied Scientific Computing, Lawrence Livermore National Laboratory,
+    Livermore, CA 94551, USA. \href{mailto:petersson1@llnl.gov}{Email: petersson1@llnl.gov}}}
+\maketitle
+
+
+\begin{abstract}
+We develop a fourth order accurate finite difference method for the three dimensional elastic wave equation in isotropic media with the piecewise smooth material property. In our model, the material property can be discontinuous at curved interfaces. The governing equations are discretized in second order form on curvilinear meshes by using a fourth order finite difference operator satisfying a summation-by-parts property. The method is energy stable and high order accurate. The highlight is that mesh sizes can be chosen according to the velocity structure of the material so that computational efficiency is improved. At the mesh refinement interfaces with hanging nodes, physical interface conditions are imposed by using ghost points and interpolation.  With a fourth order predictor-corrector time integrator, the fully discrete scheme is energy conserving. Numerical experiments are presented to verify the fourth order convergence rate and the energy conserving property. 
+\end{abstract}
+
+\begin{keywords}
+Elastic wave equations, Three space dimension,  Finite difference methods, Summation-by-parts, Non-conforming mesh refinement
+\end{keywords}
+
+\begin{AMS}
+  65M06, 65M12
+\end{AMS}
+
+\input{introduction}
+
+\input{the_anisotropic_elastic_wave_equation}
+
+\input{the_spatial_discretization}
+
+\input{sbp_operators_in_1d}
+
+\input{semi_discretization_of_the_elastic_wave_equation}
+
+\input{energy_estimate}
+
+\input{the_temporal_discretization}
+
+\input{numerical_experiments}
+
+\input{verification_of_convergence_rate}
+
+\input{iterative_methods}
+
+\input{gaussian_source}
+
+\input{energy_conservation_test}
+
+\input{loh1_test}
+
+\input{conclusion}
+
+\input{acknowledgement}
+
+\appendix
+
+\input{appendix}
+
+
+\bibliography{lu}
+\bibliographystyle{siamplain}
+
+
+\end{document}
