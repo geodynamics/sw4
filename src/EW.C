@@ -45,7 +45,9 @@
 // Experimental template based splitting along I,J,K
 #include "curvilinear4sgc.h"
 #endif
+#if defined(SW4_EXPT_3)
 #include "curvilinear4sgcX3.h"
+#endif
 extern __constant__ double cmem_acof[384];
 extern __constant__ double cmem_acof_no_gp[384];
 extern "C" {
