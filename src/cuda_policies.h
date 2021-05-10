@@ -674,7 +674,7 @@ using MPFC_POL_ASYNC = DEFAULT_LOOP3_ASYNC;
 
 // IN EW.C
 using FORCE_LOOP_ASYNC = RAJA::cuda_exec<32, true>;
-using FORCETT_LOOP_ASYNC = RAJA::cuda_exec<1024, true>;
+using FORCETT_LOOP_ASYNC = RAJA::cuda_exec<32, true>;
 
 
 using COPY_KPLANE_EXEC_POL = DEFAULT_LOOP3;

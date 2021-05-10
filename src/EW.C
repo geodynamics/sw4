@@ -45,7 +45,9 @@
 // Experimental template based splitting along I,J,K
 #include "curvilinear4sgc.h"
 #endif
-
+#include "curvilinear4sgcX3.h"
+extern __constant__ double cmem_acof[384];
+extern __constant__ double cmem_acof_no_gp[384];
 extern "C" {
 void tw_aniso_force(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                     int klast, float_sw4* fo, float_sw4 t, float_sw4 om,
@@ -5112,6 +5114,12 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
           ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr, mu_ptr, la_ptr,
           met_ptr, jac_ptr, uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
           m_acof_no_gp, m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op);
+#elif defined(SW4_EXPT_3)
+      //cudaMemcpyToSymbol(tex_acof, m_acof, 384*sizeof(double));
+      curvilinear4sgX3_ci<0>(ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr,
+                        mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr,
+                        onesided_ptr, m_acof, m_bope, m_ghcof, m_acof_no_gp,
+                        m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op);
 #else
       curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr,
                         mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr,
@@ -5159,7 +5167,14 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
               lambdaa_ptr, met_ptr, jac_ptr, uacc_ptr, onesided_ptr,
               m_acof_no_gp, m_bope, m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,
               m_sg_str_x[g], m_sg_str_y[g], nkg, op);
+#elif defined(SW4_EXPT_3)
+	  curvilinear4sgX3_ci<1>(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                            alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
+                            uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope,
+                            m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,
+                            m_sg_str_x[g], m_sg_str_y[g], nkg, op);
 #else
+	  //cudaMemcpyToSymbol(tex_acof, m_acof_no_gp, 384*sizeof(double));
           curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                             alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
                             uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope,

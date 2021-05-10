@@ -31,7 +31,8 @@
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 #ifdef SW4_USE_CMEM
-__constant__ double tex_acof[384];
+__constant__ double cmem_acof[384];
+__constant__ double cmem_acof_no_gp[384];
 #endif
 #include "EW.h"
 #include "Mspace.h"
@@ -69,7 +70,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   check_ghcof_no_gp(m_ghcof_no_gp);
 #ifdef SW4_USE_CMEM
 //std::cout<<"Copying acof to constant device memory\n";
-//SW4_CheckDeviceError(cudaMemcpyToSymbol(tex_acof, m_acof, 384*sizeof(double)));
+SW4_CheckDeviceError(cudaMemcpyToSymbol(cmem_acof, m_acof, 384*sizeof(double)));
+SW4_CheckDeviceError(cudaMemcpyToSymbol(cmem_acof_no_gp, m_acof_no_gp, 384*sizeof(double)));
 #endif
 #ifdef _OPENMP
   //if (omp_pause_resource_all(omp_pause_hard)) {

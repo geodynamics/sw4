@@ -62,6 +62,7 @@ int presetGPUID(int mpi_rank, int local_rank, int local_size) {
     else
       printf("NVML SET CPU AFFINITY CALLED SUCCESFULLY\n");
   }
+    global_variables.device = device;
 
 #endif  // ENDIF ENABLE_CUDA
 
@@ -92,7 +93,7 @@ int presetGPUID(int mpi_rank, int local_rank, int local_size) {
   }
 #endif  // ENDIF ENABLE_HIP
 
-  // printf("Device set to %d \n", global_variables.device);
+   printf("Device set to %d \n", global_variables.device);
 #endif  // ENDIF ENABLE_GPU
   return device;
 }
