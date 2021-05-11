@@ -500,6 +500,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
                      diffs[m]->setTS0Ptr(diffs[0]);
                    }
 
+        diffs[m]->syncSolFloats();
         diffs[m]->writeFile("_adj_l2.h5");
         if(diffs[m]->myPoint()) std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
             << " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;

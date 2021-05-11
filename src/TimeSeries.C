@@ -1814,7 +1814,8 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 // Windowing and component selection
     float_sw4 wghx, wghy, wghz, tau;
     float_sw4 wghx2, wghy2, wghz2;
-    tau = m_dt*2;
+    
+    tau = m_dt*5;
 
 	 wghx = wghy = wghz = wghv;
  

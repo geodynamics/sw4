@@ -590,7 +590,7 @@ for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
 
   
    MPI_Barrier(MPI_COMM_WORLD);
-   glambda.gaussian_smooth(cp_len, 5.);  // default 31
+   glambda.gaussian_smooth(cp_len, 5.);  // default 31 
    gmu.gaussian_smooth(cs_len, 3.);      // default 21
    MPI_Barrier(MPI_COMM_WORLD);
 
