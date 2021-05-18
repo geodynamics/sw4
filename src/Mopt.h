@@ -82,6 +82,7 @@ class Mopt
    double *m_sfm; // scale factors, distributed
    double *m_xs0; // initial material perturbation, shared
    double *m_xm0; // initial material perturbation, distributed
+   bool m_write_dfm;
 };
 
 #endif

@@ -70,7 +70,7 @@ class Parallel_IO
 {
 public:
    Parallel_IO( int iwrite, int pfs, int globalsizes[3], int localsizes[3],
-	    int starts[3], int nptsbuf=8000000, int padding=0 );
+                int starts[3], MPI_Comm ewcomm, int nptsbuf=8000000, int padding=0 );
    void write_array( int* fid, int nc, void* array, off_t pos0, char* type );
 #ifdef USE_HDF5
    void write_array_hdf5( const char* fname, const char *gname, const char *dname, int nc, void* array, hsize_t pos0, char* type );
@@ -100,12 +100,14 @@ private:
    int m_csteps;
    int* m_writer_ids;
    int ni, nj, nk, nig, njg, nkg, oi, oj, ok;
-   int m_zerorank_in_commworld;
+   int m_zerorank_in_commworld, m_gproc;
+
+
    Byteswapper m_bswap;
 
    MPI_Comm m_write_comm; 
    MPI_Comm m_data_comm;
-
+   MPI_Comm m_ewcomm;
    Comminfo m_isend;
    Comminfo m_irecv;
 };

@@ -41,7 +41,8 @@ public:
    ssize_t local_index( size_t ind_global );
    void set_scalefactors( int nmpars, double* sfs, double rho_ref, double mu_ref, double lambda_ref, 
 			  double vs_ref, double vp_ref );
-   int get_varcase(){return 4;}
+   int get_varcase(){return 4;};
+   void write_dfm_hdf5(double* dfm, std::string fname,  MPI_Comm comm) {printf("%s not supported!\n", __func__);}
 };
 
 #endif

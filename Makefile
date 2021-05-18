@@ -210,17 +210,18 @@ endif
 ifeq ($(hdf5),yes)
    # PROVIDE HDF5ROOT in configs/make.xyz, e.g.
    CXXFLAGS  += -I$(HDF5ROOT)/include -DUSE_HDF5
-   EXTRA_LINK_FLAGS += -L$(HDF5ROOT)/lib -lhdf5_hl -lhdf5
+   # EXTRA_LINK_FLAGS += -L$(HDF5ROOT)/lib -lhdf5_hl -lhdf5
+   linklibs += -L$(HDF5ROOT)/lib -lhdf5
 endif
 
 ifeq ($(zfp),yes)
    CXXFLAGS  += -I$(H5ZROOT)/include -I$(ZFPROOT)/include -DUSE_ZFP
-   EXTRA_LINK_FLAGS += -L$(H5ZROOT)/lib -L$(ZFPROOT)/lib -lh5zzfp -lzfp 
+   linklibs += -L$(H5ZROOT)/lib -L$(ZFPROOT)/lib -lh5zzfp -lzfp 
 endif
 
 ifeq ($(sz),yes)
    CXXFLAGS  += -I$(SZROOT)/include -DUSE_SZ
-   EXTRA_LINK_FLAGS += -L$(SZROOT)/lib -lSZ -lzlib -lzstd -lhdf5sz
+   linklibs += -L$(SZROOT)/lib -lSZ -lzlib -lzstd -lhdf5sz
 endif
 
 ifdef EXTRA_LINK_FLAGS

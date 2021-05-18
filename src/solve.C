@@ -101,6 +101,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       }
    }
 
+   int eglobal=local_to_global_event(event);
    int ifirst, ilast, jfirst, jlast, kfirst, klast;
    for( int g = 0; g <mNumberOfGrids; g++ )
    {
@@ -149,40 +150,12 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 
 // Setup curvilinear grid refinement interface
    for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
-     m_cli2[g-mNumberOfCartesianGrids]->init_arrays( m_sg_str_x, m_sg_str_y);
-
-//   bool ciold = false;
-//   if( mNumberOfGrids > mNumberOfCartesianGrids+1 )
-//   {
-     //      if( ciold )
-     //      {
-     //         m_clInterface.resize(mNumberOfGrids-mNumberOfCartesianGrids-1);
-     //         for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
-     //         {
-     //            m_clInterface[g-mNumberOfCartesianGrids]= new CurvilinearInterface( g, this );
-     //            m_clInterface[g-mNumberOfCartesianGrids]->init_arrays( a_Mu, a_Lambda, a_Rho, mMetric, mJ );
-     //         }
-     //      }
-     //      else
-     //      {
-   //         m_cli2.resize(mNumberOfGrids-mNumberOfCartesianGrids-1);
-   //         for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
-   //         {
-   //            m_cli2[g-mNumberOfCartesianGrids] = new CurvilinearInterface2( g, this );
-   //            m_cli2[g-mNumberOfCartesianGrids]->init_arrays( m_sg_str_x, m_sg_str_y);
-   //         }
-	 //      }
-   //   }
-   //      for( int g=0 ; g < mNumberOfGrids ; g++ )
-   //	{
-   //	  U[g].set_to_random();
-   //	}
-      //      cli2[0].test2(this, 1, U );
+      m_cli2[g-mNumberOfCartesianGrids]->init_arrays( m_sg_str_x, m_sg_str_y);
 
 // Allocate boundary sides
    for( int g=0 ; g < mNumberOfGrids ; g++ )   {
       stringstream procno;
-      procno << m_myRank << "." << g ; 
+      procno << m_myRank << "." << g << ".ev" << eglobal; 
      //     string logname(getlogin());
 
 // Local disks on LC seem to be setup with directory /tmp/username when user username starts a job
@@ -192,27 +165,24 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       //     string upred_name = "/tmp/" + logname + "/upred" + procno.str() + ".bin";
       //     string ucorr_name = "/tmp/" + logname + "/ucorr" + procno.str() + ".bin";
       int imin, imax, jmin, jmax, kmax;
-      if( m_iStartAct[g] <= m_iEndAct[g] && m_iStartAct[g] <= m_iEndAct[g] && m_iStartAct[g] <= m_iEndAct[g]  )
-      {
-	 imin = m_iStartAct[g]-1;
-	 imax = m_iEndAct[g]+1;
-	 jmin = m_jStartAct[g]-1;
-	 jmax = m_jEndAct[g]+1;
-	 kmax = m_kEndAct[g]+1;
-      }
-      else
-      {
-	// empty active domain
-	 imin =  0;
-	 imax = -1;
-	 jmin =  0;
-	 jmax = -1;
-	 kmax = -1;
-      }
+      imin = m_iStartActGlobal[g]-1;
+      imax = m_iEndActGlobal[g]+1;
+      jmin = m_jStartActGlobal[g]-1;
+      jmax = m_jEndActGlobal[g]+1;
+      kmax = m_kEndActGlobal[g]+1;
+      int npad[6]={0,0,0,0,0,0};
+      if( m_iStart[g] > 1 )
+         npad[0] = m_ppadding;
+      if( m_iEnd[g] < m_global_nx[g] )
+         npad[1] = m_ppadding;
+      if( m_jStart[g] > 1 )
+         npad[2] = m_ppadding;
+      if( m_jEnd[g] < m_global_ny[g] )
+         npad[3] = m_ppadding;
       if( save_sides )
       {
-	 Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt );
-	 Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt );
+	 Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt,npad );
+	 Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt,npad );
      //     cout << "sides saved for i=[" << imin << " , " << imax << "] j=[" << jmin << " , " << jmax << "] k=[" << 1 << " , " << kmax << "]"<< endl;
 	 size_t maxsizeloc = Upred_saved_sides[g]->get_noofpoints();
 	 size_t maxsize;
@@ -221,11 +191,11 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 	 MPI_Type_size(MPI_LONG_LONG,&mpisizelonglong );
 	 MPI_Type_size(MPI_INT,&mpisizeint );
 	 if( sizeof(size_t) == mpisizelong )
-	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG, MPI_MAX, MPI_COMM_WORLD );
+	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG, MPI_MAX, m_1d_communicator );
 	 else if( sizeof(size_t) == mpisizelonglong )
-	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG_LONG, MPI_MAX, MPI_COMM_WORLD );
+	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG_LONG, MPI_MAX, m_1d_communicator );
 	 else if( sizeof(size_t) == mpisizeint )
-	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_INT, MPI_MAX, m_1d_communicator );
 	 if( !mQuiet && mVerbose >= 5 && proc_zero() )
 	    cout << "  Temporary files " << upred_name << " and " << ucorr_name << " will hold " <<
 	       Upred_saved_sides[g]->get_noofpoints() << " values each, for each time step";
@@ -235,7 +205,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    }
 
 // Set the number of time steps, allocate the recording arrays, and set reference time in all time series objects  
-#pragma omp parallel for
+/* #pragma omp parallel for */
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
   {
      a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps[event]+1, mTstart, mDt); // AP: added one to mNumber...
@@ -310,8 +280,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
        
 //building the file name...
        string filename;
-       if( mPath[event] != "." )
-	 filename += mPath[event];
+       if( mPath[eglobal] != "." )
+	 filename += mPath[eglobal];
        filename += "g1.dat";	 
 
        FILE *tf=fopen(filename.c_str(),"w");
@@ -356,8 +326,16 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   if( m_check_point->do_restart() )
   {
      double timeRestartBegin = MPI_Wtime();
-     m_check_point->read_checkpoint( t, beginCycle, Um, U,
-				     AlphaVEm, AlphaVE );
+     if (!m_check_point->useHDF5())
+        m_check_point->read_checkpoint( t, beginCycle, Um, U, AlphaVEm, AlphaVE );
+#ifdef USE_HDF5
+     else
+        m_check_point->read_checkpoint_hdf5( t, beginCycle, Um, U, AlphaVEm, AlphaVE );
+#else
+     else
+         if (proc_zero())
+             cout << "Configured to restart with HDF5 but SW4 is not compiled with HDF5!" << endl;
+#endif
 // tmp
      if (proc_zero())
         printf("After reading checkpoint data: beginCycle=%d, t=%e\n", beginCycle, t);
@@ -514,7 +492,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       a_TimeSeries[tsi]->resetHDF5file();
     if(m_myRank == 0 && !m_check_point->do_restart()) 
       createTimeSeriesHDF5File(a_TimeSeries, mNumberOfTimeSteps[event]+1, mDt, "");
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(m_1d_communicator);
   }
 #endif
 
@@ -537,12 +515,12 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 // save any images for cycle = 0 (initial data), or beginCycle-1 (checkpoint restart)
   update_images( beginCycle-1, t, U, Um, Up, a_Rho, a_Mu, a_Lambda, a_Sources, 1 );
   for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
-    mImage3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[event], mZ );
+    mImage3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[eglobal], mZ );
 
   int gg = mNumberOfGrids-1; // top grid
   for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ ) {
     mESSI3DFiles[i3]->set_ntimestep(mNumberOfTimeSteps[event]);
-    mESSI3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mPath[event], mZ[gg] );// not verified for several cuvilinear grids
+    mESSI3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mPath[eglobal], mZ[gg] );// not verified for several cuvilinear grids
   }
 
 // NOTE: time stepping loop starts at currentTimeStep = beginCycle; ends at currentTimeStep <= mNumberOfTimeSteps
@@ -551,7 +529,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 // open file for saving norm of error
   if ( (m_lamb_test || m_point_source_test || m_rayleigh_wave_test || m_error_log) && proc_zero() )
   {
-    string path=getPath(event);
+    string path=getPath(eglobal);
 
     stringstream fileName;
     if( path != "." )
@@ -950,13 +928,13 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     update_images( currentTimeStep, t, Up, U, Um, a_Rho, a_Mu, a_Lambda, a_Sources, currentTimeStep == mNumberOfTimeSteps[event] );
     for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
       mImage3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, 
-				       mQp, mQs, mPath[event], mZ ); // mRho, a_Mu, mLambda occur twice because we don't use gradRho etc.
+				       mQp, mQs, mPath[eglobal], mZ ); // mRho, a_Mu, mLambda occur twice because we don't use gradRho etc.
 
     // Update the ESSI hdf5 data
     double time_essi_tmp=MPI_Wtime();
     gg = mNumberOfGrids-1; // top grid
     for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
-      mESSI3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mPath[event], mZ[gg] ); // not verified for several cuvilinear grids
+      mESSI3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mPath[eglobal], mZ[gg] ); // not verified for several cuvilinear grids
     double time_essi=MPI_Wtime()-time_essi_tmp;
 
 // save the current solution on receiver records (time-derivative require Up and Um for a 2nd order
@@ -985,11 +963,21 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     if( m_check_point->timeToWrite( t, currentTimeStep, mDt ) )
     {
        double time_chkpt=MPI_Wtime();
-       m_check_point->write_checkpoint( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
+
+       if (!m_check_point->useHDF5())
+          m_check_point->write_checkpoint( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
+#ifdef USE_HDF5
+       else
+          m_check_point->write_checkpoint_hdf5( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
+#else
+     else
+         if (proc_zero())
+             cout << "Configured to checkpoint with HDF5 but SW4 is not compiled with HDF5!" << endl;
+#endif
        double time_chkpt_tmp =MPI_Wtime()-time_chkpt;
        if( m_output_detailed_timing )
        {
-	  MPI_Allreduce( &time_chkpt_tmp, &time_chkpt, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+	  MPI_Allreduce( &time_chkpt_tmp, &time_chkpt, 1, MPI_DOUBLE, MPI_MAX, m_1d_communicator );
 	  if( m_myRank == 0 )
 	     cout << "Wallclock time to write check point file " << time_chkpt << " seconds " << endl;
        }
@@ -1002,7 +990,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 	     double time_chkpt_timeseries_tmp=MPI_Wtime()-time_chkpt_timeseries;
        if( m_output_detailed_timing )
        {
-	        MPI_Allreduce( &time_chkpt_timeseries_tmp, &time_chkpt_timeseries, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+	        MPI_Allreduce( &time_chkpt_timeseries_tmp, &time_chkpt_timeseries, 1, MPI_DOUBLE, MPI_MAX, m_1d_communicator );
 	        if( m_myRank == 0 )
 	          cout << "Wallclock time to write all checkpoint time series files "
               << time_chkpt_timeseries << " seconds " << endl;
@@ -1093,7 +1081,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
        hdf5_time += mESSI3DFiles[i3]->getHDF5Timings();
      // Max over all rank
      double max_hdf5_time;
-     MPI_Reduce( &hdf5_time, &max_hdf5_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD );
+     MPI_Reduce( &hdf5_time, &max_hdf5_time, 1, MPI_DOUBLE, MPI_MAX, 0, m_1d_communicator );
      if( m_myRank == 0 && max_hdf5_time > 0.1)
        cout << "  ==> Max wallclock time to open/write ESSI hdf5 output is " 
          << max_hdf5_time << " seconds " << endl;
@@ -1105,7 +1093,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    double total_time = 0.0, all_total_time;
    for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
       total_time += mImageFiles[fIndex]->get_write_time();
-   MPI_Reduce(&total_time, &all_total_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+   MPI_Reduce(&total_time, &all_total_time, 1, MPI_DOUBLE, MPI_MAX, 0, m_1d_communicator);
    if( m_myRank == 0 && all_total_time > 0.1)
      cout << "  ==> Max wallclock time to write images is " << all_total_time << " seconds." << endl;
 
@@ -1116,7 +1104,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
      reverse_setup_viscoelastic();
 
    for( int ii = 0 ; ii < mSfiles.size() ; ii++ )
-     mSfiles[ii]->force_write_image( t, mNumberOfTimeSteps[event], Up, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[event], mZ ); 
+     mSfiles[ii]->force_write_image( t, mNumberOfTimeSteps[event], Up, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[eglobal], mZ ); 
 
 #endif
 
@@ -1197,7 +1185,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    for( int s = 0 ; s < point_sources.size(); s++ )
       delete point_sources[s];
 
-   MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Barrier(m_1d_communicator);
 
 } // end EW::solve()
 

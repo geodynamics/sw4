@@ -108,9 +108,9 @@ void EW::setupRun( vector<vector<Source*> > & a_GlobalUniqueSources )
   // if (mVerbose && proc_zero() )
   //   cout << " *** Testing = " << m_testing << endl;
     
-  if( mVerbose && proc_zero() )
+  if( mVerbose && proc_zero_evzero() )
   {
-    cout << "  Using Bjorn's fast (parallel)" << " IO library" << endl;
+     //    cout << "  Using Bjorn's fast (parallel)" << " IO library" << endl;
     if (m_pfs)
     {
       cout << "Assuming a PARALLEL file system" << endl;
@@ -268,7 +268,7 @@ void EW::setupRun( vector<vector<Source*> > & a_GlobalUniqueSources )
 
 //  }
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(m_1d_communicator);
 
   if( m_output_detailed_timing )
      time_measure[2] = MPI_Wtime();
@@ -308,10 +308,12 @@ void EW::setupRun( vector<vector<Source*> > & a_GlobalUniqueSources )
 //  int beginCycle = 1;
 
 // Initialize IO
-  for( int e=0 ; e < m_nevent ; e++ )
-     create_directory(mPath[e]);
-
-  if (proc_zero())
+  for( int eg=0 ; eg < mPath.size(); eg++ )
+  {
+     if( event_is_in_proc(eg))
+        create_directory(mPath[eg]);
+  }
+  if (proc_zero_evzero())
   {
     double lat[4],lon[4];
     double xmax = m_global_xmax;
@@ -352,7 +354,7 @@ void EW::setupRun( vector<vector<Source*> > & a_GlobalUniqueSources )
   if( !m_anisotropic )
   {
      compute_minvsoverh( minvsoh );
-     if (proc_zero())
+     if (proc_zero_evzero())
      {
 	printf("\n***** PPW = minVs/h/maxFrequency ********\n");
 	for (int g=0; g<mNumberOfCartesianGrids; g++)
@@ -402,7 +404,7 @@ void EW::setupRun( vector<vector<Source*> > & a_GlobalUniqueSources )
 //         m_clInterface[g-mNumberOfCartesianGrids]= new CurvilinearInterface( g, this );
 //   }
 
-  if( mVerbose && proc_zero() )
+  if( mVerbose && proc_zero_evzero() )
     cout << "  Assigned material properties" << endl;
 
   if( m_output_detailed_timing )
@@ -410,13 +412,6 @@ void EW::setupRun( vector<vector<Source*> > & a_GlobalUniqueSources )
 
   // Initialize check point object
   m_check_point->setup_sizes();
-  // Coordinate the dump/cycleInterval for checkpointing with ESSI output
-  if (m_check_point->do_checkpointing())
-  {
-    int dumpInterval = m_check_point->get_checkpoint_cycle_interval();
-    for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
-      mESSI3DFiles[i3]->set_dump_interval(dumpInterval);
-  }
 
   if( m_output_detailed_timing )
      time_measure[7] = MPI_Wtime();
@@ -441,7 +436,7 @@ void EW::setupRun( vector<vector<Source*> > & a_GlobalUniqueSources )
 
 // Initialize image files: set time, tell images about grid hierarchy.
   initialize_image_files();
-  if( mVerbose && proc_zero() )
+  if( mVerbose && proc_zero_evzero() )
     cout << "*** Initialized Images" << endl;
 
   if( m_output_detailed_timing )
@@ -497,7 +492,7 @@ void EW::setupRun( vector<vector<Source*> > & a_GlobalUniqueSources )
      times[9] = time_measure[10] - time_measure[9];
      
      double* time_sums =new double[10*no_of_procs()];
-     MPI_Gather( times, 10, MPI_DOUBLE, time_sums, 10, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+     MPI_Gather( times, 10, MPI_DOUBLE, time_sums, 10, MPI_DOUBLE, 0, m_1d_communicator );
      bool printavgs = true;
      if( !mQuiet && proc_zero() )
      {
@@ -637,7 +632,7 @@ void EW::preprocessSources( vector<vector<Source*> > & a_GlobalUniqueSources )
 // find the epicenter, i.e., the location of the source with the lowest value of t0
 
 // get the epicenter
-       for( int e=0 ; e < m_nevent ; e++ )
+       for( int e=0 ; e < a_GlobalUniqueSources.size() ; e++ )
        {
 	  compute_epicenter( a_GlobalUniqueSources[e], e );
       
@@ -669,56 +664,56 @@ void EW::preprocessSources( vector<vector<Source*> > & a_GlobalUniqueSources )
 	//   printf("Number of sources: %i\n", nSources);
 
 // allocate a temp array for the mu value at all source locations
-	float_sw4 *mu_source_loc = new float_sw4[nSources];
-	float_sw4 *mu_source_global = new float_sw4[nSources];
+             float_sw4 *mu_source_loc = new float_sw4[nSources];
+             float_sw4 *mu_source_global = new float_sw4[nSources];
 // initialize
 
 #pragma omp parallel for
-	for (int s=0; s<nSources; s++)
-	{
-	  mu_source_loc[s]=-1.0;
-	  mu_source_global[s]=-1.0;
-	}
+             for (int s=0; s<nSources; s++)
+             {
+                mu_source_loc[s]=-1.0;
+                mu_source_global[s]=-1.0;
+             }
 	
 // fill in the values that are known to this processor
 #pragma omp parallel for
-	for (int s=0; s<nSources; s++)
-	  if (a_GlobalUniqueSources[e][s]->myPoint())
-	  {
-	    int is=a_GlobalUniqueSources[e][s]->m_i0;
-	    int js=a_GlobalUniqueSources[e][s]->m_j0;
-	    int ks=a_GlobalUniqueSources[e][s]->m_k0;
-	    int gs=a_GlobalUniqueSources[e][s]->m_grid;
+             for (int s=0; s<nSources; s++)
+                if (a_GlobalUniqueSources[e][s]->myPoint())
+                {
+                   int is=a_GlobalUniqueSources[e][s]->m_i0;
+                   int js=a_GlobalUniqueSources[e][s]->m_j0;
+                   int ks=a_GlobalUniqueSources[e][s]->m_k0;
+                   int gs=a_GlobalUniqueSources[e][s]->m_grid;
 	    
 // tmp
-	    mu_source_loc[s] = mMu[gs](is,js,ks); 
+                   mu_source_loc[s] = mMu[gs](is,js,ks); 
 // printf("Proc #%i, source#%i, i=%i, j=%i, k=%i, g=%i, mu=%e\n", getRank(), s, is, js, ks, gs, mu_source_loc[s]);
-	  }
+                }
 // take max over all procs: communicate 
-	MPI_Allreduce( mu_source_loc, mu_source_global, nSources, m_mpifloat, MPI_MAX, m_cartesian_communicator);
+             MPI_Allreduce( mu_source_loc, mu_source_global, nSources, m_mpifloat, MPI_MAX, m_cartesian_communicator);
 
-	if (!mQuiet && mVerbose >= 3 && proc_zero() )
-	  printf(" Done communicating shear modulus to all procs\n");
+             if (!mQuiet && mVerbose >= 3 && proc_zero() )
+                printf(" Done communicating shear modulus to all procs\n");
 // tmp
 	// for (s=0; s<nSources; s++)
 	//   printf("Proc #%i, source#%i, mu=%e\n", getRank(), s, mu_source_global[s]);
 
 // scale all moments components
 #pragma omp parallel for
-	for (int s=0; s<nSources; s++)
-	  if (a_GlobalUniqueSources[e][s]->get_CorrectForMu())
-	  {
-	     float_sw4 mu, mxx, mxy, mxz, myy, myz, mzz;
-	     mu = mu_source_global[s];
-	     a_GlobalUniqueSources[e][s]->getMoments( mxx, mxy, mxz, myy, myz, mzz);
-	     a_GlobalUniqueSources[e][s]->setMoments( mu*mxx, mu*mxy, mu*mxz, mu*myy, mu*myz, mu*mzz);
+             for (int s=0; s<nSources; s++)
+                if (a_GlobalUniqueSources[e][s]->get_CorrectForMu())
+                {
+                   float_sw4 mu, mxx, mxy, mxz, myy, myz, mzz;
+                   mu = mu_source_global[s];
+                   a_GlobalUniqueSources[e][s]->getMoments( mxx, mxy, mxz, myy, myz, mzz);
+                   a_GlobalUniqueSources[e][s]->setMoments( mu*mxx, mu*mxy, mu*mxz, mu*myy, mu*myz, mu*mzz);
 // lower the flag
-	     a_GlobalUniqueSources[e][s]->set_CorrectForMu(false);
-	  }
+                   a_GlobalUniqueSources[e][s]->set_CorrectForMu(false);
+                }
 // cleanup
-	delete[] mu_source_loc;
-	delete[] mu_source_global;
-      } // end if need_mu_corr
+             delete[] mu_source_loc;
+             delete[] mu_source_global;
+          } // end if need_mu_corr
       
       
 // limit max freq parameter (right now the raw freq parameter in the time function) Either rad/s or Hz depending on the time fcn
@@ -733,43 +728,42 @@ void EW::preprocessSources( vector<vector<Source*> > & a_GlobalUniqueSources )
       // } // end limit_source_freq
      
 // check how deep the sources go
-      float_sw4 zMax=m_global_zmin, zMaxGlobal, zMin=m_global_zmax, zMinGlobal;
+          float_sw4 zMax=m_global_zmin, zMaxGlobal, zMin=m_global_zmax, zMinGlobal;
 #pragma omp parallel for reduction(max:zMax) reduction(min:zMin)
-      for( int s=0; s < a_GlobalUniqueSources[e].size(); s++ ) 
-      {
-	float_sw4 zSource = a_GlobalUniqueSources[e][s]->getZ0( );
-	if (zSource > zMax)
-	  zMax = zSource;
-	if (zSource < zMin)
-	  zMin = zSource;
-      }
+          for( int s=0; s < a_GlobalUniqueSources[e].size(); s++ ) 
+          {
+             float_sw4 zSource = a_GlobalUniqueSources[e][s]->getZ0( );
+             if (zSource > zMax)
+                zMax = zSource;
+             if (zSource < zMin)
+                zMin = zSource;
+          }
 // compute global max over all processors
-      MPI_Allreduce( &zMax, &zMaxGlobal, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator);
-      MPI_Allreduce( &zMin, &zMinGlobal, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
-      if (!mQuiet && mVerbose >= 1 && proc_zero() )
-	printf(" Min source z-level: %e, max source z-level: %e\n", zMinGlobal, zMaxGlobal);
+          MPI_Allreduce( &zMax, &zMaxGlobal, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator);
+          MPI_Allreduce( &zMin, &zMinGlobal, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
+          if (!mQuiet && mVerbose >= 1 && proc_zero() )
+             printf(" Min source z-level: %e, max source z-level: %e\n", zMinGlobal, zMaxGlobal);
 
 // Need to set the frequency to 1/dt for Dirac source
 #pragma omp parallel for
-      for( int s=0 ; s  < a_GlobalUniqueSources[e].size(); s++ )
-	 if( a_GlobalUniqueSources[e][s]->getTfunc() == iDirac )
-	    a_GlobalUniqueSources[e][s]->setFrequency( 1.0/mDt );
+          for( int s=0 ; s  < a_GlobalUniqueSources[e].size(); s++ )
+             if( a_GlobalUniqueSources[e][s]->getTfunc() == iDirac )
+                a_GlobalUniqueSources[e][s]->setFrequency( 1.0/mDt );
 
-      if (m_prefilter_sources)
-      {
+          if (m_prefilter_sources)
+          {
 // tell the filter about the time step and compute the second order sections
-	m_filter_ptr->computeSOS( mDt );
+             m_filter_ptr->computeSOS( mDt );
 
 // output details about the filter
-	if (mVerbose>=3 && proc_zero() )
-           cout << *m_filter_ptr;
+             if (mVerbose>=3 && proc_zero() )
+                cout << *m_filter_ptr;
 
-	if (!getQuiet() && proc_zero() )
-        {
-           printf("Filter precursor = %e\n", m_filter_ptr->estimatePrecursor() );
-        }
-        
-      }
+             if (!getQuiet() && proc_zero() )
+             {
+                printf("Filter precursor = %e\n", m_filter_ptr->estimatePrecursor() );
+             }
+          }
       
 // // Modify the time functions if prefiltering is enabled
 	
@@ -816,17 +810,14 @@ void EW::preprocessSources( vector<vector<Source*> > & a_GlobalUniqueSources )
 //       }
 
 // // TODO: check that t0 is large enough even when prefilter is NOT used
-
-      if (proc_zero())
-	 saveGMTFile( a_GlobalUniqueSources, e );
+          if (proc_zero())
+             saveGMTFile( a_GlobalUniqueSources, e );
        }
     } // end normal seismic setup
 
   } // end if ( !m_twilight_forcing && !m_energy_test && !m_rayleigh_wave_test ) 
    
   mSourcesOK = true;
-
-
 } // end preprocessSources
 
 //-----------------------------------------------------------------------
@@ -943,7 +934,7 @@ void EW::set_materials()
 	  lastAllCoveringBlock=b;
 
 // tmp
-    if (proc_zero())
+    if (proc_zero_evzero())
     {
       if (lastAllCoveringBlock == 0)
 	cout << "Considering all material blocks" << endl;
@@ -1598,10 +1589,10 @@ void EW::check_anisotropic_material( vector<Sarray>& rho, vector<Sarray>& c )
    rhomaxloc = rhomax;
    eigminloc = eigmin;
    eigmaxloc = eigmax;
-   MPI_Allreduce( &rhominloc, &rhomin, 1, m_mpifloat, MPI_MIN, MPI_COMM_WORLD );
-   MPI_Allreduce( &rhomaxloc, &rhomax, 1, m_mpifloat, MPI_MAX, MPI_COMM_WORLD );
-   MPI_Allreduce( &eigminloc, &eigmin, 1, m_mpifloat, MPI_MIN, MPI_COMM_WORLD );
-   MPI_Allreduce( &eigmaxloc, &eigmax, 1, m_mpifloat, MPI_MAX, MPI_COMM_WORLD );
+   MPI_Allreduce( &rhominloc, &rhomin, 1, m_mpifloat, MPI_MIN, m_1d_communicator );
+   MPI_Allreduce( &rhomaxloc, &rhomax, 1, m_mpifloat, MPI_MAX, m_1d_communicator );
+   MPI_Allreduce( &eigminloc, &eigmin, 1, m_mpifloat, MPI_MIN, m_1d_communicator );
+   MPI_Allreduce( &eigmaxloc, &eigmax, 1, m_mpifloat, MPI_MAX, m_1d_communicator );
 
    if( proc_zero() )
    {
@@ -1647,7 +1638,7 @@ void EW::create_directory(const string& path)
    }
   // Let processor 0 finish first!
    cout.flush();  cerr.flush();
-   MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Barrier(m_1d_communicator);
 
 //
 // AP: The following stat() and access() calls appear unneccessary because
@@ -1667,7 +1658,7 @@ void EW::create_directory(const string& path)
 //-----------------------------------------------------------------------
 void EW::computeDT()
 {
-  if (!mQuiet && mVerbose >= 1 && proc_zero())
+  if (!mQuiet && mVerbose >= 1 && proc_zero_evzero())
   {
     printf("*** computing the time step ***\n");
   }
@@ -1804,7 +1795,7 @@ void EW::computeDT()
       }
     }
 
-    if (!mQuiet && (mVerbose >= 1 || mOrder<4) && proc_zero())
+    if (!mQuiet && (mVerbose >= 1 || mOrder<4) && proc_zero_evzero())
     {
       cout << "TIME accuracy order=" << mOrder << " CFL=" << mCFL << " prel. time step=" << mDt << endl;
     }
@@ -2034,7 +2025,7 @@ void EW::setup_supergrid( )
     }
   }
 
-  if (mVerbose && proc_zero() && m_use_supergrid)
+  if (mVerbose && proc_zero_evzero() && m_use_supergrid)
     cout << "Detected at least one boundary with supergrid conditions" << endl;
   
   int gTop = mNumberOfCartesianGrids-1;

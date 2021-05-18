@@ -35,7 +35,7 @@ Mopt::Mopt( EW* a_ew )
    m_misfitscale = 1;
    m_vsscale     = 1;
    m_vpscale     = 1;
-   MPI_Comm_rank( MPI_COMM_WORLD, &m_myrank );
+   MPI_Comm_rank( m_ew->m_1d_communicator, &m_myrank );
    m_optmethod = 1;
    m_nbfgs_vectors = 10;
    m_ihess_guess = 2;
@@ -75,6 +75,7 @@ Mopt::Mopt( EW* a_ew )
    m_mpcart0 = NULL;
    m_mp = NULL;
    m_nsteps_in_memory = 10;
+   m_write_dfm = false;
 }  
 
 //-----------------------------------------------------------------------
@@ -82,7 +83,7 @@ bool Mopt::parseInputFileOpt( std::string filename )
 {
    char buffer[256];
    ifstream inputFile;
-   MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Barrier(m_ew->m_1d_communicator);
 
    inputFile.open(filename.c_str());
    if (!inputFile.is_open())
@@ -124,12 +125,12 @@ bool Mopt::parseInputFileOpt( std::string filename )
 	    processMfileio( buffer );
          else if( startswith("regularize",buffer) )
 	    processMregularize( buffer );
-         else if( startswith("refinement",buffer) )
-	    CHECK_INPUT(false,"ERROR: sw4mopt does not support mesh refinement");
+         //         else if( startswith("refinement",buffer) )
+         //	    CHECK_INPUT(false,"ERROR: sw4mopt does not support mesh refinement");
       }
    }
    inputFile.close();
-   MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Barrier(m_ew->m_1d_communicator);
    m_ew->create_directory(m_path);
    m_mp->set_path(m_path);
 
@@ -212,7 +213,7 @@ void Mopt::processMaterialParCart( char* buffer )
    token = strtok(NULL, " \t");
 
    bool vel = false, vponly=false, vsvp=false, mparcartfile =false;
-   //   bool shared=false;
+   bool shared=false;
    int nx=3, ny=3, nz=3, init=0;
    double ratio=1.732, gamma=1, amp=0.1, omega=2*M_PI;
    char file[256]= " \0"; //shut up memory checker
@@ -281,13 +282,13 @@ void Mopt::processMaterialParCart( char* buffer )
          token += 6;
          omega = atof(token);
       }
-      //      else if( startswith("shared=",token) )
-      //      {
-      //         token += 7;
-      //         shared = strcmp(token,"1") == 0   ||
-      //                  strcmp(token,"yes") == 0 || 
-      //                  strcmp(token,"on") == 0;
-      //      }
+      else if( startswith("shared=",token) )
+      {
+         token += 7;
+         shared = strcmp(token,"1") == 0   ||
+                  strcmp(token,"yes") == 0 || 
+                  strcmp(token,"on") == 0;
+      }
       else
       {
 	 badOption("mparcart", token);
@@ -302,6 +303,9 @@ void Mopt::processMaterialParCart( char* buffer )
    if( m_mp != NULL )
       cout << "Error: more than one material parameterization command" << endl;
 
+   // Make sure the material grid is coarser than the global grid
+   VERIFY2( nx <= m_ew->m_global_nx[0] && ny <= m_ew->m_global_ny[0] && nz <= m_ew->m_global_nz[0], "MaterialParCart: The material grid must be coarser than the global grid")
+
    int varcase=1;
    if( vel )
       varcase=2;
@@ -309,19 +313,19 @@ void Mopt::processMaterialParCart( char* buffer )
       varcase=3;
    else if( vponly )
       varcase=4;
-   //   if( !shared )
+   if( !shared )
       m_mp = new MaterialParCart( m_ew, nx, ny, nz, init, varcase, file, amp, omega );
-      //   else
-      //   {
-      //   if (vel)
-      //      m_mp = new MaterialParCartesianVels( m_ew, nx, ny, nz, init, file );
-      //   else if( vponly )
-      //      m_mp = new MaterialParCartesianVp( m_ew, nx, ny, nz, init, file, ratio, gamma, true );
-      //   else if( vsvp )
-      //      m_mp = new MaterialParCartesianVsVp( m_ew, nx, ny, nz, init, file );
-      //   else
-      //      m_mp = new MaterialParCartesian( m_ew, nx, ny, nz, init, file );
-      //   }
+   else
+   {
+      if (vel)
+         m_mp = new MaterialParCartesianVels( m_ew, nx, ny, nz, init, file );
+      else if( vponly )
+         m_mp = new MaterialParCartesianVp( m_ew, nx, ny, nz, init, file, ratio, gamma, true );
+      else if( vsvp )
+         m_mp = new MaterialParCartesianVsVp( m_ew, nx, ny, nz, init, file );
+      else
+         m_mp = new MaterialParCartesian( m_ew, nx, ny, nz, init, file );
+   }
    // use for material projection only:
    m_mpcart0 = new MaterialParCartesian( m_ew, nx, ny, nz, 0, "");
 } // end processMaterialParCart
@@ -359,6 +363,8 @@ void Mopt::processMrun( char* buffer )
 	    m_opttest = 7;
 	 else if( strcmp(token,"testmtrl") == 0 )
 	    m_opttest = 8;
+	 else if( strcmp(token,"computegrad") == 0 )
+	    m_opttest = 9;
 	 else if( strcmp(token,"minvert+src11") == 0 )
 	 {
 	    m_opttest = 1;
@@ -422,15 +428,58 @@ void Mopt::processMrun( char* buffer )
       {
 	 token += 10;
 	 int n = strlen(token);
-	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 )
+	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 || strncmp("1",token,n)== 0)
 	    m_do_profiling = true;
       }
       else if( startswith("pseudohessian=",token) )
       {
          token += 14;
 	 int n = strlen(token);
-	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 )
+	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 || strncmp("1",token,n)== 0)
 	    m_use_pseudohessian = true;
+      }
+      else if( startswith("zerosrc=",token) )
+      {
+         token += 8;
+	 int n = strlen(token);
+	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 || strncmp("1",token,n)== 0 )
+            m_ew->set_zerograd();
+         //	    m_zerograd_at_src = true;
+      }
+      else if( startswith("zerosrcpad=",token) )
+      {
+         token += 11;
+         m_ew->set_zerograd_pad(atoi(token));
+      }
+      else if( startswith("filtergrad=",token) )
+      {
+	 int n = strlen(token);
+	 bool filtergrad =  strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 || strncmp("1",token,n)== 0;
+         m_ew->set_filtergrad();
+      }
+      else if( startswith("filteriterations=",token) )
+      {
+         token += 17;
+	 int filterit = atoi(token);
+         m_ew->set_filterit(filterit);
+      }
+      else if( startswith("filterparameter=",token) )
+      {
+         token += 16;
+         float_sw4 filterpar = atof(token);
+         if( filterpar > 1.0/6.0 || filterpar < 0 )
+         {
+            // Filter will be unstable, reset value
+            filterpar = 1.0/12.0;
+         }
+         m_ew->set_filterpar(filterpar);
+      }
+      else if( startswith("writedfm=",token) )
+      {
+         token += 9;
+	 int n = strlen(token);
+	 if( strncmp("yes",token,n)== 0 || strncmp("1",token,n)== 0 || strncmp("on",token,n)==0 )
+	    m_write_dfm = true;
       }
       else
          badOption("mrun",token);
@@ -532,7 +581,7 @@ void Mopt::processMregularize( char* buffer )
    int n;
    CHECK_INPUT(strcmp("regularize", token) == 0, "ERROR: not a regularize line...: " << token);
    token = strtok(NULL, " \t");
-   double scale_coeff = 1;
+   //   double scale_coeff = 1;
 
    string err = "Regularize Error: ";
 
@@ -543,7 +592,8 @@ void Mopt::processMregularize( char* buffer )
       if(startswith("coeff=", token)) 
       {
 	 token += 6;
-	 scale_coeff = atof(token);
+         //	 scale_coeff = atof(token);
+         m_reg_coeff = atof(token);
       }
       else if( startswith("testmode=",token))
       {
@@ -558,7 +608,7 @@ void Mopt::processMregularize( char* buffer )
          badOption("regularize",token);
       token = strtok(NULL, " \t");
    }
-   m_reg_coeff = scale_coeff;
+   //   m_reg_coeff = scale_coeff;
    
 }// end processMregularize
 
@@ -615,7 +665,7 @@ void Mopt::set_sscalefactors( )
 	    for( int i=0 ; i < my_nmpars ; i++ )
 	       sfs[i] *= imf;
 	 }
-	 MPI_Bcast( sfs, my_nmpars, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+	 MPI_Bcast( sfs, my_nmpars, MPI_DOUBLE, 0, m_ew->m_1d_communicator );
 	 VERIFY2( errflag == 0, "Error no " << errflag << " in Mopt::set_sscalefactors");
       }
    }

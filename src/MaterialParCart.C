@@ -5,6 +5,10 @@
 #include <fstream>
 #include <sstream>
 
+#ifdef USE_HDF5
+#include <hdf5.h>
+#endif
+
 MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, int varcase, 
                                   char* fname, float_sw4 amp, float_sw4 omega )
    : MaterialParameterization( a_ew, fname )
@@ -13,6 +17,7 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
      // Material represented on a coarse Cartesian grid, covering the 'active' domain.
      // points are x_0,..,x_{nx+1}, where x_0 and x_{nx+1} are fixed at zero.
    // the parameter vector represents offsets from a reference material, stored in (mRho,mMu,mLambda) in EW.
+   int verbose=0;
    m_variables = varcase;
    m_ratio = 1.732;   
    m_init = init;
@@ -35,7 +40,7 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
       xmax = (m_ew->m_iEndActGlobal[g]-1)*hf;
       ymax = (m_ew->m_jEndActGlobal[g]-1)*hf;
       zmax = m_ew->m_zmin[g] + (m_ew->m_kEndAct[g]-1)*hf;
-      if( m_myrank == 0 )
+      if( m_myrank == 0 && verbose > 0 )
          std::cout << "active region, index = " <<
             m_ew->m_iStartActGlobal[g] << " " <<
             m_ew->m_iEndActGlobal[g] << " " <<
@@ -63,7 +68,7 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
 	    for( int i= m_ew->m_iStartAct[g] ; i <= m_ew->m_iEndAct[g] ; i++ )
 	       if( m_ew->mZ[g](i,j,1) < zmin )
 		  zmin = m_ew->mZ[g](i,j,1);
-	 MPI_Allreduce( &zmin, &m_zmin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD );
+	 MPI_Allreduce( &zmin, &m_zmin, 1, MPI_DOUBLE, MPI_MIN, m_ew->m_1d_communicator );
       }
    }
 
@@ -75,7 +80,7 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
    m_hz = (m_zmax-m_zmin)/nz;
    m_zmin = m_zmin-m_hz;
 
-   if( m_myrank == 0 )
+   if( m_myrank == 0 && verbose > 0 )
    {
      cout << " xmin, xmax = " << m_xmin << " " << m_xmax << " hx = " << m_hx << endl;
      cout << " ymin, ymax = " << m_ymin << " " << m_ymax << " hy = " << m_hy << endl;
@@ -424,7 +429,7 @@ bool MaterialParCart::compute_overlap(bool dbg)
       go_global = 1;
    }
    int tmp=go_global;
-   MPI_Allreduce( &tmp, &go_global, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+   MPI_Allreduce( &tmp, &go_global, 1, MPI_INT, MPI_MAX, m_ew->m_1d_communicator );
    //   // DEBUG
    //   go_global=1;
    if( go_global )
@@ -691,6 +696,7 @@ void MaterialParCart::interpolate_parameters( int nmd, double* xmd,
    }
    else 
    {
+//always update=true
       interpolate_to_coarse_vel( a_rho, a_mu, a_lambda, m_rho, m_cs, m_cp );
    }
 
@@ -1306,15 +1312,15 @@ void MaterialParCart::get_gradient_shared( int nms, double* xms, double* dfs,
    double* tmp = new double[npts];
    for( int i=0 ; i < npts ; i++ )
       tmp[i] = grhop[i];
-   MPI_Allreduce( tmp, grhop, npts, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   MPI_Allreduce( tmp, grhop, npts, MPI_DOUBLE, MPI_SUM, m_ew->m_1d_communicator );
 
    for( int i=0 ; i < npts ; i++ )
       tmp[i] = gmup[i];
-   MPI_Allreduce( tmp, gmup, npts, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   MPI_Allreduce( tmp, gmup, npts, MPI_DOUBLE, MPI_SUM, m_ew->m_1d_communicator );
 
    for( int i=0 ; i < npts ; i++ )
       tmp[i] = glambdap[i];
-   MPI_Allreduce( tmp, glambdap, npts, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   MPI_Allreduce( tmp, glambdap, npts, MPI_DOUBLE, MPI_SUM, m_ew->m_1d_communicator );
    delete[] tmp;
 
    if( m_variables == 1 || m_variables == 2 )
@@ -1540,11 +1546,11 @@ void MaterialParCart::interpolate_to_coarse( vector<Sarray>& rhogrid,
    {
       Sarray tmp;
       tmp.copy(rho);
-      MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+      MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_MAX,m_ew->m_1d_communicator);
       tmp.copy(mu);
-      MPI_Allreduce(tmp.c_ptr(),mu.c_ptr(),mu.npts(),MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+      MPI_Allreduce(tmp.c_ptr(),mu.c_ptr(),mu.npts(),MPI_DOUBLE,MPI_MAX,m_ew->m_1d_communicator);
       tmp.copy(lambda);
-      MPI_Allreduce(tmp.c_ptr(),lambda.c_ptr(),lambda.npts(),MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+      MPI_Allreduce(tmp.c_ptr(),lambda.c_ptr(),lambda.npts(),MPI_DOUBLE,MPI_MAX,m_ew->m_1d_communicator);
    }
    else
    {
@@ -1652,16 +1658,152 @@ void MaterialParCart::interpolate_to_coarse_vel( vector<Sarray>& rhogrid,
    {
       Sarray tmp;
       tmp.copy(rho);
-      MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+      MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_MAX,m_ew->m_1d_communicator);
       tmp.copy(cs);
-      MPI_Allreduce(tmp.c_ptr(),cs.c_ptr(),cs.npts(),MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+      MPI_Allreduce(tmp.c_ptr(),cs.c_ptr(),cs.npts(),MPI_DOUBLE,MPI_MAX,m_ew->m_1d_communicator);
       tmp.copy(cp);
-      MPI_Allreduce(tmp.c_ptr(),cp.c_ptr(),cp.npts(),MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+      MPI_Allreduce(tmp.c_ptr(),cp.c_ptr(),cp.npts(),MPI_DOUBLE,MPI_MAX,m_ew->m_1d_communicator);
    }
    else
    {
       communicate(rho);
       communicate(cs);
       communicate(cp);
+   }
+}
+
+void MaterialParCart::write_dfm_hdf5(double *dfm, std::string fname, MPI_Comm comm)
+{
+#ifdef USE_HDF5
+    hid_t fid, dset, fapl, dxpl, dspace, mspace;
+    hsize_t dims[3], start[3], count[3];
+    int ret;
+
+    int ncomp=3;
+    if(m_variables == 3)
+        ncomp=2;
+    else if(m_variables == 4)
+        ncomp=1;
+
+    fapl = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
+
+    dxpl = H5Pcreate(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE);
+
+    fid = H5Fcreate(fname.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
+    if (fid < 0) {
+        std::cout << "Error with dfm file createion!" << endl;
+        return;
+    }
+
+    dims[0] = m_nz;
+    dims[1] = m_ny;
+    dims[2] = m_nx*ncomp;
+
+    start[0] = m_kbint - 1;
+    start[1] = m_jbint - 1;
+    start[2] = (m_ibint - 1)*ncomp;
+
+    count[0] = m_keint - m_kbint + 1;
+    count[1] = m_jeint - m_jbint + 1;
+    count[2] = (m_ieint - m_ibint + 1) * ncomp;
+
+    hsize_t total = count[0]*count[1]*count[2];
+    /* printf("Rank %d, Global: %llu %llu %llu, ncomp %d\n", m_myrank, dims[0], dims[1], dims[2], ncomp); */
+    /* printf("Rank %d, Local start: %llu %llu %llu count: %llu %llu %llu, total %llu\n", */ 
+    /*         m_myrank, start[0], start[1], start[2], count[0], count[1], count[2], total); */
+    /* printf("Rank %d, %f %f, %f %f\n", m_myrank, dfm[0], dfm[1], dfm[total-2], dfm[total-1]); */
+    /* fflush(stdout); */
+
+    dspace = H5Screate_simple(3, dims, NULL);
+    mspace = H5Screate_simple(3, count, NULL);
+
+    dset = H5Dcreate(fid, "dfm", H5T_NATIVE_DOUBLE, dspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if (dset < 0) {
+        std::cout << "Error with dfm dset createion!" << endl;
+        return;
+    }
+
+    H5Sselect_hyperslab(dspace, H5S_SELECT_SET, start, NULL, count, NULL);
+
+    ret = H5Dwrite(dset, H5T_NATIVE_DOUBLE, mspace, dspace, dxpl, dfm);
+    if (dset < 0) {
+        std::cout << "Error with dfm dset createion!" << endl;
+    }
+
+    H5Dclose(dset);
+    H5Sclose(dspace);
+    H5Sclose(mspace);
+    H5Pclose(fapl);
+    H5Pclose(dxpl);
+    H5Fclose(fid);
+#else
+   if( m_myrank == 0 )
+       std::cout << "Warning: calling write_dfm_hdf5 without compiling SW4 with HDF5!" << endl;
+#endif
+}
+
+//-----------------------------------------------------------------------
+void MaterialParCart::interpolate_pseudohessian( int nmpars, double* phs,
+                                                 int nmpard, double* phm,
+                                                 vector<Sarray>& phgrid )
+{
+   int ncomp=3;
+   if( m_variables == 3 )
+      ncomp=2;
+   else if( m_variables == 4 )
+      ncomp=1;
+   double* ph;
+   if( nmpard > 0 )
+      ph = phm;
+   else
+      ph = phs;
+
+   int ig, jg, kg, g;
+   for( int ijk=0 ; ijk < ncomp*(m_keint-m_kbint+1)*(m_jeint-m_jbint+1)*(m_ieint-m_ibint+1); ijk++ )
+      ph[ijk]=0;
+
+   size_t ind=0;
+   for( int k=m_kbint ; k <= m_keint ; k++ )
+      for( int j=m_jbint ; j <= m_jeint ; j++ )
+	 for( int i=m_ibint ; i <= m_ieint ; i++ )
+	 {
+            float_sw4 x = m_xmin + i*m_hx;
+	    float_sw4 y = m_ymin + j*m_hy;
+	    float_sw4 z = m_zmin + k*m_hz;
+            m_ew->computeNearestGridPoint( ig, jg, kg, g, x, y, z );
+            if( m_ew->point_in_proc( ig, jg, g) )
+	    {
+               if( ncomp == 3 )
+               {
+                  ph[ind*3  ] = phgrid[g](1,ig,jg,kg);
+                  ph[ind*3+1] = phgrid[g](2,ig,jg,kg);
+                  ph[ind*3+2] = phgrid[g](3,ig,jg,kg);
+               }
+               else if( ncomp == 2 )
+               {
+                  ph[ind*2  ] = phgrid[g](2,ig,jg,kg);
+                  ph[ind*2+1] = phgrid[g](3,ig,jg,kg);
+               }
+               else 
+                  ph[ind] = phgrid[g](3,ig,jg,kg);
+            }
+            //            else
+            //            {
+            //               std::cout << "MaterialParCart::interpolate_hessian, error point "
+            //                         << ig << " " << jg << " " << kg << " not in processor " << 
+            //                  "Material grid point " << i << " " << j << " " k << endl;
+            //            }
+            ind++;
+         }
+   if( m_global )
+   {
+      int npts = m_nx*m_ny*m_nz;
+      float_sw4* tmp =new float_sw4[ncomp*npts];
+      for( int i=0 ; i < ncomp*npts ; i++ )
+         tmp[i] = ph[i];
+      MPI_Allreduce( tmp, ph, ncomp*npts, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      delete[] tmp;
    }
 }

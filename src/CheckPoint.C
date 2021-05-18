@@ -9,6 +9,11 @@
 #include <unistd.h>
 #include <cstdio>
 
+#ifdef USE_ZFP
+#include "H5Zzfp_lib.h"
+#include "H5Zzfp_props.h"
+#endif
+
 CheckPoint* CheckPoint::nil=static_cast<CheckPoint*>(0);
 
 //-----------------------------------------------------------------------
@@ -223,8 +228,8 @@ void CheckPoint::define_pio( )
       int iwrite = 0;
       int nrwriters = mEW->getNumberOfWritersPFS();
       int nproc=0, myid=0;
-      MPI_Comm_size( MPI_COMM_WORLD, &nproc );
-      MPI_Comm_rank( MPI_COMM_WORLD, &myid);
+      MPI_Comm_size( mEW->m_cartesian_communicator, &nproc );
+      MPI_Comm_rank( mEW->m_cartesian_communicator, &myid);
 
       // new hack 
       int* owners = new int[nproc];
@@ -268,7 +273,7 @@ void CheckPoint::define_pio( )
       }      
       if (mEW->proc_zero())
          cout << "Creating a Parallel_IO object for grid g = " << g << endl;
-      m_parallel_io[g-glow] = new Parallel_IO( iwrite, mEW->usingParallelFS(), global, local, start, m_bufsize );
+      m_parallel_io[g-glow] = new Parallel_IO( iwrite, mEW->usingParallelFS(), global, local, start, mEW->m_1d_communicator, m_bufsize );
 // tmp
       if (mEW->proc_zero())
          cout << "Done creating the Parallel_IO object" << endl;
@@ -369,7 +374,7 @@ void CheckPoint::write_checkpoint( float_sw4 a_time, int a_cycle, vector<Sarray>
       CHECK_INPUT(fid != -1, "CheckPoint::write_file: Error opening: " << s.str() );
       int myid;
 
-      MPI_Comm_rank( MPI_COMM_WORLD, &myid );
+      MPI_Comm_rank( mEW->m_cartesian_communicator, &myid );
       std::cout << "writing check point on file " << s.str() << " using " <<
 	 m_parallel_io[0]->n_writers() << " writers" << std::endl;
       write_header( fid, a_time, a_cycle, hsize );
@@ -377,7 +382,7 @@ void CheckPoint::write_checkpoint( float_sw4 a_time, int a_cycle, vector<Sarray>
    }
    //   m_parallel_io[0]->writer_barrier();
    int bcast_root = m_parallel_io[0]->proc_zero_rank_in_comm_world();
-   MPI_Bcast( &hsize, 1, MPI_INT, bcast_root, MPI_COMM_WORLD );
+   MPI_Bcast( &hsize, 1, MPI_INT, bcast_root, mEW->m_cartesian_communicator );
    off_t offset = hsize;
 
    // Open file from all writers
@@ -496,7 +501,7 @@ void CheckPoint::read_checkpoint( float_sw4& a_time, int& a_cycle,
       CHECK_INPUT(fid != -1, "CheckPoint::read_checkpoint: Error opening: " << s.str() );
       int myid;
 
-      MPI_Comm_rank( MPI_COMM_WORLD, &myid );
+      MPI_Comm_rank( mEW->m_cartesian_communicator, &myid );
       std::cout << "reading check point on file " << s.str() << endl;
       read_header( fid, a_time, a_cycle, hsize );
    }
@@ -504,9 +509,9 @@ void CheckPoint::read_checkpoint( float_sw4& a_time, int& a_cycle,
 
    // Broadcast read information to all other processors.
    int bcast_root = m_parallel_io[0]->proc_zero_rank_in_comm_world();
-   MPI_Bcast( &a_cycle, 1, MPI_INT,         bcast_root, MPI_COMM_WORLD );
-   MPI_Bcast( &a_time,  1, mEW->m_mpifloat, bcast_root, MPI_COMM_WORLD );
-   MPI_Bcast( &hsize, 1, MPI_INT, bcast_root, MPI_COMM_WORLD );
+   MPI_Bcast( &a_cycle, 1, MPI_INT,         bcast_root, mEW->m_cartesian_communicator );
+   MPI_Bcast( &a_time,  1, mEW->m_mpifloat, bcast_root, mEW->m_cartesian_communicator );
+   MPI_Bcast( &hsize, 1, MPI_INT, bcast_root, mEW->m_cartesian_communicator );
    off_t offset = hsize;
 
    // Open file from all readers
@@ -608,15 +613,34 @@ float_sw4 CheckPoint::getDt()
       else if( mEW->getPath() != "./" )
 	 s << mEW->getPath();
       s << mRestartFile; // string 's' is the file name including path
-      int fid = open( const_cast<char*>(s.str().c_str()), O_RDONLY ); 
-      CHECK_INPUT(fid != -1, "CheckPoint::getDt: Error opening: " << s.str() );
-      lseek(fid,3*sizeof(int)+sizeof(float_sw4),SEEK_SET);
-      size_t nr=read(fid,&dt,sizeof(float_sw4));
-      CHECK_INPUT( nr == sizeof(float_sw4) ,
-	 "CheckPoint::getDt, error reading time step from restart file\n");
-      close(fid);
+
+      if (mUseHDF5) {
+#ifdef USE_HDF5
+         hid_t fid = H5Fopen( const_cast<char*>(s.str().c_str()), H5F_ACC_RDONLY, H5P_DEFAULT); 
+         CHECK_INPUT(fid > 0, "CheckPoint::read_checkpoint_hdf5: Error opening: " << s.str() );
+
+         hid_t attr = H5Aopen(fid, "dt", H5P_DEFAULT);
+         hid_t dtype = (m_double ? H5T_NATIVE_DOUBLE : H5T_NATIVE_FLOAT);
+         int ret = H5Aread(attr, dtype, &dt);
+         H5Aclose(attr);
+         CHECK_INPUT( ret >= 0,"CheckPoint::read_header_hdf5: Error reading dt" );
+         H5Fclose(fid);
+#else
+         if (m_parallel_io[0]->proc_zero())
+             cout << "Configured to restart with HDF5 but SW4 is not compiled with HDF5!" << endl;
+#endif
+      }
+      else {
+         int fid = open( const_cast<char*>(s.str().c_str()), O_RDONLY ); 
+         CHECK_INPUT(fid != -1, "CheckPoint::getDt: Error opening: " << s.str() );
+         lseek(fid,3*sizeof(int)+sizeof(float_sw4),SEEK_SET);
+         size_t nr=read(fid,&dt,sizeof(float_sw4));
+         CHECK_INPUT( nr == sizeof(float_sw4) ,
+            "CheckPoint::getDt, error reading time step from restart file\n");
+         close(fid);
+      }
    }
-   MPI_Bcast( &dt, 1, mEW->m_mpifloat, 0, MPI_COMM_WORLD );      
+   MPI_Bcast( &dt, 1, mEW->m_mpifloat, 0, mEW->m_cartesian_communicator );      
    return dt;
 }
 
@@ -792,11 +816,465 @@ std::string CheckPoint::get_restart_path()
 
 //-----------------------------------------------------------------------
 void CheckPoint::set_checkpoint_file( string fname, int cycle, int cycleInterval,
-				      size_t bufsize )
+				      size_t bufsize, bool useHDF5, 
+                                      int compressionMode, double compressionPar )
 {
    mCheckPointFile  = fname;
    mWritingCycle    = cycle;
    mCycleInterval   = cycleInterval;
    m_bufsize        = bufsize;
    mDoCheckPointing = true;
+   mUseHDF5         = useHDF5;
+   mCompMode        = compressionMode;
+   mCompPar         = compressionPar;
 }
+
+#ifdef USE_HDF5
+//-----------------------------------------------------------------------
+void CheckPoint::write_header_hdf5( hid_t fid, float_sw4 a_time, int a_cycle)
+{
+   // Must be called by all participating process
+   //
+   // Header format: prec - precision 8--> double, 4--> single (int)
+   //                ng   - Number of grids (int)
+   //                time - Time (float)
+   //                cycle- Time step number corresponding to Time (int)
+   //                dt   - Time step size (float)
+   //                nmech- Number of mechanisms in attenuation model
+   //                dims(g,1:6) - Size of array on grid g,
+   //                       dim(1) <= i <= dim(2), dim(3) <= j <= dim(4)
+   //                       dim(5) <= k <= dim(6)
+   //   
+   int ret;
+   hid_t attr, attr_space, attr_space6;
+   hsize_t dims = 1, dims6 = 6;
+
+   attr_space = H5Screate_simple(1, &dims, NULL);
+   attr_space6 = H5Screate_simple(1, &dims6, NULL);
+
+   hid_t dtype = (m_double ? H5T_NATIVE_DOUBLE : H5T_NATIVE_FLOAT);
+
+   int prec = m_double ? 8 : 4;
+   attr = H5Acreate(fid, "prec", H5T_NATIVE_INT, attr_space, H5P_DEFAULT, H5P_DEFAULT);
+   ret = H5Awrite(attr, H5T_NATIVE_INT, &prec);
+   CHECK_INPUT( ret >= 0,"CheckPoint::write_header_hdf5: Error writing precision" );
+   H5Aclose(attr);
+
+   int ng = mEW->mNumberOfGrids;
+   attr = H5Acreate(fid, "ngrid", H5T_NATIVE_INT, attr_space, H5P_DEFAULT, H5P_DEFAULT);
+   ret = H5Awrite(attr, H5T_NATIVE_INT, &ng);
+   CHECK_INPUT( ret >= 0,"CheckPoint::write_header_hdf5: Error writing ng" );
+   H5Aclose(attr);
+
+   attr = H5Acreate(fid, "time", dtype, attr_space, H5P_DEFAULT, H5P_DEFAULT);
+   ret = H5Awrite(attr, dtype, &a_time);
+   CHECK_INPUT( ret >= 0,"CheckPoint::write_header_hdf5: Error writing time" );
+   H5Aclose(attr);
+
+   attr = H5Acreate(fid, "cycle", H5T_NATIVE_INT, attr_space, H5P_DEFAULT, H5P_DEFAULT);
+   ret = H5Awrite(attr, H5T_NATIVE_INT, &a_cycle);
+   CHECK_INPUT( ret >= 0,"CheckPoint::write_header_hdf5: Error writing cycle" );
+   H5Aclose(attr);
+
+   float_sw4 dt = mEW->getTimeStep();
+   attr = H5Acreate(fid, "dt", dtype, attr_space, H5P_DEFAULT, H5P_DEFAULT);
+   ret = H5Awrite(attr, dtype, &dt);
+   CHECK_INPUT( ret >= 0,"CheckPoint::write_header_hdf5: Error writing dt" );
+   H5Aclose(attr);
+
+   int nmech = mEW->getNumberOfMechanisms();
+   attr = H5Acreate(fid, "nmesh", H5T_NATIVE_INT, attr_space, H5P_DEFAULT, H5P_DEFAULT);
+   ret = H5Awrite(attr, H5T_NATIVE_INT, &nmech);
+   CHECK_INPUT( ret >= 0,"CheckPoint::write_header_hdf5: Error writing nmech" );
+   H5Aclose(attr);
+
+   int nrank;
+   MPI_Comm_size(mEW->m_cartesian_communicator, &nrank);
+   attr = H5Acreate(fid, "nrank", H5T_NATIVE_INT, attr_space, H5P_DEFAULT, H5P_DEFAULT);
+   ret = H5Awrite(attr, H5T_NATIVE_INT, &nrank);
+   CHECK_INPUT( ret >= 0,"CheckPoint::write_header_hdf5: Error writing nrank" );
+   H5Aclose(attr);
+
+   int globalSize[6];
+   char name[16];
+   for(int g = 0; g < ng ;g++ )
+   {
+      sprintf(name, "mesh%d", g);
+      globalSize[0] = 1;
+      globalSize[1] = mGlobalDims[g][1]-mGlobalDims[g][0]+1;
+      globalSize[2] = 1;
+      globalSize[3] = mGlobalDims[g][3]-mGlobalDims[g][2]+1;
+      globalSize[4] = 1;
+      globalSize[5] = mGlobalDims[g][5]-mGlobalDims[g][4]+1;
+      attr = H5Acreate(fid, name, H5T_NATIVE_INT, attr_space6, H5P_DEFAULT, H5P_DEFAULT);
+      ret = H5Awrite(attr, H5T_NATIVE_INT, globalSize);
+      CHECK_INPUT( ret >= 0,"CheckPoint::write_header_hdf5: Error writing global sizes" );
+      H5Aclose(attr);
+   }
+   H5Sclose(attr_space);
+   H5Sclose(attr_space6);
+}
+
+//-----------------------------------------------------------------------
+void CheckPoint::read_header_hdf5( hid_t fid, float_sw4& a_time, int& a_cycle)
+{
+   //
+   // Header format: prec - precision 8--> double, 4--> single (int)
+   //                ng   - Number of grids (int)
+   //                time - Time (float)
+   //                cycle- Time step number corresponding to Time (int)
+   //                dt   - Time step size (float)
+   //                nmech- Number of mechanisms in attenuation model
+   //                dims(g,1:6) - Size of array on grid g,
+   //                       dim(1) <= i <= dim(2), dim(3) <= j <= dim(4)
+   //                       dim(5) <= k <= dim(6)
+   //   
+   hid_t attr;
+   hid_t dtype = (m_double ? H5T_NATIVE_DOUBLE : H5T_NATIVE_FLOAT);
+   int ret;
+
+   int prec;
+   attr = H5Aopen(fid, "prec", H5P_DEFAULT);
+   ret = H5Aread(attr, H5T_NATIVE_INT, &prec);
+   H5Aclose(attr);
+   CHECK_INPUT( ret >= 0,"CheckPoint::read_header_hdf5: Error reading precision" );
+   CHECK_INPUT( (m_double && prec==8) || (!m_double && prec==4), 
+		"CheckPoint::read_header_hdf5, floating point precision on restart file" <<
+		" does not match precision in solver");
+   int ng;
+   attr = H5Aopen(fid, "ngrid", H5P_DEFAULT);
+   ret = H5Aread(attr, H5T_NATIVE_INT, &ng);
+   H5Aclose(attr);
+   CHECK_INPUT( ret >= 0,"CheckPoint::read_header_hdf5: Error reading ng" );
+   CHECK_INPUT( ng == mEW->mNumberOfGrids, "CheckPoint::read_header_hdf5: Error number of grids on restart file"
+		<< " does not match number of grids in solver" );
+
+   attr = H5Aopen(fid, "time", H5P_DEFAULT);
+   ret = H5Aread(attr, dtype, &a_time);
+   H5Aclose(attr);
+   CHECK_INPUT( ret >= 0,"CheckPoint::read_header_hdf5: Error reading time" );
+
+   attr = H5Aopen(fid, "cycle", H5P_DEFAULT);
+   ret = H5Aread(attr, H5T_NATIVE_INT, &a_cycle);
+   H5Aclose(attr);
+   CHECK_INPUT( ret >= 0,"CheckPoint::read_header_hdf5: Error reading cycle" );
+
+   /* float_sw4 dt; */
+   /* attr = H5Aopen(fid, "dt", H5P_DEFAULT); */
+   /* ret = H5Aread(attr, dtype, &dt); */
+   /* H5Aclose(attr); */
+   /* CHECK_INPUT( ret >= 0,"CheckPoint::read_header_hdf5: Error reading dt" ); */
+
+   int nmech;
+   attr = H5Aopen(fid, "nmesh", H5P_DEFAULT);
+   ret = H5Aread(attr, H5T_NATIVE_INT, &nmech);
+   H5Aclose(attr);
+   CHECK_INPUT( ret >= 0,"CheckPoint::read_header_hdf5: Error reading nmech" );
+   CHECK_INPUT( nmech == mEW->getNumberOfMechanisms(), "CheckPoint::read_header_hdf5: Error number "
+		<< "of attenuation mechanisms on restart file"
+		<< " does not match number of attenuation mechanisms in solver" );
+
+   int nrank, nrank_restart;
+   MPI_Comm_size(mEW->m_cartesian_communicator, &nrank);
+
+   attr = H5Aopen(fid, "nrank", H5P_DEFAULT);
+   ret = H5Aread(attr, H5T_NATIVE_INT, &nrank_restart);
+   H5Aclose(attr);
+   CHECK_INPUT( ret >= 0,"CheckPoint::write_header_hdf5: Error reading nrank" );
+   CHECK_INPUT( nrank == nrank_restart, "CheckPoint::read_header_hdf5: Error number "
+		<< "of ranks on restart file does not match number of ranks in currrent run" );
+
+   int globalSize[6];
+   char name[16];
+   for(int g = 0; g < ng ;g++ )
+   {
+      sprintf(name, "mesh%d", g);
+      attr = H5Aopen(fid, name, H5P_DEFAULT);
+      ret = H5Aread(attr, H5T_NATIVE_INT, globalSize);
+      H5Aclose(attr);
+      CHECK_INPUT( ret >= 0,"CheckPoint::read_header_hdf5: Error reading global sizes" );
+      CHECK_INPUT( globalSize[0] == 1, "CheckPoint::read_checkpoint: Error in global sizes, " <<
+		   "low i-index is "<< globalSize[0]);
+      CHECK_INPUT( globalSize[1] == mGlobalDims[g][1]-mGlobalDims[g][0]+1, "CheckPoint::read_checkpoint: Error in global sizes, "
+		   << "upper i-index is " << globalSize[1]);
+      CHECK_INPUT( globalSize[2] == 1, "CheckPoint::read_checkpoint: Error in global sizes, " <<
+		   "low j-index is "<< globalSize[2]);
+      CHECK_INPUT( globalSize[3] == mGlobalDims[g][3]-mGlobalDims[g][2]+1, "CheckPoint::read_checkpoint: Error in global sizes, "
+		   << "upper j-index is " << globalSize[3]);
+      CHECK_INPUT( globalSize[4] == 1, "CheckPoint::read_checkpoint: Error in global sizes, " <<
+		   "low k-index is "<< globalSize[4]);
+      CHECK_INPUT( globalSize[5] == mGlobalDims[g][5]-mGlobalDims[g][4]+1,
+                   "CheckPoint::read_checkpoint: Error in global sizes, " << "upper k-index is " << globalSize[5]);
+   }
+}
+
+//-----------------------------------------------------------------------
+void CheckPoint::write_checkpoint_hdf5( float_sw4 a_time, int a_cycle, vector<Sarray>& a_Um,
+				   vector<Sarray>& a_U, vector<Sarray*>& a_AlphaVEm,
+				   vector<Sarray*>& a_AlphaVE )
+{
+   std::stringstream s;
+   std::stringstream fileSuffix;
+   compute_file_suffix( a_cycle, fileSuffix );
+   if ( mRestartPathSet )
+           s << mRestartPath << "/";
+   else
+   if( mEW->getPath() != "./" )
+           s << mEW->getPath() << "/";
+   s << fileSuffix.str();
+
+   // Keep track of the number of files, save previous file name, and delete the second last.
+   cycle_checkpoints( s.str() );
+
+   // Open file from processor zero and write header.
+   hid_t fid, fapl, dset, dxpl, dspace, mspace, mydspace;
+   fapl = H5Pcreate(H5P_FILE_ACCESS);
+   H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
+   H5Pset_all_coll_metadata_ops(fapl, 1);
+   H5Pset_coll_metadata_write(fapl, 1);
+
+   int alignment = 65536;
+   char *env = getenv("HDF5_ALIGNMENT_SIZE");
+   if (env != NULL) 
+       alignment = atoi(env);
+   if (alignment < 65536) 
+       alignment = 65536;
+         
+   H5Pset_alignment(fapl, 65536, alignment);
+   H5Pset_libver_bounds(fapl, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST);
+
+   fid = H5Fcreate( const_cast<char*>(s.str().c_str()), H5F_ACC_TRUNC, H5P_DEFAULT, fapl); 
+   CHECK_INPUT(fid > 0, "CheckPoint::write_file: Error opening: " << s.str() );
+
+   int myrank, nrank;
+   MPI_Comm_rank( MPI_COMM_WORLD, &myrank );
+   MPI_Comm_size(MPI_COMM_WORLD, &nrank);
+   if (myrank == 0)
+       std::cout << "Writing checkpoint to file " << s.str() << std::endl;
+
+   write_header_hdf5( fid, a_time, a_cycle);
+
+   char dset_name[128];
+   hid_t dtype = (m_double ? H5T_NATIVE_DOUBLE : H5T_NATIVE_FLOAT);
+   dxpl = H5Pcreate(H5P_DATASET_XFER);
+   H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE);
+
+   // Each rank writes its data to its own dataset
+   hsize_t npts, myoff, total;
+   hid_t prop_id = H5Pcreate (H5P_DATASET_CREATE);
+   H5Pset_alloc_time(prop_id, H5D_ALLOC_TIME_LATE);
+
+   // TODO, determine chunk size
+   hsize_t my_chunk[1];
+   my_chunk[0] = (m_double ? 2097152 : 4194304);
+   char *env_char = NULL;
+   env_char = getenv("CHECKPOINT_CHUNK_X");
+   if (env_char != NULL) 
+       my_chunk[0] = atoi(env_char);
+
+   H5Pset_chunk (prop_id, 1, my_chunk);
+
+   if (mCompMode == SW4_SZIP) {
+     H5Pset_szip(prop_id, H5_SZIP_NN_OPTION_MASK, 32);
+   }
+   else if (mCompMode == SW4_ZLIB) {
+     H5Pset_deflate(prop_id, (int)mCompPar); 
+   }
+#ifdef USE_ZFP
+   else if (mCompMode == SW4_ZFP_MODE_RATE) {
+     H5Pset_zfp_rate(prop_id, mCompPar);
+   }
+   else if (mCompMode == SW4_ZFP_MODE_PRECISION) {
+     H5Pset_zfp_precision(prop_id, (unsigned int)mCompPar);
+   }
+   else if (mCompMode == SW4_ZFP_MODE_ACCURACY) {
+     H5Pset_zfp_accuracy(prop_id, mCompPar);
+   }
+   else if (mCompMode == SW4_ZFP_MODE_REVERSIBLE) {
+     H5Pset_zfp_reversible(prop_id);
+   }
+#endif
+#ifdef USE_SZ
+   else if (mCompMode == SW4_SZ) {
+     size_t cd_nelmts; 
+     unsigned int *cd_values = NULL;
+     int dataType = SZ_DOUBLE;
+     if (m_precision == 4) 
+       dataType = SZ_FLOAT;
+     SZ_metaDataToCdArray(&cd_nelmts, &cd_values, dataType, 0, m_cycle_dims[3], m_cycle_dims[2], m_cycle_dims[1], m_cycle_dims[0]);
+     H5Pset_filter(prop_id, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts, cd_values);
+   }
+#endif
+
+   for( int g = 0 ; g < mEW->mNumberOfGrids ; g++ ) {
+      npts = (hsize_t) (mWindow[g][1] - mWindow[g][0]+1)*(mWindow[g][3] - mWindow[g][2]+1)*(mWindow[g][5] - mWindow[g][4]+1);
+      npts *= 3;
+      myoff = 0;
+      MPI_Exscan(&npts, &myoff, 1, MPI_LONG_LONG_INT, MPI_SUM, MPI_COMM_WORLD);
+      total = npts + myoff;
+      MPI_Bcast( &total, 1, MPI_LONG_LONG_INT, nrank-1, MPI_COMM_WORLD );
+      /* fprintf(stderr, "rank %d: off %llu, size %llu, total %llu\n", myrank, myoff, npts, total); */
+   
+      dspace = H5Screate_simple(1, &total, NULL);
+      mspace = H5Screate_simple(1, &npts, NULL);
+      mydspace = H5Screate_simple(1, &total, NULL);
+      H5Sselect_hyperslab(mydspace, H5S_SELECT_SET, &myoff, NULL, &npts, NULL);
+   
+      // allocate local buffer array
+      float_sw4* doubleField = new float_sw4[3*npts];
+
+      if( m_kji_order )
+         a_Um[g].extract_subarrayIK( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5], doubleField );
+      else
+         a_Um[g].extract_subarray( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5], doubleField );
+      sprintf(dset_name, "Um%d", g);
+      dset = H5Dcreate(fid, dset_name, dtype, dspace, H5P_DEFAULT, prop_id, H5P_DEFAULT);
+      H5Dwrite(dset, dtype, mspace, mydspace, dxpl, doubleField);
+      H5Dclose(dset);
+
+      if( m_kji_order )
+         a_U[g].extract_subarrayIK( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5], doubleField );
+      else
+         a_U[g].extract_subarray( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5], doubleField);
+      sprintf(dset_name, "U%d", g);
+      dset = H5Dcreate(fid, dset_name, dtype, dspace, H5P_DEFAULT, prop_id, H5P_DEFAULT);
+      H5Dwrite(dset, dtype, mspace, mydspace, dxpl, doubleField);
+      H5Dclose(dset);
+
+      for( int m=0 ; m < mEW->getNumberOfMechanisms() ; m++ ) {
+         if( m_kji_order )
+            a_AlphaVEm[g][m].extract_subarrayIK( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5], doubleField );
+         else
+            a_AlphaVEm[g][m].extract_subarray( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5], doubleField );
+         sprintf(dset_name, "VEM%d_m%d", g, m);
+         dset = H5Dcreate(fid, dset_name, dtype, dspace, H5P_DEFAULT, prop_id, H5P_DEFAULT);
+         H5Dwrite(dset, dtype, mspace, mydspace, dxpl, doubleField);
+         H5Dclose(dset);
+
+         if( m_kji_order )
+            a_AlphaVE[g][m].extract_subarrayIK(  mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5], doubleField );
+         else
+            a_AlphaVE[g][m].extract_subarray(  mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5], doubleField );
+         sprintf(dset_name, "VE%d_m%d", g, m);
+         dset = H5Dcreate(fid, dset_name, dtype, dspace, H5P_DEFAULT, prop_id, H5P_DEFAULT);
+         H5Dwrite(dset, dtype, mspace, mydspace, dxpl, doubleField);
+         H5Dclose(dset);
+      }
+      H5Sclose(dspace);
+      H5Sclose(mspace);
+      H5Sclose(mydspace);
+
+      delete[] doubleField;
+   }
+
+   H5Pclose(prop_id);
+   H5Pclose(fapl);
+   H5Pclose(dxpl);
+   H5Fclose(fid);
+} // end write_checkpoint_hdf5()
+
+//-----------------------------------------------------------------------
+void CheckPoint::read_checkpoint_hdf5( float_sw4& a_time, int& a_cycle,
+				  vector<Sarray>& a_Um, vector<Sarray>& a_U,
+				  vector<Sarray*>& a_AlphaVEm, vector<Sarray*>& a_AlphaVE )
+{
+   int myrank, nrank;
+   MPI_Comm_rank( MPI_COMM_WORLD, &myrank );
+   MPI_Comm_size(MPI_COMM_WORLD, &nrank);
+
+   std::stringstream s;
+   if( mRestartPathSet )
+      s << mRestartPath << "/";
+   else if( mEW->getPath() != "./" )
+      s << mEW->getPath();
+   s << mRestartFile;
+
+   if (myrank == 0)
+       std::cout << "Reading checkpoint from file " << s.str() << std::endl;
+
+   // Open file from processor zero and read header.
+   hid_t fid, fapl, dset, dxpl, dspace, mspace, mydspace;
+   fapl = H5Pcreate(H5P_FILE_ACCESS);
+   H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
+   H5Pset_all_coll_metadata_ops(fapl, 1);
+   H5Pset_coll_metadata_write(fapl, 1);
+   H5Pset_libver_bounds(fapl, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST);
+
+   dxpl = H5Pcreate(H5P_DATASET_XFER);
+   H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE);
+
+   fid = H5Fopen( const_cast<char*>(s.str().c_str()), H5F_ACC_RDONLY, fapl); 
+   CHECK_INPUT(fid > 0, "CheckPoint::read_checkpoint_hdf5: Error opening: " << s.str() );
+
+   read_header_hdf5( fid, a_time, a_cycle);
+
+   char dset_name[128];
+   hsize_t npts, myoff, total;
+   hid_t dtype = (m_double ? H5T_NATIVE_DOUBLE : H5T_NATIVE_FLOAT);
+
+   for( int g = 0 ; g < mEW->mNumberOfGrids ; g++ ) {
+      npts = (hsize_t) (mWindow[g][1] - mWindow[g][0]+1)*(mWindow[g][3] - mWindow[g][2]+1)*(mWindow[g][5] - mWindow[g][4]+1);
+      npts *= 3;
+      myoff = 0;
+      MPI_Exscan(&npts, &myoff, 1, MPI_LONG_LONG_INT, MPI_SUM, MPI_COMM_WORLD);
+      total = npts + myoff;
+      MPI_Bcast( &total, 1, MPI_LONG_LONG_INT, nrank-1, MPI_COMM_WORLD );
+      /* fprintf(stderr, "rank %d: off %llu, size %llu, total %llu\n", myrank, myoff, npts, total); */
+
+      dspace = H5Screate_simple(1, &total, NULL);
+      mspace = H5Screate_simple(1, &npts, NULL);
+      mydspace = H5Screate_simple(1, &total, NULL);
+      H5Sselect_hyperslab(mydspace, H5S_SELECT_SET, &myoff, NULL, &npts, NULL);
+   
+      // allocate local buffer array
+      float_sw4* doubleField = new float_sw4[3*npts];
+
+      sprintf(dset_name, "Um%d", g);
+      dset = H5Dopen(fid, dset_name, H5P_DEFAULT);
+      H5Dread(dset, dtype, mspace, mydspace, dxpl, doubleField);
+      H5Dclose(dset);
+      if( m_kji_order )
+         a_Um[g].insert_subarrayIK( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5], doubleField );
+      else
+         a_Um[g].insert_subarray( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5], doubleField );
+
+      sprintf(dset_name, "U%d", g);
+      dset = H5Dopen(fid, dset_name, H5P_DEFAULT);
+      H5Dread(dset, dtype, mspace, mydspace, dxpl, doubleField);
+      H5Dclose(dset);
+      if( m_kji_order )
+         a_U[g].insert_subarrayIK( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5], doubleField );
+      else
+         a_U[g].insert_subarray( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5], doubleField);
+
+      for( int m=0 ; m < mEW->getNumberOfMechanisms() ; m++ ) {
+         sprintf(dset_name, "VEM%d_m%d", g, m);
+         dset = H5Dopen(fid, dset_name, H5P_DEFAULT);
+         H5Dread(dset, dtype, mspace, mydspace, dxpl, doubleField);
+         H5Dclose(dset);
+         if( m_kji_order )
+            a_AlphaVEm[g][m].insert_subarrayIK( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5], doubleField );
+         else
+            a_AlphaVEm[g][m].insert_subarray( mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5], doubleField );
+
+         sprintf(dset_name, "VE%d_m%d", g, m);
+         dset = H5Dopen(fid, dset_name, H5P_DEFAULT);
+         H5Dread(dset, dtype, mspace, mydspace, dxpl, doubleField);
+         H5Dclose(dset);
+         if( m_kji_order )
+            a_AlphaVE[g][m].insert_subarrayIK(  mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5], doubleField );
+         else
+            a_AlphaVE[g][m].insert_subarray(  mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3], mWindow[g][4], mWindow[g][5], doubleField );
+      }
+      H5Sclose(dspace);
+      H5Sclose(mspace);
+      H5Sclose(mydspace);
+
+      delete[] doubleField;
+   }
+
+   H5Pclose(fapl);
+   H5Pclose(dxpl);
+   H5Fclose(fid);
+}
+#endif

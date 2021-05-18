@@ -14,8 +14,8 @@ using namespace std;
 //-----------------------------------------------------------------------
 MaterialParameterization::MaterialParameterization( EW* a_ew, char* fname )
 {
-   MPI_Comm_rank( MPI_COMM_WORLD, &m_myrank );
    m_ew = a_ew;
+   MPI_Comm_rank( m_ew->m_1d_communicator, &m_myrank );
    int n = strlen(fname)+1;
    m_filename = new char[n];
    strcpy(m_filename,fname);
@@ -147,59 +147,68 @@ void MaterialParameterization::write_parameters_dist( const char* outfile,
 
 //-----------------------------------------------------------------------
 void MaterialParameterization::read_parameters( const char* filename,
-						int nms, double* xms )
+						int npars, double* xptr )
 {
+   // Assumes global distribution of xptr. 
+   // Read from one processor, and broadcast to all.
    int errflag = 0;
    if( m_myrank == 0 )
    {
       int fd=open(filename,O_RDONLY );
-      int nms_read;
-      size_t nr = read(fd,&nms_read,sizeof(int));
-      if( nms_read == nms && nr == sizeof(int) && nms_read == m_nms )
+      int npars_read;
+      size_t nr = read(fd,&npars_read,sizeof(int));
+      if( npars_read == npars && nr == sizeof(int) )
       {
-	 nr = read(fd,xms,nms*sizeof(double));
-         if( nr != nms*sizeof(double) )
+	 nr = read(fd,xptr,npars*sizeof(double));
+         if( nr != npars*sizeof(double) )
 	    errflag = 2;
       }
-      else if( nms_read != m_nms )
-	 errflag = 3;
       else
 	 errflag = 1;
       close(fd);
    }
-   MPI_Bcast( xms, nms, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+   MPI_Bcast( xptr, npars, MPI_DOUBLE, 0, m_ew->m_1d_communicator );
    VERIFY2( errflag == 0, "Error no " << errflag << " in MaterialParameterization::read_parameters");
 }
 
 //-----------------------------------------------------------------------
-void MaterialParameterization::read_parameters( int nms, double* xms )
+void MaterialParameterization::read_parameters( int npars, double* xptr )
 {
-   int errflag = 0;
-   if( m_myrank == 0 )
-   {
-      //      string fname = m_path + m_filename;
-      string fname = m_filename;
-      int fd=open(fname.c_str(),O_RDONLY );
-      //      int fd=open(m_filename,O_RDONLY );
-      //      VERIFY2( fd != -1, "Error opening file " << m_filename << " in MaterialParameterization::read_parameters"<<endl);
-      VERIFY2( fd != -1, "Error opening file " << fname << " in MaterialParameterization::read_parameters"<<endl);
-      int nms_read;
-      size_t nr = read(fd,&nms_read,sizeof(int));
-      if( nms_read == nms && nr == sizeof(int) && nms_read == m_nms )
-      {
-	 nr = read(fd,xms,nms*sizeof(double));
-         if( nr != nms*sizeof(double) )
-	    errflag = 2;
-      }
-      else if( nms_read != m_nms )
-	 errflag = 3;
-      else
-	 errflag = 1;
-      close(fd);
-   }
-   MPI_Bcast( xms, nms, MPI_DOUBLE, 0, MPI_COMM_WORLD );
-   VERIFY2( errflag == 0, "Error no " << errflag << " in MaterialParameterization::read_parameters"<<endl);
+   read_parameters( m_filename, npars, xptr );
 }
+
+////-----------------------------------------------------------------------
+//void MaterialParameterization::read_parameters( int nms, double* xms )
+//{
+//   int errflag = 0;
+//   if( m_myrank == 0 )
+//   {
+//      //      string fname = m_path + m_filename;
+//      string fname = m_filename;
+//      int fd=open(fname.c_str(),O_RDONLY );
+//      //      int fd=open(m_filename,O_RDONLY );
+//      //      VERIFY2( fd != -1, "Error opening file " << m_filename << " in MaterialParameterization::read_parameters"<<endl);
+//      VERIFY2( fd != -1, "Error opening file " << fname << " in MaterialParameterization::read_parameters"<<endl);
+//      int nms_read;
+//      size_t nr = read(fd,&nms_read,sizeof(int));
+//      if( nms_read == nms && nr == sizeof(int) && nms_read == m_nms )
+//      {
+//	 nr = read(fd,xms,nms*sizeof(double));
+//         if( nr != nms*sizeof(double) )
+//	    errflag = 2;
+//      }
+//      else if( nms_read != m_nms )
+//      {
+//	 errflag = 3;
+//      std::cout << "nms_read = " << nms_read << " m_nms= " << m_nms << " nms= " << nms << std::endl;
+//      }
+//      else
+//	 errflag = 1;
+//      close(fd);
+//   }
+//   MPI_Bcast( xms, nms, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+//   VERIFY2( errflag == 0, "Error no " << errflag << " in MaterialParameterization::read_parameters"<<endl);
+//}
 
 //-----------------------------------------------------------------------
 //void MaterialParameterization::parameters_from_basematerial( int nmd, double* xmd,
@@ -245,6 +254,8 @@ void  MaterialParameterization::get_regularizer( int nmd, double* xmd, int nms, 
       {
 	 tikhonov +=  SQR( (xms[q] - xms0[q])/sfs[q]);
 	 dmfs_reg[q]   = 2*tcoff*(xms[q] - xms0[q])/SQR(sfs[q]);
+         //	 tikhonov +=  SQR( (xms[q] - xms0[q]));
+         //	 dmfs_reg[q]   = 2*tcoff*(xms[q] - xms0[q]);
 	 //         cout << " q = " << q << " sfs = " << sfs[q] << " " << xms0[q] << " " << xms[q] << endl;
       }
       mf_reg += tcoff*tikhonov;
@@ -255,8 +266,10 @@ void  MaterialParameterization::get_regularizer( int nmd, double* xmd, int nms, 
       {
 	 tikhonovd += SQR( (xmd[q] - xmd0[q])/sfd[q]);
 	 dmfd_reg[q] = 2*tcoff*(xmd[q] - xmd0[q])/SQR(sfd[q]);
+         //	 tikhonovd += SQR( (xmd[q] - xmd0[q]));
+         //	 dmfd_reg[q] = 2*tcoff*(xmd[q] - xmd0[q]);
       }
-      MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, m_ew->m_1d_communicator );
       mf_reg += tcoff*tikhonov;
    }
    else
@@ -264,14 +277,16 @@ void  MaterialParameterization::get_regularizer( int nmd, double* xmd, int nms, 
       double tikhonov=0;
       for (int q=0; q<m_nms; q++)
       {
-	 tikhonov +=  SQR( (xms[q] - xms0[q])/sfs[q]);
+         //	 tikhonov +=  SQR( (xms[q] - xms0[q])/sfs[q]);
+	 tikhonov +=  SQR( (xms[q] - xms0[q]));
       }
       mf_reg += tcoff*tikhonov;
 
       double tikhonovd = 0;
       for (int q=0; q<m_nmd; q++)
 	 tikhonovd += SQR( (xmd[q] - xmd0[q])/sfd[q]);
-      MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      //	 tikhonovd += SQR( (xmd[q] - xmd0[q]));
+      MPI_Allreduce( &tikhonovd, &tikhonov, 1, MPI_DOUBLE, MPI_SUM, m_ew->m_1d_communicator );
       mf_reg += tcoff*tikhonov;
    }
 #undef SQR

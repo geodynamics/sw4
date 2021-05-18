@@ -519,6 +519,7 @@ EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
   m_do_linesearch(true),
   //  m_utc0set(false),
   //  m_utc0isrefevent(false),
+  m_events_parallel(false),
   m_opttest(0),
   mEtreeFile(NULL),
   m_perturb(0),
@@ -530,9 +531,13 @@ EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
   m_randomize(false),
   m_anisotropic(false),
   m_croutines(true),
+  m_zerograd_at_src(false),
+  m_zerograd_pad(2),
+  m_filter_gradient(false),
+  m_gradfilter_ep(0.08),
+  m_gradfilter_it(5),
   NO_TOPO(1e38)
 {
-  
    MPI_Comm_rank(MPI_COMM_WORLD, &m_myRank);
    MPI_Comm_size(MPI_COMM_WORLD, &m_nProcs);
 
@@ -574,21 +579,66 @@ EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
    m_nevents_specified = findNumberOfEvents();
    m_nevent = m_nevents_specified > 0 ? m_nevents_specified:1;
 
+// Split communicator for parallel events in sw4mopt:
+   if( m_events_parallel )
+   {
+      if( m_nProcs % m_nevent != 0 )
+      {
+         if( m_myRank == 0 )
+         {
+            cout << "ERROR: When using parallel events, the number of events" 
+                 << " must prefectly divide the number of processors"  
+                 << " nprocs= " << m_nProcs << " nevents= " << m_nevent << endl;
+         }
+         MPI_Abort(MPI_COMM_WORLD,0);
+      }
+      int nproc_group = m_nProcs/m_nevent;
+      int r  = m_myRank % nproc_group;
+      int ev = (m_myRank-r)/nproc_group;
+      //      int r  = m_myRank % m_nevent;
+      //      int ev = (m_myRank-r)/m_nevent;
+      m_eStart = ev;
+      m_eEnd   = ev;
+      //    global rank = local_rank + nproc_group*e 
+      // where 0 <= global_rank < nproc, 0<= local_rank < nproc_group
+      //   e = global_event_nr, 0 <= e < nevent
+      //
+      MPI_Comm_split( MPI_COMM_WORLD, ev, m_myRank, &m_1d_communicator );
+      MPI_Comm_rank(m_1d_communicator, &m_myRank);
+      MPI_Comm_size(m_1d_communicator, &m_nProcs);
+      MPI_Comm_split( MPI_COMM_WORLD, m_myRank, 0, &m_cross_communicator );
+   }
+   else
+   {
+      m_eStart = 0;
+      m_eEnd   = m_nevent-1;
+      //      m_event_in_proc=-1;  // not used
+      MPI_Comm_dup(MPI_COMM_WORLD,&m_1d_communicator);
+      m_cross_communicator = MPI_COMM_SELF;
+   }
+   int nLocalEvents = m_eEnd-m_eStart+1;
+   if( m_events_parallel && proc_zero_evzero() )
+   {
+      cout << "Each event runs on a separate processor group" << endl;
+      cout << "   Number of events = " << m_nevent << endl;
+      cout << "   Number of processors/event = " << m_nProcs << endl;
+   }
+   //   std::cout << "nevents= " << m_nevent << " parallel= " << m_events_parallel << " estart,eend= " << m_eStart << " " << m_eEnd << " myrank= " << m_myRank << " nproc= " << m_nProcs << std::endl;
 // Allocate storage 
-   m_epi_lat.resize(m_nevent);
-   m_epi_lon.resize(m_nevent);
-   m_epi_depth.resize(m_nevent);
-   m_epi_t0.resize(m_nevent);
-   a_GlobalSources.resize(m_nevent);
-   a_GlobalTimeSeries.resize(m_nevent);
-   mPath.resize(m_nevent);
-   mObsPath.resize(m_nevent);
-   mTmax.resize(m_nevent);
-   mNumberOfTimeSteps.resize(m_nevent);
-   mTimeIsSet.resize(m_nevent);
-   m_utc0.resize(m_nevent);
+   m_epi_lat.resize(nLocalEvents);
+   m_epi_lon.resize(nLocalEvents);
+   m_epi_depth.resize(nLocalEvents);
+   m_epi_t0.resize(nLocalEvents);
+   a_GlobalSources.resize(nLocalEvents);
+   a_GlobalTimeSeries.resize(nLocalEvents);
+   //   mPath.resize(nLocalEvents);
+   //   mObsPath.resize(nLocalEvents);
+   mTmax.resize(nLocalEvents);
+   mNumberOfTimeSteps.resize(nLocalEvents);
+   mTimeIsSet.resize(nLocalEvents);
+   m_utc0.resize(nLocalEvents);
 // Defaults
-   for( int e=0 ; e < m_nevent ; e++ )
+   for( int e=0 ; e < nLocalEvents ; e++ )
    {
       m_epi_lat[e]  = 0.0;
       m_epi_lon[e]  = 0.0;
@@ -633,6 +683,41 @@ bool EW::wasParsingSuccessful()
 }
   
 //-----------------------------------------------------------------------
+bool EW::event_is_in_proc( int e ) const
+{
+   return m_eStart <= e && e <= m_eEnd;
+   //   if( m_events_parallel )
+   //   {
+   //      return e==m_event_in_proc;
+   //   }
+   //   else
+   //   {
+   //      return 0 <= e && e < m_nevent;
+   //   }
+}
+
+//-----------------------------------------------------------------------
+int EW::global_to_local_event( int e ) const
+{
+   //   if( 0 <= e && e < m_nevent )
+   //   {
+   if( m_eStart <= e && e <= m_eEnd )
+   {
+      //      return m_events_parallel?0:e;
+      return e-m_eStart;
+   }
+   else
+      return -1;
+}
+
+//-----------------------------------------------------------------------
+int EW::local_to_global_event( int e ) const
+{
+   return e+m_eStart;
+   //   return m_events_parallel?m_event_in_proc:e;
+}
+
+//-----------------------------------------------------------------------
 void EW::printTime( int cycle, float_sw4 t, bool force ) const 
 {
    if (!mQuiet && proc_zero() && (force || mPrintInterval == 1 ||
@@ -662,12 +747,13 @@ void EW::printPreamble(vector<Source*> & a_Sources, int event ) const
       msg << " Number of time steps = " << mNumberOfTimeSteps[event] << " dt: " << mDt << endl;
       if( m_nevent > 1 )
       {
+         int eglobal=local_to_global_event(event);
 	 map<string,int>::const_iterator it=m_event_names.begin();
-	 bool found=it->second == event;
+	 bool found=it->second == eglobal;
 	 while( !found && it != m_event_names.end() )
 	 {
 	    it++;
-	    found = it->second == event;
+	    found = it->second == eglobal;
 	 }
 	 msg << " Event name: " << it->first << endl;
       }      
@@ -699,7 +785,7 @@ void EW::printPreamble(vector<Source*> & a_Sources, int event ) const
       }
       cout << msg.str();
    }
-   MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Barrier(m_1d_communicator);
 
    cout.flush(); cerr.flush();
       
@@ -952,6 +1038,12 @@ void EW::check_dimensions()
 bool EW::proc_zero() const
 {
   return (m_myRank == 0);
+}
+
+//-----------------------------------------------------------------------
+bool EW::proc_zero_evzero() const
+{
+  return (m_myRank == 0 && m_eStart == 0);
 }
 
 //-----------------------------------------------------------------------
@@ -1444,7 +1536,7 @@ void EW::saveGMTFile( vector<vector<Source*> > & a_GlobalUniqueSources, int even
 {
 // this routine needs to be updated (at least for the etree info)
    if (!mWriteGMTOutput) return;
-
+   int eglobal = local_to_global_event(event);
    if (proc_zero())
    {
       stringstream contents;
@@ -1631,48 +1723,47 @@ void EW::saveGMTFile( vector<vector<Source*> > & a_GlobalUniqueSources, int even
                   else if (startswith("infile=", token))
                   {
                      token += 7; 
-                     vector<string> stanamev;
-                     vector<double> xv;
-                     vector<double> yv;
-                     vector<double> zv;
-                     vector<int> is_nsewv;
-                     int nsta = 0;
                      filename = token;
-
-                     readStationInfoHDF5(filename, &stanamev, &xv, &yv, &zv, &is_nsewv, &nsta);
-
-                     for (int i = 0; i < nsta; i++) {
-                       x = xv[i];
-                       y = yv[i];
-                       z = zv[i];
-                       lat = xv[i];
-                       lon = yv[i];
-                       name = stanamev[i];
-
-                       if (is_nsewv[i] == 0) 
-                           cartCoordSet = true;
-                       else 
-                           geoCoordSet = true;
-
-                       VERIFY(cartCoordSet || geoCoordSet);
-
-                       if (!geoCoordSet && cartCoordSet)
-                       {
-                         computeGeographicCoord(x, y, lon, lat);
-                       }
-                       if( ev == event )
-                       {
-                          numStations += 1;
-                       
-                       // Now have location
-                          stationstr << lon << " " << lat << " " << name << " CB" << endl; 
-                       }
-                     } // end for
-
                   }
 
                   token = strtok(NULL, " \t");
                }
+
+               vector<string> stanamev;
+               vector<double> xv;
+               vector<double> yv;
+               vector<double> zv;
+               vector<int> is_nsewv;
+               int nsta = 0;
+               readStationInfoHDF5(filename, &stanamev, &xv, &yv, &zv, &is_nsewv, &nsta);
+
+               for (int i = 0; i < nsta; i++) {
+                  x = xv[i];
+                  y = yv[i];
+                  z = zv[i];
+                  lat = xv[i];
+                  lon = yv[i];
+                  name = stanamev[i];
+
+                  if (is_nsewv[i] == 0) 
+                     cartCoordSet = true;
+                  else 
+                     geoCoordSet = true;
+
+                  VERIFY(cartCoordSet || geoCoordSet);
+
+                  if (!geoCoordSet && cartCoordSet)
+                  {
+                     computeGeographicCoord(x, y, lon, lat);
+                  }
+                  if( ev == eglobal )
+                  {
+                     numStations += 1;
+                       
+                       // Now have location
+                          stationstr << lon << " " << lat << " " << name << " CB" << endl; 
+                  }
+               } // end for
 #endif
             } // token on sac line
             else if (startswith("rec", buffer) || startswith("sac", buffer))
@@ -1760,7 +1851,7 @@ void EW::saveGMTFile( vector<vector<Source*> > & a_GlobalUniqueSources, int even
                {
                  computeGeographicCoord(x, y, lon, lat);
                }
-	       if( ev == event )
+	       if( ev == eglobal )
 	       {
 		  numStations += 1;
                
@@ -1783,7 +1874,7 @@ void EW::saveGMTFile( vector<vector<Source*> > & a_GlobalUniqueSources, int even
       contents << "/bin/mv plot.ps " << mName << ".ps" << endl;
 
       stringstream filename;
-      filename << mPath[event] << mGMTFileName;
+      filename << mPath[eglobal] << mGMTFileName;
       ofstream gmtfile(filename.str().c_str());
       if (gmtfile.is_open())
       {
@@ -1833,7 +1924,7 @@ void EW::print_execution_times( double times[10] )
 {
    const int nt = 10;
    double* time_sums =new double[nt*no_of_procs()];
-   MPI_Gather( times, nt, MPI_DOUBLE, time_sums, nt, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+   MPI_Gather( times, nt, MPI_DOUBLE, time_sums, nt, MPI_DOUBLE, 0, m_1d_communicator );
    bool printavgs = true;//print averages or one line per proc?
    if( !mQuiet && proc_zero() )
    {
@@ -5330,7 +5421,8 @@ void EW::update_images( int currentTimeStep, float_sw4 time, vector<Sarray> & a_
 // write the image plane on file    
       double t[3];
       t[0] = t[1] = t[2] = MPI_Wtime();
-      img->writeImagePlane_2( currentTimeStep-td, mPath[event], time-td*mDt );
+      int eglobal=local_to_global_event(event);
+      img->writeImagePlane_2( currentTimeStep-td, mPath[eglobal], time-td*mDt );
       t[2] = MPI_Wtime();
       
 // output timing info?
@@ -5342,7 +5434,7 @@ void EW::update_images( int currentTimeStep, float_sw4 time, vector<Sarray> & a_
 	double tmp[2];
 	tmp[0] = t[0];
 	tmp[1] = t[1];
-	MPI_Reduce( tmp, t, 2, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD );
+	MPI_Reduce( tmp, t, 2, MPI_DOUBLE, MPI_MAX, 0, m_1d_communicator );
 	if( proc_zero() )
 	{
 	  cout << "Maximum write time:";
@@ -5397,7 +5489,7 @@ void EW::initialize_image_files( )
 {
    // In case of multiple events, prepare maximum number of time steps
    int maxNumberOfTimeSteps = 0;
-   for( int e=0 ; e < m_nevent ; e++ )
+   for( int e=0 ; e < m_eEnd-m_eStart+1 ; e++ )
       maxNumberOfTimeSteps = mNumberOfTimeSteps[e] > maxNumberOfTimeSteps ? mNumberOfTimeSteps[e] : 
 	                                          maxNumberOfTimeSteps;
    // Image planes
@@ -5549,9 +5641,9 @@ void EW::average_speeds( float_sw4& cp, float_sw4& cs )
       float_sw4 cpgridtmp = cpgrid;
       float_sw4 csgridtmp = csgrid;
       float_sw4 nptstmp   = npts;
-      MPI_Allreduce( &cpgridtmp, &cpgrid, 1, m_mpifloat, MPI_SUM, MPI_COMM_WORLD );
-      MPI_Allreduce( &csgridtmp, &csgrid, 1, m_mpifloat, MPI_SUM, MPI_COMM_WORLD );
-      MPI_Allreduce( &nptstmp, &npts, 1, m_mpifloat, MPI_SUM, MPI_COMM_WORLD );
+      MPI_Allreduce( &cpgridtmp, &cpgrid, 1, m_mpifloat, MPI_SUM, m_1d_communicator );
+      MPI_Allreduce( &csgridtmp, &csgrid, 1, m_mpifloat, MPI_SUM, m_1d_communicator );
+      MPI_Allreduce( &nptstmp, &npts, 1, m_mpifloat, MPI_SUM, m_1d_communicator );
       cp = cp + cpgrid/npts;
       cs = cs + csgrid/npts;
    }
@@ -5733,7 +5825,8 @@ void EW::compute_energy( float_sw4 dt, bool write_file, vector<Sarray>& Um,
    energy /= (dt*dt);
    float_sw4 energytmp = energy;
    MPI_Allreduce( &energytmp, &energy, 1, m_mpifloat, MPI_SUM, m_cartesian_communicator );
-   m_energy_test->record_data( energy, step, write_file, m_myRank, mPath[event] );
+   int eglobal=local_to_global_event(event);
+   m_energy_test->record_data( energy, step, write_file, m_myRank, mPath[eglobal] );
 }
 //-----------------------------------------------------------------------
 float_sw4 EW::scalarProduct( vector<Sarray>& U, vector<Sarray>& V)
@@ -6833,7 +6926,7 @@ void EW::extractTopographyFromRfile( std::string a_topoFileName )
    }
    else
       cout << rname << " error could not open file " << a_topoFileName << endl;
-   MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Barrier(m_1d_communicator);
    end_time = MPI_Wtime();
    if (m_myRank==0)
      printf("Read topography from rfile time=%e seconds\n", end_time-start_time);
@@ -6872,7 +6965,7 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
     ASSERT(ierr >= 0);
     H5Aclose(attr_id);
   }
-  MPI_Bcast(&lonlataz, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&lonlataz, 3, MPI_DOUBLE, 0, m_1d_communicator);
 
   double alpha = lonlataz[2], lon0 = lonlataz[0], lat0 = lonlataz[1];
 
@@ -6888,7 +6981,7 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
     ASSERT(ierr >= 0);
     H5Aclose(attr_id);
   }
-  MPI_Bcast(&npatches, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&npatches, 1, MPI_INT, 0, m_1d_communicator);
 
   if (m_myRank==0 && mVerbose >= 2) {
     printf("Sfile header: \n");
@@ -6904,7 +6997,7 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
     ASSERT(ierr >= 0);
     H5Aclose(attr_id);
   }
-  MPI_Bcast(&hh, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&hh, 1, MPI_DOUBLE, 0, m_1d_communicator);
 
   // ---------- read topography on file into array gridElev
   hsize_t dims[2];
@@ -6926,8 +7019,8 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
     prec = (int)H5Tget_size(datatype_id);
     H5Tclose(datatype_id);
   }
-  MPI_Bcast(dims, 2, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&prec, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(dims, 2, MPI_LONG_LONG, 0, m_1d_communicator );
+  MPI_Bcast(&prec, 1, MPI_INT, 0, m_1d_communicator );
 
   int nitop = (int)dims[0], njtop = (int)dims[1];
 
@@ -6959,7 +7052,7 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
     H5Gclose(group_id);
     H5Fclose(file_id);
   }
-  MPI_Bcast(in_data, nitop * njtop * prec, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Bcast(in_data, nitop * njtop * prec, MPI_CHAR, 0, m_1d_communicator );
 
   float_sw4 *data = new float_sw4[nitop * njtop];
   for (int i = 0; i < nitop * njtop; i++) {
@@ -7095,7 +7188,7 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
     }// end for j
   }// end for i
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(m_1d_communicator);
   end_time = MPI_Wtime();
   if (m_myRank==0)
     printf("Read topography from sfile time=%e seconds\n", end_time-start_time);
@@ -8092,8 +8185,8 @@ void EW::sort_grid_point_sources( vector<GridPointSource*>& point_sources,
    int nrsrc =point_sources.size();
    int nrunique = identsources.size()-1;
    int nrsrctot, nruniquetot;
-   MPI_Reduce( &nrsrc, &nrsrctot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
-   MPI_Reduce( &nrunique, &nruniquetot, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+   MPI_Reduce( &nrsrc, &nrsrctot, 1, MPI_INT, MPI_SUM, 0, m_1d_communicator );
+   MPI_Reduce( &nrunique, &nruniquetot, 1, MPI_INT, MPI_SUM, 0, m_1d_communicator );
    if( !mQuiet && m_myRank == 0 && mVerbose >= 2 )
    {
       cout << "number of grid point  sources = " << nrsrctot << endl;
@@ -8160,7 +8253,8 @@ AllDims* EW::get_fine_alldimobject( )
 {
    int g=mNumberOfCartesianGrids-1;
    AllDims* fine = new AllDims( m_proc_array[0], m_proc_array[1], 1, 1, m_global_nx[g], 
-		       1, m_global_ny[g], 1, m_global_nz[g], m_ghost_points, m_ppadding );
+                                1, m_global_ny[g], 1, m_global_nz[g], m_ghost_points, 
+                                m_ppadding, m_cartesian_communicator );
    return fine;
 }
 
@@ -8180,4 +8274,165 @@ void EW::grid_information( int g )
       m_minJacobian  = min(m_minJacobian, minJglobal);
       m_maxJacobian  = max(m_maxJacobian, maxJglobal);
    }
+}
+
+//-----------------------------------------------------------------------
+void EW::set_to_zero_at_source( vector<Sarray> & a_U, 
+                                vector<GridPointSource*> point_sources,
+                                vector<int> identsources, int padding )
+{
+#pragma omp parallel for
+     for( int r=0 ; r < identsources.size()-1 ; r++ )
+     {
+	int s0=identsources[r];
+	int g= point_sources[s0]->m_grid;	
+	int i0= point_sources[s0]->m_i0;
+	int j0= point_sources[s0]->m_j0;
+	int k0= point_sources[s0]->m_k0;
+        int klow  = k0-padding > a_U[g].m_kb ? k0-padding:a_U[g].m_kb;
+        int khigh = k0+padding < a_U[g].m_ke ? k0+padding:a_U[g].m_ke;
+        int jlow  = j0-padding > a_U[g].m_jb ? j0-padding:a_U[g].m_jb;
+        int jhigh = j0+padding < a_U[g].m_je ? j0+padding:a_U[g].m_je;
+        int ilow  = i0-padding > a_U[g].m_ib ? i0-padding:a_U[g].m_ib;
+        int ihigh = i0+padding < a_U[g].m_ie ? i0+padding:a_U[g].m_ie;
+
+        for( int k=klow ; k<= khigh ;k++ )
+           for( int j=jlow ; j<= jhigh ;j++ )
+              for( int i=ilow ; i<= ihigh ;i++ )
+                 for( int c=1 ; c <= a_U[g].m_nc ;c++ )
+                    a_U[g](c,i,j,k) = 0;
+     }
+}
+//-----------------------------------------------------------------------
+void EW::set_zerograd()
+{
+   m_zerograd_at_src =true;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_zerograd_pad( int pad )
+{
+   m_zerograd_pad = pad;
+}
+
+//-----------------------------------------------------------------------
+void EW::filter_bc( Sarray& ufi, Sarray& u, int g, float_sw4 ep )
+{
+   // Boundary smoothing on top and bottom, don't need to impose
+   // boundary conditions at i and j domain boundaries, 
+         int ks=m_kStart[g], ke=m_kEnd[g];
+#pragma omp parallel for
+         for( int j=m_jStart[g]+1; j<= m_jEnd[g]-1; j++ )
+            for( int i=m_iStart[g]+1; i<= m_iEnd[g]-1; i++ )
+               for( int c=1 ; c <= u.m_nc; c++)
+               {
+                  ufi(c,i,j,ks) = ep*(u(c,i+1,j,ks)+u(c,i-1,j,ks)+u(c,i,j+1,ks)+
+                                      u(c,i,j-1,ks))+
+                        (1-6*ep)*u(c,i,j,ks);
+                  ufi(c,i,j,ke) = ep*(u(c,i+1,j,ke)+u(c,i-1,j,ke)+u(c,i,j+1,ke)+
+                                      u(c,i,j-1,ke))+
+                        (1-6*ep)*u(c,i,j,ke);
+               }
+       // No smoothing at supergrid boundaries
+         int is=m_iStart[g], ie=m_iEnd[g];
+#pragma omp parallel for
+         for( int k=m_kStart[g]; k<= m_kEnd[g]; k++ )
+            for( int j=m_jStart[g]+1; j<= m_jEnd[g]-1; j++ )
+               for( int c=1 ; c <= u.m_nc; c++)
+               {
+                  ufi(c,is,j,k) = u(c,is,j,k);
+                  ufi(c,ie,j,k) = u(c,ie,j,k);
+               }
+         int js=m_jStart[g], je=m_jEnd[g];
+#pragma omp parallel for
+         for( int k=m_kStart[g]; k<= m_kEnd[g]; k++ )
+            for( int i=m_iStart[g]; i<= m_iEnd[g]; i++ )
+               for( int c=1 ; c <= u.m_nc; c++)
+               {
+                  ufi(c,i,js,k) = u(c,i,js,k);
+                  ufi(c,i,je,k) = u(c,i,je,k);
+               }
+
+}
+
+//-----------------------------------------------------------------------
+void EW::heat_kernel_filter( vector<Sarray>& u, float_sw4 ep, int nit )
+{
+   // Filter input array u, to use for gradient filtering.
+   // Input: u   - Array to filter
+   //        ep  - Filter parameter
+   //        nit - Number of iterations
+   // Output u  - Filtered array
+   //
+
+// Two iterations between communication, because always at least 5pt overlap,
+// take care of odd number of iterations first.
+   if( nit % 2 == 1 )
+   {
+      for( int g=0 ; g < mNumberOfGrids ; g++ )
+      {
+         Sarray utmp(u[g]);
+#pragma omp parallel for
+         for( int k=m_kStart[g]+1; k<= m_kEnd[g]-1; k++ )
+            for( int j=m_jStart[g]+1; j<= m_jEnd[g]-1; j++ )
+               for( int i=m_iStart[g]+1; i<= m_iEnd[g]-1; i++ )
+                  for( int c=1 ; c <= u[g].m_nc; c++)
+                     utmp(c,i,j,k) = ep*(u[g](c,i+1,j,k)+u[g](c,i-1,j,k)+u[g](c,i,j+1,k)+
+                                         u[g](c,i,j-1,k)+u[g](c,i,j,k+1)+u[g](c,i,j,k-1))+
+                        (1-6*ep)*u[g](c,i,j,k);
+         filter_bc( utmp, u[g], g, ep );
+         u[g].copy(utmp);
+      }
+      communicate_arrays(u);
+   }
+   for( int it=1; it <= nit/2 ;it++)
+   {
+
+      for( int g=0 ; g < mNumberOfGrids ; g++ )
+      {
+         Sarray utmp(u[g]);
+
+    // First iteration
+#pragma omp parallel for
+         for( int k=m_kStart[g]+1; k<= m_kEnd[g]-1; k++ )
+            for( int j=m_jStart[g]+1; j<= m_jEnd[g]-1; j++ )
+               for( int i=m_iStart[g]+1; i<= m_iEnd[g]-1; i++ )
+                  for( int c=1 ; c <= u[g].m_nc; c++)
+                     utmp(c,i,j,k) = ep*(u[g](c,i+1,j,k)+u[g](c,i-1,j,k)+u[g](c,i,j+1,k)+
+                                         u[g](c,i,j-1,k)+u[g](c,i,j,k+1)+u[g](c,i,j,k-1))+
+                        (1-6*ep)*u[g](c,i,j,k);
+
+         filter_bc( utmp, u[g], g, ep );
+
+    // Second iteration
+#pragma omp parallel for
+         for( int k=m_kStart[g]+1; k<= m_kEnd[g]-1; k++ )
+            for( int j=m_jStart[g]+2; j<= m_jEnd[g]-2; j++ )
+               for( int i=m_iStart[g]+2; i<= m_iEnd[g]-2; i++ )
+                  for( int c=1 ; c <= u[g].m_nc; c++)
+                     u[g](c,i,j,k) = ep*(utmp(c,i+1,j,k)+utmp(c,i-1,j,k)+utmp(c,i,j+1,k)+
+                                         utmp(c,i,j-1,k)+utmp(c,i,j,k+1)+utmp(c,i,j,k-1))+
+                        (1-6*ep)*utmp(c,i,j,k);
+         filter_bc( u[g], utmp, g, ep );
+      }
+      communicate_arrays(u);
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::set_filtergrad()
+{
+   m_filter_gradient = true;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_filterit(int filterit)
+{
+   m_gradfilter_it = filterit;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_filterpar(float_sw4 filterpar)
+{
+   m_gradfilter_ep = filterpar;
 }

@@ -39,7 +39,8 @@ public:
    void set_scalefactors( int nmpars, double* sfs, double rho_ref, double mu_ref, double lambda_ref, 
 			  double vs_ref, double vp_ref );
    void subtract_base_mtrl( int nms, double* xms );
-   int get_varcase(){return 3;}
+   int get_varcase(){return 3;};
+   void write_dfm_hdf5(double* dfm, std::string fname,  MPI_Comm comm) {printf("%s not supported!\n", __func__);}
 };
 
 #endif

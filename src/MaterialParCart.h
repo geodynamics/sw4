@@ -66,7 +66,7 @@ public:
 		      std::vector<Sarray>& a_gradlambda );
 
    virtual void interpolate_pseudohessian(int nmpars, double* phs, int nmpard, double* phm, 
-                                          std::vector<Sarray>& phgrid){};
+                                          std::vector<Sarray>& phgrid);
 
    virtual void set_scalefactors( int nmpars, double* sfs, double rho_ref, 
                                   double mu_ref, double lambda_ref, 
@@ -76,8 +76,12 @@ public:
    ssize_t local_index( size_t ind_global );
 
    //   void subtract_base_mtrl( int nms, double* xms );
-   int get_varcase(){return m_variables;}
+   int get_varcase(){return m_variables;};
    //   int get_varcase(){return 2;}
+   void write_dfm_hdf5(double* dfm, std::string fname, MPI_Comm comm);
+   void get_local_grid_begin_end(int* begin, int* end) {begin[0] = m_ibint; begin[1] = m_jbint; begin[2] = m_kbint; 
+                                                        end[0] = m_ieint; end[1] = m_jeint; end[2] = m_keint;};
+   void get_global_grid_size(int *grid_size) {printf("%s\n", __func__); grid_size[0] = m_nx; grid_size[1] = m_ny; grid_size[2] = m_nz;}
 };
 
 #endif
