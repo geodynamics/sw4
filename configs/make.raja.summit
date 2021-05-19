@@ -11,6 +11,7 @@ raja_cuda=yes
 umpire = yes
 fftw = yes
 hdf5= yes
+zfp=yes
 spill_warns = no
 caliper= no
 RAJA_HOME = /gpfs/alpine/geo130/proj-shared/AUGUST_CAMPAIGN/RAJA-v0.11.0/install
@@ -18,12 +19,14 @@ RAJA_HOME = /autofs/nccs-svm1_proj/geo130/ramesh/RAJA-v0.11.0/install
 
 PROJ_HOME = /gpfs/alpine/geo130/proj-shared/AUGUST_CAMPAIGN/proj-5.0.0/install
 
-UMPIRE_HOME = /gpfs/alpine/geo130/proj-shared/AUGUST_CAMPAIGN/umpire-3.0.0/install
+UMPIRE_HOME = /autofs/nccs-svm1_home1/houjun/summit/umpire-3.0.0/install
 UMPIRE_HOME = /autofs/nccs-svm1_proj/geo130/ramesh/umpire-3.0.0/install
 
 CALIPER_HOME = /usr/workspace/wsb/ramesh/Caliper/July2020/Caliper/install
 
-HDF5_HOME = /p/gpfs1/ramesh/SW4/HDF_TEST/CMake-hdf5-1.10.6/build/HDF5-1.10.6-Linux/HDF_Group/HDF5/1.10.6
+#HDF5_HOME = /p/gpfs1/ramesh/SW4/HDF_TEST/CMake-hdf5-1.10.6/build/HDF5-1.10.6-Linux/HDF_Group/HDF5/1.10.6
+ZFP_HOME=/gpfs/alpine/csc300/world-shared/gnu_build/zfp
+H5Z_HOME=/gpfs/alpine/csc300/world-shared/gnu_build/H5Z-ZFP/install
 
 CALIPER_HOME =/usr/workspace/wsrzd/ramesh/Caliper/Caliper/install
 
@@ -48,6 +51,11 @@ MORE_FLAGS+= -DUSE_HDF5=1 -I $(OLCF_HDF5_ROOT)/include
 MORE_LINK_FLAGS+= -L $(OLCF_HDF5_ROOT)/lib -Wl,-rpath=$(OLCF_HDF5_ROOT)/lib -lhdf5_hl -lhdf5
 endif 
 
+ifeq ($(zfp),yes)
+MORE_FLAGS+= -DUSE_ZFP=1 -I $(ZFP_HOME)/include -I $(H5Z_HOME)/include
+MORE_LINK_FLAGS+= -Wl,-rpath=$(ZFP_HOME)/lib-Wl,-rpath=$(H5Z_HOME)/lib -L $(H5Z_HOME)/lib -L $(ZFP_HOME)/lib -lh5zzfp -lzfp 
+endif 
+
 ifeq ($(spill_warns),yes)
 MORE_FLAGS+=  -Xptxas -v,--warn-on-spills
 endif 
@@ -67,7 +75,7 @@ endif
 ifeq ($(proj),yes)
 MORE_FLAGS+= -I$(PROJ_HOME)/include
 #MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib  -L$(PROJ_HOME)/lib -lproj
-MORE_LINK_FLAGS+= -L$(PROJ_HOME)/lib64 -lproj
+MORE_LINK_FLAGS+= -Wl,-rpath=$(PROJ_HOME)/lib64 -L$(PROJ_HOME)/lib64 -lproj
 endif 
 
 DLINKFLAGS =  -arch=sm_70
