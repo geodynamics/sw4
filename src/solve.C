@@ -334,7 +334,17 @@ SW4_CheckDeviceError(cudaMemcpyToSymbol(cmem_acof_no_gp, m_acof_no_gp, 384*sizeo
   float_sw4 t;
   if (m_check_point->do_restart()) {
     double timeRestartBegin = MPI_Wtime();
-    m_check_point->read_checkpoint(t, beginCycle, Um, U, AlphaVEm, AlphaVE);
+    if (!m_check_point->useHDF5())
+      m_check_point->read_checkpoint( t, beginCycle, Um, U, AlphaVEm, AlphaVE );
+#ifdef USE_HDF5
+    else
+      m_check_point->read_checkpoint_hdf5( t, beginCycle, Um, U, AlphaVEm, AlphaVE );
+#else
+    else
+      if (proc_zero())
+        cout << "Configured to restart with HDF5 but SW4 is not compiled with HDF5!" << endl;
+#endif
+
     // tmp
     if (proc_zero())
       printf("After reading checkpoint data: beginCycle=%d, t=%e\n", beginCycle,
@@ -1216,8 +1226,16 @@ SW4_CheckDeviceError(cudaMemcpyToSymbol(cmem_acof_no_gp, m_acof_no_gp, 384*sizeo
     // checkpointing is not used)
     if (m_check_point->timeToWrite(t, currentTimeStep, mDt)) {
       double time_chkpt = MPI_Wtime();
-      m_check_point->write_checkpoint(t, currentTimeStep, U, Up, AlphaVE,
-                                      AlphaVEp);
+      if (!m_check_point->useHDF5())
+        m_check_point->write_checkpoint( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
+#ifdef USE_HDF5
+      else
+        m_check_point->write_checkpoint_hdf5( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
+#else
+      else
+        if (proc_zero())
+          cout << "Configured to checkpoint with HDF5 but SW4 is not compiled with HDF5!" << endl;
+#endif
       double time_chkpt_tmp = MPI_Wtime() - time_chkpt;
       if (mVerbose >= 0)
 

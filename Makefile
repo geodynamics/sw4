@@ -1,7 +1,7 @@
 #-----------------------------------------------------------------------
 # Usage:
-# make sw4 [debug=yes/no] [prec=single/double] [fortran=yes/no] [openmp=yes/no]
-#   Default is: debug=no prec=double fortran=yes openmp=yes
+# make sw4     [debug=yes/no] [proj=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
+#   Default is: debug=no proj=yes profile=no prec=double openmp=yes hdf5=no zfp=no sz=no fftw=no
 # This Makefile asumes that the following environmental variables have been assigned:
 # etree = [yes/no]
 # proj = [yes/no]
@@ -9,7 +9,15 @@
 # FC  = Fortran-77 compiler
 # SW4ROOT = path to third party libraries (used when etree=yes). 
 #
+# SW4ROOT = path to third party libraries (used when etree=yes and proj=yes). 
+# HDF5ROOT = path to hdf5 library and include files (used when hdf5=yes).
+# H5ZROOT = path to H5Z-ZFP library and include files (used when zfp=yes).
+# ZFPROOT = path to ZFP library and include files (used when zfp=yes).
+# SZROOT = path to SZ library and include files (used when sz=yes).
+# FFTWROOT = path to fftw library and include files (used when fftw=yes).
 # Note: third party libraries should have include files in $(SW4ROOT)/include, libraries in $(SW4ROOT)/lib
+# Note: HDF5ROOT and FFTWROOT can be left undefined if these libraries are 
+#       available by some other mechanism, such as 'module add'.
 #
 # The following environmental variables are optional:
 # EXTRA_CXX_FLAGS  = additional c++ compiler flags
@@ -26,8 +34,13 @@
 #-----------------------------------------------------------------------
 
 ifeq ($(debug),yes)
+   profile := "no"
    optlevel = DEBUG
+else ifeq ($(profile),yes)
+   debug := "no"
+   optlevel = PROFILE
 else
+   profile := "no"
    debug := "no"
    optlevel = OPTIMIZE
 endif
@@ -36,6 +49,10 @@ ifeq ($(optlevel),DEBUG)
    FFLAGS    = -g -O2
    CXXFLAGS  = -g -I../src -DBZ_DEBUG
    CFLAGS    = -g
+else ifeq ($(optlevel),PROFILE)
+   FFLAGS   = -g -O2
+   CXXFLAGS = -g -I../src
+   CFLAGS   = -g 
 else
    FFLAGS   = -O2
 # AP (160419) Note that cmake uses -O3 instead of -O for CXX and C
@@ -49,6 +66,7 @@ fullpath := $(shell pwd)
 HOSTNAME := $(shell hostname)
 UNAME := $(shell uname)
 
+profiledir := profile
 debugdir := debug
 optdir := optimize
 
@@ -148,6 +166,7 @@ ifeq ($(openmp),no)
 else
    debugdir := $(debugdir)_mp
    optdir   := $(optdir)_mp
+   profiledir := $(profiledir)_mp
    CXXFLAGS += 
    FFLAGS   += 
 endif
@@ -156,6 +175,7 @@ endif
 ifeq ($(fortran),yes)
    debugdir := $(debugdir)_fort
    optdir   := $(optdir)_fort
+   profiledir   := $(profiledir)_fort
    CXXFLAGS += -DSW4_NOC
 else
    fortran := "no"
@@ -164,10 +184,26 @@ endif
 ifeq ($(prec),single)
    debugdir := $(debugdir)_sp
    optdir   := $(optdir)_sp
+   profiledir   := $(profiledir)_sp
    CXXFLAGS += -I../src/float
 else
    CXXFLAGS += -I../src/double
    CXXFLAGS2 += -I../src/double	
+endif
+
+ifeq ($(hdf5),yes)
+   CXXFLAGS  += -I$(HDF5ROOT)/include -DUSE_HDF5
+   linklibs += -L$(HDF5ROOT)/lib -lhdf5
+endif
+
+ifeq ($(zfp),yes)
+   CXXFLAGS  += -I$(H5ZROOT)/include -I$(ZFPROOT)/include -DUSE_ZFP
+   linklibs += -L$(H5ZROOT)/lib -L$(ZFPROOT)/lib -lh5zzfp -lzfp 
+endif
+
+ifeq ($(sz),yes)
+   CXXFLAGS  += -I$(SZROOT)/include -DUSE_SZ
+   linklibs += -L$(SZROOT)/lib -lSZ -lzlib -lzstd -lhdf5sz
 endif
 
 ifdef EXTRA_LINK_FLAGS
@@ -176,6 +212,8 @@ endif
 
 ifeq ($(optlevel),DEBUG)
    builddir = $(debugdir)
+else ifeq ($(optlevel),PROFILE)
+   builddir = $(profiledir)
 else
    builddir = $(optdir)
 endif
@@ -231,7 +269,7 @@ ifeq ($(raja_cuda),yes)
 sw4: $(FSW4) $(FOBJ)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
-	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
+	@echo "debug=" $(debug) " profile=" $(profile) " hdf5=" $(hdf5) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT)
 	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
@@ -246,7 +284,7 @@ else
 sw4: $(FSW4) $(FOBJ)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
-	@echo "debug=" $(debug) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
+	@echo "debug=" $(debug) " profile=" $(profile) " hdf5=" $(hdf5) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT)
 	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
@@ -300,7 +338,8 @@ $(builddir)/%.o:src/%.C
 clean:
 	/bin/mkdir -p $(optdir)
 	/bin/mkdir -p $(debugdir)
-	cd $(optdir); /bin/rm -f sw4 *.o; cd ../$(debugdir); /bin/rm -f sw4 *.o
+	/bin/mkdir -p $(profiledir)
+	cd $(optdir); /bin/rm -f sw4 *.o; cd ../$(debugdir); cd ../$(profiledir); /bin/rm -f sw4 *.o; /bin/rm -f sw4 *.o
 
 # Special rule for the target test
 test:

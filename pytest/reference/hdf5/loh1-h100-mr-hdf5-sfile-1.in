@@ -21,12 +21,12 @@
 # use default values for the mesh refinement iteration
 #developer ctol=1e-10 cmaxit=100 crelax=0.92
 
-grid h=100 x=30000 y=30000 z=17000 extrapolate=1
-time t=5
-fileio path=loh1-h100-mr-2-hdf5
+grid h=200 x=30000 y=30000 z=17000 extrapolate=1
+time steps=268
+fileio path=loh1-h100-mr-1-hdf5
 
 # mesh refinement along material jump (50*20 = 1000)
-refinement zmax=1000
+# refinement zmax=1000
 
 #specify the width of the super grid damping layer (30 is the default)
 supergrid gp=30
@@ -75,17 +75,17 @@ rec x=21000 y=23000 z=0 file=sta10 usgsformat=0 sacformat=0 hdf5format=1 hdf5fil
 # sfileoutput file=sfileoutputh2v1 sampleFactorH=2 sampleFactorV=1
 
 # material images
-imagehdf5 mode=mu z=0 file=hor cycle=0
-imagehdf5 mode=lambda z=0 file=hor cycle=0
-imagehdf5 mode=rho z=0 file=hor cycle=0
+imagehdf5 mode=mu z=0 file=hor cycle=268
+imagehdf5 mode=lambda z=0 file=hor cycle=268
+imagehdf5 mode=rho z=0 file=hor cycle=268
 
-imagehdf5 mode=lambda y=15e3 file=ver cycle=0
-imagehdf5 mode=mu y=15e3 file=ver cycle=0
-imagehdf5 mode=rho y=15e3 file=ver cycle=0
+imagehdf5 mode=lambda y=15e3 file=ver cycle=268
+imagehdf5 mode=mu y=15e3 file=ver cycle=268
+imagehdf5 mode=rho y=15e3 file=ver cycle=268
 
 # solution images
-imagehdf5 mode=mag z=0 file=surf timeInterval=0.5
+imagehdf5 mode=mag z=0 file=surf cycle=268
 # no point saving uz and ux on this plane, because they are zero by symmetry
-imagehdf5 mode=uy y=15e3 file=ver timeInterval=0.5
+imagehdf5 mode=uy y=15e3 file=ver cycle=268
 
-
+checkpoint cycleInterval=200 file=loh1_hdf5_restart hdf5=yes

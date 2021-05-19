@@ -51,6 +51,15 @@
 #include "nvToolsExtCuda.h"
 #endif
 
+#ifdef USE_ZFP
+#include "H5Zzfp_lib.h"
+#include "H5Zzfp_props.h"
+#endif
+
+#ifdef USE_SZ
+#include "H5Z_SZ.h"
+#endif
+
 #if defined(SW4_SIGNAL_CHECKPOINT)
 //
 // Currently no way to get the singnal to all processes without killing the job
@@ -250,6 +259,17 @@ int main(int argc, char **argv) {
   // Save the time series here
   vector<vector<TimeSeries *> > GlobalTimeSeries;
 
+#ifdef USE_ZFP
+  H5Z_zfp_initialize();
+#endif
+
+#ifdef USE_SZ
+  char *cfgFile = getenv("SZ_CONFIG_FILE");
+  if (NULL == cfgFile)
+    cfgFile = "sz.config";
+  H5Z_SZ_Init(cfgFile);
+#endif
+
 // make a new simulation object by reading the input file 'fileName'
 // nvtxRangePushA("outer");
 #if defined(SW4_EXCEPTIONS)
@@ -366,6 +386,15 @@ int main(int argc, char **argv) {
     abort();
   }  // else std::cout<<"MAGMA FINALIZE SUCCESSFULL\n"<<std::flush;
 #endif
+
+#ifdef USE_ZFP
+  H5Z_zfp_finalize();
+#endif
+
+#ifdef USE_SZ
+  H5Z_SZ_Finalize();
+#endif
+
   // Stop MPI
   MPI_Finalize();
   // std::cout<<"MPI_Finalize done\n"<<std::flush;

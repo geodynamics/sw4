@@ -186,7 +186,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     return mpirun_cmd
 
 #------------------------------------------------
-def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mpi_tasks=0, omp_threads=0, cpu_allocation="", verbose=False, nohdf5=False):
+def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mpi_tasks=0, omp_threads=0, cpu_allocation="", verbose=False, usehdf5=False):
 
     assert sys.version_info >= (3,5) # named tuples in Python version >=3.3
 
@@ -236,6 +236,7 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
     if verbose: print('sw4_mpi_run = ', sw4_mpi_run)
 
     num_test=0
+    num_skip=0
     num_pass=0
     num_fail=0
 
@@ -244,151 +245,150 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
                 'attenuation', 'attenuation', 'pointsource',
                 'twilight', 'twilight', 'lamb',
                 'curvimeshrefine', 'curvimeshrefine', 'curvimeshrefine','curvimeshrefine',
-                'hdf5', 'hdf5']
+                'hdf5', 'hdf5', 'hdf5']
 
-    all_cases = ['energy-nomr-2nd', 'energy-mr-4th', 'energy-mr-sg-order2', 'energy-mr-sg-order4', 'refine-el', 'refine-att', 'refine-att-2nd', 'tw-att', 'tw-topo-att', 'pointsource-sg', 'flat-twi', 'gauss-twi', 'lamb','gausshill-el','gauss-sg-mr','energy','gausshill-att','loh1-h100-mr-hdf5','loh1-h100-mr-hdf5-sfile']
+    all_cases = ['energy-nomr-2nd', 'energy-mr-4th', 'energy-mr-sg-order2', 'energy-mr-sg-order4', 'refine-el', 'refine-att', 'refine-att-2nd', 'tw-att', 'tw-topo-att', 'pointsource-sg', 'flat-twi', 'gauss-twi', 'lamb','gausshill-el','gauss-sg-mr','energy','gausshill-att','loh1-h100-mr-hdf5','loh1-h100-mr-hdf5-sfile', 'loh1-h100-mr-restart-hdf5']
     
-    all_results =['energy.log', 'energy.log', 'energy.log', 'energy.log', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'PointSourceErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt','TwilightErr.txt','TwilightErr.txt','energy.log','TwilightErr.txt','hdf5.log','hdf5-sfile.log']
-    num_meshes =[1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1] # default number of meshes for level 0
+    all_results =['energy.log', 'energy.log', 'energy.log', 'energy.log', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'PointSourceErr.txt', 'TwilightErr.txt', 'TwilightErr.txt', 'LambErr.txt','TwilightErr.txt','TwilightErr.txt','energy.log','TwilightErr.txt','hdf5.log','hdf5-sfile.log', 'hdf5-restart.log']
+    num_meshes =[1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1] # default number of meshes for level 0
 
     # add more tests for higher values of the testing level
     if testing_level == 1:
-        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 2, 2, 3, 3, 2, 2, 2, 1, 2, 1, 1]
+        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 2, 2, 3, 3, 2, 2, 2, 1, 2, 1, 1, 1]
     elif testing_level == 2:
-        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 1, 1]
+        num_meshes =[1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 1, 1, 1]
 
     
     print("Running all tests for level", testing_level, "...")
     # run all tests
     for qq in range(len(all_dirs)):
-
-        # skip HDF5 test if specified
-        if qq == len(all_dirs)-2 and nohdf5 == True:
-            print("HDF5 test skipped")
-            break
-        elif qq == len(all_dirs)-2:
-            print("  Running HDF5 test, may take a few minutes ...")
-    
+   
         test_dir = all_dirs[qq]
         base_case = all_cases[qq]
         result_file = all_results[qq]
 
-        #make a local test directory
-        if not os.path.exists(test_dir):
-            os.mkdir(test_dir)
-
-        os.chdir(test_dir) # change to the new local directory
-
-        # put all test cases in a list and add a for loop for each test_dir
-        for ii in range(num_meshes[qq]):
+        # skip HDF5 test if specified
+        if ('hdf5' not in base_case and usehdf5 != 4 and usehdf5 != 0) or (base_case == 'loh1-h100-mr-hdf5' and usehdf5 != 4 and usehdf5 != 1) or (base_case == 'loh1-h100-mr-hdf5-sfile' and usehdf5 != 4 and usehdf5 != 2) or (base_case == 'loh1-h100-mr-restart-hdf5' and usehdf5 != 4 and usehdf5 != 3):
+            num_skip = num_skip+1
             num_test = num_test+1
-        
-            case_dir = base_case + '-' + str(ii+1)
-            test_case = case_dir + '.in'
-            if verbose: 
-                print('Starting test #', num_test, 'in directory:', test_dir, 'with input file:', test_case)
+            print('Test #', num_test, "Input file:", base_case+'-'+str(1)+'.in', 'SKIPPED')
+        else:
+ 
+            #make a local test directory
+            if not os.path.exists(test_dir):
+                os.mkdir(test_dir)
 
-            sw4_input_file = reference_dir + sep + test_dir + sep + test_case
-            #print('sw4_input_file = ', sw4_input_file)
+            os.chdir(test_dir) # change to the new local directory
 
-            sw4_stdout_file = case_dir + '.out'
+            # put all test cases in a list and add a for loop for each test_dir
+            for ii in range(num_meshes[qq]):
+                num_test = num_test+1
             
-            local_dir = pytest_dir + sep + test_dir
-            #print('local_dir = ', local_dir)
-            # pipe stdout and stderr to a temporary file
-            run_cmd = mpirun_cmd.split() + [
-                sw4_exe,
-                sw4_input_file
-            ]
+                case_dir = base_case + '-' + str(ii+1)
+                test_case = case_dir + '.in'
+                if verbose: 
+                    print('Starting test #', num_test, 'in directory:', test_dir, 'with input file:', test_case)
 
-            sw4_stdout_file = open(case_dir + '.out', 'wt')
-            sw4_stderr_file = open(case_dir + '.err', 'wt')
+                sw4_input_file = reference_dir + sep + test_dir + sep + test_case
+                #print('sw4_input_file = ', sw4_input_file)
 
-            # pipe stdout and stderr to a temporary file
-#            run_cmd = sw4_mpi_run + ' ' + sw4_input_file + ' >& ' + sw4_stdout_file
+                # sw4_stdout_file = case_dir + '.out'
+                
+                local_dir = pytest_dir + sep + test_dir
+                #print('local_dir = ', local_dir)
+                # pipe stdout and stderr to a temporary file
+                run_cmd = mpirun_cmd.split() + [
+                    sw4_exe,
+                    sw4_input_file
+                ]
 
-            # run sw4
-            run_dir = os.getcwd()
-            #print('Running sw4 from directory:', run_dir)
+                sw4_stdout_file = open(case_dir + '.out', 'wt')
+                sw4_stderr_file = open(case_dir + '.err', 'wt')
 
-# assign OMP_NUM_THREADS
-            status = subprocess.run(
-                run_cmd,
-                stdout=sw4_stdout_file,
-                stderr=sw4_stderr_file,
-            )
+                # pipe stdout and stderr to a temporary file
+#                run_cmd = sw4_mpi_run + ' ' + sw4_input_file + ' >& ' + sw4_stdout_file
 
-            sw4_stdout_file.close()
-            sw4_stderr_file.close()
+                # run sw4
+                run_dir = os.getcwd()
+                if verbose:
+                    print('Running sw4 from directory:', run_dir)
+                    print('run_cmd=', run_cmd)
 
-            # status = os.system(run_cmd)
-            # if status!=0:
-            #     print('ERROR: Test', test_case, ': sw4 returned non-zero exit status=', status, 'aborting test')
-            #     print('run_cmd=', run_cmd)
-            #     print("DID YOU USE THE CORRECT SW4 EXECUTABLE? (SPECIFY DIRECTORY WITH -d OPTION)")
-            #     return False # bail out
+# assign     OMP_NUM_THREADS
+                status = subprocess.run(
+                    run_cmd,
+                    stdout=sw4_stdout_file,
+                    stderr=sw4_stderr_file
+                )
 
-            if status.returncode!=0:
-                print('ERROR: Test', test_case, ': sw4 returned non-zero exit status=', status.returncode, 'aborting test')
-                print('run_cmd=', run_cmd)
-                print("DID YOU USE THE CORRECT SW4 EXECUTABLE? (SPECIFY DIRECTORY WITH -d OPTION)")
-                return False # bail out
-
-
-            ref_result = reference_dir + sep + test_dir + sep + case_dir + sep + result_file
-            #print('Test #', num_test, 'output dirs: local case_dir =', case_dir, 'ref_result =', ref_result)
-
-
-            if result_file == 'hdf5.log':
-                import verify_hdf5
-                success = True
-                sw4_stdout_file = open(case_dir + '.out', 'r')
-                for line in sw4_stdout_file:
-                    if "Error" in line or "not compiled with HDF5" in line or "without sw4 compiled with HDF5" in line:
-                        success = False
-                        print('SW4 is not compiled with HDF5 library!')
-                        break;
                 sw4_stdout_file.close()
-                if success == True:
-                    success = verify_hdf5.verify(pytest_dir, 1e-5)
-                if success == False:
-                    print('HDF5 test failed! (disable HDF5 test with -n option)')
-            elif result_file == 'hdf5-sfile.log':
-                import verify_hdf5
-                success = True
-                sw4_stdout_file = open(case_dir + '.out', 'r')
-                for line in sw4_stdout_file:
-                    if "Error" in line or "not compiled with HDF5" in line or "without sw4 compiled with HDF5" in line:
-                        success = False
-                        print('SW4 is not compiled with HDF5 library!')
-                        break;
-                sw4_stdout_file.close()
-                if success == True:
-                    success = verify_hdf5.verify_sac_image(pytest_dir, 1e-5)
-                if success == False:
-                    print('HDF5 test failed! (disable HDF5 test with -n option)')
-            elif result_file == 'energy.log':
-                success = compare_energy(case_dir + sep + result_file, 1e-10, verbose)
-            else:
-                # compare output with reference result (always compare the last line)
-                success = compare_one_line(ref_result , case_dir + sep + result_file, 1e-5, 1e-10, -1, verbose)
-                if success and 'attenuation' in test_dir:
-                    # also compare the 3rd last line in the files
-                    success = compare_one_line(ref_result , case_dir + sep + result_file, 1e-5, 1e-10, -3, verbose)
+                sw4_stderr_file.close()
 
-            if success:        
-                print('Test #', num_test, "Input file:", test_case, 'PASSED')
-                num_pass += 1
-            else:
-                print('Test #', num_test, "Input file:", test_case, 'FAILED')
-                num_fail += 1
-            
+                # status = os.system(run_cmd)
+                # if status!=0:
+                #     print('ERROR: Test', test_case, ': sw4 returned non-zero exit status=', status, 'aborting test')
+                #     print('run_cmd=', run_cmd)
+                #     print("DID YOU USE THE CORRECT SW4 EXECUTABLE? (SPECIFY DIRECTORY WITH -d OPTION)")
+                #     return False # bail out
+
+                if status.returncode!=0:
+                    print('ERROR: Test', test_case, ': sw4 returned non-zero exit status=', status.returncode, 'aborting test')
+                    print('run_cmd=', run_cmd)
+                    print("DID YOU USE THE CORRECT SW4 EXECUTABLE? (SPECIFY DIRECTORY WITH -d OPTION)")
+                    return False # bail out
+
+
+                ref_result = reference_dir + sep + test_dir + sep + case_dir + sep + result_file
+                #print('Test #', num_test, 'output dirs: local case_dir =', case_dir, 'ref_result =', ref_result)
+
+
+                if result_file == 'hdf5.log':
+                    import verify_hdf5
+                    success = True
+                    sw4_stdout_file_tmp = open(case_dir + '.out', 'r')
+                    for line in sw4_stdout_file_tmp:
+                        if "Error" in line or "not compiled with HDF5" in line or "without sw4 compiled with HDF5" in line:
+                            success = False
+                            print('  SW4 is not compiled with HDF5 library!')
+                            break;
+                    sw4_stdout_file_tmp.close()
+                    if success == True:
+                        success = verify_hdf5.verify(pytest_dir, 1e-5)
+                elif result_file == 'hdf5-sfile.log' or result_file == 'hdf5-restart.log':
+                    import verify_hdf5
+                    success = True
+                    sw4_stdout_file_tmp = open(case_dir + '.out', 'r')
+                    for line in sw4_stdout_file_tmp:
+                        if "Error" in line or "not compiled with HDF5" in line or "without sw4 compiled with HDF5" in line:
+                            success = False
+                            print('  SW4 is not compiled with HDF5 library!')
+                            break;
+                    sw4_stdout_file_tmp.close()
+                    if success == True:
+                        success = verify_hdf5.verify_sac_image(pytest_dir, 1e-5)
+                elif result_file == 'energy.log':
+                    success = compare_energy(case_dir + sep + result_file, 1e-10, verbose)
+                else:
+                    # compare output with reference result (always compare the last line)
+                    success = compare_one_line(ref_result , case_dir + sep + result_file, 1e-5, 1e-10, -1, verbose)
+                    if success and 'attenuation' in test_dir:
+                        # also compare the 3rd last line in the files
+                        success = compare_one_line(ref_result , case_dir + sep + result_file, 1e-5, 1e-10, -3, verbose)
+
+                if success:        
+                    print('Test #', num_test, "Input file:", test_case, 'PASSED')
+                    num_pass += 1
+                else:
+                    print('Test #', num_test, "Input file:", test_case, 'FAILED')
+                    num_fail += 1
+                
+            os.chdir('..') # change back to the parent directory
+            # end for ii in range(num_meshes[qq]):
+
         # end for qq in all_dirs[qq]
 
-        os.chdir('..') # change back to the parent directory
-
     # end for all cases in the test_dir
-    print('Out of', num_test, 'tests,', num_fail, 'failed and ', num_pass, 'passed')
+    print('Out of', num_test, 'tests,', num_fail, 'failed,', num_pass, 'passed, and', num_skip, 'skipped')
     # normal termination
     return True
     
@@ -398,7 +398,7 @@ if __name__ == "__main__":
     # default arguments
     testing_level=0
     verbose=False
-    nohdf5=False
+    usehdf5=4
     mpi_tasks=0 # machine dependent default
     omp_threads=0 #no threading by default
     cpu_allocation=""
@@ -411,12 +411,21 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--ompthreads", type=int, help="number of omp threads per task")
     parser.add_argument("-d", "--sw4_exe_dir", help="name of directory for sw4 executable", default="optimize_mp")
     parser.add_argument("-p", "--pytest_dir", help="full path to the directory of pytest (/path/sw4/pytest)", default="none")
-    parser.add_argument("-n", "--nohdf5", help="disable HDF5 test", action="store_true")
+    parser.add_argument("-u", "--usehdf5", type=int, choices=[0, 1, 2, 3, 4], help="run HDF5 tests with, 0 no HDF5, 1 first HDF5 case, 2 second case,..., 4 all cases")
     parser.add_argument("-A","--cpu_allocation", help="name of cpu bank/allocation",default="")
     args = parser.parse_args()
-    if args.nohdf5:
-        #print("HDF5 test disabled")
-        nohdf5=True
+
+    if args.usehdf5 == 0:
+        usehdf5=0
+    elif args.usehdf5 == 1:
+        usehdf5=1
+    elif args.usehdf5 == 2:
+        usehdf5=2
+    elif args.usehdf5 == 3:
+        usehdf5=3
+    elif args.usehdf5 == 4:
+        usehdf5=4
+
     if args.verbose:
         #print("verbose mode enabled")
         verbose=True
@@ -439,6 +448,6 @@ if __name__ == "__main__":
         #print("cpu_allocation specified=", args.cpu_allocation)
         cpu_allocation=args.cpu_allocation
 
-    if not main_test(sw4_exe_dir, pytest_dir, testing_level, mpi_tasks, omp_threads, cpu_allocation, verbose, nohdf5):
+    if not main_test(sw4_exe_dir, pytest_dir, testing_level, mpi_tasks, omp_threads, cpu_allocation, verbose, usehdf5):
         print("test_sw4 was unsuccessful")
-
+        sys.exit(-1)
