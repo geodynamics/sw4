@@ -4,8 +4,6 @@
 #include <memory>
 #include "Sarray.h"
 
-
-
 class Farray {
  public:
   Farray() {}
@@ -169,8 +167,8 @@ class Farray {
     dims = 3;
     owns_data = true;
   }
-  void define(int ibeg, int iend, int jbeg, int jend, int kbeg, int kend, int lbeg,
-         int lend) {
+  void define(int ibeg, int iend, int jbeg, int jend, int kbeg, int kend,
+              int lbeg, int lend) {
     start[0] = ibeg;
     end[0] = iend;
 
@@ -196,7 +194,6 @@ class Farray {
     owns_data = true;
   }
 
-
   ~Farray() {
     // std::cout<<"Deleting "<<id<<"\n"<<std::flush;
     if (owns_data)
@@ -204,7 +201,7 @@ class Farray {
     else
       std::cout << "Null op for subset data" << id << "\n";
   }
-  
+
   inline float_sw4& operator()(int i) { return data[base + i]; }
   inline float_sw4& operator[](int i) { return data[i]; }
 
@@ -389,7 +386,6 @@ class Farray {
   int dims;
   size_t size;
 };
-
 
 template <int N>
 class Garray {
