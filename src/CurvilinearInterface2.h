@@ -2,6 +2,8 @@
 #define SW4_CURVILINEARINTERFACE2
 
 #include <vector>
+#include "EW.h"
+#include "Sarray.h"
 
 class Sarray;
 class EW;
