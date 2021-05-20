@@ -40,7 +40,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
 #include <ctime>
 #include <iostream>
 #include <sstream>
@@ -51,7 +50,6 @@
 #include "readhdf5.h"
 
 #ifdef USE_HDF5
-
 #include "hdf5.h"
 
 struct traverse_data_t {
@@ -126,8 +124,11 @@ struct srf_data_t {
 static herr_t traverse_func(hid_t loc_id, const char *grp_name,
                             const H5L_info_t *info, void *operator_data) {
   hid_t grp, dset, attr;
-  herr_t status;
+#if H5_VERSION_GE(1, 12, 0)
+  H5O_info1_t infobuf;
+#else
   H5O_info_t infobuf;
+#endif
   EW *a_ew;
   double data[3];
   double lon, lat, depth, x, y, z;
@@ -140,11 +141,11 @@ static herr_t traverse_func(hid_t loc_id, const char *grp_name,
   a_ew = op_data->ew;
   ASSERT(a_ew != NULL);
 
-  status = H5Oget_info_by_name(loc_id, grp_name, &infobuf, H5P_DEFAULT);
-  if (status < 0) {
-    printf("Error with H5Oget_info_by_name [%s]\n", grp_name);
-    return -1;
-  }
+#if H5_VERSION_GE(1, 12, 0)
+  H5Oget_info_by_name1(loc_id, grp_name, &infobuf, H5P_DEFAULT);
+#else
+  H5Oget_info_by_name(loc_id, grp_name, &infobuf, H5P_DEFAULT);
+#endif
   if (infobuf.type == H5O_TYPE_GROUP) {
     /* if (op_data->myRank == 0) */
     /*   printf ("Group: [%s] \n", grp_name); */
@@ -185,12 +186,7 @@ static herr_t traverse_func(hid_t loc_id, const char *grp_name,
     if (nsew) {
       // STLA,STLO,STDP
       dset = H5Dopen(grp, "STLA,STLO,STDP", H5P_DEFAULT);
-      status =
-          H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-      if (status < 0) {
-        printf("Error with H5Dread [%s]\n", "STLA,STLO,STDP");
-        return -1;
-      }
+      H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
       H5Dclose(dset);
       lat = data[0];
       lon = data[1];
@@ -199,12 +195,7 @@ static herr_t traverse_func(hid_t loc_id, const char *grp_name,
     } else {
       // X, Y, Z
       dset = H5Dopen(grp, "STX,STY,STZ", H5P_DEFAULT);
-      status =
-          H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-      if (status < 0) {
-        printf("Error with H5Dread [%s]\n", "STX,STY,STZ");
-        return -1;
-      }
+      H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
       H5Dclose(dset);
       x = data[0];
       y = data[1];
@@ -372,8 +363,11 @@ void readStationHDF5(EW *ew, string inFileName, string outFileName,
 static herr_t traverse_func2(hid_t loc_id, const char *grp_name,
                              const H5L_info_t *info, void *operator_data) {
   hid_t grp, dset, attr;
-  herr_t status;
+#if H5_VERSION_GE(1, 12, 0)
+  H5O_info1_t infobuf;
+#else
   H5O_info_t infobuf;
+#endif
   float data[3];
   int isnsew;
 
@@ -381,11 +375,11 @@ static herr_t traverse_func2(hid_t loc_id, const char *grp_name,
 
   struct traverse_data2_t *op_data = (struct traverse_data2_t *)operator_data;
 
-  status = H5Oget_info_by_name(loc_id, grp_name, &infobuf, H5P_DEFAULT);
-  if (status < 0) {
-    printf("Error with H5Oget_info_by_name [%s]\n", grp_name);
-    return -1;
-  }
+#if H5_VERSION_GE(1, 12, 0)
+  H5Oget_info_by_name1(loc_id, grp_name, &infobuf, H5P_DEFAULT);
+#else
+  H5Oget_info_by_name(loc_id, grp_name, &infobuf, H5P_DEFAULT);
+#endif
   if (infobuf.type == H5O_TYPE_GROUP) {
     /* if (op_data->myRank == 0) */
     /*   printf ("Group: [%s] \n", grp_name); */
@@ -407,22 +401,12 @@ static herr_t traverse_func2(hid_t loc_id, const char *grp_name,
     if (isnsew == 0) {
       // X, Y, Z
       dset = H5Dopen(grp, "STX,STY,STZ", H5P_DEFAULT);
-      status =
-          H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-      if (status < 0) {
-        printf("Error with H5Dread [%s]\n", "STX,STY,STZ");
-        return -1;
-      }
+      H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
       H5Dclose(dset);
     } else {
       // STLA,STLO,STDP
       dset = H5Dopen(grp, "STLA,STLO,STDP", H5P_DEFAULT);
-      status =
-          H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-      if (status < 0) {
-        printf("Error with H5Dread [%s]\n", "STX,STY,STZ");
-        return -1;
-      }
+      H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
       H5Dclose(dset);
     }
 
@@ -663,7 +647,6 @@ void readRuptureHDF5(char *fname,
   float_sw4 m0 = 1.0;
   float_sw4 t0 = 0.0, freq = 1.0;
   float_sw4 mxx = 0.0, mxy = 0.0, mxz = 0.0, myy = 0.0, myz = 0.0, mzz = 0.0;
-  /* int isMomentType = -1; */
   bool topodepth = true;
   // Discrete source time function
   float_sw4 *par = NULL;

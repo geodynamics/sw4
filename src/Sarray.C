@@ -547,7 +547,7 @@ void Sarray::set_to_zero_async() {
   prefetch();
   float_sw4* lm_data = m_data;
   RAJA::forall<DEFAULT_LOOP1_ASYNC>(
-				    RAJA::RangeSegment(0, m_npts),
+      RAJA::RangeSegment(0, m_npts),
       [=] RAJA_DEVICE(size_t i) { lm_data[i] = 0; });
 }
 //-----------------------------------------------------------------------
@@ -561,13 +561,12 @@ void Sarray::set_to_zero() {
 #else
   forall(0, m_npts, [=] RAJA_DEVICE(size_t i) { lm_data[i] = 0.0; });
 #endif
-
 }
 
 //-----------------------------------------------------------------------
 void Sarray::set_to_minusOne() {
   SW4_MARK_FUNCTION;
-  
+
   prefetch();
   float_sw4* lm_data = m_data;
 
@@ -984,29 +983,27 @@ void Sarray::copy_kplane(Sarray& u, int k) {
     RAJA::kernel<COPY_KPLANE_EXEC_POL>(
         RAJA::make_tuple(c_range, j_range, i_range),
         [=] RAJA_DEVICE(int c, int j, int i) {
-    
-    
+
 #else
-	  Range<16> I(0, m_ie + 1 - m_ib);
+    Range<16> I(0, m_ie + 1 - m_ib);
     Range<4> J(0, m_je + 1 - m_jb);
     Range<4> C(0, m_nc);
     forall3(I, J, C, [=] RAJA_DEVICE(int i, int j, int c) {
     // forall2(I, J, [=] RAJA_DEVICE(int i, int j ) {
 
-
 #endif
-      // for( int c=0 ; c < m_nc ; c++ )
-      // 	 for( int j=m_jb ; j<=m_je ; j++ )
-      // 	    for( int i=m_ib ; i <= m_ie ; i++ )
-      // 	    {
-      size_t ind = (i) + mni * (j) + ind_start;    // mni*mnj*(k-mkb);
-      size_t uind = (i) + mni * (j) + uind_start;  // mni*mnj*(k-um_kb);
+          // for( int c=0 ; c < m_nc ; c++ )
+          // 	 for( int j=m_jb ; j<=m_je ; j++ )
+          // 	    for( int i=m_ib ; i <= m_ie ; i++ )
+          // 	    {
+          size_t ind = (i) + mni * (j) + ind_start;    // mni*mnj*(k-mkb);
+          size_t uind = (i) + mni * (j) + uind_start;  // mni*mnj*(k-um_kb);
 
-      // size_t ind = i+ mni*j + ind_start; // mni*mnj*(k-mkb);
-      // size_t uind = i + mni*j + uind_start; // mni*mnj*(k-um_kb);
-      // for (int c=0;c<3;c++)
-      lm_data[ind + c * nijk] = um_data[uind + c * unijk];
-    });  // SYNC_STREAM;
+          // size_t ind = i+ mni*j + ind_start; // mni*mnj*(k-mkb);
+          // size_t uind = i + mni*j + uind_start; // mni*mnj*(k-um_kb);
+          // for (int c=0;c<3;c++)
+          lm_data[ind + c * nijk] = um_data[uind + c * unijk];
+        });  // SYNC_STREAM;
   } else {
     SW4_MARK_BEGIN("RUNNING ON HOST");
     for (int j = m_jb; j <= m_je; j++)
@@ -1406,7 +1403,7 @@ void Sarray::insert_intersection(Sarray& a_U) {
       size_t sind = (i - ib) + nis * (j - jb) + nis * njs * (k - kb);
       size_t ind =
           (i - lm_ib) + lm_ni * (j - lm_jb) + lm_ni * lm_nj * (k - lm_kb);
-      
+
       for (int c = 1; c <= lm_nc; c++)
         dst_m_data[ind + totpts * (c - 1)] =
             src_m_data[sind + totptss * (c - 1)];
@@ -1620,8 +1617,6 @@ void Sarray::switch_space(Space new_space) {
 }
 //----------------------------------------------------------------------
 void mset_to_zero_async(Sarray& S0, Sarray& S1, Sarray& S2, Sarray& S3) {
-  
-
 #if defined(RAJA_ONLY)
   S0.set_to_zero_async();
   S1.set_to_zero_async();
@@ -1661,14 +1656,12 @@ void vset_to_zero_async(std::vector<Sarray>& v, int N) {
   // for(int i=0;i<N;i++)
   // std::cout<<"SIZES "<<v[i].m_npts<<"\n";
 
-  
 #if defined(RAJA_ONLY)
   for (int g = 0; g < N; g++) v[g].set_to_zero_async();
-  
+
 #else
   float_sw4 *m0, *m1, *m2, *m3, *m4, *m5;
   size_t zero = 0;
-
 
   switch (N) {
     case 1:
@@ -1751,16 +1744,15 @@ void vset_to_zero_async(std::vector<Sarray>& v, int N) {
 
 #endif
 }
- float_sw4 Sarray::norm(){
-   float_sw4 *sum;
-   sum = SW4_NEW(Space::Managed_temps,float_sw4[1]);
-   float_sw4* lm_data = m_data;
-   RAJA::forall<DEFAULT_LOOP1>(
-				     RAJA::RangeSegment(0, m_npts),
-				     [=] RAJA_DEVICE(size_t i) {
-				       RAJA::atomicAdd< RAJA::auto_atomic >(sum, lm_data[i]*lm_data[i]);
-				     });
-   float_sw4 retval=*sum;
-   ::operator delete[](sum, Space::Managed_temps);
-   return retval;
- }
+float_sw4 Sarray::norm() {
+  float_sw4* sum;
+  sum = SW4_NEW(Space::Managed_temps, float_sw4[1]);
+  float_sw4* lm_data = m_data;
+  RAJA::forall<DEFAULT_LOOP1>(
+      RAJA::RangeSegment(0, m_npts), [=] RAJA_DEVICE(size_t i) {
+        RAJA::atomicAdd<RAJA::auto_atomic>(sum, lm_data[i] * lm_data[i]);
+      });
+  float_sw4 retval = *sum;
+  ::operator delete[](sum, Space::Managed_temps);
+  return retval;
+}

@@ -60,20 +60,22 @@ using DEFAULT_LOOP3 = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
                         RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
                                              RAJA::statement::Lambda<0>>>>>>>>>;
 
-using DEFAULT_LOOP3_ASYNC = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixedAsync<
-    256,
-    RAJA::statement::Tile<
-        0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+using DEFAULT_LOOP3_ASYNC =
+    RAJA::KernelPolicy<RAJA::statement::CudaKernelFixedAsync<
+        256,
         RAJA::statement::Tile<
-            1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+            0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
             RAJA::statement::Tile<
-                2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
-                RAJA::statement::For<
-                    0, RAJA::cuda_thread_z_direct,
+                1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+                RAJA::statement::Tile<
+                    2, RAJA::statement::tile_fixed<16>, RAJA::cuda_block_x_loop,
                     RAJA::statement::For<
-                        1, RAJA::cuda_thread_y_direct,
-                        RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
-                                             RAJA::statement::Lambda<0>>>>>>>>>;
+                        0, RAJA::cuda_thread_z_direct,
+                        RAJA::statement::For<
+                            1, RAJA::cuda_thread_y_direct,
+                            RAJA::statement::For<
+                                2, RAJA::cuda_thread_x_direct,
+                                RAJA::statement::Lambda<0>>>>>>>>>;
 
 using SARRAY_LOOP_POL2 =
     RAJA::KernelPolicy<RAJA::statement::CudaKernel<RAJA::statement::Tile<
@@ -663,7 +665,8 @@ using AFCC_POL_ASYNC =
 
 // In updatememvarc.C
 /* using MPFC_POL_ASYNC = */
-/*     RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::For< */
+/*     RAJA::KernelPolicy<RAJA::statement::CudaKernelAsync<RAJA::statement::For<
+ */
 /*         0, RAJA::cuda_threadblock_exec<1>, */
 /*         RAJA::statement::For< */
 /*             1, RAJA::cuda_threadblock_exec<1>, */
@@ -675,7 +678,6 @@ using MPFC_POL_ASYNC = DEFAULT_LOOP3_ASYNC;
 // IN EW.C
 using FORCE_LOOP_ASYNC = RAJA::cuda_exec<32, true>;
 using FORCETT_LOOP_ASYNC = RAJA::cuda_exec<32, true>;
-
 
 using COPY_KPLANE_EXEC_POL = DEFAULT_LOOP3;
 

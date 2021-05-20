@@ -30,17 +30,16 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+#include "mpi.h"
+
 #include <fcntl.h>
 #include <math.h>
 #include <unistd.h>
-
 #include <cstring>
 #include <ctime>
-
 #include "EW.h"
 #include "Require.h"
 #include "SfileOutput.h"
-#include "mpi.h"
 
 // static variable definition (in class only declaration):
 int SfileOutput::mPreceedZeros = 0;
@@ -293,13 +292,13 @@ bool SfileOutput::timeToWrite(float_sw4 time, int cycle, float_sw4 dt) {
 }
 
 //-----------------------------------------------------------------------
-void SfileOutput::update_image(
-    int a_cycle, float_sw4 a_time, float_sw4 a_dt, std::vector<Sarray>& a_U,
-    std::vector<Sarray>& a_Rho, std::vector<Sarray>& a_Mu,
-    std::vector<Sarray>& a_Lambda, std::vector<Sarray>& a_gRho,
-    std::vector<Sarray>& a_gMu, std::vector<Sarray>& a_gLambda,
-    std::vector<Sarray>& a_Qp, std::vector<Sarray>& a_Qs, std::string a_path,
-    std::vector<Sarray>& a_Z) {
+void SfileOutput::update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
+                               vector<Sarray>& a_U, vector<Sarray>& a_Rho,
+                               vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+                               vector<Sarray>& a_gRho, vector<Sarray>& a_gMu,
+                               vector<Sarray>& a_gLambda, vector<Sarray>& a_Qp,
+                               vector<Sarray>& a_Qs, std::string a_path,
+                               std::vector<Sarray>& a_Z) {
   if (timeToWrite(a_time, a_cycle, a_dt))
     force_write_image(a_time, a_cycle, a_U, a_Rho, a_Mu, a_Lambda, a_gRho,
                       a_gMu, a_gLambda, a_Qp, a_Qs, a_path, a_Z);
@@ -635,12 +634,13 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
     if (m_extraz[g] == 1) {
       /* cout << "g=" << g << ", need extrapolate extra z" << endl; */
       int k = mWindow[g][5] + stV;
-      size_t ind, ind_1, ind_2;  // npts;
+      size_t ind, ind_1, ind_2;
 #ifdef BZ_DEBUG
       size_t npts = ((size_t)(mWindow[g][1] - mWindow[g][0]) / stH + 1) *
                     ((mWindow[g][3] - mWindow[g][2]) / stH + 1) *
                     ((mWindow[g][5] - mWindow[g][4]) / stV + 1 + m_extraz[g]);
 #endif
+
       // Linear extrapolation assumes that
       // mWindow[g][5]-st>=mWindow[g][4], i.e. mWindow[g][5] -mWindow[g][4]>=st.
       int ok = 2;

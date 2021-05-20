@@ -62,7 +62,7 @@ int presetGPUID(int mpi_rank, int local_rank, int local_size) {
     else
       printf("NVML SET CPU AFFINITY CALLED SUCCESFULLY\n");
   }
-    global_variables.device = device;
+  global_variables.device = device;
 
 #endif  // ENDIF ENABLE_CUDA
 
@@ -93,7 +93,7 @@ int presetGPUID(int mpi_rank, int local_rank, int local_size) {
   }
 #endif  // ENDIF ENABLE_HIP
 
-   printf("Device set to %d \n", global_variables.device);
+  printf("Device set to %d \n", global_variables.device);
 #endif  // ENDIF ENABLE_GPU
   return device;
 }
@@ -283,7 +283,7 @@ void *operator new(std::size_t size, Space loc) throw() {
     // throw std::bad_alloc();
     abort();
   }
-#else  // NOT ENABLE_GPU
+#else   // NOT ENABLE_GPU
   if ((loc == Space::Managed) || (loc == Space::Device) ||
       (loc == Space::Pinned)) {
     // std::cout<<"Managed location not available yet \n";
@@ -387,7 +387,7 @@ void *operator new[](std::size_t size, Space loc) throw() {
     // throw std::bad_alloc();
   }
 
-#else  // !ENABLE_GPU
+#else   // !ENABLE_GPU
   if ((loc == Space::Managed) || (loc == Space::Device) ||
       (loc == Space::Pinned) || (loc == Space::Managed_temps)) {
     // std::cout<<"Managed location not available yet \n";

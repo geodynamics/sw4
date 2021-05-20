@@ -3669,17 +3669,18 @@ void EW::get_exact_lamb(vector<Sarray>& a_U, float_sw4 a_t, Source& a_source) {
           double tau = t * beta / R;
           double r = R;
           if (tau > gamma) {
-            uz += G4_Integral(std::min(std::max(0.0, tau - gamma), beta / r), tau, r,
-                              beta) -
+            uz += G4_Integral(std::min(std::max(0.0, tau - gamma), beta / r),
+                              tau, r, beta) -
                   G4_Integral(0.0, tau, r, beta);
           }
           if (tau > 1 && tau < beta / r + gamma) {
             uz += G3_Integral(std::min(tau - 1, beta / r), tau, r, beta) -
-	      G3_Integral(std::max(0.0, tau - gamma), tau, r, beta);
+                  G3_Integral(std::max(0.0, tau - gamma), tau, r, beta);
           }
           if (tau > 1 / sqrt(3.) && tau < beta / r + 1) {
-            uz += G2_Integral(std::min(tau - 1 / sqrt(3.), beta / r), tau, r, beta) -
-	      G2_Integral(std::max(tau - 1, 0.0), tau, r, beta);
+            uz += G2_Integral(std::min(tau - 1 / sqrt(3.), beta / r), tau, r,
+                              beta) -
+                  G2_Integral(std::max(tau - 1, 0.0), tau, r, beta);
           }
           uz *= -fz / (M_PI * M_PI * mu) * alpha * alpha / (beta * beta * beta);
         }
@@ -4681,7 +4682,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
     idnts_local = idnts;
     float_sw4** ForceAddress_copy = ForceAddress;
 
-    //for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
+    // for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
     vset_to_zero_async(a_F, mNumberOfGrids);
     SW4_MARK_BEGIN("FORCE::DEVICE");
 
@@ -5117,11 +5118,11 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
           met_ptr, jac_ptr, uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
           m_acof_no_gp, m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op);
 #elif defined(SW4_EXPT_3)
-      //cudaMemcpyToSymbol(tex_acof, m_acof, 384*sizeof(double));
-      curvilinear4sgX3_ci<0>(ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr,
-                        mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr,
-                        onesided_ptr, m_acof, m_bope, m_ghcof, m_acof_no_gp,
-                        m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op);
+      // cudaMemcpyToSymbol(tex_acof, m_acof, 384*sizeof(double));
+      curvilinear4sgX3_ci<0>(
+          ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr, mu_ptr, la_ptr,
+          met_ptr, jac_ptr, uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
+          m_acof_no_gp, m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op);
 #else
       curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr,
                         mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr,
@@ -5170,13 +5171,13 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
               m_acof_no_gp, m_bope, m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,
               m_sg_str_x[g], m_sg_str_y[g], nkg, op);
 #elif defined(SW4_EXPT_3)
-	  curvilinear4sgX3_ci<1>(ifirst, ilast, jfirst, jlast, kfirst, klast,
-                            alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
-                            uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope,
-                            m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,
-                            m_sg_str_x[g], m_sg_str_y[g], nkg, op);
+          curvilinear4sgX3_ci<1>(
+              ifirst, ilast, jfirst, jlast, kfirst, klast, alpha_ptr, mua_ptr,
+              lambdaa_ptr, met_ptr, jac_ptr, uacc_ptr, onesided_ptr,
+              m_acof_no_gp, m_bope, m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,
+              m_sg_str_x[g], m_sg_str_y[g], nkg, op);
 #else
-	  //cudaMemcpyToSymbol(tex_acof, m_acof_no_gp, 384*sizeof(double));
+          // cudaMemcpyToSymbol(tex_acof, m_acof_no_gp, 384*sizeof(double));
           curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                             alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
                             uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope,
@@ -7954,9 +7955,10 @@ void EW::setup_viscoelastic() {
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
         for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
           for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
-	    // Code for locating libsci errors on RZNevada April 21 2021
-	    //int ijk=i+j+k;
-	    //bool doit=(ijk==(m_iStart[g]+m_jStart[g]+m_kStart[g]))&&(!getRank());
+            // Code for locating libsci errors on RZNevada April 21 2021
+            // int ijk=i+j+k;
+            // bool
+            // doit=(ijk==(m_iStart[g]+m_jStart[g]+m_kStart[g]))&&(!getRank());
 #ifdef _OPENMP
             double* a_ = new float_sw4[n * nc];
             double* beta = new double[nc];
@@ -7978,13 +7980,14 @@ void EW::setup_viscoelastic() {
             //
             for (int q = 0; q < nc; q++) {
               beta[q] = 1. / qs;
-              ///if (doit)std::cout<<"M["<<q<<","<<qs<<"]=";
+              /// if (doit)std::cout<<"M["<<q<<","<<qs<<"]=";
               for (int nu = 0; nu < n; nu++) {
-                double tmp = a(q, nu) = (omc[q] * mOmegaVE[nu] + SQR(mOmegaVE[nu]) / qs) /
-                           (SQR(mOmegaVE[nu]) + SQR(omc[q]));
-                //if (doit)std::cout<<a(q,nu)<<","<<mOmegaVE[nu]<<":";
+                double tmp = a(q, nu) =
+                    (omc[q] * mOmegaVE[nu] + SQR(mOmegaVE[nu]) / qs) /
+                    (SQR(mOmegaVE[nu]) + SQR(omc[q]));
+                // if (doit)std::cout<<a(q,nu)<<","<<mOmegaVE[nu]<<":";
               }
-	      //if (doit)std::cout<<"\n";
+              // if (doit)std::cout<<"\n";
             }
             // solve the system in least squares sense
             F77_FUNC(dgels, DGELS)
@@ -9223,7 +9226,7 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
         "WARNING: sw4 not compiled with hdf5=yes, ignoring read sfile, "
         "abort!\n");
   MPI_Abort(MPI_COMM_WORLD, -1);
-#endif // #ifdef USE_HDF5
+#endif  // #ifdef USE_HDF5
 }
 
 // CURVI_MR_CODE ADDED HERE

@@ -10,6 +10,10 @@
 #include "Parallel_IO.h"
 #include "Sarray.h"
 
+#ifdef USE_HDF5
+#include "hdf5.h"
+#endif
+
 class EW;
 
 class CheckPoint {
@@ -22,7 +26,8 @@ class CheckPoint {
   ~CheckPoint();
   void set_restart_file(string fname, size_t bufsize);
   void set_checkpoint_file(string fname, int cycle, int cycleInterval,
-                           size_t bufsize);
+                           size_t bufsize, bool useHDF5, int compressionMode,
+                           double compressionPar);
 
   void write_checkpoint(float_sw4 a_time, int a_cycle,
                         std::vector<Sarray>& a_Um, std::vector<Sarray>& a_U,
@@ -32,6 +37,17 @@ class CheckPoint {
                        std::vector<Sarray>& a_Um, std::vector<Sarray>& a_U,
                        std::vector<Sarray*>& a_AlphaVEm,
                        std::vector<Sarray*>& a_AlphaVE);
+#ifdef USE_HDF5
+  void write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
+                             std::vector<Sarray>& a_Um,
+                             std::vector<Sarray>& a_U,
+                             std::vector<Sarray*>& a_AlphaVEm,
+                             std::vector<Sarray*>& a_AlphaVE);
+  void read_checkpoint_hdf5(float_sw4& a_time, int& a_cycle,
+                            std::vector<Sarray>& a_Um, std::vector<Sarray>& a_U,
+                            std::vector<Sarray*>& a_AlphaVEm,
+                            std::vector<Sarray*>& a_AlphaVE);
+#endif
   void setup_sizes();
   bool timeToWrite(float_sw4 time, int cycle, float_sw4 dt);
   float_sw4 getDt();
@@ -40,6 +56,7 @@ class CheckPoint {
   bool do_restart();
   void set_restart_path(string restartPath);
   std::string get_restart_path();
+  bool useHDF5() { return mUseHDF5; };
 
  protected:
   void define_pio();
@@ -48,6 +65,10 @@ class CheckPoint {
   void cycle_checkpoints(string fname);
   void write_header(int& fid, float_sw4 a_time, int a_cycle, int& hsize);
   void read_header(int& fid, float_sw4& a_time, int& a_cycle, int& hsize);
+#ifdef USE_HDF5
+  void write_header_hdf5(hid_t fid, float_sw4 a_time, int a_cycle);
+  void read_header_hdf5(hid_t fid, float_sw4& a_time, int& a_cycle);
+#endif
 
   std::string mCheckPointFile;
   std::string mRestartFile;
@@ -67,6 +88,9 @@ class CheckPoint {
   bool mDoRestart;
   bool mRestartPathSet;
   string mRestartPath;
+  bool mUseHDF5;
+  int mCompMode;
+  double mCompPar;
 
  private:
   CheckPoint();  // make it impossible to call default constructor

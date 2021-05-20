@@ -73,7 +73,6 @@ void curvilinear4sgX1_ci(
     sgn = -1;
   }
 
-
   const float_sw4 i6 = 1.0 / 6;
   const float_sw4 tf = 0.75;
   const float_sw4 c1 = 2.0 / 3;

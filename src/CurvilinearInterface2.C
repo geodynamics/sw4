@@ -189,7 +189,7 @@ void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
         [=] RAJA_DEVICE(int i, int j, int k) {
           for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
         });
-  } else if (st.size() == 3) { // NOT TESTED PBUGS
+  } else if (st.size() == 3) {  // NOT TESTED PBUGS
     gmforall3async<16, 16, 1>(
         st[0], en[0],
         [=] RAJA_DEVICE(int i, int j, int k) {
@@ -199,12 +199,11 @@ void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
         [=] RAJA_DEVICE(int i, int j, int k) {
           for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
         },
-	st[2], en[2],
+        st[2], en[2],
         [=] RAJA_DEVICE(int i, int j, int k) {
           for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
-        }
-			      );
-  } else if (st.size() == 4) { // NOT TESTED PBUGS
+        });
+  } else if (st.size() == 4) {  // NOT TESTED PBUGS
     gmforall3async<16, 16, 1>(
         st[0], en[0],
         [=] RAJA_DEVICE(int i, int j, int k) {
@@ -214,18 +213,16 @@ void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
         [=] RAJA_DEVICE(int i, int j, int k) {
           for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
         },
-	st[2], en[2],
+        st[2], en[2],
         [=] RAJA_DEVICE(int i, int j, int k) {
           for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
         },
-	st[3], en[3],
+        st[3], en[3],
         [=] RAJA_DEVICE(int i, int j, int k) {
           for (int c = 1; c <= nc; c++) uV(c, i, j, k) = 0;
-        }
-			      );
-    
+        });
+
   } else {
-    
     std::cerr << " ERROR SIZE in CurvilinearInterface2::bnd_zero 0 "
               << st.size() << "\n";
     abort();
@@ -454,12 +451,12 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
 #ifdef USE_MAGMA
   std::cout << " USING MAGMA FOR DGETRF WITH BATCH SIZE " << msize << "\n";
   m_mass_block = SW4_NEW(Space::Managed, float_sw4[9 * msize]);
-  dA_array = SW4_NEW(Space::Managed, float_sw4* [msize]);
+  dA_array = SW4_NEW(Space::Managed, float_sw4 * [msize]);
   m_ipiv_block = SW4_NEW(Space::Managed, int[3 * msize]);
-  piv_array = SW4_NEW(Space::Managed, int* [msize]);
+  piv_array = SW4_NEW(Space::Managed, int * [msize]);
   magma_int_t* info = SW4_NEW(Space::Managed, int[msize]);
   // For use in solve
-  dB_array = SW4_NEW(Space::Managed, float_sw4* [msize]);
+  dB_array = SW4_NEW(Space::Managed, float_sw4 * [msize]);
   x = SW4_NEW(Space::Managed, float_sw4[3 * msize]);
   // End for use in solver
   for (int j = m_jb + m_nghost; j <= m_je - m_nghost; j++)
@@ -895,8 +892,8 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
 #endif
 #ifdef USE_LAPACK_ON_CPU
     int one = 1;
-    int three = 3; 
-    
+    int three = 3;
+
     // WARNING THIS IS RUNNING ON THE HOST
     int info = 0;
     char trans = 'N';
