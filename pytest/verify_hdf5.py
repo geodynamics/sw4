@@ -198,9 +198,15 @@ def verify(pytest_dir, tolerance):
     #     print ('All %d images data match!' % nimg)
 
     essi_fname = hdf5_dir + 'essioutput.cycle=000.essi'
+    essi_fname_repack = essi_fname + '.repack'
+    cmd='h5repack --high=2 ' + essi_fname + ' ' + essi_fname_repack
+    os.system(cmd)
+    data0, data1, data2 = read_essi(essi_fname_repack)
     ref_essi_fname = ref_dir + 'essioutput.cycle=000.essi'
-    data0, data1, data2 = read_essi(essi_fname)
-    ref_data0, ref_data1, ref_data2 = read_essi(ref_essi_fname)
+    ref_essi_fname_repack = ref_essi_fname + '.repack'
+    cmd='h5repack --high=2 ' + ref_essi_fname + ' ' + ref_essi_fname_repack
+    os.system(cmd)
+    ref_data0, ref_data1, ref_data2 = read_essi(ref_essi_fname_repack)
     sum0 = np.sum(data0)
     sum1 = np.sum(data1)
     sum2 = np.sum(data2)
