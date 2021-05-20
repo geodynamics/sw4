@@ -56,7 +56,8 @@ void CheckError(hipError_t const err, const char *file, char const *const fun,
 #define PROFILER_STOP SW4_CheckDeviceError(hipProfilerStop())
 #define PROFILER_START roctracer_start()
 #else
-//void CheckError(hipError_t const err, const char *file, char const *const fun,
+// void CheckError(hipError_t const err, const char *file, char const *const
+// fun,
 //                const int line);
 #define SW4_CheckDeviceError(err)
 #define PROFILER_START
@@ -205,7 +206,7 @@ void autopeel(Apc &apc, T only) {
 }
 
 template <typename T, typename... Args>
-void autopeel(Apc &apc, T first, Args &&...args) {
+void autopeel(Apc &apc, T first, Args &&... args) {
   apc.ofile << line(first, apc.counter);
   apc.counter++;
   autopeel(apc, args...);

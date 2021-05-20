@@ -630,9 +630,9 @@ class EW {
                                  int crf);
 
   void geodynbcGetSizes(string filename, float_sw4 origin[3],
-                        float_sw4& cubelen, float_sw4& zcubelen, float_sw4& hcube,
-                        bool& found_latlon, double& lat, double& lon,
-                        double& az, int& adjust);
+                        float_sw4& cubelen, float_sw4& zcubelen,
+                        float_sw4& hcube, bool& found_latlon, double& lat,
+                        double& lon, double& az, int& adjust);
   void geodynFindFile(char* buffer);
   void bcsurf_curvilinear_2nd_order(int side, int i0, int i1, int j0, int j1,
                                     int k0, int g, Sarray& u,

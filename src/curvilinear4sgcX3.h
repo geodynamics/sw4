@@ -34,7 +34,8 @@
 
 extern __constant__ double cmem_acof[384];
 extern __constant__ double cmem_acof_no_gp[384];
-//__device__ inline double  acof(int i, int j, int k){ return cmem_acof[(i - 1) + 6 * (j - 1) + 48 * (k - 1)];}
+//__device__ inline double  acof(int i, int j, int k){ return cmem_acof[(i - 1)
+//+ 6 * (j - 1) + 48 * (k - 1)];}
 #endif
 
 #define SW4_DEVICE __device__
@@ -46,7 +47,7 @@ extern __constant__ double cmem_acof_no_gp[384];
 #define SPLIT_VERSION
 #ifdef SPLIT_VERSION
 
-template<int N>
+template <int N>
 void curvilinear4sgX3_ci(
     int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,
@@ -126,7 +127,8 @@ void curvilinear4sgX3_ci(
 #define bope(i, j) a_bope[i - 1 + 6 * (j - 1)]
 #define ghcof(i) a_ghcof[i - 1]
 #ifdef SW4_USE_CMEM
-#define acof_no_gp(i, j, k) cmem_acof_no_gp[(i - 1) + 6 * (j - 1) + 48 * (k - 1)]
+#define acof_no_gp(i, j, k) \
+  cmem_acof_no_gp[(i - 1) + 6 * (j - 1) + 48 * (k - 1)]
 #else
 #define acof_no_gp(i, j, k) a_acof_no_gp[(i - 1) + 6 * (j - 1) + 48 * (k - 1)]
 #endif
@@ -136,11 +138,11 @@ void curvilinear4sgX3_ci(
   // PREFETCH(a_mu);
   // PREFETCH(a_lambda);
 #ifdef SW4_USE_CMEM
-  //static bool first=true;
-  //if (first){
+  // static bool first=true;
+  // if (first){
   //  first= false;
-  //cudaMemcpyToSymbol(cmem_acof, a_acof, 384*sizeof(double));
-    //}
+  // cudaMemcpyToSymbol(cmem_acof, a_acof, 384*sizeof(double));
+  //}
 #endif
   //#pragma omp parallel
   {
@@ -191,7 +193,7 @@ void curvilinear4sgX3_ci(
             // 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
             // 	    {
             // 5 ops
-	    
+
             float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
             float_sw4 istry = 1 / (stry(j));
             float_sw4 istrx = 1 / (strx(i));
@@ -349,7 +351,8 @@ void curvilinear4sgX3_ci(
             // All rr-derivatives at once
             // averaging the coefficient
             // 54*8*8+25*8 = 3656 ops, tot=3939
-            float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2,coeff;
+            float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2,
+                coeff;
             //#pragma unroll 1 // slowdown due to register spills
             for (int q = 1; q <= 8; q++) {
               mucofu2 = 0;
@@ -360,43 +363,44 @@ void curvilinear4sgX3_ci(
               mucofw2 = 0;
               //#pragma unroll 1 // slowdown due to register spills
               for (int m = 1; m <= 8; m++) {
-
-		if constexpr(N==0){
-		    coeff = acof(k,q,m);
-		  } else {
-		  coeff = acof_no_gp(k,q,m);
-		}
+                if constexpr (N == 0) {
+                  coeff = acof(k, q, m);
+                } else {
+                  coeff = acof_no_gp(k, q, m);
+                }
 
 #ifdef SW4_USE_CMEM
-if (coeff!=0.0){
+                if (coeff != 0.0) {
 #endif
-                mucofu2 += coeff*
-                           ((2 * mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
-                                strx(i) * met(2, i, j, m) * strx(i) +
-                            mu(i, j, m) * (met(3, i, j, m) * stry(j) *
-                                               met(3, i, j, m) * stry(j) +
-                                           met(4, i, j, m) * met(4, i, j, m)));
-                mucofv2 += coeff *
-                           ((2 * mu(i, j, m) + la(i, j, m)) * met(3, i, j, m) *
-                                stry(j) * met(3, i, j, m) * stry(j) +
-                            mu(i, j, m) * (met(2, i, j, m) * strx(i) *
-                                               met(2, i, j, m) * strx(i) +
-                                           met(4, i, j, m) * met(4, i, j, m)));
-                mucofw2 += coeff *
-                           ((2 * mu(i, j, m) + la(i, j, m)) * met(4, i, j, m) *
-                                met(4, i, j, m) +
-                            mu(i, j, m) * (met(2, i, j, m) * strx(i) *
-                                               met(2, i, j, m) * strx(i) +
-                                           met(3, i, j, m) * stry(j) *
-                                               met(3, i, j, m) * stry(j)));
-                mucofuv += coeff * (mu(i, j, m) + la(i, j, m)) *
-                           met(2, i, j, m) * met(3, i, j, m);
-                mucofuw +=coeff* (mu(i, j, m) + la(i, j, m)) *
-                           met(2, i, j, m) * met(4, i, j, m);
-                mucofvw += coeff * (mu(i, j, m) + la(i, j, m)) *
-                           met(3, i, j, m) * met(4, i, j, m);
+                  mucofu2 +=
+                      coeff *
+                      ((2 * mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
+                           strx(i) * met(2, i, j, m) * strx(i) +
+                       mu(i, j, m) * (met(3, i, j, m) * stry(j) *
+                                          met(3, i, j, m) * stry(j) +
+                                      met(4, i, j, m) * met(4, i, j, m)));
+                  mucofv2 +=
+                      coeff *
+                      ((2 * mu(i, j, m) + la(i, j, m)) * met(3, i, j, m) *
+                           stry(j) * met(3, i, j, m) * stry(j) +
+                       mu(i, j, m) * (met(2, i, j, m) * strx(i) *
+                                          met(2, i, j, m) * strx(i) +
+                                      met(4, i, j, m) * met(4, i, j, m)));
+                  mucofw2 +=
+                      coeff * ((2 * mu(i, j, m) + la(i, j, m)) *
+                                   met(4, i, j, m) * met(4, i, j, m) +
+                               mu(i, j, m) * (met(2, i, j, m) * strx(i) *
+                                                  met(2, i, j, m) * strx(i) +
+                                              met(3, i, j, m) * stry(j) *
+                                                  met(3, i, j, m) * stry(j)));
+                  mucofuv += coeff * (mu(i, j, m) + la(i, j, m)) *
+                             met(2, i, j, m) * met(3, i, j, m);
+                  mucofuw += coeff * (mu(i, j, m) + la(i, j, m)) *
+                             met(2, i, j, m) * met(4, i, j, m);
+                  mucofvw += coeff * (mu(i, j, m) + la(i, j, m)) *
+                             met(3, i, j, m) * met(4, i, j, m);
 #ifdef SW4_USE_CMEM
-}
+                }
 #endif
               }
 
@@ -412,7 +416,7 @@ if (coeff!=0.0){
 
             // Ghost point values, only nonzero for k=1.
             // 72 ops., tot=4011
-	    //if constexpr (N==0) {
+            // if constexpr (N==0) {
             mucofu2 =
                 ghcof(k) * ((2 * mu(i, j, 1) + la(i, j, 1)) * met(2, i, j, 1) *
                                 strx(i) * met(2, i, j, 1) * strx(i) +
@@ -445,9 +449,9 @@ if (coeff!=0.0){
             r3 += istry * mucofuw * u(1, i, j, 0) +
                   istrx * mucofvw * u(2, i, j, 0) +
                   istrxy * mucofw2 * u(3, i, j, 0);
-	      // } else {
-	    //   double dummy=ghcof(1);
-	    // }
+            // } else {
+            //   double dummy=ghcof(1);
+            // }
 
             // pq-derivatives (u-eq)
             // 38 ops., tot=4049
@@ -2332,36 +2336,36 @@ if (coeff!=0.0){
             mucofw2 = 0;
             //#pragma unroll 8
             for (int m = nk - 7; m <= nk; m++) {
-	      if (acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1)!=0.0){
-              mucofu2 += acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
-                         ((2 * mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
-                              strx(i) * met(2, i, j, m) * strx(i) +
-                          mu(i, j, m) * (met(3, i, j, m) * stry(j) *
-                                             met(3, i, j, m) * stry(j) +
-                                         met(4, i, j, m) * met(4, i, j, m)));
-              mucofv2 += acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
-                         ((2 * mu(i, j, m) + la(i, j, m)) * met(3, i, j, m) *
-                              stry(j) * met(3, i, j, m) * stry(j) +
-                          mu(i, j, m) * (met(2, i, j, m) * strx(i) *
-                                             met(2, i, j, m) * strx(i) +
-                                         met(4, i, j, m) * met(4, i, j, m)));
-              mucofw2 +=
-                  acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
-                  ((2 * mu(i, j, m) + la(i, j, m)) * met(4, i, j, m) *
-                       met(4, i, j, m) +
-                   mu(i, j, m) *
-                       (met(2, i, j, m) * strx(i) * met(2, i, j, m) * strx(i) +
-                        met(3, i, j, m) * stry(j) * met(3, i, j, m) * stry(j)));
-              mucofuv += acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
-                         (mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
-                         met(3, i, j, m);
-              mucofuw += acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
-                         (mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
-                         met(4, i, j, m);
-              mucofvw += acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
-                         (mu(i, j, m) + la(i, j, m)) * met(3, i, j, m) *
-                         met(4, i, j, m);
-	      }
+              if (acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) != 0.0) {
+                mucofu2 += acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
+                           ((2 * mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
+                                strx(i) * met(2, i, j, m) * strx(i) +
+                            mu(i, j, m) * (met(3, i, j, m) * stry(j) *
+                                               met(3, i, j, m) * stry(j) +
+                                           met(4, i, j, m) * met(4, i, j, m)));
+                mucofv2 += acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
+                           ((2 * mu(i, j, m) + la(i, j, m)) * met(3, i, j, m) *
+                                stry(j) * met(3, i, j, m) * stry(j) +
+                            mu(i, j, m) * (met(2, i, j, m) * strx(i) *
+                                               met(2, i, j, m) * strx(i) +
+                                           met(4, i, j, m) * met(4, i, j, m)));
+                mucofw2 += acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
+                           ((2 * mu(i, j, m) + la(i, j, m)) * met(4, i, j, m) *
+                                met(4, i, j, m) +
+                            mu(i, j, m) * (met(2, i, j, m) * strx(i) *
+                                               met(2, i, j, m) * strx(i) +
+                                           met(3, i, j, m) * stry(j) *
+                                               met(3, i, j, m) * stry(j)));
+                mucofuv += acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
+                           (mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
+                           met(3, i, j, m);
+                mucofuw += acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
+                           (mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
+                           met(4, i, j, m);
+                mucofvw += acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
+                           (mu(i, j, m) + la(i, j, m)) * met(3, i, j, m) *
+                           met(4, i, j, m);
+              }
             }
 
             // Computing the second derivative,
@@ -2374,8 +2378,8 @@ if (coeff!=0.0){
                   istrxy * mucofw2 * u(3, i, j, q);
           }
 
-          // Ghost point values, only nonzero for k=nk.
-          // 72 ops., tot=4011
+      // Ghost point values, only nonzero for k=nk.
+      // 72 ops., tot=4011
 #ifndef SW4_GHCOF_NO_GP_IS_ZERO
           mucofu2 = ghcof_no_gp(nk - k + 1) *
                     ((2 * mu(i, j, nk) + la(i, j, nk)) * met(2, i, j, nk) *

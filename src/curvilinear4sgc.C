@@ -33,7 +33,9 @@
 #ifdef SW4_USE_CMEM
 
 extern __constant__ double cmem_acof[384];
-__device__ inline double  acof(int i, int j, int k){ return cmem_acof[(i - 1) + 6 * (j - 1) + 48 * (k - 1)];}
+__device__ inline double acof(int i, int j, int k) {
+  return cmem_acof[(i - 1) + 6 * (j - 1) + 48 * (k - 1)];
+}
 #endif
 #include "Mspace.h"
 #include "caliper.h"
@@ -135,11 +137,11 @@ void curvilinear4sg_ci(
   // PREFETCH(a_mu);
   // PREFETCH(a_lambda);
 #ifdef SW4_USE_CMEM
-  //static bool first=true;
-  //if (first){
+  // static bool first=true;
+  // if (first){
   //  first= false;
-    cudaMemcpyToSymbol(cmem_acof, a_acof, 384*sizeof(double));
-    //}
+  cudaMemcpyToSymbol(cmem_acof, a_acof, 384 * sizeof(double));
+  //}
 #endif
   //#pragma omp parallel
   {
@@ -190,7 +192,8 @@ void curvilinear4sg_ci(
             // 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
             // 	    {
             // 5 ops
-	    //	    if (aacof(1,2,1)!=acof(1,2,1)) printf("FAILED %lf %lf \n",aacof(1,2,1),acof(1,2,1));
+            //	    if (aacof(1,2,1)!=acof(1,2,1)) printf("FAILED %lf %lf
+            //\n",aacof(1,2,1),acof(1,2,1));
             float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
             float_sw4 istry = 1 / (stry(j));
             float_sw4 istrx = 1 / (strx(i));
@@ -360,35 +363,37 @@ void curvilinear4sg_ci(
               //#pragma unroll 1 // slowdown due to register spills
               for (int m = 1; m <= 8; m++) {
 #ifdef SW4_USE_CMEM
-if (acof(k,q,m)!=0.0){
+                if (acof(k, q, m) != 0.0) {
 #endif
-                mucofu2 += acof(k, q, m) *
-                           ((2 * mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
-                                strx(i) * met(2, i, j, m) * strx(i) +
-                            mu(i, j, m) * (met(3, i, j, m) * stry(j) *
-                                               met(3, i, j, m) * stry(j) +
-                                           met(4, i, j, m) * met(4, i, j, m)));
-                mucofv2 += acof(k, q, m) *
-                           ((2 * mu(i, j, m) + la(i, j, m)) * met(3, i, j, m) *
-                                stry(j) * met(3, i, j, m) * stry(j) +
-                            mu(i, j, m) * (met(2, i, j, m) * strx(i) *
-                                               met(2, i, j, m) * strx(i) +
-                                           met(4, i, j, m) * met(4, i, j, m)));
-                mucofw2 += acof(k, q, m) *
-                           ((2 * mu(i, j, m) + la(i, j, m)) * met(4, i, j, m) *
-                                met(4, i, j, m) +
-                            mu(i, j, m) * (met(2, i, j, m) * strx(i) *
-                                               met(2, i, j, m) * strx(i) +
-                                           met(3, i, j, m) * stry(j) *
-                                               met(3, i, j, m) * stry(j)));
-                mucofuv += acof(k, q, m) * (mu(i, j, m) + la(i, j, m)) *
-                           met(2, i, j, m) * met(3, i, j, m);
-                mucofuw += acof(k, q, m) * (mu(i, j, m) + la(i, j, m)) *
-                           met(2, i, j, m) * met(4, i, j, m);
-                mucofvw += acof(k, q, m) * (mu(i, j, m) + la(i, j, m)) *
-                           met(3, i, j, m) * met(4, i, j, m);
+                  mucofu2 +=
+                      acof(k, q, m) *
+                      ((2 * mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
+                           strx(i) * met(2, i, j, m) * strx(i) +
+                       mu(i, j, m) * (met(3, i, j, m) * stry(j) *
+                                          met(3, i, j, m) * stry(j) +
+                                      met(4, i, j, m) * met(4, i, j, m)));
+                  mucofv2 +=
+                      acof(k, q, m) *
+                      ((2 * mu(i, j, m) + la(i, j, m)) * met(3, i, j, m) *
+                           stry(j) * met(3, i, j, m) * stry(j) +
+                       mu(i, j, m) * (met(2, i, j, m) * strx(i) *
+                                          met(2, i, j, m) * strx(i) +
+                                      met(4, i, j, m) * met(4, i, j, m)));
+                  mucofw2 += acof(k, q, m) *
+                             ((2 * mu(i, j, m) + la(i, j, m)) *
+                                  met(4, i, j, m) * met(4, i, j, m) +
+                              mu(i, j, m) * (met(2, i, j, m) * strx(i) *
+                                                 met(2, i, j, m) * strx(i) +
+                                             met(3, i, j, m) * stry(j) *
+                                                 met(3, i, j, m) * stry(j)));
+                  mucofuv += acof(k, q, m) * (mu(i, j, m) + la(i, j, m)) *
+                             met(2, i, j, m) * met(3, i, j, m);
+                  mucofuw += acof(k, q, m) * (mu(i, j, m) + la(i, j, m)) *
+                             met(2, i, j, m) * met(4, i, j, m);
+                  mucofvw += acof(k, q, m) * (mu(i, j, m) + la(i, j, m)) *
+                             met(3, i, j, m) * met(4, i, j, m);
 #ifdef SW4_USE_CMEM
-}
+                }
 #endif
               }
 
@@ -2360,8 +2365,8 @@ if (acof(k,q,m)!=0.0){
                   istrxy * mucofw2 * u(3, i, j, q);
           }
 
-          // Ghost point values, only nonzero for k=nk.
-          // 72 ops., tot=4011
+      // Ghost point values, only nonzero for k=nk.
+      // 72 ops., tot=4011
 #ifndef SW4_GHCOF_NO_GP_IS_ZERO
           mucofu2 = ghcof_no_gp(nk - k + 1) *
                     ((2 * mu(i, j, nk) + la(i, j, nk)) * met(2, i, j, nk) *

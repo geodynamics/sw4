@@ -71,15 +71,12 @@ std::string getVersionInfo() {
       << "  Compiler:    " << compiler << std::endl
       << "  3rd party include dir: " << incdir
       << ", and library dir: " << libdir << std::endl
-      <<  compiler_options()<<std::endl
+      << compiler_options() << std::endl
       << "----------------------------------------------------------------"
       << std::endl;
   return versioninfo.str();
 }
 };  // namespace ewversion
-
-
-
 
 // Print library versions and compiler options
 // ! Indicates options that slow down the code
@@ -91,68 +88,70 @@ std::string getVersionInfo() {
 #if defined(USE_HDF5)
 #include "H5public.h"
 #endif
-std::string compiler_options(){
-
-  
+std::string compiler_options() {
   std::stringstream opts;
-  opts<<"  Version:      "<<VERSION<<"\n";
-  opts<<"  Options:      "<<"RAJA("<<RAJA_VERSION_MAJOR<<"."<<RAJA_VERSION_MINOR<<"."<<RAJA_VERSION_PATCHLEVEL<<"):  ";
+  opts << "  Version:      " << VERSION << "\n";
+  opts << "  Options:      "
+       << "RAJA(" << RAJA_VERSION_MAJOR << "." << RAJA_VERSION_MINOR << "."
+       << RAJA_VERSION_PATCHLEVEL << "):  ";
 
 #if defined(SW4_USE_UMPIRE)
-  opts<<"UMPIRE("<<UMPIRE_VERSION_MAJOR<<"."<<UMPIRE_VERSION_MINOR<<"."<<UMPIRE_VERSION_PATCH<<"):\n\t\t";
+  opts << "UMPIRE(" << UMPIRE_VERSION_MAJOR << "." << UMPIRE_VERSION_MINOR
+       << "." << UMPIRE_VERSION_PATCH << "):\n\t\t";
 #else
-  opts<<"NO_UMPIRE(!):";
+  opts << "NO_UMPIRE(!):";
 #endif
 
-
 #if defined(ENABLE_PROJ4)
-  opts<<"PROJ4: ";
+  opts << "PROJ4: ";
 #endif
 
 #if defined(RAJA_ONLY)
-  opts<<"RAJA_ONLY(!): ";
+  opts << "RAJA_ONLY(!): ";
 #endif
 
 #if defined(_OPENMP)
-  opts<<"OPENMP: ";
+  opts << "OPENMP: ";
 #endif
 
 #if defined(SW4_STAGED_MPI_BUFFERS)
-  opts<<"STAGED_MPI_BUFFERS: ";
+  opts << "STAGED_MPI_BUFFERS: ";
 #endif
 
 #if defined(SW4_MANAGED_MPI_BUFFERS)
-  opts<<"MANAGED_MPI_BUFFERS: ";
+  opts << "MANAGED_MPI_BUFFERS: ";
 #endif
 
 #if defined(SW4_PINNED_MPI_BUFFERS)
-  opts<<"PINNED_MPI_BUFFERS: ";
+  opts << "PINNED_MPI_BUFFERS: ";
 #endif
 
 #if defined(SW4_DEVICE_MPI_BUFFERS)
-  opts<<"DEVICE_MPI_BUFFERS: ";
+  opts << "DEVICE_MPI_BUFFERS: ";
 #endif
 
 #if defined(USE_HDF5)
 #include "H5public.h"
-  opts<<"HDF5("<<H5_VERS_MAJOR<<"."<<H5_VERS_MINOR<<"."<<H5_VERS_RELEASE<<"."<<H5_VERS_SUBRELEASE<<")";
+  opts << "HDF5(" << H5_VERS_MAJOR << "." << H5_VERS_MINOR << "."
+       << H5_VERS_RELEASE << "." << H5_VERS_SUBRELEASE << ")";
 #endif
 
 #if defined(ENABLE_CALIPER)
-  opts<<"CALIPER(!): ";
+  opts << "CALIPER(!): ";
 #endif
 
 #if defined(ENABLE_FFTW)
-  opts<<"FFTW: ";
+  opts << "FFTW: ";
 #endif
 
-  opts<<"\n\t\t";
+  opts << "\n\t\t";
 #ifdef ENABLE_HIP
-  opts<<"HIP("<<HIP_VERSION_MAJOR<<"."<<HIP_VERSION_MINOR<<"."<<HIP_VERSION_PATCH<<")\n";
+  opts << "HIP(" << HIP_VERSION_MAJOR << "." << HIP_VERSION_MINOR << "."
+       << HIP_VERSION_PATCH << ")\n";
 #elif ENABLE_CUDA
-  opts<<"CUDA("<<CUDA_VERSION<<")\n";
+  opts << "CUDA(" << CUDA_VERSION << ")\n";
 #else
-  opts<<"Unknown programming model\n";
+  opts << "Unknown programming model\n";
 #endif
   return opts.str();
 }

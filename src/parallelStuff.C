@@ -515,8 +515,7 @@ void EW::communicate_array_host(Sarray& u, int grid) {
            "Communicate array, only implemented for one-, three-, four-, and "
            "21-component arrays"
                << " nc = " << u.m_nc);
-  int ie = u.m_ie, ib = u.m_ib, je = u.m_je, jb = u.m_jb,
-      kb = u.m_kb;
+  int ie = u.m_ie, ib = u.m_ib, je = u.m_je, jb = u.m_jb, kb = u.m_kb;
   //  int ke = u.m_ke;
   MPI_Status status;
   if (u.m_nc == 1) {

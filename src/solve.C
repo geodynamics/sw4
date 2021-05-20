@@ -54,7 +54,7 @@ __constant__ double cmem_acof_no_gp[384];
 bool StatMachineBase::ProfilerOn(false);
 #endif
 
-void check_ghcof_no_gp(double *ghcof_no_gp);
+void check_ghcof_no_gp(double* ghcof_no_gp);
 void curvilinear4sgwind(int, int, int, int, int, int, int, int, float_sw4*,
                         float_sw4*, float_sw4*, float_sw4*, float_sw4*,
                         float_sw4*, int*, float_sw4*, float_sw4*, float_sw4*,
@@ -69,12 +69,14 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   SW4_MARK_FUNCTION;
   check_ghcof_no_gp(m_ghcof_no_gp);
 #ifdef SW4_USE_CMEM
-//std::cout<<"Copying acof to constant device memory\n";
-SW4_CheckDeviceError(cudaMemcpyToSymbol(cmem_acof, m_acof, 384*sizeof(double)));
-SW4_CheckDeviceError(cudaMemcpyToSymbol(cmem_acof_no_gp, m_acof_no_gp, 384*sizeof(double)));
+  // std::cout<<"Copying acof to constant device memory\n";
+  SW4_CheckDeviceError(
+      cudaMemcpyToSymbol(cmem_acof, m_acof, 384 * sizeof(double)));
+  SW4_CheckDeviceError(
+      cudaMemcpyToSymbol(cmem_acof_no_gp, m_acof_no_gp, 384 * sizeof(double)));
 #endif
 #ifdef _OPENMP
-  //if (omp_pause_resource_all(omp_pause_hard)) {
+  // if (omp_pause_resource_all(omp_pause_hard)) {
   //  std::cerr << "OMP_pause_resource failed\n";
   // }
 #endif
@@ -82,7 +84,7 @@ SW4_CheckDeviceError(cudaMemcpyToSymbol(cmem_acof_no_gp, m_acof_no_gp, 384*sizeo
 #ifdef SW4_NORM_TRACE
   std::ofstream norm_trace_file("Norms.dat");
 #endif
-  //print_hwm(getRank());
+  // print_hwm(getRank());
   // solution arrays
   vector<Sarray> F(mNumberOfGrids), Lu(mNumberOfGrids), Uacc(mNumberOfGrids),
       Up(mNumberOfGrids), Um(mNumberOfGrids), U(mNumberOfGrids);
@@ -335,14 +337,16 @@ SW4_CheckDeviceError(cudaMemcpyToSymbol(cmem_acof_no_gp, m_acof_no_gp, 384*sizeo
   if (m_check_point->do_restart()) {
     double timeRestartBegin = MPI_Wtime();
     if (!m_check_point->useHDF5())
-      m_check_point->read_checkpoint( t, beginCycle, Um, U, AlphaVEm, AlphaVE );
+      m_check_point->read_checkpoint(t, beginCycle, Um, U, AlphaVEm, AlphaVE);
 #ifdef USE_HDF5
     else
-      m_check_point->read_checkpoint_hdf5( t, beginCycle, Um, U, AlphaVEm, AlphaVE );
+      m_check_point->read_checkpoint_hdf5(t, beginCycle, Um, U, AlphaVEm,
+                                          AlphaVE);
 #else
-    else
-      if (proc_zero())
-        cout << "Configured to restart with HDF5 but SW4 is not compiled with HDF5!" << endl;
+    else if (proc_zero())
+      cout << "Configured to restart with HDF5 but SW4 is not compiled with "
+              "HDF5!"
+           << endl;
 #endif
 
     // tmp
@@ -1052,21 +1056,24 @@ SW4_CheckDeviceError(cudaMemcpyToSymbol(cmem_acof_no_gp, m_acof_no_gp, 384*sizeo
       if (m_checkfornan) check_for_nan(Lu, 1, "L(uacc) ");
 
 #ifdef SW4_NORM_TRACE
-    if (!getRank()){
-      for (int g = 0; g < mNumberOfGrids; g++) {
-	norm_trace_file<<"PreEvalCorrector Up["<<g<<"] "<<Up[g].norm()<<" "<<Lu[g].norm()<<" "<<F[g].norm()<<"\n";
+      if (!getRank()) {
+        for (int g = 0; g < mNumberOfGrids; g++) {
+          norm_trace_file << "PreEvalCorrector Up[" << g << "] " << Up[g].norm()
+                          << " " << Lu[g].norm() << " " << F[g].norm() << "\n";
+        }
       }
-    }
 #endif
 
       evalCorrector(Up, mRho, Lu, F);
 
 #ifdef SW4_NORM_TRACE
-    if (!getRank()){
-      for (int g = 0; g < mNumberOfGrids; g++) {
-      norm_trace_file<<"PostEvalCorrector Up,Lu,F["<<g<<"] "<<Up[g].norm()<<" "<<Lu[g].norm()<<" "<<F[g].norm()<<"\n";
+      if (!getRank()) {
+        for (int g = 0; g < mNumberOfGrids; g++) {
+          norm_trace_file << "PostEvalCorrector Up,Lu,F[" << g << "] "
+                          << Up[g].norm() << " " << Lu[g].norm() << " "
+                          << F[g].norm() << "\n";
+        }
       }
-    }
 #endif
 
       if (m_output_detailed_timing) time_measure[12] = MPI_Wtime();
@@ -1128,15 +1135,15 @@ SW4_CheckDeviceError(cudaMemcpyToSymbol(cmem_acof_no_gp, m_acof_no_gp, 384*sizeo
       if (m_output_detailed_timing) time_measure[16] = MPI_Wtime();
 
       if (trace && m_myRank == dbgproc) cout << " after Forcing" << endl;
-      // end test
-
+        // end test
 
 #ifdef SW4_NORM_TRACE
-    if (!getRank()){
-      for (int g = 0; g < mNumberOfGrids; g++) {
-	norm_trace_file<<"PreENFORCIC Up["<<g<<"] "<<Up[g].norm()<<"\n";
+      if (!getRank()) {
+        for (int g = 0; g < mNumberOfGrids; g++) {
+          norm_trace_file << "PreENFORCIC Up[" << g << "] " << Up[g].norm()
+                          << "\n";
+        }
       }
-    }
 #endif
 
       // interface conditions for the corrector
@@ -1227,14 +1234,17 @@ SW4_CheckDeviceError(cudaMemcpyToSymbol(cmem_acof_no_gp, m_acof_no_gp, 384*sizeo
     if (m_check_point->timeToWrite(t, currentTimeStep, mDt)) {
       double time_chkpt = MPI_Wtime();
       if (!m_check_point->useHDF5())
-        m_check_point->write_checkpoint( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
+        m_check_point->write_checkpoint(t, currentTimeStep, U, Up, AlphaVE,
+                                        AlphaVEp);
 #ifdef USE_HDF5
       else
-        m_check_point->write_checkpoint_hdf5( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
+        m_check_point->write_checkpoint_hdf5(t, currentTimeStep, U, Up, AlphaVE,
+                                             AlphaVEp);
 #else
-      else
-        if (proc_zero())
-          cout << "Configured to checkpoint with HDF5 but SW4 is not compiled with HDF5!" << endl;
+      else if (proc_zero())
+        cout << "Configured to checkpoint with HDF5 but SW4 is not compiled "
+                "with HDF5!"
+             << endl;
 #endif
       double time_chkpt_tmp = MPI_Wtime() - time_chkpt;
       if (mVerbose >= 0)
@@ -1275,9 +1285,9 @@ SW4_CheckDeviceError(cudaMemcpyToSymbol(cmem_acof_no_gp, m_acof_no_gp, 384*sizeo
     cycleSolutionArrays(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp);
 
 #ifdef SW4_NORM_TRACE
-    if (!getRank()){
+    if (!getRank()) {
       for (int g = 0; g < mNumberOfGrids; g++) {
-	norm_trace_file<<"Up["<<g<<"] "<<Up[g].norm()<<"\n";
+        norm_trace_file << "Up[" << g << "] " << Up[g].norm() << "\n";
       }
     }
 #endif
@@ -1965,7 +1975,6 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                   __LINE__);  // only needs k=kc (on the interface)
     Sarray Bc(3, ibc, iec, jbc, jec, kc, kc, __FILE__, __LINE__);
 
-    
 #define FUSED_KERNELS 1
 #ifndef FUSED_KERNELS
     Unextf.set_to_zero_async();
@@ -1984,7 +1993,7 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     Sarray Uc_tt(3, ibc, iec, jbc, jec, kc - 1, kc + 7, __FILE__, __LINE__);
     // reuse Utt to hold the acceleration of the memory variables
     SW4_MARK_END("enforceIC::Allocs");
-    
+
     // Set to zero the ghost point values that are unknowns when solving the
     // interface condition. Assume that Dirichlet data is already set on ghost
     // points on the (supergrid) sides, which are not treated as unknown
@@ -2036,7 +2045,6 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
       }
       SW4_MARK_END("enforceIC::CORRECTOR");
     }
-
 
     SW4_MARK_BEGIN("enforceIC::COMPUTE_ICSTRESSES");
     compute_icstresses(a_Up[g + 1], Bf, g + 1, kf, m_sg_str_x[g + 1],
@@ -5592,7 +5600,7 @@ void EW::compute_icstresses_curv(Sarray& a_Up, Sarray& B, int kic,
 #define str_y(j) a_str_y[(j - jfirst)]
   float_sw4 sgn = 1;
   if (op == '=') {
-    //B.set_value(0.0);
+    // B.set_value(0.0);
     B.set_to_zero_async();
     sgn = 1;
   }
@@ -6263,11 +6271,14 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
     }
   }
 }
-void check_ghcof_no_gp(double *ghcof_no_gp){
+void check_ghcof_no_gp(double* ghcof_no_gp) {
 #ifdef SW4_GHCOF_NO_GP_IS_ZERO
-  for(int i=0;i<6;i++) if (ghcof_no_gp[i]!=0.0){
-      std::cerr<<"ERROR :: ghcof_no_gp["<<i<<"] is "<<ghcof_no_gp<<"\n";
-      std::cerr<<"ERROR :: RECOMPILE WITH SW4_GHCOF_NO_GP_IS_ZERO undefined\n";
+  for (int i = 0; i < 6; i++)
+    if (ghcof_no_gp[i] != 0.0) {
+      std::cerr << "ERROR :: ghcof_no_gp[" << i << "] is " << ghcof_no_gp
+                << "\n";
+      std::cerr
+          << "ERROR :: RECOMPILE WITH SW4_GHCOF_NO_GP_IS_ZERO undefined\n";
       abort();
     }
 #endif

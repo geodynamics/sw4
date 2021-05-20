@@ -2921,16 +2921,15 @@ void ve_bndry_stress_curvi_ci(
     // 	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
     // 	 {
 
-    
     SW4_MARK_END("HOST CODE");
 
-#if !defined(RAJA_ONLY) // Fine
+#if !defined(RAJA_ONLY)  // Fine
     Range<16> I(ifirst + 2, ilast - 1);
     Range<4> J(jfirst + 2, jlast - 1);
     forall2async(I, J, [=] RAJA_DEVICE(int i, int j) {
 #else
-	RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
-	RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
+    RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
+    RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
     RAJA::kernel<VBSC_POL>(RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(
                                                                    int j,
                                                                    int i) {

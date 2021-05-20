@@ -73,7 +73,6 @@ void signal_handler(int signal) {
 }
 #endif
 
-
 using namespace std;
 
 void usage(string thereason) {
@@ -109,7 +108,7 @@ int main(int argc, char **argv) {
   MPI_Comm_rank(shared_comm, &local_rank);
   MPI_Comm_size(shared_comm, &local_size);
   MPI_Info_free(&info);
-  
+
   int device = presetGPUID(myRank, local_rank, local_size);
 
 #if defined(SW4_SIGNAL_CHECKPOINT)
@@ -265,8 +264,7 @@ int main(int argc, char **argv) {
 
 #ifdef USE_SZ
   char *cfgFile = getenv("SZ_CONFIG_FILE");
-  if (NULL == cfgFile)
-    cfgFile = "sz.config";
+  if (NULL == cfgFile) cfgFile = "sz.config";
   H5Z_SZ_Init(cfgFile);
 #endif
 
@@ -400,4 +398,3 @@ int main(int argc, char **argv) {
   // std::cout<<"MPI_Finalize done\n"<<std::flush;
   return status;
 }  // end of main
-

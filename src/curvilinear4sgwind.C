@@ -193,12 +193,12 @@ void curvilinear4sgwind(
       // std::cout<<"LOWER J"<<jfirst+2<<" "<<jlast-2<<"\n";
       // std::cout<<"LOWER K"<<klowb<<" "<<klowe<<"\n";
       // SBP Boundary closure terms
-// #pragma omp for
-//       for (int k = klowb; k <= klowe; k++)
-//         for (int j = jfirst + 2; j <= jlast - 2; j++)
-// #pragma omp simd
-// #pragma ivdep
-//           for (int i = ifirst + 2; i <= ilast - 2; i++) {
+      // #pragma omp for
+      //       for (int k = klowb; k <= klowe; k++)
+      //         for (int j = jfirst + 2; j <= jlast - 2; j++)
+      // #pragma omp simd
+      // #pragma ivdep
+      //           for (int i = ifirst + 2; i <= ilast - 2; i++) {
 
 #ifdef PEEKS_GALORE
       SW4_PEEK;
@@ -2502,7 +2502,6 @@ void curvilinear4sgwind(
         lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
         lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
       });
-
     }
     // SYNC_DEVICE;
   }

@@ -900,7 +900,7 @@ void EW::processGrid(char* buffer) {
       proj0 << " +lat_0=" << mLatOrigin;
     }
   }
-  
+
   float_sw4 cubelen, zcubelen, hcube;
   if (m_geodynbc_found) {
     // Set SW4 grid spacing based on Geodyn cube data
@@ -937,7 +937,7 @@ void EW::processGrid(char* buffer) {
       // lat-lon corner of cube given
       if (adjust == 1 || origin[2] == 0) {
         // h based on cube length only, adjust z-position of cube
-        /* 
+        /*
         int nc = static_cast<int>(round(cubelen) / hcube);
         h = cubelen / nc;
         */
@@ -1097,7 +1097,7 @@ void EW::processGrid(char* buffer) {
       }
     }
   }
-  
+
   if (!m_doubly_periodic) {
     if (proc_zero() && mVerbose >= 3)
       printf("**** Setting up the grid for a non-periodic problem\n");
@@ -3042,9 +3042,9 @@ void EW::geodynFindFile(char* buffer) {
 
 //-----------------------------------------------------------------------
 void EW::geodynbcGetSizes(string filename, float_sw4 origin[3],
-                          float_sw4& cubelen, float_sw4& zcubelen, float_sw4& hcube,
-                          bool& found_latlon, double& lat, double& lon,
-                          double& az, int& adjust) {
+                          float_sw4& cubelen, float_sw4& zcubelen,
+                          float_sw4& hcube, bool& found_latlon, double& lat,
+                          double& lon, double& az, int& adjust) {
   ifstream geodynfile(m_geodynbc_filename.c_str());
   CHECK_INPUT(geodynfile.is_open(),
               "Error: opening geodyn file " << m_geodynbc_filename);
@@ -3166,7 +3166,7 @@ void EW::geodynbcGetSizes(string filename, float_sw4 origin[3],
 
   zcubelen = cubelen;
   if (nzfound) zcubelen = (nz - 1) * h;
-  
+
   if (hfound) hcube = h;
 }
 
@@ -3547,344 +3547,289 @@ void EW::processImage3D(char* buffer) {
 }
 
 //-----------------------------------------------------------------------
-void EW::processESSI3D( char* buffer )
-{
-   int dumpInterval=-1, bufferInterval=1;
-   string filePrefix="ssioutput";
-   float_sw4 coordValue;
-   float_sw4 coordBox[4];
-   const float_sw4 zero=0.0;
-   int precision = 8;
-   int compressionMode = 0;
-   double compressionPar;
-   
-   // Default is whole domain
-   coordBox[0] = zero;
-   coordBox[1] = m_global_xmax;
-   coordBox[2] = zero;
+void EW::processESSI3D(char* buffer) {
+  int dumpInterval = -1, bufferInterval = 1;
+  string filePrefix = "ssioutput";
+  float_sw4 coordValue;
+  float_sw4 coordBox[4];
+  const float_sw4 zero = 0.0;
+  int precision = 8;
+  int compressionMode = 0;
+  double compressionPar;
 
-   coordBox[3] = m_global_ymax;
-   float_sw4 depth = -999.99; // default not specified
+  // Default is whole domain
+  coordBox[0] = zero;
+  coordBox[1] = m_global_xmax;
+  coordBox[2] = zero;
 
-   char* token = strtok(buffer, " \t");
-   CHECK_INPUT(strcmp("ssioutput", token) == 0 || strcmp("essioutput", token) == 0, "ERROR: Not a essioutput/ssioutput line...: " << token );
+  coordBox[3] = m_global_ymax;
+  float_sw4 depth = -999.99;  // default not specified
 
-   token = strtok(NULL, " \t");
-   string err = "ssioutput Error: ";
-   while (token != NULL)
-   {
-     // while there are tokens in the string still
-      if (startswith("#", token) || startswith(" ", buffer))
-         // Ignore commented lines and lines with just a space.
-         break;
-      else if (startswith("file=", token))
-      {
-         token += 5; // skip file=
-         filePrefix = token;
-      }
-      else if (startswith("dumpInterval=", token))
-      {
-          token += 13; // skip dumpInterval=
-          dumpInterval = atoi(token);
-      }
-      else if (startswith("bufferInterval=", token))
-      {
-          token += 15; // skip bufferInterval=
-          bufferInterval = atoi(token);
-      }
-      else if (startswith("xmin=", token))
-      {
-          token += 5; // skip xmin=
-          coordValue = atof(token);
-          coordBox[0] = min(m_global_xmax, coordValue);
-          coordBox[0] = max(zero, coordBox[0]);
-      }
-      else if (startswith("xmax=", token))
-      {
-          token += 5; // skip xmax=
-          coordValue = atof(token);
-          coordBox[1] = min(m_global_xmax, coordValue);
-          coordBox[1] = max(zero, coordBox[1]);
-      }
-      else if (startswith("ymin=", token))
-      {
-          token += 5; // skip ymin=
-          coordValue = atof(token);
-          coordBox[2] = min(m_global_ymax, coordValue);
-          coordBox[2] = max(zero, coordBox[2]);
-      }
-      else if (startswith("ymax=", token))
-      {
-          token += 5; // skip ymax=
-          coordValue = atof(token);
-          coordBox[3] = min(m_global_ymax, coordValue);
-          coordBox[3] = max(zero, coordBox[3]);
-      }
-      else if (startswith("depth=", token))
-      {
-          token += 6; // skip depth=
-          coordValue = atof(token);
-          depth = min(m_global_zmax, coordValue);
-          depth = max(zero, depth);
-      }
-      else if (startswith("precision=", token))
-      {
-          token += 10; // skip precision=
-          precision = atoi(token);
-          if (precision != 4 && precision != 8) 
-              badOption("ssioutput precision", token);
-          if (proc_zero())
-            cout << "SSI ouput will use " << precision*8 << "-bit floating point values." << endl;
-      }
-      else if (startswith("zfp-rate=", token))
-      {
-          token += 9;
-          compressionMode = SW4_ZFP_MODE_RATE;
-          compressionPar = atof(token);
-          if (proc_zero())
-            cout << "SSI ouput will use ZFP rate=" << compressionPar << endl;
-      }
-      else if (startswith("zfp-precision=", token))
-      {
-          token += 14;
-          compressionMode = SW4_ZFP_MODE_PRECISION;
-          compressionPar = atof(token);
-          if (proc_zero())
-            cout << "SSI ouput will use ZFP precision=" << compressionPar << endl;
-      }
-      else if (startswith("zfp-accuracy=", token))
-      {
-          token += 13;
-          compressionMode = SW4_ZFP_MODE_ACCURACY;
-          compressionPar = atof(token);
-          if (proc_zero())
-            cout << "SSI ouput will use ZFP accuracy=" << compressionPar << endl;
-      }
-      else if (startswith("zfp-reversible=", token))
-      {
-          token += 15;
-          compressionMode = SW4_ZFP_MODE_REVERSIBLE;
-          if (proc_zero())
-            cout << "SSI ouput will use ZFP reversible mode" << endl;
-      }
-      else if (startswith("zlib=", token))
-      {
-          token += 5;
-          compressionMode = SW4_ZLIB;
-          compressionPar = atof(token);
-          if (proc_zero())
-            cout << "SSI ouput will use ZLIB level=" << (int)compressionPar << endl;
-      }
-      else if (startswith("szip=", token))
-      {
-          token += 5;
-          compressionMode = SW4_SZIP;
-          if (proc_zero())
-            cout << "SSI ouput will use SZIP" << endl;
-      }
-      else if (startswith("sz=", token))
-      {
-          token += 5;
-          compressionMode = SW4_SZ;
-          if (proc_zero())
-            cout << "SSI ouput will use SZ with configuration file [" << getenv("SZ_CONFIG_FILE") << "]" << endl;
-      }
-      else
-      {
-          badOption("ssioutput", token);
-      }
-      token = strtok(NULL, " \t");
-   }
+  char* token = strtok(buffer, " \t");
+  CHECK_INPUT(
+      strcmp("ssioutput", token) == 0 || strcmp("essioutput", token) == 0,
+      "ERROR: Not a essioutput/ssioutput line...: " << token);
+
+  token = strtok(NULL, " \t");
+  string err = "ssioutput Error: ";
+  while (token != NULL) {
+    // while there are tokens in the string still
+    if (startswith("#", token) || startswith(" ", buffer))
+      // Ignore commented lines and lines with just a space.
+      break;
+    else if (startswith("file=", token)) {
+      token += 5;  // skip file=
+      filePrefix = token;
+    } else if (startswith("dumpInterval=", token)) {
+      token += 13;  // skip dumpInterval=
+      dumpInterval = atoi(token);
+    } else if (startswith("bufferInterval=", token)) {
+      token += 15;  // skip bufferInterval=
+      bufferInterval = atoi(token);
+    } else if (startswith("xmin=", token)) {
+      token += 5;  // skip xmin=
+      coordValue = atof(token);
+      coordBox[0] = min(m_global_xmax, coordValue);
+      coordBox[0] = max(zero, coordBox[0]);
+    } else if (startswith("xmax=", token)) {
+      token += 5;  // skip xmax=
+      coordValue = atof(token);
+      coordBox[1] = min(m_global_xmax, coordValue);
+      coordBox[1] = max(zero, coordBox[1]);
+    } else if (startswith("ymin=", token)) {
+      token += 5;  // skip ymin=
+      coordValue = atof(token);
+      coordBox[2] = min(m_global_ymax, coordValue);
+      coordBox[2] = max(zero, coordBox[2]);
+    } else if (startswith("ymax=", token)) {
+      token += 5;  // skip ymax=
+      coordValue = atof(token);
+      coordBox[3] = min(m_global_ymax, coordValue);
+      coordBox[3] = max(zero, coordBox[3]);
+    } else if (startswith("depth=", token)) {
+      token += 6;  // skip depth=
+      coordValue = atof(token);
+      depth = min(m_global_zmax, coordValue);
+      depth = max(zero, depth);
+    } else if (startswith("precision=", token)) {
+      token += 10;  // skip precision=
+      precision = atoi(token);
+      if (precision != 4 && precision != 8)
+        badOption("ssioutput precision", token);
+      if (proc_zero())
+        cout << "SSI ouput will use " << precision * 8
+             << "-bit floating point values." << endl;
+    } else if (startswith("zfp-rate=", token)) {
+      token += 9;
+      compressionMode = SW4_ZFP_MODE_RATE;
+      compressionPar = atof(token);
+      if (proc_zero())
+        cout << "SSI ouput will use ZFP rate=" << compressionPar << endl;
+    } else if (startswith("zfp-precision=", token)) {
+      token += 14;
+      compressionMode = SW4_ZFP_MODE_PRECISION;
+      compressionPar = atof(token);
+      if (proc_zero())
+        cout << "SSI ouput will use ZFP precision=" << compressionPar << endl;
+    } else if (startswith("zfp-accuracy=", token)) {
+      token += 13;
+      compressionMode = SW4_ZFP_MODE_ACCURACY;
+      compressionPar = atof(token);
+      if (proc_zero())
+        cout << "SSI ouput will use ZFP accuracy=" << compressionPar << endl;
+    } else if (startswith("zfp-reversible=", token)) {
+      token += 15;
+      compressionMode = SW4_ZFP_MODE_REVERSIBLE;
+      if (proc_zero()) cout << "SSI ouput will use ZFP reversible mode" << endl;
+    } else if (startswith("zlib=", token)) {
+      token += 5;
+      compressionMode = SW4_ZLIB;
+      compressionPar = atof(token);
+      if (proc_zero())
+        cout << "SSI ouput will use ZLIB level=" << (int)compressionPar << endl;
+    } else if (startswith("szip=", token)) {
+      token += 5;
+      compressionMode = SW4_SZIP;
+      if (proc_zero()) cout << "SSI ouput will use SZIP" << endl;
+    } else if (startswith("sz=", token)) {
+      token += 5;
+      compressionMode = SW4_SZ;
+      if (proc_zero())
+        cout << "SSI ouput will use SZ with configuration file ["
+             << getenv("SZ_CONFIG_FILE") << "]" << endl;
+    } else {
+      badOption("ssioutput", token);
+    }
+    token = strtok(NULL, " \t");
+  }
 
 #ifndef USE_ZFP
-   if (compressionMode > 0 && compressionMode < 5 && proc_zero())
-      cout << "WARNING: SW4 is not compiled with ZFP but ZFP command is used " << endl;
+  if (compressionMode > 0 && compressionMode < 5 && proc_zero())
+    cout << "WARNING: SW4 is not compiled with ZFP but ZFP command is used "
+         << endl;
 #endif
 
 #ifndef USE_SZ
-   if (compressionMode == SW4_SZ && proc_zero())
-      cout << "WARNING: SW4 is not compiled with SZ but SZ command is used " << endl;
+  if (compressionMode == SW4_SZ && proc_zero())
+    cout << "WARNING: SW4 is not compiled with SZ but SZ command is used "
+         << endl;
 #endif
 
-   if (compressionMode != 0 && bufferInterval == 1) 
-     bufferInterval = 100;
+  if (compressionMode != 0 && bufferInterval == 1) bufferInterval = 100;
 
-   // Check the specified min/max values make sense
-   for (int d=0; d < 2*2; d+=2)
-   {
-      if (coordBox[d+1] < coordBox[d])
-      {
-         char coordName[2] = {'x','y'};
-         if (proc_zero())
-           cout << "ERROR: ssioutput subdomain " << coordName[d] <<
-              " coordinate max value " << coordBox[d+1] <<
-              " is less than min value " << coordBox[d] << endl;
-         MPI_Abort(MPI_COMM_WORLD, 1);
-      }
-   }
+  // Check the specified min/max values make sense
+  for (int d = 0; d < 2 * 2; d += 2) {
+    if (coordBox[d + 1] < coordBox[d]) {
+      char coordName[2] = {'x', 'y'};
+      if (proc_zero())
+        cout << "ERROR: ssioutput subdomain " << coordName[d]
+             << " coordinate max value " << coordBox[d + 1]
+             << " is less than min value " << coordBox[d] << endl;
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+  }
 
-   // Use depth if zmin/zmax values are specified
-   if ((depth < 0) && proc_zero())
-   {
-      cout << "WARNING: ssioutput depth not specified or less than zero, setting to zero" << endl;
-      depth=0;
-   }
+  // Use depth if zmin/zmax values are specified
+  if ((depth < 0) && proc_zero()) {
+    cout << "WARNING: ssioutput depth not specified or less than zero, setting "
+            "to zero"
+         << endl;
+    depth = 0;
+  }
 
-   ESSI3D* essi3d = new ESSI3D( this, filePrefix, dumpInterval, bufferInterval, coordBox, depth, precision, compressionMode, compressionPar);
-   addESSI3D( essi3d );
+  ESSI3D* essi3d =
+      new ESSI3D(this, filePrefix, dumpInterval, bufferInterval, coordBox,
+                 depth, precision, compressionMode, compressionPar);
+  addESSI3D(essi3d);
 }
 
 //-----------------------------------------------------------------------
-void EW::processCheckPoint(char* buffer)
-{
-   char* token = strtok(buffer, " \t");
-   CHECK_INPUT(strcmp("checkpoint", token) == 0, "ERROR: not a checkpoint line...: " << token);
-   token = strtok(NULL, " \t");
-   string err = "CheckPoint Error: ";
-   int cycle=-1, cycleInterval=0;
-   string filePrefix = "checkpoint";
+void EW::processCheckPoint(char* buffer) {
+  char* token = strtok(buffer, " \t");
+  CHECK_INPUT(strcmp("checkpoint", token) == 0,
+              "ERROR: not a checkpoint line...: " << token);
+  token = strtok(NULL, " \t");
+  string err = "CheckPoint Error: ";
+  int cycle = -1, cycleInterval = 0;
+  string filePrefix = "checkpoint";
 
-   string restartFileName, restartPath;
-   bool   restartFileGiven = false, restartPathGiven=false, useHDF5 = false;
-   int compressionMode = 0;
-   double compressionPar;
+  string restartFileName, restartPath;
+  bool restartFileGiven = false, restartPathGiven = false, useHDF5 = false;
+  int compressionMode = 0;
+  double compressionPar;
 
-   size_t bufsize=10000000;
+  size_t bufsize = 10000000;
 
-   while (token != NULL)
-    {
-       if (startswith("#", token) || startswith(" ", buffer))
-          break;
-       //      if (startswith("cycle=", token) )
-       //      {
-       //	 token += 6; // skip cycle=
-       //	 CHECK_INPUT( atoi(token) >= 0., err << "cycle must be a non-negative integer, not: " << token);
-       //	 cycle = atoi(token);
-       //	 timingSet = true;
-       //      }
-      if (startswith("cycleInterval=", token) )
-      {
-	 token += 14; // skip cycleInterval=
-	 CHECK_INPUT( atoi(token) >= 0., err << "cycleInterval must be a non-negative integer, not: " << token);
-	 cycleInterval = atoi(token);
-      }
-      else if (startswith("file=", token))
-      {
-	 token += 5; // skip file=
-	 filePrefix = token;
-      }
-      else if (startswith("restartfile=", token))
-      {
-	 token += 12; // skip file=
-	 restartFileName = token;
-	 restartFileGiven = true;
-      }
-      else if (startswith("restartpath=", token))
-      {
-	 token += 12;
-	 restartPath = token;
-	 restartPathGiven = true;
-      }
-      else if (startswith("hdf5=", token))
-      {
-	 token += 5; // skip hdf5=
-	 useHDF5 = strcmp("yes",token)==0||strcmp("true",token)==0||strcmp("1",token)==0||strcmp("on",token)==0;
-      }
-      else if (startswith("zfp-rate=", token))
-      {
-          token += 9;
-          compressionMode = SW4_ZFP_MODE_RATE;
-          compressionPar = atof(token);
-          useHDF5 = true;
-          if (proc_zero())
-            cout << "Checkpoint will use ZFP rate=" << compressionPar << endl;
-      }
-      else if (startswith("zfp-precision=", token))
-      {
-          token += 14;
-          compressionMode = SW4_ZFP_MODE_PRECISION;
-          compressionPar = atof(token);
-          useHDF5 = true;
-          if (proc_zero())
-            cout << "Checkpoint will use ZFP precision=" << compressionPar << endl;
-      }
-      else if (startswith("zfp-accuracy=", token))
-      {
-          token += 13;
-          compressionMode = SW4_ZFP_MODE_ACCURACY;
-          compressionPar = atof(token);
-          useHDF5 = true;
-          if (proc_zero())
-            cout << "Checkpoint will use ZFP accuracy=" << compressionPar << endl;
-      }
-      else if (startswith("zfp-reversible=", token))
-      {
-          token += 15;
-          compressionMode = SW4_ZFP_MODE_REVERSIBLE;
-          useHDF5 = true;
-          if (proc_zero())
-            cout << "Checkpoint will use ZFP reversible mode" << endl;
-      }
-      else if (startswith("zlib=", token))
-      {
-          token += 5;
-          compressionMode = SW4_ZLIB;
-          compressionPar = atof(token);
-          useHDF5 = true;
-          if (proc_zero())
-            cout << "Checkpoint will use ZLIB level=" << (int)compressionPar << endl;
-      }
-      else if (startswith("szip=", token))
-      {
-          token += 5;
-          compressionMode = SW4_SZIP;
-          useHDF5 = true;
-          if (proc_zero())
-            cout << "Checkpoint will use SZIP" << endl;
-      }
-      else if (startswith("sz=", token))
-      {
-          token += 5;
-          compressionMode = SW4_SZ;
-          useHDF5 = true;
-          if (proc_zero())
-            cout << "Checkpoint will use SZ with configuration file [" << getenv("SZ_CONFIG_FILE") << "]" << endl;
-      }
+  while (token != NULL) {
+    if (startswith("#", token) || startswith(" ", buffer)) break;
+    //      if (startswith("cycle=", token) )
+    //      {
+    //	 token += 6; // skip cycle=
+    //	 CHECK_INPUT( atoi(token) >= 0., err << "cycle must be a non-negative
+    //integer, not: " << token); 	 cycle = atoi(token); 	 timingSet = true;
+    //      }
+    if (startswith("cycleInterval=", token)) {
+      token += 14;  // skip cycleInterval=
+      CHECK_INPUT(atoi(token) >= 0.,
+                  err << "cycleInterval must be a non-negative integer, not: "
+                      << token);
+      cycleInterval = atoi(token);
+    } else if (startswith("file=", token)) {
+      token += 5;  // skip file=
+      filePrefix = token;
+    } else if (startswith("restartfile=", token)) {
+      token += 12;  // skip file=
+      restartFileName = token;
+      restartFileGiven = true;
+    } else if (startswith("restartpath=", token)) {
+      token += 12;
+      restartPath = token;
+      restartPathGiven = true;
+    } else if (startswith("hdf5=", token)) {
+      token += 5;  // skip hdf5=
+      useHDF5 = strcmp("yes", token) == 0 || strcmp("true", token) == 0 ||
+                strcmp("1", token) == 0 || strcmp("on", token) == 0;
+    } else if (startswith("zfp-rate=", token)) {
+      token += 9;
+      compressionMode = SW4_ZFP_MODE_RATE;
+      compressionPar = atof(token);
+      useHDF5 = true;
+      if (proc_zero())
+        cout << "Checkpoint will use ZFP rate=" << compressionPar << endl;
+    } else if (startswith("zfp-precision=", token)) {
+      token += 14;
+      compressionMode = SW4_ZFP_MODE_PRECISION;
+      compressionPar = atof(token);
+      useHDF5 = true;
+      if (proc_zero())
+        cout << "Checkpoint will use ZFP precision=" << compressionPar << endl;
+    } else if (startswith("zfp-accuracy=", token)) {
+      token += 13;
+      compressionMode = SW4_ZFP_MODE_ACCURACY;
+      compressionPar = atof(token);
+      useHDF5 = true;
+      if (proc_zero())
+        cout << "Checkpoint will use ZFP accuracy=" << compressionPar << endl;
+    } else if (startswith("zfp-reversible=", token)) {
+      token += 15;
+      compressionMode = SW4_ZFP_MODE_REVERSIBLE;
+      useHDF5 = true;
+      if (proc_zero())
+        cout << "Checkpoint will use ZFP reversible mode" << endl;
+    } else if (startswith("zlib=", token)) {
+      token += 5;
+      compressionMode = SW4_ZLIB;
+      compressionPar = atof(token);
+      useHDF5 = true;
+      if (proc_zero())
+        cout << "Checkpoint will use ZLIB level=" << (int)compressionPar
+             << endl;
+    } else if (startswith("szip=", token)) {
+      token += 5;
+      compressionMode = SW4_SZIP;
+      useHDF5 = true;
+      if (proc_zero()) cout << "Checkpoint will use SZIP" << endl;
+    } else if (startswith("sz=", token)) {
+      token += 5;
+      compressionMode = SW4_SZ;
+      useHDF5 = true;
+      if (proc_zero())
+        cout << "Checkpoint will use SZ with configuration file ["
+             << getenv("SZ_CONFIG_FILE") << "]" << endl;
+    }
 
-      else if (startswith("bufsize=", token))
-      {
-	 token += 8; // skip bufsize=
-	 bufsize = atoi(token);
-      }
-      else
-      {
-	 badOption("checkpoint", token);
-      }
-      token = strtok(NULL, " \t");
-   }
+    else if (startswith("bufsize=", token)) {
+      token += 8;  // skip bufsize=
+      bufsize = atoi(token);
+    } else {
+      badOption("checkpoint", token);
+    }
+    token = strtok(NULL, " \t");
+  }
 
 #ifndef USE_ZFP
-   if (compressionMode > 0 && compressionMode < 5 && proc_zero())
-      cout << "WARNING: SW4 is not compiled with ZFP but ZFP command is used " << endl;
+  if (compressionMode > 0 && compressionMode < 5 && proc_zero())
+    cout << "WARNING: SW4 is not compiled with ZFP but ZFP command is used "
+         << endl;
 #endif
 
 #ifndef USE_SZ
-   if (compressionMode == SW4_SZ && proc_zero())
-      cout << "WARNING: SW4 is not compiled with SZ but SZ command is used " << endl;
+  if (compressionMode == SW4_SZ && proc_zero())
+    cout << "WARNING: SW4 is not compiled with SZ but SZ command is used "
+         << endl;
 #endif
 
-   if( m_check_point == CheckPoint::nil )
-      m_check_point = new CheckPoint(this);
-   if( cycleInterval > 0 )
-      m_check_point->set_checkpoint_file( filePrefix, cycle, cycleInterval, bufsize, useHDF5, compressionMode, compressionPar );
-   if( restartFileGiven )
-   {
-      m_check_point->set_restart_file( restartFileName, bufsize );
-   }
-   if( restartPathGiven )
-   {
-     m_check_point->set_restart_path( restartPath );
-   }
+  if (m_check_point == CheckPoint::nil) m_check_point = new CheckPoint(this);
+  if (cycleInterval > 0)
+    m_check_point->set_checkpoint_file(filePrefix, cycle, cycleInterval,
+                                       bufsize, useHDF5, compressionMode,
+                                       compressionPar);
+  if (restartFileGiven) {
+    m_check_point->set_restart_file(restartFileName, bufsize);
+  }
+  if (restartPathGiven) {
+    m_check_point->set_restart_path(restartPath);
+  }
 }
 
 //-----------------------------------------------------------------------

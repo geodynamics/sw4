@@ -107,10 +107,9 @@ class RangeGS {
 };
 
 template <typename Func>
-__launch_bounds__(256)
-__global__ void forall3kernel(const int start0, const int N0, const int start1,
-                              const int N1, const int start2, const int N2,
-                              Func f) {
+__launch_bounds__(256) __global__
+    void forall3kernel(const int start0, const int N0, const int start1,
+                       const int N1, const int start2, const int N2, Func f) {
   int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
   int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
   int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
@@ -118,10 +117,9 @@ __global__ void forall3kernel(const int start0, const int N0, const int start1,
 }
 
 template <int N, typename Func>
-__launch_bounds__(256)
-__global__ void forall3kernel(const int start0, const int N0, const int start1,
-                              const int N1, const int start2, const int N2,
-                              Func f) {
+__launch_bounds__(256) __global__
+    void forall3kernel(const int start0, const int N0, const int start1,
+                       const int N1, const int start2, const int N2, Func f) {
   int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
   int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
   int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
@@ -426,10 +424,9 @@ template <int N>
 class Tclass {};
 
 template <int N, typename Tag, typename Func>
-__launch_bounds__(256)
-__global__ void forall3kernel(Tag t, const int start0, const int N0,
-                              const int start1, const int N1, const int start2,
-                              const int N2, Func f) {
+__launch_bounds__(256) __global__
+    void forall3kernel(Tag t, const int start0, const int N0, const int start1,
+                       const int N1, const int start2, const int N2, Func f) {
   int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
   int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
   int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
@@ -489,8 +486,6 @@ void multiforall(T start0, T end0, LB0 &&body0, T start1, T end1, LB1 &&body1,
                      body3);
 }
 
-
-
 // Generalized mforall kernel
 template <typename T, typename LoopBody>
 __device__ inline void runner(T start, T end, LoopBody f) {
@@ -524,7 +519,6 @@ void gmforall(T start, T end, LoopBody &&body, Args... args) {
   hipLaunchKernelGGL(gmforallkernel, blocks, tpb, 0, 0, start, end, body,
                      args...);
 }
-
 
 // Generalized gmforall3async
 
