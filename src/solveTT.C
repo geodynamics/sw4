@@ -122,13 +122,13 @@ int ntr = a_TimeSeries.size();
    FILE *fd;
 
    if(myrank==0) {     
-   sprintf(file, "%s/time_event_%d.txt", a_TimeSeries[0]->getPath(),event);
+   sprintf(file, "%s/time_event_%d.txt", a_TimeSeries[event]->getPath(),event);
    fd = fopen(file, "w");
    }
    
 
     float_sw4 win;
-    win = 2*(a_Sources[event]->getFrequency()>0? 1.0/a_Sources[event]->getFrequency() : 1.0);
+    win = 1*(a_Sources[event]->getFrequency()>0? 1.0/a_Sources[event]->getFrequency() : 1.0);  // one cycle of peak frequency
     win *= twinscale;  // expand or shrink 
 
    for(int ig=0; ig<ntr; ig++) {
@@ -146,7 +146,7 @@ int ntr = a_TimeSeries.size();
        timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win);
 
        if(myrank==0) fprintf(fd, "%d   %d\t%s\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
-               event, ig+1, a_TimeSeries[ig]->getStationName(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
+               event, ig+1, a_TimeSeries[ig]->getStationName().c_str(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
                timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win, 
                timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win);
          break;
@@ -155,7 +155,7 @@ int ntr = a_TimeSeries.size();
        times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win);
 
        if(myrank==0) fprintf(fd, "%d   %d\t%s\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
-               event, ig+1, a_TimeSeries[ig]->getStationName(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
+               event, ig+1, a_TimeSeries[ig]->getStationName().c_str(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
                times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win, 
                times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win);
 
@@ -165,7 +165,7 @@ int ntr = a_TimeSeries.size();
        times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win);
 
        if(myrank==0) fprintf(fd, "%d   %d\t%s\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
-               event, ig+1, a_TimeSeries[ig]->getStationName(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
+               event, ig+1, a_TimeSeries[ig]->getStationName().c_str(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
                timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win, 
                times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win);
      }

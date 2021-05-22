@@ -83,10 +83,11 @@ Source::Source(EW *a_ew,
 	       const char *name,
 	       bool topodepth, 
 	       int ncyc, 
-	       float_sw4* pars, int npar, int* ipars, int nipar, bool correctForMu):
+	       float_sw4* pars, int npar, int* ipars, int nipar, bool correctForMu, float_sw4 tshift):
   mIsMomentSource(true),
   mFreq(frequency),
   mT0(t0),
+  mTshift(tshift),
   mX0(x0), mY0(y0), mZ0(z0), m_zTopo(-1e38),
   mIgnore(false),
 //  mGridPointSet(false),
@@ -165,10 +166,11 @@ Source::Source(EW *a_ew, float_sw4 frequency, float_sw4 t0,
 	       const char *name, 
 	       bool topodepth,
 	       int ncyc, 
-	       float_sw4* pars, int npar, int* ipars, int nipar, bool correctForMu ):
+	       float_sw4* pars, int npar, int* ipars, int nipar, bool correctForMu, float_sw4 tshift ):
   mIsMomentSource(false),
   mFreq(frequency),
   mT0(t0),
+  mTshift(tshift),
   mX0(x0), mY0(y0), mZ0(z0), m_zTopo(-1e38),
   mIgnore(false),
 //  mGridPointSet(false),
@@ -273,6 +275,11 @@ float_sw4 Source::getDepth() const
 float_sw4 Source::getOffset() const
 {
   return mT0;
+}
+
+float_sw4 Source::getTshift() const
+{
+  return mTshift;
 }
 
 //-----------------------------------------------------------------------

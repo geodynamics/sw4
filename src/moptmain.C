@@ -568,8 +568,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       //std::cout << "gMu_ini min=" << gMu[0].minimum() << " max=" << gMu[0].maximum() << std::endl;
       //std::cout << "gLambda_ini min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << std::endl;
 
-      gMu[0].save_to_disk("gMu.say");
-      gLambda[0].save_to_disk("gLambda.say"); // local size with halos
+      //gMu[0].save_to_disk("gMu.say");
+      //gLambda[0].save_to_disk("gLambda.say"); // local size with halos
       //std::cout << "gMu min=" << gMu[0].minimum() << " max=" << gMu[0].maximum() << std::endl;
       //std::cout << "gLambda min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << std::endl;
 

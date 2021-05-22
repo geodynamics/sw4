@@ -5297,7 +5297,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
   Source* sourcePtr;
   
   float_sw4 m0 = 1.0;
-  float_sw4 t0=0.0, f0=1.0, freq=1.0;
+  float_sw4 t0=0.0, f0=1.0, freq=1.0, tshift=0.0;
   // Should be center of the grid
   double x = 0.0, y = 0.0, z = 0.0;
   int i = 0, j = 0, k = 0;
@@ -5516,6 +5516,12 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
          freq = atof(token);
          CHECK_INPUT(freq > 0,
                  err << "source command: Frequency must be > 0");
+      }
+      else if (startswith("tshift=", token))
+      {
+         token += 7; // skip tshift=
+         tshift = atof(token);
+         cout << "source tshift=" << tshift << endl;
       }
       else if(startswith("event=",token))
       {
@@ -5895,7 +5901,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
     //       }
     // these have global location since they will be used by all processors
     sourcePtr = new Source(this, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz,
-			   tDep, formstring, topodepth, ncyc, par, npar, ipar, nipar, false ); // false is correctStrengthForMu
+			   tDep, formstring, topodepth, ncyc, par, npar, ipar, nipar, false, tshift ); // false is correctStrengthForMu
 
     if (sourcePtr->ignore())
     {
@@ -5916,7 +5922,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
     //       f0 = 1;
     // global version (gets real coordinates)
     sourcePtr = new Source(this, freq, t0, x, y, z, fx, fy, fz, tDep, formstring, topodepth, ncyc,
-			   par, npar, ipar, nipar, false ); // false is correctStrengthForMu
+			   par, npar, ipar, nipar, false, tshift); // false is correctStrengthForMu
     //...and add it to the list of forcing terms
     if (sourcePtr->ignore())
     {
@@ -6334,7 +6340,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 	else
 	{
 	  sourcePtr = new Source(this, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz,
-				 tDep, formstring, topodepth, ncyc, par, npar, ipar, nipar, true ); // true is correctStrengthForMu
+				 tDep, formstring, topodepth, ncyc, par, npar, ipar, nipar, true); // true is correctStrengthForMu
 
 	  if (sourcePtr->ignore())
 	  {
