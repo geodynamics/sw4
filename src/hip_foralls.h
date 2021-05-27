@@ -424,7 +424,7 @@ template <int N>
 class Tclass {};
 
 template <int N, typename Tag, typename Func>
-__launch_bounds__(256) __global__
+__launch_bounds__(256,2) __global__
     void forall3kernel(Tag t, const int start0, const int N0, const int start1,
                        const int N1, const int start2, const int N2, Func f) {
   int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
@@ -451,7 +451,7 @@ void forall3async(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
   hipLaunchKernelGGL(forall3kernel<N>, blocks, tpb, 0, 0, t, irange.start,
                      irange.end, jrange.start, jrange.end, krange.start,
                      krange.end, body);
-  hipStreamSynchronize(0);
+  //hipStreamSynchronize(0);
   ////std::cout<<"Done\n"<<std::flush;
 }
 
