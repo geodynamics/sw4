@@ -133,8 +133,8 @@ ifeq ($(etree),yes)
    CXXFLAGS += -DENABLE_ETREE -DENABLE_PROJ4 -I$(SW4INC)
    linklibs += -L$(SW4LIB) -lcencalvm -lproj
 else ifeq ($(proj),yes)
-   CXXFLAGS += -DENABLE_PROJ4 
-   linklibs += 
+   CXXFLAGS += -DENABLE_PROJ4 -I$(SW4INC)
+   linklibs += -L$(SW4LIB) -lproj
    etree := "no"
 else
    etree := "no"
