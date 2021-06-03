@@ -229,6 +229,14 @@ void forall3GS(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
 
 // Forall2
 
+template <int WGS, int OCC, typename Func>
+  __launch_bounds__(WGS,OCC) __global__ void forall2kernel(const int start0, const int N0, const int start1,
+                              const int N1, Func f) {
+  int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
+  int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
+  if ((tid0 < N0) && (tid1 < N1)) f(tid0, tid1);
+}
+
 template <typename Func>
 __global__ void forall2kernel(const int start0, const int N0, const int start1,
                               const int N1, Func f) {
@@ -244,7 +252,7 @@ void forall2async(T1 &irange, T2 &jrange, LoopBody &&body) {
 
   // forall2kernel<<<blocks, tpb>>>(irange.start, irange.end, jrange.start,
   // jrange.end, body);
-  hipLaunchKernelGGL(forall2kernel, blocks, tpb, 0, 0, irange.start, irange.end,
+  hipLaunchKernelGGL((forall2kernel<T1::value*T2::value,2>), blocks, tpb, 0, 0, irange.start, irange.end,
                      jrange.start, jrange.end, body);
 }
 

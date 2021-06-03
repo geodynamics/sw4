@@ -2925,7 +2925,7 @@ void ve_bndry_stress_curvi_ci(
 
 #if !defined(RAJA_ONLY)  // Fine
     Range<16> I(ifirst + 2, ilast - 1);
-    Range<4> J(jfirst + 2, jlast - 1);
+    Range<16> J(jfirst + 2, jlast - 1);
     forall2async(I, J, [=] RAJA_DEVICE(int i, int j) {
 #else
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);

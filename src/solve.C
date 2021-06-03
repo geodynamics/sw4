@@ -5306,6 +5306,7 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
             a_Alpha_gcurv(3, i, j, nk) = a_Alpha_gcart(3, i, j, 1);
           });
     }
+
   SW4_MARK_END("CurviCartIC::PART 1");
   SW4_MARK_BEGIN("CurviCartIC::PART 2");
   bool force_dirichlet = false;
