@@ -1385,8 +1385,8 @@ void Sarray::insert_intersection(Sarray& a_U) {
 
 #if !defined(RAJA_ONLY)
 
-    Range<32> I(wind[0], wind[1] + 1);
-    Range<32> J(wind[2], wind[3] + 1);
+    Range<16> I(wind[0], wind[1] + 1);
+    Range<16> J(wind[2], wind[3] + 1);
     Range<1> K(wind[4], wind[5] + 1);
 
 #pragma forceinline

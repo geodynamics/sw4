@@ -45,8 +45,8 @@ MPI_HOME = /opt/cray/pe/mpich/8.1.4/ofi/crayclang/9.1
 
 EXTRA_FORT_FLAGS = 
 
-MORE_FLAGS = -DENABLE_HIP=1 -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_STAGED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC} -I$(MPI_HOME)/include -I${ROCM_PATH}/include -isystem $(ROCM_PATH)/llvm/lib/clang/12.0.0/include/.. -isystem $(ROCM_PATH)/hsa/include -isystem $(ROCM_PATH)/hip/include -D__HIP_ARCH_GFX908__=1 --cuda-gpu-arch=gfx908 -O2 -x hip -Wno-inconsistent-missing-override --rocm-path=$(ROCM_PATH) -I $(ROCM_PATH)/include/roctracer -DCAMP_USE_PLATFORM_DEFAULT_STREAM=1 -g -DVERSION=\"$(GIT_VERSION)\" -DNO_DEVICE_FUNCTION_POINTERS=1 -mllvm -amdgpu-early-inline-all=true -mllvm -amdgpu-function-calls=false -D__HIP_ROCclr__ -fhip-new-launch-api 
-MORE_LINK_FLAGS =  --offload-arch=gfx908 -O3  -std=c++11 -L $(LAPACK_LIB)  -lgfortran -lsci_cray_mp  -L $(RAJA_HOME)/lib -lRAJA -L $(MPI_HOME)/lib -lmpi -L $(UMPIRE_HOME)/lib -lumpire $(GCC_LINK_LINE) -lroctracer64  -L/opt/rocm-4.1.0/hip/lib --hip-link -lamdhip64
+MORE_FLAGS = -DENABLE_HIP=1 -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_STAGED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC} -I$(MPI_HOME)/include -I${ROCM_PATH}/include -isystem $(ROCM_PATH)/llvm/lib/clang/12.0.0/include/.. -isystem $(ROCM_PATH)/hsa/include -isystem $(ROCM_PATH)/hip/include -D__HIP_ARCH_GFX908__=1 --cuda-gpu-arch=gfx908 -O2 -x hip -Wno-inconsistent-missing-override --rocm-path=$(ROCM_PATH) -I $(ROCM_PATH)/include/roctracer -DCAMP_USE_PLATFORM_DEFAULT_STREAM=1 -g -DVERSION=\"$(GIT_VERSION)\" -DNO_DEVICE_FUNCTION_POINTERS=1 -mllvm -amdgpu-early-inline-all=true -mllvm -amdgpu-function-calls=false -D__HIP_ROCclr__ -fhip-new-launch-api -DSW4_CHECK_LAUNCH_BOUNDS=1
+MORE_LINK_FLAGS =  --offload-arch=gfx908 -O3  -std=c++17 -L $(LAPACK_LIB)  -lgfortran -lsci_cray_mp  -L $(RAJA_HOME)/lib -lRAJA -L $(MPI_HOME)/lib -lmpi -L $(UMPIRE_HOME)/lib -lumpire $(GCC_LINK_LINE) -lroctracer64  -L/opt/rocm-4.1.0/hip/lib --hip-link -lamdhip64
 
 ifeq ($(umpire),yes)
 MORE_FLAGS+= -DSW4_USE_UMPIRE=1 -I $(UMPIRE_HOME)/include
