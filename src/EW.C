@@ -4389,6 +4389,11 @@ void EW::exactAccTwilight(float_sw4 a_t, vector<Sarray>& a_Uacc) {
 void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
                vector<GridPointSource*>& point_sources,
                vector<int>& identsources) {
+  static bool first=true;
+  if (first){
+    first = false;
+    std::cout<<"WARNING **** NON_FUNCTIONAL CALL TO EW::Force\n";
+  }
   for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero();
 }
 #else
@@ -4709,6 +4714,11 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
 void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
                   vector<GridPointSource*>& point_sources,
                   vector<int>& identsources) {
+  static bool first=true;
+  if (first){
+    first = false;
+    std::cout<<"WARNING **** NON_FUNCTIONAL CALL TO EW::Force_tt\n";
+  }
   for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero();
 }
 #else
