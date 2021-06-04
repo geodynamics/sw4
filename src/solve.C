@@ -995,6 +995,15 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       SYNC_DEVICE;
 #endif
 
+#ifdef SW4_NORM_TRACE
+      if (!getRank()) {
+        for (int g = 0; g < mNumberOfGrids; g++) {
+          norm_trace_file << "PreEnforceIC Up[" << g << "] " << Up[g].norm()
+                          << " LU = " << Lu[g].norm() << " F = " << F[g].norm() << "\n";
+        }
+      }
+#endif
+
       SW4_MARK_BEGIN("MPI_WTIME");
       if (m_output_detailed_timing) time_measure[7] = MPI_Wtime();
       SW4_MARK_END("MPI_WTIME");
@@ -1010,6 +1019,15 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       // computed 5 lines down
       enforceIC(Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, true, F,
                 point_sources);  // THIS IS TH ONE TO BE FIXED FOR UP MATCH
+
+#ifdef SW4_NORM_TRACE
+      if (!getRank()) {
+        for (int g = 0; g < mNumberOfGrids; g++) {
+          norm_trace_file << "PostEnforceIC Up[" << g << "] " << Up[g].norm()
+                          << " LU = " << Lu[g].norm() << " F = " << F[g].norm() << "\n";
+        }
+      }
+#endif
 
       if (m_output_detailed_timing) time_measure[9] = MPI_Wtime();
     }
