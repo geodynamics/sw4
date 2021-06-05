@@ -882,6 +882,16 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     SYNC_DEVICE;
 #endif
 
+
+#ifdef SW4_NORM_TRACE
+      if (!getRank()) {
+        for (int g = 0; g < mNumberOfGrids; g++) {
+          norm_trace_file << "Grid Evals mMetric[" << g << "] " << mMetric[g].norm()
+                          << " J = " << mJ[g].norm() << " mu = " << mMu[g].norm() << "\n";
+        }
+      }
+#endif
+
     if (m_output_detailed_timing) time_measure[1] = MPI_Wtime();
 
     if (trace && m_myRank == dbgproc) cout << " after evalRHS" << endl;
