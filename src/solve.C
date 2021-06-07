@@ -813,7 +813,23 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
   // test: compute forcing for the first time step before the loop to get
   // started
+#ifdef SW4_NORM_TRACE
+      if (!getRank()) {
+        for (int g = 0; g < mNumberOfGrids; g++) {
+          norm_trace_file << "PRE_FORCE Up[" << g << "] " << Up[g].norm()
+                          << " LU = " << Lu[g].norm() << " F = " << F[g].norm() << "\n";
+        }
+      }
+#endif
   Force(t, F, point_sources, identsources);
+#ifdef SW4_NORM_TRACE
+      if (!getRank()) {
+        for (int g = 0; g < mNumberOfGrids; g++) {
+          norm_trace_file << "POST_FORCE Up[" << g << "] " << Up[g].norm()
+                          << " LU = " << Lu[g].norm() << " F = " << F[g].norm() << "\n";
+        }
+      }
+#endif
 #ifdef PEEKS_GALORE
   SW4_PEEK;
   SYNC_DEVICE;
@@ -885,7 +901,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
 #ifdef SW4_NORM_TRACE
       if (!getRank()) {
-        for (int g = 0; g < mNumberOfGrids; g++) {
+        for (int g =  mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
           norm_trace_file << "Grid Evals mMetric[" << g << "] " << mMetric[g].norm()
                           << " J = " << mJ[g].norm() << " mu = " << mMu[g].norm() << "\n";
         }
@@ -902,8 +918,26 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     SYNC_DEVICE;
 #endif
 
+#ifdef SW4_NORM_TRACE
+      if (!getRank()) {
+        for (int g = 0; g < mNumberOfGrids; g++) {
+          norm_trace_file << "PREevalPredictor Up[" << g << "] " << Up[g].norm()
+                          << " LU = " << Lu[g].norm() << " F = " << F[g].norm() << "\n";
+        }
+      }
+#endif
+
     // take predictor step, store in Up
     evalPredictor(Up, U, Um, mRho, Lu, F);
+
+#ifdef SW4_NORM_TRACE
+      if (!getRank()) {
+        for (int g = 0; g < mNumberOfGrids; g++) {
+          norm_trace_file << "PostevalPredictor Up[" << g << "] " << Up[g].norm()
+                          << " LU = " << Lu[g].norm() << " F = " << F[g].norm() << "\n";
+        }
+      }
+#endif
     SW4_MARK_BEGIN("COMM_WINDOW");
     if (m_output_detailed_timing) time_measure[2] = MPI_Wtime();
 
@@ -962,6 +996,15 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     // terms
     if (m_use_attenuation && m_number_mechanisms > 0)
       enforceBCfreeAtt2(Up, mMu, mLambda, AlphaVEp, BCForcing);
+
+#ifdef SW4_NORM_TRACE
+      if (!getRank()) {
+        for (int g = 0; g < mNumberOfGrids; g++) {
+          norm_trace_file << "PostEnforceBC2freeAtt2 Up[" << g << "] " << Up[g].norm()
+                          << " LU = " << Lu[g].norm() << " F = " << F[g].norm() << "\n";
+        }
+      }
+#endif
 
     if (m_output_detailed_timing) time_measure[6] = MPI_Wtime();
 
