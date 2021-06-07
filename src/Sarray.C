@@ -1660,7 +1660,7 @@ void vset_to_zero_async(std::vector<Sarray>& v, int N) {
   for (int g = 0; g < N; g++) v[g].set_to_zero_async();
 
 #else
-  float_sw4 *m0, *m1, *m2, *m3, *m4, *m5;
+  float_sw4 *m0, *m1, *m2, *m3, *m4, *m5,*m6,*m7;
   size_t zero = 0;
 
   switch (N) {
@@ -1735,6 +1735,46 @@ void vset_to_zero_async(std::vector<Sarray>& v, int N) {
           v[3].m_npts, [=] RAJA_DEVICE(size_t i) { m3[i] = 0; }, zero,
           v[4].m_npts, [=] RAJA_DEVICE(size_t i) { m4[i] = 0; }, zero,
           v[5].m_npts, [=] RAJA_DEVICE(size_t i) { m5[i] = 0; });
+      break;
+  case 7:
+
+      m0 = v[0].m_data;
+      m1 = v[1].m_data;
+      m2 = v[2].m_data;
+      m3 = v[3].m_data;
+      m4 = v[4].m_data;
+      m5 = v[5].m_data;
+      m6 = v[6].m_data;
+      gmforall<512>(
+          zero, v[0].m_npts, [=] RAJA_DEVICE(size_t i) { m0[i] = 0; }, zero,
+          v[1].m_npts, [=] RAJA_DEVICE(size_t i) { m1[i] = 0; }, zero,
+          v[2].m_npts, [=] RAJA_DEVICE(size_t i) { m2[i] = 0; }, zero,
+          v[3].m_npts, [=] RAJA_DEVICE(size_t i) { m3[i] = 0; }, zero,
+          v[4].m_npts, [=] RAJA_DEVICE(size_t i) { m4[i] = 0; }, zero,
+	  v[5].m_npts, [=] RAJA_DEVICE(size_t i) { m5[i] = 0; }, zero,
+          v[6].m_npts, [=] RAJA_DEVICE(size_t i) { m6[i] = 0; });
+      break;
+
+case 8:
+
+      m0 = v[0].m_data;
+      m1 = v[1].m_data;
+      m2 = v[2].m_data;
+      m3 = v[3].m_data;
+      m4 = v[4].m_data;
+      m5 = v[5].m_data;
+      m6 = v[6].m_data;
+      m7 = v[7].m_data;
+      gmforall<512>(
+          zero, v[0].m_npts, [=] RAJA_DEVICE(size_t i) { m0[i] = 0; }, zero,
+          v[1].m_npts, [=] RAJA_DEVICE(size_t i) { m1[i] = 0; }, zero,
+          v[2].m_npts, [=] RAJA_DEVICE(size_t i) { m2[i] = 0; }, zero,
+          v[3].m_npts, [=] RAJA_DEVICE(size_t i) { m3[i] = 0; }, zero,
+          v[4].m_npts, [=] RAJA_DEVICE(size_t i) { m4[i] = 0; }, zero,
+	  v[5].m_npts, [=] RAJA_DEVICE(size_t i) { m5[i] = 0; }, zero,
+	  v[6].m_npts, [=] RAJA_DEVICE(size_t i) { m6[i] = 0; }, zero,
+          v[7].m_npts, [=] RAJA_DEVICE(size_t i) { m7[i] = 0; });
+      break;
 
     default:
       std::cerr << "ERROR:: vset_to_zero_async not implemented for " << N
