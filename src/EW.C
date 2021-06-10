@@ -4980,7 +4980,7 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
 // perhaps a better name would be evalLu ??
 void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                  vector<Sarray>& a_Lambda, vector<Sarray>& a_Uacc,
-                 vector<Sarray*>& a_AlphaVE) {
+                 vector<Sarray*>& a_AlphaVE, std::ostream *norm_trace_file) {
   SW4_MARK_FUNCTION;
 #ifdef PEEKS_GALORE
   SW4_PEEK;
@@ -5043,6 +5043,9 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                     onesided_ptr, m_acof, m_bope, m_ghcof, uacc_ptr, u_ptr,
                     mu_ptr, la_ptr, &h, &op);
     }
+#ifdef SW4_NORM_TRACE
+    if (norm_trace_file!=nullptr) *norm_trace_file<<" evalRHS_1 "<<g<<" "<<a_Uacc[g].norm()<<"\n";
+#endif
     //    size_t nn=a_Uacc[g].count_nans();
     //    if( nn > 0 )
     //       cout << "First application of LU " << nn << " nans" << endl;
@@ -5089,7 +5092,11 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
       //    if( nn > 0 )
       //       cout << "Second application of LU " << nn << " nans" << endl;
     }
+#ifdef SW4_NORM_TRACE
+    if (norm_trace_file!=nullptr) *norm_trace_file<<" evalRHS_2"<<g<<" "<<a_Uacc[g].norm()<<"\n";
+#endif
   }
+
   //  if (topographyExists()) {
 #ifdef PEEKS_GALORE
   SW4_PEEK;
@@ -5151,6 +5158,9 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                      mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr, onesided_ptr,
                      m_acof, m_bope, m_ghcof, &op);
     }
+#ifdef SW4_NORM_TRACE
+    if (norm_trace_file!=nullptr) *norm_trace_file<<" evalRHS_3 "<<g<<" "<<a_Uacc[g].norm()<<"\n";
+#endif
 #ifdef PEEKS_GALORE
     SW4_PEEK;
     SYNC_DEVICE;
@@ -5206,8 +5216,11 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                          uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope,
                          m_ghcof_no_gp, &op);
         }
-      }
-    }
+}
+#ifdef SW4_NORM_TRACE
+    if (norm_trace_file!=nullptr) *norm_trace_file<<" evalRHS_4 "<<g<<" "<<a_Uacc[g].norm()<<"\n";
+#endif
+}
     // SYNC_STREAM;
 #ifdef PEEKS_GALORE
     SW4_PEEK;

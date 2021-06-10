@@ -1787,6 +1787,7 @@ case 8:
 float_sw4 Sarray::norm() {
   float_sw4* sum;
   sum = SW4_NEW(Space::Managed_temps, float_sw4[1]);
+  sum[0]=0.0;
   float_sw4* lm_data = m_data;
   RAJA::forall<DEFAULT_LOOP1>(
       RAJA::RangeSegment(0, m_npts), [=] RAJA_DEVICE(size_t i) {

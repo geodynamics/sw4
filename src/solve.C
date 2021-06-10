@@ -810,7 +810,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
   // Begin time stepping loop
   for (int g = 0; g < mNumberOfGrids; g++) Up[g].set_to_zero();
-
+  for (int g = 0; g < mNumberOfGrids; g++) Lu[g].set_to_zero();
   // test: compute forcing for the first time step before the loop to get
   // started
 #ifdef SW4_NORM_TRACE
@@ -888,11 +888,19 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     SW4_PEEK;
     SYNC_DEVICE;
 #endif
+#ifdef SW4_NORM_TRACE
+      if (!getRank()) {
+        for (int g = 0; g < mNumberOfGrids; g++) {
+          norm_trace_file << "PREEVALRHS Up[" << g << "] " << Up[g].norm()
+                          << " LU = " << Lu[g].norm() << " F = " << F[g].norm() << "\n";
+        }
+      }
+#endif
     // evaluate right hand side
     if (m_anisotropic)
       evalRHSanisotropic(U, mC, Lu);
     else
-      evalRHS(U, mMu, mLambda, Lu, AlphaVE);  // save Lu in composite grid 'Lu'
+      evalRHS(U, mMu, mLambda, Lu, AlphaVE,&norm_trace_file);  // save Lu in composite grid 'Lu'
 #ifdef PEEKS_GALORE
     SW4_PEEK;
     SYNC_DEVICE;
