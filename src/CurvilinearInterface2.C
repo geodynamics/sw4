@@ -326,7 +326,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   cudaMemcpyAsync(m_stry_c, lm_stry_c, (m_je - m_jb + 1) * sizeof(double),
                   cudaMemcpyHostToDevice, 0);
 #endif
-#ifdef ENABLE_HP
+#ifdef ENABLE_HIP
   hipMemcpyAsync(m_stry_c, lm_stry_c, (m_je - m_jb + 1) * sizeof(double),
                  hipMemcpyHostToDevice, 0);
 #endif
@@ -627,6 +627,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   // std::cout<<"HERE 3\n";
   U_f.insert_intersection(a_U[m_gf]);
   U_c.insert_intersection(a_U[m_gc]);
+  //std::cout<<"Initial UC "<<U_c.norm()<<"\n"<<std::flush;
   if (m_use_attenuation) {
     Alpha_c.resize(m_number_mechanisms);
     Alpha_f.resize(m_number_mechanisms);
@@ -738,9 +739,9 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
           rmax.max(fabs(residualV(c, i, j, 1)));
         }
       });
-
+  //std::cout<<"LHS RHS "<<lhs.norm()<<" "<<rhs.norm()<<"\n"<<std::flush;
   maxresloc = static_cast<float_sw4>(rmax.get());
-
+  //std::cout<<"MAX RES LOC "<<maxresloc<<"\n"<<std::flush;
   float_sw4 maxres = maxresloc;
   MPI_Allreduce(&maxresloc, &maxres, 1, m_ew->m_mpifloat, MPI_MAX,
                 m_ew->m_cartesian_communicator);
@@ -772,7 +773,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   while (maxres > m_reltol * maxres0 && scalef * maxres > m_abstol &&
          iter <= m_maxit) {
     iter++;
-    //      std::cout << "Iteration " << iter << " " << scalef*maxres << "\n";
+    //std::cout << "Iteration " << iter << " " << scalef*maxres << "\n";
 
 #ifdef USE_DIRECT_INVERSE
     int l_ib = m_Mass_block.m_ib;
@@ -959,8 +960,10 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   }
   SW4_MARK_BEGIN("IMPOSE_IC_5");
   // 5. Copy U_c and U_f back to a_U, only k=0 for U_c and k=n3f for U_f.
+  //std::cout<<"IMPOSIC 1 "<<a_U[m_gc].norm()<<" "<<a_U[m_gf].norm()<<"\n";
   a_U[m_gc].copy_kplane2(U_c, 0);      // have computed U_c:s ghost points
   a_U[m_gf].copy_kplane2(U_f, m_nkf);  // .. and U_f:s interface points
+  //std::cout<<"IMPOSIC 2 "<<a_U[m_gc].norm()<<" "<<a_U[m_gf].norm()<<"\n";
   if (m_use_attenuation) {
     for (int a = 0; a < m_number_mechanisms; a++)
       a_AlphaVE[m_gf][a].copy_kplane2(Alpha_f[a], m_nkf);
@@ -1100,12 +1103,13 @@ void CurvilinearInterface2::interface_lhs(Sarray& lhs, Sarray& uc) {
 #pragma unroll
         for (int c = 1; c <= 3; c++) lhsV(c, i, j, 1) /= m_rho_cV(i, j, 1);
       });
-
+  //std::cout<<"interface_lhs 1 "<<lhs.norm()<<" "<<m_rho_c.norm()<<"\n"<<std::flush;
   if (!m_tw && !m_psource) bnd_zero(lhs, m_nghost);
 
   Sarray prollhs(3, m_ibf, m_ief, m_jbf, m_jef, m_nkf, m_nkf, __FILE__,
                  __LINE__);
   prolongate2D(lhs, prollhs, 1, m_nkf);
+  //std::cout<<"interface_lhs 2 "<<lhs.norm()<<" "<<prollhs.norm()<<"\n"<<std::flush;
   // for (int c = 1; c <= 3; c++)
   //   for (int j = prollhs.m_jb; j <= prollhs.m_je; j++)
   //     for (int i = prollhs.m_ib; i <= prollhs.m_ie; i++)
@@ -1128,11 +1132,12 @@ void CurvilinearInterface2::interface_lhs(Sarray& lhs, Sarray& uc) {
               prollhsV(c, i, j, lm_nkf) /
               (lm_strx_f[i - lm_ibf] * lm_stry_f[j - lm_jbf]);
       });
-
+  //std::cout<<"interface_lhs 3 "<<lhs.norm()<<" "<<prollhs.norm()<<"\n"<<std::flush;
   if (!m_tw && !m_psource) bnd_zero(prollhs, m_nghost);
   restrict2D(lhs, prollhs, 1, m_nkf);
-
+  //std::cout<<"interface_lhs 4 "<<lhs.norm()<<" "<<prollhs.norm()<<"\n"<<std::flush;
   Sarray Bc(lhs, Space::Managed_temps);
+  //Bc.set_to_zero(); // For debugging
   lhs_icstresses_curv(uc, Bc, 1, m_met_c, m_mu_c, m_lambda_c, m_strx_c,
                       m_stry_c, m_sbop);
   // for (int c = 1; c <= 3; c++)
@@ -1144,6 +1149,7 @@ void CurvilinearInterface2::interface_lhs(Sarray& lhs, Sarray& uc) {
 #pragma unroll
         for (int c = 1; c <= 3; c++) lhsV(c, i, j, 1) -= BcV(c, i, j, 1);
       });
+  //std::cout<<"interface_lhs 5 "<<lhs.norm()<<" "<<Bc.norm()<<"\n"<<std::flush;
   // SYNC_STREAM;
 }
 
@@ -1427,7 +1433,8 @@ void CurvilinearInterface2::lhs_icstresses_curv(
   const int jfirst = a_Up.m_jb;
 #define str_x(i) a_str_x[(i - ifirst)]
 #define str_y(j) a_str_y[(j - jfirst)]
-
+  //std::cout<<" lhs_icstresses_curv 1 "<<a_lhs.norm()<<" "<<sbop[0]<<"\n"<<std::flush;
+  //for(int i=0;i<5;i++) std::cout<<"  str["<<i<<"] = "<<str_x(i+ifirst)<<" "<<str_y(i+jfirst)<<"\n"<<std::flush;
   // #pragma omp parallel for
   //   for (int j = a_lhs.m_jb; j <= a_lhs.m_je; j++)
   // #pragma omp simd
@@ -1472,6 +1479,7 @@ void CurvilinearInterface2::lhs_icstresses_curv(
         a_lhsV(2, i, j, k) *= isgxy;
         a_lhsV(3, i, j, k) *= isgxy;
       });
+  //std::cout<<" lhs_icstresses_curv 2 "<<a_lhs.norm()<<"\n"<<std::flush;
   // SYNC_STREAM;
 #undef str_x
 #undef str_y

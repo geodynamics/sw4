@@ -422,7 +422,7 @@ using SII_POL =
 
 // TestEcons::get_ubnd(
 using TGU_POL_ASYNC =
-    RAJA::KernelPolicy<RAJA::statement::HipKernelAsync<RAJA::statement::Tile<
+  RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<1024,RAJA::statement::Tile<
         0, RAJA::tile_fixed<4>, RAJA::hip_block_z_loop,
         RAJA::statement::Tile<
             1, RAJA::tile_fixed<16>, RAJA::hip_block_y_loop,
