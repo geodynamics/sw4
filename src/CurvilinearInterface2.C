@@ -132,7 +132,8 @@ void CurvilinearInterface2::bnd_zero(Sarray& u, int npts) {
 
   int nc = u.m_nc;
   SView& uV = u.getview();
-#ifdef RAJA_ONLY
+
+#if defined(RAJA_ONLY) || defined(__cray__)
   for (int s = 0; s < 4; s++)
     if (m_isbndry[s]) {
       int kb = u.m_kb, ke = u.m_ke, jb = u.m_jb, je = u.m_je, ib = u.m_ib,

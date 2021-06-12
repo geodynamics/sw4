@@ -153,5 +153,8 @@ std::string compiler_options() {
 #else
   opts << "Unknown programming model\n";
 #endif
+#ifdef __cray__
+  opts<<"\n\t\tCray Compiler("<<__cray_major__<<"."<<__cray_minor__<<"."<<__cray_patchlevel__<<")\n";
+#endif
   return opts.str();
 }

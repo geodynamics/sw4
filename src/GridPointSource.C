@@ -344,12 +344,6 @@ void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) {
     pos += size;
     afunv[5] = mTimeFunc(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
   }
-#else
-  static bool first=true;
-  if (first){
-    first = false;
-    printf("WARNING **** NON_FUNCTIONAL CALL TO GridPointSOurce::getFxyz \n");
-  }
 #endif
 
   int lm_derivative;
@@ -440,12 +434,6 @@ void GridPointSource::getFxyztt(float_sw4 t, float_sw4* fxyz) const {
     afunv[4] = mTimeFunc_tt(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
     pos += size;
     afunv[5] = mTimeFunc_tt(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
-  }
-#else
-static bool first=true;
-  if (first){
-    first = false;
-    printf("WARNING **** NON_FUNCTIONAL CALL TO GridPointSOurce::getFxyztt \n");
   }
 #endif
 
