@@ -46,8 +46,10 @@ void prefetch_to_device(const float_sw4 *ptr);
 #define PROFILER_STOP SW4_CheckDeviceError(cudaProfilerStop())
 
 #elif ENABLE_HIP
+#ifndef SW4_NO_ROCTRACER 
 #include <roctracer/roctracer.h>
 #include <roctracer/roctracer_ext.h>
+#endif
 void CheckError(hipError_t const err, const char *file, char const *const fun,
                 const int line);
 #define SW4_CheckDeviceError(err) \
