@@ -56,7 +56,7 @@ void CheckError(hipError_t const err, const char *file, char const *const fun,
   CheckError(err, __FILE__, __FUNCTION__, __LINE__)
 //#define PROFILER_START SW4_CheckDeviceError(hipProfilerStart())
 #define PROFILER_STOP SW4_CheckDeviceError(hipProfilerStop())
-#define PROFILER_START 
+#define PROFILER_START roctracer_start()
 #else
 // void CheckError(hipError_t const err, const char *file, char const *const
 // fun,

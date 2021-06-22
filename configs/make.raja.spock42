@@ -1,0 +1,101 @@
+FC = gfortran
+LINKER = hipcc
+CXX = $(PREP) hipcc
+GIT_VERSION := "$(shell git describe --abbrev=4 --dirty --always --tags)"
+
+proj = yes
+ckernel=yes 
+openmp=yes
+raja_cuda=yes
+umpire = yes
+fftw = no
+hdf5= no
+spill_warns = no
+caliper=no
+raja_only=no
+dbg=no
+register_count=no
+
+
+RAJA_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/RAJA-v0.13.0/install42
+
+PROJ_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/proj-5.0.0/install
+
+UMPIRE_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/umpire-5.0.1/install42
+
+HDF5_HOME = /p/gpfs1/ramesh/SW4/HDF_TEST/HDF/CMake-hdf5-1.10.6/build/HDF5-1.10.6-Linux/HDF_Group/HDF5/1.10.6
+
+CALIPER_HOME =/usr/workspace/wsrzd/ramesh/Caliper/Caliper-2.5.0/install
+
+HIP_ROOT_DIR = $(HIP_PATH)
+HSA_ROOT_DIR = $(ROCM_PATH)/hsa
+
+LAPACK_DIR = $(CRAY_LIBSCI_PREFIX_DIR)
+LAPACK_LIB = ${LAPACK_DIR}/lib
+LAPACK_INC = ${LAPACK_DIR}/include 
+
+MPI_HOME = /opt/cray/pe/cray-mvapich2_nogpu/2.3.5/infiniband/cray/10.0
+MPI_HOME = ${MPICH_DIR}
+
+EXTRA_FORT_FLAGS = 
+
+MORE_FLAGS = -DENABLE_HIP=1 -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_STAGED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC} -I$(MPI_HOME)/include -I${ROCM_PATH}/include -isystem $(ROCM_PATH)/llvm/lib/clang/12.0.0/include/.. -isystem $(ROCM_PATH)/hsa/include -isystem $(ROCM_PATH)/hip/include -D__HIP_ARCH_GFX908__=1 --cuda-gpu-arch=gfx908 -O2 -x hip -Wno-inconsistent-missing-override --amdgpu-target=gfx908 --rocm-path=$(ROCM_PATH) -I $(ROCM_PATH)/include/roctracer -DCAMP_USE_PLATFORM_DEFAULT_STREAM=1 -DVERSION=\"$(GIT_VERSION)\" -DNO_DEVICE_FUNCTION_POINTERS=1 
+MORE_LINK_FLAGS =  -O3  -std=c++11 -L $(LAPACK_LIB)  -lgfortran -lsci_cray_mp  -L $(RAJA_HOME)/lib -lRAJA -L $(MPI_HOME)/lib -lmpi -L $(UMPIRE_HOME)/lib -lumpire $(GCC_LINK_LINE) --amdgpu-target=gfx908 -L ${ROCM_PATH}/roctracer/lib -lroctracer64
+
+ifeq ($(umpire),yes)
+MORE_FLAGS+= -DSW4_USE_UMPIRE=1 -I $(UMPIRE_HOME)/include
+MORE_LINK_FLAGS+=  -L$(UMPIRE_HOME)/lib -lumpire
+endif 
+
+ifeq ($(fftw),yes)
+MORE_FLAGS+= -DENABLE_FFTW=1 -I $(FFTW_DIR)/include
+MORE_LINK_FLAGS+=-L $(FFTW_DIR)/lib -Wl,-rpath=$(FFTW_DIR)/lib -lfftw3_mpi -lfftw3
+endif 
+
+ifeq ($(hdf5),yes)
+MORE_FLAGS+= -DUSE_HDF5=1 -I $(HDF5_HOME)/include
+MORE_LINK_FLAGS+= -L $(HDF5_HOME)/lib -Wl,-rpath=$(HDF5_HOME)/lib -lhdf5_hl -lhdf5
+endif 
+ 
+ifeq ($(openmp),yes)
+MORE_FLAGS+=  -fopenmp
+MORE_LINK_FLAGS+= -fopenmp
+else
+MORE_FLAGS+= 
+endif 
+
+ifeq ($(spill_warns),yes)
+MORE_FLAGS+=  -Xptxas -v,--warn-on-spills
+endif 
+
+ifeq ($(raja_only),yes)
+MORE_FLAGS+=  -DRAJA_ONLY=1
+endif 
+
+ifeq ($(caliper),yes)
+MORE_FLAGS+= -DENABLE_CALIPER=1 -I$(CALIPER_HOME)/include
+MORE_LINK_FLAGS+= -Wl,-rpath=$(CALIPER_HOME)/lib64 -L $(CALIPER_HOME)/lib64 -lcaliper
+endif 
+
+ifeq ($(proj),yes)
+MORE_FLAGS+= -I$(PROJ_HOME)/include
+MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib64  -L$(PROJ_HOME)/lib64 -lproj
+endif 
+
+ifeq ($(dbg),yes)
+MORE_FLAGS+=  -ggdb -DPEEKS_GALORE=1 
+endif 
+
+ifeq ($(register_count),yes)
+MORE_FLAGS+=  --save-temps
+else
+MORE_FLAGS+= -fgpu-rdc 
+MORE_LINK_FLAGS+= -fgpu-rdc
+endif 
+
+
+LINKFLAGS = 
+
+EXTRA_CXX_FLAGS =  -O3 $(MORE_FLAGS) -I$(RAJA_HOME)/include -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE
+
+EXTRA_LINK_FLAGS =  $(MORE_LINK_FLAGS) 
