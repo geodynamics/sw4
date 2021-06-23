@@ -10,7 +10,7 @@ refinement zmax=950
 refinement zmax=5e3
 
 #time t=9.0
-time steps=10
+time steps=20
 
 globalmaterial  vpmin=866 vsmin=500
 

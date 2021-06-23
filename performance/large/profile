@@ -1,0 +1,2 @@
+#!/bin/bash
+rocprof  --trace-start off --sys-trace -o RocProfile_${PALS_RANKID}.csv $1 $2

@@ -1530,6 +1530,12 @@ void rhs4th3fortsgstr_ci(
     // printf("END LOOP1\n");
     SW4_MARK_END("rhs4th3fortsgstr_ci::LOOP1");
     if (onesided[4] == 1) {
+#if !defined(RAJA_ONLY)
+    Range<16> I(ifirst + 2, ilast - 1);
+    Range<4> J(jfirst + 2, jlast - 1);
+    Range<4> K(1,7);
+    forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+#else
       RAJA::RangeSegment k_range(1, 6 + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
@@ -1540,6 +1546,7 @@ void rhs4th3fortsgstr_ci(
       RAJA::kernel<RHS4TH3_POL_ASYNC>(
           RAJA::make_tuple(k_range, j_range, i_range),
           [=] RAJA_DEVICE(int k, int j, int i) {
+#endif
             float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
             float_sw4 r1, r2, r3;
             // #pragma omp for
@@ -1872,6 +1879,13 @@ void rhs4th3fortsgstr_ci(
     }
     if (onesided[5] == 1) {
       // printf("START LOOP3 \n");
+#if !defined(RAJA_ONLY)
+    Range<16> I(ifirst + 2, ilast - 1);
+    Range<4> J(jfirst + 2, jlast - 1);
+    Range<4> K(nk-5,nk+1);
+      SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP3");
+    forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+#else
       RAJA::RangeSegment k_range(nk - 5, nk + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
@@ -1881,6 +1895,7 @@ void rhs4th3fortsgstr_ci(
       RAJA::kernel<RHS4TH3_POL2_ASYNC>(
           RAJA::make_tuple(k_range, j_range, i_range),
           [=] RAJA_DEVICE(int k, int j, int i) {
+#endif
             float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
             float_sw4 r1, r2, r3;
             // #pragma omp for
