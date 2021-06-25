@@ -5136,7 +5136,18 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
           m_acof_no_gp, m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op);
 #elif defined(SW4_EXPT_3)
       // cudaMemcpyToSymbol(tex_acof, m_acof, 384*sizeof(double));
-      curvilinear4sgX3_ci<0>(
+      if (g==1)
+      curvilinear4sgX3_ci<0,1>(
+          ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr, mu_ptr, la_ptr,
+          met_ptr, jac_ptr, uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
+          m_acof_no_gp, m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op);
+      if (g==2)
+      curvilinear4sgX3_ci<0,2>(
+          ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr, mu_ptr, la_ptr,
+          met_ptr, jac_ptr, uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
+          m_acof_no_gp, m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op);
+      if (g==3)
+      curvilinear4sgX3_ci<0,3>(
           ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr, mu_ptr, la_ptr,
           met_ptr, jac_ptr, uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
           m_acof_no_gp, m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op);
@@ -5198,7 +5209,20 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
               m_acof_no_gp, m_bope, m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,
               m_sg_str_x[g], m_sg_str_y[g], nkg, op);
 #elif defined(SW4_EXPT_3)
-          curvilinear4sgX3_ci<1>(
+	  if (g==1)
+          curvilinear4sgX3_ci<1,10>(
+              ifirst, ilast, jfirst, jlast, kfirst, klast, alpha_ptr, mua_ptr,
+              lambdaa_ptr, met_ptr, jac_ptr, uacc_ptr, onesided_ptr,
+              m_acof_no_gp, m_bope, m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,
+              m_sg_str_x[g], m_sg_str_y[g], nkg, op);
+	  if (g==2)
+          curvilinear4sgX3_ci<1,20>(
+              ifirst, ilast, jfirst, jlast, kfirst, klast, alpha_ptr, mua_ptr,
+              lambdaa_ptr, met_ptr, jac_ptr, uacc_ptr, onesided_ptr,
+              m_acof_no_gp, m_bope, m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,
+              m_sg_str_x[g], m_sg_str_y[g], nkg, op);
+	  if (g==3)
+          curvilinear4sgX3_ci<1,30>(
               ifirst, ilast, jfirst, jlast, kfirst, klast, alpha_ptr, mua_ptr,
               lambdaa_ptr, met_ptr, jac_ptr, uacc_ptr, onesided_ptr,
               m_acof_no_gp, m_bope, m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,

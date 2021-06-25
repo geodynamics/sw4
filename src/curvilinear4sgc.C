@@ -172,9 +172,9 @@ void curvilinear4sg_ci(
       Range<2> K(1, 6 + 1);
 #endif
       // Uses 166 registers, no spills
-      Tclass<1> tag1;
+      Gclass<1,4,567 > tag1;
       forall3async<__LINE__>(
-          tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1> t, int i, int j, int k) {
+			     tag1, I, J, K, [=] RAJA_DEVICE(Gclass<1,4,567 >  t, int i, int j, int k) {
 #else
       RAJA::RangeSegment k_range(1, 6 + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);

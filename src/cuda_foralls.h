@@ -504,6 +504,9 @@ void forall3async(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
 template <int N>
 class Tclass {};
 
+template<int... Args>
+class Gclass{};
+
 template <int N, typename Tag, typename T1, typename T2, typename T3,
           typename LoopBody>
 void forall3async(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {

@@ -47,7 +47,7 @@ extern __constant__ double cmem_acof_no_gp[384];
 #define SPLIT_VERSION
 #ifdef SPLIT_VERSION
 
-template <int N>
+template <int N,int M>
 void curvilinear4sgX3_ci(
     int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,
@@ -165,7 +165,7 @@ void curvilinear4sgX3_ci(
 #ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
-      Range<6> K(1, 6 + 1);
+      Range<4> K(1, 6 + 1);
 #endif
 #ifdef ENABLE_HIP
       Range<64> I(ifirst + 2, ilast - 1);
@@ -173,9 +173,9 @@ void curvilinear4sgX3_ci(
       Range<2> K(1, 6 + 1);
 #endif
       // Uses 166 registers, no spills
-      Tclass<1> tag1;
+      Gclass<1,M> tag1;
       forall3async<__LINE__>(
-          tag1, I, J, K, [=] SW4_DEVICE(Tclass<1> t, int i, int j, int k) {
+			     tag1, I, J, K, [=] SW4_DEVICE(Gclass<1,M> t, int i, int j, int k) {
 #else
       RAJA::RangeSegment k_range(1, 6 + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
@@ -866,10 +866,10 @@ void curvilinear4sgX3_ci(
     // std::cout<<"KSTART END"<<kstart<<" "<<kend<<"\n";
     // forall3GS(IS,JS,KS, [=]SW4_DEVICE(int i,int j,int k){
     // Use 168 regissters , no spills
-    Tclass<2> tag2;
+			     Gclass<2,M> tag2;
 #pragma forceinline
     forall3async<__LINE__>(
-        tag2, I, J, K, [=] SW4_DEVICE(Tclass<2> t, int i, int j, int k) {
+			   tag2, I, J, K, [=] SW4_DEVICE(Gclass<2,M> t, int i, int j, int k) {
     // forall3X<256>(ifirst + 2, ilast - 1,jfirst + 2, jlast - 1,kstart, kend +
     // 1,
     //	      [=] SW4_DEVICE(int i, int j, int k) {
@@ -1302,10 +1302,10 @@ void curvilinear4sgX3_ci(
 
     // forall3GS(IS,JS,KS, [=]SW4_DEVICE(int i,int j,int k){
     // Uses 254 reisters, no spills
-    Tclass<3> tag3;
+    Gclass<3,M> tag3;
 #pragma forceinline
     forall3async<__LINE__>(
-        tag3, I, J, K, [=] SW4_DEVICE(Tclass<3> t, int i, int j, int k) {
+			   tag3, I, J, K, [=] SW4_DEVICE(Gclass<3,M> t, int i, int j, int k) {
 #else
     // RAJA::RangeSegment k_range(kstart,klast-1);
     // RAJA::RangeSegment j_range(jfirst+2,jlast-1);
@@ -1710,10 +1710,10 @@ void curvilinear4sgX3_ci(
 
     // forall3GS(IS,JS,KS, [=]SW4_DEVICE(int i,int j,int k){
     // Uses 255 registers, no spills
-    Tclass<4> tag4;
+    Gclass<4,M> tag4;
 #pragma forceinline
     forall3async<__LINE__>(
-        tag4, I, J, K, [=] SW4_DEVICE(Tclass<4> t, int i, int j, int k) {
+			   tag4, I, J, K, [=] SW4_DEVICE(Gclass<4,M> t, int i, int j, int k) {
 #else
     // RAJA::RangeSegment k_range(kstart,klast-1);
     // RAJA::RangeSegment j_range(jfirst+2,jlast-1);
@@ -2150,10 +2150,10 @@ void curvilinear4sgX3_ci(
     // 	for (int kk=-5;kk<1;kk++){
     // 	  int k=nk+kk;
     // Uses 240 registers, no spills
-    Tclass<5> tag5;
+    Gclass<5,M> tag5;
 #pragma forceinline
     forall3async<__LINE__>(
-        tag5, II, JJ, KK, [=] SW4_DEVICE(Tclass<5> t, int i, int j, int k) {
+			   tag5, II, JJ, KK, [=] SW4_DEVICE(Gclass<5,M> t, int i, int j, int k) {
     // forall3X results in a 2.5X slowdown even though registers drop from
     // 168 to 130
     // forall3X<256>(ifirst + 2, ilast - 1,jfirst + 2, jlast - 1,nk-5,nk+1,
