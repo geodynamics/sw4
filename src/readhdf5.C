@@ -200,7 +200,7 @@ static herr_t traverse_func(hid_t loc_id, const char *grp_name,
       x = data[0];
       y = data[1];
       z = data[2];
-      topodepth = false;
+      topodepth = true;
     }
 
     depth = z;
