@@ -10,7 +10,10 @@
 #include "Mspace.h"
 #include "caliper.h"
 #include "policies.h"
+#include "sys/types.h"
+#include "sys/sysinfo.h"
 
+void node_mem();
 struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0, 0,
                                                          0, 1, 0, 0, 0, 0};
 using namespace std;
@@ -134,6 +137,9 @@ void check_mem() {
 
 void print_hwm(int rank) {
   const int allocator_count = 3;
+#ifdef SW4_CPU_HWM
+  if (!rank) node_mem();
+#endif
 #if defined(ENABLE_CUDA) || defined(ENABLE_HIP)
   // std::cout<<"PRINT_HWM"<<std::flush;
   float hwm_local[allocator_count + 1], hwm_global[allocator_count + 1],
@@ -926,3 +932,29 @@ bool mpi_supports_device_buffers() {
 #endif
   return false;
 }
+void node_mem(){
+
+struct sysinfo memInfo;
+
+sysinfo (&memInfo);
+long long totalVirtualMem = memInfo.totalram;
+totalVirtualMem += memInfo.totalswap;
+totalVirtualMem *= memInfo.mem_unit;
+
+
+long long virtualMemUsed = memInfo.totalram - memInfo.freeram;
+virtualMemUsed += memInfo.totalswap - memInfo.freeswap;
+virtualMemUsed *= memInfo.mem_unit;
+
+
+long long totalPhysMem = memInfo.totalram;
+totalPhysMem *= memInfo.mem_unit;
+
+long long physMemUsed = memInfo.totalram - memInfo.freeram;
+physMemUsed *= memInfo.mem_unit;
+
+
+std::cerr<<"VM Total = "<<totalVirtualMem/1024/1024.0<<" "<<"VM Used = "<<virtualMemUsed/1024/1024.0<<" Phys Total = "<<totalPhysMem/1024/1024.0<<"  Phys Used "<<physMemUsed/1024/1024.0<<"\n";
+}
+
+
