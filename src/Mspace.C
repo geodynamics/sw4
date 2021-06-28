@@ -3,6 +3,9 @@
 #include <mpi-ext.h>
 #endif
 
+#include <limits.h>
+#include <unistd.h>
+
 #include <iomanip>
 #include <unordered_map>
 
@@ -10,16 +13,21 @@
 #include "Mspace.h"
 #include "caliper.h"
 #include "policies.h"
-#include "sys/types.h"
 #include "sys/sysinfo.h"
+#include "sys/types.h"
 
-void node_mem();
+long long node_mem();
+std::string hostname();
 struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0, 0,
                                                          0, 1, 0, 0, 0, 0};
 using namespace std;
 
 int presetGPUID(int mpi_rank, int local_rank, int local_size) {
+  int dev_counts_local[256] = {0};
+  int dev_counts_global[256] = {0};
   int device = 0;
+  // SW4_CheckDeviceError(cudaErrorStartupFailure); // For testing code in
+  // CheckError
 #if defined(ENABLE_GPU_ERROR)
   std::cerr
       << " Compilation error. Both ENABLE_CUDA and ENABLE_HIP are defined\n";
@@ -95,8 +103,15 @@ int presetGPUID(int mpi_rank, int local_rank, int local_size) {
     SW4_CheckDeviceError(hipSetDevice(device));
   }
 #endif  // ENDIF ENABLE_HIP
-
-  printf("Device set to %d \n", global_variables.device);
+  dev_counts_local[device] = 1;
+  MPI_Reduce(dev_counts_local, dev_counts_global, devices_per_node, MPI_INT,
+             MPI_SUM, 0, MPI_COMM_WORLD);
+  if (!mpi_rank)
+    for (int i = 0; i < devices_per_node; i++)
+      if (dev_counts_global[i] != 0)
+        std::cout << "Device " << i << " used by " << dev_counts_global[i]
+                  << " ranks \n";
+  std::cerr << "Device set to " << global_variables.device << "\n";
 #endif  // ENDIF ENABLE_GPU
   return device;
 }
@@ -137,13 +152,14 @@ void check_mem() {
 
 void print_hwm(int rank) {
   const int allocator_count = 3;
+  long long host_mem_used = 0;
 #ifdef SW4_CPU_HWM
-  if (!rank) node_mem();
+  host_mem_used = node_mem();
 #endif
 #if defined(ENABLE_CUDA) || defined(ENABLE_HIP)
   // std::cout<<"PRINT_HWM"<<std::flush;
-  float hwm_local[allocator_count + 1], hwm_global[allocator_count + 1],
-      hwm_global_min[allocator_count + 1];
+  float hwm_local[allocator_count + 2], hwm_global[allocator_count + 2],
+      hwm_global_min[allocator_count + 2];
 #ifdef SW4_USE_UMPIRE
   hwm_local[0] = umpire::ResourceManager::getInstance()
                      .getAllocator("UM_pool")
@@ -160,9 +176,12 @@ void print_hwm(int rank) {
   hwm_local[allocator_count] = 0;
   for (int i = 0; i < allocator_count; i++)
     hwm_local[allocator_count] += hwm_local[i];
-    // std::cout<<getRank()<<" Umpire HWM
-    // "<<umpire::ResourceManager::getInstance().getAllocator("UM_pool").getHighWatermark()/1024/1024<<"
-    // MB\n";
+
+  hwm_local[allocator_count + 1] =
+      (float)host_mem_used / 1024.0 / 1024.0 / 1024.0;
+  // std::cout<<getRank()<<" Umpire HWM
+  // "<<umpire::ResourceManager::getInstance().getAllocator("UM_pool").getHighWatermark()/1024/1024<<"
+  // MB\n";
 #else
   hwm_local[0] = global_variables.gpu_memory_hwm / 1024.0 / 1024.0 / 1024.0;
   // std::cout<<getRank()<<" GPU Memory HWM =
@@ -171,10 +190,10 @@ void print_hwm(int rank) {
   // "<<global_variables.max_mem/1024/1024<<" MB \n";
 #endif
   float hwm_total;
-  MPI_Reduce(&hwm_local, &hwm_global, allocator_count + 1, MPI_FLOAT, MPI_MAX,
+  MPI_Reduce(hwm_local, hwm_global, allocator_count + 2, MPI_FLOAT, MPI_MAX, 0,
+             MPI_COMM_WORLD);
+  MPI_Reduce(hwm_local, hwm_global_min, allocator_count + 2, MPI_FLOAT, MPI_MIN,
              0, MPI_COMM_WORLD);
-  MPI_Reduce(&hwm_local, &hwm_global_min, allocator_count + 1, MPI_FLOAT,
-             MPI_MIN, 0, MPI_COMM_WORLD);
   MPI_Reduce(&hwm_local[allocator_count], &hwm_total, 1, MPI_FLOAT, MPI_SUM, 0,
              MPI_COMM_WORLD);
   if (!rank) {
@@ -184,6 +203,10 @@ void print_hwm(int rank) {
       std::cerr << i << " MAX Global Device HWM is " << hwm_global[i]
                 << " GB\n";
     }
+
+    std::cerr << std::setprecision(2) << " MIN Host HWM is "
+              << hwm_global_min[allocator_count + 1] << " GB, MAX Host HWM is "
+              << hwm_global[allocator_count + 1] << " GB\n";
 
     std::cout << std::fixed << std::setprecision(2)
               << " Min & Max per-device memory HWM  "
@@ -635,7 +658,9 @@ void CheckError(cudaError_t const err, const char *file, char const *const fun,
                 const int line) {
   if (err) {
     std::cerr << "CUDA Error Code[" << err << "]: " << cudaGetErrorString(err)
-              << " " << file << " " << fun << " Line number:  " << line << "\n";
+              << " " << file << " " << fun << " Line number:  " << line << "\n"
+              << std::flush;
+    std::cerr << "ERROR on node " << hostname() << "\n" << std::flush;
     abort();
   }
 }
@@ -665,7 +690,9 @@ void CheckError(hipError_t const err, const char *file, char const *const fun,
                 const int line) {
   if (err) {
     std::cerr << "HIP Error Code[" << err << "]: " << hipGetErrorString(err)
-              << " " << file << " " << fun << " Line number:  " << line << "\n";
+              << " " << file << " " << fun << " Line number:  " << line << "\n"
+              << std::flush;
+    std::cerr << "ERROR on node " << hostname() << "\n" << std::flush;
     abort();
   }
 }
@@ -932,29 +959,31 @@ bool mpi_supports_device_buffers() {
 #endif
   return false;
 }
-void node_mem(){
+long long node_mem() {
+  struct sysinfo memInfo;
 
-struct sysinfo memInfo;
+  sysinfo(&memInfo);
+  long long totalVirtualMem = memInfo.totalram;
+  totalVirtualMem += memInfo.totalswap;
+  totalVirtualMem *= memInfo.mem_unit;
 
-sysinfo (&memInfo);
-long long totalVirtualMem = memInfo.totalram;
-totalVirtualMem += memInfo.totalswap;
-totalVirtualMem *= memInfo.mem_unit;
+  long long virtualMemUsed = memInfo.totalram - memInfo.freeram;
+  virtualMemUsed += memInfo.totalswap - memInfo.freeswap;
+  virtualMemUsed *= memInfo.mem_unit;
 
+  long long totalPhysMem = memInfo.totalram;
+  totalPhysMem *= memInfo.mem_unit;
 
-long long virtualMemUsed = memInfo.totalram - memInfo.freeram;
-virtualMemUsed += memInfo.totalswap - memInfo.freeswap;
-virtualMemUsed *= memInfo.mem_unit;
-
-
-long long totalPhysMem = memInfo.totalram;
-totalPhysMem *= memInfo.mem_unit;
-
-long long physMemUsed = memInfo.totalram - memInfo.freeram;
-physMemUsed *= memInfo.mem_unit;
-
-
-std::cerr<<"VM Total = "<<totalVirtualMem/1024/1024.0<<" "<<"VM Used = "<<virtualMemUsed/1024/1024.0<<" Phys Total = "<<totalPhysMem/1024/1024.0<<"  Phys Used "<<physMemUsed/1024/1024.0<<"\n";
+  long long physMemUsed = memInfo.totalram - memInfo.freeram;
+  physMemUsed *= memInfo.mem_unit;
+  // std::cerr<<"VM Total = "<<totalVirtualMem/1024/1024.0<<" "<<"VM Used =
+  // "<<virtualMemUsed/1024/1024.0<<" Phys Total = "<<totalPhysMem/1024/1024.0<<"
+  // Phys Used "<<physMemUsed/1024/1024.0<<"\n";
+  return physMemUsed;
 }
 
-
+std::string hostname() {
+  char hostname[HOST_NAME_MAX];
+  gethostname(hostname, HOST_NAME_MAX);
+  return std::string(hostname);
+}

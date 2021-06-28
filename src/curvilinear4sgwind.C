@@ -31,6 +31,7 @@
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 
+#define RAJA_ONLY_2 1
 #include <sys/types.h>
 
 #include "Mspace.h"
@@ -829,12 +830,12 @@ void curvilinear4sgwind(
 // #pragma omp simd
 // #pragma ivdep
 //           for (int i = ifirst + 2; i <= ilast - 2; i++) {
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY_2)
 
 #ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
-      Range<6> K(kmidb, kmide + 1);
+      Range<1> K(kmidb, kmide + 1);
 #endif
 
 #ifdef ENABLE_HIP
@@ -1894,12 +1895,12 @@ void curvilinear4sgwind(
 // #pragma omp simd
 // #pragma ivdep
 //           for (int i = ifirst + 2; i <= ilast - 2; i++) {
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY_2)
 
 #ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
-      Range<6> K(khighb, khighe + 1);
+      Range<1> K(khighb, khighe + 1);
 #endif
 
 #ifdef ENABLE_HIP

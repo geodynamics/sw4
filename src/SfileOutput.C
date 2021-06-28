@@ -30,16 +30,17 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
-#include "mpi.h"
-
 #include <fcntl.h>
 #include <math.h>
 #include <unistd.h>
+
 #include <cstring>
 #include <ctime>
+
 #include "EW.h"
 #include "Require.h"
 #include "SfileOutput.h"
+#include "mpi.h"
 
 // static variable definition (in class only declaration):
 int SfileOutput::mPreceedZeros = 0;

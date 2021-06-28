@@ -1353,9 +1353,10 @@ void TimeSeries::readFile(EW* ew, bool ignore_utc) {
   // building the file name...
   //
   stringstream filePrefix;
-  if ((ew->getObservationPath(m_event) != "./")&&(ew->getObservationPath(m_event) != ""))
+  if ((ew->getObservationPath(m_event) != "./") &&
+      (ew->getObservationPath(m_event) != ""))
     filePrefix << ew->getObservationPath(m_event);
-  else if (mIsRestart) 
+  else if (mIsRestart)
     filePrefix << ew->getPath();
 
   filePrefix << m_fileName << ".txt";
@@ -1363,16 +1364,16 @@ void TimeSeries::readFile(EW* ew, bool ignore_utc) {
   if (m_myPoint && m_usgsFormat) {
     bool debug = false;
     FILE* fd = fopen(filePrefix.str().c_str(), "r");
-    if (fd == NULL){
+    if (fd == NULL) {
       cerr << " ERROR: observed data file " << filePrefix.str() << " not found "
            << endl;
       cout << " ERROR: observed data file " << filePrefix.str() << " not found "
            << std::flush;
-      cout<<"ERROR PATH "<<ew->getPath()<<" flag =  "<<mIsRestart<<"\n"<<std::flush;
+      cout << "ERROR PATH " << ew->getPath() << " flag =  " << mIsRestart
+           << "\n"
+           << std::flush;
       abort();
-    }
-    else {
-
+    } else {
       int bufsize = 1024;
       char* buf = new char[bufsize];
 

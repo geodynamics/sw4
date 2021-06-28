@@ -169,7 +169,7 @@ void EW::metricexgh_ci(int ib, int ie, int jb, int je, int kb, int ke, int nz,
 #pragma omp parallel for
   for (int k = kb; k <= ke; k++)
     for (int j = jb; j <= je; j++)
-      //#pragma ivdep
+    //#pragma ivdep
 #pragma omp simd
       for (int i = ib; i <= ie; i++) {
         double zp, zq, zr;
@@ -389,7 +389,7 @@ void EW::getsurfforcing_ci(int ifirst, int ilast, int jfirst, int jlast,
 
 #pragma omp parallel for
   for (int j = jfirst; j <= jlast; j++)
-    //#pragma ivdep
+  //#pragma ivdep
 #pragma omp simd
     for (int i = ifirst; i <= ilast; i++) {
       float_sw4 sqjac = sqrt(jac(i, j, k));

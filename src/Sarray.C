@@ -1660,7 +1660,7 @@ void vset_to_zero_async(std::vector<Sarray>& v, int N) {
   for (int g = 0; g < N; g++) v[g].set_to_zero_async();
 
 #else
-  float_sw4 *m0, *m1, *m2, *m3, *m4, *m5,*m6,*m7;
+  float_sw4 *m0, *m1, *m2, *m3, *m4, *m5, *m6, *m7;
   size_t zero = 0;
 
   switch (N) {
@@ -1736,7 +1736,7 @@ void vset_to_zero_async(std::vector<Sarray>& v, int N) {
           v[4].m_npts, [=] RAJA_DEVICE(size_t i) { m4[i] = 0; }, zero,
           v[5].m_npts, [=] RAJA_DEVICE(size_t i) { m5[i] = 0; });
       break;
-  case 7:
+    case 7:
 
       m0 = v[0].m_data;
       m1 = v[1].m_data;
@@ -1751,11 +1751,11 @@ void vset_to_zero_async(std::vector<Sarray>& v, int N) {
           v[2].m_npts, [=] RAJA_DEVICE(size_t i) { m2[i] = 0; }, zero,
           v[3].m_npts, [=] RAJA_DEVICE(size_t i) { m3[i] = 0; }, zero,
           v[4].m_npts, [=] RAJA_DEVICE(size_t i) { m4[i] = 0; }, zero,
-	  v[5].m_npts, [=] RAJA_DEVICE(size_t i) { m5[i] = 0; }, zero,
+          v[5].m_npts, [=] RAJA_DEVICE(size_t i) { m5[i] = 0; }, zero,
           v[6].m_npts, [=] RAJA_DEVICE(size_t i) { m6[i] = 0; });
       break;
 
-case 8:
+    case 8:
 
       m0 = v[0].m_data;
       m1 = v[1].m_data;
@@ -1771,8 +1771,8 @@ case 8:
           v[2].m_npts, [=] RAJA_DEVICE(size_t i) { m2[i] = 0; }, zero,
           v[3].m_npts, [=] RAJA_DEVICE(size_t i) { m3[i] = 0; }, zero,
           v[4].m_npts, [=] RAJA_DEVICE(size_t i) { m4[i] = 0; }, zero,
-	  v[5].m_npts, [=] RAJA_DEVICE(size_t i) { m5[i] = 0; }, zero,
-	  v[6].m_npts, [=] RAJA_DEVICE(size_t i) { m6[i] = 0; }, zero,
+          v[5].m_npts, [=] RAJA_DEVICE(size_t i) { m5[i] = 0; }, zero,
+          v[6].m_npts, [=] RAJA_DEVICE(size_t i) { m6[i] = 0; }, zero,
           v[7].m_npts, [=] RAJA_DEVICE(size_t i) { m7[i] = 0; });
       break;
 
@@ -1787,7 +1787,7 @@ case 8:
 float_sw4 Sarray::norm() {
   float_sw4* sum;
   sum = SW4_NEW(Space::Managed_temps, float_sw4[1]);
-  sum[0]=0.0;
+  sum[0] = 0.0;
   float_sw4* lm_data = m_data;
   RAJA::forall<DEFAULT_LOOP1>(
       RAJA::RangeSegment(0, m_npts), [=] RAJA_DEVICE(size_t i) {

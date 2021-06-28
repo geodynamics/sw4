@@ -300,7 +300,8 @@ class EW {
 
   void evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                vector<Sarray>& a_Lambda, vector<Sarray>& a_Lu,
-               vector<Sarray*>& a_Alpha, std::ostream *norm_trace_file=nullptr);
+               vector<Sarray*>& a_Alpha,
+               std::ostream* norm_trace_file = nullptr);
 
   void evalRHSanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
                           vector<Sarray>& a_Uacc);

@@ -4389,10 +4389,10 @@ void EW::exactAccTwilight(float_sw4 a_t, vector<Sarray>& a_Uacc) {
 void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
                vector<GridPointSource*>& point_sources,
                vector<int>& identsources) {
-  static bool first=true;
-  if (first){
+  static bool first = true;
+  if (first) {
     first = false;
-    std::cout<<"WARNING **** NON_FUNCTIONAL CALL TO EW::Force\n";
+    std::cout << "WARNING **** NON_FUNCTIONAL CALL TO EW::Force\n";
   }
   for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero();
 }
@@ -4714,10 +4714,10 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
 void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
                   vector<GridPointSource*>& point_sources,
                   vector<int>& identsources) {
-  static bool first=true;
-  if (first){
+  static bool first = true;
+  if (first) {
     first = false;
-    std::cout<<"WARNING **** NON_FUNCTIONAL CALL TO EW::Force_tt\n";
+    std::cout << "WARNING **** NON_FUNCTIONAL CALL TO EW::Force_tt\n";
   }
   for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero();
 }
@@ -4980,7 +4980,7 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
 // perhaps a better name would be evalLu ??
 void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                  vector<Sarray>& a_Lambda, vector<Sarray>& a_Uacc,
-                 vector<Sarray*>& a_AlphaVE, std::ostream *norm_trace_file) {
+                 vector<Sarray*>& a_AlphaVE, std::ostream* norm_trace_file) {
   SW4_MARK_FUNCTION;
 #ifdef PEEKS_GALORE
   SW4_PEEK;
@@ -5044,11 +5044,12 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                     mu_ptr, la_ptr, &h, &op);
     }
 #ifdef SW4_NORM_TRACE
-    if (norm_trace_file!=nullptr) *norm_trace_file<<" evalRHS_1 "<<g<<" "<<a_Uacc[g].norm()<<"\n";
+    if (norm_trace_file != nullptr)
+      *norm_trace_file << " evalRHS_1 " << g << " " << a_Uacc[g].norm() << "\n";
 #endif
-    //    size_t nn=a_Uacc[g].count_nans();
-    //    if( nn > 0 )
-    //       cout << "First application of LU " << nn << " nans" << endl;
+      //    size_t nn=a_Uacc[g].count_nans();
+      //    if( nn > 0 )
+      //       cout << "First application of LU " << nn << " nans" << endl;
 #ifdef PEEKS_GALORE
     SW4_PEEK;
     SYNC_DEVICE;
@@ -5093,7 +5094,8 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
       //       cout << "Second application of LU " << nn << " nans" << endl;
     }
 #ifdef SW4_NORM_TRACE
-    if (norm_trace_file!=nullptr) *norm_trace_file<<" evalRHS_2 "<<g<<" "<<a_Uacc[g].norm()<<"\n";
+    if (norm_trace_file != nullptr)
+      *norm_trace_file << " evalRHS_2 " << g << " " << a_Uacc[g].norm() << "\n";
 #endif
   }
 
@@ -5159,13 +5161,18 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                      m_acof, m_bope, m_ghcof, &op);
     }
 #ifdef SW4_NORM_TRACE
-    if (norm_trace_file!=nullptr) {
-      *norm_trace_file<<" evalRHS_3 "<<g<<" "<<a_Uacc[g].norm()<<"\n";
-      *norm_trace_file<<"   evalRHS_3 U["<<g<<"]= "<<a_U[g].norm()<<"\n";
-      *norm_trace_file<<"   evalRHS_3 Mu["<<g<<"]= "<<a_Mu[g].norm()<<"\n";
-      *norm_trace_file<<"   evalRHS_3 Lambda["<<g<<"]= "<<a_Lambda[g].norm()<<"\n";
-      *norm_trace_file<<"   evalRHS_3 Metric["<<g<<"]= "<<mMetric[g].norm()<<"\n";
-      *norm_trace_file<<"   evalRHS_3 Jaco["<<g<<"]= "<<mJ[g].norm()<<"\n";
+    if (norm_trace_file != nullptr) {
+      *norm_trace_file << " evalRHS_3 " << g << " " << a_Uacc[g].norm() << "\n";
+      *norm_trace_file << "   evalRHS_3 U[" << g << "]= " << a_U[g].norm()
+                       << "\n";
+      *norm_trace_file << "   evalRHS_3 Mu[" << g << "]= " << a_Mu[g].norm()
+                       << "\n";
+      *norm_trace_file << "   evalRHS_3 Lambda[" << g
+                       << "]= " << a_Lambda[g].norm() << "\n";
+      *norm_trace_file << "   evalRHS_3 Metric[" << g
+                       << "]= " << mMetric[g].norm() << "\n";
+      *norm_trace_file << "   evalRHS_3 Jaco[" << g << "]= " << mJ[g].norm()
+                       << "\n";
     }
 #endif
 #ifdef PEEKS_GALORE
@@ -5223,11 +5230,13 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                          uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope,
                          m_ghcof_no_gp, &op);
         }
-}
+      }
 #ifdef SW4_NORM_TRACE
-    if (norm_trace_file!=nullptr) *norm_trace_file<<" evalRHS_4 "<<g<<" "<<a_Uacc[g].norm()<<"\n";
+      if (norm_trace_file != nullptr)
+        *norm_trace_file << " evalRHS_4 " << g << " " << a_Uacc[g].norm()
+                         << "\n";
 #endif
-}
+    }
     // SYNC_STREAM;
 #ifdef PEEKS_GALORE
     SW4_PEEK;

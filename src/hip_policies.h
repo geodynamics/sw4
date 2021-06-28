@@ -39,21 +39,21 @@ using DEFAULT_LOOP2X = RAJA::KernelPolicy<RAJA::statement::HipKernel<
                          RAJA::statement::For<0, RAJA::hip_thread_x_loop,
                                               RAJA::statement::Lambda<0>>>>>;
 
-using DEFAULT_LOOP2X_ASYNC_OLDE = RAJA::KernelPolicy<RAJA::statement::HipKernelAsync<
-    RAJA::statement::For<1, RAJA::hip_block_x_loop,
-                         RAJA::statement::For<0, RAJA::hip_thread_x_loop,
-                                              RAJA::statement::Lambda<0>>>>>;
+using DEFAULT_LOOP2X_ASYNC_OLDE =
+    RAJA::KernelPolicy<RAJA::statement::HipKernelAsync<RAJA::statement::For<
+        1, RAJA::hip_block_x_loop,
+        RAJA::statement::For<0, RAJA::hip_thread_x_loop,
+                             RAJA::statement::Lambda<0>>>>>;
 
-using DEFAULT_LOOP2X_ASYNC= RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<
-    256,
-  RAJA::statement::Tile<
-            0, RAJA::tile_fixed<16>, RAJA::hip_block_y_loop,
-            RAJA::statement::Tile<
-                1, RAJA::tile_fixed<16>, RAJA::hip_block_x_loop,
-                    RAJA::statement::For<
-                        0, RAJA::hip_thread_y_direct,
-                        RAJA::statement::For<1, RAJA::hip_thread_x_direct,
-                                             RAJA::statement::Lambda<0>>>>>>>;
+using DEFAULT_LOOP2X_ASYNC = RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<
+    256, RAJA::statement::Tile<
+             0, RAJA::tile_fixed<16>, RAJA::hip_block_y_loop,
+             RAJA::statement::Tile<
+                 1, RAJA::tile_fixed<16>, RAJA::hip_block_x_loop,
+                 RAJA::statement::For<
+                     0, RAJA::hip_thread_y_direct,
+                     RAJA::statement::For<1, RAJA::hip_thread_x_direct,
+                                          RAJA::statement::Lambda<0>>>>>>>;
 
 using DEFAULT_LOOP3 = RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<
     256,
@@ -112,25 +112,26 @@ using SARRAY_LOOP_POL2 =
 // RAJA::hip_threadblock_exec<16 >,
 // RAJA::statement::Lambda<0> >>>>>;
 
-using ICSTRESS_EXEC_POL =
-  RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<256,RAJA::statement::Tile<
-        0, RAJA::tile_fixed<16>, RAJA::hip_block_x_loop,
-        RAJA::statement::Tile<
-            1, RAJA::tile_fixed<16>, RAJA::hip_block_y_loop,
-            RAJA::statement::For<
-                0, RAJA::hip_thread_x_loop,
-                RAJA::statement::For<1, RAJA::hip_thread_y_loop,
-                                     RAJA::statement::Lambda<0>>>>>>>;
+using ICSTRESS_EXEC_POL = RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<
+    256, RAJA::statement::Tile<
+             0, RAJA::tile_fixed<16>, RAJA::hip_block_x_loop,
+             RAJA::statement::Tile<
+                 1, RAJA::tile_fixed<16>, RAJA::hip_block_y_loop,
+                 RAJA::statement::For<
+                     0, RAJA::hip_thread_x_loop,
+                     RAJA::statement::For<1, RAJA::hip_thread_y_loop,
+                                          RAJA::statement::Lambda<0>>>>>>>;
 
 using ICSTRESS_EXEC_POL_ASYNC =
-  RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<256,RAJA::statement::Tile<
-        0, RAJA::tile_fixed<16>, RAJA::hip_block_x_loop,
-        RAJA::statement::Tile<
-            1, RAJA::tile_fixed<16>, RAJA::hip_block_y_loop,
-            RAJA::statement::For<
-                0, RAJA::hip_thread_x_direct,
-                RAJA::statement::For<1, RAJA::hip_thread_y_direct,
-                                     RAJA::statement::Lambda<0>>>>>>>;
+    RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<
+        256, RAJA::statement::Tile<
+                 0, RAJA::tile_fixed<16>, RAJA::hip_block_x_loop,
+                 RAJA::statement::Tile<
+                     1, RAJA::tile_fixed<16>, RAJA::hip_block_y_loop,
+                     RAJA::statement::For<
+                         0, RAJA::hip_thread_x_direct,
+                         RAJA::statement::For<1, RAJA::hip_thread_y_direct,
+                                              RAJA::statement::Lambda<0>>>>>>>;
 
 // using RHS4_EXEC_POL_ASYNC =
 //   RAJA::KernelPolicy<
@@ -186,15 +187,15 @@ using RHS4_EXEC_POL_ASYNC =
                                      2, RAJA::hip_thread_x_direct,
                                      RAJA::statement::Lambda<0>>>>>>>>>;
 
-using CONSINTP_EXEC_POL1 =
-  RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<256,RAJA::statement::Tile<
-        0, RAJA::tile_fixed<16>, RAJA::hip_block_y_loop,
-        RAJA::statement::Tile<
-            1, RAJA::tile_fixed<16>, RAJA::hip_block_x_loop,
-            RAJA::statement::For<
-                0, RAJA::hip_thread_y_direct,
-                RAJA::statement::For<1, RAJA::hip_thread_x_direct,
-                                     RAJA::statement::Lambda<0>>>>>>>;
+using CONSINTP_EXEC_POL1 = RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<
+    256, RAJA::statement::Tile<
+             0, RAJA::tile_fixed<16>, RAJA::hip_block_y_loop,
+             RAJA::statement::Tile<
+                 1, RAJA::tile_fixed<16>, RAJA::hip_block_x_loop,
+                 RAJA::statement::For<
+                     0, RAJA::hip_thread_y_direct,
+                     RAJA::statement::For<1, RAJA::hip_thread_x_direct,
+                                          RAJA::statement::Lambda<0>>>>>>>;
 
 using ODDIODDJ_EXEC_POL1_ASYNC =
     RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<
@@ -210,10 +211,11 @@ using ODDIODDJ_EXEC_POL1_ASYNC =
 using ODDIODDJ_EXEC_POL2_ASYNC = RHS4_EXEC_POL_ASYNC;
 
 using EVENIODDJ_EXEC_POL_ASYNC =
-  RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<256,RAJA::statement::For<
-        1, RAJA::hip_block_x_loop,
-        RAJA::statement::For<0, RAJA::hip_thread_x_loop,
-                             RAJA::statement::Lambda<0>>>>>;
+    RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<
+        256, RAJA::statement::For<
+                 1, RAJA::hip_block_x_loop,
+                 RAJA::statement::For<0, RAJA::hip_thread_x_loop,
+                                      RAJA::statement::Lambda<0>>>>>;
 
 using EVENIEVENJ_EXEC_POL_ASYNC = EVENIODDJ_EXEC_POL_ASYNC;
 
@@ -303,15 +305,15 @@ using AVS_POL_ASYNC = RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<
                      RAJA::statement::For<1, RAJA::hip_thread_x_direct,
                                           RAJA::statement::Lambda<0>>>>>>>;
 
-using EBFA_POL =
-  RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<256,RAJA::statement::Tile<
-        0, RAJA::tile_fixed<16>, RAJA::hip_block_x_loop,
-        RAJA::statement::Tile<
-            1, RAJA::tile_fixed<16>, RAJA::hip_block_y_loop,
-            RAJA::statement::For<
-                0, RAJA::hip_thread_x_direct,
-                RAJA::statement::For<1, RAJA::hip_thread_y_direct,
-                                     RAJA::statement::Lambda<0>>>>>>>;
+using EBFA_POL = RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<
+    256, RAJA::statement::Tile<
+             0, RAJA::tile_fixed<16>, RAJA::hip_block_x_loop,
+             RAJA::statement::Tile<
+                 1, RAJA::tile_fixed<16>, RAJA::hip_block_y_loop,
+                 RAJA::statement::For<
+                     0, RAJA::hip_thread_x_direct,
+                     RAJA::statement::For<1, RAJA::hip_thread_y_direct,
+                                          RAJA::statement::Lambda<0>>>>>>>;
 
 // void EW::get_exact_point_source in EW.C
 using GEPS_POL = RAJA::KernelPolicy<
@@ -351,8 +353,9 @@ using BZ_POL_ASYNC =
                                              RAJA::statement::Lambda<0>>>>>>>>>;
 
 // CurvilinearInterface2::injection
-using INJ_POL_ASYNC =
-  RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<256,RAJA::statement::Tile<
+using INJ_POL_ASYNC = RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<
+    256,
+    RAJA::statement::Tile<
         0, RAJA::tile_fixed<4>, RAJA::hip_block_z_loop,
         RAJA::statement::Tile<
             1, RAJA::tile_fixed<8>, RAJA::hip_block_y_loop,
@@ -421,8 +424,9 @@ using SII_POL =
                                              RAJA::statement::Lambda<0>>>>>>>>>;
 
 // TestEcons::get_ubnd(
-using TGU_POL_ASYNC =
-  RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<1024,RAJA::statement::Tile<
+using TGU_POL_ASYNC = RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<
+    1024,
+    RAJA::statement::Tile<
         0, RAJA::tile_fixed<4>, RAJA::hip_block_z_loop,
         RAJA::statement::Tile<
             1, RAJA::tile_fixed<16>, RAJA::hip_block_y_loop,
@@ -436,8 +440,9 @@ using TGU_POL_ASYNC =
                                              RAJA::statement::Lambda<0>>>>>>>>>;
 
 // in addmemvarforcing2.C
-using AMVPCa_POL =
-  RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<256,RAJA::statement::Tile<
+using AMVPCa_POL = RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<
+    256,
+    RAJA::statement::Tile<
         0, RAJA::tile_fixed<4>, RAJA::hip_block_y_loop,
         RAJA::statement::Tile<
             1, RAJA::tile_fixed<4>, RAJA::hip_block_x_loop,
@@ -450,8 +455,9 @@ using AMVPCa_POL =
                         RAJA::statement::For<2, RAJA::hip_thread_z_loop,
                                              RAJA::statement::Lambda<0>>>>>>>>>;
 
-using AMVPCu_POL =
-  RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<256,RAJA::statement::Tile<
+using AMVPCu_POL = RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<
+    256,
+    RAJA::statement::Tile<
         0, RAJA::tile_fixed<4>, RAJA::hip_block_y_loop,
         RAJA::statement::Tile<
             1, RAJA::tile_fixed<4>, RAJA::hip_block_x_loop,
@@ -465,21 +471,24 @@ using AMVPCu_POL =
                                              RAJA::statement::Lambda<0>>>>>>>>>;
 
 using AMVC2Ca_POL_ASYNC =
-  RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<256,RAJA::statement::Tile<
-        0, RAJA::tile_fixed<4>, RAJA::hip_block_y_loop,
-        RAJA::statement::Tile<
-            1, RAJA::tile_fixed<4>, RAJA::hip_block_x_loop,
-            RAJA::statement::Tile<
-                2, RAJA::tile_fixed<16>, RAJA::hip_block_z_loop,
-                RAJA::statement::For<
-                    0, RAJA::hip_thread_y_loop,
-                    RAJA::statement::For<
-                        1, RAJA::hip_thread_x_loop,
-                        RAJA::statement::For<2, RAJA::hip_thread_z_loop,
-                                             RAJA::statement::Lambda<0>>>>>>>>>;
+    RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<
+        256, RAJA::statement::Tile<
+                 0, RAJA::tile_fixed<4>, RAJA::hip_block_y_loop,
+                 RAJA::statement::Tile<
+                     1, RAJA::tile_fixed<4>, RAJA::hip_block_x_loop,
+                     RAJA::statement::Tile<
+                         2, RAJA::tile_fixed<16>, RAJA::hip_block_z_loop,
+                         RAJA::statement::For<
+                             0, RAJA::hip_thread_y_loop,
+                             RAJA::statement::For<
+                                 1, RAJA::hip_thread_x_loop,
+                                 RAJA::statement::For<
+                                     2, RAJA::hip_thread_z_loop,
+                                     RAJA::statement::Lambda<0>>>>>>>>>;
 
-using AMVC2Cu_POL =
-  RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<256,RAJA::statement::Tile<
+using AMVC2Cu_POL = RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<
+    256,
+    RAJA::statement::Tile<
         0, RAJA::tile_fixed<4>, RAJA::hip_block_y_loop,
         RAJA::statement::Tile<
             1, RAJA::tile_fixed<4>, RAJA::hip_block_x_loop,
@@ -494,14 +503,15 @@ using AMVC2Cu_POL =
 
 // In addsg4windc.C
 using ASG4WC_POL_ASYNC =
-  RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<256,RAJA::statement::For<
-        2, RAJA::hip_block_z_loop,
-        RAJA::statement::For<
-            1, RAJA::hip_block_y_loop,
-            RAJA::statement::For<
-                0, RAJA::hip_thread_x_direct,
-                RAJA::statement::For<3, RAJA::seq_exec,
-                                     RAJA::statement::Lambda<0>>>>>>>;
+    RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<
+        256, RAJA::statement::For<
+                 2, RAJA::hip_block_z_loop,
+                 RAJA::statement::For<
+                     1, RAJA::hip_block_y_loop,
+                     RAJA::statement::For<
+                         0, RAJA::hip_thread_x_direct,
+                         RAJA::statement::For<3, RAJA::seq_exec,
+                                              RAJA::statement::Lambda<0>>>>>>>;
 
 // In addsgdc.C
 using ADDSGD_POL_ASYNC =
@@ -542,28 +552,31 @@ using ADDSGD_POL2_ASYNC =
 
 // in bcforce.C
 using BCFORT_EXEC_POL2_ASYNC =
-  RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<256,RAJA::statement::Tile<
-        0, RAJA::tile_fixed<4>, RAJA::hip_block_y_loop,
-        RAJA::statement::Tile<
-            1, RAJA::tile_fixed<4>, RAJA::hip_block_x_loop,
-            RAJA::statement::Tile<
-                2, RAJA::tile_fixed<16>, RAJA::hip_block_z_loop,
-                RAJA::statement::For<
-                    0, RAJA::hip_thread_y_direct,
-                    RAJA::statement::For<
-                        1, RAJA::hip_thread_x_direct,
-                        RAJA::statement::For<2, RAJA::hip_thread_z_direct,
-                                             RAJA::statement::Lambda<0>>>>>>>>>;
+    RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<
+        256, RAJA::statement::Tile<
+                 0, RAJA::tile_fixed<4>, RAJA::hip_block_y_loop,
+                 RAJA::statement::Tile<
+                     1, RAJA::tile_fixed<4>, RAJA::hip_block_x_loop,
+                     RAJA::statement::Tile<
+                         2, RAJA::tile_fixed<16>, RAJA::hip_block_z_loop,
+                         RAJA::statement::For<
+                             0, RAJA::hip_thread_y_direct,
+                             RAJA::statement::For<
+                                 1, RAJA::hip_thread_x_direct,
+                                 RAJA::statement::For<
+                                     2, RAJA::hip_thread_z_direct,
+                                     RAJA::statement::Lambda<0>>>>>>>>>;
 
 using BCFORT_EXEC_POL3_ASYNC =
-  RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<256,RAJA::statement::Tile<
-        0, RAJA::tile_fixed<16>, RAJA::hip_block_x_loop,
-        RAJA::statement::Tile<
-            1, RAJA::tile_fixed<16>, RAJA::hip_block_y_loop,
-            RAJA::statement::For<
-                0, RAJA::hip_thread_x_direct,
-                RAJA::statement::For<1, RAJA::hip_thread_y_direct,
-                                     RAJA::statement::Lambda<0>>>>>>>;
+    RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<
+        256, RAJA::statement::Tile<
+                 0, RAJA::tile_fixed<16>, RAJA::hip_block_x_loop,
+                 RAJA::statement::Tile<
+                     1, RAJA::tile_fixed<16>, RAJA::hip_block_y_loop,
+                     RAJA::statement::For<
+                         0, RAJA::hip_thread_x_direct,
+                         RAJA::statement::For<1, RAJA::hip_thread_y_direct,
+                                              RAJA::statement::Lambda<0>>>>>>>;
 
 // in curvilinear4sgc.C
 using CURV_POL_ORG =
@@ -582,14 +595,15 @@ using BUFFER_POL = RAJA::KernelPolicy<RAJA::statement::HipKernelAsync<
 
 // in rhs3cuvilinearsgc.C
 using RHS4CU_POL_ASYNC =
-  RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<256,RAJA::statement::Tile<
-        0, RAJA::tile_fixed<16>, RAJA::hip_block_x_loop,
-        RAJA::statement::Tile<
-            1, RAJA::tile_fixed<16>, RAJA::hip_block_y_loop,
-            RAJA::statement::For<
-                0, RAJA::hip_thread_x_direct,
-                RAJA::statement::For<1, RAJA::hip_thread_y_direct,
-                                     RAJA::statement::Lambda<0>>>>>>>;
+    RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<
+        256, RAJA::statement::Tile<
+                 0, RAJA::tile_fixed<16>, RAJA::hip_block_x_loop,
+                 RAJA::statement::Tile<
+                     1, RAJA::tile_fixed<16>, RAJA::hip_block_y_loop,
+                     RAJA::statement::For<
+                         0, RAJA::hip_thread_x_direct,
+                         RAJA::statement::For<1, RAJA::hip_thread_y_direct,
+                                              RAJA::statement::Lambda<0>>>>>>>;
 
 // in rhs4th3fortc.C
 using XRHS_POL2 =
@@ -651,15 +665,15 @@ using RHS4TH3_POL2_ASYNC =
 
 using VBSC_POL = DEFAULT_LOOP2X;
 
-using AFCC_POL_ASYNC =
-  RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<256,RAJA::statement::Tile<
-        0, RAJA::tile_fixed<16>, RAJA::hip_block_x_loop,
-        RAJA::statement::Tile<
-            1, RAJA::tile_fixed<16>, RAJA::hip_block_y_loop,
-            RAJA::statement::For<
-                0, RAJA::hip_thread_x_direct,
-                RAJA::statement::For<1, RAJA::hip_thread_y_direct,
-                                     RAJA::statement::Lambda<0>>>>>>>;
+using AFCC_POL_ASYNC = RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<
+    256, RAJA::statement::Tile<
+             0, RAJA::tile_fixed<16>, RAJA::hip_block_x_loop,
+             RAJA::statement::Tile<
+                 1, RAJA::tile_fixed<16>, RAJA::hip_block_y_loop,
+                 RAJA::statement::For<
+                     0, RAJA::hip_thread_x_direct,
+                     RAJA::statement::For<1, RAJA::hip_thread_y_direct,
+                                          RAJA::statement::Lambda<0>>>>>>>;
 
 // In updatememvarc.C
 /* using MPFC_POL_ASYNC = */

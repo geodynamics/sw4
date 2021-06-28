@@ -1,13 +1,14 @@
-#include "mpi.h"
-
 #include <fcntl.h>
 #include <unistd.h>
+
 #include <cstdio>
 #include <cstring>
 #include <ctime>
+
 #include "CheckPoint.h"
 #include "EW.h"
 #include "Require.h"
+#include "mpi.h"
 
 #ifdef USE_ZFP
 #include "H5Zzfp_lib.h"
@@ -660,7 +661,7 @@ void CheckPoint::write_header(int& fid, float_sw4 a_time, int a_cycle,
     //      cout << "wrote global size " << globalSize[0] << " " <<
     //      globalSize[1] << " " << globalSize[2] << " "
     //	   << globalSize[3] << " " << globalSize[4] << " " << globalSize[5] <<
-    //endl;
+    // endl;
   }
   hsize = (4 + 6 * ng) * sizeof(int) + 2 * sizeof(float_sw4);
 }
@@ -1099,15 +1100,17 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
   }
 #endif
 
-  hid_t* dset_Um  = new hid_t[mEW->mNumberOfGrids];
-  hid_t* dset_U   = new hid_t[mEW->mNumberOfGrids];
-  hid_t* dset_VEM = new hid_t[mEW->mNumberOfGrids*mEW->getNumberOfMechanisms()];
-  hid_t* dset_VE  = new hid_t[mEW->mNumberOfGrids*mEW->getNumberOfMechanisms()];
-  hsize_t *npts   = new hsize_t[mEW->mNumberOfGrids];
-  hsize_t *myoff  = new hsize_t[mEW->mNumberOfGrids];
-  hsize_t *total  = new hsize_t[mEW->mNumberOfGrids];
+  hid_t* dset_Um = new hid_t[mEW->mNumberOfGrids];
+  hid_t* dset_U = new hid_t[mEW->mNumberOfGrids];
+  hid_t* dset_VEM =
+      new hid_t[mEW->mNumberOfGrids * mEW->getNumberOfMechanisms()];
+  hid_t* dset_VE =
+      new hid_t[mEW->mNumberOfGrids * mEW->getNumberOfMechanisms()];
+  hsize_t* npts = new hsize_t[mEW->mNumberOfGrids];
+  hsize_t* myoff = new hsize_t[mEW->mNumberOfGrids];
+  hsize_t* total = new hsize_t[mEW->mNumberOfGrids];
 
-  // Workaround for summit system with spectrum MPI and HDF5 1.10.4, 
+  // Workaround for summit system with spectrum MPI and HDF5 1.10.4,
   // have to create all dsets before write to avoid runtime error
   for (int g = 0; g < mEW->mNumberOfGrids; g++) {
     npts[g] = (hsize_t)(mWindow[g][1] - mWindow[g][0] + 1) *
@@ -1115,30 +1118,32 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
               (mWindow[g][5] - mWindow[g][4] + 1);
     npts[g] *= 3;
     myoff[g] = 0;
-    MPI_Exscan(&npts[g], &myoff[g], 1, MPI_LONG_LONG_INT, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Exscan(&npts[g], &myoff[g], 1, MPI_LONG_LONG_INT, MPI_SUM,
+               MPI_COMM_WORLD);
     total[g] = npts[g] + myoff[g];
     MPI_Bcast(&total[g], 1, MPI_LONG_LONG_INT, nrank - 1, MPI_COMM_WORLD);
-    /* fprintf(stderr, "Create, g %d, rank %d: off %llu, size %llu, total %llu\n", g, myrank, myoff[g], */
+    /* fprintf(stderr, "Create, g %d, rank %d: off %llu, size %llu, total
+     * %llu\n", g, myrank, myoff[g], */
     /*         npts[g], total[g]); */
 
     dspace = H5Screate_simple(1, &total[g], NULL);
 
     sprintf(dset_name, "Um%d", g);
     dset_Um[g] = H5Dcreate(fid, dset_name, dtype, dspace, H5P_DEFAULT, prop_id,
-                     H5P_DEFAULT);
+                           H5P_DEFAULT);
 
     sprintf(dset_name, "U%d", g);
     dset_U[g] = H5Dcreate(fid, dset_name, dtype, dspace, H5P_DEFAULT, prop_id,
-                     H5P_DEFAULT);
+                          H5P_DEFAULT);
 
     for (int m = 0; m < mEW->getNumberOfMechanisms(); m++) {
       sprintf(dset_name, "VEM%d_m%d", g, m);
-      dset_VEM[g* mEW->getNumberOfMechanisms() + m] = H5Dcreate(fid, dset_name, dtype, dspace, H5P_DEFAULT, prop_id,
-                       H5P_DEFAULT);
+      dset_VEM[g * mEW->getNumberOfMechanisms() + m] = H5Dcreate(
+          fid, dset_name, dtype, dspace, H5P_DEFAULT, prop_id, H5P_DEFAULT);
 
       sprintf(dset_name, "VE%d_m%d", g, m);
-      dset_VE[g* mEW->getNumberOfMechanisms() + m] = H5Dcreate(fid, dset_name, dtype, dspace, H5P_DEFAULT, prop_id,
-                       H5P_DEFAULT);
+      dset_VE[g * mEW->getNumberOfMechanisms() + m] = H5Dcreate(
+          fid, dset_name, dtype, dspace, H5P_DEFAULT, prop_id, H5P_DEFAULT);
     }
     H5Sclose(dspace);
   }
@@ -1146,7 +1151,8 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
   for (int g = 0; g < mEW->mNumberOfGrids; g++) {
     mspace = H5Screate_simple(1, &npts[g], NULL);
     mydspace = H5Screate_simple(1, &total[g], NULL);
-    H5Sselect_hyperslab(mydspace, H5S_SELECT_SET, &myoff[g], NULL, &npts[g], NULL);
+    H5Sselect_hyperslab(mydspace, H5S_SELECT_SET, &myoff[g], NULL, &npts[g],
+                        NULL);
 
     // allocate local buffer array
     float_sw4* doubleField = new float_sw4[npts[g]];
@@ -1182,8 +1188,9 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
         a_AlphaVEm[g][m].extract_subarray(
             mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3],
             mWindow[g][4], mWindow[g][5], doubleField);
-      H5Dwrite(dset_VEM[g* mEW->getNumberOfMechanisms() + m], dtype, mspace, mydspace, dxpl, doubleField);
-      H5Dclose(dset_VEM[g* mEW->getNumberOfMechanisms() + m]);
+      H5Dwrite(dset_VEM[g * mEW->getNumberOfMechanisms() + m], dtype, mspace,
+               mydspace, dxpl, doubleField);
+      H5Dclose(dset_VEM[g * mEW->getNumberOfMechanisms() + m]);
 
       if (m_kji_order)
         a_AlphaVE[g][m].extract_subarrayIK(
@@ -1193,8 +1200,9 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
         a_AlphaVE[g][m].extract_subarray(
             mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3],
             mWindow[g][4], mWindow[g][5], doubleField);
-      H5Dwrite(dset_VE[g* mEW->getNumberOfMechanisms() + m], dtype, mspace, mydspace, dxpl, doubleField);
-      H5Dclose(dset_VE[g* mEW->getNumberOfMechanisms() + m]);
+      H5Dwrite(dset_VE[g * mEW->getNumberOfMechanisms() + m], dtype, mspace,
+               mydspace, dxpl, doubleField);
+      H5Dclose(dset_VE[g * mEW->getNumberOfMechanisms() + m]);
     }
     H5Sclose(mspace);
     H5Sclose(mydspace);
@@ -1202,13 +1210,13 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
     delete[] doubleField;
   }
 
-  delete [] dset_Um;
-  delete [] dset_U;
-  delete [] dset_VEM;
-  delete [] dset_VE;
-  delete [] npts;
-  delete [] myoff;
-  delete [] total;
+  delete[] dset_Um;
+  delete[] dset_U;
+  delete[] dset_VEM;
+  delete[] dset_VE;
+  delete[] npts;
+  delete[] myoff;
+  delete[] total;
 
   H5Pclose(prop_id);
   H5Pclose(fapl);

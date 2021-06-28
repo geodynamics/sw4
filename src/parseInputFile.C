@@ -3726,7 +3726,8 @@ void EW::processCheckPoint(char* buffer) {
     //      {
     //	 token += 6; // skip cycle=
     //	 CHECK_INPUT( atoi(token) >= 0., err << "cycle must be a non-negative
-    //integer, not: " << token); 	 cycle = atoi(token); 	 timingSet = true;
+    // integer, not: " << token); 	 cycle = atoi(token); 	 timingSet =
+    // true;
     //      }
     if (startswith("cycleInterval=", token)) {
       token += 14;  // skip cycleInterval=
