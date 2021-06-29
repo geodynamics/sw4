@@ -3,7 +3,7 @@
 #include "caliper.h"
 #include "cf_interface.h"
 #include "policies.h"
-
+#include "foralls.h"
 #define SQR(x) ((x) * (x))
 
 extern "C" {
@@ -159,9 +159,23 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
   RAJA::RangeSegment j3_range(jcb, jce + 1);
   RAJA::RangeSegment i3_range(icb, ice + 1);
   SW4_MARK_BEGIN("CONSINTP_LOOP3");
+#if !defined(RAJA_ONLY)
+#ifdef ENABLE_CUDA
+      Range<16> I(icb, ice + 1);
+      Range<4> J(jcb, jce + 1);
+      Range<4> C(1,4);
+#endif
+#ifdef ENABLE_HIP
+      Range<8> I(icb, ice + 1);
+      Range<8> J(jcb, jce + 1);
+      Range<4> C(1,4);
+#endif
+      forall3async(I, J, C, [=] RAJA_DEVICE(int ic, int jc, int c) {
+#else
   RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
       RAJA::make_tuple(c_range, j3_range, i3_range),
       [=] RAJA_DEVICE(int c, int jc, int ic) {
+#endif
         // #pragma omp parallel
         //    for (int c=1; c<=3; c++)
         // #pragma omp for
