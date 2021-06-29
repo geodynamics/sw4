@@ -6,6 +6,7 @@
 #include "cf_interface.h"
 #include "policies.h"
 #include "sw4.h"
+#include "foralls.h"
 //#ifdef SW4_NOC
 // extern "C" {
 //#endif
@@ -437,12 +438,26 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
     }  // end if (!upper && !lower)
 
     if (upper) {
+#if !defined(RAJA_ONLY)
+#ifdef ENABLE_CUDA
+      Range<16> I(ifirst + 2, ilast - 1);
+      Range<4> J(jfirst + 2, jlast - 1);
+      Range<1> K(kfirstw, klastw + 1);
+#endif
+#ifdef ENABLE_HIP
+      Range<8> I(ifirst + 2, ilast - 1);
+      Range<8> J(jfirst + 2, jlast - 1);
+      Range<4> K(kfirstw, klastw + 1);
+#endif
+      forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+#else
       RAJA::RangeSegment k_range(kfirstw, klastw + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
       RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
           RAJA::make_tuple(k_range, j_range, i_range),
           [=] RAJA_DEVICE(int k, int j, int i) {
+#endif
             float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
             float_sw4 r1, r2, r3;
             // #pragma omp for
@@ -772,12 +787,26 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
     }  // end if (upper)
 
     if (lower) {
+#if !defined(RAJA_ONLY)
+#ifdef ENABLE_CUDA
+      Range<16> I(ifirst + 2, ilast - 1);
+      Range<4> J(jfirst + 2, jlast - 1);
+      Range<1> K(kfirstw, klastw + 1);
+#endif
+#ifdef ENABLE_HIP
+      Range<8> I(ifirst + 2, ilast - 1);
+      Range<8> J(jfirst + 2, jlast - 1);
+      Range<4> K(kfirstw, klastw + 1);
+#endif
+      forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+#else
       RAJA::RangeSegment k_range(kfirstw, klastw + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
       RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
           RAJA::make_tuple(k_range, j_range, i_range),
           [=] RAJA_DEVICE(int k, int j, int i) {
+#endif
             float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
             float_sw4 r1, r2, r3;
             // #pragma omp for
