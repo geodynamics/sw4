@@ -129,8 +129,8 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
   EW *a_ew;
   double data[3];
   double lon, lat, depth, x, y, z;
-  bool geoCoordSet = true, topodepth = false, nsew = true;
-  int isnsew;
+  bool geoCoordSet = true, topodepth = true, nsew = true;
+  int isnsew, usezvalue, ret;
 
   ASSERT(operator_data != NULL);
 
@@ -146,55 +146,79 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
     // read x,y,z or ns,ew,up
     grp = H5Gopen(loc_id, grp_name, H5P_DEFAULT);
     if (grp < 0) {
-      printf("Error opening group [%s]\n", grp_name);
+      fprintf(stderr, "Error opening group [%s]\n", grp_name);
       return -1;
     }
 
-    attr = H5Dopen(grp, "ISNSEW", H5P_DEFAULT);
-    hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
-    H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
-    H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, dxpl, &isnsew);
-    H5Dclose(attr);
-    if (isnsew == 0) {
+    if (H5Lexists(grp, "ISNSEW", H5P_DEFAULT) > 0) {
+      attr = H5Dopen(grp, "ISNSEW", H5P_DEFAULT);
+      ASSERT(attr > 0);
+      ret = H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &isnsew);
+      ASSERT(ret >= 0);
+      H5Dclose(attr);
+      if (isnsew == 0)
         nsew = false;
-        geoCoordSet = false;
     }
 
     if (H5Lexists(grp, "WindowL", H5P_DEFAULT) > 0) {
-        op_data->winlset = true;
-        attr = H5Dopen(grp, "WindowL", H5P_DEFAULT);
-        H5Dread(attr, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, dxpl, &op_data->winl);
-        H5Dclose(attr);
+      op_data->winlset = true;
+      attr = H5Dopen(grp, "WindowL", H5P_DEFAULT);
+      ASSERT(attr > 0);
+      ret = H5Dread(attr, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &op_data->winl);
+      ASSERT(ret >= 0);
+      H5Dclose(attr);
     }
 
     if (H5Lexists(grp, "WindowR", H5P_DEFAULT) > 0) {
-        op_data->winrset = true;
-        attr = H5Dopen(grp, "WindowR", H5P_DEFAULT);
-        H5Dread(attr, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, dxpl, &op_data->winr);
-        H5Dclose(attr);
+      op_data->winrset = true;
+      attr = H5Dopen(grp, "WindowR", H5P_DEFAULT);
+      ASSERT(attr > 0);
+      ret = H5Dread(attr, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &op_data->winr);
+      ASSERT(ret >= 0);
+      H5Dclose(attr);
     }
 
-    H5Pclose(dxpl);
-
-    if (nsew) {
-      // STLA,STLO,STDP
-      dset = H5Dopen(grp, "STLA,STLO,STDP", H5P_DEFAULT);
-      status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-      H5Dclose(dset);
-      lat = data[0];
-      lon = data[1];
-      z   = data[2];
-      topodepth = true;
+    if (H5Lexists(grp, "USEZVALUE", H5P_DEFAULT) > 0) {
+      attr = H5Dopen(grp, "USEZVALUE", H5P_DEFAULT);
+      ASSERT(attr > 0);
+      ret = H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &usezvalue);
+      ASSERT(ret >= 0);
+      H5Dclose(attr);
+      if (usezvalue != 0)
+        topodepth = false;
     }
-    else {
+
+    if (H5Lexists(grp, "STX,STY,STZ", H5P_DEFAULT) > 0) {
       // X, Y, Z
       dset = H5Dopen(grp, "STX,STY,STZ", H5P_DEFAULT);
-      status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+      if (dset < 0)
+        fprintf(stderr, "Error reading from rechdf5 station %s, STX,STY,STZ open failed!\n", grp_name);
+      ASSERT(attr > 0);
+      ret = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+      ASSERT(ret >= 0);
       H5Dclose(dset);
       x = data[0];
       y = data[1];
       z = data[2];
-      topodepth = false;
+      geoCoordSet = false;
+    }
+    else if (H5Lexists(grp, "STLA,STLO,STDP", H5P_DEFAULT) > 0) {
+      // STLA,STLO,STDP
+      dset = H5Dopen(grp, "STLA,STLO,STDP", H5P_DEFAULT);
+      if (dset < 0)
+        fprintf(stderr, "Error reading from rechdf5 station %s, STLA,STLO,STDP open failed!\n", grp_name);
+      ASSERT(attr > 0);
+      ret = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+      ASSERT(ret >= 0);
+      H5Dclose(dset);
+      lat = data[0];
+      lon = data[1];
+      z = data[2];
+    }
+    else {
+      // Not a station group, ignore
+      H5Gclose(grp);
+      return 0;
     }
 
     depth = z;
@@ -339,6 +363,7 @@ void readStationHDF5(EW* ew, string inFileName, string outFileName, int writeEve
   H5Pclose(fapl);
   H5Fclose(fid);
 
+  return;
 }
 
 static herr_t traverse_func2 (hid_t loc_id, const char *grp_name, const H5L_info_t *info, void *operator_data)
@@ -347,13 +372,17 @@ static herr_t traverse_func2 (hid_t loc_id, const char *grp_name, const H5L_info
   herr_t status;
   H5O_info_t infobuf;
   float data[3];
-  int isnsew;
+  int isnsew, ret;
 
   ASSERT(operator_data != NULL);
 
   struct traverse_data2_t *op_data = (struct traverse_data2_t *)operator_data;
 
-  status = H5Oget_info_by_name (loc_id, grp_name, &infobuf, H5P_DEFAULT);
+#if H5_VERSION_GE(1, 12, 0)
+  H5Oget_info_by_name1(loc_id, grp_name, &infobuf, H5P_DEFAULT);
+#else
+  H5Oget_info_by_name(loc_id, grp_name, &infobuf, H5P_DEFAULT);
+#endif
   if (infobuf.type == H5O_TYPE_GROUP) {
     /* if (op_data->myRank == 0) */
     /*   printf ("Group: [%s] \n", grp_name); */
@@ -365,24 +394,38 @@ static herr_t traverse_func2 (hid_t loc_id, const char *grp_name, const H5L_info
       return -1;
     }
 
-    attr = H5Dopen(grp, "ISNSEW", H5P_DEFAULT);
-    hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
-    H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
-    H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, dxpl, &isnsew);
-    H5Pclose(dxpl);
-    H5Dclose(attr);
+    if (H5Lexists(grp, "ISNSEW", H5P_DEFAULT) > 0) {
+      attr = H5Dopen(grp, "ISNSEW", H5P_DEFAULT);
+      ASSERT(attr > 0);
+      ret = H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &isnsew);
+      ASSERT(ret >= 0);
+      H5Dclose(attr);
+    }
 
-    if (isnsew == 0) {
+    if (H5Lexists(grp, "STX,STY,STZ", H5P_DEFAULT) > 0) {
       // X, Y, Z
       dset = H5Dopen(grp, "STX,STY,STZ", H5P_DEFAULT);
-      status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+      if (dset < 0)
+        fprintf(stderr, "Error reading from rechdf5 station %s, STX,STY,STZ open failed!\n", grp_name);
+      ASSERT(attr > 0);
+      ret = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+      ASSERT(ret >= 0);
+      H5Dclose(dset);
+    }
+    else if (H5Lexists(grp, "STLA,STLO,STDP", H5P_DEFAULT) > 0) {
+      // STLA,STLO,STDP
+      dset = H5Dopen(grp, "STLA,STLO,STDP", H5P_DEFAULT);
+      if (dset < 0)
+        fprintf(stderr, "Error reading from rechdf5 station %s, STLA,STLO,STDP open failed!\n", grp_name);
+      ASSERT(attr > 0);
+      ret = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+      ASSERT(ret >= 0);
       H5Dclose(dset);
     }
     else {
-      // STLA,STLO,STDP
-      dset = H5Dopen(grp, "STLA,STLO,STDP", H5P_DEFAULT);
-      status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-      H5Dclose(dset);
+      // Not a station group, ignore
+      H5Gclose(grp);
+      return 0;
     }
 
     string staname = grp_name;
@@ -425,6 +468,7 @@ void readStationInfoHDF5(string inFileName, vector<string> *staname, vector<doub
   H5Pclose(fapl);
   H5Fclose(fid);
 
+  return;
 }
 
 void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSources, EW *ew, int event, float_sw4 m_global_xmax, float_sw4 m_global_ymax, float_sw4 m_global_zmax, float_sw4 mGeoAz, float_sw4 xmin, float_sw4 ymin, float_sw4 zmin, int mVerbose, int nreader)
@@ -839,6 +883,8 @@ void readRuptureHDF5(char *fname, vector<vector<Source*> > & a_GlobalUniqueSourc
   H5Tclose(dtype);
   free(point_data);
   free(sr_data);
+
+  return;
 }
 
 #endif // USE_HDF5
