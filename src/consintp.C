@@ -162,13 +162,23 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
 #if !defined(RAJA_ONLY)
 #ifdef ENABLE_CUDA
       Range<16> I(icb, ice + 1);
-      Range<4> J(jcb, jce + 1);
-      Range<4> C(1,4);
+      Range<16> J(jcb, jce + 1);
+      Range<1> C(1,4);
 #endif
 #ifdef ENABLE_HIP
-      Range<8> I(icb, ice + 1);
-      Range<8> J(jcb, jce + 1);
-      Range<4> C(1,4);
+// 32,32,1 = 1024 55us per call
+// 32,16,1 = 512 46 ** Best
+// 16 26 2 = 512 52
+// 8 8 1 = 64 56 
+// 20 16 = 320  1 54 us 
+// 16 16 2 =512 52 us
+// 16 16 1 = 256 50 us
+// 16 8 4 = 512 64 us
+
+
+      Range<32> I(icb, ice + 1);
+      Range<16> J(jcb, jce + 1);
+      Range<1> C(1,4);
 #endif
       forall3async(I, J, C, [=] RAJA_DEVICE(int ic, int jc, int c) {
 #else

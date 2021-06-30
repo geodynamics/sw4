@@ -452,6 +452,8 @@ void forall3asyncAT(T1 &range3, LoopBody &&body) {
 
 template <int N>
 class Tclass {};
+template<int... Args>
+class Gclass{};
 
 template <int N, typename Tag, typename Func>
 __launch_bounds__(256,2) __global__
