@@ -1121,6 +1121,23 @@ void Sarray::assign(const double* ar, int corder) {
     PREFETCH(ar);
     float_sw4* mdata = m_data;
 
+#if !defined(RAJA_ONLY)
+#ifdef ENABLE_CUDA
+    Range<16> I(0,mni);
+    Range<4> J(0,mnj);
+    Range<4> K(0,mnk);
+#endif
+#ifdef ENABLE_HIP
+    Range<64> I(0,mni);
+    Range<2> J(0,mnj);
+    Range<2> K(0,mnk);
+#endif
+    std::cout<<"CALL TO ASSIGN "<<std::flush;
+    forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+	for( int c=0;c<mnc;c++) mdata[i + mni * j + mni * mnj * k + mni * mnj * mnk * c] =
+				  ar[c + mnc * i + mnc * mni * j + mnc * mni * mnj * k];
+      });  // SYNC_STREAM;
+#else
     RAJA::RangeSegment i_range(0, mni);
     RAJA::RangeSegment j_range(0, mnj);
     RAJA::RangeSegment k_range(0, mnk);
@@ -1131,6 +1148,7 @@ void Sarray::assign(const double* ar, int corder) {
           mdata[i + mni * j + mni * mnj * k + mni * mnj * mnk * c] =
               ar[c + mnc * i + mnc * mni * j + mnc * mni * mnj * k];
         });  // SYNC_STREAM;
+#endif
   } else {
     // Class array in fortran order, input array in corder,
     // #pragma omp parallel for
