@@ -42,6 +42,7 @@
 #include "caliper.h"
 #include "policies.h"
 #include "sw4.h"
+#include "foralls.h"
 // extern "C" {
 
 void addsg4wind_ci(float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
@@ -119,7 +120,64 @@ void addsg4wind_ci(float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
   // #pragma simd
   // 	   for( int i=ifirst+2 ; i<= ilast-2; i++ )
   // 	   {
-
+#if !defined(RAJA_ONLY)
+#ifdef ENABLE_CUDA
+  Range<16> I(ifirst + 2, ilast - 1);
+  Range<4> J(jfirst + 2, jlast - 1);
+  Range<6> K(kwindb, kwinde + 1);
+#endif
+#ifdef ENABLE_HIP
+  Range<64> I(ifirst + 2, ilast - 1);
+  Range<2> J(jfirst + 2, jlast - 1);
+  Range<2> K(kwindb, kwinde + 1);
+#endif
+forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+  for (int c=1;c<4;c++) up(c, i, j, k) -=
+            coeff *
+            (
+                // x-differences
+                strx(i) * coy(j) * coz(k) *
+                    (rho(i + 1, j, k) * dcx(i + 1) *
+                         (u(c, i + 2, j, k) - 2 * u(c, i + 1, j, k) +
+                          u(c, i, j, k)) -
+                     2 * rho(i, j, k) * dcx(i) *
+                         (u(c, i + 1, j, k) - 2 * u(c, i, j, k) +
+                          u(c, i - 1, j, k)) +
+                     rho(i - 1, j, k) * dcx(i - 1) *
+                         (u(c, i, j, k) - 2 * u(c, i - 1, j, k) +
+                          u(c, i - 2, j, k)) -
+                     rho(i + 1, j, k) * dcx(i + 1) *
+                         (um(c, i + 2, j, k) - 2 * um(c, i + 1, j, k) +
+                          um(c, i, j, k)) +
+                     2 * rho(i, j, k) * dcx(i) *
+                         (um(c, i + 1, j, k) - 2 * um(c, i, j, k) +
+                          um(c, i - 1, j, k)) -
+                     rho(i - 1, j, k) * dcx(i - 1) *
+                         (um(c, i, j, k) - 2 * um(c, i - 1, j, k) +
+                          um(c, i - 2, j, k)))
+                // y-differences
+                + stry(j) * cox(i) * coz(k) *
+                      (rho(i, j + 1, k) * dcy(j + 1) *
+                           (u(c, i, j + 2, k) - 2 * u(c, i, j + 1, k) +
+                            u(c, i, j, k)) -
+                       2 * rho(i, j, k) * dcy(j) *
+                           (u(c, i, j + 1, k) - 2 * u(c, i, j, k) +
+                            u(c, i, j - 1, k)) +
+                       rho(i, j - 1, k) * dcy(j - 1) *
+                           (u(c, i, j, k) - 2 * u(c, i, j - 1, k) +
+                            u(c, i, j - 2, k)) -
+                       rho(i, j + 1, k) * dcy(j + 1) *
+                           (um(c, i, j + 2, k) - 2 * um(c, i, j + 1, k) +
+                            um(c, i, j, k)) +
+                       2 * rho(i, j, k) * dcy(j) *
+                           (um(c, i, j + 1, k) - 2 * um(c, i, j, k) +
+                            um(c, i, j - 1, k)) -
+                       rho(i, j - 1, k) * dcy(j - 1) *
+                           (um(c, i, j, k) - 2 * um(c, i, j - 1, k) +
+                            um(c, i, j - 2, k)))) /
+            rho(i, j, k);
+      });  // SYNC_STREAM;
+#else
   RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
   RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
   RAJA::RangeSegment k_range(kwindb, kwinde + 1);
@@ -172,6 +230,7 @@ void addsg4wind_ci(float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
                             um(c, i, j - 2, k)))) /
             rho(i, j, k);
       });  // SYNC_STREAM;
+#endif
 }
 
 //}
