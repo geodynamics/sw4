@@ -1132,12 +1132,15 @@ void Sarray::assign(const double* ar, int corder) {
     Range<2> J(0,mnj);
     Range<2> K(0,mnk);
 #endif
-    std::cout<<"CALL TO ASSIGN "<<std::flush;
+    // std::cout<<"FORALL CALL TO ASSIGN \n"<<std::flush;
     forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
-	for( int c=0;c<mnc;c++) mdata[i + mni * j + mni * mnj * k + mni * mnj * mnk * c] =
+	for( int c=0;c<mnc;c++) 
+	  mdata[i + mni * j + mni * mnj * k + mni * mnj * mnk * c] =
 				  ar[c + mnc * i + mnc * mni * j + mnc * mni * mnj * k];
       });  // SYNC_STREAM;
+    SYNC_DEVICE;
 #else
+    //std::cout<<"RAJA CALL TO ASSIGN \n"<<std::flush;
     RAJA::RangeSegment i_range(0, mni);
     RAJA::RangeSegment j_range(0, mnj);
     RAJA::RangeSegment k_range(0, mnk);
