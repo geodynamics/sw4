@@ -21,6 +21,7 @@ is_nsew = 0
 is_depth = 1
 for line in lines:
     # line = line.lower()
+    is_depth = 1
     if line.startswith("rec") or line.startswith("sac") :
         has_sta = 0
         # Remove "sac/rec" and "\n"
