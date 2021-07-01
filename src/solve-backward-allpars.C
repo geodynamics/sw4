@@ -37,6 +37,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    AlphaVEp.resize(mNumberOfGrids);
 
    BCForcing.resize(mNumberOfGrids);
+   int eglobal=local_to_global_event(event);
 
    int ifirst, ilast, jfirst, jlast, kfirst, klast;
    for( int g = 0; g <mNumberOfGrids; g++ )
@@ -73,6 +74,11 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       gRho[g].set_to_zero();
       gMu[g].set_to_zero();
       gLambda[g].set_to_zero();
+      //      cout << getRank() << " Dimensions in proc: "<< ifirst << " " << ilast << " " << jfirst 
+      //           << " " << jlast << " " << kfirst << " " << klast << endl;
+      //      cout << getRank() << " active region: "<< m_iStartAct[0] << " " << m_iEndAct[0] << " " 
+      //           << m_jStartAct[0] << " " << m_jEndAct[0] << " " << m_kStartAct[0] << " " << m_kEndAct[0]
+      //           << endl; 
    }
 
 
@@ -138,6 +144,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
          communicate_array( Km[g], g );
       cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
       enforceBC( Km, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
+      //      enforceDirichlet5( Km );
 
       time_measure[2] = MPI_Wtime();
 
@@ -163,6 +170,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
          communicate_array( Km[g], g );
       //      cartesian_bc_forcing( t-mDt, BCForcing );
       enforceBC( Km, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
+      //      enforceDirichlet5( Km );
 
       // U-backward solution, predictor
       evalRHS( U, a_Mu, a_Lambda, Lk, AlphaVE );
@@ -172,13 +180,16 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
          communicate_array( Um[g], g );
       cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
       enforceBC( Um, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
-      
+
      // U-backward solution, corrector
       evalDpDmInTime( Up, U, Um, Uacc ); 
 
       // set boundary data on Uacc, from forward solver
       for( int g=0 ; g < mNumberOfGrids ; g++ )
+      {
 	 Upred_saved[g]->pop( Uacc[g], currentTimeStep );
+         communicate_array( Uacc[g], g );
+      }
       enforceBC( Uacc, a_Mu, a_Lambda, AlphaVEm, t, BCForcing );
 
       evalRHS( Uacc, a_Mu, a_Lambda, Lk, AlphaVEm );
@@ -258,9 +269,21 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 	 cout << "   Max norm of backed out Um = " << umx[0]  <<  " " << umx[1]  <<  " " << umx[2]  << endl;
       }
    }
+   if( m_zerograd_at_src )
+   {
+      set_to_zero_at_source( gRho, point_sources, identsources, m_zerograd_pad );
+      set_to_zero_at_source( gMu, point_sources, identsources, m_zerograd_pad );
+      set_to_zero_at_source( gLambda, point_sources, identsources, m_zerograd_pad );
+   }
    communicate_arrays( gRho );
    communicate_arrays( gMu );
    communicate_arrays( gLambda );
+   if( m_filter_gradient )
+   {
+      heat_kernel_filter( gRho,    m_gradfilter_ep, m_gradfilter_it );
+      heat_kernel_filter( gMu,     m_gradfilter_ep, m_gradfilter_it );
+      heat_kernel_filter( gLambda, m_gradfilter_ep, m_gradfilter_it );
+   }
    
 
    //   gRho[0].save_to_disk("grho.bin");
@@ -268,7 +291,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    //   gLambda[0].save_to_disk("glambda.bin");
 
     for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
-       mImage3DFiles[i3]->force_write_image( t, 0, Up, a_Rho, a_Mu, a_Lambda, gRho, gMu, gLambda, mQp, mQs, mPath[event], mZ );
+       mImage3DFiles[i3]->force_write_image( t, 0, Up, a_Rho, a_Mu, a_Lambda, gRho, gMu, gLambda, mQp, mQs, mPath[eglobal], mZ );
 
     for( int i2 = 0 ; i2 < mImageFiles.size() ; i2++ )
     {
@@ -334,7 +357,8 @@ void EW::enforceDirichlet5( vector<Sarray> & a_U )
        for( int j=jfirst ; j <= jlast ; j++ )
 	  for( int i=ifirst ; i <= ilast ; i++ )
 	     a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
-    for( int k=kfirst ; k <= klast ; k++ )
+
+    for( int k=kfirst ; k <= kalast ; k++ )
     {
        for( int j=jfirst ; j <= jafirst-1 ; j++ )
 	  for( int i=ifirst ; i <= ilast ; i++ )

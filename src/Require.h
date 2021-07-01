@@ -85,11 +85,9 @@ if (!(x)) { \
 if (!(x)) { \
   int myRank; \
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank); \
-  if (myRank==0){ \
-     std::cout << kind << ": " << msg << std::endl;	\
-     std::cout << "...at line " << __LINE__ <<		\
-	" of file " << __FILE__ << "." << std::endl;	\
-  }\
+  std::cout << kind << ": " << msg << std::endl;	\
+  std::cout << "...at line " << __LINE__ <<		\
+     " of file " << __FILE__ << "." << std::endl;	\
   MPI_Abort( MPI_COMM_WORLD, 1 );\
 }
 #define REQUIRE2(x, msg) DBC_ASSERTION(x, msg, "Precondition violated")

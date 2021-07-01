@@ -45,6 +45,15 @@
 #endif
 #include "version.h"
 
+#ifdef USE_ZFP
+#include "H5Zzfp_lib.h"
+#include "H5Zzfp_props.h"
+#endif
+
+#ifdef USE_SZ
+#include "H5Z_SZ.h"
+#endif
+
 using namespace std;
 
 void usage(string thereason)
@@ -135,6 +144,17 @@ main(int argc, char **argv)
   vector<vector<Source*> > GlobalSources; 
 // Save the time series here
   vector<vector<TimeSeries*> > GlobalTimeSeries;
+
+#ifdef USE_ZFP
+  H5Z_zfp_initialize();
+#endif
+
+#ifdef USE_SZ
+  char *cfgFile = getenv("SZ_CONFIG_FILE");
+  if (NULL == cfgFile)
+    cfgFile = "sz.config";
+  H5Z_SZ_Init(cfgFile);
+#endif
 
 // make a new simulation object by reading the input file 'fileName'
   EW simulation(fileName, GlobalSources, GlobalTimeSeries );
@@ -242,6 +262,14 @@ main(int argc, char **argv)
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
   
+
+#ifdef USE_ZFP
+  H5Z_zfp_finalize();
+#endif
+
+#ifdef USE_SZ
+  H5Z_SZ_Finalize();
+#endif
 
 // Stop MPI
   MPI_Finalize();

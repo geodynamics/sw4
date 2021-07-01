@@ -1,0 +1,138 @@
+----------------------------------------------------------------
+            sw4 version 3.0-alpha
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Wed Mar  3 14:20:27 PST 2021
+  By user:     houhun
+  Machine:     cori04
+  Compiler:    /opt/cray/pe/craype/2.6.2/bin/CC
+  3rd party include dir: /global/project/projectdirs/m3354/tang/haswell/include, and library dir: /global/project/projectdirs/m3354/tang/haswell/lib
+----------------------------------------------------------------
+
+Input file: ./gaussian-nlcg.in
+Default Supergrid thickness has been tuned; # grid points = 15 grid sizes
+Default Supergrid damping coefficient has been tuned; damping coefficient = 0.02
+
+* Processing the grid command...
+* Setting nx to 131 to be consistent with h=100
+* Setting ny to 131 to be consistent with h=100
+* Setting nz to 131 to be consistent with h=100
+cleanupRefinementLevels: topo_zmax = 0
+ Cartesian refinement levels (z=):
+0
+ Grid distributed on 16 processors 
+ Finest grid size    135 x 135
+ Processor array     4 x 4
+Number of curvilinear grids = 0
+Number of Cartesian grids = 1
+Total number of grids = 1
+Extent of the computational domain xmax=13000 ymax=13000 zmax=13000
+Cartesian refinement levels after correction: 
+Grid=0 z-min=0
+Corrected global_zmax = 13000
+
+Rank=0, Grid #0 (Cartesian), iInterior=[1,33], jInterior=[1,33], kInterior=[1,131]
+
+*** No topography command found in input file. Using z=0 as free surface boundary ***
+
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points      Type
+   0       100       131       131       131      2248091     Cartesian
+Total number of grid points (without ghost points): 2.24809e+06
+
+*** Reading data from Rfile homo.rfile in directory ./
+Read material properties from rfile time=4.236197e-02 seconds
+
+Read station input, took 0seconds.
+
+   Execution time, reading input file 1.98995 seconds 
+  Using Bjorn's fast (parallel) IO library
+Assuming a PARALLEL file system
+Writing images from (up to) 8 procs
+Detected at least one boundary with supergrid conditions
+----------------------------------------------------
+ Making Directory: nlcg_output/
+		
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= -1.180000e+02, Lat=3.700000e+01, x=0.000000e+00, y=0.000000e+00
+1: Lon= -1.178538e+02, Lat=3.700000e+01, x=1.300000e+04, y=7.960204e-13
+2: Lon= -1.178540e+02, Lat=3.688322e+01, x=1.300000e+04, y=1.300000e+04
+3: Lon= -1.180000e+02, Lat=3.688322e+01, x=-7.960204e-13, y=1.300000e+04
+
+Considering all material blocks
+
+rfile command: outside = 68644, material = 2248091
+
+       ----------- Material properties ranges ---------------
+       2000 kg/m^3 <=  Density <= 2000 kg/m^3
+       2000 m/s    <=  Vp      <= 2000 m/s
+       1333.33 m/s    <=  Vs      <= 1333.33 m/s
+       1.5        <=  Vp/Vs   <= 1.5
+       3.55556e+09 Pa     <=  mu      <= 3.55556e+09 Pa
+       8.88888e+08 Pa     <=  lambda  <= 8.88888e+08 Pa
+       ------------------------------------------------------
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=1.000000e+02, minVs/h=13.3333 (Cartesian)
+
+  Assigned material properties
+*** computing the time step ***
+TIME accuracy order=4 CFL=1.2 prel. time step=0.0436564
+*** Initialized Images
+ Min source z-level: 8.000000e+03, max source z-level: 8.000000e+03
+
+   Execution time, start up phase 0.019542 seconds 
+active region, index = 17 115 17 115 1 115
+ xmin, xmax = 1600 11400 hx = 100
+ ymin, ymax = 1600 11400 hy = 100
+ zmin, zmax = -100 11400 hz = 100
+active region, index = 17 115 17 115 1 115
+ xmin, xmax = 1600 11400 hx = 100
+ ymin, ymax = 1600 11400 hy = 100
+ zmin, zmax = -100 11400 hz = 100
+----------------------------------------------------
+ Making Directory: nlcg_output/
+		
+... Done!
+----------------------------------------------------
+Running sw4mopt on 16 processors, using 4 threads/processor...
+Writing output to directory: nlcg_output/
+Begin NLCG iteration by evaluating initial misfit and gradient...
+2000 <=   rho    <= 2000 (grid 0)
+3.55556e+09 <=    mu    <= 3.55556e+09 (grid 0)
+8.88888e+08 <=  lambda  <= 8.88888e+08 (grid 0)
+ cfl_max = 1.19945 on grid 0
+Rename existing file to [nlcg_output/invshot5.h5_out.bak]
+Created SAC HDF5 file [nlcg_output/invshot5.h5_out] time 7.077250e-01 seconds
+Rename existing file to [nlcg_output/invshot5.h5_out_ini.bak]
+Created SAC HDF5 file [nlcg_output/invshot5.h5_out_ini] time 5.964921e-01 seconds
+Initial misfit= 35.0318
+Max norm of scaled total gradient = 0.0108552
+2000 <=   rho    <= 2000 (grid 0)
+3.55556e+09 <=    mu    <= 3.55556e+09 (grid 0)
+8.88888e+08 <=  lambda  <= 8.88888e+08 (grid 0)
+ cfl_max = 1.19945 on grid 0
+Rename existing file to [nlcg_output/invshot5.h5_out.bak]
+Created SAC HDF5 file [nlcg_output/invshot5.h5_out] time 6.994290e-01 seconds
+Rename existing file to [nlcg_output/invshot5.h5_out.bak]
+Created SAC HDF5 file [nlcg_output/invshot5.h5_out] time 6.453931e-01 seconds
+Evaluate at lambda = 1 gives f = 35.0089 (initslope = -0.0229284) 
+2000 <=   rho    <= 2000 (grid 0)
+3.55314e+09 <=    mu    <= 3.55808e+09 (grid 0)
+8.84442e+08 <=  lambda  <= 8.93082e+08 (grid 0)
+ cfl_max = 1.19967 on grid 0
+Rename existing file to [nlcg_output/invshot5.h5_out.bak]
+Created SAC HDF5 file [nlcg_output/invshot5.h5_out] time 1.655831e+00 seconds
+Written dfm to nlcg_output//dfm.h5
+-----------------------------------------------------------------------
+ it=1 1 max-norm scaled gradient= 0.0108286 max-norm model update= 0.473441
+ Misfit= 35.0089
+============================================================
+ sw4mopt ( Material/Source estimation solver) finished! 
+============================================================

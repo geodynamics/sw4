@@ -45,7 +45,7 @@ void wolfecondition( EW& simulation, vector<vector<Source*> >& GlobalSources,
       double slopetmp=0;
       for( int i=0 ; i < nm ; i++ )
 	 slopetmp += pm[i]*dfmnew[i];
-      MPI_Allreduce( &slopetmp, &slope, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      MPI_Allreduce( &slopetmp, &slope, 1, MPI_DOUBLE, MPI_SUM, simulation.m_1d_communicator );
    }
    for( int i=0 ; i < ns ; i++ )
       slope += ps[i]*dfsnew[i];
@@ -75,7 +75,7 @@ void wolfecondition( EW& simulation, vector<vector<Source*> >& GlobalSources,
 		  double slopetmp = 0;
 		  for( int i=0 ; i < nm ; i++ )
 		     slopetmp += pm[i]*dfmnew[i];
-		  MPI_Allreduce( &slopetmp, &slope, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+		  MPI_Allreduce( &slopetmp, &slope, 1, MPI_DOUBLE, MPI_SUM, simulation.m_1d_communicator );
 	       }
 	       for( int i=0 ; i < ns ; i++ )
 		  slope += ps[i]*dfsnew[i];
@@ -125,7 +125,7 @@ void wolfecondition( EW& simulation, vector<vector<Source*> >& GlobalSources,
 		  double slopetmp = 0;
 		  for( int i=0 ; i < nm ; i++ )
 		     slopetmp += pm[i]*dfmnew[i];
-		  MPI_Allreduce( &slopetmp, &slope, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+		  MPI_Allreduce( &slopetmp, &slope, 1, MPI_DOUBLE, MPI_SUM, simulation.m_1d_communicator );
 	       }
 	       for( int i=0 ; i < ns ; i++ )
 		  slope += ps[i]*dfsnew[i];
@@ -234,7 +234,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
       double tmpv[2], tmp[2];
       tmpv[0] = cglen;
       tmpv[1] = ang;
-      MPI_Allreduce( tmpv, tmp, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      MPI_Allreduce( tmpv, tmp, 2, MPI_DOUBLE, MPI_SUM, simulation.m_1d_communicator );
       cglen = tmp[0];
       ang = tmp[1];
    }
@@ -260,7 +260,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	    pm[i] = -dfm[i]/(sfm[i]*sfm[i]);
 	    cglenloc += pm[i]*pm[i]/(sfm[i]*sfm[i]);
 	 }
-	 MPI_Allreduce(&cglenloc,&cglen,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	 MPI_Allreduce(&cglenloc,&cglen,1,MPI_DOUBLE,MPI_SUM,simulation.m_1d_communicator);
       }
       for( int i=0 ; i < ns ; i++ )
       {
@@ -296,7 +296,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
       double initslopetmp = 0;
       for( int i=0; i < nmpard ; i++ )
          initslopetmp += dfm[i]*pm[i];
-      MPI_Allreduce(&initslopetmp, &initslope,1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+      MPI_Allreduce(&initslopetmp, &initslope,1, MPI_DOUBLE, MPI_SUM, simulation.m_1d_communicator );
    }
    for( int i=0; i < ns ; i++ )
       initslope += dfs[i]*ps[i];
@@ -315,7 +315,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	    rellength = rlocal;
       }
       double rellengthtmp=rellength;
-      MPI_Allreduce(&rellengthtmp,&rellength,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+      MPI_Allreduce(&rellengthtmp,&rellength,1,MPI_DOUBLE,MPI_MAX,simulation.m_1d_communicator);
    }
    for( int i=0; i < ns ; i++ )
    {
@@ -417,7 +417,7 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	    for( int i=0 ; i < nmpard ; i++ )
 	       ang += pm[i]*dfm[i];
             double angtmp=ang;
-            MPI_Allreduce(&angtmp,&ang,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+            MPI_Allreduce(&angtmp,&ang,1,MPI_DOUBLE,MPI_SUM,simulation.m_1d_communicator);
 	 }
 	 for( int i=0 ; i < ns ; i++ )
 	    ang += ps[i]*dfs[i];
@@ -577,7 +577,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
       return;
    
    int nmpard_global=0;
-   MPI_Allreduce( &nmpard, &nmpard_global, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+   MPI_Allreduce( &nmpard, &nmpard_global, 1, MPI_INT, MPI_SUM, simulation.m_1d_communicator );
 
    FILE *fd;
    FILE *fdx;
@@ -623,7 +623,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
            GlobalTimeSeries[e][tsi]->resetHDF5file();
          if(myRank == 0) 
            createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "_ini");
-         MPI_Barrier(MPI_COMM_WORLD);
+         MPI_Barrier(simulation.m_1d_communicator);
        }
 #endif
 
@@ -652,7 +652,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
       for( int i=0 ; i < nmpard ; i++ )
          rnorm = rnorm > fabs(dfm[i])*sfm[i] ? rnorm : fabs(dfm[i])*sfm[i];
       double rnormtmp = rnorm;
-      MPI_Allreduce(&rnormtmp, &rnorm, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+      MPI_Allreduce(&rnormtmp, &rnorm, 1, MPI_DOUBLE, MPI_MAX, simulation.m_1d_communicator );
    }
    for( int i=0 ; i < ns ; i++ )
       rnorm = rnorm > fabs(dfs[i])*sf[i] ? rnorm : fabs(dfs[i])*sf[i];
@@ -751,7 +751,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 		  scprodsloc[0] += sm[j+nmpard*vi]*ym[j+nmpard*vi];
 		  scprodsloc[1] += sm[j+nmpard*vi]*dfmtemp[j];
 	       }
-	       MPI_Allreduce( scprodsloc, scprods, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	       MPI_Allreduce( scprodsloc, scprods, 2, MPI_DOUBLE, MPI_SUM, simulation.m_1d_communicator );
 	    }
 	    for( int j=0 ; j < ns ; j++ )
 	    {
@@ -795,7 +795,8 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 		  gamsloc[0] += sm[i+nmpard*vi]*ym[i+nmpard*vi];
 		  gamsloc[1] += ym[i+nmpard*vi]*ym[i+nmpard*vi];
 	       }
-	       MPI_Allreduce( gamsloc, gams, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	       MPI_Allreduce( gamsloc, gams, 2, MPI_DOUBLE, MPI_SUM,
+                              simulation.m_1d_communicator );
 	    }
 	    for( int i=0 ; i < ns ; i++ )
 	    {
@@ -818,7 +819,8 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
                double scprodloc=0;
 	       for( int j=0 ; j < nmpard ; j++ )
 		  scprodloc += ym[j+nmpard*vi]*dm[j];
-	       MPI_Allreduce( &scprodloc, &scprod, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	       MPI_Allreduce( &scprodloc, &scprod, 1, MPI_DOUBLE, MPI_SUM, 
+                              simulation.m_1d_communicator );
 	    }
 	    for( int j=0 ; j < ns ; j++ )
 	       scprod += y[j+ns*vi]*ds[j];
@@ -899,7 +901,8 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 	    xm[i]  = xam[i];
 	 }
          double dxnormloc=dxnorm;
-         MPI_Allreduce(&dxnormloc,&dxnorm,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+         MPI_Allreduce(&dxnormloc,&dxnorm,1,MPI_DOUBLE,MPI_MAX,
+                       simulation.m_1d_communicator );
       } // end if nmpard > 0 (distributed parameters)      
       
       for( int i=0 ; i < ns ; i++ ) // src and shared material parameters
@@ -934,7 +937,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 	    sctmp[0] += dmsave[i]*dfm[i];
 	    sctmp[1] += dmsave[i]*dfpm[i];
 	 }
-         MPI_Allreduce(sctmp,sc,2,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+         MPI_Allreduce(sctmp,sc,2,MPI_DOUBLE,MPI_SUM,simulation.m_1d_communicator);
       }
       for( int i=0 ; i < ns ; i++ )
       {
@@ -951,7 +954,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 	 for( int i=0 ; i < nmpard ; i++ )
 	    if( fabs(dfpm[i])*sfm[i] > rnormloc )
 	       rnormloc = fabs(dfpm[i])*sfm[i];
-         MPI_Allreduce(&rnormloc,&rnorm,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+         MPI_Allreduce(&rnormloc,&rnorm,1,MPI_DOUBLE,MPI_MAX,simulation.m_1d_communicator);
       }
 
       for( int i=0 ; i < ns ; i++ )

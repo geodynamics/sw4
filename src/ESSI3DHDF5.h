@@ -53,10 +53,11 @@ public:
   void close_file();
   void write_header(double h, double (&lonlat_origin)[2], double az,
     double (&origin)[3], int cycle, double t, double dt);
-  void write_topo(double* window_array);
+  void write_topo(void* window_array);
 
-  void init_write_vel(int ntimestep);
-  void write_vel(double* window_array, int comp, int cycle);
+  void write_vel(void* window_array, int comp, int cycle, int nstep);
+
+  void init_write_vel(int ntimestep, int ZFPmode, double ZFPpar, int dumpInterval);
 
   const std::string& filename() {return m_filename;};
   void set_ihavearray(bool ihavearray) {m_ihavearray=ihavearray;};
@@ -88,6 +89,8 @@ private:
   hid_t m_mpiprop_id;
   hid_t m_vel_dataset_id[3];
   hid_t m_vel_dataspace_id[3];
+
+  hsize_t *m_all_start_count;
 #endif // def USE_HDF5
 };
 

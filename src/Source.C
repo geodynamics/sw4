@@ -546,10 +546,9 @@ void Source::correct_Z_level( EW *a_ew )
   int i,j,k,g;
 // preliminary determination of the nearest grid point (already did this in the constructor)
   int success = a_ew->computeNearestGridPoint2( i, j, k, g, mX0, mY0, mZ0 );
-
 // does this processor know about topography at this location?
   m_myPoint = success && a_ew->interior_point_in_proc(i, j, g);
-
+  
   if( !a_ew->topographyExists() ) // this is the easy case w/o topography
   {
     m_zTopo = 0.;
@@ -567,10 +566,10 @@ void Source::correct_Z_level( EW *a_ew )
 // We could remove this check if we were certain that interior_point_in_proc() never lies
   int iwrite = m_myPoint ? 1 : 0;
   int size;
-  MPI_Comm_size(MPI_COMM_WORLD,&size);
+  MPI_Comm_size(a_ew->m_1d_communicator,&size);
   std::vector<int> whoIsOne(size);
   int counter = 0;
-  MPI_Allgather(&iwrite, 1, MPI_INT, &whoIsOne[0], 1, MPI_INT,MPI_COMM_WORLD);
+  MPI_Allgather(&iwrite, 1, MPI_INT, &whoIsOne[0], 1, MPI_INT,a_ew->m_1d_communicator);
   for (unsigned int i = 0; i < whoIsOne.size(); ++i)
     if (whoIsOne[i] == 1)
       {
@@ -602,7 +601,7 @@ void Source::correct_Z_level( EW *a_ew )
   {
     zTopoLoc = -1e38;
   }
-  MPI_Allreduce( &zTopoLoc, &m_zTopo, 1, a_ew->m_mpifloat, MPI_MAX, MPI_COMM_WORLD );
+  MPI_Allreduce( &zTopoLoc, &m_zTopo, 1, a_ew->m_mpifloat, MPI_MAX, a_ew->m_1d_communicator );
   
   // printf("Proc #%i: z-coordinate of topo = %e, relative-z = %i\n", a_ew->getRank(), m_zTopo, 
   // 	 (int) m_zRelativeToTopography);
@@ -688,7 +687,7 @@ void Source::compute_grid_point( EW* a_ew )
       inds[3] = g;
    }
    int indsg[4]={0,0,0,0};
-   MPI_Allreduce( inds, indsg, 4, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+   MPI_Allreduce( inds, indsg, 4, MPI_INT, MPI_MAX, a_ew->m_1d_communicator );
    m_i0 = indsg[0];
    m_j0 = indsg[1];
    m_k0 = indsg[2];
@@ -1365,7 +1364,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    int gg = -1;
    if( success )
       gg = g;
-   MPI_Allreduce(&gg,&g,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD);
+   MPI_Allreduce(&gg,&g,1,MPI_INT,MPI_MAX,a_EW->m_1d_communicator);
    float_sw4 q, r, s;
    float_sw4 h = a_EW->mGridSize[g];
    bool canBeInverted, curvilinear;
@@ -1385,12 +1384,12 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
       // First find out the ID of a processor that defines s ...
       int s_owner = -1;
       if( canBeInverted )
-         MPI_Comm_rank(MPI_COMM_WORLD, &s_owner );
+         MPI_Comm_rank(a_EW->m_1d_communicator, &s_owner );
       int s_owner_tmp = s_owner;
-      MPI_Allreduce( &s_owner_tmp, &s_owner, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+      MPI_Allreduce( &s_owner_tmp, &s_owner, 1, MPI_INT, MPI_MAX, a_EW->m_1d_communicator );
       // ...then broadcast s
       if( s_owner > -1 )
-	 MPI_Bcast( &s, 1, a_EW->m_mpifloat, s_owner, MPI_COMM_WORLD );// s_owner is sender, all others receive
+	 MPI_Bcast( &s, 1, a_EW->m_mpifloat, s_owner, a_EW->m_1d_communicator );// s_owner is sender, all others receive
       else
       {
 	 printf("ERROR in Source::set_grid_point_sources4, no processor could invert the grid mapping \n");
@@ -1852,7 +1851,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
    }
    
    int myid;
-   MPI_Comm_rank(MPI_COMM_WORLD, &myid );
+   MPI_Comm_rank(a_EW->m_1d_communicator, &myid );
 //   cout << myid << " SOURCE at " << ic << " " << jc << " "  << kc ;
 //   if( canBeInverted )
 //      cout << " can be inverted";
@@ -2129,7 +2128,7 @@ void Source::set_grid_point_sources4( EW *a_EW, vector<GridPointSource*>& point_
 
          // Simpler solution
          float_sw4 zder[9];
-         MPI_Allreduce( zdertmp, zder, 9, a_EW->m_mpifloat, MPI_SUM, MPI_COMM_WORLD );
+         MPI_Allreduce( zdertmp, zder, 9, a_EW->m_mpifloat, MPI_SUM, a_EW->m_1d_communicator );
          zq  = zder[0];
          zr  = zder[1];
          zs  = zder[2];

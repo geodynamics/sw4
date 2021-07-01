@@ -1375,3 +1375,11 @@ void Sarray::transform_coordsystem()
       }
    }
 }
+
+//-----------------------------------------------------------------------
+void Sarray::add( Sarray& ar )
+{
+   size_t npts = static_cast<size_t>(m_ni)*m_nj*m_nk*m_nc;
+   for( size_t ind=0 ; ind < npts; ind++ )
+      m_data[ind] += ar.m_data[ind];
+}
