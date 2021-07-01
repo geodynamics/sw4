@@ -276,24 +276,24 @@ void MaterialBlock::set_material_properties( std::vector<Sarray> & rho,
   MPI_Type_size(MPI_INT,&mpisizeint );
   if( sizeof(size_t) == mpisizelong )
   {
-     MPI_Reduce(&outside, &outsideSum, 1, MPI_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
-     MPI_Reduce(&material, &materialSum, 1, MPI_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
+     MPI_Reduce(&outside, &outsideSum, 1, MPI_LONG, MPI_SUM, 0, mEW->m_1d_communicator );
+     MPI_Reduce(&material, &materialSum, 1, MPI_LONG, MPI_SUM, 0, mEW->m_1d_communicator );
   }
   else if( sizeof(size_t) == mpisizelonglong )
   {
-     MPI_Reduce(&outside, &outsideSum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
-     MPI_Reduce(&material, &materialSum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
+     MPI_Reduce(&outside, &outsideSum, 1, MPI_LONG_LONG, MPI_SUM, 0, mEW->m_1d_communicator );
+     MPI_Reduce(&material, &materialSum, 1, MPI_LONG_LONG, MPI_SUM, 0, mEW->m_1d_communicator );
   }
   else if( sizeof(size_t) == mpisizeint )
   {
-     MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
-     MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+     MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0, mEW->m_1d_communicator );
+     MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, mEW->m_1d_communicator );
   }
   else
   {
      int outsidei=outside, materiali=material, outsideSumi, materialSumi;
-     MPI_Reduce(&outsidei, &outsideSumi, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
-     MPI_Reduce(&materiali, &materialSumi, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+     MPI_Reduce(&outsidei, &outsideSumi, 1, MPI_INT, MPI_SUM, 0, mEW->m_1d_communicator );
+     MPI_Reduce(&materiali, &materialSumi, 1, MPI_INT, MPI_SUM, 0, mEW->m_1d_communicator );
      outsideSum=outsideSumi;
      materialSum=materialSumi;
   }

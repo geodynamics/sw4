@@ -229,8 +229,8 @@ void SfileOutput::define_pio( )
     int iwrite = 0;
     int nrwriters = mEW->getNumberOfWritersPFS();
     int nproc=0, myid=0;
-    MPI_Comm_size( MPI_COMM_WORLD, &nproc);
-    MPI_Comm_rank( MPI_COMM_WORLD, &myid);
+    MPI_Comm_size( mEW->m_1d_communicator, &nproc);
+    MPI_Comm_rank( mEW->m_1d_communicator, &myid);
 
     // new hack
     int* owners = new int[nproc];
@@ -257,7 +257,8 @@ void SfileOutput::define_pio( )
         iwrite = 1;
 //      std::cout << "Define PIO: grid " << g << " myid = " << myid << " iwrite= " << iwrite << " start= "
     //		<< start[0] << " " << start[1] << " " << start[2] << std::endl;
-    m_parallel_io[g-glow] = new Parallel_IO( iwrite, mEW->usingParallelFS(), global, local, start );
+    m_parallel_io[g-glow] = new Parallel_IO( iwrite, mEW->usingParallelFS(), global, local, start,
+                                             mEW->m_1d_communicator );
     delete[] owners;
   }
   m_isDefinedMPIWriters = true;
@@ -666,7 +667,7 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
   hid_t h5_fid, grp, grp2, dset, attr, dtype, dspace, attr_space1, attr_space2, attr_space3, fapl, dxpl, filespace, memspace;
   int ret;
   int myid=0;
-  MPI_Comm_rank( MPI_COMM_WORLD, &myid);
+  MPI_Comm_rank( mEW->m_1d_communicator, &myid);
 
   hsize_t offsets[3], counts[3];
   char dname[128], gname[128];
@@ -869,7 +870,7 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
 
   fapl = H5Pcreate(H5P_FILE_ACCESS);
   H5Pset_alignment(fapl, alignment, alignment);
-  H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
+  H5Pset_fapl_mpio(fapl, mEW->m_1d_communicator, MPI_INFO_NULL);
   dxpl = H5Pcreate(H5P_DATASET_XFER);
   H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE);
 

@@ -1,0 +1,59 @@
+name: linux 
+
+on:
+  push:
+    branches: [ developer ]
+  pull_request:
+    branches: [ developer ]
+
+  # Allows to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  SW4:
+    runs-on: ubuntu-latest
+    # timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Dependencies
+        run: .github/workflows/dependencies-linux.sh
+
+      - name: Build SW4
+        run: make sw4 CXX=mpicxx FC=gfortran debug=no proj=yes hdf5=yes fftw=yes zfp=no prec=double EXTRA_LINK_FLAGS="-lgfortran -lhdf5 -llapack" EXTRA_CXX_FLAGS=-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H HDF5ROOT=/usr/lib/x86_64-linux-gnu/hdf5/openmpi FFTWHOME=/usr/lib/x86_64-linux-gnu -j2
+
+      - name: Test SW4
+        working-directory: ./pytest
+        run: |
+          # All tests except HDF5 ones 
+          ./test_sw4.py -m 2 -t 2 -u 0
+          # Run 1st HDF5 test
+          ./test_sw4.py -m 2 -t 2 -u 1
+          # Run 2nd HDF5 test
+          ./test_sw4.py -m 2 -t 2 -u 2
+          # Run 3rd HDF5 test
+          ./test_sw4.py -m 2 -t 2 -u 3
+
+  # SW4mopt:
+  #   runs-on: ubuntu-latest
+  #   # timeout-minutes: 90
+
+  #   steps:
+  #     - uses: actions/checkout@v2
+
+  #     - name: Dependencies
+  #       run: .github/workflows/dependencies-linux.sh
+       
+  #     - name: Build SW4mopt
+  #       run: make sw4mopt CXX=mpicxx FC=gfortran debug=no proj=yes hdf5=yes fftw=yes zfp=no prec=double EXTRA_LINK_FLAGS="-lgfortran -lhdf5 -llapack" EXTRA_CXX_FLAGS=-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H HDF5ROOT=/usr/lib/x86_64-linux-gnu/hdf5/openmpi FFTWHOME=/usr/lib/x86_64-linux-gnu -j2
+
+  #     - name: Test SW4mopt
+  #       working-directory: ./pytest-sw4mopt
+  #       run: |
+  #         ./test_sw4mopt.py -d optimize_mp -m 2 -t 2 -v
+  #         echo "Output"
+  #         cat ./gaussian/*.out
+  #         echo "Error log"
+  #         cat ./gaussian/*.err
+

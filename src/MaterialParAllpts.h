@@ -38,6 +38,7 @@ public:
 			 double* sfd, double* sfs, bool compute_derivative, 
 			 double* dmfd_reg, double* dmfs_reg );
    int get_varcase();
+   void write_dfm_hdf5(double* dfm, std::string fname,  MPI_Comm comm) {printf("%s not supported!\n", __func__);}
 };
 
 #endif

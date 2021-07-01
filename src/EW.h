@@ -106,7 +106,11 @@ int getNumberOfSteps(int event=0) const;
 float_sw4 getGlobalZmin() { return m_global_zmin; }
 float_sw4 getGlobalZmax() { return m_global_zmax; }
 int getNumberOfEvents() const;
+int getNumberOfLocalEvents() const;
 int findNumberOfEvents();
+bool event_is_in_proc( int e ) const;
+int global_to_local_event( int e ) const;
+int local_to_global_event( int e ) const;
 
 void setupRun( vector<vector<Source*> > & a_GlobalUniqueSources );
 
@@ -308,6 +312,7 @@ void computeDTanisotropic();
    //bool inTestSourceMode() { return mTestSource; }
    //bool inTestLambMode() { return mTestLamb; }
 bool proc_zero() const;
+bool proc_zero_evzero() const;
 int no_of_procs() const;
 void create_directory(const string& path);
 void initialize_image_files();
@@ -376,6 +381,12 @@ bool proc_decompose_2d( int ni, int nj, int nproc, int proc_max[2] );
 void decomp1d( int nglobal, int myid, int nproc, int& s, int& e );
 void decomp1d_2( int N, int myid, int nproc, int& s, int& e, int nghost, int npad );
 void coarsen1d( int& n, int& ifirst, int& ilast, int periodic );
+
+bool node_core_decomp( int ni, int nj, int& Cx, int& Cy, int& Nx, int &Ny );
+void my_node_core_rank( int Cx, int Cy, int Nx, int Ny,
+                        int& cx, int& cy, int& nx, int &ny );
+int  my_node_core_id( int ni,int nj, int proc_max[2] );
+
 void allocateCurvilinearArrays();
 void generate_grid();
 void setup_metric();
@@ -576,7 +587,7 @@ void geodyn_up_from_uacc( vector<Sarray>& Up, vector<Sarray>& Uacc,
 void save_geoghost( vector<Sarray>& U );
 void restore_geoghost( vector<Sarray>& U );
 void geodynbcGetSizes( string filename, float_sw4 origin[3], float_sw4 &cubelen,
-		       float_sw4& zcubelen, bool &found_latlon, double& lat, 
+		       float_sw4& zcubelen, float_sw4& hcube, bool &found_latlon, double& lat, 
 		       double& lon, double& az, int& adjust );
 
 void geodynFindFile(char* buffer);
@@ -1290,9 +1301,19 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void checkpoint_twilight_test( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarray>& Up,
 				  vector<Sarray*> AlphaVEm, vector<Sarray*> AlphaVE,
 				  vector<Sarray*> AlphaVEp, vector<Source*> a_Sources, float_sw4 t );
+   void set_to_zero_at_source( vector<Sarray> & a_U, vector<GridPointSource*> point_sources,
+                               vector<int> identsources, int padding );
+   void set_zerograd();
+   void set_zerograd_pad(int pad);
+   void filter_bc( Sarray& ufi, Sarray& u, int g, float_sw4 ep );
+   void heat_kernel_filter( vector<Sarray>& u, float_sw4 ep, int nit );
+   void set_filtergrad();
+   void set_filterit(int filterit);
+   void set_filterpar(float_sw4 filterpar);
+
    //   TestGrid* create_gaussianHill();
    TestTwilight* create_twilight();
-   TestEcons* create_energytest();
+   TestEcons* create_energytest();   
    TestPointSource* get_point_source_test();
    AllDims* get_fine_alldimobject( );
    void grid_information( int g );
@@ -1363,7 +1384,7 @@ int m_opttest;
 
 // material description used with material surfaces and the ifile command
 vector<MaterialProperty*> m_materials;
-MPI_Comm m_cartesian_communicator;
+MPI_Comm m_cartesian_communicator, m_1d_communicator, m_cross_communicator;
 
 ofstream msgStream;
 
@@ -1386,6 +1407,9 @@ void revvector( int npts, float_sw4* v );
 
 int m_nevent; // Number of events, needed for multiple event material optimization.
 int m_nevents_specified; // Number of event lines in input file
+bool m_events_parallel; // Process events in parallel
+int m_eStart, m_eEnd;
+int m_event_in_proc; // Event number [0,nevent) in this proc, when using parallel events
 map<string,int> m_event_names;
 
 // epicenter
@@ -1660,9 +1684,14 @@ int m_cgstepselection, m_cgvarcase;
 bool m_cgfletcherreeves, m_do_linesearch;
 bool m_opt_testing;
 int m_opt_method, m_lbfgs_m;
+bool m_zerograd_at_src, m_filter_gradient;
+int m_zerograd_pad, m_gradfilter_it;
+float_sw4 m_gradfilter_ep;
+
    // perturbations for testing
 float_sw4 m_perturb;
 int m_iperturb, m_jperturb, m_kperturb, m_pervar;
+
 
 // Number of grid points per wave length, P = min Vs/(f*h) 
 vector<float_sw4> mMinVsOverH;

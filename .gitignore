@@ -11,9 +11,9 @@ build/
 
 *.synctex.gz
 
-optimize/
+optimize*/
 
-debug/
+debug*/
 
 *.o
 

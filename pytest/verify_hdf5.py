@@ -132,7 +132,7 @@ def read_sw4img_hdf5(fname):
 
 
 def read_essi(fname):
-    essi = h5py.File(fname)
+    essi = h5py.File(fname, 'r')
     data0 = essi["vel_0 ijk layout"][:]
     data1 = essi["vel_1 ijk layout"][:]
     data2 = essi["vel_2 ijk layout"][:]
@@ -198,7 +198,9 @@ def verify(pytest_dir, tolerance):
     #     print ('All %d images data match!' % nimg)
 
     essi_fname = hdf5_dir + 'essioutput.cycle=000.essi'
+    ref_essi_fname = ref_dir + 'essioutput.cycle=000.essi'
     data0, data1, data2 = read_essi(essi_fname)
+    ref_data0, ref_data1, ref_data2 = read_essi(ref_essi_fname)
     sum0 = np.sum(data0)
     sum1 = np.sum(data1)
     sum2 = np.sum(data2)
@@ -208,16 +210,26 @@ def verify(pytest_dir, tolerance):
     max0 = np.max(data0)
     max1 = np.max(data1)
     max2 = np.max(data2)
+
+    ref_sum0 = np.sum(ref_data0)
+    ref_sum1 = np.sum(ref_data1)
+    ref_sum2 = np.sum(ref_data2)
+    ref_min0 = np.min(ref_data0)
+    ref_min1 = np.min(ref_data1)
+    ref_min2 = np.min(ref_data2)
+    ref_max0 = np.max(ref_data0)
+    ref_max1 = np.max(ref_data1)
+    ref_max2 = np.max(ref_data2)
     # larger tolerance for sum data
-    if np.absolute(sum0+93573.17) > tolerance*1e4 or np.absolute(sum1+93573.17) > tolerance*1e4 or np.absolute(sum2+25479.352) > tolerance*1e4:
+    if np.absolute(sum0-ref_sum0) > tolerance*1e4 or np.absolute(sum1-ref_sum1) > tolerance*1e4 or np.absolute(sum2-ref_sum2) > tolerance*1e4:
         print ("ESSI data sum not match!", sum0, sum1, sum2)
         return False
 
-    if np.absolute(min0+7.4462595) > tolerance or np.absolute(min1+7.4462595) > tolerance or np.absolute(min2+3.6428568) > tolerance:
+    if np.absolute(min0-ref_min0) > tolerance or np.absolute(min1-ref_min1) > tolerance or np.absolute(min2-ref_min2) > tolerance:
         print ("ESSI data min not match!", min0, min1, min2)
         return False
 
-    if np.absolute(max0-6.706221) > tolerance or np.absolute(max1-6.706221) > tolerance or np.absolute(max2-2.7557883) > tolerance:
+    if np.absolute(max0-ref_max0) > tolerance or np.absolute(max1-ref_max1) > tolerance or np.absolute(max2-ref_max2) > tolerance:
         print ("ESSI data max not match!", max0, max1, max2)
         return False
 
