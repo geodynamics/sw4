@@ -7,3 +7,6 @@
 [submodule "tpl/PROJ"]
 	path = tpl/PROJ
 	url = https://github.com/OSGeo/PROJ.git
+[submodule "tpl/Umpire"]
+	path = tpl/Umpire
+	url = https://github.com/LLNL/Umpire.git
