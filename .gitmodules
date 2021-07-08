@@ -4,3 +4,6 @@
 [submodule "tpl/RAJA"]
 	path = tpl/RAJA
 	url = https://github.com/LLNL/RAJA.git
+[submodule "tpl/PROJ"]
+	path = tpl/PROJ
+	url = https://github.com/OSGeo/PROJ.git
