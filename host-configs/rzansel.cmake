@@ -1,4 +1,4 @@
-
+set (LAPACK_DIR "/usr/tcetmp/packages/lapack/lapack-3.9.0-gcc-7.3.1" CACHE STRING "")
 set (ENABLE_MPI ON CACHE BOOL "" FORCE)
 set (ENABLE_CUDA ON CACHE BOOL "" FORCE)
 set (ENABLE_RAJA ON CACHE BOOL "" FORCE)
@@ -28,7 +28,7 @@ set(CMAKE_CUDA_HOST_COMPILER "${CMAKE_CXX_COMPILER}" CACHE PATH "")
 #set(_cuda_arch "sm_70")
 set(CMAKE_CUDA_FLAGS "-lineinfo -restrict --expt-extended-lambda " CACHE STRING "")
 
-set(CUDA_SEPARABLE_COMPILATION ON CACHE BOOL "" )
+set(CUDA_SEPARABLE_COMPILATION ON CACHE BOOL "" FORCE)
 
 # nvcc does not like gtest's 'pthreads' flag
 set(gtest_disable_pthreads ON CACHE BOOL "")

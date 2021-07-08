@@ -1,3 +1,53 @@
+# first Check for LAPACK_DIR
+if (NOT EXISTS "${LAPACK_DIR}")
+    message(FATAL_ERROR "Given LAPACK_DIR does not exist: ${LAPACK_DIR}")
+endif()
+
+if (NOT IS_DIRECTORY "${LAPACK_DIR}")
+    message(FATAL_ERROR "Given LAPACK_DIR is not a directory: ${LAPACK_DIR}")
+endif()
+
+# Find includes directory
+find_path( LAPACK_INCLUDE_DIR lapack.h
+           PATHS  ${LAPACK_DIR}/include/
+                  ${LAPACK_DIR}/include/lua
+           NO_DEFAULT_PATH
+           NO_CMAKE_ENVIRONMENT_PATH
+           NO_CMAKE_PATH
+           NO_SYSTEM_ENVIRONMENT_PATH
+           NO_CMAKE_SYSTEM_PATH)
+
+# Find libraries
+find_library( LAPACK_LIBRARY NAMES lapack
+              PATHS ${LAPACK_DIR}/lib
+              NO_DEFAULT_PATH
+              NO_CMAKE_ENVIRONMENT_PATH
+              NO_CMAKE_PATH
+              NO_SYSTEM_ENVIRONMENT_PATH
+              NO_CMAKE_SYSTEM_PATH)
+
+
+include(FindPackageHandleStandardArgs)
+# handle the QUIETLY and REQUIRED arguments and set LAPACK_FOUND to TRUE
+# if all listed variables are TRUE
+find_package_handle_standard_args(LAPACK  DEFAULT_MSG
+                                  LAPACK_INCLUDE_DIR
+                                  LAPACK_LIBRARY )
+
+if(NOT LAPACK_FOUND)
+    message(FATAL_ERROR "LAPACK_DIR is not a path to a valid LAPACK install")
+endif()
+
+message(STATUS "LAPACK Includes: ${LAPACK_INCLUDE_DIR}")
+message(STATUS "LAPACK Libraries: ${LAPACK_LIBRARY}")
+
+blt_import_library(NAME       lapack
+                   TREAT_INCLUDES_AS_SYSTEM ON
+                   DEFINES    HAVE_LAPACK=1
+                   INCLUDES   ${LAPACK_INCLUDE_DIR}
+                   LIBRARIES  ${LAPACK_LIBRARY}
+                   EXPORTABLE ON)
+
 if (ENABLE_CUDA)
   blt_add_executable(NAME sw4
     HEADERS AllDims.h                   ForcingTwilight.h            MaterialProperty.h      SecondOrderSection.h  boundaryConditionTypes.h  hip_policies.h
@@ -14,7 +64,7 @@ if (ENABLE_CUDA)
     F77_FUNC.h                  MaterialInvtest.h            Require.h               TimeDep.h             forallsdecl.h             time_functions.h
     Filter.h                    MaterialPfile.h              Sarray.h                TimeSeries.h          hip_foralls.h             version.h 
     sw4.h
-    SOURCES EW.C Sarray.C version.C parseInputFile.C ForcingTwilight.C 
+    SOURCES main.C EW.C Sarray.C version.C parseInputFile.C ForcingTwilight.C 
     curvilinearGrid.C boundaryOp.f bndryOpNoGhost.f90  bcfort.f twilightfort.f rhs4th3fort.f
     parallelStuff.C Source.C MaterialProperty.C MaterialData.C material.C setupRun.C 
     solve.C solerr3.f Parallel_IO.C Image.C GridPointSource.C MaterialBlock.C testsrc.f
@@ -29,7 +79,14 @@ if (ENABLE_CUDA)
     oddIevenJinterp.C evenIevenJinterp.C CheckPoint.C Mspace.C RandomizedMaterial.C AllDims.C Patch.C ESSI3D.C 
     MaterialSfile.C MaterialInvtest.C geodyn.C ESSI3DHDF5.C sachdf5.C readhdf5.C CurvilinearInterface2.C 
     TestEcons.C TestTwilight.C  TestPointSource.C curvilinear4sgwind.C GridGeneratorGeneral.C GridGeneratorGaussianHill.C 
-    GridGenerator.C RHS43DEV.C curvilinear4sgcX1.C SfileOutput.C
+    GridGenerator.C RHS43DEV.C curvilinear4sgcX1.C SfileOutput.C addsgdc.C bcfortc.C bcfortanisgc.C bcfreesurfcurvanic.C 
+    boundaryOpc.C energy4c.C checkanisomtrlc.C computedtanisoc.C curvilinear4sgc.C gradientsc.C randomfield3dc.C 
+    innerloop-ani-sgstr-vcc.C ilanisocurvc.C rhs4curvilinearc.C rhs4curvilinearsgc.C rhs4th3fortc.C solerr3c.C testsrcc.C 
+    tw_aniso_forcec.C tw_aniso_force_ttc.C velsumc.C twilightfortc.C twilightsgfortc.C tw_ani_stiffc.C
+    anisomtrltocurvilinearc.C scalar_prodc.C updatememvarc.C addsg4windc.C bndryOpNoGhostc.C rhs4th3windc2.C rhs4th3windc.C
+    quadpack/dqawse.f quadpack/d1mach.f quadpack/dqags.f quadpack/dqaws.f
+    quadpack/dqc25s.f quadpack/dqmomo.f quadpack/dqpsrt.f quadpack/dqk15w.f quadpack/xerror.f quadpack/dqags.f quadpack/dqagse.f
+    quadpack/dqc25s.f quadpack/dqcheb.f quadpack/dqwgts.f quadpack/dqk21.f quadpack/dqelg.f
     DEPENDS_ON cuda mpi)
   blt_add_target_compile_flags(TO sw4 FLAGS -DENABLE_CUDA=1)
   set_property(TARGET sw4 PROPERTY CUDA_ARCHITECTURES 70)
@@ -39,3 +96,7 @@ if (ENABLE_CUDA)
   endif()
   #set (CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-extended-lambda ")
 endif()
+target_link_libraries(sw4 PUBLIC lapack)
+target_link_libraries(sw4 PUBLIC gomp nvidia-ml)
+target_link_libraries(sw4 PUBLIC cuda)
+set_property(TARGET sw4 PROPERTY LINKER_LANGUAGE CXX)
