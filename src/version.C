@@ -90,7 +90,7 @@ std::string getVersionInfo() {
 #endif
 std::string compiler_options() {
   std::stringstream opts;
-  opts << "  Version:      " << VERSION << "\n";
+  opts << "  Version:      " << SW4_GIT_VERSION << "\n";
   opts << "  Options:      "
        << "RAJA(" << RAJA_VERSION_MAJOR << "." << RAJA_VERSION_MINOR << "."
        << RAJA_VERSION_PATCHLEVEL << "):  ";

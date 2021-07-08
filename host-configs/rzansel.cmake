@@ -1,4 +1,5 @@
 set (LAPACK_DIR "/usr/tcetmp/packages/lapack/lapack-3.9.0-gcc-7.3.1" CACHE STRING "")
+set (PROJ4_DIR "/usr/workspace/wsrzd/ramesh/Project6/2021/SCALING/NEWCODE/sw4_cmake/tpl/PROJ/install" CACHE STRING "")
 set (ENABLE_MPI ON CACHE BOOL "" FORCE)
 set (ENABLE_CUDA ON CACHE BOOL "" FORCE)
 set (ENABLE_RAJA ON CACHE BOOL "" FORCE)
