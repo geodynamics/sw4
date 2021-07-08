@@ -98,5 +98,7 @@ if (ENABLE_CUDA)
 endif()
 target_link_libraries(sw4 PUBLIC lapack)
 target_link_libraries(sw4 PUBLIC gomp nvidia-ml)
-target_link_libraries(sw4 PUBLIC cuda)
+#target_link_libraries(sw4 PUBLIC cuda)
 set_property(TARGET sw4 PROPERTY LINKER_LANGUAGE CXX)
+# Can't get target_link_libraries to add -lcuda. Just gets ignored. End run around the problem using BLT
+blt_add_target_link_flags(TO sw4 FLAGS -lcuda)
