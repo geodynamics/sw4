@@ -153,6 +153,7 @@ endif()
 target_link_libraries(sw4 PUBLIC lapack)
 target_link_libraries(sw4 PUBLIC gomp nvidia-ml)
 target_link_libraries(sw4 PUBLIC proj4)
+target_link_libraries(sw4 PUBLIC HDF5::HDF5)
 #target_link_libraries(sw4 PUBLIC cuda)
 set_property(TARGET sw4 PROPERTY LINKER_LANGUAGE CXX)
 # Can't get target_link_libraries to add -lcuda. Just gets ignored. End run around the problem using BLT
