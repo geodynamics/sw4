@@ -23,8 +23,14 @@ set (ENABLE_EXERCISES Off CACHE BOOL "" FORCE)
 set (ENABLE_DOCUMENTATION Off CACHE BOOL "" FORCE)
 set (ENABLE_BENCHMARKS Off CACHE BOOL "" FORCE)
 set(BLT_CXX_STD "c++11" CACHE STRING "")
-include(tpl/RAJA/blt/SetupBLT.cmake)
+include(tpl/blt/SetupBLT.cmake)
 
+if (DEFINED UMPIRE_DIR)
+  find_package(Umpire REQUIRED)
+  blt_print_target_properties(TARGET Umpire)
+else ()
+add_subdirectory(tpl/Umpire)
+endif ()
 
 if (DEFINED RAJA_DIR)
   find_package(RAJA REQUIRED)
@@ -63,4 +69,5 @@ SET(SW4_BASE_COMPILE_FLAGS "-DENABLE_PROJ4 -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_S
 SET(CMAKE_CUDA_FLAGS  "${CMAKE_CUDA_FLAGS} ${SW4_BASE_COMPILE_FLAGS}")
 
 #add_subdirectory(tpl/PROJ)
+
 add_subdirectory(src)
