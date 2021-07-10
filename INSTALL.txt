@@ -104,7 +104,7 @@ lrun -T4 ./sw4 test.in
 ---------------------------------------------------------------------
 Building using cmake ( Experimental WIP)
 ---------------------------------------------------------------------
-0. git checkout raja. Then in the top level directory: git submodule update --init
+0. git checkout raja. Then in the top level directory: git submodule update --init --recursive
 1. module load gcc/8.3.1 , the gcc version of lapack and paralell HDF5
 2. proj4 needs to be built by hand and the path passed to cmake. The copy in the tpl sub-directory may be used. see examples in host-config
 4  mkdir build && cd build
