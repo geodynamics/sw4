@@ -61,7 +61,7 @@ if (NOT IS_DIRECTORY "${LAPACK_DIR}")
 endif()
 
 # Find includes directory
-find_path( LAPACK_INCLUDE_DIR lapack.h
+find_path( LAPACK_INCLUDE_DIR lapacke.h
            PATHS  ${LAPACK_DIR}/include/
                   ${LAPACK_DIR}/include/lua
            NO_DEFAULT_PATH
