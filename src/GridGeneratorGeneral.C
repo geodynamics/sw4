@@ -153,13 +153,13 @@ void GridGeneratorGeneral::generate_grid_and_met_new(EW* a_ew, int g,
   int iSurfTop = g - a_ew->mNumberOfCartesianGrids;
   int iSurfBot = iSurfTop - 1;
   float_sw4 h = a_ew->mGridSize[g];
-  float_sw4 h0 = 2.0 * h;
+  //  float_sw4 h0 = 2.0 * h;
   float_sw4 Nz_real =
       static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
   float_sw4 iNz_real = 1.0 / Nz_real;
-  float_sw4 scaleFact = 0, scaleRatio = 0;
+  float_sw4 scaleRatio = 0;
   if (g > ncg) {
-    scaleFact = (m_topo_zmax - a_ew->m_curviRefLev[g - 1 - ncg]) / m_topo_zmax;
+    //scaleFact = (m_topo_zmax - a_ew->m_curviRefLev[g - 1 - ncg]) / m_topo_zmax;
     scaleRatio = (m_topo_zmax - a_ew->m_curviRefLev[g - 1 - ncg]) /
                  (m_topo_zmax - a_ew->m_curviRefLev[g - ncg]);
   }
@@ -238,8 +238,9 @@ void GridGeneratorGeneral::generate_grid_and_met_new(EW* a_ew, int g,
   //   a_ew->communicate_array( a_z, g );
 
   // Compute metric
-  int ierr = 0;
-  ierr = metric_ci(a_x.m_ib, a_x.m_ie, a_x.m_jb, a_x.m_je, a_x.m_kb, a_x.m_ke,
+  //int ierr = 0;
+  // Error code returned but not checked. PBUGS ? July 12 2021
+  metric_ci(a_x.m_ib, a_x.m_ie, a_x.m_jb, a_x.m_je, a_x.m_kb, a_x.m_ke,
                    a_x.c_ptr(), a_y.c_ptr(), a_z.c_ptr(), a_met.c_ptr(),
                    a_jac.c_ptr());
 }

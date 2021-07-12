@@ -89,11 +89,12 @@ AllDims::AllDims(int nprocs, int ibg, int ieg, int jbg, int jeg, int kbg,
   m_keg = keg + nghost;
 
   // FFTW array distribution
+  
+  ptrdiff_t ni=0, ib=0;
+#ifdef ENABLE_FFTW
   int nig = ieg - ibg + 1 + 2 * nghost;
   int njg = jeg - jbg + 1 + 2 * nghost;
   int nkg = keg - kbg + 1 + 2 * nghost;
-  ptrdiff_t ni, ib;
-#ifdef ENABLE_FFTW
   ptrdiff_t fftw_alloc_local =
       fftw_mpi_local_size_3d(nig, njg, nkg, MPI_COMM_WORLD, &ni, &ib);
   m_fftw_alloc_local = static_cast<size_t>(fftw_alloc_local);
