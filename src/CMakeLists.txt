@@ -71,7 +71,15 @@ find_path( LAPACK_INCLUDE_DIR lapacke.h
            NO_CMAKE_SYSTEM_PATH)
 
 # Find libraries
-find_library( LAPACK_LIBRARY NAMES lapack
+if (ENABLE_HIP)
+         message(STATUS "Enable HIP is defined")
+	set(lalibname "sci_cray" CACHE STRING "" FORCE)
+else()
+         message(STATUS "Enable HIP is not defined")
+	set(lalibname "lapack" CACHE STRING "" FORCE)
+endif()
+message(STATUS "LAPACK looking for ${lalibname}")
+find_library( LAPACK_LIBRARY NAMES ${lalibname}
               PATHS ${LAPACK_DIR}/lib
               NO_DEFAULT_PATH
               NO_CMAKE_ENVIRONMENT_PATH
@@ -178,7 +186,9 @@ target_link_libraries(sw4 PUBLIC umpire)
 target_link_libraries(sw4 PUBLIC lapack)
 target_link_libraries(sw4 PUBLIC gomp nvidia-ml)
 target_link_libraries(sw4 PUBLIC proj4)
+if (ENABLE_HDF5)
 target_link_libraries(sw4 PUBLIC HDF5::HDF5)
+endif()
 #target_link_libraries(sw4 PUBLIC cuda)
 set_property(TARGET sw4 PROPERTY LINKER_LANGUAGE CXX)
 # Can't get target_link_libraries to add -lcuda. Just gets ignored. End run around the problem using BLT

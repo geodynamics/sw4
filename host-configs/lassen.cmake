@@ -3,8 +3,9 @@ set (PROJ4_DIR "/usr/workspace/wave/ramesh/PROJ/proj-5.0.0/install_lassen" CACHE
 #set (UMPIRE_DIR "/usr/workspace/wsrzd/ramesh/UMPIRE/umpire-3.0.0" CACHE STRING "")
 set (ENABLE_MPI ON CACHE BOOL "" FORCE)
 set (ENABLE_CUDA ON CACHE BOOL "" FORCE)
-set (RNABLE_OPENMP OFF CACHE BOOL "" FORCE)
+set (ENABLE_OPENMP OFF CACHE BOOL "" FORCE)
 set (ENABLE_RAJA ON CACHE BOOL "" FORCE)
+set (ENABLE_HDF5 ON CACHE BOOL "" FORCE)
 
 
 set (CUDA_ARCH "sm_70" CACHE STRING "" FORCE)

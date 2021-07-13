@@ -5,7 +5,7 @@ project(SW4 VERSION 1.0 LANGUAGES CXX Fortran)
 
 # Needs this and removal of Fortran above to work with HIP
 #find_package(MPI REQUIRED
- #       COMPONENTS CXX)
+#       COMPONENTS CXX)
 
 configure_file(SW4Config.h.in SW4Config.h)
 
@@ -73,6 +73,7 @@ SET(SW4_BASE_COMPILE_FLAGS "-DUSE_HDF5=1 -DSW4_USE_UMPIRE=1 -DENABLE_PROJ4 -DENA
 SET(CMAKE_CUDA_FLAGS  "${CMAKE_CUDA_FLAGS} ${SW4_BASE_COMPILE_FLAGS}")
 
 #add_subdirectory(tpl/PROJ)
+if (DEFINED ENABLE_HDF5)
 find_package(HDF5)
-
+endif()
 add_subdirectory(src)
