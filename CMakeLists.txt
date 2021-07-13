@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.18)
 project(SW4 VERSION 1.0 LANGUAGES CXX Fortran)
 
 
+# Needs this and removal of Fortran above to work with HIP
+#find_package(MPI REQUIRED
+ #       COMPONENTS CXX)
 
 configure_file(SW4Config.h.in SW4Config.h)
 
