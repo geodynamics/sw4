@@ -150,7 +150,7 @@ set (SW4_SRC_FILES main.C EW.C Sarray.C version.C parseInputFile.C ForcingTwilig
     quadpack/dqc25s.f quadpack/dqcheb.f quadpack/dqwgts.f quadpack/dqk21.f quadpack/dqelg.f)
 
 
-
+find_package(MPI)
 #
 # All the CUDA statements
 #
@@ -158,7 +158,7 @@ if (ENABLE_CUDA)
   blt_add_executable(NAME sw4
     HEADERS ${SW4_HDR_FILES}
     SOURCES ${SW4_SRC_FILES}
-    DEPENDS_ON cuda mpi)
+    DEPENDS_ON cuda MPI::MPI_CXX)
   blt_add_target_compile_flags(TO sw4 FLAGS -DENABLE_CUDA=1)
   set_property(TARGET sw4 PROPERTY CUDA_ARCHITECTURES 70)
   
