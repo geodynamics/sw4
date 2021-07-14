@@ -177,7 +177,7 @@ if (ENABLE_HIP)
   blt_add_executable(NAME sw4
     HEADERS ${SW4_HDR_FILES}
     SOURCES ${SW4_SRC_FILES}
-    DEPENDS_ON hip mpi)
+    DEPENDS_ON hip MPI::MPI_CXX)
   blt_add_target_compile_flags(TO sw4 FLAGS -DENABLE_HIP=1)
 endif()
 
