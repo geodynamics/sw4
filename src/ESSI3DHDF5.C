@@ -467,7 +467,7 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep)
 {
   bool enable_timing = false;
   bool debug=false;
-  debug=true;
+  /* debug=true; */
 #ifdef USE_HDF5
 
   herr_t ierr;
