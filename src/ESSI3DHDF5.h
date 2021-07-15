@@ -49,7 +49,7 @@ public:
     int (&window)[6], bool ihavearray, int precision);
   ~ESSI3DHDF5();
 
-  void create_file();
+  void create_file(bool is_open);
   void close_file();
   void write_header(double h, double (&lonlat_origin)[2], double az,
     double (&origin)[3], int cycle, double t, double dt);
@@ -57,7 +57,7 @@ public:
 
   void write_vel(void* window_array, int comp, int cycle, int nstep);
 
-  void init_write_vel(int ntimestep, int ZFPmode, double ZFPpar, int dumpInterval);
+  void init_write_vel(bool m_isRestart, int ntimestep, int ZFPmode, double ZFPpar, int dumpInterval);
 
   const std::string& filename() {return m_filename;};
   void set_ihavearray(bool ihavearray) {m_ihavearray=ihavearray;};

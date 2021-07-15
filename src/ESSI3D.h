@@ -75,6 +75,7 @@ public:
 
    double getHDF5Timings();
    void set_ntimestep(int ntimestep);
+   void set_restart(bool is_restart);
 
    static void setSteps(int a_steps);
 
@@ -97,7 +98,6 @@ protected:
    void close_vel_file();
    void write_image_hdf5( int cycle, std::string& path, float_sw4 t,
        std::vector<Sarray>& a_U );
-   void define_pio_hdf5( );
 #endif
 
    void compute_file_suffix( int cycle, std::stringstream & fileSuffix );
@@ -141,6 +141,8 @@ private:
    float** m_floatField;
    bool m_ihavearray;
    int m_ntimestep;
+   bool m_isRestart;
+   int m_rank;
 };
 
 #endif
