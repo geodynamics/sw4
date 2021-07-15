@@ -149,7 +149,7 @@ set (SW4_SRC_FILES main.C EW.C Sarray.C version.C parseInputFile.C ForcingTwilig
     quadpack/dqc25s.f quadpack/dqmomo.f quadpack/dqpsrt.f quadpack/dqk15w.f quadpack/xerror.f quadpack/dqags.f quadpack/dqagse.f
     quadpack/dqc25s.f quadpack/dqcheb.f quadpack/dqwgts.f quadpack/dqk21.f quadpack/dqelg.f)
 
-
+# This plus DEPENDS_ON MPI::MPICXX is the workaround for the -pthread problem
 find_package(MPI)
 #
 # All the CUDA statements

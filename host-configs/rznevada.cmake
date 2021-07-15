@@ -8,13 +8,13 @@ set (ENABLE_RAJA ON CACHE BOOL "" FORCE)
 
 set (MPI_HOME "/usr/tce/packages/cray-mpich-tce/cray-mpich-8.1.5.6-aocc-4.1.0/")
 
-set(MPI_CXX_COMPILER "/usr/tce/packages/cray-mpich-tce/cray-mpich-8.1.7-rocmcc-4.2.0/bin/mpihipcc" CACHE PATH "")
+set(MPI_CXX_COMPILER "mpihipcc" CACHE PATH "")
 
 set(HIPCC_VERSION "rocm-4.2.0" CACHE STRING "")
 set(HIPCC_HOME $ENV{ROCM_PATH} )
 
-set(CMAKE_C_COMPILER   "${HIPCC_HOME}/bin/hipcc" CACHE PATH "")
-set(CMAKE_CXX_COMPILER   "${HIPCC_HOME}/bin/hipcc" CACHE PATH "")
+set(CMAKE_C_COMPILER   "hipcc" CACHE PATH "")
+set(CMAKE_CXX_COMPILER   "hipcc" CACHE PATH "")
 #set(CMAKE_CXX_COMPILER "/usr/tce/packages/cray-mpich-tce/cray-mpich-8.1.7-rocmcc-4.2.0/bin/mpihipcc" CACHE PATH "")
 set(BLT_CXX_STD "c++11" CACHE STRING "")
 
