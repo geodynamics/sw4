@@ -143,6 +143,8 @@ void ESSI3D::setup() {
 
   // In k direction, guestimate the index for the requested depth
   int kmax = (int)ceil(mDepth / mEW->mGridSize[g]) + 1;
+  if (mDepth == 1)
+    kmax = 1;
   mGlobalDims[4] = mEW->m_kStartInt[g];
   mGlobalDims[5] = min(kmax, mEW->m_kEndInt[g]);
   if (m_ihavearray) {
