@@ -32,6 +32,7 @@ protected:
                                 std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu, 
                                 std::vector<Sarray>& a_lambda, bool update );
    void find_lims( int ib, int ie, int iepm, int ibpp, int& ibint, int& ieint );
+
    bool compute_overlap( bool force_shared );
    void getwgh( float_sw4 ai, float_sw4 wgh[2], int& sl, int& su );
    void communicate( Sarray& u );

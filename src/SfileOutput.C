@@ -870,7 +870,7 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
 
   fapl = H5Pcreate(H5P_FILE_ACCESS);
   H5Pset_alignment(fapl, alignment, alignment);
-  H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
+  H5Pset_fapl_mpio(fapl, mEW->m_1d_communicator, MPI_INFO_NULL);
   dxpl = H5Pcreate(H5P_DATASET_XFER);
   H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE);
 

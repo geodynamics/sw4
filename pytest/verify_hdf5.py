@@ -197,7 +197,7 @@ def verify(pytest_dir, tolerance):
     # if verify == 1:
     #     print ('All %d images data match!' % nimg)
 
-    essi_fname = hdf5_dir + 'essioutput.cycle=000.essi'
+    essi_fname = hdf5_dir + 'essioutput.ssi'
     ref_essi_fname = ref_dir + 'essioutput.cycle=000.essi'
     data0, data1, data2 = read_essi(essi_fname)
     ref_data0, ref_data1, ref_data2 = read_essi(ref_essi_fname)
