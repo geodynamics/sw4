@@ -623,6 +623,9 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
            GlobalTimeSeries[e][tsi]->resetHDF5file();
          if(myRank == 0) 
            createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "_ini");
+         //         for( int tsi = 0; tsi < GlobalTimeSeries[e].size(); tsi++ )
+         //            if( GlobalTimeSeries[e][tsi]->myPoint() )
+         //               createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][tsi]->getNsteps(), GlobalTimeSeries[e][tsi]->getDt(), "_ini");
          MPI_Barrier(simulation.m_1d_communicator);
        }
 #endif
@@ -856,7 +859,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 
 	 linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
 		     nspar, nmpars, xs, nmpard_global, nmpard, xm, f, dfs, dfm, da, dam,
-		     fabs(alpha), 10.0, tolerance, xa, xam, fp, sf, sfm, myRank,
+		     fabs(alpha), 0.5, tolerance, xa, xam, fp, sf, sfm, myRank,
 		     retcode, nreductions, testing, dfps, dfpm, mopt );
 
          if( retcode == 3 )

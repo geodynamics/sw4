@@ -373,6 +373,7 @@ void MaterialRfile::read_rfile( )
    m_zmaxloc = zmax;
 
   // Read rfile header. Translate each patch into SW4 Cartesian coordinate system
+
    string fname = m_model_dir + "/" + m_model_file;
    int fd = open( fname.c_str(), O_RDONLY );
    if( fd != -1 )
@@ -764,8 +765,10 @@ void MaterialRfile::read_rfile( )
       //      cout << "END DEBUG -----" << endl;
    }
    else
+   {
       cout << "MaterialRfile::read_rfile, error could not open file " << fname << endl;
-
+      MPI_Abort(MPI_COMM_WORLD,0);
+   }
    MPI_Barrier(mEW->m_1d_communicator);
    end_time = MPI_Wtime();
    if (mEW->getRank()==0)

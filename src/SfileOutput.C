@@ -229,8 +229,8 @@ void SfileOutput::define_pio( )
     int iwrite = 0;
     int nrwriters = mEW->getNumberOfWritersPFS();
     int nproc=0, myid=0;
-    MPI_Comm_size( MPI_COMM_WORLD, &nproc);
-    MPI_Comm_rank( MPI_COMM_WORLD, &myid);
+    MPI_Comm_size( mEW->m_1d_communicator, &nproc);
+    MPI_Comm_rank( mEW->m_1d_communicator, &myid);
 
     // new hack
     int* owners = new int[nproc];
@@ -667,7 +667,7 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
   hid_t h5_fid, grp, grp2, dset, attr, dtype, dspace, attr_space1, attr_space2, attr_space3, fapl, dxpl, filespace, memspace;
   int ret;
   int myid=0;
-  MPI_Comm_rank( MPI_COMM_WORLD, &myid);
+  MPI_Comm_rank( mEW->m_1d_communicator, &myid);
 
   hsize_t offsets[3], counts[3];
   char dname[128], gname[128];

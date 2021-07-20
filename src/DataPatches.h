@@ -86,8 +86,9 @@ class DataPatches
    void add_patch( int wind[6] );
    void print_openerr( int ecode ) const;
 public:
-   DataPatches( std::string fname, Sarray& u, int imin, int imax, int jmin, int jmax, int kmax,
-		int nlayers, int ntsteps, double dt, int npad[6] );
+   DataPatches( std::string fname, Sarray& u, int imin, int imax, int jmin, int jmax, 
+                int kmin, int kmax,
+		int nlayers, int ntsteps, double dt, int npad[6], bool top, bool bottom );
    ~DataPatches();
    void push( Sarray& u, int n );
    void pop( Sarray& u, int n );

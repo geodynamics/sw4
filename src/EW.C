@@ -195,18 +195,18 @@ extern "C" {
    void curvilinear4sg( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
 			float_sw4*, float_sw4*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, char* );
 
-   void addgradrho( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
-		    float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
-		    float_sw4*, float_sw4*, int* );
-   void addgradrhoc( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
-		     float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
-		     float_sw4*, float_sw4*, int* );
-   void addgradmula( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
-		     float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
-		     float_sw4*, float_sw4*, float_sw4*, int*, int*, int*, float_sw4* );
-   void addgradmulac( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
-		      float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
-		      float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, int*, int*, float_sw4* );
+   //   void addgradrho( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
+   //		    float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+   //		    float_sw4*, float_sw4*, int* );
+   //   void addgradrhoc( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
+   //		     float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+   //		     float_sw4*, float_sw4*, int* );
+   //   void addgradmula( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
+   //		     float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+   //		     float_sw4*, float_sw4*, float_sw4*, int*, int*, int*, float_sw4* );
+   //   void addgradmulac( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
+   //		      float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+   //   //		      float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, int*, int*, int*, float_sw4* );
 #ifdef ENABLE_OPT
    void F77_FUNC(projectmtrlc,PROJECTMTRLC)( int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*, int*,
 					     double*, double*, double*, double*, double*, double*,
@@ -282,7 +282,7 @@ void energy4c_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int 
 		  float_sw4* __restrict__ a_rho, float_sw4* __restrict__ a_jac, float_sw4& a_energy );
 void addgradrho_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		    int ifirstact, int ilastact, int jfirstact, int jlastact, 
-		    int kfirstact, int klastact, 
+		    int kfirstact, int klastact, int nk,
 		    float_sw4* __restrict__ a_kap, float_sw4* __restrict__ a_kapacc, 
 		    float_sw4* __restrict__ a_um,  float_sw4* __restrict__ a_u,
 		    float_sw4* __restrict__ a_up,  float_sw4* __restrict__ a_uacc,
@@ -290,7 +290,7 @@ void addgradrho_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, in
 		    float_sw4 dt, float_sw4 h, int onesided[6]);
 void addgradrhoc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		     int ifirstact, int ilastact, int jfirstact, int jlastact, 
-		     int kfirstact, int klastact, 
+		     int kfirstact, int klastact, int nk,
 		     float_sw4* __restrict__ a_kap, float_sw4* __restrict__ a_kapacc, 
 		     float_sw4* __restrict__ a_um,  float_sw4* __restrict__ a_u,
 		     float_sw4* __restrict__ a_up,  float_sw4* __restrict__ a_uacc,
@@ -298,7 +298,7 @@ void addgradrhoc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 		     float_sw4 dt, float_sw4* __restrict__ a_jac, int onesided[6]);
 void addgradmula_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		     int ifirstact, int ilastact, int jfirstact, int jlastact, 
-		     int kfirstact, int klastact, 
+		     int kfirstact, int klastact, int nk,
 		     float_sw4* __restrict__ a_kap, float_sw4* __restrict__ a_kapacc, 
 		     float_sw4* __restrict__ a_u,   float_sw4* __restrict__ a_uacc,
 		     float_sw4* __restrict__ a_gmu, float_sw4* __restrict__ a_glambda,
@@ -1477,7 +1477,7 @@ bool EW::interior_point_in_proc(int a_i, int a_j, int a_g)
    bool retval = false;
    if (a_g >=0 && a_g < mNumberOfGrids){
      retval = (a_i >= m_iStartInt[a_g]) && (a_i <= m_iEndInt[a_g]) &&   
-       (a_j >= m_jStartInt[a_g]) && (a_j <= m_jEndInt[a_g]);
+              (a_j >= m_jStartInt[a_g]) && (a_j <= m_jEndInt[a_g]);
    }
    return retval; 
 }
@@ -7355,6 +7355,7 @@ void EW::add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& U
       int jlastact  = m_jEndAct[g];
       int kfirstact = m_kStartAct[g];
       int klastact  = m_kEndAct[g];
+      int nk=m_global_nz[g];
       float_sw4* k_ptr = K[g].c_ptr();
       float_sw4* ka_ptr = Kacc[g].c_ptr();
       float_sw4* um_ptr = Um[g].c_ptr();
@@ -7374,7 +7375,7 @@ void EW::add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& U
 	 {
 	    addgradrhoc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 			    ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
-			    k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
+			    nk, k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
 			    mDt, mJ[g].c_ptr(), onesided_ptr );
 	    addgradmulac_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 			     ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
@@ -7399,11 +7400,11 @@ void EW::add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& U
 	 {
 	    addgradrho_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
 			   ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
-			   k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
+			   nk, k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
 			   mDt, h, onesided_ptr );
-	    addgradmula_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+	    addgradmula_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
 			    ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
-			    k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr,
+			    nk, k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr,
 			    glambda_ptr, mDt, h, onesided_ptr, nb, wb, m_bop );
 	 }
 //FTNC	 else
@@ -8435,4 +8436,37 @@ void EW::set_filterit(int filterit)
 void EW::set_filterpar(float_sw4 filterpar)
 {
    m_gradfilter_ep = filterpar;
+}
+
+//-----------------------------------------------------------------------
+void rhs4th3point( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+                  int nk, int* __restrict__ onesided, float_sw4* __restrict__ a_acof, 
+                  float_sw4 *__restrict__ a_bope, float_sw4* __restrict__ a_ghcof, 
+                  float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
+                  float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, 
+                  float_sw4 h, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
+                  float_sw4* __restrict__ a_strz, int i, int j, int k );
+
+//-----------------------------------------------------------------------
+void EW::evalLupt(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+		  vector<Sarray> & a_Lu, int grid, int i, int j, int k )
+{
+  a_Lu[grid].set_to_zero();
+  float_sw4* lu_ptr = a_Lu[grid].c_ptr();
+  float_sw4* u_ptr  = a_U[grid].c_ptr();
+  float_sw4* mu_ptr = a_Mu[grid].c_ptr();
+  float_sw4* la_ptr = a_Lambda[grid].c_ptr();
+  int ifirst, ilast, jfirst, jlast, kfirst, klast;
+  ifirst = m_iStart[grid];
+  ilast  = m_iEnd[grid];
+  jfirst = m_jStart[grid];
+  jlast  = m_jEnd[grid];
+  kfirst = m_kStart[grid];
+  klast  = m_kEnd[grid];
+  float_sw4 h = mGridSize[grid];
+  int nz = m_global_nz[grid];
+  int* onesided_ptr = m_onesided[grid];
+  rhs4th3point( ifirst, ilast, jfirst, jlast, kfirst, klast, nz, onesided_ptr, 
+                m_acof, m_bope, m_ghcof, lu_ptr, u_ptr, mu_ptr, la_ptr, h,
+                m_sg_str_x[grid], m_sg_str_y[grid], m_sg_str_z[grid], i, j, k );
 }

@@ -519,6 +519,20 @@ int EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
       //      int infogrid;
+      int numnan = a_rho[g].count_nans();
+      bool nansfound = numnan>0;
+      if( numnan > 0 )
+         std::cout << "check_material found " << numnan << " NaNs in rho " << std::endl;
+      numnan = a_mu[g].count_nans();
+      nansfound = nansfound || numnan>0;
+      if( numnan > 0 )
+         std::cout << "check_material found " << numnan << " NaNs in mu " << std::endl;
+      numnan = a_lambda[g].count_nans();
+      nansfound = nansfound || numnan>0;
+      if( numnan > 0 )
+         std::cout << "check_material found " << numnan << " NaNs in lambda " << std::endl;
+      VERIFY2(!nansfound , "ERROR: check_material found NaNs");
+
       int ifirst = m_iStart[g];
       int ilast  = m_iEnd[g];
       int jfirst = m_jStart[g];

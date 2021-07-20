@@ -37,18 +37,26 @@ MaterialParAllpts::MaterialParAllpts( EW* a_ew, char* fname, int variables )
    m_nmd = 0;
    m_nmd_global = 0;
    m_npts_per_grid.resize(m_ew->mNumberOfGrids);
+   m_npts_per_grid_local.resize(m_ew->mNumberOfGrids);
    //
    // The limits of the active region as defined in EW are iStartAct[g] <= i <= iEndAct[g] (and similar for j,k)
    // Only interior points are in active region.
    for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
    {
-      if( m_ew->m_iEndAct[g]-m_ew->m_iStartAct[g]+1 > 0 && m_ew->m_jEndAct[g]-m_ew->m_jStartAct[g]+1 >0
-	  && m_ew->m_kEndAct[g]-m_ew->m_kStartAct[g]+1 > 0 )
-	 m_nmd += (m_ew->m_iEndAct[g]-m_ew->m_iStartAct[g]+1)*(m_ew->m_jEndAct[g]-m_ew->m_jStartAct[g]+1)*
-	    (m_ew->m_kEndAct[g]-m_ew->m_kStartAct[g]+1)*m_nc;
+      m_npts_per_grid_local[g]=0;
+      if( m_ew->m_iEndAct[g]-m_ew->m_iStartAct[g]+1 > 0 && 
+          m_ew->m_jEndAct[g]-m_ew->m_jStartAct[g]+1 > 0 &&
+	  m_ew->m_kEndAct[g]-m_ew->m_kStartAct[g]+1 > 0 )
+      {
+         int npts = (m_ew->m_iEndAct[g]-m_ew->m_iStartAct[g]+1)*
+                    (m_ew->m_jEndAct[g]-m_ew->m_jStartAct[g]+1)*
+           	    (m_ew->m_kEndAct[g]-m_ew->m_kStartAct[g]+1)*m_nc;
+	 m_nmd += npts;
+         m_npts_per_grid_local[g] = npts;
+      }
       size_t gpts = (m_ew->m_iEndActGlobal[g]-m_ew->m_iStartActGlobal[g]+1)*
-	    (m_ew->m_jEndActGlobal[g]-m_ew->m_jStartActGlobal[g]+1)*
-	    (m_ew->m_kEndActGlobal[g]-m_ew->m_kStartActGlobal[g]+1)*m_nc;
+	            (m_ew->m_jEndActGlobal[g]-m_ew->m_jStartActGlobal[g]+1)*
+    	            (m_ew->m_kEndActGlobal[g]-m_ew->m_kStartActGlobal[g]+1)*m_nc;
       m_nmd_global += gpts;
       m_npts_per_grid[g] = gpts;
    }
@@ -133,7 +141,7 @@ void MaterialParAllpts::get_material( int nmd, double* xmd, int nms, double* xms
 
 //-----------------------------------------------------------------------
 void MaterialParAllpts::get_parameters( int nmd, double* xmd, int nms, double* xms, vector<Sarray>& a_rho,
-					vector<Sarray>& a_mu, vector<Sarray>& a_lambda )
+					vector<Sarray>& a_mu, vector<Sarray>& a_lambda, int nr )
 {
    size_t gp, ind;
    for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
@@ -290,6 +298,9 @@ ssize_t MaterialParAllpts::parameter_index( int ip, int jp, int kp,
 {
    // Computes local index in xmd, from the global sw4-array index (ip,jp,kp)
    // var=0,1,or 2 
+   size_t gp = 0;   // Local grid pointer
+   for( int g=0; g < grid; g++)
+      gp += m_npts_per_grid_local[g];
    ssize_t ind =-1;
    if( m_ew->point_in_proc(ip,jp,grid) )
    {
@@ -300,7 +311,7 @@ ssize_t MaterialParAllpts::parameter_index( int ip, int jp, int kp,
 	 size_t ni = static_cast<ssize_t>(m_ew->m_iEndAct[grid]-m_ew->m_iStartAct[grid]+1);
 	 size_t nj = static_cast<ssize_t>(m_ew->m_jEndAct[grid]-m_ew->m_jStartAct[grid]+1);
 	 ind = m_nc*((ip-m_ew->m_iStartAct[grid]) + ni*(jp-m_ew->m_jStartAct[grid]) +
-		      ni*nj*(kp-m_ew->m_kStartAct[grid]) )+var; 
+		      ni*nj*(kp-m_ew->m_kStartAct[grid]) )+var+gp; 
       }
    }
    return ind;

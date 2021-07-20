@@ -13,7 +13,8 @@ using namespace std;
 
 //-----------------------------------------------------------------------
 DataPatches::DataPatches( string fname, Sarray& u, int imin, int imax, int jmin, int jmax,
-			  int kmax, int layers, int ntsteps, double dt, int npad[6] )
+			  int kmin, int kmax, int layers, int ntsteps, double dt, int npad[6],
+                          bool top, bool bottom )
 {
    m_filename = fname;
    // Find the patches residing in this processor
@@ -29,33 +30,43 @@ DataPatches::DataPatches( string fname, Sarray& u, int imin, int imax, int jmin,
 
    int off = layers-1;
 
-// Bottom block
    m_npatches = 0;
    int wind[6];
-   intersect( ib, ie, jb, je, kb, ke, 
-             imin-off,imax+off,jmin-off,jmax+off,kmax,kmax+off,wind);
-   add_patch(wind);
+   if( top )
+   {
+      // Top of block
+      intersect( ib, ie, jb, je, kb, ke, 
+                 imin-off,imax+off,jmin-off,jmax+off,kmin-off,kmin,wind);
+      add_patch(wind);
+   }
+   if( bottom )
+   {
+// Bottom of block
+      intersect( ib, ie, jb, je, kb, ke, 
+                 imin-off,imax+off,jmin-off,jmax+off,kmax,kmax+off,wind);
+      add_patch(wind);
+   }
 
 // Side 3
    intersect( ib, ie, jb, je, kb, ke, 
-              imin-off,imax+off,jmin-off,jmin,1,kmax,wind);
+              imin-off,imax+off,jmin-off,jmin,kmin,kmax,wind);
    add_patch(wind);
 
 // Side 4
    intersect( ib, ie, jb, je, kb, ke, 
-              imin-off,imax+off,jmax,jmax+off,1,kmax,wind);
+              imin-off,imax+off,jmax,jmax+off,kmin,kmax,wind);
    add_patch(wind);
 
 // Side 1
 //   u.intersection(imin-off,imin,jmin,jmax,1,kmax,wind);
    intersect( ib, ie, jb, je, kb, ke, 
-              imin-off,imin,jmin,jmax,1,kmax,wind);
+              imin-off,imin,jmin,jmax,kmin,kmax,wind);
    add_patch(wind);
 
 // Side 2
 //   u.intersection(imax,imax+off,jmin,jmax,1,kmax,wind);
    intersect( ib, ie, jb, je, kb, ke, 
-              imax,imax+off,jmin,jmax,1,kmax,wind);
+              imax,imax+off,jmin,jmax,kmin,kmax,wind);
    add_patch(wind);
 
    m_isnonempty = m_npatches > 0;

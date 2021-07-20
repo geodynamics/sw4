@@ -23,6 +23,8 @@ protected:
    int m_ibpp, m_iepm, m_jbpp, m_jepm; // Index limits at proc p+1 (pp) and p-1 (pm).
    int m_init;
    int m_variables;
+   std::vector<bool> m_limited;
+
    //   Sarray m_rho, m_mu, m_lambda;
    //   Sarray m_cs, m_cp; 
    //   EW* m_ew;
@@ -30,7 +32,7 @@ protected:
                                 std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu, 
                                 std::vector<Sarray>& a_lambda, bool update );
    void find_lims( int ib, int ie, int iepm, int ibpp, int& ibint, int& ieint );
-   bool compute_overlap();
+   bool compute_overlap( bool force_shared );
    void getwgh( float_sw4 ai, float_sw4 wgh[2], int& sl, int& su );
    void communicate( Sarray& u );
    void communicate_add( Sarray& u );
@@ -45,11 +47,11 @@ protected:
                                Sarray& lambda, bool update );
    void interpolate_to_coarse_vel(std::vector<Sarray>& rhogrid, std::vector<Sarray>& mugrid,
                                   std::vector<Sarray>& lambdagrid,
-                                  Sarray& rho, Sarray& cs, Sarray& cp );
+                                  Sarray& rho, Sarray& cs, Sarray& cp, bool update );
 
 public:
    MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, int varcase, char* fname,
-                    float_sw4 amp, float_sw4 omega );
+                    float_sw4 amp, float_sw4 omega, bool force_shared );
 
    virtual void get_material( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
 		      std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
@@ -57,7 +59,7 @@ public:
    virtual void interpolate( Sarray& matcart, int g, Sarray& rho, Sarray& mu, Sarray& lambda );
 
    virtual void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
-			std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
+                                std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda, int nr );
 
    virtual void get_gradient( int nmd, double* xmd, int nms, double* xms, double* dfs, double* dfm,
 		      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
@@ -82,6 +84,22 @@ public:
    void get_local_grid_begin_end(int* begin, int* end) {begin[0] = m_ibint; begin[1] = m_jbint; begin[2] = m_kbint; 
                                                         end[0] = m_ieint; end[1] = m_jeint; end[2] = m_keint;};
    void get_global_grid_size(int *grid_size) {printf("%s\n", __func__); grid_size[0] = m_nx; grid_size[1] = m_ny; grid_size[2] = m_nz;}
+
+
+   virtual void limit_x( int nmd, double* xmd, int nms, double* xms,
+                 float_sw4 vsmin, float_sw4 vsmax, 
+                 float_sw4 vpmin, float_sw4 vpmax );
+   virtual void limit_df( int nmd, double* dfd, int nms, double* dfs );
+
+   double getXmin() const { return m_xmin; }
+   double getDx() const { return m_hx; }
+   int getNX() const { return m_nx; }
+   double getYmin() const { return m_ymin; }
+   double getDy() const { return m_hy; }
+   int getNY() const { return m_ny; }
+   double getZmin() const { return m_zmin; }
+   double getDz() const { return m_hz; }
+   int getNZ() const { return m_nz; }   
 };
 
 #endif

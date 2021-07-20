@@ -175,14 +175,17 @@ void MaterialParCartesian::interpolate_parameters( int nmd, double* xmd, int nms
 //-----------------------------------------------------------------------
 void MaterialParCartesian::get_parameters( int nmd, double* xmd, int nms,
 					   double* xms, std::vector<Sarray>& a_rho, 
-					   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
+					   std::vector<Sarray>& a_mu, 
+                                           std::vector<Sarray>& a_lambda, int nr )
 {
-   if( m_init == 0 )
+   if( nr==-1 )
+      nr = m_init;
+   if( nr == 0 )
    {
       for( int i=0 ; i < nms ; i++ )
 	 xms[i] = 0;
    }
-   else if( m_init == 1 )
+   else if( nr == 1 )
    {
       //      cout << " hx, hy, hz " << m_hx  <<  " " << m_hy << " " << m_hz << endl;
       //      cout << " nx, ny, nz " << m_nx  <<  " " << m_ny << " " << m_nz << endl;
@@ -213,15 +216,15 @@ void MaterialParCartesian::get_parameters( int nmd, double* xmd, int nms,
 	       ind++;
 	    }
    }
-   else if( m_init == 2 )
+   else if( nr == 2 )
    {
       read_parameters( nms, xms );
    }
-   else if( m_init == 3 )
+   else if( nr == 3 )
    {
       interpolate_parameters( nmd, xmd, nms, xms, a_rho, a_mu, a_lambda );
    }
-   else if( m_init == 4 )
+   else if( nr == 4 )
    {
       MParGridFile mpfile( m_filename );
       mpfile.interpolate_to_other( xms, 1, m_nx, m_ny, m_nz, m_hx, m_hy, m_hz, m_xmin, m_ymin, m_zmin );

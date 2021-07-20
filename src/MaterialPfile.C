@@ -226,7 +226,9 @@ void MaterialPfile::set_material_properties( std::vector<Sarray> & rho,
 		   material++;
 		}
 		else
+                {
 		   outside++;
+                }
 	     } // end for i, j, k
 
     } // end cartesian pfile case

@@ -164,11 +164,12 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       mkdirs(mTempPath);
       //     string upred_name = "/tmp/" + logname + "/upred" + procno.str() + ".bin";
       //     string ucorr_name = "/tmp/" + logname + "/ucorr" + procno.str() + ".bin";
-      int imin, imax, jmin, jmax, kmax;
+      int imin, imax, jmin, jmax, kmax, kmin;
       imin = m_iStartActGlobal[g]-1;
       imax = m_iEndActGlobal[g]+1;
       jmin = m_jStartActGlobal[g]-1;
       jmax = m_jEndActGlobal[g]+1;
+      kmin = m_kStartActGlobal[g]-1;
       kmax = m_kEndActGlobal[g]+1;
       int npad[6]={0,0,0,0,0,0};
       if( m_iStart[g] > 1 )
@@ -179,10 +180,21 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
          npad[2] = m_ppadding;
       if( m_jEnd[g] < m_global_ny[g] )
          npad[3] = m_ppadding;
+      if( g != mNumberOfGrids-1 )
+      {
+         // Upper boundary is grid ref bndry.
+         kmin += 2;
+      }
+      if( g != 0 )
+      {
+         // Lower boundary is grid ref bndry.
+         kmax -= 2;
+      }
       if( save_sides )
       {
-	 Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt,npad );
-	 Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt,npad );
+         bool top = g <mNumberOfGrids-1;
+	 Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmin,kmax,2,nsteps_in_memory,mDt,npad, top, true );
+	 Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmin,kmax,2,nsteps_in_memory,mDt,npad, top, true );
      //     cout << "sides saved for i=[" << imin << " , " << imax << "] j=[" << jmin << " , " << jmax << "] k=[" << 1 << " , " << kmax << "]"<< endl;
 	 size_t maxsizeloc = Upred_saved_sides[g]->get_noofpoints();
 	 size_t maxsize;
@@ -591,6 +603,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   if ( !mQuiet && proc_zero() )
     cout << endl << "  Begin time stepping..." << endl;
 
+  //   int idbg=113, jdbg=201, kdbg=25, gdbg=1;
+  //   int idbg=57, jdbg=101, kdbg=1, gdbg=0;
+  //   bool dbgowner=interior_point_in_proc(idbg,jdbg,gdbg);
+
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps[event]; currentTimeStep++)
   {    
     if( m_output_detailed_timing )
@@ -912,6 +928,17 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     
     if( m_checkfornan )
        check_for_nan( Up, 1, "Up" );
+
+    //      if( dbgowner )
+    //      {
+    //         cout << "f " << t << " " << currentTimeStep << 
+    //            " Up k"  << Up[gdbg](1,idbg,jdbg,kdbg) << " " << Up[gdbg](2,idbg,jdbg,kdbg) << " " << Up[gdbg](3,idbg,jdbg,kdbg) << endl;
+    //         cout << " Up kp"  << Up[gdbg](1,idbg,jdbg,kdbg+1) << " " << Up[gdbg](2,idbg,jdbg,kdbg+1) << " " << Up[gdbg](3,idbg,jdbg,kdbg+1) << endl;
+    //         cout<<   " U k"  << U[gdbg](1,idbg,jdbg,kdbg) << " " << U[gdbg](2,idbg,jdbg,kdbg) << " " << U[gdbg](3,idbg,jdbg,kdbg) << endl;
+    //         cout<<   " U kp"  << U[gdbg](1,idbg,jdbg,kdbg+1) << " " << U[gdbg](2,idbg,jdbg,kdbg+1) << " " << U[gdbg](3,idbg,jdbg,kdbg+1) << endl;
+    //         cout <<   " Um k"  << Um[gdbg](1,idbg,jdbg,kdbg) << " " << Um[gdbg](2,idbg,jdbg,kdbg) << " " << Um[gdbg](3,idbg,jdbg,kdbg) << endl;
+    //         cout <<   " Um kp"  << Um[gdbg](1,idbg,jdbg,kdbg+1) << " " << Um[gdbg](2,idbg,jdbg,kdbg+1) << " " << Um[gdbg](3,idbg,jdbg,kdbg+1) << endl;
+    //      }
 
 // increment time
     t += mDt;
@@ -1633,8 +1660,12 @@ void EW::update_curvilinear_cartesian_interface( vector<Sarray>& a_U )
 //-----------------Mesh refinement interface condition for 4th order predictor-corrector scheme------------------------
 void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
                     vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE, vector<Sarray*>& a_AlphaVEm, 
-		    float_sw4 time, bool predictor, vector<Sarray> &F, vector<GridPointSource*> point_sources )
+		    float_sw4 time, bool predictor, vector<Sarray> &F, vector<GridPointSource*> point_sources, bool backward )
 {
+   float_sw4 dt=mDt;
+   if( backward )
+      dt=-dt;
+
    for( int g = 0 ; g < mNumberOfCartesianGrids-1 ; g++ )
    {
       // Interpolate between g and g+1, assume factor 2 refinement with at least three ghost points
@@ -1690,20 +1721,20 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 	 if( !m_doubly_periodic )
 	 {
 // dirichlet conditions for Unextc in super-grid layer at time t+dt
-            dirichlet_LRic( Unextc, g, kc, time+mDt, 1 ); 
+            dirichlet_LRic( Unextc, g, kc, time+dt, 1 ); 
 	 }
       }
       else // In the corrector step, (Unextc, Unextf) represent the displacement after next predictor step
       {
-	 compute_preliminary_predictor( a_Up[g+1], a_U[g+1], a_AlphaVEp[g+1], Unextf, g+1, kf,  time+mDt,
+	 compute_preliminary_predictor( a_Up[g+1], a_U[g+1], a_AlphaVEp[g+1], Unextf, g+1, kf,  time+dt,
                                         F[g+1], point_sources );
-	 compute_preliminary_predictor( a_Up[g], a_U[g], a_AlphaVEp[g], Unextc, g, kc, time+mDt, 
+	 compute_preliminary_predictor( a_Up[g], a_U[g], a_AlphaVEp[g], Unextc, g, kc, time+dt, 
                                         F[g], point_sources );
 
 	 if( !m_doubly_periodic )
 	 {
 // dirichlet conditions for Unextc in super-grid layer at time t+2*dt
-            dirichlet_LRic( Unextc, g, kc, time+2*mDt, 1 ); 
+            dirichlet_LRic( Unextc, g, kc, time+2*dt, 1 ); 
 	 }
       }
 
@@ -1725,7 +1756,7 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
       if( !m_doubly_periodic )
       {
 //  dirichlet condition for Bf in the super-grid layer at time t+dt (also works with twilight)
-         dirichlet_LRstress( Bf, g+1, kf, time+mDt, 1 ); 
+         dirichlet_LRstress( Bf, g+1, kf, time+dt, 1 ); 
       }
 
       communicate_array_2d( Unextf, g+1, kf );
@@ -1766,15 +1797,15 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
       // Note: these ghost point values might never be used ?
       if( !m_doubly_periodic )
       {
-         dirichlet_LRic( a_Up[g+1], g+1, kf+1, time+mDt, 1 );
-         dirichlet_LRic( a_Up[g], g, kc-1, time+mDt, 1 );
+         dirichlet_LRic( a_Up[g+1], g+1, kf+1, time+dt, 1 );
+         dirichlet_LRic( a_Up[g], g, kc-1, time+dt, 1 );
       }
        
    } // end for g...
    for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
    {
      //         m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt );
-      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt, F, a_AlphaVEp );
+      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+dt, F, a_AlphaVEp );
       //      check_ic_conditions( g, a_Up );
    }
 } // enforceIC

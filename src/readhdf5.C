@@ -281,6 +281,8 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
           // Add extra shift from command line, use with care.
           if( op_data->t0 != 0 )
              ts_ptr->add_shift( op_data->t0 );
+          //DBG
+          //          ts_ptr->set_shift(0.0);
       
           // Set scale factor if given
           if( op_data->scalefactor_set )

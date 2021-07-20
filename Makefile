@@ -259,7 +259,8 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        evenIevenJinterp.o CheckPoint.o geodyn.o AllDims.o Patch.o RandomizedMaterial.o \
        MaterialInvtest.o sw4-prof.o sachdf5.o readhdf5.o TestTwilight.o TestPointSource.o \
        curvilinear4sgwind.o TestEcons.o GridGenerator.o GridGeneratorGeneral.o  \
-       GridGeneratorGaussianHill.o CurvilinearInterface2.o SfileOutput.o pseudohess.o
+       GridGeneratorGaussianHill.o CurvilinearInterface2.o SfileOutput.o pseudohess.o \
+       fastmarching.o solveTT.o rhs4th3point.o
 
 
 # Fortran routines (lamb_exact_numquad needs QUADPACK)
@@ -281,7 +282,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
 MOBJOPT  = moptmain.o solve-backward-allpars.o lbfgs.o nlcg.o ProjectMtrl.o \
            MaterialParameterization.o Mopt.o MaterialParCartesian.o InterpolateMaterial.o \
 	   MaterialParCartesianVels.o MaterialParCartesianVp.o MParGridFile.o MaterialParCartesianVsVp.o \
-           MaterialParAllpts.o MaterialParCart.o
+           MaterialParAllpts.o MaterialParCart.o solve-dudp.o
 
 # prefix object files with build directory
 FSW4 = $(addprefix $(builddir)/,$(OBJSW4))

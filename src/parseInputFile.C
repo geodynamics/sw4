@@ -2618,7 +2618,7 @@ void EW::parsedate( char* datestr, int& year, int& month, int& day, int& hour, i
       if( fsec < 0 )
 	 fail = 8;
       second = static_cast<int>(trunc(fsec));
-      msecond = static_cast<int>( round((fsec-second)*1000));
+      msecond = static_cast<int>( round((fsec-second)*1000000));
       if( second < 0 || second > 60 )
 	 fail = 7;
       //      cout << " second = " << second << " msecond = " << msecond <<endl;
@@ -4802,7 +4802,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
 // Define Cartesian grid arrays, loop from finest to coarsest
 
 // On entry to this loop: (nx, ifirst, ilast) and (ny, jfirst, jlast) are the local number of grid points, starting, and ending indices
-// of the finest Cartesian grif 
+// of the finest Cartesian grid 
    for( int g = nCartGrids-1 ; g >= 0 ; g-- )
    {
 // NOTE: same number of ghost points in all directions
@@ -7850,6 +7850,13 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
   {
      event=global_to_local_event(event);
      readStationHDF5(this, inhdf5file, outhdf5file, writeEvery, downSample, mode, event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax, is_obs, winlset, winrset, winl, winr, usex, usey, usez, t0, scalefactor_set,  scalefactor);
+     //     // Exclude station nr 32
+     //     if( m_myRank == 0 )
+     //        std::cout << "Excluding station " << a_GlobalTimeSeries[0][32]->getStationName() << std::endl;
+     //                                                                                            int n=a_GlobalTimeSeries[0].size();
+     //     for( int e=32 ; e < n-1;e++)
+     // a_GlobalTimeSeries[0][e] = a_GlobalTimeSeries[0][e+1];
+     //a_GlobalTimeSeries[0].resize(n-1);
   }
 #else
   if (proc_zero())
@@ -9417,7 +9424,7 @@ void EW::processEvent( char* buffer, int enr )
       }
       else
       {
-	 badOption("randomblock", token);
+	 badOption("event", token);
       }
       token = strtok(NULL, " \t");
    }

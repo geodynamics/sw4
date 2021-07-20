@@ -2,7 +2,7 @@
 
 void addgradrho_ci(  int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		     int ifirstact, int ilastact, int jfirstact, int jlastact, 
-		     int kfirstact, int klastact, 
+		     int kfirstact, int klastact, int nk,
 		     float_sw4* __restrict__ a_kap, float_sw4* __restrict__ a_kapacc, 
 		     float_sw4* __restrict__ a_um,  float_sw4* __restrict__ a_u,
 		     float_sw4* __restrict__ a_up,  float_sw4* __restrict__ a_uacc,
@@ -34,6 +34,8 @@ void addgradrho_ci(  int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 	    float_sw4 normfact = h3;
 	    if( k <= 4 && onesided[4] == 1 )
 	       normfact *= normwgh[k-1];
+            if( k >= nk-3 && onesided[5] == 1 )
+               normfact *= normwgh[nk-k];
 	    grho(i,j,k) +=  (
           kap(1,i,j,k)*(up(1,i,j,k)-2*u(1,i,j,k)+um(1,i,j,k))*idt*idt
        + dt2o12*kapacc(1,i,j,k)*uacc(1,i,j,k) +
@@ -47,7 +49,7 @@ void addgradrho_ci(  int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 //-----------------------------------------------------------------------
 void addgradrhoc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		     int ifirstact, int ilastact, int jfirstact, int jlastact, 
-		     int kfirstact, int klastact, 
+		     int kfirstact, int klastact, int nk,
 		     float_sw4* __restrict__ a_kap, float_sw4* __restrict__ a_kapacc, 
 		     float_sw4* __restrict__ a_um,  float_sw4* __restrict__ a_u,
 		     float_sw4* __restrict__ a_up,  float_sw4* __restrict__ a_uacc,
@@ -79,6 +81,8 @@ void addgradrhoc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 	    float_sw4 normfact = jac(i,j,k);
 	    if( k <= 4 && onesided[4] == 1 )
 	       normfact *= normwgh[k-1];
+            if( k >= nk-3 && onesided[5] == 1 )
+               normfact *= normwgh[nk-k];
 	    grho(i,j,k) +=  (
           kap(1,i,j,k)*(up(1,i,j,k)-2*u(1,i,j,k)+um(1,i,j,k))*idt*idt
        + dt2o12*kapacc(1,i,j,k)*uacc(1,i,j,k) +
@@ -92,13 +96,14 @@ void addgradrhoc_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 //-----------------------------------------------------------------------
 void addgradmula_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		     int ifirstact, int ilastact, int jfirstact, int jlastact, 
-		     int kfirstact, int klastact, 
+		     int kfirstact, int klastact, int nk,
 		     float_sw4* __restrict__ a_kap, float_sw4* __restrict__ a_kapacc, 
 		     float_sw4* __restrict__ a_u,   float_sw4* __restrict__ a_uacc,
 		     float_sw4* __restrict__ a_gmu, float_sw4* __restrict__ a_glambda,
 		     float_sw4 dt, float_sw4 h, int onesided[6],
 		     int nb, int wb, float_sw4* __restrict__ a_bop )
 {
+   // nk is number of points, not counting ghost points.
    const float_sw4 h3 = h*h*h;
    const float_sw4 ih2= 1.0/(h*h);
    const float_sw4 dt2o12 = dt*dt/12;
@@ -127,6 +132,9 @@ void addgradmula_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
    //#pragma omp parallel
    {
       int kstart = kfirstact;
+      int kend   = klastact;
+      if( klastact >= nk-3 && onesided[5] == 1 )
+         kend = nk-4;
       if( kfirstact <= 4 && onesided[4] == 1 )
       {
          kstart = 5;
@@ -478,7 +486,7 @@ void addgradmula_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
       }
       
 #pragma omp parallel for
-	 for( int k=kstart; k <= klastact; k++ )
+	 for( int k=kstart; k <= kend; k++ )
             for( int j=jfirstact; j <= jlastact; j++ )
 #pragma ivdep
                for( int i=ifirstact; i <= ilastact; i++ )
@@ -803,6 +811,355 @@ void addgradmula_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 		  gmu(i,j,k)     = gmu(i,j,k)    + 2*pd;
 	       }
 	 }
+      if( klastact >= nk-3 && onesided[5] == 1 )
+      {
+	 float_sw4 w8[4]={0,0,1,1};
+         float_sw4 w6p[4]={0,0,al1,al1+al2};
+	 float_sw4 w6m[4]={0,al1,al1+al2,al1+al2+al3};
+	 for( int k=nk-3; k <= klastact; k++ )
+#pragma omp parallel for
+            for( int j=jfirstact; j <= jlastact; j++ )
+#pragma ivdep
+               for( int i=ifirstact; i <= ilastact; i++ )
+	       {
+                  int kk=nk-k+1;
+                  float_sw4 normfact = h3*wgh[kk-1];
+// Diagonal terms
+		  float_sw4 dux = d4b*(u(1,i+2,j,k)-u(1,i-2,j,k))+
+		     d4a*(u(1,i+1,j,k)-u(1,i-1,j,k));
+		  float_sw4 dvy = d4b*(u(2,i,j+2,k)-u(2,i,j-2,k))+
+		     d4a*(u(2,i,j+1,k)-u(2,i,j-1,k));
+		  float_sw4 dkx = d4b*(kap(1,i+2,j,k)-kap(1,i-2,j,k))+
+		     d4a*(kap(1,i+1,j,k)-kap(1,i-1,j,k));
+		  float_sw4 dly = d4b*(kap(2,i,j+2,k)-kap(2,i,j-2,k))+
+		     d4a*(kap(2,i,j+1,k)-kap(2,i,j-1,k));
+
+		  float_sw4 duax = d4b*(uacc(1,i+2,j,k)-uacc(1,i-2,j,k))+
+		     d4a*(uacc(1,i+1,j,k)-uacc(1,i-1,j,k));
+		  float_sw4 dvay = d4b*(uacc(2,i,j+2,k)-uacc(2,i,j-2,k))+
+		     d4a*(uacc(2,i,j+1,k)-uacc(2,i,j-1,k));
+		  float_sw4 dkax = d4b*(kapacc(1,i+2,j,k)-kapacc(1,i-2,j,k))+
+		     d4a*(kapacc(1,i+1,j,k)-kapacc(1,i-1,j,k));
+		  float_sw4 dlay = d4b*(kapacc(2,i,j+2,k)-kapacc(2,i,j-2,k))+
+		     d4a*(kapacc(2,i,j+1,k)-kapacc(2,i,j-1,k));
+		  float_sw4 dwz=0, dmz=0, dwaz=0, dmaz=0;
+		  for(int m=1; m<=wb ; m++ )
+		  {
+		     dwz -= bop(kk,m)*u(3,i,j,nk-m+1);
+		     dmz -= bop(kk,m)*kap(3,i,j,nk-m+1);
+		     dwaz-= bop(kk,m)*uacc(3,i,j,nk-m+1);
+		     dmaz-= bop(kk,m)*kapacc(3,i,j,nk-m+1);
+		  }
+
+		  glambda(i,j,k) = glambda(i,j,k) + (
+		     (dux+dvy+dwz)*(dkx+dly+dmz) +
+		     dt2o12*( (duax+dvay+dwaz)*(dkx+dly+dmz) +
+			      (dux+dvy+dwz)*(dkax+dlay+dmaz) )
+						  )*normfact*ih2;
+		  gmu(i,j,k) = gmu(i,j,k) + 2*(
+		       dux*dkx+dvy*dly+dwz*dmz +
+		       dt2o12*( (duax*dkx+dvay*dly+dwaz*dmz)+
+				(dux*dkax+dvy*dlay+dwz*dmaz) )
+					    )*normfact*ih2;
+// Off diagonal stresses
+//  xy
+		  float_sw4 stuxy = d4b*(u(2,i+2,j,k)-u(2,i-2,j,k))+
+		     d4a*(u(2,i+1,j,k)-u(2,i-1,j,k))+
+		     d4b*(u(1,i,j+2,k)-u(1,i,j-2,k))+
+		     d4a*(u(1,i,j+1,k)-u(1,i,j-1,k));
+		  float_sw4 stkxy = d4b*(kap(2,i+2,j,k)-kap(2,i-2,j,k))+
+                      d4a*(kap(2,i+1,j,k)-kap(2,i-1,j,k))+
+                      d4b*(kap(1,i,j+2,k)-kap(1,i,j-2,k))+
+		     d4a*(kap(1,i,j+1,k)-kap(1,i,j-1,k));
+		  float_sw4 stuaxy = d4b*(uacc(2,i+2,j,k)-uacc(2,i-2,j,k))+
+                      d4a*(uacc(2,i+1,j,k)-uacc(2,i-1,j,k))+
+                      d4b*(uacc(1,i,j+2,k)-uacc(1,i,j-2,k))+
+		     d4a*(uacc(1,i,j+1,k)-uacc(1,i,j-1,k));
+		  float_sw4 stkaxy = d4b*(kapacc(2,i+2,j,k)-kapacc(2,i-2,j,k))+
+                      d4a*(kapacc(2,i+1,j,k)-kapacc(2,i-1,j,k))+
+                      d4b*(kapacc(1,i,j+2,k)-kapacc(1,i,j-2,k))+
+		     d4a*(kapacc(1,i,j+1,k)-kapacc(1,i,j-1,k));
+		  gmu(i,j,k)= gmu(i,j,k) + (stuxy*stkxy + 
+		       dt2o12*(stuxy*stkaxy+stuaxy*stkxy) )*normfact*ih2;
+
+//  xz
+		  float_sw4 stuxz = d4b*(u(3,i+2,j,k)-u(3,i-2,j,k))+
+		     d4a*(u(3,i+1,j,k)-u(3,i-1,j,k));
+		  float_sw4 stkxz = d4b*(kap(3,i+2,j,k)-kap(3,i-2,j,k))+
+		     d4a*(kap(3,i+1,j,k)-kap(3,i-1,j,k));
+		  float_sw4 stuaxz = d4b*(uacc(3,i+2,j,k)-uacc(3,i-2,j,k))+
+		     d4a*(uacc(3,i+1,j,k)-uacc(3,i-1,j,k));
+		  float_sw4 stkaxz = d4b*(kapacc(3,i+2,j,k)-kapacc(3,i-2,j,k))+
+		     d4a*(kapacc(3,i+1,j,k)-kapacc(3,i-1,j,k));
+		  for(int m=1; m<=wb ; m++ )
+		  {
+		     stuxz -= bop(kk,m)*u(1,i,j,nk-m+1);
+		     stkxz -= bop(kk,m)*kap(1,i,j,nk-m+1);
+		     stuaxz-= bop(kk,m)*uacc(1,i,j,nk-m+1);
+		     stkaxz-= bop(kk,m)*kapacc(1,i,j,nk-m+1);
+		  }
+		  gmu(i,j,k)= gmu(i,j,k) + ( stuxz*stkxz +
+		    dt2o12*(stuxz*stkaxz + stuaxz*stkxz) )*normfact*ih2;
+//  yz
+		  float_sw4 stuyz = d4b*(u(3,i,j+2,k)-u(3,i,j-2,k))+
+		     d4a*(u(3,i,j+1,k)-u(3,i,j-1,k));
+		  float_sw4 stkyz = d4b*(kap(3,i,j+2,k)-kap(3,i,j-2,k))+
+		     d4a*(kap(3,i,j+1,k)-kap(3,i,j-1,k));
+		  float_sw4 stuayz = d4b*(uacc(3,i,j+2,k)-uacc(3,i,j-2,k))+
+		     d4a*(uacc(3,i,j+1,k)-uacc(3,i,j-1,k));
+		  float_sw4 stkayz = d4b*(kapacc(3,i,j+2,k)-kapacc(3,i,j-2,k))+
+		     d4a*(kapacc(3,i,j+1,k)-kapacc(3,i,j-1,k));
+		  for(int m=1; m<=wb ; m++ )
+		  {
+		     stuyz -= bop(kk,m)*u(2,i,j,nk-m+1);
+		     stkyz -= bop(kk,m)*kap(2,i,j,nk-m+1);
+		     stuayz-= bop(kk,m)*uacc(2,i,j,nk-m+1);
+		     stkayz-= bop(kk,m)*kapacc(2,i,j,nk-m+1);
+		  }
+		  gmu(i,j,k)= gmu(i,j,k) + ( stuyz*stkyz +
+			dt2o12*( stuyz*stkayz+stuayz*stkyz) )*normfact*ih2;
+
+// Pos. def extra terms
+// x-direction
+		  float_sw4 d3up = u(1,i+2,j,k)-3*u(1,i+1,j,k) +
+		  3*u(1,i,j,k) -   u(1,i-1,j,k);
+		  float_sw4 d3um =u(1,i+1,j,k)-3*u(1,i,j,k) +
+                  3*u(1,i-1,j,k)-  u(1,i-2,j,k);
+		  float_sw4 d3kp = kap(1,i+2,j,k)-3*kap(1,i+1,j,k) +
+		  3*kap(1,i,j,k) -   kap(1,i-1,j,k);
+		  float_sw4 d3km = kap(1,i+1,j,k)-3*kap(1,i,j,k) +
+		  3*kap(1,i-1,j,k) - kap(1,i-2,j,k);
+		  float_sw4 d3uap = uacc(1,i+2,j,k)-3*uacc(1,i+1,j,k)+
+		  3*uacc(1,i,j,k)  -  uacc(1,i-1,j,k);
+		  float_sw4 d3uam =uacc(1,i+1,j,k)-3*uacc(1,i,j,k)+
+		  3*uacc(1,i-1,j,k) - uacc(1,i-2,j,k);
+		  float_sw4 d3kap = kapacc(1,i+2,j,k)-3*kapacc(1,i+1,j,k)+
+		  3*kapacc(1,i,j,k) -   kapacc(1,i-1,j,k);
+		  float_sw4 d3kam = kapacc(1,i+1,j,k)-3*kapacc(1,i,j,k)+
+		  3*kapacc(1,i-1,j,k)-  kapacc(1,i-2,j,k);
+		  float_sw4 pd = (c6*0.5*( d3up*d3kp+d3um*d3km  +
+           dt2o12*(d3up*d3kap + d3um*d3kam + d3uap*d3kp + d3uam*d3km) )
+                 + c8*( (d3up-d3um)*(d3kp-d3km) +
+             dt2o12*(  (d3uap-d3uam)*(d3kp-d3km)+
+		       (d3up-d3um)*(d3kap-d3kam)) ) )*h3*ih2*wgh[kk-1];
+		  glambda(i,j,k) = glambda(i,j,k) + pd;
+		  gmu(i,j,k)     = gmu(i,j,k) + 2*pd;
+		  d3up = u(2,i+2,j,k)-3*u(2,i+1,j,k)+3*u(2,i,j,k)-
+		     u(2,i-1,j,k);
+		  d3um =u(2,i+1,j,k)-3*u(2,i,j,k)+3*u(2,i-1,j,k)-
+		     u(2,i-2,j,k);
+		  d3kp = kap(2,i+2,j,k)-3*kap(2,i+1,j,k)+
+		     3*kap(2,i,j,k)-kap(2,i-1,j,k);
+		  d3km = kap(2,i+1,j,k)-3*kap(2,i,j,k)+
+		     3*kap(2,i-1,j,k)-kap(2,i-2,j,k);
+		  d3uap = uacc(2,i+2,j,k)-3*uacc(2,i+1,j,k)+
+		     3*uacc(2,i,j,k)- uacc(2,i-1,j,k);
+		  d3uam =uacc(2,i+1,j,k)-3*uacc(2,i,j,k)+
+		     3*uacc(2,i-1,j,k)- uacc(2,i-2,j,k);
+		  d3kap = kapacc(2,i+2,j,k)-3*kapacc(2,i+1,j,k)+
+		     3*kapacc(2,i,j,k)-kapacc(2,i-1,j,k);
+		  d3kam = kapacc(2,i+1,j,k)-3*kapacc(2,i,j,k)+
+		     3*kapacc(2,i-1,j,k)-kapacc(2,i-2,j,k);
+		  pd = (c6*( 0.5*( d3up*d3kp+d3um*d3km  +
+             dt2o12*(d3up*d3kap+d3um*d3kam+ d3uap*d3kp + d3uam*d3km) ))
+                 + c8*( (d3up-d3um)*(d3kp-d3km) +
+             dt2o12*(  (d3uap-d3uam)*(d3kp-d3km)+
+		       (d3up-d3um)*(d3kap-d3kam))) )*h3*ih2*wgh[kk-1];
+		  gmu(i,j,k) = gmu(i,j,k) + pd;
+
+		  d3up = u(3,i+2,j,k)-3*u(3,i+1,j,k)+3*u(3,i,j,k)-
+		                 u(3,i-1,j,k);
+		  d3um =u(3,i+1,j,k)-3*u(3,i,j,k)+3*u(3,i-1,j,k)-
+		     u(3,i-2,j,k);
+		     d3kp = kap(3,i+2,j,k)-3*kap(3,i+1,j,k)+
+			3*kap(3,i,j,k)-kap(3,i-1,j,k);
+		     d3km = kap(3,i+1,j,k)-3*kap(3,i,j,k)+
+			3*kap(3,i-1,j,k)-kap(3,i-2,j,k);
+		     d3uap = uacc(3,i+2,j,k)-3*uacc(3,i+1,j,k)+
+			3*uacc(3,i,j,k)- uacc(3,i-1,j,k);
+		     d3uam =uacc(3,i+1,j,k)-3*uacc(3,i,j,k)+
+			3*uacc(3,i-1,j,k)- uacc(3,i-2,j,k);
+		     d3kap = kapacc(3,i+2,j,k)-3*kapacc(3,i+1,j,k)+
+			3*kapacc(3,i,j,k)-kapacc(3,i-1,j,k);
+		     d3kam = kapacc(3,i+1,j,k)-3*kapacc(3,i,j,k)+
+			3*kapacc(3,i-1,j,k)-kapacc(3,i-2,j,k);
+		     pd = (c6*( 0.5*( d3up*d3kp + d3um*d3km +
+             dt2o12*(d3up*d3kap+d3um*d3kam+ d3uap*d3kp + d3uam*d3km)))
+                 + c8*( (d3up-d3um)*(d3kp-d3km) +
+             dt2o12*(  (d3uap-d3uam)*(d3kp-d3km)+
+		       (d3up-d3um)*(d3kap-d3kam))) )*h3*ih2*wgh[kk-1];
+		     gmu(i,j,k) = gmu(i,j,k) + pd;
+
+// y-direction
+		     d3up = u(1,i,j+2,k)-3*u(1,i,j+1,k)+3*u(1,i,j,k)-
+			               u(1,i,j-1,k);
+		     d3um =u(1,i,j+1,k)-3*u(1,i,j,k)+3*u(1,i,j-1,k)-
+			u(1,i,j-2,k);
+		     d3kp = kap(1,i,j+2,k)-3*kap(1,i,j+1,k)+
+			3*kap(1,i,j,k)-kap(1,i,j-1,k);
+		     d3km = kap(1,i,j+1,k)-3*kap(1,i,j,k)+
+			3*kap(1,i,j-1,k)-kap(1,i,j-2,k);
+		     d3uap = uacc(1,i,j+2,k)-3*uacc(1,i,j+1,k)+
+			3*uacc(1,i,j,k)- uacc(1,i,j-1,k);
+		     d3uam =uacc(1,i,j+1,k)-3*uacc(1,i,j,k)+
+			3*uacc(1,i,j-1,k)- uacc(1,i,j-2,k);
+		     d3kap = kapacc(1,i,j+2,k)-3*kapacc(1,i,j+1,k)+
+			3*kapacc(1,i,j,k)-kapacc(1,i,j-1,k);
+		     d3kam = kapacc(1,i,j+1,k)-3*kapacc(1,i,j,k)+
+			3*kapacc(1,i,j-1,k)-kapacc(1,i,j-2,k);
+		     pd = (c6*( 0.5*( d3up*d3kp+d3um*d3km  +
+             dt2o12*(d3up*d3kap+d3um*d3kam+ d3uap*d3kp + d3uam*d3km)) )
+                 + c8*( (d3up-d3um)*(d3kp-d3km) +
+             dt2o12*(  (d3uap-d3uam)*(d3kp-d3km)+
+		       (d3up-d3um)*(d3kap-d3kam))) )*h3*ih2*wgh[kk-1];
+		     gmu(i,j,k) = gmu(i,j,k) + pd;
+
+		     d3up = u(2,i,j+2,k)-3*u(2,i,j+1,k)+3*u(2,i,j,k)-
+			u(2,i,j-1,k);
+		     d3um =u(2,i,j+1,k)-3*u(2,i,j,k)+3*u(2,i,j-1,k)-
+			u(2,i,j-2,k);
+		     d3kp = kap(2,i,j+2,k)-3*kap(2,i,j+1,k)+
+			3*kap(2,i,j,k)-kap(2,i,j-1,k);
+		     d3km = kap(2,i,j+1,k)-3*kap(2,i,j,k)+
+			3*kap(2,i,j-1,k)-kap(2,i,j-2,k);
+		     d3uap = uacc(2,i,j+2,k)-3*uacc(2,i,j+1,k)+
+			3*uacc(2,i,j,k) -   uacc(2,i,j-1,k);
+		     d3uam =uacc(2,i,j+1,k)-3*uacc(2,i,j,k)+
+			3*uacc(2,i,j-1,k)-  uacc(2,i,j-2,k);
+		     d3kap = kapacc(2,i,j+2,k)-3*kapacc(2,i,j+1,k)+
+			3*kapacc(2,i,j,k)-    kapacc(2,i,j-1,k);
+		     d3kam = kapacc(2,i,j+1,k)-3*kapacc(2,i,j,k)+
+			3*kapacc(2,i,j-1,k)-  kapacc(2,i,j-2,k);
+
+		     pd = (c6*( 0.5*( d3up*d3kp+d3um*d3km  +
+             dt2o12*(d3up*d3kap+d3um*d3kam+ d3uap*d3kp + d3uam*d3km)))
+                 + c8*( (d3up-d3um)*(d3kp-d3km) +
+             dt2o12*(  (d3uap-d3uam)*(d3kp-d3km)+
+		       (d3up-d3um)*(d3kap-d3kam))) )*h3*ih2*wgh[kk-1];
+		     glambda(i,j,k) = glambda(i,j,k) + pd;
+		     gmu(i,j,k) = gmu(i,j,k) + 2*pd;
+
+		     d3up = u(3,i,j+2,k)-3*u(3,i,j+1,k)+3*u(3,i,j,k)-
+			u(3,i,j-1,k);
+		     d3um =u(3,i,j+1,k)-3*u(3,i,j,k)+3*u(3,i,j-1,k)-
+			u(3,i,j-2,k);
+		     d3kp = kap(3,i,j+2,k)-3*kap(3,i,j+1,k)+
+			3*kap(3,i,j,k)-kap(3,i,j-1,k);
+		     d3km = kap(3,i,j+1,k)-3*kap(3,i,j,k)+
+			3*kap(3,i,j-1,k)-kap(3,i,j-2,k);
+		     d3uap = uacc(3,i,j+2,k)-3*uacc(3,i,j+1,k)+
+			3*uacc(3,i,j,k)- uacc(3,i,j-1,k);
+		     d3uam =uacc(3,i,j+1,k)-3*uacc(3,i,j,k)+
+			3*uacc(3,i,j-1,k)-uacc(3,i,j-2,k);
+		     d3kap = kapacc(3,i,j+2,k)-3*kapacc(3,i,j+1,k)+
+			3*kapacc(3,i,j,k)-kapacc(3,i,j-1,k);
+		     d3kam = kapacc(3,i,j+1,k)-3*kapacc(3,i,j,k)+
+			3*kapacc(3,i,j-1,k)-kapacc(3,i,j-2,k);
+		     pd = (c6*( 0.5*( d3up*d3kp+d3um*d3km  +
+             dt2o12*(d3up*d3kap+d3um*d3kam+ d3uap*d3kp + d3uam*d3km)))
+                 + c8*( (d3up-d3um)*(d3kp-d3km) +
+             dt2o12*(  (d3uap-d3uam)*(d3kp-d3km)+
+		       (d3up-d3um)*(d3kap-d3kam))) )*h3*ih2*wgh[kk-1];
+		     gmu(i,j,k) = gmu(i,j,k) + pd;
+
+// z-direction
+		     if( k <= nk-1 )
+		     {
+			d3up = u(1,i,j,k+2)-3*u(1,i,j,k+1)+3*u(1,i,j,k)-
+			   u(1,i,j,k-1);
+			d3um = u(1,i,j,k+1)-3*u(1,i,j,k)+3*u(1,i,j,k-1)-
+			   u(1,i,j,k-2);
+			d3kp = kap(1,i,j,k+2)-3*kap(1,i,j,k+1)+
+			   3*kap(1,i,j,k)-kap(1,i,j,k-1);
+			d3km = kap(1,i,j,k+1)-3*kap(1,i,j,k)+
+			   3*kap(1,i,j,k-1)-kap(1,i,j,k-2);
+			d3uap = uacc(1,i,j,k+2)-3*uacc(1,i,j,k+1)+
+			   3*uacc(1,i,j,k)-uacc(1,i,j,k-1);
+			d3uam =uacc(1,i,j,k+1)-3*uacc(1,i,j,k)+
+			   3*uacc(1,i,j,k-1)-uacc(1,i,j,k-2);
+			d3kap = kapacc(1,i,j,k+2)-3*kapacc(1,i,j,k+1)+
+			   3*kapacc(1,i,j,k)-kapacc(1,i,j,k-1);
+			d3kam = kapacc(1,i,j,k+1)-3*kapacc(1,i,j,k)+
+			   3*kapacc(1,i,j,k-1)-kapacc(1,i,j,k-2);
+			pd = ( ( 0.5*( w6p[kk-1]*d3up*d3kp+w6m[kk-1]*d3um*d3km  +
+             dt2o12*(w6p[kk-1]*d3up*d3kap + w6m[kk-1]*d3um*d3kam+ 
+                     w6p[kk-1]*d3uap*d3kp + w6m[kk-1]*d3uam*d3km)))
+                 + w8[kk-1]*c8*( (d3up-d3um)*(d3kp-d3km) +
+             dt2o12*(  (d3uap-d3uam)*(d3kp-d3km)+
+		       (d3up-d3um)*(d3kap-d3kam))) )*h3*ih2;
+			gmu(i,j,k) = gmu(i,j,k) + pd;
+			if( k==nk-3 )
+			{
+			   pd = 0.5*( -al4*d3um*d3km+
+			dt2o12*(-al4*d3um*d3kam -al4*d3uam*d3km ) )*h3*ih2;
+			   gmu(i,j,k-1) = gmu(i,j,k-1) + pd;
+			}
+			d3up = u(2,i,j,k+2)-3*u(2,i,j,k+1)+
+			   3*u(2,i,j,k)- u(2,i,j,k-1);
+			d3um =u(2,i,j,k+1)-3*u(2,i,j,k)+
+			   3*u(2,i,j,k-1)- u(2,i,j,k-2);
+			d3kp = kap(2,i,j,k+2)-3*kap(2,i,j,k+1)+
+			   3*kap(2,i,j,k)-kap(2,i,j,k-1);
+			d3km = kap(2,i,j,k+1)-3*kap(2,i,j,k)+
+			   3*kap(2,i,j,k-1)-kap(2,i,j,k-2);
+			d3uap = uacc(2,i,j,k+2)-3*uacc(2,i,j,k+1)+
+			   3*uacc(2,i,j,k)- uacc(2,i,j,k-1);
+			d3uam =uacc(2,i,j,k+1)-3*uacc(2,i,j,k)+
+			   3*uacc(2,i,j,k-1)- uacc(2,i,j,k-2);
+			d3kap = kapacc(2,i,j,k+2)-3*kapacc(2,i,j,k+1)+
+			   3*kapacc(2,i,j,k)-kapacc(2,i,j,k-1);
+			d3kam = kapacc(2,i,j,k+1)-3*kapacc(2,i,j,k)+
+			   3*kapacc(2,i,j,k-1)-kapacc(2,i,j,k-2);
+			pd = (( 0.5*( w6p[kk-1]*d3up*d3kp+w6m[kk-1]*d3um*d3km  +
+             dt2o12*(w6p[kk-1]*d3up*d3kap + w6m[kk-1]*d3um*d3kam+
+                     w6p[kk-1]*d3uap*d3kp + w6m[kk-1]*d3uam*d3km)))
+                 + w8[kk-1]*c8*( (d3up-d3um)*(d3kp-d3km) +
+             dt2o12*(  (d3uap-d3uam)*(d3kp-d3km)+
+		       (d3up-d3um)*(d3kap-d3kam))) )*h3*ih2;
+			gmu(i,j,k) = gmu(i,j,k) + pd;
+			if( k == nk-3 )
+			{
+			   pd = 0.5*( -al4*d3um*d3km+
+			    dt2o12*(-al4*d3um*d3kam -al4*d3uam*d3km ) )*h3*ih2;
+			   gmu(i,j,k-1) = gmu(i,j,k-1) + pd;
+			}
+			d3up = u(3,i,j,k+2) - 3*u(3,i,j,k+1) +
+			   3*u(3,i,j,k)   -   u(3,i,j,k-1);
+			d3um = u(3,i,j,k+1) - 3*u(3,i,j,k) +
+			   3*u(3,i,j,k-1) -   u(3,i,j,k-2);
+			d3kp = kap(3,i,j,k+2) - 3*kap(3,i,j,k+1) +
+			   3*kap(3,i,j,k)   -   kap(3,i,j,k-1);
+			d3km = kap(3,i,j,k+1) - 3*kap(3,i,j,k  ) +
+			   3*kap(3,i,j,k-1) -   kap(3,i,j,k-2);
+
+			d3uap = uacc(3,i,j,k+2)-3*uacc(3,i,j,k+1)+
+			   3*uacc(3,i,j,k)  -  uacc(3,i,j,k-1);
+			d3uam = uacc(3,i,j,k+1)-3*uacc(3,i,j,k) +
+			   3*uacc(3,i,j,k-1)-  uacc(3,i,j,k-2);
+
+			d3kap = kapacc(3,i,j,k+2)- 3*kapacc(3,i,j,k+1)+
+			   3*kapacc(3,i,j,k)  -   kapacc(3,i,j,k-1);
+			d3kam = kapacc(3,i,j,k+1) -3*kapacc(3,i,j,k)+
+			   3*kapacc(3,i,j,k-1) -  kapacc(3,i,j,k-2);
+
+			pd = (0.5*( w6p[kk-1]*d3up*d3kp  + w6m[kk-1]*d3um*d3km  +
+		      dt2o12*(    w6p[kk-1]*d3up*d3kap + w6m[kk-1]*d3um*d3kam + 
+                               w6p[kk-1]*d3uap*d3kp + w6m[kk-1]*d3uam*d3km) )
+                 + w8[kk-1]*c8*( (d3up-d3um)*(d3kp-d3km) +
+                       dt2o12*(  (d3uap-d3uam)*(d3kp-d3km) +
+                                 (d3up-d3um)*(d3kap-d3kam)   )))*h3*ih2;
+			glambda(i,j,k) = glambda(i,j,k) + pd;
+			gmu(i,j,k) = gmu(i,j,k) + 2*pd;
+			if( k == nk-3 )
+			{
+			   pd = 0.5*( -al4*d3um*d3km+
+			dt2o12*(-al4*d3um*d3kam -al4*d3uam*d3km ) )*h3*ih2;
+			   glambda(i,j,k-1) = glambda(i,j,k-1) + pd;
+			   gmu(i,j,k-1)     = gmu(i,j,k-1)   +  2*pd;
+			}
+		     }
+	       }
+      }
 }
 
 //-----------------------------------------------------------------------

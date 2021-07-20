@@ -49,6 +49,14 @@ Mopt::Mopt( EW* a_ew )
    m_test_regularizer = false;
    m_do_profiling = false;
    m_use_pseudohessian = false;
+   m_vp_min = -100.; // default to negative, only positive ones in effect
+   m_vp_max = -100.;
+   m_vs_min = -100.;
+   m_vs_max = -100.;
+   m_wave_mode=2;  // default to both P and S waves otherwise 0 for P and 1 for S only
+   m_win_mode =1; // default, use eikonal solver to set windows.
+   m_twin_shift=0.0;
+   m_twin_scale=1.0; 
    m_tolerance = 1e-12;
    m_var    = 0;
    m_var2   = 0;
@@ -72,7 +80,7 @@ Mopt::Mopt( EW* a_ew )
    m_sfm = NULL;
    m_xs0 = NULL;
    m_misfit = L2;
-   m_mpcart0 = NULL;
+   //   m_mpcart0 = NULL;
    m_mp = NULL;
    m_nsteps_in_memory = 10;
    m_write_dfm = false;
@@ -282,6 +290,26 @@ void Mopt::processMaterialParCart( char* buffer )
          token += 6;
          omega = atof(token);
       }
+      else if( startswith("vp_min=",token) )
+      {
+         token += 7;
+         m_vp_min = atof(token);
+      }
+      else if( startswith("vp_max=",token) )
+      {
+         token += 7;
+         m_vp_max = atof(token);
+      }
+      else if( startswith("vs_min=",token) )
+      {
+         token += 7;
+         m_vs_min = atof(token);
+      }
+      else if( startswith("vs_max=",token) )
+      {
+         token += 7;
+         m_vs_max = atof(token);
+      }
       else if( startswith("shared=",token) )
       {
          token += 7;
@@ -313,21 +341,22 @@ void Mopt::processMaterialParCart( char* buffer )
       varcase=3;
    else if( vponly )
       varcase=4;
-   if( !shared )
-      m_mp = new MaterialParCart( m_ew, nx, ny, nz, init, varcase, file, amp, omega );
-   else
-   {
-      if (vel)
-         m_mp = new MaterialParCartesianVels( m_ew, nx, ny, nz, init, file );
-      else if( vponly )
-         m_mp = new MaterialParCartesianVp( m_ew, nx, ny, nz, init, file, ratio, gamma, true );
-      else if( vsvp )
-         m_mp = new MaterialParCartesianVsVp( m_ew, nx, ny, nz, init, file );
-      else
-         m_mp = new MaterialParCartesian( m_ew, nx, ny, nz, init, file );
-   }
+   m_mp = new MaterialParCart( m_ew, nx, ny, nz, init, varcase, file, amp, omega, shared );
+   //   if( !shared )
+   //      m_mp = new MaterialParCart( m_ew, nx, ny, nz, init, varcase, file, amp, omega );
+   //   else
+   //   {
+   //      if (vel)
+   //         m_mp = new MaterialParCartesianVels( m_ew, nx, ny, nz, init, file );
+   //      else if( vponly )
+   //         m_mp = new MaterialParCartesianVp( m_ew, nx, ny, nz, init, file, ratio, gamma, true );
+   //      else if( vsvp )
+   //         m_mp = new MaterialParCartesianVsVp( m_ew, nx, ny, nz, init, file );
+   //      else
+   //         m_mp = new MaterialParCartesian( m_ew, nx, ny, nz, init, file );
+   //   }
    // use for material projection only:
-   m_mpcart0 = new MaterialParCartesian( m_ew, nx, ny, nz, 0, "");
+   //   m_mpcart0 = new MaterialParCartesian( m_ew, nx, ny, nz, 0, "");
 } // end processMaterialParCart
 
 //-----------------------------------------------------------------------
@@ -473,6 +502,36 @@ void Mopt::processMrun( char* buffer )
             filterpar = 1.0/12.0;
          }
          m_ew->set_filterpar(filterpar);
+      }
+      else if( startswith("wave_mode=",token) )
+      {
+         token += 10;
+	 int n = strlen(token);
+         if( strncmp("P",token,n)== 0 || strncmp("p",token,n)==0) 
+            m_wave_mode = 0;
+         else if(strncmp("S",token,n)== 0 || strncmp("s",token,n)==0) 
+            m_wave_mode = 1;
+         else 
+            m_wave_mode=2;
+      }
+      else if( startswith("twinshift=",token) )  // [-1, 1] of win size
+      {
+         token += 10;
+         m_twin_shift = atof(token);
+      }
+      else if( startswith("twinscale=",token) )  // scale of win size
+      {
+         token += 10;
+         m_twin_scale = atof(token);
+      }
+      else if( startswith("win_mode=",token) )
+      {
+         token += 9;
+	 int n = strlen(token);
+         if( strncmp("none",token,n)==0 || strncmp("0",token,n)==0 )
+            m_win_mode = 0;
+         if( strncmp("auto",token,n)==0 || strncmp("1",token,n)==0 )
+            m_win_mode = 1;
       }
       else if( startswith("writedfm=",token) )
       {

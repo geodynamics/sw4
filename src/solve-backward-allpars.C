@@ -127,6 +127,9 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 //	for (int ts=0; ts<a_TimeSeries.size(); ts++)
 //	   a_TimeSeries[ts]->writeFile();
 
+//   int idbg=57, jdbg=101, kdbg=1, gdbg=0;
+//   int idbg=113, jdbg=201, kdbg=25, gdbg=1;
+//   bool dbgowner=interior_point_in_proc(idbg,jdbg,gdbg);
    // Backward time stepping loop
    for( int currentTimeStep = mNumberOfTimeSteps[event] ; currentTimeStep >= beginCycle; currentTimeStep-- )
    {    
@@ -145,12 +148,13 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
       enforceBC( Km, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
       //      enforceDirichlet5( Km );
-
       time_measure[2] = MPI_Wtime();
 
     // Corrector
       for( int s= 0 ; s < a_TimeSeries.size() ; s++ )
 	 a_TimeSeries[s]->use_as_forcing( currentTimeStep-1, F, mGridSize, mDt, mJ, topographyExists() );
+
+      enforceIC( Km, K, Kp, AlphaVEp, AlphaVE, AlphaVEm, t, true, F, point_sources, true );
 
       evalDpDmInTime( Kp, K, Km, Kacc ); 
       evalRHS( Kacc, a_Mu, a_Lambda, Lk, AlphaVEm );
@@ -171,15 +175,18 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       //      cartesian_bc_forcing( t-mDt, BCForcing );
       enforceBC( Km, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
       //      enforceDirichlet5( Km );
+      enforceIC( Km, K, Kp, AlphaVEp, AlphaVE, AlphaVEm, t, false, F, point_sources, true );
 
-      // U-backward solution, predictor
+
+    // U-backward solution, predictor
       evalRHS( U, a_Mu, a_Lambda, Lk, AlphaVE );
       Force( t, F, point_sources, identsources );
       evalPredictor( Um, U, Up, a_Rho, Lk, F );
-      for(int g=0 ; g < mNumberOfGrids ; g++ )
-         communicate_array( Um[g], g );
+      //      for(int g=0 ; g < mNumberOfGrids ; g++ )
+      //         communicate_array( Um[g], g );
       cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
-      enforceBC( Um, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
+      //      enforceBC( Um, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
+      //      enforceIC( Um, U, Up, AlphaVEp, AlphaVE, AlphaVEm, t, true, F, point_sources );
 
      // U-backward solution, corrector
       evalDpDmInTime( Up, U, Um, Uacc ); 
@@ -190,9 +197,11 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 	 Upred_saved[g]->pop( Uacc[g], currentTimeStep );
          communicate_array( Uacc[g], g );
       }
+      // Note, this assumes BCForcing is not time dependent, which is usually true
       enforceBC( Uacc, a_Mu, a_Lambda, AlphaVEm, t, BCForcing );
 
       evalRHS( Uacc, a_Mu, a_Lambda, Lk, AlphaVEm );
+
       Force_tt( t, F, point_sources, identsources );
       evalCorrector( Um, a_Rho, Lk, F );
 
@@ -202,8 +211,10 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       // set boundary data on U
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          communicate_array( Um[g], g );
-      cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
+//      cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
       enforceBC( Um, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
+      Force( t-mDt, F, point_sources, identsources );
+      enforceIC( Um, U, Up, AlphaVEp, AlphaVE, AlphaVEm, t, false, F, point_sources, true );
 
       time_measure[5] = MPI_Wtime();
 
@@ -215,6 +226,16 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       }
       add_to_grad( K, Kacc, Um, U, Up, Uacc, gRho, gMu, gLambda );      
 
+      //      if( dbgowner )
+      //      {
+      //         cout << "b " << t << " " << currentTimeStep << 
+      //            " Kp k"  << Kp[gdbg](1,idbg,jdbg,kdbg) << " " << Kp[gdbg](2,idbg,jdbg,kdbg) << " " << Kp[gdbg](3,idbg,jdbg,kdbg) << endl;
+            //         cout<<  " Kp kp"  << Kp[gdbg](1,idbg,jdbg,kdbg+1) << " " << Kp[gdbg](2,idbg,jdbg,kdbg+1) << " " << Kp[gdbg](3,idbg,jdbg,kdbg+1) << endl;
+      //         cout<<   " K k"  << K[gdbg](1,idbg,jdbg,kdbg) << " " << K[gdbg](2,idbg,jdbg,kdbg) << " " << K[gdbg](3,idbg,jdbg,kdbg) << endl;
+      //         cout <<   " K kp"  << K[gdbg](1,idbg,jdbg,kdbg+1) << " " << K[gdbg](2,idbg,jdbg,kdbg+1) << " " << K[gdbg](3,idbg,jdbg,kdbg+1) << endl;
+      //         cout <<   " Km k"  << Km[gdbg](1,idbg,jdbg,kdbg) << " " << Km[gdbg](2,idbg,jdbg,kdbg) << " " << Km[gdbg](3,idbg,jdbg,kdbg) << endl;
+      //         cout <<   " Km kp"  << Km[gdbg](1,idbg,jdbg,kdbg+1) << " " << Km[gdbg](2,idbg,jdbg,kdbg+1) << " " << Km[gdbg](3,idbg,jdbg,kdbg+1) << endl;
+      //      }
       time_measure[6] = MPI_Wtime();
       t -= mDt;
       cycleSolutionArrays( Kp, K, Km );
@@ -259,9 +280,10 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       mxnorm = mxnorm >  umx[1] ? mxnorm :  umx[1];
       mxnorm = mxnorm >  umx[2] ? mxnorm :  umx[2];
 
+      //      if( m_myRank == 0 )
+      //         cout << "Grid " << g << ", maximum norm of backed out initial data is " << mxnorm << endl;
       if( mxnorm > 1e-8 && m_myRank == 0 )
 	 cout << "WARNING: maximum norm of backed out initial data is " << mxnorm << endl;
-      
       if( !mQuiet && m_myRank == 0 && mVerbose >= 3 )
       {
          cout << "Grid nr. " << g << ": " << endl;

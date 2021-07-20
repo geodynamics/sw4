@@ -2088,21 +2088,31 @@ void EW::setup_supergrid( )
         sgpts = m_supergrid_width/mGridSize[g];
      int imin = 1+sgpts, imax = m_global_nx[g]-sgpts, jmin=1+sgpts, jmax=m_global_ny[g]-sgpts;
      int kmax=m_global_nz[g]-sgpts;
+     int kmin=1;
 
      // Only grid 0 has super grid boundary at the bottom
      if( g > 0 )
         kmax = m_global_nz[g];
 
-     //     cout << "Active region for backward solver: " << imin+1 << " " << imax-1 << " " << jmin+1 << " " << jmax-1
-     //	  << " " << 1+1 << " " << kmax-1 << endl;
      int addlayer=1;
+     
+     //     cout << "Active region for backward solver: " << imin+1 << " " << imax-1 << " " << jmin+1 << " " << jmax-1
+     //	  << " " << kmin+1 << " " << kmax-1 << endl;
+
+     // The topmost grid do not need to save values
+     //     if( g < mNumberOfGrids-1 )
+     //        kmin = 1+addlayer;
+
 
      m_iStartActGlobal[g] = m_iStartAct[g] = imin+addlayer;
      m_iEndActGlobal[g]   = m_iEndAct[g]   = imax-addlayer;
      m_jStartActGlobal[g] = m_jStartAct[g] = jmin+addlayer;
      m_jEndActGlobal[g]   = m_jEndAct[g]   = jmax-addlayer;
-     m_kStartActGlobal[g] = m_kStartAct[g] = 1;
-     m_kEndActGlobal[g]   = m_kEndAct[g]   = kmax-addlayer;
+     m_kStartActGlobal[g] = m_kStartAct[g] = kmin;
+     if( g == 0 )
+        m_kEndActGlobal[g]   = m_kEndAct[g] = kmax-addlayer;
+     else
+     m_kEndActGlobal[g]   = m_kEndAct[g] = kmax;
 
      // Changed to interior Start --> StartInt etc..
      if( m_iStartAct[g] < m_iStartInt[g] )

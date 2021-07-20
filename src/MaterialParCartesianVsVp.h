@@ -19,7 +19,7 @@ public:
    void get_material( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
 		      std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
    void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
-			std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
+			std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda, int nr );
    void get_gradient( int nmd, double* xmd, int nms, double* xms, double* dfs, double* dfm,
 		      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
 		      std::vector<Sarray>& a_lambda,

@@ -10,7 +10,7 @@
 #endif
 
 MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, int varcase, 
-                                  char* fname, float_sw4 amp, float_sw4 omega )
+                                  char* fname, float_sw4 amp, float_sw4 omega, bool force_shared )
    : MaterialParameterization( a_ew, fname )
 {
    //  VERIFY2( nx > 1 && ny > 1 && nz > 1, "MaterialParCartesian: The grid need at least two ponts in each direction")
@@ -94,7 +94,7 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
       ncomp=1;
 
 // Global grid is determined.
-   m_global = compute_overlap();
+   m_global = compute_overlap( force_shared );
 
    bool dbg=false;
    if( dbg )
@@ -124,6 +124,184 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
       m_nmd = 0;
       m_nmd_global = 0;
    }
+}
+//-----------------------------------------------------------------------
+void MaterialParCart::limit_x( int nmd, double* xmd, int nms, double* xms,
+                               float_sw4 vsmin, float_sw4 vsmax, 
+                               float_sw4 vpmin, float_sw4 vpmax )
+{
+   if( vsmin <0 && vsmax <0 && vpmin <0 && vpmax < 0 )
+   {
+      //All negative, means do no limiting
+      int nmpar = nms>0 ? nms:nmd;
+      m_limited.resize(nmpar);
+      for( int i=0 ; i < m_limited.size() ; i++ )
+         m_limited[i] = false;
+      return;
+   }
+   // If no upper limit, simplify coding
+   if( vsmax < 0 )
+      vsmax = 1e38;
+   if( vpmax < 0 )
+      vpmax = 1e38;
+
+   float_sw4* based, *bases;
+   if( nms > 0 )
+      bases = new float_sw4[nms];
+   else
+      based = new float_sw4[nmd];
+
+   get_parameters( nmd, based, nms, bases, m_ew->mRho, m_ew->mMu, m_ew->mLambda, 5);
+   float_sw4* baseptr, *xptr;
+   int nmpar;
+   if( nms > 0 )
+   {
+      baseptr = bases;
+      xptr    = xms;
+      nmpar   = nms;
+   }
+   else
+   {
+      baseptr = based;
+      xptr    = xmd;
+      nmpar   = nmd;
+   }
+   m_limited.resize(nmpar);
+   for( int i=0 ; i < m_limited.size() ; i++ )
+      m_limited[i] = false;
+
+   if( m_variables==1 )
+   {
+      std::cout << "MaterialParCart::Limit_x, variables=1 case is not implemented" << std::endl;
+      for( int ind=0 ; ind < nmpar/3 ; ind++ )
+      {
+         float_sw4 rho=baseptr[3*ind]+xptr[3*ind];
+         float_sw4 mubase=baseptr[1+3*ind];
+         float_sw4 mulabase = 2*baseptr[1+3*ind]+baseptr[2+3*ind];
+
+         if( xptr[1+3*ind]<  rho*vsmin*vsmin-mubase )
+         {
+            xptr[1+3*ind] = rho*vsmin*vsmin-mubase;
+            m_limited[1+3*ind]=true;
+         }
+         if( xptr[1+3*ind] > rho*vsmax*vsmax-mubase )
+         {
+            xptr[1+3*ind] = rho*vsmax*vsmax-mubase;
+            m_limited[1+3*ind]=true;
+         }
+         float_sw4 mu=mubase+xptr[1+3*ind];
+         if( xptr[2+3*ind] <  rho*vpmin*vpmin-2*mu )
+         {
+            xptr[2+3*ind] = rho*vpmin*vpmin-2*mu;
+            m_limited[2+3*ind]=true;
+         }
+         if( xptr[2+3*ind] > rho*vpmax*vpmax-2*mu )
+         {
+            xptr[2+3*ind] = rho*vpmax*vpmax-2*mu;
+            m_limited[2+3*ind]=true;
+         }
+      }
+   }
+   if( m_variables==2 )
+   {
+      for( int ind=0 ; ind < nmpar/3 ; ind++ )
+      {
+         float_sw4 vsbase=baseptr[1+3*ind];
+         float_sw4 vpbase=baseptr[2+3*ind];
+         if( xptr[1+3*ind] < vsmin-vsbase )
+         {
+            xptr[1+3*ind] = vsmin-vsbase;
+            m_limited[1+3*ind]=true;
+         }
+         if( xptr[1+3*ind] > vsmax-vsbase )
+         {
+            xptr[1+3*ind] = vsmax-vsbase;
+            m_limited[1+3*ind]=true;
+         }
+         if( xptr[2+3*ind] < vpmin-vpbase )
+         {
+            xptr[2+3*ind] = vpmin-vpbase;
+            m_limited[2+3*ind]=true;
+         }
+         if( xptr[2+3*ind] > vpmax-vpbase )
+         {
+            xptr[2+3*ind] = vpmax-vpbase;
+            m_limited[2+3*ind]=true;
+         }
+      }
+   }
+   else if( m_variables == 3 )
+   {
+      for( int ind=0 ; ind < nmpar/2 ; ind++ )
+      {
+         float_sw4 vsbase=baseptr[2*ind];
+         float_sw4 vpbase=baseptr[1+2*ind];
+         if( xptr[2*ind] < vsmin-vsbase )
+         {
+            xptr[2*ind] = vsmin-vsbase;
+            m_limited[2*ind]=true;
+         }
+         if( xptr[2*ind] > vsmax-vsbase )
+         {
+            xptr[2*ind] = vsmax-vsbase;
+            m_limited[2*ind]=true;
+         }
+         if( xptr[1+2*ind] < vpmin-vpbase )
+         {
+            xptr[1+2*ind] = vpmin-vpbase;
+            m_limited[1+2*ind]=true;
+         }
+         if( xptr[1+2*ind] > vpmax-vpbase )
+         {
+            xptr[1+2*ind] = vpmax-vpbase;
+            m_limited[1+2*ind]=true;
+         }
+      }
+   }
+   else if( m_variables == 4 )
+   {
+      for( int ind=0 ; ind < nmpar ; ind++ )
+      {
+         float_sw4 vpbase=baseptr[ind];
+         if( xptr[ind] < vpmin-vpbase )
+         {
+            xptr[ind] = vpmin-vpbase;
+            m_limited[ind]=true;
+         }
+         if( xptr[ind] > vpmax-vpbase )
+         {
+            xptr[ind] = vpmax-vpbase;
+            m_limited[ind]=true;
+         }
+      }
+   }
+   if( nms > 0 )
+      delete[] bases;
+   else
+      delete[] based;
+}
+
+//-----------------------------------------------------------------------
+void MaterialParCart::limit_df( int nmd, double* dfd, int nms, double* dfs )
+{
+   float_sw4* dfptr;
+   int nmpar;
+   if( nms > 0 )
+   {
+      dfptr = dfs;
+      nmpar = nms;
+   }
+   else
+   {
+      dfptr = dfd;
+      nmpar = nmd;
+   }
+   if( m_limited.size() != nmpar )
+      std::cout << "MaterialParCart::limit_df: ERROR sizes do not match " <<
+         " limited size = " << m_limited.size() << " nmpar = " << nmpar << std::endl;
+   for( int ind=0 ;ind < nmpar ; ind++ )
+      if( m_limited[ind] )
+         dfptr[ind]=0;
 }
 
 //-----------------------------------------------------------------------
@@ -263,8 +441,23 @@ void MaterialParCart::find_lims( int ib, int ie, int iepm, int ibpp,
 }
 
 //-----------------------------------------------------------------------
-bool MaterialParCart::compute_overlap()
+bool MaterialParCart::compute_overlap( bool force_shared )
 {
+   if( force_shared )
+   {
+      m_ib = m_jb = m_kb = 0;
+      m_ie=m_nx+1;
+      m_je=m_ny+1;
+      m_ke=m_nz+1;
+      m_ibint=m_jbint=m_kbint=1;
+      m_ieint=m_nx;
+      m_jeint=m_ny;
+      m_keint=m_nz;
+      if( m_myrank == 0 )
+         std::cout << "making Material parameterization global  " << std::endl;
+      return 1;
+   }
+
 // Material coarse grid limits in this processor
    int icb=10000000, ice=-100, jcb=10000000, jce=-100, kcb=10000000, kce=-100;
 
@@ -427,8 +620,7 @@ bool MaterialParCart::compute_overlap()
    }
    int tmp=go_global;
    MPI_Allreduce( &tmp, &go_global, 1, MPI_INT, MPI_MAX, m_ew->m_1d_communicator );
-   //   // DEBUG
-   //   go_global=1;
+
    if( go_global )
    {
       m_ib = m_jb = m_kb = 0;
@@ -580,16 +772,19 @@ void MaterialParCart::get_parameters( int nmd, double* xmd,
                                       int nms, double* xms, 
                                       std::vector<Sarray>& a_rho, 
                                       std::vector<Sarray>& a_mu, 
-                                      std::vector<Sarray>& a_lambda )
+                                      std::vector<Sarray>& a_lambda, int nr )
 {
-   if( m_init == 0 )
+   if( nr == -1 )
+      nr = m_init;
+
+   if( nr == 0 )
    {
       for( int i=0 ; i < nms ; i++ )
 	 xms[i] = 0;
       for( int i=0 ; i < nmd ; i++ )
 	 xmd[i] = 0;
    }
-   else if( m_init == 1 )
+   else if( nr == 1 )
    {
       //      cout << " hx, hy, hz " << m_hx  <<  " " << m_hy << " " << m_hz << endl;
       //      cout << " nx, ny, nz " << m_nx  <<  " " << m_ny << " " << m_nz << endl;
@@ -650,18 +845,21 @@ void MaterialParCart::get_parameters( int nmd, double* xmd,
 	       ind++;
 	    }
    }
-   else if( m_init == 2 )
+   else if( nr == 2 )
    {
       if( nms > 0 )
          read_parameters( nms, xms );
       else
          read_parameters( nmd, xmd );
    }
-   else if( m_init == 3 )
+   else if( nr == 3 )
    {
       interpolate_parameters( nmd, xmd, nms, xms, a_rho, a_mu, a_lambda, true );
    }
-
+   else if( nr == 5 )
+   {
+      interpolate_parameters( nmd, xmd, nms, xms, a_rho, a_mu, a_lambda, false );
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -693,8 +891,7 @@ void MaterialParCart::interpolate_parameters( int nmd, double* xmd,
    }
    else 
    {
-//always update=true
-      interpolate_to_coarse_vel( a_rho, a_mu, a_lambda, m_rho, m_cs, m_cp );
+      interpolate_to_coarse_vel( a_rho, a_mu, a_lambda, m_rho, m_cs, m_cp, update );
    }
 
    double* xptr = m_nms>0? xms:xmd;
@@ -1561,13 +1758,22 @@ void MaterialParCart::interpolate_to_coarse( vector<Sarray>& rhogrid,
 void MaterialParCart::interpolate_to_coarse_vel( vector<Sarray>& rhogrid, 
                                                  vector<Sarray>& mugrid,
                                                  vector<Sarray>& lambdagrid,
-                                                 Sarray& rho, Sarray& cs, Sarray& cp )
+                                                 Sarray& rho, Sarray& cs, Sarray& cp,
+                                                 bool update )
 {
-// Compute material perturbation on parameter grid from a material that is given on the computational grid.
+//-----------------------------------------------------------------------
+// Compute material perturbation on parameter grid from a material that is 
+// given on the computational grid.
 //
-// Computes:  rho := I(rhogrid-mRho)   (and similar for mu and lambda)
-//            cs  := I(csgrid-mCs)
-//            cp  := I(cpgrid-mCp)
+// Computes:  if update is true, computes
+//              rho := I(rhogrid-mRho)   
+//              cs  := I(csgrid-mCs)
+//              cp  := I(cpgrid-mCp)
+//            if update is false, computes
+//               rho := I(rhogrid)
+//               cs  := I(csgrid)
+//               cp  := I(cpgrid)
+//
 //            where I() interpolates from computational grid onto the parameter grid.
 //            csgrid and cpgrid are obtained by transforming (rhogrid,mugrid,lambdagrid)
 //            mCs and mCp are obtained by transforming (mRho, mMu, mLambda)
@@ -1576,7 +1782,11 @@ void MaterialParCart::interpolate_to_coarse_vel( vector<Sarray>& rhogrid,
 //                                        the computational grids.
 //
 //   Output: rho, cs, cp  - Material velocity perturbation on parameter grid.
-//
+//-----------------------------------------------------------------------
+
+   int a1=1;
+   if( !update )
+      a1 = 0;
 
    int ig, jg, kg, g;
    rho.set_to_zero();
@@ -1618,10 +1828,10 @@ void MaterialParCart::interpolate_to_coarse_vel( vector<Sarray>& rhogrid,
 			for( int i1=rhogrid[g].m_ib ; i1 <= rhogrid[g].m_ie ; i1++)
 			{
 			   csdiff[g](i1,j1,k1)=sqrt(mugrid[g](i1,j1,k1)/rhogrid[g](i1,j1,k1))-
-			                       sqrt(mMu[g](i1,j1,k1)/mRho[g](i1,j1,k1));
+			                    a1*sqrt(mMu[g](i1,j1,k1)/mRho[g](i1,j1,k1));
 			   cpdiff[g](i1,j1,k1)=
 			     sqrt((2*mugrid[g](i1,j1,k1)+lambdagrid[g](i1,j1,k1))/rhogrid[g](i1,j1,k1)) -
-		             sqrt((2*mMu[g](i1,j1,k1)   +mLambda[g](i1,j1,k1)   )/mRho[g](i1,j1,k1));
+	                  a1*sqrt((2*mMu[g](i1,j1,k1)   +mLambda[g](i1,j1,k1)   )/mRho[g](i1,j1,k1));
 			}
 		  done[g] = true;
 	       }
@@ -1634,11 +1844,11 @@ void MaterialParCart::interpolate_to_coarse_vel( vector<Sarray>& rhogrid,
 		  (wghy)*(1-wghz)*((1-wghx)*rhogrid[g](ig,jg+1,kg)+wghx*rhogrid[g](ig+1,jg+1,kg))+
 		  (1-wghy)*(wghz)*((1-wghx)*rhogrid[g](ig,jg,kg+1)+wghx*rhogrid[g](ig+1,jg,kg+1))+
 		  (wghy)*(wghz)*(  (1-wghx)*rhogrid[g](ig,jg+1,kg+1)+wghx*rhogrid[g](ig+1,jg+1,kg+1)) 
-		  -      ((1-wghy)*(1-wghz)*(
+		  -    a1*((1-wghy)*(1-wghz)*(
 			           (1-wghx)*mRho[g](ig,jg,kg)+wghx*mRho[g](ig+1,jg,kg))+
 		  (wghy)*(1-wghz)*((1-wghx)*mRho[g](ig,jg+1,kg)+wghx*mRho[g](ig+1,jg+1,kg))+
 		  (1-wghy)*(wghz)*((1-wghx)*mRho[g](ig,jg,kg+1)+wghx*mRho[g](ig+1,jg,kg+1))+
-		  (wghy)*(wghz)*(  (1-wghx)*mRho[g](ig,jg+1,kg+1)+wghx*mRho[g](ig+1,jg+1,kg+1))  );
+                    (wghy)*(wghz)*(  (1-wghx)*mRho[g](ig,jg+1,kg+1)+wghx*mRho[g](ig+1,jg+1,kg+1))  );
                cs(i,j,k) = (1-wghy)*(1-wghz)*(
 			           (1-wghx)*csdiff[g](ig,jg,kg)+wghx*csdiff[g](ig+1,jg,kg))+
 		  (wghy)*(1-wghz)*((1-wghx)*csdiff[g](ig,jg+1,kg)+wghx*csdiff[g](ig+1,jg+1,kg))+
