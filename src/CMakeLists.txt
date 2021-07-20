@@ -1,52 +1,53 @@
-## FIND PROJ4 
-if (NOT EXISTS "${PROJ4_DIR}")
-  message(FATAL_ERROR "Given SEARCH_DIR does not exist: ${PROJ4_DIR}")
-endif()
-
-if (NOT IS_DIRECTORY "${PROJ4_DIR}")
+if (ENABLE_PROJ4)
+  ## FIND PROJ4 
+  if (NOT EXISTS "${PROJ4_DIR}")
+    message(FATAL_ERROR "Given SEARCH_DIR does not exist: ${PROJ4_DIR}")
+  endif()
+  
+  if (NOT IS_DIRECTORY "${PROJ4_DIR}")
     message(FATAL_ERROR "Given SEARCH_DIR is not a directory: ${PROJ4_DIR}")
-endif()
-
-# Find includes directory
-find_path( PROJ4_INCLUDE_DIR proj_api.h
-           PATHS  ${PROJ4_DIR}/include/
-           NO_DEFAULT_PATH
-           NO_CMAKE_ENVIRONMENT_PATH
-           NO_CMAKE_PATH
-           NO_SYSTEM_ENVIRONMENT_PATH
-           NO_CMAKE_SYSTEM_PATH)
-
-# Find libraries
-find_library( PROJ4_LIBRARY NAMES proj
-              PATHS ${PROJ4_DIR}/lib64
-              NO_DEFAULT_PATH
-              NO_CMAKE_ENVIRONMENT_PATH
-              NO_CMAKE_PATH
-              NO_SYSTEM_ENVIRONMENT_PATH
-              NO_CMAKE_SYSTEM_PATH)
-
-
-include(FindPackageHandleStandardArgs)
-# handle the QUIETLY and REQUIRED arguments and set PROJ4_FOUND to TRUE
-# if all listed variables are TRUE
-find_package_handle_standard_args( PROJ4  DEFAULT_MSG
-                                  PROJ4_INCLUDE_DIR
-                                  PROJ4_LIBRARY )
-
-if(NOT PROJ4_FOUND)
+  endif()
+  
+  # Find includes directory
+  find_path( PROJ4_INCLUDE_DIR proj_api.h
+    PATHS  ${PROJ4_DIR}/include/
+    NO_DEFAULT_PATH
+    NO_CMAKE_ENVIRONMENT_PATH
+    NO_CMAKE_PATH
+    NO_SYSTEM_ENVIRONMENT_PATH
+    NO_CMAKE_SYSTEM_PATH)
+  
+  # Find libraries
+  find_library( PROJ4_LIBRARY NAMES proj
+    PATHS ${PROJ4_DIR}/lib64
+    NO_DEFAULT_PATH
+    NO_CMAKE_ENVIRONMENT_PATH
+    NO_CMAKE_PATH
+    NO_SYSTEM_ENVIRONMENT_PATH
+    NO_CMAKE_SYSTEM_PATH)
+  
+  
+  include(FindPackageHandleStandardArgs)
+  # handle the QUIETLY and REQUIRED arguments and set PROJ4_FOUND to TRUE
+  # if all listed variables are TRUE
+  find_package_handle_standard_args( PROJ4  DEFAULT_MSG
+    PROJ4_INCLUDE_DIR
+    PROJ4_LIBRARY )
+  
+  if(NOT PROJ4_FOUND)
     message(FATAL_ERROR "PROJ4_DIR is not a path to a valid PROJ4 install")
+  endif()
+
+  message(STATUS "PROJ4 Includes: ${PROJ4_INCLUDE_DIR}")
+  message(STATUS "PROJ4 Libraries: ${PROJ4_LIBRARY}")
+  
+  blt_import_library(NAME       proj4
+    TREAT_INCLUDES_AS_SYSTEM ON
+    DEFINES    HAVE_PROJ4=1
+    INCLUDES   ${PROJ4_INCLUDE_DIR}
+    LIBRARIES  ${PROJ4_LIBRARY}
+    EXPORTABLE ON)
 endif()
-
-message(STATUS "PROJ4 Includes: ${PROJ4_INCLUDE_DIR}")
-message(STATUS "PROJ4 Libraries: ${PROJ4_LIBRARY}")
-
-blt_import_library(NAME       proj4
-                   TREAT_INCLUDES_AS_SYSTEM ON
-                   DEFINES    HAVE_PROJ4=1
-                   INCLUDES   ${PROJ4_INCLUDE_DIR}
-                   LIBRARIES  ${PROJ4_LIBRARY}
-                   EXPORTABLE ON)
-
 
 
 ## FIND LAPACK
@@ -149,8 +150,8 @@ set (SW4_SRC_FILES main.C EW.C Sarray.C version.C parseInputFile.C ForcingTwilig
     quadpack/dqc25s.f quadpack/dqmomo.f quadpack/dqpsrt.f quadpack/dqk15w.f quadpack/xerror.f quadpack/dqags.f quadpack/dqagse.f
     quadpack/dqc25s.f quadpack/dqcheb.f quadpack/dqwgts.f quadpack/dqk21.f quadpack/dqelg.f)
 
-
-
+# This plus DEPENDS_ON MPI::MPICXX is the workaround for the -pthread problem
+find_package(MPI)
 #
 # All the CUDA statements
 #
@@ -158,7 +159,7 @@ if (ENABLE_CUDA)
   blt_add_executable(NAME sw4
     HEADERS ${SW4_HDR_FILES}
     SOURCES ${SW4_SRC_FILES}
-    DEPENDS_ON cuda mpi)
+    DEPENDS_ON cuda MPI::MPI_CXX)
   blt_add_target_compile_flags(TO sw4 FLAGS -DENABLE_CUDA=1)
   set_property(TARGET sw4 PROPERTY CUDA_ARCHITECTURES 70)
   
@@ -177,17 +178,22 @@ if (ENABLE_HIP)
   blt_add_executable(NAME sw4
     HEADERS ${SW4_HDR_FILES}
     SOURCES ${SW4_SRC_FILES}
-    DEPENDS_ON hip mpi)
+    DEPENDS_ON hip MPI::MPI_CXX)
   blt_add_target_compile_flags(TO sw4 FLAGS -DENABLE_HIP=1)
 endif()
 
 target_link_libraries(sw4 PUBLIC RAJA)
-target_link_libraries(sw4 PUBLIC umpire)
+
 target_link_libraries(sw4 PUBLIC lapack)
 target_link_libraries(sw4 PUBLIC gomp nvidia-ml)
-target_link_libraries(sw4 PUBLIC proj4)
+if (ENABLE_UMPIRE)
+  target_link_libraries(sw4 PUBLIC umpire)
+endif()
+if (ENABLE_PROJ4)
+  target_link_libraries(sw4 PUBLIC proj4)
+endif()
 if (ENABLE_HDF5)
-target_link_libraries(sw4 PUBLIC HDF5::HDF5)
+  target_link_libraries(sw4 PUBLIC HDF5::HDF5)
 endif()
 #target_link_libraries(sw4 PUBLIC cuda)
 set_property(TARGET sw4 PROPERTY LINKER_LANGUAGE CXX)

@@ -1,11 +1,13 @@
 set (LAPACK_DIR "/usr/tcetmp/packages/lapack/lapack-3.9.0-gcc-7.3.1" CACHE STRING "")
 set (PROJ4_DIR "/usr/workspace/wsrzd/ramesh/Project6/SW4/proj-5.0.0/install170818" CACHE STRING "")
 #set (UMPIRE_DIR "/usr/workspace/wsrzd/ramesh/UMPIRE/umpire-3.0.0" CACHE STRING "")
-set (ENABLE_MPI ON CACHE BOOL "" FORCE)
+#set (ENABLE_MPI ON CACHE BOOL "" FORCE)
 set (ENABLE_CUDA ON CACHE BOOL "" FORCE)
-set (RNABLE_OPENMP OFF CACHE BOOL "" FORCE)
+set (ENABLE_OPENMP OFF CACHE BOOL "" FORCE)
 set (ENABLE_RAJA ON CACHE BOOL "" FORCE)
 set (ENABLE_HDF5 ON CACHE BOOL "" FORCE)
+set (ENABLE_PROJ4 ON CACHE BOOL "" FORCE)
+set (ENABLE_UMPIRE ON CACHE BOOL "" FORCE)
 
 
 set (CUDA_ARCH "sm_70" CACHE STRING "" FORCE)

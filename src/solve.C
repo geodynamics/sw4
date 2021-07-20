@@ -789,8 +789,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   int gg = mNumberOfGrids - 1;  // top grid
   for (int i3 = 0; i3 < mESSI3DFiles.size(); i3++) {
     mESSI3DFiles[i3]->set_ntimestep(mNumberOfTimeSteps[event]);
-    mESSI3DFiles[i3]->update_image(beginCycle - 1, t, mDt, U, mPath[event],
-                                   mZ[gg]);
+    mESSI3DFiles[i3]->set_restart(m_check_point->do_restart());
   }
   FILE* lf = NULL;
   // open file for saving norm of error
