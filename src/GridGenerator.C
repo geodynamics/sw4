@@ -131,7 +131,7 @@ int GridGenerator::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
 }
 
 //-----------------------------------------------------------------------
-bool GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
+int GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
                                            float_sw4& z, Sarray& topo) {
   SW4_MARK_FUNCTION;
   // Interpolate the topography
@@ -148,7 +148,7 @@ bool GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
   // (without ghost points),
   //  1 <= r <= Ny.
 
-  if (!a_ew->topographyExists()) return false;
+  if (!a_ew->topographyExists()) return -1;
 
   int gTop = a_ew->mNumberOfGrids - 1;
   float_sw4 h = a_ew->mGridSize[gTop];
@@ -157,15 +157,15 @@ bool GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
 
   // Find topography at (q,r), tau=tau(q,r)
   // Nearest grid point:
-  int iNear = static_cast<int>(round(q));
-  int jNear = static_cast<int>(round(r));
+  int iNear = static_cast<int>(floor(q));
+  int jNear = static_cast<int>(floor(r));
   float_sw4 tau;
   if (fabs(iNear - q) < 1.e-9 && fabs(jNear - r) < 1.e-9) {
     // At a grid point, evaluate topography at that point
     if (topo.in_range(1, iNear, jNear, 1))
       tau = topo(iNear, jNear, 1);
     else
-      return false;
+      return -2;
   } else {
     // Not at a grid  point, interpolate the topography
     // Nearest lower grid point
@@ -181,11 +181,11 @@ bool GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
         for (int k = -3; k <= 4; k++)
           tau += a6cofi[k + 3] * a6cofj[l + 3] * topo(k + iNear, l + jNear, 1);
     } else {
-      return false;
+      return -3;
     }
   }
   z = -tau;
-  return true;
+  return 1;
 }
 
 //-----------------------------------------------------------------------

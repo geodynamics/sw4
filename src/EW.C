@@ -1206,10 +1206,11 @@ bool EW::getDepth(float_sw4 x, float_sw4 y, float_sw4 z, float_sw4& depth) {
 
     // // evaluate elevation of topography on the grid (smoothed topo)
     success = true;
-    if (!m_gridGenerator->interpolate_topography(this, x, y, zMinTilde,
-                                                 mTopoGridExt)) {
+    int ret = m_gridGenerator->interpolate_topography(this, x, y, zMinTilde,
+                                                 mTopoGridExt);
+    if (ret < 0) {
       cerr << "ERROR: getDepth: Unable to evaluate topography for x=" << x
-           << " y= " << y << " on proc # " << getRank() << endl;
+           << " y= " << y << " on proc # " << getRank() << ", ret=" << ret << endl;
       //            cerr << "q=" << q << " r=" << r << " qMin=" << qMin << "
       //            qMax=" << qMax << " rMin=" << rMin << " rMax=" << rMax <<
       //            endl;

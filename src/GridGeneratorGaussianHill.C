@@ -377,7 +377,7 @@ void GridGeneratorGaussianHill::generate_grid_and_met_old_gh(
 }
 
 //-----------------------------------------------------------------------
-bool GridGeneratorGaussianHill::interpolate_topography(EW* a_ew, float_sw4 x,
+int GridGeneratorGaussianHill::interpolate_topography(EW* a_ew, float_sw4 x,
                                                        float_sw4 y,
                                                        float_sw4& z,
                                                        Sarray& topo) {
@@ -387,7 +387,7 @@ bool GridGeneratorGaussianHill::interpolate_topography(EW* a_ew, float_sw4 x,
   //   float_sw4 y = (r-1)*h;
   z = -m_amp *
       exp(-(x - m_xc) * (x - m_xc) * m_ixl2 - (y - m_yc) * (y - m_yc) * m_iyl2);
-  return true;
+  return -1;
 }
 
 //-----------------------------------------------------------------------
@@ -400,7 +400,7 @@ bool GridGeneratorGaussianHill::exact_metric(EW* a_ew, int g, Sarray& a_jac,
     generate_grid_and_met_new_gh(a_ew, g, x, y, z, a_jac, a_met);
   else
     generate_grid_and_met_old_gh(a_ew, x, y, z, a_jac, a_met);
-  return true;
+  return 1;
 }
 
 //-----------------------------------------------------------------------

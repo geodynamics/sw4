@@ -579,7 +579,7 @@ class EW {
   void interpolate_between_grids(vector<Sarray>& u, vector<Sarray>& um,
                                  float_sw4 t, vector<Sarray*>& AlphaVE);
 
-  bool interpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0,
+  int interpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0,
                               bool smoothed);
 
   void copy_topo_to_topogridext();

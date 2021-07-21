@@ -133,7 +133,8 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
 
   // 1. Adjust z if depth below topography is given
   if (m_zRelativeToTopography && a_ew->topographyExists()) {
-    a_ew->m_gridGenerator->interpolate_topography(a_ew, mX, mY, m_zTopo,
+    a_ew->m_gridGenerator->interpolate_topography(a_ew, mX, 
+                                                  mY, m_zTopo,
                                                   a_ew->mTopoGridExt);
     mZ += m_zTopo;
   } else
