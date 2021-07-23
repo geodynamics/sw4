@@ -2927,7 +2927,7 @@ RAJA_HOST_DEVICE float_sw4 EW::Gaussian_x_T_Integral(float_sw4 t, float_sw4 R,
 //-----------------------------------------------------------------------
 // void EW::get_exact_point_source( Sarray& u, float_sw4 t, int g, Source&
 // source )
-#ifdef ENABLE_HIP
+#ifdef NO_DEVICE_FUNCTION_POINTERS
 void EW::get_exact_point_source(float_sw4* up, float_sw4 t, int g,
                                 Source& source, int* wind) {}
 #else

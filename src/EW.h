@@ -690,36 +690,36 @@ class EW {
   // test point source
   void get_exact_point_source(float_sw4* u, float_sw4 t, int g, Source& source,
                               int* wind = 0);
-  RAJA_HOST_DEVICE float_sw4 VerySmoothBump_x_T_Integral(float_sw4 t,
+  RAJA_HOST_DEVICE static float_sw4 VerySmoothBump_x_T_Integral(float_sw4 t,
                                                          float_sw4 R,
                                                          float_sw4 alpha,
                                                          float_sw4 beta);
-  RAJA_HOST_DEVICE float_sw4 C6SmoothBump_x_T_Integral(float_sw4 t, float_sw4 R,
+  RAJA_HOST_DEVICE static float_sw4 C6SmoothBump_x_T_Integral(float_sw4 t, float_sw4 R,
                                                        float_sw4 alpha,
                                                        float_sw4 beta);
-  RAJA_HOST_DEVICE float_sw4 SmoothWave_x_T_Integral(float_sw4 t, float_sw4 R,
+  RAJA_HOST_DEVICE static float_sw4 SmoothWave_x_T_Integral(float_sw4 t, float_sw4 R,
                                                      float_sw4 alpha,
                                                      float_sw4 beta);
-  RAJA_HOST_DEVICE float_sw4 Gaussian_x_T_Integral(float_sw4 t, float_sw4 R,
+  RAJA_HOST_DEVICE static float_sw4 Gaussian_x_T_Integral(float_sw4 t, float_sw4 R,
                                                    float_sw4 f, float_sw4 alpha,
                                                    float_sw4 beta);
-  RAJA_HOST_DEVICE float_sw4 VSBTP(float_sw4 Lim, float_sw4 t);
-  RAJA_HOST_DEVICE float_sw4 C6SBTP(float_sw4 Lim, float_sw4 t);
-  RAJA_HOST_DEVICE float_sw4 SWTP(float_sw4 Lim, float_sw4 t);
-  RAJA_HOST_DEVICE float_sw4 d_VerySmoothBump_dt(float_sw4 t, float_sw4 R,
+  RAJA_HOST_DEVICE static float_sw4 VSBTP(float_sw4 Lim, float_sw4 t);
+  RAJA_HOST_DEVICE static float_sw4 C6SBTP(float_sw4 Lim, float_sw4 t);
+  RAJA_HOST_DEVICE static float_sw4 SWTP(float_sw4 Lim, float_sw4 t);
+  RAJA_HOST_DEVICE static float_sw4 d_VerySmoothBump_dt(float_sw4 t, float_sw4 R,
                                                  float_sw4 c);
-  RAJA_HOST_DEVICE float_sw4 d_C6SmoothBump_dt(float_sw4 t, float_sw4 R,
+  RAJA_HOST_DEVICE static float_sw4 d_C6SmoothBump_dt(float_sw4 t, float_sw4 R,
                                                float_sw4 c);
-  RAJA_HOST_DEVICE float_sw4 d_SmoothWave_dt(float_sw4 t, float_sw4 R,
+  RAJA_HOST_DEVICE static float_sw4 d_SmoothWave_dt(float_sw4 t, float_sw4 R,
                                              float_sw4 c);
-  RAJA_HOST_DEVICE float_sw4 d_Gaussian_dt(float_sw4 t, float_sw4 R,
+  RAJA_HOST_DEVICE static float_sw4 d_Gaussian_dt(float_sw4 t, float_sw4 R,
                                            float_sw4 c, float_sw4 f);
-  RAJA_HOST_DEVICE float_sw4 VerySmoothBump(float_sw4 t, float_sw4 R,
+  RAJA_HOST_DEVICE static float_sw4 VerySmoothBump(float_sw4 t, float_sw4 R,
                                             float_sw4 c);
-  RAJA_HOST_DEVICE float_sw4 C6SmoothBump(float_sw4 t, float_sw4 R,
+  RAJA_HOST_DEVICE static float_sw4 C6SmoothBump(float_sw4 t, float_sw4 R,
                                           float_sw4 c);
-  RAJA_HOST_DEVICE float_sw4 SmoothWave(float_sw4 t, float_sw4 R, float_sw4 c);
-  RAJA_HOST_DEVICE float_sw4 Gaussian(float_sw4 t, float_sw4 R, float_sw4 c,
+  RAJA_HOST_DEVICE static float_sw4 SmoothWave(float_sw4 t, float_sw4 R, float_sw4 c);
+  RAJA_HOST_DEVICE static float_sw4 Gaussian(float_sw4 t, float_sw4 R, float_sw4 c,
                                       float_sw4 f);
 
   // Lamb's problem
