@@ -1327,7 +1327,7 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void set_filtergrad();
    void set_filterit(int filterit);
    void set_filterpar(float_sw4 filterpar);
-
+   void perturb_vels( Sarray& cs, Sarray& cp, Sarray& rndpert );
    //   TestGrid* create_gaussianHill();
    TestTwilight* create_twilight();
    TestEcons* create_energytest();   

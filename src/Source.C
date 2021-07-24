@@ -145,12 +145,12 @@ Source::Source(EW *a_ew,
    //   a_ew->computeNearestGridPoint2(m_i0,m_j0,m_k0,m_grid,mX0,mY0,mZ0);
 
 // Correct source location for discrepancy between raw and smoothed topography
-   correct_Z_level( a_ew ); // also sets the ignore flag for sources that are above the topography
+   correct_Z_level( a_ew ); 
    compute_grid_point( a_ew ); 
-  if (a_ew->getVerbosity()>=3 && a_ew->proc_zero())
-  {
-    printf("Moment source at x=%e, y=%e, z=%e is centered at grid point i=%d, j=%d, k=%d, in grid=%d\n", mX0, mY0, mZ0, m_i0, m_j0, m_k0, m_grid);
-  }
+   if (a_ew->getVerbosity()>=3 && a_ew->proc_zero())
+   {
+      printf("Moment source at x=%e, y=%e, z=%e is centered at grid point i=%d, j=%d, k=%d, in grid=%d\n", mX0, mY0, mZ0, m_i0, m_j0, m_k0, m_grid);
+   }
   
 
 }
@@ -225,7 +225,7 @@ Source::Source(EW *a_ew, float_sw4 frequency, float_sw4 t0,
 
 // Correct source location for discrepancy between raw and smoothed topography
   correct_Z_level( a_ew ); // also sets the ignore flag for sources that are above the topography
-   compute_grid_point( a_ew );
+  compute_grid_point( a_ew );
 }
 
 //-----------------------------------------------------------------------
@@ -544,24 +544,9 @@ void Source::correct_Z_level( EW *a_ew )
 //   printf("Entering correct_Z_level()\n");
 
   int i,j,k,g;
-// preliminary determination of the nearest grid point (already did this in the constructor)
   int success = a_ew->computeNearestGridPoint2( i, j, k, g, mX0, mY0, mZ0 );
-// does this processor know about topography at this location?
   m_myPoint = success && a_ew->interior_point_in_proc(i, j, g);
-  
-  if( !a_ew->topographyExists() ) // this is the easy case w/o topography
-  {
-    m_zTopo = 0.;
-// make sure the station is below or on the topography (z is positive downwards)
-    if ( mZ0 < m_zTopo-1e-9)
-    {
-      mIgnore = true;
-      printf("Ignoring Source at X=%g, Y=%g, Z=%g, because it is above the topography z=%g\n", 
-	     mX0,  mY0, mZ0, m_zTopo);
-    }
-    return; // done with the flat case
-  }
-   
+
 // The following is a safety check to make sure only one processor considers this (i,j) to be interior
 // We could remove this check if we were certain that interior_point_in_proc() never lies
   int iwrite = m_myPoint ? 1 : 0;
@@ -570,34 +555,41 @@ void Source::correct_Z_level( EW *a_ew )
   std::vector<int> whoIsOne(size);
   int counter = 0;
   MPI_Allgather(&iwrite, 1, MPI_INT, &whoIsOne[0], 1, MPI_INT,a_ew->m_1d_communicator);
-  for (unsigned int i = 0; i < whoIsOne.size(); ++i)
-    if (whoIsOne[i] == 1)
-      {
+  for (unsigned int p = 0; p < whoIsOne.size(); ++p)
+     if (whoIsOne[p] == 1)
+     {
         counter++;
-      }
+     }
   REQUIRE2(counter == 1,"Source error: the nearest grid point should only be interior to one proc, but counter = " << counter <<
 	   " for source station at (x,y,depth)=" <<  mX0 << ", " << mY0 << ", "  << mZ0 );
-
-  float_sw4 zTopoLocal;
-  if (!a_ew->m_gridGenerator->interpolate_topography(a_ew, mX0, mY0, zTopoLocal, a_ew->mTopoGridExt))
-     zTopoLocal =-1e38;
-  MPI_Allreduce(&zTopoLocal,&m_zTopo,1,a_ew->m_mpifloat,MPI_MAX,a_ew->m_1d_communicator);
-
-// If location was specified with topodepth, correct z-level  
-  if (m_zRelativeToTopography)
+  
+  if( !a_ew->topographyExists() )
   {
-    mZ0 += m_zTopo;
-    m_zRelativeToTopography = false; // set to false so the correction isn't repeated (for whatever reason)
+    // This is the easy case w/o topography
+    m_zTopo = 0.0;
+  }
+  else
+  {
+   // With topography, compute z-coordinate at topography directly above the source
+     float_sw4 zTopoLocal;
+     if (!a_ew->m_gridGenerator->interpolate_topography(a_ew, mX0, mY0, zTopoLocal, a_ew->mTopoGridExt))
+        zTopoLocal =-1e38;
+     MPI_Allreduce(&zTopoLocal,&m_zTopo,1,a_ew->m_mpifloat,MPI_MAX,a_ew->m_1d_communicator);
+     if (m_zRelativeToTopography)
+     {
+// If location was specified with topodepth, correct z-level  
+        mZ0 += m_zTopo;
+        m_zRelativeToTopography = false; // set to false so the correction isn't repeated (for whatever reason)
+     }
   }
   
-// make sure the station is below or on the topography (z is positive downwards)
-  if ( mZ0 < m_zTopo - 1.e-9)// allow for a little roundoff
+// Make sure the station is below or on the topography (z is positive downwards)
+  if ( mZ0 < m_zTopo - 1.0e-9)// allow for a little roundoff
   {
     mIgnore = true;
     printf("Ignoring Source at X=%g, Y=%g, Z=%g, because it is above the topography z=%g\n", 
 	   mX0,  mY0, mZ0, m_zTopo);
   }
-
 // tmp
 //   printf("Exiting correct_Z_level()\n");
 }
