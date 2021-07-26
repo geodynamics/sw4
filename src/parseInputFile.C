@@ -4709,7 +4709,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
    if( m_topography_exists ) // UPDATED  for more than 1 curvilinear grid
    {
 // Allocate elements in the m_curviInterface vector
-      m_curviInterface.resize(mNumberOfGrids - mNumberOfCartesianGrids);
+//      m_curviInterface.resize(mNumberOfGrids - mNumberOfCartesianGrids);
 
 // NEW
       for (int g=mNumberOfGrids-1; g>=mNumberOfCartesianGrids; g--) // g=mNumberOfGrids-1 is the finest curvilinear grid
@@ -4768,8 +4768,8 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax)
          m_ext_ghost_points = 8;
 
 // Allocate interface the interface surface for this curvilinear grid
-         m_curviInterface[g-mNumberOfCartesianGrids].define(m_iStart[g]-m_ext_ghost_points, m_iEnd[g]+m_ext_ghost_points,
-                                                            m_jStart[g]-m_ext_ghost_points, m_jEnd[g]+m_ext_ghost_points,1,1);
+//         m_curviInterface[g-mNumberOfCartesianGrids].define(m_iStart[g]-m_ext_ghost_points, m_iEnd[g]+m_ext_ghost_points,
+//                                                            m_jStart[g]-m_ext_ghost_points, m_jEnd[g]+m_ext_ghost_points,1,1);
 
 // Allocate topo arrays for the top (finest) curvilinear grid
          if (g==mNumberOfGrids-1)

@@ -1396,7 +1396,7 @@ int m_opttest;
    Sarray mTopo, mTopoGridExt;
 
 // 2-D arrays with interface surfaces (z-coordinates) for mesh refinement in the curvilinear grid
-   vector<Sarray> m_curviInterface;
+//   vector<Sarray> m_curviInterface;
    
 
 // material description used with material surfaces and the ifile command

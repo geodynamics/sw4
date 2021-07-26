@@ -592,15 +592,18 @@ bool GridGeneratorGeneral::grid_mapping_new( EW* a_ew, float_sw4 q, float_sw4 r,
          Zbot = m_curviInterface[iSurfBot](iLow, jLow, 1);
       else
       {  // high order interpolation to get intermediate value of zBot
-         if( true ) // point_in_proc_ext(i-3,j-3,gFinest) && point_in_proc_ext(i+4,j+4,gFinest)
+         if( true )
          {
-                  /* gettopowgh( q-i, a6cofi ); */
-                  /* gettopowgh( r-j, a6cofj ); */
-                  /* Zbot = 0; */
-                  /* for( int l=j-3 ; l <= j+4 ; l++ ) */
-                  /*    for( int k=i-3 ; k <= i+4 ; k++ ) */
-                  /*       Zbot += a6cofi[k-i+3]*a6cofj[l-j+3]*m_curviInterface[iSurfBot](k,l,1); */
-                  // for the purpose of plotting the grid, it suffices with linear interpolation
+            gettopowgh( q-i, a6cofi );
+            gettopowgh( r-j, a6cofj );
+            Zbot = 0;
+            for( int l=j-3 ; l <= j+4 ; l++ )
+               for( int k=i-3 ; k <= i+4 ; k++ )
+                  Zbot += a6cofi[k-i+3]*a6cofj[l-j+3]*m_curviInterface[iSurfBot](k,l,1);
+         }
+         else
+         {
+          // for the purpose of plotting the grid, it suffices with linear interpolation
             float_sw4 xi  = (x - xPt)/h0;
             float_sw4 eta = (y - yPt)/h0;
             Zbot =
