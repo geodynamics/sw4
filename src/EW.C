@@ -851,9 +851,13 @@ bool EW::wasParsingSuccessful() { return mParsingSuccessful; }
 void EW::printTime(int cycle, float_sw4 t, bool force) const {
   if (!mQuiet && proc_zero() &&
       (force || mPrintInterval == 1 || (cycle % mPrintInterval) == 1 ||
-       cycle == 1))
+       cycle == 1)) {
+    time_t now;
+    time(&now);
     // string big enough for >1 million time steps
-    printf("Time step %7i  t = %15.7e\n", cycle, t);
+    printf("Time step %7i  t = %15.7e\t%s\n", cycle, t, ctime(&now));
+    fflush(stdout);
+  }
 }
 //-----------------------------------------------------------------------
 void EW::printPreamble(vector<Source*>& a_Sources, int event) const {

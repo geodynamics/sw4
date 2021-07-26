@@ -889,6 +889,11 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 #ifdef SW4_TRACK_MPI
   // bool cudaProfilerOn = false;
 #endif
+  if (!getRank()) {
+    time_t now;
+    time(&now);
+    printf("Start time stepping at %s\n", ctime(&now));
+  }
   for (int currentTimeStep = beginCycle;
        currentTimeStep <= mNumberOfTimeSteps[event]; currentTimeStep++) {
     time_measure[0] = MPI_Wtime();
@@ -1549,15 +1554,16 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   if (mESSI3DFiles.size() > 0) {
     // Calculate the total ESSI hdf5 io time across all ranks
     double hdf5_time = 0;
-    for (int i3 = 0; i3 < mESSI3DFiles.size(); i3++)
+    for (int i3 = 0; i3 < mESSI3DFiles.size(); i3++) {
       hdf5_time += mESSI3DFiles[i3]->getHDF5Timings();
-    // Max over all rank
-    double max_hdf5_time;
-    MPI_Reduce(&hdf5_time, &max_hdf5_time, 1, MPI_DOUBLE, MPI_MAX, 0,
-               MPI_COMM_WORLD);
-    if (m_myRank == 0)
-      cout << "  ==> Max wallclock time to open/write ESSI hdf5 output is "
-           << max_hdf5_time << " seconds " << endl;
+      // Max over all rank
+      double max_hdf5_time;
+      MPI_Reduce(&hdf5_time, &max_hdf5_time, 1, MPI_DOUBLE, MPI_MAX, 0,
+                 MPI_COMM_WORLD);
+      if (m_myRank == 0)
+        cout << "  ==> Max wallclock time to open/write ESSI hdf5 output #"<<
+                i3 << " is " << max_hdf5_time << " seconds " << endl;
+    }
     // add to total time for detailed timing output
     // time_sum[0] += max_hdf5_time;
     // time_sum[7] += max_hdf5_time; // fold the essi output into images and

@@ -1515,6 +1515,7 @@ class EW {
                       std::tuple<int, int, int>& mtype);
   void putbuffer_host(float_sw4* data, float_sw4* buf,
                       std::tuple<int, int, int>& mtype);
+  void perturb_vels( Sarray& cs, Sarray& cp, Sarray& rndpert );
 
   TestTwilight* create_twilight();
   TestEcons* create_energytest();

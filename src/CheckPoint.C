@@ -332,6 +332,12 @@ void CheckPoint::write_checkpoint(float_sw4 a_time, int a_cycle,
   int hsize;
   int fid = -1;
   if (m_parallel_io[0]->proc_zero()) {
+
+    time_t now;
+    time(&now);
+    printf("Start writing checkpoint at %s\n", ctime(&now));
+    fflush(stdout);
+
     fid = open(const_cast<char*>(s.str().c_str()), O_CREAT | O_TRUNC | O_WRONLY,
                0660);
     CHECK_INPUT(fid != -1,

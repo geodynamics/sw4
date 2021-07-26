@@ -894,6 +894,18 @@ void EW::setupSBPCoeff() {
 }
 
 //-----------------------------------------------------------------------
+void EW::perturb_vels( Sarray& cs, Sarray& cp, Sarray& rndpert ) 
+{
+   for( int k=cs.m_kb ; k <= cs.m_ke ; k++ )
+      for( int j=cs.m_jb ; j <= cs.m_je ; j++ )
+         for( int i=cs.m_ib ; i <= cs.m_ie ; i++ )
+         {
+            cs(i,j,k) *= rndpert(i,j,k);
+            cp(i,j,k) *= rndpert(i,j,k);
+         }
+}
+
+//-----------------------------------------------------------------------
 void EW::set_materials()
 // Fill in material properties on all grids
 // The material objects set velocities and stored Vs in mMu, Vp in mLambda.
@@ -1117,13 +1129,12 @@ void EW::set_materials()
           zmin = m_zmin[g];
           zmax = m_zmin[g] + (m_global_nz[g] - 1) * mGridSize[g];
         }
+        Sarray rndpert(mMu[g]);
+        rndpert.set_value(1.0);
         for (unsigned int b = 0; b < m_random_blocks.size(); b++)
-          m_random_blocks[b]->perturb_velocities(g, mMu[g], mLambda[g],
-                                                 mGridSize[g], zmin, zmax);
-        //	  double zmax = m_zmin[g]+(m_global_nz[g]-1)*mGridSize[g];
-        //	  for( unsigned int b=0 ; b < m_random_blocks.size() ; b++ )
-        //	     m_random_blocks[b]->perturb_velocities( g, mMu[g],
-        // mLambda[g], mGridSize[g], m_zmin[g], zmax );
+          m_random_blocks[b]->assign_perturbation( g, rndpert,  mMu[g], mGridSize[g],
+                                                      zmin, zmax );
+        perturb_vels( mMu[g], mLambda[g], rndpert );
         communicate_array_host(mMu[g], g);
         communicate_array_host(mLambda[g], g);
       }

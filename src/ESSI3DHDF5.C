@@ -446,7 +446,7 @@ void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
 }
 
 void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
-  bool enable_timing = false;
+  bool enable_timing = true;
   bool debug = false;
   /* debug=true; */
 #ifdef USE_HDF5
@@ -456,6 +456,7 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
   int myRank;
   int write_size = m_precision;
   m_end_cycle = cycle;  // save for header for later when we close the file
+  time_t now;
 
   MPI_Comm comm = MPI_COMM_WORLD;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
@@ -487,7 +488,6 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
   start[3] = m_window[4];  // local index lo relative to global
 
   if (debug && comp == 2) {
-    time_t now;
     time(&now);
     printf(
         "Rank %d: cycle=%d, nstep=%d, writing vel start = %d %d %d %d, size = "
@@ -521,10 +521,11 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
   }
 
   if (enable_timing) {
+    time(&now);
     write_time = MPI_Wtime() - write_time_start;
-    if (cycle % 100 == 0 && comp == 0) {
-      printf("rank=%d, cycle=%d, comp=%d, write size=%fMB, write time=%f\n",
-             myRank, cycle, comp, write_size / 1048576.0, write_time);
+    if (myRank == 0) {
+      printf("%s ssioutput cycle=%d, comp=%d, write size=%.2fMB, write time=%f\n",
+              ctime(&now), cycle, comp, write_size / 1048576.0, write_time);
       fflush(stdout);
     }
   }

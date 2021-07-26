@@ -55,7 +55,10 @@ class RandomizedMaterial {
                           double zmax);
 
   void perturb_velocities(std::vector<Sarray>& cs, std::vector<Sarray>& cp);
+  void assign_perturbation( int g, Sarray& pert, Sarray& cs, double h, double zmin, 
+                            double zmax );
   void set_vsmax(float_sw4 vsmax);
+  double get_vsmax();
 
  private:
   void gen_random_mtrl_fft3d_fftw(int n1g, int n2g, int n3g, float_sw4 Lx,
