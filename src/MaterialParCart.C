@@ -445,6 +445,7 @@ void MaterialParCart::find_lims( int ib, int ie, int iepm, int ibpp,
 //-----------------------------------------------------------------------
 bool MaterialParCart::compute_overlap( bool force_shared )
 {
+   bool dbg=false;
    if( force_shared )
    {
       m_ib = m_jb = m_kb = 0;
