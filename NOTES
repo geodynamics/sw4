@@ -8,3 +8,7 @@ complexity.
 Memory usage before solve is 2.89GB per device . After 1 time step, the HWM maxes at 12.89GB. Case :hmr3.in 
 
 Set env variable LLNL_USE_OLD_CUDA_VISIBLE_DEVICES_FORMAT=1 on CORAL nodes to run with 2 ranks per node.
+
+July 28 2021
+Reference solutions for h.in and hmr3.in were run using the developer commit 34580ef6190f5a8611e2889dde7d9dd29478841e
+on 1024 ranks.
