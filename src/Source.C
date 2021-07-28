@@ -128,6 +128,7 @@ Source::Source(EW* a_ew, float_sw4 frequency, float_sw4 t0, float_sw4 x0,
   // Correct source location for discrepancy between raw and smoothed topography
   correct_Z_level(a_ew);  // also sets the ignore flag for sources that are
                           // above the topography
+  compute_grid_point(a_ew);
 
   if (a_ew->getVerbosity() >= 3 && a_ew->proc_zero()) {
     printf(
@@ -194,6 +195,7 @@ Source::Source(EW* a_ew, float_sw4 frequency, float_sw4 t0, float_sw4 x0,
   // Correct source location for discrepancy between raw and smoothed topography
   correct_Z_level(a_ew);  // also sets the ignore flag for sources that are
                           // above the topography
+  compute_grid_point(a_ew);
 }
 
 //-----------------------------------------------------------------------
