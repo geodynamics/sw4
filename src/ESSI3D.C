@@ -223,7 +223,9 @@ void ESSI3D::update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
     open_vel_file(a_cycle, a_path, a_time, a_Z);
 
   if (m_dumpInterval != -1) {
-    if (a_cycle % m_dumpInterval != 0 && a_cycle != mNumberOfTimeSteps) return;
+    if (a_cycle != 0 && a_cycle % m_dumpInterval != 0 && 
+        a_cycle != mNumberOfTimeSteps) 
+      return;
     a_cycle /= m_dumpInterval;
   }
 
@@ -360,11 +362,13 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
     }
   }
 
-  if (debug && (m_rank == 0))
-    cout << "Creating hdf5 velocity fields..." << endl;
+  double hdf5_topo_time = MPI_Wtime();
+  if (m_rank == 0)
+    cout << "Create and write topo time " << MPI_Wtime() - hdf5_topo_time << endl;;
 
   if (m_dumpInterval > 0) {
     int nstep = (int)ceil(m_ntimestep / m_dumpInterval);
+    m_ntimestep = nstep;
     if (m_compressionMode > 0)
       m_hdf5helper->init_write_vel(m_isRestart, nstep, m_compressionMode,
                                    m_compressionPar, m_bufferInterval);
@@ -379,7 +383,12 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
       m_hdf5helper->init_write_vel(m_isRestart, m_ntimestep, 0, 0.0,
                                    m_bufferInterval);
   }
-  m_hdf5_time += (MPI_Wtime() - hdf5_time);
+
+  double hdf5_vel_time = MPI_Wtime();
+  if (m_rank == 0)
+    cout << "Create vel time " << hdf5_vel_time - hdf5_topo_time << endl;;
+
+  m_hdf5_time += (hdf5_vel_time - hdf5_time);
 
   m_nbufstep = 0;
   m_fileOpen = true;

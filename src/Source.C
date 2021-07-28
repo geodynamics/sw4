@@ -465,7 +465,7 @@ void Source::correct_Z_level( EW *a_ew )
   {
    // With topography, compute z-coordinate at topography directly above the source
      float_sw4 zTopoLocal;
-     if (!a_ew->m_gridGenerator->interpolate_topography(a_ew, mX0, mY0, zTopoLocal, a_ew->mTopoGridExt))
+     if (a_ew->m_gridGenerator->interpolate_topography(a_ew, mX0, mY0, zTopoLocal, a_ew->mTopoGridExt) < 0)
         zTopoLocal =-1e38;
      MPI_Allreduce(&zTopoLocal,&m_zTopo,1,a_ew->m_mpifloat,MPI_MAX,MPI_COMM_WORLD);
      if (m_zRelativeToTopography)

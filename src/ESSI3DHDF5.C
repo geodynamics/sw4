@@ -312,6 +312,7 @@ void ESSI3DHDF5::write_topo(void* window_array) {
 #endif
   return;
 }
+
 void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
                                 int compressionMode, double compressionPar,
                                 int bufferInterval) {
@@ -332,6 +333,7 @@ void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
   // m_xvel_dataspace_id = H5Screate_simple(num_dims, m_global_dims, dims);
   hid_t prop_id = H5Pcreate(H5P_DATASET_CREATE);
   H5Pset_alloc_time(prop_id, H5D_ALLOC_TIME_LATE);
+  H5Pset_fill_time(prop_id, H5D_FILL_TIME_NEVER);
 
   if (ntimestep > 0)
     m_cycle_dims[0] = ntimestep;
@@ -524,8 +526,8 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
     time(&now);
     write_time = MPI_Wtime() - write_time_start;
     if (myRank == 0) {
-      printf("%s ssioutput cycle=%d, comp=%d, write size=%.2fMB, write time=%f\n",
-              ctime(&now), cycle, comp, write_size / 1048576.0, write_time);
+      printf("ssioutput cycle=%d, comp=%d, write size=%.2fMB, write time=%f, %s",
+              cycle, comp, write_size / 1048576.0, write_time, ctime(&now));
       fflush(stdout);
     }
   }

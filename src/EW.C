@@ -855,7 +855,7 @@ void EW::printTime(int cycle, float_sw4 t, bool force) const {
     time_t now;
     time(&now);
     // string big enough for >1 million time steps
-    printf("Time step %7i  t = %15.7e\t%s\n", cycle, t, ctime(&now));
+    printf("Time step %7i  t = %15.7e\t%s", cycle, t, ctime(&now));
     fflush(stdout);
   }
 }
