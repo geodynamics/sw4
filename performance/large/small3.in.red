@@ -1,7 +1,7 @@
 # SW4 input RUN: Hayward_scenario_M6.5_s500_3Drfile_h25m
 
 # using parallel i/o
-fileio path=hayward-att-h270-ref-result pfs=1 nwriters=32 verbose=1
+fileio path=hayward-att-h270-ref-result pfs=1 nwriters=32 verbose=4
 
 # Grid coords:
 # DON'T CHANGE AZ
@@ -9,8 +9,8 @@ grid x=100e3 y=100e3 z=30e3 h=270  lat=38.33 lon=-122.075 az=143.6380001671 proj
 refinement zmax=950
 refinement zmax=5e3
 
-time t=0.09
-#time steps=10
+#time t=0.09
+time steps=20
 
 globalmaterial  vpmin=866 vsmin=500
 
