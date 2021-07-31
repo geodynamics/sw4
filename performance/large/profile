@@ -1,2 +1,2 @@
 #!/bin/bash
-rocprof  --trace-start off --sys-trace -o RocProfileMod1_${SLURM_PROCID}.csv $1 $2
+rocprof  --trace-start off --sys-trace -o RocProfileMod2_${SLURM_PROCID}.csv $1 $2

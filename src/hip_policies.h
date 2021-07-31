@@ -173,10 +173,10 @@ using RHS4_EXEC_POL_ASYNC_OLDE =
 
 using RHS4_EXEC_POL_ASYNC =
     RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<
-        256, RAJA::statement::Tile<
+        512, RAJA::statement::Tile<
                  0, RAJA::tile_fixed<4>, RAJA::hip_block_z_loop,
                  RAJA::statement::Tile<
-                     1, RAJA::tile_fixed<4>, RAJA::hip_block_y_loop,
+                     1, RAJA::tile_fixed<8>, RAJA::hip_block_y_loop,
                      RAJA::statement::Tile<
                          2, RAJA::tile_fixed<16>, RAJA::hip_block_x_loop,
                          RAJA::statement::For<
