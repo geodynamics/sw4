@@ -128,8 +128,10 @@ int ntr = a_TimeSeries.size();
    
 
     float_sw4 win;
-    win = 1*(a_Sources[event]->getFrequency()>0? 1.0/a_Sources[event]->getFrequency() : 1.0);  // one cycle of peak frequency
+    win = 1*(a_Sources[event]->getFrequency()>0.? 1.0/a_Sources[event]->getFrequency() : 1.0);  // one cycle of peak frequency
+    cout << "original win=" << win << endl;
     win *= twinscale;  // expand or shrink 
+    cout << "dialated win=" << win << endl;
 
    for(int ig=0; ig<ntr; ig++) {
    //

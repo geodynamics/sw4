@@ -752,6 +752,7 @@ void EW::preprocessSources( vector<vector<Source*> > & a_GlobalUniqueSources )
 // Need to set the frequency to 1/dt for Dirac source
 #pragma omp parallel for
       for( int s=0 ; s  < a_GlobalUniqueSources[e].size(); s++ )
+    // fc2 from prefilter is overwritten 
 	 if( a_GlobalUniqueSources[e][s]->getTfunc() == iDirac )
 	    a_GlobalUniqueSources[e][s]->setFrequency( 1.0/mDt );
 

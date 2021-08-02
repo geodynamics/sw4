@@ -521,7 +521,7 @@ void MaterialParCartesianVsVp::interpolate_base_parameters( int nmd, double* xmd
 
 
 //-----------------------------------------------------------------------
-void MaterialParCartesianVsVp::smooth_gradient(double* dfs, std::vector<Sarray>& a_Rho, std::vector<Sarray>& a_Mu, std::vector<Sarray>& a_Lambda, std::vector<Source*>& a_Sources)
+void MaterialParCartesianVsVp::smooth_gradient(double* dfs, std::vector<Sarray>& a_Rho, std::vector<Sarray>& a_Mu, std::vector<Sarray>& a_Lambda, float_sw4 freq, float_sw4 sz)
 {
    Sarray gmu(0,m_nx+1,0,m_ny+1,0,m_nz+1);
    Sarray glambda(0,m_nx+1,0,m_ny+1,0,m_nz+1);
@@ -534,8 +534,8 @@ void MaterialParCartesianVsVp::smooth_gradient(double* dfs, std::vector<Sarray>&
    float_sw4 csavg=0.;
    
    // find dominant wavelength
-   int isz= (a_Sources[0]->getZ0() - m_zmin)/m_hz+0.5;
-   std::cout << "smooth_gradient: sz=" << a_Sources[0]->getZ0() << " isz=" << isz << " m_nx=" << m_nx << " m_ny=" << m_ny << " m_nz=" << m_nz << std::endl;
+   int isz= (sz - m_zmin)/m_hz+0.5;
+   std::cout << "smooth_gradient: sz=" << sz << " isz=" << isz << " m_nx=" << m_nx << " m_ny=" << m_ny << " m_nz=" << m_nz << std::endl;
    
    size_t ind=0;
    for( int k=1 ; k <= m_nz ; k++ )
@@ -581,9 +581,8 @@ for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
    
       //if( proc_zero() && verbose > 1 )
    
-   int cp_len = cpavg / (a_Sources[0]->getFrequency()*m_hx) /2 * 2+1;  // make it odd
-   int cs_len = csavg / (a_Sources[0]->getFrequency()*m_hx) /2 * 2+1;
-   
+   int cp_len = cpavg / (freq*m_hx) /2 * 2+1;  // make it odd
+   int cs_len = csavg / (freq*m_hx) /2 * 2+1;
 
     std::cout << "solveTT  reduced cpavg=" <<  cpavg << " cp_len=" << cp_len <<  std::endl;
     std::cout << "solveTT  reduced csavg=" <<  csavg << " cs_len=" << cs_len <<  std::endl;

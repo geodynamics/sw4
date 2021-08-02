@@ -30,7 +30,7 @@ public:
 		      std::vector<Sarray>& a_lambda,
 		      std::vector<Sarray>& a_gradrho, std::vector<Sarray>& a_gradmu,
 		      std::vector<Sarray>& a_gradlambda);
-   void smooth_gradient(double* dfs, std::vector<Sarray>& a_Rho, std::vector<Sarray>& a_Mu, std::vector<Sarray>& a_Lambda, std::vector<Source*>& a_Sources);
+   void smooth_gradient(double* dfs, std::vector<Sarray>& a_Rho, std::vector<Sarray>& a_Mu, std::vector<Sarray>& a_Lambda, float_sw4 freq, float_sw4 sz);
 
 
    //   void gradient_transformation( std::vector<Sarray>& a_rho,

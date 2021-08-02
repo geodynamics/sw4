@@ -998,8 +998,13 @@ float_sw4 vp_min, float_sw4 vp_max, float_sw4 vs_min, float_sw4 vs_max, int wave
    {
       // Add base material to update in velocity variables
 	  float_sw4 cs, cp;
-	  if(wave_mode>0)  // S-wave or both
-	     cs = sqrt(m_mu[ind]/m_rho[ind])              + mup[ind];
+	  if(wave_mode>0) { // S-wave or both
+	     //cs = sqrt(m_mu[ind]/m_rho[ind])              + mup[ind];
+		 // impose a max percentage of 15%
+		 cs = sqrt(m_mu[ind]/m_rho[ind]);
+		 if(fabs(mup[ind]/cs)>0.15) cs = cs + mup[ind]/fabs(mup[ind])*cs*0.15;
+		 else cs = cs + mup[ind];
+	  }
 	  else
          cs = sqrt(m_mu[ind]/m_rho[ind]);     
 	  

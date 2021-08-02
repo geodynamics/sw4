@@ -621,7 +621,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       }  // if pH scaling
 
    
-    mopt->m_mp->smooth_gradient(dfsevent, rho, mu, lambda, GlobalSources[e]); // needs to act on dfsevent instead of dfs
+    float_sw4 freq= mopt->get_freq_gradsmooth()>0.? mopt->get_freq_gradsmooth() : GlobalSources[e][0]->getFrequency();
+    mopt->m_mp->smooth_gradient(dfsevent, rho, mu, lambda, freq, GlobalSources[e][0]->getZ0()); // needs to act on dfsevent instead of dfs
     //save_array_to_disk(nmpars, dfsevent, "dfsevent_smoothed.bin");
 
       for( int m=0 ; m < nmpars ; m++ )

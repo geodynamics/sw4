@@ -52,6 +52,7 @@ Mopt::Mopt( EW* a_ew )
    m_vp_max = -100.;
    m_vs_min = -100.;
    m_vs_max = -100.;
+   m_freq_gradsmooth=0.0;
    m_wave_mode=2;  // default to both P and S waves otherwise 0 for P and 1 for S only
    m_twin_shift=0.0;
    m_twin_scale=1.0; 
@@ -295,6 +296,11 @@ void Mopt::processMaterialParCart( char* buffer )
       {
 	   token += 7;
 	   m_vs_max = atof(token);
+      }
+      else if( startswith("freq_gradsmooth=",token) )
+      {
+	   token += 7;
+	   m_freq_gradsmooth = atof(token);
       }
       else
       {

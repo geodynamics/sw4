@@ -5514,6 +5514,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
       {
          token += 5; // skip freq=
          freq = atof(token);
+         cout << "source frerq=" << freq << endl;
          CHECK_INPUT(freq > 0,
                  err << "source command: Frequency must be > 0");
       }
