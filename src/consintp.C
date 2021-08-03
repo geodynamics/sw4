@@ -443,6 +443,15 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
     if (jacerr0 > 0) jacerr = jacerr / jacerr0;
     it++;
 
+#ifdef NO_DEVICE_FUNCTION_POINTERS
+    // Without forcing, this iteration loop runs only once.
+    // Force it to run 15 times for doing apples to 
+    // apples timing comparisons when device side function pointers
+    // are not supported.
+    if (it==15) jacerr= m_citol*m_citol;
+    else jacerr=1.0;
+#endif
+
   }  // end while jacerr > eps (Outer iteration)
   SW4_MARK_END("CONSINTP ITERATION");
   if (jacerr > m_citol && proc_zero())
