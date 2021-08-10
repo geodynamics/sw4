@@ -7,6 +7,7 @@
 #include <map>
 #include <sstream>
 #include <vector>
+#include <tuple>
 
 #include "mpi.h"
 #include "policies.h"
@@ -606,4 +607,141 @@ void gmforall3async(T &start, T &end, LoopBody &&body, Args... args) {
   gmforallkernel3<<<blocks, tpb>>>(start, end, body, args...);
 }
 
+
+
+
+
+
+template <int N, typename Tag, typename Func>
+__launch_bounds__(512, 2) __global__
+    void forall3kernelS(Tag t, const int start0, const int N0, const int start1,
+                       const int N1, const int start2, const int N2, Func f) {
+  int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
+  int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
+  int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
+  if ((tid0 < N0) && (tid1 < N1) && (tid2 < N2)) f(t, tid0, tid1, tid2);
+}
+
+template <int N, typename Tag, typename T1, typename T2, typename T3,
+          typename LoopBody>
+void forall3(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
+  if (irange.invalid || jrange.invalid || krange.invalid) return;
+  dim3 tpb(irange.tpb, jrange.tpb, krange.tpb);
+  dim3 blocks(irange.blocks, jrange.blocks, krange.blocks);
+  // std::cout<<"forall launch tpb"<<irange.tpb<<" "<<jrange.tpb<<"
+  // "<<krange.tpb<<"\n"; std::cout<<"forall launch blocks"<<irange.blocks<<"
+  // "<<jrange.blocks<<" "<<krange.blocks<<"\n";
+  // forall3kernel<N><<<blocks, tpb>>>(t, irange.start, irange.end,
+  // jrange.start,
+  //                                   jrange.end, krange.start, krange.end,
+  //                                   body);
+  // std::cout<<hipGetErrorString(hipPeekAtLastError())<<"\n"<<std::flush;
+  // std::cout<<"Launching kernel..."<<std::flush;
+#ifdef SW4_CHECK_LAUNCH_BOUNDS
+  if ((irange.tpb * jrange.tpb * krange.tpb) != 512) {
+    std::cerr << "Check launch bounds failed !! "
+              << (irange.tpb * jrange.tpb * krange.tpb) << "!=256\n";
+    abort();
+  }
+#endif
+  hipLaunchKernelGGL(forall3kernelS<N>, blocks, tpb, 0, 0, t, irange.start,
+                     irange.end, jrange.start, jrange.end, krange.start,
+                     krange.end, body);
+  hipStreamSynchronize(0);
+  ////std::cout<<"Done\n"<<std::flush;
+}
+
+
+
+
+
+namespace SW4{
+
+template<typename T>
+  T getblocks(T start, T end, int N){
+  T blocks =  (end - start) / N;
+  blocks = ((end - start) % N == 0) ? blocks : blocks + 1;
+  return blocks;
+ }
+
+ template <typename T, typename Func>
+__launch_bounds__(512, 2) __global__
+    void forall3kernel_internal(const T start0, const T N0, const T start1,
+                       const T N1, const T start2, const T N2, Func f) {
+  int tid0 = start0 + threadIdx.z + blockIdx.z * blockDim.z;
+  int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
+  int tid2= start2 + threadIdx.x + blockIdx.x * blockDim.x;
+  if ((tid0 < N0) && (tid1 < N1) && (tid2 < N2)) f(tid0, tid1, tid2);
+}
+
+template <typename Policy_T, typename T, typename LoopBody>
+void forall3_internal(T &krange, T &jrange, T &irange, LoopBody &&body) {
+  std::cout<<"forall3_internal \n"<<std::flush;
+  std::cout<<"forall3_internal "<<Policy_T::I<<" "<<Policy_T::J<<" "<<Policy_T::K<<"\n";
+  std::cout<<"forall3_internal sizes "<<irange.size()<<" "<<jrange.size()<<" "<<krange.size()<<"\n";
+  static_assert(Policy_T::I*Policy_T::J*Policy_T::K<=512,"Forall policy conflicts with launch bounds of (512,2)");
+  dim3 tpb(Policy_T::I, Policy_T::J, Policy_T::K);
+  dim3 blocks(getblocks(*irange.begin(),*irange.end(),Policy_T::I),getblocks(*jrange.begin(),*jrange.end(),Policy_T::J),getblocks(*krange.begin(),*krange.end(),Policy_T::K));
+  // std::cout<<"forall launch tpb"<<irange.tpb<<" "<<jrange.tpb<<"
+  // "<<krange.tpb<<"\n"; std::cout<<"forall launch blocks"<<irange.blocks<<"
+  // "<<jrange.blocks<<" "<<krange.blocks<<"\n";
+  // forall3kernel<N><<<blocks, tpb>>>(t, irange.start, irange.end,
+  // jrange.start,
+  //                                   jrange.end, krange.start, krange.end,
+  //                                   body);
+  // std::cout<<hipGetErrorString(hipPeekAtLastError())<<"\n"<<std::flush;
+  // std::cout<<"Launching kernel..."<<std::flush;
+
+  std::cout<<"I "<<Policy_T::I<<" blocks = "<<getblocks(*irange.begin(),*irange.end(),Policy_T::I)<<" start = "<<*irange.begin()<<" "<<*irange.end()<<"\n"<<std::flush;
+  
+  std::cout<<"K "<<Policy_T::K<<" blocks = "<<getblocks(*krange.begin(),*krange.end(),Policy_T::K)<<" start = "<<*krange.begin()<<" "<<*krange.end()<<"\n"<<std::flush;
+  std::cout<<"J "<<Policy_T::J<<" blocks = "<<getblocks(*jrange.begin(),*jrange.end(),Policy_T::J)<<" start = "<<*jrange.begin()<<" "<<*jrange.end()<<"\n"<<std::flush;
+  
+  hipLaunchKernelGGL(forall3kernel_internal, blocks, tpb, 0, 0, *krange.begin(),
+                     *krange.end(), *jrange.begin(), *jrange.end(), *irange.begin(),
+                      *irange.end(), body);
+  hipStreamSynchronize(0);
+  ////std::cout<<"Done\n"<<std::flush;
+}
+
+
+  template<bool B, typename T, int N1, int N2, int N3>
+    struct Policy{
+      static const int I=N1;
+      static const int J=N2;
+      static const int K=N3;
+      static const bool Flag = B;
+      static T value_type;
+    };
+
+  template<typename T>
+    struct is_SW4POL_impl: std::false_type{};
+  
+  template<typename T,int... Is,bool B>
+    struct is_SW4POL_impl<Policy<B,T,Is...>>: std::true_type{};
+  
+  template<typename T>
+    constexpr bool is_SW4POL= is_SW4POL_impl<T>::value;
+  
+  
+  template<typename T1, typename T2, typename T3>
+    inline void kernel(T2 &&t, T3 &&func)
+  {
+    if constexpr (is_SW4POL<T1>){
+	std::cout<<"Calling with SW4 Policy\n"<<std::flush;
+
+	if constexpr(T1::Flag){
+	    std::cout<<"Flag set, reverting to RAJA call\n"<<std::flush;
+	    RAJA::kernel<decltype(T1::value_type)>(t,func);
+	  } else 
+	  {
+	    std::cout<<"Calling Dummy forall\n"<<std::flush;
+	    forall3_internal<T1>(RAJA::get<0>(t),RAJA::get<1>(t),RAJA::get<2>(t),func);
+	  }
+      }else{
+      std::cout<<"Calling SW4 wrappe\n"<<std::flush;
+      RAJA::kernel<T1>(t,func);
+    }
+  }
+}
 #endif  // Guards
