@@ -2290,9 +2290,9 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     RAJA::RangeSegment j_range1(u.m_jb, u.m_je + 1);
     RAJA::RangeSegment i_range1(u.m_ib + ng, u.m_ib + 2 * ng - 1 + 1);
     using CA_POL2 = SW4::Policy<false,CA_POL,8,8,8>; 
-    std::cout<<"IRANGE "<<u.m_ib + ng<<" "<<u.m_ib + 2 * ng - 1 + 1<<"\n";
-    std::cout<<"JRANGE "<<u.m_jb<<" "<<u.m_je + 1<<"\n";
-    std::cout<<"KRANGE "<<kb<<" "<<ke + 1<<"\n";
+    //std::cout<<"IRANGE "<<u.m_ib + ng<<" "<<u.m_ib + 2 * ng - 1 + 1<<"\n";
+    //std::cout<<"JRANGE "<<u.m_jb<<" "<<u.m_je + 1<<"\n";
+    //std::cout<<"KRANGE "<<kb<<" "<<ke + 1<<"\n";
     SW4::kernel<CA_POL2>(RAJA::make_tuple(k_range, j_range1, i_range1),
                          [=] RAJA_DEVICE(int k, int j, int i) {
                            size_t ind = i - (ib + ng) + ng * (j - jb) +
@@ -2324,7 +2324,8 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
 #else
     RAJA::RangeSegment j_range1(u.m_jb, u.m_je + 1);
     RAJA::RangeSegment i_range1(u.m_ie - 2 * ng + 1, u.m_ie - ng + 1);
-    RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
+    using CA_POL2 = SW4::Policy<false,CA_POL,8,8,8>; 
+    SW4::kernel<CA_POL2>(RAJA::make_tuple(k_range, j_range1, i_range1),
                          [=] RAJA_DEVICE(int k, int j, int i) {
 #endif
                            size_t ind = i - (ie - 2 * ng + 1) + ng * (j - jb) +
@@ -2346,9 +2347,10 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     //   for (int k = kb; k <= ke; k++)
     //     for (int j = u.m_jb; j <= u.m_je; j++)
     //       for (int i = u.m_ie - ng + 1; i <= u.m_ie; i++) {
+    using CA_POL2 = SW4::Policy<false,CA_POL,8,8,8>; 
     RAJA::RangeSegment j_range1(u.m_jb, u.m_je + 1);
     RAJA::RangeSegment i_range1(u.m_ie - ng + 1, u.m_ie + 1);
-    RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
+    SW4::kernel<CA_POL2>(RAJA::make_tuple(k_range, j_range1, i_range1),
                          [=] RAJA_DEVICE(int k, int j, int i) {
                            size_t ind = i - (ie - ng + 1) + ng * (j - jb) +
                                         ng * nj * (k - kb);
@@ -2369,7 +2371,8 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     //       for (int i = u.m_ib; i <= u.m_ib + ng - 1; i++) {
     RAJA::RangeSegment j_range1(u.m_jb, u.m_je + 1);
     RAJA::RangeSegment i_range1(u.m_ib, u.m_ib + ng - 1 + 1);
-    RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
+    using CA_POL2 = SW4::Policy<false,CA_POL,8,8,8>; 
+    SW4::kernel<CA_POL2>(RAJA::make_tuple(k_range, j_range1, i_range1),
                          [=] RAJA_DEVICE(int k, int j, int i) {
                            size_t ind =
                                i - ib + ng * (j - jb) + ng * nj * (k - kb);
@@ -2400,7 +2403,8 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
 
     RAJA::RangeSegment j_range1(u.m_jb + ng, u.m_jb + 2 * ng - 1 + 1);
     RAJA::RangeSegment i_range1(u.m_ib, u.m_ie + 1);
-    RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range1, i_range1),
+    using CA_POL2 = SW4::Policy<false,CA_POL,8,8,8>; 
+    SW4::kernel<CA_POL2>(RAJA::make_tuple(k_range, j_range1, i_range1),
                          [=] RAJA_DEVICE(int k, int j, int i) {
                            size_t ind = i - ib + ni * (j - (jb + ng)) +
                                         ng * ni * (k - kb);
@@ -2435,7 +2439,8 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
 #else
     RAJA::RangeSegment j_range2(u.m_je - 2 * ng + 1, u.m_je - ng + 1);
     RAJA::RangeSegment i_range2(u.m_ib, u.m_ie + 1);
-    RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range2, i_range2),
+    using CA_POL2 = SW4::Policy<false,CA_POL,8,8,8>; 
+    SW4::kernel<CA_POL2>(RAJA::make_tuple(k_range, j_range2, i_range2),
                          [=] RAJA_DEVICE(int k, int j, int i) {
 #endif
                            size_t ind = i - ib + ni * (j - (je - 2 * ng + 1)) +
@@ -2459,7 +2464,8 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     //       for (int i = u.m_ib; i <= u.m_ie; i++) {
     RAJA::RangeSegment j_range3(u.m_je - ng + 1, u.m_je + 1);
     RAJA::RangeSegment i_range3(u.m_ib, u.m_ie + 1);
-    RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range3, i_range3),
+    using CA_POL2 = SW4::Policy<false,CA_POL,8,8,8>; 
+    SW4::kernel<CA_POL2>(RAJA::make_tuple(k_range, j_range3, i_range3),
                          [=] RAJA_DEVICE(int k, int j, int i) {
                            size_t ind = i - ib + ni * (j - (je - ng + 1)) +
                                         ng * ni * (k - kb);
@@ -2480,7 +2486,8 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     //       for (int i = u.m_ib; i <= u.m_ie; i++) {
     RAJA::RangeSegment j_range4(u.m_jb, u.m_jb + ng - 1 + 1);
     RAJA::RangeSegment i_range4(u.m_ib, u.m_ie + 1);
-    RAJA::kernel<CA_POL>(RAJA::make_tuple(k_range, j_range4, i_range4),
+    using CA_POL2 = SW4::Policy<false,CA_POL,8,8,8>; 
+    SW4::kernel<CA_POL2>(RAJA::make_tuple(k_range, j_range4, i_range4),
                          [=] RAJA_DEVICE(int k, int j, int i) {
                            size_t ind =
                                i - ib + ni * (j - jb) + ng * ni * (k - kb);
