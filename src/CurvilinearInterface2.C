@@ -2313,21 +2313,11 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     //   for (int k = kb; k <= ke; k++)
     //     for (int j = u.m_jb; j <= u.m_je; j++)
     //       for (int i = u.m_ie - 2 * ng + 1; i <= u.m_ie - ng; i++) {
-#if !defined(RAJA_ONLY)
-    //std::cout<<"CALLING NEW LOOP\n";
-    Range<8> I(u.m_ie - 2 * ng + 1, u.m_ie - ng + 1);
-    Range<8> J(u.m_jb, u.m_je + 1);
-    Range<8> K(kb, ke + 1);
-    Tclass<13> tag1;
-      forall3<__LINE__>(
-			     tag1, I, J, K, [=] RAJA_DEVICE(Tclass<13> t, int i, int j, int k) {
-#else
     RAJA::RangeSegment j_range1(u.m_jb, u.m_je + 1);
     RAJA::RangeSegment i_range1(u.m_ie - 2 * ng + 1, u.m_ie - ng + 1);
     using CA_POL2 = SW4::Policy<false,CA_POL,8,8,8>; 
     SW4::kernel<CA_POL2>(RAJA::make_tuple(k_range, j_range1, i_range1),
                          [=] RAJA_DEVICE(int k, int j, int i) {
-#endif
                            size_t ind = i - (ie - 2 * ng + 1) + ng * (j - jb) +
                                         ng * nj * (k - kb);
                            for (int c = 1; c <= lm_nc; c++) {
@@ -2428,21 +2418,11 @@ void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
     //     for (int j = u.m_je - 2 * ng + 1; j <= u.m_je - ng; j++)
     //       for (int i = u.m_ib; i <= u.m_ie; i++) {
     // #6
-#if !defined(RAJA_ONLY)
-    //std::cout<<"CALLING NEW LOOP\n";
-    Range<8> I(u.m_ib, u.m_ie + 1);
-    Range<8> J(u.m_je - 2 * ng + 1, u.m_je - ng + 1);
-    Range<8> K(kb, ke + 1);
-    Tclass<16> tag1;
-      forall3<__LINE__>(
-			     tag1, I, J, K, [=] RAJA_DEVICE(Tclass<16> t, int i, int j, int k) {
-#else
     RAJA::RangeSegment j_range2(u.m_je - 2 * ng + 1, u.m_je - ng + 1);
     RAJA::RangeSegment i_range2(u.m_ib, u.m_ie + 1);
     using CA_POL2 = SW4::Policy<false,CA_POL,8,8,8>; 
     SW4::kernel<CA_POL2>(RAJA::make_tuple(k_range, j_range2, i_range2),
                          [=] RAJA_DEVICE(int k, int j, int i) {
-#endif
                            size_t ind = i - ib + ni * (j - (je - 2 * ng + 1)) +
                                         ng * ni * (k - kb);
                            for (int c = 1; c <= lm_nc; c++) {
