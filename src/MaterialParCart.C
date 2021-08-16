@@ -97,7 +97,7 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
    m_global = compute_overlap( force_shared );
 
    bool dbg=false;
-   m_global = compute_overlap(dbg);
+   //   m_global = compute_overlap(dbg);
 
    if( dbg )
    {
@@ -179,9 +179,8 @@ void MaterialParCart::limit_x( int nmd, double* xmd, int nms, double* xms,
       {
          float_sw4 rho=baseptr[3*ind]+xptr[3*ind];
          float_sw4 mubase=baseptr[1+3*ind];
-         float_sw4 mulabase = 2*baseptr[1+3*ind]+baseptr[2+3*ind];
 
-         if( xptr[1+3*ind]<  rho*vsmin*vsmin-mubase )
+         if( xptr[1+3*ind]< rho*vsmin*vsmin-mubase )
          {
             xptr[1+3*ind] = rho*vsmin*vsmin-mubase;
             m_limited[1+3*ind]=true;
@@ -191,15 +190,15 @@ void MaterialParCart::limit_x( int nmd, double* xmd, int nms, double* xms,
             xptr[1+3*ind] = rho*vsmax*vsmax-mubase;
             m_limited[1+3*ind]=true;
          }
-         float_sw4 mu=mubase+xptr[1+3*ind];
-         if( xptr[2+3*ind] <  rho*vpmin*vpmin-2*mu )
+         float_sw4 mulabase=2*(mubase+xptr[1+3*ind])+baseptr[2+3*ind];
+         if( xptr[2+3*ind] <  rho*vpmin*vpmin-mulabase )
          {
-            xptr[2+3*ind] = rho*vpmin*vpmin-2*mu;
+            xptr[2+3*ind] = rho*vpmin*vpmin-mulabase;
             m_limited[2+3*ind]=true;
          }
-         if( xptr[2+3*ind] > rho*vpmax*vpmax-2*mu )
+         if( xptr[2+3*ind] > rho*vpmax*vpmax-mulabase )
          {
-            xptr[2+3*ind] = rho*vpmax*vpmax-2*mu;
+            xptr[2+3*ind] = rho*vpmax*vpmax-mulabase;
             m_limited[2+3*ind]=true;
          }
       }
@@ -236,7 +235,7 @@ void MaterialParCart::limit_x( int nmd, double* xmd, int nms, double* xms,
    {
       for( int ind=0 ; ind < nmpar/2 ; ind++ )
       {
-         float_sw4 vsbase=baseptr[2*ind];
+         float_sw4 vsbase=baseptr[  2*ind];
          float_sw4 vpbase=baseptr[1+2*ind];
          if( xptr[2*ind] < vsmin-vsbase )
          {
@@ -457,7 +456,7 @@ bool MaterialParCart::compute_overlap( bool force_shared )
       m_jeint=m_ny;
       m_keint=m_nz;
       if( m_myrank == 0 )
-         std::cout << "making Material parameterization global  " << std::endl;
+         std::cout << "Making material parameterization global  " << std::endl;
       return 1;
    }
 
@@ -889,8 +888,8 @@ void MaterialParCart::interpolate_parameters( int nmd, double* xmd,
    //-----------------------------------------------------------------------
 
    Sarray m_rho(m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
-   Sarray m_cs(m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
-   Sarray m_cp(m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
+   Sarray m_cs( m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
+   Sarray m_cp( m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
    if( m_variables == 1 )
    {
       interpolate_to_coarse( a_rho, a_mu, a_lambda, m_rho, m_cs, m_cp, update );
@@ -908,13 +907,13 @@ void MaterialParCart::interpolate_parameters( int nmd, double* xmd,
          {
             if( m_variables == 1 || m_variables == 2)
             {
-               xptr[3*ind]   = m_rho(i,j,k);
+               xptr[3*ind  ] = m_rho(i,j,k);
                xptr[3*ind+1] = m_cs(i,j,k);
                xptr[3*ind+2] = m_cp(i,j,k);
             }
             else if( m_variables==3 )
             {
-               xptr[2*ind]   = m_cs(i,j,k);
+               xptr[2*ind  ] = m_cs(i,j,k);
                xptr[2*ind+1] = m_cp(i,j,k);
             }
             else

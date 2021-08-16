@@ -385,7 +385,7 @@ void EW::setupRun( vector<vector<Source*> > & a_GlobalUniqueSources )
   }
 
 // form combinations of material coefficients for MR
-  setup_MR_coefficients();
+  setup_MR_coefficients(mRho,mMu,mLambda);
 
 // Define curvilinear grid refinement interfaces
   if( mNumberOfGrids-mNumberOfCartesianGrids > 1 )

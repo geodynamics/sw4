@@ -499,7 +499,17 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
             double dshift, ddshift, dd1shift;
             for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
             {
-               f += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
+               //               double tmpf = 
+               f += 
+                GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
+               //               if( tmpf != 0  )
+               //               {
+               //                  cout.precision(16);
+               //                  cout << "Station " << m << " " << tmpf << endl;
+               //               }
+               //               f += tmpf;
+               //               GlobalObservations[e][m]->writeFileUSGS("obs6");
+               //               GlobalTimeSeries[e][m]->writeFileUSGS("syn6");
             }
          }
          else if( mopt->m_misfit == Mopt::CROSSCORR )
@@ -736,7 +746,7 @@ void compute_f_with_derivative( EW& simulation, int nspar, int nmpars, double* x
                                 vector<vector<TimeSeries*> >& GlobalTimeSeries,
                                 vector<vector<TimeSeries*> >& GlobalObservations,
                                 float_sw4& mf, float_sw4& dmf, Mopt *mopt, 
-                                int di, int dj, int dk, int dgrid )
+                                int di, int dj, int dk, int dgrid, int myrank )
 {
    int nms, nmd, nmpard_global;
    mopt->m_mp->get_nr_of_parameters( nms, nmd, nmpard_global );
@@ -757,15 +767,25 @@ void compute_f_with_derivative( EW& simulation, int nspar, int nmpars, double* x
       dUm[g].define(U[g]);
    }
    mf = dmf = 0;
+   float_sw4 mfcheck=0;
    for( int e=0 ; e < simulation.getNumberOfLocalEvents() ; e++ )
    {
       float_sw4 mfevent, dmfevent;
       simulation.solve_dudp( GlobalSources[e], rho, mu, lambda, GlobalTimeSeries[e],
                              GlobalObservations[e], Um, U, dUm, dU, mfevent, dmfevent, 
                              di, dj, dk, dgrid, e );
-      mf += mfevent;
+      mf  += mfevent;
       dmf += dmfevent;
+      //      for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
+      //      {
+      //	 double dshift, ddshift, dd1shift;
+      //         mfcheck += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], NULL, dshift, ddshift, dd1shift );
+      //     }
    }
+   //   double mftmp = mfcheck;
+   //   MPI_Allreduce(&mftmp,&mfcheck,1,MPI_DOUBLE,MPI_SUM,simulation.m_1d_communicator);
+   //   if( myrank == 0 )
+   //      cout << "misfit check: mf= "  << mf << " mfchck= " << mfcheck << " dif=" << mf-mfcheck << endl;
    float_sw4 tmp=mf;
    MPI_Allreduce(&tmp,&mf,1,MPI_DOUBLE,MPI_SUM,simulation.m_cross_communicator);
    tmp=dmf;
@@ -1018,6 +1038,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
          //	 h = 3e-8*sf[ind]; // multiply step length by scale factor
             h = std::max(1.0,fabs(xs[ind]))*3e-8;
             h *= exafactor;
+            h =1e-2;
             double x0=xs[ind];
             xs[ind] = x0+h;
             compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, 
@@ -1046,6 +1067,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
                cout << "Done ind = " << ind << endl;
          }
       }
+
       if( nmpard_global > 0 )
       {
          int procevent = simulation.no_of_procs();
@@ -1060,7 +1082,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
          //         for( size_t indg = 0 ; indg < nmpard_global ; indg++ )
          //         {
          //            ssize_t ind = mopt->m_mp->local_index(indg);
-                        size_t indg=0;
+         size_t indg=0;
             //            for( int grid=0 ; grid < simulation.mNumberOfGrids-1 ; grid++ )
             //               for( int kp=simulation.m_kStartActGlobal[grid] ; kp <= simulation.m_kEndActGlobal[grid];kp++)
             //                  for( int var=0 ; var < 3 ;var++ )
@@ -1073,70 +1095,84 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
             //            {
 
             //               //            
-         int grid=1;
-         int ip=57, jp=101,var=0;//, kp=12,indg=0;
-         for( int kp=26 ; kp>=24 ; kp-- )
-            //         int grid=0;
-            //         int ip=29, jp=51,var=0;
-            //         for( int kp=1 ; kp<=3 ; kp++ )
-         {
-            //            if( grid == 1 )
-            //            {
-            //               ip=113;
-            //               jp=201;
-            //               //               kp=1;
-            //            }
-            ssize_t ind = mopt->m_mp->parameter_index(ip,jp,kp,grid,var);
-            if( ind >=0 ) //if(myRank == 0 )
-               cout << "var= " << var << " (i,j,k)= (" << ip << "," << jp << "," << kp << ") grid= " << grid<<endl;
-            double x0;
-            if( ind >=0 )
-            {
-               h = 1e-3;
+                     
+         bool computewderivative=false;
+         bool dbg=false;
+         int ng=2;
+         int vb[2]={0,0}, ve[2]={2,2};
+         int ipb[2]={29,57}, ipe[2]={29,57};
+         int jpb[2]={51,101}, jpe[2]={51,101};
+         int kpb[2]={1,24}, kpe[2]={3,26};
+         //         int kpb[2]={1,1},   kpe[2]={0,3};
+
+         for( int grid=0 ; grid < ng ; grid++ )
+            for( int kp=kpb[grid] ; kp <= kpe[grid] ; kp++ )
+               for( int jp=jpb[grid] ; jp <= jpe[grid] ; jp++ )
+                  for( int ip=ipb[grid] ; ip <= ipe[grid] ; ip++ )
+                     for( int var=vb[grid] ; var <= ve[grid] ; var++ )
+                     {
+                        ssize_t ind = mopt->m_mp->parameter_index(ip,jp,kp,grid,var);
+                        if(ind >=0 && myRank < procevent) //if(myRank == 0 )
+                           cout << "var= " << var << " (i,j,k)= (" << ip << "," << jp 
+                                << "," << kp << ") grid= " << grid<<endl;
+                        double x0;
+                        if( ind >=0 )
+                        {
+                           h = 1e-3;
                   //               h = std::max(1.0,fabs(xm[ind]))*3e-8;
                   //               h *= exafactor;
-               x0 = xm[ind];
-               xm[ind] += h;
-            }
-            compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, 
-                       GlobalTimeSeries, GlobalObservations, fp, mopt );
-            if( ind >=0 )
-               xm[ind] = x0-h;
+                           x0 = xm[ind];
+                           xm[ind] += h;
+                        }
+                        compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, 
+                                   GlobalTimeSeries, GlobalObservations, fp, mopt );
+                        if( ind >=0 )
+                           xm[ind] = x0-h;
 
-            double fm;
-            compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources,
-                       GlobalTimeSeries, GlobalObservations, fm, mopt );
+                        double fm;
+                        compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources,
+                                   GlobalTimeSeries, GlobalObservations, fm, mopt );
 
-            double dfnum = (fp-fm)/(2*h);
-            double f2, df2;
-            if( var == 0 )
-            {
-               compute_f_with_derivative( simulation, nspar, nmpars, xs, nmpard, xm, 
+                        double dfnum = (fp-fm)/(2*h);
+                        double f2=0, df2=0;
+                        if( ind >= 0 )
+                           xm[ind] = x0;
+                        bool wderivative=false;
+                        if( var == 0 && computewderivative )
+                        {
+                           compute_f_with_derivative( simulation, nspar, nmpars, xs, nmpard, xm, 
                                           GlobalSources, GlobalTimeSeries, 
                                           GlobalObservations, f2, df2,
-                                          mopt, ip, jp, kp, grid );
-               if( myRank == 0 )
-                  cout << "misfit 1 and 2 " << f<< " " << f2 << " diff= " << f-f2 << endl;
-            }
-            double dfan;
-            if( ind >=0 )
-               dfan = dfm[ind];
-            if( ind >= 0 && myRank < procevent )
-            {	    
-               cout << myRank << " " << 
-                  setw(12) <<  h                      << " " <<
-                  setw(12) << dfan                    << " " << 
-                  setw(12) << dfnum                   << " " << 
-                  setw(12) << fabs(dfan-dfnum)        << " " << 
-                  setw(12) << fabs((dfan-dfnum)/dfnorm) << " " <<
-                  setw(12) << df2  << endl; //" " << grid << " " <<  kp << endl;
-               dftest << indg << " " << fp << " " << h << " " << dfan << " " << dfnum << " " << dfan-dfnum << endl;
-            }
-            if( ind >= 0 )
-               xm[ind] = x0;
-            if( indg > 0 && (indg % 100 == 0) && (myRank == 0 && myRank < procevent))
-               cout << "Done ind = " << indg << endl;
-         }
+                                          mopt, ip, jp, kp, grid, myRank );
+                           wderivative = true;
+                           if( myRank == 0 && dbg )
+                              cout << "misfit 1 and 2 " << f<< " " << f2 << " diff= " << f-f2 << endl;
+                        }
+                        if( myRank == 0 && dbg )
+                        {
+                           cout.precision(16);
+                           cout << " mf f, fp, fm, f2 " << f << " " << fp << " " << fm << " " << f2 << endl;
+                        }
+                        double dfan;
+                        if( ind >=0 )
+                           dfan = dfm[ind];
+                        if( ind >= 0 && myRank < procevent )
+                        {	    
+                           cout << myRank << " " << 
+                              setw(12) <<  h                      << " " <<
+                              setw(12) << dfan                    << " " << 
+                              setw(12) << dfnum                   << " " << 
+                              setw(12) << fabs(dfan-dfnum)        << " " << 
+                              setw(12) << fabs((dfan-dfnum)/dfnorm) << " ";
+                           if( wderivative )
+                              cout << setw(12) << df2  << endl;
+                           else
+                              cout << endl;
+                           dftest << indg << " " << fp << " " << h << " " << dfan << " " << dfnum << " " << dfan-dfnum << endl;
+                        }
+                        //                        if( indg > 0 && (indg % 100 == 0) && (myRank == 0 && myRank < procevent))
+                        //                           cout << "Done ind = " << indg << endl;
+                     }
       }
       if( dftest.is_open() )
          dftest.close();

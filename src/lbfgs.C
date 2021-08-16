@@ -343,6 +343,9 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	 xmnew[i] = xm[i] + lambda*pm[i];
       int ng = simulation.mNumberOfGrids;
       vector<Sarray> rho(ng), mu(ng), la(ng);
+
+      mopt->m_mp->limit_x( nmpard, xm, nmpars, &xs[nspar], mopt->m_vs_min, 
+                           mopt->m_vs_max, mopt->m_vp_min, mopt->m_vp_max );
       mopt->m_mp->get_material( nmpard, xmnew, nmpars, &xsnew[nspar], rho, mu, la );
       int ret_code = simulation.check_material( rho, mu, la, ok );
       if( !ok )
@@ -660,13 +663,14 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
    for( int i=0 ; i < ns ; i++ )
       rnorm = rnorm > fabs(dfs[i])*sf[i] ? rnorm : fabs(dfs[i])*sf[i];
    if( myRank == 0 )
+   {
       cout << "Max norm of scaled total gradient = " << rnorm << endl;
 
    //   cout << endl;
-   //   fprintf(fd, "%i %15.7g %15.7g %15.7g %i\n", 0, rnorm, 0.0, f, 0 );
+      fprintf(fd, "%i %15.7g %15.7g %15.7g %i\n", 0, rnorm, 0.0, f, 0 );
    //   fprintf(fdx, "%i %i %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g\n",
    //	   0,0, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9], x[10] );
-
+   }
    // s and y stores the m vectors
 
    double* s  = NULL;

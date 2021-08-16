@@ -27,8 +27,10 @@ void EW::solve_dudp( vector<Source*>& a_Sources, vector<Sarray>& a_Rho,
       G[g].set_to_zero();
       U[g].set_to_zero();
       Um[g].set_to_zero();
+      Up[g].set_to_zero();
       dU[g].set_to_zero();
       dUm[g].set_to_zero();
+      dUp[g].set_to_zero();
    }
    bool duforcing=interior_point_in_proc(di,dj,dgrid);
 
@@ -47,6 +49,9 @@ void EW::solve_dudp( vector<Source*>& a_Sources, vector<Sarray>& a_Rho,
       }
    }
 
+// Setup Cartesian grid refinement interface.
+   setup_MR_coefficients( a_Rho, a_Mu, a_Lambda );
+
    vector<TimeSeries*> dudpTimeSeries;
    for(int ts=0; ts<a_TimeSeries.size(); ts++)
       dudpTimeSeries.push_back( a_TimeSeries[ts]->copy( this, "dudp" ) );
@@ -62,7 +67,7 @@ void EW::solve_dudp( vector<Source*>& a_Sources, vector<Sarray>& a_Rho,
    vector<int> identsources;
    sort_grid_point_sources( point_sources, identsources );
 
-   double t = mTstart;
+   float_sw4 t = mTstart;
    for (int ts=0; ts<a_TimeSeries.size(); ts++)
    {
       if (a_TimeSeries[ts]->getMode() != TimeSeries::Velocity && a_TimeSeries[ts]->myPoint())
@@ -83,7 +88,7 @@ void EW::solve_dudp( vector<Source*>& a_Sources, vector<Sarray>& a_Rho,
 
    Force( t, F, point_sources, identsources );
 
-   for( int n = 0; n <= mNumberOfTimeSteps[event]; n++)
+   for( int n = 1; n <= mNumberOfTimeSteps[event]; n++)
    {    
 // evaluate spatial discretization
       evalRHS( U, a_Mu, a_Lambda, Lu, AlphaVE ); // save Lu in composite grid 'Lu'
@@ -99,13 +104,13 @@ void EW::solve_dudp( vector<Source*>& a_Sources, vector<Sarray>& a_Rho,
       cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
 
 // update ghost points in Up
-      enforceBC( Up, a_Mu, a_Lambda, AlphaVEp, t+mDt, BCForcing );
+      enforceBC( Up, a_Rho, a_Mu, a_Lambda, AlphaVEp, t+mDt, BCForcing );
 
 // precompute F_tt(t)
       Force_tt( t, F, point_sources, identsources );
 
 // *** 4th order in TIME interface conditions for the predictor
-      enforceIC( Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, true, F, point_sources );
+      enforceIC( Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, true, F, point_sources, a_Rho, a_Mu, a_Lambda );
 
 
 // corrector step for
@@ -126,12 +131,12 @@ void EW::solve_dudp( vector<Source*>& a_Sources, vector<Sarray>& a_Rho,
       cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
 
 // update ghost points in Up
-      enforceBC( Up, a_Mu, a_Lambda, AlphaVEp, t+mDt, BCForcing );
+      enforceBC( Up, a_Rho, a_Mu, a_Lambda, AlphaVEp, t+mDt, BCForcing );
 
 // compute forcing for next time step here so it can be used in enforceIC()
       Force( t+mDt, F, point_sources, identsources );
 
-      enforceIC( Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, false, F, point_sources );
+      enforceIC( Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, false, F, point_sources, a_Rho, a_Mu, a_Lambda );
 
 
 // Derivative computation:
@@ -154,7 +159,7 @@ void EW::solve_dudp( vector<Source*>& a_Sources, vector<Sarray>& a_Rho,
       cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
 
 // update ghost points in Up
-      enforceBC( dUp, a_Mu, a_Lambda, AlphaVEp, t+mDt, BCForcing );
+      enforceBC( dUp, a_Rho, a_Mu, a_Lambda, AlphaVEp, t+mDt, BCForcing );
 
 // precompute F_tt(t)
 //      Force_tt( t, F, point_sources, identsources );
@@ -168,7 +173,7 @@ void EW::solve_dudp( vector<Source*>& a_Sources, vector<Sarray>& a_Rho,
                                   2*U[dgrid](3,di,dj,dk)+Um[dgrid](3,di,dj,dk));
       }
 // *** 4th order in TIME interface conditions for the predictor
-      enforceIC( dUp, dU, dUm, AlphaVEp, AlphaVE, AlphaVEm, t, true, G, point_sources );
+      enforceIC( dUp, dU, dUm, AlphaVEp, AlphaVE, AlphaVEm, t, true, G, point_sources, a_Rho, a_Mu, a_Lambda );
 
 // corrector step for
       evalDpDmInTime( dUp, dU, dUm, Uacc ); // store result in Uacc
@@ -186,7 +191,7 @@ void EW::solve_dudp( vector<Source*>& a_Sources, vector<Sarray>& a_Rho,
       cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
 
 // update ghost points in Up
-      enforceBC( dUp, a_Mu, a_Lambda, AlphaVEp, t+mDt, BCForcing );
+      enforceBC( dUp, a_Rho, a_Mu, a_Lambda, AlphaVEp, t+mDt, BCForcing );
 
 // compute forcing for next time step here so it can be used in enforceIC()
 //      Force( t+mDt, F, point_sources, identsources );
@@ -198,7 +203,7 @@ void EW::solve_dudp( vector<Source*>& a_Sources, vector<Sarray>& a_Rho,
          G[dgrid](3,di,dj,dk) = -(Lu[dgrid](3,di,dj,dk)+F[dgrid](3,di,dj,dk))/a_Rho[dgrid](di,dj,dk);
       }
 
-      enforceIC( dUp, dU, dUm, AlphaVEp, AlphaVE, AlphaVEm, t, false, G, point_sources );
+      enforceIC( dUp, dU, dUm, AlphaVEp, AlphaVE, AlphaVEm, t, false, G, point_sources, a_Rho, a_Mu, a_Lambda );
        
 // increment time
        t += mDt;

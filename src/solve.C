@@ -148,6 +148,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    }
 // done allocating solution arrays
 
+// Setup Cartesian grid refinement interface.
+   setup_MR_coefficients( a_Rho, a_Mu, a_Lambda );
+
 // Setup curvilinear grid refinement interface
    for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
       m_cli2[g-mNumberOfCartesianGrids]->init_arrays( m_sg_str_x, m_sg_str_y);
@@ -427,7 +430,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   if( m_anisotropic )
      enforceBCanisotropic( U, mC, t, BCForcing );
   else
-     enforceBC( U, a_Mu, a_Lambda, AlphaVE, t, BCForcing );   
+     enforceBC( U, a_Rho, a_Mu, a_Lambda, AlphaVE, t, BCForcing );   
 
   for( int g=mNumberOfCartesianGrids; g < mNumberOfGrids-1 ; g++ )
      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( U, t, F, AlphaVE );
@@ -452,7 +455,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   if( m_anisotropic )
      enforceBCanisotropic( Um, mC, t-mDt, BCForcing );
   else
-     enforceBC( Um, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
+     enforceBC( Um, a_Rho, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
 
   for( int g=mNumberOfCartesianGrids; g < mNumberOfGrids-1 ; g++ )
      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( Um, t-mDt, F, AlphaVEm );
@@ -715,7 +718,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     if( m_anisotropic )
        enforceBCanisotropic( Up, mC, t+mDt, BCForcing );
     else
-       enforceBC( Up, a_Mu, a_Lambda, AlphaVEp, t+mDt, BCForcing );
+       enforceBC( Up, a_Rho, a_Mu, a_Lambda, AlphaVEp, t+mDt, BCForcing );
 
 
 // NEW
@@ -760,7 +763,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 
 // interface conditions for 2nd order in time
 // NOTE: this routine calls preliminary_predictor for t+dt, which needs F(t+dt). It is computed at the top of next time step
-       enforceIC2( Up, U, Um, AlphaVEp, t, F, point_sources );
+       enforceIC2( Up, U, Um, AlphaVEp, t, F, point_sources, a_Rho, a_Mu, a_Lambda );
 
        if( m_output_detailed_timing )
           time_measure[17] = MPI_Wtime();
@@ -780,7 +783,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 // *** 4th order in TIME interface conditions for the predictor
 // June 14, 2017: adding AlphaVE & AlphaVEm
 // NOTE: true means call preliminary_corrector, which needs F_tt(t) & is computed 5 lines down
-       enforceIC( Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, true, F, point_sources );
+       enforceIC( Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, true, F, point_sources,
+                  a_Rho, a_Mu, a_Lambda );
 
        if( m_output_detailed_timing )
           time_measure[9] = MPI_Wtime();
@@ -885,7 +889,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
        if( m_anisotropic )
 	  enforceBCanisotropic( Up, mC, t+mDt, BCForcing );
        else
-	  enforceBC( Up, a_Mu, a_Lambda, AlphaVEp, t+mDt, BCForcing );
+	  enforceBC( Up, a_Rho, a_Mu, a_Lambda, AlphaVEp, t+mDt, BCForcing );
 
 // NEW (Apr. 4, 2017)
 // Impose un-coupled free surface boundary condition with visco-elastic terms for 'Up'
@@ -913,7 +917,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 // interface conditions for the corrector
 // June 14, 2017: adding AlphaVE & AlphaVEm
 // NOTE: false means call preliminary_predictor for t+dt, which needs F(t+dt). It is computed at the top of next time step
-       enforceIC( Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, false, F, point_sources );
+       enforceIC( Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, false, F, point_sources, 
+                  a_Rho, a_Mu, a_Lambda );
 
        if( m_output_detailed_timing )
           time_measure[17] = MPI_Wtime();
@@ -1249,7 +1254,8 @@ void EW::cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector
 }
 
 //---------------------------------------------------------------------------
-void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, 
+                    vector<Sarray>& a_Lambda,
 		    vector<Sarray*>& a_AlphaVE, float_sw4 t, vector<float_sw4 **> & a_BCForcing )
 {
   int ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
@@ -1373,7 +1379,7 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
      if( m_gridGenerator->curviCartIsSmooth( mNumberOfGrids-mNumberOfCartesianGrids ) )
         update_curvilinear_cartesian_interface( a_U );
      else
-        CurviCartIC( mNumberOfCartesianGrids-1, a_U, a_Mu, a_Lambda, a_AlphaVE,  t );
+        CurviCartIC( mNumberOfCartesianGrids-1, a_U, a_Rho, a_Mu, a_Lambda, a_AlphaVE,  t );
   }
 
   // Reimpose free surface condition with attenuation terms included
@@ -1381,7 +1387,8 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
      enforceBCfreeAtt2( a_U, a_Mu, a_Lambda, a_AlphaVE, a_BCForcing );
 }
 //-----------------------------------------------------------------------
-void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Rho,
+                      vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
                       vector<Sarray*>& a_Alpha, float_sw4 t )
 {
    int gcurv=gcart+1;
@@ -1488,7 +1495,7 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
       {
          float_sw4 istrxy =1/(m_sg_str_x[gcurv][i-ib]*m_sg_str_y[gcurv][j-jb]);
          float_sw4 istrxyc=1/(m_sg_str_x[gcart][i-ib]*m_sg_str_y[gcart][j-jb]);
-         float_sw4 rhrat = mRho[gcurv](i,j,nk)/mRho[gcart](i,j,1);
+         float_sw4 rhrat = a_Rho[gcurv](i,j,nk)/a_Rho[gcart](i,j,1);
          float_sw4 bcof = h*m_sbop[0]*istrxyc-m_ghcof[0]*rhrat*w1*mJ[gcurv](i,j,nk)*istrxy/(h*h);
          float_sw4 res = -h*h*Bca(1,i,j,1)*istrxyc+ w1*rhrat*mJ[gcurv](i,j,nk)*istrxy*Luca(1,i,j,1)
                - w1*mJ[gcurv](i,j,nk)*istrxy*Lu(1,i,j,nk) + B(1,i,j,nk);            
@@ -1516,7 +1523,8 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
                    a_U[gcart].c_ptr(), a_Mu[gcart].c_ptr(), a_Lambda[gcart].c_ptr(), h,
                    m_sg_str_x[gcart], m_sg_str_y[gcart], m_sg_str_z[gcart], '=', kbca, keca, 1, 1 );
    
-      compute_icstresses( a_U[gcart], Bca, gcart, 1, m_sg_str_x[gcart], m_sg_str_y[gcart],m_sbop,'=' );
+      compute_icstresses2( a_U[gcart], Bca, 1, mGridSize[gcart], a_Mu[gcart], a_Lambda[gcart],
+                           m_sg_str_x[gcart], m_sg_str_y[gcart],m_sbop,'=' );
 
       compute_icstresses_curv( a_U[gcurv], B, nk, mMetric[gcurv], a_Mu[gcurv], a_Lambda[gcurv],
                                m_sg_str_x[gcurv], m_sg_str_y[gcurv], m_sbop_no_gp, '=' );
@@ -1524,7 +1532,7 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
       for( int j=jb+2 ; j <= je-2 ; j++ )
          for( int i=ib+2 ; i <= ie-2 ; i++ )
          {
-            float_sw4 rhrat = mRho[gcurv](i,j,nk)/mRho[gcart](i,j,1);
+            float_sw4 rhrat = a_Rho[gcurv](i,j,nk)/a_Rho[gcart](i,j,1);
             float_sw4 res = abs(-h*h*Bca(1,i,j,1)+ w1*rhrat*mJ[gcurv](i,j,nk)*Luca(1,i,j,1)
                     - w1*mJ[gcurv](i,j,nk)*Lu(1,i,j,nk) + B(1,i,j,nk));            
             resmax = res > resmax ? res:resmax;
@@ -1660,7 +1668,8 @@ void EW::update_curvilinear_cartesian_interface( vector<Sarray>& a_U )
 //-----------------Mesh refinement interface condition for 4th order predictor-corrector scheme------------------------
 void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
                     vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE, vector<Sarray*>& a_AlphaVEm, 
-		    float_sw4 time, bool predictor, vector<Sarray> &F, vector<GridPointSource*> point_sources, bool backward )
+		    float_sw4 time, bool predictor, vector<Sarray> &F, vector<GridPointSource*> point_sources,
+                    vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, bool backward )
 {
    float_sw4 dt=mDt;
    if( backward )
@@ -1714,10 +1723,12 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 // get the interior contribution to the displacements on the interface for the corrector (depends on the corrector value of AlphaVEp)
 	 compute_preliminary_corrector( a_Up[g+1], a_U[g+1], a_Um[g+1],
                                         a_AlphaVEp[g+1], a_AlphaVE[g+1], a_AlphaVEm[g+1],
-                                        Uf_tt, Unextf, g+1, kf, time, F[g+1], point_sources );
+                                        Uf_tt, Unextf, g+1, kf, time, F[g+1], point_sources,
+                                        a_Rho[g+1], a_Mu[g+1], a_Lambda[g+1] );
          compute_preliminary_corrector( a_Up[g], a_U[g], a_Um[g],
                                         a_AlphaVEp[g], a_AlphaVE[g], a_AlphaVEm[g],
-                                        Uc_tt, Unextc, g, kc, time, F[g], point_sources );
+                                        Uc_tt, Unextc, g, kc, time, F[g], point_sources, 
+                                        a_Rho[g], a_Mu[g], a_Lambda[g] );
 	 if( !m_doubly_periodic )
 	 {
 // dirichlet conditions for Unextc in super-grid layer at time t+dt
@@ -1727,9 +1738,9 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
       else // In the corrector step, (Unextc, Unextf) represent the displacement after next predictor step
       {
 	 compute_preliminary_predictor( a_Up[g+1], a_U[g+1], a_AlphaVEp[g+1], Unextf, g+1, kf,  time+dt,
-                                        F[g+1], point_sources );
+                                        F[g+1], point_sources, a_Rho[g+1], a_Mu[g+1], a_Lambda[g+1] );
 	 compute_preliminary_predictor( a_Up[g], a_U[g], a_AlphaVEp[g], Unextc, g, kc, time+dt, 
-                                        F[g], point_sources );
+                                        F[g], point_sources, a_Rho[g], a_Mu[g], a_Lambda[g] );
 
 	 if( !m_doubly_periodic )
 	 {
@@ -1738,8 +1749,10 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 	 }
       }
 
-      compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1],m_sbop,'=');
-      compute_icstresses( a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g],m_sbop,'=' );
+      compute_icstresses2( a_Up[g+1], Bf, kf, mGridSize[g+1], a_Mu[g+1], a_Lambda[g+1],
+                           m_sg_str_x[g+1], m_sg_str_y[g+1],m_sbop,'=');
+      compute_icstresses2( a_Up[g], Bc, kc, mGridSize[g], a_Mu[g], a_Lambda[g], 
+                           m_sg_str_x[g], m_sg_str_y[g],m_sbop,'=' );
 
 // NEW June 13, 2017: add in the visco-elastic boundary traction
       if( m_use_attenuation && m_number_mechanisms > 0 )
@@ -1788,8 +1801,8 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
       if( m_doubly_periodic )
 	 is_periodic[0] = is_periodic[1] = 1;
       
-      consintp( a_Up[g+1], Unextf, Bf, mMu[g+1], mLambda[g+1], mRho[g+1], mGridSize[g+1],
-		a_Up[g],   Unextc, Bc, mMu[g],   mLambda[g],   mRho[g],   mGridSize[g], 
+      consintp( a_Up[g+1], Unextf, Bf, a_Mu[g+1], a_Lambda[g+1], a_Rho[g+1], mGridSize[g+1],
+		a_Up[g],   Unextc, Bc, a_Mu[g],   a_Lambda[g],   a_Rho[g],   mGridSize[g], 
 		cof, g, g+1, is_periodic );
       //      CHECK_INPUT(false," controlled termination");
 
@@ -1920,7 +1933,8 @@ void EW::check_ic_conditions( int gc, vector<Sarray>& a_U )
 //-----------------------Special case for 2nd order time stepper----------------------------------------------------
 void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
                      vector<Sarray*>& a_AlphaVEp,
-                     float_sw4 time, vector<Sarray> &F, vector<GridPointSource*> point_sources )
+                     float_sw4 time, vector<Sarray> &F, vector<GridPointSource*> point_sources,
+                     vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda )
 {
    bool predictor = false;   // or true???
    for( int g = 0 ; g < mNumberOfCartesianGrids-1 ; g++ )
@@ -1962,8 +1976,10 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
 //
       // Check super-grid terms !
       //
-      compute_preliminary_predictor( a_Up[g+1], a_U[g+1], a_AlphaVEp[g+1], Unextf, g+1, kf, time+mDt, F[g+1], point_sources );
-      compute_preliminary_predictor( a_Up[g], a_U[g], a_AlphaVEp[g], Unextc, g, kc, time+mDt, F[g], point_sources );
+      compute_preliminary_predictor( a_Up[g+1], a_U[g+1], a_AlphaVEp[g+1], Unextf, g+1, kf, time+mDt, 
+                                     F[g+1], point_sources, a_Rho[g+1], a_Mu[g+1], a_Lambda[g+1] );
+      compute_preliminary_predictor( a_Up[g], a_U[g], a_AlphaVEp[g], Unextc, g, kc, time+mDt, 
+                                     F[g], point_sources, a_Rho[g], a_Mu[g], a_Lambda[g] );
 
       if( !m_doubly_periodic )
       {
@@ -1975,8 +1991,10 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
 //      initialData(time+mDt, a_Up, a_AlphaVEp);
 // end test
 //  compute contribution to the normal stresses (Bc, Bf) from the interior grid points in Up
-      compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1],m_sbop,'=');
-      compute_icstresses( a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g],m_sbop,'=');
+      compute_icstresses2( a_Up[g+1], Bf, kf, mGridSize[g+1], a_Mu[g+1], a_Lambda[g+1],
+                           m_sg_str_x[g+1], m_sg_str_y[g+1],m_sbop,'=');
+      compute_icstresses2( a_Up[g], Bc, kc, mGridSize[g], a_Mu[g], a_Lambda[g],
+                           m_sg_str_x[g], m_sg_str_y[g],m_sbop,'=');
 
 // add in the visco-elastic boundary traction
       if( m_use_attenuation && m_number_mechanisms > 0 )
@@ -2714,7 +2732,8 @@ void EW::gridref_initial_guess( Sarray& u, int g, bool upper )
 void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
                                         Sarray* a_AlphaVEp, Sarray* a_AlphaVE, Sarray* a_AlphaVEm,
 					Sarray& Utt, Sarray& Unext, int g, int kic, float_sw4 t, 
-					Sarray &Ftt, vector<GridPointSource*> point_sources )
+					Sarray &Ftt, vector<GridPointSource*> point_sources,
+                                        Sarray& a_Rho, Sarray& a_Mu, Sarray& a_Lambda )
 {
    //
    // NOTE: This routine is called by enforceIC() after the predictor stage to calculate the interior contribution to
@@ -2759,8 +2778,8 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
 
 // there are C and Fortran versions of this routine that are selected by the Makefile
    rhs4th3wind( ib, ie, jb, je, kb, ke, nz, m_onesided[g], m_acof,
-		       m_bope, m_ghcof, Lutt.c_ptr(), Utt.c_ptr(), mMu[g].c_ptr(),
-		       mLambda[g].c_ptr(), mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+		       m_bope, m_ghcof, Lutt.c_ptr(), Utt.c_ptr(), a_Mu.c_ptr(),
+		       a_Lambda.c_ptr(), mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
 		       m_sg_str_z[g], op, kbu, keu, kic, kic );
 
 // Plan: 1) loop over all mechanisms, 2) precompute d^2 alpha/dt^2 and store in Utt, 3) accumulate visco-elastic stresses
@@ -2845,7 +2864,7 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
 #pragma omp simd
        for( int i=Unext.m_ib+2 ; i <= Unext.m_ie-2 ; i++ )
        {
-	 float_sw4 irho=cof/mRho[g](i,j,kic);
+	 float_sw4 irho=cof/a_Rho(i,j,kic);
 	 Unext(1,i,j,kic) = a_Up(1,i,j,kic) + irho*(Lutt(1,i,j,kic)+Ftt(1,i,j,kic)); // +force(1,i,j,kic));
 	 Unext(2,i,j,kic) = a_Up(2,i,j,kic) + irho*(Lutt(2,i,j,kic)+Ftt(2,i,j,kic)); // +force(2,i,j,kic));
 	 Unext(3,i,j,kic) = a_Up(3,i,j,kic) + irho*(Lutt(3,i,j,kic)+Ftt(3,i,j,kic));//+force(3,i,j,kic));
@@ -2860,7 +2879,7 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
 // July 22: Changed time levels for (Up, U) to (U, Um)
 //      addsg4wind( &mDt, &mGridSize[g], Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), mRho[g].c_ptr(),
 //FTNC      if( m_croutines )
-	 addsg4wind_ci( Unext.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(), mRho[g].c_ptr(),
+	 addsg4wind_ci( Unext.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(), a_Rho.c_ptr(),
 			m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
 			m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
 			ib, ie, jb, je, kb, ke, m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic, kic );
@@ -2876,7 +2895,9 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
 
 //-----------------------------------------------------------------------
 void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_AlphaVEp, Sarray& Unext,
-					int g, int kic, float_sw4 t, Sarray &F, vector<GridPointSource*> point_sources )
+					int g, int kic, float_sw4 t, Sarray &F, 
+                                        vector<GridPointSource*> point_sources, 
+                                        Sarray& a_Rho, Sarray& a_Mu, Sarray& a_Lambda )
 {
    //
    // NOTE: This routine is called by enforceIC() after the corrector stage to calculate the interior contribution to
@@ -2894,8 +2915,8 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
 // Note: 6 first arguments of the function call:
 // (ib,ie), (jb,je), (kb,ke) is the declared size of mMu and mLambda in the (i,j,k)-directions, respectively
    rhs4th3wind( ib, ie, jb, je, kb, ke, nz, m_onesided[g], m_acof, // ghost point operators for elastic part
-		       m_bope, m_ghcof, Lu.c_ptr(), a_Up.c_ptr(), mMu[g].c_ptr(),
-		       mLambda[g].c_ptr(), mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+		       m_bope, m_ghcof, Lu.c_ptr(), a_Up.c_ptr(), a_Mu.c_ptr(),
+		       a_Lambda.c_ptr(), mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
 		       m_sg_str_z[g], op, kb, ke, kic, kic ); 
 // Note: 4 last arguments of the above function call:
 // (kb,ke) is the declared size of Up in the k-direction
@@ -2991,7 +3012,7 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
 #pragma omp simd
       for( int i=ib+2 ; i <= ie-2 ; i++ )
       {
-	 float_sw4 irho=cof/mRho[g](i,j,kic);
+	 float_sw4 irho=cof/a_Rho(i,j,kic);
 	 Unext(1,i,j,kic) = 2*a_Up(1,i,j,kic) - a_U(1,i,j,kic) + irho*(Lu(1,i,j,kic)+F(1,i,j,kic)); //+f(1,i,j,kic));
 	 Unext(2,i,j,kic) = 2*a_Up(2,i,j,kic) - a_U(2,i,j,kic) + irho*(Lu(2,i,j,kic)+F(2,i,j,kic)); //+f(2,i,j,kic));
 	 Unext(3,i,j,kic) = 2*a_Up(3,i,j,kic) - a_U(3,i,j,kic) + irho*(Lu(3,i,j,kic)+F(3,i,j,kic)); //+f(3,i,j,kic));
@@ -3001,7 +3022,7 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
    {
 // assign array pointers on the fly
 //FTNC      if( m_croutines )
-	 addsg4wind_ci( Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), mRho[g].c_ptr(),
+	 addsg4wind_ci( Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), a_Rho.c_ptr(),
 			m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
 			m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
 			ib, ie, jb, je, kb, ke, m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic, kic );
