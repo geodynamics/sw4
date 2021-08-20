@@ -420,12 +420,15 @@ void Source::limit_frequency( int ppw, float_sw4 minvsoh )
 float_sw4 Source::compute_t0_increase(float_sw4 t0_min) const
 {
 // Gaussian, GaussianInt=Erf, Ricker and RickerInt are all centered around mT0
-  if( mTimeDependence == iGaussian  || mTimeDependence == iErf )
-    return t0_min + 6.0/mFreq-mT0; // translating these by at least 6*sigma = 6/freq
-  else if( mTimeDependence == iRicker  || mTimeDependence == iRickerInt ) 
-    return t0_min + 1.9/mFreq-mT0; // 1.9 ?
+  if( mTimeDependence == iGaussian  || mTimeDependence == iErf ) {
+        cout << "Gaussian or iErf: mFreq=" << mFreq << " mT0=" << mT0 << " t0_min=" << t0_min << endl;
+        return t0_min + 6.0/mFreq-mT0; } // translating these by at least 6*sigma = 6/freq 
+  else if( mTimeDependence == iRicker  || mTimeDependence == iRickerInt )  {
+        cout << "Ricker or RickerInt: mFreq=" << mFreq << " mT0=" << mT0 <<  " t0_min=" << t0_min << endl;
+        return t0_min + 1.9/mFreq-mT0; // 1.9 ?  
+        }
   else
-    return t0_min - mT0; // the rest of the time functions are zero for t<mT0
+        return t0_min - mT0; // the rest of the time functions are zero for t<mT0
 }
 
 //-----------------------------------------------------------------------

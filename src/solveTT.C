@@ -33,15 +33,16 @@ void fastmarch_close (void);
 
 
 //--------------------------------------------------------------------
-void EW::solveTT( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
-		double* xs, int nmpars, MaterialParameterization* mp, int wave_mode, float twinshift, float twinscale, int event, int myrank)
+void EW::solveTT( Source* a_Source, vector<TimeSeries*> & a_TimeSeries,
+		double* xs, int nmpars, MaterialParameterization* mp, int wave_mode, float twinshift, float twinscale, float freq, int event, int myrank)
 {
    int ix, iy, iz, nx, ny, nz, n;
    nx = mp->getNX();
    ny = mp->getNY();
    nz = mp->getNZ();
+   // freq: max freq to estimate time window
 
-std::cout << "source x0=" << a_Sources[event]->getX0() << " y0=" << a_Sources[event]->getY0() << " z0=" << a_Sources[event]->getZ0() << std::endl;
+std::cout << "source x0=" << a_Source->getX0() << " y0=" << a_Source->getY0() << " z0=" << a_Source->getZ0() << std::endl;
 n= nmpars/nx/ny/nz;
 
 std::cout << "mp->xmin=" << mp->getXmin() << " ymin=" << mp->getYmin() << " zmin=" << mp->getZmin() << std::endl;
@@ -99,7 +100,7 @@ int ntr = a_TimeSeries.size();
                 nz, ny, nx,           // dimensions
                 mp->getZmin(),mp->getYmin(),mp->getXmin(),     // origin
                 mp->getDz(),mp->getDy(),mp->getDx(),           // sampling
-                a_Sources[event]->getZ0(),a_Sources[event]->getY0(),a_Sources[event]->getX0(),     // source
+                a_Source->getZ0(),a_Source->getY0(),a_Source->getX0(),     // source
                 1,1,1,                // box around the source
                 2);                   // accuracy order (1,2,3) 
          
@@ -110,7 +111,7 @@ int ntr = a_TimeSeries.size();
                 nz, ny, nx,           // dimensions
                 mp->getZmin(),mp->getYmin(),mp->getXmin(),     // origin
                 mp->getDz(),mp->getDy(),mp->getDx(),           // sampling
-                a_Sources[event]->getZ0(),a_Sources[event]->getY0(),a_Sources[event]->getX0(),     // source
+                a_Source->getZ0(),a_Source->getY0(),a_Source->getX0(),     // source
                 1,1,1,                // box around the source
                 2);                   // accuracy order (1,2,3) 
 
@@ -122,13 +123,14 @@ int ntr = a_TimeSeries.size();
    FILE *fd;
 
    if(myrank==0) {     
-   sprintf(file, "%s/time_event_%d.txt", a_TimeSeries[event]->getPath(),event);
+   sprintf(file, "%s/time_event_%d.txt", a_TimeSeries[0]->getPath(),event);
    fd = fopen(file, "w");
    }
    
 
     float_sw4 win;
-    win = 1*(a_Sources[event]->getFrequency()>0.? 1.0/a_Sources[event]->getFrequency() : 1.0);  // one cycle of peak frequency
+
+    win = 1*(a_Source->getFrequency()<freq? 1.0/a_Source->getFrequency() : 1.0/freq);  // one cycle of peak frequency
     cout << "original win=" << win << endl;
     win *= twinscale;  // expand or shrink 
     cout << "dialated win=" << win << endl;

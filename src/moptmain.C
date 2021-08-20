@@ -220,10 +220,13 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    double *coarse = new double[nmpars];
    mopt->m_mp->get_base_parameters(nmpard,xm,nmpars,coarse,simulation.mRho,simulation.mMu,simulation.mLambda );
    checkMinMax(nmpars/2, coarse, "coarse:");
+   float_sw4 freq;
+
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
-     simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
-     mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), 0, simulation.getRank());
+     freq= mopt->get_freq_gradsmooth()>0.? mopt->get_freq_gradsmooth() : GlobalSources[e][0]->getFrequency();
+     simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
+     mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), freq, e, simulation.getRank());
    }
    delete[] coarse;
    MPI_Barrier(MPI_COMM_WORLD);
@@ -391,10 +394,12 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    double *coarse = new double[nmpars]; // globally shared base model for computing TT
    mopt->m_mp->get_base_parameters(nmpard,xm,nmpars,coarse,simulation.mRho,simulation.mMu,simulation.mLambda );
    checkMinMax(nmpars/2, coarse, "coarse2:");
+   float_sw4 freq;
    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
    {
-     simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
-     mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), 0, myrank);
+     freq= mopt->get_freq_gradsmooth()>0.? mopt->get_freq_gradsmooth() : GlobalSources[e][0]->getFrequency();
+     simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
+     mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), freq, e, myrank);
    }
     MPI_Barrier(MPI_COMM_WORLD);
    delete[] coarse;
@@ -1484,26 +1489,32 @@ int main(int argc, char **argv)
 	   {
 	      for( int m = 0; m < GlobalObservations[e].size(); m++ )
 	      {
-	      //	      simulation.set_utcref( *GlobalObservations[m] );
+	      //simulation.set_utcref( *GlobalObservations[m] );
 
          	
     if(myRank==0 && GlobalObservations[e][m]->myPoint()) 
-	     //std::cout << "e=" << e << " m=" << m << " GlobalObservations[e][m] Nsteps=" <<  
-		  //   GlobalObservations[e][m]->getNsteps() << " dt=" << 
-		  //   GlobalObservations[e][m]->getDt() << " zTopo=" << GlobalObservations[e][m]->getZtopo() << std::endl;
-     
-		 GlobalObservations[e][m]->writeFileUSGS("_obs");
+	     std::cout << "e=" << e << " m=" << m << " GlobalObservations[e][m] Nsteps=" <<  
+		     GlobalObservations[e][m]->getNsteps() << " dt=" << 
+		     GlobalObservations[e][m]->getDt() << " zTopo=" << GlobalObservations[e][m]->getZtopo() << std::endl;
+      
+       //GlobalObservations[e][m]->writeFileUSGS("_obs");
 		 if( simulation.m_prefilter_sources && simulation.m_filter_observations )
 		 {
+          std::cout << "filter obs data..." << std::endl;
 		    GlobalObservations[e][m]->filter_data( simulation.m_filterobs_ptr );
-		    GlobalObservations[e][m]->writeFile( "_fi" );
+		    GlobalObservations[e][m]->writeFile( "_filtered" );
 		 }
-	      }
+	   
+      } // m
+
+
+MPI_Barrier(MPI_COMM_WORLD);  // added for debugging
 
 //  First copy observations to GlobalTimeSeries, later, solve will insert 
 //  the simulation time step and start time into GlobalTimeSeries.
 
       std::cout << "Copy observations to GlobalTimeSeries" << std::endl;
+
 	      for( int m = 0; m < GlobalObservations[e].size(); m++ )
 	      {
 		 TimeSeries *elem = GlobalObservations[e][m]->copy( &simulation, "_out", true );
@@ -1521,11 +1532,16 @@ int main(int argc, char **argv)
                    }
                  }
 #endif
-	      }
-	   }
+	      } // m
+	   
+   }  // e
+
+
+MPI_Barrier(MPI_COMM_WORLD); // added for debugging
+
 
 // Configure optimizer 
-           Mopt* mopt = new Mopt( &simulation );
+   Mopt* mopt = new Mopt( &simulation );
 	   mopt->parseInputFileOpt( fileName );
 	   if (myRank == 0)
 	   {

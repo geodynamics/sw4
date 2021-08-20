@@ -135,6 +135,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 {
       int myRank;  // tmp
       MPI_Comm_rank(MPI_COMM_WORLD, &myRank); // tmp
+
  // 1. Adjust z if depth below topography is given
    if (m_zRelativeToTopography && a_ew->topographyExists() ) 
    {

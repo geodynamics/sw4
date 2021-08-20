@@ -299,8 +299,9 @@ void Mopt::processMaterialParCart( char* buffer )
       }
       else if( startswith("freq_gradsmooth=",token) )
       {
-	   token += 7;
+	   token += 16;
 	   m_freq_gradsmooth = atof(token);
+      if(m_myrank == 0) cout << "freq_gradsmooth=" << m_freq_gradsmooth << endl;
       }
       else
       {

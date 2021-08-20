@@ -535,7 +535,8 @@ void MaterialParCartesianVsVp::smooth_gradient(double* dfs, std::vector<Sarray>&
    
    // find dominant wavelength
    int isz= (sz - m_zmin)/m_hz+0.5;
-   std::cout << "smooth_gradient: sz=" << sz << " isz=" << isz << " m_nx=" << m_nx << " m_ny=" << m_ny << " m_nz=" << m_nz << std::endl;
+   std::cout << "smooth_gradient: sz=" << sz << " isz=" << isz << 
+   " m_nx=" << m_nx << " m_ny=" << m_ny << " m_nz=" << m_nz << " freq=" << freq << std::endl;
    
    size_t ind=0;
    for( int k=1 ; k <= m_nz ; k++ )
