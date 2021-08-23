@@ -2521,15 +2521,17 @@ void satt_ci(float_sw4* __restrict__ up, float_sw4* __restrict__ qs,
   const size_t npts = static_cast<size_t>((ilast - ifirst + 1)) *
                       (jlast - jfirst + 1) * (klast - kfirst + 1);
   const float_sw4 efact = M_PI * cfreq * dt;
-#pragma omp parallel for
-#pragma ivdep
-#pragma simd
-  for (size_t i = 0; i < npts; i++) {
-    float_sw4 fact = exp(-efact / qs[i]);
-    up[i] *= fact;
-    up[i + npts] *= fact;
-    up[i + 2 * npts] *= fact;
-  }
+  // #pragma omp parallel for
+  //#pragma ivdep
+  //#pragma simd
+  
+  //for (size_t i = 0; i < npts; i++) {
+  forall(0, npts, [=] RAJA_DEVICE(size_t i) { 
+      float_sw4 fact = exp(-efact / qs[i]);
+      up[i] *= fact;
+      up[i + npts] *= fact;
+      up[i + 2 * npts] *= fact;
+    });
 }
 
 //-----------------------------------------------------------------------
