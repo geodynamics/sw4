@@ -123,7 +123,7 @@ int ntr = a_TimeSeries.size();
    FILE *fd;
 
    if(myrank==0) {     
-   sprintf(file, "%s/time_event_%d.txt", a_TimeSeries[0]->getPath(),event);
+   sprintf(file, "%s/time_event_%d.txt", a_TimeSeries[0]->getPath(), event);
    fd = fopen(file, "w");
    }
    

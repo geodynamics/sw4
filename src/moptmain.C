@@ -476,9 +476,9 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
             if(myrank == 0) 
             {
               if( mopt->m_misfit == Mopt::L2 )
-                  createTimeSeriesHDF5File(diffs, GlobalTimeSeries[e][0]->getNsteps(), simulation.getTimeStep(), "_adj_l2.h5");
+                  createTimeSeriesHDF5File(diffs, GlobalTimeSeries[e][0]->getNsteps(), simulation.getTimeStep(), "_adj_l2");
               if(mopt->m_misfit == Mopt::CROSSCORR)
-                  createTimeSeriesHDF5File(diffs, GlobalTimeSeries[e][0]->getNsteps(), simulation.getTimeStep(), "_adj_cross.h5");
+                  createTimeSeriesHDF5File(diffs, GlobalTimeSeries[e][0]->getNsteps(), simulation.getTimeStep(), "_adj_cross");
             }
             MPI_Barrier(MPI_COMM_WORLD); 
       
@@ -494,23 +494,18 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 
 	     f += GlobalTimeSeries[e][m]->misfit( *GlobalObservations[e][m], diffs[m], dshift, ddshift, dd1shift );
       // QC adj source by wei
-      #if USE_HDF5
-                 // Allocate HDF5 fid for later file write
-                   if(m == 0) { 
-                     diffs[0]->allocFid();
-                     diffs[0]->setTS0Ptr(diffs[0]);
-                   }
-                   else {
-                     diffs[m]->setFidPtr(diffs[0]->getFidPtr());
-                     diffs[m]->setTS0Ptr(diffs[0]);
-                   }
-
-        diffs[m]->syncSolFloats();
-        diffs[m]->writeFile("_adj_l2.h5");
-        if(diffs[m]->myPoint()) std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
-            << " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;
-      #endif
-        }
+         #if USE_HDF5
+         // Allocate HDF5 fid for later file write
+         if(m == 0) diffs[0]->allocFid();
+         else       diffs[m]->setFidPtr(diffs[0]->getFidPtr());
+                     
+         diffs[m]->setTS0Ptr(diffs[0]);
+         diffs[m]->syncSolFloats();
+         diffs[m]->writeFile("_adj_l2");
+         if(diffs[m]->myPoint()) std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
+               << " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;
+         #endif
+       } // loop over m
 
         std::cout << ">>>>>>>>>>>>>>>>>>> adj source written to files" << std::endl;
       }
@@ -523,25 +518,21 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 
                f += GlobalTimeSeries[e][m]->misfit2( *GlobalObservations[e][m], diffs[m] );
 
-      #if USE_HDF5
-                 // Allocate HDF5 fid for later file write
-                   if(m == 0) { 
-                     diffs[0]->allocFid();
-                     diffs[0]->setTS0Ptr(diffs[0]);
-                   }
-                   else {
-                     diffs[m]->setFidPtr(diffs[0]->getFidPtr());
-                     diffs[m]->setTS0Ptr(diffs[0]);
-                   } 
-        diffs[m]->syncSolFloats();
-        diffs[m]->writeFile("_adj_cross.h5");  // myPoint checked internally
-        if(diffs[m]->myPoint()) {
-           std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
-            << " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;
-        }
-      #endif
-         }
-      } // end of Mopt
+               #if USE_HDF5
+               // Allocate HDF5 fid for later file write
+               if(m == 0) diffs[0]->allocFid();
+               else       diffs[m]->setFidPtr(diffs[0]->getFidPtr());
+                           
+               diffs[m]->setTS0Ptr(diffs[0]);
+               diffs[m]->syncSolFloats();
+               diffs[m]->writeFile("_adj_cross");  // myPoint checked internally
+               if(diffs[m]->myPoint()) {
+                  std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
+                     << " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;
+               }
+               #endif
+            } // loop over m
+         } // end of Mopt
 
       double dfsrc[11];
       get_source_pars( nspar, dfsrc, dfs );   
@@ -1487,25 +1478,43 @@ int main(int argc, char **argv)
 
 	   for( int e=0 ; e < GlobalObservations.size() ; e++ )
 	   {
+         for( int m = 0; m < GlobalObservations[e].size(); m++ )
+         {
+          if(myRank==0 && GlobalObservations[e][m]->myPoint()) 
+          {
+            std::cout << "obs nsamples=" << GlobalObservations[e][m]->getLastTimeStep() << " sample dt=" << GlobalObservations[e][m]->getDt() << std::endl;
+            createTimeSeriesHDF5File(GlobalObservations[e], GlobalObservations[e][m]->getLastTimeStep()+1, GlobalObservations[e][m]->getDt(), "_filtered");
+            break;
+          }
+         }
+         MPI_Barrier(MPI_COMM_WORLD); // wait for file creation
+
 	      for( int m = 0; m < GlobalObservations[e].size(); m++ )
 	      {
 	      //simulation.set_utcref( *GlobalObservations[m] );
 
-         	
-    if(myRank==0 && GlobalObservations[e][m]->myPoint()) 
-	     std::cout << "e=" << e << " m=" << m << " GlobalObservations[e][m] Nsteps=" <<  
-		     GlobalObservations[e][m]->getNsteps() << " dt=" << 
-		     GlobalObservations[e][m]->getDt() << " zTopo=" << GlobalObservations[e][m]->getZtopo() << std::endl;
-      
-       //GlobalObservations[e][m]->writeFileUSGS("_obs");
-		 if( simulation.m_prefilter_sources && simulation.m_filter_observations )
-		 {
-          std::cout << "filter obs data..." << std::endl;
-		    GlobalObservations[e][m]->filter_data( simulation.m_filterobs_ptr );
-		    GlobalObservations[e][m]->writeFile( "_filtered" );
-		 }
-	   
-      } // m
+            if(myRank==0 && GlobalObservations[e][m]->myPoint()) 
+            std::cout << "e=" << e << " m=" << m << " GlobalObservations[e][m] Nsteps=" <<  
+            GlobalObservations[e][m]->getNsteps() << " dt=" << 
+            GlobalObservations[e][m]->getDt() << " zTopo=" << GlobalObservations[e][m]->getZtopo() << std::endl;
+         
+            //GlobalObservations[e][m]->writeFileUSGS("_obs");
+            if(simulation.m_prefilter_sources && simulation.m_filter_observations )
+            {
+            GlobalObservations[e][m]->filter_data(simulation.m_filterobs_ptr);
+            //GlobalObservations[e][m]->writeFile( "_filtered" );
+
+               #if USE_HDF5
+               // Allocate HDF5 fid for later file write
+               if(m == 0) GlobalObservations[e][0]->allocFid();
+               else       GlobalObservations[e][m]->setFidPtr(GlobalObservations[e][0]->getFidPtr());
+                        
+               GlobalObservations[e][m]->setTS0Ptr(GlobalObservations[e][0]);
+               GlobalObservations[e][m]->syncSolFloats();
+               GlobalObservations[e][m]->writeFile("_filtered");  // myPoint checked internally
+               #endif
+		      }
+         } // m
 
 
 MPI_Barrier(MPI_COMM_WORLD);  // added for debugging

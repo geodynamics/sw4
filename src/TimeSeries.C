@@ -551,12 +551,8 @@ void TimeSeries::writeFile( string suffix )
   // create a new function to write metadata only
   if( m_hdf5Format )
   {
-    /* if (myRank == 0) { */
-    /*   printf("Writing station timeseries data\n", myRank, m_staName.c_str()); */
-    /*   fflush(stdout); */
-    /* } */
+ 
     fid = openHDF5File(suffix);
-
     if (fid <= 0) 
       printf("Rank %d: %s fid is invalid, cannot open file [%s]\n", myRank, __func__, filePrefix.str().c_str());
     else 
@@ -2943,6 +2939,7 @@ void TimeSeries::filter_data( Filter* filter_ptr )
 {
    if( m_myPoint )
    {
+      //std::cout << "filter m_dt=" << m_dt << std::endl;
       filter_ptr->computeSOS( m_dt );
 
       filter_ptr->evaluate( mLastTimeStep+1, &mRecordedSol[0][0], &mRecordedSol[0][0] );
@@ -2952,25 +2949,25 @@ void TimeSeries::filter_data( Filter* filter_ptr )
 // Give the source time function a smooth start if this is a 2-pass (forward + backward) bandpass filter
       if( filter_ptr->get_passes() == 2 && filter_ptr->get_type() == bandPass )
       {    
-	 float_sw4 wghv, xi;
-	 int p0=3, p=20 ; // First non-zero time level, and number of points in ramp;
+         float_sw4 wghv, xi;
+         int p0=3, p=20 ; // First non-zero time level, and number of points in ramp;
 
-	 for( int i=1 ; i<=p0-1 ; i++ )
-	 {
-	    mRecordedSol[0][i-1] = 0;
-	    mRecordedSol[1][i-1] = 0;
-	    mRecordedSol[2][i-1] = 0;
-	 }
-	 for( int i=p0 ; i<=p0+p ; i++ )
-	 {
-	    wghv = 0;
-	    xi = (i-p0)/((float_sw4) p);
-	 // polynomial P(xi), P(0) = 0, P(1)=1
-	    wghv = xi*xi*xi*xi*(35-84*xi+70*xi*xi-20*xi*xi*xi);
-	    mRecordedSol[0][i-1] *= wghv;
-	    mRecordedSol[1][i-1] *= wghv;
-	    mRecordedSol[2][i-1] *= wghv;
-	 }
+         for( int i=1 ; i<=p0-1 ; i++ )
+         {
+            mRecordedSol[0][i-1] = 0;
+            mRecordedSol[1][i-1] = 0;
+            mRecordedSol[2][i-1] = 0;
+         }
+         for( int i=p0 ; i<=p0+p ; i++ )
+         {
+            wghv = 0;
+            xi = (i-p0)/((float_sw4) p);
+            // polynomial P(xi), P(0) = 0, P(1)=1
+            wghv = xi*xi*xi*xi*(35-84*xi+70*xi*xi-20*xi*xi*xi);
+            mRecordedSol[0][i-1] *= wghv;
+            mRecordedSol[1][i-1] *= wghv;
+            mRecordedSol[2][i-1] *= wghv;
+         }
       }
    }
 }
@@ -3561,7 +3558,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
     float dt, tstart;
     readAttrFloat(fid, "DELTA", &dt);
 
-    sw4npts =  (npts-1) * downsample + 1;
+    sw4npts =  (npts-1) * downsample + 1;   // sw4mpts is number of full samples
 
     // Only allocate arrays if we aren't doing a restart
     if(!mIsRestart) {
