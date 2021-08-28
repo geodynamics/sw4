@@ -31,7 +31,9 @@
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 
+#ifdef ENABLE_CUDA
 #define RAJA_ONLY_2 1
+#endif
 #include <sys/types.h>
 
 #include "Mspace.h"
@@ -205,18 +207,19 @@ void curvilinear4sgwind(
       SW4_PEEK;
       SYNC_DEVICE;
 #endif
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY_2)
 #ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
       Range<1> K(klowb, klowe + 1);
 #endif
 #ifdef ENABLE_HIP
-      Range<8> I(ifirst + 2, ilast - 1);
-      Range<8> J(jfirst + 2, jlast - 1);
-      Range<4> K(klowb, klowe + 1);
+      Range<16> I(ifirst + 2, ilast - 1);
+      Range<16> J(jfirst + 2, jlast - 1);
+      Range<1> K(klowb, klowe + 1);
 #endif
-      forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+      Tclass<31> t1;
+      forall3asyncV<256,1>(t1, I, J, K, [=] RAJA_DEVICE(Tclass<31> t, int i, int j, int k) {
 #else
       RAJA::RangeSegment k_range(klowb, klowe + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
@@ -830,7 +833,7 @@ void curvilinear4sgwind(
 // #pragma omp simd
 // #pragma ivdep
 //           for (int i = ifirst + 2; i <= ilast - 2; i++) {
-#if !defined(RAJA_ONLY_2)
+#if !defined(RAJA_ONLY)
 
 #ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
@@ -843,8 +846,8 @@ void curvilinear4sgwind(
       Range<2> J(jfirst + 2, jlast - 1);
       Range<2> K(kmidb, kmide + 1);
 #endif
-
-      forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+      Tclass<32> t1;
+      forall3async<__LINE__>(t1, I, J, K, [=] RAJA_DEVICE(Tclass<32> t, int i, int j, int k) {
 #else
       RAJA::RangeSegment k_range(kmidb, kmide + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
@@ -1905,11 +1908,11 @@ void curvilinear4sgwind(
 
 #ifdef ENABLE_HIP
       Range<16> I(ifirst + 2, ilast - 1);
-      Range<2> J(jfirst + 2, jlast - 1);
-      Range<2> K(khighb, khighe + 1);
+      Range<16> J(jfirst + 2, jlast - 1);
+      Range<1> K(khighb, khighe + 1);
 #endif
-
-      forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+	 Tclass<33> t1;
+      forall3asyncV<256,1>(t1, I, J, K, [=] RAJA_DEVICE(Tclass<33> t, int i, int j, int k) {
 #else
       RAJA::RangeSegment k_range(khighb, khighe + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);

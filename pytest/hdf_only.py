@@ -159,6 +159,10 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, verbose):
         if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="lrun -T4 "
         #mpirun_cmd="jsrun -g4 -c40 -a4 -n" + str(mpi_tasks) # Simulate Summit runs with -g4
+    elif 'login1' in node_name:
+        os.environ["PSM2_DEVICES"] = ""
+        if mpi_tasks<=0: mpi_tasks = 4
+        mpirun_cmd="srun -N 1 -A GEO130 -t 30 -n 4 -c16 --gpus-per-task=1 --gpu-bind=closest -p ecp "
     # add more machine names here
     elif 'Linux' in sys_name:
         if omp_threads<=0: omp_threads=1;
