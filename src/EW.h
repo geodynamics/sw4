@@ -259,7 +259,7 @@ void setupSBPCoeff( );
 
 // time stepping routines
 void simpleAttenuation( vector<Sarray> & a_Up );
-void enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+   void enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 		vector<Sarray*>& a_AlphaVE, float_sw4 t, vector<float_sw4 **> & a_BCForcing );
 
 void enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, 
@@ -390,7 +390,8 @@ void setup_supergrid( );
 void assign_supergrid_damping_arrays();
 
 // MR coefficients
-void setup_MR_coefficients();
+void setup_MR_coefficients( vector<Sarray>& Rho, vector<Sarray>& Mu, 
+                            vector<Sarray>& Lambda );
 
 void assign_local_bcs( );
 bool timeSteppingSet();
@@ -1260,13 +1261,16 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
 		size_t& npts );
 
    void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
-		vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE, vector<Sarray*>& a_AlphaVEm,
-                   float_sw4 t, bool predictor, vector<Sarray> &F, std::vector<GridPointSource*> point_sources, bool backward=false );
+                   vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE, vector<Sarray*>& a_AlphaVEm,
+                   float_sw4 t, bool predictor, vector<Sarray> &F, std::vector<GridPointSource*> point_sources,
+                   vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, bool backward=false );
    void enforceIC2( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
                     vector<Sarray*>& a_AlphaVEp, float_sw4 t, 
-                    vector<Sarray> &F, std::vector<GridPointSource*> point_sources );
-   void CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, 
-                     vector<Sarray*>& a_AlphaVE, float_sw4 t );
+                    vector<Sarray> &F, std::vector<GridPointSource*> point_sources,
+                    vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda );
+
+   void CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, 
+                     vector<Sarray>& a_Lambda, vector<Sarray*>& a_AlphaVE, float_sw4 t );
    
    void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
    void dirichlet_twilight_ic( Sarray& U, int g, int kic, float_sw4 t);
@@ -1277,14 +1281,20 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
 
    void gridref_initial_guess( Sarray& u, int g, bool upper );
    void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
-                                       Sarray* a_AlphaVEp, Sarray* a_AlphaVE, Sarray* a_AlphaVEm, Sarray& Utt, Sarray& Unext,
-                                       int g, int kic, float_sw4 t, Sarray &Ftt, std::vector<GridPointSource*> point_sources );
+                                       Sarray* a_AlphaVEp, Sarray* a_AlphaVE, Sarray* a_AlphaVEm, 
+                                       Sarray& Utt, Sarray& Unext,
+                                       int g, int kic, float_sw4 t, Sarray &Ftt, 
+                                       std::vector<GridPointSource*> point_sources, 
+                                       Sarray& a_Rho, Sarray& a_Mu, Sarray& a_Lambda );
+
    // void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
    //                                     Sarray& Utt, Sarray& Unext,
    //                                     int g, int kic, double t, std::vector<GridPointSource*> point_sources );
 
    void compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_AlphaVEp, Sarray& Unext,
-                                       int g, int kic, float_sw4 t, Sarray &F, vector<GridPointSource*> point_sources );
+                                       int g, int kic, float_sw4 t, Sarray &F, 
+                                       vector<GridPointSource*> point_sources,
+                                       Sarray& a_Rho, Sarray& a_Mu, Sarray& a_Lambda );
    
    void compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic, float_sw4* a_str_x, float_sw4* a_str_y, 
                             float_sw4* sbop, char op );

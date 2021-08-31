@@ -1977,13 +1977,15 @@ float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
    bool dbg =false;
    if( m_myPoint )
    {
-     //       dbg = m_staName == "FAKE.51";
+      //      dbg = m_staName == "FAKE.1";
       // 1. Evaluate correlation at some time shifts around zero
       int noptpt = 40;
       float_sw4 tlim = 2, fmax = -1e38, tmax=0;
       float_sw4 f, df, ddf;
       if( dbg )
-	cout << m_global_event << "Compute maxshift \n 1. scan through time points " << endl;
+      {
+         cout << m_staName << " : " << m_global_event << "Compute maxshift \n 1. scan through time points " << endl;
+      }
       for( int n=0 ; n < noptpt ; n++ )
       {
 	 float_sw4 tshift = -tlim + n*2*tlim/(noptpt-1);
@@ -1994,13 +1996,14 @@ float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
 	    tmax = tshift;
 	 }
 	 if( dbg )
-	   cout << m_global_event << "ts= " << tshift << " f= " << f << endl;
+            cout << m_staName<< " : " << m_global_event << "ts= " << tshift << " f= " << f << endl;
       }
       // 2. Use maximum from 1 to start Newton iteration for solving f'(tshift) = 0
       int maxit=10, it=0;
       float_sw4 tol=1e-12;
       float_sw4 err=tol+1;
       float_sw4 t1 = tmax;
+      //      t1 = 0;
       if( dbg )
 	cout << m_global_event << " 2. Newton iteration" << endl;
       while( it < maxit && err > tol )
@@ -2011,22 +2014,25 @@ float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
 	 t1=tnew;
 	 it++;
 	 if( dbg )
-	   cout << m_global_event << " it " << it << " err " << err << endl;
+            cout << m_staName << " : " << m_global_event << " it " << it << " err " << err << endl;
       }
-      if( f > fmax )
+      //      if( err < tol )
+      if( f > fmax ) // && ( -tlim <= t1 && t1 <= tlim ) )
       {
 	 tmax = t1;
 	 if( err > tol )
 	 {
-	    cout << "ERROR: No convergence in compute_maxshift, err= " << err << endl;
+	    cout << m_staName << " ERROR: No convergence in compute_maxshift, err= " << err << endl;
 	 }
 	 if( ddf >= 0 )
 	 {
-	    cout << "ERROR: compute_maxshift found a minimum,  f'' = " << ddf << endl;
+	    cout << m_staName << " ERROR: compute_maxshift found a minimum,  f'' = " << ddf << endl;
 	 }
       }
+      else
+         cout << m_staName << " WARNING: compute_maxshift:  max shift not determined by f'=0" << endl;
       if( dbg )
-	cout << m_global_event << " Found optimal time shift = " << tmax << " df= " << df << " f= " << f << " fmax= " << fmax << endl;
+         cout << m_staName << " : " << m_global_event << " Found optimal time shift = " << tmax << " df= " << df << " f= " << f << " fmax= " << fmax << endl;
       return tmax;
    }
    else
@@ -2121,7 +2127,7 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
          obs_windowed[1][i] = observed.mRecordedFloats[1][i];
          obs_windowed[2][i] = observed.mRecordedFloats[2][i];
       }
-      if( !compute_adjsrc ) 
+      //      if( !compute_adjsrc ) 
       {
          obs_windowed[0][i] *= wghxobs;
          obs_windowed[1][i] *= wghxobs;
@@ -2256,7 +2262,6 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
 	 adjsrc[1][i] = -tshift*wghy*dmf[1];
 	 adjsrc[2][i] = -tshift*wghz*dmf[2];
       }
-
    }
    if( compute_adjsrc )
    {
@@ -2298,6 +2303,10 @@ float_sw4 TimeSeries::misfit2( TimeSeries& observed, TimeSeries* diff )
    float_sw4 misfit = 0;
    if( m_myPoint )
    {
+      //      if( m_use_win )
+      //         cout << "station " << m_staName << " using windows " << m_winL << " " << m_winR
+      //              << " " << m_winL2 << " " << m_winR2 << endl;
+
       if( abs(m_t0+m_shift-(observed.m_t0+observed.m_shift)) > 100 )
       {
 	 cout <<"WARNING: Mismatch between observation start time and simulation start time is large. " << 
@@ -2323,6 +2332,13 @@ float_sw4 TimeSeries::misfit2( TimeSeries& observed, TimeSeries* diff )
 	    diff->allocateRecordingArrays(mLastTimeStep,m_t0+m_shift,m_dt);
 	 misfitsource = diff->getRecordingArray();
 	 shiftfunc( observed, ms, f, df, ddf, misfitsource );
+         // DBG
+         //         cout << m_staName << " shift = " << ms << " f= " << f << " df= " << df << " ddf= " << ddf <<endl;
+         //         float_sw4 h=1e-6, fp, dfp, ddfp, fm, dfm, ddfm;
+         //	 shiftfunc( observed, ms+h, fp, dfp, ddfp );
+         //	 shiftfunc( observed, ms-h, fm, dfm, ddfm );
+         //         cout << m_staName << " num df= " << (fp-fm)/(2*h) << " num ddf= " << (dfp-dfm)/(2*h) << endl;
+         // end DBG
       }
    }
    return misfit;

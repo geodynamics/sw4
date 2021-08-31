@@ -81,6 +81,8 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       //           << endl; 
    }
 
+// Setup Cartesian grid refinement interface.
+   setup_MR_coefficients( a_Rho, a_Mu, a_Lambda );
 
 // will accumulate the gradient of the misfit in these arrays
    for( int s=0 ; s < 11 ; s++ )
@@ -146,7 +148,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          communicate_array( Km[g], g );
       cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
-      enforceBC( Km, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
+      enforceBC( Km, a_Rho, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
       //      enforceDirichlet5( Km );
       time_measure[2] = MPI_Wtime();
 
@@ -154,7 +156,8 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       for( int s= 0 ; s < a_TimeSeries.size() ; s++ )
 	 a_TimeSeries[s]->use_as_forcing( currentTimeStep-1, F, mGridSize, mDt, mJ, topographyExists() );
 
-      enforceIC( Km, K, Kp, AlphaVEp, AlphaVE, AlphaVEm, t, true, F, point_sources, true );
+      enforceIC( Km, K, Kp, AlphaVEp, AlphaVE, AlphaVEm, t, true, F, point_sources, 
+                 a_Rho, a_Mu, a_Lambda, true );
 
       evalDpDmInTime( Kp, K, Km, Kacc ); 
       evalRHS( Kacc, a_Mu, a_Lambda, Lk, AlphaVEm );
@@ -173,9 +176,10 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          communicate_array( Km[g], g );
       //      cartesian_bc_forcing( t-mDt, BCForcing );
-      enforceBC( Km, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
+      enforceBC( Km, a_Rho, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
       //      enforceDirichlet5( Km );
-      enforceIC( Km, K, Kp, AlphaVEp, AlphaVE, AlphaVEm, t, false, F, point_sources, true );
+      enforceIC( Km, K, Kp, AlphaVEp, AlphaVE, AlphaVEm, t, false, F, point_sources, 
+                 a_Rho, a_Mu, a_Lambda, true );
 
 
     // U-backward solution, predictor
@@ -198,7 +202,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
          communicate_array( Uacc[g], g );
       }
       // Note, this assumes BCForcing is not time dependent, which is usually true
-      enforceBC( Uacc, a_Mu, a_Lambda, AlphaVEm, t, BCForcing );
+      enforceBC( Uacc, a_Rho, a_Mu, a_Lambda, AlphaVEm, t, BCForcing );
 
       evalRHS( Uacc, a_Mu, a_Lambda, Lk, AlphaVEm );
 
@@ -212,9 +216,10 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          communicate_array( Um[g], g );
 //      cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
-      enforceBC( Um, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
+      enforceBC( Um, a_Rho, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
       Force( t-mDt, F, point_sources, identsources );
-      enforceIC( Um, U, Up, AlphaVEp, AlphaVE, AlphaVEm, t, false, F, point_sources, true );
+      enforceIC( Um, U, Up, AlphaVEp, AlphaVE, AlphaVEm, t, false, F, point_sources, 
+                 a_Rho, a_Mu, a_Lambda, true );
 
       time_measure[5] = MPI_Wtime();
 
