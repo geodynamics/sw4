@@ -38,6 +38,7 @@
 #include "EW.h"
 #include "caliper.h"
 #include "policies.h"
+#include "foralls.h"
 //-----------------------------------------------------------------------
 void EW::addsgd4_ci(
     int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
@@ -86,7 +87,29 @@ void EW::addsgd4_ci(
     ASSERT_MANAGED(a_dcx);
     ASSERT_MANAGED(a_cox);
     ASSERT_MANAGED(a_strx);
-
+// USE THE RAJA VERSION WITH CUDA UNTIL SPEED IS TESTED.
+#ifdef ENABLE_CUDA
+#define RAJA_ONLY 1
+#endif 
+#if !defined(RAJA_ONLY)
+      // LOOP -1
+      //
+      // 32,4,2 is 4% slower. 32 4 4 does not fit
+#ifdef ENABLE_CUDA
+      Range<16> I(ifirst + 2, ilast - 1);
+      Range<4> J(jfirst + 2, jlast - 1);
+      Range<6> K(kfirst + 2, klast - 1);
+#endif
+#ifdef ENABLE_HIP
+      Range<64> I(ifirst + 2, ilast - 1);
+      Range<2> J(jfirst + 2, jlast - 1);
+      Range<2> K(kfirst + 2, klast - 1);
+#endif
+forall3async(
+           I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+          float_sw4 birho = beta / rho(i, j, k);
+	for (int c=0;c<3;c++)
+#else
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
     RAJA::RangeSegment k_range(kfirst + 2, klast - 1);
@@ -96,6 +119,7 @@ void EW::addsgd4_ci(
         RAJA::make_tuple(c_range, k_range, j_range, i_range),
         [=] RAJA_DEVICE(int c, int k, int j, int i) {
           float_sw4 birho = beta / rho(i, j, k);
+#endif
           {
             // Using the kernel below with an explict c loop and #pragma unroll
             // The code takes 3X more time. WIthout the pragma unroll it takes
