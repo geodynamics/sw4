@@ -87,10 +87,6 @@ void EW::addsgd4_ci(
     ASSERT_MANAGED(a_dcx);
     ASSERT_MANAGED(a_cox);
     ASSERT_MANAGED(a_strx);
-// USE THE RAJA VERSION WITH CUDA UNTIL SPEED IS TESTED.
-#ifdef ENABLE_CUDA
-#define RAJA_ONLY 1
-#endif 
 #if !defined(RAJA_ONLY)
       // LOOP -1
       //
