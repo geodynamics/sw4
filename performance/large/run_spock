@@ -1,0 +1,1 @@
+srun -N 1 -A GEO130 -t 30 -n 4 -c16 --gpus-per-task=1 --gpu-bind=closest -p ecp ./sw4 hmr3.in.summit

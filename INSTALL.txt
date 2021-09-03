@@ -110,3 +110,11 @@ Building using cmake ( Experimental WIP)
 4  mkdir build && cd build
 5  cmake -C ../host-config/<host>.cmake ../
 6  make -j 80 ( on a compute node
+
+---------------------------------------------------------------------
+Building and running on Spock
+---------------------------------------------------------------------
+0. ml rocm/4.3.0 cray-hdf5-parallel/1.12.0.6 fftw
+1. cp make.raja.spock43R14U6HDF5ZFP to make.inc in config/
+2. make -f Makefile.hipcc -j 5
+3. see performance/large/run_spock for run command

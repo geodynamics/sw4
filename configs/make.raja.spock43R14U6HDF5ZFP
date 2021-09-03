@@ -97,7 +97,7 @@ MORE_FLAGS+=  -ggdb -DPEEKS_GALORE=1
 endif 
 
 ifeq ($(register_count),yes)
-MORE_FLAGS+=  --save-temps -g -ggdb
+MORE_FLAGS+=  --save-temps -g -ggdb -DNO_DEVICE_FUNCTION_POINTERS=1
 else
 MORE_FLAGS+= -fgpu-rdc 
 MORE_LINK_FLAGS+= -fgpu-rdc
