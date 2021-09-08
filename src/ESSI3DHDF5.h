@@ -63,9 +63,6 @@ public:
   void set_ihavearray(bool ihavearray) {m_ihavearray=ihavearray;};
 
 protected:
-#ifdef USE_HDF5
-  hid_t get_mpiprop() {return m_mpiprop_id;};
-#endif
 
 private:
   ESSI3DHDF5(); // make it impossible to call default constructor
@@ -73,7 +70,6 @@ private:
 
   std::string m_filename;
   bool m_ihavearray;
-  int m_start_cycle;
   int m_end_cycle;
   int m_window[6];
   int m_global[3];
@@ -86,11 +82,7 @@ private:
   hsize_t m_slice_dims[4]; // for just a column
 
   hid_t m_file_id;
-  hid_t m_mpiprop_id;
-  hid_t m_vel_dataset_id[3];
-  hid_t m_vel_dataspace_id[3];
-
-  hsize_t *m_all_start_count;
+  hid_t m_es_id;
 #endif // def USE_HDF5
 };
 
