@@ -23,7 +23,7 @@ MPI_Datatype get_mpi_datatype( std::complex<float>* var ) {return MPI_CXX_FLOAT_
 RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zmax,
 					float_sw4 corrlen, float_sw4 corrlenz, 
 					float_sw4 hurst, float_sw4 sigma,
-					unsigned int seed )
+					bool randomrho, unsigned int seed )
 {
    mEW = a_ew;
    float_sw4 bbox[6];
@@ -46,7 +46,9 @@ RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zma
    m_sigma = sigma;
    m_seed  = seed;
    m_vsmax = 1e38;
-   
+   m_vsmin = 0;   
+   m_random_rho = randomrho;
+
 // Determine discretization based on correlation length.
    float_sw4 ppcl = 20; // grid points per correlation length
    m_nig = ppcl*(global_xmax)/corrlen;
@@ -169,7 +171,7 @@ void RandomizedMaterial::perturb_velocities( int g, Sarray& cs, Sarray& cp,
 					    (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp)  + wghi*mRndMaterial(ip+1,jp+1,kp))) +
 		     (wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp+1)+ wghi*mRndMaterial(ip+1,jp,  kp+1))+
 			     (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp+1)+ wghi*mRndMaterial(ip+1,jp+1,kp+1)));
-		  if( cs(i,j,k) <= m_vsmax )
+		  if( m_vsmin <= cs(i,j,k) && cs(i,j,k) <= m_vsmax )
 		  {
 		     cs(i,j,k) *= rndpert;
 		     cp(i,j,k) *= rndpert;
@@ -180,7 +182,7 @@ void RandomizedMaterial::perturb_velocities( int g, Sarray& cs, Sarray& cp,
 			kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke )
 	       {
 		  float_sw4 rndpert = mRndMaterial(ip,jp,kp);
-		  if( cs(i,j,k) <= m_vsmax )
+		  if( m_vsmin <= cs(i,j,k) && cs(i,j,k) <= m_vsmax )
 		  {
 		     cs(i,j,k) *= rndpert;
 		     cp(i,j,k) *= rndpert;
@@ -214,7 +216,7 @@ void RandomizedMaterial::perturb_velocities( std::vector<Sarray> & cs,
 	    for( int j=mRndMaterial.m_jb ; j <= mRndMaterial.m_je ; j++ )
 	       for( int i=mRndMaterial.m_ib ; i <= mRndMaterial.m_ie ; i++ )
 	       {
-		  if( cs[0](i+1,j+1,k+1) <= m_vsmax )
+		  if( m_vsmin <= cs[0](i+1,j+1,k+1) && cs[0](i+1,j+1,k+1) <= m_vsmax )
 		  {
 		     cs[0](i+1,j+1,k+1) *= mRndMaterial(i,j,k);
 		     cp[0](i+1,j+1,k+1) *= mRndMaterial(i,j,k);
@@ -255,7 +257,7 @@ void RandomizedMaterial::assign_perturbation( int g, Sarray& pert, Sarray& cs,
 					    (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp)  + wghi*mRndMaterial(ip+1,jp+1,kp))) +
 		     (wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp+1)+ wghi*mRndMaterial(ip+1,jp,  kp+1))+
 			     (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp+1)+ wghi*mRndMaterial(ip+1,jp+1,kp+1)));
-                  if( cs(i,j,k) <= m_vsmax )
+                  if( m_vsmin <= cs(i,j,k) && cs(i,j,k) <= m_vsmax )
                      pert(i,j,k) = rndpert; 
 	       }
 	       else if( ip >= mRndMaterial.m_ib && ip <= mRndMaterial.m_ie &&
@@ -263,7 +265,7 @@ void RandomizedMaterial::assign_perturbation( int g, Sarray& pert, Sarray& cs,
 			kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke )
 	       {
 		  float_sw4 rndpert = mRndMaterial(ip,jp,kp);
-                  if( cs(i,j,k) <= m_vsmax )
+                  if( m_vsmin <= cs(i,j,k) && cs(i,j,k) <= m_vsmax )
                      pert(i,j,k) = rndpert;
 	       }
 	       else
@@ -459,7 +461,7 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g,
       u[i] = real(uc[i]);
       imnrm = imnrm>fabs(imag(uc[i]))?imnrm:fabs(imag(uc[i]));
    }
-   if( imnrm > 1e-12 )
+   if( imnrm > 1e-6 )
       std::cout << "imnrm = "  << imnrm << std::endl;
    delete[] uc;
 
@@ -764,6 +766,17 @@ void RandomizedMaterial::set_vsmax( float_sw4 vsmax )
 double RandomizedMaterial::get_vsmax()
 {
    return m_vsmax;
+}
+//-----------------------------------------------------------------------
+void RandomizedMaterial::set_vsmin( float_sw4 vsmin )
+{
+   m_vsmin = vsmin;
+}
+
+//-----------------------------------------------------------------------
+double RandomizedMaterial::get_vsmin()
+{
+   return m_vsmin;
 }
 
 //-----------------------------------------------------------------------

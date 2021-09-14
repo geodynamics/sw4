@@ -146,6 +146,7 @@ void MaterialParCart::limit_x( int nmd, double* xmd, int nms, double* xms,
       vsmax = 1e38;
    if( vpmax < 0 )
       vpmax = 1e38;
+   float_sw4 cpcslim=1.15; // lower limit for cp/cs
 
    float_sw4* based, *bases;
    if( nms > 0 )
@@ -229,6 +230,14 @@ void MaterialParCart::limit_x( int nmd, double* xmd, int nms, double* xms,
             xptr[2+3*ind] = vpmax-vpbase;
             m_limited[2+3*ind]=true;
          }
+         float_sw4 cpcsbase=-vpbase+cpcslim*vsbase;
+         if( xptr[2+3*ind]-cpcslim*xptr[1+3*ind]<cpcsbase )
+         {
+            xptr[3*ind+2] = cpcslim/(cpcslim*cpcslim+1)*
+               (cpcsbase/cpcslim+xptr[3*ind+1]+cpcslim*xptr[3*ind+2]);
+            xptr[3*ind+1] = 1/cpcslim*(xptr[3*ind+2]-cpcsbase);
+            m_limited[1+3*ind]=m_limited[2+3*ind]=true;
+         }
       }
    }
    else if( m_variables == 3 )
@@ -256,6 +265,14 @@ void MaterialParCart::limit_x( int nmd, double* xmd, int nms, double* xms,
          {
             xptr[1+2*ind] = vpmax-vpbase;
             m_limited[1+2*ind]=true;
+         }
+         float_sw4 cpcsbase=-vpbase+cpcslim*vsbase;
+         if( xptr[1+2*ind]-cpcslim*xptr[2*ind]<cpcsbase )
+         {
+            xptr[2*ind+1] = cpcslim/(cpcslim*cpcslim+1)*
+               (cpcsbase/cpcslim+xptr[2*ind]+cpcslim*xptr[2*ind+1]);
+            xptr[2*ind] = 1/cpcslim*(xptr[2*ind+1]-cpcsbase);
+            m_limited[2*ind]=m_limited[2*ind+1]=true;
          }
       }
    }

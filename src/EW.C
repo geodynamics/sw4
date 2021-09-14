@@ -529,10 +529,13 @@ EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
   m_pervar(1),
   m_qmultiplier(1),
   m_randomize(false),
+  m_randomize_density(false),
   m_anisotropic(false),
   m_croutines(true),
   m_zerograd_at_src(false),
+  m_zerograd_at_rec(false),
   m_zerograd_pad(2),
+  m_zerogradrec_pad(0),
   m_filter_gradient(false),
   m_gradfilter_ep(0.08),
   m_gradfilter_it(5),
@@ -8252,7 +8255,7 @@ TestPointSource* EW::get_point_source_test()
 #include "AllDims.h"
 AllDims* EW::get_fine_alldimobject( )
 {
-   int g=mNumberOfCartesianGrids-1;
+   int g=mNumberOfGrids-1;
    AllDims* fine = new AllDims( m_proc_array[0], m_proc_array[1], 1, 1, m_global_nx[g], 
                                 1, m_global_ny[g], 1, m_global_nz[g], m_ghost_points, 
                                 m_ppadding, m_cartesian_communicator );
@@ -8314,6 +8317,44 @@ void EW::set_zerograd()
 void EW::set_zerograd_pad( int pad )
 {
    m_zerograd_pad = pad;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_to_zero_at_receiver( vector<Sarray> & a_U, 
+                                  vector<TimeSeries*> time_series,
+                                  int padding )
+{
+#pragma omp parallel for
+     for( int s=0 ; s < time_series.size() ; s++ )
+     {
+	int g = time_series[s]->m_grid0;	
+	int i0= time_series[s]->m_i0;
+	int j0= time_series[s]->m_j0;
+	int k0= time_series[s]->m_k0;
+        int klow  = k0-padding > a_U[g].m_kb ? k0-padding:a_U[g].m_kb;
+        int khigh = k0+padding < a_U[g].m_ke ? k0+padding:a_U[g].m_ke;
+        int jlow  = j0-padding > a_U[g].m_jb ? j0-padding:a_U[g].m_jb;
+        int jhigh = j0+padding < a_U[g].m_je ? j0+padding:a_U[g].m_je;
+        int ilow  = i0-padding > a_U[g].m_ib ? i0-padding:a_U[g].m_ib;
+        int ihigh = i0+padding < a_U[g].m_ie ? i0+padding:a_U[g].m_ie;
+
+        for( int k=klow ; k<= khigh ;k++ )
+           for( int j=jlow ; j<= jhigh ;j++ )
+              for( int i=ilow ; i<= ihigh ;i++ )
+                 for( int c=1 ; c <= a_U[g].m_nc ;c++ )
+                    a_U[g](c,i,j,k) = 0;
+     }
+}
+//-----------------------------------------------------------------------
+void EW::set_zerogradrec()
+{
+   m_zerograd_at_rec =true;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_zerogradrec_pad( int pad )
+{
+   m_zerogradrec_pad = pad;
 }
 
 //-----------------------------------------------------------------------

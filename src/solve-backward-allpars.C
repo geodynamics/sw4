@@ -302,6 +302,12 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       set_to_zero_at_source( gMu, point_sources, identsources, m_zerograd_pad );
       set_to_zero_at_source( gLambda, point_sources, identsources, m_zerograd_pad );
    }
+   if( m_zerograd_at_rec )
+   {
+      set_to_zero_at_receiver( gRho, a_TimeSeries, m_zerogradrec_pad );
+      set_to_zero_at_receiver( gMu, a_TimeSeries, m_zerogradrec_pad );
+      set_to_zero_at_receiver( gLambda, a_TimeSeries, m_zerogradrec_pad );
+   }
    communicate_arrays( gRho );
    communicate_arrays( gMu );
    communicate_arrays( gLambda );

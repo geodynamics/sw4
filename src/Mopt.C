@@ -480,6 +480,19 @@ void Mopt::processMrun( char* buffer )
          token += 11;
          m_ew->set_zerograd_pad(atoi(token));
       }
+      else if( startswith("zerorec=",token) )
+      {
+         token += 8;
+	 int n = strlen(token);
+	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 
+                                        || strncmp("1",token,n)== 0 )
+            m_ew->set_zerogradrec();
+      }
+      else if( startswith("zerorecpad=",token) )
+      {
+         token += 11;
+         m_ew->set_zerogradrec_pad(atoi(token));
+      }
       else if( startswith("filtergrad=",token) )
       {
 	 int n = strlen(token);

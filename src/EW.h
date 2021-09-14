@@ -1332,12 +1332,18 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
                                vector<int> identsources, int padding );
    void set_zerograd();
    void set_zerograd_pad(int pad);
+   void set_to_zero_at_receiver( vector<Sarray> & a_U, 
+                                 vector<TimeSeries*> time_series, 
+                                 int padding );
+   void set_zerogradrec();
+   void set_zerogradrec_pad(int pad);
    void filter_bc( Sarray& ufi, Sarray& u, int g, float_sw4 ep );
    void heat_kernel_filter( vector<Sarray>& u, float_sw4 ep, int nit );
    void set_filtergrad();
    void set_filterit(int filterit);
    void set_filterpar(float_sw4 filterpar);
    void perturb_vels( Sarray& cs, Sarray& cp, Sarray& rndpert );
+   void perturb_rho( Sarray& rho, Sarray& rndpert );
    //   TestGrid* create_gaussianHill();
    TestTwilight* create_twilight();
    TestEcons* create_energytest();   
@@ -1537,7 +1543,7 @@ vector<float_sw4> mOmegaVE;
 bool m_anisotropic;
 
 // Randomization of the material
-bool m_randomize;
+bool m_randomize, m_randomize_density;
 int m_random_seed[3];
 float_sw4 m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad, m_random_sdlimit;
 vector<RandomizedMaterial*> m_random_blocks;
@@ -1711,8 +1717,8 @@ int m_cgstepselection, m_cgvarcase;
 bool m_cgfletcherreeves, m_do_linesearch;
 bool m_opt_testing;
 int m_opt_method, m_lbfgs_m;
-bool m_zerograd_at_src, m_filter_gradient;
-int m_zerograd_pad, m_gradfilter_it;
+bool m_zerograd_at_src, m_filter_gradient, m_zerograd_at_rec;
+int m_zerograd_pad, m_gradfilter_it, m_zerogradrec_pad;
 float_sw4 m_gradfilter_ep;
 
    // perturbations for testing
