@@ -1,3 +1,4 @@
+#ifndef SW4_USE_SFK
 //  SW4 LICENSE
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
@@ -4470,4 +4471,5 @@ void curvilinear4sg_ci(
 #undef bope
 #undef ghcof
 }
+#endif
 #endif
