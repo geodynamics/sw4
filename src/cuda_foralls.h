@@ -621,6 +621,7 @@ void gmforall3async(T &start, T &end, LoopBody &&body, Args... args) {
 
 
 // The Split Fuse ( SF) loop functions
+#ifdef SW4_USE_SFK
 template <int N, typename Tag, typename... Func>
 __global__ void forall3kernelSF(Tag t, const int start0, const int N0,
                               const int start1, const int N1, const int start2,
@@ -683,5 +684,6 @@ template <int N, typename Tag, typename T1, typename T2, typename T3,
   // std::cout << "Kernel (Single)"<<t.value<<" runtime " << ms << " ms Best = "<<t.best<<" factor = "<<int(round(ms/t.best))<<" \n";
 
 }
+#endif // #ifdef SW4_USE_SFK
 
 #endif  // Guards
