@@ -616,8 +616,8 @@ void curvilinear4sg_ci(
             // float_sw4 ijac = 1 / jac(i, j, k);
             //float_sw4 istry = 1 / (stry(j));
             //float_sw4 istrx = 1 / (strx(i));
-			  float_sw4 istry = sma[4];
-	    float_sw4 istrx = sma[3];
+		      float_sw4 istry = sma[4];
+			  //	    float_sw4 istrx = sma[3];
             //float_sw4 istrxy = istry * istrx;
 	    {
 	      //float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
@@ -728,7 +728,7 @@ void curvilinear4sg_ci(
             // float_sw4 ijac = 1 / jac(i, j, k);
             //float_sw4 istry = 1 / (stry(j));
             //float_sw4 istrx = 1 / (strx(i));
-	    float_sw4 istry = sma[4];
+		      //	    float_sw4 istry = sma[4];
 	    float_sw4 istrx = sma[3];
 	    {
 	      //float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
