@@ -351,12 +351,12 @@ void linesearch( EW& simulation, vector<vector<Source*> >& GlobalSources,
       vector<Sarray> rho(ng), mu(ng), la(ng);
 
 	  std::cout << "scaling lambda=" << lambda << std::endl;
-      mopt->m_mp->get_material( nmpard, xmnew, nmpars, &xsnew[nspar], rho, mu, la, 
-	    mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode());
+      //mopt->m_mp->get_material( nmpard, xmnew, nmpars, &xsnew[nspar], rho, mu, la, 
+	   // mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode());
 
-      //mopt->m_mp->limit_x( nmpard, xm, nmpars, &xs[nspar], mopt->m_vs_min, 
-      //                     mopt->m_vs_max, mopt->m_vp_min, mopt->m_vp_max );
-      //mopt->m_mp->get_material( nmpard, xmnew, nmpars, &xsnew[nspar], rho, mu, la );
+      mopt->m_mp->limit_x( nmpard, xm, nmpars, &xs[nspar], mopt->m_vs_min, 
+                           mopt->m_vs_max, mopt->m_vp_min, mopt->m_vp_max );
+      mopt->m_mp->get_material( nmpard, xmnew, nmpars, &xsnew[nspar], rho, mu, la );
 
       int ret_code = simulation.check_material( rho, mu, la, ok );
 

@@ -22,9 +22,9 @@ public:
    virtual void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
    				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda, int nr )=0;
 
-   virtual void get_material( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
-			      std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda, 
-               float_sw4 vp_min=-100, float_sw4 vp_max=-100, float_sw4 vs_min=-100, float_sw4 vs_max=-100,int wave_mode=2)=0;
+   //virtual void get_material( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
+	//		      std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda, 
+   //            float_sw4 vp_min=-100, float_sw4 vp_max=-100, float_sw4 vs_min=-100, float_sw4 vs_max=-100,int wave_mode=2)=0;
 
    virtual void get_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
 				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )=0;

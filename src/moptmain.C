@@ -251,11 +251,11 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    MPI_Barrier(MPI_COMM_WORLD);
 
    //cout << "pre limit_x 1: nmpard=" << nmpard << " nmpars=" << nmpars << endl;
-   //mopt->m_mp->limit_x( nmpard, xm, nmpars, &xs[nspar], mopt->m_vs_min, mopt->m_vs_max, 
-   //                     mopt->m_vp_min, mopt->m_vp_max );
-   //mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
-   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda, 
-       mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode()); 
+   mopt->m_mp->limit_x( nmpard, xm, nmpars, &xs[nspar], mopt->m_vs_min, mopt->m_vs_max, 
+                        mopt->m_vp_min, mopt->m_vp_max );
+   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
+   //mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda, 
+   //    mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode()); 
 
    int ok=1;
    if( mopt->m_mcheck )
@@ -493,14 +493,14 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    }
    checkMinMax(nmpars, &xs[nspar], "compute_f_and_df: xs");
 
-   //mopt->m_mp->limit_x( nmpard, xm, nmpars, &xs[nspar], mopt->m_vs_min, mopt->m_vs_max, 
-   //                     mopt->m_vp_min, mopt->m_vp_max );
-   //mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
+   mopt->m_mp->limit_x( nmpard, xm, nmpars, &xs[nspar], mopt->m_vs_min, mopt->m_vs_max, 
+                        mopt->m_vp_min, mopt->m_vp_max );
+   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
 
    //mopt->m_mp->get_material( nmpard, xm, nmpars, xm, rho, mu, lambda );
 
-   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda,
-     mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode());
+   //mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda,
+   //  mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode());
 
   if( mopt->m_mcheck )
    {
@@ -927,9 +927,9 @@ void compute_f_with_derivative( EW& simulation, int nspar, int nmpars, double* x
 
    int ng = simulation.mNumberOfGrids;
    vector<Sarray> rho(ng), mu(ng), lambda(ng);
-   //mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
-mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda, 
-       mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode()); 
+   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
+   //mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda, 
+   //    mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode()); 
    vector<Sarray> U(ng), Um(ng), dU(ng), dUm(ng);
    for( int g= 0; g < ng ;g++ )
    {
@@ -1061,9 +1061,9 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
       rho1[0].define(i1,i2,j1,j2,k1,k2);
       mu1[0].define(i1,i2,j1,j2,k1,k2);
       lambda1[0].define(i1,i2,j1,j2,k1,k2);   
-      //mopt->m_mp->get_material( nmpard, xm, nmpars, xs, rho0, mu0, lambda0 );
-      mopt->m_mp->get_material( nmpard, xm, nmpars, xs, rho0, mu0, lambda0,
-          mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode()); 
+      mopt->m_mp->get_material( nmpard, xm, nmpars, xs, rho0, mu0, lambda0 );
+      //mopt->m_mp->get_material( nmpard, xm, nmpars, xs, rho0, mu0, lambda0,
+      //    mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode()); 
       simulation.communicate_arrays(rho0);
       simulation.communicate_arrays(mu0);
       simulation.communicate_arrays(lambda0);
@@ -1108,9 +1108,9 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
 	 }
          MPI_Allreduce( &locvar, &var, 1, MPI_INT, MPI_MAX, simulation.m_1d_communicator);
 
-         //mopt->m_mp->get_material( nmpard, xm, nmpars, xs, rho1, mu1, lambda1 );
-           mopt->m_mp->get_material( nmpard, xm, nmpars, xs, rho1, mu1, lambda1,
-             mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode()); 
+         mopt->m_mp->get_material( nmpard, xm, nmpars, xs, rho1, mu1, lambda1 );
+         //  mopt->m_mp->get_material( nmpard, xm, nmpars, xs, rho1, mu1, lambda1,
+         //    mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode()); 
 
          
          
@@ -1649,9 +1649,9 @@ void misfit_curve( int i, int j, int k, int var, double pmin, double pmax,
 	 int ng=simulation.mNumberOfGrids;
 	 vector<Sarray> rho(ng), mu(ng), lambda(ng);
 
-	 mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda,
-      mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode());
-	 //mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
+	 //mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda,
+    //  mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode());
+	 mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
 
 	 for( int im=0 ; im < mopt->m_image_files.size() ; im++ )
 	 {
@@ -2200,9 +2200,9 @@ MPI_Barrier(MPI_COMM_WORLD);  // added for debugging
                                  simulation.mLambda, -1 );
               int ng=simulation.mNumberOfGrids;
               vector<Sarray> rho(ng), mu(ng), lambda(ng);
-              //mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
-                mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda,
-                     mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode()); 
+                 mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
+               //mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda,
+               //       mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode()); 
 
               for( int im=0 ; im < mopt->m_image_files.size() ; im++ )
               {
@@ -2269,11 +2269,10 @@ MPI_Barrier(MPI_COMM_WORLD);  // added for debugging
            {
               int ng = simulation.mNumberOfGrids;
               vector<Sarray> rho(ng), mu(ng), lambda(ng);
-              //mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda,
-              //  mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode());
-              //mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
-                mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda,
-                   mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode());
+              
+                mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
+                //mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda,
+                //   mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode());
               for( int i3=0 ; i3<mopt->m_sfiles.size() ; i3++ )
                 mopt->m_sfiles[i3]->force_write_image( 0, 0, rho, rho, mu, lambda, rho, mu, lambda, rho, lambda, simulation.getOutputPath(), simulation.mZ ); 
            }

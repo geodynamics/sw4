@@ -25,8 +25,8 @@ protected:
    int m_variables;
    std::vector<bool> m_limited;
 
-   Sarray m_rho, m_mu, m_lambda;
-   Sarray m_cs, m_cp; 
+   //Sarray m_rho, m_mu, m_lambda;
+   //Sarray m_cs, m_cp; 
    //   EW* m_ew;
    void interpolate_parameters( int nmd, double* xmd, int nms, double* xms, 
                                 std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu, 
@@ -60,10 +60,10 @@ public:
    virtual void get_material( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
 		      std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
 
-   void get_material( int nmd, double* xmd, int nms,
-					     double* xms, std::vector<Sarray>& a_rho,
-					     std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda,
-                    float_sw4 vp_min, float_sw4 vp_max, float_sw4 vs_min, float_sw4 vs_max, int wave_mode);
+   //void get_material( int nmd, double* xmd, int nms,
+	//				     double* xms, std::vector<Sarray>& a_rho,
+	//				     std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda,
+   //                 float_sw4 vp_min, float_sw4 vp_max, float_sw4 vs_min, float_sw4 vs_max, int wave_mode);
 
    virtual void interpolate( Sarray& matcart, int g, Sarray& rho, Sarray& mu, Sarray& lambda );
 
