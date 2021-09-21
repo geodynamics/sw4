@@ -45,6 +45,7 @@
 #include "MaterialVolimagefile.h"
 #include "MaterialRfile.h"
 #include "MaterialSfile.h"
+#include "MaterialGMG.h"
 #include "MaterialInvtest.h"
 #include "EtreeFile.h"
 #include "TimeSeries.h"
@@ -379,6 +380,8 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
 	extractTopographyFromRfile( m_topoFileName );
      else if( m_topoInputStyle == EW::Sfile )
 	extractTopographyFromSfile( m_topoFileName );
+     else if( m_topoInputStyle == EW::GMG )
+	extractTopographyFromGMG( m_topoFileName );
 
 // preprocess the mTopo array
      if (m_topoInputStyle != EW::GaussianHill) // no smoothing or extrapolation for a gaussian hill
@@ -536,6 +539,8 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
           processSfileOutput(buffer);
        else if (startswith("sfile", buffer))
 	 processMaterialSfile( buffer );
+       else if (startswith("gmg", buffer))
+	 processMaterialGMG( buffer );
        else if (startswith("vimaterial", buffer))
 	 processMaterialVimaterial( buffer );
        else if (startswith("invtestmaterial", buffer))
@@ -1619,6 +1624,12 @@ void EW::processTopography(char* buffer)
 	  else if (strcmp("sfile", token) == 0)
 	  {
 	     m_topoInputStyle=Sfile;
+	     m_topography_exists=true;
+	     needFileName=true; // we require the file name to be given on the topography command line
+	  }
+	  else if (strcmp("gmg", token) == 0)
+	  {
+	     m_topoInputStyle=GMG;
 	     m_topography_exists=true;
 	     needFileName=true; // we require the file name to be given on the topography command line
 	  }
@@ -9165,6 +9176,63 @@ void EW::processMaterialSfile(char* buffer)
   add_mtrl_block( sf  );
 }
 
+//-----------------------------------------------------------------------
+void EW::processMaterialGMG(char* buffer)
+{
+   string name = "gmg";
+   string filename = "NONE";
+   string directory = "NONE";
+   float_sw4 a_ppm=0.,vpmin_ppm=0.,vsmin_ppm=0,rhomin_ppm=0.;
+   string cflatten = "NONE";
+   bool flatten = false;
+   bool coords_geographic = true;
+   int nstenc = 5;
+   int bufsize = 200000;  // Parallel IO buffer, in number of grid points.
+
+   char* token = strtok(buffer, " \t");
+  //  CHECK_INPUT(strcmp("rfile", token) == 0,
+  //	      "ERROR: material data can only be set by an rfile line, not: " << token);
+
+   string err = token;
+   err += " Error: ";
+   token = strtok(NULL, " \t");
+
+   while (token != NULL)
+   {
+      // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+	// Ignore commented lines and lines with just a space.
+        break;
+      else if (startswith("filename=", token))
+      {
+	 token += 9; // skip filename=
+	 filename = token;
+      }
+      else if (startswith("directory=", token))
+      {
+	 token += 10; // skip directory=
+	 directory = token;
+      }
+      else
+      {
+	 cout << token << " is not a gmg option " << endl;
+      }
+      token = strtok(NULL, " \t");
+   }
+  // End parsing...
+
+  //----------------------------------------------------------------
+  // Check parameters
+  //----------------------------------------------------------------
+  if (strcmp(directory.c_str(),"NONE")==0)
+     directory = string("./");
+
+  if (m_myRank == 0)
+     cout << "*** Using GMG " << filename << " in directory " << directory << endl;
+
+  MaterialGMG* sf = new MaterialGMG(this, filename, directory);
+  add_mtrl_block( sf );
+}
 
 //-----------------------------------------------------------------------
 void EW::processMaterialInvtest(char* buffer)

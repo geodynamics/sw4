@@ -260,7 +260,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        MaterialInvtest.o sw4-prof.o sachdf5.o readhdf5.o TestTwilight.o TestPointSource.o \
        curvilinear4sgwind.o TestEcons.o GridGenerator.o GridGeneratorGeneral.o  \
        GridGeneratorGaussianHill.o CurvilinearInterface2.o SfileOutput.o pseudohess.o \
-       fastmarching.o solveTT.o rhs4th3point.o
+       fastmarching.o solveTT.o rhs4th3point.o MaterialGMG.o
 
 
 # Fortran routines (lamb_exact_numquad needs QUADPACK)

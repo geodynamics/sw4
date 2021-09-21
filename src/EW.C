@@ -7065,7 +7065,6 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
   delete[] f_data;
   delete[] d_data;
 
- 
   gridElev.define(1, nitop, 1, njtop, 1, 1);
   gridElev.assign(data);
 
@@ -7086,6 +7085,16 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
     gridElev.transposeik();
 
   // ---------- done reading
+  //Debug
+  /* if (m_myRank == 0) { */
+  /*     printf("nitop=%d, njtop=%d\n", nitop, njtop); */
+  /*     for (int i = 1; i < 50; i++) { */
+  /*         for (int j = 1; j < 50; j++) { */
+  /*             printf(" %.1f", gridElev(i,j, 1)); */
+  /*         } */
+  /*         printf("\n"); */
+  /*     } */
+  /* } */
 
   // ---------- origin on file
   double x0, y0; // Origin on grid file
@@ -7093,6 +7102,10 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
   if (m_myRank == 0 && mVerbose >= 2) {
     printf("mat-lon0=%e mat-lat0=%e, comp-x0=%e, commp-y0=%e\n", lon0, lat0, x0, y0);
   }
+
+  // Debug
+  if (m_myRank == 0)
+    printf("mat-lon0=%e mat-lat0=%e, comp-x0=%e, commp-y0=%e\n", lon0, lat0, x0, y0);
 
   // Topography read, next interpolate to the computational grid
   int topLevel=mNumberOfGrids-1;
@@ -7204,6 +7217,261 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
 #endif
 }
 
+#ifdef USE_HDF5
+static void read_hdf5_attr(hid_t loc, hid_t dtype, char *name, void* data)
+{
+  hid_t attr_id;
+  int ierr;
+  attr_id = H5Aopen(loc, name, H5P_DEFAULT);
+  ASSERT(attr_id >= 0);
+  ierr = H5Aread(attr_id, dtype, data);
+  ASSERT(ierr >= 0);
+  H5Aclose(attr_id);
+}
+#endif
+
+//-----------------------------------------------------------------------
+void EW::extractTopographyFromGMG( std::string a_topoFileName )
+{
+  double start_time, end_time;
+  start_time = MPI_Wtime();
+#ifdef USE_HDF5
+  int verbose = mVerbose;
+  std::string rname ="EW::extractTopographyFromGMG";
+  Sarray gridElev;
+  herr_t ierr;
+  hid_t file_id, dataset_id, datatype_id, group_id, dataspace_id;
+  int prec;
+  double az, origin_x, origin_y, hh, alpha, lon0, lat0;
+  hsize_t dims[2];
+
+  if (m_myRank==0 ) {
+    file_id = H5Fopen(a_topoFileName.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+    if (file_id < 0) {
+       cout << "Could not open hdf5 file: " << a_topoFileName.c_str()<< endl;
+       MPI_Abort(MPI_COMM_WORLD, file_id);
+    }
+
+    read_hdf5_attr(file_id, H5T_IEEE_F64LE, "origin_x", &origin_x);
+    read_hdf5_attr(file_id, H5T_IEEE_F64LE, "origin_y", &origin_y);
+    read_hdf5_attr(file_id, H5T_IEEE_F64LE, "y_azimuth", &az);
+
+    group_id = H5Gopen(file_id, "surfaces", H5P_DEFAULT);
+    ASSERT(group_id >= 0);
+
+    dataset_id = H5Dopen(group_id, "topography_bathymetry", H5P_DEFAULT);
+    ASSERT(dataset_id >= 0);
+
+    dataspace_id = H5Dget_space(dataset_id);
+    H5Sget_simple_extent_dims(dataspace_id, dims, NULL);
+    H5Sclose(dataspace_id);
+
+    datatype_id = H5Dget_type(dataset_id);
+    prec = (int)H5Tget_size(datatype_id);
+    H5Tclose(datatype_id);
+
+    read_hdf5_attr(dataset_id, H5T_IEEE_F64LE, "resolution_horiz", &hh);
+  }
+
+  MPI_Bcast(&origin_x, 1, MPI_DOUBLE, 0, m_1d_communicator);
+  MPI_Bcast(&origin_y, 1, MPI_DOUBLE, 0, m_1d_communicator);
+  MPI_Bcast(&az,       1, MPI_DOUBLE, 0, m_1d_communicator);
+  MPI_Bcast(&hh,       1, MPI_DOUBLE, 0, m_1d_communicator);
+  MPI_Bcast(dims,      2, MPI_LONG_LONG, 0, m_1d_communicator );
+  MPI_Bcast(&prec,     1, MPI_INT, 0, m_1d_communicator );
+
+  alpha = az - 180.0;
+
+  // Tang: fix origin for GMG data
+  lon0 = -122.5624;
+  lat0 = 39.1745;
+
+  CHECK_INPUT( fabs(alpha-mGeoAz) < 1e-6, "ERROR: GMG azimuth must be equal to coordinate system azimuth" <<
+               " azimuth on GMG = " << alpha << " azimuth of coordinate sytem = " << mGeoAz << 
+               " difference = " << alpha-mGeoAz );
+
+  int nitop = (int)dims[0], njtop = (int)dims[1];
+  if (m_myRank==0 && mVerbose >= 2) {
+    printf("GMG header: azimuth=%e, lon0=%e, lat0=%e\n", alpha, lon0, lat0);
+    printf("            hh=%e, ni=%i, nj=%i\n", hh, nitop, njtop);
+  }
+
+  float  *f_data = new float[nitop * njtop];
+
+  if (m_myRank==0 ) {
+    ierr = H5Dread(dataset_id, H5T_IEEE_F32LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, f_data);
+    ASSERT(ierr >= 0);
+    H5Dclose(dataset_id);
+    H5Gclose(group_id);
+    H5Fclose(file_id);
+  }
+  MPI_Bcast(f_data, nitop*njtop, MPI_FLOAT, 0, m_1d_communicator );
+
+  // Offset from S and Rfile for GMG data
+  int nitop_s = nitop + 13;
+  int njtop_s = njtop + 36;
+  float_sw4 *data = new float_sw4[nitop_s * njtop_s]();
+
+  // Convert to SW4 CRS and datatype
+  for (int i = 0; i < nitop; i++) {
+      for (int j = 0; j < njtop; j++) {
+          data[(njtop_s-j-1)*nitop_s + nitop_s-i-1] = (float_sw4)f_data[i*njtop + j];
+      }
+  }
+ 
+  nitop = njtop_s;
+  njtop = nitop_s;
+
+  gridElev.define(1, nitop, 1, njtop, 1, 1);
+  gridElev.assign(data);
+  gridElev.transposeik();
+
+  if (m_myRank==0 && mVerbose >= 2) {
+    printf("1st topo (float) data=%e, gridElev(1,1,1)=%e\n", data[0], gridElev(1,1,1));
+    printf("last topo (float) data=%e, gridElev(ni,nj,1)=%e\n", data[nitop*njtop-1], gridElev(nitop,njtop,1));
+    // get min and max
+    float tmax=-9e-10, tmin=9e+10;
+    for (int q=0; q<nitop*njtop; q++) {
+      if (data[q]>tmax) tmax=data[q];
+      if (data[q]<tmin) tmin=data[q];	     
+    }
+    printf("topo max (float)=%e, min (float)=%e\n", tmax, tmin);
+  }
+
+  delete[] f_data;
+  delete[] data;
+
+   //Debug
+  /* if (m_myRank == 0) { */
+  /*     printf("nitop=%d, njtop=%d\n", nitop, njtop); */
+  /*     for (int i = 1; i < 150; i++) { */
+  /*         for (int j = 1; j < 150; j++) { */
+  /*             printf(" %.1f", gridElev(i,j, 1)); */
+  /*         } */
+  /*         printf("\n\n"); */
+  /*     } */
+  /* } */
+
+  // ---------- origin on file
+  double x0, y0; // Origin on grid file
+  computeCartesianCoord(x0, y0, lon0, lat0);
+  if (m_myRank == 0 && mVerbose >= 2) {
+    printf("mat-lon0=%e mat-lat0=%e, comp-x0=%e, commp-y0=%e\n", lon0, lat0, x0, y0);
+  }
+
+  // Debug
+  if (m_myRank == 0)
+    printf("mat-lon0=%e mat-lat0=%e, comp-x0=%e, commp-y0=%e\n", lon0, lat0, x0, y0);
+
+  // Topography read, next interpolate to the computational grid
+  int topLevel=mNumberOfGrids-1;
+
+  float_sw4 topomax=-1e30, topomin=1e30;
+#pragma omp parallel for reduction(max:topomax) reduction(min:topomin)      
+  for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
+    for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j) {
+      float_sw4 x = (i-1)*mGridSize[topLevel];
+      float_sw4 y = (j-1)*mGridSize[topLevel];
+      int i0 = static_cast<int>( trunc( 1 + (x-x0)/hh ));
+      int j0 = static_cast<int>( trunc( 1 + (y-y0)/hh ));
+// test
+      float_sw4 xmat0 = (i0-1)*hh, ymat0 = (j0-1)*hh;
+      float_sw4 xmatx = x - x0, ymaty = y - y0;
+      
+      if (mVerbose>=3) {
+        if (xmatx<xmat0 || xmatx>xmat0+hh) 
+          printf("WARNING: i0=%i is out of bounds for x=%e, xmatx=%e\n", i0, x, xmatx);
+        if (ymaty<ymat0 || ymaty>ymat0+hh) 
+          printf("WARNING: i0=%i is out of bounds for y=%e, ymaty=%e\n", i0, y, ymaty);
+      }
+      
+      bool extrapol=false;
+      if( i0 < -1 ) {
+        extrapol = true;
+        i0 = 1;
+      }
+      else if( i0 < 2 )
+        i0 = 2;
+        
+      if( i0 > nitop+1 ) {
+        extrapol = true;
+        i0 = nitop;
+      }
+      else if( i0 > nitop-2 )
+        i0 = nitop-2;
+        
+      if( j0 < -1 ) {
+        extrapol = true;
+        j0 = 1;
+      }
+      else if( j0 < 2 )
+        j0 = 2;
+
+      if( j0 > njtop+1 ) {
+        extrapol = true;
+        j0 = njtop;
+      }
+      else if( j0 > njtop-2 )
+        j0 = njtop-2;
+
+      if( !extrapol ) {
+        float_sw4 q = (x - x0 - (i0-1)*hh)/hh;
+        float_sw4 r = (y - y0 - (j0-1)*hh)/hh;
+        float_sw4 Qim1, Qi, Qip1, Qip2, Rjm1, Rj, Rjp1, Rjp2, tjm1, tj, tjp1, tjp2;
+        Qim1 = (q)*(q-1)*(q-2)/(-6.);
+        Qi   = (q+1)*(q-1)*(q-2)/(2.);
+        Qip1 = (q+1)*(q)*(q-2)/(-2.);
+        Qip2 = (q+1)*(q)*(q-1)/(6.);
+
+        Rjm1 = (r)*(r-1)*(r-2)/(-6.);
+        Rj   = (r+1)*(r-1)*(r-2)/(2.);
+        Rjp1 = (r+1)*(r)*(r-2)/(-2.);
+        Rjp2 = (r+1)*(r)*(r-1)/(6.);
+
+        if (mVerbose>=3) {
+          if (i0<2 || i0>nitop-2) printf("WARNING: topo interp out of bounds i0=%i, nitop=%i\n", i0, nitop);
+          if (j0<2 || j0>njtop-2) printf("WARNING: topo interp out of bounds j0=%i, njtop=%i\n", j0, njtop);
+        }
+        
+        tjm1 = Qim1*gridElev(i0-1,j0-1,1) +    Qi*gridElev(i0,  j0-1,1)
+          +  Qip1*gridElev(i0+1,j0-1,1) +  Qip2*gridElev(i0+2,j0-1,1);
+        tj   = Qim1*gridElev(i0-1,j0,  1) +    Qi*gridElev(i0,  j0,  1)
+          +  Qip1*gridElev(i0+1,j0,  1) +  Qip2*gridElev(i0+2,j0,  1);
+        tjp1 = Qim1*gridElev(i0-1,j0+1,1) +    Qi*gridElev(i0,  j0+1,1)
+          +  Qip1*gridElev(i0+1,j0+1,1) +  Qip2*gridElev(i0+2,j0+1,1);
+        tjp2 = Qim1*gridElev(i0-1,j0+2,1) +    Qi*gridElev(i0,  j0+2,1)
+          +  Qip1*gridElev(i0+1,j0+2,1) +  Qip2*gridElev(i0+2,j0+2,1);
+        mTopo(i,j,1) = Rjm1*tjm1 + Rj*tj + Rjp1*tjp1 + Rjp2*tjp2;
+      }
+      else {
+        if (mVerbose>=3)
+          printf("INFO: topo extrapolated for i=%i, j=%i, x=%e, y=%e, i0=%i, j0=%i\n", i, j, x, y, i0, j0);
+        
+        mTopo(i,j,1) = gridElev(i0,j0,1);
+      }
+      
+      // test
+      if (mTopo(i,j,1)>topomax) topomax=mTopo(i,j,1);
+      if (mTopo(i,j,1)<topomin) topomin=mTopo(i,j,1);
+        
+    }// end for j
+  }// end for i
+
+  MPI_Barrier(m_1d_communicator);
+  end_time = MPI_Wtime();
+  if (m_myRank==0)
+    printf("Read topography from GeoModelGrids time=%e seconds\n", end_time-start_time);
+  
+  // test
+  if (m_myRank==0 && mVerbose>=2) {
+    printf("Topo variation on comp grid: max=%e min=%e\n", topomax, topomin);
+  }
+#else
+  if (m_myRank==0)
+    printf("WARNING: sw4 not compiled with hdf5=yes, ignoring read GMG, abort!\n");
+  MPI_Abort(MPI_COMM_WORLD, -1);
+#endif
+}
 
 //-----------------------------------------------------------------------
 bool EW::is_onesided( int g, int side ) const

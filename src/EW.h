@@ -188,6 +188,7 @@ void processMaterialVimaterial(char* buffer);
 void processMaterialInvtest(char* buffer);
 void processMaterialRfile(char* buffer);
 void processMaterialSfile(char* buffer);
+void processMaterialGMG(char* buffer);
 void processAnisotropicMaterialBlock( char* buffer, int & ablockCount );
 void processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
 void processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
@@ -451,6 +452,7 @@ void extractTopographyFromEfile(string a_topoFileName, string a_topoExtFileName,
                                 float_sw4 a_EFileResolution);
 void extractTopographyFromRfile( std::string a_topoFileName );
 void extractTopographyFromSfile( std::string a_topoFileName );
+void extractTopographyFromGMG( std::string a_topoFileName );
 
 void smoothTopography(int maxIter);
 void assignInterfaceSurfaces();
@@ -634,7 +636,7 @@ float_sw4 scalarProduct( vector<Sarray>& U, vector<Sarray>& V);
 void cleanUpRefinementLevels();
    //float_sw4 curvilinear_interface_parameter( int gcurv );
 
-enum InputMode { UNDEFINED, Efile, GaussianHill, GridFile, CartesianGrid, TopoImage, Rfile, Sfile};
+enum InputMode { UNDEFINED, Efile, GaussianHill, GridFile, CartesianGrid, TopoImage, Rfile, Sfile, GMG};
 
 // access functions needed by the Image (and perhaps other) classes
 int getNumberOfCartesianGrids(){return mNumberOfCartesianGrids;};
