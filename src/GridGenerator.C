@@ -162,12 +162,12 @@ bool GridGenerator::interpolate_topography( EW* a_ew, float_sw4 x, float_sw4 y,
    float_sw4 h = a_ew->mGridSize[gTop];
    float_sw4 q = x/h+1.0;
    float_sw4 r = y/h+1.0;
-
 // Find topography at (q,r), tau=tau(q,r)
    // Nearest grid point:
    int iNear = static_cast<int>(round(q));
    int jNear = static_cast<int>(round(r));
    float_sw4 tau;
+
    if ( fabs(iNear-q) < 1.e-9 && fabs(jNear-r) < 1.e-9 )
    {
 // At a grid point, evaluate topography at that point

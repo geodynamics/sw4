@@ -225,19 +225,6 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int nd
 
     /* etime = MPI_Wtime(); */
 
-    /* if (!isIncAzWritten) { */
-/* #ifdef USE_DSET_ATTR */
-    /*   std::string newname = name; */
-    /*   std::string incname = newname + "CMPINC"; */
-    /*   std::string azname  = newname + "CMPAZ"; */
-    /*   openWriteAttr(loc, incname.c_str(), H5T_NATIVE_FLOAT, &cmpinc); */
-    /*   openWriteAttr(loc, azname.c_str(), H5T_NATIVE_FLOAT, &cmpaz); */
-/* #else */
-    /*   openWriteAttr(dset, "CMPINC", H5T_NATIVE_FLOAT, &cmpinc); */
-    /*   openWriteAttr(dset, "CMPAZ", H5T_NATIVE_FLOAT, &cmpaz); */
-/* #endif */
-    /* } */
-
     if (isLast) 
         openWriteAttr(loc, "NPTS", H5T_NATIVE_INT, &total_npts);
 
@@ -248,7 +235,6 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int nd
     /* printf("Rank %d: Attr write time %f, data write time %f\n", myRank, etime1-etime, etime-stime); */
     /* fflush(stdout); */
 
-
     if (is_debug) {
         float *write_data = (float*)data;
         printf("npts=%d, first=%e, second=%e, middle=%e, second last=%e, last=%e\n", 
@@ -257,7 +243,6 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int nd
     }
 
     /* H5Dflush(dset); */
-
     H5Pclose(dxpl);
     if (filespace != H5S_ALL) 
         H5Sclose(filespace);
@@ -543,8 +528,6 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
 
     for (int i = 0; i < ndset; i++) {
       total_dims = (hsize_t)(totalSteps/TimeSeries[ts]->getDownSample());
-      if (totalSteps % TimeSeries[ts]->getDownSample() != 0) 
-        total_dims++;
       if (total_dims == 0) {
         printf("%s: Error with dataset length 0\n", __func__);
         return -1;

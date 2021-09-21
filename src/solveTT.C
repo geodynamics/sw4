@@ -7,6 +7,8 @@
 #include "impose_cartesian_bc.h"
 #include "cf_interface.h"
 #include "f_interface.h"
+#include "MaterialParameterization.h"
+
 #define STRINGSIZE 128
 
 #ifdef USE_HDF5
@@ -36,17 +38,21 @@ void fastmarch_close (void);
 void EW::solveTT( Source* a_Source, vector<TimeSeries*> & a_TimeSeries,
 		double* xs, int nmpars, MaterialParameterization* mp, int wave_mode, float twinshift, float twinscale, float freq, int event, int myrank)
 {
+   int verbose=0;
    int ix, iy, iz, nx, ny, nz, n;
    nx = mp->getNX();
    ny = mp->getNY();
    nz = mp->getNZ();
-   // freq: max freq to estimate time window
 
-std::cout << "source x0=" << a_Source->getX0() << " y0=" << a_Source->getY0() << " z0=" << a_Source->getZ0() << std::endl;
-n= nmpars/nx/ny/nz;
+   if( verbose >= 1 && myrank == 0 )
+      std::cout << "source x0=" << a_Source->getX0() << " y0=" << a_Source->getY0() << " z0=" << a_Source->getZ0() << std::endl;
+   n= nmpars/nx/ny/nz;
 
-std::cout << "mp->xmin=" << mp->getXmin() << " ymin=" << mp->getYmin() << " zmin=" << mp->getZmin() << std::endl;
-std::cout << "nx=" << nx << " ny=" << ny << " nz=" << nz << " n=" << n << std::endl;
+   if( verbose >= 1 && myrank == 0 )
+   {
+      std::cout << "mp->xmin=" << mp->getXmin() << " ymin=" << mp->getYmin() << " zmin=" << mp->getZmin() << std::endl;
+   std::cout << "nx=" << nx << " ny=" << ny << " nz=" << nz << " n=" << n << std::endl;
+   }
 
 float *cp =(float*)malloc(nmpars/n*sizeof(float));
 float *cs =(float*)malloc(nmpars/n*sizeof(float));
@@ -82,8 +88,11 @@ csmin=1e20; csmax=-1e20;
           if(cs[i]>csmax) csmax=cs[i];
 	 }
 
-std::cout << "solveTT cpmin=" << cpmin << " cpmax=" << cpmax << std::endl;
-std::cout << "solveTT csmin=" << csmin << " csmax=" << csmax << std::endl;
+         if( verbose >= 1 && myrank == 0 )
+         {
+            std::cout << "solveTT cpmin=" << cpmin << " cpmax=" << cpmax << std::endl;
+            std::cout << "solveTT csmin=" << csmin << " csmax=" << csmax << std::endl;
+         }
 
 int ntr = a_TimeSeries.size();
 //std::cout << "nmpars=" << nmpars << " number of traces=" << ntr << std::endl;
@@ -123,7 +132,7 @@ int ntr = a_TimeSeries.size();
    FILE *fd;
 
    if(myrank==0) {     
-   sprintf(file, "%s/time_event_%d.txt", a_TimeSeries[0]->getPath(), event);
+      sprintf(file, "%s/time_event_%d.txt", a_TimeSeries[0]->getPath().c_str(),event);
    fd = fopen(file, "w");
    }
    
@@ -185,7 +194,8 @@ int ntr = a_TimeSeries.size();
    if(sp) free(sp);
    if(ss) free(ss);
    if(inflag) free(inflag);
-   
-std::cout << "solveTT completed" << std::endl;
+
+   if( verbose >= 1 && myrank == 0 )
+      std::cout << "solveTT completed" << std::endl;
  
 }

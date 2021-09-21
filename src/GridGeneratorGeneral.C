@@ -147,72 +147,24 @@ void GridGeneratorGeneral::generate_grid_and_met_old( EW *a_ew, Sarray& a_x, Sar
 void GridGeneratorGeneral::generate_grid_and_met_new( EW *a_ew, int g, Sarray& a_x, Sarray& a_y, Sarray& a_z,
                                            Sarray& a_jac, Sarray& a_met )
 {
-   int ng=a_ew->mNumberOfGrids;
    int ncg=a_ew->mNumberOfCartesianGrids;
-   int ref=1;
-   for( int grid=ng-1 ; grid > g ; grid-- )
-      ref *= 2;
-
-   int iSurfTop = g - a_ew->mNumberOfCartesianGrids;
-   int iSurfBot = iSurfTop - 1;
    float_sw4 h = a_ew->mGridSize[g]; 
-   float_sw4 h0 = 2.0*h;
    float_sw4 Nz_real = static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
    float_sw4 iNz_real = 1.0/Nz_real;
-   float_sw4 scaleFact= 0;
+   float_sw4 scaleRatio=0;
    if( g > ncg )
-      scaleFact = (m_topo_zmax - a_ew->m_curviRefLev[g-1-ncg])/m_topo_zmax;
-            
+      scaleRatio = (m_topo_zmax - a_ew->m_curviRefLev[g-1-ncg])/
+                   (m_topo_zmax - a_ew->m_curviRefLev[g-ncg]);
+
 #pragma omp parallel for
    for (int j=a_x.m_jb; j<=a_x.m_je; j++)
       for (int i=a_x.m_ib; i<=a_x.m_ie; i++)
       {
          float_sw4 X0  = (i-1)*h;
          float_sw4 Y0  = (j-1)*h;
-         float_sw4 Ztop = m_curviInterface[iSurfTop](i,j,1);
-         float_sw4 Zbot;
-         if (iSurfBot < 0)
-         {
-// Bottom interface of g=mNumberOfCartesianGrids is flat with z=m_topo_zmax
-            Zbot = m_topo_zmax;
-         }
-         else
-         {
-            Zbot = scaleFact*m_curviInterface[ng-1-ncg](ref*(i-1)+1,ref*(j-1)+1, 1) +
-                                          (1.0 - scaleFact)* m_topo_zmax;
-// Bottom interface is non-planar (curvilinear)
-//            int iLow = static_cast<int>( floor(X0/h0) )+1 ;
-//            int jLow = static_cast<int>( floor(Y0/h0) )+1;
-                 
-//            float_sw4 xPt = (iLow-1)*h0;
-//            float_sw4 yPt = (jLow-1)*h0;
-
-// First check if we are very close to a grid point
-//            if( fabs((xPt-X0)/h0) < 1.e-9 && fabs((yPt-Y0)/h0) < 1.e-9 )
-//               Zbot = m_curviInterface[iSurfBot](iLow, jLow, 1);
-//            else
-//            {  
-               // high order interpolation to get intermediate value of zBot
-//               if( true ) // point_in_proc_ext(i-3,j-3,gFinest) && point_in_proc_ext(i+4,j+4,gFinest)
-//               {
-                  /* gettopowgh( q-i, a6cofi ); */
-                  /* gettopowgh( r-j, a6cofj ); */
-                  /* Zbot = 0; */
-                  /* for( int l=j-3 ; l <= j+4 ; l++ ) */
-                  /*    for( int k=i-3 ; k <= i+4 ; k++ ) */
-                  /*       Zbot += a6cofi[k-i+3]*a6cofj[l-j+3]*m_curviInterface[iSurfBot](k,l,1); */
-                  // for the purpose of plotting the grid, it suffices with linear interpolation
-//                  float_sw4 xi  = (X0 - xPt)/h0;
-//                  float_sw4 eta = (Y0 - yPt)/h0;
-//                  Zbot =
-//                           xi*eta       *(m_curviInterface[iSurfBot](iLow+1,jLow+1,1)) +
-//                     (1.0-xi)*(1.0-eta) *(m_curviInterface[iSurfBot](iLow,jLow,1)) +
-//                           xi*(1.0-eta) *(m_curviInterface[iSurfBot](iLow+1,jLow,1)) +
-//                     (1.0-xi)*eta       *(m_curviInterface[iSurfBot](iLow,jLow+1,1));
-//               }
-//            }
-         }
-#pragma omp parallel for
+         float_sw4 Ztop = m_curviInterface[g-ncg](i,j,1);
+         float_sw4 Zbot = scaleRatio*Ztop+(1-scaleRatio)*m_topo_zmax;
+#pragma omp simd
          for (int k=a_x.m_kb; k <= a_x.m_ke; k++)
          {
 // Linear interpolation in the vertical direction
@@ -220,10 +172,8 @@ void GridGeneratorGeneral::generate_grid_and_met_new( EW *a_ew, int g, Sarray& a
             a_x(i,j,k) = X0;
             a_y(i,j,k) = Y0;
             a_z(i,j,k) = (1.0- zeta)*Ztop + zeta*Zbot;
-         } 
+         }
       }
-// make sure all processors have made their grid before we continue
-//   a_ew->communicate_array( a_z, g ); 
 
 // Compute metric
    int ierr=0;
@@ -398,8 +348,8 @@ bool GridGeneratorGeneral::inverse_grid_mapping_old( EW* a_ew,
  // 1. Compute q and r
    q = x/h + 1.0;
    r = y/h + 1.0;
-   int i= static_cast<int>(round(q));
-   int j= static_cast<int>(round(r));   
+   int i= static_cast<int>(floor(q));
+   int j= static_cast<int>(floor(r));   
    if( a_ew->interior_point_in_proc( i, j, g ) )
    {
       s = 0.;   
@@ -642,15 +592,18 @@ bool GridGeneratorGeneral::grid_mapping_new( EW* a_ew, float_sw4 q, float_sw4 r,
          Zbot = m_curviInterface[iSurfBot](iLow, jLow, 1);
       else
       {  // high order interpolation to get intermediate value of zBot
-         if( true ) // point_in_proc_ext(i-3,j-3,gFinest) && point_in_proc_ext(i+4,j+4,gFinest)
+         if( true )
          {
-                  /* gettopowgh( q-i, a6cofi ); */
-                  /* gettopowgh( r-j, a6cofj ); */
-                  /* Zbot = 0; */
-                  /* for( int l=j-3 ; l <= j+4 ; l++ ) */
-                  /*    for( int k=i-3 ; k <= i+4 ; k++ ) */
-                  /*       Zbot += a6cofi[k-i+3]*a6cofj[l-j+3]*m_curviInterface[iSurfBot](k,l,1); */
-                  // for the purpose of plotting the grid, it suffices with linear interpolation
+            gettopowgh( q-i, a6cofi );
+            gettopowgh( r-j, a6cofj );
+            Zbot = 0;
+            for( int l=j-3 ; l <= j+4 ; l++ )
+               for( int k=i-3 ; k <= i+4 ; k++ )
+                  Zbot += a6cofi[k-i+3]*a6cofj[l-j+3]*m_curviInterface[iSurfBot](k,l,1);
+         }
+         else
+         {
+          // for the purpose of plotting the grid, it suffices with linear interpolation
             float_sw4 xi  = (x - xPt)/h0;
             float_sw4 eta = (y - yPt)/h0;
             Zbot =

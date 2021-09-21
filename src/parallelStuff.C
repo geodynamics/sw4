@@ -757,3 +757,127 @@ void EW::communicate_array_2dfinest( Sarray& u )
 		 &u(ib,je-(m_ppadding-1),1), 1, m_send_type_2dfinest[1], m_neighbor[3], ytag2,
 		 m_cartesian_communicator, &status );
 }
+
+//-----------------------------------------------------------------------
+bool EW::node_core_decomp( int ni, int nj, int& Cx, int& Cy, int& Nx, int &Ny )
+{
+   //
+   // Divides a domain of ni x nj grid points into Nx x Ny nodes
+   // and Cx x Cy cores within each node.
+   // Assumes equal number of cores in each node.
+   //
+   // Input: ni, nj - Number of grid points in the two directions.
+   // Output: Cx, Cy - 2D decomposition of cores within a node
+   //         Nx, Ny - 2D decomposition of the nodes
+   //
+   int myrank, nprocs;
+   MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
+   MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
+
+   MPI_Info info;
+   MPI_Info_create(&info);
+   MPI_Comm shared_comm;
+   MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, myrank, info,
+                       &shared_comm );
+   int C; // C=Cores per node
+   MPI_Comm_size(shared_comm, &C );   
+   int c; // c=my core id within node
+   MPI_Comm_rank(shared_comm, &c );
+   if( nprocs % C != 0 )
+      std::cout << "ERROR in EW::node_core_decomp, C= " << C << 
+         " does not divide nprocs= " << nprocs << std::endl;
+   int N=nprocs/C; // N=Total number of nodes
+   // my node id, m=c+C*n
+   int n=myrank/C; // n=my node id
+   MPI_Info_free(&info);
+   MPI_Comm_free(&shared_comm);
+
+   float_sw4 fmin = ni+nj;
+   bool first     = true;
+   int p1max      = ni/m_ppadding;
+   int p2max      = nj/m_ppadding;
+ // Divide cores within a node into (Cx,Cy) with C=Cx*Cy
+   for( int c2 = 1 ; c2 <= C ;c2++)
+      if( C%c2 == 0 )
+      {
+         int c1 = C/c2;
+         {
+            float_sw4 f = fabs((float_sw4)(ni)/c1 - (float_sw4)(nj)/c2);
+            if( f < fmin || first )
+            {
+               fmin = f;
+               Cx = c1;
+               Cy = c2;
+               first= false;
+            }
+         }
+      }
+   fmin = ni+nj;
+   first=true;
+ // Divide nodes into (Nx,Ny) with N=Nx*Ny
+   for( int n2 = 1 ; n2 <= N ;n2++)
+      if( N%n2 == 0 )
+      {
+         int n1 = N/n2;
+         int p1= n1*Cx;
+         int p2= n2*Cy;
+         if( p1 <= p1max && p2 <= p2max )
+         {
+            float_sw4 f = fabs((float_sw4)(ni)/p1 - (float_sw4)(nj)/p2);
+            if( f < fmin || first )
+            {
+               fmin = f;
+               Nx = n1;
+               Ny = n2;
+               first= false;
+            }
+         }
+      }
+   return !first;
+}
+
+//-----------------------------------------------------------------------
+void EW::my_node_core_rank( int Cx, int Cy, int Nx, int Ny,
+                            int& cx, int& cy, int& nx, int &ny )
+{
+   //
+   // Get this processor's core and node id in a 2D processor decomposition.
+   // Assuming enumeration of MPI_COMM_WORLD is myrank = c + C*n, with
+   // C=Cx*Cy, c is my core id within node, n is my node id.
+   //
+   int myrank;
+   MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
+   int C=Cx*Cy;
+   int c=myrank % C;
+   int n=(myrank-c)/C;
+   cx = c % Cx;
+   cy = (c-cx)/Cx;
+   nx = n % Nx;
+   ny = (n-nx)/Nx;
+}
+
+//-----------------------------------------------------------------------
+int EW::my_node_core_id( int ni, int nj, int proc_max[2] )
+{
+   //
+   // Decompose a 2D domain based on cores and nodes.
+   //
+   // Input: ni, nj       - Total number of grid points
+   // Output: proc_max[2] - Total number of MPI-tasks in each direction
+   // Return value        - This processor's id in the new 1D enumeration
+   //
+   int Cx, Cy, Nx, Ny;
+   node_core_decomp( ni, nj, Cx, Cy, Nx, Ny );
+   if( proc_zero() )
+      std::cout <<" Cx x Cy = " << Cx << " " << Cy << 
+                  " Nx x Ny = " << Nx << " " << Ny <<std::endl;
+   int cx, cy, nx, ny;
+   my_node_core_rank( Cx, Cy, Nx, Ny, cx, cy, nx, ny );
+   proc_max[0] = Cx*Nx;
+   proc_max[1] = Cy*Ny;
+   int myrank;
+   MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
+   std::cout << "old 1d= " << myrank << " new (cx,cy,nx,ny)= " << cx 
+             << " " << cy << " " << nx << " " << ny << std::endl;
+   return cx + Cx*nx + Nx*Cx*(cy + Cy*ny);
+}

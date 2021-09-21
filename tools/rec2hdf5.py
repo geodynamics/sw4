@@ -19,8 +19,10 @@ xyz=np.array([0.0,0.0,-1.0])
 
 i = 0
 is_nsew = 0
+is_depth = 1
 for line in lines:
     # line = line.lower()
+    is_depth = 1
     if line.startswith("rec") or line.startswith("sac") :
         has_sta = 0
         # Remove "sac/rec" and "\n"
@@ -59,6 +61,8 @@ for line in lines:
             kv = pairs.split('=')
             if kv[0] == "depth" or kv[0] == "topodepth" or kv[0] == "z":
                 xyz[2] = float(kv[1])
+                if kv[0] == "z":
+                    is_depth = 0;
             elif kv[0] == "x" :
                 xyz[0] = float(kv[1])
             elif kv[0] == "y" :
@@ -80,8 +84,11 @@ for line in lines:
             dset = grp.create_dataset('STX,STY,STZ', (3,), dtype='f8')
         else:
             dset = grp.create_dataset('STLA,STLO,STDP', (3,), dtype='f8')
-
         dset[:] = xyz
+
+        if is_depth == 0:
+            dset = grp.create_dataset('USEZVALUE', (1,), dtype='i4')
+            dset[0] = 1
 
 dset = outfile.create_dataset('DOWNSAMPLE', (1,), dtype='i4')
 dset[0] = downsample

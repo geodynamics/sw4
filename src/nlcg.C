@@ -43,7 +43,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
       return;
 
    int nmpard_global=0;
-   MPI_Allreduce( &nmpard, &nmpard_global, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+   MPI_Allreduce( &nmpard, &nmpard_global, 1, MPI_INT, MPI_SUM, simulation.m_1d_communicator );
 
    if( maxit <= 0 && nmpard == 0 )
       maxit = ns + nmpard;
@@ -98,7 +98,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
            createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "_ini");
          for (int tsi = 0; tsi < GlobalTimeSeries[e].size(); tsi++) 
            GlobalTimeSeries[e][tsi]->resetHDF5file();
-         MPI_Barrier(MPI_COMM_WORLD);
+         MPI_Barrier(simulation.m_1d_communicator);
        }
 #endif
        for( int m = 0; m < GlobalTimeSeries[e].size(); m++ )
@@ -125,7 +125,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
       for( int i=0 ; i < nmpard ; i++ )
 	 rnorm = rnorm > fabs(dfm[i])*sfm[i] ? rnorm : fabs(dfm[i])*sfm[i];
       double rnormtmp = rnorm;
-      MPI_Allreduce(&rnormtmp, &rnorm, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+      MPI_Allreduce(&rnormtmp, &rnorm, 1, MPI_DOUBLE, MPI_MAX, simulation.m_1d_communicator );
    }
    for( int i=0 ; i < ns ; i++ )
       rnorm = rnorm > fabs(dfs[i])*sfs[i] ? rnorm : fabs(dfs[i])*sfs[i];
@@ -159,7 +159,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
 	    double normdlocal=0;
 	    for( int i=0 ; i < nmpard ; i++ )
 	       normdlocal += dm[i]*dm[i];
-	    MPI_Allreduce( &normdlocal, &normd, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	    MPI_Allreduce( &normdlocal, &normd, 1, MPI_DOUBLE, MPI_SUM, simulation.m_1d_communicator );
 	 }
 	 for( int i=0 ; i < ns ; i++ )
 	    normd += ds[i]*ds[i];
@@ -185,8 +185,8 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
                dtHdlocal += dm[i]*(dfpm[i]-dfm[i])*hi;
                alphaloc  += dfm[i]*dm[i];
 	    }
-	    MPI_Allreduce( &dtHdlocal, &dtHd, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-	    MPI_Allreduce( &alphaloc, &alpha, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+	    MPI_Allreduce( &dtHdlocal, &dtHd, 1, MPI_DOUBLE, MPI_SUM, simulation.m_1d_communicator );
+	    MPI_Allreduce( &alphaloc, &alpha, 1, MPI_DOUBLE, MPI_SUM, simulation.m_1d_communicator );
 	 }
 	 for( int i=0 ; i < ns ; i++ )
 	 {
@@ -236,7 +236,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
 	       xm[i]  = xam[i];
 	    }
 	    double dxnormloc=dxnorm;
-	    MPI_Allreduce(&dxnormloc,&dxnorm,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+	    MPI_Allreduce(&dxnormloc,&dxnorm,1,MPI_DOUBLE,MPI_MAX,simulation.m_1d_communicator);
 	 }
 	 for( int i=0 ; i < ns ; i++ )
 	 {
@@ -262,7 +262,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
 	    for( int i=0 ; i < nmpard ; i++ )
 	       if( fabs(dfpm[i])*sfm[i] > rnormloc )
 		  rnormloc = fabs(dfpm[i])*sfm[i];
-	    MPI_Allreduce(&rnormloc,&rnorm,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+	    MPI_Allreduce(&rnormloc,&rnorm,1,MPI_DOUBLE,MPI_MAX,simulation.m_1d_communicator);
 	 }
 	 for( int i=0 ; i < ns ; i++ )
 	    if( fabs(dfps[i])*sfs[i] > rnorm )
@@ -330,7 +330,7 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
 		  varloc[1] += dfm[i]*dfm[i]*sfm[i]*sfm[i];
 		  varloc[2] += dfm[i]*dfpm[i]*sfm[i]*sfm[i];
 	       }
-	       MPI_Allreduce(varloc,vars,3,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	       MPI_Allreduce(varloc,vars,3,MPI_DOUBLE,MPI_SUM,simulation.m_1d_communicator);
 	       num=vars[0];
 	       den=vars[1];
 	       mix=vars[2];

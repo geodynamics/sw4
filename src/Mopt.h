@@ -81,9 +81,10 @@ class Mopt
    float_sw4  m_freq_gradsmooth; // peak-power freq for smoothing gradient 
    int m_wave_mode; // 0: P  1: S  2: both
    float m_twin_shift, m_twin_scale;
-    
+   int m_win_mode;
+
    MaterialParameterization *m_mp;   
-   MaterialParCartesian *m_mpcart0;   
+   //   MaterialParCartesian *m_mpcart0;   
    std::vector<Image*> m_image_files;
    std::vector<Image3D*> m_3dimage_files;
    std::vector<SfileOutput*> m_sfiles;
@@ -97,6 +98,7 @@ class Mopt
    double *m_sfm; // scale factors, distributed
    double *m_xs0; // initial material perturbation, shared
    double *m_xm0; // initial material perturbation, distributed
+   bool m_write_dfm;
 };
 
 #endif

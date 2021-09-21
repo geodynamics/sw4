@@ -1,5 +1,7 @@
   etree = no
   proj = yes
+  fftw = yes
+  hdf5 = yes
   SW4ROOT = /usr/apps/wpp
 # assumes module load intel
 # FC = mpiifort

@@ -623,20 +623,27 @@ void EW::interpolate_to_coarse( int nx, int ny, int nz, double xmin, double ymin
    rho.set_to_zero();
    mu.set_to_zero();
    lambda.set_to_zero();
-   for( int k=1 ; k <= nz ; k++ )
-      for( int j=1 ; j <= ny ; j++ )
-	 for( int i=1 ; i <= nx ; i++ )
+   //   for( int k=1 ; k <= nz ; k++ )
+   //      for( int j=1 ; j <= ny ; j++ )
+   //	 for( int i=1 ; i <= nx ; i++ )
+   for( int k=rho.m_kb ; k <= rho.m_ke ; k++ )
+      for( int j=rho.m_jb ; j <= rho.m_je ; j++ )
+	 for( int i=rho.m_ib ; i <= rho.m_ie ; i++ )
 	 {
             double x = xmin + i*hx;
 	    double y = ymin + j*hy;
 	    double z = zmin + k*hz;
             computeNearestLowGridPoint( ig, jg, kg, g, x, y, z );
-            if( interior_point_in_proc( ig, jg, g) )
+            //            if( interior_point_in_proc( ig, jg, g) )
+            if( m_iStart[g] <= ig && ig+1 <= m_iEnd[g] &&
+                m_jStart[g] <= jg && jg+1 <= m_jEnd[g] &&
+                m_kStart[g] <= kg && kg+1 <= m_kEnd[g] )
 	    {
 	       double h = mGridSize[g];
+               double zming = m_zmin[g];
 	       double wghx = x/h-ig+1;
 	       double wghy = y/h-jg+1;
-	       double wghz = z/h-kg+1;
+	       double wghz = (z-zming)/h-kg+1;
                rho(i,j,k) = (1-wghy)*(1-wghz)*(
 			           (1-wghx)*rhogrid[g](ig,jg,kg)+wghx*rhogrid[g](ig+1,jg,kg))+
 		  (wghy)*(1-wghz)*((1-wghx)*rhogrid[g](ig,jg+1,kg)+wghx*rhogrid[g](ig+1,jg+1,kg))+
@@ -673,13 +680,13 @@ void EW::interpolate_to_coarse( int nx, int ny, int nz, double xmin, double ymin
 	       //               lambda(i,j,k) = lambdagrid[g](ig,jg,kg)-mLambda[g](ig,jg,kg);
 	    }
 	 }
-   Sarray tmp;
-   tmp.copy(rho);
-   MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-   tmp.copy(mu);
-   MPI_Allreduce(tmp.c_ptr(),mu.c_ptr(),mu.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-   tmp.copy(lambda);
-   MPI_Allreduce(tmp.c_ptr(),lambda.c_ptr(),lambda.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   //   Sarray tmp;
+   //   tmp.copy(rho);
+   //   MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   //   tmp.copy(mu);
+   //   MPI_Allreduce(tmp.c_ptr(),mu.c_ptr(),mu.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   //   tmp.copy(lambda);
+   //   MPI_Allreduce(tmp.c_ptr(),lambda.c_ptr(),lambda.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 }
 
 //-----------------------------------------------------------------------
@@ -769,11 +776,11 @@ void EW::interpolate_to_coarse_vel( int nx, int ny, int nz, double xmin, double 
 	 }
    Sarray tmp;
    tmp.copy(rho);
-   MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_SUM,m_1d_communicator);
    tmp.copy(cs);
-   MPI_Allreduce(tmp.c_ptr(),cs.c_ptr(),cs.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(tmp.c_ptr(),cs.c_ptr(),cs.npts(),MPI_DOUBLE,MPI_SUM,m_1d_communicator);
    tmp.copy(cp);
-   MPI_Allreduce(tmp.c_ptr(),cp.c_ptr(),cp.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(tmp.c_ptr(),cp.c_ptr(),cp.npts(),MPI_DOUBLE,MPI_SUM,m_1d_communicator);
 }
 
 //-----------------------------------------------------------------------
@@ -833,14 +840,15 @@ void EW::interpolate_base_to_coarse( int nx, int ny, int nz, double xmin, double
 	 }
    Sarray tmp;
    tmp.copy(rho);
-   MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_SUM,m_1d_communicator);
    tmp.copy(mu);
-   MPI_Allreduce(tmp.c_ptr(),mu.c_ptr(),mu.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(tmp.c_ptr(),mu.c_ptr(),mu.npts(),MPI_DOUBLE,MPI_SUM,m_1d_communicator);
    tmp.copy(lambda);
-   MPI_Allreduce(tmp.c_ptr(),lambda.c_ptr(),lambda.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(tmp.c_ptr(),lambda.c_ptr(),lambda.npts(),MPI_DOUBLE,MPI_SUM,m_1d_communicator);
 }
 
 //-----------------------------------------------------------------------
+// the vel version of the above
 void EW::interpolate_base_to_coarse_vel( int nx, int ny, int nz, double xmin, double ymin,
 					 double zmin, double hx, double hy, double hz,
 					 Sarray& rho, Sarray& cs, Sarray& cp )
@@ -915,11 +923,11 @@ void EW::interpolate_base_to_coarse_vel( int nx, int ny, int nz, double xmin, do
 	 }
    Sarray tmp;
    tmp.copy(rho);
-   MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(tmp.c_ptr(),rho.c_ptr(),rho.npts(),MPI_DOUBLE,MPI_SUM,m_1d_communicator);
    tmp.copy(cs);
-   MPI_Allreduce(tmp.c_ptr(),cs.c_ptr(),cs.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(tmp.c_ptr(),cs.c_ptr(),cs.npts(),MPI_DOUBLE,MPI_SUM,m_1d_communicator);
    tmp.copy(cp);
-   MPI_Allreduce(tmp.c_ptr(),cp.c_ptr(),cp.npts(),MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(tmp.c_ptr(),cp.c_ptr(),cp.npts(),MPI_DOUBLE,MPI_SUM,m_1d_communicator);
 }
 
 //-----------------------------------------------------------------------
@@ -1060,3 +1068,5 @@ void EW::transform_gradient( Sarray& rho, Sarray& mu, Sarray& lambda,
       glambdap[ind] = 2*rhop[ind]*cp*glambdap[ind];
    }
 }
+
+

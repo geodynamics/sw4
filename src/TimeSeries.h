@@ -65,7 +65,7 @@ void recordData(vector<float_sw4> & u);
 
 void writeFile( string suffix="" );
 void writeFileUSGS( string suffix="" );
-void writeFile( FILE *fid);
+void writeFile( FILE* fid);
 void syncSolFloats();
 
 void readFile( EW* ew, bool ignore_utc );
@@ -93,7 +93,6 @@ float_sw4 getTimeShift() const { return m_shift;}
 
 float_sw4 getLat() const {return m_rec_lat;}
 float_sw4 getLon() const {return m_rec_lon;}
-
 float_sw4 getXaz() const {return m_x_azimuth;}
 
 float_sw4 getMshift() const {return m_shift; }
@@ -120,15 +119,15 @@ void use_as_forcing( int n, std::vector<Sarray>& f, std::vector<float_sw4> & h, 
 
 float_sw4 product( TimeSeries& ts ) const;
 float_sw4 product_wgh( TimeSeries& ts ) const;
-float_sw4 getMaxValue(const int comp) const;
-float_sw4 getMinValue(const int comp) const;
+float_sw4 getMaxValue( const int comp) const;
+float_sw4 getMinValue( const int comp) const;
 
    //void reset_utc( int utc[7] );
 void set_utc_to_simulation_utc();
 void filter_data( Filter* filter_ptr );
 void print_timeinfo() const;
 void set_window( float_sw4 winl, float_sw4 winr );
-void set_window( float_sw4 winl, float_sw4 winr, float_sw4 winl2, float_sw4 winr2);
+void set_window( float_sw4 winl, float_sw4 winr, float_sw4 winl2, float_sw4 winr2 );
 void exclude_component( bool usex, bool usey, bool usez );
 void readSACfiles( EW* ew, const char* sac1, const char* sac2, const char* sac3, bool ignore_utc );
 void isRestart();
@@ -142,7 +141,7 @@ std::string gethdf5FileName(){return m_hdf5Name;}
 std::string getPath(){return m_path;}
 float_sw4 getDt() {return m_dt;}
 float_sw4 getLastTimeStep() {return mLastTimeStep;}
-int getUseWin() const { return m_use_win; }
+int getUseWin() const {return m_use_win;}
 
 void set_scalefactor( float_sw4 value );
 bool get_compute_scalefactor() const;
@@ -171,6 +170,9 @@ double getWriteTime() {return m_writeTime;};
 #endif
 double getReadTime() {return m_readTime;};
 void addReadTime(double t) {m_readTime += t;};
+bool is_in_supergrid_layer();
+void misfitanddudp( TimeSeries* observed, TimeSeries* dudp,
+                    float_sw4& misfit, float_sw4& dmisfit );
 
 private:   
 TimeSeries();
@@ -259,9 +261,7 @@ float_sw4 m_scalefactor;
 // float_sw4 m_dmxy, m_dmxz, m_dmyz, m_d0xy, m_d0xz, m_d0yz;
 
 // Window for optimization, m_winL, m_winR given relative simulation time zero.
-   float_sw4 m_winL, m_winR;
-// add another set of window
-   float_sw4 m_winL2, m_winR2;
+   float_sw4 m_winL, m_winR, m_winL2, m_winR2;
    bool   m_use_win, m_use_x, m_use_y, m_use_z;
 
 // quiet mode?
@@ -274,7 +274,7 @@ float_sw4 m_scalefactor;
    EW * m_ew;
 
 // Event no. (in case of multiple events)
-   int m_event;
+   int m_event, m_global_event;
 
 // HDF5 file id for all SAC data
 #ifdef USE_HDF5

@@ -22,10 +22,7 @@ public:
 		      std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda,
             float_sw4 vp_min, float_sw4 vp_max, float_sw4 vs_min, float_sw4 vs_max,int wave_mode);
    void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
-			std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
-   void get_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
-				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda ) {};
-
+			std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda, int nr );
    void get_gradient( int nmd, double* xmd, int nms, double* xms, double* dfs, double* dfm,
 		      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
 		      std::vector<Sarray>& a_lambda,
@@ -46,7 +43,6 @@ public:
    ssize_t local_index( size_t ind_global );
    void set_scalefactors( int nmpars, double* sfs, double rho_ref, double mu_ref, double lambda_ref, 
 			  double vs_ref, double vp_ref );
-   int get_varcase(){return 4;}
    double getXmin() const { return m_xmin; }
    double getDx() const { return m_hx; }
    int getNX() const { return m_nx; }
@@ -56,6 +52,8 @@ public:
    double getZmin() const { return m_zmin; }
    double getDz() const { return m_hz; }
    int getNZ() const { return m_nz; }  
+   int get_varcase(){return 4;};
+   void write_dfm_hdf5(double* dfm, std::string fname,  MPI_Comm comm) {printf("%s not supported!\n", __func__);}
 };
 
 #endif

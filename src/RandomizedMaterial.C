@@ -124,7 +124,6 @@ RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zma
    // should be enough to allow interpolation without communication.
    repad_sarray( mRndMaterial, 0, 2 );
    //   cout << "RANDMTRL dims padded array " << mRndMaterial.m_jb << " " << mRndMaterial.m_je << endl;
-   //   MPI_Barrier(MPI_COMM_WORLD);
 }
 
 //-----------------------------------------------------------------------
@@ -226,14 +225,67 @@ void RandomizedMaterial::perturb_velocities( std::vector<Sarray> & cs,
 }
 
 //-----------------------------------------------------------------------
+void RandomizedMaterial::assign_perturbation( int g, Sarray& pert, Sarray& cs, 
+                                              double h, double zmin, double zmax )
+{
+   if( m_zmax > zmin && zmax > m_zmin )
+   {
+      bool curvilinear = g >= mEW->mNumberOfCartesianGrids;
+      // Interpolate to sw4 grid
+      for( int k=mEW->m_kStartInt[g] ; k <= mEW->m_kEndInt[g] ; k++ )
+	 for( int j=mEW->m_jStartInt[g] ; j <= mEW->m_jEndInt[g] ; j++ )
+	    for( int i=mEW->m_iStartInt[g] ; i <= mEW->m_iEndInt[g] ; i++ )
+	    {
+	       float_sw4 x = (i-1)*h, y=(j-1)*h, z= zmin + (k-1)*h;
+	       if( curvilinear )
+	       {
+		  x = mEW->mX[g](i,j,k);
+		  y = mEW->mY[g](i,j,k);
+		  z = mEW->mZ[g](i,j,k);
+	       }
+	       if( m_zmin <= z && z <= m_zmax )
+	       {
+	       int ip = x/m_hh, jp=y/m_hh, kp=(z-m_zmin)/m_hv;
+	       if( ip >= mRndMaterial.m_ib && ip <= mRndMaterial.m_ie-1 &&
+		   jp >= mRndMaterial.m_jb && jp <= mRndMaterial.m_je-1 &&
+		   kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke-1 )
+	       {
+		  float_sw4 wghi= (x-ip*m_hh)/m_hh, wghj=(y-jp*m_hh)/m_hh, wghk=(z-(m_zmin+kp*m_hv))/m_hv;
+		  float_sw4 rndpert =(1-wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp)  + wghi*mRndMaterial(ip+1,jp,  kp))  +
+					    (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp)  + wghi*mRndMaterial(ip+1,jp+1,kp))) +
+		     (wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp+1)+ wghi*mRndMaterial(ip+1,jp,  kp+1))+
+			     (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp+1)+ wghi*mRndMaterial(ip+1,jp+1,kp+1)));
+                  if( cs(i,j,k) <= m_vsmax )
+                     pert(i,j,k) = rndpert; 
+	       }
+	       else if( ip >= mRndMaterial.m_ib && ip <= mRndMaterial.m_ie &&
+			jp >= mRndMaterial.m_jb && jp <= mRndMaterial.m_je &&
+			kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke )
+	       {
+		  float_sw4 rndpert = mRndMaterial(ip,jp,kp);
+                  if( cs(i,j,k) <= m_vsmax )
+                     pert(i,j,k) = rndpert;
+	       }
+	       else
+		  CHECK_INPUT(false,"ERROR: index " << ip << " " << jp << " " << kp << " not in material array bounds " <<
+			      mRndMaterial.m_ib << " <= ip <= " << mRndMaterial.m_ie << "  " <<
+			      mRndMaterial.m_jb << " <= jp <= " << mRndMaterial.m_je << "  " <<
+			      mRndMaterial.m_kb << " <= kp <= " << mRndMaterial.m_ke << " y= " << y << " j= " << j<<endl );
+               }
+	    }
+   }
+}
+
+
+//-----------------------------------------------------------------------
 void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g, 
 						     float_sw4 Lx, float_sw4 Ly, float_sw4 Lz, 
 						     float_sw4 hurst )
 {
 #ifdef ENABLE_FFTW
    int nprocs;
-   MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
-   AllDims* dimobj = new AllDims( nprocs, 0, n1g-1, 0, n2g-1, 0, n3g-1, 0 );
+   MPI_Comm_size(mEW->m_cartesian_communicator,&nprocs);
+   AllDims* dimobj = new AllDims( nprocs, 0, n1g-1, 0, n2g-1, 0, n3g-1, 0, mEW->m_cartesian_communicator );
    int dims[6];
    dimobj->getdims_nopad(dims);
    ptrdiff_t ib1 = dims[0], n1=dims[1]-dims[0]+1;
@@ -250,7 +302,7 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g,
 
    get_fourier_modes( uc, n1, ib1, n1g, n2g, n3g, Lx, Ly, Lz, hurst, m_seed );
    fftw_plan plan = fftw_mpi_plan_dft_3d( n1g, n2g, n3g, (fftw_complex*)uc, (fftw_complex*)uc,
-					  MPI_COMM_WORLD, FFTW_BACKWARD, FFTW_ESTIMATE );
+					  mEW->m_cartesian_communicator, FFTW_BACKWARD, FFTW_ESTIMATE );
 // 2. Enforce symmetries
    int r1=(n1g-1)/2, r2=(n2g-1)/2, r3=(n3g-1)/2;
    int n1h=n1g/2, n2h=n2g/2, n3h=n3g/2;
@@ -312,11 +364,11 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g,
 	 if( proc == -1 )
 	 {
 	    std::cout << "k1 " << k1 << " will send to " << proc << " who owns "  << n1g-k1 << endl;
-	    MPI_Abort(MPI_COMM_WORLD,-1);
+	    MPI_Abort(mEW->m_cartesian_communicator,-1);
 	 }
 	 if( proc != -1 )
 	    MPI_Isend( &uc[n2g*n3g*(k1-ib1)], n2g*n3g, MPI_CXX_DOUBLE_COMPLEX, proc, tag,
-		    MPI_COMM_WORLD, &req[k1-ib1] );
+		    mEW->m_cartesian_communicator, &req[k1-ib1] );
 	 else
 	    cout << "Error finding owner of " << n1g-k1 << " for send" << endl;
       }
@@ -334,12 +386,12 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g,
 	 if( proc == -1 )
 	 {
 	    std::cout<< " k1 " << k1 << " will receive from " << proc << " who owns "  << n1g-k1 << endl;
-	    MPI_Abort(MPI_COMM_WORLD,-1);
+	    MPI_Abort(mEW->m_cartesian_communicator,-1);
 	 }
  //	 std::cout << "k1 " << k1 << " will receive from " << proc << " who owns "  << n1g-k1 << endl;
 	 MPI_Status status;
 	 if( proc != -1 )
-	    MPI_Recv( ucc_, n2g*n3g, MPI_CXX_DOUBLE_COMPLEX, proc, tag, MPI_COMM_WORLD, &status );
+	    MPI_Recv( ucc_, n2g*n3g, MPI_CXX_DOUBLE_COMPLEX, proc, tag, mEW->m_cartesian_communicator, &status );
 	 else
 	    cout << "Error finding owner of " << n1g-k1 << " for receive" << endl;	    
 
@@ -411,15 +463,12 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g,
       std::cout << "imnrm = "  << imnrm << std::endl;
    delete[] uc;
 
-
    AllDims* sw4dims= mEW->get_fine_alldimobject( );
    AllDims sarobj( sw4dims, 0, n1g-1, 0, n2g-1, 0, n3g-1, 0, 0 );
    //   AllDims sarobj(m_nproc2d[0], m_nproc2d[1], 1, 0, n1g-1, 0, n2g-1, 0, n3g-1, 0, 0 );
-
    sarobj.getdims_nopad(dims);
    mRndMaterial.define(dims[0],dims[1],dims[2],dims[3],dims[4],dims[5]);
    redistribute_array<float_sw4>( *dimobj, sarobj, u, mRndMaterial.c_ptr() );
-
    delete[] u;
 #else
    cout << "ERROR: Can not generate random material without FFTW" << endl;
@@ -481,9 +530,9 @@ void RandomizedMaterial::rescale_perturbation()
    }
    float_sw4 avg;
    MPI_Datatype mpifloat = get_mpi_datatype(mtrl);
-   MPI_Allreduce(&locavg,&avg,1,mpifloat,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(&locavg,&avg,1,mpifloat,MPI_SUM,mEW->m_cartesian_communicator);
    float_sw4 sum2;
-   MPI_Allreduce(&locsum2,&sum2,1,mpifloat,MPI_SUM,MPI_COMM_WORLD);
+   MPI_Allreduce(&locsum2,&sum2,1,mpifloat,MPI_SUM,mEW->m_cartesian_communicator);
    size_t nelem = static_cast<size_t>(m_nig)*m_njg*m_nkg;
    avg = avg/(nelem);
    float_sw4 stdev = sqrt(sum2/nelem);
@@ -580,7 +629,7 @@ void RandomizedMaterial::redistribute_array( AllDims& src, AllDims& dest, T* src
       size_t size=recvlist[r]->size();
       recv_array_patch[r] = new T[size];
       MPI_Irecv( recv_array_patch[r], size, mpi_datatype, recvlist[r]->m_procid, tag,
-		 MPI_COMM_WORLD, &req[r] );
+		 mEW->m_cartesian_communicator, &req[r] );
    }
    // Pack data and send
    for( int s=0 ; s < sendlist.size() ; s++ )
@@ -588,7 +637,7 @@ void RandomizedMaterial::redistribute_array( AllDims& src, AllDims& dest, T* src
       size_t size=sendlist[s]->size();
       T* array_patch = new T[size];
       sendlist[s]->pack( src_array, src, array_patch );
-      MPI_Send( array_patch, size, mpi_datatype, sendlist[s]->m_procid, tag, MPI_COMM_WORLD );
+      MPI_Send( array_patch, size, mpi_datatype, sendlist[s]->m_procid, tag, mEW->m_cartesian_communicator );
       delete[] array_patch;
    }
 
@@ -663,7 +712,7 @@ void RandomizedMaterial::comm_sarray( Sarray& sar, int neigh[4], int padding )
    float_sw4* sbuf = new float_sw4[ptsmax];
    float_sw4* rbuf = new float_sw4[ptsmax];
    MPI_Datatype mpi_float = get_mpi_datatype(sbuf);
-   MPI_Comm comm = MPI_COMM_WORLD;
+   MPI_Comm comm = mEW->m_cartesian_communicator;
 
    MPI_Status status;
    int xtag1 = 3343, xtag2 = 3344;
@@ -709,6 +758,12 @@ void RandomizedMaterial::comm_sarray( Sarray& sar, int neigh[4], int padding )
 void RandomizedMaterial::set_vsmax( float_sw4 vsmax )
 {
    m_vsmax = vsmax;
+}
+
+//-----------------------------------------------------------------------
+double RandomizedMaterial::get_vsmax()
+{
+   return m_vsmax;
 }
 
 //-----------------------------------------------------------------------
