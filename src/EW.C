@@ -7280,23 +7280,22 @@ void EW::extractTopographyFromGMG( std::string a_topoFileName )
   MPI_Bcast(dims,      2, MPI_LONG_LONG, 0, m_1d_communicator );
   MPI_Bcast(&prec,     1, MPI_INT, 0, m_1d_communicator );
 
+  // Convert GMG az to SW4 az
   alpha = az - 180.0;
 
   // Tang: fix origin for GMG data
   lon0 = -122.5624;
   lat0 = 39.1745;
-
   CHECK_INPUT( fabs(alpha-mGeoAz) < 1e-6, "ERROR: GMG azimuth must be equal to coordinate system azimuth" <<
                " azimuth on GMG = " << alpha << " azimuth of coordinate sytem = " << mGeoAz << 
                " difference = " << alpha-mGeoAz );
 
-  int nitop = (int)dims[0], njtop = (int)dims[1];
   if (m_myRank==0 && mVerbose >= 2) {
     printf("GMG header: azimuth=%e, lon0=%e, lat0=%e\n", alpha, lon0, lat0);
-    printf("            hh=%e, ni=%i, nj=%i\n", hh, nitop, njtop);
+    printf("            hh=%e, ni=%ld, nj=%ld\n", hh, dims[0], dims[1]);
   }
 
-  float  *f_data = new float[nitop * njtop];
+  float  *f_data = new float[dims[0] * dims[1]];
 
   if (m_myRank==0 ) {
     ierr = H5Dread(dataset_id, H5T_IEEE_F32LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, f_data);
@@ -7305,33 +7304,29 @@ void EW::extractTopographyFromGMG( std::string a_topoFileName )
     H5Gclose(group_id);
     H5Fclose(file_id);
   }
-  MPI_Bcast(f_data, nitop*njtop, MPI_FLOAT, 0, m_1d_communicator );
+  MPI_Bcast(f_data, dims[0]*dims[1], MPI_FLOAT, 0, m_1d_communicator );
 
   // Offset from S and Rfile for GMG data
-  int nitop_s = nitop + 13;
-  int njtop_s = njtop + 36;
-  float_sw4 *data = new float_sw4[nitop_s * njtop_s]();
+  float_sw4 *data = new float_sw4[dims[0] * dims[1]]();
 
   // Convert to SW4 CRS and datatype
-  for (int i = 0; i < nitop; i++) {
-      for (int j = 0; j < njtop; j++) {
-          data[(njtop_s-j-1)*nitop_s + nitop_s-i-1] = (float_sw4)f_data[i*njtop + j];
+  for (int i = 0; i < dims[0]; i++) {
+      for (int j = 0; j < dims[1]; j++) {
+          data[(dims[1]-j-1)*dims[0] + dims[0]-i-1] = (float_sw4)f_data[i*dims[1] + j];
       }
   }
  
-  nitop = njtop_s;
-  njtop = nitop_s;
-
-  gridElev.define(1, nitop, 1, njtop, 1, 1);
+  // switch GMG xy to be consistent with SW4 xy direction
+  gridElev.define(1, dims[1], 1, dims[0], 1, 1);
   gridElev.assign(data);
   gridElev.transposeik();
 
   if (m_myRank==0 && mVerbose >= 2) {
     printf("1st topo (float) data=%e, gridElev(1,1,1)=%e\n", data[0], gridElev(1,1,1));
-    printf("last topo (float) data=%e, gridElev(ni,nj,1)=%e\n", data[nitop*njtop-1], gridElev(nitop,njtop,1));
+    printf("last topo (float) data=%e, gridElev(ni,nj,1)=%e\n", data[dims[0]*dims[1]-1], gridElev(dims[0],dims[1],1));
     // get min and max
     float tmax=-9e-10, tmin=9e+10;
-    for (int q=0; q<nitop*njtop; q++) {
+    for (int q=0; q<dims[0]*dims[1]; q++) {
       if (data[q]>tmax) tmax=data[q];
       if (data[q]<tmin) tmin=data[q];	     
     }
@@ -7343,7 +7338,7 @@ void EW::extractTopographyFromGMG( std::string a_topoFileName )
 
    //Debug
   /* if (m_myRank == 0) { */
-  /*     printf("nitop=%d, njtop=%d\n", nitop, njtop); */
+  /*     printf("dims[0]=%d, dims[1]=%d\n", dims[0], dims[1]); */
   /*     for (int i = 1; i < 150; i++) { */
   /*         for (int j = 1; j < 150; j++) { */
   /*             printf(" %.1f", gridElev(i,j, 1)); */
@@ -7355,6 +7350,10 @@ void EW::extractTopographyFromGMG( std::string a_topoFileName )
   // ---------- origin on file
   double x0, y0; // Origin on grid file
   computeCartesianCoord(x0, y0, lon0, lat0);
+
+  // Convert to actual x0, y0 from GMG 
+  x0 += 3600;
+  y0 += 1300;
   if (m_myRank == 0 && mVerbose >= 2) {
     printf("mat-lon0=%e mat-lat0=%e, comp-x0=%e, commp-y0=%e\n", lon0, lat0, x0, y0);
   }
@@ -7365,6 +7364,8 @@ void EW::extractTopographyFromGMG( std::string a_topoFileName )
 
   // Topography read, next interpolate to the computational grid
   int topLevel=mNumberOfGrids-1;
+  int nitop = dims[1];
+  int njtop = dims[0];
 
   float_sw4 topomax=-1e30, topomin=1e30;
 #pragma omp parallel for reduction(max:topomax) reduction(min:topomin)      
