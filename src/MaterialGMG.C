@@ -683,29 +683,6 @@ void MaterialGMG::read_gmg()
   for( int p=0 ; p < m_npatches ; p++ )
      m_isempty[p] = (isemptymin[p] == 1);
 
-  //Allocate memory
-  for( int p=0 ; p < m_npatches ; p++ ) {
-     try {
-        if( !m_isempty[p] ) {
-           mMaterial_rho[p].define(1,m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],m_kfirst[p],m_klast[p]);
-           mMaterial_cp[p].define( 1,m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],m_kfirst[p],m_klast[p]);
-           mMaterial_cs[p].define( 1,m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],m_kfirst[p],m_klast[p]);
-           if (m_use_attenuation) {
-             mMaterial_qp[p].define( 1,m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],m_kfirst[p],m_klast[p]);
-             mMaterial_qs[p].define( 1,m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],m_kfirst[p],m_klast[p]);
-           }
-        }
-     }
-     catch( bad_alloc& ba ) {
-        cout << "Processor " << mEW->getRank() << " allocation of mMaterial failed." << endl;
-        cout << "p= "<< p << " ncblock= " << ncblock[p] << " ifirst,ilast " << m_ifirst[p] << " " << m_ilast[p] <<
-           " jfirst,jlast " << m_jfirst[p] << " " << m_jlast[p] <<
-           " kfirst,klast " << m_kfirst[p] << " " << m_klast[p] << 
-           " Exception= " << ba.what() << endl;
-        MPI_Abort(MPI_COMM_WORLD,0);
-     }
-  }
-
   // Read interfaces
   mInterface.resize(m_npatches+1);
   int factor = 1, nitop = dims[0], njtop = dims[1];
@@ -755,9 +732,9 @@ void MaterialGMG::read_gmg()
     int local[4] ={ m_ilast[p]-m_ifirst[p]+1, m_jlast[p]-m_jfirst[p]+1, m_klast[p]-m_kfirst[p]+1, nc };
     int start[4] ={ m_ifirst[p]-1, m_jfirst[p]-1, m_kfirst[p]-1, 0 };
 
-    /* fprintf(stderr, "\nRank %d: start (%d, %d, %d), count (%d, %d, %d), global (%d, %d, %d), %d points, hv=%d\n", */
+    /* fprintf(stderr, "\nRank %d: start (%d, %d, %d), count (%d, %d, %d), global (%d, %d, %d), hv=%d\n", */
     /*                 mEW->getRank(), start[0], start[1], start[2], local[0], local[1], local[2], */ 
-    /*                 global[0], global[1], global[2], mMaterial_rho[p].m_npts, (int)m_hv[p]); */
+    /*                 global[0], global[1], global[2], (int)m_hv[p]); */
 
     float *in_data;
     // Rank 0 read and broadcast data
@@ -814,61 +791,112 @@ void MaterialGMG::read_gmg()
     /*     ASSERT(0); */
     /*   } */
     /* } */
-
     if( !m_isempty[p] ) {
-      float *data   = new float[dims[0]*dims[1]*dims[2]*dims[3]]();
-      float *f_data = new float[local[0]*local[1]*local[2]]();
+      // Allocate memory
+      try {
+        mMaterial_rho[p].define(1,m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],m_kfirst[p],m_klast[p]);
+        mMaterial_cp[p].define( 1,m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],m_kfirst[p],m_klast[p]);
+        mMaterial_cs[p].define( 1,m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],m_kfirst[p],m_klast[p]);
+        if (m_use_attenuation) {
+          mMaterial_qp[p].define( 1,m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],m_kfirst[p],m_klast[p]);
+          mMaterial_qs[p].define( 1,m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],m_kfirst[p],m_klast[p]);
+        }
+      }
+      catch( bad_alloc& ba ) {
+         cout << "Processor " << mEW->getRank() << " allocation of mMaterial failed." << endl;
+         cout << "p= "<< p << " ncblock= " << ncblock[p] << " ifirst,ilast " << m_ifirst[p] << " " << m_ilast[p] <<
+            " jfirst,jlast " << m_jfirst[p] << " " << m_jlast[p] <<
+            " kfirst,klast " << m_kfirst[p] << " " << m_klast[p] << 
+            " Exception= " << ba.what() << endl;
+         MPI_Abort(MPI_COMM_WORLD, 0);
+      }
+
+      float *data   = new float[dims[0]*dims[1]]();
+      float *f_data = new float[local[0]*local[1]]();
+      Sarray hslice;
+      hslice.define(1,m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],1,1);
 
       // Convert to SW4 CRS
       int idx1, idx2;
 /* #pragma omp parallel for */	 
-      for (int i = 0; i < dims[0]; i++) {
-        for (int j = 0; j < dims[1]; j++) {
-          for (int k = 0; k < dims[2]; k++) {
-            idx1 = ((dims[1]-j-1)*dims[0]*dims[2] + (dims[0]-i-1)*dims[2] + k) * nc;
-            idx2 = (i*dims[1]*dims[2] + j*dims[2] + k) * nc;
-            if (idx1 > dims[0]*dims[1]*dims[2]*nc) {
-                fprintf(stderr, "Rank %d, patch %d, 1 out %d / %d\n", mEW->getRank(), p, idx1, dims[0]*dims[1]*dims[2]);
-                ASSERT(0);
-            }
-            if (idx2 > dims[0]*dims[1]*dims[2]*nc) {
-                fprintf(stderr, "Rank %d, patch %d, 2 out %d / %d\n", mEW->getRank(), p, idx1, dims[0]*dims[1]*dims[2]);
-                ASSERT(0);
-            }
-            memcpy(&data[idx1], &in_data[idx2], nc*sizeof(float));
+      for (int c = 0; c < 5; c++) {
+        for (int k = 0; k < dims[2]; k++) {
 
-            /* for (int m = 0; m < nc; m++) { */
-            /*   if (data[idx1+m] < 0) { */
-            /*     fprintf(stderr, "Rank %d, patch %d, converted: %d,%d,%d comp %d, val[%d]=%.2f\n", */ 
-            /*                      mEW->getRank(), p, i, j, k, m, idx1, data[idx1+m]); */
-            /*     fprintf(stderr, "Rank %d, patch %d, from: %d,%d,%d comp %d, val[%d]=%.2f\n", */ 
-            /*                      mEW->getRank(), p, i, j, k, m, idx2, in_data[idx2+m]); */
-            /*     ASSERT(0); */
-            /*   } */
-            /* } */
+          for (int i = 0; i < dims[0]; i++) {
+            for (int j = 0; j < dims[1]; j++) {
+              idx1 = (dims[1]-j-1)*dims[0] + dims[0]-i-1;
+              idx2 = (i*dims[1]*dims[2] + j*dims[2] + k) * nc + c;
+              if (idx1 > dims[0]*dims[1]) {
+                  fprintf(stderr, "Rank %d, patch %d, 1 out %d / %d\n", mEW->getRank(), p, idx1, dims[0]*dims[1]);
+                  ASSERT(0);
+              }
+              if (idx2 > dims[0]*dims[1]*dims[2]*dims[3]) {
+                  fprintf(stderr, "Rank %d, patch %d, 2 out %d / %d\n", mEW->getRank(), p, idx1, dims[0]*dims[1]*dims[2]*dims[3]);
+                  ASSERT(0);
+              }
+              data[idx1] = (float_sw4)in_data[idx2];
 
+              /* for (int m = 0; m < nc; m++) { */
+                /* if (data[idx1] < 0) { */
+                /*   fprintf(stderr, "Rank %d, patch %d, converted: %d,%d,%d comp %d, val[%d]=%.2f\n", */ 
+                /*                    mEW->getRank(), p, i, j, k, c, idx1, data[idx1]); */
+                /*   fprintf(stderr, "Rank %d, patch %d, from: %d,%d,%d comp %d, val[%d]=%.2f\n", */ 
+                /*                    mEW->getRank(), p, i, j, k, c, idx2, in_data[idx2]); */
+                  /* ASSERT(0); */
+                /* } */
+              /* } */
+
+            } // end j
+          } // end i
+          hslice.assign(data);
+          hslice.transposeik();
+
+          for (int ii = m_ifirst[p]; ii < m_ilast[p]; ii++) {
+            for (int jj = m_jfirst[p]; jj < m_jlast[p]; jj++) {
+              switch (c) {
+                case 0:
+                  mMaterial_rho[p](1, ii, jj, m_kfirst[p]+k) = hslice(1, ii, jj, 1);
+                  break;
+                case 1:
+                  mMaterial_cp[p](1, ii, jj, m_kfirst[p]+k) = hslice(1, ii, jj, 1);
+                  break;
+                case 2:
+                  mMaterial_cs[p](1, ii, jj, m_kfirst[p]+k) = hslice(1, ii, jj, 1);
+                  break;
+                case 3:
+                  mMaterial_qp[p](1, ii, jj, m_kfirst[p]+k) = hslice(1, ii, jj, 1);
+                  break;
+                case 4:
+                  mMaterial_qs[p](1, ii, jj, m_kfirst[p]+k) = hslice(1, ii, jj, 1);
+                  break;
+                default:
+                  ASSERT(0);
+                  break;
+              }
+            }
           }
-        }
-      }
- 
-      extract_comp(local[0], local[1], local[2], nc, 0, start, f_data, data, mEW->getRank(), "rho");
-      mMaterial_rho[p].assign(f_data);
-      fprintf(stderr, "Rank %d, first last: %d %d, %d %d, %d %d\n", mEW->getRank(), m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],m_kfirst[p],m_klast[p]);
-      fprintf(stderr, "Rank %d, local     : %d, %d, %d\n", mEW->getRank(), local[0], local[1], local[2]);
 
-      extract_comp(local[0], local[1], local[2], nc, 1, start, f_data, data, mEW->getRank(), "Vp");
-      mMaterial_cp[p].assign(f_data);
+        } // End k
+      } // End c
+    
+      /* extract_comp(local[0], local[1], local[2], nc, 0, start, f_data, data, mEW->getRank(), "rho"); */
+      /* mMaterial_rho[p].assign(f_data); */
+      /* fprintf(stderr, "Rank %d, first last: %d %d, %d %d, %d %d\n", mEW->getRank(), m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],m_kfirst[p],m_klast[p]); */
+      /* fprintf(stderr, "Rank %d, local     : %d, %d, %d\n", mEW->getRank(), local[0], local[1], local[2]); */
 
-      extract_comp(local[0], local[1], local[2], nc, 2, start, f_data, data, mEW->getRank(), "Vs");
-      mMaterial_cs[p].assign(f_data);
+      /* extract_comp(local[0], local[1], local[2], nc, 1, start, f_data, data, mEW->getRank(), "Vp"); */
+      /* mMaterial_cp[p].assign(f_data); */
 
-      if (m_use_attenuation) {
-        extract_comp(local[0], local[1], local[2], nc, 3, start, f_data, data, mEW->getRank(), "Qp");
-        mMaterial_qp[p].assign(f_data);
+      /* extract_comp(local[0], local[1], local[2], nc, 2, start, f_data, data, mEW->getRank(), "Vs"); */
+      /* mMaterial_cs[p].assign(f_data); */
 
-        extract_comp(local[0], local[1], local[2], nc, 4, start, f_data, data, mEW->getRank(), "Qs");
-        mMaterial_qs[p].assign(f_data);
-      }
+      /* if (m_use_attenuation) { */
+      /*   extract_comp(local[0], local[1], local[2], nc, 3, start, f_data, data, mEW->getRank(), "Qp"); */
+      /*   mMaterial_qp[p].assign(f_data); */
+
+      /*   extract_comp(local[0], local[1], local[2], nc, 4, start, f_data, data, mEW->getRank(), "Qs"); */
+      /*   mMaterial_qs[p].assign(f_data); */
+      /* } */
 
       /* if (mEW->getRank() == 0) fprintf(stderr, "Patch %d, after material assign\n", p); */
 
@@ -876,50 +904,49 @@ void MaterialGMG::read_gmg()
       delete[] f_data;
       delete[] data;
 
-      mMaterial_rho[p].transposeik();
-      mMaterial_cp[p].transposeik();
-      mMaterial_cs[p].transposeik();
-      if (m_use_attenuation) {
-        mMaterial_qp[p].transposeik();
-        mMaterial_qs[p].transposeik();
-      }
+      /* mMaterial_rho[p].transposeik(); */
+      /* mMaterial_cp[p].transposeik(); */
+      /* mMaterial_cs[p].transposeik(); */
+      /* if (m_use_attenuation) { */
+      /*   mMaterial_qp[p].transposeik(); */
+      /*   mMaterial_qs[p].transposeik(); */
+      /* } */
     } // End if !m_isempty
   } // End for
 
   // Debug
-  int g=1;
-  int ni=mEW->m_iEnd[g]-mEW->m_iStart[g]+1;
-  int nj=mEW->m_jEnd[g]-mEW->m_jStart[g]+1;
-  double *tmpdata = new double[nj*ni]();
-  FILE *fp;
-  char fpname[128];
-  for (int k = 1; k <= 5; ++k) {
-    for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j)
-       for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i)
-           tmpdata[i*nj+j] = mMaterial_rho[g](1,i,j,k);
+  /* int g=1; */
+  /* int ni=mEW->m_iEnd[g]-mEW->m_iStart[g]+1; */
+  /* int nj=mEW->m_jEnd[g]-mEW->m_jStart[g]+1; */
+  /* double *tmpdata = new double[nj*ni](); */
+  /* FILE *fp; */
+  /* char fpname[128]; */
+  /* for (int k = 1; k <= 5; ++k) { */
+  /*   for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j) */
+  /*      for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i) */
+  /*          tmpdata[i*nj+j] = mMaterial_rho[g](1,i,j,k); */
 
-    sprintf(fpname, "rho.%d", k); 
-    fp = fopen(fpname, "w" );
-    fwrite(tmpdata, nj*ni, sizeof(double), fp);
-    fclose(fp);
-  }
+  /*   sprintf(fpname, "rho.%d", k); */ 
+  /*   fp = fopen(fpname, "w" ); */
+  /*   fwrite(tmpdata, nj*ni, sizeof(double), fp); */
+  /*   fclose(fp); */
+  /* } */
 
   fill_in_fluids();
   // material_check(false);
 
   // Debug
-  for (int k = 1; k <= 5; ++k) {
-    for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j)
-       for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i)
-           tmpdata[i*nj+j] = mMaterial_rho[g](1,i,j,k);
+  /* for (int k = 1; k <= 5; ++k) { */
+  /*   for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j) */
+  /*      for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i) */
+  /*          tmpdata[i*nj+j] = mMaterial_rho[g](1,i,j,k); */
 
-    sprintf(fpname, "rho.filled.%d", k); 
-    fp = fopen(fpname, "w" );
-    fwrite(tmpdata, nj*ni, sizeof(double), fp);
-    fclose(fp);
-  }
-
-  delete [] tmpdata;
+  /*   sprintf(fpname, "rho.filled.%d", k); */ 
+  /*   fp = fopen(fpname, "w" ); */
+  /*   fwrite(tmpdata, nj*ni, sizeof(double), fp); */
+  /*   fclose(fp); */
+  /* } */
+  /* delete [] tmpdata; */
 
   time_end = MPI_Wtime();
   if (mEW->getRank() == 0) {
