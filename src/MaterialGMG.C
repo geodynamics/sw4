@@ -95,7 +95,7 @@ void MaterialGMG::set_material_properties(std::vector<Sarray> & rho,
       bool curvilinear = mEW->topographyExists() && g >= mEW->mNumberOfCartesianGrids;
       size_t ni=mEW->m_iEnd[g]-mEW->m_iStart[g]+1;
       size_t nj=mEW->m_jEnd[g]-mEW->m_jStart[g]+1;
-/* #pragma omp parallel for reduction(+:material,outside) */
+#pragma omp parallel for reduction(+:material,outside)
       for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k) {
 	 for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j) {
 	    for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i) {
@@ -239,8 +239,8 @@ void MaterialGMG::set_material_properties(std::vector<Sarray> & rho,
                                      wghx*mMaterial_cp[gr](1,i0+1,j0+1,k0+1) ) );
        
                    /* if (cp[g](i,j,k) < 700) { */
-                   /*   printf("Rank %d, cp[%d](%d, %d, %d)=%.2f\n", mEW->getRank(), g, i, j, k, cp[g](i,j,k)); */
-                   /*   ASSERT(0); */
+                     /* printf("Rank %d, cp[%d](%d, %d, %d)=%.2f\n", mEW->getRank(), g, i, j, k, cp[g](i,j,k)); */
+                     /* ASSERT(0); */
                    /* } */
 
                    cs[g](i, j, k)  = (1-wghz)*( (1-wghy)*( (1-wghx)*mMaterial_cs[gr](1,i0,j0,k0) + 
@@ -252,10 +252,10 @@ void MaterialGMG::set_material_properties(std::vector<Sarray> & rho,
                                      wghy*(   (1-wghx)*mMaterial_cs[gr](1,i0,j0+1,k0+1)+ 
                                      wghx*mMaterial_cs[gr](1,i0+1,j0+1,k0+1) ) );
 
-                   if (cs[g](i,j,k) < 80) {
-                     printf("Rank %d, cs[%d](%d, %d, %d)=%.2f\n", mEW->getRank(), g, i, j, k, cs[g](i,j,k));
+                   /* if (cs[g](i,j,k) > 4000) { */
+                   /*   printf("Rank %d, cs[%d](%d, %d, %d)=%.2f\n", mEW->getRank(), g, i, j, k, cs[g](i,j,k)); */
                      /* ASSERT(0); */
-                   }
+                   /* } */
 
                    if( use_q ) {
                       xip[g](i, j, k) = (1-wghz)*( (1-wghy)*( (1-wghx)*mMaterial_qp[gr](1,i0,j0,k0) + 
@@ -283,19 +283,6 @@ void MaterialGMG::set_material_properties(std::vector<Sarray> & rho,
 	    } // End for i
 	  } // End for j
         } // End for k
-
-    /* debug */ 
-    /* if (mEW->getRank() == 0) */ 
-    /*   printf("After interpolation from GMG\n"); */
-
-    /* printf("Rank %d grid %d: rho min = %.2f, max = %.2f\n", mEW->getRank(), g, rho[g].minimum(), rho[g].maximum()); */
-    /* printf("Rank %d grid %d: cp min = %.2f, max = %.2f\n", mEW->getRank(), g, cp[g].minimum(), cp[g].maximum()); */
-    /* printf("Rank %d grid %d: cs min = %.2f, max = %.2f\n", mEW->getRank(), g, cs[g].minimum(), cs[g].maximum()); */
-
-    /* if( use_q ) { */
-    /*   printf("Rank %d grid %d: xip min = %.2f, max = %.2f\n", mEW->getRank(), g, xip[g].minimum(), xip[g].maximum()); */
-    /*   printf("Rank %d grid %d: xis min = %.2f, max = %.2f\n", mEW->getRank(), g, xis[g].minimum(), xis[g].maximum()); */
-    /* } */
 
    } // end for g...
 
@@ -367,38 +354,6 @@ static void read_hdf5_attr(hid_t loc, hid_t dtype, char *name, void* data)
 }
 #endif
 
-static void extract_comp(int ni, int nj, int nk, int nc, int comp, int *start,
-                          float *out_data, float *data, int rank, char *name)
-{
-  double vmax=-1e10, vmin=1e10;
-  int imin, imax, jmin, jmax, kmin, kmax;
-/* #pragma omp parallel for */	 
-  for (int i = 0; i < ni; i++) {
-    for (int j = 0; j < nj; j++) {
-      for (int k = 0; k < nk; k++) {
-        int idx1 = i*nj*nk+j*nk+k;
-        int idx2 = (i+start[0])*nj*nk*nc+(j+start[1])*nk*nc+(k+start[3])*nc+comp;
-        out_data[idx1] = data[idx2];
-        if (out_data[idx1] > vmax) {
-          vmax = out_data[idx1];
-          imax = i;
-          jmax = j;
-          kmax = k;
-        }
-        else if (out_data[idx1] < vmin) {
-          vmin = out_data[idx1];
-          imin = i;
-          jmin = j;
-          kmin = k;
-        }
-      }
-    }
-  }
-  fprintf(stderr, "Rank %d, %s min = %.2f (%d,%d,%d) max = %.2f (%d,%d,%d)\n", 
-          rank, name, vmin, imin, jmin, kmin, vmax, imax, jmax, kmax);
-
-}
-
 //-----------------------------------------------------------------------
 void MaterialGMG::read_gmg()
 {
@@ -446,6 +401,7 @@ void MaterialGMG::read_gmg()
   m_ymaxloc = ymax;
   m_zminloc = zmin;
   m_zmaxloc = zmax;
+  m_use_attenuation = true;
 
   string fname = m_model_dir + "/" + m_model_file;
 
@@ -456,7 +412,7 @@ void MaterialGMG::read_gmg()
   float *topo_data;
   char grid_name[32];
 
-  // This value is fixed for GMG grids
+  // Fixed for GMG grids
   m_npatches = 4;
 
   m_hh.resize(m_npatches);
@@ -703,17 +659,7 @@ void MaterialGMG::read_gmg()
     mInterface[p].assign(in_data);
     mInterface[p].transposeik();
 
-    // Debug
-    /* if (mEW->getRank() == 0) { */
-    /*     printf("GMG Interface %d\n", p); */
-    /*     for (int i = 1; i < 40; i++) { */
-    /*         for (int j = 1; j < 40; j++) { */
-    /*             printf(" %.1f", mInterface[p](i,j,1)); */
-    /*         } */
-    /*         printf("\n"); */
-    /*     } */
-    /* } */
-    fprintf(stderr, "p=%d, factor=%d, mInterface %d %d\n", p, factor, njtop, nitop);
+    /* fprintf(stderr, "p=%d, factor=%d, mInterface %d %d\n", p, factor, njtop, nitop); */
 
     if (p > 0 && p < m_npatches) {
       factor = m_hh[p]/m_hh[0];
@@ -785,12 +731,6 @@ void MaterialGMG::read_gmg()
       MPI_Bcast(in_data, dims[0]*dims[1]*dims[2]*dims[3], MPI_FLOAT, 0, mEW->m_1d_communicator );
     }
 
-    /* for (int i = 0; i < dims[0]*dims[1]*dims[2]*dims[3]; i++) { */
-    /*   if (in_data[i] < 0) { */
-    /*     fprintf(stderr, "Read negative material data, %d, %.2f\n", i, in_data[i]); */
-    /*     ASSERT(0); */
-    /*   } */
-    /* } */
     if( !m_isempty[p] ) {
       // Allocate memory
       try {
@@ -816,12 +756,11 @@ void MaterialGMG::read_gmg()
       Sarray hslice;
       hslice.define(1,m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],1,1);
 
-      // Convert to SW4 CRS
       int idx1, idx2;
-/* #pragma omp parallel for */	 
       for (int c = 0; c < 5; c++) {
         for (int k = 0; k < dims[2]; k++) {
 
+          // Convert to SW4 CRS
           for (int i = 0; i < dims[0]; i++) {
             for (int j = 0; j < dims[1]; j++) {
               idx1 = (dims[1]-j-1)*dims[0] + dims[0]-i-1;
@@ -831,43 +770,84 @@ void MaterialGMG::read_gmg()
                   ASSERT(0);
               }
               if (idx2 > dims[0]*dims[1]*dims[2]*dims[3]) {
-                  fprintf(stderr, "Rank %d, patch %d, 2 out %d / %d\n", mEW->getRank(), p, idx1, dims[0]*dims[1]*dims[2]*dims[3]);
+                  fprintf(stderr, "Rank %d, patch %d, 2 out %d / %d\n", mEW->getRank(), p, idx2, dims[0]*dims[1]*dims[2]*dims[3]);
                   ASSERT(0);
               }
               data[idx1] = (float_sw4)in_data[idx2];
 
-              /* for (int m = 0; m < nc; m++) { */
-                /* if (data[idx1] < 0) { */
-                /*   fprintf(stderr, "Rank %d, patch %d, converted: %d,%d,%d comp %d, val[%d]=%.2f\n", */ 
-                /*                    mEW->getRank(), p, i, j, k, c, idx1, data[idx1]); */
-                /*   fprintf(stderr, "Rank %d, patch %d, from: %d,%d,%d comp %d, val[%d]=%.2f\n", */ 
-                /*                    mEW->getRank(), p, i, j, k, c, idx2, in_data[idx2]); */
-                  /* ASSERT(0); */
-                /* } */
-              /* } */
-
             } // end j
           } // end i
-          hslice.assign(data);
+
+          for (int i = 0; i < local[0]; i++) {
+            for (int j = 0; j < local[1]; j++) {
+              idx1 = i*local[1] + j;
+              idx2 = (i+m_ifirst[p])*dims[0] + (j+m_jfirst[p]);
+#ifdef BZ_DEBUG
+              if (idx1 > local[0]*local[1]) {
+                  fprintf(stderr, "Rank %d, patch %d, 1 out %d / %d\n", mEW->getRank(), p, idx1, local[0]*local[1]);
+                  ASSERT(0);
+              }
+              if (idx2 > dims[0]*dims[1]) {
+                  fprintf(stderr, "Rank %d, patch %d, 2 out %d / %d\n", mEW->getRank(), p, idx2, dims[0]*dims[1]);
+                  ASSERT(0);
+              }
+#endif
+              f_data[idx1] = data[idx2];
+            }
+          }
+          hslice.assign(f_data);
           hslice.transposeik();
 
-          for (int ii = m_ifirst[p]; ii < m_ilast[p]; ii++) {
-            for (int jj = m_jfirst[p]; jj < m_jlast[p]; jj++) {
+#pragma omp parallel for	 
+          for (int ii = m_ifirst[p]; ii <= m_ilast[p]; ii++) {
+            for (int jj = m_jfirst[p]; jj <= m_jlast[p]; jj++) {
               switch (c) {
                 case 0:
                   mMaterial_rho[p](1, ii, jj, m_kfirst[p]+k) = hslice(1, ii, jj, 1);
+                  /* if (ii == m_ilast[p] && jj==m_jlast[p]) { */
+                  /*   if (k == 0) { */
+                  /*     fprintf(stderr, "p=%d: first %d, %d, %d,  last %d, %d, %d\n", */ 
+                  /*             p, m_ifirst[p],  m_jfirst[p], m_kfirst[p], m_ilast[p], m_jlast[p], m_klast[p]); */
+                  /*     fprintf(stderr, "p=%d: dims %d, %d, %d", p, dims[0], dims[1], dims[2]); */
+                  /*   } */
+                  /*   fprintf(stderr, "k=%d, rho=%.2f\n", k, mMaterial_rho[p](1, ii, jj, m_kfirst[p]+k)); */
+                  /* } */
                   break;
                 case 1:
                   mMaterial_cp[p](1, ii, jj, m_kfirst[p]+k) = hslice(1, ii, jj, 1);
+                  /* if (ii == m_ilast[p] && jj==m_jlast[p]) { */
+                  /*   if (k == 0) */
+                  /*     fprintf(stderr, "p=%d: first %d, %d, %d,  last %d, %d, %d\n", */ 
+                  /*             p, m_ifirst[p],  m_jfirst[p], m_kfirst[p], m_ilast[p], m_jlast[p], m_klast[p]); */
+                  /*   fprintf(stderr, "k=%d, cp=%.2f\n", k, mMaterial_cp[p](1, ii, jj, m_kfirst[p]+k)); */
+                  /* } */
                   break;
                 case 2:
                   mMaterial_cs[p](1, ii, jj, m_kfirst[p]+k) = hslice(1, ii, jj, 1);
+                  /* if (ii == m_ilast[p] && jj==m_jlast[p]) { */
+                  /*   if (k == 0) */
+                  /*     fprintf(stderr, "p=%d: first %d, %d, %d,  last %d, %d, %d\n", */ 
+                  /*             p, m_ifirst[p],  m_jfirst[p], m_kfirst[p], m_ilast[p], m_jlast[p], m_klast[p]); */
+                  /*   fprintf(stderr, "k=%d, cs=%.2f\n", k, mMaterial_cs[p](1, ii, jj, m_kfirst[p]+k)); */
+                  /* } */
                   break;
                 case 3:
                   mMaterial_qp[p](1, ii, jj, m_kfirst[p]+k) = hslice(1, ii, jj, 1);
+                  /* if (ii == m_ilast[p] && jj==m_jlast[p]) { */
+                  /*   if (k == 0) */
+                  /*     fprintf(stderr, "p=%d: first %d, %d, %d,  last %d, %d, %d\n", */ 
+                  /*             p, m_ifirst[p],  m_jfirst[p], m_kfirst[p], m_ilast[p], m_jlast[p], m_klast[p]); */
+                  /*   fprintf(stderr, "k=%d, qp=%.2f\n", k, mMaterial_qp[p](1, ii, jj, m_kfirst[p]+k)); */
+                  /* } */
                   break;
                 case 4:
                   mMaterial_qs[p](1, ii, jj, m_kfirst[p]+k) = hslice(1, ii, jj, 1);
+                  /* if (ii == m_ilast[p] && jj==m_jlast[p]) { */
+                  /*   if (k == 0) */
+                  /*     fprintf(stderr, "p=%d: first %d, %d, %d,  last %d, %d, %d\n", */ 
+                  /*             p, m_ifirst[p],  m_jfirst[p], m_kfirst[p], m_ilast[p], m_jlast[p], m_klast[p]); */
+                  /*   fprintf(stderr, "k=%d, qs=%.2f\n", k, mMaterial_qs[p](1, ii, jj, m_kfirst[p]+k)); */
+                  /* } */
                   break;
                 default:
                   ASSERT(0);
@@ -878,79 +858,21 @@ void MaterialGMG::read_gmg()
 
         } // End k
       } // End c
-    
-      /* extract_comp(local[0], local[1], local[2], nc, 0, start, f_data, data, mEW->getRank(), "rho"); */
-      /* mMaterial_rho[p].assign(f_data); */
-      /* fprintf(stderr, "Rank %d, first last: %d %d, %d %d, %d %d\n", mEW->getRank(), m_ifirst[p],m_ilast[p],m_jfirst[p],m_jlast[p],m_kfirst[p],m_klast[p]); */
-      /* fprintf(stderr, "Rank %d, local     : %d, %d, %d\n", mEW->getRank(), local[0], local[1], local[2]); */
-
-      /* extract_comp(local[0], local[1], local[2], nc, 1, start, f_data, data, mEW->getRank(), "Vp"); */
-      /* mMaterial_cp[p].assign(f_data); */
-
-      /* extract_comp(local[0], local[1], local[2], nc, 2, start, f_data, data, mEW->getRank(), "Vs"); */
-      /* mMaterial_cs[p].assign(f_data); */
-
-      /* if (m_use_attenuation) { */
-      /*   extract_comp(local[0], local[1], local[2], nc, 3, start, f_data, data, mEW->getRank(), "Qp"); */
-      /*   mMaterial_qp[p].assign(f_data); */
-
-      /*   extract_comp(local[0], local[1], local[2], nc, 4, start, f_data, data, mEW->getRank(), "Qs"); */
-      /*   mMaterial_qs[p].assign(f_data); */
-      /* } */
-
-      /* if (mEW->getRank() == 0) fprintf(stderr, "Patch %d, after material assign\n", p); */
 
       delete[] in_data;
       delete[] f_data;
       delete[] data;
 
-      /* mMaterial_rho[p].transposeik(); */
-      /* mMaterial_cp[p].transposeik(); */
-      /* mMaterial_cs[p].transposeik(); */
-      /* if (m_use_attenuation) { */
-      /*   mMaterial_qp[p].transposeik(); */
-      /*   mMaterial_qs[p].transposeik(); */
-      /* } */
     } // End if !m_isempty
   } // End for
 
-  // Debug
-  /* int g=1; */
-  /* int ni=mEW->m_iEnd[g]-mEW->m_iStart[g]+1; */
-  /* int nj=mEW->m_jEnd[g]-mEW->m_jStart[g]+1; */
-  /* double *tmpdata = new double[nj*ni](); */
-  /* FILE *fp; */
-  /* char fpname[128]; */
-  /* for (int k = 1; k <= 5; ++k) { */
-  /*   for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j) */
-  /*      for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i) */
-  /*          tmpdata[i*nj+j] = mMaterial_rho[g](1,i,j,k); */
-
-  /*   sprintf(fpname, "rho.%d", k); */ 
-  /*   fp = fopen(fpname, "w" ); */
-  /*   fwrite(tmpdata, nj*ni, sizeof(double), fp); */
-  /*   fclose(fp); */
-  /* } */
-
   fill_in_fluids();
-  // material_check(false);
-
-  // Debug
-  /* for (int k = 1; k <= 5; ++k) { */
-  /*   for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j) */
-  /*      for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i) */
-  /*          tmpdata[i*nj+j] = mMaterial_rho[g](1,i,j,k); */
-
-  /*   sprintf(fpname, "rho.filled.%d", k); */ 
-  /*   fp = fopen(fpname, "w" ); */
-  /*   fwrite(tmpdata, nj*ni, sizeof(double), fp); */
-  /*   fclose(fp); */
-  /* } */
-  /* delete [] tmpdata; */
+#ifdef BZ_DEBUG
+  material_check(false);
+#endif
 
   time_end = MPI_Wtime();
   if (mEW->getRank() == 0) {
-     /* cout << "MaterialGMG::read_gmg, time to read interface: " << intf_end - intf_start << " seconds." << endl; */
      cout << "MaterialGMG::read_gmg, time to read material file: " << time_end - time_start << " seconds." << endl;
   }
   cout.flush();
@@ -1032,7 +954,7 @@ void MaterialGMG::fill_in_fluids()
 void MaterialGMG::material_check( bool water )
 {
    bool printsmallcpcs=false;
-   for( int p=1 ; p < m_npatches ; p++ )
+   for( int p=0 ; p < m_npatches ; p++ )
    {
       double csmin=1e38,cpmin=1e38,cratmin=1e38,csmax=-1e38,cpmax=-1e38,cratmax=-1e38;
       double rhomin=1e38, rhomax=-1e38;

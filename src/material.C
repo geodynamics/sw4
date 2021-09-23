@@ -170,7 +170,7 @@ void EW::check_materials()
   if( mins[4] <= 0.0 )
   {
     for (int g = 0; g < mNumberOfGrids; g++)
-/* #pragma omp parallel for */
+#pragma omp parallel for
       for( int k=m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	for( int j=m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 	  for( int i=m_iStart[g] ; i <= m_iEnd[g] ; i++ )

@@ -802,24 +802,6 @@ void MaterialSfile::read_sfile()
   H5Gclose(group_id);
   H5Fclose(file_id);
 
-  // Debug
-  int g=1;
-  int ni=mEW->m_iEnd[g]-mEW->m_iStart[g]+1;
-  int nj=mEW->m_jEnd[g]-mEW->m_jStart[g]+1;
-  double *tmpdata = new double[nj*ni]();
-  FILE *fp;
-  char fpname[128];
-  for (int k = 1; k <= 5; ++k) {
-    for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j)
-      for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i)
-        tmpdata[i*nj+j] = mMaterial_rho[g](1,i,j,k);
-
-    sprintf(fpname, "sfile.rho.%d", k); 
-    fp = fopen(fpname, "w" );
-    fwrite(tmpdata, nj*ni, sizeof(double), fp);
-    fclose(fp);
-  }
-
   /* fill_in_fluids(); */
   // material_check(false);
 

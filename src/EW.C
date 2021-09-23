@@ -7103,10 +7103,6 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
     printf("mat-lon0=%e mat-lat0=%e, comp-x0=%e, commp-y0=%e\n", lon0, lat0, x0, y0);
   }
 
-  // Debug
-  if (m_myRank == 0)
-    printf("mat-lon0=%e mat-lat0=%e, comp-x0=%e, commp-y0=%e\n", lon0, lat0, x0, y0);
-
   // Topography read, next interpolate to the computational grid
   int topLevel=mNumberOfGrids-1;
 
@@ -7357,10 +7353,6 @@ void EW::extractTopographyFromGMG( std::string a_topoFileName )
   if (m_myRank == 0 && mVerbose >= 2) {
     printf("mat-lon0=%e mat-lat0=%e, comp-x0=%e, commp-y0=%e\n", lon0, lat0, x0, y0);
   }
-
-  // Debug
-  if (m_myRank == 0)
-    printf("mat-lon0=%e mat-lat0=%e, comp-x0=%e, commp-y0=%e\n", lon0, lat0, x0, y0);
 
   // Topography read, next interpolate to the computational grid
   int topLevel=mNumberOfGrids-1;
