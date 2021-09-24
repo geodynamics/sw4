@@ -530,8 +530,12 @@ void MaterialGMG::read_gmg()
   // ---------- origin on file
   mEW->computeCartesianCoord( m_x0, m_y0, lon0, lat0 );
   // Convert to actual x0, y0 from GMG 
-  m_x0 += 3600;
-  m_y0 += 1300;
+  char* env = getenv("GMG_OFF_X");
+  if (env != NULL) m_x0 += atoi(env);
+  else m_x0 += 3650;
+  env = getenv("GMG_OFF_Y");
+  if (env != NULL) m_y0 += atoi(env);
+  else m_y0 += 1300;
 
   if (mEW->getRank()==0 && mEW->getVerbosity() >= 2) {
     printf("GMG header: \n");

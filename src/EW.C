@@ -7348,8 +7348,13 @@ void EW::extractTopographyFromGMG( std::string a_topoFileName )
   computeCartesianCoord(x0, y0, lon0, lat0);
 
   // Convert to actual x0, y0 from GMG 
-  x0 += 3600;
-  y0 += 1300;
+  char* env = getenv("GMG_OFF_X");
+  if (env != NULL) x0 += atoi(env);
+  else x0 += 3650;
+  env = getenv("GMG_OFF_Y");
+  if (env != NULL) y0 += atoi(env);
+  else y0 += 1300;
+
   if (m_myRank == 0 && mVerbose >= 2) {
     printf("mat-lon0=%e mat-lat0=%e, comp-x0=%e, commp-y0=%e\n", lon0, lat0, x0, y0);
   }
