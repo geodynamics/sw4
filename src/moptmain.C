@@ -229,28 +229,6 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    //mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda, 
    //    mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode()); 
 
-   
-//solveTT
-   if( mopt->m_win_mode == 1 )
-   {
-      float_sw4* coarse=new float_sw4[nmpars];
-      mopt->m_mp->get_base_parameters(nmpard,xm,nmpars,coarse,simulation.mRho,simulation.mMu,simulation.mLambda );
-
-      float_sw4 freq;
-      //mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
-
-      for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
-      {
-         freq= mopt->get_freq_gradsmooth()>0.? mopt->get_freq_gradsmooth() : GlobalSources[e][0]->getFrequency();
-         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
-                            mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), 
-                            freq, e, simulation.getRank());
-      }
-      delete[] coarse;
-   }
-   MPI_Barrier(MPI_COMM_WORLD);
-
-   //cout << "pre limit_x 1: nmpard=" << nmpard << " nmpars=" << nmpars << endl;
    mopt->m_mp->limit_x( nmpard, xm, nmpars, &xs[nspar], mopt->m_vs_min, mopt->m_vs_max, 
                         mopt->m_vp_min, mopt->m_vp_max );
    mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
@@ -264,7 +242,24 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    }
    VERIFY2( ok, "ERROR: compute_f Material check failed\n" );
 
-   MPI_Barrier(MPI_COMM_WORLD);
+//solveTT
+   if( mopt->m_win_mode == 1 )
+   {
+      float_sw4* coarse=new float_sw4[nmpars];
+      //mopt->m_mp->get_base_parameters(nmpard,xm,nmpars,coarse,simulation.mRho,simulation.mMu,simulation.mLambda );
+
+      float_sw4 freq;
+      mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
+      for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
+      {
+         freq= mopt->get_freq_gradsmooth()>0.? mopt->get_freq_gradsmooth() : GlobalSources[e][0]->getFrequency();
+         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
+                            mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), 
+                            freq, e, simulation.getRank());
+      }
+      delete[] coarse;
+      MPI_Barrier(MPI_COMM_WORLD);
+   }
 
    //   // Debug
    //   int myid=simulation.getRank();
@@ -471,16 +466,24 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    //rho,mu,lambda local volumes get updated
    //mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda,
    //  mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode());
-
+   mopt->m_mp->limit_x( nmpard, xm, nmpars, &xs[nspar], mopt->m_vs_min, mopt->m_vs_max, 
+                        mopt->m_vp_min, mopt->m_vp_max );
+   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
+  if( mopt->m_mcheck )
+   {
+      int er=simulation.check_material( rho, mu, lambda, ok, 2 );
+   }
+   //   MPI_Barrier(MPI_COMM_WORLD);
+   VERIFY2( ok, "ERROR: Material check failed\n" );
 
    if( mopt->m_win_mode == 1 )
    {
       float_sw4 freq;
       float_sw4* coarse=new float_sw4[nmpars];
-      mopt->m_mp->get_base_parameters(nmpard,xm,nmpars,coarse,simulation.mRho,simulation.mMu,simulation.mLambda );
+      //mopt->m_mp->get_base_parameters(nmpard,xm,nmpars,coarse,simulation.mRho,simulation.mMu,simulation.mLambda );
       cout << "solveTT: nmpard=" << nmpard << " nmpars=" << nmpars << endl;
 
-      //mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
+      mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
       checkMinMax(nmpars/2, coarse, "coarse2:");
       for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
       {
@@ -493,21 +496,12 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    }
    checkMinMax(nmpars, &xs[nspar], "compute_f_and_df: xs");
 
-   mopt->m_mp->limit_x( nmpard, xm, nmpars, &xs[nspar], mopt->m_vs_min, mopt->m_vs_max, 
-                        mopt->m_vp_min, mopt->m_vp_max );
-   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
-
    //mopt->m_mp->get_material( nmpard, xm, nmpars, xm, rho, mu, lambda );
 
    //mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda,
    //  mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode());
 
-  if( mopt->m_mcheck )
-   {
-      int er=simulation.check_material( rho, mu, lambda, ok, 2 );
-   }
-   //   MPI_Barrier(MPI_COMM_WORLD);
-   VERIFY2( ok, "ERROR: Material check failed\n" );
+
 
 // Run forward problem with guessed source, upred_saved,ucorr_saved are allocated
 // inside solve_allpars. U and Um are final time solutions, to be used as 'initial' data
