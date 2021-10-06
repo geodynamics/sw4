@@ -1218,9 +1218,15 @@ void rhs4th3fortsgstr_ci(
                                      jlast - 1, k1, k2 + 1);
     forall3asyncAT<__LINE__>(IJK_AT, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
+#ifdef ENABLE_CUDA
     Range<16> I(ifirst + 2, ilast - 1);
     Range<4> J(jfirst + 2, jlast - 1);
     Range<4> K(k1, k2 + 1);
+#else
+    Range<64> I(ifirst + 2, ilast - 1);
+    Range<2> J(jfirst + 2, jlast - 1);
+    Range<2> K(k1, k2 + 1);
+#endif
     forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #endif
 #else
@@ -1531,9 +1537,15 @@ void rhs4th3fortsgstr_ci(
     SW4_MARK_END("rhs4th3fortsgstr_ci::LOOP1");
     if (onesided[4] == 1) {
 #if !defined(RAJA_ONLY)
+#ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
       Range<4> K(1, 7);
+#else
+      Range<64> I(ifirst + 2, ilast - 1);
+      Range<2> J(jfirst + 2, jlast - 1);
+      Range<2> K(1, 7);
+#endif
       forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
       RAJA::RangeSegment k_range(1, 6 + 1);
@@ -1865,9 +1877,15 @@ void rhs4th3fortsgstr_ci(
     if (onesided[5] == 1) {
       // printf("START LOOP3 \n");
 #if !defined(RAJA_ONLY)
+#ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
       Range<4> K(nk - 5, nk + 1);
+#else
+      Range<64> I(ifirst + 2, ilast - 1);
+      Range<2> J(jfirst + 2, jlast - 1);
+      Range<2> K(nk - 5, nk + 1);
+#endif
       SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP3");
       forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else

@@ -1,2 +1,2 @@
 #!/bin/bash
-rocprof  --trace-start off --sys-trace --hsa-trace -o RocProf_${SLURM_PROCID}.csv $1 $2
+rocprof  --trace-start off --sys-trace --hsa-trace -o RocProf3_${SLURM_PROCID}.csv $1 $2
