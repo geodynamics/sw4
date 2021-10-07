@@ -476,6 +476,15 @@ __launch_bounds__(WGS, OCC) __global__
   if ((tid0 < N0) && (tid1 < N1) && (tid2 < N2)) f(t, tid0, tid1, tid2);
 }
 
+template <int WGS,int OCC, typename Func>
+__launch_bounds__(WGS, OCC) __global__
+    void forall3kernelV2(const int start0, const int N0, const int start1,
+                       const int N1, const int start2, const int N2, Func f) {
+  int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
+  int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
+  int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
+  if ((tid0 < N0) && (tid1 < N1) && (tid2 < N2)) f(tid0, tid1, tid2);
+}
 template <int N, typename Tag, typename T1, typename T2, typename T3,
           typename LoopBody>
 void forall3async(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {

@@ -166,9 +166,15 @@ void memvar_corr_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   //  RAJA::RangeSegment c_range(0, 3);
 
 #if !defined(RAJA_ONLY)
+#ifdef ENABLE_CUDA
   Range<16> I(ifirst, ilast + 1);
   Range<4> J(jfirst, jlast + 1);
   Range<4> K(k1, k2 + 1);
+#else
+  Range<64> I(ifirst, ilast + 1);
+  Range<2> J(jfirst, jlast + 1);
+  Range<2> K(k1, k2 + 1);
+#endif
   forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
   RAJA::kernel<MPFC_POL_ASYNC>(

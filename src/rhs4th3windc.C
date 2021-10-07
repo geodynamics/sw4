@@ -449,8 +449,9 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
       Range<2> J(jfirst + 2, jlast - 1);
       Range<2> K(kfirstw, klastw + 1);
 #endif
+//Tclass<81> t1; 
 forall3async(
-           I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+           I, J, K, [=] RAJA_DEVICE( int i, int j, int k) {
 #else
       RAJA::RangeSegment k_range(kfirstw, klastw + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
@@ -799,8 +800,9 @@ forall3async(
       Range<2> J(jfirst + 2, jlast - 1);
       Range<2> K(kfirstw, klastw + 1);
 #endif
+//Tclass<91> t2;
 forall3async(
-           I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+            I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
       RAJA::RangeSegment k_range(kfirstw, klastw + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
