@@ -404,6 +404,25 @@ void EW::addsgd4c_ci(
     // 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
     // 	    {
 
+#if !defined(RAJA_ONLY)
+      // LOOP -1
+      //
+      // 32,4,2 is 4% slower. 32 4 4 does not fit
+#ifdef ENABLE_CUDA
+      Range<16> I(ifirst + 2, ilast - 1);
+      Range<4> J(jfirst + 2, jlast - 1);
+      Range<6> K(kfirst + 2, klast - 1);
+#endif
+#ifdef ENABLE_HIP
+      Range<64> I(ifirst + 2, ilast - 1);
+      Range<2> J(jfirst + 2, jlast - 1);
+      Range<2> K(kfirst + 2, klast - 1);
+#endif
+forall3async(
+           I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+float_sw4 irhoj = beta / (rho(i, j, k) * jac(i, j, k));
+        for (int c=0;c<3;c++)
+#else
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
     RAJA::RangeSegment k_range(kfirst + 2, klast - 1);
@@ -412,6 +431,7 @@ void EW::addsgd4c_ci(
         RAJA::make_tuple(c_range, k_range, j_range, i_range),
         [=] RAJA_DEVICE(int c, int k, int j, int i) {
           float_sw4 irhoj = beta / (rho(i, j, k) * jac(i, j, k));
+#endif
           {
             up(c, i, j, k) -=
                 irhoj *
