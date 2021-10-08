@@ -167,6 +167,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
         mpirun_cmd="srun -p amdMI100 -n1 "
     elif 'login' in node_name:
         os.environ["PSM2_DEVICES"] = ""
+        os.environ["ROMIO_FSTYPE_FORCE"]="ufs:"
         if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="srun -N 1 -A GEO130 -t 30 -n 4 -c16 --gpus-per-task=1 --gpu-bind=closest -p ecp "
     elif 'lassen' in node_name:
