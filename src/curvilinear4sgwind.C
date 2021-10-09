@@ -32,7 +32,7 @@
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 
 #ifdef ENABLE_CUDA
-#define RAJA_ONLY_2 1
+//#define RAJA_ONLY_2 1
 #endif
 #include <sys/types.h>
 
@@ -2507,7 +2507,7 @@ void curvilinear4sgwind(
         lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
       });
     }
-    // SYNC_DEVICE;
+     SYNC_DEVICE;
   }
 #ifdef PEEKS_GALORE
   SW4_PEEK;
