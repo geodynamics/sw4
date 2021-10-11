@@ -37,8 +37,16 @@ class Mopt
    void processMtypx( char* buffer );
    void processMfileio( char* buffer );
    void processMregularize( char* buffer );
+   //added to init shared model
+   int m_nx, m_ny, m_nz;
+   int m_init, m_varcase;
+   float_sw4 m_amp, m_omega;
+   char m_file[256]=" \0";
+
  public:
    Mopt( EW* a_ew );
+   ~Mopt();
+   
    bool parseInputFileOpt( std::string filename );
    void get_scalefactors( double& rhoscale, double& muscale,
 			  double& lambdascale );
@@ -61,6 +69,8 @@ class Mopt
    const string& getPath() const {return m_path;}
    EW* get_EWptr() const {return m_ew;}
    void set_baseMat(double* xs, double* xm );
+   void init_shared_model();
+
 
    enum Misfittype {L2,CROSSCORR};
    Misfittype m_misfit;
@@ -84,7 +94,7 @@ class Mopt
    int m_win_mode;
 
    MaterialParameterization *m_mp;   
-   //   MaterialParCartesian *m_mpcart0;   
+   MaterialParameterization *m_mp_shared;   
    std::vector<Image*> m_image_files;
    std::vector<Image3D*> m_3dimage_files;
    std::vector<SfileOutput*> m_sfiles;
@@ -99,6 +109,7 @@ class Mopt
    double *m_xs0; // initial material perturbation, shared
    double *m_xm0; // initial material perturbation, distributed
    bool m_write_dfm;
+
 };
 
 #endif

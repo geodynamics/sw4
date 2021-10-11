@@ -394,6 +394,8 @@ TimeSeries::~TimeSeries()
     }
     delete [] mRecordedFloats;
   }
+
+  //if(m_fid_ptr) delete m_fid_ptr;
 }
 
 //--------------------------------------------------------------

@@ -127,6 +127,8 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
       m_nmd_global = 0;
    }
 
+   std::cout << ">>>>>>>>> MaterialParCart: global=" << m_global << " nms=" << m_nms << " m_nmd_global=" << m_nmd_global << std::endl;
+
 /*
    // reinstored 
    m_rho.define(0,nx+1,0,ny+1,0,nz+1);
@@ -2132,7 +2134,7 @@ std::cout << "reach end of smooth_gradient" << std::endl;
 
 }
 
-/*
+
 void MaterialParCart::get_base_parameters( int nmd, double* xmd, int nms,
 					   double* xms, std::vector<Sarray>& a_rho, 
 					   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
@@ -2142,7 +2144,7 @@ void MaterialParCart::get_base_parameters( int nmd, double* xmd, int nms,
    interpolate_base_parameters( nmd, xmd, nms, xms, a_rho, a_mu, a_lambda );
    
 }
-*/
+
 
 void MaterialParCart::interpolate_base_parameters( int nmd, double* xmd, int nms,
 						   double* xms, std::vector<Sarray>& a_rho, 
@@ -2159,9 +2161,9 @@ void MaterialParCart::interpolate_base_parameters( int nmd, double* xmd, int nms
    std::cout << "lambda min=" << a_lambda[0].minimum() << " max=" << a_lambda[0].maximum() << std::endl;
    std::cout << "mu min=" << a_mu[0].minimum() << " max=" << a_mu[0].maximum() << std::endl;
    
-   Sarray m_rho(m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
-   Sarray m_cs( m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
-   Sarray m_cp( m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
+   Sarray m_rho(0,m_nx+1,0,m_ny+1,0,m_nz+1);
+   Sarray m_cs(0,m_nx+1,0,m_ny+1,0,m_nz+1);
+   Sarray m_cp(0,m_nx+1,0,m_ny+1,0,m_nz+1);
 
    m_ew->interpolate_base_to_coarse_vel( m_nx, m_ny, m_nz, m_xmin, m_ymin, m_zmin, m_hx, m_hy, m_hz,
 				    m_rho, m_cs, m_cp);

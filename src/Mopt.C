@@ -87,6 +87,13 @@ Mopt::Mopt( EW* a_ew )
    m_write_dfm = false;
 }  
 
+Mopt::~Mopt()
+{
+   if(m_sfs) delete m_sfs;
+   if(m_xs0!=NULL) delete [] m_xs0;
+   
+}
+
 //-----------------------------------------------------------------------
 bool Mopt::parseInputFileOpt( std::string filename )
 {
@@ -357,8 +364,12 @@ void Mopt::processMaterialParCart( char* buffer )
 
    if( m_mp != NULL )
       cout << "Error: more than one material parameterization command" << endl;
+    m_init =init;
 
    // Make sure the material grid is coarser than the global grid
+   cout << "global grid: nx=" << m_ew->m_global_nx[0] << " ny=" << m_ew->m_global_ny[0] << " nz=" << m_ew->m_global_nz[0] << endl;
+   cout << "material grid: nx=" << nx << " ny=" << ny << " nz=" << nz << endl;
+
    VERIFY2( nx <= m_ew->m_global_nx[0] && ny <= m_ew->m_global_ny[0] && nz <= m_ew->m_global_nz[0], "MaterialParCart: The material grid must be coarser than the global grid")
 
    int varcase=1;
@@ -368,7 +379,18 @@ void Mopt::processMaterialParCart( char* buffer )
       varcase=3;
    else if( vponly )
       varcase=4;
-   m_mp = new MaterialParCart( m_ew, nx, ny, nz, init, varcase, file, amp, omega, shared );
+
+     m_varcase = varcase;
+     strncpy(m_file, file, 256);
+     m_amp = amp;
+     m_omega = omega;
+     m_nx = nx;
+     m_ny = ny;
+     m_nz = nz;
+
+      m_mp = new MaterialParCart( m_ew, nx, ny, nz, init, varcase, file, amp, omega, shared );
+
+
    //   if( !shared )
    //      m_mp = new MaterialParCart( m_ew, nx, ny, nz, init, varcase, file, amp, omega );
    //   else
@@ -385,6 +407,12 @@ void Mopt::processMaterialParCart( char* buffer )
    // use for material projection only:
    //   m_mpcart0 = new MaterialParCartesian( m_ew, nx, ny, nz, 0, "");
 } // end processMaterialParCart
+
+
+void Mopt::init_shared_model()
+{
+m_mp_shared = new MaterialParCart( m_ew, m_nx, m_ny, m_nz, m_init, m_varcase, m_file, m_amp, m_omega, true );
+}
 
 //-----------------------------------------------------------------------
 void Mopt::processMrun( char* buffer )
@@ -1434,5 +1462,4 @@ int Mopt::get_pseudo_hessian_case( )
    else
       return 0;
 }
-
 

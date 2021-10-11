@@ -947,6 +947,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 	    cout << " .. return code "  << retcode << " misfit changed from " << f << " to " << fp << endl;
 		cout << "line search alpha=" << alpha << endl;
 		checkMinMax(ns, ds, "ds");
+      checkMinMax(nmpard, dm, "dm");
          }
          
       }

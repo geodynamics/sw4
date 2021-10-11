@@ -17,6 +17,8 @@ protected:
    std::string m_path;
 public:
    MaterialParameterization( EW* a_ew, char* fname );
+   virtual ~MaterialParameterization();
+   
    virtual void get_material( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
 			      std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )=0;
    virtual void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
@@ -26,11 +28,9 @@ public:
 	//		      std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda, 
    //            float_sw4 vp_min=-100, float_sw4 vp_max=-100, float_sw4 vs_min=-100, float_sw4 vs_max=-100,int wave_mode=2)=0;
 
-   //virtual void get_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
-	//			std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )=0;
             
-   //virtual void get_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
-	//			std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )=0;
+   virtual void get_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
+				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )=0;
 
    virtual void get_gradient( int nmd, double* xmd, int nms, double* xms, double* dfs, double* dfm,
 			      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,

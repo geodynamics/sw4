@@ -458,7 +458,7 @@ void MaterialParCartesianVsVp::subtract_base_mtrl( int nms, double* xms )
    
 }
 
-/*
+
 void MaterialParCartesianVsVp::get_base_parameters( int nmd, double* xmd, int nms,
 					   double* xms, std::vector<Sarray>& a_rho, 
 					   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
@@ -468,9 +468,9 @@ void MaterialParCartesianVsVp::get_base_parameters( int nmd, double* xmd, int nm
    interpolate_base_parameters( nmd, xmd, nms, xms, a_rho, a_mu, a_lambda );
    
 }
-*/
 
-/*
+
+
 void MaterialParCartesianVsVp::interpolate_base_parameters( int nmd, double* xmd, int nms,
 						   double* xms, std::vector<Sarray>& a_rho, 
 			 std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
@@ -521,7 +521,7 @@ void MaterialParCartesianVsVp::interpolate_base_parameters( int nmd, double* xmd
     std::cout << "cpmin=" << cpmin << " cpmax=" << cpmax << " csmin=" << csmin << " csmax=" << csmax << std::endl;
 
 }
-*/
+
 
 //-----------------------------------------------------------------------
 void MaterialParCartesianVsVp::smooth_gradient(double* dfs, std::vector<Sarray>& a_Rho, std::vector<Sarray>& a_Mu, std::vector<Sarray>& a_Lambda, float_sw4 freq, float_sw4 sz)

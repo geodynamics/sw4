@@ -242,6 +242,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    }
    VERIFY2( ok, "ERROR: compute_f Material check failed\n" );
 
+/*
 //solveTT
    if( mopt->m_win_mode == 1 )
    {
@@ -260,6 +261,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
       delete[] coarse;
       MPI_Barrier(MPI_COMM_WORLD);
    }
+*/
 
    //   // Debug
    //   int myid=simulation.getRank();
@@ -454,7 +456,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    vector<Sarray> rho(ng), mu(ng), lambda(ng);
 
    int nms, nmd, nmpard_global;
-   int ok=1;
+   
 
      //for( int m = 0 ; m < GlobalObservations[0].size() ; m++ ) 
         //if(GlobalObservations[0][m]->myPoint()) cout << "obs check station=" << GlobalObservations[0][m]->getStationName() << " start time=" << GlobalObservations[0][m]->getStartTime() << " shift=" <<  GlobalObservations[0][m]->getTimeShift() << endl;
@@ -469,6 +471,10 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    mopt->m_mp->limit_x( nmpard, xm, nmpars, &xs[nspar], mopt->m_vs_min, mopt->m_vs_max, 
                         mopt->m_vp_min, mopt->m_vp_max );
    mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
+
+      MPI_Barrier(MPI_COMM_WORLD);
+
+   int ok=1;
   if( mopt->m_mcheck )
    {
       int er=simulation.check_material( rho, mu, lambda, ok, 2 );
@@ -479,20 +485,25 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    if( mopt->m_win_mode == 1 )
    {
       float_sw4 freq;
-      float_sw4* coarse=new float_sw4[nmpars];
-      //mopt->m_mp->get_base_parameters(nmpard,xm,nmpars,coarse,simulation.mRho,simulation.mMu,simulation.mLambda );
-      cout << "solveTT: nmpard=" << nmpard << " nmpars=" << nmpars << endl;
+      int nmpars_shared, nmpard_shared, nmpard_global_shared;
+      
+      mopt->init_shared_model();
+      mopt->m_mp_shared->get_nr_of_parameters( nmpars_shared, nmpard_shared, nmpard_global_shared );
+      
+      float_sw4* coarse=new float_sw4[nmpars_shared];
+      mopt->m_mp_shared->get_base_parameters( nmpard_shared,xm,nmpars_shared,coarse,simulation.mRho,simulation.mMu,simulation.mLambda );
+      cout << "solveTT: nmpard_shared=" << nmpard_shared << " nmpars_shared=" << nmpars_shared << endl;
 
-      mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
-      checkMinMax(nmpars/2, coarse, "coarse2:");
+      checkMinMax(nmpars_shared/2, coarse, "coarse2:");
       for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
       {
          freq= mopt->get_freq_gradsmooth()>0.? mopt->get_freq_gradsmooth() : GlobalSources[e][0]->getFrequency();
-         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
+         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars_shared, mopt->m_mp_shared, 
                             mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), freq, e, simulation.getRank());
       }
       MPI_Barrier(MPI_COMM_WORLD);
       delete[] coarse;
+      delete mopt->m_mp_shared;
    }
    checkMinMax(nmpars, &xs[nspar], "compute_f_and_df: xs");
 
@@ -669,10 +680,11 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       //save_array_to_disk(nmpars, dfsevent, "dfsevent.bin");
       //mopt->m_mp->smooth_gradient(dfsevent); // needs to act on dfsevent instead of dfs
    
-      checkMinMax(nmpars, dfsevent, "dfsevent");
+      //checkMinMax(nmpars, dfsevent, "dfsevent");
 
     float_sw4 freq= mopt->get_freq_gradsmooth()>0.? mopt->get_freq_gradsmooth() : GlobalSources[e][0]->getFrequency();
-    mopt->m_mp->smooth_gradient(dfsevent, rho, mu, lambda, freq, GlobalSources[e][0]->getZ0()); // needs to act on dfsevent instead of dfs
+    //if(!m_filter_gradient)
+    //  mopt->m_mp->smooth_gradient(dfsevent, rho, mu, lambda, freq, GlobalSources[e][0]->getZ0()); // needs to act on dfsevent instead of dfs
     //save_array_to_disk(nmpars, dfsevent, "dfsevent_smoothed.bin");
 
       for( int m=0 ; m < nmpars ; m++ )
@@ -681,7 +693,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 	      dfm[m] += dfmevent[m];
 
       checkMinMax(nmpars, &dfs[nspar], "dfs after smooth_gradient");
-      
+      checkMinMax(nmpard, dfm, "dfm after smooth_gradient");
+
 // 3. Give back memory
          for( unsigned int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
             delete diffs[m];
@@ -698,7 +711,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 
       //cout << "pre limit_df: nmpard=" << nmpard << " nmpars=" << nmpars << endl;
       // comment out by Wei for debugging
-      //mopt->m_mp->limit_df( nmpard, dfm, nmpars, &dfs[nspar]);
+      mopt->m_mp->limit_df( nmpard, dfm, nmpars, &dfs[nspar]);
 
       double mftmp = f;
       MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,simulation.m_1d_communicator);
@@ -706,7 +719,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       // Sum gradient from different events, when these are executed
       // on different processor partitions.
 
-      /* diable by wei for debugging
+      // diable by wei for debugging
 
       mftmp=f;
       MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,simulation.m_cross_communicator);
@@ -752,7 +765,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          normalize_gradient_ph( pseudo_hessian, gRho, gMu, gLambda, eps, phcase,
                                 simulation.m_1d_communicator );
       }
-      */
+      
 
    }  // loop over events
 
@@ -2031,7 +2044,7 @@ MPI_Barrier(MPI_COMM_WORLD);  // added for debugging
 	   int nspar=mopt->m_nspar;
 // ns - Total number of non-distributed (=shared) parameters.
            int ns = nmpars + nspar;
-	   double *xs = new double[ns];
+      double *xs = new double[ns];
 
 // Default initial guess, the input source, stored in GlobalSources[0], will do nothing if nspar=0.
            double xspar[11];
@@ -2278,6 +2291,9 @@ MPI_Barrier(MPI_COMM_WORLD);  // added for debugging
 		   << "============================================================" << endl;
          cout << " time from t0=" << MPI_Wtime()-t0 << endl;
 	   }
+         
+   if(xs!=NULL) delete[] xs;
+   if(xm!=NULL) delete[] xm;
 	}
      }
 
@@ -2288,6 +2304,10 @@ MPI_Barrier(MPI_COMM_WORLD);  // added for debugging
 	   << "============================================================" << endl;
   if( status == 2 )
      status = 0;
+
+
+
+
 // Stop MPI
   MPI_Finalize();
   return 0;

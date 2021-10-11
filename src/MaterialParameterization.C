@@ -22,6 +22,11 @@ MaterialParameterization::MaterialParameterization( EW* a_ew, char* fname )
    m_path = "./";
 }
 
+MaterialParameterization::~MaterialParameterization()
+{
+if(m_filename) delete m_filename;
+}
+
 //-----------------------------------------------------------------------
 void MaterialParameterization::get_nr_of_parameters( int& nms, int& nmd,
 						     int& nmd_global ) const
