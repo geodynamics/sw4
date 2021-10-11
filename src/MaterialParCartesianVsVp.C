@@ -459,15 +459,15 @@ void MaterialParCartesianVsVp::subtract_base_mtrl( int nms, double* xms )
 }
 
 
-void MaterialParCartesianVsVp::get_base_parameters( int nmd, double* xmd, int nms,
-					   double* xms, std::vector<Sarray>& a_rho, 
-					   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
-{
-   std::cout << "VsVp::get_base_parameters" << std::endl;
+//void MaterialParCartesianVsVp::get_base_parameters( int nmd, double* xmd, int nms,
+//					   double* xms, std::vector<Sarray>& a_rho, 
+//					   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
+//{
+//   std::cout << "VsVp::get_base_parameters" << std::endl;
    
-   interpolate_base_parameters( nmd, xmd, nms, xms, a_rho, a_mu, a_lambda );
+//   interpolate_base_parameters( nmd, xmd, nms, xms, a_rho, a_mu, a_lambda );
    
-}
+//}
 
 
 

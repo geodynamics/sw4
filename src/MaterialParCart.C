@@ -2135,17 +2135,17 @@ std::cout << "reach end of smooth_gradient" << std::endl;
 }
 
 
-void MaterialParCart::get_base_parameters( int nmd, double* xmd, int nms,
-					   double* xms, std::vector<Sarray>& a_rho, 
-					   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
-{
-   std::cout << "VsVp::get_base_parameters" << std::endl;
+//void MaterialParCart::get_base_parameters( int nmd, double* xmd, int nms,
+//					   double* xms, std::vector<Sarray>& a_rho, 
+//					   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
+//{
+//   std::cout << "VsVp::get_base_parameters" << std::endl;
    
-   interpolate_base_parameters( nmd, xmd, nms, xms, a_rho, a_mu, a_lambda );
+//   interpolate_base_parameters( nmd, xmd, nms, xms, a_rho, a_mu, a_lambda );
    
-}
+//}
 
-
+/*
 void MaterialParCart::interpolate_base_parameters( int nmd, double* xmd, int nms,
 						   double* xms, std::vector<Sarray>& a_rho, 
 			 std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
@@ -2200,6 +2200,7 @@ void MaterialParCart::interpolate_base_parameters( int nmd, double* xmd, int nms
     std::cout << "cpmin=" << cpmin << " cpmax=" << cpmax << " csmin=" << csmin << " csmax=" << csmax << std::endl;
 
 }
+*/
 
 /*
 void MaterialParCart::get_material( int nmd, double* xmd, int nms,

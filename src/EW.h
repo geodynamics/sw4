@@ -1432,6 +1432,7 @@ Sarray mCcurv; // Anisotropic material with metric (on curvilinear grid).
 vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs, m_Mlcs;
 
 vector<float_sw4> m_curviRefLev; 
+bool m_filter_gradient;
 
 private:
 void preprocessSources( vector<vector<Source*> >& a_GlobalSources );
@@ -1716,7 +1717,7 @@ int m_cgstepselection, m_cgvarcase;
 bool m_cgfletcherreeves, m_do_linesearch;
 bool m_opt_testing;
 int m_opt_method, m_lbfgs_m;
-bool m_zerograd_at_src, m_filter_gradient;
+bool m_zerograd_at_src;
 int m_zerograd_pad, m_gradfilter_it;
 float_sw4 m_gradfilter_ep;
 

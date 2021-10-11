@@ -710,12 +710,6 @@ int MaterialParAllpts::get_varcase()
       return 0;
 }
 
-void MaterialParAllpts::get_base_parameters( int nmd, double* xmd, int nms,
-					   double* xms, std::vector<Sarray>& a_rho, 
-					   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
-{
-}
-
 
 void MaterialParAllpts::get_material( int nmd, double* xmd, int nms,
 					     double* xms, std::vector<Sarray>& a_rho,

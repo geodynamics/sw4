@@ -491,7 +491,9 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       mopt->m_mp_shared->get_nr_of_parameters( nmpars_shared, nmpard_shared, nmpard_global_shared );
       
       float_sw4* coarse=new float_sw4[nmpars_shared];
-      mopt->m_mp_shared->get_base_parameters( nmpard_shared,xm,nmpars_shared,coarse,simulation.mRho,simulation.mMu,simulation.mLambda );
+
+      mopt->m_mp_shared->get_parameters( nmpard_shared,xm,nmpars_shared,coarse, simulation.mRho,simulation.mMu,simulation.mLambda, 5);
+      //mopt->m_mp_shared->get_base_parameters( nmpard_shared,xm,nmpars_shared,coarse,simulation.mRho,simulation.mMu,simulation.mLambda );
       cout << "solveTT: nmpard_shared=" << nmpard_shared << " nmpars_shared=" << nmpars_shared << endl;
 
       checkMinMax(nmpars_shared/2, coarse, "coarse2:");
@@ -683,9 +685,9 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       //checkMinMax(nmpars, dfsevent, "dfsevent");
 
     float_sw4 freq= mopt->get_freq_gradsmooth()>0.? mopt->get_freq_gradsmooth() : GlobalSources[e][0]->getFrequency();
-    //if(!m_filter_gradient)
-    //  mopt->m_mp->smooth_gradient(dfsevent, rho, mu, lambda, freq, GlobalSources[e][0]->getZ0()); // needs to act on dfsevent instead of dfs
-    //save_array_to_disk(nmpars, dfsevent, "dfsevent_smoothed.bin");
+    if(!simulation.m_filter_gradient)
+      mopt->m_mp->smooth_gradient(dfsevent, rho, mu, lambda, freq, GlobalSources[e][0]->getZ0()); // needs to act on dfsevent instead of dfs
+      //save_array_to_disk(nmpars, dfsevent, "dfsevent_smoothed.bin");
 
       for( int m=0 ; m < nmpars ; m++ )
 	      dfs[m+nspar] += dfsevent[m];
