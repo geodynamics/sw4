@@ -2448,7 +2448,9 @@ void curvilinear4sg_ci(
 #ifdef ENABLE_HIP
 #pragma unroll 8
 #endif
-          for (int q = nk - 7; q <= nk; q++) {
+	  for (int qq = 0; qq<8 ; qq++) {
+	    int q = nk-qq;
+          //for (int q = nk - 7; q <= nk; q++) {
             mucofu2 = 0;
             mucofuv = 0;
             mucofuw = 0;
@@ -2459,7 +2461,9 @@ void curvilinear4sg_ci(
 #ifdef ENABLE_HIP
 #pragma unroll 8
 #endif
-            for (int m = nk - 7; m <= nk; m++) {
+	    for (int mm = 0; mm <8; mm++) {
+	      int m = nk-mm;
+            //for (int m = nk - 7; m <= nk; m++) {
               mucofu2 += acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
                          ((2 * mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
                               strx(i) * met(2, i, j, m) * strx(i) +
@@ -2505,17 +2509,17 @@ void curvilinear4sg_ci(
 	  sma[2] = r3;
 
 	}, [=] RAJA_DEVICE(Tclass<5> t, double *sma, int i, int j, int k) { // LAMBDA 3
+
+      // Ghost point values, only nonzero for k=nk.
+      // 72 ops., tot=4011
+#ifndef SW4_GHCOF_NO_GP_IS_ZERO
 	    float_sw4 r1 = sma[0];
 	    float_sw4 r2 = sma[1];
 	    float_sw4 r3 = sma[2];
 	    float_sw4 istrx = sma[3];
 	    float_sw4 istry = sma[4];
 	    float_sw4 istrxy = istry * istrx;
-
-      // Ghost point values, only nonzero for k=nk.
-      // 72 ops., tot=4011
-#ifndef SW4_GHCOF_NO_GP_IS_ZERO
-          float_Sw4 mucofu2 = ghcof_no_gp(nk - k + 1) *
+	    float_sw4 mucofu2 = ghcof_no_gp(nk - k + 1) *
                     ((2 * mu(i, j, nk) + la(i, j, nk)) * met(2, i, j, nk) *
                          strx(i) * met(2, i, j, nk) * strx(i) +
                      mu(i, j, nk) * (met(3, i, j, nk) * stry(j) *
