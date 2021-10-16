@@ -528,9 +528,9 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    
    float_sw4 *dfsevent, *dfmevent;
    if( nmpars > 0 )
-      { dfsevent = new float_sw4[nmpars]; simulation.counter_addmem(nmpars, sizeof(float_sw4)); }
+      { dfsevent = new float_sw4[nmpars]; simulation.counter_addmem(nmpars); }
    if( nmpard > 0 )
-      { dfmevent = new float_sw4[nmpard]; simulation.counter_addmem(nmpars, sizeof(float_sw4)); }
+      { dfmevent = new float_sw4[nmpard]; simulation.counter_addmem(nmpars); }
 
    for( int m=0 ; m < nmpars ; m++ )
       dfs[m+nspar] = 0;
@@ -2039,7 +2039,7 @@ int main(int argc, char **argv)
 	   mp->get_nr_of_parameters( nmpars, nmpard, nmpard_global );
 
 	   double* xm=NULL;
-      if( nmpard > 0 ) { xm = new double[nmpard]; simulation.counter_addmem(nmpars, sizeof(double)); }
+      if( nmpard > 0 ) { xm = new double[nmpard]; simulation.counter_addmem(nmpars); }
 
 // nspar - Number of parameters in source description. These are always non-distributed (=shared)
 	   int nspar=mopt->m_nspar;
@@ -2197,9 +2197,9 @@ int main(int argc, char **argv)
                   // Compute and save gradient if images are defined)
 
                   if( nspar > 0 )
-                     { dfs =new double[nspar]; simulation.counter_addmem(nspar, sizeof(double)); }
+                     { dfs =new double[nspar]; simulation.counter_addmem(nspar); }
                   if( nmpard > 0 )
-                     { dfm =new double[nmpard]; simulation.counter_addmem(nmpard, sizeof(double)); }
+                     { dfm =new double[nmpard]; simulation.counter_addmem(nmpard); }
 
                   compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, 
                                     GlobalSources, GlobalTimeSeries, GlobalObservations, 

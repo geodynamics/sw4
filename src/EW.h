@@ -1351,7 +1351,7 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void grid_information( int g );
    void check_ic_conditions( int gc, vector<Sarray>& a_U );
 
-   void counter_addmem(int n, int size);
+   void counter_addmem(int n);
    void print_memstatus();
 
 //

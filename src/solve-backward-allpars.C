@@ -76,7 +76,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       gMu[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
       gLambda[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
 
-      counter_addmem((ilast-ifirst+1)*(jlast-jfirst+1)*(klast-kfirst+1)*3*9, sizeof(float_sw4));
+      counter_addmem((ilast-ifirst+1)*(jlast-jfirst+1)*(klast-kfirst+1)*3*9);
 
       gRho[g].set_to_zero();
       gMu[g].set_to_zero();
@@ -378,7 +378,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       delete point_sources[s];
 
    // Wei added
-   counter_addmem(-(ilast-ifirst+1)*(jlast-jfirst+1)*(klast-kfirst+1)*3*9, sizeof(float_sw4));
+   counter_addmem(-(ilast-ifirst+1)*(jlast-jfirst+1)*(klast-kfirst+1)*3*9);
       MPI_Barrier(MPI_COMM_WORLD);
 }
 

@@ -536,6 +536,7 @@ EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
   m_filter_gradient(false),
   m_gradfilter_ep(0.08),
   m_gradfilter_it(5),
+  m_mempe(0),
   NO_TOPO(1e38)
 {
    MPI_Comm_rank(MPI_COMM_WORLD, &m_myRank);
@@ -8478,13 +8479,13 @@ void EW::evalLupt(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_
                 m_sg_str_x[grid], m_sg_str_y[grid], m_sg_str_z[grid], i, j, k );
 }
 
-void EW::counter_addmem(int n, int size)
+void EW::counter_addmem(int n)
 {
    std::cout << "add elements=" << n << std::endl;
-   m_mempe += n*size;
+   m_mempe += n;
 }
 
 void EW::print_memstatus()
 {
-   std::cout << "mempe (bytes)=" << m_mempe << std::endl;
+   std::cout << "mempe=" << m_mempe << std::endl;
 }

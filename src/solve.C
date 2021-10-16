@@ -132,7 +132,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       Um[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       U[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
 
-      counter_addmem((ilast-ifirst+1)*(jlast-jfirst+1)*(klast-kfirst+1)*3*6, sizeof(float_sw4));
+      counter_addmem((ilast-ifirst+1)*(jlast-jfirst+1)*(klast-kfirst+1)*3*6);
       //
       F[g].set_to_zero();
       Lu[g].set_to_zero();
@@ -1239,7 +1239,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    for( int s = 0 ; s < point_sources.size(); s++ )
       delete point_sources[s];
 
-   counter_addmem(-(ilast-ifirst+1)*(jlast-jfirst+1)*(klast-kfirst+1)*3*6, sizeof(float_sw4));
+   counter_addmem(-(ilast-ifirst+1)*(jlast-jfirst+1)*(klast-kfirst+1)*3*6);
 
    MPI_Barrier(m_1d_communicator);
 
