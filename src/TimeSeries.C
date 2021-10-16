@@ -2766,6 +2766,7 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
       filename = m_fileName + filename;
    }
 
+
    TimeSeries* retval = new TimeSeries( a_ew, filename, m_staName, m_mode, m_sacFormat, m_usgsFormat, m_hdf5Format, hdf5name, 
 					mX, mY, mZ, m_zRelativeToTopography, mWriteEvery, mDownSample, m_xyzcomponent, m_event );
    retval->m_t0    = m_t0;
@@ -3810,11 +3811,11 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
     m_ew->get_utc(utcrefsim, m_event );
     
     //recording start time
-    print_utc();
+    //print_utc();
 
     m_t0 = utc_distance( utcrefsim, m_utc );
     
-    cout << "readsachdf5:  m_t0=" << m_t0 << endl;
+    //cout << "readsachdf5:  m_t0=" << m_t0 << endl;
   }
 
   // dt may be downsampled 

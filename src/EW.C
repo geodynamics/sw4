@@ -668,6 +668,10 @@ EW::
 ~EW()
 {
 //  msgStream.close();
+for( int b=0 ; b < m_mtrlblocks.size() ; b++ )
+   delete m_mtrlblocks[b];
+
+m_mtrlblocks.clear();
 }
 
 //-----------------------------------
@@ -8472,4 +8476,15 @@ void EW::evalLupt(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_
   rhs4th3point( ifirst, ilast, jfirst, jlast, kfirst, klast, nz, onesided_ptr, 
                 m_acof, m_bope, m_ghcof, lu_ptr, u_ptr, mu_ptr, la_ptr, h,
                 m_sg_str_x[grid], m_sg_str_y[grid], m_sg_str_z[grid], i, j, k );
+}
+
+void EW::counter_addmem(int n, int size)
+{
+   std::cout << "add elements=" << n << std::endl;
+   m_mempe += n*size;
+}
+
+void EW::print_memstatus()
+{
+   std::cout << "mempe (bytes)=" << m_mempe << std::endl;
 }

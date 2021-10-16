@@ -89,9 +89,18 @@ Mopt::Mopt( EW* a_ew )
 
 Mopt::~Mopt()
 {
-   if(m_sfs) delete m_sfs;
-   if(m_xs0!=NULL) delete [] m_xs0;
+   if(m_sfs!=nullptr) delete [] m_sfs;
+   if(m_sfm!=nullptr) delete [] m_sfm;
+   if(m_xs0!=nullptr) delete [] m_xs0;
+   if(m_xm0!=nullptr) delete [] m_xm0;
+
+   for( int i=0 ; i < m_sfiles.size() ; i++ ) if(m_sfiles[i]!=nullptr) delete m_sfiles[i];
+   m_sfiles.clear();
+
+   for( int i=0 ; i < m_image_files.size() ; i++ ) if(m_image_files[i]!=nullptr) delete m_image_files[i];
+   m_image_files.clear();
    
+   if(m_mp!= nullptr) delete m_mp;
 }
 
 //-----------------------------------------------------------------------

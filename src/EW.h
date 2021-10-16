@@ -1350,6 +1350,10 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    AllDims* get_fine_alldimobject( );
    void grid_information( int g );
    void check_ic_conditions( int gc, vector<Sarray>& a_U );
+
+   void counter_addmem(int n, int size);
+   void print_memstatus();
+
 //
 // VARIABLES BEYOND THIS POINT
 //
@@ -1653,6 +1657,9 @@ int m_projection_cycle;
 
 bool m_checkfornan;
   
+// memory counter
+size_t m_mempe;  // allocated elements per processor
+
 // testing
 float_sw4 m_max_error[3], m_l2_error[3];
 

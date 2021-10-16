@@ -37,6 +37,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    AlphaVEp.resize(mNumberOfGrids);
 
    BCForcing.resize(mNumberOfGrids);
+
    int eglobal=local_to_global_event(event);
 
    int ifirst, ilast, jfirst, jlast, kfirst, klast;
@@ -61,6 +62,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       kfirst = m_kStart[g];
       klast  = m_kEnd[g];
 
+      
       F[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       Lk[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       Kacc[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
@@ -73,6 +75,9 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       gRho[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
       gMu[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
       gLambda[g].define(ifirst,ilast,jfirst,jlast,kfirst,klast);
+
+      counter_addmem((ilast-ifirst+1)*(jlast-jfirst+1)*(klast-kfirst+1)*3*9, sizeof(float_sw4));
+
       gRho[g].set_to_zero();
       gMu[g].set_to_zero();
       gLambda[g].set_to_zero();
@@ -82,6 +87,8 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       //           << m_jStartAct[0] << " " << m_jEndAct[0] << " " << m_kStartAct[0] << " " << m_kEndAct[0]
       //           << endl; 
    }
+
+   print_memstatus();
 
 // Setup Cartesian grid refinement interface.
    setup_MR_coefficients( a_Rho, a_Mu, a_Lambda );
@@ -371,6 +378,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       delete point_sources[s];
 
    // Wei added
+   counter_addmem(-(ilast-ifirst+1)*(jlast-jfirst+1)*(klast-kfirst+1)*3*9, sizeof(float_sw4));
       MPI_Barrier(MPI_COMM_WORLD);
 }
 

@@ -124,12 +124,15 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       jlast = m_jEnd[g];
       kfirst = m_kStart[g];
       klast = m_kEnd[g];
+
       F[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       Lu[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       Uacc[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       Up[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       Um[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       U[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
+
+      counter_addmem((ilast-ifirst+1)*(jlast-jfirst+1)*(klast-kfirst+1)*3*6, sizeof(float_sw4));
       //
       F[g].set_to_zero();
       Lu[g].set_to_zero();
@@ -137,6 +140,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       Up[g].set_to_zero();
       Um[g].set_to_zero();
       U[g].set_to_zero();
+
+
       if (m_use_attenuation && m_number_mechanisms > 0)
       {
 	 for (int a=0; a<m_number_mechanisms; a++)
@@ -151,6 +156,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       }
    }
 // done allocating solution arrays
+
+   print_memstatus();
 
 // Setup Cartesian grid refinement interface.
    setup_MR_coefficients( a_Rho, a_Mu, a_Lambda );
@@ -202,6 +209,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
          bool top = g <mNumberOfGrids-1;
 	 Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmin,kmax,2,nsteps_in_memory,mDt,npad, top, true );
 	 Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmin,kmax,2,nsteps_in_memory,mDt,npad, top, true );
+    
      //     cout << "sides saved for i=[" << imin << " , " << imax << "] j=[" << jmin << " , " << jmax << "] k=[" << 1 << " , " << kmax << "]"<< endl;
 	 size_t maxsizeloc = Upred_saved_sides[g]->get_noofpoints();
 	 size_t maxsize;
@@ -1230,6 +1238,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 
    for( int s = 0 ; s < point_sources.size(); s++ )
       delete point_sources[s];
+
+   counter_addmem(-(ilast-ifirst+1)*(jlast-jfirst+1)*(klast-kfirst+1)*3*6, sizeof(float_sw4));
 
    MPI_Barrier(m_1d_communicator);
 

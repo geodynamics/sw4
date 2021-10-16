@@ -235,7 +235,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       a_ew->computeCartesianCoord(x, y, lon, lat);
       int myRank;
       MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-      if(myRank==0) cout << "HDF5 read: lon=" << lon << " lat=" << lat << " x=" << x << " y=" << y << endl;
+      //if(myRank==0) cout << "HDF5 read: lon=" << lon << " lat=" << lat << " x=" << x << " y=" << y << endl;
       }
 
     bool inCurvilinear=false;
