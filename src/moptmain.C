@@ -232,11 +232,14 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    if( mopt->m_win_mode == 1 )
    {
       float_sw4* coarse=new float_sw4[nmpars];
+      float_sw4 freq;
       mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
       for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
       {
-         simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
-                            mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), 0, simulation.getRank());
+         freq= mopt->get_freq_gradsmooth()>0.? mopt->get_freq_gradsmooth() : GlobalSources[e][0]->getFrequency();
+         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
+                            mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), 
+                            freq, e, simulation.getRank());
       }
       delete[] coarse;
    }
@@ -444,13 +447,15 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    VERIFY2( ok, "ERROR: Material check failed\n" );
    if( mopt->m_win_mode == 1 )
    {
+      float_sw4 freq;
       float_sw4* coarse=new float_sw4[nmpars];
       mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
       for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
       {
-         simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
-                            mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), 0, simulation.getRank());
-      }
+         freq= mopt->get_freq_gradsmooth()>0.? mopt->get_freq_gradsmooth() : GlobalSources[e][0]->getFrequency();
+         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
+                            mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), freq, e, simulation.getRank());
+     }
       delete[] coarse;
    }
 

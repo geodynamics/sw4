@@ -35,8 +35,8 @@ void fastmarch_close (void);
 
 
 //--------------------------------------------------------------------
-void EW::solveTT( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
-		double* xs, int nmpars, MaterialParameterization* mp, int wave_mode, float twinshift, float twinscale, int event, int myrank)
+void EW::solveTT( Source* a_Source, vector<TimeSeries*> & a_TimeSeries,
+		double* xs, int nmpars, MaterialParameterization* mp, int wave_mode, float twinshift, float twinscale, float freq, int event, int myrank)
 {
    int verbose=0;
    int ix, iy, iz, nx, ny, nz, n;
@@ -45,7 +45,7 @@ void EW::solveTT( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSerie
    nz = mp->getNZ();
 
    if( verbose >= 1 && myrank == 0 )
-      std::cout << "source x0=" << a_Sources[event]->getX0() << " y0=" << a_Sources[event]->getY0() << " z0=" << a_Sources[event]->getZ0() << std::endl;
+      std::cout << "source x0=" << a_Source->getX0() << " y0=" << a_Source->getY0() << " z0=" << a_Source->getZ0() << std::endl;
    n= nmpars/nx/ny/nz;
 
    if( verbose >= 1 && myrank == 0 )
@@ -109,7 +109,7 @@ int ntr = a_TimeSeries.size();
                 nz, ny, nx,           // dimensions
                 mp->getZmin(),mp->getYmin(),mp->getXmin(),     // origin
                 mp->getDz(),mp->getDy(),mp->getDx(),           // sampling
-                a_Sources[event]->getZ0(),a_Sources[event]->getY0(),a_Sources[event]->getX0(),     // source
+                a_Source->getZ0(),a_Source->getY0(),a_Source->getX0(),     // source
                 1,1,1,                // box around the source
                 2);                   // accuracy order (1,2,3) 
          
@@ -120,7 +120,7 @@ int ntr = a_TimeSeries.size();
                 nz, ny, nx,           // dimensions
                 mp->getZmin(),mp->getYmin(),mp->getXmin(),     // origin
                 mp->getDz(),mp->getDy(),mp->getDx(),           // sampling
-                a_Sources[event]->getZ0(),a_Sources[event]->getY0(),a_Sources[event]->getX0(),     // source
+                a_Source->getZ0(),a_Source->getY0(),a_Source->getX0(),     // source
                 1,1,1,                // box around the source
                 2);                   // accuracy order (1,2,3) 
 
@@ -138,8 +138,11 @@ int ntr = a_TimeSeries.size();
    
 
     float_sw4 win;
-    win = 2*(a_Sources[event]->getFrequency()>0? 1.0/a_Sources[event]->getFrequency() : 1.0);
+
+    win = 1*(a_Source->getFrequency()<freq? 1.0/a_Source->getFrequency() : 1.0/freq);  // one cycle of peak frequency
+    //cout << "original win=" << win << endl;
     win *= twinscale;  // expand or shrink 
+    //cout << "dialated win=" << win << endl;
 
    for(int ig=0; ig<ntr; ig++) {
    //
@@ -156,7 +159,7 @@ int ntr = a_TimeSeries.size();
        timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win);
 
        if(myrank==0) fprintf(fd, "%d   %d\t%s\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
-                             event, ig+1, a_TimeSeries[ig]->getStationName().c_str(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
+               event, ig+1, a_TimeSeries[ig]->getStationName().c_str(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
                timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win, 
                timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win);
          break;
@@ -165,7 +168,7 @@ int ntr = a_TimeSeries.size();
        times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win);
 
        if(myrank==0) fprintf(fd, "%d   %d\t%s\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
-                             event, ig+1, a_TimeSeries[ig]->getStationName().c_str(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
+               event, ig+1, a_TimeSeries[ig]->getStationName().c_str(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
                times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win, 
                times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win);
 
@@ -175,7 +178,7 @@ int ntr = a_TimeSeries.size();
        times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win);
 
        if(myrank==0) fprintf(fd, "%d   %d\t%s\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
-                             event, ig+1, a_TimeSeries[ig]->getStationName().c_str(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
+               event, ig+1, a_TimeSeries[ig]->getStationName().c_str(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
                timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win, 
                times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win);
      }
