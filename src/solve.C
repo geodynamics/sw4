@@ -907,7 +907,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       PROFILER_START;
       //SW4_MARK_BEGIN("CLEAN_TIME");
       end_clean_time_reg = true;
-      SW4_MARK_BEGIN("TIME_STEPPING");
+      //SW4_MARK_BEGIN("TIME_STEPPING");
 #ifdef SW4_TRACK_MPI
       t6 = SW4_CHRONO_NOW;
       ProfilerOn = true;
