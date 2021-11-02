@@ -894,6 +894,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     time(&now);
     printf("Start time stepping at %s\n", ctime(&now));
   }
+    bool end_clean_time_reg = false;
   for (int currentTimeStep = beginCycle;
        currentTimeStep <= mNumberOfTimeSteps[event]; currentTimeStep++) {
     time_measure[0] = MPI_Wtime();
@@ -905,6 +906,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     if (currentTimeStep == (beginCycle + 10)) {
       PROFILER_START;
       //SW4_MARK_BEGIN("CLEAN_TIME");
+      end_clean_time_reg = true;
       SW4_MARK_BEGIN("TIME_STEPPING");
 #ifdef SW4_TRACK_MPI
       t6 = SW4_CHRONO_NOW;
@@ -1126,9 +1128,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       }
 #endif
 
-      SW4_MARK_BEGIN("MPI_WTIME");
+      //SW4_MARK_BEGIN("MPI_WTIME");
       if (m_output_detailed_timing) time_measure[7] = MPI_Wtime();
-      SW4_MARK_END("MPI_WTIME");
+      //SW4_MARK_END("MPI_WTIME");
       // test: precompute F_tt(t)
       Force_tt(t, F, point_sources, identsources);
 
@@ -1520,6 +1522,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       SW4_PEEK;
       SYNC_DEVICE;
     }
+    if (end_clean_time_reg){
+	//SW4_MARK_END("CLEAN_TIME");
+}
   }  // end time stepping loop
   //SW4_MARK_END("CLEAN_TIME");
   SW4_MARK_END("TIME_STEPPING");

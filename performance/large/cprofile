@@ -1,0 +1,2 @@
+#!/bin/bash
+rocprof  --roctx-trace --trace-start on --sys-trace --hsa-trace -o CaliProf_${SLURM_PROCID}.csv $1 $2
