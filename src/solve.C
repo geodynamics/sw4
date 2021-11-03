@@ -45,17 +45,6 @@ void curvilinear4sgwind( int, int, int, int, int, int, int, int, float_sw4*, flo
                          float_sw4*, float_sw4*, float_sw4*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
                          float_sw4*, float_sw4*, float_sw4*, int, char );
 
-void add_pseudohessian_terms1(  int ifirst, int ilast, int jfirst, int jlast, 
-                               int kfirst, int klast,
-                               int ifirstact, int ilastact, int jfirstact, int jlastact, 
-                               int kfirstact, int klastact, 
-                               float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_u,
-                               float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_rho,
-                               float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda,
-                               float_sw4 h, float_sw4 dt, int onesided[6], int varcase,
-                               float_sw4* __restrict__ a_bope, 
-                               float_sw4* __restrict__ a_acof, float_sw4* a_ghcof,
-                               float_sw4* __restrict__ a_ph );
 void add_pseudohessian_terms2(  int ifirst, int ilast, int jfirst, int jlast, 
                                int kfirst, int klast,
                                int ifirstact, int ilastact, int jfirstact, int jlastact, 
@@ -111,6 +100,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 	 AlphaVEm[g] = new Sarray[m_number_mechanisms];
       }
    }
+
+   int eglobal=local_to_global_event(event);
    int ifirst, ilast, jfirst, jlast, kfirst, klast;
    for( int g = 0; g <mNumberOfGrids; g++ )
    {
@@ -129,7 +120,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       jlast = m_jEnd[g];
       kfirst = m_kStart[g];
       klast = m_kEnd[g];
-
       F[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       Lu[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       Uacc[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
@@ -158,42 +148,17 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    }
 // done allocating solution arrays
 
+// Setup Cartesian grid refinement interface.
+   setup_MR_coefficients( a_Rho, a_Mu, a_Lambda );
+
 // Setup curvilinear grid refinement interface
    for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
-     m_cli2[g-mNumberOfCartesianGrids]->init_arrays( m_sg_str_x, m_sg_str_y);
-
-//   bool ciold = false;
-//   if( mNumberOfGrids > mNumberOfCartesianGrids+1 )
-//   {
-     //      if( ciold )
-     //      {
-     //         m_clInterface.resize(mNumberOfGrids-mNumberOfCartesianGrids-1);
-     //         for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
-     //         {
-     //            m_clInterface[g-mNumberOfCartesianGrids]= new CurvilinearInterface( g, this );
-     //            m_clInterface[g-mNumberOfCartesianGrids]->init_arrays( a_Mu, a_Lambda, a_Rho, mMetric, mJ );
-     //         }
-     //      }
-     //      else
-     //      {
-   //         m_cli2.resize(mNumberOfGrids-mNumberOfCartesianGrids-1);
-   //         for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
-   //         {
-   //            m_cli2[g-mNumberOfCartesianGrids] = new CurvilinearInterface2( g, this );
-   //            m_cli2[g-mNumberOfCartesianGrids]->init_arrays( m_sg_str_x, m_sg_str_y);
-   //         }
-	 //      }
-   //   }
-   //      for( int g=0 ; g < mNumberOfGrids ; g++ )
-   //	{
-   //	  U[g].set_to_random();
-   //	}
-      //      cli2[0].test2(this, 1, U );
+      m_cli2[g-mNumberOfCartesianGrids]->init_arrays( m_sg_str_x, m_sg_str_y);
 
 // Allocate boundary sides
    for( int g=0 ; g < mNumberOfGrids ; g++ )   {
       stringstream procno;
-      procno << m_myRank << "." << g ; 
+      procno << m_myRank << "." << g << ".ev" << eglobal; 
      //     string logname(getlogin());
 
 // Local disks on LC seem to be setup with directory /tmp/username when user username starts a job
@@ -202,28 +167,37 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       mkdirs(mTempPath);
       //     string upred_name = "/tmp/" + logname + "/upred" + procno.str() + ".bin";
       //     string ucorr_name = "/tmp/" + logname + "/ucorr" + procno.str() + ".bin";
-      int imin, imax, jmin, jmax, kmax;
-      if( m_iStartAct[g] <= m_iEndAct[g] && m_iStartAct[g] <= m_iEndAct[g] && m_iStartAct[g] <= m_iEndAct[g]  )
+      int imin, imax, jmin, jmax, kmax, kmin;
+      imin = m_iStartActGlobal[g]-1;
+      imax = m_iEndActGlobal[g]+1;
+      jmin = m_jStartActGlobal[g]-1;
+      jmax = m_jEndActGlobal[g]+1;
+      kmin = m_kStartActGlobal[g]-1;
+      kmax = m_kEndActGlobal[g]+1;
+      int npad[6]={0,0,0,0,0,0};
+      if( m_iStart[g] > 1 )
+         npad[0] = m_ppadding;
+      if( m_iEnd[g] < m_global_nx[g] )
+         npad[1] = m_ppadding;
+      if( m_jStart[g] > 1 )
+         npad[2] = m_ppadding;
+      if( m_jEnd[g] < m_global_ny[g] )
+         npad[3] = m_ppadding;
+      if( g != mNumberOfGrids-1 )
       {
-	 imin = m_iStartAct[g]-1;
-	 imax = m_iEndAct[g]+1;
-	 jmin = m_jStartAct[g]-1;
-	 jmax = m_jEndAct[g]+1;
-	 kmax = m_kEndAct[g]+1;
+         // Upper boundary is grid ref bndry.
+         kmin += 2;
       }
-      else
+      if( g != 0 )
       {
-	// empty active domain
-	 imin =  0;
-	 imax = -1;
-	 jmin =  0;
-	 jmax = -1;
-	 kmax = -1;
+         // Lower boundary is grid ref bndry.
+         kmax -= 2;
       }
       if( save_sides )
       {
-	 Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt );
-	 Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt );
+         bool top = g <mNumberOfGrids-1;
+	 Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmin,kmax,2,nsteps_in_memory,mDt,npad, top, true );
+	 Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmin,kmax,2,nsteps_in_memory,mDt,npad, top, true );
      //     cout << "sides saved for i=[" << imin << " , " << imax << "] j=[" << jmin << " , " << jmax << "] k=[" << 1 << " , " << kmax << "]"<< endl;
 	 size_t maxsizeloc = Upred_saved_sides[g]->get_noofpoints();
 	 size_t maxsize;
@@ -232,11 +206,11 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 	 MPI_Type_size(MPI_LONG_LONG,&mpisizelonglong );
 	 MPI_Type_size(MPI_INT,&mpisizeint );
 	 if( sizeof(size_t) == mpisizelong )
-	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG, MPI_MAX, MPI_COMM_WORLD );
+	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG, MPI_MAX, m_1d_communicator );
 	 else if( sizeof(size_t) == mpisizelonglong )
-	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG_LONG, MPI_MAX, MPI_COMM_WORLD );
+	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG_LONG, MPI_MAX, m_1d_communicator );
 	 else if( sizeof(size_t) == mpisizeint )
-	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_INT, MPI_MAX, m_1d_communicator );
 	 if( !mQuiet && mVerbose >= 5 && proc_zero() )
 	    cout << "  Temporary files " << upred_name << " and " << ucorr_name << " will hold " <<
 	       Upred_saved_sides[g]->get_noofpoints() << " values each, for each time step";
@@ -246,7 +220,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    }
 
 // Set the number of time steps, allocate the recording arrays, and set reference time in all time series objects  
-#pragma omp parallel for
+/* #pragma omp parallel for */
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
   {
      a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps[event]+1, mTstart, mDt); // AP: added one to mNumber...
@@ -321,8 +295,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
        
 //building the file name...
        string filename;
-       if( mPath[event] != "." )
-	 filename += mPath[event];
+       if( mPath[eglobal] != "." )
+	 filename += mPath[eglobal];
        filename += "g1.dat";	 
 
        FILE *tf=fopen(filename.c_str(),"w");
@@ -367,8 +341,16 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   if( m_check_point->do_restart() )
   {
      double timeRestartBegin = MPI_Wtime();
-     m_check_point->read_checkpoint( t, beginCycle, Um, U,
-				     AlphaVEm, AlphaVE );
+     if (!m_check_point->useHDF5())
+        m_check_point->read_checkpoint( t, beginCycle, Um, U, AlphaVEm, AlphaVE );
+#ifdef USE_HDF5
+     else
+        m_check_point->read_checkpoint_hdf5( t, beginCycle, Um, U, AlphaVEm, AlphaVE );
+#else
+     else
+         if (proc_zero())
+             cout << "Configured to restart with HDF5 but SW4 is not compiled with HDF5!" << endl;
+#endif
 // tmp
      if (proc_zero())
         printf("After reading checkpoint data: beginCycle=%d, t=%e\n", beginCycle, t);
@@ -448,7 +430,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   if( m_anisotropic )
      enforceBCanisotropic( U, mC, t, BCForcing );
   else
-     enforceBC( U, a_Mu, a_Lambda, AlphaVE, t, BCForcing );   
+     enforceBC( U, a_Rho, a_Mu, a_Lambda, AlphaVE, t, BCForcing );   
 
   for( int g=mNumberOfCartesianGrids; g < mNumberOfGrids-1 ; g++ )
      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( U, t, F, AlphaVE );
@@ -473,7 +455,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   if( m_anisotropic )
      enforceBCanisotropic( Um, mC, t-mDt, BCForcing );
   else
-     enforceBC( Um, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
+     enforceBC( Um, a_Rho, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
 
   for( int g=mNumberOfCartesianGrids; g < mNumberOfGrids-1 ; g++ )
      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( Um, t-mDt, F, AlphaVEm );
@@ -525,7 +507,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       a_TimeSeries[tsi]->resetHDF5file();
     if(m_myRank == 0 && !m_check_point->do_restart()) 
       createTimeSeriesHDF5File(a_TimeSeries, mNumberOfTimeSteps[event]+1, mDt, "");
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(m_1d_communicator);
   }
 #endif
 
@@ -548,12 +530,12 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 // save any images for cycle = 0 (initial data), or beginCycle-1 (checkpoint restart)
   update_images( beginCycle-1, t, U, Um, Up, a_Rho, a_Mu, a_Lambda, a_Sources, 1 );
   for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
-    mImage3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[event], mZ );
+    mImage3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[eglobal], mZ );
 
   int gg = mNumberOfGrids-1; // top grid
   for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ ) {
     mESSI3DFiles[i3]->set_ntimestep(mNumberOfTimeSteps[event]);
-    mESSI3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mPath[event], mZ[gg] );// not verified for several cuvilinear grids
+    mESSI3DFiles[i3]->set_restart(m_check_point->do_restart());
   }
 
 // NOTE: time stepping loop starts at currentTimeStep = beginCycle; ends at currentTimeStep <= mNumberOfTimeSteps
@@ -562,7 +544,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 // open file for saving norm of error
   if ( (m_lamb_test || m_point_source_test || m_rayleigh_wave_test || m_error_log) && proc_zero() )
   {
-    string path=getPath(event);
+    string path=getPath(eglobal);
 
     stringstream fileName;
     if( path != "." )
@@ -623,6 +605,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 // BEGIN TIME STEPPING LOOP
   if ( !mQuiet && proc_zero() )
     cout << endl << "  Begin time stepping..." << endl;
+
+  //   int idbg=113, jdbg=201, kdbg=25, gdbg=1;
+  //   int idbg=57, jdbg=101, kdbg=1, gdbg=0;
+  //   bool dbgowner=interior_point_in_proc(idbg,jdbg,gdbg);
 
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps[event]; currentTimeStep++)
   {    
@@ -732,7 +718,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     if( m_anisotropic )
        enforceBCanisotropic( Up, mC, t+mDt, BCForcing );
     else
-       enforceBC( Up, a_Mu, a_Lambda, AlphaVEp, t+mDt, BCForcing );
+       enforceBC( Up, a_Rho, a_Mu, a_Lambda, AlphaVEp, t+mDt, BCForcing );
 
 
 // NEW
@@ -777,7 +763,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 
 // interface conditions for 2nd order in time
 // NOTE: this routine calls preliminary_predictor for t+dt, which needs F(t+dt). It is computed at the top of next time step
-       enforceIC2( Up, U, Um, AlphaVEp, t, F, point_sources );
+       enforceIC2( Up, U, Um, AlphaVEp, t, F, point_sources, a_Rho, a_Mu, a_Lambda );
 
        if( m_output_detailed_timing )
           time_measure[17] = MPI_Wtime();
@@ -797,7 +783,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 // *** 4th order in TIME interface conditions for the predictor
 // June 14, 2017: adding AlphaVE & AlphaVEm
 // NOTE: true means call preliminary_corrector, which needs F_tt(t) & is computed 5 lines down
-       enforceIC( Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, true, F, point_sources );
+       enforceIC( Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, true, F, point_sources,
+                  a_Rho, a_Mu, a_Lambda );
 
        if( m_output_detailed_timing )
           time_measure[9] = MPI_Wtime();
@@ -902,7 +889,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
        if( m_anisotropic )
 	  enforceBCanisotropic( Up, mC, t+mDt, BCForcing );
        else
-	  enforceBC( Up, a_Mu, a_Lambda, AlphaVEp, t+mDt, BCForcing );
+	  enforceBC( Up, a_Rho, a_Mu, a_Lambda, AlphaVEp, t+mDt, BCForcing );
 
 // NEW (Apr. 4, 2017)
 // Impose un-coupled free surface boundary condition with visco-elastic terms for 'Up'
@@ -930,7 +917,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 // interface conditions for the corrector
 // June 14, 2017: adding AlphaVE & AlphaVEm
 // NOTE: false means call preliminary_predictor for t+dt, which needs F(t+dt). It is computed at the top of next time step
-       enforceIC( Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, false, F, point_sources );
+       enforceIC( Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, false, F, point_sources, 
+                  a_Rho, a_Mu, a_Lambda );
 
        if( m_output_detailed_timing )
           time_measure[17] = MPI_Wtime();
@@ -945,6 +933,17 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     
     if( m_checkfornan )
        check_for_nan( Up, 1, "Up" );
+
+    //      if( dbgowner )
+    //      {
+    //         cout << "f " << t << " " << currentTimeStep << 
+    //            " Up k"  << Up[gdbg](1,idbg,jdbg,kdbg) << " " << Up[gdbg](2,idbg,jdbg,kdbg) << " " << Up[gdbg](3,idbg,jdbg,kdbg) << endl;
+    //         cout << " Up kp"  << Up[gdbg](1,idbg,jdbg,kdbg+1) << " " << Up[gdbg](2,idbg,jdbg,kdbg+1) << " " << Up[gdbg](3,idbg,jdbg,kdbg+1) << endl;
+    //         cout<<   " U k"  << U[gdbg](1,idbg,jdbg,kdbg) << " " << U[gdbg](2,idbg,jdbg,kdbg) << " " << U[gdbg](3,idbg,jdbg,kdbg) << endl;
+    //         cout<<   " U kp"  << U[gdbg](1,idbg,jdbg,kdbg+1) << " " << U[gdbg](2,idbg,jdbg,kdbg+1) << " " << U[gdbg](3,idbg,jdbg,kdbg+1) << endl;
+    //         cout <<   " Um k"  << Um[gdbg](1,idbg,jdbg,kdbg) << " " << Um[gdbg](2,idbg,jdbg,kdbg) << " " << Um[gdbg](3,idbg,jdbg,kdbg) << endl;
+    //         cout <<   " Um kp"  << Um[gdbg](1,idbg,jdbg,kdbg+1) << " " << Um[gdbg](2,idbg,jdbg,kdbg+1) << " " << Um[gdbg](3,idbg,jdbg,kdbg+1) << endl;
+    //      }
 
 // increment time
     t += mDt;
@@ -961,13 +960,13 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     update_images( currentTimeStep, t, Up, U, Um, a_Rho, a_Mu, a_Lambda, a_Sources, currentTimeStep == mNumberOfTimeSteps[event] );
     for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
       mImage3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, 
-				       mQp, mQs, mPath[event], mZ ); // mRho, a_Mu, mLambda occur twice because we don't use gradRho etc.
+				       mQp, mQs, mPath[eglobal], mZ ); // mRho, a_Mu, mLambda occur twice because we don't use gradRho etc.
 
     // Update the ESSI hdf5 data
     double time_essi_tmp=MPI_Wtime();
     gg = mNumberOfGrids-1; // top grid
     for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
-      mESSI3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mPath[event], mZ[gg] ); // not verified for several cuvilinear grids
+      mESSI3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mPath[eglobal], mZ[gg] ); // not verified for several cuvilinear grids
     double time_essi=MPI_Wtime()-time_essi_tmp;
 
 // save the current solution on receiver records (time-derivative require Up and Um for a 2nd order
@@ -996,11 +995,21 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     if( m_check_point->timeToWrite( t, currentTimeStep, mDt ) )
     {
        double time_chkpt=MPI_Wtime();
-       m_check_point->write_checkpoint( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
+
+       if (!m_check_point->useHDF5())
+          m_check_point->write_checkpoint( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
+#ifdef USE_HDF5
+       else
+          m_check_point->write_checkpoint_hdf5( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
+#else
+     else
+         if (proc_zero())
+             cout << "Configured to checkpoint with HDF5 but SW4 is not compiled with HDF5!" << endl;
+#endif
        double time_chkpt_tmp =MPI_Wtime()-time_chkpt;
        if( m_output_detailed_timing )
        {
-	  MPI_Allreduce( &time_chkpt_tmp, &time_chkpt, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+	  MPI_Allreduce( &time_chkpt_tmp, &time_chkpt, 1, MPI_DOUBLE, MPI_MAX, m_1d_communicator );
 	  if( m_myRank == 0 )
 	     cout << "Wallclock time to write check point file " << time_chkpt << " seconds " << endl;
        }
@@ -1013,7 +1022,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 	     double time_chkpt_timeseries_tmp=MPI_Wtime()-time_chkpt_timeseries;
        if( m_output_detailed_timing )
        {
-	        MPI_Allreduce( &time_chkpt_timeseries_tmp, &time_chkpt_timeseries, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+	        MPI_Allreduce( &time_chkpt_timeseries_tmp, &time_chkpt_timeseries, 1, MPI_DOUBLE, MPI_MAX, m_1d_communicator );
 	        if( m_myRank == 0 )
 	          cout << "Wallclock time to write all checkpoint time series files "
               << time_chkpt_timeseries << " seconds " << endl;
@@ -1104,7 +1113,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
        hdf5_time += mESSI3DFiles[i3]->getHDF5Timings();
      // Max over all rank
      double max_hdf5_time;
-     MPI_Reduce( &hdf5_time, &max_hdf5_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD );
+     MPI_Reduce( &hdf5_time, &max_hdf5_time, 1, MPI_DOUBLE, MPI_MAX, 0, m_1d_communicator );
      if( m_myRank == 0 && max_hdf5_time > 0.1)
        cout << "  ==> Max wallclock time to open/write ESSI hdf5 output is " 
          << max_hdf5_time << " seconds " << endl;
@@ -1116,7 +1125,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    double total_time = 0.0, all_total_time;
    for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
       total_time += mImageFiles[fIndex]->get_write_time();
-   MPI_Reduce(&total_time, &all_total_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+   MPI_Reduce(&total_time, &all_total_time, 1, MPI_DOUBLE, MPI_MAX, 0, m_1d_communicator);
    if( m_myRank == 0 && all_total_time > 0.1)
      cout << "  ==> Max wallclock time to write images is " << all_total_time << " seconds." << endl;
 
@@ -1127,7 +1136,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
      reverse_setup_viscoelastic();
 
    for( int ii = 0 ; ii < mSfiles.size() ; ii++ )
-     mSfiles[ii]->force_write_image( t, mNumberOfTimeSteps[event], Up, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[event], mZ ); 
+     mSfiles[ii]->force_write_image( t, mNumberOfTimeSteps[event], Up, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[eglobal], mZ ); 
 
 #endif
 
@@ -1208,7 +1217,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    for( int s = 0 ; s < point_sources.size(); s++ )
       delete point_sources[s];
 
-   MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Barrier(m_1d_communicator);
 
 } // end EW::solve()
 
@@ -1245,7 +1254,8 @@ void EW::cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector
 }
 
 //---------------------------------------------------------------------------
-void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, 
+                    vector<Sarray>& a_Lambda,
 		    vector<Sarray*>& a_AlphaVE, float_sw4 t, vector<float_sw4 **> & a_BCForcing )
 {
   int ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
@@ -1369,7 +1379,7 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
      if( m_gridGenerator->curviCartIsSmooth( mNumberOfGrids-mNumberOfCartesianGrids ) )
         update_curvilinear_cartesian_interface( a_U );
      else
-        CurviCartIC( mNumberOfCartesianGrids-1, a_U, a_Mu, a_Lambda, a_AlphaVE,  t );
+        CurviCartIC( mNumberOfCartesianGrids-1, a_U, a_Rho, a_Mu, a_Lambda, a_AlphaVE,  t );
   }
 
   // Reimpose free surface condition with attenuation terms included
@@ -1377,7 +1387,8 @@ void EW::enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& 
      enforceBCfreeAtt2( a_U, a_Mu, a_Lambda, a_AlphaVE, a_BCForcing );
 }
 //-----------------------------------------------------------------------
-void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Rho,
+                      vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
                       vector<Sarray*>& a_Alpha, float_sw4 t )
 {
    int gcurv=gcart+1;
@@ -1484,7 +1495,7 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
       {
          float_sw4 istrxy =1/(m_sg_str_x[gcurv][i-ib]*m_sg_str_y[gcurv][j-jb]);
          float_sw4 istrxyc=1/(m_sg_str_x[gcart][i-ib]*m_sg_str_y[gcart][j-jb]);
-         float_sw4 rhrat = mRho[gcurv](i,j,nk)/mRho[gcart](i,j,1);
+         float_sw4 rhrat = a_Rho[gcurv](i,j,nk)/a_Rho[gcart](i,j,1);
          float_sw4 bcof = h*m_sbop[0]*istrxyc-m_ghcof[0]*rhrat*w1*mJ[gcurv](i,j,nk)*istrxy/(h*h);
          float_sw4 res = -h*h*Bca(1,i,j,1)*istrxyc+ w1*rhrat*mJ[gcurv](i,j,nk)*istrxy*Luca(1,i,j,1)
                - w1*mJ[gcurv](i,j,nk)*istrxy*Lu(1,i,j,nk) + B(1,i,j,nk);            
@@ -1512,7 +1523,8 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
                    a_U[gcart].c_ptr(), a_Mu[gcart].c_ptr(), a_Lambda[gcart].c_ptr(), h,
                    m_sg_str_x[gcart], m_sg_str_y[gcart], m_sg_str_z[gcart], '=', kbca, keca, 1, 1 );
    
-      compute_icstresses( a_U[gcart], Bca, gcart, 1, m_sg_str_x[gcart], m_sg_str_y[gcart],m_sbop,'=' );
+      compute_icstresses2( a_U[gcart], Bca, 1, mGridSize[gcart], a_Mu[gcart], a_Lambda[gcart],
+                           m_sg_str_x[gcart], m_sg_str_y[gcart],m_sbop,'=' );
 
       compute_icstresses_curv( a_U[gcurv], B, nk, mMetric[gcurv], a_Mu[gcurv], a_Lambda[gcurv],
                                m_sg_str_x[gcurv], m_sg_str_y[gcurv], m_sbop_no_gp, '=' );
@@ -1520,7 +1532,7 @@ void EW::CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vect
       for( int j=jb+2 ; j <= je-2 ; j++ )
          for( int i=ib+2 ; i <= ie-2 ; i++ )
          {
-            float_sw4 rhrat = mRho[gcurv](i,j,nk)/mRho[gcart](i,j,1);
+            float_sw4 rhrat = a_Rho[gcurv](i,j,nk)/a_Rho[gcart](i,j,1);
             float_sw4 res = abs(-h*h*Bca(1,i,j,1)+ w1*rhrat*mJ[gcurv](i,j,nk)*Luca(1,i,j,1)
                     - w1*mJ[gcurv](i,j,nk)*Lu(1,i,j,nk) + B(1,i,j,nk));            
             resmax = res > resmax ? res:resmax;
@@ -1656,8 +1668,13 @@ void EW::update_curvilinear_cartesian_interface( vector<Sarray>& a_U )
 //-----------------Mesh refinement interface condition for 4th order predictor-corrector scheme------------------------
 void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
                     vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE, vector<Sarray*>& a_AlphaVEm, 
-		    float_sw4 time, bool predictor, vector<Sarray> &F, vector<GridPointSource*> point_sources )
+		    float_sw4 time, bool predictor, vector<Sarray> &F, vector<GridPointSource*> point_sources,
+                    vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, bool backward )
 {
+   float_sw4 dt=mDt;
+   if( backward )
+      dt=-dt;
+
    for( int g = 0 ; g < mNumberOfCartesianGrids-1 ; g++ )
    {
       // Interpolate between g and g+1, assume factor 2 refinement with at least three ghost points
@@ -1706,32 +1723,36 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
 // get the interior contribution to the displacements on the interface for the corrector (depends on the corrector value of AlphaVEp)
 	 compute_preliminary_corrector( a_Up[g+1], a_U[g+1], a_Um[g+1],
                                         a_AlphaVEp[g+1], a_AlphaVE[g+1], a_AlphaVEm[g+1],
-                                        Uf_tt, Unextf, g+1, kf, time, F[g+1], point_sources );
+                                        Uf_tt, Unextf, g+1, kf, time, F[g+1], point_sources,
+                                        a_Rho[g+1], a_Mu[g+1], a_Lambda[g+1] );
          compute_preliminary_corrector( a_Up[g], a_U[g], a_Um[g],
                                         a_AlphaVEp[g], a_AlphaVE[g], a_AlphaVEm[g],
-                                        Uc_tt, Unextc, g, kc, time, F[g], point_sources );
+                                        Uc_tt, Unextc, g, kc, time, F[g], point_sources, 
+                                        a_Rho[g], a_Mu[g], a_Lambda[g] );
 	 if( !m_doubly_periodic )
 	 {
 // dirichlet conditions for Unextc in super-grid layer at time t+dt
-            dirichlet_LRic( Unextc, g, kc, time+mDt, 1 ); 
+            dirichlet_LRic( Unextc, g, kc, time+dt, 1 ); 
 	 }
       }
       else // In the corrector step, (Unextc, Unextf) represent the displacement after next predictor step
       {
-	 compute_preliminary_predictor( a_Up[g+1], a_U[g+1], a_AlphaVEp[g+1], Unextf, g+1, kf,  time+mDt,
-                                        F[g+1], point_sources );
-	 compute_preliminary_predictor( a_Up[g], a_U[g], a_AlphaVEp[g], Unextc, g, kc, time+mDt, 
-                                        F[g], point_sources );
+	 compute_preliminary_predictor( a_Up[g+1], a_U[g+1], a_AlphaVEp[g+1], Unextf, g+1, kf,  time+dt,
+                                        F[g+1], point_sources, a_Rho[g+1], a_Mu[g+1], a_Lambda[g+1] );
+	 compute_preliminary_predictor( a_Up[g], a_U[g], a_AlphaVEp[g], Unextc, g, kc, time+dt, 
+                                        F[g], point_sources, a_Rho[g], a_Mu[g], a_Lambda[g] );
 
 	 if( !m_doubly_periodic )
 	 {
 // dirichlet conditions for Unextc in super-grid layer at time t+2*dt
-            dirichlet_LRic( Unextc, g, kc, time+2*mDt, 1 ); 
+            dirichlet_LRic( Unextc, g, kc, time+2*dt, 1 ); 
 	 }
       }
 
-      compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1],m_sbop,'=');
-      compute_icstresses( a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g],m_sbop,'=' );
+      compute_icstresses2( a_Up[g+1], Bf, kf, mGridSize[g+1], a_Mu[g+1], a_Lambda[g+1],
+                           m_sg_str_x[g+1], m_sg_str_y[g+1],m_sbop,'=');
+      compute_icstresses2( a_Up[g], Bc, kc, mGridSize[g], a_Mu[g], a_Lambda[g], 
+                           m_sg_str_x[g], m_sg_str_y[g],m_sbop,'=' );
 
 // NEW June 13, 2017: add in the visco-elastic boundary traction
       if( m_use_attenuation && m_number_mechanisms > 0 )
@@ -1748,7 +1769,7 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
       if( !m_doubly_periodic )
       {
 //  dirichlet condition for Bf in the super-grid layer at time t+dt (also works with twilight)
-         dirichlet_LRstress( Bf, g+1, kf, time+mDt, 1 ); 
+         dirichlet_LRstress( Bf, g+1, kf, time+dt, 1 ); 
       }
 
       communicate_array_2d( Unextf, g+1, kf );
@@ -1780,8 +1801,8 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
       if( m_doubly_periodic )
 	 is_periodic[0] = is_periodic[1] = 1;
       
-      consintp( a_Up[g+1], Unextf, Bf, mMu[g+1], mLambda[g+1], mRho[g+1], mGridSize[g+1],
-		a_Up[g],   Unextc, Bc, mMu[g],   mLambda[g],   mRho[g],   mGridSize[g], 
+      consintp( a_Up[g+1], Unextf, Bf, a_Mu[g+1], a_Lambda[g+1], a_Rho[g+1], mGridSize[g+1],
+		a_Up[g],   Unextc, Bc, a_Mu[g],   a_Lambda[g],   a_Rho[g],   mGridSize[g], 
 		cof, g, g+1, is_periodic );
       //      CHECK_INPUT(false," controlled termination");
 
@@ -1789,15 +1810,15 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
       // Note: these ghost point values might never be used ?
       if( !m_doubly_periodic )
       {
-         dirichlet_LRic( a_Up[g+1], g+1, kf+1, time+mDt, 1 );
-         dirichlet_LRic( a_Up[g], g, kc-1, time+mDt, 1 );
+         dirichlet_LRic( a_Up[g+1], g+1, kf+1, time+dt, 1 );
+         dirichlet_LRic( a_Up[g], g, kc-1, time+dt, 1 );
       }
        
    } // end for g...
    for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
    {
      //         m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt );
-      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt, F, a_AlphaVEp );
+      m_cli2[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+dt, F, a_AlphaVEp );
       //      check_ic_conditions( g, a_Up );
    }
 } // enforceIC
@@ -1912,7 +1933,8 @@ void EW::check_ic_conditions( int gc, vector<Sarray>& a_U )
 //-----------------------Special case for 2nd order time stepper----------------------------------------------------
 void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
                      vector<Sarray*>& a_AlphaVEp,
-                     float_sw4 time, vector<Sarray> &F, vector<GridPointSource*> point_sources )
+                     float_sw4 time, vector<Sarray> &F, vector<GridPointSource*> point_sources,
+                     vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda )
 {
    bool predictor = false;   // or true???
    for( int g = 0 ; g < mNumberOfCartesianGrids-1 ; g++ )
@@ -1954,8 +1976,10 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
 //
       // Check super-grid terms !
       //
-      compute_preliminary_predictor( a_Up[g+1], a_U[g+1], a_AlphaVEp[g+1], Unextf, g+1, kf, time+mDt, F[g+1], point_sources );
-      compute_preliminary_predictor( a_Up[g], a_U[g], a_AlphaVEp[g], Unextc, g, kc, time+mDt, F[g], point_sources );
+      compute_preliminary_predictor( a_Up[g+1], a_U[g+1], a_AlphaVEp[g+1], Unextf, g+1, kf, time+mDt, 
+                                     F[g+1], point_sources, a_Rho[g+1], a_Mu[g+1], a_Lambda[g+1] );
+      compute_preliminary_predictor( a_Up[g], a_U[g], a_AlphaVEp[g], Unextc, g, kc, time+mDt, 
+                                     F[g], point_sources, a_Rho[g], a_Mu[g], a_Lambda[g] );
 
       if( !m_doubly_periodic )
       {
@@ -1967,8 +1991,10 @@ void EW::enforceIC2( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> 
 //      initialData(time+mDt, a_Up, a_AlphaVEp);
 // end test
 //  compute contribution to the normal stresses (Bc, Bf) from the interior grid points in Up
-      compute_icstresses( a_Up[g+1], Bf, g+1, kf, m_sg_str_x[g+1], m_sg_str_y[g+1],m_sbop,'=');
-      compute_icstresses( a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g],m_sbop,'=');
+      compute_icstresses2( a_Up[g+1], Bf, kf, mGridSize[g+1], a_Mu[g+1], a_Lambda[g+1],
+                           m_sg_str_x[g+1], m_sg_str_y[g+1],m_sbop,'=');
+      compute_icstresses2( a_Up[g], Bc, kc, mGridSize[g], a_Mu[g], a_Lambda[g],
+                           m_sg_str_x[g], m_sg_str_y[g],m_sbop,'=');
 
 // add in the visco-elastic boundary traction
       if( m_use_attenuation && m_number_mechanisms > 0 )
@@ -2706,7 +2732,8 @@ void EW::gridref_initial_guess( Sarray& u, int g, bool upper )
 void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
                                         Sarray* a_AlphaVEp, Sarray* a_AlphaVE, Sarray* a_AlphaVEm,
 					Sarray& Utt, Sarray& Unext, int g, int kic, float_sw4 t, 
-					Sarray &Ftt, vector<GridPointSource*> point_sources )
+					Sarray &Ftt, vector<GridPointSource*> point_sources,
+                                        Sarray& a_Rho, Sarray& a_Mu, Sarray& a_Lambda )
 {
    //
    // NOTE: This routine is called by enforceIC() after the predictor stage to calculate the interior contribution to
@@ -2751,8 +2778,8 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
 
 // there are C and Fortran versions of this routine that are selected by the Makefile
    rhs4th3wind( ib, ie, jb, je, kb, ke, nz, m_onesided[g], m_acof,
-		       m_bope, m_ghcof, Lutt.c_ptr(), Utt.c_ptr(), mMu[g].c_ptr(),
-		       mLambda[g].c_ptr(), mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+		       m_bope, m_ghcof, Lutt.c_ptr(), Utt.c_ptr(), a_Mu.c_ptr(),
+		       a_Lambda.c_ptr(), mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
 		       m_sg_str_z[g], op, kbu, keu, kic, kic );
 
 // Plan: 1) loop over all mechanisms, 2) precompute d^2 alpha/dt^2 and store in Utt, 3) accumulate visco-elastic stresses
@@ -2837,7 +2864,7 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
 #pragma omp simd
        for( int i=Unext.m_ib+2 ; i <= Unext.m_ie-2 ; i++ )
        {
-	 float_sw4 irho=cof/mRho[g](i,j,kic);
+	 float_sw4 irho=cof/a_Rho(i,j,kic);
 	 Unext(1,i,j,kic) = a_Up(1,i,j,kic) + irho*(Lutt(1,i,j,kic)+Ftt(1,i,j,kic)); // +force(1,i,j,kic));
 	 Unext(2,i,j,kic) = a_Up(2,i,j,kic) + irho*(Lutt(2,i,j,kic)+Ftt(2,i,j,kic)); // +force(2,i,j,kic));
 	 Unext(3,i,j,kic) = a_Up(3,i,j,kic) + irho*(Lutt(3,i,j,kic)+Ftt(3,i,j,kic));//+force(3,i,j,kic));
@@ -2852,7 +2879,7 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
 // July 22: Changed time levels for (Up, U) to (U, Um)
 //      addsg4wind( &mDt, &mGridSize[g], Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), mRho[g].c_ptr(),
 //FTNC      if( m_croutines )
-	 addsg4wind_ci( Unext.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(), mRho[g].c_ptr(),
+	 addsg4wind_ci( Unext.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(), a_Rho.c_ptr(),
 			m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
 			m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
 			ib, ie, jb, je, kb, ke, m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic, kic );
@@ -2868,7 +2895,9 @@ void EW::compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
 
 //-----------------------------------------------------------------------
 void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_AlphaVEp, Sarray& Unext,
-					int g, int kic, float_sw4 t, Sarray &F, vector<GridPointSource*> point_sources )
+					int g, int kic, float_sw4 t, Sarray &F, 
+                                        vector<GridPointSource*> point_sources, 
+                                        Sarray& a_Rho, Sarray& a_Mu, Sarray& a_Lambda )
 {
    //
    // NOTE: This routine is called by enforceIC() after the corrector stage to calculate the interior contribution to
@@ -2886,8 +2915,8 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
 // Note: 6 first arguments of the function call:
 // (ib,ie), (jb,je), (kb,ke) is the declared size of mMu and mLambda in the (i,j,k)-directions, respectively
    rhs4th3wind( ib, ie, jb, je, kb, ke, nz, m_onesided[g], m_acof, // ghost point operators for elastic part
-		       m_bope, m_ghcof, Lu.c_ptr(), a_Up.c_ptr(), mMu[g].c_ptr(),
-		       mLambda[g].c_ptr(), mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+		       m_bope, m_ghcof, Lu.c_ptr(), a_Up.c_ptr(), a_Mu.c_ptr(),
+		       a_Lambda.c_ptr(), mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
 		       m_sg_str_z[g], op, kb, ke, kic, kic ); 
 // Note: 4 last arguments of the above function call:
 // (kb,ke) is the declared size of Up in the k-direction
@@ -2983,7 +3012,7 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
 #pragma omp simd
       for( int i=ib+2 ; i <= ie-2 ; i++ )
       {
-	 float_sw4 irho=cof/mRho[g](i,j,kic);
+	 float_sw4 irho=cof/a_Rho(i,j,kic);
 	 Unext(1,i,j,kic) = 2*a_Up(1,i,j,kic) - a_U(1,i,j,kic) + irho*(Lu(1,i,j,kic)+F(1,i,j,kic)); //+f(1,i,j,kic));
 	 Unext(2,i,j,kic) = 2*a_Up(2,i,j,kic) - a_U(2,i,j,kic) + irho*(Lu(2,i,j,kic)+F(2,i,j,kic)); //+f(2,i,j,kic));
 	 Unext(3,i,j,kic) = 2*a_Up(3,i,j,kic) - a_U(3,i,j,kic) + irho*(Lu(3,i,j,kic)+F(3,i,j,kic)); //+f(3,i,j,kic));
@@ -2993,7 +3022,7 @@ void EW::compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_Alp
    {
 // assign array pointers on the fly
 //FTNC      if( m_croutines )
-	 addsg4wind_ci( Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), mRho[g].c_ptr(),
+	 addsg4wind_ci( Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), a_Rho.c_ptr(),
 			m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
 			m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
 			ib, ie, jb, je, kb, ke, m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic, kic );
@@ -4748,6 +4777,6 @@ void EW::addtoPseudoHessian( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarra
    }
    for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids ; g++ )
    {
-      // NYI
+      // curvilinear grids, NYI
    }
 }

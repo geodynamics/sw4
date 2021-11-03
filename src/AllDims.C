@@ -9,7 +9,8 @@
 
 //-----------------------------------------------------------------------
 AllDims::AllDims( int nproci, int nprocj, int nprock, int ibg, int ieg, 
-		  int jbg, int jeg, int kbg, int keg, int nghost, int npad )
+		  int jbg, int jeg, int kbg, int keg, int nghost, int npad,
+                  MPI_Comm ewcomm )
 {
 //-----------------------------------------------------------------------
 // General 3D array distribution.
@@ -26,10 +27,11 @@ AllDims::AllDims( int nproci, int nprocj, int nprock, int ibg, int ieg,
 //  these include padding points and ghost points.
 //
 //-----------------------------------------------------------------------   
+   MPI_Comm_dup( ewcomm, &m_communicator );
    m_nproci=nproci;
    m_nprocj=nprocj;
    m_nprock=nprock;
-   MPI_Comm_rank( MPI_COMM_WORLD, &m_myid1d );
+   MPI_Comm_rank( m_communicator, &m_myid1d );
    compute_myid3d();
 
    m_ibg = ibg-nghost;
@@ -74,11 +76,13 @@ AllDims::AllDims( int nproci, int nprocj, int nprock, int ibg, int ieg,
 
 //-----------------------------------------------------------------------
 AllDims::AllDims( int nprocs, int ibg, int ieg, int jbg, int jeg,
-		  int kbg, int keg, int nghost )
+		  int kbg, int keg, int nghost, MPI_Comm ewcomm )
 {
 // Use FFTW array distribution (i-direction split onto the processors without overlap).
 
-   MPI_Comm_rank( MPI_COMM_WORLD, &m_myid1d );
+   MPI_Comm_dup( ewcomm, &m_communicator );
+
+   MPI_Comm_rank( m_communicator, &m_myid1d );
    m_nproci = nprocs;
    m_nprocj = 1;
    m_nprock = 1;
@@ -97,7 +101,7 @@ AllDims::AllDims( int nprocs, int ibg, int ieg, int jbg, int jeg,
 
 #ifdef ENABLE_FFTW
    ptrdiff_t ni, ib;
-   ptrdiff_t fftw_alloc_local = fftw_mpi_local_size_3d( nig, njg, nkg, MPI_COMM_WORLD, &ni, &ib );
+   ptrdiff_t fftw_alloc_local = fftw_mpi_local_size_3d( nig, njg, nkg, m_communicator, &ni, &ib );
    m_fftw_alloc_local = static_cast<size_t>(fftw_alloc_local);
 #else
    int ni, ib;
@@ -107,8 +111,8 @@ AllDims::AllDims( int nprocs, int ibg, int ieg, int jbg, int jeg,
    niloc[m_myid1d] = ni;
    ibloc[m_myid1d] = ib;
 
-   MPI_Allgather( &ni, 1, MPI_INT, &niloc[0], 1, MPI_INT, MPI_COMM_WORLD );
-   MPI_Allgather( &ib, 1, MPI_INT, &ibloc[0], 1, MPI_INT, MPI_COMM_WORLD );
+   MPI_Allgather( &ni, 1, MPI_INT, &niloc[0], 1, MPI_INT, m_communicator );
+   MPI_Allgather( &ib, 1, MPI_INT, &ibloc[0], 1, MPI_INT, m_communicator );
 
    m_ib.resize(m_nproci);
    m_ie.resize(m_nproci);
@@ -146,6 +150,7 @@ AllDims::AllDims( AllDims* fine, int ibg, int ieg, int jbg, int jeg,
    m_myid3di = fine->m_myid3di;
    m_myid3dj = fine->m_myid3dj;
    m_myid3dk = fine->m_myid3dk;
+   MPI_Comm_dup( fine->m_communicator, &m_communicator );
 
    m_ibg = ibg-nghost;
    m_ieg = ieg+nghost;

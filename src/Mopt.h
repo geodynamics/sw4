@@ -49,6 +49,14 @@ class Mopt
    void set_typx( int nmpar, double* sf, double* typx );
    void init_pseudohessian( vector<Sarray>& ph );
    int get_pseudo_hessian_case();
+   float_sw4 get_vp_min() const { return m_vp_min; }
+   float_sw4 get_vp_max() const { return m_vp_max; }
+   float_sw4 get_vs_min() const { return m_vs_min; }
+   float_sw4 get_vs_max() const { return m_vs_max; }
+   int get_wave_mode() const { return m_wave_mode; }
+   float get_twin_shift() const { return m_twin_shift; }
+   float get_twin_scale() const { return m_twin_scale; }
+
    const string& getPath() const {return m_path;}
    EW* get_EWptr() const {return m_ew;}
    void set_baseMat(double* xs, double* xm );
@@ -67,8 +75,14 @@ class Mopt
    int m_var, m_var2, m_itest, m_jtest, m_ktest, m_itest2, m_jtest2, m_ktest2;
    int m_nsurfpts, m_nsurfpts2;
    double m_pmin, m_pmax, m_pmin2, m_pmax2;
+   // FWI workflow options
+   float_sw4 m_vp_min, m_vp_max, m_vs_min, m_vs_max;  // global velocity constraints
+   int m_wave_mode; // 0: P  1: S  2: both
+   float m_twin_shift, m_twin_scale;
+   int m_win_mode;
+
    MaterialParameterization *m_mp;   
-   MaterialParCartesian *m_mpcart0;   
+   //   MaterialParCartesian *m_mpcart0;   
    std::vector<Image*> m_image_files;
    std::vector<Image3D*> m_3dimage_files;
    std::vector<SfileOutput*> m_sfiles;
@@ -82,6 +96,7 @@ class Mopt
    double *m_sfm; // scale factors, distributed
    double *m_xs0; // initial material perturbation, shared
    double *m_xm0; // initial material perturbation, distributed
+   bool m_write_dfm;
 };
 
 #endif

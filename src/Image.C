@@ -212,7 +212,7 @@ void Image::associate_gridfiles( vector<Image*>& imgs )
 //bool Image::proc_write()
 //{
 //  int myRank;
-//  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+//  MPI_Comm_rank(mEW->m_1d_communicator, &myRank);
 //  return (myRank == m_rankWriter);
 //}
 
@@ -240,7 +240,7 @@ void Image::computeGridPtIndex()
 //              the grid no. of the image plane.
 //
   int myRank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+  MPI_Comm_rank(mEW->m_1d_communicator, &myRank);
 //   if (myRank == 0)
 //     printf("======== Initializing Image ==========\n");
 
@@ -338,17 +338,17 @@ void Image::computeGridPtIndex()
   int iwrite = plane_in_proc(m_gridPtIndex[0]) ? 1 : 0;
   
   MPI_Group origGroup, newGroup; 
-  MPI_Comm_group(MPI_COMM_WORLD, &origGroup); 
+  MPI_Comm_group(mEW->m_1d_communicator, &origGroup); 
 
 //   int myRank;
-//   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+//   MPI_Comm_rank(mEW->m_1d_communicator, &myRank);
 //   cout<<"myRank "<<myRank<<" and I write "<<iwrite<<endl;
 //   MPI_Barrier;
   
   int size;
-  MPI_Comm_size(MPI_COMM_WORLD,&size); 
+  MPI_Comm_size(mEW->m_1d_communicator,&size); 
   std::vector<int> writers(size);
-  MPI_Allgather(&iwrite, 1, MPI_INT, &writers[0], 1, MPI_INT,MPI_COMM_WORLD);
+  MPI_Allgather(&iwrite, 1, MPI_INT, &writers[0], 1, MPI_INT,mEW->m_1d_communicator);
   std::vector<int> fileWriterIDs;
   for (unsigned int i = 0; i < writers.size(); ++i)
     if (writers[i] == 1)
@@ -365,7 +365,7 @@ void Image::computeGridPtIndex()
       MPI_Comm_free(&m_mpiComm_writers);
 
   MPI_Group_incl(origGroup,fileWriterIDs.size(),&fileWriterIDs[0],&newGroup);
-  MPI_Comm_create(MPI_COMM_WORLD,newGroup,&m_mpiComm_writers)               ;
+  MPI_Comm_create(mEW->m_1d_communicator,newGroup,&m_mpiComm_writers)               ;
   
 //   int newRank;
 //   MPI_Group_rank(newGroup,&newRank);
@@ -550,7 +550,8 @@ void Image::define_pio( )
 	    if( q*w+r == myid )
 	       iwrite = 1;
       }
-      m_pio[g-glow] = new Parallel_IO( iwrite, mEW->usingParallelFS(), global, local, start );
+      m_pio[g-glow] = new Parallel_IO( iwrite, mEW->usingParallelFS(), global, local, start, 
+                                       mEW->m_1d_communicator );
    }
 }
 
@@ -565,7 +566,7 @@ void Image::allocatePlane()
   if (iwrite)
     {
       int myRank;
-      MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+      MPI_Comm_rank(mEW->m_1d_communicator, &myRank);
 
       bool breakLoop      = (mLocationType == Image::Z);
       
@@ -2889,7 +2890,7 @@ void Image::output_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt,
       double tmp[2];
       tmp[0] = t[0];
       tmp[1] = t[1];
-      MPI_Reduce( tmp, t, 2, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD );
+      MPI_Reduce( tmp, t, 2, MPI_DOUBLE, MPI_MAX, 0, mEW->m_1d_communicator );
       if( mEW->proc_zero() )
       {
 	 cout << "Maximum write time:";

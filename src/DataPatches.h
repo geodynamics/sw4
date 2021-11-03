@@ -86,12 +86,16 @@ class DataPatches
    void add_patch( int wind[6] );
    void print_openerr( int ecode ) const;
 public:
-   DataPatches( std::string fname, Sarray& u, int imin, int imax, int jmin, int jmax, int kmax,
-		int nlayers, int ntsteps, double dt );
+   DataPatches( std::string fname, Sarray& u, int imin, int imax, int jmin, int jmax, 
+                int kmin, int kmax,
+		int nlayers, int ntsteps, double dt, int npad[6], bool top, bool bottom );
    ~DataPatches();
    void push( Sarray& u, int n );
    void pop( Sarray& u, int n );
    size_t get_noofpoints() const;
+   void intersect( int ib, int ie, int jb, int je, int kb, int ke, 
+                   int ib2, int ie2, int jb2, int je2, int kb2, int ke2,
+                   int wind[6] );
 };
 
 #endif

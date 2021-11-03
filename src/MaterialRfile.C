@@ -260,24 +260,24 @@ void MaterialRfile::set_material_properties(std::vector<Sarray> & rho,
    MPI_Type_size(MPI_INT,&mpisizeint );
    if( sizeof(size_t) == mpisizelong )
    {
-      MPI_Reduce(&material, &materialSum, 1, MPI_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
-      MPI_Reduce(&outside,   &outsideSum, 1, MPI_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
+      MPI_Reduce(&material, &materialSum, 1, MPI_LONG, MPI_SUM, 0, mEW->m_1d_communicator );
+      MPI_Reduce(&outside,   &outsideSum, 1, MPI_LONG, MPI_SUM, 0, mEW->m_1d_communicator );
    }
    else if( sizeof(size_t) == mpisizelonglong )
    {
-      MPI_Reduce(&material, &materialSum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
-      MPI_Reduce(&outside,   &outsideSum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD );
+      MPI_Reduce(&material, &materialSum, 1, MPI_LONG_LONG, MPI_SUM, 0, mEW->m_1d_communicator );
+      MPI_Reduce(&outside,   &outsideSum, 1, MPI_LONG_LONG, MPI_SUM, 0, mEW->m_1d_communicator );
    }
    else if( sizeof(size_t) == mpisizeint )
    {
-      MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
-      MPI_Reduce(&outside,   &outsideSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+      MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, mEW->m_1d_communicator );
+      MPI_Reduce(&outside,   &outsideSum, 1, MPI_INT, MPI_SUM, 0, mEW->m_1d_communicator );
    }
    else
    {
       int materialsumi, outsidesumi, materiali=material, outsidei=outside;
-      MPI_Reduce(&materiali, &materialsumi, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
-      MPI_Reduce(&outsidei,   &outsidesumi, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+      MPI_Reduce(&materiali, &materialsumi, 1, MPI_INT, MPI_SUM, 0, mEW->m_1d_communicator );
+      MPI_Reduce(&outsidei,   &outsidesumi, 1, MPI_INT, MPI_SUM, 0, mEW->m_1d_communicator );
       materialSum=materialsumi;
       outsideSum=outsidesumi;
    }
@@ -303,8 +303,8 @@ int MaterialRfile::io_processor( )
    // Find out if this processor will participate in the I/O
    int iread=0, nproc, myid;
    int nrwriters = mEW->getNumberOfWritersPFS();
-   MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-   MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+   MPI_Comm_size(mEW->m_1d_communicator, &nproc);
+   MPI_Comm_rank(mEW->m_1d_communicator, &myid);
    if( nrwriters > nproc )
       nrwriters = nproc;
    int q, r;
@@ -373,6 +373,7 @@ void MaterialRfile::read_rfile( )
    m_zmaxloc = zmax;
 
   // Read rfile header. Translate each patch into SW4 Cartesian coordinate system
+
    string fname = m_model_dir + "/" + m_model_file;
    int fd = open( fname.c_str(), O_RDONLY );
    if( fd != -1 )
@@ -668,7 +669,7 @@ void MaterialRfile::read_rfile( )
       vector<int> isempty(m_npatches), isemptymin(m_npatches);
       for( int p=0 ; p < m_npatches ; p++ )
 	 isempty[p] = m_isempty[p];
-      MPI_Allreduce( &isempty[0], &isemptymin[0], m_npatches, MPI_INT, MPI_MIN, MPI_COMM_WORLD );
+      MPI_Allreduce( &isempty[0], &isemptymin[0], m_npatches, MPI_INT, MPI_MIN, mEW->m_1d_communicator );
       for( int p=0 ; p < m_npatches ; p++ )
 	 m_isempty[p] = (isemptymin[p] == 1);
 
@@ -725,7 +726,7 @@ void MaterialRfile::read_rfile( )
 	       start[0]=start[2];
 	       start[2]=tmp;
 	    }
-	    Parallel_IO* pio = new Parallel_IO( iread, mEW->usingParallelFS(), global, local, start, m_bufsize );
+	    Parallel_IO* pio = new Parallel_IO( iread, mEW->usingParallelFS(), global, local, start, mEW->m_1d_communicator, m_bufsize );
 	 //	 pio[p] = new Parallel_IO( iread, mEW->usingParallelFS(), global, local, start );
 // Read corresponding part of patches
 	    float_sw4* material_dble = new float_sw4[mMaterial[p].m_npts];
@@ -764,9 +765,11 @@ void MaterialRfile::read_rfile( )
       //      cout << "END DEBUG -----" << endl;
    }
    else
+   {
       cout << "MaterialRfile::read_rfile, error could not open file " << fname << endl;
-
-   MPI_Barrier(MPI_COMM_WORLD);
+      MPI_Abort(MPI_COMM_WORLD,0);
+   }
+   MPI_Barrier(mEW->m_1d_communicator);
    end_time = MPI_Wtime();
    if (mEW->getRank()==0)
      printf("Read material properties from rfile time=%e seconds\n", end_time-start_time);
@@ -895,10 +898,10 @@ void MaterialRfile::material_check( bool water )
 	    }
       double cmins[4]={csmin,cpmin,cratmin,rhomin}, cmaxs[4]={csmax,cpmax,cratmax,rhomax};
       double cminstot[4], cmaxstot[4];
-      MPI_Reduce(cmins, cminstot, 4, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD );
-      MPI_Reduce(cmaxs, cmaxstot, 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD );
+      MPI_Reduce(cmins, cminstot, 4, MPI_DOUBLE, MPI_MIN, 0, mEW->m_1d_communicator );
+      MPI_Reduce(cmaxs, cmaxstot, 4, MPI_DOUBLE, MPI_MAX, 0, mEW->m_1d_communicator );
       int myid;
-      MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+      MPI_Comm_rank(mEW->m_1d_communicator,&myid);
       if( myid == 0 )
 	 //	 if( mEW->getRank()==0 )
       {

@@ -262,8 +262,8 @@ void Image3D::define_pio( )
       int iwrite = 0;
       int nrwriters = mEW->getNumberOfWritersPFS();
       int nproc=0, myid=0;
-      MPI_Comm_size( MPI_COMM_WORLD, &nproc );
-      MPI_Comm_rank( MPI_COMM_WORLD, &myid);
+      MPI_Comm_size( mEW->m_1d_communicator, &nproc );
+      MPI_Comm_rank( mEW->m_1d_communicator, &myid);
 
       // new hack 
       int* owners = new int[nproc];
@@ -292,7 +292,7 @@ void Image3D::define_pio( )
 	    iwrite = 1;
 //      std::cout << "Define PIO: grid " << g << " myid = " << myid << " iwrite= " << iwrite << " start= "
       //		<< start[0] << " " << start[1] << " " << start[2] << std::endl;
-      m_parallel_io[g-glow] = new Parallel_IO( iwrite, mEW->usingParallelFS(), global, local, start );
+      m_parallel_io[g-glow] = new Parallel_IO( iwrite, mEW->usingParallelFS(), global, local, start, mEW->m_1d_communicator );
       delete[] owners;
    }
    m_isDefinedMPIWriters = true;
@@ -721,7 +721,7 @@ void Image3D::write_image( int cycle, std::string &path, float_sw4 t,
       CHECK_INPUT(fid != -1, "Image3D::write_image: Error opening: " << s.str() );
       int myid;
 
-      MPI_Comm_rank( MPI_COMM_WORLD, &myid );
+      MPI_Comm_rank( mEW->m_1d_communicator, &myid );
       std::cout << "writing volume image on file " << s.str();
       std::cout << " (msg from proc # " << myid << ")" << std::endl;
 
@@ -925,7 +925,7 @@ void EW::read_volimage( std::string &path, std::string &fname, vector<Sarray>& d
       CHECK_INPUT(fid != -1, "EW::read_image: Error opening: " << s.str() );
       int myid;
 
-      MPI_Comm_rank( MPI_COMM_WORLD, &myid );
+      MPI_Comm_rank( m_1d_communicator, &myid );
       std::cout << "reading volume image on file " << s.str();
       std::cout << " (msg from proc # " << myid << ")" << std::endl;
 
@@ -998,7 +998,7 @@ void EW::read_volimage( std::string &path, std::string &fname, vector<Sarray>& d
 
    parallel_io[0]->writer_barrier();
    int tmpprec=prec;
-   MPI_Allreduce( &tmpprec, &prec, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+   MPI_Allreduce( &tmpprec, &prec, 1, MPI_INT, MPI_MAX, m_1d_communicator );
 
    // Open file from all readers
    if( iread && !parallel_io[0]->proc_zero() )
@@ -1060,8 +1060,8 @@ void EW::define_parallel_io( vector<Parallel_IO*>& parallel_io )
       int iwrite = 0;
       int nrwriters = getNumberOfWritersPFS();
       int nproc=0, myid=0;
-      MPI_Comm_size( MPI_COMM_WORLD, &nproc );
-      MPI_Comm_rank( MPI_COMM_WORLD, &myid);
+      MPI_Comm_size( m_1d_communicator, &nproc );
+      MPI_Comm_rank( m_1d_communicator, &myid);
 
       // Find out the I/O processors
       // Assume all processors have some part of the array.
@@ -1084,6 +1084,6 @@ void EW::define_parallel_io( vector<Parallel_IO*>& parallel_io )
 	    iwrite = 1;
       //      std::cout << "Define PIO: grid " << g << " myid = " << myid << " iwrite= " << iwrite << " start= "
       //		<< start[0] << " " << start[1] << " " << start[2] << std::endl;
-      parallel_io[g] = new Parallel_IO( iwrite, usingParallelFS(), global, local, start );
+      parallel_io[g] = new Parallel_IO( iwrite, usingParallelFS(), global, local, start, m_1d_communicator );
    }
 }

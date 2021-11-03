@@ -41,6 +41,14 @@
 #include "Sarray.h"
 #include "Parallel_IO.h"
 
+#define SW4_ZFP_MODE_RATE       1
+#define SW4_ZFP_MODE_PRECISION  2
+#define SW4_ZFP_MODE_ACCURACY   3
+#define SW4_ZFP_MODE_REVERSIBLE 4
+#define SW4_SZIP                5
+#define SW4_ZLIB                6
+#define SW4_SZ                  7
+
 class EW;
 class ESSI3DHDF5;
 
@@ -50,18 +58,24 @@ public:
    static ESSI3D* nil;
 
    ESSI3D( EW * a_ew,
-     const std::string& filePrefix,
+      const std::string& filePrefix,
       int dumpInterval,
+      int bufferInterval,
       float_sw4 coordBox[4],
       float_sw4 depth,
-      int precision);
+      int precision,
+      int compressionMode,
+      double compressionPar
+      );
    ~ESSI3D();
 
    void set_dump_interval( int a_dumpInterval );
+   void set_buffer_interval( int a_bufferInterval );
    void setup( );
 
    double getHDF5Timings();
    void set_ntimestep(int ntimestep);
+   void set_restart(bool is_restart);
 
    static void setSteps(int a_steps);
 
@@ -72,7 +86,7 @@ public:
        std::string& a_path, Sarray& a_Z );
 
 protected:
-   void compute_image( Sarray& a_U, int a_comp );
+   void compute_image( Sarray& a_U, int a_comp, int cycle );
 
    void write_image( int cycle, std::string& path, float_sw4 t, Sarray& a_Z );
 
@@ -84,7 +98,6 @@ protected:
    void close_vel_file();
    void write_image_hdf5( int cycle, std::string& path, float_sw4 t,
        std::vector<Sarray>& a_U );
-   void define_pio_hdf5( );
 #endif
 
    void compute_file_suffix( int cycle, std::stringstream & fileSuffix );
@@ -104,6 +117,9 @@ protected:
 
    bool m_fileOpen;
 
+   int m_compressionMode;
+   double m_compressionPar;
+
    static int mPreceedZeros; // number of digits for unique time step in file names
    static int mNumberOfTimeSteps; // number of time steps for the whole sim
 
@@ -117,11 +133,16 @@ private:
 
    int m_cycle;
    int m_dumpInterval; // Note: this cycle interval to start a new file
+   int m_bufferInterval; // Note: number of steps to buffer data before writting out
+   int m_nbufstep;
    int mWindow[6]; // Local in processor start + end indices for (i,j,k) for last curvilinear grid
    int mGlobalDims[6]; // Global start + end indices for (i,j,k) for last curvilinear grid
-   double* m_doubleField;
+   double** m_doubleField;
+   float** m_floatField;
    bool m_ihavearray;
    int m_ntimestep;
+   bool m_isRestart;
+   int m_rank;
 };
 
 #endif

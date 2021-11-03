@@ -85,6 +85,7 @@ class TestEcons;
 //class CurvilinearInterface;
 class CurvilinearInterface2;
 class GridGenerator;
+class MaterialParameterization;
 
 class EW 
 {
@@ -106,7 +107,11 @@ int getNumberOfSteps(int event=0) const;
 float_sw4 getGlobalZmin() { return m_global_zmin; }
 float_sw4 getGlobalZmax() { return m_global_zmax; }
 int getNumberOfEvents() const;
+int getNumberOfLocalEvents() const;
 int findNumberOfEvents();
+bool event_is_in_proc( int e ) const;
+int global_to_local_event( int e ) const;
+int local_to_global_event( int e ) const;
 
 void setupRun( vector<vector<Source*> > & a_GlobalUniqueSources );
 
@@ -116,6 +121,10 @@ void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTim
 	    vector<DataPatches*>& Upred_saved_sides,
 	    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides, int event, int save_steps,
             int varcase, vector<Sarray>& pseudoHessian );
+
+void solveTT( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
+              double* xs, int nmpars, MaterialParameterization* mp, int wave_mode, 
+              float twinshift, float twinscale, int event, int myrank);
 
 void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, float_sw4 gradient[11], float_sw4 hessian[121] );
    //void solve_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
@@ -129,6 +138,15 @@ void solve_backward_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& 
 		    vector<DataPatches*>& Ucorr_saved_sides, float_sw4 gradients[11], 
 		    vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda, int event );
    //int nmpar, float_sw4* gradientm );
+
+void solve_dudp( vector<Source*>& a_Sources, vector<Sarray>& a_Rho, 
+                 vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+                 vector<TimeSeries*> & a_TimeSeries, 
+                 vector<TimeSeries*> & GlobalObservations,
+                 vector<Sarray>& Um, vector<Sarray>& U,
+                 vector<Sarray>& dUm, vector<Sarray>& dU,
+                 double& misfit, double& dmisfitdp, 
+                 int di, int dj, int dk, int dgrid, int event );
 
    bool parseInputFile( vector<vector<Source*> > & a_GlobalSources, vector<vector<TimeSeries*> > & a_GlobalTimeSeries );
 void parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& minute,
@@ -241,7 +259,7 @@ void setupSBPCoeff( );
 
 // time stepping routines
 void simpleAttenuation( vector<Sarray> & a_Up );
-void enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+   void enforceBC( vector<Sarray> & a_U, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
 		vector<Sarray*>& a_AlphaVE, float_sw4 t, vector<float_sw4 **> & a_BCForcing );
 
 void enforceBCfreeAtt( vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um, 
@@ -264,6 +282,9 @@ void evalRHS(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambd
 
 void evalRHSanisotropic(vector<Sarray> & a_U, vector<Sarray>& a_C, 
 			vector<Sarray> & a_Uacc );
+
+void evalLupt(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+		  vector<Sarray> & a_Lu, int grid, int i, int j, int k );
 
 void evalPredictor(vector<Sarray> & a_Up, vector<Sarray> & a_U, vector<Sarray> & a_Um,
 		   vector<Sarray>& a_Rho, vector<Sarray> & a_Lu, vector<Sarray> & a_F );
@@ -308,6 +329,7 @@ void computeDTanisotropic();
    //bool inTestSourceMode() { return mTestSource; }
    //bool inTestLambMode() { return mTestLamb; }
 bool proc_zero() const;
+bool proc_zero_evzero() const;
 int no_of_procs() const;
 void create_directory(const string& path);
 void initialize_image_files();
@@ -368,7 +390,8 @@ void setup_supergrid( );
 void assign_supergrid_damping_arrays();
 
 // MR coefficients
-void setup_MR_coefficients();
+void setup_MR_coefficients( vector<Sarray>& Rho, vector<Sarray>& Mu, 
+                            vector<Sarray>& Lambda );
 
 void assign_local_bcs( );
 bool timeSteppingSet();
@@ -376,6 +399,12 @@ bool proc_decompose_2d( int ni, int nj, int nproc, int proc_max[2] );
 void decomp1d( int nglobal, int myid, int nproc, int& s, int& e );
 void decomp1d_2( int N, int myid, int nproc, int& s, int& e, int nghost, int npad );
 void coarsen1d( int& n, int& ifirst, int& ilast, int periodic );
+
+bool node_core_decomp( int ni, int nj, int& Cx, int& Cy, int& Nx, int &Ny );
+void my_node_core_rank( int Cx, int Cy, int Nx, int Ny,
+                        int& cx, int& cy, int& nx, int &ny );
+int  my_node_core_id( int ni,int nj, int proc_max[2] );
+
 void allocateCurvilinearArrays();
 void generate_grid();
 void setup_metric();
@@ -755,8 +784,8 @@ void addtoPseudoHessian( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarray>& 
    //      	   double t, bool predictor, std::vector<GridPointSource*> point_sources );
 // NEW June 14, 2017
 
-void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
-		float_sw4 t, bool predictor, std::vector<GridPointSource*> point_sources );
+//void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
+//		float_sw4 t, bool predictor, std::vector<GridPointSource*> point_sources, bool backward=false );
    //void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
    //void dirichlet_LRic( Sarray& U, int g, int kic, float_sw4 t, int adj );
    //void gridref_initial_guess( Sarray& u, int g, bool upper );
@@ -1232,13 +1261,16 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
 		size_t& npts );
 
    void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
-		vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE, vector<Sarray*>& a_AlphaVEm,
-		float_sw4 t, bool predictor, vector<Sarray> &F, std::vector<GridPointSource*> point_sources );
+                   vector<Sarray*>& a_AlphaVEp, vector<Sarray*>& a_AlphaVE, vector<Sarray*>& a_AlphaVEm,
+                   float_sw4 t, bool predictor, vector<Sarray> &F, std::vector<GridPointSource*> point_sources,
+                   vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, bool backward=false );
    void enforceIC2( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U, std::vector<Sarray> & a_Um,
                     vector<Sarray*>& a_AlphaVEp, float_sw4 t, 
-                    vector<Sarray> &F, std::vector<GridPointSource*> point_sources );
-   void CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, 
-                     vector<Sarray*>& a_AlphaVE, float_sw4 t );
+                    vector<Sarray> &F, std::vector<GridPointSource*> point_sources,
+                    vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda );
+
+   void CurviCartIC( int gcart, vector<Sarray> &a_U, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu, 
+                     vector<Sarray>& a_Lambda, vector<Sarray*>& a_AlphaVE, float_sw4 t );
    
    void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
    void dirichlet_twilight_ic( Sarray& U, int g, int kic, float_sw4 t);
@@ -1249,14 +1281,20 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
 
    void gridref_initial_guess( Sarray& u, int g, bool upper );
    void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
-                                       Sarray* a_AlphaVEp, Sarray* a_AlphaVE, Sarray* a_AlphaVEm, Sarray& Utt, Sarray& Unext,
-                                       int g, int kic, float_sw4 t, Sarray &Ftt, std::vector<GridPointSource*> point_sources );
+                                       Sarray* a_AlphaVEp, Sarray* a_AlphaVE, Sarray* a_AlphaVEm, 
+                                       Sarray& Utt, Sarray& Unext,
+                                       int g, int kic, float_sw4 t, Sarray &Ftt, 
+                                       std::vector<GridPointSource*> point_sources, 
+                                       Sarray& a_Rho, Sarray& a_Mu, Sarray& a_Lambda );
+
    // void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
    //                                     Sarray& Utt, Sarray& Unext,
    //                                     int g, int kic, double t, std::vector<GridPointSource*> point_sources );
 
    void compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray* a_AlphaVEp, Sarray& Unext,
-                                       int g, int kic, float_sw4 t, Sarray &F, vector<GridPointSource*> point_sources );
+                                       int g, int kic, float_sw4 t, Sarray &F, 
+                                       vector<GridPointSource*> point_sources,
+                                       Sarray& a_Rho, Sarray& a_Mu, Sarray& a_Lambda );
    
    void compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic, float_sw4* a_str_x, float_sw4* a_str_y, 
                             float_sw4* sbop, char op );
@@ -1290,9 +1328,25 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void checkpoint_twilight_test( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarray>& Up,
 				  vector<Sarray*> AlphaVEm, vector<Sarray*> AlphaVE,
 				  vector<Sarray*> AlphaVEp, vector<Source*> a_Sources, float_sw4 t );
+   void set_to_zero_at_source( vector<Sarray> & a_U, vector<GridPointSource*> point_sources,
+                               vector<int> identsources, int padding );
+   void set_zerograd();
+   void set_zerograd_pad(int pad);
+   void set_to_zero_at_receiver( vector<Sarray> & a_U, 
+                                 vector<TimeSeries*> time_series, 
+                                 int padding );
+   void set_zerogradrec();
+   void set_zerogradrec_pad(int pad);
+   void filter_bc( Sarray& ufi, Sarray& u, int g, float_sw4 ep );
+   void heat_kernel_filter( vector<Sarray>& u, float_sw4 ep, int nit );
+   void set_filtergrad();
+   void set_filterit(int filterit);
+   void set_filterpar(float_sw4 filterpar);
+   void perturb_vels( Sarray& cs, Sarray& cp, Sarray& rndpert );
+   void perturb_rho( Sarray& rho, Sarray& rndpert );
    //   TestGrid* create_gaussianHill();
    TestTwilight* create_twilight();
-   TestEcons* create_energytest();
+   TestEcons* create_energytest();   
    TestPointSource* get_point_source_test();
    AllDims* get_fine_alldimobject( );
    void grid_information( int g );
@@ -1358,12 +1412,12 @@ int m_opttest;
    Sarray mTopo, mTopoGridExt;
 
 // 2-D arrays with interface surfaces (z-coordinates) for mesh refinement in the curvilinear grid
-   vector<Sarray> m_curviInterface;
+//   vector<Sarray> m_curviInterface;
    
 
 // material description used with material surfaces and the ifile command
 vector<MaterialProperty*> m_materials;
-MPI_Comm m_cartesian_communicator;
+MPI_Comm m_cartesian_communicator, m_1d_communicator, m_cross_communicator;
 
 ofstream msgStream;
 
@@ -1386,6 +1440,9 @@ void revvector( int npts, float_sw4* v );
 
 int m_nevent; // Number of events, needed for multiple event material optimization.
 int m_nevents_specified; // Number of event lines in input file
+bool m_events_parallel; // Process events in parallel
+int m_eStart, m_eEnd;
+int m_event_in_proc; // Event number [0,nevent) in this proc, when using parallel events
 map<string,int> m_event_names;
 
 // epicenter
@@ -1486,7 +1543,7 @@ vector<float_sw4> mOmegaVE;
 bool m_anisotropic;
 
 // Randomization of the material
-bool m_randomize;
+bool m_randomize, m_randomize_density;
 int m_random_seed[3];
 float_sw4 m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad, m_random_sdlimit;
 vector<RandomizedMaterial*> m_random_blocks;
@@ -1660,9 +1717,14 @@ int m_cgstepselection, m_cgvarcase;
 bool m_cgfletcherreeves, m_do_linesearch;
 bool m_opt_testing;
 int m_opt_method, m_lbfgs_m;
+bool m_zerograd_at_src, m_filter_gradient, m_zerograd_at_rec;
+int m_zerograd_pad, m_gradfilter_it, m_zerogradrec_pad;
+float_sw4 m_gradfilter_ep;
+
    // perturbations for testing
 float_sw4 m_perturb;
 int m_iperturb, m_jperturb, m_kperturb, m_pervar;
+
 
 // Number of grid points per wave length, P = min Vs/(f*h) 
 vector<float_sw4> mMinVsOverH;

@@ -518,7 +518,21 @@ int EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
    ok = 1;
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
-      int infogrid;
+      //      int infogrid;
+      int numnan = a_rho[g].count_nans();
+      bool nansfound = numnan>0;
+      if( numnan > 0 )
+         std::cout << "check_material found " << numnan << " NaNs in rho " << std::endl;
+      numnan = a_mu[g].count_nans();
+      nansfound = nansfound || numnan>0;
+      if( numnan > 0 )
+         std::cout << "check_material found " << numnan << " NaNs in mu " << std::endl;
+      numnan = a_lambda[g].count_nans();
+      nansfound = nansfound || numnan>0;
+      if( numnan > 0 )
+         std::cout << "check_material found " << numnan << " NaNs in lambda " << std::endl;
+      VERIFY2(!nansfound , "ERROR: check_material found NaNs");
+
       int ifirst = m_iStart[g];
       int ilast  = m_iEnd[g];
       int jfirst = m_jStart[g];
@@ -548,22 +562,23 @@ int EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 // Output: limits - vector of 10 elements:
 // (0=rhomin, 1=rhomax, 2=mumin, 3=mumax, 4=lamin, 5=lamax, 6=cfl2max, 7=vs2min, 8=bulkmin, 9=bulkmax)
 //  
-// bulk-modulus = 2*mu+3*lambda
+// bulk-modulus = 2*mu+3*lambda,  bulk-modulus >=0 gives cp/cs >= sqrt(4/3)
 
       float_sw4 local[5]={limits[0],limits[2],limits[4],limits[7],limits[8]};
       float_sw4 global[5];
-      MPI_Allreduce( local, global, 5, m_mpifloat, MPI_MIN, MPI_COMM_WORLD );
+      MPI_Allreduce( local, global, 5, m_mpifloat, MPI_MIN, m_1d_communicator );
       limits[0]=global[0];
       limits[2]=global[1];
       limits[4]=global[2];
       limits[7]=global[3];
       limits[8]=global[4];
+
       local[0]=limits[1];
       local[1]=limits[3];
       local[2]=limits[5];
       local[3]=limits[6];
       local[4]=limits[9];
-      MPI_Allreduce( local, global, 5, m_mpifloat, MPI_MAX, MPI_COMM_WORLD );
+      MPI_Allreduce( local, global, 5, m_mpifloat, MPI_MAX, m_1d_communicator );
       limits[1]=global[0];
       limits[3]=global[1];
       limits[5]=global[2];
@@ -575,13 +590,13 @@ int EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
          cout << limits[2] << " <=    mu    <= " << limits[3] << " (grid " << g << ")" << endl;
          cout << limits[4] << " <=  lambda  <= " << limits[5] << " (grid " << g << ")" << endl;
 
-	 if( limits[0] < 0 )
+	 if( limits[0] <= 0 )
 	    cout << "rho_min = " << limits[0] << " on grid " << g << endl;
-	 if( limits[2] < 0 )
+	 if( limits[2] <= 0 )
 	    cout << "mu_min = " << limits[2] << " on grid " << g << endl;
 	 if( limits[4] < 0 )
 	    cout << "lambda_min = " << limits[4] << " on grid " << g << endl;
-         if( limits[6] < 0 )
+         if( limits[6] <= 0 )
 	    cout << " cfl_max  is imaginary on grid " << g << endl;
          else
 	    cout << " cfl_max = " << sqrt(limits[6]) << " on grid " << g << endl;

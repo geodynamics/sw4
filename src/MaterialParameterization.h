@@ -19,7 +19,7 @@ public:
    virtual void get_material( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
 			      std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )=0;
    virtual void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
-				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )=0;
+				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda, int nr )=0;
    virtual void get_gradient( int nmd, double* xmd, int nms, double* xms, double* dfs, double* dfm,
 			      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
 			      std::vector<Sarray>& a_lambda,
@@ -44,15 +44,32 @@ public:
 				 double* sfd, double* sfs, bool compute_derivative, 
 				 double* dmfd_reg, double* dmfs_reg );
    virtual int get_varcase()=0; 
+   virtual void write_dfm_hdf5(double* dfm, std::string fname,  MPI_Comm comm)=0;
    void get_nr_of_parameters( int& nms, int& nmd, int& nmd_global ) const;
-   void parameters_from_basematerial( int nmd, double* xmd, int nms, double* xms );
-   void store_material( std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
-   void constrain_material( int nmd, double* xmd, int nms, double* xms );
+   //   void parameters_from_basematerial( int nmd, double* xmd, int nms, double* xms );
+   //   void store_material( std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
+   //   void constrain_material( int nmd, double* xmd, int nms, double* xms );
    void write_parameters( const char* filename, int nms, double* xms ); // Only shared parameters for now
    void read_parameters( const char* filename, int nms, double* xms ); // Only shared parameters for now
-   void write_parameters( int nms, double* xms ); // Only shared parameters for now
+   void write_parameters( int nms, double* xms ); 
+   void write_parameters_dist( const char* outfile, int nmd, double* xmd );
    void read_parameters( int nms, double* xms ); // Only shared parameters for now
    void set_path( std::string path ){m_path = path;}
+
+   virtual void limit_x( int nmd, double* xmd, int nms, double* xms,
+                 float_sw4 vsmin, float_sw4 vsmax, 
+                 float_sw4 vpmin, float_sw4 vpmax )=0;
+   virtual void limit_df( int nmd, double* dfd, int nms, double* dfs )=0;
+
+   virtual double getXmin() const =0;
+   virtual double getDx() const=0;
+   virtual int    getNX() const=0;
+   virtual double getYmin() const=0;
+   virtual double getDy() const =0;
+   virtual int getNY() const =0;
+   virtual double getZmin() const =0;
+   virtual double getDz() const =0;
+   virtual int getNZ() const =0;
 };
 
 #endif
