@@ -127,7 +127,7 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
       m_nmd_global = 0;
    }
 
-   std::cout << ">>>>>>>>> MaterialParCart: global=" << m_global << " nms=" << m_nms << " m_nmd_global=" << m_nmd_global << std::endl;
+   //std::cout << ">>>>>>>>> MaterialParCart: global=" << m_global << " nms=" << m_nms << " m_nmd_global=" << m_nmd_global << std::endl;
 
 /*
    // reinstored 
@@ -150,7 +150,7 @@ void MaterialParCart::limit_x( int nmd, double* xmd, int nms, double* xms,
                                float_sw4 vsmin, float_sw4 vsmax, 
                                float_sw4 vpmin, float_sw4 vpmax )
 {
-   cout << "limit_x: vsmin=" << vsmin << " vsmax=" << vsmax << endl;
+   //cout << "limit_x: vsmin=" << vsmin << " vsmax=" << vsmax << endl;
 
    if( vsmin <0 && vsmax <0 && vpmin <0 && vpmax < 0 )
    {
@@ -189,7 +189,7 @@ void MaterialParCart::limit_x( int nmd, double* xmd, int nms, double* xms,
       nmpar   = nmd;
    }
 
-   cout << "limit_x: nmpar=" << nmpar << endl;
+   //cout << "limit_x: nmpar=" << nmpar << endl;
 
    m_limited.resize(nmpar);
 

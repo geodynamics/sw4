@@ -77,17 +77,33 @@ DataPatches::DataPatches( string fname, Sarray& u, int imin, int imax, int jmin,
       m_ncomp = u.m_nc;
       m_dataptr = new size_t[m_npatches+1];
       m_dataptr[0] = 0;
+
       for( int p=0 ; p < m_npatches ; p++ )
       {
-	 size_t npts = m_ncomp*(m_dims[6*p+1]-m_dims[6*p]+1)*(m_dims[6*p+3]-m_dims[6*p+2]+1)
-	 *(m_dims[6*p+5]-m_dims[6*p+4]+1);
-	 m_dataptr[p+1] = m_dataptr[p] + npts;
+         size_t npts = m_ncomp*(m_dims[6*p+1]-m_dims[6*p]+1)*(m_dims[6*p+3]-m_dims[6*p+2]+1)
+         *(m_dims[6*p+5]-m_dims[6*p+4]+1);
+         
+         m_dataptr[p+1] = m_dataptr[p] + npts;
       }
+      // loop over p
+
       m_nsteps = ntsteps;
       m_data.resize(m_nsteps);
+
       size_t totdim = m_dataptr[m_npatches];
-      for( int n=0 ; n < m_nsteps ; n++ )
-	 m_data[n] = new double[totdim];
+
+      //std::cout << "DataPatch: m_npatches=" << m_npatches << " m_nsteps=" << m_nsteps << " totdim=" << totdim<< std::endl;
+      
+      for( int n=0 ; n < m_nsteps ; n++ ) {
+         try {
+            m_data[n] = new double[totdim];
+
+            } catch (std::bad_alloc&) {
+               cerr << "unable to allocate m_data in DataPatches" << endl; 
+            // Handle error
+            } 
+      }
+
       m_ncurrent = 0;
       m_steps = new int[m_nsteps];
 
@@ -157,9 +173,12 @@ DataPatches::~DataPatches()
    {
       delete[] m_steps;
       for( int i=0 ; i < m_data.size() ; i++ )
-	 delete[] m_data[i];
+	       delete[] m_data[i];
+
       delete[] m_dataptr;
       unlink(m_filename.c_str());
+      m_dims.clear();
+      
    // unlink deletes the file
    }
 }
@@ -215,21 +234,26 @@ void DataPatches::push( Sarray& u, int n )
       double* uptr=u.c_ptr();
       for( int p=0 ; p < m_npatches ; p++ )
       {
- 	 size_t ptr = m_dataptr[p];
-	 size_t ind=0, indu;
-	 for( int k=m_dims[6*p+4] ; k <= m_dims[6*p+5] ; k++ )
-	    for( int j=m_dims[6*p+2] ; j <= m_dims[6*p+3] ; j++ )
-	       for( int i=m_dims[6*p] ; i <= m_dims[6*p+1] ; i++ )
-	       {
-		  indu = (i-ib)+ni*(j-jb)+ni*nj*(k-kb);
-		  for( int c= 0 ; c<m_ncomp ; c++ )
-//		     m_data[m_ncurrent][ptr+m_ncomp*ind+c] = uptr[m_ncomp*indu+c];
-		     m_data[m_ncurrent][ptr+m_ncomp*ind+c] = uptr[indu+c*ntot];
-		  ind++;
-	       }
-      }
-      //      if( myid == 2 )
-      //         printf("push: ncurrent = %i n= %i step[0] = %i \n",m_ncurrent,n,m_steps[0] );
+      size_t ptr = m_dataptr[p];
+      size_t ind=0, indu;
+      
+      size_t npts = m_ncomp*(m_dims[6*p+1]-m_dims[6*p]+1)*(m_dims[6*p+3]-m_dims[6*p+2]+1)
+         *(m_dims[6*p+5]-m_dims[6*p+4]+1);
+        //int myid;
+        //MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+        //if(myid==0) cout << "push m_ncurrent=" << m_ncurrent << " end=" << ptr + npts << endl;
+
+      for( int k=m_dims[6*p+4] ; k <= m_dims[6*p+5] ; k++ )
+         for( int j=m_dims[6*p+2] ; j <= m_dims[6*p+3] ; j++ )
+            for( int i=m_dims[6*p] ; i <= m_dims[6*p+1] ; i++ )
+            {
+               indu = (i-ib)+ni*(j-jb)+ni*nj*(k-kb);
+               for( int c= 0 ; c<m_ncomp ; c++ ) m_data[m_ncurrent][ptr+m_ncomp*ind+c] = uptr[indu+c*ntot];
+            
+            ind++;
+            }
+      } // loop over m_npatches
+
       m_steps[m_ncurrent] = n;
       m_ncurrent++;
    }

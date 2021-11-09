@@ -8481,7 +8481,7 @@ void EW::evalLupt(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_
 
 void EW::counter_addmem(int n)
 {
-   std::cout << "add elements=" << n << std::endl;
+   //std::cout << "add elements=" << n << std::endl;
    m_mempe += n;
 }
 

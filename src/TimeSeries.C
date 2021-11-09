@@ -401,7 +401,9 @@ TimeSeries::~TimeSeries()
 //--------------------------------------------------------------
 void TimeSeries::allocateRecordingArrays( int numberOfTimeSteps, float_sw4 startTime, float_sw4 timeStep )
 {
-  m_shift = startTime-m_t0;
+  if(m_shift == 0.0) m_shift = startTime-m_t0;
+  //std::cout << "startTime=" << startTime << " m_t0=" << m_t0 << " m_shift=" << m_shift << std::endl;
+
   m_dt = timeStep;
 
   if (!m_myPoint) return; // only one processor saves each time series
@@ -866,6 +868,11 @@ void TimeSeries::writeFile( string suffix )
 #ifdef USE_HDF5
            if (m_hdf5Format) {
 
+        if(strcmp(m_staName.c_str(), "GS.CN180")==0)  std::cout << "writeFile 3: m_hdf5Name=" << m_hdf5Name 
+        << suffix << " sta=" << m_staName.c_str() << " mLastTimeStep+1=" << mLastTimeStep+1 
+        << " m_dt=" << m_dt << " m_shift=" << m_shift << " max=" << getMaxValue(0) << " mDownSample=" << mDownSample << std::endl;
+
+
 	     write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[0], (float) m_shift, (float) m_dt,
 	          	const_cast<char*>(xfield.c_str()), 90.0, azimx, makeCopy, false);
 	     write_hdf5_format(mLastTimeStep+1, grp, mRecordedFloats[1], (float) m_shift, (float) m_dt,
@@ -907,6 +914,7 @@ void TimeSeries::writeFile( string suffix )
            }
 #ifdef USE_HDF5
            if (m_hdf5Format) {
+
 
 	     write_hdf5_format(mLastTimeStep+1, grp, geographic[0], (float) m_shift, (float) m_dt,
 	  		const_cast<char*>(xfield.c_str()), 90.0, azimx, false, false); 
@@ -1232,6 +1240,7 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
 
   write_npts = npts;
   write_data = y;
+
   if (mDownSample > 1) {
     write_npts = (int) npts / mDownSample;
     write_data = new float[write_npts];
@@ -1468,6 +1477,8 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
 		     //			cout << m_utc[c] << " " ;
 		     //		     cout << endl;
 		     m_t0 = utc_distance( utcrefsim, m_utc );
+           cout << "utc_distance of sim and utc m_t0=" << m_t0 << endl;
+
 		  }
                   delete[] utcstr;
                   if( debug )
@@ -1515,6 +1526,11 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
 	    while( fscanf(fd,"%le %le %le %le",&td,&ux,&uy,&uz) != EOF )
 	       nlines++;
 	    fclose(fd);
+
+
+       //cout << "tstart=" << tstart << endl;
+
+
 	    // Use offset in time column.
       // Only allocate arrays if we aren't doing a restart
 	    if(!mIsRestart)
@@ -1576,7 +1592,7 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
 	 }
 	 delete[] buf;
       }
-   }
+   }  // usgs format
    else if( !m_usgsFormat )
    {
       cout << "ERROR: observed data must be an ASCII USGS file" << endl;
@@ -1732,12 +1748,17 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 
       float_sw4 mf[3], dmf[3], ddmf[3];
       float_sw4 dtfr  = observed.m_dt;
+
+
       float_sw4 t0fr  = observed.m_t0+observed.m_shift;
       int nfrsteps = observed.mLastTimeStep+1;
 
       bool compute_difference = (diff!=NULL);
       float_sw4** misfitsource;
       float** misfitsource_float; // for hdf5 output
+      
+      float_sw4 min=1e20;
+      float_sw4 max=-1e20;
 
       float_sw4 aw, bw;
       if( m_use_win )
@@ -1839,7 +1860,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
          wghz = wghy = wghx;
         } // if 2nd window exists
 
-        std::cout << "time=" << t << " winR2=" << m_winR2 << " wghx=" << wghx << std::endl;
+        //std::cout << "time=" << t << " winR2=" << m_winR2 << " wghx=" << wghx << std::endl;
 
 	 }
          if( !m_use_x )
@@ -1987,7 +2008,10 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 
 	    if( compute_difference )
 	    {
-	       misfitsource[0][i] = wghx*(mRecordedFloats[0][i]-mf[0]);
+	       misfitsource[0][i] = wghx*(mRecordedFloats[0][i]-mf[0]);  // mf[0] for inspecting obs directly
+          //if(mf[0]<min) min=mf[0];
+          //if(mf[0]>max) max=mf[0];
+
 	       misfitsource[1][i] = wghy*(mRecordedFloats[1][i]-mf[1]);
 	       misfitsource[2][i] = wghz*(mRecordedFloats[2][i]-mf[2]);
                if( m_hdf5Format )
@@ -2001,6 +2025,8 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	   scale_factor += wghx*mf[0]*mf[0]+wghy*mf[1]*mf[1]+wghz*mf[2]*mf[2];
    } // loop ove time i
 
+     //cout << "mf min=" << min << " max=" << max << " obs t0=" << observed.m_t0 << " shift=" <<  observed.m_shift << " dt=" << dtfr << " nt=" << nfrsteps 
+     //  << " sim t0= " << m_t0 << " shift=" << m_shift << " dt=" << m_dt << " mLastTimeStep+1=" << mLastTimeStep+1 << endl;
 
       //  scale misfit and diff-source
       if( m_misfit_scaling == 1 )
@@ -2010,7 +2036,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	    cout << "WARNING: Observation contains zero data" << endl;
 	    scale_factor=1;
 	 }
-	 float_sw4 iscale = 1/scale_factor;
+	 float_sw4 iscale = 1./scale_factor;  // 1.0 for inpecting obs
 	 misfit *= iscale;
 	 if( compute_difference )
 	    for( int i=0 ; i <= mLastTimeStep ; i++ )
@@ -2027,7 +2053,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	       misfitsource_float[2][i] *= iscale;
 	    }
       }
-   }
+   }  // my_point
    else
       misfit = 0;
    return 0.5*misfit;
@@ -2750,7 +2776,6 @@ float_sw4 TimeSeries::misfit2( TimeSeries& observed, TimeSeries* diff )
     
 	 shiftfunc( observed, ms, f, df, ddf, misfitsource );
     
-
       }
    }
    return misfit;
@@ -3863,8 +3888,13 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
        return;
     }
 
-    float dt, tstart;
+    float dt, tstart, origintime;
     readAttrFloat(fid, "DELTA", &dt);
+
+    readAttrFloat(fid, "ORIGINTIME", &origintime);
+    m_shift = -origintime;
+
+    cout << "read from file: m_shift=" << m_shift << endl;
 
     sw4npts =  (npts-1) * downsample + 1;   // sw4mpts is number of full samples
 
@@ -4181,7 +4211,7 @@ float_sw4 TimeSeries::getMaxValue(const int comp) const
       if(mRecordedSol[comp][i] > max_value) max_value = mRecordedSol[comp][i];
       if(mRecordedFloats[comp][i] > maxf) maxf = mRecordedFloats[comp][i];  // for qc hdf5 output
    }
-   return max_value;
+   return maxf;
 }
 
 //-----------------------------------------------------------------------
@@ -4194,7 +4224,7 @@ float_sw4 TimeSeries::getMinValue(const int comp) const
       if(mRecordedSol[comp][i] < min_value) min_value = mRecordedSol[comp][i];
       if(mRecordedFloats[comp][i] < minf) minf = mRecordedFloats[comp][i];  // for qc hdf5 output
    }
-   return min_value;
+   return minf;
 }
 
 //-----------------------------------------------------------------------
@@ -4290,6 +4320,7 @@ hid_t TimeSeries::openHDF5File(std::string suffix)
   /* H5Pset_coll_metadata_write(fapl, false); */
   /* H5Pset_all_coll_metadata_ops(fapl, false); */
 
+  printf("open %s\n", filename.c_str());
 
   *m_fid_ptr = H5Fopen(filename.c_str(),  H5F_ACC_RDWR, fapl);
   if (*m_fid_ptr <= 0) {

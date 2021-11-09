@@ -125,7 +125,7 @@ void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTim
 	    vector<Sarray>& U, vector<Sarray>& Um,
 	    vector<DataPatches*>& Upred_saved_sides,
 	    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides, int event, int save_steps,
-            int varcase, vector<Sarray>& pseudoHessian );
+            int varcase, vector<Sarray>& pseudoHessian, float_sw4 fpeak );
 
 void solveTT( Source* a_GlobalSource, vector<TimeSeries*> & a_GlobalTimeSeries,
 	    double* xs, int nmpars, MaterialParameterization* mp, int wave_mode, float twinshift, float twinscale, float freq, int event, int myrank);
@@ -140,7 +140,7 @@ void solve_backward_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& 
 		    vector<Sarray>& a_Lambda, vector<TimeSeries*> & a_GlobalTimeSeries,
 		    vector<Sarray>& a_U, vector<Sarray>& a_Um, vector<DataPatches*>& Upred_saved_sides,
 		    vector<DataPatches*>& Ucorr_saved_sides, float_sw4 gradients[11], 
-		    vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda, int event );
+		    vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda, float_sw4 fpeak, int event );
    //int nmpar, float_sw4* gradientm );
 
 void solve_dudp( vector<Source*>& a_Sources, vector<Sarray>& a_Rho, 

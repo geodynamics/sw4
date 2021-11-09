@@ -69,7 +69,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 		vector<Sarray>& U, vector<Sarray>& Um,
 		vector<DataPatches*>& Upred_saved_sides,
    		vector<DataPatches*>& Ucorr_saved_sides, bool save_sides,
-		int event, int nsteps_in_memory, int varcase, vector<Sarray>& PseudoHessian )
+		int event, int nsteps_in_memory, int varcase, vector<Sarray>& PseudoHessian, float_sw4 fpeak )
 {
    // Experimental
   //   int nsteps_in_memory=50;
@@ -157,7 +157,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    }
 // done allocating solution arrays
 
-   print_memstatus();
+   //print_memstatus();
 
 // Setup Cartesian grid refinement interface.
    setup_MR_coefficients( a_Rho, a_Mu, a_Lambda );
@@ -231,6 +231,13 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
       }
    }
 
+// first step to record boundary values
+    int step_to_record = fabs(a_Sources[0]->getTshift())/mDt- floor(1./fpeak/mDt*1.5);  //1;
+    if(step_to_record<1) step_to_record=1;
+    
+    cout << "first time step to record sides=" << step_to_record << endl;
+
+
 // Set the number of time steps, allocate the recording arrays, and set reference time in all time series objects  
 /* #pragma omp parallel for */
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
@@ -238,8 +245,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 
      a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps[event]+1, mTstart, mDt); // AP: added one to mNumber...
      // add source time shift
-     a_TimeSeries[ts]->add_shift(a_Sources[0]->getTshift());  //GlobalSources[e] passed in here
-     
+     //a_TimeSeries[ts]->add_shift(a_Sources[0]->getTshift());  //GlobalSources[e] passed in here
+     a_TimeSeries[ts]->set_shift(a_Sources[0]->getTshift()); 
+
+
      // In forward solve, the output receivers will use the same UTC as the
      // global reference utc0, therefore, set station utc equal reference utc.
      //     if( m_utc0set )
@@ -595,16 +604,16 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     printf("End report of internal flags and settings\n\n");
   }
    
-  if( save_sides )
-  {
-     for( int g=0 ; g < mNumberOfGrids ; g++ )
-     {
-	Upred_saved_sides[g]->push( Um[g], -1 );
-	Upred_saved_sides[g]->push( U[g], 0 );
-	Ucorr_saved_sides[g]->push( Um[g], -1 );
-	Ucorr_saved_sides[g]->push( U[g], 0 );
-     }
-  }
+  //if( save_sides)
+  //{
+  //   for( int g=0 ; g < mNumberOfGrids ; g++ )
+  //   {
+	//Upred_saved_sides[g]->push( Um[g], -1 );    // save wavefields on the sides using push method of DataPatch
+	//Upred_saved_sides[g]->push( U[g], 0 );
+	//Ucorr_saved_sides[g]->push( Um[g], -1 );
+	//Ucorr_saved_sides[g]->push( U[g], 0 );
+   //  }
+  //}
 
   for( int g=0 ; g < mNumberOfGrids ; g++ )
     Up[g].set_to_zero();
@@ -635,9 +644,19 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 
     // Tang print progress
     bool is_debug = false;
-    if( is_debug && proc_zero() )
-      cout << "Solving " << currentTimeStep << endl;
+    if( proc_zero() && currentTimeStep%100==0)
+      cout << "Solving " << currentTimeStep << " out of total " << mNumberOfTimeSteps[event] << endl;
 
+if( save_sides && currentTimeStep==(step_to_record-1>beginCycle? step_to_record-1 : beginCycle))
+  {
+     for( int g=0 ; g < mNumberOfGrids ; g++ )
+     {
+	Upred_saved_sides[g]->push( Um[g], -1 );    // save wavefields on the sides using push method of DataPatch
+	Upred_saved_sides[g]->push( U[g], 0 );
+	Ucorr_saved_sides[g]->push( Um[g], -1 );
+	Ucorr_saved_sides[g]->push( U[g], 0 );
+     }
+  }
 // all types of forcing...
     bool trace =false;
     int dbgproc = 1;
@@ -656,7 +675,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     {
        check_for_nan( F, 1, "F" );
        check_for_nan( U, 1, "U" );
-       //       check_for_nan( AlphaVE, m_number_mechanisms, 1, "alpha");
+       // check_for_nan( AlphaVE, m_number_mechanisms, 1, "alpha");
     }
 
 // evaluate right hand side
@@ -675,7 +694,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
        check_for_nan( Lu, 1, "Lu pred. " );
 
     // take predictor step, store in Up
-    evalPredictor( Up, U, Um, a_Rho, Lu, F );    
+       evalPredictor( Up, U, Um, a_Rho, Lu, F );    
 
     if( m_output_detailed_timing )
        time_measure[2] = MPI_Wtime();
@@ -729,10 +748,11 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 	  geodyn_up_from_uacc( Up, Uacc, U, Um, mDt ); //copy second ghost point to Up
 	  for(int g=0 ; g < mNumberOfGrids ; g++ )
 	     communicate_array( Up[g], g );
-       }
+     }
     }
 
 // update ghost points in Up
+
     if( m_anisotropic )
        enforceBCanisotropic( Up, mC, t+mDt, BCForcing );
     else
@@ -750,9 +770,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     if( trace && m_myRank == dbgproc )
        cout <<" after enforceBC" << endl;
 
-    if( m_checkfornan )
-       check_for_nan( Up, 1, "U pred. " );
-    //    Up[0].save_to_disk("up-dbg4.bin");
+    ///if( m_checkfornan )
+       ///check_for_nan( Up, 1, "U pred. " );
+       //    Up[0].save_to_disk("up-dbg4.bin");
 
 // Grid refinement interface conditions:
 // *** 2nd order in TIME
@@ -762,7 +782,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 // (otherwise, Up doesn't have the correct values on the interface)
        if (usingSupergrid())
        {
-	  addSuperGridDamping( Up, U, Um, a_Rho );
+	      addSuperGridDamping( Up, U, Um, a_Rho );
        }
 // Also add Arben's simplified attenuation
        if (m_use_attenuation && m_number_mechanisms == 0)
@@ -781,6 +801,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 
 // interface conditions for 2nd order in time
 // NOTE: this routine calls preliminary_predictor for t+dt, which needs F(t+dt). It is computed at the top of next time step
+
        enforceIC2( Up, U, Um, AlphaVEp, t, F, point_sources, a_Rho, a_Mu, a_Lambda );
 
        if( m_output_detailed_timing )
@@ -801,6 +822,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 // *** 4th order in TIME interface conditions for the predictor
 // June 14, 2017: adding AlphaVE & AlphaVEm
 // NOTE: true means call preliminary_corrector, which needs F_tt(t) & is computed 5 lines down
+
        enforceIC( Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, true, F, point_sources,
                   a_Rho, a_Mu, a_Lambda );
 
@@ -821,12 +843,14 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 
        if( trace && m_myRank == dbgproc )
           cout <<" after evalDpDmInTime" << endl;
-       if( save_sides )
-	  for( int g=0 ; g < mNumberOfGrids ; g++ )
-	     Upred_saved_sides[g]->push( Uacc[g], currentTimeStep );
 
-       if( m_checkfornan )
-	  check_for_nan( Uacc, 1, "uacc " );
+
+       if( save_sides && currentTimeStep >= step_to_record)
+	       for( int g=0 ; g < mNumberOfGrids ; g++ )
+	          Upred_saved_sides[g]->push( Uacc[g], currentTimeStep );
+
+       ///if( m_checkfornan )
+	       ///check_for_nan( Uacc, 1, "uacc " );
 
 // July 22,  4th order update for memory variables
        if( m_use_attenuation && m_number_mechanisms > 0 )
@@ -835,7 +859,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
        if( m_use_attenuation && m_number_mechanisms > 0 )
           evalDpDmInTimeAtt( AlphaVEp, AlphaVE, AlphaVEm ); // store AlphaVEacc in AlphaVEm
        if( trace && m_myRank == dbgproc )
-	  cout <<" after evalDpDmInTimeAtt" << endl;
+	        cout <<" after evalDpDmInTimeAtt" << endl;
 
        if( m_output_detailed_timing )
           time_measure[10] = MPI_Wtime();
@@ -851,8 +875,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
        if( trace && m_myRank == dbgproc )
 	  cout <<" after evalRHS" << endl;
        
-       if( m_checkfornan )
-	  check_for_nan( Lu, 1, "L(uacc) " );
+     ///  if( m_checkfornan )
+	  ///check_for_nan( Lu, 1, "L(uacc) " );
 
 
        evalCorrector( Up, a_Rho, Lu, F );
@@ -863,13 +887,13 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 // add in super-grid damping terms
        if (usingSupergrid())
        {
-	  addSuperGridDamping( Up, U, Um, a_Rho );
+	      addSuperGridDamping( Up, U, Um, a_Rho );
        }
 
 // Arben's simplified attenuation
        if (m_use_attenuation && m_number_mechanisms == 0)
        {
-	 simpleAttenuation( Up );
+	      simpleAttenuation( Up );
        }
 
        if( m_output_detailed_timing )
@@ -877,14 +901,14 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 
 // communicate across processor boundaries
        for(int g=0 ; g < mNumberOfGrids ; g++ )
-	  communicate_array( Up[g], g );
+	         communicate_array( Up[g], g );
 
        if( m_output_detailed_timing )
           time_measure[14] = MPI_Wtime();
 
        if( m_do_geodynbc )
        {
-	  impose_geodyn_ibcdata( Up, U, t+mDt, BCForcing );
+	   impose_geodyn_ibcdata( Up, U, t+mDt, BCForcing );
           advance_geodyn_time( t+2*mDt );
 	  if( m_twilight_forcing )
 	     Force( t+mDt, F, point_sources, identsources );	     
@@ -903,6 +927,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
        cartesian_bc_forcing( t+mDt, BCForcing, a_Sources );
 
 // update ghost points in Up
+
 
        if( m_anisotropic )
 	  enforceBCanisotropic( Up, mC, t+mDt, BCForcing );
@@ -935,6 +960,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 // interface conditions for the corrector
 // June 14, 2017: adding AlphaVE & AlphaVEm
 // NOTE: false means call preliminary_predictor for t+dt, which needs F(t+dt). It is computed at the top of next time step
+
        enforceIC( Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, false, F, point_sources, 
                   a_Rho, a_Mu, a_Lambda );
 
@@ -943,9 +969,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
        
        if( m_do_geodynbc )
 	  restore_geoghost(Up);
-       if( save_sides )
-	  for( int g=0 ; g < mNumberOfGrids ; g++ )
-	     Ucorr_saved_sides[g]->push( Up[g], currentTimeStep );
+      if( save_sides && currentTimeStep >= step_to_record)
+	       for( int g=0 ; g < mNumberOfGrids ; g++ )
+	         Ucorr_saved_sides[g]->push( Up[g], currentTimeStep );
 
     }// end if mOrder == 4
     
@@ -975,6 +1001,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 //
 // AP: Note to self: Any quantity related to velocities will be lagged by one time step
 //
+
     update_images( currentTimeStep, t, Up, U, Um, a_Rho, a_Mu, a_Lambda, a_Sources, currentTimeStep == mNumberOfTimeSteps[event] );
     
     for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
@@ -1046,7 +1073,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 	          cout << "Wallclock time to write all checkpoint time series files "
               << time_chkpt_timeseries << " seconds " << endl;
        }
-   }
+   }  // end of checkpoint
 
 // Energy evaluation, requires all three time levels present, do before cycle arrays.
     if( m_output_detailed_timing )
@@ -1061,6 +1088,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
        addtoPseudoHessian( Um, U, Up, a_Rho, a_Mu, a_Lambda, mDt, varcase, PseudoHessian );
 
 // cycle the solution arrays
+
     cycleSolutionArrays(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp);
 
 // evaluate error for some test cases
@@ -1093,7 +1121,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
           time_sum[4] += time_measure[13]-time_measure[12]; // super-grid
           time_sum[5] += time_measure[3]-time_measure[2] + time_measure[14]-time_measure[13]; // communicate
           time_sum[6] += time_measure[9]-time_measure[8] + time_measure[17]-time_measure[16]; // mesh ref
-          time_sum[7] += time_measure[18]-time_measure[17] - time_essi; // images + time-series - essi
+         time_sum[7] += time_measure[18]-time_measure[17] - time_essi; // images + time-series - essi
 //          time_sum[8] += 0;
           time_sum[8] += time_measure[2]-time_measure[1] + time_measure[5]-time_measure[4] + 
              time_measure[10]-time_measure[9] + time_measure[12]-time_measure[11] +
@@ -1114,12 +1142,10 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
           time_sum[9] = 0;
        }
     }
-    
+
   } // end time stepping loop
 
-
-
-  if ( !mQuiet && proc_zero() )
+  if ( proc_zero() )
     cout << "  Time stepping finished..." << endl;
 
    double time_end_solve = MPI_Wtime();
@@ -1191,7 +1217,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
             fprintf(lf, "Displacement variables (errInf, errL2, solInf)\n");            
             fprintf(lf, "%15.7e %15.7e %15.7e\n", errInf, errL2, solInf);
          }
-         
       }
       
       if( m_twilight_forcing && m_use_attenuation )
@@ -1256,6 +1281,7 @@ void EW::cycleSolutionArrays(vector<Sarray> & a_Um, vector<Sarray> & a_U, vector
     a_Um[g].reference(a_U[g].c_ptr());
     a_U[g].reference(a_Up[g].c_ptr());
     a_Up[g].reference(tmp);
+
     for( int a = 0 ; a < m_number_mechanisms ; a++ )
     {
        float_sw4 *tmp = a_AlphaVEm[g][a].c_ptr();

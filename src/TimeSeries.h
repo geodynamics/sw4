@@ -174,6 +174,9 @@ bool is_in_supergrid_layer();
 void misfitanddudp( TimeSeries* observed, TimeSeries* dudp,
                     float_sw4& misfit, float_sw4& dmisfit );
 
+size_t getAllocatedSize() const { return (m_myPoint? mAllocatedSize*6 : 0); };  // 3 comp 2 copies
+
+
 private:   
 TimeSeries();
 

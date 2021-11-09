@@ -256,5 +256,6 @@ void EW::solve_dudp( vector<Source*>& a_Sources, vector<Sarray>& a_Rho,
 
    for(int ts=0; ts<dudpTimeSeries.size(); ts++)
       delete dudpTimeSeries[ts];
+   dudpTimeSeries.clear();
 
 }

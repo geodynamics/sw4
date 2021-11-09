@@ -11,7 +11,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 				 vector<TimeSeries*> & a_TimeSeries, vector<Sarray>& Up, vector<Sarray>& U,
 				 vector<DataPatches*>& Upred_saved, vector<DataPatches*>& Ucorr_saved,
 				 double gradientsrc[11], vector<Sarray>& gRho, vector<Sarray>& gMu, 
-				 vector<Sarray>& gLambda, int event )
+				 vector<Sarray>& gLambda, float_sw4 fpeak, int event )
 {
 // solution arrays
    vector<Sarray> F, Lk, Kacc, Kp, Km, K, Um, Uacc;
@@ -88,7 +88,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       //           << endl; 
    }
 
-   print_memstatus();
+   //print_memstatus();
 
 // Setup Cartesian grid refinement interface.
    setup_MR_coefficients( a_Rho, a_Mu, a_Lambda );
@@ -128,11 +128,19 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       K[g].set_to_zero();
    }
    double t = mDt*(mNumberOfTimeSteps[event]-1);
-   int beginCycle = 1;
+
+   int step_to_record = fabs(a_Sources[0]->getTshift())/mDt- floor(1./fpeak/mDt*1.5);  //1;
+   if(step_to_record<1) step_to_record=1;
+   
+   cout << "first time step to record sides=" << step_to_record << endl;
+
+   int beginCycle = step_to_record+2;   //1;
 
    double time_measure[8];
    double time_sum[8]={0,0,0,0,0,0,0,0};
    double time_start_solve = MPI_Wtime();
+
+
 
 // Save all time series
 //	for (int ts=0; ts<a_TimeSeries.size(); ts++)
@@ -150,6 +158,10 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 
       if(currentTimeStep == mNumberOfTimeSteps[event]-10) 
         std::cout << "mNumberOfGrids=" << mNumberOfGrids << " K min=" << K[0].minimum() << " max=" << K[0].maximum() << std::endl;
+
+      if( proc_zero() && currentTimeStep%100==0)
+          cout << "Reverse stepping " << currentTimeStep << " out of total " << mNumberOfTimeSteps[event] << endl;
+
 
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          F[g].set_to_zero();
@@ -212,7 +224,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       // set boundary data on Uacc, from forward solver
       for( int g=0 ; g < mNumberOfGrids ; g++ )
       {
-	 Upred_saved[g]->pop( Uacc[g], currentTimeStep );
+	   Upred_saved[g]->pop( Uacc[g], currentTimeStep );
          communicate_array( Uacc[g], g );
       }
       // Note, this assumes BCForcing is not time dependent, which is usually true
@@ -224,11 +236,12 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       evalCorrector( Um, a_Rho, Lk, F );
 
       for( int g=0 ; g < mNumberOfGrids ; g++ )
-	 Ucorr_saved[g]->pop( Um[g], currentTimeStep-2 );
+	      Ucorr_saved[g]->pop( Um[g], currentTimeStep-2 );
 
       // set boundary data on U
       for(int g=0 ; g < mNumberOfGrids ; g++ )
          communicate_array( Um[g], g );
+         
 //      cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
       enforceBC( Um, a_Rho, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
       Force( t-mDt, F, point_sources, identsources );
@@ -269,6 +282,8 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       time_sum[6] += time_measure[7]-time_measure[6]; // Cycle arrays
    }  // end of backward time stepping
 
+   if(proc_zero()) cout << "end of time stepping" << endl;
+
    time_sum[7] = MPI_Wtime() - time_start_solve; // Total solver time
    //   cout << "Final t = " << t << endl;
 
@@ -304,13 +319,16 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       //         cout << "Grid " << g << ", maximum norm of backed out initial data is " << mxnorm << endl;
       if( mxnorm > 1e-8 && m_myRank == 0 )
 	 cout << "WARNING: maximum norm of backed out initial data is " << mxnorm << endl;
-      if( !mQuiet && m_myRank == 0 && mVerbose >= 3 )
-      {
+      //if( !mQuiet && m_myRank == 0 && mVerbose >= 3 )
+      //{
          cout << "Grid nr. " << g << ": " << endl;
 	 cout << "   Max norm of backed out U  = " << upmx[0] <<  " " << upmx[1] <<  " " << upmx[2] << endl;
 	 cout << "   Max norm of backed out Um = " << umx[0]  <<  " " << umx[1]  <<  " " << umx[2]  << endl;
-      }
+      //}
    }
+
+      if(proc_zero()) cout << "zero out grad near source" << endl;
+
    if( m_zerograd_at_src )
    {
       set_to_zero_at_source( gRho, point_sources, identsources, m_zerograd_pad );
@@ -320,6 +338,9 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    communicate_arrays( gRho );
    communicate_arrays( gMu );
    communicate_arrays( gLambda );
+
+      if(proc_zero()) cout << "filter grad" << endl;
+
    if( m_filter_gradient )
    {
       heat_kernel_filter( gRho,    m_gradfilter_ep, m_gradfilter_it );
