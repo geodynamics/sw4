@@ -53,7 +53,7 @@ Mopt::Mopt( EW* a_ew )
    m_vp_max = -100.;
    m_vs_min = -100.;
    m_vs_max = -100.;
-   m_freq_gradsmooth=0.5;
+   m_freq_peakpower=0.0;
    m_wave_mode=2;  // default to both P and S waves otherwise 0 for P and 1 for S only
    m_win_mode =1; // default, use eikonal solver to set windows.
    m_twin_shift=0.0;
@@ -311,11 +311,11 @@ void Mopt::processMaterialParCart( char* buffer )
          token += 7;
          m_vs_max = atof(token);
       }
-      else if( startswith("freq_gradsmooth=",token) )
+      else if( startswith("freq_peakpower=",token) )
       {
 	   token += 16;
-	   m_freq_gradsmooth = atof(token);
-      if(m_myrank == 0) cout << "freq_gradsmooth=" << m_freq_gradsmooth << endl;
+	   m_freq_peakpower = atof(token);
+      if(m_myrank == 0) cout << "freq_peakpower=" << m_freq_peakpower << endl;
       }
       else if( startswith("shared=",token) )
       {
