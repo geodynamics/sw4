@@ -74,9 +74,9 @@ ifeq ($(expopts),yes)
 MORE_FLAGS += -DSW4_USE_CMEM=1 -DSW4_GHCOF_NO_GP_IS_ZERO=1 -DSW4_EXPT_3=1
 endif
 
-DLINKFLAGS =  -arch=sm_70
+DLINKFLAGS =  -arch=sm_80
 LINKFLAGS =  
 CUDA_HOME = $(CUDA_DIR)
-EXTRA_CXX_FLAGS =  -O3 -lineinfo -use_fast_math $(MORE_FLAGS) -DDISABLE_PREFETCH  -ccbin CC -std=c++17 --expt-extended-lambda -restrict -arch=sm_70 -I $(CUDA_HOME)/include -I$(RAJA_HOME)/include  --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA -dc 
+EXTRA_CXX_FLAGS =  -O3 -lineinfo -use_fast_math $(MORE_FLAGS) -DDISABLE_PREFETCH  -ccbin CC -std=c++17 --expt-extended-lambda -restrict -arch=sm_80 -I $(CUDA_HOME)/include -I$(RAJA_HOME)/include  --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA -dc 
 
 EXTRA_LINK_FLAGS =   -dc -Wl,-rpath=${LAPACK_DIR} -L ${LAPACK_DIR}  -llapack -lblas  -L $(CUDA_HOME)/lib64 -lcudart -lnvToolsExt -lcuda -L $(RAJA_HOME)/lib -lRAJA  -lcudadevrt -L$(PROJ_HOME)/lib64 -lproj -L/usr/lib64/nvidia -lnvidia-ml  $(MORE_LINK_FLAGS) -lgfortran
