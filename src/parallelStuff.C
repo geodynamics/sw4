@@ -285,15 +285,31 @@ void EW::setup2D_MPICommunications() {
   global_variables.device_buffer =
       SW4_NEW(Space::Managed_temps, float_sw4[global_variables.buffer_size]);
 #else
+
+#ifdef ENABLE_CUDA
   void* ptr;
   if (cudaMalloc(&ptr, global_variables.buffer_size * 8) != cudaSuccess) {
-    std::cerr << "cudaMalloc failed in line 387 of parallelStuff.C\n";
+    std::cerr << "cudaMalloc failed on line "<<__LINE__<<"of parallelStuff.C\n";
     abort();
   } else {
     std::cout << "Device buffer of size " << global_variables.buffer_size * 8
-              << " bytes allocated in 2D\n";
+              << " bytes allocated in 2D on "<<__LINE__<<"\n";
     global_variables.device_buffer = (float_sw4*)ptr;
   }
+#endif
+
+#ifdef ENABLE_HIP
+  void* ptr;
+  if (hipMalloc(&ptr, global_variables.buffer_size * 8) != hipSuccess) {
+    std::cerr << "hipMalloc failed in line __LINE__ of parallelStuff.C\n";
+    abort();
+  } else {
+    std::cout << "Device buffer of size " << global_variables.buffer_size * 8
+              << " bytes allocated in 2D in __LINE__\n";
+    global_variables.device_buffer = (float_sw4*)ptr;
+  }
+#endif
+
 #endif
 #endif
 }
@@ -471,15 +487,32 @@ void EW::setupMPICommunications() {
   global_variables.device_buffer =
       SW4_NEW(Space::Managed_temps, float_sw4[global_variables.buffer_size]);
 #else
+
+#ifdef ENABLE_CUDA
   void* ptr;
   if (cudaMalloc(&ptr, global_variables.buffer_size * 8) != cudaSuccess) {
-    std::cerr << "cudaMalloc failed in line 387 of parallelStuff.C\n";
+    std::cerr << "cudaMalloc failed in line __LINE__ of parallelStuff.C\n";
     abort();
   } else {
     std::cout << "Device buffer of size " << global_variables.buffer_size * 8
               << " bytes allocated\n";
     global_variables.device_buffer = (float_sw4*)ptr;
   }
+#endif
+
+#ifdef ENABLE_HIP
+  void* ptr;
+  if (hipMalloc(&ptr, global_variables.buffer_size * 8) != hipSuccess) {
+    std::cerr << "hipMalloc failed in line __LINE__ of parallelStuff.C\n";
+    abort();
+  } else {
+    std::cout << "Device buffer of size " << global_variables.buffer_size * 8
+              << " bytes allocated\n";
+    global_variables.device_buffer = (float_sw4*)ptr;
+  }
+#endif
+
+
 #endif
 #endif
 }

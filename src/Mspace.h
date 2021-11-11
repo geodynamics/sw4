@@ -110,7 +110,7 @@ struct global_variable_holder_struct {
 
 extern struct global_variable_holder_struct global_variables;
 #ifdef ENABLE_CUDA
-#define SW4_TRACK_MEMORY_ALLOCATIONS 1
+//#define SW4_TRACK_MEMORY_ALLOCATIONS 1
 #endif
 #if defined(SW4_TRACK_MEMORY_ALLOCATIONS)
 #define SW4_NEW(type, arg) (new (type, __FILE__, __LINE__) arg)

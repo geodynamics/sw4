@@ -405,7 +405,7 @@ void *operator new[](std::size_t size, Space loc) throw() {
     // SW4_CheckDeviceError(cudaMemset(ptr,0,size));
     return ptr;
 #else
-    std::cerr << " Memory location Managed_temps is not defined\n";
+    //std::cerr << " Memory location Managed_temps is not defined\n";
     return ::operator new(size, Space::Managed);
 #endif
   } else {
@@ -433,7 +433,7 @@ void *operator new[](std::size_t size, Space loc) throw() {
 }
 void *operator new[](std::size_t size, Space loc, const char *file, int line) {
   SW4_MARK_FUNCTION;
-  // std::cout<<"Calling tracking new from "<<line<<" of "<<file<<"\n";
+  //  std::cout<<"Calling tracking new from "<<line<<" of "<<file<<"\n";
   pattr_t *ss = new pattr_t;
   ss->file = file;
   ss->line = line;
@@ -478,7 +478,8 @@ void operator delete(void *ptr, Space loc) throw() {
     auto allocator = rma.getAllocator("UM_pool_temps");
     allocator.deallocate(ptr);
 #else
-    std::cerr << "Memory location Managed_temps not defined\n";
+    //std::cerr << "Memory location Managed_temps not defined\n";
+    SW4_CheckDeviceError(SW4_FREE_MANAGED(ptr));
 #endif
   } else {
     std::cerr << "Unknown memory space for de-allocation request\n";
