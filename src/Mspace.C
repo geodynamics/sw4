@@ -1,5 +1,5 @@
 #include <mpi.h>
-#ifdef ENABLE_CUDA
+#if defined(ENABLE_CUDA) && defined(OPEN_MPI)
 #include <mpi-ext.h>
 #endif
 

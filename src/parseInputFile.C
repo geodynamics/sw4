@@ -313,8 +313,10 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
   // setup 2D communicators on the finest grid so that we can smooth the
   // topography
   setup2D_MPICommunications();
+#ifdef PEEKS_GALORE
   SW4_PEEK;
   SYNC_STREAM;
+#endif
   // deal with topography
   if (m_topography_exists) {
     // 1. read topography from efile
