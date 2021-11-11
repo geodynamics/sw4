@@ -7,7 +7,7 @@
 #define SYNC_STREAM SW4_CheckDeviceError(hipStreamSynchronize(0))
 #define SW4_PEEK SW4_CheckDeviceError(hipPeekAtLastError());
 
-#define SW4_MALLOC_MANAGED(addr, size) (hipMallocManaged(addr, size))
+#define SW4_MALLOC_MANAGED(addr, size) (hipMalloc(addr, size))
 #define SW4_MALLOC_DEVICE(addr, size) (hipMalloc(addr, size))
 #define SW4_MALLOC_PINNED(addr, size) \
   (hipHostMalloc(addr, size, hipHostMallocDefault))

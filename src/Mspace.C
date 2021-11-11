@@ -96,6 +96,7 @@ int presetGPUID(int mpi_rank, int local_rank, int local_size) {
       std::cerr << "WARNING :: There are " << devices_per_node
                 << " devices per node and " << local_size
                 << " ranks per node\n";
+      device=1;
     }
     global_variables.device = device;
     printf(" HIP presetGPU Called ::  LOCAL RANK %d \n", device);
@@ -882,6 +883,25 @@ Space GML(const void *ptr) {
   } else if (attr.type == cudaMemoryTypeDevice) {
     return Space::Device;
   } else if (attr.type == cudaMemoryTypeManaged) {
+    return Space::Managed;
+  } else
+    return Space::Space_Error;
+}
+#endif
+#ifdef ENABLE_HIP
+Space GML(const void *ptr) {
+    return Space::Managed;
+  struct hipPointerAttribute_t attr;
+  if (hipPointerGetAttributes(&attr, ptr) == hipErrorInvalidValue) {
+    // This shuld go away with Cuda 11
+    std::cerr << "Invalid value in GML \n";
+    return Space::Host;
+  }
+  if (attr.memoryType == hipMemoryTypeHost) {
+    return Space::Pinned;
+  } else if (attr.memoryType == hipMemoryTypeDevice) {
+    return Space::Managed;
+  } else if (attr.memoryType == hipMemoryTypeUnified) {
     return Space::Managed;
   } else
     return Space::Space_Error;
