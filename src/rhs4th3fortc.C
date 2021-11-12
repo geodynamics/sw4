@@ -1541,7 +1541,7 @@ void rhs4th3fortsgstr_ci(
 #ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
-      Range<6> K(1, 7);
+      Range<4> K(1, 7);
 #else
       Range<64> I(ifirst + 2, ilast - 1);
       Range<2> J(jfirst + 2, jlast - 1);
@@ -1882,7 +1882,7 @@ void rhs4th3fortsgstr_ci(
 #ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
-      Range<6> K(nk - 5, nk + 1);
+      Range<4> K(nk - 5, nk + 1);
 #else
       Range<64> I(ifirst + 2, ilast - 1);
       Range<2> J(jfirst + 2, jlast - 1);
