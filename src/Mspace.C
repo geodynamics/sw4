@@ -96,7 +96,6 @@ int presetGPUID(int mpi_rank, int local_rank, int local_size) {
       std::cerr << "WARNING :: There are " << devices_per_node
                 << " devices per node and " << local_size
                 << " ranks per node\n";
-      device=1;
     }
     global_variables.device = device;
     printf(" HIP presetGPU Called ::  LOCAL RANK %d \n", device);
