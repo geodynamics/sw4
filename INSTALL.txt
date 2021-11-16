@@ -114,7 +114,7 @@ Building using cmake ( Experimental WIP)
 ---------------------------------------------------------------------
 Building and running on Spock
 ---------------------------------------------------------------------
-0. ml rocm/4.3.0 cray-hdf5-parallel/1.12.0.6 fftw cray-python/3.8.5.1
+0. ml rocm/4.3.0 cray-hdf5-parallel/1.12.0.7 fftw cray-python/3.8.5.1
 1. cp make.raja.spock43R14U6HDF5ZFP to make.inc in config/
 2. make -f Makefile.hipcc -j 5
 3. see performance/large/run_spock for run command
