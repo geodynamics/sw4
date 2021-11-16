@@ -5907,18 +5907,40 @@ void EW::extractTopographyFromGridFile( string a_topoFileName )
    int Nlon, Nlat, i, j, dum;
    Sarray gridElev;
    double *latv, *lonv;
+   bool asciiread = false;
+   size_t ind = a_topoFileName.find_last_of(".");
+   asciiread = a_topoFileName.substr(ind+1) != "bin";
+   //   std::cout << "Ascii read = " << asciiread << std::endl;
+   if( asciiread )
+   {
+      FILE *gridfile = fopen(a_topoFileName.c_str(),"r");
   
-   FILE *gridfile = fopen(a_topoFileName.c_str(),"r");
-  
-   fscanf(gridfile, "%i %i", &Nlon, &Nlat);
-   gridElev.define(1,1,Nlon,1,Nlat,1,1);
-   latv = new double[Nlat+1];
-   lonv = new double[Nlon+1];
+      fscanf(gridfile, "%i %i", &Nlon, &Nlat);
+      gridElev.define(1,1,Nlon,1,Nlat,1,1);
+      latv = new double[Nlat+1];
+      lonv = new double[Nlon+1];
 
-   for (j=1; j<=Nlat; j++)
-      for (i=1; i<=Nlon; i++)
-	 fscanf(gridfile, "%le %le %le", &lonv[i], &latv[j], &gridElev(1,i,j,1));
-   fclose(gridfile);
+      for (j=1; j<=Nlat; j++)
+         for (i=1; i<=Nlon; i++)
+            fscanf(gridfile, "%le %le %le", &lonv[i], &latv[j], &gridElev(1,i,j,1));
+      fclose(gridfile);
+   }
+   else
+   {
+      int fd=open( a_topoFileName.c_str(), O_RDONLY );
+      size_t nr;
+      nr=read(fd,&Nlon,sizeof(int));
+      nr=read(fd,&Nlat,sizeof(int));
+
+      gridElev.define(1,1,Nlon,1,Nlat,1,1);
+      latv = new double[Nlat+1];
+      lonv = new double[Nlon+1];
+
+      nr=read(fd,lonv,(Nlon+1)*sizeof(double));
+      nr=read(fd,latv,(Nlat+1)*sizeof(double));
+      nr=read(fd,gridElev.c_ptr(),Nlon*Nlat*sizeof(double));
+      close(fd);
+   }
   
    if (proc_zero())
       printf("Nlon=%i Nlat=%i\n", Nlon, Nlat);

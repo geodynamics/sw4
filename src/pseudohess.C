@@ -2,7 +2,7 @@
 
 //-----------------------------------------------------------------------
 void add_pseudohessian_terms2( int ifirst, int ilast, int jfirst, int jlast, 
-                               int kfirst, int klast,
+                               int kfirst, int klast, int nk,
                                int ifirstact, int ilastact, int jfirstact, int jlastact, 
                                int kfirstact, int klastact, 
                                float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_u,
@@ -145,7 +145,7 @@ void add_pseudohessian_terms2( int ifirst, int ilast, int jfirst, int jlast,
          // Transform and square
          if( varcase >= 2 )
          {
-            for( int k=1 ; k <= n+2 ; k++ )
+            for( int k=1 ; k <= nb+2 ; k++ )
                srcmu(1,0,0,k) = srcmu(1,0,0,k)-2*srcla(1,0,0,k);
             srcmu(1,-2,0,n) = srcmu(1,-2,0,n)-2*srcla(1,-2,0,n);
             srcmu(1,-1,0,n) = srcmu(1,-1,0,n)-2*srcla(1,-1,0,n);
@@ -158,14 +158,14 @@ void add_pseudohessian_terms2( int ifirst, int ilast, int jfirst, int jlast,
             //            srcrho = srcrho + mu*srcmu
          }
          float_sw4 phtermmu = 0;
-         for( int k=1 ; k <= n+2 ; k++ )
+         for( int k=1 ; k <= nb+2 ; k++ )
             phtermmu += srcmu(1,0,0,k)*srcmu(1,0,0,k);
          phtermmu    += srcmu(1,-2,0,n)*srcmu(1,-2,0,n)+srcmu(1,-1,0,n)*srcmu(1,-1,0,n)+
                       srcmu(1, 1,0,n)*srcmu(1, 1,0,n)+srcmu(1, 2,0,n)*srcmu(1, 2,0,n)+
                       srcmu(1,0,-2,n)*srcmu(1,0,-2,n)+srcmu(1,0,-1,n)*srcmu(1,0,-1,n)+
                       srcmu(1,0, 1,n)*srcmu(1,0, 1,n)+srcmu(1,0, 2,n)*srcmu(1,0, 2,n);           
          float_sw4 phtermla = 0;
-         for( int k=1 ; k <= n+2 ; k++ )
+         for( int k=1 ; k <= nb+2 ; k++ )
             phtermla += srcla(1,0,0,k)*srcla(1,0,0,k);
          phtermla    += srcla(1,-2,0,n)*srcla(1,-2,0,n)+srcla(1,-1,0,n)*srcla(1,-1,0,n)+
                       srcla(1, 1,0,n)*srcla(1, 1,0,n)+srcla(1, 2,0,n)*srcla(1, 2,0,n)+
@@ -276,7 +276,7 @@ void add_pseudohessian_terms2( int ifirst, int ilast, int jfirst, int jlast,
          // Transform and square
          if( varcase >= 2 )
          {
-            for( int k=1 ; k <= n+2 ; k++ )
+            for( int k=1 ; k <= nb+2 ; k++ )
                srcmu(2,0,0,k) = srcmu(2,0,0,k)-2*srcla(2,0,0,k);
             srcmu(2,-2,0,n) = srcmu(2,-2,0,n)-2*srcla(2,-2,0,n);
             srcmu(2,-1,0,n) = srcmu(2,-1,0,n)-2*srcla(2,-1,0,n);
@@ -288,14 +288,14 @@ void add_pseudohessian_terms2( int ifirst, int ilast, int jfirst, int jlast,
             srcmu(2,0, 2,n) = srcmu(2,0, 2,n)-2*srcla(2,0, 2,n);
          }
          phtermmu = 0;
-         for( int k=1 ; k <= n+2 ; k++ )
+         for( int k=1 ; k <= nb+2 ; k++ )
             phtermmu += srcmu(2,0,0,k)*srcmu(2,0,0,k);
          phtermmu    += srcmu(2,-2,0,n)*srcmu(2,-2,0,n)+srcmu(2,-1,0,n)*srcmu(2,-1,0,n)+
                       srcmu(2, 1,0,n)*srcmu(2, 1,0,n)+srcmu(2, 2,0,n)*srcmu(2, 2,0,n)+
                       srcmu(2,0,-2,n)*srcmu(2,0,-2,n)+srcmu(2,0,-1,n)*srcmu(2,0,-1,n)+
                       srcmu(2,0, 1,n)*srcmu(2,0, 1,n)+srcmu(2,0, 2,n)*srcmu(2,0, 2,n);           
          phtermla = 0;
-         for( int k=1 ; k <= n+2 ; k++ )
+         for( int k=1 ; k <= nb+2 ; k++ )
             phtermla += srcla(2,0,0,k)*srcla(2,0,0,k);
          phtermla    += srcla(2,-2,0,n)*srcla(2,-2,0,n)+srcla(2,-1,0,n)*srcla(2,-1,0,n)+
                       srcla(2, 1,0,n)*srcla(2, 1,0,n)+srcla(2, 2,0,n)*srcla(2, 2,0,n)+
@@ -415,7 +415,7 @@ void add_pseudohessian_terms2( int ifirst, int ilast, int jfirst, int jlast,
          // Square and transform 
          if( varcase >= 2 )
          {
-            for( int k=1 ; k <= n+2 ; k++ )
+            for( int k=1 ; k <= nb+2 ; k++ )
                srcmu(3,0,0,k) = srcmu(3,0,0,k)-2*srcla(3,0,0,k);
             srcmu(3,-2,0,n) = srcmu(3,-2,0,n)-2*srcla(3,-2,0,n);
             srcmu(3,-1,0,n) = srcmu(3,-1,0,n)-2*srcla(3,-1,0,n);
@@ -427,14 +427,14 @@ void add_pseudohessian_terms2( int ifirst, int ilast, int jfirst, int jlast,
             srcmu(3,0, 2,n) = srcmu(3,0, 2,n)-2*srcla(3,0, 2,n);
          }
          phtermmu = 0;
-         for( int k=1 ; k <= n+2 ; k++ )
+         for( int k=1 ; k <= nb+2 ; k++ )
             phtermmu += srcmu(3,0,0,k)*srcmu(3,0,0,k);
          phtermmu    += srcmu(3,-2,0,n)*srcmu(3,-2,0,n)+srcmu(3,-1,0,n)*srcmu(3,-1,0,n)+
                       srcmu(3, 1,0,n)*srcmu(3, 1,0,n)+srcmu(3, 2,0,n)*srcmu(3, 2,0,n)+
                       srcmu(3,0,-2,n)*srcmu(3,0,-2,n)+srcmu(3,0,-1,n)*srcmu(3,0,-1,n)+
                       srcmu(3,0, 1,n)*srcmu(3,0, 1,n)+srcmu(3,0, 2,n)*srcmu(3,0, 2,n);           
          phtermla = 0;
-         for( int k=1 ; k <= n+2 ; k++ )
+         for( int k=1 ; k <= nb+2 ; k++ )
             phtermla += srcla(3,0,0,k)*srcla(3,0,0,k);
          phtermla    += srcla(3,-2,0,n)*srcla(3,-2,0,n)+srcla(3,-1,0,n)*srcla(3,-1,0,n)+
                       srcla(3, 1,0,n)*srcla(3, 1,0,n)+srcla(3, 2,0,n)*srcla(3, 2,0,n)+
@@ -472,12 +472,435 @@ void add_pseudohessian_terms2( int ifirst, int ilast, int jfirst, int jlast,
 #undef srcla
 #undef srcmu
 
+#define srcla(c,i,j,k) srcla_[(i+2)+5*(j+2)+25*(k-nk+9)+(c-1)*250]
+#define srcmu(c,i,j,k) srcmu_[(i+2)+5*(j+2)+25*(k-nk+9)+(c-1)*250]
+
+   int kend   = klastact;
+   if( onesided[5] == 1 && klastact >= nk-nb+1 )
+   {
+      // SBP boundary operators at lower bndry
+      kend = nk-nb;
+      for( int n=nk-nb+1; n <= klastact; n++ )
+         for( int m=jfirstact; m <= jlastact; m++ )
+            for( int l=ifirstact; l <= ilastact; l++ )
+            {
+            for( int c=0; c<3*5*5*10 ; c++)
+	       srcla_[c] =  srcmu_[c]=0;
+
+         float_sw4 du, dv, dw;
+
+      // d L^u/d(lambda):
+	 srcla(1,+2,0,n) = -0.125*u(1,l,m,n)+o6*u(1,l+1,m,n)-o24*u(1,l+2,m,n);
+	 srcla(1,+1,0,n) =  o6*u(1,l-1,m,n)+0.5*u(1,l,m,n)-5*o6*u(1,l+1,m,n)+o6*u(1,l+2,m,n);
+	 srcla(1, 0,0,n) = -0.125*(u(1,l-2,m,n)+u(1,l+2,m,n))+0.5*(u(1,l-1,m,n)+u(1,l+1,m,n))-0.75*u(1,l,m,n);
+	 srcla(1,-1,0,n) =  o6*u(1,l-2,m,n)-5*o6*u(1,l-1,m,n)+0.5*u(1,l,m,n)+o6*u(1,l+1,m,n);
+	 srcla(1,-2,0,n) = -o24*u(1,l-2,m,n)+o6*u(1,l-1,m,n)-0.125*u(1,l,m,n);
+
+	 srcmu(1,+2,0,n) = 2*srcla(1,+2,0,n);
+	 srcmu(1,+1,0,n) = 2*srcla(1,+1,0,n);
+	 srcmu(1, 0,0,n) = 2*srcla(1, 0,0,n);
+	 srcmu(1,-1,0,n) = 2*srcla(1,-1,0,n);
+	 srcmu(1,-2,0,n) = 2*srcla(1,-2,0,n);
+
+         dv = d4b*(u(2,l,m+2,n)-u(2,l,m-2,n))+d4a*(u(2,l,m+1,n)-u(2,l,m-1,n));
+	 srcla(1,+2,0,n) += -d4b*dv;
+	 srcla(1,+1,0,n) += -d4a*dv;
+	 srcla(1,-1,0,n) +=  d4a*dv;
+	 srcla(1,-2,0,n) +=  d4b*dv;
+
+	 if( n < nk-nb+1 )
+            dw = d4b*(u(3,l,m,n+2)-u(3,l,m,n-2))+d4a*(u(3,l,m,n+1)-u(3,l,m,n-1));
+	 else
+	 {
+	    dw = 0;
+	    for( int q=1; q <= wb ;q++)
+	       dw -= bope(nk-n+1,q)*u(3,l,m,nk-q+1);
+	 }
+	 
+	 srcla(1,+2,0,n) += -d4b*dw;
+	 srcla(1,+1,0,n) += -d4a*dw;
+	 srcla(1,-1,0,n) +=  d4a*dw;
+	 srcla(1,-2,0,n) +=  d4b*dw;
+
+      // d L^u/d(mu):
+	 srcmu(1,0,+2,n) += -0.125*u(1,l,m,n)+o6*u(1,l,m+1,n)-o24*u(1,l,m+2,n);
+	 srcmu(1,0,+1,n) +=  o6*u(1,l,m-1,n)+0.5*u(1,l,m,n)-5*o6*u(1,l,m+1,n)+o6*u(1,l,m+2,n);
+	 srcmu(1,0, 0,n) += -0.125*(u(1,l,m-2,n)+u(1,l,m+2,n))+0.5*(u(1,l,m-1,n)+u(1,l,m+1,n))-0.75*u(1,l,m,n);
+	 srcmu(1,0,-1,n) +=  o6*u(1,l,m-2,n)-5*o6*u(1,l,m-1,n)+0.5*u(1,l,m,n)+o6*u(1,l,m+1,n);
+	 srcmu(1,0,-2,n) += -o24*u(1,l,m-2,n)+o6*u(1,l,m-1,n)-0.125*u(1,l,m,n);
+
+         float_sw4 ddu;
+         for( int k=1 ; k <= nb ;k++)
+	 {
+	    ddu = 0;
+	    for( int q=1; q <= wb ;q++)
+	       ddu += acof(k,q,nk-n+1)*u(1,l,m,nk-q+1);
+	    srcmu(1,0,0,nk-k+1) += ddu;
+	 }
+         if( n == nk)
+	    srcmu(1,0,0,n) += ghcof(1)*u(1,l,m,nk+1);
+	 
+//         if( n > nb-2 )
+         if( n < nk-nb+3 )
+            srcmu(1,0,0,n-2) += -0.125*u(1,l,m,n)+o6*u(1,l,m,n-1)-o24*u(1,l,m,n-2);
+         //	 if( n> nb-1 )
+         if( n < nk-nb+2 )
+	    srcmu(1,0,0,n-1) +=  o6*u(1,l,m,n-2)-5*o6*u(1,l,m,n-1)+0.5*u(1,l,m,n)+o6*u(1,l,m,n+1);
+         //	 if( n > nb )
+         if( n < nk-nb+1 )
+	    srcmu(1,0,0, n) += -0.125*(u(1,l,m,n-2)+u(1,l,m,n+2))+0.5*(u(1,l,m,n-1)+u(1,l,m,n+1))-0.75*u(1,l,m,n);
+         //	 if( n > nb+1 )
+         if( n < nk-nb )
+	    srcmu(1,0,0,n+1) +=  o6*u(1,l,m,n-1)+0.5*u(1,l,m,n)-5*o6*u(1,l,m,n+1)+o6*u(1,l,m,n+2);
+// //	 srcmu(1,0,0,-2) += -o24*u(1,l,m,n-2)+o6*u(1,l,m,n-1)-0.125*u(1,l,m,n);
+      
+         dv = d4b*(u(2,l+2,m,n)-u(2,l-2,m,n))+d4a*(u(2,l+1,m,n)-u(2,l-1,m,n));
+	 srcmu(1,0,+2,n) += -d4b*dv;
+	 srcmu(1,0,+1,n) += -d4a*dv;
+	 srcmu(1,0,-1,n) +=  d4a*dv;
+	 srcmu(1,0,-2,n) +=  d4b*dv;
+
+	 dw = d4b*(u(3,l+2,m,n)-u(3,l-2,m,n))+d4a*(u(3,l+1,m,n)-u(3,l-1,m,n));
+	 for( int k=1 ; k <= nb ;k++)
+	    srcmu(1,0,0,nk-k+1) -= bope(k,nk-n+1)*dw;
+	 if( n < nk-nb+3 )
+	    srcmu(1,0,0,n-2) +=  d4b*dw;
+	 if( n < nk-nb+2 )
+	    srcmu(1,0,0,n-1) +=  d4a*dw;
+	 if( n < nk-nb )
+	    srcmu(1,0,0,n+1) += -d4a*dw;
+
+         // Transform and square
+         if( varcase >= 2 )
+         {
+            for( int k=nk-nb-1 ; k <= nk ; k++ )
+               srcmu(1,0,0,k) = srcmu(1,0,0,k)-2*srcla(1,0,0,k);
+            srcmu(1,-2,0,n) = srcmu(1,-2,0,n)-2*srcla(1,-2,0,n);
+            srcmu(1,-1,0,n) = srcmu(1,-1,0,n)-2*srcla(1,-1,0,n);
+            srcmu(1, 1,0,n) = srcmu(1, 1,0,n)-2*srcla(1, 1,0,n);
+            srcmu(1, 2,0,n) = srcmu(1, 2,0,n)-2*srcla(1, 2,0,n);
+            srcmu(1,0,-2,n) = srcmu(1,0,-2,n)-2*srcla(1,0,-2,n);
+            srcmu(1,0,-1,n) = srcmu(1,0,-1,n)-2*srcla(1,0,-1,n);
+            srcmu(1,0, 1,n) = srcmu(1,0, 1,n)-2*srcla(1,0, 1,n);
+            srcmu(1,0, 2,n) = srcmu(1,0, 2,n)-2*srcla(1,0, 2,n);
+            //            srcrho = srcrho + mu*srcmu
+         }
+         float_sw4 phtermmu = 0;
+         for( int k=nk-nb-1 ; k <= nk ; k++ )
+            phtermmu += srcmu(1,0,0,k)*srcmu(1,0,0,k);
+         phtermmu    += srcmu(1,-2,0,n)*srcmu(1,-2,0,n)+srcmu(1,-1,0,n)*srcmu(1,-1,0,n)+
+                      srcmu(1, 1,0,n)*srcmu(1, 1,0,n)+srcmu(1, 2,0,n)*srcmu(1, 2,0,n)+
+                      srcmu(1,0,-2,n)*srcmu(1,0,-2,n)+srcmu(1,0,-1,n)*srcmu(1,0,-1,n)+
+                      srcmu(1,0, 1,n)*srcmu(1,0, 1,n)+srcmu(1,0, 2,n)*srcmu(1,0, 2,n);           
+         float_sw4 phtermla = 0;
+         for( int k=nk-nb-1 ; k <= nk ; k++ )
+            phtermla += srcla(1,0,0,k)*srcla(1,0,0,k);
+         phtermla    += srcla(1,-2,0,n)*srcla(1,-2,0,n)+srcla(1,-1,0,n)*srcla(1,-1,0,n)+
+                      srcla(1, 1,0,n)*srcla(1, 1,0,n)+srcla(1, 2,0,n)*srcla(1, 2,0,n)+
+                      srcla(1,0,-2,n)*srcla(1,0,-2,n)+srcla(1,0,-1,n)*srcla(1,0,-1,n)+
+                      srcla(1,0, 1,n)*srcla(1,0, 1,n)+srcla(1,0, 2,n)*srcla(1,0, 2,n);           
+         float_sw4 phtermrho = SQR( idt2*(up(1,l,m,n)-2*u(1,l,m,n)+um(1,l,m,n)));
+         if( varcase == 1 )
+         {
+            ph(1,l,m,n) += phtermrho;
+            ph(2,l,m,n) += phtermmu;
+            ph(3,l,m,n) += phtermla;
+         }
+         else if( varcase == 2 )
+         {
+            float_sw4 cp2 = (2*mu(l,m,n)+lambda(l,m,n))/rho(l,m,n);
+            float_sw4 cs2 = mu(l,m,n)/rho(l,m,n);
+            ph(1,l,m,n) += phtermrho+cs2*cs2*phtermmu+cp2*cp2*phtermla;
+            ph(2,l,m,n) += 4*rho(l,m,n)*mu(l,m,n)*phtermmu;
+            ph(3,l,m,n) += 4*rho(l,m,n)*(2*mu(l,m,n)+lambda(l,m,n))*phtermla;
+         }
+         else if( varcase == 3 )
+         {
+            ph(2,l,m,n) += 4*rho(l,m,n)*mu(l,m,n)*phtermmu;
+            ph(3,l,m,n) += 4*rho(l,m,n)*(2*mu(l,m,n)+lambda(l,m,n))*phtermla;
+         }
+         else 
+         {
+            float_sw4 irat=mu(l,m,n)/(2*mu(l,m,n)+lambda(l,m,n));
+            ph(3,l,m,n) += 16*SQR(1-2*irat*irat)*rho(l,m,n)*(2*mu(l,m,n)+lambda(l,m,n))*phtermla;
+            //            ph(3,l,m,n) += 4*rho(l,m,n)*mu(l,m,n)*(irat*irat*phtermmu+phtermla);
+         }
+
+	       // d L^v/d(lambda):
+	 srcla(2,0,+2,n) = -0.125*u(2,l,m,n)+o6*u(2,l,m+1,n)-o24*u(2,l,m+2,n);
+	 srcla(2,0,+1,n) =  o6*u(2,l,m-1,n)+0.5*u(2,l,m,n)-5*o6*u(2,l,m+1,n)+o6*u(2,l,m+2,n);
+	 srcla(2,0, 0,n) = -0.125*(u(2,l,m-2,n)+u(2,l,m+2,n))+0.5*(u(2,l,m-1,n)+u(2,l,m+1,n))-0.75*u(2,l,m,n);
+	 srcla(2,0,-1,n) =  o6*u(2,l,m-2,n)-5*o6*u(2,l,m-1,n)+0.5*u(2,l,m,n)+o6*u(2,l,m+1,n);
+	 srcla(2,0,-2,n) = -o24*u(2,l,m-2,n)+o6*u(2,l,m-1,n)-0.125*u(2,l,m,n);
+
+	 srcmu(2,0,+2,n) = 2*srcla(2,0,+2,n);
+	 srcmu(2,0,+1,n) = 2*srcla(2,0,+1,n);
+	 srcmu(2,0, 0,n) = 2*srcla(2,0, 0,n);
+	 srcmu(2,0,-1,n) = 2*srcla(2,0,-1,n);
+	 srcmu(2,0,-2,n) = 2*srcla(2,0,-2,n);
+
+	 du=d4b*(u(1,l+2,m,n)-u(1,l-2,m,n))+d4a*(u(1,l+1,m,n)-u(1,l-1,m,n));
+	 srcla(2,0,+2,n) += -d4b*du;
+	 srcla(2,0,+1,n) += -d4a*du;
+	 srcla(2,0,-1,n) +=  d4a*du;
+	 srcla(2,0,-2,n) +=  d4b*du;
+
+	 if( n < nk-nb+1 )
+            dw = d4b*(u(3,l,m,n+2)-u(3,l,m,n-2))+d4a*(u(3,l,m,n+1)-u(3,l,m,n-1));
+	 else
+	 {
+	    dw = 0;
+	    for( int q=1; q <= wb ;q++)
+	       dw -= bope(nk-n+1,q)*u(3,l,m,nk-q+1);
+	 }
+	 srcla(2,0,+2,n) += -d4b*dw;
+	 srcla(2,0,+1,n) += -d4a*dw;
+	 srcla(2,0,-1,n) +=  d4a*dw;
+	 srcla(2,0,-2,n) +=  d4b*dw;
+      
+
+      // dL^v/d(mu)
+	 srcmu(2,+2,0,n) += -0.125*u(2,l,m,n)+o6*u(2,l+1,m,n)-o24*u(2,l+2,m,n);
+	 srcmu(2,+1,0,n) +=  o6*u(2,l-1,m,n)+0.5*u(2,l,m,n)-5*o6*u(2,l+1,m,n)+o6*u(2,l+2,m,n);
+	 srcmu(2, 0,0,n) += -0.125*(u(2,l-2,m,n)+u(2,l+2,m,n))+0.5*(u(2,l-1,m,n)+u(2,l+1,m,n))-0.75*u(2,l,m,n);
+	 srcmu(2,-1,0,n) +=  o6*u(2,l-2,m,n)-5*o6*u(2,l-1,m,n)+0.5*u(2,l,m,n)+o6*u(2,l+1,m,n);
+	 srcmu(2,-2,0,n) += -o24*u(2,l-2,m,n)+o6*u(2,l-1,m,n)-0.125*u(2,l,m,n);
+
+         for( int k=1 ; k <= nb ;k++)
+	 {
+	    ddu = 0;
+	    for( int q=1; q <= wb ;q++)
+	       ddu += acof(k,q,nk-n+1)*u(2,l,m,nk-q+1);
+	    srcmu(2,0,0,nk-k+1) += ddu;
+	 }
+         if( n==nk)
+	    srcmu(2,0,0,n) += ghcof(1)*u(2,l,m,nk+1);
+	 
+         if( n < nk-nb+3 )
+            srcmu(2,0,0,n-2) += -0.125*u(2,l,m,n)+o6*u(2,l,m,n-1)-o24*u(2,l,m,n-2);
+	 if( n < nk-nb+2 )
+	    srcmu(2,0,0,n-1) +=  o6*u(2,l,m,n-2)+0.5*u(2,l,m,n)-5*o6*u(2,l,m,n-1)+o6*u(2,l,m,n+1);
+	 if( n < nk-nb+1 )
+	    srcmu(2,0,0,  n) += -0.125*(u(2,l,m,n-2)+u(2,l,m,n+2))+0.5*(u(2,l,m,n-1)+u(2,l,m,n+1))-0.75*u(2,l,m,n);
+	 if( n < nk-nb )
+	    srcmu(2,0,0,n+1) +=  o6*u(2,l,m,n-1)-5*o6*u(2,l,m,n+1)+0.5*u(2,l,m,n)+o6*u(2,l,m,n+2);
+
+         du = d4b*(u(1,l,m+2,n)-u(1,l,m-2,n))+d4a*(u(1,l,m+1,n)-u(1,l,m-1,n));
+	 srcmu(2,+2,0,n) += -d4b*du;
+	 srcmu(2,+1,0,n) += -d4a*du;
+	 srcmu(2,-1,0,n) +=  d4a*du;
+	 srcmu(2,-2,0,n) +=  d4b*du;
+
+	 dw = d4b*(u(3,l,m+2,n)-u(3,l,m-2,n))+d4a*(u(3,l,m+1,n)-u(3,l,m-1,n));
+	 for( int k=1 ; k <= nb ;k++)
+	    srcmu(2,0,0,nk-k+1) -= bope(k,nk-n+1)*dw;
+	 if( n < nk-nb+3 )
+	    srcmu(2,0,0,n-2) +=  d4b*dw;
+	 if( n < nk-nb+2 )
+	    srcmu(2,0,0,n-1) +=  d4a*dw;
+	 if( n < nk-nb )
+	    srcmu(2,0,0,n+1) += -d4a*dw;
+
+         // Transform and square
+         if( varcase >= 2 )
+         {
+            for( int k=nk-nb-1 ; k <= nk ; k++ )
+               srcmu(2,0,0,k) = srcmu(2,0,0,k)-2*srcla(2,0,0,k);
+            srcmu(2,-2,0,n) = srcmu(2,-2,0,n)-2*srcla(2,-2,0,n);
+            srcmu(2,-1,0,n) = srcmu(2,-1,0,n)-2*srcla(2,-1,0,n);
+            srcmu(2, 1,0,n) = srcmu(2, 1,0,n)-2*srcla(2, 1,0,n);
+            srcmu(2, 2,0,n) = srcmu(2, 2,0,n)-2*srcla(2, 2,0,n);
+            srcmu(2,0,-2,n) = srcmu(2,0,-2,n)-2*srcla(2,0,-2,n);
+            srcmu(2,0,-1,n) = srcmu(2,0,-1,n)-2*srcla(2,0,-1,n);
+            srcmu(2,0, 1,n) = srcmu(2,0, 1,n)-2*srcla(2,0, 1,n);
+            srcmu(2,0, 2,n) = srcmu(2,0, 2,n)-2*srcla(2,0, 2,n);
+         }
+         phtermmu = 0;
+         for( int k=nk-nb-1 ; k <= nk ; k++ )
+            phtermmu += srcmu(2,0,0,k)*srcmu(2,0,0,k);
+         phtermmu    += srcmu(2,-2,0,n)*srcmu(2,-2,0,n)+srcmu(2,-1,0,n)*srcmu(2,-1,0,n)+
+                      srcmu(2, 1,0,n)*srcmu(2, 1,0,n)+srcmu(2, 2,0,n)*srcmu(2, 2,0,n)+
+                      srcmu(2,0,-2,n)*srcmu(2,0,-2,n)+srcmu(2,0,-1,n)*srcmu(2,0,-1,n)+
+                      srcmu(2,0, 1,n)*srcmu(2,0, 1,n)+srcmu(2,0, 2,n)*srcmu(2,0, 2,n);           
+         phtermla = 0;
+         for( int k=nk-nb-1 ; k <= nk ; k++ )
+            phtermla += srcla(2,0,0,k)*srcla(2,0,0,k);
+         phtermla    += srcla(2,-2,0,n)*srcla(2,-2,0,n)+srcla(2,-1,0,n)*srcla(2,-1,0,n)+
+                      srcla(2, 1,0,n)*srcla(2, 1,0,n)+srcla(2, 2,0,n)*srcla(2, 2,0,n)+
+                      srcla(2,0,-2,n)*srcla(2,0,-2,n)+srcla(2,0,-1,n)*srcla(2,0,-1,n)+
+                      srcla(2,0, 1,n)*srcla(2,0, 1,n)+srcla(2,0, 2,n)*srcla(2,0, 2,n);           
+         phtermrho = SQR( idt2*(up(2,l,m,n)-2*u(2,l,m,n)+um(2,l,m,n)));
+         if( varcase == 1 )
+         {
+            ph(1,l,m,n) += phtermrho;
+            ph(2,l,m,n) += phtermmu;
+            ph(3,l,m,n) += phtermla;
+         }
+         else if( varcase == 2 )
+         {
+            float_sw4 cp2 = (2*mu(l,m,n)+lambda(l,m,n))/rho(l,m,n);
+            float_sw4 cs2 = mu(l,m,n)/rho(l,m,n);
+            ph(1,l,m,n) += phtermrho+cs2*cs2*phtermmu+cp2*cp2*phtermla;
+            ph(2,l,m,n) += 4*rho(l,m,n)*mu(l,m,n)*phtermmu;
+            ph(3,l,m,n) += 4*rho(l,m,n)*(2*mu(l,m,n)+lambda(l,m,n))*phtermla;
+         }
+         else if( varcase == 3 )
+         {
+            ph(2,l,m,n) += 4*rho(l,m,n)*mu(l,m,n)*phtermmu;
+            ph(3,l,m,n) += 4*rho(l,m,n)*(2*mu(l,m,n)+lambda(l,m,n))*phtermla;
+         }
+         else 
+         {
+            float_sw4 irat=mu(l,m,n)/(2*mu(l,m,n)+lambda(l,m,n));
+            //            ph(3,l,m,n) += 4*rho(l,m,n)*mu(l,m,n)*(irat*irat*phtermmu+phtermla);
+            ph(3,l,m,n) += 16*SQR(1-2*irat*irat)*rho(l,m,n)*(2*mu(l,m,n)+lambda(l,m,n))*phtermla;
+         }
+
+      // dL^w/d(lambda)
+         for( int k=1 ; k <= nb ;k++)
+	 {
+	    ddu = 0;
+	    for( int q=1; q <= wb ;q++)
+	       ddu += acof(k,q,nk-n+1)*u(3,l,m,nk-q+1);
+	    srcla(3,0,0,nk-k+1) += ddu;
+	 }
+         if( n==nk)
+	    srcla(3,0,0,n) += ghcof(1)*u(3,l,m,nk+1);
+	 
+         if( n < nk-nb+3 )
+            srcla(3,0,0,n-2) += -0.125*u(3,l,m,n)+o6*u(3,l,m,n-1)-o24*u(3,l,m,n-2);
+	 if( n < nk-nb+2 )
+	    srcla(3,0,0,n-1) +=  o6*u(3,l,m,n-2)+0.5*u(3,l,m,n)-5*o6*u(3,l,m,n-1)+o6*u(3,l,m,n+1);
+	 if( n < nk-nb+1 )
+	    srcla(3,0,0, n) += -0.125*(u(3,l,m,n-2)+u(3,l,m,n+2))+0.5*(u(3,l,m,n-1)+u(3,l,m,n+1))-0.75*u(3,l,m,n);
+	 if( n < nk-nb )
+	    srcla(3,0,0,n+1) +=  o6*u(3,l,m,n-1)-5*o6*u(3,l,m,n+1)+0.5*u(3,l,m,n)+o6*u(3,l,m,n+2);
+
+	 for( int q=nk-9 ; q<= nk ;q++)
+	 {
+	    srcmu(3,0,0,q) = 2*srcla(3,0,0,q);
+	    srcmu(3,0,0,q) = 2*srcla(3,0,0,q);
+	    srcmu(3,0,0,q) = 2*srcla(3,0,0,q);
+	    srcmu(3,0,0,q) = 2*srcla(3,0,0,q);
+	    srcmu(3,0,0,q) = 2*srcla(3,0,0,q);
+	 }
+      
+	 dv = d4b*(u(2,l,m+2,n)-u(2,l,m-2,n))+d4a*(u(2,l,m+1,n)-u(2,l,m-1,n));
+	 du = d4b*(u(1,l+2,m,n)-u(1,l-2,m,n))+d4a*(u(1,l+1,m,n)-u(1,l-1,m,n));
+	 for( int k=1 ; k <= nb ;k++)
+	    srcla(3,0,0,nk-k+1) -= bope(k,nk-n+1)*(du+dv);
+	 if( n < nk-nb+3 )
+	    srcla(3,0,0,n-2) +=  d4b*(du+dv);
+	 if( n < nk-nb+2 )
+	    srcla(3,0,0,n-1) +=  d4a*(du+dv);
+	 if( n < nk-nb )
+	    srcla(3,0,0,n+1) += -d4a*(du+dv);
+
+     // dL^w/d(mu)
+	 srcmu(3,+2,0,n) += -0.125*u(3,l,m,n)+o6*u(3,l+1,m,n)-o24*u(3,l+2,m,n);
+	 srcmu(3,+1,0,n) +=  o6*u(3,l-1,m,n)+0.5*u(3,l,m,n)-5*o6*u(3,l+1,m,n)+o6*u(3,l+2,m,n);
+	 srcmu(3, 0,0,n) += -0.125*(u(3,l-2,m,n)+u(3,l+2,m,n))+0.5*(u(3,l-1,m,n)+u(3,l+1,m,n))-0.75*u(3,l,m,n);
+	 srcmu(3,-1,0,n) +=  o6*u(3,l-2,m,n)-5*o6*u(3,l-1,m,n)+0.5*u(3,l,m,n)+o6*u(3,l+1,m,n);
+	 srcmu(3,-2,0,n) += -o24*u(3,l-2,m,n)+o6*u(3,l-1,m,n)-0.125*u(3,l,m,n);
+
+	 srcmu(3,0,+2,n) += -0.125*u(3,l,m,n)+o6*u(3,l,m+1,n)-o24*u(3,l,m+2,n);
+	 srcmu(3,0,+1,n) +=  o6*u(3,l,m-1,n)+0.5*u(3,l,m,n)-5*o6*u(3,l,m+1,n)+o6*u(3,l,m+2,n);
+	 srcmu(3,0, 0,n) += -0.125*(u(3,l,m-2,n)+u(3,l,m+2,n))+0.5*(u(3,l,m-1,n)+u(3,l,m+1,n))-0.75*u(3,l,m,n);
+	 srcmu(3,0,-1,n) +=  o6*u(3,l,m-2,n)-5*o6*u(3,l,m-1,n)+0.5*u(3,l,m,n)+o6*u(3,l,m+1,n);
+	 srcmu(3,0,-2,n) += -o24*u(3,l,m-2,n)+o6*u(3,l,m-1,n)-0.125*u(3,l,m,n);
+
+	 if( n < nk-nb+1 )
+	 {
+	    du = d4b*(u(1,l,m,n+2)-u(1,l,m,n-2))+d4a*(u(1,l,m,n+1)-u(1,l,m,n-1));
+	    dv = d4b*(u(2,l,m,n+2)-u(2,l,m,n-2))+d4a*(u(2,l,m,n+1)-u(2,l,m,n-1));	 
+	 }
+	 else
+	 {
+	    du = dv = 0;
+	    for( int q=1; q <= wb ;q++)
+	    {
+	       du -= bope(nk-n+1,q)*u(1,l,m,nk-q+1);
+	       dv -= bope(nk-n+1,q)*u(2,l,m,nk-q+1);
+	    }
+	 }
+
+	 srcmu(3,+2,0,n) += -d4b*du;
+	 srcmu(3,+1,0,n) += -d4a*du;
+	 srcmu(3,-1,0,n) +=  d4a*du;
+	 srcmu(3,-2,0,n) +=  d4b*du;
+
+	 srcmu(3,0,+2,n) += -d4b*dv;
+	 srcmu(3,0,+1,n) += -d4a*dv;
+	 srcmu(3,0,-1,n) +=  d4a*dv;
+	 srcmu(3,0,-2,n) +=  d4b*dv;
+
+         // Square and transform 
+         if( varcase >= 2 )
+         {
+            for( int k=nk-nb-1 ; k <= nk ; k++ )
+               srcmu(3,0,0,k) = srcmu(3,0,0,k)-2*srcla(3,0,0,k);
+            srcmu(3,-2,0,n) = srcmu(3,-2,0,n)-2*srcla(3,-2,0,n);
+            srcmu(3,-1,0,n) = srcmu(3,-1,0,n)-2*srcla(3,-1,0,n);
+            srcmu(3, 1,0,n) = srcmu(3, 1,0,n)-2*srcla(3, 1,0,n);
+            srcmu(3, 2,0,n) = srcmu(3, 2,0,n)-2*srcla(3, 2,0,n);
+            srcmu(3,0,-2,n) = srcmu(3,0,-2,n)-2*srcla(3,0,-2,n);
+            srcmu(3,0,-1,n) = srcmu(3,0,-1,n)-2*srcla(3,0,-1,n);
+            srcmu(3,0, 1,n) = srcmu(3,0, 1,n)-2*srcla(3,0, 1,n);
+            srcmu(3,0, 2,n) = srcmu(3,0, 2,n)-2*srcla(3,0, 2,n);
+         }
+         phtermmu = 0;
+         for( int k=nk-nb-1 ; k <= nk ; k++ )
+            phtermmu += srcmu(3,0,0,k)*srcmu(3,0,0,k);
+         phtermmu    += srcmu(3,-2,0,n)*srcmu(3,-2,0,n)+srcmu(3,-1,0,n)*srcmu(3,-1,0,n)+
+                      srcmu(3, 1,0,n)*srcmu(3, 1,0,n)+srcmu(3, 2,0,n)*srcmu(3, 2,0,n)+
+                      srcmu(3,0,-2,n)*srcmu(3,0,-2,n)+srcmu(3,0,-1,n)*srcmu(3,0,-1,n)+
+                      srcmu(3,0, 1,n)*srcmu(3,0, 1,n)+srcmu(3,0, 2,n)*srcmu(3,0, 2,n);           
+         phtermla = 0;
+         for( int k=nk-nb-1 ; k <= nk ; k++ )
+            phtermla += srcla(3,0,0,k)*srcla(3,0,0,k);
+         phtermla    += srcla(3,-2,0,n)*srcla(3,-2,0,n)+srcla(3,-1,0,n)*srcla(3,-1,0,n)+
+                      srcla(3, 1,0,n)*srcla(3, 1,0,n)+srcla(3, 2,0,n)*srcla(3, 2,0,n)+
+                      srcla(3,0,-2,n)*srcla(3,0,-2,n)+srcla(3,0,-1,n)*srcla(3,0,-1,n)+
+                      srcla(3,0, 1,n)*srcla(3,0, 1,n)+srcla(3,0, 2,n)*srcla(3,0, 2,n);           
+         phtermrho = SQR( idt2*(up(3,l,m,n)-2*u(3,l,m,n)+um(3,l,m,n)));
+      
+         if( varcase == 1 )
+         {
+            ph(1,l,m,n) += phtermrho;
+            ph(2,l,m,n) += phtermmu;
+            ph(3,l,m,n) += phtermla;
+         }
+         else if( varcase == 2 )
+         {
+            float_sw4 cp2 = (2*mu(l,m,n)+lambda(l,m,n))/rho(l,m,n);
+            float_sw4 cs2 = mu(l,m,n)/rho(l,m,n);
+            ph(1,l,m,n) += phtermrho+cs2*cs2*phtermmu+cp2*cp2*phtermla;
+            ph(2,l,m,n) += 4*rho(l,m,n)*mu(l,m,n)*phtermmu;
+            ph(3,l,m,n) += 4*rho(l,m,n)*(2*mu(l,m,n)+lambda(l,m,n))*phtermla;
+         }
+         else if( varcase == 3 )
+         {
+            ph(2,l,m,n) += 4*rho(l,m,n)*mu(l,m,n)*phtermmu;
+            ph(3,l,m,n) += 4*rho(l,m,n)*(2*mu(l,m,n)+lambda(l,m,n))*phtermla;
+         }
+         else 
+         {
+            float_sw4 irat=mu(l,m,n)/(2*mu(l,m,n)+lambda(l,m,n));
+            ph(3,l,m,n) += 16*SQR(1-2*irat*irat)*rho(l,m,n)*(2*mu(l,m,n)+lambda(l,m,n))*phtermla;
+         }
+            }
+   }
+
+
+#undef srcla
+#undef srcmu
+
 #define srcla(c,i,j,k) srcla_[(i+2)+5*(j+2)+25*(k+2)+(c-1)*125]
 #define srcmu(c,i,j,k) srcmu_[(i+2)+5*(j+2)+25*(k+2)+(c-1)*125]
 
      // Interior operators
 //#pragma omp parallel for
-   for( int n=kstart; n <= klastact; n++ )
+   for( int n=kstart; n <= kend; n++ )
       for( int m=jfirstact; m <= jlastact; m++ )
 /* #pragma ivdep */
          for( int l=ifirstact; l <= ilastact; l++ )

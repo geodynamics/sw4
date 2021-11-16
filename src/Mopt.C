@@ -49,6 +49,7 @@ Mopt::Mopt( EW* a_ew )
    m_test_regularizer = false;
    m_do_profiling = false;
    m_use_pseudohessian = false;
+   m_ncontsteps = 10;
    m_vp_min = -100.; // default to negative, only positive ones in effect
    m_vp_max = -100.;
    m_vs_min = -100.;
@@ -414,6 +415,10 @@ void Mopt::processMrun( char* buffer )
 	    m_opttest = 1;
             m_nspar = 6;
 	 }
+	 else if( strcmp(token,"continuation") == 0 )
+         {
+            m_opttest = 10;
+         }
 	 else
 	    cout << "ERROR: mrun task=" << token << " not recognized " << endl;
       }
@@ -552,6 +557,11 @@ void Mopt::processMrun( char* buffer )
 	 int n = strlen(token);
 	 if( strncmp("yes",token,n)== 0 || strncmp("1",token,n)== 0 || strncmp("on",token,n)==0 )
 	    m_write_dfm = true;
+      }
+      else if( startswith("ncontsteps=",token) )
+      {
+         token += 11;
+         m_ncontsteps = atoi(token);
       }
       else
          badOption("mrun",token);
@@ -1396,7 +1406,8 @@ void Mopt::init_pseudohessian( vector<Sarray>& ph )
 {
    if( m_use_pseudohessian )
    {
-      for( int g=0 ; g < m_ew->mNumberOfCartesianGrids ; g++ )
+      //      for( int g=0 ; g < m_ew->mNumberOfCartesianGrids ; g++ )
+      for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
       {
          ph[g].define(3,m_ew->m_iStart[g],m_ew->m_iEnd[g],
                         m_ew->m_jStart[g],m_ew->m_jEnd[g],

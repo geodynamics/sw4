@@ -408,6 +408,8 @@ void MaterialParCartesian::project_and_write( std::vector<Sarray>& a_rho, std::v
 void MaterialParCartesian::projectl2( std::vector<Sarray>& mtrl, float_sw4* rhs )
 {
    // Project input mtrl array onto my parameter grid.
+   // Input: mtrl - Material array on the SW4 grid
+   // Output: rhs - Projected mtrl on the parameter grid.
    //
    // parameter grid is x_0, x_1,..,x_{nx}, x_{nx+1}, where x_1,..,x_{nx} carry degrees of freedom.
    // The dimensions are such that x_0=xmin, x_{nx+1}=xmax.

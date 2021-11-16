@@ -483,17 +483,21 @@ void RandomizedMaterial::get_fourier_modes( complex<float_sw4>* uhat, int n1, in
 					    float_sw4 hurst, unsigned int seed )
 {
    const complex<float_sw4> I(0.0,1.0);
-   float_sw4 A0=1; // Amplitude
+   //   float_sw4 A0=1; // Amplitude
+   float_sw4 A0=m_sigma*sqrt(8*M_PI*sqrt(M_PI)*tgamma(hurst+1.5)*l1*l2*l3/tgamma(hurst));
    int D=3; // For three space dimensions
-   float_sw4 A0isq2 = A0/sqrt(2.0);
+   //   float_sw4 A0isq2 = A0/sqrt(2.0);
+   float_sw4 A0isq2=A0;
    float_sw4 hhalf = 0.5*(hurst+D*0.5);
    float_sw4 ll1=l1*l1, ll2=l2*l2, ll3=l3*l3;
    
    default_random_engine generator(seed);
-   normal_distribution<float_sw4> ndist(0.0,1.0);
+   //   normal_distribution<float_sw4> ndist(0.0,1.0);
+   uniform_real_distribution<double> udist(0.0,2*M_PI);
 
    int r1=(n1g-1)/2, r2=(n2-1)/2, r3=(n3-1)/2;
-
+   float_sw4 tpi=2*M_PI;
+   float_sw4 tpi2=tpi*tpi;
    for( int k1=ib1 ; k1 <= n1-1+ib1 ; k1++ )
    {
       float_sw4 k1eff=k1;
@@ -509,8 +513,9 @@ void RandomizedMaterial::get_fourier_modes( complex<float_sw4>* uhat, int n1, in
 	    float_sw4 k3eff=k3;
 	    if( k3 > r3 )
 	       k3eff = k3-n3;
-	    uhat[k3+n3*k2+n2*n3*(k1-ib1)] = (A0isq2/pow(1+k1eff*k1eff*ll1+k2eff*k2eff*ll2+k3eff*k3eff*ll3,hhalf))
-	       *(ndist(generator)+I*ndist(generator));
+	    uhat[k3+n3*k2+n2*n3*(k1-ib1)] = (A0isq2/pow(1+tpi2*(k1eff*k1eff*ll1+k2eff*k2eff*ll2+k3eff*k3eff*ll3),hhalf))
+               *exp(I*udist(generator));
+               //	       *(ndist(generator)+I*ndist(generator));
 	    //	       *(1+I);
 	 }
       }
@@ -544,16 +549,9 @@ void RandomizedMaterial::rescale_perturbation()
    // Rescale to desired sigma, add 1 for later multiplication with given material
    float_sw4 istdev = 1/stdev;
    for( size_t ind = 0 ; ind < n ;ind++ )
-      mtrl[ind] = 1 + m_sigma*mtrl[ind]*istdev;
+      //      mtrl[ind] = 1 + m_sigma*mtrl[ind]*istdev;
+      mtrl[ind] = 1 + mtrl[ind];
 }
-
-//#include <complex>
-//#include <vector>
-//#include <iostream>
-//
-//#include <mpi.h>
-
-//#include "AllDims.h"
 
 //-----------------------------------------------------------------------
 #include "Patch.h"

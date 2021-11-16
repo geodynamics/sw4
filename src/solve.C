@@ -45,8 +45,8 @@ void curvilinear4sgwind( int, int, int, int, int, int, int, int, float_sw4*, flo
                          float_sw4*, float_sw4*, float_sw4*, int*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
                          float_sw4*, float_sw4*, float_sw4*, int, char );
 
-void add_pseudohessian_terms2(  int ifirst, int ilast, int jfirst, int jlast, 
-                               int kfirst, int klast,
+void add_pseudohessian_terms2( int ifirst, int ilast, int jfirst, int jlast, 
+                               int kfirst, int klast, int nk,
                                int ifirstact, int ilastact, int jfirstact, int jlastact, 
                                int kfirstact, int klastact, 
                                float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_u,
@@ -275,7 +275,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   } // end if prefiltering
 
 // AP changed to false
-  bool output_timefunc = false;
+  bool output_timefunc = true;
   if( output_timefunc )
   {
      int has_source_id=-1, has_source_max;
@@ -4767,13 +4767,14 @@ void EW::addtoPseudoHessian( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarra
 {
    for( int g=0 ; g < mNumberOfCartesianGrids ;g++ )
    {
+      int nk=m_global_nz[g];
       add_pseudohessian_terms2( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], 
-                               m_kStart[g], m_kEnd[g], m_iStartAct[g], m_iEndAct[g],
-                               m_jStartAct[g], m_jEndAct[g], m_kStartAct[g], m_kEndAct[g],
-                               Um[g].c_ptr(), U[g].c_ptr(), Up[g].c_ptr(), aRho[g].c_ptr(),
-                               aMu[g].c_ptr(), aLambda[g].c_ptr(), mGridSize[g], dt,
-                               m_onesided[g], varcase, m_bope, m_acof, m_ghcof,
-                               PseudoHess[g].c_ptr() );
+                                m_kStart[g], m_kEnd[g], nk, m_iStartAct[g], m_iEndAct[g],
+                                m_jStartAct[g], m_jEndAct[g], m_kStartAct[g], m_kEndAct[g],
+                                Um[g].c_ptr(), U[g].c_ptr(), Up[g].c_ptr(), aRho[g].c_ptr(),
+                                aMu[g].c_ptr(), aLambda[g].c_ptr(), mGridSize[g], dt,
+                                m_onesided[g], varcase, m_bope, m_acof, m_ghcof,
+                                PseudoHess[g].c_ptr() );
    }
    for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids ; g++ )
    {
