@@ -572,6 +572,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfmevent, 
       rho, mu, lambda, gRho, gMu, gLambda);
 
+        checkMinMax(nmpars, dfsevent, "dfsevent");
+
       //gMu[0].save_to_disk("gMu_xform.say");
       //gLambda[0].save_to_disk("gLambda_xform.say"); // local size with halos
 
@@ -626,7 +628,9 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       for( int m=0 ; m < nmpard ; m++ )
 	      dfm[m] += dfmevent[m];
 
-      
+         checkMinMax(nmpars, &dfs[nspar], "dfs after smooth_gradient");
+
+
 // 3. Give back memory
       for( unsigned int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
 	        delete diffs[m];
@@ -680,6 +684,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 
   } // test_regularizer
   
+
 // add in a Tikhonov regularizing term:
    bool tikhonovreg=false;
    if( tikhonovreg )
@@ -728,6 +733,9 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 	    dfm[m] += dfmevent[m];
       }
    }
+
+      checkMinMax(nmpars, &dfs[nspar], "dfs after regularizer");
+
 
    if( myrank == 0 && verbose >= 1 )
    {
@@ -1590,7 +1598,7 @@ MPI_Barrier(MPI_COMM_WORLD); // added for debugging
 
 // figure out how many parameters we need.
 //	Guess: nmpars - number of non-distributed (=shared) material parameters, exist copies in each proc.
-//             nmpard - Number of distributed material parameters, size of part in my processor.
+//        nmpard - Number of distributed material parameters, size of part in my processor.
 //	       nmpard_global - number of distributed parameters, total number over all processors
            int nmpars, nmpard, nmpard_global;
 	   mp->get_nr_of_parameters( nmpars, nmpard, nmpard_global );

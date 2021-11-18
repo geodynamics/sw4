@@ -422,7 +422,7 @@ void TimeSeries::allocateRecordingArrays( int numberOfTimeSteps, float_sw4 start
   }
 
   // Move this time series to always start at 'startTime'. Perhaps this should be done elsewhere ?
-  m_shift = startTime-m_t0;
+  if(m_shift==0.0) m_shift = startTime-m_t0;
   m_dt = timeStep;
 }
 
@@ -3555,8 +3555,11 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
        return;
     }
 
-    float dt, tstart;
+    float dt, tstart, origintime;
     readAttrFloat(fid, "DELTA", &dt);
+    // added 
+    readAttrFloat(fid, "ORIGINTIME", &origintime);
+    m_shift = -origintime;
 
     sw4npts =  (npts-1) * downsample + 1;   // sw4mpts is number of full samples
 

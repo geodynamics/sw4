@@ -722,8 +722,10 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
    }
    for( int i=0 ; i < ns ; i++ )
       rnorm = rnorm > fabs(dfs[i])*sf[i] ? rnorm : fabs(dfs[i])*sf[i];
-   if( myRank == 0 )
+   if( myRank == 0 ) {
+	  checkMinMax(ns, dfs, "dfs");
       cout << "Max norm of scaled total gradient = " << rnorm << endl;
+    }
 
    //   cout << endl;
    //   fprintf(fd, "%i %15.7g %15.7g %15.7g %i\n", 0, rnorm, 0.0, f, 0 );
