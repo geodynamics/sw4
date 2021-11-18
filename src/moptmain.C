@@ -253,7 +253,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
       mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
       for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
       {
-         freq= mopt->get_freq_gradsmooth()>0.? mopt->get_freq_gradsmooth() : GlobalSources[e][0]->getFrequency();
+         freq= mopt->get_freq_peakpower()>0.? mopt->get_freq_peakpower() : GlobalSources[e][0]->getFrequency();
          simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
                             mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), 
                             freq, e, simulation.getRank());
@@ -295,7 +295,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
       std::cout << "compute_f forward solve" << " time from t0=" << MPI_Wtime()-t0 << std::endl;
       sw4_profile->time_stamp("forward solve" );
       simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, 
-      false, e, mopt->m_nsteps_in_memory, 0, ph, mopt->get_freq_gradsmooth() );
+      false, e, mopt->m_nsteps_in_memory, 0, ph, mopt->get_freq_peakpower() );
       sw4_profile->time_stamp("done forward solve" ); 
       std::cout << "done compute_f forward solve" << " time from t0=" << MPI_Wtime()-t0 << std::endl;
 
@@ -498,7 +498,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       checkMinMax(nmpars_shared/2, coarse, "coarse2:");
       for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
       {
-         freq= mopt->get_freq_gradsmooth()>0.? mopt->get_freq_gradsmooth() : GlobalSources[e][0]->getFrequency();
+         freq= mopt->get_freq_peakpower()>0.? mopt->get_freq_peakpower() : GlobalSources[e][0]->getFrequency();
          simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars_shared, mopt->m_mp_shared, 
                             mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), freq, e, simulation.getRank());
       }
@@ -546,7 +546,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       std::cout << "compute_f_df forward solve"  << " time from t0=" << MPI_Wtime()-t0 << std::endl;
       sw4_profile->time_stamp("forward solve" );
        simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, 
-     mopt->m_nsteps_in_memory, phcase, pseudo_hessian, mopt->get_freq_gradsmooth() );
+     mopt->m_nsteps_in_memory, phcase, pseudo_hessian, mopt->get_freq_peakpower() );
 
       // check if U has nan
       U[0].checknan("forward U");
@@ -554,7 +554,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       std::cout << "done compute_f_df forward solve" << " time from t0=" << MPI_Wtime()-t0 << std::endl;
       
       //check simulation limits
-     cout << "forward modeling GlobalTimeSeries max=" << checkTimeSeriesLimits(GlobalTimeSeries[e]) << endl;
+     if(myrank == 0)  cout << "forward modeling GlobalTimeSeries max=" << checkTimeSeriesLimits(GlobalTimeSeries[e]) << endl;
      //Wei added sync
      MPI_Barrier(MPI_COMM_WORLD);
      
@@ -590,7 +590,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
             }
             MPI_Barrier(MPI_COMM_WORLD); 
       
-      cout << "copy of GlobalTimeSeries max=" << checkTimeSeriesLimits(diffs) << endl;
+      if(myrank == 0)  cout << "copy of GlobalTimeSeries max=" << checkTimeSeriesLimits(diffs) << endl;
 
 // 2. misfit function also updates diffs := this - observed
       if( mopt->m_misfit == Mopt::L2 )
@@ -661,8 +661,9 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
             }
         }
 
-      simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, mopt->get_freq_gradsmooth(), e );
+      simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, mopt->get_freq_peakpower(), e );
       sw4_profile->time_stamp("done backward+adjoint solve" );
+      
       cout << "done adjoint solve:" << " time from t0=" << MPI_Wtime()-t0 << " gLambda[0] npts=" << gLambda[0].npts() 
       << " min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << endl;
 
@@ -698,9 +699,9 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    
       //checkMinMax(nmpars, dfsevent, "dfsevent");
 
-    float_sw4 freq= mopt->get_freq_gradsmooth()>0.? mopt->get_freq_gradsmooth() : GlobalSources[e][0]->getFrequency();
-    //if(!simulation.m_filter_gradient)
-    //  mopt->m_mp->smooth_gradient(dfsevent, rho, mu, lambda, freq, GlobalSources[e][0]->getZ0()); // needs to act on dfsevent instead of dfs
+    float_sw4 freq= mopt->get_freq_peakpower()>0.? mopt->get_freq_peakpower() : GlobalSources[e][0]->getFrequency();
+    if(simulation.m_model_shared && simulation.m_filter_gradient)
+      mopt->m_mp->smooth_gradient(dfsevent, rho, mu, lambda, freq, GlobalSources[e][0]->getZ0()); // needs to act on dfsevent instead of dfs
       //save_array_to_disk(nmpars, dfsevent, "dfsevent_smoothed.bin");
 
       for( int m=0 ; m < nmpars ; m++ )
@@ -2219,6 +2220,7 @@ int main(int argc, char **argv)
                                     GlobalSources, GlobalTimeSeries, GlobalObservations, 
                                     f, dfs, dfm, myRank, mopt, 0 );
                      break;
+
             case 1:
       // Run optimizer (default)
                sw4_profile->time_stamp("Start optimizer");
@@ -2244,18 +2246,22 @@ int main(int argc, char **argv)
                //Wei added to assure memory release prior to next event
                MPI_Barrier(MPI_COMM_WORLD);
                break;
+
             default:
                if( myRank == 0 ) cout << "ERROR: m_opttest = " << mopt->m_opttest << " is not a valid choice" << endl;
-               {
+               break;
+         
+            } // end of switch
+
+   // output final model
+            {
                   int ng = simulation.mNumberOfGrids;
                   vector<Sarray> rho(ng), mu(ng), lambda(ng);
                   
                      mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
                   for( int i3=0 ; i3<mopt->m_sfiles.size() ; i3++ )
                      mopt->m_sfiles[i3]->force_write_image( 0, 0, rho, rho, mu, lambda, rho, mu, lambda, rho, lambda, simulation.getOutputPath(), simulation.mZ ); 
-               }
-            } // end of switch
-
+            }
 
 	   if( myRank == 0 )
 	   {

@@ -651,10 +651,10 @@ if( save_sides && currentTimeStep==(step_to_record-1>beginCycle? step_to_record-
   {
      for( int g=0 ; g < mNumberOfGrids ; g++ )
      {
-	Upred_saved_sides[g]->push( Um[g], -1 );    // save wavefields on the sides using push method of DataPatch
-	Upred_saved_sides[g]->push( U[g], 0 );
-	Ucorr_saved_sides[g]->push( Um[g], -1 );
-	Ucorr_saved_sides[g]->push( U[g], 0 );
+	Upred_saved_sides[g]->push( Um[g], currentTimeStep-1 );    // save wavefields on the sides using push method of DataPatch
+	Upred_saved_sides[g]->push( U[g], currentTimeStep+0 );
+	Ucorr_saved_sides[g]->push( Um[g], currentTimeStep-1 );
+	Ucorr_saved_sides[g]->push( U[g], currentTimeStep+0 );
      }
   }
 // all types of forcing...

@@ -134,7 +134,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    
    cout << "first time step to record sides=" << step_to_record << endl;
 
-   int beginCycle = step_to_record+2;   //1;
+   int beginCycle = step_to_record;   //+2, 1;
 
    double time_measure[8];
    double time_sum[8]={0,0,0,0,0,0,0,0};
@@ -327,10 +327,11 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       //}
    }
 
-      if(proc_zero()) cout << "zero out grad near source" << endl;
-
+      
    if( m_zerograd_at_src )
    {
+      if(proc_zero()) cout << "zero out grad near source" << endl;
+
       set_to_zero_at_source( gRho, point_sources, identsources, m_zerograd_pad );
       set_to_zero_at_source( gMu, point_sources, identsources, m_zerograd_pad );
       set_to_zero_at_source( gLambda, point_sources, identsources, m_zerograd_pad );
@@ -339,10 +340,11 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    communicate_arrays( gMu );
    communicate_arrays( gLambda );
 
-      if(proc_zero()) cout << "filter grad" << endl;
 
-   if( m_filter_gradient )
+   if( m_filter_gradient && !m_model_shared )  // diffusion-based smoothing only to distributed model
    {
+      if(proc_zero()) cout << "filter grad with diffusion kernel" << endl;
+
       heat_kernel_filter( gRho,    m_gradfilter_ep, m_gradfilter_it );
       heat_kernel_filter( gMu,     m_gradfilter_ep, m_gradfilter_it );
       heat_kernel_filter( gLambda, m_gradfilter_ep, m_gradfilter_it );

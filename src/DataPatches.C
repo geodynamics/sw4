@@ -222,8 +222,8 @@ void DataPatches::push( Sarray& u, int n )
    {
       if( m_ncurrent == m_nsteps )
       {
-	 save_to_file( );
-	 m_ncurrent = 0;
+	     save_to_file( );
+	     m_ncurrent = 0;
       }
       int ib=u.m_ib;
       int jb=u.m_jb;
@@ -285,6 +285,9 @@ void DataPatches::save_to_file( )
 	 m_nmax = m_steps[m_ncurrent-1];
          m_startedsave = true;
 	 nr = write(fd,&m_nmin,sizeof(int));
+
+    printf("save_to_file: nmin=%d nmax=%d\n", m_nmin, m_nmax);
+
 	 if( nr != sizeof(int) )
 	 {
 	    printf("ERROR DataPatches::save_to_file : Failed to write nmin\n");
@@ -367,6 +370,8 @@ void DataPatches::pop( Sarray& u, int n )
       {
       // Step not in memory, read from file
       // Assume solving backwards, read the entire interval:  n-nsteps+1 .., n into 0,..,nsteps-1
+      printf("pop: step not in memory, read from file: n=%d m_ncurrent=%d m_steps[0]=%d m_steps[m_ncurrent-1]=%d\n", n, m_ncurrent, m_steps[0], m_steps[m_ncurrent-1]);
+
 	 read_from_file( n );
 	 //	 nloc = m_ncurrent-1;
       }
@@ -414,11 +419,12 @@ void DataPatches::read_from_file( int n )
          print_openerr( errno );
          return;
       }
-      int nstart = n-m_nsteps+1;
-      if( nstart < m_nmin )
-	nstart = m_nmin;
+      int nstart = n-m_nsteps+1;  // m_nsteps is buffer length
+      if( nstart < m_nmin ) nstart = m_nmin;
       int nmax = nstart + m_nsteps-1;
-      
+
+      printf("nstart=%d nmax=%d nsteps=%d\n", nstart, nmax, m_nsteps);
+
       // header
       size_t off = 4*sizeof(int) + 6*m_npatches*sizeof(size_t) + sizeof(double);
       // skip data before nstart
@@ -430,7 +436,7 @@ void DataPatches::read_from_file( int n )
       m_ncurrent = m_nsteps;
       for( int s=0 ; s < m_ncurrent ; s++ )
       {
- 	 m_steps[s] = nstart + s;
+ 	      m_steps[s] = nstart + s;  // read nstart ... nstart + m_ncurrent
          size_t npts      = m_dataptr[m_npatches];
          size_t nrread = 0;
          while( nrread < npts )
@@ -443,6 +449,7 @@ void DataPatches::read_from_file( int n )
 	    {
 	       printf("ERROR DataPatches::read_from_file : Could not read data\n");
 	       printf("    Attempt to read %ld bytes, only read %ld \n",nread*sizeof(double),nr );
+          printf("    m_nsteps=%d npts=%d nstart=%d nmax=%d offset in file=%ld m_npatches=%d m_dataptr=%d\n", m_nsteps, npts, nstart, nmax, off, m_npatches, m_dataptr[m_npatches]);
                printf("   file name = %s \n",m_filename.c_str() );
 	       return;
 	    }

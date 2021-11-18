@@ -534,6 +534,7 @@ EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
   m_zerograd_at_src(false),
   m_zerograd_pad(2),
   m_filter_gradient(false),
+  m_model_shared(false),
   m_gradfilter_ep(0.08),
   m_gradfilter_it(5),
   m_mempe(0),
@@ -8432,6 +8433,11 @@ void EW::heat_kernel_filter( vector<Sarray>& u, float_sw4 ep, int nit )
 void EW::set_filtergrad()
 {
    m_filter_gradient = true;
+}
+
+void EW::set_model_shared()
+{
+   m_model_shared = true;
 }
 
 //-----------------------------------------------------------------------

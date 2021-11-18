@@ -53,7 +53,7 @@ Mopt::Mopt( EW* a_ew )
    m_vp_max = -100.;
    m_vs_min = -100.;
    m_vs_max = -100.;
-   m_freq_gradsmooth=0.0;
+   m_freq_peakpower=0.0;
    m_wave_mode=2;  // default to both P and S waves otherwise 0 for P and 1 for S only
    m_win_mode =1; // default, use eikonal solver to set windows.
    m_twin_shift=0.0;
@@ -238,7 +238,7 @@ void Mopt::processMaterialParCart( char* buffer )
    token = strtok(NULL, " \t");
 
    bool vel = false, vponly=false, vsvp=false, mparcartfile =false;
-   bool shared=false;
+
    int nx=3, ny=3, nz=3, init=0;
    double ratio=1.732, gamma=1, amp=0.1, omega=2*M_PI;
    char file[256]= " \0"; //shut up memory checker
@@ -317,11 +317,11 @@ void Mopt::processMaterialParCart( char* buffer )
 	   token += 7;
 	   m_vs_max = atof(token);
       }
-      else if( startswith("freq_gradsmooth=",token) )
+      else if( startswith("freq_peakpower=",token) )
       {
 	   token += 16;
-	   m_freq_gradsmooth = atof(token);
-      if(m_myrank == 0) cout << "freq_gradsmooth=" << m_freq_gradsmooth << endl;
+	   m_freq_peakpower = atof(token);
+      if(m_myrank == 0) cout << "freq_peakpower=" << m_freq_peakpower << endl;
       }
       else if( startswith("amplitude=",token) )
       {
@@ -356,9 +356,10 @@ void Mopt::processMaterialParCart( char* buffer )
       else if( startswith("shared=",token) )
       {
          token += 7;
-         shared = strcmp(token,"1") == 0   ||
+         if(strcmp(token,"1") == 0   ||
                   strcmp(token,"yes") == 0 || 
-                  strcmp(token,"on") == 0;
+                  strcmp(token,"on") == 0)
+         m_ew->set_model_shared();
       }
       else
       {
@@ -397,7 +398,7 @@ void Mopt::processMaterialParCart( char* buffer )
      m_ny = ny;
      m_nz = nz;
 
-      m_mp = new MaterialParCart( m_ew, nx, ny, nz, init, varcase, file, amp, omega, shared );
+      m_mp = new MaterialParCart( m_ew, nx, ny, nz, init, varcase, file, amp, omega, m_ew->is_model_shared() );
 
 
    //   if( !shared )
@@ -552,6 +553,7 @@ void Mopt::processMrun( char* buffer )
       }
       else if( startswith("filtergrad=",token) )
       {
+         token += 11;
 	 int n = strlen(token);
 	 bool filtergrad =  strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 || strncmp("1",token,n)== 0;
          m_ew->set_filtergrad();

@@ -1340,6 +1340,8 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void filter_bc( Sarray& ufi, Sarray& u, int g, float_sw4 ep );
    void heat_kernel_filter( vector<Sarray>& u, float_sw4 ep, int nit );
    void set_filtergrad();
+   void set_model_shared();
+   bool is_model_shared() const {return m_model_shared;}
    void set_filterit(int filterit);
    void set_filterpar(float_sw4 filterpar);
    void perturb_vels( Sarray& cs, Sarray& cp, Sarray& rndpert );
@@ -1437,6 +1439,7 @@ vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs, m_Mlcs;
 
 vector<float_sw4> m_curviRefLev; 
 bool m_filter_gradient;
+bool m_model_shared;
 
 private:
 void preprocessSources( vector<vector<Source*> >& a_GlobalSources );
