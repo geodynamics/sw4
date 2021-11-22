@@ -463,6 +463,7 @@ void extractSurfaceFromGridFile(string a_surfaceFileName);
 void extractSurfaceFromCartesianFile(string a_surfaceFileName);
 
 void computeCartesianCoord(double &x, double &y, double lon, double lat);
+void computeCartesianCoordGMG(double &x, double &y, double lon, double lat, char *crs_to);
 void computeGeographicCoord(double x, double y, double & longitude, double & latitude);
 
 void initializeSystemTime();
@@ -1429,6 +1430,7 @@ Sarray mCcurv; // Anisotropic material with metric (on curvilinear grid).
 vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs, m_Mlcs;
 
 vector<float_sw4> m_curviRefLev; 
+
 
 private:
 void preprocessSources( vector<vector<Source*> >& a_GlobalSources );

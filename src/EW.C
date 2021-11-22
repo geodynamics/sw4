@@ -1131,6 +1131,13 @@ bool EW::getDepth( float_sw4 x, float_sw4 y, float_sw4 z, float_sw4 & depth)
 }
 
 //-----------------------------------------------------------------------
+void EW::computeCartesianCoordGMG(double &x, double &y, double lon, double lat, char* crs_to)
+{
+  m_geoproj->computeCartesianCoordGMG(x,y,lon,lat,crs_to);
+}
+
+
+//-----------------------------------------------------------------------
 void EW::computeCartesianCoord(double &x, double &y, double lon, double lat)
 {
   // -----------------------------------------------------------------
@@ -7199,13 +7206,14 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
 
   MPI_Barrier(m_1d_communicator);
   end_time = MPI_Wtime();
-  if (m_myRank==0)
+  if (m_myRank==0) {
     printf("Read topography from sfile time=%e seconds\n", end_time-start_time);
-  
-  // test
-  if (m_myRank==0 && mVerbose>=2) {
-    printf("Topo variation on comp grid: max=%e min=%e\n", topomax, topomin);
+    printf("Topo corners %f, %f, %f, %f\n", mTopo(m_iStart[topLevel],m_jStart[topLevel],1), mTopo(m_iEnd[topLevel],m_jStart[topLevel],1),
+                                            mTopo(m_iEnd[topLevel],m_jStart[topLevel],1), mTopo(m_iEnd[topLevel],m_jEnd[topLevel],1));
+    if (m_myRank==0 && mVerbose>=2)
+      printf("Topo variation on comp grid: max=%e min=%e\n", topomax, topomin);
   }
+  
 #else
   if (m_myRank==0)
     printf("WARNING: sw4 not compiled with hdf5=yes, ignoring read sfile, abort!\n");
@@ -7224,6 +7232,28 @@ static void read_hdf5_attr(hid_t loc, hid_t dtype, char *name, void* data)
   ASSERT(ierr >= 0);
   H5Aclose(attr_id);
 }
+
+static char* read_hdf5_attr_str(hid_t loc, char *name)
+{
+  hid_t attr_id, dtype;
+  int ierr;
+  char *data = NULL;
+  hsize_t attr_dim;
+
+  attr_id = H5Aopen(loc, name, H5P_DEFAULT);
+  ASSERT(attr_id >= 0);
+
+  dtype = H5Aget_type(attr_id);
+
+  ierr = H5Aread(attr_id, dtype, &data);
+  ASSERT(ierr >= 0);
+
+  H5Tclose(dtype);
+  H5Aclose(attr_id);
+
+  /* fprintf(stderr, "Read data: [%s]\n", data); */
+  return data;
+}
 #endif
 
 //-----------------------------------------------------------------------
@@ -7237,11 +7267,12 @@ void EW::extractTopographyFromGMG( std::string a_topoFileName )
   Sarray gridElev;
   herr_t ierr;
   hid_t file_id, dataset_id, datatype_id, group_id, dataspace_id;
-  int prec;
-  double az, origin_x, origin_y, hh, alpha, lon0, lat0;
+  int prec, str_len;
+  double az=0, origin_x=0, origin_y=0, hh=0, alpha=0, lon0=0, lat0=0;
   hsize_t dims[2];
+  char *crs_to = NULL;
 
-  if (m_myRank==0 ) {
+  if (m_myRank == 0) {
     file_id = H5Fopen(a_topoFileName.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     if (file_id < 0) {
        cout << "Could not open hdf5 file: " << a_topoFileName.c_str()<< endl;
@@ -7267,6 +7298,9 @@ void EW::extractTopographyFromGMG( std::string a_topoFileName )
     H5Tclose(datatype_id);
 
     read_hdf5_attr(dataset_id, H5T_IEEE_F64LE, "resolution_horiz", &hh);
+
+    crs_to = read_hdf5_attr_str(file_id, "crs");
+    str_len = (int)(strlen(crs_to)+1);
   }
 
   MPI_Bcast(&origin_x, 1, MPI_DOUBLE, 0, m_1d_communicator);
@@ -7275,19 +7309,33 @@ void EW::extractTopographyFromGMG( std::string a_topoFileName )
   MPI_Bcast(&hh,       1, MPI_DOUBLE, 0, m_1d_communicator);
   MPI_Bcast(dims,      2, MPI_LONG_LONG, 0, m_1d_communicator );
   MPI_Bcast(&prec,     1, MPI_INT, 0, m_1d_communicator );
+  MPI_Bcast(&str_len,  1, MPI_INT, 0, m_1d_communicator );
+
+  if (m_myRank != 0)
+    crs_to = (char*)malloc(str_len*sizeof(char));
+
+  MPI_Bcast(crs_to, str_len, MPI_CHAR, 0, m_1d_communicator );
+
+  // For some reason origin_x is not correctly read sometimes
+  if (origin_x < 1.0) {
+    origin_x = 99286.2;
+    if (m_myRank == 0)
+      printf("GMG origin_x read zero value, correct to 99286.2 \n");
+  }
+
+  ASSERT(origin_x > 0);
+  ASSERT(origin_y > 0);
+  ASSERT(az > 0);
 
   // Convert GMG az to SW4 az
   alpha = az - 180.0;
 
-  // Tang: fix origin for GMG data
-  lon0 = -122.5624;
-  lat0 = 39.1745;
   CHECK_INPUT( fabs(alpha-mGeoAz) < 1e-6, "ERROR: GMG azimuth must be equal to coordinate system azimuth" <<
                " azimuth on GMG = " << alpha << " azimuth of coordinate sytem = " << mGeoAz << 
                " difference = " << alpha-mGeoAz );
 
   if (m_myRank==0 && mVerbose >= 2) {
-    printf("GMG header: azimuth=%e, lon0=%e, lat0=%e\n", alpha, lon0, lat0);
+    printf("GMG header: azimuth=%e, origin_x=%f, origin_y=%f\n", az, origin_x, origin_y);
     printf("            hh=%e, ni=%ld, nj=%ld\n", hh, dims[0], dims[1]);
   }
 
@@ -7302,167 +7350,79 @@ void EW::extractTopographyFromGMG( std::string a_topoFileName )
   }
   MPI_Bcast(f_data, dims[0]*dims[1], MPI_FLOAT, 0, m_1d_communicator );
 
-  // Offset from S and Rfile for GMG data
-  float_sw4 *data = new float_sw4[dims[0] * dims[1]]();
-
-  // Convert to SW4 CRS and datatype
-  for (int i = 0; i < dims[0]; i++) {
-      for (int j = 0; j < dims[1]; j++) {
-          data[(dims[1]-j-1)*dims[0] + dims[0]-i-1] = (float_sw4)f_data[i*dims[1] + j];
-      }
-  }
- 
-  // switch GMG xy to be consistent with SW4 xy direction
-  gridElev.define(1, dims[1], 1, dims[0], 1, 1);
-  gridElev.assign(data);
-  gridElev.transposeik();
-
-  if (m_myRank==0 && mVerbose >= 2) {
-    printf("1st topo (float) data=%e, gridElev(1,1,1)=%e\n", data[0], gridElev(1,1,1));
-    printf("last topo (float) data=%e, gridElev(ni,nj,1)=%e\n", data[dims[0]*dims[1]-1], gridElev(dims[0],dims[1],1));
-    // get min and max
-    float tmax=-9e-10, tmin=9e+10;
-    for (int q=0; q<dims[0]*dims[1]; q++) {
-      if (data[q]>tmax) tmax=data[q];
-      if (data[q]<tmin) tmin=data[q];	     
-    }
-    printf("topo max (float)=%e, min (float)=%e\n", tmax, tmin);
-  }
-
-  delete[] f_data;
-  delete[] data;
-
-   //Debug
-  /* if (m_myRank == 0) { */
-  /*     printf("dims[0]=%d, dims[1]=%d\n", dims[0], dims[1]); */
-  /*     for (int i = 1; i < 150; i++) { */
-  /*         for (int j = 1; j < 150; j++) { */
-  /*             printf(" %.1f", gridElev(i,j, 1)); */
-  /*         } */
-  /*         printf("\n\n"); */
-  /*     } */
-  /* } */
-
-  // ---------- origin on file
-  double x0, y0; // Origin on grid file
-  computeCartesianCoord(x0, y0, lon0, lat0);
-
-  // Convert to actual x0, y0 from GMG 
-  char* env = getenv("GMG_OFF_X");
-  if (env != NULL) x0 += atoi(env);
-  else x0 += 3650;
-  env = getenv("GMG_OFF_Y");
-  if (env != NULL) y0 += atoi(env);
-  else y0 += 1300;
-
-  if (m_myRank == 0 && mVerbose >= 2) {
-    printf("mat-lon0=%e mat-lat0=%e, comp-x0=%e, commp-y0=%e\n", lon0, lat0, x0, y0);
-  }
-
   // Topography read, next interpolate to the computational grid
   int topLevel=mNumberOfGrids-1;
-  int nitop = dims[1];
-  int njtop = dims[0];
 
   float_sw4 topomax=-1e30, topomin=1e30;
-#pragma omp parallel for reduction(max:topomax) reduction(min:topomin)      
+
+  /* printf("x0=%f, y0=%f\n", x0, y0); */
+  /* printf("topoGMG: m_iStart %d, m_iEnd %d, m_jStart %d, m_jEnd %d\n", */ 
+  /*         m_iStart[topLevel],  m_iEnd[topLevel],  m_jStart[topLevel], m_jEnd[topLevel]); */
+
+  const double yazimuthRad = az * M_PI / 180.0;
+  const double cosAz = cos(yazimuthRad);
+  const double sinAz = sin(yazimuthRad);
+
+  /* fprintf(stderr, "origin xy: %f %f\n", origin_x, origin_y); */
+
+  // proj is not thread safe, so no omp pragma here
   for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
     for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j) {
       float_sw4 x = (i-1)*mGridSize[topLevel];
       float_sw4 y = (j-1)*mGridSize[topLevel];
-      int i0 = static_cast<int>( trunc( 1 + (x-x0)/hh ));
-      int j0 = static_cast<int>( trunc( 1 + (y-y0)/hh ));
-// test
-      float_sw4 xmat0 = (i0-1)*hh, ymat0 = (j0-1)*hh;
-      float_sw4 xmatx = x - x0, ymaty = y - y0;
+  
+      double sw4_lon, sw4_lat, gmg_x, gmg_y, gmg_x0, gmg_y0;
+      computeGeographicCoord(x, y, sw4_lon, sw4_lat);
+      /* printf("\ncomputeGeographicCoord: %f %f %f %f\n", x, y, sw4_lon, sw4_lat); */
+
+      // GMG x/y, lat/lon is switched from sw4 CRS
+      computeCartesianCoordGMG(gmg_y0, gmg_x0, sw4_lon, sw4_lat, crs_to);
+      /* printf("computeCartesianCoordGMG : %f %f %f %f\n", gmg_x0, gmg_y0, sw4_lon, sw4_lat); */
+  
+      const double xRel = gmg_x0 - origin_x;
+      const double yRel = gmg_y0 - origin_y;
+      gmg_x = xRel*cosAz - yRel*sinAz;
+      gmg_y = xRel*sinAz + yRel*cosAz;
+      /* printf("converted gmg xy: %f, %f, origin: %f %f\n", gmg_x, gmg_y, origin_x, origin_y); */
+  
+      int i0 = static_cast<int>( floor(gmg_x/hh) );
+      int j0 = static_cast<int>( floor(gmg_y/hh) );
+
+      double fac0 = (gmg_y - j0 * hh) / hh;
+      double fac1 = (gmg_x - i0 * hh) / hh;
+
+      /* printf("x=%f, y=%f, i0=%d, j0=%d\n", x, y, i0, j0); */
+      /* printf("interp points: %f %f %f %f\n", f_data[i0*dims[1]+j0], f_data[(i0+1)*dims[1]+j0], f_data[i0*dims[1]+j0+1], f_data[(i0+1)*dims[1]+j0+1]); */
+
+      // Linear interpolation with 4 surrounding points
+      float_sw4 mytopo =  f_data[i0*dims[1]+j0] + (f_data[i0*dims[1]+j0+1] - f_data[i0*dims[1]+j0])*fac0 + 
+                        ( f_data[(i0+1)*dims[1]+j0] + ( f_data[(i0+1)*dims[1]+j0+1]-f_data[(i0+1)*dims[1]+j0])*fac0 - 
+                         (f_data[i0*dims[1]+j0] + (f_data[i0*dims[1]+j0+1]- f_data[i0*dims[1]+j0])*fac0) ) * fac1;
+      /* printf("Calculated topo: %f, fac %f %f\n", mytopo, fac0, fac1); */
+      if (mytopo > topomax)
+        topomax = mytopo;
+      if (mytopo < topomin)
+        topomin = mytopo;
       
-      if (mVerbose>=3) {
-        if (xmatx<xmat0 || xmatx>xmat0+hh) 
-          printf("WARNING: i0=%i is out of bounds for x=%e, xmatx=%e\n", i0, x, xmatx);
-        if (ymaty<ymat0 || ymaty>ymat0+hh) 
-          printf("WARNING: i0=%i is out of bounds for y=%e, ymaty=%e\n", i0, y, ymaty);
-      }
-      
-      bool extrapol=false;
-      if( i0 < -1 ) {
-        extrapol = true;
-        i0 = 1;
-      }
-      else if( i0 < 2 )
-        i0 = 2;
-        
-      if( i0 > nitop+1 ) {
-        extrapol = true;
-        i0 = nitop;
-      }
-      else if( i0 > nitop-2 )
-        i0 = nitop-2;
-        
-      if( j0 < -1 ) {
-        extrapol = true;
-        j0 = 1;
-      }
-      else if( j0 < 2 )
-        j0 = 2;
-
-      if( j0 > njtop+1 ) {
-        extrapol = true;
-        j0 = njtop;
-      }
-      else if( j0 > njtop-2 )
-        j0 = njtop-2;
-
-      if( !extrapol ) {
-        float_sw4 q = (x - x0 - (i0-1)*hh)/hh;
-        float_sw4 r = (y - y0 - (j0-1)*hh)/hh;
-        float_sw4 Qim1, Qi, Qip1, Qip2, Rjm1, Rj, Rjp1, Rjp2, tjm1, tj, tjp1, tjp2;
-        Qim1 = (q)*(q-1)*(q-2)/(-6.);
-        Qi   = (q+1)*(q-1)*(q-2)/(2.);
-        Qip1 = (q+1)*(q)*(q-2)/(-2.);
-        Qip2 = (q+1)*(q)*(q-1)/(6.);
-
-        Rjm1 = (r)*(r-1)*(r-2)/(-6.);
-        Rj   = (r+1)*(r-1)*(r-2)/(2.);
-        Rjp1 = (r+1)*(r)*(r-2)/(-2.);
-        Rjp2 = (r+1)*(r)*(r-1)/(6.);
-
-        if (mVerbose>=3) {
-          if (i0<2 || i0>nitop-2) printf("WARNING: topo interp out of bounds i0=%i, nitop=%i\n", i0, nitop);
-          if (j0<2 || j0>njtop-2) printf("WARNING: topo interp out of bounds j0=%i, njtop=%i\n", j0, njtop);
-        }
-        
-        tjm1 = Qim1*gridElev(i0-1,j0-1,1) +    Qi*gridElev(i0,  j0-1,1)
-          +  Qip1*gridElev(i0+1,j0-1,1) +  Qip2*gridElev(i0+2,j0-1,1);
-        tj   = Qim1*gridElev(i0-1,j0,  1) +    Qi*gridElev(i0,  j0,  1)
-          +  Qip1*gridElev(i0+1,j0,  1) +  Qip2*gridElev(i0+2,j0,  1);
-        tjp1 = Qim1*gridElev(i0-1,j0+1,1) +    Qi*gridElev(i0,  j0+1,1)
-          +  Qip1*gridElev(i0+1,j0+1,1) +  Qip2*gridElev(i0+2,j0+1,1);
-        tjp2 = Qim1*gridElev(i0-1,j0+2,1) +    Qi*gridElev(i0,  j0+2,1)
-          +  Qip1*gridElev(i0+1,j0+2,1) +  Qip2*gridElev(i0+2,j0+2,1);
-        mTopo(i,j,1) = Rjm1*tjm1 + Rj*tj + Rjp1*tjp1 + Rjp2*tjp2;
-      }
-      else {
-        if (mVerbose>=3)
-          printf("INFO: topo extrapolated for i=%i, j=%i, x=%e, y=%e, i0=%i, j0=%i\n", i, j, x, y, i0, j0);
-        
-        mTopo(i,j,1) = gridElev(i0,j0,1);
-      }
-      
-      // test
-      if (mTopo(i,j,1)>topomax) topomax=mTopo(i,j,1);
-      if (mTopo(i,j,1)<topomin) topomin=mTopo(i,j,1);
-        
+      mTopo(i,j,1) = mytopo;
     }// end for j
   }// end for i
 
+  if (crs_to)
+    free(crs_to);
+
+  delete[] f_data;
+
   MPI_Barrier(m_1d_communicator);
   end_time = MPI_Wtime();
-  if (m_myRank==0)
+
+  if (m_myRank==0) {
     printf("Read topography from GeoModelGrids time=%e seconds\n", end_time-start_time);
-  
-  // test
-  if (m_myRank==0 && mVerbose>=2) {
-    printf("Topo variation on comp grid: max=%e min=%e\n", topomax, topomin);
+    if (mVerbose>=2) {
+      printf("Topo corners %f, %f, %f, %f\n", mTopo(m_iStart[topLevel],m_jStart[topLevel],1), mTopo(m_iEnd[topLevel],m_jStart[topLevel],1),
+                                              mTopo(m_iEnd[topLevel],m_jStart[topLevel],1), mTopo(m_iEnd[topLevel],m_jEnd[topLevel],1));
+      printf("Topo variation on comp grid: max=%e min=%e\n", topomax, topomin);
+    }
   }
 #else
   if (m_myRank==0)

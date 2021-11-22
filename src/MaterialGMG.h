@@ -60,14 +60,42 @@ class MaterialGMG : public MaterialData
    bool use_attenuation() {return m_use_attenuation;}
    
   protected:
-    inline bool inside( float_sw4 x, float_sw4 y, float_sw4 z ) {
-      return m_xminloc <= x && x <= m_xmaxloc && m_yminloc <= y && y <= m_ymaxloc 
-        && m_zminloc <= z && z <= m_zmaxloc;
-    }
  
     void read_gmg( );
     void fill_in_fluids( );
     void material_check( bool water );
+
+    float mat(int gr, int c, int i, int j, int k) {
+#ifdef BZ_DEBUG
+      ASSERT(m_npatches > 0);
+      ASSERT(gr >= 0 && gr < m_npatches);
+      ASSERT( i >= 0 &&  i < m_ni[gr]);
+      ASSERT( j >= 0 &&  j < m_nj[gr]);
+      ASSERT( k >= 0 &&  k < m_nk[gr]);
+      ASSERT( c >= 0 &&  c < m_nc[gr]);
+#endif
+      return m_Material[gr][i * m_nj[gr] * m_nk[gr] * m_nc[gr] +
+                            j * m_nk[gr] * m_nc[gr] +
+                            k * m_nc[gr] + 
+                            c];
+    };
+
+    void mat_assign(int gr, int c, int i, int j, int k, float v) {
+#ifdef BZ_DEBUG
+      ASSERT(m_npatches > 0);
+      ASSERT(gr >= 0 && gr < m_npatches);
+      ASSERT( i >= 0 &&  i < m_ni[gr]);
+      ASSERT( j >= 0 &&  j < m_nj[gr]);
+      ASSERT( k >= 0 &&  k < m_nk[gr]);
+      ASSERT( c >= 0 &&  c < m_nc[gr]);
+#endif
+
+      m_Material[gr][i * m_nj[gr] * m_nk[gr] * m_nc[gr] +
+                     j * m_nk[gr] * m_nc[gr] +
+                     k * m_nc[gr] + 
+                     c] = v;
+      return;
+    };
     
     EW* mEW;
  
@@ -75,23 +103,13 @@ class MaterialGMG : public MaterialData
  
     bool m_use_attenuation;
     int m_npatches;
+    double m_Origin_x, m_Origin_y, m_Yaz, m_Zmax, m_Zmin;
+    char *m_CRS;
+    hsize_t m_Top_dims[2];
+    float* m_Top_surface;
+    vector<double> m_hv, m_hh, m_ztop;
+    vector<int> m_ni, m_nj, m_nk, m_nc;
+    vector<float*> m_Material;
 
-    vector<int> m_ifirst, m_ilast, m_jfirst, m_jlast, m_kfirst, m_klast, m_ni, m_nj, m_nk;
-    vector<double> m_hh;
-    vector<float_sw4> m_hv;
-    double m_x0, m_y0, m_lon0, m_lat0, m_azim;
- 
-    // xminloc, xmaxloc, etc. is the bounding box for the set of data patches in this processor.
-    float_sw4 m_xminloc, m_xmaxloc, m_yminloc, m_ymaxloc, m_zminloc, m_zmaxloc;
-    bool m_outside;
-
-    vector<Sarray> mMaterial_rho;
-    vector<Sarray> mMaterial_cp;
-    vector<Sarray> mMaterial_cs;
-    vector<Sarray> mMaterial_qp;
-    vector<Sarray> mMaterial_qs;
-
-    vector<Sarray> mInterface;
-    vector<bool> m_isempty;
 };
 #endif

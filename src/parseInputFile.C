@@ -653,9 +653,6 @@ void EW::processGrid(char* buffer)
   
   stringstream proj0;
 
-// hard code units to be in meters
-  proj0 << "+units=m";
-
 // default azimuth
   mGeoAz=0;
   
@@ -828,7 +825,7 @@ void EW::processGrid(char* buffer)
      {
         token +=5;
 // accumulate new style string
-        proj0 << " +proj=" << token;
+        proj0 << "+proj=" << token;
 	use_geoprojection = true;
         proj_set=true;
      }
@@ -1281,7 +1278,10 @@ void EW::processGrid(char* buffer)
   m_global_ymax = yprime;
   m_global_zmax = zprime;
 
-#ifndef ENABLE_PROJ4
+  // hard code units to be in meters
+  proj0 << " +units=m";
+
+#if !defined(ENABLE_PROJ4) && !defined(ENABLE_PROJ_NEW) 
   CHECK_INPUT( !use_geoprojection, "ERROR: need to configure SW4 with proj=yes to use projections "
                "from the Proj4 library");
 #endif
@@ -1289,7 +1289,7 @@ void EW::processGrid(char* buffer)
   {
 // tmp
 //     cout << "New proj4 string: '" << proj0.str() << "'" << endl;
-     
+
      m_geoproj = new GeographicProjection( mLonOrigin, mLatOrigin, proj0.str(), mGeoAz );
   }
   else

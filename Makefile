@@ -68,6 +68,13 @@ else
     proj := "yes"
 endif
 
+ifeq ($(proj_new),no)
+    proj_new := "no"
+else
+    proj_new := "yes"
+    proj     := "no+"
+endif
+
 fullpath := $(shell pwd)
 
 HOSTNAME := $(shell hostname)
@@ -176,10 +183,16 @@ endif
 
 ifeq ($(etree),yes)
    CXXFLAGS += -DENABLE_ETREE -DENABLE_PROJ4 -I$(SW4INC)
-   linklibs += -L$(SW4LIB) -lcencalvm -lproj
+   linklibs += -L$(SW4LIB) -lcencalvm -lproj -letree
+else ifeq ($(proj_new),yes)
+   CXXFLAGS += -DENABLE_PROJ_NEW -I$(SW4INC)
+   linklibs += -L$(SW4LIB) -lproj -lsqlite3 -lcurl -lssl -lcrypto
+   etree := "no"
+   proj  := "proj6+"
 else ifeq ($(proj),yes)
    CXXFLAGS += -DENABLE_PROJ4 -I$(SW4INC)
-   linklibs += -L$(SW4LIB) -lproj 
+   linklibs += -L$(SW4LIB) -lproj
+   #-lsqlite3 -lcurl -lssl
    etree := "no"
 else
    etree := "no"

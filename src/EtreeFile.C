@@ -359,12 +359,12 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 	 {
 	    for (int k = 1; k <= mEw->m_kEnd[g]; ++k) // don't attempt querying the etree above the topography (start at k=1)
 	    {
-	       x = mEw->mX(i,j,k);
-	       y = mEw->mY(i,j,k);
+	       x = mEw->mX[g](i,j,k);
+	       y = mEw->mY[g](i,j,k);
 // zeta is a linear function of k which should be zeta=1 for k=1 and zeta=0 for k=m_kEnd - m_ghost_points
 	       zeta = ((double) (mEw->m_kEnd[g] - ghost_points - k))/(mEw->m_kEnd[g] - ghost_points - 1.);
 // modify the z coordinate to account for the difference between raw and smoothed topography. 
-	       z = mEw->mZ(i,j,k) + ( mEw->mTopoGridExt(i,j,1) - topoMat(i,j,1) )*zeta;
+	       z = mEw->mZ[g](i,j,k) + ( mEw->mTopoGridExt(i,j,1) - topoMat(i,j,1) )*zeta;
 	       mEw->computeGeographicCoord(x, y, lon, lat);
 	       elev = -z;
 	       // if( inside( lat, lon, elev )  )
@@ -407,7 +407,7 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 			 << "Density=" << mPayload[0] << " Vp=" << mPayload[1] << " Vs=" << mPayload[2]
 			 << " Topo Elevation=" << mPayload[3] << " Qp=" << mPayload[4] << " Qs=" << mPayload[5]
 			 << " Faultblock= " << mPayload[6] 
-			 << " mZ(i,j,k)= " << mEw->mZ(i,j,k) << " topoGrid= " <<  mEw->mTopoGridExt(i,j,1) 
+			 << " mZ(i,j,k)= " << mEw->mZ[g](i,j,k) << " topoGrid= " <<  mEw->mTopoGridExt(i,j,1) 
 			 << " topoMat= " << topoMat(i,j,1) );
 		   
 			CHECK_INPUT (density != NODATAVAL, "Density undefined for grid point (i,j,k)= (" 
@@ -519,7 +519,7 @@ void EtreeFile::readEFile(std::vector<Sarray> & rho,
 			 << "Density=" << mPayload[0] << " Vp=" << mPayload[1] << " Vs=" << mPayload[2]
 			 << " Topo Elevation=" << mPayload[3] << " Qp=" << mPayload[4] << " Qs=" << mPayload[5]
 			 << " Faultblock= " << mPayload[6] 
-			 << " mZ(i,j,k)= " << mEw->mZ(i,j,k) << " topoGrid= " <<  mEw->mTopoGridExt(i,j,1) 
+			 << " mZ(i,j,k)= " << mEw->mZ[g](i,j,k) << " topoGrid= " <<  mEw->mTopoGridExt(i,j,1) 
 			 << " topoMat= " << topoMat(i,j,1) );
 		   
 			CHECK_INPUT (density != NODATAVAL, "Density undefined for grid point (i,j,k)= (" 
