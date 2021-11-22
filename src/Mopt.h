@@ -53,6 +53,7 @@ class Mopt
    float_sw4 get_vp_max() const { return m_vp_max; }
    float_sw4 get_vs_min() const { return m_vs_min; }
    float_sw4 get_vs_max() const { return m_vs_max; }
+   float_sw4 get_freq_peakpower() const { return m_freq_peakpower; }
    int get_wave_mode() const { return m_wave_mode; }
    float get_twin_shift() const { return m_twin_shift; }
    float get_twin_scale() const { return m_twin_scale; }
@@ -66,6 +67,7 @@ class Mopt
 
    int m_opttest, m_nspar;
    int m_maxit, m_maxsubit, m_nbfgs_vectors, m_optmethod, m_ihess_guess;
+   int m_ncontsteps;
    bool m_dolinesearch, m_fletcher_reeves, m_wolfe, m_mcheck, m_output_ts;
    bool m_misfit1d_images;
    bool m_test_regularizer;
@@ -77,6 +79,7 @@ class Mopt
    double m_pmin, m_pmax, m_pmin2, m_pmax2;
    // FWI workflow options
    float_sw4 m_vp_min, m_vp_max, m_vs_min, m_vs_max;  // global velocity constraints
+   float_sw4  m_freq_peakpower; // peak-power freq for setting traveltime windows or smoothing gradients
    int m_wave_mode; // 0: P  1: S  2: both
    float m_twin_shift, m_twin_scale;
    int m_win_mode;

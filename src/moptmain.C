@@ -232,11 +232,14 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    if( mopt->m_win_mode == 1 )
    {
       float_sw4* coarse=new float_sw4[nmpars];
+      float_sw4 freq;
       mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
       for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
       {
-         simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
-                            mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), 0, simulation.getRank());
+         freq= mopt->get_freq_peakpower()>0.? mopt->get_freq_peakpower() : GlobalSources[e][0]->getFrequency();
+         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
+                            mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), 
+                            freq, e, simulation.getRank());
       }
       delete[] coarse;
    }
@@ -444,13 +447,15 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    VERIFY2( ok, "ERROR: Material check failed\n" );
    if( mopt->m_win_mode == 1 )
    {
+      float_sw4 freq;
       float_sw4* coarse=new float_sw4[nmpars];
       mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
       for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
       {
-         simulation.solveTT(GlobalSources[e], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
-                            mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), 0, simulation.getRank());
-      }
+         freq= mopt->get_freq_peakpower()>0.? mopt->get_freq_peakpower() : GlobalSources[e][0]->getFrequency();
+         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
+                            mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), freq, e, simulation.getRank());
+     }
       delete[] coarse;
    }
 
@@ -1964,6 +1969,9 @@ int main(int argc, char **argv)
 	   }
 	   else if( mopt->m_opttest == 7 )
 	   {
+              // New attempt
+              mp->get_parameters( nmpard, xm, nmpars, &xs[nspar], simulation.mRho, simulation.mMu, simulation.mLambda, 5);
+              mp->write_parameters( "xpars.bin", nmpars, &xs[nspar] );
               // No longer used
       // Project material onto a Cartesian material parameterization grid
               //	      CHECK_INPUT( mopt->m_mpcart0 != NULL, "ERROR, there is no Cartesian material parameterization defined\n");
@@ -2024,6 +2032,58 @@ int main(int argc, char **argv)
 	      sw4_profile->time_stamp("Done optimizer");
 	      sw4_profile->flush();
 	   }
+           else if( mopt->m_opttest == 10 )
+           {
+// Use continuation in seismograms
+//              Help variables for sesimograms
+
+              vector<vector<TimeSeries*> > GlobalTimeSeries0;
+              vector<vector<TimeSeries*> > GlobalObservationsCont;
+              GlobalTimeSeries0.resize(GlobalObservations.size());
+              GlobalObservationsCont.resize(GlobalObservations.size());
+              for( int e=0 ; e < GlobalObservations.size() ; e++ )
+                 for( int m=0 ; m < GlobalObservations[e].size(); m++ )
+                 {
+                    TimeSeries *elem = GlobalObservations[e][m]->copy( &simulation, "_0", true );
+                    GlobalTimeSeries0[e].push_back(elem);
+                    elem = GlobalObservations[e][m]->copy( &simulation, "_Cnt", true );
+                    GlobalObservationsCont[e].push_back(elem);
+                 }
+                    
+           // 1. Solve for initial seismogram. 
+              double f;
+	      compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, 
+                         GlobalTimeSeries0, GlobalObservations, f, mopt );
+
+           // 2. Continuation loop
+              int ncsteps=mopt->m_ncontsteps;
+              double dc=1.0/(ncsteps);
+              for( int c=1 ; c <= ncsteps ; c++ )
+              {
+                 double par=c*dc;
+                 if( myRank == 0 )
+                    cout << "Starting step " << c << " of continuation method, par = " << par << endl;
+                 //    GlobalObservationsCont := (1-par)*GlobalTimeSeries0+par*GlobalObservations
+
+                 for( int e=0 ; e < GlobalObservations.size() ; e++ )
+                    for( int m=0 ; m < GlobalObservations[e].size(); m++ )
+                       GlobalObservationsCont[e][m]->add( *GlobalTimeSeries0[e][m],
+                                                          *GlobalObservations[e][m], 1-par, par );
+
+                 if( mopt->m_optmethod == 1 )
+                    lbfgs( simulation, nspar, nmpars, xs, nmpard, xm, 
+                           GlobalSources, GlobalTimeSeries,
+                           GlobalObservationsCont, myRank, mopt );
+                 else if( mopt->m_optmethod == 2 )
+                    nlcg( simulation, nspar, nmpars, xs, nmpard, xm, 
+                          GlobalSources, GlobalTimeSeries,
+                          GlobalObservationsCont, myRank, mopt );
+              }
+              
+              //              TimeSeries *elem = GlobalObservations[e][m]->copy( &simulation, "_out", true );
+              //		 GlobalTimeSeries[e].push_back(elem);
+
+           }
            else
 	      if( myRank == 0 )
 		 cout << "ERROR: m_opttest = " << mopt->m_opttest << " is not a valid choice" << endl;

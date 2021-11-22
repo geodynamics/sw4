@@ -1155,20 +1155,6 @@ void EW::set_materials()
 		   mQp[g](i,j,k) = m_qmultiplier*mQp[g](i,j,k);
 		}
     }
-
-// threshold material velocities
-    if (m_useVelocityThresholds)
-    {
-      for (g=0; g<mNumberOfGrids; g++)
-#pragma omp parallel for
-	for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
-	    for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-	      for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
-	      {
-		if (mMu[g](i,j,k) < m_vsMin) mMu[g](i,j,k) = m_vsMin;
-		if (mLambda[g](i,j,k) < m_vpMin) mLambda[g](i,j,k) = m_vpMin;
-	      }
-    }
     
 // add random perturbation
 //    cout << "randomize = " << m_randomize << " randblsize= " << m_random_blocks.size() << endl;
@@ -1197,6 +1183,16 @@ void EW::set_materials()
              m_random_blocks[b]->assign_perturbation( g, rndpert,  mMu[g], mGridSize[g],
                                                       zmin, zmax );
           perturb_vels( mMu[g], mLambda[g], rndpert );
+
+          if( m_randomize_density )
+          {
+             rndpert.set_value(1.0); 
+             for( unsigned int b=0 ; b < m_random_blocks.size() ; b++ )
+                if( m_random_blocks[b]->randomize_rho() )
+                   m_random_blocks[b]->assign_perturbation( g, rndpert,  mMu[g], mGridSize[g],
+                                                            zmin, zmax );
+             perturb_rho( mRho[g], rndpert );
+          }
           // End New
           // Old
        //  for( unsigned int b=0 ; b < m_random_blocks.size() ; b++ )
@@ -1205,6 +1201,21 @@ void EW::set_materials()
 	  communicate_array( mLambda[g], g );
        }
     }
+// threshold material velocities
+    if (m_useVelocityThresholds)
+    {
+      for (g=0; g<mNumberOfGrids; g++)
+#pragma omp parallel for
+	for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
+	    for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
+	      for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
+	      {
+		if (mMu[g](i,j,k) < m_vsMin) mMu[g](i,j,k) = m_vsMin;
+		if (mLambda[g](i,j,k) < m_vpMin) mLambda[g](i,j,k) = m_vpMin;
+	      }
+    }
+
+
     convert_material_to_mulambda( );
     
     check_for_nan( mMu, 1,"mu ");       
@@ -2708,5 +2719,15 @@ void EW::perturb_vels( Sarray& cs, Sarray& cp, Sarray& rndpert )
          {
             cs(i,j,k) *= rndpert(i,j,k);
             cp(i,j,k) *= rndpert(i,j,k);
+         }
+}
+//-----------------------------------------------------------------------
+void EW::perturb_rho( Sarray& rho, Sarray& rndpert ) 
+{
+   for( int k=rho.m_kb ; k <= rho.m_ke ; k++ )
+      for( int j=rho.m_jb ; j <= rho.m_je ; j++ )
+         for( int i=rho.m_ib ; i <= rho.m_ie ; i++ )
+         {
+            rho(i,j,k) *= 0.8*rndpert(i,j,k);
          }
 }

@@ -23,7 +23,7 @@ MPI_Datatype get_mpi_datatype( std::complex<float>* var ) {return MPI_CXX_FLOAT_
 RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zmax,
 					float_sw4 corrlen, float_sw4 corrlenz, 
 					float_sw4 hurst, float_sw4 sigma,
-					unsigned int seed )
+					bool randomrho, unsigned int seed )
 {
    mEW = a_ew;
    float_sw4 bbox[6];
@@ -46,7 +46,9 @@ RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zma
    m_sigma = sigma;
    m_seed  = seed;
    m_vsmax = 1e38;
-   
+   m_vsmin = 0;   
+   m_random_rho = randomrho;
+
 // Determine discretization based on correlation length.
    float_sw4 ppcl = 20; // grid points per correlation length
    m_nig = ppcl*(global_xmax)/corrlen;
@@ -169,7 +171,7 @@ void RandomizedMaterial::perturb_velocities( int g, Sarray& cs, Sarray& cp,
 					    (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp)  + wghi*mRndMaterial(ip+1,jp+1,kp))) +
 		     (wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp+1)+ wghi*mRndMaterial(ip+1,jp,  kp+1))+
 			     (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp+1)+ wghi*mRndMaterial(ip+1,jp+1,kp+1)));
-		  if( cs(i,j,k) <= m_vsmax )
+		  if( m_vsmin <= cs(i,j,k) && cs(i,j,k) <= m_vsmax )
 		  {
 		     cs(i,j,k) *= rndpert;
 		     cp(i,j,k) *= rndpert;
@@ -180,7 +182,7 @@ void RandomizedMaterial::perturb_velocities( int g, Sarray& cs, Sarray& cp,
 			kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke )
 	       {
 		  float_sw4 rndpert = mRndMaterial(ip,jp,kp);
-		  if( cs(i,j,k) <= m_vsmax )
+		  if( m_vsmin <= cs(i,j,k) && cs(i,j,k) <= m_vsmax )
 		  {
 		     cs(i,j,k) *= rndpert;
 		     cp(i,j,k) *= rndpert;
@@ -214,7 +216,7 @@ void RandomizedMaterial::perturb_velocities( std::vector<Sarray> & cs,
 	    for( int j=mRndMaterial.m_jb ; j <= mRndMaterial.m_je ; j++ )
 	       for( int i=mRndMaterial.m_ib ; i <= mRndMaterial.m_ie ; i++ )
 	       {
-		  if( cs[0](i+1,j+1,k+1) <= m_vsmax )
+		  if( m_vsmin <= cs[0](i+1,j+1,k+1) && cs[0](i+1,j+1,k+1) <= m_vsmax )
 		  {
 		     cs[0](i+1,j+1,k+1) *= mRndMaterial(i,j,k);
 		     cp[0](i+1,j+1,k+1) *= mRndMaterial(i,j,k);
@@ -255,7 +257,7 @@ void RandomizedMaterial::assign_perturbation( int g, Sarray& pert, Sarray& cs,
 					    (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp)  + wghi*mRndMaterial(ip+1,jp+1,kp))) +
 		     (wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp+1)+ wghi*mRndMaterial(ip+1,jp,  kp+1))+
 			     (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp+1)+ wghi*mRndMaterial(ip+1,jp+1,kp+1)));
-                  if( cs(i,j,k) <= m_vsmax )
+                  if( m_vsmin <= cs(i,j,k) && cs(i,j,k) <= m_vsmax )
                      pert(i,j,k) = rndpert; 
 	       }
 	       else if( ip >= mRndMaterial.m_ib && ip <= mRndMaterial.m_ie &&
@@ -263,7 +265,7 @@ void RandomizedMaterial::assign_perturbation( int g, Sarray& pert, Sarray& cs,
 			kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke )
 	       {
 		  float_sw4 rndpert = mRndMaterial(ip,jp,kp);
-                  if( cs(i,j,k) <= m_vsmax )
+                  if( m_vsmin <= cs(i,j,k) && cs(i,j,k) <= m_vsmax )
                      pert(i,j,k) = rndpert;
 	       }
 	       else
@@ -459,7 +461,7 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g,
       u[i] = real(uc[i]);
       imnrm = imnrm>fabs(imag(uc[i]))?imnrm:fabs(imag(uc[i]));
    }
-   if( imnrm > 1e-12 )
+   if( imnrm > 1e-6 )
       std::cout << "imnrm = "  << imnrm << std::endl;
    delete[] uc;
 
@@ -481,17 +483,21 @@ void RandomizedMaterial::get_fourier_modes( complex<float_sw4>* uhat, int n1, in
 					    float_sw4 hurst, unsigned int seed )
 {
    const complex<float_sw4> I(0.0,1.0);
-   float_sw4 A0=1; // Amplitude
+   //   float_sw4 A0=1; // Amplitude
+   float_sw4 A0=m_sigma*sqrt(8*M_PI*sqrt(M_PI)*tgamma(hurst+1.5)*l1*l2*l3/tgamma(hurst));
    int D=3; // For three space dimensions
-   float_sw4 A0isq2 = A0/sqrt(2.0);
+   //   float_sw4 A0isq2 = A0/sqrt(2.0);
+   float_sw4 A0isq2=A0;
    float_sw4 hhalf = 0.5*(hurst+D*0.5);
    float_sw4 ll1=l1*l1, ll2=l2*l2, ll3=l3*l3;
    
    default_random_engine generator(seed);
-   normal_distribution<float_sw4> ndist(0.0,1.0);
+   //   normal_distribution<float_sw4> ndist(0.0,1.0);
+   uniform_real_distribution<double> udist(0.0,2*M_PI);
 
    int r1=(n1g-1)/2, r2=(n2-1)/2, r3=(n3-1)/2;
-
+   float_sw4 tpi=2*M_PI;
+   float_sw4 tpi2=tpi*tpi;
    for( int k1=ib1 ; k1 <= n1-1+ib1 ; k1++ )
    {
       float_sw4 k1eff=k1;
@@ -507,8 +513,9 @@ void RandomizedMaterial::get_fourier_modes( complex<float_sw4>* uhat, int n1, in
 	    float_sw4 k3eff=k3;
 	    if( k3 > r3 )
 	       k3eff = k3-n3;
-	    uhat[k3+n3*k2+n2*n3*(k1-ib1)] = (A0isq2/pow(1+k1eff*k1eff*ll1+k2eff*k2eff*ll2+k3eff*k3eff*ll3,hhalf))
-	       *(ndist(generator)+I*ndist(generator));
+	    uhat[k3+n3*k2+n2*n3*(k1-ib1)] = (A0isq2/pow(1+tpi2*(k1eff*k1eff*ll1+k2eff*k2eff*ll2+k3eff*k3eff*ll3),hhalf))
+               *exp(I*udist(generator));
+               //	       *(ndist(generator)+I*ndist(generator));
 	    //	       *(1+I);
 	 }
       }
@@ -542,16 +549,9 @@ void RandomizedMaterial::rescale_perturbation()
    // Rescale to desired sigma, add 1 for later multiplication with given material
    float_sw4 istdev = 1/stdev;
    for( size_t ind = 0 ; ind < n ;ind++ )
-      mtrl[ind] = 1 + m_sigma*mtrl[ind]*istdev;
+      //      mtrl[ind] = 1 + m_sigma*mtrl[ind]*istdev;
+      mtrl[ind] = 1 + mtrl[ind];
 }
-
-//#include <complex>
-//#include <vector>
-//#include <iostream>
-//
-//#include <mpi.h>
-
-//#include "AllDims.h"
 
 //-----------------------------------------------------------------------
 #include "Patch.h"
@@ -764,6 +764,17 @@ void RandomizedMaterial::set_vsmax( float_sw4 vsmax )
 double RandomizedMaterial::get_vsmax()
 {
    return m_vsmax;
+}
+//-----------------------------------------------------------------------
+void RandomizedMaterial::set_vsmin( float_sw4 vsmin )
+{
+   m_vsmin = vsmin;
+}
+
+//-----------------------------------------------------------------------
+double RandomizedMaterial::get_vsmin()
+{
+   return m_vsmin;
 }
 
 //-----------------------------------------------------------------------

@@ -529,10 +529,13 @@ EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
   m_pervar(1),
   m_qmultiplier(1),
   m_randomize(false),
+  m_randomize_density(false),
   m_anisotropic(false),
   m_croutines(true),
   m_zerograd_at_src(false),
+  m_zerograd_at_rec(false),
   m_zerograd_pad(2),
+  m_zerogradrec_pad(0),
   m_filter_gradient(false),
   m_gradfilter_ep(0.08),
   m_gradfilter_it(5),
@@ -5911,18 +5914,40 @@ void EW::extractTopographyFromGridFile( string a_topoFileName )
    int Nlon, Nlat, i, j, dum;
    Sarray gridElev;
    double *latv, *lonv;
+   bool asciiread = false;
+   size_t ind = a_topoFileName.find_last_of(".");
+   asciiread = a_topoFileName.substr(ind+1) != "bin";
+   //   std::cout << "Ascii read = " << asciiread << std::endl;
+   if( asciiread )
+   {
+      FILE *gridfile = fopen(a_topoFileName.c_str(),"r");
   
-   FILE *gridfile = fopen(a_topoFileName.c_str(),"r");
-  
-   fscanf(gridfile, "%i %i", &Nlon, &Nlat);
-   gridElev.define(1,1,Nlon,1,Nlat,1,1);
-   latv = new double[Nlat+1];
-   lonv = new double[Nlon+1];
+      fscanf(gridfile, "%i %i", &Nlon, &Nlat);
+      gridElev.define(1,1,Nlon,1,Nlat,1,1);
+      latv = new double[Nlat+1];
+      lonv = new double[Nlon+1];
 
-   for (j=1; j<=Nlat; j++)
-      for (i=1; i<=Nlon; i++)
-	 fscanf(gridfile, "%le %le %le", &lonv[i], &latv[j], &gridElev(1,i,j,1));
-   fclose(gridfile);
+      for (j=1; j<=Nlat; j++)
+         for (i=1; i<=Nlon; i++)
+            fscanf(gridfile, "%le %le %le", &lonv[i], &latv[j], &gridElev(1,i,j,1));
+      fclose(gridfile);
+   }
+   else
+   {
+      int fd=open( a_topoFileName.c_str(), O_RDONLY );
+      size_t nr;
+      nr=read(fd,&Nlon,sizeof(int));
+      nr=read(fd,&Nlat,sizeof(int));
+
+      gridElev.define(1,1,Nlon,1,Nlat,1,1);
+      latv = new double[Nlat+1];
+      lonv = new double[Nlon+1];
+
+      nr=read(fd,lonv,(Nlon+1)*sizeof(double));
+      nr=read(fd,latv,(Nlat+1)*sizeof(double));
+      nr=read(fd,gridElev.c_ptr(),Nlon*Nlat*sizeof(double));
+      close(fd);
+   }
   
    if (proc_zero())
       printf("Nlon=%i Nlat=%i\n", Nlon, Nlat);
@@ -8478,7 +8503,7 @@ TestPointSource* EW::get_point_source_test()
 #include "AllDims.h"
 AllDims* EW::get_fine_alldimobject( )
 {
-   int g=mNumberOfCartesianGrids-1;
+   int g=mNumberOfGrids-1;
    AllDims* fine = new AllDims( m_proc_array[0], m_proc_array[1], 1, 1, m_global_nx[g], 
                                 1, m_global_ny[g], 1, m_global_nz[g], m_ghost_points, 
                                 m_ppadding, m_cartesian_communicator );
@@ -8540,6 +8565,44 @@ void EW::set_zerograd()
 void EW::set_zerograd_pad( int pad )
 {
    m_zerograd_pad = pad;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_to_zero_at_receiver( vector<Sarray> & a_U, 
+                                  vector<TimeSeries*> time_series,
+                                  int padding )
+{
+#pragma omp parallel for
+     for( int s=0 ; s < time_series.size() ; s++ )
+     {
+	int g = time_series[s]->m_grid0;	
+	int i0= time_series[s]->m_i0;
+	int j0= time_series[s]->m_j0;
+	int k0= time_series[s]->m_k0;
+        int klow  = k0-padding > a_U[g].m_kb ? k0-padding:a_U[g].m_kb;
+        int khigh = k0+padding < a_U[g].m_ke ? k0+padding:a_U[g].m_ke;
+        int jlow  = j0-padding > a_U[g].m_jb ? j0-padding:a_U[g].m_jb;
+        int jhigh = j0+padding < a_U[g].m_je ? j0+padding:a_U[g].m_je;
+        int ilow  = i0-padding > a_U[g].m_ib ? i0-padding:a_U[g].m_ib;
+        int ihigh = i0+padding < a_U[g].m_ie ? i0+padding:a_U[g].m_ie;
+
+        for( int k=klow ; k<= khigh ;k++ )
+           for( int j=jlow ; j<= jhigh ;j++ )
+              for( int i=ilow ; i<= ihigh ;i++ )
+                 for( int c=1 ; c <= a_U[g].m_nc ;c++ )
+                    a_U[g](c,i,j,k) = 0;
+     }
+}
+//-----------------------------------------------------------------------
+void EW::set_zerogradrec()
+{
+   m_zerograd_at_rec =true;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_zerogradrec_pad( int pad )
+{
+   m_zerogradrec_pad = pad;
 }
 
 //-----------------------------------------------------------------------

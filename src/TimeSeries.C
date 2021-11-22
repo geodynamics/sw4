@@ -2594,6 +2594,65 @@ float_sw4 TimeSeries::product_wgh( TimeSeries& ts ) const
 }
 
 //-----------------------------------------------------------------------
+void TimeSeries::add( TimeSeries& A, TimeSeries& B, double wghA, double wghB )
+{
+
+   if( m_myPoint )
+   {
+      if( A.mLastTimeStep > B.mLastTimeStep )
+      {
+         if( mAllocatedSize != A.mAllocatedSize )
+         {
+            mLastTimeStep  = A.mLastTimeStep;
+            mAllocatedSize = A.mAllocatedSize;
+	    for( int q=0 ; q < m_nComp ; q++ )
+            {
+               delete[] mRecordedSol[q];
+	       mRecordedSol[q] = new float_sw4[mAllocatedSize];
+            }
+         }
+         for( int i = 0 ; i <= B.mLastTimeStep ; i++ )
+         {
+            mRecordedSol[0][i] = wghA*A.mRecordedSol[0][i]+wghB*B.mRecordedSol[0][i];
+            mRecordedSol[1][i] = wghA*A.mRecordedSol[1][i]+wghB*B.mRecordedSol[1][i];
+            mRecordedSol[2][i] = wghA*A.mRecordedSol[2][i]+wghB*B.mRecordedSol[2][i];
+         }
+         for( int i = B.mLastTimeStep+1 ; i <= mLastTimeStep ; i++ )
+         {
+            mRecordedSol[0][i] = wghA*A.mRecordedSol[0][i];
+            mRecordedSol[1][i] = wghA*A.mRecordedSol[1][i];
+            mRecordedSol[2][i] = wghA*A.mRecordedSol[2][i];
+         }
+      }
+      else
+      {
+         if( mAllocatedSize != B.mAllocatedSize )
+         {
+            mLastTimeStep  = B.mLastTimeStep;
+            mAllocatedSize = B.mAllocatedSize;
+	    for( int q=0 ; q < m_nComp ; q++ )
+            {
+               delete[] mRecordedSol[q];
+	       mRecordedSol[q] = new float_sw4[mAllocatedSize];
+            }
+         }
+         for( int i= 0 ; i <= A.mLastTimeStep ; i++ )
+         {
+            mRecordedSol[0][i] = wghA*A.mRecordedSol[0][i]+wghB*B.mRecordedSol[0][i];
+            mRecordedSol[1][i] = wghA*A.mRecordedSol[1][i]+wghB*B.mRecordedSol[1][i];
+            mRecordedSol[2][i] = wghA*A.mRecordedSol[2][i]+wghB*B.mRecordedSol[2][i];
+         }
+         for( int i= A.mLastTimeStep+1 ; i <= mLastTimeStep ; i++ )
+         {
+            mRecordedSol[0][i] = wghB*B.mRecordedSol[0][i];
+            mRecordedSol[1][i] = wghB*B.mRecordedSol[1][i];
+            mRecordedSol[2][i] = wghB*B.mRecordedSol[2][i];
+         }
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
 float_sw4 TimeSeries::utc_distance( int utc1[7], int utc2[7] )
 {
    // Compute time in seconds between two [y,M,d,h,m,s,ms] times

@@ -146,6 +146,7 @@ void MaterialParCart::limit_x( int nmd, double* xmd, int nms, double* xms,
       vsmax = 1e38;
    if( vpmax < 0 )
       vpmax = 1e38;
+   float_sw4 cpcslim=1.15; // lower limit for cp/cs
 
    float_sw4* based, *bases;
    if( nms > 0 )
@@ -229,6 +230,14 @@ void MaterialParCart::limit_x( int nmd, double* xmd, int nms, double* xms,
             xptr[2+3*ind] = vpmax-vpbase;
             m_limited[2+3*ind]=true;
          }
+         float_sw4 cpcsbase=-vpbase+cpcslim*vsbase;
+         if( xptr[2+3*ind]-cpcslim*xptr[1+3*ind]<cpcsbase )
+         {
+            xptr[3*ind+2] = cpcslim/(cpcslim*cpcslim+1)*
+               (cpcsbase/cpcslim+xptr[3*ind+1]+cpcslim*xptr[3*ind+2]);
+            xptr[3*ind+1] = 1/cpcslim*(xptr[3*ind+2]-cpcsbase);
+            m_limited[1+3*ind]=m_limited[2+3*ind]=true;
+         }
       }
    }
    else if( m_variables == 3 )
@@ -256,6 +265,14 @@ void MaterialParCart::limit_x( int nmd, double* xmd, int nms, double* xms,
          {
             xptr[1+2*ind] = vpmax-vpbase;
             m_limited[1+2*ind]=true;
+         }
+         float_sw4 cpcsbase=-vpbase+cpcslim*vsbase;
+         if( xptr[1+2*ind]-cpcslim*xptr[2*ind]<cpcsbase )
+         {
+            xptr[2*ind+1] = cpcslim/(cpcslim*cpcslim+1)*
+               (cpcsbase/cpcslim+xptr[2*ind]+cpcslim*xptr[2*ind+1]);
+            xptr[2*ind] = 1/cpcslim*(xptr[2*ind+1]-cpcsbase);
+            m_limited[2*ind]=m_limited[2*ind+1]=true;
          }
       }
    }
@@ -1840,10 +1857,11 @@ void MaterialParCart::interpolate_to_coarse_vel( vector<Sarray>& rhogrid,
 			}
 		  done[g] = true;
 	       }
-	       double h = m_ew->mGridSize[g];
+	       double h    = m_ew->mGridSize[g];
+               double zmin = m_ew->m_zmin[g];
 	       double wghx = x/h-ig+1;
 	       double wghy = y/h-jg+1;
-	       double wghz = z/h-kg+1;
+	       double wghz = (z-zmin)/h-kg+1;
                rho(i,j,k) = (1-wghy)*(1-wghz)*(
 			           (1-wghx)*rhogrid[g](ig,jg,kg)+wghx*rhogrid[g](ig+1,jg,kg))+
 		  (wghy)*(1-wghz)*((1-wghx)*rhogrid[g](ig,jg+1,kg)+wghx*rhogrid[g](ig+1,jg+1,kg))+
@@ -1864,6 +1882,13 @@ void MaterialParCart::interpolate_to_coarse_vel( vector<Sarray>& rhogrid,
 		  (wghy)*(1-wghz)*((1-wghx)*cpdiff[g](ig,jg+1,kg)+wghx*cpdiff[g](ig+1,jg+1,kg))+
 		  (1-wghy)*(wghz)*((1-wghx)*cpdiff[g](ig,jg,kg+1)+wghx*cpdiff[g](ig+1,jg,kg+1))+
 		  (wghy)*(wghz)*(  (1-wghx)*cpdiff[g](ig,jg+1,kg+1)+wghx*cpdiff[g](ig+1,jg+1,kg+1));
+               if( cs(i,j,k)<0 || cp(i,j,k)<0 )
+               {
+                  std::cout << "Unphysical interpolation: "<< wghx << " " << wghy << " " << wghz << std::endl;
+                  std::cout << "z= " << z << " h= " << h << " g= " << g << " kg= " << kg << std::endl;
+                  std::cout << "cs = " << cs(i,j,k) << " "  <<csdiff[g](ig,jg,kg) << " " << csdiff[g](ig,jg,kg+1) << std::endl;
+                  std::cout << "cp = " << cp(i,j,k) << " "  <<cpdiff[g](ig,jg,kg) << " " << cpdiff[g](ig,jg,kg+1) << std::endl;
+               }
 	    }
 	 }
    if( m_global )

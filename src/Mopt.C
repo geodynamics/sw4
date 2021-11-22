@@ -49,10 +49,12 @@ Mopt::Mopt( EW* a_ew )
    m_test_regularizer = false;
    m_do_profiling = false;
    m_use_pseudohessian = false;
+   m_ncontsteps = 10;
    m_vp_min = -100.; // default to negative, only positive ones in effect
    m_vp_max = -100.;
    m_vs_min = -100.;
    m_vs_max = -100.;
+   m_freq_peakpower=0.0;
    m_wave_mode=2;  // default to both P and S waves otherwise 0 for P and 1 for S only
    m_win_mode =1; // default, use eikonal solver to set windows.
    m_twin_shift=0.0;
@@ -310,6 +312,12 @@ void Mopt::processMaterialParCart( char* buffer )
          token += 7;
          m_vs_max = atof(token);
       }
+      else if( startswith("freq_peakpower=",token) )
+      {
+	   token += 16;
+	   m_freq_peakpower = atof(token);
+      if(m_myrank == 0) cout << "freq_peakpower=" << m_freq_peakpower << endl;
+      }
       else if( startswith("shared=",token) )
       {
          token += 7;
@@ -414,6 +422,10 @@ void Mopt::processMrun( char* buffer )
 	    m_opttest = 1;
             m_nspar = 6;
 	 }
+	 else if( strcmp(token,"continuation") == 0 )
+         {
+            m_opttest = 10;
+         }
 	 else
 	    cout << "ERROR: mrun task=" << token << " not recognized " << endl;
       }
@@ -480,6 +492,19 @@ void Mopt::processMrun( char* buffer )
          token += 11;
          m_ew->set_zerograd_pad(atoi(token));
       }
+      else if( startswith("zerorec=",token) )
+      {
+         token += 8;
+	 int n = strlen(token);
+	 if( strncmp("yes",token,n)== 0 || strncmp("on",token,n)==0 
+                                        || strncmp("1",token,n)== 0 )
+            m_ew->set_zerogradrec();
+      }
+      else if( startswith("zerorecpad=",token) )
+      {
+         token += 11;
+         m_ew->set_zerogradrec_pad(atoi(token));
+      }
       else if( startswith("filtergrad=",token) )
       {
 	 int n = strlen(token);
@@ -539,6 +564,11 @@ void Mopt::processMrun( char* buffer )
 	 int n = strlen(token);
 	 if( strncmp("yes",token,n)== 0 || strncmp("1",token,n)== 0 || strncmp("on",token,n)==0 )
 	    m_write_dfm = true;
+      }
+      else if( startswith("ncontsteps=",token) )
+      {
+         token += 11;
+         m_ncontsteps = atoi(token);
       }
       else
          badOption("mrun",token);
@@ -1383,7 +1413,8 @@ void Mopt::init_pseudohessian( vector<Sarray>& ph )
 {
    if( m_use_pseudohessian )
    {
-      for( int g=0 ; g < m_ew->mNumberOfCartesianGrids ; g++ )
+      //      for( int g=0 ; g < m_ew->mNumberOfCartesianGrids ; g++ )
+      for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
       {
          ph[g].define(3,m_ew->m_iStart[g],m_ew->m_iEnd[g],
                         m_ew->m_jStart[g],m_ew->m_jEnd[g],

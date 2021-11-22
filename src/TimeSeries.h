@@ -172,6 +172,7 @@ void addReadTime(double t) {m_readTime += t;};
 bool is_in_supergrid_layer();
 void misfitanddudp( TimeSeries* observed, TimeSeries* dudp,
                     float_sw4& misfit, float_sw4& dmisfit );
+void add( TimeSeries& A, TimeSeries& B, double wghA, double wghB );
 
 private:   
 TimeSeries();

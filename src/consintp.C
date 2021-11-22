@@ -284,14 +284,17 @@ void EW::consintp( Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf, Sarray& 
       MPI_Allreduce( &jacerrtmp, &jacerr, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator );
       if( it == 0 )
 	 jacerr0 = jacerr;
-      if( jacerr0 > 0 )
+      if( jacerr0 > 1e-38 )
 	 jacerr = jacerr/jacerr0;
       it++;
 
    } // end while jacerr > eps (Outer iteration)
    
    if( jacerr > m_citol && proc_zero() )
+   {
       cout << "EW::consintp, Warning, no convergence. err = " << jacerr << " tol= " << m_citol << endl;
+      cout << "          err0= " << jacerr0 << " it= " << it << endl;
+   }
       
    if( proc_zero() && mVerbose >= 4 ) // 1 )
       cout << "EW::consintp, no of iterations= " << it << " Jac iteration error= " << jacerr << endl;

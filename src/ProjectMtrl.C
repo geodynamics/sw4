@@ -562,7 +562,7 @@ int EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 // Output: limits - vector of 10 elements:
 // (0=rhomin, 1=rhomax, 2=mumin, 3=mumax, 4=lamin, 5=lamax, 6=cfl2max, 7=vs2min, 8=bulkmin, 9=bulkmax)
 //  
-// bulk-modulus = 2*mu+3*lambda
+// bulk-modulus = 2*mu+3*lambda,  bulk-modulus >=0 gives cp/cs >= sqrt(4/3)
 
       float_sw4 local[5]={limits[0],limits[2],limits[4],limits[7],limits[8]};
       float_sw4 global[5];
@@ -601,7 +601,7 @@ int EW::check_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
          else
 	    cout << " cfl_max = " << sqrt(limits[6]) << " on grid " << g << endl;
       } // end if proc_zero && verbose > 1
-      ok = ok && (limits[0]>0 && limits[2]>0 && limits[6] <= mCFLmax*mCFLmax ); //&& limits[8]>0);
+      ok = ok && (limits[0]>0 && limits[2]>0 && limits[6] <= mCFLmax*mCFLmax && limits[8]>0);
       if (!ok)
       {
          if (limits[0] <= 0)
