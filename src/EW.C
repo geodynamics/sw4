@@ -1181,7 +1181,6 @@ string EW::bc_name(const boundaryConditionType bc) const {
 
 //-----------------------------------------------------------------------
 bool EW::getDepth(float_sw4 x, float_sw4 y, float_sw4 z, float_sw4& depth) {
-  SW4_MARK_FUNCTION;
   // get the depth below the free surface
   bool success = false;
 

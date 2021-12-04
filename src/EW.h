@@ -617,18 +617,34 @@ class EW {
   void impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um, float_sw4 t,
                              vector<float_sw4**>& bforcing);
 
+  void advance_geodyn_time( float_sw4 t );
+
   void get_geodyn_timelevel(vector<Sarray>& geodyndata);
 
   void copy_geodyn_timelevel(vector<Sarray>& geodyndata1,
                              vector<Sarray>& geodyndata2);
 
-  void geodyn_second_ghost_point(vector<Sarray>& geodyndata1,
-                                 vector<Sarray>& geodyndata2,
-                                 vector<Sarray>& rho, vector<Sarray>& mu,
-                                 vector<Sarray>& lambda,
-                                 vector<Sarray>& forcing, double t,
-                                 vector<Sarray>& U, vector<Sarray>& Um,
-                                 int crf);
+  // void geodyn_second_ghost_point(vector<Sarray>& geodyndata1,
+  //                                vector<Sarray>& geodyndata2,
+  //                                vector<Sarray>& rho, vector<Sarray>& mu,
+  //                                vector<Sarray>& lambda,
+  //                                vector<Sarray>& forcing, double t,
+  //                                vector<Sarray>& U, vector<Sarray>& Um,
+  //                                int crf);
+
+  void geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vector<Sarray>& lambda,
+				vector<Sarray>& forcing, float_sw4 t, vector<Sarray>& U,
+				vector<Sarray>& Um, int crf );
+
+  void geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarray>& mu, vector<Sarray>& lambda,
+					    vector<Sarray>& forcing, float_sw4 t, vector<Sarray>& U,
+					    vector<Sarray>& Um, int crf );
+
+  void geodyn_up_from_uacc( vector<Sarray>& Up, vector<Sarray>& Uacc,
+			  vector<Sarray>& U, vector<Sarray>& Um, float_sw4 dt );
+
+  void save_geoghost( vector<Sarray>& U );
+  void restore_geoghost( vector<Sarray>& U );
 
   void geodynbcGetSizes(string filename, float_sw4 origin[3],
                         float_sw4& cubelen, float_sw4& zcubelen,

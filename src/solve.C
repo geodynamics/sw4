@@ -852,6 +852,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   // Begin time stepping loop
   for (int g = 0; g < mNumberOfGrids; g++) Up[g].set_to_zero();
   for (int g = 0; g < mNumberOfGrids; g++) Lu[g].set_to_zero();
+
+  if( m_do_geodynbc )
+     advance_geodyn_time( t+mDt );
+  
     // test: compute forcing for the first time step before the loop to get
     // started
 #ifdef SW4_NORM_TRACE
@@ -1045,6 +1049,37 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
     if (m_output_detailed_timing) time_measure[5] = MPI_Wtime();
     SW4_MARK_END("COMM_WINDOW");
+
+    // Enforce data on coupling boundary to external solver
+    auto& a_Rho= mRho;
+    auto& a_Mu = mMu;
+    auto& a_Lambda = mLambda;
+    if( m_do_geodynbc )
+    {
+
+       if( mOrder == 2 )
+       {
+	  impose_geodyn_ibcdata( Up, U, t+mDt, BCForcing );
+          advance_geodyn_time( t+2*mDt );
+	  if( m_twilight_forcing )
+	     Force( t+mDt, F, point_sources, identsources );	     
+	  geodyn_second_ghost_point( a_Rho, a_Mu, a_Lambda, F, t+2*mDt, Up, U, 1 );
+	  for(int g=0 ; g < mNumberOfGrids ; g++ )
+	     communicate_array( Up[g], g );
+       }
+       else
+       {
+	  impose_geodyn_ibcdata( Up, U, t+mDt, BCForcing );
+	  if( m_twilight_forcing )
+	     Force_tt( t, F, point_sources, identsources );	     
+	  evalDpDmInTime( Up, U, Um, Uacc ); // store result in Uacc
+	  geodyn_second_ghost_point( a_Rho, a_Mu, a_Lambda, F, t+mDt, Uacc, U, 0 );
+	  geodyn_up_from_uacc( Up, Uacc, U, Um, mDt ); //copy second ghost point to Up
+	  for(int g=0 ; g < mNumberOfGrids ; g++ )
+	     communicate_array( Up[g], g );
+       }
+    }
+
     // update ghost points in Up
 #ifdef PEEKS_GALORE
     SW4_PEEK;
@@ -1250,6 +1285,25 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
       if (m_output_detailed_timing) time_measure[14] = MPI_Wtime();
 
+      if( m_do_geodynbc )
+       {
+	  impose_geodyn_ibcdata( Up, U, t+mDt, BCForcing );
+          advance_geodyn_time( t+2*mDt );
+	  if( m_twilight_forcing )
+	     Force( t+mDt, F, point_sources, identsources );	     
+	  geodyn_second_ghost_point( a_Rho, a_Mu, a_Lambda, F, t+2*mDt, Up, U, 1 );
+	  for(int g=0 ; g < mNumberOfGrids ; g++ )
+	     communicate_array( Up[g], g );
+	  // The free surface boundary conditions below will overwrite the
+	  // ghost point above the free surface of the geodyn cube.
+	  // This is a problem with the fourth order predictor-corrector time stepping
+	  // because L(Uacc) = L( (Up-2*U+Um)/(dt*dt)) depends on the ghost point value at U, 
+	  // The corrector first sets correct ghost value on Up, but it is not enough,
+	  // also the previous times, U,Um need to have the correct ghost point value.
+	  save_geoghost( Up );
+       }
+      
+
       // calculate boundary forcing at time t+mDt (do we really need to call
       // this fcn again???)
       cartesian_bc_forcing(t + mDt, BCForcing, a_Sources);
@@ -1298,6 +1352,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
                 point_sources);
 
       if (m_output_detailed_timing) time_measure[17] = MPI_Wtime();
+
+      if( m_do_geodynbc )
+	  restore_geoghost(Up);
 
     }  // end if mOrder == 4
 #ifdef PEEKS_GALORE
