@@ -517,6 +517,14 @@ void forall3async(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
                                     jrange.end, krange.start, krange.end, body);
 }
 
+template <int N, typename Tag, typename T1, typename T2, typename T3,
+          typename LoopBody>
+void forall3(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
+  forall3async<N,Tag>(t,irange,jrange,krange,body);
+  cudaStreamSynchronize(0);
+	  }
+  
+
 // The multiforall for kernel fusion
 template <typename T, typename F0, typename F1, typename F2, typename F3>
 __global__ void multiforallkernel(T start0, T end0, F0 f0, T start1, T end1,

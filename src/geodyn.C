@@ -14,6 +14,7 @@
 #include "EW.h"
 #include "F77_FUNC.h"
 #include "caliper.h"
+#include "foralls.h"
 
 using namespace std;
 
@@ -909,13 +910,13 @@ void EW::geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vec
 	 high_interior = m_iStartInt[g] <= i1-1 && i1-1 <= m_iEndInt[g];
 	 bool surface_correction = k0 <= 1 && g == mNumberOfGrids-1;
 
-	 Sarray Lu0(3,i0,i0,j0,j1,k0,k1);
+	 Sarray Lu0(3,i0,i0,j0,j1,k0,k1,__FILE__,__LINE__);
          if( low_interior )
 	    evalLu_Dim( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
 			//			U[g].c_ptr(), Lu0.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
 			U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(),
 			h, i0, i0, j0, j1, k0, k1 );	    
-	 Sarray Lu1(3,i1,i1,j0,j1,k0,k1);
+	 Sarray Lu1(3,i1,i1,j0,j1,k0,k1,__FILE__,__LINE__);
 	 if( high_interior )
 	    evalLu_Dip( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
 //			U[g].c_ptr(), Lu1.c_ptr(), mu[g].c_ptr(), lambda[g].c_ptr(),
@@ -1249,12 +1250,12 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
    high_interior = m_iStartInt[g] <= i1-1 && i1-1 <= m_iEndInt[g];
    bool surface_correction = k0 <= 1 && g == mNumberOfGrids-1;
 
-   Sarray Lu0(3,i0,i0,j0,j1,k0,k1);
+   Sarray Lu0(3,i0,i0,j0,j1,k0,k1,__FILE__,__LINE__);
    if( low_interior )
       evalLuCurv<0,1,1,1,1,1>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
 			       U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g], mJ[g],
 			       i0, i0, j0, j1, k0, k1 );	    
-   Sarray Lu1(3,i1,i1,j0,j1,k0,k1);
+   Sarray Lu1(3,i1,i1,j0,j1,k0,k1,__FILE__,__LINE__);
    if( high_interior )
       evalLuCurv<1,0,1,1,1,1>( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
 			       U[g], Lu1, mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g], mJ[g],
@@ -1676,7 +1677,7 @@ void EW::geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarr
 //-----------------------------------------------------------------------
 void evalLu_Dip( int ib, int ie, int jb, int je, int kb, int ke,
 		 //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
-		 Sarray& u, Sarray& lu, float_sw4* a_mu, float_sw4* a_la,
+		 Sarray& u_arg, Sarray& lu_arg, float_sw4* a_mu, float_sw4* a_la,
 		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
   SW4_MARK_FUNCTION;
@@ -1707,7 +1708,7 @@ void evalLu_Dip( int ib, int ie, int jb, int je, int kb, int ke,
    //#define lu(c,i,j,k) a_lu[i-ilb+nli*(j-jlb)+nlij*(k-klb)+(c-1)*nlijk]
    const size_t ni=ie-ib+1;
    const size_t nij=ni*(je-jb+1);
-   const size_t nijk=nij*(ke-kb+1);
+   //   const size_t nijk=nij*(ke-kb+1);
    //   const size_t nli=ile-ilb+1;
    //   const size_t nlij=nli*(jle-jlb+1);
    //   const size_t nlijk=nlij*(kle-klb+1);
@@ -1715,10 +1716,49 @@ void evalLu_Dip( int ib, int ie, int jb, int je, int kb, int ke,
    const float_sw4 half   = 0.5;
    const float_sw4 fourth = 0.25;
 
-   for( int k=klb+1 ; k <= kle-1; k++ )
-      for( int j=jlb+1 ; j <= jle-1; j++ )
-	 for( int i=ilb ; i <= ile; i++ )
+   auto& u = u_arg.getview();
+   auto& lu = lu_arg.getview();
+
+#if !defined(RAJA_ONLY)
+   Range<4> K(klb+1,kle);
+   Range<4> J(jlb+1,jle);
+   Range<16> I(ilb,ile+1);
+
+Tclass<1455> tag1;
+      forall3<__LINE__>(
+          tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1455> t, int i, int j, int k) {
+
+#else
+
+ 
+using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
+    128,
+    RAJA::statement::Tile<
+        0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+        RAJA::statement::Tile<
+            1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+            RAJA::statement::Tile<
+                2, RAJA::statement::tile_fixed<8>, RAJA::cuda_block_x_loop,
+                RAJA::statement::For<
+                    0, RAJA::cuda_thread_z_direct,
+                    RAJA::statement::For<
+                        1, RAJA::cuda_thread_y_direct,
+                        RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
+                                             RAJA::statement::Lambda<0>>>>>>>>>;
+
+    RAJA::RangeSegment k_range(klb+1,kle);
+   RAJA::RangeSegment j_range(jlb+1,jle);
+   RAJA::RangeSegment i_range(ilb,ile+1);
+   RAJA::kernel<LOCAL_POL>(
+			   RAJA::make_tuple(k_range, j_range, i_range),
+			   [=] RAJA_DEVICE(int k, int j, int i) 
 	 {
+#endif
+   
+
+   // for( int k=klb+1 ; k <= kle-1; k++ )
+   //    for( int j=jlb+1 ; j <= jle-1; j++ )
+   // 	 for( int i=ilb ; i <= ile; i++ )
 	    float_sw4 mupx = half*(mu(i,j,k)+mu(i+1,j,k));
 	    float_sw4 mumx = half*(mu(i,j,k)+mu(i-1,j,k));
 	    float_sw4 mupy = half*(mu(i,j+1,k)+mu(i,j,k));
@@ -1777,7 +1817,7 @@ void evalLu_Dip( int ib, int ie, int jb, int je, int kb, int ke,
                     (u(3,i,j,k+1)-u(3,i,j,k)) - 
                 (2*mumz+half*(la(i,j,k-1)+la(i,j,k)) )*
  		    (u(3,i,j,k)-u(3,i,j,k-1)) ); 
-	 }
+	 });
 #undef mu
 #undef la
 #undef u
@@ -1788,7 +1828,7 @@ void evalLu_Dip( int ib, int ie, int jb, int je, int kb, int ke,
 //-----------------------------------------------------------------------
 void evalLu_Dim( int ib, int ie, int jb, int je, int kb, int ke,
 		 //		 float_sw4* a_u, float_sw4* a_lu, float_sw4* a_mu, float_sw4* a_la,
-		 Sarray& u, Sarray& lu, float_sw4* a_mu, float_sw4* a_la,
+		 Sarray& u_arg, Sarray& lu_arg, float_sw4* a_mu, float_sw4* a_la,
 		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
   SW4_MARK_FUNCTION;
@@ -1806,10 +1846,49 @@ void evalLu_Dim( int ib, int ie, int jb, int je, int kb, int ke,
    const float_sw4 half   = 0.5;
    const float_sw4 fourth = 0.25;
 
-   for( int k=klb+1 ; k <= kle-1; k++ )
-      for( int j=jlb+1 ; j <= jle-1; j++ )
-	 for( int i=ilb ; i <= ile; i++ )
+
+   auto& u = u_arg.getview();
+   auto& lu = lu_arg.getview();
+
+#if !defined(RAJA_ONLY)
+   Range<4> K(klb+1,kle);
+   Range<4> J(jlb+1,jle);
+   Range<16> I(ilb,ile+1);
+
+Tclass<1456> tag1;
+      forall3<__LINE__>(
+          tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1456> t, int i, int j, int k) {
+
+#else
+
+ 
+   // for( int k=klb+1 ; k <= kle-1; k++ )
+   //    for( int j=jlb+1 ; j <= jle-1; j++ )
+   // 	 for( int i=ilb ; i <= ile; i++ )
+
+using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
+    128,
+    RAJA::statement::Tile<
+        0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+        RAJA::statement::Tile<
+            1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+            RAJA::statement::Tile<
+                2, RAJA::statement::tile_fixed<8>, RAJA::cuda_block_x_loop,
+                RAJA::statement::For<
+                    0, RAJA::cuda_thread_z_direct,
+                    RAJA::statement::For<
+                        1, RAJA::cuda_thread_y_direct,
+                        RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
+                                             RAJA::statement::Lambda<0>>>>>>>>>;
+
+    RAJA::RangeSegment k_range(klb+1,kle);
+   RAJA::RangeSegment j_range(jlb+1,jle);
+   RAJA::RangeSegment i_range(ilb,ile+1);
+   RAJA::kernel<LOCAL_POL>(
+			   RAJA::make_tuple(k_range, j_range, i_range),
+			   [=] RAJA_DEVICE(int k, int j, int i) 
 	 {
+#endif
 	    float_sw4 mupx = half*(mu(i,j,k)+mu(i+1,j,k));
 	    float_sw4 mumx = half*(mu(i,j,k)+mu(i-1,j,k));
 	    float_sw4 mupy = half*(mu(i,j+1,k)+mu(i,j,k));
@@ -1868,7 +1947,7 @@ void evalLu_Dim( int ib, int ie, int jb, int je, int kb, int ke,
                     (u(3,i,j,k+1)-u(3,i,j,k)) - 
                 (2*mumz+half*(la(i,j,k-1)+la(i,j,k)) )*
  		    (u(3,i,j,k)-u(3,i,j,k-1)) ); 
-	 }
+	 });
 #undef mu
 #undef la
 #undef u
@@ -1975,7 +2054,7 @@ void evalLu_Djp( int ib, int ie, int jb, int je, int kb, int ke,
 //-----------------------------------------------------------------------
 void evalLu_Djm( int ib, int ie, int jb, int je, int kb, int ke,
 		 //		 float_sw4* a_u, float_sw4* a_lu, float_sw4* a_mu, float_sw4* a_la,
-		 Sarray& u, Sarray& lu, float_sw4* a_mu, float_sw4* a_la,
+		 Sarray& u_arg, Sarray& lu_arg, float_sw4* a_mu, float_sw4* a_la,
 		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
   SW4_MARK_FUNCTION;
@@ -1993,10 +2072,49 @@ void evalLu_Djm( int ib, int ie, int jb, int je, int kb, int ke,
    const float_sw4 half   = 0.5;
    const float_sw4 fourth = 0.25;
 
-   for( int k=klb+1 ; k <= kle-1; k++ )
-      for( int j=jlb ; j <= jle; j++ )
-	 for( int i=ilb+1 ; i <= ile-1; i++ )
+   auto& u = u_arg.getview();
+   auto& lu = lu_arg.getview();
+
+#if !defined(RAJA_ONLY)
+   Range<4> K(klb+1,kle);
+   Range<4> J(jlb,jle+1);
+   Range<16> I(ilb+1,ile);
+
+Tclass<1459> tag1;
+      forall3<__LINE__>(
+          tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1459> t, int i, int j, int k) {
+
+#else
+
+ 
+using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
+    128,
+    RAJA::statement::Tile<
+        0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+        RAJA::statement::Tile<
+            1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+            RAJA::statement::Tile<
+                2, RAJA::statement::tile_fixed<8>, RAJA::cuda_block_x_loop,
+                RAJA::statement::For<
+                    0, RAJA::cuda_thread_z_direct,
+                    RAJA::statement::For<
+                        1, RAJA::cuda_thread_y_direct,
+                        RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
+                                             RAJA::statement::Lambda<0>>>>>>>>>;
+
+    RAJA::RangeSegment k_range(klb+1,kle);
+   RAJA::RangeSegment j_range(jlb,jle+1);
+   RAJA::RangeSegment i_range(ilb+1,ile);
+   RAJA::kernel<LOCAL_POL>(
+			   RAJA::make_tuple(k_range, j_range, i_range),
+			   [=] RAJA_DEVICE(int k, int j, int i) 
 	 {
+#endif
+
+   // for( int k=klb+1 ; k <= kle-1; k++ )
+   //    for( int j=jlb ; j <= jle; j++ )
+   // 	 for( int i=ilb+1 ; i <= ile-1; i++ )
+	 
 	    float_sw4 mupx = half*(mu(i,j,k)+mu(i+1,j,k));
 	    float_sw4 mumx = half*(mu(i,j,k)+mu(i-1,j,k));
 	    float_sw4 mupy = half*(mu(i,j+1,k)+mu(i,j,k));
@@ -2060,7 +2178,7 @@ void evalLu_Djm( int ib, int ie, int jb, int je, int kb, int ke,
                     (u(3,i,j,k+1)-u(3,i,j,k)) - 
                 (2*mumz+half*(la(i,j,k-1)+la(i,j,k)) )*
  		    (u(3,i,j,k)-u(3,i,j,k-1)) ); 
-	 }
+	 });
 #undef mu
 #undef la
 #undef u
@@ -2070,7 +2188,7 @@ void evalLu_Djm( int ib, int ie, int jb, int je, int kb, int ke,
 //-----------------------------------------------------------------------
 void evalLu_Dkp( int ib, int ie, int jb, int je, int kb, int ke,
 		 //		 float_sw4* a_u, float_sw4* a_lu, float_sw4* a_mu, float_sw4* a_la,
-		 Sarray& u, Sarray& lu, float_sw4* a_mu, float_sw4* a_la,
+		 Sarray& u_arg, Sarray& lu_arg, float_sw4* a_mu, float_sw4* a_la,
 		 float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle )
 {
   SW4_MARK_FUNCTION;
@@ -2088,10 +2206,49 @@ void evalLu_Dkp( int ib, int ie, int jb, int je, int kb, int ke,
    const float_sw4 half   = 0.5;
    const float_sw4 fourth = 0.25;
 
-   for( int k=klb ; k <= kle; k++ )
-      for( int j=jlb+1 ; j <= jle-1; j++ )
-	 for( int i=ilb+1 ; i <= ile-1; i++ )
+auto& u = u_arg.getview();
+   auto& lu = lu_arg.getview();
+
+#if !defined(RAJA_ONLY)
+   Range<4> K(klb,kle+1);
+   Range<4> J(jlb+1,jle);
+   Range<16> I(ilb+1,ile);
+
+Tclass<1457> tag1;
+      forall3<__LINE__>(
+          tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1457> t, int i, int j, int k) {
+
+#else
+
+ 
+ using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
+    128,
+    RAJA::statement::Tile<
+        0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+        RAJA::statement::Tile<
+            1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+            RAJA::statement::Tile<
+                2, RAJA::statement::tile_fixed<8>, RAJA::cuda_block_x_loop,
+                RAJA::statement::For<
+                    0, RAJA::cuda_thread_z_direct,
+                    RAJA::statement::For<
+                        1, RAJA::cuda_thread_y_direct,
+                        RAJA::statement::For<2, RAJA::cuda_thread_x_direct,
+                                             RAJA::statement::Lambda<0>>>>>>>>>;
+
+    RAJA::RangeSegment k_range(klb,kle+1);
+   RAJA::RangeSegment j_range(jlb+1,jle);
+   RAJA::RangeSegment i_range(ilb+1,ile);
+   RAJA::kernel<LOCAL_POL>(
+			   RAJA::make_tuple(k_range, j_range, i_range),
+			   [=] RAJA_DEVICE(int k, int j, int i) 
 	 {
+#endif
+
+   // for( int k=klb ; k <= kle; k++ )
+   //    for( int j=jlb+1 ; j <= jle-1; j++ )
+   // 	 for( int i=ilb+1 ; i <= ile-1; i++ )
+	 
 	    float_sw4 mupx = half*(mu(i,j,k)+mu(i+1,j,k));
 	    float_sw4 mumx = half*(mu(i,j,k)+mu(i-1,j,k));
 	    float_sw4 mupy = half*(mu(i,j+1,k)+mu(i,j,k));
@@ -2156,7 +2313,7 @@ void evalLu_Dkp( int ib, int ie, int jb, int je, int kb, int ke,
                     (u(3,i,j,k+1)-u(3,i,j,k)) - 
                 (2*mumz+half*(la(i,j,k-1)+la(i,j,k)) )*
  		    (u(3,i,j,k)-u(3,i,j,k-1)) ); 
-	 }
+	 });
 #undef mu
 #undef la
 #undef u
@@ -2279,7 +2436,7 @@ void evalLu_DkpDip( int ib, int ie, int jb, int je, int kb, int ke,
    //   const size_t nlijk=nlij*(kle-klb+1);
    const float_sw4 ih2 = 1/(h*h);
    const float_sw4 half   = 0.5;
-   const float_sw4 fourth = 0.25;
+   //   const float_sw4 fourth = 0.25;
 
    for( int k=klb ; k <= klb; k++ )
       for( int j=jlb+1 ; j <= jle-1; j++ )
@@ -2374,7 +2531,7 @@ void evalLu_DkpDim( int ib, int ie, int jb, int je, int kb, int ke,
    //   const size_t nlijk=nlij*(kle-klb+1);
    const float_sw4 ih2 = 1/(h*h);
    const float_sw4 half   = 0.5;
-   const float_sw4 fourth = 0.25;
+   //   const float_sw4 fourth = 0.25;
 
    for( int k=klb ; k <= klb; k++ )
       for( int j=jlb+1 ; j <= jle-1; j++ )
@@ -2470,7 +2627,7 @@ void evalLu_DkpDjp( int ib, int ie, int jb, int je, int kb, int ke,
    //   const size_t nlijk=nlij*(kle-klb+1);
    const float_sw4 ih2 = 1/(h*h);
    const float_sw4 half   = 0.5;
-   const float_sw4 fourth = 0.25;
+   //   const float_sw4 fourth = 0.25;
 
    for( int k=klb ; k <= klb; k++ )
       for( int j=jlb ; j <= jle; j++ )
@@ -2566,7 +2723,7 @@ void evalLu_DkpDjm( int ib, int ie, int jb, int je, int kb, int ke,
    //   const size_t nlijk=nlij*(kle-klb+1);
    const float_sw4 ih2 = 1/(h*h);
    const float_sw4 half   = 0.5;
-   const float_sw4 fourth = 0.25;
+   //const float_sw4 fourth = 0.25;
 
    for( int k=klb ; k <= klb; k++ )
       for( int j=jlb ; j <= jle; j++ )
@@ -2969,8 +3126,8 @@ void evalLuCurv( int ib, int ie, int jb, int je, int kb, int ke,
    //   const size_t nlij=nli*(jle-jlb+1);
    //   const size_t nlijk=nlij*(kle-klb+1);
    //   const float_sw4 ih2 = 1/(h*h);
-   const float_sw4 half   = 0.5;
-   const float_sw4 fourth = 0.25;
+   //   const float_sw4 half   = 0.5;
+   //const float_sw4 fourth = 0.25;
    // differences in mixed terms are computed as (u(i+iu)-u(i-il))/(iu+il), so that
    // iu=1,il=0 gives forward diff,
    // iu=0,il=1 gives backward diff,
