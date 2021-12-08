@@ -1,2 +1,2 @@
 export CALI_SERVICES_ENABLE=nvtx
-lrun -T1 nvprof -o Profile_%q\{OMPI_COMM_WORLD_RANK\} ./sw4 geo.in
+jsrun -n1 -a1 -g1 -c10 nvprof -o Profile2_%q\{OMPI_COMM_WORLD_RANK\} ./sw4 gtest2.in

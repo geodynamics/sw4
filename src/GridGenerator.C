@@ -133,7 +133,6 @@ int GridGenerator::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
 //-----------------------------------------------------------------------
 int GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
                                            float_sw4& z, Sarray& topo) {
-  SW4_MARK_FUNCTION;
   // Interpolate the topography
   //
   // if (q,r) is on this processor then
