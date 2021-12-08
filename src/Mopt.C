@@ -426,6 +426,10 @@ void Mopt::processMrun( char* buffer )
          {
             m_opttest = 10;
          }
+	 else if( strcmp(token,"addwindows") == 0 )
+         {
+            m_opttest = 11;
+         }
 	 else
 	    cout << "ERROR: mrun task=" << token << " not recognized " << endl;
       }

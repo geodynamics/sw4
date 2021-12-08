@@ -117,7 +117,7 @@ void use_as_forcing( int n, std::vector<Sarray>& f, std::vector<float_sw4> & h, 
 		     vector<Sarray>& Jac, bool topography_exists );
 
 float_sw4 product( TimeSeries& ts ) const;
-float_sw4 product_wgh( TimeSeries& ts ) const;
+   //float_sw4 product_wgh( TimeSeries& ts ) const;
 float_sw4 getMaxValue( const int comp) const;
 float_sw4 getMinValue( const int comp) const;
 
@@ -140,6 +140,7 @@ std::string gethdf5FileName(){return m_hdf5Name;}
 std::string getPath(){return m_path;}
 float_sw4 getDt() {return m_dt;}
 float_sw4 getLastTimeStep() {return mLastTimeStep;}
+   //int getAllocatedSize(){return mAllocatedSize;}
 int getUseWin() const {return m_use_win;}
 
 void set_scalefactor( float_sw4 value );
@@ -173,6 +174,8 @@ bool is_in_supergrid_layer();
 void misfitanddudp( TimeSeries* observed, TimeSeries* dudp,
                     float_sw4& misfit, float_sw4& dmisfit );
 void add( TimeSeries& A, TimeSeries& B, double wghA, double wghB );
+void writeWindows( string suffix="" );
+void readWindows();
 
 private:   
 TimeSeries();

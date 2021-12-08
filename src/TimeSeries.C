@@ -112,8 +112,10 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   //  m_utc_set(false),
   //  m_utc_offset_computed(false),
   m_use_win(false),
-  m_winL2(-1),
-  m_winR2(-1),
+  m_winL(-1e38),
+  m_winR(1e38),
+  m_winL2(-1e38),
+  m_winR2(1e38),
   m_use_x(true),
   m_use_y(true),
   m_use_z(true),
@@ -479,6 +481,91 @@ void TimeSeries::recordData(vector<float_sw4> & u)
 
    
 //----------------------------------------------------------------------
+void TimeSeries::writeWindows( string suffix )
+{
+  if (!m_myPoint) return;
+#ifdef USE_HDF5
+  if( m_hdf5Format )
+  {
+     hid_t fid = openHDF5File(suffix);
+     if( fid > 0 )
+     {
+        hid_t grp = H5Gopen(fid, const_cast<char*>(m_staName.c_str()), H5P_DEFAULT);
+        if( grp >= 0 )
+        {
+           double windows[4];
+           windows[0] = static_cast<float>(m_winL);
+           windows[1] = static_cast<float>(m_winR);
+           windows[2] = static_cast<float>(m_winL2);
+           windows[3] = static_cast<float>(m_winR2);
+           hsize_t nelements=4;
+           hid_t data_space = H5Screate_simple(1, &nelements, NULL);
+           int ret = createWriteAttr( grp, "WINDOWS", H5T_NATIVE_DOUBLE, data_space, windows );
+           if( ret < 0 )
+           {
+             ret = openWriteAttr(grp, "WINDOWS", H5T_NATIVE_DOUBLE, windows);
+             if( ret < 0 )
+                std::cout << "TimeSeries::addWindows, Error could not create/open data space" << std::endl;
+           }
+           H5Gclose(grp);
+        }
+        else
+           std::cout << "TimeSeries::addWindows Error opening group " << m_staName.c_str() << std::endl;
+        H5Fclose(fid);
+     }
+     else
+        std::cout << "TimeSeries::addWindows fid is invalid, cannot open file" << std::endl;
+  }
+#endif
+}
+
+//----------------------------------------------------------------------
+void TimeSeries::readWindows()
+{
+  if (!m_myPoint) return;
+#ifdef USE_HDF5
+  if( m_hdf5Format )
+  {
+     hid_t fid = openHDF5File("");
+     if( fid > 0 )
+     {
+        hid_t grp = H5Gopen(fid, const_cast<char*>(m_staName.c_str()), H5P_DEFAULT);
+        if( grp >= 0 )
+        {
+           if( H5Lexists(grp, "WINDOWS", H5P_DEFAULT) )
+           {
+              double windows[4];
+              hid_t attr = H5Dopen(grp, "WINDOWS", H5P_DEFAULT);
+              if( attr > 0 )
+              {
+                 int ret = H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, windows);
+                 if(ret >= 0)
+                 {
+                    m_winL = windows[0];
+                    m_winR = windows[1];
+                    m_winL2= windows[2];
+                    m_winR2= windows[3];
+                 }
+                 H5Dclose(attr);
+              }
+           }
+           else
+              std::cout << "TimeSeries::readWindows, Error windows not found on file " 
+                        << std::endl;
+           H5Gclose(grp);
+        }
+        else
+           std::cout << "TimeSeries::readWindows Error opening group " << m_staName.c_str()
+                     << std::endl;
+        H5Fclose(fid);
+     }
+     else
+        std::cout << "TimeSeries::readWindows fid is invalid, cannot open file" << std::endl;
+  }
+#endif
+}
+
+//----------------------------------------------------------------------
 void TimeSeries::writeFile( string suffix )
 {
   if (!m_myPoint) return;
@@ -510,7 +597,7 @@ void TimeSeries::writeFile( string suffix )
   std::string h5fname, fidName;
   hid_t fid, grp = 0; 
   double stlalodp[3], stxyz[3];
-  float origintime;
+  float origintime, windows[4];
   int myRank;
   MPI_Comm_rank(m_ew->m_1d_communicator, &myRank);
 
@@ -1691,11 +1778,11 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
       bool compute_difference = (diff!=NULL);
       float_sw4** misfitsource;
       float**     misfitsource_float;
-      float_sw4 aw, bw, itau;
+      float_sw4 itau;//aw, bw,
       if( m_use_win )
       {
-	aw = M_PI/(m_winR-m_winL);
-	bw = -aw*0.5*(m_winR+m_winL);
+         //	aw = M_PI/(m_winR-m_winL);
+         //	bw = -aw*0.5*(m_winR+m_winL);
         itau =1/(5*m_dt);
       }
       if( compute_difference )
@@ -1765,20 +1852,21 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	 wghx = wghy = wghz = wghv;
          if( m_use_win )
 	 {
+            wghx = 0.5*(tanh((t-m_winL)*itau) - tanh((t-m_winR)*itau));
             // First window
-	   if( t < m_winL || t > m_winR ) 
-              wghx = 0;
-	   else
-              wghx = 0.5*(tanhf((t-m_winL)*itau) - tanhf((t-m_winR)*itau)); // old fcn: pow(cos(aw*t+bw),10.0)*wghv;
+            //	   if( t < m_winL || t > m_winR ) 
+            //              wghx = 0;
+            //	   else
+            //              wghx = 0.5*(tanhf((t-m_winL)*itau) - tanhf((t-m_winR)*itau)); // old fcn: pow(cos(aw*t+bw),10.0)*wghv;
 
            // Second window 
            if( m_winL2>0 || m_winR2>0 ) 
            { 
-              float wgh2;
-              if( t < m_winL2 || t > m_winR2 ) 
-	         wgh2 = 0;
-	      else
-                 wgh2 = 0.5*(tanhf((t-m_winL2)*itau) - tanhf((t-m_winR2)*itau));
+              float_sw4 wgh2 = 0.5*(tanh((t-m_winL2)*itau) - tanh((t-m_winR2)*itau));
+              //              if( t < m_winL2 || t > m_winR2 ) 
+              //	         wgh2 = 0;
+              //	      else
+              //                 wgh2 = 0.5*(tanhf((t-m_winL2)*itau) - tanhf((t-m_winR2)*itau));
               wghx = wghx >= wgh2 ? wghx : wgh2;  // take the maximum of either window weight
            } 
            wghz = wghy = wghx;
@@ -2060,13 +2148,15 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
    bool compute_adjsrc = adjsrc != NULL;
    //   float_sw4 scale_factor=0;
       
-   float_sw4 aw, bw, itaufr, itau;
+   float_sw4 itaufr, itau;//aw, bw,
    if( m_use_win )
    {
-      aw = M_PI/(m_winR-m_winL);
-      bw = -aw*0.5*(m_winR+m_winL);
-      itaufr = 1/(2*dtfr);
+      //      aw = M_PI/(m_winR-m_winL);
+      //      bw = -aw*0.5*(m_winR+m_winL);
+
+      //      itaufr = 1/(2*dtfr);
       itau   = 1/(5*m_dt);
+      itaufr = itau;
    }
 
    // Weight to ramp down the end of misfit.
@@ -2091,17 +2181,18 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
       {
          double tobs = i*dtfr+t0fr; // t_n+tshift in Observation time 
 	       // Window data in this object w(t_n+tshift)
-         if( tobs < m_winL || tobs > m_winR ) 
-            wghxobs = 0.;
-         else
-            wghxobs= 0.5*tanhf((tobs-m_winL)*itaufr) - 0.5*tanhf((tobs-m_winR)*itaufr);
+         wghxobs= 0.5*tanh((tobs-m_winL)*itaufr) - 0.5*tanh((tobs-m_winR)*itaufr);
+         //         if( tobs < m_winL || tobs > m_winR ) 
+         //            wghxobs = 0.;
+         //         else
+         //            wghxobs= 0.5*tanhf((tobs-m_winL)*itaufr) - 0.5*tanhf((tobs-m_winR)*itaufr);
          if(m_winL2>0 || m_winR2>0 ) 
          {  
-            float wghobs2;
-            if( tobs < m_winL2 || tobs > m_winR2 )  
-               wghobs2 = 0;
-            else
-               wghobs2= 0.5*tanhf((tobs-m_winL2)*itaufr) - 0.5*tanhf((tobs-m_winR2)*itaufr);   //windowing of waveform
+            float_sw4 wghobs2= 0.5*tanh((tobs-m_winL2)*itaufr) - 0.5*tanh((tobs-m_winR2)*itaufr);   //windowing of waveform
+            //            if( tobs < m_winL2 || tobs > m_winR2 )  
+            //               wghobs2 = 0;
+            //            else
+            //               wghobs2= 0.5*tanhf((tobs-m_winL2)*itaufr) - 0.5*tanhf((tobs-m_winR2)*itaufr);   //windowing of waveform
 
             wghxobs = (wghxobs >= wghobs2? wghxobs : wghobs2);  // take the maximum of either window weight
          }
@@ -2165,18 +2256,18 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
       if( m_use_win )
       {
 	 // Window data in this object w(t_n)
-	 if( t-tshift < m_winL || t-tshift > m_winR ) 
-	    wghx = 0;
-	 else
-            wghx = 0.5*tanhf((t-tshift-m_winL)*itau) - 0.5*tanhf((t-tshift-m_winR)*itau);
-
+         wghx = 0.5*tanh((t-tshift-m_winL)*itau) - 0.5*tanh((t-tshift-m_winR)*itau);
+         //	 if( t-tshift < m_winL || t-tshift > m_winR ) 
+         //	    wghx = 0;
+         //	 else
+         //            wghx = 0.5*tanhf((t-tshift-m_winL)*itau) - 0.5*tanhf((t-tshift-m_winR)*itau);
          if( m_winL2>0 || m_winR2>0) 
          {
-            float_sw4 wgh2;
-            if( t-tshift < m_winL2 || t-tshift > m_winR2 ) 
-	         wgh2 = 0;
-            else
-               wgh2= 0.5*tanhf((t-tshift-m_winL2)*itau) - 0.5*tanhf((t-tshift-m_winR2)*itau);
+            float_sw4 wgh2= 0.5*tanh((t-tshift-m_winL2)*itau) - 0.5*tanh((t-tshift-m_winR2)*itau);
+            //            if( t-tshift < m_winL2 || t-tshift > m_winR2 ) 
+            //	         wgh2 = 0;
+            //            else
+            //               wgh2= 0.5*tanhf((t-tshift-m_winL2)*itau) - 0.5*tanhf((t-tshift-m_winR2)*itau);
             wghx = (wghx >= wgh2? wghx : wgh2);  // take the maximum of either window weight
          }
          wghz = wghy = wghx;
@@ -2303,10 +2394,6 @@ float_sw4 TimeSeries::misfit2( TimeSeries& observed, TimeSeries* diff )
    float_sw4 misfit = 0;
    if( m_myPoint )
    {
-      //      if( m_use_win )
-      //         cout << "station " << m_staName << " using windows " << m_winL << " " << m_winR
-      //              << " " << m_winL2 << " " << m_winR2 << endl;
-
       if( abs(m_t0+m_shift-(observed.m_t0+observed.m_shift)) > 100 )
       {
 	 cout <<"WARNING: Mismatch between observation start time and simulation start time is large. " << 
@@ -2548,50 +2635,50 @@ float_sw4 TimeSeries::product( TimeSeries& ts ) const
 }
 
 //-----------------------------------------------------------------------
-float_sw4 TimeSeries::product_wgh( TimeSeries& ts ) const
-{
-   // Product which uses weighting, for computing Hessian
-   float_sw4 prod = 0;
-   if( mLastTimeStep == ts.mLastTimeStep )
-   {
-   // Weight to ramp down the end of misfit.
-      int p =20 ; // Number of points in ramp;
-      int istart = 1;
-      if( mLastTimeStep-p+1 > 1 )
-	 istart = mLastTimeStep-p+1;
+//float_sw4 TimeSeries::product_wgh( TimeSeries& ts ) const
+//{
+//   // Product which uses weighting, for computing Hessian
+//   float_sw4 prod = 0;
+//   if( mLastTimeStep == ts.mLastTimeStep )
+//   {
+//   // Weight to ramp down the end of misfit.
+//      int p =20 ; // Number of points in ramp;
+//      int istart = 1;
+//      if( mLastTimeStep-p+1 > 1 )
+//	 istart = mLastTimeStep-p+1;
 
-#pragma omp parallel for reduction(+:prod)
-      for( int i= 0 ; i <= mLastTimeStep ; i++ )
-      {
-	 float_sw4 wghv = 1;
-	 if( i >= istart )
-	 {
-	    float_sw4 arg = (mLastTimeStep-i)/(p-1.0);
-	    wghv = arg*arg*arg*arg*(35-84*arg+70*arg*arg-20*arg*arg*arg);
-	 }
-
-// Windowing and component selection
-         float_sw4 wghx, wghy, wghz;
-	 wghx = wghy = wghz = wghv;
-         float_sw4 t = m_t0 + i*m_dt;
-         if( m_use_win && (t < m_winL || t > m_winR) )
-	    wghx = wghy = wghz = 0;
-         if( !m_use_x )
-	    wghx = 0;
-         if( !m_use_y )
-	    wghy = 0;
-         if( !m_use_z )
-	    wghz = 0;
-
-	 prod += (ts.mRecordedSol[0][i]*mRecordedSol[0][i]*wghx +
-  	          ts.mRecordedSol[1][i]*mRecordedSol[1][i]*wghy + 
-	          ts.mRecordedSol[2][i]*mRecordedSol[2][i]*wghz );
-      }
-   }
-   else
-      cout << "TimeSeries::product_wgh: Error time series have incompatible sizes" << endl;
-   return prod;
-}
+//#pragma omp parallel for reduction(+:prod)
+//      for( int i= 0 ; i <= mLastTimeStep ; i++ )
+//      {
+//	 float_sw4 wghv = 1;
+//	 if( i >= istart )
+//	 {
+//	    float_sw4 arg = (mLastTimeStep-i)/(p-1.0);
+//	    wghv = arg*arg*arg*arg*(35-84*arg+70*arg*arg-20*arg*arg*arg);
+//	 }
+//
+//// Windowing and component selection
+//         float_sw4 wghx, wghy, wghz;
+//	 wghx = wghy = wghz = wghv;
+//         float_sw4 t = m_t0 + i*m_dt;
+//         if( m_use_win && (t < m_winL || t > m_winR) )
+//	    wghx = wghy = wghz = 0;
+//         if( !m_use_x )
+//	    wghx = 0;
+//         if( !m_use_y )
+//	    wghy = 0;
+//         if( !m_use_z )
+//	    wghz = 0;
+//
+//	 prod += (ts.mRecordedSol[0][i]*mRecordedSol[0][i]*wghx +
+//  	          ts.mRecordedSol[1][i]*mRecordedSol[1][i]*wghy + 
+//	          ts.mRecordedSol[2][i]*mRecordedSol[2][i]*wghz );
+//      }
+//   }
+//   else
+//      cout << "TimeSeries::product_wgh: Error time series have incompatible sizes" << endl;
+//   return prod;
+//}
 
 //-----------------------------------------------------------------------
 void TimeSeries::add( TimeSeries& A, TimeSeries& B, double wghA, double wghB )
@@ -3464,7 +3551,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
        cout << "    File " << FileName << " not read." << endl;
        return;
     }
-
+    
     float dt, tstart;
     readAttrFloat(fid, "DELTA", &dt);
 
@@ -3475,6 +3562,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
       // Assumes starting from time 0 and timestep 0
       tstart = 0;
       allocateRecordingArrays( sw4npts, m_t0+tstart, (float_sw4)(dt/downsample));
+      m_nsteps = sw4npts;
     }
     else {
       m_nptsWritten = npts;
@@ -3992,20 +4080,21 @@ void TimeSeries::misfitanddudp( TimeSeries* observed, TimeSeries* dudp,
          if( m_use_win )
 	 {
             float_sw4 itau=1/(5*m_dt);
+            wghx = 0.5*(tanh((t-m_winL)*itau) - tanh((t-m_winR)*itau));
             // First window
-	   if( t < m_winL || t > m_winR ) 
-              wghx = 0;
-	   else
-              wghx = 0.5*(tanhf((t-m_winL)*itau) - tanhf((t-m_winR)*itau));
+            //	   if( t < m_winL || t > m_winR ) 
+            //              wghx = 0;
+            //	   else
+            //              wghx = 0.5*(tanhf((t-m_winL)*itau) - tanhf((t-m_winR)*itau));
 
            // Second window 
            if( m_winL2>0 || m_winR2>0 ) 
            { 
-              float wgh2;
-              if( t < m_winL2 || t > m_winR2 ) 
-	         wgh2 = 0;
-	      else
-                 wgh2 = 0.5*(tanhf((t-m_winL2)*itau) - tanhf((t-m_winR2)*itau));
+              float wgh2= 0.5*(tanh((t-m_winL2)*itau) - tanh((t-m_winR2)*itau));
+              //              if( t < m_winL2 || t > m_winR2 ) 
+              //	         wgh2 = 0;
+              //	      else
+              //                 wgh2 = 0.5*(tanhf((t-m_winL2)*itau) - tanhf((t-m_winR2)*itau));
               wghx = wghx >= wgh2 ? wghx : wgh2;  // take the maximum of either window weight
            } 
            wghz = wghy = wghx;

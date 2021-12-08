@@ -3,7 +3,8 @@
 #include <cstring>
 #include "version.h"
 //#include "MaterialParameterization.h"
-#include "MaterialParCartesian.h"
+#include "MaterialParCart.h"
+//#include "MaterialParCartesian.h"
 #include "Mopt.h"
 #include "compute_f.h"
 #include "sw4-prof.h"
@@ -1954,12 +1955,14 @@ int main(int argc, char **argv)
 	      for( int e=0 ; e < simulation.getNumberOfLocalEvents() ; e++ ) 
               {
 #ifdef USE_HDF5
-                 // Tang: need to create a HDF5 file before writing
                  if (GlobalTimeSeries[e].size() > 0 && GlobalTimeSeries[e][0]->getUseHDF5()) {
                    for (int tsi = 0; tsi < GlobalTimeSeries[e].size(); tsi++) 
                      GlobalTimeSeries[e][tsi]->resetHDF5file();
-                   if(myRank == 0) 
-                     createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "");
+                   for (int tsi = 0; tsi < GlobalTimeSeries[e].size(); tsi++) 
+                      if( GlobalTimeSeries[e][tsi]->myPoint()) 
+                         createTimeSeriesHDF5File(GlobalTimeSeries[e], 
+                                                  GlobalTimeSeries[e][tsi]->getNsteps(), 
+                                                  GlobalTimeSeries[e][tsi]->getDt(), "");
                    MPI_Barrier(simulation.m_1d_communicator);
                  }
 #endif
@@ -2084,10 +2087,64 @@ int main(int argc, char **argv)
               //		 GlobalTimeSeries[e].push_back(elem);
 
            }
+           else if( mopt->m_opttest == 11 )
+           {
+              int nx, ny, nz;
+              if( mopt->m_mp->getcartdims(nx,ny,nz) )
+              {
+                 // If possible, hardcode the coarse grid material model to only
+                 //  have vs, vp and to be shared among processors. Use the
+                 // grid dimensions given by the mparcart command.
+                 MaterialParCart* mp = new MaterialParCart(&simulation, nx, ny, nz, 0, 3,
+                                                           " ", 1.0, 1.0, true );
+                 mp->get_parameters(nmpard, xm, nmpars, xs, simulation.mRho, 
+                                          simulation.mMu, simulation.mLambda, 5 );
+                 delete mp;
+              }
+              else
+                 mopt->m_mp->get_parameters( nmpard, xm, nmpars, xs, simulation.mRho, 
+                                             simulation.mMu, simulation.mLambda, 5 );
+              if( myRank == 0 )
+                 mopt->m_mp->write_parameters("coarse.bin",nmpars,xs);
+
+#ifdef USE_HDF5
+	      for( int e=0 ; e < GlobalObservations.size(); e++ ) 
+              {
+                 if (GlobalObservations[e].size() > 0 && GlobalObservations[e][0]->getUseHDF5()) 
+                 {
+                    for (int tsi = 0; tsi < GlobalObservations[e].size(); tsi++) 
+                       GlobalObservations[e][tsi]->resetHDF5file();
+                    for (int tsi = 0; tsi < GlobalObservations[e].size(); tsi++) 
+                       if( GlobalObservations[e][tsi]->myPoint() )
+                       {
+                          createTimeSeriesHDF5File( GlobalObservations[e], 
+                                                    GlobalObservations[e][tsi]->getNsteps(), 
+                                                    GlobalObservations[e][tsi]->getDt(), "");
+                       }
+                    MPI_Barrier(simulation.m_1d_communicator);
+                 }
+              }
+#endif
+              for( int e=0; e < GlobalObservations.size(); e++ )
+                 for( int s=0 ; s < GlobalObservations[e].size() ; s++)
+                    GlobalObservations[e][s]->writeFile();
+
+              for( int e=0; e < GlobalObservations.size(); e++ )
+              {
+                 float_sw4 freq=mopt->get_freq_peakpower();
+                 if( freq <= 0 )
+                    freq = GlobalSources[e][0]->getFrequency();
+                 simulation.solveTT(GlobalSources[e][0], GlobalObservations[e], xs, nmpars, 
+                                    mopt->m_mp, mopt->get_wave_mode(), mopt->get_twin_shift(), 
+                                    mopt->get_twin_scale(), freq, e, simulation.getRank());
+                 for( int s=0 ; s < GlobalObservations[e].size() ; s++)
+                    GlobalObservations[e][s]->writeWindows();
+              }
+           }
            else
 	      if( myRank == 0 )
-		 cout << "ERROR: m_opttest = " << mopt->m_opttest << " is not a valid choice" << endl;
-
+		 cout << "ERROR: m_opttest = " << mopt->m_opttest << 
+                                           " is not a valid choice" << endl;
            {
               int ng = simulation.mNumberOfGrids;
               vector<Sarray> rho(ng), mu(ng), lambda(ng);
@@ -2119,6 +2176,6 @@ int main(int argc, char **argv)
   // Note: Always return 0, to avoid having one error message per process from LC slurmd.
   //  return status;
 } 
-
+ 
 
    

@@ -69,6 +69,8 @@ struct traverse_data_t {
   bool winrset;
   float_sw4 winl;
   float_sw4 winr;
+  float_sw4 winl2;
+  float_sw4 winr2;
   bool usex;
   bool usey;
   bool usez;

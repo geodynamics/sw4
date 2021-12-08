@@ -275,7 +275,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   } // end if prefiltering
 
 // AP changed to false
-  bool output_timefunc = true;
+  bool output_timefunc = false;
   if( output_timefunc )
   {
      int has_source_id=-1, has_source_max;

@@ -101,6 +101,7 @@ public:
    double getZmin() const { return m_zmin; }
    double getDz() const { return m_hz; }
    int getNZ() const { return m_nz; }   
+   virtual int getcartdims(int& nx, int& ny, int& nz);
 };
 
 #endif

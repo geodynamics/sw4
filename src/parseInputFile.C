@@ -9302,8 +9302,10 @@ void EW::processRandomBlock(char* buffer)
       return;
    }
    token = strtok(NULL, " \t");
-   bool lengthscaleset=false, lengthscalezset=false, vsmaxset=false, vsminset=false, random_rho=false;
+   bool lengthscaleset=false, lengthscalezset=false, vsmaxset=false;
+   bool vsminset=false, random_rho=false;
    float_sw4 corrlen=1000, corrlenz=1000, sigma=0.1, hurst=0.3, zmin=-1e38, zmax=1e38, vsmax=1e38, vsmin=0;
+   float_sw4 rhoamp=0.0;
    unsigned int seed=0;
 
    m_randomize = true;
@@ -9372,6 +9374,11 @@ void EW::processRandomBlock(char* buffer)
          random_rho = (p =="1" || p == "yes" || p=="on");
 
       }
+      else if( startswith("rhoamplitude=",token) )
+      {
+         token += 13;
+         rhoamp = atof(token);
+      }
       else
       {
 	 badOption("randomblock", token);
@@ -9381,7 +9388,8 @@ void EW::processRandomBlock(char* buffer)
    if( lengthscaleset && !lengthscalezset )
       corrlenz = corrlen;
    RandomizedMaterial* mtrl = new RandomizedMaterial( this, zmin, zmax, corrlen, 
-						      corrlenz, hurst, sigma, random_rho, seed );
+						      corrlenz, hurst, sigma, rhoamp, 
+                                                      random_rho, seed );
    if( vsmaxset )
       mtrl->set_vsmax(vsmax);
    if( vsminset )

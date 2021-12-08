@@ -44,7 +44,7 @@ for b=1:nb
    if plane==0
      contour(y,z,im,cvals);
    elseif plane==1
-     contour(x,z,im,cvals);
+     contourf(x,z,im,cvals);
    elseif plane==2
      contour(x,y,im,cvals);
    end

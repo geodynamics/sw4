@@ -23,7 +23,8 @@ MPI_Datatype get_mpi_datatype( std::complex<float>* var ) {return MPI_CXX_FLOAT_
 RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zmax,
 					float_sw4 corrlen, float_sw4 corrlenz, 
 					float_sw4 hurst, float_sw4 sigma,
-					bool randomrho, unsigned int seed )
+					float_sw4 rhoamplitude, bool randomrho, 
+                                        unsigned int seed )
 {
    mEW = a_ew;
    float_sw4 bbox[6];
@@ -47,7 +48,11 @@ RandomizedMaterial::RandomizedMaterial( EW * a_ew, float_sw4 zmin, float_sw4 zma
    m_seed  = seed;
    m_vsmax = 1e38;
    m_vsmin = 0;   
-   m_random_rho = randomrho;
+   m_random_rho   = randomrho;
+   if( m_random_rho )
+      m_rhoamplitude = rhoamplitude;
+   else
+      m_rhoamplitude = 0;
 
 // Determine discretization based on correlation length.
    float_sw4 ppcl = 20; // grid points per correlation length
@@ -228,7 +233,8 @@ void RandomizedMaterial::perturb_velocities( std::vector<Sarray> & cs,
 
 //-----------------------------------------------------------------------
 void RandomizedMaterial::assign_perturbation( int g, Sarray& pert, Sarray& cs, 
-                                              double h, double zmin, double zmax )
+                                              double h, double zmin, double zmax,
+                                              bool rho )
 {
    if( m_zmax > zmin && zmax > m_zmin )
    {
@@ -257,6 +263,8 @@ void RandomizedMaterial::assign_perturbation( int g, Sarray& pert, Sarray& cs,
 					    (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp)  + wghi*mRndMaterial(ip+1,jp+1,kp))) +
 		     (wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp+1)+ wghi*mRndMaterial(ip+1,jp,  kp+1))+
 			     (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp+1)+ wghi*mRndMaterial(ip+1,jp+1,kp+1)));
+                  if( rho )
+                     rndpert = 1+m_rhoamplitude*(rndpert-1);
                   if( m_vsmin <= cs(i,j,k) && cs(i,j,k) <= m_vsmax )
                      pert(i,j,k) = rndpert; 
 	       }
@@ -265,6 +273,8 @@ void RandomizedMaterial::assign_perturbation( int g, Sarray& pert, Sarray& cs,
 			kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke )
 	       {
 		  float_sw4 rndpert = mRndMaterial(ip,jp,kp);
+                  if( rho )
+                     rndpert = 1+m_rhoamplitude*(rndpert-1);
                   if( m_vsmin <= cs(i,j,k) && cs(i,j,k) <= m_vsmax )
                      pert(i,j,k) = rndpert;
 	       }
