@@ -17,7 +17,7 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
      // Material represented on a coarse Cartesian grid, covering the 'active' domain.
      // points are x_0,..,x_{nx+1}, where x_0 and x_{nx+1} are fixed at zero.
    // the parameter vector represents offsets from a reference material, stored in (mRho,mMu,mLambda) in EW.
-   int verbose=0;
+   int verbose=1;
    m_variables = varcase;
    m_ratio = 1.732;   
    m_init = init;
@@ -2043,4 +2043,10 @@ void MaterialParCart::interpolate_pseudohessian( int nmpars, double* phs,
       MPI_Allreduce( tmp, ph, ncomp*npts, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
       delete[] tmp;
    }
+}
+int MaterialParCart::getcartdims(int& nx, int& ny, int& nz)
+{
+   nx = m_nx;
+   ny = m_ny;
+   nz = m_nz;
 }

@@ -70,6 +70,7 @@ public:
    virtual double getZmin() const =0;
    virtual double getDz() const =0;
    virtual int getNZ() const =0;
+   virtual int getcartdims(int& nx, int& ny, int& nz){return 0;}
 };
 
 #endif

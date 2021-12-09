@@ -1181,16 +1181,15 @@ void EW::set_materials()
           rndpert.set_value(1.0); 
 	  for( unsigned int b=0 ; b < m_random_blocks.size() ; b++ )
              m_random_blocks[b]->assign_perturbation( g, rndpert,  mMu[g], mGridSize[g],
-                                                      zmin, zmax );
+                                                      zmin, zmax, false );
           perturb_vels( mMu[g], mLambda[g], rndpert );
 
           if( m_randomize_density )
           {
              rndpert.set_value(1.0); 
              for( unsigned int b=0 ; b < m_random_blocks.size() ; b++ )
-                if( m_random_blocks[b]->randomize_rho() )
-                   m_random_blocks[b]->assign_perturbation( g, rndpert,  mMu[g], mGridSize[g],
-                                                            zmin, zmax );
+                m_random_blocks[b]->assign_perturbation( g, rndpert,  mMu[g], mGridSize[g],
+                                                         zmin, zmax, true );
              perturb_rho( mRho[g], rndpert );
           }
           // End New
@@ -1199,6 +1198,8 @@ void EW::set_materials()
        //      m_random_blocks[b]->perturb_velocities( g, mMu[g], mLambda[g], mGridSize[g], zmin, zmax );
 	  communicate_array( mMu[g], g );
 	  communicate_array( mLambda[g], g );
+          if( m_randomize_density )
+             communicate_array( mRho[g], g );
        }
     }
 // threshold material velocities
@@ -2728,6 +2729,6 @@ void EW::perturb_rho( Sarray& rho, Sarray& rndpert )
       for( int j=rho.m_jb ; j <= rho.m_je ; j++ )
          for( int i=rho.m_ib ; i <= rho.m_ie ; i++ )
          {
-            rho(i,j,k) *= 0.8*rndpert(i,j,k);
+            rho(i,j,k) *= rndpert(i,j,k);
          }
 }
