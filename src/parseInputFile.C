@@ -8517,68 +8517,204 @@ void EW::processMaterialInvtest(char* buffer) {
 // }
 
 //-----------------------------------------------------------------------
-void EW::processRandomBlock(char* buffer) {
-  char* token = strtok(buffer, " \t");
-  CHECK_INPUT(strcmp("randomblock", token) == 0,
-              "ERROR: not a randomblock line: " << token);
-  token = strtok(NULL, " \t");
-  bool lengthscaleset = false, lengthscalezset = false, vsmaxset = false;
-  float_sw4 corrlen = 1000, corrlenz = 1000, sigma = 0.1, hurst = 0.3,
-            zmin = -1e38, zmax = 1e38, vsmax = 1e38;
-  unsigned int seed = 0;
+// void EW::processRandomBlock(char* buffer) {
+//   char* token = strtok(buffer, " \t");
+//   CHECK_INPUT(strcmp("randomblock", token) == 0,
+//               "ERROR: not a randomblock line: " << token);
+//   token = strtok(NULL, " \t");
+//   bool lengthscaleset = false, lengthscalezset = false, vsmaxset = false;
+//   float_sw4 corrlen = 1000, corrlenz = 1000, sigma = 0.1, hurst = 0.3,
+//             zmin = -1e38, zmax = 1e38, vsmax = 1e38;
+//   unsigned int seed = 0;
 
-  m_randomize = true;
-  while (token != NULL) {
-    // while there are tokens in the string still
-    if (startswith("#", token) || startswith(" ", buffer))
-      // Ignore commented lines and lines with just a space.
-      break;
-    else if (startswith("corrlen=", token)) {
-      token += 8;
-      corrlen = atof(token);
-      CHECK_INPUT(corrlen > 0,
-                  "Error randomblock, corrlen must be > 0, not " << token);
-      lengthscaleset = true;
-    } else if (startswith("corrlenz=", token)) {
-      token += 9;
-      corrlenz = atof(token);
-      CHECK_INPUT(corrlenz > 0,
-                  "Error randomblock, corrlenz must be > 0, not " << token);
-      lengthscalezset = true;
-    } else if (startswith("sigma=", token)) {
-      token += 6;
-      sigma = atof(token);
-      CHECK_INPUT(sigma > 0,
-                  "Error randomblock, sigma must be > 0, not " << token);
-    } else if (startswith("hurst=", token)) {
-      token += 6;
-      hurst = atof(token);
-    } else if (startswith("seed=", token)) {
-      token += 5;
-      seed = atoi(token);
-    } else if (startswith("zmin=", token)) {
-      token += 5;
-      zmin = atof(token);
-    } else if (startswith("zmax=", token)) {
-      token += 5;
-      zmax = atof(token);
-    } else if (startswith("vsmax=", token)) {
-      token += 6;
-      vsmax = atof(token);
-      vsmaxset = true;
-    } else {
-      badOption("randomblock", token);
-    }
-    token = strtok(NULL, " \t");
-  }
-  if (lengthscaleset && !lengthscalezset) corrlenz = corrlen;
-  RandomizedMaterial* mtrl = new RandomizedMaterial(
-      this, zmin, zmax, corrlen, corrlenz, hurst, sigma, seed);
-  if (vsmaxset) mtrl->set_vsmax(vsmax);
+//   m_randomize = true;
+//   while (token != NULL) {
+//     // while there are tokens in the string still
+//     if (startswith("#", token) || startswith(" ", buffer))
+//       // Ignore commented lines and lines with just a space.
+//       break;
+//     else if (startswith("corrlen=", token)) {
+//       token += 8;
+//       corrlen = atof(token);
+//       CHECK_INPUT(corrlen > 0,
+//                   "Error randomblock, corrlen must be > 0, not " << token);
+//       lengthscaleset = true;
+//     } else if (startswith("corrlenz=", token)) {
+//       token += 9;
+//       corrlenz = atof(token);
+//       CHECK_INPUT(corrlenz > 0,
+//                   "Error randomblock, corrlenz must be > 0, not " << token);
+//       lengthscalezset = true;
+//     } else if (startswith("sigma=", token)) {
+//       token += 6;
+//       sigma = atof(token);
+//       CHECK_INPUT(sigma > 0,
+//                   "Error randomblock, sigma must be > 0, not " << token);
+//     } else if (startswith("hurst=", token)) {
+//       token += 6;
+//       hurst = atof(token);
+//     } else if (startswith("seed=", token)) {
+//       token += 5;
+//       seed = atoi(token);
+//     } else if (startswith("zmin=", token)) {
+//       token += 5;
+//       zmin = atof(token);
+//     } else if (startswith("zmax=", token)) {
+//       token += 5;
+//       zmax = atof(token);
+//     } else if (startswith("vsmax=", token)) {
+//       token += 6;
+//       vsmax = atof(token);
+//       vsmaxset = true;
+//     }
+//     else if( startswith("vsmin=",token) )
+//       {
+// 	token += 6;
+// 	vsmin = atof(token);
+// 	vsminset = true;
+//       }
+//     else if( startswith("randomrho=",token) )
+//       {
+// 	token += 10;
+// 	std::string p=token;
+// 	random_rho = (p =="1" || p == "yes" || p=="on");
+	
+//       }
+//     else if( startswith("rhoamplitude=",token) )
+//       {
+// 	token += 13;
+// 	rhoamp = atof(token);
+//       } else {
+//       badOption("randomblock", token);
+//     }
+//     token = strtok(NULL, " \t");
+//   }
+//   if (lengthscaleset && !lengthscalezset) corrlenz = corrlen;
+//   RandomizedMaterial* mtrl = new RandomizedMaterial(
+//       this, zmin, zmax, corrlen, corrlenz, hurst, sigma, seed);
+//   if (vsmaxset) mtrl->set_vsmax(vsmax);
 
-  m_random_blocks.push_back(mtrl);
-  //   if( !lengthscaleset && lengthscalezset )
-  //      m_random_dist = m_random_distz;
+//   m_random_blocks.push_back(mtrl);
+//   //   if( !lengthscaleset && lengthscalezset )
+//   //      m_random_dist = m_random_distz;
+// }
+
+//-----------------------------------------------------------------------
+void EW::processRandomBlock(char* buffer)
+{
+   char* token = strtok(buffer, " \t");
+   CHECK_INPUT(strcmp("randomblock", token) == 0,
+	       "ERROR: not a randomblock line: " << token);
+   if( m_events_parallel )
+   {
+      if( proc_zero() )
+      {
+         std::cout << "WARNING: randomblock command does not work together with parallel seismic events" << std::endl;
+         std::cout << "randomblock command will be ignored " << std::endl;
+      }
+      return;
+   }
+   token = strtok(NULL, " \t");
+   bool lengthscaleset=false, lengthscalezset=false, vsmaxset=false;
+   bool vsminset=false, random_rho=false;
+   float_sw4 corrlen=1000, corrlenz=1000, sigma=0.1, hurst=0.3, zmin=-1e38, zmax=1e38, vsmax=1e38, vsmin=0;
+   float_sw4 rhoamp=0.8;
+   unsigned int seed=0;
+
+   m_randomize = true;
+   while (token != NULL)
+   {
+      // while there are tokens in the string still
+      if (startswith("#", token) || startswith(" ", buffer))
+	// Ignore commented lines and lines with just a space.
+	 break;
+      else if( startswith("corrlen=",token) )
+      {
+	 token += 8;
+	 corrlen = atof(token);
+	 CHECK_INPUT(corrlen>0, "Error randomblock, corrlen must be > 0, not " << token);
+	 lengthscaleset = true;
+      }
+      else if( startswith("corrlenz=",token) )
+      {
+	 token += 9;
+	 corrlenz = atof(token);
+	 CHECK_INPUT(corrlenz>0, "Error randomblock, corrlenz must be > 0, not " << token);
+	 lengthscalezset = true;
+      }
+      else if( startswith("sigma=",token) )
+      {
+	 token += 6;
+	 sigma = atof(token);
+	 CHECK_INPUT(sigma>0, "Error randomblock, sigma must be > 0, not " << token);
+      }
+      else if( startswith("hurst=",token) )
+      {
+	 token += 6;
+	 hurst = atof(token);
+      }
+      else if( startswith("seed=",token) )
+      {
+	 token += 5;
+         seed = atoi(token);
+      }
+      else if( startswith("zmin=",token) )
+      {
+	 token += 5;
+         zmin = atof(token);
+      }
+      else if( startswith("zmax=",token) )
+      {
+	 token += 5;
+         zmax = atof(token);
+      }
+      else if( startswith("vsmax=",token) )
+      {
+	 token += 6;
+         vsmax = atof(token);
+	 vsmaxset = true;
+      }
+      else if( startswith("vsmin=",token) )
+      {
+	 token += 6;
+         vsmin = atof(token);
+	 vsminset = true;
+      }
+      else if( startswith("randomrho=",token) )
+      {
+         token += 10;
+         std::string p=token;
+         random_rho = (p =="1" || p == "yes" || p=="on");
+
+      }
+      else if( startswith("rhoamplitude=",token) )
+      {
+         token += 13;
+         rhoamp = atof(token);
+      }
+      else
+      {
+	 badOption("randomblock", token);
+      }
+      token = strtok(NULL, " \t");
+   }
+   if( lengthscaleset && !lengthscalezset )
+      corrlenz = corrlen;
+
+   if( !random_rho )
+      rhoamp = 0.0;
+   RandomizedMaterial* mtrl = new RandomizedMaterial( this, zmin, zmax, corrlen, 
+						      corrlenz, hurst, sigma, rhoamp, 
+                                                      random_rho, seed );
+   if( vsmaxset )
+      mtrl->set_vsmax(vsmax);
+   if( vsminset )
+      mtrl->set_vsmin(vsmin);
+   m_randomize_density = random_rho || m_randomize_density;   
+
+   m_random_blocks.push_back(mtrl);
+   //   if( !lengthscaleset && lengthscalezset )
+   //      m_random_dist = m_random_distz;
 }
 
 //-----------------------------------------------------------------------

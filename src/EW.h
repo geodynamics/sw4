@@ -1532,6 +1532,7 @@ class EW {
   void putbuffer_host(float_sw4* data, float_sw4* buf,
                       std::tuple<int, int, int>& mtype);
   void perturb_vels( Sarray& cs, Sarray& cp, Sarray& rndpert );
+  void perturb_rho( Sarray& rho, Sarray& rndpert );
 
   TestTwilight* create_twilight();
   TestEcons* create_energytest();
@@ -1638,6 +1639,7 @@ class EW {
   int m_nevent;  // Number of events, needed for multiple event material
                  // optimization.
   int m_nevents_specified;  // Number of event lines in input file
+  bool m_events_parallel; // Process events in parallel
   map<string, int> m_event_names;
 
   // epicenter
@@ -1744,7 +1746,7 @@ class EW {
   bool m_anisotropic;
 
   // Randomization of the material
-  bool m_randomize;
+  bool m_randomize,m_randomize_density;
   int m_random_seed[3];
   float_sw4 m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad,
       m_random_sdlimit;

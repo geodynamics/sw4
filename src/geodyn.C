@@ -3383,10 +3383,10 @@ void evalLuCurv( int ib, int ie, int jb, int je, int kb, int ke,
    const int oi = iu==il?1:0;
 
 
-   #if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY)
    Range<4> K(klb+ok,kle-ok+1);
    Range<4> J(jlb+oj,jle-oj+1);
-   Range<16> I(ilb+oi,ile-oi+1);
+   Range<4> I(ilb+oi,ile-oi+1);
 
 Tclass<1471> tag1;
       forall3<__LINE__>(
