@@ -1386,41 +1386,41 @@ function. The topography is shown in Figure~\ref{fig:grenoble-topo}.
   \end{center}
 \end{figure}
 
-\section{efile topography}\label{sec:topo-efile}
+% \section{efile topography}\label{sec:topo-efile}
 
-The Etree databases for the San Francisco bay area and Northern California contain topographic
-information. You can setup the computational grid to follow this topography by using the following command,
-\begin{verbatim}
-topography input=efile etree=USGSBayAreaVM-08.3.0.etree zmax=8e3 order=3
-\end{verbatim}
-Note that the syntax has been changed from \emph{WPP}. This style of the topography command tells
-\emph{SW4} to read the topography from the specified Etree file. Figure~\ref{fig:erfile-topo} (left) shows
-the resulting elevation of the free surface. 
-%
-\begin{figure}[htp]
-  \begin{center}
-    \includegraphics[width=0.49\textwidth]{figures/efile-topo.png}\hfill
-    \includegraphics[width=0.49\textwidth]{figures/rfile-topo.png}
-    \caption{Topography and bathymetry in the vicinity of Berkeley, California, as
-represented by an {\tt efile} (left) and an {\tt rfile} (right). Here the red line indicates
-zero elevation.}
-    \label{fig:erfile-topo}
-  \end{center}
-\end{figure}
-%
-The \verb+efile+ keyword can also be called \verb+etree+. The \verb+order=3+ option specifies a
-cubic stretching function in the vertical direction. A higher value makes the curvilinear grid
-smoother near the bottom, but can cause a larger variation in grid size near the top. The
-\verb+zmax=8e3+ option tells \emph{SW4} to put the bottom boundary of the curvilinear grid at
-$z=8000$.
+% The Etree databases for the San Francisco bay area and Northern California contain topographic
+% information. You can setup the computational grid to follow this topography by using the following command,
+% \begin{verbatim}
+% topography input=efile etree=USGSBayAreaVM-08.3.0.etree zmax=8e3 order=3
+% \end{verbatim}
+% Note that the syntax has been changed from \emph{WPP}. This style of the topography command tells
+% \emph{SW4} to read the topography from the specified Etree file. Figure~\ref{fig:erfile-topo} (left) shows
+% the resulting elevation of the free surface. 
+% %
+% \begin{figure}[htp]
+%   \begin{center}
+%     \includegraphics[width=0.49\textwidth]{figures/efile-topo.png}\hfill
+%     \includegraphics[width=0.49\textwidth]{figures/rfile-topo.png}
+%     \caption{Topography and bathymetry in the vicinity of Berkeley, California, as
+% represented by an {\tt efile} (left) and an {\tt rfile} (right). Here the red line indicates
+% zero elevation.}
+%     \label{fig:erfile-topo}
+%   \end{center}
+% \end{figure}
+% %
+% The \verb+efile+ keyword can also be called \verb+etree+. The \verb+order=3+ option specifies a
+% cubic stretching function in the vertical direction. A higher value makes the curvilinear grid
+% smoother near the bottom, but can cause a larger variation in grid size near the top. The
+% \verb+zmax=8e3+ option tells \emph{SW4} to put the bottom boundary of the curvilinear grid at
+% $z=8000$.
 
-When the computational domain is larger, it is possible to combine the topographic information from
-the detailed and regional databases, using the following syntax:
-\begin{verbatim}
-topography input=efile etree=USGSBayAreaVM.etree xetree=USGSBayAreaVMExt.etree \
-           zmax=8e3 order=3
-\end{verbatim}
-Here the filenames have been abbreviated to improve readability.
+% When the computational domain is larger, it is possible to combine the topographic information from
+% the detailed and regional databases, using the following syntax:
+% \begin{verbatim}
+% topography input=efile etree=USGSBayAreaVM.etree xetree=USGSBayAreaVMExt.etree \
+%            zmax=8e3 order=3
+% \end{verbatim}
+% Here the filenames have been abbreviated to improve readability.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{rfile topography}\label{sec:topo-rfile}
@@ -1566,85 +1566,85 @@ block vp=6000 vs=3500 rho=2700 \
 This material is displayed on the right side of Figure~\ref{fig:blockpics}.
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The efile command} \label{sec:efile}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{figure}
-\begin{centering}
-  \includegraphics[width=0.49\textwidth]{figures/velmodelbb_roads.png} \hfil
-  \caption{The geographical extent of the etree models for Northern California and the San Francisco
-  bay area.}
-  \label{fig:sfmodel}
-\end{centering}
-\end{figure}
-The efile command is used to obtain material properties from an etree database file. Etree data
-bases use an oct-tree data structure, which allows material properties to be represented with finer
-spatial resolution near the surface. Topography and bathymetry information is included in the data
-base. Note that the same etree database file can be used independently of the grid size. We
-currently have access to an etree database file for Northern California and the extended San
-Francisco bay area. The geographical extent of the etree model is given in Table~\ref{tab:sfdata},
-which also is shown on a map in Figure~\ref{fig:sfmodel}. This model was developed by the USGS and
-can currently be downloaded from {\tt http://earthquake.usgs.gov/data/3dgeologic}. Be aware that the files
-are large (8 + 6 Gbyte) and can take a very long time to download.
-\begin{table}
-\begin{center}
-\begin{tabular}{|l|l|l|} \hline
-\multicolumn{3}{|c|}{\bf Detailed Model} \\ \hline
-Corner & Longitude & Latitude \\ \hline
-SE & -120.64040 & 37.04718 \\ \hline
-SW & -121.91833 & 36.31746 \\ \hline
-NW & -123.85736 & 38.42426 \\ \hline
-NE & -122.56127 & 39.17461 \\ \hline
-\end{tabular} \hspace{5 mm}
-\begin{tabular}{|l|l|l|} \hline
-\multicolumn{3}{|c|}{\bf Regional Model} \\ \hline
-Corner & Longitude & Latitude \\ \hline
-SE & -118.944514 & 36.702176 \\ \hline
-SW & -121.930857 & 35.009018 \\ \hline
-NW & -126.353173 & 39.680558 \\ \hline
-NE & -123.273199 & 41.48486\\ \hline
-\end{tabular}
-\caption{Geographical extent (NAD27 projection) for the central California velocity models. Both
-  models are defined down to 45 km depth.}\label{tab:sfdata}
-\end{center}
-\end{table}%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \section{The efile command} \label{sec:efile}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \begin{figure}
+% \begin{centering}
+%   \includegraphics[width=0.49\textwidth]{figures/velmodelbb_roads.png} \hfil
+%   \caption{The geographical extent of the etree models for Northern California and the San Francisco
+%   bay area.}
+%   \label{fig:sfmodel}
+% \end{centering}
+% \end{figure}
+% The efile command is used to obtain material properties from an etree database file. Etree data
+% bases use an oct-tree data structure, which allows material properties to be represented with finer
+% spatial resolution near the surface. Topography and bathymetry information is included in the data
+% base. Note that the same etree database file can be used independently of the grid size. We
+% currently have access to an etree database file for Northern California and the extended San
+% Francisco bay area. The geographical extent of the etree model is given in Table~\ref{tab:sfdata},
+% which also is shown on a map in Figure~\ref{fig:sfmodel}. This model was developed by the USGS and
+% can currently be downloaded from {\tt http://earthquake.usgs.gov/data/3dgeologic}. Be aware that the files
+% are large (8 + 6 Gbyte) and can take a very long time to download.
+% \begin{table}
+% \begin{center}
+% \begin{tabular}{|l|l|l|} \hline
+% \multicolumn{3}{|c|}{\bf Detailed Model} \\ \hline
+% Corner & Longitude & Latitude \\ \hline
+% SE & -120.64040 & 37.04718 \\ \hline
+% SW & -121.91833 & 36.31746 \\ \hline
+% NW & -123.85736 & 38.42426 \\ \hline
+% NE & -122.56127 & 39.17461 \\ \hline
+% \end{tabular} \hspace{5 mm}
+% \begin{tabular}{|l|l|l|} \hline
+% \multicolumn{3}{|c|}{\bf Regional Model} \\ \hline
+% Corner & Longitude & Latitude \\ \hline
+% SE & -118.944514 & 36.702176 \\ \hline
+% SW & -121.930857 & 35.009018 \\ \hline
+% NW & -126.353173 & 39.680558 \\ \hline
+% NE & -123.273199 & 41.48486\\ \hline
+% \end{tabular}
+% \caption{Geographical extent (NAD27 projection) for the central California velocity models. Both
+%   models are defined down to 45 km depth.}\label{tab:sfdata}
+% \end{center}
+% \end{table}%
 
-In the etree database, material properties are stored as functions of geographical coordinates
-(latitude, longitude, elevation), and \emph{SW4} must determine the geographical coordinates before
-it obtains the material properties from the database. Depending on the options of the \verb+grid+
-command, \emph{SW4} either uses formulas (\ref{eq:lat})-(\ref{eq:lon}), or the \verb+proj.4+
-library, to compute the geographic mapping. Internally to \emph{SW4}, the \emph{cencalvm} software
-library is used to query the etree database, which in turn relies on additional libraries. The
-description in this section assumes that \emph{SW4} has been configured to use the \verb+efile+
-command, see~\cite{SW4-install} for details.
+% In the etree database, material properties are stored as functions of geographical coordinates
+% (latitude, longitude, elevation), and \emph{SW4} must determine the geographical coordinates before
+% it obtains the material properties from the database. Depending on the options of the \verb+grid+
+% command, \emph{SW4} either uses formulas (\ref{eq:lat})-(\ref{eq:lon}), or the \verb+proj.4+
+% library, to compute the geographic mapping. Internally to \emph{SW4}, the \emph{cencalvm} software
+% library is used to query the etree database, which in turn relies on additional libraries. The
+% description in this section assumes that \emph{SW4} has been configured to use the \verb+efile+
+% command, see~\cite{SW4-install} for details.
 
-It is important to note the bounds of the geographical region in the database. Assuming the
-computational domain is contained within the bounds of the database, it is easy to set up the
-material model in the input file:
-\begin{verbatim}
-grid x=100e3 y=100e3 z=40e3 lat=38.0 lon=-121.8 az=144 h=1000
-efile etree=/p/lscratchd/andersp/USGSBayAreaVM-08.3.0.etree 
-\end{verbatim}
-To verify that the computational domain is inside the etree database, we recommend checking the
-geographical coordinates on a map during the construction of the input file. We often use the Google Earth
-program for this purpose.
-%
-In the case when the computational domain is larger than the region covered by the efile, a block
-command can be used to assign material properties to grid points outside of the efile region:
-\begin{verbatim}
-grid x=300000 y=300000 z=60000 lat=38 lon=-121.5 az=135 nx=100
-block vp=8000 vs=4000 rho=1000 rhograd=0.5
-efile etree=/p/lscratchd/andersp/USGSBayAreaVM-08.3.0.etree 
-\end{verbatim}
-However, sharp jumps in material properties can lead to significant scattering of seismic waves. In
-some cases, better results can be obtained by reducing the size of the computational domain to match
-the extent of the etree region.
+% It is important to note the bounds of the geographical region in the database. Assuming the
+% computational domain is contained within the bounds of the database, it is easy to set up the
+% material model in the input file:
+% \begin{verbatim}
+% grid x=100e3 y=100e3 z=40e3 lat=38.0 lon=-121.8 az=144 h=1000
+% efile etree=/p/lscratchd/andersp/USGSBayAreaVM-08.3.0.etree 
+% \end{verbatim}
+% To verify that the computational domain is inside the etree database, we recommend checking the
+% geographical coordinates on a map during the construction of the input file. We often use the Google Earth
+% program for this purpose.
+% %
+% In the case when the computational domain is larger than the region covered by the efile, a block
+% command can be used to assign material properties to grid points outside of the efile region:
+% \begin{verbatim}
+% grid x=300000 y=300000 z=60000 lat=38 lon=-121.5 az=135 nx=100
+% block vp=8000 vs=4000 rho=1000 rhograd=0.5
+% efile etree=/p/lscratchd/andersp/USGSBayAreaVM-08.3.0.etree 
+% \end{verbatim}
+% However, sharp jumps in material properties can lead to significant scattering of seismic waves. In
+% some cases, better results can be obtained by reducing the size of the computational domain to match
+% the extent of the etree region.
 
-To enable use of the extended SF model, the extended etree file must also be downloaded and
-then added to the efile command line (file names have been shortened for improved readability):
-\begin{verbatim}
-efile etree=USGSBayAreaVM.etree xetree=USGSBayAreaVMExt.etree
-\end{verbatim}
+% To enable use of the extended SF model, the extended etree file must also be downloaded and
+% then added to the efile command line (file names have been shortened for improved readability):
+% \begin{verbatim}
+% efile etree=USGSBayAreaVM.etree xetree=USGSBayAreaVMExt.etree
+% \end{verbatim}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The rfile command} \label{sec:rfile-mat}
@@ -3280,43 +3280,43 @@ absdepth    & {\tt z1} and {\tt z2} relative to topography (0), or absolute $z$-
 \index{block parameters!x1, x2, y1, y2, z1, z2, absdepth}
 %
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%  Efiles
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{efile}
-\index{command!efile}
-\label{keyword:efile}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{flushleft}
-\bf
-Syntax:\\
-\tt
-efile etree=... xetree=... logfile=... query=... access=... resolution=...\\
-\bf 
-Required parameters:\\
-\tt etree
-\end{flushleft}
-\begin{center}
-\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
-\multicolumn{5}{|c|}{\bf efile command parameters (part 1)}\\ \hline
-\bf{Option} & \bf{Description}                                    & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline 
-\hline
-etree      & full path to the etree database file                 & string   & none   & none \\ \hline
-xetree     & full path to the extended etree database file        & string   & none   & none \\ \hline
-logfile    & name of log file                                     & string   & none   & none \\ \hline
-\end{tabular}
-\end{center}
-\begin{center}
-\begin{tabular}{|l|p{8cm}|l|l|l|} \hline
-\multicolumn{5}{|c|}{\bf efile command parameters (part 2)}\\ \hline
-\bf{Option} & \bf{Description}                                & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline 
-\hline
-query      & type of query to perform                         & string  & none   & MAXRES \\ \hline
-resolution & average properties over this distance (for query=FIXEDRES) & real  & m      & $h$ \\ \hline
-access     & can be set to parallel or serial                 & string  & none   &  parallel \\ \hline
-\end{tabular}
-\end{center}
-\index{efile parameters!etree, xetree, logfile, query, resolution, access}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %  Efiles
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \subsection{efile}
+% \index{command!efile}
+% \label{keyword:efile}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \begin{flushleft}
+% \bf
+% Syntax:\\
+% \tt
+% efile etree=... xetree=... logfile=... query=... access=... resolution=...\\
+% \bf 
+% Required parameters:\\
+% \tt etree
+% \end{flushleft}
+% \begin{center}
+% \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
+% \multicolumn{5}{|c|}{\bf efile command parameters (part 1)}\\ \hline
+% \bf{Option} & \bf{Description}                                    & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline 
+% \hline
+% etree      & full path to the etree database file                 & string   & none   & none \\ \hline
+% xetree     & full path to the extended etree database file        & string   & none   & none \\ \hline
+% logfile    & name of log file                                     & string   & none   & none \\ \hline
+% \end{tabular}
+% \end{center}
+% \begin{center}
+% \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
+% \multicolumn{5}{|c|}{\bf efile command parameters (part 2)}\\ \hline
+% \bf{Option} & \bf{Description}                                & \bf{Type} & \bf{Units} & \bf{Default} \\ \hline 
+% \hline
+% query      & type of query to perform                         & string  & none   & MAXRES \\ \hline
+% resolution & average properties over this distance (for query=FIXEDRES) & real  & m      & $h$ \\ \hline
+% access     & can be set to parallel or serial                 & string  & none   &  parallel \\ \hline
+% \end{tabular}
+% \end{center}
+% \index{efile parameters!etree, xetree, logfile, query, resolution, access}
 %
 The query option can be set to one of the following:
 %
@@ -3708,9 +3708,9 @@ There are five ways of specifying the topography:
 \item {\bf input=rfile} Read the topography from a binary raster file. The name of the raster file
    must be specified by the {\bf file=...} keyword. The format of this file is described in
    Section~\ref{sec:rfile-format}.
-\item {\bf input=efile} Read the topography from the Etree database. The database file name
-   must be specified by the {\bf file=...} keyword. The spatial resolution for querying the Etree
-  database may be specified by the {\bf resolution=...} keyword.
+% \item {\bf input=efile} Read the topography from the Etree database. The database file name
+%    must be specified by the {\bf file=...} keyword. The spatial resolution for querying the Etree
+%   database may be specified by the {\bf resolution=...} keyword.
 \item {\bf input=gaussian} Build an analytical topography in the shape of a Gaussian hill. The
   amplitude is specified by {\bf gaussianAmp=...}, the hill is centered at {\bf gaussianXc=...},
   {\bf gaussianYc=...}, and the half width of the hill in the $x$ and $y$-directions are specified by 
@@ -3727,9 +3727,9 @@ input & Type of input: geographic (or grid), cartesian, efile or gaussian & stri
 %
 file & File name if input=geographic or input=cartesian & string & none & none\\ \hline
 %
-etree & File name of detailed database if input=efile (same as file) & string & none & none\\ \hline
+% etree & File name of detailed database if input=efile (same as file) & string & none & none\\ \hline
 %
-xetree & File name of extended etree database if input=efile & string & none & none\\ \hline
+% xetree & File name of extended etree database if input=efile & string & none & none\\ \hline
 %
 resolution & Resolution for querying the efile if input-efile & real & meters & none \\ \hline
 %
@@ -3740,7 +3740,7 @@ order & Interpolation order (2-6) & int & none & 4\\ \hline
 smooth & Number of smoothing iterations of topography grid surface & int & none & 10 \\ \hline
 \end{tabular}
 \end{center}
-\index{topography parameters!input, file, etree, xetree, resolution, zmax, order, smooth}
+\index{topography parameters!input, file, resolution, zmax, order, smooth}
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
 \multicolumn{5}{|c|}{\bf topography command parameters (Gaussian Hill)}\\ \hline
@@ -4940,7 +4940,7 @@ should set $V_S=-999$, but give physical values to $V_P$ and $\rho$. Note that w
 water is currently not modeled by \emph{SW4} so those values are not currently used. However,
 setting correct density and compressional wave speeds in water will allow the same material model to be
 used when such modeling becomes available. It is also consistent with how water is handled in
-USGS's etree model of the San Francisco bay area.
+USGS's model of the San Francisco bay area.
 
 A Matlab/octave reader of material models in the {\tt rfile} format, called {\tt readmat.m}, is
 provided in the {\tt tools} directory. A sample {\tt rfile} model is included in the {\tt
