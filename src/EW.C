@@ -521,7 +521,6 @@ EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
   //  m_utc0isrefevent(false),
   m_events_parallel(false),
   m_opttest(0),
-  mEtreeFile(NULL),
   m_perturb(0),
   m_iperturb(1),
   m_jperturb(1),
@@ -1544,7 +1543,7 @@ void EW::setGMTOutput(string filename, string wppfilename)
 //-----------------------------------------------------------------------
 void EW::saveGMTFile( vector<vector<Source*> > & a_GlobalUniqueSources, int event )
 {
-// this routine needs to be updated (at least for the etree info)
+// this routine needs to be updated
    if (!mWriteGMTOutput) return;
    int eglobal = local_to_global_event(event);
    if (proc_zero())
@@ -1576,24 +1575,7 @@ void EW::saveGMTFile( vector<vector<Source*> > & a_GlobalUniqueSources, int even
 
 //      GeographicCoord eNW, eNE, eSW, eSE;
       
-#ifdef ENABLE_ETREE
-      if (mEtreeFile != NULL)
-      {
-	 //        mEtreeFile->getGeoBox()->getBounds(eNW, eNE, eSW, eSE);
-// correct these as above (remove +/- 1        
-//        minx = (min(eSW.getLongitude()-1,min(eSE.getLongitude()-1,min(eNE.getLongitude()-1,eNW.getLongitude()-1))));
-//        maxx = (max(eSW.getLongitude()+1,max(eSE.getLongitude()+1,max(eNE.getLongitude()+1,eNW.getLongitude()+1))));
-//        miny = (min(eSW.getLatitude()-1,min(eSE.getLatitude()-1,min(eNE.getLatitude()-1,eNW.getLatitude()-1))));
-//        maxy = (max(eSW.getLatitude()+1,max(eSE.getLatitude()+1,max(eNE.getLatitude()+1,eNW.getLatitude()+1)))); 
-         mEtreeFile->getbox( miny, maxy, minx, maxx );
-	 minx -= 1;
-	 maxx += 1;
-	 miny -= 1;
-	 maxy += 1;
-      }
-#endif
-      
-      contents << "# Region will need to be adjusted based on etree/grid values" << endl
+      contents << "# Region will need to be adjusted based on grid values" << endl
                << "set REGION = " << minx-margin << "/" << maxx+margin << "/" << miny-margin << "/" << maxy+margin << endl
                << endl
                << "set SCALE = 6.0" << endl
@@ -1639,33 +1621,6 @@ void EW::saveGMTFile( vector<vector<Source*> > & a_GlobalUniqueSources, int even
                << lonNW << " " << latNW << endl  
                << lonSW << " " << latSW << endl
                << "EOF" << endl << endl;
-      
-#ifdef ENABLE_ETREE
-      if (mEtreeFile != NULL)
-      {
-// Consider Etree bounds also
-//         GeographicCoord eNW, eNE, eSW, eSE;
-//         mEtreeFile->getGeoBox()->getBounds(eNW, eNE, eSW, eSE);
-         double elatSE, elonSE, elatSW, elonSW, elatNE, elonNE, elatNW, elonNW;
-         mEtreeFile->getcorners( elatSE, elonSE, elatSW, elonSW, elatNE, elonNE, elatNW, elonNW );
-         contents << "# Etree region: " << mEtreeFile->getFileName() << endl
-                  << "psxy -R$REGION -JM$SCALE -W5/255/255/0ta -O -K <<EOF>> plot.ps" << endl
-                  << elonNW << " " << elatNW << endl
-                  << elonNE << " " << elatNE << endl
-                  << elonSE << " " << elatSE << endl
-                  << elonSW << " " << elatSW << endl
-                  << elonNW << " " << elatNW << endl
-                  << "EOF" << endl << endl;
-	 //         contents << "# Etree region: " << mEtreeFile->getFileName() << endl
-	 //                  << "psxy -R$REGION -JM$SCALE -W5/255/255/0ta -O -K <<EOF>> plot.ps" << endl
-	 //                  << eNW.getLongitude() << " " << eNW.getLatitude() << endl
-	 //                  << eNE.getLongitude() << " " << eNE.getLatitude() << endl
-	 //                  << eSE.getLongitude() << " " << eSE.getLatitude() << endl
-	 //                  << eSW.getLongitude() << " " << eSW.getLatitude() << endl
-	 //	             << eNW.getLongitude() << " " << eNW.getLatitude() << endl
-	 //                  << "EOF" << endl << endl;
-      }
-#endif
       
       if (a_GlobalUniqueSources[event].size() > 0)
       {
@@ -6492,82 +6447,6 @@ void EW::extractTopographyFromImageFile(string a_topoFileName)
    fclose(fd);
    if (proc_zero())
      printf("Topo image read ok\n");
-}
-
-//-----------------------------------------------------------------------
-void EW::extractTopographyFromEfile(std::string a_topoFileName, std::string a_topoExtFileName,
-				    std::string a_QueryType, float_sw4 a_EFileResolution )
-{
-#ifdef ENABLE_ETREE
-   if (proc_zero())
-      cout << endl <<
-	 "*** extracting TOPOGRAPHY from efile ***"<< endl << endl;
-   cencalvm::query::VMQuery query;
-   cencalvm::storage::ErrorHandler* pErrHandler = query.errorHandler();
-
-// Check user specified file names. Abort if they are not there or not readable
-   VERIFY2( access(a_topoFileName.c_str(), R_OK) == 0,
-	    "No read permission on etree file: " << a_topoFileName);
-   query.filename(a_topoFileName.c_str());
-
-   if (a_topoExtFileName != "NONE")
-   {
-      // User specified, if it is not there, abort
-      VERIFY2(access(a_topoExtFileName.c_str(), R_OK) == 0,
-	      "No read permission on xefile: " << a_topoExtFileName);
-      query.filenameExt(a_topoExtFileName.c_str());
-   }
-   int topLevel = mNumberOfGrids-1;
-   if (a_QueryType == "MAXRES")
-      query.queryType(cencalvm::query::VMQuery::MAXRES);
-   else if (a_QueryType == "FIXEDRES")
-   {
-      query.queryType(cencalvm::query::VMQuery::FIXEDRES);
-      if (a_EFileResolution < 0.)
-	 a_EFileResolution = mGridSize[topLevel];
-      if (proc_zero())
-	 printf("Fixedres resolution = %e\n", a_EFileResolution);
-      query.queryRes(a_EFileResolution);
-   }
-
-   const char* queryKeys[] = {"elevation", "Vp", "Vs"};
-   int payloadSize = 3;
-   query.queryVals(queryKeys, payloadSize);
-
-   double x, y;
-   double lat, lon, elev, elevDelta=25.;
-
-   query.open();
-   double *pVals=new float_sw4[payloadSize];
-   bool verbose = (mVerbose >= 3);
-
-   for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
-      for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j)
-      {
-	 x = (i-1)*mGridSize[topLevel];
-	 y = (j-1)*mGridSize[topLevel];
-	 computeGeographicCoord( x, y, lon, lat ); 
-// initial query for elevation just below sealevel
-	 elev = -25.0;
-	 query.query(&pVals, payloadSize, lon, lat, elev);
-// Make sure the query didn't generated a warning or error
-	 if (pErrHandler->status() != cencalvm::storage::ErrorHandler::OK) 
-	 {
-// If query generated an error, then bail out, otherwise reset status
-	    pErrHandler->resetStatus();
-	    if (verbose)
-	      cout << "WARNING: Etree query failed for initial elevation of topography at grid point (i,j)= ("
-		   << i << ", " << j << ") in curvilinear grid g = " << topLevel << endl
-		   << " lat= " << lat << " lon= " << lon << " query elevation= " << elev << endl;
-	    mTopo(i,j,1) = NO_TOPO;
-	    continue;
-	 } 
-// save the actual topography which will be the starting point for computing smoother the grid topography
-	 mTopo(i,j,1) = pVals[0];
-      } 
-   query.close();
-   delete[] pVals;
-#endif
 }
 
 //-----------------------------------------------------------------------

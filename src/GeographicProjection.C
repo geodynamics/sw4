@@ -62,7 +62,7 @@ GeographicProjection::GeographicProjection( double lon_origin, double lat_origin
    m_az = az*m_deg2rad;
 #endif
 
-#ifdef ENABLE_PROJ_NEW
+#ifdef ENABLE_PROJ_6
    PJ_COORD c, c_out;
    const char *crs_from = "+proj=latlong +datum=NAD83";
    const char *crs_to = projection.c_str();
@@ -88,7 +88,7 @@ GeographicProjection::GeographicProjection( double lon_origin, double lat_origin
 //-----------------------------------------------------------------------
 GeographicProjection::~GeographicProjection(void)
 {
-#ifdef ENABLE_PROJ_NEW
+#ifdef ENABLE_PROJ_6
    if (m_P)
        proj_destroy(m_P);
    if (m_Pgmg)
@@ -114,7 +114,7 @@ void GeographicProjection::computeGeographicCoord(double x, double y,
 
 #endif
 
-#ifdef ENABLE_PROJ_NEW
+#ifdef ENABLE_PROJ_6
    PJ_COORD c, c_out;
    ASSERT(m_P);
 
@@ -151,7 +151,7 @@ void GeographicProjection::computeCartesianCoord(double &x, double &y,
   y =  xlon*cos(m_az) - ylat*sin(m_az);
 #endif
 
-#ifdef ENABLE_PROJ_NEW
+#ifdef ENABLE_PROJ_6
   PJ_COORD c, c_out;
   double xlon, ylat;
 
@@ -178,7 +178,7 @@ void GeographicProjection::computeCartesianCoordGMG(double &x, double &y,
 						 double lon, double lat, char* crs_to )
 {
   x = 0.0, y = 0.0;
-#ifdef ENABLE_PROJ_NEW
+#ifdef ENABLE_PROJ_6
   PJ_COORD c, c_out;
 
   const char *crs_from = "EPSG:4326";

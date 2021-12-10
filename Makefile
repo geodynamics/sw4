@@ -6,12 +6,11 @@
 #
 # This Makefile asumes that the following environmental variables have been assigned,
 # see note below.
-# etree = [yes/no]
 # proj = [yes/no]
 # CXX = C++ compiler
 # FC  = Fortran-77 compiler
 #
-# SW4ROOT = path to third party libraries (used when etree=yes and proj=yes). 
+# SW4ROOT = path to third party libraries (used when proj=yes). 
 # HDF5ROOT = path to hdf5 library and include files (used when hdf5=yes).
 # H5ZROOT = path to H5Z-ZFP library and include files (used when zfp=yes).
 # ZFPROOT = path to ZFP library and include files (used when zfp=yes).
@@ -68,11 +67,11 @@ else
     proj := "yes"
 endif
 
-ifeq ($(proj_new),no)
-    proj_new := "no"
+ifeq ($(proj_6),no)
+    proj_6 := "no"
 else
-    proj_new := "yes"
-    proj     := "no+"
+    proj_6 := "yes"
+    proj   := "no"
 endif
 
 fullpath := $(shell pwd)
@@ -181,21 +180,15 @@ ifdef EXTRA_FORT_FLAGS
    FFLAGS += $(EXTRA_FORT_FLAGS)
 endif
 
-ifeq ($(etree),yes)
-   CXXFLAGS += -DENABLE_ETREE -DENABLE_PROJ4 -I$(SW4INC)
-   linklibs += -L$(SW4LIB) -lcencalvm -lproj -letree
-else ifeq ($(proj_new),yes)
-   CXXFLAGS += -DENABLE_PROJ_NEW -I$(SW4INC)
+ifeq ($(proj_6),yes)
+   CXXFLAGS += -DENABLE_PROJ_6 -I$(SW4INC)
    linklibs += -L$(SW4LIB) -lproj -lsqlite3 -lcurl -lssl -lcrypto
-   etree := "no"
-   proj  := "proj6+"
+   proj  := "proj_6"
 else ifeq ($(proj),yes)
    CXXFLAGS += -DENABLE_PROJ4 -I$(SW4INC)
    linklibs += -L$(SW4LIB) -lproj
    #-lsqlite3 -lcurl -lssl
-   etree := "no"
 else
-   etree := "no"
    proj  := "no"
 endif
 
@@ -266,7 +259,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        parallelStuff.o Source.o MaterialProperty.o MaterialData.o material.o setupRun.o \
        solve.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o TimeSeries.o sacsubc.o \
        SuperGrid.o TestRayleighWave.o MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o \
-       time_functions.o Qspline.o EtreeFile.o MaterialIfile.o GeographicProjection.o Image3D.o ESSI3D.o ESSI3DHDF5.o \
+       time_functions.o Qspline.o MaterialIfile.o GeographicProjection.o Image3D.o ESSI3D.o ESSI3DHDF5.o \
        MaterialVolimagefile.o MaterialRfile.o MaterialSfile.o AnisotropicMaterialBlock.o sacutils.o \
        DataPatches.o addmemvarforcing2.o consintp.o oddIoddJinterp.o evenIoddJinterp.o oddIevenJinterp.o \
        evenIevenJinterp.o CheckPoint.o geodyn.o AllDims.o Patch.o RandomizedMaterial.o \
@@ -313,7 +306,7 @@ FMOBJOPT = $(addprefix $(builddir)/,$(MOBJOPT)) $(addprefix $(builddir)/,$(QUADP
 sw4: $(FSW4) $(FOBJ)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
-	@echo "debug=" $(debug) " profile=" $(profile) " hdf5=" $(hdf5) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT)
+	@echo "debug=" $(debug) " profile=" $(profile) " hdf5=" $(hdf5) " proj=" $(proj) " SW4ROOT"= $(SW4ROOT)
 	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
@@ -327,7 +320,7 @@ sw4: $(FSW4) $(FOBJ)
 sw4mopt: $(FOBJ) $(FMOBJOPT) 
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
-	@echo "debug=" $(debug) " profile=" $(profile) " hdf5=" $(hdf5) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT) 
+	@echo "debug=" $(debug) " profile=" $(profile) " hdf5=" $(hdf5) " proj=" $(proj) " SW4ROOT"= $(SW4ROOT) 
 	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
