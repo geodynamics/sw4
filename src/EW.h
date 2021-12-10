@@ -63,7 +63,6 @@
 
 #include "MaterialData.h"
 #include "AnisotropicMaterial.h"
-#include "EtreeFile.h"
 #include "RandomizedMaterial.h"
 
 #include "SuperGrid.h"
@@ -182,11 +181,11 @@ void processMaterial( char* buffer );
 void processMaterialIfile( char* buffer );
 void processMaterialBlock( char* buffer, int & blockCount );
 void processMaterialPfile(char* buffer);
-void processMaterialEtree(char* buffer);
 void processMaterialVimaterial(char* buffer);
 void processMaterialInvtest(char* buffer);
 void processMaterialRfile(char* buffer);
 void processMaterialSfile(char* buffer);
+void processMaterialGMG(char* buffer);
 void processAnisotropicMaterialBlock( char* buffer, int & ablockCount );
 void processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
 void processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
@@ -445,11 +444,11 @@ void extractTopographyFromGridFile(string a_topoFileName);
 void extractTopographyFromImageFile(string a_topoFileName);
 void extractTopographyFromCartesianFile(string a_topoFileName);
 
-void setEtreeFile(EtreeFile* efile); 
 void extractTopographyFromEfile(string a_topoFileName, string a_topoExtFileName, string a_QueryType,
                                 float_sw4 a_EFileResolution);
 void extractTopographyFromRfile( std::string a_topoFileName );
 void extractTopographyFromSfile( std::string a_topoFileName );
+void extractTopographyFromGMG( std::string a_topoFileName );
 
 void smoothTopography(int maxIter);
 void assignInterfaceSurfaces();
@@ -460,6 +459,7 @@ void extractSurfaceFromGridFile(string a_surfaceFileName);
 void extractSurfaceFromCartesianFile(string a_surfaceFileName);
 
 void computeCartesianCoord(double &x, double &y, double lon, double lat);
+void computeCartesianCoordGMG(double &x, double &y, double lon, double lat, char *crs_to);
 void computeGeographicCoord(double x, double y, double & longitude, double & latitude);
 
 void initializeSystemTime();
@@ -633,7 +633,7 @@ float_sw4 scalarProduct( vector<Sarray>& U, vector<Sarray>& V);
 void cleanUpRefinementLevels();
    //float_sw4 curvilinear_interface_parameter( int gcurv );
 
-enum InputMode { UNDEFINED, Efile, GaussianHill, GridFile, CartesianGrid, TopoImage, Rfile, Sfile};
+enum InputMode { UNDEFINED, Efile, GaussianHill, GridFile, CartesianGrid, TopoImage, Rfile, Sfile, GMG};
 
 // access functions needed by the Image (and perhaps other) classes
 int getNumberOfCartesianGrids(){return mNumberOfCartesianGrids;};
@@ -1405,8 +1405,8 @@ Filter *m_filterobs_ptr;
 int m_opttest;
 
 // 2-D arrays with elevation-values (=-z) as function of horizontal indices
-// mTopo holds the raw topography (according to the "elevation" field in the etree)
-// topoMat holds the highest elevation where the etree returns solid material properties (now local to EtreeFile::readEFile() )
+// mTopo holds the raw topography (according to the "elevation" field in the rfile)
+// topoMat holds the highest elevation where the rfile returns solid material properties 
 // mTopoGridExt holds the smoothed topography which follows the top surface of the curvilinear grid
    Sarray mTopo, mTopoGridExt;
 
@@ -1432,6 +1432,7 @@ Sarray mCcurv; // Anisotropic material with metric (on curvilinear grid).
 vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs, m_Mlcs;
 
 vector<float_sw4> m_curviRefLev; 
+
 
 private:
 void preprocessSources( vector<vector<Source*> >& a_GlobalSources );
@@ -1464,8 +1465,6 @@ vector<AnisotropicMaterial*> m_anisotropic_mtrlblocks;
 // index convention: [0]: low-x, [1]: high-x, [2]: low-y, [3]: high-y; [4]: low-z, [5]: high-z  
 boundaryConditionType mbcGlobalType[6]; // these are the boundary conditions for the global problem
 vector<boundaryConditionType*> m_bcType;  // these are the boundary conditions for each grid on the local processor, with bProcessor conditions
-
-EtreeFile * mEtreeFile;
 
 bool m_doubly_periodic;
 

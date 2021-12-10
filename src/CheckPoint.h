@@ -44,6 +44,9 @@ public:
    void read_checkpoint_hdf5( float_sw4& a_time, int& a_cycle, std::vector<Sarray>& a_Um,
 			      std::vector<Sarray>& a_U, std::vector<Sarray*>& a_AlphaVEm,
 			      std::vector<Sarray*>& a_AlphaVE );
+   void create_hdf5_dset(hid_t fid, char *dset_name, hid_t dtype, hid_t dspace, hid_t dcpl);
+   void write_hdf5_dset(hid_t fid, char *dset_name, hid_t dtype, hid_t mspace, hid_t mydspace, hid_t dxpl, void *buf);
+   void finalize_hdf5();
 #endif
    void setup_sizes();
    bool timeToWrite( float_sw4 time, int cycle, float_sw4 dt );
@@ -65,6 +68,7 @@ protected:
 #ifdef USE_HDF5
    void write_header_hdf5( hid_t fid, float_sw4 a_time, int a_cycle);
    void read_header_hdf5( hid_t fid, float_sw4& a_time, int& a_cycle);
+   hid_t m_es_id;
 #endif
 
    std::string mCheckPointFile;
