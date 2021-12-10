@@ -1958,7 +1958,8 @@ int main(int argc, char **argv)
                  if (GlobalTimeSeries[e].size() > 0 && GlobalTimeSeries[e][0]->getUseHDF5()) {
                    for (int tsi = 0; tsi < GlobalTimeSeries[e].size(); tsi++) 
                      GlobalTimeSeries[e][tsi]->resetHDF5file();
-                   for (int tsi = 0; tsi < GlobalTimeSeries[e].size(); tsi++) 
+                   //                   for (int tsi = 0; tsi < GlobalTimeSeries[e].size(); tsi++) 
+                   int tsi=0;
                       if( GlobalTimeSeries[e][tsi]->myPoint()) 
                          createTimeSeriesHDF5File(GlobalTimeSeries[e], 
                                                   GlobalTimeSeries[e][tsi]->getNsteps(), 
@@ -2114,13 +2115,13 @@ int main(int argc, char **argv)
                  {
                     for (int tsi = 0; tsi < GlobalObservations[e].size(); tsi++) 
                        GlobalObservations[e][tsi]->resetHDF5file();
-                    for (int tsi = 0; tsi < GlobalObservations[e].size(); tsi++) 
-                       if( GlobalObservations[e][tsi]->myPoint() )
-                       {
-                          createTimeSeriesHDF5File( GlobalObservations[e], 
-                                                    GlobalObservations[e][tsi]->getNsteps(), 
-                                                    GlobalObservations[e][tsi]->getDt(), "");
-                       }
+                    int tsi=0;
+                    if( GlobalObservations[e][tsi]->myPoint() )
+                    {
+                       createTimeSeriesHDF5File( GlobalObservations[e], 
+                                                 GlobalObservations[e][tsi]->getNsteps(), 
+                                                 GlobalObservations[e][tsi]->getDt(), "");
+                    }
                     MPI_Barrier(simulation.m_1d_communicator);
                  }
               }
@@ -2139,6 +2140,18 @@ int main(int argc, char **argv)
                                     mopt->get_twin_scale(), freq, e, simulation.getRank());
                  for( int s=0 ; s < GlobalObservations[e].size() ; s++)
                     GlobalObservations[e][s]->writeWindows();
+
+                 //                 for( int s=0 ; s < GlobalObservations[e].size() ; s++)
+                 //                 {
+                 //                    float_sw4 wins[4];
+                 //                    if( GlobalObservations[e][s]->myPoint() )
+                 //                    {
+                 //                       GlobalObservations[e][s]->get_windows(wins);
+                 //                       std::cout << "station " << s<< " name= " << GlobalObservations[e][s]->getStationName() //<< 
+                 //                          " windows " << wins[0] << " " << wins[1] 
+//                                 << " " << wins[2] << " " << wins[3] << std::endl;
+                 //                    }
+                 //                 }
               }
            }
            else

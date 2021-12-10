@@ -176,6 +176,7 @@ void misfitanddudp( TimeSeries* observed, TimeSeries* dudp,
 void add( TimeSeries& A, TimeSeries& B, double wghA, double wghB );
 void writeWindows( string suffix="" );
 void readWindows();
+void get_windows( float_sw4 wins[4] );
 
 private:   
 TimeSeries();

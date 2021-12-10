@@ -238,6 +238,9 @@ void RandomizedMaterial::assign_perturbation( int g, Sarray& pert, Sarray& cs,
 {
    if( m_zmax > zmin && zmax > m_zmin )
    {
+      float_sw4 amp=1;
+      if( rho )
+         amp = m_rhoamplitude;
       bool curvilinear = g >= mEW->mNumberOfCartesianGrids;
       // Interpolate to sw4 grid
       for( int k=mEW->m_kStartInt[g] ; k <= mEW->m_kEndInt[g] ; k++ )
@@ -263,20 +266,20 @@ void RandomizedMaterial::assign_perturbation( int g, Sarray& pert, Sarray& cs,
 					    (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp)  + wghi*mRndMaterial(ip+1,jp+1,kp))) +
 		     (wghk)*((1-wghj)*((1-wghi)*mRndMaterial(ip,jp,  kp+1)+ wghi*mRndMaterial(ip+1,jp,  kp+1))+
 			     (wghj) *((1-wghi)*mRndMaterial(ip,jp+1,kp+1)+ wghi*mRndMaterial(ip+1,jp+1,kp+1)));
-                  if( rho )
-                     rndpert = 1+m_rhoamplitude*(rndpert-1);
+                  //                  if( rho )
+                  //                     rndpert = 1+m_rhoamplitude*(rndpert-1);
                   if( m_vsmin <= cs(i,j,k) && cs(i,j,k) <= m_vsmax )
-                     pert(i,j,k) = rndpert; 
+                     pert(i,j,k) = 1+amp*(rndpert-1); 
 	       }
 	       else if( ip >= mRndMaterial.m_ib && ip <= mRndMaterial.m_ie &&
 			jp >= mRndMaterial.m_jb && jp <= mRndMaterial.m_je &&
 			kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke )
 	       {
 		  float_sw4 rndpert = mRndMaterial(ip,jp,kp);
-                  if( rho )
-                     rndpert = 1+m_rhoamplitude*(rndpert-1);
+                  //                  //                  if( rho )
+                  //                     rndpert = 1+m_rhoamplitude*(rndpert-1);
                   if( m_vsmin <= cs(i,j,k) && cs(i,j,k) <= m_vsmax )
-                     pert(i,j,k) = rndpert;
+                     pert(i,j,k) = 1 + amp*(rndpert-1);
 	       }
 	       else
 		  CHECK_INPUT(false,"ERROR: index " << ip << " " << jp << " " << kp << " not in material array bounds " <<
@@ -309,7 +312,11 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g,
       read(fd,&m_seed,sizeof(unsigned int));
       close(fd);
    }
-
+   else
+   {
+  // make user input seed different on different processors
+      m_seed += mEW->getRank()*11;
+   }
 // 1. Generate Fourier modes and setup FFTW plan 
 
    get_fourier_modes( uc, n1, ib1, n1g, n2g, n3g, Lx, Ly, Lz, hurst, m_seed );

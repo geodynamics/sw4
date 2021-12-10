@@ -494,16 +494,16 @@ void TimeSeries::writeWindows( string suffix )
         if( grp >= 0 )
         {
            double windows[4];
-           windows[0] = static_cast<float>(m_winL);
-           windows[1] = static_cast<float>(m_winR);
-           windows[2] = static_cast<float>(m_winL2);
-           windows[3] = static_cast<float>(m_winR2);
-           hsize_t nelements=4;
-           hid_t data_space = H5Screate_simple(1, &nelements, NULL);
-           int ret = createWriteAttr( grp, "WINDOWS", H5T_NATIVE_DOUBLE, data_space, windows );
-           if( ret < 0 )
+           windows[0] = m_winL;
+           windows[1] = m_winR;
+           windows[2] = m_winL2;
+           windows[3] = m_winR2;
+           //           hsize_t nelements=4;
+           //           hid_t data_space = H5Screate_simple(1, &nelements, NULL);
+           //           int ret = createWriteAttr( grp, "WINDOWS", H5T_NATIVE_DOUBLE, data_space, windows );
+           //           if( ret < 0 )
            {
-             ret = openWriteAttr(grp, "WINDOWS", H5T_NATIVE_DOUBLE, windows);
+             int ret = openWriteAttr(grp, "WINDOWS", H5T_NATIVE_DOUBLE, windows);
              if( ret < 0 )
                 std::cout << "TimeSeries::addWindows, Error could not create/open data space" << std::endl;
            }
@@ -3016,6 +3016,15 @@ void TimeSeries::set_window( float_sw4 winl, float_sw4 winr )
    m_use_win = true;
    m_winL = winl;
    m_winR = winr;
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::get_windows( float_sw4 win[4] )
+{
+   win[0] = m_winL;
+   win[1] = m_winR;
+   win[2] = m_winL2;
+   win[3] = m_winR2;
 }
 
 //-----------------------------------------------------------------------

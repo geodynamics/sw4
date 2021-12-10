@@ -333,6 +333,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     fflush(stdout);
   }
 
+
   if( access( filename.c_str(), F_OK ) != -1) {
     // if the file exists, move it to a .bak before writing
     std::string bak;
@@ -439,6 +440,8 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
 
     // TODO: Location, no value to write now
     createAttr(grp, "LOC", H5T_NATIVE_INT, attr_space1);
+
+    createAttr(grp, "WINDOWS", H5T_NATIVE_DOUBLE, attr_space4);
 
     xyzcomponent = TimeSeries[ts]->getXYZcomponent();
     if( !xyzcomponent )
