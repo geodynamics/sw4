@@ -513,6 +513,12 @@ void forall3async(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
   // hipStreamSynchronize(0);
   ////std::cout<<"Done\n"<<std::flush;
 }
+template <int N, typename Tag, typename T1, typename T2, typename T3,
+          typename LoopBody>
+void forall3(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
+forall3async<N, Tag>(t, irange, jrange, krange, body);
+  hipStreamSynchronize(0);
+}
 
 template <int WGS, int OCC, typename Tag, typename T1, typename T2, typename T3,
           typename LoopBody>

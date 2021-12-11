@@ -35,6 +35,7 @@
 
 //-----------------------------------------------------------------------
 void EW::convert_material_to_mulambda() {
+SW4_MARK_FUNCTION;
   for (int g = 0; g < mNumberOfGrids; g++) {
     // On input, we have stored cs in MU, cp in Lambda
     // use mu = rho*cs*cs and lambda = rho*cp*cp  - 2*mu
@@ -588,6 +589,7 @@ float_sw4 EW::localMaxVpOverVs() {
 
 //-----------------------------------------------------------------------
 void EW::extrapolateInXY(vector<Sarray>& field) {
+SW4_MARK_FUNCTION;
   for (int g = 0; g < mNumberOfGrids; g++) {
     if (m_iStartInt[g] == 1)
 #pragma omp parallel for
@@ -625,6 +627,7 @@ void EW::extrapolateInXY(vector<Sarray>& field) {
 
 //-----------------------------------------------------------------------
 void EW::extrapolateInZ(int g, Sarray& field, bool lowk, bool highk) {
+SW4_MARK_FUNCTION;
   if (lowk)
     for (int k = m_kStart[g]; k < 1; k++)
       for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)

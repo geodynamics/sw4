@@ -1002,7 +1002,7 @@ void EW::set_materials()
           "mNumberOfCartesianGrids=%i\n",
           mMaterialExtrapolate, mNumberOfCartesianGrids);
     }
-
+   SW4_MARK_BEGIN("SetMat::Section 1");
     if (mMaterialExtrapolate > 0 && mNumberOfCartesianGrids > 1) {
       int kFrom;
       for (g = 0; g < mNumberOfCartesianGrids; g++) {
@@ -1070,7 +1070,7 @@ void EW::set_materials()
 
       }  // end for g
     }    // end if mMaterialExtrapolate > 0 ...
-
+SW4_MARK_END("SetMat::Section 1");
     // tmp
     //    printf("\n useVelocityThresholds=%i vpMin=%e vsMin=%e\n\n",
     //    m_useVelocityThresholds, m_vpMin, m_vsMin);
@@ -1087,6 +1087,7 @@ void EW::set_materials()
       extrapolateInXY(mQp);
     }
     //    cout << "min rho after " << mRho[0].minimum() << endl;
+SW4_MARK_BEGIN("SetMat::Section 2");
     if (m_use_attenuation && m_qmultiplier != 1) {
       for (int g = 0; g < mNumberOfGrids; g++)
 #pragma omp parallel for
@@ -1109,7 +1110,9 @@ void EW::set_materials()
               if (mLambda[g](i, j, k) < m_vpMin) mLambda[g](i, j, k) = m_vpMin;
             }
     }
+SW4_MARK_END("SetMat::Section 2");
 
+SW4_MARK_BEGIN("SetMat::RANDOMIZE");
     // add random perturbation
     //    cout << "randomize = " << m_randomize << " randblsize= " <<
     //    m_random_blocks.size() << endl;
@@ -1147,6 +1150,7 @@ void EW::set_materials()
         if (m_randomize_density) communicate_array(mRho[g], g);
       }
     }
+SW4_MARK_END("SetMat::RANDOMIZE");
     convert_material_to_mulambda();
 
     check_for_nan(mMu, 1, "mu ");
