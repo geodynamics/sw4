@@ -332,7 +332,6 @@ void CheckPoint::write_checkpoint(float_sw4 a_time, int a_cycle,
   int hsize;
   int fid = -1;
   if (m_parallel_io[0]->proc_zero()) {
-
     time_t now;
     time(&now);
     printf("Start writing checkpoint at %s\n", ctime(&now));

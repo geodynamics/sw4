@@ -378,9 +378,8 @@ void GridGeneratorGaussianHill::generate_grid_and_met_old_gh(
 
 //-----------------------------------------------------------------------
 int GridGeneratorGaussianHill::interpolate_topography(EW* a_ew, float_sw4 x,
-                                                       float_sw4 y,
-                                                       float_sw4& z,
-                                                       Sarray& topo) {
+                                                      float_sw4 y, float_sw4& z,
+                                                      Sarray& topo) {
   //   float_sw4 h = a_ew->mGridSize[a_ew->mNumberOfGrids-1];
   //   float_sw4 x = (q-1)*h;
   //   float_sw4 y = (r-1)*h;

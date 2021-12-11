@@ -289,11 +289,12 @@ void EW::setup2D_MPICommunications() {
 #ifdef ENABLE_CUDA
   void* ptr;
   if (cudaMalloc(&ptr, global_variables.buffer_size * 8) != cudaSuccess) {
-    std::cerr << "cudaMalloc failed on line "<<__LINE__<<"of parallelStuff.C\n";
+    std::cerr << "cudaMalloc failed on line " << __LINE__
+              << "of parallelStuff.C\n";
     abort();
   } else {
     std::cout << "Device buffer of size " << global_variables.buffer_size * 8
-              << " bytes allocated in 2D on "<<__LINE__<<"\n";
+              << " bytes allocated in 2D on " << __LINE__ << "\n";
     global_variables.device_buffer = (float_sw4*)ptr;
   }
 #endif
@@ -511,7 +512,6 @@ void EW::setupMPICommunications() {
     global_variables.device_buffer = (float_sw4*)ptr;
   }
 #endif
-
 
 #endif
 #endif

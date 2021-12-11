@@ -894,15 +894,13 @@ void EW::setupSBPCoeff() {
 }
 
 //-----------------------------------------------------------------------
-void EW::perturb_vels( Sarray& cs, Sarray& cp, Sarray& rndpert ) 
-{
-   for( int k=cs.m_kb ; k <= cs.m_ke ; k++ )
-      for( int j=cs.m_jb ; j <= cs.m_je ; j++ )
-         for( int i=cs.m_ib ; i <= cs.m_ie ; i++ )
-         {
-            cs(i,j,k) *= rndpert(i,j,k);
-            cp(i,j,k) *= rndpert(i,j,k);
-         }
+void EW::perturb_vels(Sarray &cs, Sarray &cp, Sarray &rndpert) {
+  for (int k = cs.m_kb; k <= cs.m_ke; k++)
+    for (int j = cs.m_jb; j <= cs.m_je; j++)
+      for (int i = cs.m_ib; i <= cs.m_ie; i++) {
+        cs(i, j, k) *= rndpert(i, j, k);
+        cp(i, j, k) *= rndpert(i, j, k);
+      }
 }
 
 //-----------------------------------------------------------------------
@@ -1132,23 +1130,21 @@ void EW::set_materials()
         Sarray rndpert(mMu[g]);
         rndpert.set_value(1.0);
         for (unsigned int b = 0; b < m_random_blocks.size(); b++)
-          m_random_blocks[b]->assign_perturbation( g, rndpert,  mMu[g], mGridSize[g],
-						   zmin, zmax, false);
-        perturb_vels( mMu[g], mLambda[g], rndpert );
+          m_random_blocks[b]->assign_perturbation(
+              g, rndpert, mMu[g], mGridSize[g], zmin, zmax, false);
+        perturb_vels(mMu[g], mLambda[g], rndpert);
 
-	if( m_randomize_density )
-          {
-             rndpert.set_value(1.0); 
-             for( unsigned int b=0 ; b < m_random_blocks.size() ; b++ )
-                m_random_blocks[b]->assign_perturbation( g, rndpert,  mMu[g], mGridSize[g],
-                                                         zmin, zmax, true );
-             perturb_rho( mRho[g], rndpert );
-          }
-	
+        if (m_randomize_density) {
+          rndpert.set_value(1.0);
+          for (unsigned int b = 0; b < m_random_blocks.size(); b++)
+            m_random_blocks[b]->assign_perturbation(
+                g, rndpert, mMu[g], mGridSize[g], zmin, zmax, true);
+          perturb_rho(mRho[g], rndpert);
+        }
+
         communicate_array_host(mMu[g], g);
         communicate_array_host(mLambda[g], g);
-	if( m_randomize_density )
-	  communicate_array( mRho[g], g );
+        if (m_randomize_density) communicate_array(mRho[g], g);
       }
     }
     convert_material_to_mulambda();
@@ -2648,12 +2644,10 @@ void EW::checkpoint_twilight_test(vector<Sarray> &Um, vector<Sarray> &U,
   }  // end if twilight testing
 }
 //-----------------------------------------------------------------------
-void EW::perturb_rho( Sarray& rho, Sarray& rndpert ) 
-{
-   for( int k=rho.m_kb ; k <= rho.m_ke ; k++ )
-      for( int j=rho.m_jb ; j <= rho.m_je ; j++ )
-         for( int i=rho.m_ib ; i <= rho.m_ie ; i++ )
-         {
-            rho(i,j,k) *= rndpert(i,j,k);
-         }
+void EW::perturb_rho(Sarray &rho, Sarray &rndpert) {
+  for (int k = rho.m_kb; k <= rho.m_ke; k++)
+    for (int j = rho.m_jb; j <= rho.m_je; j++)
+      for (int i = rho.m_ib; i <= rho.m_ie; i++) {
+        rho(i, j, k) *= rndpert(i, j, k);
+      }
 }

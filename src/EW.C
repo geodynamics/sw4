@@ -610,7 +610,7 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
       m_do_linesearch(true),
       //  m_utc0set(false),
       //  m_utc0isrefevent(false),
-  m_events_parallel(false),
+      m_events_parallel(false),
       m_opttest(0),
       mEtreeFile(NULL),
       m_perturb(0),
@@ -620,7 +620,7 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
       m_pervar(1),
       m_qmultiplier(1),
       m_randomize(false),
-  m_randomize_density(false),
+      m_randomize_density(false),
       m_anisotropic(false),
       m_croutines(true),
       NO_TOPO(1e38),
@@ -1212,10 +1212,11 @@ bool EW::getDepth(float_sw4 x, float_sw4 y, float_sw4 z, float_sw4& depth) {
     // // evaluate elevation of topography on the grid (smoothed topo)
     success = true;
     int ret = m_gridGenerator->interpolate_topography(this, x, y, zMinTilde,
-                                                 mTopoGridExt);
+                                                      mTopoGridExt);
     if (ret < 0) {
       cerr << "ERROR: getDepth: Unable to evaluate topography for x=" << x
-           << " y= " << y << " on proc # " << getRank() << ", ret=" << ret << endl;
+           << " y= " << y << " on proc # " << getRank() << ", ret=" << ret
+           << endl;
       //            cerr << "q=" << q << " r=" << r << " qMin=" << qMin << "
       //            qMax=" << qMax << " rMin=" << rMin << " rMax=" << rMax <<
       //            endl;

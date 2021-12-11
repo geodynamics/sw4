@@ -1,8 +1,9 @@
 #ifndef SW4_ALLDIMS_H
 #define SW4_ALLDIMS_H
 
-#include <sys/types.h>
 #include <mpi.h>
+#include <sys/types.h>
+
 #include <vector>
 
 class AllDims {
@@ -21,11 +22,11 @@ class AllDims {
   size_t m_fftw_alloc_local;
   MPI_Comm m_communicator;
 
-  AllDims( int nproci, int nprocj, int nprock, int ibg, int ieg, 
-	    int jbg, int jeg, int kbg, int keg, int nghost, int npad, MPI_Comm ewcomm );
+  AllDims(int nproci, int nprocj, int nprock, int ibg, int ieg, int jbg,
+          int jeg, int kbg, int keg, int nghost, int npad, MPI_Comm ewcomm);
 
-AllDims( int nprocs, int ibg, int ieg, int jbg, int jeg,
-	    int kbg, int keg, int nghost, MPI_Comm ewcomm );
+  AllDims(int nprocs, int ibg, int ieg, int jbg, int jeg, int kbg, int keg,
+          int nghost, MPI_Comm ewcomm);
 
   AllDims(int nproci, int nprocj, int nprock, int ibg, int ieg, int jbg,
           int jeg, int kbg, int keg, int nghost, int npad);

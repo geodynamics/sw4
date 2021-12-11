@@ -520,10 +520,9 @@ void forall3async(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
 template <int N, typename Tag, typename T1, typename T2, typename T3,
           typename LoopBody>
 void forall3(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
-  forall3async<N,Tag>(t,irange,jrange,krange,body);
+  forall3async<N, Tag>(t, irange, jrange, krange, body);
   cudaStreamSynchronize(0);
-	  }
-  
+}
 
 // The multiforall for kernel fusion
 template <typename T, typename F0, typename F1, typename F2, typename F3>
@@ -628,63 +627,64 @@ void gmforall3async(T &start, T &end, LoopBody &&body, Args... args) {
 }
 
 // forll3asyncV
-template <int WGS,int OCC, typename Tag, typename Func>
+template <int WGS, int OCC, typename Tag, typename Func>
 __launch_bounds__(WGS) __global__
-void forall3kernelV(Tag t, const int start0, const int N0, const int start1,
-                       const int N1, const int start2, const int N2, Func f) {
+    void forall3kernelV(Tag t, const int start0, const int N0, const int start1,
+                        const int N1, const int start2, const int N2, Func f) {
   int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
   int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
   int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
   if ((tid0 < N0) && (tid1 < N1) && (tid2 < N2)) f(t, tid0, tid1, tid2);
 }
 
-template <int WGS,int OCC, typename Tag, typename T1, typename T2, typename T3,
+template <int WGS, int OCC, typename Tag, typename T1, typename T2, typename T3,
           typename LoopBody>
-void forall3asyncV(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
+void forall3asyncV(Tag &t, T1 &irange, T2 &jrange, T3 &krange,
+                   LoopBody &&body) {
   if (irange.invalid || jrange.invalid || krange.invalid) return;
   dim3 tpb(irange.tpb, jrange.tpb, krange.tpb);
   dim3 blocks(irange.blocks, jrange.blocks, krange.blocks);
-                                         forall3kernelV<WGS,OCC><<<blocks, tpb>>>( t, irange.start,
-                                                                    irange.end, jrange.start, jrange.end, krange.start,
-                                                                                         krange.end, body);
-                                                                                             }
+  forall3kernelV<WGS, OCC><<<blocks, tpb>>>(t, irange.start, irange.end,
+                                            jrange.start, jrange.end,
+                                            krange.start, krange.end, body);
+}
 
 // The Split Fuse ( SF) loop functions
 #ifdef SW4_USE_SFK
 template <int N, typename Tag, typename... Func>
 __global__ void forall3kernelSF(Tag t, const int start0, const int N0,
-                              const int start1, const int N1, const int start2,
-                              const int N2, Func... f) {
-
-const int STORE=5;
+                                const int start1, const int N1,
+                                const int start2, const int N2, Func... f) {
+  const int STORE = 5;
 // NOTE: Shared memory is slightly slower, probably due to cache reduction
 //#define USE_SHARED_MEMORY 1
 #ifdef USE_SHARED_MEMORY
- auto off = (threadIdx.x+blockDim.x*threadIdx.y+blockDim.x*blockDim.y*threadIdx.z)*STORE;
-  __shared__ double sma[512*STORE];
-  double *carray = sma+off;
+  auto off = (threadIdx.x + blockDim.x * threadIdx.y +
+              blockDim.x * blockDim.y * threadIdx.z) *
+             STORE;
+  __shared__ double sma[512 * STORE];
+  double *carray = sma + off;
 #else
   double carray[STORE];
 
 #endif
 
-
-  //printf("%d \n",off);
+  // printf("%d \n",off);
   int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
   int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
   int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
   if ((tid0 < N0) && (tid1 < N1) && (tid2 < N2)) {
-    (f(t, carray,tid0, tid1, tid2),...);
+    (f(t, carray, tid0, tid1, tid2), ...);
   }
 }
 
 template <int N, typename Tag, typename T1, typename T2, typename T3,
-  typename... LoopBodies>
-  void forall3asyncSF(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBodies &&... bodies) {
+          typename... LoopBodies>
+void forall3asyncSF(Tag &t, T1 &irange, T2 &jrange, T3 &krange,
+                    LoopBodies &&...bodies) {
   if (irange.invalid || jrange.invalid || krange.invalid) return;
   dim3 tpb(irange.tpb, jrange.tpb, krange.tpb);
   dim3 blocks(irange.blocks, jrange.blocks, krange.blocks);
-
 
   // cudaEvent_t start, stop1,stop2,stop3;
   // cudaEventCreate(&start);
@@ -694,25 +694,28 @@ template <int N, typename Tag, typename T1, typename T2, typename T3,
   // bool TimeKernels=false;
   // if (TimeKernels){
   // insertEvent(start);
-  // // Launch each body i a separate kernel. Gives incorrect results due to shared memory not persisting between kernels
-  // (forall3kernelSM<N><<<blocks, tpb>>>(t, irange.start, irange.end, jrange.start,
-  // 				     jrange.end, krange.start, krange.end, bodies),...);
+  // // Launch each body i a separate kernel. Gives incorrect results due to
+  // shared memory not persisting between kernels (forall3kernelSM<N><<<blocks,
+  // tpb>>>(t, irange.start, irange.end, jrange.start, 				     jrange.end, krange.start,
+  // krange.end, bodies),...);
   // }
   // insertEvent(stop1);
   // Launch all bodies inside 1 kernel. Regs use is 6 more than biggest kernels
   forall3kernelSF<N><<<blocks, tpb>>>(t, irange.start, irange.end, jrange.start,
-				     jrange.end, krange.start, krange.end, bodies...);
+                                      jrange.end, krange.start, krange.end,
+                                      bodies...);
   // insertEvent(stop2);
 
   // float ms;
   // if (TimeKernels) {
   //   ms = timeEvent(start,stop1);
-  //   std::cout << "Kernel (Multiple)"<<t.value<<" runtime " << ms << " ms Best = "<<t.best<<" factor = "<<int(round(ms/t.best))<<" \n";
+  //   std::cout << "Kernel (Multiple)"<<t.value<<" runtime " << ms << " ms Best
+  //   = "<<t.best<<" factor = "<<int(round(ms/t.best))<<" \n";
   // }
   // ms = timeEvent(stop1,stop2);
-  // std::cout << "Kernel (Single)"<<t.value<<" runtime " << ms << " ms Best = "<<t.best<<" factor = "<<int(round(ms/t.best))<<" \n";
-
+  // std::cout << "Kernel (Single)"<<t.value<<" runtime " << ms << " ms Best =
+  // "<<t.best<<" factor = "<<int(round(ms/t.best))<<" \n";
 }
-#endif // #ifdef SW4_USE_SFK
+#endif  // #ifdef SW4_USE_SFK
 
 #endif  // Guards

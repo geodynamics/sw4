@@ -30,10 +30,9 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+#include "ESSI3DHDF5.h"
 #include "EW.h"
 #include "mpi.h"
-
-#include "ESSI3DHDF5.h"
 
 #ifdef USE_ZFP
 #include "H5Zzfp_lib.h"
@@ -526,8 +525,9 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
     time(&now);
     write_time = MPI_Wtime() - write_time_start;
     if (myRank == 0) {
-      printf("ssioutput cycle=%d, comp=%d, write size=%.2fMB, write time=%f, %s",
-              cycle, comp, write_size / 1048576.0, write_time, ctime(&now));
+      printf(
+          "ssioutput cycle=%d, comp=%d, write size=%.2fMB, write time=%f, %s",
+          cycle, comp, write_size / 1048576.0, write_time, ctime(&now));
       fflush(stdout);
     }
   }

@@ -30,16 +30,17 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
-#include "mpi.h"
-
 #include <fcntl.h>
 #include <unistd.h>
+
 #include <cstring>
 #include <ctime>
+
 #include "ESSI3D.h"
 #include "ESSI3DHDF5.h"
 #include "EW.h"
 #include "Require.h"
+#include "mpi.h"
 
 int ESSI3D::mPreceedZeros = 0;
 int ESSI3D::mNumberOfTimeSteps = -1;
@@ -143,8 +144,7 @@ void ESSI3D::setup() {
 
   // In k direction, guestimate the index for the requested depth
   int kmax = (int)ceil(mDepth / mEW->mGridSize[g]) + 1;
-  if (mDepth == 1)
-    kmax = 1;
+  if (mDepth == 1) kmax = 1;
   mGlobalDims[4] = mEW->m_kStartInt[g];
   mGlobalDims[5] = min(kmax, mEW->m_kEndInt[g]);
   if (m_ihavearray) {
@@ -223,8 +223,8 @@ void ESSI3D::update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
     open_vel_file(a_cycle, a_path, a_time, a_Z);
 
   if (m_dumpInterval != -1) {
-    if (a_cycle != 0 && a_cycle % m_dumpInterval != 0 && 
-        a_cycle != mNumberOfTimeSteps) 
+    if (a_cycle != 0 && a_cycle % m_dumpInterval != 0 &&
+        a_cycle != mNumberOfTimeSteps)
       return;
     a_cycle /= m_dumpInterval;
   }
@@ -364,7 +364,9 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
 
   double hdf5_topo_time = MPI_Wtime();
   if (m_rank == 0)
-    cout << "Create and write topo time " << MPI_Wtime() - hdf5_topo_time << endl;;
+    cout << "Create and write topo time " << MPI_Wtime() - hdf5_topo_time
+         << endl;
+  ;
 
   if (m_dumpInterval > 0) {
     int nstep = (int)ceil(m_ntimestep / m_dumpInterval);
@@ -386,7 +388,8 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
 
   double hdf5_vel_time = MPI_Wtime();
   if (m_rank == 0)
-    cout << "Create vel time " << hdf5_vel_time - hdf5_topo_time << endl;;
+    cout << "Create vel time " << hdf5_vel_time - hdf5_topo_time << endl;
+  ;
 
   m_hdf5_time += (hdf5_vel_time - hdf5_time);
 

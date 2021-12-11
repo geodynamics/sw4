@@ -820,7 +820,7 @@ void EW::buildGaussianHillTopography(float_sw4 amp, float_sw4 Lx, float_sw4 Ly,
 
 //-----------------------------------------------------------------------
 int EW::interpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0,
-                                bool smoothed) {
+                               bool smoothed) {
   // Interpolate the smoothed or raw topography
   //
   // if (q,r) is on this processor (need a 2x2 interval in (i,j)-index space:

@@ -31,6 +31,7 @@
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 #include "EW.h"
+#include "caliper.h"
 
 //-----------------------------------------------------------------------
 void EW::convert_material_to_mulambda() {
@@ -702,6 +703,7 @@ void EW::extrapolateInZvector(int g, Sarray& field, bool lowk, bool highk) {
 
 //--------- Material properties for MR ---------------
 void EW::setup_MR_coefficients() {
+  SW4_MARK_FUNCTION;
 // stretching on the fine side
 #define str_x(i) m_sg_str_x[g][(i - m_iStart[g])]
 #define str_y(j) m_sg_str_y[g][(j - m_jStart[g])]

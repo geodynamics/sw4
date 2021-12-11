@@ -45,7 +45,7 @@ class GridGenerator {
                                  float_sw4& zrr, float_sw4& zrs,
                                  float_sw4& zss);
   virtual int interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
-                                      float_sw4& z, Sarray& topo);
+                                     float_sw4& z, Sarray& topo);
   virtual bool exact_metric(EW* a_ew, int g, Sarray& a_jac, Sarray& a_met);
   virtual void fill_topo(Sarray& topo, float_sw4 h);
 };

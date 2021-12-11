@@ -375,8 +375,9 @@ using INJ_POL2_ASYNC = RAJA::KernelPolicy<RAJA::statement::HipKernelAsync<
 
 // CurvilinearInterface2::communicate_array
 
-using CA_POL =
-    RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<512,RAJA::statement::Tile<
+using CA_POL = RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<
+    512,
+    RAJA::statement::Tile<
         0, RAJA::tile_fixed<8>, RAJA::hip_block_z_loop,
         RAJA::statement::Tile<
             1, RAJA::tile_fixed<8>, RAJA::hip_block_y_loop,

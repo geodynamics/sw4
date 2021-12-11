@@ -428,65 +428,72 @@ void Source::get_parameters(float_sw4 x[11]) const {
 void Source::setFrequency(float_sw4 freq) { mFreq = freq; }
 
 //-----------------------------------------------------------------------
-void Source::correct_Z_level( EW *a_ew )
-{
-// this routine 
-// 1. calculates the z-coordinate of the topography right above the source and saves it in m_zTopo
-// 2. if m_relativeToTopography == true, it adds m_zTopo to mZ0
-// 3. checks if the source is inside the computational domain. If not, set mIgnore=true
+void Source::correct_Z_level(EW* a_ew) {
+  // this routine
+  // 1. calculates the z-coordinate of the topography right above the source and
+  // saves it in m_zTopo
+  // 2. if m_relativeToTopography == true, it adds m_zTopo to mZ0
+  // 3. checks if the source is inside the computational domain. If not, set
+  // mIgnore=true
 
-// tmp
-//   printf("Entering correct_Z_level()\n");
+  // tmp
+  //   printf("Entering correct_Z_level()\n");
 
-  int i,j,k,g;
-  int success = a_ew->computeNearestGridPoint2( i, j, k, g, mX0, mY0, mZ0 );
+  int i, j, k, g;
+  int success = a_ew->computeNearestGridPoint2(i, j, k, g, mX0, mY0, mZ0);
   m_myPoint = success && a_ew->interior_point_in_proc(i, j, g);
 
-// The following is a safety check to make sure only one processor considers this (i,j) to be interior
-// We could remove this check if we were certain that interior_point_in_proc() never lies
+  // The following is a safety check to make sure only one processor considers
+  // this (i,j) to be interior We could remove this check if we were certain
+  // that interior_point_in_proc() never lies
   int iwrite = m_myPoint ? 1 : 0;
   int size;
-  MPI_Comm_size(MPI_COMM_WORLD,&size);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
   std::vector<int> whoIsOne(size);
   int counter = 0;
-  MPI_Allgather(&iwrite, 1, MPI_INT, &whoIsOne[0], 1, MPI_INT,MPI_COMM_WORLD);
+  MPI_Allgather(&iwrite, 1, MPI_INT, &whoIsOne[0], 1, MPI_INT, MPI_COMM_WORLD);
   for (unsigned int p = 0; p < whoIsOne.size(); ++p)
-     if (whoIsOne[p] == 1)
-     {
-        counter++;
-     }
-  REQUIRE2(counter == 1,"Source error: the nearest grid point should only be interior to one proc, but counter = " << counter <<
-	   " for source station at (x,y,depth)=" <<  mX0 << ", " << mY0 << ", "  << mZ0 );
-  
-  if( !a_ew->topographyExists() )
-  {
+    if (whoIsOne[p] == 1) {
+      counter++;
+    }
+  REQUIRE2(counter == 1,
+           "Source error: the nearest grid point should only be interior to "
+           "one proc, but counter = "
+               << counter << " for source station at (x,y,depth)=" << mX0
+               << ", " << mY0 << ", " << mZ0);
+
+  if (!a_ew->topographyExists()) {
     // This is the easy case w/o topography
     m_zTopo = 0.0;
+  } else {
+    // With topography, compute z-coordinate at topography directly above the
+    // source
+    float_sw4 zTopoLocal;
+    if (a_ew->m_gridGenerator->interpolate_topography(
+            a_ew, mX0, mY0, zTopoLocal, a_ew->mTopoGridExt) < 0)
+      zTopoLocal = -1e38;
+    MPI_Allreduce(&zTopoLocal, &m_zTopo, 1, a_ew->m_mpifloat, MPI_MAX,
+                  MPI_COMM_WORLD);
+    if (m_zRelativeToTopography) {
+      // If location was specified with topodepth, correct z-level
+      mZ0 += m_zTopo;
+      m_zRelativeToTopography = false;  // set to false so the correction isn't
+                                        // repeated (for whatever reason)
+    }
   }
-  else
-  {
-   // With topography, compute z-coordinate at topography directly above the source
-     float_sw4 zTopoLocal;
-     if (a_ew->m_gridGenerator->interpolate_topography(a_ew, mX0, mY0, zTopoLocal, a_ew->mTopoGridExt) < 0)
-        zTopoLocal =-1e38;
-     MPI_Allreduce(&zTopoLocal,&m_zTopo,1,a_ew->m_mpifloat,MPI_MAX,MPI_COMM_WORLD);
-     if (m_zRelativeToTopography)
-     {
-// If location was specified with topodepth, correct z-level  
-        mZ0 += m_zTopo;
-        m_zRelativeToTopography = false; // set to false so the correction isn't repeated (for whatever reason)
-     }
-  }
-  
-// Make sure the station is below or on the topography (z is positive downwards)
-  if ( mZ0 < m_zTopo - 1.0e-9)// allow for a little roundoff
+
+  // Make sure the station is below or on the topography (z is positive
+  // downwards)
+  if (mZ0 < m_zTopo - 1.0e-9)  // allow for a little roundoff
   {
     mIgnore = true;
-    printf("Ignoring Source at X=%g, Y=%g, Z=%g, because it is above the topography z=%g\n", 
-	   mX0,  mY0, mZ0, m_zTopo);
+    printf(
+        "Ignoring Source at X=%g, Y=%g, Z=%g, because it is above the "
+        "topography z=%g\n",
+        mX0, mY0, mZ0, m_zTopo);
   }
-// tmp
-//   printf("Exiting correct_Z_level()\n");
+  // tmp
+  //   printf("Exiting correct_Z_level()\n");
 }
 
 //-----------------------------------------------------------------------

@@ -405,7 +405,7 @@ void *operator new[](std::size_t size, Space loc) throw() {
     // SW4_CheckDeviceError(cudaMemset(ptr,0,size));
     return ptr;
 #else
-    //std::cerr << " Memory location Managed_temps is not defined\n";
+    // std::cerr << " Memory location Managed_temps is not defined\n";
     return ::operator new(size, Space::Managed);
 #endif
   } else {
@@ -478,7 +478,7 @@ void operator delete(void *ptr, Space loc) throw() {
     auto allocator = rma.getAllocator("UM_pool_temps");
     allocator.deallocate(ptr);
 #else
-    //std::cerr << "Memory location Managed_temps not defined\n";
+    // std::cerr << "Memory location Managed_temps not defined\n";
     SW4_CheckDeviceError(SW4_FREE_MANAGED(ptr));
 #endif
   } else {
@@ -889,7 +889,7 @@ Space GML(const void *ptr) {
 #endif
 #ifdef ENABLE_HIP
 Space GML(const void *ptr) {
-    return Space::Managed;
+  return Space::Managed;
   struct hipPointerAttribute_t attr;
   if (hipPointerGetAttributes(&attr, ptr) == hipErrorInvalidValue) {
     // This shuld go away with Cuda 11
@@ -997,8 +997,8 @@ long long node_mem() {
   long long physMemUsed = memInfo.totalram - memInfo.freeram;
   physMemUsed *= memInfo.mem_unit;
   // std::cerr<<"VM Total = "<<totalVirtualMem/1024/1024.0<<" "<<"VM Used =
-  // "<<virtualMemUsed/1024/1024.0<<" Phys Total = "<<totalPhysMem/1024/1024.0<<"
-  // Phys Used "<<physMemUsed/1024/1024.0<<"\n";
+  // "<<virtualMemUsed/1024/1024.0<<" Phys Total =
+  // "<<totalPhysMem/1024/1024.0<<" Phys Used "<<physMemUsed/1024/1024.0<<"\n";
   return physMemUsed;
 }
 

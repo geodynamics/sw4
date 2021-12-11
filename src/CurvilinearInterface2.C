@@ -634,7 +634,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
     Alpha_f.resize(m_number_mechanisms);
     //      Alpha_c = new Sarray[m_number_mechanisms];
     //      Alpha_f = new Sarray[m_number_mechanisms];
-    //std::cout<<"BRACKET OPEN\n"<<std::flush;
+    // std::cout<<"BRACKET OPEN\n"<<std::flush;
     for (int a = 0; a < m_number_mechanisms; a++) {
       Alpha_f[a].define(3, m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef,
                         Space::Managed_temps);
@@ -643,7 +643,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
       Alpha_f[a].insert_intersection(a_AlphaVE[m_gf][a]);
       Alpha_c[a].insert_intersection(a_AlphaVE[m_gc][a]);
     }
-    //std::cout<<"BRACKET CLOSE\n"<<std::flush;
+    // std::cout<<"BRACKET CLOSE\n"<<std::flush;
   }
   SW4_MARK_END("IMPOSE_IC_1");
   SW4_MARK_BEGIN("IMPOSE_IC_2");
@@ -1442,8 +1442,8 @@ void CurvilinearInterface2::lhs_icstresses_curv(
 #define str_x(i) a_str_x[(i - ifirst)]
 #define str_y(j) a_str_y[(j - jfirst)]
   // std::cout<<" lhs_icstresses_curv 1 "<<a_lhs.norm()<<"
-  // "<<sbop[0]<<"\n"<<std::flush; for(int i=0;i<5;i++) std::cout<<" str["<<i<<"]
-  // = "<<str_x(i+ifirst)<<" "<<str_y(i+jfirst)<<"\n"<<std::flush;
+  // "<<sbop[0]<<"\n"<<std::flush; for(int i=0;i<5;i++) std::cout<<"
+  // str["<<i<<"] = "<<str_x(i+ifirst)<<" "<<str_y(i+jfirst)<<"\n"<<std::flush;
   // #pragma omp parallel for
   //   for (int j = a_lhs.m_jb; j <= a_lhs.m_je; j++)
   // #pragma omp simd

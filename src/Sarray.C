@@ -31,7 +31,6 @@
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 #include <fcntl.h>
-#include "foralls.h"
 #include <unistd.h>
 
 #include <cstdlib>
@@ -41,6 +40,7 @@
 #include "Mspace.h"
 #include "Sarray.h"
 #include "caliper.h"
+#include "foralls.h"
 #include "policies.h"
 using namespace std;
 std::unordered_map<std::string, float_sw4*> Sarray::static_map = {
@@ -53,7 +53,7 @@ bool Sarray::m_corder = false;
 // better way to do this.
 Sarray::Sarray(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
                int kend, const char* file, int line) {
-  //static size_t total = 0;
+  // static size_t total = 0;
   // SW4_MARK_FUNCTION;
   m_nc = nc;
   m_ib = ibeg;
@@ -73,8 +73,8 @@ Sarray::Sarray(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
     if (found != static_map.end())
       m_data = found->second;
     else {
-      //total += m_nc * m_ni * m_nj * m_nk*8;
-      //std::cout<<"NEW MEM "<<ss.str()<<" total = "<<total<<"\n"<<std::flush;
+      // total += m_nc * m_ni * m_nj * m_nk*8;
+      // std::cout<<"NEW MEM "<<ss.str()<<" total = "<<total<<"\n"<<std::flush;
       space = Space::Managed;
       m_data = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
       static_map[ss.str()] = m_data;
@@ -255,7 +255,7 @@ Sarray::Sarray(const Sarray& u, Space space_in) {
   if (space == Space::Managed)
     static_alloc = false;
   else if (space == Space::Managed_temps)
-    static_alloc = false; // Used to be true
+    static_alloc = false;  // Used to be true
   else if (space == Space::Host)
     static_alloc = false;
   else
@@ -406,7 +406,7 @@ void Sarray::define(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
   if (space == Space::Managed)
     static_alloc = false;
   else if (space == Space::Managed_temps)
-    static_alloc = false; // Used to be true
+    static_alloc = false;  // Used to be true
   else if (space == Space::Host)
     static_alloc = false;
   else

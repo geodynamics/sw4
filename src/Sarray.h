@@ -102,7 +102,7 @@ class Sarray {
   ~Sarray() {
 #ifndef SW4_USE_UMPIRE
     if ((m_data != 0) && (!static_alloc)) ::operator delete[](m_data, space);
-    //else std::cout<<"Skipped delete\n"<<std::flush;
+      // else std::cout<<"Skipped delete\n"<<std::flush;
 #else
     if (m_data != 0) {
       if (static_alloc) {

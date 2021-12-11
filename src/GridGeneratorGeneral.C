@@ -159,7 +159,8 @@ void GridGeneratorGeneral::generate_grid_and_met_new(EW* a_ew, int g,
   float_sw4 iNz_real = 1.0 / Nz_real;
   float_sw4 scaleRatio = 0;
   if (g > ncg) {
-    //scaleFact = (m_topo_zmax - a_ew->m_curviRefLev[g - 1 - ncg]) / m_topo_zmax;
+    // scaleFact = (m_topo_zmax - a_ew->m_curviRefLev[g - 1 - ncg]) /
+    // m_topo_zmax;
     scaleRatio = (m_topo_zmax - a_ew->m_curviRefLev[g - 1 - ncg]) /
                  (m_topo_zmax - a_ew->m_curviRefLev[g - ncg]);
   }
@@ -238,11 +239,11 @@ void GridGeneratorGeneral::generate_grid_and_met_new(EW* a_ew, int g,
   //   a_ew->communicate_array( a_z, g );
 
   // Compute metric
-  //int ierr = 0;
+  // int ierr = 0;
   // Error code returned but not checked. PBUGS ? July 12 2021
   metric_ci(a_x.m_ib, a_x.m_ie, a_x.m_jb, a_x.m_je, a_x.m_kb, a_x.m_ke,
-                   a_x.c_ptr(), a_y.c_ptr(), a_z.c_ptr(), a_met.c_ptr(),
-                   a_jac.c_ptr());
+            a_x.c_ptr(), a_y.c_ptr(), a_z.c_ptr(), a_met.c_ptr(),
+            a_jac.c_ptr());
 }
 
 //-----------------------------------------------------------------------

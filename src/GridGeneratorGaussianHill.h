@@ -56,7 +56,7 @@ class GridGeneratorGaussianHill : public GridGenerator {
                                  float_sw4& zrr, float_sw4& zrs,
                                  float_sw4& zss);
   virtual int interpolate_topography(EW* a_ew, float_sw4 q, float_sw4 r,
-                                      float_sw4& z, Sarray& topo);
+                                     float_sw4& z, Sarray& topo);
   virtual bool exact_metric(EW* a_ew, int g, Sarray& a_jac, Sarray& a_met);
   virtual void fill_topo(Sarray& topo, float_sw4 h);
   virtual void generate_z_and_j(EW* a_ew, int g, Sarray& z, Sarray& J);
