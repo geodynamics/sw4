@@ -155,7 +155,7 @@ int ntr = a_TimeSeries.size();
    // set window 
    switch(wave_mode) {
    case 0:  // P-wave only
-       a_TimeSeries[ig]->set_window(timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win, 
+        a_TimeSeries[ig]->set_window(timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win, 
        timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win);
 
        if(myrank==0) fprintf(fd, "%d   %d\t%s\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 

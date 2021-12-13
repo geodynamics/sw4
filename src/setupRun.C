@@ -1165,10 +1165,8 @@ void EW::set_materials()
        {
 	  double zmin,zmax;
           if( g >= mNumberOfCartesianGrids )
-          //	  if( g == mNumberOfGrids-1 && topographyExists() )
 	  {
 	     zmin = m_global_zmin;
-             //	     zmax = m_topo_zmax;
              zmax = m_gridGenerator->get_topo_zmax();
 	  }
 	  else

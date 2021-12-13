@@ -94,10 +94,12 @@ void nlcg( EW& simulation, int nspar, int nmpars, double* xs,
 #ifdef USE_HDF5
        // Tang: need to create a HDF5 file before writing
        if (GlobalTimeSeries[e].size() > 0 && GlobalTimeSeries[e][0]->getUseHDF5()) {
-         if(myRank == 0) 
-           createTimeSeriesHDF5File(GlobalTimeSeries[e], GlobalTimeSeries[e][0]->getNsteps(), GlobalTimeSeries[e][0]->getDt(), "_ini");
          for (int tsi = 0; tsi < GlobalTimeSeries[e].size(); tsi++) 
            GlobalTimeSeries[e][tsi]->resetHDF5file();
+         if(GlobalTimeSeries[e][0]->myPoint()) 
+           createTimeSeriesHDF5File(GlobalTimeSeries[e], 
+                                    GlobalTimeSeries[e][0]->getNsteps(), 
+                                    GlobalTimeSeries[e][0]->getDt(), "_ini");
          MPI_Barrier(simulation.m_1d_communicator);
        }
 #endif
