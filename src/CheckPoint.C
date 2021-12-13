@@ -1015,9 +1015,15 @@ void CheckPoint::finalize_hdf5()
 {
   size_t num_in_progress;
   hbool_t op_failed;
+  int ret;
 #ifdef USE_HDF5_ASYNC
-  if (m_es_id > 0)
-    H5ESwait(m_es_id, H5ES_WAIT_FOREVER, &num_in_progress, &op_failed);
+  if (m_es_id > 0) {
+    ret = H5ESwait(m_es_id, H5ES_WAIT_FOREVER, &num_in_progress, &op_failed);
+    if (ret < 0)
+      fprintf(stderr, "Error with H5ESwait!\n");
+    H5ESclose(m_es_id);
+    m_es_id = 0;
+  }
 #endif
   return;
 }
@@ -1069,13 +1075,22 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
 
   hid_t fid, fapl, dxpl, dspace, mspace, mydspace, dtype, prop_id;
   int myrank, nrank;
+  double stime, etime;
   hsize_t my_chunk[1];
+
+  stime = MPI_Wtime();
 
   MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
   MPI_Comm_size(MPI_COMM_WORLD, &nrank);
   if (myrank == 0)
     std::cout << "Writing checkpoint to file " << s.str() << std::endl;
-  
+
+  fapl = H5Pcreate(H5P_FILE_ACCESS);
+#ifdef USE_HDF5_ASYNC
+  if (m_es_id > 0)
+    finalize_hdf5();
+#endif
+
   // Each rank writes its data to its own dataset
   prop_id = H5Pcreate(H5P_DATASET_CREATE);
   dtype = (m_double ? H5T_NATIVE_DOUBLE : H5T_NATIVE_FLOAT);
@@ -1168,6 +1183,7 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
         }
         H5Sclose(dspace);
       }
+    H5Fflush(fid, H5F_SCOPE_GLOBAL);
     H5Fclose(fid);
   }// end if myrank=0
 
@@ -1192,9 +1208,6 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
 #ifdef USE_HDF5_ASYNC
   if (m_es_id == 0)
     m_es_id = H5EScreate();
-  else
-    finalize_hdf5();
-
   fid = H5Fopen_async(const_cast<char*>(s.str().c_str()), H5F_ACC_RDWR, fapl, m_es_id);
 #else
   fid = H5Fopen(const_cast<char*>(s.str().c_str()), H5F_ACC_RDWR, fapl);
@@ -1274,6 +1287,11 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
 #else
   H5Fclose(fid);
 #endif
+  etime = MPI_Wtime();
+
+  if (myrank == 0)
+    std::cout << "Written checkpoint, " << etime-stime << " seconds" << std::endl;
+
 }  // end write_checkpoint_hdf5()
 
 //-----------------------------------------------------------------------
@@ -1380,4 +1398,4 @@ void CheckPoint::read_checkpoint_hdf5( float_sw4& a_time, int& a_cycle,
    H5Pclose(dxpl);
    H5Fclose(fid);
 }
-#endif
+#endif // End USE_HDF5
