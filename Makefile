@@ -1,6 +1,6 @@
 #-----------------------------------------------------------------------
 # Usage:
-#   Default is: debug=no proj=yes profile=no prec=double openmp=yes hdf5=no fftw=no
+#   Default is: debug=no proj=yes profile=no prec=double openmp=yes hdf5=no fftw=no hdf5async=no
 # make sw4     [debug=yes/no] [proj=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
 # make sw4mopt [debug=yes/no] [proj=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
 #
@@ -218,6 +218,9 @@ ifeq ($(hdf5),yes)
    CXXFLAGS  += -I$(HDF5ROOT)/include -DUSE_HDF5
    # EXTRA_LINK_FLAGS += -L$(HDF5ROOT)/lib -lhdf5_hl -lhdf5
    linklibs += -L$(HDF5ROOT)/lib -lhdf5
+ifeq ($(hdf5async),yes)
+   CXXFLAGS  += -DUSE_HDF5_ASYNC
+endif
 endif
 
 ifeq ($(zfp),yes)
