@@ -1073,7 +1073,7 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
   // second last.
   cycle_checkpoints(s.str());
 
-  hid_t fid, fapl, dxpl, dspace, mspace, mydspace, dtype, prop_id;
+  hid_t fid, fapl, dxpl, dspace, mspace, mydspace, dtype, dcpl;
   int myrank, nrank;
   double stime, etime;
   hsize_t my_chunk[1];
@@ -1092,7 +1092,9 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
 #endif
 
   // Each rank writes its data to its own dataset
-  prop_id = H5Pcreate(H5P_DATASET_CREATE);
+  dcpl = H5Pcreate(H5P_DATASET_CREATE);
+  H5Pset_fill_time(dcpl, H5D_FILL_TIME_NEVER);
+
   dtype = (m_double ? H5T_NATIVE_DOUBLE : H5T_NATIVE_FLOAT);
 
   if (mCompMode > 0) {
@@ -1101,24 +1103,24 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
     env_char = getenv("CHECKPOINT_CHUNK_X");
     if (env_char != NULL) my_chunk[0] = atoi(env_char);
 
-    H5Pset_chunk(prop_id, 1, my_chunk);
+    H5Pset_chunk(dcpl, 1, my_chunk);
     if (myrank == 0) fprintf(stderr, "set chunk size to %llu\n", my_chunk[0]);
   }
 
   if (mCompMode == SW4_SZIP) {
-    H5Pset_szip(prop_id, H5_SZIP_NN_OPTION_MASK, 32);
+    H5Pset_szip(dcpl, H5_SZIP_NN_OPTION_MASK, 32);
   } else if (mCompMode == SW4_ZLIB) {
-    H5Pset_deflate(prop_id, (int)mCompPar);
+    H5Pset_deflate(dcpl, (int)mCompPar);
   }
 #ifdef USE_ZFP
   else if (mCompMode == SW4_ZFP_MODE_RATE) {
-    H5Pset_zfp_rate(prop_id, mCompPar);
+    H5Pset_zfp_rate(dcpl, mCompPar);
   } else if (mCompMode == SW4_ZFP_MODE_PRECISION) {
-    H5Pset_zfp_precision(prop_id, (unsigned int)mCompPar);
+    H5Pset_zfp_precision(dcpl, (unsigned int)mCompPar);
   } else if (mCompMode == SW4_ZFP_MODE_ACCURACY) {
-    H5Pset_zfp_accuracy(prop_id, mCompPar);
+    H5Pset_zfp_accuracy(dcpl, mCompPar);
   } else if (mCompMode == SW4_ZFP_MODE_REVERSIBLE) {
-    H5Pset_zfp_reversible(prop_id);
+    H5Pset_zfp_reversible(dcpl);
   }
 #endif
 #ifdef USE_SZ
@@ -1129,7 +1131,7 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
     if (m_precision == 4) dataType = SZ_FLOAT;
     SZ_metaDataToCdArray(&cd_nelmts, &cd_values, dataType, 0, m_cycle_dims[3],
                          m_cycle_dims[2], m_cycle_dims[1], m_cycle_dims[0]);
-    H5Pset_filter(prop_id, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts,
+    H5Pset_filter(dcpl, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts,
                   cd_values);
   }
 #endif
@@ -1169,17 +1171,17 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
         dspace = H5Screate_simple(1, &total[g], NULL);
     
         sprintf(dset_name, "Um%d", g);
-        create_hdf5_dset(fid, dset_name, dtype, dspace, prop_id);
+        create_hdf5_dset(fid, dset_name, dtype, dspace, dcpl);
     
         sprintf(dset_name, "U%d", g);
-        create_hdf5_dset(fid, dset_name, dtype, dspace, prop_id);
+        create_hdf5_dset(fid, dset_name, dtype, dspace, dcpl);
     
         for (int m = 0; m < mEW->getNumberOfMechanisms(); m++) {
           sprintf(dset_name, "VEM%d_m%d", g, m);
-          create_hdf5_dset(fid, dset_name, dtype, dspace, prop_id);
+          create_hdf5_dset(fid, dset_name, dtype, dspace, dcpl);
     
           sprintf(dset_name, "VE%d_m%d", g, m);
-          create_hdf5_dset(fid, dset_name, dtype, dspace, prop_id);
+          create_hdf5_dset(fid, dset_name, dtype, dspace, dcpl);
         }
         H5Sclose(dspace);
       }
@@ -1278,7 +1280,7 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
   delete [] myoff;
   delete [] total;
 
-  H5Pclose(prop_id);
+  H5Pclose(dcpl);
   H5Pclose(fapl);
   H5Pclose(dxpl);
 
