@@ -35,6 +35,7 @@ UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-3.0.0/install
 #UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-6.0.0/install_ansel
 UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-6.0.0/install_ansel_xl
 
+NVLINK_UMPIRE = $(UMPIRE_HOME)/lib/libumpire.a 
 HDF5_HOME = /p/gpfs1/ramesh/SW4/HDF_TEST/HDF/CMake-hdf5-1.12.0/build/HDF5-1.12.0-Linux/HDF_Group/HDF5/1.12.0
 HDF5_HOME = /p/gpfs1/ramesh/SW4/HDF_TEST/HDF/CMake-hdf5-1.10.6/build/HDF5-1.10.6-Linux/HDF_Group/HDF5/1.10.6
 
