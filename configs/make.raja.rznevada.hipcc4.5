@@ -9,28 +9,33 @@ openmp=yes
 raja_cuda=yes
 umpire = yes
 fftw = no
-hdf5= no
+hdf5= yes
 zfp=no
 spill_warns = no
-caliper=no
+caliper=yes
 raja_only=no
 dbg=no
 register_count=no
 
 
-RAJA_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/SCALING/NEWCODE/sw4_github/RZWHAMO_ROCM4.5/RAJA-v0.14.0/install_ROCM45_NEVADA
+RAJA_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/HIP/NEW/DECEMBER_2021/RAJA-v0.14.1/install45
 
 PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/HIP/RZNevada/proj-5.0.0/install
+PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/HIP/NEW/DECEMBER_2021/proj-5.0.0/install
 
 UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/SCALING/NEWCODE/sw4_github/RZWHAMO_ROCM4.5/umpire-6.0.0/install_ROCM45_NEVADA
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/HIP/NEW/DECEMBER_2021/umpire-6.0.0/install45
 
 HDF5_HOME = $(OLCF_HDF5_ROOT)
 HDF5_HOME = $(HDF5_DIR)
+HDF5_HOME = $(CRAY_HDF5_PARALLEL_DIR)
+HDF5_HOME = /opt/cray/pe/hdf5-parallel/default/crayclang/10.0
 
 ZFP_HOME=/gpfs/alpine/csc300/world-shared/spock/zfp
 H5Z_HOME=/gpfs/alpine/csc300/world-shared/spock/H5Z-ZFP/install
 
 CALIPER_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/Caliper/install
+CALIPER_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/HIP/NEW/DECEMBER_2021/Caliper/install_release
 
 HIP_ROOT_DIR = $(HIP_PATH)
 HSA_ROOT_DIR = $(ROCM_PATH)/hsa
