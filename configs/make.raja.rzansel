@@ -5,7 +5,7 @@ GIT_VERSION := "$(shell git describe --abbrev=4 --dirty --always --tags)"
 
 proj = yes
 ckernel=yes 
-openmp=yes
+openmp=no
 raja_cuda=yes
 umpire = yes
 fftw = yes
@@ -13,13 +13,15 @@ hdf5= yes
 spill_warns = no
 caliper=no
 raja_only=no
+norm_trace=no
 
 RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-0.7.0/install_rzansel
 RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-0.7.0/install_rzansel10.1.168
 RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.10.1/install_fresh
 RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.11.0/install_new
 #RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.11.0/install
-#RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.13.0/install
+##RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.13.0/install
+RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.14.1/install_ansel
 
 
 PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/SW4/proj-5.0.0/install170818
@@ -30,6 +32,8 @@ UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-0.3.3/install_rzansel10.
 UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-1.1.0/install
 UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-3.0.0/install
 #UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-5.0.0/install_tools
+#UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-6.0.0/install_ansel
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-6.0.0/install_ansel_xl
 
 HDF5_HOME = /p/gpfs1/ramesh/SW4/HDF_TEST/HDF/CMake-hdf5-1.12.0/build/HDF5-1.12.0-Linux/HDF_Group/HDF5/1.12.0
 HDF5_HOME = /p/gpfs1/ramesh/SW4/HDF_TEST/HDF/CMake-hdf5-1.10.6/build/HDF5-1.10.6-Linux/HDF_Group/HDF5/1.10.6
@@ -40,7 +44,7 @@ CALIPER_HOME =/usr/workspace/wsrzd/ramesh/Caliper/Caliper-2.5.0/install_cupti
 
 EXTRA_FORT_FLAGS = -qstrict
 
-MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_STAGED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC}  --Werror cross-execution-space-call -DCAMP_USE_PLATFORM_DEFAULT_STREAM=1 -DSW4_GIT_VERSION=\"$(GIT_VERSION)\" -DSW4_USE_CMEM=1 -DSW4_GHCOF_NO_GP_IS_ZERO=1 --expt-relaxed-constexpr
+MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_STAGED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC}  --Werror cross-execution-space-call -DCAMP_USE_PLATFORM_DEFAULT_STREAM=1 -DSW4_GIT_VERSION=\"$(GIT_VERSION)\" -DSW4_GHCOF_NO_GP_IS_ZERO=1 -DSW4_USE_CMEM=1 -g -lineinfo
 MORE_LINK_FLAGS = 
 
 ifeq ($(umpire),yes)
@@ -83,7 +87,11 @@ MORE_FLAGS+= -I$(PROJ_HOME)/include
 MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib64  -L$(PROJ_HOME)/lib64 -lproj
 endif 
 
-LINKFLAGS =  -arch=sm_70
+ifeq ($(norm_trace),yes)
+MORE_FLAGS+=  -DSW4_NORM_TRACE=1
+endif 
+
+LINKFLAGS =  
 
 EXTRA_CXX_FLAGS =  -O3 -use_fast_math $(MORE_FLAGS) -DDISABLE_PREFETCH  -ccbin mpixlC -std=c++14 --expt-extended-lambda -restrict -arch=sm_70 -I $(CUDA_HOME)/include -I$(RAJA_HOME)/include  --x cu  -DENABLE_CUDA -dc 
 
