@@ -85,6 +85,8 @@ public:
    void force_write_image( float_sw4 a_time, int a_cycle, std::vector<Sarray>& a_U,
        std::string& a_path, Sarray& a_Z );
 
+   void finalize_hdf5();
+
 protected:
    void compute_image( Sarray& a_U, int a_comp, int cycle );
 

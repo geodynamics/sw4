@@ -33,6 +33,7 @@ CheckPoint::CheckPoint( EW* a_ew ) :
    mDoCheckPointing(false),
    mRestartPathSet(false),
    mDoRestart(false),
+   m_es_id(0),
    m_kji_order(true)
 {
 
@@ -59,6 +60,7 @@ CheckPoint::CheckPoint( EW* a_ew,
    mDoCheckPointing(true),
    mRestartPathSet(false),
    mDoRestart(false),
+   m_es_id(0),
    m_kji_order(true)
 {
    m_double = sizeof(float_sw4)==sizeof(double);
@@ -80,6 +82,7 @@ CheckPoint::CheckPoint( EW* a_ew, string fname, size_t bufsize ) :
    m_fileno(0),
    mDoCheckPointing(false),
    mRestartPathSet(false),
+   m_es_id(0),
    mDoRestart(true)
 {
    m_double = sizeof(float_sw4)==sizeof(double);
@@ -980,7 +983,7 @@ void CheckPoint::read_header_hdf5( hid_t fid, float_sw4& a_time, int& a_cycle)
    attr = H5Aopen(fid, "nrank", H5P_DEFAULT);
    ret = H5Aread(attr, H5T_NATIVE_INT, &nrank_restart);
    H5Aclose(attr);
-   CHECK_INPUT( ret >= 0,"CheckPoint::write_header_hdf5: Error reading nrank" );
+   CHECK_INPUT( ret >= 0,"CheckPoint::read_header_hdf5: Error reading nrank" );
    CHECK_INPUT( nrank == nrank_restart, "CheckPoint::read_header_hdf5: Error number "
 		<< "of ranks on restart file does not match number of ranks in currrent run" );
 
@@ -1008,6 +1011,43 @@ void CheckPoint::read_header_hdf5( hid_t fid, float_sw4& a_time, int& a_cycle)
    }
 }
 
+void CheckPoint::finalize_hdf5()
+{
+  size_t num_in_progress;
+  hbool_t op_failed;
+#ifdef USE_HDF5_ASYNC
+  if (m_es_id > 0)
+    H5ESwait(m_es_id, H5ES_WAIT_FOREVER, &num_in_progress, &op_failed);
+#endif
+  return;
+}
+
+void CheckPoint::create_hdf5_dset(hid_t fid, char *dset_name, hid_t dtype, hid_t dspace, hid_t dcpl)
+{
+  hid_t dset;
+#ifdef USE_HDF5_ASYNC
+  dset = H5Dcreate_async(fid, dset_name, dtype, dspace, H5P_DEFAULT, dcpl, H5P_DEFAULT, m_es_id);
+  H5Dclose_async(dset, m_es_id);
+#else
+  dset = H5Dcreate(fid, dset_name, dtype, dspace, H5P_DEFAULT, dcpl, H5P_DEFAULT);
+  H5Dclose(dset);
+#endif
+}
+
+void CheckPoint::write_hdf5_dset(hid_t fid, char *dset_name, hid_t dtype, hid_t mspace, hid_t mydspace, hid_t dxpl, void *buf)
+{
+  hid_t dset;
+#ifdef USE_HDF5_ASYNC
+  dset = H5Dopen_async(fid, dset_name, H5P_DEFAULT, m_es_id);
+  H5Dwrite_async(dset, dtype, mspace, mydspace, dxpl, buf, m_es_id);
+  H5Dclose_async(dset, m_es_id);
+#else
+  dset = H5Dopen(fid, dset_name, H5P_DEFAULT);
+  H5Dwrite(dset, dtype, mspace, mydspace, dxpl, buf);
+  H5Dclose(dset);
+#endif
+}
+
 //-----------------------------------------------------------------------
 void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
                                        vector<Sarray>& a_Um,
@@ -1027,42 +1067,19 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
   // second last.
   cycle_checkpoints(s.str());
 
-  // Open file from processor zero and write header.
-  hid_t fid, fapl, dxpl, dspace, mspace, mydspace;
-  fapl = H5Pcreate(H5P_FILE_ACCESS);
-  H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
-  H5Pset_all_coll_metadata_ops(fapl, 1);
-  H5Pset_coll_metadata_write(fapl, 1);
-
-  int alignment = 65536;
-  char* env = getenv("HDF5_ALIGNMENT_SIZE");
-  if (env != NULL) alignment = atoi(env);
-  if (alignment < 65536) alignment = 65536;
-
-  H5Pset_alignment(fapl, 65536, alignment);
-  H5Pset_libver_bounds(fapl, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST);
-
-  fid = H5Fcreate(const_cast<char*>(s.str().c_str()), H5F_ACC_TRUNC,
-                  H5P_DEFAULT, fapl);
-  CHECK_INPUT(fid > 0, "CheckPoint::write_file: Error opening: " << s.str());
-
+  hid_t fid, fapl, dxpl, dspace, mspace, mydspace, dtype, prop_id;
   int myrank, nrank;
+  hsize_t my_chunk[1];
+
   MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
   MPI_Comm_size(MPI_COMM_WORLD, &nrank);
   if (myrank == 0)
     std::cout << "Writing checkpoint to file " << s.str() << std::endl;
-
-  write_header_hdf5(fid, a_time, a_cycle);
-
-  char dset_name[128];
-  hid_t dtype = (m_double ? H5T_NATIVE_DOUBLE : H5T_NATIVE_FLOAT);
-  dxpl = H5Pcreate(H5P_DATASET_XFER);
-  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE);
-
+  
   // Each rank writes its data to its own dataset
-  hid_t prop_id = H5Pcreate(H5P_DATASET_CREATE);
+  prop_id = H5Pcreate(H5P_DATASET_CREATE);
+  dtype = (m_double ? H5T_NATIVE_DOUBLE : H5T_NATIVE_FLOAT);
 
-  hsize_t my_chunk[1];
   if (mCompMode > 0) {
     my_chunk[0] = (m_double ? 65536 : 4194304);
     char* env_char = NULL;
@@ -1102,14 +1119,20 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
   }
 #endif
 
-  hid_t* dset_Um  = new hid_t[mEW->mNumberOfGrids];
-  hid_t* dset_U   = new hid_t[mEW->mNumberOfGrids];
-  hid_t* dset_VEM = new hid_t[mEW->mNumberOfGrids*mEW->getNumberOfMechanisms()];
-  hid_t* dset_VE  = new hid_t[mEW->mNumberOfGrids*mEW->getNumberOfMechanisms()];
-  hsize_t *npts   = new hsize_t[mEW->mNumberOfGrids];
-  hsize_t *myoff  = new hsize_t[mEW->mNumberOfGrids];
-  hsize_t *total  = new hsize_t[mEW->mNumberOfGrids];
-
+  char dset_name[128];
+  hsize_t *npts  = new hsize_t[mEW->mNumberOfGrids];
+  hsize_t *myoff = new hsize_t[mEW->mNumberOfGrids];
+  hsize_t *total = new hsize_t[mEW->mNumberOfGrids];
+  
+  // Rank 0 create everything and write metadata first
+  if (myrank == 0) {
+    fid = H5Fcreate(const_cast<char*>(s.str().c_str()), H5F_ACC_TRUNC,
+                    H5P_DEFAULT, H5P_DEFAULT);
+    CHECK_INPUT(fid > 0, "CheckPoint::write_file: Error opening: " << s.str());
+  
+    write_header_hdf5(fid, a_time, a_cycle);
+  }
+ 
   // Workaround for summit system with spectrum MPI and HDF5 1.10.4, 
   // have to create all dsets before write to avoid runtime error
   for (int g = 0; g < mEW->mNumberOfGrids; g++) {
@@ -1123,29 +1146,61 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
     MPI_Bcast(&total[g], 1, MPI_LONG_LONG_INT, nrank - 1, MPI_COMM_WORLD);
     /* fprintf(stderr, "Create, g %d, rank %d: off %llu, size %llu, total %llu\n", g, myrank, myoff[g], */
     /*         npts[g], total[g]); */
-
-    dspace = H5Screate_simple(1, &total[g], NULL);
-
-    sprintf(dset_name, "Um%d", g);
-    dset_Um[g] = H5Dcreate(fid, dset_name, dtype, dspace, H5P_DEFAULT, prop_id,
-                     H5P_DEFAULT);
-
-    sprintf(dset_name, "U%d", g);
-    dset_U[g] = H5Dcreate(fid, dset_name, dtype, dspace, H5P_DEFAULT, prop_id,
-                     H5P_DEFAULT);
-
-    for (int m = 0; m < mEW->getNumberOfMechanisms(); m++) {
-      sprintf(dset_name, "VEM%d_m%d", g, m);
-      dset_VEM[g* mEW->getNumberOfMechanisms() + m] = H5Dcreate(fid, dset_name, dtype, dspace, H5P_DEFAULT, prop_id,
-                       H5P_DEFAULT);
-
-      sprintf(dset_name, "VE%d_m%d", g, m);
-      dset_VE[g* mEW->getNumberOfMechanisms() + m] = H5Dcreate(fid, dset_name, dtype, dspace, H5P_DEFAULT, prop_id,
-                       H5P_DEFAULT);
-    }
-    H5Sclose(dspace);
   }
 
+  // Only rank 0 creates the dataset
+  if (myrank == 0) {
+    for (int g = 0; g < mEW->mNumberOfGrids; g++) {
+        dspace = H5Screate_simple(1, &total[g], NULL);
+    
+        sprintf(dset_name, "Um%d", g);
+        create_hdf5_dset(fid, dset_name, dtype, dspace, prop_id);
+    
+        sprintf(dset_name, "U%d", g);
+        create_hdf5_dset(fid, dset_name, dtype, dspace, prop_id);
+    
+        for (int m = 0; m < mEW->getNumberOfMechanisms(); m++) {
+          sprintf(dset_name, "VEM%d_m%d", g, m);
+          create_hdf5_dset(fid, dset_name, dtype, dspace, prop_id);
+    
+          sprintf(dset_name, "VE%d_m%d", g, m);
+          create_hdf5_dset(fid, dset_name, dtype, dspace, prop_id);
+        }
+        H5Sclose(dspace);
+      }
+    H5Fclose(fid);
+  }// end if myrank=0
+
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  fapl = H5Pcreate(H5P_FILE_ACCESS);
+
+  int alignment = 16777216;
+  char* env = getenv("HDF5_ALIGNMENT_SIZE");
+  if (env != NULL) alignment = atoi(env);
+  if (alignment < 65536) alignment = 65536;
+
+  H5Pset_alignment(fapl, 65536, alignment);
+  H5Pset_libver_bounds(fapl, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST);
+  H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
+  H5Pset_all_coll_metadata_ops(fapl, 1);
+  H5Pset_coll_metadata_write(fapl, 1);
+
+  dxpl = H5Pcreate(H5P_DATASET_XFER);
+  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE);
+
+#ifdef USE_HDF5_ASYNC
+  if (m_es_id == 0)
+    m_es_id = H5EScreate();
+  else
+    finalize_hdf5();
+
+  fid = H5Fopen_async(const_cast<char*>(s.str().c_str()), H5F_ACC_RDWR, fapl, m_es_id);
+#else
+  fid = H5Fopen(const_cast<char*>(s.str().c_str()), H5F_ACC_RDWR, fapl);
+#endif
+
+  // Start write
   for (int g = 0; g < mEW->mNumberOfGrids; g++) {
     mspace = H5Screate_simple(1, &npts[g], NULL);
     mydspace = H5Screate_simple(1, &total[g], NULL);
@@ -1162,8 +1217,9 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
       a_Um[g].extract_subarray(mWindow[g][0], mWindow[g][1], mWindow[g][2],
                                mWindow[g][3], mWindow[g][4], mWindow[g][5],
                                doubleField);
-    H5Dwrite(dset_Um[g], dtype, mspace, mydspace, dxpl, doubleField);
-    H5Dclose(dset_Um[g]);
+
+    sprintf(dset_name, "Um%d", g);
+    write_hdf5_dset(fid, dset_name, dtype, mspace, mydspace, dxpl, doubleField);
 
     if (m_kji_order)
       a_U[g].extract_subarrayIK(mWindow[g][0], mWindow[g][1], mWindow[g][2],
@@ -1173,8 +1229,8 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
       a_U[g].extract_subarray(mWindow[g][0], mWindow[g][1], mWindow[g][2],
                               mWindow[g][3], mWindow[g][4], mWindow[g][5],
                               doubleField);
-    H5Dwrite(dset_U[g], dtype, mspace, mydspace, dxpl, doubleField);
-    H5Dclose(dset_U[g]);
+    sprintf(dset_name, "U%d", g);
+    write_hdf5_dset(fid, dset_name, dtype, mspace, mydspace, dxpl, doubleField);
 
     for (int m = 0; m < mEW->getNumberOfMechanisms(); m++) {
       if (m_kji_order)
@@ -1185,8 +1241,8 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
         a_AlphaVEm[g][m].extract_subarray(
             mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3],
             mWindow[g][4], mWindow[g][5], doubleField);
-      H5Dwrite(dset_VEM[g* mEW->getNumberOfMechanisms() + m], dtype, mspace, mydspace, dxpl, doubleField);
-      H5Dclose(dset_VEM[g* mEW->getNumberOfMechanisms() + m]);
+      sprintf(dset_name, "VEM%d_m%d", g, m);
+      write_hdf5_dset(fid, dset_name, dtype, mspace, mydspace, dxpl, doubleField);
 
       if (m_kji_order)
         a_AlphaVE[g][m].extract_subarrayIK(
@@ -1196,8 +1252,8 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
         a_AlphaVE[g][m].extract_subarray(
             mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3],
             mWindow[g][4], mWindow[g][5], doubleField);
-      H5Dwrite(dset_VE[g* mEW->getNumberOfMechanisms() + m], dtype, mspace, mydspace, dxpl, doubleField);
-      H5Dclose(dset_VE[g* mEW->getNumberOfMechanisms() + m]);
+      sprintf(dset_name, "VE%d_m%d", g, m);
+      write_hdf5_dset(fid, dset_name, dtype, mspace, mydspace, dxpl, doubleField);
     }
     H5Sclose(mspace);
     H5Sclose(mydspace);
@@ -1205,10 +1261,6 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
     delete[] doubleField;
   }
 
-  delete [] dset_Um;
-  delete [] dset_U;
-  delete [] dset_VEM;
-  delete [] dset_VE;
   delete [] npts;
   delete [] myoff;
   delete [] total;
@@ -1216,7 +1268,12 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
   H5Pclose(prop_id);
   H5Pclose(fapl);
   H5Pclose(dxpl);
+
+#ifdef USE_HDF5_ASYNC
+  H5Fclose_async(fid, m_es_id);
+#else
   H5Fclose(fid);
+#endif
 }  // end write_checkpoint_hdf5()
 
 //-----------------------------------------------------------------------

@@ -1107,6 +1107,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 // Only do this if there are any essi hdf5 files
    if (mESSI3DFiles.size() > 0)
    {
+     for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
+       mESSI3DFiles[i3]->finalize_hdf5();
+
      // Calculate the total ESSI hdf5 io time across all ranks
      double hdf5_time=0;
      for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
@@ -1129,7 +1132,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    if( m_myRank == 0 && all_total_time > 0.1)
      cout << "  ==> Max wallclock time to write images is " << all_total_time << " seconds." << endl;
 
-
    // Write sfile after time stepping
    // reverse setup_viscoelastic when needed
    if ( usingAttenuation() && NULL == use_twilight_forcing() )
@@ -1138,6 +1140,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    for( int ii = 0 ; ii < mSfiles.size() ; ii++ )
      mSfiles[ii]->force_write_image( t, mNumberOfTimeSteps[event], Up, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[eglobal], mZ ); 
 
+   m_check_point->finalize_hdf5();
 #endif
 
    print_execution_time( time_start_solve, time_end_solve, "time stepping phase" );

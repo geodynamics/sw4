@@ -43,7 +43,6 @@ GeographicProjection::GeographicProjection( double lon_origin, double lat_origin
 					    string projection, double az )
 {
 #ifdef ENABLE_PROJ4
-
    m_projection = pj_init_plus(projection.c_str());
    CHECK_INPUT( m_projection != 0, "ERRROR: Init of cartographic projection failed with message: " << pj_strerrno(pj_errno) );
 
@@ -62,6 +61,41 @@ GeographicProjection::GeographicProjection( double lon_origin, double lat_origin
 
    m_az = az*m_deg2rad;
 #endif
+
+#ifdef ENABLE_PROJ_6
+   PJ_COORD c, c_out;
+   const char *crs_from = "+proj=latlong +datum=NAD83";
+   const char *crs_to = projection.c_str();
+
+   m_P = proj_create_crs_to_crs(PJ_DEFAULT_CTX, crs_from, crs_to, NULL);
+   /* printf("projection: [%s]\n", crs_to); */
+   ASSERT(m_P);
+
+   c = proj_coord(lon_origin, lat_origin, 0.0, 0.0);
+   c_out = proj_trans(m_P, PJ_FWD, c);
+
+   m_xoffset = c_out.xyzt.x;
+   m_yoffset = c_out.xyzt.y;
+
+   m_deg2rad = M_PI/180;
+   m_az = az*m_deg2rad;
+
+   m_Pgmg = NULL;
+#endif
+   /* printf("GeographicProjection origin: %f %f -> %f %f\n", lon_origin, lat_origin, m_xoffset, m_yoffset); */
+}
+
+//-----------------------------------------------------------------------
+GeographicProjection::~GeographicProjection(void)
+{
+#ifdef ENABLE_PROJ_6
+   if (m_P)
+       proj_destroy(m_P);
+   if (m_Pgmg)
+       proj_destroy(m_Pgmg);
+   m_P = NULL;
+   m_Pgmg = NULL;
+#endif
 }
 
 //-----------------------------------------------------------------------
@@ -79,6 +113,25 @@ void GeographicProjection::computeGeographicCoord(double x, double y,
    latitude  = ymap*RAD_TO_DEG;
 
 #endif
+
+#ifdef ENABLE_PROJ_6
+   PJ_COORD c, c_out;
+   ASSERT(m_P);
+
+   double xmap, ymap;
+   xmap = x*sin(m_az) + y*cos(m_az) + m_xoffset;
+   ymap = x*cos(m_az) - y*sin(m_az) + m_yoffset;
+
+   /* No need to convert to radian */
+   c = proj_coord(xmap, ymap, 0.0, 0.0);
+   c_out = proj_trans(m_P, PJ_INV, c);
+
+   longitude = c_out.xyzt.x;
+   latitude  = c_out.xyzt.y;
+
+#endif
+
+   /* printf("computeGeographicCoord: %f %f -> %f\t%f\n", x, y, longitude, latitude); */
 }
 
 //-----------------------------------------------------------------------
@@ -97,5 +150,57 @@ void GeographicProjection::computeCartesianCoord(double &x, double &y,
   x =  xlon*sin(m_az) + ylat*cos(m_az);
   y =  xlon*cos(m_az) - ylat*sin(m_az);
 #endif
+
+#ifdef ENABLE_PROJ_6
+  PJ_COORD c, c_out;
+  double xlon, ylat;
+
+  ASSERT(m_P);
+
+  c = proj_coord(lon, lat, 0.0, 0.0);
+  c_out = proj_trans(m_P, PJ_FWD, c);
+
+  xlon = c_out.xyzt.x;
+  ylat = c_out.xyzt.y;
+
+  xlon -= m_xoffset;
+  ylat -= m_yoffset;
+  x =  xlon*sin(m_az) + ylat*cos(m_az);
+  y =  xlon*cos(m_az) - ylat*sin(m_az);
+
+#endif
+
+   /* printf("computeCartesianCoord: %f %f -> %f\t%f\n", lon, lat, x, y); */
 }
 
+//-----------------------------------------------------------------------
+void GeographicProjection::computeCartesianCoordGMG(double &x, double &y,
+						 double lon, double lat, char* crs_to )
+{
+  x = 0.0, y = 0.0;
+#ifdef ENABLE_PROJ_6
+  PJ_COORD c, c_out;
+
+  const char *crs_from = "EPSG:4326";
+
+  /* printf("computeCartesianCoordGMG: crs_to %s\n", crs_to); */
+
+  if (m_Pgmg == NULL)
+    m_Pgmg  = proj_create_crs_to_crs(PJ_DEFAULT_CTX, crs_from, crs_to, NULL);
+
+  ASSERT(m_Pgmg);
+
+  // lat lon is switched in GMG CRS
+  c = proj_coord(lat, lon, 0.0, 0.0);
+  c_out = proj_trans(m_Pgmg, PJ_FWD, c);
+
+  x = c_out.xyzt.y;
+  y = c_out.xyzt.x;
+
+#else
+  printf("GMG format only works with proj 7+, abort!\n");
+  ASSERT(0);
+#endif
+
+  /* printf("computeCartesianCoordGMG: %f %f -> %f\t%f\n", lon, lat, x, y); */
+}
