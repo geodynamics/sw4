@@ -4,7 +4,7 @@ CXX = $(PREP) nvcc
 
 GIT_VERSION := "$(shell git describe --abbrev=4 --dirty --always --tags)"
 
-proj = yes
+proj_6 = yes
 ckernel=yes 
 openmp=no
 raja_cuda=yes
@@ -17,7 +17,7 @@ caliper= no
 RAJA_HOME = /gpfs/alpine/geo130/proj-shared/AUGUST_CAMPAIGN/RAJA-v0.11.0/install
 RAJA_HOME = /autofs/nccs-svm1_proj/geo130/ramesh/RAJA-v0.11.0/install
 
-PROJ_HOME = /gpfs/alpine/geo130/proj-shared/AUGUST_CAMPAIGN/proj-5.0.0/install
+PROJ_HOME = /gpfs/alpine/geo130/proj-shared/proj-8.1.1/install
 
 UMPIRE_HOME = /autofs/nccs-svm1_home1/houjun/summit/umpire-3.0.0/install
 UMPIRE_HOME = /autofs/nccs-svm1_proj/geo130/ramesh/umpire-3.0.0/install
