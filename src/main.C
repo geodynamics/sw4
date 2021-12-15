@@ -96,7 +96,12 @@ int main(int argc, char **argv) {
 
   stringstream reason;
   // Initialize MPI...
+#ifdef USE_HDF5_ASYNC
+  int provided;
+  MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+#else
   MPI_Init(&argc, &argv);
+#endif
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
   MPI_Info info;

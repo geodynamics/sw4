@@ -1,15 +1,13 @@
 #-----------------------------------------------------------------------
 # Usage:
-# make sw4     [debug=yes/no] [proj=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
+# make sw4     [debug=yes/no] [proj=yes/no] [proj_6=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
 #   Default is: debug=no proj=yes profile=no prec=double openmp=yes hdf5=no zfp=no sz=no fftw=no
 # This Makefile asumes that the following environmental variables have been assigned:
-# etree = [yes/no]
 # proj = [yes/no]
+# proj_6 = [yes/no]
 # CXX = C++ compiler
 # FC  = Fortran-77 compiler
-# SW4ROOT = path to third party libraries (used when etree=yes). 
-#
-# SW4ROOT = path to third party libraries (used when etree=yes and proj=yes). 
+# SW4ROOT = path to third party libraries (used when proj/proj_6=yes). 
 # HDF5ROOT = path to hdf5 library and include files (used when hdf5=yes).
 # H5ZROOT = path to H5Z-ZFP library and include files (used when zfp=yes).
 # ZFPROOT = path to ZFP library and include files (used when zfp=yes).
@@ -147,16 +145,16 @@ ifdef EXTRA_FORT_FLAGS
    FFLAGS += $(EXTRA_FORT_FLAGS)
 endif
 
-ifeq ($(etree),yes)
-   CXXFLAGS += -DENABLE_ETREE -DENABLE_PROJ4 -I$(SW4INC)
-   linklibs += -L$(SW4LIB) -lcencalvm -lproj
-else ifeq ($(proj),yes)
+ifeq ($(proj),yes)
 #   CXXFLAGS += -DENABLE_PROJ4
    CXXFLAGS += -DENABLE_PROJ4 
 #   linklibs += -L$(SW4LIB) -lproj
-   etree := "no"
+   proj  := "proj_4"
+else ifeq ($(proj_6),yes)
+   CXXFLAGS += -DENABLE_PROJ_6 -I$(SW4INC)
+   linklibs += -L$(SW4LIB) -lproj -lsqlite3 -lcurl -lssl -lcrypto
+   proj  := "proj_6"
 else
-   etree := "no"
    proj  := "no"
 endif
 
@@ -232,7 +230,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
        TimeSeries.o sacsubc.o SuperGrid.o addsgd.o velsum.o rayleighfort.o energy4.o TestRayleighWave.o \
        MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
-       lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
+       lamb_exact_numquad.o twilightsgfort.o MaterialIfile.o MaterialGMG.o GeographicProjection.o \
        rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o gradients.o Image3D.o \
        MaterialVolimagefile.o MaterialRfile.o randomfield3d.o innerloop-ani-sgstr-vc.o bcfortanisg.o \
        AnisotropicMaterialBlock.o checkanisomtrl.o computedtaniso.o sacutils.o ilanisocurv.o \
@@ -269,7 +267,7 @@ ifeq ($(raja_cuda),yes)
 sw4: $(FSW4) $(FOBJ)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
-	@echo "debug=" $(debug) " profile=" $(profile) " hdf5=" $(hdf5) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT)
+	@echo "debug=" $(debug) " profile=" $(profile) " hdf5=" $(hdf5) " proj=" $(proj) " SW4ROOT"= $(SW4ROOT)
 	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
@@ -284,7 +282,7 @@ else
 sw4: $(FSW4) $(FOBJ)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
-	@echo "debug=" $(debug) " profile=" $(profile) " hdf5=" $(hdf5) " proj=" $(proj) " etree=" $(etree) " SW4ROOT"= $(SW4ROOT)
+	@echo "debug=" $(debug) " profile=" $(profile) " hdf5=" $(hdf5) " proj=" $(proj) " SW4ROOT"= $(SW4ROOT)
 	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)

@@ -79,6 +79,8 @@ class ESSI3D {
                          std::vector<Sarray>& a_U, std::string& a_path,
                          Sarray& a_Z);
 
+  void finalize_hdf5();
+
  protected:
   void compute_image(Sarray& a_U, int a_comp, int cycle);
 

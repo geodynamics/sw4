@@ -119,6 +119,9 @@ void ESSI3D::set_buffer_interval(int a_bufferInterval) {
 //-----------------------------------------------------------------------
 void ESSI3D::setup() {
   const bool debug = false;
+  MPI_Comm comm = mEW->m_cartesian_communicator;
+  MPI_Info info = MPI_INFO_NULL;
+
   int g = mEW->mNumberOfGrids - 1;   // top curvilinear grid only
   m_ihavearray = true;               // gets negated if we don't, below
   for (int dim = 0; dim < 2; dim++)  // i,j dims only
@@ -144,7 +147,6 @@ void ESSI3D::setup() {
 
   // In k direction, guestimate the index for the requested depth
   int kmax = (int)ceil(mDepth / mEW->mGridSize[g]) + 1;
-  if (mDepth == 1) kmax = 1;
   mGlobalDims[4] = mEW->m_kStartInt[g];
   mGlobalDims[5] = min(kmax, mEW->m_kEndInt[g]);
   if (m_ihavearray) {
@@ -223,9 +225,7 @@ void ESSI3D::update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
     open_vel_file(a_cycle, a_path, a_time, a_Z);
 
   if (m_dumpInterval != -1) {
-    if (a_cycle != 0 && a_cycle % m_dumpInterval != 0 &&
-        a_cycle != mNumberOfTimeSteps)
-      return;
+    if (a_cycle % m_dumpInterval != 0 && a_cycle != mNumberOfTimeSteps) return;
     a_cycle /= m_dumpInterval;
   }
 
@@ -271,6 +271,8 @@ void ESSI3D::compute_image(Sarray& a_A, int a_comp, int cycle) {
   int ju = mEW->m_jEnd[g];
   int kl = mEW->m_kStart[g];
   int ku = mEW->m_kEnd[g];
+  int ni = (iu - il + 1);
+  int nj = (ju - jl + 1);
 
   // int niw = (mWindow[1]-mWindow[0])+1;
   // int nijw=niw*((mWindow[3]-mWindow[2])+1);
@@ -312,12 +314,21 @@ void ESSI3D::write_image(int cycle, std::string& path, float_sw4 t,
 #ifdef USE_HDF5
 void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
                            Sarray& a_Z) {
+  herr_t ierr;
+  hid_t dataspace_id;
+  hid_t dataset_id;
+  hid_t prop_id;
   bool debug = false;
   /* debug = true; */
+
+  const int num_dims = 3 + 1;  // 3 space + 1 time that will be extendible
+  hsize_t dims[num_dims] = {0, 0, 0, 0};
 
   int g = mEW->mNumberOfGrids - 1;
   int window[6], global[3];
   for (int d = 0; d < 3; d++) {
+    dims[d] = mWindow[2 * d + 1] - mWindow[2 * d] + 1;
+
     window[2 * d] = (m_ihavearray) ? (mWindow[2 * d] - mGlobalDims[2 * d]) : 0;
     window[2 * d + 1] =
         (m_ihavearray) ? (mWindow[2 * d + 1] - mGlobalDims[2 * d]) : -1;
@@ -337,40 +348,38 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
 
   double hdf5_time = MPI_Wtime();
 
-  m_hdf5helper->create_file(m_isRestart);
+  if (m_rank == 0) {
+    m_hdf5helper->create_file(m_isRestart);
 
-  // Write header metadata
-  double h = mEW->mGridSize[g];
-  double lonlat_origin[2] = {mEW->getLonOrigin(), mEW->getLatOrigin()};
-  double origin[3];
-  for (int d = 0; d < 3; d++)
-    origin[d] = (mGlobalDims[2 * d] - 1) * h;  // low end of each index range
-  double az = mEW->getGridAzimuth();
-  double dt = mEW->getTimeStep();
+    // Write header metadata
+    double h = mEW->mGridSize[g];
+    double lonlat_origin[2] = {mEW->getLonOrigin(), mEW->getLatOrigin()};
+    double origin[3];
+    for (int d = 0; d < 3; d++)
+      origin[d] = (mGlobalDims[2 * d] - 1) * h;  // low end of each index range
+    double az = mEW->getGridAzimuth();
+    double dt = mEW->getTimeStep();
 
-  if (!m_isRestart) {
-    m_hdf5helper->write_header(h, lonlat_origin, az, origin, a_cycle, a_time,
-                               dt);
+    if (!m_isRestart) {
+      m_hdf5helper->write_header(h, lonlat_origin, az, origin, a_cycle, a_time,
+                                 dt);
 
-    // Write z coodinates if necesito
-    if (mEW->topographyExists()) {
-      compute_image(a_Z, 0, 0);
-      if (m_precision == 4)
-        m_hdf5helper->write_topo(m_floatField[0]);
-      else if (m_precision == 8)
-        m_hdf5helper->write_topo(m_doubleField[0]);
+      // Write z coodinates if necesito
+      if (mEW->topographyExists()) {
+        compute_image(a_Z, 0, 0);
+        if (m_precision == 4)
+          m_hdf5helper->write_topo(m_floatField[0]);
+        else if (m_precision == 8)
+          m_hdf5helper->write_topo(m_doubleField[0]);
+      }
     }
-  }
 
-  double hdf5_topo_time = MPI_Wtime();
-  if (m_rank == 0)
-    cout << "Create and write topo time " << MPI_Wtime() - hdf5_topo_time
-         << endl;
-  ;
+    if (debug && (m_rank == 0))
+      cout << "Creating hdf5 velocity fields..." << endl;
+  }
 
   if (m_dumpInterval > 0) {
     int nstep = (int)ceil(m_ntimestep / m_dumpInterval);
-    m_ntimestep = nstep;
     if (m_compressionMode > 0)
       m_hdf5helper->init_write_vel(m_isRestart, nstep, m_compressionMode,
                                    m_compressionPar, m_bufferInterval);
@@ -386,25 +395,25 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
                                    m_bufferInterval);
   }
 
-  double hdf5_vel_time = MPI_Wtime();
-  if (m_rank == 0)
-    cout << "Create vel time " << hdf5_vel_time - hdf5_topo_time << endl;
-  ;
+  MPI_Comm comm = mEW->m_cartesian_communicator;
+  MPI_Barrier(comm);
 
-  m_hdf5_time += (hdf5_vel_time - hdf5_time);
+  m_hdf5helper->create_file(true);
+
+  m_hdf5_time += (MPI_Wtime() - hdf5_time);
 
   m_nbufstep = 0;
   m_fileOpen = true;
   return;
 }
 
+void ESSI3D::finalize_hdf5() {
+  m_hdf5helper->finalize_hdf5();
+  return;
+}
+
 void ESSI3D::close_vel_file() {
   if (m_fileOpen) {
-    /*
-    if (debug && (m_rank == 0))
-      cout << "Closing hdf5 file: " << s.str() << endl;
-    */
-
     m_hdf5helper->close_file();
     m_fileOpen = false;
   }
