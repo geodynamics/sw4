@@ -36,21 +36,33 @@
 #include <string>
 
 #ifdef ENABLE_PROJ4
+#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H
 #include "proj_api.h"
+#endif
+
+#ifdef ENABLE_PROJ_6
+#include "proj.h"
 #endif
 
 class GeographicProjection {
  public:
   GeographicProjection(double lon_origin, double lat_origin,
                        std::string projection, double az);
-  void computeGeographicCoord(double x, double y, double& longitude,
-                              double& latitude);
-  void computeCartesianCoord(double& x, double& y, double longitude,
+  ~GeographicProjection();
+  void computeGeographicCoord(double x, double y, double &longitude,
+                              double &latitude);
+  void computeCartesianCoord(double &x, double &y, double longitude,
                              double latitude);
+  void computeCartesianCoordGMG(double &x, double &y, double longitude,
+                                double latitude, char *crs_to);
 
  private:
 #ifdef ENABLE_PROJ4
   projPJ m_projection, m_latlong;
+#endif
+#ifdef ENABLE_PROJ_6
+  PJ *m_P;
+  PJ *m_Pgmg;
 #endif
   double m_xoffset, m_yoffset, m_az, m_deg2rad;
 };

@@ -45,7 +45,6 @@
 #include "CheckPoint.h"
 #include "DataPatches.h"
 #include "ESSI3D.h"
-#include "EtreeFile.h"
 #include "Filter.h"
 #include "ForcingTwilight.h"
 #include "GeographicProjection.h"
@@ -169,11 +168,11 @@ class EW {
   void processMaterialIfile(char* buffer);
   void processMaterialBlock(char* buffer, int& blockCount);
   void processMaterialPfile(char* buffer);
-  void processMaterialEtree(char* buffer);
   void processMaterialVimaterial(char* buffer);
   void processMaterialInvtest(char* buffer);
   void processMaterialRfile(char* buffer);
   void processMaterialSfile(char* buffer);
+  void processMaterialGMG(char* buffer);
   void processAnisotropicMaterialBlock(char* buffer, int& ablockCount);
   // void processReceiver(char* buffer, vector<TimeSeries*>&
   // a_GlobalTimeSeries);
@@ -484,12 +483,9 @@ class EW {
   void extractTopographyFromImageFile(string a_topoFileName);
   void extractTopographyFromCartesianFile(string a_topoFileName);
 
-  void setEtreeFile(EtreeFile* efile);
-  void extractTopographyFromEfile(string a_topoFileName,
-                                  string a_topoExtFileName, string a_QueryType,
-                                  float_sw4 a_EFileResolution);
   void extractTopographyFromRfile(std::string a_topoFileName);
   void extractTopographyFromSfile(std::string a_topoFileName);
+  void extractTopographyFromGMG(std::string a_topoFileName);
 
   void smoothTopography(int maxIter);
 
@@ -501,6 +497,8 @@ class EW {
 
   void computeCartesianCoord(float_sw4& x, float_sw4& y, float_sw4 lon,
                              float_sw4 lat);
+  void computeCartesianCoordGMG(double& x, double& y, double lon, double lat,
+                                char* crs_to);
   void computeGeographicCoord(float_sw4 x, float_sw4 y, float_sw4& longitude,
                               float_sw4& latitude);
 
@@ -681,13 +679,13 @@ class EW {
 
   enum InputMode {
     UNDEFINED,
-    Efile,
     GaussianHill,
     GridFile,
     CartesianGrid,
     TopoImage,
     Rfile,
-    Sfile
+    Sfile,
+    GMG
   };
 
   // access functions needed by the Image (and perhaps other) classes
@@ -1676,7 +1674,6 @@ class EW {
                  // processor, with bProcessor conditions
   float_sw4 mTstart;
   float_sw4 mDt;
-  EtreeFile* mEtreeFile;
 
   bool m_doubly_periodic;
 
@@ -1790,7 +1787,6 @@ class EW {
   bool mTopoImageFound;
   float_sw4 m_topo_zmax;
   int m_maxIter;
-  float_sw4 m_EFileResolution;
 
   //-------------------------------------------
   // IO data

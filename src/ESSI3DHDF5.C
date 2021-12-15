@@ -43,6 +43,7 @@
 #include "H5Z_SZ.h"
 #endif
 
+using std::cerr;
 using std::cout;
 
 ESSI3DHDF5* ESSI3DHDF5::nil = static_cast<ESSI3DHDF5*>(0);
@@ -50,8 +51,7 @@ ESSI3DHDF5* ESSI3DHDF5::nil = static_cast<ESSI3DHDF5*>(0);
 //-----------------------------------------------------------------------
 ESSI3DHDF5::ESSI3DHDF5(const std::string& filename, int (&global)[3],
                        int (&window)[6], bool ihavearray, int precision)
-    : m_start_cycle(-1),
-      m_end_cycle(-1),
+    : m_end_cycle(-1),
       m_filename(filename),
       m_ihavearray(ihavearray),
       m_precision(precision) {
@@ -68,15 +68,14 @@ ESSI3DHDF5::ESSI3DHDF5(const std::string& filename, int (&global)[3],
     char msg[1000];
     sprintf(msg, "Rank %d global size = %d %d %d\n", myRank, m_global[0],
             m_global[1], m_global[2]);
-    cout << msg;
+    cerr << msg;
     sprintf(msg, "Rank %d ihavearray = %s\n", myRank,
             (m_ihavearray) ? "yes" : "no");
-    cout << msg;
+    cerr << msg;
     sprintf(msg, "Rank %d index range = (%d:%d %d:%d %d:%d)\n", myRank,
             m_window[0], m_window[1], m_window[2], m_window[3], m_window[4],
             m_window[5]);
-    cout << msg;
-    cout.flush();
+    cerr << msg;
   }
 
   // Time step is 1st comp
@@ -96,44 +95,53 @@ ESSI3DHDF5::ESSI3DHDF5(const std::string& filename, int (&global)[3],
   m_slice_dims[2] = 1;
   m_slice_dims[3] = m_global[2];
 
-  for (int i = 0; i < 3; i++) {
-    m_vel_dataset_id[i] = 0;
-    m_vel_dataspace_id[i] = 0;
-  }
-
-  m_all_start_count = NULL;
-
+  m_file_id = 0;
+  m_es_id = 0;
 #endif
 }
 
 //-----------------------------------------------------------------------
 ESSI3DHDF5::~ESSI3DHDF5() {}
 
+//-----------------------------------------------------------------------
 void ESSI3DHDF5::create_file(bool is_open) {
 #ifdef USE_HDF5
-  m_mpiprop_id = H5Pcreate(H5P_DATASET_XFER);
-  H5Pset_dxpl_mpio(m_mpiprop_id, H5FD_MPIO_INDEPENDENT);
-
   MPI_Comm comm = MPI_COMM_WORLD;
   MPI_Info info = MPI_INFO_NULL;
-  hid_t prop_id = H5Pcreate(H5P_FILE_ACCESS);
-  H5Pset_fapl_mpio(prop_id, comm, info);
-  H5Pset_coll_metadata_write(prop_id, 1);
-  H5Pset_all_coll_metadata_ops(prop_id, 1);
-  H5Pset_libver_bounds(prop_id, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST);
+  hid_t fapl = H5Pcreate(H5P_FILE_ACCESS);
+  H5Pset_libver_bounds(fapl, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST);
 
-  if (is_open)
+  if (is_open) {
+    H5Pset_fapl_mpio(fapl, comm, info);
+    H5Pset_coll_metadata_write(fapl, 1);
+    H5Pset_all_coll_metadata_ops(fapl, 1);
+  }
+
+  if (is_open) {
+#ifdef USE_HDF5_ASYNC
+    size_t num_in_progress;
+    hbool_t op_failed;
+
+    if (m_es_id == 0)
+      m_es_id = H5EScreate();
+    else
+      H5ESwait(m_es_id, H5ES_WAIT_FOREVER, &num_in_progress, &op_failed);
+
+    m_file_id = H5Fopen_async(const_cast<char*>(m_filename.c_str()),
+                              H5F_ACC_RDWR, fapl, m_es_id);
+#else
     m_file_id =
-        H5Fopen(const_cast<char*>(m_filename.c_str()), H5F_ACC_RDWR, prop_id);
-  else
+        H5Fopen(const_cast<char*>(m_filename.c_str()), H5F_ACC_RDWR, fapl);
+#endif
+  } else
     m_file_id = H5Fcreate(const_cast<char*>(m_filename.c_str()), H5F_ACC_TRUNC,
-                          H5P_DEFAULT, prop_id);
+                          H5P_DEFAULT, fapl);
 
   if (m_file_id < 0) {
-    cout << "Could not open hdf5 file: " << m_filename << endl;
+    cerr << "Could not open hdf5 file: " << m_filename << endl;
     MPI_Abort(comm, m_file_id);
   }
-  H5Pclose(prop_id);
+  H5Pclose(fapl);
 #endif
   return;
 }
@@ -149,10 +157,7 @@ void ESSI3DHDF5::write_header(double h, double (&lonlat_origin)[2], double az,
 
   // Add all the metadata to the file
   if (debug && (myRank == 0))
-    cout << "Writing hdf5 metadata for file: " << m_filename << endl;
-
-  // Save the cycle for later
-  m_start_cycle = cycle;
+    cerr << "Writing hdf5 metadata for file: " << m_filename << endl;
 
   // Global grid lat,lon origin
   hsize_t dim = 2;
@@ -161,7 +166,7 @@ void ESSI3DHDF5::write_header(double h, double (&lonlat_origin)[2], double az,
       H5Dcreate2(m_file_id, "Grid lon-lat origin", H5T_NATIVE_DOUBLE,
                  dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   herr_t ierr = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL,
-                         m_mpiprop_id, &lonlat_origin);
+                         H5P_DEFAULT, &lonlat_origin);
   ierr = H5Dclose(dataset_id);
   ierr = H5Sclose(dataspace_id);
 
@@ -170,7 +175,7 @@ void ESSI3DHDF5::write_header(double h, double (&lonlat_origin)[2], double az,
   dataspace_id = H5Screate_simple(1, &dim, NULL);
   dataset_id = H5Dcreate2(m_file_id, "Grid azimuth", H5T_NATIVE_DOUBLE,
                           dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  ierr = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, m_mpiprop_id,
+  ierr = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
                   &az);
   ierr = H5Dclose(dataset_id);
   ierr = H5Sclose(dataspace_id);
@@ -180,7 +185,7 @@ void ESSI3DHDF5::write_header(double h, double (&lonlat_origin)[2], double az,
   dataspace_id = H5Screate_simple(1, &dim, NULL);
   dataset_id = H5Dcreate2(m_file_id, "ESSI xyz grid spacing", H5T_NATIVE_DOUBLE,
                           dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  ierr = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, m_mpiprop_id,
+  ierr = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
                   &h);
   ierr = H5Dclose(dataset_id);
   ierr = H5Sclose(dataspace_id);
@@ -190,7 +195,7 @@ void ESSI3DHDF5::write_header(double h, double (&lonlat_origin)[2], double az,
   dataspace_id = H5Screate_simple(1, &dim, NULL);
   dataset_id = H5Dcreate2(m_file_id, "ESSI xyz origin", H5T_NATIVE_DOUBLE,
                           dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  ierr = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, m_mpiprop_id,
+  ierr = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
                   &origin);
   ierr = H5Dclose(dataset_id);
   ierr = H5Sclose(dataspace_id);
@@ -200,7 +205,7 @@ void ESSI3DHDF5::write_header(double h, double (&lonlat_origin)[2], double az,
   dataspace_id = H5Screate_simple(1, &dim, NULL);
   dataset_id = H5Dcreate2(m_file_id, "time start", H5T_NATIVE_DOUBLE,
                           dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  ierr = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, m_mpiprop_id,
+  ierr = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
                   &t);
   ierr = H5Dclose(dataset_id);
   ierr = H5Sclose(dataspace_id);
@@ -210,12 +215,12 @@ void ESSI3DHDF5::write_header(double h, double (&lonlat_origin)[2], double az,
   dataspace_id = H5Screate_simple(1, &dim, NULL);
   dataset_id = H5Dcreate2(m_file_id, "timestep", H5T_NATIVE_DOUBLE,
                           dataspace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  ierr = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, m_mpiprop_id,
+  ierr = H5Dwrite(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
                   &dt);
   ierr = H5Dclose(dataset_id);
   ierr = H5Sclose(dataspace_id);
 
-  if (debug && (myRank == 0)) cout << "Writing hdf5 metadata done" << endl;
+  if (debug && (myRank == 0)) cerr << "Writing hdf5 metadata done" << endl;
 #endif
   return;
 }
@@ -232,7 +237,7 @@ void ESSI3DHDF5::write_topo(void* window_array) {
   if (m_precision == 4) dtype = H5T_NATIVE_FLOAT;
 
   if (debug && (myRank == 0))
-    cout << "Writing hdf5 z coordinate: " << m_filename << endl;
+    cerr << "Writing hdf5 z coordinate: " << m_filename << endl;
 
   // Create the data space and chunk for z coordinate
   char msg[1000];
@@ -240,7 +245,7 @@ void ESSI3DHDF5::write_topo(void* window_array) {
     sprintf(msg, "Rank %d creating z dataspace size = %d %d %d\n", myRank,
             (int)m_global_dims[0], (int)m_global_dims[1],
             (int)m_global_dims[2]);
-    cout << msg;
+    cerr << msg;
   }
 
   hsize_t z_dims = 3;
@@ -258,7 +263,7 @@ void ESSI3DHDF5::write_topo(void* window_array) {
   if (debug) {
     sprintf(msg, "Rank %d creating chunk/slice size = %d %d %d\n", myRank,
             (int)m_slice_dims[1], (int)m_slice_dims[2], (int)m_slice_dims[3]);
-    cout << msg;
+    cerr << msg;
   }
 
   /*
@@ -279,27 +284,25 @@ void ESSI3DHDF5::write_topo(void* window_array) {
   if (debug) {
     sprintf(msg, "Rank %d selecting z hyperslab = %d %d %d\n", myRank,
             (int)start[0], (int)start[1], (int)start[2]);
-    cout << msg;
-    cout.flush();
+    cerr << msg;
   }
   hid_t window_id = H5Screate_simple(z_dims, &m_window_dims[1], NULL);
   ierr = H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET, start, NULL,
                              &m_window_dims[1], NULL);
   if (ierr < 0) {
-    cout << "Error from z H5Sselect_hyperslab" << endl;
+    cerr << "Error from z H5Sselect_hyperslab" << endl;
     MPI_Abort(comm, ierr);
   }
   if (debug) {
     char msg[1000];
     sprintf(msg, "Writing z array Rank %d\n", myRank);
-    cout << msg;
-    cout.flush();
+    cerr << msg;
   }
 
-  ierr = H5Dwrite(dataset_id, dtype, window_id, dataspace_id, m_mpiprop_id,
+  ierr = H5Dwrite(dataset_id, dtype, window_id, dataspace_id, H5P_DEFAULT,
                   window_array);
   if (ierr < 0) {
-    cout << "Error from z H5Dwrite " << endl;
+    cerr << "Error from z H5Dwrite " << endl;
     MPI_Abort(comm, ierr);
   }
 
@@ -307,11 +310,10 @@ void ESSI3DHDF5::write_topo(void* window_array) {
   ierr = H5Dclose(dataset_id);
 
   if (debug && (myRank == 0))
-    cout << "Done writing hdf5 z coordinate: " << m_filename << endl;
+    cerr << "Done writing hdf5 z coordinate: " << m_filename << endl;
 #endif
   return;
 }
-
 void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
                                 int compressionMode, double compressionPar,
                                 int bufferInterval) {
@@ -419,27 +421,26 @@ void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
     sprintf(msg, "Rank %d creating vel dataspaces size = %d %d %d %d\n", myRank,
             (int)m_cycle_dims[0], (int)m_cycle_dims[1], (int)m_cycle_dims[2],
             (int)m_cycle_dims[3]);
-    cout << msg;
+    cerr << msg;
     fflush(stdout);
   }
 
-  for (int c = 0; c < 3; c++) {
-    m_vel_dataspace_id[c] =
-        H5Screate_simple(num_dims, m_cycle_dims, m_cycle_dims);
-    char var[100];
-    sprintf(var, "vel_%d ijk layout", c);
+  hid_t dset, dspace;
+  if (myRank == 0) {
+    for (int c = 0; c < 3; c++) {
+      dspace = H5Screate_simple(num_dims, m_cycle_dims, m_cycle_dims);
+      char var[100];
+      sprintf(var, "vel_%d ijk layout", c);
 
-    if (isRestart)
-      m_vel_dataset_id[c] = H5Dopen(m_file_id, var, H5P_DEFAULT);
-    else
-      m_vel_dataset_id[c] =
-          H5Dcreate2(m_file_id, var, dtype, m_vel_dataspace_id[c], H5P_DEFAULT,
-                     prop_id, H5P_DEFAULT);
-
-    if (m_vel_dataset_id[c] < 0) {
-      std::cout << "Error with H5Dcreate/open!" << std::endl;
-      MPI_Abort(MPI_COMM_WORLD, -1);
+      dset = H5Dcreate2(m_file_id, var, dtype, dspace, H5P_DEFAULT, prop_id,
+                        H5P_DEFAULT);
+      if (dset < 0) {
+        cerr << "Error with H5Dcreate/open!" << std::endl;
+        MPI_Abort(MPI_COMM_WORLD, -1);
+      }
+      H5Dclose(dset);
     }
+    H5Fclose(m_file_id);
   }
   H5Pclose(prop_id);
 #endif
@@ -481,7 +482,6 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
 
   hid_t window_id = H5Screate_simple(vel_dims, buf_window_dims, NULL);
 
-  m_vel_dataspace_id[comp] = H5Dget_space(m_vel_dataset_id[comp]);
   hsize_t start[4] = {0, 0, 0, 0};
   start[0] = cycle - nstep;
   start[1] = m_window[0];  // local index lo relative to global
@@ -499,32 +499,58 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
     fflush(stdout);
   }
 
+  hid_t dset, dspace;
   hsize_t my_size = 1;
+  hsize_t num_dims = 4;
   for (int i = 0; i < vel_dims; i++) my_size *= m_window_dims[i];
 
+  dspace = H5Screate_simple(num_dims, m_cycle_dims, m_cycle_dims);
+
   if (my_size == 0) {
-    H5Sselect_none(m_vel_dataspace_id[comp]);
+    H5Sselect_none(dspace);
     H5Sselect_none(window_id);
   } else {
-    ierr = H5Sselect_hyperslab(m_vel_dataspace_id[comp], H5S_SELECT_SET, start,
-                               NULL, buf_window_dims, NULL);
+    ierr = H5Sselect_hyperslab(dspace, H5S_SELECT_SET, start, NULL,
+                               buf_window_dims, NULL);
     if (ierr < 0) {
-      cout << "Error from vel H5Sselect_hyperslab" << endl;
+      cerr << "Error from vel H5Sselect_hyperslab" << endl;
       MPI_Abort(comm, ierr);
     }
   }
 
-  ierr = H5Dwrite(m_vel_dataset_id[comp], dtype, window_id,
-                  m_vel_dataspace_id[comp], dxpl, window_array);
-  if (ierr < 0) {
-    cout << "Error from vel H5Dwrite " << endl;
+  char var[100];
+  sprintf(var, "vel_%d ijk layout", comp);
+#ifdef USE_HDF5_ASYNC
+  dset = H5Dopen_async(m_file_id, var, H5P_DEFAULT, m_es_id);
+#else
+  dset = H5Dopen(m_file_id, var, H5P_DEFAULT);
+#endif
+  if (dset < 0) {
+    cerr << "Error from vel H5Dopen " << myRank << endl;
     MPI_Abort(comm, ierr);
   }
+
+#ifdef USE_HDF5_ASYNC
+  ierr = H5Dwrite_async(dset, dtype, window_id, dspace, dxpl, window_array,
+                        m_es_id);
+#else
+  ierr = H5Dwrite(dset, dtype, window_id, dspace, dxpl, window_array);
+#endif
+  if (ierr < 0) {
+    cerr << "Error from vel H5Dwrite " << endl;
+    MPI_Abort(comm, ierr);
+  }
+
+#ifdef USE_HDF5_ASYNC
+  H5Dclose_async(dset, m_es_id);
+#else
+  H5Dclose(dset);
+#endif
 
   if (enable_timing) {
     time(&now);
     write_time = MPI_Wtime() - write_time_start;
-    if (myRank == 0) {
+    if (myRank == 0 && buf_window_dims[0] >= 50) {
       printf(
           "ssioutput cycle=%d, comp=%d, write size=%.2fMB, write time=%f, %s",
           cycle, comp, write_size / 1048576.0, write_time, ctime(&now));
@@ -533,7 +559,10 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
   }
 
   H5Pclose(dxpl);
+#ifndef USE_HDF5_ASYNC
   H5Fflush(m_file_id, H5F_SCOPE_GLOBAL);
+#endif
+
 #endif
   return;
 }
@@ -541,29 +570,34 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
 void ESSI3DHDF5::close_file() {
 #ifdef USE_HDF5
   // Updated header with final start,end cycle
-  hsize_t dim = 2;
-  hid_t dataspace_id = H5Screate_simple(1, &dim, NULL);
-  hid_t dataset_id =
-      H5Dcreate2(m_file_id, "cycle start, end", H5T_STD_I32LE, dataspace_id,
-                 H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  int cycles[2] = {0, m_end_cycle};
-  herr_t ierr = H5Dwrite(dataset_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL,
-                         m_mpiprop_id, cycles);
-  ierr = H5Dclose(dataset_id);
-  ierr = H5Sclose(dataspace_id);
+  /* hsize_t dim = 2; */
+  /* hid_t dataspace_id = H5Screate_simple(1, &dim, NULL); */
+  /* hid_t dataset_id = */
+  /*     H5Dcreate2(m_file_id, "cycle start, end", H5T_STD_I32LE, dataspace_id,
+   */
+  /*                H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); */
+  /* int cycles[2] = {0, m_end_cycle}; */
+  /* herr_t ierr = H5Dwrite(dataset_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, */
+  /*                        H5P_DEFAULT, cycles); */
+  /* ierr = H5Dclose(dataset_id); */
+  /* ierr = H5Sclose(dataspace_id); */
 
-  // Close each velocity dataspace, then dataset
-  for (int comp = 0; comp < 3; comp++) {
-    if (m_vel_dataspace_id[comp] > 0) H5Sclose(m_vel_dataspace_id[comp]);
-    if (m_vel_dataset_id[comp] > 0) H5Dclose(m_vel_dataset_id[comp]);
-  }
-  H5Pclose(m_mpiprop_id);
+#ifdef USE_HDF5_ASYNC
+  H5Fclose_async(m_file_id, m_es_id);
+#else
   H5Fclose(m_file_id);
+#endif
 
-  if (m_all_start_count) {
-    free(m_all_start_count);
-    m_all_start_count = NULL;
-  }
+#endif
+  return;
+}
+
+void ESSI3DHDF5::finalize_hdf5() {
+#ifdef USE_HDF5_ASYNC
+  size_t num_in_progress;
+  hbool_t op_failed;
+  if (m_es_id > 0)
+    H5ESwait(m_es_id, H5ES_WAIT_FOREVER, &num_in_progress, &op_failed);
 #endif
   return;
 }

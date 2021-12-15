@@ -481,7 +481,6 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
       m_lamb_test(0),
       m_rayleigh_wave_test(0),
       m_update_boundary_function(0),
-      m_EFileResolution(-1.0),
       m_maxIter(10),
       m_topoFileName("NONE"),
       m_topoExtFileName("NONE"),
@@ -612,7 +611,6 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
       //  m_utc0isrefevent(false),
       m_events_parallel(false),
       m_opttest(0),
-      mEtreeFile(NULL),
       m_perturb(0),
       m_iperturb(1),
       m_jperturb(1),
@@ -1231,6 +1229,12 @@ bool EW::getDepth(float_sw4 x, float_sw4 y, float_sw4 z, float_sw4& depth) {
 }
 
 //-----------------------------------------------------------------------
+void EW::computeCartesianCoordGMG(double& x, double& y, double lon, double lat,
+                                  char* crs_to) {
+  m_geoproj->computeCartesianCoordGMG(x, y, lon, lat, crs_to);
+}
+
+//-----------------------------------------------------------------------
 void EW::computeCartesianCoord(double& x, double& y, double lon, double lat) {
   SW4_MARK_FUNCTION;
   // -----------------------------------------------------------------
@@ -1630,26 +1634,6 @@ void EW::saveGMTFile(vector<vector<Source*>>& a_GlobalUniqueSources,
 
     //      GeographicCoord eNW, eNE, eSW, eSE;
 
-#ifdef ENABLE_ETREE
-    if (mEtreeFile != NULL) {
-      //        mEtreeFile->getGeoBox()->getBounds(eNW, eNE, eSW, eSE);
-      // correct these as above (remove +/- 1
-      //        minx =
-      //        (min(eSW.getLongitude()-1,min(eSE.getLongitude()-1,min(eNE.getLongitude()-1,eNW.getLongitude()-1))));
-      //        maxx =
-      //        (max(eSW.getLongitude()+1,max(eSE.getLongitude()+1,max(eNE.getLongitude()+1,eNW.getLongitude()+1))));
-      //        miny =
-      //        (min(eSW.getLatitude()-1,min(eSE.getLatitude()-1,min(eNE.getLatitude()-1,eNW.getLatitude()-1))));
-      //        maxy =
-      //        (max(eSW.getLatitude()+1,max(eSE.getLatitude()+1,max(eNE.getLatitude()+1,eNW.getLatitude()+1))));
-      mEtreeFile->getbox(miny, maxy, minx, maxx);
-      minx -= 1;
-      maxx += 1;
-      miny -= 1;
-      maxy += 1;
-    }
-#endif
-
     contents << "# Region will need to be adjusted based on etree/grid values"
              << endl
              << "set REGION = " << minx - margin << "/" << maxx + margin << "/"
@@ -1713,43 +1697,6 @@ void EW::saveGMTFile(vector<vector<Source*>>& a_GlobalUniqueSources,
         << lonSW << " " << latSW << endl
         << "EOF" << endl
         << endl;
-
-#ifdef ENABLE_ETREE
-    if (mEtreeFile != NULL) {
-      // Consider Etree bounds also
-      //         GeographicCoord eNW, eNE, eSW, eSE;
-      //         mEtreeFile->getGeoBox()->getBounds(eNW, eNE, eSW, eSE);
-      double elatSE, elonSE, elatSW, elonSW, elatNE, elonNE, elatNW, elonNW;
-      mEtreeFile->getcorners(elatSE, elonSE, elatSW, elonSW, elatNE, elonNE,
-                             elatNW, elonNW);
-      contents
-          << "# Etree region: " << mEtreeFile->getFileName() << endl
-          << "psxy -R$REGION -JM$SCALE -W5/255/255/0ta -O -K <<EOF>> plot.ps"
-          << endl
-          << elonNW << " " << elatNW << endl
-          << elonNE << " " << elatNE << endl
-          << elonSE << " " << elatSE << endl
-          << elonSW << " " << elatSW << endl
-          << elonNW << " " << elatNW << endl
-          << "EOF" << endl
-          << endl;
-      //         contents << "# Etree region: " << mEtreeFile->getFileName() <<
-      //         endl
-      //                  << "psxy -R$REGION -JM$SCALE -W5/255/255/0ta -O -K
-      //                  <<EOF>> plot.ps" << endl
-      //                  << eNW.getLongitude() << " " << eNW.getLatitude() <<
-      //                  endl
-      //                  << eNE.getLongitude() << " " << eNE.getLatitude() <<
-      //                  endl
-      //                  << eSE.getLongitude() << " " << eSE.getLatitude() <<
-      //                  endl
-      //                  << eSW.getLongitude() << " " << eSW.getLatitude() <<
-      //                  endl
-      //	             << eNW.getLongitude() << " " << eNW.getLatitude()
-      //<< endl
-      //                  << "EOF" << endl << endl;
-    }
-#endif
 
     if (a_GlobalUniqueSources[event].size() > 0) {
       contents << "# Sources... " << endl << "cat << EOF >! event.d" << endl;
@@ -6912,81 +6859,6 @@ void EW::extractTopographyFromImageFile(string a_topoFileName) {
 }
 
 //-----------------------------------------------------------------------
-void EW::extractTopographyFromEfile(std::string a_topoFileName,
-                                    std::string a_topoExtFileName,
-                                    std::string a_QueryType,
-                                    float_sw4 a_EFileResolution) {
-#ifdef ENABLE_ETREE
-  if (proc_zero())
-    cout << endl << "*** extracting TOPOGRAPHY from efile ***" << endl << endl;
-  cencalvm::query::VMQuery query;
-  cencalvm::storage::ErrorHandler* pErrHandler = query.errorHandler();
-
-  // Check user specified file names. Abort if they are not there or not
-  // readable
-  VERIFY2(access(a_topoFileName.c_str(), R_OK) == 0,
-          "No read permission on etree file: " << a_topoFileName);
-  query.filename(a_topoFileName.c_str());
-
-  if (a_topoExtFileName != "NONE") {
-    // User specified, if it is not there, abort
-    VERIFY2(access(a_topoExtFileName.c_str(), R_OK) == 0,
-            "No read permission on xefile: " << a_topoExtFileName);
-    query.filenameExt(a_topoExtFileName.c_str());
-  }
-  int topLevel = mNumberOfGrids - 1;
-  if (a_QueryType == "MAXRES")
-    query.queryType(cencalvm::query::VMQuery::MAXRES);
-  else if (a_QueryType == "FIXEDRES") {
-    query.queryType(cencalvm::query::VMQuery::FIXEDRES);
-    if (a_EFileResolution < 0.) a_EFileResolution = mGridSize[topLevel];
-    if (proc_zero()) printf("Fixedres resolution = %e\n", a_EFileResolution);
-    query.queryRes(a_EFileResolution);
-  }
-
-  const char* queryKeys[] = {"elevation", "Vp", "Vs"};
-  int payloadSize = 3;
-  query.queryVals(queryKeys, payloadSize);
-
-  double x, y;
-  double lat, lon, elev, elevDelta = 25.;
-
-  query.open();
-  double* pVals = new float_sw4[payloadSize];
-  bool verbose = (mVerbose >= 3);
-
-  for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
-    for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j) {
-      x = (i - 1) * mGridSize[topLevel];
-      y = (j - 1) * mGridSize[topLevel];
-      computeGeographicCoord(x, y, lon, lat);
-      // initial query for elevation just below sealevel
-      elev = -25.0;
-      query.query(&pVals, payloadSize, lon, lat, elev);
-      // Make sure the query didn't generated a warning or error
-      if (pErrHandler->status() != cencalvm::storage::ErrorHandler::OK) {
-        // If query generated an error, then bail out, otherwise reset status
-        pErrHandler->resetStatus();
-        if (verbose)
-          cout << "WARNING: Etree query failed for initial elevation of "
-                  "topography at grid point (i,j)= ("
-               << i << ", " << j << ") in curvilinear grid g = " << topLevel
-               << endl
-               << " lat= " << lat << " lon= " << lon
-               << " query elevation= " << elev << endl;
-        mTopo(i, j, 1) = NO_TOPO;
-        continue;
-      }
-      // save the actual topography which will be the starting point for
-      // computing smoother the grid topography
-      mTopo(i, j, 1) = pVals[0];
-    }
-  query.close();
-  delete[] pVals;
-#endif
-}
-
-//-----------------------------------------------------------------------
 void EW::extractTopographyFromRfile(std::string a_topoFileName) {
   std::string rname = "EW::extractTopographyFromRfile";
   Sarray gridElev;
@@ -9273,6 +9145,229 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
         "abort!\n");
   MPI_Abort(MPI_COMM_WORLD, -1);
 #endif  // #ifdef USE_HDF5
+}
+
+#ifdef USE_HDF5
+static void read_hdf5_attr(hid_t loc, hid_t dtype, char* name, void* data) {
+  hid_t attr_id;
+  int ierr;
+  attr_id = H5Aopen(loc, name, H5P_DEFAULT);
+  ASSERT(attr_id >= 0);
+  ierr = H5Aread(attr_id, dtype, data);
+  ASSERT(ierr >= 0);
+  H5Aclose(attr_id);
+}
+
+static char* read_hdf5_attr_str(hid_t loc, char* name) {
+  hid_t attr_id, dtype;
+  int ierr;
+  char* data = NULL;
+
+  attr_id = H5Aopen(loc, name, H5P_DEFAULT);
+  ASSERT(attr_id >= 0);
+
+  dtype = H5Aget_type(attr_id);
+
+  ierr = H5Aread(attr_id, dtype, &data);
+  ASSERT(ierr >= 0);
+
+  H5Tclose(dtype);
+  H5Aclose(attr_id);
+
+  /* fprintf(stderr, "Read data: [%s]\n", data); */
+  return data;
+}
+#endif
+
+//-----------------------------------------------------------------------
+void EW::extractTopographyFromGMG(std::string a_topoFileName) {
+  double start_time, end_time;
+  start_time = MPI_Wtime();
+#ifdef USE_HDF5
+  Sarray gridElev;
+  herr_t ierr;
+  hid_t file_id, dataset_id, datatype_id, group_id, dataspace_id;
+  int prec, str_len;
+  double az = 0, origin_x = 0, origin_y = 0, hh = 0, alpha = 0;
+  hsize_t dims[2];
+  char* crs_to = NULL;
+
+  if (m_myRank == 0) {
+    file_id = H5Fopen(a_topoFileName.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+    if (file_id < 0) {
+      cout << "Could not open hdf5 file: " << a_topoFileName.c_str() << endl;
+      MPI_Abort(MPI_COMM_WORLD, file_id);
+    }
+
+    read_hdf5_attr(file_id, H5T_IEEE_F64LE, "origin_x", &origin_x);
+    read_hdf5_attr(file_id, H5T_IEEE_F64LE, "origin_y", &origin_y);
+    read_hdf5_attr(file_id, H5T_IEEE_F64LE, "y_azimuth", &az);
+
+    group_id = H5Gopen(file_id, "surfaces", H5P_DEFAULT);
+    ASSERT(group_id >= 0);
+
+    dataset_id = H5Dopen(group_id, "topography_bathymetry", H5P_DEFAULT);
+    ASSERT(dataset_id >= 0);
+
+    dataspace_id = H5Dget_space(dataset_id);
+    H5Sget_simple_extent_dims(dataspace_id, dims, NULL);
+    H5Sclose(dataspace_id);
+
+    datatype_id = H5Dget_type(dataset_id);
+    prec = (int)H5Tget_size(datatype_id);
+    H5Tclose(datatype_id);
+
+    read_hdf5_attr(dataset_id, H5T_IEEE_F64LE, "resolution_horiz", &hh);
+
+    crs_to = read_hdf5_attr_str(file_id, "crs");
+    str_len = (int)(strlen(crs_to) + 1);
+  }
+
+  MPI_Bcast(&origin_x, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&origin_y, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&az, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&hh, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(dims, 2, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&prec, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&str_len, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  if (m_myRank != 0) crs_to = (char*)malloc(str_len * sizeof(char));
+
+  MPI_Bcast(crs_to, str_len, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+  // For some reason origin_x is not correctly read sometimes
+  if (origin_x < 1.0) {
+    origin_x = 99286.2;
+    if (m_myRank == 0)
+      printf("GMG origin_x read zero value, correct to 99286.2 \n");
+  }
+
+  ASSERT(origin_x > 0);
+  ASSERT(origin_y > 0);
+  ASSERT(az > 0);
+
+  // Convert GMG az to SW4 az
+  alpha = az - 180.0;
+
+  CHECK_INPUT(fabs(alpha - mGeoAz) < 1e-6,
+              "ERROR: GMG azimuth must be equal to coordinate system azimuth"
+                  << " azimuth on GMG = " << alpha
+                  << " azimuth of coordinate sytem = " << mGeoAz
+                  << " difference = " << alpha - mGeoAz);
+
+  if (m_myRank == 0 && mVerbose >= 2) {
+    printf("GMG header: azimuth=%e, origin_x=%f, origin_y=%f\n", az, origin_x,
+           origin_y);
+    printf("            hh=%e, ni=%ld, nj=%ld\n", hh, dims[0], dims[1]);
+  }
+
+  float* f_data = new float[dims[0] * dims[1]];
+
+  if (m_myRank == 0) {
+    ierr = H5Dread(dataset_id, H5T_IEEE_F32LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                   f_data);
+    ASSERT(ierr >= 0);
+    H5Dclose(dataset_id);
+    H5Gclose(group_id);
+    H5Fclose(file_id);
+  }
+  MPI_Bcast(f_data, dims[0] * dims[1], MPI_FLOAT, 0, MPI_COMM_WORLD);
+
+  // Topography read, next interpolate to the computational grid
+  int topLevel = mNumberOfGrids - 1;
+
+  float_sw4 topomax = -1e30, topomin = 1e30;
+
+  /* printf("x0=%f, y0=%f\n", x0, y0); */
+  /* printf("topoGMG: m_iStart %d, m_iEnd %d, m_jStart %d, m_jEnd %d\n", */
+  /*         m_iStart[topLevel],  m_iEnd[topLevel],  m_jStart[topLevel],
+   * m_jEnd[topLevel]); */
+
+  const double yazimuthRad = az * M_PI / 180.0;
+  const double cosAz = cos(yazimuthRad);
+  const double sinAz = sin(yazimuthRad);
+
+  /* fprintf(stderr, "origin xy: %f %f\n", origin_x, origin_y); */
+
+  // proj is not thread safe, so no omp pragma here
+  for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
+    for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j) {
+      float_sw4 x = (i - 1) * mGridSize[topLevel];
+      float_sw4 y = (j - 1) * mGridSize[topLevel];
+
+      double sw4_lon, sw4_lat, gmg_x, gmg_y, gmg_x0, gmg_y0;
+      computeGeographicCoord(x, y, sw4_lon, sw4_lat);
+      /* printf("\ncomputeGeographicCoord: %f %f %f %f\n", x, y, sw4_lon,
+       * sw4_lat); */
+
+      // GMG x/y, lat/lon is switched from sw4 CRS
+      computeCartesianCoordGMG(gmg_y0, gmg_x0, sw4_lon, sw4_lat, crs_to);
+      /* printf("computeCartesianCoordGMG : %f %f %f %f\n", gmg_x0, gmg_y0,
+       * sw4_lon, sw4_lat); */
+
+      const double xRel = gmg_x0 - origin_x;
+      const double yRel = gmg_y0 - origin_y;
+      gmg_x = xRel * cosAz - yRel * sinAz;
+      gmg_y = xRel * sinAz + yRel * cosAz;
+      /* printf("converted gmg xy: %f, %f, origin: %f %f\n", gmg_x, gmg_y,
+       * origin_x, origin_y); */
+
+      int i0 = static_cast<int>(floor(gmg_x / hh));
+      int j0 = static_cast<int>(floor(gmg_y / hh));
+
+      double fac0 = (gmg_y - j0 * hh) / hh;
+      double fac1 = (gmg_x - i0 * hh) / hh;
+
+      /* printf("x=%f, y=%f, i0=%d, j0=%d\n", x, y, i0, j0); */
+      /* printf("interp points: %f %f %f %f\n", f_data[i0*dims[1]+j0],
+       * f_data[(i0+1)*dims[1]+j0], f_data[i0*dims[1]+j0+1],
+       * f_data[(i0+1)*dims[1]+j0+1]); */
+
+      // Linear interpolation with 4 surrounding points
+      float_sw4 mytopo =
+          f_data[i0 * dims[1] + j0] +
+          (f_data[i0 * dims[1] + j0 + 1] - f_data[i0 * dims[1] + j0]) * fac0 +
+          (f_data[(i0 + 1) * dims[1] + j0] +
+           (f_data[(i0 + 1) * dims[1] + j0 + 1] -
+            f_data[(i0 + 1) * dims[1] + j0]) *
+               fac0 -
+           (f_data[i0 * dims[1] + j0] +
+            (f_data[i0 * dims[1] + j0 + 1] - f_data[i0 * dims[1] + j0]) *
+                fac0)) *
+              fac1;
+      /* printf("Calculated topo: %f, fac %f %f\n", mytopo, fac0, fac1); */
+      if (mytopo > topomax) topomax = mytopo;
+      if (mytopo < topomin) topomin = mytopo;
+
+      mTopo(i, j, 1) = mytopo;
+    }  // end for j
+  }    // end for i
+
+  if (crs_to) free(crs_to);
+
+  delete[] f_data;
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  end_time = MPI_Wtime();
+
+  if (m_myRank == 0) {
+    printf("Read topography from GeoModelGrids time=%e seconds\n",
+           end_time - start_time);
+    if (mVerbose >= 2) {
+      printf("Topo corners %f, %f, %f, %f\n",
+             mTopo(m_iStart[topLevel], m_jStart[topLevel], 1),
+             mTopo(m_iEnd[topLevel], m_jStart[topLevel], 1),
+             mTopo(m_iEnd[topLevel], m_jStart[topLevel], 1),
+             mTopo(m_iEnd[topLevel], m_jEnd[topLevel], 1));
+      printf("Topo variation on comp grid: max=%e min=%e\n", topomax, topomin);
+    }
+  }
+#else
+  if (m_myRank == 0)
+    printf(
+        "WARNING: sw4 not compiled with hdf5=yes, ignoring read GMG, abort!\n");
+  MPI_Abort(MPI_COMM_WORLD, -1);
+#endif
 }
 
 // CURVI_MR_CODE ADDED HERE
