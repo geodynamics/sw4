@@ -69,8 +69,10 @@ struct traverse_data_t {
   bool winrset;
   float_sw4 winl;
   float_sw4 winr;
-  float_sw4 winl2;
-  float_sw4 winr2;
+  float_sw4 win1;
+  float_sw4 win2;
+  float_sw4 win3;
+  float_sw4 win4;
   bool usex;
   bool usey;
   bool usez;
@@ -132,10 +134,11 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
   H5O_info_t infobuf;
 #endif
   EW *a_ew;
-  double data[3];
+  double data[4];
   double lon, lat, depth, x, y, z;
   bool geoCoordSet = true, topodepth = true, nsew = true;
   int isnsew, usezvalue, ret;
+  bool foundwins=false;
 
   ASSERT(operator_data != NULL);
 
@@ -224,6 +227,17 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       lon = data[1];
       z = data[2];
     }
+    else if (H5Lexists(grp, "WINDOWS", H5P_DEFAULT) > 0) {
+       dset = H5Dopen(grp, "WINDOWS", H5P_DEFAULT);
+       if (dset < 0)
+          fprintf(stderr, "Error reading from rechdf5 station %s WINDOWS open failed!\n", grp_name);
+       ret = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+       op_data->win1=data[0];
+       op_data->win2=data[1];
+       op_data->win3=data[2];
+       op_data->win4=data[3];
+       foundwins = true;
+    }
     else {
       // Not a station group, ignore
       H5Gclose(grp);
@@ -299,7 +313,9 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
                 op_data->winl = -1;
              ts_ptr->set_window( op_data->winl, op_data->winr );
           }
-      
+          if( foundwins )
+             ts_ptr->set_window( op_data->win1, op_data->win2, op_data->win3, op_data->win4 );
+
           // Exclude some components
           if( !op_data->usex || !op_data->usey || !op_data->usez )
              ts_ptr->exclude_component( op_data->usex, op_data->usey, op_data->usez );

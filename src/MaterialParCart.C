@@ -1909,6 +1909,7 @@ void MaterialParCart::interpolate_to_coarse_vel( vector<Sarray>& rhogrid,
    }
 }
 
+//-----------------------------------------------------------------------
 void MaterialParCart::write_dfm_hdf5(double *dfm, std::string fname, MPI_Comm comm)
 {
 #ifdef USE_HDF5
@@ -1930,7 +1931,7 @@ void MaterialParCart::write_dfm_hdf5(double *dfm, std::string fname, MPI_Comm co
 
     fid = H5Fcreate(fname.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
     if (fid < 0) {
-        std::cout << "Error with dfm file createion!" << endl;
+        std::cout << "Error with dfm file creation!" << endl;
         return;
     }
 
@@ -1958,7 +1959,7 @@ void MaterialParCart::write_dfm_hdf5(double *dfm, std::string fname, MPI_Comm co
 
     dset = H5Dcreate(fid, "dfm", H5T_NATIVE_DOUBLE, dspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if (dset < 0) {
-        std::cout << "Error with dfm dset createion!" << endl;
+        std::cout << "Error with dfm dset creation!" << endl;
         return;
     }
 
@@ -1966,7 +1967,7 @@ void MaterialParCart::write_dfm_hdf5(double *dfm, std::string fname, MPI_Comm co
 
     ret = H5Dwrite(dset, H5T_NATIVE_DOUBLE, mspace, dspace, dxpl, dfm);
     if (dset < 0) {
-        std::cout << "Error with dfm dset createion!" << endl;
+        std::cout << "Error with dfm dset creation!" << endl;
     }
 
     H5Dclose(dset);
@@ -2044,9 +2045,12 @@ void MaterialParCart::interpolate_pseudohessian( int nmpars, double* phs,
       delete[] tmp;
    }
 }
+
+//-----------------------------------------------------------------------
 int MaterialParCart::getcartdims(int& nx, int& ny, int& nz)
 {
    nx = m_nx;
    ny = m_ny;
    nz = m_nz;
+   return 1;
 }

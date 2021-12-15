@@ -7719,6 +7719,7 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
   char exclstr[4]={'\0','\0','\0','\0'};
   bool usex=true, usey=true, usez=true;
   bool scalefactor_set=false;
+  bool eventgiven=false;
   int event=0;
 
   char* token = strtok(buffer, " \t");
@@ -7749,6 +7750,7 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
 	token += 6;
 	//	event = atoi(token);
 	//	CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
+        eventgiven = true;
 	// Ignore if no events given
 	if( m_nevents_specified > 0 )
 	{
@@ -7843,6 +7845,11 @@ void EW::processObservationHDF5( char* buffer, vector<vector<TimeSeries*> > & a_
      token = strtok(NULL, " \t");
   }  
 
+  if( m_nevents_specified > 0 && !eventgiven )
+  {
+     if( m_myRank == 0 )
+        std::cout << "Processobservationhdf5: ERROR, event not specified" << std::endl;
+  }
   // Read from HDF5 file, and create time series data
 #ifdef USE_HDF5
   bool is_obs = true;

@@ -5964,7 +5964,7 @@ void EW::extractTopographyFromGridFile( string a_topoFileName )
 	 if (gridElev(1,i,j,1) > elevMax) elevMax=gridElev(1,i,j,1);
       }
    if (proc_zero())
-      printf("lonMin=%e, lonMax=%e\nlatMin=%e, latMax=%e\nelevMin=%e, evalMax=%e\n", 
+      printf("lonMin=%e, lonMax=%e\nlatMin=%e, latMax=%e\nelevMin=%e, elevMax=%e\n", 
 	     lonMin, lonMax, latMin, latMax, elevMin, elevMax);
   
 // If the lat vector is not in increasing order, we need to reorder it
@@ -6173,7 +6173,7 @@ void EW::extractTopographyFromCartesianFile(string a_topoFileName)
 	 if (gridElev(1,i,j,1) > elevMax) elevMax=gridElev(1,i,j,1);
       }
    if (proc_zero())
-      printf("xMin=%e, xMax=%e\nyMin=%e, yMax=%e\nelevMin=%e, evalMax=%e\n", 
+      printf("xMin=%e, xMax=%e\nyMin=%e, yMax=%e\nelevMin=%e, elevMax=%e\n", 
 	     xMin, xMax, yMin, yMax, elevMin, elevMax);
   
    float_sw4 xP, yP, elev;
