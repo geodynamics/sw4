@@ -1,16 +1,18 @@
 #-----------------------------------------------------------------------
 # Usage:
-#   Default is: debug=no proj=yes profile=no prec=double openmp=yes hdf5=no fftw=no hdf5async=no
-# make sw4     [debug=yes/no] [proj=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
-# make sw4mopt [debug=yes/no] [proj=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
+#   Default is: debug=no proj_6=yes profile=no prec=double openmp=yes hdf5=no fftw=no
+# make sw4     [debug=yes/no] [proj_6=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
+# make sw4mopt [debug=yes/no] [proj_6=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
+#
+#  Note: The command line settings override any variable settings in the included configuration files.
 #
 # This Makefile asumes that the following environmental variables have been assigned,
 # see note below.
-# proj = [yes/no]
+# proj_6 = [yes/no]
 # CXX = C++ compiler
 # FC  = Fortran-77 compiler
 #
-# SW4ROOT = path to third party libraries (used when proj=yes). 
+# SW4ROOT = path to third party libraries (used when proj_6=yes). 
 # HDF5ROOT = path to hdf5 library and include files (used when hdf5=yes).
 # H5ZROOT = path to H5Z-ZFP library and include files (used when zfp=yes).
 # ZFPROOT = path to ZFP library and include files (used when zfp=yes).
@@ -35,14 +37,14 @@
 #-----------------------------------------------------------------------
 
 ifeq ($(debug),yes)
-   profile := "no"
+   profile := no
    optlevel = DEBUG
 else ifeq ($(profile),yes)
-   debug := "no"
+   debug := no
    optlevel = PROFILE
 else
-   debug := "no"
-   profile := "no"
+   debug := no
+   profile := no
    optlevel = OPTIMIZE
 endif
 
@@ -62,17 +64,19 @@ else
 endif
 
 ifeq ($(proj),no)
-    proj := "no"
+    proj := no
 else
-    proj := "yes"
+    proj := yes
 endif
 
 ifeq ($(proj_6),no)
-    proj_6 := "no"
+    proj_6 := no
 else
-    proj_6 := "yes"
-    proj   := "no"
+    proj_6 := yes
+    proj   := no
 endif
+
+
 
 fullpath := $(shell pwd)
 
@@ -160,6 +164,7 @@ else
 
 endif
 
+
 # This needs to be added before the OMP flags to work on a mac with the Apple clang compiler
 ifdef EXTRA_CXX_FLAGS
    CXXFLAGS += $(EXTRA_CXX_FLAGS)
@@ -189,8 +194,9 @@ else ifeq ($(proj),yes)
    linklibs += -L$(SW4LIB) -lproj
    #-lsqlite3 -lcurl -lssl
 else
-   proj  := "no"
+   proj  := no
 endif
+
 
 # FFTW needed for random material. If FFTWHOME undefined, it is assumed that 
 #   fftw has been defined by adding a module (or similar) from the OS.

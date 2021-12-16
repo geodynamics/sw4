@@ -230,7 +230,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    VERIFY2( ok, "ERROR: compute_f Material check failed\n" );
 
 //solveTT
-   if( mopt->m_win_mode == 1 )
+   if( mopt->m_win_mode == 1 && nmpard_global == 0 )
    {
       float_sw4* coarse=new float_sw4[nmpars];
       float_sw4 freq;
@@ -243,6 +243,13 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
                             freq, e, simulation.getRank());
       }
       delete[] coarse;
+   }
+   else if( mopt->m_win_mode == 1 )
+   {
+      int myrank;
+      MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
+      if( myrank == 0 )
+         std::cout << "Can not use solveTT to compute time windows with a distibuted material grid" << std::endl;
    }
 
    //   // Debug
@@ -446,19 +453,40 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    }
    //   MPI_Barrier(MPI_COMM_WORLD);
    VERIFY2( ok, "ERROR: Material check failed\n" );
-   if( mopt->m_win_mode == 1 )
+   if( mopt->m_win_mode == 1 && nmpard_global == 0 )
    {
+      if( myrank == 0 )
+         std::cout << "Calling solveTT from compute_f_and_df " << std::endl;
       float_sw4 freq;
       float_sw4* coarse=new float_sw4[nmpars];
       mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
       for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
       {
          freq= mopt->get_freq_peakpower()>0.? mopt->get_freq_peakpower() : GlobalSources[e][0]->getFrequency();
-         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
-                            mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), freq, e, simulation.getRank());
+         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars,
+                            mopt->m_mp, mopt->get_wave_mode(), mopt->get_twin_shift(), 
+                            mopt->get_twin_scale(), freq, e, simulation.getRank());
      }
       delete[] coarse;
    }
+   else if( mopt->m_win_mode == 1 )
+   {
+      if( myrank == 0 )
+         std::cout << "Can not use solveTT to compute time windows with a distibuted material grid" << std::endl;
+   }
+   if( myrank == 0 )
+      std::cout << "Checking windows:" << std::endl;
+   for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
+      for( int m=0 ; m < GlobalTimeSeries[e].size(); m++)
+      {
+         if( GlobalTimeSeries[e][m]->myPoint() )
+         {
+            float_sw4 win[4];
+            GlobalTimeSeries[e][m]->get_windows(win);
+            std::cout << "ev " << e << " " << GlobalTimeSeries[e][m]->getStationName() << " win= " <<
+               win[0] << " " << win[1] << " " << win[2] << " " << win[3] << std::endl;
+         }
+      }
 
 // Run forward problem with guessed source, upred_saved,ucorr_saved are allocated
 // inside solve_allpars. U and Um are final time solutions, to be used as 'initial' data
@@ -1695,7 +1723,7 @@ int main(int argc, char **argv)
 
 // make a new simulation object by reading the input file 'fileName'
      EW simulation(fileName, GlobalSources, GlobalObservations, true );
-     //              for( int s=0 ; s < GlobalObservations[0].size() ; s++ )
+     //     for( int s=0 ; s < GlobalObservations[0].size() ; s++ )
      //                 if( GlobalObservations[0][s]->myPoint() )
      //                 cout<<   "obs " << s << " " << GlobalObservations[0][s]->getStationName() << " shift= " << GlobalObservations[0][s]->getMshift() << " " << GlobalObservations[0][s]->get_shift() << endl;
 
@@ -1724,9 +1752,13 @@ int main(int argc, char **argv)
 	{
 // Successful initialization
 
-
 	   simulation.setQuiet(true);
-	   //	   simulation.setQuiet(false);
+
+//// Read time windows (if defined) from HDF5 file
+//	   for( int e=0 ; e < GlobalObservations.size() ; e++ )
+//	      for( int m = 0; m < GlobalObservations[e].size(); m++ )
+//                 GlobalObservations[e][m]->readWindows();
+
 // Make observations aware of the utc reference time, if set.
 // Filter observed data if required
 	   GlobalTimeSeries.resize(GlobalObservations.size());
@@ -2091,73 +2123,78 @@ int main(int argc, char **argv)
            else if( mopt->m_opttest == 11 )
            {
               int nx, ny, nz;
+              double* coarse=0;
+              bool fail=false;
               if( mopt->m_mp->getcartdims(nx,ny,nz) )
               {
                  // If possible, hardcode the coarse grid material model to only
                  //  have vs, vp and to be shared among processors. Use the
                  // grid dimensions given by the mparcart command.
+                 coarse= new double[2*nx*ny*nz];
                  MaterialParCart* mp = new MaterialParCart(&simulation, nx, ny, nz, 0, 3,
                                                            " ", 1.0, 1.0, true );
-                 mp->get_parameters(nmpard, xm, nmpars, xs, simulation.mRho, 
+                 mp->get_parameters(nmpard, xm, nmpars, coarse, simulation.mRho, 
                                           simulation.mMu, simulation.mLambda, 5 );
+                 //                 mp->write_dfm_hdf5(xm,"coarse.h5",MPI_COMM_WORLD);
                  delete mp;
               }
               else
-                 mopt->m_mp->get_parameters( nmpard, xm, nmpars, xs, simulation.mRho, 
-                                             simulation.mMu, simulation.mLambda, 5 );
-              if( myRank == 0 )
-                 mopt->m_mp->write_parameters("coarse.bin",nmpars,xs);
-
-#ifdef USE_HDF5
-	      for( int e=0 ; e < GlobalObservations.size(); e++ ) 
               {
-                 if (GlobalObservations[e].size() > 0 && GlobalObservations[e][0]->getUseHDF5()) 
+                 if( nmpard_global > 0 )
                  {
-                    for (int tsi = 0; tsi < GlobalObservations[e].size(); tsi++) 
-                       GlobalObservations[e][tsi]->resetHDF5file();
-                    int tsi=0;
-                    if( GlobalObservations[e][tsi]->myPoint() )
-                    {
-                       createTimeSeriesHDF5File( GlobalObservations[e], 
-                                                 GlobalObservations[e][tsi]->getNsteps(), 
-                                                 GlobalObservations[e][tsi]->getDt(), "");
-                    }
-                    MPI_Barrier(simulation.m_1d_communicator);
+                    if( myRank == 0 )
+                       std::cout << "ERROR, can not estimate time windows with " << 
+                          "a distributed material grid" << std::endl;
+                    fail = true;
                  }
+                 else
+                    mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, simulation.mRho, 
+                                                simulation.mMu, simulation.mLambda, 5 );
               }
-#endif
-              for( int e=0; e < GlobalObservations.size(); e++ )
-                 for( int s=0 ; s < GlobalObservations[e].size() ; s++)
-                    GlobalObservations[e][s]->writeFile();
-
-              for( int e=0; e < GlobalObservations.size(); e++ )
+              //              if( myRank == 0 )
+                 //                 mopt->m_mp->write_parameters("coarse.bin",nmpars,xs);
+              if( !fail )
               {
-                 float_sw4 freq=mopt->get_freq_peakpower();
-                 if( freq <= 0 )
-                    freq = GlobalSources[e][0]->getFrequency();
-                 simulation.solveTT(GlobalSources[e][0], GlobalObservations[e], xs, nmpars, 
-                                    mopt->m_mp, mopt->get_wave_mode(), mopt->get_twin_shift(), 
-                                    mopt->get_twin_scale(), freq, e, simulation.getRank());
-                 for( int s=0 ; s < GlobalObservations[e].size() ; s++)
-                    GlobalObservations[e][s]->writeWindows();
+#ifdef USE_HDF5
+                 for( int e=0 ; e < GlobalObservations.size(); e++ ) 
+                 {
+                    if (GlobalObservations[e].size() > 0 && GlobalObservations[e][0]->getUseHDF5()) 
+                    {
+                       for (int tsi = 0; tsi < GlobalObservations[e].size(); tsi++) 
+                          GlobalObservations[e][tsi]->resetHDF5file();
+                       int tsi=0;
+                       if( GlobalObservations[e][tsi]->myPoint() )
+                       {
+                          createTimeSeriesHDF5File( GlobalObservations[e], 
+                                                    GlobalObservations[e][tsi]->getNsteps(), 
+                                                    GlobalObservations[e][tsi]->getDt(), "");
+                       }
+                       MPI_Barrier(simulation.m_1d_communicator);
+                    }
+                 }
+#endif
+                 for( int e=0; e < GlobalObservations.size(); e++ )
+                    for( int s=0 ; s < GlobalObservations[e].size() ; s++)
+                       GlobalObservations[e][s]->writeFile();
 
-                 //                 for( int s=0 ; s < GlobalObservations[e].size() ; s++)
-                 //                 {
-                 //                    float_sw4 wins[4];
-                 //                    if( GlobalObservations[e][s]->myPoint() )
-                 //                    {
-                 //                       GlobalObservations[e][s]->get_windows(wins);
-                 //                       std::cout << "station " << s<< " name= " << GlobalObservations[e][s]->getStationName() //<< 
-                 //                          " windows " << wins[0] << " " << wins[1] 
-//                                 << " " << wins[2] << " " << wins[3] << std::endl;
-                 //                    }
-                 //                 }
+                 for( int e=0; e < GlobalObservations.size(); e++ )
+                 {
+                    float_sw4 freq=mopt->get_freq_peakpower();
+                    if( freq <= 0 )
+                       freq = GlobalSources[e][0]->getFrequency();
+                    simulation.solveTT(GlobalSources[e][0], GlobalObservations[e], coarse, nmpars, 
+                                       mopt->m_mp, mopt->get_wave_mode(), mopt->get_twin_shift(), 
+                                       mopt->get_twin_scale(), freq, e, simulation.getRank());
+                    for( int s=0 ; s < GlobalObservations[e].size() ; s++)
+                       GlobalObservations[e][s]->writeWindows();
+                 }
               }
            }
            else
 	      if( myRank == 0 )
 		 cout << "ERROR: m_opttest = " << mopt->m_opttest << 
                                            " is not a valid choice" << endl;
+           
            {
               int ng = simulation.mNumberOfGrids;
               vector<Sarray> rho(ng), mu(ng), lambda(ng);

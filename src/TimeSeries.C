@@ -505,16 +505,17 @@ void TimeSeries::writeWindows( string suffix )
            {
              int ret = openWriteAttr(grp, "WINDOWS", H5T_NATIVE_DOUBLE, windows);
              if( ret < 0 )
-                std::cout << "TimeSeries::addWindows, Error could not create/open data space" << std::endl;
+                std::cout << "TimeSeries::writeWindows, Error could not create/open data space" << std::endl;
            }
            H5Gclose(grp);
         }
         else
-           std::cout << "TimeSeries::addWindows Error opening group " << m_staName.c_str() << std::endl;
-        H5Fclose(fid);
+           std::cout << "TimeSeries::writeWindows Error opening group " << m_staName.c_str() << std::endl;
+        //        H5Fclose(fid);
+        closeHDF5File();
      }
      else
-        std::cout << "TimeSeries::addWindows fid is invalid, cannot open file" << std::endl;
+        std::cout << "TimeSeries::writeWindows fid is invalid, cannot open file" << std::endl;
   }
 #endif
 }
@@ -550,14 +551,14 @@ void TimeSeries::readWindows()
               }
            }
            else
-              std::cout << "TimeSeries::readWindows, Error windows not found on file " 
+              std::cout << "TimeSeries::readWindows: No time windows found for station " << m_staName 
                         << std::endl;
            H5Gclose(grp);
         }
         else
            std::cout << "TimeSeries::readWindows Error opening group " << m_staName.c_str()
                      << std::endl;
-        H5Fclose(fid);
+        closeHDF5File(); // H5Fclose(fid);
      }
      else
         std::cout << "TimeSeries::readWindows fid is invalid, cannot open file" << std::endl;
