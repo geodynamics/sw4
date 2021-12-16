@@ -60,6 +60,17 @@ Build instructions for Power9/V100 machines ( Summit, Lassen, Sierra etc)
     After its done compiling and testing, take tar.gz file from build and install
     Modify the HDF5_HOME dir in make.inc 
 
+9. How to install sqlite if a suitable version is unavailable and use with Proj v8.1.1
+   git clone -c feature.manyFiles=true https://github.com/spack/spack.git
+   cd spack/bin/
+   ./spack install zlib
+   spack install sqlite
+   ./spack install sqlite
+   Copy path to spack sqlite install and use in cmake command below
+   cmake -DCMAKE_INSTALL_PREFIX=../install -DCMAKE_PREFIX_PATH=<PATH_TO_SQLITE_INSTALL> ..
+   cmake --build .
+   cmake --build . --target install
+
 Running SW4 on Summit:
 -------------------------------
 
