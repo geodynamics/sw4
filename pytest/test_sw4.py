@@ -160,7 +160,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     elif 'rznevada' in node_name:
         os.environ["PSM2_DEVICES"] = ""
         if mpi_tasks<=0: mpi_tasks = 4
-        mpirun_cmd="srun -N1 -n1 "
+        mpirun_cmd="srun -N2 -n2 "
     elif 'redwood' in node_name:
         os.environ["PSM2_DEVICES"] = ""
         if mpi_tasks<=0: mpi_tasks = 4
