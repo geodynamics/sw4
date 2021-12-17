@@ -1265,7 +1265,7 @@ void EW::processGrid(char* buffer)
   // hard code units to be in meters
   proj0 << " +units=m";
 
-#if !defined(ENABLE_PROJ4) && !defined(ENABLE_PROJ_NEW) 
+#if !defined(ENABLE_PROJ4) && !defined(ENABLE_PROJ_6) 
   CHECK_INPUT( !use_geoprojection, "ERROR: need to configure SW4 with proj=yes to use projections "
                "from the Proj4 library");
 #endif
