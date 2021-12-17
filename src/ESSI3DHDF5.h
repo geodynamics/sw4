@@ -61,6 +61,7 @@ public:
 
   const std::string& filename() {return m_filename;};
   void set_ihavearray(bool ihavearray) {m_ihavearray=ihavearray;};
+  void finalize_hdf5();
 
 protected:
 
