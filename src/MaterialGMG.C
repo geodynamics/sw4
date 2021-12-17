@@ -199,10 +199,10 @@ void MaterialGMG::set_material_properties(std::vector<Sarray> & rho,
                                      wghz*( (1-wghy)*((1-wghx)*mat(gr,0,i0,j0,k0+1) + wghx*mat(gr,0,i0+1,j0,k0+1) ) +
                                              wghy*((1-wghx)*mat(gr,0,i0,j0+1,k0+1)+ wghx*mat(gr,0,i0+1,j0+1,k0+1)) );
 
-                   if (x == 80000 && y == 9000) {
-                       printf("g=%d, ijk: %d %d %d, lalo: %f %f, converted gmg xyz: %f %f %f, intf %f, gr %d, ijk %d %d %d, mat %f %f %f, rho=%f\n", 
-                               g, i, j, k, sw4_lat, sw4_lon, gmg_x, gmg_y, z, intf, gr, i0, j0, k0, mat(gr,0,i0,j0,k0), mat(gr,1,i0,j0,k0), mat(gr,2,i0,j0,k0), rho[g](i, j, k));
-                   }
+                   /* if (x == 80000 && y == 9000) { */
+                   /*     printf("g=%d, ijk: %d %d %d, lalo: %f %f, converted gmg xyz: %f %f %f, intf %f, gr %d, ijk %d %d %d, mat %f %f %f, rho=%f\n", */ 
+                   /*             g, i, j, k, sw4_lat, sw4_lon, gmg_x, gmg_y, z, intf, gr, i0, j0, k0, mat(gr,0,i0,j0,k0), mat(gr,1,i0,j0,k0), mat(gr,2,i0,j0,k0), rho[g](i, j, k)); */
+                   /* } */
                    /* if (rho[g](i,j,k) < 1500) { */
                    /*   printf("Rank %d, rho[%d](%d, %d, %d)=%.2f\n", mEW->getRank(), g, i, j, k, rho[g](i,j,k)); */
                    /*   ASSERT(0); */
