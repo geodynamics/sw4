@@ -2135,7 +2135,6 @@ int main(int argc, char **argv)
                                                            " ", 1.0, 1.0, true );
                  mp->get_parameters(nmpard, xm, nmpars, coarse, simulation.mRho, 
                                           simulation.mMu, simulation.mLambda, 5 );
-                 //                 mp->write_dfm_hdf5(xm,"coarse.h5",MPI_COMM_WORLD);
                  delete mp;
               }
               else
