@@ -224,6 +224,9 @@ ifeq ($(hdf5),yes)
    CXXFLAGS  += -I$(HDF5ROOT)/include -DUSE_HDF5
    # EXTRA_LINK_FLAGS += -L$(HDF5ROOT)/lib -lhdf5_hl -lhdf5
    linklibs += -L$(HDF5ROOT)/lib -lhdf5
+ifeq ($(hdf5async),yes)
+   CXXFLAGS  += -DUSE_HDF5_ASYNC
+endif
 endif
 
 ifeq ($(zfp),yes)

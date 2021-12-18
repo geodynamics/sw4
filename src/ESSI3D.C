@@ -447,12 +447,7 @@ void ESSI3D::open_vel_file( int a_cycle, std::string& a_path,
 
 void ESSI3D::finalize_hdf5()
 {
-#ifdef USE_HDF5_ASYNC
-  size_t num_in_progress;
-  hbool_t op_failed;
-  if (m_es_id > 0)
-    H5ESwait(m_es_id, H5ES_WAIT_FOREVER, &num_in_progress, &op_failed);
-#endif
+  m_hdf5helper->finalize_hdf5();
   return;
 }
 

@@ -589,3 +589,16 @@ void ESSI3DHDF5::close_file() {
 #endif
   return;
 }
+
+void ESSI3DHDF5::finalize_hdf5()
+{
+#ifdef USE_HDF5_ASYNC
+  size_t num_in_progress;
+  hbool_t op_failed;
+  if (m_es_id > 0)
+    H5ESwait(m_es_id, H5ES_WAIT_FOREVER, &num_in_progress, &op_failed);
+#endif
+  return;
+}
+
+
