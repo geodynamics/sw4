@@ -46,6 +46,7 @@
 #include "EW.h"
 #include "MaterialRfile.h"
 #include "Require.h"
+#include "caliper.h"
 //#include "Parallel_IO.h"
 
 using namespace std;
@@ -65,6 +66,7 @@ void MaterialRfile::set_material_properties(std::vector<Sarray>& rho,
                                             std::vector<Sarray>& cp,
                                             std::vector<Sarray>& xis,
                                             std::vector<Sarray>& xip) {
+  SW4_MARK_FUNCTION;
   // Assume attenuation arrays defined on all grids if they are defined on grid
   // zero.
   // std::cout<<" set_material_properties THIS IS CALLED\n";

@@ -7867,6 +7867,11 @@ void EW::setup_viscoelastic() {
     int lwork = 3 * n;
     double* work = new double[lwork];
 #endif
+    //g=0;
+    //std::cout<<"mMug "<<as_int(mMu[g].space)<<"\n";
+    //std::cout<<"mLamnda "<<as_int(mLambda[g].space)<<"\n";
+    //std::cout<<"mMuVE[g][0] "<<as_int(mMuVE[g][0].space)<<"\n";
+    //std::cout<<"mLambdaVE[g][0] "<<as_int(mLambdaVE[g][0].space)<<"\n";
     // loop over all grid points in all grids
     for (g = 0; g < mNumberOfGrids; g++)
 #pragma omp parallel for
