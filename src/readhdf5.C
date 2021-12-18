@@ -200,6 +200,20 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
         topodepth = false;
     }
 
+    if (H5Lexists(grp, "WINDOWS", H5P_DEFAULT) > 0) {
+       dset = H5Dopen(grp, "WINDOWS", H5P_DEFAULT);
+       if (dset < 0)
+          fprintf(stderr, "Error reading from rechdf5 station %s WINDOWS open failed!\n", grp_name);
+       ret = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+       if( ret >= 0 )
+          H5Dclose(dset);
+       op_data->win1=data[0];
+       op_data->win2=data[1];
+       op_data->win3=data[2];
+       op_data->win4=data[3];
+       foundwins = true;
+    }
+
     if (H5Lexists(grp, "STX,STY,STZ", H5P_DEFAULT) > 0) {
       // X, Y, Z
       dset = H5Dopen(grp, "STX,STY,STZ", H5P_DEFAULT);
@@ -226,17 +240,6 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
       lat = data[0];
       lon = data[1];
       z = data[2];
-    }
-    else if (H5Lexists(grp, "WINDOWS", H5P_DEFAULT) > 0) {
-       dset = H5Dopen(grp, "WINDOWS", H5P_DEFAULT);
-       if (dset < 0)
-          fprintf(stderr, "Error reading from rechdf5 station %s WINDOWS open failed!\n", grp_name);
-       ret = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-       op_data->win1=data[0];
-       op_data->win2=data[1];
-       op_data->win3=data[2];
-       op_data->win4=data[3];
-       foundwins = true;
     }
     else {
       // Not a station group, ignore
@@ -313,6 +316,7 @@ static herr_t traverse_func (hid_t loc_id, const char *grp_name, const H5L_info_
                 op_data->winl = -1;
              ts_ptr->set_window( op_data->winl, op_data->winr );
           }
+
           if( foundwins )
              ts_ptr->set_window( op_data->win1, op_data->win2, op_data->win3, op_data->win4 );
 

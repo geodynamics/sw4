@@ -33,7 +33,9 @@ CheckPoint::CheckPoint( EW* a_ew ) :
    mDoCheckPointing(false),
    mRestartPathSet(false),
    mDoRestart(false),
+#ifdef USE_HDF5_ASYNC
    m_es_id(0),
+#endif
    m_kji_order(true)
 {
 
@@ -60,7 +62,9 @@ CheckPoint::CheckPoint( EW* a_ew,
    mDoCheckPointing(true),
    mRestartPathSet(false),
    mDoRestart(false),
+#ifdef USE_HDF5_ASYNC
    m_es_id(0),
+#endif
    m_kji_order(true)
 {
    m_double = sizeof(float_sw4)==sizeof(double);
@@ -82,7 +86,9 @@ CheckPoint::CheckPoint( EW* a_ew, string fname, size_t bufsize ) :
    m_fileno(0),
    mDoCheckPointing(false),
    mRestartPathSet(false),
+#ifdef USE_HDF5_ASYNC
    m_es_id(0),
+#endif
    mDoRestart(true)
 {
    m_double = sizeof(float_sw4)==sizeof(double);

@@ -462,7 +462,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
       for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
       {
-         freq= mopt->get_freq_peakpower()>0.? mopt->get_freq_peakpower() : GlobalSources[e][0]->getFrequency();
+         freq = mopt->get_freq_peakpower()>0. ? mopt->get_freq_peakpower() : GlobalSources[e][0]->getFrequency();
          simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars,
                             mopt->m_mp, mopt->get_wave_mode(), mopt->get_twin_shift(), 
                             mopt->get_twin_scale(), freq, e, simulation.getRank());
@@ -474,19 +474,19 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       if( myrank == 0 )
          std::cout << "Can not use solveTT to compute time windows with a distibuted material grid" << std::endl;
    }
-   if( myrank == 0 )
-      std::cout << "Checking windows:" << std::endl;
-   for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
-      for( int m=0 ; m < GlobalTimeSeries[e].size(); m++)
-      {
-         if( GlobalTimeSeries[e][m]->myPoint() )
-         {
-            float_sw4 win[4];
-            GlobalTimeSeries[e][m]->get_windows(win);
-            std::cout << "ev " << e << " " << GlobalTimeSeries[e][m]->getStationName() << " win= " <<
-               win[0] << " " << win[1] << " " << win[2] << " " << win[3] << std::endl;
-         }
-      }
+   //   if( myrank == 0 )
+   //      std::cout << "Checking windows:" << std::endl;
+   //   for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
+   //      for( int m=0 ; m < GlobalTimeSeries[e].size(); m++)
+   //      {
+   //         if( GlobalTimeSeries[e][m]->myPoint() )
+   //         {
+   //            float_sw4 win[4];
+   //            GlobalTimeSeries[e][m]->get_windows(win);
+   //            std::cout << "ev " << e << " " << GlobalTimeSeries[e][m]->getStationName() << " win= " <<
+   //               win[0] << " " << win[1] << " " << win[2] << " " << win[3] << std::endl;
+   //         }
+   //      }
 
 // Run forward problem with guessed source, upred_saved,ucorr_saved are allocated
 // inside solve_allpars. U and Um are final time solutions, to be used as 'initial' data
@@ -2148,11 +2148,12 @@ int main(int argc, char **argv)
                     fail = true;
                  }
                  else
+                 {
+                    coarse = new double[nmpars];
                     mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, simulation.mRho, 
                                                 simulation.mMu, simulation.mLambda, 5 );
+                 }
               }
-              //              if( myRank == 0 )
-                 //                 mopt->m_mp->write_parameters("coarse.bin",nmpars,xs);
               if( !fail )
               {
 #ifdef USE_HDF5
