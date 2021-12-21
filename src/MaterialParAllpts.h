@@ -19,8 +19,8 @@ public:
    //              float_sw4 vp_min, float_sw4 vp_max, float_sw4 vs_min, float_sw4 vs_max,int wave_mode);
    //void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
 	//				   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
-   //void get_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
-	//			std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda ) {};
+   void get_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
+				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda ) {};
    void smooth_gradient(double* dfs, std::vector<Sarray>& a_Rho, std::vector<Sarray>& a_Mu, std::vector<Sarray>& a_Lambda, float_sw4 freq, float_sw4 sz) {};
 
    virtual void get_material( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,

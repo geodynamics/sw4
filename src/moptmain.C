@@ -232,8 +232,6 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    mopt->m_mp->limit_x( nmpard, xm, nmpars, &xs[nspar], mopt->m_vs_min, mopt->m_vs_max, 
                         mopt->m_vp_min, mopt->m_vp_max );
    mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
-   //mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda, 
-   //    mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode()); 
 
    int ok=1;
    if( mopt->m_mcheck )
@@ -462,38 +460,47 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 
    mopt->m_mp->get_nr_of_parameters( nms, nmd, nmpard_global );
    if( nms != nmpars || nmd != nmpard )
-      cout << "compute_f_and_df: WARNING, inconsistent number of material parameters" << endl;
-
+   cout << "compute_f_and_df: WARNING, inconsistent number of material parameters" << endl;
+  cout << "prepare distributed model for FWI" << endl;
    //rho,mu,lambda local volumes get updated
-   //mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda,
-   //  mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode());
    mopt->m_mp->limit_x( nmpard, xm, nmpars, &xs[nspar], mopt->m_vs_min, mopt->m_vs_max, 
                         mopt->m_vp_min, mopt->m_vp_max );
-   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda );
-
-      MPI_Barrier(MPI_COMM_WORLD);
-
+   //construct computational grid
+   mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda);
    int ok=1;
-  if( mopt->m_mcheck )
+   if( mopt->m_mcheck )
    {
       int er=simulation.check_material( rho, mu, lambda, ok, 2 );
    }
-   //   MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Barrier(MPI_COMM_WORLD);
    VERIFY2( ok, "ERROR: Material check failed\n" );
+
+   cout << "construct shared model for solveTT" << endl;
 
    if( mopt->m_win_mode == 1 )
    {
       float_sw4 freq;
       int nmpars_shared, nmpard_shared, nmpard_global_shared;
       
-      mopt->init_shared_model();
+      mopt->init_shared_model();  // mopt->m_mp_shared substantiated
       mopt->m_mp_shared->get_nr_of_parameters( nmpars_shared, nmpard_shared, nmpard_global_shared );
       
       float_sw4* coarse=new float_sw4[nmpars_shared];
+      
+      //init sim.mMu
+      //mopt->m_mp_shared->limit_x( nmpard, xm, nmpars, &xs[nspar], mopt->m_vs_min, mopt->m_vs_max, 
+      //                  mopt->m_vp_min, mopt->m_vp_max );
+      //construct computational grid
+      //mopt->m_mp_shared->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda);
 
-      mopt->m_mp_shared->get_parameters( nmpard_shared,xm,nmpars_shared,coarse, simulation.mRho,simulation.mMu,simulation.mLambda, 5);
+      //get material on grid mMu to parms coarse for this proc 
+      mopt->m_mp_shared->get_parameters( nmpard_shared,xm,nmpars_shared, coarse, simulation.mRho,simulation.mMu,simulation.mLambda, 5);
       //mopt->m_mp_shared->get_base_parameters( nmpard_shared,xm,nmpars_shared,coarse,simulation.mRho,simulation.mMu,simulation.mLambda );
       //cout << "solveTT: nmpard_shared=" << nmpard_shared << " nmpars_shared=" << nmpars_shared << endl;
+      
+      FILE *fd=fopen("coarse.bin", "w");
+      fwrite(coarse, sizeof(float_sw4), nmpars_shared, fd);
+      fclose(fd);
 
       checkMinMax(nmpars_shared/2, coarse, "coarse2:");
       for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
@@ -509,10 +516,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    checkMinMax(nmpars, &xs[nspar], "compute_f_and_df: xs");
    //simulation.print_memstatus();
 
-   //mopt->m_mp->get_material( nmpard, xm, nmpars, xm, rho, mu, lambda );
-
-   //mopt->m_mp->get_material( nmpard, xm, nmpars, &xs[nspar], rho, mu, lambda,
-   //  mopt->get_vp_min(), mopt->get_vp_max(), mopt->get_vs_min(), mopt->get_vs_max(), mopt->get_wave_mode());
+ 
+      
 
 
 
@@ -663,7 +668,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
 
       simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, mopt->get_freq_peakpower(), e );
       sw4_profile->time_stamp("done backward+adjoint solve" );
-      
+
       cout << "done adjoint solve:" << " time from t0=" << MPI_Wtime()-t0 << " gLambda[0] npts=" << gLambda[0].npts() 
       << " min=" << gLambda[0].minimum() << " max=" << gLambda[0].maximum() << endl;
 

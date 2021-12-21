@@ -31,8 +31,8 @@ protected:
    void interpolate_parameters( int nmd, double* xmd, int nms, double* xms, 
                                 std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu, 
                                 std::vector<Sarray>& a_lambda, bool update );
-   //void interpolate_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
-	//			std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
+   void interpolate_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
+				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
 
    void find_lims( int ib, int ie, int iepm, int ibpp, int& ibint, int& ieint );
 
@@ -70,8 +70,8 @@ public:
    virtual void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
                                 std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda, int nr );
 
-   //void get_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
-	//			std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
+   void get_base_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
+				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
 
    virtual void get_gradient( int nmd, double* xmd, int nms, double* xms, double* dfs, double* dfm,
 		      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,

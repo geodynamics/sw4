@@ -891,6 +891,11 @@ void EW::set_materials()
 // After materials are set, call check_materials to make sure (mu,lambda,rho) values make sense
 {  
   int g;
+
+
+
+  cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> set_materials" << endl;
+
   if( !m_testing )
   {
 // If material surfaces (Ifiles) are defined, sort them wrt their IDs
@@ -1367,7 +1372,7 @@ void EW::set_materials()
      }
   }
 
-  check_materials( );
+  check_materials();
 
 } // end EW::set_materials()
 

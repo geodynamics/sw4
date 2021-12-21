@@ -76,6 +76,8 @@ void MaterialIfile::set_material_properties( std::vector<Sarray> & rho,
    int totalPoints=0, definedPoints=0;
    int g;
    double lon, lat;
+   float_sw4 x, y, z, depth;
+
    for( g = 0 ; g < mEw->mNumberOfCartesianGrids; g++) // Cartesian grids
    {
       int kLow = mEw->m_kStart[g];
@@ -84,16 +86,18 @@ void MaterialIfile::set_material_properties( std::vector<Sarray> & rho,
 #pragma omp parallel for reduction(+:totalPoints,definedPoints)
       for( int k = kLow ; k <= mEw->m_kEnd[g]; k++ )
       {
+
+         
 // what should the index boundaries be here to avoid parallel overlap points, but include real ghost points
 	 for( int j = mEw->m_jStartInt[g]; j <= mEw->m_jEndInt[g]; j++ )
 	 {
 	    for( int i = mEw->m_iStartInt[g]; i <= mEw->m_iEndInt[g] ; i++ )
 	    {
 	       totalPoints += 1;
-	       float_sw4 x = (i-1)*mEw->mGridSize[g];
-	       float_sw4 y = (j-1)*mEw->mGridSize[g];
-	       float_sw4 z = mEw->m_zmin[g]+(k-1)*mEw->mGridSize[g];
-	       float_sw4 depth;
+	       x = (i-1)*mEw->mGridSize[g];
+	       y = (j-1)*mEw->mGridSize[g];
+	       z = mEw->m_zmin[g]+(k-1)*mEw->mGridSize[g];
+	  
 	       mEw->getDepth(x, y, z, depth);
 // (lon,lat) or (x,y) coordinates ?
 	       if ( m_mat_Cartesian)
@@ -139,11 +143,14 @@ void MaterialIfile::set_material_properties( std::vector<Sarray> & rho,
 			   qp[g](i,j,k) = lookup_Qp(mprop, depth);
 			if( qs[g].is_defined())
 			   qs[g](i,j,k) = lookup_Qs(mprop, depth);
-		     } // end if knownMaterial
-		  } // end if inside
+		       } // end if knownMaterial
+		      } // end if inside
 	       } // end if (lon,lat)
 	    } // end for i
 	 } // end for j
+
+             cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> k=" << k << " z=" << z << " depth=" << depth << endl;
+
       } // end for k
 
 // communicate material properties to ghost points (necessary on refined meshes because ghost points don't have a well defined depth/topography)

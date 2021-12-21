@@ -279,7 +279,7 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
      }
      else if (startswith("refinement", buffer))
      {
-	processRefinement(buffer);
+	    processRefinement(buffer);
      }
      else if (startswith("topography", buffer))
      {

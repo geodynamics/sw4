@@ -399,6 +399,7 @@ void MaterialParCart::get_material( int nmd, double* xmd, int nms, double* xms,
       a_mu[g].define(m_ew->mMu[g]);
       a_lambda[g].define(m_ew->mLambda[g]);
 
+      //Computes the material on computational grid from a given material perturbation on a parameter grid.
       interpolate( matcart, g, a_rho[g], a_mu[g], a_lambda[g] );
 
       // Add base material
@@ -1831,6 +1832,8 @@ void MaterialParCart::interpolate_to_coarse_vel( vector<Sarray>& rhogrid,
    cp.set_to_zero();
    int ngrids=m_ew->mNumberOfGrids;
    vector<bool> done(ngrids);
+
+   
    for( int g=0 ; g < ngrids ; g++ )
       done[g] = false;
 
@@ -1840,10 +1843,11 @@ void MaterialParCart::interpolate_to_coarse_vel( vector<Sarray>& rhogrid,
 
    vector<Sarray> csdiff(ngrids);
    vector<Sarray> cpdiff(ngrids);
+
    for( int k=m_kbint ; k <= m_keint ; k++ )
       for( int j=m_jbint ; j <= m_jeint ; j++ )
-	 for( int i=m_ibint ; i <= m_ieint ; i++ )
-	 {
+	      for( int i=m_ibint ; i <= m_ieint ; i++ )
+	      {
             rho(i,j,k)= -1e38;
             cs(i,j,k) = -1e38;
             cp(i,j,k) = -1e38;
@@ -1865,10 +1869,10 @@ void MaterialParCart::interpolate_to_coarse_vel( vector<Sarray>& rhogrid,
 			for( int i1=rhogrid[g].m_ib ; i1 <= rhogrid[g].m_ie ; i1++)
 			{
 			   csdiff[g](i1,j1,k1)=sqrt(mugrid[g](i1,j1,k1)/rhogrid[g](i1,j1,k1))-
-			                    a1*sqrt(mMu[g](i1,j1,k1)/mRho[g](i1,j1,k1));
+			                          a1*sqrt(mMu[g](i1,j1,k1)/mRho[g](i1,j1,k1));
 			   cpdiff[g](i1,j1,k1)=
-			     sqrt((2*mugrid[g](i1,j1,k1)+lambdagrid[g](i1,j1,k1))/rhogrid[g](i1,j1,k1)) -
-	                  a1*sqrt((2*mMu[g](i1,j1,k1)   +mLambda[g](i1,j1,k1)   )/mRho[g](i1,j1,k1));
+			                  sqrt((2*mugrid[g](i1,j1,k1)+lambdagrid[g](i1,j1,k1))/rhogrid[g](i1,j1,k1)) -
+	                      a1*sqrt((2*mMu[g](i1,j1,k1)   +mLambda[g](i1,j1,k1)   )/mRho[g](i1,j1,k1));
 			}
 		  done[g] = true;
 	       }
@@ -1876,26 +1880,24 @@ void MaterialParCart::interpolate_to_coarse_vel( vector<Sarray>& rhogrid,
 	       double wghx = x/h-ig+1;
 	       double wghy = y/h-jg+1;
 	       double wghz = z/h-kg+1;
-               rho(i,j,k) = (1-wghy)*(1-wghz)*(
-			           (1-wghx)*rhogrid[g](ig,jg,kg)+wghx*rhogrid[g](ig+1,jg,kg))+
-		  (wghy)*(1-wghz)*((1-wghx)*rhogrid[g](ig,jg+1,kg)+wghx*rhogrid[g](ig+1,jg+1,kg))+
-		  (1-wghy)*(wghz)*((1-wghx)*rhogrid[g](ig,jg,kg+1)+wghx*rhogrid[g](ig+1,jg,kg+1))+
-		  (wghy)*(wghz)*(  (1-wghx)*rhogrid[g](ig,jg+1,kg+1)+wghx*rhogrid[g](ig+1,jg+1,kg+1)) 
-		  -    a1*((1-wghy)*(1-wghz)*(
-			           (1-wghx)*mRho[g](ig,jg,kg)+wghx*mRho[g](ig+1,jg,kg))+
-		  (wghy)*(1-wghz)*((1-wghx)*mRho[g](ig,jg+1,kg)+wghx*mRho[g](ig+1,jg+1,kg))+
-		  (1-wghy)*(wghz)*((1-wghx)*mRho[g](ig,jg,kg+1)+wghx*mRho[g](ig+1,jg,kg+1))+
-                    (wghy)*(wghz)*(  (1-wghx)*mRho[g](ig,jg+1,kg+1)+wghx*mRho[g](ig+1,jg+1,kg+1))  );
-               cs(i,j,k) = (1-wghy)*(1-wghz)*(
-			           (1-wghx)*csdiff[g](ig,jg,kg)+wghx*csdiff[g](ig+1,jg,kg))+
-		  (wghy)*(1-wghz)*((1-wghx)*csdiff[g](ig,jg+1,kg)+wghx*csdiff[g](ig+1,jg+1,kg))+
-		  (1-wghy)*(wghz)*((1-wghx)*csdiff[g](ig,jg,kg+1)+wghx*csdiff[g](ig+1,jg,kg+1))+
-		  (wghy)*(wghz)*(  (1-wghx)*csdiff[g](ig,jg+1,kg+1)+wghx*csdiff[g](ig+1,jg+1,kg+1));
-               cp(i,j,k) = (1-wghy)*(1-wghz)*(
-			           (1-wghx)*cpdiff[g](ig,jg,kg)+wghx*cpdiff[g](ig+1,jg,kg))+
-		  (wghy)*(1-wghz)*((1-wghx)*cpdiff[g](ig,jg+1,kg)+wghx*cpdiff[g](ig+1,jg+1,kg))+
-		  (1-wghy)*(wghz)*((1-wghx)*cpdiff[g](ig,jg,kg+1)+wghx*cpdiff[g](ig+1,jg,kg+1))+
-		  (wghy)*(wghz)*(  (1-wghx)*cpdiff[g](ig,jg+1,kg+1)+wghx*cpdiff[g](ig+1,jg+1,kg+1));
+               rho(i,j,k) = (1-wghy)*(1-wghz)*((1-wghx)*rhogrid[g](ig,jg,kg)+wghx*rhogrid[g](ig+1,jg,kg))+
+		                        (wghy)*(1-wghz)*((1-wghx)*rhogrid[g](ig,jg+1,kg)+wghx*rhogrid[g](ig+1,jg+1,kg))+
+		                        (1-wghy)*(wghz)*((1-wghx)*rhogrid[g](ig,jg,kg+1)+wghx*rhogrid[g](ig+1,jg,kg+1))+
+		                          (wghy)*(wghz)*((1-wghx)*rhogrid[g](ig,jg+1,kg+1)+wghx*rhogrid[g](ig+1,jg+1,kg+1)) 
+		             -    a1*((1-wghy)*(1-wghz)*((1-wghx)*mRho[g](ig,jg,kg)+wghx*mRho[g](ig+1,jg,kg))+
+		                        (wghy)*(1-wghz)*((1-wghx)*mRho[g](ig,jg+1,kg)+wghx*mRho[g](ig+1,jg+1,kg))+
+		                        (1-wghy)*(wghz)*((1-wghx)*mRho[g](ig,jg,kg+1)+wghx*mRho[g](ig+1,jg,kg+1))+
+                                (wghy)*(wghz)*((1-wghx)*mRho[g](ig,jg+1,kg+1)+wghx*mRho[g](ig+1,jg+1,kg+1))  );
+
+               cs(i,j,k) = (1-wghy)*(1-wghz)*((1-wghx)*csdiff[g](ig,jg,kg)+wghx*csdiff[g](ig+1,jg,kg))+
+		                       (wghy)*(1-wghz)*((1-wghx)*csdiff[g](ig,jg+1,kg)+wghx*csdiff[g](ig+1,jg+1,kg))+
+		                       (1-wghy)*(wghz)*((1-wghx)*csdiff[g](ig,jg,kg+1)+wghx*csdiff[g](ig+1,jg,kg+1))+
+		                         (wghy)*(wghz)*((1-wghx)*csdiff[g](ig,jg+1,kg+1)+wghx*csdiff[g](ig+1,jg+1,kg+1));
+
+               cp(i,j,k) = (1-wghy)*(1-wghz)*((1-wghx)*cpdiff[g](ig,jg,kg)+wghx*cpdiff[g](ig+1,jg,kg))+
+		                       (wghy)*(1-wghz)*((1-wghx)*cpdiff[g](ig,jg+1,kg)+wghx*cpdiff[g](ig+1,jg+1,kg))+
+		                       (1-wghy)*(wghz)*((1-wghx)*cpdiff[g](ig,jg,kg+1)+wghx*cpdiff[g](ig+1,jg,kg+1))+
+		                         (wghy)*(wghz)*((1-wghx)*cpdiff[g](ig,jg+1,kg+1)+wghx*cpdiff[g](ig+1,jg+1,kg+1));
 	    }
 	 }
    if( m_global )
@@ -2143,17 +2145,17 @@ std::cout << "reach end of smooth_gradient" << std::endl;
 }
 
 
-//void MaterialParCart::get_base_parameters( int nmd, double* xmd, int nms,
-//					   double* xms, std::vector<Sarray>& a_rho, 
-//					   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
-//{
-//   std::cout << "VsVp::get_base_parameters" << std::endl;
+void MaterialParCart::get_base_parameters( int nmd, double* xmd, int nms,
+					   double* xms, std::vector<Sarray>& a_rho, 
+					   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
+{
+   std::cout << "VsVp::get_base_parameters" << std::endl;
    
-//   interpolate_base_parameters( nmd, xmd, nms, xms, a_rho, a_mu, a_lambda );
+   interpolate_base_parameters( nmd, xmd, nms, xms, a_rho, a_mu, a_lambda );
    
-//}
+}
 
-/*
+
 void MaterialParCart::interpolate_base_parameters( int nmd, double* xmd, int nms,
 						   double* xms, std::vector<Sarray>& a_rho, 
 			 std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
@@ -2208,7 +2210,7 @@ void MaterialParCart::interpolate_base_parameters( int nmd, double* xmd, int nms
     std::cout << "cpmin=" << cpmin << " cpmax=" << cpmax << " csmin=" << csmin << " csmax=" << csmax << std::endl;
 
 }
-*/
+
 
 /*
 void MaterialParCart::get_material( int nmd, double* xmd, int nms,

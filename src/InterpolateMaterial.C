@@ -877,6 +877,9 @@ void EW::interpolate_base_to_coarse_vel( int nx, int ny, int nz, double xmin, do
       done[g] = false;
    vector<Sarray> csgrid(mNumberOfGrids);
    vector<Sarray> cpgrid(mNumberOfGrids);
+
+   // interpolate ew->Mu to cs/cp
+   
    for( int k=1 ; k <= nz ; k++ )
       for( int j=1 ; j <= ny ; j++ )
 	 for( int i=1 ; i <= nx ; i++ )
