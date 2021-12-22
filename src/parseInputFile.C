@@ -2455,9 +2455,9 @@ void EW::processFileIO(char* buffer)
 	  {
              string path=token;
              path += '/';
-             mPath.push_back(path);
-             //	     mPath[0] = token;
-             //	     mPath[0] += '/';
+             //             mPath.push_back(path);
+             mPath[0] = token;
+             mPath[0] += '/';
 	  }
 	  //          path = token;
        }
@@ -2469,9 +2469,9 @@ void EW::processFileIO(char* buffer)
 	  {
              string path=token;
              path += '/';
-             mObsPath.push_back(path);
-             //	     mObsPath[0] = token;
-             //	     mObsPath[0] += '/';
+             //             mObsPath.push_back(path);
+             mObsPath[0] = token;
+             mObsPath[0] += '/';
 	  }
        }
 //                          123456789
@@ -9178,6 +9178,7 @@ void EW::processEvent( char* buffer, int enr )
    CHECK_INPUT(strcmp("event", token) == 0,
 	       "ERROR: not an event line: " << token);
    token = strtok(NULL, " \t");
+   bool pathdefined=false, obspathdefined=false, namedefined=false;
 
    while (token != NULL)
    {
@@ -9193,6 +9194,7 @@ void EW::processEvent( char* buffer, int enr )
 	 mPath.push_back(path);
 	 //	 mPath[enr] = token;
 	 //	 mPath[enr] += '/';
+         pathdefined=true;
       }
       else if (startswith("obspath=", token))
       {
@@ -9202,6 +9204,7 @@ void EW::processEvent( char* buffer, int enr )
 	 mObsPath.push_back(path);
 	 //	 mObsPath[enr] = token;
 	 //	 mObsPath[enr] += '/';
+         obspathdefined=true;
       }
       else if( startswith("name=",token) )
       {
@@ -9209,6 +9212,7 @@ void EW::processEvent( char* buffer, int enr )
 	 map<string,int>::iterator it=m_event_names.find(token);
 	 CHECK_INPUT(it == m_event_names.end(), "ERROR: processEvent, name = " << token << " multiply defined");
 	 m_event_names[token]=enr;
+         namedefined=true;
       }
       else if( startswith("parallel=",token) )
       {
@@ -9222,6 +9226,11 @@ void EW::processEvent( char* buffer, int enr )
       }
       token = strtok(NULL, " \t");
    }
+   CHECK_INPUT(namedefined,"ERROR processing 'event' command, name must be given");
+   if( !pathdefined )
+      mPath.push_back("./");
+   if( !obspathdefined )
+      mObsPath.push_back("./");
 }
 
 //-----------------------------------------------------------------------

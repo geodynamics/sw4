@@ -370,7 +370,7 @@ EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
   m_scenario(" "),
   //  mPath("./"),
   //  mObsPath("./"),
-  mTempPath("./"),
+  mTempPath("./tmp-sw4/"),
   mWriteGMTOutput(false),
   mPlotFrequency(80),
   mNumFiles(0),
@@ -579,7 +579,17 @@ EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
 //      m_nevent = findNumberOfEvents();
 //   }
    m_nevents_specified = findNumberOfEvents();
-   m_nevent = m_nevents_specified > 0 ? m_nevents_specified:1;
+   //   m_nevent = m_nevents_specified > 0 ? m_nevents_specified:1;
+   if( m_nevents_specified > 0 )
+      m_nevent = m_nevents_specified;
+   else
+   {
+      mPath.resize(1);
+      mPath[0]="./";
+      mObsPath.resize(1);
+      mObsPath[0]="./";
+      m_nevent = 1;
+   }
 
 // Split communicator for parallel events in sw4mopt:
    if( m_events_parallel )
