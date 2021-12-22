@@ -160,7 +160,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     elif 'rznevada' in node_name:
         os.environ["PSM2_DEVICES"] = ""
         if mpi_tasks<=0: mpi_tasks = 4
-        mpirun_cmd="srun -n1 "
+        mpirun_cmd="srun -N2 -n2 "
     elif 'redwood' in node_name:
         os.environ["PSM2_DEVICES"] = ""
         if mpi_tasks<=0: mpi_tasks = 4
@@ -173,7 +173,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     elif 'lassen' in node_name:
         os.environ["PSM2_DEVICES"] = ""
         if mpi_tasks<=0: mpi_tasks = 4
-        mpirun_cmd="lrun -T4 -M -gpu"
+        mpirun_cmd="lrun -T4 "
         #mpirun_cmd="jsrun -g4 -c40 -a4 -n" + str(mpi_tasks) # Simulate Summit runs with -g4
     # add more machine names here
     elif 'Linux' in sys_name:

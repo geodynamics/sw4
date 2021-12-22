@@ -3,7 +3,7 @@ LINKER = hipcc
 CXX = $(PREP) hipcc
 GIT_VERSION := "$(shell git describe --abbrev=4 --dirty --always --tags)"
 
-proj = yes
+proj_6 = yes
 ckernel=yes 
 openmp=yes
 raja_cuda=yes
@@ -18,13 +18,14 @@ dbg=no
 register_count=no
 
 
-RAJA_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/HIP/NEW/DECEMBER_2021/RAJA-v0.14.1/install45
+RAJA_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/HIP/NEW/DECEMBER_2021/RAJA-v0.14.1/install452
 
 PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/HIP/RZNevada/proj-5.0.0/install
 PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/HIP/NEW/DECEMBER_2021/proj-5.0.0/install
+PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/HIP/NEW/DECEMBER_2021/proj-8.1.1/install_rznevada
 
 UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/SCALING/NEWCODE/sw4_github/RZWHAMO_ROCM4.5/umpire-6.0.0/install_ROCM45_NEVADA
-UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/HIP/NEW/DECEMBER_2021/umpire-6.0.0/install45
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/HIP/NEW/DECEMBER_2021/umpire-6.0.0/install452
 
 HDF5_HOME = $(OLCF_HDF5_ROOT)
 HDF5_HOME = $(HDF5_DIR)
@@ -35,7 +36,7 @@ ZFP_HOME=/gpfs/alpine/csc300/world-shared/spock/zfp
 H5Z_HOME=/gpfs/alpine/csc300/world-shared/spock/H5Z-ZFP/install
 
 CALIPER_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/Caliper/install
-CALIPER_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/HIP/NEW/DECEMBER_2021/Caliper/install_release
+CALIPER_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/HIP/NEW/DECEMBER_2021/Caliper/install_release452
 
 HIP_ROOT_DIR = $(HIP_PATH)
 HSA_ROOT_DIR = $(ROCM_PATH)/hsa
@@ -47,10 +48,12 @@ LAPACK_INC = ${LAPACK_DIR}/include
 MPI_HOME = /opt/cray/pe/cray-mvapich2_nogpu/2.3.5/infiniband/cray/10.0
 MPI_HOME = ${MPICH_DIR}
 
+SQLITE_HOME = /usr/workspace/wsrzd/ramesh/Project6/2021/HIP/NEW/DECEMBER_2021/sqlite
+
 EXTRA_FORT_FLAGS = 
 
 MORE_FLAGS = -DENABLE_HIP=1 -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_STAGED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC} -I$(MPI_HOME)/include -I${ROCM_PATH}/include -D__HIP_ARCH_GFX908__=1 -O3 -x hip -Wno-inconsistent-missing-override --offload-arch=gfx908:xnack-:sramecc+ --rocm-path=$(ROCM_PATH) -I $(ROCM_PATH)/include/roctracer -DCAMP_USE_PLATFORM_DEFAULT_STREAM=1 -DSW4_GIT_VERSION=\"$(GIT_VERSION)\" -DSW4_GHCOF_NO_GP_IS_ZERO=1 -DSW4_USE_SFK=1
-MORE_LINK_FLAGS =  -O3  -std=c++17 -L $(LAPACK_LIB)  -lgfortran -lsci_cray_mp  -L $(RAJA_HOME)/lib -lRAJA -L $(MPI_HOME)/lib -lmpi -L $(UMPIRE_HOME)/lib -lumpire $(GCC_LINK_LINE) --offload-arch=gfx908:xnack-:sramecc+ -L ${ROCM_PATH}/roctracer/lib -lroctracer64
+MORE_LINK_FLAGS =  -O3  -std=c++17 -L $(LAPACK_LIB)  -lgfortran -lsci_cray_mp  -L $(RAJA_HOME)/lib -lRAJA -L $(MPI_HOME)/lib -lmpi -L $(UMPIRE_HOME)/lib -lumpire --offload-arch=gfx908:xnack-:sramecc+ -L ${ROCM_PATH}/roctracer/lib -lroctracer64
 
 ifeq ($(umpire),yes)
 MORE_FLAGS+= -DSW4_USE_UMPIRE=1 -I $(UMPIRE_HOME)/include
@@ -96,6 +99,11 @@ ifeq ($(proj),yes)
 MORE_FLAGS+= -I$(PROJ_HOME)/include
 MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib64  -L$(PROJ_HOME)/lib64 -lproj
 endif 
+
+ifeq ($(proj_6),yes)
+MORE_FLAGS+= -I$(PROJ_HOME)/include
+MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib64  -L$(PROJ_HOME)/lib64 -lproj -Wl,-rpath=$(SQLITE_HOME)/lib  -L$(SQLITE_HOME)/lib -lsqlite3
+endif
 
 ifeq ($(dbg),yes)
 MORE_FLAGS+=  -ggdb -DPEEKS_GALORE=1 

@@ -1,3 +1,3 @@
 export CALI_SERVICES_ENABLE=nvtx
 export CALI_CALIPER_ALLOW_REGION_OVERLAP=true
-lrun -T4 nvprof -o TProf_%q\{OMPI_COMM_WORLD_RANK\} --profile-from-start off ./sw4 small3.in
+lrun -T4 nvprof -o HProf_%q\{OMPI_COMM_WORLD_RANK\} --profile-from-start on ./sw4 small3.in

@@ -152,7 +152,7 @@ ifeq ($(proj),yes)
    proj  := "proj_4"
 else ifeq ($(proj_6),yes)
    CXXFLAGS += -DENABLE_PROJ_6 -I$(SW4INC)
-   linklibs += -L$(SW4LIB) -lproj -lsqlite3 -lcurl -lssl -lcrypto
+   linklibs += -L$(SW4LIB) -L$(SQLITE_HOME)/lib  -lproj -lcurl -lssl -lcrypto
    proj  := "proj_6"
 else
    proj  := "no"
@@ -272,7 +272,7 @@ sw4: $(FSW4) $(FOBJ)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
-	cd $(builddir); nvcc -arch=sm_70 $(DLINKFLAGS) -dlink -o file_link.o main.o $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart -lnvidia-ml
+	cd $(builddir); nvcc -arch=sm_70 $(DLINKFLAGS) -dlink -o file_link.o main.o $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart $(NVLINK_UMPIRE)
 	cd $(builddir); $(LINKER) $(LINKFLAGS) -o $@ main.o file_link.o $(OBJ) $(QUADPACK) $(linklibs)
 # test: linking with openmp for the routine rhs4sgcurv.o
 #	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)

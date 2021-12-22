@@ -3,7 +3,7 @@ LINKER = mpixlC
 CXX = $(PREP) nvcc
 GIT_VERSION := "$(shell git describe --abbrev=4 --dirty --always --tags)"
 
-proj = yes
+proj_6 = yes
 ckernel=yes 
 openmp=no
 raja_cuda=yes
@@ -25,6 +25,7 @@ RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.14.1/install_ansel
 
 
 PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/SW4/proj-5.0.0/install170818
+PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/SW4/proj-8.1.1/build_ansel/install_ansel
 
 UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-0.3.2/install_rzansel
 UMPIRE_HOME=/usr/workspace/wsrzd/ramesh/UMPIRE/umpire-0.3.3/install_rzansel
@@ -42,6 +43,8 @@ HDF5_HOME = /p/gpfs1/ramesh/SW4/HDF_TEST/HDF/CMake-hdf5-1.10.6/build/HDF5-1.10.6
 CALIPER_HOME =/usr/workspace/wsrzd/ramesh/Caliper/Caliper/install
 CALIPER_HOME =/usr/workspace/wsrzd/ramesh/Caliper/Caliper-2.5.0/install
 CALIPER_HOME =/usr/workspace/wsrzd/ramesh/Caliper/Caliper-2.5.0/install_cupti
+
+SQLITE_HOME = /usr/WS2/ramesh/Project6/SW4/spack/opt/spack/linux-rhel7-power8le/gcc-4.9.3/sqlite-3.36.0-lrjmrcqqxhmrdui66nsh2oav2rvu3l5j
 
 EXTRA_FORT_FLAGS = -qstrict
 
@@ -86,6 +89,10 @@ endif
 ifeq ($(proj),yes)
 MORE_FLAGS+= -I$(PROJ_HOME)/include
 MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib64  -L$(PROJ_HOME)/lib64 -lproj
+endif 
+ifeq ($(proj_6),yes)
+MORE_FLAGS+= -I$(PROJ_HOME)/include
+MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib64  -L$(PROJ_HOME)/lib64 -lproj -Wl,-rpath=$(SQLITE_HOME)/lib  -L$(SQLITE_HOME)/lib -lsqlite3
 endif 
 
 ifeq ($(norm_trace),yes)

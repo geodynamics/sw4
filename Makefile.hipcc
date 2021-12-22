@@ -3,7 +3,7 @@
 # make sw4 [debug=yes/no] [prec=single/double] [fortran=yes/no] [openmp=yes/no]
 #   Default is: debug=no prec=double fortran=yes openmp=yes
 # This Makefile asumes that the following environmental variables have been assigned:
-# etree = [yes/no]
+# proj_6  = [yes/no]
 # proj = [yes/no]
 # CXX = C++ compiler
 # FC  = Fortran-77 compiler
@@ -129,15 +129,14 @@ ifdef EXTRA_FORT_FLAGS
    FFLAGS += $(EXTRA_FORT_FLAGS)
 endif
 
-ifeq ($(etree),yes)
-   CXXFLAGS += -DENABLE_ETREE -DENABLE_PROJ4 -I$(SW4INC)
-   linklibs += -L$(SW4LIB) -lcencalvm -lproj
-else ifeq ($(proj),yes)
+ifeq ($(proj),yes)
    CXXFLAGS += -DENABLE_PROJ4 -I$(SW4INC)
    linklibs += 
-   etree := "no"
+else ifeq ($(proj_6),yes)
+   CXXFLAGS += -DENABLE_PROJ_6 -I$(SW4INC)
+   linklibs += -L$(SQLITE_HOME)/lib  -lproj -lcurl -lssl -lcrypto
+   proj  := "proj_6"
 else
-   etree := "no"
    proj  := "no"
 endif
 
@@ -193,7 +192,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        solve.o solerr3.o Parallel_IO.o Image.o GridPointSource.o MaterialBlock.o testsrc.o \
        TimeSeries.o sacsubc.o SuperGrid.o addsgd.o velsum.o rayleighfort.o energy4.o TestRayleighWave.o \
        MaterialPfile.o Filter.o Polynomial.o SecondOrderSection.o time_functions.o Qspline.o \
-       lamb_exact_numquad.o twilightsgfort.o EtreeFile.o MaterialIfile.o GeographicProjection.o \
+       lamb_exact_numquad.o twilightsgfort.o MaterialIfile.o MaterialGMG.o GeographicProjection.o \
        rhs4curvilinear.o curvilinear4.o rhs4curvilinearsg.o curvilinear4sg.o gradients.o Image3D.o \
        MaterialVolimagefile.o MaterialRfile.o randomfield3d.o innerloop-ani-sgstr-vc.o bcfortanisg.o \
        AnisotropicMaterialBlock.o checkanisomtrl.o computedtaniso.o sacutils.o ilanisocurv.o \

@@ -1,6 +1,10 @@
 #ifndef __HIP_FORALLS_H__
 #define __HIP_FORALLS_H__
 
+#define HSYNC_DEVICE SW4_CheckDeviceError(hipDeviceSynchronize())
+#define HSYNC_STREAM SW4_CheckDeviceError(hipStreamSynchronize(0))
+
+#include "Mspace.h"
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -27,7 +31,7 @@ void forall(int start, int end, LoopBody &&body) {
   // forallkernel<<<blocks, tpb>>>(start, end, body);
   hipLaunchKernelGGL(forallkernel<LoopBody>, blocks, tpb, 0, 0, start, end,
                      body);
-  hipDeviceSynchronize();
+  HSYNC_STREAM;
 }
 template <typename LoopBody>
 void forallasync(int start, int end, LoopBody &&body) {
@@ -38,7 +42,6 @@ void forallasync(int start, int end, LoopBody &&body) {
   // forallkernel<<<blocks, tpb>>>(start, end, body);
   hipLaunchKernelGGL(forallkernel<LoopBody>, blocks, tpb, 0, 0, start, end,
                      body);
-  // hipDeviceSynchronize();
 }
 
 template <int N, typename LoopBody>
@@ -51,7 +54,7 @@ void forall(int start, int end, LoopBody &&body) {
   // forallkernel<<<blocks, tpb>>>(start, end, body);
   hipLaunchKernelGGL(forallkernel<LoopBody>, blocks, tpb, 0, 0, start, end,
                      body);
-  hipDeviceSynchronize();
+  HSYNC_STREAM;
 }
 
 template <typename Func>
@@ -77,7 +80,7 @@ void forallB(int start, int end, LoopBody &&body) {
   // forallkernelB<<<blocks, tpb>>>(start, end, body);
   hipLaunchKernelGGL(forallkernelB<LoopBody>, blocks, tpb, 0, 0, start, end,
                      body);
-  hipDeviceSynchronize();
+  HSYNC_STREAM;
 }
 
 template <int N>
@@ -174,7 +177,7 @@ void forall3(int start0, int end0, int start1, int end1, int start2, int end2,
 #endif
   hipLaunchKernelGGL((forall3kernel<1024, 2>), blocks, tpb, 0, 0, start0, end0,
                      start1, end1, start2, end2, body);
-  hipDeviceSynchronize();
+  HSYNC_STREAM;
 }
 
 template <template <int> class T, int N>
@@ -206,7 +209,7 @@ void forall3(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
 
   // forall3kernel<<<blocks,tpb>>>(irange.start,irange.end,jrange.start,jrange.end,krange.start,krange.end,body);
   forall3async(irange, jrange, krange, body);
-  hipStreamSynchronize(0);
+  HSYNC_STREAM;
 }
 
 template <typename T1, typename T2, typename T3, typename LoopBody>
@@ -226,7 +229,7 @@ void forall3GS(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
 
   // forall3gskernel<<<blocks,tpb>>>(irange.start,irange.end,jrange.start,jrange.end,krange.start,krange.end,body);
   forall3async(irange, jrange, krange, body);
-  hipStreamSynchronize(0);
+  HSYNC_STREAM;
 }
 
 // Forall2
@@ -268,7 +271,7 @@ void forall2(T1 &irange, T2 &jrange, LoopBody &&body) {
   /* forall2kernel<<<blocks,tpb>>>(irange.start,irange.end,jrange.start,jrange.end,body);
    */
   forall2async(irange, jrange, body);
-  hipStreamSynchronize(0);
+  HSYNC_STREAM;
 }
 
 // AutoTuning Code
@@ -516,8 +519,8 @@ void forall3async(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
 template <int N, typename Tag, typename T1, typename T2, typename T3,
           typename LoopBody>
 void forall3(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
-  forall3async<N, Tag>(t, irange, jrange, krange, body);
-  hipStreamSynchronize(0);
+forall3async<N, Tag>(t, irange, jrange, krange, body);
+  HSYNC_STREAM;
 }
 
 template <int WGS, int OCC, typename Tag, typename T1, typename T2, typename T3,
