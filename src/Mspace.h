@@ -213,7 +213,7 @@ void autopeel(Apc &apc, T only) {
 }
 
 template <typename T, typename... Args>
-void autopeel(Apc &apc, T first, Args &&...args) {
+void autopeel(Apc &apc, T first, Args &&... args) {
   apc.ofile << line(first, apc.counter);
   apc.counter++;
   autopeel(apc, args...);

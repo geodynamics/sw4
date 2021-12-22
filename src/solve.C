@@ -1607,7 +1607,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 #if USE_HDF5
   // Only do this if there are any essi hdf5 files
   if (mESSI3DFiles.size() > 0) {
-    for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
+    for (int i3 = 0; i3 < mESSI3DFiles.size(); i3++)
       mESSI3DFiles[i3]->finalize_hdf5();
 
     // Calculate the total ESSI hdf5 io time across all ranks

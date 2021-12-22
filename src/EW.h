@@ -1620,7 +1620,7 @@ class EW {
 
   // material description used with material surfaces and the ifile command
   vector<MaterialProperty*> m_materials;
-  MPI_Comm m_cartesian_communicator;
+  MPI_Comm m_cartesian_communicator, m_1d_communicator;
 
   ofstream msgStream;
 

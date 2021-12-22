@@ -37,12 +37,12 @@
 #include "Filter.h"
 #include "Image3D.h"
 #include "MaterialBlock.h"
+#include "MaterialGMG.h"
 #include "MaterialIfile.h"
 #include "MaterialInvtest.h"
 #include "MaterialPfile.h"
 #include "MaterialRfile.h"
 #include "MaterialSfile.h"
-#include "MaterialGMG.h"
 #include "MaterialVolimagefile.h"
 #include "Require.h"
 #include "TimeSeries.h"
@@ -8201,17 +8201,12 @@ void EW::processMaterialGMG(char* buffer) {
   string name = "gmg";
   string filename = "NONE";
   string directory = "NONE";
-  float_sw4 a_ppm = 0., vpmin_ppm = 0., vsmin_ppm = 0, rhomin_ppm = 0.;
   string cflatten = "NONE";
-  bool flatten = false;
-  bool coords_geographic = true;
-  int nstenc = 5;
-  int bufsize = 200000;  // Parallel IO buffer, in number of grid points.
 
   char* token = strtok(buffer, " \t");
   //  CHECK_INPUT(strcmp("rfile", token) == 0,
   //	      "ERROR: material data can only be set by an rfile line, not: " <<
-  //token);
+  // token);
 
   string err = token;
   err += " Error: ";

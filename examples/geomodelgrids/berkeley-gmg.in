@@ -1,0 +1,46 @@
+# SW4 input file for testing the gmg command
+
+# set pfs=1 if you are on a parallel file system
+fileio path=berk-gmg pfs=0 verbose=2
+
+# grid size is set in the grid command
+# DO NOT CHANGE AZ!
+grid x=12e3 y=12e3 z=5e3 nx=601 lat=37.93 lon=-122.25 az=143.6380001671 proj=tmerc datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
+
+# curvilinear grid extends to z=6000 and gets approximately the same gridsize as the finest Cartesian
+topography input=gmg zmax=2e3 order=3 file=USGS_SFCVM_v21-0_detailed.berkeley.h5
+
+time steps=0 
+
+# Reduced domain of Geomodelgrids data
+gmg filename=USGS_SFCVM_v21-0_detailed.berkeley.h5 directory=./
+
+# threshold on vp and vs
+#globalmaterial vsmin=500 vpmin=768
+
+# images
+# topography (can't be written without the topography command enabled)
+imagehdf5 mode=topo z=0.0 cycle=0 file=berk
+
+imagehdf5 mode=lat z=0.0 cycle=0 file=berk
+imagehdf5 mode=lon z=0.0 cycle=0 file=berk
+
+# Output images of the elastic model on the surface (z=0)
+imagehdf5 mode=rho z=0.0 cycle=0 file=berk
+imagehdf5 mode=p z=0.0 cycle=0 file=berk
+imagehdf5 mode=s z=0.0 cycle=0 file=berk
+
+# vertical cross section
+imagehdf5 mode=rho x=2.5e3 cycle=0 file=berk
+imagehdf5 mode=s x=2.5e3 cycle=0 file=berk
+imagehdf5 mode=p x=2.5e3 cycle=0 file=berk
+
+# solution on the surface
+#imagehdf5 mode=velmag z=0.0 timeInterval=5 file=berk
+#imagehdf5 mode=hvelmax z=0.0 timeInterval=5 file=berk
+
+# simple source (irrelevant for this test)
+source x=2.5e3 y=2.5e3 z=1e3 strike=142.1 rake=180 dip=95.6 m0=1.7162e+17 t0=27.116 freq=7.62985 type=Liu
+
+# record time histories
+#rec x=5e3 y=5e3 depth=0 file=sta1 usgsformat=1 sacformat=0

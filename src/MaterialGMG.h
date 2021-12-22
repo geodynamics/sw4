@@ -98,7 +98,11 @@ class MaterialGMG : public MaterialData {
   int m_npatches;
   double m_Origin_x, m_Origin_y, m_Yaz, m_Zmax, m_Zmin;
   char* m_CRS;
+#ifdef USE_HDF5
   hsize_t m_Top_dims[2];
+#else
+  size_t m_Top_dims[2];
+#endif
   float* m_Top_surface;
   vector<double> m_hv, m_hh, m_ztop;
   vector<int> m_ni, m_nj, m_nk, m_nc;

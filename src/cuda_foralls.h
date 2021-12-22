@@ -681,7 +681,7 @@ __global__ void forall3kernelSF(Tag t, const int start0, const int N0,
 template <int N, typename Tag, typename T1, typename T2, typename T3,
           typename... LoopBodies>
 void forall3asyncSF(Tag &t, T1 &irange, T2 &jrange, T3 &krange,
-                    LoopBodies &&...bodies) {
+                    LoopBodies &&... bodies) {
   if (irange.invalid || jrange.invalid || krange.invalid) return;
   dim3 tpb(irange.tpb, jrange.tpb, krange.tpb);
   dim3 blocks(irange.blocks, jrange.blocks, krange.blocks);
@@ -696,8 +696,8 @@ void forall3asyncSF(Tag &t, T1 &irange, T2 &jrange, T3 &krange,
   // insertEvent(start);
   // // Launch each body i a separate kernel. Gives incorrect results due to
   // shared memory not persisting between kernels (forall3kernelSM<N><<<blocks,
-  // tpb>>>(t, irange.start, irange.end, jrange.start, 				     jrange.end, krange.start,
-  // krange.end, bodies),...);
+  // tpb>>>(t, irange.start, irange.end, jrange.start,
+  // jrange.end, krange.start, krange.end, bodies),...);
   // }
   // insertEvent(stop1);
   // Launch all bodies inside 1 kernel. Regs use is 6 more than biggest kernels
