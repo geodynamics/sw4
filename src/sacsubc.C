@@ -242,7 +242,7 @@ void arsac (int LN, char *name,float **data,int *nerr)
 */
 {
 	int maxpts, nread;
-	int i, j, j1, j2, k, l;
+	int i, j, j1, j2, k, l, iret;
 	int has12345;
 	FILE *fptr;
 	float rval;
@@ -353,7 +353,7 @@ perror("fopen error in arsac:");
 		return;
 	}
 	for(j=0; j< maxpts; j++){
-		fscanf(fptr,"%g",&rval);
+		iret = fscanf(fptr,"%g",&rval);
 		 (*data)[j] = rval;
 	}
 		

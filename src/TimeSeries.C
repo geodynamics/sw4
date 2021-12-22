@@ -1459,6 +1459,7 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
 {
 //building the file name...
 // 
+   int ret;
    stringstream filePrefix;
    if( ew->getObservationPath(m_global_event) != "./" && ew->getObservationPath(m_global_event) != "" )
       filePrefix << ew->getObservationPath(m_global_event);
@@ -1481,7 +1482,7 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
       // Read header
 	 for( int line=0 ; line < 13 ; line++ )
 	 {
-	    fgets(buf,bufsize,fd);
+	    ret = fgets(buf,bufsize,fd);
             if( line == 2 && !ignore_utc )
 	    {
 	       // set UTC time, if defined in file
@@ -1574,7 +1575,7 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
 
 	 // Read past header
 	    for( int line=0 ; line < 13 ; line++ )
-	       fgets(buf,bufsize,fd);
+	       ret = fgets(buf,bufsize,fd);
 	    // Mapping to invert (e,n) to (x,y) components, Only needed in the non-cartesian case.
             float_sw4 deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
             float_sw4 a11 = m_calpha*deti;
