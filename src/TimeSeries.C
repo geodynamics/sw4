@@ -1459,7 +1459,7 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
 {
 //building the file name...
 // 
-   int ret;
+   char *ret;
    stringstream filePrefix;
    if( ew->getObservationPath(m_global_event) != "./" && ew->getObservationPath(m_global_event) != "" )
       filePrefix << ew->getObservationPath(m_global_event);
