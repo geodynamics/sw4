@@ -2459,7 +2459,6 @@ void EW::processFileIO(char* buffer)
              mPath[0] = token;
              mPath[0] += '/';
 	  }
-          haspath = true;
 	  //          path = token;
        }
        else if (startswith("obspath=", token))
@@ -2514,10 +2513,6 @@ void EW::processFileIO(char* buffer)
        }
        token = strtok(NULL, " \t");
     }
-
-  if( haspath == false && m_nevents_specified == 0 )
-    mPath.push_back("./");
-
 //  if (path != 0) setOutputPath(path);
   setPrintCycle(printcycle);
   setVerbosity(verbose);
