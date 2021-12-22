@@ -6203,6 +6203,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 
   const int bufsize=1024;
   char buf[bufsize];
+  char *ret;
   
 // Discrete source time function
   float_sw4* par=NULL;
@@ -6221,12 +6222,12 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
     if (proc_zero())
       printf("Opened rupture file '%s'\n", rfile);
 // read 1st line
-    fgets(buf,bufsize,fd);
+    ret = fgets(buf,bufsize,fd);
     sscanf(buf," %lg", &rVersion );
     if (proc_zero())
       printf("Version = %.1f\n", rVersion);
 // read 2nd line, starting header block
-    fgets(buf,bufsize,fd);
+    ret = fgets(buf,bufsize,fd);
     char* token = strtok(buf, " \t");
 //    printf("token: '%s'\n", token);
     REQUIRE2(strcmp("PLANE", token) == 0, "ERROR: not a HEADER BLOCK line...: " << token);
@@ -6241,9 +6242,9 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
     {
       double elon, elat, len, wid, stk, dip, dtop, shyp, dhyp;
       int nstk, ndip;
-      fgets(buf,bufsize,fd);
+      ret = fgets(buf,bufsize,fd);
       sscanf(buf,"%lg %lg %i %i %lg %lg", &elon, &elat, &nstk, &ndip, &len, &wid);
-      fgets(buf,bufsize,fd);
+      ret = fgets(buf,bufsize,fd);
       sscanf(buf,"%lg %lg %lg %lg %lg", &stk, &dip, &dtop, &shyp, &dhyp);
       if (proc_zero())
       {
@@ -6254,7 +6255,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
       
     }
 // read header for data block
-    fgets(buf,bufsize,fd);
+    ret = fgets(buf,bufsize,fd);
     token = strtok(buf, " \t");
 //    printf("token: '%s'\n", token);
     REQUIRE2(strcmp("POINTS", token) == 0, "ERROR: not a DATA BLOCK line...: " << token);
@@ -6271,10 +6272,10 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
     {
       double lon, lat, dep, stk, dip, area, tinit, dt, rake, slip1, slip2, slip3;
       int nt1=0, nt2=0, nt3=0;
-      fgets(buf,bufsize,fd);
+      ret = fgets(buf,bufsize,fd);
       sscanf(buf,"%lg %lg %lg %lg %lg %lg %lg %lg", &lon, &lat, &dep, &stk, &dip, &area, 
 	     &tinit, &dt);
-      fgets(buf,bufsize,fd);
+      ret = fgets(buf,bufsize,fd);
       sscanf(buf,"%lg %lg %i %lg %i %lg %i", &rake, &slip1, &nt1, &slip2, &nt2, &slip3, &nt3);
 // nothing to do if nt1=nt2=nt3=0
       if (nt1<=0 && nt2<=0 && nt3<=0) continue;
@@ -6300,7 +6301,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 	freq    = 1/dt;
 	ipar    = new int[1];
 	ipar[0] = nt1dim+1; // add an extra point 
-	fgets(buf,bufsize,fd);
+	ret = fgets(buf,bufsize,fd);
 	token = strtok(buf, " \t");
 //	printf("buf='%s'\n", buf);
 	for( int i=0 ; i < nt1 ; i++ )
@@ -6308,7 +6309,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 // read another line if there are no more tokens
 	  if (token == NULL)
 	  {
-	    fgets(buf,bufsize,fd);
+	    ret = fgets(buf,bufsize,fd);
 	    token = strtok(buf, " \t");
 	  }
 //	  printf("token='%s'\n", token);
@@ -6467,7 +6468,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 	double dum;
 	if (proc_zero())
 	  printf("WARNING nt2=%i > 0 will be ignored\n", nt2);
-	fgets(buf,bufsize,fd);
+	ret = fgets(buf,bufsize,fd);
 	token = strtok(buf, " \t");
 //	printf("buf='%s'\n", buf);
 	for( int i=0 ; i < nt2 ; i++ )
@@ -6475,7 +6476,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 // read another line if there are no more tokens
 	  if (token == NULL)
 	  {
-	    fgets(buf,bufsize,fd);
+	    ret = fgets(buf,bufsize,fd);
 	    token = strtok(buf, " \t");
 	  }
 //	  printf("token='%s'\n", token);
@@ -6492,7 +6493,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 	double dum;
 	if (proc_zero())
 	  printf("WARNING nt3=%i > 0 will be ignored\n", nt3);
-	fgets(buf,bufsize,fd);
+	ret = fgets(buf,bufsize,fd);
 	token = strtok(buf, " \t");
 //	printf("buf='%s'\n", buf);
 	for( int i=0 ; i < nt3 ; i++ )
@@ -6500,7 +6501,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 // read another line if there are no more tokens
 	  if (token == NULL)
 	  {
-	    fgets(buf,bufsize,fd);
+	    ret = fgets(buf,bufsize,fd);
 	    token = strtok(buf, " \t");
 	  }
 //	  printf("token='%s'\n", token);
