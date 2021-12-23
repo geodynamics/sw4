@@ -1,0 +1,220 @@
+----------------------------------------------------------------
+            sw4 version 3.0-alpha
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Wed Dec 22 10:30:00 PST 2021
+  By user:     houhun
+  Machine:     cori04
+  Compiler:    /opt/cray/pe/craype/2.6.2/bin/CC
+  3rd party include dir: /global/cfs/cdirs/m3354/tang/proj-7.2.1/install/include, and library dir: /global/cfs/cdirs/m3354/tang/proj-7.2.1/install/lib
+----------------------------------------------------------------
+
+Input file: ./berkeley-gmg.in
+
+* Processing the grid command...
+* Setting h to 2.00000000e+01 from  x/(nx-1) (x=1.20000000e+04, nx=601)
+* Setting ny to 601 to be consistent with h=2.00000000e+01
+* Setting nz to 251 to be consistent with h=2.00000000e+01
+cleanupRefinementLevels: topo_zmax = 2.00000000e+03
+ Cartesian refinement levels (z=):
+2.00000000e+03
+ Curvilinear refinement levels (z=):
+0.00000000e+00
+allocateCartesianSolverArrays: #ghost points=2, #parallel padding points=2, topoExists=true
+refBndrSize= 1, nCartGrids=1, nCurviGrids=1 
+ Grid distributed on 8 processors 
+ Finest grid size    605 x 605
+ Processor array     2 x 4
+ Number of curvilinear grids = 1
+ Number of Cartesian grids = 1
+ Total number of grids = 2
+Extent of the computational domain xmax=1.20000000e+04 ymax=1.20000000e+04 zmax=5.00000000e+03
+Cartesian refinement levels after correction: 
+Grid=0 z-min=2.00000000e+03
+Corrected global_zmax = 5.00000000e+03
+
+Rank=0, Grid #1 (curvilinear), iInterior=[1,301], jInterior=[1,151]
+Rank=0, Grid #0 (Cartesian), iInterior=[1,301], jInterior=[1,151], kInterior=[1,151]
+***inside setup2D_MPICommunications***
+GMG header: azimuth=3.236380e+02, origin_x=63354.702392, origin_y=308443.278655
+            hh=1.000000e+02, ni=122, nj=121
+Read topography from GeoModelGrids time=7.078979e-01 seconds
+Topo corners 79.135838, 305.327877, 305.327877, 309.306268
+Topo variation on comp grid: max=5.595026e+02 min=7.913584e+01
+***inside allocateCurvilinearArrays***
+
+***Topography grid: min z = -5.550080e+02, max z = 2.142975e+00, top Cartesian z = 2.000000e+03
+***inside setupMPICommunications***
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points      Type
+   0        20       601       601       151     54541351     Cartesian
+   1        20       601       601       114     41176914     Curvilinear
+Total number of grid points (without ghost points): 9.57183e+07
+
+*** Using GMG USGS_SFCVM_v21-0_detailed.berkeley.h5 in directory ./
+  GMG header block #0
+    hh=100.000000, hv=25.000000
+    nc=7, ni=122, nj=121, nk=21
+  GMG header block #1
+    hh=200.000000, hv=50.000000
+    nc=7, ni=61, nj=61, nk=61
+  GMG header block #2
+    hh=500.000000, hv=125.000000
+    nc=7, ni=25, nj=25, nk=53
+  GMG header block #3
+    hh=1000.000000, hv=250.000000
+    nc=7, ni=13, nj=13, nk=141
+  GMG header: 
+    y_azimuth=3.236380e+02, origin_x=63354.702392, origin_y=308443.278655
+    nblocks=4
+MaterialGMG::read_gmg, time to read material file: 5.99886894e-01 seconds.
+
+
+   Execution time, reading input file 4.45197892e+00 seconds 
+Assuming a SERIAL file system.
+Setting up SBP boundary stencils
+Detected at least one boundary with supergrid conditions
+=================Processor #0 index bounds====================
+m_iStart=-1, m_iEnd=303, m_global_nx=601, m_jStart=-1, m_jEnd=153, m_global_ny=601
+=================Processor #0 interior index bounds====================
+m_iStartInt=1, m_iEndInt=301, m_jStartInt=1, m_jEndInt=151
+=================Processor #0 Boundary Conditions in top grid====================
+bc[0]=2, bc[1]=7, bc[2]=2, bc[3]=7, bc[4]=0, bc[5]=4
+----------------------------------------------------
+ Making Directory: berk-gmg/
+		
+=================Processor #4 index bounds====================
+m_iStart=300, m_iEnd=603, m_global_nx=601, m_jStart=-1, m_jEnd=153, m_global_ny=601
+=================Processor #4 interior index bounds====================
+m_iStartInt=302, m_iEndInt=601, m_jStartInt=1, m_jEndInt=151
+=================Processor #4 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=2, bc[2]=2, bc[3]=7, bc[4]=0, bc[5]=4
+=================Processor #5 index bounds====================
+m_iStart=300, m_iEnd=603, m_global_nx=601, m_jStart=150, m_jEnd=303, m_global_ny=601
+=================Processor #5 interior index bounds====================
+m_iStartInt=302, m_iEndInt=601, m_jStartInt=152, m_jEndInt=301
+=================Processor #5 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=2, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=4
+=================Processor #3 index bounds====================
+m_iStart=-1, m_iEnd=303, m_global_nx=601, m_jStart=450, m_jEnd=603, m_global_ny=601
+=================Processor #3 interior index bounds====================
+m_iStartInt=1, m_iEndInt=301, m_jStartInt=452, m_jEndInt=601
+=================Processor #3 Boundary Conditions in top grid====================
+bc[0]=2, bc[1]=7, bc[2]=7, bc[3]=2, bc[4]=0, bc[5]=4
+... Done!
+----------------------------------------------------
+=================Processor #2 index bounds====================
+m_iStart=-1, m_iEnd=303, m_global_nx=601, m_jStart=300, m_jEnd=453, m_global_ny=601
+=================Processor #2 interior index bounds====================
+m_iStartInt=1, m_iEndInt=301, m_jStartInt=302, m_jEndInt=451
+=================Processor #2 Boundary Conditions in top grid====================
+bc[0]=2, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=4
+=================Processor #1 index bounds====================
+m_iStart=-1, m_iEnd=303, m_global_nx=601, m_jStart=150, m_jEnd=303, m_global_ny=601
+=================Processor #1 interior index bounds====================
+m_iStartInt=1, m_iEndInt=301, m_jStartInt=152, m_jEndInt=301
+=================Processor #1 Boundary Conditions in top grid====================
+bc[0]=2, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=4
+=================Processor #6 index bounds====================
+m_iStart=300, m_iEnd=603, m_global_nx=601, m_jStart=300, m_jEnd=453, m_global_ny=601
+=================Processor #6 interior index bounds====================
+m_iStartInt=302, m_iEndInt=601, m_jStartInt=302, m_jEndInt=451
+=================Processor #6 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=2, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=4
+=================Processor #7 index bounds====================
+m_iStart=300, m_iEnd=603, m_global_nx=601, m_jStart=450, m_jEnd=603, m_global_ny=601
+=================Processor #7 interior index bounds====================
+m_iStartInt=302, m_iEndInt=601, m_jStartInt=452, m_jEndInt=601
+=================Processor #7 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=2, bc[2]=7, bc[3]=2, bc[4]=0, bc[5]=4
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= -1.222500e+02, Lat=3.793000e+01, x=0.000000e+00, y=-0.000000e+00
+1: Lon= -1.221701e+02, Lat=3.784240e+01, x=1.200000e+04, y=6.791833e-10
+2: Lon= -1.222805e+02, Lat=3.777903e+01, x=1.200000e+04, y=1.200000e+04
+3: Lon= -1.223605e+02, Lat=3.786655e+01, x=5.838901e-10, y=1.200000e+04
+
+Considering all material blocks
+
+gmg command: outside = 0, material = 98607873
+
+       ----------- Material properties ranges ---------------
+       1.59420494e+03 kg/m^3 <=  Density <= 2.67257759e+03 kg/m^3
+       7.04660253e+02 m/s    <=  Vp      <= 5.56575848e+03 m/s
+       8.02715442e+01 m/s    <=  Vs      <= 3.33623668e+03 m/s
+       1.65942388e+00        <=  Vp/Vs   <= 1.71620687e+01
+       1.02722927e+07 Pa     <=  mu      <= 2.97470586e+10 Pa
+       7.71051616e+08 Pa     <=  lambda  <= 2.32961026e+10 Pa
+       ------------------------------------------------------
+Material model info, Grid g=0: 1.832674e+03 <= Cs <= 3.336237e+03, 4.334402e+03 <= C-hat <= 7.296480e+03, h[g]/max(C-hat) = 2.741048e-03
+Material model info, Grid g=1: 8.027154e+01 <= Cs <= 3.080755e+03, 7.137458e+02 <= C-hat <= 6.717025e+03, h[g]/max(C-hat) = 2.977508e-03
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=2.000000e+01, minVs/h=91.6337 (Cartesian)
+g=1, h=2.000000e+01, minVs/h=4.01358 (curvilinear)
+
+Assigning SG arrays: standard case with default epsL
+  Assigned material properties
+*** computing the time step ***
+INFO: Smallest stable time step for curvilinear grid only: 3.884565e-03
+TIME accuracy order=4 CFL=1.30000000e+00 prel. time step=3.56336215e-03
+*** Initialized Images
+ Min source z-level: 1.000000e+03, max source z-level: 1.000000e+03
+
+   Execution time, start up phase 3.57200520e+01 seconds 
+Running sw4 on 8 processors, using 4 threads/processor...
+Writing output to directory: berk-gmg/
+
+***  Starting solve ***
+============================================================
+ Running program on 8 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 0.00356336
+ Number of time steps = 1 dt: 0.00356336
+
+============================================================
+ Global boundary conditions 
+      x=0    supergrid
+      x=xMax supergrid
+      y=0    supergrid
+      y=yMax supergrid
+      z=topo free surface
+      z=zMax supergrid
+
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 1.7162e+17 Nm 
+  Moment magnitude     (Mw): 5.42305
+  Number of moment sources 1
+-----------------------------------------------------------------------
+number of grid point  sources = 216
+number of unique g.p. sources = 216
+  Initial data has been assigned
+writing image plane on file berk-gmg/berk.cycle=0.z=0.topo.sw4img.h5
+writing image plane on file berk-gmg/berk.cycle=0.z=0.rho.sw4img.h5
+writing image plane on file berk-gmg/berk.cycle=0.z=0.p.sw4img.h5
+writing image plane on file berk-gmg/berk.cycle=0.z=0.s.sw4img.h5
+writing image plane on file berk-gmg/berk.cycle=0.x=2500.rho.sw4img.h5
+writing image plane on file berk-gmg/berk.cycle=0.x=2500.s.sw4img.h5
+writing image plane on file berk-gmg/berk.cycle=0.x=2500.p.sw4img.h5
+
+Reporting SW4 internal flags and settings:
+m_testing=no, twilight=no, point_source=no, moment_test=no, energy_test=no, lamb_test=no, rayleigh_test=no
+m_use_supergrid=yes
+End report of internal flags and settings
+
+
+   Execution time, initial data phase 1.12496090e+00 seconds 
+
+  Begin time stepping...
+Time step       1  t =   3.5633621e-03
+  Time stepping finished...
+  ==> Max wallclock time to write images is 3.49639654e-01 seconds.
+
+   Execution time, time stepping phase 1.35001600e+01 seconds 
+============================================================
+ program sw4 finished! 
+============================================================
