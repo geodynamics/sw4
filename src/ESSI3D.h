@@ -99,7 +99,7 @@ protected:
        Sarray& a_Z);
    void close_vel_file();
    void write_image_hdf5( int cycle, std::string& path, float_sw4 t,
-       std::vector<Sarray>& a_U );
+       std::vector<Sarray>& a_U, int is_last );
 #endif
 
    void compute_file_suffix( int cycle, std::stringstream & fileSuffix );
