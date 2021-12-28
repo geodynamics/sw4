@@ -2044,8 +2044,6 @@ void EW::setup_supergrid( )
   if (mVerbose && proc_zero_evzero() && m_use_supergrid)
     cout << "Detected at least one boundary with supergrid conditions" << endl;
   
-  int gTop = mNumberOfCartesianGrids-1;
-  //  vector<float_sw4> sg_width(mNumberOfCartesianGrids);
   vector<float_sw4> sg_width(mNumberOfGrids);
   
 // if the number of grid points was specified in the input file, we need to convert that to a physical width, based on the coarsest grid
@@ -2089,7 +2087,7 @@ void EW::setup_supergrid( )
   else
   {
      m_supergrid_taper_z[mNumberOfGrids-1].define_taper( !topographyExists() && (mbcGlobalType[4] == bSuperGrid), 0.0,
-                                                         false, m_global_zmax, sg_width[gTop] );
+                                                         false, m_global_zmax, sg_width[mNumberOfGrids-1] );
      m_supergrid_taper_z[0].define_taper( false, 0.0, mbcGlobalType[5]==bSuperGrid, m_global_zmax,
                                           sg_width[0] );
      for( int g=1 ; g < mNumberOfGrids-1 ; g++ )
