@@ -721,6 +721,8 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
     m_utc0[e].resize(7);
   }
 
+  MPI_Comm_dup(MPI_COMM_WORLD, &m_1d_communicator);
+
   // read the input file and setup the simulation object
   if (parseInputFile(a_GlobalSources, a_GlobalTimeSeries))
     mParsingSuccessful = true;
@@ -9153,7 +9155,8 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
 }
 
 #ifdef USE_HDF5
-static void read_hdf5_attr(hid_t loc, hid_t dtype, char* name, void* data) {
+static void read_hdf5_attr(hid_t loc, hid_t dtype, const char* name,
+                           void* data) {
   hid_t attr_id;
   int ierr;
   attr_id = H5Aopen(loc, name, H5P_DEFAULT);
@@ -9163,7 +9166,7 @@ static void read_hdf5_attr(hid_t loc, hid_t dtype, char* name, void* data) {
   H5Aclose(attr_id);
 }
 
-static char* read_hdf5_attr_str(hid_t loc, char* name) {
+static char* read_hdf5_attr_str(hid_t loc, const char* name) {
   hid_t attr_id, dtype;
   int ierr;
   char* data = NULL;

@@ -207,14 +207,14 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
                         wghy * ((1 - wghx) * mat(gr, 0, i0, j0 + 1, k0 + 1) +
                                 wghx * mat(gr, 0, i0 + 1, j0 + 1, k0 + 1)));
 
-            if (x == 80000 && y == 9000) {
-              printf(
-                  "g=%d, ijk: %d %d %d, lalo: %f %f, converted gmg xyz: %f %f "
-                  "%f, intf %f, gr %d, ijk %d %d %d, mat %f %f %f, rho=%f\n",
-                  g, i, j, k, sw4_lat, sw4_lon, gmg_x, gmg_y, z, intf, gr, i0,
-                  j0, k0, mat(gr, 0, i0, j0, k0), mat(gr, 1, i0, j0, k0),
-                  mat(gr, 2, i0, j0, k0), rho[g](i, j, k));
-            }
+            /* if (x == 80000 && y == 9000) { */
+            /*     printf("g=%d, ijk: %d %d %d, lalo: %f %f, converted gmg xyz:
+             * %f %f %f, intf %f, gr %d, ijk %d %d %d, mat %f %f %f, rho=%f\n",
+             */
+            /*             g, i, j, k, sw4_lat, sw4_lon, gmg_x, gmg_y, z, intf,
+             * gr, i0, j0, k0, mat(gr,0,i0,j0,k0), mat(gr,1,i0,j0,k0),
+             * mat(gr,2,i0,j0,k0), rho[g](i, j, k)); */
+            /* } */
             /* if (rho[g](i,j,k) < 1500) { */
             /*   printf("Rank %d, rho[%d](%d, %d, %d)=%.2f\n", mEW->getRank(),
              * g, i, j, k, rho[g](i,j,k)); */
@@ -315,25 +315,25 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
   MPI_Type_size(MPI_INT, &mpisizeint);
   if (sizeof(size_t) == mpisizelong) {
     MPI_Reduce(&material, &materialSum, 1, MPI_LONG, MPI_SUM, 0,
-               MPI_COMM_WORLD);
+               mEW->m_1d_communicator);
     MPI_Reduce(&outside, &outsideSum, 1, MPI_LONG, MPI_SUM, 0,
-               MPI_COMM_WORLD);
+               mEW->m_1d_communicator);
   } else if (sizeof(size_t) == mpisizelonglong) {
     MPI_Reduce(&material, &materialSum, 1, MPI_LONG_LONG, MPI_SUM, 0,
-               MPI_COMM_WORLD);
+               mEW->m_1d_communicator);
     MPI_Reduce(&outside, &outsideSum, 1, MPI_LONG_LONG, MPI_SUM, 0,
-               MPI_COMM_WORLD);
+               mEW->m_1d_communicator);
   } else if (sizeof(size_t) == mpisizeint) {
     MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0,
-               MPI_COMM_WORLD);
+               mEW->m_1d_communicator);
     MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0,
-               MPI_COMM_WORLD);
+               mEW->m_1d_communicator);
   } else {
     int materialsumi, outsidesumi, materiali = material, outsidei = outside;
     MPI_Reduce(&materiali, &materialsumi, 1, MPI_INT, MPI_SUM, 0,
-               MPI_COMM_WORLD);
+               mEW->m_1d_communicator);
     MPI_Reduce(&outsidei, &outsidesumi, 1, MPI_INT, MPI_SUM, 0,
-               MPI_COMM_WORLD);
+               mEW->m_1d_communicator);
     materialSum = materialsumi;
     outsideSum = outsidesumi;
   }
@@ -355,7 +355,8 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
 }
 
 #ifdef USE_HDF5
-static void read_hdf5_attr(hid_t loc, hid_t dtype, char* name, void* data) {
+static void read_hdf5_attr(hid_t loc, hid_t dtype, const char* name,
+                           void* data) {
   hid_t attr_id;
   int ierr;
   attr_id = H5Aopen(loc, name, H5P_DEFAULT);
@@ -365,11 +366,10 @@ static void read_hdf5_attr(hid_t loc, hid_t dtype, char* name, void* data) {
   H5Aclose(attr_id);
 }
 
-static char* read_hdf5_attr_str(hid_t loc, char* name) {
+static char* read_hdf5_attr_str(hid_t loc, const char* name) {
   hid_t attr_id, dtype;
   int ierr;
   char* data = NULL;
-  hsize_t attr_dim;
 
   attr_id = H5Aopen(loc, name, H5P_DEFAULT);
   ASSERT(attr_id >= 0);
@@ -487,8 +487,8 @@ void MaterialGMG::read_gmg() {
       if (mEW->getVerbosity() >= 2) {
         printf("  GMG header block #%i\n", p);
         printf("    hh=%f, hv=%f\n", m_hh[p], m_hv[p]);
-        printf("    nc=%i, ni=%i, nj=%i, nk=%i\n", dims[3], dims[0], dims[1],
-               dims[2]);
+        printf("    nc=%lld, ni=%lld, nj=%lld, nk=%lld\n", dims[3], dims[0],
+               dims[1], dims[2]);
       }
     }  // End for each patch
 
@@ -525,23 +525,23 @@ void MaterialGMG::read_gmg() {
 
   }  // End rank==0
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(mEW->m_1d_communicator);
 
-  MPI_Bcast(&m_Origin_x, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&m_Origin_y, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&m_Yaz, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&m_Zmax, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&m_Zmin, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&m_hv[0], m_npatches, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&m_hh[0], m_npatches, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&m_ni[0], m_npatches, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&m_nj[0], m_npatches, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&m_nk[0], m_npatches, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&m_nc[0], m_npatches, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&m_ztop[0], m_npatches, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&m_Origin_x, 1, MPI_DOUBLE, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_Origin_y, 1, MPI_DOUBLE, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_Yaz, 1, MPI_DOUBLE, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_Zmax, 1, MPI_DOUBLE, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_Zmin, 1, MPI_DOUBLE, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_hv[0], m_npatches, MPI_DOUBLE, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_hh[0], m_npatches, MPI_DOUBLE, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_ni[0], m_npatches, MPI_INT, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_nj[0], m_npatches, MPI_INT, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_nk[0], m_npatches, MPI_INT, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_nc[0], m_npatches, MPI_INT, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_ztop[0], m_npatches, MPI_DOUBLE, 0, mEW->m_1d_communicator);
 
-  MPI_Bcast(&str_len, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(m_Top_dims, 2, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&str_len, 1, MPI_INT, 0, mEW->m_1d_communicator);
+  MPI_Bcast(m_Top_dims, 2, MPI_LONG_LONG, 0, mEW->m_1d_communicator);
 
   if (mEW->getRank() != 0) {
     /* fprintf(stderr, "Rank %d, strlen: %d, topo dims: %ld %ld\n",
@@ -554,13 +554,13 @@ void MaterialGMG::read_gmg() {
     }
   }
 
-  MPI_Bcast(m_CRS, str_len, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Bcast(m_CRS, str_len, MPI_CHAR, 0, mEW->m_1d_communicator);
   MPI_Bcast(m_Top_surface, m_Top_dims[0] * m_Top_dims[1], MPI_FLOAT, 0,
-            MPI_COMM_WORLD);
+            mEW->m_1d_communicator);
 
   for (int p = 0; p < m_npatches; p++)
     MPI_Bcast(m_Material[p], m_ni[p] * m_nj[p] * m_nk[p] * m_nc[p], MPI_FLOAT,
-              0, MPI_COMM_WORLD);
+              0, mEW->m_1d_communicator);
 
   ASSERT(m_Origin_x > 0);
   ASSERT(m_Origin_y > 0);
@@ -721,11 +721,11 @@ void MaterialGMG::material_check(bool water) {
            cmaxs[4] = {csmax, cpmax, cratmax, rhomax};
     double cminstot[4], cmaxstot[4];
     MPI_Reduce(cmins, cminstot, 4, MPI_DOUBLE, MPI_MIN, 0,
-               MPI_COMM_WORLD);
+               mEW->m_1d_communicator);
     MPI_Reduce(cmaxs, cmaxstot, 4, MPI_DOUBLE, MPI_MAX, 0,
-               MPI_COMM_WORLD);
+               mEW->m_1d_communicator);
     int myid;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+    MPI_Comm_rank(mEW->m_1d_communicator, &myid);
     if (myid == 0)
     //	 if( mEW->getRank()==0 )
     {

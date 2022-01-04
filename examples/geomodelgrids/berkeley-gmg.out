@@ -1,0 +1,264 @@
+Device set to 0
+Device set to 0
+Device set to 0
+Device set to 0
+Device set to 0
+Device 0 used by 6 ranks 
+Device set to 0
+----------------------------------------------------------------
+            sw4 version 2.1-alpha
+
+ This program comes with ABSOLUTELY NO WARRANTY; released under GPL.
+ This is free software, and you are welcome to redistribute     
+ it under certain conditions, see LICENSE.txt for more details  
+----------------------------------------------------------------
+  Compiled on: Wed Dec 15 18:37:15 EST 2021
+  By user:     houjun
+  Machine:     login4
+  Compiler:    /sw/summit/cuda/11.0.3/bin/nvcc
+  3rd party include dir: /include, and library dir: /lib
+  Version:      v1.1BetaRAJA-396-gd8a0-dirty
+  Options:      RAJA(0.11.0):  UMPIRE(3.0.0):
+		STAGED_MPI_BUFFERS: HDF5(1.10.7.)FFTW: 
+		CUDA(11000)
+
+----------------------------------------------------------------
+
+Input file: ./berkeley-gmg.reduce.in
+Using staged MPI buffers (COMPILE OPTION)
+
+* Processing the grid command...
+* Setting h to 2.00000000e+01 from  x/(nx-1) (x=1.20000000e+04, nx=601)
+* Setting ny to 601 to be consistent with h=2.00000000e+01
+* Setting nz to 251 to be consistent with h=2.00000000e+01
+cleanupRefinementLevels: topo_zmax = 2.00000000e+03
+ Cartesian refinement levels (z=):
+2.00000000e+03
+ Curvilinear refinement levels (z=):
+0.00000000e+00
+allocateCartesianSolverArrays: #ghost points=2, #parallel padding points=2, topoExists=true
+refBndrSize= 1, nCartGrids=1, nCurviGrids=1 
+ Grid distributed on 6 processors 
+ Finest grid size    605 x 605
+ Processor array     2 x 3
+Number of curvilinear grids = 1
+Number of Cartesian grids = 1
+Total number of grids = 2
+Extent of the computational domain xmax=1.20000000e+04 ymax=1.20000000e+04 zmax=5.00000000e+03
+Cartesian refinement levels after correction: 
+Grid=0 z-min=2.00000000e+03
+Corrected global_zmax = 5.00000000e+03
+
+Rank=0, Grid #1 (curvilinear), iInterior=[1,301], jInterior=[1,201]
+Rank=0, Grid #0 (Cartesian), iInterior=[1,301], jInterior=[1,201], kInterior=[1,151]
+***inside setup2D_MPICommunications***
+GMG header: azimuth=3.236380e+02, origin_x=63354.702392, origin_y=308443.278655
+            hh=1.000000e+02, ni=122, nj=121
+i=-1, j=-1, i0=120, j0=120, latlon 37.930503 -122.249898, gmg 65919.495418 325326.441901
+i=303, j=203, i0=79, j0=59, latlon 37.864581 -122.246940, gmg 66238.536368 318014.251312
+Read topography from GeoModelGrids time=8.259188e-02 seconds
+Topo corners 79.135838, 305.327877, 305.327877, 120.317513
+Topo variation on comp grid: max=5.595026e+02 min=7.913584e+01
+***inside allocateCurvilinearArrays***
+
+***Topography grid: min z = -5.550080e+02, max z = 2.142975e+00, top Cartesian z = 2.000000e+03
+***inside setupMPICommunications***
+
+Global grid sizes (without ghost points)
+Grid         h        Nx        Ny        Nz       Points      Type
+   0        20       601       601       151     54541351     Cartesian
+   1        20       601       601       114     41176914     Curvilinear
+Total number of grid points (without ghost points): 9.57183e+07
+
+*** Using GMG USGS_SFCVM_v21-0_detailed.berkeley.h5 in directory /gpfs/alpine/geo130/proj-shared
+  GMG header block #0
+    hh=100.000000, hv=25.000000
+    nc=7, ni=122, nj=121, nk=21
+  GMG header block #1
+    hh=200.000000, hv=50.000000
+    nc=7, ni=61, nj=61, nk=61
+  GMG header block #2
+    hh=500.000000, hv=125.000000
+    nc=7, ni=25, nj=25, nk=53
+  GMG header block #3
+    hh=1000.000000, hv=250.000000
+    nc=7, ni=13, nj=13, nk=141
+  GMG header: 
+    y_azimuth=3.236380e+02, origin_x=63354.702392, origin_y=308443.278655
+    nblocks=4
+MaterialGMG::read_gmg, time to read material file: 1.24611770e-02 seconds.
+i=-1, j=200, i0=80, j0=120, latlon 37.909261 -122.286925, gmg 62683.535806 322943.997849
+i=303, j=403, i0=39, j0=59, latlon 37.843444 -122.283750, gmg 63018.676058 315643.660216
+Receiver INFO for station sta1:
+     initial location (x,y,z) = 5.00000000e+03 5.00000000e+03 -6.53138687e+01 zTopo= -6.53138687e+01
+     nearest grid point (x,y,z) = 5.00000000e+03 5.00000000e+03 -6.53138687e+01 h= 2.00000000e+01 with indices (i,j,k)= 251 251 1 in grid 1
+
+Read station input, took 2.11320000e-05seconds.
+   Execution time, reading input file 4.28937077e-01 seconds 
+  Using Bjorn's fast (parallel) IO library
+Assuming a SERIAL file system.
+Setting up SBP boundary stencils
+Detected at least one boundary with supergrid conditions
+=================Processor #0 index bounds====================
+m_iStart=-1, m_iEnd=303, m_global_nx=601, m_jStart=-1, m_jEnd=203, m_global_ny=601
+=================Processor #0 interior index bounds====================
+m_iStartInt=1, m_iEndInt=301, m_jStartInt=1, m_jEndInt=201
+=================Processor #0 Boundary Conditions in top grid====================
+bc[0]=2, bc[1]=7, bc[2]=2, bc[3]=7, bc[4]=0, bc[5]=4
+----------------------------------------------------
+ Making Directory: berk-gmg-reduce/
+		
+i=-1, j=400, i0=40, j0=120, latlon 37.888112 -122.323747, gmg 59463.675496 320573.406753
+i=303, j=603, i0=0, j0=59, latlon 37.822296 -122.320540, gmg 59798.815748 313273.069120
+=================Processor #2 index bounds====================
+m_iStart=-1, m_iEnd=303, m_global_nx=601, m_jStart=400, m_jEnd=603, m_global_ny=601
+=================Processor #2 interior index bounds====================
+m_iStartInt=1, m_iEndInt=301, m_jStartInt=402, m_jEndInt=601
+=================Processor #2 Boundary Conditions in top grid====================
+bc[0]=2, bc[1]=7, bc[2]=7, bc[3]=2, bc[4]=0, bc[5]=4
+=================Processor #1 index bounds====================
+m_iStart=-1, m_iEnd=303, m_global_nx=601, m_jStart=200, m_jEnd=403, m_global_ny=601
+=================Processor #1 interior index bounds====================
+m_iStartInt=1, m_iEndInt=301, m_jStartInt=202, m_jEndInt=401
+=================Processor #1 Boundary Conditions in top grid====================
+bc[0]=2, bc[1]=7, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=4
+... Done!
+----------------------------------------------------
+Geographic and Cartesian coordinates of the corners of the computational grid:
+0: Lon= -1.222500e+02, Lat=3.793000e+01, x=5.711142e-10, y=4.024069e-10
+1: Lon= -1.221701e+02, Lat=3.784240e+01, x=1.200000e+04, y=6.563410e-10
+2: Lon= -1.222805e+02, Lat=3.777903e+01, x=1.200000e+04, y=1.200000e+04
+3: Lon= -1.223605e+02, Lat=3.786655e+01, x=1.103887e-09, y=1.200000e+04
+
+Considering all material blocks
+i=300, j=200, i0=80, j0=60, latlon 37.865335 -122.246787, gmg 66251.275406 318098.108083
+i=603, j=403, i0=39, j0=-1, latlon 37.799664 -122.243783, gmg 66574.562702 310813.869751
+=================Processor #4 index bounds====================
+m_iStart=300, m_iEnd=603, m_global_nx=601, m_jStart=200, m_jEnd=403, m_global_ny=601
+=================Processor #4 interior index bounds====================
+m_iStartInt=302, m_iEndInt=601, m_jStartInt=202, m_jEndInt=401
+=================Processor #4 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=2, bc[2]=7, bc[3]=7, bc[4]=0, bc[5]=4
+i=300, j=-1, i0=120, j0=60, latlon 37.886565 -122.209771, gmg 69487.235017 320480.552135
+i=603, j=203, i0=79, j0=-1, latlon 37.820788 -122.206983, gmg 69794.423012 313184.460847
+=================Processor #3 index bounds====================
+m_iStart=300, m_iEnd=603, m_global_nx=601, m_jStart=-1, m_jEnd=203, m_global_ny=601
+=================Processor #3 interior index bounds====================
+m_iStartInt=302, m_iEndInt=601, m_jStartInt=1, m_jEndInt=201
+=================Processor #3 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=2, bc[2]=2, bc[3]=7, bc[4]=0, bc[5]=4
+i=300, j=400, i0=40, j0=60, latlon 37.844199 -122.283598, gmg 63031.415096 315727.516987
+i=603, j=603, i0=0, j0=-1, latlon 37.778528 -122.280561, gmg 63354.702392 308443.278655
+=================Processor #5 index bounds====================
+m_iStart=300, m_iEnd=603, m_global_nx=601, m_jStart=400, m_jEnd=603, m_global_ny=601
+=================Processor #5 interior index bounds====================
+m_iStartInt=302, m_iEndInt=601, m_jStartInt=402, m_jEndInt=601
+=================Processor #5 Boundary Conditions in top grid====================
+bc[0]=7, bc[1]=2, bc[2]=7, bc[3]=2, bc[4]=0, bc[5]=4
+
+gmg command: outside = 0, material = 98607873
+
+       ----------- Material properties ranges ---------------
+       1.59420494e+03 kg/m^3 <=  Density <= 2.67257759e+03 kg/m^3
+       7.04660253e+02 m/s    <=  Vp      <= 5.56575848e+03 m/s
+       8.02715442e+01 m/s    <=  Vs      <= 3.33623668e+03 m/s
+       1.65942388e+00        <=  Vp/Vs   <= 1.71620687e+01
+       1.02722927e+07 Pa     <=  mu      <= 2.97470586e+10 Pa
+       7.71051616e+08 Pa     <=  lambda  <= 2.32961026e+10 Pa
+       ------------------------------------------------------
+Material model info, Grid g=0: 1.832674e+03 <= Cs <= 3.336237e+03, 4.334402e+03 <= C-hat <= 7.296480e+03, h[g]/max(C-hat) = 2.741048e-03
+Material model info, Grid g=1: 8.027154e+01 <= Cs <= 3.080755e+03, 7.137458e+02 <= C-hat <= 6.717025e+03, h[g]/max(C-hat) = 2.977508e-03
+
+***** PPW = minVs/h/maxFrequency ********
+g=0, h=2.000000e+01, minVs/h=91.6337 (Cartesian)
+g=1, h=2.000000e+01, minVs/h=4.01358 (curvilinear)
+
+Assigning SG arrays: standard case with default epsL
+  Assigned material properties
+*** computing the time step ***
+INFO: Smallest stable time step for curvilinear grid only: 3.884565e-03
+TIME accuracy order=4 CFL=1.30000000e+00 prel. time step=3.56336215e-03
+*** Initialized Images
+ Min source z-level: 1.000000e+03, max source z-level: 1.000000e+03
+   Execution time, start up phase 1.13164468e+01 seconds 
+Running sw4 on 6 processors...
+   Using C routines.
+Writing output to directory: berk-gmg-reduce/
+
+***  Starting solve ***
+============================================================
+ Running program on 6 MPI tasks using the following data: 
+
+ Start Time = 0 Goal Time = 1
+ Number of time steps = 281 dt: 0.00355872
+
+============================================================
+ Global boundary conditions 
+      x=0    supergrid
+      x=xMax supergrid
+      y=0    supergrid
+      y=yMax supergrid
+      z=topo free surface
+      z=zMax supergrid
+
+
+-----------------------------------------------------------------------
+  Total seismic moment (M0): 1.7162e+17 Nm 
+  Moment magnitude     (Mw): 5.42305
+  Number of moment sources 1
+-----------------------------------------------------------------------
+number of grid point  sources = 216
+number of unique g.p. sources = 216
+  Initial data has been assigned
+writing image plane on file berk-gmg-reduce/berk.cycle=000.z=0.topo.sw4img
+writing image plane on file berk-gmg-reduce/berk.cycle=000.z=0.lat.sw4img
+writing image plane on file berk-gmg-reduce/berk.cycle=000.z=0.lon.sw4img
+writing image plane on file berk-gmg-reduce/berk.cycle=000.z=0.rho.sw4img
+writing image plane on file berk-gmg-reduce/berk.cycle=000.z=0.p.sw4img
+writing image plane on file berk-gmg-reduce/berk.cycle=000.z=0.s.sw4img
+writing image plane on file berk-gmg-reduce/berk.cycle=000.x=2500.rho.sw4img
+writing image plane on file berk-gmg-reduce/berk.cycle=000.x=2500.s.sw4img
+writing image plane on file berk-gmg-reduce/berk.cycle=000.x=2500.p.sw4img
+
+Reporting SW4 internal flags and settings:
+m_testing=no, twilight=no, point_source=no, moment_test=no, energy_test=no, lamb_test=no, rayleigh_test=no
+m_use_supergrid=yes
+End report of internal flags and settings
+
+  Begin time stepping...
+Start time stepping at Wed Dec 15 19:28:27 2021
+
+Time step       1  t =   3.5587189e-03	Wed Dec 15 19:28:27 2021
+0 MIN Global Device HWM is 3.1 GB
+0 MAX Global Device HWM is 3.1 GB
+1 MIN Global Device HWM is 0.015 GB
+1 MAX Global Device HWM is 0.015 GB
+ Min & Max per-device memory HWM  3.11,3.14 GB
+ Total device memory used 18.75 GB
+2 MIN Global Device HWM is 0 GB
+2 MAX Global Device HWM is 3.9e-05 GB
+ MIN Host HWM is 0 GB, MAX Host HWM is 0 GB
+Space::Managed object count & HWM are 216 & 216 Size = 0.038 MB Each object = 184
+WARNING :: Managed object count should be zero at the end of the simulation
+Time step     101  t =   3.5943060e-01	Wed Dec 15 19:28:32 2021
+Time step     201  t =   7.1530249e-01	Wed Dec 15 19:28:36 2021
+Time step     281  t =   1.0000000e+00	Wed Dec 15 19:28:39 2021
+ Time for the last time step is 42 ms 
+First time step :: min52.00  max 124.00 mean 87.33
+  Time stepping finished...
+  ==> Max wallclock time to write images is 0.06 seconds.
+   Execution time, solver phase 12.27 seconds 
+  ==> Max wallclock time to write time-series data is 0.00 seconds.
+============================================================
+ program sw4 finished! 
+============================================================
+0 MIN Global Device HWM is 3.1 GB
+0 MAX Global Device HWM is 3.1 GB
+1 MIN Global Device HWM is 0.015 GB
+1 MAX Global Device HWM is 0.015 GB
+2 MIN Global Device HWM is 0 GB
+2 MAX Global Device HWM is 3.9e-05 GB
+ MIN Host HWM is 0 GB, MAX Host HWM is 0 GB
+Space::Managed object count & HWM are 0 & 216 Size = 0.038 MB Each object = 184
+ Min & Max per-device memory HWM  3.11,3.14 GB
+ Total device memory used 18.75 GB

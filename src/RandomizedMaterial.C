@@ -396,7 +396,7 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw(int n1g, int n2g, int n3g,
         MPI_Abort(mEW->m_cartesian_communicator, -1);
       }
       //	 std::cout << "k1 " << k1 << " will receive from " << proc << "
-      //who owns "  << n1g-k1 << endl;
+      // who owns "  << n1g-k1 << endl;
       MPI_Status status;
       if (proc != -1)
         MPI_Recv(ucc_, n2g * n3g, MPI_CXX_DOUBLE_COMPLEX, proc, tag,

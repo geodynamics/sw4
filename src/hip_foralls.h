@@ -695,7 +695,7 @@ __launch_bounds__(256, 1) __global__
 template <int N, typename Tag, typename T1, typename T2, typename T3,
           typename... LoopBodies>
 void forall3asyncSF(Tag &t, T1 &irange, T2 &jrange, T3 &krange,
-                    LoopBodies &&...bodies) {
+                    LoopBodies &&... bodies) {
   if (irange.invalid || jrange.invalid || krange.invalid) {
     std::cerr << "Invalid ranges in forall3asyncSF \n";
     return;

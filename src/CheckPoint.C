@@ -35,8 +35,11 @@ CheckPoint::CheckPoint(EW* a_ew)
       mDoCheckPointing(false),
       mRestartPathSet(false),
       mDoRestart(false),
+#ifdef USE_HDF5_ASYNC
       m_es_id(0),
-      m_kji_order(true) {}
+#endif
+      m_kji_order(true) {
+}
 
 //-----------------------------------------------------------------------
 // Save check point files, but no restart
@@ -56,7 +59,9 @@ CheckPoint::CheckPoint(EW* a_ew, int cycle, int cycleInterval, string fname,
       mDoCheckPointing(true),
       mRestartPathSet(false),
       mDoRestart(false),
+#ifdef USE_HDF5_ASYNC
       m_es_id(0),
+#endif
       m_kji_order(true) {
   m_double = sizeof(float_sw4) == sizeof(double);
 }
@@ -77,7 +82,9 @@ CheckPoint::CheckPoint(EW* a_ew, string fname, size_t bufsize)
       m_fileno(0),
       mDoCheckPointing(false),
       mRestartPathSet(false),
+#ifdef USE_HDF5_ASYNC
       m_es_id(0),
+#endif
       mDoRestart(true) {
   m_double = sizeof(float_sw4) == sizeof(double);
 }
@@ -184,8 +191,8 @@ void CheckPoint::define_pio() {
   int glow = 0, ghigh = mEW->mNumberOfGrids;
 
   double time_start = MPI_Wtime();
-  double time_measure[12];
-  time_measure[0] = time_start;
+  /* double time_measure[12]; */
+  /* time_measure[0] = time_start; */
 
   // Create the restart directory if it doesn't exist
   //
@@ -247,9 +254,8 @@ void CheckPoint::define_pio() {
     }
     if (mEW->proc_zero())
       cout << "Creating a Parallel_IO object for grid g = " << g << endl;
-    m_parallel_io[g - glow] =
-        new Parallel_IO(iwrite, mEW->usingParallelFS(), global, local, start,
-                        m_bufsize);
+    m_parallel_io[g - glow] = new Parallel_IO(iwrite, mEW->usingParallelFS(),
+                                              global, local, start, m_bufsize);
     // tmp
     if (mEW->proc_zero())
       cout << "Done creating the Parallel_IO object" << endl;
@@ -665,7 +671,7 @@ void CheckPoint::write_header(int& fid, float_sw4 a_time, int a_cycle,
     //      cout << "wrote global size " << globalSize[0] << " " <<
     //      globalSize[1] << " " << globalSize[2] << " "
     //	   << globalSize[3] << " " << globalSize[4] << " " << globalSize[5] <<
-    //endl;
+    // endl;
   }
   hsize = (4 + 6 * ng) * sizeof(int) + 2 * sizeof(float_sw4);
 }
@@ -793,6 +799,7 @@ std::string CheckPoint::get_restart_path() {
     retval = mRestartPath;
     return retval;
   }
+  return retval;
 }
 
 //-----------------------------------------------------------------------
@@ -1010,10 +1017,10 @@ void CheckPoint::read_header_hdf5(hid_t fid, float_sw4& a_time, int& a_cycle) {
 }
 
 void CheckPoint::finalize_hdf5() {
+#ifdef USE_HDF5_ASYNC
   size_t num_in_progress;
   hbool_t op_failed;
   int ret;
-#ifdef USE_HDF5_ASYNC
   if (m_es_id > 0) {
     ret = H5ESwait(m_es_id, H5ES_WAIT_FOREVER, &num_in_progress, &op_failed);
     if (ret < 0) fprintf(stderr, "Error with H5ESwait!\n");
