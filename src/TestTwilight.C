@@ -155,30 +155,41 @@ void TestTwilight::get_mula_att(Sarray& muve, Sarray& lambdave, Sarray& x,
   }
 }
 
-void TestTwilight::get_bnd_att(Sarray& AlphaVE, Sarray& x, Sarray& y, Sarray& z,
+void TestTwilight::get_bnd_att(Sarray& AlphaVE_i, Sarray& x_i, Sarray& y_i, Sarray& z_i,
                                float_sw4 t, int npts, int sides[6]) {
   SW4_MARK_FUNCTION;
-  std::cout << "WARNING TestTwilight::get_bnd_att running on CPU\n"
-            << std::flush;
+  //std::cout << "WARNING TestTwilight::get_bnd_att running on CPU\n"
+  //          << std::flush;
+  auto& AlphaVE = AlphaVE_i.getview();
+  auto& x = x_i.getview();
+  auto& y = y_i.getview();
+  auto& z = z_i.getview();
   for (int s = 0; s < 6; s++)
     if (sides[s] == 1) {
-      int kb = AlphaVE.m_kb, ke = AlphaVE.m_ke, jb = AlphaVE.m_jb,
-          je = AlphaVE.m_je, ib = AlphaVE.m_ib, ie = AlphaVE.m_ie;
+      int kb = AlphaVE_i.m_kb, ke = AlphaVE_i.m_ke, jb = AlphaVE_i.m_jb,
+          je = AlphaVE_i.m_je, ib = AlphaVE_i.m_ib, ie = AlphaVE_i.m_ie;
       if (s == 0) ie = ib + npts - 1;
       if (s == 1) ib = ie - npts + 1;
       if (s == 2) je = jb + npts - 1;
       if (s == 3) jb = je - npts + 1;
       if (s == 4) {
         ke = kb + npts - 1;
-        if (ke > AlphaVE.m_ke) ke = AlphaVE.m_ke;
+        if (ke > AlphaVE_i.m_ke) ke = AlphaVE_i.m_ke;
       }
       if (s == 5) {
         kb = ke - npts + 1;
-        if (kb < AlphaVE.m_kb) kb = AlphaVE.m_kb;
+        if (kb < AlphaVE_i.m_kb) kb = AlphaVE_i.m_kb;
       }
-      for (int k = kb; k <= ke; k++)
-        for (int j = jb; j <= je; j++)
-          for (int i = ib; i <= ie; i++) {
+
+      RAJA::RangeSegment k_range(kb, ke + 1);
+      RAJA::RangeSegment j_range(jb, je + 1);
+      RAJA::RangeSegment i_range(ib, ie + 1);
+      RAJA::kernel<DEFAULT_LOOP3>(
+      RAJA::make_tuple(k_range, j_range, i_range),
+      [=] RAJA_DEVICE(int k, int j, int i) {
+      // for (int k = kb; k <= ke; k++)
+      //   for (int j = jb; j <= je; j++)
+      //     for (int i = ib; i <= ie; i++) {
             AlphaVE(1, i, j, k) =
                 cos(m_omega * (x(i, j, k) - m_c * t) + m_phase) *
                 sin(m_omega * x(i, j, k) + m_phase) *
@@ -193,6 +204,6 @@ void TestTwilight::get_bnd_att(Sarray& AlphaVE, Sarray& x, Sarray& y, Sarray& z,
                 cos(m_omega * x(i, j, k) + m_phase) *
                 cos(m_omega * y(i, j, k) + m_phase) *
                 sin(m_omega * (z(i, j, k) - m_c * t) + m_phase);
-          }
+      });
     }
 }
