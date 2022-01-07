@@ -804,7 +804,7 @@ void EW::processGrid(char* buffer) {
   }
 
   // hard code units to be in meters
-  proj0 << "+units=m";
+  proj0 << " +units=m";
 
   //--------------------------------------------------------------------
   // There are only three ways to specify a grid.

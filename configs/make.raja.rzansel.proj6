@@ -26,6 +26,7 @@ RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.14.1/install_ansel
 
 PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/SW4/proj-5.0.0/install170818
 PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/SW4/proj-8.1.1/build_ansel/install_ansel
+PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/SW4/proj-6.3.0/install_ansel
 
 UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-0.3.2/install_rzansel
 UMPIRE_HOME=/usr/workspace/wsrzd/ramesh/UMPIRE/umpire-0.3.3/install_rzansel

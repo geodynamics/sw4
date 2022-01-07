@@ -1949,6 +1949,7 @@ void EW::normOfDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
                           float_sw4& diffInf, float_sw4& diffL2,
                           float_sw4& xInf, vector<Source*>& a_globalSources) {
   SW4_MARK_FUNCTION;
+  SYNC_STREAM;
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast;
   int imin, imax, jmin, jmax, kmin, kmax;
 

@@ -72,7 +72,8 @@ GeographicProjection::GeographicProjection(double lon_origin, double lat_origin,
   PJ_COORD c, c_out;
   const char *crs_from = "+proj=latlong +datum=NAD83";
   const char *crs_to = projection.c_str();
-
+  //const char *crs_to = "+proj=utm +ellps=WGS84 +lon_0=-116.855 +lat_0=37.2281 +units=m";
+  //std::cout<<"STRING "<<crs_to<<"\n"<<projection.c_str()<<"\n";
   m_P = proj_create_crs_to_crs(PJ_DEFAULT_CTX, crs_from, crs_to, NULL);
   /* printf("projection: [%s]\n", crs_to); */
   ASSERT(m_P);
