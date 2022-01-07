@@ -802,9 +802,9 @@ void EW::processGrid(char* buffer) {
     }
     token = strtok(NULL, " \t");
   }
-
+  //std::cout<<"PROJ) "<<proj0.str().c_str()<<"\n";
   // hard code units to be in meters
-  proj0 << " +units=m";
+  //proj0 << "+units=m"; 
 
   //--------------------------------------------------------------------
   // There are only three ways to specify a grid.
@@ -1193,6 +1193,9 @@ void EW::processGrid(char* buffer) {
   m_global_xmax = xprime;
   m_global_ymax = yprime;
   m_global_zmax = zprime;
+
+  // hard code units to be in meters
+  proj0 << "+units=m";
 
 #if !defined(ENABLE_PROJ4) && !defined(ENABLE_PROJ_6)
   CHECK_INPUT(!use_geoprojection,
