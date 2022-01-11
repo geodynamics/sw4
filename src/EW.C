@@ -370,7 +370,7 @@ EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
   m_scenario(" "),
   //  mPath("./"),
   //  mObsPath("./"),
-  mTempPath("./"),
+  mTempPath("./tmp-sw4/"),
   mWriteGMTOutput(false),
   mPlotFrequency(80),
   mNumFiles(0),
@@ -579,7 +579,17 @@ EW::EW(const string& fileName, vector<vector<Source*> > & a_GlobalSources,
 //      m_nevent = findNumberOfEvents();
 //   }
    m_nevents_specified = findNumberOfEvents();
-   m_nevent = m_nevents_specified > 0 ? m_nevents_specified:1;
+   //   m_nevent = m_nevents_specified > 0 ? m_nevents_specified:1;
+   if( m_nevents_specified > 0 )
+      m_nevent = m_nevents_specified;
+   else
+   {
+      mPath.resize(1);
+      mPath[0]="./";
+      mObsPath.resize(1);
+      mObsPath[0]="./";
+      m_nevent = 1;
+   }
 
 // Split communicator for parallel events in sw4mopt:
    if( m_events_parallel )
@@ -5860,7 +5870,7 @@ void EW::extractTopographyFromGridFile( string a_topoFileName )
    CHECK_INPUT(access(a_topoFileName.c_str(), R_OK) == 0,
 	      "No read permission on topography grid file: " << a_topoFileName);
 
-   int topLevel = mNumberOfGrids-1;
+   int topLevel = mNumberOfGrids-1, ret;
   
    double x, y;
    double lat, lon, elev;
@@ -5877,14 +5887,14 @@ void EW::extractTopographyFromGridFile( string a_topoFileName )
    {
       FILE *gridfile = fopen(a_topoFileName.c_str(),"r");
   
-      fscanf(gridfile, "%i %i", &Nlon, &Nlat);
+      ret = fscanf(gridfile, "%i %i", &Nlon, &Nlat);
       gridElev.define(1,1,Nlon,1,Nlat,1,1);
       latv = new double[Nlat+1];
       lonv = new double[Nlon+1];
 
       for (j=1; j<=Nlat; j++)
          for (i=1; i<=Nlon; i++)
-            fscanf(gridfile, "%le %le %le", &lonv[i], &latv[j], &gridElev(1,i,j,1));
+            ret = fscanf(gridfile, "%le %le %le", &lonv[i], &latv[j], &gridElev(1,i,j,1));
       fclose(gridfile);
    }
    else
@@ -6089,20 +6099,20 @@ void EW::extractTopographyFromCartesianFile(string a_topoFileName)
 	       "No read permission on topography grid file: " << a_topoFileName);
 
 // 1. read the grid file
-   int Nx, Ny, i, j;
+   int Nx, Ny, i, j, ret;
    Sarray gridElev;
    float_sw4 *yv, *xv;
   
    FILE *gridfile = fopen(a_topoFileName.c_str(),"r");
   
-   fscanf(gridfile, "%i %i", &Nx, &Ny);
+   ret = fscanf(gridfile, "%i %i", &Nx, &Ny);
    gridElev.define(1,1,Nx,1,Ny,1,1);
    yv = new float_sw4[Ny+1];
    xv = new float_sw4[Nx+1];
 
    for (j=1; j<=Ny; j++)
       for (i=1; i<=Nx; i++)
-	 fscanf(gridfile, "%le %le %le", &xv[i], &yv[j], &gridElev(1,i,j,1));
+	 ret = fscanf(gridfile, "%le %le %le", &xv[i], &yv[j], &gridElev(1,i,j,1));
    fclose(gridfile);
   
    if (proc_zero())
@@ -7126,7 +7136,7 @@ void EW::extractTopographyFromSfile( std::string a_topoFileName )
 }
 
 #ifdef USE_HDF5
-static void read_hdf5_attr(hid_t loc, hid_t dtype, char *name, void* data)
+static void read_hdf5_attr(hid_t loc, hid_t dtype, const char *name, void* data)
 {
   hid_t attr_id;
   int ierr;
@@ -7137,7 +7147,7 @@ static void read_hdf5_attr(hid_t loc, hid_t dtype, char *name, void* data)
   H5Aclose(attr_id);
 }
 
-static char* read_hdf5_attr_str(hid_t loc, char *name)
+static char* read_hdf5_attr_str(hid_t loc, const char *name)
 {
   hid_t attr_id, dtype;
   int ierr;
@@ -7240,7 +7250,7 @@ void EW::extractTopographyFromGMG( std::string a_topoFileName )
 
   if (m_myRank==0 && mVerbose >= 2) {
     printf("GMG header: azimuth=%e, origin_x=%f, origin_y=%f\n", az, origin_x, origin_y);
-    printf("            hh=%e, ni=%ld, nj=%ld\n", hh, dims[0], dims[1]);
+    printf("            hh=%e, ni=%lld, nj=%lld\n", hh, dims[0], dims[1]);
   }
 
   float  *f_data = new float[dims[0] * dims[1]];

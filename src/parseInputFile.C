@@ -2430,10 +2430,10 @@ bool EW::checkTestEnergyPeriodic(char* buffer)
 void EW::processFileIO(char* buffer)
 {
    int printcycle = 100;
-   char* path = 0;
    char* scenario = 0;
    int nwriters=8;
    bool pfs=false;
+   bool haspath = false;
    
    int verbose = 0;
    bool debug = false;
@@ -2455,9 +2455,9 @@ void EW::processFileIO(char* buffer)
 	  {
              string path=token;
              path += '/';
-             mPath.push_back(path);
-             //	     mPath[0] = token;
-             //	     mPath[0] += '/';
+             //             mPath.push_back(path);
+             mPath[0] = token;
+             mPath[0] += '/';
 	  }
 	  //          path = token;
        }
@@ -2469,9 +2469,9 @@ void EW::processFileIO(char* buffer)
 	  {
              string path=token;
              path += '/';
-             mObsPath.push_back(path);
-             //	     mObsPath[0] = token;
-             //	     mObsPath[0] += '/';
+             //             mObsPath.push_back(path);
+             mObsPath[0] = token;
+             mObsPath[0] += '/';
 	  }
        }
 //                          123456789
@@ -2513,7 +2513,6 @@ void EW::processFileIO(char* buffer)
        }
        token = strtok(NULL, " \t");
     }
-
 //  if (path != 0) setOutputPath(path);
   setPrintCycle(printcycle);
   setVerbosity(verbose);
@@ -5392,7 +5391,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
   float_sw4 mxx=0.0, mxy=0.0, mxz=0.0, myy=0.0, myz=0.0, mzz=0.0;
   float_sw4 strike=0.0, dip=0.0, rake=0.0;
   float_sw4 fx=0.0, fy=0.0, fz=0.0;
-  int isMomentType = -1;
+  int isMomentType = -1, ret;
   
   double lat = 0.0, lon = 0.0, depth = 0.0;
   bool topodepth = false, depthSet=false, zSet=false;
@@ -5739,14 +5738,14 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
      CHECK_INPUT( fd !=NULL , err << "Source time function file " << dfile << " not found" );
      float_sw4 t0, dt;
      int npts;
-     fscanf(fd," %lg %lg %i", &t0, &dt, &npts );
+     ret = fscanf(fd," %lg %lg %i", &t0, &dt, &npts );
      par = new float_sw4[npts+1];
      par[0]  = t0;
      freq    = 1/dt;
      ipar    = new int[1];
      ipar[0] = npts;
      for( int i=0 ; i < npts ; i++ )
-	fscanf(fd,"%lg", &par[i+1] );
+	ret = fscanf(fd,"%lg", &par[i+1] );
      npar = npts+1;
      nipar = 1;
      //     cout << "Read disc source: t0=" << t0 << " dt="  << dt << " npts= " << npts << endl;
@@ -6199,6 +6198,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 
   const int bufsize=1024;
   char buf[bufsize];
+  char *ret;
   
 // Discrete source time function
   float_sw4* par=NULL;
@@ -6217,12 +6217,12 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
     if (proc_zero())
       printf("Opened rupture file '%s'\n", rfile);
 // read 1st line
-    fgets(buf,bufsize,fd);
+    ret = fgets(buf,bufsize,fd);
     sscanf(buf," %lg", &rVersion );
     if (proc_zero())
       printf("Version = %.1f\n", rVersion);
 // read 2nd line, starting header block
-    fgets(buf,bufsize,fd);
+    ret = fgets(buf,bufsize,fd);
     char* token = strtok(buf, " \t");
 //    printf("token: '%s'\n", token);
     REQUIRE2(strcmp("PLANE", token) == 0, "ERROR: not a HEADER BLOCK line...: " << token);
@@ -6237,9 +6237,9 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
     {
       double elon, elat, len, wid, stk, dip, dtop, shyp, dhyp;
       int nstk, ndip;
-      fgets(buf,bufsize,fd);
+      ret = fgets(buf,bufsize,fd);
       sscanf(buf,"%lg %lg %i %i %lg %lg", &elon, &elat, &nstk, &ndip, &len, &wid);
-      fgets(buf,bufsize,fd);
+      ret = fgets(buf,bufsize,fd);
       sscanf(buf,"%lg %lg %lg %lg %lg", &stk, &dip, &dtop, &shyp, &dhyp);
       if (proc_zero())
       {
@@ -6250,7 +6250,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
       
     }
 // read header for data block
-    fgets(buf,bufsize,fd);
+    ret = fgets(buf,bufsize,fd);
     token = strtok(buf, " \t");
 //    printf("token: '%s'\n", token);
     REQUIRE2(strcmp("POINTS", token) == 0, "ERROR: not a DATA BLOCK line...: " << token);
@@ -6267,10 +6267,10 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
     {
       double lon, lat, dep, stk, dip, area, tinit, dt, rake, slip1, slip2, slip3;
       int nt1=0, nt2=0, nt3=0;
-      fgets(buf,bufsize,fd);
+      ret = fgets(buf,bufsize,fd);
       sscanf(buf,"%lg %lg %lg %lg %lg %lg %lg %lg", &lon, &lat, &dep, &stk, &dip, &area, 
 	     &tinit, &dt);
-      fgets(buf,bufsize,fd);
+      ret = fgets(buf,bufsize,fd);
       sscanf(buf,"%lg %lg %i %lg %i %lg %i", &rake, &slip1, &nt1, &slip2, &nt2, &slip3, &nt3);
 // nothing to do if nt1=nt2=nt3=0
       if (nt1<=0 && nt2<=0 && nt3<=0) continue;
@@ -6296,7 +6296,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 	freq    = 1/dt;
 	ipar    = new int[1];
 	ipar[0] = nt1dim+1; // add an extra point 
-	fgets(buf,bufsize,fd);
+	ret = fgets(buf,bufsize,fd);
 	token = strtok(buf, " \t");
 //	printf("buf='%s'\n", buf);
 	for( int i=0 ; i < nt1 ; i++ )
@@ -6304,7 +6304,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 // read another line if there are no more tokens
 	  if (token == NULL)
 	  {
-	    fgets(buf,bufsize,fd);
+	    ret = fgets(buf,bufsize,fd);
 	    token = strtok(buf, " \t");
 	  }
 //	  printf("token='%s'\n", token);
@@ -6463,7 +6463,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 	double dum;
 	if (proc_zero())
 	  printf("WARNING nt2=%i > 0 will be ignored\n", nt2);
-	fgets(buf,bufsize,fd);
+	ret = fgets(buf,bufsize,fd);
 	token = strtok(buf, " \t");
 //	printf("buf='%s'\n", buf);
 	for( int i=0 ; i < nt2 ; i++ )
@@ -6471,7 +6471,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 // read another line if there are no more tokens
 	  if (token == NULL)
 	  {
-	    fgets(buf,bufsize,fd);
+	    ret = fgets(buf,bufsize,fd);
 	    token = strtok(buf, " \t");
 	  }
 //	  printf("token='%s'\n", token);
@@ -6488,7 +6488,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 	double dum;
 	if (proc_zero())
 	  printf("WARNING nt3=%i > 0 will be ignored\n", nt3);
-	fgets(buf,bufsize,fd);
+	ret = fgets(buf,bufsize,fd);
 	token = strtok(buf, " \t");
 //	printf("buf='%s'\n", buf);
 	for( int i=0 ; i < nt3 ; i++ )
@@ -6496,7 +6496,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 // read another line if there are no more tokens
 	  if (token == NULL)
 	  {
-	    fgets(buf,bufsize,fd);
+	    ret = fgets(buf,bufsize,fd);
 	    token = strtok(buf, " \t");
 	  }
 //	  printf("token='%s'\n", token);
@@ -9178,6 +9178,7 @@ void EW::processEvent( char* buffer, int enr )
    CHECK_INPUT(strcmp("event", token) == 0,
 	       "ERROR: not an event line: " << token);
    token = strtok(NULL, " \t");
+   bool pathdefined=false, obspathdefined=false, namedefined=false;
 
    while (token != NULL)
    {
@@ -9193,6 +9194,7 @@ void EW::processEvent( char* buffer, int enr )
 	 mPath.push_back(path);
 	 //	 mPath[enr] = token;
 	 //	 mPath[enr] += '/';
+         pathdefined=true;
       }
       else if (startswith("obspath=", token))
       {
@@ -9202,6 +9204,7 @@ void EW::processEvent( char* buffer, int enr )
 	 mObsPath.push_back(path);
 	 //	 mObsPath[enr] = token;
 	 //	 mObsPath[enr] += '/';
+         obspathdefined=true;
       }
       else if( startswith("name=",token) )
       {
@@ -9209,6 +9212,7 @@ void EW::processEvent( char* buffer, int enr )
 	 map<string,int>::iterator it=m_event_names.find(token);
 	 CHECK_INPUT(it == m_event_names.end(), "ERROR: processEvent, name = " << token << " multiply defined");
 	 m_event_names[token]=enr;
+         namedefined=true;
       }
       else if( startswith("parallel=",token) )
       {
@@ -9222,6 +9226,11 @@ void EW::processEvent( char* buffer, int enr )
       }
       token = strtok(NULL, " \t");
    }
+   CHECK_INPUT(namedefined,"ERROR processing 'event' command, name must be given");
+   if( !pathdefined )
+      mPath.push_back("./");
+   if( !obspathdefined )
+      mObsPath.push_back("./");
 }
 
 //-----------------------------------------------------------------------

@@ -305,11 +305,12 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw( int n1g, int n2g, int n3g,
    dimobj->getdims_nopad(dims);
    ptrdiff_t ib1 = dims[0], n1=dims[1]-dims[0]+1;
    complex<float_sw4>* uc = new complex<float_sw4>[dimobj->m_fftw_alloc_local];
+   unsigned ret;
 
    if( m_seed == 0 )
    {
       int fd=open("/dev/urandom",O_RDONLY);
-      read(fd,&m_seed,sizeof(unsigned int));
+      ret = read(fd,&m_seed,sizeof(unsigned int));
       close(fd);
    }
    else
