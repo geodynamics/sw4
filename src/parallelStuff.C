@@ -958,6 +958,7 @@ void EW::make_type(vector<std::tuple<int, int, int>>& send_type,
 
   float_sw4* tbuf =
       SW4_NEW(mpi_buffer_space, float_sw4[i1 * j1 * 4 + i2 * j2 * 4]);
+  //std::cout<<"MPI BUFFER ALLOCATE TYPE IS "<<as_int(mpi_buffer_space)<<" "<<tbuf<<"\n";
   bufs_type[4 * g + 0] = std::make_tuple(tbuf, tbuf + i1 * j1);
   bufs_type[4 * g + 1] =
       std::make_tuple(tbuf + 2 * i1 * j1, tbuf + 3 * i1 * j1);
