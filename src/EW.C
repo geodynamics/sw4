@@ -2428,6 +2428,7 @@ void EW::initialData(float_sw4 a_t, vector<Sarray>& a_U,
 bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
                   vector<Sarray*>& a_AlphaVE, vector<Source*>& sources) {
   SW4_MARK_FUNCTION;
+  SYNC_STREAM;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *u_ptr, om, ph, cv, h, zmin;
   bool retval;

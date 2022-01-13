@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
 #endif
 
   auto pooled_allocator =
-      rma.makeAllocator<umpire::strategy::QuickPool, true>(
+      rma.makeAllocator<umpire::strategy::DynamicPool, true>(
           string("UM_pool"), pref_allocator, pool_size, 1024 * 1024, 512);
 
   const size_t pool_size_small = static_cast<size_t>(250) * 1024 * 1024;
@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
 
   // auto pooled_allocator_small =static_cast<size_t>(250)*1024*1024;
   auto pooled_allocator_small =
-      rma.makeAllocator<umpire::strategy::QuickPool, true>(
+      rma.makeAllocator<umpire::strategy::DynamicPool, true>(
           string("UM_pool_temps"), pref_allocator, pool_size_small, 1024 * 1024,
           512);
 
@@ -169,7 +169,7 @@ int main(int argc, char **argv) {
   //					   object_pool_size,allocator);
 
   auto pooled_allocator_objects =
-      rma.makeAllocator<umpire::strategy::QuickPool, false>(
+      rma.makeAllocator<umpire::strategy::DynamicPool, false>(
           string("UM_object_pool"), allocator, object_pool_size);
 
 #ifdef SW4_MASS_PREFETCH
