@@ -1675,7 +1675,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       normOfDifference(Up, U, errInf, errL2, solInf, a_Sources);
 
     if (proc_zero()) {
-      printf("\n Final solution errors: Linf = %15.7e, L2 = %15.7e\n", errInf,
+      printf("\n Final solution errors: Linf = %15.7e, L2 = %25.15e\n", errInf,
              errL2);
 
       // output time, Linf-err, Linf-sol-err

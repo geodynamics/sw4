@@ -1787,16 +1787,29 @@ void vset_to_zero_async(std::vector<Sarray>& v, int N) {
 
 #endif
 }
+// Old norm based on atomics left as reference.
+// Does not work well for comparisons and is slower 
+// float_sw4 Sarray::norm() {
+//   float_sw4* sum;
+//   sum = SW4_NEW(Space::Managed_temps, float_sw4[1]);
+//   sum[0] = 0.0;
+//   float_sw4* lm_data = m_data;
+//   RAJA::forall<DEFAULT_LOOP1>(
+//       RAJA::RangeSegment(0, m_npts), [=] RAJA_DEVICE(size_t i) {
+//         RAJA::atomicAdd<RAJA::auto_atomic>(sum, lm_data[i] * lm_data[i]);
+//       });
+//   float_sw4 retval = *sum;
+//   ::operator delete[](sum, Space::Managed_temps);
+//   return retval;
+// }
 float_sw4 Sarray::norm() {
-  float_sw4* sum;
-  sum = SW4_NEW(Space::Managed_temps, float_sw4[1]);
-  sum[0] = 0.0;
+
+  RAJA::ReduceSum<RAJA::cuda_reduce,float_sw4> rsum(0);
   float_sw4* lm_data = m_data;
   RAJA::forall<DEFAULT_LOOP1>(
       RAJA::RangeSegment(0, m_npts), [=] RAJA_DEVICE(size_t i) {
-        RAJA::atomicAdd<RAJA::auto_atomic>(sum, lm_data[i] * lm_data[i]);
+	rsum+=lm_data[i] * lm_data[i];
       });
-  float_sw4 retval = *sum;
-  ::operator delete[](sum, Space::Managed_temps);
+  float_sw4 retval = static_cast<float_sw4>(rsum.get());
   return retval;
 }
