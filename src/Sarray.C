@@ -1804,7 +1804,7 @@ void vset_to_zero_async(std::vector<Sarray>& v, int N) {
 // }
 float_sw4 Sarray::norm() {
 
-  RAJA::ReduceSum<RAJA::cuda_reduce,float_sw4> rsum(0);
+  RAJA::ReduceSum<REDUCTION_POLICY,float_sw4> rsum(0);
   float_sw4* lm_data = m_data;
   RAJA::forall<DEFAULT_LOOP1>(
       RAJA::RangeSegment(0, m_npts), [=] RAJA_DEVICE(size_t i) {
