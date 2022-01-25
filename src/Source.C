@@ -83,10 +83,11 @@ Source::Source(EW *a_ew,
 	       const char *name,
 	       bool topodepth, 
 	       int ncyc, 
-	       float_sw4* pars, int npar, int* ipars, int nipar, bool correctForMu):
+	       float_sw4* pars, int npar, int* ipars, int nipar, bool correctForMu, float_sw4 tshift):
   mIsMomentSource(true),
   mFreq(frequency),
   mT0(t0),
+  mTshift(-t0),
   mX0(x0), mY0(y0), mZ0(z0), m_zTopo(-1e38),
   mIgnore(false),
 //  mGridPointSet(false),
@@ -107,6 +108,8 @@ Source::Source(EW *a_ew,
    mForces[4] = Myz;
    mForces[5] = Mzz;
    mName = name;
+
+   if(tshift!=0.0) mTshift = tshift;  // mTshift backs out t0 by default or overitten by input tshift
 
    mNpar = npar;
    if( mNpar > 0 )
@@ -165,10 +168,11 @@ Source::Source(EW *a_ew, float_sw4 frequency, float_sw4 t0,
 	       const char *name, 
 	       bool topodepth,
 	       int ncyc, 
-	       float_sw4* pars, int npar, int* ipars, int nipar, bool correctForMu ):
+	       float_sw4* pars, int npar, int* ipars, int nipar, bool correctForMu, float_sw4 tshift ):
   mIsMomentSource(false),
   mFreq(frequency),
   mT0(t0),
+  mTshift(-t0),
   mX0(x0), mY0(y0), mZ0(z0), m_zTopo(-1e38),
   mIgnore(false),
 //  mGridPointSet(false),
@@ -186,6 +190,8 @@ Source::Source(EW *a_ew, float_sw4 frequency, float_sw4 t0,
   mForces[1] = Fy;
   mForces[2] = Fz;
   mName = name;
+
+  if(tshift!=0.0) mTshift = tshift;  // mTshift backs out t0 by default or overitten by input tshift
 
   mNpar = npar;
   if( mNpar > 0 )

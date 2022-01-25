@@ -1779,8 +1779,12 @@ int main(int argc, char **argv)
 //  the simulation time step and start time into GlobalTimeSeries.
 	      for( int m = 0; m < GlobalObservations[e].size(); m++ )
 	      {
+      
 		 TimeSeries *elem = GlobalObservations[e][m]->copy( &simulation, "_out", true );
-		 GlobalTimeSeries[e].push_back(elem);
+		 //check copied timeseries m_shift
+       //if(elem->myPoint()) cout << "copied m_shift=" << elem->getTimeShift() << endl;
+    
+       GlobalTimeSeries[e].push_back(elem);
 #if USE_HDF5
                  // Allocate HDF5 fid for later file write
                  if (elem->getUseHDF5()) {
