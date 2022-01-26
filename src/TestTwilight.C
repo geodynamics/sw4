@@ -88,7 +88,9 @@ void TestTwilight::get_ubnd(Sarray& u_in, Sarray& x_in, Sarray& y_in, Sarray& z_
         kb = ke - npts + 1;
         if (kb < u_in.m_kb) kb = u_in.m_kb;
       }
-
+      auto lm_omega = m_omega;
+      auto lm_phase = m_phase;
+      auto lm_c = m_c;
       RAJA::RangeSegment k_range(kb, ke + 1);
       RAJA::RangeSegment j_range(jb, je + 1);
       RAJA::RangeSegment i_range(ib, ie + 1);
@@ -97,15 +99,15 @@ void TestTwilight::get_ubnd(Sarray& u_in, Sarray& x_in, Sarray& y_in, Sarray& z_
 				    //for (int k = kb; k <= ke; k++)
 				    //for (int j = jb; j <= je; j++)
 				    //for (int i = ib; i <= ie; i++) {
-            u(1, i, j, k) = sin(m_omega * (x(i, j, k) - m_c * t)) *
-                            sin(m_omega * y(i, j, k) + m_phase) *
-                            sin(m_omega * z(i, j, k) + m_phase);
-            u(2, i, j, k) = sin(m_omega * x(i, j, k) + m_phase) *
-                            sin(m_omega * (y(i, j, k) - m_c * t)) *
-                            sin(m_omega * z(i, j, k) + m_phase);
-            u(3, i, j, k) = sin(m_omega * x(i, j, k) + m_phase) *
-                            sin(m_omega * y(i, j, k) + m_phase) *
-                            sin(m_omega * (z(i, j, k) - m_c * t));
+            u(1, i, j, k) = sin(lm_omega * (x(i, j, k) - lm_c * t)) *
+                            sin(lm_omega * y(i, j, k) + lm_phase) *
+                            sin(lm_omega * z(i, j, k) + lm_phase);
+            u(2, i, j, k) = sin(lm_omega * x(i, j, k) + lm_phase) *
+                            sin(lm_omega * (y(i, j, k) - lm_c * t)) *
+                            sin(lm_omega * z(i, j, k) + lm_phase);
+            u(3, i, j, k) = sin(lm_omega * x(i, j, k) + lm_phase) *
+                            sin(lm_omega * y(i, j, k) + lm_phase) *
+                            sin(lm_omega * (z(i, j, k) - lm_c * t));
 				  });
     }
   SYNC_STREAM;
@@ -248,6 +250,9 @@ void TestTwilight::get_bnd_att(Sarray& AlphaVE_in, Sarray& x_in, Sarray& y_in, S
         kb = ke - npts + 1;
         if (kb < AlphaVE_in.m_kb) kb = AlphaVE_in.m_kb;
       }
+      auto lm_omega = m_omega;
+      auto lm_phase = m_phase;
+      auto lm_c = m_c;
       RAJA::RangeSegment k_range(kb, ke + 1);
       RAJA::RangeSegment j_range(jb, je + 1);
       RAJA::RangeSegment i_range(ib, ie + 1);
@@ -257,19 +262,19 @@ void TestTwilight::get_bnd_att(Sarray& AlphaVE_in, Sarray& x_in, Sarray& y_in, S
        //  for (int j = jb; j <= je; j++)
        //    for (int i = ib; i <= ie; i++) {
             AlphaVE(1, i, j, k) =
-                cos(m_omega * (x(i, j, k) - m_c * t) + m_phase) *
-                sin(m_omega * x(i, j, k) + m_phase) *
-                cos(m_omega * (z(i, j, k) - m_c * t) + m_phase);
+                cos(lm_omega * (x(i, j, k) - lm_c * t) + lm_phase) *
+                sin(lm_omega * x(i, j, k) + lm_phase) *
+                cos(lm_omega * (z(i, j, k) - lm_c * t) + lm_phase);
 
             AlphaVE(2, i, j, k) =
-                sin(m_omega * (x(i, j, k) - m_c * t)) *
-                cos(m_omega * (y(i, j, k) - m_c * t) + m_phase) *
-                cos(m_omega * z(i, j, k) + m_phase);
+                sin(lm_omega * (x(i, j, k) - lm_c * t)) *
+                cos(lm_omega * (y(i, j, k) - lm_c * t) + lm_phase) *
+                cos(lm_omega * z(i, j, k) + lm_phase);
 
             AlphaVE(3, i, j, k) =
-                cos(m_omega * x(i, j, k) + m_phase) *
-                cos(m_omega * y(i, j, k) + m_phase) *
-                sin(m_omega * (z(i, j, k) - m_c * t) + m_phase);
+                cos(lm_omega * x(i, j, k) + lm_phase) *
+                cos(lm_omega * y(i, j, k) + lm_phase) *
+                sin(lm_omega * (z(i, j, k) - lm_c * t) + lm_phase);
 				  });
     }
 }
