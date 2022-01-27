@@ -224,8 +224,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
   {
      a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps[event]+1, mTstart, mDt); // AP: added one to mNumber...
-     //cout << "solve: m_shift=" << a_TimeSeries[ts]->get_shift() << " source shift=" << a_Sources[0]->getTshift() << endl;
-     a_TimeSeries[ts]->set_shift(a_Sources[0]->getTshift()); 
+     
+     if(a_Sources.size()>0) a_TimeSeries[ts]->set_shift(a_Sources[0]->getTshift()); 
+     
 // In forward solve, the output receivers will use the same UTC as the
      // global reference utc0, therefore, set station utc equal reference utc.
      //     if( m_utc0set )

@@ -3573,8 +3573,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
     readAttrFloat(fid, "DELTA", &dt);
 
     //check if data has an origintime different from zero such as time offset used in generating sythetic data
-    readAttrFloat(fid, "ORIGINTIME", &origintime);
-    m_origintime = origintime;
+    if(readAttrFloat(fid, "ORIGINTIME", &origintime)==1) m_origintime = origintime;
 
 
     sw4npts =  (npts-1) * downsample + 1;
