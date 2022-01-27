@@ -296,14 +296,14 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
   delete[] m_Top_surface;
 
   mEW->communicate_arrays(rho);
-  mEW->communicate_arrays(cs);
-  mEW->communicate_arrays(cp);
+  mEW->communicate_host_arrays(cs);
+  mEW->communicate_host_arrays(cp);
   mEW->material_ic(rho);
   mEW->material_ic(cs);
   mEW->material_ic(cp);
   if (use_q) {
-    mEW->communicate_arrays(xis);
-    mEW->communicate_arrays(xip);
+    mEW->communicate_host_arrays(xis);
+    mEW->communicate_host_arrays(xip);
     mEW->material_ic(xis);
     mEW->material_ic(xip);
   }

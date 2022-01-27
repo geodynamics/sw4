@@ -227,11 +227,11 @@ void MaterialBlock::set_material_properties(std::vector<Sarray>& rho,
         }
       }
       mEW->communicate_array(rho[g], g);
-      mEW->communicate_array(cs[g], g);
-      mEW->communicate_array(cp[g], g);
+      mEW->communicate_array_host(cs[g], g);
+      mEW->communicate_array_host(cp[g], g);
 
-      if (qs[g].is_defined()) mEW->communicate_array(qs[g], g);
-      if (qp[g].is_defined()) mEW->communicate_array(qp[g], g);
+      if (qs[g].is_defined()) mEW->communicate_array_host(qs[g], g);
+      if (qp[g].is_defined()) mEW->communicate_array_host(qp[g], g);
     }
   }
   // end if topographyExists

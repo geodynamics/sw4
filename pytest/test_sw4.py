@@ -122,6 +122,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     if verbose: print('node_name=', node_name)
     sys_name = os.uname()[0]
     if verbose: print('sys_name=', sys_name)
+    nersc_sys = os.getenv('NERSC_HOST')
 
 
     if 'quartz' in node_name:
@@ -144,6 +145,9 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
         if mpi_tasks<=0: mpi_tasks = int(32/omp_threads) # for Haswell nodes
         sw_threads = omp_threads 
         mpirun_cmd="srun --cpu_bind=cores -n " + str(mpi_tasks) + " -c " + str(sw_threads)
+        # For Perlmutter
+        if nersc_sys == 'perlmutter':
+            mpirun_cmd="srun -N 1 -n 4 -c 32 --gpu-bind=single:1 --cpu-bind=cores  --gpus-per-task=1 "
     elif 'fourier' in node_name:
         if omp_threads<=0: omp_threads=1;
         if mpi_tasks<=0: mpi_tasks = 4
