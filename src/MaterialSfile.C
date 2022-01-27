@@ -316,7 +316,7 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> &rho,
   delete[] ist;
   delete[] jst;
 
-  mEW->communicate_arrays(rho);
+  mEW->communicate_host_arrays(rho);
   mEW->communicate_host_arrays(cs);
   mEW->communicate_host_arrays(cp);
   mEW->material_ic(rho);

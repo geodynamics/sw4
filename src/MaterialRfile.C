@@ -300,7 +300,7 @@ void MaterialRfile::set_material_properties(std::vector<Sarray>& rho,
 
   }  // end for g...
 
-  mEW->communicate_arrays(rho);
+  mEW->communicate_host_arrays(rho);
   mEW->communicate_host_arrays(cs);
   mEW->communicate_host_arrays(cp);
 
