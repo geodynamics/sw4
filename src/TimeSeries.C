@@ -393,9 +393,7 @@ TimeSeries::~TimeSeries()
 //--------------------------------------------------------------
 void TimeSeries::allocateRecordingArrays( int numberOfTimeSteps, float_sw4 startTime, float_sw4 timeStep )
 {
-  m_shift =  startTime-m_t0 - m_origintime;  // include any time offset saved as origintime in hdf5 header
-  //cout << "m_origintime=" << m_origintime << " m_shift=" << m_shift << endl;
-
+  m_shift =  startTime-m_t0 - m_origintime;  // include any additional time offset/shift from origintime
   
   m_dt = timeStep;
 
@@ -3747,6 +3745,11 @@ void TimeSeries::isRestart()
 void TimeSeries::set_shift( const float_sw4 shift )
 {
    m_shift = shift;
+}
+
+void TimeSeries::set_origintime( const float_sw4 shift )
+{
+   m_origintime = -shift;
 }
 
 //-----------------------------------------------------------------------

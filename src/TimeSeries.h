@@ -130,6 +130,7 @@ void isRestart();
 void doRestart( EW *ew, bool ignore_utc, float_sw4 shift, int beginCycle );
 void set_shift( const float_sw4 shift );
 float_sw4 get_shift() const;
+void set_origintime( const float_sw4 shift );
 void add_shift( float_sw4 shift );
 std::string getStationName(){return m_staName;}
 std::string getFileName(){return m_fileName;}
