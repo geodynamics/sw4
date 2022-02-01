@@ -3,8 +3,8 @@
 # Arguments:
 # -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir -t omp-threads
 
-import os, sys, argparse, subprocess, time, h5py, numpy
-os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
+import os, sys, argparse, subprocess, time #, h5py, numpy
+#os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 
 #------------------------------------------------
 def compare_one_line(base_file_name, test_file_name, errTol, absErrLimit, lineNum, verbose):
