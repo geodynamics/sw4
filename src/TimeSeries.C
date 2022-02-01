@@ -124,6 +124,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_compute_scalefactor(true),
   m_misfit_scaling(1),
   m_readTime(0.0),
+  m_origintime(0.0),
 #ifdef USE_HDF5
   m_sta_z(depth),
   m_fid_ptr(NULL),
@@ -392,7 +393,8 @@ TimeSeries::~TimeSeries()
 //--------------------------------------------------------------
 void TimeSeries::allocateRecordingArrays( int numberOfTimeSteps, float_sw4 startTime, float_sw4 timeStep )
 {
-  m_shift = startTime-m_t0;
+  m_shift =  startTime-m_t0 - m_origintime;  // include any additional time offset/shift from origintime
+  
   m_dt = timeStep;
 
   if (!m_myPoint) return; // only one processor saves each time series
@@ -1459,6 +1461,7 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
 {
 //building the file name...
 // 
+   char *ret;
    stringstream filePrefix;
    if( ew->getObservationPath(m_global_event) != "./" && ew->getObservationPath(m_global_event) != "" )
       filePrefix << ew->getObservationPath(m_global_event);
@@ -1481,7 +1484,7 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
       // Read header
 	 for( int line=0 ; line < 13 ; line++ )
 	 {
-	    fgets(buf,bufsize,fd);
+	    ret = fgets(buf,bufsize,fd);
             if( line == 2 && !ignore_utc )
 	    {
 	       // set UTC time, if defined in file
@@ -1574,7 +1577,7 @@ void TimeSeries::readFile( EW *ew, bool ignore_utc )
 
 	 // Read past header
 	    for( int line=0 ; line < 13 ; line++ )
-	       fgets(buf,bufsize,fd);
+	       ret = fgets(buf,bufsize,fd);
 	    // Mapping to invert (e,n) to (x,y) components, Only needed in the non-cartesian case.
             float_sw4 deti = 1.0/(m_thynrm*m_calpha+m_thxnrm*m_salpha);
             float_sw4 a11 = m_calpha*deti;
@@ -2740,6 +2743,8 @@ void TimeSeries::add( TimeSeries& A, TimeSeries& B, double wghA, double wghB )
    }
 }
 
+
+
 //-----------------------------------------------------------------------
 float_sw4 TimeSeries::utc_distance( int utc1[7], int utc2[7] )
 {
@@ -3562,8 +3567,12 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
        return;
     }
     
-    float dt, tstart;
+    float dt, tstart, origintime;
     readAttrFloat(fid, "DELTA", &dt);
+
+    //check if data has an origintime different from zero such as time offset used in generating sythetic data
+    if(readAttrFloat(fid, "ORIGINTIME", &origintime)==1) m_origintime = origintime;
+
 
     sw4npts =  (npts-1) * downsample + 1;
 
@@ -3733,9 +3742,14 @@ void TimeSeries::isRestart()
 
 //-----------------------------------------------------------------------
 // Sets the time offset for output.
-void TimeSeries::set_shift( float_sw4 shift )
+void TimeSeries::set_shift( const float_sw4 shift )
 {
    m_shift = shift;
+}
+
+void TimeSeries::set_origintime( const float_sw4 shift )
+{
+   m_origintime = -shift;
 }
 
 //-----------------------------------------------------------------------
@@ -4198,3 +4212,5 @@ void TimeSeries::misfitanddudp( TimeSeries* observed, TimeSeries* dudp,
       }
    }
 }
+
+

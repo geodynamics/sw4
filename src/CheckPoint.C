@@ -821,6 +821,7 @@ std::string CheckPoint::get_restart_path()
     retval = mRestartPath;
     return retval;
   }
+  return retval;
 }
 
 //-----------------------------------------------------------------------

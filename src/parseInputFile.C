@@ -5384,14 +5384,14 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
   Source* sourcePtr;
   
   float_sw4 m0 = 1.0;
-  float_sw4 t0=0.0, f0=1.0, freq=1.0;
+  float_sw4 t0=0.0, f0=1.0, freq=1.0, tshift=0.0;
   // Should be center of the grid
   double x = 0.0, y = 0.0, z = 0.0;
   int i = 0, j = 0, k = 0;
   float_sw4 mxx=0.0, mxy=0.0, mxz=0.0, myy=0.0, myz=0.0, mzz=0.0;
   float_sw4 strike=0.0, dip=0.0, rake=0.0;
   float_sw4 fx=0.0, fy=0.0, fz=0.0;
-  int isMomentType = -1;
+  int isMomentType = -1, ret;
   
   double lat = 0.0, lon = 0.0, depth = 0.0;
   bool topodepth = false, depthSet=false, zSet=false;
@@ -5604,6 +5604,12 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
          CHECK_INPUT(freq > 0,
                  err << "source command: Frequency must be > 0");
       }
+      else if (startswith("tshift=", token))
+      {
+         token += 7; // skip tshift=
+         tshift = atof(token);
+         cout << "parse input: source tshift=" << tshift << endl;
+      }
       else if(startswith("event=",token))
       {
 	 token += 6;
@@ -5738,14 +5744,14 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
      CHECK_INPUT( fd !=NULL , err << "Source time function file " << dfile << " not found" );
      float_sw4 t0, dt;
      int npts;
-     fscanf(fd," %lg %lg %i", &t0, &dt, &npts );
+     ret = fscanf(fd," %lg %lg %i", &t0, &dt, &npts );
      par = new float_sw4[npts+1];
      par[0]  = t0;
      freq    = 1/dt;
      ipar    = new int[1];
      ipar[0] = npts;
      for( int i=0 ; i < npts ; i++ )
-	fscanf(fd,"%lg", &par[i+1] );
+	ret = fscanf(fd,"%lg", &par[i+1] );
      npar = npts+1;
      nipar = 1;
      //     cout << "Read disc source: t0=" << t0 << " dt="  << dt << " npts= " << npts << endl;
@@ -5988,7 +5994,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
     //       }
     // these have global location since they will be used by all processors
     sourcePtr = new Source(this, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz,
-			   tDep, formstring, topodepth, ncyc, par, npar, ipar, nipar, false ); // false is correctStrengthForMu
+			   tDep, formstring, topodepth, ncyc, par, npar, ipar, nipar, false, tshift ); // false is correctStrengthForMu
     if (sourcePtr->ignore())
     {
       delete sourcePtr;
@@ -6008,7 +6014,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
     //       f0 = 1;
     // global version (gets real coordinates)
     sourcePtr = new Source(this, freq, t0, x, y, z, fx, fy, fz, tDep, formstring, topodepth, ncyc,
-			   par, npar, ipar, nipar, false ); // false is correctStrengthForMu
+			   par, npar, ipar, nipar, false, tshift ); // false is correctStrengthForMu
     //...and add it to the list of forcing terms
     if (sourcePtr->ignore())
     {
@@ -6198,6 +6204,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 
   const int bufsize=1024;
   char buf[bufsize];
+  char *ret;
   
 // Discrete source time function
   float_sw4* par=NULL;
@@ -6216,12 +6223,12 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
     if (proc_zero())
       printf("Opened rupture file '%s'\n", rfile);
 // read 1st line
-    fgets(buf,bufsize,fd);
+    ret = fgets(buf,bufsize,fd);
     sscanf(buf," %lg", &rVersion );
     if (proc_zero())
       printf("Version = %.1f\n", rVersion);
 // read 2nd line, starting header block
-    fgets(buf,bufsize,fd);
+    ret = fgets(buf,bufsize,fd);
     char* token = strtok(buf, " \t");
 //    printf("token: '%s'\n", token);
     REQUIRE2(strcmp("PLANE", token) == 0, "ERROR: not a HEADER BLOCK line...: " << token);
@@ -6236,9 +6243,9 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
     {
       double elon, elat, len, wid, stk, dip, dtop, shyp, dhyp;
       int nstk, ndip;
-      fgets(buf,bufsize,fd);
+      ret = fgets(buf,bufsize,fd);
       sscanf(buf,"%lg %lg %i %i %lg %lg", &elon, &elat, &nstk, &ndip, &len, &wid);
-      fgets(buf,bufsize,fd);
+      ret = fgets(buf,bufsize,fd);
       sscanf(buf,"%lg %lg %lg %lg %lg", &stk, &dip, &dtop, &shyp, &dhyp);
       if (proc_zero())
       {
@@ -6249,7 +6256,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
       
     }
 // read header for data block
-    fgets(buf,bufsize,fd);
+    ret = fgets(buf,bufsize,fd);
     token = strtok(buf, " \t");
 //    printf("token: '%s'\n", token);
     REQUIRE2(strcmp("POINTS", token) == 0, "ERROR: not a DATA BLOCK line...: " << token);
@@ -6266,10 +6273,10 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
     {
       double lon, lat, dep, stk, dip, area, tinit, dt, rake, slip1, slip2, slip3;
       int nt1=0, nt2=0, nt3=0;
-      fgets(buf,bufsize,fd);
+      ret = fgets(buf,bufsize,fd);
       sscanf(buf,"%lg %lg %lg %lg %lg %lg %lg %lg", &lon, &lat, &dep, &stk, &dip, &area, 
 	     &tinit, &dt);
-      fgets(buf,bufsize,fd);
+      ret = fgets(buf,bufsize,fd);
       sscanf(buf,"%lg %lg %i %lg %i %lg %i", &rake, &slip1, &nt1, &slip2, &nt2, &slip3, &nt3);
 // nothing to do if nt1=nt2=nt3=0
       if (nt1<=0 && nt2<=0 && nt3<=0) continue;
@@ -6295,7 +6302,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 	freq    = 1/dt;
 	ipar    = new int[1];
 	ipar[0] = nt1dim+1; // add an extra point 
-	fgets(buf,bufsize,fd);
+	ret = fgets(buf,bufsize,fd);
 	token = strtok(buf, " \t");
 //	printf("buf='%s'\n", buf);
 	for( int i=0 ; i < nt1 ; i++ )
@@ -6303,7 +6310,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 // read another line if there are no more tokens
 	  if (token == NULL)
 	  {
-	    fgets(buf,bufsize,fd);
+	    ret = fgets(buf,bufsize,fd);
 	    token = strtok(buf, " \t");
 	  }
 //	  printf("token='%s'\n", token);
@@ -6462,7 +6469,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 	double dum;
 	if (proc_zero())
 	  printf("WARNING nt2=%i > 0 will be ignored\n", nt2);
-	fgets(buf,bufsize,fd);
+	ret = fgets(buf,bufsize,fd);
 	token = strtok(buf, " \t");
 //	printf("buf='%s'\n", buf);
 	for( int i=0 ; i < nt2 ; i++ )
@@ -6470,7 +6477,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 // read another line if there are no more tokens
 	  if (token == NULL)
 	  {
-	    fgets(buf,bufsize,fd);
+	    ret = fgets(buf,bufsize,fd);
 	    token = strtok(buf, " \t");
 	  }
 //	  printf("token='%s'\n", token);
@@ -6487,7 +6494,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 	double dum;
 	if (proc_zero())
 	  printf("WARNING nt3=%i > 0 will be ignored\n", nt3);
-	fgets(buf,bufsize,fd);
+	ret = fgets(buf,bufsize,fd);
 	token = strtok(buf, " \t");
 //	printf("buf='%s'\n", buf);
 	for( int i=0 ; i < nt3 ; i++ )
@@ -6495,7 +6502,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
 // read another line if there are no more tokens
 	  if (token == NULL)
 	  {
-	    fgets(buf,bufsize,fd);
+	    ret = fgets(buf,bufsize,fd);
 	    token = strtok(buf, " \t");
 	  }
 //	  printf("token='%s'\n", token);

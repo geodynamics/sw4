@@ -95,9 +95,6 @@ float_sw4 getLat() const {return m_rec_lat;}
 float_sw4 getLon() const {return m_rec_lon;}
 float_sw4 getXaz() const {return m_x_azimuth;}
 
-   //float_sw4 getMshift() const {return m_shift;}
-   //float_sw4 get_t0() const {return m_t0;}
-
 int getMUTC(int i) const {return m_utc[i];}
 void print_utc();
 
@@ -131,8 +128,9 @@ void exclude_component( bool usex, bool usey, bool usez );
 void readSACfiles( EW* ew, const char* sac1, const char* sac2, const char* sac3, bool ignore_utc );
 void isRestart();
 void doRestart( EW *ew, bool ignore_utc, float_sw4 shift, int beginCycle );
-void set_shift( float_sw4 shift );
+void set_shift( const float_sw4 shift );
 float_sw4 get_shift() const;
+void set_origintime( const float_sw4 shift );
 void add_shift( float_sw4 shift );
 std::string getStationName(){return m_staName;}
 std::string getFileName(){return m_fileName;}
@@ -222,6 +220,7 @@ string m_path;
 
 // start time, shift, and time step 
 float_sw4 m_t0, m_shift, m_dt;
+float_sw4 m_origintime;        // origintime read from hdf5 header
 
 // size of recording arrays
 int mAllocatedSize;

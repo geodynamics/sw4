@@ -136,6 +136,7 @@ bool GridGeneratorGaussianHill::inverse_grid_mapping( EW* a_ew, float_sw4 x, flo
          return true;
       }
    }
+   return false;
 }
 
 //-----------------------------------------------------------------------
