@@ -282,7 +282,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    {
 //	 simulation.solve( src, GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e );
       sw4_profile->time_stamp("forward solve" );
-      simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e, mopt->m_nsteps_in_memory, 0, ph );
+      simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e, mopt->m_nsteps_in_memory, 0, ph, mopt->get_freq_peakpower() );
       sw4_profile->time_stamp("done forward solve" );
 //      cout.precision(16);  
 //  Compute misfit
@@ -514,7 +514,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       for( int e=0 ; e < simulation.getNumberOfLocalEvents() ; e++ )
       {
          sw4_profile->time_stamp("forward solve" );
-         simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory, phcase, pseudo_hessian );
+         simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory, phcase, pseudo_hessian, mopt->get_freq_peakpower() );
          sw4_profile->time_stamp("done forward solve" );
 // Compute misfit, 'diffs' will hold the source for the adjoint problem
 
@@ -555,7 +555,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          double dfsrc[11];
          get_source_pars( nspar, dfsrc, dfs );   
          sw4_profile->time_stamp("backward+adjoint solve" );
-         simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, e );
+         simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, mopt->get_freq_peakpower(), e );
          sw4_profile->time_stamp("done backward+adjoint solve" );
          //         int ip=67, jp=20, kp=20;
          //         if( simulation.interior_point_in_proc(ip,jp,0))

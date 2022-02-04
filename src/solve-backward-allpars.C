@@ -11,7 +11,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 				 vector<TimeSeries*> & a_TimeSeries, vector<Sarray>& Up, vector<Sarray>& U,
 				 vector<DataPatches*>& Upred_saved, vector<DataPatches*>& Ucorr_saved,
 				 double gradientsrc[11], vector<Sarray>& gRho, vector<Sarray>& gMu, 
-				 vector<Sarray>& gLambda, int event )
+				 vector<Sarray>& gLambda, float_sw4 fpeak, int event )
 {
 // solution arrays
    vector<Sarray> F, Lk, Kacc, Kp, Km, K, Um, Uacc;
@@ -119,7 +119,12 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       K[g].set_to_zero();
    }
    double t = mDt*(mNumberOfTimeSteps[event]-1);
-   int beginCycle = 1;
+
+   int step_to_record = fabs(a_Sources[0]->getTshift())/mDt- floor(1./fpeak/mDt*1.5);  //1;
+   if(step_to_record<1) step_to_record=1;
+   cout << "first time step to record sides=" << step_to_record << endl;
+
+   int beginCycle = step_to_record;   // 1;
 
    double time_measure[8];
    double time_sum[8]={0,0,0,0,0,0,0,0};
