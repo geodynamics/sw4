@@ -9,7 +9,7 @@ grid x=100e3 y=100e3 z=30e3 h=270  lat=38.33 lon=-122.075 az=143.6380001671 proj
 refinement zmax=950
 refinement zmax=5e3
 
-checkpoint cycleInterval=100 restartpath=hayward-att-h270-ref-result_CK file=hmr3_restart
+checkpoint cycleInterval=500 restartpath=hayward-att-h270-ref-result_CK file=hmr3_restart
 
 time t=9.0
 #time steps=10

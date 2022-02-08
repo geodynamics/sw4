@@ -1,0 +1,116 @@
+FC = xlf
+LINKER = mpixlC
+CXX = $(PREP) nvcc
+GIT_VERSION := "$(shell git describe --abbrev=4 --dirty --always --tags)"
+
+proj_6 = yes
+ckernel=yes 
+openmp=no
+raja_cuda=yes
+umpire = yes
+fftw = yes
+hdf5= yes
+spill_warns = no
+caliper=no
+raja_only=no
+norm_trace=no
+scr=yes
+
+RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-0.7.0/install_rzansel
+RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-0.7.0/install_rzansel10.1.168
+RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.10.1/install_fresh
+RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.11.0/install_new
+#RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.11.0/install
+##RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.13.0/install
+RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.14.1/install_gcc
+
+
+PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/SW4/proj-5.0.0/install170818
+PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/SW4/proj-8.1.1/build_ansel/install_ansel
+PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/SW4/proj-6.3.0/install_ansel
+
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-0.3.2/install_rzansel
+UMPIRE_HOME=/usr/workspace/wsrzd/ramesh/UMPIRE/umpire-0.3.3/install_rzansel
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-0.3.3/install_rzansel10.1.168
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-1.1.0/install
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-3.0.0/install
+#UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-5.0.0/install_tools
+#UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-6.0.0/install_ansel_xl
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-6.0.0/install_ansel_xl_camp_flag
+
+NVLINK_UMPIRE = $(UMPIRE_HOME)/lib/libumpire.a 
+HDF5_HOME = /p/gpfs1/ramesh/SW4/HDF_TEST/HDF/CMake-hdf5-1.12.0/build/HDF5-1.12.0-Linux/HDF_Group/HDF5/1.12.0
+HDF5_HOME = /p/gpfs1/ramesh/SW4/HDF_TEST/HDF/CMake-hdf5-1.10.6/build/HDF5-1.10.6-Linux/HDF_Group/HDF5/1.10.6
+HDF5_HOME = /usr/tce/packages/hdf5/hdf5-parallel-1.10.4-gcc-8.3.1-spectrum-mpi-rolling-release
+
+CALIPER_HOME =/usr/workspace/wsrzd/ramesh/Caliper/Caliper/install
+CALIPER_HOME =/usr/workspace/wsrzd/ramesh/Caliper/Caliper-2.5.0/install
+CALIPER_HOME =/usr/workspace/wsrzd/ramesh/Caliper/Caliper-2.5.0/install_cupti
+
+SQLITE_HOME = /usr/WS2/ramesh/Project6/SW4/spack/opt/spack/linux-rhel7-power8le/gcc-4.9.3/sqlite-3.36.0-lrjmrcqqxhmrdui66nsh2oav2rvu3l5j
+
+SCR_HOME = /usr/workspace/wsrzd/ramesh/SCR/scr-develop/install2
+
+EXTRA_FORT_FLAGS = -qstrict
+
+MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_STAGED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC}  --Werror cross-execution-space-call -DCAMP_USE_PLATFORM_DEFAULT_STREAM=1 -DSW4_GIT_VERSION=\"$(GIT_VERSION)\" -DSW4_GHCOF_NO_GP_IS_ZERO=1  -g -lineinfo -DSW4_USE_CMEM=1
+MORE_LINK_FLAGS = 
+
+ifeq ($(umpire),yes)
+MORE_FLAGS+= -DSW4_USE_UMPIRE=1 -I $(UMPIRE_HOME)/include
+MORE_LINK_FLAGS+=  -L$(UMPIRE_HOME)/lib -lumpire
+endif 
+
+ifeq ($(fftw),yes)
+MORE_FLAGS+= -DENABLE_FFTW=1 -I $(FFTW_DIR)/include
+MORE_LINK_FLAGS+=-L $(FFTW_DIR)/lib -Wl,-rpath=$(FFTW_DIR)/lib -lfftw3_mpi -lfftw3
+endif 
+
+ifeq ($(hdf5),yes)
+MORE_FLAGS+= -DUSE_HDF5=1 -I $(HDF5_HOME)/include
+MORE_LINK_FLAGS+= -L $(HDF5_HOME)/lib -Wl,-rpath=$(HDF5_HOME)/lib -lhdf5_hl -lhdf5
+endif 
+ 
+ifeq ($(openmp),yes)
+MORE_FLAGS+=  -Xcompiler="-qsmp=omp -qmaxmem=-1 -qstrict"
+MORE_LINK_FLAGS+= -qsmp=omp
+else
+MORE_FLAGS+=  -Xcompiler="-qmaxmem=-1 -qstrict"
+endif 
+
+ifeq ($(spill_warns),yes)
+MORE_FLAGS+=  -Xptxas -v,--warn-on-spills
+endif 
+
+ifeq ($(raja_only),yes)
+MORE_FLAGS+=  -DRAJA_ONLY=1
+endif 
+
+ifeq ($(caliper),yes)
+MORE_FLAGS+= -DENABLE_CALIPER=1 -I$(CALIPER_HOME)/include
+MORE_LINK_FLAGS+= -Wl,-rpath=$(CALIPER_HOME)/lib64 -L $(CALIPER_HOME)/lib64 -lcaliper
+endif 
+
+ifeq ($(proj),yes)
+MORE_FLAGS+= -I$(PROJ_HOME)/include
+MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib64  -L$(PROJ_HOME)/lib64 -lproj
+endif 
+ifeq ($(proj_6),yes)
+MORE_FLAGS+= -I$(PROJ_HOME)/include
+MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib64  -L$(PROJ_HOME)/lib64 -lproj -Wl,-rpath=$(SQLITE_HOME)/lib  -L$(SQLITE_HOME)/lib -lsqlite3
+endif 
+
+ifeq ($(norm_trace),yes)
+MORE_FLAGS+=  -DSW4_NORM_TRACE=1
+endif 
+
+ifeq ($(scr),yes)
+MORE_FLAGS+= -I$(SCR_HOME)/include -DSW4_USE_SCR=1
+MORE_LINK_FLAGS+=-Wl,-rpath=$(SCR_HOME)/lib64  -L$(SCR_HOME)/lib64 -lscr
+endif
+
+LINKFLAGS =  
+
+EXTRA_CXX_FLAGS =  -O3 -use_fast_math $(MORE_FLAGS) -DDISABLE_PREFETCH  -ccbin mpixlC -std=c++14 --expt-extended-lambda -restrict -arch=sm_70 -I $(CUDA_HOME)/include -I$(RAJA_HOME)/include  --x cu  -DENABLE_CUDA -dc 
+
+EXTRA_LINK_FLAGS =   -dc -L /usr/tce/packages/xl/xl-2019.02.07/xlf/16.1.1/lib -lxlf90  -lxlfmath -Wl,-rpath=${LAPACK_DIR} -L ${LAPACK_DIR}  -llapack -lblas  -L $(CUDA_HOME)/lib64 -lcudart -lnvToolsExt -lcuda -L $(RAJA_HOME)/lib -lRAJA  -lcudadevrt -L/usr/lib64/nvidia -lnvidia-ml  $(MORE_LINK_FLAGS) 
