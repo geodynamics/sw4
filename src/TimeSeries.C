@@ -119,6 +119,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_use_x(true),
   m_use_y(true),
   m_use_z(true),
+  m_win_raw(true),
   mQuietMode(false),
   mIsRestart(false),
   m_compute_scalefactor(true),
@@ -2180,7 +2181,7 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
       float_sw4 wghxobs, wghyobs, wghzobs;
       wghxobs = wghyobs = wghzobs=1.;
       if( m_use_win )
-      {
+      {         
          double tobs = i*dtfr+t0fr; // t_n+tshift in Observation time 
 	       // Window data in this object w(t_n+tshift)
          wghxobs= 0.5*tanh((tobs-m_winL)*itaufr) - 0.5*tanh((tobs-m_winR)*itaufr);
@@ -4197,5 +4198,20 @@ void TimeSeries::misfitanddudp( TimeSeries* observed, TimeSeries* dudp,
 	 misfit  *= iscale;
          dmisfit *= iscale;
       }
+   }
+}
+
+void TimeSeries::add_timeoffset_to_timewindow( const float_sw4 t0 )
+{
+   if(m_myPoint && m_win_raw )
+   {
+      cout << "raw win =" << m_winL << endl;
+      m_winL += t0;
+      m_winR += t0;
+      m_winL2 += t0;
+      m_winR2 += t0;
+      m_win_raw = false;
+      cout << "new win =" << m_winL << endl;
+
    }
 }

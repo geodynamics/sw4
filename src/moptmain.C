@@ -527,6 +527,23 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
             TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc" );
             diffs.push_back(elem);
          }
+
+// QC waveform difference
+          if(myrank == 0) 
+            {
+              if( mopt->m_misfit == Mopt::L2 ) {
+                  createTimeSeriesHDF5File(diffs, simulation.getNumberOfTimeSteps(e)+1, simulation.getTimeStep(), "_adj_l2");
+                  std::cout << "adj_l2 created with nt=" << simulation.getNumberOfTimeSteps(e)+1  << " dt=" << simulation.getTimeStep() << std::endl;
+
+              }
+              if(mopt->m_misfit == Mopt::CROSSCORR) {
+                  createTimeSeriesHDF5File(diffs, simulation.getNumberOfTimeSteps(e)+1, simulation.getTimeStep(), "_adj_cross");
+                  std::cout << "adj_crosscorr created with nt=" << simulation.getNumberOfTimeSteps(e)+1  << " dt=" << simulation.getTimeStep() << std::endl;
+              }
+            }
+            MPI_Barrier(MPI_COMM_WORLD); 
+
+
 // 2. misfit function also updates diffs := this - observed
          if( mopt->m_misfit == Mopt::L2 )
          {
@@ -544,12 +561,37 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
                //               f += tmpf;
                //               GlobalObservations[e][m]->writeFileUSGS("obs6");
                //               GlobalTimeSeries[e][m]->writeFileUSGS("syn6");
+         #if USE_HDF5
+         // Allocate HDF5 fid for later file write
+         if(m == 0) diffs[0]->allocFid();
+         else       diffs[m]->setFidPtr(diffs[0]->getFidPtr());
+                     
+         diffs[m]->setTS0Ptr(diffs[0]);
+         //diffs[m]->syncSolFloats();
+         diffs[m]->writeFile("_adj_l2");
+         if(diffs[m]->myPoint()) std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
+               << " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;
+         #endif
             }
          }
          else if( mopt->m_misfit == Mopt::CROSSCORR )
          {
-            for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
+            for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ ) {
                f += GlobalTimeSeries[e][m]->misfit2( *GlobalObservations[e][m], diffs[m] );
+            #if USE_HDF5
+               // Allocate HDF5 fid for later file write
+               if(m == 0) diffs[0]->allocFid();
+               else       diffs[m]->setFidPtr(diffs[0]->getFidPtr());
+                           
+               diffs[m]->setTS0Ptr(diffs[0]);
+               // diffs[m]->syncSolFloats();
+               diffs[m]->writeFile("_adj_cross");  // myPoint checked internally
+               if(diffs[m]->myPoint()) {
+                  std::cout << "rank=" << myrank << " m=" << m << " max obs=" << GlobalObservations[e][m]->getMaxValue(0) 
+                     << " syn=" << GlobalTimeSeries[e][m]->getMaxValue(0) << " adj=" << diffs[m]->getMaxValue(0) << std::endl;
+               }
+               #endif
+            }
          }
          
          double dfsrc[11];
@@ -1775,6 +1817,7 @@ int main(int argc, char **argv)
 		 }
 	      }
 
+
 //  First copy observations to GlobalTimeSeries, later, solve will insert 
 //  the simulation time step and start time into GlobalTimeSeries.
 	      for( int m = 0; m < GlobalObservations[e].size(); m++ )
@@ -2056,6 +2099,15 @@ int main(int argc, char **argv)
            }
            else if( mopt->m_opttest == 1 )
 	   {
+    // Make time windows aware of source freqeuncy-dependent center time, t0 
+    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
+	   {
+	      for( int m = 0; m < GlobalObservations[e].size(); m++ ) 
+         {
+		     GlobalTimeSeries[e][m]->add_timeoffset_to_timewindow(GlobalSources[e][0]->getTimeOffset());
+         }
+      }
+
 // Run optimizer (default)
 	      sw4_profile->time_stamp("Start optimizer");
 	      if( mopt->m_optmethod == 1 )
