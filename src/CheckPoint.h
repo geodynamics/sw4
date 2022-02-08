@@ -53,6 +53,14 @@ class CheckPoint {
                        hid_t mydspace, hid_t dxpl, void* buf);
   void finalize_hdf5();
 #endif
+void write_checkpoint_scr(float_sw4 a_time, int a_cycle,
+			  std::vector<Sarray>& a_U, std::vector<Sarray>& a_Up,
+			  std::vector<Sarray*>& a_AlphaVE,
+			  std::vector<Sarray*>& a_AlphaVEm) ;
+ void read_checkpoint_scr(float_sw4& a_time, int& a_cycle,
+                            std::vector<Sarray>& a_Um, std::vector<Sarray>& a_U,
+                            std::vector<Sarray*>& a_AlphaVEm,
+                            std::vector<Sarray*>& a_AlphaVE);
   void setup_sizes();
   bool timeToWrite(float_sw4 time, int cycle, float_sw4 dt);
   float_sw4 getDt();
@@ -111,6 +119,7 @@ class CheckPoint {
   std::vector<int*> mGlobalDims;  // Global start + end indices for (i,j,k) for
                                   // each grid level
   std::vector<bool> m_ihavearray;
+  std::FILE *scr_file_handle;
 };
 
 #endif

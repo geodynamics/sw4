@@ -60,6 +60,9 @@
 #include "H5Z_SZ.h"
 #endif
 
+#ifdef SW4_USE_SCR
+#include "scr.h"
+#endif
 #if defined(SW4_SIGNAL_CHECKPOINT)
 //
 // Currently no way to get the singnal to all processes without killing the job
@@ -101,6 +104,10 @@ int main(int argc, char **argv) {
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
 #else
   MPI_Init(&argc, &argv);
+#endif
+
+#ifdef SW4_USE_SCR
+  SCR_Init();
 #endif
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
@@ -226,6 +233,9 @@ int main(int argc, char **argv) {
     }
 #endif
     // Stop MPI
+#ifdef SW4_USE_SCR
+  SCR_Finalize();
+#endif
     MPI_Finalize();
     return 1;
   } else if (strcmp(argv[1], "-v") == 0) {

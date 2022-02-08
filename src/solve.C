@@ -34,6 +34,7 @@
 __constant__ double cmem_acof[384];
 __constant__ double cmem_acof_no_gp[384];
 #endif
+#include <sstream>
 #include "EW.h"
 #include "Mspace.h"
 #include "caliper.h"
@@ -336,6 +337,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   float_sw4 t;
   if (m_check_point->do_restart()) {
     double timeRestartBegin = MPI_Wtime();
+#ifndef SW4_USE_SCR
     if (!m_check_point->useHDF5())
       m_check_point->read_checkpoint(t, beginCycle, Um, U, AlphaVEm, AlphaVE);
 #ifdef USE_HDF5
@@ -347,6 +349,11 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       cout << "Configured to restart with HDF5 but SW4 is not compiled with "
               "HDF5!"
            << endl;
+#endif
+#else
+    m_check_point->read_checkpoint_scr(t, beginCycle, Um, U, AlphaVEm,
+                                          AlphaVE);
+
 #endif
 
     // tmp
@@ -1426,6 +1433,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     // checkpointing is not used)
     if (m_check_point->timeToWrite(t, currentTimeStep, mDt)) {
       double time_chkpt = MPI_Wtime();
+#ifndef SW4_USE_SCR
       if (!m_check_point->useHDF5())
         m_check_point->write_checkpoint(t, currentTimeStep, U, Up, AlphaVE,
                                         AlphaVEp);
@@ -1438,6 +1446,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
         cout << "Configured to checkpoint with HDF5 but SW4 is not compiled "
                 "with HDF5!"
              << endl;
+#endif
+#else			
+      m_check_point->write_checkpoint_scr(t, currentTimeStep, U, Up, AlphaVE,
+                                             AlphaVEp);
 #endif
       double time_chkpt_tmp = MPI_Wtime() - time_chkpt;
       if (mVerbose >= 0)
