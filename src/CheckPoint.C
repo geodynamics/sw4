@@ -282,6 +282,18 @@ bool CheckPoint::timeToWrite(float_sw4 time, int cycle, float_sw4 dt) {
   if (cycle == mWritingCycle) do_it = true;
   if (mCycleInterval != 0 && cycle % mCycleInterval == 0 && time >= mStartTime)
     do_it = true;
+
+#ifndef SW4_USE_SCR
+  // FYI: One can optionally ask SCR whether it recommends a checkpoint.
+  // This call isn't required, and one can ignore
+  // the recommendation even if one makes the call.
+  // By default, this always returns false,
+  // but there are various ways to configure SCR to use it.
+  int flag;
+  SCR_Need_checkpoint(&flag);
+  do_it = flag;
+#endif
+
   return do_it;
 }
 
