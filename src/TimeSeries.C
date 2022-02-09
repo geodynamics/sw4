@@ -4205,13 +4205,10 @@ void TimeSeries::add_timeoffset_to_timewindow( const float_sw4 t0 )
 {
    if(m_myPoint && m_win_raw )
    {
-      cout << "raw win =" << m_winL << endl;
       m_winL += t0;
       m_winR += t0;
       m_winL2 += t0;
       m_winR2 += t0;
       m_win_raw = false;
-      cout << "new win =" << m_winL << endl;
-
    }
 }
