@@ -407,12 +407,19 @@ void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
     else if (compressionMode == SW4_SZ) {
       size_t cd_nelmts;
       unsigned int* cd_values = NULL;
+      unsigned filter_config;
       int dataType = SZ_DOUBLE;
       if (m_precision == 4) dataType = SZ_FLOAT;
-      SZ_metaDataToCdArray(&cd_nelmts, &cd_values, dataType, 0, m_cycle_dims[3],
-                           m_cycle_dims[2], m_cycle_dims[1], m_cycle_dims[0]);
+      SZ_metaDataToCdArray(&cd_nelmts, &cd_values, dataType, 0, m_cycle_dims[0],
+                           m_cycle_dims[1], m_cycle_dims[2], m_cycle_dims[3]);
       H5Pset_filter(prop_id, H5Z_FILTER_SZ, H5Z_FLAG_MANDATORY, cd_nelmts,
                     cd_values);
+
+      if(H5Zfilter_avail(H5Z_FILTER_SZ)){
+	H5Zget_filter_info(H5Z_FILTER_SZ, &filter_config);
+	if(!(filter_config & H5Z_FILTER_CONFIG_ENCODE_ENABLED))
+	  printf("Error SZ filter is NOT available!\n");
+      }
     }
 #endif
   }
