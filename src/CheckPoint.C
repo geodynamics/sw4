@@ -622,46 +622,41 @@ float_sw4 CheckPoint::getDt() {
   return dt;
 #else
 
-  bool restarted=false;
-  while(!restarted){
-    int have_restart = 0;
-    char checkpoint_dir[SCR_MAX_FILENAME];
-    SCR_Have_restart(&have_restart, checkpoint_dir);
-    if (! have_restart) {
-      std::cerr<<"Error :: SCR found no checkpoints ! \n"<<std::flush;
-      abort();
-    } 
-
-    SCR_Start_restart(checkpoint_dir);
-    
-    std::stringstream s;
-    s<<checkpoint_dir<<"/CheckPoint_"<<mEW->getRank()<<".bin";
-    char scr_file[SCR_MAX_FILENAME];
-    SCR_Route_file(s.str().c_str(), scr_file);
-    int valid=1;
-    if (std::FILE *file=std::fopen(scr_file,"rb")){
-      float_sw4 dt; 
-      if ( std::fread(&dt,sizeof dt,1,file)==1) {
-	scr_file_handle=file;
-	return dt;
-      } else {
-	std::cerr<<"Read of SCR checkpoint file failed in getDt \n";
-	std::fclose(file);
-	valid = 0;
-      }
+  int have_restart = 0;
+  char checkpoint_dir[SCR_MAX_FILENAME];
+  SCR_Have_restart(&have_restart, checkpoint_dir);
+  if (! have_restart) {
+    std::cerr<<"Error :: SCR found no checkpoints ! \n"<<std::flush;
+    abort();
+  } 
+  
+  SCR_Start_restart(checkpoint_dir);
+  
+  std::stringstream s;
+  s<<checkpoint_dir<<"/CheckPoint_"<<mEW->getRank()<<".bin";
+  char scr_file[SCR_MAX_FILENAME];
+  SCR_Route_file(s.str().c_str(), scr_file);
+  int valid=1;
+  if (std::FILE *file=std::fopen(scr_file,"rb")){
+    float_sw4 dt; 
+    if ( std::fread(&dt,sizeof dt,1,file)==1) {
+      scr_file_handle=file;
+      return dt;
     } else {
-      std::cerr<<"Restart file opening failed in getDt "<<s.str()<<"\n"<<std::flush;
+      std::cerr<<"ERROR:: Read of SCR checkpoint file failed in getDt \n"<<std::flush;
+      std::fclose(file);
       valid = 0;
     }
-
-    if (valid){
-      restarted = true;
-    } else {
-      // Close the restart region and try to get a valid file\n
-      std::cerr<<"Warning Invalid restart file "<<s.str()<<"\n Retrying with older file..\n"<<std::flush;
-      restarted = (SCR_Complete_restart(valid)==SCR_SUCCESS);
-    }
+  } else {
+    std::cerr<<"ERROR::Restart file opening failed in getDt "<<s.str()<<"\n"<<std::flush;
+    valid = 0;
   }
+  
+  if (!valid){
+    std::cerr<<"ERROR :: Invalid restart file "<<s.str()<<"\n Aborting..\n"<<std::flush;
+    abort();
+  }
+  
   return -1.0e99; // Dummy return to suppress warnings. Should never be reached
 #endif
 }
