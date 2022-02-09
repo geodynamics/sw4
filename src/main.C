@@ -408,6 +408,11 @@ int main(int argc, char **argv) {
   H5Z_SZ_Finalize();
 #endif
 
+#ifdef SW4_USE_SCR
+  // Flush any cached checkpoints to parallel file system
+  SCR_Finalize();
+#endif
+
   // Stop MPI
   MPI_Finalize();
   // std::cout<<"MPI_Finalize done\n"<<std::flush;
