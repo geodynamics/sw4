@@ -1779,12 +1779,8 @@ int main(int argc, char **argv)
 //  the simulation time step and start time into GlobalTimeSeries.
 	      for( int m = 0; m < GlobalObservations[e].size(); m++ )
 	      {
-      
 		 TimeSeries *elem = GlobalObservations[e][m]->copy( &simulation, "_out", true );
-		 //check copied timeseries m_shift
-       //if(elem->myPoint()) cout << "copied m_shift=" << elem->getTimeShift() << endl;
-    
-       GlobalTimeSeries[e].push_back(elem);
+                 GlobalTimeSeries[e].push_back(elem);
 #if USE_HDF5
                  // Allocate HDF5 fid for later file write
                  if (elem->getUseHDF5()) {
@@ -2183,6 +2179,9 @@ int main(int argc, char **argv)
 
                  for( int e=0; e < GlobalObservations.size(); e++ )
                  {
+                    if( GlobalSources[e].size() <= 0 )
+                       std::cout << "ERROR, no source given for event " << e << std::endl;
+
                     float_sw4 freq=mopt->get_freq_peakpower();
                     if( freq <= 0 )
                        freq = GlobalSources[e][0]->getFrequency();

@@ -338,7 +338,7 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
             end = time.time()-start
             sw4_stdout_file.close()
             sw4_stderr_file.close()
-            print(sw4_input_file, "Total time",end)
+            if verbose: print(sw4_input_file, "Total time",end)
 
             if status.returncode!=0:
                 print('ERROR: Test', test_case, ': sw4mopt returned non-zero exit status=', status.returncode, 'aborting test')

@@ -441,54 +441,6 @@ time t=9 utcstart=09/10/2013:23:5:53.000
 \end{verbatim}
 in the input file.
 
-\section{Preconditioning the gradient}
-
-SW4mopt provides two features to precondition the gradient. First, the gradient can be 
-set to zero near seismic sources in order to reduce source imprinting on the inverted material,
-Secondly, the gradient can be smoothed by a linear filter. Both features are implemented
-as options to the {\tt mrun} command. Both options are appled to the gradient computed
-on the SW4 computational grid. If a coarser material grid is used, it is the preconditioned
-gradient that is interpolated to the material grid.
-
-The syntax to set the gradient to zero at the source is, for example,
-\begin{verbatim}
-mrun zerosrc=1 zeropad=2
-\end{verbatim}
-where {\tt zerosrc=1} means turn on the feature. It is off by default. The gradient is
-set to zero on a cube of $(2p+1)^3$ grid points around the source,
-where $p$ is an integer value given by {\tt zeropad}. The default value is {\tt zeropad=2}.
-
-The syntax to filter the gradient is, for example, 
-\begin{verbatim}
-mrun filtergrad=1 filteriterations=10 filterparameter=0.03
-\end{verbatim}
-where {\tt filtergrad=1} turns on the option. Is is off by default. The smoothing
-operator
-\begin{equation}
-(Su)_{i,j,k}= \epsilon( u_{i+1,j,k} + u_{i-1,j,k}+u_{i,j+1,k} + u_{i,j-1,k}+u_{i,j,k+1} + u_{i,j,k-1})
-+ (1-6\epsilon)u_{i,j,k}
-\label{eq:filterit}
-\end{equation}
-is applied {\tt filteriterations} times with {\tt filterparameter} giving the value of $\epsilon$.
-The filter is stable for $0< ${\tt filterparameter} $ < 1/6$. SW4mopt will reset any
-value given outside this range to $1/12$.
-The default values are {\tt filteriterations=5} and {\tt filterparameter=0.08}.
-
-If both {\tt zerosrc} and {\tt filtergrad} are used, the gradient is set to zero at the
-source before the smoothing is applied.
-\par\noindent
-{\bf Remark} The smoothing (\ref{eq:filterit}) can be interpreted as solving a heat equation. It is possible
-to prove for the one-dimensional case that the smoothing
-$$
-(Su)_{j}= \epsilon( u_{j+1} + u_{j-1})+ (1-2\epsilon)u_{j}
-$$
-applied $N$ times is an approximation of the Gaussian filter
-$$
- (Gu)_j = \sqrt{\frac{K}{\pi}}\sum_{l}e^{-K\,l^2}u_{j+l}
-$$
-where $N\epsilon=1/(4K)$. 
-
-
 %-----------------------------------------------------------------------
 \chapter{Keywords in the input file}\label{chap:keywords}
 The syntax of the input file is the same as in the forward solver, \emph{SW4}. The input
@@ -517,7 +469,7 @@ that.
 \begin{flushleft}\bf
 Syntax:\\
 \tt
-mrun task=... mcheck=... tsoutput=... 
+mrun task=... mcheck=... tsoutput=... savesteps=... ncontsteps=... 
 \\
 \bf Required parameters:\\
 \rm
@@ -530,12 +482,14 @@ given in the table below.
 \multicolumn{2}{|c|}{\bf possible values of the task option}\\ \hline
 {\bf Option} & {\bf Description}           \\ \hline 
 \hline
-minvert     & Perform material inversion (default) \\ \hline
-gradtest    & Test gradient computation vs.~a numerical derivative \\ \hline
-hesstest    & Compute the Hessian numerically  \\ \hline
-func1d      & Compute and output a one dimensional cut of the misfit \\ \hline
-func2d      & Compute and output a two dimensional surface of the misfit \\ \hline
+minvert     & Perform material inversion (default). \\ \hline
+gradtest    & Test gradient computation vs.~a numerical derivative. \\ \hline
+hesstest    & Compute the Hessian numerically.  \\ \hline
+func1d      & Compute and output a one dimensional cut of the misfit. \\ \hline
+func2d      & Compute and output a two dimensional surface of the misfit. \\ \hline
 forward     & Run one forward solve and exit. \\ \hline
+continuation& Add continuation in observed data to the optimization. \\ \hline
+addwindows  & Compute and save time windows on observations. \\ \hline
 minvert+src11& Perform material and source inversion, 11 parameter source. \\ \hline
 minvert+src10& Perform material and source inversion, 10 parameter source. \\ \hline
 minvert+src9& Perform material and source inversion, 9 parameter source. \\ \hline
@@ -560,11 +514,200 @@ the time series (synthetic seismograms) to be output after each iteration.
 task    & task to perform                 & string & minvert \\ \hline
 mcheck  & material checking (on or off)   & string & off \\ \hline
 tsoutput & output time series (on or off) & string & off \\ \hline
+savesteps& number of time step boundary data to keep in memory&int & 100  \\ \hline
+ncontsteps& number of continuation steps & int & 10 \\ \hline
 \end{tabular}
 \end{center}
-
 Currently, mcheck only outputs diagnostic messages, no attempt to correct the material if
 it is out of range is made.
+\par
+The {\tt savesteps} parameter is related to the fact that when adjoint solver computes
+the gradient it also reconstructs the forward in time wave propagation backwards in time.
+In order to compute this backward in time solution of the forward equations, the waves that
+exit the domain during the forward solve needs to be injected back into the domain
+during the backward solve. Hence, the forward solver saves the solution on the boundaries
+of the domain. In order to not run out of memory, SW4mopt only keeps {\tt savesteps} time
+steps in memory. When the number of steps exceeds {\tt savesteps} data is flushed
+to disk. {\tt savesteps} will affect the execution time, but it does not change the
+value of the computed gradient. Setting {\tt savesteps} as large as possible, 
+preferably equal to the total number of time steps will give the best performance.
+\par
+The {\tt ncontsteps} parameter gives the number of continuation steps, $N_c$, to use 
+for the {\tt task=continuation} option. The continuation is based on a linear
+interpolation of data. In continuation step $p$, inversion is made 
+with ``observed data'' equal to
+$$
+     p/N_c d(t_n) + (1-p/N_c)u^{(0),n},\qquad n=0,\ldots,M-1
+$$
+with $p=1,\ldots,N_c$. $u^{(0),n}$ is the forward solution of the initial material at time step $n$, and
+$d(t)$ is the observed earthquake data. In each continuation step, the optimizer is
+run with parameters as given by the {\tt lbfgs} or {\tt nlcg} commands.
+\par
+{\tt task=addwindows} computes and stores time windows on observed data. 
+
+
+\subsection{The objective command}\label{sec:objective}
+\begin{flushleft}\bf
+Syntax:\\
+\tt
+objective misfit=... wave\_mode=... win\_mode=... twinshift=... twinscale=... freq\_peakpower=...
+\\
+\bf Required parameters:\\
+\rm
+None
+\end{flushleft}
+The misfit (or objective) function measures the difference between computed data, $u^n$, and observed
+data, $d(t_n)$, at stations. The time discretization is $t_n=n\Delta t$, for $n=0,\ldots,M$ 
+with uniform spacing $\Delta t$. The observed data are usually not obtained on the same time 
+discretization as used by the simulation, but a continuous function of time, $d(t)$ is obtained
+through interpolation from a time grid with spacing possibly different from $\Delta t$.
+\par
+The $L^2$ misfit is computed by
+\begin{equation}
+ \frac{1}{2}\sum_{n=0}^M (u^n-d(t_n))^2
+\label{eq:l2mf}
+\end{equation}
+The cross-correlation misfit is computed by
+\begin{equation}
+  \frac{1}{2}\tau^2_{max}
+\label{eq:ccmf}
+\end{equation}
+where $\tau_{max}$ is the shift that maximizes the cross-correlation
+$$
+  \sum_{n=0}^M u^n d(t_n+\tau).
+$$
+The complete objective function consists of the sum of (\ref{eq:l2mf}) or (\ref{eq:ccmf})
+over the stations.
+Given time series data, $u^n, n=0,\ldots,M$, describing some quantity (displacement, 
+velocity acceleration etc.) at time $t_n=n\Delta t$ at one station. Windowing consists 
+of point wise multiplication of the time series by a function, $w(t)\in [0,1]$, that 
+cuts out a part of the time series. The windowing function used in SW4mopt is 
+$$
+   w(t) =  \frac{1}{2}(\tanh \frac{t-w_L}{\tau} - \tanh \frac{t-w_R}{\tau}),
+$$
+where $w_L$ and $w_R$ are given left and right limits of the window. $\tau$ is a parameter 
+that determines the steepness of the transition between 0 and 1. SW4mopt usually 
+sets $\tau=5\Delta t$. An example of a window function is show in Fig.~\ref{fig:winfcn}.
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.3\linewidth]{\figdir/winfcn.png}
+\end{center}
+\caption{Window function with $w_L=3$ and $w_R=6$.}
+\label{fig:winfcn}
+\end{figure}
+SW4mopt allows setting two different windows on each time series, 
+intended to isolate the first arrivals of the $P$-wave and the $S$-wave respectively.
+SW4mopt uses a travel time solver to compute the arrival time, $t_a$, of the first wave
+at a station. The window limits $w_L$ and $w_R$ are then defined in terms of the arrival
+time as 
+\begin{equation}
+w_L = t_a + w s\qquad w_R = t_a + w
+\label{eq:windef}
+\end{equation}
+where $s$ is a shift parameter specified by {\tt twinshift}, and $w$ is a width parameter
+that is computed by 
+\begin{equation}
+w=\begin{cases} w_0/f_p & \hbox{if}\enskip f_p>0 \\
+                w_0/f_s & \hbox{else} \end{cases}
+\label{eq:winwidthdef}
+\end{equation}
+where the scale factor $w_0$ is specified by {\tt twinscale} and
+$f_p$ is the frequency specified by {\tt freq\_peakpower} and $f_s$ is the frequency
+used by the earthquake source.
+\begin{center}
+\begin{tabular}{|l|p{7cm}|l|l|l|} \hline
+\multicolumn{4}{|c|}{\bf objective command parameters}\\ \hline
+{\bf Option} & {\bf Description}          & {\bf Type} & {\bf Default} \\ \hline 
+\hline
+misfit     & Misfit function, {\tt l2} or {\tt crosscorr} & string   & l2 \\ \hline
+win\_mode  & Compute windows before optimizing    & int & 0 \\ \hline  
+wave\_mode & Wave specific windows {\tt p}, {\tt s}, or {\tt both} & string & both \\ \hline
+twinshift  & Shift parameter $s$ in (\ref{eq:windef})  & float & 0.0 \\ \hline
+twinscale  & Scale parameter $w_0$ in (\ref{eq:winwidthdef})  & float & 1.0 \\ \hline
+freq\_peakpower & Frequency $f_p$ in (\ref{eq:winwidthdef}) & float &  0.0 \\ \hline
+\end{tabular}
+\end{center}
+The default behavior by SW4mopt is to use the time windows that are stored on the observation
+data file. In case no windows are available with the observation data, the default action
+is to not use any time windows. By specifying {\tt win\_mode=1} SW4mopt computes time windows
+at start up. Any time windows stored on the observation data file will then be ignored.
+
+Time windows can be computed according to (\ref{eq:windef}) and added to observation data files
+by the command {\tt mrun task=addwindows}. See the {\tt mrun} command for details.
+
+\subsection{The precond command}\label{sec:precond}
+\begin{flushleft}\bf
+Syntax:\\
+\tt
+precond pseudohessian=... zerosrc=... zerscrpad=... zerorec=... zerorecpad=... filtergrad=... 
+filteriterations=... filterparameter=...
+\\
+\bf Required parameters:\\
+\rm
+None
+\end{flushleft}
+{\tt precond} specifies preconditioning of the gradient of the objective function. 
+Four different techniques are available: smoothing the gradient by a Gaussian filter, 
+applying a pseudo-Hessian preconditioner, setting the gradient to zero at the source, 
+and setting the gradient to zero at the receiver stations. Various combinations of 
+these preconditioners can be used simultaneously, but not all possible permutations 
+have been tested.
+\par
+If a coarser material grid is used, the preconditioner is applied to the gradient
+on the SW4 grid before it is interpolate to the material grid. 
+
+The syntax to set the gradient to zero at the source is
+\begin{verbatim}
+precond zerosrc=1 zeropad=2
+\end{verbatim}
+where {\tt zerosrc=1} means turn on the feature. It is off by default. The gradient is
+set to zero on a cube of $(2p+1)^3$ grid points around the source,
+where $p$ is an integer value given by {\tt zeropad}. The default value is {\tt zeropad=2}.
+
+The command to set the gradient to zero at the receiver stations is
+\begin{verbatim}
+precond zerorec=1 zerorecpad=2
+\end{verbatim}
+where {\tt zerorec=1} means turn on the feature. It is off by default. 
+Similarly to the {\tt zeropad} option, {\tt zerorecpad} gives the width of
+the zeroed out region, as a cube with sides $2*zerorecpad+1$ grid points wide.
+
+The pseudo-Hessian is an approximation of the diagonal elements of the Hessian
+of the objective function. Preconditioning by the pseudohessian is turned on
+by the command
+\begin{verbatim}
+precond pseudohessian=on
+\end{verbatim}
+
+The syntax to filter the gradient is
+\begin{verbatim}
+precond filtergrad=1 filteriterations=10 filterparameter=0.03
+\end{verbatim}
+where {\tt filtergrad=1} turns on the option. Is is off by default. The smoothing
+operator
+\begin{equation}
+(Su)_{i,j,k}= \epsilon( u_{i+1,j,k} + u_{i-1,j,k}+u_{i,j+1,k} + u_{i,j-1,k}+u_{i,j,k+1} + u_{i,j,k-1})
++ (1-6\epsilon)u_{i,j,k}
+\label{eq:filterit}
+\end{equation}
+is applied {\tt filteriterations} times with {\tt filterparameter} giving the value of $\epsilon$.
+The filter is stable for $0< ${\tt filterparameter} $ < 1/6$. SW4mopt will reset any
+value given outside this range to $1/12$.
+The default values are {\tt filteriterations=5} and {\tt filterparameter=0.08}.
+
+If both {\tt zerosrc} and {\tt filtergrad} are used, the gradient is set to zero at the
+source before the smoothing is applied.
+\par\noindent
+{\bf Remark} The smoothing (\ref{eq:filterit}) can be interpreted as solving a heat 
+equation. It is possible to prove, for the one-dimensional case, that the smoothing
+$$
+ (Su)_{j}= \epsilon( u_{j+1} + u_{j-1})+ (1-2\epsilon)u_{j}
+$$
+applied $N$ times is an approximation of the Gaussian filter
+$$
+ (Gu)_j = \sqrt{\frac{K}{\pi}}\sum_{l}e^{-K\,l^2}u_{j+l}
+$$
+where $N\epsilon=1/(4K)$. 
 
 \subsection{The lbfgs command}\label{sec:lbfgs}
 \begin{flushleft}\bf
@@ -676,9 +819,9 @@ the scale of $1/\sqrt{H_{ii}}$, with $H=\partial^2f/(\partial x_i^2)$, is actual
 $x_r$ is the scale of the unknown $x_i$, and $f_r$ is the scale of the objective function. All input
 scale factors will be divided by the square root of the value of the \verb+misfit+ parameter.
 The condition number of the Hessian is not affected by multiplying all factors by a constant, 
-but the multiplier will affect the maximum step length, and is currently needed to sometimes reduce the 
-allowed step size. This is a temporary measure that should be removed, once the line search algorithm
-has been improved.
+but the multiplier will affect the maximum step length, and is currently needed to sometimes 
+reduce the allowed step size. This is a temporary measure that should be removed, once the 
+line search algorithm has been improved.
 
 \begin{center}
 \begin{tabular}{|l|p{6cm}|l|l|l|} \hline
