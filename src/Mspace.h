@@ -18,7 +18,7 @@
 #include "umpire/ResourceManager.hpp"
 //#include "umpire/Umpire.hpp"
 //#include "umpire/Allocator.hpp"
-#include "umpire/strategy/DynamicPool.hpp"
+//#include "umpire/strategy/DynamicPool.hpp"
 #include "umpire/strategy/QuickPool.hpp"
 //#include "umpire/strategy/MixedPool.hpp"
 //#include "umpire/util/StatisticsDatabase.hpp"

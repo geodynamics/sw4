@@ -1495,17 +1495,39 @@ void CheckPoint::write_checkpoint_scr(float_sw4 a_time, int a_cycle,
   std::cout<<"Writing retart file to "<<scr_file<<"\n";
   int valid=1;
   if (std::FILE *file=std::fopen(scr_file,"wb")){
+    int ng = mEW->mNumberOfGrids;
     std::fwrite(&mDt, sizeof mDt,1, file);
     std::fwrite(&a_time,sizeof a_time,1,file);
     std::fwrite(&a_cycle,sizeof a_cycle,1,file);
-    for(int g=0;g<mEW->mNumberOfGrids;g++){
-      a_U[g].fwrite(file);
-      a_Up[g].fwrite(file);
+    
+    int nmech = mEW->getNumberOfMechanisms();
+    std::fwrite(&ng, sizeof ng, 1, file);
+    std::fwrite(&nmech, sizeof nmech, 1, file);
+    int prec = m_double ? 8 : 4;
+    std::fwrite(&prec, sizeof prec, 1, file);
+    
+    int globalSize[6];
+    for (int g = 0; g < ng; g++) {
+      globalSize[0] = 1;
+      globalSize[1] = mGlobalDims[g][1] - mGlobalDims[g][0] + 1;
+      globalSize[2] = 1;
+      globalSize[3] = mGlobalDims[g][3] - mGlobalDims[g][2] + 1;
+      globalSize[4] = 1;
+      globalSize[5] = mGlobalDims[g][5] - mGlobalDims[g][4] + 1;
+      std::fwrite(&globalSize, sizeof globalSize[0], 6, file);
+    }
+
+    size_t total=0;
+    for(int g=0;g<ng;g++){
+      total+=a_U[g].fwrite(file);
+      total+=a_Up[g].fwrite(file);
       for (int m = 0; m < mEW->getNumberOfMechanisms(); m++) {
-	a_AlphaVE[g][m].fwrite(file);
-	a_AlphaVEm[g][m].fwrite(file);
+	total+=a_AlphaVE[g][m].fwrite(file);
+	total+=a_AlphaVEm[g][m].fwrite(file);
       }
     }
+    std::fwrite(&total, sizeof total, 1, file);
+    //std::cout<<"TOTAL SIZE IS "<<total<<"\n";
     std::fclose(file);
   } else{
     std::cerr<<"Failed to open checkpoint file "<<scr_file<<"\n";
@@ -1521,19 +1543,72 @@ void CheckPoint::read_checkpoint_scr(float_sw4& a_time, int& a_cycle,
                                  vector<Sarray*>& a_AlphaVE) {
 #ifdef SW4_USE_SCR
 
+  SYNC_STREAM;
   int valid=1;
   FILE *file=scr_file_handle;
   if (file){
+    // Dt has a;ready been read in by getDt
     std::fread(&a_time,sizeof a_time,1,file);
     std::fread(&a_cycle,sizeof a_cycle, 1,file);
+    
+    int ng;
+    std::fread(&ng, sizeof ng, 1, file);
+    CHECK_INPUT(ng == mEW->mNumberOfGrids,
+		"CheckPoint::read_checkpoint_scr: Error number of grids on restart file"
+		<< " does not match number of grids in solver");
+    int nmech;
+    std::fread(&nmech,sizeof nmech, 1,file);
+    CHECK_INPUT(
+		nmech == mEW->getNumberOfMechanisms(),
+		"CheckPoint::read_checkpoint_scr: Error number "
+		<< "of attenuation mechanisms on restart file"
+		<< " does not match number of attenuation mechanisms in solver");
+    int prec;
+    std::fread(&prec, sizeof prec, 1, file);
+    CHECK_INPUT(
+      (m_double && prec == 8) || (!m_double && prec == 4),
+      "CheckPoint::read_checkpoint_scr, floating point precision on restart file"
+          << " does not match precision in solver");
+
+    int globalSize[6];
+    for (int g = 0; g < ng; g++) {
+
+    int ret = fread(globalSize, sizeof globalSize[0], 6, file);
+    CHECK_INPUT(ret == 6 ,
+                "CheckPoint::read_checkpoint_scr: Error reading global sizes");
+    CHECK_INPUT(globalSize[0] == 1,
+                "CheckPoint::read_checkpoint_scr: Error in global sizes, "
+                    << "low i-index is " << globalSize[0]);
+    CHECK_INPUT(globalSize[1] == mGlobalDims[g][1] - mGlobalDims[g][0] + 1,
+                "CheckPoint::read_checkpoint_scr: Error in global sizes, "
+                    << "upper i-index is " << globalSize[1]);
+    CHECK_INPUT(globalSize[2] == 1,
+                "CheckPoint::read_checkpoint_scr: Error in global sizes, "
+                    << "low j-index is " << globalSize[2]);
+    CHECK_INPUT(globalSize[3] == mGlobalDims[g][3] - mGlobalDims[g][2] + 1,
+                "CheckPoint::read_checkpoint_scr: Error in global sizes, "
+                    << "upper j-index is " << globalSize[3]);
+    CHECK_INPUT(globalSize[4] == 1,
+                "CheckPoint::read_checkpoint_scr: Error in global sizes, "
+                    << "low k-index is " << globalSize[4]);
+    CHECK_INPUT(globalSize[5] == mGlobalDims[g][5] - mGlobalDims[g][4] + 1,
+                "CheckPoint::read_checkpoint_scr: Error in global sizes, "
+                    << "upper k-index is " << globalSize[5]);
+  }
+    size_t total=0;
     for(int g=0;g<mEW->mNumberOfGrids;g++){
-      a_Um[g].fread(file);
-      a_U[g].fread(file);
+      total+=a_Um[g].fread(file);
+      total+=a_U[g].fread(file);
       for (int m = 0; m < mEW->getNumberOfMechanisms(); m++) {
-	a_AlphaVEm[g][m].fread(file);
-	a_AlphaVE[g][m].fread(file);
+	total+=a_AlphaVEm[g][m].fread(file);
+	total+=a_AlphaVE[g][m].fread(file);
       }
     }
+    size_t rtotal=0;
+    std::fread(&rtotal, sizeof rtotal, 1, file);
+    //std::cout<<"TOTAL SIZES ARE "<<total<<" "<<rtotal<<"\n";
+    CHECK_INPUT(total == rtotal ,
+                "CheckPoint::read_checkpoint_scr: Error reading Sarray size totals :: Read "<<total<<"  expected "<<rtotal<<"\n");
     std::fclose(file);
   } else {
     std::cerr<<"Invalid file handle in read_checkpoint_scr \n"<<std::flush;

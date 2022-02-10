@@ -9268,7 +9268,7 @@ void EW::extractTopographyFromGMG(std::string a_topoFileName) {
   if (m_myRank == 0 && mVerbose >= 2) {
     printf("GMG header: azimuth=%e, origin_x=%f, origin_y=%f\n", az, origin_x,
            origin_y);
-    printf("            hh=%e, ni=%ld, nj=%ld\n", hh, dims[0], dims[1]);
+    printf("            hh=%e, ni=%llu, nj=%llu\n", hh, dims[0], dims[1]);
   }
 
   float* f_data = new float[dims[0] * dims[1]];

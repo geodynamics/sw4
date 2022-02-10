@@ -1813,17 +1813,19 @@ float_sw4 Sarray::norm() {
   float_sw4 retval = static_cast<float_sw4>(rsum.get());
   return retval;
 }
- void Sarray::fwrite(FILE *file){
+ size_t Sarray::fwrite(FILE *file){
    size_t size = m_nc*m_ni*m_nj*m_nk;
    if (std::fwrite(m_data,sizeof(float_sw4),m_nc*m_ni*m_nj*m_nk,file)!=size){
      std::cerr<<"Write failed in Sarray::fwrite\n";
      abort();
    }
+   return size;
  }
- void Sarray::fread(FILE *file){
+ size_t Sarray::fread(FILE *file){
    size_t size = m_nc*m_ni*m_nj*m_nk;
    if (std::fread(m_data,sizeof(float_sw4),m_nc*m_ni*m_nj*m_nk,file)!=size){
      std::cerr<<"Read failed in Sarray::fread\n";
      abort();
    }
+   return size;
  }

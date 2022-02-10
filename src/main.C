@@ -107,6 +107,12 @@ int main(int argc, char **argv) {
 #endif
 
 #ifdef SW4_USE_SCR
+  SCR_Configf("SCR_DEBUG=%d",1);
+  SCR_Configf("SCR_CACHE_SIZE=%d",2);
+  SCR_Configf("SCR_CACHE_BYPASS=%d",0); // Default 1 . 0 leaves everything in cache
+  SCR_Configf("SCR_FLUSH=%d",0);
+  SCR_Configf("SCR_FLUSH_ASYNC=%d",1);
+  SCR_Configf("SCR_FLUSH_TYPE=%s","PTHREAD");
   SCR_Init();
 #endif
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);

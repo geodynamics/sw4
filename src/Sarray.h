@@ -259,8 +259,8 @@ class Sarray {
   void page_lock(EWCuda* cu);
   void page_unlock(EWCuda* cu);
   void swrite(std::string filename);
-  void fwrite(FILE *file);
-  void fread(FILE *file);
+  size_t fwrite(FILE *file);
+  size_t fread(FILE *file);
   Sarray* create_copy_on_device(EWCuda* cu);
   void define_offsets();
   void GetAtt(char* file, int line);
