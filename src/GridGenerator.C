@@ -227,6 +227,7 @@ void GridGenerator::gettopowgh( float_sw4 ai, float_sw4 wgh[8] ) const
 bool GridGenerator::exact_metric( EW *a_ew, int g, Sarray& a_jac, Sarray& a_met )
 {
    std::cout <<  "GridGenerator: Exact metric is not available \n" << std::endl;
+   return true;
 }
 
 //-----------------------------------------------------------------------

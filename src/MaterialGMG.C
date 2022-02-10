@@ -308,7 +308,7 @@ void MaterialGMG::set_material_properties(std::vector<Sarray> & rho,
 }
 
 #ifdef USE_HDF5
-static void read_hdf5_attr(hid_t loc, hid_t dtype, char *name, void* data)
+static void read_hdf5_attr(hid_t loc, hid_t dtype, const char *name, void* data)
 {
   hid_t attr_id;
   int ierr;
@@ -319,7 +319,7 @@ static void read_hdf5_attr(hid_t loc, hid_t dtype, char *name, void* data)
   H5Aclose(attr_id);
 }
 
-static char* read_hdf5_attr_str(hid_t loc, char *name)
+static char* read_hdf5_attr_str(hid_t loc, const char *name)
 {
   hid_t attr_id, dtype;
   int ierr;
@@ -440,7 +440,7 @@ void MaterialGMG::read_gmg()
       if (mEW->getVerbosity() >= 2) {
         printf("  GMG header block #%i\n", p);
         printf("    hh=%f, hv=%f\n", m_hh[p], m_hv[p]);
-        printf("    nc=%i, ni=%i, nj=%i, nk=%i\n", dims[3], dims[0], dims[1], dims[2]);
+        printf("    nc=%lld, ni=%lld, nj=%lld, nk=%lld\n", dims[3], dims[0], dims[1], dims[2]);
       }
     } // End for each patch
 
