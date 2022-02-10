@@ -142,6 +142,8 @@ bool Mopt::parseInputFileOpt( std::string filename )
    inputFile.close();
    MPI_Barrier(m_ew->m_1d_communicator);
    m_ew->create_directory(m_path);
+   CHECK_INPUT(m_mp != NULL,"ERROR: Material parameterization not given");
+
    m_mp->set_path(m_path);
 
 // wait until all processes have read the input file

@@ -63,7 +63,7 @@ public:
 	 const char *name,
 	 bool topodepth, 
 	 int ncyc=1,
-	 float_sw4* pars=NULL, int npars=0, int* ipars=NULL, int nipars=0, bool correctForMu=false );
+	 float_sw4* pars=NULL, int npars=0, int* ipars=NULL, int nipars=0, bool correctForMu=false, float_sw4 tshift=0.0 );
 
   Source(EW * a_ew, float_sw4 frequency, float_sw4 t0,
          float_sw4 x0, float_sw4 y0, float_sw4 z0,
@@ -74,7 +74,7 @@ public:
          const char *name,
 	 bool topodepth, 
 	 int ncyc=1,
-	 float_sw4* pars=NULL, int npars=0, int* ipars=NULL, int nipars=0, bool correctForMu=false );
+	 float_sw4* pars=NULL, int npars=0, int* ipars=NULL, int nipars=0, bool correctForMu=false, float_sw4 tshift=0.0 );
 
  ~Source();
 
@@ -98,6 +98,7 @@ public:
   
   // Offset in time
   float_sw4 getOffset() const;
+  float_sw4 getTshift() const { return mTshift; }
 
   // Frequency
   float_sw4 getFrequency() const;
@@ -173,6 +174,7 @@ public:
   std::vector<float_sw4> mForces;
   bool mIsMomentSource;
   float_sw4 mFreq, mT0;
+  float_sw4 mTshift; // time shift applied to inversion per event source
 
   bool m_myPoint;
   bool m_zRelativeToTopography;
