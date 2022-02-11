@@ -299,6 +299,10 @@ void CheckPoint::compute_file_suffix(int cycle, std::stringstream& fileSuffix) {
   fileSuffix << ".sw4checkpoint";
 }
 
+void CheckPoint::compute_file_suffix(const char* cycle, std::stringstream& fileSuffix) {
+  fileSuffix << mCheckPointFile << "." << cycle << ".sw4checkpoint";
+}
+
 //-----------------------------------------------------------------------
 void CheckPoint::write_checkpoint(float_sw4 a_time, int a_cycle,
                                   vector<Sarray>& a_Um, vector<Sarray>& a_U,
@@ -606,7 +610,7 @@ float_sw4 CheckPoint::getDt() {
     // TODO: this is not right, but you get the idea...
     std::stringstream fileSuffix;
     compute_file_suffix(cycle_num, fileSuffix);
-    s << fileSuffix;
+    s << fileSuffix.str();
 
     // Ask SCR for the path to open our checkpoint file
     char scr_file[SCR_MAX_FILENAME];
@@ -1382,7 +1386,7 @@ void CheckPoint::read_checkpoint_hdf5(float_sw4& a_time, int& a_cycle,
   // TODO: this is not right, but you get the idea...
   std::stringstream fileSuffix;
   compute_file_suffix(cycle_num, fileSuffix);
-  s << fileSuffix;
+  s << fileSuffix.str();
 
   // Ask SCR for the path to open our checkpoint file
   char scr_file[SCR_MAX_FILENAME];

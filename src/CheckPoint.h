@@ -75,6 +75,7 @@ void write_checkpoint_scr(float_sw4 a_time, int a_cycle,
   void define_pio();
   void setSteps(int a_steps);
   void compute_file_suffix(int cycle, std::stringstream& fileSuffix);
+  void compute_file_suffix(const char* cycle, std::stringstream& fileSuffix);
   void cycle_checkpoints(string fname);
   void write_header(int& fid, float_sw4 a_time, int a_cycle, int& hsize);
   void read_header(int& fid, float_sw4& a_time, int& a_cycle, int& hsize);
