@@ -3693,7 +3693,7 @@ void EW::processCheckPoint(char* buffer) {
   string filePrefix = "checkpoint";
 
   string restartFileName, restartPath;
-  bool restartFileGiven = false, restartPathGiven = false, useHDF5 = false;
+  bool restartLatestGiven = false, restartFileGiven = false, restartPathGiven = false, useHDF5 = false;
   int compressionMode = 0;
   double compressionPar;
 
@@ -3717,6 +3717,9 @@ void EW::processCheckPoint(char* buffer) {
     } else if (startswith("file=", token)) {
       token += 5;  // skip file=
       filePrefix = token;
+    } else if (startswith("restartlatest", token)) {
+      token += 13;
+      restartLatestGiven = true;
     } else if (startswith("restartfile=", token)) {
       token += 12;  // skip file=
       restartFileName = token;
@@ -3804,6 +3807,9 @@ void EW::processCheckPoint(char* buffer) {
     m_check_point->set_checkpoint_file(filePrefix, cycle, cycleInterval,
                                        bufsize, useHDF5, compressionMode,
                                        compressionPar);
+  if (restartLatestGiven) {
+    m_check_point->set_restart_latest(bufsize);
+  }
   if (restartFileGiven) {
     m_check_point->set_restart_file(restartFileName, bufsize);
   }

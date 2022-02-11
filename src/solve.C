@@ -332,6 +332,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   vector<int> identsources;
   sort_grid_point_sources(point_sources, identsources);
 
+  // Potentially disable restart if no checkpoint is found
+  m_check_point->verify_restart();
+
   // Assign initial data
   int beginCycle;
   float_sw4 t;

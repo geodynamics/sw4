@@ -24,6 +24,7 @@ class CheckPoint {
              size_t bufsize = 10000000);
   CheckPoint(EW* a_ew, string fname, size_t bufsize = 10000000);
   ~CheckPoint();
+  void set_restart_latest(size_t bufsize);
   void set_restart_file(string fname, size_t bufsize);
   void set_checkpoint_file(string fname, int cycle, int cycleInterval,
                            size_t bufsize, bool useHDF5, int compressionMode,
@@ -66,6 +67,7 @@ void write_checkpoint_scr(float_sw4 a_time, int a_cycle,
   float_sw4 getDt();
   bool do_checkpointing();
   int get_checkpoint_cycle_interval();
+  bool verify_restart();
   bool do_restart();
   void set_restart_path(string restartPath);
   std::string get_restart_path();
