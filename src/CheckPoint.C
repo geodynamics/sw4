@@ -578,15 +578,41 @@ void CheckPoint::read_checkpoint(float_sw4& a_time, int& a_cycle,
 
 //-----------------------------------------------------------------------
 float_sw4 CheckPoint::getDt() {
-#ifndef SW4_USE_SCR
   float_sw4 dt;
+
+#ifdef SW4_USE_SCR
+  // Get checkpoint name (cycle number) from SCR
+  int have_restart = 0;
+  char cycle_num[SCR_MAX_FILENAME];
+  SCR_Have_restart(&have_restart, cycle_num);
+  if (! have_restart) {
+    // We expected SCR to have something to get to this point
+    abort();
+  }
+
+  SCR_Start_restart(cycle_num);
+#endif
+
   if (mEW->getRank() == 0) {
     std::stringstream s;
     if (mRestartPathSet)
       s << mRestartPath << "/";
     else if (mEW->getPath() != "./")
       s << mEW->getPath();
+
+#ifndef SW4_USE_SCR
     s << mRestartFile;  // string 's' is the file name including path
+#else
+    // TODO: this is not right, but you get the idea...
+    std::stringstream fileSuffix;
+    compute_file_suffix(cycle_num, fileSuffix);
+    s << fileSuffix;
+
+    // Ask SCR for the path to open our checkpoint file
+    char scr_file[SCR_MAX_FILENAME];
+    SCR_Route_file(s.str().c_str(), scr_file);
+    s = scr_file;
+#endif
 
     if (mUseHDF5) {
 #ifdef USE_HDF5
@@ -620,45 +646,6 @@ float_sw4 CheckPoint::getDt() {
   }
   MPI_Bcast(&dt, 1, mEW->m_mpifloat, 0, mEW->m_cartesian_communicator);
   return dt;
-#else
-
-  int have_restart = 0;
-  char checkpoint_dir[SCR_MAX_FILENAME];
-  SCR_Have_restart(&have_restart, checkpoint_dir);
-  if (! have_restart) {
-    std::cerr<<"Error :: SCR found no checkpoints ! \n"<<std::flush;
-    abort();
-  } 
-  
-  SCR_Start_restart(checkpoint_dir);
-  
-  std::stringstream s;
-  s<<checkpoint_dir<<"/CheckPoint_"<<mEW->getRank()<<".bin";
-  char scr_file[SCR_MAX_FILENAME];
-  SCR_Route_file(s.str().c_str(), scr_file);
-  int valid=1;
-  if (std::FILE *file=std::fopen(scr_file,"rb")){
-    float_sw4 dt; 
-    if ( std::fread(&dt,sizeof dt,1,file)==1) {
-      scr_file_handle=file;
-      return dt;
-    } else {
-      std::cerr<<"ERROR:: Read of SCR checkpoint file failed in getDt \n"<<std::flush;
-      std::fclose(file);
-      valid = 0;
-    }
-  } else {
-    std::cerr<<"ERROR::Restart file opening failed in getDt "<<s.str()<<"\n"<<std::flush;
-    valid = 0;
-  }
-  
-  if (!valid){
-    std::cerr<<"ERROR :: Invalid restart file "<<s.str()<<"\n Aborting..\n"<<std::flush;
-    abort();
-  }
-  
-  return -1.0e99; // Dummy return to suppress warnings. Should never be reached
-#endif
 }
 
 //-----------------------------------------------------------------------
