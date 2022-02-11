@@ -1482,17 +1482,19 @@ void CheckPoint::write_checkpoint_scr(float_sw4 a_time, int a_cycle,
 				      vector<Sarray*>& a_AlphaVE,
 				      vector<Sarray*>& a_AlphaVEm) {
 #ifdef SW4_USE_SCR
-  std::stringstream s;
+  std::stringstream s,cs;
   auto mDt = mEW->getTimeStep();
-  // Workaround for empty string when checkpoint dir is not sepcified in input file
+  // Workaround for empty string when checkpoint dir is not specified in input file
+  cs<<"cycle="<<a_cycle;
   if (get_restart_path().length()!=0)
-    s<<get_restart_path()<<"/CheckPoint_"<<mEW->getRank()<<".bin";
+    s<<get_restart_path()<<"/"<<cs.str()<<"/CheckPoint_"<<mEW->getRank()<<".bin";
   else
-    s<<get_restart_path()<<"./CheckPoint_"<<mEW->getRank()<<".bin";
-  SCR_Start_output(get_restart_path().c_str(), SCR_FLAG_CHECKPOINT);
+    s<<get_restart_path()<<"./"<<cs.str()<<"/CheckPoint_"<<mEW->getRank()<<".bin";
+  
+  SCR_Start_output(cs.str().c_str(), SCR_FLAG_CHECKPOINT);
   char scr_file[SCR_MAX_FILENAME];
   SCR_Route_file(s.str().c_str(), scr_file);
-  std::cout<<"Writing retart file to "<<scr_file<<"\n";
+  std::cout<<"Writing SCR checkpoint file to "<<scr_file<<"\n";
   int valid=1;
   if (std::FILE *file=std::fopen(scr_file,"wb")){
     int ng = mEW->mNumberOfGrids;

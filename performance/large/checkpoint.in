@@ -12,7 +12,7 @@ refinement zmax=5e3
 checkpoint cycleInterval=500 restartpath=hayward-att-h270-ref-result_CK file=hmr3_restart
 
 time t=9.0
-#time steps=502
+#time steps=505
 
 globalmaterial  vpmin=866 vsmin=500
 
