@@ -1368,20 +1368,6 @@ void CheckPoint::read_checkpoint_hdf5(float_sw4& a_time, int& a_cycle,
   MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
   MPI_Comm_size(MPI_COMM_WORLD, &nrank);
 
-#ifdef SW4_USE_SCR
-  // Double check that SCR has a checkpoint loaded
-  int have_restart = 0;
-  char cycle_num[SCR_MAX_FILENAME];
-  SCR_Have_restart(&have_restart, cycle_num);
-  if (! have_restart) {
-    // We expected SCR to have something to get to this point
-    abort();
-  }
-
-  // Get checkpoint name from SCR (we use application cycle number)
-  SCR_Start_restart(cycle_num);
-#endif
-
   std::stringstream s;
   if (mRestartPathSet)
     s << mRestartPath << "/";
@@ -1391,6 +1377,8 @@ void CheckPoint::read_checkpoint_hdf5(float_sw4& a_time, int& a_cycle,
 #ifndef SW4_USE_SCR
   s << mRestartFile;
 #else
+  // TODO: need to get cycle_num from earlier call to Have_restart
+
   // TODO: this is not right, but you get the idea...
   std::stringstream fileSuffix;
   compute_file_suffix(cycle_num, fileSuffix);
