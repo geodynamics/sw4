@@ -1119,9 +1119,24 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
     s << mEW->getPath() << "/";
   s << fileSuffix.str();
 
+#ifndef SW4_USE_SCR
   // Keep track of the number of files, save previous file name, and delete the
   // second last.
   cycle_checkpoints(s.str());
+#else
+  // SCR can delete older checkpoints, e.g., SCR_PREFIX_SIZE=3
+
+  // Inform SCR that a new checkpoint is starting
+  std::string cycle_num;
+  cycle_num << "cycle=" << a_cycle;
+  SCR_Start_output(cycle_num.str().c_str(), SCR_FLAG_CHECKPOINT);
+
+  // Ask SCR for the path to write our checkpoint file
+  // This could be moved just before each H5FCreate call if need to preserve original file name
+  char scr_file[SCR_MAX_FILENAME];
+  SCR_Route_file(s.str().c_str(), scr_file);
+  s = scr_file;
+#endif
 
   hid_t fid, fapl, dxpl, dspace, mspace, mydspace, dtype, dcpl;
   int myrank, nrank;
@@ -1343,6 +1358,12 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
 #else
   H5Fclose(fid);
 #endif
+
+#ifdef SW4_USE_SCR
+  int valid = 1;
+  SCR_Complete_output(valid);
+#endif
+
   etime = MPI_Wtime();
 
   if (myrank == 0)
@@ -1360,12 +1381,39 @@ void CheckPoint::read_checkpoint_hdf5(float_sw4& a_time, int& a_cycle,
   MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
   MPI_Comm_size(MPI_COMM_WORLD, &nrank);
 
+#ifdef SW4_USE_SCR
+  // Double check that SCR has a checkpoint loaded
+  int have_restart = 0;
+  char cycle_num[SCR_MAX_FILENAME];
+  SCR_Have_restart(&have_restart, cycle_num);
+  if (! have_restart) {
+    // We expected SCR to have something to get to this point
+    abort();
+  }
+
+  // Get checkpoint name from SCR (we use application cycle number)
+  SCR_Start_restart(cycle_num);
+#endif
+
   std::stringstream s;
   if (mRestartPathSet)
     s << mRestartPath << "/";
   else if (mEW->getPath() != "./")
     s << mEW->getPath();
+
+#ifndef SW4_USE_SCR
   s << mRestartFile;
+#else
+  // TODO: this is not right, but you get the idea...
+  std::stringstream fileSuffix;
+  compute_file_suffix(cycle_num, fileSuffix);
+  s << fileSuffix;
+
+  // Ask SCR for the path to open our checkpoint file
+  char scr_file[SCR_MAX_FILENAME];
+  SCR_Route_file(s.str().c_str(), scr_file);
+  s = scr_file;
+#endif
 
   if (myrank == 0)
     std::cout << "Reading checkpoint from file " << s.str() << std::endl;
@@ -1474,6 +1522,11 @@ void CheckPoint::read_checkpoint_hdf5(float_sw4& a_time, int& a_cycle,
   H5Pclose(fapl);
   H5Pclose(dxpl);
   H5Fclose(fid);
+
+#ifdef SW4_USE_SCR
+  int valid = 1;
+  SCR_Complete_restart(valid);
+#endif
 }
 #endif  // End USE_HDF5
 //-----------------------------------------------------------------------
