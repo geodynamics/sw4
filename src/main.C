@@ -160,9 +160,10 @@ int main(int argc, char **argv) {
       global_variables.device);
 #endif
 
+  const int alignment = 512; // 1024 may be 1% faster on Crusher
   auto pooled_allocator =
       rma.makeAllocator<umpire::strategy::QuickPool, true>(
-          string("UM_pool"), pref_allocator, pool_size, 1024 * 1024, 512);
+          string("UM_pool"), pref_allocator, pool_size, 1024 * 1024, alignment);
 
   const size_t pool_size_small = static_cast<size_t>(250) * 1024 * 1024;
 
@@ -174,7 +175,7 @@ int main(int argc, char **argv) {
   auto pooled_allocator_small =
       rma.makeAllocator<umpire::strategy::QuickPool, true>(
           string("UM_pool_temps"), pref_allocator, pool_size_small, 1024 * 1024,
-          512);
+          alignment);
 
   const size_t object_pool_size = static_cast<size_t>(500) * 1024 * 1024;
 
