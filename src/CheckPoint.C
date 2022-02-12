@@ -342,9 +342,25 @@ void CheckPoint::write_checkpoint(float_sw4 a_time, int a_cycle,
     s << fileSuffix.str();
   }
 
+#ifndef SW4_USE_SCR
   // Keep track of the number of files, save previous file name, and delete the
   // second last.
   cycle_checkpoints(s.str());
+#else
+  // SCR can delete older checkpoints,
+  // e.g., SCR_PREFIX_SIZE=3 to keep a sliding window of the last 3
+
+  // Inform SCR that a new checkpoint is starting
+  std::string cycle_num;
+  cycle_num << "cycle=" << a_cycle;
+  SCR_Start_output(cycle_num.str().c_str(), SCR_FLAG_CHECKPOINT);
+
+  // Ask SCR for the path to write our checkpoint file
+  // This could be moved just before each H5FCreate call if need to preserve original file name
+  char scr_file[SCR_MAX_FILENAME];
+  SCR_Route_file(s.str().c_str(), scr_file);
+  s = scr_file;
+#endif
 
   // Open file from processor zero and write header.
   int hsize;
@@ -445,6 +461,11 @@ void CheckPoint::write_checkpoint(float_sw4 a_time, int a_cycle,
     delete[] doubleField;
   }
   if (iwrite) close(fid);
+
+#ifdef SW4_USE_SCR
+  int valid = 1;
+  SCR_Complete_output(valid);
+#endif
 }  // end write_checkpoint()
 
 //-----------------------------------------------------------------------
@@ -468,7 +489,22 @@ void CheckPoint::read_checkpoint(float_sw4& a_time, int& a_cycle,
       s << mRestartPath << "/";
     else if (mEW->getPath() != "./")
       s << mEW->getPath();
+
+#ifndef SW4_USE_SCR
     s << mRestartFile;
+#else
+    // TODO: need to get cycle_num from earlier call to Have_restart
+
+    // TODO: this is not right, but you get the idea...
+    std::stringstream fileSuffix;
+    compute_file_suffix(cycle_num, fileSuffix);
+    s << fileSuffix.str();
+
+    // Ask SCR for the path to open our checkpoint file
+    char scr_file[SCR_MAX_FILENAME];
+    SCR_Route_file(s.str().c_str(), scr_file);
+    s = scr_file;
+#endif
   }
 
   // Open file from processor zero and read header.
@@ -578,6 +614,11 @@ void CheckPoint::read_checkpoint(float_sw4& a_time, int& a_cycle,
     delete[] doubleField;
   }
   if (iread) close(fid);
+
+#ifdef SW4_USE_SCR
+  int valid = 1;
+  SCR_Complete_restart(valid);
+#endif
 }
 
 //-----------------------------------------------------------------------
