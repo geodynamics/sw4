@@ -119,12 +119,12 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_use_x(true),
   m_use_y(true),
   m_use_z(true),
+  m_win_raw(true),
   mQuietMode(false),
   mIsRestart(false),
   m_compute_scalefactor(true),
   m_misfit_scaling(1),
   m_readTime(0.0),
-  m_origintime(0.0),
 #ifdef USE_HDF5
   m_sta_z(depth),
   m_fid_ptr(NULL),
@@ -393,7 +393,7 @@ TimeSeries::~TimeSeries()
 //--------------------------------------------------------------
 void TimeSeries::allocateRecordingArrays( int numberOfTimeSteps, float_sw4 startTime, float_sw4 timeStep )
 {
-  m_shift =  startTime-m_t0 - m_origintime;  // include any additional time offset/shift from origintime
+  m_shift =  startTime-m_t0;  
   
   m_dt = timeStep;
 
@@ -3567,12 +3567,8 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
        return;
     }
     
-    float dt, tstart, origintime;
+    float dt, tstart;
     readAttrFloat(fid, "DELTA", &dt);
-
-    //check if data has an origintime different from zero such as time offset used in generating sythetic data
-    if(readAttrFloat(fid, "ORIGINTIME", &origintime)==1) m_origintime = origintime;
-
 
     sw4npts =  (npts-1) * downsample + 1;
 
@@ -3742,15 +3738,10 @@ void TimeSeries::isRestart()
 
 //-----------------------------------------------------------------------
 // Sets the time offset for output.
-void TimeSeries::set_shift( const float_sw4 shift )
-{
-   m_shift = shift;
-}
-
-void TimeSeries::set_origintime( const float_sw4 shift )
-{
-   m_origintime = -shift;
-}
+//void TimeSeries::set_shift( const float_sw4 shift )
+//{
+//   m_shift = shift;
+//}
 
 //-----------------------------------------------------------------------
 float_sw4 TimeSeries::get_shift() const
@@ -4213,4 +4204,14 @@ void TimeSeries::misfitanddudp( TimeSeries* observed, TimeSeries* dudp,
    }
 }
 
-
+void TimeSeries::add_timeoffset_to_timewindow(const float_sw4 t0)
+{
+   if(m_myPoint && m_win_raw)
+   {
+      m_winL += t0;
+      m_winR += t0;
+      m_winL2 += t0;
+      m_winR2 += t0;
+      m_win_raw = false;
+   }
+}

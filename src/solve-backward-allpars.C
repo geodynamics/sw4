@@ -18,6 +18,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    //   vector<Sarray> gRho, gMu, gLambda;
    vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
    vector<double **> BCForcing;
+   bool verbose=false;
 
    F.resize(mNumberOfGrids);
    Lk.resize(mNumberOfGrids);
@@ -120,9 +121,9 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    }
    double t = mDt*(mNumberOfTimeSteps[event]-1);
 
-   int step_to_record = fabs(a_Sources[0]->getTshift())/mDt- floor(1./fpeak/mDt*1.5);  //1;
+   int step_to_record = a_Sources[0]->getTimeOffset()/mDt- floor(1./fpeak/mDt*1.5); 
    if(step_to_record<1) step_to_record=1;
-   cout << "first time step to record sides=" << step_to_record << endl;
+   if(proc_zero() && verbose) cout << "first time step to record sides=" << step_to_record << endl;
 
    int beginCycle = step_to_record;   // 1;
 

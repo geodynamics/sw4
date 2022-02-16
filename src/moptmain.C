@@ -2060,6 +2060,15 @@ int main(int argc, char **argv)
            }
            else if( mopt->m_opttest == 1 )
 	   {
+
+         // Make time windowing aware of source frequency-dependent center time t0
+         for(int e=0; e< simulation.getNumberOfEvents(); e++)
+         {
+            for(int m=0; m< GlobalObservations[e].size(); m++)
+            {
+               GlobalTimeSeries[e][m]->add_timeoffset_to_timewindow(GlobalSources[e][0]->getTimeOffset());
+            }
+         }
 // Run optimizer (default)
 	      sw4_profile->time_stamp("Start optimizer");
 	      if( mopt->m_optmethod == 1 )

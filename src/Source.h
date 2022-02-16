@@ -63,7 +63,7 @@ public:
 	 const char *name,
 	 bool topodepth, 
 	 int ncyc=1,
-	 float_sw4* pars=NULL, int npars=0, int* ipars=NULL, int nipars=0, bool correctForMu=false, float_sw4 tshift=0.0 );
+	 float_sw4* pars=NULL, int npars=0, int* ipars=NULL, int nipars=0, bool correctForMu=false);
 
   Source(EW * a_ew, float_sw4 frequency, float_sw4 t0,
          float_sw4 x0, float_sw4 y0, float_sw4 z0,
@@ -74,7 +74,7 @@ public:
          const char *name,
 	 bool topodepth, 
 	 int ncyc=1,
-	 float_sw4* pars=NULL, int npars=0, int* ipars=NULL, int nipars=0, bool correctForMu=false, float_sw4 tshift=0.0 );
+	 float_sw4* pars=NULL, int npars=0, int* ipars=NULL, int nipars=0, bool correctForMu=false);
 
  ~Source();
 
@@ -98,7 +98,6 @@ public:
   
   // Offset in time
   float_sw4 getOffset() const;
-  float_sw4 getTshift() const { return mTshift; }
 
   // Frequency
   float_sw4 getFrequency() const;
@@ -134,7 +133,8 @@ public:
   void filter_timefunc( Filter* fi, float_sw4 tstart, float_sw4 dt, int nsteps );
   bool get_CorrectForMu(){return mShearModulusFactor;};
   void set_CorrectForMu(bool smf){mShearModulusFactor=smf;};
-
+  float_sw4 getTimeOffset() const { return mT0; };
+  
  private:
   Source();
 
@@ -174,7 +174,6 @@ public:
   std::vector<float_sw4> mForces;
   bool mIsMomentSource;
   float_sw4 mFreq, mT0;
-  float_sw4 mTshift; // time shift applied to inversion per event source
 
   bool m_myPoint;
   bool m_zRelativeToTopography;

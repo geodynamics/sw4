@@ -78,6 +78,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
 // vectors of pointers to hold boundary forcing arrays in each grid
    vector<float_sw4**> BCForcing;
+   bool verbose=false;
 
    BCForcing.resize(mNumberOfGrids);
    F.resize(mNumberOfGrids);
@@ -220,16 +221,15 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    }
 
 // first step to record boundary values
-    int step_to_record = fabs(a_Sources[0]->getTshift())/mDt- floor(1./fpeak/mDt*1.5);  //1;
+    int step_to_record = a_Sources[0]->getTimeOffset()/mDt- floor(1./fpeak/mDt*1.5);
     if(step_to_record<1) step_to_record=1;
     
-    cout << "first time step to record sides=" << step_to_record << endl;
+    if(proc_zero() && verbose) cout << "first time step to record sides=" << step_to_record << endl;
 
 // Set the number of time steps, allocate the recording arrays, and set reference time in all time series objects  
 /* #pragma omp parallel for */
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
   {
-     if(a_Sources.size()>0) a_TimeSeries[ts]->set_origintime(a_Sources[0]->getTshift()); // add an optional time shift
      a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps[event]+1, mTstart, mDt); // AP: added one to mNumber...
           
 // In forward solve, the output receivers will use the same UTC as the
