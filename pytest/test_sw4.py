@@ -179,7 +179,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     return mpirun_cmd
 
 #------------------------------------------------
-def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mpi_tasks=0, omp_threads=0, cpu_allocation="", verbose=False, usehdf5=3):
+def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mpi_tasks=0, omp_threads=0, cpu_allocation="", verbose=False, usehdf5=4, geodynbc=0):
 
     assert sys.version_info >= (3,5) # named tuples in Python version >=3.3
 
@@ -261,8 +261,14 @@ def main_test(sw4_exe_dir="optimize_mp", pytest_dir ="none", testing_level=0, mp
         base_case = all_cases[qq]
         result_file = all_results[qq]
 
-        # skip HDF5 test if specified
-        if ('hdf5' not in base_case and usehdf5 != 4 and usehdf5 != 0) or (base_case == 'loh1-h100-mr-hdf5' and usehdf5 != 4 and usehdf5 != 1) or (base_case == 'loh1-h100-mr-hdf5-sfile' and usehdf5 != 4 and usehdf5 != 2) or (base_case == 'loh1-h100-mr-restart-hdf5' and usehdf5 != 4 and usehdf5 != 3):
+        # skip tests if specified with cmd options
+        if ('hdf5' not in base_case and usehdf5 != 4 and usehdf5 != 0) or \
+           (base_case == 'loh1-h100-mr-hdf5' and usehdf5 != 4 and usehdf5 != 1) or \
+           (base_case == 'loh1-h100-mr-hdf5-sfile' and usehdf5 != 4 and usehdf5 != 2) or \
+           (base_case == 'loh1-h100-mr-restart-hdf5' and usehdf5 != 4 and usehdf5 != 3) or \
+           (base_case == 'loh1-h100-mr-whi' and geodynbc != 1) or \
+           (base_case == 'loh1-h100-mr-geodynbc' and geodynbc != 1):
+
             num_skip = num_skip+1
             num_test = num_test+1
             print('Test #', num_test, "Input file:", base_case+'-'+str(1)+'.in', 'SKIPPED')
@@ -400,6 +406,7 @@ if __name__ == "__main__":
     testing_level=0
     verbose=False
     usehdf5=4
+    geodynbc=0
     mpi_tasks=0 # machine dependent default
     omp_threads=0 #no threading by default
     cpu_allocation=""
@@ -413,6 +420,7 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--sw4_exe_dir", help="name of directory for sw4 executable", default="optimize_mp")
     parser.add_argument("-p", "--pytest_dir", help="full path to the directory of pytest (/path/sw4/pytest)", default="none")
     parser.add_argument("-u", "--usehdf5", type=int, choices=[0, 1, 2, 3, 4], help="run HDF5 tests with, 0 no HDF5, 1 first HDF5 case, 2 second case,..., 4 all cases")
+    parser.add_argument("-g", "--geodynbc", type=int, choices=[0, 1], help="run Geodynbc tests with, 0 skip, 1 both cases")
     parser.add_argument("-A","--cpu_allocation", help="name of cpu bank/allocation",default="")
     args = parser.parse_args()
 
@@ -426,6 +434,12 @@ if __name__ == "__main__":
         usehdf5=3
     elif args.usehdf5 == 4:
         usehdf5=4
+
+    if args.geodynbc == 0:
+        geodynbc=0
+    elif args.geodynbc == 1:
+        geodynbc=1
+
     if args.verbose:
         #print("verbose mode enabled")
         verbose=True
@@ -448,6 +462,6 @@ if __name__ == "__main__":
         #print("cpu_allocation specified=", args.cpu_allocation)
         cpu_allocation=args.cpu_allocation
 
-    if not main_test(sw4_exe_dir, pytest_dir, testing_level, mpi_tasks, omp_threads, cpu_allocation, verbose, usehdf5):
+    if not main_test(sw4_exe_dir, pytest_dir, testing_level, mpi_tasks, omp_threads, cpu_allocation, verbose, usehdf5, geodynbc):
         print("test_sw4 was unsuccessful")
         sys.exit(-1)
