@@ -733,6 +733,9 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
     // sprintf(fname,"sw4-error-log-p%i.txt", m_myRank);
     // msgStream.open(fname);
 
+  // Potentially disable restart if no checkpoint is found
+  m_check_point->verify_restart();
+
 #if defined(ENABLE_GPU)
   float_sw4* tmpa =
       SW4_NEW(Space::Managed, float_sw4[6 + 384 + 24 + 48 + 6 + 384 + 6 + 6]);
