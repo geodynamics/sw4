@@ -27,6 +27,8 @@
 #include <sachdf5.h>
 #endif
 
+#define STRINGSIZE 128
+
 void usage(string thereason)
 {
   cout << endl
@@ -171,6 +173,58 @@ void normalize_pseudohessian( int nmpars, float_sw4* phs, int nmpard,
          phd[m*ncomp+c] = phd[m*ncomp+c]/mxnorm[c]+eps;
 }
 
+
+void set_timewindows_from_eikonal_time(vector<vector<TimeSeries*> >& GlobalTimeSeries, const vector<vector<Source*> >& GlobalSources, const Mopt* mopt, const float_sw4 fc2)
+{
+   float_sw4 winlen=1.;
+   float_sw4 wins[4];
+
+   char file[STRINGSIZE];
+   FILE *fd;
+   int myrank;
+
+   MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
+
+      for( int e=0 ; e < GlobalTimeSeries.size(); e++ )
+      {
+      if(myrank==0) {     
+         sprintf(file, "%s/time_event_%d.txt", GlobalTimeSeries[e][0]->getPath().c_str(),e);
+         fd = fopen(file, "w");
+         fprintf(fd, "event count station x y z tstart_vp  tend_vp  tstart_vs  tend_vs\n");
+         }
+
+         if(mopt->get_freq_peakpower()>0)
+         {
+            winlen = 1.0/mopt->get_freq_peakpower(); // one cycle of peak frequency
+         } 
+         else if(fc2>0)
+         {
+            winlen = 12./(2*M_PI*fc2); //half spread is 6*sigma
+         }
+         else if(GlobalSources[e][0]->getFrequency()>0)
+         {
+            winlen = 1./GlobalSources[e][0]->getFrequency();
+         }
+
+         winlen *= mopt->get_twin_scale();  // expand or shrink 
+
+	       for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
+	       {
+             GlobalTimeSeries[e][m]->shiftTimeWindow(GlobalSources[e][0]->getTimeOffset(), winlen, mopt->get_twin_shift());
+             
+            if(myrank==0 && GlobalTimeSeries[e][m]->myPoint()) {
+               GlobalTimeSeries[e][m]->get_windows(wins);
+               fprintf(fd, "%d   %d\t%s\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
+               e, m+1, GlobalTimeSeries[e][m]->getStationName().c_str(), 
+               GlobalTimeSeries[e][m]->getX(),GlobalTimeSeries[e][m]->getY(),GlobalTimeSeries[e][m]->getZ(),
+               wins[0], wins[1], wins[2], wins[3]);
+               }
+
+          } // stations
+      } // end of events
+      if(myrank==0) fclose(fd);
+}
+
 //-----------------------------------------------------------------------
 void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 		int nmpard, double* xm,
@@ -233,14 +287,12 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    if( mopt->m_win_mode == 1 && nmpard_global == 0 )
    {
       float_sw4* coarse=new float_sw4[nmpars];
-      float_sw4 freq;
       mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
       for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
       {
-         freq= mopt->get_freq_peakpower()>0.? mopt->get_freq_peakpower() : GlobalSources[e][0]->getFrequency();
+         
          simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
-                            mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), 
-                            freq, e, simulation.getRank());
+                            mopt->get_wave_mode(), e, simulation.getRank());
       }
       delete[] coarse;
    }
@@ -457,15 +509,13 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    {
       if( myrank == 0 )
          std::cout << "Calling solveTT from compute_f_and_df " << std::endl;
-      float_sw4 freq;
       float_sw4* coarse=new float_sw4[nmpars];
       mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
       for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
       {
-         freq = mopt->get_freq_peakpower()>0. ? mopt->get_freq_peakpower() : GlobalSources[e][0]->getFrequency();
-         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars,
-                            mopt->m_mp, mopt->get_wave_mode(), mopt->get_twin_shift(), 
-                            mopt->get_twin_scale(), freq, e, simulation.getRank());
+         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
+                            mopt->get_wave_mode(), e, simulation.getRank());
+
      }
       delete[] coarse;
    }
@@ -524,6 +574,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          {
             if( mopt->m_output_ts && it >= 0 )
                GlobalTimeSeries[e][m]->writeFile();
+               
             TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc" );
             diffs.push_back(elem);
          }
@@ -2060,14 +2111,9 @@ int main(int argc, char **argv)
            }
            else if( mopt->m_opttest == 1 )
 	   {
-    // Make time windows aware of source freqeuncy-dependent center time, t0 
-    for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
-	   {
-	      for( int m = 0; m < GlobalObservations[e].size(); m++ ) 
-         {
-		     GlobalTimeSeries[e][m]->add_timeoffset_to_timewindow(GlobalSources[e][0]->getTimeOffset());
-         }
-      }
+         //add frequency-dependent t0 and duration for time windowing of waveforms
+         float_sw4 fc2 = simulation.m_filter_ptr? simulation.m_filter_ptr->get_corner_freq2() : 0.;
+         set_timewindows_from_eikonal_time(GlobalTimeSeries, GlobalSources, mopt, fc2);
 
 // Run optimizer (default)
 	      sw4_profile->time_stamp("Start optimizer");
@@ -2078,6 +2124,11 @@ int main(int argc, char **argv)
 	      else if( mopt->m_optmethod == 2 )
 		 nlcg( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		       GlobalObservations, myRank, mopt );
+
+        for( int e=0 ; e < GlobalTimeSeries.size(); e++ )
+         for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
+               GlobalTimeSeries[e][m]->writeWindows();  
+
 	      sw4_profile->time_stamp("Done optimizer");
 	      sw4_profile->flush();
 	   }
@@ -2191,13 +2242,10 @@ int main(int argc, char **argv)
                        GlobalObservations[e][s]->writeFile();
 
                  for( int e=0; e < GlobalObservations.size(); e++ )
-                 {
-                    float_sw4 freq=mopt->get_freq_peakpower();
-                    if( freq <= 0 )
-                       freq = GlobalSources[e][0]->getFrequency();
-                    simulation.solveTT(GlobalSources[e][0], GlobalObservations[e], coarse, nmpars, 
-                                       mopt->m_mp, mopt->get_wave_mode(), mopt->get_twin_shift(), 
-                                       mopt->get_twin_scale(), freq, e, simulation.getRank());
+                  {
+                     simulation.solveTT(GlobalSources[e][0], GlobalObservations[e], coarse, nmpars, mopt->m_mp, 
+                                    mopt->get_wave_mode(), e, simulation.getRank());
+               
                     for( int s=0 ; s < GlobalObservations[e].size() ; s++)
                        GlobalObservations[e][s]->writeWindows();
                  }
@@ -2240,5 +2288,3 @@ int main(int argc, char **argv)
   //  return status;
 } 
  
-
-   

@@ -119,7 +119,6 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_use_x(true),
   m_use_y(true),
   m_use_z(true),
-  m_win_raw(true),
   mQuietMode(false),
   mIsRestart(false),
   m_compute_scalefactor(true),
@@ -4201,14 +4200,13 @@ void TimeSeries::misfitanddudp( TimeSeries* observed, TimeSeries* dudp,
    }
 }
 
-void TimeSeries::add_timeoffset_to_timewindow( const float_sw4 t0 )
+void TimeSeries::shiftTimeWindow( const float_sw4 t0, const float_sw4 winlen, const float_sw4 shift)
 {
-   if(m_myPoint && m_win_raw )
+   if(m_myPoint)
    {
-      m_winL += t0;
-      m_winR += t0;
-      m_winL2 += t0;
-      m_winR2 += t0;
-      m_win_raw = false;
+      m_winL += t0 + winlen*shift;   // tstart for P-wave
+      m_winR = m_winL + winlen;      // tend
+      m_winL2 += t0 + winlen*shift;  // tstart for S-wave
+      m_winR2 = m_winL2 + winlen;
    }
 }

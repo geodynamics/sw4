@@ -177,7 +177,7 @@ void add( TimeSeries& A, TimeSeries& B, double wghA, double wghB );
 void writeWindows( string suffix="" );
 void readWindows();
 void get_windows( float_sw4 wins[4] );
-void add_timeoffset_to_timewindow( const float_sw4 t0 );
+void shiftTimeWindow( const float_sw4 t0, const float_sw4 win, const float_sw4 shift);
 
 private:   
 TimeSeries();
@@ -268,7 +268,6 @@ float_sw4 m_scalefactor;
 // Window for optimization, m_winL, m_winR given relative simulation time zero.
    float_sw4 m_winL, m_winR, m_winL2, m_winR2;
    bool   m_use_win, m_use_x, m_use_y, m_use_z;
-   bool   m_win_raw; // true if zero-phase traveltimes w/o adding source center time t0
 
 // quiet mode?
    bool mQuietMode;
