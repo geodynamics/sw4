@@ -3807,6 +3807,9 @@ void EW::processCheckPoint(char* buffer) {
     m_check_point->set_checkpoint_file(filePrefix, cycle, cycleInterval,
                                        bufsize, useHDF5, compressionMode,
                                        compressionPar);
+
+  CHECK_INPUT(!(restartLatestGiven && restartFileGiven),
+              err << "invalid to specify both restartlatest and restartfile");
   if (restartLatestGiven) {
     m_check_point->set_restart_latest(bufsize);
   }
