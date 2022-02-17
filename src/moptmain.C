@@ -221,8 +221,8 @@ void set_timewindows_from_eikonal_time(vector<vector<TimeSeries*> >& GlobalTimeS
                }
 
           } // stations
+            if(myrank==0) fclose(fd);
       } // end of events
-      if(myrank==0) fclose(fd);
 }
 
 //-----------------------------------------------------------------------
