@@ -1,3 +1,3 @@
 #!/bin/bash
 export HIP_VISIBLE_DEVICES=${SLURM_LOCALID}
-$1 $2
+$@
