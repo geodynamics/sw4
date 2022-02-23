@@ -258,20 +258,27 @@ void ESSI3D::update_image( int a_cycle, float_sw4 a_time, float_sw4 a_dt,
     vector<Sarray>& a_U, std::string& a_path, Sarray& a_Z )
 {
 #ifdef USE_HDF5
-  int o_cycle = a_cycle;
+  int is_last = (mNumberOfTimeSteps == a_cycle ? 1 : 0);
   double hdf5_time=MPI_Wtime();
   if (!m_fileOpen) // must be first call, open file and write
     open_vel_file(a_cycle, a_path, a_time, a_Z);
 
   if (m_dumpInterval != -1) {
-      if (a_cycle % m_dumpInterval != 0 && a_cycle != mNumberOfTimeSteps) 
+      if (a_cycle % m_dumpInterval != 0 && a_cycle != mNumberOfTimeSteps) {
+        if (m_rank == 0)
+          fprintf(stderr, "cycle=%d skip write, total %d\n", a_cycle, mNumberOfTimeSteps);
         return;
+      }
+      else {
+        if (m_rank == 0)
+          fprintf(stderr, "cycle=%d has write, total %d\n", a_cycle, mNumberOfTimeSteps);
+      }
       a_cycle /= m_dumpInterval;
   }
 
-  write_image_hdf5( a_cycle, a_path, a_time, a_U);
+  write_image_hdf5( a_cycle, a_path, a_time, a_U, is_last);
 
-  if (o_cycle == mNumberOfTimeSteps) // last time step
+  if (is_last)
     close_vel_file();
 
   m_hdf5_time += (MPI_Wtime()-hdf5_time);
@@ -289,7 +296,7 @@ void ESSI3D::force_write_image( float_sw4 a_time, int a_cycle,
 #ifdef USE_HDF5
   double hdf5_time=MPI_Wtime();
   open_vel_file(a_cycle, a_path, a_time, a_Z);
-  write_image_hdf5( a_cycle, a_path, a_time, a_U );
+  write_image_hdf5( a_cycle, a_path, a_time, a_U, 1 );
   close_vel_file();
   m_hdf5_time += (MPI_Wtime()-hdf5_time);
 #else
@@ -461,7 +468,7 @@ void ESSI3D::close_vel_file( )
 }
 
 void ESSI3D::write_image_hdf5( int cycle, std::string &path, float_sw4 t,
-    vector<Sarray>& a_U)
+    vector<Sarray>& a_U, int is_last)
 {
   // Top grid only
   int g = mEW->mNumberOfGrids-1;
@@ -471,7 +478,7 @@ void ESSI3D::write_image_hdf5( int cycle, std::string &path, float_sw4 t,
 
   for (int i = 0; i < 3; i++) {
     compute_image(a_U[g], i, cycle);
-    if (cycle > 0 && (m_nbufstep == m_bufferInterval-1 || cycle == m_ntimestep)) {
+    if (cycle > 0 && (m_nbufstep == m_bufferInterval-1 || is_last)) {
       if (m_precision == 4) 
         m_hdf5helper->write_vel((void*)m_floatField[i], i, cycle, m_nbufstep+1);
       else if (m_precision == 8) 
