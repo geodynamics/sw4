@@ -109,6 +109,22 @@ bool CheckPoint::do_checkpointing() { return mDoCheckPointing; }
 int CheckPoint::get_checkpoint_cycle_interval() { return mCycleInterval; }
 
 //-----------------------------------------------------------------------
+// Disable restart if given restartlatest, but no checkpoint is available
+bool CheckPoint::verify_restart() {
+#ifdef SW4_USE_SCR
+  // Check whether SCR loaded a checkpoint.
+  int have_restart = 0;
+  char cycle_num[SCR_MAX_FILENAME];
+  SCR_Have_restart(&have_restart, cycle_num);
+
+  // Disable restart if SCR could not find a checkpoint.
+  if (! have_restart) {
+    mDoRestart = false;
+  }
+#endif
+}
+
+//-----------------------------------------------------------------------
 bool CheckPoint::do_restart() { return mDoRestart; }
 
 //-----------------------------------------------------------------------
@@ -635,19 +651,24 @@ float_sw4 CheckPoint::getDt() {
 #else
 
   int have_restart = 0;
-  char checkpoint_dir[SCR_MAX_FILENAME];
-  SCR_Have_restart(&have_restart, checkpoint_dir);
+  char cycle_num[SCR_MAX_FILENAME];
+  SCR_Have_restart(&have_restart, cycle_num);
   if (! have_restart) {
     std::cerr<<"Error :: SCR found no checkpoints ! \n"<<std::flush;
     abort();
   } 
   
-  SCR_Start_restart(checkpoint_dir);
+  SCR_Start_restart(cycle_num);
   
   std::stringstream s;
-  s<<checkpoint_dir<<"/CheckPoint_"<<mEW->getRank()<<".bin";
+  if (get_restart_path().length()!=0)
+    s<<get_restart_path()<<"/"<<cycle_num<<"/CheckPoint_"<<mEW->getRank()<<".bin";
+  else
+    s<<get_restart_path()<<"./"<<cycle_num<<"CheckPoint_"<<mEW->getRank()<<".bin";
+
   char scr_file[SCR_MAX_FILENAME];
   SCR_Route_file(s.str().c_str(), scr_file);
+
   int valid=1;
   if (std::FILE *file=std::fopen(scr_file,"rb")){
     float_sw4 dt; 
@@ -833,6 +854,13 @@ void CheckPoint::cycle_checkpoints(string CheckPointFile) {
     mCheckPointFileMM = CheckPointFile;
   else if (m_fileno == 2)
     mCheckPointFileM = CheckPointFile;
+}
+
+//-----------------------------------------------------------------------
+// Restart from the most recent chekpoint if available, otherwise start new run
+void CheckPoint::set_restart_latest(size_t bufsize) {
+  m_bufsize = bufsize;
+  mDoRestart = true;
 }
 
 //-----------------------------------------------------------------------
