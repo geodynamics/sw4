@@ -2180,7 +2180,7 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
       float_sw4 wghxobs, wghyobs, wghzobs;
       wghxobs = wghyobs = wghzobs=1.;
       if( m_use_win )
-      {
+      {         
          double tobs = i*dtfr+t0fr; // t_n+tshift in Observation time 
 	       // Window data in this object w(t_n+tshift)
          wghxobs= 0.5*tanh((tobs-m_winL)*itaufr) - 0.5*tanh((tobs-m_winR)*itaufr);
@@ -4197,5 +4197,16 @@ void TimeSeries::misfitanddudp( TimeSeries* observed, TimeSeries* dudp,
 	 misfit  *= iscale;
          dmisfit *= iscale;
       }
+   }
+}
+
+void TimeSeries::shiftTimeWindow( const float_sw4 t0, const float_sw4 winlen, const float_sw4 shift)
+{
+   if(m_myPoint)
+   {
+      m_winL += t0 + winlen*shift;   // tstart for P-wave
+      m_winR = m_winL + winlen;      // tend
+      m_winL2 += t0 + winlen*shift;  // tstart for S-wave
+      m_winR2 = m_winL2 + winlen;
    }
 }
