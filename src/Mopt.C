@@ -56,8 +56,8 @@ Mopt::Mopt( EW* a_ew )
    m_vs_max = -100.;
    m_freq_peakpower=0.0;
    m_wave_mode=2;  // default to both P and S waves otherwise 0 for P and 1 for S only
-   m_win_mode =1; // default, use eikonal solver to set windows.
-   m_twin_shift=0.0;
+   m_win_mode =0; // default, use windows stored on hdf5-file.
+   m_twin_shift=-0.5;
    m_twin_scale=1.0; 
    m_tolerance = 1e-12;
    m_var    = 0;

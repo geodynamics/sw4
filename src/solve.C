@@ -223,7 +223,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 /* #pragma omp parallel for */
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
   {
-     if(a_Sources.size()>0) a_TimeSeries[ts]->set_origintime(a_Sources[0]->getTshift()); // add an optional time shift
      a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps[event]+1, mTstart, mDt); // AP: added one to mNumber...
           
 // In forward solve, the output receivers will use the same UTC as the
