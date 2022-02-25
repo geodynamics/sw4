@@ -54,6 +54,7 @@ class Mopt
    float_sw4 get_vs_min() const { return m_vs_min; }
    float_sw4 get_vs_max() const { return m_vs_max; }
    float_sw4 get_freq_peakpower() const { return m_freq_peakpower; }
+   bool get_skip_precursor() const { return m_skip_precursor; }
    int get_wave_mode() const { return m_wave_mode; }
    float get_twin_shift() const { return m_twin_shift; }
    float get_twin_scale() const { return m_twin_scale; }
@@ -80,6 +81,7 @@ class Mopt
    // FWI workflow options
    float_sw4 m_vp_min, m_vp_max, m_vs_min, m_vs_max;  // global velocity constraints
    float_sw4  m_freq_peakpower; // peak-power freq for setting traveltime windows or smoothing gradients
+   bool m_skip_precursor; // skip BC recording for source precursor to save compute time and memory
    int m_wave_mode; // 0: P  1: S  2: both
    float m_twin_shift, m_twin_scale;
    int m_win_mode;

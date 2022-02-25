@@ -225,6 +225,14 @@ void set_timewindows_from_eikonal_time(vector<vector<TimeSeries*> >& GlobalTimeS
       } // end of events
 }
 
+int firstTimeStep_to_recordBC(const vector<Source*> & a_Sources, const Mopt *mopt, const float_sw4 dt)
+{
+   if(!mopt->get_skip_precursor()) return 1;
+   float_sw4 fpeak = mopt->get_freq_peakpower() > 0? mopt->get_freq_peakpower() : a_Sources[0]->getFrequency();
+   int step_to_record = a_Sources[0]->getTimeOffset()/dt- floor(1./fpeak/dt*1.5);
+   return step_to_record>1 ? step_to_record : 1;
+}
+
 //-----------------------------------------------------------------------
 void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 		int nmpard, double* xm,
@@ -334,7 +342,8 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    {
 //	 simulation.solve( src, GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e );
       sw4_profile->time_stamp("forward solve" );
-      simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e, mopt->m_nsteps_in_memory, 0, ph, mopt->get_freq_peakpower() );
+      int step_to_record = firstTimeStep_to_recordBC(GlobalSources[e], mopt, simulation.getTimeStep());
+      simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e, mopt->m_nsteps_in_memory, 0, ph, step_to_record);
       sw4_profile->time_stamp("done forward solve" );
 //      cout.precision(16);  
 //  Compute misfit
@@ -564,7 +573,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       for( int e=0 ; e < simulation.getNumberOfLocalEvents() ; e++ )
       {
          sw4_profile->time_stamp("forward solve" );
-         simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory, phcase, pseudo_hessian, mopt->get_freq_peakpower() );
+         int step_to_record = firstTimeStep_to_recordBC(GlobalSources[e], mopt, simulation.getTimeStep());
+         simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory, phcase, pseudo_hessian, step_to_record);
          sw4_profile->time_stamp("done forward solve" );
 // Compute misfit, 'diffs' will hold the source for the adjoint problem
 
@@ -609,7 +619,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          double dfsrc[11];
          get_source_pars( nspar, dfsrc, dfs );   
          sw4_profile->time_stamp("backward+adjoint solve" );
-         simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, mopt->get_freq_peakpower(), e );
+         simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, step_to_record, e );
          sw4_profile->time_stamp("done backward+adjoint solve" );
          //         int ip=67, jp=20, kp=20;
          //         if( simulation.interior_point_in_proc(ip,jp,0))
@@ -2127,11 +2137,7 @@ int main(int argc, char **argv)
 			GlobalObservations, myRank, mopt );
 	      else if( mopt->m_optmethod == 2 )
 		 nlcg( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
-		       GlobalObservations, myRank, mopt );
-
-        for( int e=0 ; e < GlobalTimeSeries.size(); e++ )
-         for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
-               GlobalTimeSeries[e][m]->writeWindows();  
+		       GlobalObservations, myRank, mopt ); 
 
 	      sw4_profile->time_stamp("Done optimizer");
 	      sw4_profile->flush();

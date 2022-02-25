@@ -621,7 +621,8 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
      {
 #ifdef USE_HDF5
        // Tang: need to create a HDF5 file before writing
-       if (GlobalTimeSeries[e].size() > 0 && GlobalTimeSeries[e][0]->getUseHDF5()) {
+       if (GlobalTimeSeries[e].size() > 0 && GlobalTimeSeries[e][0]->getUseHDF5()) 
+       {
          for (int tsi = 0; tsi < GlobalTimeSeries[e].size(); tsi++) 
            GlobalTimeSeries[e][tsi]->resetHDF5file();
          if( GlobalTimeSeries[e][0]->myPoint() )
@@ -633,6 +634,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 #endif
        for( int m = 0; m < GlobalTimeSeries[e].size(); m++ )
 		    GlobalTimeSeries[e][m]->writeFile( "_ini" );
+          
      }
    }
    if( myRank == 0 )
@@ -856,6 +858,12 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 	    dam[i] = dm[i];
 	 int retcode;
          double fp;
+
+      // save time windows per iteration
+      for( int e=0 ; e < GlobalTimeSeries.size(); e++ )
+         for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
+               GlobalTimeSeries[e][m]->writeWindows(); 
+
 	 if( myRank == 0 )
 	    cout << "Line search.. " << endl;
 
@@ -1052,6 +1060,8 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 	 dfs[i] = dfps[i];
       for( int i=0 ; i < nmpard ; i++ )
 	 dfm[i] = dfpm[i];
+
+
    } // end while it<maxit && !converged
    
 

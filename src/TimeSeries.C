@@ -119,7 +119,6 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   m_use_x(true),
   m_use_y(true),
   m_use_z(true),
-  m_win_raw(true),
   mQuietMode(false),
   mIsRestart(false),
   m_compute_scalefactor(true),

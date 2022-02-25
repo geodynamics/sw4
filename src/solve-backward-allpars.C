@@ -11,14 +11,14 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 				 vector<TimeSeries*> & a_TimeSeries, vector<Sarray>& Up, vector<Sarray>& U,
 				 vector<DataPatches*>& Upred_saved, vector<DataPatches*>& Ucorr_saved,
 				 double gradientsrc[11], vector<Sarray>& gRho, vector<Sarray>& gMu, 
-				 vector<Sarray>& gLambda, float_sw4 fpeak, int event )
+				 vector<Sarray>& gLambda, int step_to_record, int event )
 {
 // solution arrays
    vector<Sarray> F, Lk, Kacc, Kp, Km, K, Um, Uacc;
    //   vector<Sarray> gRho, gMu, gLambda;
    vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
    vector<double **> BCForcing;
-   bool verbose=false;
+   bool verbose=true;
 
    F.resize(mNumberOfGrids);
    Lk.resize(mNumberOfGrids);
@@ -121,11 +121,9 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    }
    double t = mDt*(mNumberOfTimeSteps[event]-1);
 
-   int step_to_record = a_Sources[0]->getTimeOffset()/mDt- floor(1./fpeak/mDt*1.5); 
-   if(step_to_record<1) step_to_record=1;
    if(proc_zero() && verbose) cout << "first time step to record sides=" << step_to_record << endl;
 
-   int beginCycle = step_to_record;   // 1;
+   int beginCycle = step_to_record; 
 
    double time_measure[8];
    double time_sum[8]={0,0,0,0,0,0,0,0};
@@ -216,7 +214,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       evalCorrector( Um, a_Rho, Lk, F );
 
       for( int g=0 ; g < mNumberOfGrids ; g++ )
-	 Ucorr_saved[g]->pop( Um[g], currentTimeStep-2 );
+	     Ucorr_saved[g]->pop( Um[g], currentTimeStep-2 );
 
       // set boundary data on U
       for(int g=0 ; g < mNumberOfGrids ; g++ )

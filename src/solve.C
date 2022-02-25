@@ -69,7 +69,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 		vector<Sarray>& U, vector<Sarray>& Um,
 		vector<DataPatches*>& Upred_saved_sides,
    		vector<DataPatches*>& Ucorr_saved_sides, bool save_sides,
-		int event, int nsteps_in_memory, int varcase, vector<Sarray>& PseudoHessian, float_sw4 fpeak )
+		int event, int nsteps_in_memory, int varcase, vector<Sarray>& PseudoHessian, int step_to_record)
 {
    // Experimental
   //   int nsteps_in_memory=50;
@@ -78,7 +78,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
 // vectors of pointers to hold boundary forcing arrays in each grid
    vector<float_sw4**> BCForcing;
-   bool verbose=false;
+   bool verbose=true;
 
    BCForcing.resize(mNumberOfGrids);
    F.resize(mNumberOfGrids);
@@ -221,9 +221,6 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    }
 
 // first step to record boundary values
-    int step_to_record = a_Sources[0]->getTimeOffset()/mDt- floor(1./fpeak/mDt*1.5);
-    if(step_to_record<1) step_to_record=1;
-    
     if(proc_zero() && verbose) cout << "first time step to record sides=" << step_to_record << endl;
 
 // Set the number of time steps, allocate the recording arrays, and set reference time in all time series objects  
