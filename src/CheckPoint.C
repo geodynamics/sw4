@@ -305,9 +305,9 @@ bool CheckPoint::timeToWrite(float_sw4 time, int cycle, float_sw4 dt) {
   // the recommendation even if one makes the call.
   // By default, this always returns false,
   // but there are various ways to configure SCR to use it.
-  int flag;
-  SCR_Need_checkpoint(&flag);
-  do_it = flag;
+  //int flag;
+  //SCR_Need_checkpoint(&flag);
+  //do_it = flag;
 #endif
 
   return do_it;
