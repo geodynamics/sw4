@@ -5988,7 +5988,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
     //       }
     // these have global location since they will be used by all processors
     sourcePtr = new Source(this, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz,
-			   tDep, formstring, topodepth, ncyc, par, npar, ipar, nipar, false); // false is correctStrengthForMu
+			   tDep, formstring, topodepth, ncyc, par, npar, ipar, nipar, false ); // false is correctStrengthForMu
     if (sourcePtr->ignore())
     {
       delete sourcePtr;
@@ -6008,7 +6008,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
     //       f0 = 1;
     // global version (gets real coordinates)
     sourcePtr = new Source(this, freq, t0, x, y, z, fx, fy, fz, tDep, formstring, topodepth, ncyc,
-			   par, npar, ipar, nipar, false); // false is correctStrengthForMu
+			   par, npar, ipar, nipar, false ); // false is correctStrengthForMu
     //...and add it to the list of forcing terms
     if (sourcePtr->ignore())
     {

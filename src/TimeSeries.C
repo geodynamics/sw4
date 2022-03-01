@@ -392,8 +392,7 @@ TimeSeries::~TimeSeries()
 //--------------------------------------------------------------
 void TimeSeries::allocateRecordingArrays( int numberOfTimeSteps, float_sw4 startTime, float_sw4 timeStep )
 {
-  m_shift =  startTime-m_t0;  
-  
+  m_shift = startTime-m_t0;
   m_dt = timeStep;
 
   if (!m_myPoint) return; // only one processor saves each time series
@@ -2742,8 +2741,6 @@ void TimeSeries::add( TimeSeries& A, TimeSeries& B, double wghA, double wghB )
    }
 }
 
-
-
 //-----------------------------------------------------------------------
 float_sw4 TimeSeries::utc_distance( int utc1[7], int utc2[7] )
 {
@@ -3737,10 +3734,10 @@ void TimeSeries::isRestart()
 
 //-----------------------------------------------------------------------
 // Sets the time offset for output.
-//void TimeSeries::set_shift( const float_sw4 shift )
-//{
-//   m_shift = shift;
-//}
+void TimeSeries::set_shift( float_sw4 shift )
+{
+   m_shift = shift;
+}
 
 //-----------------------------------------------------------------------
 float_sw4 TimeSeries::get_shift() const

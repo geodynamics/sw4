@@ -165,7 +165,7 @@ Source::Source(EW *a_ew, float_sw4 frequency, float_sw4 t0,
 	       const char *name, 
 	       bool topodepth,
 	       int ncyc, 
-	       float_sw4* pars, int npar, int* ipars, int nipar, bool correctForMu):
+	       float_sw4* pars, int npar, int* ipars, int nipar, bool correctForMu ):
   mIsMomentSource(false),
   mFreq(frequency),
   mT0(t0),

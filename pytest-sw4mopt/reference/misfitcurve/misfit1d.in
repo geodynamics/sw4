@@ -26,7 +26,7 @@ mparcart nx=3 ny=3 nz=2 init=0
 #------------------------------
 # Optimizer and properties
 #
-mrun task=func1d mcheck=on tsoutput=off
+mrun task=func1d mcheck=on tsoutput=off win_mode=none
 #
 # Vary lambda at point (2,2,2) in the mparcart discretization from pmin to pmax
 # and output the misfit as function of p. The parameter is offset from reference

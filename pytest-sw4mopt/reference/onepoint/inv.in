@@ -26,7 +26,7 @@ mparcart nx=1 ny=1 nz=1 init=../reference/onepoint/onep-pr10.bin
 #------------------------------
 # Optimizer and properties
 #
-mrun task=minvert mcheck=on tsoutput=on
+mrun task=minvert mcheck=on tsoutput=on win_mode=none
 lbfgs nvectors=10 ihess0=scale-factors maxit=10 tolerance=1e-10 linesearch=on
 mscalefactors rho=2650 mu=1.54e10 lambda=7.52e11 misfit=1
 #

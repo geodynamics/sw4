@@ -57,8 +57,8 @@ Mopt::Mopt( EW* a_ew )
    m_freq_peakpower=0.0;
    m_skip_precursor=false;
    m_wave_mode=2;  // default to both P and S waves otherwise 0 for P and 1 for S only
-   m_win_mode =1; // default, use eikonal solver to set windows.
-   m_twin_shift=-0.5;  //half of time window size
+   m_win_mode =0; // default, use windows stored on hdf5-file.
+   m_twin_shift=-0.5;
    m_twin_scale=1.0; 
    m_tolerance = 1e-12;
    m_var    = 0;
@@ -143,6 +143,8 @@ bool Mopt::parseInputFileOpt( std::string filename )
    inputFile.close();
    MPI_Barrier(m_ew->m_1d_communicator);
    m_ew->create_directory(m_path);
+   CHECK_INPUT(m_mp != NULL,"ERROR: Material parameterization not given");
+
    m_mp->set_path(m_path);
 
 // wait until all processes have read the input file
