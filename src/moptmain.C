@@ -2134,6 +2134,10 @@ int main(int argc, char **argv)
 	      else if( mopt->m_optmethod == 2 )
 		 nlcg( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		       GlobalObservations, myRank, mopt ); 
+       // save time windows
+       for( int e=0 ; e < GlobalTimeSeries.size(); e++ )
+         for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
+               GlobalTimeSeries[e][m]->writeWindows(); 
 
 	      sw4_profile->time_stamp("Done optimizer");
 	      sw4_profile->flush();

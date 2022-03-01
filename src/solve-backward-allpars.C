@@ -18,7 +18,7 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    //   vector<Sarray> gRho, gMu, gLambda;
    vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
    vector<double **> BCForcing;
-   bool verbose=true;
+   bool verbose=false;
 
    F.resize(mNumberOfGrids);
    Lk.resize(mNumberOfGrids);
