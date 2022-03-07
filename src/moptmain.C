@@ -288,9 +288,8 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    {
       float_sw4* coarse=new float_sw4[nmpars];
       mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
-      for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
+      for( int e=0 ; e < GlobalTimeSeries.size() ; e++ )
       {
-         
          simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
                             mopt->get_wave_mode(), e, simulation.getRank());
       }
@@ -511,7 +510,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          std::cout << "Calling solveTT from compute_f_and_df " << std::endl;
       float_sw4* coarse=new float_sw4[nmpars];
       mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
-      for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
+      for( int e=0 ; e < GlobalTimeSeries.size() ; e++ )
       {
          simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
                             mopt->get_wave_mode(), e, simulation.getRank());
