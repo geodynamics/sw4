@@ -664,8 +664,7 @@ float_sw4 CheckPoint::getDt() {
   if (get_restart_path().length()!=0)
     s<<get_restart_path()<<"/"<<cycle_num<<"/CheckPoint_"<<mEW->getRank()<<".bin";
   else
-    s<<get_restart_path()<<"./"<<cycle_num<<"CheckPoint_"<<mEW->getRank()<<".bin";
-
+    s<<get_restart_path()<<"./"<<cycle_num<<"/CheckPoint_"<<mEW->getRank()<<".bin";
   char scr_file[SCR_MAX_FILENAME];
   SCR_Route_file(s.str().c_str(), scr_file);
 
