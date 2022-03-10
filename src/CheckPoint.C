@@ -122,6 +122,7 @@ bool CheckPoint::verify_restart() {
     mDoRestart = false;
   }
 #endif
+return false;
 }
 
 //-----------------------------------------------------------------------
