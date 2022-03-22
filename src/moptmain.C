@@ -225,11 +225,30 @@ void set_timewindows_from_eikonal_time(vector<vector<TimeSeries*> >& GlobalTimeS
       } // end of events
 }
 
-int firstTimeStep_to_recordBC(const vector<Source*> & a_Sources, const Mopt *mopt, const float_sw4 dt)
+int firstTimeStep_to_recordBC(const vector<Source*> & a_Sources, const vector<TimeSeries*> & a_TimeSeries, const Mopt *mopt, const float_sw4 dt, 
+const int e, const int myrank)
 {
    if(!mopt->get_skip_precursor()) return 1;
-   float_sw4 fpeak = mopt->get_freq_peakpower() > 0? mopt->get_freq_peakpower() : a_Sources[0]->getFrequency();
-   int step_to_record = a_Sources[0]->getTimeOffset()/dt- floor(1./fpeak/dt*1.5);
+
+   //float_sw4 fpeak = mopt->get_freq_peakpower() > 0? mopt->get_freq_peakpower() : a_Sources[0]->getFrequency();
+   //int step_to_record = a_Sources[0]->getTimeOffset()/dt- floor(1./fpeak/dt*1.5);
+
+   FILE *ft;
+   float tp, ts, t_trunc;
+   char file[STRINGSIZE];
+      sprintf(file, "%s/time_to_record_%d.txt", a_TimeSeries[0]->getPath().c_str(),e);
+      ft = fopen(file, "r");
+      if(ft!=NULL) {
+      fscanf(ft, "%g\t%g\n", &tp, &ts);
+      if(myrank==0) printf("tp=%g\tts=%g\n", tp, ts);
+      }
+  
+   t_trunc = mopt->get_wave_mode()==1? ts : tp; 
+   
+   //time to record BC is based on the minimum time to reach BC's if provided in traveltime preprocessing or a default fraction of source t0
+   int step_to_record = ft==NULL? int(a_Sources[0]->getTimeOffset()/dt*0.38) : int(t_trunc*0.9/dt);   
+   if(myrank==0) printf("t_trunc=%g\tstep-to-record=%d out of two truncation criteria %d and %d\n", t_trunc, step_to_record, 
+   int(a_Sources[0]->getTimeOffset()/dt*0.38), int(t_trunc*0.95/dt));
    return step_to_record>1 ? step_to_record : 1;
 }
 
@@ -342,7 +361,9 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    {
 //	 simulation.solve( src, GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e );
       sw4_profile->time_stamp("forward solve" );
-      int step_to_record = firstTimeStep_to_recordBC(GlobalSources[e], mopt, simulation.getTimeStep());
+      int myrank;
+      MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
+      int step_to_record = firstTimeStep_to_recordBC(GlobalSources[e], GlobalTimeSeries[e], mopt, simulation.getTimeStep(), e, myrank);
       simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, false, e, mopt->m_nsteps_in_memory, 0, ph, step_to_record);
       sw4_profile->time_stamp("done forward solve" );
 //      cout.precision(16);  
@@ -573,7 +594,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       for( int e=0 ; e < simulation.getNumberOfLocalEvents() ; e++ )
       {
          sw4_profile->time_stamp("forward solve" );
-         int step_to_record = firstTimeStep_to_recordBC(GlobalSources[e], mopt, simulation.getTimeStep());
+         int step_to_record = firstTimeStep_to_recordBC(GlobalSources[e], GlobalTimeSeries[e], mopt, simulation.getTimeStep(), e, myrank);
          simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory, phcase, pseudo_hessian, step_to_record);
          sw4_profile->time_stamp("done forward solve" );
 // Compute misfit, 'diffs' will hold the source for the adjoint problem

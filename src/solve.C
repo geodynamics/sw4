@@ -221,7 +221,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    }
 
 // first step to record boundary values
-    if(proc_zero() && verbose) cout << "solver: first time step to record sides=" << step_to_record << endl;
+// if(proc_zero() && verbose) cout << "solver: first time step to record sides=" << step_to_record << endl;
 
 // Set the number of time steps, allocate the recording arrays, and set reference time in all time series objects  
 /* #pragma omp parallel for */
@@ -825,8 +825,10 @@ if( save_sides && currentTimeStep==(step_to_record>beginCycle? step_to_record : 
        if( trace && m_myRank == dbgproc )
           cout <<" after evalDpDmInTime" << endl;
        if( save_sides && currentTimeStep >= step_to_record)
-	  for( int g=0 ; g < mNumberOfGrids ; g++ )
-	     Upred_saved_sides[g]->push( Uacc[g], currentTimeStep );
+	    { 
+            for( int g=0 ; g < mNumberOfGrids ; g++ )
+	             Upred_saved_sides[g]->push( Uacc[g], currentTimeStep );
+       }
 
        if( m_checkfornan )
 	  check_for_nan( Uacc, 1, "uacc " );
@@ -947,8 +949,10 @@ if( save_sides && currentTimeStep==(step_to_record>beginCycle? step_to_record : 
        if( m_do_geodynbc )
 	  restore_geoghost(Up);
        if( save_sides && currentTimeStep >= step_to_record)
-	  for( int g=0 ; g < mNumberOfGrids ; g++ )
-	     Ucorr_saved_sides[g]->push( Up[g], currentTimeStep );
+	    {
+         for( int g=0 ; g < mNumberOfGrids ; g++ )
+	         Ucorr_saved_sides[g]->push( Up[g], currentTimeStep );
+       }
 
     }// end if mOrder == 4
     
