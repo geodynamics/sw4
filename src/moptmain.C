@@ -248,7 +248,7 @@ const int e, const int myrank)
    //time to record BC is based on the minimum time to reach BC's if provided in traveltime preprocessing or a default fraction of source t0
    int step_to_record = ft==NULL? int(a_Sources[0]->getTimeOffset()/dt*0.38) : int(t_trunc*0.9/dt);   
    if(myrank==0) printf("t_trunc=%g\tstep-to-record=%d out of two truncation criteria %d and %d\n", t_trunc, step_to_record, 
-   int(a_Sources[0]->getTimeOffset()/dt*0.38), int(t_trunc*0.95/dt));
+   int(a_Sources[0]->getTimeOffset()/dt*0.38), int(t_trunc*0.9/dt));
    return step_to_record>1 ? step_to_record : 1;
 }
 
