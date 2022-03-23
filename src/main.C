@@ -228,7 +228,7 @@ main(int argc, char **argv)
       vector<Sarray> U(ng), Um(ng), ph(ng);
       simulation.solve( GlobalSources[0], GlobalTimeSeries[0], simulation.mMu, 
 			simulation.mLambda, simulation.mRho, U, Um, upred_saved, 
-			ucorr_saved, false, 0, 0, 0, ph );
+			ucorr_saved, false, 0, 0, 0, ph, 1);
 
 // save all time series
       

@@ -69,7 +69,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 		vector<Sarray>& U, vector<Sarray>& Um,
 		vector<DataPatches*>& Upred_saved_sides,
    		vector<DataPatches*>& Ucorr_saved_sides, bool save_sides,
-		int event, int nsteps_in_memory, int varcase, vector<Sarray>& PseudoHessian )
+		int event, int nsteps_in_memory, int varcase, vector<Sarray>& PseudoHessian, int step_to_record)
 {
    // Experimental
   //   int nsteps_in_memory=50;
@@ -78,6 +78,7 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
    vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
 // vectors of pointers to hold boundary forcing arrays in each grid
    vector<float_sw4**> BCForcing;
+   bool verbose=true;
 
    BCForcing.resize(mNumberOfGrids);
    F.resize(mNumberOfGrids);
@@ -218,6 +219,9 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 	    cout << "Maximum temporary file size on grid " << g << " is " << maxsize << " doubles for each time step "<<endl;
       }
    }
+
+// first step to record boundary values
+// if(proc_zero() && verbose) cout << "solver: first time step to record sides=" << step_to_record << endl;
 
 // Set the number of time steps, allocate the recording arrays, and set reference time in all time series objects  
 /* #pragma omp parallel for */
@@ -579,16 +583,21 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     printf("End report of internal flags and settings\n\n");
   }
    
+/*
+if(step_to_record==1)  
+{
   if( save_sides )
   {
      for( int g=0 ; g < mNumberOfGrids ; g++ )
      {
-	Upred_saved_sides[g]->push( Um[g], -1 );
-	Upred_saved_sides[g]->push( U[g], 0 );
-	Ucorr_saved_sides[g]->push( Um[g], -1 );
-	Ucorr_saved_sides[g]->push( U[g], 0 );
+	   Upred_saved_sides[g]->push( Um[g], -1 );
+	   Upred_saved_sides[g]->push( U[g], 0 );
+	   Ucorr_saved_sides[g]->push( Um[g], -1 );
+	   Ucorr_saved_sides[g]->push( U[g], 0 );
      }
   }
+}
+*/
 
   for( int g=0 ; g < mNumberOfGrids ; g++ )
     Up[g].set_to_zero();
@@ -620,6 +629,17 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
     bool is_debug = false;
     if( is_debug && proc_zero() )
       cout << "Solving " << currentTimeStep << endl;
+
+if( save_sides && currentTimeStep==(step_to_record>beginCycle? step_to_record : beginCycle))
+  {
+     for( int g=0 ; g < mNumberOfGrids ; g++ )
+     {
+   Upred_saved_sides[g]->push( Um[g], currentTimeStep-1-1 );    // save wavefields on the sides using push method of DataPatch
+	Upred_saved_sides[g]->push( U[g], currentTimeStep-1+0 );
+	Ucorr_saved_sides[g]->push( Um[g], currentTimeStep-1-1 );
+	Ucorr_saved_sides[g]->push( U[g], currentTimeStep-1+0 );
+     }
+  }
 
 // all types of forcing...
     bool trace =false;
@@ -804,9 +824,11 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 
        if( trace && m_myRank == dbgproc )
           cout <<" after evalDpDmInTime" << endl;
-       if( save_sides )
-	  for( int g=0 ; g < mNumberOfGrids ; g++ )
-	     Upred_saved_sides[g]->push( Uacc[g], currentTimeStep );
+       if( save_sides && currentTimeStep >= step_to_record)
+	    { 
+            for( int g=0 ; g < mNumberOfGrids ; g++ )
+	             Upred_saved_sides[g]->push( Uacc[g], currentTimeStep );
+       }
 
        if( m_checkfornan )
 	  check_for_nan( Uacc, 1, "uacc " );
@@ -926,9 +948,11 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
        
        if( m_do_geodynbc )
 	  restore_geoghost(Up);
-       if( save_sides )
-	  for( int g=0 ; g < mNumberOfGrids ; g++ )
-	     Ucorr_saved_sides[g]->push( Up[g], currentTimeStep );
+       if( save_sides && currentTimeStep >= step_to_record)
+	    {
+         for( int g=0 ; g < mNumberOfGrids ; g++ )
+	         Ucorr_saved_sides[g]->push( Up[g], currentTimeStep );
+       }
 
     }// end if mOrder == 4
     

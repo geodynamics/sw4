@@ -11,13 +11,14 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 				 vector<TimeSeries*> & a_TimeSeries, vector<Sarray>& Up, vector<Sarray>& U,
 				 vector<DataPatches*>& Upred_saved, vector<DataPatches*>& Ucorr_saved,
 				 double gradientsrc[11], vector<Sarray>& gRho, vector<Sarray>& gMu, 
-				 vector<Sarray>& gLambda, int event )
+				 vector<Sarray>& gLambda, int step_to_record, int event )
 {
 // solution arrays
    vector<Sarray> F, Lk, Kacc, Kp, Km, K, Um, Uacc;
    //   vector<Sarray> gRho, gMu, gLambda;
    vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
    vector<double **> BCForcing;
+   bool verbose=false;
 
    F.resize(mNumberOfGrids);
    Lk.resize(mNumberOfGrids);
@@ -119,7 +120,10 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       K[g].set_to_zero();
    }
    double t = mDt*(mNumberOfTimeSteps[event]-1);
-   int beginCycle = 1;
+
+   //if(proc_zero() && verbose) cout << "first time step to record sides=" << step_to_record << endl;
+
+   int beginCycle = 1; 
 
    double time_measure[8];
    double time_sum[8]={0,0,0,0,0,0,0,0};
@@ -198,7 +202,8 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       // set boundary data on Uacc, from forward solver
       for( int g=0 ; g < mNumberOfGrids ; g++ )
       {
-	 Upred_saved[g]->pop( Uacc[g], currentTimeStep );
+	      if(currentTimeStep>=step_to_record) Upred_saved[g]->pop( Uacc[g], currentTimeStep );
+         else Uacc[g].set_to_zero();
          communicate_array( Uacc[g], g );
       }
       // Note, this assumes BCForcing is not time dependent, which is usually true
@@ -210,7 +215,10 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       evalCorrector( Um, a_Rho, Lk, F );
 
       for( int g=0 ; g < mNumberOfGrids ; g++ )
-	 Ucorr_saved[g]->pop( Um[g], currentTimeStep-2 );
+	     {
+           if(currentTimeStep>=step_to_record) Ucorr_saved[g]->pop( Um[g], currentTimeStep-2 );
+           else Um[g].set_to_zero();
+        }
 
       // set boundary data on U
       for(int g=0 ; g < mNumberOfGrids ; g++ )

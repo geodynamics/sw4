@@ -265,7 +265,6 @@ float_sw4 m_scalefactor;
 // Window for optimization, m_winL, m_winR given relative simulation time zero.
    float_sw4 m_winL, m_winR, m_winL2, m_winR2;
    bool   m_use_win, m_use_x, m_use_y, m_use_z;
-
 // quiet mode?
    bool mQuietMode;
 

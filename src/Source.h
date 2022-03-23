@@ -63,7 +63,7 @@ public:
 	 const char *name,
 	 bool topodepth, 
 	 int ncyc=1,
-	 float_sw4* pars=NULL, int npars=0, int* ipars=NULL, int nipars=0, bool correctForMu=false );
+	 float_sw4* pars=NULL, int npars=0, int* ipars=NULL, int nipars=0, bool correctForMu=false);
 
   Source(EW * a_ew, float_sw4 frequency, float_sw4 t0,
          float_sw4 x0, float_sw4 y0, float_sw4 z0,
@@ -74,7 +74,7 @@ public:
          const char *name,
 	 bool topodepth, 
 	 int ncyc=1,
-	 float_sw4* pars=NULL, int npars=0, int* ipars=NULL, int nipars=0, bool correctForMu=false );
+	 float_sw4* pars=NULL, int npars=0, int* ipars=NULL, int nipars=0, bool correctForMu=false);
 
  ~Source();
 
@@ -134,7 +134,7 @@ public:
   bool get_CorrectForMu(){return mShearModulusFactor;};
   void set_CorrectForMu(bool smf){mShearModulusFactor=smf;};
   float_sw4 getTimeOffset() const { return mT0; };
-
+  
  private:
   Source();
 

@@ -10,12 +10,43 @@
 #include "MaterialParameterization.h"
 
 #define STRINGSIZE 128
+#define FLOATMAX  1e20
 
 #ifdef USE_HDF5
 #include "sachdf5.h"
 #endif
 
 #define SQR(x) ((x)*(x))
+
+// find minimum time at the surface
+float time_to_record(float* t, int nx, int ny, int nz)
+{
+   float tmin=FLOATMAX;
+   unsigned long offset;
+   
+// top and bottom
+   offset = (nz-1)*nx*ny;
+   for(int i=0; i<nx*ny; i++) {
+      if(t[i] < tmin) tmin=t[i];
+      if(t[offset+i] < tmin) tmin = t[offset+i];
+   }
+
+// ymin and ymax
+  for(int k=0; k<nz; k++) {
+   for(int i=0; i<nx; i++) {
+      if(t[k*nx*ny+i] < tmin) tmin=t[k*nx*ny+i];
+      if(t[k*nx*ny+(ny-1)*nx+i] < tmin) tmin = t[k*nx*ny+(ny-1)*nx+i];
+   }}    
+ 
+// xmin and xmax
+  for(int k=0; k<nz; k++) {
+   for(int j=0; j<ny; j++) {
+      if(t[k*nx*ny+j*nx] < tmin) tmin=t[k*nx*ny+j*nx];
+      if(t[k*nx*ny+j*nx+nx-1] < tmin) tmin = t[k*nx*ny+j*nx+nx-1];
+   }} 
+   
+return tmin;
+}
 
 // traveltime estimation for time windowing
 void fastmarch_init (int n3,int n2,int n1);
@@ -129,11 +160,14 @@ int ntr = a_TimeSeries.size();
    //checkMinMax(nmpars/3, timep, "timep");mopt->m_misfit == Mopt::CROSSCORR
    // output to a file for QC
    char file[STRINGSIZE];
-   FILE *fd;
+   FILE *fd, *ft;
 
    if(myrank==0) {     
       sprintf(file, "%s/eikonal_time_%d.txt", a_TimeSeries[0]->getPath().c_str(),event);
       fd = fopen(file, "w");
+      sprintf(file, "%s/time_to_record_%d.txt", a_TimeSeries[0]->getPath().c_str(),event);
+      ft = fopen(file, "w");
+      if(ft==NULL) fprintf(stderr, "unable to open file:%s\n", file);
       fprintf(fd, "event count  station  x  y  z  tstart_vp  tend_vp  tstart_vs  tend_vs\n");
    }
 
@@ -179,7 +213,10 @@ int ntr = a_TimeSeries.size();
    }  // loop over traces
 
    if(myrank==0) fclose(fd);
-
+   if(myrank==0 && ft!=NULL) {
+      fprintf(ft, "%g\t%g\n", time_to_record(timep,nx,ny,nz), time_to_record(times,nx,ny,nz));
+      fclose(ft);
+      }
    if(timep) free(timep);
    if(times) free(times);
    if(cp) free(cp);
@@ -193,162 +230,5 @@ int ntr = a_TimeSeries.size();
  
 }
 
-/*
-void EW::solveTT_old( Source* a_Source, vector<TimeSeries*> & a_TimeSeries,
-		double* xs, int nmpars, MaterialParameterization* mp, int wave_mode, float win, float twinshift, int event, int myrank)
-{
-   int verbose=0;
-   int ix, iy, iz, nx, ny, nz, n;
-   nx = mp->getNX();
-   ny = mp->getNY();
-   nz = mp->getNZ();
-
-   if( verbose >= 1 && myrank == 0 )
-      std::cout << "source x0=" << a_Source->getX0() << " y0=" << a_Source->getY0() << " z0=" << a_Source->getZ0() << std::endl;
-   n= nmpars/nx/ny/nz;
-
-   if( verbose >= 1 && myrank == 0 )
-   {
-      std::cout << "mp->xmin=" << mp->getXmin() << " ymin=" << mp->getYmin() << " zmin=" << mp->getZmin() << std::endl;
-   std::cout << "nx=" << nx << " ny=" << ny << " nz=" << nz << " n=" << n << std::endl;
-   }
-
-float *cp =(float*)malloc(nmpars/n*sizeof(float));
-float *cs =(float*)malloc(nmpars/n*sizeof(float));
-
-float *sp =(float*)malloc(nmpars/n*sizeof(float));
-float *ss =(float*)malloc(nmpars/n*sizeof(float));
-float* timep =(float*)malloc(nmpars/n*sizeof(float));
-float* times =(float*)malloc(nmpars/n*sizeof(float));
-int *inflag =(int*)malloc(nmpars/n*sizeof(int));
 
 
-float_sw4 cpmin, cpmax;
-float_sw4 csmin, csmax;
-
-cpmin=1e20; cpmax=-1e20;
-csmin=1e20; csmax=-1e20;
-
-
-//#pragma omp parallel for
-	 for( size_t i = 0 ; i < nmpars/n ; i++ )
-	 {
-	      cs[i] = xs[n*i+n-2]; 
-          cp[i] = xs[n*i+n-1];
-          
-          ss[i] = 1./xs[n*i+n-2];
-          ss[i] = ss[i]*ss[i];
-          sp[i] = 1./xs[n*i+n-1];
-          sp[i] = sp[i]*sp[i];
-          
-          if(cp[i]<cpmin) cpmin=cp[i];
-          if(cp[i]>cpmax) cpmax=cp[i];
-          if(cs[i]<csmin) csmin=cs[i];
-          if(cs[i]>csmax) csmax=cs[i];
-	 }
-
-         if( verbose >= 1 && myrank == 0 )
-         {
-            std::cout << "solveTT cpmin=" << cpmin << " cpmax=" << cpmax << std::endl;
-            std::cout << "solveTT csmin=" << csmin << " csmax=" << csmax << std::endl;
-         }
-
-int ntr = a_TimeSeries.size();
-//std::cout << "nmpars=" << nmpars << " number of traces=" << ntr << std::endl;
-
-
-//std::cout << "mp xmin=" << mp->getXmin() << " hx=" << mp->getDx() << " nx=" << mp->getNX() << std::endl;
-    bool plane[3]={false,false,false};
-
-       fastmarch_init(mp->getNZ(),mp->getNY(),mp->getNX());     // nx fast 
-       fastmarch(timep,               // time 
-                sp,                   // slowness squared
-                inflag,               // in/front/out flag
-                plane,                // if plane source 
-                nz, ny, nx,           // dimensions
-                mp->getZmin(),mp->getYmin(),mp->getXmin(),     // origin
-                mp->getDz(),mp->getDy(),mp->getDx(),           // sampling
-                a_Source->getZ0(),a_Source->getY0(),a_Source->getX0(),     // source
-                1,1,1,                // box around the source
-                2);                   // accuracy order (1,2,3) 
-         
-         fastmarch(times,               // time 
-                ss,                   // slowness squared
-                inflag,               // in/front/out flag
-                plane,                // if plane source 
-                nz, ny, nx,           // dimensions
-                mp->getZmin(),mp->getYmin(),mp->getXmin(),     // origin
-                mp->getDz(),mp->getDy(),mp->getDx(),           // sampling
-                a_Source->getZ0(),a_Source->getY0(),a_Source->getX0(),     // source
-                1,1,1,                // box around the source
-                2);                   // accuracy order (1,2,3) 
-
-       fastmarch_close();
-
-   //checkMinMax(nmpars/3, timep, "timep");mopt->m_misfit == Mopt::CROSSCORR
-   // output to a file for QC
-   char file[STRINGSIZE];
-   FILE *fd;
-
-   if(myrank==0) {     
-      sprintf(file, "%s/time_event_%d.txt", a_TimeSeries[0]->getPath().c_str(),event);
-   fd = fopen(file, "w");
-   }
-
-   for(int ig=0; ig<ntr; ig++) {
-   //
-    ix = (a_TimeSeries[ig]->getX() - mp->getXmin())/mp->getDx()+0.5;
-    iy = (a_TimeSeries[ig]->getY() - mp->getYmin())/mp->getDy()+0.5;
-    iz = (a_TimeSeries[ig]->getZ() - mp->getZmin())/mp->getDz()+0.5;
-
-    //std::cout << "trace ig=" << ig+1 << " x=" << a_TimeSeries[ig]->getX() << " y=" << a_TimeSeries[ig]->getY() <<  " tp=" 
-    //   << timep[iz*nx*ny+iy*nx+ix] << " ts=" << times[iz*nx*ny+iy*nx+ix] << std::endl;
-
-   // set window 
-   switch(wave_mode) {
-   case 0:  // P-wave only
-        a_TimeSeries[ig]->set_window(timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win, 
-       timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win);
-
-       if(myrank==0) fprintf(fd, "%d   %d\t%s\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
-               event, ig+1, a_TimeSeries[ig]->getStationName().c_str(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
-               timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win, 
-               timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win);
-         break;
-   case 1:  // S-wave only
-       a_TimeSeries[ig]->set_window(times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win, 
-       times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win);
-
-       if(myrank==0) fprintf(fd, "%d   %d\t%s\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
-               event, ig+1, a_TimeSeries[ig]->getStationName().c_str(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
-               times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win, 
-               times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win);
-
-         break;
-   default:
-       a_TimeSeries[ig]->set_window(timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win, 
-       times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win);
-
-       if(myrank==0) fprintf(fd, "%d   %d\t%s\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
-               event, ig+1, a_TimeSeries[ig]->getStationName().c_str(), a_TimeSeries[ig]->getX(),a_TimeSeries[ig]->getY(),a_TimeSeries[ig]->getZ(),
-               timep[iz*nx*ny+iy*nx+ix]+win*twinshift, timep[iz*nx*ny+iy*nx+ix]+win, 
-               times[iz*nx*ny+iy*nx+ix]+win*twinshift, times[iz*nx*ny+iy*nx+ix]+win);
-     }
-   }  // loop over traces
-
-   if(myrank==0) fclose(fd);
-
-
-   if(timep) free(timep);
-   if(times) free(times);
-   if(cp) free(cp);
-   if(cs) free(cs);
-   if(sp) free(sp);
-   if(ss) free(ss);
-   if(inflag) free(inflag);
-
-   if( verbose >= 1 && myrank == 0 )
-      std::cout << "solveTT completed" << std::endl;
- 
-}
-*/

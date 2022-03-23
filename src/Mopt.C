@@ -55,6 +55,7 @@ Mopt::Mopt( EW* a_ew )
    m_vs_min = -100.;
    m_vs_max = -100.;
    m_freq_peakpower=0.0;
+   m_skip_precursor=false;
    m_wave_mode=2;  // default to both P and S waves otherwise 0 for P and 1 for S only
    m_win_mode =0; // default, use windows stored on hdf5-file.
    m_twin_shift=-0.5;
@@ -533,6 +534,13 @@ void Mopt::processMrun( char* buffer )
             filterpar = 1.0/12.0;
          }
          m_ew->set_filterpar(filterpar);
+      }
+      else if( startswith("skip_precursor=",token) )
+      {
+      token += 15;
+	   int n = strlen(token);
+	   m_skip_precursor = strncmp("yes",token,n)== 0 || strncmp("true",token,n)==0 || strncmp("1",token,n)== 0;
+      if(m_myrank == 0) cout << "skip_precursor=" << m_skip_precursor << endl;
       }
       else if( startswith("wave_mode=",token) )
       {
