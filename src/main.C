@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
   // auto device_allocator = rma.getAllocator("DEVICE");
 #ifdef ENABLE_HIP
   const size_t pool_size =
-      static_cast<size_t>(10) * 1024 * 1024 * 1024;  //+102*1024*1024;
+      static_cast<size_t>(20) * 1024 * 1024 * 1024;  //+102*1024*1024;
 #else
   const size_t pool_size =
       static_cast<size_t>(15) * 1024 * 1024 * 1024;  //+102*1024*1024;
@@ -170,8 +170,11 @@ int main(int argc, char **argv) {
   auto pooled_allocator =
       rma.makeAllocator<umpire::strategy::QuickPool, true>(
           string("UM_pool"), pref_allocator, pool_size, 1024 * 1024, alignment);
-
+#ifdef ENABLE_HIP
+  const size_t pool_size_small = static_cast<size_t>(1024) * 1024 * 1024;
+#else
   const size_t pool_size_small = static_cast<size_t>(250) * 1024 * 1024;
+#endif
 
   // This is a temporary workaround to the issue of Umpire always using device 0
   // for cudaMemAdvises using AllocationAdvisor.
@@ -183,7 +186,11 @@ int main(int argc, char **argv) {
           string("UM_pool_temps"), pref_allocator, pool_size_small, 1024 * 1024,
           alignment);
 
+#ifdef ENABLE_HIP
+  const size_t object_pool_size = static_cast<size_t>(3) *1024* 1024 * 1024;
+#else
   const size_t object_pool_size = static_cast<size_t>(500) * 1024 * 1024;
+#endif
 
   // rma.makeAllocator<umpire::strategy::MonotonicAllocationStrategy,false>(string("UM_object_pool"),
   //					   object_pool_size,allocator);
