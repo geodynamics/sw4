@@ -105,6 +105,7 @@ int main(int argc, char **argv) {
 #else
   MPI_Init(&argc, &argv);
 #endif
+  
 
 #ifdef SW4_USE_SCR
   SCR_Configf("SCR_DEBUG=%d",1);
@@ -116,6 +117,11 @@ int main(int argc, char **argv) {
   SCR_Init();
 #endif
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+  if (!myRank){
+  time_t now;
+  time(&now);
+  printf("After MPI_Init %s \n",ctime(&now));
+}
 
   MPI_Info info;
   MPI_Comm shared_comm;
@@ -420,6 +426,11 @@ int main(int argc, char **argv) {
   SCR_Finalize();
 #endif
 
+  if (!myRank){
+  time_t now;
+  time(&now);
+  printf("Pre MPI_Finalize %s \n",ctime(&now));
+}
   // Stop MPI
   MPI_Finalize();
   // std::cout<<"MPI_Finalize done\n"<<std::flush;
