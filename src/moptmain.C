@@ -27,6 +27,8 @@
 #include <sachdf5.h>
 #endif
 
+#include "util.h"
+
 #define STRINGSIZE 128
 
 void usage(string thereason)
@@ -368,6 +370,7 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
       //      delete ucorr_saved[g];
       //   }
 
+     MPI_Barrier(simulation.m_1d_communicator);
    }  // loop over events
    
    //   int myRank;
@@ -565,6 +568,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          sw4_profile->time_stamp("forward solve" );
          simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory, phcase, pseudo_hessian );
          sw4_profile->time_stamp("done forward solve" );
+         cout << "mu min=" << mu[0].minimum() << " max=" << mu[0].maximum() << endl;
+
 // Compute misfit, 'diffs' will hold the source for the adjoint problem
 
 // 1. Copy computed time series into diffs[m]
@@ -576,6 +581,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
                
             TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc" );
             diffs.push_back(elem);
+            //if(elem->myPoint()) cout <<" diffs min=" << elem->getMinValue(0) <<  " max=" << elem->getMaxValue(0) << endl;
          }
 
 
@@ -610,6 +616,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          sw4_profile->time_stamp("backward+adjoint solve" );
          simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, e );
          sw4_profile->time_stamp("done backward+adjoint solve" );
+         cout << "gMu min=" << gMu[0].minimum() << " max=" << gMu[0].maximum() << endl;
+
          //         int ip=67, jp=20, kp=20;
          //         if( simulation.interior_point_in_proc(ip,jp,0))
          //            std::cout << "mugrad = " << gMu[0](ip,jp,kp) << " rhograd = " << gRho[0](ip,jp,kp) << std::endl;
@@ -618,6 +626,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
             dfs[m+nspar] += dfsevent[m];
          for( int m=0 ; m < nmpard ; m++ )
             dfm[m] += dfmevent[m];
+
+         checkMinMax(nmpard, dfm, "dfm");
 
 // 3. Give back memory
          for( unsigned int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )

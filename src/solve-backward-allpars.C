@@ -363,6 +363,9 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    }
    for( int s=0 ; s < point_sources.size() ; s++ )
       delete point_sources[s];
+
+   MPI_Barrier(m_1d_communicator);
+
 }
 
 //-----------------------------------------------------------------------

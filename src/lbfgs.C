@@ -16,6 +16,7 @@
 #include <sachdf5.h>
 #endif
 
+#include "util.h"
 using namespace std;
 
 //-----------------------------------------------------------------------
@@ -859,6 +860,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 	 if( myRank == 0 )
 	    cout << "Line search.. " << endl;
 
+MPI_Barrier(simulation.m_1d_communicator);
 	 linesearch( simulation, GlobalSources, GlobalTimeSeries, GlobalObservations,
 		     nspar, nmpars, xs, nmpard_global, nmpard, xm, f, dfs, dfm, da, dam,
 		     fabs(alpha), 10.0, tolerance, xa, xam, fp, sf, sfm, myRank,
@@ -928,9 +930,12 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
       //	 for( int i=0 ; i < ns ; i++ )
       //	    cout << " i="  << i << " " << ds[i] << " " << xs[i] << endl;
 
+checkMinMax(nmpard, xm, "xm");
+MPI_Barrier(simulation.m_1d_communicator);
       compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 			GlobalObservations, f, dfps, dfpm, myRank, mopt, it );
-
+MPI_Barrier(simulation.m_1d_communicator);
+checkMinMax(nmpard, dfpm, "dfpm");
 
       // Check Wolfe condition:
       double sc[2]={0,0};
