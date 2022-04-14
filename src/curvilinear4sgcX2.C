@@ -72,9 +72,6 @@ void curvilinear4sgX1_ci(
     a1 = 1;
     sgn = -1;
   }
-#ifdef ENABLE_CUDA
-#define NO_COLLAPSE 1
-#endif
 
   const float_sw4 i6 = 1.0 / 6;
   const float_sw4 tf = 0.75;
@@ -120,7 +117,7 @@ void curvilinear4sgX1_ci(
 // #pragma omp simd
 // #pragma ivdep
 //         for (int i = ifirst + 2; i <= ilast - 2; i++) {
-#if defined(NO_COLLAPSE)
+#if !defined(RAJA_ONLY)
     // LOOP -1
     // 32,4,2 is 4% slower. 32 4 4 does not fit
     Range<16> II(ifirst + 2, ilast - 1);

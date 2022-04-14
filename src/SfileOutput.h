@@ -37,7 +37,6 @@
 #include <string>
 #include <vector>
 
-#include "Image.h"
 #include "Parallel_IO.h"
 #include "Sarray.h"
 #include "boundaryConditionTypes.h"

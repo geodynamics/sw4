@@ -56,7 +56,6 @@
 
 int createAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id) {
   hid_t attr, dcpl;
-  /* herr_t ret; */
 
 #ifdef USE_DSET_ATTR
   dcpl = H5Pcreate(H5P_DATASET_CREATE);
@@ -226,19 +225,6 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data,
 
   /* etime = MPI_Wtime(); */
 
-  /* if (!isIncAzWritten) { */
-  /* #ifdef USE_DSET_ATTR */
-  /*   std::string newname = name; */
-  /*   std::string incname = newname + "CMPINC"; */
-  /*   std::string azname  = newname + "CMPAZ"; */
-  /*   openWriteAttr(loc, incname.c_str(), H5T_NATIVE_FLOAT, &cmpinc); */
-  /*   openWriteAttr(loc, azname.c_str(), H5T_NATIVE_FLOAT, &cmpaz); */
-  /* #else */
-  /*   openWriteAttr(dset, "CMPINC", H5T_NATIVE_FLOAT, &cmpinc); */
-  /*   openWriteAttr(dset, "CMPAZ", H5T_NATIVE_FLOAT, &cmpaz); */
-  /* #endif */
-  /* } */
-
   if (isLast) openWriteAttr(loc, "NPTS", H5T_NATIVE_INT, &total_npts);
 
   /* etime1 = MPI_Wtime(); */
@@ -258,7 +244,6 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data,
   }
 
   /* H5Dflush(dset); */
-
   H5Pclose(dxpl);
   if (filespace != H5S_ALL) H5Sclose(filespace);
   H5Dclose(dset);
@@ -526,7 +511,6 @@ int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
 
     for (int i = 0; i < ndset; i++) {
       total_dims = (hsize_t)(totalSteps / TimeSeries[ts]->getDownSample());
-      if (totalSteps % TimeSeries[ts]->getDownSample() != 0) total_dims++;
       if (total_dims == 0) {
         printf("%s: Error with dataset length 0\n", __func__);
         return -1;

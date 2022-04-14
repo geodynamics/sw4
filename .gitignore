@@ -9,13 +9,15 @@ build/
 
 *.toc
 
-*.synctex.gz
+*.gz
 
-optimize/
+optimize*/
 
-debug/
+debug*/
 
 *.o
 
 *.make
+
+configs/make.inc
 

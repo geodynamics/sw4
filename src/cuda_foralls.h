@@ -19,7 +19,7 @@ __global__ void forallkernel(int start, int N, Func f) {
 }
 template <typename LoopBody>
 void forall(int start, int end, LoopBody &&body) {
-  int tpb = 32;
+  int tpb = 1024;
   int blocks = (end - start) / tpb;
   blocks = ((end - start) % tpb == 0) ? blocks : blocks + 1;
   // printf("Launching the kernel blocks= %d tpb= %d \n",blocks,tpb);
@@ -171,23 +171,28 @@ void forall3async(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
   // std::cout<<"forall launch tpb"<<irange.tpb<<" "<<jrange.tpb<<"
   // "<<krange.tpb<<"\n"; std::cout<<"forall launch blocks"<<irange.blocks<<"
   // "<<jrange.blocks<<" "<<krange.blocks<<"\n";
+  static int firstcall = 0;
+  if (!firstcall) {
+    firstcall = 1;
+    int minGridSize, maxBlockSize;
+    if (cudaOccupancyMaxPotentialBlockSize(&minGridSize, &maxBlockSize,
+                                           forall3kernel<LoopBody>, 0,
+                                           0) != cudaSuccess) {
+      std::cerr << "cudaOccupancyMaxPotentialBlockSize Failed\n";
+      abort();
+    } else {
+      // std::cerr<<"Min grid size "<<minGridSize<<" maxblock
+      // size"<<maxBlockSize<<" Actual grid =
+      // "<<irange.blocks*jrange.blocks*krange.blocks<<"\n";
+    }
+    if ((irange.tpb * jrange.tpb * krange.tpb) > maxBlockSize) {
+      std::cerr << " Block size too large in forall3async"
+                << (irange.tpb * jrange.tpb * krange.tpb) << " > "
+                << maxBlockSize << "n" << std::flush;
+      abort();
+    }
+  }
 
-  int minGridSize, maxBlockSize;
-  if (cudaOccupancyMaxPotentialBlockSize(&minGridSize, &maxBlockSize,
-                                         forall3kernel<LoopBody>, 0,
-                                         0) != cudaSuccess) {
-    std::cerr << "cudaOccupancyMaxPotentialBlockSize Failed\n";
-    abort();
-  } else {
-    // std::cerr<<"Min grid size "<<minGridSize<<" maxblock size
-    // "<<maxBlockSize<<"\n";
-  }
-  if ((irange.tpb * jrange.tpb * krange.tpb) > maxBlockSize) {
-    std::cerr << " Block size too large in forall3async"
-              << (irange.tpb * jrange.tpb * krange.tpb) << " > " << maxBlockSize
-              << "n" << std::flush;
-    abort();
-  }
   forall3kernel<<<blocks, tpb>>>(irange.start, irange.end, jrange.start,
                                  jrange.end, krange.start, krange.end, body);
 }
@@ -511,5 +516,206 @@ void forall3async(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
   forall3kernel<N><<<blocks, tpb>>>(t, irange.start, irange.end, jrange.start,
                                     jrange.end, krange.start, krange.end, body);
 }
+
+template <int N, typename Tag, typename T1, typename T2, typename T3,
+          typename LoopBody>
+void forall3(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
+  forall3async<N, Tag>(t, irange, jrange, krange, body);
+  cudaStreamSynchronize(0);
+}
+
+// The multiforall for kernel fusion
+template <typename T, typename F0, typename F1, typename F2, typename F3>
+__global__ void multiforallkernel(T start0, T end0, F0 f0, T start1, T end1,
+                                  F1 f1, T start2, T end2, F2 f2, T start3,
+                                  T end3, F3 f3) {
+  for (T i = start0 + threadIdx.x + blockIdx.x * blockDim.x; i < end0;
+       i += blockDim.x * gridDim.x)
+    f0(i);
+  for (T i = start1 + threadIdx.x + blockIdx.x * blockDim.x; i < end1;
+       i += blockDim.x * gridDim.x)
+    f1(i);
+  for (T i = start2 + threadIdx.x + blockIdx.x * blockDim.x; i < end2;
+       i += blockDim.x * gridDim.x)
+    f2(i);
+  for (T i = start3 + threadIdx.x + blockIdx.x * blockDim.x; i < end3;
+       i += blockDim.x * gridDim.x)
+    f3(i);
+}
+template <int N, typename T, typename LB0, typename LB1, typename LB2,
+          typename LB3>
+void multiforall(T start0, T end0, LB0 &&body0, T start1, T end1, LB1 &&body1,
+                 T start2, T end2, LB2 &&body2, T start3, T end3, LB3 &&body3) {
+  int blocks = 80 * 2048 / N;  // WARNING HARDWIRED FOR V100
+  multiforallkernel<<<blocks, N>>>(start0, end0, body0, start1, end1, body1,
+                                   start2, end2, body2, start3, end3, body3);
+}
+
+// Generalized mforall kernel
+template <typename T, typename LoopBody>
+__device__ inline void runner(T start, T end, LoopBody f) {
+  for (T i = start + threadIdx.x + blockIdx.x * blockDim.x; i < end;
+       i += blockDim.x * gridDim.x)
+    f(i);
+}
+template <typename T, typename LoopBody, class... Args>
+__device__ inline void runner(T start, T end, LoopBody f, Args... args) {
+  for (T i = start + threadIdx.x + blockIdx.x * blockDim.x; i < end;
+       i += blockDim.x * gridDim.x)
+    f(i);
+  runner(args...);
+}
+
+template <typename T, typename LoopBody, class... Args>
+__global__ void gmforallkernel(T start, T end, LoopBody body, Args... args) {
+  runner(start, end, body, args...);
+}
+
+// Generalized mforall
+
+template <int N, typename T, typename LoopBody, class... Args>
+void gmforall(T start, T end, LoopBody &&body, Args... args) {
+  // std::cout<<"Start is "<<start<<"\n";
+  int blocks = 80 * 2048 / N;  // WARNING HARDWIRED FOR V100
+  // multiforallkernel<<<blocks,N>>>(start,end, body, args...);
+  gmforallkernel<<<blocks, N>>>(start, end, body, args...);
+}
+
+// Generalized gmforall3async
+
+class MRange {
+ public:
+  int i, j, k;
+};
+
+template <typename T, typename LoopBody>
+__device__ inline void runner3(T start, T end, LoopBody f) {
+  for (decltype(start.i) i = start.i + threadIdx.x + blockIdx.x * blockDim.x;
+       i < end.i; i += blockDim.x * gridDim.x)
+    for (decltype(start.j) j = start.j + threadIdx.y + blockIdx.y * blockDim.y;
+         j < end.j; j += blockDim.y * gridDim.y)
+      for (decltype(start.k) k =
+               start.k + threadIdx.z + blockIdx.z * blockDim.z;
+           k < end.k; k += blockDim.z * gridDim.z)
+        f(i, j, k);
+}
+template <typename T, typename LoopBody, class... Args>
+__device__ inline void runner3(T start, T end, LoopBody f, Args... args) {
+  for (decltype(start.i) i = start.i + threadIdx.x + blockIdx.x * blockDim.x;
+       i < end.i; i += blockDim.x * gridDim.x)
+    for (decltype(start.j) j = start.j + threadIdx.y + blockIdx.y * blockDim.y;
+         j < end.j; j += blockDim.y * gridDim.y)
+      for (decltype(start.k) k =
+               start.k + threadIdx.z + blockIdx.z * blockDim.z;
+           k < end.k; k += blockDim.z * gridDim.z)
+        f(i, j, k);
+  runner3(args...);
+}
+
+template <typename T, typename LoopBody, class... Args>
+__global__ void gmforallkernel3(T start, T end, LoopBody body, Args... args) {
+  runner3(start, end, body, args...);
+}
+
+template <int I, int J, int K, typename T, typename LoopBody, class... Args>
+void gmforall3async(T &start, T &end, LoopBody &&body, Args... args) {
+  //  int blocks=80 * 2048/N; // WARNING HARDWIRED FOR V100
+  dim3 tpb(I, J, K);
+  dim3 blocks(64 / I, 64 / J, 40 / K);  // WARNING HARDWIRED FOR V100 PBUGS
+
+  gmforallkernel3<<<blocks, tpb>>>(start, end, body, args...);
+}
+
+// forll3asyncV
+template <int WGS, int OCC, typename Tag, typename Func>
+__launch_bounds__(WGS) __global__
+    void forall3kernelV(Tag t, const int start0, const int N0, const int start1,
+                        const int N1, const int start2, const int N2, Func f) {
+  int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
+  int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
+  int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
+  if ((tid0 < N0) && (tid1 < N1) && (tid2 < N2)) f(t, tid0, tid1, tid2);
+}
+
+template <int WGS, int OCC, typename Tag, typename T1, typename T2, typename T3,
+          typename LoopBody>
+void forall3asyncV(Tag &t, T1 &irange, T2 &jrange, T3 &krange,
+                   LoopBody &&body) {
+  if (irange.invalid || jrange.invalid || krange.invalid) return;
+  dim3 tpb(irange.tpb, jrange.tpb, krange.tpb);
+  dim3 blocks(irange.blocks, jrange.blocks, krange.blocks);
+  forall3kernelV<WGS, OCC><<<blocks, tpb>>>(t, irange.start, irange.end,
+                                            jrange.start, jrange.end,
+                                            krange.start, krange.end, body);
+}
+
+// The Split Fuse ( SF) loop functions
+#ifdef SW4_USE_SFK
+template <int N, typename Tag, typename... Func>
+__global__ void forall3kernelSF(Tag t, const int start0, const int N0,
+                                const int start1, const int N1,
+                                const int start2, const int N2, Func... f) {
+  const int STORE = 5;
+// NOTE: Shared memory is slightly slower, probably due to cache reduction
+//#define USE_SHARED_MEMORY 1
+#ifdef USE_SHARED_MEMORY
+  auto off = (threadIdx.x + blockDim.x * threadIdx.y +
+              blockDim.x * blockDim.y * threadIdx.z) *
+             STORE;
+  __shared__ double sma[512 * STORE];
+  double *carray = sma + off;
+#else
+  double carray[STORE];
+
+#endif
+
+  // printf("%d \n",off);
+  int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
+  int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
+  int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
+  if ((tid0 < N0) && (tid1 < N1) && (tid2 < N2)) {
+    (f(t, carray, tid0, tid1, tid2), ...);
+  }
+}
+
+template <int N, typename Tag, typename T1, typename T2, typename T3,
+          typename... LoopBodies>
+void forall3asyncSF(Tag &t, T1 &irange, T2 &jrange, T3 &krange,
+                    LoopBodies &&... bodies) {
+  if (irange.invalid || jrange.invalid || krange.invalid) return;
+  dim3 tpb(irange.tpb, jrange.tpb, krange.tpb);
+  dim3 blocks(irange.blocks, jrange.blocks, krange.blocks);
+
+  // cudaEvent_t start, stop1,stop2,stop3;
+  // cudaEventCreate(&start);
+  // cudaEventCreate(&stop1);
+  // cudaEventCreate(&stop2);
+  // cudaEventCreate(&stop3);
+  // bool TimeKernels=false;
+  // if (TimeKernels){
+  // insertEvent(start);
+  // // Launch each body i a separate kernel. Gives incorrect results due to
+  // shared memory not persisting between kernels (forall3kernelSM<N><<<blocks,
+  // tpb>>>(t, irange.start, irange.end, jrange.start,
+  // jrange.end, krange.start, krange.end, bodies),...);
+  // }
+  // insertEvent(stop1);
+  // Launch all bodies inside 1 kernel. Regs use is 6 more than biggest kernels
+  forall3kernelSF<N><<<blocks, tpb>>>(t, irange.start, irange.end, jrange.start,
+                                      jrange.end, krange.start, krange.end,
+                                      bodies...);
+  // insertEvent(stop2);
+
+  // float ms;
+  // if (TimeKernels) {
+  //   ms = timeEvent(start,stop1);
+  //   std::cout << "Kernel (Multiple)"<<t.value<<" runtime " << ms << " ms Best
+  //   = "<<t.best<<" factor = "<<int(round(ms/t.best))<<" \n";
+  // }
+  // ms = timeEvent(stop1,stop2);
+  // std::cout << "Kernel (Single)"<<t.value<<" runtime " << ms << " ms Best =
+  // "<<t.best<<" factor = "<<int(round(ms/t.best))<<" \n";
+}
+#endif  // #ifdef SW4_USE_SFK
 
 #endif  // Guards

@@ -1,4 +1,4 @@
-proj = yes
+proj_6 = yes
 FC = gfortran
 LINKER = mpicxx
 HOST_COMPILER = mpicxx
@@ -11,7 +11,7 @@ raja_cuda=yes
 #RAJA_LOCATION = /autofs/nccs-svm1_home1/rameshp/RAJA/RAJA-0.7.0/install
 RAJA_LOCATION = /autofs/nccs-svm1_home1/rameshp/RAJA/RAJA-0.7.0/install_cuda10.1.105
 RAJA_LOCATION = /autofs/nccs-svm1_home1/rameshp/RAJA/RAJA-v0.11.0/install
-PROJ_HOME = /gpfs/alpine/geo130/proj-shared/sw4_raja/LIBS/proj-5.0.0/install
+PROJ_HOME = /gpfs/alpine/geo130/proj-shared/proj-8.1.1/install
 #UMPIRE_HOME = /gpfs/alpine/geo130/proj-shared/sw4_raja/LIBS/Umpire/install_summit_gcc4.8.5
 #UMPIRE_HOME = /gpfs/alpine/geo130/proj-shared/sw4_raja/LIBS/Umpire/install_summit_xl
 UMPIRE_HOME = /gpfs/alpine/geo130/proj-shared/sw4_raja/Umpire/umpire-0.3.3/install_summit_xl

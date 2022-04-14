@@ -1,0 +1,105 @@
+FC = gfortran
+LINKER = mpicxx
+CXX = $(PREP) nvcc
+GIT_VERSION := "$(shell git describe --abbrev=4 --dirty --always --tags)"
+
+proj = yes
+ckernel=yes 
+openmp=yes
+raja_cuda=yes
+umpire = yes
+fftw = yes
+hdf5= yes
+spill_warns = no
+caliper=no
+raja_only=no
+lto=no
+expopts=yes
+
+RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-0.7.0/install_rzansel
+RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-0.7.0/install_rzansel10.1.168
+RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.10.1/install_fresh
+RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.11.0/install_new
+#RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.11.0/install
+#RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.13.0/install
+RAJA_HOME = /usr/workspace/wsrzd/ramesh/RAJA/RAJA-v0.13.0/install_gcc_cuda11.1.1
+
+
+PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/SW4/proj-5.0.0/install170818
+
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-0.3.2/install_rzansel
+UMPIRE_HOME=/usr/workspace/wsrzd/ramesh/UMPIRE/umpire-0.3.3/install_rzansel
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-0.3.3/install_rzansel10.1.168
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-1.1.0/install
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-3.0.0/install
+#UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-5.0.0/install_tools
+UMPIRE_HOME = /usr/workspace/wsrzd/ramesh/UMPIRE/umpire-5.0.0/install_gcc_cuda11.1.1
+
+HDF5_HOME = /p/gpfs1/ramesh/SW4/HDF_TEST/HDF/CMake-hdf5-1.12.0/build/HDF5-1.12.0-Linux/HDF_Group/HDF5/1.12.0
+HDF5_HOME = /p/gpfs1/ramesh/SW4/HDF_TEST/HDF/CMake-hdf5-1.10.6/build/HDF5-1.10.6-Linux/HDF_Group/HDF5/1.10.6
+
+CALIPER_HOME =/usr/workspace/wsrzd/ramesh/Caliper/Caliper/install
+CALIPER_HOME =/usr/workspace/wsrzd/ramesh/Caliper/Caliper-2.5.0/install
+CALIPER_HOME =/usr/workspace/wsrzd/ramesh/Caliper/Caliper-2.5.0/install_cupti
+
+EXTRA_FORT_FLAGS = 
+
+MORE_FLAGS = -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_STAGED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC}  --Werror cross-execution-space-call -DCAMP_USE_PLATFORM_DEFAULT_STREAM=1 -DSW4_GIT_VERSION=\"$(GIT_VERSION)\" 
+MORE_LINK_FLAGS = 
+
+ifeq ($(umpire),yes)
+MORE_FLAGS+= -DSW4_USE_UMPIRE=1 -I $(UMPIRE_HOME)/include
+MORE_LINK_FLAGS+=  -L$(UMPIRE_HOME)/lib -lumpire
+endif 
+
+ifeq ($(fftw),yes)
+MORE_FLAGS+= -DENABLE_FFTW=1 -I $(FFTW_DIR)/include
+MORE_LINK_FLAGS+=-L $(FFTW_DIR)/lib -Wl,-rpath=$(FFTW_DIR)/lib -lfftw3_mpi -lfftw3
+endif 
+
+ifeq ($(hdf5),yes)
+MORE_FLAGS+= -DUSE_HDF5=1 -I $(HDF5_HOME)/include
+MORE_LINK_FLAGS+= -L $(HDF5_HOME)/lib -Wl,-rpath=$(HDF5_HOME)/lib -lhdf5_hl -lhdf5
+endif 
+ 
+ifeq ($(openmp),yes)
+MORE_FLAGS+=  -Xcompiler="-fopenmp"
+MORE_LINK_FLAGS+= 
+else
+MORE_FLAGS+=  -Xcompiler=""
+endif 
+
+ifeq ($(spill_warns),yes)
+MORE_FLAGS+=  -Xptxas -v,--warn-on-spills
+endif 
+
+ifeq ($(raja_only),yes)
+MORE_FLAGS+=  -DRAJA_ONLY=1
+endif 
+
+ifeq ($(caliper),yes)
+MORE_FLAGS+= -DENABLE_CALIPER=1 -I$(CALIPER_HOME)/include
+MORE_LINK_FLAGS+= -Wl,-rpath=$(CALIPER_HOME)/lib64 -L $(CALIPER_HOME)/lib64 -lcaliper
+endif 
+
+ifeq ($(proj),yes)
+MORE_FLAGS+= -I$(PROJ_HOME)/include
+MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib64  -L$(PROJ_HOME)/lib64 -lproj
+endif 
+
+ifeq ($(lto),yes)
+MORE_FLAGS+= -dlto
+LINKFLAGS +=  -dlto
+DLINKFLAGS +=  -dlto
+endif
+
+ifeq ($(expopts),yes)
+MORE_FLAGS += -DSW4_USE_CMEM=1 -DSW4_GHCOF_NO_GP_IS_ZERO=1 -DSW4_EXPT_3=1
+endif
+
+LINKFLAGS =  -lgomp -lgfortran 
+DLINKFLAGS = -arch=sm_70 
+
+EXTRA_CXX_FLAGS =  -O3 -use_fast_math $(MORE_FLAGS) -DDISABLE_PREFETCH  --extended-lambda -ccbin mpicxx -std=c++17 -restrict -arch=sm_70 -I $(CUDA_HOME)/include -I$(RAJA_HOME)/include  --x cu  -DENABLE_CUDA -dc 
+
+EXTRA_LINK_FLAGS =   -dc -Wl,-rpath=${LAPACK_DIR} -L ${LAPACK_DIR}  -llapack -lblas  -L $(CUDA_HOME)/lib64 -lcudart -lnvToolsExt -lcuda -L $(RAJA_HOME)/lib -lRAJA  -lcudadevrt -L/usr/lib64/nvidia -lnvidia-ml  $(MORE_LINK_FLAGS) 

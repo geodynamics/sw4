@@ -1,0 +1,14 @@
+#!/bin/bash
+#SBATCH -A GEO130_crusher
+#SBATCH -J SW4SCR
+#SBATCH -o %x-%j.out
+#SBATCH -t 00:25:00
+#SBATCH -p batch
+#SBATCH -N 1
+
+export MPICH_GPU_SUPPORT_ENABLED=1
+export SCR_DEBUG=1
+export SCR_CACHE_BYPASS=0
+export SCR_FLUSH=0
+srun -N 1 -n 8 -c8 --gpus-per-task=1 --gpu-bind=closest -p batch ./sw4 checkpoint.in.summit
+srun -N 1 -n 8 -c8 --gpus-per-task=1 --gpu-bind=closest -p batch ./sw4 restart.in.summit

@@ -313,11 +313,11 @@ void MaterialPfile::set_material_properties(std::vector<Sarray> &rho,
       mEW->communicate_array(cs[g], g);
       mEW->communicate_array(cp[g], g);
       if (m_qf) {
-         if (qp[g].is_defined()) mEW->communicate_array(qp[g], g);
-         if (qs[g].is_defined()) mEW->communicate_array(qs[g], g);
+        if (qp[g].is_defined()) mEW->communicate_array(qp[g], g);
+        if (qs[g].is_defined()) mEW->communicate_array(qs[g], g);
       }
     }  // end for g (curvilinear)
-  }  // end if topographyExists()
+  }    // end if topographyExists()
 
   //  extrapolation is now done in WPP2:set_materials()
 

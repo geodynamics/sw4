@@ -133,8 +133,13 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
 
   // 1. Adjust z if depth below topography is given
   if (m_zRelativeToTopography && a_ew->topographyExists()) {
-    a_ew->m_gridGenerator->interpolate_topography(a_ew, mX, mY, m_zTopo,
-                                                  a_ew->mTopoGridExt);
+    float_sw4 zTopoLocal;
+    if (a_ew->m_gridGenerator->interpolate_topography(a_ew, mX, mY, zTopoLocal,
+                                                      a_ew->mTopoGridExt) < 0)
+      zTopoLocal = -1e38;
+    MPI_Allreduce(&zTopoLocal, &m_zTopo, 1, a_ew->m_mpifloat, MPI_MAX,
+                  MPI_COMM_WORLD);
+
     mZ += m_zTopo;
   } else
     m_zTopo = 0;
@@ -1182,15 +1187,11 @@ void TimeSeries::write_hdf5_format(int npts, hid_t grp, float* y, float btime,
 
   write_npts = npts;
   write_data = y;
+
   if (mDownSample > 1) {
-    write_npts = write_npts / mDownSample;
-    if (write_npts % mDownSample != 0) write_npts++;
+    write_npts = (int)npts / mDownSample;
     write_data = new float[write_npts];
-    int j = 0;
-    for (int i = 0; i < npts; i += mDownSample) {
-      if (j >= write_npts) break;
-      write_data[j++] = y[i];
-    }
+    for (int i = 0; i < write_npts; i++) write_data[i] = y[i * mDownSample];
   }
 
   // write only new data
@@ -1357,19 +1358,27 @@ void TimeSeries::readFile(EW* ew, bool ignore_utc) {
   // building the file name...
   //
   stringstream filePrefix;
-  if (ew->getObservationPath(m_event) != "./")
+  if ((ew->getObservationPath(m_event) != "./") &&
+      (ew->getObservationPath(m_event) != ""))
     filePrefix << ew->getObservationPath(m_event);
   else if (mIsRestart)
-    filePrefix << ew->getPath() << "/";
+    filePrefix << ew->getPath();
+
   filePrefix << m_fileName << ".txt";
 
   if (m_myPoint && m_usgsFormat) {
     bool debug = false;
     FILE* fd = fopen(filePrefix.str().c_str(), "r");
-    if (fd == NULL)
-      cout << "ERROR: observed data file " << filePrefix.str() << " not found "
+    if (fd == NULL) {
+      cerr << " ERROR: observed data file " << filePrefix.str() << " not found "
            << endl;
-    else {
+      cout << " ERROR: observed data file " << filePrefix.str() << " not found "
+           << std::flush;
+      cout << "ERROR PATH " << ew->getPath() << " flag =  " << mIsRestart
+           << "\n"
+           << std::flush;
+      abort();
+    } else {
       int bufsize = 1024;
       char* buf = new char[bufsize];
 

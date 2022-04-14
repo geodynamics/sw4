@@ -49,13 +49,22 @@ class RandomizedMaterial {
  public:
   RandomizedMaterial(EW* a_ew, float_sw4 zmin, float_sw4 zmax,
                      float_sw4 corrlen, float_sw4 corrlenz, float_sw4 hurst,
-                     float_sw4 sigma, unsigned int seed = 0);
+                     float_sw4 sigma, float_sw4 rhoamplitude = 0.0,
+                     bool randomrho = false, unsigned int seed = 0);
   ~RandomizedMaterial();
   void perturb_velocities(int g, Sarray& cs, Sarray& cp, double h, double zmin,
                           double zmax);
 
   void perturb_velocities(std::vector<Sarray>& cs, std::vector<Sarray>& cp);
+  void assign_perturbation(int g, Sarray& pert, Sarray& cs, double h,
+                           double zmin, double zmax, bool rho);
+
   void set_vsmax(float_sw4 vsmax);
+  double get_vsmax();
+  void set_vsmin(float_sw4 vsmin);
+  double get_vsmin();
+  bool randomize_rho() { return m_random_rho; }
+  float_sw4 rhoamplitude() { return m_rhoamplitude; }
 
  private:
   void gen_random_mtrl_fft3d_fftw(int n1g, int n2g, int n3g, float_sw4 Lx,
@@ -87,6 +96,7 @@ class RandomizedMaterial {
   // coordinates.
   float_sw4 m_hh, m_hv, m_zmin, m_zmax, m_corrlen, m_corrlenz, m_hurst, m_sigma,
       m_vsmax;
+  float_sw4 m_vsmin;
   //   float_sw4 m_x0, m_y0;
   unsigned int m_seed;
   int m_nproc2d[2];
@@ -94,7 +104,8 @@ class RandomizedMaterial {
   // xminloc, xmaxloc, etc. is the bounding box for the set of data patches in
   // this processor.
   float_sw4 m_xminloc, m_xmaxloc, m_yminloc, m_ymaxloc, m_zminloc, m_zmaxloc;
-  bool m_outside;
+  float_sw4 m_rhoamplitude;
+  bool m_outside, m_random_rho;
 
   // 3-dimensional Sarrays
   Sarray mRndMaterial;

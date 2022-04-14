@@ -88,29 +88,27 @@ void dpdmt_wind(int ib, int ie, int jb, int je, int kb_tt, int ke_tt, int kb_u,
   const long int base3_u = (ib + ni * jb + nij * kb_u + nijk_u);
   const long int base3_tt = (ib + ni * jb + nij * kb_tt + nijk_tt);
 
-//   long int c, k, j, i;
-// #pragma omp parallel private(k,i,j,c)
-// {
-//   for (c=1; c<=3; c++)
-//   {
-//     for(k= kb_tt; k <= ke_tt ; k++ )
-//     {
-// #pragma omp for
-//       for(j=jb; j <= je ; j++ )
-//       {
-// #pragma simd
-// #pragma ivdep
-// 	for(i=ib; i <= ie ; i++ )
-// 	{
-// 	  u_tt(c,i,j,k) = dt2i*( up(c,i,j,k)-2*u(c,i,j,k)+um(c,i,j,k) );
-// 	}
-//       }
-//     }
-//   }
-#ifdef ENABLE_GPU
-#define NO_COLLAPSE 1
-#endif
-#if defined(NO_COLLAPSE)
+  //   long int c, k, j, i;
+  // #pragma omp parallel private(k,i,j,c)
+  // {
+  //   for (c=1; c<=3; c++)
+  //   {
+  //     for(k= kb_tt; k <= ke_tt ; k++ )
+  //     {
+  // #pragma omp for
+  //       for(j=jb; j <= je ; j++ )
+  //       {
+  // #pragma simd
+  // #pragma ivdep
+  // 	for(i=ib; i <= ie ; i++ )
+  // 	{
+  // 	  u_tt(c,i,j,k) = dt2i*( up(c,i,j,k)-2*u(c,i,j,k)+um(c,i,j,k) );
+  // 	}
+  //       }
+  //     }
+  //   }
+
+#if !defined(RAJA_ONLY)
   Range<16> I(ib, ie + 1);
   Range<4> J(jb, je + 1);
   Range<4> K(kb_tt, ke_tt + 1);
@@ -125,12 +123,13 @@ void dpdmt_wind(int ib, int ie, int jb, int je, int kb_tt, int ke_tt, int kb_u,
   RAJA::RangeSegment i_range(ib, ie + 1);
   RAJA::RangeSegment j_range(jb, je + 1);
   RAJA::RangeSegment k_range(kb_tt, ke_tt + 1);
-  RAJA::RangeSegment c_range(1, 4);
+  // RAJA::RangeSegment c_range(1, 4);
   RAJA::kernel<DPDMT_WIND_LOOP_POL_ASYNC>(
-      RAJA::make_tuple(i_range, j_range, k_range, c_range),
-      [=] RAJA_DEVICE(long int i, long int j, long int k, long int c) {
-        u_tt(c, i, j, k) =
-            dt2i * (up(c, i, j, k) - 2 * u(c, i, j, k) + um(c, i, j, k));
+      RAJA::make_tuple(i_range, j_range, k_range),
+      [=] RAJA_DEVICE(long int i, long int j, long int k) {
+        for (int c = 1; c < 4; c++)
+          u_tt(c, i, j, k) =
+              dt2i * (up(c, i, j, k) - 2 * u(c, i, j, k) + um(c, i, j, k));
       });
 #endif
   // SYNC_STREAM;

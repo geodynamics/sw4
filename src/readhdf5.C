@@ -51,7 +51,6 @@
 #include "readhdf5.h"
 
 #ifdef USE_HDF5
-
 #include "hdf5.h"
 
 struct traverse_data_t {
@@ -126,13 +125,16 @@ struct srf_data_t {
 static herr_t traverse_func(hid_t loc_id, const char *grp_name,
                             const H5L_info_t *info, void *operator_data) {
   hid_t grp, dset, attr;
-  herr_t status;
+#if H5_VERSION_GE(1, 12, 0)
+  H5O_info1_t infobuf;
+#else
   H5O_info_t infobuf;
+#endif
   EW *a_ew;
   double data[3];
   double lon, lat, depth, x, y, z;
   bool geoCoordSet = true, topodepth = false, nsew = true;
-  int isnsew;
+  int isnsew, ret;
 
   ASSERT(operator_data != NULL);
 
@@ -140,11 +142,11 @@ static herr_t traverse_func(hid_t loc_id, const char *grp_name,
   a_ew = op_data->ew;
   ASSERT(a_ew != NULL);
 
-  status = H5Oget_info_by_name(loc_id, grp_name, &infobuf, H5P_DEFAULT);
-  if (status < 0) {
-    printf("Error with H5Oget_info_by_name [%s]\n", grp_name);
-    return -1;
-  }
+#if H5_VERSION_GE(1, 12, 0)
+  H5Oget_info_by_name1(loc_id, grp_name, &infobuf, H5P_DEFAULT);
+#else
+  H5Oget_info_by_name(loc_id, grp_name, &infobuf, H5P_DEFAULT);
+#endif
   if (infobuf.type == H5O_TYPE_GROUP) {
     /* if (op_data->myRank == 0) */
     /*   printf ("Group: [%s] \n", grp_name); */
@@ -152,64 +154,81 @@ static herr_t traverse_func(hid_t loc_id, const char *grp_name,
     // read x,y,z or ns,ew,up
     grp = H5Gopen(loc_id, grp_name, H5P_DEFAULT);
     if (grp < 0) {
-      printf("Error opening group [%s]\n", grp_name);
+      fprintf(stderr, "Error opening group [%s]\n", grp_name);
       return -1;
     }
 
-    attr = H5Dopen(grp, "ISNSEW", H5P_DEFAULT);
-    hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
-    H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
-    H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, dxpl, &isnsew);
-    H5Dclose(attr);
-    if (isnsew == 0) {
-      nsew = false;
-      geoCoordSet = false;
+    if (H5Lexists(grp, "ISNSEW", H5P_DEFAULT) > 0) {
+      attr = H5Dopen(grp, "ISNSEW", H5P_DEFAULT);
+      ASSERT(attr > 0);
+      ret =
+          H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &isnsew);
+      ASSERT(ret >= 0);
+      H5Dclose(attr);
+      if (isnsew == 0) {
+        nsew = false;
+        geoCoordSet = false;
+      }
     }
 
     if (H5Lexists(grp, "WindowL", H5P_DEFAULT) > 0) {
       op_data->winlset = true;
       attr = H5Dopen(grp, "WindowL", H5P_DEFAULT);
-      H5Dread(attr, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, dxpl, &op_data->winl);
+      ASSERT(attr > 0);
+      ret = H5Dread(attr, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                    &op_data->winl);
+      ASSERT(ret >= 0);
       H5Dclose(attr);
     }
 
     if (H5Lexists(grp, "WindowR", H5P_DEFAULT) > 0) {
       op_data->winrset = true;
       attr = H5Dopen(grp, "WindowR", H5P_DEFAULT);
-      H5Dread(attr, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, dxpl, &op_data->winr);
+      ASSERT(attr > 0);
+      ret = H5Dread(attr, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                    &op_data->winr);
+      ASSERT(ret >= 0);
       H5Dclose(attr);
     }
 
-    H5Pclose(dxpl);
-
-    if (nsew) {
+    if (H5Lexists(grp, "STX,STY,STZ", H5P_DEFAULT) > 0) {
+      // X, Y, Z
+      dset = H5Dopen(grp, "STX,STY,STZ", H5P_DEFAULT);
+      if (dset < 0)
+        fprintf(
+            stderr,
+            "Error reading from rechdf5 station %s, STX,STY,STZ open failed!\n",
+            grp_name);
+      ASSERT(attr > 0);
+      ret =
+          H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+      ASSERT(ret >= 0);
+      H5Dclose(dset);
+      x = data[0];
+      y = data[1];
+      z = data[2];
+      topodepth = true;
+    } else if (H5Lexists(grp, "STLA,STLO,STDP", H5P_DEFAULT) > 0) {
       // STLA,STLO,STDP
       dset = H5Dopen(grp, "STLA,STLO,STDP", H5P_DEFAULT);
-      status =
+      if (dset < 0)
+        fprintf(stderr,
+                "Error reading from rechdf5 station %s, STLA,STLO,STDP open "
+                "failed!\n",
+                grp_name);
+      ASSERT(attr > 0);
+      ret =
           H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-      if (status < 0) {
-        printf("Error with H5Dread [%s]\n", "STLA,STLO,STDP");
-        return -1;
-      }
+      ASSERT(ret >= 0);
       H5Dclose(dset);
       lat = data[0];
       lon = data[1];
       z = data[2];
       topodepth = true;
     } else {
-      // X, Y, Z
-      dset = H5Dopen(grp, "STX,STY,STZ", H5P_DEFAULT);
-      status =
-          H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-      if (status < 0) {
-        printf("Error with H5Dread [%s]\n", "STX,STY,STZ");
-        return -1;
-      }
-      H5Dclose(dset);
-      x = data[0];
-      y = data[1];
-      z = data[2];
-      topodepth = false;
+      // Not a station group, ignore
+      H5Gclose(grp);
+      return 0;
     }
 
     depth = z;
@@ -372,20 +391,23 @@ void readStationHDF5(EW *ew, string inFileName, string outFileName,
 static herr_t traverse_func2(hid_t loc_id, const char *grp_name,
                              const H5L_info_t *info, void *operator_data) {
   hid_t grp, dset, attr;
-  herr_t status;
+#if H5_VERSION_GE(1, 12, 0)
+  H5O_info1_t infobuf;
+#else
   H5O_info_t infobuf;
+#endif
   float data[3];
-  int isnsew;
+  int isnsew, ret;
 
   ASSERT(operator_data != NULL);
 
   struct traverse_data2_t *op_data = (struct traverse_data2_t *)operator_data;
 
-  status = H5Oget_info_by_name(loc_id, grp_name, &infobuf, H5P_DEFAULT);
-  if (status < 0) {
-    printf("Error with H5Oget_info_by_name [%s]\n", grp_name);
-    return -1;
-  }
+#if H5_VERSION_GE(1, 12, 0)
+  H5Oget_info_by_name1(loc_id, grp_name, &infobuf, H5P_DEFAULT);
+#else
+  H5Oget_info_by_name(loc_id, grp_name, &infobuf, H5P_DEFAULT);
+#endif
   if (infobuf.type == H5O_TYPE_GROUP) {
     /* if (op_data->myRank == 0) */
     /*   printf ("Group: [%s] \n", grp_name); */
@@ -397,33 +419,45 @@ static herr_t traverse_func2(hid_t loc_id, const char *grp_name,
       return -1;
     }
 
-    attr = H5Dopen(grp, "ISNSEW", H5P_DEFAULT);
-    hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
-    H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
-    H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, dxpl, &isnsew);
-    H5Pclose(dxpl);
-    H5Dclose(attr);
+    if (H5Lexists(grp, "ISNSEW", H5P_DEFAULT) > 0) {
+      attr = H5Dopen(grp, "ISNSEW", H5P_DEFAULT);
+      ASSERT(attr > 0);
+      ret =
+          H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &isnsew);
+      ASSERT(ret >= 0);
+      H5Dclose(attr);
+    }
 
-    if (isnsew == 0) {
+    if (H5Lexists(grp, "STX,STY,STZ", H5P_DEFAULT) > 0) {
       // X, Y, Z
       dset = H5Dopen(grp, "STX,STY,STZ", H5P_DEFAULT);
-      status =
+      if (dset < 0)
+        fprintf(
+            stderr,
+            "Error reading from rechdf5 station %s, STX,STY,STZ open failed!\n",
+            grp_name);
+      ASSERT(attr > 0);
+      ret =
           H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-      if (status < 0) {
-        printf("Error with H5Dread [%s]\n", "STX,STY,STZ");
-        return -1;
-      }
+      ASSERT(ret >= 0);
       H5Dclose(dset);
-    } else {
+    } else if (H5Lexists(grp, "STLA,STLO,STDP", H5P_DEFAULT) > 0) {
       // STLA,STLO,STDP
       dset = H5Dopen(grp, "STLA,STLO,STDP", H5P_DEFAULT);
-      status =
+      if (dset < 0)
+        fprintf(stderr,
+                "Error reading from rechdf5 station %s, STLA,STLO,STDP open "
+                "failed!\n",
+                grp_name);
+      ASSERT(attr > 0);
+      ret =
           H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-      if (status < 0) {
-        printf("Error with H5Dread [%s]\n", "STX,STY,STZ");
-        return -1;
-      }
+      ASSERT(ret >= 0);
       H5Dclose(dset);
+    } else {
+      // Not a station group, ignore
+      H5Gclose(grp);
+      return 0;
     }
 
     string staname = grp_name;
@@ -663,7 +697,6 @@ void readRuptureHDF5(char *fname,
   float_sw4 m0 = 1.0;
   float_sw4 t0 = 0.0, freq = 1.0;
   float_sw4 mxx = 0.0, mxy = 0.0, mxz = 0.0, myy = 0.0, myz = 0.0, mzz = 0.0;
-  /* int isMomentType = -1; */
   bool topodepth = true;
   // Discrete source time function
   float_sw4 *par = NULL;

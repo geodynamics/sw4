@@ -324,6 +324,7 @@ void GridPointSource::initializeTimeFunction() {
 RAJA_HOST_DEVICE
 void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) {
   float_sw4 afun, afunv[6];
+#ifndef NO_DEVICE_FUNCTION_POINTERS
   // printf("FXYZ VALUE = %d %d\n",mTimeDependence,m_derivative);
   if (mTimeDependence != iDiscrete6moments)
     afun = mTimeFunc(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
@@ -343,6 +344,7 @@ void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) {
     pos += size;
     afunv[5] = mTimeFunc(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
   }
+#endif
 
   int lm_derivative;
 #if defined(SOURCE_INVERSION)
@@ -414,6 +416,7 @@ void GridPointSource::getFxyz_notime(float_sw4* fxyz) const {
 RAJA_HOST_DEVICE
 void GridPointSource::getFxyztt(float_sw4 t, float_sw4* fxyz) const {
   float_sw4 afun, afunv[6];
+#ifndef NO_DEVICE_FUNCTION_POINTERS
   if (mTimeDependence != iDiscrete6moments)
     afun = mTimeFunc_tt(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
   else {
@@ -432,6 +435,7 @@ void GridPointSource::getFxyztt(float_sw4 t, float_sw4* fxyz) const {
     pos += size;
     afunv[5] = mTimeFunc_tt(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
   }
+#endif
 
   //  float_sw4 afun = mTimeFunc_tt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
 #if defined(SOURCE_INVERSION)

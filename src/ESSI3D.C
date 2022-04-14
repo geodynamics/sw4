@@ -49,7 +49,8 @@ ESSI3D* ESSI3D::nil = static_cast<ESSI3D*>(0);
 
 //-----------------------------------------------------------------------
 ESSI3D::ESSI3D(EW* a_ew, const std::string& filePrefix, int dumpInterval,
-               float_sw4 coordBox[6], float_sw4 depth, int precision)
+               int bufferInterval, float_sw4 coordBox[6], float_sw4 depth,
+               int precision, int compressionMode, double compressionPar)
     : mEW(a_ew),
       mFilePrefix(filePrefix),
       mFileName(""),
@@ -60,37 +61,64 @@ ESSI3D::ESSI3D(EW* a_ew, const std::string& filePrefix, int dumpInterval,
       m_hdf5_time(0),
       m_cycle(-1),
       m_dumpInterval(-1),
+      m_bufferInterval(1),
+      m_nbufstep(0),
       mDepth(depth),
       m_precision(precision),
+      m_compressionMode(compressionMode),
+      m_compressionPar(compressionPar),
       m_hdf5helper(NULL) {
   // volimage subdomain x,y corner coordinates
   for (int d = 0; d < 2 * 2; d++) mCoordBox[d] = coordBox[d];
 
   set_dump_interval(dumpInterval);
+  set_buffer_interval(bufferInterval);
+
+  MPI_Comm_rank(a_ew->m_cartesian_communicator, &m_rank);
 }
 
 //-----------------------------------------------------------------------
 ESSI3D::~ESSI3D() {
-  if (m_memallocated) delete[] m_doubleField;
+  if (m_memallocated) {
+    if (m_precision == 4) {
+      for (int i = 0; i < 3; i++) delete[] m_floatField[i];
+      delete[] m_floatField;
+    } else if (m_precision == 8) {
+      for (int i = 0; i < 3; i++) delete[] m_doubleField[i];
+      delete[] m_doubleField;
+    }
+  }
 
   if (m_hdf5helper != NULL) delete m_hdf5helper;
 }
 
 //-----------------------------------------------------------------------
-void ESSI3D::set_ntimestep(int ntimestep) { m_ntimestep = ntimestep; }
+void ESSI3D::set_ntimestep(int ntimestep) {
+  m_ntimestep = ntimestep;
+  return;
+}
+
+//-----------------------------------------------------------------------
+void ESSI3D::set_restart(bool is_restart) {
+  m_isRestart = is_restart;
+  return;
+}
 
 //-----------------------------------------------------------------------
 void ESSI3D::set_dump_interval(int a_dumpInterval) {
   if (a_dumpInterval > 0) m_dumpInterval = a_dumpInterval;
+  return;
+}
+
+//-----------------------------------------------------------------------
+void ESSI3D::set_buffer_interval(int a_bufferInterval) {
+  if (a_bufferInterval > 0) m_bufferInterval = a_bufferInterval;
+  return;
 }
 
 //-----------------------------------------------------------------------
 void ESSI3D::setup() {
   const bool debug = false;
-  /* MPI_Comm comm = MPI_COMM_WORLD; */
-  /* MPI_Info info = MPI_INFO_NULL; */
-  int myRank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
   int g = mEW->mNumberOfGrids - 1;   // top curvilinear grid only
   m_ihavearray = true;               // gets negated if we don't, below
@@ -129,19 +157,15 @@ void ESSI3D::setup() {
     }
   }
 
-  if (debug && (myRank == 0)) {
+  if (debug && (m_rank == 0)) {
     cout << "Global index range:"
          << " i=(" << mGlobalDims[0] << " , " << mGlobalDims[1] << "), j=("
          << mGlobalDims[2] << " , " << mGlobalDims[3] << "), k=("
          << mGlobalDims[4] << " , " << mGlobalDims[5] << ")" << endl;
   }
 
-  // TODO - pseudocode:
-  // - figure out depth vs. zmin/zmax indices
-  // Figure out x,y index ranges that contain requested coord box
-  // cout << "ESSI3D ptr: " << this << endl;
   if (debug)
-    cout << "ESSI3D rank: " << myRank << ", local index range: i=("
+    cout << "ESSI3D rank: " << m_rank << ", local index range: i=("
          << mWindow[0] << " , " << mWindow[1] << "), j=(" << mWindow[2] << " , "
          << mWindow[3] << "), k=(" << mWindow[4] << " , " << mWindow[5] << ")"
          << endl;
@@ -150,28 +174,37 @@ void ESSI3D::setup() {
     size_t npts = ((size_t)(mWindow[1] - mWindow[0]) + 1) *
                   ((mWindow[3] - mWindow[2]) + 1) *
                   ((mWindow[5] - mWindow[4]) + 1);
-    m_doubleField = new double[npts];
+    npts *= m_bufferInterval;
+
+    if (m_precision == 4) {
+      m_floatField = new float*[3];
+      for (int i = 0; i < 3; i++) m_floatField[i] = new float[npts];
+    } else if (m_precision == 8) {
+      m_doubleField = new double*[3];
+      for (int i = 0; i < 3; i++) m_doubleField[i] = new double[npts];
+    }
   } else {
-    m_doubleField = new double[1];
+    if (m_precision == 4) {
+      m_floatField = new float*[3];
+      for (int i = 0; i < 3; i++) m_floatField[i] = new float[1];
+    } else if (m_precision == 8) {
+      m_doubleField = new double*[3];
+      for (int i = 0; i < 3; i++) m_doubleField[i] = new double[1];
+    }
   }
   m_memallocated = true;
-#ifdef USE_HDF5
-  define_pio_hdf5();
-#else
-  define_pio();
-#endif
+  return;
 }
 
 //-----------------------------------------------------------------------
-void ESSI3D::define_pio() {
-  // TODO - error out
-}
+void ESSI3D::define_pio() { return; }
 
 //-----------------------------------------------------------------------
 void ESSI3D::setSteps(int a_steps) {
   mNumberOfTimeSteps = a_steps;
   char buffer[50];
   mPreceedZeros = snprintf(buffer, 50, "%d", a_steps);
+  return;
 }
 
 //-----------------------------------------------------------------------
@@ -189,14 +222,6 @@ void ESSI3D::update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
   if (!m_fileOpen)  // must be first call, open file and write
     open_vel_file(a_cycle, a_path, a_time, a_Z);
 
-  /* if ((a_cycle > 0) && // don't close and open on first cycle */
-  /*     (m_dumpInterval != -1) && // dump interval was set */
-  /*     (a_cycle%m_dumpInterval == 0)) // close, open new */
-  /* { */
-  /*   close_vel_file(); */
-  /*   open_vel_file(a_cycle, a_path, a_time, a_Z); */
-  /* } */
-
   if (m_dumpInterval != -1) {
     if (a_cycle % m_dumpInterval != 0 && a_cycle != mNumberOfTimeSteps) return;
     a_cycle /= m_dumpInterval;
@@ -208,12 +233,17 @@ void ESSI3D::update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
     close_vel_file();
 
   m_hdf5_time += (MPI_Wtime() - hdf5_time);
+#else
+  if (m_rank == 0)
+    std::cout << "Using SSI output but SW4 is not compiled with HDF5"
+              << std::endl;
 #endif
+  return;
 }
 
 //-----------------------------------------------------------------------
 void ESSI3D::force_write_image(float_sw4 a_time, int a_cycle,
-                               std::vector<Sarray>& a_U, std::string& a_path,
+                               vector<Sarray>& a_U, std::string& a_path,
                                Sarray& a_Z) {
 #ifdef USE_HDF5
   double hdf5_time = MPI_Wtime();
@@ -221,11 +251,16 @@ void ESSI3D::force_write_image(float_sw4 a_time, int a_cycle,
   write_image_hdf5(a_cycle, a_path, a_time, a_U);
   close_vel_file();
   m_hdf5_time += (MPI_Wtime() - hdf5_time);
+#else
+  if (m_rank == 0)
+    std::cout << "Using SSI output but SW4 is not compiled with HDF5"
+              << std::endl;
 #endif
+  return;
 }
 
 //-----------------------------------------------------------------------
-void ESSI3D::compute_image(Sarray& a_A, int a_comp) {
+void ESSI3D::compute_image(Sarray& a_A, int a_comp, int cycle) {
   int g = mEW->mNumberOfGrids - 1;
 
   int il = mEW->m_iStart[g];
@@ -234,14 +269,13 @@ void ESSI3D::compute_image(Sarray& a_A, int a_comp) {
   int ju = mEW->m_jEnd[g];
   int kl = mEW->m_kStart[g];
   int ku = mEW->m_kEnd[g];
-  /* int ni = (iu-il+1); */
-  /* int nj = (ju-jl+1); */
 
   // int niw = (mWindow[1]-mWindow[0])+1;
   // int nijw=niw*((mWindow[3]-mWindow[2])+1);
-  int nkw = (mWindow[5] - mWindow[4]) + 1;
-  int njkw = nkw * ((mWindow[3] - mWindow[2]) + 1);
-  const int c = a_comp + 1;  // why comp+1?
+  size_t nkw = (mWindow[5] - mWindow[4]) + 1;
+  size_t njkw = nkw * ((mWindow[3] - mWindow[2]) + 1);
+  size_t nijkw = njkw * ((mWindow[1] - mWindow[0]) + 1);
+  const int c = a_comp + 1;  // a_A array is 1-based
 #pragma omp parallel for
   for (int k = mWindow[4]; k <= mWindow[5]; k++)
     for (int j = mWindow[2]; j <= mWindow[3]; j++)
@@ -250,86 +284,43 @@ void ESSI3D::compute_image(Sarray& a_A, int a_comp) {
         // size_t ind = (i-mWindow[0])+niw*(j-mWindow[2])+nijw*(k-mWindow[4]);
         size_t ind =
             njkw * (i - mWindow[0]) + nkw * (j - mWindow[2]) + (k - mWindow[4]);
-        m_doubleField[ind] = (double)a_A(c, i, j, k);
+        ind += m_nbufstep * nijkw;
+        if (m_precision == 4)
+          m_floatField[a_comp][ind] = (float)a_A(c, i, j, k);
+        else if (m_precision == 8)
+          m_doubleField[a_comp][ind] = (double)a_A(c, i, j, k);
       }
+
+  return;
 }
 
 //-----------------------------------------------------------------------
 void ESSI3D::compute_file_suffix(int cycle, std::stringstream& fileSuffix) {
-  fileSuffix << mFilePrefix << ".cycle=";
-  int temp = static_cast<int>(pow(10.0, mPreceedZeros - 1));
-  int testcycle = cycle;
-  if (cycle == 0) testcycle = 1;
-  while (testcycle < temp) {
-    fileSuffix << "0";
-    temp /= 10;
-  }
-  fileSuffix << cycle;
-  fileSuffix << "."
-             << "essi";
+  fileSuffix << mFilePrefix << "."
+             << "ssi";
+  return;
 }
 
 //-----------------------------------------------------------------------
 void ESSI3D::write_image(int cycle, std::string& path, float_sw4 t,
                          Sarray& a_Z) {
-  // TODO - error out
+  return;
 }
 
 #ifdef USE_HDF5
-//-----------------------------------------------------------------------
-void ESSI3D::define_pio_hdf5() {
-  // TODO - error out
-}
-
 void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
                            Sarray& a_Z) {
-  /* herr_t ierr; */
-  /* hid_t dataspace_id; */
-  /* hid_t dataset_id; */
-  /* hid_t prop_id; */
-
-  // Parameters for extendible dataset
-  const int num_dims = 3 + 1;  // 3 space + 1 time that will be extendible
-  hsize_t dims[num_dims] = {0, 0, 0, 0};
-  /* hsize_t slice_dims[num_dims]; */
-  /* hsize_t block_dims[num_dims]; */
-  /* hsize_t global_dims[num_dims]; */
+  bool debug = false;
+  /* debug = true; */
 
   int g = mEW->mNumberOfGrids - 1;
   int window[6], global[3];
   for (int d = 0; d < 3; d++) {
-    dims[d] = mWindow[2 * d + 1] - mWindow[2 * d] + 1;
-    /* slice_dims[d] = dims[d]; */
-    /* block_dims[d] = dims[d]; */
-    /* global_dims[d] = mGlobalDims[2*d+1] - mGlobalDims[2*d] + 1; */
-
     window[2 * d] = (m_ihavearray) ? (mWindow[2 * d] - mGlobalDims[2 * d]) : 0;
     window[2 * d + 1] =
         (m_ihavearray) ? (mWindow[2 * d + 1] - mGlobalDims[2 * d]) : -1;
     global[d] = mGlobalDims[2 * d + 1] - mGlobalDims[2 * d] + 1;
   }
-  /* slice_dims[0] = 1; // Make sure we're chunking on slices */
-  /* slice_dims[num_dims-1] = 1; // 1 time step per write */
-  /* block_dims[num_dims-1] = 1; // 1 time step per write */
-  /* global_dims[num_dims-1] = 1; // 1 time step per write */
-
-  // Just to see what's being copied correctly
-  for (int i = 0; i < dims[0]; i++)
-    for (int j = 0; j < dims[1]; j++)
-      for (int k = 0; k < dims[2]; k++) {
-        size_t ind = i + dims[0] * (j + dims[1] * k);
-        m_doubleField[ind] = (double)ind;
-      }
-
-  /*
-  if (debug && (myRank == 0))
-  {
-    cout << "Setting dims to: " << endl;
-    for (int d=0; d < num_dims; d++)
-      cout << "dims[" << d << "] = " << dims[d]
-        << ", slice_dims[" << d << "] = " << slice_dims[d] << endl;
-  }
-  */
 
   std::stringstream s, fileSuffix;
   compute_file_suffix(a_cycle, fileSuffix);
@@ -338,77 +329,121 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
   m_hdf5helper =
       new ESSI3DHDF5(s.str(), global, window, m_ihavearray, m_precision);
   m_hdf5helper->set_ihavearray(m_ihavearray);
-  /*
-  if (debug && (myRank == 0))
-     cout << "Creating hdf5 file: " << m_hdf5helper->filename() << endl;
-  */
+
+  if (debug && (m_rank == 0))
+    cout << "Creating hdf5 file: " << m_hdf5helper->filename() << endl;
+
   double hdf5_time = MPI_Wtime();
-  m_hdf5helper->create_file();
 
-  // Write header metadata
-  double h = mEW->mGridSize[g];
-  double lonlat_origin[2] = {mEW->getLonOrigin(), mEW->getLatOrigin()};
-  double origin[3];
-  for (int d = 0; d < 3; d++)
-    origin[d] = (mGlobalDims[2 * d] - 1) * h;  // low end of each index range
-  double az = mEW->getGridAzimuth();
-  double dt = mEW->getTimeStep();
-  m_hdf5helper->write_header(h, lonlat_origin, az, origin, a_cycle, a_time, dt);
+  if (m_rank == 0) {
+    m_hdf5helper->create_file(m_isRestart);
 
-  // Write z coodinates if necesito
-  if (mEW->topographyExists()) {
-    compute_image(a_Z, 0);
-    m_hdf5helper->write_topo(m_doubleField);
+    // Write header metadata
+    double h = mEW->mGridSize[g];
+    double lonlat_origin[2] = {mEW->getLonOrigin(), mEW->getLatOrigin()};
+    double origin[3];
+    for (int d = 0; d < 3; d++)
+      origin[d] = (mGlobalDims[2 * d] - 1) * h;  // low end of each index range
+    double az = mEW->getGridAzimuth();
+    double dt = mEW->getTimeStep();
+
+    if (!m_isRestart) {
+      m_hdf5helper->write_header(h, lonlat_origin, az, origin, a_cycle, a_time,
+                                 dt);
+
+      // Write z coodinates if necesito
+      if (mEW->topographyExists()) {
+        compute_image(a_Z, 0, 0);
+        if (m_precision == 4)
+          m_hdf5helper->write_topo(m_floatField[0]);
+        else if (m_precision == 8)
+          m_hdf5helper->write_topo(m_doubleField[0]);
+      }
+    }
+
+    if (debug && (m_rank == 0))
+      cout << "Creating hdf5 velocity fields..." << endl;
   }
 
-  /*
-  if (debug && (myRank == 0))
-     cout << "Creating extendible hdf5 velocity fields..." << endl;
-  */
-
   if (m_dumpInterval > 0) {
-    int nstep = m_ntimestep / m_dumpInterval;
-    m_hdf5helper->init_write_vel(nstep);
-  } else
-    m_hdf5helper->init_write_vel(m_ntimestep);
+    int nstep = (int)ceil(m_ntimestep / m_dumpInterval);
+    if (m_compressionMode > 0)
+      m_hdf5helper->init_write_vel(m_isRestart, nstep, m_compressionMode,
+                                   m_compressionPar, m_bufferInterval);
+    else
+      m_hdf5helper->init_write_vel(m_isRestart, nstep, 0, 0.0,
+                                   m_bufferInterval);
+  } else {
+    if (m_compressionMode > 0)
+      m_hdf5helper->init_write_vel(m_isRestart, m_ntimestep, m_compressionMode,
+                                   m_compressionPar, m_bufferInterval);
+    else
+      m_hdf5helper->init_write_vel(m_isRestart, m_ntimestep, 0, 0.0,
+                                   m_bufferInterval);
+  }
+
+  MPI_Comm comm = mEW->m_cartesian_communicator;
+  MPI_Barrier(comm);
+
+  m_hdf5helper->create_file(true);
+
   m_hdf5_time += (MPI_Wtime() - hdf5_time);
 
+  m_nbufstep = 0;
   m_fileOpen = true;
+  return;
+}
+
+void ESSI3D::finalize_hdf5() {
+  m_hdf5helper->finalize_hdf5();
+  return;
 }
 
 void ESSI3D::close_vel_file() {
   if (m_fileOpen) {
-    /*
-    if (debug && (myRank == 0))
-      cout << "Closing hdf5 file: " << s.str() << endl;
-    */
-
     m_hdf5helper->close_file();
     m_fileOpen = false;
   }
+  return;
 }
 
 void ESSI3D::write_image_hdf5(int cycle, std::string& path, float_sw4 t,
                               vector<Sarray>& a_U) {
   // Top grid only
   int g = mEW->mNumberOfGrids - 1;
-  compute_image(a_U[g], 0);
-  m_hdf5helper->write_vel(m_doubleField, 0, cycle);
-  compute_image(a_U[g], 1);
-  m_hdf5helper->write_vel(m_doubleField, 1, cycle);
-  compute_image(a_U[g], 2);
-  m_hdf5helper->write_vel(m_doubleField, 2, cycle);
+  int doWrite = 0;
+  bool debug = false;
+  /* debug = true; */
 
-  /*
-  MPI_Barrier(MPI_COMM_WORLD);
-  if (m_fileOpen)
-  {
-    if (debug && (myRank == 0))
-      cout << "Closing hdf5 file: " << s.str() << endl;
+  for (int i = 0; i < 3; i++) {
+    compute_image(a_U[g], i, cycle);
+    if (cycle > 0 &&
+        (m_nbufstep == m_bufferInterval - 1 || cycle == m_ntimestep)) {
+      if (m_precision == 4)
+        m_hdf5helper->write_vel((void*)m_floatField[i], i, cycle,
+                                m_nbufstep + 1);
+      else if (m_precision == 8)
+        m_hdf5helper->write_vel((void*)m_doubleField[i], i, cycle,
+                                m_nbufstep + 1);
 
-    m_hdf5helper->close_file();
-    m_fileOpen = false;
+      doWrite++;
+    }
   }
-  */
+
+  m_nbufstep++;
+  m_nbufstep %= m_bufferInterval;
+
+  if (!(doWrite == 3 || doWrite == 0))
+    fprintf(stderr,
+            "Error with essioutput write_image_hdf5, not all variables are "
+            "written correctly!\n");
+
+  if (doWrite == 3) {
+    if (debug)
+      fprintf(stderr, "Rank %d: write_image_hdf5 cycle=%d/%d, m_nbufstep=%d\n",
+              m_rank, cycle, m_ntimestep, m_nbufstep);
+    m_nbufstep = 0;
+  }
+  return;
 }
 #endif  // ifdef USE_HDF5

@@ -35,6 +35,7 @@
 #include <cmath>
 
 #include "EW.h"
+#include "F77_FUNC.h"
 #include "Filter.h"
 #include "GridPointSource.h"
 #include "Mspace.h"
@@ -44,7 +45,6 @@
 #include "caliper.h"
 #include "mpi.h"
 #include "time_functions.h"
-#include "F77_FUNC.h"
 using namespace std;
 
 #define SQR(x) ((x) * (x))
@@ -128,6 +128,7 @@ Source::Source(EW* a_ew, float_sw4 frequency, float_sw4 t0, float_sw4 x0,
   // Correct source location for discrepancy between raw and smoothed topography
   correct_Z_level(a_ew);  // also sets the ignore flag for sources that are
                           // above the topography
+  compute_grid_point(a_ew);
 
   if (a_ew->getVerbosity() >= 3 && a_ew->proc_zero()) {
     printf(
@@ -194,6 +195,7 @@ Source::Source(EW* a_ew, float_sw4 frequency, float_sw4 t0, float_sw4 x0,
   // Correct source location for discrepancy between raw and smoothed topography
   correct_Z_level(a_ew);  // also sets the ignore flag for sources that are
                           // above the topography
+  compute_grid_point(a_ew);
 }
 
 //-----------------------------------------------------------------------
@@ -438,27 +440,8 @@ void Source::correct_Z_level(EW* a_ew) {
   //   printf("Entering correct_Z_level()\n");
 
   int i, j, k, g;
-  // preliminary determination of the nearest grid point (already did this in
-  // the constructor)
   int success = a_ew->computeNearestGridPoint2(i, j, k, g, mX0, mY0, mZ0);
-
-  // does this processor know about topography at this location?
   m_myPoint = success && a_ew->interior_point_in_proc(i, j, g);
-
-  if (!a_ew->topographyExists())  // this is the easy case w/o topography
-  {
-    m_zTopo = 0.;
-    // make sure the station is below or on the topography (z is positive
-    // downwards)
-    if (mZ0 < m_zTopo - 1e-9) {
-      mIgnore = true;
-      printf(
-          "Ignoring Source at X=%g, Y=%g, Z=%g, because it is above the "
-          "topography z=%g\n",
-          mX0, mY0, mZ0, m_zTopo);
-    }
-    return;  // done with the flat case
-  }
 
   // The following is a safety check to make sure only one processor considers
   // this (i,j) to be interior We could remove this check if we were certain
@@ -469,8 +452,8 @@ void Source::correct_Z_level(EW* a_ew) {
   std::vector<int> whoIsOne(size);
   int counter = 0;
   MPI_Allgather(&iwrite, 1, MPI_INT, &whoIsOne[0], 1, MPI_INT, MPI_COMM_WORLD);
-  for (unsigned int i = 0; i < whoIsOne.size(); ++i)
-    if (whoIsOne[i] == 1) {
+  for (unsigned int p = 0; p < whoIsOne.size(); ++p)
+    if (whoIsOne[p] == 1) {
       counter++;
     }
   REQUIRE2(counter == 1,
@@ -479,44 +462,38 @@ void Source::correct_Z_level(EW* a_ew) {
                << counter << " for source station at (x,y,depth)=" << mX0
                << ", " << mY0 << ", " << mZ0);
 
-  float_sw4 zTopoLoc;
-  if (m_myPoint) {
-    if (!a_ew->m_gridGenerator->interpolate_topography(
-            a_ew, mX0, mY0, zTopoLoc,
-            a_ew->mTopoGridExt))  // used the smoothed topography
-    {
-      cerr << "Unable to evaluate topography for source at X= " << mX0
-           << " Y= " << mY0 << " Z= " << mZ0 << endl;
-      cerr << "Setting topography to ZERO" << endl;
-      zTopoLoc = 0;
-    }
+  if (!a_ew->topographyExists()) {
+    // This is the easy case w/o topography
+    m_zTopo = 0.0;
   } else {
-    zTopoLoc = -1e38;
+    // With topography, compute z-coordinate at topography directly above the
+    // source
+    float_sw4 zTopoLocal;
+    if (a_ew->m_gridGenerator->interpolate_topography(
+            a_ew, mX0, mY0, zTopoLocal, a_ew->mTopoGridExt) < 0)
+      zTopoLocal = -1e38;
+    MPI_Allreduce(&zTopoLocal, &m_zTopo, 1, a_ew->m_mpifloat, MPI_MAX,
+                  MPI_COMM_WORLD);
+    if (m_zRelativeToTopography) {
+      // If location was specified with topodepth, correct z-level
+      mZ0 += m_zTopo;
+      m_zRelativeToTopography = false;  // set to false so the correction isn't
+                                        // repeated (for whatever reason)
+    }
   }
-  MPI_Allreduce(&zTopoLoc, &m_zTopo, 1, a_ew->m_mpifloat, MPI_MAX,
-                MPI_COMM_WORLD);
 
-// if location was specified with topodepth, correct z-level
-  if (m_zRelativeToTopography) {
-    mZ0 += m_zTopo;
-    m_zRelativeToTopography = false;  // set to false so the correction isn't
-                                      // repeated (for whatever reason)
-  }
-
-// Compute k-index for source location
-  compute_grid_point(a_ew);
-
-  //  int k0Loc=-99999;
-  //  if( m_myPoint )
-  //     k0Loc=k;
-  //  MPI_Allreduce( &k0Loc, &m_k0, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
-
-  if ( mZ0 < m_zTopo - 1.e-9)// allow for a little roundoff
+  // Make sure the station is below or on the topography (z is positive
+  // downwards)
+  if (mZ0 < m_zTopo - 1.0e-9)  // allow for a little roundoff
   {
     mIgnore = true;
-    printf("Ignoring Source at X=%g, Y=%g, Z=%g, because it is above the topography z=%g\n", 
-	   mX0,  mY0, mZ0, m_zTopo);
+    printf(
+        "Ignoring Source at X=%g, Y=%g, Z=%g, because it is above the "
+        "topography z=%g\n",
+        mX0, mY0, mZ0, m_zTopo);
   }
+  // tmp
+  //   printf("Exiting correct_Z_level()\n");
 }
 
 //-----------------------------------------------------------------------
@@ -1441,9 +1418,8 @@ void Source::set_grid_point_sources4(EW* a_EW,
   int i, j, k, g;
   int success = a_EW->computeNearestGridPoint2(i, j, k, g, mX0, mY0, mZ0);
   int gg = -1;
-  if( success )
-     gg = g;
-   MPI_Allreduce(&gg,&g,1,MPI_INT,MPI_MAX,MPI_COMM_WORLD);
+  if (success) gg = g;
+  MPI_Allreduce(&gg, &g, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
   float_sw4 q, r, s;
   float_sw4 h = a_EW->mGridSize[g];
   bool canBeInverted, curvilinear;
@@ -1504,8 +1480,8 @@ void Source::set_grid_point_sources4(EW* a_EW,
     canBeInverted = true;
     curvilinear = false;
   }
-  bool curvilineargp1 = g+1 >= a_EW->mNumberOfCartesianGrids;
-  bool curvilineargm1 = g-1 >= a_EW->mNumberOfCartesianGrids;
+  bool curvilineargp1 = g + 1 >= a_EW->mNumberOfCartesianGrids;
+  bool curvilineargm1 = g - 1 >= a_EW->mNumberOfCartesianGrids;
 
   int Ni = a_EW->m_global_nx[g];
   int Nj = a_EW->m_global_ny[g];
@@ -1557,16 +1533,17 @@ void Source::set_grid_point_sources4(EW* a_EW,
   // grids.
   ccbndry = a_EW->topographyExists() &&
             ((upperbndry && g == a_EW->mNumberOfCartesianGrids - 1) ||
-             (lowerbndry && g == a_EW->mNumberOfCartesianGrids    ));
+             (lowerbndry && g == a_EW->mNumberOfCartesianGrids));
 
   // gridrefbndry=true if at the interface between two cartesian grids of
   // different refinements.
   gridrefbndry = (upperbndry && g < a_EW->mNumberOfGrids - 1 && !ccbndry) ||
                  (lowerbndry && g > 0 && !ccbndry);
-   bool curvilinear_refbndry = gridrefbndry && g >= a_EW->mNumberOfCartesianGrids;
-   int ncurv = a_EW->mNumberOfGrids-a_EW->mNumberOfCartesianGrids;
-   bool cc_ic_bndry = ccbndry && !a_EW->m_gridGenerator->curviCartIsSmooth(ncurv);
-
+  bool curvilinear_refbndry =
+      gridrefbndry && g >= a_EW->mNumberOfCartesianGrids;
+  int ncurv = a_EW->mNumberOfGrids - a_EW->mNumberOfCartesianGrids;
+  bool cc_ic_bndry =
+      ccbndry && !a_EW->m_gridGenerator->curviCartIsSmooth(ncurv);
 
   //
   // ********* do the filtering of the time function here as needed based on
@@ -1940,95 +1917,44 @@ void Source::set_grid_point_sources4(EW* a_EW,
   // Point source. NOTE: Derivatives needed for source inversion not implemented
   // for this case.
   if (!mIsMomentSource /*&& canBeInverted*/) {
-    if( curvilinear_refbndry )
-    {
-         get_mr_psources(  a_EW, g, q, r, s, false, normwgh, point_sources );
-    }
-    else if( cc_ic_bndry )
-    {
-         get_cc_psources(  a_EW, g, q, r, s, false, normwgh, point_sources );
-    }
-    else
-    {
-    for (int k = kc - 2; k <= kc + 3; k++)
-      for (int j = jc - 2; j <= jc + 3; j++)
-        for (int i = ic - 2; i <= ic + 3; i++) {
-          float_sw4 wF = wghi[i - ic + 2] * wghj[j - jc + 2] * wghk[k - kc + 2];
-          if ((wF != 0) &&
-              (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) &&
-              a_EW->interior_point_in_proc(
-                  i, j, g))  // checks if (i,j) belongs to this processor
-          {
-            if (curvilinear)
-              wF /= a_EW->mJ[g](i, j, k);  // is 'g' correct?
-            else
-              wF /= h * h * h;
+    if (curvilinear_refbndry) {
+      get_mr_psources(a_EW, g, q, r, s, false, normwgh, point_sources);
+    } else if (cc_ic_bndry) {
+      get_cc_psources(a_EW, g, q, r, s, false, normwgh, point_sources);
+    } else {
+      for (int k = kc - 2; k <= kc + 3; k++)
+        for (int j = jc - 2; j <= jc + 3; j++)
+          for (int i = ic - 2; i <= ic + 3; i++) {
+            float_sw4 wF =
+                wghi[i - ic + 2] * wghj[j - jc + 2] * wghk[k - kc + 2];
+            if ((wF != 0) &&
+                (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) &&
+                a_EW->interior_point_in_proc(
+                    i, j, g))  // checks if (i,j) belongs to this processor
+            {
+              if (curvilinear)
+                wF /= a_EW->mJ[g](i, j, k);  // is 'g' correct?
+              else
+                wF /= h * h * h;
 
-            if (1 <= k && k <= Nz) {
-              GridPointSource* sourcePtr = new GridPointSource(
-                  mFreq, mT0, i, j, k, g, wF * mForces[0], wF * mForces[1],
-                  wF * mForces[2], mTimeDependence, mNcyc, mPar, mNpar, mIpar,
-                  mNipar);
-              point_sources.push_back(sourcePtr);
-            }
-            if (k <= 1 && ccbndry && upperbndry) {
-              int Nzp = a_EW->m_global_nz[g + 1];
-              int kk = Nzp - 1 + k;
-
-              GridPointSource* sourcePtr = new GridPointSource(
-                  mFreq, mT0, i, j, kk, g + 1, wF * mForces[0], wF * mForces[1],
-                  wF * mForces[2], mTimeDependence, mNcyc, mPar, mNpar, mIpar,
-                  mNipar);
-              point_sources.push_back(sourcePtr);
-            }
-            if (k >= Nz && ccbndry && lowerbndry) {
-              int kk = k - Nz + 1;
-              GridPointSource* sourcePtr = new GridPointSource(
-                  mFreq, mT0, i, j, kk, g - 1, wF * mForces[0], wF * mForces[1],
-                  wF * mForces[2], mTimeDependence, mNcyc, mPar, mNpar, mIpar,
-                  mNipar);
-              point_sources.push_back(sourcePtr);
-            }
-          }
-        }
-    if (gridrefbndry) {
-      for (int k = kc - 2; k <= kc + 3; k++) {
-        if (k <= 1) {
-          // Finer grid above
-          for (int j = jcref - 2; j <= jcref + 3; j++)
-            for (int i = icref - 2; i <= icref + 3; i++) {
-              float_sw4 wF = wghiref[i - icref + 2] * wghjref[j - jcref + 2] *
-                             wghkref[k - kc + 2];
-              if ((wF != 0) &&
-                  (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) &&
-                  a_EW->interior_point_in_proc(
-                      i, j,
-                      g + 1))  // checks if (i,j) belongs to this processor
-              {
-                wF /= 0.125 * h * h * h;
+              if (1 <= k && k <= Nz) {
+                GridPointSource* sourcePtr = new GridPointSource(
+                    mFreq, mT0, i, j, k, g, wF * mForces[0], wF * mForces[1],
+                    wF * mForces[2], mTimeDependence, mNcyc, mPar, mNpar, mIpar,
+                    mNipar);
+                point_sources.push_back(sourcePtr);
+              }
+              if (k <= 1 && ccbndry && upperbndry) {
                 int Nzp = a_EW->m_global_nz[g + 1];
                 int kk = Nzp - 1 + k;
+
                 GridPointSource* sourcePtr = new GridPointSource(
                     mFreq, mT0, i, j, kk, g + 1, wF * mForces[0],
                     wF * mForces[1], wF * mForces[2], mTimeDependence, mNcyc,
                     mPar, mNpar, mIpar, mNipar);
                 point_sources.push_back(sourcePtr);
               }
-            }
-        }  // end if k<=1
-        if (k >= Nz) {
-          // Coarser grid below
-          for (int j = jcref - 2; j <= jcref + 3; j++)
-            for (int i = icref - 2; i <= icref + 3; i++) {
-              float_sw4 wF = wghiref[i - icref + 2] * wghjref[j - jcref + 2] *
-                             wghkref[k - kc + 2];
-              if ((wF != 0) &&
-                  (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) &&
-                  a_EW->interior_point_in_proc(
-                      i, j,
-                      g - 1))  // checks if (i,j) belongs to this processor
-              {
-                wF /= 8 * h * h * h;
+              if (k >= Nz && ccbndry && lowerbndry) {
                 int kk = k - Nz + 1;
                 GridPointSource* sourcePtr = new GridPointSource(
                     mFreq, mT0, i, j, kk, g - 1, wF * mForces[0],
@@ -2037,593 +1963,585 @@ void Source::set_grid_point_sources4(EW* a_EW,
                 point_sources.push_back(sourcePtr);
               }
             }
+          }
+      if (gridrefbndry) {
+        for (int k = kc - 2; k <= kc + 3; k++) {
+          if (k <= 1) {
+            // Finer grid above
+            for (int j = jcref - 2; j <= jcref + 3; j++)
+              for (int i = icref - 2; i <= icref + 3; i++) {
+                float_sw4 wF = wghiref[i - icref + 2] * wghjref[j - jcref + 2] *
+                               wghkref[k - kc + 2];
+                if ((wF != 0) &&
+                    (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) &&
+                    a_EW->interior_point_in_proc(
+                        i, j,
+                        g + 1))  // checks if (i,j) belongs to this processor
+                {
+                  wF /= 0.125 * h * h * h;
+                  int Nzp = a_EW->m_global_nz[g + 1];
+                  int kk = Nzp - 1 + k;
+                  GridPointSource* sourcePtr = new GridPointSource(
+                      mFreq, mT0, i, j, kk, g + 1, wF * mForces[0],
+                      wF * mForces[1], wF * mForces[2], mTimeDependence, mNcyc,
+                      mPar, mNpar, mIpar, mNipar);
+                  point_sources.push_back(sourcePtr);
+                }
+              }
+          }  // end if k<=1
+          if (k >= Nz) {
+            // Coarser grid below
+            for (int j = jcref - 2; j <= jcref + 3; j++)
+              for (int i = icref - 2; i <= icref + 3; i++) {
+                float_sw4 wF = wghiref[i - icref + 2] * wghjref[j - jcref + 2] *
+                               wghkref[k - kc + 2];
+                if ((wF != 0) &&
+                    (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) &&
+                    a_EW->interior_point_in_proc(
+                        i, j,
+                        g - 1))  // checks if (i,j) belongs to this processor
+                {
+                  wF /= 8 * h * h * h;
+                  int kk = k - Nz + 1;
+                  GridPointSource* sourcePtr = new GridPointSource(
+                      mFreq, mT0, i, j, kk, g - 1, wF * mForces[0],
+                      wF * mForces[1], wF * mForces[2], mTimeDependence, mNcyc,
+                      mPar, mNpar, mIpar, mNipar);
+                  point_sources.push_back(sourcePtr);
+                }
+              }
+          }
         }
-      }
-    }  // Grid refinement boundary
+      }  // Grid refinement boundary
     }
-  }    // if !mIsMomentSource (i.e. pointForce)
+  }  // if !mIsMomentSource (i.e. pointForce)
 
   else if (mIsMomentSource)  // Moment source.
   {
-    if( curvilinear_refbndry )
-    {
-         get_mr_psources(  a_EW, g, q, r, s, true, normwgh, point_sources );
-    }
-    else if( cc_ic_bndry )
-    {
-         get_cc_psources(  a_EW, g, q, r, s, true, normwgh, point_sources );
-    }
-    else
-    {
-    float_sw4 qX0[3], rX0[3], sX0[3];
-
-    // Gradients of sX0[0]=sX, sX0[1]=sY, and sX0[2]=sZ wrt. (q,r,s)
-    float_sw4 dsX0[3], dsY0[3], dsZ0[3];
-    // Hessians of sX0[0]=sX, sX0[1]=sY, and sX0[2]=sZ wrt. (q,r,s), in order
-    // qq,qr,qs,rr,rs,ss
-    //    float_sw4 d2sX0[6], d2sY0[6], d2sZ0[6];
-    if (!curvilinear) {
-      // Cartesian case, constant metric
-      qX0[0] = 1 / h;
-      qX0[1] = 0;
-      qX0[2] = 0;
-      rX0[0] = 0;
-      rX0[1] = 1 / h;
-      rX0[2] = 0;
-      sX0[0] = 0;
-      sX0[1] = 0;
-      sX0[2] = 1 / h;
-      dsX0[0] = dsX0[1] = dsX0[2] = 0;
-      dsY0[0] = dsY0[1] = dsY0[2] = 0;
-      dsZ0[0] = dsZ0[1] = dsZ0[2] = 0;
-      // for (int i = 0; i < 6; i++) d2sX0[i] = d2sY0[i] = d2sZ0[i] = 0;
+    if (curvilinear_refbndry) {
+      get_mr_psources(a_EW, g, q, r, s, true, normwgh, point_sources);
+    } else if (cc_ic_bndry) {
+      get_cc_psources(a_EW, g, q, r, s, true, normwgh, point_sources);
     } else {
-      // Compute the curvilinear metric in the processor that owns the source.
-      //   (ic, jc are undefined if canBeInverted is false.)
-      float_sw4 zdertmp[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0}, zq, zr, zs;
-      float_sw4 zqq, zqr, zqs, zrr, zrs, zss;
-      if (a_EW->interior_point_in_proc(ic, jc, g) /*&& canBeInverted*/) {
-         //        compute_metric_at_source(a_EW, q, r, s, ic, jc, kc, g, zq, zr, zs, zqq,
-         //                                 zqr, zqs, zrr, zrs, zss);
-        a_EW->m_gridGenerator->grid_mapping_diff( a_EW, q, r, s, g, ic, jc, kc,
-                                                  zq, zr, zs, zqq, zqr, zqs,
-                                                  zrr, zrs, zss );
-        zdertmp[0] = zq;
-        zdertmp[1] = zr;
-        zdertmp[2] = zs;
-        zdertmp[3] = zqq;
-        zdertmp[4] = zqr;
-        zdertmp[5] = zqs;
-        zdertmp[6] = zrr;
-        zdertmp[7] = zrs;
-        zdertmp[8] = zss;
-      }
-      //	 // Broadcast the computed metric to all processors.
-      //	 // First find out the ID of the processor that computed the
-      // metric... 	 int owner = -1; 	 if(
-      // a_EW->interior_point_in_proc( ic, jc, g )
-      //&& canBeInverted )
-      //            MPI_Comm_rank(MPI_COMM_WORLD, &owner );
-      //	 int owntmp = owner;
-      //	 MPI_Allreduce( &owntmp, &owner, 1, MPI_INT, MPI_MAX,
-      // MPI_COMM_WORLD );
-      //	 // ...then broadcast the derivatives
-      //	 MPI_Bcast( zder, 3, MPI_DOUBLE, owner, MPI_COMM_WORLD );
+      float_sw4 qX0[3], rX0[3], sX0[3];
 
-      // Simpler solution
-      float_sw4 zder[9];
-      MPI_Allreduce(zdertmp, zder, 9, a_EW->m_mpifloat, MPI_SUM,
-                    MPI_COMM_WORLD);
-      zq = zder[0];
-      zr = zder[1];
-      zs = zder[2];
-      zqq = zder[3];
-      zqr = zder[4];
-      zqs = zder[5];
-      zrr = zder[6];
-      zrs = zder[7];
-      zss = zder[8];
+      // Gradients of sX0[0]=sX, sX0[1]=sY, and sX0[2]=sZ wrt. (q,r,s)
+      float_sw4 dsX0[3], dsY0[3], dsZ0[3];
+      // Hessians of sX0[0]=sX, sX0[1]=sY, and sX0[2]=sZ wrt. (q,r,s), in order
+      // qq,qr,qs,rr,rs,ss
+      //    float_sw4 d2sX0[6], d2sY0[6], d2sZ0[6];
+      if (!curvilinear) {
+        // Cartesian case, constant metric
+        qX0[0] = 1 / h;
+        qX0[1] = 0;
+        qX0[2] = 0;
+        rX0[0] = 0;
+        rX0[1] = 1 / h;
+        rX0[2] = 0;
+        sX0[0] = 0;
+        sX0[1] = 0;
+        sX0[2] = 1 / h;
+        dsX0[0] = dsX0[1] = dsX0[2] = 0;
+        dsY0[0] = dsY0[1] = dsY0[2] = 0;
+        dsZ0[0] = dsZ0[1] = dsZ0[2] = 0;
+        // for (int i = 0; i < 6; i++) d2sX0[i] = d2sY0[i] = d2sZ0[i] = 0;
+      } else {
+        // Compute the curvilinear metric in the processor that owns the source.
+        //   (ic, jc are undefined if canBeInverted is false.)
+        float_sw4 zdertmp[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0}, zq, zr, zs;
+        float_sw4 zqq, zqr, zqs, zrr, zrs, zss;
+        if (a_EW->interior_point_in_proc(ic, jc, g) /*&& canBeInverted*/) {
+          //        compute_metric_at_source(a_EW, q, r, s, ic, jc, kc, g, zq,
+          //        zr, zs, zqq,
+          //                                 zqr, zqs, zrr, zrs, zss);
+          a_EW->m_gridGenerator->grid_mapping_diff(a_EW, q, r, s, g, ic, jc, kc,
+                                                   zq, zr, zs, zqq, zqr, zqs,
+                                                   zrr, zrs, zss);
+          zdertmp[0] = zq;
+          zdertmp[1] = zr;
+          zdertmp[2] = zs;
+          zdertmp[3] = zqq;
+          zdertmp[4] = zqr;
+          zdertmp[5] = zqs;
+          zdertmp[6] = zrr;
+          zdertmp[7] = zrs;
+          zdertmp[8] = zss;
+        }
+        //	 // Broadcast the computed metric to all processors.
+        //	 // First find out the ID of the processor that computed the
+        // metric... 	 int owner = -1; 	 if(
+        // a_EW->interior_point_in_proc( ic, jc, g )
+        //&& canBeInverted )
+        //            MPI_Comm_rank(MPI_COMM_WORLD, &owner );
+        //	 int owntmp = owner;
+        //	 MPI_Allreduce( &owntmp, &owner, 1, MPI_INT, MPI_MAX,
+        // MPI_COMM_WORLD );
+        //	 // ...then broadcast the derivatives
+        //	 MPI_Bcast( zder, 3, MPI_DOUBLE, owner, MPI_COMM_WORLD );
 
-      qX0[0] = 1 / h;
-      qX0[1] = 0;
-      qX0[2] = 0;
-      rX0[0] = 0;
-      rX0[1] = 1 / h;
-      rX0[2] = 0;
-      sX0[0] = -zq / (h * zs);
-      sX0[1] = -zr / (h * zs);
-      sX0[2] = 1 / zs;
+        // Simpler solution
+        float_sw4 zder[9];
+        MPI_Allreduce(zdertmp, zder, 9, a_EW->m_mpifloat, MPI_SUM,
+                      MPI_COMM_WORLD);
+        zq = zder[0];
+        zr = zder[1];
+        zs = zder[2];
+        zqq = zder[3];
+        zqr = zder[4];
+        zqs = zder[5];
+        zrr = zder[6];
+        zrs = zder[7];
+        zss = zder[8];
 
-      float_sw4 deni = 1 / (h * zs * zs);
-      dsX0[0] = -(zqq * zs - zqs * zq) * deni;
-      dsX0[1] = -(zqr * zs - zrs * zq) * deni;
-      dsX0[2] = -(zqs * zs - zss * zq) * deni;
+        qX0[0] = 1 / h;
+        qX0[1] = 0;
+        qX0[2] = 0;
+        rX0[0] = 0;
+        rX0[1] = 1 / h;
+        rX0[2] = 0;
+        sX0[0] = -zq / (h * zs);
+        sX0[1] = -zr / (h * zs);
+        sX0[2] = 1 / zs;
 
-      dsY0[0] = -(zqr * zs - zqs * zr) * deni;
-      dsY0[1] = -(zrr * zs - zrs * zr) * deni;
-      dsY0[2] = -(zrs * zs - zss * zr) * deni;
+        float_sw4 deni = 1 / (h * zs * zs);
+        dsX0[0] = -(zqq * zs - zqs * zq) * deni;
+        dsX0[1] = -(zqr * zs - zrs * zq) * deni;
+        dsX0[2] = -(zqs * zs - zss * zq) * deni;
 
-      deni *= h;
-      dsZ0[0] = -zqs * deni;
-      dsZ0[1] = -zrs * deni;
-      dsZ0[2] = -zss * deni;
-    }  // end curvilinear
+        dsY0[0] = -(zqr * zs - zqs * zr) * deni;
+        dsY0[1] = -(zrr * zs - zrs * zr) * deni;
+        dsY0[2] = -(zrs * zs - zss * zr) * deni;
 
-    // Gradients of sX0[0]=sX, sX0[1]=sY, and sX0[2]=sZ wrt. (q,r,s)
-    // NYI
-    //            double dsX0[3], dsY0[3], dsZ0[3], d2sX0[6], d2sY0[6],
-    //            d2sZ0[6];
-    //	    dsX0[0] = 0;
-    //	    dsX0[1] = 0;
-    //	    dsX0[2] = 0;
+        deni *= h;
+        dsZ0[0] = -zqs * deni;
+        dsZ0[1] = -zrs * deni;
+        dsZ0[2] = -zss * deni;
+      }  // end curvilinear
 
-    //	    dsY0[0] = 0;
-    //	    dsY0[1] = 0;
-    //	    dsY0[2] = 0;
+      // Gradients of sX0[0]=sX, sX0[1]=sY, and sX0[2]=sZ wrt. (q,r,s)
+      // NYI
+      //            double dsX0[3], dsY0[3], dsZ0[3], d2sX0[6], d2sY0[6],
+      //            d2sZ0[6];
+      //	    dsX0[0] = 0;
+      //	    dsX0[1] = 0;
+      //	    dsX0[2] = 0;
 
-    //	    dsZ0[0] = 0;
-    //	    dsZ0[1] = 0;
-    //	    dsZ0[2] = 0;
-    // Hessians of sX0[0]=sX, sX0[1]=sY, and sX0[2]=sZ wrt. (q,r,s), in order
-    // qq,qr,qs,rr,rs,ss
-    //	    d2sX0[0] = 0;
-    //	    d2sX0[1] =0;
-    //	    d2sX0[2] =0;
-    //	    d2sX0[3] =0;
-    //	    d2sX0[4] =0;
-    //	    d2sX0[5] =0;
+      //	    dsY0[0] = 0;
+      //	    dsY0[1] = 0;
+      //	    dsY0[2] = 0;
 
-    //	    d2sY0[0] =0;
-    //	    d2sY0[1] =0;
-    //	    d2sY0[2] =0;
-    //	    d2sY0[3] =0;
-    //	    d2sY0[4] =0;
-    //	    d2sY0[5] =0;
+      //	    dsZ0[0] = 0;
+      //	    dsZ0[1] = 0;
+      //	    dsZ0[2] = 0;
+      // Hessians of sX0[0]=sX, sX0[1]=sY, and sX0[2]=sZ wrt. (q,r,s), in order
+      // qq,qr,qs,rr,rs,ss
+      //	    d2sX0[0] = 0;
+      //	    d2sX0[1] =0;
+      //	    d2sX0[2] =0;
+      //	    d2sX0[3] =0;
+      //	    d2sX0[4] =0;
+      //	    d2sX0[5] =0;
 
-    //	    d2sZ0[0] =0;
-    //	    d2sZ0[1] =0;
-    //	    d2sZ0[2] =0;
-    //	    d2sZ0[3] =0;
-    //	    d2sZ0[4] =0;
-    //	    d2sZ0[5] =0;
+      //	    d2sY0[0] =0;
+      //	    d2sY0[1] =0;
+      //	    d2sY0[2] =0;
+      //	    d2sY0[3] =0;
+      //	    d2sY0[4] =0;
+      //	    d2sY0[5] =0;
 
-    //      if( canBeInverted )
-    //   {
-    for (int k = kc - 2; k <= kc + 3; k++)
-      for (int j = jc - 2; j <= jc + 3; j++)
-        for (int i = ic - 2; i <= ic + 3; i++) {
-          float_sw4 wFx = 0, wFy = 0, wFz = 0, dsdp[27];
-          if (a_EW->interior_point_in_proc(i, j, g)) {
-            //                     cout << " src at " << i << " " << j << " " <<
-            //                     k << endl;
-            wFx += qX0[0] * dwghi[i - ic + 2] * wghj[j - jc + 2] *
-                   wghk[k - kc + 2];
-            //		  wFy += qX0[1]*dwghi[i-ic+2]* wghj[j-jc+2]*
-            // wghk[k-kc+2]; 		  wFz += qX0[2]*dwghi[i-ic+2]*
-            // wghj[j-jc+2]* wghk[k-kc+2];
+      //	    d2sZ0[0] =0;
+      //	    d2sZ0[1] =0;
+      //	    d2sZ0[2] =0;
+      //	    d2sZ0[3] =0;
+      //	    d2sZ0[4] =0;
+      //	    d2sZ0[5] =0;
 
-            //		  wFx +=  wghi[i-ic+2]*rX0[0]*dwghj[j-jc+2]*
-            // wghk[k-kc+2];
-            wFy += wghi[i - ic + 2] * rX0[1] * dwghj[j - jc + 2] *
-                   wghk[k - kc + 2];
-            //		  wFz +=  wghi[i-ic+2]*rX0[2]*dwghj[j-jc+2]*
-            // wghk[k-kc+2];
+      //      if( canBeInverted )
+      //   {
+      for (int k = kc - 2; k <= kc + 3; k++)
+        for (int j = jc - 2; j <= jc + 3; j++)
+          for (int i = ic - 2; i <= ic + 3; i++) {
+            float_sw4 wFx = 0, wFy = 0, wFz = 0, dsdp[27];
+            if (a_EW->interior_point_in_proc(i, j, g)) {
+              //                     cout << " src at " << i << " " << j << " "
+              //                     << k << endl;
+              wFx += qX0[0] * dwghi[i - ic + 2] * wghj[j - jc + 2] *
+                     wghk[k - kc + 2];
+              //		  wFy += qX0[1]*dwghi[i-ic+2]* wghj[j-jc+2]*
+              // wghk[k-kc+2]; 		  wFz += qX0[2]*dwghi[i-ic+2]*
+              // wghj[j-jc+2]* wghk[k-kc+2];
 
-            wFx += wghi[i - ic + 2] * wghj[j - jc + 2] * sX0[0] *
-                   dwghk[k - kc + 2];
-            //		     wFx +=  sX0[0];
-            wFy += wghi[i - ic + 2] * wghj[j - jc + 2] * sX0[1] *
-                   dwghk[k - kc + 2];
-            wFz += wghi[i - ic + 2] * wghj[j - jc + 2] * sX0[2] *
-                   dwghk[k - kc + 2];
+              //		  wFx +=  wghi[i-ic+2]*rX0[0]*dwghj[j-jc+2]*
+              // wghk[k-kc+2];
+              wFy += wghi[i - ic + 2] * rX0[1] * dwghj[j - jc + 2] *
+                     wghk[k - kc + 2];
+              //		  wFz +=  wghi[i-ic+2]*rX0[2]*dwghj[j-jc+2]*
+              // wghk[k-kc+2];
 
-            float_sw4 hi = 1.0 / h;
-            float_sw4 hi2 = hi * hi;
-            float_sw4 wFxdx0 = dwghix[i - ic + 2] * wghj[j - jc + 2] *
-                               wghk[k - kc + 2] * hi * qX0[0];
-            float_sw4 wFxdy0 = dwghi[i - ic + 2] * wghjy[j - jc + 2] *
-                               wghk[k - kc + 2] * hi * rX0[1];
-            //                     float_sw4 wFxdy0 = 0;
-            float_sw4 wFxdz0 = dwghi[i - ic + 2] * wghj[j - jc + 2] *
-                               wghkz[k - kc + 2] * hi * sX0[2];
+              wFx += wghi[i - ic + 2] * wghj[j - jc + 2] * sX0[0] *
+                     dwghk[k - kc + 2];
+              //		     wFx +=  sX0[0];
+              wFy += wghi[i - ic + 2] * wghj[j - jc + 2] * sX0[1] *
+                     dwghk[k - kc + 2];
+              wFz += wghi[i - ic + 2] * wghj[j - jc + 2] * sX0[2] *
+                     dwghk[k - kc + 2];
 
-            float_sw4 wFydx0 = wghix[i - ic + 2] * dwghj[j - jc + 2] *
-                               wghk[k - kc + 2] * hi * qX0[0];
-            float_sw4 wFydy0 = wghi[i - ic + 2] * dwghjy[j - jc + 2] *
-                               wghk[k - kc + 2] * hi * rX0[1];
-            float_sw4 wFydz0 = wghi[i - ic + 2] * dwghj[j - jc + 2] *
-                               wghkz[k - kc + 2] * hi * sX0[2];
+              float_sw4 hi = 1.0 / h;
+              float_sw4 hi2 = hi * hi;
+              float_sw4 wFxdx0 = dwghix[i - ic + 2] * wghj[j - jc + 2] *
+                                 wghk[k - kc + 2] * hi * qX0[0];
+              float_sw4 wFxdy0 = dwghi[i - ic + 2] * wghjy[j - jc + 2] *
+                                 wghk[k - kc + 2] * hi * rX0[1];
+              //                     float_sw4 wFxdy0 = 0;
+              float_sw4 wFxdz0 = dwghi[i - ic + 2] * wghj[j - jc + 2] *
+                                 wghkz[k - kc + 2] * hi * sX0[2];
 
-            float_sw4 wFzdx0 = wghix[i - ic + 2] * wghj[j - jc + 2] *
-                               dwghk[k - kc + 2] * sX0[2] * qX0[0];
-            float_sw4 wFzdy0 = wghi[i - ic + 2] * wghjy[j - jc + 2] *
-                               dwghk[k - kc + 2] * sX0[2] * rX0[1];
-            float_sw4 wFzdz0 = wghi[i - ic + 2] * wghj[j - jc + 2] *
-                               dwghkz[k - kc + 2] * sX0[2] * sX0[2];
+              float_sw4 wFydx0 = wghix[i - ic + 2] * dwghj[j - jc + 2] *
+                                 wghk[k - kc + 2] * hi * qX0[0];
+              float_sw4 wFydy0 = wghi[i - ic + 2] * dwghjy[j - jc + 2] *
+                                 wghk[k - kc + 2] * hi * rX0[1];
+              float_sw4 wFydz0 = wghi[i - ic + 2] * dwghj[j - jc + 2] *
+                                 wghkz[k - kc + 2] * hi * sX0[2];
 
-            if (curvilinear && kc <= Nz - 3) {
-              wFxdx0 += dwghi[i - ic + 2] * wghj[j - jc + 2] *
-                            wghkz[k - kc + 2] * hi * sX0[0] +
-                        wghix[i - ic + 2] * wghj[j - jc + 2] *
-                            dwghk[k - kc + 2] * hi * sX0[0] +
-                        wghi[i - ic + 2] * wghj[j - jc + 2] *
-                            dwghkz[k - kc + 2] * sX0[0] * sX0[0] +
-                        wghi[i - ic + 2] * wghj[j - jc + 2] *
-                            dwghk[k - kc + 2] *
-                            (hi * dsX0[0] + sX0[0] * dsX0[2]);
+              float_sw4 wFzdx0 = wghix[i - ic + 2] * wghj[j - jc + 2] *
+                                 dwghk[k - kc + 2] * sX0[2] * qX0[0];
+              float_sw4 wFzdy0 = wghi[i - ic + 2] * wghjy[j - jc + 2] *
+                                 dwghk[k - kc + 2] * sX0[2] * rX0[1];
+              float_sw4 wFzdz0 = wghi[i - ic + 2] * wghj[j - jc + 2] *
+                                 dwghkz[k - kc + 2] * sX0[2] * sX0[2];
 
-              wFxdy0 += dwghi[i - ic + 2] * wghj[j - jc + 2] *
-                            wghkz[k - kc + 2] * hi * sX0[1] +
-                        wghi[i - ic + 2] * wghjy[j - jc + 2] *
-                            dwghk[k - kc + 2] * hi * sX0[0] +
-                        wghi[i - ic + 2] * wghj[j - jc + 2] *
-                            dwghkz[k - kc + 2] * sX0[0] * sX0[1] +
-                        wghi[i - ic + 2] * wghj[j - jc + 2] *
-                            dwghk[k - kc + 2] *
-                            (hi * dsX0[1] + sX0[1] * dsX0[2]);
-              //			wFxdy0 += (hi*dsX0[1]+sX0[1]*dsX0[2]);
+              if (curvilinear && kc <= Nz - 3) {
+                wFxdx0 += dwghi[i - ic + 2] * wghj[j - jc + 2] *
+                              wghkz[k - kc + 2] * hi * sX0[0] +
+                          wghix[i - ic + 2] * wghj[j - jc + 2] *
+                              dwghk[k - kc + 2] * hi * sX0[0] +
+                          wghi[i - ic + 2] * wghj[j - jc + 2] *
+                              dwghkz[k - kc + 2] * sX0[0] * sX0[0] +
+                          wghi[i - ic + 2] * wghj[j - jc + 2] *
+                              dwghk[k - kc + 2] *
+                              (hi * dsX0[0] + sX0[0] * dsX0[2]);
 
-              wFxdz0 += wghi[i - ic + 2] * wghj[j - jc + 2] *
-                            dwghkz[k - kc + 2] * sX0[0] * sX0[2] +
-                        wghi[i - ic + 2] * wghj[j - jc + 2] *
-                            dwghk[k - kc + 2] * sX0[2] * dsX0[2];
+                wFxdy0 += dwghi[i - ic + 2] * wghj[j - jc + 2] *
+                              wghkz[k - kc + 2] * hi * sX0[1] +
+                          wghi[i - ic + 2] * wghjy[j - jc + 2] *
+                              dwghk[k - kc + 2] * hi * sX0[0] +
+                          wghi[i - ic + 2] * wghj[j - jc + 2] *
+                              dwghkz[k - kc + 2] * sX0[0] * sX0[1] +
+                          wghi[i - ic + 2] * wghj[j - jc + 2] *
+                              dwghk[k - kc + 2] *
+                              (hi * dsX0[1] + sX0[1] * dsX0[2]);
+                //			wFxdy0 += (hi*dsX0[1]+sX0[1]*dsX0[2]);
 
-              wFydx0 += wghi[i - ic + 2] * dwghj[j - jc + 2] *
-                            wghkz[k - kc + 2] * hi * sX0[0] +
-                        wghix[i - ic + 2] * wghj[j - jc + 2] *
-                            dwghk[k - kc + 2] * hi * sX0[1] +
-                        wghi[i - ic + 2] * wghj[j - jc + 2] *
-                            dwghkz[k - kc + 2] * sX0[0] * sX0[1] +
-                        wghi[i - ic + 2] * wghj[j - jc + 2] *
-                            dwghk[k - kc + 2] *
-                            (hi * dsY0[0] + sX0[0] * dsY0[2]);
+                wFxdz0 += wghi[i - ic + 2] * wghj[j - jc + 2] *
+                              dwghkz[k - kc + 2] * sX0[0] * sX0[2] +
+                          wghi[i - ic + 2] * wghj[j - jc + 2] *
+                              dwghk[k - kc + 2] * sX0[2] * dsX0[2];
 
-              wFydy0 += wghi[i - ic + 2] * dwghj[j - jc + 2] *
-                            wghkz[k - kc + 2] * hi * sX0[1] +
-                        wghi[i - ic + 2] * wghjy[j - jc + 2] *
-                            dwghk[k - kc + 2] * hi * sX0[1] +
-                        wghi[i - ic + 2] * wghj[j - jc + 2] *
-                            dwghkz[k - kc + 2] * sX0[1] * sX0[1] +
-                        wghi[i - ic + 2] * wghj[j - jc + 2] *
-                            dwghk[k - kc + 2] *
-                            (hi * dsY0[1] + sX0[1] * dsY0[2]);
+                wFydx0 += wghi[i - ic + 2] * dwghj[j - jc + 2] *
+                              wghkz[k - kc + 2] * hi * sX0[0] +
+                          wghix[i - ic + 2] * wghj[j - jc + 2] *
+                              dwghk[k - kc + 2] * hi * sX0[1] +
+                          wghi[i - ic + 2] * wghj[j - jc + 2] *
+                              dwghkz[k - kc + 2] * sX0[0] * sX0[1] +
+                          wghi[i - ic + 2] * wghj[j - jc + 2] *
+                              dwghk[k - kc + 2] *
+                              (hi * dsY0[0] + sX0[0] * dsY0[2]);
 
-              wFydz0 += wghi[i - ic + 2] * wghj[j - jc + 2] *
-                            dwghkz[k - kc + 2] * sX0[1] * sX0[2] +
-                        wghi[i - ic + 2] * wghj[j - jc + 2] *
-                            dwghk[k - kc + 2] * sX0[2] * dsY0[2];
+                wFydy0 += wghi[i - ic + 2] * dwghj[j - jc + 2] *
+                              wghkz[k - kc + 2] * hi * sX0[1] +
+                          wghi[i - ic + 2] * wghjy[j - jc + 2] *
+                              dwghk[k - kc + 2] * hi * sX0[1] +
+                          wghi[i - ic + 2] * wghj[j - jc + 2] *
+                              dwghkz[k - kc + 2] * sX0[1] * sX0[1] +
+                          wghi[i - ic + 2] * wghj[j - jc + 2] *
+                              dwghk[k - kc + 2] *
+                              (hi * dsY0[1] + sX0[1] * dsY0[2]);
 
-              wFzdx0 += wghi[i - ic + 2] * wghj[j - jc + 2] *
-                            dwghkz[k - kc + 2] * sX0[0] * sX0[2] +
-                        wghi[i - ic + 2] * wghj[j - jc + 2] *
-                            dwghk[k - kc + 2] *
-                            (hi * dsZ0[0] + sX0[0] * dsZ0[2]);
+                wFydz0 += wghi[i - ic + 2] * wghj[j - jc + 2] *
+                              dwghkz[k - kc + 2] * sX0[1] * sX0[2] +
+                          wghi[i - ic + 2] * wghj[j - jc + 2] *
+                              dwghk[k - kc + 2] * sX0[2] * dsY0[2];
 
-              wFzdy0 += wghi[i - ic + 2] * wghj[j - jc + 2] *
-                            dwghkz[k - kc + 2] * sX0[1] * sX0[2] +
-                        wghi[i - ic + 2] * wghj[j - jc + 2] *
-                            dwghk[k - kc + 2] *
-                            (hi * dsZ0[1] + sX0[1] * dsZ0[2]);
+                wFzdx0 += wghi[i - ic + 2] * wghj[j - jc + 2] *
+                              dwghkz[k - kc + 2] * sX0[0] * sX0[2] +
+                          wghi[i - ic + 2] * wghj[j - jc + 2] *
+                              dwghk[k - kc + 2] *
+                              (hi * dsZ0[0] + sX0[0] * dsZ0[2]);
 
-              wFzdz0 += wghi[i - ic + 2] * wghj[j - jc + 2] *
-                        dwghk[k - kc + 2] * (sX0[2] * dsZ0[2]);
-            }
-            // NOTE:  Source second derivatives wrt. (x0,y0,z0) currently not
-            // yet implemented for curvilinear grids.
+                wFzdy0 += wghi[i - ic + 2] * wghj[j - jc + 2] *
+                              dwghkz[k - kc + 2] * sX0[1] * sX0[2] +
+                          wghi[i - ic + 2] * wghj[j - jc + 2] *
+                              dwghk[k - kc + 2] *
+                              (hi * dsZ0[1] + sX0[1] * dsZ0[2]);
 
-            // Second derivatives
+                wFzdz0 += wghi[i - ic + 2] * wghj[j - jc + 2] *
+                          dwghk[k - kc + 2] * (sX0[2] * dsZ0[2]);
+              }
+              // NOTE:  Source second derivatives wrt. (x0,y0,z0) currently not
+              // yet implemented for curvilinear grids.
 
-            float_sw4 wFxdx0dx0 = dwghixx[i - ic + 2] * wghj[j - jc + 2] *
-                                  wghk[k - kc + 2] * hi2 * hi;
-            float_sw4 wFxdx0dy0 = dwghix[i - ic + 2] * wghjy[j - jc + 2] *
-                                  wghk[k - kc + 2] * hi2 * hi;
-            float_sw4 wFxdx0dz0 = dwghix[i - ic + 2] * wghj[j - jc + 2] *
-                                  wghkz[k - kc + 2] * hi2 * hi;
-            float_sw4 wFxdy0dy0 = dwghi[i - ic + 2] * wghjyy[j - jc + 2] *
-                                  wghk[k - kc + 2] * hi2 * hi;
-            float_sw4 wFxdy0dz0 = dwghi[i - ic + 2] * wghjy[j - jc + 2] *
-                                  wghkz[k - kc + 2] * hi2 * hi;
-            float_sw4 wFxdz0dz0 = dwghi[i - ic + 2] * wghj[j - jc + 2] *
-                                  wghkzz[k - kc + 2] * hi2 * hi;
+              // Second derivatives
 
-            float_sw4 wFydx0dx0 = wghixx[i - ic + 2] * dwghj[j - jc + 2] *
-                                  wghk[k - kc + 2] * hi2 * hi;
-            float_sw4 wFydx0dy0 = wghix[i - ic + 2] * dwghjy[j - jc + 2] *
-                                  wghk[k - kc + 2] * hi2 * hi;
-            float_sw4 wFydx0dz0 = wghix[i - ic + 2] * dwghj[j - jc + 2] *
-                                  wghkz[k - kc + 2] * hi2 * hi;
-            float_sw4 wFydy0dy0 = wghi[i - ic + 2] * dwghjyy[j - jc + 2] *
-                                  wghk[k - kc + 2] * hi2 * hi;
-            float_sw4 wFydy0dz0 = wghi[i - ic + 2] * dwghjy[j - jc + 2] *
-                                  wghkz[k - kc + 2] * hi2 * hi;
-            float_sw4 wFydz0dz0 = wghi[i - ic + 2] * dwghj[j - jc + 2] *
-                                  wghkzz[k - kc + 2] * hi2 * hi;
+              float_sw4 wFxdx0dx0 = dwghixx[i - ic + 2] * wghj[j - jc + 2] *
+                                    wghk[k - kc + 2] * hi2 * hi;
+              float_sw4 wFxdx0dy0 = dwghix[i - ic + 2] * wghjy[j - jc + 2] *
+                                    wghk[k - kc + 2] * hi2 * hi;
+              float_sw4 wFxdx0dz0 = dwghix[i - ic + 2] * wghj[j - jc + 2] *
+                                    wghkz[k - kc + 2] * hi2 * hi;
+              float_sw4 wFxdy0dy0 = dwghi[i - ic + 2] * wghjyy[j - jc + 2] *
+                                    wghk[k - kc + 2] * hi2 * hi;
+              float_sw4 wFxdy0dz0 = dwghi[i - ic + 2] * wghjy[j - jc + 2] *
+                                    wghkz[k - kc + 2] * hi2 * hi;
+              float_sw4 wFxdz0dz0 = dwghi[i - ic + 2] * wghj[j - jc + 2] *
+                                    wghkzz[k - kc + 2] * hi2 * hi;
 
-            float_sw4 wFzdx0dx0 = wghixx[i - ic + 2] * wghj[j - jc + 2] *
-                                  dwghk[k - kc + 2] * hi2 * hi;
-            float_sw4 wFzdx0dy0 = wghix[i - ic + 2] * wghjy[j - jc + 2] *
-                                  dwghk[k - kc + 2] * hi2 * hi;
-            float_sw4 wFzdx0dz0 = wghix[i - ic + 2] * wghj[j - jc + 2] *
-                                  dwghkz[k - kc + 2] * hi2 * hi;
-            float_sw4 wFzdy0dy0 = wghi[i - ic + 2] * wghjyy[j - jc + 2] *
-                                  dwghk[k - kc + 2] * hi2 * hi;
-            float_sw4 wFzdy0dz0 = wghi[i - ic + 2] * wghjy[j - jc + 2] *
-                                  dwghkz[k - kc + 2] * hi2 * hi;
-            float_sw4 wFzdz0dz0 = wghi[i - ic + 2] * wghj[j - jc + 2] *
-                                  dwghkzz[k - kc + 2] * hi2 * hi;
-            //                  if( curvilinear && kc <= Nz-3 )
-            //		  {
+              float_sw4 wFydx0dx0 = wghixx[i - ic + 2] * dwghj[j - jc + 2] *
+                                    wghk[k - kc + 2] * hi2 * hi;
+              float_sw4 wFydx0dy0 = wghix[i - ic + 2] * dwghjy[j - jc + 2] *
+                                    wghk[k - kc + 2] * hi2 * hi;
+              float_sw4 wFydx0dz0 = wghix[i - ic + 2] * dwghj[j - jc + 2] *
+                                    wghkz[k - kc + 2] * hi2 * hi;
+              float_sw4 wFydy0dy0 = wghi[i - ic + 2] * dwghjyy[j - jc + 2] *
+                                    wghk[k - kc + 2] * hi2 * hi;
+              float_sw4 wFydy0dz0 = wghi[i - ic + 2] * dwghjy[j - jc + 2] *
+                                    wghkz[k - kc + 2] * hi2 * hi;
+              float_sw4 wFydz0dz0 = wghi[i - ic + 2] * dwghj[j - jc + 2] *
+                                    wghkzz[k - kc + 2] * hi2 * hi;
 
-            //		  }
+              float_sw4 wFzdx0dx0 = wghixx[i - ic + 2] * wghj[j - jc + 2] *
+                                    dwghk[k - kc + 2] * hi2 * hi;
+              float_sw4 wFzdx0dy0 = wghix[i - ic + 2] * wghjy[j - jc + 2] *
+                                    dwghk[k - kc + 2] * hi2 * hi;
+              float_sw4 wFzdx0dz0 = wghix[i - ic + 2] * wghj[j - jc + 2] *
+                                    dwghkz[k - kc + 2] * hi2 * hi;
+              float_sw4 wFzdy0dy0 = wghi[i - ic + 2] * wghjyy[j - jc + 2] *
+                                    dwghk[k - kc + 2] * hi2 * hi;
+              float_sw4 wFzdy0dz0 = wghi[i - ic + 2] * wghjy[j - jc + 2] *
+                                    dwghkz[k - kc + 2] * hi2 * hi;
+              float_sw4 wFzdz0dz0 = wghi[i - ic + 2] * wghj[j - jc + 2] *
+                                    dwghkzz[k - kc + 2] * hi2 * hi;
+              //                  if( curvilinear && kc <= Nz-3 )
+              //		  {
 
-            float_sw4 jaci;
-            if (curvilinear)
-              jaci = 1 / a_EW->mJ[g](i, j, k);  // is 'g' correct?
-            else
-              jaci = 1.0 / (h * h * h);
-
-            float_sw4 fx =
-                -(mForces[0] * wFx + mForces[1] * wFy + mForces[2] * wFz) *
-                jaci;
-            float_sw4 fy =
-                -(mForces[1] * wFx + mForces[3] * wFy + mForces[4] * wFz) *
-                jaci;
-            float_sw4 fz =
-                -(mForces[2] * wFx + mForces[4] * wFy + mForces[5] * wFz) *
-                jaci;
-
-            // Derivatives with respect to (x0,y0,z0,mxx,mxy,mxz,myy,myz,mzz)
-            dsdp[0] = -(mForces[0] * wFxdx0 + mForces[1] * wFydx0 +
-                        mForces[2] * wFzdx0) *
-                      jaci;
-            dsdp[1] = -(mForces[1] * wFxdx0 + mForces[3] * wFydx0 +
-                        mForces[4] * wFzdx0) *
-                      jaci;
-            dsdp[2] = -(mForces[2] * wFxdx0 + mForces[4] * wFydx0 +
-                        mForces[5] * wFzdx0) *
-                      jaci;
-            dsdp[3] = -(mForces[0] * wFxdy0 + mForces[1] * wFydy0 +
-                        mForces[2] * wFzdy0) *
-                      jaci;
-            dsdp[4] = -(mForces[1] * wFxdy0 + mForces[3] * wFydy0 +
-                        mForces[4] * wFzdy0) *
-                      jaci;
-            dsdp[5] = -(mForces[2] * wFxdy0 + mForces[4] * wFydy0 +
-                        mForces[5] * wFzdy0) *
-                      jaci;
-            dsdp[6] = -(mForces[0] * wFxdz0 + mForces[1] * wFydz0 +
-                        mForces[2] * wFzdz0) *
-                      jaci;
-            dsdp[7] = -(mForces[1] * wFxdz0 + mForces[3] * wFydz0 +
-                        mForces[4] * wFzdz0) *
-                      jaci;
-            dsdp[8] = -(mForces[2] * wFxdz0 + mForces[4] * wFydz0 +
-                        mForces[5] * wFzdz0) *
-                      jaci;
-            dsdp[9] = -wFx * jaci;
-            dsdp[10] = 0;
-            dsdp[11] = 0;
-            dsdp[12] = -wFy * jaci;
-            dsdp[13] = -wFx * jaci;
-            dsdp[14] = 0;
-            dsdp[15] = -wFz * jaci;
-            dsdp[16] = 0;
-            dsdp[17] = -wFx * jaci;
-            dsdp[18] = 0;
-            dsdp[19] = -wFy * jaci;
-            dsdp[20] = 0;
-            dsdp[21] = 0;
-            dsdp[22] = -wFz * jaci;
-            dsdp[23] = -wFy * jaci;
-            dsdp[24] = 0;
-            dsdp[25] = 0;
-            dsdp[26] = -wFz * jaci;
-
-            // Matrices needed for computing the Hessian wrt
-            // (x0,y0,z0,mxx,mxy,mxz,myy,myz,mzz)
-            float_sw4 dddp[9], dh1[9], dh2[9], dh3[9];
-            dddp[0] = -wFxdx0 * jaci;
-            dddp[1] = -wFxdy0 * jaci;
-            dddp[2] = -wFxdz0 * jaci;
-            dddp[3] = -wFydx0 * jaci;
-            dddp[4] = -wFydy0 * jaci;
-            dddp[5] = -wFydz0 * jaci;
-            dddp[6] = -wFzdx0 * jaci;
-            dddp[7] = -wFzdy0 * jaci;
-            dddp[8] = -wFzdz0 * jaci;
-
-            //                     if( i == ic && j == jc && k == kc )
-            //		     {
-            //                        cout.precision(16);
-            //                        cout << "forcing " << endl;
-            //			cout << fx << " " << fy << " " << fz << endl;
-            //			cout << "gradient dsdp- = " << endl;
-            //			for( int dd=0 ; dd < 9 ; dd++ )
-            //			   cout << dsdp[dd] << endl;
-            //                        cout << "wFz and dwFzdx0 at " << ic << " "
-            //                        << jc << " " << kc << endl;
-            //			cout << wFz << endl;
-            //			cout << wFzdx0 << endl;
-            //			cout << wFzdy0 << endl;
-            //			cout << wFzdz0 << endl;
-            //		     }
-
-            // derivative of (dsdp[0],dsdp[3],dsdp[6]) (first component)
-            dh1[0] = -(mForces[0] * wFxdx0dx0 + mForces[1] * wFydx0dx0 +
-                       mForces[2] * wFzdx0dx0) *
-                     jaci;
-            dh1[1] = -(mForces[0] * wFxdx0dy0 + mForces[1] * wFydx0dy0 +
-                       mForces[2] * wFzdx0dy0) *
-                     jaci;
-            dh1[2] = -(mForces[0] * wFxdx0dz0 + mForces[1] * wFydx0dz0 +
-                       mForces[2] * wFzdx0dz0) *
-                     jaci;
-
-            dh1[3] = dh1[1];
-            dh1[4] = -(mForces[0] * wFxdy0dy0 + mForces[1] * wFydy0dy0 +
-                       mForces[2] * wFzdy0dy0) *
-                     jaci;
-            dh1[5] = -(mForces[0] * wFxdy0dz0 + mForces[1] * wFydy0dz0 +
-                       mForces[2] * wFzdy0dz0) *
-                     jaci;
-
-            dh1[6] = dh1[2];
-            dh1[7] = dh1[5];
-            dh1[8] = -(mForces[0] * wFxdz0dz0 + mForces[1] * wFydz0dz0 +
-                       mForces[2] * wFzdz0dz0) *
-                     jaci;
-
-            // derivative of (dsdp[1],dsdp[4],dsdp[7]) (second component)
-            dh2[0] = -(mForces[1] * wFxdx0dx0 + mForces[3] * wFydx0dx0 +
-                       mForces[4] * wFzdx0dx0) *
-                     jaci;
-            dh2[1] = -(mForces[1] * wFxdx0dy0 + mForces[3] * wFydx0dy0 +
-                       mForces[4] * wFzdx0dy0) *
-                     jaci;
-            dh2[2] = -(mForces[1] * wFxdx0dz0 + mForces[3] * wFydx0dz0 +
-                       mForces[4] * wFzdx0dz0) *
-                     jaci;
-
-            dh2[3] = dh2[1];
-            dh2[4] = -(mForces[1] * wFxdy0dy0 + mForces[3] * wFydy0dy0 +
-                       mForces[4] * wFzdy0dy0) *
-                     jaci;
-            dh2[5] = -(mForces[1] * wFxdy0dz0 + mForces[3] * wFydy0dz0 +
-                       mForces[4] * wFzdy0dz0) *
-                     jaci;
-
-            dh2[6] = dh2[2];
-            dh2[7] = dh2[5];
-            dh2[8] = -(mForces[1] * wFxdz0dz0 + mForces[3] * wFydz0dz0 +
-                       mForces[4] * wFzdz0dz0) *
-                     jaci;
-
-            // derivative of (dsdp[2],dsdp[5],dsdp[8]) (third component)
-            dh3[0] = -(mForces[2] * wFxdx0dx0 + mForces[4] * wFydx0dx0 +
-                       mForces[5] * wFzdx0dx0) *
-                     jaci;
-            dh3[1] = -(mForces[2] * wFxdx0dy0 + mForces[4] * wFydx0dy0 +
-                       mForces[5] * wFzdx0dy0) *
-                     jaci;
-            dh3[2] = -(mForces[2] * wFxdx0dz0 + mForces[4] * wFydx0dz0 +
-                       mForces[5] * wFzdx0dz0) *
-                     jaci;
-
-            dh3[3] = dh3[1];
-            dh3[4] = -(mForces[2] * wFxdy0dy0 + mForces[4] * wFydy0dy0 +
-                       mForces[5] * wFzdy0dy0) *
-                     jaci;
-            dh3[5] = -(mForces[2] * wFxdy0dz0 + mForces[4] * wFydy0dz0 +
-                       mForces[5] * wFzdy0dz0) *
-                     jaci;
-
-            dh3[6] = dh3[2];
-            dh3[7] = dh3[5];
-            dh3[8] = -(mForces[2] * wFxdz0dz0 + mForces[4] * wFydz0dz0 +
-                       mForces[5] * wFzdz0dz0) *
-                     jaci;
-
-            //                  if( i==42 && j==55 && k==39 )
-            //		  {
-            //		     cout.precision(16);
-            //                  cout <<
-            //                  "-----------------------------------------------------------------------\n";
-            //		  cout << "     " << i <<  " " << j << " " << k << endl;
-            //                  cout << "dsp = " << dsdp[2] << " " << dsdp[5] <<
-            //                  "  " << dsdp[8] << endl; cout << "dh  = " <<
-            //                  dh3[0] << " " << dh3[1] << "  " << dh3[2] <<
-            //                  endl; cout << "      " << dh3[3] << " " <<
-            //                  dh3[4] << "  " << dh3[5] << endl; cout << " " <<
-            //                  dh3[6] << " " << dh3[7] << "  " << dh3[8] <<
-            //                  endl; cout <<
-            //                  "-----------------------------------------------------------------------"
-            //                  << endl;
-            //		  }
-
-            //		  if( mAmp != 0 && (fx != 0 || fy != 0 || fz != 0) )
-            if (1 <= k && k <= Nz) {  // Runs out of memory here
-              GridPointSource* sourcePtr = new GridPointSource(
-                  mFreq, mT0, i, j, k, g, fx, fy, fz, mTimeDependence, mNcyc,
-                  mPar, mNpar, mIpar, mNipar, dsdp, dddp, dh1, dh2, dh3);
-              if (m_derivative >= 0)
-                sourcePtr->set_derivative(m_derivative, m_dir);
-              point_sources.push_back(sourcePtr);
-            }
-            if (k <= 1 && ccbndry && upperbndry) {
-              int Nzp = a_EW->m_global_nz[g + 1];
-              int kk = Nzp - 1 + k;
-                     
-              wFx = qX0[0]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
-              wFy =  wghi[i-ic+2]*rX0[1]*dwghj[j-jc+2]* wghk[k-kc+2];
-              wFx +=  wghi[i-ic+2]* wghj[j-jc+2]*sX0[0]*dwghk[k-kc+2];
-              wFy +=  wghi[i-ic+2]* wghj[j-jc+2]*sX0[1]*dwghk[k-kc+2];
-              wFz =   wghi[i-ic+2]* wghj[j-jc+2]*sX0[2]*dwghk[k-kc+2];
+              //		  }
 
               float_sw4 jaci;
-              if( curvilineargp1 )
-                 jaci = 1/a_EW->mJ[g+1](i,j,kk);
+              if (curvilinear)
+                jaci = 1 / a_EW->mJ[g](i, j, k);  // is 'g' correct?
               else
-                 jaci = 1.0/(0.125*h*h*h);
+                jaci = 1.0 / (h * h * h);
 
-              float_sw4 fx = -(mForces[0]*wFx+mForces[1]*wFy+mForces[2]*wFz)*jaci;
-              float_sw4 fy = -(mForces[1]*wFx+mForces[3]*wFy+mForces[4]*wFz)*jaci;
-              float_sw4 fz = -(mForces[2]*wFx+mForces[4]*wFy+mForces[5]*wFz)*jaci;
+              float_sw4 fx =
+                  -(mForces[0] * wFx + mForces[1] * wFy + mForces[2] * wFz) *
+                  jaci;
+              float_sw4 fy =
+                  -(mForces[1] * wFx + mForces[3] * wFy + mForces[4] * wFz) *
+                  jaci;
+              float_sw4 fz =
+                  -(mForces[2] * wFx + mForces[4] * wFy + mForces[5] * wFz) *
+                  jaci;
 
-              GridPointSource* sourcePtr = new GridPointSource(
-                  mFreq, mT0, i, j, kk, g + 1, fx, fy, fz, mTimeDependence,
-                  mNcyc, mPar, mNpar, mIpar, mNipar, dsdp, dddp, dh1, dh2, dh3);
-              if (m_derivative >= 0)
-                sourcePtr->set_derivative(m_derivative, m_dir);
-              point_sources.push_back(sourcePtr);
-            }
-            if (k >= Nz && ccbndry && lowerbndry) {
-              int kk = k - Nz + 1;
-              wFx = qX0[0]*dwghi[i-ic+2]* wghj[j-jc+2]* wghk[k-kc+2];
-              wFy =  wghi[i-ic+2]*rX0[1]*dwghj[j-jc+2]* wghk[k-kc+2];
-              wFx +=  wghi[i-ic+2]* wghj[j-jc+2]*sX0[0]*dwghk[k-kc+2];
-              wFy +=  wghi[i-ic+2]* wghj[j-jc+2]*sX0[1]*dwghk[k-kc+2];
-              wFz =   wghi[i-ic+2]* wghj[j-jc+2]*sX0[2]*dwghk[k-kc+2];
+              // Derivatives with respect to (x0,y0,z0,mxx,mxy,mxz,myy,myz,mzz)
+              dsdp[0] = -(mForces[0] * wFxdx0 + mForces[1] * wFydx0 +
+                          mForces[2] * wFzdx0) *
+                        jaci;
+              dsdp[1] = -(mForces[1] * wFxdx0 + mForces[3] * wFydx0 +
+                          mForces[4] * wFzdx0) *
+                        jaci;
+              dsdp[2] = -(mForces[2] * wFxdx0 + mForces[4] * wFydx0 +
+                          mForces[5] * wFzdx0) *
+                        jaci;
+              dsdp[3] = -(mForces[0] * wFxdy0 + mForces[1] * wFydy0 +
+                          mForces[2] * wFzdy0) *
+                        jaci;
+              dsdp[4] = -(mForces[1] * wFxdy0 + mForces[3] * wFydy0 +
+                          mForces[4] * wFzdy0) *
+                        jaci;
+              dsdp[5] = -(mForces[2] * wFxdy0 + mForces[4] * wFydy0 +
+                          mForces[5] * wFzdy0) *
+                        jaci;
+              dsdp[6] = -(mForces[0] * wFxdz0 + mForces[1] * wFydz0 +
+                          mForces[2] * wFzdz0) *
+                        jaci;
+              dsdp[7] = -(mForces[1] * wFxdz0 + mForces[3] * wFydz0 +
+                          mForces[4] * wFzdz0) *
+                        jaci;
+              dsdp[8] = -(mForces[2] * wFxdz0 + mForces[4] * wFydz0 +
+                          mForces[5] * wFzdz0) *
+                        jaci;
+              dsdp[9] = -wFx * jaci;
+              dsdp[10] = 0;
+              dsdp[11] = 0;
+              dsdp[12] = -wFy * jaci;
+              dsdp[13] = -wFx * jaci;
+              dsdp[14] = 0;
+              dsdp[15] = -wFz * jaci;
+              dsdp[16] = 0;
+              dsdp[17] = -wFx * jaci;
+              dsdp[18] = 0;
+              dsdp[19] = -wFy * jaci;
+              dsdp[20] = 0;
+              dsdp[21] = 0;
+              dsdp[22] = -wFz * jaci;
+              dsdp[23] = -wFy * jaci;
+              dsdp[24] = 0;
+              dsdp[25] = 0;
+              dsdp[26] = -wFz * jaci;
 
-              float_sw4 jaci;
-              if( curvilineargm1 )
-                 jaci = 1/a_EW->mJ[g-1](i,j,kk);
-              else
-                 jaci = 1.0/(8*h*h*h);
+              // Matrices needed for computing the Hessian wrt
+              // (x0,y0,z0,mxx,mxy,mxz,myy,myz,mzz)
+              float_sw4 dddp[9], dh1[9], dh2[9], dh3[9];
+              dddp[0] = -wFxdx0 * jaci;
+              dddp[1] = -wFxdy0 * jaci;
+              dddp[2] = -wFxdz0 * jaci;
+              dddp[3] = -wFydx0 * jaci;
+              dddp[4] = -wFydy0 * jaci;
+              dddp[5] = -wFydz0 * jaci;
+              dddp[6] = -wFzdx0 * jaci;
+              dddp[7] = -wFzdy0 * jaci;
+              dddp[8] = -wFzdz0 * jaci;
 
-              float_sw4 fx = -(mForces[0]*wFx+mForces[1]*wFy+mForces[2]*wFz)*jaci;
-              float_sw4 fy = -(mForces[1]*wFx+mForces[3]*wFy+mForces[4]*wFz)*jaci;
-              float_sw4 fz = -(mForces[2]*wFx+mForces[4]*wFy+mForces[5]*wFz)*jaci;
+              //                     if( i == ic && j == jc && k == kc )
+              //		     {
+              //                        cout.precision(16);
+              //                        cout << "forcing " << endl;
+              //			cout << fx << " " << fy << " " << fz <<
+              // endl; 			cout << "gradient dsdp- = " << endl;
+              // for( int dd=0 ; dd <
+              // 9 ; dd++ ) 			   cout << dsdp[dd] << endl;
+              //                        cout << "wFz and dwFzdx0 at " << ic << "
+              //                        "
+              //                        << jc << " " << kc << endl;
+              //			cout << wFz << endl;
+              //			cout << wFzdx0 << endl;
+              //			cout << wFzdy0 << endl;
+              //			cout << wFzdz0 << endl;
+              //		     }
 
-              GridPointSource* sourcePtr = new GridPointSource(
-                  mFreq, mT0, i, j, kk, g - 1, fx, fy, fz, mTimeDependence,
-                  mNcyc, mPar, mNpar, mIpar, mNipar, dsdp, dddp, dh1, dh2, dh3);
-              if (m_derivative >= 0)
-                sourcePtr->set_derivative(m_derivative, m_dir);
-              point_sources.push_back(sourcePtr);
-            }
-          }
-        }  // end for k,j,i
+              // derivative of (dsdp[0],dsdp[3],dsdp[6]) (first component)
+              dh1[0] = -(mForces[0] * wFxdx0dx0 + mForces[1] * wFydx0dx0 +
+                         mForces[2] * wFzdx0dx0) *
+                       jaci;
+              dh1[1] = -(mForces[0] * wFxdx0dy0 + mForces[1] * wFydx0dy0 +
+                         mForces[2] * wFzdx0dy0) *
+                       jaci;
+              dh1[2] = -(mForces[0] * wFxdx0dz0 + mForces[1] * wFydx0dz0 +
+                         mForces[2] * wFzdx0dz0) *
+                       jaci;
 
-    if (gridrefbndry) {
-      // These arrays are currently undefined across the mesh refinement
-      // boundary.
-      // --> Source inversion can not be done if the source is located at the
-      // interface.
-      float_sw4 dddp[9], dh1[9], dh2[9], dh3[9], dsdp[27];
-      for (int k = kc - 2; k <= kc + 3; k++) {
-        if (k <= 1) {
-          float_sw4 hi = 1.0 / (0.5 * h);
-          float_sw4 jaci = 1.0 / (0.125 * h * h * h);
-          for (int j = jcref - 2; j <= jcref + 3; j++)
-            for (int i = icref - 2; i <= icref + 3; i++) {
-              float_sw4 wFx = 0, wFy = 0, wFz = 0;
-              if (a_EW->interior_point_in_proc(i, j, g + 1)) {
-                wFx = dwghiref[i - icref + 2] * wghjref[j - jcref + 2] *
-                      wghkref[k - kc + 2] * hi;
-                wFy = wghiref[i - icref + 2] * dwghjref[j - jcref + 2] *
-                      wghkref[k - kc + 2] * hi;
-                wFz = wghiref[i - icref + 2] * wghjref[j - jcref + 2] *
-                      dwghkref[k - kc + 2] * hi;
+              dh1[3] = dh1[1];
+              dh1[4] = -(mForces[0] * wFxdy0dy0 + mForces[1] * wFydy0dy0 +
+                         mForces[2] * wFzdy0dy0) *
+                       jaci;
+              dh1[5] = -(mForces[0] * wFxdy0dz0 + mForces[1] * wFydy0dz0 +
+                         mForces[2] * wFzdy0dz0) *
+                       jaci;
+
+              dh1[6] = dh1[2];
+              dh1[7] = dh1[5];
+              dh1[8] = -(mForces[0] * wFxdz0dz0 + mForces[1] * wFydz0dz0 +
+                         mForces[2] * wFzdz0dz0) *
+                       jaci;
+
+              // derivative of (dsdp[1],dsdp[4],dsdp[7]) (second component)
+              dh2[0] = -(mForces[1] * wFxdx0dx0 + mForces[3] * wFydx0dx0 +
+                         mForces[4] * wFzdx0dx0) *
+                       jaci;
+              dh2[1] = -(mForces[1] * wFxdx0dy0 + mForces[3] * wFydx0dy0 +
+                         mForces[4] * wFzdx0dy0) *
+                       jaci;
+              dh2[2] = -(mForces[1] * wFxdx0dz0 + mForces[3] * wFydx0dz0 +
+                         mForces[4] * wFzdx0dz0) *
+                       jaci;
+
+              dh2[3] = dh2[1];
+              dh2[4] = -(mForces[1] * wFxdy0dy0 + mForces[3] * wFydy0dy0 +
+                         mForces[4] * wFzdy0dy0) *
+                       jaci;
+              dh2[5] = -(mForces[1] * wFxdy0dz0 + mForces[3] * wFydy0dz0 +
+                         mForces[4] * wFzdy0dz0) *
+                       jaci;
+
+              dh2[6] = dh2[2];
+              dh2[7] = dh2[5];
+              dh2[8] = -(mForces[1] * wFxdz0dz0 + mForces[3] * wFydz0dz0 +
+                         mForces[4] * wFzdz0dz0) *
+                       jaci;
+
+              // derivative of (dsdp[2],dsdp[5],dsdp[8]) (third component)
+              dh3[0] = -(mForces[2] * wFxdx0dx0 + mForces[4] * wFydx0dx0 +
+                         mForces[5] * wFzdx0dx0) *
+                       jaci;
+              dh3[1] = -(mForces[2] * wFxdx0dy0 + mForces[4] * wFydx0dy0 +
+                         mForces[5] * wFzdx0dy0) *
+                       jaci;
+              dh3[2] = -(mForces[2] * wFxdx0dz0 + mForces[4] * wFydx0dz0 +
+                         mForces[5] * wFzdx0dz0) *
+                       jaci;
+
+              dh3[3] = dh3[1];
+              dh3[4] = -(mForces[2] * wFxdy0dy0 + mForces[4] * wFydy0dy0 +
+                         mForces[5] * wFzdy0dy0) *
+                       jaci;
+              dh3[5] = -(mForces[2] * wFxdy0dz0 + mForces[4] * wFydy0dz0 +
+                         mForces[5] * wFzdy0dz0) *
+                       jaci;
+
+              dh3[6] = dh3[2];
+              dh3[7] = dh3[5];
+              dh3[8] = -(mForces[2] * wFxdz0dz0 + mForces[4] * wFydz0dz0 +
+                         mForces[5] * wFzdz0dz0) *
+                       jaci;
+
+              //                  if( i==42 && j==55 && k==39 )
+              //		  {
+              //		     cout.precision(16);
+              //                  cout <<
+              //                  "-----------------------------------------------------------------------\n";
+              //		  cout << "     " << i <<  " " << j << " " << k
+              //<< endl;
+              //                  cout << "dsp = " << dsdp[2] << " " << dsdp[5]
+              //                  << "  " << dsdp[8] << endl; cout << "dh  = "
+              //                  << dh3[0] << " " << dh3[1] << "  " << dh3[2]
+              //                  << endl; cout << "      " << dh3[3] << " " <<
+              //                  dh3[4] << "  " << dh3[5] << endl; cout << " "
+              //                  << dh3[6] << " " << dh3[7] << "  " << dh3[8]
+              //                  << endl; cout <<
+              //                  "-----------------------------------------------------------------------"
+              //                  << endl;
+              //		  }
+
+              //		  if( mAmp != 0 && (fx != 0 || fy != 0 || fz !=
+              // 0) )
+              if (1 <= k && k <= Nz) {  // Runs out of memory here
+                GridPointSource* sourcePtr = new GridPointSource(
+                    mFreq, mT0, i, j, k, g, fx, fy, fz, mTimeDependence, mNcyc,
+                    mPar, mNpar, mIpar, mNipar, dsdp, dddp, dh1, dh2, dh3);
+                if (m_derivative >= 0)
+                  sourcePtr->set_derivative(m_derivative, m_dir);
+                point_sources.push_back(sourcePtr);
+              }
+              if (k <= 1 && ccbndry && upperbndry) {
+                int Nzp = a_EW->m_global_nz[g + 1];
+                int kk = Nzp - 1 + k;
+
+                wFx = qX0[0] * dwghi[i - ic + 2] * wghj[j - jc + 2] *
+                      wghk[k - kc + 2];
+                wFy = wghi[i - ic + 2] * rX0[1] * dwghj[j - jc + 2] *
+                      wghk[k - kc + 2];
+                wFx += wghi[i - ic + 2] * wghj[j - jc + 2] * sX0[0] *
+                       dwghk[k - kc + 2];
+                wFy += wghi[i - ic + 2] * wghj[j - jc + 2] * sX0[1] *
+                       dwghk[k - kc + 2];
+                wFz = wghi[i - ic + 2] * wghj[j - jc + 2] * sX0[2] *
+                      dwghk[k - kc + 2];
+
+                float_sw4 jaci;
+                if (curvilineargp1)
+                  jaci = 1 / a_EW->mJ[g + 1](i, j, kk);
+                else
+                  jaci = 1.0 / (0.125 * h * h * h);
+
                 float_sw4 fx =
                     -(mForces[0] * wFx + mForces[1] * wFy + mForces[2] * wFz) *
                     jaci;
@@ -2633,30 +2551,34 @@ void Source::set_grid_point_sources4(EW* a_EW,
                 float_sw4 fz =
                     -(mForces[2] * wFx + mForces[4] * wFy + mForces[5] * wFz) *
                     jaci;
-                int Nzp = a_EW->m_global_nz[g + 1];
-                int kk = Nzp - 1 + k;
+
                 GridPointSource* sourcePtr = new GridPointSource(
                     mFreq, mT0, i, j, kk, g + 1, fx, fy, fz, mTimeDependence,
                     mNcyc, mPar, mNpar, mIpar, mNipar, dsdp, dddp, dh1, dh2,
                     dh3);
+                if (m_derivative >= 0)
+                  sourcePtr->set_derivative(m_derivative, m_dir);
                 point_sources.push_back(sourcePtr);
               }
-            }
-        }  // end if k <= 1
+              if (k >= Nz && ccbndry && lowerbndry) {
+                int kk = k - Nz + 1;
+                wFx = qX0[0] * dwghi[i - ic + 2] * wghj[j - jc + 2] *
+                      wghk[k - kc + 2];
+                wFy = wghi[i - ic + 2] * rX0[1] * dwghj[j - jc + 2] *
+                      wghk[k - kc + 2];
+                wFx += wghi[i - ic + 2] * wghj[j - jc + 2] * sX0[0] *
+                       dwghk[k - kc + 2];
+                wFy += wghi[i - ic + 2] * wghj[j - jc + 2] * sX0[1] *
+                       dwghk[k - kc + 2];
+                wFz = wghi[i - ic + 2] * wghj[j - jc + 2] * sX0[2] *
+                      dwghk[k - kc + 2];
 
-        if (k >= Nz) {
-          float_sw4 jaci = 1.0 / (8 * h * h * h);
-          float_sw4 hi = 1.0 / (2 * h);
-          for (int j = jcref - 2; j <= jcref + 3; j++)
-            for (int i = icref - 2; i <= icref + 3; i++) {
-              float_sw4 wFx = 0, wFy = 0, wFz = 0;
-              if (a_EW->interior_point_in_proc(i, j, g - 1)) {
-                wFx = dwghiref[i - icref + 2] * wghjref[j - jcref + 2] *
-                      wghkref[k - kc + 2] * hi;
-                wFy = wghiref[i - icref + 2] * dwghjref[j - jcref + 2] *
-                      wghkref[k - kc + 2] * hi;
-                wFz = wghiref[i - icref + 2] * wghjref[j - jcref + 2] *
-                      dwghkref[k - kc + 2] * 2 * hi;
+                float_sw4 jaci;
+                if (curvilineargm1)
+                  jaci = 1 / a_EW->mJ[g - 1](i, j, kk);
+                else
+                  jaci = 1.0 / (8 * h * h * h);
+
                 float_sw4 fx =
                     -(mForces[0] * wFx + mForces[1] * wFy + mForces[2] * wFz) *
                     jaci;
@@ -2666,22 +2588,96 @@ void Source::set_grid_point_sources4(EW* a_EW,
                 float_sw4 fz =
                     -(mForces[2] * wFx + mForces[4] * wFy + mForces[5] * wFz) *
                     jaci;
-                int kk = k - Nz + 1;
+
                 GridPointSource* sourcePtr = new GridPointSource(
                     mFreq, mT0, i, j, kk, g - 1, fx, fy, fz, mTimeDependence,
                     mNcyc, mPar, mNpar, mIpar, mNipar, dsdp, dddp, dh1, dh2,
                     dh3);
+                if (m_derivative >= 0)
+                  sourcePtr->set_derivative(m_derivative, m_dir);
                 point_sources.push_back(sourcePtr);
               }
-            }  // end for i
+            }
+          }  // end for k,j,i
 
-        }  // end if kz >= Nz
+      if (gridrefbndry) {
+        // These arrays are currently undefined across the mesh refinement
+        // boundary.
+        // --> Source inversion can not be done if the source is located at the
+        // interface.
+        float_sw4 dddp[9], dh1[9], dh2[9], dh3[9], dsdp[27];
+        for (int k = kc - 2; k <= kc + 3; k++) {
+          if (k <= 1) {
+            float_sw4 hi = 1.0 / (0.5 * h);
+            float_sw4 jaci = 1.0 / (0.125 * h * h * h);
+            for (int j = jcref - 2; j <= jcref + 3; j++)
+              for (int i = icref - 2; i <= icref + 3; i++) {
+                float_sw4 wFx = 0, wFy = 0, wFz = 0;
+                if (a_EW->interior_point_in_proc(i, j, g + 1)) {
+                  wFx = dwghiref[i - icref + 2] * wghjref[j - jcref + 2] *
+                        wghkref[k - kc + 2] * hi;
+                  wFy = wghiref[i - icref + 2] * dwghjref[j - jcref + 2] *
+                        wghkref[k - kc + 2] * hi;
+                  wFz = wghiref[i - icref + 2] * wghjref[j - jcref + 2] *
+                        dwghkref[k - kc + 2] * hi;
+                  float_sw4 fx = -(mForces[0] * wFx + mForces[1] * wFy +
+                                   mForces[2] * wFz) *
+                                 jaci;
+                  float_sw4 fy = -(mForces[1] * wFx + mForces[3] * wFy +
+                                   mForces[4] * wFz) *
+                                 jaci;
+                  float_sw4 fz = -(mForces[2] * wFx + mForces[4] * wFy +
+                                   mForces[5] * wFz) *
+                                 jaci;
+                  int Nzp = a_EW->m_global_nz[g + 1];
+                  int kk = Nzp - 1 + k;
+                  GridPointSource* sourcePtr = new GridPointSource(
+                      mFreq, mT0, i, j, kk, g + 1, fx, fy, fz, mTimeDependence,
+                      mNcyc, mPar, mNpar, mIpar, mNipar, dsdp, dddp, dh1, dh2,
+                      dh3);
+                  point_sources.push_back(sourcePtr);
+                }
+              }
+          }  // end if k <= 1
 
-      }  // end for kc
+          if (k >= Nz) {
+            float_sw4 jaci = 1.0 / (8 * h * h * h);
+            float_sw4 hi = 1.0 / (2 * h);
+            for (int j = jcref - 2; j <= jcref + 3; j++)
+              for (int i = icref - 2; i <= icref + 3; i++) {
+                float_sw4 wFx = 0, wFy = 0, wFz = 0;
+                if (a_EW->interior_point_in_proc(i, j, g - 1)) {
+                  wFx = dwghiref[i - icref + 2] * wghjref[j - jcref + 2] *
+                        wghkref[k - kc + 2] * hi;
+                  wFy = wghiref[i - icref + 2] * dwghjref[j - jcref + 2] *
+                        wghkref[k - kc + 2] * hi;
+                  wFz = wghiref[i - icref + 2] * wghjref[j - jcref + 2] *
+                        dwghkref[k - kc + 2] * 2 * hi;
+                  float_sw4 fx = -(mForces[0] * wFx + mForces[1] * wFy +
+                                   mForces[2] * wFz) *
+                                 jaci;
+                  float_sw4 fy = -(mForces[1] * wFx + mForces[3] * wFy +
+                                   mForces[4] * wFz) *
+                                 jaci;
+                  float_sw4 fz = -(mForces[2] * wFx + mForces[4] * wFy +
+                                   mForces[5] * wFz) *
+                                 jaci;
+                  int kk = k - Nz + 1;
+                  GridPointSource* sourcePtr = new GridPointSource(
+                      mFreq, mT0, i, j, kk, g - 1, fx, fy, fz, mTimeDependence,
+                      mNcyc, mPar, mNpar, mIpar, mNipar, dsdp, dddp, dh1, dh2,
+                      dh3);
+                  point_sources.push_back(sourcePtr);
+                }
+              }  // end for i
 
-    }  // end if gridrefbndry
+          }  // end if kz >= Nz
 
-    } // end if cc_ic_bndry
+        }  // end for kc
+
+      }  // end if gridrefbndry
+
+    }  // end if cc_ic_bndry
 
   }  // end if momentTensorSource
 
@@ -3178,1236 +3174,1179 @@ void Source::compute_metric_at_source(EW* a_EW, float_sw4 q, float_sw4 r,
 }
 
 extern "C" {
-void F77_FUNC(dgels,DGELS)( char &, int &, int&, int&, double*, int&, double*, int&, double*, int&, int& );
+void F77_FUNC(dgels, DGELS)(char&, int&, int&, int&, double*, int&, double*,
+                            int&, double*, int&, int&);
 }
 
 //-----------------------------------------------------------------------
-void Source::get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r, 
-                              float_sw4 s, bool gradient, float_sw4 normwgh[4],
-                              vector<GridPointSource*>& point_sources )
-{
-#define CUB(x)   (x)*(x)*(x)
-#define BISQR(x) (x)*(x)*(x)*(x)   
-   //   ic, jc on current grid
-   //   icref, jcref on adjacent grid
-   // kc 
-   // Stencil is always -2 <= m <= 2, -2 <= n <= 2, -2 <= o <= 2
-   int ncond=35; // Number of moment conditions
-#define a(i,j) a_[(i-1) + ncond*(j-1)]
-#define b(i,j) b_[(i-1) + 125*(j-1)]
-#define x(i,j) b_[(i-1) + 125*(j-1)]
-   // setup stencil centers etc.
-   int ic=static_cast<int>(round(q));
-   int jc=static_cast<int>(round(r));
-   int kc=static_cast<int>(round(s));
-   int Nz = a_EW->m_global_nz[g];
-   int icref, jcref, gref;
-   if( kc > Nz/2 )
-   {
-      // (q,r,s) in fine grid, stencil extends to coarse grid below
-      icref = static_cast<int>(round(0.5*(q+1)));
-      jcref = static_cast<int>(round(0.5*(r+1)));
-      gref=g-1;
-   }
-   else
-   {
-      // (q,r,s) in coarse grid, stencil extends to fine grid above
-      icref = static_cast<int>(round(2*q-1));
-      jcref = static_cast<int>(round(2*r-1));
-      gref=g+1;
-   }
-   float_sw4 h=a_EW->mGridSize[g], href=a_EW->mGridSize[gref];
+void Source::get_mr_psources(EW* a_EW, int g, float_sw4 q, float_sw4 r,
+                             float_sw4 s, bool gradient, float_sw4 normwgh[4],
+                             vector<GridPointSource*>& point_sources) {
+#define CUB(x) (x) * (x) * (x)
+#define BISQR(x) (x) * (x) * (x) * (x)
+  //   ic, jc on current grid
+  //   icref, jcref on adjacent grid
+  // kc
+  // Stencil is always -2 <= m <= 2, -2 <= n <= 2, -2 <= o <= 2
+  int ncond = 35;  // Number of moment conditions
+#define a(i, j) a_[(i - 1) + ncond * (j - 1)]
+#define b(i, j) b_[(i - 1) + 125 * (j - 1)]
+#define x(i, j) b_[(i - 1) + 125 * (j - 1)]
+  // setup stencil centers etc.
+  int ic = static_cast<int>(round(q));
+  int jc = static_cast<int>(round(r));
+  int kc = static_cast<int>(round(s));
+  int Nz = a_EW->m_global_nz[g];
+  int icref, jcref, gref;
+  if (kc > Nz / 2) {
+    // (q,r,s) in fine grid, stencil extends to coarse grid below
+    icref = static_cast<int>(round(0.5 * (q + 1)));
+    jcref = static_cast<int>(round(0.5 * (r + 1)));
+    gref = g - 1;
+  } else {
+    // (q,r,s) in coarse grid, stencil extends to fine grid above
+    icref = static_cast<int>(round(2 * q - 1));
+    jcref = static_cast<int>(round(2 * r - 1));
+    gref = g + 1;
+  }
+  float_sw4 h = a_EW->mGridSize[g], href = a_EW->mGridSize[gref];
 
-   // Processor owns part of source stencil if (ic,jc) is inside processor.
-   // If (ic,jc) is in the processor overlap, then all the stencil widths ic-2,..,ic+2
-   // and jc-2,..,jc+2 are not guaranteed to be owned by this processor.
-   // Need to supply grid z and Jacobian for all stencil points, extended arrays are
-   // being used.
-   if( a_EW->interior_point_in_proc(ic-2,jc-2,g) ||
-       a_EW->interior_point_in_proc(ic+2,jc-2,g) ||
-       a_EW->interior_point_in_proc(ic-2,jc+2,g) ||
-       a_EW->interior_point_in_proc(ic+2,jc+2,g) ||
-       a_EW->interior_point_in_proc(icref-2,jcref-2,gref) ||
-       a_EW->interior_point_in_proc(icref+2,jcref-2,gref) ||       
-       a_EW->interior_point_in_proc(icref-2,jcref+2,gref) ||
-       a_EW->interior_point_in_proc(icref+2,jcref+2,gref) )
-   {
-      Sarray zg(ic-2,ic+2,jc-2,jc+2,kc-2,kc+2);
-      Sarray Jg(zg);
-      if( !a_EW->interior_point_in_proc( ic, jc, g) )
-         a_EW->m_gridGenerator->generate_z_and_j( a_EW, g, zg, Jg );
-      else
-      {
-         zg.insert_intersection( a_EW->mZ[g] );
-         Jg.insert_intersection( a_EW->mJ[g] );
-      }
-      int kll, kul;
-      if( gref == g+1 )
-      {
-         int Nzp=a_EW->m_global_nz[g+1];
-         kll=Nzp-4;
-         kul=Nzp;
-      }
-      else
-      {
-         kll=1;
-         kul=5;
-      }
-      Sarray zgref(icref-2,icref+2,jcref-2,jcref+2,kll,kul);
-      Sarray Jref(zgref);
-      if( !a_EW->interior_point_in_proc( icref, jcref, gref) )
-         a_EW->m_gridGenerator->generate_z_and_j( a_EW, gref, zgref, Jref );
-      else
-      {
-         zgref.insert_intersection( a_EW->mZ[gref] );
-         Jref.insert_intersection( a_EW->mJ[gref]);
-      }
+  // Processor owns part of source stencil if (ic,jc) is inside processor.
+  // If (ic,jc) is in the processor overlap, then all the stencil widths
+  // ic-2,..,ic+2 and jc-2,..,jc+2 are not guaranteed to be owned by this
+  // processor. Need to supply grid z and Jacobian for all stencil points,
+  // extended arrays are being used.
+  if (a_EW->interior_point_in_proc(ic - 2, jc - 2, g) ||
+      a_EW->interior_point_in_proc(ic + 2, jc - 2, g) ||
+      a_EW->interior_point_in_proc(ic - 2, jc + 2, g) ||
+      a_EW->interior_point_in_proc(ic + 2, jc + 2, g) ||
+      a_EW->interior_point_in_proc(icref - 2, jcref - 2, gref) ||
+      a_EW->interior_point_in_proc(icref + 2, jcref - 2, gref) ||
+      a_EW->interior_point_in_proc(icref - 2, jcref + 2, gref) ||
+      a_EW->interior_point_in_proc(icref + 2, jcref + 2, gref)) {
+    Sarray zg(ic - 2, ic + 2, jc - 2, jc + 2, kc - 2, kc + 2);
+    Sarray Jg(zg);
+    if (!a_EW->interior_point_in_proc(ic, jc, g))
+      a_EW->m_gridGenerator->generate_z_and_j(a_EW, g, zg, Jg);
+    else {
+      zg.insert_intersection(a_EW->mZ[g]);
+      Jg.insert_intersection(a_EW->mJ[g]);
+      SYNC_STREAM;
+    }
+    int kll, kul;
+    if (gref == g + 1) {
+      int Nzp = a_EW->m_global_nz[g + 1];
+      kll = Nzp - 4;
+      kul = Nzp;
+    } else {
+      kll = 1;
+      kul = 5;
+    }
+    Sarray zgref(icref - 2, icref + 2, jcref - 2, jcref + 2, kll, kul);
+    Sarray Jref(zgref);
+    if (!a_EW->interior_point_in_proc(icref, jcref, gref))
+      a_EW->m_gridGenerator->generate_z_and_j(a_EW, gref, zgref, Jref);
+    else {
+      zgref.insert_intersection(a_EW->mZ[gref]);
+      Jref.insert_intersection(a_EW->mJ[gref]);
+      SYNC_STREAM;
+    }
 
-   int nrhs=1;
-   if( gradient )
-      nrhs = 4;
+    int nrhs = 1;
+    if (gradient) nrhs = 4;
 
-   float_sw4* a_ = new float_sw4[ncond*125];
-   int ldb = ncond > 125? ncond:125;
-   float_sw4* b_ = new float_sw4[ldb*nrhs];
-   //   float_sw4* x_ = new float_sw4[125];   
+    float_sw4* a_ = new float_sw4[ncond * 125];
+    int ldb = ncond > 125 ? ncond : 125;
+    float_sw4* b_ = new float_sw4[ldb * nrhs];
+    //   float_sw4* x_ = new float_sw4[125];
 
-   //   std::cout << "SOURCE at interface, g= " << g << " (ic,jc,kc)= " << ic <<
-   //      ", " << jc << ", " << kc << std::endl;
-   float_sw4 xc=h*(ic-1);
-   float_sw4 yc=h*(jc-1);
-   float_sw4 zc=zg(ic,jc,kc);
+    //   std::cout << "SOURCE at interface, g= " << g << " (ic,jc,kc)= " << ic
+    //   <<
+    //      ", " << jc << ", " << kc << std::endl;
+    float_sw4 xc = h * (ic - 1);
+    float_sw4 yc = h * (jc - 1);
+    float_sw4 zc = zg(ic, jc, kc);
 
-   for( int k=kc-2 ; k <= kc+2 ; k++ )
-   {
-      if( 1 <= k && k <= Nz-1 )
-      {
-         // Discretization on this grid
-         for( int j=jc-2 ; j<= jc+2 ; j++ )
-            for( int i=ic-2 ; i<= ic+2 ; i++ )
-            {
-               int ind = i-ic+2 + 5*(j-jc+2) + 25*(k-kc+2)+1;
-               float_sw4 x=(i-1)*h, y=(j-1)*h, z=zg(i,j,k);
-               a(1,ind) = 1;
-               a(2,ind) = x-xc;
-               a(3,ind) = y-yc;
-               a(4,ind) = z-zc;
-               a(5,ind) = SQR(x-xc);
-               a(6,ind) = SQR(y-yc);
-               a(7,ind) = SQR(z-zc);
-               a(8,ind) = (x-xc)*(y-yc);
-               a(9,ind) = (x-xc)*(z-zc);
-               a(10,ind)= (y-yc)*(z-zc);
-               a(11,ind)= CUB(x-xc);
-               a(12,ind)= CUB(y-yc);
-               a(13,ind)= CUB(z-zc);
-               a(14,ind)= SQR(x-xc)*(y-yc);
-               a(15,ind)= SQR(y-yc)*(x-xc);
-               a(16,ind)= SQR(z-zc)*(x-xc);
-               a(17,ind)= SQR(x-xc)*(z-zc);
-               a(18,ind)= SQR(y-yc)*(z-zc);
-               a(19,ind)= SQR(z-zc)*(y-yc);
-               a(20,ind) = (x-xc)*(y-yc)*(z-zc);
-               if( ncond == 35 )
-               {
-                  a(21,ind)= BISQR(x-xc);
-                  a(22,ind)= BISQR(y-yc);
-                  a(23,ind)= BISQR(z-zc);
-                  a(24,ind)= CUB(x-xc)*(y-yc);
-                  a(25,ind)= CUB(y-yc)*(x-xc);
-                  a(26,ind)= CUB(z-zc)*(x-xc);
-                  a(27,ind)= CUB(x-xc)*(z-zc);                  
-                  a(28,ind)= CUB(z-zc)*(y-yc);
-                  a(29,ind)= CUB(y-yc)*(z-zc);                  
-                  a(30,ind)= SQR(x-xc)*SQR(y-yc);
-                  a(31,ind)= SQR(y-yc)*SQR(z-zc);
-                  a(32,ind)= SQR(z-zc)*SQR(x-xc);
-                  a(33,ind)= SQR(x-xc)*(y-yc)*(z-zc);
-                  a(34,ind)= SQR(y-yc)*(x-xc)*(z-zc);
-                  a(35,ind)= SQR(z-zc)*(x-xc)*(y-yc);
-               }
-
+    for (int k = kc - 2; k <= kc + 2; k++) {
+      if (1 <= k && k <= Nz - 1) {
+        // Discretization on this grid
+        for (int j = jc - 2; j <= jc + 2; j++)
+          for (int i = ic - 2; i <= ic + 2; i++) {
+            int ind = i - ic + 2 + 5 * (j - jc + 2) + 25 * (k - kc + 2) + 1;
+            float_sw4 x = (i - 1) * h, y = (j - 1) * h, z = zg(i, j, k);
+            a(1, ind) = 1;
+            a(2, ind) = x - xc;
+            a(3, ind) = y - yc;
+            a(4, ind) = z - zc;
+            a(5, ind) = SQR(x - xc);
+            a(6, ind) = SQR(y - yc);
+            a(7, ind) = SQR(z - zc);
+            a(8, ind) = (x - xc) * (y - yc);
+            a(9, ind) = (x - xc) * (z - zc);
+            a(10, ind) = (y - yc) * (z - zc);
+            a(11, ind) = CUB(x - xc);
+            a(12, ind) = CUB(y - yc);
+            a(13, ind) = CUB(z - zc);
+            a(14, ind) = SQR(x - xc) * (y - yc);
+            a(15, ind) = SQR(y - yc) * (x - xc);
+            a(16, ind) = SQR(z - zc) * (x - xc);
+            a(17, ind) = SQR(x - xc) * (z - zc);
+            a(18, ind) = SQR(y - yc) * (z - zc);
+            a(19, ind) = SQR(z - zc) * (y - yc);
+            a(20, ind) = (x - xc) * (y - yc) * (z - zc);
+            if (ncond == 35) {
+              a(21, ind) = BISQR(x - xc);
+              a(22, ind) = BISQR(y - yc);
+              a(23, ind) = BISQR(z - zc);
+              a(24, ind) = CUB(x - xc) * (y - yc);
+              a(25, ind) = CUB(y - yc) * (x - xc);
+              a(26, ind) = CUB(z - zc) * (x - xc);
+              a(27, ind) = CUB(x - xc) * (z - zc);
+              a(28, ind) = CUB(z - zc) * (y - yc);
+              a(29, ind) = CUB(y - yc) * (z - zc);
+              a(30, ind) = SQR(x - xc) * SQR(y - yc);
+              a(31, ind) = SQR(y - yc) * SQR(z - zc);
+              a(32, ind) = SQR(z - zc) * SQR(x - xc);
+              a(33, ind) = SQR(x - xc) * (y - yc) * (z - zc);
+              a(34, ind) = SQR(y - yc) * (x - xc) * (z - zc);
+              a(35, ind) = SQR(z - zc) * (x - xc) * (y - yc);
             }
+          }
       }
-      if( k <= 0 || k >= Nz )
-      {
-         int kk;
-         if( k<=0 )
-         {
-         // Into finer grid above, continue into fine grid from k=0 and 
-         // upward --> from kk=Nz-1
-            int Nzp = a_EW->m_global_nz[g+1];
-            kk=k+Nzp-1;
-         }
-         if( k >= Nz )
-         {
-         // Into coarser grid below, let k=Nz be the coarse grid discretization,
-         // and continue on coarse grid from k=Nz+1 --> kk=2
-            kk=k-Nz+1;
-         }
-         for( int j=jcref-2 ; j<= jcref+2 ; j++ )
-            for( int i=icref-2 ; i<= icref+2 ; i++ )
-            {
-               float_sw4 x=(i-1)*href, y=(j-1)*href, z=zgref(i,j,kk);
-               int ind = i-icref+2 + 5*(j-jcref+2) + 25*(k-kc+2)+1;
-               a(1,ind) = 1;
-               a(2,ind) = x-xc;
-               a(3,ind) = y-yc;
-               a(4,ind) = z-zc;
-               a(5,ind) = SQR(x-xc);
-               a(6,ind) = SQR(y-yc);
-               a(7,ind) = SQR(z-zc);
-               a(8,ind) = (x-xc)*(y-yc);
-               a(9,ind) = (x-xc)*(z-zc);
-               a(10,ind)= (y-yc)*(z-zc);
-               a(11,ind)= CUB(x-xc);
-               a(12,ind)= CUB(y-yc);
-               a(13,ind)= CUB(z-zc);
-               a(14,ind)= SQR(x-xc)*(y-yc);
-               a(15,ind)= SQR(y-yc)*(x-xc);
-               a(16,ind)= SQR(z-zc)*(x-xc);
-               a(17,ind)= SQR(x-xc)*(z-zc);
-               a(18,ind)= SQR(y-yc)*(z-zc);
-               a(19,ind)= SQR(z-zc)*(y-yc);
-               a(20,ind) = (x-xc)*(y-yc)*(z-zc);
-               if( ncond == 35 )
-               {
-                  a(21,ind)= BISQR(x-xc);
-                  a(22,ind)= BISQR(y-yc);
-                  a(23,ind)= BISQR(z-zc);
-                  a(24,ind)= CUB(x-xc)*(y-yc);
-                  a(25,ind)= CUB(y-yc)*(x-xc);
-                  a(26,ind)= CUB(z-zc)*(x-xc);
-                  a(27,ind)= CUB(x-xc)*(z-zc);                  
-                  a(28,ind)= CUB(z-zc)*(y-yc);
-                  a(29,ind)= CUB(y-yc)*(z-zc);                  
-                  a(30,ind)= SQR(x-xc)*SQR(y-yc);
-                  a(31,ind)= SQR(y-yc)*SQR(z-zc);
-                  a(32,ind)= SQR(z-zc)*SQR(x-xc);
-                  a(33,ind)= SQR(x-xc)*(y-yc)*(z-zc);
-                  a(34,ind)= SQR(y-yc)*(x-xc)*(z-zc);
-                  a(35,ind)= SQR(z-zc)*(x-xc)*(y-yc);
-               }
+      if (k <= 0 || k >= Nz) {
+        int kk;
+        if (k <= 0) {
+          // Into finer grid above, continue into fine grid from k=0 and
+          // upward --> from kk=Nz-1
+          int Nzp = a_EW->m_global_nz[g + 1];
+          kk = k + Nzp - 1;
+        }
+        if (k >= Nz) {
+          // Into coarser grid below, let k=Nz be the coarse grid
+          // discretization, and continue on coarse grid from k=Nz+1 --> kk=2
+          kk = k - Nz + 1;
+        }
+        for (int j = jcref - 2; j <= jcref + 2; j++)
+          for (int i = icref - 2; i <= icref + 2; i++) {
+            float_sw4 x = (i - 1) * href, y = (j - 1) * href,
+                      z = zgref(i, j, kk);
+            int ind =
+                i - icref + 2 + 5 * (j - jcref + 2) + 25 * (k - kc + 2) + 1;
+            a(1, ind) = 1;
+            a(2, ind) = x - xc;
+            a(3, ind) = y - yc;
+            a(4, ind) = z - zc;
+            a(5, ind) = SQR(x - xc);
+            a(6, ind) = SQR(y - yc);
+            a(7, ind) = SQR(z - zc);
+            a(8, ind) = (x - xc) * (y - yc);
+            a(9, ind) = (x - xc) * (z - zc);
+            a(10, ind) = (y - yc) * (z - zc);
+            a(11, ind) = CUB(x - xc);
+            a(12, ind) = CUB(y - yc);
+            a(13, ind) = CUB(z - zc);
+            a(14, ind) = SQR(x - xc) * (y - yc);
+            a(15, ind) = SQR(y - yc) * (x - xc);
+            a(16, ind) = SQR(z - zc) * (x - xc);
+            a(17, ind) = SQR(x - xc) * (z - zc);
+            a(18, ind) = SQR(y - yc) * (z - zc);
+            a(19, ind) = SQR(z - zc) * (y - yc);
+            a(20, ind) = (x - xc) * (y - yc) * (z - zc);
+            if (ncond == 35) {
+              a(21, ind) = BISQR(x - xc);
+              a(22, ind) = BISQR(y - yc);
+              a(23, ind) = BISQR(z - zc);
+              a(24, ind) = CUB(x - xc) * (y - yc);
+              a(25, ind) = CUB(y - yc) * (x - xc);
+              a(26, ind) = CUB(z - zc) * (x - xc);
+              a(27, ind) = CUB(x - xc) * (z - zc);
+              a(28, ind) = CUB(z - zc) * (y - yc);
+              a(29, ind) = CUB(y - yc) * (z - zc);
+              a(30, ind) = SQR(x - xc) * SQR(y - yc);
+              a(31, ind) = SQR(y - yc) * SQR(z - zc);
+              a(32, ind) = SQR(z - zc) * SQR(x - xc);
+              a(33, ind) = SQR(x - xc) * (y - yc) * (z - zc);
+              a(34, ind) = SQR(y - yc) * (x - xc) * (z - zc);
+              a(35, ind) = SQR(z - zc) * (x - xc) * (y - yc);
             }
+          }
       }
-      if( k==1 || k==Nz )
-      {
-         // On interface, impose special condition on the fine side
-         int gf, icf, jcf, icc, jcc, Nzf;
-         const float_sw4 i256=1.0/256;
-         //         std::cout << "SOURCE:  k= " << k << " ic,jc= " << ic << " " << jc <<
-         //            " icref,jcref= " << icref << " " << jcref << std::endl;
-         if( k==1 )
-         {
-         // If k==1, icref,jcref are in fine grid
-            gf=g+1;
-            //            icf=icref;
-            //            jcf=jcref;
-            icc=ic;
-            jcc=jc;
-            icf=2*ic-1;            
-            jcf=2*jc-1;
-            Nzf = a_EW->m_global_nz[g+1];
-         }
-         else
-         {
-         // If k==Nz, icref,jcref are in the coarse grid
-            gf =g;
-            //            icf=ic;
-            //            jcf=jc;
-            icc=icref;
-            jcc=jcref;
-            icf=2*icc-1;
-            jcf=2*jcc-1;
-            Nzf=Nz;
-         }
-         float_sw4 hf = a_EW->mGridSize[gf];
-         float_sw4 h  = a_EW->mGridSize[g];
-         Sarray zfa(icf-7,icf+7,jcf-7,jcf+7,Nzf-5,Nzf);
-         Sarray Jfa(icf-7,icf+7,jcf-7,jcf+7,Nzf-5,Nzf);
-         a_EW->m_gridGenerator->generate_z_and_j( a_EW, gf, zfa, Jfa );
-         float_sw4* _mom_f=new double[15*15*ncond];
-#define mom_f(c,i,j) _mom_f[(c-1)+ncond*(i-icf+7)+15*ncond*(j-jcf+7)]
-         for( int j=jcf-7 ; j<= jcf+7 ; j++ )
-            for( int i=icf-7 ; i<= icf+7 ; i++ )
-            {
-               float_sw4 dx = hf*(i-1)-xc;
-               float_sw4 dy = hf*(j-1)-yc;
-               float_sw4 dz = zfa(i,j,Nzf)-zc;
-               float_sw4 Jf = Jfa(i,j,Nzf);
-               mom_f(1,i,j) = 1*Jf;
-               mom_f(2,i,j) = dx*Jf;
-               mom_f(3,i,j) = dy*Jf;
-               mom_f(4,i,j) = dz*Jf;               
-               mom_f(5,i,j) = dx*dx*Jf;
-               mom_f(6,i,j) = dy*dy*Jf;
-               mom_f(7,i,j) = dz*dz*Jf;               
-               mom_f(8,i,j) = dx*dy*Jf;
-               mom_f(9,i,j) = dx*dz*Jf;
-               mom_f(10,i,j)= dy*dz*Jf;               
-               mom_f(11,i,j)= dx*dx*dx*Jf;
-               mom_f(12,i,j)= dy*dy*dy*Jf;
-               mom_f(13,i,j)= dz*dz*dz*Jf;               
-               mom_f(14,i,j)= dx*dx*dy*Jf;
-               mom_f(15,i,j)= dx*dy*dy*Jf;
-               mom_f(16,i,j)= dx*dz*dz*Jf;
-               mom_f(17,i,j)= dx*dx*dz*Jf;
-               mom_f(18,i,j)= dy*dy*dz*Jf;
-               mom_f(19,i,j)= dy*dz*dz*Jf;
-               mom_f(20,i,j)= dx*dy*dz*Jf;
-               if( ncond == 35 )
-               {
-                  mom_f(21,i,j)= BISQR(dx)*Jf;
-                  mom_f(22,i,j)= BISQR(dy)*Jf;
-                  mom_f(23,i,j)= BISQR(dz)*Jf;
-                  mom_f(24,i,j)= CUB(dx)*(dy)*Jf;
-                  mom_f(25,i,j)= CUB(dy)*(dx)*Jf;
-                  mom_f(26,i,j)= CUB(dz)*(dx)*Jf;
-                  mom_f(27,i,j)= CUB(dx)*(dz)*Jf;                  
-                  mom_f(28,i,j)= CUB(dz)*(dy)*Jf;
-                  mom_f(29,i,j)= CUB(dy)*(dz)*Jf;                  
-                  mom_f(30,i,j)= SQR(dx)*SQR(dy)*Jf;
-                  mom_f(31,i,j)= SQR(dy)*SQR(dz)*Jf;
-                  mom_f(32,i,j)= SQR(dz)*SQR(dx)*Jf;
-                  mom_f(33,i,j)= SQR(dx)*(dy)*(dz)*Jf;
-                  mom_f(34,i,j)= SQR(dy)*(dx)*(dz)*Jf;
-                  mom_f(35,i,j)= SQR(dz)*(dx)*(dy)*Jf;
-               }
-
+      if (k == 1 || k == Nz) {
+        // On interface, impose special condition on the fine side
+        int gf, icf, jcf, icc, jcc, Nzf;
+        const float_sw4 i256 = 1.0 / 256;
+        //         std::cout << "SOURCE:  k= " << k << " ic,jc= " << ic << " "
+        //         << jc <<
+        //            " icref,jcref= " << icref << " " << jcref << std::endl;
+        if (k == 1) {
+          // If k==1, icref,jcref are in fine grid
+          gf = g + 1;
+          //            icf=icref;
+          //            jcf=jcref;
+          icc = ic;
+          jcc = jc;
+          icf = 2 * ic - 1;
+          jcf = 2 * jc - 1;
+          Nzf = a_EW->m_global_nz[g + 1];
+        } else {
+          // If k==Nz, icref,jcref are in the coarse grid
+          gf = g;
+          //            icf=ic;
+          //            jcf=jc;
+          icc = icref;
+          jcc = jcref;
+          icf = 2 * icc - 1;
+          jcf = 2 * jcc - 1;
+          Nzf = Nz;
+        }
+        float_sw4 hf = a_EW->mGridSize[gf];
+        float_sw4 h = a_EW->mGridSize[g];
+        Sarray zfa(icf - 7, icf + 7, jcf - 7, jcf + 7, Nzf - 5, Nzf);
+        Sarray Jfa(icf - 7, icf + 7, jcf - 7, jcf + 7, Nzf - 5, Nzf);
+        a_EW->m_gridGenerator->generate_z_and_j(a_EW, gf, zfa, Jfa);
+        float_sw4* _mom_f = new double[15 * 15 * ncond];
+#define mom_f(c, i, j) \
+  _mom_f[(c - 1) + ncond * (i - icf + 7) + 15 * ncond * (j - jcf + 7)]
+        for (int j = jcf - 7; j <= jcf + 7; j++)
+          for (int i = icf - 7; i <= icf + 7; i++) {
+            float_sw4 dx = hf * (i - 1) - xc;
+            float_sw4 dy = hf * (j - 1) - yc;
+            float_sw4 dz = zfa(i, j, Nzf) - zc;
+            float_sw4 Jf = Jfa(i, j, Nzf);
+            mom_f(1, i, j) = 1 * Jf;
+            mom_f(2, i, j) = dx * Jf;
+            mom_f(3, i, j) = dy * Jf;
+            mom_f(4, i, j) = dz * Jf;
+            mom_f(5, i, j) = dx * dx * Jf;
+            mom_f(6, i, j) = dy * dy * Jf;
+            mom_f(7, i, j) = dz * dz * Jf;
+            mom_f(8, i, j) = dx * dy * Jf;
+            mom_f(9, i, j) = dx * dz * Jf;
+            mom_f(10, i, j) = dy * dz * Jf;
+            mom_f(11, i, j) = dx * dx * dx * Jf;
+            mom_f(12, i, j) = dy * dy * dy * Jf;
+            mom_f(13, i, j) = dz * dz * dz * Jf;
+            mom_f(14, i, j) = dx * dx * dy * Jf;
+            mom_f(15, i, j) = dx * dy * dy * Jf;
+            mom_f(16, i, j) = dx * dz * dz * Jf;
+            mom_f(17, i, j) = dx * dx * dz * Jf;
+            mom_f(18, i, j) = dy * dy * dz * Jf;
+            mom_f(19, i, j) = dy * dz * dz * Jf;
+            mom_f(20, i, j) = dx * dy * dz * Jf;
+            if (ncond == 35) {
+              mom_f(21, i, j) = BISQR(dx) * Jf;
+              mom_f(22, i, j) = BISQR(dy) * Jf;
+              mom_f(23, i, j) = BISQR(dz) * Jf;
+              mom_f(24, i, j) = CUB(dx) * (dy)*Jf;
+              mom_f(25, i, j) = CUB(dy) * (dx)*Jf;
+              mom_f(26, i, j) = CUB(dz) * (dx)*Jf;
+              mom_f(27, i, j) = CUB(dx) * (dz)*Jf;
+              mom_f(28, i, j) = CUB(dz) * (dy)*Jf;
+              mom_f(29, i, j) = CUB(dy) * (dz)*Jf;
+              mom_f(30, i, j) = SQR(dx) * SQR(dy) * Jf;
+              mom_f(31, i, j) = SQR(dy) * SQR(dz) * Jf;
+              mom_f(32, i, j) = SQR(dz) * SQR(dx) * Jf;
+              mom_f(33, i, j) = SQR(dx) * (dy) * (dz)*Jf;
+              mom_f(34, i, j) = SQR(dy) * (dx) * (dz)*Jf;
+              mom_f(35, i, j) = SQR(dz) * (dx) * (dy)*Jf;
             }
+          }
 
-         for( int jo=jcc-2 ; jo <= jcc+2 ; jo++ )
-            for( int io=icc-2 ; io <= icc+2 ; io++ )
-            {
-               int i=2*io-1, j=2*jo-1;
-               for(int c=1 ; c <= ncond ; c++ )
-               {
-                  float_sw4 mom_r=i256*(mom_f(c,i-3,j-3)-9*mom_f(c,i-3,j-1)-16*mom_f(c,i-3,j)-9*mom_f(c,i-3,j+1)+mom_f(c,i-3,j+3)
-               +9*(-mom_f(c,i-1,j-3)+9*mom_f(c,i-1,j-1)+16*mom_f(c,i-1,j)+9*mom_f(c,i-1,j+1)-mom_f(c,i-1,j+3))
-              +16*(-mom_f(c,i,  j-3)+9*mom_f(c,i,  j-1)+16*mom_f(c,i,  j)+9*mom_f(c,i,  j+1)-mom_f(c,i,  j+3))
-               +9*(-mom_f(c,i+1,j-3)+9*mom_f(c,i+1,j-1)+16*mom_f(c,i+1,j)+9*mom_f(c,i+1,j+1)-mom_f(c,i+1,j+3)) +
-                    mom_f(c,i+3,j-3)-9*mom_f(c,i+3,j-1)-16*mom_f(c,i+3,j)-9*mom_f(c,i+3,j+1)+mom_f(c,i+3,j+3) );
-                  int ind = io-icc+2 + 5*(jo-jcc+2) + 25*(k-kc+2)+1;
-                  if( g==gf )
-                     a(c,ind) += mom_r/Jref(io,jo,1);
-                  else
-                     a(c,ind) += mom_r/Jg(io,jo,1);                     
-                     //                  a(c,ind) += mom_r/a_EW->mJ[gf-1](io,jo,1);
-                  //                  a(c,ind) += mom_r/Jref(io,jo,1);                  
-               }
+        for (int jo = jcc - 2; jo <= jcc + 2; jo++)
+          for (int io = icc - 2; io <= icc + 2; io++) {
+            int i = 2 * io - 1, j = 2 * jo - 1;
+            for (int c = 1; c <= ncond; c++) {
+              float_sw4 mom_r =
+                  i256 *
+                  (mom_f(c, i - 3, j - 3) - 9 * mom_f(c, i - 3, j - 1) -
+                   16 * mom_f(c, i - 3, j) - 9 * mom_f(c, i - 3, j + 1) +
+                   mom_f(c, i - 3, j + 3) +
+                   9 * (-mom_f(c, i - 1, j - 3) + 9 * mom_f(c, i - 1, j - 1) +
+                        16 * mom_f(c, i - 1, j) + 9 * mom_f(c, i - 1, j + 1) -
+                        mom_f(c, i - 1, j + 3)) +
+                   16 * (-mom_f(c, i, j - 3) + 9 * mom_f(c, i, j - 1) +
+                         16 * mom_f(c, i, j) + 9 * mom_f(c, i, j + 1) -
+                         mom_f(c, i, j + 3)) +
+                   9 * (-mom_f(c, i + 1, j - 3) + 9 * mom_f(c, i + 1, j - 1) +
+                        16 * mom_f(c, i + 1, j) + 9 * mom_f(c, i + 1, j + 1) -
+                        mom_f(c, i + 1, j + 3)) +
+                   mom_f(c, i + 3, j - 3) - 9 * mom_f(c, i + 3, j - 1) -
+                   16 * mom_f(c, i + 3, j) - 9 * mom_f(c, i + 3, j + 1) +
+                   mom_f(c, i + 3, j + 3));
+              int ind =
+                  io - icc + 2 + 5 * (jo - jcc + 2) + 25 * (k - kc + 2) + 1;
+              if (g == gf)
+                a(c, ind) += mom_r / Jref(io, jo, 1);
+              else
+                a(c, ind) += mom_r / Jg(io, jo, 1);
+              //                  a(c,ind) += mom_r/a_EW->mJ[gf-1](io,jo,1);
+              //                  a(c,ind) += mom_r/Jref(io,jo,1);
             }
+          }
 
-         delete[] _mom_f;
+        delete[] _mom_f;
       }
-   }
+    }
 
 #undef mom_f
-   // Right hand sides for moment conditions
-   
-   b(1,1) = 1;
-   b(2,1) = mX0-xc;
-   b(3,1) = mY0-yc;
-   b(4,1) = mZ0-zc;
-   b(5,1) = SQR(mX0-xc);
-   b(6,1) = SQR(mY0-yc);
-   b(7,1) = SQR(mZ0-zc);
-   b(8,1) = (mX0-xc)*(mY0-yc);
-   b(9,1) = (mX0-xc)*(mZ0-zc);
-   b(10,1)= (mY0-yc)*(mZ0-zc);               
-   b(11,1)= CUB(mX0-xc);
-   b(12,1)= CUB(mY0-yc);
-   b(13,1)= CUB(mZ0-zc);               
-   b(14,1)= SQR(mX0-xc)*(mY0-yc);
-   b(15,1)= SQR(mY0-yc)*(mX0-xc);
-   b(16,1)= SQR(mZ0-zc)*(mX0-xc);
-   b(17,1)= SQR(mX0-xc)*(mZ0-zc);
-   b(18,1)= SQR(mY0-yc)*(mZ0-zc);
-   b(19,1)= SQR(mZ0-zc)*(mY0-yc);
-   b(20,1)= (mX0-xc)*(mY0-yc)*(mZ0-zc);
-   if( ncond == 35 )
-   {
-      b(21,1)= BISQR(mX0-xc);
-      b(22,1)= BISQR(mY0-yc);
-      b(23,1)= BISQR(mZ0-zc);
-      b(24,1)= CUB(mX0-xc)*(mY0-yc);
-      b(25,1)= CUB(mY0-yc)*(mX0-xc);
-      b(26,1)= CUB(mZ0-zc)*(mX0-xc);
-      b(27,1)= CUB(mX0-xc)*(mZ0-zc);                  
-      b(28,1)= CUB(mZ0-zc)*(mY0-yc);
-      b(29,1)= CUB(mY0-yc)*(mZ0-zc);                  
-      b(30,1)= SQR(mX0-xc)*SQR(mY0-yc);
-      b(31,1)= SQR(mY0-yc)*SQR(mZ0-zc);
-      b(32,1)= SQR(mZ0-zc)*SQR(mX0-xc);
-      b(33,1)= SQR(mX0-xc)*(mY0-yc)*(mZ0-zc);
-      b(34,1)= SQR(mY0-yc)*(mX0-xc)*(mZ0-zc);
-      b(35,1)= SQR(mZ0-zc)*(mX0-xc)*(mY0-yc);
-   }
-   if( gradient )
-   {
+    // Right hand sides for moment conditions
+
+    b(1, 1) = 1;
+    b(2, 1) = mX0 - xc;
+    b(3, 1) = mY0 - yc;
+    b(4, 1) = mZ0 - zc;
+    b(5, 1) = SQR(mX0 - xc);
+    b(6, 1) = SQR(mY0 - yc);
+    b(7, 1) = SQR(mZ0 - zc);
+    b(8, 1) = (mX0 - xc) * (mY0 - yc);
+    b(9, 1) = (mX0 - xc) * (mZ0 - zc);
+    b(10, 1) = (mY0 - yc) * (mZ0 - zc);
+    b(11, 1) = CUB(mX0 - xc);
+    b(12, 1) = CUB(mY0 - yc);
+    b(13, 1) = CUB(mZ0 - zc);
+    b(14, 1) = SQR(mX0 - xc) * (mY0 - yc);
+    b(15, 1) = SQR(mY0 - yc) * (mX0 - xc);
+    b(16, 1) = SQR(mZ0 - zc) * (mX0 - xc);
+    b(17, 1) = SQR(mX0 - xc) * (mZ0 - zc);
+    b(18, 1) = SQR(mY0 - yc) * (mZ0 - zc);
+    b(19, 1) = SQR(mZ0 - zc) * (mY0 - yc);
+    b(20, 1) = (mX0 - xc) * (mY0 - yc) * (mZ0 - zc);
+    if (ncond == 35) {
+      b(21, 1) = BISQR(mX0 - xc);
+      b(22, 1) = BISQR(mY0 - yc);
+      b(23, 1) = BISQR(mZ0 - zc);
+      b(24, 1) = CUB(mX0 - xc) * (mY0 - yc);
+      b(25, 1) = CUB(mY0 - yc) * (mX0 - xc);
+      b(26, 1) = CUB(mZ0 - zc) * (mX0 - xc);
+      b(27, 1) = CUB(mX0 - xc) * (mZ0 - zc);
+      b(28, 1) = CUB(mZ0 - zc) * (mY0 - yc);
+      b(29, 1) = CUB(mY0 - yc) * (mZ0 - zc);
+      b(30, 1) = SQR(mX0 - xc) * SQR(mY0 - yc);
+      b(31, 1) = SQR(mY0 - yc) * SQR(mZ0 - zc);
+      b(32, 1) = SQR(mZ0 - zc) * SQR(mX0 - xc);
+      b(33, 1) = SQR(mX0 - xc) * (mY0 - yc) * (mZ0 - zc);
+      b(34, 1) = SQR(mY0 - yc) * (mX0 - xc) * (mZ0 - zc);
+      b(35, 1) = SQR(mZ0 - zc) * (mX0 - xc) * (mY0 - yc);
+    }
+    if (gradient) {
       // x-derivatives
-      b(1,2) = 0;
+      b(1, 2) = 0;
 
-      b(2,2) = -1;
-      b(3,2) = 0;
-      b(4,2) = 0;
+      b(2, 2) = -1;
+      b(3, 2) = 0;
+      b(4, 2) = 0;
 
-      b(5,2) = -2*(mX0-xc);
-      b(6,2) = 0;
-      b(7,2) = 0;
-      b(8,2) = -(mY0-yc);
-      b(9,2) = -(mZ0-zc);
-      b(10,2)= 0;
+      b(5, 2) = -2 * (mX0 - xc);
+      b(6, 2) = 0;
+      b(7, 2) = 0;
+      b(8, 2) = -(mY0 - yc);
+      b(9, 2) = -(mZ0 - zc);
+      b(10, 2) = 0;
 
-      b(11,2)= -3*SQR(mX0-xc);
-      b(12,2)= 0;
-      b(13,2)= 0;
-      b(14,2)= -2*(mX0-xc)*(mY0-yc);
-      b(15,2)= -SQR(mY0-yc);
-      b(16,2)= -SQR(mZ0-zc);
-      b(17,2)= -2*(mX0-xc)*(mZ0-zc);
-      b(18,2)= 0;
-      b(19,2)= 0;
-      b(20,2)= -(mY0-yc)*(mZ0-zc);
-      if( ncond == 35 )
-      {
-         b(21,2)= -4*CUB(mX0-xc);
-         b(22,2)= 0;
-         b(23,2)= 0;
-         b(24,2)= -3*SQR(mX0-xc)*(mY0-yc);
-         b(25,2)= -CUB(mY0-yc);
-         b(26,2)= -CUB(mZ0-zc);
-         b(27,2)= -3*SQR(mX0-xc)*(mZ0-zc);                  
-         b(28,2)= 0;
-         b(29,2)= 0;
-         b(30,2)= -2*(mX0-xc)*SQR(mY0-yc);
-         b(31,2)= 0;
-         b(32,2)= -2*SQR(mZ0-zc)*(mX0-xc);
-         b(33,2)= -2*(mX0-xc)*(mY0-yc)*(mZ0-zc);
-         b(34,2)= -SQR(mY0-yc)*(mZ0-zc);
-         b(35,2)= -SQR(mZ0-zc)*(mY0-yc);
+      b(11, 2) = -3 * SQR(mX0 - xc);
+      b(12, 2) = 0;
+      b(13, 2) = 0;
+      b(14, 2) = -2 * (mX0 - xc) * (mY0 - yc);
+      b(15, 2) = -SQR(mY0 - yc);
+      b(16, 2) = -SQR(mZ0 - zc);
+      b(17, 2) = -2 * (mX0 - xc) * (mZ0 - zc);
+      b(18, 2) = 0;
+      b(19, 2) = 0;
+      b(20, 2) = -(mY0 - yc) * (mZ0 - zc);
+      if (ncond == 35) {
+        b(21, 2) = -4 * CUB(mX0 - xc);
+        b(22, 2) = 0;
+        b(23, 2) = 0;
+        b(24, 2) = -3 * SQR(mX0 - xc) * (mY0 - yc);
+        b(25, 2) = -CUB(mY0 - yc);
+        b(26, 2) = -CUB(mZ0 - zc);
+        b(27, 2) = -3 * SQR(mX0 - xc) * (mZ0 - zc);
+        b(28, 2) = 0;
+        b(29, 2) = 0;
+        b(30, 2) = -2 * (mX0 - xc) * SQR(mY0 - yc);
+        b(31, 2) = 0;
+        b(32, 2) = -2 * SQR(mZ0 - zc) * (mX0 - xc);
+        b(33, 2) = -2 * (mX0 - xc) * (mY0 - yc) * (mZ0 - zc);
+        b(34, 2) = -SQR(mY0 - yc) * (mZ0 - zc);
+        b(35, 2) = -SQR(mZ0 - zc) * (mY0 - yc);
       }
 
       // y-derivatives
-      b(1,3) = 0;
+      b(1, 3) = 0;
 
-      b(2,3) = 0;
-      b(3,3) = -1;
-      b(4,3) = 0;
+      b(2, 3) = 0;
+      b(3, 3) = -1;
+      b(4, 3) = 0;
 
-      b(5,3) = 0;
-      b(6,3) = -2*(mY0-yc);
-      b(7,3) = 0;
-      b(8,3) = -(mX0-xc);
-      b(9,3) = 0;
-      b(10,3)= -(mZ0-zc);
+      b(5, 3) = 0;
+      b(6, 3) = -2 * (mY0 - yc);
+      b(7, 3) = 0;
+      b(8, 3) = -(mX0 - xc);
+      b(9, 3) = 0;
+      b(10, 3) = -(mZ0 - zc);
 
-      b(11,3)= 0;
-      b(12,3)= -3*SQR(mY0-yc);
-      b(13,3)= 0;
-      b(14,3)= -SQR(mX0-xc);
-      b(15,3)= -2*(mY0-yc)*(mX0-xc);
-      b(16,3)= 0;
-      b(17,3)= 0;
-      b(18,3)= -2*(mY0-yc)*(mZ0-zc);
-      b(19,3)= -SQR(mZ0-zc);
-      b(20,3)= -(mX0-xc)*(mZ0-zc);
-      if( ncond == 35 )
-      {
-         b(21,3)= 0;
-         b(22,3)= -4*CUB(mY0-yc);
-         b(23,3)= 0;
-         b(24,3)= -CUB(mX0-xc);
-         b(25,3)= -3*SQR(mY0-yc)*(mX0-xc);
-         b(26,3)= 0;
-         b(27,3)= 0;
-         b(28,3)= -CUB(mZ0-zc);
-         b(29,3)= -3*SQR(mY0-yc)*(mZ0-zc);
-         b(30,3)= -2*SQR(mX0-xc)*(mY0-yc);
-         b(31,3)= -2*(mY0-yc)*SQR(mZ0-zc);
-         b(32,3)= 0;
-         b(33,3)= -SQR(mX0-xc)*(mZ0-zc);
-         b(34,3)= -2*(mY0-yc)*(mX0-xc)*(mZ0-zc);
-         b(35,3)= -SQR(mZ0-zc)*(mX0-xc);
+      b(11, 3) = 0;
+      b(12, 3) = -3 * SQR(mY0 - yc);
+      b(13, 3) = 0;
+      b(14, 3) = -SQR(mX0 - xc);
+      b(15, 3) = -2 * (mY0 - yc) * (mX0 - xc);
+      b(16, 3) = 0;
+      b(17, 3) = 0;
+      b(18, 3) = -2 * (mY0 - yc) * (mZ0 - zc);
+      b(19, 3) = -SQR(mZ0 - zc);
+      b(20, 3) = -(mX0 - xc) * (mZ0 - zc);
+      if (ncond == 35) {
+        b(21, 3) = 0;
+        b(22, 3) = -4 * CUB(mY0 - yc);
+        b(23, 3) = 0;
+        b(24, 3) = -CUB(mX0 - xc);
+        b(25, 3) = -3 * SQR(mY0 - yc) * (mX0 - xc);
+        b(26, 3) = 0;
+        b(27, 3) = 0;
+        b(28, 3) = -CUB(mZ0 - zc);
+        b(29, 3) = -3 * SQR(mY0 - yc) * (mZ0 - zc);
+        b(30, 3) = -2 * SQR(mX0 - xc) * (mY0 - yc);
+        b(31, 3) = -2 * (mY0 - yc) * SQR(mZ0 - zc);
+        b(32, 3) = 0;
+        b(33, 3) = -SQR(mX0 - xc) * (mZ0 - zc);
+        b(34, 3) = -2 * (mY0 - yc) * (mX0 - xc) * (mZ0 - zc);
+        b(35, 3) = -SQR(mZ0 - zc) * (mX0 - xc);
       }
 
       // z-derivatives
-      b(1,4) = 0;
+      b(1, 4) = 0;
 
-      b(2,4) = 0;
-      b(3,4) = 0;
-      b(4,4) = -1;
+      b(2, 4) = 0;
+      b(3, 4) = 0;
+      b(4, 4) = -1;
 
-      b(5,4) = 0;
-      b(6,4) = 0;
-      b(7,4) = -2*(mZ0-zc);
-      b(8,4) = 0;
-      b(9,4) = -(mX0-xc);
-      b(10,4)= -(mY0-yc);
+      b(5, 4) = 0;
+      b(6, 4) = 0;
+      b(7, 4) = -2 * (mZ0 - zc);
+      b(8, 4) = 0;
+      b(9, 4) = -(mX0 - xc);
+      b(10, 4) = -(mY0 - yc);
 
-      b(11,4)= 0;
-      b(12,4)= 0;
-      b(13,4)= -3*SQR(mZ0-zc);
-      b(14,4)= 0;
-      b(15,4)= 0;
-      b(16,4)= -2*(mZ0-zc)*(mX0-xc);
-      b(17,4)= -SQR(mX0-xc);
-      b(18,4)= -SQR(mY0-yc);
-      b(19,4)= -2*(mZ0-zc)*(mY0-yc);
-      b(20,4)= -(mX0-xc)*(mY0-yc);
-      if( ncond == 35 )
-      {
-         b(21,4)= 0;
-         b(22,4)= 0;
-         b(23,4)=-4*CUB(mZ0-zc);
-         b(24,4)= 0;
-         b(25,4)= 0;
-         b(26,4)=-3*SQR(mZ0-zc)*(mX0-xc);
-         b(27,4)=-CUB(mX0-xc);
-         b(28,4)=-3*SQR(mZ0-zc)*(mY0-yc);
-         b(29,4)=-CUB(mY0-yc);
-         b(30,4)= 0;
-         b(31,4)=-2*SQR(mY0-yc)*(mZ0-zc);
-         b(32,4)=-2*(mZ0-zc)*SQR(mX0-xc);
-         b(33,4)=-SQR(mX0-xc)*(mY0-yc);
-         b(34,4)=-SQR(mY0-yc)*(mX0-xc);
-         b(35,4)=-2*(mZ0-zc)*(mX0-xc)*(mY0-yc);
+      b(11, 4) = 0;
+      b(12, 4) = 0;
+      b(13, 4) = -3 * SQR(mZ0 - zc);
+      b(14, 4) = 0;
+      b(15, 4) = 0;
+      b(16, 4) = -2 * (mZ0 - zc) * (mX0 - xc);
+      b(17, 4) = -SQR(mX0 - xc);
+      b(18, 4) = -SQR(mY0 - yc);
+      b(19, 4) = -2 * (mZ0 - zc) * (mY0 - yc);
+      b(20, 4) = -(mX0 - xc) * (mY0 - yc);
+      if (ncond == 35) {
+        b(21, 4) = 0;
+        b(22, 4) = 0;
+        b(23, 4) = -4 * CUB(mZ0 - zc);
+        b(24, 4) = 0;
+        b(25, 4) = 0;
+        b(26, 4) = -3 * SQR(mZ0 - zc) * (mX0 - xc);
+        b(27, 4) = -CUB(mX0 - xc);
+        b(28, 4) = -3 * SQR(mZ0 - zc) * (mY0 - yc);
+        b(29, 4) = -CUB(mY0 - yc);
+        b(30, 4) = 0;
+        b(31, 4) = -2 * SQR(mY0 - yc) * (mZ0 - zc);
+        b(32, 4) = -2 * (mZ0 - zc) * SQR(mX0 - xc);
+        b(33, 4) = -SQR(mX0 - xc) * (mY0 - yc);
+        b(34, 4) = -SQR(mY0 - yc) * (mX0 - xc);
+        b(35, 4) = -2 * (mZ0 - zc) * (mX0 - xc) * (mY0 - yc);
       }
-   }
-   // Solve A*x=b for x
+    }
+    // Solve A*x=b for x
 
-   char tr='N';
-   int ssize=125, info=0, nb=20;
-   int lwork=ncond+ncond*nb;
-   float_sw4* work = new float_sw4[lwork];
-   F77_FUNC(dgels,DGELS)( tr, ncond, ssize, nrhs, a_, ncond, b_, ldb, 
-                          work, lwork, info );
-   delete[] work;
-   REQUIRE2( info==0, "ERROR, info = " << info << " returned from DGELS ")
+    char tr = 'N';
+    int ssize = 125, info = 0, nb = 20;
+    int lwork = ncond + ncond * nb;
+    float_sw4* work = new float_sw4[lwork];
+    F77_FUNC(dgels, DGELS)
+    (tr, ncond, ssize, nrhs, a_, ncond, b_, ldb, work, lwork, info);
+    delete[] work;
+    REQUIRE2(info == 0, "ERROR, info = " << info << " returned from DGELS ")
 
-   // Define the point sources
-   for( int k=kc-2 ; k <= kc+2 ; k++ )
-   {
-      if( 1 <= k && k <= Nz-1 )
-      {
-         float_sw4 nwgh = 1.0;
-         if( k <= 4 )
-            nwgh = normwgh[k-1];
-         else if( k>=Nz-3 )
-            nwgh = normwgh[Nz-k];
+    // Define the point sources
+    for (int k = kc - 2; k <= kc + 2; k++) {
+      if (1 <= k && k <= Nz - 1) {
+        float_sw4 nwgh = 1.0;
+        if (k <= 4)
+          nwgh = normwgh[k - 1];
+        else if (k >= Nz - 3)
+          nwgh = normwgh[Nz - k];
 
-         // Discretization on this grid
-         for( int j=jc-2 ; j<= jc+2 ; j++ )
-            for( int i=ic-2 ; i<= ic+2 ; i++ )
-               if( a_EW->interior_point_in_proc(i,j,g) ) 
-               {
-                  int ind = i-ic+2 + 5*(j-jc+2) + 25*(k-kc+2)+1;
-                  float_sw4 fx, fy, fz;
-                  if( gradient )
-                  {
-                     fx = -(mForces[0]*x(ind,2)+mForces[1]*x(ind,3)+mForces[2]*x(ind,4));
-                     fy = -(mForces[1]*x(ind,2)+mForces[3]*x(ind,3)+mForces[4]*x(ind,4));
-                     fz = -(mForces[2]*x(ind,2)+mForces[4]*x(ind,3)+mForces[5]*x(ind,4));
-                  }
-                  else
-                  {
-                     fx = mForces[0]*x(ind,1);
-                     fy = mForces[1]*x(ind,1);
-                     fz = mForces[2]*x(ind,1);                     
-                  }
-                  if( fx != 0 || fy != 0 || fz != 0 )
-                  {
-                     //                     float_sw4 ijac=1.0/(nwgh*(a_EW->mJ[g](i,j,k)));
-                     float_sw4 ijac=1.0/(nwgh*(Jg(i,j,k)));
-                     GridPointSource* sourcePtr = 
-                        new GridPointSource( mFreq, mT0, i, j, k, g,
-                                             fx*ijac, fy*ijac, fz*ijac,
-                                             mTimeDependence, mNcyc, 
-                                             mPar, mNpar, mIpar, mNipar );
-                     point_sources.push_back(sourcePtr);
-                  }
-               }
-      }   
-      if( k <= 0 )
-      {
-         // Into finer grid above, keep k=1 on this (coarse) grid
-         int Nzp =a_EW->m_global_nz[g+1];
-         int kk=k+Nzp-1;
-         float_sw4 nwgh = 1.0;
-         if( kk>=Nzp-3 )
-            nwgh = normwgh[Nzp-kk];
-         for( int j=jcref-2 ; j<= jcref+2 ; j++ )
-            for( int i=icref-2 ; i<= icref+2 ; i++ )
-               if( a_EW->interior_point_in_proc(i,j,g+1) ) 
-               {
-                  int ind = i-icref+2 + 5*(j-jcref+2) + 25*(k-kc+2)+1;
-                  float_sw4 fx, fy, fz;
-                  if( gradient )
-                  {
-                     fx = -(mForces[0]*x(ind,2)+mForces[1]*x(ind,3)+mForces[2]*x(ind,4));
-                     fy = -(mForces[1]*x(ind,2)+mForces[3]*x(ind,3)+mForces[4]*x(ind,4));
-                     fz = -(mForces[2]*x(ind,2)+mForces[4]*x(ind,3)+mForces[5]*x(ind,4));
-                  }
-                  else
-                  {
-                     fx = mForces[0]*x(ind,1);
-                     fy = mForces[1]*x(ind,1);
-                     fz = mForces[2]*x(ind,1);                     
-                  }
-                  if( fx != 0 || fy != 0 || fz != 0 )
-                  {
-                     //                  float_sw4 wF = x(ind,1);
-                     //                  if( wF != 0 )
-                     //                  {
-                     //                     wF = wF/(nwgh*(a_EW->mJ[g+1](i,j,kk)));
-                     float_sw4 ijac = 1.0/(nwgh*Jref(i,j,kk));
-                     //                     float_sw4 ijac = 1.0/(nwgh*(a_EW->mJ[g+1](i,j,kk)));
-                     //                     std::cout << g+1 << " (i,j,k)" << i << " " << j << " " << kk << " " << wF << std::endl;
-                     GridPointSource* sourcePtr = 
-                        new GridPointSource( mFreq, mT0, i, j, kk, g+1,
-                                             fx*ijac, fy*ijac, fz*ijac,
-                                             mTimeDependence, mNcyc, 
-                                             mPar, mNpar, mIpar, mNipar );
-                     point_sources.push_back(sourcePtr);
-                  }
-               }
+        // Discretization on this grid
+        for (int j = jc - 2; j <= jc + 2; j++)
+          for (int i = ic - 2; i <= ic + 2; i++)
+            if (a_EW->interior_point_in_proc(i, j, g)) {
+              int ind = i - ic + 2 + 5 * (j - jc + 2) + 25 * (k - kc + 2) + 1;
+              float_sw4 fx, fy, fz;
+              if (gradient) {
+                fx = -(mForces[0] * x(ind, 2) + mForces[1] * x(ind, 3) +
+                       mForces[2] * x(ind, 4));
+                fy = -(mForces[1] * x(ind, 2) + mForces[3] * x(ind, 3) +
+                       mForces[4] * x(ind, 4));
+                fz = -(mForces[2] * x(ind, 2) + mForces[4] * x(ind, 3) +
+                       mForces[5] * x(ind, 4));
+              } else {
+                fx = mForces[0] * x(ind, 1);
+                fy = mForces[1] * x(ind, 1);
+                fz = mForces[2] * x(ind, 1);
+              }
+              if (fx != 0 || fy != 0 || fz != 0) {
+                //                     float_sw4
+                //                     ijac=1.0/(nwgh*(a_EW->mJ[g](i,j,k)));
+                float_sw4 ijac = 1.0 / (nwgh * (Jg(i, j, k)));
+                GridPointSource* sourcePtr = new GridPointSource(
+                    mFreq, mT0, i, j, k, g, fx * ijac, fy * ijac, fz * ijac,
+                    mTimeDependence, mNcyc, mPar, mNpar, mIpar, mNipar);
+                point_sources.push_back(sourcePtr);
+              }
+            }
       }
-      if( k >= Nz )
-      {
-         // Into coarser grid below, move this k=Nz to k=1 on coarse grid.
-         int kk=k-Nz+1;
-         float_sw4 nwgh = 1.0;
-         if( kk <= 4 )
-            nwgh = normwgh[kk-1];
-         for( int j=jcref-2 ; j<= jcref+2 ; j++ )
-            for( int i=icref-2 ; i<= icref+2 ; i++ )
-               if( a_EW->interior_point_in_proc(i,j,g-1) ) 
-               {
-                  int ind = i-icref+2 + 5*(j-jcref+2) + 25*(k-kc+2)+1;
-                  float_sw4 fx, fy, fz;
-                  if( gradient )
-                  {
-                     fx = -(mForces[0]*x(ind,2)+mForces[1]*x(ind,3)+mForces[2]*x(ind,4));
-                     fy = -(mForces[1]*x(ind,2)+mForces[3]*x(ind,3)+mForces[4]*x(ind,4));
-                     fz = -(mForces[2]*x(ind,2)+mForces[4]*x(ind,3)+mForces[5]*x(ind,4));
-                  }
-                  else
-                  {
-                     fx = mForces[0]*x(ind,1);
-                     fy = mForces[1]*x(ind,1);
-                     fz = mForces[2]*x(ind,1);                     
-                  }
-                  if( fx != 0 || fy != 0 || fz != 0 )
-                  {
-
-                     //                  float_sw4 wF = x(ind,1);
-                     //                  if( wF != 0 )
-                     //                  {
-                     //                     wF = wF/(nwgh*(a_EW->mJ[g-1](i,j,kk)));
-                     float_sw4 ijac = 1.0/(nwgh*Jref(i,j,kk));
-                     //                     float_sw4 ijac = 1.0/(nwgh*(a_EW->mJ[g-1](i,j,kk)));                     
-                     //                     std::cout << g-1 << " (i,j,k)" << i << " " << j << " " << kk << " " << wF << std::endl;
-                     GridPointSource* sourcePtr = 
-                        new GridPointSource( mFreq, mT0, i, j, kk, g-1,
-                                             fx*ijac, fy*ijac, fz*ijac,
-                                             mTimeDependence, mNcyc, 
-                                             mPar, mNpar, mIpar, mNipar );
-                     point_sources.push_back(sourcePtr);
-                  }
-               }
+      if (k <= 0) {
+        // Into finer grid above, keep k=1 on this (coarse) grid
+        int Nzp = a_EW->m_global_nz[g + 1];
+        int kk = k + Nzp - 1;
+        float_sw4 nwgh = 1.0;
+        if (kk >= Nzp - 3) nwgh = normwgh[Nzp - kk];
+        for (int j = jcref - 2; j <= jcref + 2; j++)
+          for (int i = icref - 2; i <= icref + 2; i++)
+            if (a_EW->interior_point_in_proc(i, j, g + 1)) {
+              int ind =
+                  i - icref + 2 + 5 * (j - jcref + 2) + 25 * (k - kc + 2) + 1;
+              float_sw4 fx, fy, fz;
+              if (gradient) {
+                fx = -(mForces[0] * x(ind, 2) + mForces[1] * x(ind, 3) +
+                       mForces[2] * x(ind, 4));
+                fy = -(mForces[1] * x(ind, 2) + mForces[3] * x(ind, 3) +
+                       mForces[4] * x(ind, 4));
+                fz = -(mForces[2] * x(ind, 2) + mForces[4] * x(ind, 3) +
+                       mForces[5] * x(ind, 4));
+              } else {
+                fx = mForces[0] * x(ind, 1);
+                fy = mForces[1] * x(ind, 1);
+                fz = mForces[2] * x(ind, 1);
+              }
+              if (fx != 0 || fy != 0 || fz != 0) {
+                //                  float_sw4 wF = x(ind,1);
+                //                  if( wF != 0 )
+                //                  {
+                //                     wF = wF/(nwgh*(a_EW->mJ[g+1](i,j,kk)));
+                float_sw4 ijac = 1.0 / (nwgh * Jref(i, j, kk));
+                //                     float_sw4 ijac
+                //                     = 1.0/(nwgh*(a_EW->mJ[g+1](i,j,kk)));
+                //                     std::cout << g+1 << " (i,j,k)" << i << "
+                //                     " << j << " " << kk << " " << wF <<
+                //                     std::endl;
+                GridPointSource* sourcePtr =
+                    new GridPointSource(mFreq, mT0, i, j, kk, g + 1, fx * ijac,
+                                        fy * ijac, fz * ijac, mTimeDependence,
+                                        mNcyc, mPar, mNpar, mIpar, mNipar);
+                point_sources.push_back(sourcePtr);
+              }
+            }
       }
-   }
-   delete[] a_;
-   delete[] b_;
-   }
-   //   delete[] x_;   
+      if (k >= Nz) {
+        // Into coarser grid below, move this k=Nz to k=1 on coarse grid.
+        int kk = k - Nz + 1;
+        float_sw4 nwgh = 1.0;
+        if (kk <= 4) nwgh = normwgh[kk - 1];
+        for (int j = jcref - 2; j <= jcref + 2; j++)
+          for (int i = icref - 2; i <= icref + 2; i++)
+            if (a_EW->interior_point_in_proc(i, j, g - 1)) {
+              int ind =
+                  i - icref + 2 + 5 * (j - jcref + 2) + 25 * (k - kc + 2) + 1;
+              float_sw4 fx, fy, fz;
+              if (gradient) {
+                fx = -(mForces[0] * x(ind, 2) + mForces[1] * x(ind, 3) +
+                       mForces[2] * x(ind, 4));
+                fy = -(mForces[1] * x(ind, 2) + mForces[3] * x(ind, 3) +
+                       mForces[4] * x(ind, 4));
+                fz = -(mForces[2] * x(ind, 2) + mForces[4] * x(ind, 3) +
+                       mForces[5] * x(ind, 4));
+              } else {
+                fx = mForces[0] * x(ind, 1);
+                fy = mForces[1] * x(ind, 1);
+                fz = mForces[2] * x(ind, 1);
+              }
+              if (fx != 0 || fy != 0 || fz != 0) {
+                //                  float_sw4 wF = x(ind,1);
+                //                  if( wF != 0 )
+                //                  {
+                //                     wF = wF/(nwgh*(a_EW->mJ[g-1](i,j,kk)));
+                float_sw4 ijac = 1.0 / (nwgh * Jref(i, j, kk));
+                //                     float_sw4 ijac
+                //                     = 1.0/(nwgh*(a_EW->mJ[g-1](i,j,kk)));
+                //                     std::cout << g-1 << " (i,j,k)" << i << "
+                //                     " << j << " " << kk << " " << wF <<
+                //                     std::endl;
+                GridPointSource* sourcePtr =
+                    new GridPointSource(mFreq, mT0, i, j, kk, g - 1, fx * ijac,
+                                        fy * ijac, fz * ijac, mTimeDependence,
+                                        mNcyc, mPar, mNpar, mIpar, mNipar);
+                point_sources.push_back(sourcePtr);
+              }
+            }
+      }
+    }
+    delete[] a_;
+    delete[] b_;
+  }
+  //   delete[] x_;
 #undef a
-#undef b   
+#undef b
 #undef x
 #undef CUB
 #undef BISQR
 }
 
 //-----------------------------------------------------------------------
-void Source::get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r, 
-                              float_sw4 s, bool gradient, float_sw4 normwgh[4],
-                              vector<GridPointSource*>& point_sources )
-{
-   // Curvilinear/Cartesian interface with interface conditions imposed.
-#define CUB(x)   (x)*(x)*(x)
-#define BISQR(x) (x)*(x)*(x)*(x)   
-   //   ic, jc on current grid
-   //   icref, jcref on adjacent grid
-   // kc 
-   // Stencil is always -2 <= m <= 2, -2 <= n <= 2, -2 <= o <= 2
-   //   std::cout <<"in get_cc_psources " << std::endl;
-   int ncond=35; // Number of moment conditions
-#define a(i,j) a_[(i-1) + ncond*(j-1)]
-#define b(i,j) b_[(i-1) + 125*(j-1)]
-#define x(i,j) b_[(i-1) + 125*(j-1)]
-   // setup stencil centers etc.
-   int ic=static_cast<int>(round(q));
-   int jc=static_cast<int>(round(r));
-   int kc=static_cast<int>(round(s));
-   int Nz = a_EW->m_global_nz[g];
-   int icref=ic, jcref=jc, gref;
-   if( g == a_EW->mNumberOfCartesianGrids )
-   {
-      // (q,r,s) in curvilinear grid, stencil extends to Cartesian grid below
-      gref=g-1;
-   }
-   else
-   {
-      // (q,r,s) in Cartesian grid, stencil extends to curvilinear grid above
-      gref=g+1;
-   }
-   float_sw4 h=a_EW->mGridSize[g]; // h is the same on both grids.
+void Source::get_cc_psources(EW* a_EW, int g, float_sw4 q, float_sw4 r,
+                             float_sw4 s, bool gradient, float_sw4 normwgh[4],
+                             vector<GridPointSource*>& point_sources) {
+  // Curvilinear/Cartesian interface with interface conditions imposed.
+#define CUB(x) (x) * (x) * (x)
+#define BISQR(x) (x) * (x) * (x) * (x)
+  //   ic, jc on current grid
+  //   icref, jcref on adjacent grid
+  // kc
+  // Stencil is always -2 <= m <= 2, -2 <= n <= 2, -2 <= o <= 2
+  //   std::cout <<"in get_cc_psources " << std::endl;
+  int ncond = 35;  // Number of moment conditions
+#define a(i, j) a_[(i - 1) + ncond * (j - 1)]
+#define b(i, j) b_[(i - 1) + 125 * (j - 1)]
+#define x(i, j) b_[(i - 1) + 125 * (j - 1)]
+  // setup stencil centers etc.
+  int ic = static_cast<int>(round(q));
+  int jc = static_cast<int>(round(r));
+  int kc = static_cast<int>(round(s));
+  int Nz = a_EW->m_global_nz[g];
+  int icref = ic, jcref = jc, gref;
+  if (g == a_EW->mNumberOfCartesianGrids) {
+    // (q,r,s) in curvilinear grid, stencil extends to Cartesian grid below
+    gref = g - 1;
+  } else {
+    // (q,r,s) in Cartesian grid, stencil extends to curvilinear grid above
+    gref = g + 1;
+  }
+  float_sw4 h = a_EW->mGridSize[g];  // h is the same on both grids.
 
-   // Processor owns part of source stencil if (ic,jc) is inside processor.
-   // If (ic,jc) is in the processor overlap, then all the stencil widths ic-2,..,ic+2
-   // and jc-2,..,jc+2 are not guaranteed to be owned by this processor.
-   // Need to supply grid z and Jacobian for all stencil points, extended arrays are
-   // being used.
-   if( a_EW->interior_point_in_proc(ic-2,jc-2,g) ||
-       a_EW->interior_point_in_proc(ic+2,jc-2,g) ||
-       a_EW->interior_point_in_proc(ic-2,jc+2,g) ||
-       a_EW->interior_point_in_proc(ic+2,jc+2,g) ||
-       a_EW->interior_point_in_proc(icref-2,jcref-2,gref) ||
-       a_EW->interior_point_in_proc(icref+2,jcref-2,gref) ||       
-       a_EW->interior_point_in_proc(icref-2,jcref+2,gref) ||
-       a_EW->interior_point_in_proc(icref+2,jcref+2,gref) )
-   {
-      Sarray zg, Jg, zgref, Jgref;
-      int kll, kul;
-      if( g == a_EW->mNumberOfCartesianGrids )
-      {
-         // g is curvilinear, gref Cartesian
-         zg.define(ic-2,ic+2,jc-2,jc+2,kc-2,kc+2);
-         Jg.define(ic-2,ic+2,jc-2,jc+2,kc-2,kc+2);
-         if( !a_EW->interior_point_in_proc( ic, jc, g) )
-            a_EW->m_gridGenerator->generate_z_and_j( a_EW, g, zg, Jg );
-         else
-         {
-            zg.insert_intersection( a_EW->mZ[g] );
-            Jg.insert_intersection( a_EW->mJ[g] );
-         }
-         int kll=1;
-         int kul=5;
-         zgref.define(icref-2,icref+2,jcref-2,jcref+2,kll,kul);
-         Jgref.define(icref-2,icref+2,jcref-2,jcref+2,kll,kul);
-         float_sw4 zmin = a_EW->m_zmin[gref];
-         for(int k=kll; k<= kul ; k++ )
-            for(int j=jcref-2;j<= jcref+2 ; j++ )
-               for(int i=icref-2;i<= icref+2 ; i++ )
-               {
-                  zgref(i,j,k) = zmin + (k-1)*h;
-                  Jgref(i,j,k) = h*h*h;
-               }
-
+  // Processor owns part of source stencil if (ic,jc) is inside processor.
+  // If (ic,jc) is in the processor overlap, then all the stencil widths
+  // ic-2,..,ic+2 and jc-2,..,jc+2 are not guaranteed to be owned by this
+  // processor. Need to supply grid z and Jacobian for all stencil points,
+  // extended arrays are being used.
+  if (a_EW->interior_point_in_proc(ic - 2, jc - 2, g) ||
+      a_EW->interior_point_in_proc(ic + 2, jc - 2, g) ||
+      a_EW->interior_point_in_proc(ic - 2, jc + 2, g) ||
+      a_EW->interior_point_in_proc(ic + 2, jc + 2, g) ||
+      a_EW->interior_point_in_proc(icref - 2, jcref - 2, gref) ||
+      a_EW->interior_point_in_proc(icref + 2, jcref - 2, gref) ||
+      a_EW->interior_point_in_proc(icref - 2, jcref + 2, gref) ||
+      a_EW->interior_point_in_proc(icref + 2, jcref + 2, gref)) {
+    Sarray zg, Jg, zgref, Jgref;
+    int kll, kul;
+    if (g == a_EW->mNumberOfCartesianGrids) {
+      // g is curvilinear, gref Cartesian
+      zg.define(ic - 2, ic + 2, jc - 2, jc + 2, kc - 2, kc + 2);
+      Jg.define(ic - 2, ic + 2, jc - 2, jc + 2, kc - 2, kc + 2);
+      if (!a_EW->interior_point_in_proc(ic, jc, g))
+        a_EW->m_gridGenerator->generate_z_and_j(a_EW, g, zg, Jg);
+      else {
+        zg.insert_intersection(a_EW->mZ[g]);
+        Jg.insert_intersection(a_EW->mJ[g]);
+        SYNC_STREAM;
       }
-      else
-      {
-         // g is Cartesian, gref curvilinear
-         zg.define(ic-2,ic+2,jc-2,jc+2,kc-2,kc+2);
-         Jg.define(ic-2,ic+2,jc-2,jc+2,kc-2,kc+2);
-         float_sw4 zmin = a_EW->m_zmin[g];
-         for(int k=kc-2; k<= kc+2 ; k++ )
-            for(int j=jc-2;j<= jc+2 ; j++ )
-               for(int i=ic-2;i<= ic+2 ; i++ )
-               {
-                  zg(i,j,k) = zmin + (k-1)*h;
-                  Jg(i,j,k) = h*h*h;
-               }
+      int kll = 1;
+      int kul = 5;
+      zgref.define(icref - 2, icref + 2, jcref - 2, jcref + 2, kll, kul);
+      Jgref.define(icref - 2, icref + 2, jcref - 2, jcref + 2, kll, kul);
+      float_sw4 zmin = a_EW->m_zmin[gref];
+      for (int k = kll; k <= kul; k++)
+        for (int j = jcref - 2; j <= jcref + 2; j++)
+          for (int i = icref - 2; i <= icref + 2; i++) {
+            zgref(i, j, k) = zmin + (k - 1) * h;
+            Jgref(i, j, k) = h * h * h;
+          }
 
-         int Nzp=a_EW->m_global_nz[gref];
-         kll=Nzp-4;
-         kul=Nzp;
-         zgref.define(icref-2,icref+2,jcref-2,jcref+2,kll,kul);
-         Jgref.define(icref-2,icref+2,jcref-2,jcref+2,kll,kul);
-         if( !a_EW->interior_point_in_proc( icref, jcref, gref) )
-            a_EW->m_gridGenerator->generate_z_and_j( a_EW, gref, zgref, Jgref );
-         else
-         {
-            zgref.insert_intersection( a_EW->mZ[gref] );
-            Jgref.insert_intersection( a_EW->mJ[gref]);
-         }
+    } else {
+      // g is Cartesian, gref curvilinear
+      zg.define(ic - 2, ic + 2, jc - 2, jc + 2, kc - 2, kc + 2);
+      Jg.define(ic - 2, ic + 2, jc - 2, jc + 2, kc - 2, kc + 2);
+      float_sw4 zmin = a_EW->m_zmin[g];
+      for (int k = kc - 2; k <= kc + 2; k++)
+        for (int j = jc - 2; j <= jc + 2; j++)
+          for (int i = ic - 2; i <= ic + 2; i++) {
+            zg(i, j, k) = zmin + (k - 1) * h;
+            Jg(i, j, k) = h * h * h;
+          }
+
+      int Nzp = a_EW->m_global_nz[gref];
+      kll = Nzp - 4;
+      kul = Nzp;
+      zgref.define(icref - 2, icref + 2, jcref - 2, jcref + 2, kll, kul);
+      Jgref.define(icref - 2, icref + 2, jcref - 2, jcref + 2, kll, kul);
+      if (!a_EW->interior_point_in_proc(icref, jcref, gref))
+        a_EW->m_gridGenerator->generate_z_and_j(a_EW, gref, zgref, Jgref);
+      else {
+        zgref.insert_intersection(a_EW->mZ[gref]);
+        Jgref.insert_intersection(a_EW->mJ[gref]);
+        SYNC_STREAM;
       }
+    }
 
-      int nrhs=1;
-      if( gradient )
-         nrhs = 4;
+    int nrhs = 1;
+    if (gradient) nrhs = 4;
 
-      float_sw4* a_ = new float_sw4[ncond*125];
-      int ldb = ncond > 125? ncond:125;
-      float_sw4* b_ = new float_sw4[ldb*nrhs];
-   //   float_sw4* x_ = new float_sw4[125];   
+    float_sw4* a_ = new float_sw4[ncond * 125];
+    int ldb = ncond > 125 ? ncond : 125;
+    float_sw4* b_ = new float_sw4[ldb * nrhs];
+    //   float_sw4* x_ = new float_sw4[125];
 
-   //   std::cout << "SOURCE at interface, g= " << g << " (ic,jc,kc)= " << ic <<
-   //      ", " << jc << ", " << kc << std::endl;
-      float_sw4 xc=h*(ic-1);
-      float_sw4 yc=h*(jc-1);
-      float_sw4 zc=zg(ic,jc,kc);
+    //   std::cout << "SOURCE at interface, g= " << g << " (ic,jc,kc)= " << ic
+    //   <<
+    //      ", " << jc << ", " << kc << std::endl;
+    float_sw4 xc = h * (ic - 1);
+    float_sw4 yc = h * (jc - 1);
+    float_sw4 zc = zg(ic, jc, kc);
 
-      for( int k=kc-2 ; k <= kc+2 ; k++ )
-      {
-         if( 1 <= k && k <= Nz-1 )
-         {
-         // Discretization on this grid
-            for( int j=jc-2 ; j<= jc+2 ; j++ )
-               for( int i=ic-2 ; i<= ic+2 ; i++ )
-               {
-                  int ind = i-ic+2 + 5*(j-jc+2) + 25*(k-kc+2)+1;
-                  float_sw4 x=(i-1)*h, y=(j-1)*h, z=zg(i,j,k);
-                  a(1,ind) = 1;
-                  a(2,ind) = x-xc;
-                  a(3,ind) = y-yc;
-                  a(4,ind) = z-zc;
-                  a(5,ind) = SQR(x-xc);
-                  a(6,ind) = SQR(y-yc);
-                  a(7,ind) = SQR(z-zc);
-                  a(8,ind) = (x-xc)*(y-yc);
-                  a(9,ind) = (x-xc)*(z-zc);
-                  a(10,ind)= (y-yc)*(z-zc);
-                  a(11,ind)= CUB(x-xc);
-                  a(12,ind)= CUB(y-yc);
-                  a(13,ind)= CUB(z-zc);
-                  a(14,ind)= SQR(x-xc)*(y-yc);
-                  a(15,ind)= SQR(y-yc)*(x-xc);
-                  a(16,ind)= SQR(z-zc)*(x-xc);
-                  a(17,ind)= SQR(x-xc)*(z-zc);
-                  a(18,ind)= SQR(y-yc)*(z-zc);
-                  a(19,ind)= SQR(z-zc)*(y-yc);
-                  a(20,ind) = (x-xc)*(y-yc)*(z-zc);
-                  if( ncond == 35 )
-                  {
-                     a(21,ind)= BISQR(x-xc);
-                     a(22,ind)= BISQR(y-yc);
-                     a(23,ind)= BISQR(z-zc);
-                     a(24,ind)= CUB(x-xc)*(y-yc);
-                     a(25,ind)= CUB(y-yc)*(x-xc);
-                     a(26,ind)= CUB(z-zc)*(x-xc);
-                     a(27,ind)= CUB(x-xc)*(z-zc);                  
-                     a(28,ind)= CUB(z-zc)*(y-yc);
-                     a(29,ind)= CUB(y-yc)*(z-zc);                  
-                     a(30,ind)= SQR(x-xc)*SQR(y-yc);
-                     a(31,ind)= SQR(y-yc)*SQR(z-zc);
-                     a(32,ind)= SQR(z-zc)*SQR(x-xc);
-                     a(33,ind)= SQR(x-xc)*(y-yc)*(z-zc);
-                     a(34,ind)= SQR(y-yc)*(x-xc)*(z-zc);
-                     a(35,ind)= SQR(z-zc)*(x-xc)*(y-yc);
-                  }
-
-               }
-         }
-         if( k <= 0 || k >= Nz )
-         {
-            int kk;
-            if( k<=0 )
-            {
-         // Into finer grid above, continue into fine grid from k=0 and 
-         // upward --> from kk=Nz-1
-               int Nzp = a_EW->m_global_nz[g+1];
-               kk=k+Nzp-1;
+    for (int k = kc - 2; k <= kc + 2; k++) {
+      if (1 <= k && k <= Nz - 1) {
+        // Discretization on this grid
+        for (int j = jc - 2; j <= jc + 2; j++)
+          for (int i = ic - 2; i <= ic + 2; i++) {
+            int ind = i - ic + 2 + 5 * (j - jc + 2) + 25 * (k - kc + 2) + 1;
+            float_sw4 x = (i - 1) * h, y = (j - 1) * h, z = zg(i, j, k);
+            a(1, ind) = 1;
+            a(2, ind) = x - xc;
+            a(3, ind) = y - yc;
+            a(4, ind) = z - zc;
+            a(5, ind) = SQR(x - xc);
+            a(6, ind) = SQR(y - yc);
+            a(7, ind) = SQR(z - zc);
+            a(8, ind) = (x - xc) * (y - yc);
+            a(9, ind) = (x - xc) * (z - zc);
+            a(10, ind) = (y - yc) * (z - zc);
+            a(11, ind) = CUB(x - xc);
+            a(12, ind) = CUB(y - yc);
+            a(13, ind) = CUB(z - zc);
+            a(14, ind) = SQR(x - xc) * (y - yc);
+            a(15, ind) = SQR(y - yc) * (x - xc);
+            a(16, ind) = SQR(z - zc) * (x - xc);
+            a(17, ind) = SQR(x - xc) * (z - zc);
+            a(18, ind) = SQR(y - yc) * (z - zc);
+            a(19, ind) = SQR(z - zc) * (y - yc);
+            a(20, ind) = (x - xc) * (y - yc) * (z - zc);
+            if (ncond == 35) {
+              a(21, ind) = BISQR(x - xc);
+              a(22, ind) = BISQR(y - yc);
+              a(23, ind) = BISQR(z - zc);
+              a(24, ind) = CUB(x - xc) * (y - yc);
+              a(25, ind) = CUB(y - yc) * (x - xc);
+              a(26, ind) = CUB(z - zc) * (x - xc);
+              a(27, ind) = CUB(x - xc) * (z - zc);
+              a(28, ind) = CUB(z - zc) * (y - yc);
+              a(29, ind) = CUB(y - yc) * (z - zc);
+              a(30, ind) = SQR(x - xc) * SQR(y - yc);
+              a(31, ind) = SQR(y - yc) * SQR(z - zc);
+              a(32, ind) = SQR(z - zc) * SQR(x - xc);
+              a(33, ind) = SQR(x - xc) * (y - yc) * (z - zc);
+              a(34, ind) = SQR(y - yc) * (x - xc) * (z - zc);
+              a(35, ind) = SQR(z - zc) * (x - xc) * (y - yc);
             }
-            if( k >= Nz )
-            {
-         // Into coarser grid below, let k=Nz be the coarse grid discretization,
-         // and continue on coarse grid from k=Nz+1 --> kk=2
-               kk=k-Nz+1;
-            }
-            for( int j=jcref-2 ; j<= jcref+2 ; j++ )
-               for( int i=icref-2 ; i<= icref+2 ; i++ )
-               {
-                  float_sw4 x=(i-1)*h, y=(j-1)*h, z=zgref(i,j,kk);
-                  int ind = i-icref+2 + 5*(j-jcref+2) + 25*(k-kc+2)+1;
-                  a(1,ind) = 1;
-                  a(2,ind) = x-xc;
-                  a(3,ind) = y-yc;
-                  a(4,ind) = z-zc;
-                  a(5,ind) = SQR(x-xc);
-                  a(6,ind) = SQR(y-yc);
-                  a(7,ind) = SQR(z-zc);
-                  a(8,ind) = (x-xc)*(y-yc);
-                  a(9,ind) = (x-xc)*(z-zc);
-                  a(10,ind)= (y-yc)*(z-zc);
-                  a(11,ind)= CUB(x-xc);
-                  a(12,ind)= CUB(y-yc);
-                  a(13,ind)= CUB(z-zc);
-                  a(14,ind)= SQR(x-xc)*(y-yc);
-                  a(15,ind)= SQR(y-yc)*(x-xc);
-                  a(16,ind)= SQR(z-zc)*(x-xc);
-                  a(17,ind)= SQR(x-xc)*(z-zc);
-                  a(18,ind)= SQR(y-yc)*(z-zc);
-                  a(19,ind)= SQR(z-zc)*(y-yc);
-                  a(20,ind) = (x-xc)*(y-yc)*(z-zc);
-                  if( ncond == 35 )
-                  {
-                     a(21,ind)= BISQR(x-xc);
-                     a(22,ind)= BISQR(y-yc);
-                     a(23,ind)= BISQR(z-zc);
-                     a(24,ind)= CUB(x-xc)*(y-yc);
-                     a(25,ind)= CUB(y-yc)*(x-xc);
-                     a(26,ind)= CUB(z-zc)*(x-xc);
-                     a(27,ind)= CUB(x-xc)*(z-zc);                  
-                     a(28,ind)= CUB(z-zc)*(y-yc);
-                     a(29,ind)= CUB(y-yc)*(z-zc);                  
-                     a(30,ind)= SQR(x-xc)*SQR(y-yc);
-                     a(31,ind)= SQR(y-yc)*SQR(z-zc);
-                     a(32,ind)= SQR(z-zc)*SQR(x-xc);
-                     a(33,ind)= SQR(x-xc)*(y-yc)*(z-zc);
-                     a(34,ind)= SQR(y-yc)*(x-xc)*(z-zc);
-                     a(35,ind)= SQR(z-zc)*(x-xc)*(y-yc);
-                  }
-               }
-         }
+          }
       }
+      if (k <= 0 || k >= Nz) {
+        int kk;
+        if (k <= 0) {
+          // Into finer grid above, continue into fine grid from k=0 and
+          // upward --> from kk=Nz-1
+          int Nzp = a_EW->m_global_nz[g + 1];
+          kk = k + Nzp - 1;
+        }
+        if (k >= Nz) {
+          // Into coarser grid below, let k=Nz be the coarse grid
+          // discretization, and continue on coarse grid from k=Nz+1 --> kk=2
+          kk = k - Nz + 1;
+        }
+        for (int j = jcref - 2; j <= jcref + 2; j++)
+          for (int i = icref - 2; i <= icref + 2; i++) {
+            float_sw4 x = (i - 1) * h, y = (j - 1) * h, z = zgref(i, j, kk);
+            int ind =
+                i - icref + 2 + 5 * (j - jcref + 2) + 25 * (k - kc + 2) + 1;
+            a(1, ind) = 1;
+            a(2, ind) = x - xc;
+            a(3, ind) = y - yc;
+            a(4, ind) = z - zc;
+            a(5, ind) = SQR(x - xc);
+            a(6, ind) = SQR(y - yc);
+            a(7, ind) = SQR(z - zc);
+            a(8, ind) = (x - xc) * (y - yc);
+            a(9, ind) = (x - xc) * (z - zc);
+            a(10, ind) = (y - yc) * (z - zc);
+            a(11, ind) = CUB(x - xc);
+            a(12, ind) = CUB(y - yc);
+            a(13, ind) = CUB(z - zc);
+            a(14, ind) = SQR(x - xc) * (y - yc);
+            a(15, ind) = SQR(y - yc) * (x - xc);
+            a(16, ind) = SQR(z - zc) * (x - xc);
+            a(17, ind) = SQR(x - xc) * (z - zc);
+            a(18, ind) = SQR(y - yc) * (z - zc);
+            a(19, ind) = SQR(z - zc) * (y - yc);
+            a(20, ind) = (x - xc) * (y - yc) * (z - zc);
+            if (ncond == 35) {
+              a(21, ind) = BISQR(x - xc);
+              a(22, ind) = BISQR(y - yc);
+              a(23, ind) = BISQR(z - zc);
+              a(24, ind) = CUB(x - xc) * (y - yc);
+              a(25, ind) = CUB(y - yc) * (x - xc);
+              a(26, ind) = CUB(z - zc) * (x - xc);
+              a(27, ind) = CUB(x - xc) * (z - zc);
+              a(28, ind) = CUB(z - zc) * (y - yc);
+              a(29, ind) = CUB(y - yc) * (z - zc);
+              a(30, ind) = SQR(x - xc) * SQR(y - yc);
+              a(31, ind) = SQR(y - yc) * SQR(z - zc);
+              a(32, ind) = SQR(z - zc) * SQR(x - xc);
+              a(33, ind) = SQR(x - xc) * (y - yc) * (z - zc);
+              a(34, ind) = SQR(y - yc) * (x - xc) * (z - zc);
+              a(35, ind) = SQR(z - zc) * (x - xc) * (y - yc);
+            }
+          }
+      }
+    }
 
 #undef mom_f
-   // Right hand sides for moment conditions
-   
-   b(1,1) = 1;
-   b(2,1) = mX0-xc;
-   b(3,1) = mY0-yc;
-   b(4,1) = mZ0-zc;
-   b(5,1) = SQR(mX0-xc);
-   b(6,1) = SQR(mY0-yc);
-   b(7,1) = SQR(mZ0-zc);
-   b(8,1) = (mX0-xc)*(mY0-yc);
-   b(9,1) = (mX0-xc)*(mZ0-zc);
-   b(10,1)= (mY0-yc)*(mZ0-zc);               
-   b(11,1)= CUB(mX0-xc);
-   b(12,1)= CUB(mY0-yc);
-   b(13,1)= CUB(mZ0-zc);               
-   b(14,1)= SQR(mX0-xc)*(mY0-yc);
-   b(15,1)= SQR(mY0-yc)*(mX0-xc);
-   b(16,1)= SQR(mZ0-zc)*(mX0-xc);
-   b(17,1)= SQR(mX0-xc)*(mZ0-zc);
-   b(18,1)= SQR(mY0-yc)*(mZ0-zc);
-   b(19,1)= SQR(mZ0-zc)*(mY0-yc);
-   b(20,1)= (mX0-xc)*(mY0-yc)*(mZ0-zc);
-   if( ncond == 35 )
-   {
-      b(21,1)= BISQR(mX0-xc);
-      b(22,1)= BISQR(mY0-yc);
-      b(23,1)= BISQR(mZ0-zc);
-      b(24,1)= CUB(mX0-xc)*(mY0-yc);
-      b(25,1)= CUB(mY0-yc)*(mX0-xc);
-      b(26,1)= CUB(mZ0-zc)*(mX0-xc);
-      b(27,1)= CUB(mX0-xc)*(mZ0-zc);                  
-      b(28,1)= CUB(mZ0-zc)*(mY0-yc);
-      b(29,1)= CUB(mY0-yc)*(mZ0-zc);                  
-      b(30,1)= SQR(mX0-xc)*SQR(mY0-yc);
-      b(31,1)= SQR(mY0-yc)*SQR(mZ0-zc);
-      b(32,1)= SQR(mZ0-zc)*SQR(mX0-xc);
-      b(33,1)= SQR(mX0-xc)*(mY0-yc)*(mZ0-zc);
-      b(34,1)= SQR(mY0-yc)*(mX0-xc)*(mZ0-zc);
-      b(35,1)= SQR(mZ0-zc)*(mX0-xc)*(mY0-yc);
-   }
-   if( gradient )
-   {
+    // Right hand sides for moment conditions
+
+    b(1, 1) = 1;
+    b(2, 1) = mX0 - xc;
+    b(3, 1) = mY0 - yc;
+    b(4, 1) = mZ0 - zc;
+    b(5, 1) = SQR(mX0 - xc);
+    b(6, 1) = SQR(mY0 - yc);
+    b(7, 1) = SQR(mZ0 - zc);
+    b(8, 1) = (mX0 - xc) * (mY0 - yc);
+    b(9, 1) = (mX0 - xc) * (mZ0 - zc);
+    b(10, 1) = (mY0 - yc) * (mZ0 - zc);
+    b(11, 1) = CUB(mX0 - xc);
+    b(12, 1) = CUB(mY0 - yc);
+    b(13, 1) = CUB(mZ0 - zc);
+    b(14, 1) = SQR(mX0 - xc) * (mY0 - yc);
+    b(15, 1) = SQR(mY0 - yc) * (mX0 - xc);
+    b(16, 1) = SQR(mZ0 - zc) * (mX0 - xc);
+    b(17, 1) = SQR(mX0 - xc) * (mZ0 - zc);
+    b(18, 1) = SQR(mY0 - yc) * (mZ0 - zc);
+    b(19, 1) = SQR(mZ0 - zc) * (mY0 - yc);
+    b(20, 1) = (mX0 - xc) * (mY0 - yc) * (mZ0 - zc);
+    if (ncond == 35) {
+      b(21, 1) = BISQR(mX0 - xc);
+      b(22, 1) = BISQR(mY0 - yc);
+      b(23, 1) = BISQR(mZ0 - zc);
+      b(24, 1) = CUB(mX0 - xc) * (mY0 - yc);
+      b(25, 1) = CUB(mY0 - yc) * (mX0 - xc);
+      b(26, 1) = CUB(mZ0 - zc) * (mX0 - xc);
+      b(27, 1) = CUB(mX0 - xc) * (mZ0 - zc);
+      b(28, 1) = CUB(mZ0 - zc) * (mY0 - yc);
+      b(29, 1) = CUB(mY0 - yc) * (mZ0 - zc);
+      b(30, 1) = SQR(mX0 - xc) * SQR(mY0 - yc);
+      b(31, 1) = SQR(mY0 - yc) * SQR(mZ0 - zc);
+      b(32, 1) = SQR(mZ0 - zc) * SQR(mX0 - xc);
+      b(33, 1) = SQR(mX0 - xc) * (mY0 - yc) * (mZ0 - zc);
+      b(34, 1) = SQR(mY0 - yc) * (mX0 - xc) * (mZ0 - zc);
+      b(35, 1) = SQR(mZ0 - zc) * (mX0 - xc) * (mY0 - yc);
+    }
+    if (gradient) {
       // x-derivatives
-      b(1,2) = 0;
+      b(1, 2) = 0;
 
-      b(2,2) = -1;
-      b(3,2) = 0;
-      b(4,2) = 0;
+      b(2, 2) = -1;
+      b(3, 2) = 0;
+      b(4, 2) = 0;
 
-      b(5,2) = -2*(mX0-xc);
-      b(6,2) = 0;
-      b(7,2) = 0;
-      b(8,2) = -(mY0-yc);
-      b(9,2) = -(mZ0-zc);
-      b(10,2)= 0;
+      b(5, 2) = -2 * (mX0 - xc);
+      b(6, 2) = 0;
+      b(7, 2) = 0;
+      b(8, 2) = -(mY0 - yc);
+      b(9, 2) = -(mZ0 - zc);
+      b(10, 2) = 0;
 
-      b(11,2)= -3*SQR(mX0-xc);
-      b(12,2)= 0;
-      b(13,2)= 0;
-      b(14,2)= -2*(mX0-xc)*(mY0-yc);
-      b(15,2)= -SQR(mY0-yc);
-      b(16,2)= -SQR(mZ0-zc);
-      b(17,2)= -2*(mX0-xc)*(mZ0-zc);
-      b(18,2)= 0;
-      b(19,2)= 0;
-      b(20,2)= -(mY0-yc)*(mZ0-zc);
-      if( ncond == 35 )
-      {
-         b(21,2)= -4*CUB(mX0-xc);
-         b(22,2)= 0;
-         b(23,2)= 0;
-         b(24,2)= -3*SQR(mX0-xc)*(mY0-yc);
-         b(25,2)= -CUB(mY0-yc);
-         b(26,2)= -CUB(mZ0-zc);
-         b(27,2)= -3*SQR(mX0-xc)*(mZ0-zc);                  
-         b(28,2)= 0;
-         b(29,2)= 0;
-         b(30,2)= -2*(mX0-xc)*SQR(mY0-yc);
-         b(31,2)= 0;
-         b(32,2)= -2*SQR(mZ0-zc)*(mX0-xc);
-         b(33,2)= -2*(mX0-xc)*(mY0-yc)*(mZ0-zc);
-         b(34,2)= -SQR(mY0-yc)*(mZ0-zc);
-         b(35,2)= -SQR(mZ0-zc)*(mY0-yc);
+      b(11, 2) = -3 * SQR(mX0 - xc);
+      b(12, 2) = 0;
+      b(13, 2) = 0;
+      b(14, 2) = -2 * (mX0 - xc) * (mY0 - yc);
+      b(15, 2) = -SQR(mY0 - yc);
+      b(16, 2) = -SQR(mZ0 - zc);
+      b(17, 2) = -2 * (mX0 - xc) * (mZ0 - zc);
+      b(18, 2) = 0;
+      b(19, 2) = 0;
+      b(20, 2) = -(mY0 - yc) * (mZ0 - zc);
+      if (ncond == 35) {
+        b(21, 2) = -4 * CUB(mX0 - xc);
+        b(22, 2) = 0;
+        b(23, 2) = 0;
+        b(24, 2) = -3 * SQR(mX0 - xc) * (mY0 - yc);
+        b(25, 2) = -CUB(mY0 - yc);
+        b(26, 2) = -CUB(mZ0 - zc);
+        b(27, 2) = -3 * SQR(mX0 - xc) * (mZ0 - zc);
+        b(28, 2) = 0;
+        b(29, 2) = 0;
+        b(30, 2) = -2 * (mX0 - xc) * SQR(mY0 - yc);
+        b(31, 2) = 0;
+        b(32, 2) = -2 * SQR(mZ0 - zc) * (mX0 - xc);
+        b(33, 2) = -2 * (mX0 - xc) * (mY0 - yc) * (mZ0 - zc);
+        b(34, 2) = -SQR(mY0 - yc) * (mZ0 - zc);
+        b(35, 2) = -SQR(mZ0 - zc) * (mY0 - yc);
       }
 
       // y-derivatives
-      b(1,3) = 0;
+      b(1, 3) = 0;
 
-      b(2,3) = 0;
-      b(3,3) = -1;
-      b(4,3) = 0;
+      b(2, 3) = 0;
+      b(3, 3) = -1;
+      b(4, 3) = 0;
 
-      b(5,3) = 0;
-      b(6,3) = -2*(mY0-yc);
-      b(7,3) = 0;
-      b(8,3) = -(mX0-xc);
-      b(9,3) = 0;
-      b(10,3)= -(mZ0-zc);
+      b(5, 3) = 0;
+      b(6, 3) = -2 * (mY0 - yc);
+      b(7, 3) = 0;
+      b(8, 3) = -(mX0 - xc);
+      b(9, 3) = 0;
+      b(10, 3) = -(mZ0 - zc);
 
-      b(11,3)= 0;
-      b(12,3)= -3*SQR(mY0-yc);
-      b(13,3)= 0;
-      b(14,3)= -SQR(mX0-xc);
-      b(15,3)= -2*(mY0-yc)*(mX0-xc);
-      b(16,3)= 0;
-      b(17,3)= 0;
-      b(18,3)= -2*(mY0-yc)*(mZ0-zc);
-      b(19,3)= -SQR(mZ0-zc);
-      b(20,3)= -(mX0-xc)*(mZ0-zc);
-      if( ncond == 35 )
-      {
-         b(21,3)= 0;
-         b(22,3)= -4*CUB(mY0-yc);
-         b(23,3)= 0;
-         b(24,3)= -CUB(mX0-xc);
-         b(25,3)= -3*SQR(mY0-yc)*(mX0-xc);
-         b(26,3)= 0;
-         b(27,3)= 0;
-         b(28,3)= -CUB(mZ0-zc);
-         b(29,3)= -3*SQR(mY0-yc)*(mZ0-zc);
-         b(30,3)= -2*SQR(mX0-xc)*(mY0-yc);
-         b(31,3)= -2*(mY0-yc)*SQR(mZ0-zc);
-         b(32,3)= 0;
-         b(33,3)= -SQR(mX0-xc)*(mZ0-zc);
-         b(34,3)= -2*(mY0-yc)*(mX0-xc)*(mZ0-zc);
-         b(35,3)= -SQR(mZ0-zc)*(mX0-xc);
+      b(11, 3) = 0;
+      b(12, 3) = -3 * SQR(mY0 - yc);
+      b(13, 3) = 0;
+      b(14, 3) = -SQR(mX0 - xc);
+      b(15, 3) = -2 * (mY0 - yc) * (mX0 - xc);
+      b(16, 3) = 0;
+      b(17, 3) = 0;
+      b(18, 3) = -2 * (mY0 - yc) * (mZ0 - zc);
+      b(19, 3) = -SQR(mZ0 - zc);
+      b(20, 3) = -(mX0 - xc) * (mZ0 - zc);
+      if (ncond == 35) {
+        b(21, 3) = 0;
+        b(22, 3) = -4 * CUB(mY0 - yc);
+        b(23, 3) = 0;
+        b(24, 3) = -CUB(mX0 - xc);
+        b(25, 3) = -3 * SQR(mY0 - yc) * (mX0 - xc);
+        b(26, 3) = 0;
+        b(27, 3) = 0;
+        b(28, 3) = -CUB(mZ0 - zc);
+        b(29, 3) = -3 * SQR(mY0 - yc) * (mZ0 - zc);
+        b(30, 3) = -2 * SQR(mX0 - xc) * (mY0 - yc);
+        b(31, 3) = -2 * (mY0 - yc) * SQR(mZ0 - zc);
+        b(32, 3) = 0;
+        b(33, 3) = -SQR(mX0 - xc) * (mZ0 - zc);
+        b(34, 3) = -2 * (mY0 - yc) * (mX0 - xc) * (mZ0 - zc);
+        b(35, 3) = -SQR(mZ0 - zc) * (mX0 - xc);
       }
 
       // z-derivatives
-      b(1,4) = 0;
+      b(1, 4) = 0;
 
-      b(2,4) = 0;
-      b(3,4) = 0;
-      b(4,4) = -1;
+      b(2, 4) = 0;
+      b(3, 4) = 0;
+      b(4, 4) = -1;
 
-      b(5,4) = 0;
-      b(6,4) = 0;
-      b(7,4) = -2*(mZ0-zc);
-      b(8,4) = 0;
-      b(9,4) = -(mX0-xc);
-      b(10,4)= -(mY0-yc);
+      b(5, 4) = 0;
+      b(6, 4) = 0;
+      b(7, 4) = -2 * (mZ0 - zc);
+      b(8, 4) = 0;
+      b(9, 4) = -(mX0 - xc);
+      b(10, 4) = -(mY0 - yc);
 
-      b(11,4)= 0;
-      b(12,4)= 0;
-      b(13,4)= -3*SQR(mZ0-zc);
-      b(14,4)= 0;
-      b(15,4)= 0;
-      b(16,4)= -2*(mZ0-zc)*(mX0-xc);
-      b(17,4)= -SQR(mX0-xc);
-      b(18,4)= -SQR(mY0-yc);
-      b(19,4)= -2*(mZ0-zc)*(mY0-yc);
-      b(20,4)= -(mX0-xc)*(mY0-yc);
-      if( ncond == 35 )
-      {
-         b(21,4)= 0;
-         b(22,4)= 0;
-         b(23,4)=-4*CUB(mZ0-zc);
-         b(24,4)= 0;
-         b(25,4)= 0;
-         b(26,4)=-3*SQR(mZ0-zc)*(mX0-xc);
-         b(27,4)=-CUB(mX0-xc);
-         b(28,4)=-3*SQR(mZ0-zc)*(mY0-yc);
-         b(29,4)=-CUB(mY0-yc);
-         b(30,4)= 0;
-         b(31,4)=-2*SQR(mY0-yc)*(mZ0-zc);
-         b(32,4)=-2*(mZ0-zc)*SQR(mX0-xc);
-         b(33,4)=-SQR(mX0-xc)*(mY0-yc);
-         b(34,4)=-SQR(mY0-yc)*(mX0-xc);
-         b(35,4)=-2*(mZ0-zc)*(mX0-xc)*(mY0-yc);
+      b(11, 4) = 0;
+      b(12, 4) = 0;
+      b(13, 4) = -3 * SQR(mZ0 - zc);
+      b(14, 4) = 0;
+      b(15, 4) = 0;
+      b(16, 4) = -2 * (mZ0 - zc) * (mX0 - xc);
+      b(17, 4) = -SQR(mX0 - xc);
+      b(18, 4) = -SQR(mY0 - yc);
+      b(19, 4) = -2 * (mZ0 - zc) * (mY0 - yc);
+      b(20, 4) = -(mX0 - xc) * (mY0 - yc);
+      if (ncond == 35) {
+        b(21, 4) = 0;
+        b(22, 4) = 0;
+        b(23, 4) = -4 * CUB(mZ0 - zc);
+        b(24, 4) = 0;
+        b(25, 4) = 0;
+        b(26, 4) = -3 * SQR(mZ0 - zc) * (mX0 - xc);
+        b(27, 4) = -CUB(mX0 - xc);
+        b(28, 4) = -3 * SQR(mZ0 - zc) * (mY0 - yc);
+        b(29, 4) = -CUB(mY0 - yc);
+        b(30, 4) = 0;
+        b(31, 4) = -2 * SQR(mY0 - yc) * (mZ0 - zc);
+        b(32, 4) = -2 * (mZ0 - zc) * SQR(mX0 - xc);
+        b(33, 4) = -SQR(mX0 - xc) * (mY0 - yc);
+        b(34, 4) = -SQR(mY0 - yc) * (mX0 - xc);
+        b(35, 4) = -2 * (mZ0 - zc) * (mX0 - xc) * (mY0 - yc);
       }
-   }
-   // Solve A*x=b for x
+    }
+    // Solve A*x=b for x
 
-   char tr='N';
-   int ssize=125, info=0, nb=20;
-   int lwork=ncond+ncond*nb;
-   float_sw4* work = new float_sw4[lwork];
-   F77_FUNC(dgels,DGELS)( tr, ncond, ssize, nrhs, a_, ncond, b_, ldb, 
-                          work, lwork, info );
-   delete[] work;
-   REQUIRE2( info==0, "ERROR, info = " << info << " returned from DGELS ")
+    char tr = 'N';
+    int ssize = 125, info = 0, nb = 20;
+    int lwork = ncond + ncond * nb;
+    float_sw4* work = new float_sw4[lwork];
+    F77_FUNC(dgels, DGELS)
+    (tr, ncond, ssize, nrhs, a_, ncond, b_, ldb, work, lwork, info);
+    delete[] work;
+    REQUIRE2(info == 0, "ERROR, info = " << info << " returned from DGELS ")
 
-   // Define the point sources
-   for( int k=kc-2 ; k <= kc+2 ; k++ )
-   {
-      if( 1 <= k && k <= Nz-1 )
-      {
-         float_sw4 nwgh = 1.0;
-         if( k <= 4 )
-            nwgh = normwgh[k-1];
-         else if( k>=Nz-3 )
-            nwgh = normwgh[Nz-k];
+    // Define the point sources
+    for (int k = kc - 2; k <= kc + 2; k++) {
+      if (1 <= k && k <= Nz - 1) {
+        float_sw4 nwgh = 1.0;
+        if (k <= 4)
+          nwgh = normwgh[k - 1];
+        else if (k >= Nz - 3)
+          nwgh = normwgh[Nz - k];
 
-         // Discretization on this grid
-         for( int j=jc-2 ; j<= jc+2 ; j++ )
-            for( int i=ic-2 ; i<= ic+2 ; i++ )
-               if( a_EW->interior_point_in_proc(i,j,g) ) 
-               {
-                  int ind = i-ic+2 + 5*(j-jc+2) + 25*(k-kc+2)+1;
-                  float_sw4 fx, fy, fz;
-                  if( gradient )
-                  {
-                     fx = -(mForces[0]*x(ind,2)+mForces[1]*x(ind,3)+mForces[2]*x(ind,4));
-                     fy = -(mForces[1]*x(ind,2)+mForces[3]*x(ind,3)+mForces[4]*x(ind,4));
-                     fz = -(mForces[2]*x(ind,2)+mForces[4]*x(ind,3)+mForces[5]*x(ind,4));
-                  }
-                  else
-                  {
-                     fx = mForces[0]*x(ind,1);
-                     fy = mForces[1]*x(ind,1);
-                     fz = mForces[2]*x(ind,1);                     
-                  }
-                  if( fx != 0 || fy != 0 || fz != 0 )
-                  {
-                     float_sw4 ijac=1.0/(nwgh*(Jg(i,j,k)));
-                     if( k == 1 ) // On interface, special
-                        ijac = 1.0/(nwgh*(Jg(i,j,k)+Jgref(i,j,a_EW->m_global_nz[gref]+k-1)));
-                     GridPointSource* sourcePtr = 
-                        new GridPointSource( mFreq, mT0, i, j, k, g,
-                                             fx*ijac, fy*ijac, fz*ijac,
-                                             mTimeDependence, mNcyc, 
-                                             mPar, mNpar, mIpar, mNipar );
-                     point_sources.push_back(sourcePtr);
-                  }
-               }
-      }   
-      if( k <= 0 )
-      {
-         // Into finer grid above, keep k=1 on this (coarse) grid
-         int Nzp =a_EW->m_global_nz[g+1];
-         int kk=k+Nzp-1;
-         float_sw4 nwgh = 1.0;
-         if( kk>=Nzp-3 )
-            nwgh = normwgh[Nzp-kk];
-         for( int j=jcref-2 ; j<= jcref+2 ; j++ )
-            for( int i=icref-2 ; i<= icref+2 ; i++ )
-               if( a_EW->interior_point_in_proc(i,j,g+1) ) 
-               {
-                  int ind = i-icref+2 + 5*(j-jcref+2) + 25*(k-kc+2)+1;
-                  float_sw4 fx, fy, fz;
-                  if( gradient )
-                  {
-                     fx = -(mForces[0]*x(ind,2)+mForces[1]*x(ind,3)+mForces[2]*x(ind,4));
-                     fy = -(mForces[1]*x(ind,2)+mForces[3]*x(ind,3)+mForces[4]*x(ind,4));
-                     fz = -(mForces[2]*x(ind,2)+mForces[4]*x(ind,3)+mForces[5]*x(ind,4));
-                  }
-                  else
-                  {
-                     fx = mForces[0]*x(ind,1);
-                     fy = mForces[1]*x(ind,1);
-                     fz = mForces[2]*x(ind,1);                     
-                  }
-                  if( fx != 0 || fy != 0 || fz != 0 )
-                  {
-                     //                  float_sw4 wF = x(ind,1);
-                     //                  if( wF != 0 )
-                     //                  {
-                     //                     wF = wF/(nwgh*(a_EW->mJ[g+1](i,j,kk)));
-                     float_sw4 ijac = 1.0/(nwgh*(a_EW->mJ[g+1](i,j,kk)));
-                     //                     std::cout << g+1 << " (i,j,k)" << i << " " << j << " " << kk << " " << wF << std::endl;
-                     GridPointSource* sourcePtr = 
-                        new GridPointSource( mFreq, mT0, i, j, kk, g+1,
-                                             fx*ijac, fy*ijac, fz*ijac,
-                                             mTimeDependence, mNcyc, 
-                                             mPar, mNpar, mIpar, mNipar );
-                     point_sources.push_back(sourcePtr);
-                  }
-               }
+        // Discretization on this grid
+        for (int j = jc - 2; j <= jc + 2; j++)
+          for (int i = ic - 2; i <= ic + 2; i++)
+            if (a_EW->interior_point_in_proc(i, j, g)) {
+              int ind = i - ic + 2 + 5 * (j - jc + 2) + 25 * (k - kc + 2) + 1;
+              float_sw4 fx, fy, fz;
+              if (gradient) {
+                fx = -(mForces[0] * x(ind, 2) + mForces[1] * x(ind, 3) +
+                       mForces[2] * x(ind, 4));
+                fy = -(mForces[1] * x(ind, 2) + mForces[3] * x(ind, 3) +
+                       mForces[4] * x(ind, 4));
+                fz = -(mForces[2] * x(ind, 2) + mForces[4] * x(ind, 3) +
+                       mForces[5] * x(ind, 4));
+              } else {
+                fx = mForces[0] * x(ind, 1);
+                fy = mForces[1] * x(ind, 1);
+                fz = mForces[2] * x(ind, 1);
+              }
+              if (fx != 0 || fy != 0 || fz != 0) {
+                float_sw4 ijac = 1.0 / (nwgh * (Jg(i, j, k)));
+                if (k == 1)  // On interface, special
+                  ijac = 1.0 / (nwgh *
+                                (Jg(i, j, k) +
+                                 Jgref(i, j, a_EW->m_global_nz[gref] + k - 1)));
+                GridPointSource* sourcePtr = new GridPointSource(
+                    mFreq, mT0, i, j, k, g, fx * ijac, fy * ijac, fz * ijac,
+                    mTimeDependence, mNcyc, mPar, mNpar, mIpar, mNipar);
+                point_sources.push_back(sourcePtr);
+              }
+            }
       }
-      if( k >= Nz )
-      {
-         // Into coarser grid below, move this k=Nz to k=1 on coarse grid.
-         int kk=k-Nz+1;
-         float_sw4 nwgh = 1.0;
-         if( kk <= 4 )
-            nwgh = normwgh[kk-1];
-         for( int j=jcref-2 ; j<= jcref+2 ; j++ )
-            for( int i=icref-2 ; i<= icref+2 ; i++ )
-               if( a_EW->interior_point_in_proc(i,j,g-1) ) 
-               {
-                  int ind = i-icref+2 + 5*(j-jcref+2) + 25*(k-kc+2)+1;
-                  float_sw4 fx, fy, fz;
-                  if( gradient )
-                  {
-                     fx = -(mForces[0]*x(ind,2)+mForces[1]*x(ind,3)+mForces[2]*x(ind,4));
-                     fy = -(mForces[1]*x(ind,2)+mForces[3]*x(ind,3)+mForces[4]*x(ind,4));
-                     fz = -(mForces[2]*x(ind,2)+mForces[4]*x(ind,3)+mForces[5]*x(ind,4));
-                  }
-                  else
-                  {
-                     fx = mForces[0]*x(ind,1);
-                     fy = mForces[1]*x(ind,1);
-                     fz = mForces[2]*x(ind,1);                     
-                  }
-                  if( fx != 0 || fy != 0 || fz != 0 )
-                  {
-
-                     //                  float_sw4 wF = x(ind,1);
-                     //                  if( wF != 0 )
-                     //                  {
-                     //                     wF = wF/(nwgh*(a_EW->mJ[g-1](i,j,kk)));
-                     float_sw4 ijac = 1.0/(nwgh*(Jgref(i,j,kk)));
-                     //                     std::cout << g-1 << " (i,j,k)" << i << " " << j << " " << kk << " " << wF << std::endl;
-                     if( k==Nz )//on interface, special
-                        ijac = 1.0/(nwgh*(Jg(i,j,k)+Jgref(i,j,kk)));
-                     GridPointSource* sourcePtr = 
-                        new GridPointSource( mFreq, mT0, i, j, kk, g-1,
-                                             fx*ijac, fy*ijac, fz*ijac,
-                                             mTimeDependence, mNcyc, 
-                                             mPar, mNpar, mIpar, mNipar );
-                     point_sources.push_back(sourcePtr);
-                  }
-               }
+      if (k <= 0) {
+        // Into finer grid above, keep k=1 on this (coarse) grid
+        int Nzp = a_EW->m_global_nz[g + 1];
+        int kk = k + Nzp - 1;
+        float_sw4 nwgh = 1.0;
+        if (kk >= Nzp - 3) nwgh = normwgh[Nzp - kk];
+        for (int j = jcref - 2; j <= jcref + 2; j++)
+          for (int i = icref - 2; i <= icref + 2; i++)
+            if (a_EW->interior_point_in_proc(i, j, g + 1)) {
+              int ind =
+                  i - icref + 2 + 5 * (j - jcref + 2) + 25 * (k - kc + 2) + 1;
+              float_sw4 fx, fy, fz;
+              if (gradient) {
+                fx = -(mForces[0] * x(ind, 2) + mForces[1] * x(ind, 3) +
+                       mForces[2] * x(ind, 4));
+                fy = -(mForces[1] * x(ind, 2) + mForces[3] * x(ind, 3) +
+                       mForces[4] * x(ind, 4));
+                fz = -(mForces[2] * x(ind, 2) + mForces[4] * x(ind, 3) +
+                       mForces[5] * x(ind, 4));
+              } else {
+                fx = mForces[0] * x(ind, 1);
+                fy = mForces[1] * x(ind, 1);
+                fz = mForces[2] * x(ind, 1);
+              }
+              if (fx != 0 || fy != 0 || fz != 0) {
+                //                  float_sw4 wF = x(ind,1);
+                //                  if( wF != 0 )
+                //                  {
+                //                     wF = wF/(nwgh*(a_EW->mJ[g+1](i,j,kk)));
+                float_sw4 ijac = 1.0 / (nwgh * (a_EW->mJ[g + 1](i, j, kk)));
+                //                     std::cout << g+1 << " (i,j,k)" << i << "
+                //                     " << j << " " << kk << " " << wF <<
+                //                     std::endl;
+                GridPointSource* sourcePtr =
+                    new GridPointSource(mFreq, mT0, i, j, kk, g + 1, fx * ijac,
+                                        fy * ijac, fz * ijac, mTimeDependence,
+                                        mNcyc, mPar, mNpar, mIpar, mNipar);
+                point_sources.push_back(sourcePtr);
+              }
+            }
       }
-   }
-   delete[] a_;
-   delete[] b_;
-   }
-   //   delete[] x_;   
+      if (k >= Nz) {
+        // Into coarser grid below, move this k=Nz to k=1 on coarse grid.
+        int kk = k - Nz + 1;
+        float_sw4 nwgh = 1.0;
+        if (kk <= 4) nwgh = normwgh[kk - 1];
+        for (int j = jcref - 2; j <= jcref + 2; j++)
+          for (int i = icref - 2; i <= icref + 2; i++)
+            if (a_EW->interior_point_in_proc(i, j, g - 1)) {
+              int ind =
+                  i - icref + 2 + 5 * (j - jcref + 2) + 25 * (k - kc + 2) + 1;
+              float_sw4 fx, fy, fz;
+              if (gradient) {
+                fx = -(mForces[0] * x(ind, 2) + mForces[1] * x(ind, 3) +
+                       mForces[2] * x(ind, 4));
+                fy = -(mForces[1] * x(ind, 2) + mForces[3] * x(ind, 3) +
+                       mForces[4] * x(ind, 4));
+                fz = -(mForces[2] * x(ind, 2) + mForces[4] * x(ind, 3) +
+                       mForces[5] * x(ind, 4));
+              } else {
+                fx = mForces[0] * x(ind, 1);
+                fy = mForces[1] * x(ind, 1);
+                fz = mForces[2] * x(ind, 1);
+              }
+              if (fx != 0 || fy != 0 || fz != 0) {
+                //                  float_sw4 wF = x(ind,1);
+                //                  if( wF != 0 )
+                //                  {
+                //                     wF = wF/(nwgh*(a_EW->mJ[g-1](i,j,kk)));
+                float_sw4 ijac = 1.0 / (nwgh * (Jgref(i, j, kk)));
+                //                     std::cout << g-1 << " (i,j,k)" << i << "
+                //                     " << j << " " << kk << " " << wF <<
+                //                     std::endl;
+                if (k == Nz)  // on interface, special
+                  ijac = 1.0 / (nwgh * (Jg(i, j, k) + Jgref(i, j, kk)));
+                GridPointSource* sourcePtr =
+                    new GridPointSource(mFreq, mT0, i, j, kk, g - 1, fx * ijac,
+                                        fy * ijac, fz * ijac, mTimeDependence,
+                                        mNcyc, mPar, mNpar, mIpar, mNipar);
+                point_sources.push_back(sourcePtr);
+              }
+            }
+      }
+    }
+    delete[] a_;
+    delete[] b_;
+  }
+  //   delete[] x_;
 #undef a
-#undef b   
+#undef b
 #undef x
 #undef CUB
 #undef BISQR
 }
 
 //-----------------------------------------------------------------------
-void Source::compute_grid_point( EW* a_ew )
-{
+void Source::compute_grid_point(EW* a_ew) {
   // Sets values (m_i0,m_j0,m_k0) and m_grid.
   // Should be called after the topographic correction of mZ0
-   int i, j, k, g;
-   int success = a_ew->computeNearestGridPoint2( i, j, k, g, mX0, mY0, mZ0 );
-   m_myPoint = success && a_ew->interior_point_in_proc(i, j, g);
-   int inds[4]={-9999,-9999,-9999,-9999};
-   if( m_myPoint )
-   {
-      inds[0] = i;
-      inds[1] = j;
-      inds[2] = k;
-      inds[3] = g;
-   }
-   int indsg[4]={0,0,0,0};
-   MPI_Allreduce( inds, indsg, 4, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
-   m_i0 = indsg[0];
-   m_j0 = indsg[1];
-   m_k0 = indsg[2];
-   m_grid=indsg[3];
+  int i, j, k, g;
+  int success = a_ew->computeNearestGridPoint2(i, j, k, g, mX0, mY0, mZ0);
+  m_myPoint = success && a_ew->interior_point_in_proc(i, j, g);
+  int inds[4] = {-9999, -9999, -9999, -9999};
+  if (m_myPoint) {
+    inds[0] = i;
+    inds[1] = j;
+    inds[2] = k;
+    inds[3] = g;
+  }
+  int indsg[4] = {0, 0, 0, 0};
+  MPI_Allreduce(inds, indsg, 4, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+  m_i0 = indsg[0];
+  m_j0 = indsg[1];
+  m_k0 = indsg[2];
+  m_grid = indsg[3];
 }

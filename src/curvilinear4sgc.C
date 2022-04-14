@@ -1,3 +1,4 @@
+#ifndef SW4_USE_SFK
 //  SW4 LICENSE
 // # ----------------------------------------------------------------------
 // # SW4 - Seismic Waves, 4th order
@@ -30,7 +31,13 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+#ifdef SW4_USE_CMEM
 
+extern __constant__ double cmem_acof[384];
+__device__ inline double acof(int i, int j, int k) {
+  return cmem_acof[(i - 1) + 6 * (j - 1) + 48 * (k - 1)];
+}
+#endif
 #include "Mspace.h"
 #include "caliper.h"
 #include "foralls.h"
@@ -117,7 +124,12 @@ void curvilinear4sg_ci(
 #define met(c, i, j, k) a_met[base4 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 #define strx(i) a_strx[i - ifirst0]
 #define stry(j) a_stry[j - jfirst0]
+#ifdef SW4_USE_CMEM
+#define tacof(i, j, k) cmem_acof[(i - 1) + 6 * (j - 1) + 48 * (k - 1)]
+#define aacof(i, j, k) cmem_acof[(i - 1) + 6 * (j - 1) + 48 * (k - 1)]
+#else
 #define acof(i, j, k) a_acof[(i - 1) + 6 * (j - 1) + 48 * (k - 1)]
+#endif
 #define bope(i, j) a_bope[i - 1 + 6 * (j - 1)]
 #define ghcof(i) a_ghcof[i - 1]
 #define acof_no_gp(i, j, k) a_acof_no_gp[(i - 1) + 6 * (j - 1) + 48 * (k - 1)]
@@ -125,7 +137,13 @@ void curvilinear4sg_ci(
 
   // PREFETCH(a_mu);
   // PREFETCH(a_lambda);
-
+#ifdef SW4_USE_CMEM
+  // static bool first=true;
+  // if (first){
+  //  first= false;
+  cudaMemcpyToSymbol(cmem_acof, a_acof, 384 * sizeof(double));
+  //}
+#endif
   //#pragma omp parallel
   {
     int kstart = kfirst + 2;
@@ -134,20 +152,26 @@ void curvilinear4sg_ci(
     if (onesided[4] == 1) {
       kstart = 7;
       // SBP Boundary closure terms
-#if defined(ENABLE_CUDA) || defined(ENABLE_HIP)
-#define NO_COLLAPSE 1
-#endif
+
 #ifdef PEEKS_GALORE
       std::cout << " ********* WARNING PEEKS GALORE MODE ******************\n";
       SW4_PEEK;
       SYNC_DEVICE;
 #endif
-#if defined(NO_COLLAPSE)
+#if !defined(RAJA_ONLY)
       // LOOP -1
+      //
       // 32,4,2 is 4% slower. 32 4 4 does not fit
+#ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
       Range<6> K(1, 6 + 1);
+#endif
+#ifdef ENABLE_HIP
+      Range<64> I(ifirst + 2, ilast - 1);
+      Range<2> J(jfirst + 2, jlast - 1);
+      Range<2> K(1, 6 + 1);
+#endif
       // Uses 166 registers, no spills
       Tclass<1> tag1;
       forall3async<__LINE__>(
@@ -169,13 +193,14 @@ void curvilinear4sg_ci(
             // 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
             // 	    {
             // 5 ops
+            //	    if (aacof(1,2,1)!=acof(1,2,1)) printf("FAILED %lf %lf
+            //\n",aacof(1,2,1),acof(1,2,1));
             float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
             float_sw4 istry = 1 / (stry(j));
             float_sw4 istrx = 1 / (strx(i));
             float_sw4 istrxy = istry * istrx;
 
             float_sw4 r1 = 0, r2 = 0, r3 = 0;
-
             // pp derivative (u) (u-eq)
             // 53 ops, tot=58
             float_sw4 cof1 = (2 * mu(i - 2, j, k) + la(i - 2, j, k)) *
@@ -338,31 +363,39 @@ void curvilinear4sg_ci(
               mucofw2 = 0;
               //#pragma unroll 1 // slowdown due to register spills
               for (int m = 1; m <= 8; m++) {
-                mucofu2 += acof(k, q, m) *
-                           ((2 * mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
-                                strx(i) * met(2, i, j, m) * strx(i) +
-                            mu(i, j, m) * (met(3, i, j, m) * stry(j) *
-                                               met(3, i, j, m) * stry(j) +
-                                           met(4, i, j, m) * met(4, i, j, m)));
-                mucofv2 += acof(k, q, m) *
-                           ((2 * mu(i, j, m) + la(i, j, m)) * met(3, i, j, m) *
-                                stry(j) * met(3, i, j, m) * stry(j) +
-                            mu(i, j, m) * (met(2, i, j, m) * strx(i) *
-                                               met(2, i, j, m) * strx(i) +
-                                           met(4, i, j, m) * met(4, i, j, m)));
-                mucofw2 += acof(k, q, m) *
-                           ((2 * mu(i, j, m) + la(i, j, m)) * met(4, i, j, m) *
-                                met(4, i, j, m) +
-                            mu(i, j, m) * (met(2, i, j, m) * strx(i) *
-                                               met(2, i, j, m) * strx(i) +
-                                           met(3, i, j, m) * stry(j) *
-                                               met(3, i, j, m) * stry(j)));
-                mucofuv += acof(k, q, m) * (mu(i, j, m) + la(i, j, m)) *
-                           met(2, i, j, m) * met(3, i, j, m);
-                mucofuw += acof(k, q, m) * (mu(i, j, m) + la(i, j, m)) *
-                           met(2, i, j, m) * met(4, i, j, m);
-                mucofvw += acof(k, q, m) * (mu(i, j, m) + la(i, j, m)) *
-                           met(3, i, j, m) * met(4, i, j, m);
+#ifdef SW4_USE_CMEM
+                if (acof(k, q, m) != 0.0) {
+#endif
+                  mucofu2 +=
+                      acof(k, q, m) *
+                      ((2 * mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
+                           strx(i) * met(2, i, j, m) * strx(i) +
+                       mu(i, j, m) * (met(3, i, j, m) * stry(j) *
+                                          met(3, i, j, m) * stry(j) +
+                                      met(4, i, j, m) * met(4, i, j, m)));
+                  mucofv2 +=
+                      acof(k, q, m) *
+                      ((2 * mu(i, j, m) + la(i, j, m)) * met(3, i, j, m) *
+                           stry(j) * met(3, i, j, m) * stry(j) +
+                       mu(i, j, m) * (met(2, i, j, m) * strx(i) *
+                                          met(2, i, j, m) * strx(i) +
+                                      met(4, i, j, m) * met(4, i, j, m)));
+                  mucofw2 += acof(k, q, m) *
+                             ((2 * mu(i, j, m) + la(i, j, m)) *
+                                  met(4, i, j, m) * met(4, i, j, m) +
+                              mu(i, j, m) * (met(2, i, j, m) * strx(i) *
+                                                 met(2, i, j, m) * strx(i) +
+                                             met(3, i, j, m) * stry(j) *
+                                                 met(3, i, j, m) * stry(j)));
+                  mucofuv += acof(k, q, m) * (mu(i, j, m) + la(i, j, m)) *
+                             met(2, i, j, m) * met(3, i, j, m);
+                  mucofuw += acof(k, q, m) * (mu(i, j, m) + la(i, j, m)) *
+                             met(2, i, j, m) * met(4, i, j, m);
+                  mucofvw += acof(k, q, m) * (mu(i, j, m) + la(i, j, m)) *
+                             met(3, i, j, m) * met(4, i, j, m);
+#ifdef SW4_USE_CMEM
+                }
+#endif
               }
 
               // Computing the second derivative,
@@ -805,15 +838,21 @@ void curvilinear4sg_ci(
     SYNC_DEVICE;
 #endif
 
-#if defined(NO_COLLAPSE)
+#if !defined(RAJA_ONLY)
     // LOOP 0
     RangeGS<256, 4> IS(ifirst + 2, ilast - 1);
     RangeGS<1, 1> JS(jfirst + 2, jlast - 1);
     RangeGS<1, 1> KS(kstart, klast - 1);
-
+#ifdef ENABLE_CUDA
     Range<16> I(ifirst + 2, ilast - 1);  // 16.861ms for 64,2,2
     Range<4> J(jfirst + 2, jlast - 1);
     Range<4> K(kstart, kend + 1);  // Changed for CUrvi-MR Was klast-1
+#endif
+#ifdef ENABLE_HIP
+    Range<64> I(ifirst + 2, ilast - 1);  // 16.861ms for 64,2,2
+    Range<2> J(jfirst + 2, jlast - 1);
+    Range<2> K(kstart, kend + 1);  // Changed for CUrvi-MR Was klast-1
+#endif
     // std::cout<<"KSTART END"<<kstart<<" "<<kend<<"\n";
     // forall3GS(IS,JS,KS, [=]RAJA_DEVICE(int i,int j,int k){
     // Use 168 regissters , no spills
@@ -1241,7 +1280,7 @@ void curvilinear4sg_ci(
     SW4_PEEK;
     SYNC_DEVICE;
 #endif
-#if defined(NO_COLLAPSE)
+#if !defined(RAJA_ONLY)
     // LOOP 1
     // RangeGS<256,4> IS(ifirst+2,ilast-1);
     // RangeGS<1,1>JS(jfirst+2,jlast-1);
@@ -1649,7 +1688,7 @@ void curvilinear4sg_ci(
     SW4_PEEK;
     SYNC_DEVICE;
 #endif
-#if defined(NO_COLLAPSE)
+#if !defined(RAJA_ONLY)
     // LOOP 2
     // RangeGS<256,4> IS(ifirst+2,ilast-1);
     // RangeGS<1,1>JS(jfirst+2,jlast-1);
@@ -2081,12 +2120,19 @@ void curvilinear4sg_ci(
 //         for (int i = ifirst + 2; i <= ilast - 2; i++) {
 
 //    const int UNROLL_LEN=1;
-#if defined(NO_COLLAPSE)
+#if !defined(RAJA_ONLY)
     // LOOP -1
     // 32,4,2 is 4% slower. 32 4 4 does not fit
+#ifdef ENABLE_CUDA
     Range<16> II(ifirst + 2, ilast - 1);
     Range<4> JJ(jfirst + 2, jlast - 1);
     Range<6> KK(nk - 5, nk + 1);
+#endif
+#ifdef ENABLE_HIP
+    Range<64> II(ifirst + 2, ilast - 1);
+    Range<2> JJ(jfirst + 2, jlast - 1);
+    Range<2> KK(nk - 5, nk + 1);
+#endif
     // Register count goes upto 254. Runtime goes up by factor of 2.8X
     //     Range<16> JJ2(jfirst + 2, jlast - 1);
     //     forall2async(II, JJ2,[=] RAJA_DEVICE(int i, int j) {
@@ -2320,8 +2366,9 @@ void curvilinear4sg_ci(
                   istrxy * mucofw2 * u(3, i, j, q);
           }
 
-          // Ghost point values, only nonzero for k=nk.
-          // 72 ops., tot=4011
+      // Ghost point values, only nonzero for k=nk.
+      // 72 ops., tot=4011
+#ifndef SW4_GHCOF_NO_GP_IS_ZERO
           mucofu2 = ghcof_no_gp(nk - k + 1) *
                     ((2 * mu(i, j, nk) + la(i, j, nk)) * met(2, i, j, nk) *
                          strx(i) * met(2, i, j, nk) * strx(i) +
@@ -2356,7 +2403,7 @@ void curvilinear4sg_ci(
           r3 += istry * mucofuw * u(1, i, j, nk + 1) +
                 istrx * mucofvw * u(2, i, j, nk + 1) +
                 istrxy * mucofw2 * u(3, i, j, nk + 1);
-
+#endif
           // pq-derivatives (u-eq)
           // 38 ops., tot=4049
           r1 +=
@@ -2803,8 +2850,8 @@ void curvilinear4sg_ci(
     if (onesided[4] == 1) {
       kstart = 7;
       // SBP Boundary closure terms
-#define NO_COLLAPSE 1
-#if defined(NO_COLLAPSE)
+
+#if !defined(RAJA_ONLY)
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
       Range<4> K(1, 6 + 1);
@@ -3409,7 +3456,7 @@ void curvilinear4sg_ci(
       });  // End of curvilinear4sg_ci LOOP 1
     }
 
-#if defined(NO_COLLAPSE)
+#if !defined(RAJA_ONLY)
     RangeGS<16, 16> I(ifirst + 2, ilast - 1);
     RangeGS<4, 16> J(jfirst + 2, jlast - 1);
     RangeGS<4, 4> K(kstart, klast - 1);
@@ -4424,4 +4471,5 @@ void curvilinear4sg_ci(
 #undef bope
 #undef ghcof
 }
+#endif
 #endif

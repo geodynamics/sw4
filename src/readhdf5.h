@@ -36,20 +36,21 @@
 void readStationHDF5(EW *ew, string inFileName, string outFileName,
                      int writeEvery, int downSample,
                      TimeSeries::receiverMode mode, int event,
-                     vector<vector<TimeSeries *> > *GlobalTimeSeries,
+                     std::vector<std::vector<TimeSeries *> > *GlobalTimeSeries,
                      float_sw4 m_global_xmax, float_sw4 m_global_ymax,
                      bool is_obs, bool winlset, bool winrset, float_sw4 winl,
                      float_sw4 winr, bool usex, bool usey, bool usez,
                      float_sw4 t0, bool scalefactor_set, float_sw4 scalefactor);
 
 void readRuptureHDF5(char *fname,
-                     vector<vector<Source *> > &a_GlobalUniqueSource, EW *ew,
-                     int event, float_sw4 m_global_xmax,
+                     std::vector<std::vector<Source *> > &a_GlobalUniqueSource,
+                     EW *ew, int event, float_sw4 m_global_xmax,
                      float_sw4 m_global_ymax, float_sw4 m_global_zmax,
                      float_sw4 mGeoAz, float_sw4 xmin, float_sw4 ymin,
                      float_sw4 zmin, int mVerboses, int nreader);
 
-void readStationInfoHDF5(string inFileName, vector<string> *staname,
-                         vector<double> *x, vector<double> *y,
-                         vector<double> *z, vector<int> *is_nsew, int *n);
+void readStationInfoHDF5(string inFileName, std::vector<string> *staname,
+                         std::vector<double> *x, std::vector<double> *y,
+                         std::vector<double> *z, std::vector<int> *is_nsew,
+                         int *n);
 #endif  // _READHDF5_H

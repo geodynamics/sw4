@@ -69,6 +69,133 @@ AllDims::AllDims(int nproci, int nprocj, int nprock, int ibg, int ieg, int jbg,
   m_nghost = nghost;
   m_indrev = false;
 }
+//-----------------------------------------------------------------------
+AllDims::AllDims(int nproci, int nprocj, int nprock, int ibg, int ieg, int jbg,
+                 int jeg, int kbg, int keg, int nghost, int npad,
+                 MPI_Comm ewcomm) {
+  //-----------------------------------------------------------------------
+  // General 3D array distribution.
+  //
+  // Input: nproci, nprocj, nprock - Number of processors along each dimension
+  // (i,j,k).
+  //        ibg, ieg - First and last i-index over total domain, excluding ghost
+  //        points. jbg, jeg - First and last j-index over total domain,
+  //        excluding ghost points. kbg, keg - First and last k-index over total
+  //        domain, excluding ghost points. nghost   - Number of ghost points at
+  //        boundaries npad     - Number of pad points between processors.
+  //
+  //  Computes the index cube in each processor, local index stored in
+  //        m_ib,m_ie,m_jb,m_je,m_kb,m_ke,
+  //  these include padding points and ghost points.
+  //
+  //-----------------------------------------------------------------------
+  MPI_Comm_dup(ewcomm, &m_communicator);
+  m_nproci = nproci;
+  m_nprocj = nprocj;
+  m_nprock = nprock;
+  MPI_Comm_rank(m_communicator, &m_myid1d);
+  compute_myid3d();
+
+  m_ibg = ibg - nghost;
+  m_ieg = ieg + nghost;
+  m_jbg = jbg - nghost;
+  m_jeg = jeg + nghost;
+  m_kbg = kbg - nghost;
+  m_keg = keg - nghost;
+  m_ib.resize(m_nproci);
+  m_ie.resize(m_nproci);
+  m_jb.resize(m_nprocj);
+  m_je.resize(m_nprocj);
+  m_kb.resize(m_nprock);
+  m_ke.resize(m_nprock);
+
+  int Ntot = ieg - ibg + 1 + 2 * nghost;
+  for (int p1 = 0; p1 < m_nproci; p1++) {
+    decomp1d(Ntot, p1, m_nproci, m_ib[p1], m_ie[p1], nghost, npad);
+    // Shift if array not 1-based.
+    m_ib[p1] += ibg - 1;
+    m_ie[p1] += ibg - 1;
+  }
+  Ntot = jeg - jbg + 1 + 2 * nghost;
+  for (int p2 = 0; p2 < m_nprocj; p2++) {
+    decomp1d(Ntot, p2, m_nprocj, m_jb[p2], m_je[p2], nghost, npad);
+    m_jb[p2] += jbg - 1;
+    m_je[p2] += jbg - 1;
+  }
+  Ntot = keg - kbg + 1 + 2 * nghost;
+  for (int p3 = 0; p3 < m_nprock; p3++) {
+    decomp1d(Ntot, p3, m_nprock, m_kb[p3], m_ke[p3], nghost, npad);
+    m_kb[p3] += kbg - 1;
+    m_ke[p3] += kbg - 1;
+  }
+  m_npad = npad;
+  m_nghost = nghost;
+  m_indrev = false;
+}
+//-----------------------------------------------------------------------
+AllDims::AllDims(int nprocs, int ibg, int ieg, int jbg, int jeg, int kbg,
+                 int keg, int nghost, MPI_Comm ewcomm) {
+  // Use FFTW array distribution (i-direction split onto the processors without
+  // overlap).
+
+  MPI_Comm_dup(ewcomm, &m_communicator);
+
+  MPI_Comm_rank(m_communicator, &m_myid1d);
+  m_nproci = nprocs;
+  m_nprocj = 1;
+  m_nprock = 1;
+
+  m_ibg = ibg - nghost;
+  m_ieg = ieg + nghost;
+  m_jbg = jbg - nghost;
+  m_jeg = jeg + nghost;
+  m_kbg = kbg - nghost;
+  m_keg = keg + nghost;
+
+  ptrdiff_t ni = 0, ib = 0;
+
+#ifdef ENABLE_FFTW
+  // FFTW array distribution
+  int nig = ieg - ibg + 1 + 2 * nghost;
+  int njg = jeg - jbg + 1 + 2 * nghost;
+  int nkg = keg - kbg + 1 + 2 * nghost;
+
+  ptrdiff_t ni, ib;
+  ptrdiff_t fftw_alloc_local =
+      fftw_mpi_local_size_3d(nig, njg, nkg, m_communicator, &ni, &ib);
+  m_fftw_alloc_local = static_cast<size_t>(fftw_alloc_local);
+#else
+  int ni, ib;
+#endif
+
+  std::vector<int> niloc(m_nproci), ibloc(m_nproci);
+  niloc[m_myid1d] = ni;
+  ibloc[m_myid1d] = ib;
+
+  MPI_Allgather(&ni, 1, MPI_INT, &niloc[0], 1, MPI_INT, m_communicator);
+  MPI_Allgather(&ib, 1, MPI_INT, &ibloc[0], 1, MPI_INT, m_communicator);
+
+  m_ib.resize(m_nproci);
+  m_ie.resize(m_nproci);
+  for (int p1 = 0; p1 < m_nproci; p1++) {
+    m_ib[p1] = ibloc[p1] + ibg;
+    m_ie[p1] = niloc[p1] + m_ib[p1] - 1;
+  }
+  m_myid3di = m_myid1d;
+  m_myid3dj = 0;
+  m_myid3dk = 0;
+  m_jb.resize(1);
+  m_je.resize(1);
+  m_kb.resize(1);
+  m_ke.resize(1);
+  m_jb[0] = jbg;
+  m_je[0] = jeg;
+  m_kb[0] = kbg;
+  m_ke[0] = keg;
+  m_npad = 0;
+  m_nghost = nghost;
+  m_indrev = true;
+}
 
 //-----------------------------------------------------------------------
 AllDims::AllDims(int nprocs, int ibg, int ieg, int jbg, int jeg, int kbg,
@@ -88,13 +215,14 @@ AllDims::AllDims(int nprocs, int ibg, int ieg, int jbg, int jeg, int kbg,
   m_kbg = kbg - nghost;
   m_keg = keg + nghost;
 
-  ptrdiff_t ni = 0, ib = 0;
-
-#ifdef ENABLE_FFTW
   // FFTW array distribution
+
+  ptrdiff_t ni = 0, ib = 0;
+#ifdef ENABLE_FFTW
   int nig = ieg - ibg + 1 + 2 * nghost;
   int njg = jeg - jbg + 1 + 2 * nghost;
   int nkg = keg - kbg + 1 + 2 * nghost;
+>>>>>>> origin/raja
   ptrdiff_t fftw_alloc_local =
       fftw_mpi_local_size_3d(nig, njg, nkg, MPI_COMM_WORLD, &ni, &ib);
   m_fftw_alloc_local = static_cast<size_t>(fftw_alloc_local);

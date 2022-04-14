@@ -124,7 +124,7 @@ void addsg4wind_ci(float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
   RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
   RAJA::RangeSegment k_range(kwindb, kwinde + 1);
   RAJA::RangeSegment c_range(1, 4);
-  RAJA::kernel<ASG4WC_POL_ASYNC>(
+  RAJA::kernel<ADDSGD_POL_ASYNC>(
       RAJA::make_tuple(i_range, j_range, k_range, c_range),
       [=] RAJA_DEVICE(int i, int j, int k, int c) {
         up(c, i, j, k) -=

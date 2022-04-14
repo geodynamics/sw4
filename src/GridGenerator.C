@@ -1,6 +1,6 @@
-
 #include "EW.h"
 #include "GridGenerator.h"
+#include "caliper.h"
 
 //-----------------------------------------------------------------------
 int GridGenerator::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
@@ -9,6 +9,7 @@ int GridGenerator::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
                              float_sw4* __restrict__ a_z,
                              float_sw4* __restrict__ a_met,
                              float_sw4* __restrict__ a_jac) {
+  SW4_MARK_FUNCTION;
   const float_sw4 c1 = 2.0 / 3, c2 = -1.0 / 12;
   const float_sw4 fs = 5.0 / 6, ot = 1.0 / 12, ft = 4.0 / 3, os = 1.0 / 6,
                   d3 = 14.0 / 3;
@@ -31,7 +32,7 @@ int GridGenerator::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
 #pragma omp parallel for reduction(+ : ecode)
   for (int k = kb; k <= ke; k++)
     for (int j = jb; j <= je; j++)
-#pragma ivdep
+//#pragma ivdep
 #pragma omp simd
       for (int i = ib; i <= ie; i++) {
         // k-derivatives
@@ -130,8 +131,8 @@ int GridGenerator::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
 }
 
 //-----------------------------------------------------------------------
-bool GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
-                                           float_sw4& z, Sarray& topo) {
+int GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
+                                          float_sw4& z, Sarray& topo) {
   // Interpolate the topography
   //
   // if (q,r) is on this processor then
@@ -146,7 +147,7 @@ bool GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
   // (without ghost points),
   //  1 <= r <= Ny.
 
-  if (!a_ew->topographyExists()) return false;
+  if (!a_ew->topographyExists()) return -1;
 
   int gTop = a_ew->mNumberOfGrids - 1;
   float_sw4 h = a_ew->mGridSize[gTop];
@@ -163,7 +164,7 @@ bool GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
     if (topo.in_range(1, iNear, jNear, 1))
       tau = topo(iNear, jNear, 1);
     else
-      return false;
+      return -2;
   } else {
     // Not at a grid  point, interpolate the topography
     // Nearest lower grid point
@@ -179,15 +180,16 @@ bool GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
         for (int k = -3; k <= 4; k++)
           tau += a6cofi[k + 3] * a6cofj[l + 3] * topo(k + iNear, l + jNear, 1);
     } else {
-      return false;
+      return -3;
     }
   }
   z = -tau;
-  return true;
+  return 1;
 }
 
 //-----------------------------------------------------------------------
 void GridGenerator::gettopowgh(float_sw4 ai, float_sw4 wgh[8]) const {
+  SW4_MARK_FUNCTION;
   float_sw4 pol = ai * ai * ai * ai * ai * ai * ai *
                   (-251 + 135 * ai + 25 * ai * ai - 33 * ai * ai * ai +
                    6 * ai * ai * ai * ai) /
@@ -246,11 +248,12 @@ void GridGenerator::fill_topo(Sarray& topo, float_sw4 h) {
             << std::endl;
 }
 //-----------------------------------------------------------------------
-void GridGenerator::grid_mapping_diff( EW* a_ew, float_sw4 q, float_sw4 r, float_sw4 s, int g, 
-                                   int ic, int jc, int kc,
-                                   float_sw4& zq, float_sw4& zr, float_sw4& zs,
-                                   float_sw4& zqq, float_sw4& zqr, float_sw4& zqs,
-                                   float_sw4& zrr, float_sw4& zrs, float_sw4& zss )
-{
-   std::cout <<  "GridGenerator: grid_mapping_diff NYI " << std::endl;
+void GridGenerator::grid_mapping_diff(EW* a_ew, float_sw4 q, float_sw4 r,
+                                      float_sw4 s, int g, int ic, int jc,
+                                      int kc, float_sw4& zq, float_sw4& zr,
+                                      float_sw4& zs, float_sw4& zqq,
+                                      float_sw4& zqr, float_sw4& zqs,
+                                      float_sw4& zrr, float_sw4& zrs,
+                                      float_sw4& zss) {
+  std::cout << "GridGenerator: grid_mapping_diff NYI " << std::endl;
 }

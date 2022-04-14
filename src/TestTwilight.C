@@ -64,44 +64,59 @@ void TestTwilight::get_mula(Sarray& mu, Sarray& lambda, Sarray& x, Sarray& y,
   }
 }
 
-void TestTwilight::get_ubnd(Sarray& u, Sarray& x, Sarray& y, Sarray& z,
+void TestTwilight::get_ubnd(Sarray& u_in, Sarray& x_in, Sarray& y_in, Sarray& z_in,
                             float_sw4 t, int npts, int sides[6]) {
   SW4_MARK_FUNCTION;
+  
+  SView& u = u_in.getview();
+  SView& x = x_in.getview();
+  SView& y = y_in.getview();
+  SView& z = z_in.getview();
   for (int s = 0; s < 6; s++)
     if (sides[s] == 1) {
-      int kb = u.m_kb, ke = u.m_ke, jb = u.m_jb, je = u.m_je, ib = u.m_ib,
-          ie = u.m_ie;
+      int kb = u_in.m_kb, ke = u_in.m_ke, jb = u_in.m_jb, je = u_in.m_je, ib = u_in.m_ib,
+          ie = u_in.m_ie;
       if (s == 0) ie = ib + npts - 1;
       if (s == 1) ib = ie - npts + 1;
       if (s == 2) je = jb + npts - 1;
       if (s == 3) jb = je - npts + 1;
       if (s == 4) {
         ke = kb + npts - 1;
-        if (ke > u.m_ke) ke = u.m_ke;
+        if (ke > u_in.m_ke) ke = u_in.m_ke;
       }
       if (s == 5) {
         kb = ke - npts + 1;
-        if (kb < u.m_kb) kb = u.m_kb;
+        if (kb < u_in.m_kb) kb = u_in.m_kb;
       }
-      for (int k = kb; k <= ke; k++)
-        for (int j = jb; j <= je; j++)
-          for (int i = ib; i <= ie; i++) {
-            u(1, i, j, k) = sin(m_omega * (x(i, j, k) - m_c * t)) *
-                            sin(m_omega * y(i, j, k) + m_phase) *
-                            sin(m_omega * z(i, j, k) + m_phase);
-            u(2, i, j, k) = sin(m_omega * x(i, j, k) + m_phase) *
-                            sin(m_omega * (y(i, j, k) - m_c * t)) *
-                            sin(m_omega * z(i, j, k) + m_phase);
-            u(3, i, j, k) = sin(m_omega * x(i, j, k) + m_phase) *
-                            sin(m_omega * y(i, j, k) + m_phase) *
-                            sin(m_omega * (z(i, j, k) - m_c * t));
-          }
+      auto lm_omega = m_omega;
+      auto lm_phase = m_phase;
+      auto lm_c = m_c;
+      RAJA::RangeSegment k_range(kb, ke + 1);
+      RAJA::RangeSegment j_range(jb, je + 1);
+      RAJA::RangeSegment i_range(ib, ie + 1);
+      RAJA::kernel<TGU_POL_ASYNC>(RAJA::make_tuple(k_range, j_range, i_range),
+                                  [=] RAJA_DEVICE(int k, int j, int i) {
+				    //for (int k = kb; k <= ke; k++)
+				    //for (int j = jb; j <= je; j++)
+				    //for (int i = ib; i <= ie; i++) {
+            u(1, i, j, k) = sin(lm_omega * (x(i, j, k) - lm_c * t)) *
+                            sin(lm_omega * y(i, j, k) + lm_phase) *
+                            sin(lm_omega * z(i, j, k) + lm_phase);
+            u(2, i, j, k) = sin(lm_omega * x(i, j, k) + lm_phase) *
+                            sin(lm_omega * (y(i, j, k) - lm_c * t)) *
+                            sin(lm_omega * z(i, j, k) + lm_phase);
+            u(3, i, j, k) = sin(lm_omega * x(i, j, k) + lm_phase) *
+                            sin(lm_omega * y(i, j, k) + lm_phase) *
+                            sin(lm_omega * (z(i, j, k) - lm_c * t));
+				  });
     }
+  SYNC_STREAM;
 }
 
 void TestTwilight::get_ubnd(Sarray& u, float_sw4 h, float_sw4 zmin, float_sw4 t,
                             int npts, int sides[6]) {
   SW4_MARK_FUNCTION;
+  SYNC_STREAM;
   for (int s = 0; s < 6; s++)
     if (sides[s] == 1) {
       int kb = u.m_kb, ke = u.m_ke, jb = u.m_jb, je = u.m_je, ib = u.m_ib,
@@ -155,44 +170,111 @@ void TestTwilight::get_mula_att(Sarray& muve, Sarray& lambdave, Sarray& x,
   }
 }
 
-void TestTwilight::get_bnd_att(Sarray& AlphaVE, Sarray& x, Sarray& y, Sarray& z,
+//void TestTwilight::get_bnd_att_device(Sarray& AlphaVE_i, Sarray& x_i, Sarray& y_i, Sarray& z_i,
+//                                float_sw4 t, int npts, int sides[6]) {
+//   SW4_MARK_FUNCTION;
+//   //std::cout << "WARNING TestTwilight::get_bnd_att running on CPU\n"
+//   //          << std::flush;
+//   auto& AlphaVE = AlphaVE_i.getview();
+//   auto& x = x_i.getview();
+//   auto& y = y_i.getview();
+//   auto& z = z_i.getview();
+//   for (int s = 0; s < 6; s++)
+//     if (sides[s] == 1) {
+//       int kb = AlphaVE_i.m_kb, ke = AlphaVE_i.m_ke, jb = AlphaVE_i.m_jb,
+//           je = AlphaVE_i.m_je, ib = AlphaVE_i.m_ib, ie = AlphaVE_i.m_ie;
+//       if (s == 0) ie = ib + npts - 1;
+//       if (s == 1) ib = ie - npts + 1;
+//       if (s == 2) je = jb + npts - 1;
+//       if (s == 3) jb = je - npts + 1;
+//       if (s == 4) {
+//         ke = kb + npts - 1;
+//         if (ke > AlphaVE_i.m_ke) ke = AlphaVE_i.m_ke;
+//       }
+//       if (s == 5) {
+//         kb = ke - npts + 1;
+//         if (kb < AlphaVE_i.m_kb) kb = AlphaVE_i.m_kb;
+//       }
+
+//       auto l_omega = m_omega;
+//       auto l_phase = m_phase;
+      
+//       RAJA::RangeSegment k_range(kb, ke + 1);
+//       RAJA::RangeSegment j_range(jb, je + 1);
+//       RAJA::RangeSegment i_range(ib, ie + 1);
+//       RAJA::kernel<DEFAULT_LOOP3>(
+//       RAJA::make_tuple(k_range, j_range, i_range),
+//       [=] RAJA_DEVICE(int k, int j, int i) {
+//       // for (int k = kb; k <= ke; k++)
+//       //   for (int j = jb; j <= je; j++)
+//       //     for (int i = ib; i <= ie; i++) {
+//             AlphaVE(1, i, j, k) =
+//                 cos(l_omega * (x(i, j, k) - m_c * t) + l_phase) *
+//                 sin(l_omega * x(i, j, k) + l_phase) *
+//                 cos(l_omega * (z(i, j, k) - m_c * t) + l_phase);
+
+//             AlphaVE(2, i, j, k) =
+//                 sin(l_omega * (x(i, j, k) - m_c * t)) *
+//                 cos(l_omega * (y(i, j, k) - m_c * t) + l_phase) *
+//                 cos(l_omega * z(i, j, k) + l_phase);
+
+//             AlphaVE(3, i, j, k) =
+//                 cos(l_omega * x(i, j, k) + l_phase) *
+//                 cos(l_omega * y(i, j, k) + l_phase) *
+//                 sin(l_omega * (z(i, j, k) - m_c * t) + l_phase);
+//       });
+//     }
+// }
+void TestTwilight::get_bnd_att(Sarray& AlphaVE_in, Sarray& x_in, Sarray& y_in, Sarray& z_in,
                                float_sw4 t, int npts, int sides[6]) {
   SW4_MARK_FUNCTION;
-  std::cout << "WARNING TestTwilight::get_bnd_att running on CPU\n"
-            << std::flush;
+  SView& AlphaVE = AlphaVE_in.getview();
+  SView& x = x_in.getview();
+  SView& y = y_in.getview();
+  SView& z = z_in.getview();
+  //std::cout << "WARNING TestTwilight::get_bnd_att running on CPU\n"
+  //          << std::flush;
   for (int s = 0; s < 6; s++)
     if (sides[s] == 1) {
-      int kb = AlphaVE.m_kb, ke = AlphaVE.m_ke, jb = AlphaVE.m_jb,
-          je = AlphaVE.m_je, ib = AlphaVE.m_ib, ie = AlphaVE.m_ie;
+      int kb = AlphaVE_in.m_kb, ke = AlphaVE_in.m_ke, jb = AlphaVE_in.m_jb,
+          je = AlphaVE_in.m_je, ib = AlphaVE_in.m_ib, ie = AlphaVE_in.m_ie;
       if (s == 0) ie = ib + npts - 1;
       if (s == 1) ib = ie - npts + 1;
       if (s == 2) je = jb + npts - 1;
       if (s == 3) jb = je - npts + 1;
       if (s == 4) {
         ke = kb + npts - 1;
-        if (ke > AlphaVE.m_ke) ke = AlphaVE.m_ke;
+        if (ke > AlphaVE_in.m_ke) ke = AlphaVE_in.m_ke;
       }
       if (s == 5) {
         kb = ke - npts + 1;
-        if (kb < AlphaVE.m_kb) kb = AlphaVE.m_kb;
+        if (kb < AlphaVE_in.m_kb) kb = AlphaVE_in.m_kb;
       }
-      for (int k = kb; k <= ke; k++)
-        for (int j = jb; j <= je; j++)
-          for (int i = ib; i <= ie; i++) {
+      auto lm_omega = m_omega;
+      auto lm_phase = m_phase;
+      auto lm_c = m_c;
+      RAJA::RangeSegment k_range(kb, ke + 1);
+      RAJA::RangeSegment j_range(jb, je + 1);
+      RAJA::RangeSegment i_range(ib, ie + 1);
+      RAJA::kernel<TGU_POL_ASYNC>(RAJA::make_tuple(k_range, j_range, i_range),
+                                  [=] RAJA_DEVICE(int k, int j, int i) {
+      // for (int k = kb; k <= ke; k++)
+       //  for (int j = jb; j <= je; j++)
+       //    for (int i = ib; i <= ie; i++) {
             AlphaVE(1, i, j, k) =
-                cos(m_omega * (x(i, j, k) - m_c * t) + m_phase) *
-                sin(m_omega * x(i, j, k) + m_phase) *
-                cos(m_omega * (z(i, j, k) - m_c * t) + m_phase);
+                cos(lm_omega * (x(i, j, k) - lm_c * t) + lm_phase) *
+                sin(lm_omega * x(i, j, k) + lm_phase) *
+                cos(lm_omega * (z(i, j, k) - lm_c * t) + lm_phase);
 
             AlphaVE(2, i, j, k) =
-                sin(m_omega * (x(i, j, k) - m_c * t)) *
-                cos(m_omega * (y(i, j, k) - m_c * t) + m_phase) *
-                cos(m_omega * z(i, j, k) + m_phase);
+                sin(lm_omega * (x(i, j, k) - lm_c * t)) *
+                cos(lm_omega * (y(i, j, k) - lm_c * t) + lm_phase) *
+                cos(lm_omega * z(i, j, k) + lm_phase);
 
             AlphaVE(3, i, j, k) =
-                cos(m_omega * x(i, j, k) + m_phase) *
-                cos(m_omega * y(i, j, k) + m_phase) *
-                sin(m_omega * (z(i, j, k) - m_c * t) + m_phase);
-          }
+                cos(lm_omega * x(i, j, k) + lm_phase) *
+                cos(lm_omega * y(i, j, k) + lm_phase) *
+                sin(lm_omega * (z(i, j, k) - lm_c * t) + lm_phase);
+				  });
     }
 }

@@ -277,6 +277,42 @@ void EW::setup2D_MPICommunications() {
     MPI_Type_commit(&m_send_type_2dx3p[g]);
     MPI_Type_commit(&m_send_type_2dy3p[g]);
   }
+
+#ifdef SW4_STAGED_MPI_BUFFERS
+
+#ifdef SW4_USE_UMPIRE
+
+  global_variables.device_buffer =
+      SW4_NEW(Space::Managed_temps, float_sw4[global_variables.buffer_size]);
+#else
+
+#ifdef ENABLE_CUDA
+  void* ptr;
+  if (cudaMalloc(&ptr, global_variables.buffer_size * 8) != cudaSuccess) {
+    std::cerr << "cudaMalloc failed on line " << __LINE__
+              << "of parallelStuff.C\n";
+    abort();
+  } else {
+    std::cout << "Device buffer of size " << global_variables.buffer_size * 8
+              << " bytes allocated in 2D on " << __LINE__ << "\n";
+    global_variables.device_buffer = (float_sw4*)ptr;
+  }
+#endif
+
+#ifdef ENABLE_HIP
+  void* ptr;
+  if (hipMalloc(&ptr, global_variables.buffer_size * 8) != hipSuccess) {
+    std::cerr << "hipMalloc failed in line __LINE__ of parallelStuff.C\n";
+    abort();
+  } else {
+    std::cout << "Device buffer of size " << global_variables.buffer_size * 8
+              << " bytes allocated in 2D in __LINE__\n";
+    global_variables.device_buffer = (float_sw4*)ptr;
+  }
+#endif
+
+#endif
+#endif
 }
 
 // -----------------------------
@@ -443,21 +479,60 @@ void EW::setupMPICommunications() {
   //	 MPI_Send( &dum, 1, MPI_INT, myid+1, tag, m_cartesian_communicator );
   //      fileout.close();
   //   }
+
+#ifdef SW4_STAGED_MPI_BUFFERS
+#ifdef SW4_USE_UMPIRE
+  if (global_variables.device_buffer != 0) {
+    ::operator delete[](global_variables.device_buffer, Space::Managed_temps);
+  }
+  global_variables.device_buffer =
+      SW4_NEW(Space::Managed_temps, float_sw4[global_variables.buffer_size]);
+#else
+
+#ifdef ENABLE_CUDA
+  void* ptr;
+  if (cudaMalloc(&ptr, global_variables.buffer_size * 8) != cudaSuccess) {
+    std::cerr << "cudaMalloc failed in line __LINE__ of parallelStuff.C\n";
+    abort();
+  } else {
+    std::cout << "Device buffer of size " << global_variables.buffer_size * 8
+              << " bytes allocated\n";
+    global_variables.device_buffer = (float_sw4*)ptr;
+  }
+#endif
+
+#ifdef ENABLE_HIP
+  void* ptr;
+  if (hipMalloc(&ptr, global_variables.buffer_size * 8) != hipSuccess) {
+    std::cerr << "hipMalloc failed in line __LINE__ of parallelStuff.C\n";
+    abort();
+  } else {
+    std::cout << "Device buffer of size " << global_variables.buffer_size * 8
+              << " bytes allocated\n";
+    global_variables.device_buffer = (float_sw4*)ptr;
+  }
+#endif
+
+#endif
+#endif
 }
 
-#if defined(ENABLE_GPU)
 void EW::communicate_array(Sarray& u, int grid) {
   // The async version using either device or managed memory works
   // spectrum-mpi/2018.02.05 on Ray. And it is slower on the Hayward case:
   // baseline communicate_array ( without -gpu) : 25 minutes 20 secs
   // communicate_array_async with device buffers and -gpu 29 minutes 18 secs
   // communicate_array_async with UM buffers and -gpu 29 minutes 20 secs
+#if defined(ENABLE_GPU)
   communicate_array_async(u, grid);
+#else
+  communicate_array_hostu, grid);
+#endif
   return;
 }
-#else
 //-----------------------------------------------------------------------
-void EW::communicate_array(Sarray& u, int grid) {
+void EW::communicate_array_host(Sarray& u, int grid) {
+  // std::cout<<"void EW::communicate_array(Sarray& u, int grid"<<std::flush;
   SW4_MARK_FUNCTION;
   // The async version using either device or managed memory works
   // spectrum-mpi/2018.02.05 on Ray. And it is slower on the Hayward case:
@@ -473,8 +548,8 @@ void EW::communicate_array(Sarray& u, int grid) {
            "Communicate array, only implemented for one-, three-, four-, and "
            "21-component arrays"
                << " nc = " << u.m_nc);
-  int ie = u.m_ie, ib = u.m_ib, je = u.m_je, jb = u.m_jb, ke = u.m_ke,
-      kb = u.m_kb;
+  int ie = u.m_ie, ib = u.m_ib, je = u.m_je, jb = u.m_jb, kb = u.m_kb;
+  //  int ke = u.m_ke;
   MPI_Status status;
   if (u.m_nc == 1) {
     int xtag1 = 345;
@@ -570,13 +645,17 @@ void EW::communicate_array(Sarray& u, int grid) {
                  m_cartesian_communicator, &status);
   }
 }
-#endif
 //-----------------------------------------------------------------------
 void EW::communicate_arrays(vector<Sarray>& u) {
   SW4_MARK_FUNCTION;
   for (int g = 0; g < u.size(); g++) communicate_array(u[g], g);
 }
 
+//-----------------------------------------------------------------------
+void EW::communicate_host_arrays(vector<Sarray>& u) {
+  SW4_MARK_FUNCTION;
+  for (int g = 0; g < u.size(); g++) communicate_array_host(u[g], g);
+}
 #if defined(ENABLE_GPU)
 void EW::communicate_array_2d(Sarray& u, int g, int k) {
   communicate_array_2d_async(u, g, k);
@@ -648,6 +727,7 @@ void EW::communicate_array_2d(Sarray& u, int g, int k) {
   }
 }
 #endif  // if defined(ENABLE_GPU)
+
 #if defined(ENABLE_GPU)
 void EW::communicate_array_2d_ext(Sarray& u) {
   communicate_array_2d_ext_async(u);
@@ -869,14 +949,16 @@ void EW::communicate_array_2dfinest(Sarray& u) {
                m_send_type_2dfinest[1], m_neighbor[3], ytag2,
                m_cartesian_communicator, &status);
 }
+//-----------------------------------------------------------------------
 void EW::make_type(vector<std::tuple<int, int, int>>& send_type,
                    vector<std::tuple<float_sw4*, float_sw4*>>& bufs_type,
                    int i1, int j1, int k1, int i2, int j2, int k2, int g) {
   send_type[2 * g] = std::make_tuple(i1, j1, k1);
   send_type[2 * g + 1] = std::make_tuple(i2, j2, k2);
-  // std::cout<<"MAKE_TYPE"<<i1<<" "<<j1<<" "<<i2<<" "<<k2<<"\n";
+
   float_sw4* tbuf =
       SW4_NEW(mpi_buffer_space, float_sw4[i1 * j1 * 4 + i2 * j2 * 4]);
+  //std::cout<<"MPI BUFFER ALLOCATE TYPE IS "<<as_int(mpi_buffer_space)<<" "<<tbuf<<"\n";
   bufs_type[4 * g + 0] = std::make_tuple(tbuf, tbuf + i1 * j1);
   bufs_type[4 * g + 1] =
       std::make_tuple(tbuf + 2 * i1 * j1, tbuf + 3 * i1 * j1);
@@ -884,7 +966,11 @@ void EW::make_type(vector<std::tuple<int, int, int>>& send_type,
   bufs_type[4 * g + 2] = std::make_tuple(tbuf, tbuf + i2 * j2);
   bufs_type[4 * g + 3] =
       std::make_tuple(tbuf + 2 * i2 * j2, tbuf + 3 * i2 * j2);
+
+  global_variables.buffer_size = std::max<size_t>(
+      global_variables.buffer_size, std::max<size_t>(i1 * j1, i2 * j2));
 }
+//-----------------------------------------------------------------------
 void EW::make_type_2d(vector<std::tuple<int, int, int>>& send_type,
                       vector<std::tuple<float_sw4*, float_sw4*>>& bufs_type,
                       int i1, int j1, int k1, int g) {
@@ -892,7 +978,11 @@ void EW::make_type_2d(vector<std::tuple<int, int, int>>& send_type,
 
   float_sw4* tbuf = SW4_NEW(Space::Pinned, float_sw4[i1 * j1 * 2]);
   bufs_type[g] = std::make_tuple(tbuf, tbuf + i1 * j1);
+
+  global_variables.buffer_size =
+      std::max<size_t>(global_variables.buffer_size, i1 * j1);
 }
+//-----------------------------------------------------------------------
 void EW::communicate_array_async(Sarray& u, int grid) {
   SW4_MARK_FUNCTION;
   // u.forceprefetch();
@@ -1015,7 +1105,7 @@ void EW::communicate_array_async(Sarray& u, int grid) {
                     &status);
     }
   } else if (u.m_nc == 21) {
-    std::cout << "This is happening\n";
+    std::cerr << "WARNING:: untested u.m_nc=21 branch being used \n";
     int xtag1 = 345;
     int xtag2 = 346;
     int ytag1 = 347;
@@ -1053,6 +1143,7 @@ void EW::communicate_array_async(Sarray& u, int grid) {
   }
   // u.prefetch();
 }
+//-----------------------------------------------------------------------
 void EW::AMPI_Sendrecv(float_sw4* a, int scount,
                        std::tuple<int, int, int>& sendt, int sendto, int stag,
                        float_sw4* b, int rcount,
@@ -1065,11 +1156,11 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount,
 
   int recv_count = std::get<0>(recvt) * std::get<1>(recvt);
   int send_count = std::get<0>(sendt) * std::get<1>(sendt);
-  std::chrono::high_resolution_clock::time_point t1, t2;
+
   SW4_MARK_END("THE REST");
 #if defined(ENABLE_MPI_TIMING_BARRIER)
 #if defined(SW4_TRACK_MPI)
-
+  std::chrono::high_resolution_clock::time_point t1, t2;
   t1 = SW4_CHRONO_NOW;
 #endif
   MPI_Barrier(MPI_COMM_WORLD);
@@ -1084,7 +1175,6 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount,
     getbuffer_device(a, std::get<0>(buf), sendt, true);
     // getbuffer_host(a, std::get<0>(buf), sendt);
   }
-  // std::cout<<"send_count "<<send_count<<" recv_count "<<recv_count<<"\n";
 
 #if defined(SW4_TRACK_MPI)
 #if defined(ENABLE_MPI_TIMING_BARRIER)
@@ -1160,6 +1250,7 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount,
   sm.insert(size, SW4_CHRONO_DURATION_US(t1, t2));
 #endif
 }
+//-----------------------------------------------------------------------
 void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
                           std::tuple<int, int, int>& mtype, bool async) {
   SW4_MARK_FUNCTION;
@@ -1175,8 +1266,47 @@ void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
   // for larger messages, host copy is slower.
   // if (bl*count*8>2048){
 
-#ifndef UNRAJA
+#ifdef SW4_STAGED_MPI_BUFFERS
 
+  // Code for the staged option. Local device buffer + copy to pinned host
+  // buffer A single large local buffer is used. Allocated in the 2D and 3D
+  // setup routines
+  float_sw4* lbuf = global_variables.device_buffer;
+#if defined(RAJA_ONLY)
+  RAJA::RangeSegment k_range(0, bl);
+  RAJA::RangeSegment i_range(0, count);
+  RAJA::kernel<BUFFER_POL>(RAJA::make_tuple(k_range, i_range),
+                           [=] RAJA_DEVICE(int k, int i) {
+                             lbuf[k + i * bl] = data[i * stride + k];
+                           });
+#else
+  Range<16> k_range(0, bl);
+  Range<16> i_range(0, count);
+  forall2async(i_range, k_range, [=] RAJA_DEVICE(int i, int k) {
+    lbuf[k + i * bl] = data[i * stride + k];
+  });
+#endif
+
+#if defined(ENABLE_CUDA)
+  if (async)
+    SW4_CheckDeviceError(
+        cudaMemcpyAsync(buf, lbuf, count * bl * 8, cudaMemcpyDeviceToHost, 0));
+  else
+    SW4_CheckDeviceError(
+        cudaMemcpy(buf, lbuf, count * bl * 8, cudaMemcpyDeviceToHost));
+#elif defined(ENABLE_HIP)
+  if (async)
+    SW4_CheckDeviceError(
+        hipMemcpyAsync(buf, lbuf, count * bl * 8, hipMemcpyDeviceToHost, 0));
+  else
+    SW4_CheckDeviceError(
+        hipMemcpy(buf, lbuf, count * bl * 8, hipMemcpyDeviceToHost));
+#endif
+
+#else  // #ifdef SW4_STAGED_MPI_BUFFERS
+
+  // Code for PINNED,DEVICE AND MANAGED BUFFERS
+#if defined(RAJA_ONLY)
   RAJA::RangeSegment k_range(0, bl);
   RAJA::RangeSegment i_range(0, count);
   RAJA::kernel<BUFFER_POL>(RAJA::make_tuple(k_range, i_range),
@@ -1191,11 +1321,15 @@ void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
   });
 #endif
 
-  // SW4_PEEK;
-  // SYNC_STREAM;
   if (!async) {
     SYNC_STREAM;
   }
+
+#endif
+
+  // SW4_PEEK;
+  // SYNC_STREAM;
+
   // } else {
   //   std::cout<<bl*count*8<<"\ bytes n";
   //   for(int i=0;i<count;i++) for(int k=0;k<bl;k++)
@@ -1203,6 +1337,7 @@ void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
   // }
   // std::cout<<"Done\n";
 }
+//-----------------------------------------------------------------------
 void EW::getbuffer_host(float_sw4* data, float_sw4* buf,
                         std::tuple<int, int, int>& mtype) {
   SW4_MARK_FUNCTION;
@@ -1211,11 +1346,12 @@ void EW::getbuffer_host(float_sw4* data, float_sw4* buf,
   int stride = std::get<2>(mtype);
 
   // std::cout<<bl*count*8<<"\ bytes n";
+#pragma omp parallel for collapse(2)
   for (int i = 0; i < count; i++)
     for (int k = 0; k < bl; k++) buf[k + i * bl] = data[i * stride + k];
   // std::cout<<"Done\n";
 }
-
+//-----------------------------------------------------------------------
 void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
                           std::tuple<int, int, int>& mtype, bool async) {
   SW4_MARK_FUNCTION;
@@ -1225,6 +1361,45 @@ void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
   // std::cout<<"putbuffer_device...";
   // PREFETCHFORCED(buf);
 
+  // The STAGED option
+#ifdef SW4_STAGED_MPI_BUFFERS
+  float_sw4* lbuf = global_variables.device_buffer;
+
+#if defined(ENABLE_CUDA)
+  SW4_CheckDeviceError(
+      cudaMemcpyAsync(lbuf, buf, count * bl * 8, cudaMemcpyHostToDevice, 0));
+#elif defined(ENABLE_HIP)
+  SW4_CheckDeviceError(
+      hipMemcpyAsync(lbuf, buf, count * bl * 8, hipMemcpyHostToDevice, 0));
+#endif
+
+#if !defined(RAJA_ONLY)
+  Range<16> k_range(0, bl);
+  Range<16> i_range(0, count);
+  forall2async(i_range, k_range, [=] RAJA_DEVICE(int i, int k) {
+    data[i * stride + k] = lbuf[k + i * bl];
+  });
+#else
+  RAJA::RangeSegment k_range(0, bl);
+  RAJA::RangeSegment i_range(0, count);
+  RAJA::kernel<BUFFER_POL>(RAJA::make_tuple(k_range, i_range),
+                           [=] RAJA_DEVICE(int k, int i) {
+                             // RAJA::forall<DEFAULT_LOOP1> (0,count,[=]
+                             // RAJA_DEVICE(int i){
+                             data[i * stride + k] = lbuf[k + i * bl];
+                           });
+#endif
+
+  // The PINNED, DEVICE and MANAGED cases
+#else
+
+#if !defined(RAJA_ONLY)
+  Range<16> k_range(0, bl);
+  Range<16> i_range(0, count);
+  forall2async(i_range, k_range, [=] RAJA_DEVICE(int i, int k) {
+    data[i * stride + k] = buf[k + i * bl];
+  });
+#else
   RAJA::RangeSegment k_range(0, bl);
   RAJA::RangeSegment i_range(0, count);
   RAJA::kernel<BUFFER_POL>(RAJA::make_tuple(k_range, i_range),
@@ -1233,6 +1408,9 @@ void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
                              // RAJA_DEVICE(int i){
                              data[i * stride + k] = buf[k + i * bl];
                            });
+#endif
+
+#endif
   // SW4_PEEK;
   // SYNC_STREAM;
   if (!async) {
@@ -1240,6 +1418,7 @@ void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
   }
   // std::cout<<"Done\n";
 }
+//-----------------------------------------------------------------------
 void EW::putbuffer_host(float_sw4* data, float_sw4* buf,
                         std::tuple<int, int, int>& mtype) {
   SW4_MARK_FUNCTION;
@@ -1247,11 +1426,11 @@ void EW::putbuffer_host(float_sw4* data, float_sw4* buf,
   int bl = std::get<1>(mtype);
   int stride = std::get<2>(mtype);
   // std::cout<<"putbuffer_device...";
-
+#pragma omp parallel for collapse(2)
   for (int i = 0; i < count; i++)
     for (int k = 0; k < bl; k++) data[i * stride + k] = buf[k + i * bl];
 }
-
+//-----------------------------------------------------------------------
 void EW::communicate_array_2d_async(Sarray& u, int g, int k) {
   SW4_MARK_FUNCTION;
   REQUIRE2(u.m_nc == 3,
@@ -1322,7 +1501,7 @@ void EW::communicate_array_2d_async(Sarray& u, int g, int k) {
     SW4_MARK_END("comm_array_2d_async::MPI-2");
   }
 }
-
+//-----------------------------------------------------------------------
 void EW::communicate_array_2d_async_memo(Sarray& u, int g, int k) {
   SW4_MARK_FUNCTION;
   REQUIRE2(u.m_nc == 3,
@@ -1395,6 +1574,7 @@ void EW::communicate_array_2d_async_memo(Sarray& u, int g, int k) {
     SW4_MARK_END("comm_array_2d_async::MPI-2");
   }
 }
+//-----------------------------------------------------------------------
 void EW::AMPI_Sendrecv2(float_sw4* a, int scount,
                         std::tuple<int, int, int>& sendt, int sendto, int stag,
                         float_sw4* b, int rcount,
@@ -1407,11 +1587,11 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount,
 
   int recv_count = std::get<0>(recvt) * std::get<1>(recvt);
   int send_count = std::get<0>(sendt) * std::get<1>(sendt);
-  std::chrono::high_resolution_clock::time_point t1, t2;
+
   SW4_MARK_END("THE REST2");
 #if defined(ENABLE_MPI_TIMING_BARRIER)
 #if defined(SW4_TRACK_MPI)
-
+  std::chrono::high_resolution_clock::time_point t1, t2;
   t1 = SW4_CHRONO_NOW;
 #endif
   MPI_Barrier(MPI_COMM_WORLD);
@@ -1521,6 +1701,7 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount,
 }
 //-----------------------------------------------------------------------
 void EW::communicate_array_2d_isurf(Sarray& u, int iSurf) {
+  SW4_MARK_FUNCTION;
   REQUIRE2(
       u.m_nc == 1,
       "Communicate array 2d isurf, only implemented for one-component arrays");
@@ -1543,25 +1724,31 @@ void EW::communicate_array_2d_isurf(Sarray& u, int iSurf) {
   //	   <<&u(1, ib, jb, k)<<"\n"<<std::flush;
   // std::cout<<"NEIGHS"<<m_neighbor[0]<<" "<<m_neighbor[1]<<"\n"<<std::flush;
 
-  MPI_Sendrecv(&u(1, ie - (2 * extpadding - 1), jb, k), 1,
+  // std::cout<<"COMM2 SURF START\n"<<std::flush;
+  Sarray uC(u, Space::Host);
+  uC = u;
+
+  MPI_Sendrecv(&uC(1, ie - (2 * extpadding - 1), jb, k), 1,
                m_send_type_isurfx[iSurf], m_neighbor[1], xtag1,
-               &u(1, ib, jb, k), 1, m_send_type_isurfx[iSurf], m_neighbor[0],
+               &uC(1, ib, jb, k), 1, m_send_type_isurfx[iSurf], m_neighbor[0],
                xtag1, m_cartesian_communicator, &status);
 
-  MPI_Sendrecv(&u(1, ib + extpadding, jb, k), 1, m_send_type_isurfx[iSurf],
-               m_neighbor[0], xtag2, &u(1, ie - (extpadding - 1), jb, k), 1,
+  MPI_Sendrecv(&uC(1, ib + extpadding, jb, k), 1, m_send_type_isurfx[iSurf],
+               m_neighbor[0], xtag2, &uC(1, ie - (extpadding - 1), jb, k), 1,
                m_send_type_isurfx[iSurf], m_neighbor[1], xtag2,
                m_cartesian_communicator, &status);
 
   // Y-direction communication
 
-  MPI_Sendrecv(&u(1, ib, je - (2 * extpadding - 1), k), 1,
+  MPI_Sendrecv(&uC(1, ib, je - (2 * extpadding - 1), k), 1,
                m_send_type_isurfy[iSurf], m_neighbor[3], ytag1,
-               &u(1, ib, jb, k), 1, m_send_type_isurfy[iSurf], m_neighbor[2],
+               &uC(1, ib, jb, k), 1, m_send_type_isurfy[iSurf], m_neighbor[2],
                ytag1, m_cartesian_communicator, &status);
 
-  MPI_Sendrecv(&u(1, ib, jb + extpadding, k), 1, m_send_type_isurfy[iSurf],
-               m_neighbor[2], ytag2, &u(1, ib, je - (extpadding - 1), k), 1,
+  MPI_Sendrecv(&uC(1, ib, jb + extpadding, k), 1, m_send_type_isurfy[iSurf],
+               m_neighbor[2], ytag2, &uC(1, ib, je - (extpadding - 1), k), 1,
                m_send_type_isurfy[iSurf], m_neighbor[3], ytag2,
                m_cartesian_communicator, &status);
+  u = uC;
+  // std::cout<<"COMM2 SURF END\n"<<std::flush;
 }

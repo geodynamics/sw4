@@ -4,8 +4,8 @@
 #include <vector>
 
 #include "TestEcons.h"
-#include "TestTwilight.h"
 #include "TestPointSource.h"
+#include "TestTwilight.h"
 #ifdef USE_MAGMA
 #include "magma_dbatched.h"
 #include "magma_v2.h"
@@ -58,7 +58,7 @@ class CurvilinearInterface2 {
   float_sw4* x;
 #endif
 
-#if defined(ENABLE_CUDA)
+#if defined(ENABLE_GPU)
   float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope, *m_ghcof;
   float_sw4 *m_acof_no_gp, *m_ghcof_no_gp, *m_sbop_no_gp;
 #else
@@ -112,6 +112,7 @@ class CurvilinearInterface2 {
               Sarray& mu, Sarray& lambda, float_sw4* a_str_x,
               float_sw4* a_str_y, float_sw4 ghcof);
   void bnd_zero(Sarray& u, int npts);
+  void bnd_zero_host(Sarray& u, int npts);
   void injection(Sarray& u_f, Sarray& u_c);
   void interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
                      std::vector<Sarray>& Alpha_c,

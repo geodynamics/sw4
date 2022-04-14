@@ -37,6 +37,7 @@
 
 #include "EW.h"
 #include "caliper.h"
+#include "foralls.h"
 #include "policies.h"
 //-----------------------------------------------------------------------
 void EW::addsgd4_ci(
@@ -86,7 +87,24 @@ void EW::addsgd4_ci(
     ASSERT_MANAGED(a_dcx);
     ASSERT_MANAGED(a_cox);
     ASSERT_MANAGED(a_strx);
-
+#if !defined(RAJA_ONLY)
+    // LOOP -1
+    //
+    // 32,4,2 is 4% slower. 32 4 4 does not fit
+#ifdef ENABLE_CUDA
+    Range<16> I(ifirst + 2, ilast - 1);
+    Range<4> J(jfirst + 2, jlast - 1);
+    Range<6> K(kfirst + 2, klast - 1);
+#endif
+#ifdef ENABLE_HIP
+    Range<64> I(ifirst + 2, ilast - 1);
+    Range<2> J(jfirst + 2, jlast - 1);
+    Range<2> K(kfirst + 2, klast - 1);
+#endif
+    forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+      float_sw4 birho = beta / rho(i, j, k);
+      for (int c = 0; c < 3; c++)
+#else
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
     RAJA::RangeSegment k_range(kfirst + 2, klast - 1);
@@ -96,85 +114,85 @@ void EW::addsgd4_ci(
         RAJA::make_tuple(c_range, k_range, j_range, i_range),
         [=] RAJA_DEVICE(int c, int k, int j, int i) {
           float_sw4 birho = beta / rho(i, j, k);
-          {
-            // Using the kernel below with an explict c loop and #pragma unroll
-            // The code takes 3X more time. WIthout the pragma unroll it takes
-            // the same amount of time as the kernel above. So reverting to
-            // original kernel.
+#endif
+      {
+        // Using the kernel below with an explict c loop and #pragma unroll
+        // The code takes 3X more time. WIthout the pragma unroll it takes
+        // the same amount of time as the kernel above. So reverting to
+        // original kernel.
 
-            // RAJA::kernel<ADDSGD_POL3_ASYNC>(
-            // 			    RAJA::make_tuple(k_range,j_range,i_range),
-            // 			    [=]RAJA_DEVICE (int k, int j,int i) {
-            // 			      float_sw4 birho=beta/rho(i,j,k);
-            // 			      //#pragma unroll
-            // 			      for(int c=0;c<3;c++)
-            // 				{
-            up(c, i, j, k) -=
-                birho *
-                (
-                    // x-differences
-                    strx(i) * coy(j) * coz(k) *
-                        (rho(i + 1, j, k) * dcx(i + 1) *
-                             (u(c, i + 2, j, k) - 2 * u(c, i + 1, j, k) +
-                              u(c, i, j, k)) -
-                         2 * rho(i, j, k) * dcx(i) *
-                             (u(c, i + 1, j, k) - 2 * u(c, i, j, k) +
-                              u(c, i - 1, j, k)) +
-                         rho(i - 1, j, k) * dcx(i - 1) *
-                             (u(c, i, j, k) - 2 * u(c, i - 1, j, k) +
-                              u(c, i - 2, j, k)) -
-                         rho(i + 1, j, k) * dcx(i + 1) *
-                             (um(c, i + 2, j, k) - 2 * um(c, i + 1, j, k) +
-                              um(c, i, j, k)) +
-                         2 * rho(i, j, k) * dcx(i) *
-                             (um(c, i + 1, j, k) - 2 * um(c, i, j, k) +
-                              um(c, i - 1, j, k)) -
-                         rho(i - 1, j, k) * dcx(i - 1) *
-                             (um(c, i, j, k) - 2 * um(c, i - 1, j, k) +
-                              um(c, i - 2, j, k))) +
-                    // y-differences
-                    stry(j) * cox(i) * coz(k) *
-                        (+rho(i, j + 1, k) * dcy(j + 1) *
-                             (u(c, i, j + 2, k) - 2 * u(c, i, j + 1, k) +
-                              u(c, i, j, k)) -
-                         2 * rho(i, j, k) * dcy(j) *
-                             (u(c, i, j + 1, k) - 2 * u(c, i, j, k) +
-                              u(c, i, j - 1, k)) +
-                         rho(i, j - 1, k) * dcy(j - 1) *
-                             (u(c, i, j, k) - 2 * u(c, i, j - 1, k) +
-                              u(c, i, j - 2, k)) -
-                         rho(i, j + 1, k) * dcy(j + 1) *
-                             (um(c, i, j + 2, k) - 2 * um(c, i, j + 1, k) +
-                              um(c, i, j, k)) +
-                         2 * rho(i, j, k) * dcy(j) *
-                             (um(c, i, j + 1, k) - 2 * um(c, i, j, k) +
-                              um(c, i, j - 1, k)) -
-                         rho(i, j - 1, k) * dcy(j - 1) *
-                             (um(c, i, j, k) - 2 * um(c, i, j - 1, k) +
-                              um(c, i, j - 2, k))) +
-                    strz(k) * cox(i) * coy(j) *
-                        (
-                            // z-differences
-                            +rho(i, j, k + 1) * dcz(k + 1) *
-                                (u(c, i, j, k + 2) - 2 * u(c, i, j, k + 1) +
-                                 u(c, i, j, k)) -
-                            2 * rho(i, j, k) * dcz(k) *
-                                (u(c, i, j, k + 1) - 2 * u(c, i, j, k) +
-                                 u(c, i, j, k - 1)) +
-                            rho(i, j, k - 1) * dcz(k - 1) *
-                                (u(c, i, j, k) - 2 * u(c, i, j, k - 1) +
-                                 u(c, i, j, k - 2)) -
-                            rho(i, j, k + 1) * dcz(k + 1) *
-                                (um(c, i, j, k + 2) - 2 * um(c, i, j, k + 1) +
-                                 um(c, i, j, k)) +
-                            2 * rho(i, j, k) * dcz(k) *
-                                (um(c, i, j, k + 1) - 2 * um(c, i, j, k) +
-                                 um(c, i, j, k - 1)) -
-                            rho(i, j, k - 1) * dcz(k - 1) *
-                                (um(c, i, j, k) - 2 * um(c, i, j, k - 1) +
-                                 um(c, i, j, k - 2))));
-          }
-        });  // SYNC_STREAM;
+        // RAJA::kernel<ADDSGD_POL3_ASYNC>(
+        // 			    RAJA::make_tuple(k_range,j_range,i_range),
+        // 			    [=]RAJA_DEVICE (int k, int j,int i) {
+        // 			      float_sw4 birho=beta/rho(i,j,k);
+        // 			      //#pragma unroll
+        // 			      for(int c=0;c<3;c++)
+        // 				{
+        up(c, i, j, k) -=
+            birho * (
+                        // x-differences
+                        strx(i) * coy(j) * coz(k) *
+                            (rho(i + 1, j, k) * dcx(i + 1) *
+                                 (u(c, i + 2, j, k) - 2 * u(c, i + 1, j, k) +
+                                  u(c, i, j, k)) -
+                             2 * rho(i, j, k) * dcx(i) *
+                                 (u(c, i + 1, j, k) - 2 * u(c, i, j, k) +
+                                  u(c, i - 1, j, k)) +
+                             rho(i - 1, j, k) * dcx(i - 1) *
+                                 (u(c, i, j, k) - 2 * u(c, i - 1, j, k) +
+                                  u(c, i - 2, j, k)) -
+                             rho(i + 1, j, k) * dcx(i + 1) *
+                                 (um(c, i + 2, j, k) - 2 * um(c, i + 1, j, k) +
+                                  um(c, i, j, k)) +
+                             2 * rho(i, j, k) * dcx(i) *
+                                 (um(c, i + 1, j, k) - 2 * um(c, i, j, k) +
+                                  um(c, i - 1, j, k)) -
+                             rho(i - 1, j, k) * dcx(i - 1) *
+                                 (um(c, i, j, k) - 2 * um(c, i - 1, j, k) +
+                                  um(c, i - 2, j, k))) +
+                        // y-differences
+                        stry(j) * cox(i) * coz(k) *
+                            (+rho(i, j + 1, k) * dcy(j + 1) *
+                                 (u(c, i, j + 2, k) - 2 * u(c, i, j + 1, k) +
+                                  u(c, i, j, k)) -
+                             2 * rho(i, j, k) * dcy(j) *
+                                 (u(c, i, j + 1, k) - 2 * u(c, i, j, k) +
+                                  u(c, i, j - 1, k)) +
+                             rho(i, j - 1, k) * dcy(j - 1) *
+                                 (u(c, i, j, k) - 2 * u(c, i, j - 1, k) +
+                                  u(c, i, j - 2, k)) -
+                             rho(i, j + 1, k) * dcy(j + 1) *
+                                 (um(c, i, j + 2, k) - 2 * um(c, i, j + 1, k) +
+                                  um(c, i, j, k)) +
+                             2 * rho(i, j, k) * dcy(j) *
+                                 (um(c, i, j + 1, k) - 2 * um(c, i, j, k) +
+                                  um(c, i, j - 1, k)) -
+                             rho(i, j - 1, k) * dcy(j - 1) *
+                                 (um(c, i, j, k) - 2 * um(c, i, j - 1, k) +
+                                  um(c, i, j - 2, k))) +
+                        strz(k) * cox(i) * coy(j) *
+                            (
+                                // z-differences
+                                +rho(i, j, k + 1) * dcz(k + 1) *
+                                    (u(c, i, j, k + 2) - 2 * u(c, i, j, k + 1) +
+                                     u(c, i, j, k)) -
+                                2 * rho(i, j, k) * dcz(k) *
+                                    (u(c, i, j, k + 1) - 2 * u(c, i, j, k) +
+                                     u(c, i, j, k - 1)) +
+                                rho(i, j, k - 1) * dcz(k - 1) *
+                                    (u(c, i, j, k) - 2 * u(c, i, j, k - 1) +
+                                     u(c, i, j, k - 2)) -
+                                rho(i, j, k + 1) * dcz(k + 1) *
+                                    (um(c, i, j, k + 2) -
+                                     2 * um(c, i, j, k + 1) + um(c, i, j, k)) +
+                                2 * rho(i, j, k) * dcz(k) *
+                                    (um(c, i, j, k + 1) - 2 * um(c, i, j, k) +
+                                     um(c, i, j, k - 1)) -
+                                rho(i, j, k - 1) * dcz(k - 1) *
+                                    (um(c, i, j, k) - 2 * um(c, i, j, k - 1) +
+                                     um(c, i, j, k - 2))));
+      }
+    });  // SYNC_STREAM;
 //   }
 #undef rho
 #undef up
@@ -384,6 +402,24 @@ void EW::addsgd4c_ci(
     // 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
     // 	    {
 
+#if !defined(RAJA_ONLY)
+    // LOOP -1
+    //
+    // 32,4,2 is 4% slower. 32 4 4 does not fit
+#ifdef ENABLE_CUDA
+    Range<16> I(ifirst + 2, ilast - 1);
+    Range<4> J(jfirst + 2, jlast - 1);
+    Range<6> K(kfirst + 2, klast - 1);
+#endif
+#ifdef ENABLE_HIP
+    Range<64> I(ifirst + 2, ilast - 1);
+    Range<2> J(jfirst + 2, jlast - 1);
+    Range<2> K(kfirst + 2, klast - 1);
+#endif
+    forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+      float_sw4 irhoj = beta / (rho(i, j, k) * jac(i, j, k));
+      for (int c = 0; c < 3; c++)
+#else
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
     RAJA::RangeSegment k_range(kfirst + 2, klast - 1);
@@ -392,52 +428,52 @@ void EW::addsgd4c_ci(
         RAJA::make_tuple(c_range, k_range, j_range, i_range),
         [=] RAJA_DEVICE(int c, int k, int j, int i) {
           float_sw4 irhoj = beta / (rho(i, j, k) * jac(i, j, k));
-          {
-            up(c, i, j, k) -=
-                irhoj *
-                (
-                    // x-differences
-                    strx(i) * coy(j) *
-                        (rho(i + 1, j, k) * dcx(i + 1) * jac(i + 1, j, k) *
-                             (u(c, i + 2, j, k) - 2 * u(c, i + 1, j, k) +
-                              u(c, i, j, k)) -
-                         2 * rho(i, j, k) * dcx(i) * jac(i, j, k) *
-                             (u(c, i + 1, j, k) - 2 * u(c, i, j, k) +
-                              u(c, i - 1, j, k)) +
-                         rho(i - 1, j, k) * dcx(i - 1) * jac(i - 1, j, k) *
-                             (u(c, i, j, k) - 2 * u(c, i - 1, j, k) +
-                              u(c, i - 2, j, k)) -
-                         rho(i + 1, j, k) * dcx(i + 1) * jac(i + 1, j, k) *
-                             (um(c, i + 2, j, k) - 2 * um(c, i + 1, j, k) +
-                              um(c, i, j, k)) +
-                         2 * rho(i, j, k) * dcx(i) * jac(i, j, k) *
-                             (um(c, i + 1, j, k) - 2 * um(c, i, j, k) +
-                              um(c, i - 1, j, k)) -
-                         rho(i - 1, j, k) * dcx(i - 1) * jac(i - 1, j, k) *
-                             (um(c, i, j, k) - 2 * um(c, i - 1, j, k) +
-                              um(c, i - 2, j, k))) +
-                    // y-differences
-                    stry(j) * cox(i) *
-                        (+rho(i, j + 1, k) * dcy(j + 1) * jac(i, j + 1, k) *
-                             (u(c, i, j + 2, k) - 2 * u(c, i, j + 1, k) +
-                              u(c, i, j, k)) -
-                         2 * rho(i, j, k) * dcy(j) * jac(i, j, k) *
-                             (u(c, i, j + 1, k) - 2 * u(c, i, j, k) +
-                              u(c, i, j - 1, k)) +
-                         rho(i, j - 1, k) * dcy(j - 1) * jac(i, j - 1, k) *
-                             (u(c, i, j, k) - 2 * u(c, i, j - 1, k) +
-                              u(c, i, j - 2, k)) -
-                         rho(i, j + 1, k) * dcy(j + 1) * jac(i, j + 1, k) *
-                             (um(c, i, j + 2, k) - 2 * um(c, i, j + 1, k) +
-                              um(c, i, j, k)) +
-                         2 * rho(i, j, k) * dcy(j) * jac(i, j, k) *
-                             (um(c, i, j + 1, k) - 2 * um(c, i, j, k) +
-                              um(c, i, j - 1, k)) -
-                         rho(i, j - 1, k) * dcy(j - 1) * jac(i, j - 1, k) *
-                             (um(c, i, j, k) - 2 * um(c, i, j - 1, k) +
-                              um(c, i, j - 2, k))));
-          }
-        });  // SYNC_STREAM;
+#endif
+      {
+        up(c, i, j, k) -=
+            irhoj * (
+                        // x-differences
+                        strx(i) * coy(j) *
+                            (rho(i + 1, j, k) * dcx(i + 1) * jac(i + 1, j, k) *
+                                 (u(c, i + 2, j, k) - 2 * u(c, i + 1, j, k) +
+                                  u(c, i, j, k)) -
+                             2 * rho(i, j, k) * dcx(i) * jac(i, j, k) *
+                                 (u(c, i + 1, j, k) - 2 * u(c, i, j, k) +
+                                  u(c, i - 1, j, k)) +
+                             rho(i - 1, j, k) * dcx(i - 1) * jac(i - 1, j, k) *
+                                 (u(c, i, j, k) - 2 * u(c, i - 1, j, k) +
+                                  u(c, i - 2, j, k)) -
+                             rho(i + 1, j, k) * dcx(i + 1) * jac(i + 1, j, k) *
+                                 (um(c, i + 2, j, k) - 2 * um(c, i + 1, j, k) +
+                                  um(c, i, j, k)) +
+                             2 * rho(i, j, k) * dcx(i) * jac(i, j, k) *
+                                 (um(c, i + 1, j, k) - 2 * um(c, i, j, k) +
+                                  um(c, i - 1, j, k)) -
+                             rho(i - 1, j, k) * dcx(i - 1) * jac(i - 1, j, k) *
+                                 (um(c, i, j, k) - 2 * um(c, i - 1, j, k) +
+                                  um(c, i - 2, j, k))) +
+                        // y-differences
+                        stry(j) * cox(i) *
+                            (+rho(i, j + 1, k) * dcy(j + 1) * jac(i, j + 1, k) *
+                                 (u(c, i, j + 2, k) - 2 * u(c, i, j + 1, k) +
+                                  u(c, i, j, k)) -
+                             2 * rho(i, j, k) * dcy(j) * jac(i, j, k) *
+                                 (u(c, i, j + 1, k) - 2 * u(c, i, j, k) +
+                                  u(c, i, j - 1, k)) +
+                             rho(i, j - 1, k) * dcy(j - 1) * jac(i, j - 1, k) *
+                                 (u(c, i, j, k) - 2 * u(c, i, j - 1, k) +
+                                  u(c, i, j - 2, k)) -
+                             rho(i, j + 1, k) * dcy(j + 1) * jac(i, j + 1, k) *
+                                 (um(c, i, j + 2, k) - 2 * um(c, i, j + 1, k) +
+                                  um(c, i, j, k)) +
+                             2 * rho(i, j, k) * dcy(j) * jac(i, j, k) *
+                                 (um(c, i, j + 1, k) - 2 * um(c, i, j, k) +
+                                  um(c, i, j - 1, k)) -
+                             rho(i, j - 1, k) * dcy(j - 1) * jac(i, j - 1, k) *
+                                 (um(c, i, j, k) - 2 * um(c, i, j - 1, k) +
+                                  um(c, i, j - 2, k))));
+      }
+    });  // SYNC_STREAM;
 //}
 #undef rho
 #undef up

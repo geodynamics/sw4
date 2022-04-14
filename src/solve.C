@@ -30,7 +30,11 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
-
+#ifdef SW4_USE_CMEM
+__constant__ double cmem_acof[384];
+__constant__ double cmem_acof_no_gp[384];
+#endif
+#include <sstream>
 #include "EW.h"
 #include "Mspace.h"
 #include "caliper.h"
@@ -51,12 +55,14 @@
 bool StatMachineBase::ProfilerOn(false);
 #endif
 
+void check_ghcof_no_gp(double* ghcof_no_gp);
 void curvilinear4sgwind(int, int, int, int, int, int, int, int, float_sw4*,
                         float_sw4*, float_sw4*, float_sw4*, float_sw4*,
                         float_sw4*, int*, float_sw4*, float_sw4*, float_sw4*,
                         float_sw4*, float_sw4*, float_sw4*, float_sw4*, int,
                         char);
 
+<<<<<<< HEAD
 void add_pseudohessian_terms1(  int ifirst, int ilast, int jfirst, int jlast, 
                                int kfirst, int klast,
                                int ifirstact, int ilastact, int jfirstact, int jlastact, 
@@ -1331,25 +1337,59 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
                int event) {
   SW4_MARK_FUNCTION;
+  check_ghcof_no_gp(m_ghcof_no_gp);
+#ifdef SW4_USE_CMEM
+  // std::cout<<"Copying acof to constant device memory\n";
+  SW4_CheckDeviceError(
+      cudaMemcpyToSymbol(cmem_acof, m_acof, 384 * sizeof(double)));
+  SW4_CheckDeviceError(
+      cudaMemcpyToSymbol(cmem_acof_no_gp, m_acof_no_gp, 384 * sizeof(double)));
+#endif
+#ifdef _OPENMP
+  // if (omp_pause_resource_all(omp_pause_hard)) {
+  //  std::cerr << "OMP_pause_resource failed\n";
+  // }
+#endif
+
+#ifdef SW4_NORM_TRACE
+  std::ofstream norm_trace_file("Norms.dat");
+#endif
+  // print_hwm(getRank());
   // solution arrays
-  vector<Sarray> F, Lu, Uacc, Up, Um, U;
-  vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
+  vector<Sarray> F(mNumberOfGrids), Lu(mNumberOfGrids), Uacc(mNumberOfGrids),
+      Up(mNumberOfGrids), Um(mNumberOfGrids), U(mNumberOfGrids);
+  vector<Sarray*> AlphaVE(mNumberOfGrids), AlphaVEm(mNumberOfGrids),
+      AlphaVEp(mNumberOfGrids);
   // vectors of pointers to hold boundary forcing arrays in each grid
   vector<float_sw4**> BCForcing;
   global_prefetch();
   BCForcing.resize(mNumberOfGrids);
-  F.resize(mNumberOfGrids);
-  Lu.resize(mNumberOfGrids);
-  Uacc.resize(mNumberOfGrids);
-  Up.resize(mNumberOfGrids);
-  Um.resize(mNumberOfGrids);
-  U.resize(mNumberOfGrids);
+  // F.resize(mNumberOfGrids);
+  // Lu.resize(mNumberOfGrids);
+  // Uacc.resize(mNumberOfGrids);
+  // Up.resize(mNumberOfGrids);
+  // Um.resize(mNumberOfGrids);
+  // U.resize(mNumberOfGrids);
 
   // Allocate pointers, even if attenuation not used, to avoid segfault in
   // parameter list with mMuVE[g], etc...
-  AlphaVE.resize(mNumberOfGrids);
-  AlphaVEm.resize(mNumberOfGrids);
-  AlphaVEp.resize(mNumberOfGrids);
+  // AlphaVE.resize(mNumberOfGrids);
+  // AlphaVEm.resize(mNumberOfGrids);
+  // AlphaVEp.resize(mNumberOfGrids);
+
+  // New space switching
+  SW4_MARK_BEGIN("Solve::Host->Managed");
+  for (int g = 0; g < mNumberOfGrids; g++) {
+    mMu[g].switch_space(Space::Managed);
+    mLambda[g].switch_space(Space::Managed);
+    for (int a = 0; a < m_number_mechanisms; a++) {
+      mMuVE[g][a].switch_space(Space::Managed);
+      mLambdaVE[g][a].switch_space(Space::Managed);
+    }
+  }
+  SW4_MARK_END("Solve::Host->Managed");
+  // End space switching
+
   if (m_use_attenuation && m_number_mechanisms > 0) {
     for (int g = 0; g < mNumberOfGrids; g++) {
       AlphaVE[g] = new Sarray[m_number_mechanisms];
@@ -1422,8 +1462,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   // the Source objects get discretized into GridPointSource objects
   vector<GridPointSource*> point_sources;
 
-  if( m_point_source_test )
-     m_point_source_test->set_source( a_Sources[0] );
+  if (m_point_source_test) m_point_source_test->set_source(a_Sources[0]);
 
   // Transfer source terms to each individual grid as point sources at grid
   // points.
@@ -1567,7 +1606,25 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   float_sw4 t;
   if (m_check_point->do_restart()) {
     double timeRestartBegin = MPI_Wtime();
-    m_check_point->read_checkpoint(t, beginCycle, Um, U, AlphaVEm, AlphaVE);
+#ifndef SW4_USE_SCR
+    if (!m_check_point->useHDF5())
+      m_check_point->read_checkpoint(t, beginCycle, Um, U, AlphaVEm, AlphaVE);
+#ifdef USE_HDF5
+    else
+      m_check_point->read_checkpoint_hdf5(t, beginCycle, Um, U, AlphaVEm,
+                                          AlphaVE);
+#else
+    else if (proc_zero())
+      cout << "Configured to restart with HDF5 but SW4 is not compiled with "
+              "HDF5!"
+           << endl;
+#endif
+#else
+    m_check_point->read_checkpoint_scr(t, beginCycle, Um, U, AlphaVEm,
+                                          AlphaVE);
+
+#endif
+
     // tmp
     if (proc_zero())
       printf("After reading checkpoint data: beginCycle=%d, t=%e\n", beginCycle,
@@ -1760,6 +1817,16 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
   // boundary forcing
   cartesian_bc_forcing(t, BCForcing, a_Sources);
+
+#ifdef SW4_NORM_TRACE
+  if (!getRank()) {
+    for (int g = 0; g < mNumberOfGrids; g++) {
+      norm_trace_file << "PRE EnforceBC Up[" << g << "] " << Up[g].norm()
+                      << " LU = " << Lu[g].norm() << " F = " << F[g].norm()
+                      << " U = " << U[g].norm() << "\n";
+    }
+  }
+#endif
   // OLD
   //  if( m_use_attenuation && m_number_mechanisms > 0 )
   //     addAttToFreeBcForcing( AlphaVE, BCForcing, m_sbop );
@@ -1768,11 +1835,32 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     enforceBCanisotropic(U, mC, t, BCForcing);
   else
     enforceBC(U, mMu, mLambda, AlphaVE, t, BCForcing);
+
+#ifdef SW4_NORM_TRACE
+  if (!getRank()) {
+    for (int g = 0; g < mNumberOfGrids; g++) {
+      norm_trace_file << "POST EnforceBC Up[" << g << "] " << Up[g].norm()
+                      << " LU = " << Lu[g].norm() << " F = " << F[g].norm()
+                      << " U = " << U[g].norm() << "\n";
+    }
+  }
+#endif
   // Impose un-coupled free surface boundary condition with visco-elastic terms
   // for 'Up'
   if (m_use_attenuation && (m_number_mechanisms > 0)) {
     enforceBCfreeAtt2(U, mMu, mLambda, AlphaVE, BCForcing);
   }
+
+#ifdef SW4_NORM_TRACE
+  if (!getRank()) {
+    for (int g = 0; g < mNumberOfGrids; g++) {
+      norm_trace_file << "POST EnforceBCfreeAtt2 Up[" << g << "] "
+                      << Up[g].norm() << " LU = " << Lu[g].norm()
+                      << " F = " << F[g].norm() << " U = " << U[g].norm()
+                      << "\n";
+    }
+  }
+#endif
   // Write(Up,"Up");
 #ifdef PEEKS_GALORE
   SW4_PEEK;
@@ -1782,6 +1870,17 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   // Commented out for checking restarts
   for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++)
     m_cli2[g - mNumberOfCartesianGrids]->impose_ic(U, t, AlphaVE);
+
+#ifdef SW4_NORM_TRACE
+  if (!getRank()) {
+    for (int g = 0; g < mNumberOfGrids; g++) {
+      norm_trace_file << "POST IMPOSE_IC Up[" << g << "] " << Up[g].norm()
+                      << " LU = " << Lu[g].norm() << " F = " << F[g].norm()
+                      << " U = " << U[g].norm() << "\n"
+                      << std::flush;
+    }
+  }
+#endif
 
   //    U[0].save_to_disk("u-dbg0-bc.bin");
   //    U[1].save_to_disk("u-dbg1-bc.bin");
@@ -1967,8 +2066,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   int gg = mNumberOfGrids - 1;  // top grid
   for (int i3 = 0; i3 < mESSI3DFiles.size(); i3++) {
     mESSI3DFiles[i3]->set_ntimestep(mNumberOfTimeSteps[event]);
-    mESSI3DFiles[i3]->update_image(beginCycle - 1, t, mDt, U, mPath[event],
-                                   mZ[gg]);
+    mESSI3DFiles[i3]->set_restart(m_check_point->do_restart());
   }
   FILE* lf = NULL;
   // open file for saving norm of error
@@ -2031,11 +2129,32 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
   // Begin time stepping loop
   for (int g = 0; g < mNumberOfGrids; g++) Up[g].set_to_zero();
+  for (int g = 0; g < mNumberOfGrids; g++) Lu[g].set_to_zero();
 
-  // test: compute forcing for the first time step before the loop to get
-  // started
+  if (m_do_geodynbc) advance_geodyn_time(t + mDt);
+
+    // test: compute forcing for the first time step before the loop to get
+    // started
+#ifdef SW4_NORM_TRACE
+  if (!getRank()) {
+    for (int g = 0; g < mNumberOfGrids; g++) {
+      norm_trace_file << "PRE_FORCE Up[" << g << "] " << Up[g].norm()
+                      << " LU = " << Lu[g].norm() << " F = " << F[g].norm()
+                      << " U = " << U[g].norm() << "\n";
+    }
+  }
+#endif
   Force(t, F, point_sources, identsources);
 
+#ifdef SW4_NORM_TRACE
+  if (!getRank()) {
+    for (int g = 0; g < mNumberOfGrids; g++) {
+      norm_trace_file << "POST_FORCE Up[" << g << "] " << Up[g].norm()
+                      << " LU = " << Lu[g].norm() << " F = " << F[g].norm()
+                      << "\n";
+    }
+  }
+#endif
 #ifdef PEEKS_GALORE
   SW4_PEEK;
   SYNC_DEVICE;
@@ -2052,6 +2171,12 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 #ifdef SW4_TRACK_MPI
   // bool cudaProfilerOn = false;
 #endif
+  if (!getRank()) {
+    time_t now;
+    time(&now);
+    printf("Start time stepping at %s\n", ctime(&now));
+  }
+  bool end_clean_time_reg = false;
   for (int currentTimeStep = beginCycle;
        currentTimeStep <= mNumberOfTimeSteps[event]; currentTimeStep++) {
     time_measure[0] = MPI_Wtime();
@@ -2059,8 +2184,14 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     global_variables.firstCycle = currentTimeStep == beginCycle;
     global_variables.current_step = currentTimeStep;
     if (currentTimeStep == mNumberOfTimeSteps[event]) t1 = SW4_CHRONO_NOW;
+    if (currentTimeStep == (beginCycle + 2)) print_hwm(getRank());
     if (currentTimeStep == (beginCycle + 10)) {
       PROFILER_START;
+      // SW4_MARK_BEGIN("CLEAN_TIME");
+      end_clean_time_reg = true;
+#ifdef ENABLE_CUDA
+      //SW4_MARK_BEGIN("TIME_STEPPING");
+#endif
 #ifdef SW4_TRACK_MPI
       t6 = SW4_CHRONO_NOW;
       ProfilerOn = true;
@@ -2092,16 +2223,39 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     SW4_PEEK;
     SYNC_DEVICE;
 #endif
-
+#ifdef SW4_NORM_TRACE
+    if (!getRank()) {
+      for (int g = 0; g < mNumberOfGrids; g++) {
+        norm_trace_file << "PREEVALRHS Up[" << g << "] " << Up[g].norm()
+                        << " LU = " << Lu[g].norm() << " F = " << F[g].norm()
+                        << " U = " << U[g].norm() << "\n";
+      }
+    }
+#endif
     // evaluate right hand side
     if (m_anisotropic)
       evalRHSanisotropic(U, mC, Lu);
-    else
-      evalRHS(U, mMu, mLambda, Lu, AlphaVE);  // save Lu in composite grid 'Lu'
-
+    else {
+#ifdef SW4_NORM_TRACE
+      evalRHS(U, mMu, mLambda, Lu, AlphaVE,
+              &norm_trace_file);  // save Lu in composite grid 'Lu'
+#else
+      evalRHS(U, mMu, mLambda, Lu, AlphaVE);
+#endif
+    }
 #ifdef PEEKS_GALORE
     SW4_PEEK;
     SYNC_DEVICE;
+#endif
+
+#ifdef SW4_NORM_TRACE
+    if (!getRank()) {
+      for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+        norm_trace_file << "Grid Evals mMetric[" << g << "] "
+                        << mMetric[g].norm() << " J = " << mJ[g].norm()
+                        << " mu = " << mMu[g].norm() << "\n";
+      }
+    }
 #endif
 
     if (m_output_detailed_timing) time_measure[1] = MPI_Wtime();
@@ -2115,8 +2269,28 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     SYNC_DEVICE;
 #endif
 
+#ifdef SW4_NORM_TRACE
+    if (!getRank()) {
+      for (int g = 0; g < mNumberOfGrids; g++) {
+        norm_trace_file << "PREevalPredictor Up[" << g << "] " << Up[g].norm()
+                        << " LU = " << Lu[g].norm() << " F = " << F[g].norm()
+                        << " U = " << U[g].norm() << "\n";
+      }
+    }
+#endif
+
     // take predictor step, store in Up
     evalPredictor(Up, U, Um, mRho, Lu, F);
+
+#ifdef SW4_NORM_TRACE
+    if (!getRank()) {
+      for (int g = 0; g < mNumberOfGrids; g++) {
+        norm_trace_file << "PostevalPredictor Up[" << g << "] " << Up[g].norm()
+                        << " LU = " << Lu[g].norm() << " F = " << F[g].norm()
+                        << " U = " << U[g].norm() << "\n";
+      }
+    }
+#endif
     SW4_MARK_BEGIN("COMM_WINDOW");
     if (m_output_detailed_timing) time_measure[2] = MPI_Wtime();
 
@@ -2156,6 +2330,31 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
     if (m_output_detailed_timing) time_measure[5] = MPI_Wtime();
     SW4_MARK_END("COMM_WINDOW");
+
+    // Enforce data on coupling boundary to external solver
+    auto& a_Rho = mRho;
+    auto& a_Mu = mMu;
+    auto& a_Lambda = mLambda;
+    if (m_do_geodynbc) {
+      if (mOrder == 2) {
+        impose_geodyn_ibcdata(Up, U, t + mDt, BCForcing);
+        advance_geodyn_time(t + 2 * mDt);
+        if (m_twilight_forcing) Force(t + mDt, F, point_sources, identsources);
+        geodyn_second_ghost_point(a_Rho, a_Mu, a_Lambda, F, t + 2 * mDt, Up, U,
+                                  1);
+        for (int g = 0; g < mNumberOfGrids; g++) communicate_array(Up[g], g);
+      } else {
+        impose_geodyn_ibcdata(Up, U, t + mDt, BCForcing);
+        if (m_twilight_forcing) Force_tt(t, F, point_sources, identsources);
+        evalDpDmInTime(Up, U, Um, Uacc);  // store result in Uacc
+        geodyn_second_ghost_point(a_Rho, a_Mu, a_Lambda, F, t + mDt, Uacc, U,
+                                  0);
+        geodyn_up_from_uacc(Up, Uacc, U, Um,
+                            mDt);  // copy second ghost point to Up
+        for (int g = 0; g < mNumberOfGrids; g++) communicate_array(Up[g], g);
+      }
+    }
+
     // update ghost points in Up
     //
 #ifdef PEEKS_GALORE
@@ -2178,6 +2377,17 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     // terms
     if (m_use_attenuation && m_number_mechanisms > 0)
       enforceBCfreeAtt2(Up, mMu, mLambda, AlphaVEp, BCForcing);
+
+#ifdef SW4_NORM_TRACE
+    if (!getRank()) {
+      for (int g = 0; g < mNumberOfGrids; g++) {
+        norm_trace_file << "PostEnforceBC2freeAtt2 Up[" << g << "] "
+                        << Up[g].norm() << " LU = " << Lu[g].norm()
+                        << " F = " << F[g].norm() << " U = " << U[g].norm()
+                        << "\n";
+      }
+    }
+#endif
 
     if (m_output_detailed_timing) time_measure[6] = MPI_Wtime();
 
@@ -2228,9 +2438,19 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       SYNC_DEVICE;
 #endif
 
-      SW4_MARK_BEGIN("MPI_WTIME");
+#ifdef SW4_NORM_TRACE
+      if (!getRank()) {
+        for (int g = 0; g < mNumberOfGrids; g++) {
+          norm_trace_file << "PreEnforceIC Up[" << g << "] " << Up[g].norm()
+                          << " LU = " << Lu[g].norm() << " F = " << F[g].norm()
+                          << " U = " << U[g].norm() << "\n";
+        }
+      }
+#endif
+
+      // SW4_MARK_BEGIN("MPI_WTIME");
       if (m_output_detailed_timing) time_measure[7] = MPI_Wtime();
-      SW4_MARK_END("MPI_WTIME");
+      // SW4_MARK_END("MPI_WTIME");
       // test: precompute F_tt(t)
       Force_tt(t, F, point_sources, identsources);
 
@@ -2243,6 +2463,16 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       // computed 5 lines down
       enforceIC(Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, true, F,
                 point_sources);  // THIS IS TH ONE TO BE FIXED FOR UP MATCH
+
+#ifdef SW4_NORM_TRACE
+      if (!getRank()) {
+        for (int g = 0; g < mNumberOfGrids; g++) {
+          norm_trace_file << "PostEnforceIC Up[" << g << "] " << Up[g].norm()
+                          << " LU = " << Lu[g].norm() << " F = " << F[g].norm()
+                          << " U = " << U[g].norm() << "\n";
+        }
+      }
+#endif
 
       if (m_output_detailed_timing) time_measure[9] = MPI_Wtime();
     }
@@ -2289,7 +2519,27 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
       if (m_checkfornan) check_for_nan(Lu, 1, "L(uacc) ");
 
+#ifdef SW4_NORM_TRACE
+      if (!getRank()) {
+        for (int g = 0; g < mNumberOfGrids; g++) {
+          norm_trace_file << "PreEvalCorrector Up[" << g << "] " << Up[g].norm()
+                          << " " << Lu[g].norm() << " " << F[g].norm()
+                          << " U = " << U[g].norm() << "\n";
+        }
+      }
+#endif
+
       evalCorrector(Up, mRho, Lu, F);
+
+#ifdef SW4_NORM_TRACE
+      if (!getRank()) {
+        for (int g = 0; g < mNumberOfGrids; g++) {
+          norm_trace_file << "PostEvalCorrector Up,Lu,F[" << g << "] "
+                          << Up[g].norm() << " " << Lu[g].norm() << " "
+                          << F[g].norm() << " U = " << U[g].norm() << "\n";
+        }
+      }
+#endif
 
       if (m_output_detailed_timing) time_measure[12] = MPI_Wtime();
 
@@ -2321,6 +2571,23 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
       if (m_output_detailed_timing) time_measure[14] = MPI_Wtime();
 
+      if (m_do_geodynbc) {
+        impose_geodyn_ibcdata(Up, U, t + mDt, BCForcing);
+        advance_geodyn_time(t + 2 * mDt);
+        if (m_twilight_forcing) Force(t + mDt, F, point_sources, identsources);
+        geodyn_second_ghost_point(a_Rho, a_Mu, a_Lambda, F, t + 2 * mDt, Up, U,
+                                  1);
+        for (int g = 0; g < mNumberOfGrids; g++) communicate_array(Up[g], g);
+        // The free surface boundary conditions below will overwrite the
+        // ghost point above the free surface of the geodyn cube.
+        // This is a problem with the fourth order predictor-corrector time
+        // stepping because L(Uacc) = L( (Up-2*U+Um)/(dt*dt)) depends on the
+        // ghost point value at U, The corrector first sets correct ghost value
+        // on Up, but it is not enough, also the previous times, U,Um need to
+        // have the correct ghost point value.
+        save_geoghost(Up);
+      }
+
       // calculate boundary forcing at time t+mDt (do we really need to call
       // this fcn again???)
       cartesian_bc_forcing(t + mDt, BCForcing, a_Sources);
@@ -2350,7 +2617,16 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       if (m_output_detailed_timing) time_measure[16] = MPI_Wtime();
 
       if (trace && m_myRank == dbgproc) cout << " after Forcing" << endl;
-      // end test
+        // end test
+
+#ifdef SW4_NORM_TRACE
+      if (!getRank()) {
+        for (int g = 0; g < mNumberOfGrids; g++) {
+          norm_trace_file << "PreENFORCIC Up[" << g << "] " << Up[g].norm()
+                          << "\n";
+        }
+      }
+#endif
 
       // interface conditions for the corrector
       // June 14, 2017: adding AlphaVE & AlphaVEm
@@ -2360,6 +2636,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
                 point_sources);
 
       if (m_output_detailed_timing) time_measure[17] = MPI_Wtime();
+
+      if (m_do_geodynbc) restore_geoghost(Up);
 
     }  // end if mOrder == 4
 
@@ -2440,8 +2718,24 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     // checkpointing is not used)
     if (m_check_point->timeToWrite(t, currentTimeStep, mDt)) {
       double time_chkpt = MPI_Wtime();
-      m_check_point->write_checkpoint(t, currentTimeStep, U, Up, AlphaVE,
-                                      AlphaVEp);
+#ifndef SW4_USE_SCR
+      if (!m_check_point->useHDF5())
+        m_check_point->write_checkpoint(t, currentTimeStep, U, Up, AlphaVE,
+                                        AlphaVEp);
+#ifdef USE_HDF5
+      else
+        m_check_point->write_checkpoint_hdf5(t, currentTimeStep, U, Up, AlphaVE,
+                                             AlphaVEp);
+#else
+      else if (proc_zero())
+        cout << "Configured to checkpoint with HDF5 but SW4 is not compiled "
+                "with HDF5!"
+             << endl;
+#endif
+#else			
+      m_check_point->write_checkpoint_scr(t, currentTimeStep, U, Up, AlphaVE,
+                                             AlphaVEp);
+#endif
       double time_chkpt_tmp = MPI_Wtime() - time_chkpt;
       if (mVerbose >= 0)
 
@@ -2479,6 +2773,14 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
     // cycle the solution arrays
     cycleSolutionArrays(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp);
+
+#ifdef SW4_NORM_TRACE
+    if (!getRank()) {
+      for (int g = 0; g < mNumberOfGrids; g++) {
+        norm_trace_file << "Up[" << g << "] " << Up[g].norm() << "\n";
+      }
+    }
+#endif
 
     if (m_output_detailed_timing) time_measure[19] = MPI_Wtime();
 
@@ -2566,7 +2868,11 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       SW4_PEEK;
       SYNC_DEVICE;
     }
+    if (end_clean_time_reg) {
+      // SW4_MARK_END("CLEAN_TIME");
+    }
   }  // end time stepping loop
+  // SW4_MARK_END("CLEAN_TIME");
   SW4_MARK_END("TIME_STEPPING");
 
   // Calculate stats for first time step
@@ -2598,17 +2904,21 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 #if USE_HDF5
   // Only do this if there are any essi hdf5 files
   if (mESSI3DFiles.size() > 0) {
+    for (int i3 = 0; i3 < mESSI3DFiles.size(); i3++)
+      mESSI3DFiles[i3]->finalize_hdf5();
+
     // Calculate the total ESSI hdf5 io time across all ranks
     double hdf5_time = 0;
-    for (int i3 = 0; i3 < mESSI3DFiles.size(); i3++)
+    for (int i3 = 0; i3 < mESSI3DFiles.size(); i3++) {
       hdf5_time += mESSI3DFiles[i3]->getHDF5Timings();
-    // Max over all rank
-    double max_hdf5_time;
-    MPI_Reduce(&hdf5_time, &max_hdf5_time, 1, MPI_DOUBLE, MPI_MAX, 0,
-               MPI_COMM_WORLD);
-    if (m_myRank == 0)
-      cout << "  ==> Max wallclock time to open/write ESSI hdf5 output is "
-           << max_hdf5_time << " seconds " << endl;
+      // Max over all rank
+      double max_hdf5_time;
+      MPI_Reduce(&hdf5_time, &max_hdf5_time, 1, MPI_DOUBLE, MPI_MAX, 0,
+                 MPI_COMM_WORLD);
+      if (m_myRank == 0)
+        cout << "  ==> Max wallclock time to open/write ESSI hdf5 output #"
+             << i3 << " is " << max_hdf5_time << " seconds " << endl;
+    }
     // add to total time for detailed timing output
     // time_sum[0] += max_hdf5_time;
     // time_sum[7] += max_hdf5_time; // fold the essi output into images and
@@ -2633,6 +2943,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
                                    mLambda, mRho, mMu, mLambda, mQp, mQs,
                                    mPath[event], mZ);
 
+  m_check_point->finalize_hdf5();
 #endif
 
   print_execution_time(time_start_solve, time_end_solve, "solver phase");
@@ -2661,7 +2972,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       normOfDifference(Up, U, errInf, errL2, solInf, a_Sources);
 
     if (proc_zero()) {
-      printf("\n Final solution errors: Linf = %15.7e, L2 = %15.7e\n", errInf,
+      printf("\n Final solution errors: Linf = %15.7e, L2 = %25.15e\n", errInf,
              errL2);
 
       // output time, Linf-err, Linf-sol-err
@@ -3179,17 +3490,26 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     Sarray Unextc(3, ibc, iec, jbc, jec, kc, kc, __FILE__,
                   __LINE__);  // only needs k=kc (on the interface)
     Sarray Bc(3, ibc, iec, jbc, jec, kc, kc, __FILE__, __LINE__);
+
+#define FUSED_KERNELS 1
+#ifndef FUSED_KERNELS
     Unextf.set_to_zero_async();
     Bf.set_to_zero_async();
-    // std::cout<<"BF ARRAY "<<Bf.c_ptr()<<"\n";
     Unextc.set_to_zero_async();
     Bc.set_to_zero_async();
+#else
+    mset_to_zero_async(Unextf, Bf, Unextc, Bc);
+    // SW4_PEEK;
+    // SYNC_DEVICE;
+#endif
+
     // to compute the corrector we need the acceleration in the vicinity of the
     // interface
     Sarray Uf_tt(3, ibf, ief, jbf, jef, kf - 7, kf + 1, __FILE__, __LINE__);
     Sarray Uc_tt(3, ibc, iec, jbc, jec, kc - 1, kc + 7, __FILE__, __LINE__);
     // reuse Utt to hold the acceleration of the memory variables
     SW4_MARK_END("enforceIC::Allocs");
+
     // Set to zero the ghost point values that are unknowns when solving the
     // interface condition. Assume that Dirichlet data is already set on ghost
     // points on the (supergrid) sides, which are not treated as unknown
@@ -3204,6 +3524,7 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     if (predictor)  // In the predictor step, (Unextc, Unextf) represent the
                     // displacement after the corrector step
     {
+      SW4_MARK_BEGIN("enforceIC::PREDICTOR");
       //  REMARK: June 15, 2017: if predictor == true, the memory variable
       //  a_alphaVEp holds the predicted
       // (2nd order) values on entry. However, the interior contribution to the
@@ -3223,9 +3544,11 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
         // dirichlet conditions for Unextc in super-grid layer at time t+dt
         dirichlet_LRic(Unextc, g, kc, time + mDt, 1);
       }
+      SW4_MARK_END("enforceIC::PREDICTOR");
     } else  // In the corrector step, (Unextc, Unextf) represent the
             // displacement after next predictor step
     {
+      SW4_MARK_BEGIN("enforceIC::CORRECTOR");
       compute_preliminary_predictor(a_Up[g + 1], a_U[g + 1], a_AlphaVEp[g + 1],
                                     Unextf, g + 1, kf, time + mDt, F[g + 1],
                                     point_sources);
@@ -3236,13 +3559,17 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
         // dirichlet conditions for Unextc in super-grid layer at time t+2*dt
         dirichlet_LRic(Unextc, g, kc, time + 2 * mDt, 1);
       }
+      SW4_MARK_END("enforceIC::CORRECTOR");
     }
 
+    SW4_MARK_BEGIN("enforceIC::COMPUTE_ICSTRESSES");
     compute_icstresses(a_Up[g + 1], Bf, g + 1, kf, m_sg_str_x[g + 1],
                        m_sg_str_y[g + 1]);
     compute_icstresses(a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g]);
+    SW4_MARK_END("enforceIC::COMPUTE_ICSTRESSES");
 
     // NEW June 13, 2017: add in the visco-elastic boundary traction
+    SW4_MARK_BEGIN("enforceIC::AD_VE_STRESSES");
     if (m_use_attenuation && m_number_mechanisms > 0) {
       for (int a = 0; a < m_number_mechanisms; a++) {
         // the visco-elastic stresses depend on the predictor values of AlphaVEp
@@ -3253,14 +3580,15 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                         m_sg_str_y[g]);
       }
     }
-
+    SW4_MARK_END("enforceIC::AD_VE_STRESSES");
+    SW4_MARK_BEGIN("enforceIC::DIRICHLET_LRSTRESS");
     // from enforceIC2()
     if (!m_doubly_periodic) {
       //  dirichlet condition for Bf in the super-grid layer at time t+dt (also
       //  works with twilight)
       dirichlet_LRstress(Bf, g + 1, kf, time + mDt, 1);
     }
-
+    SW4_MARK_END("enforceIC::DIRICHLET_LRSTRESS");
     SW4_MARK_BEGIN("enforceIC::MPI2DCOMM");
 #if defined(SW4_TRACK_MPI)
     {
@@ -3312,6 +3640,7 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
       dirichlet_LRic(a_Up[g], g, kc - 1, time + mDt, 1);
     }
   }  // end for g...
+  SW4_MARK_BEGIN("enforceIC::IMPOSE_IC");
   for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++) {
     //         m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up,
     //         time+mDt );
@@ -3319,6 +3648,7 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                                                    a_AlphaVEp);
     //      check_ic_conditions( g, a_Up );
   }
+  SW4_MARK_END("enforceIC::IMPOSE_IC");
 
 }  // enforceIC
 
@@ -4277,8 +4607,10 @@ void EW::compute_preliminary_corrector(
   char op = '=';
   int nz = m_global_nz[g];
   Sarray Lutt(3, ib, ie, jb, je, kic, kic, __FILE__, __LINE__);
-  Lutt.set_to_zero_async();  // Keep memory checker happy
-                             // Note: 6 first arguments of the function call:
+  // Following line commented out since array elemenst are ssigned and not
+  // updated.
+  // Lutt.set_to_zero_async();  // Keep memory checker happy
+  // Note: 6 first arguments of the function call:
   // (ib,ie), (jb,je), (kb,ke) is the declared size of mMu and mLambda in the
   // (i,j,k)-directions, respectively
 
@@ -4465,7 +4797,8 @@ void EW::compute_preliminary_predictor(
 
   // Compute L(Up) at k=kic.
   Sarray Lu(3, ib, ie, jb, je, kic, kic, __FILE__, __LINE__);
-  Lu.set_to_zero_async();  // Keep memory checker happy
+  // Commented out for speed
+  // Lu.set_to_zero_async();  // Keep memory checker happy
   char op = '=';
   int nz = m_global_nz[g];
   // Note: 6 first arguments of the function call:
@@ -5622,20 +5955,18 @@ void EW::testSourceDiscretization(int kx[3], int ky[3], int kz[3],
     F[g](2, i, j, k) += f2;
     F[g](3, i, j, k) += f3;
   }
-  for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
-  {
-     communicate_array( F[g], g );
-     m_cli2[g-mNumberOfCartesianGrids]->prolongate2D( F[g], F[g+1], 1, m_global_nz[g+1] );
+  for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++) {
+    communicate_array(F[g], g);
+    m_cli2[g - mNumberOfCartesianGrids]->prolongate2D(F[g], F[g + 1], 1,
+                                                      m_global_nz[g + 1]);
   }
-  int ncurv=mNumberOfGrids-mNumberOfCartesianGrids;
-  if( ncurv > 0 && !m_gridGenerator->curviCartIsSmooth(ncurv) )
-  {
-     int g=mNumberOfCartesianGrids;
-     int Nz=m_global_nz[g];
-     for( int j=m_jStartInt[g] ; j <= m_jEndInt[g] ; j++ )
-        for( int i=m_iStartInt[g] ; i <= m_iEndInt[g] ; i++ )
-           for( int c=1; c<= 3; c++)
-              F[g](c,i,j,Nz) = F[g-1](c,i,j,1);
+  int ncurv = mNumberOfGrids - mNumberOfCartesianGrids;
+  if (ncurv > 0 && !m_gridGenerator->curviCartIsSmooth(ncurv)) {
+    int g = mNumberOfCartesianGrids;
+    int Nz = m_global_nz[g];
+    for (int j = m_jStartInt[g]; j <= m_jEndInt[g]; j++)
+      for (int i = m_iStartInt[g]; i <= m_iEndInt[g]; i++)
+        for (int c = 1; c <= 3; c++) F[g](c, i, j, Nz) = F[g - 1](c, i, j, 1);
   }
 
   float_sw4 momgrid[3] = {0, 0, 0};
@@ -5657,12 +5988,12 @@ void EW::testSourceDiscretization(int kx[3], int ky[3], int kz[3],
     wind[4] = m_kStartInt[g];
     wind[5] = m_kEndInt[g];
     int nz = m_global_nz[g];
-    if (g <= mNumberOfCartesianGrids-1 )
+    if (g <= mNumberOfCartesianGrids - 1)
       testsrc_ci(f_ptr, ifirst, ilast, jfirst, jlast, kfirst, klast, nz, wind,
                  m_zmin[g], h, kx, ky, kz, momgrid);
     else
-       testsrcc_ci( f_ptr, ifirst, ilast, jfirst, jlast, kfirst, klast,
-                    nz, g, wind, kx, ky, kz, momgrid );
+      testsrcc_ci(f_ptr, ifirst, ilast, jfirst, jlast, kfirst, klast, nz, g,
+                  wind, kx, ky, kz, momgrid);
   }
   MPI_Allreduce(momgrid, moments, 3, m_mpifloat, MPI_SUM,
                 m_cartesian_communicator);
@@ -6491,6 +6822,7 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
             a_Alpha_gcurv(3, i, j, nk) = a_Alpha_gcart(3, i, j, 1);
           });
     }
+
   SW4_MARK_END("CurviCartIC::PART 1");
   SW4_MARK_BEGIN("CurviCartIC::PART 2");
   bool force_dirichlet = false;
@@ -6785,7 +7117,8 @@ void EW::compute_icstresses_curv(Sarray& a_Up, Sarray& B, int kic,
 #define str_y(j) a_str_y[(j - jfirst)]
   float_sw4 sgn = 1;
   if (op == '=') {
-    B.set_value(0.0);
+    // B.set_value(0.0);
+    B.set_to_zero_async();
     sgn = 1;
   }
   if (op == '-') {
@@ -7455,6 +7788,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
     }
   }
 }
+<<<<<<< HEAD
 
 //-----------------------------------------------------------------------
 void EW::addtoPseudoHessian( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarray>& Up, 
@@ -7475,4 +7809,17 @@ void EW::addtoPseudoHessian( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarra
    {
       // NYI
    }
+}
+
+void check_ghcof_no_gp(double* ghcof_no_gp) {
+#ifdef SW4_GHCOF_NO_GP_IS_ZERO
+  for (int i = 0; i < 6; i++)
+    if (ghcof_no_gp[i] != 0.0) {
+      std::cerr << "ERROR :: ghcof_no_gp[" << i << "] is " << ghcof_no_gp
+                << "\n";
+      std::cerr
+          << "ERROR :: RECOMPILE WITH SW4_GHCOF_NO_GP_IS_ZERO undefined\n";
+      abort();
+    }
+#endif
 }

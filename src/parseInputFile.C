@@ -34,10 +34,10 @@
 #include "AnisotropicMaterialBlock.h"
 #include "ESSI3D.h"
 #include "EW.h"
-#include "EtreeFile.h"
 #include "Filter.h"
 #include "Image3D.h"
 #include "MaterialBlock.h"
+#include "MaterialGMG.h"
 #include "MaterialIfile.h"
 #include "MaterialInvtest.h"
 #include "MaterialPfile.h"
@@ -313,14 +313,13 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
   // setup 2D communicators on the finest grid so that we can smooth the
   // topography
   setup2D_MPICommunications();
-
+#ifdef PEEKS_GALORE
+  SW4_PEEK;
+  SYNC_STREAM;
+#endif
   // deal with topography
   if (m_topography_exists) {
-    // 1. read topography from efile
-    if (m_topoInputStyle == EW::Efile) {
-      extractTopographyFromEfile(m_topoFileName, m_topoExtFileName, m_QueryType,
-                                 m_EFileResolution);
-    } else if (m_topoInputStyle == EW::GridFile) {
+    if (m_topoInputStyle == EW::GridFile) {
       extractTopographyFromGridFile(m_topoFileName);
     } else if (m_topoInputStyle == EW::CartesianGrid) {
       extractTopographyFromCartesianFile(m_topoFileName);
@@ -337,6 +336,8 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
       extractTopographyFromRfile(m_topoFileName);
     else if (m_topoInputStyle == EW::Sfile)
       extractTopographyFromSfile(m_topoFileName);
+    else if (m_topoInputStyle == EW::GMG)
+      extractTopographyFromGMG(m_topoFileName);
 
     // preprocess the mTopo array
     if (m_topoInputStyle !=
@@ -353,7 +354,10 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
       // portion of the grid)
       m_gridGenerator->assignInterfaceSurfaces(this, mTopoGridExt);
     }
-
+#ifdef PEEKS_GALORE
+    SW4_PEEK;
+    SYNC_STREAM;
+#endif
     // // 3. Figure out the number of grid points in the vertical direction and
     // allocate solution arrays on the curvilinear grid
     allocateCurvilinearArrays();  // need to assign  m_global_nz[g] = klast -
@@ -366,7 +370,10 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
            << endl
            << endl;
   }
-
+#ifdef PEEKS_GALORE
+  SW4_PEEK;
+  SYNC_STREAM;
+#endif
   // setup communicators for 3D solutions on all grids
   setupMPICommunications();
 
@@ -495,18 +502,13 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
         processSfileOutput(buffer);
       else if (startswith("sfile", buffer))
         processMaterialSfile(buffer);
+      else if (startswith("gmg", buffer))
+        processMaterialGMG(buffer);
       else if (startswith("vimaterial", buffer))
         processMaterialVimaterial(buffer);
       else if (startswith("invtestmaterial", buffer))
         processMaterialInvtest(buffer);
-      else if (startswith("efile", buffer)) {
-#ifndef ENABLE_ETREE
-        if (m_myRank == 0)
-          cout << "Error: SW4 was not built with Etree (efile) support" << endl;
-        return false;
-#endif
-        processMaterialEtree(buffer);
-      } else if (startswith("ifile", buffer))
+      else if (startswith("ifile", buffer))
         processMaterialIfile(buffer);
       else if (startswith("material", buffer))
         processMaterial(buffer);
@@ -516,6 +518,8 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
         processImage(buffer, false);
       else if (startswith("volimage", buffer))
         processImage3D(buffer);
+      else if (startswith("ssioutput", buffer))
+        processESSI3D(buffer);
       else if (startswith("essioutput", buffer))
         processESSI3D(buffer);
       else if (startswith("boundary_conditions", buffer))
@@ -602,9 +606,6 @@ void EW::processGrid(char* buffer) {
   bool use_geoprojection = false;
 
   stringstream proj0;
-
-  // hard code units to be in meters
-  proj0 << "+units=m";
 
   // default azimuth
   mGeoAz = 0;
@@ -758,7 +759,7 @@ void EW::processGrid(char* buffer) {
     else if (startswith("proj=", token)) {
       token += 5;
       // accumulate new style string
-      proj0 << " +proj=" << token;
+      proj0 << "+proj=" << token;
       use_geoprojection = true;
       proj_set = true;
     }
@@ -801,6 +802,9 @@ void EW::processGrid(char* buffer) {
     }
     token = strtok(NULL, " \t");
   }
+  //std::cout<<"PROJ) "<<proj0.str().c_str()<<"\n";
+  // hard code units to be in meters
+  //proj0 << "+units=m"; 
 
   //--------------------------------------------------------------------
   // There are only three ways to specify a grid.
@@ -892,18 +896,20 @@ void EW::processGrid(char* buffer) {
     }
   }
 
-  float_sw4 cubelen, zcubelen;
+  float_sw4 cubelen, zcubelen, hcube;
   if (m_geodynbc_found) {
     // Set SW4 grid spacing based on Geodyn cube data
+    // SRF: setting h from whi file stepsize is problematic for mesh refinement
 
     float_sw4 origin[3] = {0, 0, 0};
     double ibclat, ibclon, ibcaz;
 
     bool found_latlon;
     int adjust;
-    geodynbcGetSizes(m_geodynbc_filename, origin, cubelen, zcubelen,
+    geodynbcGetSizes(m_geodynbc_filename, origin, cubelen, zcubelen, hcube,
                      found_latlon, ibclat, ibclon, ibcaz, adjust);
     // Use approximate h
+    /*
     if (h == 0.0) {
       if (nx > 0)
         h = x / (nx - 1);
@@ -912,10 +918,11 @@ void EW::processGrid(char* buffer) {
       else
         h = y / (ny - 1);
     }
+    */
 
     // rounding of cube position to two decimals (prec=100), three (prec=1000)
     // etc..
-    float_sw4 prec = 100;
+    /* float_sw4 prec = 100; */
 
     if (found_latlon) {
       CHECK_INPUT(fabs(ibcaz - mGeoAz) < 1e-5,
@@ -925,18 +932,22 @@ void EW::processGrid(char* buffer) {
       // lat-lon corner of cube given
       if (adjust == 1 || origin[2] == 0) {
         // h based on cube length only, adjust z-position of cube
-        int nc = static_cast<int>(round(cubelen) / h);
+        /*
+        int nc = static_cast<int>(round(cubelen) / hcube);
         h = cubelen / nc;
-        origin[2] -= h * (origin[2] / h - round(origin[2] / h));
+        */
+        origin[2] -= hcube * (origin[2] / hcube - round(origin[2] / hcube));
       } else {
         // h based on cube length and z-position of cube
+        /*
         int a = static_cast<int>(round(origin[2] * prec));
         int b = static_cast<int>(round((origin[2] + zcubelen) * prec));
         //
         int d = gcd(a, b);
         int n1 = a / d;
-        int k = static_cast<int>(round(origin[2] / (n1 * h)));
+        int k = static_cast<int>(round(origin[2] / (n1 * hcube)));
         h = origin[2] / (k * n1);
+        */
       }
       // Geographic origin adjustment:
       double gridLat = mLatOrigin;
@@ -950,8 +961,8 @@ void EW::processGrid(char* buffer) {
       float_sw4 y = metersPerDegree *
                     (-sin(phi) * (ibclat - gridLat) +
                      cos(ibclat * deg2rad) * (ibclon - gridLon) * cos(phi));
-      x -= h * (x / h - round(x / h));
-      y -= h * (y / h - round(y / h));
+      x -= hcube * (x / hcube - round(x / hcube));
+      y -= hcube * (y / hcube - round(y / hcube));
       gridLat = ibclat - (x * cos(phi) - y * sin(phi)) / metersPerDegree;
       gridLon = ibclon - (x * sin(phi) + y * cos(phi)) /
                              (metersPerDegree * cos(ibclat * deg2rad));
@@ -967,21 +978,23 @@ void EW::processGrid(char* buffer) {
         // origin.
         float_sw4 xlen = x;
         float_sw4 ylen = y;
-        if (xlen == 0) xlen = h * (nx - 1);
-        if (ylen == 0) ylen = h * (ny - 1);
+        if (xlen == 0) xlen = hcube * (nx - 1);
+        if (ylen == 0) ylen = hcube * (ny - 1);
         origin[0] = 0.5 * (xlen - cubelen);
         origin[1] = 0.5 * (ylen - cubelen);
       }
       if (adjust == 1) {
         // h based on cube length only, adjust cube position
-        int nc = static_cast<int>(round(cubelen / h));
+        /*
+        int nc = static_cast<int>(round(cubelen / hcube));
         h = cubelen / nc;
+        */
         //	   cout << "nc= " << nc << " cubelen= " << cubelen << " origin
         // before " << 	      origin[0] << " " << origin[1] << " " << origin[2]
         // << endl;
-        origin[0] -= h * (origin[0] / h - round(origin[0] / h));
-        origin[1] -= h * (origin[1] / h - round(origin[1] / h));
-        origin[2] -= h * (origin[2] / h - round(origin[2] / h));
+        origin[0] -= hcube * (origin[0] / hcube - round(origin[0] / hcube));
+        origin[1] -= hcube * (origin[1] / hcube - round(origin[1] / hcube));
+        origin[2] -= hcube * (origin[2] / hcube - round(origin[2] / hcube));
         //	   cout << " origin after " <<
         //	      origin[0] << " " << origin[1] << " " << origin[2] << endl;
 
@@ -1079,6 +1092,7 @@ void EW::processGrid(char* buffer) {
       }
     }
   }
+
   if (!m_doubly_periodic) {
     if (proc_zero() && mVerbose >= 3)
       printf("**** Setting up the grid for a non-periodic problem\n");
@@ -1180,10 +1194,13 @@ void EW::processGrid(char* buffer) {
   m_global_ymax = yprime;
   m_global_zmax = zprime;
 
-#ifndef ENABLE_PROJ4
+  // hard code units to be in meters
+  proj0 << "+units=m";
+
+#if !defined(ENABLE_PROJ4) && !defined(ENABLE_PROJ_6)
   CHECK_INPUT(!use_geoprojection,
               "ERROR: need to configure SW4 with proj=yes to use projections "
-              "from the Proj4 library");
+              "from the Proj library");
 #endif
   if (use_geoprojection) {
     // tmp
@@ -1484,11 +1501,6 @@ void EW::processTopography(char* buffer) {
         m_topoInputStyle = CartesianGrid;
         m_topography_exists = true;
         needFileName = true;
-      } else if (strcmp("efile", token) == 0) {
-        m_topoInputStyle = Efile;
-        m_topography_exists = true;
-        needFileName = true;  // we require the file name to be given on the
-                              // topography command line
       } else if (strcmp("rfile", token) == 0) {
         m_topoInputStyle = Rfile;
         m_topography_exists = true;
@@ -1496,6 +1508,11 @@ void EW::processTopography(char* buffer) {
                               // topography command line
       } else if (strcmp("sfile", token) == 0) {
         m_topoInputStyle = Sfile;
+        m_topography_exists = true;
+        needFileName = true;  // we require the file name to be given on the
+                              // topography command line
+      } else if (strcmp("gmg", token) == 0) {
+        m_topoInputStyle = GMG;
         m_topography_exists = true;
         needFileName = true;  // we require the file name to be given on the
                               // topography command line
@@ -1516,25 +1533,6 @@ void EW::processTopography(char* buffer) {
       gotFileName = true;
       //        if (m_myRank==0)
       // 	 cout << "read topo file name=" << m_topoFileName <<endl;
-    }
-#ifdef ENABLE_ETREE
-    else if (startswith("etree=", token)) {
-      token += 6;
-      m_topoFileName = token;
-      m_topoInputStyle = Efile;
-      m_topography_exists = true;
-      gotFileName = true;
-    } else if (startswith("xetree=", token)) {
-      token += 7;  // skip xetree=
-      m_topoExtFileName = token;
-    }
-#endif
-    //                        12345678901
-    else if (startswith("resolution=", token)) {
-      token += 11;
-      m_EFileResolution = atof(token);
-      CHECK_INPUT(m_EFileResolution > 0.,
-                  "Resolution must be positive, not " << m_EFileResolution);
     }
     //                        123456789012
     else if (startswith("gaussianAmp=", token)) {
@@ -3024,8 +3022,8 @@ void EW::geodynFindFile(char* buffer) {
 //-----------------------------------------------------------------------
 void EW::geodynbcGetSizes(string filename, float_sw4 origin[3],
                           float_sw4& cubelen, float_sw4& zcubelen,
-                          bool& found_latlon, double& lat, double& lon,
-                          double& az, int& adjust) {
+                          float_sw4& hcube, bool& found_latlon, double& lat,
+                          double& lon, double& az, int& adjust) {
   ifstream geodynfile(m_geodynbc_filename.c_str());
   CHECK_INPUT(geodynfile.is_open(),
               "Error: opening geodyn file " << m_geodynbc_filename);
@@ -3147,6 +3145,8 @@ void EW::geodynbcGetSizes(string filename, float_sw4 origin[3],
 
   zcubelen = cubelen;
   if (nzfound) zcubelen = (nz - 1) * h;
+
+  if (hfound) hcube = h;
 }
 
 //-----------------------------------------------------------------------
@@ -3527,12 +3527,14 @@ void EW::processImage3D(char* buffer) {
 
 //-----------------------------------------------------------------------
 void EW::processESSI3D(char* buffer) {
-  int dumpInterval = -1;
-  string filePrefix = "essioutput";
+  int dumpInterval = -1, bufferInterval = 1;
+  string filePrefix = "ssioutput";
   float_sw4 coordValue;
   float_sw4 coordBox[4];
   const float_sw4 zero = 0.0;
   int precision = 8;
+  int compressionMode = 0;
+  double compressionPar;
 
   // Default is whole domain
   coordBox[0] = zero;
@@ -3543,11 +3545,12 @@ void EW::processESSI3D(char* buffer) {
   float_sw4 depth = -999.99;  // default not specified
 
   char* token = strtok(buffer, " \t");
-  CHECK_INPUT(strcmp("essioutput", token) == 0,
-              "ERROR: Not a essioutput line...: " << token);
+  CHECK_INPUT(
+      strcmp("ssioutput", token) == 0 || strcmp("essioutput", token) == 0,
+      "ERROR: Not a essioutput/ssioutput line...: " << token);
 
   token = strtok(NULL, " \t");
-  string err = "essioutput Error: ";
+  string err = "ssioutput Error: ";
   while (token != NULL) {
     // while there are tokens in the string still
     if (startswith("#", token) || startswith(" ", buffer))
@@ -3559,6 +3562,9 @@ void EW::processESSI3D(char* buffer) {
     } else if (startswith("dumpInterval=", token)) {
       token += 13;  // skip dumpInterval=
       dumpInterval = atoi(token);
+    } else if (startswith("bufferInterval=", token)) {
+      token += 15;  // skip bufferInterval=
+      bufferInterval = atoi(token);
     } else if (startswith("xmin=", token)) {
       token += 5;  // skip xmin=
       coordValue = atof(token);
@@ -3588,22 +3594,74 @@ void EW::processESSI3D(char* buffer) {
       token += 10;  // skip precision=
       precision = atoi(token);
       if (precision != 4 && precision != 8)
-        badOption("essioutput precision", token);
+        badOption("ssioutput precision", token);
       if (proc_zero())
-        cout << "\nESSI ouput will use " << precision * 8
+        cout << "SSI ouput will use " << precision * 8
              << "-bit floating point values." << endl;
+    } else if (startswith("zfp-rate=", token)) {
+      token += 9;
+      compressionMode = SW4_ZFP_MODE_RATE;
+      compressionPar = atof(token);
+      if (proc_zero())
+        cout << "SSI ouput will use ZFP rate=" << compressionPar << endl;
+    } else if (startswith("zfp-precision=", token)) {
+      token += 14;
+      compressionMode = SW4_ZFP_MODE_PRECISION;
+      compressionPar = atof(token);
+      if (proc_zero())
+        cout << "SSI ouput will use ZFP precision=" << compressionPar << endl;
+    } else if (startswith("zfp-accuracy=", token)) {
+      token += 13;
+      compressionMode = SW4_ZFP_MODE_ACCURACY;
+      compressionPar = atof(token);
+      if (proc_zero())
+        cout << "SSI ouput will use ZFP accuracy=" << compressionPar << endl;
+    } else if (startswith("zfp-reversible=", token)) {
+      token += 15;
+      compressionMode = SW4_ZFP_MODE_REVERSIBLE;
+      if (proc_zero()) cout << "SSI ouput will use ZFP reversible mode" << endl;
+    } else if (startswith("zlib=", token)) {
+      token += 5;
+      compressionMode = SW4_ZLIB;
+      compressionPar = atof(token);
+      if (proc_zero())
+        cout << "SSI ouput will use ZLIB level=" << (int)compressionPar << endl;
+    } else if (startswith("szip=", token)) {
+      token += 5;
+      compressionMode = SW4_SZIP;
+      if (proc_zero()) cout << "SSI ouput will use SZIP" << endl;
+    } else if (startswith("sz=", token)) {
+      token += 5;
+      compressionMode = SW4_SZ;
+      if (proc_zero())
+        cout << "SSI ouput will use SZ with configuration file ["
+             << getenv("SZ_CONFIG_FILE") << "]" << endl;
     } else {
-      badOption("essioutput", token);
+      badOption("ssioutput", token);
     }
     token = strtok(NULL, " \t");
   }
+
+#ifndef USE_ZFP
+  if (compressionMode > 0 && compressionMode < 5 && proc_zero())
+    cout << "WARNING: SW4 is not compiled with ZFP but ZFP command is used "
+         << endl;
+#endif
+
+#ifndef USE_SZ
+  if (compressionMode == SW4_SZ && proc_zero())
+    cout << "WARNING: SW4 is not compiled with SZ but SZ command is used "
+         << endl;
+#endif
+
+  if (compressionMode != 0 && bufferInterval == 1) bufferInterval = 100;
 
   // Check the specified min/max values make sense
   for (int d = 0; d < 2 * 2; d += 2) {
     if (coordBox[d + 1] < coordBox[d]) {
       char coordName[2] = {'x', 'y'};
       if (proc_zero())
-        cout << "ERROR: essioutput subdomain " << coordName[d]
+        cout << "ERROR: ssioutput subdomain " << coordName[d]
              << " coordinate max value " << coordBox[d + 1]
              << " is less than min value " << coordBox[d] << endl;
       MPI_Abort(MPI_COMM_WORLD, 1);
@@ -3612,14 +3670,15 @@ void EW::processESSI3D(char* buffer) {
 
   // Use depth if zmin/zmax values are specified
   if ((depth < 0) && proc_zero()) {
-    cout << "WARNING: essioutput depth not specified or less than zero, "
-            "setting to zero"
+    cout << "WARNING: ssioutput depth not specified or less than zero, setting "
+            "to zero"
          << endl;
     depth = 0;
   }
 
   ESSI3D* essi3d =
-      new ESSI3D(this, filePrefix, dumpInterval, coordBox, depth, precision);
+      new ESSI3D(this, filePrefix, dumpInterval, bufferInterval, coordBox,
+                 depth, precision, compressionMode, compressionPar);
   addESSI3D(essi3d);
 }
 
@@ -3631,12 +3690,12 @@ void EW::processCheckPoint(char* buffer) {
   token = strtok(NULL, " \t");
   string err = "CheckPoint Error: ";
   int cycle = -1, cycleInterval = 0;
-  //  float_sw4 time = 0.0, timeInterval = 0.0;
-  // bool timingSet = false;
   string filePrefix = "checkpoint";
 
   string restartFileName, restartPath;
-  bool restartFileGiven = false, restartPathGiven = false;
+  bool restartLatestGiven = false, restartFileGiven = false, restartPathGiven = false, useHDF5 = false;
+  int compressionMode = 0;
+  double compressionPar;
 
   size_t bufsize = 10000000;
 
@@ -3655,10 +3714,12 @@ void EW::processCheckPoint(char* buffer) {
                   err << "cycleInterval must be a non-negative integer, not: "
                       << token);
       cycleInterval = atoi(token);
-      //      timingSet = true;
     } else if (startswith("file=", token)) {
       token += 5;  // skip file=
       filePrefix = token;
+    } else if (startswith("restartlatest", token)) {
+      token += 13;
+      restartLatestGiven = true;
     } else if (startswith("restartfile=", token)) {
       token += 12;  // skip file=
       restartFileName = token;
@@ -3667,7 +3728,60 @@ void EW::processCheckPoint(char* buffer) {
       token += 12;
       restartPath = token;
       restartPathGiven = true;
-    } else if (startswith("bufsize=", token)) {
+    } else if (startswith("hdf5=", token)) {
+      token += 5;  // skip hdf5=
+      useHDF5 = strcmp("yes", token) == 0 || strcmp("true", token) == 0 ||
+                strcmp("1", token) == 0 || strcmp("on", token) == 0;
+    } else if (startswith("zfp-rate=", token)) {
+      token += 9;
+      compressionMode = SW4_ZFP_MODE_RATE;
+      compressionPar = atof(token);
+      useHDF5 = true;
+      if (proc_zero())
+        cout << "Checkpoint will use ZFP rate=" << compressionPar << endl;
+    } else if (startswith("zfp-precision=", token)) {
+      token += 14;
+      compressionMode = SW4_ZFP_MODE_PRECISION;
+      compressionPar = atof(token);
+      useHDF5 = true;
+      if (proc_zero())
+        cout << "Checkpoint will use ZFP precision=" << compressionPar << endl;
+    } else if (startswith("zfp-accuracy=", token)) {
+      token += 13;
+      compressionMode = SW4_ZFP_MODE_ACCURACY;
+      compressionPar = atof(token);
+      useHDF5 = true;
+      if (proc_zero())
+        cout << "Checkpoint will use ZFP accuracy=" << compressionPar << endl;
+    } else if (startswith("zfp-reversible=", token)) {
+      token += 15;
+      compressionMode = SW4_ZFP_MODE_REVERSIBLE;
+      useHDF5 = true;
+      if (proc_zero())
+        cout << "Checkpoint will use ZFP reversible mode" << endl;
+    } else if (startswith("zlib=", token)) {
+      token += 5;
+      compressionMode = SW4_ZLIB;
+      compressionPar = atof(token);
+      useHDF5 = true;
+      if (proc_zero())
+        cout << "Checkpoint will use ZLIB level=" << (int)compressionPar
+             << endl;
+    } else if (startswith("szip=", token)) {
+      token += 5;
+      compressionMode = SW4_SZIP;
+      useHDF5 = true;
+      if (proc_zero()) cout << "Checkpoint will use SZIP" << endl;
+    } else if (startswith("sz=", token)) {
+      token += 5;
+      compressionMode = SW4_SZ;
+      useHDF5 = true;
+      if (proc_zero())
+        cout << "Checkpoint will use SZ with configuration file ["
+             << getenv("SZ_CONFIG_FILE") << "]" << endl;
+    }
+
+    else if (startswith("bufsize=", token)) {
       token += 8;  // skip bufsize=
       bufsize = atoi(token);
     } else {
@@ -3675,10 +3789,30 @@ void EW::processCheckPoint(char* buffer) {
     }
     token = strtok(NULL, " \t");
   }
+
+#ifndef USE_ZFP
+  if (compressionMode > 0 && compressionMode < 5 && proc_zero())
+    cout << "WARNING: SW4 is not compiled with ZFP but ZFP command is used "
+         << endl;
+#endif
+
+#ifndef USE_SZ
+  if (compressionMode == SW4_SZ && proc_zero())
+    cout << "WARNING: SW4 is not compiled with SZ but SZ command is used "
+         << endl;
+#endif
+
   if (m_check_point == CheckPoint::nil) m_check_point = new CheckPoint(this);
   if (cycleInterval > 0)
     m_check_point->set_checkpoint_file(filePrefix, cycle, cycleInterval,
-                                       bufsize);
+                                       bufsize, useHDF5, compressionMode,
+                                       compressionPar);
+
+  CHECK_INPUT(!(restartLatestGiven && restartFileGiven),
+              err << "invalid to specify both restartlatest and restartfile");
+  if (restartLatestGiven) {
+    m_check_point->set_restart_latest(bufsize);
+  }
   if (restartFileGiven) {
     m_check_point->set_restart_file(restartFileName, bufsize);
   }
@@ -4278,11 +4412,12 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
       mC[g].set_to_minusOne();
     } else {
       // elastic material
-      mMu[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
-      mLambda[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
+      mMu[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Host);
+      mLambda[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                        Space::Host);
       // initialize the material coefficients to -1
-      mMu[g].set_to_minusOne();
-      mLambda[g].set_to_minusOne();
+      mMu[g].set_to_minusOneHost();
+      mLambda[g].set_to_minusOneHost();
       // allocate space for material coefficient arrays needed by MR
       m_Morc[g].define(ifirst, ilast, jfirst, jlast, 1, 1);
       m_Mlrc[g].define(ifirst, ilast, jfirst, jlast, 1, 1);
@@ -4297,21 +4432,23 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
     }
     // viscoelastic material coefficients & memory variables
     if (m_use_attenuation) {
-      mQs[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
-      mQp[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
+      mQs[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Host);
+      mQp[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Host);
       for (int a = 0; a < m_number_mechanisms;
            a++)  // the simplest attenuation model only uses Q, not MuVE or
                  // LambdaVE
       {
-        mMuVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
-        mLambdaVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
+        mMuVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                           Space::Host);
+        mLambdaVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                               Space::Host);
         // initialize the viscoelastic material coefficients to -1
-        mMuVE[g][a].set_to_minusOne();
-        mLambdaVE[g][a].set_to_minusOne();
+        mMuVE[g][a].set_to_minusOneHost();
+        mLambdaVE[g][a].set_to_minusOneHost();
       }
       // initialize Qp and Qs to -1
-      mQs[g].set_to_minusOne();
-      mQp[g].set_to_minusOne();
+      mQs[g].set_to_minusOneHost();
+      mQp[g].set_to_minusOneHost();
     }
 
     // go to the next coarser grid
@@ -4609,30 +4746,30 @@ void EW::allocateCurvilinearArrays() {
       mCcurv.set_to_minusOne();
     } else {
       mMu[g].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
-                    m_kEnd[g]);
-      mMu[g].set_to_minusOne();
+                    m_kEnd[g], Space::Host);
+      mMu[g].set_to_minusOneHost();
       mLambda[g].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                        m_kStart[g], m_kEnd[g]);
-      mLambda[g].set_to_minusOne();
+                        m_kStart[g], m_kEnd[g], Space::Host);
+      mLambda[g].set_to_minusOneHost();
     }
     // viscoelastic material coefficients
     if (m_use_attenuation) {
       // initialize the viscoelastic material coefficients to -1
       mQs[g].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
-                    m_kEnd[g]);
-      mQs[g].set_to_minusOne();
+                    m_kEnd[g], Space::Host);
+      mQs[g].set_to_minusOneHost();
       mQp[g].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
-                    m_kEnd[g]);
-      mQp[g].set_to_minusOne();
+                    m_kEnd[g], Space::Host);
+      mQp[g].set_to_minusOneHost();
       for (int a = 0; a < m_number_mechanisms;
            a++)  // the simplest attenuation model has m_number_mechanisms = 0
       {
         mMuVE[g][a].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                           m_kStart[g], m_kEnd[g]);
-        mMuVE[g][a].set_to_minusOne();
+                           m_kStart[g], m_kEnd[g], Space::Host);
+        mMuVE[g][a].set_to_minusOneHost();
         mLambdaVE[g][a].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                               m_kStart[g], m_kEnd[g]);
-        mLambdaVE[g][a].set_to_minusOne();
+                               m_kStart[g], m_kEnd[g], Space::Host);
+        mLambdaVE[g][a].set_to_minusOneHost();
       }  // end for a...
     }    // end if attenuation
   }      // end for g...
@@ -6607,6 +6744,15 @@ void EW::processReceiverHDF5(char* buffer,
 
 #ifdef USE_HDF5
   bool is_obs = false;
+  // Adjust writeEvery so it is always a multiple of downsample
+  if (writeEvery % downSample != 0) {
+    writeEvery = (int)writeEvery / downSample;
+    writeEvery *= downSample;
+    if (proc_zero())
+      cout << "receiver command: writeEvery=" << writeEvery
+           << " is not a multiple of downsample, " << downSample
+           << "adjustding writeEvery to " << writeEvery << endl;
+  }
   readStationHDF5(this, inFileName, fileName, writeEvery, downSample, mode,
                   event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax,
                   is_obs, false, false, 0, 0, false, false, false, 0, false, 0);
@@ -6808,8 +6954,6 @@ void EW::processReceiver(char* buffer,
     } else if (startswith("hdf5format=", token)) {
       token += strlen("hdf5format=");
       hdf5format = atoi(token);
-      // Write 64k data (16384 steps) each time for better HDF5 I/O performance
-      if (writeEvery == 1000) writeEvery = 16383;
     } else if (startswith("variables=", token)) {
       //* testing
       // if (proc_zero())
@@ -6896,6 +7040,15 @@ void EW::processReceiver(char* buffer,
       cerr.flush();
     }
   } else {
+    if (writeEvery % downSample != 0) {
+      writeEvery = (int)writeEvery / downSample;
+      writeEvery *= downSample;
+      if (proc_zero())
+        cout << "receiver command: writeEvery=" << writeEvery
+             << " is not a multiple of downsample, " << downSample
+             << "adjustding writeEvery to " << writeEvery << endl;
+    }
+
     TimeSeries* ts_ptr =
         new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat,
                        hdf5format, hdf5FileName, x, y, depth, topodepth,
@@ -7788,180 +7941,6 @@ void EW::processMaterialPfile(char* buffer) {
   add_mtrl_block(pf);
 }
 
-//-----------------------------------------------------------------------
-void EW::processMaterialEtree(char* buffer) {
-#ifdef ENABLE_ETREE
-  string name = "Efile";
-
-  // Used only for efiles
-  string model = "SF";
-  string etreefile = "NONE";
-  string xetreefile = "NONE";
-  string etreelogfile = "NONE";
-  const char* queryStyle = "MAXRES";
-
-  double eFileResolution = -1;
-  //  if (!mCheckMode)
-  //    resolution = mGridSize[0];
-
-  //  float vpmin = 0.0;
-  //  bool vpMinSet = false;
-  //  float vsmin = 0.0;
-  //  bool vsMinSet = false;
-  string accessmode = "parallel";
-  cencalvm::storage::Geometry* efileGeom = 0;
-
-  char* token = strtok(buffer, " \t");
-  CHECK_INPUT(
-      strcmp("efile", token) == 0,
-      "ERROR: material data can only be set by an efile line, not: " << token);
-  string materialCommandType = token;
-
-  string err = token;
-  err += " Error: ";
-
-  token = strtok(NULL, " \t");
-
-  //  InitialConditionBlock* b = new InitialConditionBlock;
-
-  while (token != NULL) {
-    // while there are tokens in the string still
-    if (startswith("#", token) || startswith(" ", buffer))
-      // Ignore commented lines and lines with just a space.
-      break;
-    //       else if (startswith("model=", token))
-    //       {
-    //          token += 6; // skip model=
-    //          model = token;
-    //       }
-    else if (startswith("etree=", token)) {
-      token += 6;  // skip etree=
-      etreefile = token;
-    } else if (startswith("xetree=", token)) {
-      token += 7;  // skip xetree=
-      xetreefile = token;
-    } else if (startswith("logfile=", token)) {
-      token += 8;  // skip logfile=
-      etreelogfile = token;
-    } else if (startswith("query=", token)) {
-      token += strlen("query=");
-      queryStyle = token;
-      CHECK_INPUT(strcmp(queryStyle, "FIXEDRES") == 0 ||
-                      strcmp(queryStyle, "MAXRES") == 0,
-                  err << "query can only be set to FIXEDRES or MAXRES, not: "
-                      << queryStyle);
-    }
-    //      else if (startswith("vsmin=", token))
-    //      {
-    //         token += strlen("vsmin=");
-    //         vsmin = atof(token);
-    //         vsMinSet = true;
-    //      }
-    //      else if (startswith("vpmin=", token))
-    //      {
-    //         token += strlen("vpmin=");
-    //         vpmin = atof(token);
-    // vpMinSet = true;
-    //      }
-    else if (startswith("resolution=", token)) {
-      token += 11;
-      eFileResolution = atof(token);
-      CHECK_INPUT(eFileResolution > 0.,
-                  "Resolution must be positive, not " << eFileResolution);
-    } else if (startswith("access=", token)) {
-      token += strlen("access=");
-      CHECK_INPUT(
-          strcmp(token, "parallel") == 0 || strcmp(token, "serial") == 0,
-          err << "access attribute can only be set to serial, or parallel, "
-                 "not: "
-              << token);
-      accessmode = token;
-    } else {
-      badOption(materialCommandType, token);
-    }
-    token = strtok(NULL, " \t");
-  }
-  // End parsing...
-
-  CHECK_INPUT(model != "", err << "the model attribute must be set");
-
-  //----------------------------------------------------------------
-  // Check parameters
-  //----------------------------------------------------------------
-  if (m_myRank == 0) {
-    cout << "\t Efile " << model << " Model specified..." << endl;
-    cout << "\t Looking for etree model: " << etreefile << endl;
-    if (xetreefile != "NONE") {
-      cout << "\t Looking for xetree model: " << xetreefile << endl;
-    }
-  }
-  //  if (mCheckMode)
-  //  {
-  //     if (access(etreefile.c_str(), R_OK) != 0)
-  //        cout << "***ERROR: No read permission on etree file: " << etreefile
-  //        << endl;
-  //     if (xetreefile != "NONE")
-  //     {
-  //        if (access(xetreefile.c_str(), R_OK) != 0)
-  //           cout << "***ERROR: No read permission on xefile: " << xetreefile
-  //           << endl;
-  //     }
-  //     return;
-  //  }
-
-  // checkmode does the copy from above, if needed, nothing else
-  //  if (mCheckMode) return;
-
-  name = model + " " + materialCommandType;
-
-  std::vector<int> temp3D;
-  std::vector<int> temp2D;
-
-  if (eFileResolution < 0.) eFileResolution = mGridSize[mNumberOfGrids - 1];
-
-  EtreeFile* ef = new EtreeFile(this, accessmode, etreefile, xetreefile, model,
-                                etreelogfile, queryStyle, eFileResolution);
-
-  double latse, lonse, latsw, lonsw, latne, lonne, latnw, lonnw;
-  ef->getcorners(latse, lonse, latsw, lonsw, latne, lonne, latnw, lonnw);
-  //  ef->getGeoBox()->getBounds(NW, NE, SW, SE);
-  double nwxyz[3];
-  double nexyz[3];
-  double swxyz[3];
-  double sexyz[3];
-  //  computeCartesianCoord(nwxyz[0],nwxyz[1],nwxyz[2],NW);
-  //  computeCartesianCoord(nexyz[0],nexyz[1],nexyz[2],NE);
-  //  computeCartesianCoord(swxyz[0],swxyz[1],swxyz[2],SW);
-  //  computeCartesianCoord(sexyz[0],sexyz[1],sexyz[2],SE);
-
-  computeCartesianCoord(sexyz[0], sexyz[1], lonse, latse);
-  computeCartesianCoord(swxyz[0], swxyz[1], lonsw, latsw);
-  computeCartesianCoord(nexyz[0], nexyz[1], lonne, latne);
-  computeCartesianCoord(nwxyz[0], nwxyz[1], lonnw, latnw);
-
-  // constrain on x domain
-  double etreeXmin = min(min(min(nexyz[0], nwxyz[0]), sexyz[0]), swxyz[0]);
-  double etreeXmax = max(max(max(nexyz[0], nwxyz[0]), sexyz[0]), swxyz[0]);
-  double etreeYmin = min(min(min(nexyz[1], nwxyz[1]), sexyz[1]), swxyz[1]);
-  double etreeYmax = max(max(max(nexyz[1], nwxyz[1]), sexyz[1]), swxyz[1]);
-  //  double etreeZmin = min(min(min(nexyz[2], nwxyz[2]), sexyz[2]), swxyz[2]);
-  //  double etreeZmax = max(max(max(nexyz[2], nwxyz[2]), sexyz[2]), swxyz[2]);
-
-  if (getVerbosity() >= 2 && m_myRank == 0)
-    printf("Horizontal extent of etree %s xmin=%e, xmax=%e, ymin=%e, ymax=%e\n",
-           name.c_str(), etreeXmin, etreeXmax, etreeYmin, etreeYmax);
-
-  //   // needed to write topographic image slices
-  mEtreeFile = ef;
-
-  add_mtrl_block(ef);
-
-#else
-  CHECK_INPUT(
-      0, "Error: Etree support not compiled into SW4 (use -DENABLE_ETREE)");
-#endif
-}
-
 void EW::processMaterialIfile(char* buffer) {
   // bool x1set = false, x2set = false, y1set = false, y2set = false,
   //      z1set = false, z2set = false;
@@ -8230,6 +8209,53 @@ void EW::processMaterialSfile(char* buffer) {
 }
 
 //-----------------------------------------------------------------------
+void EW::processMaterialGMG(char* buffer) {
+  string name = "gmg";
+  string filename = "NONE";
+  string directory = "NONE";
+  string cflatten = "NONE";
+
+  char* token = strtok(buffer, " \t");
+  //  CHECK_INPUT(strcmp("rfile", token) == 0,
+  //	      "ERROR: material data can only be set by an rfile line, not: " <<
+  // token);
+
+  string err = token;
+  err += " Error: ";
+  token = strtok(NULL, " \t");
+
+  while (token != NULL) {
+    // while there are tokens in the string still
+    if (startswith("#", token) || startswith(" ", buffer))
+      // Ignore commented lines and lines with just a space.
+      break;
+    else if (startswith("filename=", token)) {
+      token += 9;  // skip filename=
+      filename = token;
+    } else if (startswith("directory=", token)) {
+      token += 10;  // skip directory=
+      directory = token;
+    } else {
+      cout << token << " is not a gmg option " << endl;
+    }
+    token = strtok(NULL, " \t");
+  }
+  // End parsing...
+
+  //----------------------------------------------------------------
+  // Check parameters
+  //----------------------------------------------------------------
+  if (strcmp(directory.c_str(), "NONE") == 0) directory = string("./");
+
+  if (m_myRank == 0)
+    cout << "*** Using GMG " << filename << " in directory " << directory
+         << endl;
+
+  MaterialGMG* sf = new MaterialGMG(this, filename, directory);
+  add_mtrl_block(sf);
+}
+
+//-----------------------------------------------------------------------
 void EW::processMaterialInvtest(char* buffer) {
   int nr = 1;
   char* token = strtok(buffer, " \t");
@@ -8350,14 +8376,108 @@ void EW::processMaterialInvtest(char* buffer) {
 // }
 
 //-----------------------------------------------------------------------
+// void EW::processRandomBlock(char* buffer) {
+//   char* token = strtok(buffer, " \t");
+//   CHECK_INPUT(strcmp("randomblock", token) == 0,
+//               "ERROR: not a randomblock line: " << token);
+//   token = strtok(NULL, " \t");
+//   bool lengthscaleset = false, lengthscalezset = false, vsmaxset = false;
+//   float_sw4 corrlen = 1000, corrlenz = 1000, sigma = 0.1, hurst = 0.3,
+//             zmin = -1e38, zmax = 1e38, vsmax = 1e38;
+//   unsigned int seed = 0;
+
+//   m_randomize = true;
+//   while (token != NULL) {
+//     // while there are tokens in the string still
+//     if (startswith("#", token) || startswith(" ", buffer))
+//       // Ignore commented lines and lines with just a space.
+//       break;
+//     else if (startswith("corrlen=", token)) {
+//       token += 8;
+//       corrlen = atof(token);
+//       CHECK_INPUT(corrlen > 0,
+//                   "Error randomblock, corrlen must be > 0, not " << token);
+//       lengthscaleset = true;
+//     } else if (startswith("corrlenz=", token)) {
+//       token += 9;
+//       corrlenz = atof(token);
+//       CHECK_INPUT(corrlenz > 0,
+//                   "Error randomblock, corrlenz must be > 0, not " << token);
+//       lengthscalezset = true;
+//     } else if (startswith("sigma=", token)) {
+//       token += 6;
+//       sigma = atof(token);
+//       CHECK_INPUT(sigma > 0,
+//                   "Error randomblock, sigma must be > 0, not " << token);
+//     } else if (startswith("hurst=", token)) {
+//       token += 6;
+//       hurst = atof(token);
+//     } else if (startswith("seed=", token)) {
+//       token += 5;
+//       seed = atoi(token);
+//     } else if (startswith("zmin=", token)) {
+//       token += 5;
+//       zmin = atof(token);
+//     } else if (startswith("zmax=", token)) {
+//       token += 5;
+//       zmax = atof(token);
+//     } else if (startswith("vsmax=", token)) {
+//       token += 6;
+//       vsmax = atof(token);
+//       vsmaxset = true;
+//     }
+//     else if( startswith("vsmin=",token) )
+//       {
+// 	token += 6;
+// 	vsmin = atof(token);
+// 	vsminset = true;
+//       }
+//     else if( startswith("randomrho=",token) )
+//       {
+// 	token += 10;
+// 	std::string p=token;
+// 	random_rho = (p =="1" || p == "yes" || p=="on");
+
+//       }
+//     else if( startswith("rhoamplitude=",token) )
+//       {
+// 	token += 13;
+// 	rhoamp = atof(token);
+//       } else {
+//       badOption("randomblock", token);
+//     }
+//     token = strtok(NULL, " \t");
+//   }
+//   if (lengthscaleset && !lengthscalezset) corrlenz = corrlen;
+//   RandomizedMaterial* mtrl = new RandomizedMaterial(
+//       this, zmin, zmax, corrlen, corrlenz, hurst, sigma, seed);
+//   if (vsmaxset) mtrl->set_vsmax(vsmax);
+
+//   m_random_blocks.push_back(mtrl);
+//   //   if( !lengthscaleset && lengthscalezset )
+//   //      m_random_dist = m_random_distz;
+// }
+
+//-----------------------------------------------------------------------
 void EW::processRandomBlock(char* buffer) {
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("randomblock", token) == 0,
               "ERROR: not a randomblock line: " << token);
+  if (m_events_parallel) {
+    if (proc_zero()) {
+      std::cout << "WARNING: randomblock command does not work together with "
+                   "parallel seismic events"
+                << std::endl;
+      std::cout << "randomblock command will be ignored " << std::endl;
+    }
+    return;
+  }
   token = strtok(NULL, " \t");
   bool lengthscaleset = false, lengthscalezset = false, vsmaxset = false;
+  bool vsminset = false, random_rho = false;
   float_sw4 corrlen = 1000, corrlenz = 1000, sigma = 0.1, hurst = 0.3,
-            zmin = -1e38, zmax = 1e38, vsmax = 1e38;
+            zmin = -1e38, zmax = 1e38, vsmax = 1e38, vsmin = 0;
+  float_sw4 rhoamp = 0.8;
   unsigned int seed = 0;
 
   m_randomize = true;
@@ -8399,15 +8519,32 @@ void EW::processRandomBlock(char* buffer) {
       token += 6;
       vsmax = atof(token);
       vsmaxset = true;
+    } else if (startswith("vsmin=", token)) {
+      token += 6;
+      vsmin = atof(token);
+      vsminset = true;
+    } else if (startswith("randomrho=", token)) {
+      token += 10;
+      std::string p = token;
+      random_rho = (p == "1" || p == "yes" || p == "on");
+
+    } else if (startswith("rhoamplitude=", token)) {
+      token += 13;
+      rhoamp = atof(token);
     } else {
       badOption("randomblock", token);
     }
     token = strtok(NULL, " \t");
   }
   if (lengthscaleset && !lengthscalezset) corrlenz = corrlen;
-  RandomizedMaterial* mtrl = new RandomizedMaterial(
-      this, zmin, zmax, corrlen, corrlenz, hurst, sigma, seed);
+
+  if (!random_rho) rhoamp = 0.0;
+  RandomizedMaterial* mtrl =
+      new RandomizedMaterial(this, zmin, zmax, corrlen, corrlenz, hurst, sigma,
+                             rhoamp, random_rho, seed);
   if (vsmaxset) mtrl->set_vsmax(vsmax);
+  if (vsminset) mtrl->set_vsmin(vsmin);
+  m_randomize_density = random_rho || m_randomize_density;
 
   m_random_blocks.push_back(mtrl);
   //   if( !lengthscaleset && lengthscalezset )

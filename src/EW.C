@@ -42,10 +42,14 @@
 #include "hdf5.h"
 #endif
 #if defined(SW4_EXPT_1)
-// Experimental template based spliiing along I,J,K
+// Experimental template based splitting along I,J,K
 #include "curvilinear4sgc.h"
 #endif
-
+#if defined(SW4_EXPT_3)
+#include "curvilinear4sgcX3.h"
+#endif
+extern __constant__ double cmem_acof[384];
+extern __constant__ double cmem_acof_no_gp[384];
 extern "C" {
 void tw_aniso_force(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                     int klast, float_sw4* fo, float_sw4 t, float_sw4 om,
@@ -477,7 +481,6 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
       m_lamb_test(0),
       m_rayleigh_wave_test(0),
       m_update_boundary_function(0),
-      m_EFileResolution(-1.0),
       m_maxIter(10),
       m_topoFileName("NONE"),
       m_topoExtFileName("NONE"),
@@ -606,8 +609,8 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
       m_do_linesearch(true),
       //  m_utc0set(false),
       //  m_utc0isrefevent(false),
+      m_events_parallel(false),
       m_opttest(0),
-      mEtreeFile(NULL),
       m_perturb(0),
       m_iperturb(1),
       m_jperturb(1),
@@ -615,6 +618,7 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
       m_pervar(1),
       m_qmultiplier(1),
       m_randomize(false),
+      m_randomize_density(false),
       m_anisotropic(false),
       m_croutines(true),
       NO_TOPO(1e38),
@@ -644,25 +648,28 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
 #if defined(SW4_DEVICE_MPI_BUFFERS)
   mpi_buffer_space = Space::Device;
   if (!m_myRank) std::cout << "Using MPI buffers in device memory\n";
-  if (!mpi_supports_device_buffers()) {
-    std::cerr << "SW4 must be run using the -M -gpu flag with Device buffers\n";
-    abort();
-  }
+  //if (!mpi_supports_device_buffers()) {
+   // std::cerr << "SW4 must be run using the -M -gpu flag with Device buffers\n";
+    //abort();
+  //}
 #elif defined(SW4_MANAGED_MPI_BUFFERS)
   mpi_buffer_space = Space::Managed;
   if (!m_myRank) std::cout << "Using MPI buffers in managed memory\n";
-  if (!mpi_supports_device_buffers()) {
-    std::cerr
-        << "SW4 must be run using the -M -gpu flag with Managed buffers\n";
-    abort();
-  }
+  //if (!mpi_supports_device_buffers()) {
+   // std::cerr
+    //    << "SW4 must be run using the -M -gpu flag with Managed buffers\n";
+    //abort();
+  //}
 #elif defined(SW4_PINNED_MPI_BUFFERS)
   mpi_buffer_space = Space::Pinned;
   if (!m_myRank)
     std::cout << "Using MPI buffers in pinned memory(COMPILE OPTION)\n";
+#elif defined(SW4_STAGED_MPI_BUFFERS)
+  mpi_buffer_space = Space::Pinned;
+  if (!m_myRank) std::cout << "Using staged MPI buffers (COMPILE OPTION)\n";
 #else
   mpi_buffer_space = Space::Pinned;
-  if (!m_myRank) std::cout << "Using MPI buffersin pinned memory(DEFAULT)\nn";
+  if (!m_myRank) std::cout << "Using MPI buffers in pinned memory(DEFAULT)\nn";
 #endif
 
   m_check_point = new CheckPoint(this);
@@ -714,6 +721,8 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
     m_utc0[e].resize(7);
   }
 
+  MPI_Comm_dup(MPI_COMM_WORLD, &m_1d_communicator);
+
   // read the input file and setup the simulation object
   if (parseInputFile(a_GlobalSources, a_GlobalTimeSeries))
     mParsingSuccessful = true;
@@ -723,6 +732,9 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
     // char fname[100];
     // sprintf(fname,"sw4-error-log-p%i.txt", m_myRank);
     // msgStream.open(fname);
+
+  // Potentially disable restart if no checkpoint is found
+  m_check_point->verify_restart();
 
 #if defined(ENABLE_GPU)
   float_sw4* tmpa =
@@ -753,8 +765,8 @@ EW::~EW() {
   ::operator delete[](m_sbop, Space::Managed);
 #endif
   ::operator delete[](viewArrayActual, Space::Managed);
-
   for (int m = 0; m < mNumberOfGrids; m += 4) {
+  //std::cout<<"MPI BUFFER TYPE IS "<<as_int(mpi_buffer_space)<<" "<<std::get<0>(bufs_type1[4 * m])<<" \n";
     ::operator delete[](std::get<0>(bufs_type1[4 * m]), mpi_buffer_space);
     ::operator delete[](std::get<0>(bufs_type3[4 * m]), mpi_buffer_space);
     ::operator delete[](std::get<0>(bufs_type4[4 * m]), mpi_buffer_space);
@@ -768,6 +780,7 @@ EW::~EW() {
   ::operator delete[](ForceVector, Space::Managed);
   ::operator delete[](ForceAddress, Space::Managed);
 
+  ::operator delete[](global_variables.device_buffer, Space::Managed_temps);
 #ifndef SW4_USE_UMPIRE
   // Delete the allocations stored in Sarray::static_map
   for (auto& i : Sarray::static_map) {
@@ -843,9 +856,13 @@ bool EW::wasParsingSuccessful() { return mParsingSuccessful; }
 void EW::printTime(int cycle, float_sw4 t, bool force) const {
   if (!mQuiet && proc_zero() &&
       (force || mPrintInterval == 1 || (cycle % mPrintInterval) == 1 ||
-       cycle == 1))
+       cycle == 1)) {
+    time_t now;
+    time(&now);
     // string big enough for >1 million time steps
-    printf("Time step %7i  t = %15.7e\n", cycle, t);
+    printf("Time step %7i  t = %15.7e\t%s", cycle, t, ctime(&now));
+    fflush(stdout);
+  }
 }
 //-----------------------------------------------------------------------
 void EW::printPreamble(vector<Source*>& a_Sources, int event) const {
@@ -988,6 +1005,7 @@ void EW::switch_on_checkfornan() { m_checkfornan = true; }
 
 //-----------------------------------------------------------------------
 void EW::assign_local_bcs() {
+  SW4_MARK_FUNCTION;
   // This routine assigns m_bcType[g][b], b=0,1,2,3, based on mbcGlobalType,
   // taking parallel overlap boundaries into account
 
@@ -1097,6 +1115,7 @@ void EW::assign_local_bcs() {
 // Note that the padding cell array is no longer needed.
 // use m_iStartInt[g], m_iEndInt[g] to get the range of interior points
 void EW::initializePaddingCells() {
+  SW4_MARK_FUNCTION;
   int g = mNumberOfGrids - 1;
 
   for (int aa = 0; aa < 4; aa++) {
@@ -1110,6 +1129,7 @@ void EW::initializePaddingCells() {
 
 //-----------------------------------------------------------------------
 void EW::check_dimensions() {
+  SW4_MARK_FUNCTION;
   for (int g = 0; g < mNumberOfGrids; g++) {
     int nz = m_kEndInt[g] - m_kStartInt[g] + 1;
     int nzmin;
@@ -1196,10 +1216,12 @@ bool EW::getDepth(float_sw4 x, float_sw4 y, float_sw4 z, float_sw4& depth) {
 
     // // evaluate elevation of topography on the grid (smoothed topo)
     success = true;
-    if (!m_gridGenerator->interpolate_topography(this, x, y, zMinTilde,
-                                                 mTopoGridExt)) {
+    int ret = m_gridGenerator->interpolate_topography(this, x, y, zMinTilde,
+                                                      mTopoGridExt);
+    if (ret < 0) {
       cerr << "ERROR: getDepth: Unable to evaluate topography for x=" << x
-           << " y= " << y << " on proc # " << getRank() << endl;
+           << " y= " << y << " on proc # " << getRank() << ", ret=" << ret
+           << endl;
       //            cerr << "q=" << q << " r=" << r << " qMin=" << qMin << "
       //            qMax=" << qMax << " rMin=" << rMin << " rMax=" << rMax <<
       //            endl;
@@ -1214,7 +1236,14 @@ bool EW::getDepth(float_sw4 x, float_sw4 y, float_sw4 z, float_sw4& depth) {
 }
 
 //-----------------------------------------------------------------------
+void EW::computeCartesianCoordGMG(double& x, double& y, double lon, double lat,
+                                  char* crs_to) {
+  m_geoproj->computeCartesianCoordGMG(x, y, lon, lat, crs_to);
+}
+
+//-----------------------------------------------------------------------
 void EW::computeCartesianCoord(double& x, double& y, double lon, double lat) {
+  SW4_MARK_FUNCTION;
   // -----------------------------------------------------------------
   // Compute the cartesian coordinate given the geographic coordinate
   // -----------------------------------------------------------------
@@ -1289,6 +1318,7 @@ void EW::computeGeographicCoord(double x, double y, double& longitude,
 //-----------------------------------------------------------------------
 int EW::computeNearestGridPoint2(int& a_i, int& a_j, int& a_k, int& a_g,
                                  float_sw4 a_x, float_sw4 a_y, float_sw4 a_z) {
+  SW4_MARK_FUNCTION;
   int success = 0;
   if (a_z >= m_zmin[mNumberOfCartesianGrids - 1]) {
     // point is in a Cartesian grid
@@ -1349,6 +1379,7 @@ int EW::computeNearestGridPoint2(int& a_i, int& a_j, int& a_k, int& a_g,
 void EW::computeNearestGridPoint(int& a_i, int& a_j, int& a_k,
                                  int& a_g,  // grid on which indices are located
                                  float_sw4 a_x, float_sw4 a_y, float_sw4 a_z) {
+  SW4_MARK_FUNCTION;
   bool breakLoop = false;
 
   for (int g = 0; g < mNumberOfGrids; g++) {
@@ -1445,6 +1476,7 @@ void EW::computeNearestLowGridPoint(
     int& a_i, int& a_j, int& a_k,
     int& a_g,  // grid on which indices are located
     float_sw4 a_x, float_sw4 a_y, float_sw4 a_z) {
+  SW4_MARK_FUNCTION;
   bool breakLoop = false;
 
   for (int g = 0; g < mNumberOfGrids; g++) {
@@ -1510,6 +1542,7 @@ void EW::computeNearestLowGridPoint(
 
 //-----------------------------------------------------------------------
 bool EW::interior_point_in_proc(int a_i, int a_j, int a_g) {
+  SW4_MARK_FUNCTION;
   // NOT TAKING PARALLEL GHOST POINTS INTO ACCOUNT!
   // Determine if grid point with index (a_i, a_j) on grid a_g is an interior
   // grid point on this processor
@@ -1539,6 +1572,7 @@ bool EW::point_in_proc(int a_i, int a_j, int a_g) {
 
 //-----------------------------------------------------------------------
 bool EW::point_in_proc_ext(int a_i, int a_j, int a_g) {
+  SW4_MARK_FUNCTION;
   // TAKING PARALLEL GHOST POINTS+EXTRA GHOST POINTS INTO ACCOUNT!
   // Determine if grid point with index (a_i, a_j) on grid a_g is a grid point
   // on this processor
@@ -1555,6 +1589,7 @@ bool EW::point_in_proc_ext(int a_i, int a_j, int a_g) {
 
 //-----------------------------------------------------------------------
 void EW::getGlobalBoundingBox(float_sw4 bbox[6]) {
+  SW4_MARK_FUNCTION;
   bbox[0] = 0.;
   bbox[1] = m_global_xmax;
   bbox[2] = 0.;
@@ -1574,6 +1609,7 @@ void EW::setGMTOutput(string filename, string wppfilename) {
 //-----------------------------------------------------------------------
 void EW::saveGMTFile(vector<vector<Source*>>& a_GlobalUniqueSources,
                      int event) {
+  SW4_MARK_FUNCTION;
   // this routine needs to be updated (at least for the etree info)
   if (!mWriteGMTOutput) return;
 
@@ -1594,36 +1630,16 @@ void EW::saveGMTFile(vector<vector<Source*>>& a_GlobalUniqueSources,
     computeGeographicCoord(0.0, m_global_ymax, lonNW, latNW);
 
     // Round up/down
-    double minx = min(lonSW, min(lonSE, min(lonNE, lonNW)));
-    double maxx = max(lonSW, max(lonSE, max(lonNE, lonNW)));
-    double miny = min(latSW, min(latSE, min(latNE, latNW)));
-    double maxy = max(latSW, max(latSE, max(latNE, latNW)));
+    double minx = std::min(lonSW, std::min(lonSE, std::min(lonNE, lonNW)));
+    double maxx = std::max(lonSW, std::max(lonSE, std::max(lonNE, lonNW)));
+    double miny = std::min(latSW, std::min(latSE, std::min(latNE, latNW)));
+    double maxy = std::max(latSW, std::max(latSE, std::max(latNE, latNW)));
     double margin = 0.1 * fabs(maxy - miny);
 
     // tmp
     printf("margin = %e\n", margin);
 
     //      GeographicCoord eNW, eNE, eSW, eSE;
-
-#ifdef ENABLE_ETREE
-    if (mEtreeFile != NULL) {
-      //        mEtreeFile->getGeoBox()->getBounds(eNW, eNE, eSW, eSE);
-      // correct these as above (remove +/- 1
-      //        minx =
-      //        (min(eSW.getLongitude()-1,min(eSE.getLongitude()-1,min(eNE.getLongitude()-1,eNW.getLongitude()-1))));
-      //        maxx =
-      //        (max(eSW.getLongitude()+1,max(eSE.getLongitude()+1,max(eNE.getLongitude()+1,eNW.getLongitude()+1))));
-      //        miny =
-      //        (min(eSW.getLatitude()-1,min(eSE.getLatitude()-1,min(eNE.getLatitude()-1,eNW.getLatitude()-1))));
-      //        maxy =
-      //        (max(eSW.getLatitude()+1,max(eSE.getLatitude()+1,max(eNE.getLatitude()+1,eNW.getLatitude()+1))));
-      mEtreeFile->getbox(miny, maxy, minx, maxx);
-      minx -= 1;
-      maxx += 1;
-      miny -= 1;
-      maxy += 1;
-    }
-#endif
 
     contents << "# Region will need to be adjusted based on etree/grid values"
              << endl
@@ -1688,43 +1704,6 @@ void EW::saveGMTFile(vector<vector<Source*>>& a_GlobalUniqueSources,
         << lonSW << " " << latSW << endl
         << "EOF" << endl
         << endl;
-
-#ifdef ENABLE_ETREE
-    if (mEtreeFile != NULL) {
-      // Consider Etree bounds also
-      //         GeographicCoord eNW, eNE, eSW, eSE;
-      //         mEtreeFile->getGeoBox()->getBounds(eNW, eNE, eSW, eSE);
-      double elatSE, elonSE, elatSW, elonSW, elatNE, elonNE, elatNW, elonNW;
-      mEtreeFile->getcorners(elatSE, elonSE, elatSW, elonSW, elatNE, elonNE,
-                             elatNW, elonNW);
-      contents
-          << "# Etree region: " << mEtreeFile->getFileName() << endl
-          << "psxy -R$REGION -JM$SCALE -W5/255/255/0ta -O -K <<EOF>> plot.ps"
-          << endl
-          << elonNW << " " << elatNW << endl
-          << elonNE << " " << elatNE << endl
-          << elonSE << " " << elatSE << endl
-          << elonSW << " " << elatSW << endl
-          << elonNW << " " << elatNW << endl
-          << "EOF" << endl
-          << endl;
-      //         contents << "# Etree region: " << mEtreeFile->getFileName() <<
-      //         endl
-      //                  << "psxy -R$REGION -JM$SCALE -W5/255/255/0ta -O -K
-      //                  <<EOF>> plot.ps" << endl
-      //                  << eNW.getLongitude() << " " << eNW.getLatitude() <<
-      //                  endl
-      //                  << eNE.getLongitude() << " " << eNE.getLatitude() <<
-      //                  endl
-      //                  << eSE.getLongitude() << " " << eSE.getLatitude() <<
-      //                  endl
-      //                  << eSW.getLongitude() << " " << eSW.getLatitude() <<
-      //                  endl
-      //	             << eNW.getLongitude() << " " << eNW.getLatitude()
-      //<< endl
-      //                  << "EOF" << endl << endl;
-    }
-#endif
 
     if (a_GlobalUniqueSources[event].size() > 0) {
       contents << "# Sources... " << endl << "cat << EOF >! event.d" << endl;
@@ -1975,6 +1954,7 @@ void EW::normOfDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
                           float_sw4& diffInf, float_sw4& diffL2,
                           float_sw4& xInf, vector<Source*>& a_globalSources) {
   SW4_MARK_FUNCTION;
+  SYNC_STREAM;
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast;
   int imin, imax, jmin, jmax, kmin, kmax;
 
@@ -2163,6 +2143,7 @@ void EW::normOfSurfaceDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
                                  float_sw4& diffInf, float_sw4& diffL2,
                                  float_sw4& solInf, float_sw4& solL2,
                                  vector<Source*>& a_globalSources) {
+  SW4_MARK_FUNCTION;
   int g;
   float_sw4 absDiff, absSol;
   float_sw4 h, diffInfLocal = 0, diffL2Local = 0, solInfLocal = 0,
@@ -2250,6 +2231,7 @@ void EW::normOfSurfaceDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
 void EW::bndryInteriorDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
                                  float_sw4* lowZ, float_sw4* interiorZ,
                                  float_sw4* highZ) {
+  SW4_MARK_FUNCTION;
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nz;
   float_sw4 *uex_ptr, *u_ptr, h;
 
@@ -2314,6 +2296,7 @@ void EW::test_RhoUtt_Lu(vector<Sarray>& a_Uacc, vector<Sarray>& a_Lu,
 //---------------------------------------------------------------------------
 void EW::initialData(float_sw4 a_t, vector<Sarray>& a_U,
                      vector<Sarray*>& a_AlphaVE) {
+  SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *u_ptr, om, ph, cv, h, zmin;
 
@@ -2450,6 +2433,7 @@ void EW::initialData(float_sw4 a_t, vector<Sarray>& a_U,
 bool EW::exactSol(float_sw4 a_t, vector<Sarray>& a_U,
                   vector<Sarray*>& a_AlphaVE, vector<Source*>& sources) {
   SW4_MARK_FUNCTION;
+  SYNC_STREAM;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *u_ptr, om, ph, cv, h, zmin;
   bool retval;
@@ -2905,10 +2889,9 @@ RAJA_HOST_DEVICE float_sw4 EW::Gaussian_x_T_Integral(float_sw4 t, float_sw4 R,
 //-----------------------------------------------------------------------
 // void EW::get_exact_point_source( Sarray& u, float_sw4 t, int g, Source&
 // source )
-#ifdef ENABLE_HIP
+#ifdef NO_DEVICE_FUNCTION_POINTERS
 void EW::get_exact_point_source(float_sw4* up, float_sw4 t, int g,
-                                Source& source, int* wind) {
-}
+                                Source& source, int* wind) {}
 #else
 void EW::get_exact_point_source(float_sw4* up, float_sw4 t, int g,
                                 Source& source, int* wind) {
@@ -3651,17 +3634,18 @@ void EW::get_exact_lamb(vector<Sarray>& a_U, float_sw4 a_t, Source& a_source) {
           double tau = t * beta / R;
           double r = R;
           if (tau > gamma) {
-            uz += G4_Integral(min(max(0.0, tau - gamma), beta / r), tau, r,
-                              beta) -
+            uz += G4_Integral(std::min(std::max(0.0, tau - gamma), beta / r),
+                              tau, r, beta) -
                   G4_Integral(0.0, tau, r, beta);
           }
           if (tau > 1 && tau < beta / r + gamma) {
-            uz += G3_Integral(min(tau - 1, beta / r), tau, r, beta) -
-                  G3_Integral(max(0.0, tau - gamma), tau, r, beta);
+            uz += G3_Integral(std::min(tau - 1, beta / r), tau, r, beta) -
+                  G3_Integral(std::max(0.0, tau - gamma), tau, r, beta);
           }
           if (tau > 1 / sqrt(3.) && tau < beta / r + 1) {
-            uz += G2_Integral(min(tau - 1 / sqrt(3.), beta / r), tau, r, beta) -
-                  G2_Integral(max(tau - 1, 0.0), tau, r, beta);
+            uz += G2_Integral(std::min(tau - 1 / sqrt(3.), beta / r), tau, r,
+                              beta) -
+                  G2_Integral(std::max(tau - 1, 0.0), tau, r, beta);
           }
           uz *= -fz / (M_PI * M_PI * mu) * alpha * alpha / (beta * beta * beta);
         }
@@ -4366,10 +4350,17 @@ void EW::exactAccTwilight(float_sw4 a_t, vector<Sarray>& a_Uacc) {
 
 #ifndef FORCE_OMP
 //---------------------------------------------------------------------------
-#ifdef ENABLE_HIP
+#ifdef NO_DEVICE_FUNCTION_POINTERS
+// Awaiting device function pointer support in HIP
 void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
                vector<GridPointSource*>& point_sources,
                vector<int>& identsources) {
+  static bool first = true;
+  if (first) {
+    first = false;
+    std::cout << "WARNING **** NON_FUNCTIONAL CALL TO EW::Force\n";
+  }
+  for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero();
 }
 #else
 void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
@@ -4664,7 +4655,8 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
     idnts_local = idnts;
     float_sw4** ForceAddress_copy = ForceAddress;
 
-    for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
+    // for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
+    vset_to_zero_async(a_F, mNumberOfGrids);
     SW4_MARK_BEGIN("FORCE::DEVICE");
 
     RAJA::forall<FORCE_LOOP_ASYNC>(
@@ -4687,10 +4679,18 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
 }
 #endif
 //---------------------------------------------------------------------------
-#ifdef ENABLE_HIP
+#ifdef NO_DEVICE_FUNCTION_POINTERS
+// Awaiting device function pointer support in HIP
 void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
                   vector<GridPointSource*>& point_sources,
-                  vector<int>& identsources) {}
+                  vector<int>& identsources) {
+  static bool first = true;
+  if (first) {
+    first = false;
+    std::cout << "WARNING **** NON_FUNCTIONAL CALL TO EW::Force_tt\n";
+  }
+  for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero();
+}
 #else
 void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
                   vector<GridPointSource*>& point_sources,
@@ -4924,7 +4924,8 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
     //     using FORCETT_LOOP_ASYNC = RAJA::omp_parallel_for_exec;
     // #endif
 
-    for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
+    // for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
+    vset_to_zero_async(a_F, mNumberOfGrids);
     SW4_MARK_BEGIN("FORCE_TT::DEVICE");
 
     RAJA::forall<FORCETT_LOOP_ASYNC>(
@@ -4953,7 +4954,7 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
 // perhaps a better name would be evalLu ??
 void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                  vector<Sarray>& a_Lambda, vector<Sarray>& a_Uacc,
-                 vector<Sarray*>& a_AlphaVE) {
+                 vector<Sarray*>& a_AlphaVE, std::ostream* norm_trace_file) {
   SW4_MARK_FUNCTION;
 #ifdef PEEKS_GALORE
   SW4_PEEK;
@@ -4965,10 +4966,10 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   int* onesided_ptr;
 
   int g, nz;
-
+  vset_to_zero_async(a_Uacc, mNumberOfGrids);
   for (g = 0; g < mNumberOfCartesianGrids; g++) {
-    a_Uacc[g].prefetch();
-    a_Uacc[g].set_to_zero_async();
+    // a_Uacc[g].prefetch();
+    // a_Uacc[g].set_to_zero_async();
     uacc_ptr = a_Uacc[g].c_ptr();
     u_ptr = a_U[g].c_ptr();
     mu_ptr = a_Mu[g].c_ptr();
@@ -5016,9 +5017,13 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                     onesided_ptr, m_acof, m_bope, m_ghcof, uacc_ptr, u_ptr,
                     mu_ptr, la_ptr, &h, &op);
     }
-    //    size_t nn=a_Uacc[g].count_nans();
-    //    if( nn > 0 )
-    //       cout << "First application of LU " << nn << " nans" << endl;
+#ifdef SW4_NORM_TRACE
+    if (norm_trace_file != nullptr)
+      *norm_trace_file << " evalRHS_1 " << g << " " << a_Uacc[g].norm() << "\n";
+#endif
+      //    size_t nn=a_Uacc[g].count_nans();
+      //    if( nn > 0 )
+      //       cout << "First application of LU " << nn << " nans" << endl;
 #ifdef PEEKS_GALORE
     SW4_PEEK;
     SYNC_DEVICE;
@@ -5062,7 +5067,12 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
       //    if( nn > 0 )
       //       cout << "Second application of LU " << nn << " nans" << endl;
     }
+#ifdef SW4_NORM_TRACE
+    if (norm_trace_file != nullptr)
+      *norm_trace_file << " evalRHS_2 " << g << " " << a_Uacc[g].norm() << "\n";
+#endif
   }
+
   //  if (topographyExists()) {
 #ifdef PEEKS_GALORE
   SW4_PEEK;
@@ -5070,7 +5080,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
 #endif
   for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
     // g = mNumberOfGrids - 1;
-    a_Uacc[g].set_to_zero_async();
+    // a_Uacc[g].set_to_zero_async(); // Being done above
     uacc_ptr = a_Uacc[g].c_ptr();
     u_ptr = a_U[g].c_ptr();
     mu_ptr = a_Mu[g].c_ptr();
@@ -5100,6 +5110,12 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
           ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr, mu_ptr, la_ptr,
           met_ptr, jac_ptr, uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
           m_acof_no_gp, m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op);
+#elif defined(SW4_EXPT_3)
+      // cudaMemcpyToSymbol(tex_acof, m_acof, 384*sizeof(double));
+      curvilinear4sgX3_ci<0>(
+          ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr, mu_ptr, la_ptr,
+          met_ptr, jac_ptr, uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
+          m_acof_no_gp, m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op);
 #else
       curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr,
                         mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr,
@@ -5118,6 +5134,21 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                      mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr, onesided_ptr,
                      m_acof, m_bope, m_ghcof, &op);
     }
+#ifdef SW4_NORM_TRACE
+    if (norm_trace_file != nullptr) {
+      *norm_trace_file << " evalRHS_3 " << g << " " << a_Uacc[g].norm() << "\n";
+      *norm_trace_file << "   evalRHS_3 U[" << g << "]= " << a_U[g].norm()
+                       << "\n";
+      *norm_trace_file << "   evalRHS_3 Mu[" << g << "]= " << a_Mu[g].norm()
+                       << "\n";
+      *norm_trace_file << "   evalRHS_3 Lambda[" << g
+                       << "]= " << a_Lambda[g].norm() << "\n";
+      *norm_trace_file << "   evalRHS_3 Metric[" << g
+                       << "]= " << mMetric[g].norm() << "\n";
+      *norm_trace_file << "   evalRHS_3 Jaco[" << g << "]= " << mJ[g].norm()
+                       << "\n";
+    }
+#endif
 #ifdef PEEKS_GALORE
     SW4_PEEK;
     SYNC_DEVICE;
@@ -5147,7 +5178,14 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
               lambdaa_ptr, met_ptr, jac_ptr, uacc_ptr, onesided_ptr,
               m_acof_no_gp, m_bope, m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,
               m_sg_str_x[g], m_sg_str_y[g], nkg, op);
+#elif defined(SW4_EXPT_3)
+          curvilinear4sgX3_ci<1>(
+              ifirst, ilast, jfirst, jlast, kfirst, klast, alpha_ptr, mua_ptr,
+              lambdaa_ptr, met_ptr, jac_ptr, uacc_ptr, onesided_ptr,
+              m_acof_no_gp, m_bope, m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,
+              m_sg_str_x[g], m_sg_str_y[g], nkg, op);
 #else
+          // cudaMemcpyToSymbol(tex_acof, m_acof_no_gp, 384*sizeof(double));
           curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                             alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
                             uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope,
@@ -5167,6 +5205,11 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                          m_ghcof_no_gp, &op);
         }
       }
+#ifdef SW4_NORM_TRACE
+      if (norm_trace_file != nullptr)
+        *norm_trace_file << " evalRHS_4 " << g << " " << a_Uacc[g].norm()
+                         << "\n";
+#endif
     }
     // SYNC_STREAM;
 #ifdef PEEKS_GALORE
@@ -6844,81 +6887,6 @@ void EW::extractTopographyFromImageFile(string a_topoFileName) {
 }
 
 //-----------------------------------------------------------------------
-void EW::extractTopographyFromEfile(std::string a_topoFileName,
-                                    std::string a_topoExtFileName,
-                                    std::string a_QueryType,
-                                    float_sw4 a_EFileResolution) {
-#ifdef ENABLE_ETREE
-  if (proc_zero())
-    cout << endl << "*** extracting TOPOGRAPHY from efile ***" << endl << endl;
-  cencalvm::query::VMQuery query;
-  cencalvm::storage::ErrorHandler* pErrHandler = query.errorHandler();
-
-  // Check user specified file names. Abort if they are not there or not
-  // readable
-  VERIFY2(access(a_topoFileName.c_str(), R_OK) == 0,
-          "No read permission on etree file: " << a_topoFileName);
-  query.filename(a_topoFileName.c_str());
-
-  if (a_topoExtFileName != "NONE") {
-    // User specified, if it is not there, abort
-    VERIFY2(access(a_topoExtFileName.c_str(), R_OK) == 0,
-            "No read permission on xefile: " << a_topoExtFileName);
-    query.filenameExt(a_topoExtFileName.c_str());
-  }
-  int topLevel = mNumberOfGrids - 1;
-  if (a_QueryType == "MAXRES")
-    query.queryType(cencalvm::query::VMQuery::MAXRES);
-  else if (a_QueryType == "FIXEDRES") {
-    query.queryType(cencalvm::query::VMQuery::FIXEDRES);
-    if (a_EFileResolution < 0.) a_EFileResolution = mGridSize[topLevel];
-    if (proc_zero()) printf("Fixedres resolution = %e\n", a_EFileResolution);
-    query.queryRes(a_EFileResolution);
-  }
-
-  const char* queryKeys[] = {"elevation", "Vp", "Vs"};
-  int payloadSize = 3;
-  query.queryVals(queryKeys, payloadSize);
-
-  double x, y;
-  double lat, lon, elev, elevDelta = 25.;
-
-  query.open();
-  double* pVals = new float_sw4[payloadSize];
-  bool verbose = (mVerbose >= 3);
-
-  for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i)
-    for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j) {
-      x = (i - 1) * mGridSize[topLevel];
-      y = (j - 1) * mGridSize[topLevel];
-      computeGeographicCoord(x, y, lon, lat);
-      // initial query for elevation just below sealevel
-      elev = -25.0;
-      query.query(&pVals, payloadSize, lon, lat, elev);
-      // Make sure the query didn't generated a warning or error
-      if (pErrHandler->status() != cencalvm::storage::ErrorHandler::OK) {
-        // If query generated an error, then bail out, otherwise reset status
-        pErrHandler->resetStatus();
-        if (verbose)
-          cout << "WARNING: Etree query failed for initial elevation of "
-                  "topography at grid point (i,j)= ("
-               << i << ", " << j << ") in curvilinear grid g = " << topLevel
-               << endl
-               << " lat= " << lat << " lon= " << lon
-               << " query elevation= " << elev << endl;
-        mTopo(i, j, 1) = NO_TOPO;
-        continue;
-      }
-      // save the actual topography which will be the starting point for
-      // computing smoother the grid topography
-      mTopo(i, j, 1) = pVals[0];
-    }
-  query.close();
-  delete[] pVals;
-#endif
-}
-
-//-----------------------------------------------------------------------
 void EW::extractTopographyFromRfile(std::string a_topoFileName) {
   std::string rname = "EW::extractTopographyFromRfile";
   Sarray gridElev;
@@ -7758,7 +7726,7 @@ void EW::setup_viscoelastic() {
     if (proc_zero() && mVerbose >= 1) {
       for (k = 0; k < n; k++) printf("omega[%i]=%e ", k, mOmegaVE[k]);
       printf("\n");
-      for (k = 0; k < nc; k++) printf("omc[%i]=%e ", k, omc[k]);
+      for (k = 0; k < nc; k++) printf("omc[%i]=%e", k, omc[k]);
       printf("\n\n");
     }
 
@@ -7771,6 +7739,18 @@ void EW::setup_viscoelastic() {
 // use base 0 indexing of matrix
 #define a(i, j) a_[i + j * nc]
 
+#ifndef _OPENMP
+    double* a_ = new float_sw4[n * nc];
+    double* beta = new double[nc];
+    double* gamma = new double[nc];
+    int lwork = 3 * n;
+    double* work = new double[lwork];
+#endif
+    //g=0;
+    //std::cout<<"mMug "<<as_int(mMu[g].space)<<"\n";
+    //std::cout<<"mLamnda "<<as_int(mLambda[g].space)<<"\n";
+    //std::cout<<"mMuVE[g][0] "<<as_int(mMuVE[g][0].space)<<"\n";
+    //std::cout<<"mLambdaVE[g][0] "<<as_int(mLambdaVE[g][0].space)<<"\n";
     // loop over all grid points in all grids
     for (g = 0; g < mNumberOfGrids; g++)
 #ifndef SW4_NOOMP
@@ -7779,11 +7759,17 @@ void EW::setup_viscoelastic() {
       for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
         for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
           for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+            // Code for locating libsci errors on RZNevada April 21 2021
+            // int ijk=i+j+k;
+            // bool
+            // doit=(ijk==(m_iStart[g]+m_jStart[g]+m_kStart[g]))&&(!getRank());
+#ifdef _OPENMP
             double* a_ = new float_sw4[n * nc];
             double* beta = new double[nc];
             double* gamma = new double[nc];
             int lwork = 3 * n;
             double* work = new double[lwork];
+#endif
             char trans = 'N';
             int info = 0, nrhs = 1, lda = nc, ldb = nc;
 
@@ -7798,10 +7784,14 @@ void EW::setup_viscoelastic() {
             //
             for (int q = 0; q < nc; q++) {
               beta[q] = 1. / qs;
+              /// if (doit)std::cout<<"M["<<q<<","<<qs<<"]=";
               for (int nu = 0; nu < n; nu++) {
-                a(q, nu) = (omc[q] * mOmegaVE[nu] + SQR(mOmegaVE[nu]) / qs) /
-                           (SQR(mOmegaVE[nu]) + SQR(omc[q]));
+                double tmp = a(q, nu) =
+                    (omc[q] * mOmegaVE[nu] + SQR(mOmegaVE[nu]) / qs) /
+                    (SQR(mOmegaVE[nu]) + SQR(omc[q]));
+                // if (doit)std::cout<<a(q,nu)<<","<<mOmegaVE[nu]<<":";
               }
+              // if (doit)std::cout<<"\n";
             }
             // solve the system in least squares sense
             F77_FUNC(dgels, DGELS)
@@ -7904,12 +7894,20 @@ void EW::setup_viscoelastic() {
             //     for (q=0; q<n; q++)
             //       printf("beta[%i]=%e ", q, b[q]);
             //     printf("\n");
+
+#ifdef _OPENMP
             delete[] a_;
             delete[] beta;
             delete[] gamma;
             delete[] work;
-
+#endif
           }  // end for g,k,j,i
+#ifndef _OPENMP
+    delete[] a_;
+    delete[] beta;
+    delete[] gamma;
+    delete[] work;
+#endif
 #undef a
   }
 }
@@ -9043,6 +9041,230 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
         "WARNING: sw4 not compiled with hdf5=yes, ignoring read sfile, "
         "abort!\n");
   MPI_Abort(MPI_COMM_WORLD, -1);
+#endif  // #ifdef USE_HDF5
+}
+
+#ifdef USE_HDF5
+static void read_hdf5_attr(hid_t loc, hid_t dtype, const char* name,
+                           void* data) {
+  hid_t attr_id;
+  int ierr;
+  attr_id = H5Aopen(loc, name, H5P_DEFAULT);
+  ASSERT(attr_id >= 0);
+  ierr = H5Aread(attr_id, dtype, data);
+  ASSERT(ierr >= 0);
+  H5Aclose(attr_id);
+}
+
+static char* read_hdf5_attr_str(hid_t loc, const char* name) {
+  hid_t attr_id, dtype;
+  int ierr;
+  char* data = NULL;
+
+  attr_id = H5Aopen(loc, name, H5P_DEFAULT);
+  ASSERT(attr_id >= 0);
+
+  dtype = H5Aget_type(attr_id);
+
+  ierr = H5Aread(attr_id, dtype, &data);
+  ASSERT(ierr >= 0);
+
+  H5Tclose(dtype);
+  H5Aclose(attr_id);
+
+  /* fprintf(stderr, "Read data: [%s]\n", data); */
+  return data;
+}
+#endif
+
+//-----------------------------------------------------------------------
+void EW::extractTopographyFromGMG(std::string a_topoFileName) {
+  double start_time, end_time;
+  start_time = MPI_Wtime();
+#ifdef USE_HDF5
+  Sarray gridElev;
+  herr_t ierr;
+  hid_t file_id, dataset_id, datatype_id, group_id, dataspace_id;
+  int prec, str_len;
+  double az = 0, origin_x = 0, origin_y = 0, hh = 0, alpha = 0;
+  hsize_t dims[2];
+  char* crs_to = NULL;
+
+  if (m_myRank == 0) {
+    file_id = H5Fopen(a_topoFileName.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+    if (file_id < 0) {
+      cout << "Could not open hdf5 file: " << a_topoFileName.c_str() << endl;
+      MPI_Abort(MPI_COMM_WORLD, file_id);
+    }
+
+    read_hdf5_attr(file_id, H5T_IEEE_F64LE, "origin_x", &origin_x);
+    read_hdf5_attr(file_id, H5T_IEEE_F64LE, "origin_y", &origin_y);
+    read_hdf5_attr(file_id, H5T_IEEE_F64LE, "y_azimuth", &az);
+
+    group_id = H5Gopen(file_id, "surfaces", H5P_DEFAULT);
+    ASSERT(group_id >= 0);
+
+    dataset_id = H5Dopen(group_id, "topography_bathymetry", H5P_DEFAULT);
+    ASSERT(dataset_id >= 0);
+
+    dataspace_id = H5Dget_space(dataset_id);
+    H5Sget_simple_extent_dims(dataspace_id, dims, NULL);
+    H5Sclose(dataspace_id);
+
+    datatype_id = H5Dget_type(dataset_id);
+    prec = (int)H5Tget_size(datatype_id);
+    H5Tclose(datatype_id);
+
+    read_hdf5_attr(dataset_id, H5T_IEEE_F64LE, "resolution_horiz", &hh);
+
+    crs_to = read_hdf5_attr_str(file_id, "crs");
+    str_len = (int)(strlen(crs_to) + 1);
+  }
+
+  MPI_Bcast(&origin_x, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&origin_y, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&az, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&hh, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(dims, 2, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&prec, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&str_len, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  if (m_myRank != 0) crs_to = (char*)malloc(str_len * sizeof(char));
+
+  MPI_Bcast(crs_to, str_len, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+  // For some reason origin_x is not correctly read sometimes
+  if (origin_x < 1.0) {
+    origin_x = 99286.2;
+    if (m_myRank == 0)
+      printf("GMG origin_x read zero value, correct to 99286.2 \n");
+  }
+
+  ASSERT(origin_x > 0);
+  ASSERT(origin_y > 0);
+  ASSERT(az > 0);
+
+  // Convert GMG az to SW4 az
+  alpha = az - 180.0;
+
+  CHECK_INPUT(fabs(alpha - mGeoAz) < 1e-6,
+              "ERROR: GMG azimuth must be equal to coordinate system azimuth"
+                  << " azimuth on GMG = " << alpha
+                  << " azimuth of coordinate sytem = " << mGeoAz
+                  << " difference = " << alpha - mGeoAz);
+
+  if (m_myRank == 0 && mVerbose >= 2) {
+    printf("GMG header: azimuth=%e, origin_x=%f, origin_y=%f\n", az, origin_x,
+           origin_y);
+    printf("            hh=%e, ni=%llu, nj=%llu\n", hh, dims[0], dims[1]);
+  }
+
+  float* f_data = new float[dims[0] * dims[1]];
+
+  if (m_myRank == 0) {
+    ierr = H5Dread(dataset_id, H5T_IEEE_F32LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                   f_data);
+    ASSERT(ierr >= 0);
+    H5Dclose(dataset_id);
+    H5Gclose(group_id);
+    H5Fclose(file_id);
+  }
+  MPI_Bcast(f_data, dims[0] * dims[1], MPI_FLOAT, 0, MPI_COMM_WORLD);
+
+  // Topography read, next interpolate to the computational grid
+  int topLevel = mNumberOfGrids - 1;
+
+  float_sw4 topomax = -1e30, topomin = 1e30;
+
+  /* printf("x0=%f, y0=%f\n", x0, y0); */
+  /* printf("topoGMG: m_iStart %d, m_iEnd %d, m_jStart %d, m_jEnd %d\n", */
+  /*         m_iStart[topLevel],  m_iEnd[topLevel],  m_jStart[topLevel],
+   * m_jEnd[topLevel]); */
+
+  const double yazimuthRad = az * M_PI / 180.0;
+  const double cosAz = cos(yazimuthRad);
+  const double sinAz = sin(yazimuthRad);
+
+  /* fprintf(stderr, "origin xy: %f %f\n", origin_x, origin_y); */
+
+  // proj is not thread safe, so no omp pragma here
+  for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
+    for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j) {
+      float_sw4 x = (i - 1) * mGridSize[topLevel];
+      float_sw4 y = (j - 1) * mGridSize[topLevel];
+
+      double sw4_lon, sw4_lat, gmg_x, gmg_y, gmg_x0, gmg_y0;
+      computeGeographicCoord(x, y, sw4_lon, sw4_lat);
+      /* printf("\ncomputeGeographicCoord: %f %f %f %f\n", x, y, sw4_lon,
+       * sw4_lat); */
+
+      // GMG x/y, lat/lon is switched from sw4 CRS
+      computeCartesianCoordGMG(gmg_y0, gmg_x0, sw4_lon, sw4_lat, crs_to);
+      /* printf("computeCartesianCoordGMG : %f %f %f %f\n", gmg_x0, gmg_y0,
+       * sw4_lon, sw4_lat); */
+
+      const double xRel = gmg_x0 - origin_x;
+      const double yRel = gmg_y0 - origin_y;
+      gmg_x = xRel * cosAz - yRel * sinAz;
+      gmg_y = xRel * sinAz + yRel * cosAz;
+      /* printf("converted gmg xy: %f, %f, origin: %f %f\n", gmg_x, gmg_y,
+       * origin_x, origin_y); */
+
+      int i0 = static_cast<int>(floor(gmg_x / hh));
+      int j0 = static_cast<int>(floor(gmg_y / hh));
+
+      double fac0 = (gmg_y - j0 * hh) / hh;
+      double fac1 = (gmg_x - i0 * hh) / hh;
+
+      /* printf("x=%f, y=%f, i0=%d, j0=%d\n", x, y, i0, j0); */
+      /* printf("interp points: %f %f %f %f\n", f_data[i0*dims[1]+j0],
+       * f_data[(i0+1)*dims[1]+j0], f_data[i0*dims[1]+j0+1],
+       * f_data[(i0+1)*dims[1]+j0+1]); */
+
+      // Linear interpolation with 4 surrounding points
+      float_sw4 mytopo =
+          f_data[i0 * dims[1] + j0] +
+          (f_data[i0 * dims[1] + j0 + 1] - f_data[i0 * dims[1] + j0]) * fac0 +
+          (f_data[(i0 + 1) * dims[1] + j0] +
+           (f_data[(i0 + 1) * dims[1] + j0 + 1] -
+            f_data[(i0 + 1) * dims[1] + j0]) *
+               fac0 -
+           (f_data[i0 * dims[1] + j0] +
+            (f_data[i0 * dims[1] + j0 + 1] - f_data[i0 * dims[1] + j0]) *
+                fac0)) *
+              fac1;
+      /* printf("Calculated topo: %f, fac %f %f\n", mytopo, fac0, fac1); */
+      if (mytopo > topomax) topomax = mytopo;
+      if (mytopo < topomin) topomin = mytopo;
+
+      mTopo(i, j, 1) = mytopo;
+    }  // end for j
+  }    // end for i
+
+  if (crs_to) free(crs_to);
+
+  delete[] f_data;
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  end_time = MPI_Wtime();
+
+  if (m_myRank == 0) {
+    printf("Read topography from GeoModelGrids time=%e seconds\n",
+           end_time - start_time);
+    if (mVerbose >= 2) {
+      printf("Topo corners %f, %f, %f, %f\n",
+             mTopo(m_iStart[topLevel], m_jStart[topLevel], 1),
+             mTopo(m_iEnd[topLevel], m_jStart[topLevel], 1),
+             mTopo(m_iEnd[topLevel], m_jStart[topLevel], 1),
+             mTopo(m_iEnd[topLevel], m_jEnd[topLevel], 1));
+      printf("Topo variation on comp grid: max=%e min=%e\n", topomax, topomin);
+    }
+  }
+#else
+  if (m_myRank == 0)
+    printf(
+        "WARNING: sw4 not compiled with hdf5=yes, ignoring read GMG, abort!\n");
+  MPI_Abort(MPI_COMM_WORLD, -1);
 #endif
 }
 
@@ -9069,10 +9291,7 @@ TestEcons* EW::create_energytest() {
   else
     return 0;
 }
-TestPointSource* EW::get_point_source_test()
-{
-   return m_point_source_test;
-}
+TestPointSource* EW::get_point_source_test() { return m_point_source_test; }
 void EW::load_balance() {
   for (int g = 0; g < mNumberOfGrids; g++) {
     size_t local_size = (m_kEndInt[g] - m_kStartInt[g] + 1) *

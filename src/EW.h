@@ -45,7 +45,6 @@
 #include "CheckPoint.h"
 #include "DataPatches.h"
 #include "ESSI3D.h"
-#include "EtreeFile.h"
 #include "Filter.h"
 #include "ForcingTwilight.h"
 #include "GeographicProjection.h"
@@ -177,11 +176,11 @@ class EW {
   void processMaterialIfile(char* buffer);
   void processMaterialBlock(char* buffer, int& blockCount);
   void processMaterialPfile(char* buffer);
-  void processMaterialEtree(char* buffer);
   void processMaterialVimaterial(char* buffer);
   void processMaterialInvtest(char* buffer);
   void processMaterialRfile(char* buffer);
   void processMaterialSfile(char* buffer);
+  void processMaterialGMG(char* buffer);
   void processAnisotropicMaterialBlock(char* buffer, int& ablockCount);
   // void processReceiver(char* buffer, vector<TimeSeries*>&
   // a_GlobalTimeSeries);
@@ -308,7 +307,8 @@ class EW {
 
   void evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                vector<Sarray>& a_Lambda, vector<Sarray>& a_Lu,
-               vector<Sarray*>& a_Alpha);
+               vector<Sarray*>& a_Alpha,
+               std::ostream* norm_trace_file = nullptr);
 
   void evalRHSanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
                           vector<Sarray>& a_Uacc);
@@ -452,7 +452,9 @@ class EW {
   void setupMPICommunications();
   void setup2D_MPICommunications();
   void communicate_array(Sarray& u, int grid);
+  void communicate_array_host(Sarray& u, int grid);
   void communicate_arrays(vector<Sarray>& u);
+  void communicate_host_arrays(vector<Sarray>& u);
   void communicate_array_2dfinest(Sarray& u);
   void communicate_array_2d(Sarray& u, int g, int k);
   void communicate_array_2d_asym(Sarray& u, int g, int k);
@@ -486,12 +488,9 @@ class EW {
   void extractTopographyFromImageFile(string a_topoFileName);
   void extractTopographyFromCartesianFile(string a_topoFileName);
 
-  void setEtreeFile(EtreeFile* efile);
-  void extractTopographyFromEfile(string a_topoFileName,
-                                  string a_topoExtFileName, string a_QueryType,
-                                  float_sw4 a_EFileResolution);
   void extractTopographyFromRfile(std::string a_topoFileName);
   void extractTopographyFromSfile(std::string a_topoFileName);
+  void extractTopographyFromGMG(std::string a_topoFileName);
 
   void smoothTopography(int maxIter);
 
@@ -503,6 +502,8 @@ class EW {
 
   void computeCartesianCoord(float_sw4& x, float_sw4& y, float_sw4 lon,
                              float_sw4 lat);
+  void computeCartesianCoordGMG(double& x, double& y, double lon, double lat,
+                                char* crs_to);
   void computeGeographicCoord(float_sw4 x, float_sw4 y, float_sw4& longitude,
                               float_sw4& latitude);
 
@@ -581,8 +582,8 @@ class EW {
   void interpolate_between_grids(vector<Sarray>& u, vector<Sarray>& um,
                                  float_sw4 t, vector<Sarray*>& AlphaVE);
 
-  bool interpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0,
-                              bool smoothed);
+  int interpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0,
+                             bool smoothed);
 
   void copy_topo_to_topogridext();
 
@@ -620,24 +621,39 @@ class EW {
                              vector<float_sw4**>& bforcing);
   void advance_geodyn_time( float_sw4 t );
 
+  void advance_geodyn_time(float_sw4 t);
+
   void get_geodyn_timelevel(vector<Sarray>& geodyndata);
 
   void copy_geodyn_timelevel(vector<Sarray>& geodyndata1,
                              vector<Sarray>& geodyndata2);
 
-  void geodyn_second_ghost_point( vector<Sarray>& rho, vector<Sarray>& mu, vector<Sarray>& lambda,
-                                  vector<Sarray>& forcing, float_sw4 t, vector<Sarray>& U,
-                                  vector<Sarray>& Um, int crf );
+  // void geodyn_second_ghost_point(vector<Sarray>& geodyndata1,
+  //                                vector<Sarray>& geodyndata2,
+  //                                vector<Sarray>& rho, vector<Sarray>& mu,
+  //                                vector<Sarray>& lambda,
+  //                                vector<Sarray>& forcing, double t,
+  //                                vector<Sarray>& U, vector<Sarray>& Um,
+  //                                int crf);
 
-  void geodyn_second_ghost_point_curvilinear( vector<Sarray>& rho, vector<Sarray>& mu, vector<Sarray>& lambda,
-                                              vector<Sarray>& forcing, float_sw4 t, vector<Sarray>& U,
-                                              vector<Sarray>& Um, int crf );
+  void geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
+                                 vector<Sarray>& lambda,
+                                 vector<Sarray>& forcing, float_sw4 t,
+                                 vector<Sarray>& U, vector<Sarray>& Um,
+                                 int crf);
 
-  void geodyn_up_from_uacc( vector<Sarray>& Up, vector<Sarray>& Uacc,
-                            vector<Sarray>& U, vector<Sarray>& Um, float_sw4 dt );
+  void geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
+                                             vector<Sarray>& mu,
+                                             vector<Sarray>& lambda,
+                                             vector<Sarray>& forcing,
+                                             float_sw4 t, vector<Sarray>& U,
+                                             vector<Sarray>& Um, int crf);
 
-  void save_geoghost( vector<Sarray>& U );
-  void restore_geoghost( vector<Sarray>& U );
+  void geodyn_up_from_uacc(vector<Sarray>& Up, vector<Sarray>& Uacc,
+                           vector<Sarray>& U, vector<Sarray>& Um, float_sw4 dt);
+
+  void save_geoghost(vector<Sarray>& U);
+  void restore_geoghost(vector<Sarray>& U);
 
   void geodynbcGetSizes(string filename, float_sw4 origin[3],
                         float_sw4& cubelen, float_sw4& zcubelen,
@@ -671,13 +687,13 @@ class EW {
 
   enum InputMode {
     UNDEFINED,
-    Efile,
     GaussianHill,
     GridFile,
     CartesianGrid,
     TopoImage,
     Rfile,
-    Sfile
+    Sfile,
+    GMG
   };
 
   // access functions needed by the Image (and perhaps other) classes
@@ -701,37 +717,40 @@ class EW {
   // test point source
   void get_exact_point_source(float_sw4* u, float_sw4 t, int g, Source& source,
                               int* wind = 0);
-  RAJA_HOST_DEVICE float_sw4 VerySmoothBump_x_T_Integral(float_sw4 t,
-                                                         float_sw4 R,
-                                                         float_sw4 alpha,
-                                                         float_sw4 beta);
-  RAJA_HOST_DEVICE float_sw4 C6SmoothBump_x_T_Integral(float_sw4 t, float_sw4 R,
-                                                       float_sw4 alpha,
-                                                       float_sw4 beta);
-  RAJA_HOST_DEVICE float_sw4 SmoothWave_x_T_Integral(float_sw4 t, float_sw4 R,
-                                                     float_sw4 alpha,
-                                                     float_sw4 beta);
-  RAJA_HOST_DEVICE float_sw4 Gaussian_x_T_Integral(float_sw4 t, float_sw4 R,
-                                                   float_sw4 f, float_sw4 alpha,
-                                                   float_sw4 beta);
-  RAJA_HOST_DEVICE float_sw4 VSBTP(float_sw4 Lim, float_sw4 t);
-  RAJA_HOST_DEVICE float_sw4 C6SBTP(float_sw4 Lim, float_sw4 t);
-  RAJA_HOST_DEVICE float_sw4 SWTP(float_sw4 Lim, float_sw4 t);
-  RAJA_HOST_DEVICE float_sw4 d_VerySmoothBump_dt(float_sw4 t, float_sw4 R,
+  RAJA_HOST_DEVICE static float_sw4 VerySmoothBump_x_T_Integral(float_sw4 t,
+                                                                float_sw4 R,
+                                                                float_sw4 alpha,
+                                                                float_sw4 beta);
+  RAJA_HOST_DEVICE static float_sw4 C6SmoothBump_x_T_Integral(float_sw4 t,
+                                                              float_sw4 R,
+                                                              float_sw4 alpha,
+                                                              float_sw4 beta);
+  RAJA_HOST_DEVICE static float_sw4 SmoothWave_x_T_Integral(float_sw4 t,
+                                                            float_sw4 R,
+                                                            float_sw4 alpha,
+                                                            float_sw4 beta);
+  RAJA_HOST_DEVICE static float_sw4 Gaussian_x_T_Integral(
+      float_sw4 t, float_sw4 R, float_sw4 f, float_sw4 alpha, float_sw4 beta);
+  RAJA_HOST_DEVICE static float_sw4 VSBTP(float_sw4 Lim, float_sw4 t);
+  RAJA_HOST_DEVICE static float_sw4 C6SBTP(float_sw4 Lim, float_sw4 t);
+  RAJA_HOST_DEVICE static float_sw4 SWTP(float_sw4 Lim, float_sw4 t);
+  RAJA_HOST_DEVICE static float_sw4 d_VerySmoothBump_dt(float_sw4 t,
+                                                        float_sw4 R,
+                                                        float_sw4 c);
+  RAJA_HOST_DEVICE static float_sw4 d_C6SmoothBump_dt(float_sw4 t, float_sw4 R,
+                                                      float_sw4 c);
+  RAJA_HOST_DEVICE static float_sw4 d_SmoothWave_dt(float_sw4 t, float_sw4 R,
+                                                    float_sw4 c);
+  RAJA_HOST_DEVICE static float_sw4 d_Gaussian_dt(float_sw4 t, float_sw4 R,
+                                                  float_sw4 c, float_sw4 f);
+  RAJA_HOST_DEVICE static float_sw4 VerySmoothBump(float_sw4 t, float_sw4 R,
+                                                   float_sw4 c);
+  RAJA_HOST_DEVICE static float_sw4 C6SmoothBump(float_sw4 t, float_sw4 R,
                                                  float_sw4 c);
-  RAJA_HOST_DEVICE float_sw4 d_C6SmoothBump_dt(float_sw4 t, float_sw4 R,
+  RAJA_HOST_DEVICE static float_sw4 SmoothWave(float_sw4 t, float_sw4 R,
                                                float_sw4 c);
-  RAJA_HOST_DEVICE float_sw4 d_SmoothWave_dt(float_sw4 t, float_sw4 R,
-                                             float_sw4 c);
-  RAJA_HOST_DEVICE float_sw4 d_Gaussian_dt(float_sw4 t, float_sw4 R,
-                                           float_sw4 c, float_sw4 f);
-  RAJA_HOST_DEVICE float_sw4 VerySmoothBump(float_sw4 t, float_sw4 R,
-                                            float_sw4 c);
-  RAJA_HOST_DEVICE float_sw4 C6SmoothBump(float_sw4 t, float_sw4 R,
-                                          float_sw4 c);
-  RAJA_HOST_DEVICE float_sw4 SmoothWave(float_sw4 t, float_sw4 R, float_sw4 c);
-  RAJA_HOST_DEVICE float_sw4 Gaussian(float_sw4 t, float_sw4 R, float_sw4 c,
-                                      float_sw4 f);
+  RAJA_HOST_DEVICE static float_sw4 Gaussian(float_sw4 t, float_sw4 R,
+                                             float_sw4 c, float_sw4 f);
 
   // Lamb's problem
   void get_exact_lamb(vector<Sarray>& a_U, float_sw4 a_t, Source& a_source);
@@ -1121,9 +1140,9 @@ class EW {
                   int kb, int ke, int nk, int wind[6], float_sw4 zmin,
                   float_sw4 h, int kx[3], int ky[3], int kz[3],
                   float_sw4 mom[3]);
-void testsrcc_ci( float_sw4* __restrict__ f, int ib, int ie, int jb, int je, 
-                  int kb, int ke, int nk, int g, int wind[6], 
-                  int kx[3], int ky[3], int kz[3], float_sw4 mom[3] );
+  void testsrcc_ci(float_sw4* __restrict__ f, int ib, int ie, int jb, int je,
+                   int kb, int ke, int nk, int g, int wind[6], int kx[3],
+                   int ky[3], int kz[3], float_sw4 mom[3]);
   void tw_aniso_force_ci(int ifirst, int ilast, int jfirst, int jlast,
                          int kfirst, int klast, float_sw4* fo, float_sw4 t,
                          float_sw4 om, float_sw4 cv, float_sw4 ph,
@@ -1547,6 +1566,8 @@ void testsrcc_ci( float_sw4* __restrict__ f, int ib, int ie, int jb, int je,
                       std::tuple<int, int, int>& mtype);
   void putbuffer_host(float_sw4* data, float_sw4* buf,
                       std::tuple<int, int, int>& mtype);
+  void perturb_vels(Sarray& cs, Sarray& cp, Sarray& rndpert);
+  void perturb_rho(Sarray& rho, Sarray& rndpert);
 
   TestTwilight* create_twilight();
   TestEcons* create_energytest();
@@ -1628,7 +1649,7 @@ void testsrcc_ci( float_sw4* __restrict__ f, int ib, int ie, int jb, int je,
 
   // material description used with material surfaces and the ifile command
   vector<MaterialProperty*> m_materials;
-  MPI_Comm m_cartesian_communicator;
+  MPI_Comm m_cartesian_communicator, m_1d_communicator;
 
   ofstream msgStream;
 
@@ -1653,6 +1674,7 @@ void testsrcc_ci( float_sw4* __restrict__ f, int ib, int ie, int jb, int je,
   int m_nevent;  // Number of events, needed for multiple event material
                  // optimization.
   int m_nevents_specified;  // Number of event lines in input file
+  bool m_events_parallel;   // Process events in parallel
   map<string, int> m_event_names;
 
   // epicenter
@@ -1681,7 +1703,6 @@ void testsrcc_ci( float_sw4* __restrict__ f, int ib, int ie, int jb, int je,
                  // processor, with bProcessor conditions
   float_sw4 mTstart;
   float_sw4 mDt;
-  EtreeFile* mEtreeFile;
 
   bool m_doubly_periodic;
 
@@ -1759,7 +1780,7 @@ void testsrcc_ci( float_sw4* __restrict__ f, int ib, int ie, int jb, int je,
   bool m_anisotropic;
 
   // Randomization of the material
-  bool m_randomize;
+  bool m_randomize, m_randomize_density;
   int m_random_seed[3];
   float_sw4 m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad,
       m_random_sdlimit;
@@ -1795,7 +1816,6 @@ void testsrcc_ci( float_sw4* __restrict__ f, int ib, int ie, int jb, int je,
   bool mTopoImageFound;
   float_sw4 m_topo_zmax;
   int m_maxIter;
-  float_sw4 m_EFileResolution;
 
   //-------------------------------------------
   // IO data

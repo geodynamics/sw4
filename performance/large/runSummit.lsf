@@ -1,0 +1,17 @@
+#!/bin/bash
+# Begin LSF Directives
+#BSUB -P GEO130
+#BSUB -N
+#BSUB -W 0:30
+#BSUB -nnodes  1
+#BSUB -J RunHMR4
+moudle load netlib-lapack/3.9.1
+module load cuda
+module unload darshan-runtime
+module load gcc
+module load hdf5
+date
+jsrun -n 6 -g1 -c7 -a1  ./sw4 hmr3.in.summit
+jsrun -n 6 -g1 -c7 -a1  ./sw4 h.in.summit
+jsrun -n 4 -g1 -c10 -a1  ./sw4 hmr3.in.summit
+jsrun -n 4 -g1 -c10 -a1  ./sw4 h.in.summit

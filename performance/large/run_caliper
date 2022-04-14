@@ -1,0 +1,3 @@
+export CALI_SERVICES_ENABLE=mpi,roctx
+export CALI_MPI_BLACKLIST=none
+srun -N 1 -A GEO130 -t 120 -n 4 -c16 --gpus-per-task=1 --gpu-bind=closest -p ecp ./cprofile ./sw4 small3.in.summit

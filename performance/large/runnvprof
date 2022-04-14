@@ -1,0 +1,1 @@
+lrun -T4 nvprof -o ProfileV_%q\{OMPI_COMM_WORLD_RANK\} ./sw4 small3.in

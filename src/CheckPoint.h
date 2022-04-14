@@ -10,6 +10,10 @@
 #include "Parallel_IO.h"
 #include "Sarray.h"
 
+#ifdef USE_HDF5
+#include "hdf5.h"
+#endif
+
 class EW;
 
 class CheckPoint {
@@ -20,9 +24,11 @@ class CheckPoint {
              size_t bufsize = 10000000);
   CheckPoint(EW* a_ew, string fname, size_t bufsize = 10000000);
   ~CheckPoint();
+  void set_restart_latest(size_t bufsize);
   void set_restart_file(string fname, size_t bufsize);
   void set_checkpoint_file(string fname, int cycle, int cycleInterval,
-                           size_t bufsize);
+                           size_t bufsize, bool useHDF5, int compressionMode,
+                           double compressionPar);
 
   void write_checkpoint(float_sw4 a_time, int a_cycle,
                         std::vector<Sarray>& a_Um, std::vector<Sarray>& a_U,
@@ -32,14 +38,40 @@ class CheckPoint {
                        std::vector<Sarray>& a_Um, std::vector<Sarray>& a_U,
                        std::vector<Sarray*>& a_AlphaVEm,
                        std::vector<Sarray*>& a_AlphaVE);
+#ifdef USE_HDF5
+  void write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
+                             std::vector<Sarray>& a_Um,
+                             std::vector<Sarray>& a_U,
+                             std::vector<Sarray*>& a_AlphaVEm,
+                             std::vector<Sarray*>& a_AlphaVE);
+  void read_checkpoint_hdf5(float_sw4& a_time, int& a_cycle,
+                            std::vector<Sarray>& a_Um, std::vector<Sarray>& a_U,
+                            std::vector<Sarray*>& a_AlphaVEm,
+                            std::vector<Sarray*>& a_AlphaVE);
+  void create_hdf5_dset(hid_t fid, char* dset_name, hid_t dtype, hid_t dspace,
+                        hid_t dcpl);
+  void write_hdf5_dset(hid_t fid, char* dset_name, hid_t dtype, hid_t mspace,
+                       hid_t mydspace, hid_t dxpl, void* buf);
+  void finalize_hdf5();
+#endif
+void write_checkpoint_scr(float_sw4 a_time, int a_cycle,
+			  std::vector<Sarray>& a_U, std::vector<Sarray>& a_Up,
+			  std::vector<Sarray*>& a_AlphaVE,
+			  std::vector<Sarray*>& a_AlphaVEm) ;
+ void read_checkpoint_scr(float_sw4& a_time, int& a_cycle,
+                            std::vector<Sarray>& a_Um, std::vector<Sarray>& a_U,
+                            std::vector<Sarray*>& a_AlphaVEm,
+                            std::vector<Sarray*>& a_AlphaVE);
   void setup_sizes();
   bool timeToWrite(float_sw4 time, int cycle, float_sw4 dt);
   float_sw4 getDt();
   bool do_checkpointing();
   int get_checkpoint_cycle_interval();
+  bool verify_restart();
   bool do_restart();
   void set_restart_path(string restartPath);
   std::string get_restart_path();
+  bool useHDF5() { return mUseHDF5; };
 
  protected:
   void define_pio();
@@ -48,6 +80,11 @@ class CheckPoint {
   void cycle_checkpoints(string fname);
   void write_header(int& fid, float_sw4 a_time, int a_cycle, int& hsize);
   void read_header(int& fid, float_sw4& a_time, int& a_cycle, int& hsize);
+#ifdef USE_HDF5
+  void write_header_hdf5(hid_t fid, float_sw4 a_time, int a_cycle);
+  void read_header_hdf5(hid_t fid, float_sw4& a_time, int& a_cycle);
+  hid_t m_es_id;
+#endif
 
   std::string mCheckPointFile;
   std::string mRestartFile;
@@ -67,6 +104,9 @@ class CheckPoint {
   bool mDoRestart;
   bool mRestartPathSet;
   string mRestartPath;
+  bool mUseHDF5;
+  int mCompMode;
+  double mCompPar;
 
  private:
   CheckPoint();  // make it impossible to call default constructor
@@ -81,6 +121,7 @@ class CheckPoint {
   std::vector<int*> mGlobalDims;  // Global start + end indices for (i,j,k) for
                                   // each grid level
   std::vector<bool> m_ihavearray;
+  std::FILE *scr_file_handle;
 };
 
 #endif

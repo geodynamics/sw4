@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdio>
 
+#include "caliper.h"
 #include "cf_interface.h"
 #include "sw4.h"
 
@@ -20,6 +21,7 @@ void rhs4th3wind_host(
     float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry,
     float_sw4* __restrict__ a_strz, char op, int kfirstu, int klastu,
     int kfirstw, int klastw) {
+  SW4_MARK_FUNCTION;
   // Direct reuse of fortran code by these macro definitions:
 #define mu(i, j, k) a_mu[base + i + ni * (j) + nij * (k)]
 #define la(i, j, k) a_lambda[base + i + ni * (j) + nij * (k)]

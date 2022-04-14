@@ -27,10 +27,11 @@ Build instructions for Power9/V100 machines ( Summit, Lassen, Sierra etc)
    make install
 
 
-5. Get Proj 5.0.0 from https://proj.org/download.html:
-   wget https://download.osgeo.org/proj/proj-5.0.0.tar.gz
+5. Get Proj 8.1.1 from https://proj.org/download.html:
+   wget https://download.osgeo.org/proj/proj-8.1.1.tar.gz
 
 6. build and install Proj using:
+   ml sqlite
    mkdir build && cd build
    cmake -DCMAKE_INSTALL_PREFIX=../install  ../
    make install
@@ -59,6 +60,17 @@ Build instructions for Power9/V100 machines ( Summit, Lassen, Sierra etc)
     After its done compiling and testing, take tar.gz file from build and install
     Modify the HDF5_HOME dir in make.inc 
 
+9. How to install sqlite if a suitable version is unavailable and use with Proj v8.1.1
+   git clone -c feature.manyFiles=true https://github.com/spack/spack.git
+   cd spack/bin/
+   ./spack install zlib
+   spack install sqlite
+   ./spack install sqlite
+   Copy path to spack sqlite install and use in cmake command below
+   cmake -DCMAKE_INSTALL_PREFIX=../install -DCMAKE_PREFIX_PATH=<PATH_TO_SQLITE_INSTALL> ..
+   cmake --build .
+   cmake --build . --target install
+
 Running SW4 on Summit:
 -------------------------------
 
@@ -85,6 +97,7 @@ module load netlib-lapack/3.8.0
 module load cuda
 module load xl
 module load fftw
+module load sqlite
 date
 jsrun -n 7200 -g1 -c7 -a1 ./sw4 test.in
 
@@ -100,3 +113,21 @@ bsub -alloc_flags "smt1 cpublink autonumaoff" -nnodes 2048 -W 30:00 -G lcstaff -
 To run in an interactive allocation use:
 
 lrun -T4 ./sw4 test.in
+
+---------------------------------------------------------------------
+Building using cmake ( Experimental WIP)
+---------------------------------------------------------------------
+0. git checkout raja. Then in the top level directory: git submodule update --init --recursive
+1. module load gcc/8.3.1 , the gcc version of lapack and paralell HDF5
+2. proj4 needs to be built by hand and the path passed to cmake. The copy in the tpl sub-directory may be used. see examples in host-config
+4  mkdir build && cd build
+5  cmake -C ../host-config/<host>.cmake ../
+6  make -j 80 ( on a compute node
+
+---------------------------------------------------------------------
+Building and running on Spock
+---------------------------------------------------------------------
+0. ml rocm/4.3.0 cray-hdf5-parallel/1.12.0.7 fftw cray-python/3.8.5.1
+1. cp make.raja.spock43R14U6HDF5ZFP to make.inc in config/
+2. make -f Makefile.hipcc -j 5
+3. see performance/large/run_spock for run command

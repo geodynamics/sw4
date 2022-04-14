@@ -89,13 +89,11 @@ void memvar_pred_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::RangeSegment j_range(jfirst, jlast + 1);
   RAJA::RangeSegment k_range(k1, k2 + 1);
-  RAJA::RangeSegment c_range(0, 3);
+  //  RAJA::RangeSegment c_range(0, 3);
 
   // Note both POL3 and POL3X_ take about the same time on Hayward with 16 ranks
-#ifdef ENABLE_GPU
-#define NO_COLLAPSE 1
-#endif
-#if defined(NO_COLLAPSE)
+
+#if !defined(RAJA_ONLY)
   Range<16> I(ifirst, ilast + 1);
   Range<4> J(jfirst, jlast + 1);
   Range<4> K(k1, k2 + 1);
@@ -165,15 +163,18 @@ void memvar_corr_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::RangeSegment j_range(jfirst, jlast + 1);
   RAJA::RangeSegment k_range(k1, k2 + 1);
-  RAJA::RangeSegment c_range(0, 3);
+  //  RAJA::RangeSegment c_range(0, 3);
 
-#ifdef ENABLE_GPU
-#define NO_COLLAPSE 1
-#endif
-#if defined(NO_COLLAPSE)
+#if !defined(RAJA_ONLY)
+#ifdef ENABLE_CUDA
   Range<16> I(ifirst, ilast + 1);
   Range<4> J(jfirst, jlast + 1);
   Range<4> K(k1, k2 + 1);
+#else
+  Range<64> I(ifirst, ilast + 1);
+  Range<2> J(jfirst, jlast + 1);
+  Range<2> K(k1, k2 + 1);
+#endif
   forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
   RAJA::kernel<MPFC_POL_ASYNC>(
@@ -256,7 +257,7 @@ void memvar_corr_fort_wind_ci(
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::RangeSegment j_range(jfirst, jlast + 1);
   RAJA::RangeSegment k_range(k1, k2 + 1);
-  RAJA::RangeSegment c_range(0, 3);
+  //  RAJA::RangeSegment c_range(0, 3);
 
   RAJA::kernel<XRHS_POL_ASYNC>(
       RAJA::make_tuple(k_range, j_range, i_range),

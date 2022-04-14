@@ -1,7 +1,10 @@
 #include <mpi.h>
-#ifdef ENABLE_CUDA
+#if defined(ENABLE_CUDA) && defined(OPEN_MPI)
 #include <mpi-ext.h>
 #endif
+
+#include <limits.h>
+#include <unistd.h>
 
 #include <iomanip>
 #include <unordered_map>
@@ -10,12 +13,21 @@
 #include "Mspace.h"
 #include "caliper.h"
 #include "policies.h"
+#include "sys/sysinfo.h"
+#include "sys/types.h"
 
-struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0,
-                                                         0, 0, 1, 0};
+long long node_mem();
+std::string hostname();
+struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0, 0,
+                                                         0, 1, 0, 0, 0, 0};
 using namespace std;
 
-void presetGPUID(int mpi_rank) {
+int presetGPUID(int mpi_rank, int local_rank, int local_size) {
+  int dev_counts_local[256] = {0};
+  int dev_counts_global[256] = {0};
+  int device = 0;
+  // SW4_CheckDeviceError(cudaErrorStartupFailure); // For testing code in
+  // CheckError
 #if defined(ENABLE_GPU_ERROR)
   std::cerr
       << " Compilation error. Both ENABLE_CUDA and ENABLE_HIP are defined\n";
@@ -35,10 +47,18 @@ void presetGPUID(int mpi_rank) {
   SW4_CheckDeviceError(cudaGetDeviceCount(&devices_per_node));
   global_variables.num_devices = devices_per_node;
   if (devices_per_node > 1) {
-    char *crank = getenv("OMPI_COMM_WORLD_LOCAL_RANK");
-    int device = atoi(crank) % devices_per_node;
+    // char *crank = getenv("SLURM_LOCALID");
+    // int device = atoi(crank) % devices_per_node;
+    if (local_size == devices_per_node) {
+      device = local_rank;
+    } else {
+      device = local_rank % devices_per_node;
+      std::cerr << "WARNING :: There are " << devices_per_node
+                << " devices per node and " << local_size
+                << " ranks per node\n";
+    }
     global_variables.device = device;
-    printf(" presetGPU Called ::  LOCAL RANK %d \n", device);
+    printf(" CUDA presetGPU Called ::  LOCAL RANK %d \n", device);
     SW4_CheckDeviceError(cudaSetDevice(device));
     SW4_CheckDeviceError(cudaFree(NULL));
     char uuid[80];
@@ -53,30 +73,47 @@ void presetGPUID(int mpi_rank) {
     else
       printf("NVML SET CPU AFFINITY CALLED SUCCESFULLY\n");
   }
+  global_variables.device = device;
 
-#endif  // ENABLE_CUDA
+#endif  // ENDIF ENABLE_CUDA
 
 #ifdef ENABLE_HIP
   int devices_per_node = 4;
   SW4_CheckDeviceError(hipGetDeviceCount(&devices_per_node));
-  printf("NUmber of device is %d\n",devices_per_node);
+  printf("Number of devices is %d\n", devices_per_node);
   fflush(stdout);
   global_variables.num_devices = devices_per_node;
   if (devices_per_node > 1) {
-    char *crank = getenv("SLURM_PROC");
-    printf("Return fro GETENV IS %s\n",crank);
-  fflush(stdout);
-    int device = atoi(crank) % devices_per_node;
-    device=mpi_rank%devices_per_node;
+    // char *crank = getenv("SLURM_LOCALID");
+    // printf("Return from GETENV IS %s\n", crank);
+    // fflush(stdout);
+    // int device = atoi(crank) % devices_per_node;
+    // device = mpi_rank % devices_per_node;
+    if (local_size == devices_per_node) {
+      device = local_rank;
+    } else {
+      device = local_rank % devices_per_node;
+      std::cerr << "WARNING :: There are " << devices_per_node
+                << " devices per node and " << local_size
+                << " ranks per node\n";
+    }
     global_variables.device = device;
-    printf(" presetGPU Called ::  LOCAL RANK %d \n", device);
-  fflush(stdout);
+    printf(" HIP presetGPU Called ::  LOCAL RANK %d \n", device);
+    fflush(stdout);
     SW4_CheckDeviceError(hipSetDevice(device));
   }
-#endif  // ENABLE_HIP
-
-  // printf("Device set to %d \n", global_variables.device);
-#endif  // ENABLE_GPU
+#endif  // ENDIF ENABLE_HIP
+  dev_counts_local[device] = 1;
+  MPI_Reduce(dev_counts_local, dev_counts_global, devices_per_node, MPI_INT,
+             MPI_SUM, 0, MPI_COMM_WORLD);
+  if (!mpi_rank)
+    for (int i = 0; i < devices_per_node; i++)
+      if (dev_counts_global[i] != 0)
+        std::cout << "Device " << i << " used by " << dev_counts_global[i]
+                  << " ranks \n";
+  std::cerr << "Device set to " << global_variables.device << "\n";
+#endif  // ENDIF ENABLE_GPU
+  return device;
 }
 
 typedef struct {
@@ -115,10 +152,14 @@ void check_mem() {
 
 void print_hwm(int rank) {
   const int allocator_count = 3;
-#if defined(ENABLE_CUDA)
+  long long host_mem_used = 0;
+#ifdef SW4_CPU_HWM
+  host_mem_used = node_mem();
+#endif
+#if defined(ENABLE_CUDA) || defined(ENABLE_HIP)
   // std::cout<<"PRINT_HWM"<<std::flush;
-  float hwm_local[allocator_count + 1], hwm_global[allocator_count + 1],
-      hwm_global_min[allocator_count + 1];
+  float hwm_local[allocator_count + 2], hwm_global[allocator_count + 2],
+      hwm_global_min[allocator_count + 2];
 #ifdef SW4_USE_UMPIRE
   hwm_local[0] = umpire::ResourceManager::getInstance()
                      .getAllocator("UM_pool")
@@ -135,9 +176,12 @@ void print_hwm(int rank) {
   hwm_local[allocator_count] = 0;
   for (int i = 0; i < allocator_count; i++)
     hwm_local[allocator_count] += hwm_local[i];
-    // std::cout<<getRank()<<" Umpire HWM
-    // "<<umpire::ResourceManager::getInstance().getAllocator("UM_pool").getHighWatermark()/1024/1024<<"
-    // MB\n";
+
+  hwm_local[allocator_count + 1] =
+      (float)host_mem_used / 1024.0 / 1024.0 / 1024.0;
+  // std::cout<<getRank()<<" Umpire HWM
+  // "<<umpire::ResourceManager::getInstance().getAllocator("UM_pool").getHighWatermark()/1024/1024<<"
+  // MB\n";
 #else
   hwm_local[0] = global_variables.gpu_memory_hwm / 1024.0 / 1024.0 / 1024.0;
   // std::cout<<getRank()<<" GPU Memory HWM =
@@ -146,10 +190,10 @@ void print_hwm(int rank) {
   // "<<global_variables.max_mem/1024/1024<<" MB \n";
 #endif
   float hwm_total;
-  MPI_Reduce(&hwm_local, &hwm_global, allocator_count + 1, MPI_FLOAT, MPI_MAX,
+  MPI_Reduce(hwm_local, hwm_global, allocator_count + 2, MPI_FLOAT, MPI_MAX, 0,
+             MPI_COMM_WORLD);
+  MPI_Reduce(hwm_local, hwm_global_min, allocator_count + 2, MPI_FLOAT, MPI_MIN,
              0, MPI_COMM_WORLD);
-  MPI_Reduce(&hwm_local, &hwm_global_min, allocator_count + 1, MPI_FLOAT,
-             MPI_MIN, 0, MPI_COMM_WORLD);
   MPI_Reduce(&hwm_local[allocator_count], &hwm_total, 1, MPI_FLOAT, MPI_SUM, 0,
              MPI_COMM_WORLD);
   if (!rank) {
@@ -159,6 +203,10 @@ void print_hwm(int rank) {
       std::cerr << i << " MAX Global Device HWM is " << hwm_global[i]
                 << " GB\n";
     }
+
+    std::cerr << std::setprecision(2) << " MIN Host HWM is "
+              << hwm_global_min[allocator_count + 1] << " GB, MAX Host HWM is "
+              << hwm_global[allocator_count + 1] << " GB\n";
 
     std::cout << std::fixed << std::setprecision(2)
               << " Min & Max per-device memory HWM  "
@@ -217,8 +265,9 @@ void *operator new(std::size_t size, Space loc) throw() {
     auto allocator = rma.getAllocator("UM_pool");
     ptr = static_cast<void *>(allocator.allocate(size));
 #if defined(ENABLE_CUDA)
-    SW4_CheckDeviceError(cudaMemAdvise(
-        ptr, size, cudaMemAdviseSetPreferredLocation, global_variables.device));
+    //    SW4_CheckDeviceError(cudaMemAdvise(
+    //     ptr, size, cudaMemAdviseSetPreferredLocation,
+    //     global_variables.device));
 #endif
     // std::cout<<"PTR 1 "<<ptr<<"\n";
     // SW4_CheckDeviceError(cudaMemset(ptr,0,size));
@@ -356,7 +405,7 @@ void *operator new[](std::size_t size, Space loc) throw() {
     // SW4_CheckDeviceError(cudaMemset(ptr,0,size));
     return ptr;
 #else
-    std::cerr << " Memory location Managed_temps is not defined\n";
+    // std::cerr << " Memory location Managed_temps is not defined\n";
     return ::operator new(size, Space::Managed);
 #endif
   } else {
@@ -384,7 +433,7 @@ void *operator new[](std::size_t size, Space loc) throw() {
 }
 void *operator new[](std::size_t size, Space loc, const char *file, int line) {
   SW4_MARK_FUNCTION;
-  // std::cout<<"Calling tracking new from "<<line<<" of "<<file<<"\n";
+  //  std::cout<<"Calling tracking new from "<<line<<" of "<<file<<"\n";
   pattr_t *ss = new pattr_t;
   ss->file = file;
   ss->line = line;
@@ -421,7 +470,7 @@ void operator delete(void *ptr, Space loc) throw() {
   } else if (loc == Space::Pinned)
     SW4_CheckDeviceError(SW4_FREE_PINNED(ptr));
   else if (loc == Space::Host) {
-    // std:cout<<"Calling my placement delete\n";
+    // std::cout<<"Calling my placement delete\n";
     ::operator delete(ptr);
   } else if (loc == Space::Managed_temps) {
 #if defined(SW4_USE_UMPIRE)
@@ -429,7 +478,8 @@ void operator delete(void *ptr, Space loc) throw() {
     auto allocator = rma.getAllocator("UM_pool_temps");
     allocator.deallocate(ptr);
 #else
-    std::cerr << "Memory location Managed_temps not defined\n";
+    // std::cerr << "Memory location Managed_temps not defined\n";
+    SW4_CheckDeviceError(SW4_FREE_MANAGED(ptr));
 #endif
   } else {
     std::cerr << "Unknown memory space for de-allocation request\n";
@@ -486,7 +536,7 @@ void operator delete[](void *ptr, Space loc) throw() {
     SW4_CheckDeviceError(SW4_FREE_PINNED(ptr));
   else if (loc == Space::Host) {
     // std:cout<<"Calling my placement delete\n";
-    ::operator delete(ptr);
+    ::operator delete[](ptr);
   } else if (loc == Space::Managed_temps) {
 #ifdef SW4_USE_UMPIRE
     umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
@@ -609,7 +659,9 @@ void CheckError(cudaError_t const err, const char *file, char const *const fun,
                 const int line) {
   if (err) {
     std::cerr << "CUDA Error Code[" << err << "]: " << cudaGetErrorString(err)
-              << " " << file << " " << fun << " Line number:  " << line << "\n";
+              << " " << file << " " << fun << " Line number:  " << line << "\n"
+              << std::flush;
+    std::cerr << "ERROR on node " << hostname() << "\n" << std::flush;
     abort();
   }
 }
@@ -639,7 +691,9 @@ void CheckError(hipError_t const err, const char *file, char const *const fun,
                 const int line) {
   if (err) {
     std::cerr << "HIP Error Code[" << err << "]: " << hipGetErrorString(err)
-              << " " << file << " " << fun << " Line number:  " << line << "\n";
+              << " " << file << " " << fun << " Line number:  " << line << "\n"
+              << std::flush;
+    std::cerr << "ERROR on node " << hostname() << "\n" << std::flush;
     abort();
   }
 }
@@ -833,6 +887,25 @@ Space GML(const void *ptr) {
     return Space::Space_Error;
 }
 #endif
+#ifdef ENABLE_HIP
+Space GML(const void *ptr) {
+  return Space::Managed;
+  struct hipPointerAttribute_t attr;
+  if (hipPointerGetAttributes(&attr, ptr) == hipErrorInvalidValue) {
+    // This shuld go away with Cuda 11
+    std::cerr << "Invalid value in GML \n";
+    return Space::Host;
+  }
+  if (attr.memoryType == hipMemoryTypeHost) {
+    return Space::Pinned;
+  } else if (attr.memoryType == hipMemoryTypeDevice) {
+    return Space::Managed;
+  } else if (attr.memoryType == hipMemoryTypeUnified) {
+    return Space::Managed;
+  } else
+    return Space::Space_Error;
+}
+#endif
 
 void invert(float_sw4 *A, int msize) {
   float_sw4 B[9];
@@ -905,4 +978,32 @@ bool mpi_supports_device_buffers() {
 #endif
 #endif
   return false;
+}
+long long node_mem() {
+  struct sysinfo memInfo;
+
+  sysinfo(&memInfo);
+  long long totalVirtualMem = memInfo.totalram;
+  totalVirtualMem += memInfo.totalswap;
+  totalVirtualMem *= memInfo.mem_unit;
+
+  long long virtualMemUsed = memInfo.totalram - memInfo.freeram;
+  virtualMemUsed += memInfo.totalswap - memInfo.freeswap;
+  virtualMemUsed *= memInfo.mem_unit;
+
+  long long totalPhysMem = memInfo.totalram;
+  totalPhysMem *= memInfo.mem_unit;
+
+  long long physMemUsed = memInfo.totalram - memInfo.freeram;
+  physMemUsed *= memInfo.mem_unit;
+  // std::cerr<<"VM Total = "<<totalVirtualMem/1024/1024.0<<" "<<"VM Used =
+  // "<<virtualMemUsed/1024/1024.0<<" Phys Total =
+  // "<<totalPhysMem/1024/1024.0<<" Phys Used "<<physMemUsed/1024/1024.0<<"\n";
+  return physMemUsed;
+}
+
+std::string hostname() {
+  char hostname[HOST_NAME_MAX];
+  gethostname(hostname, HOST_NAME_MAX);
+  return std::string(hostname);
 }

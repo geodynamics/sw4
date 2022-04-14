@@ -1,0 +1,5 @@
+To run pytest to completion:
+
+ml  cray-python
+pip install h5py
+setenv ROMIO_FSTYPE_FORCE "ufs:"

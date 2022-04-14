@@ -819,8 +819,8 @@ void EW::buildGaussianHillTopography(float_sw4 amp, float_sw4 Lx, float_sw4 Ly,
 }
 
 //-----------------------------------------------------------------------
-bool EW::interpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0,
-                                bool smoothed) {
+int EW::interpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0,
+                               bool smoothed) {
   // Interpolate the smoothed or raw topography
   //
   // if (q,r) is on this processor (need a 2x2 interval in (i,j)-index space:
@@ -858,13 +858,13 @@ bool EW::interpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0,
   if (!inside_domain) {
     cout << "interpolate_topography: input parameters out of bounds (q,r) = "
          << q << ", " << r << endl;
-    return false;
+    return -11;
   }
 
   float_sw4 X0 = (q - 1.0) * h;
   float_sw4 Y0 = (r - 1.0) * h;
 
-  if (!topographyExists()) return false;
+  if (!topographyExists()) return -12;
 
   float_sw4 zMaxCart = m_zmin[mNumberOfCartesianGrids - 1];
 
@@ -878,7 +878,7 @@ bool EW::interpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0,
 
   if (g != gCurv) {
     cout << "interpolate_topography: g = " << g << " gcurv = " << gCurv << endl;
-    return false;
+    return -13;
   }
   float_sw4 tau;  // holds the elevation at (q,r). Recall that elevation=-z
   if (m_analytical_topo) {
@@ -944,12 +944,12 @@ bool EW::interpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0,
              << " j = " << j << " limits " << m_iStart[gCurv] << " "
              << m_iEnd[gCurv] << " " << m_jStart[gCurv] << " " << m_jEnd[gCurv]
              << " nearest i = " << iNear << " j= " << jNear << endl;
-        return false;
+        return -14;
       }
     }
   }  // end general case: interpolating mTopoGrid array
   Z0 = -tau;
-  return true;
+  return 1;
 }
 
 //-----------------------------------------------------------------------

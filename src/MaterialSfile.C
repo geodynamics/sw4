@@ -46,7 +46,7 @@
 #include "EW.h"
 #include "MaterialSfile.h"
 #include "Require.h"
-
+#include "caliper.h"
 #ifdef USE_HDF5
 #include "hdf5.h"
 #endif
@@ -77,6 +77,7 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> &rho,
                                             std::vector<Sarray> &cp,
                                             std::vector<Sarray> &xis,
                                             std::vector<Sarray> &xip) {
+  SW4_MARK_FUNCTION;
   // Assume attenuation arrays defined on all grids if they are defined on grid
   // zero.
   bool use_q = m_use_attenuation && xis[0].is_defined() && xip[0].is_defined();
@@ -316,14 +317,14 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> &rho,
   delete[] jst;
 
   mEW->communicate_arrays(rho);
-  mEW->communicate_arrays(cs);
-  mEW->communicate_arrays(cp);
+  mEW->communicate_host_arrays(cs);
+  mEW->communicate_host_arrays(cp);
   mEW->material_ic(rho);
   mEW->material_ic(cs);
   mEW->material_ic(cp);
   if (use_q) {
-    mEW->communicate_arrays(xis);
-    mEW->communicate_arrays(xip);
+    mEW->communicate_host_arrays(xis);
+    mEW->communicate_host_arrays(xip);
     mEW->material_ic(xis);
     mEW->material_ic(xip);
   }

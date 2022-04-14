@@ -51,6 +51,18 @@
 #include "nvToolsExtCuda.h"
 #endif
 
+#ifdef USE_ZFP
+#include "H5Zzfp_lib.h"
+#include "H5Zzfp_props.h"
+#endif
+
+#ifdef USE_SZ
+#include "H5Z_SZ.h"
+#endif
+
+#ifdef SW4_USE_SCR
+#include "scr.h"
+#endif
 #if defined(SW4_SIGNAL_CHECKPOINT)
 //
 // Currently no way to get the singnal to all processes without killing the job
@@ -87,10 +99,36 @@ int main(int argc, char **argv) {
 
   stringstream reason;
   // Initialize MPI...
+#ifdef USE_HDF5_ASYNC
+  int provided;
+  MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+#else
   MPI_Init(&argc, &argv);
+#endif
+
+#ifdef SW4_USE_SCR
+  SCR_Configf("SCR_DEBUG=%d",1);
+  SCR_Configf("SCR_CACHE_SIZE=%d",2);
+  SCR_Configf("SCR_CACHE_BYPASS=%d",0); // Default 1 . 0 leaves everything in cache
+  SCR_Configf("SCR_FLUSH=%d",0);
+  SCR_Configf("SCR_FLUSH_ASYNC=%d",1);
+  SCR_Configf("SCR_FLUSH_TYPE=%s","PTHREAD");
+  SCR_Init();
+#endif
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
-  presetGPUID(myRank);
+  MPI_Info info;
+  MPI_Comm shared_comm;
+  MPI_Info_create(&info);
+  MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, myRank, info,
+                      &shared_comm);
+  int local_rank = -1, local_size = -1;
+  MPI_Comm_rank(shared_comm, &local_rank);
+  MPI_Comm_size(shared_comm, &local_size);
+  MPI_Info_free(&info);
+
+  int device = presetGPUID(myRank, local_rank, local_size);
+
 #if defined(SW4_SIGNAL_CHECKPOINT)
   std::signal(SIGUSR1, signal_handler);
 #endif
@@ -98,7 +136,7 @@ int main(int argc, char **argv) {
 #ifdef SW4_USE_UMPIRE
   umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
 #ifdef ENABLE_HIP
-  auto allocator = rma.getAllocator("DEVICE::"+std::to_string(myRank));
+  auto allocator = rma.getAllocator("DEVICE::" + std::to_string(device));
 #else
   auto allocator = rma.getAllocator("UM");
 #endif
@@ -109,20 +147,23 @@ int main(int argc, char **argv) {
 #else
   const size_t pool_size =
       static_cast<size_t>(15) * 1024 * 1024 * 1024;  //+102*1024*1024;
-#endif 
-
+#endif
 
 #ifdef ENABLE_HIP
   auto pref_allocator = allocator;
 #else
+  // auto aligned_allocator =
+  // rma.makeAllocator<umpire::strategy::AlignedAllocator>(
+  //   "aligned_allocator", allocator, 256);
   auto pref_allocator = rma.makeAllocator<umpire::strategy::AllocationAdvisor>(
       "preferred_location_device", allocator, "PREFERRED_LOCATION",
       global_variables.device);
 #endif
 
+  const int alignment = 512; // 1024 may be 1% faster on Crusher
   auto pooled_allocator =
-      rma.makeAllocator<umpire::strategy::DynamicPool, true>(
-          string("UM_pool"), pref_allocator, pool_size);
+      rma.makeAllocator<umpire::strategy::QuickPool, true>(
+          string("UM_pool"), pref_allocator, pool_size, 1024 * 1024, alignment);
 
   const size_t pool_size_small = static_cast<size_t>(250) * 1024 * 1024;
 
@@ -132,8 +173,9 @@ int main(int argc, char **argv) {
 
   // auto pooled_allocator_small =static_cast<size_t>(250)*1024*1024;
   auto pooled_allocator_small =
-      rma.makeAllocator<umpire::strategy::DynamicPool, true>(
-          string("UM_pool_temps"), pref_allocator, pool_size_small);
+      rma.makeAllocator<umpire::strategy::QuickPool, true>(
+          string("UM_pool_temps"), pref_allocator, pool_size_small, 1024 * 1024,
+          alignment);
 
   const size_t object_pool_size = static_cast<size_t>(500) * 1024 * 1024;
 
@@ -141,7 +183,7 @@ int main(int argc, char **argv) {
   //					   object_pool_size,allocator);
 
   auto pooled_allocator_objects =
-      rma.makeAllocator<umpire::strategy::DynamicPool, false>(
+      rma.makeAllocator<umpire::strategy::QuickPool, false>(
           string("UM_object_pool"), allocator, object_pool_size);
 
 #ifdef SW4_MASS_PREFETCH
@@ -163,12 +205,12 @@ int main(int argc, char **argv) {
 
   // } else {
   //   auto pooled_allocator_small =
-  //     rma.makeAllocator<umpire::strategy::DynamicPool,true>(string("UM_pool_temps"),
+  //     rma.makeAllocator<umpire::strategy::QuickPool,true>(string("UM_pool_temps"),
   //  							   pref_allocator,pool_size_small);
   // }
 
   // auto pooled_allocator2 =
-  //   rma.makeAllocator<umpire::strategy::DynamicPool,false>(string("UM_pool_temps"),
+  //   rma.makeAllocator<umpire::strategy::QuickPool,false>(string("UM_pool_temps"),
   //                                                   allocator);
 #endif
 
@@ -198,6 +240,9 @@ int main(int argc, char **argv) {
     }
 #endif
     // Stop MPI
+#ifdef SW4_USE_SCR
+  SCR_Finalize();
+#endif
     MPI_Finalize();
     return 1;
   } else if (strcmp(argv[1], "-v") == 0) {
@@ -235,6 +280,16 @@ int main(int argc, char **argv) {
   // Save the time series here
   vector<vector<TimeSeries *> > GlobalTimeSeries;
 
+#ifdef USE_ZFP
+  H5Z_zfp_initialize();
+#endif
+
+#ifdef USE_SZ
+  char *cfgFile = getenv("SZ_CONFIG_FILE");
+  if (NULL == cfgFile) cfgFile = "sz.config";
+  H5Z_SZ_Init(cfgFile);
+#endif
+
 // make a new simulation object by reading the input file 'fileName'
 // nvtxRangePushA("outer");
 #if defined(SW4_EXCEPTIONS)
@@ -264,7 +319,7 @@ int main(int argc, char **argv) {
       } else {
         if (myRank == 0) {
           int nth = 1;
-#ifndef SW4_NOOMP
+#ifdef _OPENMP
 #pragma omp parallel
           {
             if (omp_get_thread_num() == 0) {
@@ -351,6 +406,20 @@ int main(int argc, char **argv) {
     abort();
   }  // else std::cout<<"MAGMA FINALIZE SUCCESSFULL\n"<<std::flush;
 #endif
+
+#ifdef USE_ZFP
+  H5Z_zfp_finalize();
+#endif
+
+#ifdef USE_SZ
+  H5Z_SZ_Finalize();
+#endif
+
+#ifdef SW4_USE_SCR
+  // Flush any cached checkpoints to parallel file system
+  SCR_Finalize();
+#endif
+
   // Stop MPI
   MPI_Finalize();
   // std::cout<<"MPI_Finalize done\n"<<std::flush;

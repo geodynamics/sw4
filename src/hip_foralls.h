@@ -1,6 +1,10 @@
 #ifndef __HIP_FORALLS_H__
 #define __HIP_FORALLS_H__
 
+#define HSYNC_DEVICE SW4_CheckDeviceError(hipDeviceSynchronize())
+#define HSYNC_STREAM SW4_CheckDeviceError(hipStreamSynchronize(0))
+
+#include "Mspace.h"
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -27,7 +31,7 @@ void forall(int start, int end, LoopBody &&body) {
   // forallkernel<<<blocks, tpb>>>(start, end, body);
   hipLaunchKernelGGL(forallkernel<LoopBody>, blocks, tpb, 0, 0, start, end,
                      body);
-  hipDeviceSynchronize();
+  HSYNC_STREAM;
 }
 template <typename LoopBody>
 void forallasync(int start, int end, LoopBody &&body) {
@@ -36,8 +40,8 @@ void forallasync(int start, int end, LoopBody &&body) {
   blocks = ((end - start) % tpb == 0) ? blocks : blocks + 1;
   // printf("Launching the kernel blocks= %d tpb= %d \n",blocks,tpb);
   // forallkernel<<<blocks, tpb>>>(start, end, body);
-  hipLaunchKernelGGL(forallkernel<LoopBody>, blocks, tpb, 0, 0, start, end, body);
-  // hipDeviceSynchronize();
+  hipLaunchKernelGGL(forallkernel<LoopBody>, blocks, tpb, 0, 0, start, end,
+                     body);
 }
 
 template <int N, typename LoopBody>
@@ -45,11 +49,12 @@ void forall(int start, int end, LoopBody &&body) {
   int tpb = 1024;
   int blocks = (end - start) / tpb;
   blocks = ((end - start) % tpb == 0) ? blocks : blocks + 1;
-  printf("Launching the kernel blocks= %d tpb= %d on line %d\n", blocks, tpb,
-         N);
+  // printf("Launching the kernel blocks= %d tpb= %d on line %d\n", blocks, tpb,
+  //    N);
   // forallkernel<<<blocks, tpb>>>(start, end, body);
-  hipLaunchKernelGGL(forallkernel<LoopBody>, blocks, tpb, 0, 0, start, end, body);
-  hipDeviceSynchronize();
+  hipLaunchKernelGGL(forallkernel<LoopBody>, blocks, tpb, 0, 0, start, end,
+                     body);
+  HSYNC_STREAM;
 }
 
 template <typename Func>
@@ -71,10 +76,11 @@ void forallB(int start, int end, LoopBody &&body) {
   int tpb = 1024;
   int blocks = 52;
   // blocks=((end-start)%tpb==0)?blocks:blocks+1;
-  printf("Launching the kernel\n");
+  // printf("Launching the kernel\n");
   // forallkernelB<<<blocks, tpb>>>(start, end, body);
-  hipLaunchKernelGGL(forallkernelB<LoopBody>, blocks, tpb, 0, 0, start, end, body);
-  hipDeviceSynchronize();
+  hipLaunchKernelGGL(forallkernelB<LoopBody>, blocks, tpb, 0, 0, start, end,
+                     body);
+  HSYNC_STREAM;
 }
 
 template <int N>
@@ -86,6 +92,7 @@ class Range {
     invalid = false;
     if (blocks <= 0) invalid = true;
   };
+  static const int value = N;
   int start;
   int end;
   int blocks;
@@ -103,10 +110,19 @@ class RangeGS {
   int tpb;
 };
 
+template <int WGS, int OCC, typename Func>
+__launch_bounds__(WGS, OCC) __global__
+    void forall3kernel(const int start0, const int N0, const int start1,
+                       const int N1, const int start2, const int N2, Func f) {
+  int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
+  int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
+  int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
+  if ((tid0 < N0) && (tid1 < N1) && (tid2 < N2)) f(tid0, tid1, tid2);
+}
 template <typename Func>
-__global__ void forall3kernel(const int start0, const int N0, const int start1,
-                              const int N1, const int start2, const int N2,
-                              Func f) {
+__launch_bounds__(256, 2) __global__
+    void forall3kernel(const int start0, const int N0, const int start1,
+                       const int N1, const int start2, const int N2, Func f) {
   int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
   int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
   int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
@@ -114,9 +130,9 @@ __global__ void forall3kernel(const int start0, const int N0, const int start1,
 }
 
 template <int N, typename Func>
-__global__ void forall3kernel(const int start0, const int N0, const int start1,
-                              const int N1, const int start2, const int N2,
-                              Func f) {
+__launch_bounds__(256, 2) __global__
+    void forall3kernel(const int start0, const int N0, const int start1,
+                       const int N1, const int start2, const int N2, Func f) {
   int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
   int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
   int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
@@ -149,16 +165,24 @@ void forall3(int start0, int end0, int start1, int end1, int start2, int end2,
   int block2 = (end2 - start2) / tpb2;
   block2 = ((end2 - start2) % tpb2 == 0) ? block2 : block2 + 1;
 
-  std::cout << " BLOCKS " << block0 << " " << block1 << " " << block2 << "\n";
+  //  std::cout << " BLOCKS " << block0 << " " << block1 << " " << block2 <<
+  //  "\n";
   dim3 tpb(tpb0, tpb1, tpb2);
   dim3 blocks(block0, block1, block2);
 
-  printf("Launching the kernel 3d \n");
+  // printf("Launching the kernel 3d \n");
   // forall3kernel<<<blocks, tpb>>>(start0, end0, start1, end1, start2, end2,
   // body);
-  hipLaunchKernelGGL(forall3kernel, blocks, tpb, 0, 0, start0, end0, start1,
-                     end1, start2, end2, body);
-  hipDeviceSynchronize();
+#ifdef SW4_CHECK_LAUNCH_BOUNDS
+#endif
+  hipLaunchKernelGGL((forall3kernel<1024, 2>), blocks, tpb, 0, 0, start0, end0,
+                     start1, end1, start2, end2, body);
+  HSYNC_STREAM;
+}
+
+template <template <int> class T, int N>
+constexpr int extractN(const T<N> &) {
+  return N;
 }
 
 template <typename T1, typename T2, typename T3, typename LoopBody>
@@ -168,8 +192,15 @@ void forall3async(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
 
   // forall3kernel<<<blocks, tpb>>>(irange.start, irange.end, jrange.start,
   //                              jrange.end, krange.start, krange.end, body);
-  hipLaunchKernelGGL(forall3kernel, blocks, tpb, 0, 0, irange.start, irange.end,
-                     jrange.start, jrange.end, krange.start, krange.end, body);
+#ifdef SW4_CHECK_LAUNCH_BOUNDS
+  // if ((irange.tpb*jrange.tpb*krange.tpb)!=256){
+  //   std::cerr<<"Check launch bounds failed !!
+  //   "<<(irange.tpb*jrange.tpb*krange.tpb)<<"!=256\n"; abort();
+  // }
+#endif
+  hipLaunchKernelGGL((forall3kernel<T1::value * T2::value * T3::value, 2>),
+                     blocks, tpb, 0, 0, irange.start, irange.end, jrange.start,
+                     jrange.end, krange.start, krange.end, body);
 }
 template <typename T1, typename T2, typename T3, typename LoopBody>
 void forall3(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
@@ -178,7 +209,7 @@ void forall3(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
 
   // forall3kernel<<<blocks,tpb>>>(irange.start,irange.end,jrange.start,jrange.end,krange.start,krange.end,body);
   forall3async(irange, jrange, krange, body);
-  hipStreamSynchronize(0);
+  HSYNC_STREAM;
 }
 
 template <typename T1, typename T2, typename T3, typename LoopBody>
@@ -198,10 +229,19 @@ void forall3GS(T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
 
   // forall3gskernel<<<blocks,tpb>>>(irange.start,irange.end,jrange.start,jrange.end,krange.start,krange.end,body);
   forall3async(irange, jrange, krange, body);
-  hipStreamSynchronize(0);
+  HSYNC_STREAM;
 }
 
 // Forall2
+
+template <int WGS, int OCC, typename Func>
+__launch_bounds__(WGS, OCC) __global__
+    void forall2kernel(const int start0, const int N0, const int start1,
+                       const int N1, Func f) {
+  int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
+  int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
+  if ((tid0 < N0) && (tid1 < N1)) f(tid0, tid1);
+}
 
 template <typename Func>
 __global__ void forall2kernel(const int start0, const int N0, const int start1,
@@ -218,8 +258,9 @@ void forall2async(T1 &irange, T2 &jrange, LoopBody &&body) {
 
   // forall2kernel<<<blocks, tpb>>>(irange.start, irange.end, jrange.start,
   // jrange.end, body);
-  hipLaunchKernelGGL(forall2kernel, blocks, tpb, 0, 0, irange.start, irange.end,
-                     jrange.start, jrange.end, body);
+  hipLaunchKernelGGL((forall2kernel<T1::value * T2::value, 2>), blocks, tpb, 0,
+                     0, irange.start, irange.end, jrange.start, jrange.end,
+                     body);
 }
 
 template <typename T1, typename T2, typename LoopBody>
@@ -230,7 +271,7 @@ void forall2(T1 &irange, T2 &jrange, LoopBody &&body) {
   /* forall2kernel<<<blocks,tpb>>>(irange.start,irange.end,jrange.start,jrange.end,body);
    */
   forall2async(irange, jrange, body);
-  hipStreamSynchronize(0);
+  HSYNC_STREAM;
 }
 
 // AutoTuning Code
@@ -416,38 +457,255 @@ void forall3asyncAT(T1 &range3, LoopBody &&body) {
 
 #endif
 
-
 template <int N>
 class Tclass {};
 
-
 template <int N, typename Tag, typename Func>
-__global__ void forall3kernel(Tag t, const int start0, const int N0,
-                              const int start1, const int N1, const int start2,
-                              const int N2, Func f) {
+__launch_bounds__(256, 2) __global__
+    void forall3kernel(Tag t, const int start0, const int N0, const int start1,
+                       const int N1, const int start2, const int N2, Func f) {
+  int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
+  int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
+  int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
+  if ((tid0 < N0) && (tid1 < N1) && (tid2 < N2)) f(t, tid0, tid1, tid2);
+}
+template <int WGS, int OCC, typename Tag, typename Func>
+__launch_bounds__(WGS, OCC) __global__
+    void forall3kernelV(Tag t, const int start0, const int N0, const int start1,
+                        const int N1, const int start2, const int N2, Func f) {
   int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
   int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
   int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
   if ((tid0 < N0) && (tid1 < N1) && (tid2 < N2)) f(t, tid0, tid1, tid2);
 }
 
+template <int WGS, int OCC, typename Func>
+__launch_bounds__(WGS, OCC) __global__
+    void forall3kernelV2(const int start0, const int N0, const int start1,
+                         const int N1, const int start2, const int N2, Func f) {
+  int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
+  int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
+  int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
+  if ((tid0 < N0) && (tid1 < N1) && (tid2 < N2)) f(tid0, tid1, tid2);
+}
 template <int N, typename Tag, typename T1, typename T2, typename T3,
           typename LoopBody>
 void forall3async(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
   if (irange.invalid || jrange.invalid || krange.invalid) return;
   dim3 tpb(irange.tpb, jrange.tpb, krange.tpb);
   dim3 blocks(irange.blocks, jrange.blocks, krange.blocks);
-  std::cout<<"forall launch tpb"<<irange.tpb<<" "<<jrange.tpb<<"  "<<krange.tpb<<"\n"; 
-  std::cout<<"forall launch blocks"<<irange.blocks<<"  "<<jrange.blocks<<" "<<krange.blocks<<"\n";
-  // forall3kernel<N><<<blocks, tpb>>>(t, irange.start, irange.end, jrange.start,
-  //                                   jrange.end, krange.start, krange.end, body);
-  std::cout<<hipGetErrorString(hipPeekAtLastError())<<"\n"<<std::flush;
-  std::cout<<"Launching kernel..."<<std::flush;
-  hipLaunchKernelGGL(forall3kernel<N>, blocks, tpb, 0, 0, t, irange.start, irange.end,
-                     jrange.start, jrange.end, krange.start, krange.end, body);
-  hipStreamSynchronize(0);
-  std::cout<<"Done\n"<<std::flush;
+  // std::cout<<"forall launch tpb"<<irange.tpb<<" "<<jrange.tpb<<"
+  // "<<krange.tpb<<"\n"; std::cout<<"forall launch blocks"<<irange.blocks<<"
+  // "<<jrange.blocks<<" "<<krange.blocks<<"\n";
+  // forall3kernel<N><<<blocks, tpb>>>(t, irange.start, irange.end,
+  // jrange.start,
+  //                                   jrange.end, krange.start, krange.end,
+  //                                   body);
+  // std::cout<<hipGetErrorString(hipPeekAtLastError())<<"\n"<<std::flush;
+  // std::cout<<"Launching kernel..."<<std::flush;
+#ifdef SW4_CHECK_LAUNCH_BOUNDS
+  if ((irange.tpb * jrange.tpb * krange.tpb) != 256) {
+    std::cerr << "Check launch bounds failed !! "
+              << (irange.tpb * jrange.tpb * krange.tpb) << "!=256\n";
+    abort();
+  }
+#endif
+  hipLaunchKernelGGL(forall3kernel<N>, blocks, tpb, 0, 0, t, irange.start,
+                     irange.end, jrange.start, jrange.end, krange.start,
+                     krange.end, body);
+  // hipStreamSynchronize(0);
+  ////std::cout<<"Done\n"<<std::flush;
+}
+template <int N, typename Tag, typename T1, typename T2, typename T3,
+          typename LoopBody>
+void forall3(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
+forall3async<N, Tag>(t, irange, jrange, krange, body);
+  HSYNC_STREAM;
 }
 
+template <int WGS, int OCC, typename Tag, typename T1, typename T2, typename T3,
+          typename LoopBody>
+void forall3asyncV(Tag &t, T1 &irange, T2 &jrange, T3 &krange,
+                   LoopBody &&body) {
+  if (irange.invalid || jrange.invalid || krange.invalid) return;
+  dim3 tpb(irange.tpb, jrange.tpb, krange.tpb);
+  dim3 blocks(irange.blocks, jrange.blocks, krange.blocks);
+  // std::cout<<"forall launch tpb"<<irange.tpb<<" "<<jrange.tpb<<"
+  // "<<krange.tpb<<"\n"; std::cout<<"forall launch blocks"<<irange.blocks<<"
+  // "<<jrange.blocks<<" "<<krange.blocks<<"\n";
+  // forall3kernel<N><<<blocks, tpb>>>(t, irange.start, irange.end,
+  // jrange.start,
+  //                                   jrange.end, krange.start, krange.end,
+  //                                   body);
+  // std::cout<<hipGetErrorString(hipPeekAtLastError())<<"\n"<<std::flush;
+  // std::cout<<"Launching kernel..."<<std::flush;
+#ifdef SW4_CHECK_LAUNCH_BOUNDS
+  if ((irange.tpb * jrange.tpb * krange.tpb) != 256) {
+    std::cerr << "Check launch bounds failed !! "
+              << (irange.tpb * jrange.tpb * krange.tpb) << "!=256\n";
+    abort();
+  }
+#endif
+  hipLaunchKernelGGL((forall3kernelV<WGS, OCC>), blocks, tpb, 0, 0, t,
+                     irange.start, irange.end, jrange.start, jrange.end,
+                     krange.start, krange.end, body);
+  // hipStreamSynchronize(0);
+  ////std::cout<<"Done\n"<<std::flush;
+}
+
+// The multiforall for kernel fusion
+template <typename T, typename F0, typename F1, typename F2, typename F3>
+__global__ void multiforallkernel(T start0, T end0, F0 f0, T start1, T end1,
+                                  F1 f1, T start2, T end2, F2 f2, T start3,
+                                  T end3, F3 f3) {
+  for (T i = start0 + threadIdx.x + blockIdx.x * blockDim.x; i < end0;
+       i += blockDim.x * gridDim.x)
+    f0(i);
+  for (T i = start1 + threadIdx.x + blockIdx.x * blockDim.x; i < end1;
+       i += blockDim.x * gridDim.x)
+    f1(i);
+  for (T i = start2 + threadIdx.x + blockIdx.x * blockDim.x; i < end2;
+       i += blockDim.x * gridDim.x)
+    f2(i);
+  for (T i = start3 + threadIdx.x + blockIdx.x * blockDim.x; i < end3;
+       i += blockDim.x * gridDim.x)
+    f3(i);
+}
+template <int N, typename T, typename LB0, typename LB1, typename LB2,
+          typename LB3>
+void multiforall(T start0, T end0, LB0 &&body0, T start1, T end1, LB1 &&body1,
+                 T start2, T end2, LB2 &&body2, T start3, T end3, LB3 &&body3) {
+  // int blocks = 80 * 2048 / N;  // WARNING HARDWIRED FOR V100
+
+  dim3 tpb(N, 1, 1);
+  dim3 blocks(80 * 2048 / N, 1, 1);
+  hipLaunchKernelGGL(multiforallkernel, blocks, tpb, 0, 0, start0, end0, body0,
+                     start1, end1, body1, start2, end2, body2, start3, end3,
+                     body3);
+}
+
+// Generalized mforall kernel
+template <typename T, typename LoopBody>
+__device__ inline void runner(T start, T end, LoopBody f) {
+  for (T i = start + threadIdx.x + blockIdx.x * blockDim.x; i < end;
+       i += blockDim.x * gridDim.x)
+    f(i);
+}
+template <typename T, typename LoopBody, class... Args>
+__device__ inline void runner(T start, T end, LoopBody f, Args... args) {
+  for (T i = start + threadIdx.x + blockIdx.x * blockDim.x; i < end;
+       i += blockDim.x * gridDim.x)
+    f(i);
+  runner(args...);
+}
+
+template <typename T, typename LoopBody, class... Args>
+__global__ void gmforallkernel(T start, T end, LoopBody body, Args... args) {
+  runner(start, end, body, args...);
+}
+
+// Generalized mforall
+
+template <int N, typename T, typename LoopBody, class... Args>
+void gmforall(T start, T end, LoopBody &&body, Args... args) {
+  // std::cout<<"Start is "<<start<<"\n";
+  dim3 tpb(N, 1, 1);
+  dim3 blocks(80 * 2048 / N, 1, 1);
+  // int blocks = 80 * 2048 / N;  // WARNING HARDWIRED FOR V100
+  // multiforallkernel<<<blocks,N>>>(start,end, body, args...);
+  // gmforallkernel<<<blocks, N>>>(start, end, body, args...);
+  hipLaunchKernelGGL(gmforallkernel, blocks, tpb, 0, 0, start, end, body,
+                     args...);
+}
+
+// Generalized gmforall3async
+
+class MRange {
+ public:
+  int i, j, k;
+};
+
+template <typename T, typename LoopBody>
+__device__ inline void runner3(T start, T end, LoopBody f) {
+  for (decltype(start.i) i = start.i + threadIdx.x + blockIdx.x * blockDim.x;
+       i < end.i; i += blockDim.x * gridDim.x)
+    for (decltype(start.j) j = start.j + threadIdx.y + blockIdx.y * blockDim.y;
+         j < end.j; j += blockDim.y * gridDim.y)
+      for (decltype(start.k) k =
+               start.k + threadIdx.z + blockIdx.z * blockDim.z;
+           k < end.k; k += blockDim.z * gridDim.z)
+        f(i, j, k);
+}
+template <typename T, typename LoopBody, class... Args>
+__device__ inline void runner3(T start, T end, LoopBody f, Args... args) {
+  for (decltype(start.i) i = start.i + threadIdx.x + blockIdx.x * blockDim.x;
+       i < end.i; i += blockDim.x * gridDim.x)
+    for (decltype(start.j) j = start.j + threadIdx.y + blockIdx.y * blockDim.y;
+         j < end.j; j += blockDim.y * gridDim.y)
+      for (decltype(start.k) k =
+               start.k + threadIdx.z + blockIdx.z * blockDim.z;
+           k < end.k; k += blockDim.z * gridDim.z)
+        f(i, j, k);
+  runner3(args...);
+}
+
+template <typename T, typename LoopBody, class... Args>
+__global__ void gmforallkernel3(T start, T end, LoopBody body, Args... args) {
+  runner3(start, end, body, args...);
+}
+
+template <int I, int J, int K, typename T, typename LoopBody, class... Args>
+void gmforall3async(T &start, T &end, LoopBody &&body, Args... args) {
+  //  int blocks=80 * 2048/N; // WARNING HARDWIRED FOR V100
+  dim3 tpb(I, J, K);
+  dim3 blocks(64 / I, 64 / J, 40 / K);  // WARNING HARDWIRED FOR V100 PBUGS
+
+  gmforallkernel3<<<blocks, tpb>>>(start, end, body, args...);
+}
+
+// Split Fusion kernels
+template <int N, typename Tag, typename... Func>
+__launch_bounds__(256, 1) __global__
+    void forall3kernelSF(Tag t, const int start0, const int N0,
+                         const int start1, const int N1, const int start2,
+                         const int N2, Func... f) {
+  const int STORE = 5;
+#define USE_SHARED_MEMORY 1
+#ifdef USE_SHARED_MEMORY
+  int off = (threadIdx.x + blockDim.x * threadIdx.y +
+             blockDim.x * blockDim.y * threadIdx.z) *
+            STORE;
+  __shared__ double sma[512 * STORE];
+
+  double *carray = sma + off;
+#else
+  double carray[STORE];
+
+#endif
+  // double sma2[3];
+
+  int tid0 = start0 + threadIdx.x + blockIdx.x * blockDim.x;
+  int tid1 = start1 + threadIdx.y + blockIdx.y * blockDim.y;
+  int tid2 = start2 + threadIdx.z + blockIdx.z * blockDim.z;
+  if ((tid0 < N0) && (tid1 < N1) && (tid2 < N2)) {
+    (f(t, carray, tid0, tid1, tid2), ...);
+  }
+}
+
+template <int N, typename Tag, typename T1, typename T2, typename T3,
+          typename... LoopBodies>
+void forall3asyncSF(Tag &t, T1 &irange, T2 &jrange, T3 &krange,
+                    LoopBodies &&... bodies) {
+  if (irange.invalid || jrange.invalid || krange.invalid) {
+    std::cerr << "Invalid ranges in forall3asyncSF \n";
+    return;
+  }
+  dim3 tpb(irange.tpb, jrange.tpb, krange.tpb);
+  dim3 blocks(irange.blocks, jrange.blocks, krange.blocks);
+
+  hipLaunchKernelGGL(forall3kernelSF<N>, blocks, tpb, 0, 0, t, irange.start,
+                     irange.end, jrange.start, jrange.end, krange.start,
+                     krange.end, bodies...);
+}
 
 #endif  // Guards
