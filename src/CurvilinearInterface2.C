@@ -97,7 +97,10 @@ void CurvilinearInterface2::copy_str( float_sw4* dest, float_sw4* src,
 
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::init_arrays( vector<float_sw4*>& a_strx,
-					 vector<float_sw4*>& a_stry )
+					 vector<float_sw4*>& a_stry,
+                                         vector<Sarray>& a_rho, 
+                                         vector<Sarray>& a_mu, 
+                                         vector<Sarray>& a_lambda )
 {
    for( int s=0 ; s < 4; s++ )
       m_isbndry[s] = m_ew->getLocalBcType( m_gc, s ) != bProcessor;
@@ -184,12 +187,19 @@ void CurvilinearInterface2::init_arrays( vector<float_sw4*>& a_strx,
    }
    else 
    {
-      m_rho_c.insert_intersection(m_ew->mRho[m_gc]);
-      m_rho_f.insert_intersection(m_ew->mRho[m_gf]);
-      m_mu_c.insert_intersection(m_ew->mMu[m_gc]);
-      m_mu_f.insert_intersection(m_ew->mMu[m_gf]);
-      m_lambda_c.insert_intersection(m_ew->mLambda[m_gc]);
-      m_lambda_f.insert_intersection(m_ew->mLambda[m_gf]);
+      //      m_rho_c.insert_intersection(m_ew->mRho[m_gc]);
+      //      m_rho_f.insert_intersection(m_ew->mRho[m_gf]);
+      //      m_mu_c.insert_intersection(m_ew->mMu[m_gc]);
+      //      m_mu_f.insert_intersection(m_ew->mMu[m_gf]);
+      //      m_lambda_c.insert_intersection(m_ew->mLambda[m_gc]);
+      //      m_lambda_f.insert_intersection(m_ew->mLambda[m_gf]);
+
+      m_rho_c.insert_intersection(a_rho[m_gc]);
+      m_rho_f.insert_intersection(a_rho[m_gf]);
+      m_mu_c.insert_intersection(a_mu[m_gc]);
+      m_mu_f.insert_intersection(a_mu[m_gf]);
+      m_lambda_c.insert_intersection(a_lambda[m_gc]);
+      m_lambda_f.insert_intersection(a_lambda[m_gf]);
 
       int extra_ghost = m_nghost - m_ew->getNumberOfGhostPoints();
       if( extra_ghost > 0 )

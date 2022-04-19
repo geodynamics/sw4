@@ -31,7 +31,7 @@ class GridGenerator
    virtual bool grid_mapping( EW* a_ew, float_sw4 p, float_sw4 q, float_sw4 r, int g,
                               float_sw4& x, float_sw4& y, float_sw4& z )=0;
    virtual bool inverse_grid_mapping( EW* a_ew, float_sw4 x, float_sw4 y, float_sw4 z, int g,
-                                      float_sw4& p, float_sw4& q, float_sw4& r )=0;
+                                      float_sw4& p, float_sw4& q, float_sw4& r, bool interior=true )=0;
    virtual void grid_mapping_diff( EW* a_ew, float_sw4 q, float_sw4 r, float_sw4 s, int g, 
                                    int ic, int jc, int kc,
                                    float_sw4& zq, float_sw4& zr, float_sw4& zs,

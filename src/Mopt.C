@@ -3,6 +3,7 @@
 #include <fcntl.h>
 
 #include "MaterialParCart.h"
+#include "MaterialParCurv.h"
 #include "MaterialParCartesian.h"
 #include "MaterialParCartesianVels.h"
 #include "MaterialParCartesianVp.h"
@@ -143,7 +144,7 @@ bool Mopt::parseInputFileOpt( std::string filename )
    MPI_Barrier(m_ew->m_1d_communicator);
    m_ew->create_directory(m_path);
    CHECK_INPUT(m_mp != NULL,"ERROR: Material parameterization not given");
-
+   initialize_mimage_files();
    m_mp->set_path(m_path);
 
 // wait until all processes have read the input file
@@ -351,7 +352,10 @@ void Mopt::processMaterialParCart( char* buffer )
       varcase=3;
    else if( vponly )
       varcase=4;
-   m_mp = new MaterialParCart( m_ew, nx, ny, nz, init, varcase, file, amp, omega, shared );
+   if( m_ew->topographyExists() )
+      m_mp = new MaterialParCurv( m_ew, nx, ny, nz, init, varcase, file, amp, omega, shared );
+   else
+      m_mp = new MaterialParCart( m_ew, nx, ny, nz, init, varcase, file, amp, omega, shared );
    //   if( !shared )
    //      m_mp = new MaterialParCart( m_ew, nx, ny, nz, init, varcase, file, amp, omega );
    //   else
@@ -1437,4 +1441,27 @@ int Mopt::get_pseudo_hessian_case( )
       return m_mp->get_varcase();
    else
       return 0;
+}
+
+//-----------------------------------------------------------------------
+void Mopt::initialize_mimage_files( )
+{
+   Image::setSteps(m_maxit);
+   //   Image::setSteps(mNumberOfTimeSteps);
+   for (unsigned int fIndex = 0; fIndex < m_image_files.size(); ++fIndex)
+   {
+     m_image_files[fIndex]->computeGridPtIndex();
+     m_image_files[fIndex]->allocatePlane();
+   }
+
+   for (unsigned int fIndex = 0; fIndex < m_image_files.size(); ++fIndex)
+      m_image_files[fIndex]->associate_gridfiles( m_image_files );
+
+   for (unsigned int fIndex = 0; fIndex < m_image_files.size(); ++fIndex)
+      if( m_image_files[fIndex]->mMode == Image::GRIDX
+       || m_image_files[fIndex]->mMode == Image::GRIDY
+       || m_image_files[fIndex]->mMode == Image::GRIDZ )
+      {
+	 m_image_files[fIndex]->computeImageGrid(m_ew->mX, m_ew->mY, m_ew->mZ );
+      }
 }

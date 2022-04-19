@@ -49,7 +49,7 @@ bool GridGeneratorGeneral::grid_mapping( EW* a_ew, float_sw4 q, float_sw4 r, flo
 
 //-----------------------------------------------------------------------
 bool GridGeneratorGeneral::inverse_grid_mapping( EW* a_ew, float_sw4 x, float_sw4 y, float_sw4 z, int g,
-                                                 float_sw4& q, float_sw4& r, float_sw4& s )
+                                                 float_sw4& q, float_sw4& r, float_sw4& s, bool interior )
 {
    int ncurv = a_ew->mNumberOfGrids-a_ew->mNumberOfCartesianGrids;
    if( m_always_new || ncurv > 1 )
@@ -57,7 +57,7 @@ bool GridGeneratorGeneral::inverse_grid_mapping( EW* a_ew, float_sw4 x, float_sw
    // New mapping.
       float_sw4 h = a_ew->mGridSize[g];
       int     Nz  = a_ew->m_global_nz[g];
-      return inverse_grid_mapping_new( a_ew, x, y, z, g, q, r, s, h, Nz );
+      return inverse_grid_mapping_new( a_ew, x, y, z, g, q, r, s, h, Nz, interior );
    }
    else
    {
@@ -70,7 +70,7 @@ bool GridGeneratorGeneral::inverse_grid_mapping( EW* a_ew, float_sw4 x, float_sw
       // 0. Check z
       if( !( bbox[4]-3*h < z && z < bbox[5]+3*h ) )
          return false;
-      return inverse_grid_mapping_old( a_ew, x, y, z, g, q, r, s, a_ew->mTopoGridExt, h, Nz );
+      return inverse_grid_mapping_old( a_ew, x, y, z, g, q, r, s, a_ew->mTopoGridExt, h, Nz, interior );
    }
 }
 
@@ -332,7 +332,8 @@ bool GridGeneratorGeneral::grid_mapping_old( float_sw4 q, float_sw4 r, float_sw4
 bool GridGeneratorGeneral::inverse_grid_mapping_old( EW* a_ew, 
                                                      float_sw4 x, float_sw4 y, float_sw4 z, int g,
                                                      float_sw4& q, float_sw4& r, float_sw4& s,
-                                                     Sarray& TopoGridExt, float_sw4 h, int Nz )
+                                                     Sarray& TopoGridExt, float_sw4 h, int Nz,
+                                                     bool interior )
 {
 //
 // If (X0, Y0, Z0) is on the curvilinear grid and (X0, Y0) is on this processor:
@@ -349,8 +350,16 @@ bool GridGeneratorGeneral::inverse_grid_mapping_old( EW* a_ew,
    q = x/h + 1.0;
    r = y/h + 1.0;
    int i= static_cast<int>(floor(q));
-   int j= static_cast<int>(floor(r));   
-   if( a_ew->interior_point_in_proc( i, j, g ) )
+   int j= static_cast<int>(floor(r));
+   bool xysuccess;
+   if( interior )
+      xysuccess = a_ew->interior_point_in_proc( i, j, g );
+   else
+      xysuccess = a_ew->point_in_proc( i, j, g );
+
+   if( xysuccess )
+      //   if( a_ew->point_in_proc( i, j, g ) )
+      //   if( a_ew->interior_point_in_proc( i, j, g ) )
    {
       s = 0.;   
 // 2. Compute s
@@ -626,7 +635,7 @@ bool GridGeneratorGeneral::inverse_grid_mapping_new( EW* a_ew, float_sw4 x,
                                                      int g,
                                                      float_sw4& q, float_sw4& r,
                                                      float_sw4& s,
-                                                     float_sw4 h, int Nz )
+                                                     float_sw4 h, int Nz, bool interior )
 {
 //
 // If (X0, Y0, Z0) is in the curvilinear grid g and (X0, Y0) is on this processor:
@@ -643,7 +652,12 @@ bool GridGeneratorGeneral::inverse_grid_mapping_new( EW* a_ew, float_sw4 x,
    r = y/h + 1.0;
    int i= static_cast<int>(floor(q));
    int j= static_cast<int>(floor(r));   
-   if( a_ew->interior_point_in_proc( i, j, g ) )
+   bool xysuccess;
+   if( interior )
+      xysuccess = a_ew->interior_point_in_proc( i, j, g );
+   else
+      xysuccess = a_ew->point_in_proc( i, j, g );
+   if( xysuccess )
    {
 // 2. Compute s
       s = 0.;

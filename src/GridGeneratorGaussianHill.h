@@ -42,7 +42,7 @@ class GridGeneratorGaussianHill: public GridGenerator
    virtual bool grid_mapping( EW* a_ew, float_sw4 p, float_sw4 q, float_sw4 r, int g,
                               float_sw4& x, float_sw4& y, float_sw4& z );
    virtual bool inverse_grid_mapping( EW* a_ew, float_sw4 x, float_sw4 y, float_sw4 z, int g,
-                                      float_sw4& p, float_sw4& q, float_sw4& r );
+                                      float_sw4& p, float_sw4& q, float_sw4& r, bool interior=true );
    virtual void grid_mapping_diff(
                              EW* a_ew, float_sw4 q, float_sw4 r, float_sw4 s, int g, 
                              int ic, int jc, int kc,

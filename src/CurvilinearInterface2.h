@@ -67,7 +67,9 @@ class CurvilinearInterface2
 public:
    CurvilinearInterface2( int a_gc, EW* a_ew );
    CurvilinearInterface2() {}
-   void init_arrays( std::vector<float_sw4*>& a_strx, std::vector<float_sw4*>& a_stry );
+   void init_arrays( std::vector<float_sw4*>& a_strx, std::vector<float_sw4*>& a_stry,
+                     std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
+                     std::vector<Sarray>& a_lambda );
    //   void test1( EW* a_ew, int gc, std::vector<Sarray>& a_U );
    //   void test2( EW* a_ew, int gc, std::vector<Sarray>& a_U );
    

@@ -153,7 +153,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
 
 // Setup curvilinear grid refinement interface
    for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
-      m_cli2[g-mNumberOfCartesianGrids]->init_arrays( m_sg_str_x, m_sg_str_y);
+      m_cli2[g-mNumberOfCartesianGrids]->init_arrays( m_sg_str_x, m_sg_str_y,
+                                                      a_Rho, a_Mu, a_Lambda );
 
 // Allocate boundary sides
    for( int g=0 ; g < mNumberOfGrids ; g++ )   {

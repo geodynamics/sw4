@@ -139,19 +139,37 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
    m_path         = a_ew->getPath(m_global_event);
 
  // 1. Adjust z if depth below topography is given
-   if (m_zRelativeToTopography && a_ew->topographyExists() ) 
+   if (a_ew->topographyExists() ) 
    {
       float_sw4 zTopoLocal;
       if(!a_ew->m_gridGenerator->interpolate_topography( a_ew, mX, mY, zTopoLocal, a_ew->mTopoGridExt))
          zTopoLocal=-1e38;
       MPI_Allreduce( &zTopoLocal, &m_zTopo, 1, a_ew->m_mpifloat, MPI_MAX, a_ew->m_1d_communicator );
-      mZ += m_zTopo;
+         //      mZ += m_zTopo;
    } 
    else
       m_zTopo = 0;
-   m_zRelativeToTopography = false;
+   if( m_zRelativeToTopography )
+   {
+      mZ += m_zTopo;
+      m_zRelativeToTopography = false;
+   }
+   float_sw4 rofftol = 1e-9;
+   if(sizeof(float_sw4) == 4 )
+      rofftol = 1e-5;
+// Make sure the station is below the topography (z is positive downwards)
+   if ( mZ < m_zTopo - rofftol)
+   {
+      printf("Ignoring SAC station %s mX=%g, mY=%g, mZ=%g, because it is above the topography z=%g\n", 
+	     m_staName.c_str(),  mX,  mY, mZ, m_zTopo);
+      m_myPoint=false;
+      return;
+   }
+
+
 // 2. Find nearest grid point and its grid.
    m_myPoint = a_ew->computeNearestGridPoint2( m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ );
+
    //   if( m_myPoint )
    //   cout << "station at ("<< mX  << " " << mY << " " << mZ <<" placed at grid point " <<
    //      m_i0 << " " << m_j0 << " " << m_k0 << " in grid " << m_grid0 <<endl;
@@ -219,21 +237,6 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 //      mZ += m_zTopo;
 //      m_zRelativeToTopography = false; // set to false so the correction isn't repeated (e.g. by the copy function)
 //   }
-   float_sw4 rofftol = 1e-9;
-   if(sizeof(float_sw4) == 4 )
-      rofftol = 1e-5;
-
-   float_sw4 zMin = m_zTopo - rofftol; // allow for a little roundoff
-   
-// make sure the station is below the topography (z is positive downwards)
-   if ( mZ < zMin)
-   {
-      printf("Ignoring SAC station %s mX=%g, mY=%g, mZ=%g, because it is above the topography z=%g\n", 
-	     m_staName.c_str(),  mX,  mY, mZ, m_zTopo);
- // don't write this station
-      m_myPoint=false;
-      return;
-   }
      
 // now we can find the closest grid point  
 //   a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);

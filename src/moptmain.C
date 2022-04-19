@@ -961,32 +961,45 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
    {
    //Debug This assumes that m_mp->get_gradient is modified to only return
       // the sum over the grid points of the gradient wrt. the parameter
-      std::vector<Sarray> rho0(1), mu0(1), lambda0(1), rho1(1), mu1(1), lambda1(1);
-      std::vector<Sarray> cs0(1), cp0(1), cs1(1), cp1(1);
-      int k1=simulation.m_kStart[0];
-      int k2=simulation.m_kEnd[0];
-      int j1=simulation.m_jStart[0];
-      int j2=simulation.m_jEnd[0];
-      int i1=simulation.m_iStart[0];
-      int i2=simulation.m_iEnd[0];
-      rho0[0].define(i1,i2,j1,j2,k1,k2);
-      mu0[0].define(i1,i2,j1,j2,k1,k2);
-      lambda0[0].define(i1,i2,j1,j2,k1,k2);   
-      rho1[0].define(i1,i2,j1,j2,k1,k2);
-      mu1[0].define(i1,i2,j1,j2,k1,k2);
-      lambda1[0].define(i1,i2,j1,j2,k1,k2);   
+      int ng=simulation.mNumberOfGrids;
+      std::vector<Sarray> rho0(ng), mu0(ng), lambda0(ng), rho1(ng), mu1(ng), lambda1(ng);
+      std::vector<Sarray> cs0(ng), cp0(ng), cs1(ng), cp1(ng);
+      for( int g=0 ; g < ng; g++)
+      {
+         int k1=simulation.m_kStart[g];
+         int k2=simulation.m_kEnd[g];
+         int j1=simulation.m_jStart[g];
+         int j2=simulation.m_jEnd[g];
+         int i1=simulation.m_iStart[g];
+         int i2=simulation.m_iEnd[g];
+         rho0[g].define(i1,i2,j1,j2,k1,k2);
+         mu0[g].define(i1,i2,j1,j2,k1,k2);
+         lambda0[g].define(i1,i2,j1,j2,k1,k2);   
+         rho1[g].define(i1,i2,j1,j2,k1,k2);
+         mu1[g].define(i1,i2,j1,j2,k1,k2);
+         lambda1[g].define(i1,i2,j1,j2,k1,k2);   
+      }
       mopt->m_mp->get_material( nmpard, xm, nmpars, xs, rho0, mu0, lambda0 );
       simulation.communicate_arrays(rho0);
       simulation.communicate_arrays(mu0);
       simulation.communicate_arrays(lambda0);
       int varcase=mopt->m_mp->get_varcase();
-      if( varcase > 1  )
+      for( int g=0 ; g < ng; g++)
       {
-         cs0[0].define(i1,i2,j1,j2,k1,k2);
-         cp0[0].define(i1,i2,j1,j2,k1,k2);   
-         cs1[0].define(i1,i2,j1,j2,k1,k2);
-         cp1[0].define(i1,i2,j1,j2,k1,k2);   
-         getcscp( rho0[0], mu0[0], lambda0[0], cs0[0], cp0[0]);
+         if( varcase > 1  )
+         {
+            int k1=simulation.m_kStart[g];
+            int k2=simulation.m_kEnd[g];
+            int j1=simulation.m_jStart[g];
+            int j2=simulation.m_jEnd[g];
+            int i1=simulation.m_iStart[g];
+            int i2=simulation.m_iEnd[g];
+            cs0[g].define(i1,i2,j1,j2,k1,k2);
+            cp0[g].define(i1,i2,j1,j2,k1,k2);   
+            cs1[g].define(i1,i2,j1,j2,k1,k2);
+            cp1[g].define(i1,i2,j1,j2,k1,k2);   
+            getcscp( rho0[g], mu0[g], lambda0[g], cs0[g], cp0[g]);
+         }
       }
       double* sf = mopt->m_sfm;
       double h=1e-6;
@@ -1024,37 +1037,40 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
          simulation.communicate_arrays(rho1);
          simulation.communicate_arrays(mu1);
          simulation.communicate_arrays(lambda1);
-         if( varcase > 1 )
-            getcscp( rho1[0], mu1[0], lambda1[0], cs1[0], cp1[0]);
-         double dfnum;
-         if( varcase == 1 )
+         double dfnum=0;
+         for( int g=0 ; g < ng; g++)
          {
-            if( var==0 )
-               dfnum = sumdiff(simulation,0,rho1[0],rho0[0])/h;
-            else if( var==1 )
-               dfnum = sumdiff(simulation,0,mu1[0],mu0[0])/h;
-            else if( var==2 )
-               dfnum = sumdiff(simulation,0,lambda1[0],lambda0[0])/h;
-         }
-         else if( varcase == 2 )
-         {
-            if( var==0 )
-               dfnum = sumdiff(simulation,0,rho1[0],rho0[0])/h;
-            else if( var==1 )
-               dfnum = sumdiff(simulation,0,cs1[0],cs0[0])/h;
-            else if( var==2 )
-               dfnum = sumdiff(simulation,0,cp1[0],cp0[0])/h;
-         }
-         else if( varcase == 3 )
-         {
-            if( var==0 )
-               dfnum = sumdiff(simulation,0,cs1[0],cs0[0])/h;
-            else if( var==1 )
-               dfnum = sumdiff(simulation,0,cp1[0],cp0[0])/h;
-         }
-         else 
-         {
-            dfnum = sumdiff(simulation,0,cp1[0],cp0[0])/h;
+            if( varcase > 1 )
+               getcscp( rho1[g], mu1[g], lambda1[g], cs1[g], cp1[g]);
+            if( varcase == 1 )
+            {
+               if( var==0 )
+                  dfnum += sumdiff(simulation,g,rho1[g],rho0[g])/h;
+               else if( var==1 )
+                  dfnum += sumdiff(simulation,g,mu1[g],mu0[g])/h;
+               else if( var==2 )
+                  dfnum += sumdiff(simulation,g,lambda1[g],lambda0[g])/h;
+            }
+            else if( varcase == 2 )
+            {
+               if( var==0 )
+                  dfnum += sumdiff(simulation,g,rho1[g],rho0[g])/h;
+               else if( var==1 )
+                  dfnum += sumdiff(simulation,g,cs1[g],cs0[g])/h;
+               else if( var==2 )
+                  dfnum += sumdiff(simulation,g,cp1[g],cp0[g])/h;
+            }
+            else if( varcase == 3 )
+            {
+               if( var==0 )
+                  dfnum += sumdiff(simulation,g,cs1[g],cs0[g])/h;
+               else if( var==1 )
+                  dfnum += sumdiff(simulation,g,cp1[g],cp0[g])/h;
+            }
+            else 
+            {
+               dfnum += sumdiff(simulation,g,cp1[g],cp0[g])/h;
+            }
          }
 
 	 double dfan;
@@ -1186,22 +1202,32 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
          bool computewderivative=false;
          bool dbg=false;
          int ng=2;
-         int vb[2]={0,0}, ve[2]={2,2};
-         int ipb[2]={29,57}, ipe[2]={29,57};
-         int jpb[2]={51,101}, jpe[2]={51,101};
-         int kpb[2]={1,24}, kpe[2]={3,26};
+         int vb[2]={0,0}, ve[2]={0,0};
+         int ipb[2]={20,20}, ipe[2]={20,20};
+         int jpb[2]={18,18}, jpe[2]={18,18};
+         int kpb[2]={1,1}, kpe[2]={6,17};
          //         int kpb[2]={1,1},   kpe[2]={0,3};
-
+         //         int grid=0;
          for( int grid=0 ; grid < ng ; grid++ )
             for( int kp=kpb[grid] ; kp <= kpe[grid] ; kp++ )
                for( int jp=jpb[grid] ; jp <= jpe[grid] ; jp++ )
                   for( int ip=ipb[grid] ; ip <= ipe[grid] ; ip++ )
                      for( int var=vb[grid] ; var <= ve[grid] ; var++ )
                      {
+
+         //                    for( int kp=1 ; kp <= 5 ; kp++ )
+         //                       for( int jp=5 ; jp <= 5 ; jp++ )
+         //                         for( int ip=5 ; ip <= 6 ; ip++ )
+         //                            for( int var=1 ; var <= 2 ; var++ )
+         //         
+
+                        //         for( int indg=0; indg < nmpard_global  ; indg++)
+                        //         {
+                        //            ssize_t ind = mopt->m_mp->local_index(indg);
                         ssize_t ind = mopt->m_mp->parameter_index(ip,jp,kp,grid,var);
-                        if(ind >=0 && myRank < procevent) //if(myRank == 0 )
-                           cout << "var= " << var << " (i,j,k)= (" << ip << "," << jp 
-                                << "," << kp << ") grid= " << grid<<endl;
+            //                        if(ind >=0 && myRank < procevent) //if(myRank == 0 )
+                           //                           cout << "var= " << var << " (i,j,k)= (" << ip << "," << jp 
+                           //                                << "," << kp << ") grid= " << grid<<endl;
                         double x0;
                         if( ind >=0 )
                         {
@@ -1225,16 +1251,16 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
                         if( ind >= 0 )
                            xm[ind] = x0;
                         bool wderivative=false;
-                        if( var == 0 && computewderivative )
-                        {
-                           compute_f_with_derivative( simulation, nspar, nmpars, xs, nmpard, xm, 
-                                          GlobalSources, GlobalTimeSeries, 
-                                          GlobalObservations, f2, df2,
-                                          mopt, ip, jp, kp, grid, myRank );
-                           wderivative = true;
-                           if( myRank == 0 && dbg )
-                              cout << "misfit 1 and 2 " << f<< " " << f2 << " diff= " << f-f2 << endl;
-                        }
+                        //                        if( var == 0 && computewderivative )
+                        //                        {
+                        //                           compute_f_with_derivative( simulation, nspar, nmpars, xs, nmpard, xm, 
+                        //                                          GlobalSources, GlobalTimeSeries, 
+                        //                                          GlobalObservations, f2, df2,
+                        //                                          mopt, ip, jp, kp, grid, myRank );
+                        //                           wderivative = true;
+                        //                           if( myRank == 0 && dbg )
+                        //                              cout << "misfit 1 and 2 " << f<< " " << f2 << " diff= " << f-f2 << endl;
+                        //                        }
                         if( myRank == 0 && dbg )
                         {
                            cout.precision(16);
@@ -1259,7 +1285,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
                         }
                         //                        if( indg > 0 && (indg % 100 == 0) && (myRank == 0 && myRank < procevent))
                         //                           cout << "Done ind = " << indg << endl;
-                     }
+         }
       }
       if( dftest.is_open() )
          dftest.close();
@@ -2070,7 +2096,17 @@ int main(int argc, char **argv)
 	   }
            else if( mopt->m_opttest == 8 )
            {
-        // Material parameterization test. Compute material from parameters and output images
+        // Material parameterization test. 
+              // 1. Interpolate from SW4 grid to material grid, and save result to file coarse.h5
+              mp->get_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,
+                                 simulation.mLambda, 5 );
+              double* xptr=xm;
+              if( nmpars > 0 )
+                 xptr=&xs[nspar];
+              mp->write_dfm_hdf5(xptr,"coarse.h5",MPI_COMM_WORLD);
+
+              // 2. Fetch parameters according to input 'mparcart init=option' and interpolate 
+              //    to SW4 grid. Save the SW4 material to image files.
               mp->get_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,
                                  simulation.mLambda, -1 );
               int ng=simulation.mNumberOfGrids;

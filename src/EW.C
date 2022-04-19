@@ -306,7 +306,7 @@ void addgradmula_ci( int ifirst, int ilast, int jfirst, int jlast, int kfirst, i
 		     int nb, int wb, float_sw4* __restrict__ a_bop );
 void addgradmulac_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
 		     int ifirstact, int ilastact, int jfirstact, int jlastact, 
-		     int kfirstact, int klastact, 
+		     int kfirstact, int klastact, int nk,
 		     float_sw4* __restrict__ a_kap, float_sw4* __restrict__ a_kapacc, 
 		     float_sw4* __restrict__ a_u,   float_sw4* __restrict__ a_uacc,
 		     float_sw4* __restrict__ a_gmu, float_sw4* __restrict__ a_glambda,
@@ -1289,6 +1289,7 @@ int EW::computeNearestGridPoint2( int& a_i, int& a_j, int& a_k, int& a_g,
       // foundglobal= Grid point found in at least one processor.
       // success  = Grid point found in my processor (found locally).
       //
+
       int g=mNumberOfCartesianGrids;
       //  int foundglobal=0; 
       success = 0;
@@ -1312,6 +1313,62 @@ int EW::computeNearestGridPoint2( int& a_i, int& a_j, int& a_k, int& a_g,
          g++;
       }
       //      VERIFY2( foundglobal, "ERROR in EW:computeNearestGridPoint2, could not find curvilinear grid point");
+   }
+   return success;
+}
+
+//-----------------------------------------------------------------------
+int EW::computeInvGridMap( float_sw4& a_i, float_sw4& a_j, float_sw4& a_k, int& a_g,
+                           float_sw4 a_x, float_sw4 a_y, float_sw4 a_z )
+{
+   int success = 0;
+   if( a_z >= m_zmin[mNumberOfCartesianGrids-1] )
+   {
+      // point is in a Cartesian grid
+      int g=0;
+      while( g < mNumberOfCartesianGrids && a_z < m_zmin[g] )
+         g++;
+      a_g = g;
+      a_i = a_x/mGridSize[g]+1;
+      a_j = a_y/mGridSize[g]+1;
+      a_k = (a_z-m_zmin[g])/mGridSize[g]+1;
+
+      VERIFY2(a_i >= 1-m_ghost_points && a_i <= m_global_nx[a_g]+m_ghost_points,
+              "Grid Error: i (" << a_i << ") is out of bounds: ( " << 1 << "," 
+              << m_global_nx[a_g] << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
+      VERIFY2(a_j >= 1-m_ghost_points && a_j <= m_global_ny[a_g]+m_ghost_points,
+              "Grid Error: j (" << a_j << ") is out of bounds: ( " << 1 << ","
+              << m_global_ny[a_g] << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
+      VERIFY2(a_k >= m_kStart[a_g] && a_k <= m_kEnd[a_g],
+              "Grid Error: k (" << a_k << ") is out of bounds: ( " << 1 << "," 
+              << m_kEnd[a_g]-m_ghost_points << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
+      int i=static_cast<int>(floor(a_i));
+      int j=static_cast<int>(floor(a_j));
+      success = point_in_proc(i,j,a_g);
+      //      success = interior_point_in_proc(i,j,a_g);
+   }
+   else
+   {
+      // point is in a curvilinear grid
+      //
+      // success  = Grid point found in my processor (found locally).
+      //
+      int g=mNumberOfCartesianGrids;
+      success = 0;
+      float_sw4 q, r, s;
+      while( g < mNumberOfGrids && !success )
+      {
+         success = m_gridGenerator->
+            inverse_grid_mapping( this, a_x, a_y, a_z, g, q, r, s, false );
+         if( success )
+         {
+            a_g = g;
+            a_i = q;
+            a_j = r;
+            a_k = s;
+         }
+         g++;
+      }
    }
    return success;
 }
@@ -7509,59 +7566,30 @@ void EW::add_to_grad( vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& U
       float_sw4* grho_ptr = gRho[g].c_ptr();
       float_sw4* gmu_ptr = gMu[g].c_ptr();
       float_sw4* glambda_ptr = gLambda[g].c_ptr();
-      float_sw4 h = mGridSize[g];
+      float_sw4  h = mGridSize[g];
       int* onesided_ptr = m_onesided[g];
       int nb = 4, wb=6;
-//      if( topographyExists() && g == mNumberOfGrids-1 )
       if( topographyExists() && g >= mNumberOfCartesianGrids )
       {
-//FTNC	 if( m_croutines )
-	 {
-	    addgradrhoc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
-			    ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
-			    nk, k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
-			    mDt, mJ[g].c_ptr(), onesided_ptr );
-	    addgradmulac_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
-			     ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
-			     k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr, glambda_ptr, mDt, h,
-			     mMetric[g].c_ptr(), mJ[g].c_ptr(), onesided_ptr, nb, wb, m_bop );
-	 }
-//FTNC	 else
-//FTNC	 {
-//FTNC	    addgradrhoc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-//FTNC			    &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,
-//FTNC					k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
-//FTNC					     &mDt, mJ.c_ptr(), onesided_ptr );
-//FTNC	    addgradmulac( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-//FTNC                         &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,
-//FTNC					k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr,
-//FTNC	      glambda_ptr, &mDt, &h, mMetric.c_ptr(), mJ.c_ptr(), onesided_ptr, &nb, &wb, m_bop );
-//FTNC	 }
+         addgradrhoc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+                         ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
+                         nk, k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
+                         mDt, mJ[g].c_ptr(), onesided_ptr );
+         addgradmulac_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+                          ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
+                          nk, k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr, glambda_ptr, mDt, h,
+                          mMetric[g].c_ptr(), mJ[g].c_ptr(), onesided_ptr, nb, wb, m_bop );
       }
       else
       {
-//FTNC	 if( m_croutines )
-	 {
-	    addgradrho_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
-			   ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
-			   nk, k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
-			   mDt, h, onesided_ptr );
-	    addgradmula_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
-			    ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
-			    nk, k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr,
-			    glambda_ptr, mDt, h, onesided_ptr, nb, wb, m_bop );
-	 }
-//FTNC	 else
-//FTNC	 {
-//FTNC	    addgradrho( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-//FTNC                         &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,
-//FTNC					k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
-//FTNC					&mDt, &h, onesided_ptr );
-//FTNC	    addgradmula( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-//FTNC                         &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact, &klastact,
-//FTNC					k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr,
-//FTNC				    glambda_ptr, &mDt, &h, onesided_ptr, &nb, &wb, m_bop );
-//FTNC	 }
+         addgradrho_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+                        ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
+                        nk, k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
+                        mDt, h, onesided_ptr );
+         addgradmula_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
+                         ifirstact, ilastact, jfirstact, jlastact, kfirstact, klastact,
+                         nk, k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr,
+                         glambda_ptr, mDt, h, onesided_ptr, nb, wb, m_bop );
       }
    }
 }

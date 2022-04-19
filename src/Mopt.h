@@ -37,6 +37,7 @@ class Mopt
    void processMtypx( char* buffer );
    void processMfileio( char* buffer );
    void processMregularize( char* buffer );
+   void initialize_mimage_files();
  public:
    Mopt( EW* a_ew );
    bool parseInputFileOpt( std::string filename );

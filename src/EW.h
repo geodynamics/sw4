@@ -506,6 +506,8 @@ int computeNearestGridPoint2(int & a_i,
 			     float_sw4 a_y, 
 			     float_sw4 a_z);
 
+int computeInvGridMap( float_sw4& a_i, float_sw4& a_j, float_sw4& a_k, int& a_g,
+                       float_sw4 a_x, float_sw4 a_y, float_sw4 a_z );
 
 void coord_from_index( int i, int j, int k, int g, float_sw4& x, float_sw4& y, float_sw4& z );
 

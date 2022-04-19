@@ -61,14 +61,20 @@ bool GridGeneratorGaussianHill::grid_mapping( EW* a_ew, float_sw4 q, float_sw4 r
 
 //-----------------------------------------------------------------------
 bool GridGeneratorGaussianHill::inverse_grid_mapping( EW* a_ew, float_sw4 x, float_sw4 y, float_sw4 z, int g,
-                                                      float_sw4& q, float_sw4& r, float_sw4& s )
+                                                      float_sw4& q, float_sw4& r, float_sw4& s, bool interior )
 {
    float_sw4 h = a_ew->mGridSize[g];
    q = x/h+1;
    r = y/h+1;
-   int i= static_cast<int>(round(q));
-   int j= static_cast<int>(round(r));   
-   if( a_ew->interior_point_in_proc( i, j, g ) )
+   int i= static_cast<int>(floor(q));
+   int j= static_cast<int>(floor(r));   
+   bool xysuccess;
+   if( interior )
+      xysuccess = a_ew->interior_point_in_proc( i, j, g );
+   else
+      xysuccess = a_ew->point_in_proc( i, j, g );
+
+   if( xysuccess )
    {
       float_sw4 tau = top(x,y);
       if( m_always_new || a_ew->mNumberOfGrids-a_ew->mNumberOfCartesianGrids > 1 )
