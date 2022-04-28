@@ -8451,17 +8451,16 @@ void EW::grid_information( int g )
 
 //-----------------------------------------------------------------------
 void EW::set_to_zero_at_source( vector<Sarray> & a_U, 
-                                vector<GridPointSource*> point_sources,
-                                vector<int> identsources, int padding )
+                                vector<Source*> sources,
+                                int padding )
 {
 #pragma omp parallel for
-     for( int r=0 ; r < identsources.size()-1 ; r++ )
+     for( int s=0 ; s < sources.size() ; s++ )
      {
-	int s0=identsources[r];
-	int g= point_sources[s0]->m_grid;	
-	int i0= point_sources[s0]->m_i0;
-	int j0= point_sources[s0]->m_j0;
-	int k0= point_sources[s0]->m_k0;
+	int g = sources[s]->m_grid;
+	int i0= sources[s]->m_i0;
+	int j0= sources[s]->m_j0;
+	int k0= sources[s]->m_k0;
         int klow  = k0-padding > a_U[g].m_kb ? k0-padding:a_U[g].m_kb;
         int khigh = k0+padding < a_U[g].m_ke ? k0+padding:a_U[g].m_ke;
         int jlow  = j0-padding > a_U[g].m_jb ? j0-padding:a_U[g].m_jb;

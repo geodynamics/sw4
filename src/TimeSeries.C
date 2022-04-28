@@ -2092,7 +2092,7 @@ float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
             cout << m_staName<< " : " << m_global_event << "ts= " << tshift << " f= " << f << endl;
       }
       // 2. Use maximum from 1 to start Newton iteration for solving f'(tshift) = 0
-      int maxit=10, it=0;
+      int maxit=15, it=0;
       float_sw4 tol=1e-12;
       float_sw4 err=tol+1;
       float_sw4 t1 = tmax;
@@ -2413,6 +2413,13 @@ float_sw4 TimeSeries::misfit2( TimeSeries& observed, TimeSeries* diff )
          cout << "Observation t0 = " <<observed.m_t0 << " shift= " << observed.m_shift << endl;
          cout << " station  t0 = " << m_t0 << " shift= " << m_shift << endl;
       }
+      // DEBUG
+      //      if( m_myPoint && m_staName=="GS.CN181" )
+      //      {
+      //         cout << "station GS.CN181, window lims "  
+      //              << m_winL << " " << m_winR  << " " 
+      //              << m_winL2 << " " << m_winR2 << endl;
+      //      }
       float_sw4 ms=compute_maxshift( observed );
       misfit = 0.5*ms*ms;
 

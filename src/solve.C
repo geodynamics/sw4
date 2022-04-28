@@ -248,6 +248,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   for( unsigned int i=0 ; i < a_Sources.size() ; i++ )
       a_Sources[i]->set_grid_point_sources4( this, point_sources );
 
+  //  std::cout << m_myRank << " no of sources = " << point_sources.size() << std::endl;
+  //  std::cout << m_myRank << " no of receivers = " << a_TimeSeries.size() << std::endl;
  // Debug
   // for (int proc = 0; proc<m_nProcs; proc++)
   //    if (proc == m_myRank)
@@ -1824,7 +1826,7 @@ void EW::enforceIC( vector<Sarray>& a_Up, vector<Sarray> & a_U, vector<Sarray> &
    {
      //         m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt );
       m_cli2[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+dt, F, a_AlphaVEp );
-      //      check_ic_conditions( g, a_Up );
+      //            check_ic_conditions( g, a_Up );
    }
 } // enforceIC
 
@@ -1932,7 +1934,7 @@ void EW::check_ic_conditions( int gc, vector<Sarray>& a_U )
    //      for( int i=Bc.m_ib ; i <= Bc.m_ie ; i++ )
    //         std::cout << i << " " << j << " " << res(1,i,j,1) << " " << res(2,i,j,1) << " " << res(3,i,j,1) << std::endl;
    //   std::cout << "IC cond: residual norm " << res.absmax(1) << " " << res.absmax(2) << " " << res.absmax(3) << std::endl;
-   //   std::cout << "IC cond: residual norm " << resnrm[0] << " " << resnrm[1] << " " << resnrm[2] << std::endl;
+   //      std::cout << "IC cond: residual norm " << resnrm[0] << " " << resnrm[1] << " " << resnrm[2] << std::endl;
 }
 
 //-----------------------Special case for 2nd order time stepper----------------------------------------------------

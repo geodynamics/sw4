@@ -565,6 +565,13 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          sw4_profile->time_stamp("forward solve" );
          simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory, phcase, pseudo_hessian );
          sw4_profile->time_stamp("done forward solve" );
+
+     //DEBUG
+         int ip=39, jp=37, kp=3, gr=2;
+         if( simulation.interior_point_in_proc(ip,jp,gr))
+            std::cout << "U(T) = " << U[gr](1,ip,jp,kp) << " " << U[gr](2,ip,jp,kp) << " "
+                      << U[gr](3,ip,jp,kp) << std::endl;
+
 // Compute misfit, 'diffs' will hold the source for the adjoint problem
 
 // 1. Copy computed time series into diffs[m]
@@ -610,9 +617,10 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          sw4_profile->time_stamp("backward+adjoint solve" );
          simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, e );
          sw4_profile->time_stamp("done backward+adjoint solve" );
-         //         int ip=67, jp=20, kp=20;
-         //         if( simulation.interior_point_in_proc(ip,jp,0))
-         //            std::cout << "mugrad = " << gMu[0](ip,jp,kp) << " rhograd = " << gRho[0](ip,jp,kp) << std::endl;
+         // DEBUG
+         //         int ip=39, jp=37, kp=3, gr=2;
+         if( simulation.interior_point_in_proc(ip,jp,gr))
+            std::cout << "mugrad = " << gMu[gr](ip,jp,kp) << " rhograd = " << gRho[gr](ip,jp,kp) << std::endl;
          mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfmevent, rho, mu, lambda, gRho, gMu, gLambda );
          for( int m=0 ; m < nmpars ; m++ )
             dfs[m+nspar] += dfsevent[m];
@@ -1099,7 +1107,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
       vector<Image*> im;
       compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, 
                         GlobalTimeSeries, GlobalObservations, f, dfs, dfm, 
-                        simulation.getRank(), mopt ); //mp, false, false, im );
+                        simulation.getRank(), mopt, 0 ); //mp, false, false, im );
    // Compute max-norm of gradient
       double dfnorm=0;
       if( nmpard_global > 0 )
@@ -1201,11 +1209,20 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
                      
          bool computewderivative=false;
          bool dbg=false;
-         int ng=2;
-         int vb[2]={0,0}, ve[2]={0,0};
-         int ipb[2]={20,20}, ipe[2]={20,20};
-         int jpb[2]={18,18}, jpe[2]={18,18};
-         int kpb[2]={1,1}, kpe[2]={6,17};
+
+         //         int ng=2;
+         //         int vb[2]={0,0}, ve[2]={0,0};
+         //         int ipb[2]={20,20}, ipe[2]={20,20};
+         //         int jpb[2]={18,18}, jpe[2]={18,18};
+         //         int kpb[2]={1,1}, kpe[2]={6,17};
+
+         int ng=3;
+         int vb[3]={0,0,0}, ve[3]={0,0,0};
+         int ipb[3]={20,20,39}, ipe[3]={20,20,39};
+         int jpb[3]={18,18,35}, jpe[3]={18,18,35};
+         int kpb[3]={1,1,1}, kpe[3]={6,12,12};
+
+         //         int kpb[2]={1,1}, kpe[2]={14,25};
          //         int kpb[2]={1,1},   kpe[2]={0,3};
          //         int grid=0;
          for( int grid=0 ; grid < ng ; grid++ )

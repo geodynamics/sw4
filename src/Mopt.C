@@ -92,7 +92,7 @@ Mopt::Mopt( EW* a_ew )
 //-----------------------------------------------------------------------
 bool Mopt::parseInputFileOpt( std::string filename )
 {
-   char buffer[256];
+   char buffer[4096];
    ifstream inputFile;
    MPI_Barrier(m_ew->m_1d_communicator);
 
@@ -105,7 +105,7 @@ bool Mopt::parseInputFileOpt( std::string filename )
    }
    while (!inputFile.eof())
    {    
-      inputFile.getline(buffer, 256);
+      inputFile.getline(buffer, 4096);
       if( strlen(buffer) > 0 && !(startswith("#",buffer)||startswith("\n",buffer)||startswith("\r",buffer) ) )
       {
 	 if( startswith("mparcart", buffer) )

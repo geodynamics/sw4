@@ -1329,8 +1329,8 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void checkpoint_twilight_test( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarray>& Up,
 				  vector<Sarray*> AlphaVEm, vector<Sarray*> AlphaVE,
 				  vector<Sarray*> AlphaVEp, vector<Source*> a_Sources, float_sw4 t );
-   void set_to_zero_at_source( vector<Sarray> & a_U, vector<GridPointSource*> point_sources,
-                               vector<int> identsources, int padding );
+   void set_to_zero_at_source( vector<Sarray> & a_U, vector<Source*> point_sources,
+                               int padding );
    void set_zerograd();
    void set_zerograd_pad(int pad);
    void set_to_zero_at_receiver( vector<Sarray> & a_U, 
