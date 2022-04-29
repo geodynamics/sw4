@@ -567,10 +567,10 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          sw4_profile->time_stamp("done forward solve" );
 
      //DEBUG
-         int ip=39, jp=37, kp=3, gr=2;
-         if( simulation.interior_point_in_proc(ip,jp,gr))
-            std::cout << "U(T) = " << U[gr](1,ip,jp,kp) << " " << U[gr](2,ip,jp,kp) << " "
-                      << U[gr](3,ip,jp,kp) << std::endl;
+         ///         int ip=39, jp=37, kp=3, gr=2;
+         //         if( simulation.interior_point_in_proc(ip,jp,gr))
+         //            std::cout << "U(T) = " << U[gr](1,ip,jp,kp) << " " << U[gr](2,ip,jp,kp) << " "
+         //                      << U[gr](3,ip,jp,kp) << std::endl;
 
 // Compute misfit, 'diffs' will hold the source for the adjoint problem
 
@@ -619,8 +619,8 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          sw4_profile->time_stamp("done backward+adjoint solve" );
          // DEBUG
          //         int ip=39, jp=37, kp=3, gr=2;
-         if( simulation.interior_point_in_proc(ip,jp,gr))
-            std::cout << "mugrad = " << gMu[gr](ip,jp,kp) << " rhograd = " << gRho[gr](ip,jp,kp) << std::endl;
+         //         if( simulation.interior_point_in_proc(ip,jp,gr))
+         //            std::cout << "mugrad = " << gMu[gr](ip,jp,kp) << " rhograd = " << gRho[gr](ip,jp,kp) << std::endl;
          mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfmevent, rho, mu, lambda, gRho, gMu, gLambda );
          for( int m=0 ; m < nmpars ; m++ )
             dfs[m+nspar] += dfsevent[m];
@@ -1149,7 +1149,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
          //	 h = 3e-8*sf[ind]; // multiply step length by scale factor
             h = std::max(1.0,fabs(xs[ind]))*3e-8;
             h *= exafactor;
-            h =1e-2;
+            h =1e-3;
             double x0=xs[ind];
             xs[ind] = x0+h;
             compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, 
@@ -1217,7 +1217,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
          //         int kpb[2]={1,1}, kpe[2]={6,17};
 
          int ng=3;
-         int vb[3]={0,0,0}, ve[3]={0,0,0};
+         int vb[3]={1,1,1}, ve[3]={1,1,1};
          int ipb[3]={20,20,39}, ipe[3]={20,20,39};
          int jpb[3]={18,18,35}, jpe[3]={18,18,35};
          int kpb[3]={1,1,1}, kpe[3]={6,12,12};
@@ -1225,12 +1225,14 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
          //         int kpb[2]={1,1}, kpe[2]={14,25};
          //         int kpb[2]={1,1},   kpe[2]={0,3};
          //         int grid=0;
-         for( int grid=0 ; grid < ng ; grid++ )
-            for( int kp=kpb[grid] ; kp <= kpe[grid] ; kp++ )
-               for( int jp=jpb[grid] ; jp <= jpe[grid] ; jp++ )
-                  for( int ip=ipb[grid] ; ip <= ipe[grid] ; ip++ )
-                     for( int var=vb[grid] ; var <= ve[grid] ; var++ )
-                     {
+
+
+         //         for( int grid=0 ; grid < ng ; grid++ )
+         //            for( int kp=kpb[grid] ; kp <= kpe[grid] ; kp++ )
+         //               for( int jp=jpb[grid] ; jp <= jpe[grid] ; jp++ )
+         //                  for( int ip=ipb[grid] ; ip <= ipe[grid] ; ip++ )
+         //                     for( int var=vb[grid] ; var <= ve[grid] ; var++ )
+         //                     {
 
          //                    for( int kp=1 ; kp <= 5 ; kp++ )
          //                       for( int jp=5 ; jp <= 5 ; jp++ )
@@ -1238,10 +1240,10 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
          //                            for( int var=1 ; var <= 2 ; var++ )
          //         
 
-                        //         for( int indg=0; indg < nmpard_global  ; indg++)
-                        //         {
-                        //            ssize_t ind = mopt->m_mp->local_index(indg);
-                        ssize_t ind = mopt->m_mp->parameter_index(ip,jp,kp,grid,var);
+         for( int indg=0; indg < nmpard_global  ; indg++)
+         {
+           ssize_t ind = mopt->m_mp->local_index(indg);
+           //                ssize_t ind = mopt->m_mp->parameter_index(ip,jp,kp,grid,var);
             //                        if(ind >=0 && myRank < procevent) //if(myRank == 0 )
                            //                           cout << "var= " << var << " (i,j,k)= (" << ip << "," << jp 
                            //                                << "," << kp << ") grid= " << grid<<endl;

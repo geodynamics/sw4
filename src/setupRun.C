@@ -2101,12 +2101,11 @@ void EW::setup_supergrid( )
      if( m_use_sg_width )
         sgpts = m_supergrid_width/mGridSize[g];
      int imin = 1+sgpts, imax = m_global_nx[g]-sgpts, jmin=1+sgpts, jmax=m_global_ny[g]-sgpts;
-     int kmax=m_global_nz[g]-sgpts;
+     int kmax=m_global_nz[g];
      int kmin=1;
-
      // Only grid 0 has super grid boundary at the bottom
-     if( g > 0 )
-        kmax = m_global_nz[g];
+     if( g == 0 )
+        kmax = m_global_nz[g]-sgpts;
 
      int addlayer=1;
      
@@ -2126,7 +2125,7 @@ void EW::setup_supergrid( )
      if( g == 0 )
         m_kEndActGlobal[g]   = m_kEndAct[g] = kmax-addlayer;
      else
-     m_kEndActGlobal[g]   = m_kEndAct[g] = kmax;
+        m_kEndActGlobal[g]   = m_kEndAct[g] = kmax;
 
      // Changed to interior Start --> StartInt etc..
      if( m_iStartAct[g] < m_iStartInt[g] )

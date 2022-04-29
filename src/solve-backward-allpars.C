@@ -242,9 +242,9 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       // This call to enforceIC is needed in order to enforce the IC outside
       // the active domain, which is required in order to keep the scheme stable.
 
-      //      enforceDirichlet5( Um );
-      enforceIC( Um, U, Up, AlphaVEp, AlphaVE, AlphaVEm, t, false, F, point_sources, 
-                 a_Rho, a_Mu, a_Lambda, true );
+      enforceDirichlet5( Um );
+      //      enforceIC( Um, U, Up, AlphaVEp, AlphaVE, AlphaVEm, t, false, F, point_sources, 
+      //                 a_Rho, a_Mu, a_Lambda, true );
       //      for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
       //         m_cli2[g-mNumberOfCartesianGrids]->impose_ic( Um, t-mDt, F, AlphaVEm, true );
 
@@ -405,7 +405,7 @@ void EW::enforceDirichlet5( vector<Sarray> & a_U )
     kfirst = m_kStart[g];
     klast  = m_kEnd[g];
 
-    int off=2;
+    int off=3;
     int iafirst, ialast, jafirst, jalast, kafirst, kalast;
     iafirst = m_iStartAct[g];
     ialast  = m_iEndAct[g];
@@ -413,25 +413,35 @@ void EW::enforceDirichlet5( vector<Sarray> & a_U )
     jalast  = m_jEndAct[g];
     kafirst = m_kStartAct[g];
     kalast  = m_kEndAct[g];
-    for( int k=kalast+off ; k <= klast ; k++ )
-       for( int j=jfirst ; j <= jlast ; j++ )
-	  for( int i=ifirst ; i <= ilast ; i++ )
-	     a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
+    bool ilayer = ialast-iafirst-1 > 0;
+    bool jlayer = jalast-jafirst-1 > 0;
+    bool klayer = kalast-kafirst-1 > 0;
+    if( klayer ) // Always at bottom
+       for( int k=kalast+off ; k <= klast ; k++ )
+          for( int j=jfirst ; j <= jlast ; j++ )
+             for( int i=ifirst ; i <= ilast ; i++ )
+                a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
 
-    for( int k=kfirst ; k <= kalast ; k++ )
+    for( int k=kfirst ; k <= klast ; k++ )
     {
-       for( int j=jfirst ; j <= jafirst-off ; j++ )
-	  for( int i=ifirst ; i <= ilast ; i++ )
-	     a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
-       for( int j=jalast+off ; j <= jlast ; j++ )
-	  for( int i=ifirst ; i <= ilast ; i++ )
-	     a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
-       for( int j=jfirst ; j <= jlast ; j++ )
-	  for( int i=ifirst ; i <= iafirst-off ; i++ )
-	     a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
-       for( int j=jfirst ; j <= jlast ; j++ )
-	  for( int i=ialast+off ; i <= ilast ; i++ )
-	     a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
+       if( jlayer )
+       {
+          for( int j=jfirst ; j <= jafirst-off ; j++ )
+             for( int i=ifirst ; i <= ilast ; i++ )
+                a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
+          for( int j=jalast+off ; j <= jlast ; j++ )
+             for( int i=ifirst ; i <= ilast ; i++ )
+                a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
+       }
+       if( ilayer )
+       {
+          for( int j=jfirst ; j <= jlast ; j++ )
+             for( int i=ifirst ; i <= iafirst-off ; i++ )
+                a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
+          for( int j=jfirst ; j <= jlast ; j++ )
+             for( int i=ialast+off ; i <= ilast ; i++ )
+                a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
+       }
     }
   }
 }
