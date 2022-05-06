@@ -284,24 +284,24 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    VERIFY2( ok, "ERROR: compute_f Material check failed\n" );
 
 //solveTT
-   if( mopt->m_win_mode == 1 && nmpard_global == 0 )
-   {
-      float_sw4* coarse=new float_sw4[nmpars];
-      mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
-      for( int e=0 ; e < GlobalTimeSeries.size() ; e++ )
-      {
-         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
-                            mopt->get_wave_mode(), e, simulation.getRank());
-      }
-      delete[] coarse;
-   }
-   else if( mopt->m_win_mode == 1 )
-   {
-      int myrank;
-      MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
-      if( myrank == 0 )
-         std::cout << "Can not use solveTT to compute time windows with a distibuted material grid" << std::endl;
-   }
+//   if( mopt->m_win_mode == 1 && nmpard_global == 0 )
+//   {
+//      float_sw4* coarse=new float_sw4[nmpars];
+//      mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
+//      for( int e=0 ; e < GlobalTimeSeries.size() ; e++ )
+//      {
+//         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
+//                            mopt->get_wave_mode(), e, simulation.getRank());
+//      }
+//      delete[] coarse;
+//   }
+//   else if( mopt->m_win_mode == 1 )
+//   {
+//      int myrank;
+//      MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
+//      if( myrank == 0 )
+//         std::cout << "Can not use solveTT to compute time windows with a distibuted material grid" << std::endl;
+//   }
 
    //   // Debug
    //   int myid=simulation.getRank();
@@ -504,25 +504,26 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    }
    //   MPI_Barrier(MPI_COMM_WORLD);
    VERIFY2( ok, "ERROR: Material check failed\n" );
-   if( mopt->m_win_mode == 1 && nmpard_global == 0 )
-   {
-      if( myrank == 0 )
-         std::cout << "Calling solveTT from compute_f_and_df " << std::endl;
-      float_sw4* coarse=new float_sw4[nmpars];
-      mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
-      for( int e=0 ; e < GlobalTimeSeries.size() ; e++ )
-      {
-         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
-                            mopt->get_wave_mode(), e, simulation.getRank());
+   //   if( mopt->m_win_mode == 1 && nmpard_global == 0 )
+   //   {
+   //      if( myrank == 0 )
+   //         std::cout << "Calling solveTT from compute_f_and_df " << std::endl;
+   //      float_sw4* coarse=new float_sw4[nmpars];
+   //      mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
+   //      for( int e=0 ; e < GlobalTimeSeries.size() ; e++ )
+   //      {
+   //         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
+   //                            mopt->get_wave_mode(), e, simulation.getRank());
 
-     }
-      delete[] coarse;
-   }
-   else if( mopt->m_win_mode == 1 )
-   {
-      if( myrank == 0 )
-         std::cout << "Can not use solveTT to compute time windows with a distibuted material grid" << std::endl;
-   }
+   //     }
+   //      delete[] coarse;
+   //   }
+   //   else if( mopt->m_win_mode == 1 )
+   //   {
+   //      if( myrank == 0 )
+   //         std::cout << "Can not use solveTT to compute time windows with a distibuted material grid" << std::endl;
+   //   }
+
    //   if( myrank == 0 )
    //      std::cout << "Checking windows:" << std::endl;
    //   for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
@@ -2166,9 +2167,15 @@ int main(int argc, char **argv)
            else if( mopt->m_opttest == 1 )
 	   {
          //add frequency-dependent t0 and duration for time windowing of waveforms
-         float_sw4 fc2 = simulation.m_filter_ptr? simulation.m_filter_ptr->get_corner_freq2() : 0.;
-         set_timewindows_from_eikonal_time(GlobalTimeSeries, GlobalSources, mopt, fc2);
-
+              float_sw4 fc2 = simulation.m_filter_ptr? simulation.m_filter_ptr->get_corner_freq2() : 0.;
+              if( mopt->m_win_mode != 0 )
+                 set_timewindows_from_eikonal_time(GlobalTimeSeries, GlobalSources, mopt, fc2);
+              else
+              {
+                 for( int e=0 ; e < GlobalObservations.size() ; e++ )
+                    for( int m=0 ; m < GlobalObservations[e].size(); m++ )
+                       GlobalObservations[e][m]->disableWindows();
+              }
 // Run optimizer (default)
 	      sw4_profile->time_stamp("Start optimizer");
 	      if( mopt->m_optmethod == 1 )
@@ -2266,9 +2273,20 @@ int main(int argc, char **argv)
                  }
                  else
                  {
+                    float_sw4 topz=0;
+                    if( simulation.topographyExists() )
+                    for( int e=0 ; e < GlobalObservations.size(); e++ ) 
+                       for (int ts = 0; ts < GlobalObservations[e].size(); ts++) 
+                       {
+                          if( GlobalObservations[e][ts]->getZ() < topz )
+                             topz = GlobalObservations[e][ts]->getZ();
+                       }
                     coarse = new double[nmpars];
-                    mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, simulation.mRho, 
-                                                simulation.mMu, simulation.mLambda, 5 );
+//                    mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, simulation.mRho, 
+//                                                simulation.mMu, simulation.mLambda, 5 );
+                    mopt->m_mp->interpolate_to_cartesian( nmpard, xm, nmpars, coarse, 
+                                                          simulation.mRho, simulation.mMu, 
+                                                          simulation.mLambda, topz );
                  }
               }
               if( !fail )
@@ -2297,13 +2315,14 @@ int main(int argc, char **argv)
 
                  for( int e=0; e < GlobalObservations.size(); e++ )
                   {
-                    if( GlobalSources[e].size() <= 0 )
-                       std::cout << "ERROR, no source given for event " << e << std::endl;
+                     if( GlobalSources[e].size() <= 0 )
+                        std::cout << "ERROR, no source given for event " << e << std::endl;
                      simulation.solveTT(GlobalSources[e][0], GlobalObservations[e], coarse, nmpars, mopt->m_mp, 
                                     mopt->get_wave_mode(), e, simulation.getRank());
                
-                    for( int s=0 ; s < GlobalObservations[e].size() ; s++)
-                       GlobalObservations[e][s]->writeWindows();
+                     for( int s=0 ; s < GlobalObservations[e].size() ; s++)
+                        GlobalObservations[e][s]->writeWindows();
+
                  }
               }
            }

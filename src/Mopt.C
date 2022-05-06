@@ -57,7 +57,7 @@ Mopt::Mopt( EW* a_ew )
    m_vs_max = -100.;
    m_freq_peakpower=0.0;
    m_wave_mode=2;  // default to both P and S waves otherwise 0 for P and 1 for S only
-   m_win_mode =0; // default, use windows stored on hdf5-file.
+   m_win_mode =1; // default, use windows stored on hdf5-file.
    m_twin_shift=-0.5;
    m_twin_scale=1.0; 
    m_tolerance = 1e-12;
@@ -343,7 +343,11 @@ void Mopt::processMaterialParCart( char* buffer )
       cout << "Error: more than one material parameterization command" << endl;
 
    // Make sure the material grid is coarser than the global grid
-   VERIFY2( nx <= m_ew->m_global_nx[0] && ny <= m_ew->m_global_ny[0] && nz <= m_ew->m_global_nz[0], "MaterialParCart: The material grid must be coarser than the global grid")
+   int nztot=0;
+   for( int g=0; g < m_ew->mNumberOfGrids; g++ )
+      nztot += m_ew->m_global_nz[g];
+
+   VERIFY2( nx <= m_ew->m_global_nx[0] && ny <= m_ew->m_global_ny[0] && nz <= nztot, "MaterialParCart: The material grid must be coarser than the global grid")
 
    int varcase=1;
    if( vel )

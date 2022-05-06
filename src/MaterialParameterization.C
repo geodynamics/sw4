@@ -291,3 +291,14 @@ void  MaterialParameterization::get_regularizer( int nmd, double* xmd, int nms, 
    }
 #undef SQR
 }
+//-----------------------------------------------------------------------
+void MaterialParameterization::interpolate_to_cartesian( int nmd, double* xmd, 
+                                                         int nms, double* xms,
+                                                         std::vector<Sarray>& a_rho,
+                                                         std::vector<Sarray>& a_mu,
+                                                         std::vector<Sarray>& a_lambda,
+                                                         double zmintop )
+{
+   get_parameters( nmd, xmd, nms, xms, a_rho, a_mu, a_lambda, 5 );
+}
+

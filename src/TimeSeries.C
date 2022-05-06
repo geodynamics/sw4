@@ -4220,3 +4220,10 @@ void TimeSeries::shiftTimeWindow( const float_sw4 t0, const float_sw4 winlen, co
       m_winR2 = m_winL2 + winlen;
    }
 }
+void TimeSeries::disableWindows()
+{
+   m_winL  = -1e38;
+   m_winR  =  1e38;
+   m_winL2 = -1e38;
+   m_winR2 =  1e38;
+}

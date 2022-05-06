@@ -14,7 +14,7 @@ MaterialParCurv::MaterialParCurv( EW* a_ew, int nx, int ny, int nz, int init, in
                                           char* fname, float_sw4 amp, float_sw4 omega, bool force_shared )
    : MaterialParameterization( a_ew, fname )
 {
-   //  VERIFY2( nx > 1 && ny > 1 && nz > 1, "MaterialParCartesian: The grid need at least two points in each direction")
+   //  VERIFY2( nx > 1 && ny > 1 && nz > 1, "MaterialParCurv: The grid need at least two points in each direction")
      // Material represented on a coarse Cartesian grid, covering the 'active' domain.
      // points are x_0,..,x_{nx+1}, where x_0 and x_{nx+1} are fixed at zero.
    // the parameter vector represents offsets from a reference material, stored in (mRho,mMu,mLambda) in EW.
@@ -79,8 +79,8 @@ MaterialParCurv::MaterialParCurv( EW* a_ew, int nx, int ny, int nz, int init, in
       }
    }
 
-   // Determine h, such that x= i*h+xmin, i=0,..,nx+1
-   // Note, z_k = k*h + zmin, k=0,..,nz+1, with zmin=-h at surface, 
+   // Determine h, such that x= i*h+xmin, i=0,..,nx+1  ( x_0=xmin, x_{nx+1}=xmax
+   // Note, z_k = k*h + zmin, k=0,..,nz+1, with zmin=-h at surface, ( z_0=zmin-h, z_{nz+1}=zmax )
    //  i.e., k=1 is upper bndry.
    m_hx = (m_xmax-m_xmin)/(nx+1);
    m_hy = (m_ymax-m_ymin)/(ny+1);
@@ -399,7 +399,7 @@ void MaterialParCurv::limit_df( int nmd, double* dfd, int nms, double* dfs )
       nmpar = nmd;
    }
    if( m_limited.size() != nmpar )
-      std::cout << "MaterialParCart::limit_df: ERROR sizes do not match " <<
+      std::cout << "MaterialParCurv::limit_df: ERROR sizes do not match " <<
          " limited size = " << m_limited.size() << " nmpar = " << nmpar << std::endl;
    for( int ind=0 ;ind < nmpar ; ind++ )
       if( m_limited[ind] )
@@ -421,7 +421,7 @@ void MaterialParCurv::get_material( int nmd, double* xmd, int nms, double* xms,
 //
 //-----------------------------------------------------------------------
 {
-   REQUIRE2( nmd==m_nmd && nms==m_nms, "ERROR in MaterialParCart::get_material " << 
+   REQUIRE2( nmd==m_nmd && nms==m_nms, "ERROR in MaterialParCurv::get_material " << 
                                        " inconsistent dimensions\n" );
 
    double* xptr;
@@ -1326,7 +1326,7 @@ void MaterialParCurv::interpolate_gradient( int g, Sarray& a_gradrho, Sarray& a_
    // Output: gradc - The gradient on the parameter grid, three components as one
    //                 array, size of gradc is 3 x ni x nj x nk
    //
-   // This is the transpose of the interpolation in MaterialParCart::interpolate,
+   // This is the transpose of the interpolation in MaterialParCurv::interpolate,
    //-----------------------------------------------------------------------
 
    int ibact = m_ew->m_iStartAct[g], ieact=m_ew->m_iEndAct[g];
@@ -2068,7 +2068,7 @@ void MaterialParCurv::interpolate_pseudohessian( int nmpars, double* phs,
             }
             //            else
             //            {
-            //               std::cout << "MaterialParCart::interpolate_hessian, error point "
+            //               std::cout << "MaterialParCurv::interpolate_hessian, error point "
             //                         << ig << " " << jg << " " << kg << " not in processor " << 
             //                  "Material grid point " << i << " " << j << " " k << endl;
             //            }
@@ -2092,4 +2092,73 @@ int MaterialParCurv::getcartdims(int& nx, int& ny, int& nz)
    ny = m_ny;
    nz = m_nz;
    return 1;
+}
+
+//-----------------------------------------------------------------------
+void MaterialParCurv::interpolate_to_cartesian( int nmd, double* xmd,
+                                                int nms, double* xms,
+                                                std::vector<Sarray>& a_rho,
+                                                std::vector<Sarray>& a_mu,
+                                                std::vector<Sarray>& a_lambda,
+                                                double zmintop )
+{
+  // Define Cartesian grid from zmax to input zmintop with same
+  // Number of grid points as curvilinear material grid
+
+   //   if( m_global )
+   //   {
+   float_sw4* x = nms>0?xms:xmd;
+
+// Note, bottom boundary flat --> can evaluate mZ at any (i,j) position
+   double hz = (mZ(1,1,m_nz)-zmintop)/(m_nz-1); 
+
+   Sarray m_rho(m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
+   Sarray m_cs( m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
+   Sarray m_cp( m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
+   if( m_variables == 1 )
+   {
+      interpolate_to_coarse( a_rho, a_mu, a_lambda, m_rho, m_cs, m_cp, false );
+   }
+   else 
+   {
+      interpolate_to_coarse_vel( a_rho, a_mu, a_lambda, m_rho, m_cs, m_cp, false );
+   }
+   size_t ind= 0;
+   for( int k=m_kbint ; k <= m_keint ; k++ )
+      for( int j=m_jbint ; j <= m_jeint ; j++ )
+	 for( int i=m_ibint ; i <= m_ieint ; i++ )
+         {
+            double z=zmintop+(k-1)*hz;
+            int kk=floor(m_nz*(z-mZ(i,j,1))/(mZ(i,j,m_nz)-mZ(i,j,1)))+1;
+            double wgh;
+            if( kk <= 0 )
+            {
+               kk = 0;
+               wgh= 0;
+            }
+            else if( kk >m_nz )
+            {
+               kk = m_nz;
+               wgh=1;
+            }
+            else
+            {
+               wgh=(z-mZ(i,j,kk))/(mZ(i,j,kk+1)-mZ(i,j,kk));               
+            }
+            if( m_variables == 1 || m_variables == 2)
+            {
+               x[3*ind]   = wgh*m_rho(i,j,kk+1)+(1-wgh)*m_rho(i,j,kk);
+               x[3*ind+1] = wgh*m_cs(i,j,kk+1) +(1-wgh)*m_cs(i,j,kk);
+               x[3*ind+2] = wgh*m_cp(i,j,kk+1) +(1-wgh)*m_cp(i,j,kk);
+            }
+            else if( m_variables == 3 )
+            {
+               x[2*ind]   = wgh*m_cs(i,j,kk+1) +(1-wgh)*m_cs(i,j,kk);
+               x[2*ind+1] = wgh*m_cp(i,j,kk+1) +(1-wgh)*m_cp(i,j,kk);
+            }
+            else
+               x[ind] = wgh*m_cp(i,j,kk+1)+(1-wgh)*m_cp(i,j,kk);
+            ind++;
+         }
+   //   }
 }

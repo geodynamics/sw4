@@ -175,6 +175,7 @@ void writeWindows( string suffix="" );
 void readWindows();
 void get_windows( float_sw4 wins[4] );
 void shiftTimeWindow( const float_sw4 t0, const float_sw4 win, const float_sw4 shift);
+void disableWindows();
 
 private:   
 TimeSeries();

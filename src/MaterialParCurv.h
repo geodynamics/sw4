@@ -77,6 +77,13 @@ public:
                                   double mu_ref, double lambda_ref, 
                                   double vs_ref, double vp_ref );
 
+   virtual void interpolate_to_cartesian( int nmd, double* xmd,
+                                          int nms, double* xms,
+                                          std::vector<Sarray>& a_rho,
+                                          std::vector<Sarray>& a_mu,
+                                          std::vector<Sarray>& a_lambda,
+                                          double zmintop );
+
    ssize_t parameter_index( int ip, int jp, int kp, int grid, int var );
    ssize_t local_index( size_t ind_global );
 
