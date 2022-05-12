@@ -49,9 +49,7 @@ public:
                                           int nms, double* xms,
                                           std::vector<Sarray>& a_rho,
                                           std::vector<Sarray>& a_mu,
-                                          std::vector<Sarray>& a_lambda,
-                                          double zmintop=0 );
-
+                                          std::vector<Sarray>& a_lambda );
    void get_nr_of_parameters( int& nms, int& nmd, int& nmd_global ) const;
    //   void parameters_from_basematerial( int nmd, double* xmd, int nms, double* xms );
    //   void store_material( std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );

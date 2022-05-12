@@ -1444,7 +1444,7 @@ int m_nevent; // Number of events, needed for multiple event material optimizati
 int m_nevents_specified; // Number of event lines in input file
 bool m_events_parallel; // Process events in parallel
 int m_eStart, m_eEnd;
-int m_event_in_proc; // Event number [0,nevent) in this proc, when using parallel events
+   //int m_event_in_proc; // Event number [0,nevent) in this proc, when using parallel events
 map<string,int> m_event_names;
 
 // epicenter

@@ -2166,16 +2166,22 @@ int main(int argc, char **argv)
            }
            else if( mopt->m_opttest == 1 )
 	   {
+              bool dbg=false;
          //add frequency-dependent t0 and duration for time windowing of waveforms
               float_sw4 fc2 = simulation.m_filter_ptr? simulation.m_filter_ptr->get_corner_freq2() : 0.;
               if( mopt->m_win_mode != 0 )
                  set_timewindows_from_eikonal_time(GlobalTimeSeries, GlobalSources, mopt, fc2);
               else
               {
-                 for( int e=0 ; e < GlobalObservations.size() ; e++ )
-                    for( int m=0 ; m < GlobalObservations[e].size(); m++ )
-                       GlobalObservations[e][m]->disableWindows();
+                 for( int e=0 ; e < GlobalTimeSeries.size() ; e++ )
+                    for( int m=0 ; m < GlobalTimeSeries[e].size(); m++ )
+                       GlobalTimeSeries[e][m]->disableWindows();
               }
+              if( dbg )
+                 for( int e=0 ; e < GlobalTimeSeries.size() ; e++ )
+                    for( int m=0 ; m < GlobalTimeSeries[e].size(); m++ )
+                       GlobalTimeSeries[e][m]->print_windows();
+
 // Run optimizer (default)
 	      sw4_profile->time_stamp("Start optimizer");
 	      if( mopt->m_optmethod == 1 )
@@ -2273,20 +2279,12 @@ int main(int argc, char **argv)
                  }
                  else
                  {
-                    float_sw4 topz=0;
-                    if( simulation.topographyExists() )
-                    for( int e=0 ; e < GlobalObservations.size(); e++ ) 
-                       for (int ts = 0; ts < GlobalObservations[e].size(); ts++) 
-                       {
-                          if( GlobalObservations[e][ts]->getZ() < topz )
-                             topz = GlobalObservations[e][ts]->getZ();
-                       }
                     coarse = new double[nmpars];
 //                    mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, simulation.mRho, 
 //                                                simulation.mMu, simulation.mLambda, 5 );
                     mopt->m_mp->interpolate_to_cartesian( nmpard, xm, nmpars, coarse, 
                                                           simulation.mRho, simulation.mMu, 
-                                                          simulation.mLambda, topz );
+                                                          simulation.mLambda );
                  }
               }
               if( !fail )
@@ -2322,7 +2320,6 @@ int main(int argc, char **argv)
                
                      for( int s=0 ; s < GlobalObservations[e].size() ; s++)
                         GlobalObservations[e][s]->writeWindows();
-
                  }
               }
            }
@@ -2331,6 +2328,7 @@ int main(int argc, char **argv)
 		 cout << "ERROR: m_opttest = " << mopt->m_opttest << 
                                            " is not a valid choice" << endl;
            
+           if( simulation.event_is_in_proc(0) )
            {
               int ng = simulation.mNumberOfGrids;
               vector<Sarray> rho(ng), mu(ng), lambda(ng);

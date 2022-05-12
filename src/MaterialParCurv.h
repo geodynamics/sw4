@@ -81,8 +81,7 @@ public:
                                           int nms, double* xms,
                                           std::vector<Sarray>& a_rho,
                                           std::vector<Sarray>& a_mu,
-                                          std::vector<Sarray>& a_lambda,
-                                          double zmintop );
+                                          std::vector<Sarray>& a_lambda );
 
    ssize_t parameter_index( int ip, int jp, int kp, int grid, int var );
    ssize_t local_index( size_t ind_global );

@@ -11,7 +11,7 @@
 #include "GridGenerator.h"
 
 MaterialParCurv::MaterialParCurv( EW* a_ew, int nx, int ny, int nz, int init, int varcase, 
-                                          char* fname, float_sw4 amp, float_sw4 omega, bool force_shared )
+                                  char* fname, float_sw4 amp, float_sw4 omega, bool force_shared )
    : MaterialParameterization( a_ew, fname )
 {
    //  VERIFY2( nx > 1 && ny > 1 && nz > 1, "MaterialParCurv: The grid need at least two points in each direction")
@@ -86,8 +86,6 @@ MaterialParCurv::MaterialParCurv( EW* a_ew, int nx, int ny, int nz, int init, in
    m_hy = (m_ymax-m_ymin)/(ny+1);
    m_hz = (m_zmax-m_zmin)/nz;
    m_zmin = m_zmin-m_hz;
-
-
 
 
    //   for( int j=0; j <= m_ny+1; j++ )
@@ -2099,22 +2097,17 @@ void MaterialParCurv::interpolate_to_cartesian( int nmd, double* xmd,
                                                 int nms, double* xms,
                                                 std::vector<Sarray>& a_rho,
                                                 std::vector<Sarray>& a_mu,
-                                                std::vector<Sarray>& a_lambda,
-                                                double zmintop )
+                                                std::vector<Sarray>& a_lambda )
 {
-  // Define Cartesian grid from zmax to input zmintop with same
-  // Number of grid points as curvilinear material grid
-
-   //   if( m_global )
-   //   {
+   // Here we use the Cartesian grid mapping z_k = z_min + k*hz, k=0,..,nz+1
+   // defined in the constructor. This grid always extends above the highest
+   // station, see Constructor.
    float_sw4* x = nms>0?xms:xmd;
-
-// Note, bottom boundary flat --> can evaluate mZ at any (i,j) position
-   double hz = (mZ(1,1,m_nz)-zmintop)/(m_nz-1); 
 
    Sarray m_rho(m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
    Sarray m_cs( m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
    Sarray m_cp( m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
+   // Interpolation to the curvilinear material grid
    if( m_variables == 1 )
    {
       interpolate_to_coarse( a_rho, a_mu, a_lambda, m_rho, m_cs, m_cp, false );
@@ -2123,12 +2116,13 @@ void MaterialParCurv::interpolate_to_cartesian( int nmd, double* xmd,
    {
       interpolate_to_coarse_vel( a_rho, a_mu, a_lambda, m_rho, m_cs, m_cp, false );
    }
+   // Interpolation to the Cartesian material grid from the curvilinear material grid
    size_t ind= 0;
    for( int k=m_kbint ; k <= m_keint ; k++ )
       for( int j=m_jbint ; j <= m_jeint ; j++ )
 	 for( int i=m_ibint ; i <= m_ieint ; i++ )
          {
-            double z=zmintop+(k-1)*hz;
+            double z=m_zmin+k*m_hz;
             int kk=floor(m_nz*(z-mZ(i,j,1))/(mZ(i,j,m_nz)-mZ(i,j,1)))+1;
             double wgh;
             if( kk <= 0 )

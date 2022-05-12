@@ -487,6 +487,12 @@ void TimeSeries::recordData(vector<float_sw4> & u)
 void TimeSeries::writeWindows( string suffix )
 {
   if (!m_myPoint) return;
+  bool dbg=false;
+  if( dbg )
+  {
+     std::cout << "traveltime for station " << m_staName << " at (x,y,z) " <<
+     mX << " " << mY << " " << mZ << " is " << m_winL << " " << m_winL2 << std::endl;
+  }
 #ifdef USE_HDF5
   if( m_hdf5Format )
   {
@@ -1784,6 +1790,14 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
       float_sw4** misfitsource;
       float**     misfitsource_float;
       float_sw4 itau;//aw, bw,
+      bool dbg = true;
+      if( dbg )
+      {
+         cout << "DBG " << m_staName << " use_win= " << m_use_win << 
+            " p-win=[ " << m_winL << ", " << m_winR << "]" << 
+            " s-win=[ " << m_winL2 << ", " << m_winR2 << "]" << endl;
+      }
+
       if( m_use_win )
       {
          //	aw = M_PI/(m_winR-m_winL);
@@ -2038,7 +2052,11 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
       {
 	 if( scale_factor == 0 )
 	 {
-	    cout << "WARNING: Observation contains zero data" << endl;
+	    cout << "WARNING: Observation contains zero data" <<
+               "1  win = " << m_winL << " " <<m_winR << " " << 
+               m_winL2 << " " << m_winR2 << 
+               " t0 = " << m_t0 << " shift= " << m_shift << endl;
+
 	    scale_factor=1;
 	 }
 	 float_sw4 iscale = 1/scale_factor;
@@ -2058,6 +2076,8 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	       misfitsource_float[2][i] *= iscale;
 	    }
       }
+      if( dbg )
+         cout << "DBG " << m_staName << " misfit= " << misfit << endl;
    }
    else
       misfit = 0;
@@ -3037,6 +3057,17 @@ void TimeSeries::get_windows( float_sw4 win[4] )
    win[1] = m_winR;
    win[2] = m_winL2;
    win[3] = m_winR2;
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::print_windows( )
+{
+   if( m_myPoint )
+   {
+      std::cout << m_staName << " time windows = " << 
+         "p-wave = [" <<  m_winL << ", " << m_winR << "] s-wave = [" <<
+         m_winL2 << ", " << m_winR2 << "]" << std::endl;
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -4200,7 +4231,10 @@ void TimeSeries::misfitanddudp( TimeSeries* observed, TimeSeries* dudp,
       {
 	 if( scale_factor == 0 )
 	 {
-	    cout << "WARNING: Observation contains zero data" << endl;
+	    cout << "WARNING: Observation contains zero data" << 
+               "2  win = " << m_winL << " " <<m_winR << " " << 
+               m_winL2 << " " << m_winR2 << 
+               " t0 = " << m_t0 << " shift= " << m_shift << endl;
 	    scale_factor=1;
 	 }
 	 float_sw4 iscale = 1/scale_factor;
@@ -4222,6 +4256,7 @@ void TimeSeries::shiftTimeWindow( const float_sw4 t0, const float_sw4 winlen, co
 }
 void TimeSeries::disableWindows()
 {
+   m_use_win = false;
    m_winL  = -1e38;
    m_winR  =  1e38;
    m_winL2 = -1e38;
