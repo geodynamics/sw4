@@ -92,7 +92,9 @@ Mopt::Mopt( EW* a_ew )
 //-----------------------------------------------------------------------
 bool Mopt::parseInputFileOpt( std::string filename )
 {
-   char buffer[4096];
+   //   char buffer[4096];
+   const int buflen=65536;
+   char* buffer = new char[buflen];
    ifstream inputFile;
    MPI_Barrier(m_ew->m_1d_communicator);
 
@@ -105,7 +107,7 @@ bool Mopt::parseInputFileOpt( std::string filename )
    }
    while (!inputFile.eof())
    {    
-      inputFile.getline(buffer, 4096);
+      inputFile.getline(buffer, buflen);
       if( strlen(buffer) > 0 && !(startswith("#",buffer)||startswith("\n",buffer)||startswith("\r",buffer) ) )
       {
 	 if( startswith("mparcart", buffer) )
@@ -141,6 +143,7 @@ bool Mopt::parseInputFileOpt( std::string filename )
       }
    }
    inputFile.close();
+   delete[] buffer;
    MPI_Barrier(m_ew->m_1d_communicator);
    m_ew->create_directory(m_path);
    CHECK_INPUT(m_mp != NULL,"ERROR: Material parameterization not given");

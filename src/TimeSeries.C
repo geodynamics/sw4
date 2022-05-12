@@ -1790,7 +1790,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
       float_sw4** misfitsource;
       float**     misfitsource_float;
       float_sw4 itau;//aw, bw,
-      bool dbg = true;
+      bool dbg = false;
       if( dbg )
       {
          cout << "DBG " << m_staName << " use_win= " << m_use_win << 
