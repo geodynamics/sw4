@@ -62,7 +62,6 @@ void curvilinear4sgwind(int, int, int, int, int, int, int, int, float_sw4*,
                         float_sw4*, float_sw4*, float_sw4*, float_sw4*, int,
                         char);
 
-<<<<<<< HEAD
 void add_pseudohessian_terms1(  int ifirst, int ilast, int jfirst, int jlast, 
                                int kfirst, int klast,
                                int ifirstact, int ilastact, int jfirstact, int jlastact, 
@@ -7788,7 +7787,6 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
     }
   }
 }
-<<<<<<< HEAD
 
 //-----------------------------------------------------------------------
 void EW::addtoPseudoHessian( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarray>& Up, 

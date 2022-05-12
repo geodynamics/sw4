@@ -619,7 +619,6 @@ class EW {
 
   void impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um, float_sw4 t,
                              vector<float_sw4**>& bforcing);
-  void advance_geodyn_time( float_sw4 t );
 
   void advance_geodyn_time(float_sw4 t);
 
@@ -656,7 +655,7 @@ class EW {
   void restore_geoghost(vector<Sarray>& U);
 
   void geodynbcGetSizes(string filename, float_sw4 origin[3],
-                        float_sw4& cubelen, float_sw4& zcubelen,
+                        float_sw4& cubelen, float_sw4& zcubelen, float_sw4& hcube,
                         bool& found_latlon, double& lat, double& lon,
                         double& az, int& adjust);
 

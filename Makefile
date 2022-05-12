@@ -298,7 +298,8 @@ sw4mopt: $(FOBJ) $(FMOBJOPT)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
 	# cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(MOBJOPT) $(OBJ) $(QUADPACK) $(linklibs)
-	cd $(builddir); nvcc $(NVCCLINKFLAGS) -dlink -o moptfile_link.o $(MOBJOPT) $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart -lnvidia-ml
+	cd $(builddir); nvcc -arch=sm_70 $(DLINKFLAGS) -dlink -o moptfile_link.o $(MOBJOPT) $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart $(NVLINK_UMPIRE)
+	# cd $(builddir); nvcc $(NVCCLINKFLAGS) -dlink -o moptfile_link.o $(MOBJOPT) $(OBJ) $(LINKFLAGS) -lcudadevrt -lcudart -lnvidia-ml
 	cd $(builddir); $(LINKER) $(LINKFLAGS) -o $@ moptfile_link.o $(MOBJOPT) $(OBJ) $(QUADPACK) $(linklibs)
 	# cd $(builddir); $(LINKER) $(LINKFLAGS) -o $@ moptmain.o moptfile_link.o $(MOBJOPT) $(OBJ) $(QUADPACK) $(linklibs)
 	@echo " "
