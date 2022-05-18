@@ -1214,6 +1214,18 @@ int main(int argc, char **argv)
   int myRank, nProcs;
   int status = start_minv( argc, argv, fileName, myRank, nProcs );
 
+  MPI_Info info;
+  MPI_Comm shared_comm;
+  MPI_Info_create(&info);
+  MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, myRank, info,
+                      &shared_comm);
+  int local_rank = -1, local_size = -1;
+  MPI_Comm_rank(shared_comm, &local_rank);
+  MPI_Comm_size(shared_comm, &local_size);
+  MPI_Info_free(&info);
+
+  int device = presetGPUID(myRank, local_rank, local_size);
+
 #ifdef SW4_USE_UMPIRE
   umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
 #ifdef ENABLE_HIP
