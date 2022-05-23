@@ -13,41 +13,60 @@ using namespace std;
 
 //-----------------------------------------------------------------------
 DataPatches::DataPatches( string fname, Sarray& u, int imin, int imax, int jmin, int jmax,
-			  int kmax, int layers, int ntsteps, double dt )
+			  int kmin, int kmax, int layers, int ntsteps, double dt, int npad[6],
+                          bool top, bool bottom )
 {
    m_filename = fname;
    // Find the patches residing in this processor
+   // npad can be used to only select interior points (avoid processor overlap pts).
 
  // My block
-   /* int ib=u.m_ib; */
-   /* int ie=u.m_ie; */
-   /* int jb=u.m_jb; */
-   /* int je=u.m_je; */
-   /* int kb=u.m_kb; */
-   /* int ke=u.m_ke; */
+   int ib=u.m_ib+npad[0];
+   int ie=u.m_ie-npad[1];
+   int jb=u.m_jb+npad[2];
+   int je=u.m_je-npad[3];
+   int kb=u.m_kb+npad[4];
+   int ke=u.m_ke-npad[5];
 
    int off = layers-1;
 
-// Bottom block
    m_npatches = 0;
    int wind[6];
-   u.intersection(imin-off,imax+off,jmin-off,jmax+off,kmax,kmax+off,wind);
-   add_patch(wind);
+   if( top )
+   {
+      // Top of block
+      intersect( ib, ie, jb, je, kb, ke, 
+                 imin-off,imax+off,jmin-off,jmax+off,kmin-off,kmin,wind);
+      add_patch(wind);
+   }
+   if( bottom )
+   {
+// Bottom of block
+      intersect( ib, ie, jb, je, kb, ke, 
+                 imin-off,imax+off,jmin-off,jmax+off,kmax,kmax+off,wind);
+      add_patch(wind);
+   }
 
 // Side 3
-   u.intersection(imin-off,imax+off,jmin-off,jmin,1,kmax,wind);
+   intersect( ib, ie, jb, je, kb, ke, 
+              imin-off,imax+off,jmin-off,jmin,kmin,kmax,wind);
    add_patch(wind);
 
 // Side 4
-   u.intersection(imin-off,imax+off,jmax,jmax+off,1,kmax,wind);
+   intersect( ib, ie, jb, je, kb, ke, 
+              imin-off,imax+off,jmax,jmax+off,kmin,kmax,wind);
    add_patch(wind);
 
 // Side 1
-   u.intersection(imin-off,imin,jmin,jmax,1,kmax,wind);
+//   u.intersection(imin-off,imin,jmin,jmax,1,kmax,wind);
+   intersect( ib, ie, jb, je, kb, ke, 
+              imin-off,imin,jmin,jmax,kmin,kmax,wind);
    add_patch(wind);
 
 // Side 2
-   u.intersection(imax,imax+off,jmin,jmax,1,kmax,wind);
+//   u.intersection(imax,imax+off,jmin,jmax,1,kmax,wind);
+   intersect( ib, ie, jb, je, kb, ke, 
+              imax,imax+off,jmin,jmax,kmin,kmax,wind);
    add_patch(wind);
 
    m_isnonempty = m_npatches > 0;
@@ -158,13 +177,13 @@ void DataPatches::add_patch( int wind[6] )
 {
    //   int myid;
    //   MPI_Comm_rank(MPI_COMM_WORLD,&myid);
-   //   if( myid==1 )
-   //   {
-   //      cout << "adding patch = " << wind[0] << " " << wind[1] <<
-   //	 " " << wind[2] << " " << wind[3] << " " << wind[4] << " " << wind[5] << endl;
-   //   }
    if( wind[1]>=wind[0] && wind[3]>=wind[2] && wind[5]>=wind[4] )
    {
+      //      if( myid==2 || myid==1 || myid==0 )
+      //      {
+      //         cout << myid << " adding patch = " << wind[0] << " " << wind[1] <<
+      //            " " << wind[2] << " " << wind[3] << " " << wind[4] << " " << wind[5] << endl;
+      //      }
       m_dims.push_back(wind[0]);
       m_dims.push_back(wind[1]);
       m_dims.push_back(wind[2]);
@@ -221,7 +240,7 @@ void DataPatches::save_to_file( )
 {
    if( m_ncurrent > 0 && !m_error && m_isnonempty )
    {
-      off_t nr;
+      size_t nr;
       int fd = open( m_filename.c_str(), O_RDWR );
       if( fd == -1 )
       {
@@ -374,7 +393,7 @@ void DataPatches::read_from_file( int n )
       int nstart = n-m_nsteps+1;
       if( nstart < m_nmin )
 	nstart = m_nmin;
-      /* int nmax = nstart + m_nsteps-1; */
+      int nmax = nstart + m_nsteps-1;
       
       // header
       size_t off = 4*sizeof(int) + 6*m_npatches*sizeof(size_t) + sizeof(double);
@@ -438,4 +457,17 @@ void DataPatches::print_openerr( int ecode ) const
    default : emsg = "unknown";
    }
    cout << "open failed with error code " << emsg << endl;
+}
+
+//-----------------------------------------------------------------------
+void DataPatches::intersect( int ib, int ie, int jb, int je, int kb, int ke, 
+                             int ib2, int ie2, int jb2, int je2, int kb2, int ke2,
+                             int wind[6] )
+{
+   wind[0] = max(ib,ib2);
+   wind[1] = min(ie,ie2);
+   wind[2] = max(jb,jb2);
+   wind[3] = min(je,je2);
+   wind[4] = max(kb,kb2);
+   wind[5] = min(ke,ke2);
 }

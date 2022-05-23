@@ -48,7 +48,8 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
          if (m_bcType[g][side] == bStressFree || m_bcType[g][side] == bDirichlet ||
 	     m_bcType[g][side] == bSuperGrid)
          {
-    	    BCForcing[g][side] = new double[3*m_NumberOfBCPoints[g][side]];
+    	    BCForcing[g][side] = 
+		SW4_NEW(Space::Managed, float_sw4[3 * m_NumberOfBCPoints[g][side]]);
          }
       }
       ifirst = m_iStart[g];
@@ -104,6 +105,15 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
   vector<int> identsources;
   sort_grid_point_sources( point_sources, identsources );
 
+  SarrayVectorPrefetch(F);
+  SarrayVectorPrefetch(Lk);
+  SarrayVectorPrefetch(Kacc);
+  SarrayVectorPrefetch(Kp);
+  SarrayVectorPrefetch(Km);
+  SarrayVectorPrefetch(K);
+  SarrayVectorPrefetch(Um);
+  SarrayVectorPrefetch(Uacc);
+
    // Initial data
    for(int g=0 ; g < mNumberOfGrids ; g++ )
    {
@@ -146,7 +156,9 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 	 a_TimeSeries[s]->use_as_forcing( currentTimeStep-1, F, mGridSize, mDt, mJ, topographyExists() );
 
       evalDpDmInTime( Kp, K, Km, Kacc ); 
+
       evalRHS( Kacc, a_Mu, a_Lambda, Lk, AlphaVEm );
+
       evalCorrector( Km, a_Rho, Lk, F );
 
       time_measure[3] = MPI_Wtime();
@@ -258,10 +270,14 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 	 cout << "   Max norm of backed out Um = " << umx[0]  <<  " " << umx[1]  <<  " " << umx[2]  << endl;
       }
    }
-   communicate_arrays( gRho );
-   communicate_arrays( gMu );
-   communicate_arrays( gLambda );
+
+   /* communicate_arrays( gRho ); */
+   /* communicate_arrays( gMu ); */
+   /* communicate_arrays( gLambda ); */
    
+   communicate_host_arrays( gRho );
+   communicate_host_arrays( gMu );
+   communicate_host_arrays( gLambda );
 
    //   gRho[0].save_to_disk("grho.bin");
    //   gMu[0].save_to_disk("gmu.bin");
@@ -298,12 +314,11 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    //	 hessian[m+11*j] = hessian[j+11*m];
 
    // Give back memory
-   for( int g = 0; g <mNumberOfGrids; g++ )
-   {
-      for(int side=0; side < 6; side++)
-	 if( BCForcing[g][side] != NULL )
-	    delete[] BCForcing[g][side];
-      delete[] BCForcing[g];
+   for (int g = 0; g < mNumberOfGrids; g++) {
+     for (int side = 0; side < 6; side++)
+       if (BCForcing[g][side] != NULL)
+         ::operator delete[](BCForcing[g][side], Space::Managed);
+     delete[] BCForcing[g];
    }
    for( int s=0 ; s < point_sources.size() ; s++ )
       delete point_sources[s];

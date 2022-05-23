@@ -9848,3 +9848,40 @@ void EW::load_balance() {
     std::cout << getRank() << " Grid # " << g << " " << perc << "%\n";
   }
 }
+
+//-----------------------------------------------------------------------
+bool EW::event_is_in_proc( int e ) const
+{
+   return m_eStart <= e && e <= m_eEnd;
+   //   if( m_events_parallel )
+   //   {
+   //      return e==m_event_in_proc;
+   //   }
+   //   else
+   //   {
+   //      return 0 <= e && e < m_nevent;
+   //   }
+}
+
+//-----------------------------------------------------------------------
+int EW::global_to_local_event( int e ) const
+{
+   //   if( 0 <= e && e < m_nevent )
+   //   {
+   if( m_eStart <= e && e <= m_eEnd )
+   {
+      //      return m_events_parallel?0:e;
+      return e-m_eStart;
+   }
+   else
+      return -1;
+}
+
+//-----------------------------------------------------------------------
+int EW::local_to_global_event( int e ) const
+{
+   return e+m_eStart;
+   //   return m_events_parallel?m_event_in_proc:e;
+}
+
+

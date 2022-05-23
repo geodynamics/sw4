@@ -631,6 +631,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 		    GlobalTimeSeries[e][m]->writeFile( "_ini" );
      }
    }
+
    if( myRank == 0 )
    {
       cout << "Initial misfit= "  << f << endl;
@@ -645,6 +646,7 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
 	 }
       }
    }
+
    //   return;
    rnorm = 0;
    if( nmpard_global > 0 )
@@ -654,10 +656,12 @@ void lbfgs( EW& simulation, int nspar, int nmpars, double* xs,
       double rnormtmp = rnorm;
       MPI_Allreduce(&rnormtmp, &rnorm, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
    }
+
    for( int i=0 ; i < ns ; i++ )
       rnorm = rnorm > fabs(dfs[i])*sf[i] ? rnorm : fabs(dfs[i])*sf[i];
    if( myRank == 0 )
       cout << "Max norm of scaled total gradient = " << rnorm << endl;
+
 
    //   cout << endl;
    //   fprintf(fd, "%i %15.7g %15.7g %15.7g %i\n", 0, rnorm, 0.0, f, 0 );

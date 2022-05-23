@@ -87,7 +87,7 @@ bool Mopt::parseInputFileOpt( std::string filename )
    if (!inputFile.is_open())
    {
       if (m_myrank == 0)
-	 cerr << endl << "ERROR OPENING INPUT FILE: " << filename << endl << endl;
+	 cerr << endl << "Mopt parse ERROR OPENING INPUT FILE: " << filename << endl << endl;
       return false;
    }
    while (!inputFile.eof())

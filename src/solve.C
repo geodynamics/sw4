@@ -95,7 +95,6 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
    		vector<DataPatches*>& Ucorr_saved_sides, bool save_sides,
 		int event, int nsteps_in_memory, int varcase, vector<Sarray>& PseudoHessian )
 {
-   SW4_MARK_FUNCTION;
    // Experimental
   //   int nsteps_in_memory=50;
 // solution arrays
@@ -116,6 +115,22 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
    AlphaVE.resize(mNumberOfGrids);
    AlphaVEm.resize(mNumberOfGrids);
    AlphaVEp.resize(mNumberOfGrids);
+
+   global_prefetch();
+
+   // New space switching
+   SW4_MARK_BEGIN("Solve::Host->Managed");
+   for (int g = 0; g < mNumberOfGrids; g++) {
+     mMu[g].switch_space(Space::Managed);
+     mLambda[g].switch_space(Space::Managed);
+     for (int a = 0; a < m_number_mechanisms; a++) {
+       mMuVE[g][a].switch_space(Space::Managed);
+       mLambdaVE[g][a].switch_space(Space::Managed);
+     }
+   }
+   SW4_MARK_END("Solve::Host->Managed");
+   // End space switching
+
    if (m_use_attenuation && m_number_mechanisms > 0)
    {
       for( int g = 0; g <mNumberOfGrids; g++ )
@@ -125,6 +140,8 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 	 AlphaVEm[g] = new Sarray[m_number_mechanisms];
       }
    }
+
+   int eglobal=local_to_global_event(event);
    int ifirst, ilast, jfirst, jlast, kfirst, klast;
    for( int g = 0; g <mNumberOfGrids; g++ )
    {
@@ -134,7 +151,7 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 	 BCForcing[g][side]=NULL;
 	 if (m_bcType[g][side] == bStressFree || m_bcType[g][side] == bDirichlet || m_bcType[g][side] == bSuperGrid)
 	 {
-	    BCForcing[g][side] = new float_sw4[3*m_NumberOfBCPoints[g][side]];
+	    BCForcing[g][side] = SW4_NEW(Space::Managed, float_sw4[3 * m_NumberOfBCPoints[g][side]]); 
 	 }
       }
       ifirst = m_iStart[g];
@@ -143,7 +160,6 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
       jlast = m_jEnd[g];
       kfirst = m_kStart[g];
       klast = m_kEnd[g];
-
       F[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       Lu[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
       Uacc[g].define(3,ifirst,ilast,jfirst,jlast,kfirst,klast);
@@ -172,42 +188,19 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
    }
 // done allocating solution arrays
 
+// Setup Cartesian grid refinement interface.
+   /* setup_MR_coefficients( a_Rho, a_Mu, a_Lambda ); */
+   setup_MR_coefficients();
+
 // Setup curvilinear grid refinement interface
    for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
-     m_cli2[g-mNumberOfCartesianGrids]->init_arrays( m_sg_str_x, m_sg_str_y);
-
-//   bool ciold = false;
-//   if( mNumberOfGrids > mNumberOfCartesianGrids+1 )
-//   {
-     //      if( ciold )
-     //      {
-     //         m_clInterface.resize(mNumberOfGrids-mNumberOfCartesianGrids-1);
-     //         for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
-     //         {
-     //            m_clInterface[g-mNumberOfCartesianGrids]= new CurvilinearInterface( g, this );
-     //            m_clInterface[g-mNumberOfCartesianGrids]->init_arrays( a_Mu, a_Lambda, a_Rho, mMetric, mJ );
-     //         }
-     //      }
-     //      else
-     //      {
-   //         m_cli2.resize(mNumberOfGrids-mNumberOfCartesianGrids-1);
-   //         for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
-   //         {
-   //            m_cli2[g-mNumberOfCartesianGrids] = new CurvilinearInterface2( g, this );
-   //            m_cli2[g-mNumberOfCartesianGrids]->init_arrays( m_sg_str_x, m_sg_str_y);
-   //         }
-	 //      }
-   //   }
-   //      for( int g=0 ; g < mNumberOfGrids ; g++ )
-   //	{
-   //	  U[g].set_to_random();
-   //	}
-      //      cli2[0].test2(this, 1, U );
+      m_cli2[g-mNumberOfCartesianGrids]->init_arrays( m_sg_str_x, m_sg_str_y );
+                                                      
 
 // Allocate boundary sides
    for( int g=0 ; g < mNumberOfGrids ; g++ )   {
       stringstream procno;
-      procno << m_myRank << "." << g ; 
+      procno << m_myRank << "." << g << ".ev" << eglobal; 
      //     string logname(getlogin());
 
 // Local disks on LC seem to be setup with directory /tmp/username when user username starts a job
@@ -216,28 +209,37 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
       mkdirs(mTempPath);
       //     string upred_name = "/tmp/" + logname + "/upred" + procno.str() + ".bin";
       //     string ucorr_name = "/tmp/" + logname + "/ucorr" + procno.str() + ".bin";
-      int imin, imax, jmin, jmax, kmax;
-      if( m_iStartAct[g] <= m_iEndAct[g] && m_iStartAct[g] <= m_iEndAct[g] && m_iStartAct[g] <= m_iEndAct[g]  )
+      int imin, imax, jmin, jmax, kmax, kmin;
+      imin = m_iStartActGlobal[g]-1;
+      imax = m_iEndActGlobal[g]+1;
+      jmin = m_jStartActGlobal[g]-1;
+      jmax = m_jEndActGlobal[g]+1;
+      kmin = m_kStartActGlobal[g]-1;
+      kmax = m_kEndActGlobal[g]+1;
+      int npad[6]={0,0,0,0,0,0};
+      if( m_iStart[g] > 1 )
+         npad[0] = m_ppadding;
+      if( m_iEnd[g] < m_global_nx[g] )
+         npad[1] = m_ppadding;
+      if( m_jStart[g] > 1 )
+         npad[2] = m_ppadding;
+      if( m_jEnd[g] < m_global_ny[g] )
+         npad[3] = m_ppadding;
+      if( g != mNumberOfGrids-1 )
       {
-	 imin = m_iStartAct[g]-1;
-	 imax = m_iEndAct[g]+1;
-	 jmin = m_jStartAct[g]-1;
-	 jmax = m_jEndAct[g]+1;
-	 kmax = m_kEndAct[g]+1;
+         // Upper boundary is grid ref bndry.
+         kmin += 2;
       }
-      else
+      if( g != 0 )
       {
-	// empty active domain
-	 imin =  0;
-	 imax = -1;
-	 jmin =  0;
-	 jmax = -1;
-	 kmax = -1;
+         // Lower boundary is grid ref bndry.
+         kmax -= 2;
       }
       if( save_sides )
       {
-	 Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt );
-	 Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmax,2,nsteps_in_memory,mDt );
+         bool top = g <mNumberOfGrids-1;
+	 Upred_saved_sides[g] = new DataPatches( upred_name.c_str() ,U[g],imin,imax,jmin,jmax,kmin,kmax,2,nsteps_in_memory,mDt,npad, top, true );
+	 Ucorr_saved_sides[g] = new DataPatches( ucorr_name.c_str() ,U[g],imin,imax,jmin,jmax,kmin,kmax,2,nsteps_in_memory,mDt,npad, top, true );
      //     cout << "sides saved for i=[" << imin << " , " << imax << "] j=[" << jmin << " , " << jmax << "] k=[" << 1 << " , " << kmax << "]"<< endl;
 	 size_t maxsizeloc = Upred_saved_sides[g]->get_noofpoints();
 	 size_t maxsize;
@@ -246,11 +248,11 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 	 MPI_Type_size(MPI_LONG_LONG,&mpisizelonglong );
 	 MPI_Type_size(MPI_INT,&mpisizeint );
 	 if( sizeof(size_t) == mpisizelong )
-	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG, MPI_MAX, MPI_COMM_WORLD );
+	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG, MPI_MAX, m_1d_communicator );
 	 else if( sizeof(size_t) == mpisizelonglong )
-	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG_LONG, MPI_MAX, MPI_COMM_WORLD );
+	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_LONG_LONG, MPI_MAX, m_1d_communicator );
 	 else if( sizeof(size_t) == mpisizeint )
-	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
+	    MPI_Allreduce( &maxsizeloc, &maxsize, 1, MPI_INT, MPI_MAX, m_1d_communicator );
 	 if( !mQuiet && mVerbose >= 5 && proc_zero() )
 	    cout << "  Temporary files " << upred_name << " and " << ucorr_name << " will hold " <<
 	       Upred_saved_sides[g]->get_noofpoints() << " values each, for each time step";
@@ -264,7 +266,8 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
   {
      a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps[event]+1, mTstart, mDt); // AP: added one to mNumber...
-     // In forward solve, the output receivers will use the same UTC as the
+          
+// In forward solve, the output receivers will use the same UTC as the
      // global reference utc0, therefore, set station utc equal reference utc.
      //     if( m_utc0set )
      //	a_TimeSeries[ts]->set_station_utc( m_utc0 );
@@ -279,12 +282,15 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 // the Source objects get discretized into GridPointSource objects
   vector<GridPointSource*> point_sources;
 
+  if( m_point_source_test )
+     m_point_source_test->set_source( a_Sources[0] );
+
 // Transfer source terms to each individual grid as point sources at grid points.
-  SW4_MARK_BEGIN("set_grid_point_sources4");
   for( unsigned int i=0 ; i < a_Sources.size() ; i++ )
       a_Sources[i]->set_grid_point_sources4( this, point_sources );
-  SW4_MARK_END("set_grid_point_sources4");
 
+  //  std::cout << m_myRank << " no of sources = " << point_sources.size() << std::endl;
+  //  std::cout << m_myRank << " no of receivers = " << a_TimeSeries.size() << std::endl;
  // Debug
   // for (int proc = 0; proc<m_nProcs; proc++)
   //    if (proc == m_myRank)
@@ -334,8 +340,8 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
        
 //building the file name...
        string filename;
-       if( mPath[event] != "." )
-	 filename += mPath[event];
+       if( mPath[eglobal] != "." )
+	 filename += mPath[eglobal];
        filename += "g1.dat";	 
 
        FILE *tf=fopen(filename.c_str(),"w");
@@ -380,8 +386,16 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
   if( m_check_point->do_restart() )
   {
      double timeRestartBegin = MPI_Wtime();
-     m_check_point->read_checkpoint( t, beginCycle, Um, U,
-				     AlphaVEm, AlphaVE );
+     if (!m_check_point->useHDF5())
+        m_check_point->read_checkpoint( t, beginCycle, Um, U, AlphaVEm, AlphaVE );
+#ifdef USE_HDF5
+     else
+        m_check_point->read_checkpoint_hdf5( t, beginCycle, Um, U, AlphaVEm, AlphaVE );
+#else
+     else
+         if (proc_zero())
+             cout << "Configured to restart with HDF5 but SW4 is not compiled with HDF5!" << endl;
+#endif
 // tmp
      if (proc_zero())
         printf("After reading checkpoint data: beginCycle=%d, t=%e\n", beginCycle, t);
@@ -402,7 +416,7 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
      }
 
 // Reset image time to the time corresponding to restart
-/* #pragma omp parallel for */
+#pragma omp parallel for
   for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
      mImageFiles[fIndex]->initializeTime(t);
    
@@ -422,11 +436,6 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
      initialData(mTstart, U, AlphaVE);
      initialData(mTstart-mDt, Um, AlphaVEm );
   }
-
-#ifdef PEEKS_GALORE
-  SW4_PEEK;
-  SYNC_DEVICE;
-#endif
   
   if ( !mQuiet && mVerbose && proc_zero() )
     cout << "  Initial data has been assigned" << endl;
@@ -505,11 +514,6 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 // more testing
   checkpoint_twilight_test( Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp, a_Sources, t );
 
-#ifdef PEEKS_GALORE
-  SW4_PEEK;
-  SYNC_DEVICE;
-#endif
-
 // test if the spatial operator is self-adjoint (only works without mesh refinement)
   if (m_energy_test && getVerbosity() >= 1 && getNumberOfGrids() == 1)
   {
@@ -532,15 +536,9 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
         printf("Scalar products (Um, L(U)) = %e and (U, L(Um)) = %e, diff=%e\n", sp_vLu, sp_uLv, sp_vLu-sp_uLv);
   } // end m_energy_test ...
 
-
   if( m_moment_test )
      test_sources( point_sources, a_Sources, F, identsources );
 
-
-#ifdef PEEKS_GALORE
-  SW4_PEEK;
-  SYNC_DEVICE;
-#endif
 
 // save initial data on receiver records
   vector<float_sw4> uRec;
@@ -554,14 +552,8 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
       a_TimeSeries[tsi]->resetHDF5file();
     if(m_myRank == 0 && !m_check_point->do_restart()) 
       createTimeSeriesHDF5File(a_TimeSeries, mNumberOfTimeSteps[event]+1, mDt, "");
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(m_1d_communicator);
   }
-#endif
-
-
-#ifdef PEEKS_GALORE
-  SW4_PEEK;
-  SYNC_DEVICE;
 #endif
 
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
@@ -583,12 +575,12 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 // save any images for cycle = 0 (initial data), or beginCycle-1 (checkpoint restart)
   update_images( beginCycle-1, t, U, Um, Up, a_Rho, a_Mu, a_Lambda, a_Sources, 1 );
   for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
-    mImage3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[event], mZ );
+    mImage3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[eglobal], mZ );
 
   int gg = mNumberOfGrids-1; // top grid
   for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ ) {
     mESSI3DFiles[i3]->set_ntimestep(mNumberOfTimeSteps[event]);
-    mESSI3DFiles[i3]->update_image( beginCycle-1, t, mDt, U, mPath[event], mZ[gg] );// not verified for several cuvilinear grids
+    mESSI3DFiles[i3]->set_restart(m_check_point->do_restart());
   }
 
 // NOTE: time stepping loop starts at currentTimeStep = beginCycle; ends at currentTimeStep <= mNumberOfTimeSteps
@@ -597,7 +589,7 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 // open file for saving norm of error
   if ( (m_lamb_test || m_point_source_test || m_rayleigh_wave_test || m_error_log) && proc_zero() )
   {
-    string path=getPath(event);
+    string path=getPath(eglobal);
 
     stringstream fileName;
     if( path != "." )
@@ -642,24 +634,6 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
      }
   }
 
-#ifdef PEEKS_GALORE
-  SW4_PEEK;
-  SYNC_DEVICE;
-#endif
-
-  // Prefetch Sarrays before starting time stepping
-  SarrayVectorPrefetch(Up);
-  SarrayVectorPrefetch(Um);
-  SarrayVectorPrefetch(U);
-  SarrayVectorPrefetch(Uacc);
-  SarrayVectorPrefetch(F);
-  SarrayVectorPrefetch(mMu);
-  SarrayVectorPrefetch(mLambda);
-  SarrayVectorPrefetch(Lu);
-  SarrayVectorPrefetch(AlphaVE, m_number_mechanisms);
-  SarrayVectorPrefetch(AlphaVEm, m_number_mechanisms);
-  SarrayVectorPrefetch(AlphaVEp, m_number_mechanisms);
-  // End prefetch
   for( int g=0 ; g < mNumberOfGrids ; g++ )
     Up[g].set_to_zero();
 
@@ -670,11 +644,6 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
   Force( t, F, point_sources, identsources );
 // end test
 
-#ifdef PEEKS_GALORE
-  SW4_PEEK;
-  SYNC_DEVICE;
-#endif
-
   double time_start_solve = MPI_Wtime();
   print_execution_time( time_start_init, time_start_solve, "initial data phase" );
 
@@ -682,7 +651,9 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
   if ( !mQuiet && proc_zero() )
     cout << endl << "  Begin time stepping..." << endl;
 
-  SW4_MARK_BEGIN("TIME_STEPPING");
+  //   int idbg=113, jdbg=201, kdbg=25, gdbg=1;
+  //   int idbg=57, jdbg=101, kdbg=1, gdbg=0;
+  //   bool dbgowner=interior_point_in_proc(idbg,jdbg,gdbg);
 
   for( int currentTimeStep = beginCycle; currentTimeStep <= mNumberOfTimeSteps[event]; currentTimeStep++)
   {    
@@ -715,21 +686,11 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
        //       check_for_nan( AlphaVE, m_number_mechanisms, 1, "alpha");
     }
 
-#ifdef PEEKS_GALORE
-    SW4_PEEK;
-    SYNC_DEVICE;
-#endif
-
 // evaluate right hand side
     if( m_anisotropic )
        evalRHSanisotropic( U, mC, Lu );
     else
        evalRHS( U, a_Mu, a_Lambda, Lu, AlphaVE ); // save Lu in composite grid 'Lu'
-
-#ifdef PEEKS_GALORE
-    SW4_PEEK;
-    SYNC_DEVICE;
-#endif
 
     if( m_output_detailed_timing )
        time_measure[1] = MPI_Wtime();
@@ -740,15 +701,8 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
     if( m_checkfornan )
        check_for_nan( Lu, 1, "Lu pred. " );
 
-#ifdef PEEKS_GALORE
-    SW4_PEEK;
-    SYNC_DEVICE;
-#endif
-
     // take predictor step, store in Up
     evalPredictor( Up, U, Um, a_Rho, Lu, F );    
-
-    SW4_MARK_BEGIN("COMM_WINDOW");
 
     if( m_output_detailed_timing )
        time_measure[2] = MPI_Wtime();
@@ -756,13 +710,9 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
     if( trace &&  m_myRank == dbgproc )
        cout <<" after evalPredictor" << endl;
 
-    SW4_MARK_BEGIN("COMM_ACTUAL");
-
 // communicate across processor boundaries
     for(int g=0 ; g < mNumberOfGrids ; g++ )
        communicate_array( Up[g], g );
-
-    SW4_MARK_END("COMM_ACTUAL");
 
     if( m_output_detailed_timing )
        time_measure[3] = MPI_Wtime();
@@ -809,24 +759,11 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
        }
     }
 
-   SW4_MARK_END("COMM_WINDOW");
-
-#ifdef PEEKS_GALORE
-   SW4_PEEK;
-   SYNC_DEVICE;
-#endif
-
 // update ghost points in Up
     if( m_anisotropic )
        enforceBCanisotropic( Up, mC, t+mDt, BCForcing );
     else
        enforceBC( Up, a_Mu, a_Lambda, AlphaVEp, t+mDt, BCForcing );
-
-
-#ifdef PEEKS_GALORE
-   SW4_PEEK;
-   SYNC_DEVICE;
-#endif
 
 // NEW
 // Impose un-coupled free surface boundary condition with visco-elastic terms
@@ -847,8 +784,6 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 // *** 2nd order in TIME
     if (mOrder == 2)
     {
-       SW4_MARK_BEGIN("mOrder=2");
-
 // add super-grid damping terms before enforcing interface conditions
 // (otherwise, Up doesn't have the correct values on the interface)
        if (usingSupergrid())
@@ -872,19 +807,13 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 
 // interface conditions for 2nd order in time
 // NOTE: this routine calls preliminary_predictor for t+dt, which needs F(t+dt). It is computed at the top of next time step
-       enforceIC2( Up, U, Um, AlphaVEp, t, F, point_sources );
+       enforceIC2( Up, U, Um, AlphaVEp, t, F, point_sources);
 
        if( m_output_detailed_timing )
           time_measure[17] = MPI_Wtime();
-
-       SW4_MARK_END("mOrder=2");
     }
     else // 4th order time stepping
     {
-#ifdef PEEKS_GALORE
-       SW4_PEEK;
-       SYNC_DEVICE;
-#endif
        if( m_output_detailed_timing )
           time_measure[7] = MPI_Wtime();
 
@@ -903,11 +832,6 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
        if( m_output_detailed_timing )
           time_measure[9] = MPI_Wtime();
     }
-
-#ifdef PEEKS_GALORE
-    SW4_PEEK;
-    SYNC_DEVICE;
-#endif
 
 //
 // corrector step for
@@ -1049,13 +973,19 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 
     }// end if mOrder == 4
     
-#ifdef PEEKS_GALORE
-       SW4_PEEK;
-       SYNC_DEVICE;
-#endif
-
     if( m_checkfornan )
        check_for_nan( Up, 1, "Up" );
+
+    //      if( dbgowner )
+    //      {
+    //         cout << "f " << t << " " << currentTimeStep << 
+    //            " Up k"  << Up[gdbg](1,idbg,jdbg,kdbg) << " " << Up[gdbg](2,idbg,jdbg,kdbg) << " " << Up[gdbg](3,idbg,jdbg,kdbg) << endl;
+    //         cout << " Up kp"  << Up[gdbg](1,idbg,jdbg,kdbg+1) << " " << Up[gdbg](2,idbg,jdbg,kdbg+1) << " " << Up[gdbg](3,idbg,jdbg,kdbg+1) << endl;
+    //         cout<<   " U k"  << U[gdbg](1,idbg,jdbg,kdbg) << " " << U[gdbg](2,idbg,jdbg,kdbg) << " " << U[gdbg](3,idbg,jdbg,kdbg) << endl;
+    //         cout<<   " U kp"  << U[gdbg](1,idbg,jdbg,kdbg+1) << " " << U[gdbg](2,idbg,jdbg,kdbg+1) << " " << U[gdbg](3,idbg,jdbg,kdbg+1) << endl;
+    //         cout <<   " Um k"  << Um[gdbg](1,idbg,jdbg,kdbg) << " " << Um[gdbg](2,idbg,jdbg,kdbg) << " " << Um[gdbg](3,idbg,jdbg,kdbg) << endl;
+    //         cout <<   " Um kp"  << Um[gdbg](1,idbg,jdbg,kdbg+1) << " " << Um[gdbg](2,idbg,jdbg,kdbg+1) << " " << Um[gdbg](3,idbg,jdbg,kdbg+1) << endl;
+    //      }
 
 // increment time
     t += mDt;
@@ -1063,9 +993,6 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 // periodically, print time stepping info to stdout
     printTime( currentTimeStep, t, currentTimeStep == mNumberOfTimeSteps[event] ); 
     //    printTime( currentTimeStep, t, true ); 
-
-    SYNC_STREAM;  // This probably needs to be somewhere inside update_images so
-                  // that it is called only before an image write
 
 // Images have to be written before the solution arrays are cycled, because both Up and Um are needed
 // to compute a centered time derivative
@@ -1075,13 +1002,13 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
     update_images( currentTimeStep, t, Up, U, Um, a_Rho, a_Mu, a_Lambda, a_Sources, currentTimeStep == mNumberOfTimeSteps[event] );
     for( int i3 = 0 ; i3 < mImage3DFiles.size() ; i3++ )
       mImage3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, 
-				       mQp, mQs, mPath[event], mZ ); // mRho, a_Mu, mLambda occur twice because we don't use gradRho etc.
+				       mQp, mQs, mPath[eglobal], mZ ); // mRho, a_Mu, mLambda occur twice because we don't use gradRho etc.
 
     // Update the ESSI hdf5 data
     double time_essi_tmp=MPI_Wtime();
     gg = mNumberOfGrids-1; // top grid
     for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
-      mESSI3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mPath[event], mZ[gg] ); // not verified for several cuvilinear grids
+      mESSI3DFiles[i3]->update_image( currentTimeStep, t, mDt, Up, mPath[eglobal], mZ[gg] ); // not verified for several cuvilinear grids
     double time_essi=MPI_Wtime()-time_essi_tmp;
 
 // save the current solution on receiver records (time-derivative require Up and Um for a 2nd order
@@ -1110,11 +1037,21 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
     if( m_check_point->timeToWrite( t, currentTimeStep, mDt ) )
     {
        double time_chkpt=MPI_Wtime();
-       m_check_point->write_checkpoint( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
+
+       if (!m_check_point->useHDF5())
+          m_check_point->write_checkpoint( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
+#ifdef USE_HDF5
+       else
+          m_check_point->write_checkpoint_hdf5( t, currentTimeStep, U, Up, AlphaVE, AlphaVEp );
+#else
+     else
+         if (proc_zero())
+             cout << "Configured to checkpoint with HDF5 but SW4 is not compiled with HDF5!" << endl;
+#endif
        double time_chkpt_tmp =MPI_Wtime()-time_chkpt;
        if( m_output_detailed_timing )
        {
-	  MPI_Allreduce( &time_chkpt_tmp, &time_chkpt, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+	  MPI_Allreduce( &time_chkpt_tmp, &time_chkpt, 1, MPI_DOUBLE, MPI_MAX, m_1d_communicator );
 	  if( m_myRank == 0 )
 	     cout << "Wallclock time to write check point file " << time_chkpt << " seconds " << endl;
        }
@@ -1127,7 +1064,7 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 	     double time_chkpt_timeseries_tmp=MPI_Wtime()-time_chkpt_timeseries;
        if( m_output_detailed_timing )
        {
-	        MPI_Allreduce( &time_chkpt_timeseries_tmp, &time_chkpt_timeseries, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+	        MPI_Allreduce( &time_chkpt_timeseries_tmp, &time_chkpt_timeseries, 1, MPI_DOUBLE, MPI_MAX, m_1d_communicator );
 	        if( m_myRank == 0 )
 	          cout << "Wallclock time to write all checkpoint time series files "
               << time_chkpt_timeseries << " seconds " << endl;
@@ -1201,13 +1138,8 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
        }
     }
     
-    if (currentTimeStep == beginCycle) {
-      SW4_PEEK;
-      SYNC_DEVICE;
-    }
   } // end time stepping loop
 
-  SW4_MARK_END("TIME_STEPPING");
 
   if ( !mQuiet && proc_zero() )
     cout << "  Time stepping finished..." << endl;
@@ -1218,13 +1150,16 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 // Only do this if there are any essi hdf5 files
    if (mESSI3DFiles.size() > 0)
    {
+     for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
+       mESSI3DFiles[i3]->finalize_hdf5();
+
      // Calculate the total ESSI hdf5 io time across all ranks
      double hdf5_time=0;
      for( int i3 = 0 ; i3 < mESSI3DFiles.size() ; i3++ )
        hdf5_time += mESSI3DFiles[i3]->getHDF5Timings();
      // Max over all rank
      double max_hdf5_time;
-     MPI_Reduce( &hdf5_time, &max_hdf5_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD );
+     MPI_Reduce( &hdf5_time, &max_hdf5_time, 1, MPI_DOUBLE, MPI_MAX, 0, m_1d_communicator );
      if( m_myRank == 0 && max_hdf5_time > 0.1)
        cout << "  ==> Max wallclock time to open/write ESSI hdf5 output is " 
          << max_hdf5_time << " seconds " << endl;
@@ -1236,10 +1171,9 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
    double total_time = 0.0, all_total_time;
    for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
       total_time += mImageFiles[fIndex]->get_write_time();
-   MPI_Reduce(&total_time, &all_total_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+   MPI_Reduce(&total_time, &all_total_time, 1, MPI_DOUBLE, MPI_MAX, 0, m_1d_communicator);
    if( m_myRank == 0 && all_total_time > 0.1)
      cout << "  ==> Max wallclock time to write images is " << all_total_time << " seconds." << endl;
-
 
    // Write sfile after time stepping
    // reverse setup_viscoelastic when needed
@@ -1247,9 +1181,11 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
      reverse_setup_viscoelastic();
 
    for( int ii = 0 ; ii < mSfiles.size() ; ii++ )
-     mSfiles[ii]->force_write_image( t, mNumberOfTimeSteps[event], Up, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[event], mZ ); 
+     mSfiles[ii]->force_write_image( t, mNumberOfTimeSteps[event], Up, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs, mPath[eglobal], mZ ); 
 
+   m_check_point->finalize_hdf5();
 #endif
+
 
    print_execution_time( time_start_solve, time_end_solve, "time stepping phase" );
 
@@ -1257,6 +1193,7 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
    {
       print_execution_times( time_sum );
    }
+
 
 // check the accuracy of the final solution, store exact solution in Up, ignore AlphaVE
    if( exactSol( t, Up, AlphaVEp, a_Sources ) )
@@ -1318,17 +1255,16 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
    cout.flush(); cerr.flush();
 
 // Give back memory
-   for( int g = 0; g <mNumberOfGrids; g++ )
-   {
-      for(int side=0; side < 6; side++)
-	 if( BCForcing[g][side] != NULL )
-	    delete[] BCForcing[g][side];
-      delete[] BCForcing[g];
+   for (int g = 0; g < mNumberOfGrids; g++) {
+     for (int side = 0; side < 6; side++)
+       if (BCForcing[g][side] != NULL)
+         ::operator delete[](BCForcing[g][side], Space::Managed);
+     delete[] BCForcing[g];
    }
    for( int s = 0 ; s < point_sources.size(); s++ )
       delete point_sources[s];
 
-   MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Barrier(m_1d_communicator);
 
 } // end EW::solve_mopt()
 
@@ -7758,31 +7694,46 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
       // numberOfBCPoints=0
       SW4_MARK_BEGIN("LOOP6");
 
-      // for (q=0; q<3*m_NumberOfBCPoints[g][0]; q++)
-      RAJA::forall<DEFAULT_LOOP1_ASYNC>(
-          RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][0]),
-          [=] RAJA_DEVICE(int q) { bforce_side0_ptr[q] = 0.; });
-      // for (q=0; q<3*m_NumberOfBCPoints[g][1]; q++)
-      RAJA::forall<DEFAULT_LOOP1_ASYNC>(
-          RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][1]),
-          [=] RAJA_DEVICE(int q) { bforce_side1_ptr[q] = 0.; });
-      // for (q=0; q<3*m_NumberOfBCPoints[g][2]; q++)
-      RAJA::forall<DEFAULT_LOOP1_ASYNC>(
-          RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][2]),
-          [=] RAJA_DEVICE(int q) { bforce_side2_ptr[q] = 0.; });
-      // for (q=0; q<3*m_NumberOfBCPoints[g][3]; q++)
-      RAJA::forall<DEFAULT_LOOP1_ASYNC>(
-          RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][3]),
-          [=] RAJA_DEVICE(int q) { bforce_side3_ptr[q] = 0.; });
-      // for (q=0; q<3*m_NumberOfBCPoints[g][4]; q++)
-      RAJA::forall<DEFAULT_LOOP1_ASYNC>(
-          RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][4]),
-          [=] RAJA_DEVICE(int q) { bforce_side4_ptr[q] = 0.; });
-      // for (q=0; q<3*m_NumberOfBCPoints[g][5]; q++)
-      RAJA::forall<DEFAULT_LOOP1_ASYNC>(
-          RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][5]),
-          [=] RAJA_DEVICE(int q) { bforce_side5_ptr[q] = 0.; });
-      SYNC_STREAM;
+      int q;
+      for (q=0; q<3*m_NumberOfBCPoints[g][0]; q++)
+	bforce_side0_ptr[q] = 0.;
+      for (q=0; q<3*m_NumberOfBCPoints[g][1]; q++)
+	bforce_side1_ptr[q] = 0.;
+      for (q=0; q<3*m_NumberOfBCPoints[g][2]; q++)
+	bforce_side2_ptr[q] = 0.;
+      for (q=0; q<3*m_NumberOfBCPoints[g][3]; q++)
+	bforce_side3_ptr[q] = 0.;
+      for (q=0; q<3*m_NumberOfBCPoints[g][4]; q++)
+	bforce_side4_ptr[q] = 0.;
+      for (q=0; q<3*m_NumberOfBCPoints[g][5]; q++)
+	bforce_side5_ptr[q] = 0.;     
+      
+      /* // for (q=0; q<3*m_NumberOfBCPoints[g][0]; q++) */
+      /* RAJA::forall<DEFAULT_LOOP1_ASYNC>( */
+      /*     RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][0]), */
+      /*     [=] RAJA_DEVICE(int q) { bforce_side0_ptr[q] = 0.; }); */
+      /* // for (q=0; q<3*m_NumberOfBCPoints[g][1]; q++) */
+      /* RAJA::forall<DEFAULT_LOOP1_ASYNC>( */
+      /*     RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][1]), */
+      /*     [=] RAJA_DEVICE(int q) { bforce_side1_ptr[q] = 0.; }); */
+      /* // for (q=0; q<3*m_NumberOfBCPoints[g][2]; q++) */
+      /* RAJA::forall<DEFAULT_LOOP1_ASYNC>( */
+      /*     RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][2]), */
+      /*     [=] RAJA_DEVICE(int q) { bforce_side2_ptr[q] = 0.; }); */
+      /* // for (q=0; q<3*m_NumberOfBCPoints[g][3]; q++) */
+      /* RAJA::forall<DEFAULT_LOOP1_ASYNC>( */
+      /*     RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][3]), */
+      /*     [=] RAJA_DEVICE(int q) { bforce_side3_ptr[q] = 0.; }); */
+      /* // for (q=0; q<3*m_NumberOfBCPoints[g][4]; q++) */
+      /* RAJA::forall<DEFAULT_LOOP1_ASYNC>( */
+      /*     RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][4]), */
+      /*     [=] RAJA_DEVICE(int q) { bforce_side4_ptr[q] = 0.; }); */
+      /* // for (q=0; q<3*m_NumberOfBCPoints[g][5]; q++) */
+      /* RAJA::forall<DEFAULT_LOOP1_ASYNC>( */
+      /*     RAJA::RangeSegment(0, 3 * m_NumberOfBCPoints[g][5]), */
+      /*     [=] RAJA_DEVICE(int q) { bforce_side5_ptr[q] = 0.; }); */
+      /* SYNC_STREAM; */
+
       SW4_MARK_END("LOOP6");
     }
   }

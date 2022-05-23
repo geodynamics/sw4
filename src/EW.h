@@ -99,6 +99,9 @@ class EW {
   float_sw4 getGlobalZmin() { return m_global_zmin; }
   float_sw4 getGlobalZmax() { return m_global_zmax; }
   int findNumberOfEvents();
+  bool event_is_in_proc( int e ) const;
+  int global_to_local_event( int e ) const;
+  int local_to_global_event( int e ) const;
 
   void setupRun(vector<vector<Source*>>& a_GlobalUniqueSources);
 
@@ -1674,6 +1677,7 @@ class EW {
                  // optimization.
   int m_nevents_specified;  // Number of event lines in input file
   bool m_events_parallel;   // Process events in parallel
+  int m_eStart, m_eEnd;
   map<string, int> m_event_names;
 
   // epicenter
