@@ -4634,864 +4634,273 @@ void EW::Force(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*>& po
   }
 }
 
-/* void EW::Force(float_sw4 a_t, vector<Sarray>& a_F, */
-/*                vector<GridPointSource*>& point_sources, */
-/*                vector<int>& identsources) { */
-/*   SW4_MARK_FUNCTION; */
-/*   int ifirst, ilast, jfirst, jlast, kfirst, klast; */
-/*   float_sw4 *f_ptr, om, ph, cv, h, zmin, omm, phm, amprho, ampmu, ampla; */
-
-/*   int g; */
-
-/*   if (m_twilight_forcing) { */
-/*     if (m_anisotropic) { */
-/*       float_sw4 phc[21];  // move these angles to the EW class */
-
-/*       // need to store all the phase angle constants somewhere */
-/*       for (int i = 0; i < 21; i++) phc[i] = i * 10 * M_PI / 180; */
-
-/*       for (g = 0; g < mNumberOfCartesianGrids; g++) { */
-/*         f_ptr = a_F[g].c_ptr(); */
-/*         ifirst = m_iStart[g]; */
-/*         ilast = m_iEnd[g]; */
-/*         jfirst = m_jStart[g]; */
-/*         jlast = m_jEnd[g]; */
-/*         kfirst = m_kStart[g]; */
-/*         klast = m_kEnd[g]; */
-/*         h = mGridSize[g]; */
-/*         zmin = m_zmin[g]; */
-
-/*         om = m_twilight_forcing->m_omega; */
-/*         ph = m_twilight_forcing->m_phase; */
-/*         cv = m_twilight_forcing->m_c; */
-/*         omm = m_twilight_forcing->m_momega; */
-/*         phm = m_twilight_forcing->m_mphase; */
-/*         amprho = m_twilight_forcing->m_amprho; */
-
-/*         if (m_croutines) */
-/*           tw_aniso_force_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr, */
-/*                             a_t, om, cv, ph, omm, phm, amprho, phc, h, zmin); */
-/*         else */
-/*           tw_aniso_force(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr, */
-/*                          a_t, om, cv, ph, omm, phm, amprho, phc, h, zmin); */
-/*       }  // end for all Cartesian grids */
-/*       // if (topographyExists()) { */
-/*       for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) { */
-/*         // g = mNumberOfGrids - 1; */
-/*         f_ptr = a_F[g].c_ptr(); */
-/*         ifirst = m_iStart[g]; */
-/*         ilast = m_iEnd[g]; */
-/*         jfirst = m_jStart[g]; */
-/*         jlast = m_jEnd[g]; */
-/*         kfirst = m_kStart[g]; */
-/*         klast = m_kEnd[g]; */
-/*         om = m_twilight_forcing->m_omega; */
-/*         ph = m_twilight_forcing->m_phase; */
-/*         cv = m_twilight_forcing->m_c; */
-/*         omm = m_twilight_forcing->m_momega; */
-/*         phm = m_twilight_forcing->m_mphase; */
-/*         amprho = m_twilight_forcing->m_amprho; */
-
-/*         if (m_croutines) */
-/*           tw_aniso_curvi_force_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, */
-/*                                   f_ptr, a_t, om, cv, ph, omm, phm, amprho, phc, */
-/*                                   mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr()); */
-/*         else */
-/*           tw_aniso_curvi_force(ifirst, ilast, jfirst, jlast, kfirst, klast, */
-/*                                f_ptr, a_t, om, cv, ph, omm, phm, amprho, phc, */
-/*                                mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr()); */
-
-/*       }  // end if topographyExists */
-
-/*     } else {  // isotropic twilight forcing */
-/*       for (g = 0; g < mNumberOfCartesianGrids; g++) { */
-/*         f_ptr = a_F[g].c_ptr(); */
-/*         ifirst = m_iStart[g]; */
-/*         ilast = m_iEnd[g]; */
-/*         jfirst = m_jStart[g]; */
-/*         jlast = m_jEnd[g]; */
-/*         kfirst = m_kStart[g]; */
-/*         klast = m_kEnd[g]; */
-/*         h = mGridSize[g];  // how do we define the grid size for the curvilinear */
-/*                            // grid? */
-/*         zmin = m_zmin[g]; */
-
-/*         om = m_twilight_forcing->m_omega; */
-/*         ph = m_twilight_forcing->m_phase; */
-/*         cv = m_twilight_forcing->m_c; */
-/*         omm = m_twilight_forcing->m_momega; */
-/*         phm = m_twilight_forcing->m_mphase; */
-/*         amprho = m_twilight_forcing->m_amprho; */
-/*         ampmu = m_twilight_forcing->m_ampmu; */
-/*         ampla = m_twilight_forcing->m_amplambda; */
-/*         if (usingSupergrid()) { */
-/*           float_sw4 omstrx = m_supergrid_taper_x[g].get_tw_omega(); */
-/*           float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega(); */
-/*           float_sw4 omstrz = m_supergrid_taper_z[g].get_tw_omega(); */
-/*           if (m_croutines) */
-/*             forcingfortsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr, */
-/*                              a_t, om, cv, ph, omm, phm, amprho, ampmu, ampla, h, */
-/*                              zmin, omstrx, omstry, omstrz); */
-/*           else */
-/*             forcingfortsg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, */
-/*                           f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, */
-/*                           &ampmu, &ampla, &h, &zmin, &omstrx, &omstry, &omstrz); */
-/*           if (m_use_attenuation) { */
-/*             if (m_croutines) */
-/*               forcingfortsgatt_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, */
-/*                                   f_ptr, a_t, om, cv, ph, omm, phm, amprho, */
-/*                                   ampmu, ampla, h, zmin, omstrx, omstry, */
-/*                                   omstrz); */
-/*             else */
-/*               forcingfortsgatt(&ifirst, &ilast, &jfirst, &jlast, &kfirst, */
-/*                                &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, */
-/*                                &amprho, &ampmu, &ampla, &h, &zmin, &omstrx, */
-/*                                &omstry, &omstrz); */
-/*           } */
-/*         } else { */
-/*           if (m_croutines) */
-/*             forcingfort_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr, */
-/*                            a_t, om, cv, ph, omm, phm, amprho, ampmu, ampla, h, */
-/*                            zmin); */
-/*           else */
-/*             forcingfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, */
-/*                         f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, */
-/*                         &ampla, &h, &zmin); */
-/*           if (m_use_attenuation) { */
-/*             if (m_croutines) */
-/*               forcingfortatt_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, */
-/*                                 f_ptr, a_t, om, cv, ph, omm, phm, amprho, ampmu, */
-/*                                 ampla, h, zmin); */
-/*             else */
-/*               forcingfortatt(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, */
-/*                              f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, */
-/*                              &ampmu, &ampla, &h, &zmin); */
-/*           } */
-/*         } */
-/*       }  // end for all Cartesian grids */
-
-/*       //      if (topographyExists()) { */
-/*       for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) { */
-/*         // g = mNumberOfGrids - 1; */
-/*         f_ptr = a_F[g].c_ptr(); */
-/*         ifirst = m_iStart[g]; */
-/*         ilast = m_iEnd[g]; */
-/*         jfirst = m_jStart[g]; */
-/*         jlast = m_jEnd[g]; */
-/*         kfirst = m_kStart[g]; */
-/*         klast = m_kEnd[g]; */
-/*         om = m_twilight_forcing->m_omega; */
-/*         ph = m_twilight_forcing->m_phase; */
-/*         cv = m_twilight_forcing->m_c; */
-/*         omm = m_twilight_forcing->m_momega; */
-/*         phm = m_twilight_forcing->m_mphase; */
-/*         amprho = m_twilight_forcing->m_amprho; */
-/*         ampmu = m_twilight_forcing->m_ampmu; */
-/*         ampla = m_twilight_forcing->m_amplambda; */
-/*         if (usingSupergrid()) { */
-/*           float_sw4 omstrx = m_supergrid_taper_x[g].get_tw_omega(); */
-/*           float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega(); */
-/*           float_sw4 omstrz = m_supergrid_taper_z[g].get_tw_omega(); */
-/*           if (m_croutines) */
-/*             forcingfortcsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, */
-/*                               f_ptr, a_t, om, cv, ph, omm, phm, amprho, ampmu, */
-/*                               ampla, mX[g].c_ptr(), mY[g].c_ptr(), */
-/*                               mZ[g].c_ptr(), omstrx, omstry, omstrz); */
-/*           else */
-/*             forcingfortcsg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, */
-/*                            f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, */
-/*                            &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(), */
-/*                            mZ[g].c_ptr(), &omstrx, &omstry, &omstrz); */
-/*           if (m_use_attenuation) { */
-/*             if (m_croutines) */
-/*               forcingfortsgattc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, */
-/*                                    f_ptr, a_t, om, cv, ph, omm, phm, amprho, */
-/*                                    ampmu, ampla, mX[g].c_ptr(), mY[g].c_ptr(), */
-/*                                    mZ[g].c_ptr(), omstrx, omstry, omstrz); */
-/*             else */
-/*               forcingfortsgattc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, */
-/*                                 &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, */
-/*                                 &amprho, &ampmu, &ampla, mX[g].c_ptr(), */
-/*                                 mY[g].c_ptr(), mZ[g].c_ptr(), &omstrx, &omstry, */
-/*                                 &omstrz); */
-/*           } */
-/*         } else { */
-/*           if (m_croutines) */
-/*             forcingfortc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr, */
-/*                             a_t, om, cv, ph, omm, phm, amprho, ampmu, ampla, */
-/*                             mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr()); */
-/*           else */
-/*             forcingfortc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, */
-/*                          f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, */
-/*                          &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(), */
-/*                          mZ[g].c_ptr()); */
-/*           if (m_use_attenuation) { */
-/*             if (m_croutines) */
-/*               forcingfortattc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, */
-/*                                  f_ptr, a_t, om, cv, ph, omm, phm, amprho, */
-/*                                  ampmu, ampla, mX[g].c_ptr(), mY[g].c_ptr(), */
-/*                                  mZ[g].c_ptr()); */
-/*             else */
-/*               forcingfortattc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, */
-/*                               f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, */
-/*                               &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(), */
-/*                               mZ[g].c_ptr()); */
-/*           } */
-/*         } */
-/*       } */
-/*     }  // end isotropic case */
-
-/*   }  // end twilight */
-
-/*   else if (m_rayleigh_wave_test) { */
-/*     for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero(); */
-/*   } else if (m_energy_test) { */
-/*     for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero(); */
-/*   } else { */
-/*     // */
-/*     // WARNING:: THERE IS AN ASSUMPTION HERE THAT FORCE WILL BE CALLED BEFORE */
-/*     // FORCE_TT */
-/*     // */
-/*     static bool firstcall = true; */
-
-/*     GridPointSource** GPSL; */
-/*     int* idnts_local; */
-/*     if (firstcall) { */
-/*       // WARNING :: FORCE_TT cannot be called until this section has been called */
-/*       SW4_MARK_BEGIN("FORCE::HOST::FIRSTCALL"); */
-/*       // size_t mfree,mtotal; */
-/*       // SW4_CheckDeviceError(cudaMemGetInfo(&mfree,&mtotal)); */
-/*       // std::cout<<getRank()<<" MFREE PRE-ALLOC"<<mfree/1024/1024.0<<" MB */
-/*       // "<<point_sources.size()<<","<<identsourc */
-/*       //	es.size()<<"\n"; */
-/*       GPS = SW4_NEW(Space::Managed, GridPointSource * [point_sources.size()]); */
-/*       idnts = SW4_NEW(Space::Managed, int[identsources.size()]); */
-/*       GPSL = GPS; */
-/*       idnts_local = idnts; */
-
-/*       for (int r = 0; r < identsources.size(); r++) idnts[r] = identsources[r]; */
-/*       for (int s = 0; s < point_sources.size(); s++) GPS[s] = point_sources[s]; */
-
-/*         // if (point_sources.size()>0){ */
-/*         // SW4_CheckDeviceError(cudaMemPrefetchAsync(GPS, */
-/*         // 						point_sources.size()*sizeof(GridPointSource*), */
-/*         // 						0, */
-/*         // 						0)); */
-
-/*         // SW4_CheckDeviceError(cudaMemPrefetchAsync(idnts, */
-/*         // 						identsources.size()*sizeof(int), */
-/*         // 						0, */
-/*         // 						0)); */
-/*         // } */
-/*         // SW4_CheckDeviceError(cudaMemGetInfo(&mfree,&mtotal)); */
-/*         // std::cout<<getRank()<<" MFREE POST-ALLOC"<<mfree/1024/1024.0<<" MB */
-/*         // \n"; */
-/* #ifndef SW4_NOOMP */
-/* #pragma omp parallel for */
-/* #endif */
-/*       for (int r = 0; r < identsources.size() - 1; r++) { */
-/*         int index = r * 3; */
-/*         int s0 = identsources[r]; */
-/*         int g = point_sources[s0]->m_grid; */
-/*         int i = point_sources[s0]->m_i0; */
-/*         int j = point_sources[s0]->m_j0; */
-/*         int k = point_sources[s0]->m_k0; */
-
-/*         size_t ind1 = a_F[g].index(1, i, j, k); */
-/*         size_t oc = a_F[g].m_offc; */
-/*         float_sw4* fptr = a_F[g].c_ptr(); */
-/*         ForceAddress[index] = fptr + ind1; */
-/*         ForceAddress[index + 1] = fptr + ind1 + oc; */
-/*         ForceAddress[index + 2] = fptr + ind1 + 2 * oc; */
-/*       } */
-
-/*       // if (point_sources.size()>0) std::cerr<<getRank()<<" Calling */
-/*       // GPS[r]->initializeTimeFunction() "<<point_sources.size()<<" \n"; */
-/*       // for (int i=0;i<point_sources.size();i++) GPSL[i]->print_vals(); */
-/*       RAJA::forall<DEFAULT_LOOP1>( */
-/*           RAJA::RangeSegment(0, point_sources.size()), */
-/*           [=] RAJA_DEVICE(int r) { GPSL[r]->initializeTimeFunction(); }); */
-/*       // if (point_sources.size()>0)std::cerr<<"Done Calling */
-/*       // GPS[r]->initializeTimeFunction()  "<<point_sources.size()<<" \n"; */
-/*       SW4_MARK_END("FORCE::HOST::FIRSTCALL"); */
-
-/*       firstcall = false; */
-/*     } */
-/*     // #ifdef ENABLE_CUDA */
-/*     //     typedef RAJA::cuda_exec<32, true> FORCE_LOOP_ASYNC; */
-/*     // #else */
-/*     //     using FORCE_LOOP_ASYNC = RAJA::omp_parallel_for_exec; */
-/*     // #endif */
-/*     GPSL = GPS; */
-/*     idnts_local = idnts; */
-/*     float_sw4** ForceAddress_copy = ForceAddress; */
-
-/*     // for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async(); */
-/*     vset_to_zero_async(a_F, mNumberOfGrids); */
-/*     SW4_MARK_BEGIN("FORCE::DEVICE"); */
-
-/*     RAJA::forall<FORCE_LOOP_ASYNC>( */
-/*         RAJA::RangeSegment(0, identsources.size() - 1), [=] RAJA_DEVICE(int r) { */
-/*           int index = r * 3; */
-/*           for (int s = idnts_local[r]; s < idnts_local[r + 1]; s++) { */
-/*             float_sw4 fxyz[3]; */
-/*             GPSL[s]->getFxyz(a_t, fxyz); */
-/* #ifndef SW4_NOOMP */
-/* #pragma unroll */
-/* #endif */
-/*             for (int i = 0; i < 3; i++) */
-/*               *ForceAddress_copy[index + i] += fxyz[i]; */
-/*           } */
-/*         }); */
-
-/*     SYNC_STREAM; */
-/*     SW4_MARK_END("FORCE::DEVICE"); */
-/*   } */
-/* } */
 #endif
-//---------------------------------------------------------------------------
-void EW::Force_tt(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*>& point_sources,
-		  vector<int>& identsources )
-{
+#ifdef NO_DEVICE_FUNCTION_POINTERS
+// Awaiting device function pointer support in HIP
+void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
+                  vector<GridPointSource*>& point_sources,
+                  vector<int>& identsources) {
+  static bool first = true;
+  if (first) {
+    first = false;
+    std::cout << "WARNING **** NON_FUNCTIONAL CALL TO EW::Force_tt\n";
+  }
+  for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero();
+}
+#else
+void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
+                  vector<GridPointSource*>& point_sources,
+                  vector<int>& identsources) {
+  SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *f_ptr, om, ph, cv, h, zmin, omm, phm, amprho, ampmu, ampla;
-  
+  // std::cout<<"FORCE_TT\n";
   int g;
-  
-  if (m_twilight_forcing)
-  {
-     if (m_anisotropic)
-     {
-        float_sw4 phc[21]; // move these angles to the EW class
+  // std::cerr<<"And now in force_tt\n";
+  if (m_twilight_forcing) {
+    if (m_anisotropic) {
+      float_sw4 phc[21];  // move these angles to the EW class
 
-        // need to store all the phase angle constants somewhere
-        phc[0]=0;
-        for (int i=0; i<21; i++)
-           phc[i] = i*10*M_PI/180;
+      // need to store all the phase angle constants somewhere
+      phc[0] = 0;
+      for (int i = 0; i < 21; i++) phc[i] = i * 10 * M_PI / 180;
 
-        for(g=0 ; g<mNumberOfCartesianGrids; g++ )
-        {
-           f_ptr    = a_F[g].c_ptr();
-           ifirst = m_iStart[g];
-           ilast  = m_iEnd[g];
-           jfirst = m_jStart[g];
-           jlast  = m_jEnd[g];
-           kfirst = m_kStart[g];
-           klast  = m_kEnd[g];
-           h = mGridSize[g]; 
-           zmin = m_zmin[g];
-    
-           om = m_twilight_forcing->m_omega;
-           ph = m_twilight_forcing->m_phase;
-           cv = m_twilight_forcing->m_c;
-           omm = m_twilight_forcing->m_momega;
-           phm = m_twilight_forcing->m_mphase;
-           amprho = m_twilight_forcing->m_amprho;
+      for (g = 0; g < mNumberOfCartesianGrids; g++) {
+        f_ptr = a_F[g].c_ptr();
+        ifirst = m_iStart[g];
+        ilast = m_iEnd[g];
+        jfirst = m_jStart[g];
+        jlast = m_jEnd[g];
+        kfirst = m_kStart[g];
+        klast = m_kEnd[g];
+        h = mGridSize[g];
+        zmin = m_zmin[g];
 
-//FTNC	   if( m_croutines )
-	      tw_aniso_force_tt_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
-				   a_t, om, cv, ph, omm, phm,
-				   amprho, phc, h, zmin);
-//FTNC	   else
-//FTNC	      tw_aniso_force_tt(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
-//FTNC				a_t, om, cv, ph, omm, phm,
-//FTNC				amprho, phc, h, zmin);
-        } // end for all Cartesian grids
+        om = m_twilight_forcing->m_omega;
+        ph = m_twilight_forcing->m_phase;
+        cv = m_twilight_forcing->m_c;
+        omm = m_twilight_forcing->m_momega;
+        phm = m_twilight_forcing->m_mphase;
+        amprho = m_twilight_forcing->m_amprho;
 
-//        if( topographyExists() )
-        for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
-        {
-           f_ptr    = a_F[g].c_ptr();
-           ifirst = m_iStart[g];
-           ilast  = m_iEnd[g];
-           jfirst = m_jStart[g];
-           jlast  = m_jEnd[g];
-           kfirst = m_kStart[g];
-           klast  = m_kEnd[g];
-           om = m_twilight_forcing->m_omega;
-           ph = m_twilight_forcing->m_phase;
-           cv = m_twilight_forcing->m_c;
-           omm = m_twilight_forcing->m_momega;
-           phm = m_twilight_forcing->m_mphase;
-           amprho = m_twilight_forcing->m_amprho;
-//FTNC	   if( m_croutines )
-	      tw_aniso_curvi_force_tt_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
-					 a_t, om, cv, ph, omm, phm, amprho, phc,
-					 mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
-//FTNC	   else
-//FTNC	      tw_aniso_curvi_force_tt(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
-//FTNC                                   a_t, om, cv, ph, omm, phm, amprho, phc,
-//FTNC                                   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr());
-        } // end if topographyExists
-                
-     }
-     else
-     { // isotropic twilight forcing
-        for(g=0 ; g<mNumberOfCartesianGrids; g++ )
-        {
-           f_ptr    = a_F[g].c_ptr();
-           ifirst = m_iStart[g];
-           ilast  = m_iEnd[g];
-           jfirst = m_jStart[g];
-           jlast  = m_jEnd[g];
-           kfirst = m_kStart[g];
-           klast  = m_kEnd[g];
-           h = mGridSize[g]; // how do we define the grid size for the curvilinear grid?
-           zmin = m_zmin[g];
-    
-           om = m_twilight_forcing->m_omega;
-           ph = m_twilight_forcing->m_phase;
-           cv = m_twilight_forcing->m_c;
-           omm = m_twilight_forcing->m_momega;
-           phm = m_twilight_forcing->m_mphase;
-           amprho = m_twilight_forcing->m_amprho;
-           ampmu = m_twilight_forcing->m_ampmu;
-           ampla = m_twilight_forcing->m_amplambda;
-           if( usingSupergrid() )
-           {
-              float_sw4 omstrx = m_supergrid_taper_x[g].get_tw_omega();
-              float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega();
-              float_sw4 omstrz = m_supergrid_taper_z[g].get_tw_omega();
-//FTNC	      if( m_croutines )
-		 forcingttfortsg_ci( ifirst, ilast, jfirst, jlast, kfirst, 
-				  klast, f_ptr, a_t, om, cv, ph, omm, phm, amprho, ampmu, ampla,
-				  h, zmin, omstrx, omstry, omstrz );
-//FTNC	      else
-//FTNC		 forcingttfortsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-//FTNC				  &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
-//FTNC				  &h, &zmin, &omstrx, &omstry, &omstrz );
-              if( m_use_attenuation )
-	      {
-//FTNC		 if( m_croutines )
-		    forcingttfortsgatt_ci( ifirst, ilast, jfirst, jlast, kfirst, 
-					   klast, f_ptr, a_t, om, cv, ph, omm, phm, amprho, ampmu, ampla,
-					   h, zmin, omstrx, omstry, omstrz );
-//FTNC		 else
-//FTNC		    forcingttfortsgatt( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-//FTNC					&klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
-//FTNC					&h, &zmin, &omstrx, &omstry, &omstrz );
-	      }
-           }
-           else
-           {
-//FTNC	      if( m_croutines )
-		 forcingttfort_ci( ifirst, ilast, jfirst, jlast, kfirst, 
-				   klast, f_ptr, a_t, om, cv, ph, omm, phm,
-				   amprho, ampmu, ampla, h, zmin );
-//FTNC	      else
-//FTNC		 forcingttfort( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-//FTNC				&klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
-//FTNC				&amprho, &ampmu, &ampla, &h, &zmin );
-              if( m_use_attenuation )
-	      {
-//FTNC		 if( m_croutines )
-		    forcingttattfort_ci( ifirst, ilast, jfirst, jlast, kfirst, 
-					 klast, f_ptr, a_t, om, cv, ph, omm, phm,
-					 amprho, ampmu, ampla, h, zmin );
-//FTNC		 else
-//FTNC		    forcingttattfort( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-//FTNC				      &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
-//FTNC				      &amprho, &ampmu, &ampla, &h, &zmin );
-	      }
-           }
+        if (m_croutines)
+          tw_aniso_force_tt_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                               f_ptr, a_t, om, cv, ph, omm, phm, amprho, phc, h,
+                               zmin);
+        else
+          tw_aniso_force_tt(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
+                            a_t, om, cv, ph, omm, phm, amprho, phc, h, zmin);
+      }  // end for all Cartesian grids
+
+      // if (topographyExists()) {
+      for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+        // g = mNumberOfGrids - 1;
+        f_ptr = a_F[g].c_ptr();
+        ifirst = m_iStart[g];
+        ilast = m_iEnd[g];
+        jfirst = m_jStart[g];
+        jlast = m_jEnd[g];
+        kfirst = m_kStart[g];
+        klast = m_kEnd[g];
+        om = m_twilight_forcing->m_omega;
+        ph = m_twilight_forcing->m_phase;
+        cv = m_twilight_forcing->m_c;
+        omm = m_twilight_forcing->m_momega;
+        phm = m_twilight_forcing->m_mphase;
+        amprho = m_twilight_forcing->m_amprho;
+        if (m_croutines)
+          tw_aniso_curvi_force_tt_ci(ifirst, ilast, jfirst, jlast, kfirst,
+                                     klast, f_ptr, a_t, om, cv, ph, omm, phm,
+                                     amprho, phc, mX[g].c_ptr(), mY[g].c_ptr(),
+                                     mZ[g].c_ptr());
+        else
+          tw_aniso_curvi_force_tt(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                                  f_ptr, a_t, om, cv, ph, omm, phm, amprho, phc,
+                                  mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+
+      }  // end if topographyExists
+
+    } else {  // isotropic twilight forcing
+      for (g = 0; g < mNumberOfCartesianGrids; g++) {
+        f_ptr = a_F[g].c_ptr();
+        ifirst = m_iStart[g];
+        ilast = m_iEnd[g];
+        jfirst = m_jStart[g];
+        jlast = m_jEnd[g];
+        kfirst = m_kStart[g];
+        klast = m_kEnd[g];
+        h = mGridSize[g];  // how do we define the grid size for the curvilinear
+                           // grid?
+        zmin = m_zmin[g];
+
+        om = m_twilight_forcing->m_omega;
+        ph = m_twilight_forcing->m_phase;
+        cv = m_twilight_forcing->m_c;
+        omm = m_twilight_forcing->m_momega;
+        phm = m_twilight_forcing->m_mphase;
+        amprho = m_twilight_forcing->m_amprho;
+        ampmu = m_twilight_forcing->m_ampmu;
+        ampla = m_twilight_forcing->m_amplambda;
+        if (usingSupergrid()) {
+          float_sw4 omstrx = m_supergrid_taper_x[g].get_tw_omega();
+          float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega();
+          float_sw4 omstrz = m_supergrid_taper_z[g].get_tw_omega();
+          if (m_croutines)
+            forcingttfortsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                               f_ptr, a_t, om, cv, ph, omm, phm, amprho, ampmu,
+                               ampla, h, zmin, omstrx, omstry, omstrz);
+          else
+            forcingttfortsg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+                            f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho,
+                            &ampmu, &ampla, &h, &zmin, &omstrx, &omstry,
+                            &omstrz);
+          if (m_use_attenuation) {
+            if (m_croutines)
+              forcingttfortsgatt_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                                    f_ptr, a_t, om, cv, ph, omm, phm, amprho,
+                                    ampmu, ampla, h, zmin, omstrx, omstry,
+                                    omstrz);
+            else
+              forcingttfortsgatt(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+                                 &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
+                                 &amprho, &ampmu, &ampla, &h, &zmin, &omstrx,
+                                 &omstry, &omstrz);
+          }
+        } else {
+          if (m_croutines)
+            forcingttfort_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr,
+                             a_t, om, cv, ph, omm, phm, amprho, ampmu, ampla, h,
+                             zmin);
+          else
+            forcingttfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+                          f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho,
+                          &ampmu, &ampla, &h, &zmin);
+          if (m_use_attenuation) {
+            if (m_croutines)
+              forcingttattfort_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                                  f_ptr, a_t, om, cv, ph, omm, phm, amprho,
+                                  ampmu, ampla, h, zmin);
+            else
+              forcingttattfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+                               &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
+                               &amprho, &ampmu, &ampla, &h, &zmin);
+          }
         }
-        //        if( topographyExists() )
-        for(g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++ )
-        {
-           //           g = mNumberOfGrids-1;
-           f_ptr    = a_F[g].c_ptr();
-           ifirst = m_iStart[g];
-           ilast  = m_iEnd[g];
-           jfirst = m_jStart[g];
-           jlast  = m_jEnd[g];
-           kfirst = m_kStart[g];
-           klast  = m_kEnd[g];
-           om = m_twilight_forcing->m_omega;
-           ph = m_twilight_forcing->m_phase;
-           cv = m_twilight_forcing->m_c;
-           omm = m_twilight_forcing->m_momega;
-           phm = m_twilight_forcing->m_mphase;
-           amprho = m_twilight_forcing->m_amprho;
-           ampmu = m_twilight_forcing->m_ampmu;
-           ampla = m_twilight_forcing->m_amplambda;
-           if( usingSupergrid() )
-           {
-              float_sw4 omstrx = m_supergrid_taper_x[g].get_tw_omega();
-              float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega();
-              float_sw4 omstrz = m_supergrid_taper_z[g].get_tw_omega();
-//FTNC	      if( m_croutines )
-		 forcingttfortcsg_ci( ifirst, ilast, jfirst, jlast, kfirst, 
-				   klast, f_ptr, a_t, om, cv, ph, omm, phm,
-				   amprho, ampmu, ampla,
-				   mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
-				   omstrx, omstry, omstrz );
-//FTNC	      else
-//FTNC		 forcingttfortcsg( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-//FTNC				   &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
-//FTNC				   &amprho, &ampmu, &ampla,
-//FTNC				   mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
-//FTNC				   &omstrx, &omstry, &omstrz );
-              if( m_use_attenuation )
-	      {
-//FTNC		 if( m_croutines )
-		    forcingttfortsgattc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
-					 klast, f_ptr, a_t, om, cv, ph, omm, phm, amprho, ampmu, ampla,
-					 mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(),
-					 omstrx, omstry, omstrz );
-//FTNC		 else
-//FTNC		    forcingttfortsgattc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-//FTNC					 &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, &ampmu, &ampla,
-//FTNC					 mX.c_ptr(), mY.c_ptr(), mZ.c_ptr(),
-//FTNC					 &omstrx, &omstry, &omstrz );
-	      }
-           }
-           else
-           {
-//FTNC	      if( m_croutines )
-		 forcingttfortc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
-				    klast, f_ptr, a_t, om, cv, ph, omm, phm,
-				    amprho, ampmu, ampla,
-				    mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
-//FTNC	      else
-//FTNC		 forcingttfortc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-//FTNC				 &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
-//FTNC				 &amprho, &ampmu, &ampla,
-//FTNC				 mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
-              if( m_use_attenuation )
-	      {
-//FTNC		 if( m_croutines )
-		    forcingttattfortc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
-					  klast, f_ptr, a_t, om, cv, ph, omm, phm,
-					  amprho, ampmu, ampla, mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr() );
-//FTNC		 else
-//FTNC		    forcingttattfortc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-//FTNC				       &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
-//FTNC				       &amprho, &ampmu, &ampla, mX.c_ptr(), mY.c_ptr(), mZ.c_ptr() );
-	      }
-           }
+      }
+      //     if (topographyExists()) {
+      for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+        // g = mNumberOfGrids - 1;
+        f_ptr = a_F[g].c_ptr();
+        ifirst = m_iStart[g];
+        ilast = m_iEnd[g];
+        jfirst = m_jStart[g];
+        jlast = m_jEnd[g];
+        kfirst = m_kStart[g];
+        klast = m_kEnd[g];
+        om = m_twilight_forcing->m_omega;
+        ph = m_twilight_forcing->m_phase;
+        cv = m_twilight_forcing->m_c;
+        omm = m_twilight_forcing->m_momega;
+        phm = m_twilight_forcing->m_mphase;
+        amprho = m_twilight_forcing->m_amprho;
+        ampmu = m_twilight_forcing->m_ampmu;
+        ampla = m_twilight_forcing->m_amplambda;
+        if (usingSupergrid()) {
+          float_sw4 omstrx = m_supergrid_taper_x[g].get_tw_omega();
+          float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega();
+          float_sw4 omstrz = m_supergrid_taper_z[g].get_tw_omega();
+          if (m_croutines)
+            forcingttfortcsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                                f_ptr, a_t, om, cv, ph, omm, phm, amprho, ampmu,
+                                ampla, mX[g].c_ptr(), mY[g].c_ptr(),
+                                mZ[g].c_ptr(), omstrx, omstry, omstrz);
+          else
+            forcingttfortcsg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+                             f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho,
+                             &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(),
+                             mZ[g].c_ptr(), &omstrx, &omstry, &omstrz);
+          if (m_use_attenuation) {
+            if (m_croutines)
+              forcingttfortsgattc_ci(
+                  ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr, a_t, om,
+                  cv, ph, omm, phm, amprho, ampmu, ampla, mX[g].c_ptr(),
+                  mY[g].c_ptr(), mZ[g].c_ptr(), omstrx, omstry, omstrz);
+            else
+              forcingttfortsgattc(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+                                  &klast, f_ptr, &a_t, &om, &cv, &ph, &omm,
+                                  &phm, &amprho, &ampmu, &ampla, mX[g].c_ptr(),
+                                  mY[g].c_ptr(), mZ[g].c_ptr(), &omstrx,
+                                  &omstry, &omstrz);
+          }
+        } else {
+          if (m_croutines)
+            forcingttfortc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                              f_ptr, a_t, om, cv, ph, omm, phm, amprho, ampmu,
+                              ampla, mX[g].c_ptr(), mY[g].c_ptr(),
+                              mZ[g].c_ptr());
+          else
+            forcingttfortc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+                           f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho,
+                           &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(),
+                           mZ[g].c_ptr());
+          if (m_use_attenuation) {
+            if (m_croutines)
+              forcingttattfortc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                                   f_ptr, a_t, om, cv, ph, omm, phm, amprho,
+                                   ampmu, ampla, mX[g].c_ptr(), mY[g].c_ptr(),
+                                   mZ[g].c_ptr());
+            else
+              forcingttattfortc(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+                                &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm,
+                                &amprho, &ampmu, &ampla, mX[g].c_ptr(),
+                                mY[g].c_ptr(), mZ[g].c_ptr());
+          }
         }
-     } // end isotropic
-     
-  } // end twilight
-  
-  else if( m_rayleigh_wave_test )
-  {
-     for( int g =0 ; g < mNumberOfGrids ; g++ )
-	a_F[g].set_to_zero();
-  }
-  else if( m_energy_test )
-  {
-     for( int g =0 ; g < mNumberOfGrids ; g++ )
-	a_F[g].set_to_zero();
-  }
-  else
-  {
-     // Default: m_point_source_test, m_lamb_test or full seismic case
-     for( int g =0 ; g < mNumberOfGrids ; g++ )
-	a_F[g].set_to_zero();
+      }
+    }  // end isotropic
 
-#pragma omp parallel for
-     for( int r=0 ; r < identsources.size()-1 ; r++ )
-     {
-	int s0=identsources[r];
-	int g= point_sources[s0]->m_grid;	
-	int i= point_sources[s0]->m_i0;
-	int j= point_sources[s0]->m_j0;
-	int k= point_sources[s0]->m_k0;
-	float_sw4 f1=0, f2=0, f3=0;
-	for( int s = identsources[r] ; s < identsources[r+1] ; s++ )
-	{
-	   float_sw4 fxyz[3];
-	   point_sources[s]->getFxyztt(a_t,fxyz);
-	   f1 += fxyz[0];
-	   f2 += fxyz[1];
-	   f3 += fxyz[2];
-	}
-	a_F[g](1,i,j,k) += f1;
-	a_F[g](2,i,j,k) += f2;
-	a_F[g](3,i,j,k) += f3;
-     }
+  }  // end twilight
 
-     //     for( int s = 0 ; s < point_sources.size() ; s++ )
-     //     {
-     //	int g = point_sources[s]->m_grid;
-     //        float_sw4 fxyz[3];
-     //	point_sources[s]->getFxyztt(a_t,fxyz);
-     //	a_F[g](1,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[0];
-     //	a_F[g](2,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[1];
-     //	a_F[g](3,point_sources[s]->m_i0,point_sources[s]->m_j0,point_sources[s]->m_k0) += fxyz[2];
-     //     }
+  else if (m_rayleigh_wave_test) {
+    for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero();
+  } else if (m_energy_test) {
+    for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero();
+  } else {
+    // Default: m_point_source_test, m_lamb_test or full seismic case
+    // for( int g =0 ; g < mNumberOfGrids ; g++ )
+    // 	a_F[g].set_to_zero();
+
+    GridPointSource** GPSL = GPS;
+    int* idnts_local = idnts;
+
+    float_sw4** ForceAddress_copy = ForceAddress;
+    // #ifdef ENABLE_CUDA
+    //     typedef RAJA::cuda_exec<1024, true> FORCETT_LOOP_ASYNC;
+    // #else
+    //     using FORCETT_LOOP_ASYNC = RAJA::omp_parallel_for_exec;
+    // #endif
+
+    // for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
+    vset_to_zero_async(a_F, mNumberOfGrids);
+    SW4_MARK_BEGIN("FORCE_TT::DEVICE");
+
+    RAJA::forall<FORCETT_LOOP_ASYNC>(
+        RAJA::RangeSegment(0, identsources.size() - 1), [=] RAJA_DEVICE(int r) {
+          int index = r * 3;
+          for (int s = idnts_local[r]; s < idnts_local[r + 1]; s++) {
+            float_sw4 fxyz[3];
+            GPSL[s]->getFxyztt(a_t, fxyz);
+#pragma unroll
+            for (int i = 0; i < 3; i++)
+              *ForceAddress_copy[index + i] += fxyz[i];
+          }
+        });
+
+    SYNC_STREAM;
+    SW4_MARK_END("FORCE_TT::DEVICE");
   }
 }
-
-/* #ifdef NO_DEVICE_FUNCTION_POINTERS */
-/* // Awaiting device function pointer support in HIP */
-/* void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F, */
-/*                   vector<GridPointSource*>& point_sources, */
-/*                   vector<int>& identsources) { */
-/*   static bool first = true; */
-/*   if (first) { */
-/*     first = false; */
-/*     std::cout << "WARNING **** NON_FUNCTIONAL CALL TO EW::Force_tt\n"; */
-/*   } */
-/*   for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero(); */
-/* } */
-/* #else */
-/* void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F, */
-/*                   vector<GridPointSource*>& point_sources, */
-/*                   vector<int>& identsources) { */
-/*   SW4_MARK_FUNCTION; */
-/*   int ifirst, ilast, jfirst, jlast, kfirst, klast; */
-/*   float_sw4 *f_ptr, om, ph, cv, h, zmin, omm, phm, amprho, ampmu, ampla; */
-/*   // std::cout<<"FORCE_TT\n"; */
-/*   int g; */
-/*   // std::cerr<<"And now in force_tt\n"; */
-/*   if (m_twilight_forcing) { */
-/*     if (m_anisotropic) { */
-/*       float_sw4 phc[21];  // move these angles to the EW class */
-
-/*       // need to store all the phase angle constants somewhere */
-/*       phc[0] = 0; */
-/*       for (int i = 0; i < 21; i++) phc[i] = i * 10 * M_PI / 180; */
-
-/*       for (g = 0; g < mNumberOfCartesianGrids; g++) { */
-/*         f_ptr = a_F[g].c_ptr(); */
-/*         ifirst = m_iStart[g]; */
-/*         ilast = m_iEnd[g]; */
-/*         jfirst = m_jStart[g]; */
-/*         jlast = m_jEnd[g]; */
-/*         kfirst = m_kStart[g]; */
-/*         klast = m_kEnd[g]; */
-/*         h = mGridSize[g]; */
-/*         zmin = m_zmin[g]; */
-
-/*         om = m_twilight_forcing->m_omega; */
-/*         ph = m_twilight_forcing->m_phase; */
-/*         cv = m_twilight_forcing->m_c; */
-/*         omm = m_twilight_forcing->m_momega; */
-/*         phm = m_twilight_forcing->m_mphase; */
-/*         amprho = m_twilight_forcing->m_amprho; */
-
-/*         if (m_croutines) */
-/*           tw_aniso_force_tt_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, */
-/*                                f_ptr, a_t, om, cv, ph, omm, phm, amprho, phc, h, */
-/*                                zmin); */
-/*         else */
-/*           tw_aniso_force_tt(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr, */
-/*                             a_t, om, cv, ph, omm, phm, amprho, phc, h, zmin); */
-/*       }  // end for all Cartesian grids */
-
-/*       // if (topographyExists()) { */
-/*       for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) { */
-/*         // g = mNumberOfGrids - 1; */
-/*         f_ptr = a_F[g].c_ptr(); */
-/*         ifirst = m_iStart[g]; */
-/*         ilast = m_iEnd[g]; */
-/*         jfirst = m_jStart[g]; */
-/*         jlast = m_jEnd[g]; */
-/*         kfirst = m_kStart[g]; */
-/*         klast = m_kEnd[g]; */
-/*         om = m_twilight_forcing->m_omega; */
-/*         ph = m_twilight_forcing->m_phase; */
-/*         cv = m_twilight_forcing->m_c; */
-/*         omm = m_twilight_forcing->m_momega; */
-/*         phm = m_twilight_forcing->m_mphase; */
-/*         amprho = m_twilight_forcing->m_amprho; */
-/*         if (m_croutines) */
-/*           tw_aniso_curvi_force_tt_ci(ifirst, ilast, jfirst, jlast, kfirst, */
-/*                                      klast, f_ptr, a_t, om, cv, ph, omm, phm, */
-/*                                      amprho, phc, mX[g].c_ptr(), mY[g].c_ptr(), */
-/*                                      mZ[g].c_ptr()); */
-/*         else */
-/*           tw_aniso_curvi_force_tt(ifirst, ilast, jfirst, jlast, kfirst, klast, */
-/*                                   f_ptr, a_t, om, cv, ph, omm, phm, amprho, phc, */
-/*                                   mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr()); */
-
-/*       }  // end if topographyExists */
-
-/*     } else {  // isotropic twilight forcing */
-/*       for (g = 0; g < mNumberOfCartesianGrids; g++) { */
-/*         f_ptr = a_F[g].c_ptr(); */
-/*         ifirst = m_iStart[g]; */
-/*         ilast = m_iEnd[g]; */
-/*         jfirst = m_jStart[g]; */
-/*         jlast = m_jEnd[g]; */
-/*         kfirst = m_kStart[g]; */
-/*         klast = m_kEnd[g]; */
-/*         h = mGridSize[g];  // how do we define the grid size for the curvilinear */
-/*                            // grid? */
-/*         zmin = m_zmin[g]; */
-
-/*         om = m_twilight_forcing->m_omega; */
-/*         ph = m_twilight_forcing->m_phase; */
-/*         cv = m_twilight_forcing->m_c; */
-/*         omm = m_twilight_forcing->m_momega; */
-/*         phm = m_twilight_forcing->m_mphase; */
-/*         amprho = m_twilight_forcing->m_amprho; */
-/*         ampmu = m_twilight_forcing->m_ampmu; */
-/*         ampla = m_twilight_forcing->m_amplambda; */
-/*         if (usingSupergrid()) { */
-/*           float_sw4 omstrx = m_supergrid_taper_x[g].get_tw_omega(); */
-/*           float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega(); */
-/*           float_sw4 omstrz = m_supergrid_taper_z[g].get_tw_omega(); */
-/*           if (m_croutines) */
-/*             forcingttfortsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, */
-/*                                f_ptr, a_t, om, cv, ph, omm, phm, amprho, ampmu, */
-/*                                ampla, h, zmin, omstrx, omstry, omstrz); */
-/*           else */
-/*             forcingttfortsg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, */
-/*                             f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, */
-/*                             &ampmu, &ampla, &h, &zmin, &omstrx, &omstry, */
-/*                             &omstrz); */
-/*           if (m_use_attenuation) { */
-/*             if (m_croutines) */
-/*               forcingttfortsgatt_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, */
-/*                                     f_ptr, a_t, om, cv, ph, omm, phm, amprho, */
-/*                                     ampmu, ampla, h, zmin, omstrx, omstry, */
-/*                                     omstrz); */
-/*             else */
-/*               forcingttfortsgatt(&ifirst, &ilast, &jfirst, &jlast, &kfirst, */
-/*                                  &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, */
-/*                                  &amprho, &ampmu, &ampla, &h, &zmin, &omstrx, */
-/*                                  &omstry, &omstrz); */
-/*           } */
-/*         } else { */
-/*           if (m_croutines) */
-/*             forcingttfort_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr, */
-/*                              a_t, om, cv, ph, omm, phm, amprho, ampmu, ampla, h, */
-/*                              zmin); */
-/*           else */
-/*             forcingttfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, */
-/*                           f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, */
-/*                           &ampmu, &ampla, &h, &zmin); */
-/*           if (m_use_attenuation) { */
-/*             if (m_croutines) */
-/*               forcingttattfort_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, */
-/*                                   f_ptr, a_t, om, cv, ph, omm, phm, amprho, */
-/*                                   ampmu, ampla, h, zmin); */
-/*             else */
-/*               forcingttattfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, */
-/*                                &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, */
-/*                                &amprho, &ampmu, &ampla, &h, &zmin); */
-/*           } */
-/*         } */
-/*       } */
-/*       //     if (topographyExists()) { */
-/*       for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) { */
-/*         // g = mNumberOfGrids - 1; */
-/*         f_ptr = a_F[g].c_ptr(); */
-/*         ifirst = m_iStart[g]; */
-/*         ilast = m_iEnd[g]; */
-/*         jfirst = m_jStart[g]; */
-/*         jlast = m_jEnd[g]; */
-/*         kfirst = m_kStart[g]; */
-/*         klast = m_kEnd[g]; */
-/*         om = m_twilight_forcing->m_omega; */
-/*         ph = m_twilight_forcing->m_phase; */
-/*         cv = m_twilight_forcing->m_c; */
-/*         omm = m_twilight_forcing->m_momega; */
-/*         phm = m_twilight_forcing->m_mphase; */
-/*         amprho = m_twilight_forcing->m_amprho; */
-/*         ampmu = m_twilight_forcing->m_ampmu; */
-/*         ampla = m_twilight_forcing->m_amplambda; */
-/*         if (usingSupergrid()) { */
-/*           float_sw4 omstrx = m_supergrid_taper_x[g].get_tw_omega(); */
-/*           float_sw4 omstry = m_supergrid_taper_y[g].get_tw_omega(); */
-/*           float_sw4 omstrz = m_supergrid_taper_z[g].get_tw_omega(); */
-/*           if (m_croutines) */
-/*             forcingttfortcsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, */
-/*                                 f_ptr, a_t, om, cv, ph, omm, phm, amprho, ampmu, */
-/*                                 ampla, mX[g].c_ptr(), mY[g].c_ptr(), */
-/*                                 mZ[g].c_ptr(), omstrx, omstry, omstrz); */
-/*           else */
-/*             forcingttfortcsg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, */
-/*                              f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, */
-/*                              &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(), */
-/*                              mZ[g].c_ptr(), &omstrx, &omstry, &omstrz); */
-/*           if (m_use_attenuation) { */
-/*             if (m_croutines) */
-/*               forcingttfortsgattc_ci( */
-/*                   ifirst, ilast, jfirst, jlast, kfirst, klast, f_ptr, a_t, om, */
-/*                   cv, ph, omm, phm, amprho, ampmu, ampla, mX[g].c_ptr(), */
-/*                   mY[g].c_ptr(), mZ[g].c_ptr(), omstrx, omstry, omstrz); */
-/*             else */
-/*               forcingttfortsgattc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, */
-/*                                   &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, */
-/*                                   &phm, &amprho, &ampmu, &ampla, mX[g].c_ptr(), */
-/*                                   mY[g].c_ptr(), mZ[g].c_ptr(), &omstrx, */
-/*                                   &omstry, &omstrz); */
-/*           } */
-/*         } else { */
-/*           if (m_croutines) */
-/*             forcingttfortc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, */
-/*                               f_ptr, a_t, om, cv, ph, omm, phm, amprho, ampmu, */
-/*                               ampla, mX[g].c_ptr(), mY[g].c_ptr(), */
-/*                               mZ[g].c_ptr()); */
-/*           else */
-/*             forcingttfortc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, */
-/*                            f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, &amprho, */
-/*                            &ampmu, &ampla, mX[g].c_ptr(), mY[g].c_ptr(), */
-/*                            mZ[g].c_ptr()); */
-/*           if (m_use_attenuation) { */
-/*             if (m_croutines) */
-/*               forcingttattfortc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, */
-/*                                    f_ptr, a_t, om, cv, ph, omm, phm, amprho, */
-/*                                    ampmu, ampla, mX[g].c_ptr(), mY[g].c_ptr(), */
-/*                                    mZ[g].c_ptr()); */
-/*             else */
-/*               forcingttattfortc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, */
-/*                                 &klast, f_ptr, &a_t, &om, &cv, &ph, &omm, &phm, */
-/*                                 &amprho, &ampmu, &ampla, mX[g].c_ptr(), */
-/*                                 mY[g].c_ptr(), mZ[g].c_ptr()); */
-/*           } */
-/*         } */
-/*       } */
-/*     }  // end isotropic */
-
-/*   }  // end twilight */
-
-/*   else if (m_rayleigh_wave_test) { */
-/*     for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero(); */
-/*   } else if (m_energy_test) { */
-/*     for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero(); */
-/*   } else { */
-/*     // Default: m_point_source_test, m_lamb_test or full seismic case */
-/*     // for( int g =0 ; g < mNumberOfGrids ; g++ ) */
-/*     // 	a_F[g].set_to_zero(); */
-
-/*     GridPointSource** GPSL = GPS; */
-/*     int* idnts_local = idnts; */
-
-/*     float_sw4** ForceAddress_copy = ForceAddress; */
-/*     // #ifdef ENABLE_CUDA */
-/*     //     typedef RAJA::cuda_exec<1024, true> FORCETT_LOOP_ASYNC; */
-/*     // #else */
-/*     //     using FORCETT_LOOP_ASYNC = RAJA::omp_parallel_for_exec; */
-/*     // #endif */
-
-/*     // for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async(); */
-/*     vset_to_zero_async(a_F, mNumberOfGrids); */
-/*     SW4_MARK_BEGIN("FORCE_TT::DEVICE"); */
-
-/*     RAJA::forall<FORCETT_LOOP_ASYNC>( */
-/*         RAJA::RangeSegment(0, identsources.size() - 1), [=] RAJA_DEVICE(int r) { */
-/*           int index = r * 3; */
-/*           for (int s = idnts_local[r]; s < idnts_local[r + 1]; s++) { */
-/*             float_sw4 fxyz[3]; */
-/*             GPSL[s]->getFxyztt(a_t, fxyz); */
-/* #ifndef SW4_NOOMP */
-/* #pragma unroll */
-/* #endif */
-/*             for (int i = 0; i < 3; i++) */
-/*               *ForceAddress_copy[index + i] += fxyz[i]; */
-/*           } */
-/*         }); */
-
-/*     SYNC_STREAM; */
-/*     SW4_MARK_END("FORCE_TT::DEVICE"); */
-/*   } */
-/* } */
-/* #endif */
+#endif
 
 #endif /* ifdef FORCE_OMP */
 
