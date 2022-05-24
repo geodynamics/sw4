@@ -3857,6 +3857,9 @@ int EW::getNumberOfSteps(int event) const { return mNumberOfTimeSteps[event]; }
 int EW::getNumberOfEvents() const { return m_nevent; }
 
 //-----------------------------------------------------------------------
+int EW::getNumberOfLocalEvents() const{ return m_eEnd-m_eStart+1; }
+
+//-----------------------------------------------------------------------
 void EW::switch_on_error_log() { m_error_log = true; }
 
 //-----------------------------------------------------------------------

@@ -135,7 +135,7 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
   if (m_zRelativeToTopography && a_ew->topographyExists()) {
     float_sw4 zTopoLocal;
     if (a_ew->m_gridGenerator->interpolate_topography(a_ew, mX, mY, zTopoLocal,
-                                                      a_ew->mTopoGridExt) < 0)
+                                                      a_ew->mTopoGridExt) == false)
       zTopoLocal = -1e38;
     MPI_Allreduce(&zTopoLocal, &m_zTopo, 1, a_ew->m_mpifloat, MPI_MAX,
                   MPI_COMM_WORLD);
@@ -2322,42 +2322,102 @@ float_sw4 TimeSeries::product(TimeSeries& ts) const {
 }
 
 //-----------------------------------------------------------------------
-float_sw4 TimeSeries::product_wgh(TimeSeries& ts) const {
-  // Product which uses weighting, for computing Hessian
-  float_sw4 prod = 0;
-  if (mLastTimeStep == ts.mLastTimeStep) {
-    // Weight to ramp down the end of misfit.
-    int p = 20;  // Number of points in ramp;
-    int istart = 1;
-    if (mLastTimeStep - p + 1 > 1) istart = mLastTimeStep - p + 1;
+/* float_sw4 TimeSeries::product_wgh(TimeSeries& ts) const { */
+/*   // Product which uses weighting, for computing Hessian */
+/*   float_sw4 prod = 0; */
+/*   if (mLastTimeStep == ts.mLastTimeStep) { */
+/*     // Weight to ramp down the end of misfit. */
+/*     int p = 20;  // Number of points in ramp; */
+/*     int istart = 1; */
+/*     if (mLastTimeStep - p + 1 > 1) istart = mLastTimeStep - p + 1; */
 
-#pragma omp parallel for reduction(+ : prod)
-    for (int i = 0; i <= mLastTimeStep; i++) {
-      float_sw4 wghv = 1;
-      if (i >= istart) {
-        float_sw4 arg = (mLastTimeStep - i) / (p - 1.0);
-        wghv = arg * arg * arg * arg *
-               (35 - 84 * arg + 70 * arg * arg - 20 * arg * arg * arg);
+/* #pragma omp parallel for reduction(+ : prod) */
+/*     for (int i = 0; i <= mLastTimeStep; i++) { */
+/*       float_sw4 wghv = 1; */
+/*       if (i >= istart) { */
+/*         float_sw4 arg = (mLastTimeStep - i) / (p - 1.0); */
+/*         wghv = arg * arg * arg * arg * */
+/*                (35 - 84 * arg + 70 * arg * arg - 20 * arg * arg * arg); */
+/*       } */
+
+/*       // Windowing and component selection */
+/*       float_sw4 wghx, wghy, wghz; */
+/*       wghx = wghy = wghz = wghv; */
+/*       float_sw4 t = m_t0 + i * m_dt; */
+/*       if (m_use_win && (t < m_winL || t > m_winR)) wghx = wghy = wghz = 0; */
+/*       if (!m_use_x) wghx = 0; */
+/*       if (!m_use_y) wghy = 0; */
+/*       if (!m_use_z) wghz = 0; */
+
+/*       prod += (ts.mRecordedSol[0][i] * mRecordedSol[0][i] * wghx + */
+/*                ts.mRecordedSol[1][i] * mRecordedSol[1][i] * wghy + */
+/*                ts.mRecordedSol[2][i] * mRecordedSol[2][i] * wghz); */
+/*     } */
+/*   } else */
+/*     cout << "TimeSeries::product_wgh: Error time series have incompatible sizes" */
+/*          << endl; */
+/*   return prod; */
+/* } */
+
+//-----------------------------------------------------------------------
+void TimeSeries::add( TimeSeries& A, TimeSeries& B, double wghA, double wghB )
+{
+
+   if( m_myPoint )
+   {
+      if( A.mLastTimeStep > B.mLastTimeStep )
+      {
+         if( mAllocatedSize != A.mAllocatedSize )
+         {
+            mLastTimeStep  = A.mLastTimeStep;
+            mAllocatedSize = A.mAllocatedSize;
+	    for( int q=0 ; q < m_nComp ; q++ )
+            {
+               delete[] mRecordedSol[q];
+	       mRecordedSol[q] = new float_sw4[mAllocatedSize];
+            }
+         }
+         for( int i = 0 ; i <= B.mLastTimeStep ; i++ )
+         {
+            mRecordedSol[0][i] = wghA*A.mRecordedSol[0][i]+wghB*B.mRecordedSol[0][i];
+            mRecordedSol[1][i] = wghA*A.mRecordedSol[1][i]+wghB*B.mRecordedSol[1][i];
+            mRecordedSol[2][i] = wghA*A.mRecordedSol[2][i]+wghB*B.mRecordedSol[2][i];
+         }
+         for( int i = B.mLastTimeStep+1 ; i <= mLastTimeStep ; i++ )
+         {
+            mRecordedSol[0][i] = wghA*A.mRecordedSol[0][i];
+            mRecordedSol[1][i] = wghA*A.mRecordedSol[1][i];
+            mRecordedSol[2][i] = wghA*A.mRecordedSol[2][i];
+         }
       }
-
-      // Windowing and component selection
-      float_sw4 wghx, wghy, wghz;
-      wghx = wghy = wghz = wghv;
-      float_sw4 t = m_t0 + i * m_dt;
-      if (m_use_win && (t < m_winL || t > m_winR)) wghx = wghy = wghz = 0;
-      if (!m_use_x) wghx = 0;
-      if (!m_use_y) wghy = 0;
-      if (!m_use_z) wghz = 0;
-
-      prod += (ts.mRecordedSol[0][i] * mRecordedSol[0][i] * wghx +
-               ts.mRecordedSol[1][i] * mRecordedSol[1][i] * wghy +
-               ts.mRecordedSol[2][i] * mRecordedSol[2][i] * wghz);
-    }
-  } else
-    cout << "TimeSeries::product_wgh: Error time series have incompatible sizes"
-         << endl;
-  return prod;
+      else
+      {
+         if( mAllocatedSize != B.mAllocatedSize )
+         {
+            mLastTimeStep  = B.mLastTimeStep;
+            mAllocatedSize = B.mAllocatedSize;
+	    for( int q=0 ; q < m_nComp ; q++ )
+            {
+               delete[] mRecordedSol[q];
+	       mRecordedSol[q] = new float_sw4[mAllocatedSize];
+            }
+         }
+         for( int i= 0 ; i <= A.mLastTimeStep ; i++ )
+         {
+            mRecordedSol[0][i] = wghA*A.mRecordedSol[0][i]+wghB*B.mRecordedSol[0][i];
+            mRecordedSol[1][i] = wghA*A.mRecordedSol[1][i]+wghB*B.mRecordedSol[1][i];
+            mRecordedSol[2][i] = wghA*A.mRecordedSol[2][i]+wghB*B.mRecordedSol[2][i];
+         }
+         for( int i= A.mLastTimeStep+1 ; i <= mLastTimeStep ; i++ )
+         {
+            mRecordedSol[0][i] = wghB*B.mRecordedSol[0][i];
+            mRecordedSol[1][i] = wghB*B.mRecordedSol[1][i];
+            mRecordedSol[2][i] = wghB*B.mRecordedSol[2][i];
+         }
+      }
+   }
 }
+
 
 //-----------------------------------------------------------------------
 float_sw4 TimeSeries::utc_distance(int utc1[7], int utc2[7]) {
@@ -2619,6 +2679,27 @@ void TimeSeries::set_window(float_sw4 winl, float_sw4 winr) {
   m_winL = winl;
   m_winR = winr;
 }
+
+//-----------------------------------------------------------------------
+void TimeSeries::get_windows( float_sw4 win[4] )
+{
+   win[0] = m_winL;
+   win[1] = m_winR;
+   win[2] = m_winL2;
+   win[3] = m_winR2;
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::print_windows( )
+{
+   if( m_myPoint )
+   {
+      std::cout << m_staName << " time windows = " << 
+         "p-wave = [" <<  m_winL << ", " << m_winR << "] s-wave = [" <<
+         m_winL2 << ", " << m_winR2 << "]" << std::endl;
+   }
+}
+
 
 //-----------------------------------------------------------------------
 void TimeSeries::exclude_component(bool usex, bool usey, bool usez) {
@@ -3419,6 +3500,207 @@ int TimeSeries::allocFid() {
   m_fid_ptr = new hid_t;
   *m_fid_ptr = 0;
   return 0;  // Added 6/16/202 in Raja code. not tested PBUGS
+}
+
+//-----------------------------------------------------------------------
+bool TimeSeries::is_in_supergrid_layer()
+{
+   if( m_myPoint )
+   {
+return
+   m_i0<m_ew->m_iStartActGlobal[m_grid0] ||
+   m_ew->m_iEndActGlobal[m_grid0] < m_i0  ||
+   m_j0<m_ew->m_jStartActGlobal[m_grid0] || 
+   m_ew->m_jEndActGlobal[m_grid0] < m_j0  ||
+  (m_grid0==0 && m_ew->m_kEndActGlobal[m_grid0] < m_k0);
+   }
+   else
+      return false;
+}
+   
+//----------------------------------------------------------------------
+void TimeSeries::writeWindows( string suffix )
+{
+  if (!m_myPoint) return;
+  bool dbg=false;
+  if( dbg )
+  {
+     std::cout << "traveltime for station " << m_staName << " at (x,y,z) " <<
+     mX << " " << mY << " " << mZ << " is " << m_winL << " " << m_winL2 << std::endl;
+  }
+#ifdef USE_HDF5
+  if( m_hdf5Format )
+  {
+     hid_t fid = openHDF5File(suffix);
+     if( fid > 0 )
+     {
+        hid_t grp = H5Gopen(fid, const_cast<char*>(m_staName.c_str()), H5P_DEFAULT);
+        if( grp >= 0 )
+        {
+           double windows[4];
+           windows[0] = m_winL;
+           windows[1] = m_winR;
+           windows[2] = m_winL2;
+           windows[3] = m_winR2;
+           //           hsize_t nelements=4;
+           //           hid_t data_space = H5Screate_simple(1, &nelements, NULL);
+           //           int ret = createWriteAttr( grp, "WINDOWS", H5T_NATIVE_DOUBLE, data_space, windows );
+           //           if( ret < 0 )
+           {
+             if( H5Lexists(grp, "WINDOWS", H5P_DEFAULT) ) {
+               int ret = openWriteAttr(grp, "WINDOWS", H5T_NATIVE_DOUBLE, windows);
+               if( ret < 0 )
+                  std::cout << "TimeSeries::writeWindows, Error could not create/open data space" << std::endl;
+             }
+             else {
+               hsize_t nelements=4;
+               hid_t data_space = H5Screate_simple(1, &nelements, NULL);
+               int ret = createWriteAttr( grp, "WINDOWS", H5T_NATIVE_DOUBLE, data_space, windows );
+               H5Sclose(data_space);
+             }
+           }
+           H5Gclose(grp);
+        }
+        else
+           std::cout << "TimeSeries::writeWindows Error opening group " << m_staName.c_str() << std::endl;
+        //        H5Fclose(fid);
+        closeHDF5File();
+     }
+     else
+        std::cout << "TimeSeries::writeWindows fid is invalid, cannot open file" << std::endl;
+  }
+#endif
+}
+
+//----------------------------------------------------------------------
+void TimeSeries::readWindows()
+{
+  if (!m_myPoint) return;
+#ifdef USE_HDF5
+  if( m_hdf5Format )
+  {
+     hid_t fid = openHDF5File("");
+     if( fid > 0 )
+     {
+        hid_t grp = H5Gopen(fid, const_cast<char*>(m_staName.c_str()), H5P_DEFAULT);
+        if( grp >= 0 )
+        {
+           if( H5Lexists(grp, "WINDOWS", H5P_DEFAULT) )
+           {
+              double windows[4];
+              hid_t attr = H5Dopen(grp, "WINDOWS", H5P_DEFAULT);
+              if( attr > 0 )
+              {
+                 int ret = H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, windows);
+                 if(ret >= 0)
+                 {
+                    m_winL = windows[0];
+                    m_winR = windows[1];
+                    m_winL2= windows[2];
+                    m_winR2= windows[3];
+                 }
+                 H5Dclose(attr);
+              }
+           }
+           else
+              std::cout << "TimeSeries::readWindows: No time windows found for station " << m_staName 
+                        << std::endl;
+           H5Gclose(grp);
+        }
+        else
+           std::cout << "TimeSeries::readWindows Error opening group " << m_staName.c_str()
+                     << std::endl;
+        closeHDF5File(); // H5Fclose(fid);
+     }
+     else
+        std::cout << "TimeSeries::readWindows fid is invalid, cannot open file" << std::endl;
+  }
+#endif
+}
+
+
+//-----------------------------------------------------------------------
+void TimeSeries::writeFile(FILE *fid )
+{
+  if (!m_myPoint) return;
+  fwrite(&mX, sizeof(float_sw4), 1, fid);
+  fwrite(&mY, sizeof(float_sw4), 1, fid);
+  fwrite(mRecordedSol[0], sizeof(float_sw4), mLastTimeStep+1, fid);  // X component
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::syncSolFloats()
+{
+   if (!m_myPoint) return;
+   for( int i=0 ; i <= mLastTimeStep ; i++ )
+   {
+      mRecordedFloats[0][i] = (float)mRecordedSol[0][i];
+      mRecordedFloats[1][i] = (float)mRecordedSol[1][i];
+      mRecordedFloats[2][i] = (float)mRecordedSol[2][i];
+   }
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::print_utc()
+{
+   printf("Recording start time is  %02i/%02i/%i:%i:%i:%i.%i\n", m_utc[1], m_utc[2], 
+          m_utc[0], m_utc[3], m_utc[4], m_utc[5], m_utc[6]);
+}
+
+//-----------------------------------------------------------------------
+float_sw4 TimeSeries::getMaxValue(const int comp) const
+{
+   float_sw4 max_value = -1e20;
+   float maxf =-1e20;
+   for(int i=0; i<mLastTimeStep; i++) 
+   {
+      if(mRecordedSol[comp][i] > max_value) max_value = mRecordedSol[comp][i];
+      if(mRecordedFloats[comp][i] > maxf) maxf = mRecordedFloats[comp][i];  // for qc hdf5 output
+   }
+   return max_value;
+}
+
+//-----------------------------------------------------------------------
+float_sw4 TimeSeries::getMinValue(const int comp) const
+{
+   float_sw4 min_value = -1e20;
+   float minf =-1e20;
+   for(int i=0; i<mLastTimeStep; i++) 
+   {
+      if(mRecordedSol[comp][i] < min_value) min_value = mRecordedSol[comp][i];
+      if(mRecordedFloats[comp][i] < minf) minf = mRecordedFloats[comp][i];  // for qc hdf5 output
+   }
+   return min_value;
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::set_window( float_sw4 winl, float_sw4 winr, float_sw4 winl2, 
+                             float_sw4 winr2 )
+{
+   m_use_win = true;
+   m_winL = winl;
+   m_winR = winr;
+   m_winL2 = winl2;
+   m_winR2 = winr2;
+}
+
+void TimeSeries::shiftTimeWindow( const float_sw4 t0, const float_sw4 winlen, const float_sw4 shift)
+{
+   if(m_myPoint)
+   {
+      m_winL += t0 + winlen*shift;   // tstart for P-wave
+      m_winR = m_winL + winlen;      // tend
+      m_winL2 += t0 + winlen*shift;  // tstart for S-wave
+      m_winR2 = m_winL2 + winlen;
+   }
+}
+void TimeSeries::disableWindows()
+{
+   m_use_win = false;
+   m_winL  = -1e38;
+   m_winR  =  1e38;
+   m_winL2 = -1e38;
+   m_winR2 =  1e38;
 }
 
 int TimeSeries::closeHDF5File() {

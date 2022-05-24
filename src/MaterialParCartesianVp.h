@@ -17,11 +17,11 @@ private:
    void interpolate_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
 				std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
 public:
-   MaterialParCartesianVp( EW* a_ew, int nx, int ny, int nz, int init, char* fname, double ratio, double gamma, bool fixrho );
+   MaterialParCartesianVp( EW* a_ew, int nx, int ny, int nz, int init, const char* fname, double ratio, double gamma, bool fixrho );
    void get_material( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
 		      std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
    void get_parameters( int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho, 
-			std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda );
+			std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda, int nr );
    void get_gradient( int nmd, double* xmd, int nms, double* xms, double* dfs, double* dfm,
 		      std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
 		      std::vector<Sarray>& a_lambda,
@@ -41,7 +41,8 @@ public:
    ssize_t local_index( size_t ind_global );
    void set_scalefactors( int nmpars, double* sfs, double rho_ref, double mu_ref, double lambda_ref, 
 			  double vs_ref, double vp_ref );
-   int get_varcase(){return 4;}
+   int get_varcase(){return 4;};
+   void write_dfm_hdf5(double* dfm, std::string fname,  MPI_Comm comm) {printf("%s not supported!\n", __func__);}
 };
 
 #endif

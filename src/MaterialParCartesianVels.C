@@ -10,7 +10,7 @@
 //  cp =x[3*i+2]
 //
 //-----------------------------------------------------------------------
-MaterialParCartesianVels::MaterialParCartesianVels( EW* a_ew, int nx, int ny, int nz, int init, char* fname )
+MaterialParCartesianVels::MaterialParCartesianVels( EW* a_ew, int nx, int ny, int nz, int init, const char* fname )
    : MaterialParameterization( a_ew, fname )
 {
    //  VERIFY2( nx > 1 && ny > 1 && nz > 1, "MaterialParCartesianVels: The grid need at least two ponts in each direction")
@@ -194,15 +194,18 @@ void MaterialParCartesianVels::interpolate_parameters( int nmd, double* xmd, int
 
 //-----------------------------------------------------------------------
 void MaterialParCartesianVels::get_parameters( int nmd, double* xmd, int nms,
-					   double* xms, std::vector<Sarray>& a_rho, 
-					   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda )
+                                               double* xms, std::vector<Sarray>& a_rho, 
+                                               std::vector<Sarray>& a_mu, 
+                                               std::vector<Sarray>& a_lambda, int nr )
 {
-   if( m_init == 0 )
+   if( nr==-1)
+      nr=m_init;
+   if( nr == 0 )
    {
       for( int i=0 ; i < nms ; i++ )
 	 xms[i] = 0;
    }
-   else if( m_init == 1 )
+   else if( nr == 1 )
    {
       //      cout << " hx, hy, hz " << m_hx  <<  " " << m_hy << " " << m_hz << endl;
       //      cout << " nx, ny, nz " << m_nx  <<  " " << m_ny << " " << m_nz << endl;
@@ -223,23 +226,23 @@ void MaterialParCartesianVels::get_parameters( int nmd, double* xmd, int nms,
 	       double rho = 1+ep*sin(om*x+0.13)*sin(om*y)*sin(om*z);
 	       double cs  = 2+ep*cos(om*x)*sin(om*y)*cos(om*z+0.01);
 	       double cp  = 4+ep*sin(om*x+0.4)*sin(om*y)*cos(om*z+0.1);
-	       /* double mu = cs*cs*rho; */
-	       /* double lambda = rho*(cp*cp-2*cs*cs); */
+	       double mu = cs*cs*rho;
+	       double lambda = rho*(cp*cp-2*cs*cs);
 	       xms[3*ind]   = rho-1;
 	       xms[3*ind+1] = cs-2;
 	       xms[3*ind+2] = cp-4;
 	       ind++;
 	    }
    }
-   else if( m_init == 2 )
+   else if( nr == 2 )
    {
       read_parameters( nms, xms );
    }
-   else if( m_init == 3 )
+   else if( nr == 3 )
    {
       interpolate_parameters( nmd, xmd, nms, xms, a_rho, a_mu, a_lambda );
    }
-   else if( m_init == 4 )
+   else if( nr == 4 )
    {
      cout << "M_filename = " << m_filename << endl;
       MParGridFile mpfile( m_filename );

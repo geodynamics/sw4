@@ -76,6 +76,8 @@ class TimeSeries {
 
   void writeFile(string suffix = "");
   void writeFileUSGS(string suffix = "");
+  void writeFile( FILE* fid);
+  void syncSolFloats();
 
   void readFile(EW* ew, bool ignore_utc);
 
@@ -99,6 +101,8 @@ class TimeSeries {
 
   float_sw4 getXaz() const { return m_x_azimuth; }
 
+  void print_utc();
+
   float_sw4 getMshift() const { return m_shift; }
 
   int getMUTC(int i) const { return m_utc[i]; }
@@ -120,13 +124,17 @@ class TimeSeries {
                       float_sw4 dt, std::vector<Sarray>& Jac, bool topography_exists);
 
   float_sw4 product(TimeSeries& ts) const;
-  float_sw4 product_wgh(TimeSeries& ts) const;
+  float_sw4 getMaxValue( const int comp) const;
+  float_sw4 getMinValue( const int comp) const;
+  /* float_sw4 product_wgh(TimeSeries& ts) const; */
 
   // void reset_utc( int utc[7] );
   void set_utc_to_simulation_utc();
   void filter_data(Filter* filter_ptr);
   void print_timeinfo() const;
   void set_window(float_sw4 winl, float_sw4 winr);
+  void set_window( float_sw4 winl, float_sw4 winr, float_sw4 winl2, float_sw4 winr2 );
+  void print_windows();
   void exclude_component(bool usex, bool usey, bool usez);
   void readSACfiles(EW* ew, const char* sac1, const char* sac2,
                     const char* sac3, bool ignore_utc);
@@ -170,6 +178,16 @@ class TimeSeries {
 #endif
   double getReadTime() { return m_readTime; };
   void addReadTime(double t) { m_readTime += t; };
+bool is_in_supergrid_layer();
+void misfitanddudp( TimeSeries* observed, TimeSeries* dudp,
+                    float_sw4& misfit, float_sw4& dmisfit );
+void add( TimeSeries& A, TimeSeries& B, double wghA, double wghB );
+void writeWindows( string suffix="" );
+void readWindows();
+void get_windows( float_sw4 wins[4] );
+void shiftTimeWindow( const float_sw4 t0, const float_sw4 win, const float_sw4 shift);
+void disableWindows();
+
 
  private:
   TimeSeries();
@@ -266,7 +284,7 @@ class TimeSeries {
 
   // Window for optimization, m_winL, m_winR given relative simulation time
   // zero.
-  float_sw4 m_winL, m_winR;
+  float_sw4 m_winL, m_winR, m_winL2, m_winR2;
   bool m_use_win, m_use_x, m_use_y, m_use_z;
 
   // quiet mode?

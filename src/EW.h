@@ -75,6 +75,15 @@
 
 using namespace std;
 
+class AllDims;
+//class TestGrid;
+class TestTwilight;
+class TestEcons;
+//class CurvilinearInterface;
+class CurvilinearInterface2;
+class GridGenerator;
+class MaterialParameterization;
+
 class EW {
  public:
   EW(const string& name, vector<vector<Source*>>& a_GlobalUniqueSources,
@@ -96,6 +105,7 @@ class EW {
   // int getNumberOfSteps() const;
   int getNumberOfSteps(int event = 0) const;
   int getNumberOfEvents() const;
+  int getNumberOfLocalEvents() const;
   float_sw4 getGlobalZmin() { return m_global_zmin; }
   float_sw4 getGlobalZmax() { return m_global_zmax; }
   int findNumberOfEvents();
@@ -114,6 +124,9 @@ class EW {
                       vector<DataPatches*>& Upred_saved_sides,
                       vector<DataPatches*>& Ucorr_saved_sides, bool save_sides,
                       int event, int nsteps_in_memory, int varcase, vector<Sarray>& PseudoHessian );
+
+  void solveTT( Source* a_GlobalSource, vector<TimeSeries*> & a_GlobalTimeSeries,
+                double* xs, int nmpars, MaterialParameterization* mp, int wave_mode, int event, int myrank);
 
   void solve_backward(vector<Source*>& a_Sources,
                       vector<TimeSeries*>& a_TimeSeries, float_sw4 gradient[11],
@@ -315,6 +328,9 @@ class EW {
 
   void evalRHSanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
                           vector<Sarray>& a_Uacc);
+
+  void evalLupt(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+                vector<Sarray> & a_Lu, int grid, int i, int j, int k );
 
   void evalPredictor(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                      vector<Sarray>& a_Um, vector<Sarray>& a_Rho,
@@ -539,6 +555,9 @@ class EW {
   void computeNearestSurfaceGridPoint(int& a_i, int& a_j, float_sw4 a_x,
                                       float_sw4 a_y, float_sw4 a_z);
 
+  int computeInvGridMap( float_sw4& a_i, float_sw4& a_j, float_sw4& a_k, int& a_g,
+                         float_sw4 a_x, float_sw4 a_y, float_sw4 a_z );
+
   void coord_from_index(int i, int j, int k, int g, float_sw4& x, float_sw4& y,
                         float_sw4& z);
 
@@ -585,7 +604,7 @@ class EW {
   void interpolate_between_grids(vector<Sarray>& u, vector<Sarray>& um,
                                  float_sw4 t, vector<Sarray*>& AlphaVE);
 
-  int interpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0,
+  bool interpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0,
                              bool smoothed);
 
   void copy_topo_to_topogridext();
@@ -1575,6 +1594,24 @@ class EW {
   TestEcons* create_energytest();
   AllDims* get_fine_alldimobject();
   TestPointSource* get_point_source_test();
+
+  void set_to_zero_at_source( vector<Sarray> & a_U, vector<Source*> point_sources,
+                              int padding );
+  void set_zerograd();
+  void set_zerograd_pad(int pad);
+  void set_to_zero_at_receiver( vector<Sarray> & a_U, 
+                                vector<TimeSeries*> time_series, 
+                                int padding );
+  void set_zerogradrec();
+  void set_zerogradrec_pad(int pad);
+  void filter_bc( Sarray& ufi, Sarray& u, int g, float_sw4 ep );
+  void heat_kernel_filter( vector<Sarray>& u, float_sw4 ep, int nit );
+  void set_filtergrad();
+  void set_filterit(int filterit);
+  void set_filterpar(float_sw4 filterpar);
+  //   TestGrid* create_gaussianHill();
+  void grid_information( int g );
+  void check_ic_conditions( int gc, vector<Sarray>& a_U );
   //
   // VARIABLES BEYOND THIS POINT
   //
@@ -1969,6 +2006,9 @@ class EW {
   bool m_cgfletcherreeves, m_do_linesearch;
   bool m_opt_testing;
   int m_opt_method, m_lbfgs_m;
+  bool m_zerograd_at_src, m_filter_gradient, m_zerograd_at_rec;
+  int m_zerograd_pad, m_gradfilter_it, m_zerogradrec_pad;
+  float_sw4 m_gradfilter_ep;
   // perturbations for testing
   float_sw4 m_perturb;
   int m_iperturb, m_jperturb, m_kperturb, m_pervar;

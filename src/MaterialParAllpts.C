@@ -3,7 +3,7 @@
 #include "MaterialParAllpts.h"
 
 //-----------------------------------------------------------------------
-MaterialParAllpts::MaterialParAllpts( EW* a_ew, char* fname, int variables )
+MaterialParAllpts::MaterialParAllpts( EW* a_ew, const char* fname, int variables )
   : MaterialParameterization( a_ew, fname )
 {
    if( variables == 0 )
@@ -37,21 +37,42 @@ MaterialParAllpts::MaterialParAllpts( EW* a_ew, char* fname, int variables )
    m_nmd = 0;
    m_nmd_global = 0;
    m_npts_per_grid.resize(m_ew->mNumberOfGrids);
+   m_npts_per_grid_local.resize(m_ew->mNumberOfGrids);
    //
    // The limits of the active region as defined in EW are iStartAct[g] <= i <= iEndAct[g] (and similar for j,k)
    // Only interior points are in active region.
    for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
    {
-      if( m_ew->m_iEndAct[g]-m_ew->m_iStartAct[g]+1 > 0 && m_ew->m_jEndAct[g]-m_ew->m_jStartAct[g]+1 >0
-	  && m_ew->m_kEndAct[g]-m_ew->m_kStartAct[g]+1 > 0 )
-	 m_nmd += (m_ew->m_iEndAct[g]-m_ew->m_iStartAct[g]+1)*(m_ew->m_jEndAct[g]-m_ew->m_jStartAct[g]+1)*
-	    (m_ew->m_kEndAct[g]-m_ew->m_kStartAct[g]+1)*m_nc;
+      m_npts_per_grid_local[g]=0;
+      if( m_ew->m_iEndAct[g]-m_ew->m_iStartAct[g]+1 > 0 && 
+          m_ew->m_jEndAct[g]-m_ew->m_jStartAct[g]+1 > 0 &&
+	  m_ew->m_kEndAct[g]-m_ew->m_kStartAct[g]+1 > 0 )
+      {
+         int npts = (m_ew->m_iEndAct[g]-m_ew->m_iStartAct[g]+1)*
+                    (m_ew->m_jEndAct[g]-m_ew->m_jStartAct[g]+1)*
+           	    (m_ew->m_kEndAct[g]-m_ew->m_kStartAct[g]+1)*m_nc;
+	 m_nmd += npts;
+         m_npts_per_grid_local[g] = npts;
+      }
       size_t gpts = (m_ew->m_iEndActGlobal[g]-m_ew->m_iStartActGlobal[g]+1)*
-	    (m_ew->m_jEndActGlobal[g]-m_ew->m_jStartActGlobal[g]+1)*
-	    (m_ew->m_kEndActGlobal[g]-m_ew->m_kStartActGlobal[g]+1)*m_nc;
+	            (m_ew->m_jEndActGlobal[g]-m_ew->m_jStartActGlobal[g]+1)*
+    	            (m_ew->m_kEndActGlobal[g]-m_ew->m_kStartActGlobal[g]+1)*m_nc;
       m_nmd_global += gpts;
       m_npts_per_grid[g] = gpts;
    }
+
+   for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
+   {
+      if( m_myrank == 0 )
+	cout << "active region, index = " <<
+	  m_ew->m_iStartActGlobal[g] << " " <<
+	  m_ew->m_iEndActGlobal[g] << " " <<
+	  m_ew->m_jStartActGlobal[g] << " " <<
+	  m_ew->m_jEndActGlobal[g] << " " <<
+	  m_ew->m_kStartActGlobal[g] << " " <<
+	  m_ew->m_kEndActGlobal[g] << endl;
+   }
+
 }
 
 //-----------------------------------------------------------------------
@@ -120,7 +141,7 @@ void MaterialParAllpts::get_material( int nmd, double* xmd, int nms, double* xms
 
 //-----------------------------------------------------------------------
 void MaterialParAllpts::get_parameters( int nmd, double* xmd, int nms, double* xms, vector<Sarray>& a_rho,
-					vector<Sarray>& a_mu, vector<Sarray>& a_lambda )
+					vector<Sarray>& a_mu, vector<Sarray>& a_lambda, int nr )
 {
    size_t gp, ind;
    for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
@@ -272,10 +293,14 @@ void MaterialParAllpts::interpolate_pseudohessian( int nmpars, double* phs,
 //}
 
 //-----------------------------------------------------------------------
-ssize_t MaterialParAllpts::parameter_index( int ip, int jp, int kp, int grid,
-					   int var )
+ssize_t MaterialParAllpts::parameter_index( int ip, int jp, int kp,
+                                            int grid, int var )
 {
-   // var=0,1,or 2 for zero based index.
+   // Computes local index in xmd, from the global sw4-array index (ip,jp,kp)
+   // var=0,1,or 2 
+   size_t gp = 0;   // Local grid pointer
+   for( int g=0; g < grid; g++)
+      gp += m_npts_per_grid_local[g];
    ssize_t ind =-1;
    if( m_ew->point_in_proc(ip,jp,grid) )
    {
@@ -286,7 +311,7 @@ ssize_t MaterialParAllpts::parameter_index( int ip, int jp, int kp, int grid,
 	 size_t ni = static_cast<ssize_t>(m_ew->m_iEndAct[grid]-m_ew->m_iStartAct[grid]+1);
 	 size_t nj = static_cast<ssize_t>(m_ew->m_jEndAct[grid]-m_ew->m_jStartAct[grid]+1);
 	 ind = m_nc*((ip-m_ew->m_iStartAct[grid]) + ni*(jp-m_ew->m_jStartAct[grid]) +
-		      ni*nj*(kp-m_ew->m_kStartAct[grid]) )+var; 
+		      ni*nj*(kp-m_ew->m_kStartAct[grid]) )+var+gp; 
       }
    }
    return ind;
@@ -312,6 +337,7 @@ ssize_t MaterialParAllpts::local_index( size_t ind_global )
    if( found )
    {
 
+      // Transform to a global index (i,j,k)
       size_t nig = static_cast<ssize_t>(m_ew->m_iEndActGlobal[g]-m_ew->m_iStartActGlobal[g]+1);
       size_t njg = static_cast<ssize_t>(m_ew->m_jEndActGlobal[g]-m_ew->m_jStartActGlobal[g]+1);
       int r = ind_global % m_nc;
@@ -324,17 +350,19 @@ ssize_t MaterialParAllpts::local_index( size_t ind_global )
       i = i + m_ew->m_iStartActGlobal[g];
       j = j + m_ew->m_jStartActGlobal[g];
       k = k + m_ew->m_kStartActGlobal[g];
-      if( m_ew->m_iStartAct[g] <= i && i <= m_ew->m_iEndAct[g] &&
-	  m_ew->m_jStartAct[g] <= j && j <= m_ew->m_jEndAct[g] &&
-	  m_ew->m_kStartAct[g] <= k && k <= m_ew->m_kEndAct[g] )
-      {
-	 size_t ni = static_cast<ssize_t>(m_ew->m_iEndAct[g]-m_ew->m_iStartAct[g]+1);
-	 size_t nj = static_cast<ssize_t>(m_ew->m_jEndAct[g]-m_ew->m_jStartAct[g]+1);
-	 return m_nc*((i-m_ew->m_iStartAct[g]) + ni*(j-m_ew->m_jStartAct[g]) +
-		   ni*nj*(k-m_ew->m_kStartAct[g]) )+r; 
-      }
-      else
-	 return -1;
+      return parameter_index(i,j,k,g,r);
+
+      //      if( m_ew->m_iStartAct[g] <= i && i <= m_ew->m_iEndAct[g] &&
+      //	  m_ew->m_jStartAct[g] <= j && j <= m_ew->m_jEndAct[g] &&
+      //	  m_ew->m_kStartAct[g] <= k && k <= m_ew->m_kEndAct[g] )
+      //      {
+      //	 size_t ni = static_cast<ssize_t>(m_ew->m_iEndAct[g]-m_ew->m_iStartAct[g]+1);
+      //	 size_t nj = static_cast<ssize_t>(m_ew->m_jEndAct[g]-m_ew->m_jStartAct[g]+1);
+      //	 return m_nc*((i-m_ew->m_iStartAct[g]) + ni*(j-m_ew->m_jStartAct[g]) +
+      //		   ni*nj*(k-m_ew->m_kStartAct[g]) )+r; 
+      //      }
+      //      else
+      //	 return -1;
    }
    else
       return -1;
@@ -400,10 +428,9 @@ void MaterialParAllpts::get_regularizer( int nmd, double* xmd, int nms, double* 
    if( m_variables == RCSCP )
       o = 1;
    int myrank;
-   MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
+   MPI_Comm_rank(m_ew->m_1d_communicator,&myrank);
 
    mf_reg = 0;
-printf("mf_reg0=%e\n", mf_reg);
    for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
    {
       const int iba = m_ew->m_iStartAct[g];
@@ -651,20 +678,17 @@ printf("mf_reg0=%e\n", mf_reg);
       ind0 += m_npts_per_grid[g];
    }
    double mf_reg_tmp=mf_reg;
-   MPI_Allreduce( &mf_reg_tmp, &mf_reg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+   MPI_Allreduce( &mf_reg_tmp, &mf_reg, 1, MPI_DOUBLE, MPI_SUM, m_ew->m_1d_communicator);
    int npts_tmp = npts;
-   MPI_Allreduce( &npts_tmp, &npts, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+   MPI_Allreduce( &npts_tmp, &npts, 1, MPI_INT, MPI_SUM, m_ew->m_1d_communicator );
 
    double inpts = 1.0/npts;
-printf("get_regularizer1: mf_reg=%e, regcoeff=%e, inpts=%e\n", mf_reg, regcoeff, inpts);
-
    mf_reg = 0.125*regcoeff*mf_reg*inpts;
    if( compute_derivative )
    {
       for( int i=0; i < m_nmd ; i++ )
 	 dmfd_reg[i] *= regcoeff*inpts;
    }
-printf("get_regularizer2: mf_reg=%e, regcoeff=%e, inpts=%e\n", mf_reg, regcoeff, inpts);
 #undef SQR
 }
 

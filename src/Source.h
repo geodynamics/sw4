@@ -126,6 +126,7 @@ class Source {
   void filter_timefunc(Filter* fi, float_sw4 tstart, float_sw4 dt, int nsteps);
   bool get_CorrectForMu() { return mShearModulusFactor; };
   void set_CorrectForMu(bool smf) { mShearModulusFactor = smf; };
+  float_sw4 getTimeOffset() const { return mT0; };
 
  private:
   Source();

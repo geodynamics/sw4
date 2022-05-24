@@ -1215,18 +1215,16 @@ bool EW::getDepth(float_sw4 x, float_sw4 y, float_sw4 z, float_sw4& depth) {
     if (r > rMax) r = rMax;
 
     // // evaluate elevation of topography on the grid (smoothed topo)
-    success = true;
-    int ret = m_gridGenerator->interpolate_topography(this, x, y, zMinTilde,
+    success = m_gridGenerator->interpolate_topography(this, x, y, zMinTilde,
                                                       mTopoGridExt);
-    if (ret < 0) {
+    if (!success) {
       cerr << "ERROR: getDepth: Unable to evaluate topography for x=" << x
-           << " y= " << y << " on proc # " << getRank() << ", ret=" << ret
+           << " y= " << y << " on proc # " << getRank() << ", ret=" << success 
            << endl;
       //            cerr << "q=" << q << " r=" << r << " qMin=" << qMin << "
       //            qMax=" << qMax << " rMin=" << rMin << " rMax=" << rMax <<
       //            endl;
       // cerr << "Setting elevation of topography to ZERO" << endl;
-      success = false;
       //      zMinTilde = 0;
       MPI_Abort(MPI_COMM_WORLD, 1);
     }
@@ -1374,6 +1372,63 @@ int EW::computeNearestGridPoint2(int& a_i, int& a_j, int& a_k, int& a_g,
   }
   return success;
 }
+
+//-----------------------------------------------------------------------
+int EW::computeInvGridMap( float_sw4& a_i, float_sw4& a_j, float_sw4& a_k, int& a_g,
+                           float_sw4 a_x, float_sw4 a_y, float_sw4 a_z )
+{
+   int success = 0;
+   if( a_z >= m_zmin[mNumberOfCartesianGrids-1] )
+   {
+      // point is in a Cartesian grid
+      int g=0;
+      while( g < mNumberOfCartesianGrids && a_z < m_zmin[g] )
+         g++;
+      a_g = g;
+      a_i = a_x/mGridSize[g]+1;
+      a_j = a_y/mGridSize[g]+1;
+      a_k = (a_z-m_zmin[g])/mGridSize[g]+1;
+
+      VERIFY2(a_i >= 1-m_ghost_points && a_i <= m_global_nx[a_g]+m_ghost_points,
+              "Grid Error: i (" << a_i << ") is out of bounds: ( " << 1 << "," 
+              << m_global_nx[a_g] << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
+      VERIFY2(a_j >= 1-m_ghost_points && a_j <= m_global_ny[a_g]+m_ghost_points,
+              "Grid Error: j (" << a_j << ") is out of bounds: ( " << 1 << ","
+              << m_global_ny[a_g] << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
+      VERIFY2(a_k >= m_kStart[a_g] && a_k <= m_kEnd[a_g],
+              "Grid Error: k (" << a_k << ") is out of bounds: ( " << 1 << "," 
+              << m_kEnd[a_g]-m_ghost_points << ")" << " x,y,z = " << a_x << " " << a_y << " " << a_z);
+      int i=static_cast<int>(floor(a_i));
+      int j=static_cast<int>(floor(a_j));
+      success = point_in_proc(i,j,a_g);
+      //      success = interior_point_in_proc(i,j,a_g);
+   }
+   else
+   {
+      // point is in a curvilinear grid
+      //
+      // success  = Grid point found in my processor (found locally).
+      //
+      int g=mNumberOfCartesianGrids;
+      success = 0;
+      float_sw4 q, r, s;
+      while( g < mNumberOfGrids && !success )
+      {
+         success = m_gridGenerator->
+            inverse_grid_mapping( this, a_x, a_y, a_z, g, q, r, s, false );
+         if( success )
+         {
+            a_g = g;
+            a_i = q;
+            a_j = r;
+            a_k = s;
+         }
+         g++;
+      }
+   }
+   return success;
+}
+
 
 //-------------------------------------------------------
 void EW::computeNearestGridPoint(int& a_i, int& a_j, int& a_k,
@@ -8704,6 +8759,255 @@ AllDims* EW::get_fine_alldimobject() {
                               m_global_nx[g], 1, m_global_ny[g], 1,
                               m_global_nz[g], m_ghost_points, m_ppadding);
   return fine;
+}
+
+//-----------------------------------------------------------------------
+void EW::grid_information( int g )
+{
+   if( g >= mNumberOfCartesianGrids )
+   {
+      float_sw4 minJ = mJ[g].minimum();
+      float_sw4 maxJ = mJ[g].maximum();
+      float_sw4 minJglobal, maxJglobal;
+      MPI_Allreduce( &minJ, &minJglobal, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
+      MPI_Allreduce( &maxJ, &maxJglobal, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator);
+      if (mVerbose>3 && proc_zero())
+      std::cout <<  "*** Jacobian of metric, curvi grid g= " << g <<
+         " minJ = " <<  minJglobal << " maxJ = " << maxJglobal << std::endl;
+      m_minJacobian  = min(m_minJacobian, minJglobal);
+      m_maxJacobian  = max(m_maxJacobian, maxJglobal);
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::set_to_zero_at_source( vector<Sarray> & a_U, 
+                                vector<Source*> sources,
+                                int padding )
+{
+#pragma omp parallel for
+     for( int s=0 ; s < sources.size() ; s++ )
+     {
+	int g = sources[s]->m_grid;
+	int i0= sources[s]->m_i0;
+	int j0= sources[s]->m_j0;
+	int k0= sources[s]->m_k0;
+        int klow  = k0-padding > a_U[g].m_kb ? k0-padding:a_U[g].m_kb;
+        int khigh = k0+padding < a_U[g].m_ke ? k0+padding:a_U[g].m_ke;
+        int jlow  = j0-padding > a_U[g].m_jb ? j0-padding:a_U[g].m_jb;
+        int jhigh = j0+padding < a_U[g].m_je ? j0+padding:a_U[g].m_je;
+        int ilow  = i0-padding > a_U[g].m_ib ? i0-padding:a_U[g].m_ib;
+        int ihigh = i0+padding < a_U[g].m_ie ? i0+padding:a_U[g].m_ie;
+
+        for( int k=klow ; k<= khigh ;k++ )
+           for( int j=jlow ; j<= jhigh ;j++ )
+              for( int i=ilow ; i<= ihigh ;i++ )
+                 for( int c=1 ; c <= a_U[g].m_nc ;c++ )
+                    a_U[g](c,i,j,k) = 0;
+     }
+}
+//-----------------------------------------------------------------------
+void EW::set_zerograd()
+{
+   m_zerograd_at_src =true;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_zerograd_pad( int pad )
+{
+   m_zerograd_pad = pad;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_to_zero_at_receiver( vector<Sarray> & a_U, 
+                                  vector<TimeSeries*> time_series,
+                                  int padding )
+{
+#pragma omp parallel for
+     for( int s=0 ; s < time_series.size() ; s++ )
+     {
+	int g = time_series[s]->m_grid0;	
+	int i0= time_series[s]->m_i0;
+	int j0= time_series[s]->m_j0;
+	int k0= time_series[s]->m_k0;
+        int klow  = k0-padding > a_U[g].m_kb ? k0-padding:a_U[g].m_kb;
+        int khigh = k0+padding < a_U[g].m_ke ? k0+padding:a_U[g].m_ke;
+        int jlow  = j0-padding > a_U[g].m_jb ? j0-padding:a_U[g].m_jb;
+        int jhigh = j0+padding < a_U[g].m_je ? j0+padding:a_U[g].m_je;
+        int ilow  = i0-padding > a_U[g].m_ib ? i0-padding:a_U[g].m_ib;
+        int ihigh = i0+padding < a_U[g].m_ie ? i0+padding:a_U[g].m_ie;
+
+        for( int k=klow ; k<= khigh ;k++ )
+           for( int j=jlow ; j<= jhigh ;j++ )
+              for( int i=ilow ; i<= ihigh ;i++ )
+                 for( int c=1 ; c <= a_U[g].m_nc ;c++ )
+                    a_U[g](c,i,j,k) = 0;
+     }
+}
+//-----------------------------------------------------------------------
+void EW::set_zerogradrec()
+{
+   m_zerograd_at_rec =true;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_zerogradrec_pad( int pad )
+{
+   m_zerogradrec_pad = pad;
+}
+
+//-----------------------------------------------------------------------
+void EW::filter_bc( Sarray& ufi, Sarray& u, int g, float_sw4 ep )
+{
+   // Boundary smoothing on top and bottom, don't need to impose
+   // boundary conditions at i and j domain boundaries, 
+         int ks=m_kStart[g], ke=m_kEnd[g];
+#pragma omp parallel for
+         for( int j=m_jStart[g]+1; j<= m_jEnd[g]-1; j++ )
+            for( int i=m_iStart[g]+1; i<= m_iEnd[g]-1; i++ )
+               for( int c=1 ; c <= u.m_nc; c++)
+               {
+                  ufi(c,i,j,ks) = ep*(u(c,i+1,j,ks)+u(c,i-1,j,ks)+u(c,i,j+1,ks)+
+                                      u(c,i,j-1,ks))+
+                        (1-6*ep)*u(c,i,j,ks);
+                  ufi(c,i,j,ke) = ep*(u(c,i+1,j,ke)+u(c,i-1,j,ke)+u(c,i,j+1,ke)+
+                                      u(c,i,j-1,ke))+
+                        (1-6*ep)*u(c,i,j,ke);
+               }
+       // No smoothing at supergrid boundaries
+         int is=m_iStart[g], ie=m_iEnd[g];
+#pragma omp parallel for
+         for( int k=m_kStart[g]; k<= m_kEnd[g]; k++ )
+            for( int j=m_jStart[g]+1; j<= m_jEnd[g]-1; j++ )
+               for( int c=1 ; c <= u.m_nc; c++)
+               {
+                  ufi(c,is,j,k) = u(c,is,j,k);
+                  ufi(c,ie,j,k) = u(c,ie,j,k);
+               }
+         int js=m_jStart[g], je=m_jEnd[g];
+#pragma omp parallel for
+         for( int k=m_kStart[g]; k<= m_kEnd[g]; k++ )
+            for( int i=m_iStart[g]; i<= m_iEnd[g]; i++ )
+               for( int c=1 ; c <= u.m_nc; c++)
+               {
+                  ufi(c,i,js,k) = u(c,i,js,k);
+                  ufi(c,i,je,k) = u(c,i,je,k);
+               }
+
+}
+
+//-----------------------------------------------------------------------
+void EW::heat_kernel_filter( vector<Sarray>& u, float_sw4 ep, int nit )
+{
+   // Filter input array u, to use for gradient filtering.
+   // Input: u   - Array to filter
+   //        ep  - Filter parameter
+   //        nit - Number of iterations
+   // Output u  - Filtered array
+   //
+
+// Two iterations between communication, because always at least 5pt overlap,
+// take care of odd number of iterations first.
+   if( nit % 2 == 1 )
+   {
+      for( int g=0 ; g < mNumberOfGrids ; g++ )
+      {
+         Sarray utmp(u[g]);
+#pragma omp parallel for
+         for( int k=m_kStart[g]+1; k<= m_kEnd[g]-1; k++ )
+            for( int j=m_jStart[g]+1; j<= m_jEnd[g]-1; j++ )
+               for( int i=m_iStart[g]+1; i<= m_iEnd[g]-1; i++ )
+                  for( int c=1 ; c <= u[g].m_nc; c++)
+                     utmp(c,i,j,k) = ep*(u[g](c,i+1,j,k)+u[g](c,i-1,j,k)+u[g](c,i,j+1,k)+
+                                         u[g](c,i,j-1,k)+u[g](c,i,j,k+1)+u[g](c,i,j,k-1))+
+                        (1-6*ep)*u[g](c,i,j,k);
+         filter_bc( utmp, u[g], g, ep );
+         u[g].copy(utmp);
+      }
+      communicate_arrays(u);
+   }
+   for( int it=1; it <= nit/2 ;it++)
+   {
+
+      for( int g=0 ; g < mNumberOfGrids ; g++ )
+      {
+         Sarray utmp(u[g]);
+
+    // First iteration
+#pragma omp parallel for
+         for( int k=m_kStart[g]+1; k<= m_kEnd[g]-1; k++ )
+            for( int j=m_jStart[g]+1; j<= m_jEnd[g]-1; j++ )
+               for( int i=m_iStart[g]+1; i<= m_iEnd[g]-1; i++ )
+                  for( int c=1 ; c <= u[g].m_nc; c++)
+                     utmp(c,i,j,k) = ep*(u[g](c,i+1,j,k)+u[g](c,i-1,j,k)+u[g](c,i,j+1,k)+
+                                         u[g](c,i,j-1,k)+u[g](c,i,j,k+1)+u[g](c,i,j,k-1))+
+                        (1-6*ep)*u[g](c,i,j,k);
+
+         filter_bc( utmp, u[g], g, ep );
+
+    // Second iteration
+#pragma omp parallel for
+         for( int k=m_kStart[g]+1; k<= m_kEnd[g]-1; k++ )
+            for( int j=m_jStart[g]+2; j<= m_jEnd[g]-2; j++ )
+               for( int i=m_iStart[g]+2; i<= m_iEnd[g]-2; i++ )
+                  for( int c=1 ; c <= u[g].m_nc; c++)
+                     u[g](c,i,j,k) = ep*(utmp(c,i+1,j,k)+utmp(c,i-1,j,k)+utmp(c,i,j+1,k)+
+                                         utmp(c,i,j-1,k)+utmp(c,i,j,k+1)+utmp(c,i,j,k-1))+
+                        (1-6*ep)*utmp(c,i,j,k);
+         filter_bc( u[g], utmp, g, ep );
+      }
+      communicate_arrays(u);
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::set_filtergrad()
+{
+   m_filter_gradient = true;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_filterit(int filterit)
+{
+   m_gradfilter_it = filterit;
+}
+
+//-----------------------------------------------------------------------
+void EW::set_filterpar(float_sw4 filterpar)
+{
+   m_gradfilter_ep = filterpar;
+}
+
+//-----------------------------------------------------------------------
+void rhs4th3point( int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+                  int nk, int* __restrict__ onesided, float_sw4* __restrict__ a_acof, 
+                  float_sw4 *__restrict__ a_bope, float_sw4* __restrict__ a_ghcof, 
+                  float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
+                  float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, 
+                  float_sw4 h, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, 
+                  float_sw4* __restrict__ a_strz, int i, int j, int k );
+
+//-----------------------------------------------------------------------
+void EW::evalLupt(vector<Sarray> & a_U, vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+		  vector<Sarray> & a_Lu, int grid, int i, int j, int k )
+{
+  a_Lu[grid].set_to_zero();
+  float_sw4* lu_ptr = a_Lu[grid].c_ptr();
+  float_sw4* u_ptr  = a_U[grid].c_ptr();
+  float_sw4* mu_ptr = a_Mu[grid].c_ptr();
+  float_sw4* la_ptr = a_Lambda[grid].c_ptr();
+  int ifirst, ilast, jfirst, jlast, kfirst, klast;
+  ifirst = m_iStart[grid];
+  ilast  = m_iEnd[grid];
+  jfirst = m_jStart[grid];
+  jlast  = m_jEnd[grid];
+  kfirst = m_kStart[grid];
+  klast  = m_kEnd[grid];
+  float_sw4 h = mGridSize[grid];
+  int nz = m_global_nz[grid];
+  int* onesided_ptr = m_onesided[grid];
+  rhs4th3point( ifirst, ilast, jfirst, jlast, kfirst, klast, nz, onesided_ptr, 
+                m_acof, m_bope, m_ghcof, lu_ptr, u_ptr, mu_ptr, la_ptr, h,
+                m_sg_str_x[grid], m_sg_str_y[grid], m_sg_str_z[grid], i, j, k );
 }
 //-----------------------------------------------------------------------
 void EW::extractTopographyFromSfile(std::string a_topoFileName) {
