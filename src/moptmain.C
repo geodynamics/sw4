@@ -2192,9 +2192,12 @@ int main(int argc, char **argv)
 		 nlcg( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		       GlobalObservations, myRank, mopt );
 
-        for( int e=0 ; e < GlobalTimeSeries.size(); e++ )
-         for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
-               GlobalTimeSeries[e][m]->writeWindows();  
+              for( int e=0 ; e < GlobalTimeSeries.size(); e++ )
+                for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ ) {
+                  // This barrier is needed as each process needs to open and write to the HDF5 file independently, and one at a time
+                  MPI_Barrier(simulation.m_1d_communicator);
+                  GlobalTimeSeries[e][m]->writeWindows();  
+                }
 
 	      sw4_profile->time_stamp("Done optimizer");
 	      sw4_profile->flush();
@@ -2318,8 +2321,11 @@ int main(int argc, char **argv)
                      simulation.solveTT(GlobalSources[e][0], GlobalObservations[e], coarse, nmpars, mopt->m_mp, 
                                     mopt->get_wave_mode(), e, simulation.getRank());
                
-                     for( int s=0 ; s < GlobalObservations[e].size() ; s++)
+                     for( int s=0 ; s < GlobalObservations[e].size() ; s++) {
+                        // This barrier is needed as each process needs to open and write to the HDF5 file independently, and one at a time
+                        MPI_Barrier(simulation.m_1d_communicator);
                         GlobalObservations[e][s]->writeWindows();
+                     }
                  }
               }
            }
