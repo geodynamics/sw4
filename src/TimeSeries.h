@@ -82,6 +82,7 @@ class TimeSeries {
   void readFile(EW* ew, bool ignore_utc);
 
   float_sw4** getRecordingArray() { return mRecordedSol; }
+  float **getRecordingArrayFloats(){ return mRecordedFloats; }
 
   int getNsteps() const { return mLastTimeStep + 1; }
   int getDownSample() const { return mDownSample; }

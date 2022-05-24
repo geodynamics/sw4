@@ -265,6 +265,7 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 /* #pragma omp parallel for */
   for (int ts=0; ts<a_TimeSeries.size(); ts++)
   {
+
      a_TimeSeries[ts]->allocateRecordingArrays( mNumberOfTimeSteps[event]+1, mTstart, mDt); // AP: added one to mNumber...
           
 // In forward solve, the output receivers will use the same UTC as the
@@ -451,14 +452,14 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
      for(int g=0 ; g < mNumberOfGrids ; g++ )
      {
         for(int m=0 ; m < m_number_mechanisms; m++ )
-           communicate_array( AlphaVE[g][m], g );
+           communicate_array_host( AlphaVE[g][m], g );
      }
 // AlphaVEm
 // communicate across processor boundaries
      for(int g=0 ; g < mNumberOfGrids ; g++ )
      {
         for(int m=0 ; m < m_number_mechanisms; m++ )
-           communicate_array( AlphaVEm[g][m], g );
+           communicate_array_host( AlphaVEm[g][m], g );
      }
   } // end if checkpoint restarting
   
@@ -467,7 +468,7 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 // U
 // communicate across processor boundaries
   for(int g=0 ; g < mNumberOfGrids ; g++ )
-    communicate_array( U[g], g );
+    communicate_array_host( U[g], g );
 // boundary forcing
   cartesian_bc_forcing( t, BCForcing, a_Sources );
 
@@ -488,7 +489,7 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 // Um
 // communicate across processor boundaries
   for(int g=0 ; g < mNumberOfGrids ; g++ )
-    communicate_array( Um[g], g );
+    communicate_array_host( Um[g], g );
 
   //    Um[0].save_to_disk("um-dbg0.bin");
   //    Um[1].save_to_disk("um-dbg1.bin");
@@ -712,7 +713,7 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 
 // communicate across processor boundaries
     for(int g=0 ; g < mNumberOfGrids ; g++ )
-       communicate_array( Up[g], g );
+       communicate_array_host( Up[g], g );
 
     if( m_output_detailed_timing )
        time_measure[3] = MPI_Wtime();
@@ -744,7 +745,7 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 	     Force( t+mDt, F, point_sources, identsources );	     
 	  geodyn_second_ghost_point( a_Rho, a_Mu, a_Lambda, F, t+2*mDt, Up, U, 1 );
 	  for(int g=0 ; g < mNumberOfGrids ; g++ )
-	     communicate_array( Up[g], g );
+	     communicate_array_host( Up[g], g );
        }
        else
        {
@@ -755,7 +756,7 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 	  geodyn_second_ghost_point( a_Rho, a_Mu, a_Lambda, F, t+mDt, Uacc, U, 0 );
 	  geodyn_up_from_uacc( Up, Uacc, U, Um, mDt ); //copy second ghost point to Up
 	  for(int g=0 ; g < mNumberOfGrids ; g++ )
-	     communicate_array( Up[g], g );
+	     communicate_array_host( Up[g], g );
        }
     }
 
@@ -902,7 +903,7 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 
 // communicate across processor boundaries
        for(int g=0 ; g < mNumberOfGrids ; g++ )
-	  communicate_array( Up[g], g );
+	  communicate_array_host( Up[g], g );
 
        if( m_output_detailed_timing )
           time_measure[14] = MPI_Wtime();
@@ -915,7 +916,7 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
 	     Force( t+mDt, F, point_sources, identsources );	     
 	  geodyn_second_ghost_point( a_Rho, a_Mu, a_Lambda, F, t+2*mDt, Up, U, 1 );
 	  for(int g=0 ; g < mNumberOfGrids ; g++ )
-	     communicate_array( Up[g], g );
+	     communicate_array_host( Up[g], g );
 	  // The free surface boundary conditions below will overwrite the
 	  // ghost point above the free surface of the geodyn cube.
 	  // This is a problem with the fourth order predictor-corrector time stepping
@@ -1261,6 +1262,7 @@ void EW::solve_mopt( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSe
          ::operator delete[](BCForcing[g][side], Space::Managed);
      delete[] BCForcing[g];
    }
+
    for( int s = 0 ; s < point_sources.size(); s++ )
       delete point_sources[s];
 

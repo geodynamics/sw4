@@ -362,14 +362,16 @@ TimeSeries::~TimeSeries() {
   // deallocate the recording arrays
   if (mRecordedSol) {
     for (int q = 0; q < m_nComp; q++) {
-      if (mRecordedSol[q]) delete[] mRecordedSol[q];
+      if (mRecordedSol[q]) 
+        ::operator delete[](mRecordedSol[q], Space::Managed);
     }
     delete[] mRecordedSol;
   }
 
   if (mRecordedFloats) {
     for (int q = 0; q < m_nComp; q++) {
-      if (mRecordedFloats[q]) delete[] mRecordedFloats[q];
+      if (mRecordedFloats[q])
+        ::operator delete[](mRecordedFloats[q], Space::Managed);
     }
     delete[] mRecordedFloats;
   }
@@ -384,14 +386,16 @@ void TimeSeries::allocateRecordingArrays(int numberOfTimeSteps,
     mAllocatedSize = numberOfTimeSteps + 1;
     mLastTimeStep = -1;
     for (int q = 0; q < m_nComp; q++) {
-      if (mRecordedSol[q]) delete[] mRecordedSol[q];
-      mRecordedSol[q] = new float_sw4[mAllocatedSize]();
+      if (mRecordedSol[q])
+        ::operator delete[](mRecordedSol[q], Space::Managed);
+      mRecordedSol[q] = SW4_NEW(Space::Managed, float_sw4[mAllocatedSize]);
     }
 
     if (m_sacFormat || m_hdf5Format) {
       for (int q = 0; q < m_nComp; q++) {
-        if (mRecordedFloats[q]) delete[] mRecordedFloats[q];
-        mRecordedFloats[q] = new float[mAllocatedSize]();
+        if (mRecordedFloats[q])  
+            ::operator delete[](mRecordedFloats[q], Space::Managed);
+        mRecordedFloats[q] = SW4_NEW(Space::Managed, float[mAllocatedSize]);
       }
     }
   }
@@ -1624,8 +1628,6 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
    //
    //-----------------------------------------------------------------------
 
-   int myRank;
-   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
    float_sw4 misfit = 0;
    dshift  = 0;
    ddshift = 0;
@@ -1643,17 +1645,32 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 
       bool compute_difference = (diff!=NULL);
       float_sw4** misfitsource;
-      float_sw4 aw, bw;
+      float_sw4**     misfitsource_float;
+      float_sw4 itau;//aw, bw,
+      bool dbg = false;
+      if( dbg )
+      {
+         cout << "DBG " << m_staName << " use_win= " << m_use_win << 
+            " p-win=[ " << m_winL << ", " << m_winR << "]" << 
+            " s-win=[ " << m_winL2 << ", " << m_winR2 << "]" << endl;
+      }
+
       if( m_use_win )
       {
-	aw = M_PI/(m_winR-m_winL);
-	bw = -aw*0.5*(m_winR+m_winL);
+         //	aw = M_PI/(m_winR-m_winL);
+         //	bw = -aw*0.5*(m_winR+m_winL);
+        itau =1/(5*m_dt);
       }
       if( compute_difference )
       {
+
 	 if( diff->mLastTimeStep < mLastTimeStep )
 	    diff->allocateRecordingArrays(mLastTimeStep,m_t0+m_shift,m_dt);
+
 	 misfitsource = diff->getRecordingArray();
+
+         if( m_hdf5Format )
+            misfitsource_float = diff->getRecordingArray();
       }
       if( abs(m_t0+m_shift-(observed.m_t0+observed.m_shift)) > 100 )
 	 cout <<"WARNING: Mismatch between observation start time and simulation start time is large. Station Tstart = " << m_t0+m_shift << " Observation Tstart = " << observed.m_t0+observed.m_shift << endl;
@@ -1693,7 +1710,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 
 
 	 float_sw4 t  = m_t0 + m_shift + i*m_dt;
-	 float_sw4 ir = round((t-t0fr)/dtfr);
+	 float_sw4 ir = (t-t0fr)/dtfr;
 	 int ie   = static_cast<int>(ir);
 	 //	 int mmin = ie-order/2+1;
 	 //	 int mmax = ie+order/2;
@@ -1714,10 +1731,25 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	 wghx = wghy = wghz = wghv;
          if( m_use_win )
 	 {
-	   if( t < m_winL || t > m_winR ) 
-	     wghx = wghy = wghz = 0;
-	   else
-	     wghx = wghy = wghz = pow(cos(aw*t+bw),10.0)*wghv;
+            wghx = 0.5*(tanh((t-m_winL)*itau) - tanh((t-m_winR)*itau));
+            // First window
+            //	   if( t < m_winL || t > m_winR ) 
+            //              wghx = 0;
+            //	   else
+            //              wghx = 0.5*(tanhf((t-m_winL)*itau) - tanhf((t-m_winR)*itau)); // old fcn: pow(cos(aw*t+bw),10.0)*wghv;
+
+           // Second window 
+           if( m_winL2>0 || m_winR2>0 ) 
+           { 
+              float_sw4 wgh2 = 0.5*(tanh((t-m_winL2)*itau) - tanh((t-m_winR2)*itau));
+              //              if( t < m_winL2 || t > m_winR2 ) 
+              //	         wgh2 = 0;
+              //	      else
+              //                 wgh2 = 0.5*(tanhf((t-m_winL2)*itau) - tanhf((t-m_winR2)*itau));
+              wghx = wghx >= wgh2 ? wghx : wgh2;  // take the maximum of either window weight
+           } 
+           wghz = wghy = wghx;
+           //        std::cout << "time=" << t << " winR2=" << m_winR2 << " wghx=" << wghx << std::endl;
 	 }
          if( !m_use_x )
 	    wghx = 0;
@@ -1763,8 +1795,8 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
             float_sw4 ai, wgh[6], dwgh[6], ddwgh[6];
             if( ie < 3 )
 	    {
-	       mmin = 1;
-	       mmax = 5;
+	       mmin = 0;
+	       mmax = 4;
 	       ai   = ir - (mmin+2);
 	       getwgh5( ai, wgh, dwgh, ddwgh );
             
@@ -1814,6 +1846,7 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 		  ddmf[2] += ddwgh[m-mmin]*observed.mRecordedFloats[2][m]*idtfr2;
 	       }
 	    }
+
 	 }
 	 if( m_usgsFormat )
 	 {
@@ -1836,6 +1869,12 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	       misfitsource[0][i] = wghx*(mRecordedSol[0][i]-mf[0]);
 	       misfitsource[1][i] = wghy*(mRecordedSol[1][i]-mf[1]);
 	       misfitsource[2][i] = wghz*(mRecordedSol[2][i]-mf[2]);
+               if( m_hdf5Format )
+               {
+                  misfitsource_float[0][i]= (float)wghx*(mRecordedSol[0][i]-mf[0]);
+                  misfitsource_float[1][i]= (float)wghy*(mRecordedSol[1][i]-mf[1]);
+                  misfitsource_float[2][i]= (float)wghz*(mRecordedSol[2][i]-mf[2]);
+               }
 	    }
 	 }
 	 else
@@ -1859,17 +1898,27 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	       misfitsource[0][i] = wghx*(mRecordedFloats[0][i]-mf[0]);
 	       misfitsource[1][i] = wghy*(mRecordedFloats[1][i]-mf[1]);
 	       misfitsource[2][i] = wghz*(mRecordedFloats[2][i]-mf[2]);
+               if( m_hdf5Format )
+               {
+                  misfitsource_float[0][i]= (float)wghx*(misfitsource[0][i]);
+                  misfitsource_float[1][i]= (float)wghy*(misfitsource[1][i]);
+                  misfitsource_float[2][i]= (float)wghz*(misfitsource[2][i]);
+               }
 	    }
 	 }
 	 scale_factor += wghx*mf[0]*mf[0]+wghy*mf[1]*mf[1]+wghz*mf[2]*mf[2];
-      }
 
+      }
       //  scale misfit and diff-source
       if( m_misfit_scaling == 1 )
       {
 	 if( scale_factor == 0 )
 	 {
-	    cout << "WARNING: Observation contains zero data" << endl;
+	    cout << "WARNING: Observation contains zero data" <<
+               "1  win = " << m_winL << " " <<m_winR << " " << 
+               m_winL2 << " " << m_winR2 << 
+               " t0 = " << m_t0 << " shift= " << m_shift << endl;
+
 	    scale_factor=1;
 	 }
 	 float_sw4 iscale = 1/scale_factor;
@@ -1881,13 +1930,22 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	       misfitsource[1][i] *= iscale;
 	       misfitsource[2][i] *= iscale;
 	    }
+	 if( compute_difference && m_hdf5Format )
+	    for( int i=0 ; i <= mLastTimeStep ; i++ )
+	    {
+	       misfitsource_float[0][i] *= iscale;
+	       misfitsource_float[1][i] *= iscale;
+	       misfitsource_float[2][i] *= iscale;
+	    }
       }
+      if( dbg )
+         cout << "DBG " << m_staName << " misfit= " << misfit << endl;
    }
    else
       misfit = 0;
-
    return 0.5*misfit;
 }
+
 //-----------------------------------------------------------------------
 float_sw4 TimeSeries::compute_maxshift(TimeSeries& observed) {
   bool dbg = false;
@@ -2208,7 +2266,7 @@ TimeSeries* TimeSeries::copy(EW* a_ew, string filename, bool addname) {
       retval->mRecordedFloats = new float*[m_nComp];
       if (mAllocatedSize > 0) {
         for (int q = 0; q < m_nComp; q++)
-          retval->mRecordedFloats[q] = new float[mAllocatedSize];
+          retval->mRecordedFloats[q] = SW4_NEW(Space::Managed, float[mAllocatedSize]);
         for (int q = 0; q < m_nComp; q++)
           for (int i = 0; i < mAllocatedSize; i++)
             retval->mRecordedFloats[q][i] = mRecordedFloats[q][i];
@@ -2219,7 +2277,7 @@ TimeSeries* TimeSeries::copy(EW* a_ew, string filename, bool addname) {
       retval->mRecordedSol = new float_sw4*[m_nComp];
       if (mAllocatedSize > 0) {
         for (int q = 0; q < m_nComp; q++)
-          retval->mRecordedSol[q] = new float_sw4[mAllocatedSize];
+          retval->mRecordedSol[q] = SW4_NEW(Space::Managed, float_sw4[mAllocatedSize]);
         for (int q = 0; q < m_nComp; q++)
           for (int i = 0; i < mAllocatedSize; i++)
             retval->mRecordedSol[q][i] = mRecordedSol[q][i];

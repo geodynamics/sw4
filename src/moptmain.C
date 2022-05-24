@@ -382,6 +382,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       dfs[m+nspar] = 0;
    for( int m=0 ; m < nmpard ; m++ )
       dfm[m] = 0;
+
    if( !mopt->m_test_regularizer )
    {
       mopt->init_pseudohessian( pseudo_hessian );
@@ -389,7 +390,9 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
       for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
       {
          sw4_profile->time_stamp("forward solve" );
+
          simulation.solve_mopt( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory, phcase, pseudo_hessian );
+
          sw4_profile->time_stamp("done forward solve" );
 
 // Compute misfit, 'diffs' will hold the source for the adjoint problem
@@ -403,6 +406,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
             TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc" );
             diffs.push_back(elem);
          }
+
 // 2. misfit function also updates diffs := this - observed
          if( mopt->m_misfit == Mopt::L2 )
          {
@@ -431,6 +435,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          for( unsigned int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
             delete diffs[m];
          diffs.clear();
+
       }
       double mftmp = f;
       MPI_Allreduce(&mftmp,&f,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
@@ -462,6 +467,7 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          normalize_gradient_ph( pseudo_hessian, gRho, gMu, gLambda, eps, phcase );
       }
    }
+
 // add in a Tikhonov regularizing term:
    bool tikhonovreg=false;
    if( tikhonovreg )
@@ -1754,9 +1760,11 @@ int main(int argc, char **argv)
 		 nlcg( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		       GlobalObservations, myRank, mopt );
 
-        for( int e=0 ; e < GlobalTimeSeries.size(); e++ )
-         for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
-               GlobalTimeSeries[e][m]->writeWindows();  
+             for( int e=0 ; e < GlobalTimeSeries.size(); e++ )
+               for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ ) {
+                 MPI_Barrier(simulation.m_1d_communicator);
+                 GlobalTimeSeries[e][m]->writeWindows();  
+               }
 
 	      sw4_profile->time_stamp("Done optimizer");
 	      sw4_profile->flush();
@@ -1880,8 +1888,10 @@ int main(int argc, char **argv)
                      simulation.solveTT(GlobalSources[e][0], GlobalObservations[e], coarse, nmpars, mopt->m_mp, 
                                     mopt->get_wave_mode(), e, simulation.getRank());
                
-                     for( int s=0 ; s < GlobalObservations[e].size() ; s++)
-                        GlobalObservations[e][s]->writeWindows();
+                     for( int s=0 ; s < GlobalObservations[e].size() ; s++) {
+                       MPI_Barrier(simulation.m_1d_communicator);
+                       GlobalObservations[e][s]->writeWindows();
+                     }
                  }
               }
            }
