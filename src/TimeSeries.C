@@ -512,9 +512,17 @@ void TimeSeries::writeWindows( string suffix )
            //           int ret = createWriteAttr( grp, "WINDOWS", H5T_NATIVE_DOUBLE, data_space, windows );
            //           if( ret < 0 )
            {
-             int ret = openWriteAttr(grp, "WINDOWS", H5T_NATIVE_DOUBLE, windows);
-             if( ret < 0 )
-                std::cout << "TimeSeries::writeWindows, Error could not create/open data space" << std::endl;
+             if( H5Lexists(grp, "WINDOWS", H5P_DEFAULT) ) {
+               int ret = openWriteAttr(grp, "WINDOWS", H5T_NATIVE_DOUBLE, windows);
+               if( ret < 0 )
+                  std::cout << "TimeSeries::writeWindows, Error could not create/open data space" << std::endl;
+             }
+             else {
+               hsize_t nelements=4;
+               hid_t data_space = H5Screate_simple(1, &nelements, NULL);
+               int ret = createWriteAttr( grp, "WINDOWS", H5T_NATIVE_DOUBLE, data_space, windows );
+               H5Sclose(data_space);
+             }
            }
            H5Gclose(grp);
         }
