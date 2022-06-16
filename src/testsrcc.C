@@ -12,8 +12,10 @@ void EW::testsrc_ci(float_sw4* __restrict__ f, int ib, int ie, int jb, int je,
   float_sw4 wgh[4] = {17.0 / 48, 59.0 / 48, 43.0 / 48, 49.0 / 48};
   //   float_sw4 mom1=mom[0],mom2=mom[1],mom3=mom[2];
   float_sw4 mom1 = 0, mom2 = 0, mom3 = 0;
+#ifndef ENABLE_HIP
 #pragma omp parallel
 #pragma omp for reduction(+ : mom1, mom2, mom3)
+#endif
   for (int k = wind[4]; k <= wind[5]; k++) {
     float_sw4 z = zmin + (k - 1) * h;
     for (int j = wind[2]; j <= wind[3]; j++) {
@@ -84,8 +86,10 @@ void EW::testsrcc_ci(float_sw4* __restrict__ f, int ib, int ie, int jb, int je,
   float_sw4 wgh[4] = {17.0 / 48, 59.0 / 48, 43.0 / 48, 49.0 / 48};
   //   float_sw4 mom1=mom[0],mom2=mom[1],mom3=mom[2];
   float_sw4 mom1 = 0, mom2 = 0, mom3 = 0;
+#ifndef ENABLE_HIP
 #pragma omp parallel
 #pragma omp for reduction(+ : mom1, mom2, mom3)
+#endif
   for (int k = wind[4]; k <= wind[5]; k++) {
     for (int j = wind[2]; j <= wind[3]; j++) {
       for (int i = wind[0]; i <= wind[1]; i++) {
