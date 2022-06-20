@@ -29,6 +29,7 @@ RAJA_HOME = /usr/workspace/wsrzd/ramesh/Project6/2022/EAS3/RAJA-v2022.03.0/insta
 PROJ_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/proj-5.0.0/install
 #PROJ_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/proj-5.0.0/install5
 PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/2022/EAS3/proj-5.0.0/install_rzvernal
+PROJ_HOME = /usr/workspace/wsrzd/ramesh/Project6/2022/EAS3/proj-6.3.0/install
 
 UMPIRE_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/umpire-6.0.0/install43
 UMPIRE_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/umpire-6.0.0/install45
@@ -107,7 +108,7 @@ MORE_LINK_FLAGS+= -Wl,-rpath=$(CALIPER_HOME)/lib64 -L $(CALIPER_HOME)/lib64 -lca
 endif 
 
 ifeq ($(proj),yes)
-MORE_FLAGS+= -I$(PROJ_HOME)/include
+MORE_FLAGS+= -I$(PROJ_HOME)/include 
 MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib64  -L$(PROJ_HOME)/lib64 -lproj
 endif 
 
