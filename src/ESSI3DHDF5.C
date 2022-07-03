@@ -57,6 +57,7 @@ ESSI3DHDF5::ESSI3DHDF5(const std::string& filename, int (&global)[3],
       m_precision(precision) {
 #ifdef USE_HDF5
   bool debug = false;
+  /* debug = true; */
   for (int d = 0; d < 3; d++) {
     m_global[d] = global[d];
     m_window[2 * d] = window[2 * d];          // lo, relative to global
@@ -104,20 +105,22 @@ ESSI3DHDF5::ESSI3DHDF5(const std::string& filename, int (&global)[3],
 ESSI3DHDF5::~ESSI3DHDF5() {}
 
 //-----------------------------------------------------------------------
-void ESSI3DHDF5::create_file(bool is_open) {
+void ESSI3DHDF5::create_file(bool is_open, bool is_create) {
 #ifdef USE_HDF5
   MPI_Comm comm = MPI_COMM_WORLD;
   MPI_Info info = MPI_INFO_NULL;
   hid_t fapl = H5Pcreate(H5P_FILE_ACCESS);
   H5Pset_libver_bounds(fapl, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST);
 
+  int m_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &m_rank);
   if (is_open) {
-    H5Pset_fapl_mpio(fapl, comm, info);
-    H5Pset_coll_metadata_write(fapl, 1);
-    H5Pset_all_coll_metadata_ops(fapl, 1);
-  }
+    if (!is_create) {
+      H5Pset_fapl_mpio(fapl, comm, info);
+      H5Pset_coll_metadata_write(fapl, 1);
+      H5Pset_all_coll_metadata_ops(fapl, 1);
+    }
 
-  if (is_open) {
 #ifdef USE_HDF5_ASYNC
     size_t num_in_progress;
     hbool_t op_failed;
@@ -133,11 +136,13 @@ void ESSI3DHDF5::create_file(bool is_open) {
     m_file_id =
         H5Fopen(const_cast<char*>(m_filename.c_str()), H5F_ACC_RDWR, fapl);
 #endif
-  } else
+  } 
+  else {
     m_file_id = H5Fcreate(const_cast<char*>(m_filename.c_str()), H5F_ACC_TRUNC,
                           H5P_DEFAULT, fapl);
+  }
 
-  if (m_file_id < 0) {
+  if (m_file_id <= 0) {
     cerr << "Could not open hdf5 file: " << m_filename << endl;
     MPI_Abort(comm, m_file_id);
   }
@@ -150,8 +155,8 @@ void ESSI3DHDF5::write_header(double h, double (&lonlat_origin)[2], double az,
                               double (&origin)[3], int cycle, double t,
                               double dt) {
 #ifdef USE_HDF5
-  /* bool debug=true; */
   bool debug = false;
+  /* debug=true; */
   int myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
@@ -228,7 +233,7 @@ void ESSI3DHDF5::write_header(double h, double (&lonlat_origin)[2], double az,
 void ESSI3DHDF5::write_topo(void* window_array) {
 #ifdef USE_HDF5
   bool debug = false;
-  /* bool debug=true; */
+  /* debug=true; */
   MPI_Comm comm = MPI_COMM_WORLD;
   int myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
@@ -432,8 +437,13 @@ void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
       char var[100];
       sprintf(var, "vel_%d ijk layout", c);
 
-      dset = H5Dcreate2(m_file_id, var, dtype, dspace, H5P_DEFAULT, prop_id,
-                        H5P_DEFAULT);
+      if (isRestart) {
+          dset = H5Dopen(m_file_id, var, H5P_DEFAULT);
+      }
+      else {
+          dset = H5Dcreate2(m_file_id, var, dtype, dspace, H5P_DEFAULT, prop_id,
+                            H5P_DEFAULT);
+      }
       if (dset < 0) {
         cerr << "Error with H5Dcreate/open!" << std::endl;
         MPI_Abort(MPI_COMM_WORLD, -1);
@@ -441,6 +451,7 @@ void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
       H5Dclose(dset);
     }
     H5Fclose(m_file_id);
+    m_file_id = 0;
   }
   H5Pclose(prop_id);
 #endif
@@ -587,6 +598,7 @@ void ESSI3DHDF5::close_file() {
 #else
   H5Fclose(m_file_id);
 #endif
+  m_file_id = 0;
 
 #endif
   return;

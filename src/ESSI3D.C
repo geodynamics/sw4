@@ -118,7 +118,8 @@ void ESSI3D::set_buffer_interval(int a_bufferInterval) {
 
 //-----------------------------------------------------------------------
 void ESSI3D::setup() {
-  const bool debug = false;
+  bool debug = false;
+  /* debug = true; */
 
   int g = mEW->mNumberOfGrids - 1;   // top curvilinear grid only
   m_ihavearray = true;               // gets negated if we don't, below
@@ -313,6 +314,7 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
   bool debug = false;
   /* debug = true; */
 
+  bool is_create = true;
   int g = mEW->mNumberOfGrids - 1;
   int window[6], global[3];
   for (int d = 0; d < 3; d++) {
@@ -331,12 +333,12 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
   m_hdf5helper->set_ihavearray(m_ihavearray);
 
   if (debug && (m_rank == 0))
-    cout << "Creating hdf5 file: " << m_hdf5helper->filename() << endl;
+    cout << "Create/open hdf5 file: " << m_hdf5helper->filename() << endl;
 
   double hdf5_time = MPI_Wtime();
 
   if (m_rank == 0) {
-    m_hdf5helper->create_file(m_isRestart);
+    m_hdf5helper->create_file(m_isRestart, is_create);
 
     // Write header metadata
     double h = mEW->mGridSize[g];
@@ -361,7 +363,7 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
       }
     }
 
-    if (debug && (m_rank == 0))
+    if (debug)
       cout << "Creating hdf5 velocity fields..." << endl;
   }
 
@@ -385,7 +387,8 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
   MPI_Comm comm = mEW->m_cartesian_communicator;
   MPI_Barrier(comm);
 
-  m_hdf5helper->create_file(true);
+  is_create = false;
+  m_hdf5helper->create_file(true, is_create);
 
   m_hdf5_time += (MPI_Wtime() - hdf5_time);
 
