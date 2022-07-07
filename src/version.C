@@ -47,7 +47,7 @@ const char* compiler = EW_COMPILER;
 //   const char* basedir = EW_BASEDIR;
 const char* libdir = EW_LIBDIR;
 const char* incdir = EW_INCDIR;
-const char* version = "2.1-alpha";
+const char* version = "3.0";
 
 std::string getVersionInfo() {
   std::stringstream versioninfo;

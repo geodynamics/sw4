@@ -49,7 +49,7 @@ class ESSI3DHDF5 {
              bool ihavearray, int precision);
   ~ESSI3DHDF5();
 
-  void create_file(bool is_open, bool is_create);
+  void create_file(bool is_restart, bool is_root);
   void close_file();
   void write_header(double h, double (&lonlat_origin)[2], double az,
                     double (&origin)[3], int cycle, double t, double dt);

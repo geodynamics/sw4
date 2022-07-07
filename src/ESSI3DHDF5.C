@@ -105,7 +105,7 @@ ESSI3DHDF5::ESSI3DHDF5(const std::string& filename, int (&global)[3],
 ESSI3DHDF5::~ESSI3DHDF5() {}
 
 //-----------------------------------------------------------------------
-void ESSI3DHDF5::create_file(bool is_open, bool is_create) {
+void ESSI3DHDF5::create_file(bool is_restart, bool is_root) {
 #ifdef USE_HDF5
   MPI_Comm comm = MPI_COMM_WORLD;
   MPI_Info info = MPI_INFO_NULL;
@@ -114,8 +114,8 @@ void ESSI3DHDF5::create_file(bool is_open, bool is_create) {
 
   int m_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &m_rank);
-  if (is_open) {
-    if (!is_create) {
+  if (is_restart) {
+    if (!is_root) {
       H5Pset_fapl_mpio(fapl, comm, info);
       H5Pset_coll_metadata_write(fapl, 1);
       H5Pset_all_coll_metadata_ops(fapl, 1);

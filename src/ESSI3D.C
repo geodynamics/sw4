@@ -314,7 +314,7 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
   bool debug = false;
   /* debug = true; */
 
-  bool is_create = true;
+  bool is_root = true;
   int g = mEW->mNumberOfGrids - 1;
   int window[6], global[3];
   for (int d = 0; d < 3; d++) {
@@ -338,7 +338,7 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
   double hdf5_time = MPI_Wtime();
 
   if (m_rank == 0) {
-    m_hdf5helper->create_file(m_isRestart, is_create);
+    m_hdf5helper->create_file(m_isRestart, is_root);
 
     // Write header metadata
     double h = mEW->mGridSize[g];
@@ -387,8 +387,8 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
   MPI_Comm comm = mEW->m_cartesian_communicator;
   MPI_Barrier(comm);
 
-  is_create = false;
-  m_hdf5helper->create_file(true, is_create);
+  is_root = false;
+  m_hdf5helper->create_file(true, is_root);
 
   m_hdf5_time += (MPI_Wtime() - hdf5_time);
 
