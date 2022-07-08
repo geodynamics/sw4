@@ -27,6 +27,8 @@
 #include <sachdf5.h>
 #endif
 
+#define STRINGSIZE 128
+
 void usage(string thereason)
 {
   cout << endl
@@ -171,6 +173,58 @@ void normalize_pseudohessian( int nmpars, float_sw4* phs, int nmpard,
          phd[m*ncomp+c] = phd[m*ncomp+c]/mxnorm[c]+eps;
 }
 
+
+void set_timewindows_from_eikonal_time(vector<vector<TimeSeries*> >& GlobalTimeSeries, const vector<vector<Source*> >& GlobalSources, const Mopt* mopt, const float_sw4 fc2)
+{
+   float_sw4 winlen=1.;
+   float_sw4 wins[4];
+
+   char file[STRINGSIZE];
+   FILE *fd;
+   int myrank;
+
+   MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
+
+      for( int e=0 ; e < GlobalTimeSeries.size(); e++ )
+      {
+      if(myrank==0) {     
+         sprintf(file, "%s/time_event_%d.txt", GlobalTimeSeries[e][0]->getPath().c_str(),e);
+         fd = fopen(file, "w");
+         fprintf(fd, "event count station x y z tstart_vp  tend_vp  tstart_vs  tend_vs\n");
+         }
+
+         if(mopt->get_freq_peakpower()>0)
+         {
+            winlen = 1.0/mopt->get_freq_peakpower(); // one cycle of peak frequency
+         } 
+         else if(fc2>0)
+         {
+            winlen = 12./(2*M_PI*fc2); //half spread is 6*sigma
+         }
+         else if(GlobalSources[e][0]->getFrequency()>0)
+         {
+            winlen = 1./GlobalSources[e][0]->getFrequency();
+         }
+
+         winlen *= mopt->get_twin_scale();  // expand or shrink 
+
+	       for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ )
+	       {
+             GlobalTimeSeries[e][m]->shiftTimeWindow(GlobalSources[e][0]->getTimeOffset(), winlen, mopt->get_twin_shift());
+             
+            if(myrank==0 && GlobalTimeSeries[e][m]->myPoint()) {
+               GlobalTimeSeries[e][m]->get_windows(wins);
+               fprintf(fd, "%d   %d\t%s\t%g\t%g\t%g\t%g\t%g\t%g\t%g\n", 
+               e, m+1, GlobalTimeSeries[e][m]->getStationName().c_str(), 
+               GlobalTimeSeries[e][m]->getX(),GlobalTimeSeries[e][m]->getY(),GlobalTimeSeries[e][m]->getZ(),
+               wins[0], wins[1], wins[2], wins[3]);
+               }
+
+          } // stations
+            if(myrank==0) fclose(fd);
+      } // end of events
+}
+
 //-----------------------------------------------------------------------
 void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
 		int nmpard, double* xm,
@@ -230,27 +284,24 @@ void compute_f( EW& simulation, int nspar, int nmpars, double* xs,
    VERIFY2( ok, "ERROR: compute_f Material check failed\n" );
 
 //solveTT
-   if( mopt->m_win_mode == 1 && nmpard_global == 0 )
-   {
-      float_sw4* coarse=new float_sw4[nmpars];
-      float_sw4 freq;
-      mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
-      for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
-      {
-         freq= mopt->get_freq_peakpower()>0.? mopt->get_freq_peakpower() : GlobalSources[e][0]->getFrequency();
-         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
-                            mopt->get_wave_mode(), mopt->get_twin_shift(), mopt->get_twin_scale(), 
-                            freq, e, simulation.getRank());
-      }
-      delete[] coarse;
-   }
-   else if( mopt->m_win_mode == 1 )
-   {
-      int myrank;
-      MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
-      if( myrank == 0 )
-         std::cout << "Can not use solveTT to compute time windows with a distibuted material grid" << std::endl;
-   }
+//   if( mopt->m_win_mode == 1 && nmpard_global == 0 )
+//   {
+//      float_sw4* coarse=new float_sw4[nmpars];
+//      mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
+//      for( int e=0 ; e < GlobalTimeSeries.size() ; e++ )
+//      {
+//         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
+//                            mopt->get_wave_mode(), e, simulation.getRank());
+//      }
+//      delete[] coarse;
+//   }
+//   else if( mopt->m_win_mode == 1 )
+//   {
+//      int myrank;
+//      MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
+//      if( myrank == 0 )
+//         std::cout << "Can not use solveTT to compute time windows with a distibuted material grid" << std::endl;
+//   }
 
    //   // Debug
    //   int myid=simulation.getRank();
@@ -453,27 +504,26 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
    }
    //   MPI_Barrier(MPI_COMM_WORLD);
    VERIFY2( ok, "ERROR: Material check failed\n" );
-   if( mopt->m_win_mode == 1 && nmpard_global == 0 )
-   {
-      if( myrank == 0 )
-         std::cout << "Calling solveTT from compute_f_and_df " << std::endl;
-      float_sw4 freq;
-      float_sw4* coarse=new float_sw4[nmpars];
-      mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
-      for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
-      {
-         freq = mopt->get_freq_peakpower()>0. ? mopt->get_freq_peakpower() : GlobalSources[e][0]->getFrequency();
-         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars,
-                            mopt->m_mp, mopt->get_wave_mode(), mopt->get_twin_shift(), 
-                            mopt->get_twin_scale(), freq, e, simulation.getRank());
-     }
-      delete[] coarse;
-   }
-   else if( mopt->m_win_mode == 1 )
-   {
-      if( myrank == 0 )
-         std::cout << "Can not use solveTT to compute time windows with a distibuted material grid" << std::endl;
-   }
+   //   if( mopt->m_win_mode == 1 && nmpard_global == 0 )
+   //   {
+   //      if( myrank == 0 )
+   //         std::cout << "Calling solveTT from compute_f_and_df " << std::endl;
+   //      float_sw4* coarse=new float_sw4[nmpars];
+   //      mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, rho, mu, lambda, 5 );
+   //      for( int e=0 ; e < GlobalTimeSeries.size() ; e++ )
+   //      {
+   //         simulation.solveTT(GlobalSources[e][0], GlobalTimeSeries[e], coarse, nmpars, mopt->m_mp, 
+   //                            mopt->get_wave_mode(), e, simulation.getRank());
+
+   //     }
+   //      delete[] coarse;
+   //   }
+   //   else if( mopt->m_win_mode == 1 )
+   //   {
+   //      if( myrank == 0 )
+   //         std::cout << "Can not use solveTT to compute time windows with a distibuted material grid" << std::endl;
+   //   }
+
    //   if( myrank == 0 )
    //      std::cout << "Checking windows:" << std::endl;
    //   for( int e=0 ; e < simulation.getNumberOfEvents() ; e++ )
@@ -516,6 +566,13 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          sw4_profile->time_stamp("forward solve" );
          simulation.solve( GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho, U, Um, upred_saved, ucorr_saved, true, e, mopt->m_nsteps_in_memory, phcase, pseudo_hessian );
          sw4_profile->time_stamp("done forward solve" );
+
+     //DEBUG
+         ///         int ip=39, jp=37, kp=3, gr=2;
+         //         if( simulation.interior_point_in_proc(ip,jp,gr))
+         //            std::cout << "U(T) = " << U[gr](1,ip,jp,kp) << " " << U[gr](2,ip,jp,kp) << " "
+         //                      << U[gr](3,ip,jp,kp) << std::endl;
+
 // Compute misfit, 'diffs' will hold the source for the adjoint problem
 
 // 1. Copy computed time series into diffs[m]
@@ -524,9 +581,12 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          {
             if( mopt->m_output_ts && it >= 0 )
                GlobalTimeSeries[e][m]->writeFile();
+               
             TimeSeries *elem = GlobalTimeSeries[e][m]->copy( &simulation, "diffsrc" );
             diffs.push_back(elem);
          }
+
+
 // 2. misfit function also updates diffs := this - observed
          if( mopt->m_misfit == Mopt::L2 )
          {
@@ -548,8 +608,9 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          }
          else if( mopt->m_misfit == Mopt::CROSSCORR )
          {
-            for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ )
+            for( int m = 0 ; m < GlobalTimeSeries[e].size() ; m++ ) {
                f += GlobalTimeSeries[e][m]->misfit2( *GlobalObservations[e][m], diffs[m] );
+            }
          }
          
          double dfsrc[11];
@@ -557,9 +618,10 @@ void compute_f_and_df( EW& simulation, int nspar, int nmpars, double* xs,
          sw4_profile->time_stamp("backward+adjoint solve" );
          simulation.solve_backward_allpars( GlobalSources[e], rho, mu, lambda,  diffs, U, Um, upred_saved, ucorr_saved, dfsrc, gRho, gMu, gLambda, e );
          sw4_profile->time_stamp("done backward+adjoint solve" );
-         //         int ip=67, jp=20, kp=20;
-         //         if( simulation.interior_point_in_proc(ip,jp,0))
-         //            std::cout << "mugrad = " << gMu[0](ip,jp,kp) << " rhograd = " << gRho[0](ip,jp,kp) << std::endl;
+         // DEBUG
+         //         int ip=39, jp=37, kp=3, gr=2;
+         //         if( simulation.interior_point_in_proc(ip,jp,gr))
+         //            std::cout << "mugrad = " << gMu[gr](ip,jp,kp) << " rhograd = " << gRho[gr](ip,jp,kp) << std::endl;
          mopt->m_mp->get_gradient( nmpard, xm, nmpars, &xs[nspar], dfsevent, dfmevent, rho, mu, lambda, gRho, gMu, gLambda );
          for( int m=0 ; m < nmpars ; m++ )
             dfs[m+nspar] += dfsevent[m];
@@ -908,32 +970,45 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
    {
    //Debug This assumes that m_mp->get_gradient is modified to only return
       // the sum over the grid points of the gradient wrt. the parameter
-      std::vector<Sarray> rho0(1), mu0(1), lambda0(1), rho1(1), mu1(1), lambda1(1);
-      std::vector<Sarray> cs0(1), cp0(1), cs1(1), cp1(1);
-      int k1=simulation.m_kStart[0];
-      int k2=simulation.m_kEnd[0];
-      int j1=simulation.m_jStart[0];
-      int j2=simulation.m_jEnd[0];
-      int i1=simulation.m_iStart[0];
-      int i2=simulation.m_iEnd[0];
-      rho0[0].define(i1,i2,j1,j2,k1,k2);
-      mu0[0].define(i1,i2,j1,j2,k1,k2);
-      lambda0[0].define(i1,i2,j1,j2,k1,k2);   
-      rho1[0].define(i1,i2,j1,j2,k1,k2);
-      mu1[0].define(i1,i2,j1,j2,k1,k2);
-      lambda1[0].define(i1,i2,j1,j2,k1,k2);   
+      int ng=simulation.mNumberOfGrids;
+      std::vector<Sarray> rho0(ng), mu0(ng), lambda0(ng), rho1(ng), mu1(ng), lambda1(ng);
+      std::vector<Sarray> cs0(ng), cp0(ng), cs1(ng), cp1(ng);
+      for( int g=0 ; g < ng; g++)
+      {
+         int k1=simulation.m_kStart[g];
+         int k2=simulation.m_kEnd[g];
+         int j1=simulation.m_jStart[g];
+         int j2=simulation.m_jEnd[g];
+         int i1=simulation.m_iStart[g];
+         int i2=simulation.m_iEnd[g];
+         rho0[g].define(i1,i2,j1,j2,k1,k2);
+         mu0[g].define(i1,i2,j1,j2,k1,k2);
+         lambda0[g].define(i1,i2,j1,j2,k1,k2);   
+         rho1[g].define(i1,i2,j1,j2,k1,k2);
+         mu1[g].define(i1,i2,j1,j2,k1,k2);
+         lambda1[g].define(i1,i2,j1,j2,k1,k2);   
+      }
       mopt->m_mp->get_material( nmpard, xm, nmpars, xs, rho0, mu0, lambda0 );
       simulation.communicate_arrays(rho0);
       simulation.communicate_arrays(mu0);
       simulation.communicate_arrays(lambda0);
       int varcase=mopt->m_mp->get_varcase();
-      if( varcase > 1  )
+      for( int g=0 ; g < ng; g++)
       {
-         cs0[0].define(i1,i2,j1,j2,k1,k2);
-         cp0[0].define(i1,i2,j1,j2,k1,k2);   
-         cs1[0].define(i1,i2,j1,j2,k1,k2);
-         cp1[0].define(i1,i2,j1,j2,k1,k2);   
-         getcscp( rho0[0], mu0[0], lambda0[0], cs0[0], cp0[0]);
+         if( varcase > 1  )
+         {
+            int k1=simulation.m_kStart[g];
+            int k2=simulation.m_kEnd[g];
+            int j1=simulation.m_jStart[g];
+            int j2=simulation.m_jEnd[g];
+            int i1=simulation.m_iStart[g];
+            int i2=simulation.m_iEnd[g];
+            cs0[g].define(i1,i2,j1,j2,k1,k2);
+            cp0[g].define(i1,i2,j1,j2,k1,k2);   
+            cs1[g].define(i1,i2,j1,j2,k1,k2);
+            cp1[g].define(i1,i2,j1,j2,k1,k2);   
+            getcscp( rho0[g], mu0[g], lambda0[g], cs0[g], cp0[g]);
+         }
       }
       double* sf = mopt->m_sfm;
       double h=1e-6;
@@ -971,37 +1046,40 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
          simulation.communicate_arrays(rho1);
          simulation.communicate_arrays(mu1);
          simulation.communicate_arrays(lambda1);
-         if( varcase > 1 )
-            getcscp( rho1[0], mu1[0], lambda1[0], cs1[0], cp1[0]);
-         double dfnum;
-         if( varcase == 1 )
+         double dfnum=0;
+         for( int g=0 ; g < ng; g++)
          {
-            if( var==0 )
-               dfnum = sumdiff(simulation,0,rho1[0],rho0[0])/h;
-            else if( var==1 )
-               dfnum = sumdiff(simulation,0,mu1[0],mu0[0])/h;
-            else if( var==2 )
-               dfnum = sumdiff(simulation,0,lambda1[0],lambda0[0])/h;
-         }
-         else if( varcase == 2 )
-         {
-            if( var==0 )
-               dfnum = sumdiff(simulation,0,rho1[0],rho0[0])/h;
-            else if( var==1 )
-               dfnum = sumdiff(simulation,0,cs1[0],cs0[0])/h;
-            else if( var==2 )
-               dfnum = sumdiff(simulation,0,cp1[0],cp0[0])/h;
-         }
-         else if( varcase == 3 )
-         {
-            if( var==0 )
-               dfnum = sumdiff(simulation,0,cs1[0],cs0[0])/h;
-            else if( var==1 )
-               dfnum = sumdiff(simulation,0,cp1[0],cp0[0])/h;
-         }
-         else 
-         {
-            dfnum = sumdiff(simulation,0,cp1[0],cp0[0])/h;
+            if( varcase > 1 )
+               getcscp( rho1[g], mu1[g], lambda1[g], cs1[g], cp1[g]);
+            if( varcase == 1 )
+            {
+               if( var==0 )
+                  dfnum += sumdiff(simulation,g,rho1[g],rho0[g])/h;
+               else if( var==1 )
+                  dfnum += sumdiff(simulation,g,mu1[g],mu0[g])/h;
+               else if( var==2 )
+                  dfnum += sumdiff(simulation,g,lambda1[g],lambda0[g])/h;
+            }
+            else if( varcase == 2 )
+            {
+               if( var==0 )
+                  dfnum += sumdiff(simulation,g,rho1[g],rho0[g])/h;
+               else if( var==1 )
+                  dfnum += sumdiff(simulation,g,cs1[g],cs0[g])/h;
+               else if( var==2 )
+                  dfnum += sumdiff(simulation,g,cp1[g],cp0[g])/h;
+            }
+            else if( varcase == 3 )
+            {
+               if( var==0 )
+                  dfnum += sumdiff(simulation,g,cs1[g],cs0[g])/h;
+               else if( var==1 )
+                  dfnum += sumdiff(simulation,g,cp1[g],cp0[g])/h;
+            }
+            else 
+            {
+               dfnum += sumdiff(simulation,g,cp1[g],cp0[g])/h;
+            }
          }
 
 	 double dfan;
@@ -1030,7 +1108,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
       vector<Image*> im;
       compute_f_and_df( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, 
                         GlobalTimeSeries, GlobalObservations, f, dfs, dfm, 
-                        simulation.getRank(), mopt ); //mp, false, false, im );
+                        simulation.getRank(), mopt, 0 ); //mp, false, false, im );
    // Compute max-norm of gradient
       double dfnorm=0;
       if( nmpard_global > 0 )
@@ -1072,7 +1150,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
          //	 h = 3e-8*sf[ind]; // multiply step length by scale factor
             h = std::max(1.0,fabs(xs[ind]))*3e-8;
             h *= exafactor;
-            h =1e-2;
+            h =1e-3;
             double x0=xs[ind];
             xs[ind] = x0+h;
             compute_f( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, 
@@ -1132,23 +1210,44 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
                      
          bool computewderivative=false;
          bool dbg=false;
-         int ng=2;
-         int vb[2]={0,0}, ve[2]={2,2};
-         int ipb[2]={29,57}, ipe[2]={29,57};
-         int jpb[2]={51,101}, jpe[2]={51,101};
-         int kpb[2]={1,24}, kpe[2]={3,26};
-         //         int kpb[2]={1,1},   kpe[2]={0,3};
 
-         for( int grid=0 ; grid < ng ; grid++ )
-            for( int kp=kpb[grid] ; kp <= kpe[grid] ; kp++ )
-               for( int jp=jpb[grid] ; jp <= jpe[grid] ; jp++ )
-                  for( int ip=ipb[grid] ; ip <= ipe[grid] ; ip++ )
-                     for( int var=vb[grid] ; var <= ve[grid] ; var++ )
-                     {
-                        ssize_t ind = mopt->m_mp->parameter_index(ip,jp,kp,grid,var);
-                        if(ind >=0 && myRank < procevent) //if(myRank == 0 )
-                           cout << "var= " << var << " (i,j,k)= (" << ip << "," << jp 
-                                << "," << kp << ") grid= " << grid<<endl;
+         //         int ng=2;
+         //         int vb[2]={0,0}, ve[2]={0,0};
+         //         int ipb[2]={20,20}, ipe[2]={20,20};
+         //         int jpb[2]={18,18}, jpe[2]={18,18};
+         //         int kpb[2]={1,1}, kpe[2]={6,17};
+
+         int ng=3;
+         int vb[3]={1,1,1}, ve[3]={1,1,1};
+         int ipb[3]={20,20,39}, ipe[3]={20,20,39};
+         int jpb[3]={18,18,35}, jpe[3]={18,18,35};
+         int kpb[3]={1,1,1}, kpe[3]={6,12,12};
+
+         //         int kpb[2]={1,1}, kpe[2]={14,25};
+         //         int kpb[2]={1,1},   kpe[2]={0,3};
+         //         int grid=0;
+
+
+         //         for( int grid=0 ; grid < ng ; grid++ )
+         //            for( int kp=kpb[grid] ; kp <= kpe[grid] ; kp++ )
+         //               for( int jp=jpb[grid] ; jp <= jpe[grid] ; jp++ )
+         //                  for( int ip=ipb[grid] ; ip <= ipe[grid] ; ip++ )
+         //                     for( int var=vb[grid] ; var <= ve[grid] ; var++ )
+         //                     {
+
+         //                    for( int kp=1 ; kp <= 5 ; kp++ )
+         //                       for( int jp=5 ; jp <= 5 ; jp++ )
+         //                         for( int ip=5 ; ip <= 6 ; ip++ )
+         //                            for( int var=1 ; var <= 2 ; var++ )
+         //         
+
+         for( int indg=0; indg < nmpard_global  ; indg++)
+         {
+           ssize_t ind = mopt->m_mp->local_index(indg);
+           //                ssize_t ind = mopt->m_mp->parameter_index(ip,jp,kp,grid,var);
+            //                        if(ind >=0 && myRank < procevent) //if(myRank == 0 )
+                           //                           cout << "var= " << var << " (i,j,k)= (" << ip << "," << jp 
+                           //                                << "," << kp << ") grid= " << grid<<endl;
                         double x0;
                         if( ind >=0 )
                         {
@@ -1172,16 +1271,16 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
                         if( ind >= 0 )
                            xm[ind] = x0;
                         bool wderivative=false;
-                        if( var == 0 && computewderivative )
-                        {
-                           compute_f_with_derivative( simulation, nspar, nmpars, xs, nmpard, xm, 
-                                          GlobalSources, GlobalTimeSeries, 
-                                          GlobalObservations, f2, df2,
-                                          mopt, ip, jp, kp, grid, myRank );
-                           wderivative = true;
-                           if( myRank == 0 && dbg )
-                              cout << "misfit 1 and 2 " << f<< " " << f2 << " diff= " << f-f2 << endl;
-                        }
+                        //                        if( var == 0 && computewderivative )
+                        //                        {
+                        //                           compute_f_with_derivative( simulation, nspar, nmpars, xs, nmpard, xm, 
+                        //                                          GlobalSources, GlobalTimeSeries, 
+                        //                                          GlobalObservations, f2, df2,
+                        //                                          mopt, ip, jp, kp, grid, myRank );
+                        //                           wderivative = true;
+                        //                           if( myRank == 0 && dbg )
+                        //                              cout << "misfit 1 and 2 " << f<< " " << f2 << " diff= " << f-f2 << endl;
+                        //                        }
                         if( myRank == 0 && dbg )
                         {
                            cout.precision(16);
@@ -1206,7 +1305,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
                         }
                         //                        if( indg > 0 && (indg % 100 == 0) && (myRank == 0 && myRank < procevent))
                         //                           cout << "Done ind = " << indg << endl;
-                     }
+         }
       }
       if( dftest.is_open() )
          dftest.close();
@@ -1775,6 +1874,7 @@ int main(int argc, char **argv)
 		 }
 	      }
 
+
 //  First copy observations to GlobalTimeSeries, later, solve will insert 
 //  the simulation time step and start time into GlobalTimeSeries.
 	      for( int m = 0; m < GlobalObservations[e].size(); m++ )
@@ -2016,7 +2116,17 @@ int main(int argc, char **argv)
 	   }
            else if( mopt->m_opttest == 8 )
            {
-        // Material parameterization test. Compute material from parameters and output images
+        // Material parameterization test. 
+              // 1. Interpolate from SW4 grid to material grid, and save result to file coarse.h5
+              mp->get_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,
+                                 simulation.mLambda, 5 );
+              double* xptr=xm;
+              if( nmpars > 0 )
+                 xptr=&xs[nspar];
+              mp->write_dfm_hdf5(xptr,"coarse.h5",MPI_COMM_WORLD);
+
+              // 2. Fetch parameters according to input 'mparcart init=option' and interpolate 
+              //    to SW4 grid. Save the SW4 material to image files.
               mp->get_parameters(nmpard,xm,nmpars,&xs[nspar],simulation.mRho,simulation.mMu,
                                  simulation.mLambda, -1 );
               int ng=simulation.mNumberOfGrids;
@@ -2056,6 +2166,22 @@ int main(int argc, char **argv)
            }
            else if( mopt->m_opttest == 1 )
 	   {
+              bool dbg=false;
+         //add frequency-dependent t0 and duration for time windowing of waveforms
+              float_sw4 fc2 = simulation.m_filter_ptr? simulation.m_filter_ptr->get_corner_freq2() : 0.;
+              if( mopt->m_win_mode != 0 )
+                 set_timewindows_from_eikonal_time(GlobalTimeSeries, GlobalSources, mopt, fc2);
+              else
+              {
+                 for( int e=0 ; e < GlobalTimeSeries.size() ; e++ )
+                    for( int m=0 ; m < GlobalTimeSeries[e].size(); m++ )
+                       GlobalTimeSeries[e][m]->disableWindows();
+              }
+              if( dbg )
+                 for( int e=0 ; e < GlobalTimeSeries.size() ; e++ )
+                    for( int m=0 ; m < GlobalTimeSeries[e].size(); m++ )
+                       GlobalTimeSeries[e][m]->print_windows();
+
 // Run optimizer (default)
 	      sw4_profile->time_stamp("Start optimizer");
 	      if( mopt->m_optmethod == 1 )
@@ -2065,6 +2191,14 @@ int main(int argc, char **argv)
 	      else if( mopt->m_optmethod == 2 )
 		 nlcg( simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources, GlobalTimeSeries,
 		       GlobalObservations, myRank, mopt );
+
+              for( int e=0 ; e < GlobalTimeSeries.size(); e++ )
+                for( int m=0 ; m < GlobalTimeSeries[e].size() ; m++ ) {
+                  // This barrier is needed as each process needs to open and write to the HDF5 file independently, and one at a time
+                  MPI_Barrier(simulation.m_1d_communicator);
+                  GlobalTimeSeries[e][m]->writeWindows();  
+                }
+
 	      sw4_profile->time_stamp("Done optimizer");
 	      sw4_profile->flush();
 	   }
@@ -2149,8 +2283,11 @@ int main(int argc, char **argv)
                  else
                  {
                     coarse = new double[nmpars];
-                    mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, simulation.mRho, 
-                                                simulation.mMu, simulation.mLambda, 5 );
+//                    mopt->m_mp->get_parameters( nmpard, xm, nmpars, coarse, simulation.mRho, 
+//                                                simulation.mMu, simulation.mLambda, 5 );
+                    mopt->m_mp->interpolate_to_cartesian( nmpard, xm, nmpars, coarse, 
+                                                          simulation.mRho, simulation.mMu, 
+                                                          simulation.mLambda );
                  }
               }
               if( !fail )
@@ -2178,15 +2315,17 @@ int main(int argc, char **argv)
                        GlobalObservations[e][s]->writeFile();
 
                  for( int e=0; e < GlobalObservations.size(); e++ )
-                 {
-                    float_sw4 freq=mopt->get_freq_peakpower();
-                    if( freq <= 0 )
-                       freq = GlobalSources[e][0]->getFrequency();
-                    simulation.solveTT(GlobalSources[e][0], GlobalObservations[e], coarse, nmpars, 
-                                       mopt->m_mp, mopt->get_wave_mode(), mopt->get_twin_shift(), 
-                                       mopt->get_twin_scale(), freq, e, simulation.getRank());
-                    for( int s=0 ; s < GlobalObservations[e].size() ; s++)
-                       GlobalObservations[e][s]->writeWindows();
+                  {
+                     if( GlobalSources[e].size() <= 0 )
+                        std::cout << "ERROR, no source given for event " << e << std::endl;
+                     simulation.solveTT(GlobalSources[e][0], GlobalObservations[e], coarse, nmpars, mopt->m_mp, 
+                                    mopt->get_wave_mode(), e, simulation.getRank());
+               
+                     for( int s=0 ; s < GlobalObservations[e].size() ; s++) {
+                        // This barrier is needed as each process needs to open and write to the HDF5 file independently, and one at a time
+                        MPI_Barrier(simulation.m_1d_communicator);
+                        GlobalObservations[e][s]->writeWindows();
+                     }
                  }
               }
            }
@@ -2195,6 +2334,7 @@ int main(int argc, char **argv)
 		 cout << "ERROR: m_opttest = " << mopt->m_opttest << 
                                            " is not a valid choice" << endl;
            
+           if( simulation.event_is_in_proc(0) )
            {
               int ng = simulation.mNumberOfGrids;
               vector<Sarray> rho(ng), mu(ng), lambda(ng);
@@ -2227,5 +2367,3 @@ int main(int argc, char **argv)
   //  return status;
 } 
  
-
-   

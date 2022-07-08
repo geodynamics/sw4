@@ -122,7 +122,7 @@ void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTim
             int varcase, vector<Sarray>& pseudoHessian );
 
 void solveTT( Source* a_GlobalSource, vector<TimeSeries*> & a_GlobalTimeSeries,
-	    double* xs, int nmpars, MaterialParameterization* mp, int wave_mode, float twinshift, float twinscale, float freq, int event, int myrank);
+	    double* xs, int nmpars, MaterialParameterization* mp, int wave_mode, int event, int myrank);
 
 void solve_backward( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries, float_sw4 gradient[11], float_sw4 hessian[121] );
    //void solve_allpars( vector<Source*> & a_GlobalSources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
@@ -506,6 +506,8 @@ int computeNearestGridPoint2(int & a_i,
 			     float_sw4 a_y, 
 			     float_sw4 a_z);
 
+int computeInvGridMap( float_sw4& a_i, float_sw4& a_j, float_sw4& a_k, int& a_g,
+                       float_sw4 a_x, float_sw4 a_y, float_sw4 a_z );
 
 void coord_from_index( int i, int j, int k, int g, float_sw4& x, float_sw4& y, float_sw4& z );
 
@@ -1327,8 +1329,8 @@ void velsum_ci( int is, int ie, int js, int je, int ks, int ke,
    void checkpoint_twilight_test( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarray>& Up,
 				  vector<Sarray*> AlphaVEm, vector<Sarray*> AlphaVE,
 				  vector<Sarray*> AlphaVEp, vector<Source*> a_Sources, float_sw4 t );
-   void set_to_zero_at_source( vector<Sarray> & a_U, vector<GridPointSource*> point_sources,
-                               vector<int> identsources, int padding );
+   void set_to_zero_at_source( vector<Sarray> & a_U, vector<Source*> point_sources,
+                               int padding );
    void set_zerograd();
    void set_zerograd_pad(int pad);
    void set_to_zero_at_receiver( vector<Sarray> & a_U, 
@@ -1442,7 +1444,7 @@ int m_nevent; // Number of events, needed for multiple event material optimizati
 int m_nevents_specified; // Number of event lines in input file
 bool m_events_parallel; // Process events in parallel
 int m_eStart, m_eEnd;
-int m_event_in_proc; // Event number [0,nevent) in this proc, when using parallel events
+   //int m_event_in_proc; // Event number [0,nevent) in this proc, when using parallel events
 map<string,int> m_event_names;
 
 // epicenter

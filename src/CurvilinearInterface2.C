@@ -37,6 +37,7 @@ CurvilinearInterface2::CurvilinearInterface2( int a_gc, EW* a_ew )
       m_isbndry[s] = true;
    m_use_attenuation   = a_ew->usingAttenuation();
    m_number_mechanisms = a_ew->getNumberOfMechanisms();
+   m_memory_is_allocated = false;
 }
 
 //-----------------------------------------------------------------------
@@ -97,8 +98,17 @@ void CurvilinearInterface2::copy_str( float_sw4* dest, float_sw4* src,
 
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::init_arrays( vector<float_sw4*>& a_strx,
-					 vector<float_sw4*>& a_stry )
+					 vector<float_sw4*>& a_stry,
+                                         vector<Sarray>& a_rho, 
+                                         vector<Sarray>& a_mu, 
+                                         vector<Sarray>& a_lambda )
 {
+   if( m_memory_is_allocated )
+   {
+      delete[] m_strx_c, m_stry_c, m_strx_f, m_stry_f;
+      delete[] m_mass_block, m_ipiv_block;
+   }
+   m_memory_is_allocated = true;
    for( int s=0 ; s < 4; s++ )
       m_isbndry[s] = m_ew->getLocalBcType( m_gc, s ) != bProcessor;
 
@@ -184,12 +194,19 @@ void CurvilinearInterface2::init_arrays( vector<float_sw4*>& a_strx,
    }
    else 
    {
-      m_rho_c.insert_intersection(m_ew->mRho[m_gc]);
-      m_rho_f.insert_intersection(m_ew->mRho[m_gf]);
-      m_mu_c.insert_intersection(m_ew->mMu[m_gc]);
-      m_mu_f.insert_intersection(m_ew->mMu[m_gf]);
-      m_lambda_c.insert_intersection(m_ew->mLambda[m_gc]);
-      m_lambda_f.insert_intersection(m_ew->mLambda[m_gf]);
+      //      m_rho_c.insert_intersection(m_ew->mRho[m_gc]);
+      //      m_rho_f.insert_intersection(m_ew->mRho[m_gf]);
+      //      m_mu_c.insert_intersection(m_ew->mMu[m_gc]);
+      //      m_mu_f.insert_intersection(m_ew->mMu[m_gf]);
+      //      m_lambda_c.insert_intersection(m_ew->mLambda[m_gc]);
+      //      m_lambda_f.insert_intersection(m_ew->mLambda[m_gf]);
+
+      m_rho_c.insert_intersection(a_rho[m_gc]);
+      m_rho_f.insert_intersection(a_rho[m_gf]);
+      m_mu_c.insert_intersection(a_mu[m_gc]);
+      m_mu_f.insert_intersection(a_mu[m_gf]);
+      m_lambda_c.insert_intersection(a_lambda[m_gc]);
+      m_lambda_f.insert_intersection(a_lambda[m_gf]);
 
       int extra_ghost = m_nghost - m_ew->getNumberOfGhostPoints();
       if( extra_ghost > 0 )
@@ -350,7 +367,8 @@ void CurvilinearInterface2::init_arrays_att()
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
                                        std::vector<Sarray>& a_F,
-                                       std::vector<Sarray*>& a_AlphaVE )
+                                       std::vector<Sarray*>& a_AlphaVE, 
+                                       bool injection_only )
 {
    bool force_dirichlet = false; //, check_stress_cont=false;
    //   int fg=0;
@@ -446,7 +464,16 @@ void CurvilinearInterface2::impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
          communicate_array( Alpha_f[a], true );
       }
 
-
+   if( injection_only )
+   {
+      a_U[m_gf].copy_kplane2(U_f,m_nkf);
+      if( m_use_attenuation )
+      {
+         for( int a=0 ; a < m_number_mechanisms ; a++ )
+            a_AlphaVE[m_gf][a].copy_kplane2(Alpha_f[a],m_nkf);
+      }
+      return;
+   }
 // 4. Solve equation for stress continuity, formulated as lhs*x+rhs=0, where x are uc's ghost points at k=0.
 
    // 4.a Form right hand side of equation

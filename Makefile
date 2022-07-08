@@ -187,7 +187,7 @@ endif
 
 ifeq ($(proj_6),yes)
    CXXFLAGS += -DENABLE_PROJ_6 -I$(SW4INC)
-   linklibs += -L$(SW4LIB) -lproj -lsqlite3 -lcurl -lssl -lcrypto
+   linklibs += -L$(SW4LIB) -lproj -lsqlite3 -lcurl -lssl -lcrypto -Wl,-rpath,$(SW4LIB)
    proj  := "proj_6"
 else ifeq ($(proj),yes)
    CXXFLAGS += -DENABLE_PROJ4 -I$(SW4INC)
@@ -206,7 +206,7 @@ ifeq ($(fftw),yes)
    else
       CXXFLAGS += -DENABLE_FFTW 
    endif
-   linklibs += -L$(FFTWHOME)/lib -lfftw3_mpi -lfftw3 
+   linklibs += -L$(FFTWHOME)/lib -lfftw3_mpi -lfftw3 -Wl,-rpath,$(FFTWHOME)/lib
 endif
 
 ifeq ($(prec),single)
@@ -223,7 +223,7 @@ ifeq ($(hdf5),yes)
    # PROVIDE HDF5ROOT in configs/make.xyz, e.g.
    CXXFLAGS  += -I$(HDF5ROOT)/include -DUSE_HDF5
    # EXTRA_LINK_FLAGS += -L$(HDF5ROOT)/lib -lhdf5_hl -lhdf5
-   linklibs += -L$(HDF5ROOT)/lib -lhdf5
+   linklibs += -L$(HDF5ROOT)/lib -lhdf5 -Wl,-rpath,$(HDF5ROOT)/lib
 ifeq ($(hdf5async),yes)
    CXXFLAGS  += -DUSE_HDF5_ASYNC
 endif
@@ -231,12 +231,12 @@ endif
 
 ifeq ($(zfp),yes)
    CXXFLAGS  += -I$(H5ZROOT)/include -I$(ZFPROOT)/include -DUSE_ZFP
-   linklibs += -L$(H5ZROOT)/lib -L$(ZFPROOT)/lib -lh5zzfp -lzfp 
+   linklibs += -L$(H5ZROOT)/lib -L$(ZFPROOT)/lib -lh5zzfp -lzfp -Wl,-rpath,$(H5ZROOT)/lib  -Wl,-rpath,$(ZFPROOT)/lib
 endif
 
 ifeq ($(sz),yes)
-   CXXFLAGS  += -I$(SZROOT)/include -DUSE_SZ
-   linklibs += -L$(SZROOT)/lib -lSZ -lzlib -lzstd -lhdf5sz
+   CXXFLAGS += -I$(SZROOT)/include -DUSE_SZ
+   linklibs += -L$(SZROOT)/lib -lSZ -lzlib -lhdf5sz -lhdf5 -lm -Wl,-rpath,$(SZROOT)/lib
 endif
 
 ifdef EXTRA_LINK_FLAGS
@@ -297,7 +297,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
 MOBJOPT  = moptmain.o solve-backward-allpars.o lbfgs.o nlcg.o ProjectMtrl.o \
            MaterialParameterization.o Mopt.o MaterialParCartesian.o InterpolateMaterial.o \
 	   MaterialParCartesianVels.o MaterialParCartesianVp.o MParGridFile.o MaterialParCartesianVsVp.o \
-           MaterialParAllpts.o MaterialParCart.o solve-dudp.o
+           MaterialParAllpts.o MaterialParCart.o solve-dudp.o MaterialParCurv.o
 
 # prefix object files with build directory
 FSW4 = $(addprefix $(builddir)/,$(OBJSW4))

@@ -95,9 +95,6 @@ float_sw4 getLat() const {return m_rec_lat;}
 float_sw4 getLon() const {return m_rec_lon;}
 float_sw4 getXaz() const {return m_x_azimuth;}
 
-   //float_sw4 getMshift() const {return m_shift;}
-   //float_sw4 get_t0() const {return m_t0;}
-
 int getMUTC(int i) const {return m_utc[i];}
 void print_utc();
 
@@ -127,6 +124,7 @@ void filter_data( Filter* filter_ptr );
 void print_timeinfo() const;
 void set_window( float_sw4 winl, float_sw4 winr );
 void set_window( float_sw4 winl, float_sw4 winr, float_sw4 winl2, float_sw4 winr2 );
+void print_windows();
 void exclude_component( bool usex, bool usey, bool usez );
 void readSACfiles( EW* ew, const char* sac1, const char* sac2, const char* sac3, bool ignore_utc );
 void isRestart();
@@ -177,6 +175,8 @@ void add( TimeSeries& A, TimeSeries& B, double wghA, double wghB );
 void writeWindows( string suffix="" );
 void readWindows();
 void get_windows( float_sw4 wins[4] );
+void shiftTimeWindow( const float_sw4 t0, const float_sw4 win, const float_sw4 shift);
+void disableWindows();
 
 private:   
 TimeSeries();

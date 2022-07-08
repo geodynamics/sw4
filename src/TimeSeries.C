@@ -139,19 +139,37 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
    m_path         = a_ew->getPath(m_global_event);
 
  // 1. Adjust z if depth below topography is given
-   if (m_zRelativeToTopography && a_ew->topographyExists() ) 
+   if (a_ew->topographyExists() ) 
    {
       float_sw4 zTopoLocal;
       if(!a_ew->m_gridGenerator->interpolate_topography( a_ew, mX, mY, zTopoLocal, a_ew->mTopoGridExt))
          zTopoLocal=-1e38;
       MPI_Allreduce( &zTopoLocal, &m_zTopo, 1, a_ew->m_mpifloat, MPI_MAX, a_ew->m_1d_communicator );
-      mZ += m_zTopo;
+         //      mZ += m_zTopo;
    } 
    else
       m_zTopo = 0;
-   m_zRelativeToTopography = false;
+   if( m_zRelativeToTopography )
+   {
+      mZ += m_zTopo;
+      m_zRelativeToTopography = false;
+   }
+   float_sw4 rofftol = 1e-9;
+   if(sizeof(float_sw4) == 4 )
+      rofftol = 1e-5;
+// Make sure the station is below the topography (z is positive downwards)
+   if ( mZ < m_zTopo - rofftol)
+   {
+      printf("Ignoring SAC station %s mX=%g, mY=%g, mZ=%g, because it is above the topography z=%g\n", 
+	     m_staName.c_str(),  mX,  mY, mZ, m_zTopo);
+      m_myPoint=false;
+      return;
+   }
+
+
 // 2. Find nearest grid point and its grid.
    m_myPoint = a_ew->computeNearestGridPoint2( m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ );
+
    //   if( m_myPoint )
    //   cout << "station at ("<< mX  << " " << mY << " " << mZ <<" placed at grid point " <<
    //      m_i0 << " " << m_j0 << " " << m_k0 << " in grid " << m_grid0 <<endl;
@@ -219,21 +237,6 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
 //      mZ += m_zTopo;
 //      m_zRelativeToTopography = false; // set to false so the correction isn't repeated (e.g. by the copy function)
 //   }
-   float_sw4 rofftol = 1e-9;
-   if(sizeof(float_sw4) == 4 )
-      rofftol = 1e-5;
-
-   float_sw4 zMin = m_zTopo - rofftol; // allow for a little roundoff
-   
-// make sure the station is below the topography (z is positive downwards)
-   if ( mZ < zMin)
-   {
-      printf("Ignoring SAC station %s mX=%g, mY=%g, mZ=%g, because it is above the topography z=%g\n", 
-	     m_staName.c_str(),  mX,  mY, mZ, m_zTopo);
- // don't write this station
-      m_myPoint=false;
-      return;
-   }
      
 // now we can find the closest grid point  
 //   a_ew->computeNearestGridPoint(m_i0, m_j0, m_k0, m_grid0, mX, mY, mZ);
@@ -484,6 +487,12 @@ void TimeSeries::recordData(vector<float_sw4> & u)
 void TimeSeries::writeWindows( string suffix )
 {
   if (!m_myPoint) return;
+  bool dbg=false;
+  if( dbg )
+  {
+     std::cout << "traveltime for station " << m_staName << " at (x,y,z) " <<
+     mX << " " << mY << " " << mZ << " is " << m_winL << " " << m_winL2 << std::endl;
+  }
 #ifdef USE_HDF5
   if( m_hdf5Format )
   {
@@ -503,9 +512,17 @@ void TimeSeries::writeWindows( string suffix )
            //           int ret = createWriteAttr( grp, "WINDOWS", H5T_NATIVE_DOUBLE, data_space, windows );
            //           if( ret < 0 )
            {
-             int ret = openWriteAttr(grp, "WINDOWS", H5T_NATIVE_DOUBLE, windows);
-             if( ret < 0 )
-                std::cout << "TimeSeries::writeWindows, Error could not create/open data space" << std::endl;
+             if( H5Lexists(grp, "WINDOWS", H5P_DEFAULT) ) {
+               int ret = openWriteAttr(grp, "WINDOWS", H5T_NATIVE_DOUBLE, windows);
+               if( ret < 0 )
+                  std::cout << "TimeSeries::writeWindows, Error could not create/open data space" << std::endl;
+             }
+             else {
+               hsize_t nelements=4;
+               hid_t data_space = H5Screate_simple(1, &nelements, NULL);
+               int ret = createWriteAttr( grp, "WINDOWS", H5T_NATIVE_DOUBLE, data_space, windows );
+               H5Sclose(data_space);
+             }
            }
            H5Gclose(grp);
         }
@@ -1781,6 +1798,14 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
       float_sw4** misfitsource;
       float**     misfitsource_float;
       float_sw4 itau;//aw, bw,
+      bool dbg = false;
+      if( dbg )
+      {
+         cout << "DBG " << m_staName << " use_win= " << m_use_win << 
+            " p-win=[ " << m_winL << ", " << m_winR << "]" << 
+            " s-win=[ " << m_winL2 << ", " << m_winR2 << "]" << endl;
+      }
+
       if( m_use_win )
       {
          //	aw = M_PI/(m_winR-m_winL);
@@ -2035,7 +2060,11 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
       {
 	 if( scale_factor == 0 )
 	 {
-	    cout << "WARNING: Observation contains zero data" << endl;
+	    cout << "WARNING: Observation contains zero data" <<
+               "1  win = " << m_winL << " " <<m_winR << " " << 
+               m_winL2 << " " << m_winR2 << 
+               " t0 = " << m_t0 << " shift= " << m_shift << endl;
+
 	    scale_factor=1;
 	 }
 	 float_sw4 iscale = 1/scale_factor;
@@ -2055,6 +2084,8 @@ float_sw4 TimeSeries::misfit( TimeSeries& observed, TimeSeries* diff,
 	       misfitsource_float[2][i] *= iscale;
 	    }
       }
+      if( dbg )
+         cout << "DBG " << m_staName << " misfit= " << misfit << endl;
    }
    else
       misfit = 0;
@@ -2089,7 +2120,7 @@ float_sw4 TimeSeries::compute_maxshift( TimeSeries& observed )
             cout << m_staName<< " : " << m_global_event << "ts= " << tshift << " f= " << f << endl;
       }
       // 2. Use maximum from 1 to start Newton iteration for solving f'(tshift) = 0
-      int maxit=10, it=0;
+      int maxit=15, it=0;
       float_sw4 tol=1e-12;
       float_sw4 err=tol+1;
       float_sw4 t1 = tmax;
@@ -2180,7 +2211,7 @@ void TimeSeries::shiftfunc( TimeSeries& observed, float_sw4 tshift, float_sw4 &f
       float_sw4 wghxobs, wghyobs, wghzobs;
       wghxobs = wghyobs = wghzobs=1.;
       if( m_use_win )
-      {
+      {         
          double tobs = i*dtfr+t0fr; // t_n+tshift in Observation time 
 	       // Window data in this object w(t_n+tshift)
          wghxobs= 0.5*tanh((tobs-m_winL)*itaufr) - 0.5*tanh((tobs-m_winR)*itaufr);
@@ -2410,6 +2441,13 @@ float_sw4 TimeSeries::misfit2( TimeSeries& observed, TimeSeries* diff )
          cout << "Observation t0 = " <<observed.m_t0 << " shift= " << observed.m_shift << endl;
          cout << " station  t0 = " << m_t0 << " shift= " << m_shift << endl;
       }
+      // DEBUG
+      //      if( m_myPoint && m_staName=="GS.CN181" )
+      //      {
+      //         cout << "station GS.CN181, window lims "  
+      //              << m_winL << " " << m_winR  << " " 
+      //              << m_winL2 << " " << m_winR2 << endl;
+      //      }
       float_sw4 ms=compute_maxshift( observed );
       misfit = 0.5*ms*ms;
 
@@ -3027,6 +3065,17 @@ void TimeSeries::get_windows( float_sw4 win[4] )
    win[1] = m_winR;
    win[2] = m_winL2;
    win[3] = m_winR2;
+}
+
+//-----------------------------------------------------------------------
+void TimeSeries::print_windows( )
+{
+   if( m_myPoint )
+   {
+      std::cout << m_staName << " time windows = " << 
+         "p-wave = [" <<  m_winL << ", " << m_winR << "] s-wave = [" <<
+         m_winL2 << ", " << m_winR2 << "]" << std::endl;
+   }
 }
 
 //-----------------------------------------------------------------------
@@ -4190,7 +4239,10 @@ void TimeSeries::misfitanddudp( TimeSeries* observed, TimeSeries* dudp,
       {
 	 if( scale_factor == 0 )
 	 {
-	    cout << "WARNING: Observation contains zero data" << endl;
+	    cout << "WARNING: Observation contains zero data" << 
+               "2  win = " << m_winL << " " <<m_winR << " " << 
+               m_winL2 << " " << m_winR2 << 
+               " t0 = " << m_t0 << " shift= " << m_shift << endl;
 	    scale_factor=1;
 	 }
 	 float_sw4 iscale = 1/scale_factor;
@@ -4198,4 +4250,23 @@ void TimeSeries::misfitanddudp( TimeSeries* observed, TimeSeries* dudp,
          dmisfit *= iscale;
       }
    }
+}
+
+void TimeSeries::shiftTimeWindow( const float_sw4 t0, const float_sw4 winlen, const float_sw4 shift)
+{
+   if(m_myPoint)
+   {
+      m_winL += t0 + winlen*shift;   // tstart for P-wave
+      m_winR = m_winL + winlen;      // tend
+      m_winL2 += t0 + winlen*shift;  // tstart for S-wave
+      m_winR2 = m_winL2 + winlen;
+   }
+}
+void TimeSeries::disableWindows()
+{
+   m_use_win = false;
+   m_winL  = -1e38;
+   m_winR  =  1e38;
+   m_winL2 = -1e38;
+   m_winR2 =  1e38;
 }

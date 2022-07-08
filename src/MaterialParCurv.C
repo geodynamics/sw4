@@ -1,6 +1,4 @@
-
 #include "EW.h"
-#include "MaterialParCart.h"
 #include "Require.h"
 #include <fstream>
 #include <sstream>
@@ -9,21 +7,27 @@
 #include <hdf5.h>
 #endif
 
-MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, int varcase, 
+#include "MaterialParCurv.h"
+#include "GridGenerator.h"
+
+MaterialParCurv::MaterialParCurv( EW* a_ew, int nx, int ny, int nz, int init, int varcase, 
                                   char* fname, float_sw4 amp, float_sw4 omega, bool force_shared )
    : MaterialParameterization( a_ew, fname )
 {
-   //  VERIFY2( nx > 1 && ny > 1 && nz > 1, "MaterialParCartesian: The grid need at least two points in each direction")
+   //  VERIFY2( nx > 1 && ny > 1 && nz > 1, "MaterialParCurv: The grid need at least two points in each direction")
      // Material represented on a coarse Cartesian grid, covering the 'active' domain.
      // points are x_0,..,x_{nx+1}, where x_0 and x_{nx+1} are fixed at zero.
    // the parameter vector represents offsets from a reference material, stored in (mRho,mMu,mLambda) in EW.
    int verbose=1;
    m_variables = varcase;
    m_ratio = 1.732;   
-   m_init = init;
-   m_nx   = nx;
-   m_ny   = ny;
-   m_nz   = nz;
+   m_init  = init;
+   m_nx    = nx;
+   m_ny    = ny;
+   m_nz    = nz;
+
+   //m_toposurf.define(m_nx,m_ny,1);
+   //   m_ztopomax = a_ew->m_gridGenerator->get_topo_zmax();
 
  // Amplitude and wave number for artificial material tests
    m_amplitude = amp;
@@ -39,9 +43,12 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
       ymin = (m_ew->m_jStartActGlobal[g]-1)*hf;
       xmax = (m_ew->m_iEndActGlobal[g]-1)*hf;
       ymax = (m_ew->m_jEndActGlobal[g]-1)*hf;
+
+    // zmax largest at bottom Cartesian grid --> can ignore problem with
+    // below formula on curvilinear grids
       zmax = m_ew->m_zmin[g] + (m_ew->m_kEndAct[g]-1)*hf;
       if( m_myrank == 0 && verbose > 0 )
-         std::cout << "active region, index = " <<
+         std::cout << "Active region, Grid " << g << " index = " <<
             m_ew->m_iStartActGlobal[g] << " " <<
             m_ew->m_iEndActGlobal[g] << " " <<
             m_ew->m_jStartActGlobal[g] << " " <<
@@ -72,13 +79,33 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
       }
    }
 
-   // Determine h, such that x= i*h+xmin, i=0,..,nx+1
-   // Note, z_k = k*h + zmin, k=0,..,nz+1, with zmin=-h at surface, 
+   // Determine h, such that x= i*h+xmin, i=0,..,nx+1  ( x_0=xmin, x_{nx+1}=xmax
+   // Note, z_k = k*h + zmin, k=0,..,nz+1, with zmin=-h at surface, ( z_0=zmin-h, z_{nz+1}=zmax )
    //  i.e., k=1 is upper bndry.
    m_hx = (m_xmax-m_xmin)/(nx+1);
    m_hy = (m_ymax-m_ymin)/(ny+1);
    m_hz = (m_zmax-m_zmin)/nz;
    m_zmin = m_zmin-m_hz;
+
+
+   //   for( int j=0; j <= m_ny+1; j++ )
+   //      for( int i=0; i <= m_nx+1; i++ )
+   //      {
+   //         float_sw4 x=m_xmin+m_hx*i, y=m_ymin+m_hy*j;
+   //         float_sw4 ztopo;
+   //         bool success;
+   //         if( m_ew->topographyExists() )
+   //            success = m_ew->m_gridGenerator->interpolate_topography(m_ew,x,y,
+   //                                                      ztopo,m_ew->mTopoGridExt);
+   //         else
+   //         {
+   //            ztopo = m_zmin+m_hz;
+   //            success=true;
+   //         }
+   //         if( success )
+   //            for( int k=0; k<=m_nz+1; k++ )
+   //               mZ(i,j,k) = ((m_nz+1-k)*ztopo + (k-1.0)*m_zmax)/(m_nz);
+   //      }
 
    if( m_myrank == 0 && verbose > 0 )
    {
@@ -87,14 +114,65 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
      cout << " zmin, zmax = " << m_zmin << " " << m_zmax << " hz = " << m_hz << endl;
    }
 
-   int ncomp=3;
-   if( varcase == 3 )
-      ncomp=2;
-   else if( varcase == 4 )
-      ncomp=1;
-
 // Global grid is determined.
    m_global = compute_overlap( force_shared );
+
+   mZ.define(m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
+   mZ.set_value(-1e38);
+ // Generate grid 
+   if( m_global )
+   {
+      mZ.define(0,m_nx+1,0,m_ny+1,0,m_nz+1);
+      for( int j=0; j <= m_ny+1; j++ )
+         for( int i=0; i <= m_nx+1; i++ )
+         {
+            float_sw4 x=m_xmin+m_hx*i, y=m_ymin+m_hy*j;
+            float_sw4 ztopo;
+            bool success;
+            if( m_ew->topographyExists() )
+               success = m_ew->m_gridGenerator->interpolate_topography(m_ew,x,y,
+                                                         ztopo,m_ew->mTopoGridExt);
+            else
+            {
+               ztopo = m_zmin+m_hz;
+               success=true;
+            }
+            if( success )
+               for( int k=0; k<=m_nz+1; k++ )
+                  mZ(i,j,k) = ((m_nz+1-k)*ztopo + (k-1.0)*m_zmax)/(m_nz);
+         }
+      double* zptr=mZ.c_ptr();
+      int npts = (m_nx+2)*(m_ny+2)*(m_nz+2);
+      double* tmp = new double[npts];
+      for( int i=0 ; i < npts ; i++ )
+         tmp[i] = zptr[i];
+      MPI_Allreduce( tmp, zptr, npts, MPI_DOUBLE, MPI_MAX, m_ew->m_1d_communicator );
+
+   }
+   else
+   {
+      for( int j=m_jb ; j <= m_je ; j++ )
+         for( int i=m_ib ; i <= m_ie ; i++ )
+         {
+            float_sw4 x=m_xmin+m_hx*i, y=m_ymin+m_hy*j;
+            float_sw4 ztopo;
+            bool success;
+            if( m_ew->topographyExists() )
+            {
+               success = m_ew->m_gridGenerator->interpolate_topography(m_ew,x,y,
+                                                      ztopo,m_ew->mTopoGridExt);
+            }
+            else
+            {
+               ztopo = m_zmin+m_hz;
+               success=true;
+            }
+            if( success )
+               for( int k=m_kb ; k <= m_ke ; k++ )
+                  mZ(i,j,k) = ((m_nz+1-k)*ztopo + (k-1.0)*m_zmax)/(m_nz);
+         }
+      communicate(mZ);
+   }
 
    bool dbg=false;
    //   m_global = compute_overlap(dbg);
@@ -111,24 +189,28 @@ MaterialParCart::MaterialParCart( EW* a_ew, int nx, int ny, int nz, int init, in
          << m_kb << " " << m_kbint << " " << m_keint << " " << m_ke <<  std::endl;
       utfil.close();
    }
-   
+   m_ncomp=3;
+   if( m_variables==3)
+      m_ncomp=2;
+   if( m_variables==4)
+      m_ncomp=1;
    if( !m_global )
    {
       // Distributed arrays
       m_nms = 0;
-      m_nmd = ncomp*(m_ieint-m_ibint+1)*(m_jeint-m_jbint+1)*(m_keint-m_kbint+1);
-      m_nmd_global = ncomp*nx*ny*nz;
+      m_nmd = m_ncomp*(m_ieint-m_ibint+1)*(m_jeint-m_jbint+1)*(m_keint-m_kbint+1);
+      m_nmd_global = m_ncomp*nx*ny*nz;
    }
    else
    {
       // Global arrays
-      m_nms = ncomp*nx*ny*nz;
+      m_nms = m_ncomp*nx*ny*nz;
       m_nmd = 0;
       m_nmd_global = 0;
    }
 }
 //-----------------------------------------------------------------------
-void MaterialParCart::limit_x( int nmd, double* xmd, int nms, double* xms,
+void MaterialParCurv::limit_x( int nmd, double* xmd, int nms, double* xms,
                                float_sw4 vsmin, float_sw4 vsmax, 
                                float_sw4 vpmin, float_sw4 vpmax )
 {
@@ -175,7 +257,7 @@ void MaterialParCart::limit_x( int nmd, double* xmd, int nms, double* xms,
 
    if( m_variables==1 )
    {
-      std::cout << "MaterialParCart::Limit_x, variables=1 case is not implemented" << std::endl;
+      std::cout << "MaterialParCurv::Limit_x, variables=1 case is not implemented" << std::endl;
       for( int ind=0 ; ind < nmpar/3 ; ind++ )
       {
          float_sw4 rho=baseptr[3*ind]+xptr[3*ind];
@@ -300,7 +382,7 @@ void MaterialParCart::limit_x( int nmd, double* xmd, int nms, double* xms,
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCart::limit_df( int nmd, double* dfd, int nms, double* dfs )
+void MaterialParCurv::limit_df( int nmd, double* dfd, int nms, double* dfs )
 {
    float_sw4* dfptr;
    int nmpar;
@@ -315,7 +397,7 @@ void MaterialParCart::limit_df( int nmd, double* dfd, int nms, double* dfs )
       nmpar = nmd;
    }
    if( m_limited.size() != nmpar )
-      std::cout << "MaterialParCart::limit_df: ERROR sizes do not match " <<
+      std::cout << "MaterialParCurv::limit_df: ERROR sizes do not match " <<
          " limited size = " << m_limited.size() << " nmpar = " << nmpar << std::endl;
    for( int ind=0 ;ind < nmpar ; ind++ )
       if( m_limited[ind] )
@@ -323,7 +405,7 @@ void MaterialParCart::limit_df( int nmd, double* dfd, int nms, double* dfs )
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCart::get_material( int nmd, double* xmd, int nms, double* xms, 
+void MaterialParCurv::get_material( int nmd, double* xmd, int nms, double* xms, 
                                     std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu, 
                                     std::vector<Sarray>& a_lambda )
 
@@ -337,7 +419,7 @@ void MaterialParCart::get_material( int nmd, double* xmd, int nms, double* xms,
 //
 //-----------------------------------------------------------------------
 {
-   REQUIRE2( nmd==m_nmd && nms==m_nms, "ERROR in MaterialParCart::get_material " << 
+   REQUIRE2( nmd==m_nmd && nms==m_nms, "ERROR in MaterialParCurv::get_material " << 
                                        " inconsistent dimensions\n" );
 
    double* xptr;
@@ -348,45 +430,18 @@ void MaterialParCart::get_material( int nmd, double* xmd, int nms, double* xms,
 
    Sarray matcart(3,m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
    matcart.set_to_zero();
-   if( m_variables == 1 || m_variables == 2 )
-   {
-      size_t ind =0;
-      for( int k=m_kbint ; k <= m_keint ; k++ )
-         for( int j=m_jbint ; j <= m_jeint ; j++ )
-            for( int i=m_ibint ; i <= m_ieint ; i++ )
-            {
-               matcart(1,i,j,k) = xptr[3*ind];
-               matcart(2,i,j,k) = xptr[3*ind+1];
-               matcart(3,i,j,k) = xptr[3*ind+2];
-               ind++;
-            }
-   }
-   else if(  m_variables == 3 )
-   {
-      size_t ind =0;
-      for( int k=m_kbint ; k <= m_keint ; k++ )
-         for( int j=m_jbint ; j <= m_jeint ; j++ )
-            for( int i=m_ibint ; i <= m_ieint ; i++ )
-            {
-               matcart(2,i,j,k) = xptr[2*ind];
-               matcart(3,i,j,k) = xptr[2*ind+1];
-               ind++;
-            }
-   }
-   else
-   {
-      size_t ind =0;
-      for( int k=m_kbint ; k <= m_keint ; k++ )
-         for( int j=m_jbint ; j <= m_jeint ; j++ )
-            for( int i=m_ibint ; i <= m_ieint ; i++ )
-            {
-               matcart(3,i,j,k) = xptr[ind];
-               ind++;
-            }
-   }
+   size_t ind =0;
+   for( int k=m_kbint ; k <= m_keint ; k++ )
+      for( int j=m_jbint ; j <= m_jeint ; j++ )
+         for( int i=m_ibint ; i <= m_ieint ; i++ )
+         {
+            for( int c=1; c <= m_ncomp; c++ )
+               matcart(c+3-m_ncomp,i,j,k) = xptr[m_ncomp*ind+(c-1)];
+            ind++;
+         }
    communicate(matcart);
 
-   for( int g=0 ; g < m_ew->mNumberOfCartesianGrids; g++ )
+   for( int g=0 ; g < m_ew->mNumberOfGrids; g++ )
    {
       a_rho[g].define(m_ew->mRho[g]);
       a_mu[g].define(m_ew->mMu[g]);
@@ -394,6 +449,8 @@ void MaterialParCart::get_material( int nmd, double* xmd, int nms, double* xms,
 
       interpolate( matcart, g, a_rho[g], a_mu[g], a_lambda[g] );
 
+      //      if( g== 0 )
+      //         a_rho[g].save_to_disk("rho0.bin");
       // Add base material
       float_sw4* mmup  = m_ew->mMu[g].c_ptr();
       float_sw4* mlap  = m_ew->mLambda[g].c_ptr();
@@ -438,10 +495,19 @@ void MaterialParCart::get_material( int nmd, double* xmd, int nms, double* xms,
       m_ew->communicate_array( a_mu[g], g );
       m_ew->communicate_array( a_lambda[g], g );
    }
+   if( m_ew->mNumberOfGrids-m_ew->mNumberOfCartesianGrids > 0 )
+   {
+      if( m_ew->m_gridGenerator->curviCartIsSmooth( m_ew->mNumberOfGrids-m_ew->mNumberOfCartesianGrids ) )
+      {
+         m_ew->update_curvilinear_cartesian_interface( a_rho );
+         m_ew->update_curvilinear_cartesian_interface( a_mu );
+         m_ew->update_curvilinear_cartesian_interface( a_lambda );
+      }
+   }
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCart::find_lims( int ib, int ie, int iepm, int ibpp, 
+void MaterialParCurv::find_lims( int ib, int ie, int iepm, int ibpp, 
                                  int& ibint, int& ieint )
 {
    if( (ib+iepm) % 2 == 0 )
@@ -459,7 +525,7 @@ void MaterialParCart::find_lims( int ib, int ie, int iepm, int ibpp,
 }
 
 //-----------------------------------------------------------------------
-bool MaterialParCart::compute_overlap( bool force_shared )
+bool MaterialParCurv::compute_overlap( bool force_shared )
 {
    bool dbg=false;
    if( force_shared )
@@ -478,7 +544,7 @@ bool MaterialParCart::compute_overlap( bool force_shared )
    }
 
 // Material coarse grid limits in this processor
-   int icb=10000000, ice=-100, jcb=10000000, jce=-100, kcb=10000000, kce=-100;
+   int icb=10000000, ice=-100, jcb=10000000, jce=-100;
 
 // 1. Interpolate from coarse to fine:
    // find stencil limits: sl,su
@@ -493,7 +559,6 @@ bool MaterialParCart::compute_overlap( bool force_shared )
     // should be interpolated from material grid in this proc.
       int ibact = m_ew->m_iStartAct[g], ieact=m_ew->m_iEndAct[g];
       int jbact = m_ew->m_jStartAct[g], jeact=m_ew->m_jEndAct[g];
-      int kbact = m_ew->m_kStartAct[g], keact=m_ew->m_kEndAct[g];   
 
    // I-direction
       float_sw4 x=(ibact-1)*h;
@@ -518,21 +583,8 @@ bool MaterialParCart::compute_overlap( bool force_shared )
       jc =static_cast<int>(floor(q));
       //      jce = jc+su;
       jce = std::max(jc+su,jce);
-
-   // K-direction
-      float_sw4 z=zmin+(kbact-1)*h;
-      q=(z-m_zmin)/m_hz;
-      int kc =static_cast<int>(floor(q));
-      //      kcb = kc+sl;
-      kcb = std::min(kc+sl,kcb);
-      z=zmin+(keact-1)*h;
-      q=(z-m_zmin)/m_hz;
-      kc =static_cast<int>(floor(q));
-      //      kce = kc+su;
-      kce = std::max(kc+su,kce);
    }
 
-   //   std::cout << m_myrank << " First sweep I " << icb << " " << ice << std::endl;
 // 2. Interpolate from fine to coarse, adjust bounds if needed:
    int ngh=0;
    bool finetocoarse=false;
@@ -540,33 +592,23 @@ bool MaterialParCart::compute_overlap( bool force_shared )
    {
       bool done = false;
       int maxghost=10;
-   //   if( (ice-icb)/2 < maxghost )
-   //      maxghost=(ice-icb)/2;
-   //   if( (jce-jcb)/2 < maxghost )
-   //      maxghost=(jce-jcb)/2;
 
       while( !done && ngh < maxghost  )
       {
       // try with ngh ghost points, exit if interpolation stencil fits,
       // otherwise increase ngh
          done = true;
-         int k=(kce+kcb)/2;
-      //      for( int k=kcb+ngh ; k <= kce-ngh ; k++ )
          for( int j=jcb+ngh ; j <= jce-ngh ; j++ )
             for( int i=icb+ngh ; i <= ice-ngh ; i++ )
             {
-               double x = m_xmin + i*m_hx;
-               double y = m_ymin + j*m_hy;
-               //               double z = m_zmin + k*m_hz;
-               //               int g, ig, jg, kg;
+               float_sw4 x = m_xmin + i*m_hx;
+               float_sw4 y = m_ymin + j*m_hy;
                int g=0;
-               float_sw4 h=m_ew->mGridSize[g], zmin=m_ew->m_zmin[g];
+               float_sw4 h=m_ew->mGridSize[g];//, zmin=m_ew->m_zmin[g];
                int ig, jg;
                ig = static_cast<int>(floor(x/h+1));
                jg = static_cast<int>(floor(y/h+1));
-               //               kg = static_cast<int>(floor((z-zmin)/h+1));
-       //               m_ew->computeNearestLowGridPoint( ig, jg, kg, g, x, y, z );
-         // Assume bilinear interpolation from fine grid,
+         // Assume trilinear interpolation from fine grid,
          // only (i,i+1), (j,j+1), (and (k,k+1) ) involved:
                if(!(m_ew->point_in_proc( ig, jg, g) && m_ew->point_in_proc(ig+1,jg+1,g)) )
                {
@@ -578,13 +620,10 @@ bool MaterialParCart::compute_overlap( bool force_shared )
             ngh++;
       }
    }
-   //   std::cout << m_myrank << " Second sweep ngh= " << ngh << std::endl;
    m_ib= icb-ngh;
    m_ie= ice+ngh;
    m_jb= jcb-ngh;
    m_je= jce+ngh;
-   //   m_kb= kcb-ngh;
-   //   m_ke= kce+ngh;
    if( m_ew->m_neighbor[0] == MPI_PROC_NULL )
       m_ib   = 0;
    if( m_ew->m_neighbor[1] == MPI_PROC_NULL )
@@ -675,7 +714,7 @@ bool MaterialParCart::compute_overlap( bool force_shared )
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCart::getwgh( float_sw4 ai, float_sw4 wgh[2], int& sl, int& su )
+void MaterialParCurv::getwgh( float_sw4 ai, float_sw4 wgh[2], int& sl, int& su )
 { // Linear interpolation
    wgh[0]=1-ai;
    wgh[1]=ai;
@@ -684,10 +723,11 @@ void MaterialParCart::getwgh( float_sw4 ai, float_sw4 wgh[2], int& sl, int& su )
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCart::interpolate( Sarray& matcart, int g, Sarray& rho, 
+void MaterialParCurv::interpolate( Sarray& matcart, int g, Sarray& rho, 
                                    Sarray& mu, Sarray& lambda )
 {
    // Interpolate coarse grid material matcart to fine grid rho,mu,lambda.
+   // Uses trilinear interpolation.
    //
    // It is assumed that the dimensions of matcart has been determined
    // such that all grid points in the active domain of the computational grid 
@@ -703,94 +743,85 @@ void MaterialParCart::interpolate( Sarray& matcart, int g, Sarray& rho,
    int jbact = m_ew->m_jStartAct[g], jeact=m_ew->m_jEndAct[g];
    int kbact = m_ew->m_kStartAct[g], keact=m_ew->m_kEndAct[g];   
    float_sw4 h=m_ew->mGridSize[g], zmin=m_ew->m_zmin[g];
-   int sl, su;
-   float_sw4 wghdum[20];
-   getwgh(0.0,wghdum,sl,su);// call to find sl, su
-   int sw = su-sl+1;
-   float_sw4* wghx = new float_sw4[sw*(ieact-ibact+1)];
-   float_sw4* wghy = new float_sw4[sw*(jeact-jbact+1)];
-   float_sw4* wghz = new float_sw4[sw*(keact-kbact+1)];
-
-   for( int i=ibact ; i <= ieact ;i++ )
-   {
-      float_sw4 x=(i-1)*h;
-      float_sw4 q=(x-m_xmin)/m_hx;
-      int ic =static_cast<int>(floor(q));
-      if( ic+su > m_nx+1 )
-         ic = m_nx+1-su;
-      if( ic+sl < 0 )
-         ic = -sl;
-      getwgh(q-ic,&wghx[sw*(i-ibact)],sl,su);
-   }
-   for( int j=jbact ; j <= jeact ;j++ )
-   {
-      float_sw4 y=(j-1)*h;
-      float_sw4 q=(y-m_ymin)/m_hy;
-      int jc =static_cast<int>(floor(q));
-      if( jc+su > m_ny+1 )
-         jc = m_ny+1-su;
-      if( jc+sl < 0 )
-         jc = -sl;
-      getwgh(q-jc,&wghy[sw*(j-jbact)],sl,su);
-   }
-   for( int k=kbact ; k <= keact ;k++ )
-   {
-      float_sw4 z=zmin+(k-1)*h;
-      float_sw4 q=(z-m_zmin)/m_hz;
-      int kc =static_cast<int>(floor(q));
-      if( kc+su > m_nz+1 )
-         kc = m_nz+1-su;
-      if( kc+sl < 0 )
-         kc = -sl;
-      getwgh(q-kc,&wghz[sw*(k-kbact)],sl,su);
-   }
+   bool curvilinear = g >= m_ew->mNumberOfCartesianGrids;
 
    rho.set_value(0.0);
    mu.set_value(0.0);
    lambda.set_value(0.0);
+   //   if( m_myrank == 0 )
+   mZ.save_to_disk("zcoord.bin");
+   matcart.save_to_disk("matcart.bin");
    for( int k=kbact; k <= keact ; k++ )
-   {
-      float_sw4 z=zmin+(k-1)*h;
-      int kc =static_cast<int>(floor((z-m_zmin)/m_hz));
-      if( kc+su > m_nz+1 )
-         kc = m_nz+1-su;
-      if( kc+sl < 0 )
-         kc = -sl;
       for( int j=jbact; j <= jeact ; j++ )
       {
+         float_sw4 wghx, wghy, wghz;
          float_sw4 y=(j-1)*h;
-         int jc =static_cast<int>(floor((y-m_ymin)/m_hy));
-         if( jc+su > m_ny+1 )
-            jc = m_ny+1-su;
-         if( jc+sl < 0 )
-            jc = -sl;
+         float_sw4 q=(y-m_ymin)/m_hy;
+         int jc =static_cast<int>(floor(q));
+         if( jc > m_ny )
+            jc = m_ny;
+         if( jc < 0 )
+            jc = 0;
+         wghy = 1-(q-jc);
+
          for( int i=ibact; i <= ieact ; i++ )
          {
+            //            bool dbg = i==63 && (j==58 || j==59 ) && k==9 && g==1;
             float_sw4 x=(i-1)*h;
-            int ic =static_cast<int>(floor((x-m_xmin)/m_hx));
-            if( ic+su > m_nx+1 )
-               ic = m_nx+1-su;
-            if( ic+sl < 0 )
-               ic = -sl;
-            for( int l=sl; l<= su ; l++ )
-               for( int n=sl; n<= su ; n++ )
-                  for( int m=sl; m<= su ; m++ )
-                  {
-                     float_sw4 wghtot=wghx[m-sl+sw*(i-ibact)]*wghy[n-sl+sw*(j-jbact)]*wghz[l-sl+sw*(k-kbact)];
-                     rho(i,j,k)    += wghtot*matcart(1,ic+m,jc+n,kc+l);
-                     mu(i,j,k)     += wghtot*matcart(2,ic+m,jc+n,kc+l);
-                     lambda(i,j,k) += wghtot*matcart(3,ic+m,jc+n,kc+l);
-                  }
+            float_sw4 r=(x-m_xmin)/m_hx;
+            int ic =static_cast<int>(floor(r));
+            if( ic > m_nx )
+               ic = m_nx;
+            if( ic < 0 )
+               ic = 0;
+            wghx = 1-(r-ic);
+
+            float_sw4 ztopo=wghy*(wghx*mZ(ic,jc,  1)+(1-wghx)*mZ(ic+1,jc,  1)) + 
+                        (1-wghy)*(wghx*mZ(ic,jc+1,1)+(1-wghx)*mZ(ic+1,jc+1,1));
+            float_sw4 z;
+            if( curvilinear )
+               z=m_ew->mZ[g](i,j,k);
+            else
+               z=zmin+(k-1)*h;
+            float_sw4 s= m_nz*(z-ztopo)/(m_zmax-ztopo)+1;
+            int kc = static_cast<int>(floor(s));
+            if( kc > m_nz )
+               kc = m_nz;
+            if( kc < 0 )
+               kc = 0;
+            wghz = 1-(s-kc);
+            rho(i,j,k) = 
+               wghz*  wghy   *(wghx*matcart(1,ic,jc,  kc)  +(1-wghx)*matcart(1,ic+1,jc,  kc)) + 
+               wghz* (1-wghy)*(wghx*matcart(1,ic,jc+1,kc)  +(1-wghx)*matcart(1,ic+1,jc+1,kc))   +
+            (1-wghz)*  wghy  *(wghx*matcart(1,ic,jc,  kc+1)+(1-wghx)*matcart(1,ic+1,jc,  kc+1)) + 
+            (1-wghz)*(1-wghy)*(wghx*matcart(1,ic,jc+1,kc+1)+(1-wghx)*matcart(1,ic+1,jc+1,kc+1)); 
+            mu(i,j,k)  = 
+               wghz*  wghy   *(wghx*matcart(2,ic,jc,  kc)  +(1-wghx)*matcart(2,ic+1,jc,  kc)) + 
+               wghz* (1-wghy)*(wghx*matcart(2,ic,jc+1,kc)  +(1-wghx)*matcart(2,ic+1,jc+1,kc))   +
+            (1-wghz)*  wghy  *(wghx*matcart(2,ic,jc,  kc+1)+(1-wghx)*matcart(2,ic+1,jc,  kc+1)) + 
+            (1-wghz)*(1-wghy)*(wghx*matcart(2,ic,jc+1,kc+1)+(1-wghx)*matcart(2,ic+1,jc+1,kc+1)); 
+            lambda(i,j,k)  = 
+               wghz*  wghy   *(wghx*matcart(3,ic,jc,  kc)  +(1-wghx)*matcart(3,ic+1,jc,  kc)) + 
+               wghz* (1-wghy)*(wghx*matcart(3,ic,jc+1,kc)  +(1-wghx)*matcart(3,ic+1,jc+1,kc))   +
+            (1-wghz)*  wghy  *(wghx*matcart(3,ic,jc,  kc+1)+(1-wghx)*matcart(3,ic+1,jc,  kc+1)) + 
+            (1-wghz)*(1-wghy)*(wghx*matcart(3,ic,jc+1,kc+1)+(1-wghx)*matcart(3,ic+1,jc+1,kc+1)); 
+            //            if( dbg )
+            //            {
+            //            std::cout << "g= " << g << " i,j,k= " << i << " " << j << " " << k << " ic,jc,kc " << ic << " " << jc << " " << kc <<
+            //               " wgh " << wghx << " " << wghy << " " << wghz << "xc,yc zc= " << m_xmin+ic*m_hx << " " << m_ymin + jc*m_hy << " " << mZ(ic,jc,kc) <<  std::endl;
+            //            std::cout<< "matcart= " << matcart(1,ic,jc,kc) << " " << matcart(1,ic,jc,kc+1) << " " <<
+            //                                     matcart(1,ic,jc+1,kc) << " " << matcart(1,ic,jc+1,kc+1) << " " <<
+            //                                     matcart(1,ic+1,jc,kc) << " " << matcart(1,ic+1,jc,kc+1) << " " << 
+            //               matcart(1,ic+1,jc+1,kc) << " " << matcart(1,ic+1,jc+1,kc+1) << std::endl;
+            //            std::cout << "rho = " << rho(i,j,k) << " x,y,z= " << x << " " << y << " " << z << std::endl;
+            //            }
          }
       }
-   }
-   delete[] wghx;
-   delete[] wghy;
-   delete[] wghz;
 }
 
+
 //-----------------------------------------------------------------------
-void MaterialParCart::get_parameters( int nmd, double* xmd, 
+void MaterialParCurv::get_parameters( int nmd, double* xmd, 
                                       int nms, double* xms, 
                                       std::vector<Sarray>& a_rho, 
                                       std::vector<Sarray>& a_mu, 
@@ -808,35 +839,33 @@ void MaterialParCart::get_parameters( int nmd, double* xmd,
    }
    else if( nr == 1 )
    {
-      //      cout << " hx, hy, hz " << m_hx  <<  " " << m_hy << " " << m_hz << endl;
-      //      cout << " nx, ny, nz " << m_nx  <<  " " << m_ny << " " << m_nz << endl;
-      //      cout << " xmin, xmax " << m_xmin  <<  " " << m_xmax << endl;
-      //      cout << " ymin, ymax " << m_ymin  <<  " " << m_ymax << endl;
 
    // Test data for sine perturbed material
 
-    // Get base material 
+   // Interpolate base material to material grid
       if( m_variables == 1)
          interpolate_parameters( nmd, xmd, nms, xms, a_rho, a_mu, a_lambda, false );
 
-      //      std::cout << "variables = " << m_variables << std::endl;
       float_sw4 om = m_omega;
-      double* xptr = nms>0?xms:xmd;
+      float_sw4* xptr = nms>0?xms:xmd;
+      //      std::cout << " input amp and omega " << m_amplitude << " " << m_omega << std::endl;
       size_t ind =0;
       for( int k=m_kbint ; k <= m_keint ; k++ )
 	 for( int j=m_jbint ; j <= m_jeint ; j++ )
 	    for( int i=m_ibint ; i <= m_ieint ; i++ )
 	    {
-               bool dbg = i==1 && j==11 && k==5;
+               //               bool dbg = i==1 && j==11 && k==5;
 	       double x = i*m_hx + m_xmin;
 	       double y = j*m_hy + m_ymin;
-	       double z = k*m_hz + m_zmin;
+	       double z = mZ(i,j,k);
                double rhopert = m_amplitude*sin(om*x+0.13)*sin(om*y)*sin(om*z);
                double cspert  = m_amplitude*cos(om*x)*sin(om*y)*cos(om*z+0.01);
                double cppert  = m_amplitude*sin(om*x+0.4)*sin(om*y)*cos(om*z+0.1);
 
                if( m_variables == 1 )
                {
+                  // Use base material in xptr[] to convert velocity-perturbations to
+                  // (mu,lambda)-perturbations.
                   double cs = sqrt( xptr[3*ind+1]/xptr[3*ind] )+cspert;
                   double cp = sqrt((xptr[3*ind+2]+2*xptr[3*ind+1])/xptr[3*ind])+cppert;
                   double mupert     =  xptr[3*ind]*cs*cs-xptr[3*ind+1];
@@ -885,7 +914,7 @@ void MaterialParCart::get_parameters( int nmd, double* xmd,
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCart::interpolate_parameters( int nmd, double* xmd, 
+void MaterialParCurv::interpolate_parameters( int nmd, double* xmd, 
                                               int nms, double* xms, 
                                               std::vector<Sarray>& a_rho, 
                                               std::vector<Sarray>& a_mu, 
@@ -940,7 +969,7 @@ void MaterialParCart::interpolate_parameters( int nmd, double* xmd,
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCart::communicate( Sarray& u )
+void MaterialParCurv::communicate( Sarray& u )
 {
    //--------------------------------------------------------------
    // General ghost point exchange at processor boundaries.
@@ -1111,7 +1140,7 @@ void MaterialParCart::communicate( Sarray& u )
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCart::communicate_add( Sarray& u )
+void MaterialParCurv::communicate_add( Sarray& u )
 {
    //--------------------------------------------------------------
    // Get neighbor's ghost points and add to my interior points
@@ -1283,7 +1312,7 @@ void MaterialParCart::communicate_add( Sarray& u )
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCart::interpolate_gradient( int g, Sarray& a_gradrho, Sarray& a_gradmu, 
+void MaterialParCurv::interpolate_gradient( int g, Sarray& a_gradrho, Sarray& a_gradmu, 
                                             Sarray& a_gradlambda, Sarray& gradc )
 {
    //-----------------------------------------------------------------------
@@ -1295,104 +1324,80 @@ void MaterialParCart::interpolate_gradient( int g, Sarray& a_gradrho, Sarray& a_
    // Output: gradc - The gradient on the parameter grid, three components as one
    //                 array, size of gradc is 3 x ni x nj x nk
    //
-   // This is the transpose of the interpolation in MaterialParCart::interpolate,
+   // This is the transpose of the interpolation in MaterialParCurv::interpolate,
    //-----------------------------------------------------------------------
 
    int ibact = m_ew->m_iStartAct[g], ieact=m_ew->m_iEndAct[g];
    int jbact = m_ew->m_jStartAct[g], jeact=m_ew->m_jEndAct[g];
    int kbact = m_ew->m_kStartAct[g], keact=m_ew->m_kEndAct[g];   
    float_sw4 h=m_ew->mGridSize[g], zmin=m_ew->m_zmin[g];
-   int sl, su;
-   float_sw4 wghdum[20];
-   getwgh(0.0,wghdum,sl,su);// call to find sl, su
-   int sw = su-sl+1;
-   float_sw4* wghx = new float_sw4[sw*(ieact-ibact+1)];
-   float_sw4* wghy = new float_sw4[sw*(jeact-jbact+1)];
-   float_sw4* wghz = new float_sw4[sw*(keact-kbact+1)];
-   for( int i=ibact ; i <= ieact ;i++ )
-   {
-      float_sw4 x=(i-1)*h;
-      float_sw4 q=(x-m_xmin)/m_hx;
-      int ic =static_cast<int>(floor(q));
-      if( ic+su > m_nx+1 )
-         ic = m_nx+1-su;
-      if( ic-sl < 0 )
-         ic = sl;
-      getwgh(q-ic,&wghx[sw*(i-ibact)],sl,su);
-   }
-   for( int j=jbact ; j <= jeact ;j++ )
-   {
-      float_sw4 y=(j-1)*h;
-      float_sw4 q=(y-m_ymin)/m_hy;
-      int jc =static_cast<int>(floor(q));
-      if( jc+su > m_ny+1 )
-         jc = m_ny+1-su;
-      if( jc-sl < 0 )
-         jc = sl;
-      getwgh(q-jc,&wghy[sw*(j-jbact)],sl,su);
-   }
-   for( int k=kbact ; k <= keact ;k++ )
-   {
-      float_sw4 z=zmin+(k-1)*h;
-      float_sw4 q=(z-m_zmin)/m_hz;
-      int kc =static_cast<int>(floor(q));
-      if( kc+su > m_nz+1 )
-         kc = m_nz+1-su;
-      if( kc-sl < 0 )
-         kc = sl;
-      getwgh(q-kc,&wghz[sw*(k-kbact)],sl,su);
-   }
-
+   bool curvilinear = g >= m_ew->mNumberOfCartesianGrids;
+   //   int sl=0, su=1;
+   float_sw4 wghx, wghy, wghz;
    for( int k=kbact; k <= keact ; k++ )
-   {
-      float_sw4 z=zmin+(k-1)*h;
-      int kc =static_cast<int>(floor((z-m_zmin)/m_hz));
-      if( kc+su > m_nz+1 )
-         kc = m_nz+1-su;
-      if( kc-sl < 0 )
-         kc = sl;
       for( int j=jbact; j <= jeact ; j++ )
       {
+         float_sw4 wghx, wghy, wghz;
          float_sw4 y=(j-1)*h;
-         int jc =static_cast<int>(floor((y-m_ymin)/m_hy));
-         if( jc+su > m_ny+1 )
-            jc = m_ny+1-su;
-         if( jc-sl < 0 )
-            jc = sl;
+         float_sw4 q=(y-m_ymin)/m_hy;
+         int jc =static_cast<int>(floor(q));
+         if( jc > m_ny )
+            jc = m_ny;
+         if( jc < 0 )
+            jc = 0;
+         wghy = 1-(q-jc);
          for( int i=ibact; i <= ieact ; i++ )
          {
             float_sw4 x=(i-1)*h;
-            int ic =static_cast<int>(floor((x-m_xmin)/m_hx));            
-            if( ic+su > m_nx+1 )
-               ic = m_nx+1-su;
-            if( ic-sl < 0 )
-               ic = sl;
-            for( int l=sl; l<= su ; l++ )
-               for( int n=sl; n<= su ; n++ )
-                  for( int m=sl; m<= su ; m++ )
+            float_sw4 r=(x-m_xmin)/m_hx;
+            int ic =static_cast<int>(floor(r));
+            if( ic > m_nx )
+               ic = m_nx;
+            if( ic < 0 )
+               ic = 0;
+            wghx = 1-(r-ic);
+
+            float_sw4 ztopo=wghy*(wghx*mZ(ic,jc,  1)+(1-wghx)*mZ(ic+1,jc,  1)) + 
+                        (1-wghy)*(wghx*mZ(ic,jc+1,1)+(1-wghx)*mZ(ic+1,jc+1,1));
+            float_sw4 z;
+            if( curvilinear )
+               z=m_ew->mZ[g](i,j,k);
+            else
+               z=zmin+(k-1)*h;
+            //            float_sw4 zmax  = mZ(ic,jc,m_nz); 
+            //            float_sw4 s=(m_nz-1)*((z-ztopo)/(zmax-ztopo)+1);
+            float_sw4 s= m_nz*(z-ztopo)/(m_zmax-ztopo)+1;
+            int kc = static_cast<int>(floor(s));
+            if( kc > m_nz )
+               kc = m_nz;
+            if( kc < 0 )
+               kc = 0;
+            wghz = 1-(s-kc);
+
+            for( int l=0; l<= 1 ; l++ )
+               for( int n=0; n<= 1 ; n++ )
+                  for( int m=0; m<= 1 ; m++ )
                   {
-                     float_sw4 wghtot=wghx[m-sl+sw*(i-ibact)]*
-                                      wghy[n-sl+sw*(j-jbact)]*
-                                      wghz[l-sl+sw*(k-kbact)];
+                     float_sw4 wghtot = (m+(1-2*m)*wghx)*(n+(1-2*n)*wghy)*(l+(1-2*l)*wghz);
+                     gradc(1,ic+m,jc+n,kc+l) += wghtot*a_gradrho(i,j,k);
+                     gradc(2,ic+m,jc+n,kc+l) += wghtot*a_gradmu(i,j,k);
+                     gradc(3,ic+m,jc+n,kc+l) += wghtot*a_gradlambda(i,j,k);
+
+                     //                     float_sw4 wghtot=wghx[m-sl+sw*(i-ibact)]*
+                     //                                      wghy[n-sl+sw*(j-jbact)]*
+                     //                                      wghz[l-sl+sw*(k-kbact)];
                      // Debug
                      //                     gradc(1,ic+m,jc+n,kc+l) += wghtot;
                      //                     gradc(2,ic+m,jc+n,kc+l) += wghtot;
                      //                     gradc(3,ic+m,jc+n,kc+l) += wghtot;
                      //End debug
-                     gradc(1,ic+m,jc+n,kc+l) += wghtot*a_gradrho(i,j,k);
-                     gradc(2,ic+m,jc+n,kc+l) += wghtot*a_gradmu(i,j,k);
-                     gradc(3,ic+m,jc+n,kc+l) += wghtot*a_gradlambda(i,j,k);
                   }
          }
-      }
    }
-   delete[] wghx;
-   delete[] wghy;
-   delete[] wghz;
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCart::get_gradient( int nmd, double* xmd, int nms, double* xms,
+void MaterialParCurv::get_gradient( int nmd, double* xmd, int nms, double* xms,
                                     double* dfs, double* dfm,
                                     std::vector<Sarray>& a_rho,
                                     std::vector<Sarray>& a_mu,
@@ -1417,75 +1422,97 @@ void MaterialParCart::get_gradient( int nmd, double* xmd, int nms, double* xms,
    //  Note, only one of dfs and dfm is used.
    //-----------------------------------------------------------------------
 
-   if( m_global )
+   //   if( m_global )
+   //   {
+   //      get_gradient_shared( nms, xms, dfs, a_rho, a_mu, a_lambda, 
+   //                           a_gradrho, a_gradmu, a_gradlambda );
+   //   }
+   //   else
    {
-      get_gradient_shared( nms, xms, dfs, a_rho, a_mu, a_lambda, 
-                           a_gradrho, a_gradmu, a_gradlambda );
-   }
-   else
-   {
-   if( m_variables != 1 )
-   {
-   // 1. Transform gradient w.r.t. (rho,mu,lambda) to gradient w.r.t (rho,cs,cp):
-      for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
-         m_ew->transform_gradient( a_rho[g], a_mu[g], a_lambda[g], 
-                                   a_gradrho[g], a_gradmu[g], a_gradlambda[g] );
-   }
+      if( m_variables != 1 )
+      {
+// 1. Transform gradient w.r.t. (rho,mu,lambda) to gradient w.r.t (rho,cs,cp):
+         for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
+            m_ew->transform_gradient( a_rho[g], a_mu[g], a_lambda[g], 
+                                      a_gradrho[g], a_gradmu[g], a_gradlambda[g] );
+      }
 
-   Sarray gradc(3,m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
+      Sarray gradc(3,m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
 // 2. Gradient of interpolation operator
-   gradc.set_to_zero();
-   for( int g = 0 ; g < m_ew->mNumberOfGrids ; g++ )
-   {
+      gradc.set_to_zero();
+      for( int g = 0 ; g < m_ew->mNumberOfGrids ; g++ )
+      {
 // Chain rule of interpolation relation, e.g., gradc(2,:)=gradmu*d(mu)/dx
-      interpolate_gradient( g, a_gradrho[g], a_gradmu[g], a_gradlambda[g], gradc );
-   }   
-   communicate_add(gradc);
-   if( m_variables == 1 || m_variables == 2 )
-   {
-      size_t ind =0;
-      for( int k=m_kbint ; k <= m_keint ; k++ )
-         for( int j=m_jbint ; j <= m_jeint ; j++ )
-            for( int i=m_ibint ; i <= m_ieint ; i++ )
-            {
-               dfm[3*ind  ] = gradc(1,i,j,k);
-               dfm[3*ind+1] = gradc(2,i,j,k);
-               dfm[3*ind+2] = gradc(3,i,j,k);
-               ind++;
-            }
-   }
-   else if(  m_variables == 3 )
-   {
-      size_t ind =0;
-      for( int k=m_kbint ; k <= m_keint ; k++ )
-         for( int j=m_jbint ; j <= m_jeint ; j++ )
-            for( int i=m_ibint ; i <= m_ieint ; i++ )
-            {
-               dfm[2*ind  ] = gradc(2,i,j,k);
-               dfm[2*ind+1] = gradc(3,i,j,k);
-               ind++;
-            }
-   }
-   else
-   {
-      size_t ind =0;
+         interpolate_gradient( g, a_gradrho[g], a_gradmu[g], a_gradlambda[g], gradc );
+      }   
+      float_sw4* dfptr;
+      if( m_global )
+      {
+         // Shared material model, add together contributions from each processor
+         // into shared array.
+         int npts = gradc.npts();
+         float_sw4* gradcptr=gradc.c_ptr();
+         float_sw4* tmp = new double[3*npts];
+         for( int i=0 ; i < 3*npts ; i++ )
+            tmp[i] = gradcptr[i];
+         MPI_Allreduce( tmp, gradcptr, 3*npts, MPI_DOUBLE, MPI_SUM, m_ew->m_1d_communicator );
+         delete[] tmp;
+         dfptr = dfs;
+      }
+      else
+      {
+         // Distributed material mode, add together contributions in overlap region
+         // at processor boundaries.
+         communicate_add(gradc);
+         dfptr = dfm;
+      }
+
+// 3. Move data into non-ghostpoint gradient array 
+      if( m_variables == 1 || m_variables == 2 )
+      {
+         size_t ind =0;
+         for( int k=m_kbint ; k <= m_keint ; k++ )
+            for( int j=m_jbint ; j <= m_jeint ; j++ )
+               for( int i=m_ibint ; i <= m_ieint ; i++ )
+               {
+                  dfptr[3*ind  ] = gradc(1,i,j,k);
+                  dfptr[3*ind+1] = gradc(2,i,j,k);
+                  dfptr[3*ind+2] = gradc(3,i,j,k);
+                  ind++;
+               }
+      }
+      else if(  m_variables == 3 )
+      {
+         size_t ind =0;
+         for( int k=m_kbint ; k <= m_keint ; k++ )
+            for( int j=m_jbint ; j <= m_jeint ; j++ )
+               for( int i=m_ibint ; i <= m_ieint ; i++ )
+               {
+                  dfptr[2*ind  ] = gradc(2,i,j,k);
+                  dfptr[2*ind+1] = gradc(3,i,j,k);
+                  ind++;
+               }
+      }
+      else
+      {
+         size_t ind =0;
       //      float_sw4 irat2=1/(m_ratio*m_ratio);
-      float_sw4 irat=1/m_ratio;
-      for( int k=m_kbint ; k <= m_keint ; k++ )
-         for( int j=m_jbint ; j <= m_jeint ; j++ )
-            for( int i=m_ibint ; i <= m_ieint ; i++ )
-            {
-               dfm[ind] = irat*gradc(2,i,j,k)+gradc(3,i,j,k);
+         float_sw4 irat=1/m_ratio;
+         for( int k=m_kbint ; k <= m_keint ; k++ )
+            for( int j=m_jbint ; j <= m_jeint ; j++ )
+               for( int i=m_ibint ; i <= m_ieint ; i++ )
+               {
+                  dfptr[ind] = irat*gradc(2,i,j,k)+gradc(3,i,j,k);
                //               dfm[ind] = gradc(3,i,j,k);
                //               dfm[ind] = 2*(1-2*irat2)*gradc(3,i,j,k);
-               ind++;
-            }
-   }
+                  ind++;
+               }
+      }
    }
 }   
 
 //-----------------------------------------------------------------------
-void MaterialParCart::get_gradient_shared( int nms, double* xms, double* dfs,
+void MaterialParCurv::get_gradient_shared( int nms, double* xms, double* dfs,
 					 std::vector<Sarray>& a_rho,
 					 std::vector<Sarray>& a_mu,
 					 std::vector<Sarray>& a_lambda,
@@ -1581,7 +1608,7 @@ void MaterialParCart::get_gradient_shared( int nms, double* xms, double* dfs,
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCart::set_scalefactors( int nmpars, double* sf, double rho_ref, 
+void MaterialParCurv::set_scalefactors( int nmpars, double* sf, double rho_ref, 
                                         double mu_ref, double lambda_ref,  
                                         double vs_ref, double vp_ref )
 {
@@ -1619,7 +1646,7 @@ void MaterialParCart::set_scalefactors( int nmpars, double* sf, double rho_ref,
 }
 
 //-----------------------------------------------------------------------
-ssize_t MaterialParCart::parameter_index( int ip, int jp, int kp, int grid,
+ssize_t MaterialParCurv::parameter_index( int ip, int jp, int kp, int grid,
                                           int var )
 {
    // Local 1D-index of parameter array at point (ip,jp,kp) where 
@@ -1643,7 +1670,7 @@ ssize_t MaterialParCart::parameter_index( int ip, int jp, int kp, int grid,
 }
 
 //-----------------------------------------------------------------------
-ssize_t MaterialParCart::local_index( size_t ind_global )
+ssize_t MaterialParCurv::local_index( size_t ind_global )
 {
    // 1.Transform to global (i,j,k)-space
    int ig, jg, kg, var;
@@ -1664,7 +1691,7 @@ ssize_t MaterialParCart::local_index( size_t ind_global )
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCart::interpolate_to_coarse( vector<Sarray>& rhogrid, 
+void MaterialParCurv::interpolate_to_coarse( vector<Sarray>& rhogrid, 
                                              vector<Sarray>& mugrid,
                                              vector<Sarray>& lambdagrid,
                                              Sarray& rho, 
@@ -1676,7 +1703,7 @@ void MaterialParCart::interpolate_to_coarse( vector<Sarray>& rhogrid,
 // Compute material perturbation on parameter grid from a material that 
 // is given on the computational grid.
 //
-// Computes:  rho := I(rhogrid-mRho)   (and similar for mu and lambda)
+// Computes:  rho := I(rhogrid-mRho) or rho:=I(rhogrid)  (and similar for mu and lambda)
 //            where I() interpolates from computational grid onto the parameter grid.
 //   
 //   Input: rhogrid, mugrid, lambdagrid - The material on the computational grids.
@@ -1695,9 +1722,7 @@ void MaterialParCart::interpolate_to_coarse( vector<Sarray>& rhogrid,
    rho.set_to_zero();
    mu.set_to_zero();
    lambda.set_to_zero();
-   //   for( int k=1 ; k <= nz ; k++ )
-   //      for( int j=1 ; j <= ny ; j++ )
-   //	 for( int i=1 ; i <= nx ; i++ )
+
    std::vector<Sarray>& mRho = m_ew->mRho;
    std::vector<Sarray>& mMu = m_ew->mMu;
    std::vector<Sarray>& mLambda = m_ew->mLambda;
@@ -1710,18 +1735,20 @@ void MaterialParCart::interpolate_to_coarse( vector<Sarray>& rhogrid,
             lambda(i,j,k)=-1e38;
             double x = m_xmin + i*m_hx;
 	    double y = m_ymin + j*m_hy;
-	    double z = m_zmin + k*m_hz;
-            m_ew->computeNearestLowGridPoint( ig, jg, kg, g, x, y, z );
-            //            if( interior_point_in_proc( ig, jg, g) )
+	    double z = mZ(i,j,k);
+            float_sw4 q, r, s;
+            if( m_ew->computeInvGridMap( q, r, s, g, x, y, z ) )
+            {
+            ig = static_cast<int>(floor(q));
+            jg = static_cast<int>(floor(r));
+            kg = static_cast<int>(round(s));
             if( m_ew->m_iStart[g] <= ig && ig+1 <= m_ew->m_iEnd[g] &&
                 m_ew->m_jStart[g] <= jg && jg+1 <= m_ew->m_jEnd[g] &&
                 m_ew->m_kStart[g] <= kg && kg+1 <= m_ew->m_kEnd[g] )
 	    {
-	       double h = m_ew->mGridSize[g];
-               double zming = m_ew->m_zmin[g];
-	       double wghx = x/h-ig+1;
-	       double wghy = y/h-jg+1;
-	       double wghz = (z-zming)/h-kg+1;
+               float_sw4 wghx = q-ig;
+               float_sw4 wghy = r-jg;
+               float_sw4 wghz = s-kg;
                rho(i,j,k) = (1-wghy)*(1-wghz)*(
 			           (1-wghx)*rhogrid[g](ig,jg,kg)+wghx*rhogrid[g](ig+1,jg,kg))+
 		  (wghy)*(1-wghz)*((1-wghx)*rhogrid[g](ig,jg+1,kg)+wghx*rhogrid[g](ig+1,jg+1,kg))+
@@ -1756,6 +1783,7 @@ void MaterialParCart::interpolate_to_coarse( vector<Sarray>& rhogrid,
 	       //               rho(i,j,k)    =    rhogrid[g](ig,jg,kg)-mRho[g](ig,jg,kg);
 	       //               mu(i,j,k)     =     mugrid[g](ig,jg,kg)-mMu[g](ig,jg,kg);
 	       //               lambda(i,j,k) = lambdagrid[g](ig,jg,kg)-mLambda[g](ig,jg,kg);
+            }
 	    }
 	 }
    if( m_global )
@@ -1777,7 +1805,7 @@ void MaterialParCart::interpolate_to_coarse( vector<Sarray>& rhogrid,
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCart::interpolate_to_coarse_vel( vector<Sarray>& rhogrid, 
+void MaterialParCurv::interpolate_to_coarse_vel( vector<Sarray>& rhogrid, 
                                                  vector<Sarray>& mugrid,
                                                  vector<Sarray>& lambdagrid,
                                                  Sarray& rho, Sarray& cs, Sarray& cp,
@@ -1832,11 +1860,16 @@ void MaterialParCart::interpolate_to_coarse_vel( vector<Sarray>& rhogrid,
             rho(i,j,k)= -1e38;
             cs(i,j,k) = -1e38;
             cp(i,j,k) = -1e38;
-            double x = m_xmin + i*m_hx;
-	    double y = m_ymin + j*m_hy;
-	    double z = m_zmin + k*m_hz;
-            m_ew->computeNearestLowGridPoint( ig, jg, kg, g, x, y, z );
-               //            if( interior_point_in_proc( ig, jg, g) )
+            float_sw4 x = m_xmin + i*m_hx;
+	    float_sw4 y = m_ymin + j*m_hy;
+	    float_sw4 z = mZ(i,j,k); 
+            float_sw4 q, r, s;
+            if( m_ew->computeInvGridMap( q, r, s, g, x, y, z ) )
+            {
+            ig = static_cast<int>(floor(q));
+            jg = static_cast<int>(floor(r));
+            kg = static_cast<int>(round(s));
+
             if( m_ew->m_iStart[g] <= ig && ig+1 <= m_ew->m_iEnd[g] &&
                 m_ew->m_jStart[g] <= jg && jg+1 <= m_ew->m_jEnd[g] &&
                 m_ew->m_kStart[g] <= kg && kg+1 <= m_ew->m_kEnd[g] )
@@ -1857,11 +1890,9 @@ void MaterialParCart::interpolate_to_coarse_vel( vector<Sarray>& rhogrid,
 			}
 		  done[g] = true;
 	       }
-	       double h    = m_ew->mGridSize[g];
-               double zmin = m_ew->m_zmin[g];
-	       double wghx = x/h-ig+1;
-	       double wghy = y/h-jg+1;
-	       double wghz = (z-zmin)/h-kg+1;
+               float_sw4 wghx = q-ig;
+               float_sw4 wghy = r-jg;
+               float_sw4 wghz = s-kg;
                rho(i,j,k) = (1-wghy)*(1-wghz)*(
 			           (1-wghx)*rhogrid[g](ig,jg,kg)+wghx*rhogrid[g](ig+1,jg,kg))+
 		  (wghy)*(1-wghz)*((1-wghx)*rhogrid[g](ig,jg+1,kg)+wghx*rhogrid[g](ig+1,jg+1,kg))+
@@ -1885,10 +1916,11 @@ void MaterialParCart::interpolate_to_coarse_vel( vector<Sarray>& rhogrid,
                if( cs(i,j,k)<0 || cp(i,j,k)<0 )
                {
                   std::cout << "Unphysical interpolation: "<< wghx << " " << wghy << " " << wghz << std::endl;
-                  std::cout << "z= " << z << " h= " << h << " g= " << g << " kg= " << kg << std::endl;
+                  std::cout << "z= " << z << " g= " << g << " kg= " << kg << std::endl;
                   std::cout << "cs = " << cs(i,j,k) << " "  <<csdiff[g](ig,jg,kg) << " " << csdiff[g](ig,jg,kg+1) << std::endl;
                   std::cout << "cp = " << cp(i,j,k) << " "  <<cpdiff[g](ig,jg,kg) << " " << cpdiff[g](ig,jg,kg+1) << std::endl;
                }
+            }
 	    }
 	 }
    if( m_global )
@@ -1910,7 +1942,7 @@ void MaterialParCart::interpolate_to_coarse_vel( vector<Sarray>& rhogrid,
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCart::write_dfm_hdf5(double *dfm, std::string fname, MPI_Comm comm)
+void MaterialParCurv::write_dfm_hdf5(double *dfm, std::string fname, MPI_Comm comm)
 {
 #ifdef USE_HDF5
     hid_t fid, dset, fapl, dxpl, dspace, mspace;
@@ -1983,7 +2015,7 @@ void MaterialParCart::write_dfm_hdf5(double *dfm, std::string fname, MPI_Comm co
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCart::interpolate_pseudohessian( int nmpars, double* phs,
+void MaterialParCurv::interpolate_pseudohessian( int nmpars, double* phs,
                                                  int nmpard, double* phm,
                                                  vector<Sarray>& phgrid )
 {
@@ -2009,8 +2041,13 @@ void MaterialParCart::interpolate_pseudohessian( int nmpars, double* phs,
 	 {
             float_sw4 x = m_xmin + i*m_hx;
 	    float_sw4 y = m_ymin + j*m_hy;
-	    float_sw4 z = m_zmin + k*m_hz;
-            m_ew->computeNearestGridPoint( ig, jg, kg, g, x, y, z );
+	    float_sw4 z = mZ(i,j,k);
+            float_sw4 q, r, s;
+            m_ew->computeInvGridMap( q, r, s, g, x, y, z );
+            ig = static_cast<int>(floor(q));
+            jg = static_cast<int>(floor(r));
+            kg = static_cast<int>(round(s));
+            //            m_ew->computeNearestGridPoint( ig, jg, kg, g, x, y, z );
             if( m_ew->point_in_proc( ig, jg, g) )
 	    {
                if( ncomp == 3 )
@@ -2029,7 +2066,7 @@ void MaterialParCart::interpolate_pseudohessian( int nmpars, double* phs,
             }
             //            else
             //            {
-            //               std::cout << "MaterialParCart::interpolate_hessian, error point "
+            //               std::cout << "MaterialParCurv::interpolate_hessian, error point "
             //                         << ig << " " << jg << " " << kg << " not in processor " << 
             //                  "Material grid point " << i << " " << j << " " k << endl;
             //            }
@@ -2047,10 +2084,75 @@ void MaterialParCart::interpolate_pseudohessian( int nmpars, double* phs,
 }
 
 //-----------------------------------------------------------------------
-int MaterialParCart::getcartdims(int& nx, int& ny, int& nz)
+int MaterialParCurv::getcartdims(int& nx, int& ny, int& nz)
 {
    nx = m_nx;
    ny = m_ny;
    nz = m_nz;
    return 1;
+}
+
+//-----------------------------------------------------------------------
+void MaterialParCurv::interpolate_to_cartesian( int nmd, double* xmd,
+                                                int nms, double* xms,
+                                                std::vector<Sarray>& a_rho,
+                                                std::vector<Sarray>& a_mu,
+                                                std::vector<Sarray>& a_lambda )
+{
+   // Here we use the Cartesian grid mapping z_k = z_min + k*hz, k=0,..,nz+1
+   // defined in the constructor. This grid always extends above the highest
+   // station, see Constructor.
+   float_sw4* x = nms>0?xms:xmd;
+
+   Sarray m_rho(m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
+   Sarray m_cs( m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
+   Sarray m_cp( m_ib,m_ie,m_jb,m_je,m_kb,m_ke);
+   // Interpolation to the curvilinear material grid
+   if( m_variables == 1 )
+   {
+      interpolate_to_coarse( a_rho, a_mu, a_lambda, m_rho, m_cs, m_cp, false );
+   }
+   else 
+   {
+      interpolate_to_coarse_vel( a_rho, a_mu, a_lambda, m_rho, m_cs, m_cp, false );
+   }
+   // Interpolation to the Cartesian material grid from the curvilinear material grid
+   size_t ind= 0;
+   for( int k=m_kbint ; k <= m_keint ; k++ )
+      for( int j=m_jbint ; j <= m_jeint ; j++ )
+	 for( int i=m_ibint ; i <= m_ieint ; i++ )
+         {
+            double z=m_zmin+k*m_hz;
+            int kk=floor(m_nz*(z-mZ(i,j,1))/(mZ(i,j,m_nz)-mZ(i,j,1)))+1;
+            double wgh;
+            if( kk <= 0 )
+            {
+               kk = 0;
+               wgh= 0;
+            }
+            else if( kk >m_nz )
+            {
+               kk = m_nz;
+               wgh=1;
+            }
+            else
+            {
+               wgh=(z-mZ(i,j,kk))/(mZ(i,j,kk+1)-mZ(i,j,kk));               
+            }
+            if( m_variables == 1 || m_variables == 2)
+            {
+               x[3*ind]   = wgh*m_rho(i,j,kk+1)+(1-wgh)*m_rho(i,j,kk);
+               x[3*ind+1] = wgh*m_cs(i,j,kk+1) +(1-wgh)*m_cs(i,j,kk);
+               x[3*ind+2] = wgh*m_cp(i,j,kk+1) +(1-wgh)*m_cp(i,j,kk);
+            }
+            else if( m_variables == 3 )
+            {
+               x[2*ind]   = wgh*m_cs(i,j,kk+1) +(1-wgh)*m_cs(i,j,kk);
+               x[2*ind+1] = wgh*m_cp(i,j,kk+1) +(1-wgh)*m_cp(i,j,kk);
+            }
+            else
+               x[ind] = wgh*m_cp(i,j,kk+1)+(1-wgh)*m_cp(i,j,kk);
+            ind++;
+         }
+   //   }
 }

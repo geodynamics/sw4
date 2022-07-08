@@ -427,6 +427,8 @@ void EW::setupRun( vector<vector<Source*> > & a_GlobalUniqueSources )
 	computeDTanisotropic();
      else
 	computeDT( );
+     if( proc_zero_evzero() )
+        cout << "  time step = " << mDt << endl;
   }
 
   if( m_output_detailed_timing )
@@ -1798,7 +1800,7 @@ void EW::computeDT()
     MPI_Allreduce( &dtloc, &mDt, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
 
     //   cout << "cfl = " << mCFL << endl;
-    //   cout << "dtloc = " << mDt << endl;
+
 
 // global minima for curvilinear grid
     if (topographyExists())
@@ -1816,7 +1818,7 @@ void EW::computeDT()
       cout << "TIME accuracy order=" << mOrder << " CFL=" << mCFL << " prel. time step=" << mDt << endl;
     }
     
-    for( int e=0 ; e < m_nevent ; e++ )
+    for( int e=0 ; e < m_eEnd-m_eStart+1 ; e++ )
     {
        if (mTimeIsSet[e])
        {
@@ -2101,12 +2103,11 @@ void EW::setup_supergrid( )
      if( m_use_sg_width )
         sgpts = m_supergrid_width/mGridSize[g];
      int imin = 1+sgpts, imax = m_global_nx[g]-sgpts, jmin=1+sgpts, jmax=m_global_ny[g]-sgpts;
-     int kmax=m_global_nz[g]-sgpts;
+     int kmax=m_global_nz[g];
      int kmin=1;
-
      // Only grid 0 has super grid boundary at the bottom
-     if( g > 0 )
-        kmax = m_global_nz[g];
+     if( g == 0 )
+        kmax = m_global_nz[g]-sgpts;
 
      int addlayer=1;
      
@@ -2126,7 +2127,7 @@ void EW::setup_supergrid( )
      if( g == 0 )
         m_kEndActGlobal[g]   = m_kEndAct[g] = kmax-addlayer;
      else
-     m_kEndActGlobal[g]   = m_kEndAct[g] = kmax;
+        m_kEndActGlobal[g]   = m_kEndAct[g] = kmax;
 
      // Changed to interior Start --> StartInt etc..
      if( m_iStartAct[g] < m_iStartInt[g] )

@@ -718,7 +718,7 @@ void SfileOutput::write_image(const char *fname, std::vector<Sarray>& a_Z )
     H5Awrite(attr, H5T_NATIVE_DOUBLE, lonlataz);
     H5Aclose(attr);
 
-    aname = "Coarsest horizontal grid spacing";
+    aname = "Finest horizontal grid spacing";
     double spacing = mEW->mGridSize[ng-1]*stH;
     attr = H5Acreate(h5_fid, aname, H5T_NATIVE_DOUBLE, attr_space1, H5P_DEFAULT, H5P_DEFAULT);
     if( attr < 0 )

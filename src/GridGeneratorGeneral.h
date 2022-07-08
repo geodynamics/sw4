@@ -21,7 +21,7 @@ class GridGeneratorGeneral: public GridGenerator
 
    bool inverse_grid_mapping_old( EW* a_ew, float_sw4 p, float_sw4 q, float_sw4 r, int g,
                           float_sw4& x, float_sw4& y, float_sw4& z, Sarray& TopoGridExt,
-                          float_sw4 h, int Nz );
+                                  float_sw4 h, int Nz, bool interior );
 
    void grid_mapping_diff_old( EW* a_EW, float_sw4 q, float_sw4 r, float_sw4 s, int g, 
                                int ic, int jc, int kc,
@@ -36,7 +36,7 @@ class GridGeneratorGeneral: public GridGenerator
 
    bool inverse_grid_mapping_new( EW* a_ew, float_sw4 x,float_sw4 y, float_sw4 z, int g,
                                   float_sw4& q, float_sw4& r, float_sw4& s,
-                                  float_sw4 h, int Nz );
+                                  float_sw4 h, int Nz, bool interior );
 
    void grid_mapping_diff_new( EW* a_ew, float_sw4 q, float_sw4 r, float_sw4 s, int g, 
                                int ic, int jc, int kc,
@@ -59,7 +59,7 @@ class GridGeneratorGeneral: public GridGenerator
                               float_sw4& x, float_sw4& y, float_sw4& z );
 
    virtual bool inverse_grid_mapping( EW* a_ew, float_sw4 x, float_sw4 y, float_sw4 z, int g,
-                                      float_sw4& p, float_sw4& q, float_sw4& r );   
+                                      float_sw4& p, float_sw4& q, float_sw4& r, bool interior=true );   
 
    virtual void grid_mapping_diff( EW* a_ew, float_sw4 q, float_sw4 r, float_sw4 s, int g, 
                                    int ic, int jc, int kc,

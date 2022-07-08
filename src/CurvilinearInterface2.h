@@ -30,6 +30,7 @@ class CurvilinearInterface2
 
    float_sw4* m_mass_block;
    int* m_ipiv_block;
+   bool m_memory_is_allocated;
 
    float_sw4 m_acof[384], m_bope[48], m_ghcof[6], m_acof_no_gp[384], m_ghcof_no_gp[6];
    float_sw4 m_sbop[6], m_sbop_no_gp[6], m_bop[24];
@@ -67,13 +68,16 @@ class CurvilinearInterface2
 public:
    CurvilinearInterface2( int a_gc, EW* a_ew );
    CurvilinearInterface2() {}
-   void init_arrays( std::vector<float_sw4*>& a_strx, std::vector<float_sw4*>& a_stry );
+   void init_arrays( std::vector<float_sw4*>& a_strx, std::vector<float_sw4*>& a_stry,
+                     std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
+                     std::vector<Sarray>& a_lambda );
    //   void test1( EW* a_ew, int gc, std::vector<Sarray>& a_U );
    //   void test2( EW* a_ew, int gc, std::vector<Sarray>& a_U );
    
    void impose_ic( std::vector<Sarray>& a_U, float_sw4 t,
                    std::vector<Sarray>& a_F, 
-                   std::vector<Sarray*>& a_AlphaVE );
+                   std::vector<Sarray*>& a_AlphaVE,
+                   bool injection_only=false );
 
    void prolongate2D( Sarray& Uc, Sarray& Uf, int kc, int kf );
 };
