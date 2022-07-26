@@ -1990,6 +1990,9 @@ void rhs4th3fortsgstr_ci(
         float_sw4 mu1zz = 0;
         float_sw4 mu2zz = 0;
         float_sw4 mu3zz = 0;
+#ifdef ENABLE_HIP
+#pragma unroll 8
+#endif
         for (int qb = 1; qb <= 8; qb++) {
           float_sw4 mucof = 0;
           float_sw4 lap2mu = 0;
@@ -2089,6 +2092,9 @@ void rhs4th3fortsgstr_ci(
         float_sw4 u3zip1 = 0;
         float_sw4 u3zim1 = 0;
         float_sw4 u3zim2 = 0;
+#ifdef ENABLE_HIP
+	//#pragma unroll 8 // Slower
+#endif
         for (int qb = 1; qb <= 8; qb++) {
           u3zip2 -= bope(kb, qb) * u(3, i + 2, j, nk - qb + 1);
           u3zip1 -= bope(kb, qb) * u(3, i + 1, j, nk - qb + 1);
@@ -2102,6 +2108,9 @@ void rhs4th3fortsgstr_ci(
 
         /*   (mu*w_x)_z: NOT CENTERED */
         float_sw4 mu3xz = 0;
+#ifdef ENABLE_HIP
+	//#pragma unroll 8
+#endif
         for (int qb = 1; qb <= 8; qb++)
           mu3xz -=
               bope(kb, qb) *
@@ -2154,6 +2163,9 @@ void rhs4th3fortsgstr_ci(
         float_sw4 u3zjp1 = 0;
         float_sw4 u3zjm1 = 0;
         float_sw4 u3zjm2 = 0;
+#ifdef ENABLE_HIP
+	//#pragma unroll 8
+#endif
         for (int qb = 1; qb <= 8; qb++) {
           u3zjp2 -= bope(kb, qb) * u(3, i, j + 2, nk - qb + 1);
           u3zjp1 -= bope(kb, qb) * u(3, i, j + 1, nk - qb + 1);
@@ -2167,6 +2179,9 @@ void rhs4th3fortsgstr_ci(
 
         /* (mu*w_y)_z: NOT CENTERED */
         float_sw4 mu3yz = 0;
+#ifdef ENABLE_HIP
+	//#pragma unroll 8
+#endif
         for (int qb = 1; qb <= 8; qb++)
           mu3yz -=
               bope(kb, qb) *
@@ -2181,6 +2196,9 @@ void rhs4th3fortsgstr_ci(
         float_sw4 u1zip1 = 0;
         float_sw4 u1zim1 = 0;
         float_sw4 u1zim2 = 0;
+#ifdef ENABLE_HIP
+	//#pragma unroll 8
+#endif
         for (int qb = 1; qb <= 8; qb++) {
           u1zip2 -= bope(kb, qb) * u(1, i + 2, j, nk - qb + 1);
           u1zip1 -= bope(kb, qb) * u(1, i + 1, j, nk - qb + 1);
@@ -2197,6 +2215,9 @@ void rhs4th3fortsgstr_ci(
         float_sw4 u2zjp1 = 0;
         float_sw4 u2zjm1 = 0;
         float_sw4 u2zjm2 = 0;
+#ifdef ENABLE_HIP
+	//#pragma unroll 8
+#endif
         for (int qb = 1; qb <= 8; qb++) {
           u2zjp2 -= bope(kb, qb) * u(2, i, j + 2, nk - qb + 1);
           u2zjp1 -= bope(kb, qb) * u(2, i, j + 1, nk - qb + 1);
@@ -2210,6 +2231,9 @@ void rhs4th3fortsgstr_ci(
 
         /*   (la*u_x)_z: NOT CENTERED */
         float_sw4 lau1xz = 0;
+#ifdef ENABLE_HIP
+	//#pragma unroll 8
+#endif
         for (int qb = 1; qb <= 8; qb++)
           lau1xz -=
               bope(kb, qb) *
@@ -2220,6 +2244,9 @@ void rhs4th3fortsgstr_ci(
 
         /* (la*v_y)_z: NOT CENTERED */
         float_sw4 lau2yz = 0;
+#ifdef ENABLE_HIP
+	//#pragma unroll 8
+#endif
         for (int qb = 1; qb <= 8; qb++) {
           lau2yz -=
               bope(kb, qb) *
