@@ -403,6 +403,9 @@ void curvilinear4sgwind(
           mucofvw = 0;
           mucofv2 = 0;
           mucofw2 = 0;
+#ifdef ENABLE_HIP
+#pragma unroll 8
+#endif
           for (int m = 1; m <= 8; m++) {
             mucofu2 += acof(k, q, m) *
                        ((2 * mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
@@ -2379,6 +2382,9 @@ void curvilinear4sgwind(
         // averaging the coefficient
         // 54*8*8+25*8 = 3656 ops, tot=3939
         float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2;
+#ifdef ENABLE_HIP
+	//#pragma unroll 8
+#endif
         for (int q = nk - 7; q <= nk; q++) {
           mucofu2 = 0;
           mucofuv = 0;
@@ -2386,6 +2392,9 @@ void curvilinear4sgwind(
           mucofvw = 0;
           mucofv2 = 0;
           mucofw2 = 0;
+#ifdef ENABLE_HIP
+#pragma unroll 8
+#endif
           for (int m = nk - 7; m <= nk; m++) {
             mucofu2 += acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
                        ((2 * mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *

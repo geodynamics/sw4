@@ -520,6 +520,9 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
         float_sw4 mu1zz = 0;
         float_sw4 mu2zz = 0;
         float_sw4 mu3zz = 0;
+#ifdef ENABLE_HIP
+#pragma unroll 8
+#endif
         for (int q = 1; q <= 8; q++) {
           //		     lap2mu= 0;
           //		     mucof = 0;
