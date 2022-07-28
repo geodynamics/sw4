@@ -171,9 +171,10 @@ void memvar_corr_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   Range<4> J(jfirst, jlast + 1);
   Range<4> K(k1, k2 + 1);
 #else
-  Range<64> I(ifirst, ilast + 1);
-  Range<2> J(jfirst, jlast + 1);
-  Range<2> K(k1, k2 + 1);
+  // 64,2,2 is 196ms, 256,2,2 is 182ms, 512,2,1 is 181ms, 1024,1,1 is 169ms
+  Range<1024> I(ifirst, ilast + 1);
+  Range<1> J(jfirst, jlast + 1);
+  Range<1> K(k1, k2 + 1);
 #endif
   forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
 #else
