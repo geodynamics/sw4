@@ -66,7 +66,7 @@ source x=15000 y=15000 z=2000 mxy=1e18 t0=0.36 freq=16.6667 type=Gaussian
 rechdf5 infile=stations.h5 outfile=sta.h5
 
 # essioutput command
-# essioutput file=essioutput xmin=10000 xmax=12000 ymin=10000 ymax=12000 depth=200 precision=4
+essioutput file=essioutput xmin=10000 xmax=10200 ymin=10000 ymax=10200 depth=50 precision=4
 
 # sfileoutput
 sfileoutput file=sfileoutputh2v1 sampleFactorH=2 sampleFactorV=1
