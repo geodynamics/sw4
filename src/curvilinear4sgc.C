@@ -353,7 +353,9 @@ void curvilinear4sg_ci(
             // averaging the coefficient
             // 54*8*8+25*8 = 3656 ops, tot=3939
             float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2;
-
+#ifdef ENABLE_HIP
+__syncthreads();
+#endif
             for (int q = 1; q <= 8; q++) {
               mucofu2 = 0;
               mucofuv = 0;
@@ -941,6 +943,9 @@ void curvilinear4sg_ci(
                    mux4 * (u(1, i, j + 2, k) - u(1, i, j, k))) *
                   istrx;
           }
+#ifdef ENABLE_HIP
+__syncthreads();
+#endif
           // rr derivative (u)
           // 5*11+14+14=83 ops, tot=184
           {
@@ -2319,6 +2324,9 @@ void curvilinear4sg_ci(
           // averaging the coefficient
           // 54*8*8+25*8 = 3656 ops, tot=3939
           float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2;
+#ifdef ENABLE_HIP
+__syncthreads();
+#endif
           for (int q = nk - 7; q <= nk; q++) {
             mucofu2 = 0;
             mucofuv = 0;
