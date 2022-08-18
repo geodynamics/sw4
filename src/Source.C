@@ -2867,7 +2867,7 @@ void Source::filter_timefunc(Filter* filter_ptr, float_sw4 tstart, float_sw4 dt,
 
     // Save discrete function
     mNipar = 1;
-    mIpar = new int[mNipar];
+    mIpar = SW4_NEW(Space::Managed, int[mNipar]);
     mIpar[0] = nsteps;
 
     mFreq = 1. / dt;
