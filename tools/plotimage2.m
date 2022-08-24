@@ -1,3 +1,4 @@
+%-*-octave-*--
 %
 % PLOTIMAGE2
 %
@@ -22,7 +23,7 @@ end;
 if nargin < 3
    nc=21;
    [cv0, np, plane, mx, mn] = imageinfo(fil,nc,0,machineformat);
-#   printf("data min=%e, max=%e\n", mn, mx);
+%   printf("data min=%e, max=%e\n", mn, mx);
    mn = max(0.006,mx/20);
    if mx<5*mn
      mx = 5*mn;
@@ -43,13 +44,16 @@ mode    =fread(fd,1,'int');
 gridinfo=fread(fd,1,'int');
 fclose(fd);
 
+npatches = nb;
+firstCurviPatch = npatches - gridinfo + 1;
+
 x1min=1e9;
 x2min=1e9;
 x1max=-1e9;
 x2max=-1e9;
 
 for b=1:nb
-	[im,x,y,z] = readimage(fil,b,0,machineformat);
+  [im,x,y,z] = readimage(fil,b,0,machineformat);
    if plane==0
      contour(y,z,im,cvals);
    elseif plane==1
@@ -63,7 +67,7 @@ for b=1:nb
    [n m]=size(im);
 % make a frame
   if plane==0
-    if (b==nb) && (gridinfo == 1)
+    if (b >= firstCurviPatch)
       plot(y(1,:), z(1,:),'k')
       plot(y(n,:), z(n,:),'k')
       plot(y(:,1), z(:,1),'k')
@@ -83,7 +87,8 @@ for b=1:nb
       x2ma=max(z);
     end;
   elseif plane==1
-    if (b==nb) && (gridinfo == 1)
+%    if (b==nb) && (gridinfo == 1) %  update
+    if (b >= firstCurviPatch)
       plot(x(1,:), z(1,:),'k')
       plot(x(n,:), z(n,:),'k')
       plot(x(:,1), z(:,1),'k')
@@ -122,7 +127,8 @@ axis([x1min x1max x2min x2max]);
 hold off;
 axis ij; % flip z-axis to point downwards
 axis equal;
-caxis([0.0, mx]);
+%caxis([0.0, mx]);
+caxis([mn, mx]);
 colorbar;
 set(gca,"fontsize",16);
 #title_str=sprintf("Time=%g", t);

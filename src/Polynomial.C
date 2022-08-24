@@ -46,7 +46,7 @@ Polynomial::Polynomial()
   }
 } // end default constructor
 
-Polynomial::Polynomial(double c[3])
+Polynomial::Polynomial(float_sw4 c[3])
 {
   for (int q=0; q<3; q++)
   {
@@ -54,7 +54,7 @@ Polynomial::Polynomial(double c[3])
   }
 } // end constructor
 
-double Polynomial::coeff(unsigned int q)
+float_sw4 Polynomial::coeff(unsigned int q)
 {
   return m_c[q];
 }

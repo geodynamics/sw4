@@ -31,6 +31,7 @@
 ! # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
       subroutine rayleighfort( ifirst, ilast, jfirst, jlast, kfirst, 
      +     klast, u, t, lambda, mu, rho, cr, omega, alpha, h, zmin )
+     + bind(c)
       implicit none
       integer ifirst, ilast, jfirst, jlast, kfirst, klast, i, j, k
       real*8 u(3,ifirst:ilast,jfirst:jlast,kfirst:klast)
@@ -62,6 +63,8 @@ c      write(*,*),'Rayleigh params:', cRel, mu, cr, xi
       amp1 = 1
       amp2 = -amp1*(2-xi2)/2
 c      write(*,*)'Rayleigh:', omega, amp1, amp2, xi2, c, t, phase
+!$OMP PARALLEL PRIVATE(i,j,k,x,y,z,xp,up)
+!$OMP DO      
       do k=kfirst,klast
         z = (k-1)*h + zmin
         do j=jfirst,jlast
@@ -86,11 +89,13 @@ c      write(*,*)'Rayleigh:', omega, amp1, amp2, xi2, c, t, phase
           enddo
         enddo
       enddo
+!$OMP ENDDO      
+!$OMP END PARALLEL
       end
 
 c----------------------------------------------------------------------
       subroutine RAYDIRBDRY( bforce, wind, t, lambda, mu, rho, cr, 
-     +     omega, alpha, h, zmin )
+     +     omega, alpha, h, zmin ) bind(c)
       implicit none
       integer wind(6)
       real*8 bforce(3,*), h, t, lambda, mu, rho, cr, omega, zmin
@@ -152,7 +157,7 @@ c need to add zmin to work in a composite grid setting
       end
 
 c this routine computes the Rayleigh wave phase velocity, relative to the shear velocity
-      real*8 function RVEL( la, mu )
+      real*8 function RVEL( la, mu ) bind(c)
       implicit none
       real*8 la, mu
       real*8 pr, cRel, xi, latilde, csw0, dxi

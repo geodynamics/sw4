@@ -40,7 +40,19 @@
 #include <iostream>
 #include <iomanip>
 #include <mpi.h>
+#ifndef SW4_NOOMP
+#include <omp.h>
+#endif
 #include "version.h"
+
+#ifdef USE_ZFP
+#include "H5Zzfp_lib.h"
+#include "H5Zzfp_props.h"
+#endif
+
+#ifdef USE_SZ
+#include "H5Z_SZ.h"
+#endif
 
 using namespace std;
 
@@ -64,7 +76,12 @@ main(int argc, char **argv)
   stringstream reason;
 
   // Initialize MPI...
+#ifdef USE_HDF5_ASYNC
+  int provided;
+  MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+#else
   MPI_Init(&argc, &argv);
+#endif
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
 #ifdef ENABLE_TAU
@@ -129,12 +146,23 @@ main(int argc, char **argv)
   cout << std::scientific;
   
 // Save the source description here
-  vector<Source*> GlobalSources; 
+  vector<vector<Source*> > GlobalSources; 
 // Save the time series here
-  vector<TimeSeries*> GlobalTimeSeries;
+  vector<vector<TimeSeries*> > GlobalTimeSeries;
+
+#ifdef USE_ZFP
+  H5Z_zfp_initialize();
+#endif
+
+#ifdef USE_SZ
+  char *cfgFile = getenv("SZ_CONFIG_FILE");
+  if (NULL == cfgFile)
+    cfgFile = "sz.config";
+  H5Z_SZ_Init(cfgFile);
+#endif
 
 // make a new simulation object by reading the input file 'fileName'
-  EW simulation(fileName, GlobalSources, GlobalTimeSeries);
+  EW simulation(fileName, GlobalSources, GlobalTimeSeries );
 
   if (!simulation.wasParsingSuccessful())
   {
@@ -161,18 +189,63 @@ main(int argc, char **argv)
     {
       if (myRank == 0)
       {
-	cout << "Running sw4 on " <<  nProcs << " processors..." << endl
-	     << "Writing output to directory: " 
-	     << simulation.getPath() << endl;
+	 int nth=1;
+#ifndef SW4_NOOMP
+#pragma omp parallel
+	 {
+	    if( omp_get_thread_num() == 0 )
+	    {
+	       nth=omp_get_num_threads();
+	    }
+	 }
+#endif
+	 if( nth == 1 )
+	 {
+	    if( nProcs > 1 )
+	       cout << "Running sw4 on " <<  nProcs << " processors..." << endl;
+	    else
+	       cout << "Running sw4 on " <<  nProcs << " processor..." << endl;
+	 }
+	 else
+	 {
+	    if( nProcs > 1 )
+	       // Assume same number of threads for each MPI-task.
+	       cout << "Running sw4 on " <<  nProcs << " processors, using " << nth << " threads/processor..." << endl;
+	    else
+	       cout << "Running sw4 on " <<  nProcs << " processor, using " << nth << " threads..." << endl;
+	 }
+	 //FTNC	 if( simulation.m_croutines )
+	 //FTNC	    cout << "   Using C routines." << endl;
+	 //FTNC	 else
+	 //FTNC	    cout << "   Using fortran routines." << endl;
+	 cout << "Writing output to directory: " 
+		 << simulation.getPath() << endl;
+      
       }
 // run the simulation
-      simulation.solve( GlobalSources, GlobalTimeSeries );
+      int ng=simulation.mNumberOfGrids;
+      vector<DataPatches*> upred_saved(ng), ucorr_saved(ng);
+      vector<Sarray> U(ng), Um(ng), ph(ng);
+      simulation.solve( GlobalSources[0], GlobalTimeSeries[0], simulation.mMu, 
+			simulation.mLambda, simulation.mRho, U, Um, upred_saved, 
+			ucorr_saved, false, 0, 0, 0, ph );
 
 // save all time series
       
-      for (int ts=0; ts<GlobalTimeSeries.size(); ts++)
+      double myWriteTime = 0.0, allWriteTime;
+      for (int ts=0; ts<GlobalTimeSeries[0].size(); ts++)
       {
-	GlobalTimeSeries[ts]->writeFile();
+	GlobalTimeSeries[0][ts]->writeFile();
+#ifdef USE_HDF5
+        myWriteTime += GlobalTimeSeries[0][ts]->getWriteTime();
+        if( ts == GlobalTimeSeries[0].size()-1) {
+	  GlobalTimeSeries[0][ts]->closeHDF5File();
+
+          MPI_Reduce(&myWriteTime, &allWriteTime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+          if( myRank == 0 )
+            cout << "  ==> Max wallclock time to write time-series data is " << allWriteTime << " seconds." << endl;
+        }
+#endif
       }
 
       if( myRank == 0 )
@@ -194,6 +267,14 @@ main(int argc, char **argv)
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
   
+
+#ifdef USE_ZFP
+  H5Z_zfp_finalize();
+#endif
+
+#ifdef USE_SZ
+  H5Z_SZ_Finalize();
+#endif
 
 // Stop MPI
   MPI_Finalize();

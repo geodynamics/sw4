@@ -33,6 +33,8 @@
 #ifndef EW_SOURCE_H
 #define EW_SOURCE_H
 
+#include "sw4.h"
+
 #include <iostream>
 #include <vector>
 #include <string>
@@ -49,30 +51,30 @@ class Source
    friend std::ostream& operator<<(std::ostream& output, const Source& s);
 public:
   
-  Source(EW * a_ew, double frequency, double t0,
-	 double x0, double y0, double z0,
-	 double Mxx,
-	 double Mxy,
-	 double Mxz,
-	 double Myy,
-	 double Myz,
-	 double Mzz,
+  Source(EW * a_ew, float_sw4 frequency, float_sw4 t0,
+	 float_sw4 x0, float_sw4 y0, float_sw4 z0,
+	 float_sw4 Mxx,
+	 float_sw4 Mxy,
+	 float_sw4 Mxz,
+	 float_sw4 Myy,
+	 float_sw4 Myz,
+	 float_sw4 Mzz,
 	 timeDep tDep,
 	 const char *name,
 	 bool topodepth, 
 	 int ncyc=1,
-	 double* pars=NULL, int npars=0, int* ipars=NULL, int nipars=0, bool correctForMu=false );
+	 float_sw4* pars=NULL, int npars=0, int* ipars=NULL, int nipars=0, bool correctForMu=false );
 
-  Source(EW * a_ew, double frequency, double t0,
-         double x0, double y0, double z0,
-         double Fx,
-         double Fy,
-         double Fz,
+  Source(EW * a_ew, float_sw4 frequency, float_sw4 t0,
+         float_sw4 x0, float_sw4 y0, float_sw4 z0,
+         float_sw4 Fx,
+         float_sw4 Fy,
+         float_sw4 Fz,
          timeDep tDep,
          const char *name,
 	 bool topodepth, 
 	 int ncyc=1,
-	 double* pars=NULL, int npars=0, int* ipars=NULL, int nipars=0, bool correctForMu=false );
+	 float_sw4* pars=NULL, int npars=0, int* ipars=NULL, int nipars=0, bool correctForMu=false );
 
  ~Source();
 
@@ -81,105 +83,113 @@ public:
 
 // keep track of new filtering approach:
    bool m_timeFuncIsReady;
-   void prepareTimeFunc(bool doFilter, double sw4TimeStep, int sw4TimeSamples, Filter *sw4_filter);
+   void prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep, int sw4TimeSamples, Filter *sw4_filter);
 
-  double getX0() const;
-  double getY0() const;
-  double getZ0() const;
-  double getDepth() const;
+  float_sw4 getX0() const;
+  float_sw4 getY0() const;
+  float_sw4 getZ0() const;
+  float_sw4 getDepth() const;
   bool ignore() const {return mIgnore;}
   bool myPoint(){ return m_myPoint; }
 
   // Amplitude
-  double getAmplitude() const;
+  float_sw4 getAmplitude() const;
    //  void setAmplitude(double amp);
   
   // Offset in time
-  double getOffset() const;
+  float_sw4 getOffset() const;
 
   // Frequency
-  double getFrequency() const;
+  float_sw4 getFrequency() const;
   timeDep getTfunc() const {return mTimeDependence;}
-  void setMaxFrequency(double max_freq);
+  void setMaxFrequency(float_sw4 max_freq);
 
   // Type of source
   bool isMomentSource() const;
 
-  double dt_to_resolve( int ppw ) const;
-  int ppw_to_resolve( double dt ) const;
+  float_sw4 dt_to_resolve( int ppw ) const;
+  int ppw_to_resolve( float_sw4 dt ) const;
 
   const std::string& getName() const { return mName; };
-  void limit_frequency( int ppw, double minvsoh );
-  double compute_t0_increase( double t0_min ) const;
-  void adjust_t0( double dt0 );
+  void limit_frequency( int ppw, float_sw4 minvsoh );
+  float_sw4 compute_t0_increase( float_sw4 t0_min ) const;
+  void adjust_t0( float_sw4 dt0 );
 
   void set_grid_point_sources4( EW *a_EW, std::vector<GridPointSource*>& point_sources );
 
-  void exact_testmoments( int kx[3], int ky[3], int kz[3], double momexact[3] );
-  void getForces( double& fx, double& fy, double& fz ) const;
-  void getMoments( double& mxx, double& mxy, double& mxz, double& myy, double& myz, double& mzz ) const;
-  void setMoments( double mxx, double mxy, double mxz, double myy, double myz, double mzz );
+  void exact_testmoments( int kx[3], int ky[3], int kz[3], float_sw4 momexact[3] );
+  void getForces( float_sw4& fx, float_sw4& fy, float_sw4& fz ) const;
+  void getMoments( float_sw4& mxx, float_sw4& mxy, float_sw4& mxz, float_sw4& myy, float_sw4& myz, float_sw4& mzz ) const;
+  void setMoments( float_sw4 mxx, float_sw4 mxy, float_sw4 mxz, float_sw4 myy, float_sw4 myz, float_sw4 mzz );
   void printPointer(){std::cout << "Source pointer = "  << mPar << std::endl;}
-  void perturb( double h, int comp );
+  void perturb( float_sw4 h, int comp );
   void set_derivative( int der );
   void set_noderivative( );
-  void set_dirderivative( double dir[11] );
+  void set_dirderivative( float_sw4 dir[11] );
   Source* copy( std::string a_name );
-  void set_parameters( double x[11] );
-  void setFrequency( double freq );
-  void get_parameters( double x[11] ) const;
-  void filter_timefunc( Filter* fi, double tstart, double dt, int nsteps );
+  void set_parameters( float_sw4 x[11] );
+  void setFrequency( float_sw4 freq );
+  void get_parameters( float_sw4 x[11] ) const;
+  void filter_timefunc( Filter* fi, float_sw4 tstart, float_sw4 dt, int nsteps );
   bool get_CorrectForMu(){return mShearModulusFactor;};
   void set_CorrectForMu(bool smf){mShearModulusFactor=smf;};
+  float_sw4 getTimeOffset() const { return mT0; };
 
  private:
   Source();
 
   void correct_Z_level( EW *a_ew );
-  void compute_metric_at_source( EW* a_EW, double q, double r, double s, int ic, int jc, int kc,
-				 int g, double& zq, double& zr, double& zs, double& zqq, double& zqr,
-				 double& zqs, double& zrr, double& zrs, double& zss ) const;
+  void compute_grid_point( EW *a_ew );
+  void compute_metric_at_source( EW* a_EW, float_sw4 q, float_sw4 r, float_sw4 s, int ic, int jc, int kc,
+				 int g, float_sw4& zq, float_sw4& zr, float_sw4& zs, float_sw4& zqq, float_sw4& zqr,
+				 float_sw4& zqs, float_sw4& zrr, float_sw4& zrs, float_sw4& zss ) const;
+   void get_mr_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r, 
+                         float_sw4 s, bool gradient, float_sw4 normwgh[4], 
+                         std::vector<GridPointSource*>& point_sources );
+   void get_cc_psources( EW* a_EW, int g, float_sw4 q, float_sw4 r, 
+                         float_sw4 s, bool gradient, float_sw4 normwgh[4],
+                         std::vector<GridPointSource*>& point_sources );
+
   int spline_interpolation( );
-  void getsourcewgh(double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const;
-  void getsourcedwgh(double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const;
-  void getsourcewghlow(double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const;
-  void getsourcedwghlow(double ai, double wgh[6], double dwghda[6], double ddwghda[6] ) const;
-  void getmetwgh( double alph, double wgh[8], double dwgh[8], double ddwgh[8], double dddwgh[8] ) const;
-  void getmetdwgh( double alph, double wgh[8] ) const;
-  void getmetwgh7( double ai, double wgh[7] ) const;
-  void getmetdwgh7( double ai, double wgh[7] ) const;
+  void getsourcewgh(float_sw4 ai, float_sw4 wgh[6], float_sw4 dwghda[6], float_sw4 ddwghda[6] ) const;
+  void getsourcedwgh(float_sw4 ai, float_sw4 wgh[6], float_sw4 dwghda[6], float_sw4 ddwghda[6] ) const;
+  void getsourcewghlow(float_sw4 ai, float_sw4 wgh[6], float_sw4 dwghda[6], float_sw4 ddwghda[6] ) const;
+  void getsourcedwghlow(float_sw4 ai, float_sw4 wgh[6], float_sw4 dwghda[6], float_sw4 ddwghda[6] ) const;
+  void getmetwgh( float_sw4 alph, float_sw4 wgh[8], float_sw4 dwgh[8], float_sw4 ddwgh[8], float_sw4 dddwgh[8] ) const;
+  void getmetdwgh( float_sw4 alph, float_sw4 wgh[8] ) const;
+  void getmetwgh7( float_sw4 ai, float_sw4 wgh[7] ) const;
+  void getmetdwgh7( float_sw4 ai, float_sw4 wgh[7] ) const;
 
-  void getsourcewghNM2sm6(  double ci,  double wghk[6] ) const;
-  void getsourcedwghNM2sm6(  double ci,  double dwghk[6] ) const;
-  void getsourcewghNM1sm6(  double ci,  double wghk[6] ) const;
-  void getsourcedwghNM1sm6(  double ci,  double dwghk[6] ) const;
-  void getsourcewghNsm6(  double ci,  double wghk[6] ) const;
-  void getsourcedwghNsm6(  double ci,  double dwghk[6] ) const;
-  void getsourcewghP1sm6(  double ci,  double wghk[6] ) const;
-  void getsourcedwghP1sm6(  double ci,  double dwghk[6] ) const;
+  void getsourcewghNM2sm6(  float_sw4 ci,  float_sw4 wghk[6] ) const;
+  void getsourcedwghNM2sm6(  float_sw4 ci,  float_sw4 dwghk[6] ) const;
+  void getsourcewghNM1sm6(  float_sw4 ci,  float_sw4 wghk[6] ) const;
+  void getsourcedwghNM1sm6(  float_sw4 ci,  float_sw4 dwghk[6] ) const;
+  void getsourcewghNsm6(  float_sw4 ci,  float_sw4 wghk[6] ) const;
+  void getsourcedwghNsm6(  float_sw4 ci,  float_sw4 dwghk[6] ) const;
+  void getsourcewghP1sm6(  float_sw4 ci,  float_sw4 wghk[6] ) const;
+  void getsourcedwghP1sm6(  float_sw4 ci,  float_sw4 dwghk[6] ) const;
 
-  double find_min_exponent() const;
+  float_sw4 find_min_exponent() const;
   std::string mName;
-  std::vector<double> mForces;
+  std::vector<float_sw4> mForces;
   bool mIsMomentSource;
-  double mFreq, mT0;
+  float_sw4 mFreq, mT0;
 
   bool m_myPoint;
   bool m_zRelativeToTopography;
-  double mX0,mY0,mZ0;
-  double* mPar;
+  float_sw4 mX0,mY0,mZ0;
+  float_sw4* mPar;
   int* mIpar;
   int mNpar, mNipar;
   int mNcyc;
   int m_derivative;  
   timeDep mTimeDependence;
-  double m_dir[11];
+  float_sw4 m_dir[11];
   bool m_is_filtered;
 
-  double m_zTopo;
+  float_sw4 m_zTopo;
   bool mIgnore;
   bool mShearModulusFactor;
-
 };
 
 #endif

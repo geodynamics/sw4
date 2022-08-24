@@ -30,6 +30,9 @@
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA 
 #include "EW.h"
+#include "CurvilinearInterface2.h"
+#include "GridGenerator.h"
+
 #include <cstring>
 
 // making directories
@@ -43,54 +46,60 @@
 
 #include "F77_FUNC.h"
 extern "C" {
-   void tw_ani_stiff(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, double h, double zmin,
-                     double omm, double phm, double amprho, double *rho, double *phc, double *cm);
+   void tw_ani_stiff(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+		     float_sw4 h, float_sw4 zmin, float_sw4 omm, float_sw4 phm,
+		     float_sw4 amprho, float_sw4 *rho, float_sw4 *phc, float_sw4 *cm);
+   void tw_ani_curvi_stiff(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
+			   int klast, float_sw4 *xx, float_sw4 *yy, float_sw4 *zz,
+			   float_sw4 omm, float_sw4 phm, float_sw4 amprho, float_sw4 *rho,
+			   float_sw4 *phc, float_sw4 *cm);
+   void exactmatfort(int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*, 
+		     float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+		     float_sw4*);
+   void exactmatfortc( int*, int*, int*, int*, int*, int*, float_sw4*, float_sw4*, float_sw4*,
+		       float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+		       float_sw4*, float_sw4*); 
 
-   void tw_ani_curvi_stiff(int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, double *xx, double *yy, double *zz,
-                     double omm, double phm, double amprho, double *rho, double *phc, double *cm);
-   
-   void F77_FUNC(exactmatfort,EXACTMATFORT)(int*, int*, int*, int*, int*, int*, double*, double*, double*, 
-					 double*, double*, double*, double*, double*, double*, double*);
-   void F77_FUNC(exactmatfortc,EXACTMATFORTC)( int*, int*, int*, int*, int*, int*, double*, double*, double*,
-                                            double*, double*, double*, double*, double*, double*, double*, double*); 
-void F77_FUNC(wavepropbop_4, WAVEPROPBOP_4)(double *, double *, double *, double *, double *, double *, double *);
-void F77_FUNC(varcoeffs4,VARCOEFFS4)(double *, double *);
-void F77_FUNC(bopext4th,BOPEXT4TH)(double *, double *);
+   void wavepropbop_4(double *, double *, double *, double *, double *, double *, double *);
+   void varcoeffs4(double *, double *);
+   void bopext4th(double *, double *);
 
-void F77_FUNC(dspev,DSPEV)(char & JOBZ, char & UPLO, int & N, double *AP, double *W, double *Z, int & LDZ, double *WORK, int & INFO);
-void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A, int & LDA, double *B, int & LDB, double *WORK, 
-			   int & LWORK, int & INFO);
-void F77_FUNC(randomfield3d,RANDOMFIELD3D)( int *, int *, int *, int *, int *, int *, int*, int*, int*, 
-					    int*, double*, double*, double*, double*, double*, int*, double*, int*, int* );
-void F77_FUNC(randomfield3dc,RANDOMFIELD3DC)( int *, int *, int *, int *, int *, int *, int*, int*, int*, 
-                                              int*, double*, double*, double*, double*, double*, double*, int*, double*, int*, int* );
-
-void F77_FUNC(perturbvelocity,PERTURBVELOCITY)( int *, int *, int *, int *, int *, int *, double*, 
+   void F77_FUNC(dspev,DSPEV)(char & JOBZ, char & UPLO, int & N, double *AP, double *W, double *Z,
+			      int & LDZ, double *WORK, int & INFO);
+   void F77_FUNC(dgels,DGELS)(char & TRANS, int & M, int & N, int & NRHS, double *A, int & LDA, double *B,
+			      int & LDB, double *WORK, int & LWORK, int & INFO);
+   void randomfield3d( int *, int *, int *, int *, int *, int *, int*, int*, int*, 
+		       int*, double*, double*, double*, double*, double*, int*, double*, int*, int* );
+   void randomfield3dc( int *, int *, int *, int *, int *, int *, int*, int*, int*, 
+			int*, double*, double*, double*, double*, double*, double*, int*, double*, int*, int* );
+   void perturbvelocity( int *, int *, int *, int *, int *, int *, double*, 
 						double*, double*, double*, double*, double*, double*, double* );
-void F77_FUNC(perturbvelocityc,PERTURBVELOCITYC)( int *, int *, int *, int *, int *, int *, double*, 
+   void perturbvelocityc( int *, int *, int *, int *, int *, int *, double*, 
 						  double*, double*, double*, double*, double*, double* );
-void F77_FUNC(checkanisomtrl,CHECKANISOMTRL)( int *, int *, int *, int *, int *, int *, double*, 
-					      double*, double*, double*, double*, double* );
-void F77_FUNC(computedtaniso,COMPUTEDTANISO)( int *, int *, int *, int *, int *, int *, double*,
-					      double*, double*, double*, double* );
-void F77_FUNC(computedtaniso2,COMPUTEDTANISO2)( int *, int *, int *, int *, int *, int *, double*,
-					      double*, double*, double*, double* );
-void F77_FUNC(computedtaniso2curv,COMPUTEDTANISO2CURV)( int *, int *, int *, int *, int *, int *, double*,
-					      double*, double*, double*, double* );
-   void F77_FUNC(anisomtrltocurvilinear,ANISOMTRLTOCURVILINEAR)( int*, int*, int*, int*, int*, int*, double*, double*, double* );
+   void checkanisomtrl( int *, int *, int *, int *, int *, int *, double*, 
+			double*, double*, double*, double*, double* );
+   void computedtaniso2( int *, int *, int *, int *, int *, int *, double*,
+			 double*, double*, double*, double* );
+   void computedtaniso2curv( int *, int *, int *, int *, int *, int *, double*,
+			     double*, double*, double*, double* );
+   void anisomtrltocurvilinear( int*, int*, int*, int*, int*, int*, double*, double*, double* );
    void bndryOpNoGhost( double *acof_no_gp, double *ghcof_no_gp, double *sbop_no_gp );
 }
+void bndryOpNoGhostc( float_sw4* acof_no_gp, float_sw4* ghcof_no_gp, float_sw4* sbop_no_gp);
 
 #define SQR(x) ((x)*(x))
 
 //----------------------------------------------
-void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
+void EW::setupRun( vector<vector<Source*> > & a_GlobalUniqueSources )
 {
    if( mIsInitialized && proc_zero() )
       cout << " WARNING, calling setupRun twice " << endl;
 
   double time_start = MPI_Wtime();
 
+  double time_measure[12];
+  time_measure[0] = time_start;
+  
 // m_testing == true is one of the pointers to testing modes is assigned
 // add other pointers to the list of testing modes as they get implemented
   m_testing = (m_twilight_forcing || m_point_source_test || m_lamb_test || m_rayleigh_wave_test || m_energy_test ); 
@@ -99,9 +108,9 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
   // if (mVerbose && proc_zero() )
   //   cout << " *** Testing = " << m_testing << endl;
     
-  if( mVerbose && proc_zero() )
+  if( mVerbose && proc_zero_evzero() )
   {
-    cout << "  Using Bjorn's fast (parallel)" << " IO library" << endl;
+     //    cout << "  Using Bjorn's fast (parallel)" << " IO library" << endl;
     if (m_pfs)
     {
       cout << "Assuming a PARALLEL file system" << endl;
@@ -115,7 +124,7 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
   
 // setup coefficients for SBP operators
   setupSBPCoeff();
-  
+
   if( proc_zero() && mVerbose >=3)
   {
     int g;
@@ -144,6 +153,9 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 
 // Check that f.d. operators fit inside the domains.
   check_dimensions();
+
+  if( m_output_detailed_timing )
+     time_measure[1] = MPI_Wtime();
 
 // for all sides with dirichlet, free surface, supergrid, or periodic boundary conditions,
 // save the extent of the multi-D boundary window, and allocate arrays to hold the boundary forcing
@@ -256,7 +268,10 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 
 //  }
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(m_1d_communicator);
+
+  if( m_output_detailed_timing )
+     time_measure[2] = MPI_Wtime();
 
   //  string cachePath = mPath;
    
@@ -290,18 +305,23 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
 
 //  string saved_path = mPath;
 
-  int beginCycle = 1;
+//  int beginCycle = 1;
 
 // Initialize IO
-  create_output_directory( );
-
-  if (proc_zero())
+  for( int eg=0 ; eg < mPath.size(); eg++ )
+  {
+     if( event_is_in_proc(eg))
+        create_directory(mPath[eg]);
+  }
+  if (proc_zero_evzero())
   {
     double lat[4],lon[4];
-    computeGeographicCoord(0.0,           0.0,           lon[0], lat[0]);
-    computeGeographicCoord(m_global_xmax, 0.0,           lon[1], lat[1]);
-    computeGeographicCoord(m_global_xmax, m_global_ymax, lon[2], lat[2]);
-    computeGeographicCoord(0.0,           m_global_ymax, lon[3], lat[3]);
+    double xmax = m_global_xmax;
+    double ymax = m_global_ymax;
+    computeGeographicCoord(0.0,  0.0,  lon[0], lat[0]);
+    computeGeographicCoord(xmax, 0.0,  lon[1], lat[1]);
+    computeGeographicCoord(xmax, ymax, lon[2], lat[2]);
+    computeGeographicCoord(0.0,  ymax, lon[3], lat[3]);
 // test inverse mapping too
     double xc[4], yc[4];
     for (int q=0; q<4; q++)
@@ -316,34 +336,42 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
     
     printf("\n");
   }
-  
+
+  if( m_output_detailed_timing )
+     time_measure[3] = MPI_Wtime();
+
 // set material properties
   if( m_anisotropic )
      set_anisotropic_materials();
   else
      set_materials();
 
+  if( m_output_detailed_timing )
+     time_measure[4] = MPI_Wtime();
+
 // evaluate resolution
-  double minvsoh;
+  float_sw4 minvsoh;
   if( !m_anisotropic )
   {
      compute_minvsoverh( minvsoh );
-     if (proc_zero())
+     if (proc_zero_evzero())
      {
 	printf("\n***** PPW = minVs/h/maxFrequency ********\n");
 	for (int g=0; g<mNumberOfCartesianGrids; g++)
 	{
 	   printf("g=%i, h=%e, minVs/h=%g (Cartesian)\n", g, mGridSize[g], mMinVsOverH[g]);
 	}
-	if (topographyExists())
+	for (int g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++)
 	{
-	   int g = mNumberOfGrids-1;
 	   printf("g=%i, h=%e, minVs/h=%g (curvilinear)\n", g, mGridSize[g], mMinVsOverH[g]);
 	}
 	printf("\n");
      }
   }
   
+  if( m_output_detailed_timing )
+     time_measure[5] = MPI_Wtime();
+
   assign_supergrid_damping_arrays();
 
 // convert Qp and Qs to muVE, lambdaVE, and compute unrelaxed lambda, mu
@@ -355,24 +383,66 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
      else
 	setup_viscoelastic();
   }
-  
-  if( mVerbose && proc_zero() )
+
+// form combinations of material coefficients for MR
+  setup_MR_coefficients(mRho,mMu,mLambda);
+
+// Define curvilinear grid refinement interfaces
+  if( mNumberOfGrids-mNumberOfCartesianGrids > 1 )
+  {
+     m_cli2.resize(mNumberOfGrids-mNumberOfCartesianGrids-1);
+     for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
+     {
+        m_cli2[g-mNumberOfCartesianGrids] = new CurvilinearInterface2( g, this );
+     }
+  }
+
+//   if( mNumberOfGrids-mNumberOfCartesianGrids > 1 )
+//   {
+//      m_clInterface.resize(mNumberOfGrids-mNumberOfCartesianGrids-1);
+//      for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
+//         m_clInterface[g-mNumberOfCartesianGrids]= new CurvilinearInterface( g, this );
+//   }
+
+  if( mVerbose && proc_zero_evzero() )
     cout << "  Assigned material properties" << endl;
+
+  if( m_output_detailed_timing )
+     time_measure[6] = MPI_Wtime();
+
+  // Initialize check point object
+  m_check_point->setup_sizes();
+
+  if( m_output_detailed_timing )
+     time_measure[7] = MPI_Wtime();
 
 // compute time-step and number of time steps. 
 // Note: SW4 always ends the simulation at mTmax, whether prefilter is enabled or not.
 // This behavior is different from WPP
-  if( m_anisotropic )
-     computeDTanisotropic();
+  if( m_check_point->do_restart() )
+     getDtFromRestartFile();
   else
-     computeDT( );
+  {
+     if( m_anisotropic )
+	computeDTanisotropic();
+     else
+	computeDT( );
+     if( proc_zero_evzero() )
+        cout << "  time step = " << mDt << endl;
+  }
+
+  if( m_output_detailed_timing )
+     time_measure[8] = MPI_Wtime();
 
 // should we initialize all images after the prefilter time offset stuff?
 
 // Initialize image files: set time, tell images about grid hierarchy.
   initialize_image_files();
-  if( mVerbose && proc_zero() )
+  if( mVerbose && proc_zero_evzero() )
     cout << "*** Initialized Images" << endl;
+
+  if( m_output_detailed_timing )
+     time_measure[9] = MPI_Wtime();
 
 // // is the curvilinear grid ok?
 //   if (topographyExists() && m_minJacobian <=0. && proc_zero()) // m_minJacobian is the global minimum and should be the same on all processes
@@ -405,11 +475,71 @@ void EW::setupRun( vector<Source*> & a_GlobalUniqueSources )
   preprocessSources( a_GlobalUniqueSources );
   
   double time_start_solve = MPI_Wtime();
+  time_measure[10] = time_start_solve;
+  
   print_execution_time( time_start, time_start_solve, "start up phase" );
-}
+
+  if( m_output_detailed_timing )
+  {
+     double times[10];
+     times[0] = time_measure[1] - time_measure[0];
+     times[1] = time_measure[2] - time_measure[1];
+     times[2] = time_measure[3] - time_measure[2];
+     times[3] = time_measure[4] - time_measure[3];
+     times[4] = time_measure[5] - time_measure[4];
+     times[5] = time_measure[6] - time_measure[5];
+     times[6] = time_measure[7] - time_measure[6];
+     times[7] = time_measure[8] - time_measure[7];
+     times[8] = time_measure[9] - time_measure[8];
+     times[9] = time_measure[10] - time_measure[9];
+     
+     double* time_sums =new double[10*no_of_procs()];
+     MPI_Gather( times, 10, MPI_DOUBLE, time_sums, 10, MPI_DOUBLE, 0, m_1d_communicator );
+     bool printavgs = true;
+     if( !mQuiet && proc_zero() )
+     {
+        double avgs[10]={0,0,0,0,0,0,0,0,0,0};
+        for( int p= 0 ; p < no_of_procs() ; p++ )
+           for( int c=0 ; c < 10 ; c++ )
+              avgs[c] += time_sums[10*p+c];
+        for( int c=0 ; c < 10 ; c++ )
+           avgs[c] /= no_of_procs();
+        cout << "\n----------------------------------------" << endl;
+        cout << "          Setup time summary (average)" << endl;
+//                             6                  9            8            6            7                7       6          2        5        7
+        cout << "SBP+SG      BndryWind  InitPath  SetElastic  EvalResol  ViscoElastic  CheckPnt     DT     Image     SrcPrep" << endl;
+        cout.setf(ios::left);
+        cout.precision(3);
+        cout.width(11);
+        cout << avgs[0];
+        cout.width(11);
+        cout << avgs[1];
+        cout.width(11);
+        cout << avgs[2];
+        cout.width(11);
+        cout << avgs[3];
+        cout.width(11);
+        cout << avgs[4];
+        cout.width(11);
+        cout << avgs[5];
+        cout.width(11);
+        cout << avgs[6];
+        cout.width(11);
+        cout << avgs[7];
+        cout.width(11);
+        cout << avgs[8];
+        cout.width(11);
+        cout << avgs[9];
+        cout << endl;
+     } // end if proc_zero()
+     delete[] time_sums;
+  } // end if output detailed timings
+  
+} // end void setupRun()
+
 
 //-----------------------------------------------------------------------
-void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
+void EW::preprocessSources( vector<vector<Source*> > & a_GlobalUniqueSources )
 {
 // This routine should be called once, after setupRun (can we include it in setupRun?)
 
@@ -442,7 +572,7 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
       if (mVerbose && proc_zero())
 	cout << "Sanity testing of the source" << endl;
 
-      if( (m_point_source_test || m_lamb_test) && a_GlobalUniqueSources.size() != 1 )
+      if( (m_point_source_test || m_lamb_test) && a_GlobalUniqueSources[0].size() != 1 )
       {
 	if (proc_zero())
 	  cout << "Error: Point Source Test and Lamb Test must have one single source" << endl
@@ -450,19 +580,19 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 	sources_ok=false;
       }
 
-      if( m_point_source_test && !(a_GlobalUniqueSources[0]->getName() == "VerySmoothBump" ||
-				   a_GlobalUniqueSources[0]->getName() == "C6SmoothBump" ||
-				   a_GlobalUniqueSources[0]->getName() == "SmoothWave" ||
-				   a_GlobalUniqueSources[0]->getName() == "Gaussian") )
+      if( m_point_source_test && !(a_GlobalUniqueSources[0][0]->getName() == "VerySmoothBump" ||
+				   a_GlobalUniqueSources[0][0]->getName() == "C6SmoothBump" ||
+				   a_GlobalUniqueSources[0][0]->getName() == "SmoothWave" ||
+				   a_GlobalUniqueSources[0][0]->getName() == "Gaussian") )
       {
 	if (proc_zero())
 	  cout << "Error: Point Source Test can only have source types" 
 	       << " VerySmoothBump, SmoothWave, or Gaussian" << endl
-	       << "  Input name is " << a_GlobalUniqueSources[0]->getName() << endl;
+	       << "  Input name is " << a_GlobalUniqueSources[0][0]->getName() << endl;
 	sources_ok=false;
       }
 
-      if( m_lamb_test && a_GlobalUniqueSources[0]->isMomentSource() )
+      if( m_lamb_test && a_GlobalUniqueSources[0][0]->isMomentSource() )
       {
 	if (proc_zero())
 	  cout << "Error: Lamb's Test must have one point force" << endl
@@ -472,19 +602,19 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 
       if( m_lamb_test )
       {
-	double fx, fy, fz, z0, freq;
-	a_GlobalUniqueSources[0]->getForces( fx, fy, fz );
-	z0 = a_GlobalUniqueSources[0]->getZ0();
-	freq = a_GlobalUniqueSources[0]->getFrequency();
+	float_sw4 fx, fy, fz, z0, freq;
+	a_GlobalUniqueSources[0][0]->getForces( fx, fy, fz );
+	z0 = a_GlobalUniqueSources[0][0]->getZ0();
+	freq = a_GlobalUniqueSources[0][0]->getFrequency();
 	
-	if ( !( (a_GlobalUniqueSources[0]->getName() == "VerySmoothBump" ||
-		 a_GlobalUniqueSources[0]->getName() == "C6SmoothBump" ) &&
+	if ( !( (a_GlobalUniqueSources[0][0]->getName() == "VerySmoothBump" ||
+		 a_GlobalUniqueSources[0][0]->getName() == "C6SmoothBump" ) &&
 	       freq == 1.0 && z0 == 0.0 && fx == 0.0 && fy == 0.0) )
 	{
 	  if (proc_zero())
 	    cout << "Error: Lamb Test assumes a 'VerySmoothBump' time function with freq=1" 
 		 << " on z=0 with fx=0 and fy=0" << endl
-		 << " The specified source has a '" << a_GlobalUniqueSources[0]->getName() 
+		 << " The specified source has a '" << a_GlobalUniqueSources[0][0]->getName() 
 		 << "' time function with freq=" << freq 
 		 << " on z=" << z0 << " with fx=" << fx << " and fy=" << fy << endl;
 	  sources_ok=false;
@@ -504,84 +634,88 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 // find the epicenter, i.e., the location of the source with the lowest value of t0
 
 // get the epicenter
-      compute_epicenter( a_GlobalUniqueSources );
+       for( int e=0 ; e < a_GlobalUniqueSources.size() ; e++ )
+       {
+	  compute_epicenter( a_GlobalUniqueSources[e], e );
       
 // Set up 'normal' sources for point_source_test, lamb_test, or standard seismic case.
 
 // if the sources were defined by a rupture file, we need to multiply the Mij coefficients by mu (shear modulus)
-      bool need_mu_corr=false;
-      
-      for( int i=0 ; i < a_GlobalUniqueSources.size() ; i++ )
-	need_mu_corr = (need_mu_corr || a_GlobalUniqueSources[i]->get_CorrectForMu( ));
+	  bool need_mu_corr=false;
+#pragma omp parallel for reduction(||:need_mu_corr)
+	  for( int i=0 ; i < a_GlobalUniqueSources[e].size() ; i++ )
+	     need_mu_corr = (need_mu_corr || a_GlobalUniqueSources[e][i]->get_CorrectForMu( ));
 
 // must communicate need_mu_corr
-      int mu_corr_global=0, mu_corr_loc= need_mu_corr? 1:0;
+	  int mu_corr_global=0, mu_corr_loc= need_mu_corr? 1:0;
       
 // take max over all procs to communicate 
-      MPI_Allreduce( &mu_corr_loc, &mu_corr_global, 1, MPI_INT, MPI_MAX, m_cartesian_communicator);
-      need_mu_corr=(bool) mu_corr_global;
+	  MPI_Allreduce( &mu_corr_loc, &mu_corr_global, 1, MPI_INT, MPI_MAX, m_cartesian_communicator);
+	  need_mu_corr=(bool) mu_corr_global;
 
 // tmp
 //      printf(" Proc #%i, sources needs correction for shear modulus: %s\n", getRank(), need_mu_corr? "TRUE":"FALSE");
 
-      if (!mQuiet && mVerbose >= 3 && proc_zero() )
-	printf(" Some sources needs correction for shear modulus: %s\n", need_mu_corr? "TRUE":"FALSE");
+	  if (!mQuiet && mVerbose >= 3 && proc_zero() )
+	     printf(" Some sources needs correction for shear modulus: %s\n", need_mu_corr? "TRUE":"FALSE");
 
-      if (need_mu_corr)
-      {
-	int nSources=a_GlobalUniqueSources.size();
+	  if (need_mu_corr)
+	  {
+	     int nSources=a_GlobalUniqueSources[e].size();
 	// if (proc_zero())
 	//   printf("Number of sources: %i\n", nSources);
 
 // allocate a temp array for the mu value at all source locations
-	double *mu_source_loc = new double[nSources];
-	double *mu_source_global = new double[nSources];
+             float_sw4 *mu_source_loc = new float_sw4[nSources];
+             float_sw4 *mu_source_global = new float_sw4[nSources];
 // initialize
-	int s;
-	for (s=0; s<nSources; s++)
-	{
-	  mu_source_loc[s]=-1.0;
-	  mu_source_global[s]=-1.0;
-	}
+
+#pragma omp parallel for
+             for (int s=0; s<nSources; s++)
+             {
+                mu_source_loc[s]=-1.0;
+                mu_source_global[s]=-1.0;
+             }
 	
 // fill in the values that are known to this processor
-	for (s=0; s<nSources; s++)
-	  if (a_GlobalUniqueSources[s]->myPoint())
-	  {
-	    int is=a_GlobalUniqueSources[s]->m_i0;
-	    int js=a_GlobalUniqueSources[s]->m_j0;
-	    int ks=a_GlobalUniqueSources[s]->m_k0;
-	    int gs=a_GlobalUniqueSources[s]->m_grid;
+#pragma omp parallel for
+             for (int s=0; s<nSources; s++)
+                if (a_GlobalUniqueSources[e][s]->myPoint())
+                {
+                   int is=a_GlobalUniqueSources[e][s]->m_i0;
+                   int js=a_GlobalUniqueSources[e][s]->m_j0;
+                   int ks=a_GlobalUniqueSources[e][s]->m_k0;
+                   int gs=a_GlobalUniqueSources[e][s]->m_grid;
 	    
 // tmp
-	    mu_source_loc[s] = mMu[gs](is,js,ks); 
+                   mu_source_loc[s] = mMu[gs](is,js,ks); 
 // printf("Proc #%i, source#%i, i=%i, j=%i, k=%i, g=%i, mu=%e\n", getRank(), s, is, js, ks, gs, mu_source_loc[s]);
-	  }
+                }
 // take max over all procs: communicate 
-	MPI_Allreduce( mu_source_loc, mu_source_global, nSources, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
+             MPI_Allreduce( mu_source_loc, mu_source_global, nSources, m_mpifloat, MPI_MAX, m_cartesian_communicator);
 
-	if (!mQuiet && mVerbose >= 3 && proc_zero() )
-	  printf(" Done communicating shear modulus to all procs\n");
+             if (!mQuiet && mVerbose >= 3 && proc_zero() )
+                printf(" Done communicating shear modulus to all procs\n");
 // tmp
 	// for (s=0; s<nSources; s++)
 	//   printf("Proc #%i, source#%i, mu=%e\n", getRank(), s, mu_source_global[s]);
 
 // scale all moments components
-	double mu, mxx, mxy, mxz, myy, myz, mzz;
-	for (s=0; s<nSources; s++)
-	  if (a_GlobalUniqueSources[s]->get_CorrectForMu())
-	  {
-	    mu = mu_source_global[s];
-	    a_GlobalUniqueSources[s]->getMoments( mxx, mxy, mxz, myy, myz, mzz);
-	    a_GlobalUniqueSources[s]->setMoments( mu*mxx, mu*mxy, mu*mxz, mu*myy, mu*myz, mu*mzz);
+#pragma omp parallel for
+             for (int s=0; s<nSources; s++)
+                if (a_GlobalUniqueSources[e][s]->get_CorrectForMu())
+                {
+                   float_sw4 mu, mxx, mxy, mxz, myy, myz, mzz;
+                   mu = mu_source_global[s];
+                   a_GlobalUniqueSources[e][s]->getMoments( mxx, mxy, mxz, myy, myz, mzz);
+                   a_GlobalUniqueSources[e][s]->setMoments( mu*mxx, mu*mxy, mu*mxz, mu*myy, mu*myz, mu*mzz);
 // lower the flag
-	    a_GlobalUniqueSources[s]->set_CorrectForMu(false);
-	  }
-	
+                   a_GlobalUniqueSources[e][s]->set_CorrectForMu(false);
+                }
 // cleanup
-	delete[] mu_source_loc;
-	delete[] mu_source_global;
-      } // end if need_mu_corr
+             delete[] mu_source_loc;
+             delete[] mu_source_global;
+          } // end if need_mu_corr
       
       
 // limit max freq parameter (right now the raw freq parameter in the time function) Either rad/s or Hz depending on the time fcn
@@ -596,41 +730,42 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
       // } // end limit_source_freq
      
 // check how deep the sources go
-      double zSource, zMax=m_global_zmin, zMaxGlobal, zMin=m_global_zmax, zMinGlobal;
-      for( int s=0; s < a_GlobalUniqueSources.size(); s++ ) 
-      {
-	zSource = a_GlobalUniqueSources[s]->getZ0( );
-	if (zSource > zMax)
-	  zMax = zSource;
-	if (zSource < zMin)
-	  zMin = zSource;
-      }
+          float_sw4 zMax=m_global_zmin, zMaxGlobal, zMin=m_global_zmax, zMinGlobal;
+#pragma omp parallel for reduction(max:zMax) reduction(min:zMin)
+          for( int s=0; s < a_GlobalUniqueSources[e].size(); s++ ) 
+          {
+             float_sw4 zSource = a_GlobalUniqueSources[e][s]->getZ0( );
+             if (zSource > zMax)
+                zMax = zSource;
+             if (zSource < zMin)
+                zMin = zSource;
+          }
 // compute global max over all processors
-      MPI_Allreduce( &zMax, &zMaxGlobal, 1, MPI_DOUBLE, MPI_MAX, m_cartesian_communicator);
-      MPI_Allreduce( &zMin, &zMinGlobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
-      if (!mQuiet && mVerbose >= 1 && proc_zero() )
-	printf(" Min source z-level: %e, max source z-level: %e\n", zMinGlobal, zMaxGlobal);
+          MPI_Allreduce( &zMax, &zMaxGlobal, 1, m_mpifloat, MPI_MAX, m_cartesian_communicator);
+          MPI_Allreduce( &zMin, &zMinGlobal, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
+          if (!mQuiet && mVerbose >= 1 && proc_zero() )
+             printf(" Min source z-level: %e, max source z-level: %e\n", zMinGlobal, zMaxGlobal);
 
 // Need to set the frequency to 1/dt for Dirac source
-      for( int s=0 ; s  < a_GlobalUniqueSources.size(); s++ )
-	 if( a_GlobalUniqueSources[s]->getTfunc() == iDirac )
-	    a_GlobalUniqueSources[s]->setFrequency( 1.0/mDt );
+#pragma omp parallel for
+          for( int s=0 ; s  < a_GlobalUniqueSources[e].size(); s++ )
+             if( a_GlobalUniqueSources[e][s]->getTfunc() == iDirac )
+                a_GlobalUniqueSources[e][s]->setFrequency( 1.0/mDt );
 
-      if (m_prefilter_sources)
-      {
+          if (m_prefilter_sources)
+          {
 // tell the filter about the time step and compute the second order sections
-	m_filter_ptr->computeSOS( mDt );
+             m_filter_ptr->computeSOS( mDt );
 
 // output details about the filter
-	if (mVerbose>=3 && proc_zero() )
-           cout << *m_filter_ptr;
+             if (mVerbose>=3 && proc_zero() )
+                cout << *m_filter_ptr;
 
-	if (!getQuiet() && proc_zero() )
-        {
-           printf("Filter precursor = %e\n", m_filter_ptr->estimatePrecursor() );
-        }
-        
-      }
+             if (!getQuiet() && proc_zero() )
+             {
+                printf("Filter precursor = %e\n", m_filter_ptr->estimatePrecursor() );
+             }
+          }
       
 // // Modify the time functions if prefiltering is enabled
 	
@@ -677,21 +812,18 @@ void EW::preprocessSources( vector<Source*> & a_GlobalUniqueSources )
 //       }
 
 // // TODO: check that t0 is large enough even when prefilter is NOT used
-
-      if (proc_zero())
-	saveGMTFile( a_GlobalUniqueSources );
-
+          if (proc_zero())
+             saveGMTFile( a_GlobalUniqueSources, e );
+       }
     } // end normal seismic setup
 
   } // end if ( !m_twilight_forcing && !m_energy_test && !m_rayleigh_wave_test ) 
    
   mSourcesOK = true;
-
-
 } // end preprocessSources
 
 //-----------------------------------------------------------------------
-void EW::compute_epicenter( vector<Source*> & a_GlobalUniqueSources ) 
+void EW::compute_epicenter( vector<Source*> & a_GlobalUniqueSources, int e ) 
 {
   // To find out which event goes first, we need to query all sources
   double earliestTime=0.;
@@ -721,30 +853,34 @@ void EW::compute_epicenter( vector<Source*> & a_GlobalUniqueSources )
     epiDepth = firstSource->getDepth(); // corrected for topography!
   }
 
-  set_epicenter(epiLat, epiLon, epiDepth, earliestTime);
+  set_epicenter(epiLat, epiLon, epiDepth, earliestTime, e );
   
 }
 
 //-----------------------------------------------------------------------
 void EW::setupSBPCoeff()
 {
-  double gh2; // this coefficient is also stored in m_ghcof[0]
+  float_sw4 gh2; // this coefficient is also stored in m_ghcof[0]
   if (mVerbose >=2 && m_myRank == 0)
     cout << "Setting up SBP boundary stencils" << endl;
-  
-// get coefficients for difference approximation of 2nd derivative with variable coefficients
-//      call VARCOEFFS4( acof, ghcof )
-  F77_FUNC(varcoeffs4,VARCOEFFS4)(m_acof, m_ghcof);
-// get coefficients for difference approximation of 1st derivative
-//      call WAVEPROPBOP_4( iop, iop2, bop, bop2, gh2, hnorm, sbop )
-  F77_FUNC(wavepropbop_4,WAVEPROPBOP_4)(m_iop, m_iop2, m_bop, m_bop2, &gh2, m_hnorm, m_sbop);
-// extend the definition of the 1st derivative to the first 6 points
-//      call BOPEXT4TH( bop, bope )
-  F77_FUNC(bopext4th,BOPEXT4TH)(m_bop, m_bope);
-
-// NEW: setup stencils that do NOT use ghost points (for visco-elastic memory variables)
-  bndryOpNoGhost( m_acof_no_gp, m_ghcof_no_gp, m_sbop_no_gp );
-  
+//FTNC  if( m_croutines )
+  {
+     GetStencilCoefficients( m_acof, m_ghcof, m_bop, m_bope, m_sbop );
+     bndryOpNoGhostc( m_acof_no_gp, m_ghcof_no_gp, m_sbop_no_gp );
+  }
+//FTNC  else
+//FTNC  {
+//FTNC// m_iop, m_iop2, m_bop2, m_hnorm never used in code, use local variables:
+//FTNC     float_sw4 hnorm[4], gh2, iop[5], iop2[5], bop2[24];
+//FTNC// get coefficients for difference approximation of 2nd derivative with variable coefficients
+//FTNC     varcoeffs4(m_acof, m_ghcof);
+//FTNC// get coefficients for difference approximation of 1st derivative
+//FTNC     wavepropbop_4(iop, iop2, m_bop, bop2, &gh2, hnorm, m_sbop);
+//FTNC// extend the definition of the 1st derivative tothe first 6 points
+//FTNC     bopext4th(m_bop, m_bope);
+//FTNC// NEW: setup stencils that do NOT use ghost points (for visco-elastic memory variables)
+//FTNC     bndryOpNoGhost( m_acof_no_gp, m_ghcof_no_gp, m_sbop_no_gp );
+//FTNC  }
 }
 
 
@@ -798,8 +934,9 @@ void EW::set_materials()
     for( unsigned int b = 0 ; b < m_mtrlblocks.size() ; b++ )
        if (m_mtrlblocks[b]->coversAllPoints())
 	  lastAllCoveringBlock=b;
+
 // tmp
-    if (proc_zero())
+    if (proc_zero_evzero())
     {
       if (lastAllCoveringBlock == 0)
 	cout << "Considering all material blocks" << endl;
@@ -846,7 +983,8 @@ void EW::set_materials()
 // extrapolate material properties to mesh refinement boundaries (e.g. for doing the LOH cases more accurately)
     if (!mQuiet && proc_zero() && mVerbose>=3)
     {
-      printf("setMaterials> mMaterialExtrapolate = %i, mNumberOfCartesianGrids=%i\n", mMaterialExtrapolate, mNumberOfCartesianGrids);
+      printf("setMaterials> mMaterialExtrapolate = %i, mNumberOfCartesianGrids=%i, mNumberOfGrids=%i\n",
+	     mMaterialExtrapolate, mNumberOfCartesianGrids, mNumberOfGrids);
     }
     
     if (mMaterialExtrapolate > 0 && mNumberOfCartesianGrids > 1)
@@ -862,6 +1000,7 @@ void EW::set_materials()
 	    printf("setMaterials> top extrapol, g=%i, kFrom=%d, kStart=%d, kStartInt=%d\n", g, kFrom, m_kStart[g], m_kStartInt[g]);
 
 	  for (int k = m_kStart[g]; k < kFrom; ++k)
+#pragma omp parallel for
 	    for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
 	      for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
 	      {
@@ -873,6 +1012,7 @@ void EW::set_materials()
 	  if( m_use_attenuation )
 	  {
 	    for (int k = m_kStart[g]; k < kFrom; ++k)
+#pragma omp parallel for
 	      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
 		for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
 		{
@@ -881,7 +1021,7 @@ void EW::set_materials()
 		}
 	  }
 	  
-	} // end extrapolat to top
+	} // end extrapolate to top
 
 	if (g > 0) // extrapolate to bottom
 	{
@@ -891,6 +1031,7 @@ void EW::set_materials()
 	    printf("setMaterials> bottom extrapol, g=%i, kFrom=%i, kEnd=%d, kEndInt=%d\n", g, kFrom, m_kEnd[g], m_kEndInt[g]);
 
 	  for (int k = kFrom+1; k <= m_kEnd[g]; ++k)
+#pragma omp parallel for
 	    for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
 	      for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
 	      {
@@ -902,6 +1043,7 @@ void EW::set_materials()
 	  if( m_use_attenuation )
 	  {
 	    for (int k = kFrom+1; k <= m_kEnd[g]; ++k)
+#pragma omp parallel for
 	      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
 		for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
 		{
@@ -915,13 +1057,88 @@ void EW::set_materials()
       } // end for g      
     } // end if mMaterialExtrapolate > 0 ...
     
+// repeat for the curvilinear grids
+    int NumberOfCurviGrids = mNumberOfGrids - mNumberOfCartesianGrids;
+    
+    if (mMaterialExtrapolate > 0 && NumberOfCurviGrids > 1)
+    {
+      int kFrom;
+      for (g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++)
+      {
+	if (g < mNumberOfGrids-1) // extrapolate to top
+	{
+	  kFrom = m_kStartInt[g]+mMaterialExtrapolate;
+
+	  if (!mQuiet && proc_zero() && mVerbose>=3)
+	    printf("setMaterials> top extrapol, g=%i, kFrom=%d, kStart=%d, kStartInt=%d\n", g, kFrom, m_kStart[g], m_kStartInt[g]);
+
+	  for (int k = m_kStart[g]; k < kFrom; ++k)
+#pragma omp parallel for
+	    for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
+	      for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
+	      {
+		mRho[g](i,j,k)    = mRho[g](i,j,kFrom);
+		mMu[g](i,j,k)     = mMu[g](i,j,kFrom);
+		mLambda[g](i,j,k) = mLambda[g](i,j,kFrom);
+	      }
+
+	  if( m_use_attenuation )
+	  {
+	    for (int k = m_kStart[g]; k < kFrom; ++k)
+#pragma omp parallel for
+	      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
+		for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
+		{
+		  mQs[g](i,j,k) = mQs[g](i,j,kFrom);
+		  mQp[g](i,j,k) = mQp[g](i,j,kFrom);
+		}
+	  }
+	  
+	} // end extrapolate to top
+
+	if (g > mNumberOfCartesianGrids) // extrapolate to bottom
+	{
+	  kFrom = m_kEndInt[g]-mMaterialExtrapolate;
+
+	  if (!mQuiet && proc_zero() && mVerbose>=3)
+	    printf("setMaterials> bottom extrapol, g=%i, kFrom=%i, kEnd=%d, kEndInt=%d\n", g, kFrom, m_kEnd[g], m_kEndInt[g]);
+
+	  for (int k = kFrom+1; k <= m_kEnd[g]; ++k)
+#pragma omp parallel for
+	    for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
+	      for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
+	      {
+		mRho[g](i,j,k)    = mRho[g](i,j,kFrom);
+		mMu[g](i,j,k)     = mMu[g](i,j,kFrom);
+		mLambda[g](i,j,k) = mLambda[g](i,j,kFrom);
+	      }
+
+	  if( m_use_attenuation )
+	  {
+	    for (int k = kFrom+1; k <= m_kEnd[g]; ++k)
+#pragma omp parallel for
+	      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
+		for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
+		{
+		  mQs[g](i,j,k) = mQs[g](i,j,kFrom);
+		  mQp[g](i,j,k) = mQp[g](i,j,kFrom);
+		}
+	  }
+	  
+	} // end extrapolate to bottom
+	
+      } // end for g      
+    } // end if mMaterialExtrapolate > 0 and NumberOfCurviGrids > 1
+    
 // tmp
 //    printf("\n useVelocityThresholds=%i vpMin=%e vsMin=%e\n\n", m_useVelocityThresholds, m_vpMin, m_vsMin);
 // Extrapolate to ghost points in x and y, if they were not set by the previous routines.
 //    cout << "min rho before " << mRho[0].minimum() << endl;
+
     extrapolateInXY( mRho );
     extrapolateInXY( mMu );
     extrapolateInXY( mLambda );
+
     if( m_use_attenuation )
     {
       extrapolateInXY(mQs);
@@ -931,6 +1148,7 @@ void EW::set_materials()
     if( m_use_attenuation && m_qmultiplier != 1 )
     {
        for (int g=0; g<mNumberOfGrids; g++)
+#pragma omp parallel for
 	  for (int k = m_kStart[g]; k <= m_kEnd[g]; k++ )
 	     for (int j = m_jStart[g]; j <= m_jEnd[g]; j++ )
 		for (int i = m_iStart[g]; i <= m_iEnd[g]; i++ )
@@ -939,11 +1157,56 @@ void EW::set_materials()
 		   mQp[g](i,j,k) = m_qmultiplier*mQp[g](i,j,k);
 		}
     }
+    
+// add random perturbation
+//    cout << "randomize = " << m_randomize << " randblsize= " << m_random_blocks.size() << endl;
+    if( m_randomize )
+    {
+       //  perturb_velocities( mMu, mLambda );
+       for( int g=0 ; g < mNumberOfGrids ; g++ )
+       {
+	  double zmin,zmax;
+          if( g >= mNumberOfCartesianGrids )
+	  {
+	     zmin = m_global_zmin;
+             zmax = m_gridGenerator->get_topo_zmax();
+	  }
+	  else
+	  {
+	     zmin = m_zmin[g];
+	     zmax = m_zmin[g]+(m_global_nz[g]-1)*mGridSize[g];	     
+	  }
+          // New
+          Sarray rndpert(mMu[g]);
+          rndpert.set_value(1.0); 
+	  for( unsigned int b=0 ; b < m_random_blocks.size() ; b++ )
+             m_random_blocks[b]->assign_perturbation( g, rndpert,  mMu[g], mGridSize[g],
+                                                      zmin, zmax, false );
+          perturb_vels( mMu[g], mLambda[g], rndpert );
 
+          if( m_randomize_density )
+          {
+             rndpert.set_value(1.0); 
+             for( unsigned int b=0 ; b < m_random_blocks.size() ; b++ )
+                m_random_blocks[b]->assign_perturbation( g, rndpert,  mMu[g], mGridSize[g],
+                                                         zmin, zmax, true );
+             perturb_rho( mRho[g], rndpert );
+          }
+          // End New
+          // Old
+       //  for( unsigned int b=0 ; b < m_random_blocks.size() ; b++ )
+       //      m_random_blocks[b]->perturb_velocities( g, mMu[g], mLambda[g], mGridSize[g], zmin, zmax );
+	  communicate_array( mMu[g], g );
+	  communicate_array( mLambda[g], g );
+          if( m_randomize_density )
+             communicate_array( mRho[g], g );
+       }
+    }
 // threshold material velocities
     if (m_useVelocityThresholds)
     {
       for (g=0; g<mNumberOfGrids; g++)
+#pragma omp parallel for
 	for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
 	    for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
 	      for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
@@ -952,10 +1215,7 @@ void EW::set_materials()
 		if (mLambda[g](i,j,k) < m_vpMin) mLambda[g](i,j,k) = m_vpMin;
 	      }
     }
-    
-// add random perturbation
-    if( m_randomize )
-       perturb_velocities( mMu, mLambda );
+
 
     convert_material_to_mulambda( );
     
@@ -974,10 +1234,10 @@ void EW::set_materials()
 	   << "******************************" << endl;
 
 // For some forcings (such as twilight forcing) the material is set here.
-      double xP, yP, zP;
+      float_sw4 xP, yP, zP;
       
       int ifirst, ilast, jfirst, jlast, kfirst, klast;
-      double *rho_ptr, *mu_ptr, *la_ptr, h, zmin, omm, phm, amprho, ampmu, ampla;
+      float_sw4 *rho_ptr, *mu_ptr, *la_ptr, h, zmin, omm, phm, amprho, ampmu, ampla;
 	
       for (g=0; g<mNumberOfCartesianGrids; g++)
       {
@@ -1001,9 +1261,14 @@ void EW::set_materials()
      //  subroutine exactmatfort( ifirst, ilast, jfirst, jlast, kfirst, 
      // +     klast, rho, mu, la, omm, phm, amprho, ampmu, amplambda, h, 
      // +     zmin )
-	F77_FUNC(exactmatfort,EXACTMATFORT)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-					    &klast, rho_ptr, mu_ptr, la_ptr, &omm, &phm, 
-					    &amprho, &ampmu, &ampla, &h, &zmin );
+//FTNC	if( m_croutines )
+	   exactmatfort_ci( ifirst, ilast, jfirst, jlast, kfirst, klast, 
+			    rho_ptr, mu_ptr, la_ptr, omm, phm, 
+			    amprho, ampmu, ampla, h, zmin );
+//FTNC	else
+//FTNC	   exactmatfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+//FTNC			&klast, rho_ptr, mu_ptr, la_ptr, &omm, &phm, 
+//FTNC			&amprho, &ampmu, &ampla, &h, &zmin );
 // Need to communicate across material boundaries, why ?
 //	  communicate_array( mRho[g], g );
 //	  communicate_array( mMu[g], g );
@@ -1011,32 +1276,41 @@ void EW::set_materials()
       }
       if( topographyExists() )
       {
- 	  g = mNumberOfGrids-1;
-	  rho_ptr = mRho[g].c_ptr();
-	  mu_ptr  = mMu[g].c_ptr();
-	  la_ptr  = mLambda[g].c_ptr();
-	  ifirst = m_iStart[g];
-	  ilast  = m_iEnd[g];
-	  jfirst = m_jStart[g];
-	  jlast  = m_jEnd[g];
-	  kfirst = m_kStart[g];
-	  klast  = m_kEnd[g];
-          double* x_ptr = mX.c_ptr();
-          double* y_ptr = mY.c_ptr();
-          double* z_ptr = mZ.c_ptr();
-	  omm = m_twilight_forcing->m_momega;
-	  phm = m_twilight_forcing->m_mphase;
-	  amprho = m_twilight_forcing->m_amprho;
-	  ampmu = m_twilight_forcing->m_ampmu;
-	  ampla = m_twilight_forcing->m_amplambda;
-	  F77_FUNC(exactmatfortc,EXACTMATFORTC)(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
-					      &klast, rho_ptr, mu_ptr, la_ptr, &omm, &phm, 
-					&amprho, &ampmu, &ampla, x_ptr, y_ptr, z_ptr );
+         for (g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++)
+         {
+// 	  g = mNumberOfGrids-1;
+            rho_ptr = mRho[g].c_ptr();
+            mu_ptr  = mMu[g].c_ptr();
+            la_ptr  = mLambda[g].c_ptr();
+            ifirst = m_iStart[g];
+            ilast  = m_iEnd[g];
+            jfirst = m_jStart[g];
+            jlast  = m_jEnd[g];
+            kfirst = m_kStart[g];
+            klast  = m_kEnd[g];
+            float_sw4* x_ptr = mX[g].c_ptr();
+            float_sw4* y_ptr = mY[g].c_ptr();
+            float_sw4* z_ptr = mZ[g].c_ptr();
+            omm = m_twilight_forcing->m_momega;
+            phm = m_twilight_forcing->m_mphase;
+            amprho = m_twilight_forcing->m_amprho;
+            ampmu = m_twilight_forcing->m_ampmu;
+            ampla = m_twilight_forcing->m_amplambda;
+//FTNC            if( m_croutines )
+            exactmatfortc_ci( ifirst, ilast, jfirst, jlast, kfirst, 
+                              klast, rho_ptr, mu_ptr, la_ptr, omm, phm, 
+                              amprho, ampmu, ampla, x_ptr, y_ptr, z_ptr );
+//FTNC            else
+//FTNC               exactmatfortc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, 
+//FTNC                             &klast, rho_ptr, mu_ptr, la_ptr, &omm, &phm, 
+//FTNC                             &amprho, &ampmu, &ampla, x_ptr, y_ptr, z_ptr );
+
 //   // Need this for Energy testing, random material will not agree on processor boundaries.
 // 	  communicate_array( mRho[g], g );
 // 	  communicate_array( mMu[g], g );
 // 	  communicate_array( mLambda[g], g );
-      }
+         } // end for g
+      } // end if topographyExists
       
   } // end material set by forcing mode (for testing)
   else if ( m_point_source_test )
@@ -1068,25 +1342,17 @@ void EW::set_materials()
   }
   else if ( m_energy_test )
   {
-     double cpocs = m_energy_test->m_cpcsratio;
-     double amp = m_energy_test->m_stochastic_amp;
+     float_sw4 cpocs = m_energy_test->m_cpcsratio;
+     float_sw4 amp = m_energy_test->m_stochastic_amp;
 // tmp
      if (proc_zero())
-     {
         printf("\n ENERGY TEST material amplitude: %e\n", amp);
         
-     }
-     
-// hardcoded loh1 test (assumes 2 grids)
-     // double rho0[2]={2700, 2600};
-     // double vp0[2]={6000, 4000};
-     // double vs0[2]={3464, 2000};
-
      for (g=0; g<mNumberOfGrids; g++)
      {
-	double* rho_ptr    = mRho[g].c_ptr();
-	double* mu_ptr     = mMu[g].c_ptr();
-	double* lambda_ptr = mLambda[g].c_ptr();
+	float_sw4* rho_ptr    = mRho[g].c_ptr();
+	float_sw4* mu_ptr     = mMu[g].c_ptr();
+	float_sw4* lambda_ptr = mLambda[g].c_ptr();
         // setting all points in the grid to constant + random perturb: No need to extrapolate ghost points!
 	for( int i=0 ; i < (m_iEnd[g]-m_iStart[g]+1)*(m_jEnd[g]-m_jStart[g]+1)*(m_kEnd[g]-m_kStart[g]+1); i++ )
 	{
@@ -1098,17 +1364,21 @@ void EW::set_materials()
 	   // mu_ptr[i]    = rho0[g]*vs0[g]*vs0[g] + amp*drand48();
            // lambda_ptr[i] = rho0[g]*(vp0[g]*vp0[g] - 2*vs0[g]*vs0[g]) + amp*drand48();
 	}
+     }
+     material_ic( mRho );
+     material_ic( mMu );
+     material_ic( mLambda );
 	// Communication needed here. Because of random material data,
 	// processor overlap points will otherwise have different values
 	// in different processors.
-        material_ic( mRho );
-        material_ic( mMu );
-	material_ic( mLambda );
+     for (g=0; g<mNumberOfGrids; g++)
+     {
 	communicate_array( mRho[g], g );
 	communicate_array( mMu[g], g );
 	communicate_array( mLambda[g], g );
      }
   }
+
   check_materials( );
 
 } // end EW::set_materials()
@@ -1153,6 +1423,7 @@ void EW::set_anisotropic_materials()
                if (!mQuiet && proc_zero() && mVerbose>=3)
                   printf("setMaterials> top extrapol, g=%i, kFrom=%i, kStart=%i\n", g, kFrom, m_kStart[g]);
                for (int k = m_kStart[g]; k < kFrom; ++k)
+#pragma omp parallel for
                   for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
                      for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
                      {
@@ -1167,6 +1438,7 @@ void EW::set_anisotropic_materials()
                if (!mQuiet && proc_zero() && mVerbose>=3)
                   printf("setMaterials> bottom extrapol, g=%i, kFrom=%i, kEnd=%i\n", g, kFrom, m_kEnd[g]);
                for (int k = kFrom+1; k <= m_kEnd[g]; ++k)
+#pragma omp parallel for
                   for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
                      for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
                      {
@@ -1189,10 +1461,13 @@ void EW::set_anisotropic_materials()
       }
       if( topographyExists() )
       {
-         int g=mNumberOfGrids-1;
-         F77_FUNC(anisomtrltocurvilinear,ANISOMTRLTOCURVILINEAR)( &m_iStart[g], &m_iEnd[g], 
-                                                                  &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
-                                                                  mMetric.c_ptr(), mC[g].c_ptr(), mCcurv.c_ptr() );
+         //         int g=mNumberOfGrids-1;
+         for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids ; g++ )
+            anisomtrltocurvilinear_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+				 mMetric[g].c_ptr(), mC[g].c_ptr(), mCcurv.c_ptr() );// NOT implemented for several curvilinear grids
+//FTNC
+//         anisomtrltocurvilinear( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+//				 mMetric.c_ptr(), mC[g].c_ptr(), mCcurv.c_ptr() );
       }
    }// end if !m_testing, i.e., not Twilight
    else if (m_twilight_forcing) 
@@ -1204,11 +1479,11 @@ void EW::set_anisotropic_materials()
               << "******************************" << endl;
 
 // For some forcings (such as twilight forcing) the material is set here.
-      double xP, yP, zP;
+      float_sw4 xP, yP, zP;
       
       int ifirst, ilast, jfirst, jlast, kfirst, klast, g;
-      double *cm_ptr, *rho_ptr, h, zmin, omm, phm, amprho, ampmu, ampla;
-      double phc[21]; // move these angles to the EW class
+      float_sw4 *cm_ptr, *rho_ptr, h, zmin, omm, phm, amprho, ampmu, ampla;
+      float_sw4 phc[21]; // move these angles to the EW class
 
       // need to store all the phase angle constants somewhere
      phc[0]=0;
@@ -1235,49 +1510,60 @@ void EW::set_anisotropic_materials()
 
 // setup density (rho)
 // setup rho and stiffness matrix         
-        tw_ani_stiff(ifirst, ilast, jfirst, jlast, kfirst, klast, h, zmin,
+//FTNC	 if( m_croutines )
+	    tw_ani_stiff_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, h, zmin,
                      omm, phm, amprho, rho_ptr, phc, cm_ptr);
+//FTNC	 else
+//FTNC	    tw_ani_stiff(ifirst, ilast, jfirst, jlast, kfirst, klast, h, zmin,
+//FTNC                     omm, phm, amprho, rho_ptr, phc, cm_ptr);
          
 // also need rho
       }
       if( topographyExists() )
       {
-         g = mNumberOfGrids-1;
-         rho_ptr = mRho[g].c_ptr();
-         cm_ptr = mC[g].c_ptr();
+         for (g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++)
+         {
+//         g = mNumberOfGrids-1;
+            rho_ptr = mRho[g].c_ptr();
+            cm_ptr = mC[g].c_ptr();
 
-         double* x_ptr = mX.c_ptr();
-         double* y_ptr = mY.c_ptr();
-         double* z_ptr = mZ.c_ptr();
+            float_sw4* x_ptr = mX[g].c_ptr();
+            float_sw4* y_ptr = mY[g].c_ptr();
+            float_sw4* z_ptr = mZ[g].c_ptr();
 
-         ifirst = m_iStart[g];
-         ilast  = m_iEnd[g];
-         jfirst = m_jStart[g];
-         jlast  = m_jEnd[g];
-         kfirst = m_kStart[g];
-         klast  = m_kEnd[g];
+            ifirst = m_iStart[g];
+            ilast  = m_iEnd[g];
+            jfirst = m_jStart[g];
+            jlast  = m_jEnd[g];
+            kfirst = m_kStart[g];
+            klast  = m_kEnd[g];
 
-         omm = m_twilight_forcing->m_momega;
-         phm = m_twilight_forcing->m_mphase;
-         amprho = m_twilight_forcing->m_amprho;
-
-         if (proc_zero() )
-            printf("set_anisotropic_mat> before tw_ani_curvi_stiff\n");
-         tw_ani_curvi_stiff(ifirst, ilast, jfirst, jlast, kfirst, klast, x_ptr, y_ptr, z_ptr,
-                            omm, phm, amprho, rho_ptr, phc, cm_ptr);
-         if (proc_zero() )
-            printf("set_anisotropic_mat> after tw_ani_curvi_stiff\n");
-
-      }
+            omm = m_twilight_forcing->m_momega;
+            phm = m_twilight_forcing->m_mphase;
+            amprho = m_twilight_forcing->m_amprho;
+         
+            if (proc_zero() )
+               printf("set_anisotropic_mat> before tw_ani_curvi_stiff\n");
+//FTNC            if( m_croutines )
+               tw_ani_curvi_stiff_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, x_ptr, y_ptr, z_ptr,
+                                     omm, phm, amprho, rho_ptr, phc, cm_ptr);
+//FTNC            else
+//FTNC               tw_ani_curvi_stiff(ifirst, ilast, jfirst, jlast, kfirst, klast, x_ptr, y_ptr, z_ptr,
+//FTNC                                  omm, phm, amprho, rho_ptr, phc, cm_ptr);
+            if (proc_zero() )
+               printf("set_anisotropic_mat> after tw_ani_curvi_stiff\n");
+         } // end for g         
+      } // end if topographyExists      
 
 // make sure the stiffness matrix is positive definite
       check_anisotropic_material( mRho, mC );
       if( topographyExists() )
       {
          int g=mNumberOfGrids-1;
-         F77_FUNC(anisomtrltocurvilinear,ANISOMTRLTOCURVILINEAR)( &m_iStart[g], &m_iEnd[g], 
-                                                                  &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
-                                                                  mMetric.c_ptr(), mC[g].c_ptr(), mCcurv.c_ptr() );
+         anisomtrltocurvilinear_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+				 mMetric[g].c_ptr(), mC[g].c_ptr(), mCcurv.c_ptr() );// NOT implemented for several curvilinear grids
+//FTNC         anisomtrltocurvilinear( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+//				 mMetric.c_ptr(), mC[g].c_ptr(), mCcurv.c_ptr() );
       }
       
    } // end if m_twilight
@@ -1292,17 +1578,22 @@ void EW::set_anisotropic_materials()
 //-----------------------------------------------------------------------
 void EW::check_anisotropic_material( vector<Sarray>& rho, vector<Sarray>& c )
 {
-   double rhomin=1e38, rhomax=-1e38;
-   double eigmin=1e38, eigmax=-1e38;
-   double rhominloc, rhomaxloc, eigminloc, eigmaxloc;
+   float_sw4 rhomin=1e38, rhomax=-1e38;
+   float_sw4 eigmin=1e38, eigmax=-1e38;
+   float_sw4 rhominloc, rhomaxloc, eigminloc, eigmaxloc;
    for( int g=0 ; g < mNumberOfGrids ; g++ )
    {
-      double* rho_ptr = rho[g].c_ptr();
-      double* c_ptr = c[g].c_ptr();
-      F77_FUNC(checkanisomtrl,CHECKANISOMTRL)(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-					      &m_kStart[g], &m_kEnd[g],
-					      rho_ptr, c_ptr,
-					      &rhominloc, &rhomaxloc, &eigminloc, &eigmaxloc );
+      float_sw4* rho_ptr = rho[g].c_ptr();
+      float_sw4* c_ptr = c[g].c_ptr();
+//FTNC      if( m_croutines )
+	 checkanisomtrl_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+			    m_kStart[g], m_kEnd[g], rho_ptr, c_ptr,
+			    rhominloc, rhomaxloc, eigminloc, eigmaxloc );
+//FTNC      else
+//FTNC	 checkanisomtrl(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+//FTNC			&m_kStart[g], &m_kEnd[g],
+//FTNC			rho_ptr, c_ptr,
+//FTNC			&rhominloc, &rhomaxloc, &eigminloc, &eigmaxloc );
       if( rhominloc < rhomin )
 	 rhomin = rhominloc;
       if( rhomaxloc > rhomax )
@@ -1316,10 +1607,10 @@ void EW::check_anisotropic_material( vector<Sarray>& rho, vector<Sarray>& c )
    rhomaxloc = rhomax;
    eigminloc = eigmin;
    eigmaxloc = eigmax;
-   MPI_Allreduce( &rhominloc, &rhomin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD );
-   MPI_Allreduce( &rhomaxloc, &rhomax, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
-   MPI_Allreduce( &eigminloc, &eigmin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD );
-   MPI_Allreduce( &eigmaxloc, &eigmax, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD );
+   MPI_Allreduce( &rhominloc, &rhomin, 1, m_mpifloat, MPI_MIN, m_1d_communicator );
+   MPI_Allreduce( &rhomaxloc, &rhomax, 1, m_mpifloat, MPI_MAX, m_1d_communicator );
+   MPI_Allreduce( &eigminloc, &eigmin, 1, m_mpifloat, MPI_MIN, m_1d_communicator );
+   MPI_Allreduce( &eigmaxloc, &eigmax, 1, m_mpifloat, MPI_MAX, m_1d_communicator );
 
    if( proc_zero() )
    {
@@ -1331,18 +1622,18 @@ void EW::check_anisotropic_material( vector<Sarray>& rho, vector<Sarray>& c )
 }
 
 //-----------------------------------------------------------------------
-void EW::create_output_directory( )
+void EW::create_directory(const string& path)
 {
    if (proc_zero()) 
    {
 
      cout << "----------------------------------------------------" << endl
-	  << " Making Output Directory: " << mPath << endl
+	  << " Making Directory: " << path << endl
 	  << "\t\t" << endl;
 
       // Create directory where all these files will be written.
 
-      int err = mkdirs(mPath);
+      int err = mkdirs(path);
 
       if (err == 0)
 	cout << "... Done!" << endl
@@ -1350,135 +1641,141 @@ void EW::create_output_directory( )
       else
       {
 // fatal error
-	cerr << endl << "******** Failed to create the output directory *******" << endl << endl;
+	cerr << endl << "******** Failed to create the directory *******" << endl << endl;
 	MPI_Abort(MPI_COMM_WORLD,1);
       }
 
 // check that we have write permission on the directory
-      if (access(mPath.c_str(),W_OK)!=0)
+      if (access(path.c_str(),W_OK)!=0)
       {
 // fatal error
-	cerr << endl << "Error: No write permission on output directory: " << mPath << endl;
+	cerr << endl << "Error: No write permission on directory: " << path << endl;
 	MPI_Abort(MPI_COMM_WORLD,1);
       }
       
    }
   // Let processor 0 finish first!
    cout.flush();  cerr.flush();
-   MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Barrier(m_1d_communicator);
 
-// Check that the mPath directory exists from all processes
-   struct stat statBuf;
-   int statErr = stat(mPath.c_str(), &statBuf);
-   CHECK_INPUT(statErr == 0 && S_ISDIR(statBuf.st_mode), "Error: " << mPath << " is not a directory" << endl);
+//
+// AP: The following stat() and access() calls appear unneccessary because
+// a) not all processes need to interact with the file system
+// b) why would a directory only be accessible from proc=0 ?
+//
+// Check that the path directory exists from all processes (NB: Only a few of the processes need access)
+//    struct stat statBuf;
+//    int statErr = stat(path.c_str(), &statBuf);
+//    CHECK_INPUT(statErr == 0 && S_ISDIR(statBuf.st_mode), "Error: " << path << " is not a directory" << endl);
    
-// check that all processes have write permission on the directory
-   CHECK_INPUT(access(mPath.c_str(),W_OK)==0,
-	   "Error: No write permission on output directory: " << mPath << endl);
+// // check that all processes have write permission on the directory
+//    CHECK_INPUT(access(path.c_str(),W_OK)==0,
+// 	   "Error: No write permission on directory: " << path << endl);
 }
 
 //-----------------------------------------------------------------------
 void EW::computeDT()
 {
-  if (!mQuiet && mVerbose >= 1 && proc_zero())
+  if (!mQuiet && mVerbose >= 1 && proc_zero_evzero())
   {
     printf("*** computing the time step ***\n");
   }
   
-   double dtloc=1.e10, dtGP;
-   mDt = dtloc;
+  float_sw4 dtloc=1.e10, factor = 4;
+  mDt = dtloc;
 
-   double factor = 4;
-   double loceig;
-   
 // temporarily changing the CFL number to suit 2nd order time stepping (and agree with test3 fortran code)
 //   mCFL = 0.9;
 
    int g;
    for (int g=0; g<mNumberOfCartesianGrids; g++)
    {
+      float_sw4 dtgrid=1e10;
+#pragma omp parallel for reduction(min:dtgrid)      
      for (int k=m_kStart[g]; k<=m_kEnd[g]; k++)
        for (int j=m_jStart[g]; j<=m_jEnd[g]; j++)
 	 for (int i=m_iStart[g]; i<=m_iEnd[g]; i++)
 	 {
-	    loceig = factor*mMu[g](i,j,k) + mLambda[g](i,j,k);
+	    float_sw4 loceig = factor*mMu[g](i,j,k) + mLambda[g](i,j,k);
 	    for( int a=0 ; a < m_number_mechanisms ; a++ )
 	       loceig += factor*mMuVE[g][a](i,j,k) + mLambdaVE[g][a](i,j,k);
             loceig /= mRho[g](i,j,k);
 	    //	   loceig = (factor*mMu[g](i,j,k) + mLambda[g](i,j,k) )/mRho[g](i,j,k);
-	   dtGP = mCFL*mGridSize[g]/sqrt( loceig );
+	    float_sw4 dtGP = mCFL*mGridSize[g]/sqrt( loceig );
 	   //	   dtloc = min(dtloc,dtGP);
-	   dtloc = dtloc < dtGP ? dtloc : dtGP;
+	    dtgrid = dtgrid < dtGP ? dtgrid : dtGP;
+   //	   dtloc = dtloc < dtGP ? dtloc : dtGP;
 	 }
+     dtloc = dtloc < dtgrid ? dtloc : dtgrid;
    }
 
 // look at the curvilinear grid
-   double dtCurv=1.e18, dtCurvGP;
+   float_sw4 dtCurv=1.e18;
    if (topographyExists())
    {
-     g = mNumberOfGrids-1;
-     double Amat[6], la, mu, la2mu;
-     int N=3, LDZ=1, INFO;
-     char JOBZ='N', UPLO='L';
-     double W[3], Z[1], WORK[9];
-// do consider ghost points (especially the ghost line above the topography might be important)
-     for (int k=m_kStart[g]; k<=m_kEnd[g]; k++)
-       for (int j=m_jStart[g]; j<=m_jEnd[g]; j++)
-	 for (int i=m_iStart[g]; i<=m_iEnd[g]; i++)
-	 {
-	   la = mLambda[g](i,j,k);
-	   mu = mMu[g](i,j,k);
-	   for( int a = 0 ; a < m_number_mechanisms ; a++ )
-	   {
-	      la += mLambdaVE[g][a](i,j,k);
-              mu += mMuVE[g][a](i,j,k);
-	   }
-	   la2mu = la + 2.*mu;
-           double jinv = 1/mJ(i,j,k);
+      for (g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++)
+      {
+#pragma omp parallel for reduction(min:dtCurv)
+         for (int k=m_kStartInt[g]; k<=m_kEndInt[g]; k++)
+            for (int j=m_jStart[g]; j<=m_jEnd[g]; j++)
+               for (int i=m_iStart[g]; i<=m_iEnd[g]; i++)
+               {
+                  int N=3, LDZ=1, INFO;
+                  char JOBZ='N', UPLO='L';
+                  double Amat[6], W[3], Z[1], WORK[9];
+                  float_sw4 la = mLambda[g](i,j,k);
+                  float_sw4 mu = mMu[g](i,j,k);
+                  for( int a = 0 ; a < m_number_mechanisms ; a++ )
+                  {
+                     la += mLambdaVE[g][a](i,j,k);
+                     mu += mMuVE[g][a](i,j,k);
+                  }
+                  float_sw4 la2mu = la + 2.*mu;
+                  float_sw4 jinv = 1/mJ[g](i,j,k);
 // A11
 //	   Amat[0] = -4.*(SQR(mQ(1,i,j,k))*la2mu + SQR(mQ(2,i,j,k))*mu + SQR(mQ(3,i,j,k))*mu 
 //		        + SQR(mR(1,i,j,k))*la2mu + SQR(mR(2,i,j,k))*mu + SQR(mR(3,i,j,k))*mu
 //			 + SQR(mS(1,i,j,k))*la2mu + SQR(mS(2,i,j,k))*mu + SQR(mS(3,i,j,k))*mu);
-           Amat[0] = -4*(SQR(mMetric(1,i,j,k))*la2mu + SQR(mMetric(1,i,j,k))*mu + 
-			 SQR(mMetric(2,i,j,k))*la2mu + SQR(mMetric(3,i,j,k))*mu + SQR(mMetric(4,i,j,k))*mu)*jinv;
+                  Amat[0] = -4*(SQR(mMetric[g](1,i,j,k))*la2mu + SQR(mMetric[g](1,i,j,k))*mu + 
+                                SQR(mMetric[g](2,i,j,k))*la2mu + SQR(mMetric[g](3,i,j,k))*mu + SQR(mMetric[g](4,i,j,k))*mu)*jinv;
 // A21 = A12
 //	   Amat[1] = -4.*(mQ(1,i,j,k)*mQ(2,i,j,k) + mR(1,i,j,k)*mR(2,i,j,k) + mS(1,i,j,k)*mS(2,i,j,k))*(mu+la);
-	   Amat[1] = -4.*mMetric(2,i,j,k)*mMetric(3,i,j,k)*(mu+la)*jinv;
+                  Amat[1] = -4.*mMetric[g](2,i,j,k)*mMetric[g](3,i,j,k)*(mu+la)*jinv;
 // A31 = A13	   
 //	   Amat[2] = -4.*(mQ(1,i,j,k)*mQ(3,i,j,k) + mR(1,i,j,k)*mR(3,i,j,k) + mS(1,i,j,k)*mS(3,i,j,k))*(mu+la);
-	   Amat[2] = -4.*mMetric(2,i,j,k)*mMetric(4,i,j,k)*(mu+la)*jinv;
+                  Amat[2] = -4.*mMetric[g](2,i,j,k)*mMetric[g](4,i,j,k)*(mu+la)*jinv;
 // A22	   
-	   Amat[3] = -4.*(SQR(mMetric(1,i,j,k))*mu + SQR(mMetric(1,i,j,k))*la2mu +
-		        + SQR(mMetric(2,i,j,k))*mu + SQR(mMetric(3,i,j,k))*la2mu + SQR(mMetric(4,i,j,k))*mu)*jinv;
+                  Amat[3] = -4.*(SQR(mMetric[g](1,i,j,k))*mu + SQR(mMetric[g](1,i,j,k))*la2mu +
+                                 + SQR(mMetric[g](2,i,j,k))*mu + SQR(mMetric[g](3,i,j,k))*la2mu + SQR(mMetric[g](4,i,j,k))*mu)*jinv;
 // A32 = A23
 //	   Amat[4] = -4.*(mQ(2,i,j,k)*mQ(3,i,j,k) + mR(2,i,j,k)*mR(3,i,j,k) + mS(2,i,j,k)*mS(3,i,j,k))*(mu+la);
-	   Amat[4] = -4.*mMetric(3,i,j,k)*mMetric(4,i,j,k)*(mu+la)*jinv;
+                  Amat[4] = -4.*mMetric[g](3,i,j,k)*mMetric[g](4,i,j,k)*(mu+la)*jinv;
 // A33
-	   Amat[5] = -4.*(SQR(mMetric(1,i,j,k))*mu + SQR(mMetric(1,i,j,k))*mu
-			+ SQR(mMetric(2,i,j,k))*mu + SQR(mMetric(3,i,j,k))*mu + SQR(mMetric(4,i,j,k))*la2mu)*jinv;
+                  Amat[5] = -4.*(SQR(mMetric[g](1,i,j,k))*mu + SQR(mMetric[g](1,i,j,k))*mu
+                                 + SQR(mMetric[g](2,i,j,k))*mu + SQR(mMetric[g](3,i,j,k))*mu + SQR(mMetric[g](4,i,j,k))*la2mu)*jinv;
 // calculate eigenvalues of symmetric matrix
-	   F77_FUNC(dspev,DSPEV)(JOBZ, UPLO, N, Amat, W, Z, LDZ, WORK, INFO);
-
-	   if (INFO != 0)
-	   {
-	     printf("ERROR: computeDT: dspev returned INFO = %i for grid point (%i, %i, %i)\n", INFO, i, j, k);
-	     printf("lambda = %e, mu = %e\n", la, mu);
-             printf("Jacobian = %15.7g \n",mJ(i,j,k));
-	     printf("Matrix = \n");
-	     printf(" %15.7g  %15.7g %15.7g \n",Amat[0],Amat[1],Amat[2]);
-	     printf(" %15.7g  %15.7g %15.7g \n",Amat[1],Amat[3],Amat[4]);
-	     printf(" %15.7g  %15.7g %15.7g \n",Amat[2],Amat[4],Amat[5]);
-	     MPI_Abort(MPI_COMM_WORLD, 1);
-	   }
+                  F77_FUNC(dspev,DSPEV)(JOBZ, UPLO, N, Amat, W, Z, LDZ, WORK, INFO);
+                  
+                  if (INFO != 0)
+                  {
+                     printf("ERROR: computeDT: dspev returned INFO = %i for grid point (%i, %i, %i)\n", INFO, i, j, k);
+                     printf("lambda = %e, mu = %e\n", la, mu);
+                     printf("Jacobian = %15.7g \n",mJ[g](i,j,k));
+                     printf("Matrix = \n");
+                     printf(" %15.7g  %15.7g %15.7g \n",Amat[0],Amat[1],Amat[2]);
+                     printf(" %15.7g  %15.7g %15.7g \n",Amat[1],Amat[3],Amat[4]);
+                     printf(" %15.7g  %15.7g %15.7g \n",Amat[2],Amat[4],Amat[5]);
+                     MPI_Abort(MPI_COMM_WORLD, 1);
+                  }
 // tmp
 //	   fprintf(fp,"%i %i %i %e %e %e\n", i, j, k, W[0], W[1], W[2]);
 
 // eigenvalues in ascending order: W[0] < W[1] < W[2]
-	   if (W[0] >= 0.)
-	   {
-	     printf("ERROR: computeDT: determining eigenvalue is non-negative; W[0] = %e at curvilinear grid point (%i, %i, %i)\n", W[0], i, j, k);
-	     MPI_Abort(MPI_COMM_WORLD, 1);
-	   }
+                  if (W[0] >= 0.)
+                  {
+                     printf("ERROR: computeDT: determining eigenvalue is non-negative; W[0] = %e at curvilinear grid point (%i, %i, %i)\n", W[0], i, j, k);
+                     MPI_Abort(MPI_COMM_WORLD, 1);
+                  }
 // local time step
 //           double asym = SQR(mMetric(2,i,j,k))+SQR(mMetric(3,i,j,k))+SQR(mMetric(4,i,j,k));
 //           double m1 = SQR(mMetric(1,i,j,k));
@@ -1488,96 +1785,118 @@ void EW::computeDT()
 //           eg2 = eg2*4*jinv;
 //           cout << "eig solver " << W[0] << " analytic values " << eg1 << " and " << eg2 << endl;
 
-	   dtCurvGP = dtGP = mCFL*sqrt(4.*mRho[g](i,j,k)/(-W[0]));
-	   dtloc = min(dtloc, dtGP);
-	   dtCurv = min(dtCurv, dtCurvGP);
-	 }
+                  float_sw4 dtCurvGP = mCFL*sqrt(4.*mRho[g](i,j,k)/(-W[0]));
+                  dtCurv = dtCurv < dtCurvGP ? dtCurv : dtCurvGP;
+               }
 // tmp
 //     fclose(fp);
+      } // end for g
    } // end if topographyExists()
-   
-   mDt = dtloc;
+
+   if( dtCurv < dtloc )
+      dtloc = dtCurv;
 
 // compute the global minima
-    MPI_Allreduce( &dtloc, &mDt, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
+    MPI_Allreduce( &dtloc, &mDt, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
 
     //   cout << "cfl = " << mCFL << endl;
-    //   cout << "dtloc = " << mDt << endl;
+
 
 // global minima for curvilinear grid
     if (topographyExists())
     {
-      double dtCurvGlobal;
-      MPI_Allreduce( &dtCurv, &dtCurvGlobal, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
+      float_sw4 dtCurvGlobal;
+      MPI_Allreduce( &dtCurv, &dtCurvGlobal, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
       if (!mQuiet && mVerbose >= 1 && proc_zero())
       {
 	printf("INFO: Smallest stable time step for curvilinear grid only: %e\n", dtCurvGlobal);
       }
     }
 
-    if (!mQuiet && (mVerbose >= 1 || mOrder<4) && proc_zero())
+    if (!mQuiet && (mVerbose >= 1 || mOrder<4) && proc_zero_evzero())
     {
       cout << "TIME accuracy order=" << mOrder << " CFL=" << mCFL << " prel. time step=" << mDt << endl;
     }
     
-    if (mTimeIsSet)
+    for( int e=0 ; e < m_eEnd-m_eStart+1 ; e++ )
     {
+       if (mTimeIsSet[e])
+       {
 // constrain the dt based on the goal time
 //      VERIFY2(mTmax > mTstart,"*** ERROR: Tstart is greater than Tmax! ***");  
-      mNumberOfTimeSteps = static_cast<int> ((mTmax - mTstart) / mDt + 0.5); 
-      mNumberOfTimeSteps = (mNumberOfTimeSteps==0)? 1: mNumberOfTimeSteps;
+	  mNumberOfTimeSteps[e] = static_cast<int> ((mTmax[e] - mTstart) / mDt + 0.5); 
+	  mNumberOfTimeSteps[e] = (mNumberOfTimeSteps[e]==0)? 1: mNumberOfTimeSteps[e];
 // the resulting mDt could be slightly too large, because the numberOfTimeSteps is rounded to the nearest int
-      mDt = (mTmax - mTstart) / mNumberOfTimeSteps;
+// When more than one event set mTmax, the final time will only be perfect for one event, don't know how to fix that....
+	  mDt = (mTmax[e] - mTstart) / mNumberOfTimeSteps[e];
+       }
     }
 }
 
 //-----------------------------------------------------------------------
-void EW::computeDTanisotropic()
+void EW::computeDTanisotropic() // NOT completely updated for several curvilinear grids
 {
    if (!mQuiet && mVerbose >= 1 && proc_zero())
    {
       printf("*** computing the time step ***\n");
    }
-   double dtproc=1.e38;
+   float_sw4 dtproc=1.e38;
    for (int g=0; g<mNumberOfCartesianGrids; g++)
    {
-      double* rho_ptr = mRho[g].c_ptr();
-      double* c_ptr = mC[g].c_ptr();
-      double dtgrid;
-      F77_FUNC(computedtaniso2,COMPUTEDTANISO2)( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-						 &m_kStart[g], &m_kEnd[g],
-						 rho_ptr, c_ptr, &mCFL, &mGridSize[g], &dtgrid );
+      float_sw4* rho_ptr = mRho[g].c_ptr();
+      float_sw4* c_ptr = mC[g].c_ptr();
+      float_sw4 dtgrid;
+//FTNC      if( m_croutines )
+	 computedtaniso2_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+			     m_kStart[g], m_kEnd[g],
+			     rho_ptr, c_ptr, mCFL, mGridSize[g], dtgrid );
+//FTNC      else
+//FTNC	 computedtaniso2( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+//FTNC			  &m_kStart[g], &m_kEnd[g],
+//FTNC			  rho_ptr, c_ptr, &mCFL, &mGridSize[g], &dtgrid );
       if( dtgrid < dtproc )
 	 dtproc = dtgrid;
    }
    if( topographyExists() )
    {
-      int g=mNumberOfGrids-1;
-      double* rho_ptr = mRho[g].c_ptr();
-      double* c_ptr = mCcurv.c_ptr();
-      double* jac_ptr = mJ.c_ptr();
-      double dtgrid;
-      F77_FUNC(computedtaniso2curv,COMPUTEDTANISO2CURV)( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-							 &m_kStart[g], &m_kEnd[g],
-							 rho_ptr, c_ptr, jac_ptr, &mCFL, &dtgrid );
-      if( dtgrid < dtproc )
-	 dtproc = dtgrid;
+      for (int g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++)
+      {
+//      int g=mNumberOfGrids-1;
+         float_sw4* rho_ptr = mRho[g].c_ptr();
+         float_sw4* c_ptr = mCcurv.c_ptr();
+         float_sw4* jac_ptr = mJ[g].c_ptr();
+         float_sw4 dtgrid;
+//FTNC         if( m_croutines )
+            computedtaniso2curv_ci( m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+                                    m_kStart[g], m_kEnd[g],
+                                    rho_ptr, c_ptr, jac_ptr, mCFL, dtgrid );
+//FTNC         else
+//FTNC            computedtaniso2curv( &m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+//FTNC                                 &m_kStart[g], &m_kEnd[g],
+//FTNC                                 rho_ptr, c_ptr, jac_ptr, &mCFL, &dtgrid );
+         if( dtgrid < dtproc )
+            dtproc = dtgrid;
+      }
    }
+   
 // compute the global minima
-    MPI_Allreduce( &dtproc, &mDt, 1, MPI_DOUBLE, MPI_MIN, m_cartesian_communicator);
-    if (!mQuiet && mVerbose >= 1 && proc_zero())
-    {
+   MPI_Allreduce( &dtproc, &mDt, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
+   if (!mQuiet && mVerbose >= 1 && proc_zero())
+   {
       cout << "order of accuracy=" << mOrder << " CFL=" << mCFL << " prel. time step=" << mDt << endl;
-    }
+   }
     
-    if (mTimeIsSet)
+    for( int e=0 ; e < m_nevent ; e++ )
     {
+       if (mTimeIsSet[e])
+       {
 // constrain the dt based on the goal time
 //      VERIFY2(mTmax > mTstart,"*** ERROR: Tstart is greater than Tmax! ***");  
-      mNumberOfTimeSteps = static_cast<int> ((mTmax - mTstart) / mDt + 0.5); 
-      mNumberOfTimeSteps = (mNumberOfTimeSteps==0)? 1: mNumberOfTimeSteps;
+	  mNumberOfTimeSteps[e] = static_cast<int> ((mTmax[e] - mTstart) / mDt + 0.5); 
+	  mNumberOfTimeSteps[e] = (mNumberOfTimeSteps[e]==0)? 1: mNumberOfTimeSteps[e];
 // the resulting mDt could be slightly too large, because the numberOfTimeSteps is rounded to the nearest int
-      mDt = (mTmax - mTstart) / mNumberOfTimeSteps;
+	  mDt = (mTmax[e] - mTstart) / mNumberOfTimeSteps[e];
+       }
     }
 }
 
@@ -1724,20 +2043,20 @@ void EW::setup_supergrid( )
     }
   }
 
-  if (mVerbose && proc_zero() && m_use_supergrid)
+  if (mVerbose && proc_zero_evzero() && m_use_supergrid)
     cout << "Detected at least one boundary with supergrid conditions" << endl;
   
-  int gTop = mNumberOfCartesianGrids-1;
-  vector<double> sg_width(mNumberOfCartesianGrids);
-
+  vector<float_sw4> sg_width(mNumberOfGrids);
+  
 // if the number of grid points was specified in the input file, we need to convert that to a physical width, based on the coarsest grid
   if ( !m_use_sg_width )
   {
      m_supergrid_width = m_sg_gp_thickness*mGridSize[0];
      m_use_sg_width = true;
   }
-  
-  for( int g=0 ; g < mNumberOfCartesianGrids ; g++ )
+
+  //  for( int g=0 ; g < mNumberOfCartesianGrids ; g++ )
+  for( int g=0 ; g < mNumberOfGrids ; g++ )
   {
      if( m_use_sg_width )
         sg_width[g] = m_supergrid_width;
@@ -1751,16 +2070,16 @@ void EW::setup_supergrid( )
                                           (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
                                           sg_width[g] );
   }
-  if( topographyExists() )
-  {
-     int g=mNumberOfGrids-1;
-     m_supergrid_taper_x[g].define_taper( (mbcGlobalType[0] == bSuperGrid), 0.0,
-                                          (mbcGlobalType[1] == bSuperGrid), m_global_xmax, 
-                                          sg_width[gTop] );
-     m_supergrid_taper_y[g].define_taper( (mbcGlobalType[2] == bSuperGrid), 0.0,
-                                          (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
-                                          sg_width[gTop] );
-  }
+  //  if( topographyExists() )
+  //  {
+  //     int g=mNumberOfGrids-1;
+  //     m_supergrid_taper_x[g].define_taper( (mbcGlobalType[0] == bSuperGrid), 0.0,
+  //                                          (mbcGlobalType[1] == bSuperGrid), m_global_xmax, 
+  //                                          sg_width[gTop] );
+  //     m_supergrid_taper_y[g].define_taper( (mbcGlobalType[2] == bSuperGrid), 0.0,
+  //                                          (mbcGlobalType[3] == bSuperGrid), m_global_ymax, 
+  //                                          sg_width[gTop] );
+  //  }
   if( mNumberOfGrids == 1 )
   {
      m_supergrid_taper_z[0].define_taper( !topographyExists() && (mbcGlobalType[4] == bSuperGrid), 0.0,
@@ -1770,7 +2089,7 @@ void EW::setup_supergrid( )
   else
   {
      m_supergrid_taper_z[mNumberOfGrids-1].define_taper( !topographyExists() && (mbcGlobalType[4] == bSuperGrid), 0.0,
-                                                         false, m_global_zmax, sg_width[gTop] );
+                                                         false, m_global_zmax, sg_width[mNumberOfGrids-1] );
      m_supergrid_taper_z[0].define_taper( false, 0.0, mbcGlobalType[5]==bSuperGrid, m_global_zmax,
                                           sg_width[0] );
      for( int g=1 ; g < mNumberOfGrids-1 ; g++ )
@@ -1784,30 +2103,41 @@ void EW::setup_supergrid( )
      if( m_use_sg_width )
         sgpts = m_supergrid_width/mGridSize[g];
      int imin = 1+sgpts, imax = m_global_nx[g]-sgpts, jmin=1+sgpts, jmax=m_global_ny[g]-sgpts;
-     int kmax=m_global_nz[g]-sgpts;
-
+     int kmax=m_global_nz[g];
+     int kmin=1;
      // Only grid 0 has super grid boundary at the bottom
-     if( g > 0 )
-        kmax = m_global_nz[g];
+     if( g == 0 )
+        kmax = m_global_nz[g]-sgpts;
 
+     int addlayer=1;
+     
      //     cout << "Active region for backward solver: " << imin+1 << " " << imax-1 << " " << jmin+1 << " " << jmax-1
-     //	  << " " << 1+1 << " " << kmax-1 << endl;
+     //	  << " " << kmin+1 << " " << kmax-1 << endl;
 
-     m_iStartActGlobal[g] = m_iStartAct[g] = imin+1;
-     m_iEndActGlobal[g]   = m_iEndAct[g]   = imax-1;
-     m_jStartActGlobal[g] = m_jStartAct[g] = jmin+1;
-     m_jEndActGlobal[g]   = m_jEndAct[g]   = jmax-1;
-     m_kStartActGlobal[g] = m_kStartAct[g] = 1;
-     m_kEndActGlobal[g]   = m_kEndAct[g]   = kmax-1;
+     // The topmost grid do not need to save values
+     //     if( g < mNumberOfGrids-1 )
+     //        kmin = 1+addlayer;
 
-     if( m_iStartAct[g] < m_iStart[g] )
-        m_iStartAct[g] = m_iStart[g];
-     if( m_jStartAct[g] < m_jStart[g] )
-        m_jStartAct[g] = m_jStart[g];
-     if( m_iEndAct[g] > m_iEnd[g] )
-        m_iEndAct[g] = m_iEnd[g];
-     if( m_jEndAct[g] > m_jEnd[g] )
-        m_jEndAct[g] = m_jEnd[g];
+
+     m_iStartActGlobal[g] = m_iStartAct[g] = imin+addlayer;
+     m_iEndActGlobal[g]   = m_iEndAct[g]   = imax-addlayer;
+     m_jStartActGlobal[g] = m_jStartAct[g] = jmin+addlayer;
+     m_jEndActGlobal[g]   = m_jEndAct[g]   = jmax-addlayer;
+     m_kStartActGlobal[g] = m_kStartAct[g] = kmin;
+     if( g == 0 )
+        m_kEndActGlobal[g]   = m_kEndAct[g] = kmax-addlayer;
+     else
+        m_kEndActGlobal[g]   = m_kEndAct[g] = kmax;
+
+     // Changed to interior Start --> StartInt etc..
+     if( m_iStartAct[g] < m_iStartInt[g] )
+        m_iStartAct[g] = m_iStartInt[g];
+     if( m_jStartAct[g] < m_jStartInt[g] )
+        m_jStartAct[g] = m_jStartInt[g];
+     if( m_iEndAct[g] > m_iEndInt[g] )
+        m_iEndAct[g] = m_iEndInt[g];
+     if( m_jEndAct[g] > m_jEndInt[g] )
+        m_jEndAct[g] = m_jEndInt[g];
 
      // If empty, set dimensions so that imax-imin+1=0, to avoid negative element count.
      if( m_iStartAct[g] > m_iEndAct[g] )
@@ -1834,7 +2164,7 @@ void EW::setup_supergrid( )
 void EW::assign_supergrid_damping_arrays()
 {
   int g, i, j, k, topCartesian;
-  double x, y, z;
+  float_sw4 x, y, z;
   
 // resize the vectors for the pointers
   m_sg_dc_x.resize(mNumberOfGrids);
@@ -1853,18 +2183,18 @@ void EW::assign_supergrid_damping_arrays()
 // allocate storage for 1-D damping coefficients on each grid
   for( g=0 ; g<mNumberOfGrids; g++) 
   {
-    m_sg_dc_x[g]  = new double[m_iEnd[g]-m_iStart[g]+1];
-    m_sg_dc_y[g]  = new double[m_jEnd[g]-m_jStart[g]+1];
-    m_sg_dc_z[g]  = new double[m_kEnd[g]-m_kStart[g]+1];
+    m_sg_dc_x[g]  = new float_sw4[m_iEnd[g]-m_iStart[g]+1];
+    m_sg_dc_y[g]  = new float_sw4[m_jEnd[g]-m_jStart[g]+1];
+    m_sg_dc_z[g]  = new float_sw4[m_kEnd[g]-m_kStart[g]+1];
 
-    m_sg_str_x[g] = new double[m_iEnd[g]-m_iStart[g]+1];
-    m_sg_str_y[g] = new double[m_jEnd[g]-m_jStart[g]+1];
-    m_sg_str_z[g] = new double[m_kEnd[g]-m_kStart[g]+1];
+    m_sg_str_x[g] = new float_sw4[m_iEnd[g]-m_iStart[g]+1];
+    m_sg_str_y[g] = new float_sw4[m_jEnd[g]-m_jStart[g]+1];
+    m_sg_str_z[g] = new float_sw4[m_kEnd[g]-m_kStart[g]+1];
 
 // new corner taper functions to reduce strength of damping near the edges and corners
-    m_sg_corner_x[g] = new double[m_iEnd[g]-m_iStart[g]+1];
-    m_sg_corner_y[g] = new double[m_jEnd[g]-m_jStart[g]+1];
-    m_sg_corner_z[g] = new double[m_kEnd[g]-m_kStart[g]+1];
+    m_sg_corner_x[g] = new float_sw4[m_iEnd[g]-m_iStart[g]+1];
+    m_sg_corner_y[g] = new float_sw4[m_jEnd[g]-m_jStart[g]+1];
+    m_sg_corner_z[g] = new float_sw4[m_kEnd[g]-m_kStart[g]+1];
   }
 
 #define dcx(i,g) (m_sg_dc_x[g])[i-m_iStart[g]]
@@ -1898,23 +2228,26 @@ void EW::assign_supergrid_damping_arrays()
 
 	for( g=0 ; g<mNumberOfGrids; g++)  
 	{
-	   for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+#pragma omp parallel for
+	   for( int i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
 	   {
-	      x = (i-1)*mGridSize[g];
+	      float_sw4 x = (i-1)*mGridSize[g];
 	      dcx(i,g)  = 0;
 	      cornerx(i,g)  = 1;
 	      strx(i,g) = m_supergrid_taper_x[g].tw_stretching(x);
 	   }
-	   for( j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+#pragma omp parallel for
+	   for( int j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 	   {
-	      y = (j-1)*mGridSize[g];
+	      float_sw4 y = (j-1)*mGridSize[g];
 	      dcy(j,g)  = 0;
 	      cornery(j,g)  = 1;
 	      stry(j,g) = m_supergrid_taper_y[g].tw_stretching(y);
 	   }
 	   if ( g > topCartesian || (0 < g && g < mNumberOfGrids-1) ) // curvilinear grid or refinement grid.
 	   {
-	      for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+#pragma omp parallel for
+	      for( int k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	      {
 		 dcz(k,g)  = 0.;
 		 cornerz(k,g)  = 1.;
@@ -1923,9 +2256,10 @@ void EW::assign_supergrid_damping_arrays()
 	   }
 	   else
 	   {
-	      for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+#pragma omp parallel for
+	      for( int k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	      {
-		 z = m_zmin[g] + (k-1)*mGridSize[g];
+		 float_sw4 z = m_zmin[g] + (k-1)*mGridSize[g];
 		 dcz(k,g)  = 0;
 		 cornerz(k,g) = 1.;
 		 strz(k,g) = m_supergrid_taper_z[g].tw_stretching(z);
@@ -1955,16 +2289,18 @@ void EW::assign_supergrid_damping_arrays()
         
 	for( g=0 ; g<mNumberOfGrids; g++)  
 	{
-	   for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+#pragma omp parallel for
+	   for( int i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
 	   {
-	      x = (i-1)*mGridSize[g];
+	      float_sw4 x = (i-1)*mGridSize[g];
 	      dcx(i,g)  = m_supergrid_taper_x[g].dampingCoeff(x);
 	      strx(i,g) = m_supergrid_taper_x[g].stretching(x);
 	      cornerx(i,g)  = m_supergrid_taper_x[g].cornerTaper(x);
 	   }
-	   for( j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+#pragma omp parallel for
+	   for( int j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 	   {
-	      y = (j-1)*mGridSize[g];
+	      float_sw4 y = (j-1)*mGridSize[g];
 	      dcy(j,g)  = m_supergrid_taper_y[g].dampingCoeff(y);
 	      stry(j,g) = m_supergrid_taper_y[g].stretching(y);
 	      cornery(j,g)  = m_supergrid_taper_y[g].cornerTaper(y);
@@ -1972,7 +2308,8 @@ void EW::assign_supergrid_damping_arrays()
 	   if (g > topCartesian || (0 < g && g < mNumberOfGrids-1)  ) // Curvilinear or refinement grid
 	   {
 // No supergrid damping in the vertical (k-) direction on a curvilinear or refinement grid.
-	      for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+#pragma omp parallel for
+	      for( int k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	      {
 		 dcz(k,g) = 0.;
 		 strz(k,g) = 1;
@@ -1981,9 +2318,10 @@ void EW::assign_supergrid_damping_arrays()
 	   }
 	   else
 	   {
-	      for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+#pragma omp parallel for
+	      for( int k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	      {
-		z = m_zmin[g] + (k-1)*mGridSize[g];
+		float_sw4 z = m_zmin[g] + (k-1)*mGridSize[g];
 		dcz(k,g)  = m_supergrid_taper_z[g].dampingCoeff(z);
 		strz(k,g) = m_supergrid_taper_z[g].stretching(z);
 		cornerz(k,g) = m_supergrid_taper_z[g].cornerTaper(z);
@@ -2000,19 +2338,22 @@ void EW::assign_supergrid_damping_arrays()
 // Supergrid not used, but define arrays to simplify coding in some places.
      for( int g=0 ; g < mNumberOfGrids ; g++ )
      {
-	for( i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
+#pragma omp parallel for
+	for( int i = m_iStart[g] ; i <= m_iEnd[g] ; i++ )
 	{
 	   dcx(i,g)  = 0;
 	   strx(i,g) = 1;
 	   cornerx(i,g) = 1.;
 	}
-	for( j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
+#pragma omp parallel for
+	for( int j = m_jStart[g] ; j <= m_jEnd[g] ; j++ )
 	{
 	   dcy(j,g)  = 0;
 	   stry(j,g) = 1;
 	   cornery(j,g) = 1.;
 	}
-	for( k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
+#pragma omp parallel for
+	for( int k = m_kStart[g] ; k <= m_kEnd[g] ; k++ )
 	{
 	   dcz(k,g)  = 0.;
 	   strz(k,g) = 1;
@@ -2073,30 +2414,33 @@ void EW::assign_supergrid_damping_arrays()
 void EW::material_ic( vector<Sarray>& a_mtrl )
 {
 // interface between curvilinear and top Cartesian grid
-   if (topographyExists())
+   if (topographyExists() )
    {
-      //      int nc=1;
-      int g  = mNumberOfCartesianGrids-1;
-      int gc = mNumberOfGrids-1;
-      int nc = a_mtrl[g].ncomp();
-      int q, i, j;
+      if( m_gridGenerator->curviCartIsSmooth(mNumberOfGrids-mNumberOfCartesianGrids) )
+      {
+         int g  = mNumberOfCartesianGrids-1;
+         int gc = g+1;
+	 int nc = a_mtrl[g].ncomp();
+	 int q, i, j;
 // inject values between lower boundary of gc and upper boundary of g
-      for( j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
-	 for( i = m_iStart[g]; i <= m_iEnd[g]; i++ )
-	 {
+#pragma omp parallel for
+	 for( int j = m_jStart[g] ; j <= m_jEnd[g]; j++ )
+	   for( int i = m_iStart[g]; i <= m_iEnd[g]; i++ )
+	   {
 // assign ghost points in the Cartesian grid
-	    for (q = 0; q < m_ghost_points; q++) // only once when m_ghost_points==1
-	    {
-	       for( int c = 1; c <= nc ; c++ )
-		  a_mtrl[g](c,i,j,m_kStart[g] + q) = a_mtrl[gc](c,i,j,m_kEnd[gc]-2*m_ghost_points + q);
-	    }
+	      for (int q = 0; q < m_ghost_points; q++) // only once when m_ghost_points==1
+	      {
+	         for( int c = 1; c <= nc ; c++ )
+		   a_mtrl[g](c,i,j,m_kStart[g] + q) = a_mtrl[gc](c,i,j,m_kEnd[gc]-2*m_ghost_points + q);
+	      }
 // assign ghost points in the Curvilinear grid
-	    for (q = 0; q <= m_ghost_points; q++) // twice when m_ghost_points==1 (overwrites solution on the common grid line)
-	    {
-	       for( int c = 1; c <= nc ; c++ )
+	      for (int q = 0; q <= m_ghost_points; q++) // twice when m_ghost_points==1 (overwrites solution on the common grid line)
+	      {
+	         for( int c = 1; c <= nc ; c++ )
 		  a_mtrl[gc](c,i,j,m_kEnd[gc]-q) = a_mtrl[g](c,i,j,m_kStart[g]+2*m_ghost_points - q);
-	    }
-	 }
+	      }
+	   }
+      }
    }
 }
 
@@ -2122,12 +2466,12 @@ void EW::perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp )
    // NOTE: This might not work if grid refinement is put into the code later.
    //
    Sarray saverand(ifirst-p,ilast+p,jfirst-p,jlast+p,kfirst-pz,kfirst+pz);
-   double* saverand_ptr = saverand.c_ptr();
-   double plimit=m_random_sdlimit/sqrt(3.0);
+   float_sw4* saverand_ptr = saverand.c_ptr();
+   float_sw4 plimit=m_random_sdlimit/sqrt(3.0);
    for ( g=0; g<mNumberOfGrids; g++)
    {
-      double* vs_ptr  = a_vs[g].c_ptr();
-      double* vp_ptr  = a_vp[g].c_ptr();
+      float_sw4* vs_ptr  = a_vs[g].c_ptr();
+      float_sw4* vp_ptr  = a_vp[g].c_ptr();
       ifirst = m_iStart[g];
       ilast  = m_iEnd[g];
       jfirst = m_jStart[g];
@@ -2138,29 +2482,250 @@ void EW::perturb_velocities( vector<Sarray>& a_vs, vector<Sarray>& a_vp )
       int ny = m_global_ny[g];
       int nz = m_global_nz[g];
       int ghost = m_ghost_points;
-      double h = mGridSize[g];
+      float_sw4 h = mGridSize[g];
       Sarray pert(ifirst,ilast,jfirst,jlast,kfirst,klast);
       Sarray wgh(ifirst,ilast,jfirst,jlast,kfirst,klast);
-      double* pert_ptr = pert.c_ptr();
-      double* wgh_ptr = wgh.c_ptr();
+      float_sw4* pert_ptr = pert.c_ptr();
+      float_sw4* wgh_ptr = wgh.c_ptr();
 
-      if( g == mNumberOfGrids-1 && topographyExists() )
+//FTNC      if( m_croutines )
       {
-         F77_FUNC(randomfield3dc,RANDOMFIELD3DC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-		     &nx, &ny, &nz, &ghost, pert_ptr, wgh_ptr, &m_random_dist,
-			      &m_random_distz, &h, mZ.c_ptr(), m_random_seed, saverand_ptr, &p, &pz );
-         F77_FUNC(perturbvelocityc,PERTURBVELOCITYC)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-						      vs_ptr, vp_ptr, pert_ptr, &m_random_amp, &m_random_amp_grad,
-						      mZ.c_ptr(), &plimit );
+	 if( g >= mNumberOfCartesianGrids && topographyExists() ) // NOT verified for several curvilinear grids
+	 {
+	    randomfield3dc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+			    nx, ny, nz, ghost, pert_ptr, wgh_ptr, m_random_dist,
+			    m_random_distz, h, mZ[g].c_ptr(), m_random_seed, saverand_ptr, p, pz );
+	    perturbvelocityc_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+			      vs_ptr, vp_ptr, pert_ptr, m_random_amp, m_random_amp_grad,
+			      mZ[g].c_ptr(), plimit );
+	 }
+	 else
+	 {
+	    randomfield3d_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+			   nx, ny, nz, ghost, pert_ptr, wgh_ptr, m_random_dist,
+			   m_random_distz, h, m_random_seed, saverand_ptr, p, pz );
+	    perturbvelocity_ci( ifirst, ilast, jfirst, jlast, kfirst, klast,
+			     vs_ptr, vp_ptr, pert_ptr, m_random_amp, m_random_amp_grad,
+			     m_zmin[g], h, plimit );
+	 }
       }
-      else
-      {
-         F77_FUNC(randomfield3d,RANDOMFIELD3D)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-		     &nx, &ny, &nz, &ghost, pert_ptr, wgh_ptr, &m_random_dist,
-						&m_random_distz, &h, m_random_seed, saverand_ptr, &p, &pz );
-         F77_FUNC(perturbvelocity,PERTURBVELOCITY)( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-						    vs_ptr, vp_ptr, pert_ptr, &m_random_amp, &m_random_amp_grad,
-						    &m_zmin[g], &h, &plimit );
-      }
+//FTNC      else
+//FTNC      {
+//FTNC	 if( g >= mNumberOfCartesianGrids && topographyExists() ) // NOT verified for several curvilinear grids
+//FTNC	 {
+//FTNC	    randomfield3dc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			    &nx, &ny, &nz, &ghost, pert_ptr, wgh_ptr, &m_random_dist,
+//FTNC			    &m_random_distz, &h, mZ.c_ptr(), m_random_seed, saverand_ptr, &p, &pz );
+//FTNC	    perturbvelocityc( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			      vs_ptr, vp_ptr, pert_ptr, &m_random_amp, &m_random_amp_grad,
+//FTNC			      mZ.c_ptr(), &plimit );
+//FTNC	 }
+//FTNC	 else
+//FTNC	 {
+//FTNC	    randomfield3d( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			   &nx, &ny, &nz, &ghost, pert_ptr, wgh_ptr, &m_random_dist,
+//FTNC			   &m_random_distz, &h, m_random_seed, saverand_ptr, &p, &pz );
+//FTNC	    perturbvelocity( &ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+//FTNC			     vs_ptr, vp_ptr, pert_ptr, &m_random_amp, &m_random_amp_grad,
+//FTNC			     &m_zmin[g], &h, &plimit );
+//FTNC	 }
+//FTNC      }
    }
+}
+
+//-----------------------------------------------------------------------
+void EW::getDtFromRestartFile()
+{
+   //   VERIFY2( m_check_point->mDoRestart,
+   //	    "Error in EW::getDtFromRestartFile: there is no restart command");
+   mDt = m_check_point->getDt();
+   // Assume one event for restart.
+   if( m_nevent > 1 )
+   {
+      if( proc_zero() )
+	 cout << "WARNING: Restart only supported for single event computations." << 
+	    " Restart will use default event" << endl;
+   }
+   int event=0;
+   if (mTimeIsSet[event])
+   {
+// constrain Tmax based on the time step
+      mNumberOfTimeSteps[event] = static_cast<int> ((mTmax[event] - mTstart) / mDt + 0.5); 
+      mNumberOfTimeSteps[event] = (mNumberOfTimeSteps[event]==0)? 1: mNumberOfTimeSteps[event];
+      mTmax[event] = mTstart + mNumberOfTimeSteps[event]*mDt;
+      // Do not change time step from restart solution !
+      //      mDt = (mTmax - mTstart) / mNumberOfTimeSteps;
+   }
+}  
+
+
+//-----------------------------------------------------------------------
+void EW::initial_tw_test( vector<Sarray>& U, vector<Sarray>& Up, vector<Sarray>& F,
+			  vector<Sarray>& Mu, vector<Sarray>& Lambda, vector<Sarray>& Lu,
+			  vector<Sarray>& Uacc, vector<Sarray*> AlphaVE,
+			  vector<GridPointSource*> point_sources, vector<int> identsources,
+			  float_sw4 t )
+{
+   if (m_twilight_forcing && getVerbosity() >= 3) // only do these tests if verbose>=3
+   {
+      if ( !mQuiet && proc_zero() )
+	 cout << "***Twilight Testing..." << endl;
+
+// output some internal flags        
+      for(int g=0; g<mNumberOfGrids; g++)
+      {
+	 printf("proc=%i, Onesided[grid=%i]:", m_myRank, g);
+	 for (int q=0; q<6; q++)
+	    printf(" os[%i]=%i", q, m_onesided[g][q]);
+	 printf("\n");
+	 printf("proc=%i, bcType[grid=%i]:", m_myRank, g);
+	 for (int q=0; q<6; q++)
+	    printf(" bc[%i]=%i", q, m_bcType[g][q]);
+	 printf("\n");
+      }
+
+// test accuracy of spatial approximation
+      if ( proc_zero() )
+	 printf("\n Testing the accuracy of the spatial difference approximation\n");
+      exactRhsTwilight(t, F);
+      evalRHS( U, Mu, Lambda, Up, AlphaVE ); // save Lu in composite grid 'Up'
+
+
+// evaluate and print errors
+      float_sw4 * lowZ = new float_sw4[3*mNumberOfGrids];
+      float_sw4 * interiorZ = new float_sw4[3*mNumberOfGrids];
+      float_sw4 * highZ = new float_sw4[3*mNumberOfGrids];
+    //    float_sw4 lowZ[3], interiorZ[3], highZ[3];
+      bndryInteriorDifference( F, Up, lowZ, interiorZ, highZ );
+
+      float_sw4* tmp= new float_sw4[3*mNumberOfGrids];
+      for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
+	 tmp[i] = lowZ[i];
+      MPI_Reduce( tmp, lowZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
+      for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
+	 tmp[i] = interiorZ[i];
+      MPI_Reduce( tmp, interiorZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
+      for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
+	 tmp[i] = highZ[i];
+      MPI_Reduce( tmp, highZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
+
+      if ( proc_zero() )
+      {
+	 for( int g=0 ; g < mNumberOfGrids ; g++ )
+	 {
+	    printf("Grid nr: %3i \n", g );
+	    printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n", lowZ[3*g], lowZ[3*g+1], lowZ[3*g+2]);
+	    printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n", interiorZ[3*g], interiorZ[3*g+1], interiorZ[3*g+2]);
+	    printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n", highZ[3*g], highZ[3*g+1], highZ[3*g+2]);
+	 }
+      }
+  
+// test accuracy of forcing
+      evalRHS( U, mMu, mLambda, Lu, AlphaVE ); // save Lu in composite grid 'Lu'
+      Force( t, F, point_sources, identsources );
+      exactAccTwilight( t, Uacc ); // save Utt in Uacc
+      test_RhoUtt_Lu( Uacc, Lu, F, lowZ, interiorZ, highZ );
+
+      for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
+	 tmp[i] = lowZ[i];
+      MPI_Reduce( tmp, lowZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
+      for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
+	 tmp[i] = interiorZ[i];
+      MPI_Reduce( tmp, interiorZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
+      for( int i=0 ; i < 3*mNumberOfGrids ; i++ )
+	 tmp[i] = highZ[i];
+      MPI_Reduce( tmp, highZ, 3*mNumberOfGrids, m_mpifloat, MPI_MAX, 0, m_cartesian_communicator );
+
+      if ( proc_zero() )
+      {
+	 printf("Testing accuracy of rho*utt - L(u) = F\n");
+	 for( int g=0 ; g < mNumberOfGrids ; g++ )
+	 {
+	    printf("Grid nr: %3i \n", g );
+	    printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n",lowZ[3*g],lowZ[3*g+1],lowZ[3*g+2]);
+	    printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n",interiorZ[3*g],interiorZ[3*g+1],interiorZ[3*g+2]);
+	    printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n",highZ[3*g],highZ[3*g+1],highZ[3*g+2]);
+	 }
+      }
+      delete[] tmp;
+      delete[] lowZ;
+      delete[] interiorZ;
+      delete[] highZ;
+   }
+}
+
+//-----------------------------------------------------------------------
+void EW::checkpoint_twilight_test( vector<Sarray>& Um, vector<Sarray>& U, vector<Sarray>& Up,
+				   vector<Sarray*> AlphaVEm, vector<Sarray*> AlphaVE,
+				   vector<Sarray*> AlphaVEp, vector<Source*> a_Sources, float_sw4 t )
+{
+   if (m_twilight_forcing && m_check_point->do_restart() && getVerbosity()>=3)
+   {
+      if ( proc_zero() )
+	 printf("Checking the accuracy of the checkpoint data\n");
+
+// check the accuracy of the initial data, store exact solution in Up, ignore AlphaVE
+      float_sw4 errInf=0, errL2=0, solInf=0, solL2=0;
+      exactSol( t, Up, AlphaVEp, a_Sources );
+
+    normOfDifference( Up, U, errInf, errL2, solInf, a_Sources );
+
+    if ( proc_zero() )
+       printf("\n Checkpoint errors in U: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
+
+    if( m_use_attenuation )
+    {
+       vector<Sarray> Aex(mNumberOfGrids), A(mNumberOfGrids);
+       for( int g=0 ; g < mNumberOfGrids ; g++ )
+       {
+          Aex[g].copy(AlphaVEp[g][0]); // only checking mechanism m=0
+          A[g].copy(AlphaVE[g][0]);
+       }
+       normOfDifference( Aex, A, errInf, errL2, solInf, a_Sources );
+       if ( proc_zero() )
+          printf(" Checkpoint solution errors, attenuation at t: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
+    }
+    
+// Now check Um and AlpphaVEm
+    exactSol( t-mDt, Up, AlphaVEp, a_Sources );
+
+    normOfDifference( Up, Um, errInf, errL2, solInf, a_Sources );
+
+    if ( proc_zero() )
+       printf("\n Checkpoint errors in Um: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
+
+    if( m_use_attenuation )
+    {
+       vector<Sarray> Aex(mNumberOfGrids), A(mNumberOfGrids);
+       for( int g=0 ; g < mNumberOfGrids ; g++ )
+       {
+          Aex[g].copy(AlphaVEp[g][0]); // only checking mechanism m=0
+          A[g].copy(AlphaVEm[g][0]);
+       }
+       normOfDifference( Aex, A, errInf, errL2, solInf, a_Sources );
+       if ( proc_zero() )
+          printf(" Checkpoint solution errors, attenuation at t-dt: Linf = %15.7e, L2 = %15.7e\n", errInf, errL2);
+    }
+  } // end if twilight testing
+}
+//-----------------------------------------------------------------------
+void EW::perturb_vels( Sarray& cs, Sarray& cp, Sarray& rndpert ) 
+{
+   for( int k=cs.m_kb ; k <= cs.m_ke ; k++ )
+      for( int j=cs.m_jb ; j <= cs.m_je ; j++ )
+         for( int i=cs.m_ib ; i <= cs.m_ie ; i++ )
+         {
+            cs(i,j,k) *= rndpert(i,j,k);
+            cp(i,j,k) *= rndpert(i,j,k);
+         }
+}
+//-----------------------------------------------------------------------
+void EW::perturb_rho( Sarray& rho, Sarray& rndpert ) 
+{
+   for( int k=rho.m_kb ; k <= rho.m_ke ; k++ )
+      for( int j=rho.m_jb ; j <= rho.m_je ; j++ )
+         for( int i=rho.m_ib ; i <= rho.m_ie ; i++ )
+         {
+            rho(i,j,k) *= rndpert(i,j,k);
+         }
 }
