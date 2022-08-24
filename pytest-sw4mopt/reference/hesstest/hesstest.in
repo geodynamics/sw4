@@ -27,7 +27,7 @@ mparcart nx=1 ny=1 nz=1 init=../reference/gradtest/onep-pr10.bin
 #------------------------------
 # Optimizer and properties
 #
-mrun task=hesstest mcheck=on tsoutput=off
+mrun task=hesstest mcheck=on tsoutput=off win_mode=none
 #lbfgs nvectors=3 ihess0=scale-factors maxit=20 tolerance=1e-12 linesearch=on
 #mscalefactors rho=2650 mu=2.5e10 lambda=2.4e12 misfit=1
 mscalefactors rho=2650 mu=1.54e10 lambda=7.52e11 misfit=1

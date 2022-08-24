@@ -1,4 +1,6 @@
 #include "EW.h"
+#include "GridGenerator.h"
+#include "CurvilinearInterface2.h"
 #include "F77_FUNC.h"
 
 //extern "C" {
@@ -84,6 +86,11 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 // Setup Cartesian grid refinement interface.
    setup_MR_coefficients( a_Rho, a_Mu, a_Lambda );
 
+// Setup curvilinear grid refinement interface
+   for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
+      m_cli2[g-mNumberOfCartesianGrids]->init_arrays( m_sg_str_x, m_sg_str_y,
+                                                      a_Rho, a_Mu, a_Lambda );
+
 // will accumulate the gradient of the misfit in these arrays
    for( int s=0 ; s < 11 ; s++ )
       gradientsrc[s] = 0;
@@ -142,6 +149,19 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
       evalPredictor( Km, K, Kp, a_Rho, Lk, F );
 
       time_measure[1] = MPI_Wtime();
+
+         //         int ip=39, jp=37, kp=3, gr=2;
+      //      std::cout << currentTimeStep << " min max U " << U[2].minimum() << " " << U[2].maximum() << std::endl;
+      //      if( currentTimeStep == 727 )
+      //      {
+      //         U[0].save_to_disk("U0c.bin");
+      //         U[1].save_to_disk("U1c.bin");
+      //         U[2].save_to_disk("U2c.bin");
+      //         K[0].save_to_disk("K0c.bin");
+      //         K[1].save_to_disk("K1c.bin");
+      //         K[2].save_to_disk("K2c.bin");
+      //         exit(0);
+      //      }
 
      // Boundary conditions on predictor
       //      enforceDirichlet5( Km );
@@ -218,8 +238,15 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
 //      cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
       enforceBC( Um, a_Rho, a_Mu, a_Lambda, AlphaVEm, t-mDt, BCForcing );
       Force( t-mDt, F, point_sources, identsources );
-      enforceIC( Um, U, Up, AlphaVEp, AlphaVE, AlphaVEm, t, false, F, point_sources, 
-                 a_Rho, a_Mu, a_Lambda, true );
+
+      // This call to enforceIC is needed in order to enforce the IC outside
+      // the active domain, which is required in order to keep the scheme stable.
+
+      enforceDirichlet5( Um );
+      //      enforceIC( Um, U, Up, AlphaVEp, AlphaVE, AlphaVEm, t, false, F, point_sources, 
+      //                 a_Rho, a_Mu, a_Lambda, true );
+      //      for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
+      //         m_cli2[g-mNumberOfCartesianGrids]->impose_ic( Um, t-mDt, F, AlphaVEm, true );
 
       time_measure[5] = MPI_Wtime();
 
@@ -298,14 +325,14 @@ void EW::solve_backward_allpars( vector<Source*> & a_Sources,
    }
    if( m_zerograd_at_src )
    {
-      set_to_zero_at_source( gRho, point_sources, identsources, m_zerograd_pad );
-      set_to_zero_at_source( gMu, point_sources, identsources, m_zerograd_pad );
-      set_to_zero_at_source( gLambda, point_sources, identsources, m_zerograd_pad );
+      set_to_zero_at_source( gRho,    a_Sources, m_zerograd_pad );
+      set_to_zero_at_source( gMu,     a_Sources, m_zerograd_pad );
+      set_to_zero_at_source( gLambda, a_Sources, m_zerograd_pad );
    }
    if( m_zerograd_at_rec )
    {
-      set_to_zero_at_receiver( gRho, a_TimeSeries, m_zerogradrec_pad );
-      set_to_zero_at_receiver( gMu, a_TimeSeries, m_zerogradrec_pad );
+      set_to_zero_at_receiver( gRho,    a_TimeSeries, m_zerogradrec_pad );
+      set_to_zero_at_receiver( gMu,     a_TimeSeries, m_zerogradrec_pad );
       set_to_zero_at_receiver( gLambda, a_TimeSeries, m_zerogradrec_pad );
    }
    communicate_arrays( gRho );
@@ -370,7 +397,6 @@ void EW::enforceDirichlet5( vector<Sarray> & a_U )
 {
   for(int g=0 ; g<mNumberOfGrids; g++ )
   {
-    double* u_ptr = a_U[g].c_ptr();
     int ifirst, ilast, jfirst, jlast, kfirst, klast;
     ifirst = m_iStart[g];
     ilast  = m_iEnd[g];
@@ -379,6 +405,7 @@ void EW::enforceDirichlet5( vector<Sarray> & a_U )
     kfirst = m_kStart[g];
     klast  = m_kEnd[g];
 
+    int off=3;
     int iafirst, ialast, jafirst, jalast, kafirst, kalast;
     iafirst = m_iStartAct[g];
     ialast  = m_iEndAct[g];
@@ -386,28 +413,35 @@ void EW::enforceDirichlet5( vector<Sarray> & a_U )
     jalast  = m_jEndAct[g];
     kafirst = m_kStartAct[g];
     kalast  = m_kEndAct[g];
-    for( int k=kalast+1 ; k <= klast ; k++ )
-       for( int j=jfirst ; j <= jlast ; j++ )
-	  for( int i=ifirst ; i <= ilast ; i++ )
-	     a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
+    bool ilayer = ialast-iafirst-1 > 0;
+    bool jlayer = jalast-jafirst-1 > 0;
+    bool klayer = kalast-kafirst-1 > 0;
+    if( klayer ) // Always at bottom
+       for( int k=kalast+off ; k <= klast ; k++ )
+          for( int j=jfirst ; j <= jlast ; j++ )
+             for( int i=ifirst ; i <= ilast ; i++ )
+                a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
 
-    for( int k=kfirst ; k <= kalast ; k++ )
+    for( int k=kfirst ; k <= klast ; k++ )
     {
-       for( int j=jfirst ; j <= jafirst-1 ; j++ )
-	  for( int i=ifirst ; i <= ilast ; i++ )
-	     a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
-       for( int j=jalast+1 ; j <= jlast ; j++ )
-	  for( int i=ifirst ; i <= ilast ; i++ )
-	     a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
-       for( int j=jfirst ; j <= jlast ; j++ )
-	  for( int i=ifirst ; i <= iafirst-1 ; i++ )
-	     a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
-       for( int j=jfirst ; j <= jlast ; j++ )
-	  for( int i=ialast+1 ; i <= ilast ; i++ )
-	     a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
+       if( jlayer )
+       {
+          for( int j=jfirst ; j <= jafirst-off ; j++ )
+             for( int i=ifirst ; i <= ilast ; i++ )
+                a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
+          for( int j=jalast+off ; j <= jlast ; j++ )
+             for( int i=ifirst ; i <= ilast ; i++ )
+                a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
+       }
+       if( ilayer )
+       {
+          for( int j=jfirst ; j <= jlast ; j++ )
+             for( int i=ifirst ; i <= iafirst-off ; i++ )
+                a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
+          for( int j=jfirst ; j <= jlast ; j++ )
+             for( int i=ialast+off ; i <= ilast ; i++ )
+                a_U[g](1,i,j,k)=a_U[g](2,i,j,k)=a_U[g](3,i,j,k)=0;
+       }
     }
-    //    F77_FUNC(hdirichlet5,HDIRICHLET5)( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
-    //				       &klast, &iafirst, &ialast, &jafirst, &jalast,
-    //				       &kafirst, &kalast, u_ptr );
   }
 }

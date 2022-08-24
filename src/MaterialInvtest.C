@@ -65,9 +65,8 @@ void MaterialInvtest::set_material_properties( std::vector<Sarray> & rho, std::v
       invtestmtrl( ifirst, ilast, jfirst, jlast, kfirst, klast,
 		   rho_ptr, cs_ptr, cp_ptr, h, zmin, m_nr );
    }
-   if( mEW->topographyExists() )
+   for( int g=mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids; g++)
    {
-      int g = mEW->mNumberOfGrids-1;
       rho_ptr   = rho[g].c_ptr();
       cs_ptr    = cs[g].c_ptr();
       cp_ptr    = cp[g].c_ptr();
@@ -77,7 +76,7 @@ void MaterialInvtest::set_material_properties( std::vector<Sarray> & rho, std::v
       jlast  = mEW->m_jEnd[g];
       kfirst = mEW->m_kStart[g];
       klast  = mEW->m_kEnd[g];
-      float_sw4* x_ptr = mEW->mX[g].c_ptr(); // NOT verified for several curvilinear grids
+      float_sw4* x_ptr = mEW->mX[g].c_ptr();
       float_sw4* y_ptr = mEW->mY[g].c_ptr();
       float_sw4* z_ptr = mEW->mZ[g].c_ptr();
       invtestmtrlc( ifirst, ilast, jfirst, jlast, kfirst, klast,
@@ -212,9 +211,9 @@ void MaterialInvtest::invtestmtrlc( int ib, int ie, int jb, int je, int kb, int 
    float_sw4 rho1, rho2, rho3, rho4, z1, z2, z3, Lz=200;
    if( nr == 3 )
    {
-      omx = pi2*5.0/30000;
-      omy = pi2*5.0/30000;
-      omz = pi2*3.0/17000;
+      omx = pi2*2.0/30000;
+      omy = pi2*2.0/30000;
+      omz = pi2*1.0/17000;
       phip = 0.3;
       phir = 0.17;
       phis = 0.08;
@@ -273,10 +272,12 @@ void MaterialInvtest::invtestmtrlc( int ib, int ie, int jb, int je, int kb, int 
 	    {
 	       rho[ind]=2650 +
 		     50*sin(omx*x)*sin(omy*y)*cos(omz*z+phir);
-	       cs[ind] =2732 +
-		     732*cos(omx*x)*sin(omy*y+phis)*cos(omz*z);
 	       cp[ind]=5000 +
                     1000*sin(omx*x+phip)*sin(omy*y)*cos(omz*z);
+               cs[ind] = cp[ind]/( 1.8660 + 
+		     0.1339*cos(omx*x)*sin(omy*y+phis)*cos(omz*z) );
+                  //	       cs[ind] =2732 +
+                  //		     732*cos(omx*x)*sin(omy*y+phis)*cos(omz*z);
 	    }
 	    else if( nr == 4 )
 	    {

@@ -3,8 +3,8 @@
 # Arguments:
 # -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir -t omp-threads
 
-import os, sys, argparse, subprocess, time, h5py, numpy
-os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
+import os, sys, argparse, subprocess, time #, h5py, numpy
+#os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 
 #------------------------------------------------
 def compare_one_line(base_file_name, test_file_name, errTol, absErrLimit, lineNum, verbose):
@@ -183,7 +183,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
 
 
     if 'quartz' in node_name:
-        if omp_threads<=0: omp_threads=2;
+        if omp_threads<=0: omp_threads=1;
         if mpi_tasks<=0: mpi_tasks = int(36/omp_threads)
         if cpu_allocation == "":
            mpirun_cmd="srun -ppdebug -n " + str(mpi_tasks) + " -c " + str(omp_threads)
@@ -272,10 +272,11 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
     num_pass=0
     num_fail=0
 
-    all_dirs    = ['gaussian', 'gaussian', 'gradtest','hesstest','misfitcurve','onepoint']
-    all_cases   = ['gaussian-lbfgs', 'gaussian-nlcg', 'grad','hesstest','misfit1d','inv']
-    all_results = ['gaussian-lbfgs.out', 'gaussian-nlcg.out', 'GradientTest.txt', 'Hessian.txt', 'Misfit1d.txt', 'convergence.log']
-    all_abslim  = [1e-10, 1e-10, 1e-10, 1e-20, 1e-10, 1e-10]
+    all_dirs    = ['gradtest','hesstest','misfitcurve','onepoint','gaussian', 'gaussian']
+    all_cases   = ['grad','hesstest','misfit1d','inv','gaussian-lbfgs', 'gaussian-nlcg']
+    all_results = ['GradientTest.txt', 'Hessian.txt', 'Misfit1d.txt', 'convergence.log',
+                   'gaussian-lbfgs.out', 'gaussian-nlcg.out']
+    all_abslim  = [1e-10, 1e-20, 1e-10, 1e-10, 1e-10, 1e-10]
     num_meshes  = [1, 1, 1, 1, 1, 1] # default number of meshes for level 0
     
     print("Running all tests for level", testing_level, "...")
@@ -304,7 +305,7 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
             sw4_input_file = reference_dir + sep + test_dir + sep + test_case
             #print('sw4_input_file = ', sw4_input_file)
 
-            sw4_stdout_file = case_file + '.out'
+#            sw4_stdout_file = case_file + '.out'
             
             local_dir = pytest_dir + sep + test_dir
             #print('local_dir = ', local_dir)
@@ -328,18 +329,16 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
 
             # run sw4mopt
             run_dir = os.getcwd()
-            #print('Running sw4mopt from directory:', run_dir)
-            # assign OMP_NUM_THREADS
             start=time.time()
             status = subprocess.run(
                 run_cmd,
                 stdout=sw4_stdout_file,
-                stderr=sw4_stderr_file,
+                stderr=sw4_stderr_file
             )
             end = time.time()-start
             sw4_stdout_file.close()
             sw4_stderr_file.close()
-            print(sw4_input_file, "Total time",end)
+            if verbose: print(sw4_input_file, "Total time",end)
 
             if status.returncode!=0:
                 print('ERROR: Test', test_case, ': sw4mopt returned non-zero exit status=', status.returncode, 'aborting test')

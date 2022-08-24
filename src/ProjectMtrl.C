@@ -456,6 +456,62 @@ void EW::material_correction( int nmpar, float_sw4* xm )
 }
 
 //-----------------------------------------------------------------------
+void correct_material(  vector<Sarray>& a_rho, vector<Sarray>& a_mu,
+                        vector<Sarray>& a_lambda, float_sw4 vsmin, 
+                        float_sw4 vpvsminratio )
+{
+   // Find (mu,lambda) minimizing (mu-mu0)^2 + (lambda-lamda0)^2
+   // with inequality constraints vs >= vsmin, vp/vs >= vpvsminratio
+   // Solved as a quadratic programming problem at each grid point.
+   float_sw4 alpha=vpvsminratio*vpvsminratio-2;
+   float_sw4 vsmin2=vsmin*vsmin;
+   float_sw4 alfactor=1/(1+alpha*alpha);
+   for( int g=0 ; g < a_rho.size() ; g++ )
+   {
+      //  int ifirst = m_iStart[g];
+      //      int ilast  = m_iEnd[g];
+      //      int jfirst = m_jStart[g];
+      //      int jlast  = m_jEnd[g];
+      //      int kfirst = m_kStart[g];
+      //      int klast  = m_kEnd[g];
+      //      int ifirstact = m_iStartAct[g];
+      //      int ilastact  = m_iEndAct[g];
+      //      int jfirstact = m_jStartAct[g];
+      //      int jlastact  = m_jEndAct[g];
+      //      int kfirstact = m_kStartAct[g];
+      //      int klastact  = m_kEndAct[g];
+
+      float_sw4* rhop = a_rho[g].c_ptr();
+      float_sw4* mup  = a_mu[g].c_ptr();
+      float_sw4* lap  = a_lambda[g].c_ptr();
+      for( int ind=0; ind <= a_mu[g].npts(); ind++ )
+      {
+         float_sw4 beta= rhop[ind]*vsmin2;
+         float_sw4 kap1=-lap[ind]+alpha*beta;
+         float_sw4 kap2= alpha*kap1+beta-mup[ind];
+         if( kap1 >= 0 && kap2 >= 0 )
+         {
+            lap[ind] = alpha*beta;
+            mup[ind] = beta;
+         }
+         else
+         {
+            kap1 = -lap[ind]+alpha*mup[ind];
+            kap2 = -mup[ind]+beta;
+            if( kap2 >= 0 )
+               mup[ind] = beta;
+            else if( kap1 >= 0 )
+            {
+               kap1 = (-lap[ind]+alpha*mup[ind])*alfactor;
+               mup[ind] = mup[ind] - alpha*kap1;
+               lap[ind] = lap[ind] + kap1;
+            }
+         }
+      }
+   }
+}
+
+//-----------------------------------------------------------------------
 void EW::project_material( vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 			   vector<Sarray>& a_lambda, int& info )
 // routine to enforce material speed limits and positive density
