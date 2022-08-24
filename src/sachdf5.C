@@ -438,6 +438,12 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     // Lon, lat, dep
     createAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_DOUBLE, attr_space3);
 
+    // Actual location in SW4
+    createAttr(grp, "ACTUALSTLA,STLO,STDP", H5T_NATIVE_DOUBLE, attr_space3);
+
+    // Distance
+    createAttr(grp, "DISTFROMACTUAL", H5T_NATIVE_DOUBLE, attr_space1);
+
     // TODO: Location, no value to write now
     createAttr(grp, "LOC", H5T_NATIVE_INT, attr_space1);
 
