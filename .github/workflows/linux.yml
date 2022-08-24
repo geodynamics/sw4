@@ -2,9 +2,9 @@ name: linux
 
 on:
   push:
-    branches: [ developer ]
+    branches: [ master, developer ]
   pull_request:
-    branches: [ developer ]
+    branches: [ master, developer ]
 
   # Allows to run this workflow manually from the Actions tab
   workflow_dispatch:
