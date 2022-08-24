@@ -11,7 +11,7 @@ RUN apt-get update && \
 \
 # install hdf5 1.12.1, and remain packages \
 wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.1/src/hdf5-1.12.1.tar.gz && \
-  tar xzf hdf5-1.12.1.tar.gz && cd hdf5-1.12.1 && ./configure --prefix=/usr/local/hdf5 --enable-parallel --enable-build-mode=production && \
+  tar xzf hdf5-1.12.1.tar.gz && rm hdf5-1.12.1.tar.gz && cd hdf5-1.12.1 && ./configure --prefix=/usr/local/hdf5 --enable-parallel --enable-build-mode=production && \
   make -j4 && make install && cd .. && \
   apt-get install --yes libproj-dev libhdf5-mpi-dev libfftw3-dev libfftw3-mpi-dev \
     liblapack-dev python3-h5py libcurl3-dev && \
