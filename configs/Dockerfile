@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:20.04
 
 WORKDIR /home
 
@@ -24,6 +24,9 @@ git -c http.sslVerify=false clone https://github.com/LLNL/zfp.git && cd zfp/ && 
 git -c http.sslVerify=false clone https://github.com/LLNL/H5Z-ZFP.git && cd H5Z-ZFP/ && \
   make FC= CC=mpicc ZFP_HOME=/home/zfp HDF5_HOME=/usr/local/hdf5 all install && \
   cd ..
+
+# changing BUILD_TIME will break the cache here so that sw4 can be built each time
+ARG BUILD_TIME=unknown
 
 # build sw4 
 RUN git -c http.sslVerify=false clone https://github.com/geodynamics/sw4.git && \
