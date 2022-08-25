@@ -661,6 +661,11 @@ void TimeSeries::writeFile( string suffix )
         dist = sqrt( (mX-mGPX)*(mX-mGPX)+(mY-mGPY)*(mY-mGPY) );
         openWriteAttr(grp, "DISTFROMACTUAL", H5T_NATIVE_DOUBLE, &dist);
 
+        stxyz[0] = double(mGPX);
+        stxyz[1] = double(mGPY);
+        stxyz[2] = double(mGPZ);
+        openWriteAttr(grp, "ACTUALSTX,STY,STZ", H5T_NATIVE_DOUBLE, stxyz);
+
         m_isMetaWritten = true;
       }
     }
