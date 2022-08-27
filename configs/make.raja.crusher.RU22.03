@@ -1,3 +1,4 @@
+# WARNING : the PrgEnv-amd module must be loaded
 FC = gfortran
 LINKER = hipcc
 CXX = $(PREP) hipcc
