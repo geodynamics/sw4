@@ -1,0 +1,3 @@
+# request allocation using flux mini alloc -N 1 -n 8
+export MPICH_GPU_SUPPORT_ENABLED=1
+flux mini run -n 8 -c 8 -g 1 -o gpu-affinity=per-task -o cpu-affinity=per-task  ./sw4 hmr3.in.lassen
