@@ -335,9 +335,11 @@ void innerloopanisgstrvc_ci(
 // the routine will replace the Fortran routine curvilinear4sg()
 void curvilinear4sg_ci(
     int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-    float_sw4* __restrict__ a_u1, float_sw4* __restrict__ a_u2,  float_sw4* __restrict__ a_u3, 
+    float_sw4* a_u,
+    float_sw4* a_u1, float_sw4* a_u2,  float_sw4* a_u3, 
     float_sw4* __restrict__ a_mu,
-    float_sw4* __restrict__ a_lambda, float_sw4* __restrict__ a_met,
+    float_sw4* __restrict__ a_lambda, 
+    float_sw4* __restrict__ a_met,
     float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu, int* onesided,
     float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
     float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_acof_no_gp,
@@ -5116,8 +5118,11 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
       //                   onesided_ptr, m_acof, m_bope, m_ghcof, m_acof_no_gp,
       //                   m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op);
       curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, 
+			u_ptr+base3,
 			u_ptr+base3+nijk, u_ptr+base3+2*nijk,u_ptr+base3+3*nijk,
-                        mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr,
+                        mu_ptr, la_ptr, 
+			met_ptr+base4,		
+			jac_ptr, uacc_ptr,
                         onesided_ptr, m_acof, m_bope, m_ghcof, m_acof_no_gp,
                         m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op);
 #endif
@@ -5191,8 +5196,11 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
           //                   m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,
           //                   m_sg_str_x[g], m_sg_str_y[g], nkg, op);
 	  curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
+			    alpha_ptr+base3,
                             alpha_ptr+base3+nijk, alpha_ptr+base3+2*nijk, alpha_ptr+base3+3*nijk,
-			    mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
+			    mua_ptr, lambdaa_ptr,
+			    met_ptr+base4,		
+			    jac_ptr,
                             uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope,
                             m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,
                             m_sg_str_x[g], m_sg_str_y[g], nkg, op);
