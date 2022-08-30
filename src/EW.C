@@ -335,7 +335,8 @@ void innerloopanisgstrvc_ci(
 // the routine will replace the Fortran routine curvilinear4sg()
 void curvilinear4sg_ci(
     int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-    float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,
+    float_sw4* __restrict__ a_u1, float_sw4* __restrict__ a_u2,  float_sw4* __restrict__ a_u3, 
+    float_sw4* __restrict__ a_mu,
     float_sw4* __restrict__ a_lambda, float_sw4* __restrict__ a_met,
     float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu, int* onesided,
     float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
@@ -5085,6 +5086,12 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     kfirst = m_kStart[g];
     klast = m_kEnd[g];
     onesided_ptr = m_onesided[g];
+    const int ni = ilast - ifirst + 1;
+    const int nij = ni * (jlast - jfirst + 1);
+    const int nijk = nij * (klast - kfirst + 1);
+    const int base = -(ifirst + ni * jfirst + nij * kfirst);
+    const int base3 = base - nijk;
+    const int base4 = base - nijk;
     int nkg = m_global_nz[g];
     char op = '=';  // assign Uacc := L_u(u)
 #ifdef PEEKS_GALORE
@@ -5104,7 +5111,12 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
           met_ptr, jac_ptr, uacc_ptr, onesided_ptr, m_acof, m_bope, m_ghcof,
           m_acof_no_gp, m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op);
 #else
-      curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr,
+      // curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, u_ptr,
+      //                   mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr,
+      //                   onesided_ptr, m_acof, m_bope, m_ghcof, m_acof_no_gp,
+      //                   m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op);
+      curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, 
+			u_ptr+base3+nijk, u_ptr+base3+2*nijk,u_ptr+base3+3*nijk,
                         mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr,
                         onesided_ptr, m_acof, m_bope, m_ghcof, m_acof_no_gp,
                         m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], nkg, op);
@@ -5173,12 +5185,19 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
               m_sg_str_x[g], m_sg_str_y[g], nkg, op);
 #else
           // cudaMemcpyToSymbol(tex_acof, m_acof_no_gp, 384*sizeof(double));
-          curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
-                            alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
+          // curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
+          //                   alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
+          //                   uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope,
+          //                   m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,
+          //                   m_sg_str_x[g], m_sg_str_y[g], nkg, op);
+	  curvilinear4sg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                            alpha_ptr+base3+nijk, alpha_ptr+base3+2*nijk, alpha_ptr+base3+3*nijk,
+			    mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
                             uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope,
                             m_ghcof_no_gp, m_acof_no_gp, m_ghcof_no_gp,
                             m_sg_str_x[g], m_sg_str_y[g], nkg, op);
 #endif
+
         } else {
           if (usingSupergrid())
             curvilinear4sg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
