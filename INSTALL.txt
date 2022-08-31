@@ -125,9 +125,19 @@ Building using cmake ( Experimental WIP)
 6  make -j 80 ( on a compute node
 
 ---------------------------------------------------------------------
-Building and running on Spock
+Building and running on Crusher
 ---------------------------------------------------------------------
-0. ml rocm/4.3.0 cray-hdf5-parallel/1.12.0.7 fftw cray-python/3.8.5.1
-1. cp make.raja.spock43R14U6HDF5ZFP to make.inc in config/
+0. ml  PrgEnv-amd cray-hdf5-parallel fftw cray-python
+1. cp make.raja.crusher.RU22.03 to make.inc in config/
 2. make -f Makefile.hipcc -j 5
-3. see performance/large/run_spock for run command
+3. see performance/large/run.crusher.scr for run command
+
+---------------------------------------------------------------------
+Building Proj6+ on Crusher
+---------------------------------------------------------------------
+
+0. wget https://download.osgeo.org/proj/proj-9.0.0.tar.gz
+1. ml sqlite libtiff
+2. mkdir build && cd build
+3. cmake -DCMAKE_INSTALL_PREFIX=../install  ../
+4. make install -j 5
