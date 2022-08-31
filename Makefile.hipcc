@@ -134,7 +134,7 @@ ifeq ($(proj),yes)
    linklibs += 
 else ifeq ($(proj_6),yes)
    CXXFLAGS += -DENABLE_PROJ_6 -I$(SW4INC)
-   linklibs += -L$(SQLITE_HOME)/lib  -lproj -lcurl -lssl -lcrypto
+   #linklibs += -L$(SQLITE_HOME)/lib  -lproj -lcurl -lssl -lcrypto
    proj  := "proj_6"
 else
    proj  := "no"

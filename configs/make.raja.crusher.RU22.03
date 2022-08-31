@@ -3,7 +3,7 @@ LINKER = hipcc
 CXX = $(PREP) hipcc
 GIT_VERSION := "$(shell git describe --abbrev=4 --dirty --always --tags)"
 
-proj = yes
+proj_6 = yes
 ckernel=yes 
 openmp=yes
 raja_cuda=yes
@@ -26,6 +26,7 @@ RAJA_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/RAJA-v0.14.0/insta
 
 PROJ_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/proj-5.0.0/install
 #PROJ_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/proj-5.0.0/install5
+PROJ6_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/proj-8.1.1/install
 
 UMPIRE_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/umpire-6.0.0/install43
 UMPIRE_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/umpire-6.0.0/install45
@@ -105,6 +106,11 @@ ifeq ($(proj),yes)
 MORE_FLAGS+= -I$(PROJ_HOME)/include
 MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ_HOME)/lib64  -L$(PROJ_HOME)/lib64 -lproj
 endif 
+
+ifeq ($(proj_6),yes)
+MORE_FLAGS+= -I$(PROJ6_HOME)/include
+MORE_LINK_FLAGS+=-Wl,-rpath=$(PROJ6_HOME)/lib64  -L$(PROJ6_HOME)/lib64 -lproj -Wl,-rpath=$(OLCF_SQLITE_ROOT)/lib  -L$(OLCF_SQLITE_ROOT)/lib -lsqlite3
+endif
 
 ifeq ($(dbg),yes)
 MORE_FLAGS+=  -ggdb -DPEEKS_GALORE=1 
