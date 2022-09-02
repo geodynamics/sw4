@@ -1089,7 +1089,8 @@ void rhs4th3fortsgstr_ci(
     int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, int nk,
     int* __restrict__ onesided, float_sw4* __restrict__ a_acof,
     float_sw4* __restrict__ a_bope, float_sw4* __restrict__ a_ghcof,
-    float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
+    float_sw4* __restrict__ a_lu, 
+    float_sw4* __restrict__ a_u1,float_sw4* __restrict__ a_u2,float_sw4* __restrict__ a_u3,
     float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, float_sw4 h,
     float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry,
     float_sw4* __restrict__ a_strz, char op) {
@@ -1104,10 +1105,13 @@ void rhs4th3fortsgstr_ci(
   //#define ar(i,j) b_ar[j][i];
 
   // Direct reuse of fortran code by these macro definitions:
-#define mu(i, j, k) a_mu[base + i + ni * (j) + nij * (k)]
-#define la(i, j, k) a_lambda[base + i + ni * (j) + nij * (k)]
+#define mu(i, j, k) a_mu[+ i + ni * (j) + nij * (k)]
+#define la(i, j, k) a_lambda[i + ni * (j) + nij * (k)]
   // Reversed indexation
-#define u(c, i, j, k) a_u[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
+  //#define u(c, i, j, k) a_u[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
+#define u1(i, j, k) a_u1[i + ni * (j) + nij * (k)]
+#define u2(i, j, k) a_u2[i + ni * (j) + nij * (k)]
+#define u3(i, j, k) a_u3[i + ni * (j) + nij * (k)]
 #define lu(c, i, j, k) a_lu[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
 #define strx(i) a_strx[i - ifirst0]
 #define stry(j) a_stry[j - jfirst0]
@@ -1274,81 +1278,80 @@ void rhs4th3fortsgstr_ci(
           (strx(i) *
                ((2 * mux1 + la(i - 1, j, k) * strx(i - 1) -
                  tf * (la(i, j, k) * strx(i) + la(i - 2, j, k) * strx(i - 2))) *
-                    (u(1, i - 2, j, k) - u(1, i, j, k)) +
+                    (u1(i - 2, j, k) - u1(i, j, k)) +
                 (2 * mux2 + la(i - 2, j, k) * strx(i - 2) +
                  la(i + 1, j, k) * strx(i + 1) +
                  3 * (la(i, j, k) * strx(i) + la(i - 1, j, k) * strx(i - 1))) *
-                    (u(1, i - 1, j, k) - u(1, i, j, k)) +
+                    (u1(i - 1, j, k) - u1(i, j, k)) +
                 (2 * mux3 + la(i - 1, j, k) * strx(i - 1) +
                  la(i + 2, j, k) * strx(i + 2) +
                  3 * (la(i + 1, j, k) * strx(i + 1) + la(i, j, k) * strx(i))) *
-                    (u(1, i + 1, j, k) - u(1, i, j, k)) +
+                    (u1(i + 1, j, k) - u1(i, j, k)) +
                 (2 * mux4 + la(i + 1, j, k) * strx(i + 1) -
                  tf * (la(i, j, k) * strx(i) + la(i + 2, j, k) * strx(i + 2))) *
-                    (u(1, i + 2, j, k) - u(1, i, j, k))) +
-           stry(j) * (muy1 * (u(1, i, j - 2, k) - u(1, i, j, k)) +
-                      muy2 * (u(1, i, j - 1, k) - u(1, i, j, k)) +
-                      muy3 * (u(1, i, j + 1, k) - u(1, i, j, k)) +
-                      muy4 * (u(1, i, j + 2, k) - u(1, i, j, k))) +
-           strz(k) * (muz1 * (u(1, i, j, k - 2) - u(1, i, j, k)) +
-                      muz2 * (u(1, i, j, k - 1) - u(1, i, j, k)) +
-                      muz3 * (u(1, i, j, k + 1) - u(1, i, j, k)) +
-                      muz4 * (u(1, i, j, k + 2) - u(1, i, j, k))));
+                    (u1(i + 2, j, k) - u1(i, j, k))) +
+           stry(j) * (muy1 * (u1(i, j - 2, k) - u1(i, j, k)) +
+                      muy2 * (u1(i, j - 1, k) - u1(i, j, k)) +
+                      muy3 * (u1(i, j + 1, k) - u1(i, j, k)) +
+                      muy4 * (u1(i, j + 2, k) - u1(i, j, k))) +
+           strz(k) * (muz1 * (u1(i, j, k - 2) - u1(i, j, k)) +
+                      muz2 * (u1(i, j, k - 1) - u1(i, j, k)) +
+                      muz3 * (u1(i, j, k + 1) - u1(i, j, k)) +
+                      muz4 * (u1(i, j, k + 2) - u1(i, j, k))));
 
       /* 75 ops */
       r2 =
           i6 *
-          (strx(i) * (mux1 * (u(2, i - 2, j, k) - u(2, i, j, k)) +
-                      mux2 * (u(2, i - 1, j, k) - u(2, i, j, k)) +
-                      mux3 * (u(2, i + 1, j, k) - u(2, i, j, k)) +
-                      mux4 * (u(2, i + 2, j, k) - u(2, i, j, k))) +
+          (strx(i) * (mux1 * (u2(i - 2, j, k) - u2(i, j, k)) +
+                      mux2 * (u2(i - 1, j, k) - u2(i, j, k)) +
+                      mux3 * (u2(i + 1, j, k) - u2(i, j, k)) +
+                      mux4 * (u2(i + 2, j, k) - u2(i, j, k))) +
            stry(j) *
                ((2 * muy1 + la(i, j - 1, k) * stry(j - 1) -
                  tf * (la(i, j, k) * stry(j) + la(i, j - 2, k) * stry(j - 2))) *
-                    (u(2, i, j - 2, k) - u(2, i, j, k)) +
+                    (u2(i, j - 2, k) - u2(i, j, k)) +
                 (2 * muy2 + la(i, j - 2, k) * stry(j - 2) +
                  la(i, j + 1, k) * stry(j + 1) +
                  3 * (la(i, j, k) * stry(j) + la(i, j - 1, k) * stry(j - 1))) *
-                    (u(2, i, j - 1, k) - u(2, i, j, k)) +
+                    (u2(i, j - 1, k) - u2(i, j, k)) +
                 (2 * muy3 + la(i, j - 1, k) * stry(j - 1) +
                  la(i, j + 2, k) * stry(j + 2) +
                  3 * (la(i, j + 1, k) * stry(j + 1) + la(i, j, k) * stry(j))) *
-                    (u(2, i, j + 1, k) - u(2, i, j, k)) +
+                    (u2(i, j + 1, k) - u2(i, j, k)) +
                 (2 * muy4 + la(i, j + 1, k) * stry(j + 1) -
                  tf * (la(i, j, k) * stry(j) + la(i, j + 2, k) * stry(j + 2))) *
-                    (u(2, i, j + 2, k) - u(2, i, j, k))) +
-           strz(k) * (muz1 * (u(2, i, j, k - 2) - u(2, i, j, k)) +
-                      muz2 * (u(2, i, j, k - 1) - u(2, i, j, k)) +
-                      muz3 * (u(2, i, j, k + 1) - u(2, i, j, k)) +
-                      muz4 * (u(2, i, j, k + 2) - u(2, i, j, k))));
+                    (u2(i, j + 2, k) - u2(i, j, k))) +
+           strz(k) * (muz1 * (u2(i, j, k - 2) - u2(i, j, k)) +
+                      muz2 * (u2(i, j, k - 1) - u2(i, j, k)) +
+                      muz3 * (u2(i, j, k + 1) - u2(i, j, k)) +
+                      muz4 * (u2(i, j, k + 2) - u2(i, j, k))));
 
       /* 75 ops */
       r3 =
           i6 *
-          (strx(i) * (mux1 * (u(3, i - 2, j, k) - u(3, i, j, k)) +
-                      mux2 * (u(3, i - 1, j, k) - u(3, i, j, k)) +
-                      mux3 * (u(3, i + 1, j, k) - u(3, i, j, k)) +
-                      mux4 * (u(3, i + 2, j, k) - u(3, i, j, k))) +
-           stry(j) * (muy1 * (u(3, i, j - 2, k) - u(3, i, j, k)) +
-                      muy2 * (u(3, i, j - 1, k) - u(3, i, j, k)) +
-                      muy3 * (u(3, i, j + 1, k) - u(3, i, j, k)) +
-                      muy4 * (u(3, i, j + 2, k) - u(3, i, j, k))) +
+          (strx(i) * (mux1 * (u3(i - 2, j, k) - u3(i, j, k)) +
+                      mux2 * (u3(i - 1, j, k) - u3(i, j, k)) +
+                      mux3 * (u3(i + 1, j, k) - u3(i, j, k)) +
+                      mux4 * (u3(i + 2, j, k) - u3(i, j, k))) +
+           stry(j) * (muy1 * (u3(i, j - 2, k) - u3(i, j, k)) +
+                      muy2 * (u3(i, j - 1, k) - u3(i, j, k)) +
+                      muy3 * (u3(i, j + 1, k) - u3(i, j, k)) +
+                      muy4 * (u3(i, j + 2, k) - u3(i, j, k))) +
            strz(k) *
                ((2 * muz1 + la(i, j, k - 1) * strz(k - 1) -
                  tf * (la(i, j, k) * strz(k) + la(i, j, k - 2) * strz(k - 2))) *
-                    (u(3, i, j, k - 2) - u(3, i, j, k)) +
+                    (u3(i, j, k - 2) - u3(i, j, k)) +
                 (2 * muz2 + la(i, j, k - 2) * strz(k - 2) +
                  la(i, j, k + 1) * strz(k + 1) +
                  3 * (la(i, j, k) * strz(k) + la(i, j, k - 1) * strz(k - 1))) *
-                    (u(3, i, j, k - 1) - u(3, i, j, k)) +
+                    (u3(i, j, k - 1) - u3(i, j, k)) +
                 (2 * muz3 + la(i, j, k - 1) * strz(k - 1) +
                  la(i, j, k + 2) * strz(k + 2) +
                  3 * (la(i, j, k + 1) * strz(k + 1) + la(i, j, k) * strz(k))) *
-                    (u(3, i, j, k + 1) - u(3, i, j, k)) +
+                    (u3(i, j, k + 1) - u3(i, j, k)) +
                 (2 * muz4 + la(i, j, k + 1) * strz(k + 1) -
                  tf * (la(i, j, k) * strz(k) + la(i, j, k + 2) * strz(k + 2))) *
-                    (u(3, i, j, k + 2) - u(3, i, j, k))));
-
+                    (u3(i, j, k + 2) - u3(i, j, k))));
       /* Mixed derivatives: */
       /* 29ops /mixed derivative */
       /* 116 ops for r1 */
@@ -1356,176 +1359,176 @@ void rhs4th3fortsgstr_ci(
       r1 = r1 +
            strx(i) * stry(j) * i144 *
                (la(i - 2, j, k) *
-                    (u(2, i - 2, j - 2, k) - u(2, i - 2, j + 2, k) +
-                     8 * (-u(2, i - 2, j - 1, k) + u(2, i - 2, j + 1, k))) -
+                    (u2(i - 2, j - 2, k) - u2(i - 2, j + 2, k) +
+                     8 * (-u2(i - 2, j - 1, k) + u2(i - 2, j + 1, k))) -
                 8 * (la(i - 1, j, k) *
-                     (u(2, i - 1, j - 2, k) - u(2, i - 1, j + 2, k) +
-                      8 * (-u(2, i - 1, j - 1, k) + u(2, i - 1, j + 1, k)))) +
+                     (u2(i - 1, j - 2, k) - u2(i - 1, j + 2, k) +
+                      8 * (-u2(i - 1, j - 1, k) + u2(i - 1, j + 1, k)))) +
                 8 * (la(i + 1, j, k) *
-                     (u(2, i + 1, j - 2, k) - u(2, i + 1, j + 2, k) +
-                      8 * (-u(2, i + 1, j - 1, k) + u(2, i + 1, j + 1, k)))) -
+                     (u2(i + 1, j - 2, k) - u2(i + 1, j + 2, k) +
+                      8 * (-u2(i + 1, j - 1, k) + u2(i + 1, j + 1, k)))) -
                 (la(i + 2, j, k) *
-                 (u(2, i + 2, j - 2, k) - u(2, i + 2, j + 2, k) +
-                  8 * (-u(2, i + 2, j - 1, k) + u(2, i + 2, j + 1, k)))))
+                 (u2(i + 2, j - 2, k) - u2(i + 2, j + 2, k) +
+                  8 * (-u2(i + 2, j - 1, k) + u2(i + 2, j + 1, k)))))
            /*   (la*w_z)_x */
            + strx(i) * strz(k) * i144 *
                  (la(i - 2, j, k) *
-                      (u(3, i - 2, j, k - 2) - u(3, i - 2, j, k + 2) +
-                       8 * (-u(3, i - 2, j, k - 1) + u(3, i - 2, j, k + 1))) -
+                      (u3(i - 2, j, k - 2) - u3(i - 2, j, k + 2) +
+                       8 * (-u3(i - 2, j, k - 1) + u3(i - 2, j, k + 1))) -
                   8 * (la(i - 1, j, k) *
-                       (u(3, i - 1, j, k - 2) - u(3, i - 1, j, k + 2) +
-                        8 * (-u(3, i - 1, j, k - 1) + u(3, i - 1, j, k + 1)))) +
+                       (u3(i - 1, j, k - 2) - u3(i - 1, j, k + 2) +
+                        8 * (-u3(i - 1, j, k - 1) + u3(i - 1, j, k + 1)))) +
                   8 * (la(i + 1, j, k) *
-                       (u(3, i + 1, j, k - 2) - u(3, i + 1, j, k + 2) +
-                        8 * (-u(3, i + 1, j, k - 1) + u(3, i + 1, j, k + 1)))) -
+                       (u3(i + 1, j, k - 2) - u3(i + 1, j, k + 2) +
+                        8 * (-u3(i + 1, j, k - 1) + u3(i + 1, j, k + 1)))) -
                   (la(i + 2, j, k) *
-                   (u(3, i + 2, j, k - 2) - u(3, i + 2, j, k + 2) +
-                    8 * (-u(3, i + 2, j, k - 1) + u(3, i + 2, j, k + 1)))))
+                   (u3(i + 2, j, k - 2) - u3(i + 2, j, k + 2) +
+                    8 * (-u3(i + 2, j, k - 1) + u3(i + 2, j, k + 1)))))
            /*   (mu*v_x)_y */
            + strx(i) * stry(j) * i144 *
                  (mu(i, j - 2, k) *
-                      (u(2, i - 2, j - 2, k) - u(2, i + 2, j - 2, k) +
-                       8 * (-u(2, i - 1, j - 2, k) + u(2, i + 1, j - 2, k))) -
+                      (u2(i - 2, j - 2, k) - u2(i + 2, j - 2, k) +
+                       8 * (-u2(i - 1, j - 2, k) + u2(i + 1, j - 2, k))) -
                   8 * (mu(i, j - 1, k) *
-                       (u(2, i - 2, j - 1, k) - u(2, i + 2, j - 1, k) +
-                        8 * (-u(2, i - 1, j - 1, k) + u(2, i + 1, j - 1, k)))) +
+                       (u2(i - 2, j - 1, k) - u2(i + 2, j - 1, k) +
+                        8 * (-u2(i - 1, j - 1, k) + u2(i + 1, j - 1, k)))) +
                   8 * (mu(i, j + 1, k) *
-                       (u(2, i - 2, j + 1, k) - u(2, i + 2, j + 1, k) +
-                        8 * (-u(2, i - 1, j + 1, k) + u(2, i + 1, j + 1, k)))) -
+                       (u2(i - 2, j + 1, k) - u2(i + 2, j + 1, k) +
+                        8 * (-u2(i - 1, j + 1, k) + u2(i + 1, j + 1, k)))) -
                   (mu(i, j + 2, k) *
-                   (u(2, i - 2, j + 2, k) - u(2, i + 2, j + 2, k) +
-                    8 * (-u(2, i - 1, j + 2, k) + u(2, i + 1, j + 2, k)))))
+                   (u2(i - 2, j + 2, k) - u2(i + 2, j + 2, k) +
+                    8 * (-u2(i - 1, j + 2, k) + u2(i + 1, j + 2, k)))))
            /*   (mu*w_x)_z */
            + strx(i) * strz(k) * i144 *
                  (mu(i, j, k - 2) *
-                      (u(3, i - 2, j, k - 2) - u(3, i + 2, j, k - 2) +
-                       8 * (-u(3, i - 1, j, k - 2) + u(3, i + 1, j, k - 2))) -
+                      (u3(i - 2, j, k - 2) - u3(i + 2, j, k - 2) +
+                       8 * (-u3(i - 1, j, k - 2) + u3(i + 1, j, k - 2))) -
                   8 * (mu(i, j, k - 1) *
-                       (u(3, i - 2, j, k - 1) - u(3, i + 2, j, k - 1) +
-                        8 * (-u(3, i - 1, j, k - 1) + u(3, i + 1, j, k - 1)))) +
+                       (u3(i - 2, j, k - 1) - u3(i + 2, j, k - 1) +
+                        8 * (-u3(i - 1, j, k - 1) + u3(i + 1, j, k - 1)))) +
                   8 * (mu(i, j, k + 1) *
-                       (u(3, i - 2, j, k + 1) - u(3, i + 2, j, k + 1) +
-                        8 * (-u(3, i - 1, j, k + 1) + u(3, i + 1, j, k + 1)))) -
+                       (u3(i - 2, j, k + 1) - u3(i + 2, j, k + 1) +
+                        8 * (-u3(i - 1, j, k + 1) + u3(i + 1, j, k + 1)))) -
                   (mu(i, j, k + 2) *
-                   (u(3, i - 2, j, k + 2) - u(3, i + 2, j, k + 2) +
-                    8 * (-u(3, i - 1, j, k + 2) + u(3, i + 1, j, k + 2)))));
+                   (u3(i - 2, j, k + 2) - u3(i + 2, j, k + 2) +
+                    8 * (-u3(i - 1, j, k + 2) + u3(i + 1, j, k + 2)))));
 
       /* 116 ops for r2 */
       /*   (mu*u_y)_x */
       r2 = r2 +
            strx(i) * stry(j) * i144 *
                (mu(i - 2, j, k) *
-                    (u(1, i - 2, j - 2, k) - u(1, i - 2, j + 2, k) +
-                     8 * (-u(1, i - 2, j - 1, k) + u(1, i - 2, j + 1, k))) -
+                    (u1(i - 2, j - 2, k) - u1(i - 2, j + 2, k) +
+                     8 * (-u1(i - 2, j - 1, k) + u1(i - 2, j + 1, k))) -
                 8 * (mu(i - 1, j, k) *
-                     (u(1, i - 1, j - 2, k) - u(1, i - 1, j + 2, k) +
-                      8 * (-u(1, i - 1, j - 1, k) + u(1, i - 1, j + 1, k)))) +
+                     (u1(i - 1, j - 2, k) - u1(i - 1, j + 2, k) +
+                      8 * (-u1(i - 1, j - 1, k) + u1(i - 1, j + 1, k)))) +
                 8 * (mu(i + 1, j, k) *
-                     (u(1, i + 1, j - 2, k) - u(1, i + 1, j + 2, k) +
-                      8 * (-u(1, i + 1, j - 1, k) + u(1, i + 1, j + 1, k)))) -
+                     (u1(i + 1, j - 2, k) - u1(i + 1, j + 2, k) +
+                      8 * (-u1(i + 1, j - 1, k) + u1(i + 1, j + 1, k)))) -
                 (mu(i + 2, j, k) *
-                 (u(1, i + 2, j - 2, k) - u(1, i + 2, j + 2, k) +
-                  8 * (-u(1, i + 2, j - 1, k) + u(1, i + 2, j + 1, k)))))
+                 (u1(i + 2, j - 2, k) - u1(i + 2, j + 2, k) +
+                  8 * (-u1(i + 2, j - 1, k) + u1(i + 2, j + 1, k)))))
            /* (la*u_x)_y */
            + strx(i) * stry(j) * i144 *
                  (la(i, j - 2, k) *
-                      (u(1, i - 2, j - 2, k) - u(1, i + 2, j - 2, k) +
-                       8 * (-u(1, i - 1, j - 2, k) + u(1, i + 1, j - 2, k))) -
+                      (u1(i - 2, j - 2, k) - u1(i + 2, j - 2, k) +
+                       8 * (-u1(i - 1, j - 2, k) + u1(i + 1, j - 2, k))) -
                   8 * (la(i, j - 1, k) *
-                       (u(1, i - 2, j - 1, k) - u(1, i + 2, j - 1, k) +
-                        8 * (-u(1, i - 1, j - 1, k) + u(1, i + 1, j - 1, k)))) +
+                       (u1(i - 2, j - 1, k) - u1(i + 2, j - 1, k) +
+                        8 * (-u1(i - 1, j - 1, k) + u1(i + 1, j - 1, k)))) +
                   8 * (la(i, j + 1, k) *
-                       (u(1, i - 2, j + 1, k) - u(1, i + 2, j + 1, k) +
-                        8 * (-u(1, i - 1, j + 1, k) + u(1, i + 1, j + 1, k)))) -
+                       (u1(i - 2, j + 1, k) - u1(i + 2, j + 1, k) +
+                        8 * (-u1(i - 1, j + 1, k) + u1(i + 1, j + 1, k)))) -
                   (la(i, j + 2, k) *
-                   (u(1, i - 2, j + 2, k) - u(1, i + 2, j + 2, k) +
-                    8 * (-u(1, i - 1, j + 2, k) + u(1, i + 1, j + 2, k)))))
+                   (u1(i - 2, j + 2, k) - u1(i + 2, j + 2, k) +
+                    8 * (-u1(i - 1, j + 2, k) + u1(i + 1, j + 2, k)))))
            /* (la*w_z)_y */
            + stry(j) * strz(k) * i144 *
                  (la(i, j - 2, k) *
-                      (u(3, i, j - 2, k - 2) - u(3, i, j - 2, k + 2) +
-                       8 * (-u(3, i, j - 2, k - 1) + u(3, i, j - 2, k + 1))) -
+                      (u3(i, j - 2, k - 2) - u3(i, j - 2, k + 2) +
+                       8 * (-u3(i, j - 2, k - 1) + u3(i, j - 2, k + 1))) -
                   8 * (la(i, j - 1, k) *
-                       (u(3, i, j - 1, k - 2) - u(3, i, j - 1, k + 2) +
-                        8 * (-u(3, i, j - 1, k - 1) + u(3, i, j - 1, k + 1)))) +
+                       (u3(i, j - 1, k - 2) - u3(i, j - 1, k + 2) +
+                        8 * (-u3(i, j - 1, k - 1) + u3(i, j - 1, k + 1)))) +
                   8 * (la(i, j + 1, k) *
-                       (u(3, i, j + 1, k - 2) - u(3, i, j + 1, k + 2) +
-                        8 * (-u(3, i, j + 1, k - 1) + u(3, i, j + 1, k + 1)))) -
+                       (u3(i, j + 1, k - 2) - u3(i, j + 1, k + 2) +
+                        8 * (-u3(i, j + 1, k - 1) + u3(i, j + 1, k + 1)))) -
                   (la(i, j + 2, k) *
-                   (u(3, i, j + 2, k - 2) - u(3, i, j + 2, k + 2) +
-                    8 * (-u(3, i, j + 2, k - 1) + u(3, i, j + 2, k + 1)))))
+                   (u3(i, j + 2, k - 2) - u3(i, j + 2, k + 2) +
+                    8 * (-u3(i, j + 2, k - 1) + u3(i, j + 2, k + 1)))))
            /* (mu*w_y)_z */
            + stry(j) * strz(k) * i144 *
                  (mu(i, j, k - 2) *
-                      (u(3, i, j - 2, k - 2) - u(3, i, j + 2, k - 2) +
-                       8 * (-u(3, i, j - 1, k - 2) + u(3, i, j + 1, k - 2))) -
+                      (u3(i, j - 2, k - 2) - u3(i, j + 2, k - 2) +
+                       8 * (-u3(i, j - 1, k - 2) + u3(i, j + 1, k - 2))) -
                   8 * (mu(i, j, k - 1) *
-                       (u(3, i, j - 2, k - 1) - u(3, i, j + 2, k - 1) +
-                        8 * (-u(3, i, j - 1, k - 1) + u(3, i, j + 1, k - 1)))) +
+                       (u3(i, j - 2, k - 1) - u3(i, j + 2, k - 1) +
+                        8 * (-u3(i, j - 1, k - 1) + u3(i, j + 1, k - 1)))) +
                   8 * (mu(i, j, k + 1) *
-                       (u(3, i, j - 2, k + 1) - u(3, i, j + 2, k + 1) +
-                        8 * (-u(3, i, j - 1, k + 1) + u(3, i, j + 1, k + 1)))) -
+                       (u3(i, j - 2, k + 1) - u3(i, j + 2, k + 1) +
+                        8 * (-u3(i, j - 1, k + 1) + u3(i, j + 1, k + 1)))) -
                   (mu(i, j, k + 2) *
-                   (u(3, i, j - 2, k + 2) - u(3, i, j + 2, k + 2) +
-                    8 * (-u(3, i, j - 1, k + 2) + u(3, i, j + 1, k + 2)))));
+                   (u3(i, j - 2, k + 2) - u3(i, j + 2, k + 2) +
+                    8 * (-u3(i, j - 1, k + 2) + u3(i, j + 1, k + 2)))));
       /* 116 ops for r3 */
       /*  (mu*u_z)_x */
       r3 = r3 +
            strx(i) * strz(k) * i144 *
                (mu(i - 2, j, k) *
-                    (u(1, i - 2, j, k - 2) - u(1, i - 2, j, k + 2) +
-                     8 * (-u(1, i - 2, j, k - 1) + u(1, i - 2, j, k + 1))) -
+                    (u1(i - 2, j, k - 2) - u1(i - 2, j, k + 2) +
+                     8 * (-u1(i - 2, j, k - 1) + u1(i - 2, j, k + 1))) -
                 8 * (mu(i - 1, j, k) *
-                     (u(1, i - 1, j, k - 2) - u(1, i - 1, j, k + 2) +
-                      8 * (-u(1, i - 1, j, k - 1) + u(1, i - 1, j, k + 1)))) +
+                     (u1(i - 1, j, k - 2) - u1(i - 1, j, k + 2) +
+                      8 * (-u1(i - 1, j, k - 1) + u1(i - 1, j, k + 1)))) +
                 8 * (mu(i + 1, j, k) *
-                     (u(1, i + 1, j, k - 2) - u(1, i + 1, j, k + 2) +
-                      8 * (-u(1, i + 1, j, k - 1) + u(1, i + 1, j, k + 1)))) -
+                     (u1(i + 1, j, k - 2) - u1(i + 1, j, k + 2) +
+                      8 * (-u1(i + 1, j, k - 1) + u1(i + 1, j, k + 1)))) -
                 (mu(i + 2, j, k) *
-                 (u(1, i + 2, j, k - 2) - u(1, i + 2, j, k + 2) +
-                  8 * (-u(1, i + 2, j, k - 1) + u(1, i + 2, j, k + 1)))))
+                 (u1(i + 2, j, k - 2) - u1(i + 2, j, k + 2) +
+                  8 * (-u1(i + 2, j, k - 1) + u1(i + 2, j, k + 1)))))
            /* (mu*v_z)_y */
            + stry(j) * strz(k) * i144 *
                  (mu(i, j - 2, k) *
-                      (u(2, i, j - 2, k - 2) - u(2, i, j - 2, k + 2) +
-                       8 * (-u(2, i, j - 2, k - 1) + u(2, i, j - 2, k + 1))) -
+                      (u2(i, j - 2, k - 2) - u2(i, j - 2, k + 2) +
+                       8 * (-u2(i, j - 2, k - 1) + u2(i, j - 2, k + 1))) -
                   8 * (mu(i, j - 1, k) *
-                       (u(2, i, j - 1, k - 2) - u(2, i, j - 1, k + 2) +
-                        8 * (-u(2, i, j - 1, k - 1) + u(2, i, j - 1, k + 1)))) +
+                       (u2(i, j - 1, k - 2) - u2(i, j - 1, k + 2) +
+                        8 * (-u2(i, j - 1, k - 1) + u2(i, j - 1, k + 1)))) +
                   8 * (mu(i, j + 1, k) *
-                       (u(2, i, j + 1, k - 2) - u(2, i, j + 1, k + 2) +
-                        8 * (-u(2, i, j + 1, k - 1) + u(2, i, j + 1, k + 1)))) -
+                       (u2(i, j + 1, k - 2) - u2(i, j + 1, k + 2) +
+                        8 * (-u2(i, j + 1, k - 1) + u2(i, j + 1, k + 1)))) -
                   (mu(i, j + 2, k) *
-                   (u(2, i, j + 2, k - 2) - u(2, i, j + 2, k + 2) +
-                    8 * (-u(2, i, j + 2, k - 1) + u(2, i, j + 2, k + 1)))))
+                   (u2(i, j + 2, k - 2) - u2(i, j + 2, k + 2) +
+                    8 * (-u2(i, j + 2, k - 1) + u2(i, j + 2, k + 1)))))
            /*   (la*u_x)_z */
            + strx(i) * strz(k) * i144 *
                  (la(i, j, k - 2) *
-                      (u(1, i - 2, j, k - 2) - u(1, i + 2, j, k - 2) +
-                       8 * (-u(1, i - 1, j, k - 2) + u(1, i + 1, j, k - 2))) -
+                      (u1(i - 2, j, k - 2) - u1(i + 2, j, k - 2) +
+                       8 * (-u1(i - 1, j, k - 2) + u1(i + 1, j, k - 2))) -
                   8 * (la(i, j, k - 1) *
-                       (u(1, i - 2, j, k - 1) - u(1, i + 2, j, k - 1) +
-                        8 * (-u(1, i - 1, j, k - 1) + u(1, i + 1, j, k - 1)))) +
+                       (u1(i - 2, j, k - 1) - u1(i + 2, j, k - 1) +
+                        8 * (-u1(i - 1, j, k - 1) + u1(i + 1, j, k - 1)))) +
                   8 * (la(i, j, k + 1) *
-                       (u(1, i - 2, j, k + 1) - u(1, i + 2, j, k + 1) +
-                        8 * (-u(1, i - 1, j, k + 1) + u(1, i + 1, j, k + 1)))) -
+                       (u1(i - 2, j, k + 1) - u1(i + 2, j, k + 1) +
+                        8 * (-u1(i - 1, j, k + 1) + u1(i + 1, j, k + 1)))) -
                   (la(i, j, k + 2) *
-                   (u(1, i - 2, j, k + 2) - u(1, i + 2, j, k + 2) +
-                    8 * (-u(1, i - 1, j, k + 2) + u(1, i + 1, j, k + 2)))))
+                   (u1(i - 2, j, k + 2) - u1(i + 2, j, k + 2) +
+                    8 * (-u1(i - 1, j, k + 2) + u1(i + 1, j, k + 2)))))
            /* (la*v_y)_z */
            + stry(j) * strz(k) * i144 *
                  (la(i, j, k - 2) *
-                      (u(2, i, j - 2, k - 2) - u(2, i, j + 2, k - 2) +
-                       8 * (-u(2, i, j - 1, k - 2) + u(2, i, j + 1, k - 2))) -
+                      (u2(i, j - 2, k - 2) - u2(i, j + 2, k - 2) +
+                       8 * (-u2(i, j - 1, k - 2) + u2(i, j + 1, k - 2))) -
                   8 * (la(i, j, k - 1) *
-                       (u(2, i, j - 2, k - 1) - u(2, i, j + 2, k - 1) +
-                        8 * (-u(2, i, j - 1, k - 1) + u(2, i, j + 1, k - 1)))) +
+                       (u2(i, j - 2, k - 1) - u2(i, j + 2, k - 1) +
+                        8 * (-u2(i, j - 1, k - 1) + u2(i, j + 1, k - 1)))) +
                   8 * (la(i, j, k + 1) *
-                       (u(2, i, j - 2, k + 1) - u(2, i, j + 2, k + 1) +
-                        8 * (-u(2, i, j - 1, k + 1) + u(2, i, j + 1, k + 1)))) -
+                       (u2(i, j - 2, k + 1) - u2(i, j + 2, k + 1) +
+                        8 * (-u2(i, j - 1, k + 1) + u2(i, j + 1, k + 1)))) -
                   (la(i, j, k + 2) *
-                   (u(2, i, j - 2, k + 2) - u(2, i, j + 2, k + 2) +
-                    8 * (-u(2, i, j - 1, k + 2) + u(2, i, j + 1, k + 2)))));
+                   (u2(i, j - 2, k + 2) - u2(i, j + 2, k + 2) +
+                    8 * (-u2(i, j - 1, k + 2) + u2(i, j + 1, k + 2)))));
 
       /* 9 ops */
       lu(1, i, j, k) = a1 * lu(1, i, j, k) + cof * r1;
@@ -1594,25 +1597,25 @@ void rhs4th3fortsgstr_ci(
         r1 = i6 * (strx(i) * ((2 * mux1 + la(i - 1, j, k) * strx(i - 1) -
                                tf * (la(i, j, k) * strx(i) +
                                      la(i - 2, j, k) * strx(i - 2))) *
-                                  (u(1, i - 2, j, k) - u(1, i, j, k)) +
+                                  (u1(i - 2, j, k) - u1(i, j, k)) +
                               (2 * mux2 + la(i - 2, j, k) * strx(i - 2) +
                                la(i + 1, j, k) * strx(i + 1) +
                                3 * (la(i, j, k) * strx(i) +
                                     la(i - 1, j, k) * strx(i - 1))) *
-                                  (u(1, i - 1, j, k) - u(1, i, j, k)) +
+                                  (u1(i - 1, j, k) - u1(i, j, k)) +
                               (2 * mux3 + la(i - 1, j, k) * strx(i - 1) +
                                la(i + 2, j, k) * strx(i + 2) +
                                3 * (la(i + 1, j, k) * strx(i + 1) +
                                     la(i, j, k) * strx(i))) *
-                                  (u(1, i + 1, j, k) - u(1, i, j, k)) +
+                                  (u1(i + 1, j, k) - u1(i, j, k)) +
                               (2 * mux4 + la(i + 1, j, k) * strx(i + 1) -
                                tf * (la(i, j, k) * strx(i) +
                                      la(i + 2, j, k) * strx(i + 2))) *
-                                  (u(1, i + 2, j, k) - u(1, i, j, k))) +
-                   stry(j) * (+muy1 * (u(1, i, j - 2, k) - u(1, i, j, k)) +
-                              muy2 * (u(1, i, j - 1, k) - u(1, i, j, k)) +
-                              muy3 * (u(1, i, j + 1, k) - u(1, i, j, k)) +
-                              muy4 * (u(1, i, j + 2, k) - u(1, i, j, k))));
+                                  (u1(i + 2, j, k) - u1(i, j, k))) +
+                   stry(j) * (+muy1 * (u1(i, j - 2, k) - u1(i, j, k)) +
+                              muy2 * (u1(i, j - 1, k) - u1(i, j, k)) +
+                              muy3 * (u1(i, j + 1, k) - u1(i, j, k)) +
+                              muy4 * (u1(i, j + 2, k) - u1(i, j, k))));
 
         /* (mu*uz)_z can not be centered */
         /* second derivative (mu*u_z)_z at grid point z_k */
@@ -1647,54 +1650,54 @@ void rhs4th3fortsgstr_ci(
               acof(k, q, 3) * mu(i, j, 3) + acof(k, q, 4) * mu(i, j, 4) +
               acof(k, q, 5) * mu(i, j, 5) + acof(k, q, 6) * mu(i, j, 6) +
               acof(k, q, 7) * mu(i, j, 7) + acof(k, q, 8) * mu(i, j, 8);
-          mu1zz += mucof * u(1, i, j, q);
-          mu2zz += mucof * u(2, i, j, q);
-          mu3zz += lap2mu * u(3, i, j, q);
+          mu1zz += mucof * u1(i, j, q);
+          mu2zz += mucof * u2(i, j, q);
+          mu3zz += lap2mu * u3(i, j, q);
         }
 
         /* ghost point only influences the first point (k=1) because
          * ghcof(k)=0 for k>=2*/
-        r1 = r1 + (mu1zz + ghcof(k) * mu(i, j, 1) * u(1, i, j, 0));
+        r1 = r1 + (mu1zz + ghcof(k) * mu(i, j, 1) * u1(i, j, 0));
 
-        r2 = i6 * (strx(i) * (mux1 * (u(2, i - 2, j, k) - u(2, i, j, k)) +
-                              mux2 * (u(2, i - 1, j, k) - u(2, i, j, k)) +
-                              mux3 * (u(2, i + 1, j, k) - u(2, i, j, k)) +
-                              mux4 * (u(2, i + 2, j, k) - u(2, i, j, k))) +
+        r2 = i6 * (strx(i) * (mux1 * (u2(i - 2, j, k) - u2(i, j, k)) +
+                              mux2 * (u2(i - 1, j, k) - u2(i, j, k)) +
+                              mux3 * (u2(i + 1, j, k) - u2(i, j, k)) +
+                              mux4 * (u2(i + 2, j, k) - u2(i, j, k))) +
                    stry(j) * ((2 * muy1 + la(i, j - 1, k) * stry(j - 1) -
                                tf * (la(i, j, k) * stry(j) +
                                      la(i, j - 2, k) * stry(j - 2))) *
-                                  (u(2, i, j - 2, k) - u(2, i, j, k)) +
+                                  (u2(i, j - 2, k) - u2(i, j, k)) +
                               (2 * muy2 + la(i, j - 2, k) * stry(j - 2) +
                                la(i, j + 1, k) * stry(j + 1) +
                                3 * (la(i, j, k) * stry(j) +
                                     la(i, j - 1, k) * stry(j - 1))) *
-                                  (u(2, i, j - 1, k) - u(2, i, j, k)) +
+                                  (u2(i, j - 1, k) - u2(i, j, k)) +
                               (2 * muy3 + la(i, j - 1, k) * stry(j - 1) +
                                la(i, j + 2, k) * stry(j + 2) +
                                3 * (la(i, j + 1, k) * stry(j + 1) +
                                     la(i, j, k) * stry(j))) *
-                                  (u(2, i, j + 1, k) - u(2, i, j, k)) +
+                                  (u2(i, j + 1, k) - u2(i, j, k)) +
                               (2 * muy4 + la(i, j + 1, k) * stry(j + 1) -
                                tf * (la(i, j, k) * stry(j) +
                                      la(i, j + 2, k) * stry(j + 2))) *
-                                  (u(2, i, j + 2, k) - u(2, i, j, k))));
+                                  (u2(i, j + 2, k) - u2(i, j, k))));
 
         /* ghost point only influences the first point (k=1) because
          * ghcof(k)=0 for k>=2 */
-        r2 = r2 + (mu2zz + ghcof(k) * mu(i, j, 1) * u(2, i, j, 0));
+        r2 = r2 + (mu2zz + ghcof(k) * mu(i, j, 1) * u2(i, j, 0));
 
-        r3 = i6 * (strx(i) * (mux1 * (u(3, i - 2, j, k) - u(3, i, j, k)) +
-                              mux2 * (u(3, i - 1, j, k) - u(3, i, j, k)) +
-                              mux3 * (u(3, i + 1, j, k) - u(3, i, j, k)) +
-                              mux4 * (u(3, i + 2, j, k) - u(3, i, j, k))) +
-                   stry(j) * (muy1 * (u(3, i, j - 2, k) - u(3, i, j, k)) +
-                              muy2 * (u(3, i, j - 1, k) - u(3, i, j, k)) +
-                              muy3 * (u(3, i, j + 1, k) - u(3, i, j, k)) +
-                              muy4 * (u(3, i, j + 2, k) - u(3, i, j, k))));
+        r3 = i6 * (strx(i) * (mux1 * (u3(i - 2, j, k) - u3(i, j, k)) +
+                              mux2 * (u3(i - 1, j, k) - u3(i, j, k)) +
+                              mux3 * (u3(i + 1, j, k) - u3(i, j, k)) +
+                              mux4 * (u3(i + 2, j, k) - u3(i, j, k))) +
+                   stry(j) * (muy1 * (u3(i, j - 2, k) - u3(i, j, k)) +
+                              muy2 * (u3(i, j - 1, k) - u3(i, j, k)) +
+                              muy3 * (u3(i, j + 1, k) - u3(i, j, k)) +
+                              muy4 * (u3(i, j + 2, k) - u3(i, j, k))));
         /* ghost point only influences the first point (k=1) because
          * ghcof(k)=0 for k>=2 */
         r3 = r3 + (mu3zz +
-                   ghcof(k) * (la(i, j, 1) + 2 * mu(i, j, 1)) * u(3, i, j, 0));
+                   ghcof(k) * (la(i, j, 1) + 2 * mu(i, j, 1)) * u3(i, j, 0));
 
         /* cross-terms in first component of rhs */
         /*   (la*v_y)_x */
@@ -1703,37 +1706,37 @@ void rhs4th3fortsgstr_ci(
             strx(i) * stry(j) *
                 (i144 *
                      (la(i - 2, j, k) *
-                          (u(2, i - 2, j - 2, k) - u(2, i - 2, j + 2, k) +
-                           8 * (-u(2, i - 2, j - 1, k) +
-                                u(2, i - 2, j + 1, k))) -
+                          (u2(i - 2, j - 2, k) - u2(i - 2, j + 2, k) +
+                           8 * (-u2(i - 2, j - 1, k) +
+                                u2(i - 2, j + 1, k))) -
                       8 * (la(i - 1, j, k) *
-                           (u(2, i - 1, j - 2, k) - u(2, i - 1, j + 2, k) +
-                            8 * (-u(2, i - 1, j - 1, k) +
-                                 u(2, i - 1, j + 1, k)))) +
+                           (u2(i - 1, j - 2, k) - u2(i - 1, j + 2, k) +
+                            8 * (-u2(i - 1, j - 1, k) +
+                                 u2(i - 1, j + 1, k)))) +
                       8 * (la(i + 1, j, k) *
-                           (u(2, i + 1, j - 2, k) - u(2, i + 1, j + 2, k) +
-                            8 * (-u(2, i + 1, j - 1, k) +
-                                 u(2, i + 1, j + 1, k)))) -
+                           (u2(i + 1, j - 2, k) - u2(i + 1, j + 2, k) +
+                            8 * (-u2(i + 1, j - 1, k) +
+                                 u2(i + 1, j + 1, k)))) -
                       (la(i + 2, j, k) *
-                       (u(2, i + 2, j - 2, k) - u(2, i + 2, j + 2, k) +
-                        8 * (-u(2, i + 2, j - 1, k) + u(2, i + 2, j + 1, k)))))
+                       (u2(i + 2, j - 2, k) - u2(i + 2, j + 2, k) +
+                        8 * (-u2(i + 2, j - 1, k) + u2(i + 2, j + 1, k)))))
                  /*   (mu*v_x)_y */
                  + i144 * (mu(i, j - 2, k) *
-                               (u(2, i - 2, j - 2, k) - u(2, i + 2, j - 2, k) +
-                                8 * (-u(2, i - 1, j - 2, k) +
-                                     u(2, i + 1, j - 2, k))) -
+                               (u2(i - 2, j - 2, k) - u2(i + 2, j - 2, k) +
+                                8 * (-u2(i - 1, j - 2, k) +
+                                     u2(i + 1, j - 2, k))) -
                            8 * (mu(i, j - 1, k) *
-                                (u(2, i - 2, j - 1, k) - u(2, i + 2, j - 1, k) +
-                                 8 * (-u(2, i - 1, j - 1, k) +
-                                      u(2, i + 1, j - 1, k)))) +
+                                (u2(i - 2, j - 1, k) - u2(i + 2, j - 1, k) +
+                                 8 * (-u2(i - 1, j - 1, k) +
+                                      u2(i + 1, j - 1, k)))) +
                            8 * (mu(i, j + 1, k) *
-                                (u(2, i - 2, j + 1, k) - u(2, i + 2, j + 1, k) +
-                                 8 * (-u(2, i - 1, j + 1, k) +
-                                      u(2, i + 1, j + 1, k)))) -
+                                (u2(i - 2, j + 1, k) - u2(i + 2, j + 1, k) +
+                                 8 * (-u2(i - 1, j + 1, k) +
+                                      u2(i + 1, j + 1, k)))) -
                            (mu(i, j + 2, k) *
-                            (u(2, i - 2, j + 2, k) - u(2, i + 2, j + 2, k) +
-                             8 * (-u(2, i - 1, j + 2, k) +
-                                  u(2, i + 1, j + 2, k))))));
+                            (u2(i - 2, j + 2, k) - u2(i + 2, j + 2, k) +
+                             8 * (-u2(i - 1, j + 2, k) +
+                                  u2(i + 1, j + 2, k))))));
         /*   (la*w_z)_x: NOT CENTERED */
         float_sw4 u3zip2 = 0;
         float_sw4 u3zip1 = 0;
@@ -1743,10 +1746,10 @@ void rhs4th3fortsgstr_ci(
 #pragma unroll 8
 #endif
         for (int q = 1; q <= 8; q++) {
-          u3zip2 += bope(k, q) * u(3, i + 2, j, q);
-          u3zip1 += bope(k, q) * u(3, i + 1, j, q);
-          u3zim1 += bope(k, q) * u(3, i - 1, j, q);
-          u3zim2 += bope(k, q) * u(3, i - 2, j, q);
+          u3zip2 += bope(k, q) * u3(i + 2, j, q);
+          u3zip1 += bope(k, q) * u3(i + 1, j, q);
+          u3zim1 += bope(k, q) * u3(i - 1, j, q);
+          u3zim2 += bope(k, q) * u3(i - 2, j, q);
         }
         float_sw4 lau3zx =
             i12 * (-la(i + 2, j, k) * u3zip2 + 8 * la(i + 1, j, k) * u3zip1 -
@@ -1759,8 +1762,8 @@ void rhs4th3fortsgstr_ci(
 #endif
         for (int q = 1; q <= 8; q++)
           mu3xz += bope(k, q) * (mu(i, j, q) * i12 *
-                                 (-u(3, i + 2, j, q) + 8 * u(3, i + 1, j, q) -
-                                  8 * u(3, i - 1, j, q) + u(3, i - 2, j, q)));
+                                 (-u3(i + 2, j, q) + 8 * u3(i + 1, j, q) -
+                                  8 * u3(i - 1, j, q) + u3(i - 2, j, q)));
         r1 = r1 + strx(i) * mu3xz;
 
         /* cross-terms in second component of rhs */
@@ -1770,37 +1773,37 @@ void rhs4th3fortsgstr_ci(
             strx(i) * stry(j) *
                 (i144 *
                      (mu(i - 2, j, k) *
-                          (u(1, i - 2, j - 2, k) - u(1, i - 2, j + 2, k) +
-                           8 * (-u(1, i - 2, j - 1, k) +
-                                u(1, i - 2, j + 1, k))) -
+                          (u1(i - 2, j - 2, k) - u1(i - 2, j + 2, k) +
+                           8 * (-u1(i - 2, j - 1, k) +
+                                u1(i - 2, j + 1, k))) -
                       8 * (mu(i - 1, j, k) *
-                           (u(1, i - 1, j - 2, k) - u(1, i - 1, j + 2, k) +
-                            8 * (-u(1, i - 1, j - 1, k) +
-                                 u(1, i - 1, j + 1, k)))) +
+                           (u1(i - 1, j - 2, k) - u1(i - 1, j + 2, k) +
+                            8 * (-u1(i - 1, j - 1, k) +
+                                 u1(i - 1, j + 1, k)))) +
                       8 * (mu(i + 1, j, k) *
-                           (u(1, i + 1, j - 2, k) - u(1, i + 1, j + 2, k) +
-                            8 * (-u(1, i + 1, j - 1, k) +
-                                 u(1, i + 1, j + 1, k)))) -
+                           (u1(i + 1, j - 2, k) - u1(i + 1, j + 2, k) +
+                            8 * (-u1(i + 1, j - 1, k) +
+                                 u1(i + 1, j + 1, k)))) -
                       (mu(i + 2, j, k) *
-                       (u(1, i + 2, j - 2, k) - u(1, i + 2, j + 2, k) +
-                        8 * (-u(1, i + 2, j - 1, k) + u(1, i + 2, j + 1, k)))))
+                       (u1(i + 2, j - 2, k) - u1(i + 2, j + 2, k) +
+                        8 * (-u1(i + 2, j - 1, k) + u1(i + 2, j + 1, k)))))
                  /* (la*u_x)_y  */
                  + i144 * (la(i, j - 2, k) *
-                               (u(1, i - 2, j - 2, k) - u(1, i + 2, j - 2, k) +
-                                8 * (-u(1, i - 1, j - 2, k) +
-                                     u(1, i + 1, j - 2, k))) -
+                               (u1(i - 2, j - 2, k) - u1(i + 2, j - 2, k) +
+                                8 * (-u1(i - 1, j - 2, k) +
+                                     u1(i + 1, j - 2, k))) -
                            8 * (la(i, j - 1, k) *
-                                (u(1, i - 2, j - 1, k) - u(1, i + 2, j - 1, k) +
-                                 8 * (-u(1, i - 1, j - 1, k) +
-                                      u(1, i + 1, j - 1, k)))) +
+                                (u1(i - 2, j - 1, k) - u1(i + 2, j - 1, k) +
+                                 8 * (-u1(i - 1, j - 1, k) +
+                                      u1(i + 1, j - 1, k)))) +
                            8 * (la(i, j + 1, k) *
-                                (u(1, i - 2, j + 1, k) - u(1, i + 2, j + 1, k) +
-                                 8 * (-u(1, i - 1, j + 1, k) +
-                                      u(1, i + 1, j + 1, k)))) -
+                                (u1(i - 2, j + 1, k) - u1(i + 2, j + 1, k) +
+                                 8 * (-u1(i - 1, j + 1, k) +
+                                      u1(i + 1, j + 1, k)))) -
                            (la(i, j + 2, k) *
-                            (u(1, i - 2, j + 2, k) - u(1, i + 2, j + 2, k) +
-                             8 * (-u(1, i - 1, j + 2, k) +
-                                  u(1, i + 1, j + 2, k))))));
+                            (u1(i - 2, j + 2, k) - u1(i + 2, j + 2, k) +
+                             8 * (-u1(i - 1, j + 2, k) +
+                                  u1(i + 1, j + 2, k))))));
         /* (la*w_z)_y : NOT CENTERED */
         float_sw4 u3zjp2 = 0;
         float_sw4 u3zjp1 = 0;
@@ -1810,10 +1813,10 @@ void rhs4th3fortsgstr_ci(
 #pragma unroll 8
 #endif
         for (int q = 1; q <= 8; q++) {
-          u3zjp2 += bope(k, q) * u(3, i, j + 2, q);
-          u3zjp1 += bope(k, q) * u(3, i, j + 1, q);
-          u3zjm1 += bope(k, q) * u(3, i, j - 1, q);
-          u3zjm2 += bope(k, q) * u(3, i, j - 2, q);
+          u3zjp2 += bope(k, q) * u3(i, j + 2, q);
+          u3zjp1 += bope(k, q) * u3(i, j + 1, q);
+          u3zjm1 += bope(k, q) * u3(i, j - 1, q);
+          u3zjm2 += bope(k, q) * u3(i, j - 2, q);
         }
         float_sw4 lau3zy =
             i12 * (-la(i, j + 2, k) * u3zjp2 + 8 * la(i, j + 1, k) * u3zjp1 -
@@ -1828,8 +1831,8 @@ void rhs4th3fortsgstr_ci(
 #endif
         for (int q = 1; q <= 8; q++)
           mu3yz += bope(k, q) * (mu(i, j, q) * i12 *
-                                 (-u(3, i, j + 2, q) + 8 * u(3, i, j + 1, q) -
-                                  8 * u(3, i, j - 1, q) + u(3, i, j - 2, q)));
+                                 (-u3(i, j + 2, q) + 8 * u3(i, j + 1, q) -
+                                  8 * u3(i, j - 1, q) + u3(i, j - 2, q)));
 
         r2 = r2 + stry(j) * mu3yz;
 
@@ -1841,10 +1844,10 @@ void rhs4th3fortsgstr_ci(
         float_sw4 u1zim2 = 0;
 	//#pragma unroll 8 // This one slowed the code 3m 11.28 
         for (int q = 1; q <= 8; q++) {
-          u1zip2 += bope(k, q) * u(1, i + 2, j, q);
-          u1zip1 += bope(k, q) * u(1, i + 1, j, q);
-          u1zim1 += bope(k, q) * u(1, i - 1, j, q);
-          u1zim2 += bope(k, q) * u(1, i - 2, j, q);
+          u1zip2 += bope(k, q) * u1(i + 2, j, q);
+          u1zip1 += bope(k, q) * u1(i + 1, j, q);
+          u1zim1 += bope(k, q) * u1(i - 1, j, q);
+          u1zim2 += bope(k, q) * u1(i - 2, j, q);
         }
         float_sw4 mu1zx =
             i12 * (-mu(i + 2, j, k) * u1zip2 + 8 * mu(i + 1, j, k) * u1zip1 -
@@ -1858,10 +1861,10 @@ void rhs4th3fortsgstr_ci(
         float_sw4 u2zjm2 = 0;
 	//#pragma unroll 8 // 3m 10.74
         for (int q = 1; q <= 8; q++) {
-          u2zjp2 += bope(k, q) * u(2, i, j + 2, q);
-          u2zjp1 += bope(k, q) * u(2, i, j + 1, q);
-          u2zjm1 += bope(k, q) * u(2, i, j - 1, q);
-          u2zjm2 += bope(k, q) * u(2, i, j - 2, q);
+          u2zjp2 += bope(k, q) * u2(i, j + 2, q);
+          u2zjp1 += bope(k, q) * u2(i, j + 1, q);
+          u2zjm1 += bope(k, q) * u2(i, j - 1, q);
+          u2zjm2 += bope(k, q) * u2(i, j - 2, q);
         }
         float_sw4 mu2zy =
             i12 * (-mu(i, j + 2, k) * u2zjp2 + 8 * mu(i, j + 1, k) * u2zjp1 -
@@ -1873,8 +1876,8 @@ void rhs4th3fortsgstr_ci(
 	//#pragma unroll 8 // 3m 10.86
         for (int q = 1; q <= 8; q++)
           lau1xz += bope(k, q) * (la(i, j, q) * i12 *
-                                  (-u(1, i + 2, j, q) + 8 * u(1, i + 1, j, q) -
-                                   8 * u(1, i - 1, j, q) + u(1, i - 2, j, q)));
+                                  (-u1(i + 2, j, q) + 8 * u1(i + 1, j, q) -
+                                   8 * u1(i - 1, j, q) + u1(i - 2, j, q)));
         r3 = r3 + strx(i) * lau1xz;
 
         /* (la*v_y)_z: NOT CENTERED */
@@ -1882,8 +1885,8 @@ void rhs4th3fortsgstr_ci(
 	//#pragma unroll 8 // 3m 10.73
         for (int q = 1; q <= 8; q++)
           lau2yz += bope(k, q) * (la(i, j, q) * i12 *
-                                  (-u(2, i, j + 2, q) + 8 * u(2, i, j + 1, q) -
-                                   8 * u(2, i, j - 1, q) + u(2, i, j - 2, q)));
+                                  (-u2(i, j + 2, q) + 8 * u2(i, j + 1, q) -
+                                   8 * u2(i, j - 1, q) + u2(i, j - 2, q)));
         r3 = r3 + stry(j) * lau2yz;
 
         lu(1, i, j, k) = a1 * lu(1, i, j, k) + cof * r1;
@@ -1956,25 +1959,25 @@ void rhs4th3fortsgstr_ci(
         r1 = i6 * (strx(i) * ((2 * mux1 + la(i - 1, j, k) * strx(i - 1) -
                                tf * (la(i, j, k) * strx(i) +
                                      la(i - 2, j, k) * strx(i - 2))) *
-                                  (u(1, i - 2, j, k) - u(1, i, j, k)) +
+                                  (u1(i - 2, j, k) - u1(i, j, k)) +
                               (2 * mux2 + la(i - 2, j, k) * strx(i - 2) +
                                la(i + 1, j, k) * strx(i + 1) +
                                3 * (la(i, j, k) * strx(i) +
                                     la(i - 1, j, k) * strx(i - 1))) *
-                                  (u(1, i - 1, j, k) - u(1, i, j, k)) +
+                                  (u1(i - 1, j, k) - u1(i, j, k)) +
                               (2 * mux3 + la(i - 1, j, k) * strx(i - 1) +
                                la(i + 2, j, k) * strx(i + 2) +
                                3 * (la(i + 1, j, k) * strx(i + 1) +
                                     la(i, j, k) * strx(i))) *
-                                  (u(1, i + 1, j, k) - u(1, i, j, k)) +
+                                  (u1(i + 1, j, k) - u1(i, j, k)) +
                               (2 * mux4 + la(i + 1, j, k) * strx(i + 1) -
                                tf * (la(i, j, k) * strx(i) +
                                      la(i + 2, j, k) * strx(i + 2))) *
-                                  (u(1, i + 2, j, k) - u(1, i, j, k))) +
-                   stry(j) * (+muy1 * (u(1, i, j - 2, k) - u(1, i, j, k)) +
-                              muy2 * (u(1, i, j - 1, k) - u(1, i, j, k)) +
-                              muy3 * (u(1, i, j + 1, k) - u(1, i, j, k)) +
-                              muy4 * (u(1, i, j + 2, k) - u(1, i, j, k))));
+                                  (u1(i + 2, j, k) - u1(i, j, k))) +
+                   stry(j) * (+muy1 * (u1(i, j - 2, k) - u1(i, j, k)) +
+                              muy2 * (u1(i, j - 1, k) - u1(i, j, k)) +
+                              muy3 * (u1(i, j + 1, k) - u1(i, j, k)) +
+                              muy4 * (u1(i, j + 2, k) - u1(i, j, k))));
 
         /* all indices ending with 'b' are indices relative to the boundary,
          * going into the domain (1,2,3,...)*/
@@ -2001,53 +2004,53 @@ void rhs4th3fortsgstr_ci(
             lap2mu += acof(kb, qb, mb) *
                       (2 * mu(i, j, nk - mb + 1) + la(i, j, nk - mb + 1));
           }
-          mu1zz += mucof * u(1, i, j, nk - qb + 1);
-          mu2zz += mucof * u(2, i, j, nk - qb + 1);
-          mu3zz += lap2mu * u(3, i, j, nk - qb + 1);
+          mu1zz += mucof * u1(i, j, nk - qb + 1);
+          mu2zz += mucof * u2(i, j, nk - qb + 1);
+          mu3zz += lap2mu * u3(i, j, nk - qb + 1);
         }
         /* computing the second derivative */
         /* ghost point only influences the first point (k=1) because
          * ghcof(k)=0 for k>=2*/
-        r1 = r1 + (mu1zz + ghcof(kb) * mu(i, j, nk) * u(1, i, j, nk + 1));
+        r1 = r1 + (mu1zz + ghcof(kb) * mu(i, j, nk) * u1(i, j, nk + 1));
 
-        r2 = i6 * (strx(i) * (mux1 * (u(2, i - 2, j, k) - u(2, i, j, k)) +
-                              mux2 * (u(2, i - 1, j, k) - u(2, i, j, k)) +
-                              mux3 * (u(2, i + 1, j, k) - u(2, i, j, k)) +
-                              mux4 * (u(2, i + 2, j, k) - u(2, i, j, k))) +
+        r2 = i6 * (strx(i) * (mux1 * (u2(i - 2, j, k) - u2(i, j, k)) +
+                              mux2 * (u2(i - 1, j, k) - u2(i, j, k)) +
+                              mux3 * (u2(i + 1, j, k) - u2(i, j, k)) +
+                              mux4 * (u2(i + 2, j, k) - u2(i, j, k))) +
                    stry(j) * ((2 * muy1 + la(i, j - 1, k) * stry(j - 1) -
                                tf * (la(i, j, k) * stry(j) +
                                      la(i, j - 2, k) * stry(j - 2))) *
-                                  (u(2, i, j - 2, k) - u(2, i, j, k)) +
+                                  (u2(i, j - 2, k) - u2(i, j, k)) +
                               (2 * muy2 + la(i, j - 2, k) * stry(j - 2) +
                                la(i, j + 1, k) * stry(j + 1) +
                                3 * (la(i, j, k) * stry(j) +
                                     la(i, j - 1, k) * stry(j - 1))) *
-                                  (u(2, i, j - 1, k) - u(2, i, j, k)) +
+                                  (u2(i, j - 1, k) - u2(i, j, k)) +
                               (2 * muy3 + la(i, j - 1, k) * stry(j - 1) +
                                la(i, j + 2, k) * stry(j + 2) +
                                3 * (la(i, j + 1, k) * stry(j + 1) +
                                     la(i, j, k) * stry(j))) *
-                                  (u(2, i, j + 1, k) - u(2, i, j, k)) +
+                                  (u2(i, j + 1, k) - u2(i, j, k)) +
                               (2 * muy4 + la(i, j + 1, k) * stry(j + 1) -
                                tf * (la(i, j, k) * stry(j) +
                                      la(i, j + 2, k) * stry(j + 2))) *
-                                  (u(2, i, j + 2, k) - u(2, i, j, k))));
+                                  (u2(i, j + 2, k) - u2(i, j, k))));
 
         /* (mu*vz)_z can not be centered */
         /* second derivative (mu*v_z)_z at grid point z_k */
         /* averaging the coefficient: already done above */
-        r2 = r2 + (mu2zz + ghcof(kb) * mu(i, j, nk) * u(2, i, j, nk + 1));
+        r2 = r2 + (mu2zz + ghcof(kb) * mu(i, j, nk) * u2(i, j, nk + 1));
 
-        r3 = i6 * (strx(i) * (mux1 * (u(3, i - 2, j, k) - u(3, i, j, k)) +
-                              mux2 * (u(3, i - 1, j, k) - u(3, i, j, k)) +
-                              mux3 * (u(3, i + 1, j, k) - u(3, i, j, k)) +
-                              mux4 * (u(3, i + 2, j, k) - u(3, i, j, k))) +
-                   stry(j) * (muy1 * (u(3, i, j - 2, k) - u(3, i, j, k)) +
-                              muy2 * (u(3, i, j - 1, k) - u(3, i, j, k)) +
-                              muy3 * (u(3, i, j + 1, k) - u(3, i, j, k)) +
-                              muy4 * (u(3, i, j + 2, k) - u(3, i, j, k))));
+        r3 = i6 * (strx(i) * (mux1 * (u3(i - 2, j, k) - u3(i, j, k)) +
+                              mux2 * (u3(i - 1, j, k) - u3(i, j, k)) +
+                              mux3 * (u3(i + 1, j, k) - u3(i, j, k)) +
+                              mux4 * (u3(i + 2, j, k) - u3(i, j, k))) +
+                   stry(j) * (muy1 * (u3(i, j - 2, k) - u3(i, j, k)) +
+                              muy2 * (u3(i, j - 1, k) - u3(i, j, k)) +
+                              muy3 * (u3(i, j + 1, k) - u3(i, j, k)) +
+                              muy4 * (u3(i, j + 2, k) - u3(i, j, k))));
         r3 = r3 + (mu3zz + ghcof(kb) * (la(i, j, nk) + 2 * mu(i, j, nk)) *
-                               u(3, i, j, nk + 1));
+                               u3(i, j, nk + 1));
 
         /* cross-terms in first component of rhs */
         /*   (la*v_y)_x */
@@ -2056,37 +2059,37 @@ void rhs4th3fortsgstr_ci(
             strx(i) * stry(j) *
                 (i144 *
                      (la(i - 2, j, k) *
-                          (u(2, i - 2, j - 2, k) - u(2, i - 2, j + 2, k) +
-                           8 * (-u(2, i - 2, j - 1, k) +
-                                u(2, i - 2, j + 1, k))) -
+                          (u2(i - 2, j - 2, k) - u2(i - 2, j + 2, k) +
+                           8 * (-u2(i - 2, j - 1, k) +
+                                u2(i - 2, j + 1, k))) -
                       8 * (la(i - 1, j, k) *
-                           (u(2, i - 1, j - 2, k) - u(2, i - 1, j + 2, k) +
-                            8 * (-u(2, i - 1, j - 1, k) +
-                                 u(2, i - 1, j + 1, k)))) +
+                           (u2(i - 1, j - 2, k) - u2(i - 1, j + 2, k) +
+                            8 * (-u2(i - 1, j - 1, k) +
+                                 u2(i - 1, j + 1, k)))) +
                       8 * (la(i + 1, j, k) *
-                           (u(2, i + 1, j - 2, k) - u(2, i + 1, j + 2, k) +
-                            8 * (-u(2, i + 1, j - 1, k) +
-                                 u(2, i + 1, j + 1, k)))) -
+                           (u2(i + 1, j - 2, k) - u2(i + 1, j + 2, k) +
+                            8 * (-u2(i + 1, j - 1, k) +
+                                 u2(i + 1, j + 1, k)))) -
                       (la(i + 2, j, k) *
-                       (u(2, i + 2, j - 2, k) - u(2, i + 2, j + 2, k) +
-                        8 * (-u(2, i + 2, j - 1, k) + u(2, i + 2, j + 1, k)))))
+                       (u2(i + 2, j - 2, k) - u2(i + 2, j + 2, k) +
+                        8 * (-u2(i + 2, j - 1, k) + u2(i + 2, j + 1, k)))))
                  /*   (mu*v_x)_y */
                  + i144 * (mu(i, j - 2, k) *
-                               (u(2, i - 2, j - 2, k) - u(2, i + 2, j - 2, k) +
-                                8 * (-u(2, i - 1, j - 2, k) +
-                                     u(2, i + 1, j - 2, k))) -
+                               (u2(i - 2, j - 2, k) - u2(i + 2, j - 2, k) +
+                                8 * (-u2(i - 1, j - 2, k) +
+                                     u2(i + 1, j - 2, k))) -
                            8 * (mu(i, j - 1, k) *
-                                (u(2, i - 2, j - 1, k) - u(2, i + 2, j - 1, k) +
-                                 8 * (-u(2, i - 1, j - 1, k) +
-                                      u(2, i + 1, j - 1, k)))) +
+                                (u2(i - 2, j - 1, k) - u2(i + 2, j - 1, k) +
+                                 8 * (-u2(i - 1, j - 1, k) +
+                                      u2(i + 1, j - 1, k)))) +
                            8 * (mu(i, j + 1, k) *
-                                (u(2, i - 2, j + 1, k) - u(2, i + 2, j + 1, k) +
-                                 8 * (-u(2, i - 1, j + 1, k) +
-                                      u(2, i + 1, j + 1, k)))) -
+                                (u2(i - 2, j + 1, k) - u2(i + 2, j + 1, k) +
+                                 8 * (-u2(i - 1, j + 1, k) +
+                                      u2(i + 1, j + 1, k)))) -
                            (mu(i, j + 2, k) *
-                            (u(2, i - 2, j + 2, k) - u(2, i + 2, j + 2, k) +
-                             8 * (-u(2, i - 1, j + 2, k) +
-                                  u(2, i + 1, j + 2, k))))));
+                            (u2(i - 2, j + 2, k) - u2(i + 2, j + 2, k) +
+                             8 * (-u2(i - 1, j + 2, k) +
+                                  u2(i + 1, j + 2, k))))));
         /*   (la*w_z)_x: NOT CENTERED */
         float_sw4 u3zip2 = 0;
         float_sw4 u3zip1 = 0;
@@ -2096,10 +2099,10 @@ void rhs4th3fortsgstr_ci(
 	//#pragma unroll 8 // Slower
 #endif
         for (int qb = 1; qb <= 8; qb++) {
-          u3zip2 -= bope(kb, qb) * u(3, i + 2, j, nk - qb + 1);
-          u3zip1 -= bope(kb, qb) * u(3, i + 1, j, nk - qb + 1);
-          u3zim1 -= bope(kb, qb) * u(3, i - 1, j, nk - qb + 1);
-          u3zim2 -= bope(kb, qb) * u(3, i - 2, j, nk - qb + 1);
+          u3zip2 -= bope(kb, qb) * u3(i + 2, j, nk - qb + 1);
+          u3zip1 -= bope(kb, qb) * u3(i + 1, j, nk - qb + 1);
+          u3zim1 -= bope(kb, qb) * u3(i - 1, j, nk - qb + 1);
+          u3zim2 -= bope(kb, qb) * u3(i - 2, j, nk - qb + 1);
         }
         float_sw4 lau3zx =
             i12 * (-la(i + 2, j, k) * u3zip2 + 8 * la(i + 1, j, k) * u3zip1 -
@@ -2115,8 +2118,8 @@ void rhs4th3fortsgstr_ci(
           mu3xz -=
               bope(kb, qb) *
               (mu(i, j, nk - qb + 1) * i12 *
-               (-u(3, i + 2, j, nk - qb + 1) + 8 * u(3, i + 1, j, nk - qb + 1) -
-                8 * u(3, i - 1, j, nk - qb + 1) + u(3, i - 2, j, nk - qb + 1)));
+               (-u3(i + 2, j, nk - qb + 1) + 8 * u3(i + 1, j, nk - qb + 1) -
+                8 * u3(i - 1, j, nk - qb + 1) + u3(i - 2, j, nk - qb + 1)));
 
         r1 = r1 + strx(i) * mu3xz;
 
@@ -2127,37 +2130,37 @@ void rhs4th3fortsgstr_ci(
             strx(i) * stry(j) *
                 (i144 *
                      (mu(i - 2, j, k) *
-                          (u(1, i - 2, j - 2, k) - u(1, i - 2, j + 2, k) +
-                           8 * (-u(1, i - 2, j - 1, k) +
-                                u(1, i - 2, j + 1, k))) -
+                          (u1(i - 2, j - 2, k) - u1(i - 2, j + 2, k) +
+                           8 * (-u1(i - 2, j - 1, k) +
+                                u1(i - 2, j + 1, k))) -
                       8 * (mu(i - 1, j, k) *
-                           (u(1, i - 1, j - 2, k) - u(1, i - 1, j + 2, k) +
-                            8 * (-u(1, i - 1, j - 1, k) +
-                                 u(1, i - 1, j + 1, k)))) +
+                           (u1(i - 1, j - 2, k) - u1(i - 1, j + 2, k) +
+                            8 * (-u1(i - 1, j - 1, k) +
+                                 u1(i - 1, j + 1, k)))) +
                       8 * (mu(i + 1, j, k) *
-                           (u(1, i + 1, j - 2, k) - u(1, i + 1, j + 2, k) +
-                            8 * (-u(1, i + 1, j - 1, k) +
-                                 u(1, i + 1, j + 1, k)))) -
+                           (u1(i + 1, j - 2, k) - u1(i + 1, j + 2, k) +
+                            8 * (-u1(i + 1, j - 1, k) +
+                                 u1(i + 1, j + 1, k)))) -
                       (mu(i + 2, j, k) *
-                       (u(1, i + 2, j - 2, k) - u(1, i + 2, j + 2, k) +
-                        8 * (-u(1, i + 2, j - 1, k) + u(1, i + 2, j + 1, k)))))
+                       (u1(i + 2, j - 2, k) - u1(i + 2, j + 2, k) +
+                        8 * (-u1(i + 2, j - 1, k) + u1(i + 2, j + 1, k)))))
                  /* (la*u_x)_y */
                  + i144 * (la(i, j - 2, k) *
-                               (u(1, i - 2, j - 2, k) - u(1, i + 2, j - 2, k) +
-                                8 * (-u(1, i - 1, j - 2, k) +
-                                     u(1, i + 1, j - 2, k))) -
+                               (u1(i - 2, j - 2, k) - u1(i + 2, j - 2, k) +
+                                8 * (-u1(i - 1, j - 2, k) +
+                                     u1(i + 1, j - 2, k))) -
                            8 * (la(i, j - 1, k) *
-                                (u(1, i - 2, j - 1, k) - u(1, i + 2, j - 1, k) +
-                                 8 * (-u(1, i - 1, j - 1, k) +
-                                      u(1, i + 1, j - 1, k)))) +
+                                (u1(i - 2, j - 1, k) - u1(i + 2, j - 1, k) +
+                                 8 * (-u1(i - 1, j - 1, k) +
+                                      u1(i + 1, j - 1, k)))) +
                            8 * (la(i, j + 1, k) *
-                                (u(1, i - 2, j + 1, k) - u(1, i + 2, j + 1, k) +
-                                 8 * (-u(1, i - 1, j + 1, k) +
-                                      u(1, i + 1, j + 1, k)))) -
+                                (u1(i - 2, j + 1, k) - u1(i + 2, j + 1, k) +
+                                 8 * (-u1(i - 1, j + 1, k) +
+                                      u1(i + 1, j + 1, k)))) -
                            (la(i, j + 2, k) *
-                            (u(1, i - 2, j + 2, k) - u(1, i + 2, j + 2, k) +
-                             8 * (-u(1, i - 1, j + 2, k) +
-                                  u(1, i + 1, j + 2, k))))));
+                            (u1(i - 2, j + 2, k) - u1(i + 2, j + 2, k) +
+                             8 * (-u1(i - 1, j + 2, k) +
+                                  u1(i + 1, j + 2, k))))));
         /* (la*w_z)_y : NOT CENTERED */
         float_sw4 u3zjp2 = 0;
         float_sw4 u3zjp1 = 0;
@@ -2167,10 +2170,10 @@ void rhs4th3fortsgstr_ci(
 	//#pragma unroll 8
 #endif
         for (int qb = 1; qb <= 8; qb++) {
-          u3zjp2 -= bope(kb, qb) * u(3, i, j + 2, nk - qb + 1);
-          u3zjp1 -= bope(kb, qb) * u(3, i, j + 1, nk - qb + 1);
-          u3zjm1 -= bope(kb, qb) * u(3, i, j - 1, nk - qb + 1);
-          u3zjm2 -= bope(kb, qb) * u(3, i, j - 2, nk - qb + 1);
+          u3zjp2 -= bope(kb, qb) * u3(i, j + 2, nk - qb + 1);
+          u3zjp1 -= bope(kb, qb) * u3(i, j + 1, nk - qb + 1);
+          u3zjm1 -= bope(kb, qb) * u3(i, j - 1, nk - qb + 1);
+          u3zjm2 -= bope(kb, qb) * u3(i, j - 2, nk - qb + 1);
         }
         float_sw4 lau3zy =
             i12 * (-la(i, j + 2, k) * u3zjp2 + 8 * la(i, j + 1, k) * u3zjp1 -
@@ -2186,8 +2189,8 @@ void rhs4th3fortsgstr_ci(
           mu3yz -=
               bope(kb, qb) *
               (mu(i, j, nk - qb + 1) * i12 *
-               (-u(3, i, j + 2, nk - qb + 1) + 8 * u(3, i, j + 1, nk - qb + 1) -
-                8 * u(3, i, j - 1, nk - qb + 1) + u(3, i, j - 2, nk - qb + 1)));
+               (-u3(i, j + 2, nk - qb + 1) + 8 * u3(i, j + 1, nk - qb + 1) -
+                8 * u3(i, j - 1, nk - qb + 1) + u3(i, j - 2, nk - qb + 1)));
         r2 = r2 + stry(j) * mu3yz;
 
         /* No centered cross terms in r3 */
@@ -2200,10 +2203,10 @@ void rhs4th3fortsgstr_ci(
 	//#pragma unroll 8
 #endif
         for (int qb = 1; qb <= 8; qb++) {
-          u1zip2 -= bope(kb, qb) * u(1, i + 2, j, nk - qb + 1);
-          u1zip1 -= bope(kb, qb) * u(1, i + 1, j, nk - qb + 1);
-          u1zim1 -= bope(kb, qb) * u(1, i - 1, j, nk - qb + 1);
-          u1zim2 -= bope(kb, qb) * u(1, i - 2, j, nk - qb + 1);
+          u1zip2 -= bope(kb, qb) * u1(i + 2, j, nk - qb + 1);
+          u1zip1 -= bope(kb, qb) * u1(i + 1, j, nk - qb + 1);
+          u1zim1 -= bope(kb, qb) * u1(i - 1, j, nk - qb + 1);
+          u1zim2 -= bope(kb, qb) * u1(i - 2, j, nk - qb + 1);
         }
         float_sw4 mu1zx =
             i12 * (-mu(i + 2, j, k) * u1zip2 + 8 * mu(i + 1, j, k) * u1zip1 -
@@ -2219,10 +2222,10 @@ void rhs4th3fortsgstr_ci(
 	//#pragma unroll 8
 #endif
         for (int qb = 1; qb <= 8; qb++) {
-          u2zjp2 -= bope(kb, qb) * u(2, i, j + 2, nk - qb + 1);
-          u2zjp1 -= bope(kb, qb) * u(2, i, j + 1, nk - qb + 1);
-          u2zjm1 -= bope(kb, qb) * u(2, i, j - 1, nk - qb + 1);
-          u2zjm2 -= bope(kb, qb) * u(2, i, j - 2, nk - qb + 1);
+          u2zjp2 -= bope(kb, qb) * u2(i, j + 2, nk - qb + 1);
+          u2zjp1 -= bope(kb, qb) * u2(i, j + 1, nk - qb + 1);
+          u2zjm1 -= bope(kb, qb) * u2(i, j - 1, nk - qb + 1);
+          u2zjm2 -= bope(kb, qb) * u2(i, j - 2, nk - qb + 1);
         }
         float_sw4 mu2zy =
             i12 * (-mu(i, j + 2, k) * u2zjp2 + 8 * mu(i, j + 1, k) * u2zjp1 -
@@ -2238,8 +2241,8 @@ void rhs4th3fortsgstr_ci(
           lau1xz -=
               bope(kb, qb) *
               (la(i, j, nk - qb + 1) * i12 *
-               (-u(1, i + 2, j, nk - qb + 1) + 8 * u(1, i + 1, j, nk - qb + 1) -
-                8 * u(1, i - 1, j, nk - qb + 1) + u(1, i - 2, j, nk - qb + 1)));
+               (-u1(i + 2, j, nk - qb + 1) + 8 * u1(i + 1, j, nk - qb + 1) -
+                8 * u1(i - 1, j, nk - qb + 1) + u1(i - 2, j, nk - qb + 1)));
         r3 = r3 + strx(i) * lau1xz;
 
         /* (la*v_y)_z: NOT CENTERED */
@@ -2251,8 +2254,8 @@ void rhs4th3fortsgstr_ci(
           lau2yz -=
               bope(kb, qb) *
               (la(i, j, nk - qb + 1) * i12 *
-               (-u(2, i, j + 2, nk - qb + 1) + 8 * u(2, i, j + 1, nk - qb + 1) -
-                8 * u(2, i, j - 1, nk - qb + 1) + u(2, i, j - 2, nk - qb + 1)));
+               (-u2(i, j + 2, nk - qb + 1) + 8 * u2(i, j + 1, nk - qb + 1) -
+                8 * u2(i, j - 1, nk - qb + 1) + u2(i, j - 2, nk - qb + 1)));
         }
         r3 = r3 + stry(j) * lau2yz;
 

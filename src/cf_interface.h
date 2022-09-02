@@ -198,7 +198,8 @@ void rhs4th3fortsgstr_ci(
     int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, int nk,
     int* __restrict__ onesided, float_sw4* __restrict__ a_acof,
     float_sw4* __restrict__ a_bope, float_sw4* __restrict__ a_ghcof,
-    float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
+    float_sw4* __restrict__ a_lu, 
+    float_sw4* __restrict__ a_u1,float_sw4* __restrict__ a_u2,float_sw4* __restrict__ a_u3,
     float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, float_sw4 h,
     float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry,
     float_sw4* __restrict__ a_strz, char op);

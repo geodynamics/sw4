@@ -4981,6 +4981,12 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     jlast = m_jEnd[g];
     kfirst = m_kStart[g];
     klast = m_kEnd[g];
+    const int ni = ilast - ifirst + 1;
+    //   const int nj= jlast-jfirst+1;
+    const int nij = ni * (jlast - jfirst + 1);
+    const int nijk = nij * (klast - kfirst + 1);
+    const int base = -(ifirst + ni * jfirst + nij * kfirst);
+    const int base3 = base - nijk;
     h = mGridSize[g];  // how do we define the grid size for the curvilinear
                        // grid?
     nz = m_global_nz[g];
@@ -4990,7 +4996,8 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
       if (usingSupergrid())
         rhs4th3fortsgstr_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
                             onesided_ptr, m_acof, m_bope, m_ghcof, uacc_ptr,
-                            u_ptr, mu_ptr, la_ptr, h, m_sg_str_x[g],
+                            u_ptr+base3+nijk,u_ptr+base3+2*nijk,u_ptr+base3+3*nijk,
+			    mu_ptr+base, la_ptr+base, h, m_sg_str_x[g],
                             m_sg_str_y[g], m_sg_str_z[g], op);
       else
         rhs4th3fort_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
@@ -5033,8 +5040,10 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
           if (usingSupergrid())
             rhs4th3fortsgstr_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
                                 onesided_ptr, m_acof_no_gp, m_bope,
-                                m_ghcof_no_gp, uacc_ptr, alpha_ptr, mua_ptr,
-                                lambdaa_ptr, h, m_sg_str_x[g], m_sg_str_y[g],
+                                m_ghcof_no_gp, uacc_ptr, 
+				alpha_ptr+base3+nijk, alpha_ptr+base3+2*nijk, alpha_ptr+base3+3*nijk, 
+				mua_ptr+base,
+                                lambdaa_ptr+base, h, m_sg_str_x[g], m_sg_str_y[g],
                                 m_sg_str_z[g], op);
           else
             rhs4th3fort_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
