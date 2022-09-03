@@ -51,6 +51,10 @@ __constant__ double cmem_acof_no_gp[384];
 #include "sachdf5.h"
 #endif
 
+#ifdef SW4_USE_HPCT
+#include <hpctoolkit.h>
+#endif
+
 #ifdef SW4_TRACK_MPI
 bool StatMachineBase::ProfilerOn(false);
 #endif
@@ -915,6 +919,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     if (currentTimeStep == (beginCycle + 2)) print_hwm(getRank());
     if (currentTimeStep == (beginCycle + 10)) {
       PROFILER_START;
+#ifdef SW4_USE_HPCT
+      hpctoolkit_sampling_start();
+#endif
       // SW4_MARK_BEGIN("CLEAN_TIME");
       end_clean_time_reg = true;
 #ifdef ENABLE_CUDA

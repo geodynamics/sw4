@@ -17,6 +17,7 @@ raja_only=no
 dbg=no
 register_count=no
 scr=no
+hpct=no
 
 
 RAJA_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/RAJA-v0.14.0/install43
@@ -26,7 +27,7 @@ RAJA_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/RAJA-v0.14.0/insta
 
 PROJ_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/proj-5.0.0/install
 #PROJ_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/proj-5.0.0/install5
-PROJ6_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/proj-8.1.1/install
+PROJ6_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/proj-9.0.0/install
 
 UMPIRE_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/umpire-6.0.0/install43
 UMPIRE_HOME = /gpfs/alpine/geo130/proj-shared/ramesh/2021/SPOCK/umpire-6.0.0/install45
@@ -50,6 +51,8 @@ HSA_ROOT_DIR = $(ROCM_PATH)/hsa
 LAPACK_DIR = $(CRAY_LIBSCI_PREFIX_DIR)
 LAPACK_LIB = ${LAPACK_DIR}/lib
 LAPACK_INC = ${LAPACK_DIR}/include 
+
+HPCT_HOME = /gpfs/alpine/csc322/world-shared/.install/2022-08-crusher/spack/cray-sles15-zen3/gcc-11.2.0/hpctoolkit-master-voyulrk6nz3qqst7qv53y24frwsgwsmi
 
 MPI_HOME = /opt/cray/pe/cray-mvapich2_nogpu/2.3.5/infiniband/cray/10.0
 MPI_HOME = ${MPICH_DIR}
@@ -126,6 +129,10 @@ endif
 ifeq ($(scr),yes)
 MORE_FLAGS+= -I$(SCR_HOME)/include -DSW4_USE_SCR=1
 MORE_LINK_FLAGS+=-Wl,-rpath=$(SCR_HOME)/lib64  -L$(SCR_HOME)/lib64 -lscr
+endif
+ifeq ($(hpct),yes)
+MORE_FLAGS+= -I$(HPCT_HOME)/include -DSW4_USE_HPCT=1
+MORE_LINK_FLAGS+=-Wl,-rpath=$(HPCT_HOME)/lib/hpctoolkit  -L$(HPCT_HOME)/lib/hpctoolkit -lhpctoolkit
 endif
 
 

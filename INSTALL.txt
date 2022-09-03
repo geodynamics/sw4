@@ -127,7 +127,7 @@ Building using cmake ( Experimental WIP)
 ---------------------------------------------------------------------
 Building and running on Crusher
 ---------------------------------------------------------------------
-0. ml  PrgEnv-amd cray-hdf5-parallel fftw cray-python
+0. ml  PrgEnv-amd cray-hdf5-parallel fftw cray-python sqlite libtiff ( last 2 for Proj6+)
 1. cp make.raja.crusher.RU22.03 to make.inc in config/
 2. make -f Makefile.hipcc -j 5
 3. see performance/large/run.crusher.scr for run command
