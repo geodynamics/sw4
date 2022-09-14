@@ -614,7 +614,7 @@ void TimeSeries::writeFile( string suffix )
   // Open the output HDF5 file if not already opened
   std::string h5fname, fidName;
   hid_t fid, grp = 0; 
-  double stlalodp[3], stxyz[3];
+  double stlalodp[3], stxyz[3], dist;
   float origintime, windows[4];
   int myRank;
   MPI_Comm_rank(m_ew->m_1d_communicator, &myRank);
@@ -650,6 +650,21 @@ void TimeSeries::writeFile( string suffix )
 
         origintime = float(m_epi_time_offset);
         openWriteAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, &origintime);
+
+        // Actual location in SW4
+        stlalodp[0] = double(m_rec_gp_lat);
+        stlalodp[1] = double(m_rec_gp_lon);
+        stlalodp[2] = double(m_sta_z);
+        openWriteAttr(grp, "ACTUALSTLA,STLO,STDP", H5T_NATIVE_DOUBLE, stlalodp);
+
+        // Distance
+        dist = sqrt( (mX-mGPX)*(mX-mGPX)+(mY-mGPY)*(mY-mGPY) );
+        openWriteAttr(grp, "DISTFROMACTUAL", H5T_NATIVE_DOUBLE, &dist);
+
+        stxyz[0] = double(mGPX);
+        stxyz[1] = double(mGPY);
+        stxyz[2] = double(mGPZ);
+        openWriteAttr(grp, "ACTUALSTX,STY,STZ", H5T_NATIVE_DOUBLE, stxyz);
 
         m_isMetaWritten = true;
       }
