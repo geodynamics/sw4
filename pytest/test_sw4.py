@@ -148,6 +148,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
         # For Perlmutter
         if nersc_sys == 'perlmutter':
             mpirun_cmd="srun -N 1 -n 4 -c 32 --gpu-bind=single:1 --cpu-bind=cores  --gpus-per-task=1 "
+            mpirun_cmd="srun -n 4 --gpus-per-task 1 --gpu-bind=closest -c 16"
     elif 'fourier' in node_name:
         if omp_threads<=0: omp_threads=1;
         if mpi_tasks<=0: mpi_tasks = 4

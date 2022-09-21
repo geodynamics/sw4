@@ -1,0 +1,4 @@
+#!/bin/bash
+offset=$((PALS_RANKID*50+1800))
+echo $offset
+ncu -o NCUProfOffset_%q{PALS_RANKID} --set full -k forall3kernelI -f -s $offset -c 50 $1 $2

@@ -1,0 +1,3 @@
+export SLURM_CPU_BIND="cores"
+dcgmi profile --pause
+srun -n 4 --gpus-per-task 1 --gpu-bind=closest -c 16  -C gpu ./nbind ./sw4 small3.in

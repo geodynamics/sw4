@@ -1,0 +1,2 @@
+export SLURM_CPU_BIND="cores"
+srun -n 4 --gpus-per-task 1 --gpu-bind=closest -c 16  -C gpu nsys profile -o Profile2_%q{PALS_RANKID} -f true -c cudaProfilerApi --stats=true ./sw4 small3.in

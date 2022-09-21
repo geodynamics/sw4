@@ -972,8 +972,12 @@ void Sarray::copy_kplane(Sarray& u, int k) {
     int mnj = m_nj;
     // int mnc = m_nc;
     // SW4_MARK_BEGIN("CK_PREF");
-    // prefetch();
-    // u.prefetch();
+#ifdef SW4_A100
+    static int cc=0;
+    cc++;
+//forceprefetch();
+    if (cc%2==0) u.forceprefetch();
+#endif
     // SW4_MARK_END("CK_PREF");
     size_t ind_start = mni * mnj * (k - mkb);
     size_t uind_start = mni * mnj * (k - um_kb);
