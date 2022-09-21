@@ -106,6 +106,6 @@ endif
 DLINKFLAGS =  -arch=sm_80
 LINKFLAGS =  
 # CUDA_HOME = $(CUDA_DIR)
-EXTRA_CXX_FLAGS =  -O3 -lineinfo -use_fast_math $(MORE_FLAGS) -DDISABLE_PREFETCH=1  -ccbin gcc -std=c++17 --expt-extended-lambda -restrict -arch=sm_80 -I $(CUDA_HOME)/include -I$(RAJA_HOME)/include  --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA -dc -DSW4_A100=1
+EXTRA_CXX_FLAGS =  -O3 -lineinfo -use_fast_math $(MORE_FLAGS) -DDISABLE_PREFETCH=1  -ccbin gcc -std=c++17 --expt-extended-lambda -restrict -arch=sm_80 -I $(CUDA_HOME)/include -I$(RAJA_HOME)/include  --x cu -DUSE_NVTX -DRAJA_USE_CUDA -DSW4_CROUTINES -DRAJA_USE_RESTRICT_PTR -DCUDA_CODE -DENABLE_CUDA -dc -DSW4_A100=1 -DCAMP_USE_PLATFORM_DEFAULT_STREAM=1
 
 EXTRA_LINK_FLAGS =   -dc -Wl,-rpath=${LAPACK_DIR} -L ${LAPACK_DIR}  -llapack -lblas  -L $(CUDA_HOME)/lib64 -lcudart -lnvToolsExt -lcuda -L $(RAJA_HOME)/lib -lRAJA  -lcudadevrt -L$(PROJ_HOME)/lib64 -lproj -L/usr/lib64/nvidia -lnvidia-ml  $(MORE_LINK_FLAGS)  -lstdc++ -lm -ldl
