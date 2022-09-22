@@ -1608,7 +1608,11 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount,
     {
 #endif
       // getbuffer_device(a,std::get<0>(buf),sendt,true);
+#ifdef SW4_A100
+      getbuffer_device(a, std::get<0>(buf), sendt);
+#else
       getbuffer_host(a, std::get<0>(buf), sendt);
+#endif
 #if defined(SW4_TRACK_MPI)
       auto t2 = SW4_CHRONO_NOW;
       size_t size = 0;
@@ -1654,7 +1658,11 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount,
 #if defined(SW4_TRACK_MPI)
       auto t1 = SW4_CHRONO_NOW;
 #endif
+#ifdef SW4_A100
+      putbuffer_device(b, std::get<1>(buf), recvt);
+#else
       putbuffer_host(b, std::get<1>(buf), recvt);
+#endif
 #if defined(SW4_TRACK_MPI)
       auto t2 = SW4_CHRONO_NOW;
       size_t size = 0;
