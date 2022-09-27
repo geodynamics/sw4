@@ -14,7 +14,7 @@ hdf5= yes
 mpi=yes
 zfp=no
 spill_warns = no
-caliper= no
+caliper=no
 lto=no
 expopts=yes
 
@@ -33,6 +33,8 @@ HDF5_HOME = $(HDF5_DIR)
 
 ZFP_HOME=/global/cfs/cdirs/m3354/perl/zfp-0.5.5
 H5Z_HOME=/global/cfs/cdirs/m3354/perl/H5Z-ZFP/install
+
+CALIPER_HOME = /global/cfs/cdirs/m3354/ramesh/bug/CODE3/Caliper/install
 
 MPI_HOME=$(CRAY_MPICH_DIR)
 

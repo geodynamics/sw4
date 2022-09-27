@@ -141,3 +141,8 @@ Building Proj6+ on Crusher
 2. mkdir build && cd build
 3. cmake -DCMAKE_INSTALL_PREFIX=../install  ../
 4. make install -j 5
+
+-----------------------------------------------------------------------
+Building Caliper
+-----------------------------------------------------------------------
+cmake -DCMAKE_INSTALL_PREFIX=../install -DWITH_CUPTI=TRUE -DWITH_NVTX=TRUE ../
