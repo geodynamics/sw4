@@ -1,0 +1,18 @@
+# packages needed for compilation:
+# libmpich-dev|libopenmpi-dev, libblas-dev, liblapack-dev, libproj-dev
+#
+# packages needed at runtime:
+# libmpich12|libopenmpi2, mpich|openmpi-bin, libblas3, liblapack3, libproj12
+#
+# run with the following (in root dir) to avoid picking up any user space
+# dependency installs (so that binary uses system packages only and can be
+# ported easily):
+# $ PATH=/usr/bin:/bin make
+
+FC = gfortran
+# be sure to use the correct corresponding mpirun at runtime
+# either set by update-alternatives or directly e.g. /usr/bin/mpirun.openmpi
+CXX = mpicxx.openmpi
+#CXX = mpicxx.mpich
+proj = yes
+EXTRA_LINK_FLAGS = -Wl,-rpath=/usr/lib -llapack -lblas -lgfortran
