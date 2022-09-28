@@ -1,18 +1,18 @@
 #-----------------------------------------------------------------------
 # Usage:
-#   Default is: debug=no proj_6=yes profile=no prec=double openmp=yes hdf5=no fftw=no
-# make sw4     [debug=yes/no] [proj_6=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
-# make sw4mopt [debug=yes/no] [proj_6=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
+#   Default is: debug=no proj=yes profile=no prec=double openmp=yes hdf5=no fftw=no
+# make sw4     [debug=yes/no] [proj=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
+# make sw4mopt [debug=yes/no] [proj=yes/no] [profile=yes/no] [prec=single/double] [openmp=yes/no] [hdf5=yes/no] [zfp=yes/no] [sz=yes/no] [fftw=yes/no]
 #
 #  Note: The command line settings override any variable settings in the included configuration files.
 #
 # This Makefile asumes that the following environmental variables have been assigned,
 # see note below.
-# proj_6 = [yes/no]
+# proj = [yes/no]
 # CXX = C++ compiler
 # FC  = Fortran-77 compiler
 #
-# SW4ROOT = path to third party libraries (used when proj_6=yes). 
+# SW4ROOT = path to third party libraries (used when proj=yes). 
 # HDF5ROOT = path to hdf5 library and include files (used when hdf5=yes).
 # H5ZROOT = path to H5Z-ZFP library and include files (used when zfp=yes).
 # ZFPROOT = path to ZFP library and include files (used when zfp=yes).
@@ -62,21 +62,6 @@ else
    CXXFLAGS = -O3 -I../src -std=c++11
    CFLAGS   = -O3 
 endif
-
-ifeq ($(proj),no)
-    proj := no
-else
-    proj := yes
-endif
-
-ifeq ($(proj_6),no)
-    proj_6 := no
-else
-    proj_6 := yes
-    proj   := no
-endif
-
-
 
 fullpath := $(shell pwd)
 
@@ -185,16 +170,9 @@ ifdef EXTRA_FORT_FLAGS
    FFLAGS += $(EXTRA_FORT_FLAGS)
 endif
 
-ifeq ($(proj_6),yes)
-   CXXFLAGS += -DENABLE_PROJ_6 -I$(SW4INC)
-   linklibs += -L$(SW4LIB) -lproj -lsqlite3 -lcurl -lssl -lcrypto -Wl,-rpath,$(SW4LIB)
-   proj  := "proj_6"
-else ifeq ($(proj),yes)
-   CXXFLAGS += -DENABLE_PROJ4 -I$(SW4INC)
-   linklibs += -L$(SW4LIB) -lproj
-   #-lsqlite3 -lcurl -lssl
-else
-   proj  := no
+ifeq ($(proj),yes)
+   CXXFLAGS += -DENABLE_PROJ -I$(SW4INC)
+   linklibs += -L$(SW4LIB) -lproj -lsqlite3 -Wl,-rpath,$(SW4LIB)
 endif
 
 
@@ -315,7 +293,7 @@ FMOBJOPT = $(addprefix $(builddir)/,$(MOBJOPT)) $(addprefix $(builddir)/,$(QUADP
 sw4: $(FSW4) $(FOBJ)
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
-	@echo "debug=" $(debug) " profile=" $(profile) " hdf5=" $(hdf5) " proj=" $(proj) " SW4ROOT"= $(SW4ROOT)
+	@echo "debug="$(debug) " profile="$(profile) " hdf5="$(hdf5) " proj="$(proj) " SW4ROOT"=$(SW4ROOT)
 	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
@@ -329,7 +307,7 @@ sw4: $(FSW4) $(FOBJ)
 sw4mopt: $(FOBJ) $(FMOBJOPT) 
 	@echo "*** Configuration file: '" $(foundincfile) "' ***"
 	@echo "********* User configuration variables **************"
-	@echo "debug=" $(debug) " profile=" $(profile) " hdf5=" $(hdf5) " proj=" $(proj) " SW4ROOT"= $(SW4ROOT) 
+	@echo "debug="$(debug) " profile="$(profile) " hdf5="$(hdf5) " proj="$(proj) " SW4ROOT"=$(SW4ROOT) 
 	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
 	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
