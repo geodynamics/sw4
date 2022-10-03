@@ -5347,7 +5347,7 @@ void EW::processSource(char* buffer,
       f0 = atof(token);
     } else if (startswith("type=", token)) {
       token += 5;
-      strncpy(formstring, token, 100);
+      strncpy(formstring, token, 1000);
       if (!strcmp("Ricker", formstring))
         tDep = iRicker;
       else if (!strcmp("Gaussian", formstring))
@@ -5761,7 +5761,7 @@ void EW::processRuptureHDF5(char* buffer,
       break;
     if (startswith("file=", token)) {
       token += 5;  // read past 'file='
-      strncpy(rfile, token, 100);
+      strncpy(rfile, token, 1000);
       rfileset = true;
     } else if (startswith("event=", token)) {
       token += 6;
@@ -5858,7 +5858,7 @@ void EW::processRupture(char* buffer,
       break;
     if (startswith("file=", token)) {
       token += 5;  // read past 'file='
-      strncpy(rfile, token, 100);
+      strncpy(rfile, token, 1000);
       rfileset = true;
     } else if (startswith("event=", token)) {
       token += 6;
