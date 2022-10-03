@@ -5157,7 +5157,7 @@ void EW::processSource(char* buffer,
   bool ncyc_set = false;
 
   timeDep tDep = iRickerInt;
-  char formstring[100];
+  char formstring[1000];
   char dfile[1000];
 
   strcpy(formstring, "Ricker");
@@ -5827,9 +5827,9 @@ void EW::processRupture(char* buffer,
   bool rfileset = false;
 
   timeDep tDep = iDiscrete;
-  char formstring[100];
+  char formstring[1000];
   strcpy(formstring, "Discrete");
-  char rfile[100];
+  char rfile[1000];
 
   // bounding box
   // only check the z>zmin when we have topography. For a flat free surface, we
