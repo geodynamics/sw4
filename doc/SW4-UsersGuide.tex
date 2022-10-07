@@ -91,7 +91,7 @@ COMPUTATIONAL INFRASTRUCTURE FOR GEODYNAMICS (CIG)
 % e.g. height=6.5in
 \begin{center}
 \vspace{.1in}
-\includegraphics[width=0.65\linewidth]{figures/hayward-pgv.png}
+\includegraphics[width=0.6\linewidth]{figures/hayward-pgv.png}
 % FILL: image file name
 % e.g. cover_image.png
 \end{center}
@@ -102,7 +102,7 @@ COMPUTATIONAL INFRASTRUCTURE FOR GEODYNAMICS (CIG)
 \hfill{\Huge \fontfamily{\sfdefault}\selectfont User's Guide \\
 % FILL: manual version
 % e.g. 1.0
-\raggedleft \huge \fontfamily{\sfdefault}\selectfont Version 2.0\\}
+\raggedleft \huge \fontfamily{\sfdefault}\selectfont Version 3.0\\}
 
 %AUTHOR(S) & WEBSITE%
 \null
@@ -114,6 +114,7 @@ COMPUTATIONAL INFRASTRUCTURE FOR GEODYNAMICS (CIG)
 % be sure to have a newline (\\) after the final author
 N. Anders Petersson\\
 Bjorn Sjogreen\\
+Houjun Tang\\
 }
 {\fontfamily{\sfdefault}\selectfont www.geodynamics.org}
 
@@ -1294,8 +1295,8 @@ z=\tau(x,y).
 \]
 The topography can currently be described in one of four ways: a Gaussian hill
 (\S~\ref{sec:topo-gauss-hill}), by the elevation on a latitude-longitude grid
-(\S~\ref{sec:topo-gridfile}), through an \verb+efile+ database (\S~\ref{sec:topo-efile}), or by
-using a \verb+rfile+ raster file (\S~\ref{sec:topo-rfile}).
+(\S~\ref{sec:topo-gridfile}), through a \verb+rfile+ raster file (\S~\ref{sec:topo-rfile}), an \verb+sfile+ (\S~\ref{sec:topo-sfile}), or by
+using a \verb+gmg+ (\S~\ref{sec:topo-gmg})file.
 
 A curvilinear grid is automatically constructed between the topography surface and a user specified depth
 $z=$\verb+zmax+. If no topography command is present in the input file, the top surface is taken to
@@ -1362,7 +1363,7 @@ gauss-twi-1.in  gauss-twi-2.in  gauss-twi-3.in
 \section{Topography grid file}\label{sec:topo-gridfile}
 The topography can be given on a regular lattice in geographical (lat, lon), or Cartesian $(x, y)$
 coordinates. This approach works well together with the \verb+block+, \verb+pfile+, and \verb+ifile+
-material commands. It can also be used together with the \verb+rfile+ or \verb+efile+ commands, but
+material commands. It can also be used together with the \verb+rfile+ or \verb+sfile+ commands, but
 in those cases it is important that the topography is consistent with the material data, because it
 is given relative to mean sea level ($z=0$).
 
@@ -1386,8 +1387,8 @@ function. The topography is shown in Figure~\ref{fig:grenoble-topo}.
   \end{center}
 \end{figure}
 
-% \section{efile topography}\label{sec:topo-efile}
-
+\section{efile topography}\label{sec:topo-efile}
+We deprecated the ability to read an \verb+efile+ in SW4. Users are advised to use \verb+sfile+ or \verb+gmg+ formats.
 % The Etree databases for the San Francisco bay area and Northern California contain topographic
 % information. You can setup the computational grid to follow this topography by using the following command,
 % \begin{verbatim}
@@ -1428,20 +1429,19 @@ function. The topography is shown in Figure~\ref{fig:grenoble-topo}.
 The first block in an \verb+rfile+ raster file contains the topographic
 information. You can setup the computational grid to follow this topography by using the following command,
 \begin{verbatim}
-topography input=rfile zmax=2e3 order=3 \
-           file=/Users/petersson1/src/sw4/examples/rfile/berkeley.rfile
+topography input=rfile zmax=2e3 order=3  file=berkeley.rfile
 \end{verbatim}
 Here, the topography command tells \emph{SW4} to read the topography from the specified {\tt
-  rfile}. Similar to the {\tt efile} topography, the \verb+order=3+ option specifies the type of
+  rfile}. The \verb+order=3+ option specifies the type of
 stretching to use when making the curvilinear grid, and the \verb+zmax=2e3+ option tells \emph{SW4}
-to put the bottom boundary of the curvilinear grid at $z=2000$. Figure~\ref{fig:erfile-topo} (right)
-shows the elevation of the resulting topography. In this example, the {\tt rfile} holds the same
-information as the {\tt efile} (shown on the left side of the same figure). The reason the {\tt
-  efile} topography looks rough (pixelated) is that the grid size of the computational grid is
-$h=20$ m, while the horizontal resolution of both the {\tt rfile} and the {\tt efile} is 100 m. The
-reason the {\tt rfile} topography is smoother is because bi-linear interpolation is used to define
-the topography in between the grid points of the {\tt rfile}, while the current query routines for
-the {\tt efile} only support a piecewise constant representation.
+to put the bottom boundary of the curvilinear grid at $z=2000$. 
+% Figure~\ref{fig:erfile-topo} (right)
+% shows the elevation of the resulting topography. In this example, the {\tt rfile} holds the same
+% information as the {\tt efile (deprecated since 2021)} (shown on the left side of the same figure). The reason the {\tt efile} topography looks rough (pixelated) is that the grid size of the computational grid is
+% $h=20$ m, while the horizontal resolution of both the {\tt rfile} and the {\tt efile} is 100 m. The
+% reason the {\tt rfile} topography is smoother is because bi-linear interpolation is used to define
+% the topography in between the grid points of the {\tt rfile}, while the current query routines for
+% the {\tt efile} only support a piecewise constant representation.
 
 Note that the topography must be described by the same {\tt rfile} as the material model, see
 Section~\ref{sec:rfile-mat} for further information. The format
@@ -1449,10 +1449,16 @@ for the \verb+rfile+ is described in Section~\ref{sec:rfile-format}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{sfile topography}\label{sec:topo-sfile}
-Note, the \verb+sfile+ also contains the same topography data as \verb+rfile+, and can be accessed using 
+The \verb+sfile+ also contains the same topography data as \verb+rfile+, and can be accessed using 
 the \verb+topo+ \verb+input=sfile+ argument.
 See Section~\ref{sec:sfile-mat} for more information.
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{gmg topography}\label{sec:topo-gmg}
+The \verb+gmg+ also contains topography data, and can be accessed using 
+the \verb+topo+ \verb+input=gmg+ argument.
+See Section~\ref{sec:gmg-mat} for more information.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1462,9 +1468,8 @@ See Section~\ref{sec:sfile-mat} for more information.
 
 In \emph{SW4}, an isotropic elastic material model is defined by the grid point values of the density
 ($\rho$), the compressional velocity ($V_p$), and the shear velocity ($V_s$). The material
-properties can be specified by the \verb+block+ command (\S~\ref{sec:block}), the \verb+efile+
-command (\S~\ref{sec:efile}), the \verb+rfile+ command (\S~\ref{sec:rfile-mat}), the \verb+pfile+
-command (\S~\ref{sec:pfile}), the \verb+ifile+ command (\S~\ref{sec:ifile}), or by a combination of
+properties can be specified by the \verb+block+ command (\S~\ref{sec:block}), the \verb+rfile+ command (\S~\ref{sec:rfile-mat}), the \verb+pfile+
+command (\S~\ref{sec:pfile}), the \verb+ifile+ command (\S~\ref{sec:ifile}), the \verb+gmg+ command (\S~\ref{sec:gmg-mat}), or by a combination of
 them. If the same computational grid is used for several simulations, the material model can also be
 obtained through the \verb+vimaterial+ command, assuming that it was initially saved using the
 \verb+volimage+ command. See \S~\ref{sec:vimat} for details.
@@ -1481,7 +1486,7 @@ the nearest boundary point. In other words, \emph{SW4} does {\em not} require th
 be defined at the ghost points, but will use it if it is provided. This is a change from
 \emph{WPP}.
 
-The order within the material commands (block, pfile, rfile, efile, and ifile) {\em does} matter (unlike
+The order within the material commands (block, pfile, rfile, sfile, gmg, and ifile) {\em does} matter (unlike
 all other commands) in that the priority of the material command increases towards the end of the
 input file. Hence, a material command in the input file can be completely or partially overridden by
 subsequent material commands.
@@ -1489,20 +1494,23 @@ subsequent material commands.
 In the block, pfile, and ifile commands, material properties are assigned based on the depth below
 the free surface. This means that the internal material model depends on the topography, but the
 material properties along the free surface will always be the same, independent of the topographic
-model. For the rfile and efile commands, material properties are defined as functions of the
+model. For the rfile and sfile commands, material properties are defined as functions of the
 $z$-coordinate, i.e., relative to mean sea level ($z=0$). In this case the topography information is
 embedded in the material description. The {\tt rfile} command should always be used with topography
-from the same {\tt rfile}. If you combine the {\tt efile} commands with a planar topography, a
-linear mapping is constructed before the material properties are assigned. The properties at the
-free surface are thus mapped to the top grid surface ($z=0$), and the bottom grid surface (with
-$z=z_N$) is assigned material properties for elevation $-z_N$. Elevation values at intermediate grid
-points follow from the linear mapping.
+from the same {\tt rfile}. 
+
+%If you combine the {\tt efile} commands with a planar topography, a
+%linear mapping is constructed before the material properties are assigned. The properties at the
+%free surface are thus mapped to the top grid surface ($z=0$), and the bottom grid surface (with
+%$z=z_N$) is assigned material properties for elevation $-z_N$. Elevation values at intermediate grid
+%points follow from the linear mapping.
 %The material properties in the coarser Cartesian grids are not effected
 %by this mapping procedure.
 
 After reading all material commands in the input file and assigning material properties to the
 computational grid, \emph{SW4} outputs general information about the ranges in the material
 model. For a purely elastic material, the output looks like
+\newpage
 \begin{verbatim}
        ----------- Material properties ranges ---------------
        1590 kg/m^3 <=  Density <= 3300 kg/m^3
@@ -1566,9 +1574,10 @@ block vp=6000 vs=3500 rho=2700 \
 This material is displayed on the right side of Figure~\ref{fig:blockpics}.
 
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% \section{The efile command} \label{sec:efile}
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The efile command} \label{sec:efile}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+We deprecated the ability to read an \verb+efile+ in SW4. Users are advised to use \verb+sfile+ or \verb+gmg+ formats.
 % \begin{figure}
 % \begin{centering}
 %   \includegraphics[width=0.49\textwidth]{figures/velmodelbb_roads.png} \hfil
@@ -1665,7 +1674,7 @@ read in parallel (if a parallel file system is available). In this approach, onl
 cores (processors) interact with the file system, and the data is propagated to all other cores
 using calls to the MPI library. The parallel reading capability of the {\tt rfile}
 format has been shown to scale well on up to 131,072 cores. In practice, it is the most important
-advantage over the {\tt efile format} and allows material models of the same complexity to be read
+advantage over the {\tt efile format (deprecated since 2021)} and allows material models of the same complexity to be read
 significantly faster. 
 
 Material properties in the rfile are stored internally on a block-structured grid, and relies on the
@@ -1690,21 +1699,15 @@ The topography and material properties are evaluated on the computational grid u
 interpolation from the underlying grid in the {\tt rfile} format. When the computational grid is
 finer than the grid in the {\tt rfile}, the interpolation leads to some smoothing, see
 Figure~\ref{fig:rfile-efile}.
-\begin{figure}
+\begin{figure}[h]
 \begin{centering}
   \includegraphics[width=0.48\textwidth]{figures/rfile-cp.png}\hfill
 \includegraphics[width=0.48\textwidth]{figures/efile-cp.png}\\
-  \caption{The compressional wave speed ($C_P$) along the topography using the {\tt rfile} (left) and the {\tt efile} (right) commands. Here,
+  \caption{The compressional wave speed ($C_P$) along the topography using the {\tt rfile} (left) and the {\tt efile (deprecated since 2021)} (right) commands. Here,
     the computational grid has size $h=20$ m, while the horizontal grid sizes of the {\tt rfile}
   and {\tt efile} are both $hh=100$ m. Notice the stair-stepping in the right figure.}
   \label{fig:rfile-efile}
-\end{centering}
-\end{figure}
-In this case, the {\tt rfile} was generated by copying the topography and material properties from
-the {\tt efile}, using the same resolution in both file formats. A vertical cross-section of the same
-model is shown in Figure~\ref{fig:rfile-efile-2}.
-\begin{figure}
-\begin{centering}
+
   \includegraphics[width=0.48\textwidth]{figures/rfile-cp-x.png}\hfill
 \includegraphics[width=0.48\textwidth]{figures/efile-cp-x.png}\\
   \caption{The compressional wave speed in a vertical cross-section, using the {\tt rfile} (left) and the {\tt efile} (right) commands. Here,
@@ -1714,6 +1717,10 @@ model is shown in Figure~\ref{fig:rfile-efile-2}.
   \label{fig:rfile-efile-2}
 \end{centering}
 \end{figure}
+In this case, the {\tt rfile} was generated by copying the topography and material properties from
+the {\tt efile}, using the same resolution in both file formats. A vertical cross-section of the same
+model is shown in Figure~\ref{fig:rfile-efile-2}.
+
 The query routines for the {\tt efile} format define constant material properties in each cell,
 while the reader of a {\tt rfile} uses linear interpolation to define properties in between the grid
 point values. Thus, material discontinuities (such as the vertical fault line) are maintained by 
@@ -1725,26 +1732,13 @@ in a much smoother model.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The sfile command} \label{sec:sfile-mat}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-The \verb+sfile+ command (``s'' being the next letter after ``r''), was
-  created to include a depth-based curvilinear grid for the material model,
-  which provides finer resolution close to the surface and avoids storing
-  ``air'' or ``water'' points above the surface.
-%It also includes the ability to write the material model for seismic
-%  inversion calculations (see {\em SW4-mopt} documentation for that).
+The \verb+sfile+ command (``s'' being the next letter after ``r''), was created to include a depth-based curvilinear grid for the material model,  which provides finer resolution close to the surface and avoids storing ``air'' or ``water'' points above the surface. It also includes the ability to write the material model for seismic inversion calculations (using the \verb+sfileoutput+ command, see {\em SW4-mopt} documentation).
 
 \begin{verbatim}
-grid x=12e3 y=12e3 z=5e3 nx=601 lat=37.93 lon=-122.25 az=143.6380 proj=tmerc \
-     datum=NAD83 lon_p=-123.0 lat_p=35.0 scale=0.9996
-sfile filename=USGSBayAreaVM-08.3.0.sfile directory=/Users/petersson1
+sfile filename=USGSBayAreaVM-08.3.0.sfile directory=/path/to/sfile
 \end{verbatim}
 
-The file contents are similar to the \verb+rfile+ file, but is
-  defined with internal (curvilinear) refinement boundaries,
-  and all 5 material properties.
-Note that the \verb+rfile+ caveats about the computational domain
-  still apply, and geographical region bounds should all be
-  checked against the \verb+sfile+'s {\em origin}, 
-  ({\em nx,ny}), {\em hh}, {\em z\_bot}, etc.
+The file contents are similar to the \verb+rfile+ file, but are defined with internal (curvilinear) refinement boundaries, and all 5 material properties. Note that the \verb+rfile+ caveats about the computational domain still apply, and geographical region bounds should all be checked against the \verb+sfile+'s {\em origin}, ({\em nx,ny}), {\em hh}, {\em z\_bot}, etc.
 
 Figure~\ref{fig:sfile} shows a schematic of the data layout in a 2D slice
   of the \verb+sfile+ domain.
@@ -1766,7 +1760,7 @@ In order to avoid gaps at refinement boundaries, the bottom interfaces
 See \ref{keyword:sfile} for usage information and \ref{sec:sfile-format}
   for HDF5 file format details.
 
-\begin{figure}[htbp]
+\begin{figure}[htbp!]
 \begin{center}
 \includegraphics[width=0.9\textwidth]{figures/sfile.png}
   \caption{A schematic of the grid and data layout in {\tt sfile} files.
@@ -1780,6 +1774,20 @@ See \ref{keyword:sfile} for usage information and \ref{sec:sfile-format}
 \label{fig:sfile}
 \end{center}
 \end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The gmg command} \label{sec:gmg-mat}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The \verb+gmg+ command uses data stored in the GeoModelGrids format (developed by Brad Aagard from USGS, \url{https://geomodelgrids.readthedocs.io}), which has georeferenced grid-based earth models composed of blocks with different grid resolutions. The latest San Francisco Bay region 3D seismic velocity model (v21.1, released on  December 9, 2021) can be downloaded at \url{https://www.usgs.gov/data/san-francisco-bay-region-3d-seismic-velocity-model-v211}. The \verb+gmg+ command has the same syntax with \verb+rfile+ and \verb+sfile+:
+
+\begin{verbatim}
+gmg filename=USGS_SFCVM_v21-1_detailed.h5 directory=/path/to/gmgfile/
+\end{verbatim}
+
+The file contents are similar to the \verb+sfile+ format, both are using HDF5 as the underlying file format, but they use different schema and curvilinear refinement boundaries. More tools and descriptions about the GeoModelGrids are available at \url{https://github.com/baagaard-usgs/geomodelgrids} and \url{https://geomodelgrids.readthedocs.io}).
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The pfile command}\label{sec:pfile}
@@ -1919,7 +1927,7 @@ The \verb+ifile+ file format is described in Section~\ref{sec:ifile-format}.
 The \verb+vimaterial+ command is intended to speed up the reading of large material models for cases
 when many simulations use the same computational grid. In order for this command to work, the
 \verb+grid+ and \verb+topography+ commands must be identical between runs. An initial run must
-construct the material model using the commands described in the previous sections (block, efile,
+construct the material model using the commands described in the previous sections (block,
 pfile, ifile). The initial run must also save the material model using the \verb+volimage+
 command. Each of these commands saves one scalar property per file, so three files must be saved for
 an elastic material. In subsequent simulations the \verb+vimaterial+ command can replace the initial
@@ -1932,10 +1940,8 @@ reads this information and saves it on 5 separate \verb+volimage+ files,
 \begin{verbatim}
 fileio pfs=1 path=MaterialModel
 grid x=275e3 y=120e3 z=40e3 h=400 lon=-122.688 lat=39.009 az=142.25
-topography input=efile file=efile/USGSBayAreaVM-08.3.0.etree zmax=8e3 order=3
+topography input=rfile file=USGSBayAreaVM-08.3.0.rfile zmax=8e3 order=3
 attenuation nmech=3 phasefreq=1 maxfreq=10
-
-efile query=MAXRES etree=efile/USGSBayAreaVM-08.3.0.etree 
 
 volimage mode=rho file=Lp cycle=0 precision=double
 volimage mode=mu file=Lp cycle=0 precision=double
@@ -1951,7 +1957,7 @@ model directly from the \verb+volimage+ files,
 \begin{verbatim}
 fileio pfs=1 path=OtherRun
 grid x=275e3 y=120e3 z=40e3 h=400 lon=-122.688 lat=39.009 az=142.25
-topography input=efile file=efile/USGSBayAreaVM-08.3.0.etree zmax=8e3 order=3
+topography input=rfile file=USGSBayAreaVM-08.3.0.rfile zmax=8e3 order=3
 attenuation nmech=3 phasefreq=1 maxfreq=10
 
 vimaterial path=MaterialModel rho=Lp.cycle=0.rho.3Dimg mu=Lp.cycle=0.mu.3Dimg \
@@ -1998,7 +2004,7 @@ vertical $x=20000$ plane.
 \begin{figure}
 \begin{centering}
   \includegraphics[width=0.7\linewidth]{figures/comp-grid-2.png}
-  \caption{Composite grid with two mesh refinement interfaces and three Cartesian component grids.}
+  \caption{Composite grid with two mesh refinement interfaces and three Cartesian grids.}
   \label{fig:gridrefs1}
 \end{centering}
 \end{figure}  
@@ -2041,13 +2047,14 @@ direction is choosen such that the average vertical grid size is the same as the
 horizontal directions.  A portion of the computational grid is shown in the vertical cross section
 $x=50000$, see Figure~\ref{fig:efile-grid}.
 %
-\begin{figure}[htp]
+\begin{figure}[htbp]
   \begin{center}
     \includegraphics[width=0.7\textwidth]{figures/rfile-grid.png}
     \caption{A composite grid with two mesh refinement interfaces and topography. In this case there
       are three Cartesian components and one curvilinear grid following a non-planar topography.}
     \label{fig:efile-grid}
   \end{center}
+  \vspace{-10pt}
 \end{figure}
 
 After constructing the computational grid, \emph{SW4} outputs information about the number of grid
@@ -2728,7 +2735,7 @@ command2 parameter1=value1 parameter2=value2 ... parameterM=valueM
 \end{verbatim}
 Each command starts at the beginning of the line and ends at the end of the same line. Blank and
 comment lines are disregarded. A comment is a line starting with a \# character. The order of the
-parameters within each command makes no difference. The material commands (block, ifile, pfile, and efile)
+parameters within each command makes no difference. The material commands (block, ifile, pfile, rfile, sfile, and gmg)
 are applied in the order they appear. The ordering of all other commands is inconsequential. Note
 that the entire input file is read before the simulation starts.
 
@@ -2740,12 +2747,12 @@ command, some parameter values are required to fall within specified ranges.
 A brief description of all commands is given in the following sections. The commands marked as
 [required] must be present in all \emph{SW4} input files, while those marked as [optional] are just
 that. Other commands, such as those specifying the material model can be given by a combination of
-different commands (block, pfile, efile, or ifile). Note that some required commands must occur
+different commands (block, pfile, rfile, sfile, or ifile). Note that some required commands must occur
 exactly once (grid, time). Some optional commands should not occur more than once (topography,
 fileio, prefilter, globalmaterial, gmt, developer). Any number of output commands can be given (rec,
 image, volimage). Unless \emph{SW4} is run in one of its test modes (twilight, testlamb,
 testpointsource, testrayleigh, testenergy), at least one source must be specified, and the material
-must be specifed by at least one of the (block, pfile, ifile, efile) commands. Also note that the
+must be specifed by at least one of the (block, pfile, ifile, rfile, sfile, gmg) commands. Also note that the
 test modes are mutually exclusive. Not all of these rules are currently enforced by the parser, but
 \emph{SW4} can give unexpected behavior if they are violated.
 
@@ -3138,7 +3145,7 @@ The SRF-HDF5 file format is described in Section~\ref{sec:rupturehdf5-format}
 
 It is required that the material model is defined in the entire computational domain. The material
 properies are extrapolated to the ghost points if they are not covered by the material model (this
-is a change from \emph{WPP}). The material commands \verb+block+, \verb+ifile+, \verb+efile+, and
+is a change from \emph{WPP}). The material commands \verb+block+, \verb+ifile+, \verb+rfile+, \verb+sfile+, \verb+gmg+, and
 \verb+pfile+, are applied in the same order as they are given. Hence, it is possible to overwrite
 the properties specified by a material command given earlier in the file. This can be particularily
 useful when using the \verb+block+ command. Finally, the properties of the optional
@@ -3318,26 +3325,26 @@ absdepth    & {\tt z1} and {\tt z2} relative to topography (0), or absolute $z$-
 % \end{center}
 % \index{efile parameters!etree, xetree, logfile, query, resolution, access}
 %
-The query option can be set to one of the following:
-%
-\begin{center}
-\begin{tabular}{lp{12cm}} \hline
-\bf{query option} & \bf{Description} 
-\\ \hline 
-MAXRES & Sample the data at the maximum available
-resolution in the database. This is the default query type. 
-\\ 
-FIXEDRES & Average the material properties at the requested resolution, which is specified with the
-\verb+resolution+ keyword. The default resolution is the grid spacing. $h$ \\
-\end{tabular}
-\end{center}
-%
-For example, to set the data to be sampled at 1 km resolution:
-\begin{verbatim}
-efile query=FIXEDRES resolution=1000 etree=USGS-SF1906.etree
-\end{verbatim}
-Note: the logfile option can be used to track if any grid points were outside the etree database
-domain, or if any grid points were located in the air.
+% The query option can be set to one of the following:
+% %
+% \begin{center}
+% \begin{tabular}{lp{12cm}} \hline
+% \bf{query option} & \bf{Description} 
+% \\ \hline 
+% MAXRES & Sample the data at the maximum available
+% resolution in the database. This is the default query type. 
+% \\ 
+% FIXEDRES & Average the material properties at the requested resolution, which is specified with the
+% \verb+resolution+ keyword. The default resolution is the grid spacing. $h$ \\
+% \end{tabular}
+% \end{center}
+% %
+% For example, to set the data to be sampled at 1 km resolution:
+% \begin{verbatim}
+% rfile query=FIXEDRES resolution=1000 etree=USGS-SF1906.etree
+% \end{verbatim}
+% Note: the logfile option can be used to track if any grid points were outside the etree database
+% domain, or if any grid points were located in the air.
 
 %
 \subsection{pfile}
@@ -3723,7 +3730,7 @@ There are five ways of specifying the topography:
 \multicolumn{5}{|c|}{\bf topography command parameters (basic)}\\ \hline
 \bf{Option} & \bf{Description} & \bf{Type} & \bf{Units} & \bf{Default}\\ \hline \hline
 %
-input & Type of input: geographic (or grid), cartesian, efile or gaussian & string & none & none\\ \hline
+input & Type of input: geographic (or grid), cartesian or gaussian & string & none & none\\ \hline
 %
 file & File name if input=geographic or input=cartesian & string & none & none\\ \hline
 %
@@ -3731,7 +3738,7 @@ file & File name if input=geographic or input=cartesian & string & none & none\\
 %
 % xetree & File name of extended etree database if input=efile & string & none & none\\ \hline
 %
-resolution & Resolution for querying the efile if input-efile & real & meters & none \\ \hline
+% resolution & Resolution for querying the efile if input-efile & real & meters & none \\ \hline
 %
 zmax & z coordinate of the interface between  Cartesian and curvilinear grid& real &  m & 0\\ \hline
 %
@@ -4119,21 +4126,21 @@ qs      & $Q_s$ material attenuation factor \\ \hline
 \index{volimage parameters!modes - ux, uy, uz, rho, p, s, lambda, mu, qp, qs}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% ESSI 3D output
+% SSI 3D output
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{essioutput [optional]}
+\subsection{ssioutput [optional]}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\index{command!essioutput}
+\index{command!ssioutput}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\label{keyword:essioutput}
+\label{keyword:ssioutput}
 \begin{flushleft}
 \bf Syntax:\\ \tt
-essioutput file=... dumpInterval=... xmin=... xmax=... ymin=... ymax=... depth=...\\
+ssioutput file=... dumpInterval=... bufferInterval=... xmin=... xmax=... ymin=... ymax=... depth=... compression\_option=...\\
 \bf Required parameter:\\
-None
+file, xmin, xmax, ymin, ymax, depth.
 \end{flushleft}
 %
-The \verb+essioutput+ command in \emph{SW4} allows you to save 3D volumetric
+The \verb+ssioutput+ command in \emph{SW4} allows you to save 3D volumetric
   data in a file for ESSI.
 These files are in an HDF5 format that can be post-processed for ESSI input directly.
 SW4 must be compiled with the {\tt hdf5=yes} option to enable this option,
@@ -4143,19 +4150,17 @@ Be aware that these files can be {\em very} large, depending on the
   x,y,z ranges (which could include the whole domain).
 The option {\bf file=...} has the
   same meaning as the corresponding parameters in the image command.
-The \verb+essioutput+ command produces files with extension \verb+.essi+.
+The \verb+ssioutput+ command produces files with extension \verb+.ssi+.
+To reduce the output size, we have enabled the support to utilize ZFP \url{https://github.com/LLNL/zfp} and SZ \url{https://github.com/szcompressor/SZ} lossy compression. They can reduce the output size without significant precision loss. We found setting \verb+zfp_accuracy=0.01+ can reduce the output size by a factor of 40. Note ZFP and H5Z-ZFP must be installed and linked with SW4 to use this option, see the Installation Guide for detailed installation instructions.
 
-The option {\bf dumpInterval=...} specifies the maximum 
-number of time steps in a file. If omitted, the data is written after
-every time step of the simulation.
-%When reading these multiple files,
-%care must be taken to avoid duplicate data from the same time step in
-%different files (and simply appending the time series values will lead
-%to duplicate data).
+
+The option {\bf dumpInterval=...} affects the maximum 
+number of time steps in a file, it allows down-sampling the data to reduce the overall output size. If omitted, the data is written after every time step of the simulation.
+
 Note that when the \verb+checkpoint+ command is
 being used, its {\bf cycleInterval=...} option takes precedence over
 the specified {\bf dumpInterval}. This is to guarentee that both the
-checkpoint and ESSI files are written after the same time step.
+checkpoint and SSI files are written after the same time step.
 
 Note that only data from the topmost grid can be output, which may or may
   not include topography and in the case of mesh refinement, will not
@@ -4167,24 +4172,28 @@ When topography is present, i.e., the top grid is curvilinear, each file also
 Note that the grid coordinates are only saved when the
   input file contains a \verb+topography+ command.
 
-The file format is described in Section~\ref{sec:essioutput-format}.
+To imporve the I/O performance, {\bf bufferInterval} should be set. We found setting it 400 to 800 are good in large scale simulations.
+
+
+
+The file format is described in Section~\ref{sec:ssioutput-format}.
 %
 \begin{center}
 \begin{tabular}{|l|p{8cm}|l|l|l|} \hline
-\multicolumn{5}{|c|}{\bf essioutput command options}\\ \hline
+\multicolumn{5}{|c|}{\bf ssioutput command options}\\ \hline
 {\bf Option} & {\bf Description}          & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline
 \hline
 file        & file name header of image                          & string & none
-  & essioutput \\ \hline
+  & ssioutput \\ \hline
   dumpInterval & interval between file writes & string & -1 (1 file) \\ \hline
-xmin     & starting $x$ location of requested ESSI region & real & m & 0 \\ \hline
-xmax     & ending $x$ location of requested ESSI region & real & m & $x_{max}$ \\ \hline
-ymin     & starting $y$ location of requested ESSI region & real & m & 0 \\ \hline
-ymax     & ending $y$ location of requested ESSI region & real & m & $y_{max}$ \\ \hline
-depth     & approx depth of output over requested ESSI region & real & m & 0 \\ \hline
+xmin     & starting $x$ location of requested SSI region & real & m & 0 \\ \hline
+xmax     & ending $x$ location of requested SSI region & real & m & $x_{max}$ \\ \hline
+ymin     & starting $y$ location of requested SSI region & real & m & 0 \\ \hline
+ymax     & ending $y$ location of requested SSI region & real & m & $y_{max}$ \\ \hline
+depth     & approx depth of output over requested SSI region & real & m & 0 \\ \hline
 \end{tabular}
 \end{center}
-\index{essioutput parameters!file}
+\index{ssioutput parameters!file}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{gmt [optional]}
@@ -4988,7 +4997,7 @@ hh_1 = hh_2,\quad ni_1=ni_2,\quad nj_1=nj_2.
 \index{fileformats!sfile}
 
 The \verb+sfile+ command provides material data and topography, 
-  similiar to the \verb+rfile+, but with materials defined on
+  similar  to the \verb+rfile+, but with materials defined on
   a curvilinear mesh with refinement boundaries.
 Each grid of material data has corresponding top and bottom interfaces
   that defines the vertical distribution of grids points, which is constant
@@ -5121,7 +5130,7 @@ dataspace of the ``PLANE'' attribute.
 
 The ``POINTS'' and ``SR1'' datasets store the data block of the SRF file. Different from the SRF format,
 where the slip rate at each time step for a direction follows immediately after each point source, 
-we concatenate all slip rates and put it in a single 1D dataset, which is optimized for data read.
+we concatenate all slip rates and put them in a single 1D dataset, which is optimized for data read.
 To access the slip rates of a particular point source, one needs to accumulate the number of rates
 before the desired one and calculate its offset in the ``SR1'' dataset. 
 
@@ -5215,46 +5224,50 @@ directory. Note that only a subset of the header information is parsed by this r
 \section{sachdf5}\label{sec:sachdf5-format}
 \index{fileformats!sachdf5}
 
-The HDF5 format hold the time history of all components of the solution at a fixed point in space.
+The HDF5 format holds the time history of all components of the solution at a fixed point in space.
 There are 4 global attributes in the root group of the file, including {\tt DATETIME}, a time string
 (in UTC) recording the start of the simulation; {\tt UNIT}, the unit for the data (``m'', ``m/s'', etc.);
-{\tt DELTA}, the sample interval; and {\tt ORIGINTIME}, the origin time in seconds, relative to start time 
+{\tt DELTA}, the sample interval; and {\tt ORIGINTIME}, the origin time in seconds, relative to the start time 
 of SW4 calculation and seismogram of the earliest source.
 
-Then the time-series data of each station in in seperate groups, using the station name as the group name.
-Inside each group, the is location code, number of valid points stored in the data array, the station location
-in both xyz coordiate in SW4 domain (m) and latitude, longitude, depth. The data array may be named with 
-X, Y, Z, or EW, NS, UP, depending on the {\tt isnsew=} option specified in the rec/sac command. For each of 
-these component, there are also *CMPAZ and *CMINC (e.g. XCMPAZ, XCMPINC) recording its azimuth and inclination.
+Then the time-series data of each station in separate groups, using the station name as the group name.
+Inside each group, there is the number of valid points stored in the data array, the station location
+in both xyz coordiate in SW4 domain (m) and latitude, longitude, depth. In the case when the surface grids are too sparse, we also store the actual location and the distance between the actual and user-specified location in {\tt ACTUALSTLA,STLO,STDP}, {\tt ACTUALSTX,STY,STZ}, and  {\tt DISTFROMACTUAL}.  The data array may be named with 
+{\tt X, Y, Z, or EW, NS, UP} depending on the {\tt isnsew=} option specified in the rec/sac command. For each of 
+these component, there are also {\tt *CMPAZ and} {\tt *CMINC} (e.g. {\tt XCMPAZ, XCMPINC}) recording its azimuth and inclination.
 
 Note that the dataspace of the data array is pre-allocated to hold the entire timeseries data of the simulation,
-when the SW4 is terminately early (i.e. in case of checkpoint/restart), only a portion of the data in the array
-is valid, with the size recorded in the ``NPTS'' field. When reading the data, it is recommanded to read the 
-``NPTS'' value first and only use the first {\tt NPTS} values from the data array.
+when the SW4 is terminate early (i.e. in case of checkpoint/restart), only a portion of the data in the array
+is valid, with the size recorded in the {\tt NPTS} field. When reading the data, it is recommended to read the 
+{\tt NPTS} value first and only use the first {\tt NPTS} values from the data array.
 
 The HDF5 file stores data in an self-describing way, with the following fields:
 
 \begin{center}
 \begin{tabular}{lll}\hline
 Name & Type & Size \\ \hline
-  ``DATETIME'' & H5T\_STRING & string\_len \\ \hline
-  ``UNIT'' & H5T\_STRING & string\_len \\ \hline
-  ``DELTA'' & H5T\_STD\_F32LE & 1 \\ \hline
-  ``ORIGINTIME'' & H5T\_STD\_F32LE & 1 \\ \hline
+  DATETIME & H5T\_STRING & string\_len \\ \hline
+  UNIT & H5T\_STRING & string\_len \\ \hline
+  DELTA & H5T\_STD\_F32LE & 1 \\ \hline
+  ORIGINTIME & H5T\_STD\_F32LE & 1 \\ \hline
 Group /BK.BDM (station name) \\ \hline
-  ``LOC'' & H5T\_IEEE\_I32LE & 1  \\ \hline
-  ``NPTS'' & H5T\_IEEE\_I32LE & 1  \\ \hline
-  ``STLA,STLO,STDP'' & H5T\_STD\_F32LE & 3 \\ \hline
-  ``STX,STY,STZ'' & H5T\_STD\_F32LE & 3 \\ \hline
-  ``X or EW'' & H5T\_STD\_F32LE & NPTS \\ \hline
-  ``XCMPAZ or EWCMPAZ'' & H5T\_STD\_F32LE & 1\\ \hline
-  ``XCMPINC or EWCMPINC'' & H5T\_STD\_F32LE & 1\\ \hline
-  ``Y or NS'' & H5T\_STD\_F32LE & NPTS \\ \hline
-  ``YCMPAZ or NSCMPAZ'' & H5T\_STD\_F32LE & 1\\ \hline
-  ``YCMPINC or NSCMPINC'' & H5T\_STD\_F32LE & 1\\ \hline
-  ``Z or UP'' & H5T\_STD\_F32LE & NPTS \\ \hline
-  ``ZCMPAZ or UPCMPAZ'' & H5T\_STD\_F32LE & 1\\ \hline
-  ``ZCMPINC or UPCMPINC'' & H5T\_STD\_F32LE & 1\\ \hline
+  ISNSEW & H5T\_IEEE\_I32LE & 1  \\ \hline
+  LOC & H5T\_IEEE\_I32LE & 1  \\ \hline
+  NPTS & H5T\_IEEE\_I32LE & 1  \\ \hline
+  STLA,STLO,STDP & H5T\_STD\_F32LE & 3 \\ \hline
+  ACTUALSTLA,STLO,STDP & H5T\_STD\_F32LE & 3 \\ \hline
+  STX,STY,STZ & H5T\_STD\_F32LE & 3 \\ \hline
+  ACTUALSTX,STY,STZ & H5T\_STD\_F32LE & 3 \\ \hline
+  DISTFROMACTUAL & H5T\_STD\_F32LE & 1\\ \hline
+  X or EW & H5T\_STD\_F32LE & NPTS \\ \hline
+  XCMPAZ or EWCMPAZ & H5T\_STD\_F32LE & 1\\ \hline
+  XCMPINC or EWCMPINC & H5T\_STD\_F32LE & 1\\ \hline
+  Y or NS & H5T\_STD\_F32LE & NPTS \\ \hline
+  YCMPAZ or NSCMPAZ & H5T\_STD\_F32LE & 1\\ \hline
+  YCMPINC or NSCMPINC & H5T\_STD\_F32LE & 1\\ \hline
+  Z or UP & H5T\_STD\_F32LE & NPTS \\ \hline
+  ZCMPAZ or UPCMPAZ & H5T\_STD\_F32LE & 1\\ \hline
+  ZCMPINC or UPCMPINC & H5T\_STD\_F32LE & 1\\ \hline
 \end{tabular}
 \end{center}
 
@@ -5523,7 +5536,7 @@ which currently remains Cartesian also for a curvilinear grid.
 \section{imagehdf5}\label{sec:imagehdf5-format}
 \index{fileformats!imagehdf5}
 
-The image files in HDF5 format hold identical data as in the image files, but stored as HDF5 attributes and datasets. To improve the I/O efficiency, the header data as well as the patch data are stored in arrays instead of individually in the binary format (i.e. all the ni values of multiple patches are stored in the same HDF5 dataset, with its length equal to the number of patches).
+The image files in HDF5 format hold identical data as in the image file, but are stored as HDF5 attributes and datasets. To improve the I/O efficiency, the header data and the patch data are stored in arrays instead of individually in the binary format (i.e. all the {\tt ni} values of multiple patches are stored in the same HDF5 dataset, with its length equal to the number of patches).
 
 The output of \verb+h5dump -A imagehdf5.file+  is below:
 
@@ -5685,13 +5698,13 @@ The $x$- and $y-$ coordinates are uniformly distributed, also for the curvilinea
 reconstructed from the grid size $h$, and the index bounds. The $z$-coordinate on other patches, when present, will
 always be uniform, and can be reconstructed from $h$ and the $zmin$ variable.
 
-\section{essioutput}\label{sec:essioutput-format}
-\index{fileformats!essioutput}
+\section{ssioutput}\label{sec:ssioutput-format}
+\index{fileformats!ssioutput}
 
-The \verb+essiouput+ command generates (potentially very large) binary HDF5
+The \verb+ssiouput+ command generates (potentially very large) binary HDF5
   files holding three-dimensional volumetric data for the ESSI application.
 
-The format of the \verb+essioutput+ files is self-describing in HDF5
+The format of the \verb+ssioutput+ files is self-describing in HDF5
   (use {\tt h5dump -A} to see header metadata):
 \begin{center}
 \begin{tabular}{lll}\hline
