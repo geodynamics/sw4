@@ -74,6 +74,7 @@ optdir := optimize
 
 SW4INC    = $(SW4ROOT)/include
 SW4LIB    = $(SW4ROOT)/lib
+SW4LIB64  = $(SW4ROOT)/lib64
 #Default, override with configs/make.name. Preferably, FFTW is installed under SW4ROOT
 FFTWHOME  = $(SW4ROOT)
 
@@ -172,7 +173,7 @@ endif
 
 ifeq ($(proj),yes)
    CXXFLAGS += -DENABLE_PROJ -I$(SW4INC)
-   linklibs += -L$(SW4LIB) -lproj -lsqlite3 -Wl,-rpath,$(SW4LIB)
+   linklibs += -L$(SW4LIB) -L$(SW4LIB64) -lproj -lsqlite3 -Wl,-rpath,$(SW4LIB) -Wl,-rpath,$(SW4LIB64)
 endif
 
 
