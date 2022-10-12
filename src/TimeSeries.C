@@ -3760,9 +3760,37 @@ void TimeSeries::doRestart(EW *ew, bool ignore_utc, float_sw4 shift, int beginCy
     // Read the old SAC files from the fileio path directory
     std::string fullFilePath = ew->getPath();
     fullFilePath += "/" + m_fileName;
-    std::string filex = fullFilePath + ".x";
-    std::string filey = fullFilePath + ".y";
-    std::string filez = fullFilePath + ".z";
+    std::string filex, filey, filez;
+    if( m_mode == Displacement ) {
+      if( m_xyzcomponent ) {
+        filex = fullFilePath + ".x";
+        filey = fullFilePath + ".y";
+        filez = fullFilePath + ".z";
+      }
+      else {
+        filex = fullFilePath + ".e";
+        filey = fullFilePath + ".n";
+        filez = fullFilePath + ".u";
+      }
+    }
+    else if( m_mode == Velocity ) {
+      if( m_xyzcomponent ) {
+        filex = fullFilePath + ".xv";
+        filey = fullFilePath + ".yv";
+        filez = fullFilePath + ".zv";
+      }
+      else {
+        filex = fullFilePath + ".ev";
+        filey = fullFilePath + ".nv";
+        filez = fullFilePath + ".uv";
+      }
+    }
+    else if( m_mode == Curl ) {
+      filex = fullFilePath + ".curlx";
+      filey = fullFilePath + ".curly";
+      filez = fullFilePath + ".curlz";
+    }
+
     readSACfiles(ew, const_cast<char*>(filex.c_str()), 
         const_cast<char*>(filey.c_str()),
         const_cast<char*>(filez.c_str()), ignore_utc);
