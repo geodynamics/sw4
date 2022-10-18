@@ -2508,6 +2508,32 @@ on the image file.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Checkpoint and Restart the checkpoint command}\label{sec:checkpoint}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+SW4 can write out checkpoint files with a fixed time step interval. The checkpoint file can be used for restarting a simulation from when the latest checkpoint is written. SW4 writes out one single file for each checkpoint, and user can choose to use either a binary format or the HDF5 format. Checkpoint files can be very large, as it contains data of the entire domain. For the HDF5 format, compression is also supported (with the same parameter as the \verb+ssioutput+ command), users are advised to set a relatively low tolerance with the lossy compression to prevent significant precision loss with the restart. And user should also be aware that a restart from a checkpoint file that uses lossy compression will likely result in different solution results.
+
+Below is an example command to write a checkpoint file every 80,000 steps to the \verb+output+ directory. The checkpoint file name will be starting with \verb+HFCheck+ and includes the time step value when it is written (e.g. HFCheck.cycle=160000.sw4checkpoint). 
+\begin{verbatim}
+checkpoint cycleInterval=80000 restartpath=output file=HFCheck
+\end{verbatim}
+To use the HDF5 format and optionally with compression:
+\begin{verbatim}
+checkpoint cycleInterval=80000 restartpath=output file=HFCheck \
+    hdf5=yes zfp_accuracy=1e-5
+\end{verbatim}
+
+To restart from a previously written checkpoint file, add the \verb+restartfile+ key word and the checkpoint file name to the \verb+checkpoint+ command:
+\begin{verbatim}
+checkpoint cycleInterval=80000 restartpath=output file=HFCheck \
+    restartfile=HFCheck.cycle=160000.sw4checkpoint \
+    hdf5=yes zfp_accuracy=1e-5
+\end{verbatim}
+
+Note that when using the \verb+checkpoint+ command in combination with the \verb+rec+, \verb+rechdf5+, and  \verb+ssioutput+ commands, it is advisable to align their write intervals, such that the latest time-series data are also written at the time writing a checkpoint file. For example, a user may set  \verb+writeEvery=1000+ (default) in the \verb+rechdf5+ command, and set \verb+dumpInterval=400+ in the \verb+ssioutput+ command, and set \verb+cycleInterval=40000+, as 40000 is divisible by both 1000 and 4000.
+
+More details are provided in Section \ref{keyword:checkpoint}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Creating a GMT script with the gmt command}\label{sec:gmt}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 The Generic Mapping Toolkit (\emph{GMT})~\cite{WesselSmithGMT} is a suite of image generation
@@ -3116,8 +3142,10 @@ of the material is taken into account to calculate the strength of each source t
 prescribed amount of slip is achieved on each sub-fault of the SRF file. 
 
 The SRF file format is described on the SCEC wiki webpage:
-
 \verb+http://scec.usc.edu/scecpedia/Standard_Rupture_Format+
+
+Note that when using a rupture file, the default SW4 time-series output is usually velocity instead of displacement.
+
 \index{rupture parameters! file}
 
 
@@ -3432,10 +3460,45 @@ filename      & name of raster file                     & string  & none & none 
 directory     & name of directory for the raster file   & string  & none & . \\ \hline
 \end{tabular}
 \end{center}
-Note that only relative paths are currently supported in the \verb+filename+ keyword. Use the
+Note that sfile uses HDF5 format, so SW4 must be compiled with HDF5. Also only relative paths are currently supported in the \verb+filename+ keyword. Use the
 \verb+directory+ keyword to specify absolute paths.
 
 \index{sfile parameters!filename, directory}
+
+
+
+%
+\subsection{gmg}
+\index{command!gmg}
+\label{keyword:gmg}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{flushleft}\bf
+Syntax:\\
+\tt
+gmg filename=... directory=...\\
+
+\bf Required parameters:\\
+\tt filename
+\end{flushleft}
+%
+\begin{center}
+\begin{tabular}{|l|p{8cm}|l|l||l|} \hline
+\multicolumn{5}{|c|}{\bf gmg command parameters}\\ \hline
+{\bf Option} & {\bf Description}                        & {\bf Type} & {\bf Units} & {\bf Default} \\ \hline 
+\hline
+%mode      & \verb+read+ to read the file                    & string  & none &
+%  read
+%\\ \hline
+%\hline
+filename      & name of GMG file                     & string  & none & none \\ \hline
+directory     & name of directory for the GMG file   & string  & none & . \\ \hline
+\end{tabular}
+\end{center}
+Note that GMG uses HDF5 format, so SW4 must be compiled with HDF5. Also only relative paths are currently supported in the \verb+filename+ keyword. Use the
+\verb+directory+ keyword to specify absolute paths.
+
+\index{gmg parameters!filename, directory}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{ifile}
@@ -4157,10 +4220,7 @@ To reduce the output size, we have enabled the support to utilize ZFP \url{https
 The option {\bf dumpInterval=...} affects the maximum 
 number of time steps in a file, it allows down-sampling the data to reduce the overall output size. If omitted, the data is written after every time step of the simulation.
 
-Note that when the \verb+checkpoint+ command is
-being used, its {\bf cycleInterval=...} option takes precedence over
-the specified {\bf dumpInterval}. This is to guarentee that both the
-checkpoint and SSI files are written after the same time step.
+Note that when the \verb+checkpoint+ command is being used, it is best to have {\bf cycleInterval} divisible by  {\bf dumpInterval}. This is to guarantee that both the checkpoint and SSI files are written after the same time step.
 
 Note that only data from the topmost grid can be output, which may or may
   not include topography and in the case of mesh refinement, will not
@@ -4185,12 +4245,17 @@ The file format is described in Section~\ref{sec:ssioutput-format}.
 \hline
 file        & file name header of image                          & string & none
   & ssioutput \\ \hline
-  dumpInterval & interval between file writes & string & -1 (1 file) \\ \hline
+  dumpInterval & interval between file writes & string &  none & -1 \\ \hline
 xmin     & starting $x$ location of requested SSI region & real & m & 0 \\ \hline
 xmax     & ending $x$ location of requested SSI region & real & m & $x_{max}$ \\ \hline
 ymin     & starting $y$ location of requested SSI region & real & m & 0 \\ \hline
 ymax     & ending $y$ location of requested SSI region & real & m & $y_{max}$ \\ \hline
 depth     & approx depth of output over requested SSI region & real & m & 0 \\ \hline
+zfp\_accuracy & use ZFP lossy compression accuracy mode & float & none & N/A \\ \hline
+zfp\_precision & use ZFP lossy compression precision mode & float &none &  N/A \\ \hline
+zfp\_rate & use ZFP lossy compression rate mode & float &none &  N/A \\ \hline
+zfp\_reversible & use ZFP lossless compression mode & int & none &  0 \\ \hline
+
 \end{tabular}
 \end{center}
 \index{ssioutput parameters!file}
@@ -4317,6 +4382,12 @@ cycleInterval & sets the interval for writing out restart files & int & 0 \\
 \hline
 restartfile & restart the code from this file & string & ``restart''  \\ \hline
 restartpath & path to restart file & string & N/A \\ \hline
+hdf5 & use HDF5 output format & string & ``no'' \\ \hline
+zfp\_accuracy & use ZFP lossy compression accuracy mode & float & N/A \\ \hline
+zfp\_precision & use ZFP lossy compression precision mode & float & N/A \\ \hline
+zfp\_rate & use ZFP lossy compression rate mode & float & N/A \\ \hline
+zfp\_reversible & use ZFP lossless compression mode & int & 0 \\ \hline
+
 \end{tabular}
 \end{center}
 \index{checkpoint parameters!file, cycleInterval, restartfile, restartpath}
