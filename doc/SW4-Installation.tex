@@ -412,11 +412,11 @@ Section~\ref{cha:ctest-sw4} for details.
 
 To use CMake, navigate to the top {\tt sw4} directory and run the following commands:
 \begin{verbatim}
-mkdir build
-cd build
-cmake [options] ..
-make
-make install
+  > mkdir build
+  > cd build
+  > cmake [options] ..
+  > make
+  > make install
 \end{verbatim}
 
 The two dots after {\tt cmake [options]} are essential and instructs it to look in the parent
@@ -438,7 +438,8 @@ add \texttt{-D\textless option\textgreater=\textless value\textgreater} to the o
 \texttt{cmake} command.  For example, when building SW4 with the PROJ library:
 %
 \begin{verbatim}
-cmake -DUSE_PROJ=ON -DPROJ_DIR=${SW4ROOT}/install/lib64/cmake/proj ..
+  > export 
+  > cmake -DUSE_PROJ=ON -DPROJ_DIR=${SW4ROOT}/install/lib64/cmake/proj ..
 \end{verbatim}
 %
 A list of options is shown in the table below.
@@ -456,8 +457,8 @@ USE\_HDF5 & OFF & Enable HDF5 library. \\ \hline
 HDF5\_DIR & (none) & The path to the HDF5 installation. \\ \hline
 %
 USE\_ZFP & OFF & Enable ZFP compression. \\ \hline
-H5Z-ZFP\_DIR & (none) & The path to the H5Z-ZFP installation (ZFP path can be obtained automatically). \\ \hline
-%
+ZFP\_DIR & (none) & The path to the ZFP installation. \\ \hline
+H5Z\_ZFP\_DIR & (none) & The path to the H5Z-ZFP installation. \\ \hline
 CMAKE\_BUILD\_TYPE & Release & The type of build to setup. Can be either \texttt{Debug},
 \texttt{Release}, or \texttt{RelWithDebInfo}.  This affects the type of optimization and debug flags
 used in compiling \emph{SW4}. \\ \hline
@@ -593,27 +594,27 @@ and \verb+${SW4ROOT}/lib+, respectively.
 \subsection{PROJ}
 The PROJ library requires SQLite, if your system does not have it installed already, it can be compiled with the following steps:
 \begin{verbatim}
-  > wget https://www.sqlite.org/2022/sqlite-autoconf-3390300.tar.gz
-  > tar xf sqlite-autoconf-3390300.tar.gz
-  > cd sqlite-autoconf-3390300/
+  # Download sqlite from https://www.sqlite.org/download.html (sqlite-autoconf-x)
+  > tar xf sqlite-autoconf-x.tar.gz
+  > cd sqlite-autoconf-x/
   > ./configure --prefix=${SW4ROOT}
   > make
   > make install
 \end{verbatim}
 
-The PROJ library can then be installed by the following steps:
+The PROJ library (version 9 and later is recommended) can be installed by the following steps:
 
 \begin{verbatim}
-  > wget https://download.osgeo.org/proj/proj-9.1.0.tar.gz
-  > tar xf proj-9.1.0.tar.gz
-  > cd proj-9.1.0
+  # Download PROJ from https://proj.org/download.html
+  > tar xf proj-x.x.x.tar.gz
+  > cd proj-x.x.x
   > mkdir build
   > cd build
   > cmake -DBUILD_APPS=OFF -DCMAKE_INSTALL_PREFIX=${SW4ROOT}
 -DSQLITE3_INCLUDE_DIR=${SW4ROOT}/include
 -DSQLITE3_LIBRARY=${SW4ROOT}/lib/libsqlite3.so  ..
 
-# Note that the two -DSQLITE3 flags are needed if you compiled SQLite yourself.
+  # Note that the two -DSQLITE3 flags are needed if you compiled SQLite yourself.
   > make
   > make install
 \end{verbatim}
@@ -621,7 +622,7 @@ The PROJ library can then be installed by the following steps:
 \subsection{HDF5}
 Installing HDF5 (version 1.12 and later is recommended) can be done with the following steps:
 \begin{verbatim}
-# Download HDF5 from https://www.hdfgroup.org/downloads/hdf5/source-code
+  # Download HDF5 from https://www.hdfgroup.org/downloads/hdf5/source-code
   > tar xf hdf5-1.xx.x.tar.gz
   > cd hdf5-1.xx.x
   > mkdir build
@@ -632,51 +633,66 @@ Installing HDF5 (version 1.12 and later is recommended) can be done with the fol
 \end{verbatim}
 
 \subsection{ZFP and H5Z-ZFP}
-Latest ZFP and H5Z-ZFP can be found at \url{https://github.com/LLNL/zfp} and \url{https://github.com/LLNL/H5Z-ZFP}. We use their latest stable release version at the time writing this documentation as an example.
+We recommend to use use ZFP and H5Z-ZFP's latest stable release version. 
 
 Installing ZFP can be done with the following steps:
-
 \begin{verbatim}
-  > wget https://github.com/LLNL/zfp/releases/download/1.0.0/zfp-1.0.0.tar.gz
-  > tar xf zfp-1.0.0.tar.gz
-  > cd zfp-1.0.0
+  # Download ZFP from https://github.com/LLNL/zfp/releases
+  > tar xf zfp-x.x.x.tar.gz
+  > cd zfp-x.x.x
   > mkdir build
   > cd build
-  > cmake -DBIT_STREAM_WORD_TYPE=uint8 -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=${SW4ROOT} ..
+  > cmake -DZFP_BIT_STREAM_WORD_SIZE=8 -DCMAKE_INSTALL_PREFIX=${SW4ROOT} ..
   > make
   > make install
 \end{verbatim}
 
 Installing H5Z-ZFP can be done with the following steps:
 \begin{verbatim}
-  > wget https://github.com/LLNL/H5Z-ZFP/archive/refs/tags/v1.1.0.tar.gz
-  > tar xf v1.1.0.tar.gz
-  > cd H5Z-ZFP-1.1.0
+  # Download H5Z-ZFP from https://github.com/LLNL/H5Z-ZFP/releases
+  > tar xf vx.x.x.tar.gz
+  > cd H5Z-ZFP-x.x.x
   > mkdir build
   > cd build
-  > export HDF_DIR=<path-to_hdf5>
-  > export ZFP_DIR=<path-to-zfp>
+  > export HDF_DIR=/path/to/hdf5/install
+  > export ZFP_DIR=/path/to/zfp/install
   > cmake -DCMAKE_INSTALL_PREFIX=${SW4ROOT} ..
   > make
   > make install
 \end{verbatim}
 
-Alternatively they can be installed using {\tt macports} (if you are using MacOS).
-
 To verify that the libraries have been installed properly, you should go to the \verb+SW4ROOT+
-directory and list the {\tt lib} sub-directory (\verb+cd ${SW4ROOT}; ls lib+). You should see the
+directory and list the {\tt lib} sub-directory (\verb+cd ${SW4ROOT}; ls lib lib64+). You should see the
 following files (on Mac OSX machines, the .so extension is replaced by .dylib ):
 \begin{verbatim}
-cd ${SW4ROOT}
-ls lib64
-libproj.so libhdf5.so ...
+  > cd ${SW4ROOT}
+  > ls lib lib64
+  > lib
+  > libhdf5.so ...
+  > lib64
+  > libproj.so ...
 \end{verbatim}
+
 Furthermore, if you list the include sub-directory, you should see include files such as 
 \begin{verbatim}
   > cd ${SW4ROOT}
   > ls include
   > proj.h hdf5.h ...
 \end{verbatim}
+
+\subsection{SW4 with PROJ, HDF5, and ZFP}
+To build SW4 with all the libraries can be done using CMake with the following commands:
+
+\begin{verbatim}
+  > export PROJ_ROOT=/path/to/proj/install
+  > export HDF5_ROOT=/path/to/hdf5/install
+  > export ZFP_ROOT=/path/to/zfp/install
+  > export H5Z_ZFP_ROOT=/path/to/h5z_zfp/install
+  > cmake -DUSE_HDF5=ON -DUSE_PROJ=ON -DUSE_ZFP=ON ..
+  > make
+\end{verbatim}
+
+
 
 \section{Disclaimer} 
 This document was prepared as an account of work sponsored by an agency of the United States
