@@ -1787,7 +1787,7 @@ gmg filename=USGS_SFCVM_v21-1_detailed.h5 directory=/path/to/gmgfile/
 
 The file contents are similar to the \verb+sfile+ format, both are using HDF5 as the underlying file format, but they use different schema and curvilinear refinement boundaries. More tools and descriptions about the GeoModelGrids are available at \url{https://github.com/baagaard-usgs/geomodelgrids} and \url{https://geomodelgrids.readthedocs.io}).
 
-
+See Section \ref{keyword:gmg} for more details options.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{The pfile command}\label{sec:pfile}
@@ -4326,8 +4326,9 @@ sampleFactorV  & specifies the sub-sampling factor in the vertical direction & i
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{flushleft}
 \bf Syntax:\\ \tt
-checkpoint cycleInterval=... file=... restartpath=... \\
+checkpoint cycleInterval=... file=... restartpath=... \\ zfp\_{accuracy/precision/rate/reversible}=...\\
 checkpoint cycleInterval=... file=... restartpath=... restartfile=... \\
+zfp\_{accuracy/precision/rate/reversible}=...\\
 \bf Required parameter:\\
 \rm Time for output: (time, timeInterval, cycle, or cycleInterval).\\
 \bf Notes:\\
