@@ -5730,7 +5730,7 @@ void EW::processRuptureHDF5(char* buffer,
 #ifdef USE_HDF5
   int event = 0;
   bool rfileset = false;
-  char rfile[100];
+  char rfile[1000];
   double stime, etime;
   stime = MPI_Wtime();
 
