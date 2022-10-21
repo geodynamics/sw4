@@ -1,0 +1,11 @@
+#!/bin/bash
+#BSUB -P lc
+#BSUB -W 00:30
+#BSUB -nnodes 1
+#BSUB -q pdebug
+#BSUB -J Test
+#BSUB -o RunLassen_%J.out
+#BSUB -e RunLassen_%J.err
+date
+module load cuda/11.7.0
+lrun -T4 -M -gpu  ./sw4 hmr3.in.lassen.sfile

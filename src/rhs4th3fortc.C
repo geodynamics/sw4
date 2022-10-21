@@ -2271,7 +2271,9 @@ void rhs4th3fortsgstr_ci(
   }
 #undef mu
 #undef la
-#undef u
+#undef u1
+#undef u2
+#undef u3
 #undef lu
 #undef strx
 #undef stry
