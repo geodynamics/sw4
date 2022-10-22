@@ -1,0 +1,5 @@
+Works with https://github.com/LLNL/scr/releases/download/v3.0.1/scr-v3.0.1.tgz on CORAL and Crusher.
+Defaults set in main.C. Can be modified using env variables.
+Default is to use ramdisk and drain to the filesystem asynchronously
+Space required ~1/3th of memory used.
+
