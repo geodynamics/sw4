@@ -46,14 +46,16 @@
 
 \begin{document}
 
-\title{Installing SW4 version 2.0}
+\title{Installing SW4 version 3.0}
 
 \author{ N. Anders Petersson$^*$ \and Bj\"orn Sj\"ogreen\thanks{Center for Applied Scientific
     Computing, Lawrence Livermore National Laboratory, PO Box 808, Livermore CA 94551. This work
     performed under the auspices of the U.S. Department of Energy by Lawrence Livermore National
     Laboratory under contract DE-AC52-07NA27344. This is contribution
-    LLNL-SM-741310.} }
-\date{November 6, 2017}
+    LLNL-SM-741310.} 
+\and Houjun Tang\thanks{ Lawrence Berkeley National Laboratory}
+    }
+\date{September 21, 2022}
 \maketitle
 
 %\thispagestyle{plain}
@@ -67,68 +69,45 @@
 \section{Introduction}
 The sole purpose of this document is to describe the installation process of the seismic wave
 propagation code \emph{SW4}. A comprehensive user's guide is provided in the report by
-Petersson and Sjogreen~\cite{SW4-v2}.
+Petersson and Sjogreen~\cite{SW4-v3}.
 
 \section{Compilers and third party libraries}
 
 Before you can build \emph{SW4} on your system, you must have
 \begin{enumerate}
-\item the \verb+lapack+ and \verb+blas+ libraries. These libraries provide basic linear algebra
-  functionality and are pre-installed on many machines;
-\item a MPI-2 library. This library provides support for message passing on parallel
-  machines. Examples of open source implementations include Mpich-2 and OpenMPI. Note that the MPI-2
-  library must be installed even if you are only building \emph{SW4} for a single core system.
+\item the \verb+lapack+ and \verb+blas+ libraries. These libraries provide basic linear algebra functionality and are pre-installed on many machines;
+\item an MPI library. This library provides support for message passing on parallel
+  machines. Examples of open source implementations include Mpich and OpenMPI. Note that the MPI library must be installed even if you are only building \emph{SW4} for a single core system.
 \end{enumerate}
-To avoid incompatibility issues and linking problems, we recommend using the same compiler for
-the libraries as for \emph{SW4}.
 
-In order to use geographic projection and material models stored in the \emph{rfile} format, you
-need to install the Proj4 before building \emph{SW4}:
+To avoid incompatibility issues and linking problems, we recommend using the same compiler for the libraries as for \emph{SW4}.
+
+In order to use geographic projection and material models stored in the \emph{rfile} format, you need to install the PROJ before building \emph{SW4}:
 \begin{itemize}
-\item The Proj.4 library, {\tt http://trac.osgeo.org/proj}
+\item PROJ (version 6+), \url{https://proj.org/download.html}
 \end{itemize}  
-If you also wish to use material models using the \emph{efile} format, you also need to download and
-install two additional libraries:
+If you also wish to use material models using the \emph{sfile} or \emph{GMG} format, you also need to download and install the HDF5 library:
 \begin{itemize}
-\item The Euclid e-tree library, {\tt http://www-2.cs.cmu.edu/~euclid}
-\item The cencalvm library, \\{\tt http://earthquake.usgs.gov/data/3dgeologic/cencalvm\_doc/index.html}
+\item HDF5 (version 1.12+), \url{https://www.hdfgroup.org/downloads/hdf5/source-code}
 \end{itemize}
-To simplify the build process, all libraries should be installed under the same directory, such that
-the library files (.so, .a, etc.) are in the lib sub-directory and the include files (.h) end up in
-the include sub-directory. See Section~\ref{sec:cencalvm-install} for details.
+To simplify the build process, all libraries should be installed under the same directory, such that the library files (.so, .a, etc.) are in the lib sub-directory and the include files (.h) end up in the include sub-directory. See Section~\ref{sec:proj} for details.
 
-\paragraph{Mac computers}
+\paragraph{MacOS}
 
-We recommend using the MacPorts package manager for installing the required compilers and
-libraries. Simply go to www.macports.org, and install macports on your system. With that in place,
-you can use the \verb+port+ command as follows
+We recommend using the MacPorts package manager for installing the required compilers and libraries. Simply go to www.macports.org, and install macports on your system. With that in place, you can use the \verb+port+ command as follows
 \begin{verbatim}
-shell> sudo port install gcc72
-shell> sudo port select --set gcc mp-gcc72
-shell> sudo port install mpich-gcc7
-shell> sudo port select --set mpi mpich-gcc7
+sudo port install gcc11
+sudo port install mpich-gcc11
+sudo port install hdf5
 \end{verbatim}
-Here, \verb+gcc72+ refers to version 7.2 of the Gnu compiler suite. Compiler versions are bound to
-change in the future, so the above commands will need to be modified accordingly. Before starting,
-make sure you install a version of gcc that is compatible with the MPI library package. The above
-example installs the \verb+mpich+ package using the gcc72 compilers, which includes a
-compatible Fortran compiler. Alternatively, you can use the \verb+openmpi+ package. Note that the
-\verb+port select+ commands are used to create shortcuts to the compilers and MPI environment. By
-using the above setup, the Gnu compilers can be accessed with \verb+gcc+ and \verb+gfortran+
-commands, and the MPI compilers and execution environment are called \verb+mpicxx+, \verb+mpif90+,
-and \verb+mpirun+, respectively.
+Here, \verb+gcc11+ refers to version 11 of the GNU compiler suite. Compiler versions are bound to change in the future, so the above commands will need to be modified accordingly. Before starting, make sure you install a version of gcc that is compatible with the MPI library package. The above example installs the \verb+mpich+ package using the gcc11 compilers, which includes a compatible Fortran compiler. Alternatively, you can use the \verb+openmpi+ package. Note that the \verb+port select+ commands are used to create shortcuts to the compilers and MPI environment. By using the above setup, the GNU compilers can be accessed with \verb+gcc+ and \verb+gfortran+ commands, and the MPI compilers and execution environment are called \verb+mpicxx+, \verb+mpif90+, and \verb+mpirun+, respectively.
 
-The \verb+lapack+ and \verb+blas+ libraries are preinstalled on recent Macs and can be accessed
-using the \verb+-framework Accelerate+ link option. If that is not available or does not work on your
-machine, you can download \verb+lapack+ and \verb+blas+ from www.netlib.org.
+The \verb+lapack+ and \verb+blas+ libraries are preinstalled on recent Macs and can be accessed using the \verb+-framework Accelerate+ link option. If that is not available or does not work on your machine, you can download \verb+lapack+ and \verb+blas+ from \url{www.netlib.org.}
 
-\paragraph{Linux machines}
-We here give detailed instructions for installing the third part libraries under 64 bit, Fedora Core
-18 Linux. Other Linux variants use similar commands for installing software packages, but note that 
-the package manager \verb+yum+ is specific to Fedora Core.
+\paragraph{Linux}
+We here give detailed instructions for installing the third part libraries under 64 bit, Fedora Core 18 Linux. Other Linux variants use similar commands for installing software packages, but note that the package manager \verb+yum+ is specific to Fedora Core. For Ubuntu systems, one can simply change \verb+yum+ to \verb+apt-get+
 
-You need to have root privileges to install precompiled packages. Start by opening an xterm and
-set your user identity to root by the command
+You need to have root privileges to install precompiled packages. Start by opening an xterm and set your user identity to root by the command
 \begin{verbatim}
 su -
 \end{verbatim}
@@ -138,33 +117,27 @@ yum install gcc
 yum install gcc-c++
 yum install gcc-gfortran
 \end{verbatim}
-You install the \verb+mpich2+ library and include files with the command
+You install the \verb+mpich+ and \verb+hdf5+ library and include files with the command
 \begin{verbatim}
-yum install mpich2-devel
+yum install mpich-devel
+yum install hdf5
 \end{verbatim}
-The executables and libraries are installed in \verb+/usr/lib64/mpich2/bin+ and 
-\verb+/usr/lib64/mpich2/lib+ respectively. We suggest that you add \verb+/usr/lib64/mpich2/bin+ to 
-your path. This is done with the command
+
+The executables and libraries are installed in \verb+/usr/lib64/mpich/bin+ and  \verb+/usr/lib64/mpich/lib+ respectively. We suggest that you add \verb+/usr/lib64/mpich/bin+ to your path. This is done with the command:
 \begin{verbatim}
-export PATH=${PATH}:/usr/lib64/mpich2/bin
+export PATH=${PATH}:/usr/lib64/mpich/bin
 \end{verbatim}
 if your shell is \verb+bash+. For \verb+tcsh+ users, the command is
 \begin{verbatim}
-setenv PATH ${PATH}:/usr/lib64/mpich2/bin
+setenv PATH ${PATH}:/usr/lib64/mpich/bin
 \end{verbatim}
-It is convenient to put the path setting command in
-your startup file, \verb+.bashrc+ or \verb+.cshrc+., for bash or csh/tcsh respectively.
-
+It is convenient to put the path setting command in your startup file, \verb+.bashrc+ or \verb+.cshrc+., for bash or csh/tcsh respectively.
 The \verb+blas+ and \verb+lapack+ libraries are installed with
 \begin{verbatim}
 yum install blas
 yum install lapack
 \end{verbatim}
-On our system, the libraries were installed in \verb+/usr/lib64+ as \verb+libblas.so.3+ and
-\verb+liblapack.so.3+. For some unknown reason, the install program does not add links to these
-files with extension \verb+.so+, which is necessary for the linker to find them. We must therefore
-add the links explicitly. If the libraries were installed elsewhere on your system, but you don't
-know where, you can find them with the following command:
+On our system, the libraries were installed in \verb+/usr/lib64+ as \verb+libblas.so.3+ and \verb+liblapack.so.3+. For some unknown reason, the install program does not add links to these files with extension \verb+.so+, which is necessary for the linker to find them. We must therefore add the links explicitly. If the libraries were installed elsewhere on your system, but you don't know where, you can find them with the following command:
 \begin{verbatim}
 find / -name "*blas*" -print
 \end{verbatim}
@@ -182,12 +155,12 @@ Note that you need to have \verb+root+ privileges for this to work.
 \index{installation!directories}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-To unpack the \emph{SW4} source code, you place the file \verb+sw4-v2.0.tgz+ in the
+To unpack the \emph{SW4} source code, you place the file \verb+sw4-v3.0.tar.gz+ in the
 desired directory and issue the following command:
 \begin{verbatim}
-shell> tar xzf sw4-v2.0.tgz
+tar xzf sw4-v3.0.tar.gz
 \end{verbatim}
-As a result a new sub-directory named \verb+sw4-v2.0+ is created. It contains several files
+As a result a new sub-directory named \verb+sw4-v3.0+ is created. It contains several files
 and sub-directories:
 %
 \begin{itemize}
@@ -214,73 +187,52 @@ and sub-directories:
 %https://computation.llnl.gov/casc/serpentine/software.html
 %\end{verbatim}
 
-The classical way of building \emph{SW4} uses \verb+make+. We recommend using GNU make, sometimes called
-\verb+gmake+. You can check the version of make on you system with the command
+The classical way of building \emph{SW4} uses \verb+make+. We recommend using GNU make, sometimes called \verb+gmake+. You can check the version of make on you system with the command
 \begin{verbatim}
-shell> make -v
+make -v
 \end{verbatim}
 If you don't have GNU make installed on your system, you can obtain it from www.gnu.org.
 
 We have built \emph{SW4} and its supporting libraries on Intel based laptops and desktops running
-LINUX and OSX. It has also been built on several supercomputers such as the Intel machines {\tt cab,
-quartz}
-(at LLNL) and {\tt edison, cori} (at LBNL), as well as the IBM BGQ machine {\tt vulcan} at LLNL. We have
+LINUX and OSX. It has also been built on several supercomputers such as the Intel machines {\tt 
+quartz} (at LLNL), {\tt Cori} (at LBNL), and {\tt Summit} (at ORNL). We have
 successfully used the following versions of Gnu, Intel, and IBM compilers:
 \begin{verbatim}
-Gnu:   g++/gcc/gfortran      versions 4.5 to 7.2
-Intel: icpc/icc/ifort        versions 16.0 to 18.0
-IBM Blue Gene: xlcxx/xlc/xlf versions 12.1 to 14.1
+GNU:   g++/gcc/gfortran      versions 4.5+
+Intel: icpc/icc/ifort        versions 16.0+
+IBM:   xlcxx/xlc/xlf         versions 12.1+
 \end{verbatim}
 
-\emph{SW4} uses the message passing interface (MPI) standard (MPI-2 to be specific) for
-communication on parallel distributed memory machines. Note that the MPI library often includes
-wrappers for compiling, linking, and running of MPI programs. For example, the {\tt mpich2} package
-build wrappers for the underlying C++ and Fortran compilers called {\tt mpicxx} and {\tt mpif90}, as
-well as the {\tt mpirun} script. We highly recommend using these programs for compiling, linking,
-and running \emph{SW4}.
+\emph{SW4} uses the message passing interface (MPI) standard for communication on parallel distributed memory machines. Note that the MPI library often includes wrappers for compiling, linking, and running of MPI programs. For example, the {\tt mpich} package build wrappers for the underlying C++ and Fortran compilers called {\tt mpicxx} and {\tt mpif90}, as well as the {\tt mpirun} script. We highly recommend using these programs for compiling, linking, and running \emph{SW4}.
 
 
 \subsection{Basic compilation and linking of \emph{SW4}}\label{sec:basic-install}
 \index{installation!basic} 
 
-The best way of getting started is to first build \emph{SW4} without the proj.4 and cencalvm
-libraries. This process should be very straight forward and the resulting \emph{SW4} executable
-will support all commands except \verb+rfile+, \verb+efile+ and the \verb+proj+/\verb+ellps+ options in the
-\verb+grid+ command. If you need to use these options, you can always recompile \emph{SW4} after the
-proj.4 and cencalvm libraries have been installed. See \S~\ref{sec:cencalvm-install} for details.
-
-The basic build process is controlled by the environmental variables \verb+FC+, \verb+CXX+,
-\verb+EXTRA_FORT_FLAGS+, \verb+EXTRA_CXX_FLAGS+, and \verb+EXTRA_LINK_FLAGS+. These variables should
-hold the names of the Fortan and C++ compilers, and any extra options that should be passed to
-the compilers and linker. The easiest way of assigning these variables is by creating a file in the
-\verb+configs+ directory called \verb+make.inc+. The \verb+Makefile+ will look for this file and
-read it if it is available. There are several examples in the \verb+configs+ directory, e.g.
-\verb+make.osx+ for Macs and \verb+make.linux+ for Linux machines. You should copy one of these files
-to your own \verb+make.inc+ and edit it as needed. 
+The basic build process is controlled by the environmental variables \verb+FC+, \verb+CXX+, \verb+EXTRA_FORT_FLAGS+, \verb+EXTRA_CXX_FLAGS+, and \verb+EXTRA_LINK_FLAGS+. These variables should hold the names of the Fortran and C++ compilers, and any extra options that should be passed to the compilers and linker. The easiest way of assigning these variables is by creating a file in the \verb+configs+ directory called \verb+make.inc+. The \verb+Makefile+ will look for this file and read it if it is available. There are several examples in the \verb+configs+ directory, e.g. \verb+make.osx+ for Macs and \verb+make.linux+ for Linux machines. You should copy one of these files to your own \verb+make.inc+ and edit it as needed. 
 
 \subsubsection{Mac machines}
 If you are on a Mac, you could copy the setup from \verb+make.osx+,
 \begin{verbatim}
-shell> cd configs
-shell> cp make.osx make.inc
-shell> cat make.inc
-etree = no
+cd configs
+cp make.osx make.inc
+cat make.inc
 proj = no
+hdf5 = no
 FC = mpif90
 CXX = mpicxx
 EXTRA_FORT_FLAGS = 
-EXTRA_LINK_FLAGS = -framework Accelerate -L/opt/local/lib/gcc72 -lgfortran
+EXTRA_LINK_FLAGS = -framework Accelerate -L/opt/local/lib/gcc11 -lgfortran
 \end{verbatim}
-In this case, the \verb+blas+ and \verb+lapack+ libraries are assumed to be provided by the
-\verb+-framework Accelerate+ option. The \verb+libgfortran+ library is located in the directory
-\verb+/opt/local/lib/gcc72+, which is where \verb+macports+ currently installs it.
+In this case, the \verb+blas+ and \verb+lapack+ libraries are assumed to be provided by the \verb+-framework Accelerate+ option. The \verb+libgfortran+ library is located in the directory \verb+/opt/local/lib/gcc11+, which is where \verb+macports+ currently installs it.
 
 \subsubsection{Linux machines}
 If you are on a Linux machine, we suggest you copy the configuration options from \verb+make.linux+,
 \begin{verbatim}
-shell> cd configs
-shell> cp make.linux make.inc
-shell> cat make.inc
+cd configs
+cp make.linux make.inc
+cat make.inc
+proj = no
 FC = gfortran
 CXX = mpicxx
 EXTRA_LINK_FLAGS = -L/usr/lib64 -llapack -lblas -lgfortran
@@ -289,14 +241,14 @@ This setup assumes that the \verb+blas+ and \verb+lapack+ libraries are located 
 \verb+/usr/lib64+ directory. 
 In the case of Fedora Core 18, we needed to set the link flag variable to
 \begin{verbatim}
-EXTRA_LINK_FLAGS = -Wl,-rpath=/usr/lib64/mpich2/lib  -llapack -lblas -lgfortran
+EXTRA_LINK_FLAGS = -Wl,-rpath=/usr/lib64/mpich/lib  -llapack -lblas -lgfortran
 \end{verbatim}
 
 \subsubsection{Using make}
 You build \emph{SW4} with the "make" command from the main directory.
 \begin{verbatim}
-shell> cd /enter/your/path/sw4-v2.0
-shell> make
+cd /enter/your/path/sw4-v3.0
+make
 \end{verbatim}
 If all goes well, you will see the SW4 Lives banner on your screen after the compilation and linking
 has completed,
@@ -304,8 +256,6 @@ has completed,
 \begin{verbatim}
     
 ``'-.,_,.-'``'-.,_,.='``'-.,_,.-'``'-.,_,.='````'-.,_,.-'``'-.,_,.='``
-
-
   _________    ____      __      ____    _    __
  /   ____  \   \   \    /  \    /   /   / |  |  |  
  |  |    \./    \   \  /    \  /   /   /  |  |  |
@@ -321,24 +271,22 @@ has completed,
   |  |     |  |   \      /   |   __|    \__    |  |  | 
   |  `----.|  |    \    /    |  |____    __)   |  |__| 
   |_______||__|     \__/     |_______|  (_____/   (__)
-     
-
 ``'-.,_,.-'``'-.,_,.='``'-.,_,.-'``'-.,_,.='````'-.,_,.-'``'-.,_,.='``
 
 \end{verbatim}
 }
 By default, \verb+make+ builds an optimized \verb+sw4+ executable. It is located in 
 \begin{verbatim}
-/enter/your/path/sw4-v2.0/optimize/sw4
+/enter/your/path/sw4-v3.0/optimize/sw4
 \end{verbatim}
 You can also build an executable with debugging symbols by adding the \verb+debug=yes+ option to \verb+make+,
 \begin{verbatim}
-shell> cd /enter/your/path/sw4-v2.0
-shell> make debug=yes
+cd /enter/your/path/sw4-v3.0
+make debug=yes
 \end{verbatim}
 In this case, the executable will be located in
 \begin{verbatim}
-/enter/your/path/sw4-v2.0/debug/sw4
+/enter/your/path/sw4-v3.0/debug/sw4
 \end{verbatim}
 It can be convenient to add the corresponding directory to your \verb+PATH+ environment
 variable. This can be accomplished by modifying your shell configuration file, e.g. \verb+~/.cshrc+
@@ -348,64 +296,54 @@ if you are using C-shell.
 
 The input file for \verb+make+ is
 \begin{verbatim}
-sw4-v2.0/Makefile
+sw4-v3.0/Makefile
 \end{verbatim}
 Do {\em not} change this \verb+Makefile+. It should only be necessary to edit your configuration
 file, that is,
 \begin{verbatim}
-/my/path/sw4-v2.0/configs/make.inc
+/my/path/sw4-v3.0/configs/make.inc
 \end{verbatim}
 Note that you must create this file, for example by copying one of the \verb+make.xyz+ files in the
 same directory. The \verb+make.inc+ file holds all information that is particular for your system,
 such as the name of the compilers, the location of the third party libraries, and any extra
-arguments that should be passed to the compiler or linker. This file also tells \verb+make+ whether
-or not the \verb+cencalvm+ and \verb+proj.4+ libraries are available and where they are located.
+arguments that should be passed to the compiler or linker. 
 
 The following \verb+make.inc+ file includes all configurable options:
 \begin{verbatim}
-etree = no
 proj = no
-SW4ROOT = /Users/petersson1
-
+hdf5 = no
+SW4ROOT = /my/path/to/installed/library
 CXX = mpicxx
 FC  = mpif77
-
 EXTRA_CXX_FLAGS = -DUSING_MPI
 EXTRA_FORT_FLAGS = -fno-underscoring
 EXTRA_LINK_FLAGS = -framework vecLib
 \end{verbatim}
-The \verb+etree+ variable should be set to \verb+yes+ or \verb+no+, to indicate whether or not the
-cencalvm and related libraries are available. The \verb+SW4ROOT+ variable is only used when
-\verb+etree=yes+. The \verb+CXX+ and \verb+FC+ variables should be set to the names of the C++ and
+The \verb+CXX+ and \verb+FC+ variables should be set to the names of the C++ and
 Fortran compilers, respectively. Finally, the \verb+EXTRA_CXX_FLAGS+, \verb+EXTRA_FORT_FLAGS+, and
 \verb+EXTRA_LINK_FLAGS+ variables should contain any additional arguments that need to be passed to
 the C++ compiler, Fortran compiler, or linker, on your system.
 
-\subsection{Building \emph{SW4} with proj.4 and/or efile support}
-The installation of the proj.4, euclid, and cencalvm libraries is discussed in
-Section~\ref{sec:cencalvm-install}. Note that the proj.4 libraray enables the more advanced
-geographical mapping keywords in the {\tt grid} command and is also required by the {\tt rfile}
-command. To enable the {\tt efile} command, you have to also install the {\tt euclid} and {\tt
-  cencalvm} libraries. Note that the latter two libraries are only needed by the {\tt efile}
-command. If you are not planning on using that command, there is no need to install those
-libraies. This is a change from \emph{SW4} version 1.0.
+\subsection{Building \emph{SW4} with PROJ, HDF5, and ZFP support}
+The PROJ libraray enables the more advanced geographical mapping keywords in the {\tt grid} command and is also required by the {\tt rfile, sfile} and {\tt gmg} commands. To enable the {\tt sfile}, {\tt ssioutput}, and {\tt gmg} commands, you have to also install the {\tt HDF5} library. To use ZFP compression for the {\tt ssioutput} command, {\tt ZFP} and {\tt H5Z-ZFP} are required. See Section \ref{sec:proj} for installing these libraries.
 
-Once you have successfully installed the proj.4, and optionally the euclid and cencalvm libraries,
-it should be easy to re-configure \emph{SW4} to use them. Simply edit your configuration file
-(\verb+make.inc+) by adding two lines to the top of the file, setting the {\tt etree} keyword to
+Once you have successfully installed the PROJ, and optionally the HDF5 and ZFP libraries, it should be easy to re-configure \emph{SW4} to use them. Simply edit your configuration file (\verb+make.inc+) by adding the following lines to the top of the file, setting the {\tt proj}, {\tt hdf5}, and {\tt zfp} keywords to
 {\tt yes} or {\tt no}, as appropriate.
 \begin{verbatim}
-proj = yes
-etree = no
+proj = yes 
+hdf5 = yes
+zfp = yes
 SW4ROOT = /thid/party/basedir
-...
+HDF5ROOT = /thid/party/basedir
+ZFPROOT = /thid/party/basedir
+H5ZROOT = /thid/party/basedir
 \end{verbatim}
+
 You then need to re-compile \emph{SW4}. Go to the \emph{SW4} main directory, clean out the previous
 object files and executable, and re-run make:
 \begin{verbatim}
-shell> cd /my/installation/dir/sw4-v2.0
-shell> make clean
-shell> make
+make clean
+make
 \end{verbatim}
 If all goes well, the ``SW4 lives'' banner is shown after the make command is
 completed. As before, the \verb+sw4+ executable will be located in the \verb+optimize+ or
@@ -420,27 +358,23 @@ After \emph{SW4} has been built with \verb+make+, go to the \verb+pytest+ direct
 \verb+test_sw4.py+. If the \verb+sw4+ executable resides in the \verb+optimize+ directory, you can
 run the basic tests by doing:
 \begin{verbatim}
-shell> cd pytest
-shell> ./test_sw4.py
+cd pytest
+./test_sw4.py ("./test_sw4.py -u 0" if HDF5 is not installed)
 \end{verbatim}
 If all goes well, you should see the following output:
 \begin{verbatim}
->shell test_sw4.py
 Running all tests for level 0 ...
-Starting test # 1 in directory: meshrefine with input file: refine-el-1.in
-Test # 1 Input file: refine-el-1.in PASSED
-Starting test # 2 in directory: meshrefine with input file: refine-att-1.in
-Test # 2 Input file: refine-att-1.in PASSED
+Test # 1 Input file: energy-nomr-2nd-1.in PASSED
+Test # 2 Input file: energy-mr-4th-1.in PASSED
 ...
-Starting test # 12 in directory: lamb with input file: lamb-1.in
-Test # 12 Input file: lamb-1.in PASSED
-Out of 12 tests, 12 passed and 0 failed.
+Test # 25 Input file: loh1-h100-mr-restart-hdf5-1.in PASSED
+Out of 25 tests, 0 failed, 23 passed, and 2 skipped
 \end{verbatim}
 Some aspects of the testing can be modified by providing command line arguments to
 \verb+test_sw4.py+. For a complete list of options do \verb+test_sw4.py --help+, which currently
 give the output:
 \begin{verbatim}
-shell> ./test_sw4.py --help
+./test_sw4.py --help
 usage: test_sw4.py [-h] [-v] [-l {0,1,2}] [-m MPITASKS] [-d SW4_EXE_DIR]
 
 optional arguments:
@@ -450,8 +384,20 @@ optional arguments:
                         testing level
   -m MPITASKS, --mpitasks MPITASKS
                         number of mpi tasks
+  -t OMPTHREADS, --ompthreads OMPTHREADS
+                        number of omp threads per task
   -d SW4_EXE_DIR, --sw4_exe_dir SW4_EXE_DIR
                         name of directory for sw4 executable
+  -p PYTEST_DIR, --pytest_dir PYTEST_DIR
+                        full path to the directory of pytest
+                        (/path/sw4/pytest)
+  -u {0,1,2,3,4}, --usehdf5 {0,1,2,3,4}
+                        run HDF5 tests with, 0 no HDF5, 1 first HDF5 case, 2
+                        second case,..., 4 all cases
+  -g {0,1}, --geodynbc {0,1}
+                        run Geodynbc tests with, 0 skip, 1 both cases
+  -A CPU_ALLOCATION, --cpu_allocation CPU_ALLOCATION
+                        name of cpu bank/allocation
 \end{verbatim}
 Note  that the directory name for the \verb+sw4+ executable should be given relative to the main
 \verb+sw4+ directory.
@@ -466,11 +412,13 @@ Section~\ref{cha:ctest-sw4} for details.
 
 To use CMake, navigate to the top {\tt sw4} directory and run the following commands:
 \begin{verbatim}
-shell> mkdir build
-shell> cd build
-shell> cmake [options] ..
-shell> make
+  > mkdir build
+  > cd build
+  > cmake [options] ..
+  > make
+  > make install
 \end{verbatim}
+
 The two dots after {\tt cmake [options]} are essential and instructs it to look in the parent
 directory for the {\tt CMakeLists.txt} file.
  
@@ -480,10 +428,6 @@ makefiles that are appropriate for your system. You then run \verb+make+ to comp
 run \texttt{make VERBOSE=1}.  Once SW4 has been successfully built, you will see the
 ``SW4 Lives!'' banner on the screen.
 
-NOTE: \verb+cmake+ puts the \verb+sw4+ executable in the \verb+build/bin+ directory. This is
-different from regular {\tt make}, which puts the executable in the \verb+optimize+
-directory.
-
 NOTE: If you want to rebuild \verb+sw4+ with a new set of options, you can force \verb+cmake+ to start
 from scratch by removing the file \verb+CMakeCache.txt+ in the \verb+build+ directory. Another way
 is to remove all files in the \verb+build+ directory.
@@ -491,14 +435,14 @@ is to remove all files in the \verb+build+ directory.
 \subsection{CMake Options}
 CMake provides several options to allow customized configuration of \emph{SW4}.  To use any option,
 add \texttt{-D\textless option\textgreater=\textless value\textgreater} to the options in the
-\texttt{cmake} command.  For example:
+\texttt{cmake} command.  For example, when building SW4 with the PROJ library:
 %
 \begin{verbatim}
-cmake -DTESTING_LEVEL=1 -DCMAKE_BUILD_TYPE=Debug ..
+  > export 
+  > cmake -DUSE_PROJ=ON -DPROJ_DIR=${SW4ROOT}/install/lib64/cmake/proj ..
 \end{verbatim}
 %
-configures \emph{SW4} with testing level 1, to be compiled with debugging symbols in the object
-files. A list of options is shown in the table below.
+A list of options is shown in the table below.
 %
 \begin{center}
 \begin{tabular}{|l|c|p{0.55\textwidth}|}
@@ -506,12 +450,15 @@ files. A list of options is shown in the table below.
 Option & Default & Details \\
 \hline
 %
-PROJ4\_HOME & (none) & The path to the Proj.4 installation to use when compiling
-\emph{SW4}. \\ \hline
+USE\_PROJ & OFF & Enable PROJ library. \\ \hline
+PROJ\_DIR & (none) & The path to the PROJ installation. \\ \hline
 %
-CENCALVM\_HOME & (none) & The path to the cencalvm installation to use when compiling
-\emph{SW4}. \\ \hline
+USE\_HDF5 & OFF & Enable HDF5 library. \\ \hline
+HDF5\_DIR & (none) & The path to the HDF5 installation. \\ \hline
 %
+USE\_ZFP & OFF & Enable ZFP compression. \\ \hline
+ZFP\_DIR & (none) & The path to the ZFP installation. \\ \hline
+H5Z\_ZFP\_DIR & (none) & The path to the H5Z-ZFP installation. \\ \hline
 CMAKE\_BUILD\_TYPE & Release & The type of build to setup. Can be either \texttt{Debug},
 \texttt{Release}, or \texttt{RelWithDebInfo}.  This affects the type of optimization and debug flags
 used in compiling \emph{SW4}. \\ \hline
@@ -548,24 +495,24 @@ to run on the debug partition using 128 cores. To modify the default MPI executi
 other runtime parameters, the variables MPIEXEC, MPIEXEC\_NUMPROC\_FLAG, and
 MPIEXEC\_PREFLAGS can be set as in the following example:
 \begin{verbatim}
-cmake -DTESTING_LEVEL=2 -DMPI_NUM_TEST_PROCS=128 -DMPIEXEC=/usr/bin/srun \
+cmake -DTESTING_LEVEL=2 -DMPI_NUM_TEST_PROCS=128 -DMPIEXEC=srun \
       -DMPIEXEC_NUMPROC_FLAG=-n -DMPIEXEC_PREFLAGS=-ppdebug ..
 \end{verbatim}
 
-After the proj.4, euclid and cencalvm libraries have been installed (see next section), you need to tell
+After the PROJ and HDF5 libraries have been installed (see next section), you need to tell
 \verb+cmake+ where to find them. On the LC-machines, all three libraries are currently installed under
 \verb+/usr/apps/wpp+, and you can use the following command options to configure \verb+sw4+:
 \begin{verbatim}
-cmake -DTESTING_LEVEL=2 -DMPI_NUM_TEST_PROCS=36 -DMPIEXEC=/usr/bin/srun \
+cmake -DTESTING_LEVEL=2 -DMPI_NUM_TEST_PROCS=36 -DMPIEXEC=srun \
       -DMPIEXEC_NUMPROC_FLAG=-n -DMPIEXEC_PREFLAGS=-ppdebug \
-      -DPROJ4_HOME=/usr/apps/wpp -DCENCALVM_HOME=/usr/apps/wpp ..
+      -DUSE_HDF5=ON -DPROJ_DIR=/usr/apps/wpp \
+      -DUSE_PROJ=ON -DHDF5_DIR=/usr/apps/wpp ..
 \end{verbatim}
 To verify that \verb+cmake+ actually found the libraries, pay attention to the
 following lines of the output from the \verb+cmake+ command:
 \begin{verbatim}
 ...
--- Found PROJ4: /usr/apps/wpp/lib/libproj.so  
--- Found CENCALVM: /usr/apps/wpp/lib/libcencalvm.so;/usr/apps/wpp/lib/libetree.so  
+-- Found PROJ: /usr/apps/wpp/lib/libproj.so  
 ...
 \end{verbatim}
 
@@ -631,76 +578,121 @@ Total Test time (real) =  65.35 sec
 If a test fails you can check the details in the output log at
 \texttt{Testing/Temporary/LastTest.log}.
 
-\section{Installing the proj.4, euclid, and cencalvm packages}\label{sec:cencalvm-install}
-\index{installation!cencalvm} \index{installation!efile}
+\section{Installing the PROJ, HDF5, and ZFP}\label{sec:proj}
+\index{installation!proj} \index{installation!hdf5}
 
-If you are only interested in using the advanced geographical mapping options of the {\tt grid} command,
-or the {\tt rfile} command, you only need to install the proj.4 package.
+If you are interested in using the advanced geographical mapping options of the {\tt grid} command, the {\tt sfile}, or the {\tt gmg} command, you need to install the PROJ package. For {\tt sfile}, {\tt ssioutput},  and {\tt gmg}, the HDF5 library is also required. To use the {\tt ssioutput} command with ZFP compression, both ZFP library and the ZFP HDF5 filter library (H5Z-ZFP) are required.  
 
-The following instructions describe how to install all three packages. For simplicity all packages
+The following instructions describe how to install the two packages. For simplicity all packages
 are installed under the same top directory. If you are using {\tt cmake}, you may optionally put the
-proj.4 package in a separate directory. In the following we shall assume that all packages are
+PROJ and HDF5 packages in a separate directory. In the following we shall assume that all packages are
 installed under the same top directory, and that you assign the name of that directory to the
 environment variable \verb+SW4ROOT+. When you are finished installing the packages, the
 corresponding include and library files should be in the sub-directories \verb+${SW4ROOT}/include+
 and \verb+${SW4ROOT}/lib+, respectively.
 
-The cencalvm library was developed by Brad Aagaard at USGS. Instructions for building the cencalvm
-library as well as downloading the Etree database files for Northern California, can
-currently be downloaded from
+\subsection{PROJ}
+The PROJ library requires SQLite, if your system does not have it installed already, it can be compiled with the following steps:
 \begin{verbatim}
-http://earthquake.usgs.gov/data/3dgeologic/cencalvm_doc/INSTALL.html
+  # Download sqlite from https://www.sqlite.org/download.html (sqlite-autoconf-x)
+  > tar xf sqlite-autoconf-x.tar.gz
+  > cd sqlite-autoconf-x/
+  > ./configure --prefix=${SW4ROOT}
+  > make
+  > make install
 \end{verbatim}
-The installation process for cencalvm, which is outlined below, is described in detail on the above
-web page.  Note that cencalvm relies on both the euclid and the proj.4 libraries.
 
-The euclid library must be installed manually by explicitly copying all include files to
-the include directory and all libraries to the lib directory,
-\begin{verbatim}
-shell> cd euclid3-1.2/libsrc
-shell> make
-shell> cp *.h ${SW4ROOT}/include
-shell> cp libetree.* ${SW4ROOT}/lib
-\end{verbatim}
-The proj4 library should be configured to be installed in \verb+${SW4ROOT}+. This is accomplished by
-\begin{verbatim}
-shell> cd proj-4.7.0
-shell> configure --prefix=${SW4ROOT}
-shell> make
-shell> make install
-\end{verbatim}
-We remark that the {\tt proj.4} library can alternatively be installed using {\tt macports} (if you are
-on a Mac OSX machine).
+The PROJ library (version 9 and later is recommended) can be installed by the following steps:
 
-The cencalvm library should also be configured to be installed in \verb+${SW4ROOT}+. You also have to help
-the configure script finding the include and library files for the proj.4 and etree libraries,
 \begin{verbatim}
-shell> cd cencalvm-0.6.5
-shell> configure --prefix=${SW4ROOT} CPPFLAGS="-I${SW4ROOT}/include" \
-                 LDFLAGS="-L${SW4ROOT}/lib"
-shell> make
-shell> make install
+  # Download PROJ from https://proj.org/download.html
+  > tar xf proj-x.x.x.tar.gz
+  > cd proj-x.x.x
+  > mkdir build
+  > cd build
+  > cmake -DBUILD_APPS=OFF -DCMAKE_INSTALL_PREFIX=${SW4ROOT}
+-DSQLITE3_INCLUDE_DIR=${SW4ROOT}/include
+-DSQLITE3_LIBRARY=${SW4ROOT}/lib/libsqlite3.so  ..
+
+  # Note that the two -DSQLITE3 flags are needed if you compiled SQLite yourself.
+  > make
+  > make install
+\end{verbatim}
+
+\subsection{HDF5}
+Installing HDF5 (version 1.12 and later is recommended) can be done with the following steps:
+\begin{verbatim}
+  # Download HDF5 from https://www.hdfgroup.org/downloads/hdf5/source-code
+  > tar xf hdf5-1.xx.x.tar.gz
+  > cd hdf5-1.xx.x
+  > mkdir build
+  > cd build
+  > cmake -DHDF5_ENABLE_PARALLEL=ON -DCMAKE_INSTALL_PREFIX=${SW4ROOT}
+  > make
+  > make install
+\end{verbatim}
+
+\subsection{ZFP and H5Z-ZFP}
+We recommend to use use ZFP and H5Z-ZFP's latest stable release version. 
+
+Installing ZFP can be done with the following steps:
+\begin{verbatim}
+  # Download ZFP from https://github.com/LLNL/zfp/releases
+  > tar xf zfp-x.x.x.tar.gz
+  > cd zfp-x.x.x
+  > mkdir build
+  > cd build
+  > cmake -DZFP_BIT_STREAM_WORD_SIZE=8 -DCMAKE_INSTALL_PREFIX=${SW4ROOT} ..
+  > make
+  > make install
+\end{verbatim}
+
+Installing H5Z-ZFP can be done with the following steps:
+\begin{verbatim}
+  # Download H5Z-ZFP from https://github.com/LLNL/H5Z-ZFP/releases
+  > tar xf vx.x.x.tar.gz
+  > cd H5Z-ZFP-x.x.x
+  > mkdir build
+  > cd build
+  > export HDF_DIR=/path/to/hdf5/install
+  > export ZFP_DIR=/path/to/zfp/install
+  > cmake -DCMAKE_INSTALL_PREFIX=${SW4ROOT} ..
+  > make
+  > make install
 \end{verbatim}
 
 To verify that the libraries have been installed properly, you should go to the \verb+SW4ROOT+
-directory and list the {\tt lib} sub-directory (\verb+cd ${SW4ROOT}; ls lib+). You should see the
+directory and list the {\tt lib} sub-directory (\verb+cd ${SW4ROOT}; ls lib lib64+). You should see the
 following files (on Mac OSX machines, the .so extension is replaced by .dylib ):
 \begin{verbatim}
-shell> cd ${SW4ROOT}
-shell> ls lib
-libetree.so libetree.a 
-libproj.so libproj.a libproj.la 
-libcencalvm.a libcencalvm.la libcencalvm.so 
+  > cd ${SW4ROOT}
+  > ls lib lib64
+  > lib
+  > libhdf5.so ...
+  > lib64
+  > libproj.so ...
 \end{verbatim}
+
 Furthermore, if you list the include sub-directory, you should see include files such as 
 \begin{verbatim}
-shell> cd ${SW4ROOT} %$
-shell> ls include
-btree.h etree.h etree_inttypes.h
-nad_list.h projects.h proj_api.h
-cencalvm
+  > cd ${SW4ROOT}
+  > ls include
+  > proj.h hdf5.h ...
 \end{verbatim}
-Note that the include files for cencalvm are in the sub-directory with the same name.
+
+\subsection{SW4 with PROJ, HDF5, and ZFP}
+To build SW4 with all the libraries can be done using CMake with the following commands:
+
+\begin{verbatim}
+  > export PROJ_ROOT=/path/to/proj/install
+  > export HDF5_ROOT=/path/to/hdf5/install
+  > export ZFP_ROOT=/path/to/zfp/install
+  > export H5Z_ZFP_ROOT=/path/to/h5z_zfp/install
+  > cmake -DUSE_HDF5=ON -DUSE_PROJ=ON -DUSE_ZFP=ON ..
+  > make
+\end{verbatim}
+
+
 
 \section{Disclaimer} 
 This document was prepared as an account of work sponsored by an agency of the United States

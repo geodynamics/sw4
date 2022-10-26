@@ -1265,9 +1265,9 @@ void EW::processGrid(char* buffer)
   // hard code units to be in meters
   proj0 << " +units=m";
 
-#if !defined(ENABLE_PROJ4) && !defined(ENABLE_PROJ_6) 
+#if !defined(ENABLE_PROJ)
   CHECK_INPUT( !use_geoprojection, "ERROR: need to configure SW4 with proj=yes to use projections "
-               "from the Proj4 library");
+               "from the PROJ library (version 6 or later)");
 #endif
   if( use_geoprojection )
   {
@@ -5407,7 +5407,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
   bool ncyc_set = false;
 
   timeDep tDep = iRickerInt;
-  char formstring[100];
+  char formstring[1000];
   char dfile[1000];
 
   strcpy(formstring, "Ricker");
@@ -5638,7 +5638,7 @@ void EW::processSource(char* buffer, vector<vector<Source*> > & a_GlobalUniqueSo
       else if (startswith("type=",token))
       {
          token += 5;
-         strncpy(formstring, token,100);
+         strncpy(formstring, token,1000);
          if (!strcmp("Ricker",formstring))
             tDep = iRicker;
          else if (!strcmp("Gaussian",formstring))
@@ -6036,7 +6036,7 @@ void EW::processRuptureHDF5(char* buffer, vector<vector<Source*> > & a_GlobalUni
 #ifdef USE_HDF5
   int event = 0;
   bool rfileset=false;
-  char rfile[100];
+  char rfile[1000];
   double stime, etime;
   stime = MPI_Wtime();
 
@@ -6066,7 +6066,7 @@ void EW::processRuptureHDF5(char* buffer, vector<vector<Source*> > & a_GlobalUni
       if (startswith("file=",token))
       {
 	token += 5; // read past 'file='
-         strncpy(rfile, token,100);
+         strncpy(rfile, token,1000);
 	 rfileset = true;
       }
       else if(startswith("event=",token))
@@ -6136,9 +6136,9 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
   bool rfileset=false;
 
   timeDep tDep = iDiscrete;
-  char formstring[100];
+  char formstring[1000];
   strcpy(formstring, "Discrete");
-  char rfile[100];
+  char rfile[1000];
 
 // bounding box
 // only check the z>zmin when we have topography. For a flat free surface, we will remove sources too 
@@ -6166,7 +6166,7 @@ void EW::processRupture(char* buffer, vector<vector<Source*> > & a_GlobalUniqueS
       if (startswith("file=",token))
       {
 	token += 5; // read past 'file='
-         strncpy(rfile, token,100);
+         strncpy(rfile, token,1000);
 	 rfileset = true;
       }
       else if(startswith("event=",token))
