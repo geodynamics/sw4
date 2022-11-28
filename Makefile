@@ -163,8 +163,14 @@ else
    debugdir := $(debugdir)_mp
    optdir   := $(optdir)_mp
    profiledir   := $(profiledir)_mp
-   CXXFLAGS += -fopenmp
-   FFLAGS   += -fopenmp
+   ifeq ($(UNAME_S),Darwin)
+      CXXFLAGS += -lomp
+      FFLAGS   += -lomp
+   else
+      CXXFLAGS += -fopenmp
+      FFLAGS   += -fopenmp
+   endif
+
 endif
 
 ifdef EXTRA_FORT_FLAGS
@@ -300,7 +306,7 @@ sw4: $(FSW4) $(FOBJ)
 	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
 	@echo "******************************************************"
 	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
-# test: linking with openmp for the routine rhs4sgcurv.o
+# test: linking with f for the routine rhs4sgcurv.o
 #	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
 	@cat wave.txt
 	@echo "*** Build directory: " $(builddir) " ***"
