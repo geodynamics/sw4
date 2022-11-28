@@ -163,7 +163,7 @@ else
    debugdir := $(debugdir)_mp
    optdir   := $(optdir)_mp
    profiledir   := $(profiledir)_mp
-   ifeq ($(UNAME_S),Darwin)
+   ifeq ($(UNAME),Darwin)
       CXXFLAGS += -lomp
       FFLAGS   += -lomp
    else
