@@ -101,9 +101,9 @@ else
       include configs/make.fourier
       foundincfile := "configs/make.fourier"
    # for any other MacOS system
-    else
-       include configs/make.osx
-       foundincfile := "configs/make.osx"
+   # else
+   #    include configs/make.osx
+   #    foundincfile := "configs/make.osx"
     endif
   endif
 
@@ -163,8 +163,14 @@ else
    debugdir := $(debugdir)_mp
    optdir   := $(optdir)_mp
    profiledir   := $(profiledir)_mp
-   CXXFLAGS += -fopenmp
-   FFLAGS   += -fopenmp
+   ifeq ($(UNAME),Darwin)
+      CXXFLAGS += -lomp
+      FFLAGS   += -lomp
+   else
+      CXXFLAGS += -fopenmp
+      FFLAGS   += -fopenmp
+   endif
+
 endif
 
 ifdef EXTRA_FORT_FLAGS
