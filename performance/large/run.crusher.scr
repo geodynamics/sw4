@@ -6,7 +6,10 @@
 #SBATCH -p batch
 #SBATCH -N 1
 
+export FI_MR_CACHE_MAX_COUNT=0
 export MPICH_GPU_SUPPORT_ENABLED=1
+# Option below for multinode runs only
+export MPICH_OFI_NIC_POLICY=NUMA
 export SCR_DEBUG=1
 export SCR_CACHE_BYPASS=0
 export SCR_FLUSH=0
