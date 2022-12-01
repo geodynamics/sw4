@@ -89,17 +89,13 @@ ifeq ($(USERMAKE),configs/make.inc)
   include configs/make.inc
   foundincfile := "configs/make.inc"
 else
-
+# Below are commented out for Spack install
 # if configs/make.inc does not exist
  # ifeq ($(UNAME),Darwin)
-  # for Anders' old laptop
+  # for Anders' laptop 
   #  ifeq ($(findstring chebyshev,$(HOSTNAME)),chebyshev)
   #    include configs/make.chebyshev
   #    foundincfile := "configs/make.chebyshev"
-  # for Anders' new laptop
-  #  else ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
-  #    include configs/make.fourier
-  #    foundincfile := "configs/make.fourier"
    # for any other MacOS system
    # else
    #    include configs/make.osx
