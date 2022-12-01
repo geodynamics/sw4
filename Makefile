@@ -93,13 +93,13 @@ else
 # if configs/make.inc does not exist
   ifeq ($(UNAME),Darwin)
   # for Anders' old laptop
-    ifeq ($(findstring chebyshev,$(HOSTNAME)),chebyshev)
-      include configs/make.chebyshev
-      foundincfile := "configs/make.chebyshev"
+  #  ifeq ($(findstring chebyshev,$(HOSTNAME)),chebyshev)
+  #    include configs/make.chebyshev
+  #    foundincfile := "configs/make.chebyshev"
   # for Anders' new laptop
-    else ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
-      include configs/make.fourier
-      foundincfile := "configs/make.fourier"
+  #  else ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
+  #    include configs/make.fourier
+  #    foundincfile := "configs/make.fourier"
    # for any other MacOS system
    # else
    #    include configs/make.osx
