@@ -88,10 +88,10 @@ USERMAKE := $(shell if test -r configs/make.inc; then echo "configs/make.inc"; f
 ifeq ($(USERMAKE),configs/make.inc)
   include configs/make.inc
   foundincfile := "configs/make.inc"
-else
+# else
 
 # if configs/make.inc does not exist
-  ifeq ($(UNAME),Darwin)
+ # ifeq ($(UNAME),Darwin)
   # for Anders' old laptop
   #  ifeq ($(findstring chebyshev,$(HOSTNAME)),chebyshev)
   #    include configs/make.chebyshev
@@ -104,7 +104,7 @@ else
    # else
    #    include configs/make.osx
    #    foundincfile := "configs/make.osx"
-    endif
+   # endif
   endif
 
 # put the variables in the configs/make.xyz file
