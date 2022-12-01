@@ -89,23 +89,19 @@ ifeq ($(USERMAKE),configs/make.inc)
   include configs/make.inc
   foundincfile := "configs/make.inc"
 else
-
+# Below are commented out for Spack install
 # if configs/make.inc does not exist
-  ifeq ($(UNAME),Darwin)
-  # for Anders' old laptop
-    ifeq ($(findstring chebyshev,$(HOSTNAME)),chebyshev)
-      include configs/make.chebyshev
-      foundincfile := "configs/make.chebyshev"
-  # for Anders' new laptop
-    else ifeq ($(findstring fourier,$(HOSTNAME)),fourier)
-      include configs/make.fourier
-      foundincfile := "configs/make.fourier"
+ # ifeq ($(UNAME),Darwin)
+  # for Anders' laptop 
+  #  ifeq ($(findstring chebyshev,$(HOSTNAME)),chebyshev)
+  #    include configs/make.chebyshev
+  #    foundincfile := "configs/make.chebyshev"
    # for any other MacOS system
    # else
    #    include configs/make.osx
    #    foundincfile := "configs/make.osx"
-    endif
-  endif
+   # endif
+  # endif
 
 # put the variables in the configs/make.xyz file
   ifeq ($(UNAME),Linux)
@@ -164,8 +160,8 @@ else
    optdir   := $(optdir)_mp
    profiledir   := $(profiledir)_mp
    ifeq ($(UNAME),Darwin)
-      CXXFLAGS += -lomp
-      FFLAGS   += -lomp
+      CXXFLAGS += -Xpreprocessor  -fopenmp
+      FFLAGS   += -Xpreprocessor  -fopenmp
    else
       CXXFLAGS += -fopenmp
       FFLAGS   += -fopenmp
