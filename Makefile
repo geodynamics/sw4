@@ -164,8 +164,8 @@ else
    optdir   := $(optdir)_mp
    profiledir   := $(profiledir)_mp
    ifeq ($(UNAME),Darwin)
-      CXXFLAGS += -lomp
-      FFLAGS   += -lomp
+      CXXFLAGS += -Xpreprocessor  -fopenmp
+      FFLAGS   += -Xpreprocessor  -fopenmp
    else
       CXXFLAGS += -fopenmp
       FFLAGS   += -fopenmp
