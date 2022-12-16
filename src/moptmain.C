@@ -1241,6 +1241,8 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
          //                            for( int var=1 ; var <= 2 ; var++ )
          //         
 
+         h = 1e-3; // set step size in FD approx
+
          for( int indg=0; indg < nmpard_global  ; indg++)
          {
            ssize_t ind = mopt->m_mp->local_index(indg);
@@ -1251,9 +1253,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
                         double x0;
                         if( ind >=0 )
                         {
-                           h = 1e-3;
-                  //               h = std::max(1.0,fabs(xm[ind]))*3e-8;
-                  //               h *= exafactor;
+                           
                            x0 = xm[ind];
                            xm[ind] += h;
                         }
@@ -1301,7 +1301,7 @@ void gradient_test( EW& simulation, vector<vector<Source*> >& GlobalSources,
                               cout << setw(12) << df2  << endl;
                            else
                               cout << endl;
-                           dftest << indg << " " << fp << " " << h << " " << dfan << " " << dfnum << " " << dfan-dfnum << endl;
+                           dftest << indg << " " << fp << " " << h << " " << dfan << " " << dfnum << endl;// " " << dfan-dfnum << endl;
                         }
                         //                        if( indg > 0 && (indg % 100 == 0) && (myRank == 0 && myRank < procevent))
                         //                           cout << "Done ind = " << indg << endl;
