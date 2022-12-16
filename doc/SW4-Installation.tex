@@ -69,7 +69,23 @@
 \section{Introduction}
 The sole purpose of this document is to describe the installation process of the seismic wave
 propagation code \emph{SW4}. A comprehensive user's guide is provided in the report by
-Petersson and Sjogreen~\cite{SW4-v3}.
+Petersson, Sjogreen, and Tang~\cite{SW4-v3}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Installing \emph{SW4} with spack}\label{cha:installing-sw4-spack}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\emph{SW4} can be installed with Spack (\url{https://spack.io}), which is a package manager for supercomputers, Linux, and macOS. It can automatically install \emph{SW4} together with all its dependent libraries, such as MPI, Proj, OpenMP, blas, lapack, HDF5, FFTW, and ZFP. 
+\begin{verbatim}
+  > git clone -c feature.manyFiles=true https://github.com/spack/spack.git
+  > . spack/share/spack/setup-env.sh
+  > spack install sw4
+\end{verbatim}
+
+Run the following command to add the installed \emph{SW4} executable to your system PATH:
+\begin{verbatim}
+  > . spack/share/spack/setup-env.sh
+  > spack load sw4
+\end{verbatim}
 
 \section{Compilers and third party libraries}
 
@@ -189,7 +205,7 @@ and sub-directories:
 
 The classical way of building \emph{SW4} uses \verb+make+. We recommend using GNU make, sometimes called \verb+gmake+. You can check the version of make on you system with the command
 \begin{verbatim}
-make -v
+    > make -v
 \end{verbatim}
 If you don't have GNU make installed on your system, you can obtain it from www.gnu.org.
 
@@ -281,8 +297,8 @@ By default, \verb+make+ builds an optimized \verb+sw4+ executable. It is located
 \end{verbatim}
 You can also build an executable with debugging symbols by adding the \verb+debug=yes+ option to \verb+make+,
 \begin{verbatim}
-cd /enter/your/path/sw4-v3.0
-make debug=yes
+  > cd /enter/your/path/sw4-v3.0
+  > make debug=yes
 \end{verbatim}
 In this case, the executable will be located in
 \begin{verbatim}
@@ -342,8 +358,8 @@ H5ZROOT = /thid/party/basedir
 You then need to re-compile \emph{SW4}. Go to the \emph{SW4} main directory, clean out the previous
 object files and executable, and re-run make:
 \begin{verbatim}
-make clean
-make
+  > make clean
+  > make
 \end{verbatim}
 If all goes well, the ``SW4 lives'' banner is shown after the make command is
 completed. As before, the \verb+sw4+ executable will be located in the \verb+optimize+ or
@@ -358,8 +374,8 @@ After \emph{SW4} has been built with \verb+make+, go to the \verb+pytest+ direct
 \verb+test_sw4.py+. If the \verb+sw4+ executable resides in the \verb+optimize+ directory, you can
 run the basic tests by doing:
 \begin{verbatim}
-cd pytest
-./test_sw4.py ("./test_sw4.py -u 0" if HDF5 is not installed)
+  > cd pytest
+  > ./test_sw4.py ("./test_sw4.py -u 0" if HDF5 is not installed)
 \end{verbatim}
 If all goes well, you should see the following output:
 \begin{verbatim}
@@ -374,7 +390,7 @@ Some aspects of the testing can be modified by providing command line arguments 
 \verb+test_sw4.py+. For a complete list of options do \verb+test_sw4.py --help+, which currently
 give the output:
 \begin{verbatim}
-./test_sw4.py --help
+    > ./test_sw4.py --help
 usage: test_sw4.py [-h] [-v] [-l {0,1,2}] [-m MPITASKS] [-d SW4_EXE_DIR]
 
 optional arguments:
