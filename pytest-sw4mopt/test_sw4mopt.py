@@ -3,7 +3,7 @@
 # Arguments:
 # -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir -t omp-threads
 
-import os, sys, argparse, subprocess, time, h5py, numpy
+import os, sys, argparse, subprocess, time
 #os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 
 #------------------------------------------------
@@ -142,6 +142,10 @@ def compare_misfit(base_file_name, test_file_name, errTol, lineNum, verbose):
 
 #------------------------------------------------
 def compare_dfm_hdf5(fname_res, fname_ref, errTol, verbose):
+    if 'h5py' not in sys.modules:
+        print("This test requires h5py")
+        sys.exit(-1)
+    import h5py, numpy
 
     success = True;
 
@@ -214,17 +218,17 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
         # mpirun_cmd="jsrun -a1 -c7 -g1 -l CPU-CPU -d packed -b packed:7 -M -gpu -n " + str(mpi_tasks)
     # add more machine names here
     elif 'Linux' in sys_name:
-        if mpi_tasks<=0: mpi_tasks = 1
+        if mpi_tasks<=0: mpi_tasks = 2
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
     else:
         #default mpi command
-        if mpi_tasks<=0: mpi_tasks = 1
+        if mpi_tasks<=0: mpi_tasks = 2
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
 
     return mpirun_cmd
 
 #------------------------------------------------
-def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=0, cpu_allocation="", verbose=False):
+def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=0, cpu_allocation="", usehdf5, verbose=False):
     assert sys.version_info >= (3,5) # named tuples in Python version >=3.3
     sep = '/'
     pytest_dir = os.getcwd()
@@ -280,9 +284,15 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
     num_meshes  = [1, 1, 1, 1, 1, 1] # default number of meshes for level 0
     
     print("Running all tests for level", testing_level, "...")
+
+    # Last two tests are HDF5 ones, only run when explicitly enabled
+    if usehdf5:
+        qend = len(all_dirs)
+    else:
+        qend = len(all_dirs) - 2
+
 # run all tests
-    for qq in range(len(all_dirs)):
-    
+    for qq in range(0, qend):
         test_dir = all_dirs[qq]
         base_case = all_cases[qq]
         result_file = all_results[qq]
@@ -407,9 +417,6 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
 #------------------------------------------------
 if __name__ == "__main__":
     assert sys.version_info >= (3,5) # named tuples in Python version >=3.3
-    if 'h5py' not in sys.modules:
-        print("This test requires h5py")
-        sys.exit(-1)
 
     # default arguments
     testing_level=0
@@ -417,6 +424,7 @@ if __name__ == "__main__":
     mpi_tasks=0 # machine dependent default
     omp_threads=0 #no threading by default
     cpu_allocation=""
+    usehdf5=False
 
     parser=argparse.ArgumentParser()
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
@@ -426,6 +434,7 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--ompthreads", type=int, help="number of omp threads per task")
     parser.add_argument("-d", "--sw4_exe_dir", help="name of directory for sw4 executable", default="optimize")
     parser.add_argument("-A","--cpu_allocation", help="name of cpu bank/allocation",default="")
+    parser.add_argument("-u", "--usehdf5", help="run HDF5 tests", action="store_true")
     args = parser.parse_args()
     if args.verbose:
         #print("verbose mode enabled")
@@ -445,7 +454,10 @@ if __name__ == "__main__":
     if args.cpu_allocation:
         #print("cpu_allocation specified=", args.cpu_allocation)
         cpu_allocation=args.cpu_allocation
+    if args.verbose:
+        print("HDF5 tests enabled")
+        usehdf5=True
 
-    if not main_test(sw4_exe_dir, testing_level, mpi_tasks, omp_threads, cpu_allocation, verbose):
+    if not main_test(sw4_exe_dir, testing_level, mpi_tasks, omp_threads, cpu_allocation, usehdf5, verbose):
         print("test_sw4 was unsuccessful")
         sys.exit(-1)
