@@ -3,7 +3,7 @@
 # Arguments:
 # -h: help, -v: verbose mode -l testing level, -m mpi-tasks, -d sw4-exe-dir -t omp-threads
 
-import os, sys, argparse, subprocess, time #, h5py, numpy
+import os, sys, argparse, subprocess, time, h5py, numpy
 #os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 
 #------------------------------------------------
@@ -407,6 +407,10 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
 #------------------------------------------------
 if __name__ == "__main__":
     assert sys.version_info >= (3,5) # named tuples in Python version >=3.3
+    if 'h5py' not in sys.modules:
+        print("This test requires h5py")
+        sys.exit(-1)
+
     # default arguments
     testing_level=0
     verbose=False
