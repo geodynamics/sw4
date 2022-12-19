@@ -228,7 +228,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     return mpirun_cmd
 
 #------------------------------------------------
-def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=0, cpu_allocation="", usehdf5, verbose=False):
+def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=0, cpu_allocation="", usehdf5=False, verbose=False):
     assert sys.version_info >= (3,5) # named tuples in Python version >=3.3
     sep = '/'
     pytest_dir = os.getcwd()

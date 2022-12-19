@@ -1,4 +1,4 @@
-name: linux 
+name: linux-sw4mopt 
 
 on:
   push:
