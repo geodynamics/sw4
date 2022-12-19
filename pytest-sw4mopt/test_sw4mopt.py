@@ -302,6 +302,7 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
             os.mkdir(test_dir)
 
         os.chdir(test_dir) # change to the new local directory
+        print("test_dir:", test_dir)
 
         # put all test cases in a list and add a for loop for each test_dir
         for ii in range(num_meshes[qq]):

@@ -168,7 +168,7 @@ void MaterialParameterization::read_parameters( const char* filename,
       close(fd);
    }
    MPI_Bcast( xptr, npars, MPI_DOUBLE, 0, m_ew->m_1d_communicator );
-   VERIFY2( errflag == 0, "Error no " << errflag << " in MaterialParameterization::read_parameters");
+   VERIFY2( errflag == 0, "Error no " << errflag << " in MaterialParameterization::read_parameters" << filename);
 }
 
 //-----------------------------------------------------------------------
