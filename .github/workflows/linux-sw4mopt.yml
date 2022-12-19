@@ -26,8 +26,6 @@ jobs:
       - name: Test SW4mopt
         working-directory: pytest-sw4mopt
         run: |
-          ls -lh /home/runner/work/sw4/optimize_mp/sw4mopt
-          ls -lh /home/runner/work/sw4/pytest-sw4mopt/reference/gradtest/grad.in
-          ls -lh /home/runner/work/sw4/sw4/optimize_mp/sw4mopt
-          ls -lh /home/runner/work/sw4/sw4/pytest-sw4mopt/reference/gradtest/grad.in
+          ls -lh /home/runner/work/
+          ls -lh /home/runner/work/sw4/
           ./test_sw4mopt.py -d optimize_mp
