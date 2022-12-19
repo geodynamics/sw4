@@ -313,6 +313,9 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
                 print('Starting test #', num_test, 'in directory:', test_dir, 'with input file:', test_case)
 
             sw4_input_file = reference_dir + sep + test_dir + sep + test_case
+            if not os.path.isfile(sw4_input_file):
+                print("ERROR: the input file", sw4_input_file, "does not exists")
+                return False
             #print('sw4_input_file = ', sw4_input_file)
 
 #            sw4_stdout_file = case_file + '.out'
