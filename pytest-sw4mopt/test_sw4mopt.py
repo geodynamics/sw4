@@ -218,11 +218,11 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
         # mpirun_cmd="jsrun -a1 -c7 -g1 -l CPU-CPU -d packed -b packed:7 -M -gpu -n " + str(mpi_tasks)
     # add more machine names here
     elif 'Linux' in sys_name:
-        if mpi_tasks<=0: mpi_tasks = 2
+        if mpi_tasks<=0: mpi_tasks = 1
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
     else:
         #default mpi command
-        if mpi_tasks<=0: mpi_tasks = 2
+        if mpi_tasks<=0: mpi_tasks = 1
         mpirun_cmd="mpirun -np " + str(mpi_tasks)
 
     return mpirun_cmd

@@ -26,8 +26,8 @@ jobs:
       - name: Test SW4mopt
         working-directory: pytest-sw4mopt
         run: |
-          mkdir gradtest
-          cd gradtest
-          mpirun -np 1 /home/runner/work/sw4/sw4/optimize_mp/sw4mopt /home/runner/work/sw4/sw4/pytest-sw4mopt/reference/gradtest/grad.in
-          cd ..
+          # mkdir gradtest
+          # cd gradtest
+          # mpirun -np 1 /home/runner/work/sw4/sw4/optimize_mp/sw4mopt /home/runner/work/sw4/sw4/pytest-sw4mopt/reference/gradtest/grad.in
+          # cd ..
           ./test_sw4mopt.py -d optimize_mp
