@@ -23,11 +23,6 @@ jobs:
       - name: Build SW4mopt
         run: make sw4mopt CXX=mpicxx FC=gfortran debug=no proj=yes hdf5=yes fftw=yes zfp=no prec=double EXTRA_LINK_FLAGS="-lgfortran -lhdf5 -llapack"  HDF5ROOT=/usr/lib/x86_64-linux-gnu/hdf5/openmpi FFTWHOME=/usr/lib/x86_64-linux-gnu -j2
 
-      - name: Test SW4mopt
-        working-directory: pytest-sw4mopt
-        run: |
-          # mkdir gradtest
-          # cd gradtest
-          # mpirun -np 1 /home/runner/work/sw4/sw4/optimize_mp/sw4mopt /home/runner/work/sw4/sw4/pytest-sw4mopt/reference/gradtest/grad.in
-          # cd ..
-          ./test_sw4mopt.py -d optimize_mp
+#      - name: Test SW4mopt
+#        working-directory: pytest-sw4mopt
+#        run: ./test_sw4mopt.py -d optimize_mp
