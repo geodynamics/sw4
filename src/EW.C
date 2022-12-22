@@ -48,8 +48,10 @@
 #if defined(SW4_EXPT_3)
 #include "curvilinear4sgcX3.h"
 #endif
+#ifdef ENABLE_GPU
 extern __constant__ double cmem_acof[384];
 extern __constant__ double cmem_acof_no_gp[384];
+#endif
 extern "C" {
 void tw_aniso_force(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                     int klast, float_sw4* fo, float_sw4 t, float_sw4 om,

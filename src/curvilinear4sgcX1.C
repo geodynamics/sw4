@@ -117,7 +117,7 @@ void curvilinear4sgX1_ci(
 // #pragma omp simd
 // #pragma ivdep
 //         for (int i = ifirst + 2; i <= ilast - 2; i++) {
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
     // LOOP -1
     // 32,4,2 is 4% slower. 32 4 4 does not fit
     Range<16> II(ifirst + 2, ilast - 1);

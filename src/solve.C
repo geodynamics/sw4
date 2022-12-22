@@ -87,7 +87,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 #endif
 
 #ifdef SW4_NORM_TRACE
-  std::ofstream norm_trace_file("Norms.dat");
+  std::ofstream norm_trace_file;
+  if (!getRank()) {
+    norm_trace_file.open("Norms.dat");
+  }
 #endif
   // print_hwm(getRank());
   // solution arrays

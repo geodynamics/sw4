@@ -207,7 +207,7 @@ void curvilinear4sgwind(
       SW4_PEEK;
       SYNC_DEVICE;
 #endif
-#if !defined(RAJA_ONLY_2)
+#if !defined(RAJA_ONLY_2) && defined(ENABLE_GPU)
 #ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
@@ -844,7 +844,7 @@ void curvilinear4sgwind(
 // #pragma omp simd
 // #pragma ivdep
 //           for (int i = ifirst + 2; i <= ilast - 2; i++) {
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
 
 #ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
@@ -2195,7 +2195,7 @@ void curvilinear4sgwind(
 // #pragma omp simd
 // #pragma ivdep
 //           for (int i = ifirst + 2; i <= ilast - 2; i++) {
-#if !defined(RAJA_ONLY_2)
+#if !defined(RAJA_ONLY_2) && defined(ENABLE_GPU)
 
 #ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);

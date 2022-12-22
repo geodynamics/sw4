@@ -438,7 +438,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
     }  // end if (!upper && !lower)
 
     if (upper) {
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
 #ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
@@ -776,7 +776,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
     }  // end if (upper)
 
     if (lower) {
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
 #ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);

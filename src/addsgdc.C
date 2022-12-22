@@ -87,7 +87,7 @@ void EW::addsgd4_ci(
     ASSERT_MANAGED(a_dcx);
     ASSERT_MANAGED(a_cox);
     ASSERT_MANAGED(a_strx);
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
     // LOOP -1
     //
     // 32,4,2 is 4% slower. 32 4 4 does not fit
@@ -402,7 +402,7 @@ void EW::addsgd4c_ci(
     // 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
     // 	    {
 
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
     // LOOP -1
     //
     // 32,4,2 is 4% slower. 32 4 4 does not fit

@@ -16,6 +16,7 @@
 #include "EW.h"
 #include "F77_FUNC.h"
 #include "caliper.h"
+#include "policies.h"
 #include "foralls.h"
 
 using namespace std;
@@ -2079,7 +2080,7 @@ void evalLu_Dip(
   auto& u = u_arg.getview();
   auto& lu = lu_arg.getview();
 
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
   Range<4> K(klb + 1, kle);
   Range<4> J(jlb + 1, jle);
   Range<4> I(ilb, ile + 1);
@@ -2090,6 +2091,7 @@ void evalLu_Dip(
 
 #else
 
+#if defined(ENABLE_GPU)
   using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
       128,
       RAJA::statement::Tile<
@@ -2105,6 +2107,9 @@ void evalLu_Dip(
                           RAJA::statement::For<
                               2, RAJA::cuda_thread_x_direct,
                               RAJA::statement::Lambda<0> > > > > > > > >;
+#else
+   using LOCAL_POL = DEFAULT_LOOP3;
+#endif 
 
   RAJA::RangeSegment k_range(klb + 1, kle);
   RAJA::RangeSegment j_range(jlb + 1, jle);
@@ -2227,7 +2232,7 @@ void evalLu_Dim(int ib, int ie, int jb, int je, int kb, int ke,
   // std::cout<<"SIZES DIM ("<<klb<<","<<(kle+1)<<")( "<<jlb+1<<","<<jle<<"
   // )("<<ilb+1<<","<<ile<<")\n";
   // 96 regs/thread nvcc
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
   Range<4> K(klb + 1, kle);
   Range<4> J(jlb + 1, jle);
   Range<4> I(ilb, ile + 1);
@@ -2242,6 +2247,7 @@ void evalLu_Dim(int ib, int ie, int jb, int je, int kb, int ke,
   //    for( int j=jlb+1 ; j <= jle-1; j++ )
   // 	 for( int i=ilb ; i <= ile; i++ )
 
+#if defined (ENABLE_GPU)
   using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
       128,
       RAJA::statement::Tile<
@@ -2257,6 +2263,9 @@ void evalLu_Dim(int ib, int ie, int jb, int je, int kb, int ke,
                           RAJA::statement::For<
                               2, RAJA::cuda_thread_x_direct,
                               RAJA::statement::Lambda<0> > > > > > > > >;
+#else
+   using LOCAL_POL = DEFAULT_LOOP3;
+#endif
 
   RAJA::RangeSegment k_range(klb + 1, kle);
   RAJA::RangeSegment j_range(jlb + 1, jle);
@@ -2374,7 +2383,7 @@ void evalLu_Djp(int ib, int ie, int jb, int je, int kb, int ke,
   auto& u = u_arg.getview();
   auto& lu = lu_arg.getview();
 
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
   Range<4> K(klb + 1, kle);
   Range<4> J(jlb, jle + 1);
   Range<16> I(ilb + 1, ile);
@@ -2385,6 +2394,7 @@ void evalLu_Djp(int ib, int ie, int jb, int je, int kb, int ke,
 
 #else
 
+#if defined(ENABLE_GPU)
   using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
       128,
       RAJA::statement::Tile<
@@ -2400,6 +2410,9 @@ void evalLu_Djp(int ib, int ie, int jb, int je, int kb, int ke,
                           RAJA::statement::For<
                               2, RAJA::cuda_thread_x_direct,
                               RAJA::statement::Lambda<0> > > > > > > > >;
+#else
+  using LOCAL_POL=DEFAULT_LOOP3;
+#endif
 
   RAJA::RangeSegment k_range(klb + 1, kle);
   RAJA::RangeSegment j_range(jlb, jle + 1);
@@ -2529,7 +2542,7 @@ void evalLu_Djm(int ib, int ie, int jb, int je, int kb, int ke,
   // std::cout<<"SIZES DJM ("<<klb<<","<<(kle+1)<<")( "<<jlb+1<<","<<jle<<"
   // )("<<ilb+1<<","<<ile<<")\n";
   // 100 regs/thread nvcc
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined (ENABLE_GPU)
   Range<4> K(klb + 1, kle);
   Range<4> J(jlb, jle + 1);
   Range<4> I(ilb + 1, ile);
@@ -2540,6 +2553,7 @@ void evalLu_Djm(int ib, int ie, int jb, int je, int kb, int ke,
 
 #else
 
+#if defined(ENABLE_GPU)
   using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
       128,
       RAJA::statement::Tile<
@@ -2555,6 +2569,9 @@ void evalLu_Djm(int ib, int ie, int jb, int je, int kb, int ke,
                           RAJA::statement::For<
                               2, RAJA::cuda_thread_x_direct,
                               RAJA::statement::Lambda<0> > > > > > > > >;
+#else
+  using LOCAL_POL = DEFAULT_LOOP3;
+#endif
 
   RAJA::RangeSegment k_range(klb + 1, kle);
   RAJA::RangeSegment j_range(jlb, jle + 1);
@@ -2681,7 +2698,7 @@ void evalLu_Dkp(int ib, int ie, int jb, int je, int kb, int ke,
   auto& u = u_arg.getview();
   auto& lu = lu_arg.getview();
 
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
   Range<4> K(klb, kle + 1);
   Range<4> J(jlb + 1, jle);
   Range<16> I(ilb + 1, ile);
@@ -2692,6 +2709,7 @@ void evalLu_Dkp(int ib, int ie, int jb, int je, int kb, int ke,
 
 #else
 
+#if defined(ENABLE_GPU)
   using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
       128,
       RAJA::statement::Tile<
@@ -2707,6 +2725,9 @@ void evalLu_Dkp(int ib, int ie, int jb, int je, int kb, int ke,
                           RAJA::statement::For<
                               2, RAJA::cuda_thread_x_direct,
                               RAJA::statement::Lambda<0> > > > > > > > >;
+#else
+  using LOCAL_POL = DEFAULT_LOOP3;
+#endif
 
   RAJA::RangeSegment k_range(klb, kle + 1);
   RAJA::RangeSegment j_range(jlb + 1, jle);
@@ -2835,7 +2856,7 @@ void evalLu_Dkm(int ib, int ie, int jb, int je, int kb, int ke,
   auto& lu = lu_arg.getview();
 
   // 122 Regs/thread
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
   Range<4> K(klb, kle + 1);
   Range<4> J(jlb + 1, jle);
   Range<4> I(ilb + 1, ile);
@@ -2847,6 +2868,7 @@ void evalLu_Dkm(int ib, int ie, int jb, int je, int kb, int ke,
 
 #else
 
+#if defined(ENABLE_GPU)
   using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
       128,
       RAJA::statement::Tile<
@@ -2862,6 +2884,9 @@ void evalLu_Dkm(int ib, int ie, int jb, int je, int kb, int ke,
                           RAJA::statement::For<
                               2, RAJA::cuda_thread_x_direct,
                               RAJA::statement::Lambda<0> > > > > > > > >;
+#else
+    using LOCAL_POL = DEFAULT_LOOP3;
+#endif
 
   RAJA::RangeSegment k_range(klb, kle + 1);
   RAJA::RangeSegment j_range(jlb + 1, jle);
@@ -2989,7 +3014,7 @@ void evalLu_DkpDip(int ib, int ie, int jb, int je, int kb, int ke,
   auto& u = u_arg.getview();
   auto& lu = lu_arg.getview();
 
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
   Range<4> K(klb, klb + 1);
   Range<4> J(jlb + 1, jle);
   Range<4> I(ilb, ile + 1);
@@ -3000,6 +3025,7 @@ void evalLu_DkpDip(int ib, int ie, int jb, int je, int kb, int ke,
 
 #else
 
+#if defined(ENABLE_GPU)
   using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
       128,
       RAJA::statement::Tile<
@@ -3015,6 +3041,9 @@ void evalLu_DkpDip(int ib, int ie, int jb, int je, int kb, int ke,
                           RAJA::statement::For<
                               2, RAJA::cuda_thread_x_direct,
                               RAJA::statement::Lambda<0> > > > > > > > >;
+#else
+   using LOCAL_POL = DEFAULT_LOOP3;
+#endif
 
   RAJA::RangeSegment k_range(klb, klb + 1);
   RAJA::RangeSegment j_range(jlb + 1, jle);
@@ -3136,7 +3165,7 @@ void evalLu_DkpDim(int ib, int ie, int jb, int je, int kb, int ke,
   auto& u = u_arg.getview();
   auto& lu = lu_arg.getview();
 
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
   Range<4> K(klb, klb + 1);
   Range<4> J(jlb + 1, jle);
   Range<4> I(ilb, ile + 1);
@@ -3146,6 +3175,8 @@ void evalLu_DkpDim(int ib, int ie, int jb, int je, int kb, int ke,
       tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1556> t, int i, int j, int k) {
 
 #else
+
+#if defined(ENABLE_GPU)
 
   using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
       128,
@@ -3162,6 +3193,9 @@ void evalLu_DkpDim(int ib, int ie, int jb, int je, int kb, int ke,
                           RAJA::statement::For<
                               2, RAJA::cuda_thread_x_direct,
                               RAJA::statement::Lambda<0> > > > > > > > >;
+  #else
+  using LOCAL_POL = DEFAULT_LOOP3;
+  #endif
 
   RAJA::RangeSegment k_range(klb, klb + 1);
   RAJA::RangeSegment j_range(jlb + 1, jle);
@@ -3284,7 +3318,7 @@ void evalLu_DkpDjp(int ib, int ie, int jb, int je, int kb, int ke,
   auto& u = u_arg.getview();
   auto& lu = lu_arg.getview();
 
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
   Range<4> K(klb, klb + 1);
   Range<4> J(jlb, jle + 1);
   Range<4> I(ilb + 1, ile);
@@ -3295,6 +3329,7 @@ void evalLu_DkpDjp(int ib, int ie, int jb, int je, int kb, int ke,
 
 #else
 
+#if defined(ENABLE_GPU)
   using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
       128,
       RAJA::statement::Tile<
@@ -3310,6 +3345,9 @@ void evalLu_DkpDjp(int ib, int ie, int jb, int je, int kb, int ke,
                           RAJA::statement::For<
                               2, RAJA::cuda_thread_x_direct,
                               RAJA::statement::Lambda<0> > > > > > > > >;
+  #else
+  using LOCAL_POL = DEFAULT_LOOP3;
+  #endif
 
   RAJA::RangeSegment k_range(klb, klb + 1);
   RAJA::RangeSegment j_range(jlb, jle + 1);
@@ -3432,7 +3470,7 @@ void evalLu_DkpDjm(int ib, int ie, int jb, int je, int kb, int ke,
   auto& u = u_arg.getview();
   auto& lu = lu_arg.getview();
 
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
   Range<4> K(klb, klb + 1);
   Range<4> J(jlb, jle + 1);
   Range<4> I(ilb + 1, ile);
@@ -3443,6 +3481,7 @@ void evalLu_DkpDjm(int ib, int ie, int jb, int je, int kb, int ke,
 
 #else
 
+#if defined(ENABLE_GPU)
   using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
       128,
       RAJA::statement::Tile<
@@ -3458,6 +3497,9 @@ void evalLu_DkpDjm(int ib, int ie, int jb, int je, int kb, int ke,
                           RAJA::statement::For<
                               2, RAJA::cuda_thread_x_direct,
                               RAJA::statement::Lambda<0> > > > > > > > >;
+  #else
+  using LOCAL_POL = DEFAULT_LOOP3;
+  #endif
 
   RAJA::RangeSegment k_range(klb, klb + 1);
   RAJA::RangeSegment j_range(jlb, jle + 1);
@@ -3931,7 +3973,7 @@ void evalLuCurv(int ib, int ie, int jb, int je, int kb, int ke, Sarray& u_arg,
   const int oj = ju == jl ? 1 : 0;
   const int oi = iu == il ? 1 : 0;
 
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
   Range<4> K(klb + ok, kle - ok + 1);
   Range<4> J(jlb + oj, jle - oj + 1);
   Range<4> I(ilb + oi, ile - oi + 1);
@@ -3946,6 +3988,7 @@ void evalLuCurv(int ib, int ie, int jb, int je, int kb, int ke, Sarray& u_arg,
   //    for( int j=jlb+1 ; j <= jle-1; j++ )
   // 	 for( int i=ilb ; i <= ile; i++ )
 
+#if defined(ENABLE_GPU)
   using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
       128,
       RAJA::statement::Tile<
@@ -3961,6 +4004,9 @@ void evalLuCurv(int ib, int ie, int jb, int je, int kb, int ke, Sarray& u_arg,
                           RAJA::statement::For<
                               2, RAJA::cuda_thread_x_direct,
                               RAJA::statement::Lambda<0> > > > > > > > >;
+#else
+  using LOCAL_POL = DEFAULT_LOOP3;
+#endif
 
   RAJA::RangeSegment k_range(klb + ok, kle - ok + 1);
   RAJA::RangeSegment j_range(jlb + oj, jle - oj + 1);

@@ -123,6 +123,10 @@ int main(int argc, char **argv) {
   printf("After MPI_Init %s \n",ctime(&now));
 }
 
+#ifdef SW4_NORM_TRACE
+  if (!myRank) std::cout<<"\n\n\n\nWARNING "" SW4 NORM TRACE is On. Output in Norms.dat \n\n\n";
+#endif
+
   MPI_Info info;
   MPI_Comm shared_comm;
   MPI_Info_create(&info);

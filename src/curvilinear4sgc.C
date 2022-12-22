@@ -169,7 +169,7 @@ void curvilinear4sg_ci(
       SW4_PEEK;
       SYNC_DEVICE;
 #endif
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
       // LOOP -1
       //
       // 32,4,2 is 4% slower. 32 4 4 does not fit
@@ -860,7 +860,7 @@ __syncthreads();
     SYNC_DEVICE;
 #endif
 
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
     // LOOP 0
     RangeGS<256, 4> IS(ifirst + 2, ilast - 1);
     RangeGS<1, 1> JS(jfirst + 2, jlast - 1);
@@ -1305,7 +1305,7 @@ __syncthreads();
     SW4_PEEK;
     SYNC_DEVICE;
 #endif
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
     // LOOP 1
     // RangeGS<256,4> IS(ifirst+2,ilast-1);
     // RangeGS<1,1>JS(jfirst+2,jlast-1);
@@ -1713,7 +1713,7 @@ __syncthreads();
     SW4_PEEK;
     SYNC_DEVICE;
 #endif
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
     // LOOP 2
     // RangeGS<256,4> IS(ifirst+2,ilast-1);
     // RangeGS<1,1>JS(jfirst+2,jlast-1);
@@ -2151,7 +2151,7 @@ __syncthreads();
 //         for (int i = ifirst + 2; i <= ilast - 2; i++) {
 
 //    const int UNROLL_LEN=1;
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
     // LOOP -1
     // 32,4,2 is 4% slower. 32 4 4 does not fit
 #ifdef ENABLE_CUDA

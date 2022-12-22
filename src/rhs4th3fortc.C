@@ -1215,7 +1215,7 @@ void rhs4th3fortsgstr_ci(
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP1");
 
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
 
 #ifdef SW4_AUTOTUNE
     RangeAT<384, __LINE__, 1> IJK_AT(ifirst + 2, ilast - 1, jfirst + 2,
@@ -1540,7 +1540,7 @@ void rhs4th3fortsgstr_ci(
     SW4_MARK_END("rhs4th3fortsgstr_ci::LOOP1");
     if (onesided[4] == 1) {
       SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP2");
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
 #ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
@@ -1900,7 +1900,7 @@ void rhs4th3fortsgstr_ci(
     if (onesided[5] == 1) {
       SW4_MARK_BEGIN("rhs4th3fortsgstr_ci::LOOP3");
       // printf("START LOOP3 \n");
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
 #ifdef ENABLE_CUDA
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
@@ -2596,7 +2596,10 @@ void satt_ci(float_sw4* __restrict__ up, float_sw4* __restrict__ qs,
   //#pragma simd
 
   // for (size_t i = 0; i < npts; i++) {
-  forall(0, npts, [=] RAJA_DEVICE(size_t i) {
+  //RAJA::forall(0, npts, [=] RAJA_DEVICE(size_t i) {
+  RAJA::forall<DEFAULT_LOOP1>(RAJA::RangeSegment(0, npts),
+                              [=] RAJA_DEVICE(size_t i) { 
+  
     float_sw4 fact = exp(-efact / qs[i]);
     up[i] *= fact;
     up[i + npts] *= fact;
@@ -2985,7 +2988,7 @@ void ve_bndry_stress_curvi_ci(
 
     // SW4_MARK_END("HOST CODE");
 
-#if !defined(RAJA_ONLY)  // Fine
+#if !defined(RAJA_ONLY)  && defined(ENABLE_GPU) // Fine
     Range<16> I(ifirst + 2, ilast - 1);
     Range<16> J(jfirst + 2, jlast - 1);
     forall2async(I, J, [=] RAJA_DEVICE(int i, int j) {

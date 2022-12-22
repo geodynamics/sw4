@@ -526,7 +526,7 @@ void EW::communicate_array(Sarray& u, int grid) {
 #if defined(ENABLE_GPU)
   communicate_array_async(u, grid);
 #else
-  communicate_array_hostu, grid);
+  communicate_array_host(u, grid);
 #endif
   return;
 }
@@ -1306,7 +1306,7 @@ void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
 #else  // #ifdef SW4_STAGED_MPI_BUFFERS
 
   // Code for PINNED,DEVICE AND MANAGED BUFFERS
-#if defined(RAJA_ONLY)
+#if defined(RAJA_ONLY) || not defined(ENABLE_GPU)
   RAJA::RangeSegment k_range(0, bl);
   RAJA::RangeSegment i_range(0, count);
   RAJA::kernel<BUFFER_POL>(RAJA::make_tuple(k_range, i_range),
@@ -1393,7 +1393,7 @@ void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
   // The PINNED, DEVICE and MANAGED cases
 #else
 
-#if !defined(RAJA_ONLY)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
   Range<16> k_range(0, bl);
   Range<16> i_range(0, count);
   forall2async(i_range, k_range, [=] RAJA_DEVICE(int i, int k) {
