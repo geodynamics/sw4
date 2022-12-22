@@ -1,0 +1,28 @@
+name: linux-sw4mopt 
+
+on:
+  push:
+    branches: [ master, developer ]
+  pull_request:
+    branches: [ master, developer ]
+
+  # Allows to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  SW4mopt:
+    runs-on: ubuntu-latest
+    # timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Dependencies
+        run: .github/workflows/dependencies-linux.sh
+
+      - name: Build SW4mopt
+        run: make sw4mopt CXX=mpicxx FC=gfortran debug=no proj=yes hdf5=yes fftw=yes zfp=no prec=double EXTRA_LINK_FLAGS="-lgfortran -lhdf5 -llapack"  HDF5ROOT=/usr/lib/x86_64-linux-gnu/hdf5/openmpi FFTWHOME=/usr/lib/x86_64-linux-gnu -j2
+
+#      - name: Test SW4mopt
+#        working-directory: pytest-sw4mopt
+#        run: ./test_sw4mopt.py -d optimize_mp
