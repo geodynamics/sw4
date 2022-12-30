@@ -234,8 +234,8 @@ void arsac(int LN, char *name, float **data, int *nerr)
   Adapted from FORTRAN version written by by Hafidh A. A. Ghalib, 1988.
 */
 {
-  int maxpts;
-  int i, j, k, l;
+  int maxpts, nread;
+  int i, j, j1, j2, k, l, iret;
   int has12345;
   FILE *fptr;
   float rval;
@@ -244,7 +244,7 @@ void arsac(int LN, char *name, float **data, int *nerr)
   char cval0[9], cval1[9], cval2[9];
   char cstr[81];
   char fstr[16];
-  char *endptr;
+  char *endptr, *ret;
   int ls;
   /*
           determine if the file exists for reading
@@ -265,7 +265,7 @@ void arsac(int LN, char *name, float **data, int *nerr)
   */
   /* read in   float header values 5 per line */
   for (i = 0; i < NRSTR; i += 5) {
-    fgets(cstr, 80, fptr);
+    ret = fgets(cstr, 80, fptr);
     for (k = 0, j = 0; k < 5; k++, j += 15) {
       strncpy(fstr, &cstr[j], 15);
       fstr[15] = '\0';
@@ -274,7 +274,7 @@ void arsac(int LN, char *name, float **data, int *nerr)
   }
   /* read in integer header values 5 per line */
   for (i = 0; i < NISTR; i += 5) {
-    fgets(cstr, 80, fptr);
+    ret = fgets(cstr, 80, fptr);
     for (k = 0, j = 0; k < 5; k++, j += 10) {
       strncpy(fstr, &cstr[j], 10);
       fstr[10] = '\0';
@@ -285,7 +285,7 @@ void arsac(int LN, char *name, float **data, int *nerr)
   for (i = 0; i < NCSTR; i += 3) {
     /* use fgets to get a string - scanf ignores a
             valid blank field */
-    fgets(cstr, 80, fptr);
+    ret = fgets(cstr, 80, fptr);
     strncpy(cval0, &cstr[0], 8);
     strncpy(cval1, &cstr[8], 8);
     strncpy(cval2, &cstr[16], 8);
@@ -345,7 +345,7 @@ void arsac(int LN, char *name, float **data, int *nerr)
     return;
   }
   for (j = 0; j < maxpts; j++) {
-    fscanf(fptr, "%g", &rval);
+    iret = fscanf(fptr, "%g", &rval);
     (*data)[j] = rval;
   }
 

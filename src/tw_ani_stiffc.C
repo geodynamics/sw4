@@ -23,7 +23,7 @@ void EW::tw_ani_stiff_ci(int ifirst, int ilast, int jfirst, int jlast,
   for (int k = kfirst; k <= klast; k++)
     for (int j = jfirst; j <= jlast; j++)
 #pragma ivdep
-#pragma simd
+      //#pragma simd
       for (int i = ifirst; i <= ilast; i++) {
         size_t ind = base + i + ni * j + nij * k;
         float_sw4 x = (i - 1) * h;
@@ -103,7 +103,7 @@ void EW::tw_ani_curvi_stiff_ci(
   for (int k = kfirst; k <= klast; k++)
     for (int j = jfirst; j <= jlast; j++)
 #pragma ivdep
-#pragma simd
+      //#pragma simd
       for (int i = ifirst; i <= ilast; i++) {
         size_t ind = base + i + ni * j + nij * k;
         float_sw4 x = xx[ind];

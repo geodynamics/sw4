@@ -256,10 +256,10 @@ void oddIoddJinterpJacobi(
         Uf(c, i, j, nkf + 1) = UfNew(c, i, j, nkf + 1);
         Uc(c, ic, jc, 0) = UcNew(c, ic, jc, 0);
       }
+  rmax[0] = rmax1 > rmax[0] ? rmax1 : rmax[0];
+  rmax[1] = rmax2 > rmax[1] ? rmax2 : rmax[1];
+  rmax[2] = rmax3 > rmax[2] ? rmax3 : rmax[2];
 
-  rmax[0] = rmax1;
-  rmax[1] = rmax2;
-  rmax[2] = rmax3;
 }  // end oddIoddJinterpJacobi
 
 // optimized version using macros instead of Sarray indexing
@@ -929,9 +929,9 @@ void oddIoddJinterp(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf,
       //	       }
     }  // end for ic, jc
 
-  rmax[0] = rmax1;
-  rmax[1] = rmax2;
-  rmax[2] = rmax3;
+  rmax[0] = rmax1 > rmax[0] ? rmax1 : rmax[0];
+  rmax[1] = rmax2 > rmax[1] ? rmax2 : rmax[1];
+  rmax[2] = rmax3 > rmax[2] ? rmax3 : rmax[2];
 #undef strc_x
 #undef strc_y
 #undef strf_x

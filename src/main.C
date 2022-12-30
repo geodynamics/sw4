@@ -33,7 +33,6 @@
 //#include "mpi.h"
 
 #include <mpi.h>
-#include <omp.h>
 
 #include <cstring>
 #include <fstream>
@@ -41,10 +40,9 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-
-#include "EW.h"
-#include "Mspace.h"
-#include "policies.h"
+#ifndef SW4_NOOMP
+#include <omp.h>
+#endif
 #include "version.h"
 #ifdef ENABLE_CUDA
 #include "cuda_profiler_api.h"
@@ -307,6 +305,7 @@ int main(int argc, char **argv) {
   H5Z_SZ_Init(cfgFile);
 #endif
 
+
 // make a new simulation object by reading the input file 'fileName'
 // nvtxRangePushA("outer");
 #if defined(SW4_EXCEPTIONS)
@@ -365,36 +364,35 @@ int main(int argc, char **argv) {
           cout << "Writing output to directory: " << simulation.getPath()
                << endl;
         }
-        // run the simulation
-        simulation.solve(GlobalSources[0], GlobalTimeSeries[0], 0);
-
-        // save all time series
+        // FTNC	 if( simulation.m_croutines )
+        // FTNC	    cout << "   Using C routines." << endl;
+        // FTNC	 else
+        // FTNC	    cout << "   Using fortran routines." << endl;
+      int ng = simulation.mNumberOfGrids;
+      vector<DataPatches *> upred_saved(ng), ucorr_saved(ng);
+      vector<Sarray> U(ng), Um(ng), ph(ng);
+      simulation.solve(GlobalSources[0], GlobalTimeSeries[0], simulation.mMu,
+                       simulation.mLambda, simulation.mRho, U, Um, upred_saved,
+                       ucorr_saved, false, 0, 0, 0, ph);
 
         double myWriteTime = 0.0, allWriteTime;
 
-        for (int ts = 0; ts < GlobalTimeSeries[0].size(); ts++) {
-          GlobalTimeSeries[0][ts]->writeFile();
+      double myWriteTime = 0.0, allWriteTime;
+      for (int ts = 0; ts < GlobalTimeSeries[0].size(); ts++) {
+        GlobalTimeSeries[0][ts]->writeFile();
 #ifdef USE_HDF5
-          myWriteTime += GlobalTimeSeries[0][ts]->getWriteTime();
-          if (ts == GlobalTimeSeries[0].size() - 1) {
-            GlobalTimeSeries[0][ts]->closeHDF5File();
+        myWriteTime += GlobalTimeSeries[0][ts]->getWriteTime();
+        if (ts == GlobalTimeSeries[0].size() - 1) {
+          GlobalTimeSeries[0][ts]->closeHDF5File();
 
-            MPI_Reduce(&myWriteTime, &allWriteTime, 1, MPI_DOUBLE, MPI_MAX, 0,
-                       MPI_COMM_WORLD);
-            if (myRank == 0)
-              cout << "  ==> Max wallclock time to write time-series data is "
-                   << allWriteTime << " seconds." << endl;
-          }
+          MPI_Reduce(&myWriteTime, &allWriteTime, 1, MPI_DOUBLE, MPI_MAX, 0,
+                     MPI_COMM_WORLD);
+          if (myRank == 0)
+            cout << "  ==> Max wallclock time to write time-series data is "
+                 << allWriteTime << " seconds." << endl;
+        }
 #endif
-        }
-
-        if (myRank == 0) {
-          cout << "============================================================"
-               << endl
-               << " program sw4 finished! " << endl
-               << "============================================================"
-               << endl;
-        }
+      }
 
         status = 0;
       }
@@ -414,6 +412,14 @@ int main(int argc, char **argv) {
          << endl;
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
+
+#ifdef USE_ZFP
+  H5Z_zfp_finalize();
+#endif
+
+#ifdef USE_SZ
+  H5Z_SZ_Finalize();
+#endif
 
   print_hwm(myRank);
 

@@ -102,9 +102,16 @@ void EW::coarsen1d(int& n, int& ifirst, int& ilast, int periodic) {
 void EW::decomp1d(int nglobal, int myid, int nproc, int& s, int& e)
 //
 // Decompose index space 1 <= i <= nglobal into nproc blocks
-// returns start and end indices for block nr. myid,
-//          where 0 <= myid <= nproc-1
 //
+// Input: nglobal - Total number of points
+//        myid    - Processor ID of current task,  0 <= myid <= nproc-1.
+//        nproc   - Total number of processors (tasks).
+//
+// Output: s - Low index in this processor.
+//         e - High index in this processor, ie, current task holds s <= i <= e
+//
+// The nglobal points are distributed as evenly as possible on the tasks.
+// Uses m_ppadding points wide overlap at processor interfaces.
 {
   int olap = 2 * m_ppadding;
   int nlocal = (nglobal + (nproc - 1) * olap) / nproc;
@@ -118,6 +125,49 @@ void EW::decomp1d(int nglobal, int myid, int nproc, int& s, int& e)
   if (myid < deficit) nlocal = nlocal + 1;
 
   e = s + nlocal - 1;
+}
+
+//-----------------------------------------------------------------------
+void EW::decomp1d_2(int N, int myid, int nproc, int& s, int& e, int nghost,
+                    int npad)
+//
+// Decompose index space 1-nghost <= i <= N+nghost into nproc blocks
+//
+// Input: N      - Number of points in domain.
+//        myid   - Processor ID of current task,  0 <= myid <= nproc-1.
+//        nproc  - Total number of processors (tasks).
+//        nghost - Number of ghost points at domain boundaries.
+//        npad   - Number of overlap (padding) points at processor boundaries.
+//
+// Output: s - Low index in this processor.
+//         e - High index in this processor, ie, current task holds s <= i <= e
+//
+// The N points are distributed as evenly as possible on the tasks. Ghost points
+// and padding points are added after distribution.
+//
+{
+  int nglobal = N + 2 * nghost;
+  int olap = 2 * npad;
+
+  int nlocal = N / nproc;
+  int deficit = N % nproc;
+
+  if (myid < deficit)
+    s = myid * nlocal + myid + 1;
+  else
+    s = myid * nlocal + deficit + 1;
+
+  if (myid < deficit) nlocal = nlocal + 1;
+
+  e = s + nlocal - 1;
+  if (myid == nproc - 1)
+    e += nghost;
+  else
+    e += npad;
+  if (myid == 0)
+    s -= nghost;
+  else
+    s -= npad;
 }
 
 // -----------------------------
@@ -783,6 +833,17 @@ void EW::communicate_array_2d_ext_async(Sarray& u) {
       u.m_nc == 1,
       "Communicate array 2d ext, only implemented for one-component arrays");
   int g = mNumberOfGrids - 1;
+  int ie = m_iEnd[g] + m_ext_ghost_points,
+      ib = m_iStart[g] - m_ext_ghost_points;
+  int je = m_jEnd[g] + m_ext_ghost_points,
+      jb = m_jStart[g] - m_ext_ghost_points;
+
+//-----------------------------------------------------------------------
+void EW::communicate_array_2d_isurf(Sarray& u, int iSurf) {
+  REQUIRE2(
+      u.m_nc == 1,
+      "Communicate array 2d isurf, only implemented for one-component arrays");
+  int g = mNumberOfCartesianGrids + iSurf;
   int ie = m_iEnd[g] + m_ext_ghost_points,
       ib = m_iStart[g] - m_ext_ghost_points;
   int je = m_jEnd[g] + m_ext_ghost_points,

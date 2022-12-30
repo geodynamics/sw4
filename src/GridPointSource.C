@@ -235,14 +235,8 @@ void GridPointSource::initializeTimeFunction() {
       mTimeFunc_omtt = Dirac_omtt;
       break;
     case iDiscrete:
-      mTimeFunc = Discrete;
-      mTimeFunc_t = Discrete_t;
-      mTimeFunc_tt = Discrete_tt;
-      mTimeFunc_ttt = Discrete_ttt;
-      mTimeFunc_om = Discrete_om;
-      mTimeFunc_omtt = Discrete_omtt;
-      break;
     case iDiscrete6moments:
+    case iDiscrete3forces:
       mTimeFunc = Discrete;
       mTimeFunc_t = Discrete_t;
       mTimeFunc_tt = Discrete_tt;
@@ -293,13 +287,8 @@ void GridPointSource::initializeTimeFunction() {
       mTimeFunc_omom = Dirac_omom;
       break;
     case iDiscrete:
-      mTimeFunc_tttt = Discrete_tttt;
-      mTimeFunc_tttom = Discrete_tttom;
-      mTimeFunc_ttomom = Discrete_ttomom;
-      mTimeFunc_tom = Discrete_tom;
-      mTimeFunc_omom = Discrete_omom;
-      break;
     case iDiscrete6moments:
+    case iDiscrete3forces:
       mTimeFunc_tttt = Discrete_tttt;
       mTimeFunc_tttom = Discrete_tttom;
       mTimeFunc_ttomom = Discrete_ttomom;
@@ -324,11 +313,10 @@ void GridPointSource::initializeTimeFunction() {
 RAJA_HOST_DEVICE
 void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) {
   float_sw4 afun, afunv[6];
-#ifndef NO_DEVICE_FUNCTION_POINTERS
-  // printf("FXYZ VALUE = %d %d\n",mTimeDependence,m_derivative);
-  if (mTimeDependence != iDiscrete6moments)
+  if (mTimeDependence != iDiscrete6moments &&
+      mTimeDependence != iDiscrete3forces)
     afun = mTimeFunc(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
-  else {
+  else if (mTimeDependence == iDiscrete6moments) {
     int npts = mIpar[0];
     int size = 6 * (npts - 1) + 1;
     size_t pos = 0;
@@ -343,8 +331,16 @@ void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) {
     afunv[4] = mTimeFunc(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
     pos += size;
     afunv[5] = mTimeFunc(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
+  } else if (mTimeDependence == iDiscrete3forces) {
+    int npts = mIpar[0];
+    int size = 6 * (npts - 1) + 1;
+    size_t pos = 0;
+    afunv[0] = mTimeFunc(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
+    pos += size;
+    afunv[1] = mTimeFunc(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
+    pos += size;
+    afunv[2] = mTimeFunc(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
   }
-#endif
 
   int lm_derivative;
 #if defined(SOURCE_INVERSION)
@@ -353,17 +349,22 @@ void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) {
   lm_derivative = -1;
 #endif
   if (lm_derivative == -1) {
-    if (mTimeDependence != iDiscrete6moments) {
+    if (mTimeDependence != iDiscrete6moments &&
+        mTimeDependence != iDiscrete3forces) {
       fxyz[0] = mForces[0] * afun;
       fxyz[1] = mForces[1] * afun;
       fxyz[2] = mForces[2] * afun;
-    } else {
+    } else if (mTimeDependence == iDiscrete6moments) {
       fxyz[0] =
           mForces[0] * afunv[0] + mForces[1] * afunv[1] + mForces[2] * afunv[2];
       fxyz[1] =
           mForces[0] * afunv[1] + mForces[1] * afunv[3] + mForces[2] * afunv[4];
       fxyz[2] =
           mForces[0] * afunv[2] + mForces[1] * afunv[4] + mForces[2] * afunv[5];
+    } else if (mTimeDependence == iDiscrete3forces) {
+      fxyz[0] = mForces[0] * afunv[0];
+      fxyz[1] = mForces[0] * afunv[1];
+      fxyz[2] = mForces[0] * afunv[2];
     }
   } else if (lm_derivative >= 0 && lm_derivative <= 8) {
 #if defined(SOURCE_INVERSION)
@@ -416,10 +417,10 @@ void GridPointSource::getFxyz_notime(float_sw4* fxyz) const {
 RAJA_HOST_DEVICE
 void GridPointSource::getFxyztt(float_sw4 t, float_sw4* fxyz) const {
   float_sw4 afun, afunv[6];
-#ifndef NO_DEVICE_FUNCTION_POINTERS
-  if (mTimeDependence != iDiscrete6moments)
+  if (mTimeDependence != iDiscrete6moments &&
+      mTimeDependence != iDiscrete3forces)
     afun = mTimeFunc_tt(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
-  else {
+  else if (mTimeDependence == iDiscrete6moments) {
     int npts = mIpar[0];
     int size = 6 * (npts - 1) + 1;
     size_t pos = 0;
@@ -434,23 +435,36 @@ void GridPointSource::getFxyztt(float_sw4 t, float_sw4* fxyz) const {
     afunv[4] = mTimeFunc_tt(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
     pos += size;
     afunv[5] = mTimeFunc_tt(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
+  } else if (mTimeDependence == iDiscrete3forces) {
+    int npts = mIpar[0];
+    int size = 6 * (npts - 1) + 1;
+    size_t pos = 0;
+    afunv[0] = mTimeFunc_tt(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
+    pos += size;
+    afunv[1] = mTimeFunc_tt(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
+    pos += size;
+    afunv[2] = mTimeFunc_tt(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
   }
-#endif
 
   //  float_sw4 afun = mTimeFunc_tt(mFreq,t-mT0,mPar, mNpar, mIpar, mNipar);
 #if defined(SOURCE_INVERSION)
   if (m_derivative == -1) {
-    if (mTimeDependence != iDiscrete6moments) {
+    if (mTimeDependence != iDiscrete6moments &&
+        mTimeDependence != iDiscrete3forces) {
       fxyz[0] = mForces[0] * afun;
       fxyz[1] = mForces[1] * afun;
       fxyz[2] = mForces[2] * afun;
-    } else {
+    } else if (mTimeDependence == iDiscrete6moments) {
       fxyz[0] =
           mForces[0] * afunv[0] + mForces[1] * afunv[1] + mForces[2] * afunv[2];
       fxyz[1] =
           mForces[0] * afunv[1] + mForces[1] * afunv[3] + mForces[2] * afunv[4];
       fxyz[2] =
           mForces[0] * afunv[2] + mForces[1] * afunv[4] + mForces[2] * afunv[5];
+    } else if (mTimeDependence == iDiscrete3forces) {
+      fxyz[0] = mForces[0] * afunv[0];
+      fxyz[1] = mForces[0] * afunv[1];
+      fxyz[2] = mForces[0] * afunv[2];
     }
   } else if (m_derivative >= 0 && m_derivative <= 8) {
     fxyz[0] = m_jacobian[m_derivative * 3] * afun;
@@ -566,7 +580,8 @@ ostream& operator<<(ostream& output, const GridPointSource& s) {
 void GridPointSource::add_to_gradient(std::vector<Sarray>& kappa,
                                       std::vector<Sarray>& eta, float_sw4 t,
                                       float_sw4 dt, float_sw4 gradient[11],
-                                      std::vector<float_sw4>& h, Sarray& Jac,
+                                      std::vector<float_sw4>& h,
+                                      vector<Sarray>& Jac,
                                       bool topography_exists) {
 #if defined(SOURCE_INVERSION)
   if (m_jacobian_known) {
@@ -584,7 +599,8 @@ void GridPointSource::add_to_gradient(std::vector<Sarray>& kappa,
     float_sw4 eta2 = eta[m_grid](2, m_i0, m_j0, m_k0);
     float_sw4 eta3 = eta[m_grid](3, m_i0, m_j0, m_k0);
     float_sw4 h3 = h[m_grid] * h[m_grid] * h[m_grid];
-    if (topography_exists && m_grid == h.size() - 1) h3 = Jac(m_i0, m_j0, m_k0);
+    if (topography_exists && m_grid == h.size() - 1)
+      h3 = Jac[m_grid](m_i0, m_j0, m_k0);
     //      float_sw4 h3 = 1.0;
     if (1 <= m_k0 && m_k0 <= 4) h3 *= normwgh[m_k0 - 1];
 

@@ -121,9 +121,13 @@ int EW::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
         // Compute the metric
         if (zr <= 0) {
           ecode = -1;
+          // tmp
           cout << "zr = " << zr << " at " << i << " " << j << " " << k << endl;
           cout << "x,y,z = " << x(i, j, k) << " " << y(i, j, k) << " "
                << z(i, j, k) << endl;
+          printf("ib=%d, ie=%d, jb=%d, je=%d, kb=%d, ke=%d, proc=%d\n", ib, ie,
+                 jb, je, kb, ke, m_myRank);
+          // end tmp
         }
         sqzr = sqrt(zr);
         jac(i, j, k) = h * h * zr;
@@ -340,17 +344,17 @@ void EW::freesurfcurvi_ci(int ib, int ie, int jb, int je, int kb, int ke,
           -s0i *
           (s[1] * u(1, i, j, k) + s[2] * u(1, i, j, k + kl) +
            s[3] * u(1, i, j, k + 2 * kl) + s[4] * u(1, i, j, k + 3 * kl) +
-           bc * rhs1 - dc * met(2, i, j, k));
+           kl * bc * rhs1 - kl * dc * met(2, i, j, k));
       u(2, i, j, k - kl) =
           -s0i *
           (s[1] * u(2, i, j, k) + s[2] * u(2, i, j, k + kl) +
            s[3] * u(2, i, j, k + 2 * kl) + s[4] * u(2, i, j, k + 3 * kl) +
-           bc * rhs2 - dc * met(3, i, j, k));
+           kl * bc * rhs2 - kl * dc * met(3, i, j, k));
       u(3, i, j, k - kl) =
           -s0i *
           (s[1] * u(3, i, j, k) + s[2] * u(3, i, j, k + kl) +
            s[3] * u(3, i, j, k + 2 * kl) + s[4] * u(3, i, j, k + 3 * kl) +
-           bc * rhs3 - dc * met(4, i, j, k));
+           kl * bc * rhs3 - kl * dc * met(4, i, j, k));
     }
   }
   //#undef x

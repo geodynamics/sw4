@@ -1,3 +1,4 @@
+#include <iostream>
 #include "EW.h"
 #include "sw4.h"
 //-----------------------------------------------------------------------
@@ -6,32 +7,41 @@ void EW::solerr3_ci(int ib, int ie, int jb, int je, int kb, int ke, float_sw4 h,
                     float_sw4& li, float_sw4& l2, float_sw4& xli,
                     float_sw4 zmin, float_sw4 x0, float_sw4 y0, float_sw4 z0,
                     float_sw4 radius, int imin, int imax, int jmin, int jmax,
-                    int kmin, int kmax) {
+                    int kmin, int kmax, int geocube, int i0, int i1, int j0,
+                    int j1, int k0, int k1) {
   li = 0;
   l2 = 0;
   xli = 0;
   float_sw4 sradius2 = radius * radius;
   if (radius < 0) sradius2 = -sradius2;
+  int imxerr, jmxerr, kmxerr;
   const size_t ni = ie - ib + 1;
   const size_t nij = ni * (je - jb + 1);
   const float_sw4 h3 = h * h * h;
   const size_t nijk = nij * (ke - kb + 1);
-
   for (int c = 0; c < 3; c++) {
     float_sw4 liloc = 0, l2loc = 0, xliloc = 0;
 #pragma omp parallel for reduction(max : liloc, xliloc) reduction(+ : l2loc)
     for (size_t k = kmin; k <= kmax; k++)
       for (size_t j = jmin; j <= jmax; j++)
         for (size_t i = imin; i <= imax; i++) {
+          bool inside =
+              i < i0 || i > i1 || j < j0 || j > j1 || k < k0 || k > k1;
           if (((i - 1) * h - x0) * ((i - 1) * h - x0) +
-                  ((j - 1) * h - y0) * ((j - 1) * h - y0) +
-                  ((k - 1) * h + zmin - z0) * ((k - 1) * h + zmin - z0) >
-              sradius2) {
+                      ((j - 1) * h - y0) * ((j - 1) * h - y0) +
+                      ((k - 1) * h + zmin - z0) * ((k - 1) * h + zmin - z0) >
+                  sradius2 &&
+              (geocube != 1 || (geocube == 1 && inside))) {
             size_t ind = i - ib + ni * (j - jb) + nij * (k - kb) + nijk * c;
             float_sw4 err = fabs(u[ind] - uex[ind]);
             //		     if( fabs(u[ind]-uex[ind])>liloc )
             //			liloc = fabs(u[ind]-uex[ind]);
-            if (err > liloc) liloc = err;
+            if (err > liloc) {
+              liloc = err;
+              imxerr = i;
+              jmxerr = j;
+              kmxerr = k;
+            }
             if (fabs(uex[ind]) > xliloc) xliloc = fabs(uex[ind]);
             // if (uex[ind] > xliloc) xliloc = uex[ind]; // ORG PRE CURVIMR
             //		     l2loc += h3*(u[ind]-uex[ind])*(u[ind]-uex[ind]);
@@ -118,7 +128,7 @@ void EW::solerr3c_ci(int ib, int ie, int jb, int je, int kb, int ke,
   const size_t nij = ni * (je - jb + 1);
   const size_t nijk = nij * (ke - kb + 1);
   const size_t base = -(ib + ni * jb + nij * kb);
-
+  int imxerr = 0, jmxerr = 0, kmxerr = 0;
   for (int c = 0; c < 3; c++) {
     float_sw4 liloc = 0, xliloc = 0, l2loc = 0;
 #pragma omp parallel for reduction(max : liloc, xliloc) reduction(+ : l2loc)
@@ -132,7 +142,13 @@ void EW::solerr3c_ci(int ib, int ie, int jb, int je, int kb, int ke,
           if (dist > sradius2) {
             size_t ind3 = ind + nijk * c;
             float_sw4 err = fabs(u[ind3] - uex[ind3]);
-            liloc = liloc > err ? liloc : err;
+            //		     liloc = liloc > err ? liloc:err;
+            if (liloc < err) {
+              liloc = err;
+              imxerr = i;
+              jmxerr = j;
+              kmxerr = k;
+            }
             xliloc = xliloc > fabs(uex[ind3]) ? xliloc : fabs(uex[ind3]);
             // xliloc = xliloc > uex[ind3] ? xliloc : uex[ind3]; // ORG PRE
             // CURVIMR std::cout<<"SOL"<<ind3<<" "<<xliloc<<"
@@ -144,9 +160,11 @@ void EW::solerr3c_ci(int ib, int ie, int jb, int je, int kb, int ke,
           }
         }
     li = liloc > li ? liloc : li;
-    l2 += l2loc;
     xli = xliloc > xli ? xliloc : xli;
+    l2 += l2loc;
   }
+  //   std::cout << "Max error on grid: " << li << " at (i,j,k)= " << imxerr <<
+  //   " " << jmxerr << " " << kmxerr << std::endl;
 }
 
 #ifdef XL_BUG_152435FIXED

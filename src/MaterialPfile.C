@@ -95,7 +95,7 @@ void MaterialPfile::set_material_properties(std::vector<Sarray> &rho,
                                             std::vector<Sarray> &qs,
                                             std::vector<Sarray> &qp) {
   int myRank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+  MPI_Comm_rank(mEW->m_1d_communicator, &myRank);
   // the qs and qp arrays are always allocated to allow qs[g].is_defined() to be
   // called
   //  bool use_attenuation = !(qs.size()==0);
@@ -204,8 +204,9 @@ void MaterialPfile::set_material_properties(std::vector<Sarray> &rho,
                 if (qs[g].is_defined()) qs[g](i, j, k) = qus;
               }
               material++;
-            } else
+            } else {
               outside++;
+            }
           }  // end for i, j, k
 
     }  // end cartesian pfile case
@@ -317,13 +318,16 @@ void MaterialPfile::set_material_properties(std::vector<Sarray> &rho,
         if (qs[g].is_defined()) mEW->communicate_array(qs[g], g);
       }
     }  // end for g (curvilinear)
-  }    // end if topographyExists()
+
+  }  // end if topographyExists()
 
   //  extrapolation is now done in WPP2:set_materials()
 
   int outsideSum, materialSum;
-  MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0,
+             mEW->m_1d_communicator);
+  MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0,
+             mEW->m_1d_communicator);
 
   if (mEW->proc_zero())
     cout << "outside = " << outsideSum << ", "
@@ -345,7 +349,7 @@ void MaterialPfile::read_pfile() {
   //   m_rhomin  = rhomin;
 
   int myRank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+  MPI_Comm_rank(mEW->m_1d_communicator, &myRank);
 
   // Open file
   FILE *fd = fopen(ppmfile.c_str(), "r");

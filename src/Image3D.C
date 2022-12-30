@@ -247,8 +247,8 @@ void Image3D::define_pio() {
     int iwrite = 0;
     int nrwriters = mEW->getNumberOfWritersPFS();
     int nproc = 0, myid = 0;
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+    MPI_Comm_size(mEW->m_1d_communicator, &nproc);
+    MPI_Comm_rank(mEW->m_1d_communicator, &myid);
 
     // new hack
     int* owners = new int[nproc];
@@ -272,7 +272,8 @@ void Image3D::define_pio() {
     //      iwrite= " << iwrite << " start= "
     //		<< start[0] << " " << start[1] << " " << start[2] << std::endl;
     m_parallel_io[g - glow] =
-        new Parallel_IO(iwrite, mEW->usingParallelFS(), global, local, start);
+        new Parallel_IO(iwrite, mEW->usingParallelFS(), global, local, start,
+                        mEW->m_1d_communicator);
     delete[] owners;
   }
   m_isDefinedMPIWriters = true;
@@ -324,11 +325,15 @@ void Image3D::update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
                            vector<Sarray>& a_gLambda, vector<Sarray>& a_Qp,
                            vector<Sarray>& a_Qs, std::string a_path,
                            std::vector<Sarray>& a_Z) {
-  SW4_MARK_FUNCTION;
+  double stime, etime;
   if (timeToWrite(a_time, a_cycle, a_dt)) {
     compute_image(a_U, a_Rho, a_Mu, a_Lambda, a_gRho, a_gMu, a_gLambda, a_Qp,
                   a_Qs);
+    stime = MPI_Wtime();
     write_image(a_cycle, a_path, a_time, a_Z);
+    etime = MPI_Wtime();
+    if (m_parallel_io[0]->proc_zero())
+      printf("  Write volimage takes %e seconds\n", etime - stime);
   }
 }
 
@@ -340,9 +345,14 @@ void Image3D::force_write_image(float_sw4 a_time, int a_cycle,
                                 vector<Sarray>& a_gLambda, vector<Sarray>& a_Qp,
                                 vector<Sarray>& a_Qs, std::string a_path,
                                 std::vector<Sarray>& a_Z) {
+  double stime, etime;
   compute_image(a_U, a_Rho, a_Mu, a_Lambda, a_gRho, a_gMu, a_gLambda, a_Qp,
                 a_Qs);
+  stime = MPI_Wtime();
   write_image(a_cycle, a_path, a_time, a_Z);
+  etime = MPI_Wtime();
+  if (m_parallel_io[0]->proc_zero())
+    printf("  Write volimage takes %e seconds\n", etime - stime);
 }
 
 //-----------------------------------------------------------------------
@@ -383,7 +393,7 @@ void Image3D::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
       up = a_Qs[g].c_ptr();
 
     int niw = (mWindow[g][1] - mWindow[g][0]) / st + 1;
-    int nijw = ni * ((mWindow[g][3] - mWindow[g][2]) / st + 1);
+    int nijw = niw * ((mWindow[g][3] - mWindow[g][2]) / st + 1);
     if (mMode == UX || mMode == UY || mMode == UZ) {
       int c = 0;
       if (mMode == UY) c = 1;
@@ -649,31 +659,26 @@ void Image3D::compute_file_suffix(int cycle, std::stringstream& fileSuffix) {
 }
 
 //-----------------------------------------------------------------------
-// void Image3D::write_image(int cycle, std::string& path, float_sw4 t,
-//                           Sarray& a_Z) {
-//   SW4_MARK_FUNCTION;
-//   // File format:
-//   //
-//   // [precision(int), npatches(int), time(double), plane(int=-1),
-//   // coordinate(double=-1),
-//   //  imagetype(int), gridinfo(int), timeofday(string),
-//   //     h_1(double)  zmin_1(double)  sizes_1(6 int)
-//   //     h_2(double)  zmin_2(double)  sizes_2(6 int)
-//   //                    ....
-//   //     h_ng(double) zmin_ng(double) sizes_ng(6 int)
-//   //     data_1(float/double array) ... data_ng(float/double array)
-//   //     [z(float/double array)] ]
-//   //  plane and coordinate are always -1, exist here for compatibility with
-//   the
-//   //  2D images imagetype = mode nr. (ux=1,uy=2, etc..) gridinfo  = -1 no
-//   grid
-//   //  info given
-//   //               0 all blocks are on Cartesian grids, no z-coordinate
-//   needed
-//   //               1 Curvilinear grid is stored after the data blocks
-//   // timeofday - String describing the creation date of the file, max 25
-//   bytes.
-//   //
+void Image3D::write_image(int cycle, std::string& path, float_sw4 t,
+                          std::vector<Sarray>& a_Z) {
+  // File format:
+  //
+  // [precision(int), npatches(int), time(double), plane(int=-1),
+  // coordinate(double=-1),
+  //  imagetype(int), gridinfo(int), timeofday(string),
+  //     h_1(double)  zmin_1(double)  sizes_1(6 int)
+  //     h_2(double)  zmin_2(double)  sizes_2(6 int)
+  //                    ....
+  //     h_ng(double) zmin_ng(double) sizes_ng(6 int)
+  //     data_1(float/double array) ... data_ng(float/double array)
+  //     [z(float/double array)] ]
+  //  plane and coordinate are always -1, exist here for compatibility with the
+  //  2D images imagetype = mode nr. (ux=1,uy=2, etc..) gridinfo  = -1 no grid
+  //  info given
+  //               0 all blocks are on Cartesian grids, no z-coordinate needed
+  //               1 Curvilinear grid is stored after the data blocks
+  // timeofday - String describing the creation date of the file, max 25 bytes.
+  //
 
 //   int ng = mEW->mNumberOfGrids;
 //   // offset initialized to header size:
@@ -708,9 +713,9 @@ void Image3D::compute_file_suffix(int cycle, std::stringstream& fileSuffix) {
 //     CHECK_INPUT(fid != -1, "Image3D::write_image: Error opening: " <<
 //     s.str()); int myid;
 
-//     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
-//     std::cout << "writing volume image on file " << s.str();
-//     std::cout << " (msg from proc # " << myid << ")" << std::endl;
+    MPI_Comm_rank(mEW->m_1d_communicator, &myid);
+    std::cout << "writing volume image on file " << s.str();
+    std::cout << " (msg from proc # " << myid << ")" << std::endl;
 
 //     int prec = m_double ? 8 : 4;
 //     size_t ret = write(fid, &prec, sizeof(int));
@@ -801,65 +806,65 @@ void Image3D::compute_file_suffix(int cycle, std::stringstream& fileSuffix) {
 //     }
 //   }
 
-//   // Add curvilinear grid, if needed
-//   if (gridinfo == 1) {
-//     int g = ng - 1;
-//     float_sw4* zp = a_Z.c_ptr();
-//     size_t npts =
-//         ((size_t)(mGlobalDims[g][1] - mGlobalDims[g][0]) / st + 1) *
-//         ((mGlobalDims[g][3] - mGlobalDims[g][2]) / st + 1) *
-//         ((mGlobalDims[g][5] - mGlobalDims[g][4]) / st + 1 + m_extraz[g]);
+  // Add curvilinear grid, if needed
+  if (gridinfo == 1) {
+    for (int g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids; g++) {
+      //      int g = ng-1;
+      float_sw4* zp = a_Z[g].c_ptr();
+      size_t npts =
+          ((size_t)(mGlobalDims[g][1] - mGlobalDims[g][0]) / st + 1) *
+          ((mGlobalDims[g][3] - mGlobalDims[g][2]) / st + 1) *
+          ((mGlobalDims[g][5] - mGlobalDims[g][4]) / st + 1 + m_extraz[g]);
 
-//     if (!mEW->usingParallelFS() || g == 0)
-//     m_parallel_io[g]->writer_barrier();
+      if (!mEW->usingParallelFS() || g == 0) m_parallel_io[g]->writer_barrier();
 
-//     size_t nptsloc =
-//         ((size_t)(mWindow[g][1] - mWindow[g][0]) / mImageSamplingFactor + 1)
-//         *
-//         ((mWindow[g][3] - mWindow[g][2]) / mImageSamplingFactor + 1) *
-//         ((mWindow[g][5] - mWindow[g][4]) / mImageSamplingFactor + 1 +
-//          m_extraz[g]);
+      size_t nptsloc =
+          ((size_t)(mWindow[g][1] - mWindow[g][0]) / mImageSamplingFactor + 1) *
+          ((mWindow[g][3] - mWindow[g][2]) / mImageSamplingFactor + 1) *
+          ((mWindow[g][5] - mWindow[g][4]) / mImageSamplingFactor + 1 +
+           m_extraz[g]);
 
-//     int ni = (mWindow[g][1] - mWindow[g][0]) / st + 1;
-//     int nij = ni * ((mWindow[g][3] - mWindow[g][2]) / st + 1);
-//     if (m_double) {
-//       double* zfp = new double[nptsloc];
-// #pragma omp parallel for
-//       for (int k = mWindow[g][4]; k <= mWindow[g][5]; k += st)
-//         for (int j = mWindow[g][2]; j <= mWindow[g][3]; j += st)
-//           for (int i = mWindow[g][0]; i <= mWindow[g][1]; i += st) {
-//             size_t ind = (i - mWindow[g][0]) / st +
-//                          ni * (j - mWindow[g][2]) / st +
-//                          nij * (k - mWindow[g][4]) / st;
-//             zfp[ind] = (double)a_Z(i, j, k);
-//           }
-//       //	 for( size_t i = 0; i < nptsloc ; i++ )
-//       //	    zfp[i] = zp[i];
-//       char cprec[] = "double";
-//       m_parallel_io[g]->write_array(&fid, 1, zfp, offset, cprec);
-//       offset += npts * sizeof(double);
-//       delete[] zfp;
-//     } else {
-//       float* zfp = new float[nptsloc];
-// #pragma omp parallel for
-//       for (int k = mWindow[g][4]; k <= mWindow[g][5]; k += st)
-//         for (int j = mWindow[g][2]; j <= mWindow[g][3]; j += st)
-//           for (int i = mWindow[g][0]; i <= mWindow[g][1]; i += st) {
-//             size_t ind = (i - mWindow[g][0]) / st +
-//                          ni * (j - mWindow[g][2]) / st +
-//                          nij * (k - mWindow[g][4]) / st;
-//             zfp[ind] = (float)a_Z(i, j, k);
-//           }
-//       //	 for( size_t i = 0; i < nptsloc ; i++ )
-//       //	    zfp[i] = zp[i];
-//       char cprec[] = "float";
-//       m_parallel_io[g]->write_array(&fid, 1, zfp, offset, cprec);
-//       offset += npts * sizeof(float);
-//       delete[] zfp;
-//     }
-//   }
-//   if (iwrite) close(fid);
-// }
+      int ni = (mWindow[g][1] - mWindow[g][0]) / st + 1;
+      int nij = ni * ((mWindow[g][3] - mWindow[g][2]) / st + 1);
+      if (m_double) {
+        double* zfp = new double[nptsloc];
+#pragma omp parallel for
+        for (int k = mWindow[g][4]; k <= mWindow[g][5]; k += st)
+          for (int j = mWindow[g][2]; j <= mWindow[g][3]; j += st)
+            for (int i = mWindow[g][0]; i <= mWindow[g][1]; i += st) {
+              size_t ind = (i - mWindow[g][0]) / st +
+                           ni * (j - mWindow[g][2]) / st +
+                           nij * (k - mWindow[g][4]) / st;
+              zfp[ind] = (double)a_Z[g](i, j, k);
+            }
+        //	 for( size_t i = 0; i < nptsloc ; i++ )
+        //	    zfp[i] = zp[i];
+        char cprec[] = "double";
+        m_parallel_io[g]->write_array(&fid, 1, zfp, offset, cprec);
+        offset += npts * sizeof(double);
+        delete[] zfp;
+      } else {
+        float* zfp = new float[nptsloc];
+#pragma omp parallel for
+        for (int k = mWindow[g][4]; k <= mWindow[g][5]; k += st)
+          for (int j = mWindow[g][2]; j <= mWindow[g][3]; j += st)
+            for (int i = mWindow[g][0]; i <= mWindow[g][1]; i += st) {
+              size_t ind = (i - mWindow[g][0]) / st +
+                           ni * (j - mWindow[g][2]) / st +
+                           nij * (k - mWindow[g][4]) / st;
+              zfp[ind] = (float)a_Z[g](i, j, k);
+            }
+        //	 for( size_t i = 0; i < nptsloc ; i++ )
+        //	    zfp[i] = zp[i];
+        char cprec[] = "float";
+        m_parallel_io[g]->write_array(&fid, 1, zfp, offset, cprec);
+        offset += npts * sizeof(float);
+        delete[] zfp;
+      }
+    }  // end for g (curvilinear)
+
+  }  // end if grid info
+
 
 //-----------------------------------------------------------------------
 void EW::read_volimage(std::string& path, std::string& fname,
@@ -912,7 +917,7 @@ void EW::read_volimage(std::string& path, std::string& fname,
     CHECK_INPUT(fid != -1, "EW::read_image: Error opening: " << s.str());
     int myid;
 
-    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+    MPI_Comm_rank(m_1d_communicator, &myid);
     std::cout << "reading volume image on file " << s.str();
     std::cout << " (msg from proc # " << myid << ")" << std::endl;
 
@@ -997,7 +1002,7 @@ void EW::read_volimage(std::string& path, std::string& fname,
 
   parallel_io[0]->writer_barrier();
   int tmpprec = prec;
-  MPI_Allreduce(&tmpprec, &prec, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+  MPI_Allreduce(&tmpprec, &prec, 1, MPI_INT, MPI_MAX, m_1d_communicator);
 
   // Open file from all readers
   if (iread && !parallel_io[0]->proc_zero()) {
@@ -1015,7 +1020,7 @@ void EW::read_volimage(std::string& path, std::string& fname,
 
     if (!usingParallelFS() || g == 0) parallel_io[g]->writer_barrier();
 
-    double* doubleField = new double[nptsloc];
+    float_sw4* doubleField = new float_sw4[nptsloc];
     if (prec == 8) {
       parallel_io[g]->read_array(&fid, 1, doubleField, offset, "double");
       offset += npts * sizeof(double);
@@ -1052,8 +1057,8 @@ void EW::define_parallel_io(vector<Parallel_IO*>& parallel_io) {
     int iwrite = 0;
     int nrwriters = getNumberOfWritersPFS();
     int nproc = 0, myid = 0;
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+    MPI_Comm_size(m_1d_communicator, &nproc);
+    MPI_Comm_rank(m_1d_communicator, &myid);
 
     // Find out the I/O processors
     // Assume all processors have some part of the array.
@@ -1072,8 +1077,8 @@ void EW::define_parallel_io(vector<Parallel_IO*>& parallel_io) {
     //      std::cout << "Define PIO: grid " << g << " myid = " << myid << "
     //      iwrite= " << iwrite << " start= "
     //		<< start[0] << " " << start[1] << " " << start[2] << std::endl;
-    parallel_io[g] =
-        new Parallel_IO(iwrite, usingParallelFS(), global, local, start);
+    parallel_io[g] = new Parallel_IO(iwrite, usingParallelFS(), global, local,
+                                     start, m_1d_communicator);
   }
 }
 //-----------------------------------------------------------------------

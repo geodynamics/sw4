@@ -69,7 +69,8 @@ void EW::check_materials() {
   // Minimum allowed  cp/cs, positive definite operator requires cp/cs >
   // sqrt(4/3) = 1.155...
   //   lambda >0 requires cp/cs > sqrt(2)
-  const float_sw4 mincpcsratio = 1.2;
+  //  const float_sw4 mincpcsratio = 1.2;
+  const float_sw4 mincpcsratio = sqrt(4.0 / 3);
   const float_sw4 la_min_fact = mincpcsratio * mincpcsratio - 2;
 
   float_sw4 mins[8], maxs[8];
@@ -193,8 +194,8 @@ void EW::check_materials() {
             CHECK_INPUT(mLambda[g](i, j, k) >= la_min_fact * mMu[g](i, j, k),
                         "lambda= " << mLambda[g](i, j, k) << " in grid g= " << g
                                    << " at point "
-                                   << " (" << i << "," << j << "," << k
-                                   << ") ");
+                                   << " (" << i << "," << j << "," << k << ") "
+                                   << "mMu=" << mMu[g](i, j, k));
           }
   }
   if (m_use_attenuation && !m_twilight_forcing) {
@@ -705,37 +706,39 @@ void EW::extrapolateInZvector(int g, Sarray& field, bool lowk, bool highk) {
 }
 
 //--------- Material properties for MR ---------------
-void EW::setup_MR_coefficients() {
-  SW4_MARK_FUNCTION;
+void EW::setup_MR_coefficients(vector<Sarray>& Rho, vector<Sarray>& Mu,
+                               vector<Sarray>& Lambda) {
 // stretching on the fine side
 #define str_x(i) m_sg_str_x[g][(i - m_iStart[g])]
 #define str_y(j) m_sg_str_y[g][(j - m_jStart[g])]
   // calculate m_Morc, etc for all Cartesian grids
-  for (int g = 0; g < mNumberOfCartesianGrids; g++) {
-    int nk = m_global_nz[g];
-    for (int c = 1; c <= 3; c++)
-      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-        for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
-          float_sw4 irho = 1 / mRho[g](i, j, 1);
-          m_Morc[g](i, j, 1) = mMu[g](i, j, 1) * irho;  // mu/rho at k=1
-          m_Mlrc[g](i, j, 1) = (2 * mMu[g](i, j, 1) + mLambda[g](i, j, 1)) *
-                               irho;  // (2*mu+lambda)/rho at k=1
-          m_Mucs[g](i, j, 1) =
-              mMu[g](i, j, 1) / (str_x(i) * str_y(j));  // mu/str at 1
-          m_Mlcs[g](i, j, 1) =
-              (2 * mMu[g](i, j, 1) + mLambda[g](i, j, 1)) /
-              (str_x(i) * str_y(j));  //(2*mu + lambda)/str at 1
+  if (!m_anisotropic) {
+    for (int g = 0; g < mNumberOfCartesianGrids; g++) {
+      int nk = m_global_nz[g];
+      for (int c = 1; c <= 3; c++)
+        for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
+          for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+            float_sw4 irho = 1 / Rho[g](i, j, 1);
+            m_Morc[g](i, j, 1) = Mu[g](i, j, 1) * irho;  // mu/rho at k=1
+            m_Mlrc[g](i, j, 1) = (2 * Mu[g](i, j, 1) + Lambda[g](i, j, 1)) *
+                                 irho;  // (2*mu+lambda)/rho at k=1
+            m_Mucs[g](i, j, 1) =
+                Mu[g](i, j, 1) / (str_x(i) * str_y(j));  // mu/str at 1
+            m_Mlcs[g](i, j, 1) =
+                (2 * Mu[g](i, j, 1) + Lambda[g](i, j, 1)) /
+                (str_x(i) * str_y(j));  //(2*mu + lambda)/str at 1
 
-          float_sw4 irhoN = 1 / mRho[g](i, j, nk);
-          m_Morf[g](i, j, nk) = mMu[g](i, j, nk) * irhoN;  // mu/rho at nk
-          m_Mlrf[g](i, j, nk) = (2 * mMu[g](i, j, nk) + mLambda[g](i, j, nk)) *
-                                irhoN;  // (2*mu+lambda)/rho at nk
-          m_Mufs[g](i, j, nk) =
-              mMu[g](i, j, nk) / (str_x(i) * str_y(j));  // mu/str at nk
-          m_Mlfs[g](i, j, nk) =
-              (2 * mMu[g](i, j, nk) + mLambda[g](i, j, nk)) /
-              (str_x(i) * str_y(j));  //(2*mu + lambda)/str at nk
-        }
+            float_sw4 irhoN = 1 / Rho[g](i, j, nk);
+            m_Morf[g](i, j, nk) = Mu[g](i, j, nk) * irhoN;  // mu/rho at nk
+            m_Mlrf[g](i, j, nk) = (2 * Mu[g](i, j, nk) + Lambda[g](i, j, nk)) *
+                                  irhoN;  // (2*mu+lambda)/rho at nk
+            m_Mufs[g](i, j, nk) =
+                Mu[g](i, j, nk) / (str_x(i) * str_y(j));  // mu/str at nk
+            m_Mlfs[g](i, j, nk) =
+                (2 * Mu[g](i, j, nk) + Lambda[g](i, j, nk)) /
+                (str_x(i) * str_y(j));  //(2*mu + lambda)/str at nk
+          }
+    }
   }
 #undef str_x
 #undef str_y

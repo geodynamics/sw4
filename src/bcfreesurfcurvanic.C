@@ -69,8 +69,8 @@ void EW::bcfreesurfcurvani_ci(int ifirst, int ilast, int jfirst, int jlast,
         rhs3 += c[ind + 14 * npts] * du + c[ind + 16 * npts] * dv +
                 c[ind + 17 * npts] * dw - bforce5[2 + 3 * qq];
         // Solve system for ghost point values
-        float_sw4 x[3] = {rhs1, rhs2, rhs3};
-        float_sw4 a[9];
+        double x[3] = {rhs1, rhs2, rhs3};
+        double a[9];
         a[0] = c[ind + 12 * npts];
         a[1] = c[ind + 13 * npts];
         a[2] = c[ind + 14 * npts];
@@ -141,8 +141,8 @@ void EW::bcfreesurfcurvani_ci(int ifirst, int ilast, int jfirst, int jlast,
                 c[ind + 17 * npts] * dw - bforce6[2 + 3 * qq];
 
         // Solve system for ghost point values
-        float_sw4 x[3] = {rhs1, rhs2, rhs3};
-        float_sw4 a[9];
+        double x[3] = {rhs1, rhs2, rhs3};
+        double a[9];
         a[0] = c[ind + 12 * npts];
         a[1] = c[ind + 13 * npts];
         a[2] = c[ind + 14 * npts];

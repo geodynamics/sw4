@@ -73,7 +73,7 @@ void EW::randomfield3d_ci(int ifirst, int ilast, int jfirst, int jlast,
   for (int k = 1 - pz; k <= nkg + gh; k++)
     for (int j = 1 - gh; j <= njg + gh; j++)
 #pragma ivdep
-#pragma simd
+      //#pragma simd
       for (int i = 1 - gh; i <= nig + gh; i++) {
         // Random number generator, expanded into loop
         int krand = iseed1 / 206;
@@ -173,7 +173,7 @@ void EW::randomfield3dc_ci(int ifirst, int ilast, int jfirst, int jlast,
   for (int k = 1 - pz; k <= nkg + gh; k++)
     for (int j = 1 - gh; j <= njg + gh; j++)
 #pragma ivdep
-#pragma simd
+      //#pragma simd
       for (int i = 1 - gh; i <= nig + gh; i++) {
         // Random number generator, expanded into loop
         int krand = iseed1 / 206;
@@ -240,7 +240,7 @@ void EW::perturbvelocity_ci(int ifirst, int ilast, int jfirst, int jlast,
     float_sw4 A = amp + grad * (zmin + (k - 1) * h);
     for (int j = jfirst; j <= jlast; j++)
 #pragma ivdep
-#pragma simd
+      //#pragma simd
       for (int i = ifirst; i <= ilast; i++) {
         float_sw4 perijk = a_per[ind] > -plimit ? a_per[ind] : -plimit;
         perijk = perijk < plimit ? perijk : plimit;
@@ -263,7 +263,7 @@ void EW::perturbvelocityc_ci(int ifirst, int ilast, int jfirst, int jlast,
   for (int k = kfirst; k <= klast; k++)
     for (int j = jfirst; j <= jlast; j++)
 #pragma ivdep
-#pragma simd
+      //#pragma simd
       for (int i = ifirst; i <= ilast; i++) {
         float_sw4 A = amp + grad * a_z[ind];
         float_sw4 perijk = a_per[ind] > -plimit ? a_per[ind] : -plimit;

@@ -170,7 +170,7 @@ void EW::twilightfortattc_ci(int ifirst, int ilast, int jfirst, int jlast,
   for (int k = kfirst; k <= klast; k++)
     for (int j = jfirst; j <= jlast; j++)
 #pragma ivdep
-#pragma simd
+      //#pragma simd
       for (int i = ifirst; i <= ilast; i++) {
         size_t ind = base + i + ni * j + nij * k;
         alpha[ind] = cos(om * (x[ind] - cv * t) + ph) * sin(om * x[ind] + ph) *
