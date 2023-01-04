@@ -166,7 +166,7 @@ int main(int argc, char **argv) {
   // rma.makeAllocator<umpire::strategy::AlignedAllocator>(
   //   "aligned_allocator", allocator, 256);
   auto pref_allocator = rma.makeAllocator<umpire::strategy::AllocationAdvisor>(
-      "preferred_location_device", allocator, "PREFERRED_LOCATION",
+      "preferred_location_device", allocator, "SET_PREFERRED_LOCATION",
       global_variables.device);
 #endif
 
