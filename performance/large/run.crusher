@@ -1,0 +1,14 @@
+#!/bin/bash
+#SBATCH -A GEO130_crusher
+#SBATCH -J SW4TEST
+#SBATCH -o %x-%j.out
+#SBATCH -t 00:25:00
+#SBATCH -p batch
+#SBATCH -N 1
+
+export FI_MR_CACHE_MAX_COUNT=0
+export MPICH_GPU_SUPPORT_ENABLED=1
+# Option below for multinode runs only
+export MPICH_OFI_NIC_POLICY=NUMA
+srun -N 1 -n 8 -c7 --gpus-per-task=1 --gpu-bind=closest -p batch ./sw4 hmr3.in.summit
+srun -N 1 -n 8 -c7 --gpus-per-task=1 --gpu-bind=closest -p batch ./sw4 h.in.summit
