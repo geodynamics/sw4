@@ -99,11 +99,18 @@ class EW {
   float_sw4 getGlobalZmin() { return m_global_zmin; }
   float_sw4 getGlobalZmax() { return m_global_zmax; }
   int findNumberOfEvents();
+  bool event_is_in_proc( int e ) const;
+  int global_to_local_event( int e ) const;
+  int local_to_global_event( int e ) const;
 
   void setupRun(vector<vector<Source*>>& a_GlobalUniqueSources);
 
-  void solve(vector<Source*>& a_GlobalSources,
-             vector<TimeSeries*>& a_GlobalTimeSeries, int event);
+  void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries,
+	    vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, vector<Sarray>& a_Rho,
+	    vector<Sarray>& U, vector<Sarray>& Um,
+	    vector<DataPatches*>& Upred_saved_sides,
+	    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides, int event, int save_steps,
+            int varcase, vector<Sarray>& pseudoHessian );
   void solve_backward(vector<Source*>& a_Sources,
                       vector<TimeSeries*>& a_TimeSeries, float_sw4 gradient[11],
                       float_sw4 hessian[121]);
@@ -362,6 +369,7 @@ class EW {
   // bool inTestSourceMode() { return mTestSource; }
   // bool inTestLambMode() { return mTestLamb; }
   bool proc_zero() const;
+  bool proc_zero_evzero() const;
   int no_of_procs() const;
   void create_output_directory();
   void create_directory(const string& path);
@@ -521,12 +529,25 @@ class EW {
   /* void bc_free_surface( Sarray& u, int g, float_sw4 t, int side, */
   /* 		      Forcing* forcing, float_sw4 h, int onesided[6] ); */
 
+  void computeNearestTopoGridPoint(int & iNear, 
+                                 int & jNear, 
+                                 float_sw4 a_x, 
+                                 float_sw4 a_y);
+
+void computeLowTopoGridPoint(int & iLow, 
+                             int & jLow, 
+                             float_sw4 a_x, 
+                             float_sw4 a_y);
+  
   void computeNearestGridPoint(int& a_i, int& a_j, int& a_k,
                                int& a_g,  // grid on which indices are located
                                float_sw4 a_x, float_sw4 a_y, float_sw4 a_z);
   int computeNearestGridPoint2(int& a_i, int& a_j, int& a_k,
                                int& a_g,  // grid on which indices are located
                                float_sw4 a_x, float_sw4 a_y, float_sw4 a_z);
+
+  int computeInvGridMap( float_sw4& a_i, float_sw4& a_j, float_sw4& a_k, int& a_g,
+                       float_sw4 a_x, float_sw4 a_y, float_sw4 a_z );
 
   void computeNearestSurfaceGridPoint(int& a_i, int& a_j, float_sw4 a_x,
                                       float_sw4 a_y, float_sw4 a_z);
@@ -820,6 +841,8 @@ class EW {
 
   bool check_for_nan(vector<Sarray>& a_U, int verbose, string name);
 
+  bool check_for_nan( vector<Sarray*>& a_U, int nmech, int verbose, string name );
+
   void define_parallel_io(vector<Parallel_IO*>& parallel_io);
 
   void read_volimage(std::string& path, std::string& fname,
@@ -1085,11 +1108,13 @@ class EW {
   //__restrict__ a_um, 		      float_sw4 omega, float_sw4 dt, int domain
   //);
 
-  void solerr3_ci(int ib, int ie, int jb, int je, int kb, int ke, float_sw4 h,
-                  float_sw4* __restrict__ uex, float_sw4* __restrict__ u,
-                  float_sw4& li, float_sw4& l2, float_sw4& xli, float_sw4 zmin,
-                  float_sw4 x0, float_sw4 y0, float_sw4 z0, float_sw4 radius,
-                  int imin, int imax, int jmin, int jmax, int kmin, int kmax);
+  void solerr3_ci( int ib, int ie, int jb, int je, int kb, int ke,
+		 float_sw4 h, float_sw4* __restrict__ uex,
+		 float_sw4* __restrict__ u, float_sw4& li,
+		 float_sw4& l2, float_sw4& xli, float_sw4 zmin, float_sw4 x0,
+		 float_sw4 y0, float_sw4 z0, float_sw4 radius,
+		 int imin, int imax, int jmin, int jmax, int kmin, int kmax, int geocube,
+		 int i0, int i1, int j0, int j1, int k0, int k1 );
   void solerrgp_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                    int klast, float_sw4 h, float_sw4* __restrict__ uex,
                    float_sw4* __restrict__ u, float_sw4& li, float_sw4& l2);
@@ -1620,7 +1645,7 @@ class EW {
 
   // material description used with material surfaces and the ifile command
   vector<MaterialProperty*> m_materials;
-  MPI_Comm m_cartesian_communicator, m_1d_communicator;
+  MPI_Comm m_cartesian_communicator, m_1d_communicator,m_cross_communicator;
 
   ofstream msgStream;
 
@@ -1646,6 +1671,7 @@ class EW {
                  // optimization.
   int m_nevents_specified;  // Number of event lines in input file
   bool m_events_parallel;   // Process events in parallel
+  int m_eStart, m_eEnd;
   map<string, int> m_event_names;
 
   // epicenter
@@ -1787,6 +1813,7 @@ class EW {
   bool mTopoImageFound;
   float_sw4 m_topo_zmax;
   int m_maxIter;
+  float_sw4 m_EFileResolution;
 
   //-------------------------------------------
   // IO data
@@ -1937,6 +1964,10 @@ class EW {
   bool m_cgfletcherreeves, m_do_linesearch;
   bool m_opt_testing;
   int m_opt_method, m_lbfgs_m;
+  bool m_zerograd_at_src, m_filter_gradient, m_zerograd_at_rec;
+  int m_zerograd_pad, m_gradfilter_it, m_zerogradrec_pad;
+  float_sw4 m_gradfilter_ep;
+  
   // perturbations for testing
   float_sw4 m_perturb;
   int m_iperturb, m_jperturb, m_kperturb, m_pervar;

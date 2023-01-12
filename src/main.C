@@ -40,10 +40,16 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+
 #ifndef SW4_NOOMP
 #include <omp.h>
 #endif
+
+#include "EW.h"
+#include "Mspace.h"
+#include "policies.h"
 #include "version.h"
+
 #ifdef ENABLE_CUDA
 #include "cuda_profiler_api.h"
 #include "nvToolsExtCuda.h"
@@ -375,7 +381,6 @@ int main(int argc, char **argv) {
                        simulation.mLambda, simulation.mRho, U, Um, upred_saved,
                        ucorr_saved, false, 0, 0, 0, ph);
 
-        double myWriteTime = 0.0, allWriteTime;
 
       double myWriteTime = 0.0, allWriteTime;
       for (int ts = 0; ts < GlobalTimeSeries[0].size(); ts++) {

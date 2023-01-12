@@ -70,7 +70,11 @@ void curvilinear4sgwind(int, int, int, int, int, int, int, int, float_sw4*,
 
 //--------------------------------------------------------------------
 void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
-               int event) {
+	       vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, vector<Sarray>& a_Rho,
+		vector<Sarray>& U, vector<Sarray>& Um,
+		vector<DataPatches*>& Upred_saved_sides,
+   		vector<DataPatches*>& Ucorr_saved_sides, bool save_sides,
+               int event,int nsteps_in_memory, int varcase, vector<Sarray>& PseudoHessian ){
   SW4_MARK_FUNCTION;
   check_ghcof_no_gp(m_ghcof_no_gp);
 #ifdef SW4_USE_CMEM
