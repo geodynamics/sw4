@@ -1665,163 +1665,190 @@ void EW::create_directory(const string &path) {
 }
 
 //-----------------------------------------------------------------------
-void EW::computeDT()
-{
-  if (!mQuiet && mVerbose >= 1 && proc_zero_evzero())
-  {
+
+void EW::computeDT() {
+  if (!mQuiet && mVerbose >= 1 && proc_zero_evzero()) {
     printf("*** computing the time step ***\n");
   }
-  
-  float_sw4 dtloc=1.e10, factor = 4;
+
+  float_sw4 dtloc = 1.e10, factor = 4;
   mDt = dtloc;
 
-// temporarily changing the CFL number to suit 2nd order time stepping (and agree with test3 fortran code)
-//   mCFL = 0.9;
+  // temporarily changing the CFL number to suit 2nd order time stepping (and
+  // agree with test3 fortran code)
+  //   mCFL = 0.9;
 
-   int g;
-   for (int g=0; g<mNumberOfCartesianGrids; g++)
-   {
-      float_sw4 dtgrid=1e10;
-#pragma omp parallel for reduction(min:dtgrid)      
-     for (int k=m_kStart[g]; k<=m_kEnd[g]; k++)
-       for (int j=m_jStart[g]; j<=m_jEnd[g]; j++)
-	 for (int i=m_iStart[g]; i<=m_iEnd[g]; i++)
-	 {
-	    float_sw4 loceig = factor*mMu[g](i,j,k) + mLambda[g](i,j,k);
-	    for( int a=0 ; a < m_number_mechanisms ; a++ )
-	       loceig += factor*mMuVE[g][a](i,j,k) + mLambdaVE[g][a](i,j,k);
-            loceig /= mRho[g](i,j,k);
-	    //	   loceig = (factor*mMu[g](i,j,k) + mLambda[g](i,j,k) )/mRho[g](i,j,k);
-	    float_sw4 dtGP = mCFL*mGridSize[g]/sqrt( loceig );
-	   //	   dtloc = min(dtloc,dtGP);
-	    dtgrid = dtgrid < dtGP ? dtgrid : dtGP;
-   //	   dtloc = dtloc < dtGP ? dtloc : dtGP;
-	 }
-     dtloc = dtloc < dtgrid ? dtloc : dtgrid;
-   }
+  int g;
+  for (int g = 0; g < mNumberOfCartesianGrids; g++) {
+    float_sw4 dtgrid = 1e10;
+#pragma omp parallel for reduction(min : dtgrid)
+    for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
+      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
+        for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+          float_sw4 loceig = factor * mMu[g](i, j, k) + mLambda[g](i, j, k);
+          for (int a = 0; a < m_number_mechanisms; a++)
+            loceig += factor * mMuVE[g][a](i, j, k) + mLambdaVE[g][a](i, j, k);
+          loceig /= mRho[g](i, j, k);
+          //	   loceig = (factor*mMu[g](i,j,k) + mLambda[g](i,j,k)
+          //)/mRho[g](i,j,k);
+          float_sw4 dtGP = mCFL * mGridSize[g] / sqrt(loceig);
+          //	   dtloc = min(dtloc,dtGP);
+          dtgrid = dtgrid < dtGP ? dtgrid : dtGP;
+          //	   dtloc = dtloc < dtGP ? dtloc : dtGP;
+        }
+    dtloc = dtloc < dtgrid ? dtloc : dtgrid;
+  }
 
-// look at the curvilinear grid
-   float_sw4 dtCurv=1.e18;
-   if (topographyExists())
-   {
-      for (g=mNumberOfCartesianGrids; g<mNumberOfGrids; g++)
-      {
-#pragma omp parallel for reduction(min:dtCurv)
-         for (int k=m_kStartInt[g]; k<=m_kEndInt[g]; k++)
-            for (int j=m_jStart[g]; j<=m_jEnd[g]; j++)
-               for (int i=m_iStart[g]; i<=m_iEnd[g]; i++)
-               {
-                  int N=3, LDZ=1, INFO;
-                  char JOBZ='N', UPLO='L';
-                  double Amat[6], W[3], Z[1], WORK[9];
-                  float_sw4 la = mLambda[g](i,j,k);
-                  float_sw4 mu = mMu[g](i,j,k);
-                  for( int a = 0 ; a < m_number_mechanisms ; a++ )
-                  {
-                     la += mLambdaVE[g][a](i,j,k);
-                     mu += mMuVE[g][a](i,j,k);
-                  }
-                  float_sw4 la2mu = la + 2.*mu;
-                  float_sw4 jinv = 1/mJ[g](i,j,k);
-// A11
-//	   Amat[0] = -4.*(SQR(mQ(1,i,j,k))*la2mu + SQR(mQ(2,i,j,k))*mu + SQR(mQ(3,i,j,k))*mu 
-//		        + SQR(mR(1,i,j,k))*la2mu + SQR(mR(2,i,j,k))*mu + SQR(mR(3,i,j,k))*mu
-//			 + SQR(mS(1,i,j,k))*la2mu + SQR(mS(2,i,j,k))*mu + SQR(mS(3,i,j,k))*mu);
-                  Amat[0] = -4*(SQR(mMetric[g](1,i,j,k))*la2mu + SQR(mMetric[g](1,i,j,k))*mu + 
-                                SQR(mMetric[g](2,i,j,k))*la2mu + SQR(mMetric[g](3,i,j,k))*mu + SQR(mMetric[g](4,i,j,k))*mu)*jinv;
-// A21 = A12
-//	   Amat[1] = -4.*(mQ(1,i,j,k)*mQ(2,i,j,k) + mR(1,i,j,k)*mR(2,i,j,k) + mS(1,i,j,k)*mS(2,i,j,k))*(mu+la);
-                  Amat[1] = -4.*mMetric[g](2,i,j,k)*mMetric[g](3,i,j,k)*(mu+la)*jinv;
-// A31 = A13	   
-//	   Amat[2] = -4.*(mQ(1,i,j,k)*mQ(3,i,j,k) + mR(1,i,j,k)*mR(3,i,j,k) + mS(1,i,j,k)*mS(3,i,j,k))*(mu+la);
-                  Amat[2] = -4.*mMetric[g](2,i,j,k)*mMetric[g](4,i,j,k)*(mu+la)*jinv;
-// A22	   
-                  Amat[3] = -4.*(SQR(mMetric[g](1,i,j,k))*mu + SQR(mMetric[g](1,i,j,k))*la2mu +
-                                 + SQR(mMetric[g](2,i,j,k))*mu + SQR(mMetric[g](3,i,j,k))*la2mu + SQR(mMetric[g](4,i,j,k))*mu)*jinv;
-// A32 = A23
-//	   Amat[4] = -4.*(mQ(2,i,j,k)*mQ(3,i,j,k) + mR(2,i,j,k)*mR(3,i,j,k) + mS(2,i,j,k)*mS(3,i,j,k))*(mu+la);
-                  Amat[4] = -4.*mMetric[g](3,i,j,k)*mMetric[g](4,i,j,k)*(mu+la)*jinv;
-// A33
-                  Amat[5] = -4.*(SQR(mMetric[g](1,i,j,k))*mu + SQR(mMetric[g](1,i,j,k))*mu
-                                 + SQR(mMetric[g](2,i,j,k))*mu + SQR(mMetric[g](3,i,j,k))*mu + SQR(mMetric[g](4,i,j,k))*la2mu)*jinv;
-// calculate eigenvalues of symmetric matrix
-                  F77_FUNC(dspev,DSPEV)(JOBZ, UPLO, N, Amat, W, Z, LDZ, WORK, INFO);
-                  
-                  if (INFO != 0)
-                  {
-                     printf("ERROR: computeDT: dspev returned INFO = %i for grid point (%i, %i, %i)\n", INFO, i, j, k);
-                     printf("lambda = %e, mu = %e\n", la, mu);
-                     printf("Jacobian = %15.7g \n",mJ[g](i,j,k));
-                     printf("Matrix = \n");
-                     printf(" %15.7g  %15.7g %15.7g \n",Amat[0],Amat[1],Amat[2]);
-                     printf(" %15.7g  %15.7g %15.7g \n",Amat[1],Amat[3],Amat[4]);
-                     printf(" %15.7g  %15.7g %15.7g \n",Amat[2],Amat[4],Amat[5]);
-                     MPI_Abort(MPI_COMM_WORLD, 1);
-                  }
-// tmp
-//	   fprintf(fp,"%i %i %i %e %e %e\n", i, j, k, W[0], W[1], W[2]);
+  // look at the curvilinear grid
+  float_sw4 dtCurv = 1.e18;
+  if (topographyExists()) {
+    for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+#pragma omp parallel for reduction(min : dtCurv)
+      for (int k = m_kStartInt[g]; k <= m_kEndInt[g]; k++)
+        for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
+          for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+            int N = 3, LDZ = 1, INFO;
+            char JOBZ = 'N', UPLO = 'L';
+            double Amat[6], W[3], Z[1], WORK[9];
+            float_sw4 la = mLambda[g](i, j, k);
+            float_sw4 mu = mMu[g](i, j, k);
+            for (int a = 0; a < m_number_mechanisms; a++) {
+              la += mLambdaVE[g][a](i, j, k);
+              mu += mMuVE[g][a](i, j, k);
+            }
+            float_sw4 la2mu = la + 2. * mu;
+            float_sw4 jinv = 1 / mJ[g](i, j, k);
+            // A11
+            //	   Amat[0] = -4.*(SQR(mQ(1,i,j,k))*la2mu + SQR(mQ(2,i,j,k))*mu +
+            //SQR(mQ(3,i,j,k))*mu
+            //		        + SQR(mR(1,i,j,k))*la2mu + SQR(mR(2,i,j,k))*mu +
+            //SQR(mR(3,i,j,k))*mu
+            //			 + SQR(mS(1,i,j,k))*la2mu + SQR(mS(2,i,j,k))*mu +
+            //SQR(mS(3,i,j,k))*mu);
+            Amat[0] = -4 *
+                      (SQR(mMetric[g](1, i, j, k)) * la2mu +
+                       SQR(mMetric[g](1, i, j, k)) * mu +
+                       SQR(mMetric[g](2, i, j, k)) * la2mu +
+                       SQR(mMetric[g](3, i, j, k)) * mu +
+                       SQR(mMetric[g](4, i, j, k)) * mu) *
+                      jinv;
+            // A21 = A12
+            //	   Amat[1] = -4.*(mQ(1,i,j,k)*mQ(2,i,j,k) +
+            //mR(1,i,j,k)*mR(2,i,j,k) + mS(1,i,j,k)*mS(2,i,j,k))*(mu+la);
+            Amat[1] = -4. * mMetric[g](2, i, j, k) * mMetric[g](3, i, j, k) *
+                      (mu + la) * jinv;
+            // A31 = A13
+            //	   Amat[2] = -4.*(mQ(1,i,j,k)*mQ(3,i,j,k) +
+            //mR(1,i,j,k)*mR(3,i,j,k) + mS(1,i,j,k)*mS(3,i,j,k))*(mu+la);
+            Amat[2] = -4. * mMetric[g](2, i, j, k) * mMetric[g](4, i, j, k) *
+                      (mu + la) * jinv;
+            // A22
+            Amat[3] = -4. *
+                      (SQR(mMetric[g](1, i, j, k)) * mu +
+                       SQR(mMetric[g](1, i, j, k)) * la2mu +
+                       +SQR(mMetric[g](2, i, j, k)) * mu +
+                       SQR(mMetric[g](3, i, j, k)) * la2mu +
+                       SQR(mMetric[g](4, i, j, k)) * mu) *
+                      jinv;
+            // A32 = A23
+            //	   Amat[4] = -4.*(mQ(2,i,j,k)*mQ(3,i,j,k) +
+            //mR(2,i,j,k)*mR(3,i,j,k) + mS(2,i,j,k)*mS(3,i,j,k))*(mu+la);
+            Amat[4] = -4. * mMetric[g](3, i, j, k) * mMetric[g](4, i, j, k) *
+                      (mu + la) * jinv;
+            // A33
+            Amat[5] = -4. *
+                      (SQR(mMetric[g](1, i, j, k)) * mu +
+                       SQR(mMetric[g](1, i, j, k)) * mu +
+                       SQR(mMetric[g](2, i, j, k)) * mu +
+                       SQR(mMetric[g](3, i, j, k)) * mu +
+                       SQR(mMetric[g](4, i, j, k)) * la2mu) *
+                      jinv;
+            // calculate eigenvalues of symmetric matrix
+            F77_FUNC(dspev, DSPEV)(JOBZ, UPLO, N, Amat, W, Z, LDZ, WORK, INFO);
 
-// eigenvalues in ascending order: W[0] < W[1] < W[2]
-                  if (W[0] >= 0.)
-                  {
-                     printf("ERROR: computeDT: determining eigenvalue is non-negative; W[0] = %e at curvilinear grid point (%i, %i, %i)\n", W[0], i, j, k);
-                     MPI_Abort(MPI_COMM_WORLD, 1);
-                  }
-// local time step
-//           double asym = SQR(mMetric(2,i,j,k))+SQR(mMetric(3,i,j,k))+SQR(mMetric(4,i,j,k));
-//           double m1 = SQR(mMetric(1,i,j,k));
-//           double eg1 = m1*(3*mu+la)+mu*asym;
-//	   double eg2 = (mu+la)*(0.5*(m1+asym) +0.5*sqrt( (m1+asym)*(m1+asym)-4*SQR(mMetric(4,i,j,k))*m1)) + mu*(2*m1+asym);
-//           eg1 = eg1*4*jinv;
-//           eg2 = eg2*4*jinv;
-//           cout << "eig solver " << W[0] << " analytic values " << eg1 << " and " << eg2 << endl;
+            if (INFO != 0) {
+              printf(
+                  "ERROR: computeDT: dspev returned INFO = %i for grid point "
+                  "(%i, %i, %i)\n",
+                  INFO, i, j, k);
+              printf("lambda = %e, mu = %e\n", la, mu);
+              printf("Jacobian = %15.7g \n", mJ[g](i, j, k));
+              printf("Matrix = \n");
+              printf(" %15.7g  %15.7g %15.7g \n", Amat[0], Amat[1], Amat[2]);
+              printf(" %15.7g  %15.7g %15.7g \n", Amat[1], Amat[3], Amat[4]);
+              printf(" %15.7g  %15.7g %15.7g \n", Amat[2], Amat[4], Amat[5]);
+              MPI_Abort(MPI_COMM_WORLD, 1);
+            }
+            // tmp
+            //	   fprintf(fp,"%i %i %i %e %e %e\n", i, j, k, W[0], W[1], W[2]);
 
-                  float_sw4 dtCurvGP = mCFL*sqrt(4.*mRho[g](i,j,k)/(-W[0]));
-                  dtCurv = dtCurv < dtCurvGP ? dtCurv : dtCurvGP;
-               }
-// tmp
-//     fclose(fp);
-      } // end for g
-   } // end if topographyExists()
+            // eigenvalues in ascending order: W[0] < W[1] < W[2]
+            if (W[0] >= 0.) {
+              printf(
+                  "ERROR: computeDT: determining eigenvalue is non-negative; "
+                  "W[0] = %e at curvilinear grid point (%i, %i, %i)\n",
+                  W[0], i, j, k);
+              MPI_Abort(MPI_COMM_WORLD, 1);
+            }
+            // local time step
+            //           double asym =
+            //           SQR(mMetric(2,i,j,k))+SQR(mMetric(3,i,j,k))+SQR(mMetric(4,i,j,k));
+            //           double m1 = SQR(mMetric(1,i,j,k));
+            //           double eg1 = m1*(3*mu+la)+mu*asym;
+            //	   double eg2 = (mu+la)*(0.5*(m1+asym) +0.5*sqrt(
+            //(m1+asym)*(m1+asym)-4*SQR(mMetric(4,i,j,k))*m1)) + mu*(2*m1+asym);
+            //           eg1 = eg1*4*jinv;
+            //           eg2 = eg2*4*jinv;
+            //           cout << "eig solver " << W[0] << " analytic values " <<
+            //           eg1 << " and " << eg2 << endl;
 
-   if( dtCurv < dtloc )
-      dtloc = dtCurv;
+            float_sw4 dtCurvGP = mCFL * sqrt(4. * mRho[g](i, j, k) / (-W[0]));
+            dtCurv = dtCurv < dtCurvGP ? dtCurv : dtCurvGP;
+          }
+      // tmp
+      //     fclose(fp);
+    }  // end for g
+  }    // end if topographyExists()
 
-// compute the global minima
-    MPI_Allreduce( &dtloc, &mDt, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
+  if (dtCurv < dtloc) dtloc = dtCurv;
 
-    //   cout << "cfl = " << mCFL << endl;
+  // compute the global minima
+  MPI_Allreduce(&dtloc, &mDt, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
 
+  //   cout << "cfl = " << mCFL << endl;
 
-// global minima for curvilinear grid
-    if (topographyExists())
-    {
-      float_sw4 dtCurvGlobal;
-      MPI_Allreduce( &dtCurv, &dtCurvGlobal, 1, m_mpifloat, MPI_MIN, m_cartesian_communicator);
-      if (!mQuiet && mVerbose >= 1 && proc_zero())
-      {
-	printf("INFO: Smallest stable time step for curvilinear grid only: %e\n", dtCurvGlobal);
-      }
+  // global minima for curvilinear grid
+  if (topographyExists()) {
+    float_sw4 dtCurvGlobal;
+    MPI_Allreduce(&dtCurv, &dtCurvGlobal, 1, m_mpifloat, MPI_MIN,
+                  m_cartesian_communicator);
+    if (!mQuiet && mVerbose >= 1 && proc_zero()) {
+      printf("INFO: Smallest stable time step for curvilinear grid only: %e\n",
+             dtCurvGlobal);
     }
+  }
 
-    if (!mQuiet && (mVerbose >= 1 || mOrder<4) && proc_zero_evzero())
-    {
-      cout << "TIME accuracy order=" << mOrder << " CFL=" << mCFL << " prel. time step=" << mDt << endl;
+  if (!mQuiet && (mVerbose >= 1 || mOrder < 4) && proc_zero_evzero()) {
+    cout << "TIME accuracy order=" << mOrder << " CFL=" << mCFL
+         << " prel. time step=" << mDt << endl;
+  }
+
+  for (int e = 0; e < m_eEnd - m_eStart + 1; e++) {
+    if (mTimeIsSet[e]) {
+      // constrain the dt based on the goal time
+      //      VERIFY2(mTmax > mTstart,"*** ERROR: Tstart is greater than Tmax!
+      //      ***");
+      mNumberOfTimeSteps[e] =
+          static_cast<int>((mTmax[e] - mTstart) / mDt + 0.5);
+      mNumberOfTimeSteps[e] =
+          (mNumberOfTimeSteps[e] == 0) ? 1 : mNumberOfTimeSteps[e];
+      // the resulting mDt could be slightly too large, because the
+      // numberOfTimeSteps is rounded to the nearest int When more than one
+      // event set mTmax, the final time will only be perfect for one event,
+      // don't know how to fix that....
+      mDt = (mTmax[e] - mTstart) / mNumberOfTimeSteps[e];
     }
-    
-    for( int e=0 ; e < m_eEnd-m_eStart+1 ; e++ )
-    {
-       if (mTimeIsSet[e])
-       {
-// constrain the dt based on the goal time
-//      VERIFY2(mTmax > mTstart,"*** ERROR: Tstart is greater than Tmax! ***");  
-	  mNumberOfTimeSteps[e] = static_cast<int> ((mTmax[e] - mTstart) / mDt + 0.5); 
-	  mNumberOfTimeSteps[e] = (mNumberOfTimeSteps[e]==0)? 1: mNumberOfTimeSteps[e];
-// the resulting mDt could be slightly too large, because the numberOfTimeSteps is rounded to the nearest int
-// When more than one event set mTmax, the final time will only be perfect for one event, don't know how to fix that....
-	  mDt = (mTmax[e] - mTstart) / mNumberOfTimeSteps[e];
-       }
-    }
+  }
 }
 
 
