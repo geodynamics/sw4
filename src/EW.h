@@ -441,12 +441,14 @@ class EW {
   void assign_supergrid_damping_arrays();
 
   // MR coefficients
-  void setup_MR_coefficients();
+  void setup_MR_coefficients( vector<Sarray>& Rho, vector<Sarray>& Mu, 
+                            vector<Sarray>& Lambda );
 
   void assign_local_bcs();
   bool timeSteppingSet();
   bool proc_decompose_2d(int ni, int nj, int nproc, int proc_max[2]);
   void decomp1d(int nglobal, int myid, int nproc, int& s, int& e);
+  void decomp1d_2( int N, int myid, int nproc, int& s, int& e, int nghost, int npad );
   void coarsen1d(int& n, int& ifirst, int& ilast, int periodic);
 
   bool node_core_decomp( int ni, int nj, int& Cx, int& Cy, int& Nx, int &Ny );
