@@ -40,7 +40,6 @@
 
 #include "Parallel_IO.h"
 #include "Sarray.h"
-#include "Source.h"
 #include "boundaryConditionTypes.h"
 
 class EW;

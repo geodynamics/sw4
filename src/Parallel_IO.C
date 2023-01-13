@@ -31,16 +31,13 @@
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 #include <mpi.h>
-
 #include <iostream>
 using namespace std;
 
 #include <errno.h>
 #include <unistd.h>
-
 #include <cstdlib>
 #include <cstring>
-
 #include "Parallel_IO.h"
 
 #ifdef USE_HDF5
@@ -459,7 +456,7 @@ void Parallel_IO::init_array(int globalsizes[3], int localsizes[3],
   //                      padding avoids writing these twice.
   int blsize, s, blocks_in_writer, r, p, b, blnr, kb, ke, l;
   int ibl, iel, jbl, jel, kbl, kel, nsend;
-  int found, i, j, q, lims[6], v[6], vr[6], nprocs, tag2, myid;
+  int found, i, j, q, lims[6], v[6], vr[6], nprocs, tag, tag2, myid;
   int retcode;  //, gproc;
   int* nrecvs;
   size_t nblocks, npts, maxpts;
@@ -684,7 +681,7 @@ void Parallel_IO::init_array(int globalsizes[3], int localsizes[3],
     }
     m_isend.m_maxbuf = maxpts;
 
-    //    tag = 335;
+    tag = 335;
     tag2 = 336;
     /* Senders pass info to receievers */
     if (m_iwrite == 1) {
@@ -876,7 +873,7 @@ void Parallel_IO::init_array(int globalsizes[3], int localsizes[3],
     //	    vr[5] = m_irecv.m_comm_index[5][b-1][i];
     //	    bsize += (vr[1]-vr[0]+1)*(vr[3]-vr[2]+1)*(vr[5]-vr[4]+1);
     //	    //	    if( (vr[1]-vr[0]+1)*(vr[3]-vr[2]+1)*(vr[5]-vr[4]+1) >
-    // bsizemax )
+    //bsizemax )
     //	    //	    {
     //	    //	       maxcomm = i;
     //	    //	       bsizemax =
@@ -2180,7 +2177,6 @@ int Parallel_IO::proc_zero_rank_in_comm_world() {
   //      MPI_Allreduce( &myid, &retval, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD );
   //      m_zerorank_in_commworld = retval;
   //   }
-  }
   return m_zerorank_in_commworld;
 }
 

@@ -160,8 +160,8 @@ void EW::freesurfcurvisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
           (s[1] * u(3, i, j, k) + s[2] * u(3, i, j, k + kl) +
            s[3] * u(3, i, j, k + 2 * kl) + s[4] * u(3, i, j, k + 3 * kl) +
            kl * bc * rhs3 - kl * dc * met(4, i, j, k) * isqrtxy);
-    }
-  }
+      });
+  // }
 #undef mu
 #undef la
 #undef met

@@ -32,7 +32,6 @@
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 #include <mpi.h>
-#include <unistd.h>
 
 #include <unistd.h>
 #include <cstdlib>
@@ -41,12 +40,13 @@
 
 #include "TimeSeries.h"
 //#include "mpi.h"
-#include "EW.h"
-#include "Filter.h"
-#include "Require.h"
 #include "csstime.h"
 #include "sacsubc.h"
 
+#include "Filter.h"
+#include "Require.h"
+
+#include "EW.h"
 #include "GridGenerator.h"
 
 #ifdef USE_HDF5
@@ -1499,16 +1499,10 @@ void TimeSeries::readFile(EW* ew, bool ignore_utc) {
   if (m_myPoint && m_usgsFormat) {
     bool debug = false;
     FILE* fd = fopen(filePrefix.str().c_str(), "r");
-    if (fd == NULL) {
-      cerr << " ERROR: observed data file " << filePrefix.str() << " not found "
+    if (fd == NULL)
+      cout << "ERROR: observed data file " << filePrefix.str() << " not found "
            << endl;
-      cout << " ERROR: observed data file " << filePrefix.str() << " not found "
-           << std::flush;
-      cout << "ERROR PATH " << ew->getPath() << " flag =  " << mIsRestart
-           << "\n"
-           << std::flush;
-      abort();
-    } else {
+    else {
       int bufsize = 1024;
       char* buf = new char[bufsize];
 
@@ -2200,23 +2194,6 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
       }
       wghzobs = wghyobs = wghxobs;
     }  // if use_win
-    // Set to zero before the starting point of the observations, or past end of
-    // observed data.
-    mf[0] = mf[1] = mf[2] = 0;
-    dmf[0] = dmf[1] = dmf[2] = 0;
-    ddmf[0] = ddmf[1] = ddmf[2] = 0;
-    if (1 <= ie && ie <= nfrsteps) {
-      float_sw4 ai, wgh[6], dwgh[6], ddwgh[6];
-      if (ie < 3) {
-        mmin = 1;
-        mmax = 5;
-        ai = ir - (mmin + 2);
-        getwgh5(ai, wgh, dwgh, ddwgh);
-      } else if (ie > nfrsteps - 3) {
-        mmin = nfrsteps - 4;
-        mmax = nfrsteps;
-        ai = ir - (mmin + 2);
-        getwgh5(ai, wgh, dwgh, ddwgh);
 
     if (!m_use_x) wghxobs = 0;
     if (!m_use_y) wghyobs = 0;
@@ -2316,15 +2293,6 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
         mf[0] += wgh[m - mmin] * obs_windowed[0][m];
         mf[1] += wgh[m - mmin] * obs_windowed[1][m];
         mf[2] += wgh[m - mmin] * obs_windowed[2][m];
-          ddmf[0] +=
-              ddwgh[m - mmin] * observed.mRecordedSol[0][m] * idtfr2 * wghxobs;
-          ddmf[1] +=
-              ddwgh[m - mmin] * observed.mRecordedSol[1][m] * idtfr2 * wghyobs;
-          ddmf[2] +=
-              ddwgh[m - mmin] * observed.mRecordedSol[2][m] * idtfr2 * wghzobs;
-          mf[0] += wgh[m - mmin] * observed.mRecordedFloats[0][m] * wghxobs;
-          mf[1] += wgh[m - mmin] * observed.mRecordedFloats[1][m] * wghyobs;
-          mf[2] += wgh[m - mmin] * observed.mRecordedFloats[2][m] * wghzobs;
 
         dmf[0] += dwgh[m - mmin] * obs_windowed[0][m] * idtfr;
         dmf[1] += dwgh[m - mmin] * obs_windowed[1][m] * idtfr;
@@ -2333,6 +2301,7 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
         ddmf[0] += ddwgh[m - mmin] * obs_windowed[0][m] * idtfr2;
         ddmf[1] += ddwgh[m - mmin] * obs_windowed[1][m] * idtfr2;
         ddmf[2] += ddwgh[m - mmin] * obs_windowed[2][m] * idtfr2;
+      }
     }
     if (m_usgsFormat) {
       func += (mf[0] * mRecordedSol[0][i] * wghx +

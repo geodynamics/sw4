@@ -30,17 +30,16 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+#include "mpi.h"
+
 #include <fcntl.h>
 #include <math.h>
 #include <unistd.h>
-
 #include <cstring>
 #include <ctime>
-
 #include "EW.h"
 #include "Require.h"
 #include "SfileOutput.h"
-#include "mpi.h"
 
 // static variable definition (in class only declaration):
 int SfileOutput::mPreceedZeros = 0;
@@ -223,8 +222,8 @@ void SfileOutput::define_pio() {
     int iwrite = 0;
     int nrwriters = mEW->getNumberOfWritersPFS();
     int nproc = 0, myid = 0;
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+    MPI_Comm_size(mEW->m_1d_communicator, &nproc);
+    MPI_Comm_rank(mEW->m_1d_communicator, &myid);
 
     // new hack
     int* owners = new int[nproc];
@@ -248,7 +247,8 @@ void SfileOutput::define_pio() {
     //      iwrite= " << iwrite << " start= "
     //		<< start[0] << " " << start[1] << " " << start[2] << std::endl;
     m_parallel_io[g - glow] =
-        new Parallel_IO(iwrite, mEW->usingParallelFS(), global, local, start);
+        new Parallel_IO(iwrite, mEW->usingParallelFS(), global, local, start,
+                        mEW->m_1d_communicator);
     delete[] owners;
   }
   m_isDefinedMPIWriters = true;
@@ -635,12 +635,10 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
     if (m_extraz[g] == 1) {
       /* cout << "g=" << g << ", need extrapolate extra z" << endl; */
       int k = mWindow[g][5] + stV;
-      size_t ind, ind_1, ind_2;
-#ifdef BZ_DEBUG
-      size_t npts = ((size_t)(mWindow[g][1] - mWindow[g][0]) / stH + 1) *
-                    ((mWindow[g][3] - mWindow[g][2]) / stH + 1) *
-                    ((mWindow[g][5] - mWindow[g][4]) / stV + 1 + m_extraz[g]);
-#endif
+      size_t ind, ind_1, ind_2, npts;
+      npts = ((size_t)(mWindow[g][1] - mWindow[g][0]) / stH + 1) *
+             ((mWindow[g][3] - mWindow[g][2]) / stH + 1) *
+             ((mWindow[g][5] - mWindow[g][4]) / stV + 1 + m_extraz[g]);
 
       // Linear extrapolation assumes that
       // mWindow[g][5]-st>=mWindow[g][4], i.e. mWindow[g][5] -mWindow[g][4]>=st.
@@ -719,11 +717,11 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
     m_modestring = "Qs";
 
 #ifdef USE_HDF5
-  hid_t h5_fid, grp, grp2, dset, attr, dspace, attr_space1, attr_space2,
+  hid_t h5_fid, grp, grp2, dset, attr, dtype, dspace, attr_space1, attr_space2,
       attr_space3, fapl, dxpl, filespace, memspace;
   int ret;
   int myid = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+  MPI_Comm_rank(mEW->m_1d_communicator, &myid);
 
   hsize_t offsets[3], counts[3];
   char dname[128], gname[128];
@@ -745,7 +743,7 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
 
   // Open file from processor zero and write header.
   if (m_parallel_io[0]->proc_zero() && !m_isCreated) {
-    hsize_t dims2 = 2, dims3 = 3;
+    hsize_t dims[3], dims1 = 1, dims2 = 2, dims3 = 3, total_elem = 0;
 
     fapl = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_alignment(fapl, alignment, alignment);
@@ -776,7 +774,7 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
     H5Awrite(attr, H5T_NATIVE_DOUBLE, lonlataz);
     H5Aclose(attr);
 
-    aname = "Coarsest horizontal grid spacing";
+    aname = "Finest horizontal grid spacing";
     double spacing = mEW->mGridSize[ng - 1] * stH;
     attr = H5Acreate(h5_fid, aname, H5T_NATIVE_DOUBLE, attr_space1, H5P_DEFAULT,
                      H5P_DEFAULT);
@@ -954,7 +952,7 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
 
   fapl = H5Pcreate(H5P_FILE_ACCESS);
   H5Pset_alignment(fapl, alignment, alignment);
-  H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
+  H5Pset_fapl_mpio(fapl, mEW->m_1d_communicator, MPI_INFO_NULL);
   dxpl = H5Pcreate(H5P_DATASET_XFER);
   H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_COLLECTIVE);
 

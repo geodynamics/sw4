@@ -99,7 +99,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   // print_hwm(getRank());
   // solution arrays
   vector<Sarray> F(mNumberOfGrids), Lu(mNumberOfGrids), Uacc(mNumberOfGrids),
-      Up(mNumberOfGrids), Um(mNumberOfGrids), U(mNumberOfGrids);
+    Up(mNumberOfGrids) ; //Um(mNumberOfGrids), U(mNumberOfGrids);
   vector<Sarray*> AlphaVE(mNumberOfGrids), AlphaVEm(mNumberOfGrids),
       AlphaVEp(mNumberOfGrids);
   // vectors of pointers to hold boundary forcing arrays in each grid

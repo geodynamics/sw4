@@ -35,12 +35,12 @@
 
 #include <string>
 
-#ifdef ENABLE_PROJ4
-#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H
-#include "proj_api.h"
-#endif
+/* #ifdef ENABLE_PROJ4 */
+/* #define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H */
+/* #include "proj_api.h" */
+/* #endif */
 
-#ifdef ENABLE_PROJ_6
+#ifdef ENABLE_PROJ
 #include "proj.h"
 #endif
 
@@ -57,10 +57,10 @@ class GeographicProjection {
                                 double latitude, char *crs_to);
 
  private:
-#ifdef ENABLE_PROJ4
-  projPJ m_projection, m_latlong;
-#endif
-#ifdef ENABLE_PROJ_6
+/* #ifdef ENABLE_PROJ4 */
+/*      projPJ m_projection, m_latlong; */
+/* #endif */
+#ifdef ENABLE_PROJ
   PJ *m_P;
   PJ *m_Pgmg;
 #endif

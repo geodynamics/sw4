@@ -222,18 +222,19 @@ void MaterialBlock::set_material_properties(std::vector<Sarray>& rho,
                   i, j, k, g, x, y, z, depth, m_xmin, m_xmax, m_ymin, m_ymax,
                   m_zmin, m_zmax);
             }
+	    outside++;
           }
+
+	  } // end for i
+        } // end for j
+     } // end for k
       mEW->communicate_array(rho[g], g);
       mEW->communicate_array_host(cs[g], g);
       mEW->communicate_array_host(cp[g], g);
 
       if (qs[g].is_defined()) mEW->communicate_array_host(qs[g], g);
       if (qp[g].is_defined()) mEW->communicate_array_host(qp[g], g);
-  }
-  // end if topographyExists
 
-    if (qs[g].is_defined()) mEW->communicate_array(qs[g], g);
-    if (qp[g].is_defined()) mEW->communicate_array(qp[g], g);
   }  // end for g (curvilinear)
 
   size_t outsideSum, materialSum;

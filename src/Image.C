@@ -31,19 +31,18 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+#include "mpi.h"
+
 #include <fcntl.h>
 #include <unistd.h>
-
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
-
 #include "EW.h"
 #include "Image.h"
 #include "Require.h"
-#include "mpi.h"
 
 #ifdef USE_HDF5
 #include "sachdf5.h"
@@ -259,7 +258,7 @@ void Image::computeGridPtIndex() {
       }
       //       if (myRank == 0)
       // 	printf("The closest grid line is located at %s = %.2f; index =
-      // %i on grid %i\n", mOrientationString[mLocationType].c_str(),
+      // %i on grid %i\n", 	       mOrientationString[mLocationType].c_str(),
       // (m_gridPtIndex[g]-1)*mEW->mGridSize[g],m_gridPtIndex[g],g);
     }  // end for all Cartesian grids
 
@@ -462,8 +461,7 @@ void Image::define_pio() {
   for (int g = glow; g < ghigh; g++) {
     int global[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g],
                      mEW->m_global_nz[g]};
-    //		       mEW->m_kEnd[g] - mEW->m_kStart[g] -
-    // 2*mEW->m_ghost_points+1}
+    //		       mEW->m_kEnd[g] - mEW->m_kStart[g] - 2*mEW->m_ghost_points+1}
     //;
     int local[3];
     local[0] = mWindow[g][1] - mWindow[g][0] + 1;
@@ -538,9 +536,9 @@ void Image::allocatePlane() {
     // mFilePrefix.c_str(), m_rankWriter);
     //       }
 
-    //    int nPatches = mEW->mNumberOfGrids;  // both Cartesian and curvilinear
+    int nPatches = mEW->mNumberOfGrids;  // both Cartesian and curvilinear
 
-    //   if (breakLoop) nPatches = 1;
+    if (breakLoop) nPatches = 1;
 
     // figure out the sizes...
     for (int g = 0; g < mEW->mNumberOfGrids; g++) {
@@ -858,7 +856,7 @@ void Image::computeImageLatLon(std::vector<Sarray>& a_X,
           for (int ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++) {
             size_t iField = (ii - mWindow[g][0]) + ni * (jj - mWindow[g][2]) +
                             nij * (kk - mWindow[g][4]);
-            double latP, lonP, xP, yP, val;
+            double latP, lonP, xP, yP, zP, val;
             if (g > topCartesian)  // curvilinear grid
             {
               xP = a_X[g](ii, jj, kk);
@@ -867,7 +865,7 @@ void Image::computeImageLatLon(std::vector<Sarray>& a_X,
             } else {
               xP = (ii - 1) * mEW->mGridSize[g];
               yP = (jj - 1) * mEW->mGridSize[g];
-              // zP = (kk - 1) * mEW->mGridSize[g] + mEW->m_zmin[g];
+              zP = (kk - 1) * mEW->mGridSize[g] + mEW->m_zmin[g];
             }
             mEW->computeGeographicCoord(xP, yP, lonP, latP);
             if (mMode == Image::LAT)
@@ -2998,7 +2996,7 @@ void Image::output_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
            mMode != VMAX) {
     if (mEW->proc_zero()) {
       //	  printf("Can only write ux, uy, uz, mu, rho, lambda, uxerr,
-      // uyerr, uzerr- remove once completely implemented\n");
+      //uyerr, uzerr- remove once completely implemented\n");
       printf(
           "Can only write ux, uy, uz, mu, rho, lambda: - remove once "
           "completely implemented\n");

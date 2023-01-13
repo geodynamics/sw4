@@ -2425,7 +2425,7 @@ void evalLu_Djp(int ib, int ie, int jb, int je, int kb, int ke,
         //    for( int j=jlb ; j <= jle; j++ )
         // 	 for( int i=ilb+1 ; i <= ile-1; i++ )
 
-      for (int i = ilb + 1; i <= ile - 1; i++) {
+
         float_sw4 mupx = half * (mu(i, j, k) + mu(i + 1, j, k));
         float_sw4 mumx = half * (mu(i, j, k) + mu(i - 1, j, k));
         float_sw4 mupy = half * (mu(i, j + 1, k) + mu(i, j, k));
@@ -2585,7 +2585,7 @@ void evalLu_Djm(int ib, int ie, int jb, int je, int kb, int ke,
         //    for( int j=jlb ; j <= jle; j++ )
         // 	 for( int i=ilb+1 ; i <= ile-1; i++ )
 
-      for (int i = ilb + 1; i <= ile - 1; i++) {
+
         float_sw4 mupx = half * (mu(i, j, k) + mu(i + 1, j, k));
         float_sw4 mumx = half * (mu(i, j, k) + mu(i - 1, j, k));
         float_sw4 mupy = half * (mu(i, j + 1, k) + mu(i, j, k));
@@ -3362,7 +3362,7 @@ void evalLu_DkpDjp(int ib, int ie, int jb, int je, int kb, int ke,
         //    for( int j=jlb ; j <= jle; j++ )
         // 	 for( int i=ilb+1 ; i <= ile-1; i++ )
         // 	 {
-      for (int i = ilb + 1; i <= ile - 1; i++) {
+
         float_sw4 mupx = half * (mu(i, j, k) + mu(i + 1, j, k));
         float_sw4 mumx = half * (mu(i, j, k) + mu(i - 1, j, k));
         float_sw4 mupy = half * (mu(i, j + 1, k) + mu(i, j, k));
@@ -3515,7 +3515,7 @@ void evalLu_DkpDjm(int ib, int ie, int jb, int je, int kb, int ke,
         //    for( int j=jlb ; j <= jle; j++ )
         // 	 for( int i=ilb+1 ; i <= ile-1; i++ )
         // 	 {
-      for (int i = ilb + 1; i <= ile - 1; i++) {
+
         float_sw4 mupx = half * (mu(i, j, k) + mu(i + 1, j, k));
         float_sw4 mumx = half * (mu(i, j, k) + mu(i - 1, j, k));
         float_sw4 mupy = half * (mu(i, j + 1, k) + mu(i, j, k));
@@ -3941,11 +3941,13 @@ void EW::bcsurf_curvilinear_2nd_order(int side, int i0, int i1, int j0, int j1,
 }
 
 //-----------------------------------------------------------------------
+
 template <int iu, int il, int ju, int jl, int ku, int kl>
-void evalLuCurv(int ib, int ie, int jb, int je, int kb, int ke, Sarray& u,
-                Sarray& lu, float_sw4* a_mu, float_sw4* a_la, Sarray& met,
-                Sarray& jac, int ilb, int ile, int jlb, int jle, int klb,
-                int kle) {
+void evalLuCurv(int ib, int ie, int jb, int je, int kb, int ke, Sarray& u_arg,
+                Sarray& lu_arg, float_sw4* a_mu, float_sw4* a_la,
+                Sarray& met_arg, Sarray& jac_arg, int ilb, int ile, int jlb,
+                int jle, int klb, int kle) {
+  SW4_MARK_FUNCTION;
 #define mu(i, j, k) a_mu[i - ib + ni * (j - jb) + nij * (k - kb)]
 #define la(i, j, k) a_la[i - ib + ni * (j - jb) + nij * (k - kb)]
   //#define u(c,i,j,k)  a_u[i-ib+ni*(j-jb)+nij*(k-kb)+(c-1)*nijk]
@@ -3957,22 +3959,72 @@ void evalLuCurv(int ib, int ie, int jb, int je, int kb, int ke, Sarray& u,
   //   const size_t nlij=nli*(jle-jlb+1);
   //   const size_t nlijk=nlij*(kle-klb+1);
   //   const float_sw4 ih2 = 1/(h*h);
-  const float_sw4 half = 0.5;
-  const float_sw4 fourth = 0.25;
+  //   const float_sw4 half   = 0.5;
+  // const float_sw4 fourth = 0.25;
   // differences in mixed terms are computed as (u(i+iu)-u(i-il))/(iu+il), so
   // that iu=1,il=0 gives forward diff, iu=0,il=1 gives backward diff, iu=1,il=1
   // gives centered diff.
 
+  auto& u = u_arg.getview();
+  auto& lu = lu_arg.getview();
+  auto& met = met_arg.getview();
+  auto& jac = jac_arg.getview();
+
   const int ok = ku == kl ? 1 : 0;
   const int oj = ju == jl ? 1 : 0;
   const int oi = iu == il ? 1 : 0;
-  for (int k = klb + ok; k <= kle - ok; k++)
-    for (int j = jlb + oj; j <= jle - oj; j++)
-      for (int i = ilb + oi; i <= ile - oi; i++)
-      //   for( int k=klb+1 ; k <= kle-1; k++ )
-      //      for( int j=jlb ; j <= jle; j++ )
-      //	 for( int i=ilb+1 ; i <= ile-1; i++ )
-      {
+
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
+  Range<4> K(klb + ok, kle - ok + 1);
+  Range<4> J(jlb + oj, jle - oj + 1);
+  Range<4> I(ilb + oi, ile - oi + 1);
+
+  Tclass<1471> tag1;
+  forall3<__LINE__>(
+      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1471> t, int i, int j, int k) {
+
+#else
+
+  // for( int k=klb+1 ; k <= kle-1; k++ )
+  //    for( int j=jlb+1 ; j <= jle-1; j++ )
+  // 	 for( int i=ilb ; i <= ile; i++ )
+
+#if defined(ENABLE_GPU)
+  using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
+      128,
+      RAJA::statement::Tile<
+          0, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_z_loop,
+          RAJA::statement::Tile<
+              1, RAJA::statement::tile_fixed<4>, RAJA::cuda_block_y_loop,
+              RAJA::statement::Tile<
+                  2, RAJA::statement::tile_fixed<8>, RAJA::cuda_block_x_loop,
+                  RAJA::statement::For<
+                      0, RAJA::cuda_thread_z_direct,
+                      RAJA::statement::For<
+                          1, RAJA::cuda_thread_y_direct,
+                          RAJA::statement::For<
+                              2, RAJA::cuda_thread_x_direct,
+                              RAJA::statement::Lambda<0> > > > > > > > >;
+#else
+  using LOCAL_POL = DEFAULT_LOOP3;
+#endif
+
+  RAJA::RangeSegment k_range(klb + ok, kle - ok + 1);
+  RAJA::RangeSegment j_range(jlb + oj, jle - oj + 1);
+  RAJA::RangeSegment i_range(ilb + oi, ile - oi + 1);
+  RAJA::kernel<LOCAL_POL>(
+      RAJA::make_tuple(k_range, j_range, i_range),
+      [=] RAJA_DEVICE(int k, int j, int i) {
+#endif
+        // 255 regs per thread with NVCC with spills
+
+        // for( int k=klb+ok ; k <= kle-ok; k++ )
+        //    for( int j=jlb+oj ; j <= jle-oj; j++ )
+        // 	 for( int i=ilb+oi ; i <= ile-oi; i++ )
+        // 	    //   for( int k=klb+1 ; k <= kle-1; k++ )
+        // 	    //      for( int j=jlb ; j <= jle; j++ )
+        // 	    //	 for( int i=ilb+1 ; i <= ile-1; i++ )
+        // 	 {
         float_sw4 r1 = 0, r2 = 0, r3 = 0;
         float_sw4 ijac = 1.0 / jac(i, j, k);
         // U-equation D+D-
@@ -4357,7 +4409,7 @@ void evalLuCurv(int ib, int ie, int jb, int je, int kb, int ke, Sarray& u,
               ((ju + jl) * (ku + kl));
 
         lu(3, i, j, k) = r3 * ijac;
-      }
+      });
 #undef mu
 #undef la
 }

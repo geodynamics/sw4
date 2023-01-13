@@ -34,7 +34,6 @@
 
 #include <cstdio>
 #include <cstring>
-
 #include "GeographicProjection.h"
 #include "Require.h"
 
@@ -75,28 +74,6 @@ GeographicProjection::GeographicProjection(double lon_origin, double lat_origin,
   m_P = proj_create_crs_to_crs(PJ_DEFAULT_CTX, crs_from, crs_to, NULL);
   /* printf("projection: [%s]\n", crs_to); */
   ASSERT(m_P);
-  c = proj_coord(lon_origin, lat_origin, 0.0, 0.0);
-  c_out = proj_trans(m_P, PJ_FWD, c);
-
-  m_xoffset = c_out.xyzt.x;
-  m_yoffset = c_out.xyzt.y;
-
-  m_deg2rad = M_PI / 180;
-  m_az = az * m_deg2rad;
-
-
-  m_az = az * m_deg2rad;
-#endif
-
-#ifdef ENABLE_PROJ_6
-  PJ_COORD c, c_out;
-  const char *crs_from = "+proj=latlong +datum=NAD83";
-  const char *crs_to = projection.c_str();
-  //const char *crs_to = "+proj=utm +ellps=WGS84 +lon_0=-116.855 +lat_0=37.2281 +units=m";
-  //std::cout<<"STRING "<<crs_to<<"\n"<<projection.c_str()<<"\n";
-  m_P = proj_create_crs_to_crs(PJ_DEFAULT_CTX, crs_from, crs_to, NULL);
-  /* printf("projection: [%s]\n", crs_to); */
-  ASSERT(m_P);
 
   c = proj_coord(lon_origin, lat_origin, 0.0, 0.0);
   c_out = proj_trans(m_P, PJ_FWD, c);
@@ -116,15 +93,6 @@ GeographicProjection::GeographicProjection(double lon_origin, double lat_origin,
 //-----------------------------------------------------------------------
 GeographicProjection::~GeographicProjection(void) {
 #ifdef ENABLE_PROJ
-  if (m_P) proj_destroy(m_P);
-  if (m_Pgmg) proj_destroy(m_Pgmg);
-  m_P = NULL;
-  m_Pgmg = NULL;
-}
-
-//-----------------------------------------------------------------------
-GeographicProjection::~GeographicProjection(void) {
-#ifdef ENABLE_PROJ_6
   if (m_P) proj_destroy(m_P);
   if (m_Pgmg) proj_destroy(m_Pgmg);
   m_P = NULL;
@@ -150,16 +118,6 @@ void GeographicProjection::computeGeographicCoord(double x, double y,
   /* #endif */
 
 #ifdef ENABLE_PROJ
-  PJ_COORD c, c_out;
-  ASSERT(m_P);
-
-  double xmap, ymap;
-  xmap = x * sin(m_az) + y * cos(m_az) + m_xoffset;
-  ymap = x * cos(m_az) - y * sin(m_az) + m_yoffset;
-
-#endif
-
-#ifdef ENABLE_PROJ_6
   PJ_COORD c, c_out;
   ASSERT(m_P);
 
@@ -201,19 +159,6 @@ void GeographicProjection::computeCartesianCoord(double &x, double &y,
   PJ_COORD c, c_out;
   double xlon, ylat;
 
-  xlon = lon * DEG_TO_RAD;
-  ylat = lat * DEG_TO_RAD;
-  status = pj_transform(m_latlong, m_projection, 1, 1, &xlon, &ylat, NULL);
-  xlon -= m_xoffset;
-  ylat -= m_yoffset;
-  x = xlon * sin(m_az) + ylat * cos(m_az);
-  y = xlon * cos(m_az) - ylat * sin(m_az);
-#endif
-
-#ifdef ENABLE_PROJ_6
-  PJ_COORD c, c_out;
-  double xlon, ylat;
-
   ASSERT(m_P);
 
   c = proj_coord(lon, lat, 0.0, 0.0);
@@ -226,7 +171,7 @@ void GeographicProjection::computeCartesianCoord(double &x, double &y,
   ylat -= m_yoffset;
   x = xlon * sin(m_az) + ylat * cos(m_az);
   y = xlon * cos(m_az) - ylat * sin(m_az);
-
+#endif
 
   /* printf("computeCartesianCoord: %f %f -> %f\t%f\n", lon, lat, x, y); */
 }
