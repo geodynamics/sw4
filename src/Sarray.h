@@ -224,6 +224,7 @@ class Sarray {
   int ncomp() const { return m_nc; }
   int npts() const { return m_ni * m_nj * m_nk; }
   void copy(const Sarray& u);
+  float_sw4 absmax( int c=1 );
   float_sw4 maximum(int c = 1);
   float_sw4 minimum(int c = 1);
   float_sw4 sum(int c = 1);

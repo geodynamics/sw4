@@ -1,6 +1,6 @@
+
 #include "EW.h"
 #include "GridGenerator.h"
-#include "caliper.h"
 
 //-----------------------------------------------------------------------
 int GridGenerator::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
@@ -9,7 +9,6 @@ int GridGenerator::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
                              float_sw4* __restrict__ a_z,
                              float_sw4* __restrict__ a_met,
                              float_sw4* __restrict__ a_jac) {
-  SW4_MARK_FUNCTION;
   const float_sw4 c1 = 2.0 / 3, c2 = -1.0 / 12;
   const float_sw4 fs = 5.0 / 6, ot = 1.0 / 12, ft = 4.0 / 3, os = 1.0 / 6,
                   d3 = 14.0 / 3;
@@ -32,7 +31,7 @@ int GridGenerator::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
 #pragma omp parallel for reduction(+ : ecode)
   for (int k = kb; k <= ke; k++)
     for (int j = jb; j <= je; j++)
-//#pragma ivdep
+#pragma ivdep
 #pragma omp simd
       for (int i = ib; i <= ie; i++) {
         // k-derivatives
@@ -131,8 +130,8 @@ int GridGenerator::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
 }
 
 //-----------------------------------------------------------------------
-int GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
-                                          float_sw4& z, Sarray& topo) {
+bool GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
+                                           float_sw4& z, Sarray& topo) {
   // Interpolate the topography
   //
   // if (q,r) is on this processor then
@@ -147,24 +146,24 @@ int GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
   // (without ghost points),
   //  1 <= r <= Ny.
 
-  if (!a_ew->topographyExists()) return -1;
+  if (!a_ew->topographyExists()) return false;
 
   int gTop = a_ew->mNumberOfGrids - 1;
   float_sw4 h = a_ew->mGridSize[gTop];
   float_sw4 q = x / h + 1.0;
   float_sw4 r = y / h + 1.0;
-
   // Find topography at (q,r), tau=tau(q,r)
   // Nearest grid point:
   int iNear = static_cast<int>(round(q));
   int jNear = static_cast<int>(round(r));
   float_sw4 tau;
+
   if (fabs(iNear - q) < 1.e-9 && fabs(jNear - r) < 1.e-9) {
     // At a grid point, evaluate topography at that point
     if (topo.in_range(1, iNear, jNear, 1))
       tau = topo(iNear, jNear, 1);
     else
-      return -2;
+      return false;
   } else {
     // Not at a grid  point, interpolate the topography
     // Nearest lower grid point
@@ -180,16 +179,15 @@ int GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
         for (int k = -3; k <= 4; k++)
           tau += a6cofi[k + 3] * a6cofj[l + 3] * topo(k + iNear, l + jNear, 1);
     } else {
-      return -3;
+      return false;
     }
   }
   z = -tau;
-  return 1;
+  return true;
 }
 
 //-----------------------------------------------------------------------
 void GridGenerator::gettopowgh(float_sw4 ai, float_sw4 wgh[8]) const {
-  SW4_MARK_FUNCTION;
   float_sw4 pol = ai * ai * ai * ai * ai * ai * ai *
                   (-251 + 135 * ai + 25 * ai * ai - 33 * ai * ai * ai +
                    6 * ai * ai * ai * ai) /
@@ -225,7 +223,7 @@ void GridGenerator::gettopowgh(float_sw4 ai, float_sw4 wgh[8]) const {
 bool GridGenerator::exact_metric(EW* a_ew, int g, Sarray& a_jac,
                                  Sarray& a_met) {
   std::cout << "GridGenerator: Exact metric is not available \n" << std::endl;
-  return false;
+  return true;
 }
 
 //-----------------------------------------------------------------------

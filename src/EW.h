@@ -95,6 +95,7 @@ class EW {
   void setNumberSteps(int steps, int event = 0);  // remove???
   // int getNumberOfSteps() const;
   int getNumberOfSteps(int event = 0) const;
+  int getNumberOfLocalEvents() const;
   int getNumberOfEvents() const;
   float_sw4 getGlobalZmin() { return m_global_zmin; }
   float_sw4 getGlobalZmax() { return m_global_zmax; }
@@ -447,6 +448,12 @@ class EW {
   bool proc_decompose_2d(int ni, int nj, int nproc, int proc_max[2]);
   void decomp1d(int nglobal, int myid, int nproc, int& s, int& e);
   void coarsen1d(int& n, int& ifirst, int& ilast, int periodic);
+
+  bool node_core_decomp( int ni, int nj, int& Cx, int& Cy, int& Nx, int &Ny );
+  void my_node_core_rank( int Cx, int Cy, int Nx, int Ny,
+			  int& cx, int& cy, int& nx, int &ny );
+  int  my_node_core_id( int ni,int nj, int proc_max[2] );
+  
   void allocateCurvilinearArrays();
   void generate_grid();
   void setup_metric();

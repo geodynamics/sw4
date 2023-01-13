@@ -48,15 +48,16 @@ class GridGeneratorGaussianHill : public GridGenerator {
                             int g, float_sw4& x, float_sw4& y, float_sw4& z);
   virtual bool inverse_grid_mapping(EW* a_ew, float_sw4 x, float_sw4 y,
                                     float_sw4 z, int g, float_sw4& p,
-                                    float_sw4& q, float_sw4& r);
+                                    float_sw4& q, float_sw4& r,
+                                    bool interior = true);
   virtual void grid_mapping_diff(EW* a_ew, float_sw4 q, float_sw4 r,
                                  float_sw4 s, int g, int ic, int jc, int kc,
                                  float_sw4& zq, float_sw4& zr, float_sw4& zs,
                                  float_sw4& zqq, float_sw4& zqr, float_sw4& zqs,
                                  float_sw4& zrr, float_sw4& zrs,
                                  float_sw4& zss);
-  virtual int interpolate_topography(EW* a_ew, float_sw4 q, float_sw4 r,
-                                     float_sw4& z, Sarray& topo);
+  virtual bool interpolate_topography(EW* a_ew, float_sw4 q, float_sw4 r,
+                                      float_sw4& z, Sarray& topo);
   virtual bool exact_metric(EW* a_ew, int g, Sarray& a_jac, Sarray& a_met);
   virtual void fill_topo(Sarray& topo, float_sw4 h);
   virtual void generate_z_and_j(EW* a_ew, int g, Sarray& z, Sarray& J);

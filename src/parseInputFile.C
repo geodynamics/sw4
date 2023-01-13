@@ -3624,6 +3624,7 @@ void EW::processCheckPoint(char* buffer) {
 
   string restartFileName, restartPath;
   bool restartFileGiven = false, restartPathGiven = false, useHDF5 = false;
+  bool restartLatestGiven = false;
   int compressionMode = 0;
   double compressionPar;
 
@@ -5738,6 +5739,7 @@ void EW::processSource(char* buffer,
   if (mVerbose >= 4 && proc_zero())
     cout << "********Done parsing source command*********" << endl;
 }
+}
 
 //----------------------------------------------------------------------------
 void EW::processRuptureHDF5(char* buffer,
@@ -7261,14 +7263,6 @@ void EW::processObservationHDF5(
     // a_GlobalTimeSeries[0][e] = a_GlobalTimeSeries[0][e+1];
     // a_GlobalTimeSeries[0].resize(n-1);
   }
-
-  // Read from HDF5 file, and create time series data
-#ifdef USE_HDF5
-  bool is_obs = true;
-  readStationHDF5(this, inhdf5file, outhdf5file, writeEvery, downSample, mode,
-                  event, &a_GlobalTimeSeries, m_global_xmax, m_global_ymax,
-                  is_obs, winlset, winrset, winl, winr, usex, usey, usez, t0,
-                  scalefactor_set, scalefactor);
 
 #else
   if (proc_zero())
