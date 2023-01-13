@@ -1412,6 +1412,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
     // periodically, print time stepping info to stdout
     printTime(currentTimeStep, t, currentTimeStep == mNumberOfTimeSteps[event]);
+
     //    printTime( currentTimeStep, t, true );
 
     // Images have to be written before the solution arrays are cycled, because
@@ -1540,7 +1541,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     if (m_lamb_test || m_point_source_test || m_rayleigh_wave_test) {
       float_sw4 errInf = 0, errL2 = 0, solInf = 0, solL2 = 0;
       exactSol(t, Up, AlphaVE, a_Sources);  // store exact solution in Up
-
+ 
       if (m_lamb_test)
         normOfSurfaceDifference(Up, U, errInf, errL2, solInf, solL2, a_Sources);
       else if (m_point_source_test || m_rayleigh_wave_test)

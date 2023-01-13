@@ -3906,7 +3906,7 @@ void EW::get_exact_lamb2(vector<Sarray>& a_U, float_sw4 a_t, Source& a_source) {
     tfun = 2;
   // Fortran
   size_t npts = a_U[g].m_npts;
-  double* uexact = new double[npts];
+  float_sw4* uexact = SW4_NEW(Space::Managed, float_sw4[npts]);
   for (size_t i = 0; i < npts; i++) uexact[i] = 0;
   double fzd = fz;
   double d_t = a_t;
