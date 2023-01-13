@@ -9968,38 +9968,38 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
 #endif  // #ifdef USE_HDF5
 }
 
-#ifdef USE_HDF5
-static void read_hdf5_attr(hid_t loc, hid_t dtype, const char* name,
-                           void* data) {
-  hid_t attr_id;
-  int ierr;
-  attr_id = H5Aopen(loc, name, H5P_DEFAULT);
-  ASSERT(attr_id >= 0);
-  ierr = H5Aread(attr_id, dtype, data);
-  ASSERT(ierr >= 0);
-  H5Aclose(attr_id);
-}
+// #ifdef USE_HDF5
+// static void read_hdf5_attr(hid_t loc, hid_t dtype, const char* name,
+//                            void* data) {
+//   hid_t attr_id;
+//   int ierr;
+//   attr_id = H5Aopen(loc, name, H5P_DEFAULT);
+//   ASSERT(attr_id >= 0);
+//   ierr = H5Aread(attr_id, dtype, data);
+//   ASSERT(ierr >= 0);
+//   H5Aclose(attr_id);
+// }
 
-static char* read_hdf5_attr_str(hid_t loc, const char* name) {
-  hid_t attr_id, dtype;
-  int ierr;
-  char* data = NULL;
+// static char* read_hdf5_attr_str(hid_t loc, const char* name) {
+//   hid_t attr_id, dtype;
+//   int ierr;
+//   char* data = NULL;
 
-  attr_id = H5Aopen(loc, name, H5P_DEFAULT);
-  ASSERT(attr_id >= 0);
+//   attr_id = H5Aopen(loc, name, H5P_DEFAULT);
+//   ASSERT(attr_id >= 0);
 
-  dtype = H5Aget_type(attr_id);
+//   dtype = H5Aget_type(attr_id);
 
-  ierr = H5Aread(attr_id, dtype, &data);
-  ASSERT(ierr >= 0);
+//   ierr = H5Aread(attr_id, dtype, &data);
+//   ASSERT(ierr >= 0);
 
-  H5Tclose(dtype);
-  H5Aclose(attr_id);
+//   H5Tclose(dtype);
+//   H5Aclose(attr_id);
 
-  /* fprintf(stderr, "Read data: [%s]\n", data); */
-  return data;
-}
-#endif
+//   /* fprintf(stderr, "Read data: [%s]\n", data); */
+//   return data;
+// }
+// #endif
 
 //-----------------------------------------------------------------------
 void EW::extractTopographyFromGMG(std::string a_topoFileName) {
