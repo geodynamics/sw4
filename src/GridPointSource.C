@@ -314,7 +314,7 @@ RAJA_HOST_DEVICE
 void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) {
   float_sw4 afun, afunv[6];
   //printf("mTimeDependence =%d %d\n",mTimeDependence,iRicker);
-  fxyz[0]=-1.0; fxyz[1]=-2.0;fxyz[2]=-3.0;
+
   if (mTimeDependence != iDiscrete6moments &&
       mTimeDependence != iDiscrete3forces)
     afun = mTimeFunc(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);

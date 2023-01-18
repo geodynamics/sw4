@@ -5037,7 +5037,6 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
 #pragma unroll
             for (int i = 0; i < 3; i++)
               *ForceAddress_copy[index + i] += fxyz[i];
-	    //if ((fxyz[0]+fxyz[1]+fxyz[2])!=0.0) printf("FORCE %f %f %f\n",fxyz[0],fxyz[1],fxyz[2]);
           }
         });
 

@@ -4357,11 +4357,11 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
       mC[g].set_to_minusOne();
     } else {
       // elastic material
-      mMu[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
-      mLambda[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
+      mMu[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast,Space::Host);
+      mLambda[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast,Space::Host);
       // initialize the material coefficients to -1
-      mMu[g].set_to_minusOne();
-      mLambda[g].set_to_minusOne();
+      mMu[g].set_to_minusOneHost();
+      mLambda[g].set_to_minusOneHost();
       // allocate space for material coefficient arrays needed by MR
       m_Morc[g].define(ifirst, ilast, jfirst, jlast, 1, 1);
       m_Mlrc[g].define(ifirst, ilast, jfirst, jlast, 1, 1);
@@ -4376,21 +4376,21 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
     }
     // viscoelastic material coefficients & memory variables
     if (m_use_attenuation) {
-      mQs[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
-      mQp[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
+      mQs[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast,Space::Host);
+      mQp[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast,Space::Host);
       for (int a = 0; a < m_number_mechanisms;
            a++)  // the simplest attenuation model only uses Q, not MuVE or
                  // LambdaVE
       {
-        mMuVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
-        mLambdaVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast);
+        mMuVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast,Space::Host);
+        mLambdaVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast,Space::Host);
         // initialize the viscoelastic material coefficients to -1
-        mMuVE[g][a].set_to_minusOne();
-        mLambdaVE[g][a].set_to_minusOne();
+        mMuVE[g][a].set_to_minusOneHost();
+        mLambdaVE[g][a].set_to_minusOneHost();
       }
       // initialize Qp and Qs to -1
-      mQs[g].set_to_minusOne();
-      mQp[g].set_to_minusOne();
+      mQs[g].set_to_minusOneHost();
+      mQp[g].set_to_minusOneHost();
     }
 
     // go to the next coarser grid
