@@ -5028,6 +5028,10 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
     vset_to_zero_async(a_F, mNumberOfGrids);
     SW4_MARK_BEGIN("FORCE::DEVICE");
     //std::cout<<"FORCE "<<identsources.size()<<"\n";
+#ifdef SW4_NORM_TRACE
+    RAJA::ReduceSum<REDUCTION_POLICY, float_sw4> norm(0);
+    RAJA::ReduceSum<REDUCTION_POLICY, float_sw4> Fnorm(0);
+#endif
     RAJA::forall<FORCE_LOOP_ASYNC>(
         RAJA::RangeSegment(0, identsources.size() - 1), [=] RAJA_DEVICE(int r) {
           int index = r * 3;
@@ -5037,11 +5041,18 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
 #pragma unroll
             for (int i = 0; i < 3; i++)
               *ForceAddress_copy[index + i] += fxyz[i];
+#ifdef SW4_NORM_TRACE
+	    for (int i = 0; i < 3; i++) norm+=fxyz[i];
+	    for(int i=0;i<3;i++) Fnorm+=GPSL[s]->mForces[i];
+#endif
           }
         });
 
     SYNC_STREAM;
     SW4_MARK_END("FORCE::DEVICE");
+#ifdef SW4_NORM_TRACE
+    std::cout<<"FORCE NORM "<<norm.get()<<" "<<Fnorm.get()<<"\n";
+#endif
   }
 }
 #endif
