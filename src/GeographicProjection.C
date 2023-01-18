@@ -134,8 +134,7 @@ void GeographicProjection::computeGeographicCoord(double x, double y,
 
 #endif
 
-  /* printf("computeGeographicCoord: %f %f -> %f\t%f\n", x, y, longitude,
-   * latitude); */
+  //printf("computeGeographicCoord: %f %f -> %f\t%f\n", x, y, longitude,  latitude); 
 }
 
 //-----------------------------------------------------------------------
@@ -173,7 +172,7 @@ void GeographicProjection::computeCartesianCoord(double &x, double &y,
   y = xlon * cos(m_az) - ylat * sin(m_az);
 #endif
 
-  /* printf("computeCartesianCoord: %f %f -> %f\t%f\n", lon, lat, x, y); */
+  //printf("computeCartesianCoord: %f %f -> %f\t%f\n", lon, lat, x, y); 
 }
 
 //-----------------------------------------------------------------------

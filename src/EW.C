@@ -5027,7 +5027,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
     // for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
     vset_to_zero_async(a_F, mNumberOfGrids);
     SW4_MARK_BEGIN("FORCE::DEVICE");
-
+    //std::cout<<"FORCE "<<identsources.size()<<"\n";
     RAJA::forall<FORCE_LOOP_ASYNC>(
         RAJA::RangeSegment(0, identsources.size() - 1), [=] RAJA_DEVICE(int r) {
           int index = r * 3;
@@ -5037,6 +5037,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
 #pragma unroll
             for (int i = 0; i < 3; i++)
               *ForceAddress_copy[index + i] += fxyz[i];
+	    //if ((fxyz[0]+fxyz[1]+fxyz[2])!=0.0) printf("FORCE %f %f %f\n",fxyz[0],fxyz[1],fxyz[2]);
           }
         });
 

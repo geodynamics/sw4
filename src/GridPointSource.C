@@ -313,9 +313,12 @@ void GridPointSource::initializeTimeFunction() {
 RAJA_HOST_DEVICE
 void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) {
   float_sw4 afun, afunv[6];
+  //printf("mTimeDependence =%d %d\n",mTimeDependence,iRicker);
+  fxyz[0]=-1.0; fxyz[1]=-2.0;fxyz[2]=-3.0;
   if (mTimeDependence != iDiscrete6moments &&
       mTimeDependence != iDiscrete3forces)
     afun = mTimeFunc(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
+
   else if (mTimeDependence == iDiscrete6moments) {
     int npts = mIpar[0];
     int size = 6 * (npts - 1) + 1;
@@ -341,7 +344,7 @@ void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) {
     pos += size;
     afunv[2] = mTimeFunc(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
   }
-
+  //printf("AFUN]=%f %f %f %f\n",afun,mForces[0],mForces[1],mForces[2]);
   int lm_derivative;
 #if defined(SOURCE_INVERSION)
   lm_derivative = m_derivative;

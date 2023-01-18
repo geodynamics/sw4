@@ -90,6 +90,7 @@ Source::Source(EW* a_ew, float_sw4 frequency, float_sw4 t0, float_sw4 x0,
       m_is_filtered(false),
       m_myPoint(false),
       m_timeFuncIsReady(false) {
+ 
   mForces.resize(6);
   mForces[0] = Mxx;
   mForces[1] = Mxy;
@@ -162,6 +163,7 @@ Source::Source(EW* a_ew, float_sw4 frequency, float_sw4 t0, float_sw4 x0,
       mShearModulusFactor(correctForMu),
       m_myPoint(false),
       m_timeFuncIsReady(false) {
+  //printf("MXX MZY MXZ %f %f %f \n",Fx,Fy,Fz);
   mForces.resize(3);
   mForces[0] = Fx;
   mForces[1] = Fy;

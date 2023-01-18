@@ -5071,6 +5071,7 @@ void EW::processImage(char* buffer, bool use_hdf5) {
 // }
 
 //----------------------------------------------------------------------------
+
 void EW::processSource(char* buffer,
                        vector<vector<Source*> >& a_GlobalUniqueSources) {
   Source* sourcePtr;
@@ -5079,7 +5080,7 @@ void EW::processSource(char* buffer,
   float_sw4 t0 = 0.0, f0 = 1.0, freq = 1.0;
   // Should be center of the grid
   double x = 0.0, y = 0.0, z = 0.0;
-  //  int i = 0, j = 0, k = 0;
+  int i = 0, j = 0, k = 0;
   float_sw4 mxx = 0.0, mxy = 0.0, mxz = 0.0, myy = 0.0, myz = 0.0, mzz = 0.0;
   float_sw4 strike = 0.0, dip = 0.0, rake = 0.0;
   float_sw4 fx = 0.0, fy = 0.0, fz = 0.0;
@@ -5494,21 +5495,6 @@ void EW::processSource(char* buffer,
         readSACdata(fname.c_str(), npts, &par[offset + 1], byteswap);
         if (timereverse) revvector(npts, &par[offset + 1]);
       }
-    // PBUGS npts not set in original code. Set below to turnoff warning
-    npts = 1;  // THis is potential bug source.
-    std::cerr << " npts set randomly in parseinfput file line 5216."
-              << std::flush;
-    abort();
-    // END CHANGES
-
-    if (isMomentType) {
-      tDep = iDiscrete6moments;
-      fname = basename + ".xx";
-      npar = 6 * (npts + 1);
-    } else {
-      tDep = iDiscrete3forces;
-      fname = basename + ".x";
-      npar = 3 * (npts + 1);
     }
 
     // ---------------------------------------------------------------------------
@@ -5678,68 +5664,8 @@ void EW::processSource(char* buffer,
     if (mVerbose >= 4 && proc_zero())
       cout << "********Done parsing source command*********" << endl;
   }
-
-  if (isMomentType) {
-    // Remove amplitude variable
-    mxx *= m0;
-    mxy *= m0;
-    mxz *= m0;
-    myy *= m0;
-    myz *= m0;
-    mzz *= m0;
-    //       m0 = 1;
-    //       if( m_myRank == 0 )
-    //       {
-    //	  cout << "m0 = " << m0 << endl;
-    //	  cout << "x  = " << x << endl;
-    //	  cout << "y  = " << y << endl;
-    //	  cout << "z  = " << z << endl;
-    //	  cout << "t0 = " << t0 << endl;
-    //	  cout << "freq=" << freq << endl;
-    //       	  cout << "Mxx = " << mxx << endl;
-    //      	  cout << "Myy = " << myy << endl;
-    //      	  cout << "Mzz = " << mzz << endl;
-    //      	  cout << "Mxy = " << mxy << endl;
-    //      	  cout << "Mxz = " << mxz << endl;
-    //      	  cout << "Myz = " << myz << endl;
-    //       }
-    // these have global location since they will be used by all processors
-    sourcePtr =
-        new Source(this, freq, t0, x, y, z, mxx, mxy, mxz, myy, myz, mzz, tDep,
-                   formstring, topodepth, ncyc, par, npar, ipar, nipar,
-                   false);  // false is correctStrengthForMu
-
-    if (sourcePtr->ignore()) {
-      delete sourcePtr;
-    } else {
-      a_GlobalUniqueSources[event].push_back(sourcePtr);
-    }
-
-  } else  // point forcing
-  {
-    // Remove amplitude variable
-    fx *= f0;
-    fy *= f0;
-    fz *= f0;
-    //       f0 = 1;
-    // global version (gets real coordinates)
-    sourcePtr = new Source(this, freq, t0, x, y, z, fx, fy, fz, tDep,
-                           formstring, topodepth, ncyc, par, npar, ipar, nipar,
-                           false);  // false is correctStrengthForMu
-
-    //...and add it to the list of forcing terms
-    if (sourcePtr->ignore()) {
-      delete sourcePtr;
-    } else {
-      a_GlobalUniqueSources[event].push_back(sourcePtr);
-    }
-  }
-  if (npar > 0) delete[] par;
-  if (nipar > 0) delete[] ipar;
-  if (mVerbose >= 4 && proc_zero())
-    cout << "********Done parsing source command*********" << endl;
 }
-}
+
 
 //----------------------------------------------------------------------------
 void EW::processRuptureHDF5(char* buffer,
