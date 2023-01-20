@@ -144,11 +144,11 @@ void MaterialIfile::set_material_properties(std::vector<Sarray>& rho,
     // communicate material properties to ghost points (necessary on refined
     // meshes because ghost points don't have a well defined depth/topography)
     mEw->communicate_array(rho[g], g);
-    mEw->communicate_array(cs[g], g);
-    mEw->communicate_array(cp[g], g);
+    mEw->communicate_array_host(cs[g], g);
+    mEw->communicate_array_host(cp[g], g);
     // attenuation variables
-    if (qp[g].is_defined()) mEw->communicate_array(qp[g], g);
-    if (qs[g].is_defined()) mEw->communicate_array(qs[g], g);
+    if (qp[g].is_defined()) mEw->communicate_array_host(qp[g], g);
+    if (qs[g].is_defined()) mEw->communicate_array_host(qs[g], g);
   }                             // end for g (all Cartesian grids)
   if (mEw->topographyExists())  // curvilinear grid
   {
