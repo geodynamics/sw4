@@ -204,6 +204,77 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     m_cli2[g - mNumberOfCartesianGrids]->init_arrays(m_sg_str_x, m_sg_str_y,
                                                      a_Rho, a_Mu, a_Lambda); // MERGE
 
+   // Allocate boundary sides
+  for (int g = 0; g < mNumberOfGrids; g++) {
+    stringstream procno;
+    procno << m_myRank << "." << g << ".ev" << eglobal;
+    //     string logname(getlogin());
+
+    // Local disks on LC seem to be setup with directory /tmp/username when user
+    // username starts a job
+    string upred_name = mTempPath + "upred" + procno.str() + ".bin";
+    string ucorr_name = mTempPath + "ucorr" + procno.str() + ".bin";
+    mkdirs(mTempPath);
+    //     string upred_name = "/tmp/" + logname + "/upred" + procno.str() +
+    //     ".bin"; string ucorr_name = "/tmp/" + logname + "/ucorr" +
+    //     procno.str() + ".bin";
+    int imin, imax, jmin, jmax, kmax, kmin;
+    imin = m_iStartActGlobal[g] - 1;
+    imax = m_iEndActGlobal[g] + 1;
+    jmin = m_jStartActGlobal[g] - 1;
+    jmax = m_jEndActGlobal[g] + 1;
+    kmin = m_kStartActGlobal[g] - 1;
+    kmax = m_kEndActGlobal[g] + 1;
+    int npad[6] = {0, 0, 0, 0, 0, 0};
+    if (m_iStart[g] > 1) npad[0] = m_ppadding;
+    if (m_iEnd[g] < m_global_nx[g]) npad[1] = m_ppadding;
+    if (m_jStart[g] > 1) npad[2] = m_ppadding;
+    if (m_jEnd[g] < m_global_ny[g]) npad[3] = m_ppadding;
+    if (g != mNumberOfGrids - 1) {
+      // Upper boundary is grid ref bndry.
+      kmin += 2;
+    }
+    if (g != 0) {
+      // Lower boundary is grid ref bndry.
+      kmax -= 2;
+    }
+    if (save_sides) {
+      bool top = g < mNumberOfGrids - 1;
+      Upred_saved_sides[g] = new DataPatches(
+          upred_name.c_str(), U[g], imin, imax, jmin, jmax, kmin, kmax, 2,
+          nsteps_in_memory, mDt, npad, top, true);
+      Ucorr_saved_sides[g] = new DataPatches(
+          ucorr_name.c_str(), U[g], imin, imax, jmin, jmax, kmin, kmax, 2,
+          nsteps_in_memory, mDt, npad, top, true);
+      //     cout << "sides saved for i=[" << imin << " , " << imax << "] j=["
+      //     << jmin << " , " << jmax << "] k=[" << 1 << " , " << kmax << "]"<<
+      //     endl;
+      size_t maxsizeloc = Upred_saved_sides[g]->get_noofpoints();
+      size_t maxsize;
+      int mpisizelong, mpisizelonglong, mpisizeint;
+      MPI_Type_size(MPI_LONG, &mpisizelong);
+      MPI_Type_size(MPI_LONG_LONG, &mpisizelonglong);
+      MPI_Type_size(MPI_INT, &mpisizeint);
+      if (sizeof(size_t) == mpisizelong)
+        MPI_Allreduce(&maxsizeloc, &maxsize, 1, MPI_LONG, MPI_MAX,
+                      m_1d_communicator);
+      else if (sizeof(size_t) == mpisizelonglong)
+        MPI_Allreduce(&maxsizeloc, &maxsize, 1, MPI_LONG_LONG, MPI_MAX,
+                      m_1d_communicator);
+      else if (sizeof(size_t) == mpisizeint)
+        MPI_Allreduce(&maxsizeloc, &maxsize, 1, MPI_INT, MPI_MAX,
+                      m_1d_communicator);
+      if (!mQuiet && mVerbose >= 5 && proc_zero())
+        cout << "  Temporary files " << upred_name << " and " << ucorr_name
+             << " will hold " << Upred_saved_sides[g]->get_noofpoints()
+             << " values each, for each time step";
+      if (!mQuiet && proc_zero() && mVerbose >= 3)
+        cout << "Maximum temporary file size on grid " << g << " is " << maxsize
+             << " doubles for each time step " << endl;
+    }
+  }
+
+
 // Set the number of time steps, allocate the recording arrays, and set
 // reference time in all time series objects
 #pragma omp parallel for
@@ -330,7 +401,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
       // building the file name...
       string filename;
-      if (mPath[event] != ".") filename += mPath[event];
+      if (mPath[eglobal] != ".") filename += mPath[event];
       filename += "g1.dat";
 
       FILE* tf = fopen(filename.c_str(), "w");
@@ -357,9 +428,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   printPreamble(a_Sources, event);
 
   // Set up timers
-  double time_start_solve = MPI_Wtime();
+  double time_start_init = MPI_Wtime();
   double time_measure[20];
-  double time_sum[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+  double time_sum[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   //  double bc_time_measure[5]={0,0,0,0,0};
 
   // Sort sources wrt spatial location, needed for thread parallel computing
@@ -462,6 +533,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   //     mImage3DFiles[i3]->update_image( t, 0, mDt, U, mRho, mMu, mLambda,
   //     mRho, mMu, mLambda, mQp, mQs, mPath, mZ );
 
+  // STOPPING MERGE HERE.
   // do some testing...
   if (m_twilight_forcing &&
       getVerbosity() >= 3)  // only do these tests if verbose>=3
@@ -925,6 +997,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   }
 #endif
   Force(t, F, point_sources, identsources);
+
+  double time_start_solve = MPI_Wtime();
+  print_execution_time(time_start_init, time_start_solve, "initial data phase");
 #ifdef SW4_NORM_TRACE
   if (!getRank()) {
     for (int g = 0; g < mNumberOfGrids; g++) {
