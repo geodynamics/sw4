@@ -38,6 +38,8 @@ class CurvilinearInterface2 {
 
   float_sw4* m_mass_block;
   int* m_ipiv_block;
+  bool m_memory_is_allocated;
+  
   float_sw4* m_mpi_buffer_space;
   size_t m_mpi_buffer_size;
 
@@ -97,7 +99,8 @@ class CurvilinearInterface2 {
   CurvilinearInterface2() {}
   ~CurvilinearInterface2();
   void init_arrays(std::vector<float_sw4*>& a_strx,
-                   std::vector<float_sw4*>& a_stry);
+                   std::vector<float_sw4*>& a_stry, std::vector<Sarray>& a_rho,
+                   std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda);
   //   void test1( EW* a_ew, int gc, std::vector<Sarray>& a_U );
   //   void test2( EW* a_ew, int gc, std::vector<Sarray>& a_U );
 

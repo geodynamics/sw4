@@ -66,6 +66,16 @@ void curvilinear4sgwind(int, int, int, int, int, int, int, int, float_sw4*,
                         float_sw4*, float_sw4*, float_sw4*, float_sw4*, int,
                         char);
 
+void add_pseudohessian_terms2(
+    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, int nk,
+    int ifirstact, int ilastact, int jfirstact, int jlastact, int kfirstact,
+    int klastact, float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_u,
+    float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_rho,
+    float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, float_sw4 h,
+    float_sw4 dt, int onesided[6], int varcase, float_sw4* __restrict__ a_bope,
+    float_sw4* __restrict__ a_acof, float_sw4* a_ghcof,
+    float_sw4* __restrict__ a_ph);
+
 #define SQR(x) ((x) * (x))
 
 //--------------------------------------------------------------------
@@ -140,6 +150,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     }
   }
 
+  int eglobal = local_to_global_event(event);
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   for (int g = 0; g < mNumberOfGrids; g++) {
     BCForcing[g] = new float_sw4*[6];
@@ -167,19 +178,31 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     Up[g].define(3, ifirst, ilast, jfirst, jlast, kfirst, klast);
     Um[g].define(3, ifirst, ilast, jfirst, jlast, kfirst, klast);
     U[g].define(3, ifirst, ilast, jfirst, jlast, kfirst, klast);
+    F[g].set_to_zero(); // are these required ?
+    Lu[g].set_to_zero();
+    Uacc[g].set_to_zero();
+    Up[g].set_to_zero();
+    Um[g].set_to_zero();
+    U[g].set_to_zero();
     if (m_use_attenuation && m_number_mechanisms > 0) {
       for (int a = 0; a < m_number_mechanisms; a++) {
         AlphaVE[g][a].define(3, ifirst, ilast, jfirst, jlast, kfirst, klast);
         AlphaVEp[g][a].define(3, ifirst, ilast, jfirst, jlast, kfirst, klast);
         AlphaVEm[g][a].define(3, ifirst, ilast, jfirst, jlast, kfirst, klast);
+	AlphaVE[g][a].set_to_zero(); // Are these required ?
+        AlphaVEp[g][a].set_to_zero();
+        AlphaVEm[g][a].set_to_zero();
       }
     }
   }
   // done allocating solution arrays
 
+  setup_MR_coefficients(a_Rho, a_Mu, a_Lambda); // MERGE
+
   // Setup curvilinear grid refinement interface
   for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++)
-    m_cli2[g - mNumberOfCartesianGrids]->init_arrays(m_sg_str_x, m_sg_str_y);
+    m_cli2[g - mNumberOfCartesianGrids]->init_arrays(m_sg_str_x, m_sg_str_y,
+                                                     a_Rho, a_Mu, a_Lambda); // MERGE
 
 // Set the number of time steps, allocate the recording arrays, and set
 // reference time in all time series objects

@@ -76,6 +76,7 @@ CurvilinearInterface2::CurvilinearInterface2(int a_gc, EW* a_ew) {
   for (int s = 0; s < 4; s++) m_isbndry[s] = true;
   m_use_attenuation = a_ew->usingAttenuation();
   m_number_mechanisms = a_ew->getNumberOfMechanisms();
+  m_memory_is_allocated = false;
   // Allocate space for MPI buffers
 }
 
@@ -260,9 +261,17 @@ void CurvilinearInterface2::copy_str(float_sw4* dest, float_sw4* src,
 
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
-                                        vector<float_sw4*>& a_stry) {
+                                        vector<float_sw4*>& a_stry,
+                                        vector<Sarray>& a_rho,
+                                        vector<Sarray>& a_mu,
+                                        vector<Sarray>& a_lambda) {
   SW4_MARK_FUNCTION;
   // std::cout << "void CurvilinearInterface2::init_arrays \n";
+  if (m_memory_is_allocated) {
+    delete[] m_strx_c, m_stry_c, m_strx_f, m_stry_f; // PBUGS
+    delete[] m_mass_block, m_ipiv_block; // PBUGS
+  }
+  m_memory_is_allocated = true;
   for (int s = 0; s < 4; s++)
     m_isbndry[s] = m_ew->getLocalBcType(m_gc, s) != bProcessor;
 
