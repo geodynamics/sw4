@@ -407,12 +407,20 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
     m_tw->get_mula(m_mu_c, m_lambda_c, m_x_c, m_y_c, m_z_c);
     m_tw->get_mula(m_mu_f, m_lambda_f, m_x_f, m_y_f, m_z_f);
   } else {
-    m_rho_c.insert_intersection(m_ew->mRho[m_gc]);
-    m_rho_f.insert_intersection(m_ew->mRho[m_gf]);
-    m_mu_c.insert_intersection(m_ew->mMu[m_gc]);
-    m_mu_f.insert_intersection(m_ew->mMu[m_gf]);
-    m_lambda_c.insert_intersection(m_ew->mLambda[m_gc]);
-    m_lambda_f.insert_intersection(m_ew->mLambda[m_gf]);
+    // m_rho_c.insert_intersection(m_ew->mRho[m_gc]);
+    // m_rho_f.insert_intersection(m_ew->mRho[m_gf]);
+    // m_mu_c.insert_intersection(m_ew->mMu[m_gc]);
+    // m_mu_f.insert_intersection(m_ew->mMu[m_gf]);
+    // m_lambda_c.insert_intersection(m_ew->mLambda[m_gc]);
+    // m_lambda_f.insert_intersection(m_ew->mLambda[m_gf]);
+
+    m_rho_c.insert_intersection(a_rho[m_gc]);
+    m_rho_f.insert_intersection(a_rho[m_gf]);
+    m_mu_c.insert_intersection(a_mu[m_gc]);
+    m_mu_f.insert_intersection(a_mu[m_gf]);
+    m_lambda_c.insert_intersection(a_lambda[m_gc]);
+    m_lambda_f.insert_intersection(a_lambda[m_gf]);
+    
     SYNC_STREAM;
     int extra_ghost = m_nghost - m_ew->getNumberOfGhostPoints();
     if (extra_ghost > 0) {
