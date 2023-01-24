@@ -1473,7 +1473,9 @@ void computeLowTopoGridPoint(int & iLow,
   void enforceIC2(std::vector<Sarray>& a_Up, std::vector<Sarray>& a_U,
                   std::vector<Sarray>& a_Um, vector<Sarray*>& a_AlphaVEp,
                   float_sw4 t, vector<Sarray>& F,
-                  std::vector<GridPointSource*>& point_sources);
+                  std::vector<GridPointSource*>& point_sources,
+		  vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
+		  vector<Sarray>& a_Lambda);
   void CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Rho,
 		   vector<Sarray>& a_Mu,
                    vector<Sarray>& a_Lambda, vector<Sarray*>& a_AlphaVE,

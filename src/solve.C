@@ -1287,7 +1287,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       // interface conditions for 2nd order in time
       // NOTE: this routine calls preliminary_predictor for t+dt, which needs
       // F(t+dt). It is computed at the top of next time step
-      enforceIC2(Up, U, Um, AlphaVEp, t, F, point_sources);
+      enforceIC2(Up, U, Um, AlphaVEp, t, F, point_sources,a_Rho, a_Mu,
+                 a_Lambda);
       //enforceIC2(Up, U, Um, AlphaVEp, t, F, point_sources, a_Rho, a_Mu,
       //          a_Lambda);
 
@@ -2507,7 +2508,9 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
 void EW::enforceIC2(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                     vector<Sarray>& a_Um, vector<Sarray*>& a_AlphaVEp,
                     float_sw4 time, vector<Sarray>& F,
-                    vector<GridPointSource*>& point_sources) {
+                    vector<GridPointSource*>& point_sources,
+		    vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
+                    vector<Sarray>& a_Lambda) {
   SW4_MARK_FUNCTION;
   bool predictor = false;  // or true???
   for (int g = 0; g < mNumberOfCartesianGrids - 1; g++) {
@@ -2573,9 +2576,15 @@ void EW::enforceIC2(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     // end test
     //  compute contribution to the normal stresses (Bc, Bf) from the interior
     //  grid points in Up
-    compute_icstresses(a_Up[g + 1], Bf, g + 1, kf, m_sg_str_x[g + 1],
-                       m_sg_str_y[g + 1]);
-    compute_icstresses(a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g]);
+    // compute_icstresses(a_Up[g + 1], Bf, g + 1, kf, m_sg_str_x[g + 1],
+    //                    m_sg_str_y[g + 1]);
+    // compute_icstresses(a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g]);
+
+    compute_icstresses2(a_Up[g + 1], Bf, kf, mGridSize[g + 1], a_Mu[g + 1],
+                        a_Lambda[g + 1], m_sg_str_x[g + 1], m_sg_str_y[g + 1],
+                        m_sbop, '=');
+    compute_icstresses2(a_Up[g], Bc, kc, mGridSize[g], a_Mu[g], a_Lambda[g],
+                        m_sg_str_x[g], m_sg_str_y[g], m_sbop, '=');
 
     // add in the visco-elastic boundary traction
     if (m_use_attenuation && m_number_mechanisms > 0) {
