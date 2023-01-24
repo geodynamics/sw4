@@ -401,7 +401,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
       // building the file name...
       string filename;
-      if (mPath[eglobal] != ".") filename += mPath[event];
+      if (mPath[eglobal] != ".") filename += mPath[eglobal];
       filename += "g1.dat";
 
       FILE* tf = fopen(filename.c_str(), "w");
@@ -533,97 +533,99 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   //     mImage3DFiles[i3]->update_image( t, 0, mDt, U, mRho, mMu, mLambda,
   //     mRho, mMu, mLambda, mQp, mQs, mPath, mZ );
 
-  // STOPPING MERGE HERE.
+
   // do some testing...
-  if (m_twilight_forcing &&
-      getVerbosity() >= 3)  // only do these tests if verbose>=3
-  {
-    if (!mQuiet && proc_zero()) cout << "***Twilight Testing..." << endl;
+  initial_tw_test(U, Up, F, a_Mu, a_Lambda, Lu, Uacc, AlphaVE, point_sources,
+                  identsources, t);
+//   if (m_twilight_forcing &&
+//       getVerbosity() >= 3)  // only do these tests if verbose>=3
+//   {
+//     if (!mQuiet && proc_zero()) cout << "***Twilight Testing..." << endl;
 
-    // output some internal flags
-    for (int g = 0; g < mNumberOfGrids; g++) {
-      printf("proc=%i, Onesided[grid=%i]:", m_myRank, g);
-      for (int q = 0; q < 6; q++) printf(" os[%i]=%i", q, m_onesided[g][q]);
-      printf("\n");
-      printf("proc=%i, bcType[grid=%i]:", m_myRank, g);
-      for (int q = 0; q < 6; q++) printf(" bc[%i]=%i", q, m_bcType[g][q]);
-      printf("\n");
-    }
+//     // output some internal flags
+//     for (int g = 0; g < mNumberOfGrids; g++) {
+//       printf("proc=%i, Onesided[grid=%i]:", m_myRank, g);
+//       for (int q = 0; q < 6; q++) printf(" os[%i]=%i", q, m_onesided[g][q]);
+//       printf("\n");
+//       printf("proc=%i, bcType[grid=%i]:", m_myRank, g);
+//       for (int q = 0; q < 6; q++) printf(" bc[%i]=%i", q, m_bcType[g][q]);
+//       printf("\n");
+//     }
 
-    // test accuracy of spatial approximation
-    if (proc_zero())
-      printf(
-          "\n Testing the accuracy of the spatial difference approximation\n");
-    exactRhsTwilight(t, F);
-    evalRHS(U, mMu, mLambda, Up, AlphaVE);  // save Lu in composite grid 'Up'
+//     // test accuracy of spatial approximation
+//     if (proc_zero())
+//       printf(
+//           "\n Testing the accuracy of the spatial difference approximation\n");
+//     exactRhsTwilight(t, F);
+//     evalRHS(U, mMu, mLambda, Up, AlphaVE);  // save Lu in composite grid 'Up'
 
-    // evaluate and print errors
-    float_sw4* lowZ = new float_sw4[3 * mNumberOfGrids];
-    float_sw4* interiorZ = new float_sw4[3 * mNumberOfGrids];
-    float_sw4* highZ = new float_sw4[3 * mNumberOfGrids];
-    //    float_sw4 lowZ[3], interiorZ[3], highZ[3];
-    bndryInteriorDifference(F, Up, lowZ, interiorZ, highZ);
+//     // evaluate and print errors
+//     float_sw4* lowZ = new float_sw4[3 * mNumberOfGrids];
+//     float_sw4* interiorZ = new float_sw4[3 * mNumberOfGrids];
+//     float_sw4* highZ = new float_sw4[3 * mNumberOfGrids];
+//     //    float_sw4 lowZ[3], interiorZ[3], highZ[3];
+//     bndryInteriorDifference(F, Up, lowZ, interiorZ, highZ);
 
-    float_sw4* tmp = new float_sw4[3 * mNumberOfGrids];
-    for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = lowZ[i];
-    MPI_Reduce(tmp, lowZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
-               m_cartesian_communicator);
-    for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = interiorZ[i];
-    MPI_Reduce(tmp, interiorZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
-               m_cartesian_communicator);
-    for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = highZ[i];
-    MPI_Reduce(tmp, highZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
-               m_cartesian_communicator);
+//     float_sw4* tmp = new float_sw4[3 * mNumberOfGrids];
+//     for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = lowZ[i];
+//     MPI_Reduce(tmp, lowZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
+//                m_cartesian_communicator);
+//     for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = interiorZ[i];
+//     MPI_Reduce(tmp, interiorZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
+//                m_cartesian_communicator);
+//     for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = highZ[i];
+//     MPI_Reduce(tmp, highZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
+//                m_cartesian_communicator);
 
-    if (proc_zero()) {
-      for (int g = 0; g < mNumberOfGrids; g++) {
-        printf("Grid nr: %3i \n", g);
-        printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n",
-               lowZ[3 * g], lowZ[3 * g + 1], lowZ[3 * g + 2]);
-        printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n",
-               interiorZ[3 * g], interiorZ[3 * g + 1], interiorZ[3 * g + 2]);
-        printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n",
-               highZ[3 * g], highZ[3 * g + 1], highZ[3 * g + 2]);
-      }
-    }
-#ifdef PEEKS_GALORE
-    SW4_PEEK;
-    SYNC_DEVICE;
-#endif
+//     if (proc_zero()) {
+//       for (int g = 0; g < mNumberOfGrids; g++) {
+//         printf("Grid nr: %3i \n", g);
+//         printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n",
+//                lowZ[3 * g], lowZ[3 * g + 1], lowZ[3 * g + 2]);
+//         printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n",
+//                interiorZ[3 * g], interiorZ[3 * g + 1], interiorZ[3 * g + 2]);
+//         printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n",
+//                highZ[3 * g], highZ[3 * g + 1], highZ[3 * g + 2]);
+//       }
+//     }
+// #ifdef PEEKS_GALORE
+//     SW4_PEEK;
+//     SYNC_DEVICE;
+// #endif
 
-    // test accuracy of forcing
-    evalRHS(U, mMu, mLambda, Lu, AlphaVE);  // save Lu in composite grid 'Lu'
-    Force(t, F, point_sources, identsources);
-    exactAccTwilight(t, Uacc);  // save Utt in Uacc
-    test_RhoUtt_Lu(Uacc, Lu, F, lowZ, interiorZ, highZ);
+//     // test accuracy of forcing
+//     evalRHS(U, mMu, mLambda, Lu, AlphaVE);  // save Lu in composite grid 'Lu'
+//     Force(t, F, point_sources, identsources);
+//     exactAccTwilight(t, Uacc);  // save Utt in Uacc
+//     test_RhoUtt_Lu(Uacc, Lu, F, lowZ, interiorZ, highZ);
 
-    for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = lowZ[i];
-    MPI_Reduce(tmp, lowZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
-               m_cartesian_communicator);
-    for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = interiorZ[i];
-    MPI_Reduce(tmp, interiorZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
-               m_cartesian_communicator);
-    for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = highZ[i];
-    MPI_Reduce(tmp, highZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
-               m_cartesian_communicator);
+//     for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = lowZ[i];
+//     MPI_Reduce(tmp, lowZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
+//                m_cartesian_communicator);
+//     for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = interiorZ[i];
+//     MPI_Reduce(tmp, interiorZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
+//                m_cartesian_communicator);
+//     for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = highZ[i];
+//     MPI_Reduce(tmp, highZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
+//                m_cartesian_communicator);
 
-    if (proc_zero()) {
-      printf("Testing accuracy of rho*utt - L(u) = F\n");
-      for (int g = 0; g < mNumberOfGrids; g++) {
-        printf("Grid nr: %3i \n", g);
-        printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n",
-               lowZ[3 * g], lowZ[3 * g + 1], lowZ[3 * g + 2]);
-        printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n",
-               interiorZ[3 * g], interiorZ[3 * g + 1], interiorZ[3 * g + 2]);
-        printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n",
-               highZ[3 * g], highZ[3 * g + 1], highZ[3 * g + 2]);
-      }
-    }
-    delete[] tmp;
-    delete[] lowZ;
-    delete[] interiorZ;
-    delete[] highZ;
-  }  // end m_twilight_forcing
+//     if (proc_zero()) {
+//       printf("Testing accuracy of rho*utt - L(u) = F\n");
+//       for (int g = 0; g < mNumberOfGrids; g++) {
+//         printf("Grid nr: %3i \n", g);
+//         printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n",
+//                lowZ[3 * g], lowZ[3 * g + 1], lowZ[3 * g + 2]);
+//         printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n",
+//                interiorZ[3 * g], interiorZ[3 * g + 1], interiorZ[3 * g + 2]);
+//         printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n",
+//                highZ[3 * g], highZ[3 * g + 1], highZ[3 * g + 2]);
+//       }
+//     }
+//     delete[] tmp;
+//     delete[] lowZ;
+//     delete[] interiorZ;
+//     delete[] highZ;
+//   }  // end m_twilight_forcing
 
   // global_prefetch();
   // after checkpoint restart, we must communicate the memory variables
