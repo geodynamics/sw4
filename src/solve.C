@@ -916,10 +916,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   //Um[grid0].forceprefetch();
   // save any images for cycle = 0 (initial data), or beginCycle-1 (checkpoint
   // restart)
-  update_images(beginCycle - 1, t, U, Um, Up, mRho, mMu, mLambda, a_Sources, 1);
+  update_images(beginCycle - 1, t, U, Um, Up, a_Rho, a_Mu, a_Lambda, a_Sources, 1);
   for (int i3 = 0; i3 < mImage3DFiles.size(); i3++)
-    mImage3DFiles[i3]->update_image(beginCycle - 1, t, mDt, U, mRho, mMu,
-                                    mLambda, mRho, mMu, mLambda, mQp, mQs,
+    mImage3DFiles[i3]->update_image(beginCycle - 1, t, mDt, U, a_Rho, a_Mu,
+                                    a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs,
                                     mPath[event], mZ);
   int gg = mNumberOfGrids - 1;  // top grid
   for (int i3 = 0; i3 < mESSI3DFiles.size(); i3++) {
@@ -931,7 +931,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   if ((m_lamb_test || m_point_source_test || m_rayleigh_wave_test ||
        m_error_log) &&
       proc_zero()) {
-    string path = getPath();
+    string path = getPath(eglobal);
 
     stringstream fileName;
     if (path != ".") fileName << path;
@@ -951,7 +951,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   //        point_sources[s]->print_info();
 
   // output flags and settings that affect the run
-  if (proc_zero() && mVerbose >= 1) {
+  if (!mQuiet && proc_zero() && mVerbose >= 1) {
     printf("\nReporting SW4 internal flags and settings:\n");
     printf(
         "m_testing=%s, twilight=%s, point_source=%s, moment_test=%s, "
@@ -964,6 +964,15 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     printf("m_use_supergrid=%s\n", usingSupergrid() ? "yes" : "no");
     printf("End report of internal flags and settings\n\n");
   }
+
+    if (save_sides) {
+      for (int g = 0; g < mNumberOfGrids; g++) {
+	Upred_saved_sides[g]->push(Um[g], -1);
+	Upred_saved_sides[g]->push(U[g], 0);
+	Ucorr_saved_sides[g]->push(Um[g], -1);
+	Ucorr_saved_sides[g]->push(U[g], 0);
+      }
+    }
 
   if (!mQuiet && proc_zero()) cout << "  Begin time stepping..." << endl;
 #ifdef PEEKS_GALORE
@@ -986,7 +995,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
   // Begin time stepping loop
   for (int g = 0; g < mNumberOfGrids; g++) Up[g].set_to_zero();
-  for (int g = 0; g < mNumberOfGrids; g++) Lu[g].set_to_zero();
+  //  for (int g = 0; g < mNumberOfGrids; g++) Lu[g].set_to_zero(); ?? MERGE_PBUGS
 
   if (m_do_geodynbc) advance_geodyn_time(t + mDt);
 
