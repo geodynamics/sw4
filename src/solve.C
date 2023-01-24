@@ -1108,10 +1108,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       evalRHSanisotropic(U, mC, Lu);
     else {
 #ifdef SW4_NORM_TRACE
-      evalRHS(U, mMu, mLambda, Lu, AlphaVE,
+      evalRHS(U, a_Mu, a_Lambda, Lu, AlphaVE,
               &norm_trace_file);  // save Lu in composite grid 'Lu'
 #else
-      evalRHS(U, mMu, mLambda, Lu, AlphaVE);
+      evalRHS(U, a_Mu, a_Lambda, Lu, AlphaVE);
 #endif
     }
 #ifdef PEEKS_GALORE
@@ -1150,7 +1150,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 #endif
 
     // take predictor step, store in Up
-    evalPredictor(Up, U, Um, mRho, Lu, F);
+    evalPredictor(Up, U, Um, a_Rho, Lu, F);
 
 #ifdef SW4_NORM_TRACE
     if (!getRank()) {
@@ -1202,9 +1202,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     SW4_MARK_END("COMM_WINDOW");
 
     // Enforce data on coupling boundary to external solver
-    auto& a_Rho = mRho;
-    auto& a_Mu = mMu;
-    auto& a_Lambda = mLambda;
+    //    auto& a_Rho = mRho;
+    //  auto& a_Mu = mMu;
+    // auto& a_Lambda = mLambda;
     if (m_do_geodynbc) {
       if (mOrder == 2) {
         impose_geodyn_ibcdata(Up, U, t + mDt, BCForcing);
@@ -1233,7 +1233,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     if (m_anisotropic)
       enforceBCanisotropic(Up, mC, t + mDt, BCForcing);
     else
-      enforceBC(Up, a_Rho, mMu, mLambda, AlphaVEp, t + mDt, BCForcing);
+      enforceBC(Up, a_Rho, a_Mu, a_Lambda, AlphaVEp, t + mDt, BCForcing);
 #ifdef PEEKS_GALORE
     SW4_PEEK;
     SYNC_DEVICE;
@@ -1269,7 +1269,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       // add super-grid damping terms before enforcing interface conditions
       // (otherwise, Up doesn't have the correct values on the interface)
       if (usingSupergrid()) {
-        addSuperGridDamping(Up, U, Um, mRho);
+        addSuperGridDamping(Up, U, Um, a_Rho);
       }
       // Also add Arben's simplified attenuation
       if (m_use_attenuation && m_number_mechanisms == 0) {
@@ -1288,6 +1288,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       // NOTE: this routine calls preliminary_predictor for t+dt, which needs
       // F(t+dt). It is computed at the top of next time step
       enforceIC2(Up, U, Um, AlphaVEp, t, F, point_sources);
+      //enforceIC2(Up, U, Um, AlphaVEp, t, F, point_sources, a_Rho, a_Mu,
+      //          a_Lambda);
 
       if (m_output_detailed_timing) time_measure[17] = MPI_Wtime();
       SW4_MARK_END("mOrder=2");
