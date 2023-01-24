@@ -1325,8 +1325,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       // NOTE: true means call preliminary_corrector, which needs F_tt(t) & is
       // computed 5 lines down
       enforceIC(Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, true, F,
-                point_sources);  // THIS IS TH ONE TO BE FIXED FOR UP MATCH
+                point_sources,a_Rho, a_Mu, a_Lambda);  
 
+      // MERGE STOPPED HERE
 #ifdef SW4_NORM_TRACE
       if (!getRank()) {
         for (int g = 0; g < mNumberOfGrids; g++) {
@@ -1495,7 +1496,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       // NOTE: false means call preliminary_predictor for t+dt, which needs
       // F(t+dt). It is computed at the top of next time step
       enforceIC(Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, false, F,
-                point_sources);
+                point_sources,a_Rho, a_Mu, a_Lambda);
 
       if (m_output_detailed_timing) time_measure[17] = MPI_Wtime();
 
@@ -2315,8 +2316,13 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                    vector<Sarray>& a_Um, vector<Sarray*>& a_AlphaVEp,
                    vector<Sarray*>& a_AlphaVE, vector<Sarray*>& a_AlphaVEm,
                    float_sw4 time, bool predictor, vector<Sarray>& F,
-                   vector<GridPointSource*>& point_sources) {
+                   vector<GridPointSource*>& point_sources,
+		   vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
+                   vector<Sarray>& a_Lambda, bool backward) {
   SW4_MARK_FUNCTION;
+  float_sw4 dt = mDt;
+  if (backward) dt = -dt;
+  
   for (int g = 0; g < mNumberOfCartesianGrids - 1; g++) {
     // Interpolate between g and g+1, assume factor 2 refinement with at least
     // three ghost points
@@ -2387,13 +2393,15 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
       compute_preliminary_corrector(a_Up[g + 1], a_U[g + 1], a_Um[g + 1],
                                     a_AlphaVEp[g + 1], a_AlphaVE[g + 1],
                                     a_AlphaVEm[g + 1], Uf_tt, Unextf, g + 1, kf,
-                                    time, F[g + 1], point_sources);
+                                    time, F[g + 1], point_sources,
+				    a_Rho[g + 1], a_Mu[g + 1], a_Lambda[g + 1]);
       compute_preliminary_corrector(a_Up[g], a_U[g], a_Um[g], a_AlphaVEp[g],
                                     a_AlphaVE[g], a_AlphaVEm[g], Uc_tt, Unextc,
-                                    g, kc, time, F[g], point_sources);
+                                    g, kc, time, F[g], point_sources,a_Rho[g],
+                                    a_Mu[g], a_Lambda[g]);
       if (!m_doubly_periodic) {
         // dirichlet conditions for Unextc in super-grid layer at time t+dt
-        dirichlet_LRic(Unextc, g, kc, time + mDt, 1);
+        dirichlet_LRic(Unextc, g, kc, time + dt, 1);
       }
       SW4_MARK_END("enforceIC::PREDICTOR");
     } else  // In the corrector step, (Unextc, Unextf) represent the
@@ -2401,22 +2409,29 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     {
       SW4_MARK_BEGIN("enforceIC::CORRECTOR");
       compute_preliminary_predictor(a_Up[g + 1], a_U[g + 1], a_AlphaVEp[g + 1],
-                                    Unextf, g + 1, kf, time + mDt, F[g + 1],
-                                    point_sources);
+                                    Unextf, g + 1, kf, time + dt, F[g + 1],
+                                    point_sources,a_Rho[g + 1], a_Mu[g + 1],
+                                    a_Lambda[g + 1]);
       compute_preliminary_predictor(a_Up[g], a_U[g], a_AlphaVEp[g], Unextc, g,
-                                    kc, time + mDt, F[g], point_sources);
+                                    kc, time + dt, F[g], point_sources,
+				    a_Rho[g], a_Mu[g], a_Lambda[g]);
 
       if (!m_doubly_periodic) {
         // dirichlet conditions for Unextc in super-grid layer at time t+2*dt
-        dirichlet_LRic(Unextc, g, kc, time + 2 * mDt, 1);
+        dirichlet_LRic(Unextc, g, kc, time + 2 * dt, 1);
       }
       SW4_MARK_END("enforceIC::CORRECTOR");
     }
 
     SW4_MARK_BEGIN("enforceIC::COMPUTE_ICSTRESSES");
-    compute_icstresses(a_Up[g + 1], Bf, g + 1, kf, m_sg_str_x[g + 1],
-                       m_sg_str_y[g + 1]);
-    compute_icstresses(a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g]);
+    // compute_icstresses(a_Up[g + 1], Bf, g + 1, kf, m_sg_str_x[g + 1],
+    //                    m_sg_str_y[g + 1]);
+    // compute_icstresses(a_Up[g], Bc, g, kc, m_sg_str_x[g], m_sg_str_y[g]);
+    compute_icstresses2(a_Up[g + 1], Bf, kf, mGridSize[g + 1], a_Mu[g + 1],
+                        a_Lambda[g + 1], m_sg_str_x[g + 1], m_sg_str_y[g + 1],
+                        m_sbop, '=');
+    compute_icstresses2(a_Up[g], Bc, kc, mGridSize[g], a_Mu[g], a_Lambda[g],
+                        m_sg_str_x[g], m_sg_str_y[g], m_sbop, '=');
     SW4_MARK_END("enforceIC::COMPUTE_ICSTRESSES");
 
     // NEW June 13, 2017: add in the visco-elastic boundary traction
@@ -2437,7 +2452,7 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     if (!m_doubly_periodic) {
       //  dirichlet condition for Bf in the super-grid layer at time t+dt (also
       //  works with twilight)
-      dirichlet_LRstress(Bf, g + 1, kf, time + mDt, 1);
+      dirichlet_LRstress(Bf, g + 1, kf, time + dt, 1);
     }
     SW4_MARK_END("enforceIC::DIRICHLET_LRSTRESS");
     SW4_MARK_BEGIN("enforceIC::MPI2DCOMM");
@@ -2487,15 +2502,15 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     // Finally, restore the ghost point values on the sides of the domain.
     // Note: these ghost point values might never be used ?
     if (!m_doubly_periodic) {
-      dirichlet_LRic(a_Up[g + 1], g + 1, kf + 1, time + mDt, 1);
-      dirichlet_LRic(a_Up[g], g, kc - 1, time + mDt, 1);
+      dirichlet_LRic(a_Up[g + 1], g + 1, kf + 1, time + dt, 1);
+      dirichlet_LRic(a_Up[g], g, kc - 1, time + dt, 1);
     }
   }  // end for g...
   SW4_MARK_BEGIN("enforceIC::IMPOSE_IC");
   for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++) {
     //         m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up,
     //         time+mDt );
-    m_cli2[g - mNumberOfCartesianGrids]->impose_ic(a_Up, time + mDt,
+    m_cli2[g - mNumberOfCartesianGrids]->impose_ic(a_Up, time + dt,
                                                    a_AlphaVEp);
     //      check_ic_conditions( g, a_Up );
   }
@@ -2562,9 +2577,11 @@ void EW::enforceIC2(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     //
     compute_preliminary_predictor(a_Up[g + 1], a_U[g + 1], a_AlphaVEp[g + 1],
                                   Unextf, g + 1, kf, time + mDt, F[g + 1],
-                                  point_sources);
+                                  point_sources,a_Rho[g + 1], a_Mu[g + 1],
+                                  a_Lambda[g + 1]);
     compute_preliminary_predictor(a_Up[g], a_U[g], a_AlphaVEp[g], Unextc, g, kc,
-                                  time + mDt, F[g], point_sources);
+                                  time + mDt, F[g], point_sources,a_Rho[g],
+                                  a_Mu[g], a_Lambda[g]);
 
     if (!m_doubly_periodic) {
       // dirichlet conditions for Unextc in super-grid layer at time t+2*dt
@@ -3420,7 +3437,8 @@ void EW::compute_preliminary_corrector(
     Sarray& a_Up, Sarray& a_U, Sarray& a_Um, Sarray* a_AlphaVEp,
     Sarray* a_AlphaVE, Sarray* a_AlphaVEm, Sarray& Utt, Sarray& Unext, int g,
     int kic, float_sw4 t, Sarray& Ftt,
-    vector<GridPointSource*>& point_sources) {
+    vector<GridPointSource*>& point_sources,
+    Sarray& a_Rho, Sarray& a_Mu, Sarray& a_Lambda) {
   SW4_MARK_FUNCTION;
   //
   // NOTE: This routine is called by enforceIC() after the predictor stage to
@@ -3438,22 +3456,22 @@ void EW::compute_preliminary_corrector(
   a_U.prefetch();
   a_Up.prefetch();
   a_Um.prefetch();
-  if (m_croutines)  // optimized C-version for reversed index ordering
+  //  if (m_croutines)  // optimized C-version for reversed index ordering
     dpdmt_wind(Utt.m_ib, Utt.m_ie, Utt.m_jb, Utt.m_je, Utt.m_kb, Utt.m_ke,
                a_U.m_kb, a_U.m_ke, a_Up.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(),
                Utt.c_ptr(), idt2);
-  else {
-    for (int k = Utt.m_kb; k <= Utt.m_ke; k++)
-      for (int j = Utt.m_jb; j <= Utt.m_je; j++)
-        for (int i = Utt.m_ib; i <= Utt.m_ie; i++) {
-          Utt(1, i, j, k) = idt2 * (a_Up(1, i, j, k) - 2 * a_U(1, i, j, k) +
-                                    a_Um(1, i, j, k));
-          Utt(2, i, j, k) = idt2 * (a_Up(2, i, j, k) - 2 * a_U(2, i, j, k) +
-                                    a_Um(2, i, j, k));
-          Utt(3, i, j, k) = idt2 * (a_Up(3, i, j, k) - 2 * a_U(3, i, j, k) +
-                                    a_Um(3, i, j, k));
-        }
-  }
+  // else {
+  //   for (int k = Utt.m_kb; k <= Utt.m_ke; k++)
+  //     for (int j = Utt.m_jb; j <= Utt.m_je; j++)
+  //       for (int i = Utt.m_ib; i <= Utt.m_ie; i++) {
+  //         Utt(1, i, j, k) = idt2 * (a_Up(1, i, j, k) - 2 * a_U(1, i, j, k) +
+  //                                   a_Um(1, i, j, k));
+  //         Utt(2, i, j, k) = idt2 * (a_Up(2, i, j, k) - 2 * a_U(2, i, j, k) +
+  //                                   a_Um(2, i, j, k));
+  //         Utt(3, i, j, k) = idt2 * (a_Up(3, i, j, k) - 2 * a_U(3, i, j, k) +
+  //                                   a_Um(3, i, j, k));
+  //       }
+  // }
 
   // all points (for mMu, mLambda
 
@@ -3621,20 +3639,20 @@ void EW::compute_preliminary_corrector(
     // July 22: Changed time levels for (Up, U) to (U, Um)
     //      addsg4wind( &mDt, &mGridSize[g], Unext.c_ptr(), a_Up.c_ptr(),
     //      a_U.c_ptr(), mRho[g].c_ptr(),
-    if (m_croutines)
+    //    if (m_croutines)
       addsg4wind_ci(Unext.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(), mRho[g].c_ptr(),
                     m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g],
                     m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
                     m_sg_corner_y[g], m_sg_corner_z[g], ib, ie, jb, je, kb, ke,
                     m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke,
                     kic, kic);
-    else
-      addsg4wind(&mDt, &mGridSize[g], Unext.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(),
-                 mRho[g].c_ptr(), m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
-                 m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
-                 m_sg_corner_y[g], m_sg_corner_z[g], ib, ie, jb, je, kb, ke,
-                 m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic,
-                 kic);
+    // else
+    //   addsg4wind(&mDt, &mGridSize[g], Unext.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(),
+    //              mRho[g].c_ptr(), m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
+    //              m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
+    //              m_sg_corner_y[g], m_sg_corner_z[g], ib, ie, jb, je, kb, ke,
+    //              m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic,
+    //              kic);
     // Note: the last four arguments define the declared size of Unext, followed
     // by the lower and upper boundaries of the k-window
   }
@@ -3643,7 +3661,9 @@ void EW::compute_preliminary_corrector(
 //-----------------------------------------------------------------------
 void EW::compute_preliminary_predictor(
     Sarray& a_Up, Sarray& a_U, Sarray* a_AlphaVEp, Sarray& Unext, int g,
-    int kic, float_sw4 t, Sarray& F, vector<GridPointSource*>& point_sources) {
+    int kic, float_sw4 t, Sarray& F, vector<GridPointSource*>& point_sources,
+    Sarray& a_Rho, Sarray& a_Mu,
+    Sarray& a_Lambda) {
   SW4_MARK_FUNCTION;
   //
   // NOTE: This routine is called by enforceIC() after the corrector stage to
@@ -3772,7 +3792,7 @@ void EW::compute_preliminary_predictor(
   SView& a_UV = a_U.getview();
   SView& LuV = Lu.getview();
   SView& FV = F.getview();
-  SView& mRhogV = mRho[g].getview();
+  SView& mRhogV = a_Rho.getview();
 
   // SView &UnextV = *new SView(Unext);
   // SView &a_UpV = *new SView(a_Up);
@@ -3806,22 +3826,22 @@ void EW::compute_preliminary_predictor(
                          // order AD, Cartesian grid
   {
     // assign array pointers on the fly
-    if (m_croutines)
+    //    if (m_croutines)
       addsg4wind_ci(Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), mRho[g].c_ptr(),
                     m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g],
                     m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
                     m_sg_corner_y[g], m_sg_corner_z[g], ib, ie, jb, je, kb, ke,
                     m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke,
                     kic, kic);
-    else
-      addsg4wind(&mDt, &mGridSize[g], Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(),
-                 mRho[g].c_ptr(), m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
-                 m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
-                 m_sg_corner_y[g], m_sg_corner_z[g], ib, ie, jb, je, kb, ke,
-                 m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic,
-                 kic);
-    // Note: the last four arguments define the declared size of Unext, followed
-    // by the lower and upper boundaries of the k-window
+    // else
+  //     addsg4wind(&mDt, &mGridSize[g], Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(),
+  //                mRho[g].c_ptr(), m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
+  //                m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
+  //                m_sg_corner_y[g], m_sg_corner_z[g], ib, ie, jb, je, kb, ke,
+  //                m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic,
+  //                kic);
+  //   // Note: the last four arguments define the declared size of Unext, followed
+  //   // by the lower and upper boundaries of the k-window
   }
 }
 

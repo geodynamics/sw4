@@ -885,9 +885,9 @@ void computeLowTopoGridPoint(int & iLow,
   //      point_sources );
   // NEW June 14, 2017
 
-  void enforceIC(std::vector<Sarray>& a_Up, std::vector<Sarray>& a_U,
-                 std::vector<Sarray>& a_Um, float_sw4 t, bool predictor,
-                 std::vector<GridPointSource*>& point_sources);
+  // void enforceIC(std::vector<Sarray>& a_Up, std::vector<Sarray>& a_U,
+  //                std::vector<Sarray>& a_Um, float_sw4 t, bool predictor,
+  //                std::vector<GridPointSource*>& point_sources);
   // void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
   // void dirichlet_LRic( Sarray& U, int g, int kic, float_sw4 t, int adj );
   // void gridref_initial_guess( Sarray& u, int g, bool upper );
@@ -1465,11 +1465,18 @@ void computeLowTopoGridPoint(int & iLow,
                  float_sw4* __restrict__ lambda, float_sw4* __restrict__ rho,
                  float_sw4& cp, float_sw4& cs, size_t& npts);
 
+  // void enforceIC(std::vector<Sarray>& a_Up, std::vector<Sarray>& a_U,
+  //                std::vector<Sarray>& a_Um, vector<Sarray*>& a_AlphaVEp,
+  //                vector<Sarray*>& a_AlphaVE, vector<Sarray*>& a_AlphaVEm,
+  //                float_sw4 t, bool predictor, vector<Sarray>& F,
+  //                std::vector<GridPointSource*>& point_sources);
   void enforceIC(std::vector<Sarray>& a_Up, std::vector<Sarray>& a_U,
                  std::vector<Sarray>& a_Um, vector<Sarray*>& a_AlphaVEp,
                  vector<Sarray*>& a_AlphaVE, vector<Sarray*>& a_AlphaVEm,
                  float_sw4 t, bool predictor, vector<Sarray>& F,
-                 std::vector<GridPointSource*>& point_sources);
+                 std::vector<GridPointSource*>&point_sources,
+                 vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
+		 vector<Sarray>& a_Lambda, bool backward = false);
   void enforceIC2(std::vector<Sarray>& a_Up, std::vector<Sarray>& a_U,
                   std::vector<Sarray>& a_Um, vector<Sarray*>& a_AlphaVEp,
                   float_sw4 t, vector<Sarray>& F,
@@ -1491,7 +1498,8 @@ void computeLowTopoGridPoint(int & iLow,
       Sarray& a_Up, Sarray& a_U, Sarray& a_Um, Sarray* a_AlphaVEp,
       Sarray* a_AlphaVE, Sarray* a_AlphaVEm, Sarray& Utt, Sarray& Unext, int g,
       int kic, float_sw4 t, Sarray& Ftt,
-      std::vector<GridPointSource*>& point_sources);
+      std::vector<GridPointSource*> &point_sources, Sarray& a_Rho, Sarray& a_Mu,
+      Sarray& a_Lambda);
   // void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray&
   // a_Um,
   //                                     Sarray& Utt, Sarray& Unext,
@@ -1499,10 +1507,12 @@ void computeLowTopoGridPoint(int & iLow,
   //                                     std::vector<GridPointSource*>
   //                                     point_sources );
 
-  void compute_preliminary_predictor(Sarray& a_Up, Sarray& a_U,
+   void compute_preliminary_predictor(Sarray& a_Up, Sarray& a_U,
                                      Sarray* a_AlphaVEp, Sarray& Unext, int g,
                                      int kic, float_sw4 t, Sarray& F,
-                                     vector<GridPointSource*>& point_sources);
+                                     vector<GridPointSource*>& point_sources,
+                                     Sarray& a_Rho, Sarray& a_Mu,
+                                     Sarray& a_Lambda);
 
   void compute_icstresses(Sarray& a_Up, Sarray& B, int g, int kic,
                           float_sw4* a_str_x, float_sw4* a_str_y);
