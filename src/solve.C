@@ -817,8 +817,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     }
 
     // compute Uacc = L(U) and Vacc=L(V); V=Um
-    evalRHS(U, mMu, mLambda, Lu, AlphaVE);     // save Lu in composite grid 'Lu'
-    evalRHS(Um, mMu, mLambda, Uacc, AlphaVE);  // save Lu in composite grid 'Lu'
+    evalRHS(U, a_Mu, a_Lambda, Lu, AlphaVE);     // save Lu in composite grid 'Lu'
+    evalRHS(Um, a_Mu, a_Lambda, Uacc, AlphaVE);  // save Lu in composite grid 'Lu'
     // should not be necessary to communicate across processor boundaries to
     // make ghost points agree
 
@@ -871,7 +871,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     if (m_myRank == 0 && !m_check_point->do_restart())
       createTimeSeriesHDF5File(a_TimeSeries, mNumberOfTimeSteps[event] + 1, mDt,
                                "");
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(m_1d_communicator);
   }
 #endif
 
@@ -912,6 +912,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 	  std::cout<<" Prefetch active in grid  "<<*p<<"\n";
   }
 #endif
+  // MERGE STOPPED HERE
   //Um[grid0].forceprefetch();
   // save any images for cycle = 0 (initial data), or beginCycle-1 (checkpoint
   // restart)
