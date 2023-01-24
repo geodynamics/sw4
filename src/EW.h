@@ -278,7 +278,8 @@ class EW {
 
   // time stepping routines
   void simpleAttenuation(vector<Sarray>& a_Up);
-  void enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
+  void enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
+		 vector<Sarray>& a_Mu,
                  vector<Sarray>& a_Lambda, vector<Sarray*>& a_AlphaVE,
                  float_sw4 t, vector<float_sw4**>& a_BCForcing);
 
@@ -1473,7 +1474,8 @@ void computeLowTopoGridPoint(int & iLow,
                   std::vector<Sarray>& a_Um, vector<Sarray*>& a_AlphaVEp,
                   float_sw4 t, vector<Sarray>& F,
                   std::vector<GridPointSource*>& point_sources);
-  void CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
+  void CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Rho,
+		   vector<Sarray>& a_Mu,
                    vector<Sarray>& a_Lambda, vector<Sarray*>& a_AlphaVE,
                    float_sw4 t);
   void dirichlet_hom_ic(Sarray& U, int g, int k, bool inner);

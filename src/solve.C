@@ -673,7 +673,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   if (m_anisotropic)
     enforceBCanisotropic(U, mC, t, BCForcing);
   else
-    enforceBC(U, mMu, mLambda, AlphaVE, t, BCForcing);
+    enforceBC(U, a_Rho, a_Mu, a_Lambda, AlphaVE, t, BCForcing);
 
 #ifdef SW4_NORM_TRACE
   if (!getRank()) {
@@ -686,9 +686,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 #endif
   // Impose un-coupled free surface boundary condition with visco-elastic terms
   // for 'Up'
-  if (m_use_attenuation && (m_number_mechanisms > 0)) {
-    enforceBCfreeAtt2(U, mMu, mLambda, AlphaVE, BCForcing);
-  }
+  //if (m_use_attenuation && (m_number_mechanisms > 0)) {
+  //  enforceBCfreeAtt2(U, mMu, mLambda, AlphaVE, BCForcing);
+  //}
 
 #ifdef SW4_NORM_TRACE
   if (!getRank()) {
@@ -742,68 +742,70 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   if (m_anisotropic)
     enforceBCanisotropic(Um, mC, t - mDt, BCForcing);
   else
-    enforceBC(Um, mMu, mLambda, AlphaVEm, t - mDt, BCForcing);
+    enforceBC(Um, a_Rho, mMu, mLambda, AlphaVEm, t - mDt, BCForcing);
   // Impose un-coupled free surface boundary condition with visco-elastic terms
   // for 'Up'
-  if (m_use_attenuation && (m_number_mechanisms > 0)) {
-    enforceBCfreeAtt2(Um, mMu, mLambda, AlphaVEm, BCForcing);
-  }
+  //if (m_use_attenuation && (m_number_mechanisms > 0)) {
+  //  enforceBCfreeAtt2(Um, mMu, mLambda, AlphaVEm, BCForcing);
+  // }
 
   for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++)
     m_cli2[g - mNumberOfCartesianGrids]->impose_ic(Um, t - mDt, AlphaVEm);
   // more testing
-  if (m_twilight_forcing && m_check_point->do_restart() &&
-      getVerbosity() >= 3) {
-    if (proc_zero()) printf("Checking the accuracy of the checkpoint data\n");
+  checkpoint_twilight_test(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp, a_Sources,
+                           t);
+  // if (m_twilight_forcing && m_check_point->do_restart() &&
+  //     getVerbosity() >= 3) {
+  //   if (proc_zero()) printf("Checking the accuracy of the checkpoint data\n");
 
-    // check the accuracy of the initial data, store exact solution in Up,
-    // ignore AlphaVE
-    float_sw4 errInf = 0, errL2 = 0, solInf = 0;
-    exactSol(t, Up, AlphaVEp, a_Sources);
+  //   // check the accuracy of the initial data, store exact solution in Up,
+  //   // ignore AlphaVE
+  //   float_sw4 errInf = 0, errL2 = 0, solInf = 0;
+  //   exactSol(t, Up, AlphaVEp, a_Sources);
 
-    normOfDifference(Up, U, errInf, errL2, solInf, a_Sources);
+  //   normOfDifference(Up, U, errInf, errL2, solInf, a_Sources);
 
-    if (proc_zero())
-      printf("\n Checkpoint errors in U: Linf = %15.7e, L2 = %15.7e\n", errInf,
-             errL2);
+  //   if (proc_zero())
+  //     printf("\n Checkpoint errors in U: Linf = %15.7e, L2 = %15.7e\n", errInf,
+  //            errL2);
 
-    if (m_use_attenuation) {
-      vector<Sarray> Aex(mNumberOfGrids), A(mNumberOfGrids);
-      for (int g = 0; g < mNumberOfGrids; g++) {
-        Aex[g].copy(AlphaVEp[g][0]);  // only checking mechanism m=0
-        A[g].copy(AlphaVE[g][0]);
-      }
-      normOfDifference(Aex, A, errInf, errL2, solInf, a_Sources);
-      if (proc_zero())
-        printf(
-            " Checkpoint solution errors, attenuation at t: Linf = %15.7e, L2 "
-            "= %15.7e\n",
-            errInf, errL2);
-    }
+  //   if (m_use_attenuation) {
+  //     vector<Sarray> Aex(mNumberOfGrids), A(mNumberOfGrids);
+  //     for (int g = 0; g < mNumberOfGrids; g++) {
+  //       Aex[g].copy(AlphaVEp[g][0]);  // only checking mechanism m=0
+  //       A[g].copy(AlphaVE[g][0]);
+  //     }
+  //     normOfDifference(Aex, A, errInf, errL2, solInf, a_Sources);
+  //     if (proc_zero())
+  //       printf(
+  //           " Checkpoint solution errors, attenuation at t: Linf = %15.7e, L2 "
+  //           "= %15.7e\n",
+  //           errInf, errL2);
+  //   }
 
-    // Now check Um and AlpphaVEm
-    exactSol(t - mDt, Up, AlphaVEp, a_Sources);
+  //   // Now check Um and AlpphaVEm
+  //   exactSol(t - mDt, Up, AlphaVEp, a_Sources);
 
-    normOfDifference(Up, Um, errInf, errL2, solInf, a_Sources);
+  //   normOfDifference(Up, Um, errInf, errL2, solInf, a_Sources);
 
-    if (proc_zero())
-      printf("\n Checkpoint errors in Um: Linf = %15.7e, L2 = %15.7e\n", errInf,
-             errL2);
+  //   if (proc_zero())
+  //     printf("\n Checkpoint errors in Um: Linf = %15.7e, L2 = %15.7e\n", errInf,
+  //            errL2);
 
-    if (m_use_attenuation) {
-      vector<Sarray> Aex(mNumberOfGrids), A(mNumberOfGrids);
-      for (int g = 0; g < mNumberOfGrids; g++) {
-        Aex[g].copy(AlphaVEp[g][0]);  // only checking mechanism m=0
-        A[g].copy(AlphaVEm[g][0]);
-      }
-      normOfDifference(Aex, A, errInf, errL2, solInf, a_Sources);
-      if (proc_zero())
-        printf(
-            " Checkpoint solution errors, attenuation at t-dt: Linf = %15.7e, "
-            "L2 = %15.7e\n",
-            errInf, errL2);
-    }
-  }  // end if twilight testing
+  //   if (m_use_attenuation) {
+  //     vector<Sarray> Aex(mNumberOfGrids), A(mNumberOfGrids);
+  //     for (int g = 0; g < mNumberOfGrids; g++) {
+  //       Aex[g].copy(AlphaVEp[g][0]);  // only checking mechanism m=0
+  //       A[g].copy(AlphaVEm[g][0]);
+  //     }
+  //     normOfDifference(Aex, A, errInf, errL2, solInf, a_Sources);
+  //     if (proc_zero())
+  //       printf(
+  //           " Checkpoint solution errors, attenuation at t-dt: Linf = %15.7e, "
+  //           "L2 = %15.7e\n",
+  //           errInf, errL2);
+  //   }
+  // }  // end if twilight testing
 
   // test if the spatial operator is self-adjoint (only works without mesh
   // refinement)
@@ -1221,7 +1223,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     if (m_anisotropic)
       enforceBCanisotropic(Up, mC, t + mDt, BCForcing);
     else
-      enforceBC(Up, mMu, mLambda, AlphaVEp, t + mDt, BCForcing);
+      enforceBC(Up, a_Rho, mMu, mLambda, AlphaVEp, t + mDt, BCForcing);
 #ifdef PEEKS_GALORE
     SW4_PEEK;
     SYNC_DEVICE;
@@ -1230,8 +1232,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     // NEW
     // Impose un-coupled free surface boundary condition with visco-elastic
     // terms
-    if (m_use_attenuation && m_number_mechanisms > 0)
-      enforceBCfreeAtt2(Up, mMu, mLambda, AlphaVEp, BCForcing);
+    // if (m_use_attenuation && m_number_mechanisms > 0)
+    //  enforceBCfreeAtt2(Up, mMu, mLambda, AlphaVEp, BCForcing);
 
 #ifdef SW4_NORM_TRACE
     if (!getRank()) {
@@ -1444,14 +1446,14 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       if (m_anisotropic)
         enforceBCanisotropic(Up, mC, t + mDt, BCForcing);
       else
-        enforceBC(Up, mMu, mLambda, AlphaVEp, t + mDt, BCForcing);
+        enforceBC(Up, a_Rho, mMu, mLambda, AlphaVEp, t + mDt, BCForcing);
 
       // NEW (Apr. 4, 2017)
       // Impose un-coupled free surface boundary condition with visco-elastic
       // terms for 'Up'
-      if (m_use_attenuation && (m_number_mechanisms > 0)) {
-        enforceBCfreeAtt2(Up, mMu, mLambda, AlphaVEp, BCForcing);
-      }
+      //if (m_use_attenuation && (m_number_mechanisms > 0)) {
+      //  enforceBCfreeAtt2(Up, mMu, mLambda, AlphaVEp, BCForcing);
+      //}
 
       if (m_output_detailed_timing) time_measure[15] = MPI_Wtime();
 
@@ -1922,7 +1924,8 @@ void EW::cycleSolutionArrays(vector<Sarray>& a_Um, vector<Sarray>& a_U,
 }
 
 //---------------------------------------------------------------------------
-void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
+void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
+		   vector<Sarray>& a_Mu,
                    vector<Sarray>& a_Lambda, vector<Sarray*>& a_AlphaVE,
                    float_sw4 t, vector<float_sw4**>& a_BCForcing) {
   SW4_MARK_FUNCTION;
@@ -2054,15 +2057,15 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                                            mNumberOfCartesianGrids))
       update_curvilinear_cartesian_interface(a_U);
     else
-      CurviCartIC(mNumberOfCartesianGrids - 1, a_U, a_Mu, a_Lambda, a_AlphaVE,
+      CurviCartIC(mNumberOfCartesianGrids - 1, a_U, a_Rho, a_Mu, a_Lambda, a_AlphaVE,
                   t);
   }
   SW4_MARK_END("CURVI in EnforceBC");
   // THE CALL BELOW to enforceBCfreeAtt2 IS MADE IN SOLVE IN THE RAJA VERSION
   // AND HERE IN THE DEVELOPER BRANCH
   // Reimpose free surface condition with attenuation terms included
-  // if( usingAttenuation() )
-  // enforceBCfreeAtt2( a_U, a_Mu, a_Lambda, a_AlphaVE, a_BCForcing );
+   if( usingAttenuation() )
+   enforceBCfreeAtt2( a_U, a_Mu, a_Lambda, a_AlphaVE, a_BCForcing );
 
   return;
 #else
@@ -5605,7 +5608,8 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
   }  // end for g=0,.
      //::operator delete[](viewArray,Space::Managed);
 }
-void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
+void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Rho,
+		     vector<Sarray>& a_Mu,
                      vector<Sarray>& a_Lambda, vector<Sarray*>& a_Alpha,
                      float_sw4 t) {
   SW4_MARK_FUNCTION;
@@ -5760,8 +5764,8 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   float_sw4* m_sg_str_y_gcurv = m_sg_str_y[gcurv];
   float_sw4* m_sg_str_x_gcart = m_sg_str_x[gcart];
   float_sw4* m_sg_str_y_gcart = m_sg_str_y[gcart];
-  auto& mRho_gcurv = mRho[gcurv].getview();
-  auto& mRho_gcart = mRho[gcart].getview();
+  auto& mRho_gcurv = a_Rho[gcurv].getview();
+  auto& mRho_gcart = a_Rho[gcart].getview();
   auto& m_sbop0 = m_sbop[0];
   auto& m_ghcof0 = m_ghcof[0];
   auto& mJ_gcurv = mJ[gcurv].getview();
@@ -5842,7 +5846,7 @@ void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     float_sw4 resmax = 0;
     for (int j = jb + 2; j <= je - 2; j++)
       for (int i = ib + 2; i <= ie - 2; i++) {
-        float_sw4 rhrat = mRho[gcurv](i, j, nk) / mRho[gcart](i, j, 1);
+        float_sw4 rhrat = a_Rho[gcurv](i, j, nk) / a_Rho[gcart](i, j, 1);
         float_sw4 res =
             abs(-h * h * Bca(1, i, j, 1) +
                 w1 * rhrat * mJ[gcurv](i, j, nk) * Luca(1, i, j, 1) -
