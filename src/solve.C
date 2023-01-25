@@ -1994,7 +1994,7 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
     //       wind_ptr[6*s+1] << " " << wind_ptr[6*s+2] << " "
     //	    << wind_ptr[6*s+3] << " " << wind_ptr[6*s+4] << " " <<
     // wind_ptr[6*s+5] << endl;
-    int topo = topographyExists() && g == mNumberOfGrids - 1;
+    int topo = topographyExists() && g >= mNumberOfCartesianGrids;
 
     // THESE ARRAYS MUST BE FILLED IN BEFORE CALLING THIS ROUTINE
     // for periodic bc, a_BCForcing[g][s] == NULL, so you better not access
@@ -2008,71 +2008,71 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
 
     if (usingSupergrid()) {
       // std::cout<<" THIS 1\n";
-      if (m_croutines)
+      //      if (m_croutines)
         bcfortsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, wind_ptr, nx,
                     ny, nz, u_ptr, h, bcType_ptr, m_sbop, mu_ptr, la_ptr, t,
                     bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
                     bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr, om,
                     ph, cv, m_sg_str_x[g], m_sg_str_y[g]);
-      else
-        bcfortsg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, wind_ptr,
-                 &nx, &ny, &nz, u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr,
-                 &t, bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
-                 bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr, &om, &ph,
-                 &cv, m_sg_str_x[g], m_sg_str_y[g]);
+      // else
+      //   bcfortsg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, wind_ptr,
+      //            &nx, &ny, &nz, u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr,
+      //            &t, bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
+      //            bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr, &om, &ph,
+      //            &cv, m_sg_str_x[g], m_sg_str_y[g]);
       int side;
       if (topo == 1 && m_bcType[g][4] == bStressFree) {
         // std::cout<<" THIS 2\n";
         side = 5;
-        if (m_croutines)
+	//        if (m_croutines)
           freesurfcurvisg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
                              side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
                              m_sbop, bforce_side4_ptr, m_sg_str_x[g],
                              m_sg_str_y[g]);
-        else
-          freesurfcurvisg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                          &nz, &side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
-                          m_sbop, bforce_side4_ptr, m_sg_str_x[g],
-                          m_sg_str_y[g]);
+        // else
+        //   freesurfcurvisg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+        //                   &nz, &side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
+        //                   m_sbop, bforce_side4_ptr, m_sg_str_x[g],
+        //                   m_sg_str_y[g]);
       }
     } else {
       // std::cout<<" THIS 3 OFF \n ";
-      if (m_croutines)
+      //      if (m_croutines)
         bcfort_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, wind_ptr, nx, ny,
                   nz, u_ptr, h, bcType_ptr, m_sbop, mu_ptr, la_ptr, t,
                   bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
                   bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr, om, ph,
                   cv, topo);
-      else
-        bcfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, wind_ptr, &nx,
-               &ny, &nz, u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr, &t,
-               bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
-               bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr, &om, &ph,
-               &cv, &topo);
+      // else
+      //   bcfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, wind_ptr, &nx,
+      //          &ny, &nz, u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr, &t,
+      //          bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
+      //          bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr, &om, &ph,
+      //          &cv, &topo);
       int side;
       if (topo == 1 && m_bcType[g][4] == bStressFree) {
         // std::cout<<" THIS 4 OFF \n";
         side = 5;
-        if (m_croutines)
+	//        if (m_croutines)
           freesurfcurvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
                            side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
                            m_sbop, bforce_side4_ptr);
-        else
-          freesurfcurvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
-                        &side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
-                        m_sbop, bforce_side4_ptr);
+        // else
+        //   freesurfcurvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
+        //                 &side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
+        //                 m_sbop, bforce_side4_ptr);
       }
       if (topo == 1 && m_bcType[g][5] == bStressFree) {
         // std::cout<<" THIS 5\n";
         side = 6;
-        if (m_croutines)
+	//        if (m_croutines)
           freesurfcurvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
                            side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
                            m_sbop, bforce_side5_ptr);
-        else
-          freesurfcurvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
-                        &side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
-                        m_sbop, bforce_side5_ptr);
+        // else
+        //   freesurfcurvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
+        //                 &side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
+        //                 m_sbop, bforce_side5_ptr);
       }
     }
   }
