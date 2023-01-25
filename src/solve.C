@@ -1857,7 +1857,7 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     //       wind_ptr[6*s+1] << " " << wind_ptr[6*s+2] << " "
     //	    << wind_ptr[6*s+3] << " " << wind_ptr[6*s+4] << " " <<
     // wind_ptr[6*s+5] << endl;
-    int topo = topographyExists() && g == mNumberOfGrids - 1;
+    int topo = topographyExists() && g >= mNumberOfCartesianGrids;
 
     // THESE ARRAYS MUST BE FILLED IN BEFORE CALLING THIS ROUTINE
     // for periodic bc, a_BCForcing[g][s] == NULL, so you better not access
@@ -2105,7 +2105,7 @@ void EW::update_curvilinear_cartesian_interface(vector<Sarray>& a_U) {
   if (topographyExists()) {
     const int nc = 3;
     int g = mNumberOfCartesianGrids - 1;
-    int gc = mNumberOfGrids - 1;
+    int gc = g+1;
     const int mgp = getNumberOfGhostPoints();
     //      float_sw4 nrm[3]={0,0,0};
     //      int q, i, j;
