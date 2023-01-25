@@ -877,6 +877,12 @@ void computeLowTopoGridPoint(int & iLow,
                               Sarray& gradrhogrid, Sarray& gradmugrid,
                               Sarray& gradlambdagrid);
 
+  void addtoPseudoHessian(vector<Sarray>& Um, vector<Sarray>& U,
+                          vector<Sarray>& Up, vector<Sarray>& aRho,
+                          vector<Sarray>& aMu, vector<Sarray>& aLambda,
+                          float_sw4 dt, int varcase,
+                          vector<Sarray>& PseudoHess);
+
   // Functions to impose conditions at grid refinement interface:
   // void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U,
   // std::vector<Sarray> & a_Um,

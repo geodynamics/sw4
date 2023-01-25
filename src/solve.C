@@ -1513,7 +1513,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     SW4_PEEK;
     SYNC_DEVICE;
 #endif
-    // MERGE STOPPPED AROUND HERE
+
     if (m_checkfornan) check_for_nan(Up, 1, "Up");
 
     //    Um[0].save_to_disk("um-dbg0.bin");
@@ -1551,16 +1551,16 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
                   currentTimeStep == mNumberOfTimeSteps[event]);
     for (int i3 = 0; i3 < mImage3DFiles.size(); i3++)
       mImage3DFiles[i3]->update_image(
-          currentTimeStep, t, mDt, Up, mRho, mMu, mLambda, mRho, mMu, mLambda,
-          mQp, mQs, mPath[event], mZ);  // mRho, mMu, mLambda occur twice
+          currentTimeStep, t, mDt, Up, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda,
+          mQp, mQs, mPath[eglobal], mZ);  // mRho, mMu, mLambda occur twice
                                         // because we don't use gradRho etc.
 
     // Update the ESSI hdf5 data
     double time_essi_tmp = MPI_Wtime();
     gg = mNumberOfGrids - 1;  // top grid
     for (int i3 = 0; i3 < mESSI3DFiles.size(); i3++)
-      mESSI3DFiles[i3]->update_image(currentTimeStep, t, mDt, Up, mPath[event],
-                                     mZ[gg]);
+      mESSI3DFiles[i3]->update_image(currentTimeStep, t, mDt, Up, mPath[eglobal],
+                                     mZ[gg]); // not verified for several cuvilinear grids
     double time_essi = MPI_Wtime() - time_essi_tmp;
 
     // save the current solution on receiver records (time-derivative require Up
@@ -1612,11 +1612,11 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
                                              AlphaVEp);
 #endif
       double time_chkpt_tmp = MPI_Wtime() - time_chkpt;
-      if (mVerbose >= 0)
+      if (m_output_detailed_timing)
 
       {
         MPI_Allreduce(&time_chkpt_tmp, &time_chkpt, 1, MPI_DOUBLE, MPI_MAX,
-                      MPI_COMM_WORLD);
+                      m_1d_communicator);
         if (m_myRank == 0)
           cout << "Wallclock time to write check point file " << time_chkpt
                << " seconds " << endl;
@@ -1629,7 +1629,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       double time_chkpt_timeseries_tmp = MPI_Wtime() - time_chkpt_timeseries;
       if (m_output_detailed_timing) {
         MPI_Allreduce(&time_chkpt_timeseries_tmp, &time_chkpt_timeseries, 1,
-                      MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+                      MPI_DOUBLE, MPI_MAX, m_1d_communicator);
         if (m_myRank == 0)
           cout << "Wallclock time to write all checkpoint time series files "
                << time_chkpt_timeseries << " seconds " << endl;
@@ -1645,6 +1645,11 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     if (m_energy_test)
       compute_energy(mDt, currentTimeStep == mNumberOfTimeSteps[event], Um, U,
                      Up, currentTimeStep, event);
+
+     // Accumulate pseudo-Hessian terms
+    if (varcase > 0)
+      addtoPseudoHessian(Um, U, Up, a_Rho, a_Mu, a_Lambda, mDt, varcase,
+                         PseudoHessian);
 
     // cycle the solution arrays
     cycleSolutionArrays(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp);
@@ -1680,6 +1685,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     // //        serialize(currentTimeStep, U, Um);
 
     if (m_output_detailed_timing) {
+      time_measure[19] = MPI_Wtime();
+      
       if (mOrder == 4) {
         time_sum[0] += time_measure[19] - time_measure[0];  // total
         time_sum[1] += time_measure[1] - time_measure[0] + time_measure[11] -
@@ -1695,12 +1702,13 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
         time_sum[6] += time_measure[9] - time_measure[8] + time_measure[17] -
                        time_measure[16];  // mesh ref
         time_sum[7] +=
-            time_measure[18] - time_measure[17];  // images + time-series
+	  time_measure[18] - time_measure[17]-time_essi;  // images + time-series-essi
                                                   //          time_sum[8] += 0;
         time_sum[8] += time_measure[2] - time_measure[1] + time_measure[5] -
                        time_measure[4] + time_measure[10] - time_measure[9] +
                        time_measure[12] - time_measure[11] + time_measure[19] -
                        time_measure[18];  // updates
+	time_sum[9] += time_essi;
 
       } else {  // 2nd order in time algorithm
         time_sum[0] += time_measure[19] - time_measure[0];  // total
@@ -1712,6 +1720,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
         time_sum[6] = 0;
         time_sum[7] = 0;
         time_sum[8] = 0;
+	time_sum[9] = 0;
       }
     }
 #ifdef SW4_TRACK_MPI
@@ -1789,8 +1798,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       // Max over all rank
       double max_hdf5_time;
       MPI_Reduce(&hdf5_time, &max_hdf5_time, 1, MPI_DOUBLE, MPI_MAX, 0,
-                 MPI_COMM_WORLD);
-      if (m_myRank == 0)
+                 m_1d_communicator);
+      if (m_myRank == 0 && max_hdf5_time > 0.1)
         cout << "  ==> Max wallclock time to open/write ESSI hdf5 output #"
              << i3 << " is " << max_hdf5_time << " seconds " << endl;
     }
@@ -1804,8 +1813,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
     total_time += mImageFiles[fIndex]->get_write_time();
   MPI_Reduce(&total_time, &all_total_time, 1, MPI_DOUBLE, MPI_MAX, 0,
-             MPI_COMM_WORLD);
-  if (m_myRank == 0)
+            m_1d_communicator );
+  if (m_myRank == 0 && all_total_time > 0.1)
     cout << "  ==> Max wallclock time to write images is " << all_total_time
          << " seconds." << endl;
   // Write sfile after time stepping
@@ -1814,14 +1823,14 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     reverse_setup_viscoelastic();
 
   for (int ii = 0; ii < mSfiles.size(); ii++)
-    mSfiles[ii]->force_write_image(t, mNumberOfTimeSteps[event], Up, mRho, mMu,
-                                   mLambda, mRho, mMu, mLambda, mQp, mQs,
-                                   mPath[event], mZ);
+    mSfiles[ii]->force_write_image(t, mNumberOfTimeSteps[event], Up, a_Rho, a_Mu,
+                                   a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs,
+                                   mPath[eglobal], mZ);
 
   m_check_point->finalize_hdf5();
 #endif
 
-  print_execution_time(time_start_solve, time_end_solve, "solver phase");
+  print_execution_time(time_start_solve, time_end_solve, "time stepping phase");
 
   if (m_output_detailed_timing) print_execution_times(time_sum);
 
@@ -6686,4 +6695,25 @@ void check_ghcof_no_gp(double* ghcof_no_gp) {
       abort();
     }
 #endif
+}
+
+//-----------------------------------------------------------------------
+void EW::addtoPseudoHessian(vector<Sarray>& Um, vector<Sarray>& U,
+                            vector<Sarray>& Up, vector<Sarray>& aRho,
+                            vector<Sarray>& aMu, vector<Sarray>& aLambda,
+                            float_sw4 dt, int varcase,
+                            vector<Sarray>& PseudoHess) {
+  for (int g = 0; g < mNumberOfCartesianGrids; g++) {
+    int nk = m_global_nz[g];
+    add_pseudohessian_terms2(
+        m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g], m_kEnd[g],
+        nk, m_iStartAct[g], m_iEndAct[g], m_jStartAct[g], m_jEndAct[g],
+        m_kStartAct[g], m_kEndAct[g], Um[g].c_ptr(), U[g].c_ptr(),
+        Up[g].c_ptr(), aRho[g].c_ptr(), aMu[g].c_ptr(), aLambda[g].c_ptr(),
+        mGridSize[g], dt, m_onesided[g], varcase, m_bope, m_acof, m_ghcof,
+        PseudoHess[g].c_ptr());
+  }
+  for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+    // curvilinear grids, NYI
+  }
 }
