@@ -912,7 +912,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 	  std::cout<<" Prefetch active in grid  "<<*p<<"\n";
   }
 #endif
-  // MERGE STOPPED HERE
+ 
   //Um[grid0].forceprefetch();
   // save any images for cycle = 0 (initial data), or beginCycle-1 (checkpoint
   // restart)
@@ -995,7 +995,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
   // Begin time stepping loop
   for (int g = 0; g < mNumberOfGrids; g++) Up[g].set_to_zero();
-  //  for (int g = 0; g < mNumberOfGrids; g++) Lu[g].set_to_zero(); ?? MERGE_PBUGS
+  //  for (int g = 0; g < mNumberOfGrids; g++) Lu[g].set_to_zero(); // MERGE_PBUGS
 
   if (m_do_geodynbc) advance_geodyn_time(t + mDt);
 
@@ -1327,8 +1327,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       enforceIC(Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, true, F,
                 point_sources,a_Rho, a_Mu, a_Lambda);  
 
-      // MERGE STOPPED HERE
-#ifdef SW4_NORM_TRACE
+ #ifdef SW4_NORM_TRACE
       if (!getRank()) {
         for (int g = 0; g < mNumberOfGrids; g++) {
           norm_trace_file << "PostEnforceIC Up[" << g << "] " << Up[g].norm()
@@ -1356,6 +1355,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
       evalDpDmInTime(Up, U, Um, Uacc);  // store result in Uacc
       if (trace && m_myRank == dbgproc) cout << " after evalDpDmInTime" << endl;
+      if (save_sides)
+        for (int g = 0; g < mNumberOfGrids; g++)
+          Upred_saved_sides[g]->push(Uacc[g], currentTimeStep);
+
 
       if (m_checkfornan) check_for_nan(Uacc, 1, "uacc ");
 
@@ -1374,7 +1377,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       if (m_anisotropic)
         evalRHSanisotropic(Uacc, mC, Lu);
       else
-        evalRHS(Uacc, mMu, mLambda, Lu, AlphaVEm);
+        evalRHS(Uacc, a_Mu, a_Lambda, Lu, AlphaVEm);
 
       if (m_output_detailed_timing) time_measure[11] = MPI_Wtime();
 
@@ -1392,7 +1395,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       }
 #endif
 
-      evalCorrector(Up, mRho, Lu, F);
+      evalCorrector(Up, a_Rho, Lu, F);
 
 #ifdef SW4_NORM_TRACE
       if (!getRank()) {
@@ -1409,7 +1412,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       // add in super-grid damping terms
       if (usingSupergrid()) {
         // std::cout<<"SUPERGRID\n";
-        addSuperGridDamping(Up, U, Um, mRho);
+        addSuperGridDamping(Up, U, Um, a_Rho);
       }
 
       // Arben's simplified attenuation
@@ -1460,7 +1463,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       if (m_anisotropic)
         enforceBCanisotropic(Up, mC, t + mDt, BCForcing);
       else
-        enforceBC(Up, a_Rho, mMu, mLambda, AlphaVEp, t + mDt, BCForcing);
+        enforceBC(Up, a_Rho, a_Mu, a_Lambda, AlphaVEp, t + mDt, BCForcing);
 
       // NEW (Apr. 4, 2017)
       // Impose un-coupled free surface boundary condition with visco-elastic
@@ -1501,13 +1504,16 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       if (m_output_detailed_timing) time_measure[17] = MPI_Wtime();
 
       if (m_do_geodynbc) restore_geoghost(Up);
+      if (save_sides)
+        for (int g = 0; g < mNumberOfGrids; g++)
+          Ucorr_saved_sides[g]->push(Up[g], currentTimeStep);
 
     }  // end if mOrder == 4
 #ifdef PEEKS_GALORE
     SW4_PEEK;
     SYNC_DEVICE;
 #endif
-
+    // MERGE STOPPPED AROUND HERE
     if (m_checkfornan) check_for_nan(Up, 1, "Up");
 
     //    Um[0].save_to_disk("um-dbg0.bin");
