@@ -2195,7 +2195,7 @@ void EW::enforceBCanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
     //       wind_ptr[6*s+1] << " " << wind_ptr[6*s+2] << " "
     //	    << wind_ptr[6*s+3] << " " << wind_ptr[6*s+4] << " " <<
     // wind_ptr[6*s+5] << endl;
-    int topo = topographyExists() && g == mNumberOfGrids - 1;
+    //int topo = topographyExists() && g == mNumberOfGrids - 1;
 
     // THESE ARRAYS MUST BE FILLED IN BEFORE CALLING THIS ROUTINE
     // for periodic bc, a_BCForcing[g][s] == NULL, so you better not access
@@ -2207,30 +2207,30 @@ void EW::enforceBCanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
     bforce_side4_ptr = a_BCForcing[g][4];  // low-k bndry forcing array pointer
     bforce_side5_ptr = a_BCForcing[g][5];  // high-k bndry forcing array pointer
 
-    if (m_croutines)
+    //    if (m_croutines)
       bcfortanisg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, wind_ptr, nx,
                      ny, nz, u_ptr, h, bcType_ptr, m_sbop, c_ptr,
                      bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
                      bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr,
                      m_sg_str_x[g], m_sg_str_y[g]);
-    else
-      bcfortanisg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, wind_ptr,
-                  &nx, &ny, &nz, u_ptr, &h, bcType_ptr, m_sbop, c_ptr,
-                  bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
-                  bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr,
-                  m_sg_str_x[g], m_sg_str_y[g]);
+    // else
+    //   bcfortanisg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, wind_ptr,
+    //               &nx, &ny, &nz, u_ptr, &h, bcType_ptr, m_sbop, c_ptr,
+    //               bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
+    //               bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr,
+    //               m_sg_str_x[g], m_sg_str_y[g]);
     if (topographyExists() && g == mNumberOfGrids - 1 &&
         m_bcType[g][4] == bStressFree) {
       int fside = 5;
       float_sw4* cc_ptr = mCcurv.c_ptr();
-      if (m_croutines)
+      //      if (m_croutines)
         bcfreesurfcurvani_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
                              u_ptr, cc_ptr, fside, m_sbop, bforce_side4_ptr,
                              bforce_side5_ptr, m_sg_str_x[g], m_sg_str_y[g]);
-      else
-        bcfreesurfcurvani(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                          &nz, u_ptr, cc_ptr, &fside, m_sbop, bforce_side4_ptr,
-                          bforce_side5_ptr, m_sg_str_x[g], m_sg_str_y[g]);
+      // else
+      //   bcfreesurfcurvani(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+      //                     &nz, u_ptr, cc_ptr, &fside, m_sbop, bforce_side4_ptr,
+      //                     bforce_side5_ptr, m_sg_str_x[g], m_sg_str_y[g]);
     }
   }
   update_curvilinear_cartesian_interface(a_U);
@@ -2238,11 +2238,10 @@ void EW::enforceBCanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
 //
 void EW::update_curvilinear_cartesian_interface(vector<Sarray>& a_U) {
   SW4_MARK_FUNCTION;
-  // std::cout<<"EW::update_curvilinear_cartesian_interface_raja<\n"<<std::flush;
   if (topographyExists()) {
     const int nc = 3;
     int g = mNumberOfCartesianGrids - 1;
-    int gc = mNumberOfGrids - 1;
+    int gc = g+1;
     const int mgp = getNumberOfGhostPoints();
     //      float_sw4 nrm[3]={0,0,0};
     //      int q, i, j;
@@ -2301,7 +2300,7 @@ void EW::update_curvilinear_cartesian_interface_org(vector<Sarray>& a_U) {
   SYNC_STREAM;
   if (topographyExists()) {
     int g = mNumberOfCartesianGrids - 1;
-    int gc = mNumberOfGrids - 1;
+    int gc = g+1;
     int nc = a_U[0].m_nc;
     // std::cout<<"CALL TO void EW::update_curvilinear_cartesian_interface\n";
 // inject solution values between lower boundary of gc and upper boundary of g
@@ -2509,11 +2508,11 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     int is_periodic[2] = {0, 0};
     if (m_doubly_periodic) is_periodic[0] = is_periodic[1] = 1;
 
-    consintp(a_Up[g + 1], Unextf, Bf, mMu[g + 1], mLambda[g + 1], mRho[g + 1],
-             mGridSize[g + 1], a_Up[g], Unextc, Bc, mMu[g], mLambda[g], mRho[g],
+    consintp(a_Up[g + 1], Unextf, Bf, a_Mu[g + 1], a_Lambda[g + 1], a_Rho[g + 1],
+             mGridSize[g + 1], a_Up[g], Unextc, Bc, a_Mu[g], a_Lambda[g], a_Rho[g],
              mGridSize[g], cof, g, g + 1, is_periodic);
     //      CHECK_INPUT(false," controlled termination");
-
+    // MERGE STOPPED HERE
     // Finally, restore the ghost point values on the sides of the domain.
     // Note: these ghost point values might never be used ?
     if (!m_doubly_periodic) {
