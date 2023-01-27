@@ -708,7 +708,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
   // Commented out for checking restarts
   for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++)
-    m_cli2[g - mNumberOfCartesianGrids]->impose_ic(U, t, AlphaVE);
+    m_cli2[g - mNumberOfCartesianGrids]->impose_ic(U, t, F, AlphaVE);
 
 #ifdef SW4_NORM_TRACE
   if (!getRank()) {
@@ -750,7 +750,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   // }
 
   for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++)
-    m_cli2[g - mNumberOfCartesianGrids]->impose_ic(Um, t - mDt, AlphaVEm);
+    m_cli2[g - mNumberOfCartesianGrids]->impose_ic(Um, t - mDt, F, AlphaVEm);
   // more testing
   checkpoint_twilight_test(Um, U, Up, AlphaVEm, AlphaVE, AlphaVEp, a_Sources,
                            t);
@@ -2302,7 +2302,6 @@ void EW::update_curvilinear_cartesian_interface_org(vector<Sarray>& a_U) {
     int g = mNumberOfCartesianGrids - 1;
     int gc = g+1;
     int nc = a_U[0].m_nc;
-    // std::cout<<"CALL TO void EW::update_curvilinear_cartesian_interface\n";
 // inject solution values between lower boundary of gc and upper boundary of g
 #pragma omp parallel for
     for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
@@ -2512,7 +2511,7 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
              mGridSize[g + 1], a_Up[g], Unextc, Bc, a_Mu[g], a_Lambda[g], a_Rho[g],
              mGridSize[g], cof, g, g + 1, is_periodic);
     //      CHECK_INPUT(false," controlled termination");
-    // MERGE STOPPED HERE
+
     // Finally, restore the ghost point values on the sides of the domain.
     // Note: these ghost point values might never be used ?
     if (!m_doubly_periodic) {
@@ -2524,7 +2523,7 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
   for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++) {
     //         m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up,
     //         time+mDt );
-    m_cli2[g - mNumberOfCartesianGrids]->impose_ic(a_Up, time + dt,
+    m_cli2[g - mNumberOfCartesianGrids]->impose_ic(a_Up, time + dt, F, 
                                                    a_AlphaVEp);
     //      check_ic_conditions( g, a_Up );
   }
@@ -2697,7 +2696,7 @@ void EW::enforceIC2(vector<Sarray>& a_Up, vector<Sarray>& a_U,
   for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++) {
     //      m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt
     //      );
-    m_cli2[g - mNumberOfCartesianGrids]->impose_ic(a_Up, time + mDt,
+    m_cli2[g - mNumberOfCartesianGrids]->impose_ic(a_Up, time + mDt,F,
                                                    a_AlphaVEp);
   }
 }  // end enforceIC2

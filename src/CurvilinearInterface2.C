@@ -641,7 +641,9 @@ void CurvilinearInterface2::init_arrays_att() {
 
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
-                                      std::vector<Sarray*>& a_AlphaVE) {
+				      std::vector<Sarray>& a_F,
+                                      std::vector<Sarray*>& a_AlphaVE,
+				      bool injection_only) {
   SW4_MARK_FUNCTION;
 #ifdef SW4_NORM_TRACE
   static int myRank = -1;
@@ -744,6 +746,15 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
       injection(Alpha_f[a], Alpha_c[a]);
       communicate_array(Alpha_f[a], true);
     }
+
+   if (injection_only) {
+    a_U[m_gf].copy_kplane2(U_f, m_nkf);
+    if (m_use_attenuation) {
+      for (int a = 0; a < m_number_mechanisms; a++)
+        a_AlphaVE[m_gf][a].copy_kplane2(Alpha_f[a], m_nkf);
+    }
+    return;
+  }
 
   // 4. Solve equation for stress continuity, formulated as lhs*x+rhs=0, where x
   // are uc's ghost points at k=0.

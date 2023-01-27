@@ -105,7 +105,8 @@ class CurvilinearInterface2 {
   //   void test2( EW* a_ew, int gc, std::vector<Sarray>& a_U );
 
   void impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
-                 std::vector<Sarray*>& a_AlphaVE);
+                 std::vector<Sarray>& a_F, std::vector<Sarray*>& a_AlphaVE,
+                 bool injection_only = false);
   void interface_lhs(Sarray& lhs, Sarray& uc);
   void compute_icstresses_curv(Sarray& a_Up, Sarray& B, int kic,
                                Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
