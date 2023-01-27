@@ -2714,21 +2714,21 @@ void EW::check_corrector(Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc,
   float_sw4 pci = (9 * (Uc(c, ic, jc, kc) + Uc(c, ic + 1, jc, kc)) -
                    (Uc(c, ic - 1, jc, kc) + Uc(c, ic + 2, jc, kc))) /
                   16;
-  float_sw4 pcim = (9 * (Uc(c, ic, jc - 1, kc) + Uc(c, ic + 1, jc - 1, kc)) -
-                    (Uc(c, ic - 1, jc - 1, kc) + Uc(c, ic + 2, jc - 1, kc))) /
-                   16;
-  float_sw4 pcip = (9 * (Uc(c, ic, jc + 1, kc) + Uc(c, ic + 1, jc + 1, kc)) -
-                    (Uc(c, ic - 1, jc + 1, kc) + Uc(c, ic + 2, jc + 1, kc))) /
-                   16;
-  float_sw4 pcipp = (9 * (Uc(c, ic, jc + 2, kc) + Uc(c, ic + 1, jc + 2, kc)) -
-                     (Uc(c, ic - 1, jc + 2, kc) + Uc(c, ic + 2, jc + 2, kc))) /
-                    16;
+  // float_sw4 pcim = (9 * (Uc(c, ic, jc - 1, kc) + Uc(c, ic + 1, jc - 1, kc)) -
+  //                   (Uc(c, ic - 1, jc - 1, kc) + Uc(c, ic + 2, jc - 1, kc))) /
+  //                  16;
+  // float_sw4 pcip = (9 * (Uc(c, ic, jc + 1, kc) + Uc(c, ic + 1, jc + 1, kc)) -
+  //                   (Uc(c, ic - 1, jc + 1, kc) + Uc(c, ic + 2, jc + 1, kc))) /
+  //                  16;
+  // float_sw4 pcipp = (9 * (Uc(c, ic, jc + 2, kc) + Uc(c, ic + 1, jc + 2, kc)) -
+  //                    (Uc(c, ic - 1, jc + 2, kc) + Uc(c, ic + 2, jc + 2, kc))) /
+  //                   16;
 
-  // float_sw4 pc = ( 9*(pci+pcip)-(pcim+pcipp))/16;
+  // // float_sw4 pc = ( 9*(pci+pcip)-(pcim+pcipp))/16;
 
-  float_sw4 pcj = (9 * (Uc(c, ic, jc, kc) + Uc(c, ic, jc + 1, kc)) -
-                   (Uc(c, ic, jc - 1, kc) + Uc(c, ic, jc + 2, kc))) /
-                  16;
+  // float_sw4 pcj = (9 * (Uc(c, ic, jc, kc) + Uc(c, ic, jc + 1, kc)) -
+  //                  (Uc(c, ic, jc - 1, kc) + Uc(c, ic, jc + 2, kc))) /
+  //                 16;
   cout << "check " << Uf(c, i, j, kf) << " " << Uc(c, ic, jc, kc) << " " << pci
        << " " << Uf(c, i, j, kf) - pci << endl;
   //   cout << "  next " << Unextf(c,i,j,kf) << " " << Unextc(c,ic,jc,kc) <<
@@ -2924,14 +2924,14 @@ void EW::dirichlet_twilight_ic(Sarray& U, int g, int kic, float_sw4 t) {
     float_sw4 cv = m_twilight_forcing->m_c;
     float_sw4 h = mGridSize[g];
     float_sw4* u_ptr = U.c_ptr();
-    if (m_croutines)
+    //    if (m_croutines)
       twilightfortwind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], kdb,
                           kde, u_ptr, t, om, cv, ph, h, m_zmin[g], i1, i2, j1,
                           j2, kic, kic);
-    else
-      twilightfortwind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &kdb,
-                       &kde, u_ptr, &t, &om, &cv, &ph, &h, &m_zmin[g], &i1, &i2,
-                       &j1, &j2, &kic, &kic);
+    // else
+    //   twilightfortwind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &kdb,
+    //                    &kde, u_ptr, &t, &om, &cv, &ph, &h, &m_zmin[g], &i1, &i2,
+    //                    &j1, &j2, &kic, &kic);
   }
 }
 
@@ -3015,53 +3015,53 @@ void EW::dirichlet_LRic(Sarray& U, int g, int kic, float_sw4 t, int adj) {
       // low i-side
       int i1 = m_iStart[g], i2 = m_iStartInt[g] - adj;
       int j1 = m_jStart[g], j2 = m_jEnd[g];
-      if (m_croutines)
+      //      if (m_croutines)
         twilightfortwind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], kdb,
                             kde, u_ptr, t, om, cv, ph, h, m_zmin[g], i1, i2, j1,
                             j2, kic, kic);
-      else
-        twilightfortwind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-                         &kdb, &kde, u_ptr, &t, &om, &cv, &ph, &h, &m_zmin[g],
-                         &i1, &i2, &j1, &j2, &kic, &kic);
+      // else
+      //   twilightfortwind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+      //                    &kdb, &kde, u_ptr, &t, &om, &cv, &ph, &h, &m_zmin[g],
+      //                    &i1, &i2, &j1, &j2, &kic, &kic);
     }
     if (m_iEndInt[g] == m_global_nx[g]) {
       // high i-side
       int i1 = m_iEndInt[g] + adj, i2 = m_iEnd[g];
       int j1 = m_jStart[g], j2 = m_jEnd[g];
-      if (m_croutines)
+      //      if (m_croutines)
         twilightfortwind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], kdb,
                             kde, u_ptr, t, om, cv, ph, h, m_zmin[g], i1, i2, j1,
                             j2, kic, kic);
-      else
-        twilightfortwind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-                         &kdb, &kde, u_ptr, &t, &om, &cv, &ph, &h, &m_zmin[g],
-                         &i1, &i2, &j1, &j2, &kic, &kic);
+      // else
+      //   twilightfortwind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+      //                    &kdb, &kde, u_ptr, &t, &om, &cv, &ph, &h, &m_zmin[g],
+      //                    &i1, &i2, &j1, &j2, &kic, &kic);
     }
     if (m_jStartInt[g] == 1) {
       // low j-side
       int i1 = m_iStart[g], i2 = m_iEnd[g];
       int j1 = m_jStart[g], j2 = m_jStartInt[g] - adj;
-      if (m_croutines)
+      //      if (m_croutines)
         twilightfortwind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], kdb,
                             kde, u_ptr, t, om, cv, ph, h, m_zmin[g], i1, i2, j1,
                             j2, kic, kic);
-      else
-        twilightfortwind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-                         &kdb, &kde, u_ptr, &t, &om, &cv, &ph, &h, &m_zmin[g],
-                         &i1, &i2, &j1, &j2, &kic, &kic);
+      // else
+      //   twilightfortwind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+      //                    &kdb, &kde, u_ptr, &t, &om, &cv, &ph, &h, &m_zmin[g],
+      //                    &i1, &i2, &j1, &j2, &kic, &kic);
     }
     if (m_jEndInt[g] == m_global_ny[g]) {
       // high j-side
       int i1 = m_iStart[g], i2 = m_iEnd[g];
       int j1 = m_jEndInt[g] + adj, j2 = m_jEnd[g];
-      if (m_croutines)
+      //      if (m_croutines)
         twilightfortwind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], kdb,
                             kde, u_ptr, t, om, cv, ph, h, m_zmin[g], i1, i2, j1,
                             j2, kic, kic);
-      else
-        twilightfortwind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-                         &kdb, &kde, u_ptr, &t, &om, &cv, &ph, &h, &m_zmin[g],
-                         &i1, &i2, &j1, &j2, &kic, &kic);
+      // else
+      //   twilightfortwind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+      //                    &kdb, &kde, u_ptr, &t, &om, &cv, &ph, &h, &m_zmin[g],
+      //                    &i1, &i2, &j1, &j2, &kic, &kic);
     }
   }
 }
@@ -3174,53 +3174,53 @@ void EW::dirichlet_LRstress(Sarray& B, int g, int kic, float_sw4 t, int adj) {
       int j1 = m_jStart[g], j2 = m_jEnd[g];
       if (usingSupergrid()) {
         // assigns B
-        if (m_croutines)
+	//        if (m_croutines)
           twfrsurfzsg_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                               m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
                               omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g],
                               i1, i2, j1, j2);
-        else
-          twfrsurfzsg_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                           m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                           omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g], i1,
-                           i2, j1, j2);
+        // else
+        //   twfrsurfzsg_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+        //                    m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+        //                    omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g], i1,
+        //                    i2, j1, j2);
         if (m_use_attenuation)  // only 1 mechanism with twilight forcing
         {
           // adds attenuation to B
-          if (m_croutines)
+	  //          if (m_croutines)
             twfrsurfzsg_att_wind_ci(
                 m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                 m_kEnd[g], h, kic, t, om, cv, ph, omstrx, omstry, b_ptr,
                 mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2);
-          else
-            twfrsurfzsg_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                                 m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                                 omstrx, omstry, b_ptr, mua_ptr, laa_ptr,
-                                 m_zmin[g], i1, i2, j1, j2);
+          // else
+          //   twfrsurfzsg_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+          //                        m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+          //                        omstrx, omstry, b_ptr, mua_ptr, laa_ptr,
+          //                        m_zmin[g], i1, i2, j1, j2);
         }
       } else {
         // assigns B
-        if (m_croutines)
+	//        if (m_croutines)
           twfrsurfz_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                             m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
                             b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2);
-        else
-          twfrsurfz_wind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-                         &m_kStart[g], &m_kEnd[g], &h, &kic, &t, &om, &cv, &ph,
-                         b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2, &j1, &j2);
+        // else
+        //   twfrsurfz_wind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+        //                  &m_kStart[g], &m_kEnd[g], &h, &kic, &t, &om, &cv, &ph,
+        //                  b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2, &j1, &j2);
         if (m_use_attenuation)  // only 1 mechanism with twilight forcing
         {
           // adds attenuation to B
-          if (m_croutines)
+	  //          if (m_croutines)
             twfrsurfz_att_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g],
                                   m_jEnd[g], m_kStart[g], m_kEnd[g], h, kic, t,
                                   om, cv, ph, b_ptr, mua_ptr, laa_ptr,
                                   m_zmin[g], i1, i2, j1, j2);
-          else
-            twfrsurfz_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                               m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                               b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1,
-                               j2);
+          // else
+          //   twfrsurfz_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+          //                      m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+          //                      b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1,
+          //                      j2);
         }
       }  // else (not supergrid)
     }    //  if( m_iStartInt[g] == 1 )
@@ -3231,53 +3231,53 @@ void EW::dirichlet_LRstress(Sarray& B, int g, int kic, float_sw4 t, int adj) {
       int j1 = m_jStart[g], j2 = m_jEnd[g];
       if (usingSupergrid()) {
         // assigns B
-        if (m_croutines)
+	//       if (m_croutines)
           twfrsurfzsg_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                               m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
                               omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g],
                               i1, i2, j1, j2);
-        else
-          twfrsurfzsg_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                           m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                           omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g], i1,
-                           i2, j1, j2);
+        // else
+        //   twfrsurfzsg_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+        //                    m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+        //                    omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g], i1,
+        //                    i2, j1, j2);
         if (m_use_attenuation)  // only 1 mechanism with twilight forcing
         {
           // adds attenuation to B
-          if (m_croutines)
+	  //          if (m_croutines)
             twfrsurfzsg_att_wind_ci(
                 m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                 m_kEnd[g], h, kic, t, om, cv, ph, omstrx, omstry, b_ptr,
                 mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2);
-          else
-            twfrsurfzsg_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                                 m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                                 omstrx, omstry, b_ptr, mua_ptr, laa_ptr,
-                                 m_zmin[g], i1, i2, j1, j2);
+          // else
+          //   twfrsurfzsg_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+          //                        m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+          //                        omstrx, omstry, b_ptr, mua_ptr, laa_ptr,
+          //                        m_zmin[g], i1, i2, j1, j2);
         }
       } else {
         // assigns B
-        if (m_croutines)
+	//       if (m_croutines)
           twfrsurfz_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                             m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
                             b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2);
-        else
-          twfrsurfz_wind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-                         &m_kStart[g], &m_kEnd[g], &h, &kic, &t, &om, &cv, &ph,
-                         b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2, &j1, &j2);
+        // else
+        //   twfrsurfz_wind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+        //                  &m_kStart[g], &m_kEnd[g], &h, &kic, &t, &om, &cv, &ph,
+        //                  b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2, &j1, &j2);
         if (m_use_attenuation)  // only 1 mechanism with twilight forcing
         {
           // adds attenuation to B
-          if (m_croutines)
+	  //          if (m_croutines)
             twfrsurfz_att_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g],
                                   m_jEnd[g], m_kStart[g], m_kEnd[g], h, kic, t,
                                   om, cv, ph, b_ptr, mua_ptr, laa_ptr,
                                   m_zmin[g], i1, i2, j1, j2);
-          else
-            twfrsurfz_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                               m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                               b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1,
-                               j2);
+          // else
+          //   twfrsurfz_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+          //                      m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+          //                      b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1,
+          //                      j2);
         }
       }  // else (not supergrid)
     }    // end if( m_iEndInt[g] == m_global_nx[g] )
@@ -3288,53 +3288,53 @@ void EW::dirichlet_LRstress(Sarray& B, int g, int kic, float_sw4 t, int adj) {
       int j1 = m_jStart[g], j2 = m_jStartInt[g] - adj;
       if (usingSupergrid()) {
         // assigns B
-        if (m_croutines)
+	//        if (m_croutines)
           twfrsurfzsg_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                               m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
                               omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g],
                               i1, i2, j1, j2);
-        else
-          twfrsurfzsg_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                           m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                           omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g], i1,
-                           i2, j1, j2);
+        // else
+        //   twfrsurfzsg_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+        //                    m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+        //                    omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g], i1,
+        //                    i2, j1, j2);
         if (m_use_attenuation)  // only 1 mechanism with twilight forcing
         {
           // adds attenuation to B
-          if (m_croutines)
+	  //          if (m_croutines)
             twfrsurfzsg_att_wind_ci(
                 m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                 m_kEnd[g], h, kic, t, om, cv, ph, omstrx, omstry, b_ptr,
                 mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2);
-          else
-            twfrsurfzsg_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                                 m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                                 omstrx, omstry, b_ptr, mua_ptr, laa_ptr,
-                                 m_zmin[g], i1, i2, j1, j2);
+          // else
+          //   twfrsurfzsg_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+          //                        m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+          //                        omstrx, omstry, b_ptr, mua_ptr, laa_ptr,
+          //                        m_zmin[g], i1, i2, j1, j2);
         }
       } else {
         // assigns B
-        if (m_croutines)
+	//        if (m_croutines)
           twfrsurfz_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                             m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
                             b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2);
-        else
-          twfrsurfz_wind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-                         &m_kStart[g], &m_kEnd[g], &h, &kic, &t, &om, &cv, &ph,
-                         b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2, &j1, &j2);
+        // else
+        //   twfrsurfz_wind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+        //                  &m_kStart[g], &m_kEnd[g], &h, &kic, &t, &om, &cv, &ph,
+        //                  b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2, &j1, &j2);
         if (m_use_attenuation)  // only 1 mechanism with twilight forcing
         {
           // adds attenuation to B
-          if (m_croutines)
+	  //         if (m_croutines)
             twfrsurfz_att_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g],
                                   m_jEnd[g], m_kStart[g], m_kEnd[g], h, kic, t,
                                   om, cv, ph, b_ptr, mua_ptr, laa_ptr,
                                   m_zmin[g], i1, i2, j1, j2);
-          else
-            twfrsurfz_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                               m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                               b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1,
-                               j2);
+          // else
+          //   twfrsurfz_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+          //                      m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+          //                      b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1,
+          //                      j2);
         }
       }  // else (not supergrid)
     }    // end if( m_jStartInt[g] == 1 )
@@ -3345,53 +3345,53 @@ void EW::dirichlet_LRstress(Sarray& B, int g, int kic, float_sw4 t, int adj) {
       int j1 = m_jEndInt[g] + adj, j2 = m_jEnd[g];
       if (usingSupergrid()) {
         // assigns B
-        if (m_croutines)
+	//        if (m_croutines)
           twfrsurfzsg_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                               m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
                               omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g],
                               i1, i2, j1, j2);
-        else
-          twfrsurfzsg_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                           m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                           omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g], i1,
-                           i2, j1, j2);
+        // else
+        //   twfrsurfzsg_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+        //                    m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+        //                    omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g], i1,
+        //                    i2, j1, j2);
         if (m_use_attenuation)  // only 1 mechanism with twilight forcing
         {
           // adds attenuation to B
-          if (m_croutines)
+	  //         if (m_croutines)
             twfrsurfzsg_att_wind_ci(
                 m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                 m_kEnd[g], h, kic, t, om, cv, ph, omstrx, omstry, b_ptr,
                 mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2);
-          else
-            twfrsurfzsg_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                                 m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                                 omstrx, omstry, b_ptr, mua_ptr, laa_ptr,
-                                 m_zmin[g], i1, i2, j1, j2);
+          // else
+          //   twfrsurfzsg_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+          //                        m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+          //                        omstrx, omstry, b_ptr, mua_ptr, laa_ptr,
+          //                        m_zmin[g], i1, i2, j1, j2);
         }
       } else {
         // assigns B
-        if (m_croutines)
+	//        if (m_croutines)
           twfrsurfz_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                             m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
                             b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2);
-        else
-          twfrsurfz_wind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-                         &m_kStart[g], &m_kEnd[g], &h, &kic, &t, &om, &cv, &ph,
-                         b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2, &j1, &j2);
+        // else
+        //   twfrsurfz_wind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+        //                  &m_kStart[g], &m_kEnd[g], &h, &kic, &t, &om, &cv, &ph,
+        //                  b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2, &j1, &j2);
         if (m_use_attenuation)  // only 1 mechanism with twilight forcing
         {
           // adds attenuation to B
-          if (m_croutines)
+	  //          if (m_croutines)
             twfrsurfz_att_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g],
                                   m_jEnd[g], m_kStart[g], m_kEnd[g], h, kic, t,
                                   om, cv, ph, b_ptr, mua_ptr, laa_ptr,
                                   m_zmin[g], i1, i2, j1, j2);
-          else
-            twfrsurfz_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                               m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                               b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1,
-                               j2);
+          // else
+          //   twfrsurfz_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+          //                      m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+          //                      b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1,
+          //                      j2);
         }
       }
     }  // end if( m_jEndInt[g] == m_global_ny[g] )
@@ -3507,8 +3507,8 @@ void EW::compute_preliminary_corrector(
   // there are C and Fortran versions of this routine that are selected by the
   // Makefile
   rhs4th3wind(ib, ie, jb, je, kb, ke, nz, m_onesided[g], m_acof, m_bope,
-              m_ghcof, Lutt.c_ptr(), Utt.c_ptr(), mMu[g].c_ptr(),
-              mLambda[g].c_ptr(), mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+              m_ghcof, Lutt.c_ptr(), Utt.c_ptr(), a_Mu.c_ptr(),
+              a_Lambda.c_ptr(), mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
               m_sg_str_z[g], op, kbu, keu, kic, kic);
 
   // Plan: 1) loop over all mechanisms, 2) precompute d^2 alpha/dt^2 and store
@@ -3698,8 +3698,8 @@ void EW::compute_preliminary_predictor(
   // (i,j,k)-directions, respectively
   rhs4th3wind(ib, ie, jb, je, kb, ke, nz, m_onesided[g],
               m_acof,  // ghost point operators for elastic part
-              m_bope, m_ghcof, Lu.c_ptr(), a_Up.c_ptr(), mMu[g].c_ptr(),
-              mLambda[g].c_ptr(), mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
+              m_bope, m_ghcof, Lu.c_ptr(), a_Up.c_ptr(), a_Mu.c_ptr(),
+              a_Lambda.c_ptr(), mGridSize[g], m_sg_str_x[g], m_sg_str_y[g],
               m_sg_str_z[g], op, kb, ke, kic, kic);
   // Note: 4 last arguments of the above function call:
   // (kb,ke) is the declared size of Up in the k-direction
@@ -3840,7 +3840,7 @@ void EW::compute_preliminary_predictor(
   {
     // assign array pointers on the fly
     //    if (m_croutines)
-      addsg4wind_ci(Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), mRho[g].c_ptr(),
+      addsg4wind_ci(Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), a_Rho.c_ptr(),
                     m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g],
                     m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
                     m_sg_corner_y[g], m_sg_corner_z[g], ib, ie, jb, je, kb, ke,
@@ -3857,7 +3857,7 @@ void EW::compute_preliminary_predictor(
   //   // by the lower and upper boundaries of the k-window
   }
 }
-
+// MERGE_TILL_HERE
 //-----------------------------------------------------------------------
 void EW::compute_icstresses(Sarray& a_Up, Sarray& B, int g, int kic,
                             float_sw4* a_str_x, float_sw4* a_str_y) {
