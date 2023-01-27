@@ -5036,7 +5036,7 @@ void EW::addSuperGridDamping(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     kfirst = m_kStart[g];
     klast = m_kEnd[g];
     if (m_sg_damping_order == 4) {
-      if (topographyExists() && g == mNumberOfGrids - 1) {
+	     if (topographyExists() && g >= mNumberOfCartesianGrids) {
         if (m_croutines)
           addsgd4c_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr,
                       u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g],
@@ -5063,7 +5063,7 @@ void EW::addSuperGridDamping(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                   &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient);
       }
     } else if (m_sg_damping_order == 6) {
-      if (topographyExists() && g == mNumberOfGrids - 1) {
+	    if (topographyExists() && g >= mNumberOfCartesianGrids) {
         if (m_croutines)
           addsgd6c_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr,
                       u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g],
