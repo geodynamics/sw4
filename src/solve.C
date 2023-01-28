@@ -3857,7 +3857,7 @@ void EW::compute_preliminary_predictor(
   //   // by the lower and upper boundaries of the k-window
   }
 }
-// MERGE_TILL_HERE
+// Replaced with compute_icstresses2
 //-----------------------------------------------------------------------
 void EW::compute_icstresses(Sarray& a_Up, Sarray& B, int g, int kic,
                             float_sw4* a_str_x, float_sw4* a_str_y) {
@@ -4869,8 +4869,8 @@ void EW::testSourceDiscretization(int kx[3], int ky[3], int kz[3],
     jlast = m_jEnd[g];
     kfirst = m_kStart[g];
     klast = m_kEnd[g];
-    h = mGridSize[g];  // how do we define the grid size for the curvilinear
-                       // grid?
+    h = mGridSize[g];  
+        
     float_sw4* f_ptr = F[g].c_ptr();
     int wind[6];
     wind[0] = m_iStartInt[g];
@@ -5198,58 +5198,58 @@ void EW::addSuperGridDamping(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     kfirst = m_kStart[g];
     klast = m_kEnd[g];
     if (m_sg_damping_order == 4) {
-      if (topographyExists() && g == mNumberOfGrids - 1) {
-        if (m_croutines)
+      if (topographyExists() && g >= mNumberOfCartesianGrids) {
+	//        if (m_croutines)
           addsgd4c_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr,
                       u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g],
                       m_sg_str_x[g], m_sg_str_y[g], mJ[g].c_ptr(),
                       m_sg_corner_x[g], m_sg_corner_y[g],
                       m_supergrid_damping_coefficient);
-        else
-          addsgd4c(&mDt, up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g],
-                   m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g], mJ[g].c_ptr(),
-                   m_sg_corner_x[g], m_sg_corner_y[g], &ifirst, &ilast, &jfirst,
-                   &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient);
+        // else
+        //   addsgd4c(&mDt, up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g],
+        //            m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g], mJ[g].c_ptr(),
+        //            m_sg_corner_x[g], m_sg_corner_y[g], &ifirst, &ilast, &jfirst,
+        //            &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient);
       } else {
-        if (m_croutines)
+	//        if (m_croutines)
           addsgd4_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr, u_ptr,
                      um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
                      m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
                      m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
                      m_supergrid_damping_coefficient);
-        else
-          addsgd4(&mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr,
-                  m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g],
-                  m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
-                  m_sg_corner_y[g], m_sg_corner_z[g], &ifirst, &ilast, &jfirst,
-                  &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient);
+        // else
+        //   addsgd4(&mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr,
+        //           m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g],
+        //           m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
+        //           m_sg_corner_y[g], m_sg_corner_z[g], &ifirst, &ilast, &jfirst,
+        //           &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient);
       }
     } else if (m_sg_damping_order == 6) {
-      if (topographyExists() && g == mNumberOfGrids - 1) {
-        if (m_croutines)
+      if (topographyExists() && g >= mNumberOfCartesianGrids) {
+	//        if (m_croutines)
           addsgd6c_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr,
                       u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g],
                       m_sg_str_x[g], m_sg_str_y[g], mJ[g].c_ptr(),
                       m_sg_corner_x[g], m_sg_corner_y[g],
                       m_supergrid_damping_coefficient);
-        else
-          addsgd6c(&mDt, up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g],
-                   m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g], mJ[g].c_ptr(),
-                   m_sg_corner_x[g], m_sg_corner_y[g], &ifirst, &ilast, &jfirst,
-                   &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient);
+        // else
+        //   addsgd6c(&mDt, up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g],
+        //            m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g], mJ[g].c_ptr(),
+        //            m_sg_corner_x[g], m_sg_corner_y[g], &ifirst, &ilast, &jfirst,
+        //            &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient);
       } else {
-        if (m_croutines)
+	//        if (m_croutines)
           addsgd6_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr, u_ptr,
                      um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
                      m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
                      m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
                      m_supergrid_damping_coefficient);
-        else
-          addsgd6(&mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr,
-                  m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g],
-                  m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
-                  m_sg_corner_y[g], m_sg_corner_z[g], &ifirst, &ilast, &jfirst,
-                  &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient);
+	  //   else
+          // addsgd6(&mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr,
+          //         m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g],
+          //         m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
+          //         m_sg_corner_y[g], m_sg_corner_z[g], &ifirst, &ilast, &jfirst,
+	  //       &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient);
       }
     }
   }
@@ -5280,12 +5280,12 @@ void EW::simpleAttenuation(vector<Sarray>& a_Up) {
     kfirst = m_kStart[g];
     klast = m_kEnd[g];
 
-    if (m_croutines)
+    //    if (m_croutines)
       satt_ci(up_ptr, qs_ptr, dt, cfreq, ifirst, ilast, jfirst, jlast, kfirst,
               klast);
-    else
-      satt(up_ptr, qs_ptr, &dt, &cfreq, &ifirst, &ilast, &jfirst, &jlast,
-           &kfirst, &klast);
+      //    else
+      //   satt(up_ptr, qs_ptr, &dt, &cfreq, &ifirst, &ilast, &jfirst, &jlast,
+      //        &kfirst, &klast);
   }
 }
 
@@ -5310,7 +5310,8 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
     int kfirst = m_kStart[g];
     int klast = m_kEnd[g];
     float_sw4 h = mGridSize[g];
-    int topo = topographyExists() && g == mNumberOfGrids - 1;
+    //int topo = topographyExists() && g == mNumberOfGrids - 1;
+    int topo = g > mNumberOfCartesianGrids - 1;
 
     SView& a_UpgV = a_Up[g].getview();
     SView& a_MugV = a_Mu[g].getview();
@@ -5596,7 +5597,7 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
     }  // end if bcType[g][5] == bStressFree
 
     // all the curvilinear code needs to be overhauled
-    if (m_bcType[g][4] == bStressFree && topo && g == mNumberOfGrids - 1) {
+    if (m_bcType[g][4] == bStressFree && topo && g >= mNumberOfCartesianGrids ) {
       SW4_MARK_BEGIN("enforceBCfreeAtt2::SET 3");
       float_sw4* mu_p = a_Mu[g].c_ptr();
       float_sw4* la_p = a_Lambda[g].c_ptr();
@@ -5630,31 +5631,31 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
         SW4_MARK_END("CPTR");
         // std::cout<<"Pointers "<<mu_ve_p<<" "<<lave_p<<" "<<alphap_p<<"\n";
         // This function adds the visco-elastic boundary stresses to bforcerhs
-        if (m_croutines)
+	//        if (m_croutines)
           ve_bndry_stress_curvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                                    nz, alphap_p, mu_ve_p, lave_p,
                                    bforcerhs.c_ptr(), mMetric[g].c_ptr(), side,
                                    m_sbop_no_gp, usesg, m_sg_str_x[g],
                                    m_sg_str_y[g]);  // no ghost points here
-        else
-          ve_bndry_stress_curvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
-                                &klast, &nz, alphap_p, mu_ve_p, lave_p,
-                                bforcerhs.c_ptr(), mMetric[g].c_ptr(), &side,
-                                m_sbop_no_gp, &usesg, m_sg_str_x[g],
-                                m_sg_str_y[g]);  // no ghost points here
+        // else
+        //   ve_bndry_stress_curvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
+        //                         &klast, &nz, alphap_p, mu_ve_p, lave_p,
+        //                         bforcerhs.c_ptr(), mMetric[g].c_ptr(), &side,
+        //                         m_sbop_no_gp, &usesg, m_sg_str_x[g],
+        //                         m_sg_str_y[g]);  // no ghost points here
       }                                          // end for a...
 
       // update GHOST POINT VALUES OF UP
-      if (m_croutines)
+      //      if (m_croutines)
         att_free_curvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_p,
                           mu_p, la_p, bforcerhs.c_ptr(), mMetric[g].c_ptr(),
                           m_sbop,  // use ghost points
                           usesg, m_sg_str_x[g], m_sg_str_y[g]);
-      else
-        att_free_curvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, up_p,
-                       mu_p, la_p, bforcerhs.c_ptr(), mMetric[g].c_ptr(),
-                       m_sbop,  // use ghost points
-                       &usesg, m_sg_str_x[g], m_sg_str_y[g]);
+      // else
+      //   att_free_curvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, up_p,
+      //                  mu_p, la_p, bforcerhs.c_ptr(), mMetric[g].c_ptr(),
+      //                  m_sbop,  // use ghost points
+      //                  &usesg, m_sg_str_x[g], m_sg_str_y[g]);
       SW4_MARK_END("enforceBCfreeAtt2::SET 3");
       SYNC_STREAM;
     }  // end if bcType[g][4] == bStressFree && topography
