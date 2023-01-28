@@ -5148,8 +5148,8 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
     int kfirst = m_kStart[g];
     int klast = m_kEnd[g];
     float_sw4 h = mGridSize[g];
-    int topo = topographyExists() && g == mNumberOfGrids - 1;
-
+    //int topo = topographyExists() && g == mNumberOfGrids - 1;
+    int topo = g > mNumberOfCartesianGrids - 1;
     SView& a_UpgV = a_Up[g].getview();
     SView& a_MugV = a_Mu[g].getview();
     SView& a_LambdagV = a_Lambda[g].getview();
@@ -5313,7 +5313,7 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
     }  // end if bcType[g][4] == bStressFree
     if (m_bcType[g][5] == bStressFree) {
       SW4_MARK_BEGIN("enforceBCfreeAtt2::SET 2");
-      // std::cerr << "WARNING :: CODE EXECUTING ON CPU solve.C Line 4929 \n";
+      std::cerr << "WARNING :: CODE EXECUTING ON CPU solve.C Line 6533 \n";
       int nk = m_global_nz[g];
       // const float_sw4 i6  = 1.0/6;
       const float_sw4 d4a = 2.0 / 3;
@@ -5434,7 +5434,7 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
     }  // end if bcType[g][5] == bStressFree
 
     // all the curvilinear code needs to be overhauled
-    if (m_bcType[g][4] == bStressFree && topo && g == mNumberOfGrids - 1) {
+    if (m_bcType[g][4] == bStressFree && topo && g >= mNumberOfCartesianGrids) {
       SW4_MARK_BEGIN("enforceBCfreeAtt2::SET 3");
       float_sw4* mu_p = a_Mu[g].c_ptr();
       float_sw4* la_p = a_Lambda[g].c_ptr();
