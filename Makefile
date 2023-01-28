@@ -255,6 +255,10 @@ else
   OBJ += rhs4th3windc.o 
 endif
 
+MOBJOPT  = moptmain.o solve-backward-allpars.o lbfgs.o nlcg.o ProjectMtrl.o \
+           MaterialParameterization.o Mopt.o MaterialParCartesian.o InterpolateMaterial.o \
+	   MaterialParCartesianVels.o MaterialParCartesianVp.o MParGridFile.o MaterialParCartesianVsVp.o \
+           MaterialParAllpts.o MaterialParCart.o solve-dudp.o MaterialParCurv.o
 
 # OpenMP & C-version of the F-77 routine curvilinear4sg() is in rhs4sgcurv.o
 
@@ -291,6 +295,20 @@ sw4: $(FSW4) $(FOBJ)
 # test: linking with openmp for the routine rhs4sgcurv.o
 #	cd $(builddir); $(CXX) $(CXXFLAGS) -qopenmp -o $@ main.o $(OBJ) $(QUADPACK) $(linklibs)
 	@cat wave.txt
+	@echo "*** Build directory: " $(builddir) " ***"
+
+sw4mopt: $(FOBJ) $(FMOBJOPT) 
+	@echo "*** Configuration file: '" $(foundincfile) "' ***"
+	@echo "********* User configuration variables **************"
+	@echo "debug="$(debug) " profile="$(profile) " hdf5="$(hdf5) " proj="$(proj) " SW4ROOT"=$(SW4ROOT) 
+	@echo "CXX=" $(CXX) "EXTRA_CXX_FLAGS"= $(EXTRA_CXX_FLAGS)
+	@echo "FC=" $(FC) " EXTRA_FORT_FLAGS=" $(EXTRA_FORT_FLAGS)
+	@echo "EXTRA_LINK_FLAGS"= $(EXTRA_LINK_FLAGS)
+	@echo "******************************************************"
+	cd $(builddir); $(CXX) $(CXXFLAGS) -o $@ $(MOBJOPT) $(OBJ) $(QUADPACK) $(linklibs)
+	@echo " "
+	@echo "******* sw4mopt was built successfully *******" 
+	@echo " "
 	@echo "*** Build directory: " $(builddir) " ***"
 endif
 # tarball

@@ -75,6 +75,8 @@
 
 using namespace std;
 
+class MaterialParameterization;
+
 class EW {
  public:
   EW(const string& name, vector<vector<Source*>>& a_GlobalUniqueSources,
@@ -112,6 +114,11 @@ class EW {
 	    vector<DataPatches*>& Upred_saved_sides,
 	    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides, int event, int save_steps,
             int varcase, vector<Sarray>& pseudoHessian );
+
+   void solveTT(Source* a_GlobalSource, vector<TimeSeries*>& a_GlobalTimeSeries,
+               double* xs, int nmpars, MaterialParameterization* mp,
+               int wave_mode, int event, int myrank);
+  
   void solve_backward(vector<Source*>& a_Sources,
                       vector<TimeSeries*>& a_TimeSeries, float_sw4 gradient[11],
                       float_sw4 hessian[121]);
@@ -130,8 +137,17 @@ class EW {
                               vector<DataPatches*>& Upred_saved_sides,
                               vector<DataPatches*>& Ucorr_saved_sides,
                               float_sw4 gradients[11], vector<Sarray>& gRho,
-                              vector<Sarray>& gMu, vector<Sarray>& gLambda);
+                              vector<Sarray>& gMu, vector<Sarray>& gLambda,
+                              int event);
   // int nmpar, float_sw4* gradientm );
+
+  void solve_dudp(vector<Source*>& a_Sources, vector<Sarray>& a_Rho,
+                  vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+                  vector<TimeSeries*>& a_TimeSeries,
+                  vector<TimeSeries*>& GlobalObservations, vector<Sarray>& Um,
+                  vector<Sarray>& U, vector<Sarray>& dUm, vector<Sarray>& dU,
+                  double& misfit, double& dmisfitdp, int di, int dj, int dk,
+                  int dgrid, int event);
 
   bool parseInputFile(vector<vector<Source*>>& a_GlobalSources,
                       vector<vector<TimeSeries*>>& a_GlobalTimeSeries);
@@ -313,6 +329,10 @@ class EW {
 
   void evalRHSanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
                           vector<Sarray>& a_Uacc);
+
+  void evalLupt(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
+                vector<Sarray>& a_Lambda, vector<Sarray>& a_Lu, int grid, int i,
+                int j, int k);
 
   void evalPredictor(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                      vector<Sarray>& a_Um, vector<Sarray>& a_Rho,
@@ -812,15 +832,15 @@ void computeLowTopoGridPoint(int & iLow,
   void get_material_parameter(int nmpar, float_sw4* xm);
   void get_scale_factors(int nmpar, float_sw4* xm);
 
-#ifdef ENABLE_OPT
+  //#ifdef ENABLE_OPT
   void material_correction(int nmpar, float_sw4* xm);
 
   void project_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
                         vector<Sarray>& a_lambda, int& info);
 
-  void check_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
-                      vector<Sarray>& a_lambda, int& ok);
-#endif
+  int check_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
+                     vector<Sarray>& a_lambda, int& ok, int verbose = 0);
+  //#endif
 
   void check_anisotropic_material(vector<Sarray>& rho, vector<Sarray>& c);
 
@@ -858,17 +878,28 @@ void computeLowTopoGridPoint(int & iLow,
   void read_volimage(std::string& path, std::string& fname,
                      vector<Sarray>& data);
 
-  void interpolate(int nx, int ny, int nz, float_sw4 xmin, float_sw4 ymin,
+   void interpolate(int nx, int ny, int nz, float_sw4 xmin, float_sw4 ymin,
                    float_sw4 zmin, float_sw4 hx, float_sw4 hy, float_sw4 hz,
                    Sarray& rho, Sarray& mu, Sarray& lambda, int grid,
-                   Sarray& rhogrid, Sarray& mugrid, Sarray& lambdagrid);
+                   Sarray& rhogrid, Sarray& mugrid, Sarray& lambdagrid,
+                   bool update);
 
   void interpolate_to_coarse(int nx, int ny, int nz, float_sw4 xmin,
                              float_sw4 ymin, float_sw4 zmin, float_sw4 hx,
                              float_sw4 hy, float_sw4 hz, Sarray& rho,
                              Sarray& mu, Sarray& lambda,
                              vector<Sarray>& rhogrid, vector<Sarray>& mugrid,
-                             vector<Sarray>& lambdagrid);
+                             vector<Sarray>& lambdagrid, bool update);
+
+  void interpolate_base_to_coarse(int nx, int ny, int nz, double xmin,
+                                  double ymin, double zmin, double hx,
+                                  double hy, double hz, Sarray& rho, Sarray& mu,
+                                  Sarray& lambda);
+
+  void interpolate_base_to_coarse_vel(int nx, int ny, int nz, double xmin,
+                                      double ymin, double zmin, double hx,
+                                      double hy, double hz, Sarray& rho,
+                                      Sarray& cs, Sarray& cp);
 
   void interpolation_gradient(int nx, int ny, int nz, float_sw4 xmin,
                               float_sw4 ymin, float_sw4 zmin, float_sw4 hx,
@@ -876,6 +907,19 @@ void computeLowTopoGridPoint(int & iLow,
                               Sarray& gradmu, Sarray& gradlambda, int grid,
                               Sarray& gradrhogrid, Sarray& gradmugrid,
                               Sarray& gradlambdagrid);
+
+  void interpolate_to_coarse_vel(int nx, int ny, int nz, double xmin,
+                                 double ymin, double zmin, double hx, double hy,
+                                 double hz, Sarray& rho, Sarray& cs, Sarray& cp,
+                                 vector<Sarray>& rhogrid,
+                                 vector<Sarray>& mugrid,
+                                 vector<Sarray>& lambdagrid);
+
+  void update_and_transform_material(int g, Sarray& rho, Sarray& mu,
+                                     Sarray& lambda);
+
+  void transform_gradient(Sarray& rho, Sarray& mu, Sarray& lambda, Sarray& grho,
+                          Sarray& gmu, Sarray& glambda);
 
   void addtoPseudoHessian(vector<Sarray>& Um, vector<Sarray>& U,
                           vector<Sarray>& Up, vector<Sarray>& aRho,
@@ -1563,6 +1607,19 @@ void computeLowTopoGridPoint(int & iLow,
                                 vector<Sarray*> AlphaVE,
                                 vector<Sarray*> AlphaVEp,
                                 vector<Source*> a_Sources, float_sw4 t);
+  void set_to_zero_at_source(vector<Sarray>& a_U, vector<Source*> point_sources,
+                             int padding);
+  void set_zerograd();
+  void set_zerograd_pad(int pad);
+  void set_to_zero_at_receiver(vector<Sarray>& a_U,
+                               vector<TimeSeries*> time_series, int padding);
+  void set_zerogradrec();
+  void set_zerogradrec_pad(int pad);
+  void heat_kernel_filter(vector<Sarray>& u, float_sw4 ep, int nit);
+  void set_filtergrad();
+  void set_filterit(int filterit);
+  void set_filterpar(float_sw4 filterpar);
+  
   void make_type(vector<std::tuple<int, int, int>>& send_type,
                  vector<std::tuple<float_sw4*, float_sw4*>>& bufs_type, int i1,
                  int j1, int k1, int i2, int j2, int k2, int g);
