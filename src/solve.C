@@ -1952,6 +1952,17 @@ void EW::cycleSolutionArrays(vector<Sarray>& a_Um, vector<Sarray>& a_U,
   }
 }
 
+//------------------------------------------------------------------------
+void EW::cycleSolutionArrays(vector<Sarray>& a_Um, vector<Sarray>& a_U,
+                             vector<Sarray>& a_Up) {
+  for (int g = 0; g < mNumberOfGrids; g++) {
+    float_sw4* tmp = a_Um[g].c_ptr();
+    a_Um[g].reference(a_U[g].c_ptr());
+    a_U[g].reference(a_Up[g].c_ptr());
+    a_Up[g].reference(tmp);
+  }
+}
+
 //---------------------------------------------------------------------------
 void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
 		   vector<Sarray>& a_Mu,

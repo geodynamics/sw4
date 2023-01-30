@@ -222,7 +222,7 @@ endif
 MOBJOPT  = moptmain.o solve-backward-allpars.o lbfgs.o nlcg.o ProjectMtrl.o \
            MaterialParameterization.o Mopt.o MaterialParCartesian.o InterpolateMaterial.o \
 	   MaterialParCartesianVels.o MaterialParCartesianVp.o MParGridFile.o MaterialParCartesianVsVp.o \
-           MaterialParAllpts.o MaterialParCart.o solve-dudp.o MaterialParCurv.o
+           MaterialParAllpts.o MaterialParCart.o solve-dudp.o MaterialParCurv.o sw4-prof.o solveTT.o fastmarching.o rhs4th3point.o
 
 # OpenMP & C-version of the F-77 routine curvilinear4sg() is in rhs4sgcurv.o
 

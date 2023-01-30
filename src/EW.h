@@ -1615,6 +1615,7 @@ void computeLowTopoGridPoint(int & iLow,
                                vector<TimeSeries*> time_series, int padding);
   void set_zerogradrec();
   void set_zerogradrec_pad(int pad);
+  void filter_bc(Sarray& ufi, Sarray& u, int g, float_sw4 ep);
   void heat_kernel_filter(vector<Sarray>& u, float_sw4 ep, int nit);
   void set_filtergrad();
   void set_filterit(int filterit);
