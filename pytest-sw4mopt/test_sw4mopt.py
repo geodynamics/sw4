@@ -217,6 +217,27 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
         mpirun_cmd="jsrun -a1 -c7 -r6 -l CPU-CPU -d packed -b packed:7 -n " + str(mpi_tasks)
         # mpirun_cmd="jsrun -a1 -c7 -g1 -l CPU-CPU -d packed -b packed:7 -M -gpu -n " + str(mpi_tasks)
     # add more machine names here
+    elif 'crusher' in node_name:
+        os.environ["MPICH_GPU_SUPPORT_ENABLED"]="1"
+        if mpi_tasks<=0: mpi_tasks = 4
+        mpirun_cmd="srun -N 1 -A GEO130_crusher -t 30 -n 8 -c8 --gpus-per-task=1 --gpu-bind=closest -p batch "
+    elif 'login' in node_name:
+        os.environ["MPICH_GPU_SUPPORT_ENABLED"]="1"
+        if mpi_tasks<=0: mpi_tasks = 4
+        mpirun_cmd="srun -N 1 -A GEO130_crusher -t 30 -n 8 -c8 --gpus-per-task=1 --gpu-bind=closest -p batch "
+    elif 'rzvernal' in node_name:
+        os.environ["MPICH_GPU_SUPPORT_ENABLED"]="1"
+        if mpi_tasks<=0: mpi_tasks = 4
+        mpirun_cmd="srun -N 1 -n 8 -c8 --gpus-per-task=1 --gpu-bind=closest "
+    elif 'tioga' in node_name:
+        os.environ["MPICH_GPU_SUPPORT_ENABLED"]="1"
+        if mpi_tasks<=0: mpi_tasks = 4
+        mpirun_cmd="srun -N 1 -n 8 -c8 --gpus-per-task=1 --gpu-bind=closest "
+        mpirun_cmd="flux mini run -n 8 -c 8 -g 1 -o gpu-affinity=per-task -o cpu-affinity=per-task"
+    elif 'lassen' in node_name:
+        os.environ["PSM2_DEVICES"] = ""
+        if mpi_tasks<=0: mpi_tasks = 4
+        mpirun_cmd="lrun -T4 "
     elif 'Linux' in sys_name:
         if mpi_tasks<=0: mpi_tasks = 1
         mpirun_cmd="mpirun -np " + str(mpi_tasks)

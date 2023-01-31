@@ -144,6 +144,7 @@ void MaterialParameterization::read_parameters(const char* filename, int npars,
     int fd = open(filename, O_RDONLY);
     int npars_read;
     size_t nr = read(fd, &npars_read, sizeof(int));
+    
     if (npars_read == npars && nr == sizeof(int)) {
       nr = read(fd, xptr, npars * sizeof(double));
       if (nr != npars * sizeof(double)) errflag = 2;

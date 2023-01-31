@@ -5012,7 +5012,6 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
       // if (point_sources.size()>0)std::cerr<<"Done Calling
       // GPS[r]->initializeTimeFunction()  "<<point_sources.size()<<" \n";
       SW4_MARK_END("FORCE::HOST::FIRSTCALL");
-
       firstcall = false;
     }
     // #ifdef ENABLE_CUDA

@@ -50,7 +50,7 @@ void EW::solve_backward_allpars(
       BCForcing[g][side] = NULL;
       if (m_bcType[g][side] == bStressFree || m_bcType[g][side] == bDirichlet ||
           m_bcType[g][side] == bSuperGrid) {
-        BCForcing[g][side] = new double[3 * m_NumberOfBCPoints[g][side]];
+        BCForcing[g][side] = SW4_NEW(Space::Managed, float_sw4[3 * m_NumberOfBCPoints[g][side]]);
       }
     }
     ifirst = m_iStart[g];
@@ -394,7 +394,7 @@ void EW::solve_backward_allpars(
   // Give back memory
   for (int g = 0; g < mNumberOfGrids; g++) {
     for (int side = 0; side < 6; side++)
-      if (BCForcing[g][side] != NULL) delete[] BCForcing[g][side];
+      if (BCForcing[g][side] != NULL) ::operator delete[](BCForcing[g][side], Space::Managed);
     delete[] BCForcing[g];
   }
   for (int s = 0; s < point_sources.size(); s++) delete point_sources[s];
