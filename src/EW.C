@@ -5025,6 +5025,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
 
     // for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
     vset_to_zero_async(a_F, mNumberOfGrids);
+
     SW4_MARK_BEGIN("FORCE::DEVICE");
     //std::cout<<"FORCE "<<identsources.size()<<"\n";
 #ifdef SW4_NORM_TRACE
@@ -9181,8 +9182,10 @@ void EW::sort_grid_point_sources(vector<GridPointSource*>& point_sources,
     cout << "number of unique g.p. sources = " << nruniquetot << endl;
   }
 
+  if (ForceVector==NULL){
   ForceVector = SW4_NEW(Space::Managed, float_sw4[nrunique * 3]);
   ForceAddress = SW4_NEW(Space::Managed, float_sw4 * [nrunique * 3]);
+  }
 
   //   for( int s=0 ; s<m_identsources.size()-1 ; s++ )
   //      for( int i=m_identsources[s]; i< m_identsources[s+1] ; i++ )
