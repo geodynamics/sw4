@@ -1052,7 +1052,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     global_variables.firstCycle = currentTimeStep == beginCycle;
     global_variables.current_step = currentTimeStep;
     if (currentTimeStep == mNumberOfTimeSteps[event]) t1 = SW4_CHRONO_NOW;
-    if (currentTimeStep == (beginCycle + 2)) print_hwm(getRank());
+    //if (currentTimeStep == (beginCycle + 2)) print_hwm(getRank());
     if (currentTimeStep == (beginCycle + 10)) {
       PROFILER_START;
 #ifdef SW4_USE_HPCT

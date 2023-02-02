@@ -5045,9 +5045,9 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
               *ForceAddress_copy[index + i] += fxyz[i];
 	    //	    printf("FXYZ %d %d %.15g %.15g %.15g\n",r,s,fxyz[0],fxyz[1],fxyz[2]);
 #ifdef SW4_NORM_TRACE
-	    norm0+=fxyz[0];
-	    norm1+=fxyz[1];
-	    norm2+=fxyz[2];
+	    norm0+=fxyz[0]*fxyz[0];
+	    norm1+=fxyz[1]*fxyz[1];
+	    norm2+=fxyz[2]*fxyz[2];
 	    for (int i = 0; i < 3; i++) {
 	      //norm[i]+=fxyz[i];
 	      Fnorm+=GPSL[s]->mForces[i];
