@@ -101,10 +101,13 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 #endif
 
 #ifdef SW4_NORM_TRACE
-  std::ofstream norm_trace_file;
-  if (!getRank()) {
-    norm_trace_file.open("Norms.dat");
+  static  std::ofstream norm_trace_file;
+  static int ntf_opened=false;
+  if ((!ntf_opened) && (!getRank())) {
+      norm_trace_file.open("Norms.dat");
+      ntf_opened=true;
   }
+  
 #endif
   // print_hwm(getRank());
   // solution arrays
@@ -1016,6 +1019,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   print_execution_time(time_start_init, time_start_solve, "initial data phase");
 #ifdef SW4_NORM_TRACE
   if (!getRank()) {
+
     for (int g = 0; g < mNumberOfGrids; g++) {
       norm_trace_file << "POST_FORCE Up[" << g << "] " << Up[g].norm()
                       << " LU = " << Lu[g].norm() << " F = " << F[g].norm()

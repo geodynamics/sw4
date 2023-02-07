@@ -5050,9 +5050,10 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
 	    norm2+=fxyz[2]*fxyz[2];
 	    for (int i = 0; i < 3; i++) {
 	      //norm[i]+=fxyz[i];
-	      Fnorm+=GPSL[s]->mForces[i];
+
 	      Anorm+=GPSL[s]->mFreq;
 	    }
+	    //for (int i = 0; i < 3; i++)  Fnorm+=*ForceAddress_copy[index + i]**ForceAddress_copy[index + i];
 #endif
           }
         });
@@ -5060,7 +5061,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
     SYNC_STREAM;
     SW4_MARK_END("FORCE::DEVICE");
 #ifdef SW4_NORM_TRACE
-    std::cout<<"FORCE NORM "<<a_t<<" "<<norm0.get()<<" "<<norm1.get()<<" "<<norm2.get()<<"\n"; //<<Fnorm.get()<<" "<<Anorm.get()<<"\n";
+    //std::cout<<"FORCE NORM "<<a_t<<" "<<norm0.get()<<" "<<norm1.get()<<" "<<norm2.get()<<" "<<Fnorm.get()<<" "<<a_F[0].norm()<<"\n";// <<Anorm.get()<<"\n";
     cout.precision(3);
 #endif
   }
