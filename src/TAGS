@@ -201,7 +201,7 @@ void varcoeffs4(470,11880
 checkanisomtrlc.C,52
 void EW::checkanisomtrl_ci(checkanisomtrl_ci9,256
 
-CheckPoint.C,1809
+CheckPoint.C,1878
 CheckPoint* CheckPoint::nil 25,332
 CheckPoint::CheckPoint(30,558
 CheckPoint::CheckPoint(53,1126
@@ -234,6 +234,7 @@ void CheckPoint::create_hdf5_dset(create_hdf5_dset1122,42028
 void CheckPoint::write_hdf5_dset(write_hdf5_dset1136,42480
 void CheckPoint::write_checkpoint_hdf5(write_checkpoint_hdf51152,43084
 void CheckPoint::read_checkpoint_hdf5(read_checkpoint_hdf51406,51967
+void CheckPoint::read_checkpoint_scr(read_checkpoint_scr1530,56765
 
 computedtanisoc.C,195
 void EW::maxwave(maxwave10,257
@@ -471,54 +472,66 @@ void EW::smooth_grid(smooth_grid273,10216
 
 CurvilinearInterface2.C,2355
 CurvilinearInterface2::CurvilinearInterface2(CurvilinearInterface229,976
-CurvilinearInterface2::~CurvilinearInterface2(~CurvilinearInterface282,2769
-void CurvilinearInterface2::bnd_zero_host(bnd_zero_host109,3851
-void CurvilinearInterface2::bnd_zero(bnd_zero128,4584
-void CurvilinearInterface2::copy_str(copy_str236,8380
-void CurvilinearInterface2::init_arrays(init_arrays262,9456
-void CurvilinearInterface2::init_arrays_att(init_arrays_att568,21194
-void CurvilinearInterface2::impose_ic(impose_ic626,23590
-void CurvilinearInterface2::injection(injection1022,39093
-void CurvilinearInterface2::interface_block(interface_block1107,42590
-void CurvilinearInterface2::interface_lhs(interface_lhs1134,43702
-void CurvilinearInterface2::interface_rhs(interface_rhs1211,46992
-void CurvilinearInterface2::compute_icstresses_curv_host(compute_icstresses_curv_host1373,54612
-#define str_x(1384,55054
-#define str_y(1385,55093
-#undef str_x1472,58377
-#undef str_y1473,58390
-void CurvilinearInterface2::lhs_icstresses_curv(lhs_icstresses_curv1477,58480
-#define str_x(1488,58976
-#define str_y(1489,59015
-#undef str_x1539,61197
-#undef str_y1540,61210
-void CurvilinearInterface2::lhs_Lu(lhs_Lu1544,61300
-#define strx(1551,61668
-#define stry(1552,61706
-#undef strx1607,64603
-#undef stry1608,64615
-void CurvilinearInterface2::mat_icstresses_curv(mat_icstresses_curv1612,64704
-#define str_x(1622,65161
-#define str_y(1623,65196
-#undef str_x1675,67325
-#undef str_y1676,67338
-void CurvilinearInterface2::matrix_Lu(matrix_Lu1680,67428
-#define strx(1685,67747
-#define stry(1686,67784
-#undef strx1725,69806
-#undef stry1726,69818
-void CurvilinearInterface2::restprol2D(restprol2D1730,69907
-void CurvilinearInterface2::prolongate2D(prolongate2D1782,72187
-void CurvilinearInterface2::restrict2D(restrict2D1907,76262
-void CurvilinearInterface2::communicate_array_org(communicate_array_org1970,78630
-void CurvilinearInterface2::communicate_array1d(communicate_array1d2108,84393
-void CurvilinearInterface2::compute_icstresses_curv(compute_icstresses_curv2142,85696
-#define str_x(2152,86112
-#define str_y(2153,86151
-#undef str_x2262,90482
-#undef str_y2263,90495
-void CurvilinearInterface2::allocate_mpi_buffers(allocate_mpi_buffers2265,90510
-void CurvilinearInterface2::communicate_array(communicate_array2280,90988
+CurvilinearInterface2::~CurvilinearInterface2(~CurvilinearInterface283,2802
+void CurvilinearInterface2::bnd_zero_host(bnd_zero_host110,3884
+void CurvilinearInterface2::bnd_zero(bnd_zero129,4617
+void CurvilinearInterface2::copy_str(copy_str237,8413
+void CurvilinearInterface2::init_arrays(init_arrays263,9489
+void CurvilinearInterface2::init_arrays_att(init_arrays_att585,21905
+void CurvilinearInterface2::impose_ic(impose_ic643,24301
+void CurvilinearInterface2::injection(injection1050,40100
+void CurvilinearInterface2::interface_block(interface_block1135,43597
+void CurvilinearInterface2::interface_lhs(interface_lhs1162,44709
+void CurvilinearInterface2::interface_rhs(interface_rhs1239,47999
+void CurvilinearInterface2::compute_icstresses_curv_host(compute_icstresses_curv_host1401,55619
+#define str_x(1412,56061
+#define str_y(1413,56100
+#undef str_x1500,59384
+#undef str_y1501,59397
+void CurvilinearInterface2::lhs_icstresses_curv(lhs_icstresses_curv1505,59487
+#define str_x(1516,59983
+#define str_y(1517,60022
+#undef str_x1567,62204
+#undef str_y1568,62217
+void CurvilinearInterface2::lhs_Lu(lhs_Lu1572,62307
+#define strx(1579,62675
+#define stry(1580,62713
+#undef strx1635,65610
+#undef stry1636,65622
+void CurvilinearInterface2::mat_icstresses_curv(mat_icstresses_curv1640,65711
+#define str_x(1650,66168
+#define str_y(1651,66203
+#undef str_x1703,68332
+#undef str_y1704,68345
+void CurvilinearInterface2::matrix_Lu(matrix_Lu1708,68435
+#define strx(1713,68754
+#define stry(1714,68791
+#undef strx1753,70813
+#undef stry1754,70825
+void CurvilinearInterface2::restprol2D(restprol2D1758,70914
+void CurvilinearInterface2::prolongate2D(prolongate2D1810,73194
+void CurvilinearInterface2::restrict2D(restrict2D1935,77269
+void CurvilinearInterface2::communicate_array_org(communicate_array_org1998,79637
+void CurvilinearInterface2::communicate_array1d(communicate_array1d2136,85400
+void CurvilinearInterface2::compute_icstresses_curv(compute_icstresses_curv2170,86703
+#define str_x(2180,87119
+#define str_y(2181,87158
+#undef str_x2290,91489
+#undef str_y2291,91502
+void CurvilinearInterface2::allocate_mpi_buffers(allocate_mpi_buffers2293,91517
+void CurvilinearInterface2::communicate_array(communicate_array2308,91995
+
+DataPatches.C,495
+DataPatches::DataPatches(DataPatches15,283
+DataPatches::~DataPatches(~DataPatches142,4294
+size_t DataPatches::get_noofpoints(get_noofpoints152,4599
+void DataPatches::add_patch(add_patch160,4796
+void DataPatches::push(push182,5544
+void DataPatches::save_to_file(save_to_file221,6915
+void DataPatches::pop(pop307,9644
+void DataPatches::read_from_file(read_from_file350,11238
+void DataPatches::print_openerr(print_openerr399,12842
+void DataPatches::intersect(intersect466,14135
 
 energy4c.C,443
 void energy4_ci(39,1461
@@ -657,7 +670,7 @@ void evenIoddJinterp(401,14935
 #undef strf_x528,20221
 #undef strf_y529,20235
 
-EW.C,8369
+EW.C,9029
 #define SQR(449,26208
 EW::EW(456,26301
 EW::~EW(~EW837,38275
@@ -732,81 +745,151 @@ void EW::exactRhsTwilight(exactRhsTwilight4528,184429
 void EW::exactAccTwilight(exactAccTwilight4630,188768
 void EW::Force(Force4695,191149
 void EW::Force(Force4706,191507
-void EW::Force_tt(Force_tt5051,205744
-void EW::Force_tt(Force_tt5062,206114
-void EW::evalRHS(evalRHS5332,217463
-void EW::evalRHSanisotropic(evalRHSanisotropic5623,229541
-void EW::evalPredictor(evalPredictor5684,231833
-void EW::evalCorrector(evalCorrector5726,233176
-void EW::evalDpDmInTime(evalDpDmInTime5760,234302
-void EW::updateMemVarPred(updateMemVarPred5800,235644
-void EW::updateMemVarCorr(updateMemVarCorr5847,237488
-void EW::updateMemVarCorrNearInterface(updateMemVarCorrNearInterface5900,239535
-void EW::evalDpDmInTimeAtt(evalDpDmInTimeAtt5958,241973
-void EW::side_plane(side_plane5991,243228
-void EW::update_images(update_images6019,243979
-void EW::addImage(addImage6322,256382
-void EW::addImage3D(addImage3D6325,256515
-void EW::addESSI3D(addESSI3D6327,256653
-void EW::addSfileOutput(addSfileOutput6330,256789
-void EW::initialize_image_files(initialize_image_files6333,256930
-void EW::set_sg_thickness(set_sg_thickness6376,258696
-void EW::set_sg_width(set_sg_width6386,259136
-void EW::set_sg_damping(set_sg_damping6395,259454
-void EW::set_global_bcs(set_global_bcs6404,259807
-void EW::set_prefilter(set_prefilter6414,260225
-void EW::set_threshold_velocities(set_threshold_velocities6423,260637
-void EW::average_speeds(average_speeds6430,260856
-void EW::layered_speeds(layered_speeds6493,263422
-void EW::testsourcediff(testsourcediff6534,264778
-void EW::get_scalefactors(get_scalefactors6572,266185
-bool EW::compute_sf(compute_sf6577,266366
-void EW::compute_guess(compute_guess6580,266498
-void EW::get_cgparameters(get_cgparameters6590,266894
-void EW::compute_energy(compute_energy6604,267432
-float_sw4 EW::scalarProduct(scalarProduct6666,270184
-void EW::get_utc(get_utc6705,271770
-void EW::print_utc(print_utc6710,271952
-void EW::extractTopographyFromGridFile(extractTopographyFromGridFile6719,272265
-void EW::extractTopographyFromCartesianFile(extractTopographyFromCartesianFile6948,280464
-void EW::extractTopographyFromImageFile(extractTopographyFromImageFile7172,288404
-void EW::extractTopographyFromRfile(extractTopographyFromRfile7310,293367
-static void read_hdf5_attr(7985,316420
-static char* read_hdf5_attr_str(7996,316713
-bool EW::is_onesided(is_onesided8213,324597
-void EW::parameters_to_material(parameters_to_material8238,325452
-void EW::material_to_parameters(material_to_parameters8266,326382
-void EW::add_to_grad(add_to_grad8336,328501
-void EW::perturb_mtrl(perturb_mtrl8391,331065
-void EW::perturb_mtrl(perturb_mtrl8412,332048
-void EW::get_optmethod(get_optmethod8433,332975
-void EW::set_epicenter(set_epicenter8439,333150
-void EW::get_epicenter(get_epicenter8448,333471
-bool EW::check_for_nan(check_for_nan8457,333796
-bool EW::check_for_nan(check_for_nan8475,334448
-void EW::check_min_max_int(check_min_max_int8495,335199
-void EW::extrapolateTopo(extrapolateTopo8523,336237
-void EW::checkTopo(checkTopo8572,337798
-void EW::setup_attenuation_relaxation(setup_attenuation_relaxation8589,338344
-void EW::setup_viscoelastic(setup_viscoelastic8640,340143
-#define a(8674,341115
-#undef a8843,347781
-void EW::reverse_setup_viscoelastic(reverse_setup_viscoelastic8849,347872
-#define a(8866,348353
-#undef a9007,353997
-void EW::setup_viscoelastic_tw(setup_viscoelastic_tw9012,354087
-void EW::compute_minvsoverh(compute_minvsoverh9077,356525
-bool less_than(9107,357634
-void EW::sort_grid_point_sources(sort_grid_point_sources9112,357818
-void EW::Force(Force9176,360390
-void EW::Force_tt(Force_tt9416,370884
-AllDims* EW::get_fine_alldimobject(get_fine_alldimobject9673,382092
-void EW::extractTopographyFromSfile(extractTopographyFromSfile9681,382474
-void EW::extractTopographyFromGMG(extractTopographyFromGMG10005,392786
-TestTwilight* EW::create_twilight(create_twilight10198,399545
-TestEcons* EW::create_energytest(create_energytest10211,399959
-TestPointSource* EW::get_point_source_test(get_point_source_test10218,400157
-void EW::load_balance(load_balance10219,400234
+void EW::Force_tt(Force_tt5073,206657
+void EW::Force_tt(Force_tt5084,207027
+void EW::evalRHS(evalRHS5354,218376
+void EW::evalRHSanisotropic(evalRHSanisotropic5645,230454
+void EW::evalPredictor(evalPredictor5706,232746
+void EW::evalCorrector(evalCorrector5748,234089
+void EW::evalDpDmInTime(evalDpDmInTime5782,235215
+void EW::updateMemVarPred(updateMemVarPred5822,236557
+void EW::updateMemVarCorr(updateMemVarCorr5869,238401
+void EW::updateMemVarCorrNearInterface(updateMemVarCorrNearInterface5922,240448
+void EW::evalDpDmInTimeAtt(evalDpDmInTimeAtt5980,242886
+void EW::side_plane(side_plane6013,244141
+void EW::update_images(update_images6041,244892
+void EW::addImage(addImage6344,257295
+void EW::addImage3D(addImage3D6347,257428
+void EW::addESSI3D(addESSI3D6349,257566
+void EW::addSfileOutput(addSfileOutput6352,257702
+void EW::initialize_image_files(initialize_image_files6355,257843
+void EW::set_sg_thickness(set_sg_thickness6398,259609
+void EW::set_sg_width(set_sg_width6408,260049
+void EW::set_sg_damping(set_sg_damping6417,260367
+void EW::set_global_bcs(set_global_bcs6426,260720
+void EW::set_prefilter(set_prefilter6436,261138
+void EW::set_threshold_velocities(set_threshold_velocities6445,261550
+void EW::average_speeds(average_speeds6452,261769
+void EW::layered_speeds(layered_speeds6515,264335
+void EW::testsourcediff(testsourcediff6556,265691
+void EW::get_scalefactors(get_scalefactors6594,267098
+bool EW::compute_sf(compute_sf6599,267279
+void EW::compute_guess(compute_guess6602,267411
+void EW::get_cgparameters(get_cgparameters6612,267807
+void EW::compute_energy(compute_energy6626,268345
+float_sw4 EW::scalarProduct(scalarProduct6688,271097
+void EW::get_utc(get_utc6727,272683
+void EW::print_utc(print_utc6732,272865
+void EW::extractTopographyFromGridFile(extractTopographyFromGridFile6741,273178
+void EW::extractTopographyFromCartesianFile(extractTopographyFromCartesianFile6970,281377
+void EW::extractTopographyFromImageFile(extractTopographyFromImageFile7194,289317
+void EW::extractTopographyFromRfile(extractTopographyFromRfile7332,294280
+static void read_hdf5_attr(8007,317333
+static char* read_hdf5_attr_str(8018,317626
+bool EW::is_onesided(is_onesided8235,325510
+void EW::parameters_to_material(parameters_to_material8260,326365
+void EW::material_to_parameters(material_to_parameters8288,327295
+void EW::add_to_grad(add_to_grad8358,329414
+void EW::perturb_mtrl(perturb_mtrl8413,331978
+void EW::perturb_mtrl(perturb_mtrl8434,332961
+void EW::get_optmethod(get_optmethod8455,333888
+void EW::set_epicenter(set_epicenter8461,334063
+void EW::get_epicenter(get_epicenter8470,334384
+bool EW::check_for_nan(check_for_nan8479,334709
+bool EW::check_for_nan(check_for_nan8497,335361
+void EW::check_min_max_int(check_min_max_int8517,336112
+void EW::extrapolateTopo(extrapolateTopo8545,337150
+void EW::checkTopo(checkTopo8594,338711
+void EW::setup_attenuation_relaxation(setup_attenuation_relaxation8611,339257
+void EW::setup_viscoelastic(setup_viscoelastic8662,341056
+#define a(8696,342028
+#undef a8865,348694
+void EW::reverse_setup_viscoelastic(reverse_setup_viscoelastic8871,348785
+#define a(8888,349266
+#undef a9029,354910
+void EW::setup_viscoelastic_tw(setup_viscoelastic_tw9034,355000
+void EW::compute_minvsoverh(compute_minvsoverh9099,357438
+bool less_than(9129,358547
+void EW::sort_grid_point_sources(sort_grid_point_sources9134,358731
+void EW::Force(Force9200,361333
+void EW::Force_tt(Force_tt9440,371827
+AllDims* EW::get_fine_alldimobject(get_fine_alldimobject9697,383035
+void EW::extractTopographyFromSfile(extractTopographyFromSfile9705,383417
+void EW::extractTopographyFromGMG(extractTopographyFromGMG10029,393729
+TestTwilight* EW::create_twilight(create_twilight10222,400488
+TestEcons* EW::create_energytest(create_energytest10235,400902
+TestPointSource* EW::get_point_source_test(get_point_source_test10242,401100
+void EW::load_balance(load_balance10243,401177
+void EW::set_to_zero_at_source(set_to_zero_at_source10256,401758
+void EW::set_zerograd(set_zerograd10278,402791
+void EW::set_zerograd_pad(set_zerograd_pad10281,402920
+void EW::set_to_zero_at_receiver(set_to_zero_at_receiver10284,403056
+void EW::set_zerogradrec(set_zerogradrec10306,404122
+void EW::set_zerogradrec_pad(set_zerogradrec_pad10309,404254
+void EW::filter_bc(filter_bc10311,404395
+void EW::heat_kernel_filter(heat_kernel_filter10346,405958
+void EW::set_filtergrad(set_filtergrad10410,408582
+void EW::set_filterit(set_filterit10413,408713
+void EW::set_filterpar(set_filterpar10416,408856
+void EW::evalLupt(evalLupt10429,409717
+
+fastmarching.C,1732
+#define SF_MAX(29,960
+#define SF_MIN(30,1005
+#define SF_ABS(32,1051
+#define SF_SIG(33,1095
+#define SF_NINT(35,1134
+#define SF_ODD(37,1195
+#define SF_EVEN(38,1221
+#define SF_PI 40,1256
+#define SF_EPS 42,1305
+#define SF_HUGE 43,1332
+float **x,x45,1357
+float **x, **xn,xn45,1357
+float **x, **xn, **x1;x145,1357
+enum { SF_IN,47,1381
+enum { SF_IN, SF_FRONT,47,1381
+enum { SF_IN, SF_FRONT, SF_OUT 47,1381
+/*@out@*/ void *sf_alloc(sf_alloc50,1481
+void sf_pqueue_init(69,1894
+void sf_pqueue_start(80,2171
+void sf_pqueue_close(87,2255
+void sf_pqueue_insert(93,2333
+void sf_pqueue_insert2(111,2625
+float *sf_pqueue_extract(sf_pqueue_extract129,2917
+float *sf_pqueue_extract2(sf_pqueue_extract2155,3367
+void sf_pqueue_update(181,3818
+struct Upd 212,4384
+  double stencil,213,4397
+  double stencil, value;213,4397
+  double delta;214,4422
+static int *in,in226,4779
+static int *in, *n,n226,4779
+static int *in, *n, s[s226,4779
+static int *in, *n, s[3], order;226,4779
+static float *ttime,ttime227,4812
+static float *ttime, *vv,vv227,4812
+static float *ttime, *vv, rdx[rdx227,4812
+static double v1;228,4846
+void sf_neighbors_init(230,4865
+int sf_neighbours(249,5416
+int sf_neighbours2(269,5861
+static int update(289,6311
+static int update2(305,6608
+static float qsolve(321,6907
+static float qsolve2(412,8796
+static void stencil(501,10657
+static bool updaten(508,10796
+static bool updaten2(534,11245
+static void grid(560,11695
+static int dist(574,11914
+int sf_neighbors_distance(592,12261
+int sf_neighbors_nearsource(648,13949
+int sf_neighbors_surface(714,15801
+int sf_neighbors_mask(754,16642
+void fastmarch_init(794,17501
+void fastmarch(808,17861
+void fastmarch_close(860,19197
 
 Filter.C,545
 Filter::Filter(Filter47,1570
@@ -931,8 +1014,8 @@ GeographicProjection.C,399
 GeographicProjection::GeographicProjection(GeographicProjection43,1586
 GeographicProjection::~GeographicProjection(~GeographicProjection94,3317
 void GeographicProjection::computeGeographicCoord(computeGeographicCoord104,3569
-void GeographicProjection::computeCartesianCoord(computeCartesianCoord142,4694
-void GeographicProjection::computeCartesianCoordGMG(computeCartesianCoordGMG180,5732
+void GeographicProjection::computeCartesianCoord(computeCartesianCoord141,4687
+void GeographicProjection::computeCartesianCoordGMG(computeCartesianCoordGMG179,5727
 
 gradientsc.C,865
 void addgradrho_ci(3,18
@@ -1029,21 +1112,21 @@ GridPointSource::GridPointSource(47,1625
 GridPointSource::~GridPointSource(~GridPointSource104,3182
 void GridPointSource::initializeTimeFunction(initializeTimeFunction111,3361
 void GridPointSource::getFxyz(getFxyz314,9707
-void GridPointSource::getFxyz_notime(getFxyz_notime409,13394
-void GridPointSource::getFxyztt(getFxyztt418,13669
-void GridPointSource::set_derivative(set_derivative519,17763
-void GridPointSource::set_noderivative(set_noderivative527,18049
-void GridPointSource::limitFrequency(limitFrequency534,18227
-float_sw4 GridPointSource::getTimeFunc(getTimeFunc539,18405
-float_sw4 GridPointSource::evalTimeFunc_t(evalTimeFunc_t544,18606
-float_sw4 GridPointSource::evalTimeFunc_tt(evalTimeFunc_tt549,18812
-float_sw4 GridPointSource::evalTimeFunc_ttt(evalTimeFunc_ttt554,19020
-float_sw4 GridPointSource::evalTimeFunc_tttt(evalTimeFunc_tttt559,19230
-ostream& operator<<(564,19442
-void GridPointSource::add_to_gradient(add_to_gradient580,20187
-void GridPointSource::add_to_hessian(add_to_hessian647,23144
-void GridPointSource::print_info(print_info762,27870
-void GridPointSource::set_sort_key(set_sort_key783,28614
+void GridPointSource::getFxyz_notime(getFxyz_notime412,13532
+void GridPointSource::getFxyztt(getFxyztt421,13807
+void GridPointSource::set_derivative(set_derivative522,17901
+void GridPointSource::set_noderivative(set_noderivative530,18187
+void GridPointSource::limitFrequency(limitFrequency537,18365
+float_sw4 GridPointSource::getTimeFunc(getTimeFunc542,18543
+float_sw4 GridPointSource::evalTimeFunc_t(evalTimeFunc_t547,18744
+float_sw4 GridPointSource::evalTimeFunc_tt(evalTimeFunc_tt552,18950
+float_sw4 GridPointSource::evalTimeFunc_ttt(evalTimeFunc_ttt557,19158
+float_sw4 GridPointSource::evalTimeFunc_tttt(evalTimeFunc_tttt562,19368
+ostream& operator<<(567,19580
+void GridPointSource::add_to_gradient(add_to_gradient583,20325
+void GridPointSource::add_to_hessian(add_to_hessian650,23282
+void GridPointSource::print_info(print_info765,28008
+void GridPointSource::set_sort_key(set_sort_key786,28752
 
 ilanisocurvc.C,237
 void ilanisocurv_ci(4,35
@@ -1121,6 +1204,9 @@ void Image::output_image(output_image2912,119534
 void Image::computeImageQuantityDiff(computeImageQuantityDiff3033,124100
 bool Image::needs_mgrad(needs_mgrad3072,125588
 
+initUmpire.C,25
+void init_umpire(16,518
+
 innerloop-ani-sgstr-vcc.C,224
 void innerloopanisgstrvc_ci(5,36
 #define c(29,1093
@@ -1132,6 +1218,83 @@ void innerloopanisgstrvc_ci(5,36
 #define acof(35,1428
 #define bop(36,1495
 #define ghcof(37,1541
+
+InterpolateMaterial.C,2153
+void interpolatemtrl(7,133
+#define rhogrid(15,649
+#define mugrid(16,727
+#define lambdagrid(17,803
+#define rho(20,892
+#define mu(21,947
+#define lambda(22,1000
+#undef rhogrid101,4040
+#undef mugrid102,4055
+#undef lambdagrid103,4069
+#undef rho104,4087
+#undef mu105,4098
+#undef lambda106,4108
+void interpolatemtrlc(110,4199
+#define zgrid(118,4729
+#define rhogrid(119,4803
+#define mugrid(120,4881
+#define lambdagrid(121,4957
+#define rho(124,5046
+#define mu(125,5101
+#define lambda(126,5154
+#undef zgrid203,8203
+#undef rhogrid204,8216
+#undef mugrid205,8231
+#undef lambdagrid206,8245
+#undef rho207,8263
+#undef mu208,8274
+#undef lambda209,8284
+void gradients(213,8375
+#define gradrhogrid(226,9075
+#define gradmugrid(228,9165
+#define gradlambdagrid(230,9253
+#define gradrho(233,9350
+#define gradmu(234,9413
+#define gradlambda(235,9474
+#define gradrhol(252,9996
+#define gradmul(253,10076
+#define gradlambdal(254,10154
+#undef gradrhogrid377,14694
+#undef gradmugrid378,14713
+#undef gradlambdagrid379,14731
+#undef gradrho380,14753
+#undef gradmu381,14768
+#undef gradlambda382,14782
+#undef gradrhol383,14800
+#undef gradmul384,14816
+#undef gradlambdal385,14831
+void gradientsc(392,14992
+#define zgrid(403,15671
+#define gradrhogrid(404,15745
+#define gradmugrid(406,15835
+#define gradlambdagrid(408,15923
+#define gradrho(411,16020
+#define gradmu(412,16083
+#define gradlambda(413,16144
+#undef zgrid531,21023
+#undef gradrhogrid532,21036
+#undef gradmugrid533,21055
+#undef gradlambdagrid534,21073
+#undef gradrho535,21095
+#undef gradmu536,21110
+#undef gradlambda537,21124
+void EW::interpolate(interpolate541,21219
+void EW::interpolate_to_coarse(interpolate_to_coarse615,24078
+void EW::interpolate_to_coarse_vel(interpolate_to_coarse_vel751,31386
+void EW::interpolate_base_to_coarse(interpolate_base_to_coarse879,37894
+void EW::interpolate_base_to_coarse_vel(interpolate_base_to_coarse_vel968,42243
+void EW::interpolation_gradient(interpolation_gradient1074,47357
+void EW::update_and_transform_material(update_and_transform_material1121,49504
+void EW::transform_gradient(transform_gradient1146,50622
+
+lbfgs.C,76
+void wolfecondition(22,387
+void linesearch(134,5458
+void lbfgs(458,17983
 
 main.C,1053
 void signal_handler(77,2089
@@ -1222,6 +1385,134 @@ void MaterialInvtest::set_material_properties(set_material_properties42,1678
 void MaterialInvtest::invtestmtrl(invtestmtrl86,3378
 void MaterialInvtest::invtestmtrlc(invtestmtrlc177,6547
 
+MaterialParAllpts.C,683
+MaterialParAllpts::MaterialParAllpts(6,123
+void MaterialParAllpts::get_material(get_material64,2298
+void MaterialParAllpts::get_parameters(get_parameters128,4982
+void MaterialParAllpts::get_gradient(get_gradient166,6696
+void MaterialParAllpts::interpolate_pseudohessian(interpolate_pseudohessian223,9347
+ssize_t MaterialParAllpts::parameter_index(parameter_index274,11537
+ssize_t MaterialParAllpts::local_index(local_index299,12709
+void MaterialParAllpts::set_scalefactors(set_scalefactors346,14397
+void MaterialParAllpts::get_regularizer(get_regularizer375,15306
+#define SQR(382,15658
+#undef SQR689,30431
+int MaterialParAllpts::get_varcase(get_varcase693,30519
+
+MaterialParameterization.C,827
+MaterialParameterization::MaterialParameterization(MaterialParameterization15,268
+void MaterialParameterization::get_nr_of_parameters(get_nr_of_parameters25,592
+void MaterialParameterization::write_parameters(write_parameters71,2388
+void MaterialParameterization::write_parameters(write_parameters97,3485
+void MaterialParameterization::write_parameters_dist(write_parameters_dist117,4370
+void MaterialParameterization::read_parameters(read_parameters138,5282
+void MaterialParameterization::read_parameters(read_parameters163,6221
+void MaterialParameterization::set_scalefactors(set_scalefactors211,8037
+void MaterialParameterization::get_regularizer(get_regularizer223,8533
+#define SQR(232,8970
+#undef SQR276,10625
+void MaterialParameterization::interpolate_to_cartesian(interpolate_to_cartesian279,10712
+
+MaterialParCart.C,1462
+MaterialParCart::MaterialParCart(12,148
+void MaterialParCart::limit_x(limit_x126,4335
+void MaterialParCart::limit_df(limit_df268,9323
+void MaterialParCart::get_material(get_material287,9903
+void MaterialParCart::find_lims(find_lims392,13619
+bool MaterialParCart::compute_overlap(compute_overlap409,14085
+void MaterialParCart::getwgh(getwgh609,21054
+void MaterialParCart::interpolate(interpolate618,21320
+void MaterialParCart::get_parameters(get_parameters706,24816
+void MaterialParCart::interpolate_parameters(interpolate_parameters787,28206
+void MaterialParCart::communicate(communicate830,29879
+void MaterialParCart::communicate_add(communicate_add994,36640
+void MaterialParCart::interpolate_gradient(interpolate_gradient1160,43537
+void MaterialParCart::get_gradient(get_gradient1252,47503
+void MaterialParCart::get_gradient_shared(get_gradient_shared1330,50851
+void MaterialParCart::set_scalefactors(set_scalefactors1416,54515
+ssize_t MaterialParCart::parameter_index(parameter_index1442,55343
+ssize_t MaterialParCart::local_index(local_index1464,56166
+void MaterialParCart::interpolate_to_coarse(interpolate_to_coarse1484,56810
+void MaterialParCart::interpolate_to_coarse_vel(interpolate_to_coarse_vel1637,64644
+void MaterialParCart::write_dfm_hdf5(write_dfm_hdf51799,72759
+void MaterialParCart::interpolate_pseudohessian(interpolate_pseudohessian1879,75050
+int MaterialParCart::getcartdims(getcartdims1939,77226
+
+MaterialParCartesian.C,762
+MaterialParCartesian::MaterialParCartesian(8,117
+void MaterialParCartesian::get_material(get_material101,3758
+void MaterialParCartesian::interpolate_parameters(interpolate_parameters126,4796
+void MaterialParCartesian::get_parameters(get_parameters168,6813
+void MaterialParCartesian::get_gradient(get_gradient217,8969
+void MaterialParCartesian::interpolate_pseudohessian(interpolate_pseudohessian264,10837
+ssize_t MaterialParCartesian::parameter_index(parameter_index312,12791
+ssize_t MaterialParCartesian::local_index(local_index326,13279
+void MaterialParCartesian::project_and_write(project_and_write334,13587
+void MaterialParCartesian::projectl2(projectl2376,15308
+void MaterialParCartesian::subtract_base_mtrl(subtract_base_mtrl545,22654
+
+MaterialParCartesianVels.C,747
+MaterialParCartesianVels::MaterialParCartesianVels(13,414
+void MaterialParCartesianVels::get_material(get_material112,4177
+void MaterialParCartesianVels::interpolate_parameters(interpolate_parameters154,6152
+void MaterialParCartesianVels::get_parameters(get_parameters192,7785
+void MaterialParCartesianVels::get_gradient(get_gradient240,9864
+void MaterialParCartesianVels::interpolate_pseudohessian(interpolate_pseudohessian307,12783
+ssize_t MaterialParCartesianVels::parameter_index(parameter_index337,13915
+ssize_t MaterialParCartesianVels::local_index(local_index351,14411
+void MaterialParCartesianVels::set_scalefactors(set_scalefactors364,15105
+void MaterialParCartesianVels::subtract_base_mtrl(subtract_base_mtrl376,15597
+
+MaterialParCartesianVp.C,725
+MaterialParCartesianVp::MaterialParCartesianVp(13,388
+void MaterialParCartesianVp::get_material(get_material117,4279
+void MaterialParCartesianVp::interpolate_parameters(interpolate_parameters176,6908
+void MaterialParCartesianVp::get_parameters(get_parameters205,8224
+void MaterialParCartesianVp::get_gradient(get_gradient245,9783
+void MaterialParCartesianVp::interpolate_pseudohessian(interpolate_pseudohessian300,12095
+ssize_t MaterialParCartesianVp::parameter_index(parameter_index326,13120
+ssize_t MaterialParCartesianVp::local_index(local_index338,13553
+void MaterialParCartesianVp::set_scalefactors(set_scalefactors351,14243
+void MaterialParCartesianVp::subtract_base_mtrl(subtract_base_mtrl359,14663
+
+MaterialParCartesianVsVp.C,748
+MaterialParCartesianVsVp::MaterialParCartesianVsVp(12,390
+void MaterialParCartesianVsVp::get_material(get_material111,4153
+void MaterialParCartesianVsVp::interpolate_parameters(interpolate_parameters154,6160
+void MaterialParCartesianVsVp::get_parameters(get_parameters198,7941
+void MaterialParCartesianVsVp::get_gradient(get_gradient250,10125
+void MaterialParCartesianVsVp::interpolate_pseudohessian(interpolate_pseudohessian316,13027
+ssize_t MaterialParCartesianVsVp::parameter_index(parameter_index344,14072
+ssize_t MaterialParCartesianVsVp::local_index(local_index358,14568
+void MaterialParCartesianVsVp::set_scalefactors(set_scalefactors371,15262
+void MaterialParCartesianVsVp::subtract_base_mtrl(subtract_base_mtrl382,15728
+
+MaterialParCurv.C,1549
+MaterialParCurv::MaterialParCurv(13,175
+void MaterialParCurv::limit_x(limit_x201,7077
+void MaterialParCurv::limit_df(limit_df343,12065
+void MaterialParCurv::get_material(get_material362,12645
+void MaterialParCurv::find_lims(find_lims457,16144
+bool MaterialParCurv::compute_overlap(compute_overlap474,16610
+void MaterialParCurv::getwgh(getwgh644,22413
+void MaterialParCurv::interpolate(interpolate653,22679
+void MaterialParCurv::get_parameters(get_parameters773,28504
+void MaterialParCurv::interpolate_parameters(interpolate_parameters852,31773
+void MaterialParCurv::communicate(communicate895,33446
+void MaterialParCurv::communicate_add(communicate_add1059,40207
+void MaterialParCurv::interpolate_gradient(interpolate_gradient1225,47104
+void MaterialParCurv::get_gradient(get_gradient1307,50748
+void MaterialParCurv::get_gradient_shared(get_gradient_shared1407,54843
+void MaterialParCurv::set_scalefactors(set_scalefactors1493,58507
+ssize_t MaterialParCurv::parameter_index(parameter_index1519,59335
+ssize_t MaterialParCurv::local_index(local_index1541,60158
+void MaterialParCurv::interpolate_to_coarse(interpolate_to_coarse1561,60802
+void MaterialParCurv::interpolate_to_coarse_vel(interpolate_to_coarse_vel1716,68730
+void MaterialParCurv::write_dfm_hdf5(write_dfm_hdf51883,77039
+void MaterialParCurv::interpolate_pseudohessian(interpolate_pseudohessian1963,79330
+int MaterialParCurv::getcartdims(getcartdims2028,81720
+void MaterialParCurv::interpolate_to_cartesian(interpolate_to_cartesian2036,81910
+
 MaterialPfile.C,339
 MaterialPfile::MaterialPfile(50,1670
 void MaterialPfile::set_material_properties(set_material_properties92,3261
@@ -1253,6 +1544,64 @@ void MaterialSfile::material_check(material_check958,35752
 MaterialVolimagefile.C,136
 MaterialVolimagefile::MaterialVolimagefile(39,1522
 void MaterialVolimagefile::set_material_properties(set_material_properties55,1982
+
+Mopt.C,1405
+Mopt::Mopt(Mopt19,430
+bool Mopt::parseInputFileOpt(parseInputFileOpt93,2082
+void Mopt::badOption(badOption160,4502
+bool Mopt::startswith(startswith167,4754
+void Mopt::processMaterialAllpts(processMaterialAllpts180,5115
+void Mopt::processMaterialParCart(processMaterialParCart216,6287
+void Mopt::processMrun(processMrun350,11059
+void Mopt::processMscalefactors(processMscalefactors515,17408
+void Mopt::processMfileio(processMfileio561,18880
+void Mopt::processMregularize(processMregularize582,19457
+void Mopt::get_scalefactors(get_scalefactors616,20511
+void Mopt::set_sscalefactors(set_sscalefactors624,20781
+void Mopt::set_baseMat(set_baseMat671,22553
+void Mopt::set_dscalefactors(set_dscalefactors683,22987
+void Mopt::set_sourcescalefactors(set_sourcescalefactors699,23514
+void Mopt::processLBFGS(processLBFGS716,24130
+void Mopt::processNLCG(processNLCG767,26006
+void Mopt::processMfsurf(processMfsurf807,27569
+void Mopt::processMimage(processMimage889,30347
+void Mopt::processSfileoutput(processSfileoutput993,34076
+void Mopt::processM3Dimage(processM3Dimage1097,37988
+void Mopt::processMtypx(processMtypx1194,41481
+void Mopt::set_typx(set_typx1232,42735
+void Mopt::init_pseudohessian(init_pseudohessian1252,43231
+int Mopt::get_pseudo_hessian_case(get_pseudo_hessian_case1264,43698
+void Mopt::initialize_mimage_files(initialize_mimage_files1272,43893
+
+moptmain.C,596
+#define SQR(23,402
+#define STRINGSIZE 32,513
+void usage(34,537
+void set_source_pars(47,995
+void get_source_pars(66,1804
+void normalize_gradient_ph(85,2613
+void normalize_pseudohessian(117,4018
+void set_timewindows_from_eikonal_time(157,5417
+void compute_f(209,7255
+void compute_f_and_df(426,15891
+void compute_f_with_derivative(802,31925
+void restrict(859,34463
+double getcscp(879,35245
+double sumdiff(890,35706
+void gradient_test(909,36363
+void hessian_test(1256,50660
+void misfit_curve(1477,59667
+void misfit_surface(1605,64418
+int start_minv(1652,66522
+int main(1703,67913
+
+MParGridFile.C,347
+MParGridFile::MParGridFile(MParGridFile10,179
+MParGridFile::MParGridFile(MParGridFile13,330
+MParGridFile::~MParGridFile(~MParGridFile38,1050
+void MParGridFile::read_mparcartfile(read_mparcartfile41,1175
+void MParGridFile::write_mparcartfile(write_mparcartfile67,2065
+void MParGridFile::interpolate_to_other(interpolate_to_other92,2949
 
 Mspace.C,1828
 struct global_variable_holder_struct global_variables 21,365
@@ -1310,6 +1659,9 @@ void invert(913,31084
 bool mpi_supports_device_buffers(972,32872
 long long node_mem(985,33265
 std::string hostname(1008,34037
+
+nlcg.C,18
+void nlcg(22,387
 
 oddIevenJinterp.C,886
 void oddIevenJinterpJacobi(10,173
@@ -1494,30 +1846,30 @@ void EW::set_energylog(set_energylog3797,132989
 void EW::set_cflnumber(set_cflnumber3804,133209
 void EW::set_twilight_forcing(set_twilight_forcing3807,133338
 void EW::allocateCartesianSolverArrays(allocateCartesianSolverArrays3813,133535
-void EW::allocateCurvilinearArrays(allocateCurvilinearArrays4422,155909
-void EW::deprecatedImageMode(deprecatedImageMode4721,168454
-void EW::processImage(processImage4728,168771
-void EW::processSource(processSource5074,181766
-void EW::processRuptureHDF5(processRuptureHDF55745,206567
-void EW::processRupture(processRupture5823,209095
-void EW::processMaterialBlock(processMaterialBlock6232,223777
-void EW::processAnisotropicMaterialBlock(processAnisotropicMaterialBlock6410,230023
-void EW::processReceiverHDF5(processReceiverHDF56688,239707
-void EW::processReceiver(processReceiver6804,244022
-void EW::processObservationHDF5(processObservationHDF57118,255796
-void EW::processObservation(processObservation7276,261409
-void EW::processScaleFactors(processScaleFactors7653,275072
-void EW::processCG(processCG7753,278302
-void EW::processMaterialPfile(processMaterialPfile7913,284134
-void EW::processMaterialIfile(processMaterialIfile8014,287621
-void EW::processMaterialVimaterial(processMaterialVimaterial8088,289956
-void EW::processMaterialRfile(processMaterialRfile8160,292059
-void EW::processMaterialSfile(processMaterialSfile8225,294234
-void EW::processMaterialGMG(processMaterialGMG8282,296093
-void EW::processMaterialInvtest(processMaterialInvtest8334,297792
-void EW::processRandomBlock(processRandomBlock8537,304478
-void EW::processEvent(processEvent8630,307735
-int EW::findNumberOfEvents(findNumberOfEvents8683,309591
+void EW::allocateCurvilinearArrays(allocateCurvilinearArrays4422,156005
+void EW::deprecatedImageMode(deprecatedImageMode4721,168550
+void EW::processImage(processImage4728,168867
+void EW::processSource(processSource5075,181863
+void EW::processRuptureHDF5(processRuptureHDF55671,204247
+void EW::processRupture(processRupture5749,206775
+void EW::processMaterialBlock(processMaterialBlock6158,221457
+void EW::processAnisotropicMaterialBlock(processAnisotropicMaterialBlock6336,227703
+void EW::processReceiverHDF5(processReceiverHDF56614,237387
+void EW::processReceiver(processReceiver6730,241702
+void EW::processObservationHDF5(processObservationHDF57044,253476
+void EW::processObservation(processObservation7202,259089
+void EW::processScaleFactors(processScaleFactors7579,272752
+void EW::processCG(processCG7679,275982
+void EW::processMaterialPfile(processMaterialPfile7839,281814
+void EW::processMaterialIfile(processMaterialIfile7940,285301
+void EW::processMaterialVimaterial(processMaterialVimaterial8014,287636
+void EW::processMaterialRfile(processMaterialRfile8086,289739
+void EW::processMaterialSfile(processMaterialSfile8151,291914
+void EW::processMaterialGMG(processMaterialGMG8208,293773
+void EW::processMaterialInvtest(processMaterialInvtest8260,295472
+void EW::processRandomBlock(processRandomBlock8463,302158
+void EW::processEvent(processEvent8556,305415
+int EW::findNumberOfEvents(findNumberOfEvents8609,307271
 
 Patch.C,164
 Patch::Patch(Patch8,156
@@ -1537,6 +1889,42 @@ Polynomial::Polynomial(Polynomial42,1498
 Polynomial::Polynomial(Polynomial48,1609
 float_sw4 Polynomial::coeff(coeff54,1728
 ostream& operator<<(57,1819
+
+ProjectMtrl.C,297
+#define SQR(36,1337
+void projectmtrl(39,1439
+void projectmtrlc(154,6059
+void checkmtrl(269,10719
+void EW::material_correction(material_correction373,14587
+void correct_material(420,16363
+void EW::project_material(project_material469,18236
+int EW::check_material(check_material518,20068
+
+pseudohess.C,558
+void add_pseudohessian_terms2(4,92
+#define rho(25,1115
+#define mu(26,1177
+#define lambda(27,1237
+#define um(28,1305
+#define u(29,1382
+#define up(30,1457
+#define ph(31,1534
+#define bope(32,1611
+#define acof(33,1658
+#define ghcof(34,1723
+#define SQR(35,1755
+#define srcla(37,1783
+#define srcmu(39,1874
+#undef srcla554,27469
+#undef srcmu555,27482
+#define srcla(557,27496
+#define srcmu(559,27592
+#undef srcla1065,53004
+#undef srcmu1066,53017
+#define srcla(1068,53031
+#define srcmu(1070,53122
+#undef srcla1524,77453
+#undef srcmu1525,77466
 
 Qspline.C,109
 Qspline::Qspline(Qspline45,1675
@@ -1941,6 +2329,19 @@ void att_free_curvi_ci(3131,148197
 #undef sgstry3289,155404
 #undef bforcerhs3290,155418
 
+rhs4th3point.C,235
+void rhs4th3point(8,178
+#define mu(19,877
+#define la(20,935
+#define u(22,1022
+#define lu(23,1095
+#define strx(24,1170
+#define stry(25,1205
+#define strz(26,1240
+#define acof(27,1275
+#define bope(28,1342
+#define ghcof(29,1389
+
 rhs4th3windc2.C,394
 void update_unext(12,240
 #define Lutt(19,607
@@ -2111,8 +2512,8 @@ void mset_to_zero_async(1724,58946
 int aligned(1755,59956
 void vset_to_zero_async(1760,60080
 float_sw4 Sarray::norm(norm1907,64938
- size_t Sarray::fwrite(fwrite1925,65398
- size_t Sarray::fread(fread1933,65640
+ size_t Sarray::fwrite(fwrite1926,65399
+ size_t Sarray::fread(fread1934,65641
 
 scalar_prodc.C,29
 void scalar_prod_ci(39,1464
@@ -2186,147 +2587,161 @@ void EW::solerr3c_ci(solerr3c_ci113,4668
 void EW::meterr4c_ci(meterr4c_ci176,7405
 void EW::meterr4c_ci(meterr4c_ci209,8828
 
-solve.C,2695
+solve-backward-allpars.C,119
+void EW::solve_backward_allpars(solve_backward_allpars12,265
+void EW::enforceDirichlet5(enforceDirichlet5404,16508
+
+solve.C,2817
 __constant__ double cmem_acof[cmem_acof34,1399
 __constant__ double cmem_acof_no_gp[cmem_acof_no_gp35,1435
-#define SQR(69,2296
-void EW::solve(solve72,2395
-void EW::cycleSolutionArrays(cycleSolutionArrays1805,65290
-void EW::enforceBC(enforceBC1825,66118
-#define SW4_RAJA_CURVIMR1947,71856
-void EW::enforceBCanisotropic(enforceBCanisotropic2028,75184
-void EW::update_curvilinear_cartesian_interface(update_curvilinear_cartesian_interface2107,78812
-void EW::update_curvilinear_cartesian_interface_org(update_curvilinear_cartesian_interface_org2167,81367
-void EW::enforceIC(enforceIC2198,82650
-#define FUSED_KERNELS 2229,84098
-void EW::enforceIC2(enforceIC22392,91624
-void EW::check_corrector(check_corrector2551,98691
-void EW::check_displacement_continuity(check_displacement_continuity2597,101172
-void EW::dirichlet_hom_ic(dirichlet_hom_ic2669,104073
-void EW::dirichlet_twilight_ic(dirichlet_twilight_ic2761,107435
-void EW::dirichlet_LRic(dirichlet_LRic2785,108471
-void EW::dirichlet_LRstress(dirichlet_LRstress2916,114278
-void EW::gridref_initial_guess(gridref_initial_guess3250,130033
-void EW::compute_preliminary_corrector(compute_preliminary_corrector3295,131250
-void EW::compute_preliminary_predictor(compute_preliminary_predictor3520,141418
-void EW::compute_icstresses(compute_icstresses3705,149813
-#define str_x(3714,150150
-#define str_y(3715,150189
-#undef str_x3798,153279
-#undef str_y3799,153292
-void EW::add_ve_stresses(add_ve_stresses3803,153382
-#define str_x(3813,153726
-#define str_y(3814,153765
-#undef str_x3871,156196
-#undef str_y3872,156209
-void EW::cartesian_bc_forcing_olde(cartesian_bc_forcing_olde3876,156306
-void EW::test_sources(test_sources4568,186622
-void EW::testSourceDiscretization(testSourceDiscretization4658,189717
-void EW::extractRecordData(extractRecordData4738,192748
-void EW::addSuperGridDamping(addSuperGridDamping5023,205953
-void EW::simpleAttenuation(simpleAttenuation5103,209773
-void EW::enforceBCfreeAtt2(enforceBCfreeAtt25136,210679
-void EW::CurviCartIC(CurviCartIC5508,230209
-void EW::compute_icstresses2(compute_icstresses25768,242437
-#define str_x(5778,242864
-#define str_y(5779,242903
-#undef str_x5836,245149
-#undef str_y5837,245162
-void EW::compute_icstresses_curv(compute_icstresses_curv5841,245252
-#define str_x(5852,245756
-#define str_y(5853,245795
-#undef str_x5963,250150
-#undef str_y5964,250163
-void EW::compute_icstresses_cpu(compute_icstresses_cpu5967,250252
-#define str_x(5978,250670
-#define str_y(5979,250709
-#undef str_x6027,252476
-#undef str_y6028,252489
-void EW::cartesian_bc_forcing(cartesian_bc_forcing6030,252504
-void check_ghcof_no_gp(6527,275921
+#define SQR(79,2880
+void EW::solve(solve82,2979
+void EW::cycleSolutionArrays(cycleSolutionArrays1947,71729
+void EW::cycleSolutionArrays(cycleSolutionArrays1967,72554
+void EW::enforceBC(enforceBC1978,72953
+#define SW4_RAJA_CURVIMR2101,78824
+void EW::enforceBCanisotropic(enforceBCanisotropic2182,82155
+void EW::update_curvilinear_cartesian_interface(update_curvilinear_cartesian_interface2261,85829
+void EW::update_curvilinear_cartesian_interface_org(update_curvilinear_cartesian_interface_org2320,88287
+void EW::enforceIC(enforceIC2350,89476
+#define FUSED_KERNELS 2386,91085
+void EW::enforceIC2(enforceIC22558,99198
+void EW::check_corrector(check_corrector2727,106854
+void EW::check_displacement_continuity(check_displacement_continuity2773,109374
+void EW::dirichlet_hom_ic(dirichlet_hom_ic2845,112275
+void EW::dirichlet_twilight_ic(dirichlet_twilight_ic2937,115637
+void EW::dirichlet_LRic(dirichlet_LRic2961,116691
+void EW::dirichlet_LRstress(dirichlet_LRstress3092,122578
+void EW::gridref_initial_guess(gridref_initial_guess3426,138621
+void EW::compute_preliminary_corrector(compute_preliminary_corrector3471,139838
+void EW::compute_preliminary_predictor(compute_preliminary_predictor3697,150120
+void EW::compute_icstresses(compute_icstresses3884,158631
+#define str_x(3893,158968
+#define str_y(3894,159007
+#undef str_x3977,162097
+#undef str_y3978,162110
+void EW::add_ve_stresses(add_ve_stresses3982,162200
+#define str_x(3992,162544
+#define str_y(3993,162583
+#undef str_x4050,165014
+#undef str_y4051,165027
+void EW::cartesian_bc_forcing_olde(cartesian_bc_forcing_olde4055,165124
+void EW::test_sources(test_sources4747,195440
+void EW::testSourceDiscretization(testSourceDiscretization4837,198535
+void EW::extractRecordData(extractRecordData4917,201490
+void EW::addSuperGridDamping(addSuperGridDamping5202,214695
+void EW::simpleAttenuation(simpleAttenuation5282,218591
+void EW::enforceBCfreeAtt2(enforceBCfreeAtt25315,219521
+void EW::CurviCartIC(CurviCartIC5688,239151
+void EW::compute_icstresses2(compute_icstresses25949,251413
+#define str_x(5959,251840
+#define str_y(5960,251879
+#undef str_x6017,254125
+#undef str_y6018,254138
+void EW::compute_icstresses_curv(compute_icstresses_curv6022,254228
+#define str_x(6033,254732
+#define str_y(6034,254771
+#undef str_x6144,259126
+#undef str_y6145,259139
+void EW::compute_icstresses_cpu(compute_icstresses_cpu6148,259228
+#define str_x(6159,259646
+#define str_y(6160,259685
+#undef str_x6208,261452
+#undef str_y6209,261465
+void EW::cartesian_bc_forcing(cartesian_bc_forcing6211,261480
+void check_ghcof_no_gp(6708,284897
+void EW::addtoPseudoHessian(addtoPseudoHessian6722,285333
+
+solve-dudp.C,37
+void EW::solve_dudp(solve_dudp3,17
+
+solveTT.C,81
+#define STRINGSIZE 12,215
+#define SQR(18,284
+void EW::solveTT(solveTT36,1028
 
 Source.C,3551
 #define SQR(53,1717
 Source::Source(70,2365
-Source::Source(143,4659
-Source::Source(Source206,6526
-Source::~Source(~Source212,6649
-float_sw4 Source::getX0(getX0218,6868
-float_sw4 Source::getY0(getY0221,6991
-float_sw4 Source::getZ0(getZ0224,7114
-float_sw4 Source::getDepth(getDepth227,7237
-float_sw4 Source::getOffset(getOffset230,7373
-float_sw4 Source::getFrequency(getFrequency233,7500
-void Source::setMaxFrequency(setMaxFrequency236,7632
-bool Source::isMomentSource(isMomentSource241,7802
-void Source::getForces(getForces244,7941
-void Source::getMoments(getMoments255,8235
-void Source::setMoments(setMoments270,8694
-float_sw4 Source::getAmplitude(getAmplitude287,9149
-ostream& operator<<(305,9724
-void Source::limit_frequency(limit_frequency325,10650
-float_sw4 Source::compute_t0_increase(compute_t0_increase340,11267
-void Source::adjust_t0(adjust_t0352,11860
-float_sw4 Source::dt_to_resolve(dt_to_resolve357,12022
-int Source::ppw_to_resolve(ppw_to_resolve369,12392
-void Source::set_derivative(set_derivative381,12749
-void Source::set_noderivative(set_noderivative386,12914
-void Source::set_dirderivative(set_dirderivative389,13044
-void Source::set_parameters(set_parameters395,13244
-void Source::get_parameters(get_parameters414,13741
-void Source::setFrequency(setFrequency433,14244
-void Source::correct_Z_level(correct_Z_level436,14379
-void Source::compute_grid_point(compute_grid_point506,16974
-void Source::getsourcewgh(getsourcewgh532,17889
-void Source::getsourcedwgh(getsourcedwgh582,20150
-void Source::getsourcewghlow(getsourcewghlow623,21976
-void Source::getsourcedwghlow(getsourcedwghlow653,23329
-void Source::getmetwgh(getmetwgh684,24504
-void Source::getmetdwgh(getmetdwgh790,30297
-void Source::getmetwgh7(getmetwgh7821,31968
-void Source::getmetdwgh7(getmetdwgh7845,33386
-void Source::getsourcewghNM2sm6(getsourcewghNM2sm6866,34612
-void Source::getsourcedwghNM2sm6(getsourcedwghNM2sm6914,37312
-void Source::getsourcewghNM1sm6(getsourcewghNM1sm6961,39743
-void Source::getsourcedwghNM1sm6(getsourcedwghNM1sm61011,42530
-void Source::getsourcewghNsm6(getsourcewghNsm61059,45050
-void Source::getsourcedwghNsm6(getsourcedwghNsm61118,48197
-void Source::getsourcewghP1sm6(getsourcewghP1sm61205,53164
-void Source::getsourcedwghP1sm6(getsourcedwghP1sm61259,56382
-void Source::prepareTimeFunc(prepareTimeFunc1312,59381
-void Source::set_grid_point_sources4(set_grid_point_sources41448,64799
-void Source::exact_testmoments(exact_testmoments2849,124828
-void Source::perturb(perturb2919,126682
-void Source::filter_timefunc(filter_timefunc2935,127030
-int Source::spline_interpolation(spline_interpolation3053,130485
-Source* Source::copy(copy3146,133936
-float_sw4 Source::find_min_exponent(find_min_exponent3195,135459
-void Source::compute_metric_at_source(compute_metric_at_source3201,135665
-void Source::get_mr_psources(get_mr_psources3369,141813
-#define CUB(3372,142036
-#define BISQR(3373,142067
-#define a(3380,142370
-#define b(3381,142416
-#define x(3382,142460
-#define mom_f(3594,151115
-#undef mom_f3677,154959
-#undef a3983,166431
-#undef b3984,166440
-#undef x3985,166449
-#undef CUB3986,166458
-#undef BISQR3987,166469
-void Source::get_cc_psources(get_cc_psources3991,166559
-#define CUB(3995,166854
-#define BISQR(3996,166885
-#define a(4003,167168
-#define b(4004,167214
-#define x(4005,167258
-#undef mom_f4203,175558
-#undef a4509,187007
-#undef b4510,187016
-#undef x4511,187025
-#undef CUB4512,187034
-#undef BISQR4513,187045
+Source::Source(144,4661
+Source::Source(Source208,6576
+Source::~Source(~Source214,6699
+float_sw4 Source::getX0(getX0220,6918
+float_sw4 Source::getY0(getY0223,7041
+float_sw4 Source::getZ0(getZ0226,7164
+float_sw4 Source::getDepth(getDepth229,7287
+float_sw4 Source::getOffset(getOffset232,7423
+float_sw4 Source::getFrequency(getFrequency235,7550
+void Source::setMaxFrequency(setMaxFrequency238,7682
+bool Source::isMomentSource(isMomentSource243,7852
+void Source::getForces(getForces246,7991
+void Source::getMoments(getMoments257,8285
+void Source::setMoments(setMoments272,8744
+float_sw4 Source::getAmplitude(getAmplitude289,9199
+ostream& operator<<(307,9774
+void Source::limit_frequency(limit_frequency327,10700
+float_sw4 Source::compute_t0_increase(compute_t0_increase342,11317
+void Source::adjust_t0(adjust_t0354,11910
+float_sw4 Source::dt_to_resolve(dt_to_resolve359,12072
+int Source::ppw_to_resolve(ppw_to_resolve371,12442
+void Source::set_derivative(set_derivative383,12799
+void Source::set_noderivative(set_noderivative388,12964
+void Source::set_dirderivative(set_dirderivative391,13094
+void Source::set_parameters(set_parameters397,13294
+void Source::get_parameters(get_parameters416,13791
+void Source::setFrequency(setFrequency435,14294
+void Source::correct_Z_level(correct_Z_level438,14429
+void Source::compute_grid_point(compute_grid_point508,17024
+void Source::getsourcewgh(getsourcewgh534,17939
+void Source::getsourcedwgh(getsourcedwgh584,20200
+void Source::getsourcewghlow(getsourcewghlow625,22026
+void Source::getsourcedwghlow(getsourcedwghlow655,23379
+void Source::getmetwgh(getmetwgh686,24554
+void Source::getmetdwgh(getmetdwgh792,30347
+void Source::getmetwgh7(getmetwgh7823,32018
+void Source::getmetdwgh7(getmetdwgh7847,33436
+void Source::getsourcewghNM2sm6(getsourcewghNM2sm6868,34662
+void Source::getsourcedwghNM2sm6(getsourcedwghNM2sm6916,37362
+void Source::getsourcewghNM1sm6(getsourcewghNM1sm6963,39793
+void Source::getsourcedwghNM1sm6(getsourcedwghNM1sm61013,42580
+void Source::getsourcewghNsm6(getsourcewghNsm61061,45100
+void Source::getsourcedwghNsm6(getsourcedwghNsm61120,48247
+void Source::getsourcewghP1sm6(getsourcewghP1sm61207,53214
+void Source::getsourcedwghP1sm6(getsourcedwghP1sm61261,56432
+void Source::prepareTimeFunc(prepareTimeFunc1314,59431
+void Source::set_grid_point_sources4(set_grid_point_sources41450,64849
+void Source::exact_testmoments(exact_testmoments2854,124958
+void Source::perturb(perturb2924,126812
+void Source::filter_timefunc(filter_timefunc2940,127160
+int Source::spline_interpolation(spline_interpolation3058,130615
+Source* Source::copy(copy3151,134066
+float_sw4 Source::find_min_exponent(find_min_exponent3200,135589
+void Source::compute_metric_at_source(compute_metric_at_source3206,135795
+void Source::get_mr_psources(get_mr_psources3374,141943
+#define CUB(3377,142166
+#define BISQR(3378,142197
+#define a(3385,142500
+#define b(3386,142546
+#define x(3387,142590
+#define mom_f(3601,151283
+#undef mom_f3684,155127
+#undef a3990,166599
+#undef b3991,166608
+#undef x3992,166617
+#undef CUB3993,166626
+#undef BISQR3994,166637
+void Source::get_cc_psources(get_cc_psources3998,166727
+#define CUB(4002,167022
+#define BISQR(4003,167053
+#define a(4010,167336
+#define b(4011,167382
+#define x(4012,167426
+#undef mom_f4212,175754
+#undef a4518,187203
+#undef b4519,187212
+#undef x4520,187221
+#undef CUB4521,187230
+#undef BISQR4522,187241
 
 SuperGrid.C,650
 SuperGrid::SuperGrid(SuperGrid39,1464
@@ -2342,6 +2757,18 @@ float_sw4 SuperGrid::cornerTaper(cornerTaper201,7025
 float_sw4 SuperGrid::tw_stretching(tw_stretching208,7273
 void SuperGrid::set_twilight(set_twilight212,7372
 void SuperGrid::set_eps(set_eps214,7443
+
+sw4-prof.C,382
+int SW4Prof::m_instances 9,100
+SW4Prof0* sw4_profile;12,177
+SW4Prof::SW4Prof(SW4Prof14,201
+void SW4Prof::time_stamp(time_stamp33,689
+void SW4Prof::time_stamp(time_stamp38,808
+void SW4Prof::flush(flush45,980
+SW4Prof0::SW4Prof0(SW4Prof056,1425
+void SW4Prof0::time_stamp(time_stamp57,1449
+void SW4Prof0::time_stamp(time_stamp58,1497
+void SW4Prof0::flush(flush59,1553
 
 TestEcons.C,163
 TestEcons::TestEcons(5,65
@@ -3263,7 +3690,7 @@ void curvilinear4sg_ci(2793,143250
 #undef bope4483,232525
 #undef ghcof4484,232537
 
-CurvilinearInterface2.h,3894
+CurvilinearInterface2.h,3932
 #define SW4_CURVILINEARINTERFACE22,34
 class CurvilinearInterface2 17,266
   EW* m_ew;18,296
@@ -3319,56 +3746,57 @@ class CurvilinearInterface2 17,266
   std::vector<Sarray> m_muve_f, m_lambdave_f, m_muve_c, m_lambdave_c;37,891
   float_sw4* m_mass_block;39,962
   int* m_ipiv_block;40,989
-  float_sw4* m_mpi_buffer_space;41,1010
-  size_t m_mpi_buffer_size;42,1043
-  float_sw4* m_mass_block_gpu;45,1089
-  int* m_ipiv_block_gpu;46,1120
-  float_sw4** dA_array;48,1146
-  magma_int_t** piv_array;49,1170
-  magma_queue_t queue;50,1197
-  float_sw4** dB_array;51,1220
-  float_sw4* x;52,1244
-  std::vector<int> subbatchsize,53,1260
-  std::vector<int> subbatchsize, subbatchoffset;53,1260
-  float_sw4* m_mass_block_gpu;57,1343
-  float_sw4* x;58,1374
-  float_sw4 *m_sbop,m_sbop62,1422
-  float_sw4 *m_sbop, *m_acof,m_acof62,1422
-  float_sw4 *m_sbop, *m_acof, *m_bop,m_bop62,1422
-  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope,m_bope62,1422
-  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope, *m_ghcof;m_ghcof62,1422
-  float_sw4 *m_acof_no_gp,m_acof_no_gp63,1479
-  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp,m_ghcof_no_gp63,1479
-  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp, *m_sbop_no_gp;m_sbop_no_gp63,1479
-  float_sw4 m_acof[m_acof65,1543
-  float_sw4 m_acof[384], m_bope[m_bope65,1543
-  float_sw4 m_acof[384], m_bope[48], m_ghcof[m_ghcof65,1543
-  float_sw4 m_acof[384], m_bope[48], m_ghcof[6], m_acof_no_gp[m_acof_no_gp65,1543
-      m_ghcof_no_gp[m_ghcof_no_gp66,1611
-  float_sw4 m_sbop[m_sbop67,1635
-  float_sw4 m_sbop[6], m_sbop_no_gp[m_sbop_no_gp67,1635
-  float_sw4 m_sbop[6], m_sbop_no_gp[6], m_bop[m_bop67,1635
-  CurvilinearInterface2(97,2836
+  bool m_memory_is_allocated;41,1010
+  float_sw4* m_mpi_buffer_space;43,1043
+  size_t m_mpi_buffer_size;44,1076
+  float_sw4* m_mass_block_gpu;47,1122
+  int* m_ipiv_block_gpu;48,1153
+  float_sw4** dA_array;50,1179
+  magma_int_t** piv_array;51,1203
+  magma_queue_t queue;52,1230
+  float_sw4** dB_array;53,1253
+  float_sw4* x;54,1277
+  std::vector<int> subbatchsize,55,1293
+  std::vector<int> subbatchsize, subbatchoffset;55,1293
+  float_sw4* m_mass_block_gpu;59,1376
+  float_sw4* x;60,1407
+  float_sw4 *m_sbop,m_sbop64,1455
+  float_sw4 *m_sbop, *m_acof,m_acof64,1455
+  float_sw4 *m_sbop, *m_acof, *m_bop,m_bop64,1455
+  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope,m_bope64,1455
+  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope, *m_ghcof;m_ghcof64,1455
+  float_sw4 *m_acof_no_gp,m_acof_no_gp65,1512
+  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp,m_ghcof_no_gp65,1512
+  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp, *m_sbop_no_gp;m_sbop_no_gp65,1512
+  float_sw4 m_acof[m_acof67,1576
+  float_sw4 m_acof[384], m_bope[m_bope67,1576
+  float_sw4 m_acof[384], m_bope[48], m_ghcof[m_ghcof67,1576
+  float_sw4 m_acof[384], m_bope[48], m_ghcof[6], m_acof_no_gp[m_acof_no_gp67,1576
+      m_ghcof_no_gp[m_ghcof_no_gp68,1644
+  float_sw4 m_sbop[m_sbop69,1668
+  float_sw4 m_sbop[6], m_sbop_no_gp[m_sbop_no_gp69,1668
+  float_sw4 m_sbop[6], m_sbop_no_gp[6], m_bop[m_bop69,1668
+  CurvilinearInterface2(99,2869
 
 DataPatches.h,507
 #define DATAPATCHES_H34,1401
-class DataPatches 41,1482
-  int m_npatches;43,1544
-  std::vector<size_t> m_dims;49,1751
-  size_t* m_dataptr;52,1851
-  int m_ncomp;56,1968
-  int m_nmin,59,2029
-  int m_nmin, m_nmax;59,2029
-  int m_nsteps;62,2096
-  int m_ncurrent;65,2159
-  size_t m_ni,67,2178
-  size_t m_ni, m_nj;67,2178
-  std::string m_filename;70,2226
-  std::vector<double*> m_data;73,2312
-  int* m_steps;77,2480
-  bool m_startedsave;80,2573
-  bool m_error;83,2613
-  bool m_isnonempty;84,2629
+class DataPatches 40,1481
+  int m_npatches;42,1543
+  std::vector<size_t> m_dims;48,1750
+  size_t* m_dataptr;51,1850
+  int m_ncomp;55,1967
+  int m_nmin,58,2028
+  int m_nmin, m_nmax;58,2028
+  int m_nsteps;61,2095
+  int m_ncurrent;64,2158
+  size_t m_ni,66,2177
+  size_t m_ni, m_nj;66,2177
+  std::string m_filename;69,2225
+  std::vector<double*> m_data;72,2311
+  int* m_steps;76,2479
+  bool m_startedsave;79,2572
+  bool m_error;82,2612
+  bool m_isnonempty;83,2628
 
 ESSI3D.h,1203
 #define SW4_ESSI3D_H34,1400
@@ -3429,438 +3857,438 @@ class ESSI3DHDF5 44,1528
   hid_t m_file_id;85,2833
   hid_t m_es_id;86,2852
 
-EW.h,19134
+EW.h,19258
 #define EW_H35,1404
 using namespace std;76,2278
-class EW 78,2300
-  float_sw4 getGlobalZmin(100,3206
-  float_sw4 getGlobalZmax(101,3260
-  void setPrintCycle(213,8894
-  void setVerbosity(214,8954
-  void setQuiet(215,9008
-  bool getQuiet(216,9061
-  int getVerbosity(217,9099
-  int getRank(218,9142
-  void setDebugIO(219,9180
-  void set_testing_mode(230,9629
-  bool get_testing_mode(231,9696
-  const string& getOutputPath(396,17859
-  const string& getObservationPath(400,18071
-  const string& getName(401,18146
-  boundaryConditionType getLocalBcType(404,18294
-  void add_mtrl_block(408,18388
-  void addMaterialProperty(419,18792
-  bool usingSupergrid(438,19561
-  void* use_twilight_forcing(483,21374
-  bool topographyExists(602,26357
-  bool usingAttenuation(603,26416
-  enum InputMode 710,30958
-    UNDEFINED,711,30977
-    GaussianHill,712,30992
-    GridFile,713,31010
-    CartesianGrid,714,31024
-    TopoImage,715,31043
-    Rfile,716,31058
-    Sfile,717,31069
-    GMG718,31080
-  int getNumberOfCartesianGrids(722,31164
-  int getNumberOfGrids(723,31235
-  int getNumberOfGhostPoints(724,31288
-  int getNumberOfParallelPaddingPoints(725,31347
-  float_sw4 getLonOrigin(726,31412
-  float_sw4 getLatOrigin(727,31463
-  float_sw4 getGridAzimuth(728,31514
-  float_sw4 getMetersPerDegree(729,31563
-  bool usingParallelFS(730,31626
-  int getNumberOfWritersPFS(731,31670
-  float_sw4 getTimeStep(732,31724
-  int getNumberOfTimeSteps(734,31843
-  int getNumberOfMechanisms(737,31936
-  string getPath(789,35202
-  const float_sw4 NO_TOPO;1584,84555
-  int mNumberOfGrids,1590,84690
-  int mNumberOfGrids, mNumberOfCartesianGrids;1590,84690
-  vector<float_sw4> mGridSize;1594,84828
-  vector<int> m_iStart,1597,84941
-  vector<int> m_iStart, m_iEnd,1597,84941
-  vector<int> m_iStart, m_iEnd, m_jStart,1597,84941
-  vector<int> m_iStart, m_iEnd, m_jStart, m_jEnd,1597,84941
-  vector<int> m_iStart, m_iEnd, m_jStart, m_jEnd, m_kStart,1597,84941
-  vector<int> m_iStart, m_iEnd, m_jStart, m_jEnd, m_kStart, m_kEnd;1597,84941
-  vector<int> m_iStartAct,1601,85115
-  vector<int> m_iStartAct, m_iEndAct,1601,85115
-  vector<int> m_iStartAct, m_iEndAct, m_jStartAct,1601,85115
-  vector<int> m_iStartAct, m_iEndAct, m_jStartAct, m_jEndAct,1601,85115
-  vector<int> m_iStartAct, m_iEndAct, m_jStartAct, m_jEndAct, m_kStartAct,1601,85115
-      m_kEndAct;1602,85190
-  vector<int> m_iStartActGlobal,1603,85207
-  vector<int> m_iStartActGlobal, m_iEndActGlobal,1603,85207
-  vector<int> m_iStartActGlobal, m_iEndActGlobal, m_jStartActGlobal,1603,85207
-      m_jEndActGlobal;1604,85276
-  vector<int> m_kStartActGlobal,1605,85299
-  vector<int> m_kStartActGlobal, m_kEndActGlobal;1605,85299
-  vector<int> m_global_nx,1608,85431
-  vector<int> m_global_nx, m_global_ny,1608,85431
-  vector<int> m_global_nx, m_global_ny, m_global_nz;1608,85431
-  vector<int> m_iStartInt,1612,85604
-  vector<int> m_iStartInt, m_iEndInt,1612,85604
-  vector<int> m_iStartInt, m_iEndInt, m_jStartInt,1612,85604
-  vector<int> m_iStartInt, m_iEndInt, m_jStartInt, m_jEndInt,1612,85604
-  vector<int> m_iStartInt, m_iEndInt, m_jStartInt, m_jEndInt, m_kStartInt,1612,85604
-      m_kEndInt;1613,85679
-  int m_paddingCells[m_paddingCells1617,85850
-  vector<float_sw4> m_zmin;1621,86031
-  vector<Sarray> mX,1625,86198
-  vector<Sarray> mX, mY,1625,86198
-  vector<Sarray> mX, mY, mZ;1625,86198
-  vector<Sarray> mJ;1626,86277
-  vector<Sarray> mMetric;1628,86407
-  GridGenerator* m_gridGenerator;1630,86434
-  bool m_prefilter_sources,1633,86492
-  bool m_prefilter_sources, m_filter_observations;1633,86492
-  Filter* m_filter_ptr;1636,86591
-  Filter* m_filterobs_ptr;1638,86644
-  int m_opttest;1641,86767
-  Sarray mTopo,1649,87192
-  Sarray mTopo, mTopoGridExt;1649,87192
-  vector<Sarray> m_curviInterface;1653,87328
-  vector<MaterialProperty*> m_materials;1656,87440
-  MPI_Comm m_cartesian_communicator,1657,87481
-  MPI_Comm m_cartesian_communicator, m_1d_communicator,1657,87481
-  MPI_Comm m_cartesian_communicator, m_1d_communicator,m_cross_communicator;1657,87481
-  ofstream msgStream;1659,87559
-  vector<Sarray> mMu;1662,87645
-  vector<Sarray> mLambda;1663,87667
-  vector<Sarray> mRho;1664,87693
-  vector<Sarray*> mMuVE,1665,87716
-  vector<Sarray*> mMuVE, mLambdaVE;1665,87716
-  vector<Sarray> mC;1666,87777
-  Sarray mCcurv;1667,87849
-  vector<Sarray> m_Morf,1670,87978
-  vector<Sarray> m_Morf, m_Mlrf,1670,87978
-  vector<Sarray> m_Morf, m_Mlrf, m_Mufs,1670,87978
-  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs,1670,87978
-  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc,1670,87978
-  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc,1670,87978
-  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs,1670,87978
-  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs, m_Mlcs;1670,87978
-  vector<float_sw4> m_curviRefLev;1672,88060
-  int m_nevent;1679,88280
-  int m_nevents_specified;1681,88387
-  bool m_events_parallel;1682,88454
-  int m_eStart,1683,88512
-  int m_eStart, m_eEnd;1683,88512
-  map<map1684,88536
-  map<string, int> m_event_names;1684,88536
-  vector<float_sw4> m_epi_lat,1687,88586
-  vector<float_sw4> m_epi_lat, m_epi_lon,1687,88586
-  vector<float_sw4> m_epi_lat, m_epi_lon, m_epi_depth,1687,88586
-  vector<float_sw4> m_epi_lat, m_epi_lon, m_epi_depth, m_epi_t0;1687,88586
-  GeographicProjection* m_geoproj;1691,88712
-  ForcingTwilight* m_twilight_forcing;1693,88748
-  TestPointSource* m_point_source_test;1694,88787
-  bool m_moment_test;1695,88827
-  TestEnergy* m_energy_test;1696,88849
-  TestLamb* m_lamb_test;1697,88878
-  TestRayleighWave* m_rayleigh_wave_test;1698,88903
-  vector<MaterialData*> m_mtrlblocks;1700,88946
-  vector<AnisotropicMaterial*> m_anisotropic_mtrlblocks;1701,88984
-  boundaryConditionType mbcGlobalType[mbcGlobalType1705,89144
-      m_bcType;1708,89326
-  float_sw4 mTstart;1710,89465
-  float_sw4 mDt;1711,89486
-  bool m_doubly_periodic;1713,89504
-  int m_proc_array[m_proc_array1715,89531
-  bool mbcsSet;1717,89555
-  bool m_analytical_topo,1721,89688
-  bool m_analytical_topo, m_use_analytical_metric;1721,89688
-  float_sw4 m_GaussianAmp,1722,89739
-  float_sw4 m_GaussianAmp, m_GaussianLx,1722,89739
-  float_sw4 m_GaussianAmp, m_GaussianLx, m_GaussianLy,1722,89739
-  float_sw4 m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc,1722,89739
-      m_GaussianYc;1723,89808
-  bool m_useVelocityThresholds;1732,90124
-  float_sw4 m_vpMin,1733,90156
-  float_sw4 m_vpMin, m_vsMin;1733,90156
-  int m_grid_interpolation_order;1736,90250
-  float_sw4 m_zetaBreak;1737,90284
-  float_sw4 m_minJacobian,1740,90346
-  float_sw4 m_minJacobian, m_maxJacobian;1740,90346
-  string m_scenario;1742,90389
-  float_sw4 m_frequency_limit;1745,90439
-  bool m_limit_frequency;1746,90470
-  int m_ppw;1747,90496
-  bool m_pfs;1750,90533
-  int m_nwriters;1751,90547
-  bool m_use_supergrid;1754,90581
-  int m_sg_gp_thickness;1755,90605
-  int m_sg_damping_order;1756,90656
-  float_sw4 m_supergrid_damping_coefficient;1757,90720
-  float_sw4 m_supergrid_width;1758,90765
-  bool m_use_sg_width;1759,90824
-  vector<SuperGrid> m_supergrid_taper_x,1760,90883
-  vector<SuperGrid> m_supergrid_taper_x, m_supergrid_taper_y;1760,90883
-  vector<SuperGrid> m_supergrid_taper_z;1761,90945
-  vector<string> mPath,1764,91027
-  vector<string> mPath, mObsPath;1764,91027
-  string mTempPath;1765,91073
-  vector<int*> m_NumberOfBCPoints;1768,91138
-  vector<int*> m_BndryWindow;1771,91247
-  bool m_use_attenuation,1774,91348
-  bool m_use_attenuation, m_att_use_max_frequency;1774,91348
-  int m_number_mechanisms;1775,91399
-  float_sw4 m_velo_omega,1776,91426
-  float_sw4 m_velo_omega, m_min_omega,1776,91426
-  float_sw4 m_velo_omega, m_min_omega, m_max_omega,1776,91426
-  float_sw4 m_velo_omega, m_min_omega, m_max_omega, m_att_max_frequency,1776,91426
-      m_att_ppw;1777,91499
-  float_sw4 m_qmultiplier;1778,91516
-  vector<Sarray> mQp,1780,91544
-  vector<Sarray> mQp, mQs;1780,91544
-  vector<float_sw4> mOmegaVE;1783,91638
-  bool m_anisotropic;1786,91695
-  bool m_randomize,1789,91753
-  bool m_randomize, m_randomize_density;1789,91753
-  int m_random_seed[m_random_seed1790,91794
-  float_sw4 m_random_dist,1791,91818
-  float_sw4 m_random_dist, m_random_distz,1791,91818
-  float_sw4 m_random_dist, m_random_distz, m_random_amp,1791,91818
-  float_sw4 m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad,1791,91818
-      m_random_sdlimit;1792,91894
-  vector<RandomizedMaterial*> m_random_blocks;1793,91918
-  float_sw4 m_global_xmax,1809,92553
-  float_sw4 m_global_xmax, m_global_ymax,1809,92553
-  float_sw4 m_global_xmax, m_global_ymax, m_global_zmin,1809,92553
-  float_sw4 m_global_xmax, m_global_ymax, m_global_zmin, m_global_zmax;1809,92553
-  int mMaterialExtrapolate;1813,92728
-  int m_nx_base,1816,92801
-  int m_nx_base, m_ny_base,1816,92801
-  int m_nx_base, m_ny_base, m_nz_base;1816,92801
-  float_sw4 m_h_base;1817,92840
-  vector<bool> m_iscurvilinear;1818,92862
-  vector<float_sw4> m_refinementBoundaries;1819,92894
-  InputMode m_topoInputStyle;1820,92938
-  string m_topoFileName,1821,92968
-  string m_topoFileName, m_topoExtFileName,1821,92968
-  string m_topoFileName, m_topoExtFileName, m_QueryType;1821,92968
-  bool mTopoImageFound;1822,93025
-  float_sw4 m_topo_zmax;1823,93049
-  int m_maxIter;1824,93074
-  float_sw4 m_EFileResolution;1825,93091
-  int m_myRank,1830,93232
-  int m_myRank, m_nProcs;1830,93232
-  string mName;1832,93259
-  string mGMTFileName;1834,93301
-  bool mWriteGMTOutput;1836,93325
-  int mPlotFrequency;1837,93349
-  int mNumFiles;1838,93371
-  int mVerbose;1839,93388
-  bool mQuiet;1840,93404
-  bool mDebugIO;1842,93420
-  bool mHomogeneous;1843,93437
-  bool mCompareSACFiles;1846,93502
-  float mSACFileErrorTolerance;1847,93527
-  vector<Image*> mImageFiles;1850,93581
-  vector<Image3D*> mImage3DFiles;1851,93611
-  vector<ESSI3D*> mESSI3DFiles;1852,93645
-  vector<SfileOutput*> mSfiles;1853,93677
-  bool m_iotiming;1854,93709
-  vector<bool> mTimeIsSet;1857,93744
-  vector<float_sw4> mTmax;1858,93771
-  vector<int> mNumberOfTimeSteps;1860,93799
-  int m_update_boundary_function;1863,93850
-  int mOrder;1868,93955
-  float_sw4 mCFL,1872,94144
-  float_sw4 mCFL, mCFLmax;1872,94144
-  vector<int*> m_onesided;1875,94217
-  float_sw4 m_curlcoeff,1876,94244
-  float_sw4 m_curlcoeff, m_d4coeff,1876,94244
-  float_sw4 m_curlcoeff, m_d4coeff, m_d4_cfl;1876,94244
-  vector<float_sw4*> m_sg_dc_x,1879,94362
-  vector<float_sw4*> m_sg_dc_x, m_sg_dc_y,1879,94362
-  vector<float_sw4*> m_sg_dc_x, m_sg_dc_y, m_sg_dc_z;1879,94362
-  vector<float_sw4*> m_sg_str_x,1880,94416
-  vector<float_sw4*> m_sg_str_x, m_sg_str_y,1880,94416
-  vector<float_sw4*> m_sg_str_x, m_sg_str_y, m_sg_str_z;1880,94416
-  vector<float_sw4*> m_sg_corner_x,1881,94473
-  vector<float_sw4*> m_sg_corner_x, m_sg_corner_y,1881,94473
-  vector<float_sw4*> m_sg_corner_x, m_sg_corner_y, m_sg_corner_z;1881,94473
-  bool m_energy_log,1893,94858
-  bool m_energy_log, m_energy_print;1893,94858
-  float_sw4 m_saved_energy;1894,94895
-  string m_energy_logfile;1895,94923
-  vector<float_sw4> m_energy;1896,94950
-  bool m_do_timing;1901,95122
-  int m_timing_print;1902,95142
-  bool m_output_detailed_timing;1903,95164
-  bool m_output_load;1904,95197
-  int m_projection_cycle;1906,95220
-  bool m_checkfornan;1908,95247
-  float_sw4 m_max_error[m_max_error1911,95283
-  float_sw4 m_max_error[3], m_l2_error[m_l2_error1911,95283
-  string m_error_log_file;1913,95327
-  bool m_error_log,1914,95354
-  bool m_error_log, m_error_print;1914,95354
-  int m_inner_loop;1915,95389
-  bool m_mesh_refinements;1919,95470
-  bool m_matrices_decomposed;1920,95497
-  float_sw4 m_citol,1921,95527
-  float_sw4 m_citol, m_cirelfact;1921,95527
-  int m_cimaxiter;1922,95561
-  vector<float_sw4*> m_cimat1;1924,95581
-  vector<float_sw4*> m_cimat2;1925,95612
-  vector<int*> m_ciipiv1;1926,95643
-  vector<int*> m_ciipiv2;1927,95669
-  bool m_do_geodynbc;1933,95763
-  std::vector<float_sw4*> m_geo_usgh;1934,95785
-  std::vector<int*> m_geodyn_dims;1935,95844
-  std::vector<Sarray> m_geodyn_data1;1936,95879
-  std::vector<Sarray> m_geodyn_data2;1937,95917
-  double m_geodyn_origin[m_geodyn_origin1938,95955
-  double m_geodyn_origin[3], m_geodyn_h,1938,95955
-  double m_geodyn_origin[3], m_geodyn_h, m_geodyn_dt;1938,95955
-  int m_geodyn_step,1939,96009
-  int m_geodyn_step, m_geodyn_maxsteps,1939,96009
-  int m_geodyn_step, m_geodyn_maxsteps, m_geodyn_blocksize;1939,96009
-  int m_geodyn_ni,1940,96069
-  int m_geodyn_ni, m_geodyn_nj,1940,96069
-  int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk,1940,96069
-  int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk, m_geodyn_faces;1940,96069
-  std::string m_geodyn_filename;1941,96130
-  std::ifstream m_geodynfile;1942,96163
-  bool m_geodyn_iwillread,1943,96193
-  bool m_geodyn_iwillread, m_geodyn_past_end;1943,96193
-  bool m_geodynbc_found,1946,96270
-  bool m_geodynbc_found, m_geodynbc_center;1946,96270
-  std::string m_geodynbc_filename;1947,96314
-  float_sw4 m_ibc_origin[m_ibc_origin1948,96349
-  int mPrintInterval;1950,96379
-  double mGeoAz;1952,96443
-  double mLonOrigin,1953,96460
-  double mLonOrigin, mLatOrigin;1953,96460
-  float_sw4 mMetersPerDegree,1956,96526
-  float_sw4 mMetersPerDegree, mMetersPerLongitude;1956,96526
-  bool mConstMetersPerLongitude;1957,96577
-  bool mParsingSuccessful,1960,96656
-  bool mParsingSuccessful, mIsInitialized,1960,96656
-  bool mParsingSuccessful, mIsInitialized, mSourcesOK;1960,96656
-  bool m_testing;1961,96711
-  bool m_inverse_problem;1964,96777
-  bool m_iniguess_pos,1965,96842
-  bool m_iniguess_pos, m_iniguess_t0fr,1965,96842
-  bool m_iniguess_pos, m_iniguess_t0fr, m_iniguess_mom,1965,96842
-      m_iniguess_shifts;1966,96898
-  bool m_output_initial_seismograms;1967,96952
-  bool m_compute_scalefactors;1968,96989
-  int m_maxit,1969,97020
-  int m_maxit, m_maxrestart;1969,97020
-  float_sw4 m_tolerance;1970,97049
-  float_sw4 m_scalefactors[m_scalefactors1971,97074
-  int m_cgstepselection,1972,97106
-  int m_cgstepselection, m_cgvarcase;1972,97106
-  bool m_cgfletcherreeves,1973,97144
-  bool m_cgfletcherreeves, m_do_linesearch;1973,97144
-  bool m_opt_testing;1974,97188
-  int m_opt_method,1975,97210
-  int m_opt_method, m_lbfgs_m;1975,97210
-  bool m_zerograd_at_src,1976,97241
-  bool m_zerograd_at_src, m_filter_gradient,1976,97241
-  bool m_zerograd_at_src, m_filter_gradient, m_zerograd_at_rec;1976,97241
-  int m_zerograd_pad,1977,97305
-  int m_zerograd_pad, m_gradfilter_it,1977,97305
-  int m_zerograd_pad, m_gradfilter_it, m_zerogradrec_pad;1977,97305
-  float_sw4 m_gradfilter_ep;1978,97363
-  float_sw4 m_perturb;1981,97426
-  int m_iperturb,1982,97449
-  int m_iperturb, m_jperturb,1982,97449
-  int m_iperturb, m_jperturb, m_kperturb,1982,97449
-  int m_iperturb, m_jperturb, m_kperturb, m_pervar;1982,97449
-  vector<float_sw4> mMinVsOverH;1985,97563
-  int m_ext_ghost_points;1987,97597
-  int m_ghost_points;1988,97623
-  int m_ppadding;1989,97645
-  float_sw4 *m_sbop,m_sbop1993,97750
-  float_sw4 *m_sbop, *m_acof,m_acof1993,97750
-  float_sw4 *m_sbop, *m_acof, *m_bop,m_bop1993,97750
-  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope,m_bope1993,97750
-  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope, *m_ghcof;m_ghcof1993,97750
-  float_sw4 *m_acof_no_gp,m_acof_no_gp1994,97807
-  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp,m_ghcof_no_gp1994,97807
-  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp, *m_sbop_no_gp;m_sbop_no_gp1994,97807
-  float_sw4 m_sbop[m_sbop1996,97871
-  float_sw4 m_sbop[6], m_acof[m_acof1996,97871
-  float_sw4 m_sbop[6], m_acof[384], m_bop[m_bop1996,97871
-  float_sw4 m_sbop[6], m_acof[384], m_bop[24], m_bope[m_bope1996,97871
-  float_sw4 m_sbop[6], m_acof[384], m_bop[24], m_bope[48], m_ghcof[m_ghcof1996,97871
-  float_sw4 m_acof_no_gp[m_acof_no_gp1997,97942
-  float_sw4 m_acof_no_gp[384], m_ghcof_no_gp[m_ghcof_no_gp1997,97942
-  float_sw4 m_acof_no_gp[384], m_ghcof_no_gp[6], m_sbop_no_gp[m_sbop_no_gp1997,97942
-  SView* viewArrayActual;2003,98231
-  vector<CurvilinearInterface2*> m_cli2;2005,98258
-  vector<MPI_Datatype> m_send_type1;2008,98324
-  vector<MPI_Datatype> m_send_type3;2009,98361
-  vector<MPI_Datatype> m_send_type4;2010,98398
-  vector<MPI_Datatype> m_send_type21;2011,98447
-  MPI_Datatype m_send_type_2dfinest[m_send_type_2dfinest2012,98501
-  MPI_Datatype m_send_type_2dfinest_ext[m_send_type_2dfinest_ext2013,98541
-  vector<MPI_Datatype> m_send_type_isurfx;2016,98628
-  vector<MPI_Datatype> m_send_type_isurfy;2017,98671
-  vector<MPI_Datatype> m_send_type_2dx;2019,98715
-  vector<MPI_Datatype> m_send_type_2dy;2020,98755
-  vector<MPI_Datatype> m_send_type_2dx3p;2021,98795
-  vector<MPI_Datatype> m_send_type_2dy3p;2022,98837
-  vector<MPI_Datatype> m_send_type_2dx1p;2023,98879
-  vector<MPI_Datatype> m_send_type_2dy1p;2024,98921
-  vector<vector2027,99008
-  vector<std::tuple<int, int, int>> send_type1;2027,99008
-  vector<vector2028,99056
-  vector<std::tuple<int, int, int>> send_type3;2028,99056
-  vector<vector2029,99104
-  vector<std::tuple<int, int, int>> send_type4;2029,99104
-  vector<vector2030,99152
-  vector<std::tuple<int, int, int>> send_type21;2030,99152
-  vector<vector2032,99202
-  vector<std::tuple<int, int, int>> send_type_2dx;2032,99202
-  vector<vector2033,99253
-  vector<std::tuple<int, int, int>> send_type_2dy;2033,99253
-  vector<vector2035,99305
-  vector<std::tuple<int, int, int>> send_type_2dfinest_ext;2035,99305
-  vector<vector2037,99366
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type1;2037,99366
-  vector<vector2038,99423
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type3;2038,99423
-  vector<vector2039,99480
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type4;2039,99480
-  vector<vector2040,99537
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type21;2040,99537
-  vector<vector2042,99596
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type_2dx;2042,99596
-  vector<vector2043,99656
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type_2dy;2043,99656
-  vector<vector2045,99717
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type_2dfinest_ext;2045,99717
-  Space mpi_buffer_space;2047,99787
-  float_sw4* ForceVector;2050,99865
-  float_sw4** ForceAddress;2051,99891
-  int* idnts;2052,99919
-  GridPointSource** GPS;2053,99933
-  StatMachine<StatMachine2058,100118
-  StatMachine<size_t, double> sm;2058,100118
-  StatMachine<StatMachine2059,100152
-  StatMachine<size_t, double> sm2;2059,100152
-  StatMachine<StatMachine2060,100187
-  StatMachine<int, double> coll_sm;2060,100187
-  StatMachine<StatMachine2061,100223
-  StatMachine<int, double> step_sm;2061,100223
-  StatMachine<StatMachine2062,100259
-  StatMachine<int, double> host_sm;2062,100259
-  int m_neighbor[m_neighbor2065,100311
-  MPI_Datatype m_mpifloat;2066,100332
-  bool m_topography_exists;2068,100360
-  vector<vector<int>> m_utc0;2073,100498
-  bool m_croutines;2079,100653
-  CheckPoint* m_check_point;2083,100747
-  bool ProfilerOn;2084,100776
+class EW 80,2333
+  float_sw4 getGlobalZmin(102,3239
+  float_sw4 getGlobalZmax(103,3293
+  void setPrintCycle(229,9640
+  void setVerbosity(230,9700
+  void setQuiet(231,9754
+  bool getQuiet(232,9807
+  int getVerbosity(233,9845
+  int getRank(234,9888
+  void setDebugIO(235,9926
+  void set_testing_mode(246,10375
+  bool get_testing_mode(247,10442
+  const string& getOutputPath(417,18803
+  const string& getObservationPath(421,19015
+  const string& getName(422,19090
+  boundaryConditionType getLocalBcType(425,19238
+  void add_mtrl_block(429,19332
+  void addMaterialProperty(440,19736
+  bool usingSupergrid(459,20505
+  void* use_twilight_forcing(504,22318
+  bool topographyExists(623,27301
+  bool usingAttenuation(624,27360
+  enum InputMode 731,31902
+    UNDEFINED,732,31921
+    GaussianHill,733,31936
+    GridFile,734,31954
+    CartesianGrid,735,31968
+    TopoImage,736,31987
+    Rfile,737,32002
+    Sfile,738,32013
+    GMG739,32024
+  int getNumberOfCartesianGrids(743,32108
+  int getNumberOfGrids(744,32179
+  int getNumberOfGhostPoints(745,32232
+  int getNumberOfParallelPaddingPoints(746,32291
+  float_sw4 getLonOrigin(747,32356
+  float_sw4 getLatOrigin(748,32407
+  float_sw4 getGridAzimuth(749,32458
+  float_sw4 getMetersPerDegree(750,32507
+  bool usingParallelFS(751,32570
+  int getNumberOfWritersPFS(752,32614
+  float_sw4 getTimeStep(753,32668
+  int getNumberOfTimeSteps(755,32787
+  int getNumberOfMechanisms(758,32880
+  string getPath(810,36146
+  const float_sw4 NO_TOPO;1662,88494
+  int mNumberOfGrids,1668,88629
+  int mNumberOfGrids, mNumberOfCartesianGrids;1668,88629
+  vector<float_sw4> mGridSize;1672,88767
+  vector<int> m_iStart,1675,88880
+  vector<int> m_iStart, m_iEnd,1675,88880
+  vector<int> m_iStart, m_iEnd, m_jStart,1675,88880
+  vector<int> m_iStart, m_iEnd, m_jStart, m_jEnd,1675,88880
+  vector<int> m_iStart, m_iEnd, m_jStart, m_jEnd, m_kStart,1675,88880
+  vector<int> m_iStart, m_iEnd, m_jStart, m_jEnd, m_kStart, m_kEnd;1675,88880
+  vector<int> m_iStartAct,1679,89054
+  vector<int> m_iStartAct, m_iEndAct,1679,89054
+  vector<int> m_iStartAct, m_iEndAct, m_jStartAct,1679,89054
+  vector<int> m_iStartAct, m_iEndAct, m_jStartAct, m_jEndAct,1679,89054
+  vector<int> m_iStartAct, m_iEndAct, m_jStartAct, m_jEndAct, m_kStartAct,1679,89054
+      m_kEndAct;1680,89129
+  vector<int> m_iStartActGlobal,1681,89146
+  vector<int> m_iStartActGlobal, m_iEndActGlobal,1681,89146
+  vector<int> m_iStartActGlobal, m_iEndActGlobal, m_jStartActGlobal,1681,89146
+      m_jEndActGlobal;1682,89215
+  vector<int> m_kStartActGlobal,1683,89238
+  vector<int> m_kStartActGlobal, m_kEndActGlobal;1683,89238
+  vector<int> m_global_nx,1686,89370
+  vector<int> m_global_nx, m_global_ny,1686,89370
+  vector<int> m_global_nx, m_global_ny, m_global_nz;1686,89370
+  vector<int> m_iStartInt,1690,89543
+  vector<int> m_iStartInt, m_iEndInt,1690,89543
+  vector<int> m_iStartInt, m_iEndInt, m_jStartInt,1690,89543
+  vector<int> m_iStartInt, m_iEndInt, m_jStartInt, m_jEndInt,1690,89543
+  vector<int> m_iStartInt, m_iEndInt, m_jStartInt, m_jEndInt, m_kStartInt,1690,89543
+      m_kEndInt;1691,89618
+  int m_paddingCells[m_paddingCells1695,89789
+  vector<float_sw4> m_zmin;1699,89970
+  vector<Sarray> mX,1703,90137
+  vector<Sarray> mX, mY,1703,90137
+  vector<Sarray> mX, mY, mZ;1703,90137
+  vector<Sarray> mJ;1704,90216
+  vector<Sarray> mMetric;1706,90346
+  GridGenerator* m_gridGenerator;1708,90373
+  bool m_prefilter_sources,1711,90431
+  bool m_prefilter_sources, m_filter_observations;1711,90431
+  Filter* m_filter_ptr;1714,90530
+  Filter* m_filterobs_ptr;1716,90583
+  int m_opttest;1719,90706
+  Sarray mTopo,1727,91131
+  Sarray mTopo, mTopoGridExt;1727,91131
+  vector<Sarray> m_curviInterface;1731,91267
+  vector<MaterialProperty*> m_materials;1734,91379
+  MPI_Comm m_cartesian_communicator,1735,91420
+  MPI_Comm m_cartesian_communicator, m_1d_communicator,1735,91420
+  MPI_Comm m_cartesian_communicator, m_1d_communicator,m_cross_communicator;1735,91420
+  ofstream msgStream;1737,91498
+  vector<Sarray> mMu;1740,91584
+  vector<Sarray> mLambda;1741,91606
+  vector<Sarray> mRho;1742,91632
+  vector<Sarray*> mMuVE,1743,91655
+  vector<Sarray*> mMuVE, mLambdaVE;1743,91655
+  vector<Sarray> mC;1744,91716
+  Sarray mCcurv;1745,91788
+  vector<Sarray> m_Morf,1748,91917
+  vector<Sarray> m_Morf, m_Mlrf,1748,91917
+  vector<Sarray> m_Morf, m_Mlrf, m_Mufs,1748,91917
+  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs,1748,91917
+  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc,1748,91917
+  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc,1748,91917
+  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs,1748,91917
+  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs, m_Mlcs;1748,91917
+  vector<float_sw4> m_curviRefLev;1750,91999
+  int m_nevent;1757,92219
+  int m_nevents_specified;1759,92326
+  bool m_events_parallel;1760,92393
+  int m_eStart,1761,92451
+  int m_eStart, m_eEnd;1761,92451
+  map<map1762,92475
+  map<string, int> m_event_names;1762,92475
+  vector<float_sw4> m_epi_lat,1765,92525
+  vector<float_sw4> m_epi_lat, m_epi_lon,1765,92525
+  vector<float_sw4> m_epi_lat, m_epi_lon, m_epi_depth,1765,92525
+  vector<float_sw4> m_epi_lat, m_epi_lon, m_epi_depth, m_epi_t0;1765,92525
+  GeographicProjection* m_geoproj;1769,92651
+  ForcingTwilight* m_twilight_forcing;1771,92687
+  TestPointSource* m_point_source_test;1772,92726
+  bool m_moment_test;1773,92766
+  TestEnergy* m_energy_test;1774,92788
+  TestLamb* m_lamb_test;1775,92817
+  TestRayleighWave* m_rayleigh_wave_test;1776,92842
+  vector<MaterialData*> m_mtrlblocks;1778,92885
+  vector<AnisotropicMaterial*> m_anisotropic_mtrlblocks;1779,92923
+  boundaryConditionType mbcGlobalType[mbcGlobalType1783,93083
+      m_bcType;1786,93265
+  float_sw4 mTstart;1788,93404
+  float_sw4 mDt;1789,93425
+  bool m_doubly_periodic;1791,93443
+  int m_proc_array[m_proc_array1793,93470
+  bool mbcsSet;1795,93494
+  bool m_analytical_topo,1799,93627
+  bool m_analytical_topo, m_use_analytical_metric;1799,93627
+  float_sw4 m_GaussianAmp,1800,93678
+  float_sw4 m_GaussianAmp, m_GaussianLx,1800,93678
+  float_sw4 m_GaussianAmp, m_GaussianLx, m_GaussianLy,1800,93678
+  float_sw4 m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc,1800,93678
+      m_GaussianYc;1801,93747
+  bool m_useVelocityThresholds;1810,94063
+  float_sw4 m_vpMin,1811,94095
+  float_sw4 m_vpMin, m_vsMin;1811,94095
+  int m_grid_interpolation_order;1814,94189
+  float_sw4 m_zetaBreak;1815,94223
+  float_sw4 m_minJacobian,1818,94285
+  float_sw4 m_minJacobian, m_maxJacobian;1818,94285
+  string m_scenario;1820,94328
+  float_sw4 m_frequency_limit;1823,94378
+  bool m_limit_frequency;1824,94409
+  int m_ppw;1825,94435
+  bool m_pfs;1828,94472
+  int m_nwriters;1829,94486
+  bool m_use_supergrid;1832,94520
+  int m_sg_gp_thickness;1833,94544
+  int m_sg_damping_order;1834,94595
+  float_sw4 m_supergrid_damping_coefficient;1835,94659
+  float_sw4 m_supergrid_width;1836,94704
+  bool m_use_sg_width;1837,94763
+  vector<SuperGrid> m_supergrid_taper_x,1838,94822
+  vector<SuperGrid> m_supergrid_taper_x, m_supergrid_taper_y;1838,94822
+  vector<SuperGrid> m_supergrid_taper_z;1839,94884
+  vector<string> mPath,1842,94966
+  vector<string> mPath, mObsPath;1842,94966
+  string mTempPath;1843,95012
+  vector<int*> m_NumberOfBCPoints;1846,95077
+  vector<int*> m_BndryWindow;1849,95186
+  bool m_use_attenuation,1852,95287
+  bool m_use_attenuation, m_att_use_max_frequency;1852,95287
+  int m_number_mechanisms;1853,95338
+  float_sw4 m_velo_omega,1854,95365
+  float_sw4 m_velo_omega, m_min_omega,1854,95365
+  float_sw4 m_velo_omega, m_min_omega, m_max_omega,1854,95365
+  float_sw4 m_velo_omega, m_min_omega, m_max_omega, m_att_max_frequency,1854,95365
+      m_att_ppw;1855,95438
+  float_sw4 m_qmultiplier;1856,95455
+  vector<Sarray> mQp,1858,95483
+  vector<Sarray> mQp, mQs;1858,95483
+  vector<float_sw4> mOmegaVE;1861,95577
+  bool m_anisotropic;1864,95634
+  bool m_randomize,1867,95692
+  bool m_randomize, m_randomize_density;1867,95692
+  int m_random_seed[m_random_seed1868,95733
+  float_sw4 m_random_dist,1869,95757
+  float_sw4 m_random_dist, m_random_distz,1869,95757
+  float_sw4 m_random_dist, m_random_distz, m_random_amp,1869,95757
+  float_sw4 m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad,1869,95757
+      m_random_sdlimit;1870,95833
+  vector<RandomizedMaterial*> m_random_blocks;1871,95857
+  float_sw4 m_global_xmax,1887,96492
+  float_sw4 m_global_xmax, m_global_ymax,1887,96492
+  float_sw4 m_global_xmax, m_global_ymax, m_global_zmin,1887,96492
+  float_sw4 m_global_xmax, m_global_ymax, m_global_zmin, m_global_zmax;1887,96492
+  int mMaterialExtrapolate;1891,96667
+  int m_nx_base,1894,96740
+  int m_nx_base, m_ny_base,1894,96740
+  int m_nx_base, m_ny_base, m_nz_base;1894,96740
+  float_sw4 m_h_base;1895,96779
+  vector<bool> m_iscurvilinear;1896,96801
+  vector<float_sw4> m_refinementBoundaries;1897,96833
+  InputMode m_topoInputStyle;1898,96877
+  string m_topoFileName,1899,96907
+  string m_topoFileName, m_topoExtFileName,1899,96907
+  string m_topoFileName, m_topoExtFileName, m_QueryType;1899,96907
+  bool mTopoImageFound;1900,96964
+  float_sw4 m_topo_zmax;1901,96988
+  int m_maxIter;1902,97013
+  float_sw4 m_EFileResolution;1903,97030
+  int m_myRank,1908,97171
+  int m_myRank, m_nProcs;1908,97171
+  string mName;1910,97198
+  string mGMTFileName;1912,97240
+  bool mWriteGMTOutput;1914,97264
+  int mPlotFrequency;1915,97288
+  int mNumFiles;1916,97310
+  int mVerbose;1917,97327
+  bool mQuiet;1918,97343
+  bool mDebugIO;1920,97359
+  bool mHomogeneous;1921,97376
+  bool mCompareSACFiles;1924,97441
+  float mSACFileErrorTolerance;1925,97466
+  vector<Image*> mImageFiles;1928,97520
+  vector<Image3D*> mImage3DFiles;1929,97550
+  vector<ESSI3D*> mESSI3DFiles;1930,97584
+  vector<SfileOutput*> mSfiles;1931,97616
+  bool m_iotiming;1932,97648
+  vector<bool> mTimeIsSet;1935,97683
+  vector<float_sw4> mTmax;1936,97710
+  vector<int> mNumberOfTimeSteps;1938,97738
+  int m_update_boundary_function;1941,97789
+  int mOrder;1946,97894
+  float_sw4 mCFL,1950,98083
+  float_sw4 mCFL, mCFLmax;1950,98083
+  vector<int*> m_onesided;1953,98156
+  float_sw4 m_curlcoeff,1954,98183
+  float_sw4 m_curlcoeff, m_d4coeff,1954,98183
+  float_sw4 m_curlcoeff, m_d4coeff, m_d4_cfl;1954,98183
+  vector<float_sw4*> m_sg_dc_x,1957,98301
+  vector<float_sw4*> m_sg_dc_x, m_sg_dc_y,1957,98301
+  vector<float_sw4*> m_sg_dc_x, m_sg_dc_y, m_sg_dc_z;1957,98301
+  vector<float_sw4*> m_sg_str_x,1958,98355
+  vector<float_sw4*> m_sg_str_x, m_sg_str_y,1958,98355
+  vector<float_sw4*> m_sg_str_x, m_sg_str_y, m_sg_str_z;1958,98355
+  vector<float_sw4*> m_sg_corner_x,1959,98412
+  vector<float_sw4*> m_sg_corner_x, m_sg_corner_y,1959,98412
+  vector<float_sw4*> m_sg_corner_x, m_sg_corner_y, m_sg_corner_z;1959,98412
+  bool m_energy_log,1971,98797
+  bool m_energy_log, m_energy_print;1971,98797
+  float_sw4 m_saved_energy;1972,98834
+  string m_energy_logfile;1973,98862
+  vector<float_sw4> m_energy;1974,98889
+  bool m_do_timing;1979,99061
+  int m_timing_print;1980,99081
+  bool m_output_detailed_timing;1981,99103
+  bool m_output_load;1982,99136
+  int m_projection_cycle;1984,99159
+  bool m_checkfornan;1986,99186
+  float_sw4 m_max_error[m_max_error1989,99222
+  float_sw4 m_max_error[3], m_l2_error[m_l2_error1989,99222
+  string m_error_log_file;1991,99266
+  bool m_error_log,1992,99293
+  bool m_error_log, m_error_print;1992,99293
+  int m_inner_loop;1993,99328
+  bool m_mesh_refinements;1997,99409
+  bool m_matrices_decomposed;1998,99436
+  float_sw4 m_citol,1999,99466
+  float_sw4 m_citol, m_cirelfact;1999,99466
+  int m_cimaxiter;2000,99500
+  vector<float_sw4*> m_cimat1;2002,99520
+  vector<float_sw4*> m_cimat2;2003,99551
+  vector<int*> m_ciipiv1;2004,99582
+  vector<int*> m_ciipiv2;2005,99608
+  bool m_do_geodynbc;2011,99702
+  std::vector<float_sw4*> m_geo_usgh;2012,99724
+  std::vector<int*> m_geodyn_dims;2013,99783
+  std::vector<Sarray> m_geodyn_data1;2014,99818
+  std::vector<Sarray> m_geodyn_data2;2015,99856
+  double m_geodyn_origin[m_geodyn_origin2016,99894
+  double m_geodyn_origin[3], m_geodyn_h,2016,99894
+  double m_geodyn_origin[3], m_geodyn_h, m_geodyn_dt;2016,99894
+  int m_geodyn_step,2017,99948
+  int m_geodyn_step, m_geodyn_maxsteps,2017,99948
+  int m_geodyn_step, m_geodyn_maxsteps, m_geodyn_blocksize;2017,99948
+  int m_geodyn_ni,2018,100008
+  int m_geodyn_ni, m_geodyn_nj,2018,100008
+  int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk,2018,100008
+  int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk, m_geodyn_faces;2018,100008
+  std::string m_geodyn_filename;2019,100069
+  std::ifstream m_geodynfile;2020,100102
+  bool m_geodyn_iwillread,2021,100132
+  bool m_geodyn_iwillread, m_geodyn_past_end;2021,100132
+  bool m_geodynbc_found,2024,100209
+  bool m_geodynbc_found, m_geodynbc_center;2024,100209
+  std::string m_geodynbc_filename;2025,100253
+  float_sw4 m_ibc_origin[m_ibc_origin2026,100288
+  int mPrintInterval;2028,100318
+  double mGeoAz;2030,100382
+  double mLonOrigin,2031,100399
+  double mLonOrigin, mLatOrigin;2031,100399
+  float_sw4 mMetersPerDegree,2034,100465
+  float_sw4 mMetersPerDegree, mMetersPerLongitude;2034,100465
+  bool mConstMetersPerLongitude;2035,100516
+  bool mParsingSuccessful,2038,100595
+  bool mParsingSuccessful, mIsInitialized,2038,100595
+  bool mParsingSuccessful, mIsInitialized, mSourcesOK;2038,100595
+  bool m_testing;2039,100650
+  bool m_inverse_problem;2042,100716
+  bool m_iniguess_pos,2043,100781
+  bool m_iniguess_pos, m_iniguess_t0fr,2043,100781
+  bool m_iniguess_pos, m_iniguess_t0fr, m_iniguess_mom,2043,100781
+      m_iniguess_shifts;2044,100837
+  bool m_output_initial_seismograms;2045,100891
+  bool m_compute_scalefactors;2046,100928
+  int m_maxit,2047,100959
+  int m_maxit, m_maxrestart;2047,100959
+  float_sw4 m_tolerance;2048,100988
+  float_sw4 m_scalefactors[m_scalefactors2049,101013
+  int m_cgstepselection,2050,101045
+  int m_cgstepselection, m_cgvarcase;2050,101045
+  bool m_cgfletcherreeves,2051,101083
+  bool m_cgfletcherreeves, m_do_linesearch;2051,101083
+  bool m_opt_testing;2052,101127
+  int m_opt_method,2053,101149
+  int m_opt_method, m_lbfgs_m;2053,101149
+  bool m_zerograd_at_src,2054,101180
+  bool m_zerograd_at_src, m_filter_gradient,2054,101180
+  bool m_zerograd_at_src, m_filter_gradient, m_zerograd_at_rec;2054,101180
+  int m_zerograd_pad,2055,101244
+  int m_zerograd_pad, m_gradfilter_it,2055,101244
+  int m_zerograd_pad, m_gradfilter_it, m_zerogradrec_pad;2055,101244
+  float_sw4 m_gradfilter_ep;2056,101302
+  float_sw4 m_perturb;2059,101365
+  int m_iperturb,2060,101388
+  int m_iperturb, m_jperturb,2060,101388
+  int m_iperturb, m_jperturb, m_kperturb,2060,101388
+  int m_iperturb, m_jperturb, m_kperturb, m_pervar;2060,101388
+  vector<float_sw4> mMinVsOverH;2063,101502
+  int m_ext_ghost_points;2065,101536
+  int m_ghost_points;2066,101562
+  int m_ppadding;2067,101584
+  float_sw4 *m_sbop,m_sbop2071,101689
+  float_sw4 *m_sbop, *m_acof,m_acof2071,101689
+  float_sw4 *m_sbop, *m_acof, *m_bop,m_bop2071,101689
+  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope,m_bope2071,101689
+  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope, *m_ghcof;m_ghcof2071,101689
+  float_sw4 *m_acof_no_gp,m_acof_no_gp2072,101746
+  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp,m_ghcof_no_gp2072,101746
+  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp, *m_sbop_no_gp;m_sbop_no_gp2072,101746
+  float_sw4 m_sbop[m_sbop2074,101810
+  float_sw4 m_sbop[6], m_acof[m_acof2074,101810
+  float_sw4 m_sbop[6], m_acof[384], m_bop[m_bop2074,101810
+  float_sw4 m_sbop[6], m_acof[384], m_bop[24], m_bope[m_bope2074,101810
+  float_sw4 m_sbop[6], m_acof[384], m_bop[24], m_bope[48], m_ghcof[m_ghcof2074,101810
+  float_sw4 m_acof_no_gp[m_acof_no_gp2075,101881
+  float_sw4 m_acof_no_gp[384], m_ghcof_no_gp[m_ghcof_no_gp2075,101881
+  float_sw4 m_acof_no_gp[384], m_ghcof_no_gp[6], m_sbop_no_gp[m_sbop_no_gp2075,101881
+  SView* viewArrayActual;2081,102170
+  vector<CurvilinearInterface2*> m_cli2;2083,102197
+  vector<MPI_Datatype> m_send_type1;2086,102263
+  vector<MPI_Datatype> m_send_type3;2087,102300
+  vector<MPI_Datatype> m_send_type4;2088,102337
+  vector<MPI_Datatype> m_send_type21;2089,102386
+  MPI_Datatype m_send_type_2dfinest[m_send_type_2dfinest2090,102440
+  MPI_Datatype m_send_type_2dfinest_ext[m_send_type_2dfinest_ext2091,102480
+  vector<MPI_Datatype> m_send_type_isurfx;2094,102567
+  vector<MPI_Datatype> m_send_type_isurfy;2095,102610
+  vector<MPI_Datatype> m_send_type_2dx;2097,102654
+  vector<MPI_Datatype> m_send_type_2dy;2098,102694
+  vector<MPI_Datatype> m_send_type_2dx3p;2099,102734
+  vector<MPI_Datatype> m_send_type_2dy3p;2100,102776
+  vector<MPI_Datatype> m_send_type_2dx1p;2101,102818
+  vector<MPI_Datatype> m_send_type_2dy1p;2102,102860
+  vector<vector2105,102947
+  vector<std::tuple<int, int, int>> send_type1;2105,102947
+  vector<vector2106,102995
+  vector<std::tuple<int, int, int>> send_type3;2106,102995
+  vector<vector2107,103043
+  vector<std::tuple<int, int, int>> send_type4;2107,103043
+  vector<vector2108,103091
+  vector<std::tuple<int, int, int>> send_type21;2108,103091
+  vector<vector2110,103141
+  vector<std::tuple<int, int, int>> send_type_2dx;2110,103141
+  vector<vector2111,103192
+  vector<std::tuple<int, int, int>> send_type_2dy;2111,103192
+  vector<vector2113,103244
+  vector<std::tuple<int, int, int>> send_type_2dfinest_ext;2113,103244
+  vector<vector2115,103305
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type1;2115,103305
+  vector<vector2116,103362
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type3;2116,103362
+  vector<vector2117,103419
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type4;2117,103419
+  vector<vector2118,103476
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type21;2118,103476
+  vector<vector2120,103535
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type_2dx;2120,103535
+  vector<vector2121,103595
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type_2dy;2121,103595
+  vector<vector2123,103656
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type_2dfinest_ext;2123,103656
+  Space mpi_buffer_space;2125,103726
+  float_sw4* ForceVector;2128,103804
+  float_sw4** ForceAddress;2129,103830
+  int* idnts;2130,103858
+  GridPointSource** GPS;2131,103872
+  StatMachine<StatMachine2136,104057
+  StatMachine<size_t, double> sm;2136,104057
+  StatMachine<StatMachine2137,104091
+  StatMachine<size_t, double> sm2;2137,104091
+  StatMachine<StatMachine2138,104126
+  StatMachine<int, double> coll_sm;2138,104126
+  StatMachine<StatMachine2139,104162
+  StatMachine<int, double> step_sm;2139,104162
+  StatMachine<StatMachine2140,104198
+  StatMachine<int, double> host_sm;2140,104198
+  int m_neighbor[m_neighbor2143,104250
+  MPI_Datatype m_mpifloat;2144,104271
+  bool m_topography_exists;2146,104299
+  vector<vector<int>> m_utc0;2151,104437
+  bool m_croutines;2157,104592
+  CheckPoint* m_check_point;2161,104686
+  bool ProfilerOn;2162,104715
 
 F77_FUNC.h,209
 #define F77_FUNC_H34,1398
@@ -4502,6 +4930,255 @@ class MaterialInvtest 41,1482
   int m_nr;50,1838
   EW* mEW;51,1850
 
+MaterialParAllpts.h,772
+#define MATERIALPARALLPTS_H2,28
+class MaterialParAllpts 6,96
+  std::vector<size_t> m_npts_per_grid,7,156
+  std::vector<size_t> m_npts_per_grid, m_npts_per_grid_local;7,156
+  int m_nc;8,218
+  enum Variabletype 11,379
+  enum Variabletype { RML,11,379
+  enum Variabletype { RML, RCSCP,11,379
+  enum Variabletype { RML, RCSCP, CSCP,11,379
+  enum Variabletype { RML, RCSCP, CSCP, CP 11,379
+  Variabletype m_variables;12,425
+  double m_ratio;13,453
+  virtual void write_dfm_hdf5(46,2404
+  virtual void limit_x(50,2533
+  virtual void limit_df(53,2717
+  double getXmin(55,2789
+  double getDx(56,2817
+  int getNX(57,2843
+  double getYmin(58,2866
+  double getDy(59,2894
+  int getNY(60,2920
+  double getZmin(61,2943
+  double getDz(62,2971
+  int getNZ(63,2997
+
+MaterialParameterization.h,355
+#define MATERIALPARAMETERIZATION_H2,35
+class MaterialParameterization 10,139
+  int m_myrank,12,184
+  int m_myrank, m_nmd,12,184
+  int m_myrank, m_nmd, m_nms,12,184
+  int m_myrank, m_nmd, m_nms, m_nmd_global;12,184
+  EW* m_ew;13,228
+  char* m_filename;14,240
+  std::string m_path;15,260
+  void set_path(74,3725
+  virtual int getcartdims(90,4360
+
+MaterialParCartesian.h,831
+#define MATERIALPARCARTESIAN_H2,31
+class MaterialParCartesian 6,102
+  double m_xmin,8,175
+  double m_xmin, m_ymin,8,175
+  double m_xmin, m_ymin, m_zmin,8,175
+  double m_xmin, m_ymin, m_zmin, m_hx,8,175
+  double m_xmin, m_ymin, m_zmin, m_hx, m_hy,8,175
+      m_hz;9,220
+  double m_xmax,11,327
+  double m_xmax, m_ymax,11,327
+  double m_xmax, m_ymax, m_zmax;11,327
+  int m_nx,12,383
+  int m_nx, m_ny,12,383
+  int m_nx, m_ny, m_nz;12,383
+  int m_init;13,452
+  Sarray m_rho,14,466
+  Sarray m_rho, m_mu,14,466
+  Sarray m_rho, m_mu, m_lambda;14,466
+  int get_varcase(45,2252
+  void write_dfm_hdf5(46,2287
+  double getXmin(49,2407
+  double getDx(50,2451
+  int getNX(51,2491
+  double getYmin(52,2528
+  double getDy(53,2572
+  int getNY(54,2612
+  double getZmin(55,2649
+  double getDz(56,2693
+  int getNZ(57,2733
+
+MaterialParCartesianVels.h,676
+#define MATERIALPARCARTESIANVELS_H2,35
+class MaterialParCartesianVels 6,110
+  double m_xmin,8,187
+  double m_xmin, m_ymin,8,187
+  double m_xmin, m_ymin, m_zmin,8,187
+  double m_xmin, m_ymin, m_zmin, m_hx,8,187
+  double m_xmin, m_ymin, m_zmin, m_hx, m_hy,8,187
+      m_hz;9,232
+  double m_xmax,11,339
+  double m_xmax, m_ymax,11,339
+  double m_xmax, m_ymax, m_zmax;11,339
+  int m_nx,12,395
+  int m_nx, m_ny,12,395
+  int m_nx, m_ny, m_nz;12,395
+  int m_init;13,464
+  Sarray m_rho,14,478
+  Sarray m_rho, m_mu,14,478
+  Sarray m_rho, m_mu, m_lambda;14,478
+  Sarray m_cs,15,510
+  Sarray m_cs, m_cp;15,510
+  int get_varcase(50,2423
+  void write_dfm_hdf5(51,2458
+
+MaterialParCartesianVp.h,755
+#define MATERIALPARCARTESIANVP_H2,33
+class MaterialParCartesianVp 6,106
+  double m_xmin,8,181
+  double m_xmin, m_ymin,8,181
+  double m_xmin, m_ymin, m_zmin,8,181
+  double m_xmin, m_ymin, m_zmin, m_hx,8,181
+  double m_xmin, m_ymin, m_zmin, m_hx, m_hy,8,181
+      m_hz;9,226
+  double m_xmax,11,333
+  double m_xmax, m_ymax,11,333
+  double m_xmax, m_ymax, m_zmax;11,333
+  int m_nx,12,389
+  int m_nx, m_ny,12,389
+  int m_nx, m_ny, m_nz;12,389
+  int m_init;13,458
+  Sarray m_rho,14,472
+  Sarray m_rho, m_mu,14,472
+  Sarray m_rho, m_mu, m_lambda;14,472
+  Sarray m_cs,15,504
+  Sarray m_cs, m_cp;15,504
+  double m_ratio,16,543
+  double m_ratio, m_gamma;16,543
+  bool m_fixrho;17,570
+  int get_varcase(52,2498
+  void write_dfm_hdf5(53,2533
+
+MaterialParCartesianVsVp.h,676
+#define MATERIALPARCARTESIANVSVP_H2,35
+class MaterialParCartesianVsVp 6,110
+  double m_xmin,8,187
+  double m_xmin, m_ymin,8,187
+  double m_xmin, m_ymin, m_zmin,8,187
+  double m_xmin, m_ymin, m_zmin, m_hx,8,187
+  double m_xmin, m_ymin, m_zmin, m_hx, m_hy,8,187
+      m_hz;9,232
+  double m_xmax,11,339
+  double m_xmax, m_ymax,11,339
+  double m_xmax, m_ymax, m_zmax;11,339
+  int m_nx,12,395
+  int m_nx, m_ny,12,395
+  int m_nx, m_ny, m_nz;12,395
+  int m_init;13,464
+  Sarray m_rho,14,478
+  Sarray m_rho, m_mu,14,478
+  Sarray m_rho, m_mu, m_lambda;14,478
+  Sarray m_cs,15,510
+  Sarray m_cs, m_cp;15,510
+  int get_varcase(50,2423
+  void write_dfm_hdf5(51,2458
+
+MaterialParCart.h,1578
+#define MATERIALPARCART_H2,26
+class MaterialParCart 12,274
+  float_sw4 m_xmin,14,344
+  float_sw4 m_xmin, m_ymin,14,344
+  float_sw4 m_xmin, m_ymin, m_zmin,14,344
+  float_sw4 m_xmin, m_ymin, m_zmin, m_hx,14,344
+  float_sw4 m_xmin, m_ymin, m_zmin, m_hx, m_hy,14,344
+  float_sw4 m_xmin, m_ymin, m_zmin, m_hx, m_hy, m_hz;14,344
+  float_sw4 m_xmax,15,398
+  float_sw4 m_xmax, m_ymax,15,398
+  float_sw4 m_xmax, m_ymax, m_zmax,15,398
+  float_sw4 m_xmax, m_ymax, m_zmax, m_ratio;15,398
+  float_sw4 m_amplitude,16,443
+  float_sw4 m_amplitude, m_omega;16,443
+  bool m_global;18,478
+  int m_nx,19,495
+  int m_nx, m_ny,19,495
+  int m_nx, m_ny, m_nz;19,495
+  int m_ib,20,560
+  int m_ib, m_ie,20,560
+  int m_ib, m_ie, m_jb,20,560
+  int m_ib, m_ie, m_jb, m_je,20,560
+  int m_ib, m_ie, m_jb, m_je, m_kb,20,560
+      m_ke;21,596
+  int m_ibint,22,657
+  int m_ibint, m_ieint,22,657
+  int m_ibint, m_ieint, m_jbint,22,657
+  int m_ibint, m_ieint, m_jbint, m_jeint,22,657
+  int m_ibint, m_ieint, m_jbint, m_jeint, m_kbint,22,657
+      m_keint;23,708
+  int m_ibpp,24,760
+  int m_ibpp, m_iepm,24,760
+  int m_ibpp, m_iepm, m_jbpp,24,760
+      m_jepm;25,790
+  int m_init;26,852
+  int m_variables;27,866
+  std::vector<bool> m_limited;28,885
+  int get_varcase(97,4296
+  void get_local_grid_begin_end(100,4447
+  void get_global_grid_size(108,4646
+  double getXmin(120,5054
+  double getDx(121,5098
+  int getNX(122,5138
+  double getYmin(123,5175
+  double getDy(124,5219
+  int getNY(125,5259
+  double getZmin(126,5296
+  double getDz(127,5340
+  int getNZ(128,5380
+
+MaterialParCurv.h,1621
+#define MATERIALPARCURV_H2,26
+class MaterialParCurv 12,274
+  float_sw4 m_xmin,14,344
+  float_sw4 m_xmin, m_ymin,14,344
+  float_sw4 m_xmin, m_ymin, m_zmin,14,344
+  float_sw4 m_xmin, m_ymin, m_zmin, m_hx,14,344
+  float_sw4 m_xmin, m_ymin, m_zmin, m_hx, m_hy,14,344
+  float_sw4 m_xmin, m_ymin, m_zmin, m_hx, m_hy, m_hz;14,344
+  float_sw4 m_xmax,15,398
+  float_sw4 m_xmax, m_ymax,15,398
+  float_sw4 m_xmax, m_ymax, m_zmax,15,398
+  float_sw4 m_xmax, m_ymax, m_zmax, m_ratio;15,398
+  float_sw4 m_amplitude,16,443
+  float_sw4 m_amplitude, m_omega;16,443
+  Sarray mZ;17,477
+  bool m_global;19,491
+  int m_ncomp;20,508
+  int m_nx,21,523
+  int m_nx, m_ny,21,523
+  int m_nx, m_ny, m_nz;21,523
+  int m_ib,22,588
+  int m_ib, m_ie,22,588
+  int m_ib, m_ie, m_jb,22,588
+  int m_ib, m_ie, m_jb, m_je,22,588
+  int m_ib, m_ie, m_jb, m_je, m_kb,22,588
+      m_ke;23,624
+  int m_ibint,24,685
+  int m_ibint, m_ieint,24,685
+  int m_ibint, m_ieint, m_jbint,24,685
+  int m_ibint, m_ieint, m_jbint, m_jeint,24,685
+  int m_ibint, m_ieint, m_jbint, m_jeint, m_kbint,24,685
+      m_keint;25,736
+  int m_ibpp,26,788
+  int m_ibpp, m_iepm,26,788
+  int m_ibpp, m_iepm, m_jbpp,26,788
+      m_jepm;27,818
+  int m_init;28,880
+  int m_variables;29,894
+  std::vector<bool> m_limited;30,913
+  int get_varcase(104,4616
+  void get_local_grid_begin_end(107,4767
+  void get_global_grid_size(115,4966
+  double getXmin(127,5374
+  double getDx(128,5418
+  int getNX(129,5458
+  double getYmin(130,5495
+  double getDy(131,5539
+  int getNY(132,5579
+  double getZmin(133,5616
+  double getDz(134,5660
+  int getNZ(135,5700
+
 MaterialPfile.h,1721
 #define MATERIALPFILE_FILE34,1406
 class MaterialPfile 45,1530
@@ -4654,6 +5331,115 @@ class MaterialVolimagefile 43,1511
   std::string m_path, m_rho, m_mu, m_lambda, m_qp, m_qs;56,2076
   bool m_rhomula;57,2133
   EW* mEW;58,2151
+
+Mopt.h,3460
+#define MOPT_H2,15
+class Mopt 13,192
+  EW* m_ew;15,215
+  int m_myrank;16,227
+  double m_rhoscale,17,243
+  double m_rhoscale, m_muscale,17,243
+  double m_rhoscale, m_muscale, m_lambdascale,17,243
+  double m_rhoscale, m_muscale, m_lambdascale, m_misfitscale;17,243
+  double m_vsscale,18,305
+  double m_vsscale, m_vpscale;18,305
+  double m_typrho,19,336
+  double m_typrho, m_typmu,19,336
+  double m_typrho, m_typmu, m_typlambda;19,336
+  bool m_typrhoset,20,377
+  bool m_typrhoset, m_typmuset,20,377
+  bool m_typrhoset, m_typmuset, m_typlambdaset;20,377
+  double m_rhosffactor,21,425
+  double m_rhosffactor, m_musffactor,21,425
+  double m_rhosffactor, m_musffactor, m_lambdasffactor;21,425
+  bool m_use_pseudohessian;22,481
+  float_sw4 get_vp_min(52,1563
+  float_sw4 get_vp_max(53,1615
+  float_sw4 get_vs_min(54,1667
+  float_sw4 get_vs_max(55,1719
+  float_sw4 get_freq_peakpower(56,1771
+  int get_wave_mode(57,1839
+  float get_twin_shift(58,1891
+  float get_twin_scale(59,1947
+  const string& getPath(61,2004
+  EW* get_EWptr(62,2055
+  enum Misfittype 65,2141
+  enum Misfittype { L2,65,2141
+  enum Misfittype { L2, CROSSCORR 65,2141
+  Misfittype m_misfit;66,2178
+  int m_opttest,68,2202
+  int m_opttest, m_nspar;68,2202
+  int m_maxit,69,2228
+  int m_maxit, m_maxsubit,69,2228
+  int m_maxit, m_maxsubit, m_nbfgs_vectors,69,2228
+  int m_maxit, m_maxsubit, m_nbfgs_vectors, m_optmethod,69,2228
+  int m_maxit, m_maxsubit, m_nbfgs_vectors, m_optmethod, m_ihess_guess;69,2228
+  int m_ncontsteps;70,2300
+  bool m_dolinesearch,71,2320
+  bool m_dolinesearch, m_fletcher_reeves,71,2320
+  bool m_dolinesearch, m_fletcher_reeves, m_wolfe,71,2320
+  bool m_dolinesearch, m_fletcher_reeves, m_wolfe, m_mcheck,71,2320
+  bool m_dolinesearch, m_fletcher_reeves, m_wolfe, m_mcheck, m_output_ts;71,2320
+  bool m_misfit1d_images;72,2394
+  bool m_test_regularizer;73,2420
+  bool m_do_profiling;74,2447
+  double m_tolerance;75,2470
+  int m_var,77,2508
+  int m_var, m_var2,77,2508
+  int m_var, m_var2, m_itest,77,2508
+  int m_var, m_var2, m_itest, m_jtest,77,2508
+  int m_var, m_var2, m_itest, m_jtest, m_ktest,77,2508
+  int m_var, m_var2, m_itest, m_jtest, m_ktest, m_itest2,77,2508
+  int m_var, m_var2, m_itest, m_jtest, m_ktest, m_itest2, m_jtest2,77,2508
+  int m_var, m_var2, m_itest, m_jtest, m_ktest, m_itest2, m_jtest2, m_ktest2;77,2508
+  int m_nsurfpts,78,2586
+  int m_nsurfpts, m_nsurfpts2;78,2586
+  double m_pmin,79,2617
+  double m_pmin, m_pmax,79,2617
+  double m_pmin, m_pmax, m_pmin2,79,2617
+  double m_pmin, m_pmax, m_pmin2, m_pmax2;79,2617
+  float_sw4 m_vp_min,81,2686
+  float_sw4 m_vp_min, m_vp_max,81,2686
+  float_sw4 m_vp_min, m_vp_max, m_vs_min,81,2686
+      m_vs_max;82,2728
+  float_sw4 m_freq_peakpower;83,2790
+  int m_wave_mode;85,2928
+  float m_twin_shift,86,2982
+  float m_twin_shift, m_twin_scale;86,2982
+  int m_win_mode;87,3018
+  MaterialParameterization* m_mp;89,3037
+  std::vector<Image*> m_image_files;91,3111
+  std::vector<Image3D*> m_3dimage_files;92,3148
+  std::vector<SfileOutput*> m_sfiles;93,3189
+  std::string m_scales_fname,94,3227
+  std::string m_scales_fname, m_scalem_fname;94,3227
+  bool m_scales_file_given;95,3273
+  std::string m_path;96,3301
+  double m_reg_coeff;97,3323
+  int m_nsteps_in_memory;98,3345
+  int m_nstot;100,3483
+  double* m_sfs;101,3542
+  double* m_sfm;102,3594
+  double* m_xs0;103,3651
+  double* m_xm0;104,3719
+  bool m_write_dfm;105,3792
+
+MParGridFile.h,589
+#define MPARGRIDFILE_H2,23
+class MParGridFile 17,493
+  bool is_update(28,1050
+  int m_vars,32,1151
+  int m_vars, m_nxr,32,1151
+  int m_vars, m_nxr, m_nyr,32,1151
+  int m_vars, m_nxr, m_nyr, m_nzr,32,1151
+  int m_vars, m_nxr, m_nyr, m_nzr, m_update;32,1151
+  float_sw4 m_xrmin,33,1196
+  float_sw4 m_xrmin, m_yrmin,33,1196
+  float_sw4 m_xrmin, m_yrmin, m_zrmin,33,1196
+  float_sw4 m_xrmin, m_yrmin, m_zrmin, m_hxr,33,1196
+  float_sw4 m_xrmin, m_yrmin, m_zrmin, m_hxr, m_hyr,33,1196
+  float_sw4 m_xrmin, m_yrmin, m_zrmin, m_hxr, m_hyr, m_hzr;33,1196
+  float_sw4* m_xms;34,1256
 
 Mspace.h,1880
 #define __MSPACE_H__3,38
@@ -5139,7 +5925,7 @@ class SfileOutput 51,1640
   std::vector<bool> m_ihavearray;161,5079
   bool m_isCreated;162,5113
 
-Source.h,1071
+Source.h,1107
 #define EW_SOURCE_H35,1411
 class Source 50,1578
   int m_i0,69,2426
@@ -5154,28 +5940,29 @@ class Source 50,1578
   void printPointer(117,4039
   bool get_CorrectForMu(127,4502
   void set_CorrectForMu(128,4561
-  std::string mName;171,6942
-  std::vector<float_sw4> mForces;172,6963
-  bool mIsMomentSource;173,6997
-  float_sw4 mFreq,174,7021
-  float_sw4 mFreq, mT0;174,7021
-  bool m_myPoint;176,7046
-  bool m_zRelativeToTopography;177,7064
-  float_sw4 mX0,178,7096
-  float_sw4 mX0, mY0,178,7096
-  float_sw4 mX0, mY0, mZ0;178,7096
-  float_sw4* mPar;179,7123
-  int* mIpar;180,7142
-  int mNpar,181,7156
-  int mNpar, mNipar;181,7156
-  int mNcyc;182,7177
-  int m_derivative;183,7190
-  timeDep mTimeDependence;184,7210
-  float_sw4 m_dir[m_dir185,7237
-  bool m_is_filtered;186,7260
-  float_sw4 m_zTopo;188,7283
-  bool mIgnore;189,7304
-  bool mShearModulusFactor;190,7320
+  float_sw4 getTimeOffset(129,4627
+  std::string mName;172,6995
+  std::vector<float_sw4> mForces;173,7016
+  bool mIsMomentSource;174,7050
+  float_sw4 mFreq,175,7074
+  float_sw4 mFreq, mT0;175,7074
+  bool m_myPoint;177,7099
+  bool m_zRelativeToTopography;178,7117
+  float_sw4 mX0,179,7149
+  float_sw4 mX0, mY0,179,7149
+  float_sw4 mX0, mY0, mZ0;179,7149
+  float_sw4* mPar;180,7176
+  int* mIpar;181,7195
+  int mNpar,182,7209
+  int mNpar, mNipar;182,7209
+  int mNcyc;183,7230
+  int m_derivative;184,7243
+  timeDep mTimeDependence;185,7263
+  float_sw4 m_dir[m_dir186,7290
+  bool m_is_filtered;187,7313
+  float_sw4 m_zTopo;189,7336
+  bool mIgnore;190,7357
+  bool mShearModulusFactor;191,7373
 
 startEnd.h,30
 #define EW_STARTEND_H34,1401
@@ -5211,6 +5998,18 @@ class SuperGrid 39,1451
 sw4.h,43
 #define SW4_H2,14
 #define float_sw4 4,29
+
+sw4-prof.h,291
+#define SW4_PROFILE2,20
+class SW4Prof0 7,78
+class SW4Prof 15,246
+  std::vector<std::string> m_labels;23,435
+  std::vector<double> m_times;24,472
+  int m_myrank,25,503
+  int m_myrank, m_nprocs;25,503
+  double m_t0;26,529
+  std::string m_fname;27,544
+  static int m_instances;28,567
 
 TestEcons.h,104
 #define TESTECONS_H2,20
@@ -5432,5 +6231,7 @@ version.h,29
 #define EW_VERSION_H34,1400
 
 f_interface.h,0
+
+compute_f.h,0
 
 cf_interface.h,0

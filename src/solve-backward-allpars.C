@@ -8,7 +8,7 @@
 //   int*, int*,
 //					   int*, int*, int*, int*, double* );
 //}
-
+extern std::ofstream norm_trace_file;
 void EW::solve_backward_allpars(
     vector<Source*>& a_Sources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
     vector<Sarray>& a_Lambda, vector<TimeSeries*>& a_TimeSeries,
@@ -21,7 +21,19 @@ void EW::solve_backward_allpars(
   //   vector<Sarray> gRho, gMu, gLambda;
   vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
   vector<double**> BCForcing;
+  std::cout<<"SOLVE_BACKWARD_ALLPARS\n";
 
+#ifdef SW4_NORM_TRACE
+  static  std::ofstream norm_trace_file_old;
+  static int ntf_opened=false;
+  if ((!ntf_opened) && (!getRank())) {
+    //norm_trace_file.open("NormsOpt.dat");
+    //ntf_opened=true;
+    //norm_trace_file.precision(10);
+  }
+  norm_trace_file<<"SOLVE_BACKWARDS_ALLPARS\n";
+#endif
+  
   F.resize(mNumberOfGrids);
   Lk.resize(mNumberOfGrids);
   Kacc.resize(mNumberOfGrids);
@@ -75,6 +87,7 @@ void EW::solve_backward_allpars(
     gRho[g].set_to_zero();
     gMu[g].set_to_zero();
     gLambda[g].set_to_zero();
+    Uacc[g].set_to_zero();
     //      cout << getRank() << " Dimensions in proc: "<< ifirst << " " <<
     //      ilast << " " << jfirst
     //           << " " << jlast << " " << kfirst << " " << klast << endl;
@@ -212,14 +225,48 @@ void EW::solve_backward_allpars(
     //      enforceIC( Um, U, Up, AlphaVEp, AlphaVE, AlphaVEm, t, true, F,
     //      point_sources );
 
+#ifdef SW4_NORM_TRACE
+  if (!getRank()) {
+
+    for (int g = 0; g < mNumberOfGrids; g++) {
+      norm_trace_file << "POST_FORCE Up[" << g << "] " << Up[g].norm()
+                      << " Um = " << Um[g].norm() << " F = " << F[g].norm()
+                      << "Uacc = "<< Uacc[g].norm()<<"U = "<< U[g].norm()
+		      <<"\n";
+    }
+  }
+#endif
+
     // U-backward solution, corrector
     evalDpDmInTime(Up, U, Um, Uacc);
+
+#ifdef SW4_NORM_TRACE
+  if (!getRank()) {
+
+    for (int g = 0; g < mNumberOfGrids; g++) {
+      norm_trace_file << "POST_EVALDPDM Uacc[" << g << "] " << Uacc[g].norm()
+                      << " Up = " << Up[g].norm() 
+                      <<"\n";
+    }
+  }
+#endif
 
     // set boundary data on Uacc, from forward solver
     for (int g = 0; g < mNumberOfGrids; g++) {
       Upred_saved[g]->pop(Uacc[g], currentTimeStep);
       communicate_array(Uacc[g], g);
     }
+#ifdef SW4_NORM_TRACE
+  if (!getRank()) {
+
+    for (int g = 0; g < mNumberOfGrids; g++) {
+      norm_trace_file << "POST_POP Uacc[" << g << "] " << Uacc[g].norm()
+                      << " Up = " << Up[g].norm() 
+                      <<"\n";
+    }
+  }
+#endif
+    
     // Note, this assumes BCForcing is not time dependent, which is usually true
     enforceBC(Uacc, a_Rho, a_Mu, a_Lambda, AlphaVEm, t, BCForcing);
 
@@ -228,14 +275,57 @@ void EW::solve_backward_allpars(
     Force_tt(t, F, point_sources, identsources);
     evalCorrector(Um, a_Rho, Lk, F);
 
+#ifdef SW4_NORM_TRACE
+  if (!getRank()) {
+
+    for (int g = 0; g < mNumberOfGrids; g++) {
+      norm_trace_file << "POST_FORCE_TT Up[" << g << "] " << Up[g].norm()
+                      << " Um = " << Um[g].norm() << " F = " << F[g].norm()
+                      << "\n";
+    }
+  }
+#endif
+
     for (int g = 0; g < mNumberOfGrids; g++)
       Ucorr_saved[g]->pop(Um[g], currentTimeStep - 2);
+    
+#ifdef SW4_NORM_TRACE
+      if (!getRank()) {
+
+    for (int g = 0; g < mNumberOfGrids; g++) {
+      norm_trace_file << "POST_POP Um[" << g << "] " << Um[g].norm()<<"\n";
+    }}
+#endif
+    
 
     // set boundary data on U
     for (int g = 0; g < mNumberOfGrids; g++) communicate_array(Um[g], g);
+
+#ifdef SW4_NORM_TRACE
+     if (!getRank()) {
+
+    for (int g = 0; g < mNumberOfGrids; g++) {
+      norm_trace_file << "PRE ENFORCEBC Um[" << g << "] " << Um[g].norm()
+                      << " aRho = " << a_Rho[g].norm() << " a_MU = " << a_Mu[g].norm()
+		      <<" aLambda = "<<a_Lambda[g].norm()
+                      << "\n";
+    }
+     }
+#endif
     //      cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
     enforceBC(Um, a_Rho, a_Mu, a_Lambda, AlphaVEm, t - mDt, BCForcing);
     Force(t - mDt, F, point_sources, identsources);
+
+#ifdef SW4_NORM_TRACE
+  if (!getRank()) {
+
+    for (int g = 0; g < mNumberOfGrids; g++) {
+      norm_trace_file << "POST_FORCE_2 Up[" << g << "] " << Up[g].norm()
+                      << " Um = " << Um[g].norm() << " F = " << F[g].norm()
+                      << "\n";
+    }
+  }
+#endif
 
     // This call to enforceIC is needed in order to enforce the IC outside
     // the active domain, which is required in order to keep the scheme stable.
@@ -258,6 +348,18 @@ void EW::solve_backward_allpars(
       //mGridSize );
     }
     add_to_grad(K, Kacc, Um, U, Up, Uacc, gRho, gMu, gLambda);
+    
+#ifdef SW4_NORM_TRACE
+      if (!getRank()) {
+
+    for (int g = 0; g < mNumberOfGrids; g++) {
+      norm_trace_file << "ADD_GRAD K[" << g << "] " << K[g].norm()
+                      << " Kacc = " << K[g].norm() << " gRho = " << gRho[g].norm()
+		      << "gMu = "<<gMu[g].norm()<<" "<< "gLambda = "<<gLambda[g].norm()
+                      << "\n";
+    }
+  }
+#endif
 
     //      if( dbgowner )
     //      {

@@ -26,7 +26,7 @@
 #ifdef USE_HDF5
 #include <sachdf5.h>
 #endif
-
+std::ofstream norm_trace_file;
 void init_umpire(int device);
 
 #define STRINGSIZE 128
@@ -1714,6 +1714,10 @@ int main(int argc, char** argv) {
   MPI_Comm_rank(shared_comm, &local_rank);
   MPI_Comm_size(shared_comm, &local_size);
   MPI_Info_free(&info);
+#ifdef SW4_NORM_TRACE
+  norm_trace_file.open("NormsOpt.dat");
+  norm_trace_file.precision(10);
+#endif
 
   int device = presetGPUID(myRank, local_rank, local_size);
 

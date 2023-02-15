@@ -38,6 +38,7 @@
 #include "startEnd.h"
 #include "version.h"
 
+extern std::ofstream norm_trace_file;
 #ifdef USE_HDF5
 #include "hdf5.h"
 #include "readhdf5.h"
@@ -5330,7 +5331,12 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
     // for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
     vset_to_zero_async(a_F, mNumberOfGrids);
     SW4_MARK_BEGIN("FORCE_TT::DEVICE");
-
+    //norm_trace_file<<"FORCE_TT "<<a_F[0].norm()<<"\n";
+#ifdef SW4_NORM_TRACE
+    RAJA::ReduceSum<REDUCTION_POLICY, float_sw4> norm0(0),norm1(0),norm2(0);
+    RAJA::ReduceSum<REDUCTION_POLICY, float_sw4> Fnorm(0);
+    RAJA::ReduceSum<REDUCTION_POLICY, float_sw4> Anorm(0);
+#endif
     RAJA::forall<FORCETT_LOOP_ASYNC>(
         RAJA::RangeSegment(0, identsources.size() - 1), [=] RAJA_DEVICE(int r) {
           int index = r * 3;
@@ -5340,10 +5346,25 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
 #pragma unroll
             for (int i = 0; i < 3; i++)
               *ForceAddress_copy[index + i] += fxyz[i];
+#ifdef SW4_NORM_TRACE
+	    norm0+=fxyz[0]*fxyz[0];
+	    norm1+=fxyz[1]*fxyz[1];
+	    norm2+=fxyz[2]*fxyz[2];
+	    for (int i = 0; i < 3; i++) {
+	      //norm[i]+=fxyz[i];
+
+	      Anorm+=GPSL[s]->mFreq;
+	    }
+	    //for (int i = 0; i < 3; i++)  Fnorm+=*ForceAddress_copy[index + i]**ForceAddress_copy[index + i];
+#endif
           }
         });
 
     SYNC_STREAM;
+#ifdef SW4_NORM_TRACE
+    norm_trace_file<<"FORCE__TT NORM "<<a_t<<" "<<norm0.get()<<" "
+		   <<norm1.get()<<" "<<norm2.get()<<"\n";
+#endif
     SW4_MARK_END("FORCE_TT::DEVICE");
   }
 }

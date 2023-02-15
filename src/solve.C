@@ -30,6 +30,7 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+extern std::ofstream norm_trace_file;
 #ifdef SW4_USE_CMEM
 __constant__ double cmem_acof[384];
 __constant__ double cmem_acof_no_gp[384];
@@ -86,6 +87,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
    		vector<DataPatches*>& Ucorr_saved_sides, bool save_sides,
                int event,int nsteps_in_memory, int varcase, vector<Sarray>& PseudoHessian ){
   SW4_MARK_FUNCTION;
+  std::cout<<"SOLVE\n";
   check_ghcof_no_gp(m_ghcof_no_gp);
 #ifdef SW4_USE_CMEM
   // std::cout<<"Copying acof to constant device memory\n";
@@ -1043,11 +1045,13 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 #ifdef SW4_TRACK_MPI
   // bool cudaProfilerOn = false;
 #endif
+#ifndef SOURCE_INVERSION
   if (!getRank()) {
     time_t now;
     time(&now);
     printf("Start time stepping at %s\n", ctime(&now));
   }
+#endif
   bool end_clean_time_reg = false;
   for (int currentTimeStep = beginCycle;
        currentTimeStep <= mNumberOfTimeSteps[event]; currentTimeStep++) {
@@ -1098,7 +1102,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     SW4_PEEK;
     SYNC_DEVICE;
 #endif
-#ifdef SW4_NORM_TRACE
+#ifdef SW4_NORM_TRACE_2
     if (!getRank()) {
       for (int g = 0; g < mNumberOfGrids; g++) {
         norm_trace_file << "PREEVALRHS Up[" << g << "] " << Up[g].norm()
@@ -1111,7 +1115,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     if (m_anisotropic)
       evalRHSanisotropic(U, mC, Lu);
     else {
-#ifdef SW4_NORM_TRACE
+#ifdef SW4_NORM_TRACE_2
       evalRHS(U, a_Mu, a_Lambda, Lu, AlphaVE,
               &norm_trace_file);  // save Lu in composite grid 'Lu'
 #else
@@ -1305,7 +1309,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       SYNC_DEVICE;
 #endif
 
-#ifdef SW4_NORM_TRACE
+#ifdef SW4_NORM_TRACE_2
       if (!getRank()) {
         for (int g = 0; g < mNumberOfGrids; g++) {
           norm_trace_file << "PreEnforceIC Up[" << g << "] " << Up[g].norm()
@@ -1743,11 +1747,13 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
                 << " s \n";
 #endif
       if (proc_zero()) {
+#ifndef SOURCE_INVERSION
         std::cout << " Time for the last time step is "
                   << std::chrono::duration_cast<std::chrono::milliseconds>(t2 -
                                                                            t1)
                          .count()
                   << " ms \n";
+#endif
       }
     }
 
@@ -1759,6 +1765,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     if (end_clean_time_reg) {
       // SW4_MARK_END("CLEAN_TIME");
     }
+    norm_trace_file<<"DONE WITH TIME STEP"<<currentTimeStep<<"\n";
   }  // end time stepping loop
   // SW4_MARK_END("CLEAN_TIME");
   SW4_MARK_END("TIME_STEPPING");
@@ -1774,9 +1781,11 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   MPI_Reduce(&fstep_local, &fstep_avg, 1, MPI_FLOAT, MPI_SUM, 0,
              MPI_COMM_WORLD);
   fstep_avg /= m_nProcs;
+#ifndef SOURCE_INVERSION
   if (m_myRank == 0)
     cout << "First time step :: min" << fstep_min << "  max " << fstep_max
          << " mean " << fstep_avg << "\n";
+#endif
   // End calculate stats for first time step
 
   // cudaProfilerStop();
@@ -1933,7 +1942,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   //   if( m_forcing->knows_exact() )
   //      computeSolutionError(U, mTime, AlphaVE ); // note that final solution
   //      ends up in U after the call to cycleSolutionArrays()
-
+  norm_trace_file<<"DONE WITH SOLVE\n";
 }  // end EW::solve()
 
 //------------------------------------------------------------------------
@@ -1980,6 +1989,17 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
       *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
   int* wind_ptr;
   float_sw4 om = 0, ph = 0, cv = 0;
+
+#ifdef SW4_NORM_TRACE
+  if (!getRank()) {
+
+    for (int g = 0; g < mNumberOfGrids; g++) {
+      norm_trace_file << "IN ENFORCEBC a_U[" << g << "] " << a_U[g].norm()
+		      << "\n";
+    }
+  }
+#endif
+  
 
   for (g = 0; g < mNumberOfGrids; g++) {
     u_ptr = a_U[g].c_ptr();
@@ -2091,6 +2111,18 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
       }
     }
   }
+
+#ifdef SW4_NORM_TRACE
+  if (!getRank()) {
+
+    for (int g = 0; g < mNumberOfGrids; g++) {
+      norm_trace_file << "IN ENFORCEBC END a_U[" << g << "] " << a_U[g].norm()
+		      << "\n";
+    }
+  }
+#endif
+
+  
 #define SW4_RAJA_CURVIMR
 #ifdef SW4_RAJA_CURVIMR
   SW4_MARK_BEGIN("CURVI in EnforceBC");
