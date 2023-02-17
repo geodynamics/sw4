@@ -88,6 +88,7 @@ class GridPointSource : public Managed {
   void set_noderivative();
   void print_info() const;
   void set_sort_key(size_t key);
+  int getmNpar(){ return mNpar;}
 
   //// discretize a time function at each time step and change the time function
   /// to be "Discrete()"

@@ -30,6 +30,7 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+#include <fstream>
 extern std::ofstream norm_trace_file;
 #ifdef SW4_USE_CMEM
 __constant__ double cmem_acof[384];
@@ -4872,6 +4873,8 @@ void EW::testSourceDiscretization(int kx[3], int ky[3], int kz[3],
 
   // tmp
   if (proc_zero()) printf("Inside testSourceDiscretization\n");
+  std::cout<<"testSourcrDiscretization ::"<<identsources.size()<<" "<<point_sources.size()
+	       <<" "<<ForceAddress<<" "<<GPS<<"\n"<<std::flush;
 
   // Impose source
   for (int g = 0; g < mNumberOfGrids; g++) F[g].set_to_zero();

@@ -239,7 +239,7 @@ OBJ  = EW.o Sarray.o version.o parseInputFile.o ForcingTwilight.o \
        oddIevenJinterp.o evenIevenJinterp.o CheckPoint.o Mspace.o RandomizedMaterial.o AllDims.o Patch.o ESSI3D.o \
 	MaterialSfile.o MaterialInvtest.o geodyn.o ESSI3DHDF5.o sachdf5.o readhdf5.o CurvilinearInterface2.o \
 	TestEcons.o TestTwilight.o  TestPointSource.o curvilinear4sgwind.o GridGeneratorGeneral.o GridGeneratorGaussianHill.o \
-	GridGenerator.o RHS43DEV.o curvilinear4sgcX1.o curvilinear4sgcSF.o SfileOutput.o 
+	GridGenerator.o RHS43DEV.o curvilinear4sgcX1.o curvilinear4sgcSF.o SfileOutput.o DataPatches.o pseudohess.o rhs4th3point.o initUmpire.o
 
 
 # new C-routines converted from fortran
@@ -255,16 +255,19 @@ else
   OBJ += rhs4th3windc.o 
 endif
 
+# Material optimization
 MOBJOPT  = moptmain.o solve-backward-allpars.o lbfgs.o nlcg.o ProjectMtrl.o \
            MaterialParameterization.o Mopt.o MaterialParCartesian.o InterpolateMaterial.o \
 	   MaterialParCartesianVels.o MaterialParCartesianVp.o MParGridFile.o MaterialParCartesianVsVp.o \
-           MaterialParAllpts.o MaterialParCart.o solve-dudp.o MaterialParCurv.o
-
+           MaterialParAllpts.o MaterialParCart.o solve-dudp.o MaterialParCurv.o sw4-prof.o solveTT.o fastmarching.o 
 # OpenMP & C-version of the F-77 routine curvilinear4sg() is in rhs4sgcurv.o
 
 # prefix object files with build directory
 FSW4 = $(addprefix $(builddir)/,$(OBJSW4))
 FOBJ = $(addprefix $(builddir)/,$(OBJ)) $(addprefix $(builddir)/,$(QUADPACK))
+
+# Material optimization
+FMOBJOPT = $(addprefix $(builddir)/,$(MOBJOPT)) $(addprefix $(builddir)/,$(QUADPACK))
 
 # prefix
 ifeq ($(raja_cuda),yes)

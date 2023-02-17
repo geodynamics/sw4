@@ -117,11 +117,12 @@ void EW::solve_backward_allpars(
 
   // the Source objects get discretized into GridPointSource objects
   vector<GridPointSource*> point_sources;
-
+  std::cout<<"BEFORE SOURCE4"<<point_sources.size()<<"\n";
   // Transfer source terms to each individual grid as point sources at grid
   // points.
   for (unsigned int i = 0; i < a_Sources.size(); i++)
     a_Sources[i]->set_grid_point_sources4(this, point_sources);
+  std::cout<<"AFTER SOURCE4"<<point_sources.size()<<"\n";
 
   //   if (!m_testing && m_prefilter_sources)
   //   {

@@ -4987,6 +4987,9 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
         // SW4_CheckDeviceError(cudaMemGetInfo(&mfree,&mtotal));
         // std::cout<<getRank()<<" MFREE POST-ALLOC"<<mfree/1024/1024.0<<" MB
         // \n";
+
+      // std::cout<<"FORCE ::"<<identsources.size()<<" "<<point_sources.size()
+      //       <<" "<<ForceAddress<<" "<<GPS<<"\n"<<std::flush;
 #pragma omp parallel for
       for (int r = 0; r < identsources.size() - 1; r++) {
         int index = r * 3;
@@ -5023,13 +5026,15 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
     GPSL = GPS;
     idnts_local = idnts;
     float_sw4** ForceAddress_copy = ForceAddress;
+         std::cout<<"FORCE ::"<<identsources.size()<<" "<<point_sources.size()
+		  <<" "<<ForceAddress<<" "<<GPS<<"\n"<<std::flush;
 
     // for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
     vset_to_zero_async(a_F, mNumberOfGrids);
 
     SW4_MARK_BEGIN("FORCE::DEVICE");
     //std::cout<<"FORCE "<<identsources.size()<<"\n";
-#ifdef SW4_NORM_TRACE
+#ifdef SW4_NORM_TRACE_2
     cout.precision(15);
     RAJA::ReduceSum<REDUCTION_POLICY, float_sw4> norm0(0),norm1(0),norm2(0);
     RAJA::ReduceSum<REDUCTION_POLICY, float_sw4> Fnorm(0);
@@ -5040,12 +5045,13 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
           int index = r * 3;
           for (int s = idnts_local[r]; s < idnts_local[r + 1]; s++) {
             float_sw4 fxyz[3];
+	    if (r<3) std::cout<<r<<" "<<s<<" "<<GPSL[s]<<" "<<GPSL[s]->getmNpar()<<"\n";
             GPSL[s]->getFxyz(a_t, fxyz);
 #pragma unroll
             for (int i = 0; i < 3; i++)
               *ForceAddress_copy[index + i] += fxyz[i];
 	    //	    printf("FXYZ %d %d %.15g %.15g %.15g\n",r,s,fxyz[0],fxyz[1],fxyz[2]);
-#ifdef SW4_NORM_TRACE
+#ifdef SW4_NORM_TRACE_2
 	    norm0+=fxyz[0]*fxyz[0];
 	    norm1+=fxyz[1]*fxyz[1];
 	    norm2+=fxyz[2]*fxyz[2];
@@ -5061,7 +5067,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
 
     SYNC_STREAM;
     SW4_MARK_END("FORCE::DEVICE");
-#ifdef SW4_NORM_TRACE
+#ifdef SW4_NORM_TRACE_2
     //std::cout<<"FORCE NORM "<<a_t<<" "<<norm0.get()<<" "<<norm1.get()<<" "<<norm2.get()<<" "<<Fnorm.get()<<" "<<a_F[0].norm()<<"\n";// <<Anorm.get()<<"\n";
     cout.precision(3);
 #endif
@@ -5320,7 +5326,8 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
 
     GridPointSource** GPSL = GPS;
     int* idnts_local = idnts;
-
+    std::cout<<"FORCE_TT ::"<<identsources.size()<<" "<<point_sources.size()
+	       <<" "<<ForceAddress<<" "<<GPS<<"\n"<<std::flush;
     float_sw4** ForceAddress_copy = ForceAddress;
     // #ifdef ENABLE_CUDA
     //     typedef RAJA::cuda_exec<1024, true> FORCETT_LOOP_ASYNC;
