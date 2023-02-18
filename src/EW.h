@@ -261,7 +261,7 @@ class EW {
   void exactAccTwilight(float_sw4 a_t, vector<Sarray>& a_Uacc);
   void Force(float_sw4 a_t, vector<Sarray>& a_F,
              vector<GridPointSource*>& point_sources,
-             vector<int>& identsources);
+             vector<int>& identsources,bool init=false);
   void Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
                 vector<GridPointSource*>& point_sources,
                 vector<int>& identsources);

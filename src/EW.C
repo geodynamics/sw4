@@ -4706,7 +4706,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
 #else
 void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
                vector<GridPointSource*>& point_sources,
-               vector<int>& identsources) {
+               vector<int>& identsources,bool init) {
   SW4_MARK_FUNCTION;
   int ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *f_ptr, om, ph, cv, h, zmin, omm, phm, amprho, ampmu, ampla;
@@ -4957,7 +4957,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
 
     GridPointSource** GPSL;
     int* idnts_local;
-    if (firstcall) {
+    if (init) {
       // WARNING :: FORCE_TT cannot be called until this section has been called
       SW4_MARK_BEGIN("FORCE::HOST::FIRSTCALL");
       // size_t mfree,mtotal;
@@ -5026,8 +5026,8 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
     GPSL = GPS;
     idnts_local = idnts;
     float_sw4** ForceAddress_copy = ForceAddress;
-         std::cout<<"FORCE ::"<<identsources.size()<<" "<<point_sources.size()
-		  <<" "<<ForceAddress<<" "<<GPS<<"\n"<<std::flush;
+    //      std::cout<<"FORCE ::"<<identsources.size()<<" "<<point_sources.size()
+    //		  <<" "<<ForceAddress<<" "<<GPS<<"\n"<<std::flush;
 
     // for (int g = 0; g < mNumberOfGrids; g++) a_F[g].set_to_zero_async();
     vset_to_zero_async(a_F, mNumberOfGrids);
@@ -5045,7 +5045,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
           int index = r * 3;
           for (int s = idnts_local[r]; s < idnts_local[r + 1]; s++) {
             float_sw4 fxyz[3];
-	    if (r<3) std::cout<<r<<" "<<s<<" "<<GPSL[s]<<" "<<GPSL[s]->getmNpar()<<"\n";
+	    // if (r<3) std::cout<<r<<" "<<s<<" "<<GPSL[s]<<" "<<GPSL[s]->getmNpar()<<"\n";
             GPSL[s]->getFxyz(a_t, fxyz);
 #pragma unroll
             for (int i = 0; i < 3; i++)
@@ -5326,8 +5326,8 @@ void EW::Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
 
     GridPointSource** GPSL = GPS;
     int* idnts_local = idnts;
-    std::cout<<"FORCE_TT ::"<<identsources.size()<<" "<<point_sources.size()
-	       <<" "<<ForceAddress<<" "<<GPS<<"\n"<<std::flush;
+    //std::cout<<"FORCE_TT ::"<<identsources.size()<<" "<<point_sources.size()
+    //	       <<" "<<ForceAddress<<" "<<GPS<<"\n"<<std::flush;
     float_sw4** ForceAddress_copy = ForceAddress;
     // #ifdef ENABLE_CUDA
     //     typedef RAJA::cuda_exec<1024, true> FORCETT_LOOP_ASYNC;

@@ -1016,7 +1016,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     }
   }
 #endif
-  Force(t, F, point_sources, identsources);
+  Force(t, F, point_sources, identsources,true);
 
   double time_start_solve = MPI_Wtime();
   print_execution_time(time_start_init, time_start_solve, "initial data phase");

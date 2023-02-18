@@ -315,11 +315,11 @@ void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) {
   float_sw4 afun, afunv[6];
   //printf("mTimeDependence =%d %d\n",mTimeDependence,iRicker);
 
-  if (mNpar==0) {
-    std::cout<<"FXYZ "<<mNpar<<" "<<mNipar<<"\n"<<std::flush;
-    afun = 0.0;
-    return;
-  }
+  //  if (mNpar==0) {
+  //   std::cout<<"FXYZ "<<mNpar<<" "<<mNipar<<"\n"<<std::flush;
+  //   afun = 0.0;
+  //   return;
+  // }
   if (mTimeDependence != iDiscrete6moments &&
       mTimeDependence != iDiscrete3forces)
     afun = mTimeFunc(mFreq, t - mT0, mPar, mNpar, mIpar, mNipar);
@@ -423,7 +423,8 @@ void GridPointSource::getFxyz_notime(float_sw4* fxyz) const {
 
 //-----------------------------------------------------------------------
 RAJA_HOST_DEVICE
-void GridPointSource::getFxyztt(float_sw4 t, float_sw4* fxyz) const {
+
+  void GridPointSource::getFxyztt(float_sw4 t, float_sw4* fxyz) const {
   float_sw4 afun, afunv[6];
   if (mTimeDependence != iDiscrete6moments &&
       mTimeDependence != iDiscrete3forces)
