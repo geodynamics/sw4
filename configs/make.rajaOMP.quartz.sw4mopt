@@ -1,0 +1,25 @@
+proj = yes
+FC = gfortran
+LINKER = mpicxx
+CXX = mpicxx
+GIT_VERSION := "$(shell git describe --abbrev=4 --dirty --always --tags)"
+RAJA_LOCATION = /usr/workspace/wsb/deg/ramesh/RAJA_053/RAJA/install_ray053
+RAJA_LOCATION = /usr/workspace/wsb/deg/ramesh/RAJA_01_24_2018/RAJA/install
+RAJA_LOCATION = /usr/workspace/wsb/deg/ramesh/RAJA_053/RAJA/install_053NOMP
+RAJA_LOCATION = /usr/workspace/wsb/deg/ramesh/RAJA_01_24_2018/RAJA/install_nomp
+RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2018/RAJA/install-ray-nomp
+RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2018/RAJA/install-quartz
+RAJA_LOCATION = /usr/workspace/wsb/ramesh/Project6/SW4/sw4_raja_omp_DEC2018/raja/install
+RAJA_LOCATION = /usr/workspace/wsb/ramesh/RAJA/2019/RAJA-0.7.0/install_corona_icc
+RAJA_LOCATION = /usr/workspace/wsb/ramesh/Project6/MAMMOTH/MERGE_TESTS/RAJA-v2022.10.4/install_openmp
+RAJA_LOCATION = /usr/workspace/wsb/ramesh/Project6/MAMMOTH/MERGE_TESTS/RAJA-v2022.10.4/install_omp_quartz_gcc
+PROJ_HOME = /usr/workspace/wsb/ramesh/Project6/Proj/proj-5.0.0/install-quartz
+CALIPER_LOCATION = /usr/workspace/wsb/ramesh/Caliper/Caliper/install_quartz
+EXTRA_FORT_FLAGS = 
+LINKFLAGS = 
+EXTRA_CXX_FLAGS =  -O3  -std=c++14 -fopenmp -I$(RAJA_LOCATION)/include  -I$(CALIPER_LOCATION)/include -DSW4_CROUTINES -I$(PROJ_HOME)/include  -DSW4_GIT_VERSION=\"$(GIT_VERSION)\" -DUSE_LAPACK_ON_CPU=1 -g -DSW4_NORM_TRACE=1 -DSOURCE_INVERSION=1 
+EXTRA_CXX_FLAGS2 = -O3  -std=c++14 -fopenmp -I$(RAJA_LOCATION)/include  -I$(CALIPER_LOCATION)/include -DSW4_CROUTINES -I$(PROJ_HOME)/include  -DSW4_GIT_VERSION=\"$(GIT_VERSION)\" -DUSE_LAPACK_ON_CPU=1 -g 
+
+MKL_PATH = /usr/tce/packages/mkl/mkl-2018.0/lib
+EXTRA_LINK_FLAGS = -fopenmp -Wl,-rpath=$(SW4ROOT)/lib -Wl,-rpath=${MKL_PATH} -L${MKL_PATH} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl -Wl,-rpath=$(CALIPER_LOCATION)/lib64  -L $(PROJ_HOME)/lib64 -lproj -Wl,-rpath=$(PROJ_HOME)/lib64 -L $(RAJA_LOCATION)/lib -lcamp -lRAJA  -lgfortran
+
