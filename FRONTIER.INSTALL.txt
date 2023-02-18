@@ -1,0 +1,32 @@
+0. Load the modules:
+
+ml  PrgEnv-amd cray-hdf5-parallel cray-fftw cray-python sqlite libtiff
+ml rocm
+
+1. Build RAJA:
+mkdir build && cd build
+cmake -DCMAKE_CXX_COMPILER=hipcc -DCMAKE_C_COMPILER=hipcc -DCMAKE_INSTALL_PREFIX=../install_frontier -DENABLE_HIP=On -DENABLE_OPENMP=Off -DHIP_ROOT_DIR=/opt/rocm-5.3.0/hip -DCMAKE_HIP_ARCHITECTURES=gfx90a ../
+make -j 10
+make test
+make install -j 10
+
+2. UMPIRE:
+mkdir buidl && cd build
+cmake -DCMAKE_CXX_COMPILER=hipcc -DCMAKE_C_COMPILER=hipcc -DCMAKE_INSTALL_PREFIX=../install_frontier  -DUMPIRE_ENABLE_FILE_RESOURCE=Off -DENABLE_HIP=On -DENABLE_OPENMP=Off -DHIP_ROOT_DIR=/opt/rocm-5.3.0/hip -DCMAKE_HIP_ARC
+HITECTURES=gfx90a ../
+make -j 10
+make test
+make install -j 10
+
+3. PROJ6+
+0. wget https://download.osgeo.org/proj/proj-9.0.0.tar.gz
+2. mkdir build && cd build
+3. cmake -DCMAKE_INSTALL_PREFIX=../install  ../
+4. make install -j 5
+
+---------------------------------------------------------------------
+1. cp make.raja.Frontier.KPP make.inc in config/
+2. modify paths to the 3 libraries above in make.inc
+3. make -f Makefile.hipcc -j 5
+4. see performance/large/run.frontier.cmd for sample batch script
+
