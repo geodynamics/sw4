@@ -1,9 +1,9 @@
-0. Load the modules:
+0. Modules
 ---------------------------------------------------------------------
 0. ml  PrgEnv-amd cray-hdf5-parallel cray-fftw cray-python sqlite libtiff
 1. ml rocm
 
-1. Build RAJA:
+1. RAJA:
 ---------------------------------------------------------------------
 0. wget https://github.com/LLNL/RAJA/releases/download/v2022.10.4/RAJA-v2022.10.4.tar.gz
 1. mkdir build && cd build
@@ -28,6 +28,7 @@
 3. cmake -DCMAKE_INSTALL_PREFIX=../install  ../
 4. make install -j 5
 
+4. SW4
 ---------------------------------------------------------------------
 0. git clone https://github.com/geodynamics/sw4.git
 1. cd sw4
