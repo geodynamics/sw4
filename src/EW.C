@@ -37,7 +37,7 @@
 #include "policies.h"
 #include "startEnd.h"
 #include "version.h"
-
+#include <fstream>
 extern std::ofstream norm_trace_file;
 #ifdef USE_HDF5
 #include "hdf5.h"
@@ -6609,6 +6609,8 @@ void EW::testsourcediff(vector<Source*> GlobalSources, float_sw4 gradient[11],
   }
   //   for( int m=0 ; m < gpsources.size() ; m++ )
   //   cout << "size of sources " << gpsources.size() << endl;
+
+#ifdef TRANSLATED
   for (int m = 0; m < gpsources.size() - 1; m++) {
     gpsources[m]->add_to_gradient(
         kappa, eta, 0.63, mDt, gradient, mGridSize, mJ,
@@ -6616,6 +6618,9 @@ void EW::testsourcediff(vector<Source*> GlobalSources, float_sw4 gradient[11],
                               // Sarrays
     gpsources[m]->add_to_hessian(kappa, eta, 0.63, mDt, hessian, mGridSize);
   }
+#else
+  std::cerr<<" WARNING :: MISSING FUNCTIONALITY IN EW.C line 6622\n";
+#endif
 }
 
 //-----------------------------------------------------------------------

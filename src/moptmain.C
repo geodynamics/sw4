@@ -30,6 +30,7 @@ std::ofstream norm_trace_file;
 void init_umpire(int device);
 
 #define STRINGSIZE 128
+#include "Mspace.h"
 
 void usage(string thereason) {
   cout << endl
@@ -598,7 +599,7 @@ void compute_f_and_df(EW& simulation, int nspar, int nmpars, double* xs,
         }
       }
 
-      double dfsrc[11];
+      double *dfsrc= SW4_NEW(Space::Managed, float_sw4[11]);
       get_source_pars(nspar, dfsrc, dfs);
       sw4_profile->time_stamp("backward+adjoint solve");
       simulation.solve_backward_allpars(GlobalSources[e], rho, mu, lambda,

@@ -77,10 +77,11 @@ class GridPointSource : public Managed {
 
   void limitFrequency(float_sw4 max_freq);
 
-  void add_to_gradient(std::vector<Sarray>& kappa, std::vector<Sarray>& eta,
+  RAJA_HOST_DEVICE
+  void add_to_gradient(SView *kappa, SView *eta,
                        float_sw4 t, float_sw4 dt, float_sw4 gradient[11],
-                       std::vector<float_sw4>& h, vector<Sarray>& Jac,
-                       bool topography_exists);
+                       float_sw4 *h, SView *Jac,
+                       bool topography_exists,int hsize);
   void add_to_hessian(std::vector<Sarray>& kappa, std::vector<Sarray>& eta,
                       float_sw4 t, float_sw4 dt, float_sw4 hessian[121],
                       std::vector<float_sw4>& h);

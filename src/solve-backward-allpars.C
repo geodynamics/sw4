@@ -13,7 +13,7 @@ void EW::solve_backward_allpars(
     vector<Source*>& a_Sources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
     vector<Sarray>& a_Lambda, vector<TimeSeries*>& a_TimeSeries,
     vector<Sarray>& Up, vector<Sarray>& U, vector<DataPatches*>& Upred_saved,
-    vector<DataPatches*>& Ucorr_saved, double gradientsrc[11],
+    vector<DataPatches*>& Ucorr_saved, double *gradientsrc,
     vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda,
     int event) {
   // solution arrays
@@ -340,14 +340,38 @@ void EW::solve_backward_allpars(
     //         AlphaVEm, true );
 
     time_measure[5] = MPI_Wtime();
-
+    //std::cout<<"ADD TO GRADIENT\n"<<std::flush;
     // Accumulate the gradient
-    for (int s = 0; s < point_sources.size(); s++) {
-      point_sources[s]->add_to_gradient(K, Kacc, t, mDt, gradientsrc, mGridSize,
-                                        mJ, topographyExists());
+    
+    //for (int s = 0; s < point_sources.size(); s++) {
+    //  point_sources[s]->add_to_gradient(K, Kacc, t, mDt, gradientsrc, mGridSize,
+    //                                  mJ, topographyExists());
+    SView *KV = SW4_NEW(Space::Managed, SView[K.size()]);
+    SView *KaccV = SW4_NEW(Space::Managed, SView[Kacc.size()]);
+    SView *mJV = SW4_NEW(Space::Managed, SView[mJ.size()]);
+    float_sw4 *h = SW4_NEW(Space::Managed, float_sw4[mGridSize.size()]);
+    int hsize=mGridSize.size();
+
+    for (int i=0;i<K.size();i++) KV[i]=K[i].getview();
+    for (int i=0;i<Kacc.size();i++) KaccV[i]=Kacc[i].getview();
+    for (int i=0;i<mJ.size();i++) mJV[i]=mJ[i].getview();
+    for(int i=0;i<mGridSize.size();i++) h[i]=mGridSize[i];
+    float_sw4 lmDt = mDt;
+    GridPointSource **GPSL = GPS;
+    bool topoE=topographyExists();
+      RAJA::forall<DEFAULT_LOOP1>(
+          RAJA::RangeSegment(0, point_sources.size()),
+          [=] RAJA_DEVICE(int s) {
+	    GPSL[s]->add_to_gradient(KV, KaccV, t, lmDt, gradientsrc, h,
+				     mJV, topoE, hsize);
+	  });
+      ::operator delete[](KV,Space::Managed);
+      ::operator delete[](KaccV,Space::Managed);
+      ::operator delete[](mJV,Space::Managed);
+      ::operator delete[](h,Space::Managed);
       //	 point_sources[s]->add_to_hessian(  K, Kacc, t, mDt, hessian,
       //mGridSize );
-    }
+      //std::cout<<"DONE ADD TO GRADIENT\n"<<std::flush;
     add_to_grad(K, Kacc, Um, U, Up, Uacc, gRho, gMu, gLambda);
     
 #ifdef SW4_NORM_TRACE

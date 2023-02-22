@@ -586,12 +586,13 @@ ostream& operator<<(ostream& output, const GridPointSource& s) {
 }
 
 //-----------------------------------------------------------------------
-void GridPointSource::add_to_gradient(std::vector<Sarray>& kappa,
-                                      std::vector<Sarray>& eta, float_sw4 t,
+ RAJA_HOST_DEVICE
+void GridPointSource::add_to_gradient(SView *kappa,
+                                      SView *eta, float_sw4 t,
                                       float_sw4 dt, float_sw4 gradient[11],
-                                      std::vector<float_sw4>& h,
-                                      vector<Sarray>& Jac,
-                                      bool topography_exists) {
+                                      float_sw4  *h,
+                                      SView *Jac,
+                                      bool topography_exists,int hsize) {
 #if defined(SOURCE_INVERSION)
   if (m_jacobian_known) {
     float_sw4 normwgh[4] = {17.0 / 48.0, 59.0 / 48.0, 43.0 / 48.0, 49.0 / 48.0};
@@ -608,7 +609,7 @@ void GridPointSource::add_to_gradient(std::vector<Sarray>& kappa,
     float_sw4 eta2 = eta[m_grid](2, m_i0, m_j0, m_k0);
     float_sw4 eta3 = eta[m_grid](3, m_i0, m_j0, m_k0);
     float_sw4 h3 = h[m_grid] * h[m_grid] * h[m_grid];
-    if (topography_exists && m_grid == h.size() - 1)
+    if (topography_exists && m_grid == hsize- 1)
       h3 = Jac[m_grid](m_i0, m_j0, m_k0);
     //      float_sw4 h3 = 1.0;
     if (1 <= m_k0 && m_k0 <= 4) h3 *= normwgh[m_k0 - 1];
