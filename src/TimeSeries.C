@@ -621,7 +621,7 @@ void TimeSeries::writeFile(string suffix) {
     fid = openHDF5File(suffix);
 
     //std::cout<<"WRITE SUFFIX "<<suffix<<" ResT = "<<filePrefix.str()<<"\n"<<std::flush;
-    return;
+
     if (fid <= 0)
       printf("Rank %d: %s fid is invalid, cannot open file [%s]\n", myRank,
              __func__, filePrefix.str().c_str());

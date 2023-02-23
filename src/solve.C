@@ -30,8 +30,10 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
+#ifdef SW4_NORM_TRACE
 #include <fstream>
 extern std::ofstream norm_trace_file;
+#endif
 #ifdef SW4_USE_CMEM
 __constant__ double cmem_acof[384];
 __constant__ double cmem_acof_no_gp[384];
@@ -1772,7 +1774,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     if (end_clean_time_reg) {
       // SW4_MARK_END("CLEAN_TIME");
     }
+#ifdef SW4_NORM_TRACE
     norm_trace_file<<"DONE WITH TIME STEP"<<currentTimeStep<<"\n";
+#endif
   }  // end time stepping loop
   // SW4_MARK_END("CLEAN_TIME");
   SW4_MARK_END("TIME_STEPPING");
@@ -1950,7 +1954,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   //   if( m_forcing->knows_exact() )
   //      computeSolutionError(U, mTime, AlphaVE ); // note that final solution
   //      ends up in U after the call to cycleSolutionArrays()
+#ifdef SW4_NORM_TRACE
   norm_trace_file<<"DONE WITH SOLVE\n";
+#endif
   //std::cout<<" DONE WITH SOLVE\n"<<std::flush;
 }  // end EW::solve()
 

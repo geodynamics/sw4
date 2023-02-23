@@ -38,7 +38,9 @@
 #include "startEnd.h"
 #include "version.h"
 #include <fstream>
+#ifdef SW4_NORM_TRACE
 extern std::ofstream norm_trace_file;
+#endif
 #ifdef USE_HDF5
 #include "hdf5.h"
 #include "readhdf5.h"
