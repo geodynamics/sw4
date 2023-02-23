@@ -18,6 +18,7 @@
 #include <fstream>
 #include <iomanip>
 #include <sstream>
+#include <filesystem>
 
 #ifndef SQR
 #define SQR(x) ((x) * (x))
@@ -170,6 +171,7 @@ void set_timewindows_from_eikonal_time(
 
   for (int e = 0; e < GlobalTimeSeries.size(); e++) {
     if (myrank == 0) {
+      std::cout<<" PATH IS "<<GlobalTimeSeries[e][0]->getPath()<<"\n"<<std::flush;
       sprintf(file, "%s/time_event_%d.txt",
               GlobalTimeSeries[e][0]->getPath().c_str(), e);
       fd = fopen(file, "w");
@@ -570,7 +572,7 @@ void compute_f_and_df(EW& simulation, int nspar, int nmpars, double* xs,
       // 1. Copy computed time series into diffs[m]
       vector<TimeSeries*> diffs;
       for (int m = 0; m < GlobalTimeSeries[e].size(); m++) {
-        if (mopt->m_output_ts && it >= 0) GlobalTimeSeries[e][m]->writeFile();
+        if (mopt->m_output_ts && it >= 0) GlobalTimeSeries[e][m]->writeFile(); // ERROR HAPPENS HERE
 
         TimeSeries* elem = GlobalTimeSeries[e][m]->copy(&simulation, "diffsrc");
         diffs.push_back(elem);
@@ -1715,6 +1717,11 @@ int main(int argc, char** argv) {
   MPI_Comm_rank(shared_comm, &local_rank);
   MPI_Comm_size(shared_comm, &local_size);
   MPI_Info_free(&info);
+
+  if (myRank==0){
+    std::filesystem::path cwd = std::filesystem::current_path();
+    std::cout<<"CWD is "<<cwd.string()<<"\n";
+  }
 #ifdef SW4_NORM_TRACE
   norm_trace_file.open("NormsOpt.dat");
   norm_trace_file.precision(10);
@@ -2099,7 +2106,7 @@ int main(int argc, char** argv) {
           sw4_profile->time_stamp("Start optimizer");
           if (mopt->m_optmethod == 1)
             lbfgs(simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources,
-                  GlobalTimeSeries, GlobalObservations, myRank, mopt);
+                  GlobalTimeSeries, GlobalObservations, myRank, mopt); // ERROR HAPPENS HERE
           else if (mopt->m_optmethod == 2)
             nlcg(simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources,
                  GlobalTimeSeries, GlobalObservations, myRank, mopt);

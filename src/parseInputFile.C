@@ -7174,6 +7174,7 @@ void EW::processObservationHDF5(
   // Read from HDF5 file, and create time series data
 #ifdef USE_HDF5
   bool is_obs = true;
+
   if (event_is_in_proc(event)) {
     event = global_to_local_event(event);
     readStationHDF5(this, inhdf5file, outhdf5file, writeEvery, downSample, mode,

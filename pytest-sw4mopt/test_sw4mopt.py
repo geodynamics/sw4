@@ -142,10 +142,10 @@ def compare_misfit(base_file_name, test_file_name, errTol, lineNum, verbose):
 
 #------------------------------------------------
 def compare_dfm_hdf5(fname_res, fname_ref, errTol, verbose):
+    import h5py, numpy
     if 'h5py' not in sys.modules:
         print("This test requires h5py")
         sys.exit(-1)
-    import h5py, numpy
 
     success = True;
 
@@ -395,6 +395,7 @@ def main_test(sw4_exe_dir="optimize", testing_level=0, mpi_tasks=0, omp_threads=
                 if success: 
                     # compare the mistfit value
                     ref_result = reference_dir + sep + test_dir + sep + result_file
+                    print("Comparing ",ref_result, " and ", result_file)
                     success = compare_misfit(ref_result, result_file, 1e-5, -4, verbose)
             elif result_file == 'gaussian-nlcg.out':
                 ref_h5 = reference_dir + sep + test_dir + sep + 'run1' + sep + 'nlcg.dfm.h5'

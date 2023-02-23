@@ -555,9 +555,10 @@ void lbfgs(EW& simulation, int nspar, int nmpars, double* xs, int nmpard,
 
   compute_f_and_df(simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources,
                    GlobalTimeSeries, GlobalObservations, f, dfs, dfm, myRank,
-                   mopt, 0);
+                   mopt, 0); // ERROR HAPPENS HERE
 
   if (mopt->m_output_ts) {
+
     for (int e = 0; e < GlobalTimeSeries.size(); e++) {
 #ifdef USE_HDF5
       // Tang: need to create a HDF5 file before writing
@@ -572,6 +573,7 @@ void lbfgs(EW& simulation, int nspar, int nmpars, double* xs, int nmpard,
         MPI_Barrier(simulation.m_1d_communicator);
       }
 #endif
+
       for (int m = 0; m < GlobalTimeSeries[e].size(); m++)
         GlobalTimeSeries[e][m]->writeFile("_ini");
     }

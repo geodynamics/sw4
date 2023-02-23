@@ -139,7 +139,6 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
       m_event(event) {
   m_global_event = a_ew->local_to_global_event(m_event);
   m_path = a_ew->getPath(m_global_event);
-
   // 1. Adjust z if depth below topography is given
   if (a_ew->topographyExists()) {
     float_sw4 zTopoLocal;
@@ -599,7 +598,7 @@ void TimeSeries::writeFile(string suffix) {
   if (suffix == "")
     filePrefix << m_fileName << ".";
   else
-    filePrefix << m_fileName << suffix.c_str() << ".";
+    filePrefix << m_fileName << suffix.c_str() << ".h5";
 
   stringstream ux, uy, uz, uxy, uxz, uyz, uyx, uzx, uzy;
 
@@ -621,6 +620,8 @@ void TimeSeries::writeFile(string suffix) {
     /* } */
     fid = openHDF5File(suffix);
 
+    //std::cout<<"WRITE SUFFIX "<<suffix<<" ResT = "<<filePrefix.str()<<"\n"<<std::flush;
+    return;
     if (fid <= 0)
       printf("Rank %d: %s fid is invalid, cannot open file [%s]\n", myRank,
              __func__, filePrefix.str().c_str());
@@ -2425,6 +2426,7 @@ TimeSeries* TimeSeries::copy(EW* a_ew, string filename, bool addname) {
       a_ew, filename, m_staName, m_mode, m_sacFormat, m_usgsFormat,
       m_hdf5Format, hdf5name, mX, mY, mZ, m_zRelativeToTopography, mWriteEvery,
       mDownSample, m_xyzcomponent, m_event);
+  //retval->m_path=a_ew->getPath( a_ew->local_to_global_event(m_event));
   retval->m_t0 = m_t0;
   retval->m_dt = m_dt;
   retval->m_shift = m_shift;
@@ -3867,6 +3869,7 @@ hid_t TimeSeries::openHDF5File(std::string suffix) {
       m_hdf5Name.find(".h5") == string::npos)
     filename.append(".hdf5");
 
+  //  std::cout<<"FULE NAME IN openHDF5File is "<<filename<<"\n";
   if (*m_fid_ptr >= 0 && this->m_ts0Ptr &&
       filename.compare(this->m_ts0Ptr->m_fidName) == 0) {
     // If file is alread open, no need to open it again

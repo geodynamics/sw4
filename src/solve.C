@@ -88,7 +88,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
    		vector<DataPatches*>& Ucorr_saved_sides, bool save_sides,
                int event,int nsteps_in_memory, int varcase, vector<Sarray>& PseudoHessian ){
   SW4_MARK_FUNCTION;
-  std::cout<<"SOLVE\n";
+  //std::cout<<"SOLVE\n";
   check_ghcof_no_gp(m_ghcof_no_gp);
 #ifdef SW4_USE_CMEM
   // std::cout<<"Copying acof to constant device memory\n";
@@ -871,6 +871,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   // locking so we can have multiple writer to open and write different datasets
   // of the same file
   setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
+
   if (a_TimeSeries.size() > 0 && a_TimeSeries[0]->getUseHDF5()) {
     for (int tsi = 0; tsi < a_TimeSeries.size(); tsi++)
       a_TimeSeries[tsi]->resetHDF5file();
@@ -879,6 +880,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
                                "");
     MPI_Barrier(m_1d_communicator);
   }
+
 #endif
 
 #ifdef PEEKS_GALORE
@@ -901,6 +903,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       a_TimeSeries[ts]->recordData(uRec);
     }
   }
+
 #ifdef SW4_PREFETCH_AFTER_TS
   //
   // This option reduces solve time by 1.5% for a single node case with 4K receivers
@@ -932,6 +935,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     mESSI3DFiles[i3]->set_ntimestep(mNumberOfTimeSteps[event]);
     mESSI3DFiles[i3]->set_restart(m_check_point->do_restart());
   }
+
   FILE* lf = NULL;
   // open file for saving norm of error
   if ((m_lamb_test || m_point_source_test || m_rayleigh_wave_test ||
@@ -979,6 +983,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 	Ucorr_saved_sides[g]->push(U[g], 0);
       }
     }
+
 
   if (!mQuiet && proc_zero()) cout << "  Begin time stepping..." << endl;
 #ifdef PEEKS_GALORE
@@ -1170,6 +1175,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       }
     }
 #endif
+
     SW4_MARK_BEGIN("COMM_WINDOW");
     if (m_output_detailed_timing) time_measure[2] = MPI_Wtime();
 
@@ -1842,6 +1848,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
                                    mPath[eglobal], mZ);
 
   m_check_point->finalize_hdf5();
+
 #endif
 
   print_execution_time(time_start_solve, time_end_solve, "time stepping phase");
@@ -1944,6 +1951,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   //      computeSolutionError(U, mTime, AlphaVE ); // note that final solution
   //      ends up in U after the call to cycleSolutionArrays()
   norm_trace_file<<"DONE WITH SOLVE\n";
+  //std::cout<<" DONE WITH SOLVE\n"<<std::flush;
 }  // end EW::solve()
 
 //------------------------------------------------------------------------

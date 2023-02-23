@@ -21,7 +21,7 @@ void EW::solve_backward_allpars(
   //   vector<Sarray> gRho, gMu, gLambda;
   vector<Sarray*> AlphaVE, AlphaVEm, AlphaVEp;
   vector<double**> BCForcing;
-  std::cout<<"SOLVE_BACKWARD_ALLPARS\n";
+  //  std::cout<<"SOLVE_BACKWARD_ALLPARS\n";
 
 #ifdef SW4_NORM_TRACE
   static  std::ofstream norm_trace_file_old;
