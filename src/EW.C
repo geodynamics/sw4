@@ -5036,7 +5036,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
 
     SW4_MARK_BEGIN("FORCE::DEVICE");
     //std::cout<<"FORCE "<<identsources.size()<<"\n";
-#ifdef SW4_NORM_TRACE_2
+#ifdef SW4_NORM_TRACE
     cout.precision(15);
     RAJA::ReduceSum<REDUCTION_POLICY, float_sw4> norm0(0),norm1(0),norm2(0);
     RAJA::ReduceSum<REDUCTION_POLICY, float_sw4> Fnorm(0);
@@ -5053,7 +5053,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
             for (int i = 0; i < 3; i++)
               *ForceAddress_copy[index + i] += fxyz[i];
 	    //	    printf("FXYZ %d %d %.15g %.15g %.15g\n",r,s,fxyz[0],fxyz[1],fxyz[2]);
-#ifdef SW4_NORM_TRACE_2
+#ifdef SW4_NORM_TRACE
 	    norm0+=fxyz[0]*fxyz[0];
 	    norm1+=fxyz[1]*fxyz[1];
 	    norm2+=fxyz[2]*fxyz[2];
@@ -5069,9 +5069,9 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
 
     SYNC_STREAM;
     SW4_MARK_END("FORCE::DEVICE");
-#ifdef SW4_NORM_TRACE_2
-    //std::cout<<"FORCE NORM "<<a_t<<" "<<norm0.get()<<" "<<norm1.get()<<" "<<norm2.get()<<" "<<Fnorm.get()<<" "<<a_F[0].norm()<<"\n";// <<Anorm.get()<<"\n";
-    cout.precision(3);
+#ifdef SW4_NORM_TRACE
+    norm_trace_file<<"FORCE NORM "<<a_t<<" "<<norm0.get()<<" "<<norm1.get()<<" "<<norm2.get()<<" "<<Fnorm.get()<<" "<<a_F[0].norm()<<"\n";// <<Anorm.get()<<"\n";
+    //cout.precision(3);
 #endif
   }
 }
