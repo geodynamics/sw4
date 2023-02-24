@@ -50,6 +50,10 @@
 #include "policies.h"
 #include "version.h"
 
+#ifdef SW4_NORM_TRACE
+std::ofstream norm_trace_file;
+#endif
+
 #ifdef ENABLE_CUDA
 #include "cuda_profiler_api.h"
 #include "nvToolsExtCuda.h"
@@ -142,6 +146,11 @@ int main(int argc, char **argv) {
   MPI_Info_free(&info);
 
   int device = presetGPUID(myRank, local_rank, local_size);
+
+#ifdef SW4_NORM_TRACE
+  norm_trace_file.open("NormsOpt.dat");
+  norm_trace_file.precision(10);
+#endif
 
 #if defined(SW4_SIGNAL_CHECKPOINT)
   std::signal(SIGUSR1, signal_handler);

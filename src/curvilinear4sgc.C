@@ -165,7 +165,7 @@ void curvilinear4sg_ci(
       // SBP Boundary closure terms
 
 #ifdef PEEKS_GALORE
-      std::cout << " ********* WARNING PEEKS GALORE MODE ******************\n";
+      //std::cout << " ********* WARNING PEEKS GALORE MODE ******************\n";
       SW4_PEEK;
       SYNC_DEVICE;
 #endif

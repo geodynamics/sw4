@@ -647,9 +647,7 @@ void GridPointSource::add_to_gradient(SView *kappa,
         dgom * (kap1 * mForces[0] + kap2 * mForces[1] + kap3 * mForces[2]) * h3;
   }
 #else
-  std::cerr << "This routine is disabled. Compile with -DSOURCE_INVERSION=1\n"
-            << std::flush;
-  abort();
+  printf("ERROR :: This routine, add_to_gradient,  is disabled. Compile with -DSOURCE_INVERSION=1\n");
 #endif
 }
 

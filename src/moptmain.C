@@ -27,7 +27,9 @@
 #ifdef USE_HDF5
 #include <sachdf5.h>
 #endif
+#ifdef SW4_NORM_TRACE
 std::ofstream norm_trace_file;
+#endif
 void init_umpire(int device);
 
 #define STRINGSIZE 128

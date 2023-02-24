@@ -12,6 +12,7 @@
 #include "umpire/util/Macros.hpp"
 #endif
 #include <string>
+#include "Mspace.h"
 
 void init_umpire(int device){
 

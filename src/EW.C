@@ -9219,6 +9219,7 @@ void EW::sort_grid_point_sources(vector<GridPointSource*>& point_sources,
   }
 
   if (ForceVector==NULL){
+ std::cout<<"ALLOCATING FORCEADRESS AND FORCEVECTOR\n";
   ForceVector = SW4_NEW(Space::Managed, float_sw4[nrunique * 3]);
   ForceAddress = SW4_NEW(Space::Managed, float_sw4 * [nrunique * 3]);
   }

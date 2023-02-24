@@ -1777,6 +1777,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 #ifdef SW4_NORM_TRACE
     norm_trace_file<<"DONE WITH TIME STEP"<<currentTimeStep<<"\n";
 #endif
+      SYNC_DEVICE;
+      SW4_PEEK;
+      SYNC_DEVICE;
   }  // end time stepping loop
   // SW4_MARK_END("CLEAN_TIME");
   SW4_MARK_END("TIME_STEPPING");

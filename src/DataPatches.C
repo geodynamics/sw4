@@ -7,7 +7,9 @@
 
 #include "Sarray.h"
 using namespace std;
+//#ifdef SW4_NORM_TRACE
 extern std::ofstream norm_trace_file;
+//#endif
 #include <errno.h>
 #include "DataPatches.h"
 
@@ -228,7 +230,7 @@ void DataPatches::push(Sarray& u, int n) {
 //-----------------------------------------------------------------------
 void DataPatches::save_to_file() {
   if (m_ncurrent > 0 && !m_error && m_isnonempty) {
-    size_t nr;
+    ssize_t nr;
     int fd = open(m_filename.c_str(), O_RDWR);
     if (fd == -1) {
       printf("ERROR DataPatches::save_to_file : file %s could not be opened \n",
