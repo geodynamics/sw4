@@ -148,7 +148,9 @@ int main(int argc, char **argv) {
   int device = presetGPUID(myRank, local_rank, local_size);
 
 #ifdef SW4_NORM_TRACE
-  norm_trace_file.open("NormsOpt.dat");
+  stringstream filename;
+  filename<<"Norms_"<<myRank<<".dat";
+  norm_trace_file.open(filename.str());
   norm_trace_file.precision(10);
 #endif
 
