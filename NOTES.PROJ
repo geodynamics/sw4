@@ -1,0 +1,6 @@
+Grid time step and curvi grid size differences can occur is proj is not enabled using the -DENABLE_PROJ flag
+Manifests as warnings:
+
+WARNING: i0=500 is out of bounds for y=-2.025000e+02, ymaty=-2.025000e+02
+
+because proj calls are returning without doing anything

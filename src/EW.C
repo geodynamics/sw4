@@ -7621,10 +7621,10 @@ void EW::extractTopographyFromRfile(std::string a_topoFileName) {
 
         if (mVerbose >= 3) {
           if (xmatx < xmat0 || xmatx > xmat0 + hh)
-            printf("WARNING: i0=%i is out of bounds for x=%e, xmatx=%e\n", i0,
+            printf("3WARNING: i0=%i is out of bounds for x=%e, xmatx=%e\n", i0,
                    x, xmatx);
           if (ymaty < ymat0 || ymaty > ymat0 + hh)
-            printf("WARNING: i0=%i is out of bounds for y=%e, ymaty=%e\n", i0,
+            printf("4WARNING: i0=%i is out of bounds for y=%e, ymaty=%e\n", i0,
                    y, ymaty);
         }
 
@@ -9219,9 +9219,8 @@ void EW::sort_grid_point_sources(vector<GridPointSource*>& point_sources,
   }
 
   if (ForceVector==NULL){
- std::cout<<"ALLOCATING FORCEADRESS AND FORCEVECTOR\n";
-  ForceVector = SW4_NEW(Space::Managed, float_sw4[nrunique * 3]);
-  ForceAddress = SW4_NEW(Space::Managed, float_sw4 * [nrunique * 3]);
+    ForceVector = SW4_NEW(Space::Managed, float_sw4[nrunique * 3]);
+    ForceAddress = SW4_NEW(Space::Managed, float_sw4 * [nrunique * 3]);
   }
 
   //   for( int s=0 ; s<m_identsources.size()-1 ; s++ )
@@ -9921,10 +9920,10 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
 
       if (mVerbose >= 3) {
         if (xmatx < xmat0 || xmatx > xmat0 + hh)
-          printf("WARNING: i0=%i is out of bounds for x=%e, xmatx=%e\n", i0, x,
+          printf("1WARNING: i0=%i is out of bounds for x=%e, xmatx=%e\n", i0, x,
                  xmatx);
         if (ymaty < ymat0 || ymaty > ymat0 + hh)
-          printf("WARNING: i0=%i is out of bounds for y=%e, ymaty=%e\n", i0, y,
+          printf("2WARNING: i0=%i is out of bounds for y=%e, ymaty=%e\n", i0, y,
                  ymaty);
       }
 

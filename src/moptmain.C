@@ -1720,10 +1720,13 @@ int main(int argc, char** argv) {
   MPI_Comm_size(shared_comm, &local_size);
   MPI_Info_free(&info);
 
+#if (__cplusplus==201703L)
   if (myRank==0){
     std::filesystem::path cwd = std::filesystem::current_path();
     std::cout<<"CWD is "<<cwd.string()<<"\n";
   }
+#endif
+
 #ifdef SW4_NORM_TRACE
   norm_trace_file.open("NormsOpt.dat");
   norm_trace_file.precision(10);

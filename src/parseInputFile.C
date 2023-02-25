@@ -5419,6 +5419,8 @@ void EW::processSource(char* buffer,
       int utcsac[7], npts;
       string basename = dfile;
       string fname;
+      npts=1; // WARNING SUPPRESSION
+      std::cerr<<"WARNING :: npts arbitrarily set to 1 in parseInputFIle line 5423\n";
       if (isMomentType) {
         tDep = iDiscrete6moments;
         fname = basename + ".xx";

@@ -132,6 +132,11 @@ void GeographicProjection::computeGeographicCoord(double x, double y,
   longitude = c_out.xyzt.x;
   latitude = c_out.xyzt.y;
 
+#else
+
+  std::cerr<<"ERROR CALL TO void GeographicProjection::computeGeographicCoord with Proj disabled\n Check if -DENABLE_PROJ is being used to build sw4/sw4mopt executable\n";
+  abort();
+
 #endif
 
   //printf("computeGeographicCoord: %f %f -> %f\t%f\n", x, y, longitude,  latitude); 
