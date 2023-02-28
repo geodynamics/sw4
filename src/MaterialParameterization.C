@@ -142,9 +142,13 @@ void MaterialParameterization::read_parameters(const char* filename, int npars,
   int errflag = 0;
   if (m_myrank == 0) {
     int fd = open(filename, O_RDONLY);
+    if (fd<0){
+      std::cerr<<"ERROR opening "<<filename<<"\n";
+      abort();
+    }
     int npars_read;
     size_t nr = read(fd, &npars_read, sizeof(int));
-    
+  
     if (npars_read == npars && nr == sizeof(int)) {
       nr = read(fd, xptr, npars * sizeof(double));
       if (nr != npars * sizeof(double)) errflag = 2;

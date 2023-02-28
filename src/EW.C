@@ -6621,7 +6621,8 @@ void EW::testsourcediff(vector<Source*> GlobalSources, float_sw4 gradient[11],
     gpsources[m]->add_to_hessian(kappa, eta, 0.63, mDt, hessian, mGridSize);
   }
 #else
-  std::cerr<<" WARNING :: MISSING FUNCTIONALITY IN EW.C line 6622\n";
+  std::cerr<<" ERROR :: MISSING FUNCTIONALITY IN EW.C line 6622\n";
+  abort();
 #endif
 }
 

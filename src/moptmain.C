@@ -1889,6 +1889,7 @@ int main(int argc, char** argv) {
           get_source_pars(nspar, xspar, xs);
         }
 
+	//std::cout<<"MOPTMAIN ["<<myRank<<"] "<<nmpard<<" "<<nmpars<<"\n"<<std::flush;
         // Initialize the material parameters
         mp->get_parameters(nmpard, xm, nmpars, &xs[nspar], simulation.mRho,
                            simulation.mMu, simulation.mLambda, -1);

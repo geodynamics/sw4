@@ -20,6 +20,7 @@ MaterialParCart::MaterialParCart(EW* a_ew, int nx, int ny, int nz, int init,
   // zero.
   // the parameter vector represents offsets from a reference material, stored
   // in (mRho,mMu,mLambda) in EW.
+
   int verbose = 1;
   m_variables = varcase;
   m_ratio = 1.732;
@@ -115,12 +116,14 @@ MaterialParCart::MaterialParCart(EW* a_ew, int nx, int ny, int nz, int init,
     m_nmd = ncomp * (m_ieint - m_ibint + 1) * (m_jeint - m_jbint + 1) *
             (m_keint - m_kbint + 1);
     m_nmd_global = ncomp * nx * ny * nz;
+    //   std::cout<<"IN GLOBAL "<<ncomp<<" "<< (m_ieint - m_ibint + 1)<<" "<<(m_jeint - m_jbint + 1)<<" "<<(m_keint - m_kbint + 1)<<"\n";
   } else {
     // Global arrays
     m_nms = ncomp * nx * ny * nz;
     m_nmd = 0;
     m_nmd_global = 0;
   }
+  //  std::cout<<"MaterialPArCart ["<<m_global<<"] "<<m_nmd<<" "<<m_nms<<"\n"<<std::flush;
 }
 //-----------------------------------------------------------------------
 void MaterialParCart::limit_x(int nmd, double* xmd, int nms, double* xms,
@@ -772,6 +775,7 @@ void MaterialParCart::get_parameters(int nmd, double* xmd, int nms, double* xms,
           ind++;
         }
   } else if (nr == 2) {
+
     if (nms > 0)
       read_parameters(nms, xms);
     else

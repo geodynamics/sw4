@@ -229,6 +229,10 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
         os.environ["MPICH_GPU_SUPPORT_ENABLED"]="1"
         if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="srun -N 1 -n 8 -c8 --gpus-per-task=1 --gpu-bind=closest "
+    elif 'rzansel' in node_name:
+        os.environ["MPICH_GPU_SUPPORT_ENABLED"]="1"
+        if mpi_tasks<=0: mpi_tasks = 4
+        mpirun_cmd="lrun -T4 "
     elif 'tioga' in node_name:
         os.environ["MPICH_GPU_SUPPORT_ENABLED"]="1"
         if mpi_tasks<=0: mpi_tasks = 4
