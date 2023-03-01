@@ -2,6 +2,7 @@
 #include "EW.h"
 #include "F77_FUNC.h"
 #include "GridGenerator.h"
+#include "foralls.h"
 
 // extern "C" {
 //   void F77_FUNC(hdirichlet5,HDIRICHLET5)( int*, int*, int*, int*, int*, int*,
@@ -359,8 +360,9 @@ void EW::solve_backward_allpars(
     float_sw4 lmDt = mDt;
     GridPointSource **GPSL = GPS;
     bool topoE=topographyExists();
-      RAJA::forall<DEFAULT_LOOP1>(
-          RAJA::RangeSegment(0, point_sources.size()),
+        RAJA::forall<ATG_LOOP>(
+             RAJA::RangeSegment(0, point_sources.size()),
+    //    forall256(0,point_sources.size(),
           [=] RAJA_DEVICE(int s) {
 	    GPSL[s]->add_to_gradient(KV, KaccV, t, lmDt, gradientsrc, h,
 				     mJV, topoE, hsize);

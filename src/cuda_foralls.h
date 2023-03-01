@@ -22,10 +22,11 @@ void forall(int start, int end, LoopBody &&body) {
   int tpb = 1024;
   int blocks = (end - start) / tpb;
   blocks = ((end - start) % tpb == 0) ? blocks : blocks + 1;
-  // printf("Launching the kernel blocks= %d tpb= %d \n",blocks,tpb);
-  forallkernel<<<blocks, tpb>>>(start, end, body);
+  //printf("Launching the kernel blocks= %d tpb= %d \n",blocks,tpb);
+  if (blocks!=0) forallkernel<<<blocks, tpb>>>(start, end, body);
   cudaDeviceSynchronize();
 }
+
 template <typename LoopBody>
 void forallasync(int start, int end, LoopBody &&body) {
   int tpb = 1024;
@@ -42,7 +43,7 @@ void forall(int start, int end, LoopBody &&body) {
   int blocks = (end - start) / tpb;
   blocks = ((end - start) % tpb == 0) ? blocks : blocks + 1;
   printf("Launching the kernel blocks= %d tpb= %d on line %d\n", blocks, tpb,
-         N);
+        N);
   forallkernel<<<blocks, tpb>>>(start, end, body);
   cudaDeviceSynchronize();
 }

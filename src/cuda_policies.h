@@ -19,6 +19,7 @@
 #define SW4_DEVICE_SUCCESS cudaSuccess
 //   SW4_CheckDeviceError(cudaStreamSynchronize(0));
 typedef RAJA::cuda_exec<1024> DEFAULT_LOOP1;
+typedef RAJA::cuda_exec<256> ATG_LOOP;
 typedef RAJA::cuda_exec<1024, true> DEFAULT_LOOP1_ASYNC;
 using REDUCTION_POLICY = RAJA::cuda_reduce;
 
