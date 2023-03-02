@@ -375,7 +375,7 @@ void readStationHDF5(EW* ew, string inFileName, string outFileName, int writeEve
   tData.scalefactor = scalefactor;
 
   fapl = H5Pcreate(H5P_FILE_ACCESS);
-  H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
+  /* H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL); */
 
   fid = H5Fopen(inFileName.c_str(),  H5F_ACC_RDONLY, fapl);
   if (fid < 0) {
@@ -491,7 +491,7 @@ void readStationInfoHDF5(string inFileName, vector<string> *staname, vector<doub
   tData.n = n;
 
   fapl = H5Pcreate(H5P_FILE_ACCESS);
-  H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL);
+  /* H5Pset_fapl_mpio(fapl, MPI_COMM_SELF, MPI_INFO_NULL); */
 
   fid = H5Fopen(inFileName.c_str(),  H5F_ACC_RDONLY, fapl);
   if (fid < 0) {
