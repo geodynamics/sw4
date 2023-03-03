@@ -18,7 +18,9 @@
 #include <fstream>
 #include <iomanip>
 #include <sstream>
-#include <filesystem>
+#if (__cplusplus==201703L)
+//#include <filesystem>
+#endif
 
 #ifndef SQR
 #define SQR(x) ((x) * (x))
@@ -1722,8 +1724,8 @@ int main(int argc, char** argv) {
 
 #if (__cplusplus==201703L)
   if (myRank==0){
-    std::filesystem::path cwd = std::filesystem::current_path();
-    std::cout<<"CWD is "<<cwd.string()<<"\n";
+    //std::filesystem::path cwd = std::filesystem::current_path();
+    //std::cout<<"CWD is "<<cwd.string()<<"\n";
   }
 #endif
 

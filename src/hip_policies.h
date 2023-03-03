@@ -19,7 +19,7 @@
 #define SW4_DEVICE_SUCCESS hipSuccess
 //   SW4_CheckDeviceError(hipStreamSynchronize(0));
 typedef RAJA::hip_exec<1024> DEFAULT_LOOP1;
-typedef RAJA::hip_exec<256> ATG_LOOP:
+typedef RAJA::hip_exec<256> ATG_LOOP;
 typedef RAJA::hip_exec<1024, true> DEFAULT_LOOP1_ASYNC;
 using REDUCTION_POLICY = RAJA::hip_reduce;
 

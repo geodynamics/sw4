@@ -173,7 +173,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     elif 'crusher' in node_name:
         os.environ["MPICH_GPU_SUPPORT_ENABLED"]="1"
         if mpi_tasks<=0: mpi_tasks = 4
-        mpirun_cmd="srun -N 1 -A GEO130_crusher -t 30 -n 8 -c8 --gpus-per-task=1 --gpu-bind=closest -p batch "
+        mpirun_cmd="srun -N 1 -A GEO130_crusher -t 30 -n 8 -c7 --gpus-per-task=1 --gpu-bind=closest -p batch "
     elif 'login' in node_name:
         os.environ["MPICH_GPU_SUPPORT_ENABLED"]="1"
         if mpi_tasks<=0: mpi_tasks = 4
