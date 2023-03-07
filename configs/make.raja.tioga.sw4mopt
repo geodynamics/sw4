@@ -25,6 +25,7 @@ RAJA_HOME = /usr/workspace/wsb/ramesh/CORAL2/2022/EAS3_ACCEPTANCE_SW4/RAJA-v2022
 
 PROJ_HOME = /usr/workspace/wsb/ramesh/CORAL2/2022/EAS3_ACCEPTANCE_SW4/proj-5.0.0/install_500
 PROJ_HOME = /usr/workspace/wsb/ramesh/CORAL2/2022/EAS3_ACCEPTANCE_SW4/proj-9.0.0/install
+PROJ_HOME = /usr/workspace/wsb/ramesh/CORAL2/2022/EAS3_ACCEPTANCE_SW4/proj-6.3.0/install
 
 UMPIRE_HOME = /usr/workspace/wsb/ramesh/CORAL2/2022/EAS3_ACCEPTANCE_SW4/umpire-6.0.0/install_510
 UMPIRE_HOME = /usr/workspace/wsb/ramesh/CORAL2/2022/EAS3_ACCEPTANCE_SW4/umpire-2022.03.1/install_tioga_520
@@ -51,7 +52,7 @@ MPI_HOME = ${MPICH_DIR}
 
 EXTRA_FORT_FLAGS = 
 
-MORE_FLAGS = -DENABLE_HIP=1 -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_MANAGED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC} -I$(MPI_HOME)/include -I${ROCM_PATH}/include -D__HIP_ARCH_GFX90a__=1 -O3 -x hip -Wno-inconsistent-missing-override $(SW4_GPU_ARCH) --rocm-path=$(ROCM_PATH) -I $(ROCM_PATH)/include/roctracer -DCAMP_USE_PLATFORM_DEFAULT_STREAM=1 -DSW4_GIT_VERSION=\"$(GIT_VERSION)\" -DSW4_GHCOF_NO_GP_IS_ZERO=1  -g -ggdb -std=c++17 -Wno-unused-result
+MORE_FLAGS = -DENABLE_HIP=1 -DENABLE_MPI_TIMING_BARRIER=1 -DSW4_MANAGED_MPI_BUFFERS=1 -DUSE_DIRECT_INVERSE=1 -I ${LAPACK_INC} -I$(MPI_HOME)/include -I${ROCM_PATH}/include -D__HIP_ARCH_GFX90a__=1 -O3 -x hip -Wno-inconsistent-missing-override $(SW4_GPU_ARCH) --rocm-path=$(ROCM_PATH) -I $(ROCM_PATH)/include/roctracer -DCAMP_USE_PLATFORM_DEFAULT_STREAM=1 -DSW4_GIT_VERSION=\"$(GIT_VERSION)\" -DSW4_GHCOF_NO_GP_IS_ZERO=1  -g -ggdb -std=c++17 -Wno-unused-result -DSOURCE_INVERSION=1 
 
 MORE_LINK_FLAGS =  -O3  -std=c++17 -L $(LAPACK_LIB)  -Wl,-rpath=$(LAPACK_LIB)  -lsci_amd_mp  -L $(RAJA_HOME)/lib -lRAJA -L $(MPI_HOME)/lib -lmpi -L $(UMPIRE_HOME)/lib -lumpire $(GCC_LINK_LINE) $(SW4_GPU_ARCH)  -L ${ROCM_PATH}/roctracer/lib -lroctracer64 -L${CRAY_MPICH_ROOTDIR}/gtl/lib -Wl,-rpath=${CRAY_MPICH_ROOTDIR}/gtl/lib/ -lmpi_gtl_hsa -lcamp -lflang -lpgmath -lflangrti -ldl -L /opt/cray/pe/gcc/12.1.0/snos/lib64/ -Wl,-rpath=/opt/cray/pe/gcc/12.1.0/snos/lib64/ -lgfortran
 
