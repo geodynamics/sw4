@@ -55,9 +55,10 @@ public:
 // support for derived quantities of the time derivative are not yet implemented
   enum receiverMode{Displacement, Div, Curl, Strains, Velocity, DisplacementGradient /*, DivVelo, CurlVelo, StrainsVelo */ };
 
-TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, int sacFormat, int usgsFormat, int hdf5Format, std::string hdf5FileName, 
-	    float_sw4 x, float_sw4 y, float_sw4 z, bool topoDepth, int writeEvery, int downSample, bool xyzcomponent=true, int event=0, std::string net="NET", 
-            std::string loc="LOC", std::string seedid="SEEDID", std::string datetime="DATETIME");
+TimeSeries( EW* a_ew, std::string fileName, std::string groupName, std::string staName, receiverMode mode, int sacFormat, int usgsFormat, 
+            int hdf5Format, std::string hdf5FileName, float_sw4 x, float_sw4 y, float_sw4 z, bool topoDepth, int writeEvery, int downSample, 
+            bool xyzcomponent=true, int event=0, std::string net="NET", std::string loc="LOC", std::string seedid="SEEDID", 
+            std::string datetime="DATETIME");
 ~TimeSeries();
 
 void allocateRecordingArrays( int numberOfTimeSteps, float_sw4 startTime, float_sw4 timeStep );
@@ -141,6 +142,7 @@ std::string getSeedid(){return m_seedid;}
 std::string getDatetime(){return m_datetime;}
 std::string getFileName(){return m_fileName;}
 std::string gethdf5FileName(){return m_hdf5Name;}
+std::string gethdf5GroupName(){return m_groupName;}
 std::string getPath(){return m_path;}
 float_sw4 getDt() {return m_dt;}
 float_sw4 getLastTimeStep() {return mLastTimeStep;}
@@ -218,7 +220,7 @@ int m_nComp;
 
 bool m_myPoint; // set to true if this processor writes to the arrays
 
-std::string m_fileName, m_staName, m_hdf5Name, m_net, m_loc, m_seedid, m_datetime;
+std::string m_fileName, m_groupName, m_staName, m_hdf5Name, m_net, m_loc, m_seedid, m_datetime;
 
 float_sw4 mX, mY, mZ, mGPX, mGPY, mGPZ; // original and actual location
 float_sw4 m_zTopo;

@@ -7262,6 +7262,8 @@ void EW::processReceiverV2(char* buffer, vector<vector<TimeSeries*> > & a_Global
   string fileName = "station";
   string hdf5FileName = "station.hdf5";
   string staName = "station";
+  string groupName = "group";
+  bool   hasGroupName = false;
   string net = "NET";
   string loc = "LOC";
   string seedid = "SEEDID";
@@ -7275,7 +7277,7 @@ void EW::processReceiverV2(char* buffer, vector<vector<TimeSeries*> > & a_Global
 
   bool topodepth = false;
 
-  bool usgsformat = 0, sacformat = 1, hdf5format = 0; // default is to write sac files
+  int usgsformat = 0, sacformat = 0, hdf5format = 1; // default is to write sac files
   TimeSeries::receiverMode mode=TimeSeries::Displacement;
 
   char* token = strtok(buffer, " \t");
@@ -7418,7 +7420,8 @@ void EW::processReceiverV2(char* buffer, vector<vector<TimeSeries*> > & a_Global
      {
         // For HDF5 station group name
         token += 6; // skip group=
-        fileName = token;
+        groupName = token;
+        hasGroupName = true;
      }
      else if (startswith("sta=", token))
      {
@@ -7549,6 +7552,9 @@ void EW::processReceiverV2(char* buffer, vector<vector<TimeSeries*> > & a_Global
   if (!staNameGiven)
     staName = fileName;
 
+  if (!hasGroupName)
+    groupName = staName;
+
   bool inCurvilinear=false;
 // we are in or above the curvilinear grid 
   if ( topographyExists() && z < m_zmin[mNumberOfCartesianGrids-1])
@@ -7595,7 +7601,7 @@ void EW::processReceiverV2(char* buffer, vector<vector<TimeSeries*> > & a_Global
     event = global_to_local_event(event);
 
 
-    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, hdf5FileName, x, y, depth, 
+    TimeSeries *ts_ptr = new TimeSeries(this, fileName, groupName, staName, mode, sacformat, usgsformat, hdf5format, hdf5FileName, x, y, depth, 
 					topodepth, writeEvery, downSample, !nsew, event, net, loc, seedid, datetime);
 #if USE_HDF5
     if (hdf5format) {
@@ -7632,6 +7638,8 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
   string staName = "station";
   bool staNameGiven=false;
   double stime, etime;
+  string groupName = "group";
+  bool   hasGroupName = false;
   string net = "NET";
   string loc = "LOC";
   string seedid = "SEEDID";
@@ -7763,6 +7771,13 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
         token += 5; // skip file=
         fileName = token;
      }
+     else if(startswith("group=", token))
+     {
+        // For HDF5 station group name
+        token += 6; // skip group=
+        groupName = token;
+        hasGroupName = true;
+     }
      else if (startswith("sta=", token))
      {
         token += strlen("sta=");
@@ -7892,6 +7907,9 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
   if (!staNameGiven)
     staName = fileName;
 
+  if (!hasGroupName)
+    groupName = staName;
+
   bool inCurvilinear=false;
 // we are in or above the curvilinear grid 
   if ( topographyExists() && z < m_zmin[mNumberOfCartesianGrids-1])
@@ -7936,7 +7954,7 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
     }
 
     event = global_to_local_event(event);
-    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, hdf5FileName, x, y, depth, 
+    TimeSeries *ts_ptr = new TimeSeries(this, fileName, groupName, staName, mode, sacformat, usgsformat, hdf5format, hdf5FileName, x, y, depth, 
 					topodepth, writeEvery, downSample, !nsew, event, net, loc, seedid, datetime);
 #if USE_HDF5
     if (hdf5format) {
@@ -8144,6 +8162,8 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
   string fileName = "rec";
   string staName = "station";
   bool staNameGiven=false;
+  string groupName = "group";
+  bool   hasGroupName = false;
   string net = "NET";
   string loc = "LOC";
   string seedid = "SEEDID";
@@ -8257,6 +8277,13 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
        CHECK_INPUT(depth <= m_global_zmax,
 		   "observation command: depth must be less than or equal to zmax, not " << depth);
 // by depth we here mean depth below topography
+     }
+     else if(startswith("group=", token))
+     {
+        // For HDF5 station group name
+        token += 6; // skip group=
+        groupName = token;
+        hasGroupName = true;
      }
      else if(startswith("file=", token))
      {
@@ -8446,6 +8473,9 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
      if (!staNameGiven)
         staName = fileName;
 
+     if (!hasGroupName)
+       groupName = staName;
+
      bool inCurvilinear=false;
 //
 // AP: This test is incorrect because we don't know the elevation of the observation
@@ -8484,7 +8514,7 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
      }
      else
      {
-        TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, hdf5file, x, y, depth, 
+        TimeSeries *ts_ptr = new TimeSeries(this, fileName, groupName, staName, mode, sacformat, usgsformat, hdf5format, hdf5file, x, y, depth, 
 					topodepth, writeEvery, 1, true, event, net, loc, seedid, datetime);
     // Read in file. 
     // ignore_utc=true, ignores UTC read from file, instead uses the default utc = simulation utc as reference.

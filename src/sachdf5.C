@@ -46,74 +46,74 @@
 #include "EW.h"
 #include "TimeSeries.h"
 
-/* #define USE_DSET_ATTR 1 */
-
 #ifdef USE_HDF5
 
 #include "sachdf5.h"
 
-int createAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id)
+int createAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id, bool usedset)
 {
     hid_t attr, dcpl;
     herr_t ret;
 
-#ifdef USE_DSET_ATTR
-    dcpl = H5Pcreate(H5P_DATASET_CREATE);
-    H5Pset_alloc_time(dcpl, H5D_ALLOC_TIME_EARLY);
-    H5Pset_fill_time(dcpl, H5D_FILL_TIME_NEVER);
-    attr = H5Dcreate(loc, name, type_id, space_id, H5P_DEFAULT, dcpl, H5P_DEFAULT);
-    H5Pclose(dcpl);
-#else
-    attr = H5Acreate(loc, name, type_id, space_id, H5P_DEFAULT, H5P_DEFAULT);
-#endif
+    if (usedset) {
+        dcpl = H5Pcreate(H5P_DATASET_CREATE);
+        H5Pset_alloc_time(dcpl, H5D_ALLOC_TIME_EARLY);
+        H5Pset_fill_time(dcpl, H5D_FILL_TIME_NEVER);
+        attr = H5Dcreate(loc, name, type_id, space_id, H5P_DEFAULT, dcpl, H5P_DEFAULT);
+        H5Pclose(dcpl);
+    }
+    else
+        attr = H5Acreate(loc, name, type_id, space_id, H5P_DEFAULT, H5P_DEFAULT);
+
     if (attr < 0) {
         printf("%s: Error with H5Acreate [%s]\n", __func__, name);
         return -1;
     }
-#ifdef USE_DSET_ATTR
-    H5Dclose(attr);
-#else
-    H5Aclose(attr);
-#endif
+    if (usedset)
+        H5Dclose(attr);
+    else
+        H5Aclose(attr);
     return 1;
 }
 
-int createWriteAttr(hid_t loc, char const *name, hid_t type_id, hid_t space_id, void *data)
+int createWriteAttr(hid_t loc, char const *name, hid_t type_id, hid_t space_id, void *data, bool usedset)
 {
     hid_t attr, dcpl;
     herr_t ret;
 
-#ifdef USE_DSET_ATTR
-    dcpl = H5Pcreate(H5P_DATASET_CREATE);
-    H5Pset_alloc_time(dcpl, H5D_ALLOC_TIME_EARLY);
-    H5Pset_fill_time(dcpl, H5D_FILL_TIME_NEVER);
-    attr = H5Dcreate(loc, name, type_id, space_id, H5P_DEFAULT, dcpl, H5P_DEFAULT);
-    H5Pclose(dcpl);
-#else
-    attr = H5Acreate(loc, name, type_id, space_id, H5P_DEFAULT, H5P_DEFAULT);
-#endif
+    if (usedset) {
+        dcpl = H5Pcreate(H5P_DATASET_CREATE);
+        H5Pset_alloc_time(dcpl, H5D_ALLOC_TIME_EARLY);
+        H5Pset_fill_time(dcpl, H5D_FILL_TIME_NEVER);
+        attr = H5Dcreate(loc, name, type_id, space_id, H5P_DEFAULT, dcpl, H5P_DEFAULT);
+        H5Pclose(dcpl);
+    }
+    else
+        attr = H5Acreate(loc, name, type_id, space_id, H5P_DEFAULT, H5P_DEFAULT);
+
     if (attr < 0) {
         printf("%s: Error with H5Acreate [%s]\n", __func__, name);
         return -1;
     }
-#ifdef USE_DSET_ATTR
-    ret  = H5Dwrite(attr, type_id, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
-#else
-    ret  = H5Awrite(attr, type_id, data);
-#endif
+    if (usedset)
+        ret  = H5Dwrite(attr, type_id, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+    else
+        ret  = H5Awrite(attr, type_id, data);
+
     if (ret < 0) {
         printf("%s: Error with H5Awrite [%s]\n", __func__, name);
         return -1;
     }
-#ifdef USE_DSET_ATTR
-    H5Dclose(attr);
-#else
-    H5Aclose(attr);
-#endif
+
+    if (usedset)
+        H5Dclose(attr);
+    else
+        H5Aclose(attr);
+
     return 1;
 }
 
-int openWriteAttr(hid_t loc, const char *name, hid_t type_id, void *data)
+int openWriteAttr(hid_t loc, const char *name, hid_t type_id, void *data, bool usedset)
 {
     hid_t attr;
     herr_t ret;
@@ -121,34 +121,34 @@ int openWriteAttr(hid_t loc, const char *name, hid_t type_id, void *data)
     // debug
     /* printf("%s: start [%s]\n", __func__, name); */
 
-#ifdef USE_DSET_ATTR
-    attr = H5Dopen(loc, name, H5P_DEFAULT);
-#else
-    attr = H5Aopen(loc, name, H5P_DEFAULT);
-#endif
+    if (usedset)
+        attr = H5Dopen(loc, name, H5P_DEFAULT);
+    else
+        attr = H5Aopen(loc, name, H5P_DEFAULT);
+
     if (attr < 0) {
         printf("%s: Error with H5Aopen [%s]\n", __func__, name);
         return -1;
     }
 
-#ifdef USE_DSET_ATTR
-    hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
-    H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
-    ret  = H5Dwrite(attr, type_id, H5S_ALL, H5S_ALL, dxpl, data);
-    H5Pclose(dxpl);
-#else
-    ret  = H5Awrite(attr, type_id, data);
-#endif
+    if (usedset) {
+        hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
+        H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
+        ret  = H5Dwrite(attr, type_id, H5S_ALL, H5S_ALL, dxpl, data);
+        H5Pclose(dxpl);
+    }
+    else
+        ret  = H5Awrite(attr, type_id, data);
+
     if (ret < 0) {
         printf("%s: Error with H5Awrite [%s]\n", __func__, name);
         return -1;
     }
 
-#ifdef USE_DSET_ATTR
-    H5Dclose(attr);
-#else
-    H5Aclose(attr);
-#endif
+    if (usedset)
+        H5Dclose(attr);
+    else
+        H5Aclose(attr);
 
     // debug
     /* printf("%s: write [%s] success int=%d, float=%.2f!\n", __func__, name, *((int*)data), *((float*)data)); */
@@ -187,7 +187,7 @@ int createWriteAttrStr(hid_t loc, const char *name, const char* str)
 }
 
 int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int ndim, hsize_t *start, hsize_t *count, int total_npts, 
-                  float btime, float cmpinc, float cmpaz, bool isIncAzWritten, bool isLast)
+                  float btime, float cmpinc, float cmpaz, bool isIncAzWritten, bool isLast, int hdf5Format)
 {
     bool is_debug = false;
     /* is_debug = true; */
@@ -195,6 +195,10 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int nd
     hid_t dset, filespace, dxpl;
     herr_t ret;
     hsize_t dims[3];
+    bool usedset = true;
+
+    if (hdf5Format == 2)
+        usedset = false;
 
     /* stime = MPI_Wtime(); */
 
@@ -226,7 +230,7 @@ int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data, int nd
     /* etime = MPI_Wtime(); */
 
     if (isLast) 
-        openWriteAttr(loc, "NPTS", H5T_NATIVE_INT, &total_npts);
+        openWriteAttr(loc, "NPTS", H5T_NATIVE_INT, &total_npts, usedset);
 
     /* etime1 = MPI_Wtime(); */
 
@@ -267,6 +271,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   TimeSeries::receiverMode mode;
   bool xyzcomponent;
   int ndset = 0, isnsew = 0;
+  bool usedset = true;
 
   if (TimeSeries.size() == 0) 
       return 0;
@@ -402,11 +407,11 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
   if (downsample < 1) downsample = 1;
 
   dt = (float)delta * downsample;
-  createWriteAttr(fid, "DELTA", H5T_NATIVE_FLOAT, attr_space1, &dt);
-  createWriteAttr(fid, "DOWNSAMPLE", H5T_NATIVE_INT, attr_space1, &downsample);
+  createWriteAttr(fid, "DELTA", H5T_NATIVE_FLOAT, attr_space1, &dt, usedset);
+  createWriteAttr(fid, "DOWNSAMPLE", H5T_NATIVE_INT, attr_space1, &downsample, usedset);
 
   // o, origin time (seconds, relative to start time of SW4 calculation and seismogram, earliest source)
-  createAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, attr_space1);
+  createAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, attr_space1, usedset);
 
   // units, units for motion (m for displacement, m/s for velocity, m/s/s for acceleration
   mode = TimeSeries[0]->getMode();
@@ -421,7 +426,7 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
 
   for (int ts=0; ts<TimeSeries.size(); ts++)
   {
-    std::string stationname = TimeSeries[ts]->getStationName();
+    std::string stationname = TimeSeries[ts]->gethdf5GroupName();
     grp  = H5Gcreate(fid, stationname.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if (grp < 0) {
        printf("Error: H5Gcreate [%s] failed\n", stationname.c_str());
@@ -429,33 +434,33 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
     }
 
     // Number of points
-    createAttr(grp, "NPTS", H5T_NATIVE_INT, attr_space1);
+    createAttr(grp, "NPTS", H5T_NATIVE_INT, attr_space1, usedset);
 
     // x, y, z
-    createAttr(grp, "STX,STY,STZ", H5T_NATIVE_DOUBLE, attr_space3);
+    createAttr(grp, "STX,STY,STZ", H5T_NATIVE_DOUBLE, attr_space3, usedset);
 
     // Lon, lat, dep
-    createAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_DOUBLE, attr_space3);
+    createAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_DOUBLE, attr_space3, usedset);
 
     // Actual location in SW4
-    createAttr(grp, "ACTUALSTLA,STLO,STDP", H5T_NATIVE_DOUBLE, attr_space3);
+    createAttr(grp, "ACTUALSTLA,STLO,STDP", H5T_NATIVE_DOUBLE, attr_space3, usedset);
 
     // Distance
-    createAttr(grp, "DISTFROMACTUAL", H5T_NATIVE_DOUBLE, attr_space1);
+    createAttr(grp, "DISTFROMACTUAL", H5T_NATIVE_DOUBLE, attr_space1, usedset);
 
     // Actual xyz location in SW4
-    createAttr(grp, "ACTUALSTX,STY,STZ", H5T_NATIVE_DOUBLE, attr_space3);
+    createAttr(grp, "ACTUALSTX,STY,STZ", H5T_NATIVE_DOUBLE, attr_space3, usedset);
 
     // TODO: Location, no value to write now
-    createAttr(grp, "LOC", H5T_NATIVE_INT, attr_space1);
+    createAttr(grp, "LOC", H5T_NATIVE_INT, attr_space1, usedset);
 
-    createAttr(grp, "WINDOWS", H5T_NATIVE_DOUBLE, attr_space4);
+    createAttr(grp, "WINDOWS", H5T_NATIVE_DOUBLE, attr_space4, usedset);
 
     xyzcomponent = TimeSeries[ts]->getXYZcomponent();
     if( !xyzcomponent )
       isnsew = 1;
 
-    createWriteAttr(grp, "ISNSEW", H5T_NATIVE_INT, attr_space1, &isnsew);
+    createWriteAttr(grp, "ISNSEW", H5T_NATIVE_INT, attr_space1, &isnsew, usedset);
 
     cmpazs[0] = TimeSeries[ts]->getXaz();
     cmpazs[1] = TimeSeries[ts]->getXaz()+90.;
@@ -546,19 +551,9 @@ int createTimeSeriesHDF5File(vector<TimeSeries*> & TimeSeries, int totalSteps, f
       dset       = H5Dcreate(grp, dset_names[i].c_str(), H5T_NATIVE_FLOAT, dset_space, H5P_DEFAULT, dcpl, H5P_DEFAULT);
       H5Sclose(dset_space);
       ASSERT(dset >= 0);
-#ifdef USE_DSET_ATTR
-      std::string incname = dset_names[i] + "CMPINC";
-      std::string azname  = dset_names[i] + "CMPAZ";
-      /* createAttr(grp, incname.c_str(), H5T_NATIVE_FLOAT, attr_space1); */
-      /* createAttr(grp, azname.c_str(), H5T_NATIVE_FLOAT, attr_space1); */
-      createWriteAttr(grp, incname.c_str(), H5T_NATIVE_FLOAT, attr_space1, &cmpazs[i]);
-      createWriteAttr(grp, azname.c_str(), H5T_NATIVE_FLOAT, attr_space1, &cmpincs[i]);
-#else
-      /* createAttr(dset, "CMPINC", H5T_NATIVE_FLOAT, attr_space1); */
-      /* createAttr(dset, "CMPAZ", H5T_NATIVE_FLOAT, attr_space1); */
-      createWriteAttr(grp, "CMPAZ", H5T_NATIVE_FLOAT, attr_space1, &cmpazs[i]);
-      createWriteAttr(grp, "CMPINC", H5T_NATIVE_FLOAT, attr_space1, &cmpincs[i]);
-#endif
+
+      createWriteAttr(dset, "CMPAZ", H5T_NATIVE_FLOAT, attr_space1, &cmpazs[i], usedset);
+      createWriteAttr(dset, "CMPINC", H5T_NATIVE_FLOAT, attr_space1, &cmpincs[i], usedset);
       H5Dclose(dset);
     }
     H5Gclose(grp);
@@ -591,6 +586,7 @@ int createTimeSeriesHDF5FileV2(vector<TimeSeries*> & TimeSeries, int totalSteps,
   TimeSeries::receiverMode mode;
   bool xyzcomponent;
   int ndset = 0, isnsew = 0;
+  bool usedset = false;
 
   if (TimeSeries.size() == 0) 
       return 0;
@@ -730,17 +726,17 @@ int createTimeSeriesHDF5FileV2(vector<TimeSeries*> & TimeSeries, int totalSteps,
     createWriteAttrStr(fid, "UNIT", "m/s or m/s/s");
 
   // o, origin time (seconds, relative to start time of SW4 calculation and seismogram, earliest source)
-  /* createAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, attr_space1); */
+  /* createAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, attr_space1, usedset); */
   float origintime = TimeSeries[0]->getEpiTimeOffset();
-  createWriteAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, attr_space1, &origintime);
+  createWriteAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, attr_space1, &origintime, usedset);
 
   float cmpazs[9] = {0}, cmpincs[9] = {0};
 
   for (int ts=0; ts<TimeSeries.size(); ts++) {
-    std::string filename = TimeSeries[ts]->getFileName();
-    grp  = H5Gcreate(fid, filename.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    std::string grpname = TimeSeries[ts]->gethdf5GroupName();
+    grp  = H5Gcreate(fid, grpname.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if (grp < 0) {
-       printf("Error: H5Gcreate [%s] failed\n", filename.c_str());
+       printf("Error: H5Gcreate [%s] failed\n", grpname.c_str());
        return -1;
     }
 
@@ -769,58 +765,57 @@ int createTimeSeriesHDF5FileV2(vector<TimeSeries*> & TimeSeries, int totalSteps,
 
     // DELTA
     dt = (float)delta * downsample;
-    createWriteAttr(grp, "DELTA", H5T_NATIVE_FLOAT, attr_space1, &dt);
-    createWriteAttr(grp, "DOWNSAMPLE", H5T_NATIVE_INT, attr_space1, &downsample);
+    createWriteAttr(grp, "DELTA", H5T_NATIVE_FLOAT, attr_space1, &dt, usedset);
+    createWriteAttr(grp, "DOWNSAMPLE", H5T_NATIVE_INT, attr_space1, &downsample, usedset);
 
     xyzcomponent = TimeSeries[ts]->getXYZcomponent();
     if( !xyzcomponent )
       isnsew = 1;
-    createWriteAttr(grp, "ISNSEW", H5T_NATIVE_INT, attr_space1, &isnsew);
+    createWriteAttr(grp, "ISNSEW", H5T_NATIVE_INT, attr_space1, &isnsew, usedset);
 
     // Lon, lat, dep
     float lon, lat, dep;
     lat = TimeSeries[ts]->getLat();
     lon = TimeSeries[ts]->getLon();
     dep = TimeSeries[ts]->getZ();
-    createWriteAttr(grp, "STLA", H5T_NATIVE_FLOAT, attr_space1, &lat);
-    createWriteAttr(grp, "STLO", H5T_NATIVE_FLOAT, attr_space1, &lon);
-    createWriteAttr(grp, "STDP", H5T_NATIVE_FLOAT, attr_space1, &dep);
+    createWriteAttr(grp, "STLA", H5T_NATIVE_FLOAT, attr_space1, &lat, usedset);
+    createWriteAttr(grp, "STLO", H5T_NATIVE_FLOAT, attr_space1, &lon, usedset);
+    createWriteAttr(grp, "STDP", H5T_NATIVE_FLOAT, attr_space1, &dep, usedset);
 
     // x, y, z
     float x, y, z;
     x = TimeSeries[ts]->getX();
     y = TimeSeries[ts]->getY();
     z = TimeSeries[ts]->getZ();
-    createWriteAttr(grp, "STX", H5T_NATIVE_FLOAT, attr_space1, &x);
-    createWriteAttr(grp, "STY", H5T_NATIVE_FLOAT, attr_space1, &y);
-    createWriteAttr(grp, "STZ", H5T_NATIVE_FLOAT, attr_space1, &z);
+    createWriteAttr(grp, "STX", H5T_NATIVE_FLOAT, attr_space1, &x, usedset);
+    createWriteAttr(grp, "STY", H5T_NATIVE_FLOAT, attr_space1, &y, usedset);
+    createWriteAttr(grp, "STZ", H5T_NATIVE_FLOAT, attr_space1, &z, usedset);
 
     // Actual location in SW4
     lat = TimeSeries[ts]->getRecGPLat();
     lon = TimeSeries[ts]->getRecGPLon();
-    createWriteAttr(grp, "ACTUALSTLA", H5T_NATIVE_FLOAT, attr_space1, &lat);
-    createWriteAttr(grp, "ACTUALSTLO", H5T_NATIVE_FLOAT, attr_space1, &lon);
-    createWriteAttr(grp, "ACTUALSTDP", H5T_NATIVE_FLOAT, attr_space1, &dep);
+    createWriteAttr(grp, "ACTUALSTLA", H5T_NATIVE_FLOAT, attr_space1, &lat, usedset);
+    createWriteAttr(grp, "ACTUALSTLO", H5T_NATIVE_FLOAT, attr_space1, &lon, usedset);
+    createWriteAttr(grp, "ACTUALSTDP", H5T_NATIVE_FLOAT, attr_space1, &dep, usedset);
 
     // Actual xyz location in SW4
     float gpx, gpy, gpz;
-    createAttr(grp, "ACTUALSTX,STY,STZ", H5T_NATIVE_FLOAT, attr_space3);
     gpx = TimeSeries[ts]->getRecGPX();
     gpy = TimeSeries[ts]->getRecGPY();
     gpz = TimeSeries[ts]->getRecGPZ();
-    createWriteAttr(grp, "ACTUALSTX", H5T_NATIVE_FLOAT, attr_space1, &gpx);
-    createWriteAttr(grp, "ACTUALSTY", H5T_NATIVE_FLOAT, attr_space1, &gpy);
-    createWriteAttr(grp, "ACTUALSTZ", H5T_NATIVE_FLOAT, attr_space1, &gpz);
+    createWriteAttr(grp, "ACTUALSTX", H5T_NATIVE_FLOAT, attr_space1, &gpx, usedset);
+    createWriteAttr(grp, "ACTUALSTY", H5T_NATIVE_FLOAT, attr_space1, &gpy, usedset);
+    createWriteAttr(grp, "ACTUALSTZ", H5T_NATIVE_FLOAT, attr_space1, &gpz, usedset);
 
     // Distance
     float dist = sqrt( (x-gpx)*(x-gpx)+(y-gpy)*(y-gpy) );
-    createWriteAttr(grp, "DISTFROMACTUAL", H5T_NATIVE_FLOAT, attr_space1, &dist);
+    createWriteAttr(grp, "DISTFROMACTUAL", H5T_NATIVE_FLOAT, attr_space1, &dist, usedset);
 
     // WINDOWS
-    createAttr(grp, "WINDOWS", H5T_NATIVE_FLOAT, attr_space4);
+    createAttr(grp, "WINDOWS", H5T_NATIVE_FLOAT, attr_space4, usedset);
 
     // Number of points
-    createAttr(grp, "NPTS", H5T_NATIVE_INT, attr_space1);
+    createAttr(grp, "NPTS", H5T_NATIVE_INT, attr_space1, usedset);
 
     cmpazs[0] = TimeSeries[ts]->getXaz();
     cmpazs[1] = TimeSeries[ts]->getXaz()+90.;
@@ -911,19 +906,9 @@ int createTimeSeriesHDF5FileV2(vector<TimeSeries*> & TimeSeries, int totalSteps,
       dset       = H5Dcreate(grp, dset_names[i].c_str(), H5T_NATIVE_FLOAT, dset_space, H5P_DEFAULT, dcpl, H5P_DEFAULT);
       H5Sclose(dset_space);
       ASSERT(dset >= 0);
-#ifdef USE_DSET_ATTR
-      std::string incname = dset_names[i] + "CMPINC";
-      std::string azname  = dset_names[i] + "CMPAZ";
-      /* createAttr(grp, incname.c_str(), H5T_NATIVE_FLOAT, attr_space1); */
-      /* createAttr(grp, azname.c_str(), H5T_NATIVE_FLOAT, attr_space1); */
-      createWriteAttr(grp, incname.c_str(), H5T_NATIVE_FLOAT, attr_space1, &cmpazs[i]);
-      createWriteAttr(grp, azname.c_str(), H5T_NATIVE_FLOAT, attr_space1, &cmpincs[i]);
-#else
-      /* createAttr(dset, "CMPINC", H5T_NATIVE_FLOAT, attr_space1); */
-      /* createAttr(dset, "CMPAZ", H5T_NATIVE_FLOAT, attr_space1); */
-      createWriteAttr(dset, "CMPAZ", H5T_NATIVE_FLOAT, attr_space1, &cmpazs[i]);
-      createWriteAttr(dset, "CMPINC", H5T_NATIVE_FLOAT, attr_space1, &cmpincs[i]);
-#endif
+      
+      createWriteAttr(dset, "CMPAZ", H5T_NATIVE_FLOAT, attr_space1, &cmpazs[i], usedset);
+      createWriteAttr(dset, "CMPINC", H5T_NATIVE_FLOAT, attr_space1, &cmpincs[i], usedset);
       H5Dclose(dset);
     }
     H5Gclose(grp);
@@ -970,76 +955,76 @@ int readAttrStr(hid_t loc, const char *name, char* str)
     return 1;
 }
 
-int readAttrInt(hid_t loc, const char *name, int *data)
+int readAttrInt(hid_t loc, const char *name, int *data, bool usedset)
 {
   hid_t attr;
   herr_t ret;
 
-#ifdef USE_DSET_ATTR
-  attr = H5Dopen(loc, name, H5P_DEFAULT);
-#else
-  attr = H5Aopen(loc, name, H5P_DEFAULT);
-#endif
+  if (usedset)
+      attr = H5Dopen(loc, name, H5P_DEFAULT);
+  else
+      attr = H5Aopen(loc, name, H5P_DEFAULT);
+
   if (attr < 0) {
       printf("%s: Error with H5Aopen [%s]\n", __func__, name);
       return -1;
   }
 
-#ifdef USE_DSET_ATTR
-  hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
-  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
-  ret  = H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, dxpl, (void*)data);
-  H5Pclose(dxpl);
-#else
-  ret  = H5Aread(attr, H5T_NATIVE_INT, (void*)data);
-#endif
+  if (usedset) {
+    hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
+    ret  = H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, dxpl, (void*)data);
+    H5Pclose(dxpl);
+  }
+  else
+    ret  = H5Aread(attr, H5T_NATIVE_INT, (void*)data);
+
   if (ret < 0) {
-      printf("%s: Error with H5Aread [%s]\n", __func__, name);
-      return -1;
+    printf("%s: Error with H5Aread [%s]\n", __func__, name);
+    return -1;
   }
 
-#ifdef USE_DSET_ATTR
-  H5Dclose(attr);
-#else
-  H5Aclose(attr);
-#endif
+  if (usedset)
+    H5Dclose(attr);
+  else
+    H5Aclose(attr);
 
     return 1;
 }
 
-int readAttrFloat(hid_t loc, const char *name, float *data)
+int readAttrFloat(hid_t loc, const char *name, float *data, bool usedset)
 {
   hid_t attr;
   herr_t ret;
 
-#ifdef USE_DSET_ATTR
-  attr = H5Dopen(loc, name, H5P_DEFAULT);
-#else
-  attr = H5Aopen(loc, name, H5P_DEFAULT);
-#endif
+  if (usedset)
+    attr = H5Dopen(loc, name, H5P_DEFAULT);
+  else
+    attr = H5Aopen(loc, name, H5P_DEFAULT);
+
   if (attr < 0) {
       printf("%s: Error with H5Aopen [%s]\n", __func__, name);
       return -1;
   }
 
-#ifdef USE_DSET_ATTR
-  hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
-  H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
-  ret  = H5Dread(attr, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, dxpl, (void*)data);
-  H5Pclose(dxpl);
-#else
-  ret  = H5Aread(attr, H5T_NATIVE_FLOAT, (void*)data);
-#endif
+  if (usedset) {
+    hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
+    H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
+    ret  = H5Dread(attr, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, dxpl, (void*)data);
+    H5Pclose(dxpl);
+  }
+  else
+    ret  = H5Aread(attr, H5T_NATIVE_FLOAT, (void*)data);
+
   if (ret < 0) {
       printf("%s: Error with H5Aread [%s]\n", __func__, name);
       return -1;
   }
 
-#ifdef USE_DSET_ATTR
-  H5Dclose(attr);
-#else
-  H5Aclose(attr);
-#endif
+  if (usedset)
+    H5Dclose(attr);
+  else
+    H5Aclose(attr);
 
     return 1;
 }

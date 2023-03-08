@@ -57,7 +57,8 @@ using namespace std;
 void parsedate( char* datestr, int& year, int& month, int& day, int& hour, int& minute,
 		int& second, int& msecond, int& fail );
 
-TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, 
+TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string groupName, std::string staName, 
+                        receiverMode mode, 
                         int sacFormat, int usgsFormat, int hdf5Format, std::string hdf5FileName, 
                         float_sw4 x, float_sw4 y, float_sw4 depth, 
                         bool topoDepth, int writeEvery, int downSample, bool xyzcomponent, int event,
@@ -77,6 +78,7 @@ TimeSeries::TimeSeries( EW* a_ew, std::string fileName, std::string staName, rec
   mGPY(0.0),
   mGPZ(0.0),
   m_net(net),
+  m_groupName(groupName),
   m_loc(loc),
   m_seedid(seedid),
   m_datetime(datetime),
@@ -483,10 +485,7 @@ void TimeSeries::recordData(vector<float_sw4> & u)
    }
 
    if (mWriteEvery > 0 && mLastTimeStep > 0 && mLastTimeStep % mWriteEvery == 0) {
-      if (m_hdf5Format == 1)
-          writeFile();
-      else if (m_hdf5Format == 2)
-          writeFileV2();
+     writeFile();
    }
 
 }
@@ -497,21 +496,24 @@ void TimeSeries::writeWindows( string suffix )
 {
   if (!m_myPoint) return;
   bool dbg=false;
+  bool usedset=true;
   if( dbg )
   {
      std::cout << "traveltime for station " << m_staName << " at (x,y,z) " <<
      mX << " " << mY << " " << mZ << " is " << m_winL << " " << m_winL2 << std::endl;
   }
+  if (m_hdf5Format == 2)
+    usedset = false;
 #ifdef USE_HDF5
   if( m_hdf5Format )
   {
      hid_t fid = openHDF5File(suffix);
      if( fid > 0 )
      {
-        hid_t grp = H5Gopen(fid, const_cast<char*>(m_staName.c_str()), H5P_DEFAULT);
+        hid_t grp = H5Gopen(fid, const_cast<char*>(m_groupName.c_str()), H5P_DEFAULT);
         if( grp >= 0 )
         {
-           double windows[4];
+           float windows[4];
            windows[0] = m_winL;
            windows[1] = m_winR;
            windows[2] = m_winL2;
@@ -522,14 +524,14 @@ void TimeSeries::writeWindows( string suffix )
            //           if( ret < 0 )
            {
              if( H5Lexists(grp, "WINDOWS", H5P_DEFAULT) ) {
-               int ret = openWriteAttr(grp, "WINDOWS", H5T_NATIVE_DOUBLE, windows);
+               int ret = openWriteAttr(grp, "WINDOWS", H5T_NATIVE_FLOAT, windows, usedset);
                if( ret < 0 )
                   std::cout << "TimeSeries::writeWindows, Error could not create/open data space" << std::endl;
              }
              else {
                hsize_t nelements=4;
                hid_t data_space = H5Screate_simple(1, &nelements, NULL);
-               int ret = createWriteAttr( grp, "WINDOWS", H5T_NATIVE_DOUBLE, data_space, windows );
+               int ret = createWriteAttr( grp, "WINDOWS", H5T_NATIVE_FLOAT, data_space, windows, usedset );
                H5Sclose(data_space);
              }
            }
@@ -550,30 +552,28 @@ void TimeSeries::writeWindows( string suffix )
 void TimeSeries::readWindows()
 {
   if (!m_myPoint) return;
+  bool usedset=true;
+  if (m_hdf5Format == 2)
+    usedset = false;
+  hid_t attr;
 #ifdef USE_HDF5
   if( m_hdf5Format )
   {
      hid_t fid = openHDF5File("");
      if( fid > 0 )
      {
-        hid_t grp = H5Gopen(fid, const_cast<char*>(m_staName.c_str()), H5P_DEFAULT);
+        hid_t grp = H5Gopen(fid, const_cast<char*>(m_groupName.c_str()), H5P_DEFAULT);
         if( grp >= 0 )
         {
            if( H5Lexists(grp, "WINDOWS", H5P_DEFAULT) )
            {
-              double windows[4];
-              hid_t attr = H5Dopen(grp, "WINDOWS", H5P_DEFAULT);
-              if( attr > 0 )
-              {
-                 int ret = H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, windows);
-                 if(ret >= 0)
-                 {
-                    m_winL = windows[0];
-                    m_winR = windows[1];
-                    m_winL2= windows[2];
-                    m_winR2= windows[3];
-                 }
-                 H5Dclose(attr);
+              float windows[4];
+              int ret = readAttrFloat(grp, "WINDOWS", windows, usedset);
+              if(ret >= 0) {
+                 m_winL = windows[0];
+                 m_winR = windows[1];
+                 m_winL2= windows[2];
+                 m_winR2= windows[3];
               }
            }
            else
@@ -595,7 +595,13 @@ void TimeSeries::readWindows()
 //----------------------------------------------------------------------
 void TimeSeries::writeFile( string suffix )
 {
+  bool usedset = true;
   if (!m_myPoint) return;
+
+  if (m_hdf5Format==2) {
+    writeFileV2(suffix);
+    return;
+  }
 
   double stime, etime;
   stime = MPI_Wtime();
@@ -641,39 +647,39 @@ void TimeSeries::writeFile( string suffix )
       printf("Rank %d: %s fid is invalid, cannot open file [%s]\n", myRank, __func__, filePrefix.str().c_str());
     else 
     {
-      grp = H5Gopen(fid, const_cast<char*>(m_staName.c_str()), H5P_DEFAULT);
+      grp = H5Gopen(fid, const_cast<char*>(m_groupName.c_str()), H5P_DEFAULT);
       if (grp < 0) 
-        printf("TimeSeries::writeFile Error opening group [%s]\n", m_staName.c_str());
+        printf("TimeSeries::writeFile Error opening group [%s]\n", m_groupName.c_str());
 
       if (grp > 0 && !m_isMetaWritten) {
         stlalodp[0] = double(m_rec_lat);
         stlalodp[1] = double(m_rec_lon);
         stlalodp[2] = double(m_sta_z);
 
-        openWriteAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_DOUBLE, stlalodp);
+        openWriteAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_DOUBLE, stlalodp, usedset);
 
         stxyz[0] = double(mX);
         stxyz[1] = double(mY);
         stxyz[2] = double(m_sta_z);
-        openWriteAttr(grp, "STX,STY,STZ", H5T_NATIVE_DOUBLE, stxyz);
+        openWriteAttr(grp, "STX,STY,STZ", H5T_NATIVE_DOUBLE, stxyz, usedset);
 
         origintime = float(m_epi_time_offset);
-        openWriteAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, &origintime);
+        openWriteAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, &origintime, usedset);
 
         // Actual location in SW4
         stlalodp[0] = double(m_rec_gp_lat);
         stlalodp[1] = double(m_rec_gp_lon);
         stlalodp[2] = double(m_sta_z);
-        openWriteAttr(grp, "ACTUALSTLA,STLO,STDP", H5T_NATIVE_DOUBLE, stlalodp);
+        openWriteAttr(grp, "ACTUALSTLA,STLO,STDP", H5T_NATIVE_DOUBLE, stlalodp, usedset);
 
         // Distance
         dist = sqrt( (mX-mGPX)*(mX-mGPX)+(mY-mGPY)*(mY-mGPY) );
-        openWriteAttr(grp, "DISTFROMACTUAL", H5T_NATIVE_DOUBLE, &dist);
+        openWriteAttr(grp, "DISTFROMACTUAL", H5T_NATIVE_DOUBLE, &dist, usedset);
 
         stxyz[0] = double(mGPX);
         stxyz[1] = double(mGPY);
         stxyz[2] = double(mGPZ);
-        openWriteAttr(grp, "ACTUALSTX,STY,STZ", H5T_NATIVE_DOUBLE, stxyz);
+        openWriteAttr(grp, "ACTUALSTX,STY,STZ", H5T_NATIVE_DOUBLE, stxyz, usedset);
 
         m_isMetaWritten = true;
       }
@@ -1163,7 +1169,7 @@ void TimeSeries::writeFile( string suffix )
   etime = MPI_Wtime();
   m_writeTime += (etime - stime);
 
-  /* printf("Rank %d: done written timeseries data of station [%s], %f seconds\n", myRank, m_staName.c_str(), etime - stime); */
+  /* printf("Rank %d: done written timeseries data of station [%s], %f seconds\n", myRank, m_groupName.c_str(), etime - stime); */
   /* fflush(stdout); */
 #endif
 
@@ -1210,18 +1216,18 @@ void TimeSeries::writeFileV2( string suffix )
   if( m_hdf5Format )
   {
     /* if (myRank == 0) { */
-    /*   printf("Writing station timeseries data\n", myRank, m_staName.c_str()); */
+    /*   printf("Writing station timeseries data\n", myRank, m_groupName.c_str()); */
     /*   fflush(stdout); */
     /* } */
     fid = openHDF5File(suffix);
 
     if (fid <= 0) 
       printf("Rank %d: %s fid is invalid, cannot open file [%s]\n", myRank, __func__, filePrefix.str().c_str());
-    else 
-    {
-      grp = H5Gopen(fid, const_cast<char*>(m_fileName.c_str()), H5P_DEFAULT);
+    else {
+        grp = H5Gopen(fid, const_cast<char*>(m_groupName.c_str()), H5P_DEFAULT);
+
       if (grp < 0) 
-        printf("TimeSeries::writeFile Error opening group [%s]\n", m_staName.c_str());
+        printf("TimeSeries::writeFile Error opening group [%s]\n", m_groupName.c_str());
 
       if (grp > 0 && !m_isMetaWritten) {
       /*   stlalodp[0] = double(m_rec_lat); */
@@ -1646,7 +1652,7 @@ void TimeSeries::writeFileV2( string suffix )
   etime = MPI_Wtime();
   m_writeTime += (etime - stime);
 
-  /* printf("Rank %d: done written timeseries data of station [%s], %f seconds\n", myRank, m_staName.c_str(), etime - stime); */
+  /* printf("Rank %d: done written timeseries data of station [%s], %f seconds\n", myRank, m_groupName.c_str(), etime - stime); */
   /* fflush(stdout); */
 #endif
 
@@ -1816,7 +1822,7 @@ write_hdf5_format(int npts, hid_t grp, float *y, float btime, float dt, char *va
   }
 
   if (count > 0) 
-    ret = openWriteData(grp, var, H5T_NATIVE_FLOAT, (void*)write_data, 1, &start, &count, write_npts, btime, cmpinc, cmpaz, m_isIncAzWritten, isLast);
+    ret = openWriteData(grp, var, H5T_NATIVE_FLOAT, (void*)write_data, 1, &start, &count, write_npts, btime, cmpinc, cmpaz, m_isIncAzWritten, isLast, m_hdf5Format);
 
   if (isLast && ret == 1) {
     m_nptsWritten += count;
@@ -2987,7 +2993,7 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
       filename = m_fileName + filename;
    }
 
-   TimeSeries* retval = new TimeSeries( a_ew, filename, m_staName, m_mode, m_sacFormat, m_usgsFormat, m_hdf5Format, hdf5name, 
+   TimeSeries* retval = new TimeSeries( a_ew, filename, m_groupName, m_staName, m_mode, m_sacFormat, m_usgsFormat, m_hdf5Format, hdf5name, 
 					mX, mY, mZ, m_zRelativeToTopography, mWriteEvery, mDownSample, m_xyzcomponent, m_event );
    retval->m_t0    = m_t0;
    retval->m_dt    = m_dt;
@@ -2999,6 +3005,10 @@ TimeSeries* TimeSeries::copy( EW* a_ew, string filename, bool addname )
    retval->m_scalefactor = m_scalefactor;
    retval->m_compute_scalefactor = m_compute_scalefactor;
    retval->m_misfit_scaling = m_misfit_scaling;
+   retval->m_net = m_net;
+   retval->m_loc = m_loc;
+   retval->m_seedid = m_seedid;
+   retval->m_datetime = m_datetime;
 
 #ifdef USE_HDF5
    // Record the number of timesteps for HDF5 dset space allocation
@@ -4050,6 +4060,9 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
   char data[128];
   hsize_t ndim, dims[4];
   int ret;
+  bool usedset = true;
+  if (m_hdf5Format == 2)
+    usedset = false;
 
   if (!m_myPoint) 
       return;
@@ -4075,7 +4088,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
 
   // dt may be downsampled 
   int downsample;
-  readAttrInt(fid, "DOWNSAMPLE", &downsample);
+  readAttrInt(fid, "DOWNSAMPLE", &downsample, usedset);
   if (downsample < 1) {
      cout << "ERROR: downsample="<< downsample << " is invalid! Setting to 1" << endl;
      downsample = 1;
@@ -4096,7 +4109,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
       cout << "ERROR opening group [" << m_staName << "] !" << endl;
 
     int is_nsew, npts, sw4npts;
-    readAttrInt(grp, "ISNSEW", &is_nsew);
+    readAttrInt(grp, "ISNSEW", &is_nsew, usedset);
 
     if (is_nsew == 1) {
       dset_names[0] = "EW";
@@ -4111,7 +4124,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
     }
     m_xyzcomponent = cartesian;
 
-    readAttrInt(grp, "NPTS", &npts);
+    readAttrInt(grp, "NPTS", &npts, usedset);
     if( npts <= 1 ) {
        cout << "ERROR: observed data is too short" << endl;
        cout << "    File " << FileName << " not read." << endl;
@@ -4119,7 +4132,7 @@ void TimeSeries::readSACHDF5( EW *ew, string FileName, bool ignore_utc)
     }
     
     float dt, tstart;
-    readAttrFloat(fid, "DELTA", &dt);
+    readAttrFloat(fid, "DELTA", &dt, usedset);
 
     sw4npts =  (npts-1) * downsample + 1;
 

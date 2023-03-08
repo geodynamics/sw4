@@ -509,6 +509,8 @@ void EW::solve( vector<Source*> & a_Sources, vector<TimeSeries*> & a_TimeSeries,
   if ( a_TimeSeries.size() > 0 && a_TimeSeries[0]->getUseHDF5()) {
     for (int tsi = 0; tsi < a_TimeSeries.size(); tsi++) 
       a_TimeSeries[tsi]->resetHDF5file();
+    /* if(m_myRank == 0 && !m_check_point->do_restart()) */ 
+    /*   createTimeSeriesHDF5File(a_TimeSeries, mNumberOfTimeSteps[event]+1, mDt, ""); */
     if(m_myRank == 0 && !m_check_point->do_restart()) 
       createTimeSeriesHDF5FileV2(a_TimeSeries, mNumberOfTimeSteps[event]+1, mDt, "");
     MPI_Barrier(m_1d_communicator);

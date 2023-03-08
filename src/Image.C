@@ -1035,6 +1035,7 @@ void Image::copy2DArrayToImage(Sarray &u2)
 //-----------------------------------------------------------------------
 void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
 {
+   bool usedset = true;
    if( !m_user_created )
       return;
    
@@ -1219,12 +1220,12 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
       attr_space1 = H5Screate_simple(1, &dims1, NULL);
 
       nPatches = mLocationType == Image::Z ? 1 : mEW->mNumberOfGrids;
-      ret = createWriteAttr(h5_fid, "npatch", H5T_NATIVE_INT, attr_space1, &nPatches);
+      ret = createWriteAttr(h5_fid, "npatch", H5T_NATIVE_INT, attr_space1, &nPatches, usedset);
       if( ret < 0 )
 	 cout << "ERROR: Image::writeImagePlane_2 could not write number of patches" << endl;
 
       double dblevar=static_cast<double>(t);
-      ret = createWriteAttr(h5_fid, "time", H5T_NATIVE_DOUBLE, attr_space1, &dblevar);
+      ret = createWriteAttr(h5_fid, "time", H5T_NATIVE_DOUBLE, attr_space1, &dblevar, usedset);
       if( ret < 0 )
 	 cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 time" << endl;
 
@@ -1235,7 +1236,7 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
       else
 	 ltype = 2;
 
-      ret = createWriteAttr(h5_fid, "plane", H5T_NATIVE_INT, attr_space1, &ltype);
+      ret = createWriteAttr(h5_fid, "plane", H5T_NATIVE_INT, attr_space1, &ltype, usedset);
       if( ret < 0 )
 	 cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 plane type" << endl;
 
@@ -1244,16 +1245,16 @@ void Image::writeImagePlane_2(int cycle, std::string &path, float_sw4 t )
          coordvalue += mEW->m_zmin[glow];
 
       dblevar=static_cast<double>(coordvalue);
-      ret = createWriteAttr(h5_fid, "coordinate", H5T_NATIVE_DOUBLE, attr_space1, &dblevar);
+      ret = createWriteAttr(h5_fid, "coordinate", H5T_NATIVE_DOUBLE, attr_space1, &dblevar, usedset);
       if( ret < 0 )
 	 cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 coordinate value" << endl;
 
       int imode = static_cast<int>(mMode);
-      ret = createWriteAttr(h5_fid, "mode", H5T_NATIVE_INT, attr_space1, &imode);
+      ret = createWriteAttr(h5_fid, "mode", H5T_NATIVE_INT, attr_space1, &imode, usedset);
       if( ret < 0 )
 	 cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 imode" << endl;
 
-      ret = createWriteAttr(h5_fid, "gridinfo", H5T_NATIVE_INT, attr_space1, &mGridinfo);
+      ret = createWriteAttr(h5_fid, "gridinfo", H5T_NATIVE_INT, attr_space1, &mGridinfo, usedset);
       if( ret < 0 )
 	 cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 gridinfo" << endl;
 
