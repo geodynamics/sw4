@@ -2,9 +2,9 @@
 //  Wei Liu
 //  July 2020
 //
-#include "caliper.h"
 #include "EW.h"
 #include "MaterialParameterization.h"
+#include "caliper.h"
 #include "cf_interface.h"
 #include "f_interface.h"
 #include "impose_cartesian_bc.h"
@@ -73,7 +73,7 @@ void EW::solveTT(Source* a_Source, vector<TimeSeries*>& a_TimeSeries,
   csmin = 1e20;
   csmax = -1e20;
 
-  //#pragma omp parallel for
+  // #pragma omp parallel for
   for (size_t i = 0; i < nmpars / n; i++) {
     cs[i] = xs[n * i + n - 2];
     cp[i] = xs[n * i + n - 1];

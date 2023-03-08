@@ -126,10 +126,10 @@ void curvilinear4sg_ci(
 #define acof(i, j, k) a_acof[(i - 1) + 6 * (j - 1) + 48 * (k - 1)]
 #endif
 
-  //#define MYCONSTANT 0
-  //#define acof(i,j,k) MYCONSTANT
-  //#define acof(i, j, k) 1.0
-  //#define acof(i, j, k) acoff[(i - 1)][(j-1)][(k-1)]
+  // #define MYCONSTANT 0
+  // #define acof(i,j,k) MYCONSTANT
+  // #define acof(i, j, k) 1.0
+  // #define acof(i, j, k) acoff[(i - 1)][(j-1)][(k-1)]
 #define bope(i, j) a_bope[i - 1 + 6 * (j - 1)]
 #define ghcof(i) a_ghcof[i - 1]
 #define acof_no_gp(i, j, k) a_acof_no_gp[(i - 1) + 6 * (j - 1) + 48 * (k - 1)]
@@ -146,7 +146,7 @@ void curvilinear4sg_ci(
   //  PREFETCH(a_mu);
   // PREFETCH(a_lambda);
 
-  //#pragma omp parallel
+  // #pragma omp parallel
   {
     int kstart = kfirst + 2;
     int kend = klast - 2;
@@ -155,7 +155,8 @@ void curvilinear4sg_ci(
       kstart = 7;
       // SBP Boundary closure terms
 #ifdef PEEKS_GALORE
-      //std::cout << " ********* WARNING PEEKS GALORE MODE ******************\n";
+      // std::cout << " ********* WARNING PEEKS GALORE MODE
+      // ******************\n";
       SW4_PEEK;
       SYNC_DEVICE;
 #endif
@@ -446,7 +447,7 @@ void curvilinear4sg_ci(
                 mucofvw = 0;
                 mucofv2 = 0;
                 mucofw2 = 0;
-                //#pragma unroll 8 // HIP SA 176
+                // #pragma unroll 8 // HIP SA 176
                 for (int m = 1; m <= 8;
                      m++) {  // without this loop the funcion takes 6.8s
               // mu and lambda seem to vary from cycle to cycle. So mucofs
@@ -818,7 +819,7 @@ void curvilinear4sg_ci(
               dwdrm1 = 0;
               dwdrp1 = 0;
               dwdrp2 = 0;
-              //#pragma unroll 8 // Make is slighly worse 7.9 s 7.7ms
+              // #pragma unroll 8 // Make is slighly worse 7.9 s 7.7ms
               for (int q = 1; q <= 8; q++) {
                 dudrm2 += bope(k, q) * u(1, i, j - 2, q);
                 dvdrm2 += bope(k, q) * u(2, i, j - 2, q);
@@ -926,7 +927,7 @@ void curvilinear4sg_ci(
               float_sw4 r1 = sma[0];
               float_sw4 r2 = sma[1];
               float_sw4 r3 = sma[2];
-              //#pragma unroll 8 // Make it worse with HIP
+              // #pragma unroll 8 // Make it worse with HIP
               for (int q = 1; q <= 8; q++) {
                 // (u-eq)
                 // 53 ops
@@ -2516,7 +2517,7 @@ void curvilinear4sg_ci(
           // averaging the coefficient
           // 54*8*8+25*8 = 3656 ops, tot=3939
           float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2;
-      //#pragma unroll 8
+      // #pragma unroll 8
 #ifdef ENABLE_HIP
 #pragma unroll 8
 #endif
@@ -2529,7 +2530,7 @@ void curvilinear4sg_ci(
             mucofvw = 0;
             mucofv2 = 0;
             mucofw2 = 0;
-        //#pragma unroll 8
+        // #pragma unroll 8
 #ifdef ENABLE_HIP
 #pragma unroll 8
 #endif
@@ -2740,7 +2741,7 @@ void curvilinear4sg_ci(
           float_sw4 dudrm2 = 0, dudrm1 = 0, dudrp1 = 0, dudrp2 = 0;
           float_sw4 dvdrm2 = 0, dvdrm1 = 0, dvdrp1 = 0, dvdrp2 = 0;
           float_sw4 dwdrm2 = 0, dwdrm1 = 0, dwdrp1 = 0, dwdrp2 = 0;
-          //#pragma unroll 8
+          // #pragma unroll 8
           for (int q = nk - 7; q <= nk; q++) {
             dudrm2 -= bope(nk - k + 1, nk - q + 1) * u(1, i - 2, j, q);
             dvdrm2 -= bope(nk - k + 1, nk - q + 1) * u(2, i - 2, j, q);
@@ -2859,8 +2860,8 @@ void curvilinear4sg_ci(
           float_sw4 dwdrp1 = 0;
           float_sw4 dwdrp2 = 0;
 
-          //#pragma unroll 8
-          // for (int q = nk - 7; q <= nk; q++) {
+          // #pragma unroll 8
+          //  for (int q = nk - 7; q <= nk; q++) {
           for (int qq = 0; qq < 8; qq++) {
             int q = nk - qq;
             dudrm2 -= bope(nk - k + 1, nk - q + 1) * u(1, i, j - 2, q);
@@ -2964,7 +2965,7 @@ void curvilinear4sg_ci(
 
           // pr and qr derivatives at once
           // in loop: 8*(53+53+43) = 1192 ops, tot=6037
-          //#pragma unroll 8
+          // #pragma unroll 8
           // for (int q = nk - 7; q <= nk; q++) {
           for (int qq = 0; qq < 8; qq++) {
             int q = nk - qq;

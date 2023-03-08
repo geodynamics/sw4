@@ -209,8 +209,8 @@ void EW::consintp(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
   //    SView &UnextcV = Unextc.getview();
   //    Unextc.prefetch();
   SW4_MARK_BEGIN("CONSINTP_LOOP4");
-  //#pragma omp parallel
-  // for (int c=1; c<=3; c++)
+  // #pragma omp parallel
+  //  for (int c=1; c<=3; c++)
   {
     // this works but is a bit awkward
     // The instantiaion below needs to be long for Raja master. bug is fixed in

@@ -145,21 +145,21 @@ void EW::freesurfcurvisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
                              yoxsqrt * met(3, i, j, k) * rhs2 +
                              isqrtxy * met(4, i, j, k) * rhs3);
 
-      u(1, i, j, k - kl) =
-          -s0i *
-          (s[1] * u(1, i, j, k) + s[2] * u(1, i, j, k + kl) +
-           s[3] * u(1, i, j, k + 2 * kl) + s[4] * u(1, i, j, k + 3 * kl) +
-           kl * bc * rhs1 - kl * dc * met(2, i, j, k) * xoysqrt);
-      u(2, i, j, k - kl) =
-          -s0i *
-          (s[1] * u(2, i, j, k) + s[2] * u(2, i, j, k + kl) +
-           s[3] * u(2, i, j, k + 2 * kl) + s[4] * u(2, i, j, k + 3 * kl) +
-           kl * bc * rhs2 - kl * dc * met(3, i, j, k) * yoxsqrt);
-      u(3, i, j, k - kl) =
-          -s0i *
-          (s[1] * u(3, i, j, k) + s[2] * u(3, i, j, k + kl) +
-           s[3] * u(3, i, j, k + 2 * kl) + s[4] * u(3, i, j, k + 3 * kl) +
-           kl * bc * rhs3 - kl * dc * met(4, i, j, k) * isqrtxy);
+        u(1, i, j, k - kl) =
+            -s0i *
+            (s[1] * u(1, i, j, k) + s[2] * u(1, i, j, k + kl) +
+             s[3] * u(1, i, j, k + 2 * kl) + s[4] * u(1, i, j, k + 3 * kl) +
+             kl * bc * rhs1 - kl * dc * met(2, i, j, k) * xoysqrt);
+        u(2, i, j, k - kl) =
+            -s0i *
+            (s[1] * u(2, i, j, k) + s[2] * u(2, i, j, k + kl) +
+             s[3] * u(2, i, j, k + 2 * kl) + s[4] * u(2, i, j, k + 3 * kl) +
+             kl * bc * rhs2 - kl * dc * met(3, i, j, k) * yoxsqrt);
+        u(3, i, j, k - kl) =
+            -s0i *
+            (s[1] * u(3, i, j, k) + s[2] * u(3, i, j, k + kl) +
+             s[3] * u(3, i, j, k + 2 * kl) + s[4] * u(3, i, j, k + 3 * kl) +
+             kl * bc * rhs3 - kl * dc * met(4, i, j, k) * isqrtxy);
       });
   // }
 #undef mu
@@ -191,7 +191,7 @@ void EW::getsurfforcingsg_ci(
 #define met(c, i, j, k) a_met[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 #define jac(i, j, k) a_jac[base + (i) + ni * (j) + nij * (k)]
 #define forcing(c, i, j) a_forcing[3 * basef - 1 + (c) + 3 * (i) + nic3 * (j)]
-  //#define tau(c,i,j)         a_tau[6*basef-1+(c)+6*(i)+nic6*(j)]
+  // #define tau(c,i,j)         a_tau[6*basef-1+(c)+6*(i)+nic6*(j)]
 #define tau(c, i, j) a_tau[basef - nij + (i) + ni * (j) + nij * (c)]
 #define strx(i) a_strx[i - ifirst]
 #define stry(j) a_stry[j - jfirst]
@@ -200,7 +200,7 @@ void EW::getsurfforcingsg_ci(
   for (int j = jfirst; j <= jlast; j++) {
     float_sw4 istry = 1 / stry(j);
 #pragma ivdep
-    //#pragma simd
+    // #pragma simd
     for (int i = ifirst; i <= ilast; i++) {
       float_sw4 istrx = 1 / strx(i);
       float_sw4 sqjac = sqrt(jac(i, j, k));
@@ -246,7 +246,7 @@ void EW::subsurfforcingsg_ci(
 #define met(c, i, j, k) a_met[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 #define jac(i, j, k) a_jac[base + (i) + ni * (j) + nij * (k)]
 #define forcing(c, i, j) a_forcing[3 * basef - 1 + (c) + 3 * (i) + nic3 * (j)]
-  //#define tau(c,i,j)         a_tau[6*basef-1+(c)+6*(i)+nic6*(j)]
+  // #define tau(c,i,j)         a_tau[6*basef-1+(c)+6*(i)+nic6*(j)]
 #define tau(c, i, j) a_tau[basef - nij + (i) + ni * (j) + nij * (c)]
 #define strx(i) a_strx[i - ifirst]
 #define stry(j) a_stry[j - jfirst]
@@ -255,7 +255,7 @@ void EW::subsurfforcingsg_ci(
   for (int j = jfirst; j <= jlast; j++) {
     float_sw4 istry = 1 / stry(j);
 #pragma ivdep
-    //#pragma simd
+    // #pragma simd
     for (int i = ifirst; i <= ilast; i++) {
       float_sw4 istrx = 1 / strx(i);
       float_sw4 sqjac = sqrt(jac(i, j, k));

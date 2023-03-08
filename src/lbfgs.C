@@ -1,10 +1,12 @@
 #include "caliper.h"
 #ifdef OPTTEST_MODE
 #include <mpi.h>
+
 #include <cmath>
 #include <cstdio>
 #include <iostream>
 #include <vector>
+
 #include "dummy-classes.h"
 #else
 #include "EW.h"
@@ -559,10 +561,9 @@ void lbfgs(EW& simulation, int nspar, int nmpars, double* xs, int nmpard,
 
   compute_f_and_df(simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources,
                    GlobalTimeSeries, GlobalObservations, f, dfs, dfm, myRank,
-                   mopt, 0); // ERROR HAPPENS HERE
+                   mopt, 0);  // ERROR HAPPENS HERE
 
   if (mopt->m_output_ts) {
-
     for (int e = 0; e < GlobalTimeSeries.size(); e++) {
 #ifdef USE_HDF5
       // Tang: need to create a HDF5 file before writing
@@ -611,7 +612,7 @@ void lbfgs(EW& simulation, int nspar, int nmpars, double* xs, int nmpard,
     //   fprintf(fdx, "%i %i %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g %15.7g
     //   %15.7g %15.7g %15.7g %15.7g\n",
     //	   0,0, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7], x[8], x[9],
-    //x[10] );
+    // x[10] );
   }
   // s and y stores the m vectors
 
@@ -778,7 +779,7 @@ void lbfgs(EW& simulation, int nspar, int nmpars, double* xs, int nmpard,
         printf(".. return code %d misfit changed from %e to %e\n", retcode, f,
                fp);
         //	    cout << " .. return code "  << retcode << " misfit changed
-        //from " << f << " to " << fp << endl;
+        // from " << f << " to " << fp << endl;
       }
 
     } else {

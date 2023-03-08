@@ -30,8 +30,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
-#include "caliper.h"
 #include "EW.h"
+#include "caliper.h"
 
 #define SQR(x) ((x) * (x))
 
@@ -65,7 +65,7 @@ void projectmtrl(int ib, int ie, int jb, int je, int kb, int ke, int iba,
   //*        rhoscale, muscale, lascale - Scaling parameters for rho, mu, lambda
   //*
   //* Output: rho, mu, lambda - Material is projected to satisfy the
-  //constraints.
+  // constraints.
   //*         info - 0   --> No correction was needed
   //*               -1   --> Projection was unsuccessful
   //*                1   --> Negative density or mu was corrected.
@@ -562,9 +562,10 @@ int EW::check_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
     //      {
     //	 // Curvilinear
     //	 F77_FUNC(projectmtrlc,PROJECTMTRLC)( &ifirst, &ilast, &jfirst, &jlast,
-    //&kfirst, &klast, 					    &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
-    //					    &klastact,  rhop, mup, lap, &mDt, mMetric.c_ptr(),
-    //mJ.c_ptr(), 					      &mCFLmax, &vsmin, &rhoscale, &muscale, &lascale, &infogrid );
+    //&kfirst, &klast, 					    &ifirstact, &ilastact, &jfirstact,
+    //&jlastact, &kfirstact, 					    &klastact,  rhop, mup, lap, &mDt, mMetric.c_ptr(),
+    // mJ.c_ptr(), 					      &mCFLmax, &vsmin, &rhoscale, &muscale, &lascale,
+    // &infogrid );
     //      }
     //      else
     //      {

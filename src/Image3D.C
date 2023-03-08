@@ -30,15 +30,16 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
-#include "mpi.h"
-
 #include <fcntl.h>
 #include <unistd.h>
+
 #include <cstring>
 #include <ctime>
+
 #include "EW.h"
 #include "Image3D.h"
 #include "Require.h"
+#include "mpi.h"
 
 // static variable definition (in class only declaration):
 int Image3D::mPreceedZeros = 0;
@@ -398,9 +399,9 @@ void Image3D::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
       if (mMode == UZ) c = 2;
       if (m_double) {
         //	    for( int ks=0 ; ks <= (mWindow[g][5]-mWindow[g][4])/st ;
-        //ks++ ) 	       for( int js=0 ; js <= (mWindow[g][3]-mWindow[g][2])/st ; js++ )
-        //		  for( int is=0 ; is <= (mWindow[g][1]-mWindow[g][0])/st ;
-        //is++ )
+        // ks++ ) 	       for( int js=0 ; js <=
+        // (mWindow[g][3]-mWindow[g][2])/st ; js++ ) 		  for( int is=0 ; is <=
+        //(mWindow[g][1]-mWindow[g][0])/st ; is++ )
         //		  {
         //		     int k = mWindow[g][4]+ks*st;
         //		     int j = mWindow[g][2]+js*st;
@@ -417,7 +418,7 @@ void Image3D::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                            nijw * (k - mWindow[g][4]) / st;
               m_doubleField[g][ind] = (double)a_U[g](c + 1, i, j, k);
               //		     m_doubleField[g][ind] = up[c+
-              //3*((i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl))];
+              // 3*((i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl))];
             }
       } else {
 #pragma omp parallel for
@@ -429,7 +430,7 @@ void Image3D::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                            nijw * (k - mWindow[g][4]) / st;
               m_floatField[g][ind] = (float)a_U[g](c + 1, i, j, k);
               //		     m_floatField[g][ind++] = up[c+
-              //3*((i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl))];
+              // 3*((i-il)+ni*(j-jl)+((size_t)ni)*nj*(k-kl))];
             }
       }
     } else if (mMode == RHO || mMode == MU || mMode == LAMBDA ||

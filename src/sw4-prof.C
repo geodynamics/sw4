@@ -1,11 +1,11 @@
-#include "caliper.h"
 #include <mpi.h>
-
-#include "sw4-prof.h"
 
 #include <fstream>
 #include <iostream>
 #include <sstream>
+
+#include "caliper.h"
+#include "sw4-prof.h"
 
 int SW4Prof::m_instances = 0;
 

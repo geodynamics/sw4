@@ -34,9 +34,6 @@
 #include "AnisotropicMaterialBlock.h"
 #include "ESSI3D.h"
 #include "EW.h"
-
-#include "AnisotropicMaterialBlock.h"
-#include "ESSI3D.h"
 #include "Filter.h"
 #include "Image3D.h"
 #include "MaterialBlock.h"
@@ -55,7 +52,7 @@
 #include "nearlyEqual.h"
 #include "sacutils.h"
 #include "version.h"
-//#include "TestGrid.h"
+// #include "TestGrid.h"
 #include "GridGeneratorGaussianHill.h"
 #include "GridGeneratorGeneral.h"
 
@@ -805,9 +802,9 @@ void EW::processGrid(char* buffer) {
     }
     token = strtok(NULL, " \t");
   }
-  //std::cout<<"PROJ) "<<proj0.str().c_str()<<"\n";
-  // hard code units to be in meters
-  //proj0 << "+units=m"; 
+  // std::cout<<"PROJ) "<<proj0.str().c_str()<<"\n";
+  //  hard code units to be in meters
+  // proj0 << "+units=m";
 
   //--------------------------------------------------------------------
   // There are only three ways to specify a grid.
@@ -994,7 +991,8 @@ void EW::processGrid(char* buffer) {
         h = cubelen/nc;
         */
         //	   cout << "nc= " << nc << " cubelen= " << cubelen << " origin
-        //before " << 	      origin[0] << " " << origin[1] << " " << origin[2] << endl;
+        // before " << 	      origin[0] << " " << origin[1] << " " << origin[2]
+        // << endl;
         origin[0] -= hcube * (origin[0] / hcube - round(origin[0] / hcube));
         origin[1] -= hcube * (origin[1] / hcube - round(origin[1] / hcube));
         origin[2] -= hcube * (origin[2] / hcube - round(origin[2] / hcube));
@@ -4357,8 +4355,9 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
       mC[g].set_to_minusOne();
     } else {
       // elastic material
-      mMu[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast,Space::Host);
-      mLambda[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast,Space::Host);
+      mMu[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Host);
+      mLambda[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                        Space::Host);
       // initialize the material coefficients to -1
       mMu[g].set_to_minusOneHost();
       mLambda[g].set_to_minusOneHost();
@@ -4376,14 +4375,16 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
     }
     // viscoelastic material coefficients & memory variables
     if (m_use_attenuation) {
-      mQs[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast,Space::Host);
-      mQp[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast,Space::Host);
+      mQs[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Host);
+      mQp[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Host);
       for (int a = 0; a < m_number_mechanisms;
            a++)  // the simplest attenuation model only uses Q, not MuVE or
                  // LambdaVE
       {
-        mMuVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast,Space::Host);
-        mLambdaVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast,Space::Host);
+        mMuVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                           Space::Host);
+        mLambdaVE[g][a].define(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                               Space::Host);
         // initialize the viscoelastic material coefficients to -1
         mMuVE[g][a].set_to_minusOneHost();
         mLambdaVE[g][a].set_to_minusOneHost();
@@ -5419,8 +5420,9 @@ void EW::processSource(char* buffer,
       int utcsac[7], npts;
       string basename = dfile;
       string fname;
-      npts=1; // WARNING SUPPRESSION
-      std::cerr<<"WARNING :: npts arbitrarily set to 1 in parseInputFIle line 5423\n";
+      npts = 1;  // WARNING SUPPRESSION
+      std::cerr << "WARNING :: npts arbitrarily set to 1 in parseInputFIle "
+                   "line 5423\n";
       if (isMomentType) {
         tDep = iDiscrete6moments;
         fname = basename + ".xx";
@@ -5667,7 +5669,6 @@ void EW::processSource(char* buffer,
       cout << "********Done parsing source command*********" << endl;
   }
 }
-
 
 //----------------------------------------------------------------------------
 void EW::processRuptureHDF5(char* buffer,
@@ -7117,8 +7118,8 @@ void EW::processObservationHDF5(
     //	{
     //	   int year,month,day,hour,minute,second,msecond, fail;
     //	   // Format: 01/04/2012:17:34:45.2343
-    //(Month/Day/Year:Hour:Min:Sec.fraction) 	   parsedate( token, year, month, day,
-    //hour, minute, second, msecond, fail ); 	   if( fail == 0 )
+    //(Month/Day/Year:Hour:Min:Sec.fraction) 	   parsedate( token, year, month,
+    //day, hour, minute, second, msecond, fail ); 	   if( fail == 0 )
     //	   {
     //              utcset = true;
     //	      utc[0] = year;
@@ -7131,7 +7132,7 @@ void EW::processObservationHDF5(
     //	   }
     //	   else
     //	      CHECK_INPUT(fail == 0 , "processObservation: Error in utc format.
-    //Give as mm/dd/yyyy:hh:mm:ss.ms "
+    // Give as mm/dd/yyyy:hh:mm:ss.ms "
     //			  << " or use utc=ignore" );
     //	}
     //     }
@@ -8165,7 +8166,7 @@ void EW::processMaterialSfile(char* buffer) {
   char* token = strtok(buffer, " \t");
   //  CHECK_INPUT(strcmp("rfile", token) == 0,
   //	      "ERROR: material data can only be set by an rfile line, not: " <<
-  //token);
+  // token);
 
   string err = token;
   err += " Error: ";
@@ -8222,7 +8223,7 @@ void EW::processMaterialGMG(char* buffer) {
   char* token = strtok(buffer, " \t");
   //  CHECK_INPUT(strcmp("rfile", token) == 0,
   //	      "ERROR: material data can only be set by an rfile line, not: " <<
-  //token);
+  // token);
 
   string err = token;
   err += " Error: ";

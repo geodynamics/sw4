@@ -35,8 +35,6 @@
 #include "CurvilinearInterface2.h"
 #include "EW.h"
 #include "GridGenerator.h"
-
-#include "GridGenerator.h"
 #include "caliper.h"
 
 // making directories
@@ -781,8 +779,9 @@ void EW::preprocessSources(vector<vector<Source *> > &a_GlobalUniqueSources) {
         // // Modify the time functions if prefiltering is enabled
 
         // // 1. Make sure the smallest time offset is at least t0_min +
-        // (timeFcn dependent offset for centered fcn's) 	double dt0 = 0; 	double
-        // dt0loc, dt0max, t0_min; 	t0_min = m_filter_ptr->estimatePrecursor();
+        // (timeFcn dependent offset for centered fcn's) 	double dt0 = 0;
+        // double dt0loc, dt0max, t0_min; 	t0_min =
+        // m_filter_ptr->estimatePrecursor();
         // // tmp
         // 	if (!mQuiet && proc_zero() )
         // 	  printf("Filter precursor = %e\n", t0_min);
@@ -818,8 +817,9 @@ void EW::preprocessSources(vector<vector<Source *> > &a_GlobalUniqueSources) {
         // 	  if ( !mQuiet && proc_zero() )
         // 	    printf("\n*** WARNING: the 2 pass prefilter has an estimated
         // precursor of length %e s\n"
-        // 		   "*** To avoid artifacts due to sudden startup, increase
-        // t0 in all source commands by at least %e\n\n", 		   t0_min, dt0max);
+        // 		   "*** To avoid artifacts due to sudden startup,
+        // increase t0 in all source commands by at least %e\n\n",
+        // t0_min, dt0max);
         // 	}
 
         // // Do the filtering
@@ -1462,7 +1462,7 @@ void EW::set_anisotropic_materials() {
       //         anisomtrltocurvilinear( &m_iStart[g], &m_iEnd[g], &m_jStart[g],
       //         &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
       //				 mMetric.c_ptr(), mC[g].c_ptr(),
-      //mCcurv.c_ptr() );
+      // mCcurv.c_ptr() );
     }
   }  // end if !m_testing, i.e., not Twilight
   else if (m_twilight_forcing) {
@@ -1556,8 +1556,9 @@ void EW::set_anisotropic_materials() {
           m_kEnd[g], mMetric[g].c_ptr(), mC[g].c_ptr(),
           mCcurv.c_ptr());  // NOT implemented for several curvilinear grids
       // FTNC         anisomtrltocurvilinear( &m_iStart[g], &m_iEnd[g],
-      // &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g], 				 mMetric.c_ptr(),
-      //mC[g].c_ptr(), mCcurv.c_ptr() );
+      // &m_jStart[g], &m_jEnd[g], &m_kStart[g], &m_kEnd[g],
+      // mMetric.c_ptr(),
+      // mC[g].c_ptr(), mCcurv.c_ptr() );
     }
 
   }  // end if m_twilight
@@ -1721,11 +1722,11 @@ void EW::computeDT() {
             float_sw4 jinv = 1 / mJ[g](i, j, k);
             // A11
             //	   Amat[0] = -4.*(SQR(mQ(1,i,j,k))*la2mu + SQR(mQ(2,i,j,k))*mu +
-            //SQR(mQ(3,i,j,k))*mu
+            // SQR(mQ(3,i,j,k))*mu
             //		        + SQR(mR(1,i,j,k))*la2mu + SQR(mR(2,i,j,k))*mu +
-            //SQR(mR(3,i,j,k))*mu
-            //			 + SQR(mS(1,i,j,k))*la2mu + SQR(mS(2,i,j,k))*mu +
-            //SQR(mS(3,i,j,k))*mu);
+            // SQR(mR(3,i,j,k))*mu
+            //			 + SQR(mS(1,i,j,k))*la2mu + SQR(mS(2,i,j,k))*mu
+            //+ SQR(mS(3,i,j,k))*mu);
             Amat[0] = -4 *
                       (SQR(mMetric[g](1, i, j, k)) * la2mu +
                        SQR(mMetric[g](1, i, j, k)) * mu +
@@ -1735,12 +1736,12 @@ void EW::computeDT() {
                       jinv;
             // A21 = A12
             //	   Amat[1] = -4.*(mQ(1,i,j,k)*mQ(2,i,j,k) +
-            //mR(1,i,j,k)*mR(2,i,j,k) + mS(1,i,j,k)*mS(2,i,j,k))*(mu+la);
+            // mR(1,i,j,k)*mR(2,i,j,k) + mS(1,i,j,k)*mS(2,i,j,k))*(mu+la);
             Amat[1] = -4. * mMetric[g](2, i, j, k) * mMetric[g](3, i, j, k) *
                       (mu + la) * jinv;
             // A31 = A13
             //	   Amat[2] = -4.*(mQ(1,i,j,k)*mQ(3,i,j,k) +
-            //mR(1,i,j,k)*mR(3,i,j,k) + mS(1,i,j,k)*mS(3,i,j,k))*(mu+la);
+            // mR(1,i,j,k)*mR(3,i,j,k) + mS(1,i,j,k)*mS(3,i,j,k))*(mu+la);
             Amat[2] = -4. * mMetric[g](2, i, j, k) * mMetric[g](4, i, j, k) *
                       (mu + la) * jinv;
             // A22
@@ -1753,7 +1754,7 @@ void EW::computeDT() {
                       jinv;
             // A32 = A23
             //	   Amat[4] = -4.*(mQ(2,i,j,k)*mQ(3,i,j,k) +
-            //mR(2,i,j,k)*mR(3,i,j,k) + mS(2,i,j,k)*mS(3,i,j,k))*(mu+la);
+            // mR(2,i,j,k)*mR(3,i,j,k) + mS(2,i,j,k)*mS(3,i,j,k))*(mu+la);
             Amat[4] = -4. * mMetric[g](3, i, j, k) * mMetric[g](4, i, j, k) *
                       (mu + la) * jinv;
             // A33
@@ -1851,7 +1852,6 @@ void EW::computeDT() {
     }
   }
 }
-
 
 //-----------------------------------------------------------------------
 void EW::computeDTanisotropic()  // NOT completely updated for several
@@ -2534,7 +2534,8 @@ void EW::perturb_velocities(vector<Sarray> &a_vs, vector<Sarray> &a_vp) {
     // &klast,
     // FTNC			   &nx, &ny, &nz, &ghost, pert_ptr, wgh_ptr,
     // &m_random_dist,
-    // FTNC			   &m_random_distz, &h, m_random_seed, saverand_ptr, &p, &pz
+    // FTNC			   &m_random_distz, &h, m_random_seed, saverand_ptr, &p,
+    // &pz
     // ); FTNC	    perturbvelocity( &ifirst, &ilast, &jfirst, &jlast, &kfirst,
     // &klast,
     // FTNC			     vs_ptr, vp_ptr, pert_ptr, &m_random_amp,
@@ -2669,7 +2670,7 @@ void EW::checkpoint_twilight_test(vector<Sarray> &Um, vector<Sarray> &U,
                                   vector<Sarray *> AlphaVE,
                                   vector<Sarray *> AlphaVEp,
                                   vector<Source *> a_Sources, float_sw4 t) {
- SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   if (m_twilight_forcing && m_check_point->do_restart() &&
       getVerbosity() >= 3) {
     if (proc_zero()) printf("Checking the accuracy of the checkpoint data\n");

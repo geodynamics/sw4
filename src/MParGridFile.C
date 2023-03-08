@@ -1,11 +1,11 @@
-#include "caliper.h"
 #include <fcntl.h>
 #include <unistd.h>
-#include <cmath>
 
+#include <cmath>
 #include <iostream>
 
 #include "MParGridFile.h"
+#include "caliper.h"
 
 //-----------------------------------------------------------------------
 MParGridFile::MParGridFile(std::string fname) { read_mparcartfile(fname); }
@@ -15,9 +15,8 @@ MParGridFile::MParGridFile(float_sw4* xms, int vars, int nx, int ny, int nz,
                            float_sw4 hx, float_sw4 hy, float_sw4 hz,
                            float_sw4 xmin, float_sw4 ymin, float_sw4 zmin,
                            int update) {
-
   SW4_MARK_FUNCTION;
-  
+
   m_update = update;
   m_vars = vars;
   m_nxr = nx;
@@ -43,9 +42,8 @@ MParGridFile::~MParGridFile() { delete[] m_xms; }
 
 //-----------------------------------------------------------------------
 void MParGridFile::read_mparcartfile(std::string fname) {
-
   SW4_MARK_FUNCTION;
-  
+
   int fd = open(fname.c_str(), O_RDONLY);
   int mag;
   size_t nr = read(fd, &mag, sizeof(int));
@@ -72,9 +70,8 @@ void MParGridFile::read_mparcartfile(std::string fname) {
 
 //-----------------------------------------------------------------------
 void MParGridFile::write_mparcartfile(std::string fname) {
-
   SW4_MARK_FUNCTION;
-  
+
   int fd = open(fname.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0660);
   int mag = 1;
   size_t nr = write(fd, &mag, sizeof(int));
@@ -104,10 +101,8 @@ void MParGridFile::interpolate_to_other(float_sw4* xms, int vars, int nx,
                                         float_sw4 hy, float_sw4 hz,
                                         float_sw4 xmin, float_sw4 ymin,
                                         float_sw4 zmin) {
-
   SW4_MARK_FUNCTION;
 
-  
   int nc;
   if (vars == 1 || vars == 2)
     nc = 3;
@@ -208,8 +203,8 @@ void MParGridFile::interpolate_to_other(float_sw4* xms, int vars, int nx,
         float_sw4 wghx = (x - xr) / m_hxr;
         size_t ind = ir - 1 + m_nxr * (jr - 1) + nxyr * (kr - 1);
         //	    std::cout << "ind= " << ind << " ind+ " << ind+1+m_nxr+nxyr
-        //<< " indpar = " << indpar << std::endl; 	    std::cout << "ind " << ind <<
-        //" wgh " << wghx << " " << wghy << " " << wghz << std::endl;
+        //<< " indpar = " << indpar << std::endl; 	    std::cout << "ind "
+        //<< ind << " wgh " << wghx << " " << wghy << " " << wghz << std::endl;
         for (int c = 0; c < nc; c++) {
           xms[c + nc * indpar] =
               (1 - wghz) * ((1 - wghy) * ((1 - wghx) * xmsrc[c + nc * ind] +

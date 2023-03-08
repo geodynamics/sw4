@@ -754,7 +754,7 @@ size_t Sarray::count_nans(int& cfirst, int& ifirst, int& jfirst, int& kfirst) {
   size_t retval = 0, ind = 0;
   // Note: you're going to get various threads racing to set the "first" values.
   // This won't work.
-  //#pragma omp parallel for reduction(+:retval)
+  // #pragma omp parallel for reduction(+:retval)
   if (m_corder) {
     for (int c = 1; c <= m_nc; c++)
       for (int k = m_kb; k <= m_ke; k++)
@@ -914,7 +914,8 @@ void Sarray::insert_subarray(int ib, int ie, int jb, int je, int kb, int ke,
 // void Sarray::insert_intersection(Sarray& a_U) {
 //   // Assuming nc is the same for m_data and a_U.m_data.
 //   int wind[6];
-//   int ib = a_U.m_ib, ie = a_U.m_ie, jb = a_U.m_jb, je = a_U.m_je, kb = a_U.m_kb,
+//   int ib = a_U.m_ib, ie = a_U.m_ie, jb = a_U.m_jb, je = a_U.m_je, kb =
+//   a_U.m_kb,
 //       ke = a_U.m_ke;
 //   intersection(ib, ie, jb, je, kb, ke, wind);
 //   int nis = ie - ib + 1;
@@ -1035,17 +1036,17 @@ void Sarray::copy_kplane(Sarray& u, int k) {
     int mnj = m_nj;
     // int mnc = m_nc;
     // SW4_MARK_BEGIN("CK_PREF");
-//#ifdef SW4_A100_1
-// Not required if get/putbuffer_device is used to avoid page faults
-    //static int cc=0;
-    //cc++;
-    //if (cc%2==0) u.forceprefetch();
-//#endif
-    // SW4_MARK_END("CK_PREF");
+    // #ifdef SW4_A100_1
+    //  Not required if get/putbuffer_device is used to avoid page faults
+    // static int cc=0;
+    // cc++;
+    // if (cc%2==0) u.forceprefetch();
+    // #endif
+    //  SW4_MARK_END("CK_PREF");
     size_t ind_start = mni * mnj * (k - mkb);
     size_t uind_start = mni * mnj * (k - um_kb);
 
-#if defined(RAJA_ONLY) || not defined (ENABLE_GPU)
+#if defined(RAJA_ONLY) || not defined(ENABLE_GPU)
     RAJA::RangeSegment c_range(0, m_nc);
     RAJA::RangeSegment j_range(0, m_je - m_jb + 1);
     RAJA::RangeSegment i_range(0, m_ie - m_ib + 1);
@@ -1114,8 +1115,8 @@ void Sarray::copy_kplane(Sarray& u, int k) {
 //   } else {
 //     for (int j = wind[2]; j <= wind[3]; j++)
 //       for (int i = wind[0]; i <= wind[1]; i++) {
-//         size_t ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
-//         size_t uind = (i - u.m_ib) + u.m_ni * (j - u.m_jb) +
+//         size_t ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k -
+//         m_kb); size_t uind = (i - u.m_ib) + u.m_ni * (j - u.m_jb) +
 //                       u.m_ni * u.m_nj * (k - u.m_kb);
 //         for (int c = 0; c < m_nc; c++)
 //           m_data[c + m_nc * ind] = u.m_data[c + m_nc * uind];
@@ -1488,7 +1489,7 @@ void Sarray::insert_intersection(Sarray& a_U) {
     const int lm_nc = m_nc;
     // std::cout<<"Calling interest \n"<<std::flush;
 
-#if !defined(RAJA_ONLY) && defined (ENABLE_GPU)
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
 
     Range<16> I(wind[0], wind[1] + 1);
     Range<16> J(wind[2], wind[3] + 1);
@@ -1890,7 +1891,7 @@ void vset_to_zero_async(std::vector<Sarray>& v, int N) {
 #endif
 }
 // Old norm based on atomics left as reference.
-// Does not work well for comparisons and is slower 
+// Does not work well for comparisons and is slower
 // float_sw4 Sarray::norm() {
 //   float_sw4* sum;
 //   sum = SW4_NEW(Space::Managed_temps, float_sw4[1]);
@@ -1905,37 +1906,37 @@ void vset_to_zero_async(std::vector<Sarray>& v, int N) {
 //   return retval;
 // }
 float_sw4 Sarray::norm() {
-
 #ifdef ENABLE_GPU
 
-  RAJA::ReduceSum<REDUCTION_POLICY,float_sw4> rsum(0);
+  RAJA::ReduceSum<REDUCTION_POLICY, float_sw4> rsum(0);
   float_sw4* lm_data = m_data;
 
   RAJA::forall<DEFAULT_LOOP1>(
-      RAJA::RangeSegment(0, m_npts), [=] RAJA_DEVICE(size_t i) {
-	rsum+=lm_data[i] * lm_data[i];
-      });
+      RAJA::RangeSegment(0, m_npts),
+      [=] RAJA_DEVICE(size_t i) { rsum += lm_data[i] * lm_data[i]; });
   float_sw4 retval = static_cast<float_sw4>(rsum.get());
   return retval;
 #else
-  float_sw4 retval=0;
-  for (size_t i=0;i<m_npts;i++) retval+=m_data[i]*m_data[i];
+  float_sw4 retval = 0;
+  for (size_t i = 0; i < m_npts; i++) retval += m_data[i] * m_data[i];
   return retval;
 #endif
 }
- size_t Sarray::fwrite(FILE *file){
-   size_t size = m_nc*m_ni*m_nj*m_nk;
-   if (std::fwrite(m_data,sizeof(float_sw4),m_nc*m_ni*m_nj*m_nk,file)!=size){
-     std::cerr<<"Write failed in Sarray::fwrite\n";
-     abort();
-   }
-   return size;
- }
- size_t Sarray::fread(FILE *file){
-   size_t size = m_nc*m_ni*m_nj*m_nk;
-   if (std::fread(m_data,sizeof(float_sw4),m_nc*m_ni*m_nj*m_nk,file)!=size){
-     std::cerr<<"Read failed in Sarray::fread\n";
-     abort();
-   }
-   return size;
- }
+size_t Sarray::fwrite(FILE* file) {
+  size_t size = m_nc * m_ni * m_nj * m_nk;
+  if (std::fwrite(m_data, sizeof(float_sw4), m_nc * m_ni * m_nj * m_nk, file) !=
+      size) {
+    std::cerr << "Write failed in Sarray::fwrite\n";
+    abort();
+  }
+  return size;
+}
+size_t Sarray::fread(FILE* file) {
+  size_t size = m_nc * m_ni * m_nj * m_nk;
+  if (std::fread(m_data, sizeof(float_sw4), m_nc * m_ni * m_nj * m_nk, file) !=
+      size) {
+    std::cerr << "Read failed in Sarray::fread\n";
+    abort();
+  }
+  return size;
+}

@@ -1,10 +1,10 @@
-#include "caliper.h"
 #include <fcntl.h>
 #include <unistd.h>
 
 #include "EW.h"
 #include "MParGridFile.h"
 #include "MaterialParCartesian.h"
+#include "caliper.h"
 
 MaterialParCartesian::MaterialParCartesian(EW* a_ew, int nx, int ny, int nz,
                                            int init, char* fname)
@@ -202,8 +202,9 @@ void MaterialParCartesian::get_parameters(
           xms[3 * ind + 1] = mu - 4;
           xms[3 * ind + 2] = lambda - 8;
           //               if( m_myrank == 0 )
-          //		  cout << " xms " << xms[3*ind] << " " << xms[3*ind+1] << "
-          //" << xms[3*ind+2] << " x,y,z " << x << " " << y << " " << z << endl;
+          //		  cout << " xms " << xms[3*ind] << " " << xms[3*ind+1] <<
+          //" " << xms[3*ind+2] << " x,y,z " << x << " " << y << " " << z <<
+          //endl;
           ind++;
         }
   } else if (nr == 2) {
@@ -300,7 +301,8 @@ void MaterialParCartesian::interpolate_pseudohessian(int nmpars, double* phs,
 
 //-----------------------------------------------------------------------
 // void MaterialParCartesian::perturb_material( int ip, int jp, int kp, int
-// grid, 					     int var, double h, double* xs, double* xm )
+// grid, 					     int var, double h, double* xs, double* xm
+// )
 //// ignore grid, xm
 //{
 //   VERIFY2( 1 <= ip && ip <= m_nx && 1 <= jp && jp <= m_ny && 1 <= kp && kp <=
@@ -309,7 +311,7 @@ void MaterialParCartesian::interpolate_pseudohessian(int nmpars, double* phs,
 //<< 	    ip << " " << jp << " " << kp << " out of range " << endl );
 //   VERIFY2( (var==0) || (var==1) || (var==2),
 //	    "ERROR in MaterialParCartesian::perturb_material, variable no. " <<
-//var
+// var
 //	    << " out of range " << endl );
 //   size_t ind = ip-1+m_nx*(jp-1)+m_nx*m_ny*(kp-1);
 //   xs[3*ind+var] += h;
@@ -497,7 +499,7 @@ void MaterialParCartesian::projectl2(std::vector<Sarray>& mtrl,
   //	 rowsum += mat[i+Ntot*j];
   //      if( std::abs(rhs[i]/rowsum-mtrl[0](1,1,1))>1e-3)
   //	  cout << "i= "<< i << " matsum = " << rowsum << " rhs= " << rhs[i] <<
-  //endl;
+  // endl;
   //   }
 
   // Solve system of linear equations

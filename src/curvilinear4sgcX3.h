@@ -144,7 +144,7 @@ void curvilinear4sgX3_ci(
   // cudaMemcpyToSymbol(cmem_acof, a_acof, 384*sizeof(double));
   //}
 #endif
-  //#pragma omp parallel
+  // #pragma omp parallel
   {
     int kstart = kfirst + 2;
     int kend = klast - 2;
@@ -353,7 +353,7 @@ void curvilinear4sgX3_ci(
             // 54*8*8+25*8 = 3656 ops, tot=3939
             float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2,
                 coeff;
-            //#pragma unroll 1 // slowdown due to register spills
+            // #pragma unroll 1 // slowdown due to register spills
             for (int q = 1; q <= 8; q++) {
               mucofu2 = 0;
               mucofuv = 0;
@@ -361,7 +361,7 @@ void curvilinear4sgX3_ci(
               mucofvw = 0;
               mucofv2 = 0;
               mucofw2 = 0;
-              //#pragma unroll 1 // slowdown due to register spills
+              // #pragma unroll 1 // slowdown due to register spills
               for (int m = 1; m <= 8; m++) {
                 if constexpr (N == 0) {
                   coeff = acof(k, q, m);
@@ -562,7 +562,7 @@ void curvilinear4sgX3_ci(
             float_sw4 dudrm2 = 0, dudrm1 = 0, dudrp1 = 0, dudrp2 = 0;
             float_sw4 dvdrm2 = 0, dvdrm1 = 0, dvdrp1 = 0, dvdrp2 = 0;
             float_sw4 dwdrm2 = 0, dwdrm1 = 0, dwdrp1 = 0, dwdrp2 = 0;
-            //#pragma unroll 1
+            // #pragma unroll 1
             for (int q = 1; q <= 8; q++) {
               dudrm2 += bope(k, q) * u(1, i - 2, j, q);
               dvdrm2 += bope(k, q) * u(2, i - 2, j, q);
@@ -666,7 +666,7 @@ void curvilinear4sgX3_ci(
             dwdrm1 = 0;
             dwdrp1 = 0;
             dwdrp2 = 0;
-            //#pragma unroll 1
+            // #pragma unroll 1
             for (int q = 1; q <= 8; q++) {
               dudrm2 += bope(k, q) * u(1, i, j - 2, q);
               dvdrm2 += bope(k, q) * u(2, i, j - 2, q);
@@ -755,7 +755,7 @@ void curvilinear4sgX3_ci(
 
             // pr and qr derivatives at once
             // in loop: 8*(53+53+43) = 1192 ops, tot=6037
-            //#pragma unroll 1
+            // #pragma unroll 1
             for (int q = 1; q <= 8; q++) {
               // (u-eq)
               // 53 ops
@@ -2326,7 +2326,7 @@ void curvilinear4sgX3_ci(
           // averaging the coefficient
           // 54*8*8+25*8 = 3656 ops, tot=3939
           float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2;
-          //#pragma unroll 8
+          // #pragma unroll 8
           for (int q = nk - 7; q <= nk; q++) {
             mucofu2 = 0;
             mucofuv = 0;
@@ -2334,7 +2334,7 @@ void curvilinear4sgX3_ci(
             mucofvw = 0;
             mucofv2 = 0;
             mucofw2 = 0;
-            //#pragma unroll 8
+            // #pragma unroll 8
             for (int m = nk - 7; m <= nk; m++) {
               if (acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) != 0.0) {
                 mucofu2 += acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
@@ -2493,7 +2493,7 @@ void curvilinear4sgX3_ci(
           float_sw4 dudrm2 = 0, dudrm1 = 0, dudrp1 = 0, dudrp2 = 0;
           float_sw4 dvdrm2 = 0, dvdrm1 = 0, dvdrp1 = 0, dvdrp2 = 0;
           float_sw4 dwdrm2 = 0, dwdrm1 = 0, dwdrp1 = 0, dwdrp2 = 0;
-          //#pragma unroll 8
+          // #pragma unroll 8
           for (int q = nk - 7; q <= nk; q++) {
             dudrm2 -= bope(nk - k + 1, nk - q + 1) * u(1, i - 2, j, q);
             dvdrm2 -= bope(nk - k + 1, nk - q + 1) * u(2, i - 2, j, q);
@@ -2596,7 +2596,7 @@ void curvilinear4sgX3_ci(
           dwdrm1 = 0;
           dwdrp1 = 0;
           dwdrp2 = 0;
-          //#pragma unroll 8
+          // #pragma unroll 8
           for (int q = nk - 7; q <= nk; q++) {
             dudrm2 -= bope(nk - k + 1, nk - q + 1) * u(1, i, j - 2, q);
             dvdrm2 -= bope(nk - k + 1, nk - q + 1) * u(2, i, j - 2, q);
@@ -2684,7 +2684,7 @@ void curvilinear4sgX3_ci(
 
           // pr and qr derivatives at once
           // in loop: 8*(53+53+43) = 1192 ops, tot=6037
-          //#pragma unroll 8
+          // #pragma unroll 8
           for (int q = nk - 7; q <= nk; q++) {
             // (u-eq)
             // 53 ops
@@ -2856,7 +2856,7 @@ void curvilinear4sg_ci(
   PREFETCH(a_mu);
   PREFETCH(a_lambda);
 
-  //#pragma omp parallel
+  // #pragma omp parallel
   {
     int kstart = kfirst + 2;
     if (onesided[4] == 1) {

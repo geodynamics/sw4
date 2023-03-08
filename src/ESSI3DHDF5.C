@@ -136,8 +136,7 @@ void ESSI3DHDF5::create_file(bool is_restart, bool is_root) {
     m_file_id =
         H5Fopen(const_cast<char*>(m_filename.c_str()), H5F_ACC_RDWR, fapl);
 #endif
-  } 
-  else {
+  } else {
     m_file_id = H5Fcreate(const_cast<char*>(m_filename.c_str()), H5F_ACC_TRUNC,
                           H5P_DEFAULT, fapl);
   }
@@ -438,11 +437,10 @@ void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
       sprintf(var, "vel_%d ijk layout", c);
 
       if (isRestart) {
-          dset = H5Dopen(m_file_id, var, H5P_DEFAULT);
-      }
-      else {
-          dset = H5Dcreate2(m_file_id, var, dtype, dspace, H5P_DEFAULT, prop_id,
-                            H5P_DEFAULT);
+        dset = H5Dopen(m_file_id, var, H5P_DEFAULT);
+      } else {
+        dset = H5Dcreate2(m_file_id, var, dtype, dspace, H5P_DEFAULT, prop_id,
+                          H5P_DEFAULT);
       }
       if (dset < 0) {
         cerr << "Error with H5Dcreate/open!" << std::endl;

@@ -127,7 +127,7 @@ class Source {
   bool get_CorrectForMu() { return mShearModulusFactor; };
   void set_CorrectForMu(bool smf) { mShearModulusFactor = smf; };
   float_sw4 getTimeOffset() const { return mT0; };
-  
+
  private:
   Source();
 

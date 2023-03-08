@@ -1,6 +1,8 @@
 #include <sys/types.h>
+
 #include <cstddef>
 #include <cstdio>
+
 #include "cf_interface.h"
 #include "sw4.h"
 
@@ -59,12 +61,12 @@ void rhs4th3point(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
   float_sw4 u2zjp2, u2zjp1, u2zjm1, u2zjm2, lau1xz, lau2yz;
 
   if (!upper && !lower) {
-    //#pragma omp for // k-loop is usually very short
-    //    for( k= kfirstw; k <= klastw ; k++ )
-    //#pragma omp for
-    //      for( j=jfirst+2; j <= jlast-2 ; j++ )
-    //#pragma simd
-    //#pragma ivdep
+    // #pragma omp for // k-loop is usually very short
+    //     for( k= kfirstw; k <= klastw ; k++ )
+    // #pragma omp for
+    //       for( j=jfirst+2; j <= jlast-2 ; j++ )
+    // #pragma simd
+    // #pragma ivdep
     //	for( i=ifirst+2; i <= ilast-2 ; i++ )
     //	{
     /* from inner_loop_4a, 28x3 = 84 ops */
@@ -360,11 +362,11 @@ void rhs4th3point(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
   }  // end if (!upper && !lower)
 
   if (upper) {
-    //#pragma omp for
-    //    for( k= kfirstw; k <= klastw ; k++ )
-    //      for( j=jfirst+2; j <= jlast-2 ; j++ )
+    // #pragma omp for
+    //     for( k= kfirstw; k <= klastw ; k++ )
+    //       for( j=jfirst+2; j <= jlast-2 ; j++ )
     //	 //#pragma simd
-    //#pragma ivdep
+    // #pragma ivdep
     //	for( i=ifirst+2; i <= ilast-2 ; i++ )
     //	{
     /* from inner_loop_4a */
@@ -649,11 +651,11 @@ void rhs4th3point(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
   }  // end if (upper)
 
   if (lower) {
-    //#pragma omp for
-    //    for( k= kfirstw; k <= klastw ; k++ )
-    //      for( j=jfirst+2; j <= jlast-2 ; j++ )
+    // #pragma omp for
+    //     for( k= kfirstw; k <= klastw ; k++ )
+    //       for( j=jfirst+2; j <= jlast-2 ; j++ )
     //	 //#pragma simd
-    //#pragma ivdep
+    // #pragma ivdep
     //	for( i=ifirst+2; i <= ilast-2 ; i++ )
     //	{
     /* from inner_loop_4a */

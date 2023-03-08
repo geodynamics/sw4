@@ -2,8 +2,8 @@
 #include "caliper.h"
 #include "policies.h"
 #include "sw4.h"
-//#include <math.h>
-//#include <sys/types.h>
+// #include <math.h>
+// #include <sys/types.h>
 //-----------------------------------------------------------------------
 void EW::forcingfortsg_ci(int ifirst, int ilast, int jfirst, int jlast,
                           int kfirst, int klast, float_sw4* __restrict__ fo,
@@ -808,7 +808,7 @@ void EW::forcingfortsgatt_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t nij = ni * (jlast - jfirst + 1);
   const size_t nijk = nij * (klast - kfirst + 1);
   const size_t base = -(ifirst + ni * jfirst + nij * kfirst);
-  //#pragma omp parallel
+  // #pragma omp parallel
   RAJA::RangeSegment k_range(kfirst, klast + 1);
   RAJA::RangeSegment j_range(jfirst, jlast + 1);
   RAJA::RangeSegment i_range(ifirst, ilast + 1);

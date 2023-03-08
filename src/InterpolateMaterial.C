@@ -1,5 +1,5 @@
-#include "caliper.h"
 #include "EW.h"
+#include "caliper.h"
 #ifndef SW4_NOOMP
 #include <omp.h>
 #endif
@@ -118,7 +118,7 @@ void interpolatemtrlc(
     float_sw4* __restrict__ a_mugrid, float_sw4* __restrict__ a_lambdagrid,
     float_sw4 hf, float_sw4* __restrict__ a_zgrid) {
   SW4_MARK_FUNCTION;
-  
+
 #define zgrid(i, j, k) a_zgrid[i - ib + nig * (j - jb) + nijg * (k - kb)]
 #define rhogrid(i, j, k) a_rhogrid[i - ib + nig * (j - jb) + nijg * (k - kb)]
 #define mugrid(i, j, k) a_mugrid[i - ib + nig * (j - jb) + nijg * (k - kb)]
@@ -226,7 +226,7 @@ void gradients(int nx, int ny, int nz, float_sw4 xmin, float_sw4 ymin,
                float_sw4* __restrict__ a_gradlambdagrid, float_sw4 hf,
                float_sw4 zmingrid) {
   SW4_MARK_FUNCTION;
-  
+
   //* Chain rule of trilinear interpolation
 
 #define gradrhogrid(i, j, k) \
@@ -407,7 +407,7 @@ void gradientsc(int nx, int ny, int nz, float_sw4 xmin, float_sw4 ymin,
                 float_sw4* __restrict__ a_gradlambdagrid, float_sw4 hf,
                 float_sw4* __restrict__ a_zgrid) {
   SW4_MARK_FUNCTION;
-  
+
 #define zgrid(i, j, k) a_zgrid[i - ib + nig * (j - jb) + nijg * (k - kb)]
 #define gradrhogrid(i, j, k) \
   a_gradrhogrid[i - ib + nig * (j - jb) + nijg * (k - kb)]
@@ -627,7 +627,7 @@ void EW::interpolate_to_coarse(int nx, int ny, int nz, double xmin, double ymin,
                                vector<Sarray>& rhogrid, vector<Sarray>& mugrid,
                                vector<Sarray>& lambdagrid, bool update) {
   SW4_MARK_FUNCTION;
-  
+
   // Compute material perturbation on parameter grid from a material that is
   // given on the computational grid.
   //
@@ -767,7 +767,7 @@ void EW::interpolate_to_coarse_vel(int nx, int ny, int nz, double xmin,
                                    vector<Sarray>& mugrid,
                                    vector<Sarray>& lambdagrid) {
   SW4_MARK_FUNCTION;
-  
+
   // Compute material perturbation on parameter grid from a material that is
   // given on the computational grid.
   //
@@ -894,7 +894,7 @@ void EW::interpolate_base_to_coarse(int nx, int ny, int nz, double xmin,
                                     double hy, double hz, Sarray& rho,
                                     Sarray& mu, Sarray& lambda) {
   SW4_MARK_FUNCTION;
-  
+
   // Compute material perturbation on parameter grid from the background
   // material.
   //
@@ -985,7 +985,7 @@ void EW::interpolate_base_to_coarse_vel(int nx, int ny, int nz, double xmin,
                                         double hy, double hz, Sarray& rho,
                                         Sarray& cs, Sarray& cp) {
   SW4_MARK_FUNCTION;
-  
+
   // Compute material perturbation on parameter grid from the background
   // material.
   //
@@ -1094,9 +1094,8 @@ void EW::interpolation_gradient(int nx, int ny, int nz, double xmin,
                                 Sarray& gradlambda, int grid,
                                 Sarray& gradrhogrid, Sarray& gradmugrid,
                                 Sarray& gradlambdagrid) {
-
   SW4_MARK_FUNCTION;
-  
+
   int ifirst = m_iStart[grid];
   int ilast = m_iEnd[grid];
   int jfirst = m_jStart[grid];
@@ -1140,9 +1139,8 @@ void EW::interpolation_gradient(int nx, int ny, int nz, double xmin,
 //-----------------------------------------------------------------------
 void EW::update_and_transform_material(int g, Sarray& rho, Sarray& mu,
                                        Sarray& lambda) {
-
   SW4_MARK_FUNCTION;
-  
+
   // Input (rho,mu,lambda) on grid g contains (rho,cs,cp) update from base
   // material. This routine returns (rho,mu,lambda) computed by adding the input
   // update variables to the base material (rhoB,csB,cpB) and transforming back
@@ -1168,9 +1166,8 @@ void EW::update_and_transform_material(int g, Sarray& rho, Sarray& mu,
 //-----------------------------------------------------------------------
 void EW::transform_gradient(Sarray& rho, Sarray& mu, Sarray& lambda,
                             Sarray& grho, Sarray& gmu, Sarray& glambda) {
-
   SW4_MARK_FUNCTION;
-  
+
   // (grho,gmu,glambda) is gradient on grid g with respect to (rho,mu,lambda) at
   // the
   //  grid points.

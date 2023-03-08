@@ -1,8 +1,9 @@
-#include "caliper.h"
 #include <fcntl.h>
 #include <unistd.h>
+
 #include <cstring>
 
+#include "EW.h"
 #include "MaterialParAllpts.h"
 #include "MaterialParCart.h"
 #include "MaterialParCartesian.h"
@@ -10,11 +11,9 @@
 #include "MaterialParCartesianVp.h"
 #include "MaterialParCartesianVsVp.h"
 #include "MaterialParCurv.h"
-
-#include "EW.h"
-
 #include "Mopt.h"
 #include "SfileOutput.h"
+#include "caliper.h"
 
 //-----------------------------------------------------------------------
 Mopt::Mopt(EW* a_ew) {
@@ -141,7 +140,7 @@ bool Mopt::parseInputFileOpt(std::string filename) {
         processMregularize(buffer);
       //         else if( startswith("refinement",buffer) )
       //	    CHECK_INPUT(false,"ERROR: sw4mopt does not support mesh
-      //refinement");
+      // refinement");
     }
   }
   inputFile.close();

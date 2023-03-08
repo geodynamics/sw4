@@ -248,7 +248,7 @@ void EW::addsgd6_ci(
 #pragma omp for
         for (int k = kfirst + 3; k <= klast - 3; k++)
           for (int j = jfirst + 3; j <= jlast - 3; j++)
-          //#pragma simd
+          // #pragma simd
 #pragma ivdep
             for (int i = ifirst + 3; i <= ilast - 3; i++) {
               float_sw4 birho = 0.5 * beta / rho(i, j, k);
@@ -525,7 +525,7 @@ void EW::addsgd6c_ci(
 #pragma omp for
         for (int k = kfirst + 3; k <= klast - 3; k++)
           for (int j = jfirst + 3; j <= jlast - 3; j++)
-          //#pragma simd
+          // #pragma simd
 #pragma ivdep
             for (int i = ifirst + 3; i <= ilast - 3; i++) {
               float_sw4 birho = 0.5 * beta / (rho(i, j, k) * jac(i, j, k));

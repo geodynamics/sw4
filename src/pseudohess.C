@@ -50,7 +50,7 @@ void add_pseudohessian_terms2(
     kstart = nb + 1;
     for (int n = kfirstact; n <= nb; n++)
 
-      //#pragma omp parallel for
+      // #pragma omp parallel for
       for (int m = jfirstact; m <= jlastact; m++) /* #pragma ivdep */
         for (int l = ifirstact; l <= ilastact; l++) {
           //	 srcla_ = srcpla[s];
@@ -1071,7 +1071,7 @@ void add_pseudohessian_terms2(
   srcmu_[(i + 2) + 5 * (j + 2) + 25 * (k + 2) + (c - 1) * 125]
 
   // Interior operators
-  //#pragma omp parallel for
+  // #pragma omp parallel for
   for (int n = kstart; n <= kend; n++)
     for (int m = jfirstact; m <= jlastact; m++) /* #pragma ivdep */
       for (int l = ifirstact; l <= ilastact; l++) {

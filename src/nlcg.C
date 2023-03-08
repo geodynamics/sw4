@@ -1,10 +1,12 @@
 #include "caliper.h"
 #ifdef OPTTEST_MODE
 #include <mpi.h>
+
 #include <cmath>
 #include <cstdio>
 #include <iostream>
 #include <vector>
+
 #include "dummy-classes.h"
 #else
 #include "EW.h"

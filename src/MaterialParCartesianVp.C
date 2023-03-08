@@ -1,8 +1,7 @@
-#include "caliper.h"
 #include "EW.h"
-#include "MaterialParCartesianVp.h"
-
 #include "MParGridFile.h"
+#include "MaterialParCartesianVp.h"
+#include "caliper.h"
 
 //-----------------------------------------------------------------------
 //  Parameterize the material on a Cartesian coarse grid, with
@@ -16,9 +15,8 @@ MaterialParCartesianVp::MaterialParCartesianVp(EW* a_ew, int nx, int ny, int nz,
                                                double ratio, double gamma,
                                                bool fixrho)
     : MaterialParameterization(a_ew, fname) {
-
   SW4_MARK_FUNCTION;
-  
+
   //  VERIFY2( nx > 1 && ny > 1 && nz > 1, "MaterialParCartesianVp: The grid
   //  need at least two ponts in each direction")
   // Material represented on a coarse Cartesian grid, covering the 'active'
@@ -122,10 +120,8 @@ void MaterialParCartesianVp::get_material(int nmd, double* xmd, int nms,
                                           double* xms, vector<Sarray>& a_rho,
                                           vector<Sarray>& a_mu,
                                           vector<Sarray>& a_lambda) {
-
   SW4_MARK_FUNCTION;
 
-  
   // 1.  cp := x
   // 2.  a_cp := I(cp)  where I(cp) is interpolation to f.d. grid.
   // 3.  (a_rho,a_mu,a_lambda) := T( gamma*(a_cp+mCp),(a_cp+mCp)/ratio,
@@ -184,9 +180,8 @@ void MaterialParCartesianVp::get_material(int nmd, double* xmd, int nms,
 void MaterialParCartesianVp::interpolate_parameters(
     int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
     std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda) {
-
   SW4_MARK_FUNCTION;
-  
+
   // Interpolates the difference a_cp-(m_ew->mCp), into local cp. i.e., m_cp =
   // I(a_cp-(m_ew->mCp)) where a_cp,mCp are on the computational grid, m_cp on
   // the parameter grid.
@@ -216,9 +211,8 @@ void MaterialParCartesianVp::interpolate_parameters(
 void MaterialParCartesianVp::get_parameters(
     int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
     std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda, int nr) {
-
   SW4_MARK_FUNCTION;
-  
+
   if (nr == -1) nr = m_init;
   if (nr == 0) {
     for (int i = 0; i < nms; i++) xms[i] = 0;
@@ -261,9 +255,8 @@ void MaterialParCartesianVp::get_gradient(
     std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
     std::vector<Sarray>& a_lambda, std::vector<Sarray>& a_gradrho,
     std::vector<Sarray>& a_gradmu, std::vector<Sarray>& a_gradlambda) {
-
   SW4_MARK_FUNCTION;
-  
+
   // Computes gradient with respect to the material parameterization from given
   // gradients with respect to the material at grid points.
   //
@@ -317,9 +310,8 @@ void MaterialParCartesianVp::get_gradient(
 void MaterialParCartesianVp::interpolate_pseudohessian(int nmpars, double* phs,
                                                        int nmpard, double* phm,
                                                        vector<Sarray>& phgrid) {
-
   SW4_MARK_FUNCTION;
-  
+
   int ig, jg, kg, g;
   size_t ind = 0;
   for (int k = 1; k <= m_nz; k++)
@@ -347,7 +339,6 @@ ssize_t MaterialParCartesianVp::parameter_index(int ip, int jp, int kp,
                                                 int grid, int var)
 // Ignore grid.
 {
-
   if (1 <= ip && ip <= m_nx && 1 <= jp && jp <= m_ny && 1 <= kp && kp <= m_nz)
     return (ip - 1 + static_cast<ssize_t>(m_nx) * (jp - 1) +
             m_nx * m_ny * (kp - 1));
@@ -360,9 +351,11 @@ ssize_t MaterialParCartesianVp::local_index(size_t ind_global) { return -1; }
 
 //-----------------------------------------------------------------------
 // void MaterialParCartesianVp::gradient_transformation( std::vector<Sarray>&
-// a_rho, 							std::vector<Sarray>& a_mu, 							std::vector<Sarray>& a_lambda,
+// a_rho, 							std::vector<Sarray>& a_mu,
+// std::vector<Sarray>& a_lambda,
 //							std::vector<Sarray>&
-//a_gradrho, 							std::vector<Sarray>& a_gradmu, 							std::vector<Sarray>& a_gradlambda )
+// a_gradrho, 							std::vector<Sarray>& a_gradmu,
+// std::vector<Sarray>& a_gradlambda )
 //{
 //   for( int g=0 ; g < m_ew->mNumberOfGrids ; g++ )
 //      m_ew->transform_gradient( a_rho[g], a_mu[g], a_lambda[g],
@@ -374,16 +367,14 @@ void MaterialParCartesianVp::set_scalefactors(int nmpars, double* sfs,
                                               double lambda_ref, double vs_ref,
                                               double vp_ref) {
   SW4_MARK_FUNCTION;
-  
+
   for (int i = 0; i < nmpars; i++) sfs[i] = vp_ref;
 }
 
 //-----------------------------------------------------------------------
 void MaterialParCartesianVp::subtract_base_mtrl(int nms, double* xms) {
-
   SW4_MARK_FUNCTION;
 
-  
   // Assume xms are given as full material, interpolate and subtract the
   // base material to get xms as an update.
 

@@ -7,12 +7,12 @@
 #include "forallsdecl.h"
 #include "policies.h"
 #include "sw4.h"
-//#ifdef ENABLE_GPU
-// j#include <cuda_runtime.h>
-//#include "optimizedcuda.h"
-//#endif
-//#include "tests.h"
-// extern "C" {
+// #ifdef ENABLE_GPU
+//  j#include <cuda_runtime.h>
+// #include "optimizedcuda.h"
+// #endif
+// #include "tests.h"
+//  extern "C" {
 
 void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                     int klast, int nk, int* __restrict__ onesided,
@@ -1089,8 +1089,8 @@ void rhs4th3fortsgstr_ci(
     int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, int nk,
     int* __restrict__ onesided, float_sw4* __restrict__ a_acof,
     float_sw4* __restrict__ a_bope, float_sw4* __restrict__ a_ghcof,
-    float_sw4* __restrict__ a_lu, 
-    float_sw4* __restrict__ a_u1,float_sw4* __restrict__ a_u2,float_sw4* __restrict__ a_u3,
+    float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u1,
+    float_sw4* __restrict__ a_u2, float_sw4* __restrict__ a_u3,
     float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, float_sw4 h,
     float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry,
     float_sw4* __restrict__ a_strz, char op) {
@@ -1102,13 +1102,13 @@ void rhs4th3fortsgstr_ci(
   //   float_sw4** b_ar=(float_sw4*)malloc(ni*nj*sizeof(float_sw4*));
   //   for( int j=0;j<nj;j++)
   //      b_ar[j] = &a_lu[j-1+ni*(1-1)];
-  //#define ar(i,j) b_ar[j][i];
+  // #define ar(i,j) b_ar[j][i];
 
   // Direct reuse of fortran code by these macro definitions:
-#define mu(i, j, k) a_mu[+ i + ni * (j) + nij * (k)]
+#define mu(i, j, k) a_mu[+i + ni * (j) + nij * (k)]
 #define la(i, j, k) a_lambda[i + ni * (j) + nij * (k)]
   // Reversed indexation
-  //#define u(c, i, j, k) a_u[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
+  // #define u(c, i, j, k) a_u[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
 #define u1(i, j, k) a_u1[i + ni * (j) + nij * (k)]
 #define u2(i, j, k) a_u2[i + ni * (j) + nij * (k)]
 #define u3(i, j, k) a_u3[i + ni * (j) + nij * (k)]
@@ -1696,8 +1696,8 @@ void rhs4th3fortsgstr_ci(
                               muy4 * (u3(i, j + 2, k) - u3(i, j, k))));
         /* ghost point only influences the first point (k=1) because
          * ghcof(k)=0 for k>=2 */
-        r3 = r3 + (mu3zz +
-                   ghcof(k) * (la(i, j, 1) + 2 * mu(i, j, 1)) * u3(i, j, 0));
+        r3 = r3 +
+             (mu3zz + ghcof(k) * (la(i, j, 1) + 2 * mu(i, j, 1)) * u3(i, j, 0));
 
         /* cross-terms in first component of rhs */
         /*   (la*v_y)_x */
@@ -1707,36 +1707,31 @@ void rhs4th3fortsgstr_ci(
                 (i144 *
                      (la(i - 2, j, k) *
                           (u2(i - 2, j - 2, k) - u2(i - 2, j + 2, k) +
-                           8 * (-u2(i - 2, j - 1, k) +
-                                u2(i - 2, j + 1, k))) -
+                           8 * (-u2(i - 2, j - 1, k) + u2(i - 2, j + 1, k))) -
                       8 * (la(i - 1, j, k) *
                            (u2(i - 1, j - 2, k) - u2(i - 1, j + 2, k) +
-                            8 * (-u2(i - 1, j - 1, k) +
-                                 u2(i - 1, j + 1, k)))) +
+                            8 * (-u2(i - 1, j - 1, k) + u2(i - 1, j + 1, k)))) +
                       8 * (la(i + 1, j, k) *
                            (u2(i + 1, j - 2, k) - u2(i + 1, j + 2, k) +
-                            8 * (-u2(i + 1, j - 1, k) +
-                                 u2(i + 1, j + 1, k)))) -
+                            8 * (-u2(i + 1, j - 1, k) + u2(i + 1, j + 1, k)))) -
                       (la(i + 2, j, k) *
                        (u2(i + 2, j - 2, k) - u2(i + 2, j + 2, k) +
                         8 * (-u2(i + 2, j - 1, k) + u2(i + 2, j + 1, k)))))
                  /*   (mu*v_x)_y */
-                 + i144 * (mu(i, j - 2, k) *
-                               (u2(i - 2, j - 2, k) - u2(i + 2, j - 2, k) +
-                                8 * (-u2(i - 1, j - 2, k) +
-                                     u2(i + 1, j - 2, k))) -
-                           8 * (mu(i, j - 1, k) *
-                                (u2(i - 2, j - 1, k) - u2(i + 2, j - 1, k) +
-                                 8 * (-u2(i - 1, j - 1, k) +
-                                      u2(i + 1, j - 1, k)))) +
-                           8 * (mu(i, j + 1, k) *
-                                (u2(i - 2, j + 1, k) - u2(i + 2, j + 1, k) +
-                                 8 * (-u2(i - 1, j + 1, k) +
-                                      u2(i + 1, j + 1, k)))) -
-                           (mu(i, j + 2, k) *
-                            (u2(i - 2, j + 2, k) - u2(i + 2, j + 2, k) +
-                             8 * (-u2(i - 1, j + 2, k) +
-                                  u2(i + 1, j + 2, k))))));
+                 +
+                 i144 *
+                     (mu(i, j - 2, k) *
+                          (u2(i - 2, j - 2, k) - u2(i + 2, j - 2, k) +
+                           8 * (-u2(i - 1, j - 2, k) + u2(i + 1, j - 2, k))) -
+                      8 * (mu(i, j - 1, k) *
+                           (u2(i - 2, j - 1, k) - u2(i + 2, j - 1, k) +
+                            8 * (-u2(i - 1, j - 1, k) + u2(i + 1, j - 1, k)))) +
+                      8 * (mu(i, j + 1, k) *
+                           (u2(i - 2, j + 1, k) - u2(i + 2, j + 1, k) +
+                            8 * (-u2(i - 1, j + 1, k) + u2(i + 1, j + 1, k)))) -
+                      (mu(i, j + 2, k) *
+                       (u2(i - 2, j + 2, k) - u2(i + 2, j + 2, k) +
+                        8 * (-u2(i - 1, j + 2, k) + u2(i + 1, j + 2, k))))));
         /*   (la*w_z)_x: NOT CENTERED */
         float_sw4 u3zip2 = 0;
         float_sw4 u3zip1 = 0;
@@ -1774,36 +1769,31 @@ void rhs4th3fortsgstr_ci(
                 (i144 *
                      (mu(i - 2, j, k) *
                           (u1(i - 2, j - 2, k) - u1(i - 2, j + 2, k) +
-                           8 * (-u1(i - 2, j - 1, k) +
-                                u1(i - 2, j + 1, k))) -
+                           8 * (-u1(i - 2, j - 1, k) + u1(i - 2, j + 1, k))) -
                       8 * (mu(i - 1, j, k) *
                            (u1(i - 1, j - 2, k) - u1(i - 1, j + 2, k) +
-                            8 * (-u1(i - 1, j - 1, k) +
-                                 u1(i - 1, j + 1, k)))) +
+                            8 * (-u1(i - 1, j - 1, k) + u1(i - 1, j + 1, k)))) +
                       8 * (mu(i + 1, j, k) *
                            (u1(i + 1, j - 2, k) - u1(i + 1, j + 2, k) +
-                            8 * (-u1(i + 1, j - 1, k) +
-                                 u1(i + 1, j + 1, k)))) -
+                            8 * (-u1(i + 1, j - 1, k) + u1(i + 1, j + 1, k)))) -
                       (mu(i + 2, j, k) *
                        (u1(i + 2, j - 2, k) - u1(i + 2, j + 2, k) +
                         8 * (-u1(i + 2, j - 1, k) + u1(i + 2, j + 1, k)))))
                  /* (la*u_x)_y  */
-                 + i144 * (la(i, j - 2, k) *
-                               (u1(i - 2, j - 2, k) - u1(i + 2, j - 2, k) +
-                                8 * (-u1(i - 1, j - 2, k) +
-                                     u1(i + 1, j - 2, k))) -
-                           8 * (la(i, j - 1, k) *
-                                (u1(i - 2, j - 1, k) - u1(i + 2, j - 1, k) +
-                                 8 * (-u1(i - 1, j - 1, k) +
-                                      u1(i + 1, j - 1, k)))) +
-                           8 * (la(i, j + 1, k) *
-                                (u1(i - 2, j + 1, k) - u1(i + 2, j + 1, k) +
-                                 8 * (-u1(i - 1, j + 1, k) +
-                                      u1(i + 1, j + 1, k)))) -
-                           (la(i, j + 2, k) *
-                            (u1(i - 2, j + 2, k) - u1(i + 2, j + 2, k) +
-                             8 * (-u1(i - 1, j + 2, k) +
-                                  u1(i + 1, j + 2, k))))));
+                 +
+                 i144 *
+                     (la(i, j - 2, k) *
+                          (u1(i - 2, j - 2, k) - u1(i + 2, j - 2, k) +
+                           8 * (-u1(i - 1, j - 2, k) + u1(i + 1, j - 2, k))) -
+                      8 * (la(i, j - 1, k) *
+                           (u1(i - 2, j - 1, k) - u1(i + 2, j - 1, k) +
+                            8 * (-u1(i - 1, j - 1, k) + u1(i + 1, j - 1, k)))) +
+                      8 * (la(i, j + 1, k) *
+                           (u1(i - 2, j + 1, k) - u1(i + 2, j + 1, k) +
+                            8 * (-u1(i - 1, j + 1, k) + u1(i + 1, j + 1, k)))) -
+                      (la(i, j + 2, k) *
+                       (u1(i - 2, j + 2, k) - u1(i + 2, j + 2, k) +
+                        8 * (-u1(i - 1, j + 2, k) + u1(i + 1, j + 2, k))))));
         /* (la*w_z)_y : NOT CENTERED */
         float_sw4 u3zjp2 = 0;
         float_sw4 u3zjp1 = 0;
@@ -1842,7 +1832,7 @@ void rhs4th3fortsgstr_ci(
         float_sw4 u1zip1 = 0;
         float_sw4 u1zim1 = 0;
         float_sw4 u1zim2 = 0;
-	//#pragma unroll 8 // This one slowed the code 3m 11.28 
+        // #pragma unroll 8 // This one slowed the code 3m 11.28
         for (int q = 1; q <= 8; q++) {
           u1zip2 += bope(k, q) * u1(i + 2, j, q);
           u1zip1 += bope(k, q) * u1(i + 1, j, q);
@@ -1859,7 +1849,7 @@ void rhs4th3fortsgstr_ci(
         float_sw4 u2zjp1 = 0;
         float_sw4 u2zjm1 = 0;
         float_sw4 u2zjm2 = 0;
-	//#pragma unroll 8 // 3m 10.74
+        // #pragma unroll 8 // 3m 10.74
         for (int q = 1; q <= 8; q++) {
           u2zjp2 += bope(k, q) * u2(i, j + 2, q);
           u2zjp1 += bope(k, q) * u2(i, j + 1, q);
@@ -1873,7 +1863,7 @@ void rhs4th3fortsgstr_ci(
 
         /*   (la*u_x)_z: NOT CENTERED */
         float_sw4 lau1xz = 0;
-	//#pragma unroll 8 // 3m 10.86
+        // #pragma unroll 8 // 3m 10.86
         for (int q = 1; q <= 8; q++)
           lau1xz += bope(k, q) * (la(i, j, q) * i12 *
                                   (-u1(i + 2, j, q) + 8 * u1(i + 1, j, q) -
@@ -1882,7 +1872,7 @@ void rhs4th3fortsgstr_ci(
 
         /* (la*v_y)_z: NOT CENTERED */
         float_sw4 lau2yz = 0;
-	//#pragma unroll 8 // 3m 10.73
+        // #pragma unroll 8 // 3m 10.73
         for (int q = 1; q <= 8; q++)
           lau2yz += bope(k, q) * (la(i, j, q) * i12 *
                                   (-u2(i, j + 2, q) + 8 * u2(i, j + 1, q) -
@@ -2060,43 +2050,38 @@ void rhs4th3fortsgstr_ci(
                 (i144 *
                      (la(i - 2, j, k) *
                           (u2(i - 2, j - 2, k) - u2(i - 2, j + 2, k) +
-                           8 * (-u2(i - 2, j - 1, k) +
-                                u2(i - 2, j + 1, k))) -
+                           8 * (-u2(i - 2, j - 1, k) + u2(i - 2, j + 1, k))) -
                       8 * (la(i - 1, j, k) *
                            (u2(i - 1, j - 2, k) - u2(i - 1, j + 2, k) +
-                            8 * (-u2(i - 1, j - 1, k) +
-                                 u2(i - 1, j + 1, k)))) +
+                            8 * (-u2(i - 1, j - 1, k) + u2(i - 1, j + 1, k)))) +
                       8 * (la(i + 1, j, k) *
                            (u2(i + 1, j - 2, k) - u2(i + 1, j + 2, k) +
-                            8 * (-u2(i + 1, j - 1, k) +
-                                 u2(i + 1, j + 1, k)))) -
+                            8 * (-u2(i + 1, j - 1, k) + u2(i + 1, j + 1, k)))) -
                       (la(i + 2, j, k) *
                        (u2(i + 2, j - 2, k) - u2(i + 2, j + 2, k) +
                         8 * (-u2(i + 2, j - 1, k) + u2(i + 2, j + 1, k)))))
                  /*   (mu*v_x)_y */
-                 + i144 * (mu(i, j - 2, k) *
-                               (u2(i - 2, j - 2, k) - u2(i + 2, j - 2, k) +
-                                8 * (-u2(i - 1, j - 2, k) +
-                                     u2(i + 1, j - 2, k))) -
-                           8 * (mu(i, j - 1, k) *
-                                (u2(i - 2, j - 1, k) - u2(i + 2, j - 1, k) +
-                                 8 * (-u2(i - 1, j - 1, k) +
-                                      u2(i + 1, j - 1, k)))) +
-                           8 * (mu(i, j + 1, k) *
-                                (u2(i - 2, j + 1, k) - u2(i + 2, j + 1, k) +
-                                 8 * (-u2(i - 1, j + 1, k) +
-                                      u2(i + 1, j + 1, k)))) -
-                           (mu(i, j + 2, k) *
-                            (u2(i - 2, j + 2, k) - u2(i + 2, j + 2, k) +
-                             8 * (-u2(i - 1, j + 2, k) +
-                                  u2(i + 1, j + 2, k))))));
+                 +
+                 i144 *
+                     (mu(i, j - 2, k) *
+                          (u2(i - 2, j - 2, k) - u2(i + 2, j - 2, k) +
+                           8 * (-u2(i - 1, j - 2, k) + u2(i + 1, j - 2, k))) -
+                      8 * (mu(i, j - 1, k) *
+                           (u2(i - 2, j - 1, k) - u2(i + 2, j - 1, k) +
+                            8 * (-u2(i - 1, j - 1, k) + u2(i + 1, j - 1, k)))) +
+                      8 * (mu(i, j + 1, k) *
+                           (u2(i - 2, j + 1, k) - u2(i + 2, j + 1, k) +
+                            8 * (-u2(i - 1, j + 1, k) + u2(i + 1, j + 1, k)))) -
+                      (mu(i, j + 2, k) *
+                       (u2(i - 2, j + 2, k) - u2(i + 2, j + 2, k) +
+                        8 * (-u2(i - 1, j + 2, k) + u2(i + 1, j + 2, k))))));
         /*   (la*w_z)_x: NOT CENTERED */
         float_sw4 u3zip2 = 0;
         float_sw4 u3zip1 = 0;
         float_sw4 u3zim1 = 0;
         float_sw4 u3zim2 = 0;
 #ifdef ENABLE_HIP
-	//#pragma unroll 8 // Slower
+        // #pragma unroll 8 // Slower
 #endif
         for (int qb = 1; qb <= 8; qb++) {
           u3zip2 -= bope(kb, qb) * u3(i + 2, j, nk - qb + 1);
@@ -2112,7 +2097,7 @@ void rhs4th3fortsgstr_ci(
         /*   (mu*w_x)_z: NOT CENTERED */
         float_sw4 mu3xz = 0;
 #ifdef ENABLE_HIP
-	//#pragma unroll 8
+        // #pragma unroll 8
 #endif
         for (int qb = 1; qb <= 8; qb++)
           mu3xz -=
@@ -2131,43 +2116,38 @@ void rhs4th3fortsgstr_ci(
                 (i144 *
                      (mu(i - 2, j, k) *
                           (u1(i - 2, j - 2, k) - u1(i - 2, j + 2, k) +
-                           8 * (-u1(i - 2, j - 1, k) +
-                                u1(i - 2, j + 1, k))) -
+                           8 * (-u1(i - 2, j - 1, k) + u1(i - 2, j + 1, k))) -
                       8 * (mu(i - 1, j, k) *
                            (u1(i - 1, j - 2, k) - u1(i - 1, j + 2, k) +
-                            8 * (-u1(i - 1, j - 1, k) +
-                                 u1(i - 1, j + 1, k)))) +
+                            8 * (-u1(i - 1, j - 1, k) + u1(i - 1, j + 1, k)))) +
                       8 * (mu(i + 1, j, k) *
                            (u1(i + 1, j - 2, k) - u1(i + 1, j + 2, k) +
-                            8 * (-u1(i + 1, j - 1, k) +
-                                 u1(i + 1, j + 1, k)))) -
+                            8 * (-u1(i + 1, j - 1, k) + u1(i + 1, j + 1, k)))) -
                       (mu(i + 2, j, k) *
                        (u1(i + 2, j - 2, k) - u1(i + 2, j + 2, k) +
                         8 * (-u1(i + 2, j - 1, k) + u1(i + 2, j + 1, k)))))
                  /* (la*u_x)_y */
-                 + i144 * (la(i, j - 2, k) *
-                               (u1(i - 2, j - 2, k) - u1(i + 2, j - 2, k) +
-                                8 * (-u1(i - 1, j - 2, k) +
-                                     u1(i + 1, j - 2, k))) -
-                           8 * (la(i, j - 1, k) *
-                                (u1(i - 2, j - 1, k) - u1(i + 2, j - 1, k) +
-                                 8 * (-u1(i - 1, j - 1, k) +
-                                      u1(i + 1, j - 1, k)))) +
-                           8 * (la(i, j + 1, k) *
-                                (u1(i - 2, j + 1, k) - u1(i + 2, j + 1, k) +
-                                 8 * (-u1(i - 1, j + 1, k) +
-                                      u1(i + 1, j + 1, k)))) -
-                           (la(i, j + 2, k) *
-                            (u1(i - 2, j + 2, k) - u1(i + 2, j + 2, k) +
-                             8 * (-u1(i - 1, j + 2, k) +
-                                  u1(i + 1, j + 2, k))))));
+                 +
+                 i144 *
+                     (la(i, j - 2, k) *
+                          (u1(i - 2, j - 2, k) - u1(i + 2, j - 2, k) +
+                           8 * (-u1(i - 1, j - 2, k) + u1(i + 1, j - 2, k))) -
+                      8 * (la(i, j - 1, k) *
+                           (u1(i - 2, j - 1, k) - u1(i + 2, j - 1, k) +
+                            8 * (-u1(i - 1, j - 1, k) + u1(i + 1, j - 1, k)))) +
+                      8 * (la(i, j + 1, k) *
+                           (u1(i - 2, j + 1, k) - u1(i + 2, j + 1, k) +
+                            8 * (-u1(i - 1, j + 1, k) + u1(i + 1, j + 1, k)))) -
+                      (la(i, j + 2, k) *
+                       (u1(i - 2, j + 2, k) - u1(i + 2, j + 2, k) +
+                        8 * (-u1(i - 1, j + 2, k) + u1(i + 1, j + 2, k))))));
         /* (la*w_z)_y : NOT CENTERED */
         float_sw4 u3zjp2 = 0;
         float_sw4 u3zjp1 = 0;
         float_sw4 u3zjm1 = 0;
         float_sw4 u3zjm2 = 0;
 #ifdef ENABLE_HIP
-	//#pragma unroll 8
+        // #pragma unroll 8
 #endif
         for (int qb = 1; qb <= 8; qb++) {
           u3zjp2 -= bope(kb, qb) * u3(i, j + 2, nk - qb + 1);
@@ -2183,7 +2163,7 @@ void rhs4th3fortsgstr_ci(
         /* (mu*w_y)_z: NOT CENTERED */
         float_sw4 mu3yz = 0;
 #ifdef ENABLE_HIP
-	//#pragma unroll 8
+        // #pragma unroll 8
 #endif
         for (int qb = 1; qb <= 8; qb++)
           mu3yz -=
@@ -2200,7 +2180,7 @@ void rhs4th3fortsgstr_ci(
         float_sw4 u1zim1 = 0;
         float_sw4 u1zim2 = 0;
 #ifdef ENABLE_HIP
-	//#pragma unroll 8
+        // #pragma unroll 8
 #endif
         for (int qb = 1; qb <= 8; qb++) {
           u1zip2 -= bope(kb, qb) * u1(i + 2, j, nk - qb + 1);
@@ -2219,7 +2199,7 @@ void rhs4th3fortsgstr_ci(
         float_sw4 u2zjm1 = 0;
         float_sw4 u2zjm2 = 0;
 #ifdef ENABLE_HIP
-	//#pragma unroll 8
+        // #pragma unroll 8
 #endif
         for (int qb = 1; qb <= 8; qb++) {
           u2zjp2 -= bope(kb, qb) * u2(i, j + 2, nk - qb + 1);
@@ -2235,7 +2215,7 @@ void rhs4th3fortsgstr_ci(
         /*   (la*u_x)_z: NOT CENTERED */
         float_sw4 lau1xz = 0;
 #ifdef ENABLE_HIP
-	//#pragma unroll 8
+        // #pragma unroll 8
 #endif
         for (int qb = 1; qb <= 8; qb++)
           lau1xz -=
@@ -2248,7 +2228,7 @@ void rhs4th3fortsgstr_ci(
         /* (la*v_y)_z: NOT CENTERED */
         float_sw4 lau2yz = 0;
 #ifdef ENABLE_HIP
-	//#pragma unroll 8
+        // #pragma unroll 8
 #endif
         for (int qb = 1; qb <= 8; qb++) {
           lau2yz -=
@@ -2592,19 +2572,18 @@ void satt_ci(float_sw4* __restrict__ up, float_sw4* __restrict__ qs,
                       (jlast - jfirst + 1) * (klast - kfirst + 1);
   const float_sw4 efact = M_PI * cfreq * dt;
   // #pragma omp parallel for
-  //#pragma ivdep
-  //#pragma simd
+  // #pragma ivdep
+  // #pragma simd
 
   // for (size_t i = 0; i < npts; i++) {
-  //RAJA::forall(0, npts, [=] RAJA_DEVICE(size_t i) {
+  // RAJA::forall(0, npts, [=] RAJA_DEVICE(size_t i) {
   RAJA::forall<DEFAULT_LOOP1>(RAJA::RangeSegment(0, npts),
-                              [=] RAJA_DEVICE(size_t i) { 
-  
-    float_sw4 fact = exp(-efact / qs[i]);
-    up[i] *= fact;
-    up[i + npts] *= fact;
-    up[i + 2 * npts] *= fact;
-  });
+                              [=] RAJA_DEVICE(size_t i) {
+                                float_sw4 fact = exp(-efact / qs[i]);
+                                up[i] *= fact;
+                                up[i + npts] *= fact;
+                                up[i + 2 * npts] *= fact;
+                              });
 }
 
 //-----------------------------------------------------------------------
@@ -2746,8 +2725,8 @@ void addbstresswresc_ci(
 #define lambdavebnd(i, j) a_lambdavebnd[base0 + i + ni * (j)]
 #define sgstrx(i) a_strx[i - ifirst]
 #define sgstry(j) a_stry[j - jfirst]
-  //#define bforcerhs(c,i,j) a_bforcerhs[base0+c-1+3*(i+ni*(j))]
-  //#define memforce(c,i,j)   a_memforce[base0+c-1+3*(i+ni*(j))]
+  // #define bforcerhs(c,i,j) a_bforcerhs[base0+c-1+3*(i+ni*(j))]
+  // #define memforce(c,i,j)   a_memforce[base0+c-1+3*(i+ni*(j))]
 #define bforcerhs(c, i, j) a_bforcerhs[base03 + (i) + ni * (j) + nij * (c)]
 #define memforce(c, i, j) a_memforce[base03 + (i) + ni * (j) + nij * (c)]
 
@@ -2953,8 +2932,8 @@ void ve_bndry_stress_curvi_ci(
 #define met(c, i, j, k) a_met[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
 #define sgstrx(i) a_strx[i - ifirst]
 #define sgstry(j) a_stry[j - jfirst]
-  //#define bforcerhs(c,i,j) a_bforcerhs[base0+c-1+3*(i+ni*(j))]
-  //#define memforce(c,i,j)   a_memforce[base0+c-1+3*(i+ni*(j))]
+  // #define bforcerhs(c,i,j) a_bforcerhs[base0+c-1+3*(i+ni*(j))]
+  // #define memforce(c,i,j)   a_memforce[base0+c-1+3*(i+ni*(j))]
 #define bforcerhs(c, i, j) a_bforcerhs[base03 + (i) + ni * (j) + nij * (c)]
 
   // const float_sw4 i6 = 1.0/6;
@@ -2977,7 +2956,7 @@ void ve_bndry_stress_curvi_ci(
     k = nz;
     kl = -1;
   }
-  //#pragma omp parallel
+  // #pragma omp parallel
   {
     //
     // #pragma omp for
@@ -2988,7 +2967,7 @@ void ve_bndry_stress_curvi_ci(
 
     // SW4_MARK_END("HOST CODE");
 
-#if !defined(RAJA_ONLY)  && defined(ENABLE_GPU) // Fine
+#if !defined(RAJA_ONLY) && defined(ENABLE_GPU)  // Fine
     Range<16> I(ifirst + 2, ilast - 1);
     Range<16> J(jfirst + 2, jlast - 1);
     forall2async(I, J, [=] RAJA_DEVICE(int i, int j) {
@@ -3155,7 +3134,7 @@ void att_free_curvi_ci(
 
   // Hardcoded for the k=1 surface
   int k = 1, kl = 1;
-  //#pragma omp parallel
+  // #pragma omp parallel
   {
     //     float_sw4 sgx = 1, sgy = 1, isgx = 1, isgy = 1;
     float_sw4 s0i = 1 / sbop[0];

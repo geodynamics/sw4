@@ -2,6 +2,7 @@
 #define GRIDGENERATORGENERAL_H
 
 #include <vector>
+
 #include "GridGenerator.h"
 
 class GridGeneratorGeneral : public GridGenerator {

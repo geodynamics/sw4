@@ -46,7 +46,7 @@ void innerloopanisgstrvc_ci(
 #pragma omp for
       for (int k = 1; k <= 6; k++)
         for (int j = jfirst + 2; j <= jlast - 2; j++)
-        //#pragma simd
+        // #pragma simd
 #pragma ivdep
           for (int i = ifirst + 2; i <= ilast - 2; i++) {
             float_sw4 r1 = 0, r2 = 0, r3 = 0;
@@ -736,7 +736,7 @@ void innerloopanisgstrvc_ci(
 #pragma omp for
       for (int k = nk - 5; k <= nk; k++)
         for (int j = jfirst + 2; j <= jlast - 2; j++)
-        //#pragma simd
+        // #pragma simd
 #pragma ivdep
           for (int i = ifirst + 2; i <= ilast - 2; i++) {
             float_sw4 r1 = 0, r2 = 0, r3 = 0;
@@ -1426,7 +1426,7 @@ void innerloopanisgstrvc_ci(
 #pragma omp for
     for (int k = kstart; k <= kend; k++)
       for (int j = jfirst + 2; j <= jlast - 2; j++)
-      //#pragma simd
+      // #pragma simd
 #pragma ivdep
         for (int i = ifirst + 2; i <= ilast - 2; i++) {
           float_sw4 r1 = 0, r2 = 0, r3 = 0;

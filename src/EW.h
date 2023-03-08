@@ -102,23 +102,24 @@ class EW {
   float_sw4 getGlobalZmin() { return m_global_zmin; }
   float_sw4 getGlobalZmax() { return m_global_zmax; }
   int findNumberOfEvents();
-  bool event_is_in_proc( int e ) const;
-  int global_to_local_event( int e ) const;
-  int local_to_global_event( int e ) const;
+  bool event_is_in_proc(int e) const;
+  int global_to_local_event(int e) const;
+  int local_to_global_event(int e) const;
 
   void setupRun(vector<vector<Source*>>& a_GlobalUniqueSources);
 
-  void solve( vector<Source*> & a_GlobalSources, vector<TimeSeries*> & a_GlobalTimeSeries,
-	    vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, vector<Sarray>& a_Rho,
-	    vector<Sarray>& U, vector<Sarray>& Um,
-	    vector<DataPatches*>& Upred_saved_sides,
-	    vector<DataPatches*>& Ucorr_saved_sides, bool save_sides, int event, int save_steps,
-            int varcase, vector<Sarray>& pseudoHessian );
+  void solve(vector<Source*>& a_GlobalSources,
+             vector<TimeSeries*>& a_GlobalTimeSeries, vector<Sarray>& a_Mu,
+             vector<Sarray>& a_Lambda, vector<Sarray>& a_Rho, vector<Sarray>& U,
+             vector<Sarray>& Um, vector<DataPatches*>& Upred_saved_sides,
+             vector<DataPatches*>& Ucorr_saved_sides, bool save_sides,
+             int event, int save_steps, int varcase,
+             vector<Sarray>& pseudoHessian);
 
-   void solveTT(Source* a_GlobalSource, vector<TimeSeries*>& a_GlobalTimeSeries,
+  void solveTT(Source* a_GlobalSource, vector<TimeSeries*>& a_GlobalTimeSeries,
                double* xs, int nmpars, MaterialParameterization* mp,
                int wave_mode, int event, int myrank);
-  
+
   void solve_backward(vector<Source*>& a_Sources,
                       vector<TimeSeries*>& a_TimeSeries, float_sw4 gradient[11],
                       float_sw4 hessian[121]);
@@ -260,8 +261,8 @@ class EW {
   void exactRhsTwilight(float_sw4 a_t, vector<Sarray>& a_F);
   void exactAccTwilight(float_sw4 a_t, vector<Sarray>& a_Uacc);
   void Force(float_sw4 a_t, vector<Sarray>& a_F,
-             vector<GridPointSource*>& point_sources,
-             vector<int>& identsources,bool init=false);
+             vector<GridPointSource*>& point_sources, vector<int>& identsources,
+             bool init = false);
   void Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
                 vector<GridPointSource*>& point_sources,
                 vector<int>& identsources);
@@ -295,9 +296,9 @@ class EW {
   // time stepping routines
   void simpleAttenuation(vector<Sarray>& a_Up);
   void enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
-		 vector<Sarray>& a_Mu,
-                 vector<Sarray>& a_Lambda, vector<Sarray*>& a_AlphaVE,
-                 float_sw4 t, vector<float_sw4**>& a_BCForcing);
+                 vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+                 vector<Sarray*>& a_AlphaVE, float_sw4 t,
+                 vector<float_sw4**>& a_BCForcing);
 
   void enforceBCfreeAtt(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                         vector<Sarray>& a_Um, vector<Sarray>& a_Mu,
@@ -462,21 +463,22 @@ class EW {
   void assign_supergrid_damping_arrays();
 
   // MR coefficients
-  void setup_MR_coefficients( vector<Sarray>& Rho, vector<Sarray>& Mu, 
-                            vector<Sarray>& Lambda );
+  void setup_MR_coefficients(vector<Sarray>& Rho, vector<Sarray>& Mu,
+                             vector<Sarray>& Lambda);
 
   void assign_local_bcs();
   bool timeSteppingSet();
   bool proc_decompose_2d(int ni, int nj, int nproc, int proc_max[2]);
   void decomp1d(int nglobal, int myid, int nproc, int& s, int& e);
-  void decomp1d_2( int N, int myid, int nproc, int& s, int& e, int nghost, int npad );
+  void decomp1d_2(int N, int myid, int nproc, int& s, int& e, int nghost,
+                  int npad);
   void coarsen1d(int& n, int& ifirst, int& ilast, int periodic);
 
-  bool node_core_decomp( int ni, int nj, int& Cx, int& Cy, int& Nx, int &Ny );
-  void my_node_core_rank( int Cx, int Cy, int Nx, int Ny,
-			  int& cx, int& cy, int& nx, int &ny );
-  int  my_node_core_id( int ni,int nj, int proc_max[2] );
-  
+  bool node_core_decomp(int ni, int nj, int& Cx, int& Cy, int& Nx, int& Ny);
+  void my_node_core_rank(int Cx, int Cy, int Nx, int Ny, int& cx, int& cy,
+                         int& nx, int& ny);
+  int my_node_core_id(int ni, int nj, int proc_max[2]);
+
   void allocateCurvilinearArrays();
   void generate_grid();
   void setup_metric();
@@ -559,16 +561,12 @@ class EW {
   /* void bc_free_surface( Sarray& u, int g, float_sw4 t, int side, */
   /* 		      Forcing* forcing, float_sw4 h, int onesided[6] ); */
 
-  void computeNearestTopoGridPoint(int & iNear, 
-                                 int & jNear, 
-                                 float_sw4 a_x, 
-                                 float_sw4 a_y);
+  void computeNearestTopoGridPoint(int& iNear, int& jNear, float_sw4 a_x,
+                                   float_sw4 a_y);
 
-void computeLowTopoGridPoint(int & iLow, 
-                             int & jLow, 
-                             float_sw4 a_x, 
-                             float_sw4 a_y);
-  
+  void computeLowTopoGridPoint(int& iLow, int& jLow, float_sw4 a_x,
+                               float_sw4 a_y);
+
   void computeNearestGridPoint(int& a_i, int& a_j, int& a_k,
                                int& a_g,  // grid on which indices are located
                                float_sw4 a_x, float_sw4 a_y, float_sw4 a_z);
@@ -576,8 +574,8 @@ void computeLowTopoGridPoint(int & iLow,
                                int& a_g,  // grid on which indices are located
                                float_sw4 a_x, float_sw4 a_y, float_sw4 a_z);
 
-  int computeInvGridMap( float_sw4& a_i, float_sw4& a_j, float_sw4& a_k, int& a_g,
-                       float_sw4 a_x, float_sw4 a_y, float_sw4 a_z );
+  int computeInvGridMap(float_sw4& a_i, float_sw4& a_j, float_sw4& a_k,
+                        int& a_g, float_sw4 a_x, float_sw4 a_y, float_sw4 a_z);
 
   void computeNearestSurfaceGridPoint(int& a_i, int& a_j, float_sw4 a_x,
                                       float_sw4 a_y, float_sw4 a_z);
@@ -832,7 +830,7 @@ void computeLowTopoGridPoint(int & iLow,
   void get_material_parameter(int nmpar, float_sw4* xm);
   void get_scale_factors(int nmpar, float_sw4* xm);
 
-  //#ifdef ENABLE_OPT
+  // #ifdef ENABLE_OPT
   void material_correction(int nmpar, float_sw4* xm);
 
   void project_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
@@ -840,7 +838,7 @@ void computeLowTopoGridPoint(int & iLow,
 
   int check_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
                      vector<Sarray>& a_lambda, int& ok, int verbose = 0);
-  //#endif
+  // #endif
 
   void check_anisotropic_material(vector<Sarray>& rho, vector<Sarray>& c);
 
@@ -871,14 +869,14 @@ void computeLowTopoGridPoint(int & iLow,
 
   bool check_for_nan(vector<Sarray>& a_U, int verbose, string name);
 
-  bool check_for_nan( vector<Sarray*>& a_U, int nmech, int verbose, string name );
+  bool check_for_nan(vector<Sarray*>& a_U, int nmech, int verbose, string name);
 
   void define_parallel_io(vector<Parallel_IO*>& parallel_io);
 
   void read_volimage(std::string& path, std::string& fname,
                      vector<Sarray>& data);
 
-   void interpolate(int nx, int ny, int nz, float_sw4 xmin, float_sw4 ymin,
+  void interpolate(int nx, int ny, int nz, float_sw4 xmin, float_sw4 ymin,
                    float_sw4 zmin, float_sw4 hx, float_sw4 hy, float_sw4 hz,
                    Sarray& rho, Sarray& mu, Sarray& lambda, int grid,
                    Sarray& rhogrid, Sarray& mugrid, Sarray& lambdagrid,
@@ -1168,13 +1166,12 @@ void computeLowTopoGridPoint(int & iLow,
   //__restrict__ a_um, 		      float_sw4 omega, float_sw4 dt, int domain
   //);
 
-  void solerr3_ci( int ib, int ie, int jb, int je, int kb, int ke,
-		 float_sw4 h, float_sw4* __restrict__ uex,
-		 float_sw4* __restrict__ u, float_sw4& li,
-		 float_sw4& l2, float_sw4& xli, float_sw4 zmin, float_sw4 x0,
-		 float_sw4 y0, float_sw4 z0, float_sw4 radius,
-		 int imin, int imax, int jmin, int jmax, int kmin, int kmax, int geocube,
-		 int i0, int i1, int j0, int j1, int k0, int k1 );
+  void solerr3_ci(int ib, int ie, int jb, int je, int kb, int ke, float_sw4 h,
+                  float_sw4* __restrict__ uex, float_sw4* __restrict__ u,
+                  float_sw4& li, float_sw4& l2, float_sw4& xli, float_sw4 zmin,
+                  float_sw4 x0, float_sw4 y0, float_sw4 z0, float_sw4 radius,
+                  int imin, int imax, int jmin, int jmax, int kmin, int kmax,
+                  int geocube, int i0, int i1, int j0, int j1, int k0, int k1);
   void solerrgp_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                    int klast, float_sw4 h, float_sw4* __restrict__ uex,
                    float_sw4* __restrict__ u, float_sw4& li, float_sw4& l2);
@@ -1524,19 +1521,18 @@ void computeLowTopoGridPoint(int & iLow,
                  std::vector<Sarray>& a_Um, vector<Sarray*>& a_AlphaVEp,
                  vector<Sarray*>& a_AlphaVE, vector<Sarray*>& a_AlphaVEm,
                  float_sw4 t, bool predictor, vector<Sarray>& F,
-                 std::vector<GridPointSource*>&point_sources,
+                 std::vector<GridPointSource*>& point_sources,
                  vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
-		 vector<Sarray>& a_Lambda, bool backward = false);
+                 vector<Sarray>& a_Lambda, bool backward = false);
   void enforceIC2(std::vector<Sarray>& a_Up, std::vector<Sarray>& a_U,
                   std::vector<Sarray>& a_Um, vector<Sarray*>& a_AlphaVEp,
                   float_sw4 t, vector<Sarray>& F,
                   std::vector<GridPointSource*>& point_sources,
-		  vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
-		  vector<Sarray>& a_Lambda);
+                  vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
+                  vector<Sarray>& a_Lambda);
   void CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Rho,
-		   vector<Sarray>& a_Mu,
-                   vector<Sarray>& a_Lambda, vector<Sarray*>& a_AlphaVE,
-                   float_sw4 t);
+                   vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+                   vector<Sarray*>& a_AlphaVE, float_sw4 t);
   void dirichlet_hom_ic(Sarray& U, int g, int k, bool inner);
   void dirichlet_twilight_ic(Sarray& U, int g, int kic, float_sw4 t);
 
@@ -1548,7 +1544,7 @@ void computeLowTopoGridPoint(int & iLow,
       Sarray& a_Up, Sarray& a_U, Sarray& a_Um, Sarray* a_AlphaVEp,
       Sarray* a_AlphaVE, Sarray* a_AlphaVEm, Sarray& Utt, Sarray& Unext, int g,
       int kic, float_sw4 t, Sarray& Ftt,
-      std::vector<GridPointSource*> &point_sources, Sarray& a_Rho, Sarray& a_Mu,
+      std::vector<GridPointSource*>& point_sources, Sarray& a_Rho, Sarray& a_Mu,
       Sarray& a_Lambda);
   // void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray&
   // a_Um,
@@ -1557,7 +1553,7 @@ void computeLowTopoGridPoint(int & iLow,
   //                                     std::vector<GridPointSource*>
   //                                     point_sources );
 
-   void compute_preliminary_predictor(Sarray& a_Up, Sarray& a_U,
+  void compute_preliminary_predictor(Sarray& a_Up, Sarray& a_U,
                                      Sarray* a_AlphaVEp, Sarray& Unext, int g,
                                      int kic, float_sw4 t, Sarray& F,
                                      vector<GridPointSource*>& point_sources,
@@ -1620,7 +1616,7 @@ void computeLowTopoGridPoint(int & iLow,
   void set_filtergrad();
   void set_filterit(int filterit);
   void set_filterpar(float_sw4 filterpar);
-  
+
   void make_type(vector<std::tuple<int, int, int>>& send_type,
                  vector<std::tuple<float_sw4*, float_sw4*>>& bufs_type, int i1,
                  int j1, int k1, int i2, int j2, int k2, int g);
@@ -1732,7 +1728,7 @@ void computeLowTopoGridPoint(int & iLow,
 
   // material description used with material surfaces and the ifile command
   vector<MaterialProperty*> m_materials;
-  MPI_Comm m_cartesian_communicator, m_1d_communicator,m_cross_communicator;
+  MPI_Comm m_cartesian_communicator, m_1d_communicator, m_cross_communicator;
 
   ofstream msgStream;
 
@@ -2054,7 +2050,7 @@ void computeLowTopoGridPoint(int & iLow,
   bool m_zerograd_at_src, m_filter_gradient, m_zerograd_at_rec;
   int m_zerograd_pad, m_gradfilter_it, m_zerogradrec_pad;
   float_sw4 m_gradfilter_ep;
-  
+
   // perturbations for testing
   float_sw4 m_perturb;
   int m_iperturb, m_jperturb, m_kperturb, m_pervar;

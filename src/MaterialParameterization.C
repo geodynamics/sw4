@@ -1,14 +1,14 @@
-#include "caliper.h"
 #include <fcntl.h>
 #include <mpi.h>
 #include <unistd.h>
+
 #include <cstring>
 #include <fstream>
 
-#include "MaterialParameterization.h"
-
 #include "EW.h"
+#include "MaterialParameterization.h"
 #include "Require.h"
+#include "caliper.h"
 
 using namespace std;
 
@@ -149,13 +149,13 @@ void MaterialParameterization::read_parameters(const char* filename, int npars,
   int errflag = 0;
   if (m_myrank == 0) {
     int fd = open(filename, O_RDONLY);
-    if (fd<0){
-      std::cerr<<"ERROR opening "<<filename<<"\n";
+    if (fd < 0) {
+      std::cerr << "ERROR opening " << filename << "\n";
       abort();
     }
     int npars_read;
     size_t nr = read(fd, &npars_read, sizeof(int));
-  
+
     if (npars_read == npars && nr == sizeof(int)) {
       nr = read(fd, xptr, npars * sizeof(double));
       if (nr != npars * sizeof(double)) errflag = 2;
@@ -214,7 +214,8 @@ void MaterialParameterization::read_parameters(int npars, double* xptr) {
 
 //-----------------------------------------------------------------------
 // void MaterialParameterization::parameters_from_basematerial( int nmd, double*
-// xmd, 							 int nms, double* xms )
+// xmd, 							 int nms, double* xms
+// )
 //{
 //   get_parameters( nmd, xmd, nms, xms, m_ew->mRho, m_ew->mMu, m_ew->mLambda );
 //}

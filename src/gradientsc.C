@@ -142,7 +142,7 @@ void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
   a_kapacc[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 #define bop(q, k) a_bop[q - 1 + 4 * (k - 1)]
 
-  //#pragma omp parallel
+  // #pragma omp parallel
   {
     int kstart = kfirstact;
     int kend = klastact;
@@ -1346,17 +1346,17 @@ void addgradmulac_ci(
   int kstart = kfirstact;
   int kend = klastact;
   if (klastact >= nk - 3 && onesided[5] == 1) kend = nk - 4;
-  //#pragma omp parallel
+  // #pragma omp parallel
   {
     if (kfirstact <= 4 && onesided[4] == 1) {
       kstart = 5;
       float_sw4 w8[4] = {0, 0, 1, 1};
       float_sw4 w6m[4] = {0, 0, al1, al1 + al2};
       float_sw4 w6p[4] = {0, al1, al1 + al2, al1 + al2 + al3};
-      //#pragma omp for
+      // #pragma omp for
       for (int k = kfirstact; k <= 4; k++)
         for (int j = jfirstact; j <= jlastact; j++)
-          //#pragma ivdep
+          // #pragma ivdep
           for (int i = ifirstact; i <= ilastact; i++) {
             float_sw4 normfact = wgh[k - 1];
             // Diagonal terms
@@ -1944,10 +1944,10 @@ void addgradmulac_ci(
           }
     }
 
-    //#pragma omp parallel for
+    // #pragma omp parallel for
     for (int k = kstart; k <= kend; k++)
       for (int j = jfirstact; j <= jlastact; j++)
-        //#pragma ivdep
+        // #pragma ivdep
         for (int i = ifirstact; i <= ilastact; i++) {
           // Diagonal terms
           float_sw4 dux = d4b * (u(1, i + 2, j, k) - u(1, i - 2, j, k)) +

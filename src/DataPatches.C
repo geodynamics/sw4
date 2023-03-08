@@ -7,10 +7,11 @@
 
 #include "Sarray.h"
 using namespace std;
-//#ifdef SW4_NORM_TRACE
+// #ifdef SW4_NORM_TRACE
 extern std::ofstream norm_trace_file;
-//#endif
+// #endif
 #include <errno.h>
+
 #include "DataPatches.h"
 
 //-----------------------------------------------------------------------
@@ -184,7 +185,7 @@ void DataPatches::add_patch(int wind[6]) {
 void DataPatches::push(Sarray& u, int n) {
   //   int myid;
   //   MPI_Comm_rank(MPI_COMM_WORLD,&myid);
-  double norm=0.0;
+  double norm = 0.0;
   if (m_isnonempty && !m_error) {
     if (m_ncurrent == m_nsteps) {
       save_to_file();
@@ -207,11 +208,12 @@ void DataPatches::push(Sarray& u, int n) {
             indu = (i - ib) + ni * (j - jb) + ni * nj * (k - kb);
             for (int c = 0; c < m_ncomp; c++)
               //		     m_data[m_ncurrent][ptr+m_ncomp*ind+c] =
-              //uptr[m_ncomp*indu+c];
+              // uptr[m_ncomp*indu+c];
               m_data[m_ncurrent][ptr + m_ncomp * ind + c] =
                   uptr[indu + c * ntot];
 #ifdef SW4_NORM_TRACE
-	    for (int c = 0; c < m_ncomp; c++) norm+=uptr[indu + c * ntot]*uptr[indu + c * ntot];
+            for (int c = 0; c < m_ncomp; c++)
+              norm += uptr[indu + c * ntot] * uptr[indu + c * ntot];
 #endif
             ind++;
           }
@@ -223,7 +225,7 @@ void DataPatches::push(Sarray& u, int n) {
     m_ncurrent++;
   }
 #ifdef SW4_NORM_TRACE
-  norm_trace_file<<" DATAPath push "<<n<<" "<<norm<<"\n";
+  norm_trace_file << " DATAPath push " << n << " " << norm << "\n";
 #endif
 }
 
@@ -348,7 +350,7 @@ void DataPatches::pop(Sarray& u, int n) {
             indu = (i - ib) + ni * (j - jb) + ni * nj * (k - kb);
             for (int c = 0; c < m_ncomp; c++)
               //		     uptr[m_ncomp*indu+c] =
-              //m_data[nloc][ptr+m_ncomp*ind+c];
+              // m_data[nloc][ptr+m_ncomp*ind+c];
               uptr[indu + c * ntot] = m_data[nloc][ptr + m_ncomp * ind + c];
             ind++;
           }

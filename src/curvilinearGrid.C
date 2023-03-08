@@ -37,13 +37,15 @@
 // #include "F77_FUNC.h"
 // extern "C" {
 //    void metric( int*, int*, int*, int*, int*, int*,
-// 				 double*, double*, double*, double*, double*, int *
+// 				 double*, double*, double*, double*, double*, int
+// *
 // );
 //    void gridinfo( int*, int*, int*, int*, int*, int*,
 // 				     double*, double*, double*, double* );
 //    void metricexgh( int*, int*, int*, int*, int*, int*, int*, int*, int*,
 // 					 double*, double*, double*, double*,
-// double*, 					 int*, double*, double*, double*, double*, 					 double*, double*, double*
+// double*, 					 int*, double*, double*, double*, double*,
+// double*, double*, double*
 // );
 //    void meterr4c( int*, int*, int*, int*, int*, int*,
 // 		  double*, double*, double*, double*, double*, double*,
@@ -158,14 +160,14 @@ void EW::metric_derivatives_test() {
   //      metricexgh_ci( Bx, Nx, By, Ny, Bz, Nz, nzg, mX[g].c_ptr(),
   //      mY[g].c_ptr(), mZ[g].c_ptr(),
   //				    metex.c_ptr(), jacex.c_ptr(),
-  //m_grid_interpolation_order, m_zetaBreak, zmax, 				    m_GaussianAmp, m_GaussianXc,
-  //m_GaussianYc, m_GaussianLx, m_GaussianLy );
+  // m_grid_interpolation_order, m_zetaBreak, zmax,
+  // m_GaussianAmp, m_GaussianXc, m_GaussianYc, m_GaussianLx, m_GaussianLy );
   // FTNC   else
   // FTNC      metricexgh( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg,
   // mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), FTNC
   // metex.c_ptr(), jacex.c_ptr(), &m_grid_interpolation_order, &m_zetaBreak,
-  // &zmax, FTNC				    &m_GaussianAmp, &m_GaussianXc,
-  // &m_GaussianYc, &m_GaussianLx, &m_GaussianLy );
+  // &zmax, FTNC				    &m_GaussianAmp,
+  // &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy );
   communicate_array(metex, mNumberOfGrids - 1);
   communicate_array(jacex, mNumberOfGrids - 1);
 

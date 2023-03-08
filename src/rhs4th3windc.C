@@ -7,9 +7,9 @@
 #include "foralls.h"
 #include "policies.h"
 #include "sw4.h"
-//#ifdef SW4_NOC
-// extern "C" {
-//#endif
+// #ifdef SW4_NOC
+//  extern "C" {
+// #endif
 
 //-----------------------------------------------------------------------
 void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
@@ -1123,6 +1123,6 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
   }  // endif #pragma omp parallel private
 }
 
-//#ifdef SW4_NOC
-//}
-//#endif
+// #ifdef SW4_NOC
+// }
+// #endif

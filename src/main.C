@@ -30,7 +30,7 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
-//#include "mpi.h"
+// #include "mpi.h"
 
 #include <mpi.h>
 
@@ -113,26 +113,28 @@ int main(int argc, char **argv) {
 #else
   MPI_Init(&argc, &argv);
 #endif
-  
 
 #ifdef SW4_USE_SCR
-  SCR_Configf("SCR_DEBUG=%d",1);
-  SCR_Configf("SCR_CACHE_SIZE=%d",2);
-  SCR_Configf("SCR_CACHE_BYPASS=%d",1); // Default 1 . 0 leaves everything in cache
-  SCR_Configf("SCR_FLUSH=%d",0);
-  SCR_Configf("SCR_FLUSH_ASYNC=%d",1);
-  SCR_Configf("SCR_FLUSH_TYPE=%s","PTHREAD");
+  SCR_Configf("SCR_DEBUG=%d", 1);
+  SCR_Configf("SCR_CACHE_SIZE=%d", 2);
+  SCR_Configf("SCR_CACHE_BYPASS=%d",
+              1);  // Default 1 . 0 leaves everything in cache
+  SCR_Configf("SCR_FLUSH=%d", 0);
+  SCR_Configf("SCR_FLUSH_ASYNC=%d", 1);
+  SCR_Configf("SCR_FLUSH_TYPE=%s", "PTHREAD");
   SCR_Init();
 #endif
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-  if (!myRank){
-  time_t now;
-  time(&now);
-  printf("After MPI_Init %s \n",ctime(&now));
-}
+  if (!myRank) {
+    time_t now;
+    time(&now);
+    printf("After MPI_Init %s \n", ctime(&now));
+  }
 
 #ifdef SW4_NORM_TRACE
-  if (!myRank) std::cout<<"\n\n\n\nWARNING "" SW4 NORM TRACE is On. Output in Norms.dat \n\n\n";
+  if (!myRank)
+    std::cout << "\n\n\n\nWARNING "
+                 " SW4 NORM TRACE is On. Output in Norms.dat \n\n\n";
 #endif
 
   MPI_Info info;
@@ -149,7 +151,7 @@ int main(int argc, char **argv) {
 
 #ifdef SW4_NORM_TRACE
   stringstream filename;
-  filename<<"Norms_"<<myRank<<".dat";
+  filename << "Norms_" << myRank << ".dat";
   norm_trace_file.open(filename.str());
   norm_trace_file.precision(10);
 #endif
@@ -185,10 +187,9 @@ int main(int argc, char **argv) {
       global_variables.device);
 #endif
 
-  const int alignment = 512; // 1024 may be 1% faster on Crusher
-  auto pooled_allocator =
-      rma.makeAllocator<umpire::strategy::QuickPool, true>(
-          string("UM_pool"), pref_allocator, pool_size, 1024 * 1024, alignment);
+  const int alignment = 512;  // 1024 may be 1% faster on Crusher
+  auto pooled_allocator = rma.makeAllocator<umpire::strategy::QuickPool, true>(
+      string("UM_pool"), pref_allocator, pool_size, 1024 * 1024, alignment);
 #ifdef ENABLE_HIP
   const size_t pool_size_small = static_cast<size_t>(1024) * 1024 * 1024;
 #else
@@ -206,7 +207,7 @@ int main(int argc, char **argv) {
           alignment);
 
 #ifdef ENABLE_HIP
-  const size_t object_pool_size = static_cast<size_t>(3) *1024* 1024 * 1024;
+  const size_t object_pool_size = static_cast<size_t>(3) * 1024 * 1024 * 1024;
 #else
   const size_t object_pool_size = static_cast<size_t>(500) * 1024 * 1024;
 #endif
@@ -273,7 +274,7 @@ int main(int argc, char **argv) {
 #endif
     // Stop MPI
 #ifdef SW4_USE_SCR
-  SCR_Finalize();
+    SCR_Finalize();
 #endif
     MPI_Finalize();
     return 1;
@@ -321,7 +322,6 @@ int main(int argc, char **argv) {
   if (NULL == cfgFile) cfgFile = "sz.config";
   H5Z_SZ_Init(cfgFile);
 #endif
-
 
 // make a new simulation object by reading the input file 'fileName'
 // nvtxRangePushA("outer");
@@ -385,30 +385,29 @@ int main(int argc, char **argv) {
         // FTNC	    cout << "   Using C routines." << endl;
         // FTNC	 else
         // FTNC	    cout << "   Using fortran routines." << endl;
-      int ng = simulation.mNumberOfGrids;
-      vector<DataPatches *> upred_saved(ng), ucorr_saved(ng);
-      vector<Sarray> U(ng), Um(ng), ph(ng);
-      simulation.solve(GlobalSources[0], GlobalTimeSeries[0], simulation.mMu,
-                       simulation.mLambda, simulation.mRho, U, Um, upred_saved,
-                       ucorr_saved, false, 0, 0, 0, ph);
+        int ng = simulation.mNumberOfGrids;
+        vector<DataPatches *> upred_saved(ng), ucorr_saved(ng);
+        vector<Sarray> U(ng), Um(ng), ph(ng);
+        simulation.solve(GlobalSources[0], GlobalTimeSeries[0], simulation.mMu,
+                         simulation.mLambda, simulation.mRho, U, Um,
+                         upred_saved, ucorr_saved, false, 0, 0, 0, ph);
 
-
-      double myWriteTime = 0.0, allWriteTime;
-      for (int ts = 0; ts < GlobalTimeSeries[0].size(); ts++) {
-        GlobalTimeSeries[0][ts]->writeFile();
+        double myWriteTime = 0.0, allWriteTime;
+        for (int ts = 0; ts < GlobalTimeSeries[0].size(); ts++) {
+          GlobalTimeSeries[0][ts]->writeFile();
 #ifdef USE_HDF5
-        myWriteTime += GlobalTimeSeries[0][ts]->getWriteTime();
-        if (ts == GlobalTimeSeries[0].size() - 1) {
-          GlobalTimeSeries[0][ts]->closeHDF5File();
+          myWriteTime += GlobalTimeSeries[0][ts]->getWriteTime();
+          if (ts == GlobalTimeSeries[0].size() - 1) {
+            GlobalTimeSeries[0][ts]->closeHDF5File();
 
-          MPI_Reduce(&myWriteTime, &allWriteTime, 1, MPI_DOUBLE, MPI_MAX, 0,
-                     MPI_COMM_WORLD);
-          if (myRank == 0)
-            cout << "  ==> Max wallclock time to write time-series data is "
-                 << allWriteTime << " seconds." << endl;
-        }
+            MPI_Reduce(&myWriteTime, &allWriteTime, 1, MPI_DOUBLE, MPI_MAX, 0,
+                       MPI_COMM_WORLD);
+            if (myRank == 0)
+              cout << "  ==> Max wallclock time to write time-series data is "
+                   << allWriteTime << " seconds." << endl;
+          }
 #endif
-      }
+        }
 
         status = 0;
       }
@@ -459,11 +458,11 @@ int main(int argc, char **argv) {
   SCR_Finalize();
 #endif
 
-  if (!myRank){
-  time_t now;
-  time(&now);
-  printf("Pre MPI_Finalize %s \n",ctime(&now));
-}
+  if (!myRank) {
+    time_t now;
+    time(&now);
+    printf("Pre MPI_Finalize %s \n", ctime(&now));
+  }
   // Stop MPI
   MPI_Finalize();
   // std::cout<<"MPI_Finalize done\n"<<std::flush;

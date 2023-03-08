@@ -306,7 +306,7 @@ void curvilinear4sgX1_ci(
       // averaging the coefficient
       // 54*8*8+25*8 = 3656 ops, tot=3939
       float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2;
-      //#pragma unroll UNROLL_LEN
+      // #pragma unroll UNROLL_LEN
       for (int qq = -7; qq <= 0; qq++) {
         int q = nk + qq;
         mucofu2 = 0;
@@ -315,7 +315,7 @@ void curvilinear4sgX1_ci(
         mucofvw = 0;
         mucofv2 = 0;
         mucofw2 = 0;
-        //#pragma unroll UNROLL_LEN
+        // #pragma unroll UNROLL_LEN
         for (int mm = -7; mm <= 0; mm++) {
           int m = nk + mm;
           mucofu2 += acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
@@ -483,7 +483,7 @@ void curvilinear4sgX1_ci(
       float_sw4 dudrm2 = 0, dudrm1 = 0, dudrp1 = 0, dudrp2 = 0;
       float_sw4 dvdrm2 = 0, dvdrm1 = 0, dvdrp1 = 0, dvdrp2 = 0;
       float_sw4 dwdrm2 = 0, dwdrm1 = 0, dwdrp1 = 0, dwdrp2 = 0;
-      //#pragma unroll UNROLL_LEN
+      // #pragma unroll UNROLL_LEN
       for (int q = nk - 7; q <= nk; q++) {
         dudrm2 -= bope(nk - k + 1, nk - q + 1) * u(1, i - 2, j, q);
         dvdrm2 -= bope(nk - k + 1, nk - q + 1) * u(2, i - 2, j, q);
@@ -596,7 +596,7 @@ void curvilinear4sgX1_ci(
       dwdrm1 = 0;
       dwdrp1 = 0;
       dwdrp2 = 0;
-      //#pragma unroll UNROLL_LEN
+      // #pragma unroll UNROLL_LEN
       for (int q = nk - 7; q <= nk; q++) {
         dudrm2 -= bope(nk - k + 1, nk - q + 1) * u(1, i, j - 2, q);
         dvdrm2 -= bope(nk - k + 1, nk - q + 1) * u(2, i, j - 2, q);
@@ -696,7 +696,7 @@ void curvilinear4sgX1_ci(
 
       // pr and qr derivatives at once
       // in loop: 8*(53+53+43) = 1192 ops, tot=6037
-      //#pragma unroll UNROLL_LEN
+      // #pragma unroll UNROLL_LEN
       for (int q = nk - 7; q <= nk; q++) {
         // (u-eq)
         // 53 ops

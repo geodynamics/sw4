@@ -313,7 +313,7 @@ void GridPointSource::initializeTimeFunction() {
 RAJA_HOST_DEVICE
 void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) {
   float_sw4 afun, afunv[6];
-  //printf("mTimeDependence =%d %d\n",mTimeDependence,iRicker);
+  // printf("mTimeDependence =%d %d\n",mTimeDependence,iRicker);
 
   //  if (mNpar==0) {
   //   std::cout<<"FXYZ "<<mNpar<<" "<<mNipar<<"\n"<<std::flush;
@@ -349,7 +349,7 @@ void GridPointSource::getFxyz(float_sw4 t, float_sw4* fxyz) {
     pos += size;
     afunv[2] = mTimeFunc(mFreq, t - mT0, mPar + pos, mNpar, mIpar, mNipar);
   }
-  //printf("AFUN]=%f %f %f %f\n",afun,mForces[0],mForces[1],mForces[2]);
+  // printf("AFUN]=%f %f %f %f\n",afun,mForces[0],mForces[1],mForces[2]);
   int lm_derivative;
 #if defined(SOURCE_INVERSION)
   lm_derivative = m_derivative;
@@ -424,7 +424,7 @@ void GridPointSource::getFxyz_notime(float_sw4* fxyz) const {
 //-----------------------------------------------------------------------
 RAJA_HOST_DEVICE
 
-  void GridPointSource::getFxyztt(float_sw4 t, float_sw4* fxyz) const {
+void GridPointSource::getFxyztt(float_sw4 t, float_sw4* fxyz) const {
   float_sw4 afun, afunv[6];
   if (mTimeDependence != iDiscrete6moments &&
       mTimeDependence != iDiscrete3forces)
@@ -586,13 +586,11 @@ ostream& operator<<(ostream& output, const GridPointSource& s) {
 }
 
 //-----------------------------------------------------------------------
- RAJA_HOST_DEVICE
-void GridPointSource::add_to_gradient(SView *kappa,
-                                      SView *eta, float_sw4 t,
+RAJA_HOST_DEVICE
+void GridPointSource::add_to_gradient(SView* kappa, SView* eta, float_sw4 t,
                                       float_sw4 dt, float_sw4 gradient[11],
-                                      float_sw4  *h,
-                                      SView *Jac,
-                                      bool topography_exists,int hsize) {
+                                      float_sw4* h, SView* Jac,
+                                      bool topography_exists, int hsize) {
 #if defined(SOURCE_INVERSION)
   if (m_jacobian_known) {
     float_sw4 normwgh[4] = {17.0 / 48.0, 59.0 / 48.0, 43.0 / 48.0, 49.0 / 48.0};
@@ -609,7 +607,7 @@ void GridPointSource::add_to_gradient(SView *kappa,
     float_sw4 eta2 = eta[m_grid](2, m_i0, m_j0, m_k0);
     float_sw4 eta3 = eta[m_grid](3, m_i0, m_j0, m_k0);
     float_sw4 h3 = h[m_grid] * h[m_grid] * h[m_grid];
-    if (topography_exists && m_grid == hsize- 1)
+    if (topography_exists && m_grid == hsize - 1)
       h3 = Jac[m_grid](m_i0, m_j0, m_k0);
     //      float_sw4 h3 = 1.0;
     if (1 <= m_k0 && m_k0 <= 4) h3 *= normwgh[m_k0 - 1];
@@ -647,7 +645,9 @@ void GridPointSource::add_to_gradient(SView *kappa,
         dgom * (kap1 * mForces[0] + kap2 * mForces[1] + kap3 * mForces[2]) * h3;
   }
 #else
-  printf("ERROR :: This routine, add_to_gradient,  is disabled. Compile with -DSOURCE_INVERSION=1\n");
+  printf(
+      "ERROR :: This routine, add_to_gradient,  is disabled. Compile with "
+      "-DSOURCE_INVERSION=1\n");
 #endif
 }
 

@@ -48,7 +48,7 @@ int EW::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
 #pragma omp parallel for reduction(+ : ecode)
   for (int k = kb; k <= ke; k++)
     for (int j = jb; j <= je; j++)
-//#pragma ivdep
+// #pragma ivdep
 #pragma omp simd
       for (int i = ib; i <= ie; i++) {
         // k-derivatives
@@ -173,7 +173,7 @@ void EW::metricexgh_ci(int ib, int ie, int jb, int je, int kb, int ke, int nz,
 #pragma omp parallel for
   for (int k = kb; k <= ke; k++)
     for (int j = jb; j <= je; j++)
-    //#pragma ivdep
+    // #pragma ivdep
 #pragma omp simd
       for (int i = ib; i <= ie; i++) {
         double zp, zq, zr;
@@ -246,9 +246,9 @@ void EW::freesurfcurvi_ci(int ib, int ie, int jb, int je, int kb, int ke,
   const int base4 = base - nijk;
   const int base3 = base - nijk;
   const int nic3 = 3 * ni;
-  //#define x(i,j,k)     a_x[base+i+ni*(j)+nij*(k)]
-  //#define y(i,j,k)     a_y[base+i+ni*(j)+nij*(k)]
-  //#define z(i,j,k)     a_z[base+i+ni*(j)+nij*(k)]
+  // #define x(i,j,k)     a_x[base+i+ni*(j)+nij*(k)]
+  // #define y(i,j,k)     a_y[base+i+ni*(j)+nij*(k)]
+  // #define z(i,j,k)     a_z[base+i+ni*(j)+nij*(k)]
 #define mu(i, j, k) a_mu[base + i + ni * (j) + nij * (k)]
 #define la(i, j, k) a_la[base + i + ni * (j) + nij * (k)]
 #define met(c, i, j, k) a_met[base4 + (i) + ni * (j) + nij * (k) + nijk * (c)]
@@ -267,7 +267,7 @@ void EW::freesurfcurvi_ci(int ib, int ie, int jb, int je, int kb, int ke,
   float_sw4 s0i = 1 / s[0];
 #pragma omp parallel for
   for (int j = jb + 2; j <= je - 2; j++) {
-    //#pragma ivdep
+    // #pragma ivdep
 #pragma omp simd
     for (int i = ib + 2; i <= ie - 2; i++) {
       // First tangential derivatives
@@ -357,9 +357,9 @@ void EW::freesurfcurvi_ci(int ib, int ie, int jb, int je, int kb, int ke,
            kl * bc * rhs3 - kl * dc * met(4, i, j, k));
     }
   }
-  //#undef x
-  //#undef y
-  //#undef z
+  // #undef x
+  // #undef y
+  // #undef z
 #undef mu
 #undef la
 #undef met
@@ -389,11 +389,11 @@ void EW::getsurfforcing_ci(int ifirst, int ilast, int jfirst, int jlast,
 #define jac(i, j, k) a_jac[base + (i) + ni * (j) + nij * (k)]
 #define forcing(c, i, j) a_forcing[3 * basef - 1 + (c) + 3 * (i) + nic3 * (j)]
 #define tau(c, i, j) a_tau[basef - nij + (i) + ni * (j) + nij * (c)]
-  //#define tau(c,i,j)         a_tau[6*basef-1+(c)+6*(i)+nic6*(j)]
+  // #define tau(c,i,j)         a_tau[6*basef-1+(c)+6*(i)+nic6*(j)]
 
 #pragma omp parallel for
   for (int j = jfirst; j <= jlast; j++)
-  //#pragma ivdep
+  // #pragma ivdep
 #pragma omp simd
     for (int i = ifirst; i <= ilast; i++) {
       float_sw4 sqjac = sqrt(jac(i, j, k));
@@ -432,7 +432,7 @@ void EW::getsurfforcinggh_ci(int ifirst, int ilast, int jfirst, int jlast,
 
 #define forcing(c, i, j) a_forcing[3 * basef - 1 + (c) + 3 * (i) + nic3 * (j)]
 #define tau(c, i, j) a_tau[basef - nij + (i) + ni * (j) + nij * (c)]
-  //#define tau(c,i,j)         a_tau[6*basef-1+(c)+6*(i)+nic6*(j)]
+  // #define tau(c,i,j)         a_tau[6*basef-1+(c)+6*(i)+nic6*(j)]
   float_sw4 ixl2 = 1 / (xl * xl);
   float_sw4 iyl2 = 1 / (yl * yl);
 #pragma omp parallel for
@@ -478,7 +478,7 @@ void EW::subsurfforcing_ci(int ifirst, int ilast, int jfirst, int jlast,
 #define jac(i, j, k) a_jac[base + (i) + ni * (j) + nij * (k)]
 #define forcing(c, i, j) a_forcing[3 * basef - 1 + (c) + 3 * (i) + nic3 * (j)]
 #define tau(c, i, j) a_tau[basef - nij + (i) + ni * (j) + nij * (c)]
-  //#define tau(c,i,j)         a_tau[6*basef-1+(c)+6*(i)+nic6*(j)]
+  // #define tau(c,i,j)         a_tau[6*basef-1+(c)+6*(i)+nic6*(j)]
 
 #pragma omp parallel for
   for (int j = jfirst; j <= jlast; j++)
@@ -551,7 +551,7 @@ void EW::addbstressc_ci(
   for (int j = jfirst + 2; j <= jlast - 2; j++) {
     float_sw4 sgy = usesg ? sgstry(j) : 1;
     float_sw4 isgy = 1 / sgy;
-    //#pragma ivdep
+    // #pragma ivdep
 #pragma omp simd
     for (int i = ifirst + 2; i <= ilast - 2; i++) {
       float_sw4 sgx = usesg ? sgstrx(i) : 1;

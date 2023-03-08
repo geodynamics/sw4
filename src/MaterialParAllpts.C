@@ -1,6 +1,6 @@
-#include "caliper.h"
 #include "EW.h"
 #include "MaterialParAllpts.h"
+#include "caliper.h"
 
 //-----------------------------------------------------------------------
 MaterialParAllpts::MaterialParAllpts(EW* a_ew, char* fname, int variables)
@@ -255,7 +255,8 @@ void MaterialParAllpts::interpolate_pseudohessian(int nmpars, double* phs,
 
 ////-----------------------------------------------------------------------
 // void MaterialParAllpts::perturb_material( int ip, int jp, int kp, int grid,
-//					  int var, double h, double* xs, double* xm
+//					  int var, double h, double* xs, double*
+//xm
 //)
 //// ignore xs
 //{
@@ -338,9 +339,9 @@ ssize_t MaterialParAllpts::local_index(size_t ind_global) {
     //	  m_ew->m_kStartAct[g] <= k && k <= m_ew->m_kEndAct[g] )
     //      {
     //	 size_t ni =
-    //static_cast<ssize_t>(m_ew->m_iEndAct[g]-m_ew->m_iStartAct[g]+1); 	 size_t nj
-    //= static_cast<ssize_t>(m_ew->m_jEndAct[g]-m_ew->m_jStartAct[g]+1); 	 return
-    //m_nc*((i-m_ew->m_iStartAct[g]) + ni*(j-m_ew->m_jStartAct[g]) +
+    // static_cast<ssize_t>(m_ew->m_iEndAct[g]-m_ew->m_iStartAct[g]+1); 	 size_t
+    // nj = static_cast<ssize_t>(m_ew->m_jEndAct[g]-m_ew->m_jStartAct[g]+1);
+    //return m_nc*((i-m_ew->m_iStartAct[g]) + ni*(j-m_ew->m_jStartAct[g]) +
     //		   ni*nj*(k-m_ew->m_kStartAct[g]) )+r;
     //      }
     //      else
@@ -385,9 +386,8 @@ void MaterialParAllpts::get_regularizer(
     double regcoeff, vector<Sarray>& a_rho, vector<Sarray>& a_mu,
     vector<Sarray>& a_lambda, double& mf_reg, double* sfd, double* sfs,
     bool compute_derivative, double* dmfd_reg, double* dmfs_reg) {
-
   SW4_MARK_FUNCTION;
-  
+
   if (regcoeff == 0) return;
 
 #define SQR(x) ((x) * (x))

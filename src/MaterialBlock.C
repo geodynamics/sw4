@@ -195,7 +195,7 @@ void MaterialBlock::set_material_properties(std::vector<Sarray>& rho,
           float_sw4 y = mEW->mY[g](i, j, k);
           float_sw4 z = mEW->mZ[g](i, j, k);
 
-            // printf("x ,y,z %f %f %f %f\n",x,y,z,mEW->m_zmin[g]);
+          // printf("x ,y,z %f %f %f %f\n",x,y,z,mEW->m_zmin[g]);
 
           float_sw4 depth;
           if (m_absoluteDepth) {
@@ -222,18 +222,18 @@ void MaterialBlock::set_material_properties(std::vector<Sarray>& rho,
                   i, j, k, g, x, y, z, depth, m_xmin, m_xmax, m_ymin, m_ymax,
                   m_zmin, m_zmax);
             }
-	    outside++;
+            outside++;
           }
 
-	  } // end for i
-        } // end for j
-     } // end for k
-      mEW->communicate_array(rho[g], g);
-      mEW->communicate_array_host(cs[g], g);
-      mEW->communicate_array_host(cp[g], g);
+        }  // end for i
+      }    // end for j
+    }      // end for k
+    mEW->communicate_array(rho[g], g);
+    mEW->communicate_array_host(cs[g], g);
+    mEW->communicate_array_host(cp[g], g);
 
-      if (qs[g].is_defined()) mEW->communicate_array_host(qs[g], g);
-      if (qp[g].is_defined()) mEW->communicate_array_host(qp[g], g);
+    if (qs[g].is_defined()) mEW->communicate_array_host(qs[g], g);
+    if (qp[g].is_defined()) mEW->communicate_array_host(qp[g], g);
 
   }  // end for g (curvilinear)
 

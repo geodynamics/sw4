@@ -1,9 +1,10 @@
-#include "caliper.h"
 #include <fstream>
 #include <sstream>
+
 #include "EW.h"
 #include "MaterialParCart.h"
 #include "Require.h"
+#include "caliper.h"
 
 #ifdef USE_HDF5
 #include <hdf5.h>
@@ -117,14 +118,16 @@ MaterialParCart::MaterialParCart(EW* a_ew, int nx, int ny, int nz, int init,
     m_nmd = ncomp * (m_ieint - m_ibint + 1) * (m_jeint - m_jbint + 1) *
             (m_keint - m_kbint + 1);
     m_nmd_global = ncomp * nx * ny * nz;
-    //   std::cout<<"IN GLOBAL "<<ncomp<<" "<< (m_ieint - m_ibint + 1)<<" "<<(m_jeint - m_jbint + 1)<<" "<<(m_keint - m_kbint + 1)<<"\n";
+    //   std::cout<<"IN GLOBAL "<<ncomp<<" "<< (m_ieint - m_ibint + 1)<<"
+    //   "<<(m_jeint - m_jbint + 1)<<" "<<(m_keint - m_kbint + 1)<<"\n";
   } else {
     // Global arrays
     m_nms = ncomp * nx * ny * nz;
     m_nmd = 0;
     m_nmd_global = 0;
   }
-  //  std::cout<<"MaterialPArCart ["<<m_global<<"] "<<m_nmd<<" "<<m_nms<<"\n"<<std::flush;
+  //  std::cout<<"MaterialPArCart ["<<m_global<<"] "<<m_nmd<<"
+  //  "<<m_nms<<"\n"<<std::flush;
 }
 //-----------------------------------------------------------------------
 void MaterialParCart::limit_x(int nmd, double* xmd, int nms, double* xms,
@@ -615,8 +618,7 @@ bool MaterialParCart::compute_overlap(bool force_shared) {
 }
 
 //-----------------------------------------------------------------------
-void MaterialParCart::getwgh(float_sw4 ai, float_sw4 wgh[2], int& sl,
-                             int& su) {
+void MaterialParCart::getwgh(float_sw4 ai, float_sw4 wgh[2], int& sl, int& su) {
   SW4_MARK_FUNCTION;
   // Linear interpolation
   wgh[0] = 1 - ai;
@@ -719,9 +721,8 @@ void MaterialParCart::get_parameters(int nmd, double* xmd, int nms, double* xms,
                                      std::vector<Sarray>& a_rho,
                                      std::vector<Sarray>& a_mu,
                                      std::vector<Sarray>& a_lambda, int nr) {
-
   SW4_MARK_FUNCTION;
-  
+
   if (nr == -1) nr = m_init;
 
   if (nr == 0) {
@@ -787,7 +788,6 @@ void MaterialParCart::get_parameters(int nmd, double* xmd, int nms, double* xms,
           ind++;
         }
   } else if (nr == 2) {
-
     if (nms > 0)
       read_parameters(nms, xms);
     else
@@ -803,9 +803,8 @@ void MaterialParCart::get_parameters(int nmd, double* xmd, int nms, double* xms,
 void MaterialParCart::interpolate_parameters(
     int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
     std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda, bool update) {
-
   SW4_MARK_FUNCTION;
-  
+
   //-----------------------------------------------------------------------
   // Interpolate a material on the computational grid to the parameter grid:
   //
@@ -847,9 +846,8 @@ void MaterialParCart::interpolate_parameters(
 
 //-----------------------------------------------------------------------
 void MaterialParCart::communicate(Sarray& u) {
-
   SW4_MARK_FUNCTION;
-  
+
   //--------------------------------------------------------------
   // General ghost point exchange at processor boundaries.
   //
@@ -1014,9 +1012,8 @@ void MaterialParCart::communicate(Sarray& u) {
 
 //-----------------------------------------------------------------------
 void MaterialParCart::communicate_add(Sarray& u) {
-
   SW4_MARK_FUNCTION;
-  
+
   //--------------------------------------------------------------
   // Get neighbor's ghost points and add to my interior points
   //
@@ -1280,9 +1277,8 @@ void MaterialParCart::get_gradient(
     std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
     std::vector<Sarray>& a_lambda, std::vector<Sarray>& a_gradrho,
     std::vector<Sarray>& a_gradmu, std::vector<Sarray>& a_gradlambda) {
-
   SW4_MARK_FUNCTION;
-  
+
   //-----------------------------------------------------------------------
   // Computes gradient with respect to the material parameterization from given
   // gradients with respect to the material at grid points.
@@ -1363,9 +1359,8 @@ void MaterialParCart::get_gradient_shared(int nms, double* xms, double* dfs,
                                           std::vector<Sarray>& a_gradrho,
                                           std::vector<Sarray>& a_gradmu,
                                           std::vector<Sarray>& a_gradlambda) {
-
   SW4_MARK_FUNCTION;
-  
+
   //-----------------------------------------------------------------------
   // Computes gradient with respect to the material parameterization from
   // given gradients with respect to the material at grid points.
@@ -1448,9 +1443,8 @@ void MaterialParCart::get_gradient_shared(int nms, double* xms, double* dfs,
 void MaterialParCart::set_scalefactors(int nmpars, double* sf, double rho_ref,
                                        double mu_ref, double lambda_ref,
                                        double vs_ref, double vp_ref) {
-
   SW4_MARK_FUNCTION;
-  
+
   if (m_variables == 1) {
     for (int i = 0; i < nmpars; i += 3) {
       sf[i] = rho_ref;
@@ -1476,9 +1470,8 @@ void MaterialParCart::set_scalefactors(int nmpars, double* sf, double rho_ref,
 //-----------------------------------------------------------------------
 ssize_t MaterialParCart::parameter_index(int ip, int jp, int kp, int grid,
                                          int var) {
-
   SW4_MARK_FUNCTION;
-  
+
   // Local 1D-index of parameter array at point (ip,jp,kp) where
   // (ip,jp,kp) are global array indexes. If point not in this
   // processor, -1 is returned.
@@ -1500,9 +1493,8 @@ ssize_t MaterialParCart::parameter_index(int ip, int jp, int kp, int grid,
 
 //-----------------------------------------------------------------------
 ssize_t MaterialParCart::local_index(size_t ind_global) {
-
   SW4_MARK_FUNCTION;
-  
+
   // 1.Transform to global (i,j,k)-space
   int ig, jg, kg, var;
   int ncomp = 3;
@@ -1527,9 +1519,8 @@ void MaterialParCart::interpolate_to_coarse(vector<Sarray>& rhogrid,
                                             vector<Sarray>& lambdagrid,
                                             Sarray& rho, Sarray& mu,
                                             Sarray& lambda, bool update) {
-
   SW4_MARK_FUNCTION;
-  
+
   //-----------------------------------------------------------------------
   // Compute material perturbation on parameter grid from a material that
   // is given on the computational grid.
@@ -1683,9 +1674,8 @@ void MaterialParCart::interpolate_to_coarse_vel(vector<Sarray>& rhogrid,
                                                 vector<Sarray>& lambdagrid,
                                                 Sarray& rho, Sarray& cs,
                                                 Sarray& cp, bool update) {
-
   SW4_MARK_FUNCTION;
-  
+
   //-----------------------------------------------------------------------
   // Compute material perturbation on parameter grid from a material that is
   // given on the computational grid.
@@ -1845,9 +1835,8 @@ void MaterialParCart::interpolate_to_coarse_vel(vector<Sarray>& rhogrid,
 //-----------------------------------------------------------------------
 void MaterialParCart::write_dfm_hdf5(double* dfm, std::string fname,
                                      MPI_Comm comm) {
-
   SW4_MARK_FUNCTION;
-  
+
 #ifdef USE_HDF5
   hid_t fid, dset, fapl, dxpl, dspace, mspace;
   hsize_t dims[3], start[3], count[3];
@@ -1929,9 +1918,8 @@ void MaterialParCart::write_dfm_hdf5(double* dfm, std::string fname,
 void MaterialParCart::interpolate_pseudohessian(int nmpars, double* phs,
                                                 int nmpard, double* phm,
                                                 vector<Sarray>& phgrid) {
-
   SW4_MARK_FUNCTION;
-  
+
   int ncomp = 3;
   if (m_variables == 3)
     ncomp = 2;

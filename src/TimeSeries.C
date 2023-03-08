@@ -32,22 +32,20 @@
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 #include <mpi.h>
-
 #include <unistd.h>
+
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
 
 #include "TimeSeries.h"
-//#include "mpi.h"
+// #include "mpi.h"
+#include "EW.h"
+#include "Filter.h"
+#include "GridGenerator.h"
+#include "Require.h"
 #include "csstime.h"
 #include "sacsubc.h"
-
-#include "Filter.h"
-#include "Require.h"
-
-#include "EW.h"
-#include "GridGenerator.h"
 
 #ifdef USE_HDF5
 #include "sachdf5.h"
@@ -228,8 +226,8 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
   //         //      if (!a_ew->interpolate_topography(q, r, m_zTopo, true))
   //      {
   //	 cerr << "Unable to evaluate topography for receiver station" <<
-  //m_fileName << " mX= " << mX//// << " mY= " << mY << endl; 	 cerr << "Setting
-  //topography to ZERO" << endl; 	 m_zTopo = 0;
+  // m_fileName << " mX= " << mX//// << " mY= " << mY << endl; 	 cerr <<
+  // "Setting topography to ZERO" << endl; 	 m_zTopo = 0;
   //      }
   //   }
   //   else
@@ -269,7 +267,7 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
   //      else
   //      {
   //	 cerr << "Can't invert curvilinear grid mapping for recevier station" <<
-  //m_fileName << " mX= " << mX << " mY= "
+  // m_fileName << " mX= " << mX << " mY= "
   //	      << mY << " mZ= " << mZ << endl;
   //	 cerr << "Placing the station on the surface (depth=0)." << endl;
   //	 m_k0 = 1;
@@ -620,7 +618,8 @@ void TimeSeries::writeFile(string suffix) {
     /* } */
     fid = openHDF5File(suffix);
 
-    //std::cout<<"WRITE SUFFIX "<<suffix<<" ResT = "<<filePrefix.str()<<"\n"<<std::flush;
+    // std::cout<<"WRITE SUFFIX "<<suffix<<" ResT =
+    // "<<filePrefix.str()<<"\n"<<std::flush;
 
     if (fid <= 0)
       printf("Rank %d: %s fid is invalid, cannot open file [%s]\n", myRank,
@@ -2426,7 +2425,7 @@ TimeSeries* TimeSeries::copy(EW* a_ew, string filename, bool addname) {
       a_ew, filename, m_staName, m_mode, m_sacFormat, m_usgsFormat,
       m_hdf5Format, hdf5name, mX, mY, mZ, m_zRelativeToTopography, mWriteEvery,
       mDownSample, m_xyzcomponent, m_event);
-  //retval->m_path=a_ew->getPath( a_ew->local_to_global_event(m_event));
+  // retval->m_path=a_ew->getPath( a_ew->local_to_global_event(m_event));
   retval->m_t0 = m_t0;
   retval->m_dt = m_dt;
   retval->m_shift = m_shift;
@@ -2601,9 +2600,9 @@ float_sw4 TimeSeries::product(TimeSeries& ts) const {
 //      if( mLastTimeStep-p+1 > 1 )
 //	 istart = mLastTimeStep-p+1;
 
-//#pragma omp parallel for reduction(+:prod)
-//      for( int i= 0 ; i <= mLastTimeStep ; i++ )
-//      {
+// #pragma omp parallel for reduction(+:prod)
+//       for( int i= 0 ; i <= mLastTimeStep ; i++ )
+//       {
 //	 float_sw4 wghv = 1;
 //	 if( i >= istart )
 //	 {

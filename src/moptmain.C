@@ -1,11 +1,12 @@
-#include "caliper.h"
 #include <cstring>
+
 #include "DataPatches.h"
 #include "EW.h"
+#include "caliper.h"
 #include "version.h"
-//#include "MaterialParameterization.h"
+// #include "MaterialParameterization.h"
 #include "MaterialParCart.h"
-//#include "MaterialParCartesian.h"
+// #include "MaterialParCartesian.h"
 #include "Mopt.h"
 #include "compute_f.h"
 #include "sw4-prof.h"
@@ -16,11 +17,12 @@
 
 #include <fcntl.h>
 #include <unistd.h>
+
 #include <fstream>
 #include <iomanip>
 #include <sstream>
-#if (__cplusplus==201703L)
-//#include <filesystem>
+#if (__cplusplus == 201703L)
+// #include <filesystem>
 #endif
 
 #ifndef SQR
@@ -72,7 +74,7 @@ void set_source_pars(int nspar, double srcpars[11], double* xs) {
 
 //-----------------------------------------------------------------------
 void get_source_pars(int nspar, double srcpars[11], double* xs) {
-   SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   // nspar =11, all parameters=(x0,y0,z0,m_{xx}-m_{zz},t0,freq)
   // nspar =10, no freq., parameters=(x0,y0,z0,m_{xx}-m_{zz},t0)
   // nspar = 9 , no freq or t0, parameters=(x0,y0,z0,m_{xx}-m_{zz})
@@ -181,7 +183,8 @@ void set_timewindows_from_eikonal_time(
 
   for (int e = 0; e < GlobalTimeSeries.size(); e++) {
     if (myrank == 0) {
-      std::cout<<" PATH IS "<<GlobalTimeSeries[e][0]->getPath()<<"\n"<<std::flush;
+      std::cout << " PATH IS " << GlobalTimeSeries[e][0]->getPath() << "\n"
+                << std::flush;
       sprintf(file, "%s/time_event_%d.txt",
               GlobalTimeSeries[e][0]->getPath().c_str(), e);
       fd = fopen(file, "w");
@@ -246,7 +249,7 @@ void compute_f(EW& simulation, int nspar, int nmpars, double* xs, int nmpard,
 //         mf               - The misfit.
 //-----------------------------------------------------------------------
 {
-   SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   // Source optimization
   //   vector<Source*> src(1);
   //   src[0] = GlobalSources[0][0]->copy(" ");
@@ -329,7 +332,7 @@ void compute_f(EW& simulation, int nspar, int nmpars, double* xs, int nmpard,
   if (!mopt->m_test_regularizer) {
     for (int e = 0; e < simulation.getNumberOfLocalEvents(); e++) {
       //	 simulation.solve( src, GlobalTimeSeries[e], mu, lambda, rho, U,
-      //Um, upred_saved, ucorr_saved, false, e );
+      // Um, upred_saved, ucorr_saved, false, e );
       sw4_profile->time_stamp("forward solve");
       simulation.solve(GlobalSources[e], GlobalTimeSeries[e], mu, lambda, rho,
                        U, Um, upred_saved, ucorr_saved, false, e,
@@ -446,7 +449,7 @@ void compute_f_and_df(EW& simulation, int nspar, int nmpars, double* xs,
                       Mopt* mopt, int it)
 
 //		       MaterialParameterization* mp, bool mcheck, bool
-//output_ts, 		       vector<Image*>& images )
+// output_ts, 		       vector<Image*>& images )
 
 //-----------------------------------------------------------------------
 // Compute misfit and its gradient.
@@ -473,7 +476,7 @@ void compute_f_and_df(EW& simulation, int nspar, int nmpars, double* xs,
 //         dfm              - Gradient wrt to the material of misfit.
 //-----------------------------------------------------------------------
 {
-   SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   int verbose = 0;
   sw4_profile->time_stamp("Enter compute_f_and_df");
   // source optimization
@@ -584,7 +587,8 @@ void compute_f_and_df(EW& simulation, int nspar, int nmpars, double* xs,
       // 1. Copy computed time series into diffs[m]
       vector<TimeSeries*> diffs;
       for (int m = 0; m < GlobalTimeSeries[e].size(); m++) {
-        if (mopt->m_output_ts && it >= 0) GlobalTimeSeries[e][m]->writeFile(); // ERROR HAPPENS HERE
+        if (mopt->m_output_ts && it >= 0)
+          GlobalTimeSeries[e][m]->writeFile();  // ERROR HAPPENS HERE
 
         TimeSeries* elem = GlobalTimeSeries[e][m]->copy(&simulation, "diffsrc");
         diffs.push_back(elem);
@@ -613,7 +617,7 @@ void compute_f_and_df(EW& simulation, int nspar, int nmpars, double* xs,
         }
       }
 
-      double *dfsrc= SW4_NEW(Space::Managed, float_sw4[11]);
+      double* dfsrc = SW4_NEW(Space::Managed, float_sw4[11]);
       get_source_pars(nspar, dfsrc, dfs);
       sw4_profile->time_stamp("backward+adjoint solve");
       simulation.solve_backward_allpars(GlobalSources[e], rho, mu, lambda,
@@ -821,7 +825,7 @@ void compute_f_with_derivative(EW& simulation, int nspar, int nmpars,
                                vector<vector<TimeSeries*> >& GlobalObservations,
                                float_sw4& mf, float_sw4& dmf, Mopt* mopt,
                                int di, int dj, int dk, int dgrid, int myrank) {
-   SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   int nms, nmd, nmpard_global;
   mopt->m_mp->get_nr_of_parameters(nms, nmd, nmpard_global);
   if (nms != nmpars || nmd != nmpard)
@@ -873,7 +877,7 @@ void compute_f_with_derivative(EW& simulation, int nspar, int nmpars,
 
 //-----------------------------------------------------------------------
 void restrict(int active[6], int wind[6], double* xm, double* xmi) {
-   SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   int ni = (wind[1] - wind[0] + 1);
   int nj = (wind[3] - wind[2] + 1);
   int nia = (active[1] - active[0] + 1);
@@ -895,7 +899,7 @@ void restrict(int active[6], int wind[6], double* xm, double* xmi) {
 //-----------------------------------------------------------------------
 double getcscp(Sarray& rho, Sarray& mu, Sarray& lambda, Sarray& cs,
                Sarray& cp) {
-   SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   for (int k = rho.m_kb; k <= rho.m_ke; k++)
     for (int j = rho.m_jb; j <= rho.m_je; j++)
       for (int i = rho.m_ib; i <= rho.m_ie; i++) {
@@ -906,7 +910,7 @@ double getcscp(Sarray& rho, Sarray& mu, Sarray& lambda, Sarray& cs,
 
 //-----------------------------------------------------------------------
 double sumdiff(EW& simulation, int g, Sarray& u1, Sarray& u2) {
-   SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   int k1 = simulation.m_kStartInt[g];
   int k2 = simulation.m_kEndInt[g];
   int j1 = simulation.m_jStartInt[g];
@@ -930,7 +934,7 @@ void gradient_test(EW& simulation, vector<vector<Source*> >& GlobalSources,
                    vector<vector<TimeSeries*> >& GlobalObservations, int nspar,
                    int nmpars, double* xs, int nmpard, double* xm, int myRank,
                    Mopt* mopt) {
-   SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   // nspar:  Number of parameters in source description, when solving for the
   // source nmpars: Number of parameters in material description,
   // non-distributed nmpard: Number of parameters in material description,
@@ -1277,10 +1281,10 @@ void hessian_test(EW& simulation, vector<vector<Source*> >& GlobalSources,
                   vector<vector<TimeSeries*> >& GlobalTimeSeries,
                   vector<vector<TimeSeries*> >& GlobalObservations, int nspar,
                   int nmpars, double* xs, int nmpard, double* xm,
-                  //		   int myRank, MaterialParameterization* mp, double*
-                  //sf, double* sfm )
+                  //		   int myRank, MaterialParameterization* mp,
+                  //double* sf, double* sfm )
                   int myRank, Mopt* mopt) {
-   SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   // Hessian test
   int ns = nspar + nmpars;
   double f;
@@ -1406,8 +1410,9 @@ void hessian_test(EW& simulation, vector<vector<Source*> >& GlobalSources,
     //              << simulation.m_jEnd[grid] << endl; int start[3]
     //              ={active[0]-activeg[0],active[2]-activeg[2],active[4]-activeg[4]};
     //	      int locsize[3]
-    //={active[1]-active[0]+1,active[3]-active[2]+1,active[5]-active[4]+1}; 	      int
-    //globsize[3]={activeg[1]-activeg[0]+1,activeg[3]-activeg[2]+1,activeg[5]-activeg[4]+1};
+    //={active[1]-active[0]+1,active[3]-active[2]+1,active[5]-active[4]+1};
+    //int
+    // globsize[3]={activeg[1]-activeg[0]+1,activeg[3]-activeg[2]+1,activeg[5]-activeg[4]+1};
     int nptsbuf = 1000000;
     int iwrite = myRank == 0 || (myRank % 8 == 0);
 
@@ -1420,8 +1425,8 @@ void hessian_test(EW& simulation, vector<vector<Source*> >& GlobalSources,
     if (myRank == 0) {
       // create file, write header
       //	 int fid = open( "hessdir/hessians.bin", O_CREAT | O_TRUNC |
-      //O_WRONLY, 0660 ); 	 fid = open( "hessdir/hessian.bin", O_CREAT | O_TRUNC |
-      //O_WRONLY, 0660 );
+      // O_WRONLY, 0660 ); 	 fid = open( "hessdir/hessian.bin", O_CREAT |
+      // O_TRUNC | O_WRONLY, 0660 );
       int fid = open(fname.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0660);
 
       if (fid == -1) {
@@ -1502,7 +1507,7 @@ void misfit_curve(int i, int j, int k, int var, double pmin, double pmax,
                   vector<vector<TimeSeries*> >& GlobalTimeSeries,
                   vector<vector<TimeSeries*> >& GlobalObservations, int myRank,
                   Mopt* mopt) {
-   SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   double* fcn = new double[npts];
   //   ssize_t ind=mp->parameter_index(i,j,k,0,var);
 
@@ -1633,7 +1638,7 @@ void misfit_surface(int ix1, int jx1, int kx1, int ix2, int jx2, int kx2,
                     vector<vector<TimeSeries*> >& GlobalTimeSeries,
                     vector<vector<TimeSeries*> >& GlobalObservations,
                     int myRank, Mopt* mopt) {
-   SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   double* fcn = new double[npts1 * npts2];
   ssize_t ind1 = mp->parameter_index(ix1, jx1, kx1, 0, varx1);
   ssize_t ind2 = mp->parameter_index(ix2, jx2, kx2, 0, varx2);
@@ -1674,7 +1679,7 @@ void misfit_surface(int ix1, int jx1, int kx1, int ix2, int jx2, int kx2,
 //-----------------------------------------------------------------------
 int start_minv(int argc, char** argv, string& input_file, int& myRank,
                int& nProcs) {
-   SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   stringstream reason;
 
   // Initialize MPI...
@@ -1739,10 +1744,10 @@ int main(int argc, char** argv) {
   MPI_Comm_size(shared_comm, &local_size);
   MPI_Info_free(&info);
 
-#if (__cplusplus==201703L)
-  if (myRank==0){
-    //std::filesystem::path cwd = std::filesystem::current_path();
-    //std::cout<<"CWD is "<<cwd.string()<<"\n";
+#if (__cplusplus == 201703L)
+  if (myRank == 0) {
+    // std::filesystem::path cwd = std::filesystem::current_path();
+    // std::cout<<"CWD is "<<cwd.string()<<"\n";
   }
 #endif
 
@@ -1754,7 +1759,7 @@ int main(int argc, char** argv) {
   int device = presetGPUID(myRank, local_rank, local_size);
 
   init_umpire(device);
-  
+
   if (status == 0) {
     // Save the source description here
     vector<vector<Source*> > GlobalSources;
@@ -1788,7 +1793,7 @@ int main(int argc, char** argv) {
       //	{
       //	   if (myRank == 0)
       //	      cout << "Source optmization only implemented for a single
-      //source" << endl;
+      // source" << endl;
       //	}
       else {
         // Successful initialization
@@ -1882,11 +1887,11 @@ int main(int argc, char** argv) {
 
         // figure out how many parameters we need.
         //	Guess: nmpars - number of non-distributed (=shared) material
-        //parameters, exist copies in each proc.
+        // parameters, exist copies in each proc.
         //             nmpard - Number of distributed material parameters, size
         //             of part in my processor.
         //	       nmpard_global - number of distributed parameters, total
-        //number over all processors
+        // number over all processors
         int nmpars, nmpard, nmpard_global;
         mp->get_nr_of_parameters(nmpars, nmpard, nmpard_global);
 
@@ -1908,8 +1913,9 @@ int main(int argc, char** argv) {
           get_source_pars(nspar, xspar, xs);
         }
 
-	//std::cout<<"MOPTMAIN ["<<myRank<<"] "<<nmpard<<" "<<nmpars<<"\n"<<std::flush;
-        // Initialize the material parameters
+        // std::cout<<"MOPTMAIN ["<<myRank<<"] "<<nmpard<<"
+        // "<<nmpars<<"\n"<<std::flush;
+        //  Initialize the material parameters
         mp->get_parameters(nmpard, xm, nmpars, &xs[nspar], simulation.mRho,
                            simulation.mMu, simulation.mLambda, -1);
         //           string parname = simulation.getOutputPath() +
@@ -2059,9 +2065,10 @@ int main(int argc, char** argv) {
           // No longer used
           // Project material onto a Cartesian material parameterization grid
           //	      CHECK_INPUT( mopt->m_mpcart0 != NULL, "ERROR, there is no
-          //Cartesian material parameterization defined\n");
+          // Cartesian material parameterization defined\n");
           //	      mopt->m_mpcart0->project_and_write( simulation.mRho,
-          //simulation.mMu, simulation.mLambda, 						  "projmtrl.mpc");
+          // simulation.mMu, simulation.mLambda,
+          // "projmtrl.mpc");
         } else if (mopt->m_opttest == 8) {
           // Material parameterization test.
           // 1. Interpolate from SW4 grid to material grid, and save result to
@@ -2131,7 +2138,8 @@ int main(int argc, char** argv) {
           sw4_profile->time_stamp("Start optimizer");
           if (mopt->m_optmethod == 1)
             lbfgs(simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources,
-                  GlobalTimeSeries, GlobalObservations, myRank, mopt); // ERROR HAPPENS HERE
+                  GlobalTimeSeries, GlobalObservations, myRank,
+                  mopt);  // ERROR HAPPENS HERE
           else if (mopt->m_optmethod == 2)
             nlcg(simulation, nspar, nmpars, xs, nmpard, xm, GlobalSources,
                  GlobalTimeSeries, GlobalObservations, myRank, mopt);

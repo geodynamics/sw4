@@ -2,6 +2,7 @@
 #define MPARGRIDFILE_H
 
 #include <string>
+
 #include "sw4.h"
 
 // Class representing a file holding a material parameter grid.

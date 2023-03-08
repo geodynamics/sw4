@@ -108,7 +108,7 @@ void curvilinear4sgX_ci(
   // PREFETCH(a_mu);
   // PREFETCH(a_lambda);
 
-  //#pragma omp parallel
+  // #pragma omp parallel
   {
     int kstart = kfirst + 2;
     int kend = klast - 2;
@@ -2678,7 +2678,7 @@ void curvilinear4sg_ci(
   PREFETCH(a_mu);
   PREFETCH(a_lambda);
 
-  //#pragma omp parallel
+  // #pragma omp parallel
   {
     int kstart = kfirst + 2;
     if (onesided[4] == 1) {

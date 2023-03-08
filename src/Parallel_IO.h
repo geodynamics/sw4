@@ -34,10 +34,9 @@
 #ifndef EW_WPPPIO_H
 #define EW_WPPPIO_H
 
+#include "Byteswapper.h"
 #include "mpi.h"
 #include "sw4.h"
-
-#include "Byteswapper.h"
 #ifdef USE_HDF5
 #include "hdf5.h"
 #endif

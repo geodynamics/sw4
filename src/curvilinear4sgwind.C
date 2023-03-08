@@ -32,7 +32,7 @@
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 
 #ifdef ENABLE_CUDA
-//#define RAJA_ONLY_2 1
+// #define RAJA_ONLY_2 1
 #endif
 #include <sys/types.h>
 
@@ -41,8 +41,8 @@
 #include "foralls.h"
 #include "policies.h"
 #include "sw4.h"
-//#include <iostream>
-// using namespace std;
+// #include <iostream>
+//  using namespace std;
 void curvilinear4sgwind(
     int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
     int kfirstw, int klastw, float_sw4* __restrict__ a_u,
@@ -126,7 +126,7 @@ void curvilinear4sgwind(
 #define la(i, j, k) a_lambda[base + (i) + ni * (j) + nij * (k)]
 #define jac(i, j, k) a_jac[base + (i) + ni * (j) + nij * (k)]
 #define u(c, i, j, k) a_u[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
-  //#define lu(c,i,j,k)   a_lu[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]
+  // #define lu(c,i,j,k)   a_lu[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]
 #define lu(c, i, j, k) a_lu[base3w + (i) + ni * (j) + nij * (k) + nijkw * (c)]
 #define met(c, i, j, k) a_met[base4 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 #define strx(i) a_strx[i - ifirst0]
@@ -186,7 +186,7 @@ void curvilinear4sgwind(
   //   << lower << " high(kb,ke)= " << khighb << " " << khighe << " low(kb,ke) =
   //   " << klowb << " " << klowe << std::endl; bool debug= (ifirst==105 &&
   //   ilast==137 && jfirst==105 && jlast==137); int idbg=108, jdbg=107;
-  //#pragma omp parallel
+  // #pragma omp parallel
 
   using LOCAL_POL = DEFAULT_LOOP3;
   {
@@ -2383,7 +2383,7 @@ void curvilinear4sgwind(
         // 54*8*8+25*8 = 3656 ops, tot=3939
         float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2;
 #ifdef ENABLE_HIP
-	//#pragma unroll 8
+        // #pragma unroll 8
 #endif
         for (int q = nk - 7; q <= nk; q++) {
           mucofu2 = 0;

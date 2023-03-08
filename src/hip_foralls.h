@@ -4,7 +4,6 @@
 #define HSYNC_DEVICE SW4_CheckDeviceError(hipDeviceSynchronize())
 #define HSYNC_STREAM SW4_CheckDeviceError(hipStreamSynchronize(0))
 
-#include "Mspace.h"
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -12,6 +11,7 @@
 #include <sstream>
 #include <vector>
 
+#include "Mspace.h"
 #include "mpi.h"
 #include "policies.h"
 std::vector<int> factors(int N);
@@ -519,7 +519,7 @@ void forall3async(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
 template <int N, typename Tag, typename T1, typename T2, typename T3,
           typename LoopBody>
 void forall3(Tag &t, T1 &irange, T2 &jrange, T3 &krange, LoopBody &&body) {
-forall3async<N, Tag>(t, irange, jrange, krange, body);
+  forall3async<N, Tag>(t, irange, jrange, krange, body);
   HSYNC_STREAM;
 }
 
@@ -695,7 +695,7 @@ __launch_bounds__(256, 1) __global__
 template <int N, typename Tag, typename T1, typename T2, typename T3,
           typename... LoopBodies>
 void forall3asyncSF(Tag &t, T1 &irange, T2 &jrange, T3 &krange,
-                    LoopBodies &&... bodies) {
+                    LoopBodies &&...bodies) {
   if (irange.invalid || jrange.invalid || krange.invalid) {
     std::cerr << "Invalid ranges in forall3asyncSF \n";
     return;

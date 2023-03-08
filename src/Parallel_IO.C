@@ -31,13 +31,16 @@
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 #include <mpi.h>
+
 #include <iostream>
 using namespace std;
 
 #include <errno.h>
 #include <unistd.h>
+
 #include <cstdlib>
 #include <cstring>
+
 #include "Parallel_IO.h"
 
 #ifdef USE_HDF5
@@ -873,7 +876,7 @@ void Parallel_IO::init_array(int globalsizes[3], int localsizes[3],
     //	    vr[5] = m_irecv.m_comm_index[5][b-1][i];
     //	    bsize += (vr[1]-vr[0]+1)*(vr[3]-vr[2]+1)*(vr[5]-vr[4]+1);
     //	    //	    if( (vr[1]-vr[0]+1)*(vr[3]-vr[2]+1)*(vr[5]-vr[4]+1) >
-    //bsizemax )
+    // bsizemax )
     //	    //	    {
     //	    //	       maxcomm = i;
     //	    //	       bsizemax =
@@ -1932,7 +1935,7 @@ void Parallel_IO::read_array(int* fid, int nc, float_sw4* array, off_t pos0,
           if (flt == 0) {
             if (nc * ((size_t)niblock) * njblock * nkblock > linux_lim)
               //		     sizew = read_dble_wlim( fid, rbuf,
-              //nc*((size_t)niblock)*njblock*nkblock,linux_lim);
+              // nc*((size_t)niblock)*njblock*nkblock,linux_lim);
               sizew = read_with_limit(
                   fid, rbuf, nc * ((size_t)niblock) * njblock * nkblock,
                   linux_lim);

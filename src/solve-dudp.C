@@ -1,5 +1,5 @@
-#include "caliper.h"
 #include "EW.h"
+#include "caliper.h"
 
 void EW::solve_dudp(vector<Source*>& a_Sources, vector<Sarray>& a_Rho,
                     vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
@@ -8,9 +8,8 @@ void EW::solve_dudp(vector<Source*>& a_Sources, vector<Sarray>& a_Rho,
                     vector<Sarray>& U, vector<Sarray>& dUm, vector<Sarray>& dU,
                     double& misfit, double& dmisfitdp, int di, int dj, int dk,
                     int dgrid, int event) {
-
   SW4_MARK_FUNCTION;
-  
+
   const float_sw4 dt2 = mDt * mDt;
   const float_sw4 todt4 = 12 / (mDt * mDt * mDt * mDt);
   int ng = mNumberOfGrids;

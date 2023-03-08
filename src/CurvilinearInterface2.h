@@ -39,7 +39,7 @@ class CurvilinearInterface2 {
   float_sw4* m_mass_block;
   int* m_ipiv_block;
   bool m_memory_is_allocated;
-  
+
   float_sw4* m_mpi_buffer_space;
   size_t m_mpi_buffer_size;
 

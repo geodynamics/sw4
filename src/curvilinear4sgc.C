@@ -48,8 +48,7 @@ __device__ inline double acof(int i, int j, int k) {
 void curvilinear4sgX1_ci(
     int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,
-    float_sw4* __restrict__ a_lambda, 
-    float_sw4* __restrict__ a_met,
+    float_sw4* __restrict__ a_lambda, float_sw4* __restrict__ a_met,
     float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu, int* onesided,
     float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
     float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_acof_no_gp,
@@ -57,16 +56,14 @@ void curvilinear4sgX1_ci(
     float_sw4* __restrict__ a_stry, int nk, char op);
 void curvilinear4sg_ci(
     int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-    float_sw4*  a_u,
-    float_sw4*  a_u1, float_sw4* a_u2, float_sw4* a_u3, 
-    float_sw4* __restrict__ a_mu,
-    float_sw4* __restrict__ a_lambda,
-    float_sw4* __restrict__ a_met,
-    float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu, int* onesided,
-    float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
-    float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_acof_no_gp,
-    float_sw4* __restrict__ a_ghcof_no_gp, float_sw4* __restrict__ a_strx,
-    float_sw4* __restrict__ a_stry, int nk, char op) {
+    float_sw4* a_u, float_sw4* a_u1, float_sw4* a_u2, float_sw4* a_u3,
+    float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda,
+    float_sw4* __restrict__ a_met, float_sw4* __restrict__ a_jac,
+    float_sw4* __restrict__ a_lu, int* onesided, float_sw4* __restrict__ a_acof,
+    float_sw4* __restrict__ a_bope, float_sw4* __restrict__ a_ghcof,
+    float_sw4* __restrict__ a_acof_no_gp, float_sw4* __restrict__ a_ghcof_no_gp,
+    float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, int nk,
+    char op) {
   SW4_MARK_FUNCTION;
   //      subroutine CURVILINEAR4SG( ifirst, ilast, jfirst, jlast, kfirst,
   //     *                         klast, u, mu, la, met, jac, lu,
@@ -128,9 +125,9 @@ void curvilinear4sg_ci(
 #define u2(i, j, k) a_u2[(i) + ni * (j) + nij * (k)]
 #define u3(i, j, k) a_u3[(i) + ni * (j) + nij * (k)]
 #define lu(c, i, j, k) a_lu[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
-    // WARNING a_met and a_amet[1-4] are the same array
-    // But they are used in different kernels and never in the same kernel
-    // a_met in K1 and K5 only
+  // WARNING a_met and a_amet[1-4] are the same array
+  // But they are used in different kernels and never in the same kernel
+  // a_met in K1 and K5 only
 #define met(c, i, j, k) a_met[(i) + ni * (j) + nij * (k) + nijk * (c)]
 
 #define strx(i) a_strx[i - ifirst0]
@@ -155,7 +152,7 @@ void curvilinear4sg_ci(
   cudaMemcpyToSymbol(cmem_acof, a_acof, 384 * sizeof(double));
   //}
 #endif
-  //#pragma omp parallel
+  // #pragma omp parallel
   {
     int kstart = kfirst + 2;
     int kend = klast - 2;
@@ -165,7 +162,8 @@ void curvilinear4sg_ci(
       // SBP Boundary closure terms
 
 #ifdef PEEKS_GALORE
-      //std::cout << " ********* WARNING PEEKS GALORE MODE ******************\n";
+      // std::cout << " ********* WARNING PEEKS GALORE MODE
+      // ******************\n";
       SW4_PEEK;
       SYNC_DEVICE;
 #endif
@@ -365,7 +363,7 @@ void curvilinear4sg_ci(
             // 54*8*8+25*8 = 3656 ops, tot=3939
             float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2;
 #ifdef ENABLE_HIP
-__syncthreads();
+            __syncthreads();
 #endif
             for (int q = 1; q <= 8; q++) {
               mucofu2 = 0;
@@ -374,9 +372,9 @@ __syncthreads();
               mucofvw = 0;
               mucofv2 = 0;
               mucofw2 = 0;
-              //#pragma unroll 1 // slowdown due to register spills
+          // #pragma unroll 1 // slowdown due to register spills
 #ifdef ENABLE_HIP
-#pragma unroll 8 // slowdown due to register spills
+#pragma unroll 8  // slowdown due to register spills
 #endif
               for (int m = 1; m <= 8; m++) {
 #ifdef SW4_USE_CMEM
@@ -424,7 +422,7 @@ __syncthreads();
                     istrxy * mucofw2 * u3(i, j, q);
             }
 #ifdef ENABLE_HIP
-__syncthreads();
+            __syncthreads();
 #endif
             // Ghost point values, only nonzero for k=1.
             // 72 ops., tot=4011
@@ -464,113 +462,89 @@ __syncthreads();
             // pq-derivatives (u-eq)
             // 38 ops., tot=4049
             r1 +=
-                c2 *
-                    (mu(i, j + 2, k) * met(1, i, j + 2, k) *
-                         met(1, i, j + 2, k) *
-                         (c2 * (u2(i + 2, j + 2, k) - u2(i - 2, j + 2, k)) +
-                          c1 *
-                              (u2(i + 1, j + 2, k) - u2(i - 1, j + 2, k))) -
-                     mu(i, j - 2, k) * met(1, i, j - 2, k) *
-                         met(1, i, j - 2, k) *
-                         (c2 * (u2(i + 2, j - 2, k) - u2(i - 2, j - 2, k)) +
-                          c1 * (u2(i + 1, j - 2, k) -
-                                u2(i - 1, j - 2, k)))) +
-                c1 *
-                    (mu(i, j + 1, k) * met(1, i, j + 1, k) *
-                         met(1, i, j + 1, k) *
-                         (c2 * (u2(i + 2, j + 1, k) - u2(i - 2, j + 1, k)) +
-                          c1 *
-                              (u2(i + 1, j + 1, k) - u2(i - 1, j + 1, k))) -
-                     mu(i, j - 1, k) * met(1, i, j - 1, k) *
-                         met(1, i, j - 1, k) *
-                         (c2 * (u2(i + 2, j - 1, k) - u2(i - 2, j - 1, k)) +
-                          c1 *
-                              (u2(i + 1, j - 1, k) - u2(i - 1, j - 1, k))));
+                c2 * (mu(i, j + 2, k) * met(1, i, j + 2, k) *
+                          met(1, i, j + 2, k) *
+                          (c2 * (u2(i + 2, j + 2, k) - u2(i - 2, j + 2, k)) +
+                           c1 * (u2(i + 1, j + 2, k) - u2(i - 1, j + 2, k))) -
+                      mu(i, j - 2, k) * met(1, i, j - 2, k) *
+                          met(1, i, j - 2, k) *
+                          (c2 * (u2(i + 2, j - 2, k) - u2(i - 2, j - 2, k)) +
+                           c1 * (u2(i + 1, j - 2, k) - u2(i - 1, j - 2, k)))) +
+                c1 * (mu(i, j + 1, k) * met(1, i, j + 1, k) *
+                          met(1, i, j + 1, k) *
+                          (c2 * (u2(i + 2, j + 1, k) - u2(i - 2, j + 1, k)) +
+                           c1 * (u2(i + 1, j + 1, k) - u2(i - 1, j + 1, k))) -
+                      mu(i, j - 1, k) * met(1, i, j - 1, k) *
+                          met(1, i, j - 1, k) *
+                          (c2 * (u2(i + 2, j - 1, k) - u2(i - 2, j - 1, k)) +
+                           c1 * (u2(i + 1, j - 1, k) - u2(i - 1, j - 1, k))));
 
             // qp-derivatives (u-eq)
             // 38 ops. tot=4087
             r1 +=
-                c2 *
-                    (la(i + 2, j, k) * met(1, i + 2, j, k) *
-                         met(1, i + 2, j, k) *
-                         (c2 * (u2(i + 2, j + 2, k) - u2(i + 2, j - 2, k)) +
-                          c1 *
-                              (u2(i + 2, j + 1, k) - u2(i + 2, j - 1, k))) -
-                     la(i - 2, j, k) * met(1, i - 2, j, k) *
-                         met(1, i - 2, j, k) *
-                         (c2 * (u2(i - 2, j + 2, k) - u2(i - 2, j - 2, k)) +
-                          c1 * (u2(i - 2, j + 1, k) -
-                                u2(i - 2, j - 1, k)))) +
-                c1 *
-                    (la(i + 1, j, k) * met(1, i + 1, j, k) *
-                         met(1, i + 1, j, k) *
-                         (c2 * (u2(i + 1, j + 2, k) - u2(i + 1, j - 2, k)) +
-                          c1 *
-                              (u2(i + 1, j + 1, k) - u2(i + 1, j - 1, k))) -
-                     la(i - 1, j, k) * met(1, i - 1, j, k) *
-                         met(1, i - 1, j, k) *
-                         (c2 * (u2(i - 1, j + 2, k) - u2(i - 1, j - 2, k)) +
-                          c1 *
-                              (u2(i - 1, j + 1, k) - u2(i - 1, j - 1, k))));
+                c2 * (la(i + 2, j, k) * met(1, i + 2, j, k) *
+                          met(1, i + 2, j, k) *
+                          (c2 * (u2(i + 2, j + 2, k) - u2(i + 2, j - 2, k)) +
+                           c1 * (u2(i + 2, j + 1, k) - u2(i + 2, j - 1, k))) -
+                      la(i - 2, j, k) * met(1, i - 2, j, k) *
+                          met(1, i - 2, j, k) *
+                          (c2 * (u2(i - 2, j + 2, k) - u2(i - 2, j - 2, k)) +
+                           c1 * (u2(i - 2, j + 1, k) - u2(i - 2, j - 1, k)))) +
+                c1 * (la(i + 1, j, k) * met(1, i + 1, j, k) *
+                          met(1, i + 1, j, k) *
+                          (c2 * (u2(i + 1, j + 2, k) - u2(i + 1, j - 2, k)) +
+                           c1 * (u2(i + 1, j + 1, k) - u2(i + 1, j - 1, k))) -
+                      la(i - 1, j, k) * met(1, i - 1, j, k) *
+                          met(1, i - 1, j, k) *
+                          (c2 * (u2(i - 1, j + 2, k) - u2(i - 1, j - 2, k)) +
+                           c1 * (u2(i - 1, j + 1, k) - u2(i - 1, j - 1, k))));
 
             // pq-derivatives (v-eq)
             // 38 ops. , tot=4125
             r2 +=
-                c2 *
-                    (la(i, j + 2, k) * met(1, i, j + 2, k) *
-                         met(1, i, j + 2, k) *
-                         (c2 * (u1(i + 2, j + 2, k) - u1(i - 2, j + 2, k)) +
-                          c1 *
-                              (u1(i + 1, j + 2, k) - u1(i - 1, j + 2, k))) -
-                     la(i, j - 2, k) * met(1, i, j - 2, k) *
-                         met(1, i, j - 2, k) *
-                         (c2 * (u1(i + 2, j - 2, k) - u1(i - 2, j - 2, k)) +
-                          c1 * (u1(i + 1, j - 2, k) -
-                                u1(i - 1, j - 2, k)))) +
-                c1 *
-                    (la(i, j + 1, k) * met(1, i, j + 1, k) *
-                         met(1, i, j + 1, k) *
-                         (c2 * (u1(i + 2, j + 1, k) - u1(i - 2, j + 1, k)) +
-                          c1 *
-                              (u1(i + 1, j + 1, k) - u1(i - 1, j + 1, k))) -
-                     la(i, j - 1, k) * met(1, i, j - 1, k) *
-                         met(1, i, j - 1, k) *
-                         (c2 * (u1(i + 2, j - 1, k) - u1(i - 2, j - 1, k)) +
-                          c1 *
-                              (u1(i + 1, j - 1, k) - u1(i - 1, j - 1, k))));
+                c2 * (la(i, j + 2, k) * met(1, i, j + 2, k) *
+                          met(1, i, j + 2, k) *
+                          (c2 * (u1(i + 2, j + 2, k) - u1(i - 2, j + 2, k)) +
+                           c1 * (u1(i + 1, j + 2, k) - u1(i - 1, j + 2, k))) -
+                      la(i, j - 2, k) * met(1, i, j - 2, k) *
+                          met(1, i, j - 2, k) *
+                          (c2 * (u1(i + 2, j - 2, k) - u1(i - 2, j - 2, k)) +
+                           c1 * (u1(i + 1, j - 2, k) - u1(i - 1, j - 2, k)))) +
+                c1 * (la(i, j + 1, k) * met(1, i, j + 1, k) *
+                          met(1, i, j + 1, k) *
+                          (c2 * (u1(i + 2, j + 1, k) - u1(i - 2, j + 1, k)) +
+                           c1 * (u1(i + 1, j + 1, k) - u1(i - 1, j + 1, k))) -
+                      la(i, j - 1, k) * met(1, i, j - 1, k) *
+                          met(1, i, j - 1, k) *
+                          (c2 * (u1(i + 2, j - 1, k) - u1(i - 2, j - 1, k)) +
+                           c1 * (u1(i + 1, j - 1, k) - u1(i - 1, j - 1, k))));
 
             //* qp-derivatives (v-eq)
             // 38 ops., tot=4163
             r2 +=
-                c2 *
-                    (mu(i + 2, j, k) * met(1, i + 2, j, k) *
-                         met(1, i + 2, j, k) *
-                         (c2 * (u1(i + 2, j + 2, k) - u1(i + 2, j - 2, k)) +
-                          c1 *
-                              (u1(i + 2, j + 1, k) - u1(i + 2, j - 1, k))) -
-                     mu(i - 2, j, k) * met(1, i - 2, j, k) *
-                         met(1, i - 2, j, k) *
-                         (c2 * (u1(i - 2, j + 2, k) - u1(i - 2, j - 2, k)) +
-                          c1 * (u1(i - 2, j + 1, k) -
-                                u1(i - 2, j - 1, k)))) +
-                c1 *
-                    (mu(i + 1, j, k) * met(1, i + 1, j, k) *
-                         met(1, i + 1, j, k) *
-                         (c2 * (u1(i + 1, j + 2, k) - u1(i + 1, j - 2, k)) +
-                          c1 *
-                              (u1(i + 1, j + 1, k) - u1(i + 1, j - 1, k))) -
-                     mu(i - 1, j, k) * met(1, i - 1, j, k) *
-                         met(1, i - 1, j, k) *
-                         (c2 * (u1(i - 1, j + 2, k) - u1(i - 1, j - 2, k)) +
-                          c1 *
-                              (u1(i - 1, j + 1, k) - u1(i - 1, j - 1, k))));
+                c2 * (mu(i + 2, j, k) * met(1, i + 2, j, k) *
+                          met(1, i + 2, j, k) *
+                          (c2 * (u1(i + 2, j + 2, k) - u1(i + 2, j - 2, k)) +
+                           c1 * (u1(i + 2, j + 1, k) - u1(i + 2, j - 1, k))) -
+                      mu(i - 2, j, k) * met(1, i - 2, j, k) *
+                          met(1, i - 2, j, k) *
+                          (c2 * (u1(i - 2, j + 2, k) - u1(i - 2, j - 2, k)) +
+                           c1 * (u1(i - 2, j + 1, k) - u1(i - 2, j - 1, k)))) +
+                c1 * (mu(i + 1, j, k) * met(1, i + 1, j, k) *
+                          met(1, i + 1, j, k) *
+                          (c2 * (u1(i + 1, j + 2, k) - u1(i + 1, j - 2, k)) +
+                           c1 * (u1(i + 1, j + 1, k) - u1(i + 1, j - 1, k))) -
+                      mu(i - 1, j, k) * met(1, i - 1, j, k) *
+                          met(1, i - 1, j, k) *
+                          (c2 * (u1(i - 1, j + 2, k) - u1(i - 1, j - 2, k)) +
+                           c1 * (u1(i - 1, j + 1, k) - u1(i - 1, j - 1, k))));
 
             // rp - derivatives
             // 24*8 = 192 ops, tot=4355
             float_sw4 dudrm2 = 0, dudrm1 = 0, dudrp1 = 0, dudrp2 = 0;
             float_sw4 dvdrm2 = 0, dvdrm1 = 0, dvdrp1 = 0, dvdrp2 = 0;
             float_sw4 dwdrm2 = 0, dwdrm1 = 0, dwdrp1 = 0, dwdrp2 = 0;
-            //#pragma unroll 1
+            // #pragma unroll 1
             for (int q = 1; q <= 8; q++) {
               dudrm2 += bope(k, q) * u1(i - 2, j, q);
               dvdrm2 += bope(k, q) * u2(i - 2, j, q);
@@ -674,7 +648,7 @@ __syncthreads();
             dwdrm1 = 0;
             dwdrp1 = 0;
             dwdrp2 = 0;
-            //#pragma unroll 1
+            // #pragma unroll 1
             for (int q = 1; q <= 8; q++) {
               dudrm2 += bope(k, q) * u1(i, j - 2, q);
               dvdrm2 += bope(k, q) * u2(i, j - 2, q);
@@ -763,7 +737,7 @@ __syncthreads();
 
             // pr and qr derivatives at once
             // in loop: 8*(53+53+43) = 1192 ops, tot=6037
-            //#pragma unroll 1
+            // #pragma unroll 1
             for (int q = 1; q <= 8; q++) {
               // (u-eq)
               // 53 ops
@@ -842,9 +816,9 @@ __syncthreads();
             }
 
             // 12 ops, tot=6049
-            lu(1,i, j, k) = a1 * lu(1,i, j, k) + sgn * r1 * ijac;
-            lu(2,i, j, k) = a1 * lu(2,i, j, k) + sgn * r2 * ijac;
-            lu(3,i, j, k) = a1 * lu(3,i, j, k) + sgn * r3 * ijac;
+            lu(1, i, j, k) = a1 * lu(1, i, j, k) + sgn * r1 * ijac;
+            lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
+            lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
           });  // End of curvilinear4sg_ci LOOP -1
     }
 #undef u1
@@ -961,7 +935,7 @@ __syncthreads();
                   istrx;
           }
 #ifdef ENABLE_HIP
-	  //__syncthreads();
+      //__syncthreads();
 #endif
           // rr derivative (u)
           // 5*11+14+14=83 ops, tot=184
@@ -1298,7 +1272,7 @@ __syncthreads();
                              (u(2, i, j - 1, k + 1) - u(2, i, j - 1, k - 1)))));
 
           // 4 ops, tot=773
-          lu(1,i, j, k) = a1 * lu(1,i, j, k) + sgn * r1 * ijac;
+          lu(1, i, j, k) = a1 * lu(1, i, j, k) + sgn * r1 * ijac;
         });  // END OF LOOP 0
 
 #ifdef PEEKS_GALORE
@@ -1707,7 +1681,7 @@ __syncthreads();
                         istrx));
 
           // 4 ops, tot=1541
-          lu(2,i, j, k) = a1 * lu(2,i, j, k) + sgn * r2 * ijac;
+          lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
         });  // END OF LOOP 1
 #ifdef PEEKS_GALORE
     SW4_PEEK;
@@ -1890,7 +1864,7 @@ __syncthreads();
             mux3 = cof2 + cof5 + 3 * (cof4 + cof3);
             mux4 = cof4 - tf * (cof3 + cof5);
 #ifdef ENABLE_HIP
-	    //	    __syncthreads();
+        //	    __syncthreads();
 #endif
             r3 +=
                 i6 *
@@ -2128,7 +2102,7 @@ __syncthreads();
           }
 
           // 4 ops, tot=2126
-          lu(3,i, j, k) = a1 * lu(3,i, j, k) + sgn * r3 * ijac;
+          lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
         });  // End of curvilinear4sg_ci LOOP 2
   }
 #undef u
@@ -2348,7 +2322,7 @@ __syncthreads();
           // 54*8*8+25*8 = 3656 ops, tot=3939
           float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2;
 #ifdef ENABLE_HIP
-__syncthreads();
+          __syncthreads();
 #endif
           for (int q = nk - 7; q <= nk; q++) {
             mucofu2 = 0;
@@ -2401,7 +2375,7 @@ __syncthreads();
                   istrxy * mucofw2 * u3(i, j, q);
           }
 #ifdef ENABLE_HIP
-	    __syncthreads();
+          __syncthreads();
 #endif
 
       // Ghost point values, only nonzero for k=nk.
@@ -2433,8 +2407,7 @@ __syncthreads();
           mucofvw = ghcof_no_gp(nk - k + 1) * (mu(i, j, nk) + la(i, j, nk)) *
                     met(3, i, j, nk) * met(4, i, j, nk);
           r1 += istrxy * mucofu2 * u1(i, j, nk + 1) +
-                mucofuv * u2(i, j, nk + 1) +
-                istry * mucofuw * u3(i, j, nk + 1);
+                mucofuv * u2(i, j, nk + 1) + istry * mucofuw * u3(i, j, nk + 1);
           r2 += mucofuv * u1(i, j, nk + 1) +
                 istrxy * mucofv2 * u2(i, j, nk + 1) +
                 istrx * mucofvw * u3(i, j, nk + 1);
@@ -2519,7 +2492,7 @@ __syncthreads();
           float_sw4 dudrm2 = 0, dudrm1 = 0, dudrp1 = 0, dudrp2 = 0;
           float_sw4 dvdrm2 = 0, dvdrm1 = 0, dvdrp1 = 0, dvdrp2 = 0;
           float_sw4 dwdrm2 = 0, dwdrm1 = 0, dwdrp1 = 0, dwdrp2 = 0;
-          //#pragma unroll 8
+          // #pragma unroll 8
           for (int q = nk - 7; q <= nk; q++) {
             dudrm2 -= bope(nk - k + 1, nk - q + 1) * u1(i - 2, j, q);
             dvdrm2 -= bope(nk - k + 1, nk - q + 1) * u2(i - 2, j, q);
@@ -2622,7 +2595,7 @@ __syncthreads();
           dwdrm1 = 0;
           dwdrp1 = 0;
           dwdrp2 = 0;
-          //#pragma unroll 8
+          // #pragma unroll 8
           for (int q = nk - 7; q <= nk; q++) {
             dudrm2 -= bope(nk - k + 1, nk - q + 1) * u1(i, j - 2, q);
             dvdrm2 -= bope(nk - k + 1, nk - q + 1) * u2(i, j - 2, q);
@@ -2710,7 +2683,7 @@ __syncthreads();
 
           // pr and qr derivatives at once
           // in loop: 8*(53+53+43) = 1192 ops, tot=6037
-          //#pragma unroll 8
+          // #pragma unroll 8
           for (int q = nk - 7; q <= nk; q++) {
             // (u-eq)
             // 53 ops
@@ -2789,9 +2762,9 @@ __syncthreads();
           }
 
           // 12 ops, tot=6049
-          lu(1,i, j, k) = a1 * lu(1,i, j, k) + sgn * r1 * ijac;
-          lu(2,i, j, k) = a1 * lu(2,i, j, k) + sgn * r2 * ijac;
-          lu(3,i, j, k) = a1 * lu(3,i, j, k) + sgn * r3 * ijac;
+          lu(1, i, j, k) = a1 * lu(1, i, j, k) + sgn * r1 * ijac;
+          lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
+          lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
         });
   }
   SW4_MARK_END("CURVI::cuvilinear4sgc");
@@ -2882,7 +2855,7 @@ void curvilinear4sg_ci(
   PREFETCH(a_mu);
   PREFETCH(a_lambda);
 
-  //#pragma omp parallel
+  // #pragma omp parallel
   {
     int kstart = kfirst + 2;
     if (onesided[4] == 1) {
@@ -3114,8 +3087,7 @@ void curvilinear4sg_ci(
                 istry * mucofuw * u3(i, j, q);
           r2 += mucofuv * u1(i, j, q) + istrxy * mucofv2 * u2(i, j, q) +
                 istrx * mucofvw * u3(i, j, q);
-          r3 += istry * mucofuw * u1(i, j, q) +
-                istrx * mucofvw * u2(i, j, q) +
+          r3 += istry * mucofuw * u1(i, j, q) + istrx * mucofvw * u2(i, j, q) +
                 istrxy * mucofw2 * u3(i, j, q);
         }
 
@@ -3149,8 +3121,7 @@ void curvilinear4sg_ci(
               istry * mucofuw * u3(i, j, 0);
         r2 += mucofuv * u1(i, j, 0) + istrxy * mucofv2 * u2(i, j, 0) +
               istrx * mucofvw * u3(i, j, 0);
-        r3 += istry * mucofuw * u1(i, j, 0) +
-              istrx * mucofvw * u2(i, j, 0) +
+        r3 += istry * mucofuw * u1(i, j, 0) + istrx * mucofvw * u2(i, j, 0) +
               istrxy * mucofw2 * u3(i, j, 0);
 
         // pq-derivatives (u-eq)
@@ -3488,9 +3459,9 @@ void curvilinear4sg_ci(
         }
 
         // 12 ops, tot=6049
-        lu(1,i, j, k) = a1 * lu(1,i, j, k) + sgn * r1 * ijac;
-        lu(2,i, j, k) = a1 * lu(2,i, j, k) + sgn * r2 * ijac;
-        lu(3,i, j, k) = a1 * lu(3,i, j, k) + sgn * r3 * ijac;
+        lu(1, i, j, k) = a1 * lu(1, i, j, k) + sgn * r1 * ijac;
+        lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
+        lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;
       });  // End of curvilinear4sg_ci LOOP 1
     }
 
@@ -3760,99 +3731,96 @@ void curvilinear4sg_ci(
                   la(i - 2, j, k) * met(4, i - 2, j, k) * met(1, i - 2, j, k) *
                       (c2 * (u3(i - 2, j, k + 2) - u3(i - 2, j, k - 2)) +
                        c1 * (u3(i - 2, j, k + 1) - u3(i - 2, j, k - 1))))) +
-           c1 *
-               ((2 * mu(i + 1, j, k) + la(i + 1, j, k)) * met(2, i + 1, j, k) *
-                    met(1, i + 1, j, k) *
-                    (c2 * (u1(i + 1, j, k + 2) - u1(i + 1, j, k - 2)) +
-                     c1 * (u1(i + 1, j, k + 1) - u1(i + 1, j, k - 1))) *
-                    strx(i + 1) +
-                la(i + 1, j, k) * met(3, i + 1, j, k) * met(1, i + 1, j, k) *
-                    (c2 * (u2(i + 1, j, k + 2) - u2(i + 1, j, k - 2)) +
-                     c1 * (u2(i + 1, j, k + 1) - u2(i + 1, j, k - 1))) *
-                    stry(j) +
-                la(i + 1, j, k) * met(4, i + 1, j, k) * met(1, i + 1, j, k) *
-                    (c2 * (u3(i + 1, j, k + 2) - u3(i + 1, j, k - 2)) +
-                     c1 * (u3(i + 1, j, k + 1) - u3(i + 1, j, k - 1))) -
-                ((2 * mu(i - 1, j, k) + la(i - 1, j, k)) * met(2, i - 1, j, k) *
-                     met(1, i - 1, j, k) *
-                     (c2 * (u1(i - 1, j, k + 2) - u1(i - 1, j, k - 2)) +
-                      c1 * (u1(i - 1, j, k + 1) - u1(i - 1, j, k - 1))) *
-                     strx(i - 1) +
-                 la(i - 1, j, k) * met(3, i - 1, j, k) * met(1, i - 1, j, k) *
-                     (c2 * (u2(i - 1, j, k + 2) - u2(i - 1, j, k - 2)) +
-                      c1 * (u2(i - 1, j, k + 1) - u2(i - 1, j, k - 1))) *
+           c1 * ((2 * mu(i + 1, j, k) + la(i + 1, j, k)) * met(2, i + 1, j, k) *
+                     met(1, i + 1, j, k) *
+                     (c2 * (u1(i + 1, j, k + 2) - u1(i + 1, j, k - 2)) +
+                      c1 * (u1(i + 1, j, k + 1) - u1(i + 1, j, k - 1))) *
+                     strx(i + 1) +
+                 la(i + 1, j, k) * met(3, i + 1, j, k) * met(1, i + 1, j, k) *
+                     (c2 * (u2(i + 1, j, k + 2) - u2(i + 1, j, k - 2)) +
+                      c1 * (u2(i + 1, j, k + 1) - u2(i + 1, j, k - 1))) *
                      stry(j) +
-                 la(i - 1, j, k) * met(4, i - 1, j, k) * met(1, i - 1, j, k) *
-                     (c2 * (u3(i - 1, j, k + 2) - u3(i - 1, j, k - 2)) +
-                      c1 * (u3(i - 1, j, k + 1) - u3(i - 1, j, k - 1)))))) *
+                 la(i + 1, j, k) * met(4, i + 1, j, k) * met(1, i + 1, j, k) *
+                     (c2 * (u3(i + 1, j, k + 2) - u3(i + 1, j, k - 2)) +
+                      c1 * (u3(i + 1, j, k + 1) - u3(i + 1, j, k - 1))) -
+                 ((2 * mu(i - 1, j, k) + la(i - 1, j, k)) *
+                      met(2, i - 1, j, k) * met(1, i - 1, j, k) *
+                      (c2 * (u1(i - 1, j, k + 2) - u1(i - 1, j, k - 2)) +
+                       c1 * (u1(i - 1, j, k + 1) - u1(i - 1, j, k - 1))) *
+                      strx(i - 1) +
+                  la(i - 1, j, k) * met(3, i - 1, j, k) * met(1, i - 1, j, k) *
+                      (c2 * (u2(i - 1, j, k + 2) - u2(i - 1, j, k - 2)) +
+                       c1 * (u2(i - 1, j, k + 1) - u2(i - 1, j, k - 1))) *
+                      stry(j) +
+                  la(i - 1, j, k) * met(4, i - 1, j, k) * met(1, i - 1, j, k) *
+                      (c2 * (u3(i - 1, j, k + 2) - u3(i - 1, j, k - 2)) +
+                       c1 * (u3(i - 1, j, k + 1) - u3(i - 1, j, k - 1)))))) *
           istry;
 
       // qr derivatives
       // 82 ops, tot=687
-      r1 +=
-          c2 * (mu(i, j, k + 2) * met(3, i, j, k + 2) * met(1, i, j, k + 2) *
-                    (c2 * (u1(i, j + 2, k + 2) - u1(i, j - 2, k + 2)) +
-                     c1 * (u1(i, j + 1, k + 2) - u1(i, j - 1, k + 2))) *
-                    stry(j) * istrx +
-                la(i, j, k + 2) * met(2, i, j, k + 2) * met(1, i, j, k + 2) *
-                    (c2 * (u2(i, j + 2, k + 2) - u2(i, j - 2, k + 2)) +
-                     c1 * (u2(i, j + 1, k + 2) - u2(i, j - 1, k + 2))) -
-                (mu(i, j, k - 2) * met(3, i, j, k - 2) * met(1, i, j, k - 2) *
-                     (c2 * (u1(i, j + 2, k - 2) - u1(i, j - 2, k - 2)) +
-                      c1 * (u1(i, j + 1, k - 2) - u1(i, j - 1, k - 2))) *
-                     stry(j) * istrx +
-                 la(i, j, k - 2) * met(2, i, j, k - 2) * met(1, i, j, k - 2) *
-                     (c2 * (u2(i, j + 2, k - 2) - u2(i, j - 2, k - 2)) +
-                      c1 * (u2(i, j + 1, k - 2) - u2(i, j - 1, k - 2))))) +
-          c1 * (mu(i, j, k + 1) * met(3, i, j, k + 1) * met(1, i, j, k + 1) *
-                    (c2 * (u1(i, j + 2, k + 1) - u1(i, j - 2, k + 1)) +
-                     c1 * (u1(i, j + 1, k + 1) - u1(i, j - 1, k + 1))) *
-                    stry(j) * istrx +
-                la(i, j, k + 1) * met(2, i, j, k + 1) * met(1, i, j, k + 1) *
-                    (c2 * (u2(i, j + 2, k + 1) - u2(i, j - 2, k + 1)) +
-                     c1 * (u2(i, j + 1, k + 1) - u2(i, j - 1, k + 1))) -
-                (mu(i, j, k - 1) * met(3, i, j, k - 1) * met(1, i, j, k - 1) *
-                     (c2 * (u1(i, j + 2, k - 1) - u1(i, j - 2, k - 1)) +
-                      c1 * (u1(i, j + 1, k - 1) - u1(i, j - 1, k - 1))) *
-                     stry(j) * istrx +
-                 la(i, j, k - 1) * met(2, i, j, k - 1) * met(1, i, j, k - 1) *
-                     (c2 * (u2(i, j + 2, k - 1) - u2(i, j - 2, k - 1)) +
-                      c1 * (u2(i, j + 1, k - 1) - u2(i, j - 1, k - 1)))));
+      r1 += c2 * (mu(i, j, k + 2) * met(3, i, j, k + 2) * met(1, i, j, k + 2) *
+                      (c2 * (u1(i, j + 2, k + 2) - u1(i, j - 2, k + 2)) +
+                       c1 * (u1(i, j + 1, k + 2) - u1(i, j - 1, k + 2))) *
+                      stry(j) * istrx +
+                  la(i, j, k + 2) * met(2, i, j, k + 2) * met(1, i, j, k + 2) *
+                      (c2 * (u2(i, j + 2, k + 2) - u2(i, j - 2, k + 2)) +
+                       c1 * (u2(i, j + 1, k + 2) - u2(i, j - 1, k + 2))) -
+                  (mu(i, j, k - 2) * met(3, i, j, k - 2) * met(1, i, j, k - 2) *
+                       (c2 * (u1(i, j + 2, k - 2) - u1(i, j - 2, k - 2)) +
+                        c1 * (u1(i, j + 1, k - 2) - u1(i, j - 1, k - 2))) *
+                       stry(j) * istrx +
+                   la(i, j, k - 2) * met(2, i, j, k - 2) * met(1, i, j, k - 2) *
+                       (c2 * (u2(i, j + 2, k - 2) - u2(i, j - 2, k - 2)) +
+                        c1 * (u2(i, j + 1, k - 2) - u2(i, j - 1, k - 2))))) +
+            c1 * (mu(i, j, k + 1) * met(3, i, j, k + 1) * met(1, i, j, k + 1) *
+                      (c2 * (u1(i, j + 2, k + 1) - u1(i, j - 2, k + 1)) +
+                       c1 * (u1(i, j + 1, k + 1) - u1(i, j - 1, k + 1))) *
+                      stry(j) * istrx +
+                  la(i, j, k + 1) * met(2, i, j, k + 1) * met(1, i, j, k + 1) *
+                      (c2 * (u2(i, j + 2, k + 1) - u2(i, j - 2, k + 1)) +
+                       c1 * (u2(i, j + 1, k + 1) - u2(i, j - 1, k + 1))) -
+                  (mu(i, j, k - 1) * met(3, i, j, k - 1) * met(1, i, j, k - 1) *
+                       (c2 * (u1(i, j + 2, k - 1) - u1(i, j - 2, k - 1)) +
+                        c1 * (u1(i, j + 1, k - 1) - u1(i, j - 1, k - 1))) *
+                       stry(j) * istrx +
+                   la(i, j, k - 1) * met(2, i, j, k - 1) * met(1, i, j, k - 1) *
+                       (c2 * (u2(i, j + 2, k - 1) - u2(i, j - 2, k - 1)) +
+                        c1 * (u2(i, j + 1, k - 1) - u2(i, j - 1, k - 1)))));
 
       // rq derivatives
       // 82 ops, tot=769
-      r1 +=
-          c2 * (mu(i, j + 2, k) * met(3, i, j + 2, k) * met(1, i, j + 2, k) *
-                    (c2 * (u1(i, j + 2, k + 2) - u1(i, j + 2, k - 2)) +
-                     c1 * (u1(i, j + 2, k + 1) - u1(i, j + 2, k - 1))) *
-                    stry(j + 2) * istrx +
-                mu(i, j + 2, k) * met(2, i, j + 2, k) * met(1, i, j + 2, k) *
-                    (c2 * (u2(i, j + 2, k + 2) - u2(i, j + 2, k - 2)) +
-                     c1 * (u2(i, j + 2, k + 1) - u2(i, j + 2, k - 1))) -
-                (mu(i, j - 2, k) * met(3, i, j - 2, k) * met(1, i, j - 2, k) *
-                     (c2 * (u1(i, j - 2, k + 2) - u1(i, j - 2, k - 2)) +
-                      c1 * (u1(i, j - 2, k + 1) - u1(i, j - 2, k - 1))) *
-                     stry(j - 2) * istrx +
-                 mu(i, j - 2, k) * met(2, i, j - 2, k) * met(1, i, j - 2, k) *
-                     (c2 * (u2(i, j - 2, k + 2) - u2(i, j - 2, k - 2)) +
-                      c1 * (u2(i, j - 2, k + 1) - u2(i, j - 2, k - 1))))) +
-          c1 * (mu(i, j + 1, k) * met(3, i, j + 1, k) * met(1, i, j + 1, k) *
-                    (c2 * (u1(i, j + 1, k + 2) - u1(i, j + 1, k - 2)) +
-                     c1 * (u1(i, j + 1, k + 1) - u1(i, j + 1, k - 1))) *
-                    stry(j + 1) * istrx +
-                mu(i, j + 1, k) * met(2, i, j + 1, k) * met(1, i, j + 1, k) *
-                    (c2 * (u2(i, j + 1, k + 2) - u2(i, j + 1, k - 2)) +
-                     c1 * (u2(i, j + 1, k + 1) - u2(i, j + 1, k - 1))) -
-                (mu(i, j - 1, k) * met(3, i, j - 1, k) * met(1, i, j - 1, k) *
-                     (c2 * (u1(i, j - 1, k + 2) - u1(i, j - 1, k - 2)) +
-                      c1 * (u1(i, j - 1, k + 1) - u1(i, j - 1, k - 1))) *
-                     stry(j - 1) * istrx +
-                 mu(i, j - 1, k) * met(2, i, j - 1, k) * met(1, i, j - 1, k) *
-                     (c2 * (u2(i, j - 1, k + 2) - u2(i, j - 1, k - 2)) +
-                      c1 * (u2(i, j - 1, k + 1) - u2(i, j - 1, k - 1)))));
+      r1 += c2 * (mu(i, j + 2, k) * met(3, i, j + 2, k) * met(1, i, j + 2, k) *
+                      (c2 * (u1(i, j + 2, k + 2) - u1(i, j + 2, k - 2)) +
+                       c1 * (u1(i, j + 2, k + 1) - u1(i, j + 2, k - 1))) *
+                      stry(j + 2) * istrx +
+                  mu(i, j + 2, k) * met(2, i, j + 2, k) * met(1, i, j + 2, k) *
+                      (c2 * (u2(i, j + 2, k + 2) - u2(i, j + 2, k - 2)) +
+                       c1 * (u2(i, j + 2, k + 1) - u2(i, j + 2, k - 1))) -
+                  (mu(i, j - 2, k) * met(3, i, j - 2, k) * met(1, i, j - 2, k) *
+                       (c2 * (u1(i, j - 2, k + 2) - u1(i, j - 2, k - 2)) +
+                        c1 * (u1(i, j - 2, k + 1) - u1(i, j - 2, k - 1))) *
+                       stry(j - 2) * istrx +
+                   mu(i, j - 2, k) * met(2, i, j - 2, k) * met(1, i, j - 2, k) *
+                       (c2 * (u2(i, j - 2, k + 2) - u2(i, j - 2, k - 2)) +
+                        c1 * (u2(i, j - 2, k + 1) - u2(i, j - 2, k - 1))))) +
+            c1 * (mu(i, j + 1, k) * met(3, i, j + 1, k) * met(1, i, j + 1, k) *
+                      (c2 * (u1(i, j + 1, k + 2) - u1(i, j + 1, k - 2)) +
+                       c1 * (u1(i, j + 1, k + 1) - u1(i, j + 1, k - 1))) *
+                      stry(j + 1) * istrx +
+                  mu(i, j + 1, k) * met(2, i, j + 1, k) * met(1, i, j + 1, k) *
+                      (c2 * (u2(i, j + 1, k + 2) - u2(i, j + 1, k - 2)) +
+                       c1 * (u2(i, j + 1, k + 1) - u2(i, j + 1, k - 1))) -
+                  (mu(i, j - 1, k) * met(3, i, j - 1, k) * met(1, i, j - 1, k) *
+                       (c2 * (u1(i, j - 1, k + 2) - u1(i, j - 1, k - 2)) +
+                        c1 * (u1(i, j - 1, k + 1) - u1(i, j - 1, k - 1))) *
+                       stry(j - 1) * istrx +
+                   mu(i, j - 1, k) * met(2, i, j - 1, k) * met(1, i, j - 1, k) *
+                       (c2 * (u2(i, j - 1, k + 2) - u2(i, j - 1, k - 2)) +
+                        c1 * (u2(i, j - 1, k + 1) - u2(i, j - 1, k - 1)))));
 
       // 4 ops, tot=773
-      lu(1,i, j, k) = a1 * lu(1,i, j, k) + sgn * r1 * ijac;
+      lu(1, i, j, k) = a1 * lu(1, i, j, k) + sgn * r1 * ijac;
       // v-equation
 
       //	    r1 = 0;
@@ -4186,7 +4154,7 @@ void curvilinear4sg_ci(
                        istrx));
 
       // 4 ops, tot=1541
-      lu(2,i, j, k) = a1 * lu(2,i, j, k) + sgn * r2 * ijac;
+      lu(2, i, j, k) = a1 * lu(2, i, j, k) + sgn * r2 * ijac;
 
       // w-equation
 
@@ -4365,50 +4333,43 @@ void curvilinear4sg_ci(
           // rp derivatives
           // 79 ops, tot=1957
           //   r1 +=
-          +
-          istry *
-              (c2 *
-                   ((mu(i + 2, j, k)) * met(4, i + 2, j, k) *
-                        met(1, i + 2, j, k) *
-                        (c2 * (u1(i + 2, j, k + 2) - u1(i + 2, j, k - 2)) +
-                         c1 * (u1(i + 2, j, k + 1) - u1(i + 2, j, k - 1))) +
-                    mu(i + 2, j, k) * met(2, i + 2, j, k) *
-                        met(1, i + 2, j, k) *
-                        (c2 * (u3(i + 2, j, k + 2) - u3(i + 2, j, k - 2)) +
-                         c1 * (u3(i + 2, j, k + 1) - u3(i + 2, j, k - 1))) *
-                        strx(i + 2) -
-                    (mu(i - 2, j, k) * met(4, i - 2, j, k) *
-                         met(1, i - 2, j, k) *
-                         (c2 * (u1(i - 2, j, k + 2) - u1(i - 2, j, k - 2)) +
-                          c1 *
-                              (u1(i - 2, j, k + 1) - u1(i - 2, j, k - 1))) +
-                     mu(i - 2, j, k) * met(2, i - 2, j, k) *
-                         met(1, i - 2, j, k) *
-                         (c2 * (u3(i - 2, j, k + 2) - u3(i - 2, j, k - 2)) +
-                          c1 *
-                              (u3(i - 2, j, k + 1) - u3(i - 2, j, k - 1))) *
-                         strx(i - 2))) +
-               c1 *
-                   ((mu(i + 1, j, k)) * met(4, i + 1, j, k) *
-                        met(1, i + 1, j, k) *
-                        (c2 * (u1(i + 1, j, k + 2) - u1(i + 1, j, k - 2)) +
-                         c1 * (u1(i + 1, j, k + 1) - u1(i + 1, j, k - 1))) +
-                    mu(i + 1, j, k) * met(2, i + 1, j, k) *
-                        met(1, i + 1, j, k) *
-                        (c2 * (u3(i + 1, j, k + 2) - u3(i + 1, j, k - 2)) +
-                         c1 * (u3(i + 1, j, k + 1) - u3(i + 1, j, k - 1))) *
-                        strx(i + 1) -
-                    (mu(i - 1, j, k) * met(4, i - 1, j, k) *
-                         met(1, i - 1, j, k) *
-                         (c2 * (u1(i - 1, j, k + 2) - u1(i - 1, j, k - 2)) +
-                          c1 *
-			  (u1(i - 1, j, k + 1) - u1(i - 1, j, k - 1))) +
-                     mu(i - 1, j, k) * met(2, i - 1, j, k) *
-                         met(1, i - 1, j, k) *
-                         (c2 * (u3(i - 1, j, k + 2) - u3(i - 1, j, k - 2)) +
-                          c1 *
-                              (u3(i - 1, j, k + 1) - u3(i - 1, j, k - 1))) *
-                         strx(i - 1))))
+          + istry *
+                (c2 * ((mu(i + 2, j, k)) * met(4, i + 2, j, k) *
+                           met(1, i + 2, j, k) *
+                           (c2 * (u1(i + 2, j, k + 2) - u1(i + 2, j, k - 2)) +
+                            c1 * (u1(i + 2, j, k + 1) - u1(i + 2, j, k - 1))) +
+                       mu(i + 2, j, k) * met(2, i + 2, j, k) *
+                           met(1, i + 2, j, k) *
+                           (c2 * (u3(i + 2, j, k + 2) - u3(i + 2, j, k - 2)) +
+                            c1 * (u3(i + 2, j, k + 1) - u3(i + 2, j, k - 1))) *
+                           strx(i + 2) -
+                       (mu(i - 2, j, k) * met(4, i - 2, j, k) *
+                            met(1, i - 2, j, k) *
+                            (c2 * (u1(i - 2, j, k + 2) - u1(i - 2, j, k - 2)) +
+                             c1 * (u1(i - 2, j, k + 1) - u1(i - 2, j, k - 1))) +
+                        mu(i - 2, j, k) * met(2, i - 2, j, k) *
+                            met(1, i - 2, j, k) *
+                            (c2 * (u3(i - 2, j, k + 2) - u3(i - 2, j, k - 2)) +
+                             c1 * (u3(i - 2, j, k + 1) - u3(i - 2, j, k - 1))) *
+                            strx(i - 2))) +
+                 c1 * ((mu(i + 1, j, k)) * met(4, i + 1, j, k) *
+                           met(1, i + 1, j, k) *
+                           (c2 * (u1(i + 1, j, k + 2) - u1(i + 1, j, k - 2)) +
+                            c1 * (u1(i + 1, j, k + 1) - u1(i + 1, j, k - 1))) +
+                       mu(i + 1, j, k) * met(2, i + 1, j, k) *
+                           met(1, i + 1, j, k) *
+                           (c2 * (u3(i + 1, j, k + 2) - u3(i + 1, j, k - 2)) +
+                            c1 * (u3(i + 1, j, k + 1) - u3(i + 1, j, k - 1))) *
+                           strx(i + 1) -
+                       (mu(i - 1, j, k) * met(4, i - 1, j, k) *
+                            met(1, i - 1, j, k) *
+                            (c2 * (u1(i - 1, j, k + 2) - u1(i - 1, j, k - 2)) +
+                             c1 * (u1(i - 1, j, k + 1) - u1(i - 1, j, k - 1))) +
+                        mu(i - 1, j, k) * met(2, i - 1, j, k) *
+                            met(1, i - 1, j, k) *
+                            (c2 * (u3(i - 1, j, k + 2) - u3(i - 1, j, k - 2)) +
+                             c1 * (u3(i - 1, j, k + 1) - u3(i - 1, j, k - 1))) *
+                            strx(i - 1))))
           // qr derivatives
           // 86 ops, tot=2043
           //     r1 +=
@@ -4449,48 +4410,42 @@ void curvilinear4sg_ci(
           //  r1 +=
           +
           istrx *
-              (c2 *
-                   (mu(i, j + 2, k) * met(3, i, j + 2, k) *
-                        met(1, i, j + 2, k) *
-                        (c2 * (u3(i, j + 2, k + 2) - u3(i, j + 2, k - 2)) +
-                         c1 * (u3(i, j + 2, k + 1) - u3(i, j + 2, k - 1))) *
-                        stry(j + 2) +
-                    mu(i, j + 2, k) * met(4, i, j + 2, k) *
-                        met(1, i, j + 2, k) *
-                        (c2 * (u2(i, j + 2, k + 2) - u2(i, j + 2, k - 2)) +
-                         c1 * (u2(i, j + 2, k + 1) - u2(i, j + 2, k - 1))) -
-                    (mu(i, j - 2, k) * met(3, i, j - 2, k) *
-                         met(1, i, j - 2, k) *
-                         (c2 * (u3(i, j - 2, k + 2) - u3(i, j - 2, k - 2)) +
-                          c1 *
-                              (u3(i, j - 2, k + 1) - u3(i, j - 2, k - 1))) *
-                         stry(j - 2) +
-                     mu(i, j - 2, k) * met(4, i, j - 2, k) *
-                         met(1, i, j - 2, k) *
-                         (c2 * (u2(i, j - 2, k + 2) - u2(i, j - 2, k - 2)) +
-                          c1 * (u2(i, j - 2, k + 1) -
-                                u2(i, j - 2, k - 1))))) +
-               c1 *
-                   (mu(i, j + 1, k) * met(3, i, j + 1, k) *
-                        met(1, i, j + 1, k) *
-                        (c2 * (u3(i, j + 1, k + 2) - u3(i, j + 1, k - 2)) +
-                         c1 * (u3(i, j + 1, k + 1) - u3(i, j + 1, k - 1))) *
-                        stry(j + 1) +
-                    mu(i, j + 1, k) * met(4, i, j + 1, k) *
-                        met(1, i, j + 1, k) *
-                        (c2 * (u2(i, j + 1, k + 2) - u2(i, j + 1, k - 2)) +
-                         c1 * (u2(i, j + 1, k + 1) - u2(i, j + 1, k - 1))) -
-                    (mu(i, j - 1, k) * met(3, i, j - 1, k) *
-                         met(1, i, j - 1, k) *
-                         (c2 * (u3(i, j - 1, k + 2) - u3(i, j - 1, k - 2)) +
-                          c1 *
-                              (u3(i, j - 1, k + 1) - u3(i, j - 1, k - 1))) *
-                         stry(j - 1) +
-                     mu(i, j - 1, k) * met(4, i, j - 1, k) *
-                         met(1, i, j - 1, k) *
-                         (c2 * (u2(i, j - 1, k + 2) - u2(i, j - 1, k - 2)) +
-                          c1 * (u2(i, j - 1, k + 1) -
-                                u2(i, j - 1, k - 1))))));
+              (c2 * (mu(i, j + 2, k) * met(3, i, j + 2, k) *
+                         met(1, i, j + 2, k) *
+                         (c2 * (u3(i, j + 2, k + 2) - u3(i, j + 2, k - 2)) +
+                          c1 * (u3(i, j + 2, k + 1) - u3(i, j + 2, k - 1))) *
+                         stry(j + 2) +
+                     mu(i, j + 2, k) * met(4, i, j + 2, k) *
+                         met(1, i, j + 2, k) *
+                         (c2 * (u2(i, j + 2, k + 2) - u2(i, j + 2, k - 2)) +
+                          c1 * (u2(i, j + 2, k + 1) - u2(i, j + 2, k - 1))) -
+                     (mu(i, j - 2, k) * met(3, i, j - 2, k) *
+                          met(1, i, j - 2, k) *
+                          (c2 * (u3(i, j - 2, k + 2) - u3(i, j - 2, k - 2)) +
+                           c1 * (u3(i, j - 2, k + 1) - u3(i, j - 2, k - 1))) *
+                          stry(j - 2) +
+                      mu(i, j - 2, k) * met(4, i, j - 2, k) *
+                          met(1, i, j - 2, k) *
+                          (c2 * (u2(i, j - 2, k + 2) - u2(i, j - 2, k - 2)) +
+                           c1 * (u2(i, j - 2, k + 1) - u2(i, j - 2, k - 1))))) +
+               c1 * (mu(i, j + 1, k) * met(3, i, j + 1, k) *
+                         met(1, i, j + 1, k) *
+                         (c2 * (u3(i, j + 1, k + 2) - u3(i, j + 1, k - 2)) +
+                          c1 * (u3(i, j + 1, k + 1) - u3(i, j + 1, k - 1))) *
+                         stry(j + 1) +
+                     mu(i, j + 1, k) * met(4, i, j + 1, k) *
+                         met(1, i, j + 1, k) *
+                         (c2 * (u2(i, j + 1, k + 2) - u2(i, j + 1, k - 2)) +
+                          c1 * (u2(i, j + 1, k + 1) - u2(i, j + 1, k - 1))) -
+                     (mu(i, j - 1, k) * met(3, i, j - 1, k) *
+                          met(1, i, j - 1, k) *
+                          (c2 * (u3(i, j - 1, k + 2) - u3(i, j - 1, k - 2)) +
+                           c1 * (u3(i, j - 1, k + 1) - u3(i, j - 1, k - 1))) *
+                          stry(j - 1) +
+                      mu(i, j - 1, k) * met(4, i, j - 1, k) *
+                          met(1, i, j - 1, k) *
+                          (c2 * (u2(i, j - 1, k + 2) - u2(i, j - 1, k - 2)) +
+                           c1 * (u2(i, j - 1, k + 1) - u2(i, j - 1, k - 1))))));
 
       // 4 ops, tot=2126
       lu(3, i, j, k) = a1 * lu(3, i, j, k) + sgn * r3 * ijac;

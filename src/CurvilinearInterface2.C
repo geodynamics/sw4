@@ -268,8 +268,8 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   SW4_MARK_FUNCTION;
   // std::cout << "void CurvilinearInterface2::init_arrays \n";
   if (m_memory_is_allocated) {
-    delete[] m_strx_c, m_stry_c, m_strx_f, m_stry_f; // PBUGS
-    delete[] m_mass_block, m_ipiv_block; // PBUGS
+    delete[] m_strx_c, m_stry_c, m_strx_f, m_stry_f;  // PBUGS
+    delete[] m_mass_block, m_ipiv_block;              // PBUGS
   }
   m_memory_is_allocated = true;
   for (int s = 0; s < 4; s++)
@@ -305,7 +305,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   float_sw4* lm_stry_c = m_stry_c;
   float_sw4* lm_strx_f = m_strx_f;
   float_sw4* lm_stry_f = m_stry_f;
-  
+
 #endif
 
   allocate_mpi_buffers();
@@ -420,7 +420,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
     m_mu_f.insert_intersection(a_mu[m_gf]);
     m_lambda_c.insert_intersection(a_lambda[m_gc]);
     m_lambda_f.insert_intersection(a_lambda[m_gf]);
-    
+
     SYNC_STREAM;
     int extra_ghost = m_nghost - m_ew->getNumberOfGhostPoints();
     if (extra_ghost > 0) {
@@ -459,7 +459,7 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   int nimb = (m_Mass_block.m_ie - m_Mass_block.m_ib + 1);
   size_t msize = nimb * (m_Mass_block.m_je - m_Mass_block.m_jb + 1);
   // std::cout << "Batch size in setup is " << msize << "\n";
-  //#define USE_DIRECT_INVERSE 1
+  // #define USE_DIRECT_INVERSE 1
 #ifdef USE_DIRECT_INVERSE
   // std::cout << " USING DIRECT INVERSE \n";
   m_mass_block = SW4_NEW(Space::Managed, float_sw4[9 * msize]);
@@ -574,10 +574,10 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   SW4_MARK_END("DGETRF");
 #endif
 #ifdef ENABLE_GPU
-  delete [] lm_strx_c;
-  delete [] lm_stry_c;
-  delete [] lm_strx_f;
-  delete [] lm_stry_f;
+  delete[] lm_strx_c;
+  delete[] lm_stry_c;
+  delete[] lm_strx_f;
+  delete[] lm_stry_f;
 #endif
 }
 
@@ -641,19 +641,18 @@ void CurvilinearInterface2::init_arrays_att() {
 
 //-----------------------------------------------------------------------
 void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
-				      std::vector<Sarray>& a_F,
+                                      std::vector<Sarray>& a_F,
                                       std::vector<Sarray*>& a_AlphaVE,
-				      bool injection_only) {
+                                      bool injection_only) {
   SW4_MARK_FUNCTION;
 #ifdef SW4_NORM_TRACE
   static int myRank = -1;
   static bool first = true;
-  if (myRank==-1)
-    MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+  if (myRank == -1) MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
   static std::ofstream ofile;
-  if ((!myRank) &&(first)){
+  if ((!myRank) && (first)) {
     ofile.open("CIC.dat");
-    first=false;
+    first = false;
   }
 #endif
   // SYNC_STREAM;                   // CURVI_CPU
@@ -747,7 +746,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
       communicate_array(Alpha_f[a], true);
     }
 
-   if (injection_only) {
+  if (injection_only) {
     a_U[m_gf].copy_kplane2(U_f, m_nkf);
     if (m_use_attenuation) {
       for (int a = 0; a < m_number_mechanisms; a++)
@@ -794,8 +793,10 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
           rmax.max(fabs(residualV(c, i, j, 1)));
         }
       });
-// float_sw4 nmax=-1.234;
-//for (int i=lhs.m_ib + 5;i<lhs.m_ie - 4;i++) for(int j=lhs.m_jb + 5;j<lhs.m_je - 4;j++) for(int c=1;c<=3;c++) nmax = std::max(nmax,fabs(residual(c, i, j, 1)));
+  // float_sw4 nmax=-1.234;
+  // for (int i=lhs.m_ib + 5;i<lhs.m_ie - 4;i++) for(int j=lhs.m_jb +
+  // 5;j<lhs.m_je - 4;j++) for(int c=1;c<=3;c++) nmax =
+  // std::max(nmax,fabs(residual(c, i, j, 1)));
   // std::cout<<"LHS RHS "<<lhs.norm()<<" "<<rhs.norm()<<"\n"<<std::flush;
   maxresloc = static_cast<float_sw4>(rmax.get());
   // std::cout<<"MAX RES LOC "<<maxresloc<<"\n"<<std::flush;
@@ -827,12 +828,14 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
   //      convhist.push_back(abstol);
   //   }
 #ifdef SW4_NORM_TRACE
-  if (!myRank) ofile<<"WHILE "<<maxres<<" "<<maxresloc<<" "<<lhs.norm()<<" "<<rhs.norm()<<"\n";
+  if (!myRank)
+    ofile << "WHILE " << maxres << " " << maxresloc << " " << lhs.norm() << " "
+          << rhs.norm() << "\n";
 #endif
   while (maxres > m_reltol * maxres0 && scalef * maxres > m_abstol &&
          iter <= m_maxit) {
     iter++;
-    //std::cout << "Iteration " << iter << " " << scalef*maxres << "\n";
+    // std::cout << "Iteration " << iter << " " << scalef*maxres << "\n";
 
 #ifdef USE_DIRECT_INVERSE
     int l_ib = m_Mass_block.m_ib;
@@ -882,7 +885,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
     int l_jb = m_Mass_block.m_jb;
     int l_je = m_Mass_block.m_je;
     SView& residualV = residual.getview();
-    
+
     RAJA::RangeSegment j_range(l_jb, l_je + 1);
     RAJA::RangeSegment i_range(l_ib, l_ie + 1);
 
@@ -895,7 +898,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
           for (int l = 1; l < 4; l++)
             lx[l - 1 + 3 * ind] = residualV(l, i, j, 1);
         });
-    //#define PEEKS_GALORE
+    // #define PEEKS_GALORE
 #ifdef PEEKS_GALORE
     SW4_PEEK;
     SYNC_DEVICE;
@@ -983,7 +986,7 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
 #endif
 
 #ifdef SW4_NORM_TRACE
-    if (!myRank) ofile<<"PRE-INTERFACE U_C"<<U_c.norm()<<"\n";
+    if (!myRank) ofile << "PRE-INTERFACE U_C" << U_c.norm() << "\n";
 #endif
 
     // 4.d Communicate U_c here (only k=0 plane)
@@ -1023,16 +1026,17 @@ void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
               << " abstol= " << m_abstol << std::endl;
   }
 #ifdef SW4_NORM_TRACE
-  //int myRank = 0;
-  //MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-  //std::ofstream ofile; 
-  if (!myRank){
-    //ofile.open("CIC.dat", std::ios_base::app);
-    ofile<< "CIC_END U_c="<<U_c.norm()<<" U_f "<<U_f.norm()<<"\n\n"<<std::flush;
-    //ofile.close();
+  // int myRank = 0;
+  // MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+  // std::ofstream ofile;
+  if (!myRank) {
+    // ofile.open("CIC.dat", std::ios_base::app);
+    ofile << "CIC_END U_c=" << U_c.norm() << " U_f " << U_f.norm() << "\n\n"
+          << std::flush;
+    // ofile.close();
   }
 #endif
-  
+
   SW4_MARK_BEGIN("IMPOSE_IC_5");
   // 5. Copy U_c and U_f back to a_U, only k=0 for U_c and k=n3f for U_f.
   // std::cout<<"IMPOSIC 1 "<<a_U[m_gc].norm()<<" "<<a_U[m_gf].norm()<<"\n";
@@ -1198,7 +1202,7 @@ void CurvilinearInterface2::interface_lhs(Sarray& lhs, Sarray& uc) {
   int lm_ibf = m_ibf;
   int lm_jbf = m_jbf;
   int lm_nkf = m_nkf;
- // std::cout<<"PRE PROLL"<<prollhs.norm()<<"\n";
+  // std::cout<<"PRE PROLL"<<prollhs.norm()<<"\n";
   RAJA::RangeSegment j_range2(prollhs.m_jb, prollhs.m_je + 1);
   RAJA::RangeSegment i_range2(prollhs.m_ib, prollhs.m_ie + 1);
   RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
@@ -1209,10 +1213,12 @@ void CurvilinearInterface2::interface_lhs(Sarray& lhs, Sarray& uc) {
               w1 * m_jac_fV(i, j, lm_nkf) * m_rho_fV(i, j, lm_nkf) *
               prollhsV(c, i, j, lm_nkf) /
               (lm_strx_f[i - lm_ibf] * lm_stry_f[j - lm_jbf]);
-	//	printf("LOOP %d %d %lf %lf\n",i,j,lm_strx_f[i - lm_ibf] ,lm_stry_f[j - lm_jbf]);
+        //	printf("LOOP %d %d %lf %lf\n",i,j,lm_strx_f[i - lm_ibf]
+        //,lm_stry_f[j - lm_jbf]);
       });
- // std::cout<<"JAC = "<<m_jac_f.norm()<<" RHOF = "<<m_rho_f.norm()<<"\n";
-  //std::cout<<"interface_lhs 3 "<<lhs.norm()<<"   "<<prollhs.norm()<<"\n"<<std::flush;
+  // std::cout<<"JAC = "<<m_jac_f.norm()<<" RHOF = "<<m_rho_f.norm()<<"\n";
+  // std::cout<<"interface_lhs 3 "<<lhs.norm()<<"
+  // "<<prollhs.norm()<<"\n"<<std::flush;
   if (!m_tw && !m_psource) bnd_zero(prollhs, m_nghost);
   restrict2D(lhs, prollhs, 1, m_nkf);
   // std::cout<<"interface_lhs 4 "<<lhs.norm()<<"
@@ -1860,13 +1866,13 @@ void CurvilinearInterface2::prolongate2D(Sarray& Uc, Sarray& Uf, int kc,
   auto& lm_nc = Uf.m_nc;
   auto& UcV = Uc.getview();
   auto& UfV = Uf.getview();
-  //#pragma omp parallel
-  //  {
-  //     for (int c = 1; c <= Uf.m_nc; c++)
-  // #pragma omp for
-  //       for (int j = jb1; j <= je1; j++)
-  // #pragma omp simd
-  //         for (int i = ib1; i <= ie1; i++)
+  // #pragma omp parallel
+  //   {
+  //      for (int c = 1; c <= Uf.m_nc; c++)
+  //  #pragma omp for
+  //        for (int j = jb1; j <= je1; j++)
+  //  #pragma omp simd
+  //          for (int i = ib1; i <= ie1; i++)
   RAJA::RangeSegment j_range1(jb1, je1 + 1);
   RAJA::RangeSegment i_range1(ib1, ie1 + 1);
   RAJA::kernel<DEFAULT_LOOP2X_ASYNC>(

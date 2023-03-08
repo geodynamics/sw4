@@ -7,9 +7,9 @@
 #include "cf_interface.h"
 #include "sw4.h"
 
-//#ifdef SW4_NOC
-// extern "C" {
-//#endif
+// #ifdef SW4_NOC
+//  extern "C" {
+// #endif
 
 //-----------------------------------------------------------------------
 void rhs4th3wind_host(
@@ -90,11 +90,11 @@ void rhs4th3wind_host(
 			     u2zjp2,u2zjp1,u2zjm1,u2zjm2,mu2zy,lau1xz,lau2yz,kb,qb,mb,muz1,muz2,muz3,muz4)
   {
     if (!upper && !lower) {
-      //#pragma omp for // k-loop is usually very short
+      // #pragma omp for // k-loop is usually very short
       for (k = kfirstw; k <= klastw; k++)
 #pragma omp for
         for (j = jfirst + 2; j <= jlast - 2; j++)
-        //#pragma simd
+        // #pragma simd
 #pragma ivdep
           for (i = ifirst + 2; i <= ilast - 2; i++) {
             /* from inner_loop_4a, 28x3 = 84 ops */
@@ -448,7 +448,7 @@ void rhs4th3wind_host(
 #pragma omp for
       for (k = kfirstw; k <= klastw; k++)
         for (j = jfirst + 2; j <= jlast - 2; j++)
-        //#pragma simd
+        // #pragma simd
 #pragma ivdep
           for (i = ifirst + 2; i <= ilast - 2; i++) {
             /* from inner_loop_4a */
@@ -768,7 +768,7 @@ void rhs4th3wind_host(
 #pragma omp for
       for (k = kfirstw; k <= klastw; k++)
         for (j = jfirst + 2; j <= jlast - 2; j++)
-        //#pragma simd
+        // #pragma simd
 #pragma ivdep
           for (i = ifirst + 2; i <= ilast - 2; i++) {
             /* from inner_loop_4a */
@@ -1087,6 +1087,6 @@ void rhs4th3wind_host(
   }  // endif #pragma omp parallel private
 }
 
-//#ifdef SW4_NOC
-//}
-//#endif
+// #ifdef SW4_NOC
+// }
+// #endif

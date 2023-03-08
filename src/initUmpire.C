@@ -1,23 +1,22 @@
 #ifdef SW4_USE_UMPIRE
 #include "umpire/ResourceManager.hpp"
-//#include "umpire/Umpire.hpp"
-//#include "umpire/Allocator.hpp"
-//#include "umpire/strategy/DynamicPool.hpp"
+// #include "umpire/Umpire.hpp"
+// #include "umpire/Allocator.hpp"
+// #include "umpire/strategy/DynamicPool.hpp"
 #include "umpire/strategy/QuickPool.hpp"
-//#include "umpire/strategy/MixedPool.hpp"
-//#include "umpire/util/StatisticsDatabase.hpp"
+// #include "umpire/strategy/MixedPool.hpp"
+// #include "umpire/util/StatisticsDatabase.hpp"
 #include "umpire/strategy/AlignedAllocator.hpp"
 #include "umpire/strategy/AllocationAdvisor.hpp"
 #include "umpire/strategy/MonotonicAllocationStrategy.hpp"
 #include "umpire/util/Macros.hpp"
 #endif
 #include <string>
+
 #include "Mspace.h"
 
-void init_umpire(int device){
-
-  
- #ifdef SW4_USE_UMPIRE
+void init_umpire(int device) {
+#ifdef SW4_USE_UMPIRE
   umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();
 #ifdef ENABLE_HIP
   auto allocator = rma.getAllocator("DEVICE::" + std::to_string(device));
@@ -44,10 +43,10 @@ void init_umpire(int device){
       global_variables.device);
 #endif
 
-  const int alignment = 512; // 1024 may be 1% faster on Crusher
-  auto pooled_allocator =
-      rma.makeAllocator<umpire::strategy::QuickPool, true>(
-							   std::string("UM_pool"), pref_allocator, pool_size, 1024 * 1024, alignment);
+  const int alignment = 512;  // 1024 may be 1% faster on Crusher
+  auto pooled_allocator = rma.makeAllocator<umpire::strategy::QuickPool, true>(
+      std::string("UM_pool"), pref_allocator, pool_size, 1024 * 1024,
+      alignment);
 #ifdef ENABLE_HIP
   const size_t pool_size_small = static_cast<size_t>(1024) * 1024 * 1024;
 #else
@@ -61,11 +60,11 @@ void init_umpire(int device){
   // auto pooled_allocator_small =static_cast<size_t>(250)*1024*1024;
   auto pooled_allocator_small =
       rma.makeAllocator<umpire::strategy::QuickPool, true>(
-							   std::string("UM_pool_temps"), pref_allocator, pool_size_small, 1024 * 1024,
-          alignment);
+          std::string("UM_pool_temps"), pref_allocator, pool_size_small,
+          1024 * 1024, alignment);
 
 #ifdef ENABLE_HIP
-  const size_t object_pool_size = static_cast<size_t>(3) *1024* 1024 * 1024;
+  const size_t object_pool_size = static_cast<size_t>(3) * 1024 * 1024 * 1024;
 #else
   const size_t object_pool_size = static_cast<size_t>(500) * 1024 * 1024;
 #endif
@@ -75,7 +74,7 @@ void init_umpire(int device){
 
   auto pooled_allocator_objects =
       rma.makeAllocator<umpire::strategy::QuickPool, false>(
-							    std::string("UM_object_pool"), allocator, object_pool_size);
+          std::string("UM_object_pool"), allocator, object_pool_size);
 
 #ifdef SW4_MASS_PREFETCH
   std::cout << "Mass prefetch operational\n";
@@ -104,5 +103,4 @@ void init_umpire(int device){
   //   rma.makeAllocator<umpire::strategy::QuickPool,false>(string("UM_pool_temps"),
   //                                                   allocator);
 #endif
-  
 }

@@ -39,6 +39,7 @@ __constant__ double cmem_acof[384];
 __constant__ double cmem_acof_no_gp[384];
 #endif
 #include <sstream>
+
 #include "EW.h"
 #include "Mspace.h"
 #include "caliper.h"
@@ -84,13 +85,14 @@ void add_pseudohessian_terms2(
 
 //--------------------------------------------------------------------
 void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
-	       vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, vector<Sarray>& a_Rho,
-		vector<Sarray>& U, vector<Sarray>& Um,
-		vector<DataPatches*>& Upred_saved_sides,
-   		vector<DataPatches*>& Ucorr_saved_sides, bool save_sides,
-               int event,int nsteps_in_memory, int varcase, vector<Sarray>& PseudoHessian ){
+               vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+               vector<Sarray>& a_Rho, vector<Sarray>& U, vector<Sarray>& Um,
+               vector<DataPatches*>& Upred_saved_sides,
+               vector<DataPatches*>& Ucorr_saved_sides, bool save_sides,
+               int event, int nsteps_in_memory, int varcase,
+               vector<Sarray>& PseudoHessian) {
   SW4_MARK_FUNCTION;
-  //std::cout<<"SOLVE\n";
+  // std::cout<<"SOLVE\n";
   check_ghcof_no_gp(m_ghcof_no_gp);
 #ifdef SW4_USE_CMEM
   // std::cout<<"Copying acof to constant device memory\n";
@@ -106,18 +108,18 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 #endif
 
 #ifdef SW4_NORM_TRACE
-  static  std::ofstream norm_trace_file;
-  static int ntf_opened=false;
+  static std::ofstream norm_trace_file;
+  static int ntf_opened = false;
   if ((!ntf_opened) && (!getRank())) {
-      norm_trace_file.open("Norms.dat");
-      ntf_opened=true;
+    norm_trace_file.open("Norms.dat");
+    ntf_opened = true;
   }
-  
+
 #endif
   // print_hwm(getRank());
   // solution arrays
   vector<Sarray> F(mNumberOfGrids), Lu(mNumberOfGrids), Uacc(mNumberOfGrids),
-    Up(mNumberOfGrids) ; //Um(mNumberOfGrids), U(mNumberOfGrids);
+      Up(mNumberOfGrids);  // Um(mNumberOfGrids), U(mNumberOfGrids);
   vector<Sarray*> AlphaVE(mNumberOfGrids), AlphaVEm(mNumberOfGrids),
       AlphaVEp(mNumberOfGrids);
   // vectors of pointers to hold boundary forcing arrays in each grid
@@ -186,7 +188,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     Up[g].define(3, ifirst, ilast, jfirst, jlast, kfirst, klast);
     Um[g].define(3, ifirst, ilast, jfirst, jlast, kfirst, klast);
     U[g].define(3, ifirst, ilast, jfirst, jlast, kfirst, klast);
-    F[g].set_to_zero(); // are these required ?
+    F[g].set_to_zero();  // are these required ?
     Lu[g].set_to_zero();
     Uacc[g].set_to_zero();
     Up[g].set_to_zero();
@@ -197,7 +199,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
         AlphaVE[g][a].define(3, ifirst, ilast, jfirst, jlast, kfirst, klast);
         AlphaVEp[g][a].define(3, ifirst, ilast, jfirst, jlast, kfirst, klast);
         AlphaVEm[g][a].define(3, ifirst, ilast, jfirst, jlast, kfirst, klast);
-	AlphaVE[g][a].set_to_zero(); // Are these required ?
+        AlphaVE[g][a].set_to_zero();  // Are these required ?
         AlphaVEp[g][a].set_to_zero();
         AlphaVEm[g][a].set_to_zero();
       }
@@ -205,14 +207,14 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   }
   // done allocating solution arrays
 
-  setup_MR_coefficients(a_Rho, a_Mu, a_Lambda); // MERGE
+  setup_MR_coefficients(a_Rho, a_Mu, a_Lambda);  // MERGE
 
   // Setup curvilinear grid refinement interface
   for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++)
-    m_cli2[g - mNumberOfCartesianGrids]->init_arrays(m_sg_str_x, m_sg_str_y,
-                                                     a_Rho, a_Mu, a_Lambda); // MERGE
+    m_cli2[g - mNumberOfCartesianGrids]->init_arrays(
+        m_sg_str_x, m_sg_str_y, a_Rho, a_Mu, a_Lambda);  // MERGE
 
-   // Allocate boundary sides
+  // Allocate boundary sides
   for (int g = 0; g < mNumberOfGrids; g++) {
     stringstream procno;
     procno << m_myRank << "." << g << ".ev" << eglobal;
@@ -281,7 +283,6 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
              << " doubles for each time step " << endl;
     }
   }
-
 
 // Set the number of time steps, allocate the recording arrays, and set
 // reference time in all time series objects
@@ -464,8 +465,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
            << endl;
 #endif
 #else
-    m_check_point->read_checkpoint_scr(t, beginCycle, Um, U, AlphaVEm,
-                                          AlphaVE);
+    m_check_point->read_checkpoint_scr(t, beginCycle, Um, U, AlphaVEm, AlphaVE);
 
 #endif
 
@@ -541,99 +541,101 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   //     mImage3DFiles[i3]->update_image( t, 0, mDt, U, mRho, mMu, mLambda,
   //     mRho, mMu, mLambda, mQp, mQs, mPath, mZ );
 
-
   // do some testing...
   initial_tw_test(U, Up, F, a_Mu, a_Lambda, Lu, Uacc, AlphaVE, point_sources,
                   identsources, t);
-//   if (m_twilight_forcing &&
-//       getVerbosity() >= 3)  // only do these tests if verbose>=3
-//   {
-//     if (!mQuiet && proc_zero()) cout << "***Twilight Testing..." << endl;
+  //   if (m_twilight_forcing &&
+  //       getVerbosity() >= 3)  // only do these tests if verbose>=3
+  //   {
+  //     if (!mQuiet && proc_zero()) cout << "***Twilight Testing..." << endl;
 
-//     // output some internal flags
-//     for (int g = 0; g < mNumberOfGrids; g++) {
-//       printf("proc=%i, Onesided[grid=%i]:", m_myRank, g);
-//       for (int q = 0; q < 6; q++) printf(" os[%i]=%i", q, m_onesided[g][q]);
-//       printf("\n");
-//       printf("proc=%i, bcType[grid=%i]:", m_myRank, g);
-//       for (int q = 0; q < 6; q++) printf(" bc[%i]=%i", q, m_bcType[g][q]);
-//       printf("\n");
-//     }
+  //     // output some internal flags
+  //     for (int g = 0; g < mNumberOfGrids; g++) {
+  //       printf("proc=%i, Onesided[grid=%i]:", m_myRank, g);
+  //       for (int q = 0; q < 6; q++) printf(" os[%i]=%i", q,
+  //       m_onesided[g][q]); printf("\n"); printf("proc=%i, bcType[grid=%i]:",
+  //       m_myRank, g); for (int q = 0; q < 6; q++) printf(" bc[%i]=%i", q,
+  //       m_bcType[g][q]); printf("\n");
+  //     }
 
-//     // test accuracy of spatial approximation
-//     if (proc_zero())
-//       printf(
-//           "\n Testing the accuracy of the spatial difference approximation\n");
-//     exactRhsTwilight(t, F);
-//     evalRHS(U, mMu, mLambda, Up, AlphaVE);  // save Lu in composite grid 'Up'
+  //     // test accuracy of spatial approximation
+  //     if (proc_zero())
+  //       printf(
+  //           "\n Testing the accuracy of the spatial difference
+  //           approximation\n");
+  //     exactRhsTwilight(t, F);
+  //     evalRHS(U, mMu, mLambda, Up, AlphaVE);  // save Lu in composite grid
+  //     'Up'
 
-//     // evaluate and print errors
-//     float_sw4* lowZ = new float_sw4[3 * mNumberOfGrids];
-//     float_sw4* interiorZ = new float_sw4[3 * mNumberOfGrids];
-//     float_sw4* highZ = new float_sw4[3 * mNumberOfGrids];
-//     //    float_sw4 lowZ[3], interiorZ[3], highZ[3];
-//     bndryInteriorDifference(F, Up, lowZ, interiorZ, highZ);
+  //     // evaluate and print errors
+  //     float_sw4* lowZ = new float_sw4[3 * mNumberOfGrids];
+  //     float_sw4* interiorZ = new float_sw4[3 * mNumberOfGrids];
+  //     float_sw4* highZ = new float_sw4[3 * mNumberOfGrids];
+  //     //    float_sw4 lowZ[3], interiorZ[3], highZ[3];
+  //     bndryInteriorDifference(F, Up, lowZ, interiorZ, highZ);
 
-//     float_sw4* tmp = new float_sw4[3 * mNumberOfGrids];
-//     for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = lowZ[i];
-//     MPI_Reduce(tmp, lowZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
-//                m_cartesian_communicator);
-//     for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = interiorZ[i];
-//     MPI_Reduce(tmp, interiorZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
-//                m_cartesian_communicator);
-//     for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = highZ[i];
-//     MPI_Reduce(tmp, highZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
-//                m_cartesian_communicator);
+  //     float_sw4* tmp = new float_sw4[3 * mNumberOfGrids];
+  //     for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = lowZ[i];
+  //     MPI_Reduce(tmp, lowZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
+  //                m_cartesian_communicator);
+  //     for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = interiorZ[i];
+  //     MPI_Reduce(tmp, interiorZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
+  //                m_cartesian_communicator);
+  //     for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = highZ[i];
+  //     MPI_Reduce(tmp, highZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
+  //                m_cartesian_communicator);
 
-//     if (proc_zero()) {
-//       for (int g = 0; g < mNumberOfGrids; g++) {
-//         printf("Grid nr: %3i \n", g);
-//         printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n",
-//                lowZ[3 * g], lowZ[3 * g + 1], lowZ[3 * g + 2]);
-//         printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n",
-//                interiorZ[3 * g], interiorZ[3 * g + 1], interiorZ[3 * g + 2]);
-//         printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n",
-//                highZ[3 * g], highZ[3 * g + 1], highZ[3 * g + 2]);
-//       }
-//     }
-// #ifdef PEEKS_GALORE
-//     SW4_PEEK;
-//     SYNC_DEVICE;
-// #endif
+  //     if (proc_zero()) {
+  //       for (int g = 0; g < mNumberOfGrids; g++) {
+  //         printf("Grid nr: %3i \n", g);
+  //         printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n",
+  //                lowZ[3 * g], lowZ[3 * g + 1], lowZ[3 * g + 2]);
+  //         printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n",
+  //                interiorZ[3 * g], interiorZ[3 * g + 1], interiorZ[3 * g +
+  //                2]);
+  //         printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n",
+  //                highZ[3 * g], highZ[3 * g + 1], highZ[3 * g + 2]);
+  //       }
+  //     }
+  // #ifdef PEEKS_GALORE
+  //     SW4_PEEK;
+  //     SYNC_DEVICE;
+  // #endif
 
-//     // test accuracy of forcing
-//     evalRHS(U, mMu, mLambda, Lu, AlphaVE);  // save Lu in composite grid 'Lu'
-//     Force(t, F, point_sources, identsources);
-//     exactAccTwilight(t, Uacc);  // save Utt in Uacc
-//     test_RhoUtt_Lu(Uacc, Lu, F, lowZ, interiorZ, highZ);
+  //     // test accuracy of forcing
+  //     evalRHS(U, mMu, mLambda, Lu, AlphaVE);  // save Lu in composite grid
+  //     'Lu' Force(t, F, point_sources, identsources); exactAccTwilight(t,
+  //     Uacc);  // save Utt in Uacc test_RhoUtt_Lu(Uacc, Lu, F, lowZ,
+  //     interiorZ, highZ);
 
-//     for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = lowZ[i];
-//     MPI_Reduce(tmp, lowZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
-//                m_cartesian_communicator);
-//     for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = interiorZ[i];
-//     MPI_Reduce(tmp, interiorZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
-//                m_cartesian_communicator);
-//     for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = highZ[i];
-//     MPI_Reduce(tmp, highZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
-//                m_cartesian_communicator);
+  //     for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = lowZ[i];
+  //     MPI_Reduce(tmp, lowZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
+  //                m_cartesian_communicator);
+  //     for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = interiorZ[i];
+  //     MPI_Reduce(tmp, interiorZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
+  //                m_cartesian_communicator);
+  //     for (int i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = highZ[i];
+  //     MPI_Reduce(tmp, highZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
+  //                m_cartesian_communicator);
 
-//     if (proc_zero()) {
-//       printf("Testing accuracy of rho*utt - L(u) = F\n");
-//       for (int g = 0; g < mNumberOfGrids; g++) {
-//         printf("Grid nr: %3i \n", g);
-//         printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n",
-//                lowZ[3 * g], lowZ[3 * g + 1], lowZ[3 * g + 2]);
-//         printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n",
-//                interiorZ[3 * g], interiorZ[3 * g + 1], interiorZ[3 * g + 2]);
-//         printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n",
-//                highZ[3 * g], highZ[3 * g + 1], highZ[3 * g + 2]);
-//       }
-//     }
-//     delete[] tmp;
-//     delete[] lowZ;
-//     delete[] interiorZ;
-//     delete[] highZ;
-//   }  // end m_twilight_forcing
+  //     if (proc_zero()) {
+  //       printf("Testing accuracy of rho*utt - L(u) = F\n");
+  //       for (int g = 0; g < mNumberOfGrids; g++) {
+  //         printf("Grid nr: %3i \n", g);
+  //         printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n",
+  //                lowZ[3 * g], lowZ[3 * g + 1], lowZ[3 * g + 2]);
+  //         printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n",
+  //                interiorZ[3 * g], interiorZ[3 * g + 1], interiorZ[3 * g +
+  //                2]);
+  //         printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n",
+  //                highZ[3 * g], highZ[3 * g + 1], highZ[3 * g + 2]);
+  //       }
+  //     }
+  //     delete[] tmp;
+  //     delete[] lowZ;
+  //     delete[] interiorZ;
+  //     delete[] highZ;
+  //   }  // end m_twilight_forcing
 
   // global_prefetch();
   // after checkpoint restart, we must communicate the memory variables
@@ -694,7 +696,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 #endif
   // Impose un-coupled free surface boundary condition with visco-elastic terms
   // for 'Up'
-  //if (m_use_attenuation && (m_number_mechanisms > 0)) {
+  // if (m_use_attenuation && (m_number_mechanisms > 0)) {
   //  enforceBCfreeAtt2(U, mMu, mLambda, AlphaVE, BCForcing);
   //}
 
@@ -753,7 +755,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     enforceBC(Um, a_Rho, mMu, mLambda, AlphaVEm, t - mDt, BCForcing);
   // Impose un-coupled free surface boundary condition with visco-elastic terms
   // for 'Up'
-  //if (m_use_attenuation && (m_number_mechanisms > 0)) {
+  // if (m_use_attenuation && (m_number_mechanisms > 0)) {
   //  enforceBCfreeAtt2(Um, mMu, mLambda, AlphaVEm, BCForcing);
   // }
 
@@ -764,7 +766,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
                            t);
   // if (m_twilight_forcing && m_check_point->do_restart() &&
   //     getVerbosity() >= 3) {
-  //   if (proc_zero()) printf("Checking the accuracy of the checkpoint data\n");
+  //   if (proc_zero()) printf("Checking the accuracy of the checkpoint
+  //   data\n");
 
   //   // check the accuracy of the initial data, store exact solution in Up,
   //   // ignore AlphaVE
@@ -774,7 +777,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   //   normOfDifference(Up, U, errInf, errL2, solInf, a_Sources);
 
   //   if (proc_zero())
-  //     printf("\n Checkpoint errors in U: Linf = %15.7e, L2 = %15.7e\n", errInf,
+  //     printf("\n Checkpoint errors in U: Linf = %15.7e, L2 = %15.7e\n",
+  //     errInf,
   //            errL2);
 
   //   if (m_use_attenuation) {
@@ -786,7 +790,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   //     normOfDifference(Aex, A, errInf, errL2, solInf, a_Sources);
   //     if (proc_zero())
   //       printf(
-  //           " Checkpoint solution errors, attenuation at t: Linf = %15.7e, L2 "
+  //           " Checkpoint solution errors, attenuation at t: Linf = %15.7e, L2
+  //           "
   //           "= %15.7e\n",
   //           errInf, errL2);
   //   }
@@ -797,7 +802,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   //   normOfDifference(Up, Um, errInf, errL2, solInf, a_Sources);
 
   //   if (proc_zero())
-  //     printf("\n Checkpoint errors in Um: Linf = %15.7e, L2 = %15.7e\n", errInf,
+  //     printf("\n Checkpoint errors in Um: Linf = %15.7e, L2 = %15.7e\n",
+  //     errInf,
   //            errL2);
 
   //   if (m_use_attenuation) {
@@ -809,9 +815,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   //     normOfDifference(Aex, A, errInf, errL2, solInf, a_Sources);
   //     if (proc_zero())
   //       printf(
-  //           " Checkpoint solution errors, attenuation at t-dt: Linf = %15.7e, "
-  //           "L2 = %15.7e\n",
-  //           errInf, errL2);
+  //           " Checkpoint solution errors, attenuation at t-dt: Linf = %15.7e,
+  //           " "L2 = %15.7e\n", errInf, errL2);
   //   }
   // }  // end if twilight testing
 
@@ -825,8 +830,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     }
 
     // compute Uacc = L(U) and Vacc=L(V); V=Um
-    evalRHS(U, a_Mu, a_Lambda, Lu, AlphaVE);     // save Lu in composite grid 'Lu'
-    evalRHS(Um, a_Mu, a_Lambda, Uacc, AlphaVE);  // save Lu in composite grid 'Lu'
+    evalRHS(U, a_Mu, a_Lambda, Lu, AlphaVE);  // save Lu in composite grid 'Lu'
+    evalRHS(Um, a_Mu, a_Lambda, Uacc,
+            AlphaVE);  // save Lu in composite grid 'Lu'
     // should not be necessary to communicate across processor boundaries to
     // make ghost points agree
 
@@ -899,7 +905,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       int j0 = a_TimeSeries[ts]->m_j0;
       int k0 = a_TimeSeries[ts]->m_k0;
       int grid0 = a_TimeSeries[ts]->m_grid0;
-      //gset.insert(grid0);
+      // gset.insert(grid0);
       extractRecordData(a_TimeSeries[ts]->getMode(), i0, j0, k0, grid0, uRec,
                         Um, U);
       a_TimeSeries[ts]->recordData(uRec);
@@ -908,26 +914,29 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
 #ifdef SW4_PREFETCH_AFTER_TS
   //
-  // This option reduces solve time by 1.5% for a single node case with 4K receivers
-  // on Perlmutter. Probably slower with smaller receiver counts and on Coral machines
+  // This option reduces solve time by 1.5% for a single node case with 4K
+  // receivers on Perlmutter. Probably slower with smaller receiver counts and
+  // on Coral machines
   //
   std::set<int> gset;
   for (int ts = 0; ts < a_TimeSeries.size(); ts++) {
-     if (a_TimeSeries[ts]->myPoint()) {
-        int grid0 = a_TimeSeries[ts]->m_grid0;
-	gset.insert(grid0);
-     }
+    if (a_TimeSeries[ts]->myPoint()) {
+      int grid0 = a_TimeSeries[ts]->m_grid0;
+      gset.insert(grid0);
+    }
   }
-  std::cout<<"PREFETCH AFTER TIMESERIES DATA EXTRACT ACTIVE IN "<<gset.size()<<" grids \n";
-  for( auto p=gset.begin();p!=gset.end();p++){
-	  std::cout<<" Prefetch active in grid  "<<*p<<"\n";
+  std::cout << "PREFETCH AFTER TIMESERIES DATA EXTRACT ACTIVE IN "
+            << gset.size() << " grids \n";
+  for (auto p = gset.begin(); p != gset.end(); p++) {
+    std::cout << " Prefetch active in grid  " << *p << "\n";
   }
 #endif
- 
-  //Um[grid0].forceprefetch();
-  // save any images for cycle = 0 (initial data), or beginCycle-1 (checkpoint
-  // restart)
-  update_images(beginCycle - 1, t, U, Um, Up, a_Rho, a_Mu, a_Lambda, a_Sources, 1);
+
+  // Um[grid0].forceprefetch();
+  //  save any images for cycle = 0 (initial data), or beginCycle-1 (checkpoint
+  //  restart)
+  update_images(beginCycle - 1, t, U, Um, Up, a_Rho, a_Mu, a_Lambda, a_Sources,
+                1);
   for (int i3 = 0; i3 < mImage3DFiles.size(); i3++)
     mImage3DFiles[i3]->update_image(beginCycle - 1, t, mDt, U, a_Rho, a_Mu,
                                     a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs,
@@ -977,15 +986,14 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     printf("End report of internal flags and settings\n\n");
   }
 
-    if (save_sides) {
-      for (int g = 0; g < mNumberOfGrids; g++) {
-	Upred_saved_sides[g]->push(Um[g], -1);
-	Upred_saved_sides[g]->push(U[g], 0);
-	Ucorr_saved_sides[g]->push(Um[g], -1);
-	Ucorr_saved_sides[g]->push(U[g], 0);
-      }
+  if (save_sides) {
+    for (int g = 0; g < mNumberOfGrids; g++) {
+      Upred_saved_sides[g]->push(Um[g], -1);
+      Upred_saved_sides[g]->push(U[g], 0);
+      Ucorr_saved_sides[g]->push(Um[g], -1);
+      Ucorr_saved_sides[g]->push(U[g], 0);
     }
-
+  }
 
   if (!mQuiet && proc_zero()) cout << "  Begin time stepping..." << endl;
 #ifdef PEEKS_GALORE
@@ -1008,7 +1016,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
   // Begin time stepping loop
   for (int g = 0; g < mNumberOfGrids; g++) Up[g].set_to_zero();
-  //  for (int g = 0; g < mNumberOfGrids; g++) Lu[g].set_to_zero(); // MERGE_PBUGS
+  //  for (int g = 0; g < mNumberOfGrids; g++) Lu[g].set_to_zero(); //
+  //  MERGE_PBUGS
 
   if (m_do_geodynbc) advance_geodyn_time(t + mDt);
 
@@ -1023,13 +1032,12 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     }
   }
 #endif
-  Force(t, F, point_sources, identsources,true);
+  Force(t, F, point_sources, identsources, true);
 
   double time_start_solve = MPI_Wtime();
   print_execution_time(time_start_init, time_start_solve, "initial data phase");
 #ifdef SW4_NORM_TRACE
   if (!getRank()) {
-
     for (int g = 0; g < mNumberOfGrids; g++) {
       norm_trace_file << "POST_FORCE Up[" << g << "] " << Up[g].norm()
                       << " LU = " << Lu[g].norm() << " F = " << F[g].norm()
@@ -1068,7 +1076,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     global_variables.firstCycle = currentTimeStep == beginCycle;
     global_variables.current_step = currentTimeStep;
     if (currentTimeStep == mNumberOfTimeSteps[event]) t1 = SW4_CHRONO_NOW;
-    //if (currentTimeStep == (beginCycle + 2)) print_hwm(getRank());
+    // if (currentTimeStep == (beginCycle + 2)) print_hwm(getRank());
     if (currentTimeStep == (beginCycle + 10)) {
       PROFILER_START;
 #ifdef SW4_USE_HPCT
@@ -1077,7 +1085,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       // SW4_MARK_BEGIN("CLEAN_TIME");
       end_clean_time_reg = true;
 #ifdef ENABLE_CUDA
-      //SW4_MARK_BEGIN("TIME_STEPPING");
+      // SW4_MARK_BEGIN("TIME_STEPPING");
 #endif
 #ifdef SW4_TRACK_MPI
       t6 = SW4_CHRONO_NOW;
@@ -1304,10 +1312,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       // interface conditions for 2nd order in time
       // NOTE: this routine calls preliminary_predictor for t+dt, which needs
       // F(t+dt). It is computed at the top of next time step
-      enforceIC2(Up, U, Um, AlphaVEp, t, F, point_sources,a_Rho, a_Mu,
+      enforceIC2(Up, U, Um, AlphaVEp, t, F, point_sources, a_Rho, a_Mu,
                  a_Lambda);
-      //enforceIC2(Up, U, Um, AlphaVEp, t, F, point_sources, a_Rho, a_Mu,
-      //          a_Lambda);
+      // enforceIC2(Up, U, Um, AlphaVEp, t, F, point_sources, a_Rho, a_Mu,
+      //           a_Lambda);
 
       if (m_output_detailed_timing) time_measure[17] = MPI_Wtime();
       SW4_MARK_END("mOrder=2");
@@ -1342,9 +1350,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       // NOTE: true means call preliminary_corrector, which needs F_tt(t) & is
       // computed 5 lines down
       enforceIC(Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, true, F,
-                point_sources,a_Rho, a_Mu, a_Lambda);  
+                point_sources, a_Rho, a_Mu, a_Lambda);
 
- #ifdef SW4_NORM_TRACE
+#ifdef SW4_NORM_TRACE
       if (!getRank()) {
         for (int g = 0; g < mNumberOfGrids; g++) {
           norm_trace_file << "PostEnforceIC Up[" << g << "] " << Up[g].norm()
@@ -1375,7 +1383,6 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       if (save_sides)
         for (int g = 0; g < mNumberOfGrids; g++)
           Upred_saved_sides[g]->push(Uacc[g], currentTimeStep);
-
 
       if (m_checkfornan) check_for_nan(Uacc, 1, "uacc ");
 
@@ -1485,7 +1492,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       // NEW (Apr. 4, 2017)
       // Impose un-coupled free surface boundary condition with visco-elastic
       // terms for 'Up'
-      //if (m_use_attenuation && (m_number_mechanisms > 0)) {
+      // if (m_use_attenuation && (m_number_mechanisms > 0)) {
       //  enforceBCfreeAtt2(Up, mMu, mLambda, AlphaVEp, BCForcing);
       //}
 
@@ -1516,7 +1523,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       // NOTE: false means call preliminary_predictor for t+dt, which needs
       // F(t+dt). It is computed at the top of next time step
       enforceIC(Up, U, Um, AlphaVEp, AlphaVE, AlphaVEm, t, false, F,
-                point_sources,a_Rho, a_Mu, a_Lambda);
+                point_sources, a_Rho, a_Mu, a_Lambda);
 
       if (m_output_detailed_timing) time_measure[17] = MPI_Wtime();
 
@@ -1567,17 +1574,19 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     update_images(currentTimeStep, t, Up, U, Um, mRho, mMu, mLambda, a_Sources,
                   currentTimeStep == mNumberOfTimeSteps[event]);
     for (int i3 = 0; i3 < mImage3DFiles.size(); i3++)
-      mImage3DFiles[i3]->update_image(
-          currentTimeStep, t, mDt, Up, a_Rho, a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda,
-          mQp, mQs, mPath[eglobal], mZ);  // mRho, mMu, mLambda occur twice
-                                        // because we don't use gradRho etc.
+      mImage3DFiles[i3]->update_image(currentTimeStep, t, mDt, Up, a_Rho, a_Mu,
+                                      a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs,
+                                      mPath[eglobal],
+                                      mZ);  // mRho, mMu, mLambda occur twice
+                                            // because we don't use gradRho etc.
 
     // Update the ESSI hdf5 data
     double time_essi_tmp = MPI_Wtime();
     gg = mNumberOfGrids - 1;  // top grid
     for (int i3 = 0; i3 < mESSI3DFiles.size(); i3++)
-      mESSI3DFiles[i3]->update_image(currentTimeStep, t, mDt, Up, mPath[eglobal],
-                                     mZ[gg]); // not verified for several cuvilinear grids
+      mESSI3DFiles[i3]->update_image(
+          currentTimeStep, t, mDt, Up, mPath[eglobal],
+          mZ[gg]);  // not verified for several cuvilinear grids
     double time_essi = MPI_Wtime() - time_essi_tmp;
 
     // save the current solution on receiver records (time-derivative require Up
@@ -1600,10 +1609,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       }
     }
 #ifdef SW4_PREFETCH_AFTER_TS
-    for( auto p=gset.begin();p!=gset.end();p++){
-          Um[*p].forceprefetch();
-          Up[*p].forceprefetch();
-  }
+    for (auto p = gset.begin(); p != gset.end(); p++) {
+      Um[*p].forceprefetch();
+      Up[*p].forceprefetch();
+    }
 #endif
 
     // Write check point, if requested (timeToWrite returns false if
@@ -1624,9 +1633,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
                 "with HDF5!"
              << endl;
 #endif
-#else			
+#else
       m_check_point->write_checkpoint_scr(t, currentTimeStep, U, Up, AlphaVE,
-                                             AlphaVEp);
+                                          AlphaVEp);
 #endif
       double time_chkpt_tmp = MPI_Wtime() - time_chkpt;
       if (m_output_detailed_timing)
@@ -1663,7 +1672,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       compute_energy(mDt, currentTimeStep == mNumberOfTimeSteps[event], Um, U,
                      Up, currentTimeStep, event);
 
-     // Accumulate pseudo-Hessian terms
+    // Accumulate pseudo-Hessian terms
     if (varcase > 0)
       addtoPseudoHessian(Um, U, Up, a_Rho, a_Mu, a_Lambda, mDt, varcase,
                          PseudoHessian);
@@ -1685,7 +1694,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     if (m_lamb_test || m_point_source_test || m_rayleigh_wave_test) {
       float_sw4 errInf = 0, errL2 = 0, solInf = 0, solL2 = 0;
       exactSol(t, Up, AlphaVE, a_Sources);  // store exact solution in Up
- 
+
       if (m_lamb_test)
         normOfSurfaceDifference(Up, U, errInf, errL2, solInf, solL2, a_Sources);
       else if (m_point_source_test || m_rayleigh_wave_test)
@@ -1703,7 +1712,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
     if (m_output_detailed_timing) {
       time_measure[19] = MPI_Wtime();
-      
+
       if (mOrder == 4) {
         time_sum[0] += time_measure[19] - time_measure[0];  // total
         time_sum[1] += time_measure[1] - time_measure[0] + time_measure[11] -
@@ -1718,14 +1727,14 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
                        time_measure[13];  // communicate
         time_sum[6] += time_measure[9] - time_measure[8] + time_measure[17] -
                        time_measure[16];  // mesh ref
-        time_sum[7] +=
-	  time_measure[18] - time_measure[17]-time_essi;  // images + time-series-essi
-                                                  //          time_sum[8] += 0;
+        time_sum[7] += time_measure[18] - time_measure[17] -
+                       time_essi;  // images + time-series-essi
+                                   //          time_sum[8] += 0;
         time_sum[8] += time_measure[2] - time_measure[1] + time_measure[5] -
                        time_measure[4] + time_measure[10] - time_measure[9] +
                        time_measure[12] - time_measure[11] + time_measure[19] -
                        time_measure[18];  // updates
-	time_sum[9] += time_essi;
+        time_sum[9] += time_essi;
 
       } else {  // 2nd order in time algorithm
         time_sum[0] += time_measure[19] - time_measure[0];  // total
@@ -1737,7 +1746,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
         time_sum[6] = 0;
         time_sum[7] = 0;
         time_sum[8] = 0;
-	time_sum[9] = 0;
+        time_sum[9] = 0;
       }
     }
 #ifdef SW4_TRACK_MPI
@@ -1775,11 +1784,11 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       // SW4_MARK_END("CLEAN_TIME");
     }
 #ifdef SW4_NORM_TRACE
-    norm_trace_file<<"DONE WITH TIME STEP"<<currentTimeStep<<"\n";
+    norm_trace_file << "DONE WITH TIME STEP" << currentTimeStep << "\n";
 #endif
-      SYNC_DEVICE;
-      SW4_PEEK;
-      SYNC_DEVICE;
+    SYNC_DEVICE;
+    SW4_PEEK;
+    SYNC_DEVICE;
   }  // end time stepping loop
   // SW4_MARK_END("CLEAN_TIME");
   SW4_MARK_END("TIME_STEPPING");
@@ -1840,7 +1849,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   for (unsigned int fIndex = 0; fIndex < mImageFiles.size(); ++fIndex)
     total_time += mImageFiles[fIndex]->get_write_time();
   MPI_Reduce(&total_time, &all_total_time, 1, MPI_DOUBLE, MPI_MAX, 0,
-            m_1d_communicator );
+             m_1d_communicator);
   if (m_myRank == 0 && all_total_time > 0.1)
     cout << "  ==> Max wallclock time to write images is " << all_total_time
          << " seconds." << endl;
@@ -1850,9 +1859,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     reverse_setup_viscoelastic();
 
   for (int ii = 0; ii < mSfiles.size(); ii++)
-    mSfiles[ii]->force_write_image(t, mNumberOfTimeSteps[event], Up, a_Rho, a_Mu,
-                                   a_Lambda, a_Rho, a_Mu, a_Lambda, mQp, mQs,
-                                   mPath[eglobal], mZ);
+    mSfiles[ii]->force_write_image(t, mNumberOfTimeSteps[event], Up, a_Rho,
+                                   a_Mu, a_Lambda, a_Rho, a_Mu, a_Lambda, mQp,
+                                   mQs, mPath[eglobal], mZ);
 
   m_check_point->finalize_hdf5();
 
@@ -1958,9 +1967,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   //      computeSolutionError(U, mTime, AlphaVE ); // note that final solution
   //      ends up in U after the call to cycleSolutionArrays()
 #ifdef SW4_NORM_TRACE
-  norm_trace_file<<"DONE WITH SOLVE\n";
+  norm_trace_file << "DONE WITH SOLVE\n";
 #endif
-  //std::cout<<" DONE WITH SOLVE\n"<<std::flush;
+  // std::cout<<" DONE WITH SOLVE\n"<<std::flush;
 }  // end EW::solve()
 
 //------------------------------------------------------------------------
@@ -1996,9 +2005,9 @@ void EW::cycleSolutionArrays(vector<Sarray>& a_Um, vector<Sarray>& a_U,
 
 //---------------------------------------------------------------------------
 void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
-		   vector<Sarray>& a_Mu,
-                   vector<Sarray>& a_Lambda, vector<Sarray*>& a_AlphaVE,
-                   float_sw4 t, vector<float_sw4**>& a_BCForcing) {
+                   vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+                   vector<Sarray*>& a_AlphaVE, float_sw4 t,
+                   vector<float_sw4**>& a_BCForcing) {
   SW4_MARK_FUNCTION;
   int g, ifirst, ilast, jfirst, jlast, kfirst, klast, nx, ny, nz;
   float_sw4 *u_ptr, *mu_ptr, *la_ptr, h;
@@ -2010,14 +2019,12 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
 
 #ifdef SW4_NORM_TRACE
   if (!getRank()) {
-
     for (int g = 0; g < mNumberOfGrids; g++) {
       norm_trace_file << "IN ENFORCEBC a_U[" << g << "] " << a_U[g].norm()
-		      << "\n";
+                      << "\n";
     }
   }
 #endif
-  
 
   for (g = 0; g < mNumberOfGrids; g++) {
     u_ptr = a_U[g].c_ptr();
@@ -2062,68 +2069,72 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
     if (usingSupergrid()) {
       // std::cout<<" THIS 1\n";
       //      if (m_croutines)
-        bcfortsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, wind_ptr, nx,
-                    ny, nz, u_ptr, h, bcType_ptr, m_sbop, mu_ptr, la_ptr, t,
-                    bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
-                    bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr, om,
-                    ph, cv, m_sg_str_x[g], m_sg_str_y[g]);
+      bcfortsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, wind_ptr, nx, ny,
+                  nz, u_ptr, h, bcType_ptr, m_sbop, mu_ptr, la_ptr, t,
+                  bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
+                  bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr, om, ph,
+                  cv, m_sg_str_x[g], m_sg_str_y[g]);
       // else
       //   bcfortsg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, wind_ptr,
-      //            &nx, &ny, &nz, u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr,
-      //            &t, bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
-      //            bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr, &om, &ph,
-      //            &cv, m_sg_str_x[g], m_sg_str_y[g]);
+      //            &nx, &ny, &nz, u_ptr, &h, bcType_ptr, m_sbop, mu_ptr,
+      //            la_ptr, &t, bforce_side0_ptr, bforce_side1_ptr,
+      //            bforce_side2_ptr, bforce_side3_ptr, bforce_side4_ptr,
+      //            bforce_side5_ptr, &om, &ph, &cv, m_sg_str_x[g],
+      //            m_sg_str_y[g]);
       int side;
       if (topo == 1 && m_bcType[g][4] == bStressFree) {
         // std::cout<<" THIS 2\n";
         side = 5;
-	//        if (m_croutines)
-          freesurfcurvisg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
-                             side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
-                             m_sbop, bforce_side4_ptr, m_sg_str_x[g],
-                             m_sg_str_y[g]);
+        //        if (m_croutines)
+        freesurfcurvisg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
+                           side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
+                           m_sbop, bforce_side4_ptr, m_sg_str_x[g],
+                           m_sg_str_y[g]);
         // else
         //   freesurfcurvisg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-        //                   &nz, &side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
-        //                   m_sbop, bforce_side4_ptr, m_sg_str_x[g],
-        //                   m_sg_str_y[g]);
+        //                   &nz, &side, u_ptr, mu_ptr, la_ptr,
+        //                   mMetric[g].c_ptr(), m_sbop, bforce_side4_ptr,
+        //                   m_sg_str_x[g], m_sg_str_y[g]);
       }
     } else {
       // std::cout<<" THIS 3 OFF \n ";
       //      if (m_croutines)
-        bcfort_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, wind_ptr, nx, ny,
-                  nz, u_ptr, h, bcType_ptr, m_sbop, mu_ptr, la_ptr, t,
-                  bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
-                  bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr, om, ph,
-                  cv, topo);
+      bcfort_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, wind_ptr, nx, ny,
+                nz, u_ptr, h, bcType_ptr, m_sbop, mu_ptr, la_ptr, t,
+                bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
+                bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr, om, ph,
+                cv, topo);
       // else
-      //   bcfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, wind_ptr, &nx,
+      //   bcfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, wind_ptr,
+      //   &nx,
       //          &ny, &nz, u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr, &t,
       //          bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
-      //          bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr, &om, &ph,
-      //          &cv, &topo);
+      //          bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr, &om,
+      //          &ph, &cv, &topo);
       int side;
       if (topo == 1 && m_bcType[g][4] == bStressFree) {
         // std::cout<<" THIS 4 OFF \n";
         side = 5;
-	//        if (m_croutines)
-          freesurfcurvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
-                           side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
-                           m_sbop, bforce_side4_ptr);
+        //        if (m_croutines)
+        freesurfcurvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz, side,
+                         u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(), m_sbop,
+                         bforce_side4_ptr);
         // else
-        //   freesurfcurvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
+        //   freesurfcurvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+        //   &nz,
         //                 &side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
         //                 m_sbop, bforce_side4_ptr);
       }
       if (topo == 1 && m_bcType[g][5] == bStressFree) {
         // std::cout<<" THIS 5\n";
         side = 6;
-	//        if (m_croutines)
-          freesurfcurvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
-                           side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
-                           m_sbop, bforce_side5_ptr);
+        //        if (m_croutines)
+        freesurfcurvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz, side,
+                         u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(), m_sbop,
+                         bforce_side5_ptr);
         // else
-        //   freesurfcurvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
+        //   freesurfcurvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+        //   &nz,
         //                 &side, u_ptr, mu_ptr, la_ptr, mMetric[g].c_ptr(),
         //                 m_sbop, bforce_side5_ptr);
       }
@@ -2132,15 +2143,13 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
 
 #ifdef SW4_NORM_TRACE
   if (!getRank()) {
-
     for (int g = 0; g < mNumberOfGrids; g++) {
       norm_trace_file << "IN ENFORCEBC END a_U[" << g << "] " << a_U[g].norm()
-		      << "\n";
+                      << "\n";
     }
   }
 #endif
 
-  
 #define SW4_RAJA_CURVIMR
 #ifdef SW4_RAJA_CURVIMR
   SW4_MARK_BEGIN("CURVI in EnforceBC");
@@ -2151,15 +2160,15 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                                            mNumberOfCartesianGrids))
       update_curvilinear_cartesian_interface(a_U);
     else
-      CurviCartIC(mNumberOfCartesianGrids - 1, a_U, a_Rho, a_Mu, a_Lambda, a_AlphaVE,
-                  t);
+      CurviCartIC(mNumberOfCartesianGrids - 1, a_U, a_Rho, a_Mu, a_Lambda,
+                  a_AlphaVE, t);
   }
   SW4_MARK_END("CURVI in EnforceBC");
   // THE CALL BELOW to enforceBCfreeAtt2 IS MADE IN SOLVE IN THE RAJA VERSION
   // AND HERE IN THE DEVELOPER BRANCH
   // Reimpose free surface condition with attenuation terms included
-   if( usingAttenuation() )
-   enforceBCfreeAtt2( a_U, a_Mu, a_Lambda, a_AlphaVE, a_BCForcing );
+  if (usingAttenuation())
+    enforceBCfreeAtt2(a_U, a_Mu, a_Lambda, a_AlphaVE, a_BCForcing);
 
   return;
 #else
@@ -2260,7 +2269,7 @@ void EW::enforceBCanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
     //       wind_ptr[6*s+1] << " " << wind_ptr[6*s+2] << " "
     //	    << wind_ptr[6*s+3] << " " << wind_ptr[6*s+4] << " " <<
     // wind_ptr[6*s+5] << endl;
-    //int topo = topographyExists() && g == mNumberOfGrids - 1;
+    // int topo = topographyExists() && g == mNumberOfGrids - 1;
 
     // THESE ARRAYS MUST BE FILLED IN BEFORE CALLING THIS ROUTINE
     // for periodic bc, a_BCForcing[g][s] == NULL, so you better not access
@@ -2273,13 +2282,14 @@ void EW::enforceBCanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
     bforce_side5_ptr = a_BCForcing[g][5];  // high-k bndry forcing array pointer
 
     //    if (m_croutines)
-      bcfortanisg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, wind_ptr, nx,
-                     ny, nz, u_ptr, h, bcType_ptr, m_sbop, c_ptr,
-                     bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
-                     bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr,
-                     m_sg_str_x[g], m_sg_str_y[g]);
+    bcfortanisg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, wind_ptr, nx,
+                   ny, nz, u_ptr, h, bcType_ptr, m_sbop, c_ptr,
+                   bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
+                   bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr,
+                   m_sg_str_x[g], m_sg_str_y[g]);
     // else
-    //   bcfortanisg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, wind_ptr,
+    //   bcfortanisg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+    //   wind_ptr,
     //               &nx, &ny, &nz, u_ptr, &h, bcType_ptr, m_sbop, c_ptr,
     //               bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
     //               bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr,
@@ -2289,13 +2299,14 @@ void EW::enforceBCanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
       int fside = 5;
       float_sw4* cc_ptr = mCcurv.c_ptr();
       //      if (m_croutines)
-        bcfreesurfcurvani_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
-                             u_ptr, cc_ptr, fside, m_sbop, bforce_side4_ptr,
-                             bforce_side5_ptr, m_sg_str_x[g], m_sg_str_y[g]);
+      bcfreesurfcurvani_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
+                           u_ptr, cc_ptr, fside, m_sbop, bforce_side4_ptr,
+                           bforce_side5_ptr, m_sg_str_x[g], m_sg_str_y[g]);
       // else
       //   bcfreesurfcurvani(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-      //                     &nz, u_ptr, cc_ptr, &fside, m_sbop, bforce_side4_ptr,
-      //                     bforce_side5_ptr, m_sg_str_x[g], m_sg_str_y[g]);
+      //                     &nz, u_ptr, cc_ptr, &fside, m_sbop,
+      //                     bforce_side4_ptr, bforce_side5_ptr, m_sg_str_x[g],
+      //                     m_sg_str_y[g]);
     }
   }
   update_curvilinear_cartesian_interface(a_U);
@@ -2306,7 +2317,7 @@ void EW::update_curvilinear_cartesian_interface(vector<Sarray>& a_U) {
   if (topographyExists()) {
     const int nc = 3;
     int g = mNumberOfCartesianGrids - 1;
-    int gc = g+1;
+    int gc = g + 1;
     const int mgp = getNumberOfGhostPoints();
     //      float_sw4 nrm[3]={0,0,0};
     //      int q, i, j;
@@ -2365,7 +2376,7 @@ void EW::update_curvilinear_cartesian_interface_org(vector<Sarray>& a_U) {
   SYNC_STREAM;
   if (topographyExists()) {
     int g = mNumberOfCartesianGrids - 1;
-    int gc = g+1;
+    int gc = g + 1;
     int nc = a_U[0].m_nc;
 // inject solution values between lower boundary of gc and upper boundary of g
 #pragma omp parallel for
@@ -2395,12 +2406,12 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                    vector<Sarray*>& a_AlphaVE, vector<Sarray*>& a_AlphaVEm,
                    float_sw4 time, bool predictor, vector<Sarray>& F,
                    vector<GridPointSource*>& point_sources,
-		   vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
+                   vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
                    vector<Sarray>& a_Lambda, bool backward) {
   SW4_MARK_FUNCTION;
   float_sw4 dt = mDt;
   if (backward) dt = -dt;
-  
+
   for (int g = 0; g < mNumberOfCartesianGrids - 1; g++) {
     // Interpolate between g and g+1, assume factor 2 refinement with at least
     // three ghost points
@@ -2468,14 +2479,13 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
 
       // get the interior contribution to the displacements on the interface for
       // the corrector (depends on the corrector value of AlphaVEp)
-      compute_preliminary_corrector(a_Up[g + 1], a_U[g + 1], a_Um[g + 1],
-                                    a_AlphaVEp[g + 1], a_AlphaVE[g + 1],
-                                    a_AlphaVEm[g + 1], Uf_tt, Unextf, g + 1, kf,
-                                    time, F[g + 1], point_sources,
-				    a_Rho[g + 1], a_Mu[g + 1], a_Lambda[g + 1]);
+      compute_preliminary_corrector(
+          a_Up[g + 1], a_U[g + 1], a_Um[g + 1], a_AlphaVEp[g + 1],
+          a_AlphaVE[g + 1], a_AlphaVEm[g + 1], Uf_tt, Unextf, g + 1, kf, time,
+          F[g + 1], point_sources, a_Rho[g + 1], a_Mu[g + 1], a_Lambda[g + 1]);
       compute_preliminary_corrector(a_Up[g], a_U[g], a_Um[g], a_AlphaVEp[g],
                                     a_AlphaVE[g], a_AlphaVEm[g], Uc_tt, Unextc,
-                                    g, kc, time, F[g], point_sources,a_Rho[g],
+                                    g, kc, time, F[g], point_sources, a_Rho[g],
                                     a_Mu[g], a_Lambda[g]);
       if (!m_doubly_periodic) {
         // dirichlet conditions for Unextc in super-grid layer at time t+dt
@@ -2488,11 +2498,11 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
       SW4_MARK_BEGIN("enforceIC::CORRECTOR");
       compute_preliminary_predictor(a_Up[g + 1], a_U[g + 1], a_AlphaVEp[g + 1],
                                     Unextf, g + 1, kf, time + dt, F[g + 1],
-                                    point_sources,a_Rho[g + 1], a_Mu[g + 1],
+                                    point_sources, a_Rho[g + 1], a_Mu[g + 1],
                                     a_Lambda[g + 1]);
       compute_preliminary_predictor(a_Up[g], a_U[g], a_AlphaVEp[g], Unextc, g,
                                     kc, time + dt, F[g], point_sources,
-				    a_Rho[g], a_Mu[g], a_Lambda[g]);
+                                    a_Rho[g], a_Mu[g], a_Lambda[g]);
 
       if (!m_doubly_periodic) {
         // dirichlet conditions for Unextc in super-grid layer at time t+2*dt
@@ -2572,9 +2582,9 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     int is_periodic[2] = {0, 0};
     if (m_doubly_periodic) is_periodic[0] = is_periodic[1] = 1;
 
-    consintp(a_Up[g + 1], Unextf, Bf, a_Mu[g + 1], a_Lambda[g + 1], a_Rho[g + 1],
-             mGridSize[g + 1], a_Up[g], Unextc, Bc, a_Mu[g], a_Lambda[g], a_Rho[g],
-             mGridSize[g], cof, g, g + 1, is_periodic);
+    consintp(a_Up[g + 1], Unextf, Bf, a_Mu[g + 1], a_Lambda[g + 1],
+             a_Rho[g + 1], mGridSize[g + 1], a_Up[g], Unextc, Bc, a_Mu[g],
+             a_Lambda[g], a_Rho[g], mGridSize[g], cof, g, g + 1, is_periodic);
     //      CHECK_INPUT(false," controlled termination");
 
     // Finally, restore the ghost point values on the sides of the domain.
@@ -2588,7 +2598,7 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
   for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++) {
     //         m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up,
     //         time+mDt );
-    m_cli2[g - mNumberOfCartesianGrids]->impose_ic(a_Up, time + dt, F, 
+    m_cli2[g - mNumberOfCartesianGrids]->impose_ic(a_Up, time + dt, F,
                                                    a_AlphaVEp);
     //      check_ic_conditions( g, a_Up );
   }
@@ -2602,7 +2612,7 @@ void EW::enforceIC2(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                     vector<Sarray>& a_Um, vector<Sarray*>& a_AlphaVEp,
                     float_sw4 time, vector<Sarray>& F,
                     vector<GridPointSource*>& point_sources,
-		    vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
+                    vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
                     vector<Sarray>& a_Lambda) {
   SW4_MARK_FUNCTION;
   bool predictor = false;  // or true???
@@ -2655,10 +2665,10 @@ void EW::enforceIC2(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     //
     compute_preliminary_predictor(a_Up[g + 1], a_U[g + 1], a_AlphaVEp[g + 1],
                                   Unextf, g + 1, kf, time + mDt, F[g + 1],
-                                  point_sources,a_Rho[g + 1], a_Mu[g + 1],
+                                  point_sources, a_Rho[g + 1], a_Mu[g + 1],
                                   a_Lambda[g + 1]);
     compute_preliminary_predictor(a_Up[g], a_U[g], a_AlphaVEp[g], Unextc, g, kc,
-                                  time + mDt, F[g], point_sources,a_Rho[g],
+                                  time + mDt, F[g], point_sources, a_Rho[g],
                                   a_Mu[g], a_Lambda[g]);
 
     if (!m_doubly_periodic) {
@@ -2761,7 +2771,7 @@ void EW::enforceIC2(vector<Sarray>& a_Up, vector<Sarray>& a_U,
   for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++) {
     //      m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt
     //      );
-    m_cli2[g - mNumberOfCartesianGrids]->impose_ic(a_Up, time + mDt,F,
+    m_cli2[g - mNumberOfCartesianGrids]->impose_ic(a_Up, time + mDt, F,
                                                    a_AlphaVEp);
   }
 }  // end enforceIC2
@@ -2780,13 +2790,17 @@ void EW::check_corrector(Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc,
                    (Uc(c, ic - 1, jc, kc) + Uc(c, ic + 2, jc, kc))) /
                   16;
   // float_sw4 pcim = (9 * (Uc(c, ic, jc - 1, kc) + Uc(c, ic + 1, jc - 1, kc)) -
-  //                   (Uc(c, ic - 1, jc - 1, kc) + Uc(c, ic + 2, jc - 1, kc))) /
+  //                   (Uc(c, ic - 1, jc - 1, kc) + Uc(c, ic + 2, jc - 1, kc)))
+  //                   /
   //                  16;
   // float_sw4 pcip = (9 * (Uc(c, ic, jc + 1, kc) + Uc(c, ic + 1, jc + 1, kc)) -
-  //                   (Uc(c, ic - 1, jc + 1, kc) + Uc(c, ic + 2, jc + 1, kc))) /
+  //                   (Uc(c, ic - 1, jc + 1, kc) + Uc(c, ic + 2, jc + 1, kc)))
+  //                   /
   //                  16;
-  // float_sw4 pcipp = (9 * (Uc(c, ic, jc + 2, kc) + Uc(c, ic + 1, jc + 2, kc)) -
-  //                    (Uc(c, ic - 1, jc + 2, kc) + Uc(c, ic + 2, jc + 2, kc))) /
+  // float_sw4 pcipp = (9 * (Uc(c, ic, jc + 2, kc) + Uc(c, ic + 1, jc + 2, kc))
+  // -
+  //                    (Uc(c, ic - 1, jc + 2, kc) + Uc(c, ic + 2, jc + 2, kc)))
+  //                    /
   //                   16;
 
   // // float_sw4 pc = ( 9*(pci+pcip)-(pcim+pcipp))/16;
@@ -2990,13 +3004,14 @@ void EW::dirichlet_twilight_ic(Sarray& U, int g, int kic, float_sw4 t) {
     float_sw4 h = mGridSize[g];
     float_sw4* u_ptr = U.c_ptr();
     //    if (m_croutines)
-      twilightfortwind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], kdb,
-                          kde, u_ptr, t, om, cv, ph, h, m_zmin[g], i1, i2, j1,
-                          j2, kic, kic);
+    twilightfortwind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], kdb,
+                        kde, u_ptr, t, om, cv, ph, h, m_zmin[g], i1, i2, j1, j2,
+                        kic, kic);
     // else
-    //   twilightfortwind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g], &kdb,
-    //                    &kde, u_ptr, &t, &om, &cv, &ph, &h, &m_zmin[g], &i1, &i2,
-    //                    &j1, &j2, &kic, &kic);
+    //   twilightfortwind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+    //   &kdb,
+    //                    &kde, u_ptr, &t, &om, &cv, &ph, &h, &m_zmin[g], &i1,
+    //                    &i2, &j1, &j2, &kic, &kic);
   }
 }
 
@@ -3081,52 +3096,52 @@ void EW::dirichlet_LRic(Sarray& U, int g, int kic, float_sw4 t, int adj) {
       int i1 = m_iStart[g], i2 = m_iStartInt[g] - adj;
       int j1 = m_jStart[g], j2 = m_jEnd[g];
       //      if (m_croutines)
-        twilightfortwind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], kdb,
-                            kde, u_ptr, t, om, cv, ph, h, m_zmin[g], i1, i2, j1,
-                            j2, kic, kic);
+      twilightfortwind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], kdb,
+                          kde, u_ptr, t, om, cv, ph, h, m_zmin[g], i1, i2, j1,
+                          j2, kic, kic);
       // else
       //   twilightfortwind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-      //                    &kdb, &kde, u_ptr, &t, &om, &cv, &ph, &h, &m_zmin[g],
-      //                    &i1, &i2, &j1, &j2, &kic, &kic);
+      //                    &kdb, &kde, u_ptr, &t, &om, &cv, &ph, &h,
+      //                    &m_zmin[g], &i1, &i2, &j1, &j2, &kic, &kic);
     }
     if (m_iEndInt[g] == m_global_nx[g]) {
       // high i-side
       int i1 = m_iEndInt[g] + adj, i2 = m_iEnd[g];
       int j1 = m_jStart[g], j2 = m_jEnd[g];
       //      if (m_croutines)
-        twilightfortwind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], kdb,
-                            kde, u_ptr, t, om, cv, ph, h, m_zmin[g], i1, i2, j1,
-                            j2, kic, kic);
+      twilightfortwind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], kdb,
+                          kde, u_ptr, t, om, cv, ph, h, m_zmin[g], i1, i2, j1,
+                          j2, kic, kic);
       // else
       //   twilightfortwind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-      //                    &kdb, &kde, u_ptr, &t, &om, &cv, &ph, &h, &m_zmin[g],
-      //                    &i1, &i2, &j1, &j2, &kic, &kic);
+      //                    &kdb, &kde, u_ptr, &t, &om, &cv, &ph, &h,
+      //                    &m_zmin[g], &i1, &i2, &j1, &j2, &kic, &kic);
     }
     if (m_jStartInt[g] == 1) {
       // low j-side
       int i1 = m_iStart[g], i2 = m_iEnd[g];
       int j1 = m_jStart[g], j2 = m_jStartInt[g] - adj;
       //      if (m_croutines)
-        twilightfortwind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], kdb,
-                            kde, u_ptr, t, om, cv, ph, h, m_zmin[g], i1, i2, j1,
-                            j2, kic, kic);
+      twilightfortwind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], kdb,
+                          kde, u_ptr, t, om, cv, ph, h, m_zmin[g], i1, i2, j1,
+                          j2, kic, kic);
       // else
       //   twilightfortwind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-      //                    &kdb, &kde, u_ptr, &t, &om, &cv, &ph, &h, &m_zmin[g],
-      //                    &i1, &i2, &j1, &j2, &kic, &kic);
+      //                    &kdb, &kde, u_ptr, &t, &om, &cv, &ph, &h,
+      //                    &m_zmin[g], &i1, &i2, &j1, &j2, &kic, &kic);
     }
     if (m_jEndInt[g] == m_global_ny[g]) {
       // high j-side
       int i1 = m_iStart[g], i2 = m_iEnd[g];
       int j1 = m_jEndInt[g] + adj, j2 = m_jEnd[g];
       //      if (m_croutines)
-        twilightfortwind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], kdb,
-                            kde, u_ptr, t, om, cv, ph, h, m_zmin[g], i1, i2, j1,
-                            j2, kic, kic);
+      twilightfortwind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], kdb,
+                          kde, u_ptr, t, om, cv, ph, h, m_zmin[g], i1, i2, j1,
+                          j2, kic, kic);
       // else
       //   twilightfortwind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-      //                    &kdb, &kde, u_ptr, &t, &om, &cv, &ph, &h, &m_zmin[g],
-      //                    &i1, &i2, &j1, &j2, &kic, &kic);
+      //                    &kdb, &kde, u_ptr, &t, &om, &cv, &ph, &h,
+      //                    &m_zmin[g], &i1, &i2, &j1, &j2, &kic, &kic);
     }
   }
 }
@@ -3239,53 +3254,56 @@ void EW::dirichlet_LRstress(Sarray& B, int g, int kic, float_sw4 t, int adj) {
       int j1 = m_jStart[g], j2 = m_jEnd[g];
       if (usingSupergrid()) {
         // assigns B
-	//        if (m_croutines)
-          twfrsurfzsg_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                              m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                              omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g],
-                              i1, i2, j1, j2);
+        //        if (m_croutines)
+        twfrsurfzsg_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+                            m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+                            omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g],
+                            i1, i2, j1, j2);
         // else
         //   twfrsurfzsg_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
         //                    m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-        //                    omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g], i1,
-        //                    i2, j1, j2);
+        //                    omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g],
+        //                    i1, i2, j1, j2);
         if (m_use_attenuation)  // only 1 mechanism with twilight forcing
         {
           // adds attenuation to B
-	  //          if (m_croutines)
-            twfrsurfzsg_att_wind_ci(
-                m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
-                m_kEnd[g], h, kic, t, om, cv, ph, omstrx, omstry, b_ptr,
-                mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2);
+          //          if (m_croutines)
+          twfrsurfzsg_att_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g],
+                                  m_jEnd[g], m_kStart[g], m_kEnd[g], h, kic, t,
+                                  om, cv, ph, omstrx, omstry, b_ptr, mua_ptr,
+                                  laa_ptr, m_zmin[g], i1, i2, j1, j2);
           // else
-          //   twfrsurfzsg_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-          //                        m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-          //                        omstrx, omstry, b_ptr, mua_ptr, laa_ptr,
+          //   twfrsurfzsg_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g],
+          //   m_jEnd[g],
+          //                        m_kStart[g], m_kEnd[g], h, kic, t, om, cv,
+          //                        ph, omstrx, omstry, b_ptr, mua_ptr, laa_ptr,
           //                        m_zmin[g], i1, i2, j1, j2);
         }
       } else {
         // assigns B
-	//        if (m_croutines)
-          twfrsurfz_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                            m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                            b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2);
+        //        if (m_croutines)
+        twfrsurfz_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+                          m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph, b_ptr,
+                          mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2);
         // else
         //   twfrsurfz_wind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-        //                  &m_kStart[g], &m_kEnd[g], &h, &kic, &t, &om, &cv, &ph,
-        //                  b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2, &j1, &j2);
+        //                  &m_kStart[g], &m_kEnd[g], &h, &kic, &t, &om, &cv,
+        //                  &ph, b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2,
+        //                  &j1, &j2);
         if (m_use_attenuation)  // only 1 mechanism with twilight forcing
         {
           // adds attenuation to B
-	  //          if (m_croutines)
-            twfrsurfz_att_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g],
-                                  m_jEnd[g], m_kStart[g], m_kEnd[g], h, kic, t,
-                                  om, cv, ph, b_ptr, mua_ptr, laa_ptr,
-                                  m_zmin[g], i1, i2, j1, j2);
+          //          if (m_croutines)
+          twfrsurfz_att_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+                                m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+                                b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1,
+                                j2);
           // else
-          //   twfrsurfz_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+          //   twfrsurfz_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g],
+          //   m_jEnd[g],
           //                      m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-          //                      b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1,
-          //                      j2);
+          //                      b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2,
+          //                      j1, j2);
         }
       }  // else (not supergrid)
     }    //  if( m_iStartInt[g] == 1 )
@@ -3296,53 +3314,56 @@ void EW::dirichlet_LRstress(Sarray& B, int g, int kic, float_sw4 t, int adj) {
       int j1 = m_jStart[g], j2 = m_jEnd[g];
       if (usingSupergrid()) {
         // assigns B
-	//       if (m_croutines)
-          twfrsurfzsg_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                              m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                              omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g],
-                              i1, i2, j1, j2);
+        //       if (m_croutines)
+        twfrsurfzsg_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+                            m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+                            omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g],
+                            i1, i2, j1, j2);
         // else
         //   twfrsurfzsg_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
         //                    m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-        //                    omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g], i1,
-        //                    i2, j1, j2);
+        //                    omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g],
+        //                    i1, i2, j1, j2);
         if (m_use_attenuation)  // only 1 mechanism with twilight forcing
         {
           // adds attenuation to B
-	  //          if (m_croutines)
-            twfrsurfzsg_att_wind_ci(
-                m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
-                m_kEnd[g], h, kic, t, om, cv, ph, omstrx, omstry, b_ptr,
-                mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2);
+          //          if (m_croutines)
+          twfrsurfzsg_att_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g],
+                                  m_jEnd[g], m_kStart[g], m_kEnd[g], h, kic, t,
+                                  om, cv, ph, omstrx, omstry, b_ptr, mua_ptr,
+                                  laa_ptr, m_zmin[g], i1, i2, j1, j2);
           // else
-          //   twfrsurfzsg_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-          //                        m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-          //                        omstrx, omstry, b_ptr, mua_ptr, laa_ptr,
+          //   twfrsurfzsg_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g],
+          //   m_jEnd[g],
+          //                        m_kStart[g], m_kEnd[g], h, kic, t, om, cv,
+          //                        ph, omstrx, omstry, b_ptr, mua_ptr, laa_ptr,
           //                        m_zmin[g], i1, i2, j1, j2);
         }
       } else {
         // assigns B
-	//       if (m_croutines)
-          twfrsurfz_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                            m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                            b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2);
+        //       if (m_croutines)
+        twfrsurfz_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+                          m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph, b_ptr,
+                          mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2);
         // else
         //   twfrsurfz_wind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-        //                  &m_kStart[g], &m_kEnd[g], &h, &kic, &t, &om, &cv, &ph,
-        //                  b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2, &j1, &j2);
+        //                  &m_kStart[g], &m_kEnd[g], &h, &kic, &t, &om, &cv,
+        //                  &ph, b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2,
+        //                  &j1, &j2);
         if (m_use_attenuation)  // only 1 mechanism with twilight forcing
         {
           // adds attenuation to B
-	  //          if (m_croutines)
-            twfrsurfz_att_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g],
-                                  m_jEnd[g], m_kStart[g], m_kEnd[g], h, kic, t,
-                                  om, cv, ph, b_ptr, mua_ptr, laa_ptr,
-                                  m_zmin[g], i1, i2, j1, j2);
+          //          if (m_croutines)
+          twfrsurfz_att_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+                                m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+                                b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1,
+                                j2);
           // else
-          //   twfrsurfz_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+          //   twfrsurfz_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g],
+          //   m_jEnd[g],
           //                      m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-          //                      b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1,
-          //                      j2);
+          //                      b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2,
+          //                      j1, j2);
         }
       }  // else (not supergrid)
     }    // end if( m_iEndInt[g] == m_global_nx[g] )
@@ -3353,53 +3374,56 @@ void EW::dirichlet_LRstress(Sarray& B, int g, int kic, float_sw4 t, int adj) {
       int j1 = m_jStart[g], j2 = m_jStartInt[g] - adj;
       if (usingSupergrid()) {
         // assigns B
-	//        if (m_croutines)
-          twfrsurfzsg_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                              m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                              omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g],
-                              i1, i2, j1, j2);
+        //        if (m_croutines)
+        twfrsurfzsg_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+                            m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+                            omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g],
+                            i1, i2, j1, j2);
         // else
         //   twfrsurfzsg_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
         //                    m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-        //                    omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g], i1,
-        //                    i2, j1, j2);
+        //                    omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g],
+        //                    i1, i2, j1, j2);
         if (m_use_attenuation)  // only 1 mechanism with twilight forcing
         {
           // adds attenuation to B
-	  //          if (m_croutines)
-            twfrsurfzsg_att_wind_ci(
-                m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
-                m_kEnd[g], h, kic, t, om, cv, ph, omstrx, omstry, b_ptr,
-                mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2);
+          //          if (m_croutines)
+          twfrsurfzsg_att_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g],
+                                  m_jEnd[g], m_kStart[g], m_kEnd[g], h, kic, t,
+                                  om, cv, ph, omstrx, omstry, b_ptr, mua_ptr,
+                                  laa_ptr, m_zmin[g], i1, i2, j1, j2);
           // else
-          //   twfrsurfzsg_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-          //                        m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-          //                        omstrx, omstry, b_ptr, mua_ptr, laa_ptr,
+          //   twfrsurfzsg_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g],
+          //   m_jEnd[g],
+          //                        m_kStart[g], m_kEnd[g], h, kic, t, om, cv,
+          //                        ph, omstrx, omstry, b_ptr, mua_ptr, laa_ptr,
           //                        m_zmin[g], i1, i2, j1, j2);
         }
       } else {
         // assigns B
-	//        if (m_croutines)
-          twfrsurfz_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                            m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                            b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2);
+        //        if (m_croutines)
+        twfrsurfz_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+                          m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph, b_ptr,
+                          mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2);
         // else
         //   twfrsurfz_wind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-        //                  &m_kStart[g], &m_kEnd[g], &h, &kic, &t, &om, &cv, &ph,
-        //                  b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2, &j1, &j2);
+        //                  &m_kStart[g], &m_kEnd[g], &h, &kic, &t, &om, &cv,
+        //                  &ph, b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2,
+        //                  &j1, &j2);
         if (m_use_attenuation)  // only 1 mechanism with twilight forcing
         {
           // adds attenuation to B
-	  //         if (m_croutines)
-            twfrsurfz_att_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g],
-                                  m_jEnd[g], m_kStart[g], m_kEnd[g], h, kic, t,
-                                  om, cv, ph, b_ptr, mua_ptr, laa_ptr,
-                                  m_zmin[g], i1, i2, j1, j2);
+          //         if (m_croutines)
+          twfrsurfz_att_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+                                m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+                                b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1,
+                                j2);
           // else
-          //   twfrsurfz_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+          //   twfrsurfz_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g],
+          //   m_jEnd[g],
           //                      m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-          //                      b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1,
-          //                      j2);
+          //                      b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2,
+          //                      j1, j2);
         }
       }  // else (not supergrid)
     }    // end if( m_jStartInt[g] == 1 )
@@ -3410,53 +3434,56 @@ void EW::dirichlet_LRstress(Sarray& B, int g, int kic, float_sw4 t, int adj) {
       int j1 = m_jEndInt[g] + adj, j2 = m_jEnd[g];
       if (usingSupergrid()) {
         // assigns B
-	//        if (m_croutines)
-          twfrsurfzsg_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                              m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                              omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g],
-                              i1, i2, j1, j2);
+        //        if (m_croutines)
+        twfrsurfzsg_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+                            m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+                            omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g],
+                            i1, i2, j1, j2);
         // else
         //   twfrsurfzsg_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
         //                    m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-        //                    omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g], i1,
-        //                    i2, j1, j2);
+        //                    omstrx, omstry, b_ptr, mu_ptr, la_ptr, m_zmin[g],
+        //                    i1, i2, j1, j2);
         if (m_use_attenuation)  // only 1 mechanism with twilight forcing
         {
           // adds attenuation to B
-	  //         if (m_croutines)
-            twfrsurfzsg_att_wind_ci(
-                m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
-                m_kEnd[g], h, kic, t, om, cv, ph, omstrx, omstry, b_ptr,
-                mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1, j2);
+          //         if (m_croutines)
+          twfrsurfzsg_att_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g],
+                                  m_jEnd[g], m_kStart[g], m_kEnd[g], h, kic, t,
+                                  om, cv, ph, omstrx, omstry, b_ptr, mua_ptr,
+                                  laa_ptr, m_zmin[g], i1, i2, j1, j2);
           // else
-          //   twfrsurfzsg_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-          //                        m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-          //                        omstrx, omstry, b_ptr, mua_ptr, laa_ptr,
+          //   twfrsurfzsg_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g],
+          //   m_jEnd[g],
+          //                        m_kStart[g], m_kEnd[g], h, kic, t, om, cv,
+          //                        ph, omstrx, omstry, b_ptr, mua_ptr, laa_ptr,
           //                        m_zmin[g], i1, i2, j1, j2);
         }
       } else {
         // assigns B
-	//        if (m_croutines)
-          twfrsurfz_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
-                            m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-                            b_ptr, mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2);
+        //        if (m_croutines)
+        twfrsurfz_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+                          m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph, b_ptr,
+                          mu_ptr, la_ptr, m_zmin[g], i1, i2, j1, j2);
         // else
         //   twfrsurfz_wind(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-        //                  &m_kStart[g], &m_kEnd[g], &h, &kic, &t, &om, &cv, &ph,
-        //                  b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2, &j1, &j2);
+        //                  &m_kStart[g], &m_kEnd[g], &h, &kic, &t, &om, &cv,
+        //                  &ph, b_ptr, mu_ptr, la_ptr, &m_zmin[g], &i1, &i2,
+        //                  &j1, &j2);
         if (m_use_attenuation)  // only 1 mechanism with twilight forcing
         {
           // adds attenuation to B
-	  //          if (m_croutines)
-            twfrsurfz_att_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g],
-                                  m_jEnd[g], m_kStart[g], m_kEnd[g], h, kic, t,
-                                  om, cv, ph, b_ptr, mua_ptr, laa_ptr,
-                                  m_zmin[g], i1, i2, j1, j2);
+          //          if (m_croutines)
+          twfrsurfz_att_wind_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+                                m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
+                                b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1,
+                                j2);
           // else
-          //   twfrsurfz_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
+          //   twfrsurfz_att_wind(m_iStart[g], m_iEnd[g], m_jStart[g],
+          //   m_jEnd[g],
           //                      m_kStart[g], m_kEnd[g], h, kic, t, om, cv, ph,
-          //                      b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2, j1,
-          //                      j2);
+          //                      b_ptr, mua_ptr, laa_ptr, m_zmin[g], i1, i2,
+          //                      j1, j2);
         }
       }
     }  // end if( m_jEndInt[g] == m_global_ny[g] )
@@ -3514,8 +3541,7 @@ void EW::gridref_initial_guess(Sarray& u, int g, bool upper) {
 void EW::compute_preliminary_corrector(
     Sarray& a_Up, Sarray& a_U, Sarray& a_Um, Sarray* a_AlphaVEp,
     Sarray* a_AlphaVE, Sarray* a_AlphaVEm, Sarray& Utt, Sarray& Unext, int g,
-    int kic, float_sw4 t, Sarray& Ftt,
-    vector<GridPointSource*>& point_sources,
+    int kic, float_sw4 t, Sarray& Ftt, vector<GridPointSource*>& point_sources,
     Sarray& a_Rho, Sarray& a_Mu, Sarray& a_Lambda) {
   SW4_MARK_FUNCTION;
   //
@@ -3535,9 +3561,9 @@ void EW::compute_preliminary_corrector(
   a_Up.prefetch();
   a_Um.prefetch();
   //  if (m_croutines)  // optimized C-version for reversed index ordering
-    dpdmt_wind(Utt.m_ib, Utt.m_ie, Utt.m_jb, Utt.m_je, Utt.m_kb, Utt.m_ke,
-               a_U.m_kb, a_U.m_ke, a_Up.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(),
-               Utt.c_ptr(), idt2);
+  dpdmt_wind(Utt.m_ib, Utt.m_ie, Utt.m_jb, Utt.m_je, Utt.m_kb, Utt.m_ke,
+             a_U.m_kb, a_U.m_ke, a_Up.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(),
+             Utt.c_ptr(), idt2);
   // else {
   //   for (int k = Utt.m_kb; k <= Utt.m_ke; k++)
   //     for (int j = Utt.m_jb; j <= Utt.m_je; j++)
@@ -3718,30 +3744,32 @@ void EW::compute_preliminary_corrector(
     //      addsg4wind( &mDt, &mGridSize[g], Unext.c_ptr(), a_Up.c_ptr(),
     //      a_U.c_ptr(), mRho[g].c_ptr(),
     //    if (m_croutines)
-      addsg4wind_ci(Unext.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(), mRho[g].c_ptr(),
-                    m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g],
-                    m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
-                    m_sg_corner_y[g], m_sg_corner_z[g], ib, ie, jb, je, kb, ke,
-                    m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke,
-                    kic, kic);
+    addsg4wind_ci(Unext.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(), mRho[g].c_ptr(),
+                  m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g],
+                  m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
+                  m_sg_corner_y[g], m_sg_corner_z[g], ib, ie, jb, je, kb, ke,
+                  m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic,
+                  kic);
     // else
-    //   addsg4wind(&mDt, &mGridSize[g], Unext.c_ptr(), a_U.c_ptr(), a_Um.c_ptr(),
+    //   addsg4wind(&mDt, &mGridSize[g], Unext.c_ptr(), a_U.c_ptr(),
+    //   a_Um.c_ptr(),
     //              mRho[g].c_ptr(), m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
-    //              m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
-    //              m_sg_corner_y[g], m_sg_corner_z[g], ib, ie, jb, je, kb, ke,
-    //              m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic,
-    //              kic);
+    //              m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
+    //              m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g], ib,
+    //              ie, jb, je, kb, ke, m_supergrid_damping_coefficient,
+    //              Unext.m_kb, Unext.m_ke, kic, kic);
     // Note: the last four arguments define the declared size of Unext, followed
     // by the lower and upper boundaries of the k-window
   }
 }  // end compute_preliminary_corrector
 
 //-----------------------------------------------------------------------
-void EW::compute_preliminary_predictor(
-    Sarray& a_Up, Sarray& a_U, Sarray* a_AlphaVEp, Sarray& Unext, int g,
-    int kic, float_sw4 t, Sarray& F, vector<GridPointSource*>& point_sources,
-    Sarray& a_Rho, Sarray& a_Mu,
-    Sarray& a_Lambda) {
+void EW::compute_preliminary_predictor(Sarray& a_Up, Sarray& a_U,
+                                       Sarray* a_AlphaVEp, Sarray& Unext, int g,
+                                       int kic, float_sw4 t, Sarray& F,
+                                       vector<GridPointSource*>& point_sources,
+                                       Sarray& a_Rho, Sarray& a_Mu,
+                                       Sarray& a_Lambda) {
   SW4_MARK_FUNCTION;
   //
   // NOTE: This routine is called by enforceIC() after the corrector stage to
@@ -3905,21 +3933,23 @@ void EW::compute_preliminary_predictor(
   {
     // assign array pointers on the fly
     //    if (m_croutines)
-      addsg4wind_ci(Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), a_Rho.c_ptr(),
-                    m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g],
-                    m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
-                    m_sg_corner_y[g], m_sg_corner_z[g], ib, ie, jb, je, kb, ke,
-                    m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke,
-                    kic, kic);
+    addsg4wind_ci(Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(), a_Rho.c_ptr(),
+                  m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g],
+                  m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
+                  m_sg_corner_y[g], m_sg_corner_z[g], ib, ie, jb, je, kb, ke,
+                  m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic,
+                  kic);
     // else
-  //     addsg4wind(&mDt, &mGridSize[g], Unext.c_ptr(), a_Up.c_ptr(), a_U.c_ptr(),
-  //                mRho[g].c_ptr(), m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
-  //                m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
-  //                m_sg_corner_y[g], m_sg_corner_z[g], ib, ie, jb, je, kb, ke,
-  //                m_supergrid_damping_coefficient, Unext.m_kb, Unext.m_ke, kic,
-  //                kic);
-  //   // Note: the last four arguments define the declared size of Unext, followed
-  //   // by the lower and upper boundaries of the k-window
+    //     addsg4wind(&mDt, &mGridSize[g], Unext.c_ptr(), a_Up.c_ptr(),
+    //     a_U.c_ptr(),
+    //                mRho[g].c_ptr(), m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
+    //                m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
+    //                m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g], ib,
+    //                ie, jb, je, kb, ke, m_supergrid_damping_coefficient,
+    //                Unext.m_kb, Unext.m_ke, kic, kic);
+    //   // Note: the last four arguments define the declared size of Unext,
+    //   followed
+    //   // by the lower and upper boundaries of the k-window
   }
 }
 // Replaced with compute_icstresses2
@@ -3971,14 +4001,14 @@ void EW::compute_icstresses(Sarray& a_Up, Sarray& B, int g, int kic,
 
   RAJA::kernel<ICSTRESS_EXEC_POL_ASYNC>(
       RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
-        //#pragma omp parallel for
-        //   for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
-        //#pragma omp simd
-        //     for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
-        //      {
-        // UpV.print(true);
-        // BV(1,i,j,k) = 0.0;
-        // printf("HERE %d %d %lf %lf \n",i,j,UpV(1,i,j,k-1),BV(1,i,j,k));
+        // #pragma omp parallel for
+        //    for( int j=B.m_jb+2 ; j <= B.m_je-2 ; j++ )
+        // #pragma omp simd
+        //      for( int i=B.m_ib+2 ; i <= B.m_ie-2 ; i++ )
+        //       {
+        //  UpV.print(true);
+        //  BV(1,i,j,k) = 0.0;
+        //  printf("HERE %d %d %lf %lf \n",i,j,UpV(1,i,j,k-1),BV(1,i,j,k));
         float_sw4 uz, vz, wz;
         uz = vz = wz = 0.0;
         // printf("UZ %lf %lf %lf\n",uz,vz,wz);
@@ -4890,8 +4920,9 @@ void EW::testSourceDiscretization(int kx[3], int ky[3], int kz[3],
 
   // tmp
   if (proc_zero()) printf("Inside testSourceDiscretization\n");
-  std::cout<<"testSourcrDiscretization ::"<<identsources.size()<<" "<<point_sources.size()
-	       <<" "<<ForceAddress<<" "<<GPS<<"\n"<<std::flush;
+  std::cout << "testSourcrDiscretization ::" << identsources.size() << " "
+            << point_sources.size() << " " << ForceAddress << " " << GPS << "\n"
+            << std::flush;
 
   // Impose source
   for (int g = 0; g < mNumberOfGrids; g++) F[g].set_to_zero();
@@ -4936,8 +4967,8 @@ void EW::testSourceDiscretization(int kx[3], int ky[3], int kz[3],
     jlast = m_jEnd[g];
     kfirst = m_kStart[g];
     klast = m_kEnd[g];
-    h = mGridSize[g];  
-        
+    h = mGridSize[g];
+
     float_sw4* f_ptr = F[g].c_ptr();
     int wind[6];
     wind[0] = m_iStartInt[g];
@@ -4962,7 +4993,7 @@ void EW::testSourceDiscretization(int kx[3], int ky[3], int kz[3],
 void EW::extractRecordData(TimeSeries::receiverMode mode, int i0, int j0,
                            int k0, int g0, vector<float_sw4>& uRec,
                            vector<Sarray>& Um2, vector<Sarray>& U) {
-	SW4_MARK_FUNCTION;
+  SW4_MARK_FUNCTION;
   if (mode == TimeSeries::Displacement) {
     uRec.resize(3);
     uRec[0] = U[g0](1, i0, j0, k0);
@@ -5266,57 +5297,58 @@ void EW::addSuperGridDamping(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     klast = m_kEnd[g];
     if (m_sg_damping_order == 4) {
       if (topographyExists() && g >= mNumberOfCartesianGrids) {
-	//        if (m_croutines)
-          addsgd4c_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr,
-                      u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g],
-                      m_sg_str_x[g], m_sg_str_y[g], mJ[g].c_ptr(),
-                      m_sg_corner_x[g], m_sg_corner_y[g],
-                      m_supergrid_damping_coefficient);
+        //        if (m_croutines)
+        addsgd4c_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr, u_ptr,
+                    um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g],
+                    m_sg_str_y[g], mJ[g].c_ptr(), m_sg_corner_x[g],
+                    m_sg_corner_y[g], m_supergrid_damping_coefficient);
         // else
         //   addsgd4c(&mDt, up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g],
         //            m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g], mJ[g].c_ptr(),
-        //            m_sg_corner_x[g], m_sg_corner_y[g], &ifirst, &ilast, &jfirst,
-        //            &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient);
+        //            m_sg_corner_x[g], m_sg_corner_y[g], &ifirst, &ilast,
+        //            &jfirst, &jlast, &kfirst, &klast,
+        //            &m_supergrid_damping_coefficient);
       } else {
-	//        if (m_croutines)
-          addsgd4_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr, u_ptr,
-                     um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
-                     m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
-                     m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
-                     m_supergrid_damping_coefficient);
+        //        if (m_croutines)
+        addsgd4_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr, u_ptr,
+                   um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
+                   m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
+                   m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
+                   m_supergrid_damping_coefficient);
         // else
         //   addsgd4(&mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr,
         //           m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g],
         //           m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
-        //           m_sg_corner_y[g], m_sg_corner_z[g], &ifirst, &ilast, &jfirst,
-        //           &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient);
+        //           m_sg_corner_y[g], m_sg_corner_z[g], &ifirst, &ilast,
+        //           &jfirst, &jlast, &kfirst, &klast,
+        //           &m_supergrid_damping_coefficient);
       }
     } else if (m_sg_damping_order == 6) {
       if (topographyExists() && g >= mNumberOfCartesianGrids) {
-	//        if (m_croutines)
-          addsgd6c_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr,
-                      u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g],
-                      m_sg_str_x[g], m_sg_str_y[g], mJ[g].c_ptr(),
-                      m_sg_corner_x[g], m_sg_corner_y[g],
-                      m_supergrid_damping_coefficient);
+        //        if (m_croutines)
+        addsgd6c_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr, u_ptr,
+                    um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_str_x[g],
+                    m_sg_str_y[g], mJ[g].c_ptr(), m_sg_corner_x[g],
+                    m_sg_corner_y[g], m_supergrid_damping_coefficient);
         // else
         //   addsgd6c(&mDt, up_ptr, u_ptr, um_ptr, rho_ptr, m_sg_dc_x[g],
         //            m_sg_dc_y[g], m_sg_str_x[g], m_sg_str_y[g], mJ[g].c_ptr(),
-        //            m_sg_corner_x[g], m_sg_corner_y[g], &ifirst, &ilast, &jfirst,
-        //            &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient);
+        //            m_sg_corner_x[g], m_sg_corner_y[g], &ifirst, &ilast,
+        //            &jfirst, &jlast, &kfirst, &klast,
+        //            &m_supergrid_damping_coefficient);
       } else {
-	//        if (m_croutines)
-          addsgd6_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr, u_ptr,
-                     um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
-                     m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
-                     m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
-                     m_supergrid_damping_coefficient);
-	  //   else
-          // addsgd6(&mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr,
-          //         m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g],
-          //         m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
-          //         m_sg_corner_y[g], m_sg_corner_z[g], &ifirst, &ilast, &jfirst,
-	  //       &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient);
+        //        if (m_croutines)
+        addsgd6_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_ptr, u_ptr,
+                   um_ptr, rho_ptr, m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g],
+                   m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
+                   m_sg_corner_x[g], m_sg_corner_y[g], m_sg_corner_z[g],
+                   m_supergrid_damping_coefficient);
+        //   else
+        // addsgd6(&mDt, &mGridSize[g], up_ptr, u_ptr, um_ptr, rho_ptr,
+        //         m_sg_dc_x[g], m_sg_dc_y[g], m_sg_dc_z[g], m_sg_str_x[g],
+        //         m_sg_str_y[g], m_sg_str_z[g], m_sg_corner_x[g],
+        //         m_sg_corner_y[g], m_sg_corner_z[g], &ifirst, &ilast, &jfirst,
+        //       &jlast, &kfirst, &klast, &m_supergrid_damping_coefficient);
       }
     }
   }
@@ -5348,11 +5380,11 @@ void EW::simpleAttenuation(vector<Sarray>& a_Up) {
     klast = m_kEnd[g];
 
     //    if (m_croutines)
-      satt_ci(up_ptr, qs_ptr, dt, cfreq, ifirst, ilast, jfirst, jlast, kfirst,
-              klast);
-      //    else
-      //   satt(up_ptr, qs_ptr, &dt, &cfreq, &ifirst, &ilast, &jfirst, &jlast,
-      //        &kfirst, &klast);
+    satt_ci(up_ptr, qs_ptr, dt, cfreq, ifirst, ilast, jfirst, jlast, kfirst,
+            klast);
+    //    else
+    //   satt(up_ptr, qs_ptr, &dt, &cfreq, &ifirst, &ilast, &jfirst, &jlast,
+    //        &kfirst, &klast);
   }
 }
 
@@ -5377,7 +5409,7 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
     int kfirst = m_kStart[g];
     int klast = m_kEnd[g];
     float_sw4 h = mGridSize[g];
-    //int topo = topographyExists() && g == mNumberOfGrids - 1;
+    // int topo = topographyExists() && g == mNumberOfGrids - 1;
     int topo = g > mNumberOfCartesianGrids - 1;
 
     SView& a_UpgV = a_Up[g].getview();
@@ -5423,13 +5455,13 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
       float_sw4* lm_sbop_no_gp =
           m_sbop_no_gp;  // Because the lambda does not capture member arrays
                          // and variables.
-      //#pragma omp parallel
+      // #pragma omp parallel
       {
         //	 float_sw4* r1 = new float_sw4[m_number_mechanisms];
         //	 float_sw4* r2 = new float_sw4[m_number_mechanisms];
         //	 float_sw4* r3 = new float_sw4[m_number_mechanisms];
         //	 float_sw4* cof = new float_sw4[m_number_mechanisms];
-        //#pragma omp for
+        // #pragma omp for
         // for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
         // for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
         //{
@@ -5664,7 +5696,7 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
     }  // end if bcType[g][5] == bStressFree
 
     // all the curvilinear code needs to be overhauled
-    if (m_bcType[g][4] == bStressFree && topo && g >= mNumberOfCartesianGrids ) {
+    if (m_bcType[g][4] == bStressFree && topo && g >= mNumberOfCartesianGrids) {
       SW4_MARK_BEGIN("enforceBCfreeAtt2::SET 3");
       float_sw4* mu_p = a_Mu[g].c_ptr();
       float_sw4* la_p = a_Lambda[g].c_ptr();
@@ -5698,28 +5730,29 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
         SW4_MARK_END("CPTR");
         // std::cout<<"Pointers "<<mu_ve_p<<" "<<lave_p<<" "<<alphap_p<<"\n";
         // This function adds the visco-elastic boundary stresses to bforcerhs
-	//        if (m_croutines)
-          ve_bndry_stress_curvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
-                                   nz, alphap_p, mu_ve_p, lave_p,
-                                   bforcerhs.c_ptr(), mMetric[g].c_ptr(), side,
-                                   m_sbop_no_gp, usesg, m_sg_str_x[g],
-                                   m_sg_str_y[g]);  // no ghost points here
+        //        if (m_croutines)
+        ve_bndry_stress_curvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
+                                 nz, alphap_p, mu_ve_p, lave_p,
+                                 bforcerhs.c_ptr(), mMetric[g].c_ptr(), side,
+                                 m_sbop_no_gp, usesg, m_sg_str_x[g],
+                                 m_sg_str_y[g]);  // no ghost points here
         // else
         //   ve_bndry_stress_curvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst,
         //                         &klast, &nz, alphap_p, mu_ve_p, lave_p,
         //                         bforcerhs.c_ptr(), mMetric[g].c_ptr(), &side,
         //                         m_sbop_no_gp, &usesg, m_sg_str_x[g],
         //                         m_sg_str_y[g]);  // no ghost points here
-      }                                          // end for a...
+      }  // end for a...
 
       // update GHOST POINT VALUES OF UP
       //      if (m_croutines)
-        att_free_curvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_p,
-                          mu_p, la_p, bforcerhs.c_ptr(), mMetric[g].c_ptr(),
-                          m_sbop,  // use ghost points
-                          usesg, m_sg_str_x[g], m_sg_str_y[g]);
+      att_free_curvi_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, up_p, mu_p,
+                        la_p, bforcerhs.c_ptr(), mMetric[g].c_ptr(),
+                        m_sbop,  // use ghost points
+                        usesg, m_sg_str_x[g], m_sg_str_y[g]);
       // else
-      //   att_free_curvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, up_p,
+      //   att_free_curvi(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+      //   up_p,
       //                  mu_p, la_p, bforcerhs.c_ptr(), mMetric[g].c_ptr(),
       //                  m_sbop,  // use ghost points
       //                  &usesg, m_sg_str_x[g], m_sg_str_y[g]);
@@ -5731,9 +5764,8 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
      //::operator delete[](viewArray,Space::Managed);
 }
 void EW::CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Rho,
-		     vector<Sarray>& a_Mu,
-                     vector<Sarray>& a_Lambda, vector<Sarray*>& a_Alpha,
-                     float_sw4 t) {
+                     vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
+                     vector<Sarray*>& a_Alpha, float_sw4 t) {
   SW4_MARK_FUNCTION;
   // std::cout<<"CALL TO EW::CurviCartIC ON CPU \n"<<std::flush;
   SYNC_STREAM;  // FOR CURVI_CPU

@@ -22,8 +22,8 @@ void forall(int start, int end, LoopBody &&body) {
   int tpb = 1024;
   int blocks = (end - start) / tpb;
   blocks = ((end - start) % tpb == 0) ? blocks : blocks + 1;
-  //printf("Launching the kernel blocks= %d tpb= %d \n",blocks,tpb);
-  if (blocks!=0) forallkernel<<<blocks, tpb>>>(start, end, body);
+  // printf("Launching the kernel blocks= %d tpb= %d \n",blocks,tpb);
+  if (blocks != 0) forallkernel<<<blocks, tpb>>>(start, end, body);
   cudaDeviceSynchronize();
 }
 
@@ -43,7 +43,7 @@ void forall(int start, int end, LoopBody &&body) {
   int blocks = (end - start) / tpb;
   blocks = ((end - start) % tpb == 0) ? blocks : blocks + 1;
   printf("Launching the kernel blocks= %d tpb= %d on line %d\n", blocks, tpb,
-        N);
+         N);
   forallkernel<<<blocks, tpb>>>(start, end, body);
   cudaDeviceSynchronize();
 }
@@ -658,7 +658,7 @@ __global__ void forall3kernelSF(Tag t, const int start0, const int N0,
                                 const int start2, const int N2, Func... f) {
   const int STORE = 5;
 // NOTE: Shared memory is slightly slower, probably due to cache reduction
-//#define USE_SHARED_MEMORY 1
+// #define USE_SHARED_MEMORY 1
 #ifdef USE_SHARED_MEMORY
   auto off = (threadIdx.x + blockDim.x * threadIdx.y +
               blockDim.x * blockDim.y * threadIdx.z) *
@@ -682,7 +682,7 @@ __global__ void forall3kernelSF(Tag t, const int start0, const int N0,
 template <int N, typename Tag, typename T1, typename T2, typename T3,
           typename... LoopBodies>
 void forall3asyncSF(Tag &t, T1 &irange, T2 &jrange, T3 &krange,
-                    LoopBodies &&... bodies) {
+                    LoopBodies &&...bodies) {
   if (irange.invalid || jrange.invalid || krange.invalid) return;
   dim3 tpb(irange.tpb, jrange.tpb, krange.tpb);
   dim3 blocks(irange.blocks, jrange.blocks, krange.blocks);

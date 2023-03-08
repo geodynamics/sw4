@@ -50,11 +50,11 @@ void scalar_prod_ci(int is, int ie, int js, int je, int ks, int ke, int i1,
   const int nijk = nij * (ke - ks + 1);
   const int base = -(is + ni * js + nij * ks);
   //   const int base3 = base-nijk;
-  //#define u(c,i,j,k) a_u[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]
-  //#define v(c,i,j,k) a_v[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]
-  //#define strx(i) a_strx[i-is]
-  //#define stry(j) a_stry[j-js]
-  //#define strz(k) a_strz[k-ks]
+  // #define u(c,i,j,k) a_u[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]
+  // #define v(c,i,j,k) a_v[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]
+  // #define strx(i) a_strx[i-is]
+  // #define stry(j) a_stry[j-js]
+  // #define strz(k) a_strz[k-ks]
 
   // float_sw4 scprod_loc = 0;
   const bool onesided4 = onesided[4] == 1;

@@ -1,8 +1,8 @@
-#include "caliper.h"
 #include "CurvilinearInterface2.h"
 #include "EW.h"
 #include "F77_FUNC.h"
 #include "GridGenerator.h"
+#include "caliper.h"
 #include "foralls.h"
 
 // extern "C" {
@@ -15,7 +15,7 @@ void EW::solve_backward_allpars(
     vector<Source*>& a_Sources, vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
     vector<Sarray>& a_Lambda, vector<TimeSeries*>& a_TimeSeries,
     vector<Sarray>& Up, vector<Sarray>& U, vector<DataPatches*>& Upred_saved,
-    vector<DataPatches*>& Ucorr_saved, double *gradientsrc,
+    vector<DataPatches*>& Ucorr_saved, double* gradientsrc,
     vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda,
     int event) {
   SW4_MARK_FUNCTION;
@@ -27,16 +27,16 @@ void EW::solve_backward_allpars(
   //  std::cout<<"SOLVE_BACKWARD_ALLPARS\n";
 
 #ifdef SW4_NORM_TRACE
-  static  std::ofstream norm_trace_file_old;
-  static int ntf_opened=false;
+  static std::ofstream norm_trace_file_old;
+  static int ntf_opened = false;
   if ((!ntf_opened) && (!getRank())) {
-    //norm_trace_file.open("NormsOpt.dat");
-    //ntf_opened=true;
-    //norm_trace_file.precision(10);
+    // norm_trace_file.open("NormsOpt.dat");
+    // ntf_opened=true;
+    // norm_trace_file.precision(10);
   }
-  norm_trace_file<<"SOLVE_BACKWARDS_ALLPARS\n";
+  norm_trace_file << "SOLVE_BACKWARDS_ALLPARS\n";
 #endif
-  
+
   F.resize(mNumberOfGrids);
   Lk.resize(mNumberOfGrids);
   Kacc.resize(mNumberOfGrids);
@@ -65,7 +65,8 @@ void EW::solve_backward_allpars(
       BCForcing[g][side] = NULL;
       if (m_bcType[g][side] == bStressFree || m_bcType[g][side] == bDirichlet ||
           m_bcType[g][side] == bSuperGrid) {
-        BCForcing[g][side] = SW4_NEW(Space::Managed, float_sw4[3 * m_NumberOfBCPoints[g][side]]);
+        BCForcing[g][side] =
+            SW4_NEW(Space::Managed, float_sw4[3 * m_NumberOfBCPoints[g][side]]);
       }
     }
     ifirst = m_iStart[g];
@@ -126,14 +127,13 @@ void EW::solve_backward_allpars(
   for (unsigned int i = 0; i < a_Sources.size(); i++)
     a_Sources[i]->set_grid_point_sources4(this, point_sources);
 
-
   //   if (!m_testing && m_prefilter_sources)
   //   {
   ////  Replace the time function by a filtered one, represented by a (long)
-  ///vector holding values at each time step
+  /// vector holding values at each time step
   //      for( int s=0; s < point_sources.size(); s++ )
   //	 point_sources[s]->discretizeTimeFuncAndFilter(mTstart, mDt,
-  //mNumberOfTimeSteps, m_filter_ptr);
+  // mNumberOfTimeSteps, m_filter_ptr);
   //   }
 
   // Sort sources wrt spatial location, needed for thread parallel computing
@@ -220,7 +220,7 @@ void EW::solve_backward_allpars(
 
     // U-backward solution, predictor
     evalRHS(U, a_Mu, a_Lambda, Lk, AlphaVE);
-    Force(t, F, point_sources, identsources,true);
+    Force(t, F, point_sources, identsources, true);
     evalPredictor(Um, U, Up, a_Rho, Lk, F);
     //      for(int g=0 ; g < mNumberOfGrids ; g++ )
     //         communicate_array( Um[g], g );
@@ -230,29 +230,26 @@ void EW::solve_backward_allpars(
     //      point_sources );
 
 #ifdef SW4_NORM_TRACE
-  if (!getRank()) {
-
-    for (int g = 0; g < mNumberOfGrids; g++) {
-      norm_trace_file << "POST_FORCE Up[" << g << "] " << Up[g].norm()
-                      << " Um = " << Um[g].norm() << " F = " << F[g].norm()
-                      << "Uacc = "<< Uacc[g].norm()<<"U = "<< U[g].norm()
-		      <<"\n";
+    if (!getRank()) {
+      for (int g = 0; g < mNumberOfGrids; g++) {
+        norm_trace_file << "POST_FORCE Up[" << g << "] " << Up[g].norm()
+                        << " Um = " << Um[g].norm() << " F = " << F[g].norm()
+                        << "Uacc = " << Uacc[g].norm() << "U = " << U[g].norm()
+                        << "\n";
+      }
     }
-  }
 #endif
 
     // U-backward solution, corrector
     evalDpDmInTime(Up, U, Um, Uacc);
 
 #ifdef SW4_NORM_TRACE
-  if (!getRank()) {
-
-    for (int g = 0; g < mNumberOfGrids; g++) {
-      norm_trace_file << "POST_EVALDPDM Uacc[" << g << "] " << Uacc[g].norm()
-                      << " Up = " << Up[g].norm() 
-                      <<"\n";
+    if (!getRank()) {
+      for (int g = 0; g < mNumberOfGrids; g++) {
+        norm_trace_file << "POST_EVALDPDM Uacc[" << g << "] " << Uacc[g].norm()
+                        << " Up = " << Up[g].norm() << "\n";
+      }
     }
-  }
 #endif
 
     // set boundary data on Uacc, from forward solver
@@ -261,16 +258,14 @@ void EW::solve_backward_allpars(
       communicate_array(Uacc[g], g);
     }
 #ifdef SW4_NORM_TRACE
-  if (!getRank()) {
-
-    for (int g = 0; g < mNumberOfGrids; g++) {
-      norm_trace_file << "POST_POP Uacc[" << g << "] " << Uacc[g].norm()
-                      << " Up = " << Up[g].norm() 
-                      <<"\n";
+    if (!getRank()) {
+      for (int g = 0; g < mNumberOfGrids; g++) {
+        norm_trace_file << "POST_POP Uacc[" << g << "] " << Uacc[g].norm()
+                        << " Up = " << Up[g].norm() << "\n";
+      }
     }
-  }
 #endif
-    
+
     // Note, this assumes BCForcing is not time dependent, which is usually true
     enforceBC(Uacc, a_Rho, a_Mu, a_Lambda, AlphaVEm, t, BCForcing);
 
@@ -280,55 +275,51 @@ void EW::solve_backward_allpars(
     evalCorrector(Um, a_Rho, Lk, F);
 
 #ifdef SW4_NORM_TRACE
-  if (!getRank()) {
-
-    for (int g = 0; g < mNumberOfGrids; g++) {
-      norm_trace_file << "POST_FORCE_TT Up[" << g << "] " << Up[g].norm()
-                      << " Um = " << Um[g].norm() << " F = " << F[g].norm()
-                      << "\n";
+    if (!getRank()) {
+      for (int g = 0; g < mNumberOfGrids; g++) {
+        norm_trace_file << "POST_FORCE_TT Up[" << g << "] " << Up[g].norm()
+                        << " Um = " << Um[g].norm() << " F = " << F[g].norm()
+                        << "\n";
+      }
     }
-  }
 #endif
 
     for (int g = 0; g < mNumberOfGrids; g++)
       Ucorr_saved[g]->pop(Um[g], currentTimeStep - 2);
-    
-#ifdef SW4_NORM_TRACE
-      if (!getRank()) {
 
-    for (int g = 0; g < mNumberOfGrids; g++) {
-      norm_trace_file << "POST_POP Um[" << g << "] " << Um[g].norm()<<"\n";
-    }}
+#ifdef SW4_NORM_TRACE
+    if (!getRank()) {
+      for (int g = 0; g < mNumberOfGrids; g++) {
+        norm_trace_file << "POST_POP Um[" << g << "] " << Um[g].norm() << "\n";
+      }
+    }
 #endif
-    
 
     // set boundary data on U
     for (int g = 0; g < mNumberOfGrids; g++) communicate_array(Um[g], g);
 
 #ifdef SW4_NORM_TRACE
-     if (!getRank()) {
-
-    for (int g = 0; g < mNumberOfGrids; g++) {
-      norm_trace_file << "PRE ENFORCEBC Um[" << g << "] " << Um[g].norm()
-                      << " aRho = " << a_Rho[g].norm() << " a_MU = " << a_Mu[g].norm()
-		      <<" aLambda = "<<a_Lambda[g].norm()
-                      << "\n";
+    if (!getRank()) {
+      for (int g = 0; g < mNumberOfGrids; g++) {
+        norm_trace_file << "PRE ENFORCEBC Um[" << g << "] " << Um[g].norm()
+                        << " aRho = " << a_Rho[g].norm()
+                        << " a_MU = " << a_Mu[g].norm()
+                        << " aLambda = " << a_Lambda[g].norm() << "\n";
+      }
     }
-     }
 #endif
     //      cartesian_bc_forcing( t-mDt, BCForcing, a_Sources );
     enforceBC(Um, a_Rho, a_Mu, a_Lambda, AlphaVEm, t - mDt, BCForcing);
     Force(t - mDt, F, point_sources, identsources);
 
 #ifdef SW4_NORM_TRACE
-  if (!getRank()) {
-
-    for (int g = 0; g < mNumberOfGrids; g++) {
-      norm_trace_file << "POST_FORCE_2 Up[" << g << "] " << Up[g].norm()
-                      << " Um = " << Um[g].norm() << " F = " << F[g].norm()
-                      << "\n";
+    if (!getRank()) {
+      for (int g = 0; g < mNumberOfGrids; g++) {
+        norm_trace_file << "POST_FORCE_2 Up[" << g << "] " << Up[g].norm()
+                        << " Um = " << Um[g].norm() << " F = " << F[g].norm()
+                        << "\n";
+      }
     }
-  }
 #endif
 
     // This call to enforceIC is needed in order to enforce the IC outside
@@ -343,51 +334,52 @@ void EW::solve_backward_allpars(
     //         AlphaVEm, true );
 
     time_measure[5] = MPI_Wtime();
-    //std::cout<<"ADD TO GRADIENT\n"<<std::flush;
-    // Accumulate the gradient
-    
-    //for (int s = 0; s < point_sources.size(); s++) {
-    //  point_sources[s]->add_to_gradient(K, Kacc, t, mDt, gradientsrc, mGridSize,
-    //                                  mJ, topographyExists());
-    SView *KV = SW4_NEW(Space::Managed, SView[K.size()]);
-    SView *KaccV = SW4_NEW(Space::Managed, SView[Kacc.size()]);
-    SView *mJV = SW4_NEW(Space::Managed, SView[mJ.size()]);
-    float_sw4 *h = SW4_NEW(Space::Managed, float_sw4[mGridSize.size()]);
-    int hsize=mGridSize.size();
+    // std::cout<<"ADD TO GRADIENT\n"<<std::flush;
+    //  Accumulate the gradient
 
-    for (int i=0;i<K.size();i++) KV[i]=K[i].getview();
-    for (int i=0;i<Kacc.size();i++) KaccV[i]=Kacc[i].getview();
-    for (int i=0;i<mJ.size();i++) mJV[i]=mJ[i].getview();
-    for(int i=0;i<mGridSize.size();i++) h[i]=mGridSize[i];
+    // for (int s = 0; s < point_sources.size(); s++) {
+    //   point_sources[s]->add_to_gradient(K, Kacc, t, mDt, gradientsrc,
+    //   mGridSize,
+    //                                   mJ, topographyExists());
+    SView* KV = SW4_NEW(Space::Managed, SView[K.size()]);
+    SView* KaccV = SW4_NEW(Space::Managed, SView[Kacc.size()]);
+    SView* mJV = SW4_NEW(Space::Managed, SView[mJ.size()]);
+    float_sw4* h = SW4_NEW(Space::Managed, float_sw4[mGridSize.size()]);
+    int hsize = mGridSize.size();
+
+    for (int i = 0; i < K.size(); i++) KV[i] = K[i].getview();
+    for (int i = 0; i < Kacc.size(); i++) KaccV[i] = Kacc[i].getview();
+    for (int i = 0; i < mJ.size(); i++) mJV[i] = mJ[i].getview();
+    for (int i = 0; i < mGridSize.size(); i++) h[i] = mGridSize[i];
     float_sw4 lmDt = mDt;
-    GridPointSource **GPSL = GPS;
-    bool topoE=topographyExists();
-        RAJA::forall<ATG_LOOP>(
-             RAJA::RangeSegment(0, point_sources.size()),
-    //    forall256(0,point_sources.size(),
-          [=] RAJA_DEVICE(int s) {
-	    GPSL[s]->add_to_gradient(KV, KaccV, t, lmDt, gradientsrc, h,
-				     mJV, topoE, hsize);
-	  });
-      ::operator delete[](KV,Space::Managed);
-      ::operator delete[](KaccV,Space::Managed);
-      ::operator delete[](mJV,Space::Managed);
-      ::operator delete[](h,Space::Managed);
-      //	 point_sources[s]->add_to_hessian(  K, Kacc, t, mDt, hessian,
-      //mGridSize );
-      //std::cout<<"DONE ADD TO GRADIENT\n"<<std::flush;
+    GridPointSource** GPSL = GPS;
+    bool topoE = topographyExists();
+    RAJA::forall<ATG_LOOP>(RAJA::RangeSegment(0, point_sources.size()),
+                           //    forall256(0,point_sources.size(),
+                           [=] RAJA_DEVICE(int s) {
+                             GPSL[s]->add_to_gradient(KV, KaccV, t, lmDt,
+                                                      gradientsrc, h, mJV,
+                                                      topoE, hsize);
+                           });
+    ::operator delete[](KV, Space::Managed);
+    ::operator delete[](KaccV, Space::Managed);
+    ::operator delete[](mJV, Space::Managed);
+    ::operator delete[](h, Space::Managed);
+    //	 point_sources[s]->add_to_hessian(  K, Kacc, t, mDt, hessian,
+    // mGridSize );
+    // std::cout<<"DONE ADD TO GRADIENT\n"<<std::flush;
     add_to_grad(K, Kacc, Um, U, Up, Uacc, gRho, gMu, gLambda);
-    
-#ifdef SW4_NORM_TRACE
-      if (!getRank()) {
 
-    for (int g = 0; g < mNumberOfGrids; g++) {
-      norm_trace_file << "ADD_GRAD K[" << g << "] " << K[g].norm()
-                      << " Kacc = " << K[g].norm() << " gRho = " << gRho[g].norm()
-		      << "gMu = "<<gMu[g].norm()<<" "<< "gLambda = "<<gLambda[g].norm()
-                      << "\n";
+#ifdef SW4_NORM_TRACE
+    if (!getRank()) {
+      for (int g = 0; g < mNumberOfGrids; g++) {
+        norm_trace_file << "ADD_GRAD K[" << g << "] " << K[g].norm()
+                        << " Kacc = " << K[g].norm()
+                        << " gRho = " << gRho[g].norm()
+                        << "gMu = " << gMu[g].norm() << " "
+                        << "gLambda = " << gLambda[g].norm() << "\n";
+      }
     }
-  }
 #endif
 
     //      if( dbgowner )
@@ -525,7 +517,8 @@ void EW::solve_backward_allpars(
   // Give back memory
   for (int g = 0; g < mNumberOfGrids; g++) {
     for (int side = 0; side < 6; side++)
-      if (BCForcing[g][side] != NULL) ::operator delete[](BCForcing[g][side], Space::Managed);
+      if (BCForcing[g][side] != NULL)
+        ::operator delete[](BCForcing[g][side], Space::Managed);
     delete[] BCForcing[g];
   }
   for (int s = 0; s < point_sources.size(); s++) delete point_sources[s];

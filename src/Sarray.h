@@ -35,8 +35,8 @@
 #define EW_SARRAY_H
 
 #include <sys/types.h>
-//#include <iostream>
-//#include <mpi.h>
+// #include <iostream>
+// #include <mpi.h>
 #include <cstdlib>
 #include <string>
 #include <vector>
@@ -224,7 +224,7 @@ class Sarray {
   int ncomp() const { return m_nc; }
   int npts() const { return m_ni * m_nj * m_nk; }
   void copy(const Sarray& u);
-  float_sw4 absmax( int c=1 );
+  float_sw4 absmax(int c = 1);
   float_sw4 maximum(int c = 1);
   float_sw4 minimum(int c = 1);
   float_sw4 sum(int c = 1);
@@ -260,8 +260,8 @@ class Sarray {
   void page_lock(EWCuda* cu);
   void page_unlock(EWCuda* cu);
   void swrite(std::string filename);
-  size_t fwrite(FILE *file);
-  size_t fread(FILE *file);
+  size_t fwrite(FILE* file);
+  size_t fread(FILE* file);
   Sarray* create_copy_on_device(EWCuda* cu);
   void define_offsets();
   void GetAtt(char* file, int line);

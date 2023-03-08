@@ -80,7 +80,7 @@ int presetGPUID(int mpi_rank, int local_rank, int local_size) {
 #ifdef ENABLE_HIP
   int devices_per_node = 4;
   SW4_CheckDeviceError(hipGetDeviceCount(&devices_per_node));
-  //printf("Number of devices is %d\n", devices_per_node);
+  // printf("Number of devices is %d\n", devices_per_node);
   fflush(stdout);
   global_variables.num_devices = devices_per_node;
   if (devices_per_node > 1) {
@@ -111,7 +111,7 @@ int presetGPUID(int mpi_rank, int local_rank, int local_size) {
       if (dev_counts_global[i] != 0)
         std::cout << "Device " << i << " used by " << dev_counts_global[i]
                   << " ranks \n";
-  //std::cerr << "Device set to " << global_variables.device << "\n";
+        // std::cerr << "Device set to " << global_variables.device << "\n";
 #endif  // ENDIF ENABLE_GPU
   return device;
 }
@@ -537,7 +537,7 @@ void operator delete[](void *ptr, Space loc) throw() {
     SW4_CheckDeviceError(SW4_FREE_PINNED(ptr));
   else if (loc == Space::Host) {
     // std:cout<<"Calling my placement delete\n";
-    ::operator delete(ptr); // No [] because it is allocated using new(size)
+    ::operator delete(ptr);  // No [] because it is allocated using new(size)
   } else if (loc == Space::Managed_temps) {
 #ifdef SW4_USE_UMPIRE
     umpire::ResourceManager &rma = umpire::ResourceManager::getInstance();

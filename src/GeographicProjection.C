@@ -34,6 +34,7 @@
 
 #include <cstdio>
 #include <cstring>
+
 #include "GeographicProjection.h"
 #include "Require.h"
 
@@ -134,12 +135,16 @@ void GeographicProjection::computeGeographicCoord(double x, double y,
 
 #else
 
-  std::cerr<<"ERROR CALL TO void GeographicProjection::computeGeographicCoord with Proj disabled\n Check if -DENABLE_PROJ is being used to build sw4/sw4mopt executable\n";
+  std::cerr
+      << "ERROR CALL TO void GeographicProjection::computeGeographicCoord with "
+         "Proj disabled\n Check if -DENABLE_PROJ is being used to build "
+         "sw4/sw4mopt executable\n";
   abort();
 
 #endif
 
-  //printf("computeGeographicCoord: %f %f -> %f\t%f\n", x, y, longitude,  latitude); 
+  // printf("computeGeographicCoord: %f %f -> %f\t%f\n", x, y, longitude,
+  // latitude);
 }
 
 //-----------------------------------------------------------------------
@@ -177,7 +182,7 @@ void GeographicProjection::computeCartesianCoord(double &x, double &y,
   y = xlon * cos(m_az) - ylat * sin(m_az);
 #endif
 
-  //printf("computeCartesianCoord: %f %f -> %f\t%f\n", lon, lat, x, y); 
+  // printf("computeCartesianCoord: %f %f -> %f\t%f\n", lon, lat, x, y);
 }
 
 //-----------------------------------------------------------------------

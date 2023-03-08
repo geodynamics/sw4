@@ -31,18 +31,19 @@
 // # You should have received a copy of the GNU General Public License
 // # along with this program; if not, write to the Free Software
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
-#include "mpi.h"
-
 #include <fcntl.h>
 #include <unistd.h>
+
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+
 #include "EW.h"
 #include "Image.h"
 #include "Require.h"
+#include "mpi.h"
 
 #ifdef USE_HDF5
 #include "sachdf5.h"
@@ -258,7 +259,7 @@ void Image::computeGridPtIndex() {
       }
       //       if (myRank == 0)
       // 	printf("The closest grid line is located at %s = %.2f; index =
-      // %i on grid %i\n", 	       mOrientationString[mLocationType].c_str(),
+      // %i on grid %i\n", mOrientationString[mLocationType].c_str(),
       // (m_gridPtIndex[g]-1)*mEW->mGridSize[g],m_gridPtIndex[g],g);
     }  // end for all Cartesian grids
 
@@ -461,7 +462,8 @@ void Image::define_pio() {
   for (int g = glow; g < ghigh; g++) {
     int global[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g],
                      mEW->m_global_nz[g]};
-    //		       mEW->m_kEnd[g] - mEW->m_kStart[g] - 2*mEW->m_ghost_points+1}
+    //		       mEW->m_kEnd[g] - mEW->m_kStart[g] -
+    //2*mEW->m_ghost_points+1}
     //;
     int local[3];
     local[0] = mWindow[g][1] - mWindow[g][0] + 1;
@@ -1408,7 +1410,7 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
           //	    if( mMode == S && mEW->getRank() == 10 )
           //	    {
           //	       cout << "Before write, value is  " <<
-          //m_floatField[g][618] << " g= " << g << "off= " << offset << " glow=
+          // m_floatField[g][618] << " g= " << g << "off= " << offset << " glow=
           //" << glow << " ghigh= "<< ghigh << endl; 	       dbg = true;
           //	    }
           //	    if( mMode == S && mEW->getRank() == 63 && mLocationType == Z
@@ -2996,7 +2998,7 @@ void Image::output_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
            mMode != VMAX) {
     if (mEW->proc_zero()) {
       //	  printf("Can only write ux, uy, uz, mu, rho, lambda, uxerr,
-      //uyerr, uzerr- remove once completely implemented\n");
+      // uyerr, uzerr- remove once completely implemented\n");
       printf(
           "Can only write ux, uy, uz, mu, rho, lambda: - remove once "
           "completely implemented\n");

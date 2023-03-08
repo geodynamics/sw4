@@ -363,8 +363,7 @@ void ESSI3D::open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
       }
     }
 
-    if (debug)
-      cout << "Creating hdf5 velocity fields..." << endl;
+    if (debug) cout << "Creating hdf5 velocity fields..." << endl;
   }
 
   if (m_dumpInterval > 0) {
