@@ -55,8 +55,9 @@ public:
 // support for derived quantities of the time derivative are not yet implemented
   enum receiverMode{Displacement, Div, Curl, Strains, Velocity, DisplacementGradient /*, DivVelo, CurlVelo, StrainsVelo */ };
 
-TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, bool sacFormat, bool usgsFormat, bool hdf5Format, std::string hdf5FileName, 
-	    float_sw4 x, float_sw4 y, float_sw4 z, bool topoDepth, int writeEvery, int downSample, bool xyzcomponent=true, int event=0 );
+TimeSeries( EW* a_ew, std::string fileName, std::string staName, receiverMode mode, int sacFormat, int usgsFormat, int hdf5Format, std::string hdf5FileName, 
+	    float_sw4 x, float_sw4 y, float_sw4 z, bool topoDepth, int writeEvery, int downSample, bool xyzcomponent=true, int event=0, std::string net="NET", 
+            std::string loc="LOC", std::string seedid="SEEDID", std::string datetime="DATETIME");
 ~TimeSeries();
 
 void allocateRecordingArrays( int numberOfTimeSteps, float_sw4 startTime, float_sw4 timeStep );
@@ -64,6 +65,7 @@ void allocateRecordingArrays( int numberOfTimeSteps, float_sw4 startTime, float_
 void recordData(vector<float_sw4> & u);
 
 void writeFile( string suffix="" );
+void writeFileV2( string suffix="" );
 void writeFileUSGS( string suffix="" );
 void writeFile( FILE* fid);
 void syncSolFloats();
@@ -98,7 +100,7 @@ float_sw4 getXaz() const {return m_x_azimuth;}
 int getMUTC(int i) const {return m_utc[i];}
 void print_utc();
 
-/* float_sw4 getEpiTimeOffset() const {return m_epi_time_offset;} */
+float_sw4 getEpiTimeOffset() const {return m_epi_time_offset;}
 
 bool getXYZcomponent() const {return m_xyzcomponent;}
 float_sw4 arrival_time( float_sw4 lod );
@@ -133,6 +135,10 @@ void set_shift( float_sw4 shift );
 float_sw4 get_shift() const;
 void add_shift( float_sw4 shift );
 std::string getStationName(){return m_staName;}
+std::string getNet(){return m_net;}
+std::string getLoc(){return m_loc;}
+std::string getSeedid(){return m_seedid;}
+std::string getDatetime(){return m_datetime;}
 std::string getFileName(){return m_fileName;}
 std::string gethdf5FileName(){return m_hdf5Name;}
 std::string getPath(){return m_path;}
@@ -140,6 +146,11 @@ float_sw4 getDt() {return m_dt;}
 float_sw4 getLastTimeStep() {return mLastTimeStep;}
    //int getAllocatedSize(){return mAllocatedSize;}
 int getUseWin() const {return m_use_win;}
+float_sw4 getRecGPLat() {return m_rec_gp_lat;}
+float_sw4 getRecGPLon() {return m_rec_gp_lon;}
+float_sw4 getRecGPX() {return mGPX;}
+float_sw4 getRecGPY() {return mGPY;}
+float_sw4 getRecGPZ() {return mGPZ;}
 
 void set_scalefactor( float_sw4 value );
 bool get_compute_scalefactor() const;
@@ -207,7 +218,7 @@ int m_nComp;
 
 bool m_myPoint; // set to true if this processor writes to the arrays
 
-std::string m_fileName, m_staName, m_hdf5Name;
+std::string m_fileName, m_staName, m_hdf5Name, m_net, m_loc, m_seedid, m_datetime;
 
 float_sw4 mX, mY, mZ, mGPX, mGPY, mGPZ; // original and actual location
 float_sw4 m_zTopo;
@@ -217,7 +228,7 @@ bool m_zRelativeToTopography; // location is given relative to topography
 int mWriteEvery;
 int mDownSample;
 
-bool m_usgsFormat, m_sacFormat, m_hdf5Format;
+int m_usgsFormat, m_sacFormat, m_hdf5Format;
 string m_path;
 
 // start time, shift, and time step 

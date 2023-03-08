@@ -188,6 +188,7 @@ void processMaterialSfile(char* buffer);
 void processMaterialGMG(char* buffer);
 void processAnisotropicMaterialBlock( char* buffer, int & ablockCount );
 void processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
+void processReceiverV2(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
 void processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
 void processObservation(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);
 void processObservationHDF5(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries);

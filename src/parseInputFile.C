@@ -493,7 +493,7 @@ bool EW::parseInputFile( vector<vector<Source*> > & a_GlobalUniqueSources,
        else if (!m_inverse_problem && (startswith("rechdf5", buffer) || startswith("sachdf5", buffer)) ) // was called "sac" in WPP
 	 processReceiverHDF5(buffer, a_GlobalTimeSeries);
        else if (!m_inverse_problem && (startswith("rec", buffer) || startswith("sac", buffer)) ) // was called "sac" in WPP
-	 processReceiver(buffer, a_GlobalTimeSeries);
+	 processReceiverV2(buffer, a_GlobalTimeSeries);
        else if (m_inverse_problem && (startswith("obshdf5", buffer) || startswith("observationhdf5", buffer))) // 
 	  processObservationHDF5(buffer, a_GlobalTimeSeries);
        else if (m_inverse_problem && startswith("obs", buffer)) // 
@@ -7254,6 +7254,373 @@ void EW::processReceiverHDF5(char* buffer, vector<vector<TimeSeries*> > & a_Glob
     a_GlobalTimeSeries[0][0]->addReadTime(etime-stime);
 }
 
+void EW::processReceiverV2(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries)
+{
+  double x=0.0, y=0.0, z=0.0;
+  double lat = 0.0, lon = 0.0, depth = 0.0;
+  bool cartCoordSet = false, geoCoordSet = false;
+  string fileName = "station";
+  string hdf5FileName = "station.hdf5";
+  string staName = "station";
+  string net = "NET";
+  string loc = "LOC";
+  string seedid = "SEEDID";
+  string datetime = "DATETIME";
+  bool staNameGiven=false;
+  double stime, etime;
+  stime = MPI_Wtime();
+  
+  int writeEvery = 1000;
+  int downSample = 1;
+
+  bool topodepth = false;
+
+  bool usgsformat = 0, sacformat = 1, hdf5format = 0; // default is to write sac files
+  TimeSeries::receiverMode mode=TimeSeries::Displacement;
+
+  char* token = strtok(buffer, " \t");
+  bool nsew=false; 
+  int event=0;
+  //int vel=0;
+
+// tmp
+//  cerr << "******************** INSIDE process receiver *********************" << endl;
+
+  CHECK_INPUT(strcmp("rec", token) == 0 || strcmp("sac", token) == 0, "ERROR: not a rec line...: " << token);
+  token = strtok(NULL, " \t");
+
+  string err = "RECEIVER Error: ";
+
+//* testing
+  // if (proc_zero())
+  //   cout << "start parsing of receiver command, token:" << token << "(end token)" << endl;
+
+  while (token != NULL)
+  {
+     // while there are tokens in the string still
+     //     cout << m_myRank << " token " << token <<"x"<<endl;
+
+     if (startswith("#", token) || startswith(" ", buffer))
+        // Ignore commented lines and lines with just a space.
+        break;
+     if (startswith("x=", token))
+     {
+        CHECK_INPUT(!geoCoordSet,
+                err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
+        token += 2; // skip x=
+        cartCoordSet = true;
+        x = atof(token);
+        CHECK_INPUT(x >= 0.0,
+		    "receiver command: x must be greater than or equal to 0, not " << x);
+        CHECK_INPUT(x <= m_global_xmax,
+		    "receiver command: x must be less than or equal to xmax, not " << x);
+     }
+     else if (startswith("y=", token))
+     {
+        CHECK_INPUT(!geoCoordSet,
+                err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
+        token += 2; // skip y=
+        cartCoordSet = true;
+        y = atof(token);
+        CHECK_INPUT(y >= 0.0,
+                "receiver command: y must be greater than or equal to 0, not " << y);
+        CHECK_INPUT(y <= m_global_ymax,
+		    "receiver command: y must be less than or equal to ymax, not " << y);
+     }
+     else if (startswith("lat=", token))
+     {
+        CHECK_INPUT(!cartCoordSet,
+                err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
+        token += 4; // skip lat=
+        lat = atof(token);
+        CHECK_INPUT(lat >= -90.0,
+                "receiver command: lat must be greater than or equal to -90 degrees, not " 
+                << lat);
+        CHECK_INPUT(lat <= 90.0,
+                "receiver command: lat must be less than or equal to 90 degrees, not "
+                << lat);
+        geoCoordSet = true;
+     }
+     else if (startswith("lon=", token))
+     {
+        CHECK_INPUT(!cartCoordSet,
+                err << "receiver command: Cannot set both a geographical (lat, lon) and a cartesian (x,y) coordinate");
+        token += 4; // skip lon=
+        lon = atof(token);
+        CHECK_INPUT(lon >= -180.0,
+                "receiver command: lon must be greater or equal to -180 degrees, not " 
+                << lon);
+        CHECK_INPUT(lon <= 180.0,
+                "receiver command: lon must be less than or equal to 180 degrees, not "
+                << lon);
+        geoCoordSet = true;
+     }
+     else if (startswith("z=", token))
+     {
+       token += 2; // skip z=
+       depth = z = atof(token);
+       topodepth = false; // absolute depth (below mean sea level)
+       CHECK_INPUT(z <= m_global_zmax,
+		   "receiver command: z must be less than or equal to zmax, not " << z);
+     }
+     else if (startswith("depth=", token))
+     {
+        token += 6; // skip depth=
+       z = depth = atof(token);
+       topodepth = true; // by depth we here mean depth below topography
+       CHECK_INPUT(depth >= 0.0,
+	       err << "receiver command: depth must be greater than or equal to zero");
+       CHECK_INPUT(depth <= m_global_zmax,
+		   "receiver command: depth must be less than or equal to zmax, not " << depth);
+     }
+//                        1234567890
+     else if (startswith("topodepth=", token))
+     {
+        token += 10; // skip topodepth=
+       z = depth = atof(token);
+       topodepth = true; // by depth we here mean depth below topography
+       CHECK_INPUT(depth >= 0.0,
+	       err << "receiver command: depth must be greater than or equal to zero");
+       CHECK_INPUT(depth <= m_global_zmax,
+		   "receiver command: depth must be less than or equal to zmax, not " << depth);
+     }
+     else if(startswith("hdf5file=", token))
+     {
+        token += 9; // skip file=
+        hdf5FileName = token;
+     }
+     else if(startswith("net=", token))
+     {
+        token += 4;
+        net = token;
+     }
+     else if(startswith("loc=", token))
+     {
+        token += 4;
+        loc = token;
+     }
+     else if(startswith("seedid=", token))
+     {
+        token += 7;
+        seedid = token;
+     }
+     else if(startswith("datetime=", token))
+     {
+        token += 9;
+        datetime = token;
+     }
+     else if(startswith("file=", token))
+     {
+        token += 5; // skip file=
+        fileName = token;
+     }
+     else if(startswith("group=", token))
+     {
+        // For HDF5 station group name
+        token += 6; // skip group=
+        fileName = token;
+     }
+     else if (startswith("sta=", token))
+     {
+        token += strlen("sta=");
+        staName = token;
+	staNameGiven=true;
+     }
+     else if( startswith("nsew=", token) )
+     {
+        token += strlen("nsew=");
+        nsew = atoi(token) == 1;
+     }
+     // else if( startswith("velocity=", token) )
+     // {
+     //    token += strlen("velocity=");
+     //    vel = atoi(token);
+     // }
+     else if (startswith("writeEvery=", token))
+     {
+       token += strlen("writeEvery=");
+       writeEvery = atoi(token);
+       CHECK_INPUT(writeEvery >= 0,
+	       err << "sac command: writeEvery must be set to a non-negative integer, not: " << token);
+     }
+     else if (startswith("downSample=", token) || startswith("downsample=", token))
+     {
+       token += strlen("downSample=");
+       downSample = atoi(token);
+       CHECK_INPUT(downSample >= 1,
+	       err << "sac command: downSample must be set to an integer greater or equal than 1, not: " << token);
+     }
+     else if(startswith("event=",token))
+     {
+	token += 6;
+	//	event = atoi(token);
+	//	CHECK_INPUT( 0 <= event && event < m_nevent, err << "event no. "<< event << " out of range" );
+	// Ignore if no events given
+	if( m_nevents_specified > 0 )
+	{
+	   map<string,int>::iterator it = m_event_names.find(token);
+           //	   CHECK_INPUT( it != m_event_names.end(), 
+           //		     err << "event with name "<< token << " not found" );
+           //	   event = it->second;
+             if( it != m_event_names.end() )
+                event = it->second;
+             else if( proc_zero() )
+                std::cout << "Receiver warning: event with name " << token << " not found" << std::endl;
+	}
+     }
+     else if( startswith("usgsformat=", token) )
+     {
+        token += strlen("usgsformat=");
+        usgsformat = atoi(token);
+     }
+     else if( startswith("sacformat=", token) )
+     {
+        token += strlen("sacformat=");
+        sacformat = atoi(token);
+     }
+     else if( startswith("hdf5format=", token) )
+     {
+        token += strlen("hdf5format=");
+        hdf5format = atoi(token);
+     }
+     else if( startswith("variables=", token) )
+     {
+//* testing
+       // if (proc_zero())
+       // 	 printf("Inside rec command, before parsing 'variables=', token:'%s'(end token)\n", token);
+       
+       token += strlen("variables=");
+
+//* testing
+       // if (proc_zero())
+       // 	 printf("Inside rec command, after parsing 'variables=', token:'%s'(end token)\n", token);
+
+       if( strcmp("displacement",token)==0 )
+       {
+	 mode = TimeSeries::Displacement;
+       }
+       else if( strcmp("velocity",token)==0 )
+       {
+	 mode = TimeSeries::Velocity;
+       }
+       else if( strcmp("div",token)==0 )
+       {
+	 mode = TimeSeries::Div;
+       }
+       else if( strcmp("curl",token)==0 )
+       {
+	 mode = TimeSeries::Curl;
+       }
+       else if( strcmp("strains",token)==0 )
+       {
+	 mode = TimeSeries::Strains;
+       }
+       else if( strcmp("displacementgradient",token)==0 )
+       {
+	 mode = TimeSeries::DisplacementGradient;
+       }
+       else
+       {
+	 if (proc_zero())
+	   cout << "receiver command: variables=" << token << " not understood" << endl
+		<< "using default mode (displacement)" << endl << endl;
+	 mode = TimeSeries::Displacement;
+       }
+       
+     }
+     else
+     {
+        badOption("receiver", token);
+     }
+     token = strtok(NULL, " \t");
+//* testing
+     // if (proc_zero())
+     //   cout << "rec command: Bottom of while loop, token:" << token << "(end token)" << endl;
+     
+  }  
+  //  cout << "end receiver " << m_myRank << endl;
+
+  if (geoCoordSet)
+  {
+    computeCartesianCoord(x, y, lon, lat);
+// check if (x,y) is within the computational domain
+  }
+
+  if (!staNameGiven)
+    staName = fileName;
+
+  bool inCurvilinear=false;
+// we are in or above the curvilinear grid 
+  if ( topographyExists() && z < m_zmin[mNumberOfCartesianGrids-1])
+  {
+    inCurvilinear = true;
+  }
+      
+// check if (x,y,z) is not in the global bounding box
+  if ( !( (inCurvilinear || z >= 0) && x>=0 && x<=m_global_xmax && y>=0 && y<=m_global_ymax))
+  {
+// The location of this station was outside the domain, so don't include it in the global list
+    if (m_myRank == 0 && getVerbosity() > 0)
+    {
+      stringstream receivererr;
+  
+      receivererr << endl 
+		  << "***************************************************" << endl
+		  << " WARNING:  RECEIVER positioned outside grid!" << endl;
+      receivererr << " No RECEIVER file will be generated for file = " << fileName << endl;
+      if (geoCoordSet)
+      {
+	receivererr << " @ lon=" << lon << " lat=" << lat << " depth=" << depth << endl << endl;
+      }
+      else
+      {
+	receivererr << " @ x=" << x << " y=" << y << " z=" << z << endl << endl;
+      }
+      
+      receivererr << "***************************************************" << endl;
+      cerr << receivererr.str();
+      cerr.flush();
+    }
+  }
+  else if( event_is_in_proc(event) )
+  {
+    if (writeEvery % downSample != 0) {
+      writeEvery = (int)writeEvery / downSample;
+      writeEvery *= downSample;
+      if (proc_zero())
+        cout << "receiver command: writeEvery=" << writeEvery << " is not a multiple of downsample, "
+            << downSample << "adjustding writeEvery to " << writeEvery << endl;
+    }
+
+    event = global_to_local_event(event);
+
+
+    TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, hdf5FileName, x, y, depth, 
+					topodepth, writeEvery, downSample, !nsew, event, net, loc, seedid, datetime);
+#if USE_HDF5
+    if (hdf5format) {
+      if(a_GlobalTimeSeries[event].size() == 0) {
+        ts_ptr->allocFid();
+        ts_ptr->setTS0Ptr(ts_ptr);
+      }
+      else {
+        ts_ptr->setFidPtr(a_GlobalTimeSeries[event][0]->getFidPtr());
+        ts_ptr->setTS0Ptr(a_GlobalTimeSeries[event][0]);
+      }
+    }
+#endif
+
+// include the receiver in the global list
+    a_GlobalTimeSeries[event].push_back(ts_ptr);
+  }
+
+  etime = MPI_Wtime();
+  if (a_GlobalTimeSeries.size() > 0 && a_GlobalTimeSeries[0].size() > 0) 
+    a_GlobalTimeSeries[0][0]->addReadTime(etime-stime);
+  
+}
+
+
 //-----------------------------------------------------------------------
 void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTimeSeries)
 {
@@ -7265,6 +7632,11 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
   string staName = "station";
   bool staNameGiven=false;
   double stime, etime;
+  string net = "NET";
+  string loc = "LOC";
+  string seedid = "SEEDID";
+  string datetime = "DATETIME";
+
   stime = MPI_Wtime();
   
   int writeEvery = 1000;
@@ -7565,7 +7937,7 @@ void EW::processReceiver(char* buffer, vector<vector<TimeSeries*> > & a_GlobalTi
 
     event = global_to_local_event(event);
     TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, hdf5FileName, x, y, depth, 
-					topodepth, writeEvery, downSample, !nsew, event );
+					topodepth, writeEvery, downSample, !nsew, event, net, loc, seedid, datetime);
 #if USE_HDF5
     if (hdf5format) {
       if(a_GlobalTimeSeries[event].size() == 0) {
@@ -7772,7 +8144,11 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
   string fileName = "rec";
   string staName = "station";
   bool staNameGiven=false;
-  
+  string net = "NET";
+  string loc = "LOC";
+  string seedid = "SEEDID";
+  string datetime = "DATETIME";
+
   int writeEvery = 0;
 
   bool dateSet = false;
@@ -8109,7 +8485,7 @@ void EW::processObservation( char* buffer, vector<vector<TimeSeries*> > & a_Glob
      else
      {
         TimeSeries *ts_ptr = new TimeSeries(this, fileName, staName, mode, sacformat, usgsformat, hdf5format, hdf5file, x, y, depth, 
-					topodepth, writeEvery, 1, true, event );
+					topodepth, writeEvery, 1, true, event, net, loc, seedid, datetime);
     // Read in file. 
     // ignore_utc=true, ignores UTC read from file, instead uses the default utc = simulation utc as reference.
     //        This is useful for synthetic data.
