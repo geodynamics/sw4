@@ -240,7 +240,7 @@ void DataPatches::save_to_file( )
 {
    if( m_ncurrent > 0 && !m_error && m_isnonempty )
    {
-      size_t nr;
+      ssize_t nr;
       int fd = open( m_filename.c_str(), O_RDWR );
       if( fd == -1 )
       {
