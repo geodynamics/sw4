@@ -2427,7 +2427,7 @@ void predfort_ci(int ib, int ie, int jb, int je, int kb, int ke,
                        dt2orh * (lu[i + npts] + fo[i + npts]);
         up[i + 2 * npts] = 2 * u[i + 2 * npts] - um[i + 2 * npts] +
                            dt2orh * (lu[i + 2 * npts] + fo[i + 2 * npts]);
-      });  // SYNC_STREAM;
+      });  
 }
 
 //-----------------------------------------------------------------------

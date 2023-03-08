@@ -1,6 +1,8 @@
 #ifndef __SW4_CALIPER_ANNOTATIONS__
 #define __SW4_CALIPER_ANNOTATIONS__
 
+#define SW4_CPU_WARN std::cout<<"WARNING "<<__func__<<" running on CPU \n"
+
 #if defined(ENABLE_CALIPER)
 
 #include <caliper/cali.h>

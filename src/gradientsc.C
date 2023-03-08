@@ -94,6 +94,8 @@ void addgradrhoc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 #define kapacc(c, i, j, k) \
   a_kapacc[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 #define uacc(c, i, j, k) a_uacc[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
+
+  SW4_CPU_WARN;
 #pragma omp parallel for
   for (int k = kfirstact; k <= klastact; k++)
     for (int j = jfirstact; j <= jlastact; j++)

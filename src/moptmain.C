@@ -1,5 +1,5 @@
 #include <cstring>
-
+#include "caliper.h"
 #include "DataPatches.h"
 #include "EW.h"
 #include "caliper.h"
@@ -1730,6 +1730,7 @@ int start_minv(int argc, char** argv, string& input_file, int& myRank,
 
 //-----------------------------------------------------------------------
 int main(int argc, char** argv) {
+  SW4_MARK_FUNCTION;
   string fileName;
   int myRank, nProcs;
   int status = start_minv(argc, argv, fileName, myRank, nProcs);

@@ -1759,6 +1759,7 @@ int aligned(double* p) {
   return 2048;
 }
 void vset_to_zero_async(std::vector<Sarray>& v, int N) {
+  SW4_MARK_FUNCTION;
   // for(int i=0;i<N;i++)
   // std::cout<<"SIZES "<<v[i].m_npts<<"\n";
 

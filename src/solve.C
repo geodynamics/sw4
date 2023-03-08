@@ -6801,6 +6801,7 @@ void EW::addtoPseudoHessian(vector<Sarray>& Um, vector<Sarray>& U,
                             vector<Sarray>& aMu, vector<Sarray>& aLambda,
                             float_sw4 dt, int varcase,
                             vector<Sarray>& PseudoHess) {
+  SW4_MARK_FUNCTION;
   for (int g = 0; g < mNumberOfCartesianGrids; g++) {
     int nk = m_global_nz[g];
     add_pseudohessian_terms2(
