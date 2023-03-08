@@ -1,0 +1,2 @@
+There is a bug in sw4mopt that crashes runs with 4 ranks.
+Runs on CORAL machines will have to be done with 2 nodes 8 ranks.
