@@ -1,3 +1,4 @@
+#include "caliper.h"
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstring>
@@ -17,6 +18,7 @@
 
 //-----------------------------------------------------------------------
 Mopt::Mopt(EW* a_ew) {
+  SW4_MARK_FUNCTION;
   m_ew = a_ew;
   m_opttest = 1;
 
@@ -91,6 +93,7 @@ Mopt::Mopt(EW* a_ew) {
 
 //-----------------------------------------------------------------------
 bool Mopt::parseInputFileOpt(std::string filename) {
+  SW4_MARK_FUNCTION;
   //   char buffer[4096];
   const int buflen = 65536;
   char* buffer = new char[buflen];
@@ -158,6 +161,7 @@ bool Mopt::parseInputFileOpt(std::string filename) {
 
 //-----------------------------------------------------------------------
 void Mopt::badOption(string name, char* option) const {
+  SW4_MARK_FUNCTION;
   if (m_myrank == 0)
     cout << "\tWarning: ignoring " << name << " line option '" << option << "'"
          << endl;
@@ -165,6 +169,7 @@ void Mopt::badOption(string name, char* option) const {
 
 //-----------------------------------------------------------------------
 bool Mopt::startswith(const char begin[], char* line) {
+  SW4_MARK_FUNCTION;
   int lenb = strlen(begin);
 
   // We ignore any preceeding whitespace
@@ -178,6 +183,7 @@ bool Mopt::startswith(const char begin[], char* line) {
 
 //-----------------------------------------------------------------------
 void Mopt::processMaterialAllpts(char* buffer) {
+  SW4_MARK_FUNCTION;
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("mpallpts", token) == 0,
               "ERROR: not an mpallpts line: " << token);
@@ -214,6 +220,7 @@ void Mopt::processMaterialAllpts(char* buffer) {
 
 //-----------------------------------------------------------------------
 void Mopt::processMaterialParCart(char* buffer) {
+  SW4_MARK_FUNCTION;
   int nr = 1;
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("mparcart", token) == 0,
@@ -348,6 +355,7 @@ void Mopt::processMaterialParCart(char* buffer) {
 
 //-----------------------------------------------------------------------
 void Mopt::processMrun(char* buffer) {
+  SW4_MARK_FUNCTION;
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("mrun", token) == 0, "ERROR: not an mrun line: " << token);
   token = strtok(NULL, " \t");
@@ -513,6 +521,7 @@ void Mopt::processMrun(char* buffer) {
 
 //-----------------------------------------------------------------------
 void Mopt::processMscalefactors(char* buffer) {
+  SW4_MARK_FUNCTION;
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("mscalefactors", token) == 0,
               "ERROR: not an mscalefactors line: " << token);
@@ -559,6 +568,7 @@ void Mopt::processMscalefactors(char* buffer) {
 
 //-----------------------------------------------------------------------
 void Mopt::processMfileio(char* buffer) {
+  SW4_MARK_FUNCTION;
   char* path = 0;
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("fileio", token) == 0,
@@ -580,6 +590,7 @@ void Mopt::processMfileio(char* buffer) {
 
 //-----------------------------------------------------------------------
 void Mopt::processMregularize(char* buffer) {
+  SW4_MARK_FUNCTION;
   char* path = 0;
   char* token = strtok(buffer, " \t");
   int n;
@@ -615,6 +626,7 @@ void Mopt::processMregularize(char* buffer) {
 //-----------------------------------------------------------------------
 void Mopt::get_scalefactors(double& rhoscale, double& muscale,
                             double& lambdascale) {
+  SW4_MARK_FUNCTION;
   rhoscale = m_rhoscale;
   muscale = m_muscale;
   lambdascale = m_lambdascale;
@@ -622,6 +634,7 @@ void Mopt::get_scalefactors(double& rhoscale, double& muscale,
 
 //-----------------------------------------------------------------------
 void Mopt::set_sscalefactors() {
+  SW4_MARK_FUNCTION;
   int my_nmpars, nmpard, nmpard_global;
   m_mp->get_nr_of_parameters(my_nmpars, nmpard, nmpard_global);
   m_nstot = m_nspar + my_nmpars;
@@ -669,6 +682,7 @@ void Mopt::set_sscalefactors() {
 
 //-----------------------------------------------------------------------
 void Mopt::set_baseMat(double* xs, double* xm) {
+  SW4_MARK_FUNCTION;
   int my_nmpars, nmpard, nmpard_global;
   m_mp->get_nr_of_parameters(my_nmpars, nmpard, nmpard_global);
   m_nstot = m_nspar + my_nmpars;
@@ -681,6 +695,7 @@ void Mopt::set_baseMat(double* xs, double* xm) {
 
 //-----------------------------------------------------------------------
 void Mopt::set_dscalefactors() {
+  SW4_MARK_FUNCTION;
   int nmpars, nmpard, nmpard_global;
   m_mp->get_nr_of_parameters(nmpars, nmpard, nmpard_global);
   if (nmpard > 0) {
@@ -697,6 +712,7 @@ void Mopt::set_dscalefactors() {
 
 //-----------------------------------------------------------------------
 void Mopt::set_sourcescalefactors(int nspar, double* sfs) {
+  SW4_MARK_FUNCTION;
   double sfall[11];
   m_ew->get_scalefactors(sfall);
   if (nspar == 11)
@@ -714,6 +730,7 @@ void Mopt::set_sourcescalefactors(int nspar, double* sfs) {
 
 //-----------------------------------------------------------------------
 void Mopt::processLBFGS(char* buffer) {
+  SW4_MARK_FUNCTION;
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("lbfgs", token) == 0,
               "ERROR: not an lbfgs line: " << token);
@@ -765,6 +782,7 @@ void Mopt::processLBFGS(char* buffer) {
 
 //-----------------------------------------------------------------------
 void Mopt::processNLCG(char* buffer) {
+  SW4_MARK_FUNCTION;
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("nlcg", token) == 0, "ERROR: not an nlcg line: " << token);
   token = strtok(NULL, " \t");
@@ -805,6 +823,7 @@ void Mopt::processNLCG(char* buffer) {
 
 //-----------------------------------------------------------------------
 void Mopt::processMfsurf(char* buffer) {
+  SW4_MARK_FUNCTION;
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("mfsurf", token) == 0,
               "ERROR: not an mfsurf line: " << token);
@@ -887,6 +906,7 @@ void Mopt::processMfsurf(char* buffer) {
 
 //-----------------------------------------------------------------------
 void Mopt::processMimage(char* buffer, bool use_hdf5) {
+  SW4_MARK_FUNCTION;
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("mimage", token) == 0,
               "ERROR: not an mimage line: " << token);
@@ -991,6 +1011,7 @@ void Mopt::processMimage(char* buffer, bool use_hdf5) {
 
 //-----------------------------------------------------------------------
 void Mopt::processSfileoutput(char* buffer) {
+  SW4_MARK_FUNCTION;
   int cycle = 0, cycleInterval = 0;
   int sampleFactorV = 1;
   int sampleFactorH = 1;
@@ -1095,6 +1116,7 @@ void Mopt::processSfileoutput(char* buffer) {
 
 //-----------------------------------------------------------------------
 void Mopt::processM3Dimage(char* buffer) {
+  SW4_MARK_FUNCTION;
   int iter = -1, iterInterval = 0;
   Image3D::Image3DMode mode = Image3D::RHO;
   double time = 0.0, timeInterval = 0.0;
@@ -1192,6 +1214,7 @@ void Mopt::processM3Dimage(char* buffer) {
 
 //-----------------------------------------------------------------------
 void Mopt::processMtypx(char* buffer) {
+  SW4_MARK_FUNCTION;
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("mtypx", token) == 0,
               "ERROR: not an mtypx line: " << token);
@@ -1230,6 +1253,7 @@ void Mopt::processMtypx(char* buffer) {
 
 //-----------------------------------------------------------------------
 void Mopt::set_typx(int nmpar, double* sf, double* typx) {
+  SW4_MARK_FUNCTION;
   for (int i = 0; i < nmpar; i += 3) {
     if (m_typrhoset)
       typx[i] = m_typrho;
@@ -1250,6 +1274,7 @@ void Mopt::set_typx(int nmpar, double* sf, double* typx) {
 
 //-----------------------------------------------------------------------
 void Mopt::init_pseudohessian(vector<Sarray>& ph) {
+  SW4_MARK_FUNCTION;
   if (m_use_pseudohessian) {
     //      for( int g=0 ; g < m_ew->mNumberOfCartesianGrids ; g++ )
     for (int g = 0; g < m_ew->mNumberOfGrids; g++) {
@@ -1262,6 +1287,7 @@ void Mopt::init_pseudohessian(vector<Sarray>& ph) {
 
 //-----------------------------------------------------------------------
 int Mopt::get_pseudo_hessian_case() {
+  SW4_MARK_FUNCTION;
   if (m_use_pseudohessian)
     return m_mp->get_varcase();
   else
@@ -1270,6 +1296,7 @@ int Mopt::get_pseudo_hessian_case() {
 
 //-----------------------------------------------------------------------
 void Mopt::initialize_mimage_files() {
+  SW4_MARK_FUNCTION;
   Image::setSteps(m_maxit);
   //   Image::setSteps(mNumberOfTimeSteps);
   for (unsigned int fIndex = 0; fIndex < m_image_files.size(); ++fIndex) {

@@ -1,3 +1,4 @@
+#include "caliper.h"
 #include <mpi.h>
 
 #include "sw4-prof.h"
@@ -12,6 +13,7 @@ int SW4Prof::m_instances = 0;
 SW4Prof0* sw4_profile;
 
 SW4Prof::SW4Prof(std::string path) {
+  SW4_MARK_FUNCTION;
   if (m_instances == 0) {
     MPI_Comm_rank(MPI_COMM_WORLD, &m_myrank);
     MPI_Comm_size(MPI_COMM_WORLD, &m_nprocs);

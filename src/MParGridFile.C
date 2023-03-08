@@ -1,3 +1,4 @@
+#include "caliper.h"
 #include <fcntl.h>
 #include <unistd.h>
 #include <cmath>
@@ -14,6 +15,9 @@ MParGridFile::MParGridFile(float_sw4* xms, int vars, int nx, int ny, int nz,
                            float_sw4 hx, float_sw4 hy, float_sw4 hz,
                            float_sw4 xmin, float_sw4 ymin, float_sw4 zmin,
                            int update) {
+
+  SW4_MARK_FUNCTION;
+  
   m_update = update;
   m_vars = vars;
   m_nxr = nx;
@@ -39,6 +43,9 @@ MParGridFile::~MParGridFile() { delete[] m_xms; }
 
 //-----------------------------------------------------------------------
 void MParGridFile::read_mparcartfile(std::string fname) {
+
+  SW4_MARK_FUNCTION;
+  
   int fd = open(fname.c_str(), O_RDONLY);
   int mag;
   size_t nr = read(fd, &mag, sizeof(int));
@@ -65,6 +72,9 @@ void MParGridFile::read_mparcartfile(std::string fname) {
 
 //-----------------------------------------------------------------------
 void MParGridFile::write_mparcartfile(std::string fname) {
+
+  SW4_MARK_FUNCTION;
+  
   int fd = open(fname.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0660);
   int mag = 1;
   size_t nr = write(fd, &mag, sizeof(int));
@@ -94,6 +104,10 @@ void MParGridFile::interpolate_to_other(float_sw4* xms, int vars, int nx,
                                         float_sw4 hy, float_sw4 hz,
                                         float_sw4 xmin, float_sw4 ymin,
                                         float_sw4 zmin) {
+
+  SW4_MARK_FUNCTION;
+
+  
   int nc;
   if (vars == 1 || vars == 2)
     nc = 3;

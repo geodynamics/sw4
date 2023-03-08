@@ -1,3 +1,4 @@
+#include "caliper.h"
 #include "EW.h"
 #include "MParGridFile.h"
 #include "MaterialParCartesianVels.h"
@@ -14,6 +15,9 @@ MaterialParCartesianVels::MaterialParCartesianVels(EW* a_ew, int nx, int ny,
                                                    int nz, int init,
                                                    char* fname)
     : MaterialParameterization(a_ew, fname) {
+
+  SW4_MARK_FUNCTION;
+  
   //  VERIFY2( nx > 1 && ny > 1 && nz > 1, "MaterialParCartesianVels: The grid
   //  need at least two ponts in each direction")
   // Material represented on a coarse Cartesian grid, covering the 'active'
@@ -113,6 +117,9 @@ void MaterialParCartesianVels::get_material(int nmd, double* xmd, int nms,
                                             double* xms, vector<Sarray>& a_rho,
                                             vector<Sarray>& a_mu,
                                             vector<Sarray>& a_lambda) {
+
+  SW4_MARK_FUNCTION;
+  
   // 1.  (rho,cs,cp) := x
   // 2.  (a_rho,a_cs,a_cp) := I(rho,cs,cp)  where I(rho,cs,cp) is interpolation
   // to f.d. grid.
@@ -154,6 +161,9 @@ void MaterialParCartesianVels::get_material(int nmd, double* xmd, int nms,
 void MaterialParCartesianVels::interpolate_parameters(
     int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
     std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda) {
+
+  SW4_MARK_FUNCTION;
+  
   // Interpolates the difference a_rho-(m_ew->mRho), into local rho. i.e., m_rho
   // = I(a_rho-(m_ew->mRho)) where a_rho,mRho are on the computational grid, rho
   // on the parameter grid.
@@ -192,6 +202,9 @@ void MaterialParCartesianVels::interpolate_parameters(
 void MaterialParCartesianVels::get_parameters(
     int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
     std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda, int nr) {
+
+  SW4_MARK_FUNCTION;
+  
   if (nr == -1) nr = m_init;
   if (nr == 0) {
     for (int i = 0; i < nms; i++) xms[i] = 0;
@@ -242,6 +255,9 @@ void MaterialParCartesianVels::get_gradient(
     std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
     std::vector<Sarray>& a_lambda, std::vector<Sarray>& a_gradrho,
     std::vector<Sarray>& a_gradmu, std::vector<Sarray>& a_gradlambda) {
+
+  SW4_MARK_FUNCTION;
+  
   //
   // Computes gradient with respect to the material parameterization from given
   // gradients with respect to the material at grid points.
@@ -306,6 +322,9 @@ void MaterialParCartesianVels::get_gradient(
 //-----------------------------------------------------------------------
 void MaterialParCartesianVels::interpolate_pseudohessian(
     int nmpars, double* phs, int nmpard, double* phm, vector<Sarray>& phgrid) {
+
+  SW4_MARK_FUNCTION;
+  
   int ig, jg, kg, g;
   size_t ind = 0;
   for (int k = 1; k <= m_nz; k++)
@@ -338,6 +357,7 @@ ssize_t MaterialParCartesianVels::parameter_index(int ip, int jp, int kp,
                                                   int grid, int var)
 // Ignore grid.
 {
+  SW4_MARK_FUNCTION;
   if (1 <= ip && ip <= m_nx && 1 <= jp && jp <= m_ny && 1 <= kp && kp <= m_nz &&
       (0 <= var) && (var <= 2))
     return 3 * (ip - 1 + static_cast<ssize_t>(m_nx) * (jp - 1) +
@@ -365,6 +385,9 @@ void MaterialParCartesianVels::set_scalefactors(int nmpars, double* sfs,
                                                 double rho_ref, double mu_ref,
                                                 double lambda_ref,
                                                 double vs_ref, double vp_ref) {
+
+  SW4_MARK_FUNCTION;
+  
   for (int i = 0; i < nmpars; i += 3) {
     sfs[i] = rho_ref;
     sfs[i + 1] = vs_ref;
@@ -374,6 +397,9 @@ void MaterialParCartesianVels::set_scalefactors(int nmpars, double* sfs,
 
 //-----------------------------------------------------------------------
 void MaterialParCartesianVels::subtract_base_mtrl(int nms, double* xms) {
+
+  SW4_MARK_FUNCTION;
+  
   // Assume xms are given as full material, interpolate and subtract the
   // base material to get xms as an update.
 

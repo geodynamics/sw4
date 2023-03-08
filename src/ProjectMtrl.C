@@ -30,7 +30,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
-
+#include "caliper.h"
 #include "EW.h"
 
 #define SQR(x) ((x) * (x))
@@ -42,6 +42,7 @@ void projectmtrl(int ib, int ie, int jb, int je, int kb, int ke, int iba,
                  float_sw4* __restrict__ lambda, float_sw4 dt, float_sw4 h,
                  float_sw4 cfl, float_sw4 vsmin, float_sw4 rhoscale,
                  float_sw4 muscale, float_sw4 lascale, int& info) {
+  SW4_MARK_FUNCTION;
   //*********************************************************************
   //*
   //* Projection of the material arrays to satisfy the following constraints
@@ -158,6 +159,7 @@ void projectmtrlc(int ib, int ie, int jb, int je, int kb, int ke, int iba,
                   float_sw4* __restrict__ met, float_sw4* __restrict__ jac,
                   float_sw4 cfl, float_sw4 vsmin, float_sw4 rhoscale,
                   float_sw4 muscale, float_sw4 lascale, int& info) {
+  SW4_MARK_FUNCTION;
   //*********************************************************************
   //*
   //* Same as PROJECTMTRL, but for the curvilinear grid.
@@ -270,6 +272,7 @@ void checkmtrl(int ib, int ie, int jb, int je, int kb, int ke,
                float_sw4* __restrict__ rho, float_sw4* __restrict__ mu,
                float_sw4* __restrict__ lambda, float_sw4 dt, float_sw4 h,
                float_sw4 limits[10]) {
+  SW4_MARK_FUNCTION;
   //-----------------------------------------------------------------------
   //      subroutine CHECKMTRL( ib,  ie,  jb,  je,  kb,  ke,
   //     *         rho, mu, lambda, dt, h, limits )
@@ -373,6 +376,7 @@ void checkmtrl(int ib, int ie, int jb, int je, int kb, int ke,
 void EW::material_correction(int nmpar, float_sw4* xm)
 // routine to enforce material speed limits and positive density
 {
+  SW4_MARK_FUNCTION;
   float_sw4 vsmin = -1;
   if (m_useVelocityThresholds) vsmin = m_vsMin;
   float_sw4 rhoscale = 1, muscale = 1, lascale = 1;
@@ -420,6 +424,7 @@ void EW::material_correction(int nmpar, float_sw4* xm)
 void correct_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
                       vector<Sarray>& a_lambda, float_sw4 vsmin,
                       float_sw4 vpvsminratio) {
+  SW4_MARK_FUNCTION;
   // Find (mu,lambda) minimizing (mu-mu0)^2 + (lambda-lamda0)^2
   // with inequality constraints vs >= vsmin, vp/vs >= vpvsminratio
   // Solved as a quadratic programming problem at each grid point.
@@ -470,6 +475,7 @@ void EW::project_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
                           vector<Sarray>& a_lambda, int& info)
 // routine to enforce material speed limits and positive density
 {
+  SW4_MARK_FUNCTION;
   float_sw4 vsmin = -1;
   if (m_useVelocityThresholds) vsmin = m_vsMin;
   float_sw4 rhoscale = 1, muscale = 1, lascale = 1;
@@ -517,6 +523,7 @@ void EW::project_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
 //-----------------------------------------------------------------------
 int EW::check_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
                        vector<Sarray>& a_lambda, int& ok, int verbose) {
+  SW4_MARK_FUNCTION;
   int err_code = 0;
   ok = 1;
   for (int g = 0; g < mNumberOfGrids; g++) {

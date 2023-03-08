@@ -1,3 +1,4 @@
+#include "caliper.h"
 #ifdef OPTTEST_MODE
 #include <mpi.h>
 #include <cmath>
@@ -36,6 +37,7 @@ void wolfecondition(EW& simulation, vector<vector<Source*> >& GlobalSources,
 //-----------------------------------------------------------------------
 
 {
+  SW4_MARK_FUNCTION;
   double beta = 0.9, lambdaprev, fpprev, maxlambda;
   int ns = nspar + nmpars;
   compute_f_and_df(simulation, nspar, nmpars, xsnew, nm, xmnew, GlobalSources,
@@ -187,6 +189,7 @@ void linesearch(EW& simulation, vector<vector<Source*> >& GlobalSources,
 //-----------------------------------------------------------------------
 
 {
+  SW4_MARK_FUNCTION;
   bool maxtaken = false;
   int ns;
   double alpha = 1e-6, cglen = 0, ang = 0;
@@ -489,6 +492,7 @@ void lbfgs(EW& simulation, int nspar, int nmpars, double* xs, int nmpard,
 //
 //-----------------------------------------------------------------------
 {
+  SW4_MARK_FUNCTION;
   int j, k, ns;
   bool converged = false;
   //   bool dolinesearch = true;

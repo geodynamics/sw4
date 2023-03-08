@@ -1,3 +1,4 @@
+#include "caliper.h"
 #include <cstring>
 #include "DataPatches.h"
 #include "EW.h"
@@ -51,6 +52,7 @@ void usage(string thereason) {
 
 //-----------------------------------------------------------------------
 void set_source_pars(int nspar, double srcpars[11], double* xs) {
+  SW4_MARK_FUNCTION;
   // nspar =11, all parameters=(x0,y0,z0,m_{xx}-m_{zz},t0,freq)
   // nspar =10, no freq., parameters=(x0,y0,z0,m_{xx}-m_{zz},t0)
   // nspar = 9 , no freq or t0, parameters=(x0,y0,z0,m_{xx}-m_{zz})
@@ -70,6 +72,7 @@ void set_source_pars(int nspar, double srcpars[11], double* xs) {
 
 //-----------------------------------------------------------------------
 void get_source_pars(int nspar, double srcpars[11], double* xs) {
+   SW4_MARK_FUNCTION;
   // nspar =11, all parameters=(x0,y0,z0,m_{xx}-m_{zz},t0,freq)
   // nspar =10, no freq., parameters=(x0,y0,z0,m_{xx}-m_{zz},t0)
   // nspar = 9 , no freq or t0, parameters=(x0,y0,z0,m_{xx}-m_{zz})
@@ -91,6 +94,7 @@ void get_source_pars(int nspar, double srcpars[11], double* xs) {
 void normalize_gradient_ph(vector<Sarray>& pseudo_hessian, vector<Sarray>& gRho,
                            vector<Sarray>& gMu, vector<Sarray>& gLambda,
                            float_sw4 eps, int phcase, MPI_Comm comm) {
+  SW4_MARK_FUNCTION;
   int ng = gRho.size();
   for (int g = 0; g < ng; g++) {
     int ib = pseudo_hessian[g].m_ib, ie = pseudo_hessian[g].m_ie;
@@ -123,6 +127,7 @@ void normalize_gradient_ph(vector<Sarray>& pseudo_hessian, vector<Sarray>& gRho,
 void normalize_pseudohessian(int nmpars, float_sw4* phs, int nmpard,
                              float_sw4* phd, float_sw4 eps, int phcase,
                              MPI_Comm comm) {
+  SW4_MARK_FUNCTION;
   float_sw4 mxnorm[3] = {0, 0, 0};
   int ncomp;
   if (phcase == 1 || phcase == 2)
@@ -159,11 +164,12 @@ void normalize_pseudohessian(int nmpars, float_sw4* phs, int nmpard,
     for (int c = 0; c < ncomp; c++)
       phd[m * ncomp + c] = phd[m * ncomp + c] / mxnorm[c] + eps;
 }
-
+//------------------------------------------------------------------------------------------------------
 void set_timewindows_from_eikonal_time(
     vector<vector<TimeSeries*> >& GlobalTimeSeries,
     const vector<vector<Source*> >& GlobalSources, const Mopt* mopt,
     const float_sw4 fc2) {
+  SW4_MARK_FUNCTION;
   float_sw4 winlen = 1.;
   float_sw4 wins[4];
 
@@ -240,6 +246,7 @@ void compute_f(EW& simulation, int nspar, int nmpars, double* xs, int nmpard,
 //         mf               - The misfit.
 //-----------------------------------------------------------------------
 {
+   SW4_MARK_FUNCTION;
   // Source optimization
   //   vector<Source*> src(1);
   //   src[0] = GlobalSources[0][0]->copy(" ");
@@ -466,6 +473,7 @@ void compute_f_and_df(EW& simulation, int nspar, int nmpars, double* xs,
 //         dfm              - Gradient wrt to the material of misfit.
 //-----------------------------------------------------------------------
 {
+   SW4_MARK_FUNCTION;
   int verbose = 0;
   sw4_profile->time_stamp("Enter compute_f_and_df");
   // source optimization
@@ -813,6 +821,7 @@ void compute_f_with_derivative(EW& simulation, int nspar, int nmpars,
                                vector<vector<TimeSeries*> >& GlobalObservations,
                                float_sw4& mf, float_sw4& dmf, Mopt* mopt,
                                int di, int dj, int dk, int dgrid, int myrank) {
+   SW4_MARK_FUNCTION;
   int nms, nmd, nmpard_global;
   mopt->m_mp->get_nr_of_parameters(nms, nmd, nmpard_global);
   if (nms != nmpars || nmd != nmpard)
@@ -864,6 +873,7 @@ void compute_f_with_derivative(EW& simulation, int nspar, int nmpars,
 
 //-----------------------------------------------------------------------
 void restrict(int active[6], int wind[6], double* xm, double* xmi) {
+   SW4_MARK_FUNCTION;
   int ni = (wind[1] - wind[0] + 1);
   int nj = (wind[3] - wind[2] + 1);
   int nia = (active[1] - active[0] + 1);
@@ -885,6 +895,7 @@ void restrict(int active[6], int wind[6], double* xm, double* xmi) {
 //-----------------------------------------------------------------------
 double getcscp(Sarray& rho, Sarray& mu, Sarray& lambda, Sarray& cs,
                Sarray& cp) {
+   SW4_MARK_FUNCTION;
   for (int k = rho.m_kb; k <= rho.m_ke; k++)
     for (int j = rho.m_jb; j <= rho.m_je; j++)
       for (int i = rho.m_ib; i <= rho.m_ie; i++) {
@@ -895,6 +906,7 @@ double getcscp(Sarray& rho, Sarray& mu, Sarray& lambda, Sarray& cs,
 
 //-----------------------------------------------------------------------
 double sumdiff(EW& simulation, int g, Sarray& u1, Sarray& u2) {
+   SW4_MARK_FUNCTION;
   int k1 = simulation.m_kStartInt[g];
   int k2 = simulation.m_kEndInt[g];
   int j1 = simulation.m_jStartInt[g];
@@ -918,6 +930,7 @@ void gradient_test(EW& simulation, vector<vector<Source*> >& GlobalSources,
                    vector<vector<TimeSeries*> >& GlobalObservations, int nspar,
                    int nmpars, double* xs, int nmpard, double* xm, int myRank,
                    Mopt* mopt) {
+   SW4_MARK_FUNCTION;
   // nspar:  Number of parameters in source description, when solving for the
   // source nmpars: Number of parameters in material description,
   // non-distributed nmpard: Number of parameters in material description,
@@ -1267,6 +1280,7 @@ void hessian_test(EW& simulation, vector<vector<Source*> >& GlobalSources,
                   //		   int myRank, MaterialParameterization* mp, double*
                   //sf, double* sfm )
                   int myRank, Mopt* mopt) {
+   SW4_MARK_FUNCTION;
   // Hessian test
   int ns = nspar + nmpars;
   double f;
@@ -1488,6 +1502,7 @@ void misfit_curve(int i, int j, int k, int var, double pmin, double pmax,
                   vector<vector<TimeSeries*> >& GlobalTimeSeries,
                   vector<vector<TimeSeries*> >& GlobalObservations, int myRank,
                   Mopt* mopt) {
+   SW4_MARK_FUNCTION;
   double* fcn = new double[npts];
   //   ssize_t ind=mp->parameter_index(i,j,k,0,var);
 
@@ -1618,6 +1633,7 @@ void misfit_surface(int ix1, int jx1, int kx1, int ix2, int jx2, int kx2,
                     vector<vector<TimeSeries*> >& GlobalTimeSeries,
                     vector<vector<TimeSeries*> >& GlobalObservations,
                     int myRank, Mopt* mopt) {
+   SW4_MARK_FUNCTION;
   double* fcn = new double[npts1 * npts2];
   ssize_t ind1 = mp->parameter_index(ix1, jx1, kx1, 0, varx1);
   ssize_t ind2 = mp->parameter_index(ix2, jx2, kx2, 0, varx2);
@@ -1658,6 +1674,7 @@ void misfit_surface(int ix1, int jx1, int kx1, int ix2, int jx2, int kx2,
 //-----------------------------------------------------------------------
 int start_minv(int argc, char** argv, string& input_file, int& myRank,
                int& nProcs) {
+   SW4_MARK_FUNCTION;
   stringstream reason;
 
   // Initialize MPI...

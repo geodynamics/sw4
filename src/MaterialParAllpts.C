@@ -1,10 +1,11 @@
-
+#include "caliper.h"
 #include "EW.h"
 #include "MaterialParAllpts.h"
 
 //-----------------------------------------------------------------------
 MaterialParAllpts::MaterialParAllpts(EW* a_ew, char* fname, int variables)
     : MaterialParameterization(a_ew, fname) {
+  SW4_MARK_FUNCTION;
   if (variables == 0) {
     m_variables = RML;
     m_nc = 3;
@@ -65,6 +66,7 @@ void MaterialParAllpts::get_material(int nmd, double* xmd, int nms, double* xms,
                                      vector<Sarray>& a_rho,
                                      vector<Sarray>& a_mu,
                                      vector<Sarray>& a_lambda) {
+  SW4_MARK_FUNCTION;
   size_t gp, ind;
   for (int g = 0; g < m_ew->mNumberOfGrids; g++) {
     // Fill in base material, in case the parameterization do not cover all of
@@ -129,6 +131,7 @@ void MaterialParAllpts::get_parameters(int nmd, double* xmd, int nms,
                                        double* xms, vector<Sarray>& a_rho,
                                        vector<Sarray>& a_mu,
                                        vector<Sarray>& a_lambda, int nr) {
+  SW4_MARK_FUNCTION;
   size_t gp, ind;
   for (int g = 0; g < m_ew->mNumberOfGrids; g++) {
     if (g == 0)
@@ -168,6 +171,7 @@ void MaterialParAllpts::get_gradient(
     std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
     std::vector<Sarray>& a_lambda, vector<Sarray>& a_gradrho,
     vector<Sarray>& a_gradmu, vector<Sarray>& a_gradlambda) {
+  SW4_MARK_FUNCTION;
   double irat2 = 1 / (m_ratio * m_ratio);
 
   size_t gp, ind;
@@ -223,6 +227,7 @@ void MaterialParAllpts::get_gradient(
 void MaterialParAllpts::interpolate_pseudohessian(int nmpars, double* phs,
                                                   int nmpard, double* phm,
                                                   vector<Sarray>& phgrid) {
+  SW4_MARK_FUNCTION;
   size_t gp, ind;
   for (int g = 0; g < m_ew->mNumberOfGrids; g++) {
     if (g == 0)
@@ -273,6 +278,7 @@ void MaterialParAllpts::interpolate_pseudohessian(int nmpars, double* phs,
 //-----------------------------------------------------------------------
 ssize_t MaterialParAllpts::parameter_index(int ip, int jp, int kp, int grid,
                                            int var) {
+  SW4_MARK_FUNCTION;
   // Computes local index in xmd, from the global sw4-array index (ip,jp,kp)
   // var=0,1,or 2
   size_t gp = 0;  // Local grid pointer
@@ -297,6 +303,7 @@ ssize_t MaterialParAllpts::parameter_index(int ip, int jp, int kp, int grid,
 
 //-----------------------------------------------------------------------
 ssize_t MaterialParAllpts::local_index(size_t ind_global) {
+  SW4_MARK_FUNCTION;
   // ind = c + nc*(i-ib) + nc*ni*(j-jb) + nc*ni*nj*(k-ib)
   size_t ind = m_npts_per_grid[0];
   bool found = false;
@@ -347,6 +354,7 @@ void MaterialParAllpts::set_scalefactors(int nmpars, double* sfs,
                                          double rho_ref, double mu_ref,
                                          double lambda_ref, double vs_ref,
                                          double vp_ref) {
+  SW4_MARK_FUNCTION;
   if (m_variables == RML) {
     for (int i = 0; i < nmpars; i += 3) {
       sfs[i] = rho_ref;
@@ -377,6 +385,9 @@ void MaterialParAllpts::get_regularizer(
     double regcoeff, vector<Sarray>& a_rho, vector<Sarray>& a_mu,
     vector<Sarray>& a_lambda, double& mf_reg, double* sfd, double* sfs,
     bool compute_derivative, double* dmfd_reg, double* dmfs_reg) {
+
+  SW4_MARK_FUNCTION;
+  
   if (regcoeff == 0) return;
 
 #define SQR(x) ((x) * (x))
@@ -691,6 +702,7 @@ void MaterialParAllpts::get_regularizer(
 
 //-----------------------------------------------------------------------
 int MaterialParAllpts::get_varcase() {
+  SW4_MARK_FUNCTION;
   if (m_variables == RML)
     return 1;
   else if (m_variables == RCSCP)

@@ -1,3 +1,4 @@
+#include "caliper.h"
 #include <fcntl.h>
 #include <mpi.h>
 #include <unistd.h>
@@ -13,6 +14,7 @@ using namespace std;
 
 //-----------------------------------------------------------------------
 MaterialParameterization::MaterialParameterization(EW* a_ew, char* fname) {
+  SW4_MARK_FUNCTION;
   m_ew = a_ew;
   MPI_Comm_rank(m_ew->m_1d_communicator, &m_myrank);
   int n = strlen(fname) + 1;
@@ -24,6 +26,7 @@ MaterialParameterization::MaterialParameterization(EW* a_ew, char* fname) {
 //-----------------------------------------------------------------------
 void MaterialParameterization::get_nr_of_parameters(int& nms, int& nmd,
                                                     int& nmd_global) const {
+  SW4_MARK_FUNCTION;
   nmd = m_nmd;
   nms = m_nms;
   nmd_global = m_nmd_global;
@@ -70,6 +73,7 @@ void MaterialParameterization::get_nr_of_parameters(int& nms, int& nmd,
 //-----------------------------------------------------------------------
 void MaterialParameterization::write_parameters(const char* filename, int nms,
                                                 double* xms) {
+  SW4_MARK_FUNCTION;
   VERIFY2(nms == m_nms, "MP::write_parameters: Error in sizes nms = "
                             << nms << " m_nms = " << m_nms);
   // Format: nms,xms[0],xms[1],..xms[nms-1]
@@ -95,6 +99,7 @@ void MaterialParameterization::write_parameters(const char* filename, int nms,
 
 //-----------------------------------------------------------------------
 void MaterialParameterization::write_parameters(int nms, double* xms) {
+  SW4_MARK_FUNCTION;
   VERIFY2(nms == m_nms, "MP::write_parameters: Error in sizes ");
   // Format: nms,xms[0],xms[1],..xms[nms-1]
   if (m_myrank == 0 && nms > 0) {
@@ -116,6 +121,7 @@ void MaterialParameterization::write_parameters(int nms, double* xms) {
 //-----------------------------------------------------------------------
 void MaterialParameterization::write_parameters_dist(const char* outfile,
                                                      int nmd, double* xmd) {
+  SW4_MARK_FUNCTION;
   if (nmd > 0) {
     std::stringstream fid;
     fid << m_myrank << "\0";
@@ -137,6 +143,7 @@ void MaterialParameterization::write_parameters_dist(const char* outfile,
 //-----------------------------------------------------------------------
 void MaterialParameterization::read_parameters(const char* filename, int npars,
                                                double* xptr) {
+  SW4_MARK_FUNCTION;
   // Assumes global distribution of xptr.
   // Read from one processor, and broadcast to all.
   int errflag = 0;
@@ -165,6 +172,7 @@ void MaterialParameterization::read_parameters(const char* filename, int npars,
 
 //-----------------------------------------------------------------------
 void MaterialParameterization::read_parameters(int npars, double* xptr) {
+  SW4_MARK_FUNCTION;
   read_parameters(m_filename, npars, xptr);
 }
 
@@ -216,6 +224,7 @@ void MaterialParameterization::set_scalefactors(int nmpars, double* sfs,
                                                 double rho_ref, double mu_ref,
                                                 double lambda_ref,
                                                 double vs_ref, double vp_ref) {
+  SW4_MARK_FUNCTION;
   for (int i = 0; i < nmpars; i += 3) {
     sfs[i] = rho_ref;
     sfs[i + 1] = mu_ref;
@@ -229,6 +238,7 @@ void MaterialParameterization::get_regularizer(
     double regcoeff, std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
     std::vector<Sarray>& a_lambda, double& mf_reg, double* sfd, double* sfs,
     bool compute_derivative, double* dmfd_reg, double* dmfs_reg) {
+  SW4_MARK_FUNCTION;
   mf_reg = 0;
   if (fabs(regcoeff) < 1e-12) return;
 
@@ -283,5 +293,6 @@ void MaterialParameterization::get_regularizer(
 void MaterialParameterization::interpolate_to_cartesian(
     int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
     std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda) {
+  SW4_MARK_FUNCTION;
   get_parameters(nmd, xmd, nms, xms, a_rho, a_mu, a_lambda, 5);
 }

@@ -1,3 +1,4 @@
+#include "caliper.h"
 #ifdef OPTTEST_MODE
 #include <mpi.h>
 #include <cmath>
@@ -26,6 +27,7 @@ void nlcg(EW& simulation, int nspar, int nmpars, double* xs, int nmpard,
           Mopt* mopt)
 
 {
+  SW4_MARK_FUNCTION;
   int ns, verbose = -1, nreductions = 0;
   double rnorm, f;
   bool testing = false;

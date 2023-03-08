@@ -1159,6 +1159,7 @@ void EW::set_materials()
       extrapolateInXY(mQp);
     }
     //    cout << "min rho after " << mRho[0].minimum() << endl;
+    SW4_MARK_END("SetMat::Section 1");
     SW4_MARK_BEGIN("SetMat::Section 2");
     if (m_use_attenuation && m_qmultiplier != 1) {
       for (int g = 0; g < mNumberOfGrids; g++)

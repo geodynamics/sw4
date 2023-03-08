@@ -1,3 +1,4 @@
+#include "caliper.h"
 #include <fstream>
 #include <sstream>
 #include "EW.h"
@@ -14,6 +15,7 @@ MaterialParCurv::MaterialParCurv(EW* a_ew, int nx, int ny, int nz, int init,
                                  int varcase, char* fname, float_sw4 amp,
                                  float_sw4 omega, bool force_shared)
     : MaterialParameterization(a_ew, fname) {
+  SW4_MARK_FUNCTION;
   //  VERIFY2( nx > 1 && ny > 1 && nz > 1, "MaterialParCurv: The grid need at
   //  least two points in each direction")
   // Material represented on a coarse Cartesian grid, covering the 'active'
@@ -201,6 +203,9 @@ MaterialParCurv::MaterialParCurv(EW* a_ew, int nx, int ny, int nz, int init,
 void MaterialParCurv::limit_x(int nmd, double* xmd, int nms, double* xms,
                               float_sw4 vsmin, float_sw4 vsmax, float_sw4 vpmin,
                               float_sw4 vpmax) {
+
+  SW4_MARK_FUNCTION;
+  
   if (vsmin < 0 && vsmax < 0 && vpmin < 0 && vpmax < 0) {
     // All negative, means do no limiting
     int nmpar = nms > 0 ? nms : nmd;
@@ -341,6 +346,9 @@ void MaterialParCurv::limit_x(int nmd, double* xmd, int nms, double* xms,
 
 //-----------------------------------------------------------------------
 void MaterialParCurv::limit_df(int nmd, double* dfd, int nms, double* dfs) {
+
+  SW4_MARK_FUNCTION;
+  
   float_sw4* dfptr;
   int nmpar;
   if (nms > 0) {
@@ -374,6 +382,9 @@ void MaterialParCurv::get_material(int nmd, double* xmd, int nms, double* xms,
 //
 //-----------------------------------------------------------------------
 {
+  
+  SW4_MARK_FUNCTION;
+  
   REQUIRE2(nmd == m_nmd && nms == m_nms,
            "ERROR in MaterialParCurv::get_material "
                << " inconsistent dimensions\n");
@@ -456,6 +467,9 @@ void MaterialParCurv::get_material(int nmd, double* xmd, int nms, double* xms,
 //-----------------------------------------------------------------------
 void MaterialParCurv::find_lims(int ib, int ie, int iepm, int ibpp, int& ibint,
                                 int& ieint) {
+
+  SW4_MARK_FUNCTION;
+  
   if ((ib + iepm) % 2 == 0)
     ibint = (ib + iepm) / 2;
   else
@@ -472,6 +486,9 @@ void MaterialParCurv::find_lims(int ib, int ie, int iepm, int ibpp, int& ibint,
 
 //-----------------------------------------------------------------------
 bool MaterialParCurv::compute_overlap(bool force_shared) {
+
+  SW4_MARK_FUNCTION;
+  
   bool dbg = false;
   if (force_shared) {
     m_ib = m_jb = m_kb = 0;
@@ -652,6 +669,9 @@ void MaterialParCurv::getwgh(float_sw4 ai, float_sw4 wgh[2], int& sl,
 //-----------------------------------------------------------------------
 void MaterialParCurv::interpolate(Sarray& matcart, int g, Sarray& rho,
                                   Sarray& mu, Sarray& lambda) {
+
+  SW4_MARK_FUNCTION;
+  
   // Interpolate coarse grid material matcart to fine grid rho,mu,lambda.
   // Uses trilinear interpolation.
   //
@@ -774,6 +794,9 @@ void MaterialParCurv::get_parameters(int nmd, double* xmd, int nms, double* xms,
                                      std::vector<Sarray>& a_rho,
                                      std::vector<Sarray>& a_mu,
                                      std::vector<Sarray>& a_lambda, int nr) {
+
+  SW4_MARK_FUNCTION;
+  
   if (nr == -1) nr = m_init;
 
   if (nr == 0) {
@@ -852,6 +875,10 @@ void MaterialParCurv::get_parameters(int nmd, double* xmd, int nms, double* xms,
 void MaterialParCurv::interpolate_parameters(
     int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
     std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda, bool update) {
+
+  SW4_MARK_FUNCTION;
+
+  
   //-----------------------------------------------------------------------
   // Interpolate a material on the computational grid to the parameter grid:
   //
@@ -893,6 +920,8 @@ void MaterialParCurv::interpolate_parameters(
 
 //-----------------------------------------------------------------------
 void MaterialParCurv::communicate(Sarray& u) {
+
+  SW4_MARK_FUNCTION;
   //--------------------------------------------------------------
   // General ghost point exchange at processor boundaries.
   //
@@ -1057,6 +1086,8 @@ void MaterialParCurv::communicate(Sarray& u) {
 
 //-----------------------------------------------------------------------
 void MaterialParCurv::communicate_add(Sarray& u) {
+  SW4_MARK_FUNCTION;
+  
   //--------------------------------------------------------------
   // Get neighbor's ghost points and add to my interior points
   //
@@ -1226,6 +1257,9 @@ void MaterialParCurv::interpolate_gradient(int g, Sarray& a_gradrho,
                                            Sarray& a_gradmu,
                                            Sarray& a_gradlambda,
                                            Sarray& gradc) {
+
+  SW4_MARK_FUNCTION;
+  
   //-----------------------------------------------------------------------
   // Interpolate the gradient from the SW4 grid to the coarser parameter grid.
   //
@@ -1309,6 +1343,9 @@ void MaterialParCurv::get_gradient(
     std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
     std::vector<Sarray>& a_lambda, std::vector<Sarray>& a_gradrho,
     std::vector<Sarray>& a_gradmu, std::vector<Sarray>& a_gradlambda) {
+
+  SW4_MARK_FUNCTION;
+  
   //-----------------------------------------------------------------------
   // Computes gradient with respect to the material parameterization from given
   // gradients with respect to the material at grid points.
@@ -1411,6 +1448,8 @@ void MaterialParCurv::get_gradient_shared(int nms, double* xms, double* dfs,
                                           std::vector<Sarray>& a_gradrho,
                                           std::vector<Sarray>& a_gradmu,
                                           std::vector<Sarray>& a_gradlambda) {
+
+  SW4_MARK_FUNCTION;
   //-----------------------------------------------------------------------
   // Computes gradient with respect to the material parameterization from
   // given gradients with respect to the material at grid points.
@@ -1493,6 +1532,7 @@ void MaterialParCurv::get_gradient_shared(int nms, double* xms, double* dfs,
 void MaterialParCurv::set_scalefactors(int nmpars, double* sf, double rho_ref,
                                        double mu_ref, double lambda_ref,
                                        double vs_ref, double vp_ref) {
+  SW4_MARK_FUNCTION;
   if (m_variables == 1) {
     for (int i = 0; i < nmpars; i += 3) {
       sf[i] = rho_ref;
@@ -1518,6 +1558,7 @@ void MaterialParCurv::set_scalefactors(int nmpars, double* sf, double rho_ref,
 //-----------------------------------------------------------------------
 ssize_t MaterialParCurv::parameter_index(int ip, int jp, int kp, int grid,
                                          int var) {
+  SW4_MARK_FUNCTION;
   // Local 1D-index of parameter array at point (ip,jp,kp) where
   // (ip,jp,kp) are global array indexes. If point not in this
   // processor, -1 is returned.
@@ -1539,6 +1580,7 @@ ssize_t MaterialParCurv::parameter_index(int ip, int jp, int kp, int grid,
 
 //-----------------------------------------------------------------------
 ssize_t MaterialParCurv::local_index(size_t ind_global) {
+  SW4_MARK_FUNCTION;
   // 1.Transform to global (i,j,k)-space
   int ig, jg, kg, var;
   int ncomp = 3;
@@ -1563,6 +1605,7 @@ void MaterialParCurv::interpolate_to_coarse(vector<Sarray>& rhogrid,
                                             vector<Sarray>& lambdagrid,
                                             Sarray& rho, Sarray& mu,
                                             Sarray& lambda, bool update) {
+  SW4_MARK_FUNCTION;
   //-----------------------------------------------------------------------
   // Compute material perturbation on parameter grid from a material that
   // is given on the computational grid.
@@ -1718,6 +1761,7 @@ void MaterialParCurv::interpolate_to_coarse_vel(vector<Sarray>& rhogrid,
                                                 vector<Sarray>& lambdagrid,
                                                 Sarray& rho, Sarray& cs,
                                                 Sarray& cp, bool update) {
+  SW4_MARK_FUNCTION;
   //-----------------------------------------------------------------------
   // Compute material perturbation on parameter grid from a material that is
   // given on the computational grid.
@@ -1882,6 +1926,7 @@ void MaterialParCurv::interpolate_to_coarse_vel(vector<Sarray>& rhogrid,
 //-----------------------------------------------------------------------
 void MaterialParCurv::write_dfm_hdf5(double* dfm, std::string fname,
                                      MPI_Comm comm) {
+  SW4_MARK_FUNCTION;
 #ifdef USE_HDF5
   hid_t fid, dset, fapl, dxpl, dspace, mspace;
   hsize_t dims[3], start[3], count[3];
@@ -1963,6 +2008,7 @@ void MaterialParCurv::write_dfm_hdf5(double* dfm, std::string fname,
 void MaterialParCurv::interpolate_pseudohessian(int nmpars, double* phs,
                                                 int nmpard, double* phm,
                                                 vector<Sarray>& phgrid) {
+  SW4_MARK_FUNCTION;
   int ncomp = 3;
   if (m_variables == 3)
     ncomp = 2;
@@ -2038,6 +2084,7 @@ void MaterialParCurv::interpolate_to_cartesian(int nmd, double* xmd, int nms,
                                                std::vector<Sarray>& a_rho,
                                                std::vector<Sarray>& a_mu,
                                                std::vector<Sarray>& a_lambda) {
+  SW4_MARK_FUNCTION;
   // Here we use the Cartesian grid mapping z_k = z_min + k*hz, k=0,..,nz+1
   // defined in the constructor. This grid always extends above the highest
   // station, see Constructor.

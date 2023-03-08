@@ -16,7 +16,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-
+#include "caliper.h"
 // modified to use in FWI
 #include <float.h>
 #include <math.h>
@@ -234,6 +234,7 @@ void sf_neighbors_init(int *in1 /* status flag [n[0]*n[1]*n[2]] */,
                        float *time1 /* traveltime [n[0]*n[1]*n[2]] */)
 /*< Initialize >*/
 {
+  SW4_MARK_FUNCTION;
   in = in1;
   ttime = time1;
   n = n1;
@@ -321,6 +322,7 @@ static int update2(float value, int i)
 static float qsolve(int i)
 /* find new traveltime at gridpoint i */
 {
+  SW4_MARK_FUNCTION;
   int j, k, ix;
   float a, b, t, res;
   struct Upd *v[3], x[3], *xj;
@@ -794,6 +796,7 @@ int sf_neighbors_mask(float *vv1 /* slowness [n[0]*n[1]*n[2]] */,
 void fastmarch_init(int n3, int n2, int n1)
 /*< Initialize data dimensions >*/
 {
+  SW4_MARK_FUNCTION;
   int maxband;
 
   maxband = 0;
@@ -816,6 +819,7 @@ void fastmarch(float *time /* time */, float *v /* slowness squared */,
                int order /* accuracy order (1,2,3) */)
 /*< Run fast marching eikonal solver >*/
 {
+  SW4_MARK_FUNCTION;
   float xs[3], d[3], *p;
   int n[3], b[3], npoints, i;
 

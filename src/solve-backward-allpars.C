@@ -1,3 +1,4 @@
+#include "caliper.h"
 #include "CurvilinearInterface2.h"
 #include "EW.h"
 #include "F77_FUNC.h"
@@ -17,6 +18,7 @@ void EW::solve_backward_allpars(
     vector<DataPatches*>& Ucorr_saved, double *gradientsrc,
     vector<Sarray>& gRho, vector<Sarray>& gMu, vector<Sarray>& gLambda,
     int event) {
+  SW4_MARK_FUNCTION;
   // solution arrays
   vector<Sarray> F, Lk, Kacc, Kp, Km, K, Um, Uacc;
   //   vector<Sarray> gRho, gMu, gLambda;

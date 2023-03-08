@@ -2,7 +2,7 @@
 //  Wei Liu
 //  July 2020
 //
-
+#include "caliper.h"
 #include "EW.h"
 #include "MaterialParameterization.h"
 #include "cf_interface.h"
@@ -36,6 +36,7 @@ void fastmarch_close(void);
 void EW::solveTT(Source* a_Source, vector<TimeSeries*>& a_TimeSeries,
                  double* xs, int nmpars, MaterialParameterization* mp,
                  int wave_mode, int event, int myrank) {
+  SW4_MARK_FUNCTION;
   int verbose = 0;
   int ix, iy, iz, nx, ny, nz, n;
   nx = mp->getNX();

@@ -1,3 +1,4 @@
+#include "caliper.h"
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -8,6 +9,7 @@
 MaterialParCartesian::MaterialParCartesian(EW* a_ew, int nx, int ny, int nz,
                                            int init, char* fname)
     : MaterialParameterization(a_ew, fname) {
+  SW4_MARK_FUNCTION;
   //  VERIFY2( nx > 1 && ny > 1 && nz > 1, "MaterialParCartesian: The grid need
   //  at least two ponts in each direction")
   // Material represented on a coarse Cartesian grid, covering the 'active'
@@ -102,6 +104,7 @@ void MaterialParCartesian::get_material(int nmd, double* xmd, int nms,
                                         double* xms, vector<Sarray>& a_rho,
                                         vector<Sarray>& a_mu,
                                         vector<Sarray>& a_lambda) {
+  SW4_MARK_FUNCTION;
   double* rhop = m_rho.c_ptr();
   double* mup = m_mu.c_ptr();
   double* lambdap = m_lambda.c_ptr();
@@ -126,6 +129,7 @@ void MaterialParCartesian::get_material(int nmd, double* xmd, int nms,
 void MaterialParCartesian::interpolate_parameters(
     int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
     std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda) {
+  SW4_MARK_FUNCTION;
   // Interpolates the difference a_rho-mRho, into local rho. i.e., m_rho =
   // I(a_rho-mRho) where a_rho,mRho are on the computational grid, rho on the
   // parameter grid.
@@ -168,6 +172,7 @@ void MaterialParCartesian::interpolate_parameters(
 void MaterialParCartesian::get_parameters(
     int nmd, double* xmd, int nms, double* xms, std::vector<Sarray>& a_rho,
     std::vector<Sarray>& a_mu, std::vector<Sarray>& a_lambda, int nr) {
+  SW4_MARK_FUNCTION;
   if (nr == -1) nr = m_init;
   if (nr == 0) {
     for (int i = 0; i < nms; i++) xms[i] = 0;
@@ -219,6 +224,7 @@ void MaterialParCartesian::get_gradient(
     std::vector<Sarray>& a_rho, std::vector<Sarray>& a_mu,
     std::vector<Sarray>& a_lambda, std::vector<Sarray>& a_gradrho,
     std::vector<Sarray>& a_gradmu, std::vector<Sarray>& a_gradlambda) {
+  SW4_MARK_FUNCTION;
   Sarray grho(0, m_nx + 1, 0, m_ny + 1, 0, m_nz + 1),
       gmu(0, m_nx + 1, 0, m_ny + 1, 0, m_nz + 1);
   Sarray glambda(0, m_nx + 1, 0, m_ny + 1, 0, m_nz + 1);
@@ -264,6 +270,7 @@ void MaterialParCartesian::get_gradient(
 void MaterialParCartesian::interpolate_pseudohessian(int nmpars, double* phs,
                                                      int nmpard, double* phm,
                                                      vector<Sarray>& phgrid) {
+  SW4_MARK_FUNCTION;
   int ig, jg, kg, g;
   size_t ind = 0;
   for (int k = 1; k <= m_nz; k++)
@@ -313,6 +320,7 @@ ssize_t MaterialParCartesian::parameter_index(int ip, int jp, int kp, int grid,
                                               int var)
 // Ignore grid.
 {
+  SW4_MARK_FUNCTION;
   if (1 <= ip && ip <= m_nx && 1 <= jp && jp <= m_ny && 1 <= kp && kp <= m_nz &&
       (0 <= var) && (var <= 2))
     return 3 * (ip - 1 + static_cast<ssize_t>(m_nx) * (jp - 1) +
@@ -335,6 +343,7 @@ void MaterialParCartesian::project_and_write(std::vector<Sarray>& a_rho,
                                              std::vector<Sarray>& a_mu,
                                              std::vector<Sarray>& a_lambda,
                                              std::string fname) {
+  SW4_MARK_FUNCTION;
   float_sw4 mu_min = 1.02e7;
   float_sw4 rho_min = 1593;
   float_sw4 lambda_min = 7.67e8;
@@ -375,6 +384,7 @@ void MaterialParCartesian::project_and_write(std::vector<Sarray>& a_rho,
 //-----------------------------------------------------------------------
 void MaterialParCartesian::projectl2(std::vector<Sarray>& mtrl,
                                      float_sw4* rhs) {
+  SW4_MARK_FUNCTION;
   // Project input mtrl array onto my parameter grid.
   // Input: mtrl - Material array on the SW4 grid
   // Output: rhs - Projected mtrl on the parameter grid.
@@ -543,6 +553,7 @@ void MaterialParCartesian::projectl2(std::vector<Sarray>& mtrl,
 
 //-----------------------------------------------------------------------
 void MaterialParCartesian::subtract_base_mtrl(int nms, double* xms) {
+  SW4_MARK_FUNCTION;
   // Assume xms are given as full material, interpolate and subtract the
   // base material to get xms as an update.
 
