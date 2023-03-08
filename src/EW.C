@@ -8481,6 +8481,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
 
   //-----------------------------------------------------------------------
   void EW::perturb_mtrl() {
+    SW4_MARK_FUNCTION;
     int g = mNumberOfGrids - 1;
     if (m_perturb != 0 && point_in_proc(m_iperturb, m_jperturb, g)) {
       cout << "per = " << m_perturb << " " << m_iperturb << " " << m_jperturb
@@ -9789,6 +9790,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   }
   //-----------------------------------------------------------------------
   void EW::extractTopographyFromSfile(std::string a_topoFileName) {
+    SW4_MARK_FUNCTION;
     double start_time, end_time;
     start_time = MPI_Wtime();
 #ifdef USE_HDF5
@@ -10115,6 +10117,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
 
   //-----------------------------------------------------------------------
   void EW::extractTopographyFromGMG(std::string a_topoFileName) {
+    SW4_MARK_FUNCTION;
     double start_time, end_time;
     start_time = MPI_Wtime();
 #ifdef USE_HDF5
@@ -10345,6 +10348,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   //-----------------------------------------------------------------------
   void EW::set_to_zero_at_source(vector<Sarray> & a_U, vector<Source*> sources,
                                  int padding) {
+    SW4_MARK_FUNCTION;
 #pragma omp parallel for
     for (int s = 0; s < sources.size(); s++) {
       int g = sources[s]->m_grid;
@@ -10373,6 +10377,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   //-----------------------------------------------------------------------
   void EW::set_to_zero_at_receiver(
       vector<Sarray> & a_U, vector<TimeSeries*> time_series, int padding) {
+    SW4_MARK_FUNCTION;
 #pragma omp parallel for
     for (int s = 0; s < time_series.size(); s++) {
       int g = time_series[s]->m_grid0;
@@ -10399,6 +10404,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   void EW::set_zerogradrec_pad(int pad) { m_zerogradrec_pad = pad; }
   //-----------------------------------------------------------------------
   void EW::filter_bc(Sarray & ufi, Sarray & u, int g, float_sw4 ep) {
+    SW4_MARK_FUNCTION;
     // Boundary smoothing on top and bottom, don't need to impose
     // boundary conditions at i and j domain boundaries,
     int ks = m_kStart[g], ke = m_kEnd[g];
@@ -10434,6 +10440,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
 
   //-----------------------------------------------------------------------
   void EW::heat_kernel_filter(vector<Sarray> & u, float_sw4 ep, int nit) {
+    SW4_MARK_FUNCTION;
     // Filter input array u, to use for gradient filtering.
     // Input: u   - Array to filter
     //        ep  - Filter parameter
@@ -10518,6 +10525,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   void EW::evalLupt(vector<Sarray> & a_U, vector<Sarray> & a_Mu,
                     vector<Sarray> & a_Lambda, vector<Sarray> & a_Lu, int grid,
                     int i, int j, int k) {
+    SW4_MARK_FUNCTION;
     a_Lu[grid].set_to_zero();
     float_sw4* lu_ptr = a_Lu[grid].c_ptr();
     float_sw4* u_ptr = a_U[grid].c_ptr();

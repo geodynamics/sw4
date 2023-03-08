@@ -1,3 +1,4 @@
+#include "caliper.h"
 #include "sw4.h"
 
 void addgradrho_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
@@ -9,6 +10,7 @@ void addgradrho_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                    float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_uacc,
                    float_sw4* __restrict__ a_grho, float_sw4 dt, float_sw4 h,
                    int onesided[6]) {
+  SW4_MARK_FUNCTION;
   const float_sw4 idt = 1.0 / dt;
   const float_sw4 dt2o12 = dt * dt / 12;
   const float_sw4 h3 = h * h * h;
@@ -62,6 +64,7 @@ void addgradrhoc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                     float_sw4* __restrict__ a_uacc,
                     float_sw4* __restrict__ a_grho, float_sw4 dt,
                     float_sw4* __restrict__ a_jac, int onesided[6]) {
+  SW4_MARK_FUNCTION;
   const float_sw4 idt = 1.0 / dt;
   const float_sw4 dt2o12 = dt * dt / 12;
   const float_sw4 normwgh[4] = {17.0 / 48, 59.0 / 48, 43.0 / 48, 49.0 / 48};
@@ -104,7 +107,7 @@ void addgradrhoc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
       }
 }
 
-//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------// Takes a lot of time for LFGS
 void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                     int klast, int ifirstact, int ilastact, int jfirstact,
                     int jlastact, int kfirstact, int klastact, int nk,
@@ -115,6 +118,7 @@ void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                     float_sw4* __restrict__ a_glambda, float_sw4 dt,
                     float_sw4 h, int onesided[6], int nb, int wb,
                     float_sw4* __restrict__ a_bop) {
+  SW4_MARK_FUNCTION;
   // nk is number of points, not counting ghost points.
   const float_sw4 h3 = h * h * h;
   const float_sw4 ih2 = 1.0 / (h * h);
@@ -542,7 +546,7 @@ void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                 gmu(i, j, k + 1) = gmu(i, j, k + 1) + 2 * pd;
               }
             }
-          }
+          } // I loop
     }
 
 #pragma omp parallel for
@@ -1317,6 +1321,7 @@ void addgradmulac_ci(
     float_sw4* __restrict__ a_glambda, float_sw4 dt, float_sw4 h,
     float_sw4* __restrict__ a_met, float_sw4* __restrict__ a_jac,
     int onesided[6], int nb, int wb, float_sw4* __restrict__ a_bop) {
+  SW4_MARK_FUNCTION;
   const float_sw4 dt2o12 = dt * dt / 12;
   const float_sw4 wgh[4] = {17.0 / 48, 59.0 / 48, 43.0 / 48, 49.0 / 48};
   const float_sw4 d4a = 2.0 / 3;
