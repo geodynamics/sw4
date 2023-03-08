@@ -9852,8 +9852,11 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
 
     double hh;
     if (m_myRank == 0) {
-      attr_id =
-          H5Aopen(file_id, "Coarsest horizontal grid spacing", H5P_DEFAULT);
+      // For backward-compatibility
+      if (H5Aexists(file_id, "Coarsest horizontal grid spacing") > 0)
+        attr_id = H5Aopen(file_id, "Coarsest horizontal grid spacing", H5P_DEFAULT);
+      else
+        attr_id = H5Aopen(file_id, "Finest horizontal grid spacing", H5P_DEFAULT);
       ASSERT(attr_id >= 0);
       ierr = H5Aread(attr_id, H5T_NATIVE_DOUBLE, &hh);
       ASSERT(ierr >= 0);
