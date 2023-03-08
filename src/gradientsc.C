@@ -1,4 +1,5 @@
 #include "caliper.h"
+#include "policies.h"
 #include "sw4.h"
 
 void addgradrho_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
@@ -153,14 +154,24 @@ void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
     if (klastact >= nk - 3 && onesided[5] == 1) kend = nk - 4;
     if (kfirstact <= 4 && onesided[4] == 1) {
       kstart = 5;
-      float_sw4 w8[4] = {0, 0, 1, 1};
-      float_sw4 w6m[4] = {0, 0, al1, al1 + al2};
-      float_sw4 w6p[4] = {0, al1, al1 + al2, al1 + al2 + al3};
-      for (int k = kfirstact; k <= 4; k++)
-#pragma omp parallel for
-        for (int j = jfirstact; j <= jlastact; j++)
-#pragma ivdep
-          for (int i = ifirstact; i <= ilastact; i++) {
+      //     float_sw4 w8[4] = {0, 0, 1, 1};
+      //     float_sw4 w6m[4] = {0, 0, al1, al1 + al2};
+      //    float_sw4 w6p[4] = {0, al1, al1 + al2, al1 + al2 + al3};
+      //      for (int k = kfirstact; k <= 4; k++)
+      //#pragma omp parallel for
+      //       for (int j = jfirstact; j <= jlastact; j++)
+      //#pragma ivdep
+      //          for (int i = ifirstact; i <= ilastact; i++) {
+      RAJA::RangeSegment k_range(kfirstact, 4 + 1);
+      RAJA::RangeSegment j_range(jfirstact , jlastact + 1);
+      RAJA::RangeSegment i_range(ifirstact , ilastact + 1);
+      RAJA::kernel<CURV_POL>(
+          RAJA::make_tuple(k_range, j_range, i_range),
+          [=] RAJA_DEVICE(int k, int j, int i) {
+	    const float_sw4 wgh[4] = {17.0 / 48, 59.0 / 48, 43.0 / 48, 49.0 / 48};
+	    const float_sw4 w8[4] = {0, 0, 1, 1};
+	    const float_sw4 w6m[4] = {0, 0, al1, al1 + al2};
+	    const float_sw4 w6p[4] = {0, al1, al1 + al2, al1 + al2 + al3};
             float_sw4 normfact = h3 * wgh[k - 1];
             // Diagonal terms
             float_sw4 dux = d4b * (u(1, i + 2, j, k) - u(1, i - 2, j, k)) +
@@ -546,14 +557,20 @@ void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                 gmu(i, j, k + 1) = gmu(i, j, k + 1) + 2 * pd;
               }
             }
-          } // I loop
+          } );
     }
 
-#pragma omp parallel for
-    for (int k = kstart; k <= kend; k++)
-      for (int j = jfirstact; j <= jlastact; j++)
-#pragma ivdep
-        for (int i = ifirstact; i <= ilastact; i++) {
+    //#pragma omp parallel for
+    //   for (int k = kstart; k <= kend; k++)
+    //     for (int j = jfirstact; j <= jlastact; j++)
+    //#pragma ivdep
+    //       for (int i = ifirstact; i <= ilastact; i++) {
+    RAJA::RangeSegment k_range(kstart, kend + 1);
+      RAJA::RangeSegment j_range(jfirstact , jlastact + 1);
+      RAJA::RangeSegment i_range(ifirstact , ilastact + 1);
+      RAJA::kernel<CURV_POL>(
+          RAJA::make_tuple(k_range, j_range, i_range),
+          [=] RAJA_DEVICE(int k, int j, int i) {
           float_sw4 normfact = h3;
           // Diagonal terms
           float_sw4 dux = d4b * (u(1, i + 2, j, k) - u(1, i - 2, j, k)) +
@@ -916,17 +933,24 @@ void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                h3 * ih2;
           glambda(i, j, k) = glambda(i, j, k) + pd;
           gmu(i, j, k) = gmu(i, j, k) + 2 * pd;
-        }
+	  });
   }
   if (klastact >= nk - 3 && onesided[5] == 1) {
-    float_sw4 w8[4] = {0, 0, 1, 1};
-    float_sw4 w6p[4] = {0, 0, al1, al1 + al2};
-    float_sw4 w6m[4] = {0, al1, al1 + al2, al1 + al2 + al3};
-    for (int k = nk - 3; k <= klastact; k++)
-#pragma omp parallel for
-      for (int j = jfirstact; j <= jlastact; j++)
-#pragma ivdep
-        for (int i = ifirstact; i <= ilastact; i++) {
+   
+    //    for (int k = nk - 3; k <= klastact; k++)
+    //#pragma omp parallel for
+    //     for (int j = jfirstact; j <= jlastact; j++)
+    //#pragma ivdep
+    //      for (int i = ifirstact; i <= ilastact; i++) {
+	  RAJA::RangeSegment k_range(nk-3, klastact + 1);
+      RAJA::RangeSegment j_range(jfirstact , jlastact + 1);
+      RAJA::RangeSegment i_range(ifirstact , ilastact + 1);
+      RAJA::kernel<CURV_POL>(
+          RAJA::make_tuple(k_range, j_range, i_range),
+          [=] RAJA_DEVICE(int k, int j, int i) {
+	     const float_sw4 w8[4] = {0, 0, 1, 1};
+    const float_sw4 w6p[4] = {0, 0, al1, al1 + al2};
+    const float_sw4 w6m[4] = {0, al1, al1 + al2, al1 + al2 + al3};
           int kk = nk - k + 1;
           float_sw4 normfact = h3 * wgh[kk - 1];
           // Diagonal terms
@@ -1307,7 +1331,7 @@ void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
               gmu(i, j, k - 1) = gmu(i, j, k - 1) + 2 * pd;
             }
           }
-        }
+	  });
   }
 }
 
