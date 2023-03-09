@@ -180,19 +180,21 @@ void set_timewindows_from_eikonal_time(
   int myrank;
 
   MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-
+  //std::cout<<myrank<<" "<<"IN set_timewindows_from_eikonal_time\n"<<std::flush;
   for (int e = 0; e < GlobalTimeSeries.size(); e++) {
     if (myrank == 0) {
+      std::cout<<"EIKONAL\n"<<std::flush;
       std::cout << " PATH IS " << GlobalTimeSeries[e][0]->getPath() << "\n"
                 << std::flush;
       sprintf(file, "%s/time_event_%d.txt",
               GlobalTimeSeries[e][0]->getPath().c_str(), e);
+      std::cout<<"PATH "<<file<<"\n"<<std::flush;
       fd = fopen(file, "w");
       fprintf(
           fd,
           "event count station x y z tstart_vp  tend_vp  tstart_vs  tend_vs\n");
     }
-
+    //std::cout<<myrank<<" "<<"WRITE DONE set_timewindows_from_eikonal_time\n"<<std::flush;
     if (mopt->get_freq_peakpower() > 0) {
       winlen = 1.0 / mopt->get_freq_peakpower();  // one cycle of peak frequency
     } else if (fc2 > 0) {
