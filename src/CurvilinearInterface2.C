@@ -268,8 +268,12 @@ void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
   SW4_MARK_FUNCTION;
   // std::cout << "void CurvilinearInterface2::init_arrays \n";
   if (m_memory_is_allocated) {
-    delete[] m_strx_c, m_stry_c, m_strx_f, m_stry_f;  // PBUGS
-    delete[] m_mass_block, m_ipiv_block;              // PBUGS
+    delete[] m_strx_c;
+    delete [] m_stry_c;
+    delete [] m_strx_f;
+    delete [] m_stry_f;  // PBUGS
+    delete[] m_mass_block;
+    delete [] m_ipiv_block;              // PBUGS
   }
   m_memory_is_allocated = true;
   for (int s = 0; s < 4; s++)

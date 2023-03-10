@@ -2772,7 +2772,7 @@ void EW::processGeodynbc(char* buf) {
   bool done = false;
   while (!geodynfile.eof() && !done) {
     geodynfile.getline(buffer, 256);
-    if (startswith("#", buffer) || startswith("\n", buffer) || buffer == "\0")
+    if (startswith("#", buffer) || startswith("\n", buffer) || (strcmp(buffer,"\0")==0))
       break;
     if (startswith("begindata", buffer)) {
       done = true;
@@ -2972,7 +2972,7 @@ void EW::geodynbcGetSizes(string filename, float_sw4 origin[3],
        elevfound = false;
   while (!geodynfile.eof() && !done) {
     geodynfile.getline(buffer, 256);
-    if (startswith("#", buffer) || startswith("\n", buffer) || buffer == "\0")
+    if (startswith("#", buffer) || startswith("\n", buffer) || (strcmp(buffer,"\0")==0))
       break;
     if (startswith("begindata", buffer)) {
       done = true;

@@ -16,7 +16,7 @@ class MaterialParameterization {
   std::string m_path;
 
  public:
-  MaterialParameterization(EW* a_ew, char* fname);
+  MaterialParameterization(EW* a_ew, char const* fname);
   virtual void get_material(int nmd, double* xmd, int nms, double* xms,
                             std::vector<Sarray>& a_rho,
                             std::vector<Sarray>& a_mu,

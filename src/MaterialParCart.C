@@ -11,7 +11,7 @@
 #endif
 
 MaterialParCart::MaterialParCart(EW* a_ew, int nx, int ny, int nz, int init,
-                                 int varcase, char* fname, float_sw4 amp,
+                                 int varcase, char const * fname, float_sw4 amp,
                                  float_sw4 omega, bool force_shared)
     : MaterialParameterization(a_ew, fname) {
   SW4_MARK_FUNCTION;
@@ -1007,7 +1007,10 @@ void MaterialParCart::communicate(Sarray& u) {
 
   MPI_Wait(&req3, &status);
   MPI_Wait(&req4, &status);
-  delete[] rbuf1, rbuf2, sbuf1, sbuf2;
+  delete[] rbuf1; rbuf1=nullptr;
+  delete[] rbuf2;
+  delete[] sbuf1;
+  delete[] sbuf2;
 }
 
 //-----------------------------------------------------------------------
@@ -1175,7 +1178,10 @@ void MaterialParCart::communicate_add(Sarray& u) {
 
   MPI_Wait(&req3, &status);
   MPI_Wait(&req4, &status);
-  delete[] rbuf1, rbuf2, sbuf1, sbuf2;
+  delete[] rbuf1;
+  delete [] rbuf2;
+  delete [] sbuf1;
+  delete [] sbuf2;
 }
 
 //-----------------------------------------------------------------------

@@ -60,7 +60,7 @@ class MaterialParCart : public MaterialParameterization {
 
  public:
   MaterialParCart(EW* a_ew, int nx, int ny, int nz, int init, int varcase,
-                  char* fname, float_sw4 amp, float_sw4 omega,
+                  char const *fname, float_sw4 amp, float_sw4 omega,
                   bool force_shared);
 
   virtual void get_material(int nmd, double* xmd, int nms, double* xms,

@@ -52,15 +52,16 @@ class MaterialParAllpts : public MaterialParameterization {
                        float_sw4 vpmax){};
   virtual void limit_df(int nmd, double* dfd, int nms, double* dfs){};
 
-  double getXmin() const {}
-  double getDx() const {}
-  int getNX() const {}
-  double getYmin() const {}
-  double getDy() const {}
-  int getNY() const {}
-  double getZmin() const {}
-  double getDz() const {}
-  int getNZ() const {}
+  // Dummpy returns added below to suppress warnings PBUGS
+  double getXmin() const { return -1.0; }
+  double getDx() const { return -1.0;}
+  int getNX() const { return -1; }
+  double getYmin() const { return -1.0; }
+  double getDy() const {return- 1.0;}
+  int getNY() const {return -1; }
+  double getZmin() const { return -1.0; }
+  double getDz() const {return -1.0; }
+  int getNZ() const {return -1; }
 };
 
 #endif

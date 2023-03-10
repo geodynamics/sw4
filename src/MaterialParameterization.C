@@ -13,7 +13,7 @@
 using namespace std;
 
 //-----------------------------------------------------------------------
-MaterialParameterization::MaterialParameterization(EW* a_ew, char* fname) {
+MaterialParameterization::MaterialParameterization(EW* a_ew, char const * fname) {
   SW4_MARK_FUNCTION;
   m_ew = a_ew;
   MPI_Comm_rank(m_ew->m_1d_communicator, &m_myrank);

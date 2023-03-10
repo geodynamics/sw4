@@ -738,7 +738,7 @@ void oddIoddJinterp(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf,
 
 #pragma omp parallel for reduction(max : rmax1, rmax2, rmax3)
   for (int jc = jcb; jc <= jce; jc++)
-#pragma omp simd
+    //#pragma omp simd
     for (int ic = icb; ic <= ice; ic++) {
       float_sw4 a11, a12, a21, a22, b1, b2, r1, r2, deti;
       // i odd, j odd

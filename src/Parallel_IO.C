@@ -1448,7 +1448,7 @@ void Parallel_IO::write_array_hdf5(const char* fname, const char* gname,
 
 //-----------------------------------------------------------------------
 void Parallel_IO::write_array(int* fid, int nc, void* array, off_t pos0,
-                              char* typ) {
+                              char const * typ) {
   //
   //  Write array previously set up by constructing object.
   //

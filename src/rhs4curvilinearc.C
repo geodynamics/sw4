@@ -49,7 +49,7 @@ int EW::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
   for (int k = kb; k <= ke; k++)
     for (int j = jb; j <= je; j++)
 // #pragma ivdep
-#pragma omp simd
+// #pragma omp simd
       for (int i = ib; i <= ie; i++) {
         // k-derivatives
         double zr, zp, zq, sqzr;
@@ -152,6 +152,7 @@ void EW::metricexgh_ci(int ib, int ie, int jb, int je, int kb, int ke, int nz,
                        float_sw4* __restrict__ a_jac, int order, float_sw4 sb,
                        float_sw4 zmax, float_sw4 amp, float_sw4 xc,
                        float_sw4 yc, float_sw4 xl, float_sw4 yl) {
+  SW4_MARK_FUNCTION;
   // Exact metric derivatives for the Gaussian hill topography
 
   const int ni = ie - ib + 1;
@@ -174,7 +175,7 @@ void EW::metricexgh_ci(int ib, int ie, int jb, int je, int kb, int ke, int nz,
   for (int k = kb; k <= ke; k++)
     for (int j = jb; j <= je; j++)
     // #pragma ivdep
-#pragma omp simd
+      //#pragma omp simd
       for (int i = ib; i <= ie; i++) {
         double zp, zq, zr;
         double s = (k - 1.0) / (nz - 1.0);
@@ -394,7 +395,7 @@ void EW::getsurfforcing_ci(int ifirst, int ilast, int jfirst, int jlast,
 #pragma omp parallel for
   for (int j = jfirst; j <= jlast; j++)
   // #pragma ivdep
-#pragma omp simd
+    //#pragma omp simd
     for (int i = ifirst; i <= ilast; i++) {
       float_sw4 sqjac = sqrt(jac(i, j, k));
       forcing(1, i, j) = sqjac * (met(2, i, j, k) * tau(1, i, j) +
@@ -509,6 +510,7 @@ void EW::addbstressc_ci(
     float_sw4* __restrict__ a_met, int side, float_sw4* s, char op, int ghterm,
     int usesg, float_sw4* __restrict__ a_sgstrx,
     float_sw4* __restrict__ a_sgstry) {
+  SW4_MARK_FUNCTION;
   const float_sw4 c1 = 2.0 / 3, c2 = -1.0 / 12;
 
   const int ni = ilast - ifirst + 1;
@@ -552,7 +554,7 @@ void EW::addbstressc_ci(
     float_sw4 sgy = usesg ? sgstry(j) : 1;
     float_sw4 isgy = 1 / sgy;
     // #pragma ivdep
-#pragma omp simd
+    //#pragma omp simd
     for (int i = ifirst + 2; i <= ilast - 2; i++) {
       float_sw4 sgx = usesg ? sgstrx(i) : 1;
       float_sw4 isgx = 1 / sgx;

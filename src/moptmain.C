@@ -899,7 +899,7 @@ void restrict(int active[6], int wind[6], double* xm, double* xmi) {
 }
 
 //-----------------------------------------------------------------------
-double getcscp(Sarray& rho, Sarray& mu, Sarray& lambda, Sarray& cs,
+void getcscp(Sarray& rho, Sarray& mu, Sarray& lambda, Sarray& cs,
                Sarray& cp) {
   SW4_MARK_FUNCTION;
   for (int k = rho.m_kb; k <= rho.m_ke; k++)
@@ -1983,7 +1983,7 @@ int main(int argc, char** argv) {
         // Output source initial guess
         if (myRank == 0 && nspar > 0) {
           cout << "Initial source guess : \n";
-          char* names[11] = {
+          char const *names[11] = {
               " x0 = ",  " y0 = ",  " z0 = ",  " mxx = ", " mxy = ", " mxz = ",
               " myy = ", " myz = ", " mzz = ", " t0 = ",  " freq = "};
           for (int i = 0; i < nspar; i++) {

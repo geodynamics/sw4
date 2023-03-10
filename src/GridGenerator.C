@@ -31,8 +31,8 @@ int GridGenerator::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
 #pragma omp parallel for reduction(+ : ecode)
   for (int k = kb; k <= ke; k++)
     for (int j = jb; j <= je; j++)
-#pragma ivdep
-#pragma omp simd
+      //#pragma ivdep
+      //#pragma omp simd
       for (int i = ib; i <= ie; i++) {
         // k-derivatives
         double zr, zp, zq, sqzr;

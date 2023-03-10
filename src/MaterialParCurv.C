@@ -1072,7 +1072,11 @@ void MaterialParCurv::communicate(Sarray& u) {
 
   MPI_Wait(&req3, &status);
   MPI_Wait(&req4, &status);
-  delete[] rbuf1, rbuf2, sbuf1, sbuf2;
+  delete[] rbuf1; 
+  delete [] rbuf2; 
+  delete [] sbuf1;
+  delete [] sbuf2;
+  
 }
 
 //-----------------------------------------------------------------------
@@ -1240,7 +1244,10 @@ void MaterialParCurv::communicate_add(Sarray& u) {
 
   MPI_Wait(&req3, &status);
   MPI_Wait(&req4, &status);
-  delete[] rbuf1, rbuf2, sbuf1, sbuf2;
+  delete [] rbuf1;
+  delete [] rbuf2;
+  delete [] sbuf1;
+  delete [] sbuf2;
 }
 
 //-----------------------------------------------------------------------
