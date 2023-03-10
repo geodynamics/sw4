@@ -1,0 +1,9 @@
+# # Modules loaded
+# 1) StdEnv (S)   2) cuda/11.7.0   3) fftw/3.3.9   4) xl/2022.08.19   5) spectrum-mpi/rolling-release   6) lapack/3.8.0-gcc-4.9.3
+#
+etree=no
+SW4ROOT=/usr/apps/wpp
+FC=mpifort
+CXX=mpicxx
+#EXTRA_LINK_FLAGS =  -L/usr/tce/packages/xl/xl-2019.02.07/xlf/16.1.1/lib -L/usr/tcetmp/packages/lapack/lapack-3.8.0-gcc-4.9.3/lib -llapack -lblas -lxlfmath -lxlf90 -lgfortran
+EXTRA_LINK_FLAGS =  -L/usr/tce/packages/xl/xl-2022.08.19/xlf/16.1.1/lib -L$(LAPACK_DIR)  -llapack -lblas -lxlfmath -lxlf90 -lgfortran

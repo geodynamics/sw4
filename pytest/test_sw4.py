@@ -160,7 +160,7 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
     elif 'lassen' in node_name:
         os.environ["PSM2_DEVICES"] = ""
         if mpi_tasks<=0: mpi_tasks = 4
-        mpirun_cmd="lrun -T4 -M -gpu"
+        mpirun_cmd="lrun -T40 "
     # add more machine names here
     elif 'Linux' in sys_name:
         if omp_threads<=0: omp_threads=1;
