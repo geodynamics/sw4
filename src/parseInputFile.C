@@ -5420,21 +5420,22 @@ void EW::processSource(char* buffer,
       int utcsac[7], npts;
       string basename = dfile;
       string fname;
-      npts = 1;  // WARNING SUPPRESSION
-      std::cerr << "WARNING :: npts arbitrarily set to 1 in parseInputFIle "
-                   "line 5423\n";
+      
       if (isMomentType) {
         tDep = iDiscrete6moments;
         fname = basename + ".xx";
-        npar = 6 * (npts + 1);
+        //npar = 6 * (npts + 1);
       } else {
         tDep = iDiscrete3forces;
         fname = basename + ".x";
-        npar = 3 * (npts + 1);
+        //npar = 3 * (npts + 1);
       }
       bool byteswap;
       readSACheader(fname.c_str(), dt, t0, latsac, lonsac, cmpazsac, cmpincsac,
                     utcsac, npts, byteswap);
+      npar = 3 * (npts + 1);
+      if  (isMomentType) npar = 6 * (npts + 1);
+      
       if (!useB) t0 = 0;
 
       if (geoCoordSet) {
