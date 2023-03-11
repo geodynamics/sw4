@@ -164,6 +164,7 @@ void MaterialParameterization::read_parameters(const char* filename, int npars,
     close(fd);
   }
   MPI_Bcast(xptr, npars, MPI_DOUBLE, 0, m_ew->m_1d_communicator);
+  if (errflag !=0) std::cout<<"SW4MOPT test failure is due to the 8 rank restriction\n";
   VERIFY2(errflag == 0, "Error no "
                             << errflag
                             << " in MaterialParameterization::read_parameters"
