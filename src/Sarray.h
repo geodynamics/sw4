@@ -187,10 +187,11 @@ class Sarray {
   int m_ib, m_ie, m_jb, m_je, m_kb, m_ke;
   static bool m_corder;
   ssize_t m_base;
-  size_t m_offi, m_offj, m_offk, m_offc, m_npts;
+  ssize_t m_offi, m_offj, m_offk, m_offc;
+  size_t m_npts;
   //   int index( int i, int j, int k ) {return
   //   (i-m_ib)+m_ni*(j-m_jb)+m_ni*m_nj*(k-m_kb);}
-  size_t index(int i, int j, int k) {
+  ssize_t index(int i, int j, int k) {
     return m_base + m_offc + m_offi * i + m_offj * j + m_offk * k;
   }
 #ifdef SW4_CUDA
@@ -198,7 +199,7 @@ class Sarray {
     return m_base + m_offc * c + m_offi * i + m_offj * j + m_offk * k;
   }
 #else
-  size_t index(int c, int i, int j, int k) {
+  ssize_t index(int c, int i, int j, int k) {
     return m_base + m_offc * c + m_offi * i + m_offj * j + m_offk * k;
   }
 #endif

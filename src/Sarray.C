@@ -807,7 +807,7 @@ void Sarray::copy(const Sarray& u) {
   m_nk = m_ke - m_kb + 1;
   space = Space::Managed;
   if (m_nc * m_ni * m_nj * m_nk > 0) {
-    m_data = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
+    m_data = SW4_NEW(Space::Managed, float_sw4[(ssize_t)m_nc * m_ni * m_nj * m_nk]);
 #pragma omp parallel for
     for (int i = 0; i < m_nc * m_ni * m_nj * m_nk; i++) m_data[i] = u.m_data[i];
   } else

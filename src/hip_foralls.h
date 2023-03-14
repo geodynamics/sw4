@@ -142,11 +142,11 @@ __launch_bounds__(256, 2) __global__
 template <typename Func>
 __global__ void forall3gskernel(int start0, int N0, int start1, int N1,
                                 int start2, int N2, Func f) {
-  for (int i = start0 + threadIdx.x + blockIdx.x * blockDim.x; i < N0;
+  for (int i = start0 + (int)threadIdx.x + (int)blockIdx.x * blockDim.x; i < N0;
        i += blockDim.x * gridDim.x)
-    for (int j = start1 + threadIdx.y + blockIdx.y * blockDim.y; j < N1;
+    for (int j = start1 + (int)threadIdx.y + (int)blockIdx.y * blockDim.y; j < N1;
          j += blockDim.y * gridDim.y)
-      for (int k = start2 + threadIdx.z + blockIdx.z * blockDim.z; k < N2;
+      for (int k = start2 + (int)threadIdx.z + (int)blockIdx.z * blockDim.z; k < N2;
            k += blockDim.z * gridDim.z)
         f(i, j, k);
 }

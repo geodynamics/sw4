@@ -6807,7 +6807,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
       fclose(gridfile);
     } else {
       int fd = open(a_topoFileName.c_str(), O_RDONLY);
-      size_t nr;
+      ssize_t nr;
       nr = read(fd, &Nlon, sizeof(int));
       nr = read(fd, &Nlat, sizeof(int));
 
@@ -7382,7 +7382,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     if (fd != -1) {
       // ---------- magic number
       int magic;
-      size_t nr = read(fd, &magic, sizeof(int));
+      ssize_t nr = read(fd, &magic, sizeof(int));
       if (nr != sizeof(int)) {
         cout << rname << " Error reading magic number, nr= " << nr
              << "bytes read" << endl;
