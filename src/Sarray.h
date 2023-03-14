@@ -55,9 +55,9 @@ class SView {
  public:
   float_sw4* data;
   ssize_t base;
-  size_t offc, offi, offj, offk;
-  SView(float_sw4* data, ssize_t base, size_t offc, size_t offi, size_t offj,
-        size_t offk);
+  ssize_t offc, offi, offj, offk;
+  SView(float_sw4* data, ssize_t base, ssize_t offc, ssize_t offi, ssize_t offj,
+        ssize_t offk);
   // SView(SView &in){}
   SView(Sarray& x);
   SView();

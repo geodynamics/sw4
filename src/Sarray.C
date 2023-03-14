@@ -1396,8 +1396,8 @@ void Sarray::forceprefetch(int device) {
 SView::SView() : data{NULL} {
   // std:cerr<<"SVIEW default ctor, should never be called \n";
 }
-SView::SView(float_sw4* data, ssize_t base, size_t offc, size_t offi,
-             size_t offj, size_t offk)
+SView::SView(float_sw4* data, ssize_t base, ssize_t offc, ssize_t offi,
+             ssize_t offj, ssize_t offk)
     : data{data}, base{base}, offc{offc}, offi{offi}, offj{offj}, offk{offk} {}
 SView::SView(Sarray& x) {
   data = x.c_ptr();
