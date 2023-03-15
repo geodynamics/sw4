@@ -183,9 +183,9 @@ void set_timewindows_from_eikonal_time(
   //std::cout<<myrank<<" "<<"IN set_timewindows_from_eikonal_time\n"<<std::flush;
   for (int e = 0; e < GlobalTimeSeries.size(); e++) {
     if (myrank == 0) {
-      std::cout<<"EIKONAL\n"<<std::flush;
-      std::cout << " PATH IS " << GlobalTimeSeries[e][0]->getPath() << "\n"
-                << std::flush;
+      //std::cout<<"EIKONAL\n"<<std::flush;
+      //std::cout << " PATH IS " << GlobalTimeSeries[e][0]->getPath() << "\n"
+      //         << std::flush;
       sprintf(file, "%s/time_event_%d.txt",
               GlobalTimeSeries[e][0]->getPath().c_str(), e);
       std::cout<<"PATH "<<file<<"\n"<<std::flush;
