@@ -1,0 +1,7 @@
+#export CALI_SERVICES_ENABLE=callpath,event,trace,recorder,timestamp
+export CALI_CONFIG=hatchet-region-profile,output.format=cali
+#export CALI_CONFIG=hatchet-sample-profile,output.format=json
+#export CALI_CONFIG=runtime-report,region.count
+export AMD_SERIALIZE_KERNEL=3
+export MPICH_GPU_SUPPORT_ENABLED=1
+flux mini run -n 8 -c 8 -g 1 -o gpu-affinity=per-task -o cpu-affinity=per-task  ./sw4 hmr3.in.lassen
