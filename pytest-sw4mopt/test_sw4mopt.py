@@ -230,16 +230,18 @@ def guess_mpi_cmd(mpi_tasks, omp_threads, cpu_allocation, verbose):
         if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="srun -N 1 -n 8 -c8 --gpus-per-task=1 --gpu-bind=closest "
     elif 'rzansel' in node_name:
-        os.environ["MPICH_GPU_SUPPORT_ENABLED"]="1"
+        os.environ["ROMIO_FSTYPE_FORCE"]="ufs:"
         if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="lrun -T8 "
     elif 'tioga' in node_name:
         os.environ["MPICH_GPU_SUPPORT_ENABLED"]="1"
+        os.environ["ROMIO_FSTYPE_FORCE"]="ufs:"
         if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="srun -N 1 -n 8 -c8 --gpus-per-task=1 --gpu-bind=closest "
         mpirun_cmd="flux mini run -n 8 -c 8 -g 1 -o gpu-affinity=per-task -o cpu-affinity=per-task"
     elif 'lassen' in node_name:
         os.environ["PSM2_DEVICES"] = ""
+        os.environ["ROMIO_FSTYPE_FORCE"]="ufs:"
         if mpi_tasks<=0: mpi_tasks = 4
         mpirun_cmd="lrun -T8 "
     elif 'Linux' in sys_name:
