@@ -1,0 +1,6 @@
+#export CALI_SERVICES_ENABLE=callpath,event,trace,recorder,timestamp
+export CALI_CONFIG=hatchet-region-profile,output.format=cali
+#export CALI_CONFIG=hatchet-sample-profile,output.format=json
+#export CALI_CONFIG=runtime-report,region.count
+export CUDA_LAUNCH_BLOCKING=1
+lrun -T4 ./sw4 hmr3.in
