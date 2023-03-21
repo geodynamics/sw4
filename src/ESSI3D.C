@@ -419,9 +419,10 @@ void ESSI3D::write_image_hdf5(int cycle, std::string& path, float_sw4 t,
   /* debug = true; */
 
   for (int i = 0; i < 3; i++) {
+    int nstep = (int)floor(m_ntimestep / m_dumpInterval);
     compute_image(a_U[g], i, cycle);
     if (cycle > 0 &&
-        (m_nbufstep == m_bufferInterval - 1 || cycle == m_ntimestep)) {
+        (m_nbufstep == m_bufferInterval - 1 || cycle == nstep)) {
       if (m_precision == 4)
         m_hdf5helper->write_vel((void*)m_floatField[i], i, cycle,
                                 m_nbufstep + 1);
