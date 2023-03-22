@@ -193,6 +193,11 @@ Qspline::Qspline( int npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt, int bc
    delete[] ipiv;
    
    m_npts = npts;
+   if (npts > 1)
+      m_polcof = new float_sw4[6*(npts-1)];
+   else
+      m_polcof = new float_sw4[6];
+
    m_polcof = new float_sw4[6*(npts-1)];
    for( int i= 0 ; i < npts-1 ; i++ )
    {
