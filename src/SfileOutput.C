@@ -412,9 +412,7 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
               if (g < mEW->mNumberOfCartesianGrids) 
                 m_doubleField[g][ind] = (double)((*data1)(1,i,j,k));
               else {
-                int ii = i*hh[g];
-                int jj = j*hh[g];
-                double z_kl = -mEW->mTopo(ii,jj,1);
+                double z_kl = a_Z[gz](i,j,kl);
                 double z_ku = a_Z[gz](i,j,ku);
                 my_z = z_kl + (z_ku - z_kl)*(k-1)/(double)(ku-1);
                 int t = 1;
@@ -439,12 +437,7 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
               if (g < mEW->mNumberOfCartesianGrids) 
                 m_floatField[g][ind] = (float)((*data1)(1,i,j,k));
               else {
-                int ii = i*hh[g];
-                int jj = j*hh[g];
-                // debug
-                /* fprintf(stderr, "Rank %d, i=%d, j=%d, ii=%d, jj=%d, topo: %d, %d, %d, %d\n", */
-                /*         myRank, i, j, ii, jj, mEW->mTopo.m_ib, mEW->mTopo.m_ie, mEW->mTopo.m_jb, mEW->mTopo.m_je); */
-                double z_kl = -mEW->mTopo(ii,jj,1);
+                double z_kl = a_Z[gz](i,j,kl);
                 double z_ku = a_Z[gz](i,j,ku);
                 my_z = z_kl + (z_ku - z_kl)*(k-1)/(double)(ku-1);
                 int t = 1;
@@ -471,9 +464,7 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
               if (g < mEW->mNumberOfCartesianGrids) 
                 m_doubleField[g][ind] = (double)sqrt((2*((*data2)(1,i,j,k)) +((*data3)(1,i,j,k)))/((*data1)(1,i,j,k)));
               else {
-                int ii = i*hh[g];
-                int jj = j*hh[g];
-                double z_kl = -mEW->mTopo(ii,jj,1);
+                double z_kl = a_Z[gz](i,j,kl);
                 double z_ku = a_Z[gz](i,j,ku);
                 my_z = z_kl + (z_ku - z_kl)*(k-1)/(double)(ku-1);
                 int t = 1;
@@ -507,9 +498,7 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
               if (g < mEW->mNumberOfCartesianGrids) 
                 m_floatField[g][ind] = (float)sqrt((2.0*((*data2)(1,i,j,k)) +((*data3)(1,i,j,k)))/((*data1)(1,i,j,k)));
               else {
-                int ii = i*hh[g];
-                int jj = j*hh[g];
-                double z_kl = -mEW->mTopo(ii,jj,1);
+                double z_kl = a_Z[gz](i,j,kl);
                 double z_ku = a_Z[gz](i,j,ku);
                 my_z = z_kl + (z_ku - z_kl)*(k-1)/(double)(ku-1);
                 int t = 1;
@@ -552,9 +541,7 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
               if (g < mEW->mNumberOfCartesianGrids) 
                 m_doubleField[g][ind] = (double)sqrt(((*data2)(1,i,j,k))/((*data1)(1,i,j,k)));
               else {
-                int ii = i*hh[g];
-                int jj = j*hh[g];
-                double z_kl = -mEW->mTopo(ii,jj,1);
+                double z_kl = a_Z[gz](i,j,kl);
                 double z_ku = a_Z[gz](i,j,ku);
                 my_z = z_kl + (z_ku - z_kl)*(k-1)/(double)(ku-1);
                 int t = 1;
@@ -587,9 +574,7 @@ void SfileOutput::compute_image( vector<Sarray>& a_U, vector<Sarray>& a_Rho,
               if (g < mEW->mNumberOfCartesianGrids) 
                 m_floatField[g][ind] = (float)sqrt(((*data2)(1,i,j,k))/((*data1)(1,i,j,k)));
               else {
-                int ii = i*hh[g];
-                int jj = j*hh[g];
-                double z_kl = -mEW->mTopo(ii,jj,1);
+                double z_kl = a_Z[gz](i,j,kl);
                 double z_ku = a_Z[gz](i,j,ku);
                 my_z = z_kl + (z_ku - z_kl)*(k-1)/(double)(ku-1);
                 int t = 1;
