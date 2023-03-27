@@ -31,9 +31,7 @@ ARG BUILD_TIME=unknown
 # build sw4 
 RUN git -c http.sslVerify=false clone https://github.com/geodynamics/sw4.git && \
   cd sw4/ && git switch developer && rm -r .git/ && \
-  ln -s /usr/lib/x86_64-linux-gnu/libssl.so.1.1  /usr/lib64/libssl.so && \
-  ln -s /usr/lib/x86_64-linux-gnu/libcrypto.so.1.1  /usr/lib64/libcrypto.so && \
-  make sw4 CXX=mpicxx FC=gfortran debug=no proj_6=yes hdf5=yes fftw=yes zfp=yes prec=double EXTRA_LINK_FLAGS="-L/usr/lib64 -lgfortran -lhdf5 -llapack"  HDF5ROOT=/usr/local/hdf5 FFTWHOME=/usr/lib/x86_64-linux-gnu ZFPROOT=/home/zfp H5ZROOT=/home/H5Z-ZFP/install -j4
+  make sw4 CXX=mpicxx FC=gfortran debug=no proj=yes hdf5=yes fftw=yes zfp=yes prec=double EXTRA_LINK_FLAGS="-L/usr/lib64 -lgfortran -lhdf5 -llapack"  HDF5ROOT=/usr/local/hdf5 FFTWHOME=/usr/lib/x86_64-linux-gnu ZFPROOT=/home/zfp H5ZROOT=/home/H5Z-ZFP/install -j4
 
 ENV PATH="$PATH:/home/sw4/optimize_mp" \
   LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/hdf5/lib"
