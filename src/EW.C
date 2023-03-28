@@ -8495,6 +8495,9 @@ void EW::set_to_zero_at_receiver( vector<Sarray> & a_U,
 #pragma omp parallel for
      for( int s=0 ; s < time_series.size() ; s++ )
      {
+        if (!time_series[s]->myPoint())
+            continue;
+
 	int g = time_series[s]->m_grid0;	
 	int i0= time_series[s]->m_i0;
 	int j0= time_series[s]->m_j0;
