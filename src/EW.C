@@ -10383,6 +10383,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     SW4_MARK_FUNCTION;
 #pragma omp parallel for
     for (int s = 0; s < time_series.size(); s++) {
+      if ( !time_series[s]->myPoint()) continue;
       int g = time_series[s]->m_grid0;
       int i0 = time_series[s]->m_i0;
       int j0 = time_series[s]->m_j0;

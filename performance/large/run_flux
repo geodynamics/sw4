@@ -1,6 +1,6 @@
 # request allocation using flux mini alloc -N 1 -n 8
 export MPICH_GPU_SUPPORT_ENABLED=1
-flux mini run -n 8 -c 8 -g 1 -o gpu-affinity=per-task -o cpu-affinity=per-task  ./sw4 hmr3.in.lassen
-flux mini run -n 8 -c 8 -g 1 -o gpu-affinity=per-task -o cpu-affinity=per-task  ./sw4 h.in.lassen
+flux run -n 8 -c 8 -g 1 -o gpu-affinity=per-task -o cpu-affinity=per-task  ./sw4 hmr3.in.lassen
+flux run -n 8 -c 8 -g 1 -o gpu-affinity=per-task -o cpu-affinity=per-task  ./sw4 h.in.lassen
 diff hayward-att-h270-ref-result/sta1.txt hayward-att-h270-ref-result/sta1.txt.last
 diff hayward-att-h200-ref-result/sta1.txt hayward-att-h200-ref-result/sta1.txt.last
