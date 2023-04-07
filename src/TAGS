@@ -36,92 +36,92 @@ void EW::addsgd4_ci(addsgd4_ci43,1758
 #define strz(68,2932
 #define dcz(69,2969
 #define coz(70,3004
-#undef rho197,9109
-#undef up198,9120
-#undef u199,9130
-#undef um200,9139
-#undef strx201,9149
-#undef dcx202,9161
-#undef cox203,9172
-#undef stry204,9183
-#undef dcy205,9195
-#undef coy206,9206
-#undef strz207,9217
-#undef dcz208,9229
-#undef coz209,9240
-void EW::addsgd6_ci(addsgd6_ci214,9332
-#define rho(225,9914
-#define up(227,10000
-#define u(229,10098
-#define um(231,10194
-#define strx(233,10292
-#define dcx(234,10329
-#define cox(235,10364
-#define stry(236,10399
-#define dcy(237,10436
-#define coy(238,10471
-#define strz(239,10506
-#define dcz(240,10543
-#define coz(241,10578
-#undef rho346,16957
-#undef up347,16968
-#undef u348,16978
-#undef um349,16987
-#undef strx350,16997
-#undef dcx351,17009
-#undef cox352,17020
-#undef stry353,17031
-#undef dcy354,17043
-#undef coy355,17054
-#undef strz356,17065
-#undef dcz357,17077
-#undef coz358,17088
-void EW::addsgd4c_ci(addsgd4c_ci363,17180
-#define rho(373,17696
-#define up(375,17782
-#define u(377,17880
-#define um(379,17976
-#define jac(381,18074
-#define strx(383,18160
-#define dcx(384,18197
-#define cox(385,18232
-#define stry(386,18267
-#define dcy(387,18304
-#define coy(388,18339
-#undef rho478,22581
-#undef up479,22592
-#undef u480,22602
-#undef um481,22611
-#undef strx482,22621
-#undef dcx483,22633
-#undef cox484,22644
-#undef stry485,22655
-#undef dcy486,22667
-#undef coy487,22678
-#undef jac488,22689
-void EW::addsgd6c_ci(addsgd6c_ci493,22781
-#define rho(503,23297
-#define up(505,23383
-#define u(507,23481
-#define um(509,23577
-#define jac(511,23675
-#define strx(513,23761
-#define dcx(514,23798
-#define cox(515,23833
-#define stry(516,23868
-#define dcy(517,23905
-#define coy(518,23940
-#undef rho602,28945
-#undef up603,28956
-#undef u604,28966
-#undef um605,28975
-#undef strx606,28985
-#undef dcx607,28997
-#undef cox608,29008
-#undef stry609,29019
-#undef dcy610,29031
-#undef coy611,29042
-#undef jac612,29053
+#undef rho197,9132
+#undef up198,9143
+#undef u199,9153
+#undef um200,9162
+#undef strx201,9172
+#undef dcx202,9184
+#undef cox203,9195
+#undef stry204,9206
+#undef dcy205,9218
+#undef coy206,9229
+#undef strz207,9240
+#undef dcz208,9252
+#undef coz209,9263
+void EW::addsgd6_ci(addsgd6_ci214,9355
+#define rho(225,9937
+#define up(227,10023
+#define u(229,10121
+#define um(231,10217
+#define strx(233,10315
+#define dcx(234,10352
+#define cox(235,10387
+#define stry(236,10422
+#define dcy(237,10459
+#define coy(238,10494
+#define strz(239,10529
+#define dcz(240,10566
+#define coz(241,10601
+#undef rho346,16980
+#undef up347,16991
+#undef u348,17001
+#undef um349,17010
+#undef strx350,17020
+#undef dcx351,17032
+#undef cox352,17043
+#undef stry353,17054
+#undef dcy354,17066
+#undef coy355,17077
+#undef strz356,17088
+#undef dcz357,17100
+#undef coz358,17111
+void EW::addsgd4c_ci(addsgd4c_ci363,17203
+#define rho(373,17719
+#define up(375,17805
+#define u(377,17903
+#define um(379,17999
+#define jac(381,18097
+#define strx(383,18183
+#define dcx(384,18220
+#define cox(385,18255
+#define stry(386,18290
+#define dcy(387,18327
+#define coy(388,18362
+#undef rho478,22627
+#undef up479,22638
+#undef u480,22648
+#undef um481,22657
+#undef strx482,22667
+#undef dcx483,22679
+#undef cox484,22690
+#undef stry485,22701
+#undef dcy486,22713
+#undef coy487,22724
+#undef jac488,22735
+void EW::addsgd6c_ci(addsgd6c_ci493,22827
+#define rho(503,23343
+#define up(505,23429
+#define u(507,23527
+#define um(509,23623
+#define jac(511,23721
+#define strx(513,23807
+#define dcx(514,23844
+#define cox(515,23879
+#define stry(516,23914
+#define dcy(517,23951
+#define coy(518,23986
+#undef rho602,28991
+#undef up603,29002
+#undef u604,29012
+#undef um605,29021
+#undef strx606,29031
+#undef dcx607,29043
+#undef cox608,29054
+#undef stry609,29065
+#undef dcy610,29077
+#undef coy611,29088
+#undef jac612,29099
 
 AllDims.C,580
 AllDims::AllDims(AllDims12,202
@@ -201,37 +201,41 @@ void varcoeffs4(470,11880
 checkanisomtrlc.C,52
 void EW::checkanisomtrl_ci(checkanisomtrl_ci9,256
 
-CheckPoint.C,1681
-CheckPoint* CheckPoint::nil 18,247
-CheckPoint::CheckPoint(23,473
-CheckPoint::CheckPoint(43,1011
-CheckPoint::CheckPoint(66,1725
-CheckPoint::~CheckPoint(~CheckPoint86,2288
-bool CheckPoint::do_checkpointing(do_checkpointing95,2531
-int CheckPoint::get_checkpoint_cycle_interval(get_checkpoint_cycle_interval98,2671
-bool CheckPoint::do_restart(do_restart101,2821
-void CheckPoint::setup_sizes(setup_sizes104,2949
-void CheckPoint::define_pio(define_pio183,5767
-void CheckPoint::setSteps(setSteps261,8303
-bool CheckPoint::timeToWrite(timeToWrite267,8495
-void CheckPoint::compute_file_suffix(compute_file_suffix279,8911
-void CheckPoint::write_checkpoint(write_checkpoint293,9363
-void CheckPoint::read_checkpoint(read_checkpoint437,15318
-float_sw4 CheckPoint::getDt(getDt570,21080
-void CheckPoint::write_header(write_header615,22719
-void CheckPoint::read_header(read_header674,25201
-void CheckPoint::cycle_checkpoints(cycle_checkpoints755,28987
-void CheckPoint::set_restart_file(set_restart_file777,29792
-void CheckPoint::set_restart_path(set_restart_path784,30003
-std::string CheckPoint::get_restart_path(get_restart_path790,30192
-void CheckPoint::set_checkpoint_file(set_checkpoint_file799,30411
-void CheckPoint::write_header_hdf5(write_header_hdf5815,30990
-void CheckPoint::read_header_hdf5(read_header_hdf5906,34597
-void CheckPoint::finalize_hdf5(finalize_hdf51012,39103
-void CheckPoint::create_hdf5_dset(create_hdf5_dset1027,39442
-void CheckPoint::write_hdf5_dset(write_hdf5_dset1041,39894
-void CheckPoint::write_checkpoint_hdf5(write_checkpoint_hdf51057,40498
-void CheckPoint::read_checkpoint_hdf5(read_checkpoint_hdf51304,49116
+CheckPoint.C,1947
+CheckPoint* CheckPoint::nil 22,291
+CheckPoint::CheckPoint(27,517
+CheckPoint::CheckPoint(50,1085
+CheckPoint::CheckPoint(75,1828
+CheckPoint::~CheckPoint(~CheckPoint97,2420
+bool CheckPoint::do_checkpointing(do_checkpointing106,2663
+int CheckPoint::get_checkpoint_cycle_interval(get_checkpoint_cycle_interval109,2803
+bool CheckPoint::verify_restart(verify_restart113,3027
+bool CheckPoint::do_restart(do_restart129,3440
+void CheckPoint::setup_sizes(setup_sizes132,3568
+void CheckPoint::define_pio(define_pio211,6386
+void CheckPoint::setSteps(setSteps288,8948
+bool CheckPoint::timeToWrite(timeToWrite294,9140
+void CheckPoint::compute_file_suffix(compute_file_suffix318,9928
+void CheckPoint::write_checkpoint(write_checkpoint332,10380
+void CheckPoint::read_checkpoint(read_checkpoint476,16335
+float_sw4 CheckPoint::getDt(getDt609,22097
+void CheckPoint::write_header(write_header698,24993
+void CheckPoint::read_header(read_header757,27476
+void CheckPoint::cycle_checkpoints(cycle_checkpoints838,31262
+void CheckPoint::set_restart_latest(set_restart_latest861,32147
+void CheckPoint::set_restart_file(set_restart_file867,32322
+void CheckPoint::set_restart_path(set_restart_path874,32533
+std::string CheckPoint::get_restart_path(get_restart_path880,32722
+void CheckPoint::set_checkpoint_file(set_checkpoint_file890,32958
+void CheckPoint::write_header_hdf5(write_header_hdf5906,33537
+void CheckPoint::read_header_hdf5(read_header_hdf5997,37144
+void CheckPoint::finalize_hdf5(finalize_hdf51103,41650
+void CheckPoint::create_hdf5_dset(create_hdf5_dset1118,41989
+void CheckPoint::write_hdf5_dset(write_hdf5_dset1132,42441
+void CheckPoint::write_checkpoint_hdf5(write_checkpoint_hdf51148,43045
+void CheckPoint::read_checkpoint_hdf5(read_checkpoint_hdf51395,51663
+void CheckPoint::write_checkpoint_scr(write_checkpoint_scr1520,56535
+void CheckPoint::read_checkpoint_scr(read_checkpoint_scr1582,58795
 
 computedtanisoc.C,195
 void EW::maxwave(maxwave10,257
@@ -274,61 +278,71 @@ void EW::consintp(consintp3,90
 #undef strf_x549,27449
 #undef strf_y550,27463
 
-curvilinear4sgc.C,1332
+curvilinear4sgc.C,1549
 __device__ inline double acof(37,1463
 #define SPLIT_VERSION46,1684
-void curvilinear4sg_ci(57,2310
-#define mu(119,4661
-#define la(120,4721
-#define jac(121,4785
-#define u(122,4847
-#define lu(123,4922
-#define met(124,4999
-#define strx(125,5078
-#define stry(126,5114
-#define tacof(128,5170
-#define aacof(129,5241
-#define acof(131,5318
-#define bope(133,5392
-#define ghcof(134,5439
-#define acof_no_gp(135,5471
-#define ghcof_no_gp(136,5550
-#undef mu2766,143109
-#undef la2767,143119
-#undef jac2768,143129
-#undef u2769,143140
-#undef lu2770,143149
-#undef met2771,143159
-#undef strx2772,143170
-#undef stry2773,143182
-#undef acof2774,143194
-#undef bope2775,143206
-#undef ghcof2776,143218
-#undef acof_no_gp2777,143231
-#undef ghcof_no_gp2778,143249
-void curvilinear4sg_ci(2781,143276
-#define mu(2832,145141
-#define la(2833,145201
-#define jac(2834,145265
-#define u(2835,145327
-#define lu(2836,145402
-#define met(2837,145479
-#define strx(2838,145558
-#define stry(2839,145594
-#define acof(2840,145630
-#define bope(2841,145697
-#define ghcof(2842,145744
-#undef mu4462,232458
-#undef la4463,232468
-#undef jac4464,232478
-#undef u4465,232489
-#undef lu4466,232498
-#undef met4467,232508
-#undef strx4468,232519
-#undef stry4469,232531
-#undef acof4470,232543
-#undef bope4471,232555
-#undef ghcof4472,232567
+void curvilinear4sg_ci(58,2315
+#define mu(123,4719
+#define la(124,4779
+#define jac(125,4843
+#define u1(127,4906
+#define u2(128,4959
+#define u3(129,5012
+#define lu(130,5065
+#define met(134,5304
+#define strx(136,5376
+#define stry(137,5412
+#define tacof(139,5468
+#define aacof(140,5539
+#define acof(142,5616
+#define bope(144,5690
+#define ghcof(145,5737
+#define acof_no_gp(146,5769
+#define ghcof_no_gp(147,5848
+#undef u1850,40832
+#undef u2851,40842
+#undef u3852,40852
+#define u(853,40862
+#undef u2134,109371
+#define u1(2135,109380
+#define u2(2136,109433
+#define u3(2137,109486
+#undef mu2804,143194
+#undef la2805,143204
+#undef jac2806,143214
+#undef u2807,143225
+#undef lu2808,143234
+#undef met2809,143244
+#undef strx2810,143255
+#undef stry2811,143267
+#undef acof2812,143279
+#undef bope2813,143291
+#undef ghcof2814,143303
+#undef acof_no_gp2815,143316
+#undef ghcof_no_gp2816,143334
+void curvilinear4sg_ci(2819,143361
+#define mu(2870,145226
+#define la(2871,145286
+#define jac(2872,145350
+#define u(2873,145412
+#define lu(2874,145487
+#define met(2875,145564
+#define strx(2876,145643
+#define stry(2877,145679
+#define acof(2878,145715
+#define bope(2879,145782
+#define ghcof(2880,145829
+#undef mu4500,230824
+#undef la4501,230834
+#undef jac4502,230844
+#undef u4503,230855
+#undef lu4504,230864
+#undef met4505,230874
+#undef strx4506,230885
+#undef stry4507,230897
+#undef acof4508,230909
+#undef bope4509,230921
+#undef ghcof4510,230933
 
 curvilinear4sgcSF.C,765
 __device__ inline double acof(37,1462
@@ -377,19 +391,19 @@ void curvilinear4sgX1_ci(40,1482
 #define ghcof(102,4041
 #define acof_no_gp(103,4073
 #define ghcof_no_gp(104,4152
-#undef mu796,37578
-#undef la797,37588
-#undef jac798,37598
-#undef u799,37609
-#undef lu800,37618
-#undef met801,37628
-#undef strx802,37639
-#undef stry803,37651
-#undef acof804,37663
-#undef bope805,37675
-#undef ghcof806,37687
-#undef acof_no_gp807,37700
-#undef ghcof_no_gp808,37718
+#undef mu796,37601
+#undef la797,37611
+#undef jac798,37621
+#undef u799,37632
+#undef lu800,37641
+#undef met801,37651
+#undef strx802,37662
+#undef stry803,37674
+#undef acof804,37686
+#undef bope805,37698
+#undef ghcof806,37710
+#undef acof_no_gp807,37723
+#undef ghcof_no_gp808,37741
 
 curvilinear4sgcX2.C,617
 void curvilinear4sgX1_ci(40,1482
@@ -435,19 +449,19 @@ void curvilinear4sgwind(46,1601
 #define ghcof(136,5643
 #define acof_no_gp(137,5675
 #define ghcof_no_gp(138,5754
-#undef mu2813,143059
-#undef la2814,143069
-#undef jac2815,143079
-#undef u2816,143090
-#undef lu2817,143099
-#undef met2818,143109
-#undef strx2819,143120
-#undef stry2820,143132
-#undef acof2821,143144
-#undef acof_no_gp2822,143156
-#undef bope2823,143174
-#undef ghcof2824,143186
-#undef ghcof_no_gp2825,143199
+#undef mu2822,143257
+#undef la2823,143267
+#undef jac2824,143277
+#undef u2825,143288
+#undef lu2826,143297
+#undef met2827,143307
+#undef strx2828,143318
+#undef stry2829,143330
+#undef acof2830,143342
+#undef acof_no_gp2831,143354
+#undef bope2832,143372
+#undef ghcof2833,143384
+#undef ghcof_no_gp2834,143397
 
 curvilinearGrid.C,596
 #define SQR(49,2078
@@ -461,56 +475,56 @@ void EW::copy_topo_to_topogridext(copy_topo_to_topogridext1025,38445
 void EW::gettopowgh(gettopowgh1061,39792
 void EW::smooth_grid(smooth_grid1094,41703
 
-CurvilinearInterface2.C,2354
+CurvilinearInterface2.C,2355
 CurvilinearInterface2::CurvilinearInterface2(CurvilinearInterface229,976
 CurvilinearInterface2::~CurvilinearInterface2(~CurvilinearInterface282,2769
 void CurvilinearInterface2::bnd_zero_host(bnd_zero_host109,3851
 void CurvilinearInterface2::bnd_zero(bnd_zero128,4584
-void CurvilinearInterface2::copy_str(copy_str236,8340
-void CurvilinearInterface2::init_arrays(init_arrays262,9416
-void CurvilinearInterface2::init_arrays_att(init_arrays_att554,20863
-void CurvilinearInterface2::impose_ic(impose_ic612,23259
-void CurvilinearInterface2::injection(injection978,37816
-void CurvilinearInterface2::interface_block(interface_block1063,41313
-void CurvilinearInterface2::interface_lhs(interface_lhs1090,42425
-void CurvilinearInterface2::interface_rhs(interface_rhs1165,45509
-void CurvilinearInterface2::compute_icstresses_curv_host(compute_icstresses_curv_host1327,53129
-#define str_x(1338,53571
-#define str_y(1339,53610
-#undef str_x1426,56894
-#undef str_y1427,56907
-void CurvilinearInterface2::lhs_icstresses_curv(lhs_icstresses_curv1431,56997
-#define str_x(1442,57493
-#define str_y(1443,57532
-#undef str_x1493,59714
-#undef str_y1494,59727
-void CurvilinearInterface2::lhs_Lu(lhs_Lu1498,59817
-#define strx(1505,60185
-#define stry(1506,60223
-#undef strx1561,63120
-#undef stry1562,63132
-void CurvilinearInterface2::mat_icstresses_curv(mat_icstresses_curv1566,63221
-#define str_x(1576,63678
-#define str_y(1577,63713
-#undef str_x1629,65842
-#undef str_y1630,65855
-void CurvilinearInterface2::matrix_Lu(matrix_Lu1634,65945
-#define strx(1639,66264
-#define stry(1640,66301
-#undef strx1679,68323
-#undef stry1680,68335
-void CurvilinearInterface2::restprol2D(restprol2D1684,68424
-void CurvilinearInterface2::prolongate2D(prolongate2D1736,70704
-void CurvilinearInterface2::restrict2D(restrict2D1861,74779
-void CurvilinearInterface2::communicate_array_org(communicate_array_org1924,77147
-void CurvilinearInterface2::communicate_array1d(communicate_array1d2062,82910
-void CurvilinearInterface2::compute_icstresses_curv(compute_icstresses_curv2096,84213
-#define str_x(2106,84629
-#define str_y(2107,84668
-#undef str_x2216,88999
-#undef str_y2217,89012
-void CurvilinearInterface2::allocate_mpi_buffers(allocate_mpi_buffers2219,89027
-void CurvilinearInterface2::communicate_array(communicate_array2234,89505
+void CurvilinearInterface2::copy_str(copy_str236,8380
+void CurvilinearInterface2::init_arrays(init_arrays262,9456
+void CurvilinearInterface2::init_arrays_att(init_arrays_att568,21194
+void CurvilinearInterface2::impose_ic(impose_ic626,23590
+void CurvilinearInterface2::injection(injection1022,39093
+void CurvilinearInterface2::interface_block(interface_block1107,42590
+void CurvilinearInterface2::interface_lhs(interface_lhs1134,43702
+void CurvilinearInterface2::interface_rhs(interface_rhs1211,46992
+void CurvilinearInterface2::compute_icstresses_curv_host(compute_icstresses_curv_host1373,54612
+#define str_x(1384,55054
+#define str_y(1385,55093
+#undef str_x1472,58377
+#undef str_y1473,58390
+void CurvilinearInterface2::lhs_icstresses_curv(lhs_icstresses_curv1477,58480
+#define str_x(1488,58976
+#define str_y(1489,59015
+#undef str_x1539,61197
+#undef str_y1540,61210
+void CurvilinearInterface2::lhs_Lu(lhs_Lu1544,61300
+#define strx(1551,61668
+#define stry(1552,61706
+#undef strx1607,64603
+#undef stry1608,64615
+void CurvilinearInterface2::mat_icstresses_curv(mat_icstresses_curv1612,64704
+#define str_x(1622,65161
+#define str_y(1623,65196
+#undef str_x1675,67325
+#undef str_y1676,67338
+void CurvilinearInterface2::matrix_Lu(matrix_Lu1680,67428
+#define strx(1685,67747
+#define stry(1686,67784
+#undef strx1725,69806
+#undef stry1726,69818
+void CurvilinearInterface2::restprol2D(restprol2D1730,69907
+void CurvilinearInterface2::prolongate2D(prolongate2D1782,72187
+void CurvilinearInterface2::restrict2D(restrict2D1907,76262
+void CurvilinearInterface2::communicate_array_org(communicate_array_org1970,78630
+void CurvilinearInterface2::communicate_array1d(communicate_array1d2108,84393
+void CurvilinearInterface2::compute_icstresses_curv(compute_icstresses_curv2142,85696
+#define str_x(2152,86112
+#define str_y(2153,86151
+#undef str_x2262,90482
+#undef str_y2263,90495
+void CurvilinearInterface2::allocate_mpi_buffers(allocate_mpi_buffers2265,90510
+void CurvilinearInterface2::communicate_array(communicate_array2280,90988
 
 energy4c.C,443
 void energy4_ci(39,1461
@@ -546,32 +560,32 @@ void ESSI3D::set_restart(set_restart102,3332
 void ESSI3D::set_dump_interval(set_dump_interval108,3491
 void ESSI3D::set_buffer_interval(set_buffer_interval114,3690
 void ESSI3D::setup(setup120,3899
-void ESSI3D::define_pio(define_pio202,7049
-void ESSI3D::setSteps(setSteps205,7162
-double ESSI3D::getHDF5Timings(getHDF5Timings213,7392
-void ESSI3D::update_image(update_image218,7569
-void ESSI3D::force_write_image(force_write_image247,8476
-void ESSI3D::compute_image(compute_image265,9085
-void ESSI3D::compute_file_suffix(compute_file_suffix302,10433
-void ESSI3D::write_image(write_image309,10655
-void ESSI3D::open_vel_file(open_vel_file315,10792
-void ESSI3D::finalize_hdf5(finalize_hdf5410,13880
-void ESSI3D::close_vel_file(close_vel_file415,13957
-void ESSI3D::write_image_hdf5(write_image_hdf5423,14082
+void ESSI3D::define_pio(define_pio201,6983
+void ESSI3D::setSteps(setSteps204,7096
+double ESSI3D::getHDF5Timings(getHDF5Timings212,7326
+void ESSI3D::update_image(update_image217,7503
+void ESSI3D::force_write_image(force_write_image246,8410
+void ESSI3D::compute_image(compute_image264,9019
+void ESSI3D::compute_file_suffix(compute_file_suffix299,10315
+void ESSI3D::write_image(write_image306,10537
+void ESSI3D::open_vel_file(open_vel_file312,10674
+void ESSI3D::finalize_hdf5(finalize_hdf5400,13561
+void ESSI3D::close_vel_file(close_vel_file405,13638
+void ESSI3D::write_image_hdf5(write_image_hdf5413,13763
 
 ESSI3DHDF5.C,530
 using std::cerr;46,1552
 using std::cout;47,1569
 ESSI3DHDF5* ESSI3DHDF5::nil 49,1587
 ESSI3DHDF5::ESSI3DHDF5(52,1721
-ESSI3DHDF5::~ESSI3DHDF5(~ESSI3DHDF5104,3392
-void ESSI3DHDF5::create_file(create_file107,3496
-void ESSI3DHDF5::write_header(write_header149,4640
-void ESSI3DHDF5::write_topo(write_topo228,7643
-void ESSI3DHDF5::init_write_vel(init_write_vel317,10476
-void ESSI3DHDF5::write_vel(write_vel450,14669
-void ESSI3DHDF5::close_file(close_file570,18051
-void ESSI3DHDF5::finalize_hdf5(finalize_hdf5595,18775
+ESSI3DHDF5::~ESSI3DHDF5(~ESSI3DHDF5105,3414
+void ESSI3DHDF5::create_file(create_file108,3518
+void ESSI3DHDF5::write_header(write_header154,4759
+void ESSI3DHDF5::write_topo(write_topo233,7757
+void ESSI3DHDF5::init_write_vel(init_write_vel322,10585
+void ESSI3DHDF5::write_vel(write_vel461,14912
+void ESSI3DHDF5::close_file(close_file581,18294
+void ESSI3DHDF5::finalize_hdf5(finalize_hdf5607,19035
 
 evenIevenJinterp.C,893
 void evenIevenJinterpJacobi(7,133
@@ -649,155 +663,155 @@ void evenIoddJinterp(401,14851
 #undef strf_x528,20053
 #undef strf_y529,20067
 
-EW.C,8304
-#define SQR(436,25868
-EW::EW(439,25911
-EW::~EW(~EW757,35392
-bool EW::isInitialized(isInitialized845,38689
-bool EW::wasParsingSuccessful(wasParsingSuccessful848,38796
-void EW::printTime(printTime851,38934
-void EW::printPreamble(printPreamble863,39374
-void EW::switch_on_checkfornan(switch_on_checkfornan997,44760
-void EW::assign_local_bcs(assign_local_bcs1000,44894
-void EW::initializePaddingCells(initializePaddingCells1110,49547
-void EW::check_dimensions(check_dimensions1124,49893
-bool EW::proc_zero(proc_zero1153,50904
-int EW::no_of_procs(no_of_procs1156,51034
-string EW::bc_name(bc_name1159,51158
-bool EW::getDepth(getDepth1183,51872
-void EW::computeCartesianCoordGMG(computeCartesianCoordGMG1232,53543
-void EW::computeCartesianCoord(computeCartesianCoord1238,53813
-void EW::computeGeographicCoord(computeGeographicCoord1282,55631
-int EW::computeNearestGridPoint2(computeNearestGridPoint21312,56889
-void EW::computeNearestGridPoint(computeNearestGridPoint1372,59455
-void EW::computeNearestLowGridPoint(computeNearestLowGridPoint1468,63106
-bool EW::interior_point_in_proc(interior_point_in_proc1537,65525
-bool EW::point_in_proc(point_in_proc1552,66071
-bool EW::point_in_proc_ext(point_in_proc_ext1567,66557
-void EW::getGlobalBoundingBox(getGlobalBoundingBox1584,67198
-void EW::setGMTOutput(setGMTOutput1595,67487
-void EW::saveGMTFile(saveGMTFile1603,67713
-void EW::print_execution_time(print_execution_time1832,76739
-void EW::print_execution_times(print_execution_times1857,77395
-void EW::finalizeIO(finalizeIO1932,79883
-void EW::default_bcs(default_bcs1940,80159
-void EW::normOfDifference(normOfDifference1946,80407
-void EW::normOfDifferenceGhostPoints(normOfDifferenceGhostPoints2080,85632
-void EW::normOfSurfaceDifference(normOfSurfaceDifference2134,87512
-void EW::bndryInteriorDifference(bndryInteriorDifference2223,90241
-void EW::test_RhoUtt_Lu(test_RhoUtt_Lu2254,91347
-void EW::initialData(initialData2289,92654
-bool EW::exactSol(exactSol2425,97795
-RAJA_HOST_DEVICE float_sw4 EW::SmoothWave(SmoothWave2562,102997
-RAJA_HOST_DEVICE float_sw4 EW::VerySmoothBump(VerySmoothBump2582,103798
-RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::C6SmoothBump(C6SmoothBump2602,104629
-RAJA_HOST_DEVICE float_sw4 EW::d_SmoothWave_dt(d_SmoothWave_dt2613,105101
-RAJA_HOST_DEVICE float_sw4 EW::d_VerySmoothBump_dt(d_VerySmoothBump_dt2633,105941
-RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::d_C6SmoothBump_dt(d_C6SmoothBump_dt2654,106828
-RAJA_HOST_DEVICE float_sw4 EW::SWTP(SWTP2666,107378
-RAJA_HOST_DEVICE float_sw4 EW::VSBTP(VSBTP2701,108631
-RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::C6SBTP(C6SBTP2743,110545
-RAJA_HOST_DEVICE float_sw4 EW::SmoothWave_x_T_Integral(SmoothWave_x_T_Integral2756,111194
-RAJA_HOST_DEVICE float_sw4 EW::VerySmoothBump_x_T_Integral(VerySmoothBump_x_T_Integral2785,112046
-RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::C6SmoothBump_x_T_Integral(C6SmoothBump_x_T_Integral2815,112974
-RAJA_HOST_DEVICE float_sw4 EW::Gaussian(Gaussian2842,113672
-RAJA_HOST_DEVICE float_sw4 EW::d_Gaussian_dt(d_Gaussian_dt2850,113995
-RAJA_HOST_DEVICE float_sw4 EW::Gaussian_x_T_Integral(Gaussian_x_T_Integral2859,114366
-void EW::get_exact_point_source(get_exact_point_source2884,115572
-void EW::get_exact_point_source(get_exact_point_source2887,115707
-complex<float_sw4> asin(3503,137463
-complex<float_sw4> atan(3509,137667
-complex<double> atan2(3515,137864
-void EW::get_exact_lamb2(get_exact_lamb23534,138448
-void EW::get_exact_lamb(get_exact_lamb3577,139977
-double EW::G4_Integral(G4_Integral3648,142184
-double EW::G3_Integral(G3_Integral3662,142831
-double EW::G2_Integral(G2_Integral3809,150800
-void EW::exactRhsTwilight(exactRhsTwilight4179,171491
-void EW::exactAccTwilight(exactAccTwilight4279,175733
-void EW::Force(Force4343,178009
-void EW::Force(Force4354,178367
-void EW::Force_tt(Force_tt4668,191753
-void EW::Force_tt(Force_tt4679,192123
-void EW::evalRHS(evalRHS4935,203275
-void EW::evalRHSanisotropic(evalRHSanisotropic5204,214355
-void EW::evalPredictor(evalPredictor5265,216630
-void EW::evalCorrector(evalCorrector5307,217943
-void EW::evalDpDmInTime(evalDpDmInTime5341,219039
-void EW::updateMemVarPred(updateMemVarPred5381,220352
-void EW::updateMemVarCorr(updateMemVarCorr5428,222228
-void EW::updateMemVarCorrNearInterface(updateMemVarCorrNearInterface5485,224607
-void EW::evalDpDmInTimeAtt(evalDpDmInTimeAtt5545,227100
-void EW::side_plane(side_plane5580,228428
-void EW::update_images(update_images5608,229179
-void EW::addImage(addImage5907,241332
-void EW::addImage3D(addImage3D5910,241465
-void EW::addESSI3D(addESSI3D5912,241603
-void EW::addSfileOutput(addSfileOutput5914,241738
-void EW::initialize_image_files(initialize_image_files5916,241878
-void EW::set_sg_thickness(set_sg_thickness5956,243533
-void EW::set_sg_width(set_sg_width5966,243973
-void EW::set_sg_damping(set_sg_damping5975,244291
-void EW::set_global_bcs(set_global_bcs5984,244644
-void EW::set_prefilter(set_prefilter5994,245062
-void EW::set_threshold_velocities(set_threshold_velocities6003,245474
-void EW::average_speeds(average_speeds6010,245693
-void EW::layered_speeds(layered_speeds6069,248168
-void EW::testsourcediff(testsourcediff6110,249524
-void EW::get_scalefactors(get_scalefactors6148,250951
-bool EW::compute_sf(compute_sf6153,251132
-void EW::compute_guess(compute_guess6156,251264
-void EW::get_cgparameters(get_cgparameters6166,251660
-void EW::compute_energy(compute_energy6180,252198
-float_sw4 EW::scalarProduct(scalarProduct6238,254814
-void EW::get_utc(get_utc6277,256370
-void EW::print_utc(print_utc6282,256552
-void EW::extractTopographyFromGridFile(extractTopographyFromGridFile6291,256865
-void EW::extractTopographyFromCartesianFile(extractTopographyFromCartesianFile6501,264343
-void EW::extractTopographyFromImageFile(extractTopographyFromImageFile6724,272247
-void EW::extractTopographyFromRfile(extractTopographyFromRfile6862,277210
-bool EW::is_onesided(is_onesided7220,288979
-void EW::get_gridgen_info(get_gridgen_info7223,289135
-void EW::get_nr_of_material_parameters(get_nr_of_material_parameters7229,289345
-void EW::parameters_to_material(parameters_to_material7242,289844
-void EW::material_to_parameters(material_to_parameters7270,290774
-void EW::get_material_parameter(get_material_parameter7291,291510
-void EW::get_scale_factors(get_scale_factors7311,292152
-void EW::add_to_grad(add_to_grad7334,292854
-void EW::perturb_mtrl(perturb_mtrl7412,296783
-void EW::perturb_mtrl(perturb_mtrl7433,297766
-void EW::get_optmethod(get_optmethod7454,298693
-void EW::set_epicenter(set_epicenter7460,298868
-void EW::get_epicenter(get_epicenter7469,299189
-bool EW::check_for_nan(check_for_nan7478,299514
-void EW::check_min_max_int(check_min_max_int7496,300142
-void EW::material_correction(material_correction7525,301198
-void EW::project_material(project_material7576,303036
-void EW::check_material(check_material7630,304937
-void EW::extrapolateTopo(extrapolateTopo7710,307791
-void EW::checkTopo(checkTopo7759,309352
-void EW::setup_attenuation_relaxation(setup_attenuation_relaxation7776,309898
-void EW::setup_viscoelastic(setup_viscoelastic7827,311697
-#define a(7861,312669
-#undef a8030,319335
-void EW::reverse_setup_viscoelastic(reverse_setup_viscoelastic8035,319425
-#define a(8052,319906
-#undef a8193,325554
-void EW::setup_viscoelastic_tw(setup_viscoelastic_tw8198,325644
-void EW::compute_minvsoverh(compute_minvsoverh8262,328031
-bool less_than(8292,329140
-void EW::sort_grid_point_sources(sort_grid_point_sources8297,329324
-void EW::Force(Force8360,331849
-void EW::Force_tt(Force_tt8600,342343
-AllDims* EW::get_fine_alldimobject(get_fine_alldimobject8857,353551
-void EW::extractTopographyFromSfile(extractTopographyFromSfile8865,353933
-static void read_hdf5_attr(9156,363395
-static char* read_hdf5_attr_str(9166,363655
-void EW::extractTopographyFromGMG(extractTopographyFromGMG9188,364128
-TestTwilight* EW::create_twilight(create_twilight9381,370885
-TestEcons* EW::create_energytest(create_energytest9394,371299
-TestPointSource* EW::get_point_source_test(get_point_source_test9401,371497
-void EW::load_balance(load_balance9402,371574
+EW.C,8305
+#define SQR(441,25946
+EW::EW(444,25989
+EW::~EW(~EW767,35636
+bool EW::isInitialized(isInitialized855,39040
+bool EW::wasParsingSuccessful(wasParsingSuccessful858,39147
+void EW::printTime(printTime861,39285
+void EW::printPreamble(printPreamble873,39725
+void EW::switch_on_checkfornan(switch_on_checkfornan1007,45111
+void EW::assign_local_bcs(assign_local_bcs1010,45245
+void EW::initializePaddingCells(initializePaddingCells1120,49898
+void EW::check_dimensions(check_dimensions1134,50244
+bool EW::proc_zero(proc_zero1163,51255
+int EW::no_of_procs(no_of_procs1166,51385
+string EW::bc_name(bc_name1169,51509
+bool EW::getDepth(getDepth1193,52223
+void EW::computeCartesianCoordGMG(computeCartesianCoordGMG1242,53894
+void EW::computeCartesianCoord(computeCartesianCoord1248,54164
+void EW::computeGeographicCoord(computeGeographicCoord1292,55982
+int EW::computeNearestGridPoint2(computeNearestGridPoint21322,57240
+void EW::computeNearestGridPoint(computeNearestGridPoint1382,59806
+void EW::computeNearestLowGridPoint(computeNearestLowGridPoint1478,63457
+bool EW::interior_point_in_proc(interior_point_in_proc1547,65876
+bool EW::point_in_proc(point_in_proc1562,66422
+bool EW::point_in_proc_ext(point_in_proc_ext1577,66908
+void EW::getGlobalBoundingBox(getGlobalBoundingBox1594,67549
+void EW::setGMTOutput(setGMTOutput1605,67838
+void EW::saveGMTFile(saveGMTFile1613,68064
+void EW::print_execution_time(print_execution_time1842,77090
+void EW::print_execution_times(print_execution_times1867,77746
+void EW::finalizeIO(finalizeIO1942,80234
+void EW::default_bcs(default_bcs1950,80510
+void EW::normOfDifference(normOfDifference1956,80758
+void EW::normOfDifferenceGhostPoints(normOfDifferenceGhostPoints2091,85998
+void EW::normOfSurfaceDifference(normOfSurfaceDifference2145,87878
+void EW::bndryInteriorDifference(bndryInteriorDifference2234,90607
+void EW::test_RhoUtt_Lu(test_RhoUtt_Lu2265,91713
+void EW::initialData(initialData2300,93020
+bool EW::exactSol(exactSol2436,98161
+RAJA_HOST_DEVICE float_sw4 EW::SmoothWave(SmoothWave2574,103378
+RAJA_HOST_DEVICE float_sw4 EW::VerySmoothBump(VerySmoothBump2594,104179
+RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::C6SmoothBump(C6SmoothBump2614,105010
+RAJA_HOST_DEVICE float_sw4 EW::d_SmoothWave_dt(d_SmoothWave_dt2625,105482
+RAJA_HOST_DEVICE float_sw4 EW::d_VerySmoothBump_dt(d_VerySmoothBump_dt2645,106322
+RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::d_C6SmoothBump_dt(d_C6SmoothBump_dt2666,107209
+RAJA_HOST_DEVICE float_sw4 EW::SWTP(SWTP2678,107759
+RAJA_HOST_DEVICE float_sw4 EW::VSBTP(VSBTP2713,109012
+RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::C6SBTP(C6SBTP2755,110926
+RAJA_HOST_DEVICE float_sw4 EW::SmoothWave_x_T_Integral(SmoothWave_x_T_Integral2768,111575
+RAJA_HOST_DEVICE float_sw4 EW::VerySmoothBump_x_T_Integral(VerySmoothBump_x_T_Integral2797,112427
+RAJA_HOST_DEVICE SW4_FORCEINLINE float_sw4 EW::C6SmoothBump_x_T_Integral(C6SmoothBump_x_T_Integral2827,113355
+RAJA_HOST_DEVICE float_sw4 EW::Gaussian(Gaussian2854,114053
+RAJA_HOST_DEVICE float_sw4 EW::d_Gaussian_dt(d_Gaussian_dt2862,114376
+RAJA_HOST_DEVICE float_sw4 EW::Gaussian_x_T_Integral(Gaussian_x_T_Integral2871,114747
+void EW::get_exact_point_source(get_exact_point_source2896,115953
+void EW::get_exact_point_source(get_exact_point_source2899,116088
+complex<float_sw4> asin(3515,137844
+complex<float_sw4> atan(3521,138048
+complex<double> atan2(3527,138245
+void EW::get_exact_lamb2(get_exact_lamb23546,138829
+void EW::get_exact_lamb(get_exact_lamb3589,140358
+double EW::G4_Integral(G4_Integral3660,142565
+double EW::G3_Integral(G3_Integral3674,143212
+double EW::G2_Integral(G2_Integral3821,151181
+void EW::exactRhsTwilight(exactRhsTwilight4191,171872
+void EW::exactAccTwilight(exactAccTwilight4291,176114
+void EW::Force(Force4355,178390
+void EW::Force(Force4366,178748
+void EW::Force_tt(Force_tt4680,192134
+void EW::Force_tt(Force_tt4691,192504
+void EW::evalRHS(evalRHS4947,203656
+void EW::evalRHSanisotropic(evalRHSanisotropic5249,216301
+void EW::evalPredictor(evalPredictor5310,218576
+void EW::evalCorrector(evalCorrector5352,219889
+void EW::evalDpDmInTime(evalDpDmInTime5386,220985
+void EW::updateMemVarPred(updateMemVarPred5426,222298
+void EW::updateMemVarCorr(updateMemVarCorr5473,224174
+void EW::updateMemVarCorrNearInterface(updateMemVarCorrNearInterface5530,226553
+void EW::evalDpDmInTimeAtt(evalDpDmInTimeAtt5590,229046
+void EW::side_plane(side_plane5625,230374
+void EW::update_images(update_images5653,231125
+void EW::addImage(addImage5952,243278
+void EW::addImage3D(addImage3D5955,243411
+void EW::addESSI3D(addESSI3D5957,243549
+void EW::addSfileOutput(addSfileOutput5959,243684
+void EW::initialize_image_files(initialize_image_files5961,243824
+void EW::set_sg_thickness(set_sg_thickness6001,245479
+void EW::set_sg_width(set_sg_width6011,245919
+void EW::set_sg_damping(set_sg_damping6020,246237
+void EW::set_global_bcs(set_global_bcs6029,246590
+void EW::set_prefilter(set_prefilter6039,247008
+void EW::set_threshold_velocities(set_threshold_velocities6048,247420
+void EW::average_speeds(average_speeds6055,247639
+void EW::layered_speeds(layered_speeds6114,250114
+void EW::testsourcediff(testsourcediff6155,251470
+void EW::get_scalefactors(get_scalefactors6193,252897
+bool EW::compute_sf(compute_sf6198,253078
+void EW::compute_guess(compute_guess6201,253210
+void EW::get_cgparameters(get_cgparameters6211,253606
+void EW::compute_energy(compute_energy6225,254144
+float_sw4 EW::scalarProduct(scalarProduct6283,256760
+void EW::get_utc(get_utc6322,258316
+void EW::print_utc(print_utc6327,258498
+void EW::extractTopographyFromGridFile(extractTopographyFromGridFile6336,258811
+void EW::extractTopographyFromCartesianFile(extractTopographyFromCartesianFile6546,266289
+void EW::extractTopographyFromImageFile(extractTopographyFromImageFile6769,274193
+void EW::extractTopographyFromRfile(extractTopographyFromRfile6907,279156
+bool EW::is_onesided(is_onesided7265,290925
+void EW::get_gridgen_info(get_gridgen_info7268,291081
+void EW::get_nr_of_material_parameters(get_nr_of_material_parameters7274,291291
+void EW::parameters_to_material(parameters_to_material7287,291790
+void EW::material_to_parameters(material_to_parameters7315,292720
+void EW::get_material_parameter(get_material_parameter7336,293456
+void EW::get_scale_factors(get_scale_factors7356,294098
+void EW::add_to_grad(add_to_grad7379,294800
+void EW::perturb_mtrl(perturb_mtrl7457,298729
+void EW::perturb_mtrl(perturb_mtrl7478,299712
+void EW::get_optmethod(get_optmethod7499,300639
+void EW::set_epicenter(set_epicenter7505,300814
+void EW::get_epicenter(get_epicenter7514,301135
+bool EW::check_for_nan(check_for_nan7523,301460
+void EW::check_min_max_int(check_min_max_int7541,302088
+void EW::material_correction(material_correction7570,303144
+void EW::project_material(project_material7621,304982
+void EW::check_material(check_material7675,306883
+void EW::extrapolateTopo(extrapolateTopo7755,309737
+void EW::checkTopo(checkTopo7804,311298
+void EW::setup_attenuation_relaxation(setup_attenuation_relaxation7821,311844
+void EW::setup_viscoelastic(setup_viscoelastic7872,313643
+#define a(7906,314615
+#undef a8075,321281
+void EW::reverse_setup_viscoelastic(reverse_setup_viscoelastic8080,321371
+#define a(8097,321852
+#undef a8238,327500
+void EW::setup_viscoelastic_tw(setup_viscoelastic_tw8243,327590
+void EW::compute_minvsoverh(compute_minvsoverh8307,329977
+bool less_than(8337,331086
+void EW::sort_grid_point_sources(sort_grid_point_sources8342,331270
+void EW::Force(Force8405,333795
+void EW::Force_tt(Force_tt8645,344289
+AllDims* EW::get_fine_alldimobject(get_fine_alldimobject8902,355497
+void EW::extractTopographyFromSfile(extractTopographyFromSfile8910,355879
+static void read_hdf5_attr(9201,365341
+static char* read_hdf5_attr_str(9212,365634
+void EW::extractTopographyFromGMG(extractTopographyFromGMG9234,366113
+TestTwilight* EW::create_twilight(create_twilight9427,372872
+TestEcons* EW::create_energytest(create_energytest9440,373286
+TestPointSource* EW::get_point_source_test(get_point_source_test9447,373484
+void EW::load_balance(load_balance9448,373561
 
 Filter.C,545
 Filter::Filter(Filter47,1570
@@ -816,114 +830,114 @@ ForcingTwilight.C,58
 ForcingTwilight::ForcingTwilight(ForcingTwilight36,1483
 
 geodyn.C,3034
-#define SQR(23,302
-template <int iu,25,330
-template <int iu, int il,25,330
-template <int iu, int il, int ju,25,330
-template <int iu, int il, int ju, int jl,25,330
-template <int iu, int il, int ju, int jl, int ku,25,330
-void EW::set_geodyn_data(set_geodyn_data83,3426
-void EW::impose_geodyn_ibcdata(impose_geodyn_ibcdata294,10924
-void EW::advance_geodyn_time(advance_geodyn_time878,39078
-void EW::get_geodyn_timelevel(get_geodyn_timelevel914,40445
-void EW::copy_geodyn_timelevel(copy_geodyn_timelevel946,41702
-void EW::geodyn_second_ghost_point(geodyn_second_ghost_point975,42785
-void EW::geodyn_second_ghost_point_curvilinear(geodyn_second_ghost_point_curvilinear1433,64457
-#define a(1886,86970
-#undef a2033,94886
-void evalLu_Dip(2038,94978
-#define mu(2065,96202
-#define la(2066,96268
-#undef mu2197,102682
-#undef la2198,102692
-#undef u2199,102702
-#undef lu2200,102711
-void evalLu_Dim(2204,102798
-#define mu(2211,103171
-#define la(2212,103237
-#undef mu2346,109768
-#undef la2347,109778
-#undef u2348,109788
-#undef lu2349,109797
-void evalLu_Djp(2353,109884
-#define mu(2360,110257
-#define la(2361,110323
-#undef mu2499,116745
-#undef la2500,116755
-#undef u2501,116765
-#undef lu2502,116774
-void evalLu_Djm(2506,116861
-#define mu(2513,117234
-#define la(2514,117300
-#undef mu2653,123855
-#undef la2654,123865
-#undef u2655,123875
-#undef lu2656,123884
-void evalLu_Dkp(2660,123971
-#define mu(2667,124344
-#define la(2668,124410
-#undef mu2806,130832
-#undef la2807,130842
-#undef u2808,130852
-#undef lu2809,130861
-void evalLu_Dkm(2813,130948
-#define mu(2820,131321
-#define la(2821,131387
-#undef mu2961,137938
-#undef la2962,137948
-#undef u2963,137958
-#undef lu2964,137967
-void evalLu_DkpDip(2968,138054
-#define mu(2975,138448
-#define la(2976,138514
-#undef mu3108,144694
-#undef la3109,144704
-#undef u3110,144714
-#undef lu3111,144723
-void evalLu_DkpDim(3115,144810
-#define mu(3122,145204
-#define la(3123,145270
-#undef mu3256,151451
-#undef la3257,151461
-#undef u3258,151471
-#undef lu3259,151480
-void evalLu_DkpDjp(3263,151567
-#define mu(3270,151958
-#define la(3271,152024
-#undef mu3404,158205
-#undef la3405,158215
-#undef u3406,158225
-#undef lu3407,158234
-void evalLu_DkpDjm(3411,158321
-#define mu(3418,158712
-#define la(3419,158778
-#undef mu3552,164957
-#undef la3553,164967
-#undef u3554,164977
-#undef lu3555,164986
-void EW::geodyn_up_from_uacc(geodyn_up_from_uacc3559,165073
-void EW::save_geoghost(save_geoghost3666,170500
-void EW::restore_geoghost(restore_geoghost3693,171437
-void EW::bcsurf_curvilinear_2nd_order(bcsurf_curvilinear_2nd_order3720,172358
-#define amat(3814,176476
-#undef amat3883,180426
-template <int iu,3902,181115
-template <int iu, int il,3902,181115
-template <int iu, int il, int ju,3902,181115
-template <int iu, int il, int ju, int jl,3902,181115
-template <int iu, int il, int ju, int jl, int ku,3902,181115
-void evalLuCurv(3903,181173
-#define mu(3908,181461
-#define la(3909,181527
-#undef mu4366,205786
-#undef la4367,205796
+#define SQR(24,324
+template <int iu,26,352
+template <int iu, int il,26,352
+template <int iu, int il, int ju,26,352
+template <int iu, int il, int ju, int jl,26,352
+template <int iu, int il, int ju, int jl, int ku,26,352
+void EW::set_geodyn_data(set_geodyn_data84,3448
+void EW::impose_geodyn_ibcdata(impose_geodyn_ibcdata295,10946
+void EW::advance_geodyn_time(advance_geodyn_time879,39103
+void EW::get_geodyn_timelevel(get_geodyn_timelevel915,40470
+void EW::copy_geodyn_timelevel(copy_geodyn_timelevel947,41727
+void EW::geodyn_second_ghost_point(geodyn_second_ghost_point976,42810
+void EW::geodyn_second_ghost_point_curvilinear(geodyn_second_ghost_point_curvilinear1434,64492
+#define a(1887,87023
+#undef a2034,94944
+void evalLu_Dip(2039,95036
+#define mu(2066,96260
+#define la(2067,96326
+#undef mu2202,102837
+#undef la2203,102847
+#undef u2204,102857
+#undef lu2205,102866
+void evalLu_Dim(2209,102953
+#define mu(2216,103327
+#define la(2217,103393
+#undef mu2355,110021
+#undef la2356,110031
+#undef u2357,110041
+#undef lu2358,110050
+void evalLu_Djp(2362,110137
+#define mu(2369,110511
+#define la(2370,110577
+#undef mu2512,117092
+#undef la2513,117102
+#undef u2514,117112
+#undef lu2515,117121
+void evalLu_Djm(2519,117208
+#define mu(2526,117582
+#define la(2527,117648
+#undef mu2670,124299
+#undef la2671,124309
+#undef u2672,124319
+#undef lu2673,124328
+void evalLu_Dkp(2677,124415
+#define mu(2684,124789
+#define la(2685,124855
+#undef mu2827,131372
+#undef la2828,131382
+#undef u2829,131392
+#undef lu2830,131401
+void evalLu_Dkm(2834,131488
+#define mu(2841,131862
+#define la(2842,131928
+#undef mu2986,138576
+#undef la2987,138586
+#undef u2988,138596
+#undef lu2989,138605
+void evalLu_DkpDip(2993,138692
+#define mu(3000,139087
+#define la(3001,139153
+#undef mu3137,145429
+#undef la3138,145439
+#undef u3139,145449
+#undef lu3140,145458
+void evalLu_DkpDim(3144,145545
+#define mu(3151,145940
+#define la(3152,146006
+#undef mu3290,152287
+#undef la3291,152297
+#undef u3292,152307
+#undef lu3293,152316
+void evalLu_DkpDjp(3297,152403
+#define mu(3304,152795
+#define la(3305,152861
+#undef mu3442,159141
+#undef la3443,159151
+#undef u3444,159161
+#undef lu3445,159170
+void evalLu_DkpDjm(3449,159257
+#define mu(3456,159649
+#define la(3457,159715
+#undef mu3594,165993
+#undef la3595,166003
+#undef u3596,166013
+#undef lu3597,166022
+void EW::geodyn_up_from_uacc(geodyn_up_from_uacc3601,166109
+void EW::save_geoghost(save_geoghost3708,171536
+void EW::restore_geoghost(restore_geoghost3735,172473
+void EW::bcsurf_curvilinear_2nd_order(bcsurf_curvilinear_2nd_order3762,173394
+#define amat(3856,177512
+#undef amat3925,181462
+template <int iu,3944,182152
+template <int iu, int il,3944,182152
+template <int iu, int il, int ju,3944,182152
+template <int iu, int il, int ju, int jl,3944,182152
+template <int iu, int il, int ju, int jl, int ku,3944,182152
+void evalLuCurv(3945,182210
+#define mu(3950,182498
+#define la(3951,182564
+#undef mu4412,206918
+#undef la4413,206928
 
 GeographicProjection.C,399
 GeographicProjection::GeographicProjection(GeographicProjection44,1587
-GeographicProjection::~GeographicProjection(~GeographicProjection96,3247
-void GeographicProjection::computeGeographicCoord(computeGeographicCoord106,3501
-void GeographicProjection::computeCartesianCoord(computeCartesianCoord143,4554
-void GeographicProjection::computeCartesianCoordGMG(computeCartesianCoordGMG181,5516
+GeographicProjection::~GeographicProjection(~GeographicProjection98,3445
+void GeographicProjection::computeGeographicCoord(computeGeographicCoord108,3699
+void GeographicProjection::computeCartesianCoord(computeCartesianCoord145,4752
+void GeographicProjection::computeCartesianCoordGMG(computeCartesianCoordGMG183,5714
 
 gradientsc.C,830
 void addgradrho_ci(3,18
@@ -1123,10 +1137,39 @@ void innerloopanisgstrvc_ci(5,36
 #define bop(36,1495
 #define ghcof(37,1541
 
-main.C,67
-void signal_handler(70,2019
-void usage(78,2165
-int main(90,2543
+main.C,1053
+void signal_handler(73,2062
+void usage(81,2208
+int main(93,2586
+  MPI_Info info;130,3511
+  MPI_Comm shared_comm;131,3528
+  MPI_Info_create(&info)info132,3552
+  int local_rank 135,3689
+  MPI_Info_free(&info)info138,3815
+  int device 140,3840
+  umpire::ResourceManager &rma rma147,4006
+  auto allocator 149,4097
+  auto allocator 151,4177
+  const size_t pool_size 155,4302
+  const size_t pool_size 158,4406
+  auto pref_allocator 163,4530
+  auto pref_allocator 168,4706
+  const int alignment 173,4898
+  auto pooled_allocator 174,4963
+  const size_t pool_size_small 178,5148
+  const size_t pool_size_small 180,5228
+  auto pooled_allocator_small 188,5553
+  const size_t object_pool_size 194,5767
+  const size_t object_pool_size 196,5850
+  auto pooled_allocator_objects 202,6076
+  int status 238,7474
+  int mpi2args 241,7555
+    fileName 282,8573
+  cout 293,8816
+  vector<vector<Source *> > GlobalSources;296,8882
+  vector<vector<TimeSeries *> > GlobalTimeSeries;298,8956
+  char *cfgFile cfgFile305,9068
+  } catch 403,12282
 
 MaterialBlock.C,308
 MaterialBlock::MaterialBlock(MaterialBlock41,1552
@@ -1137,24 +1180,24 @@ void MaterialBlock::set_material_properties(set_material_properties112,3959
 
 material.C,906
 void EW::convert_material_to_mulambda(convert_material_to_mulambda37,1491
-void EW::check_materials(check_materials63,2618
-float_sw4 EW::localMin(localMin337,13974
-float_sw4 EW::localMax(localMax362,14784
-float_sw4 EW::localMinVp(localMinVp383,15469
-float_sw4 EW::localMaxVp(localMaxVp409,16409
-float_sw4 EW::localMinVs(localMinVs436,17351
-float_sw4 EW::localMaxVs(localMaxVs459,18131
-float_sw4 EW::localMinVpOverVs(localMinVpOverVs481,18911
-float_sw4 EW::localMaxVpOverVs(localMaxVpOverVs513,20190
-void EW::extrapolateInXY(extrapolateInXY591,22951
-void EW::extrapolateInZ(extrapolateInZ629,24514
-void EW::extrapolateInXYvector(extrapolateInXYvector644,25169
-void EW::extrapolateInZvector(extrapolateInZvector688,27003
-void EW::setup_MR_coefficients(setup_MR_coefficients708,27793
-#define str_x(711,27880
-#define str_y(712,27930
-#undef str_x740,29333
-#undef str_y741,29346
+void EW::check_materials(check_materials63,2620
+float_sw4 EW::localMin(localMin337,13976
+float_sw4 EW::localMax(localMax362,14786
+float_sw4 EW::localMinVp(localMinVp383,15471
+float_sw4 EW::localMaxVp(localMaxVp409,16411
+float_sw4 EW::localMinVs(localMinVs436,17353
+float_sw4 EW::localMaxVs(localMaxVs459,18133
+float_sw4 EW::localMinVpOverVs(localMinVpOverVs481,18913
+float_sw4 EW::localMaxVpOverVs(localMaxVpOverVs513,20192
+void EW::extrapolateInXY(extrapolateInXY591,22953
+void EW::extrapolateInZ(extrapolateInZ629,24518
+void EW::extrapolateInXYvector(extrapolateInXYvector644,25175
+void EW::extrapolateInZvector(extrapolateInZvector688,27009
+void EW::setup_MR_coefficients(setup_MR_coefficients708,27799
+#define str_x(711,27886
+#define str_y(712,27936
+#undef str_x740,29339
+#undef str_y741,29352
 
 MaterialData.C,49
 MaterialData::MaterialData(MaterialData36,1427
@@ -1163,19 +1206,19 @@ MaterialGMG.C,403
 MaterialGMG::MaterialGMG(57,1774
 MaterialGMG::~MaterialGMG(~MaterialGMG72,2226
 void MaterialGMG::set_material_properties(set_material_properties75,2332
-static void read_hdf5_attr(358,14355
-static char* read_hdf5_attr_str(368,14615
-void MaterialGMG::read_gmg(read_gmg391,15108
-void MaterialGMG::fill_in_fluids(fill_in_fluids610,22306
-void MaterialGMG::material_check(material_check690,25505
+static void read_hdf5_attr(358,14441
+static char* read_hdf5_attr_str(369,14734
+void MaterialGMG::read_gmg(read_gmg391,15213
+void MaterialGMG::fill_in_fluids(fill_in_fluids610,22563
+void MaterialGMG::material_check(material_check690,25762
 
 MaterialIfile.C,443
 MaterialIfile::MaterialIfile(MaterialIfile45,1597
 void MaterialIfile::set_material_properties(set_material_properties64,2146
-void MaterialIfile::extractSurfaceFromGridFile(extractSurfaceFromGridFile240,10707
-void MaterialIfile::extractSurfaceFromCartesianFile(extractSurfaceFromCartesianFile400,16291
-int MaterialIfile::getMaterialID(getMaterialID554,21577
-int MaterialIfile::getCartesianMaterialID(getCartesianMaterialID629,24480
+void MaterialIfile::extractSurfaceFromGridFile(extractSurfaceFromGridFile240,10727
+void MaterialIfile::extractSurfaceFromCartesianFile(extractSurfaceFromCartesianFile400,16311
+int MaterialIfile::getMaterialID(getMaterialID554,21597
+int MaterialIfile::getCartesianMaterialID(getCartesianMaterialID629,24500
 
 MaterialInvtest.C,234
 MaterialInvtest::MaterialInvtest(37,1499
@@ -1196,20 +1239,20 @@ MaterialProperty::MaterialProperty(MaterialProperty35,1410
 void MaterialProperty::setSqrtCoefficients(setSqrtCoefficients61,2005
 
 MaterialRfile.C,346
-MaterialRfile::MaterialRfile(54,1761
-void MaterialRfile::set_material_properties(set_material_properties63,2103
-int MaterialRfile::io_processor(io_processor359,16369
-void MaterialRfile::read_rfile(read_rfile381,17017
-void MaterialRfile::fill_in_fluids(fill_in_fluids788,31848
-void MaterialRfile::material_check(material_check862,35390
+MaterialRfile::MaterialRfile(55,1782
+void MaterialRfile::set_material_properties(set_material_properties64,2124
+int MaterialRfile::io_processor(io_processor361,16411
+void MaterialRfile::read_rfile(read_rfile383,17059
+void MaterialRfile::fill_in_fluids(fill_in_fluids790,31890
+void MaterialRfile::material_check(material_check864,35432
 
 MaterialSfile.C,344
-MaterialSfile::MaterialSfile(57,1776
-MaterialSfile::~MaterialSfile(~MaterialSfile72,2238
-void MaterialSfile::set_material_properties(set_material_properties75,2348
-void MaterialSfile::read_sfile(read_sfile374,15282
-void MaterialSfile::fill_in_fluids(fill_in_fluids875,31861
-void MaterialSfile::material_check(material_check957,35711
+MaterialSfile::MaterialSfile(57,1796
+MaterialSfile::~MaterialSfile(~MaterialSfile72,2258
+void MaterialSfile::set_material_properties(set_material_properties75,2368
+void MaterialSfile::read_sfile(read_sfile375,15323
+void MaterialSfile::fill_in_fluids(fill_in_fluids876,31902
+void MaterialSfile::material_check(material_check958,35752
 
 MaterialVolimagefile.C,136
 MaterialVolimagefile::MaterialVolimagefile(39,1522
@@ -1218,59 +1261,59 @@ void MaterialVolimagefile::set_material_properties(set_material_properties55,1
 Mspace.C,1828
 struct global_variable_holder_struct global_variables 21,365
 int presetGPUID(25,538
-  const char *file;file120,3939
-  int line;121,3959
-  size_t size;122,3971
-  Space type;123,3986
-} pattr_t;124,4000
-pattr_t *patpush(patpush126,4012
-void check_mem(141,4391
-void print_hwm(153,4716
-void *operator new(operator new235,8217
-void *operator new(operator new330,11791
-void *operator new[](operator new[]343,12153
-void *operator new[](operator new[]434,15692
-void operator delete(operator delete447,16048
-void operator delete[](operator delete[]501,17964
-void operator delete(operator delete567,20148
-void operator delete[](operator delete[]570,20262
-void assert_check_managed(576,20446
-void assert_check_host(598,21435
-void ptr_push(619,22398
-ssize_t getsize(629,22616
-void prefetch_to_device(641,22808
-void CheckError(658,23324
-void prefetch_to_device(672,23762
-void CheckError(690,24297
-void *Managed::operator new(operator new703,24746
-void *Managed::operator new[](operator new[]723,25395
-void Managed::operator delete(operator delete740,25887
-void Managed::operator delete[](operator delete[]758,26436
-size_t Managed::ocount 777,27026
-size_t Managed::hwm 778,27054
-std::string line(784,27229
-std::string line(789,27358
-std::string line(796,27551
-std::string line(801,27686
-std::string line(807,27890
-Apc::Apc(Apc813,28026
-Apc::~Apc(~Apc818,28145
-void global_prefetch(828,28352
-#define PREFETCH_ALL 842,29000
-std::vector<int> factors(857,29441
-std::vector<int> factors(863,29578
-Space GML(871,29777
-Space GML(891,30393
-void invert(910,30951
-#define M(913,31009
-#define I(914,31063
-#define P(938,32113
-#undef M964,32709
-#undef P965,32718
-#undef I966,32727
-bool mpi_supports_device_buffers(969,32739
-long long node_mem(982,33132
-std::string hostname(1005,33904
+  const char *file;file120,3943
+  int line;121,3963
+  size_t size;122,3975
+  Space type;123,3990
+} pattr_t;124,4004
+pattr_t *patpush(patpush126,4016
+void check_mem(141,4395
+void print_hwm(153,4720
+void *operator new(operator new235,8221
+void *operator new(operator new330,11799
+void *operator new[](operator new[]343,12161
+void *operator new[](operator new[]434,15703
+void operator delete(operator delete447,16059
+void operator delete[](operator delete[]502,17991
+void operator delete(operator delete570,20281
+void operator delete[](operator delete[]573,20395
+void assert_check_managed(579,20579
+void assert_check_host(601,21568
+void ptr_push(622,22531
+ssize_t getsize(632,22749
+void prefetch_to_device(644,22941
+void CheckError(661,23457
+void prefetch_to_device(675,23895
+void CheckError(693,24430
+void *Managed::operator new(operator new706,24879
+void *Managed::operator new[](operator new[]726,25528
+void Managed::operator delete(operator delete743,26020
+void Managed::operator delete[](operator delete[]761,26569
+size_t Managed::ocount 780,27159
+size_t Managed::hwm 781,27187
+std::string line(787,27362
+std::string line(792,27491
+std::string line(799,27684
+std::string line(804,27819
+std::string line(810,28023
+Apc::Apc(Apc816,28159
+Apc::~Apc(~Apc821,28278
+void global_prefetch(831,28485
+#define PREFETCH_ALL 845,29133
+std::vector<int> factors(860,29574
+std::vector<int> factors(866,29711
+Space GML(874,29910
+Space GML(894,30526
+void invert(913,31084
+#define M(916,31142
+#define I(917,31196
+#define P(941,32246
+#undef M967,32842
+#undef P968,32851
+#undef I969,32860
+bool mpi_supports_device_buffers(972,32872
+long long node_mem(985,33265
+std::string hostname(1008,34037
 
 oddIevenJinterp.C,886
 void oddIevenJinterpJacobi(10,173
@@ -1381,28 +1424,28 @@ void EW::decomp1d(decomp1d102,3462
 void EW::setup2D_MPICommunications(setup2D_MPICommunications124,4053
 void EW::setupMPICommunications(setupMPICommunications319,12157
 void EW::communicate_array(communicate_array520,19320
-void EW::communicate_array_host(communicate_array_host534,19924
-void EW::communicate_arrays(communicate_arrays649,26048
-void EW::communicate_host_arrays(communicate_host_arrays655,26260
-void EW::communicate_array_2d(communicate_array_2d660,26431
-void EW::communicate_array_2d(communicate_array_2d666,26619
-void EW::communicate_array_2d_ext(communicate_array_2d_ext732,29819
-void EW::communicate_array_2d_ext(communicate_array_2d_ext738,29995
-void EW::communicate_array_2d_ext_async(communicate_array_2d_ext_async780,31810
-void EW::communicate_array_2d_asym(communicate_array_2d_asym822,33712
-void EW::communicate_array_2dfinest(communicate_array_2dfinest916,38532
-void EW::make_type(make_type953,40304
-void EW::make_type_2d(make_type_2d973,41243
-void EW::communicate_array_async(communicate_array_async985,41787
-void EW::AMPI_Sendrecv(AMPI_Sendrecv1146,49234
-void EW::getbuffer_device(getbuffer_device1253,52997
-void EW::getbuffer_host(getbuffer_host1340,55766
-void EW::putbuffer_device(putbuffer_device1354,56292
-void EW::putbuffer_host(putbuffer_host1421,58481
-void EW::communicate_array_2d_async(communicate_array_2d_async1433,58978
-void EW::communicate_array_2d_async_memo(communicate_array_2d_async_memo1504,62646
-void EW::AMPI_Sendrecv2(AMPI_Sendrecv21577,66319
-void EW::communicate_array_2d_isurf(communicate_array_2d_isurf1702,70716
+void EW::communicate_array_host(communicate_array_host534,19925
+void EW::communicate_arrays(communicate_arrays649,26049
+void EW::communicate_host_arrays(communicate_host_arrays655,26261
+void EW::communicate_array_2d(communicate_array_2d660,26432
+void EW::communicate_array_2d(communicate_array_2d666,26620
+void EW::communicate_array_2d_ext(communicate_array_2d_ext732,29820
+void EW::communicate_array_2d_ext(communicate_array_2d_ext738,29996
+void EW::communicate_array_2d_ext_async(communicate_array_2d_ext_async780,31811
+void EW::communicate_array_2d_asym(communicate_array_2d_asym822,33713
+void EW::communicate_array_2dfinest(communicate_array_2dfinest916,38533
+void EW::make_type(make_type953,40305
+void EW::make_type_2d(make_type_2d974,41334
+void EW::communicate_array_async(communicate_array_async986,41878
+void EW::AMPI_Sendrecv(AMPI_Sendrecv1147,49325
+void EW::getbuffer_device(getbuffer_device1254,53088
+void EW::getbuffer_host(getbuffer_host1341,55884
+void EW::putbuffer_device(putbuffer_device1355,56410
+void EW::putbuffer_host(putbuffer_host1422,58622
+void EW::communicate_array_2d_async(communicate_array_2d_async1434,59119
+void EW::communicate_array_2d_async_memo(communicate_array_2d_async_memo1505,62787
+void EW::AMPI_Sendrecv2(AMPI_Sendrecv21578,66460
+void EW::communicate_array_2d_isurf(communicate_array_2d_isurf1711,71019
 
 parseInputFile.C,3993
 #define SQR(74,2218
@@ -1413,70 +1456,70 @@ bool EW::startswith(startswith146,3817
 void EW::deprecatedOption(deprecatedOption159,4176
 bool EW::parseInputFile(parseInputFile182,4922
 void EW::processGrid(processGrid591,21078
-void EW::cleanUpRefinementLevels(cleanUpRefinementLevels1213,43632
-void EW::processRefinement(processRefinement1312,47307
-void EW::processAttenuation(processAttenuation1338,48199
-void EW::processTopography(processTopography1432,51436
-void EW::processTwilight(processTwilight1646,59396
-void EW::processDeveloper(processDeveloper1801,64566
-void EW::processTestPointSource(processTestPointSource1979,70807
-void EW::processTestRayleigh(processTestRayleigh2014,71999
-void EW::processTestLamb(processTestLamb2065,73677
-void EW::processTestEnergy(processTestEnergy2127,75558
-bool EW::checkTestEnergyPeriodic(checkTestEnergyPeriodic2202,78174
-void EW::processFileIO(processFileIO2222,78828
-void EW::processGMT(processGMT2297,81214
-void EW::parsedate(parsedate2322,82016
-void EW::processTime(processTime2363,83686
-void EW::processBoundaryConditions(processBoundaryConditions2450,86743
-void EW::processSupergrid(processSupergrid2522,88620
-void EW::badOption(badOption2606,91362
-void EW::processGlobalMaterial(processGlobalMaterial2613,91612
-void EW::processPrefilter(processPrefilter2762,95941
-void EW::processGeodynbc(processGeodynbc2825,98168
-void EW::geodynFindFile(geodynFindFile2992,103978
-void EW::geodynbcGetSizes(geodynbcGetSizes3020,104801
-void EW::processMaterial(processMaterial3150,108679
-void EW::processSfileOutput(processSfileOutput3275,112867
-void EW::processImage3D(processImage3D3383,116984
-void EW::processESSI3D(processESSI3D3526,122522
-void EW::processCheckPoint(processCheckPoint3683,128213
-void EW::setOutputPath(setOutputPath3813,132883
-void EW::setIO_timing(setIO_timing3820,133065
-void EW::setParallel_IO(setParallel_IO3823,133204
-void EW::setGoalTime(setGoalTime3829,133371
-void EW::setNumberSteps(setNumberSteps3836,133560
-int EW::getNumberOfSteps(getNumberOfSteps3842,133751
-int EW::getNumberOfEvents(getNumberOfEvents3845,133906
-void EW::switch_on_error_log(switch_on_error_log3848,134036
-void EW::set_energylog(set_energylog3851,134166
-void EW::set_cflnumber(set_cflnumber3858,134386
-void EW::set_twilight_forcing(set_twilight_forcing3861,134515
-void EW::allocateCartesianSolverArrays(allocateCartesianSolverArrays3867,134712
-void EW::allocateCurvilinearArrays(allocateCurvilinearArrays4468,156664
-void EW::deprecatedImageMode(deprecatedImageMode4767,169209
-void EW::processImage(processImage4774,169526
-void EW::processSource(processSource5120,182521
-void EW::processRuptureHDF5(processRuptureHDF55716,204223
-void EW::processRupture(processRupture5791,206666
-void EW::processMaterialBlock(processMaterialBlock6193,220954
-void EW::processAnisotropicMaterialBlock(processAnisotropicMaterialBlock6371,227200
-void EW::processReceiverHDF5(processReceiverHDF56649,236884
-void EW::processReceiver(processReceiver6758,240951
-void EW::processObservationHDF5(processObservationHDF57066,252426
-void EW::processObservation(processObservation7202,257045
-void EW::processScaleFactors(processScaleFactors7571,270105
-void EW::processCG(processCG7671,273335
-void EW::processMaterialPfile(processMaterialPfile7831,279167
-void EW::processMaterialIfile(processMaterialIfile7932,282654
-void EW::processMaterialVimaterial(processMaterialVimaterial8006,284989
-void EW::processMaterialRfile(processMaterialRfile8078,287092
-void EW::processMaterialSfile(processMaterialSfile8143,289267
-void EW::processMaterialGMG(processMaterialGMG8200,291143
-void EW::processMaterialInvtest(processMaterialInvtest8252,292842
-void EW::processRandomBlock(processRandomBlock8455,299528
-void EW::processEvent(processEvent8548,302785
-int EW::findNumberOfEvents(findNumberOfEvents8588,304111
+void EW::cleanUpRefinementLevels(cleanUpRefinementLevels1216,43748
+void EW::processRefinement(processRefinement1315,47423
+void EW::processAttenuation(processAttenuation1341,48315
+void EW::processTopography(processTopography1435,51552
+void EW::processTwilight(processTwilight1649,59512
+void EW::processDeveloper(processDeveloper1804,64682
+void EW::processTestPointSource(processTestPointSource1982,70923
+void EW::processTestRayleigh(processTestRayleigh2017,72115
+void EW::processTestLamb(processTestLamb2068,73793
+void EW::processTestEnergy(processTestEnergy2130,75674
+bool EW::checkTestEnergyPeriodic(checkTestEnergyPeriodic2205,78290
+void EW::processFileIO(processFileIO2225,78944
+void EW::processGMT(processGMT2300,81330
+void EW::parsedate(parsedate2325,82132
+void EW::processTime(processTime2366,83802
+void EW::processBoundaryConditions(processBoundaryConditions2453,86859
+void EW::processSupergrid(processSupergrid2525,88736
+void EW::badOption(badOption2609,91478
+void EW::processGlobalMaterial(processGlobalMaterial2616,91728
+void EW::processPrefilter(processPrefilter2765,96057
+void EW::processGeodynbc(processGeodynbc2828,98284
+void EW::geodynFindFile(geodynFindFile2995,104094
+void EW::geodynbcGetSizes(geodynbcGetSizes3023,104917
+void EW::processMaterial(processMaterial3153,108795
+void EW::processSfileOutput(processSfileOutput3278,112983
+void EW::processImage3D(processImage3D3386,117100
+void EW::processESSI3D(processESSI3D3529,122638
+void EW::processCheckPoint(processCheckPoint3686,128329
+void EW::setOutputPath(setOutputPath3825,133349
+void EW::setIO_timing(setIO_timing3832,133531
+void EW::setParallel_IO(setParallel_IO3835,133670
+void EW::setGoalTime(setGoalTime3841,133837
+void EW::setNumberSteps(setNumberSteps3848,134026
+int EW::getNumberOfSteps(getNumberOfSteps3854,134217
+int EW::getNumberOfEvents(getNumberOfEvents3857,134372
+void EW::switch_on_error_log(switch_on_error_log3860,134502
+void EW::set_energylog(set_energylog3863,134632
+void EW::set_cflnumber(set_cflnumber3870,134852
+void EW::set_twilight_forcing(set_twilight_forcing3873,134981
+void EW::allocateCartesianSolverArrays(allocateCartesianSolverArrays3879,135178
+void EW::allocateCurvilinearArrays(allocateCurvilinearArrays4480,157130
+void EW::deprecatedImageMode(deprecatedImageMode4779,169675
+void EW::processImage(processImage4786,169992
+void EW::processSource(processSource5132,182987
+void EW::processRuptureHDF5(processRuptureHDF55728,204691
+void EW::processRupture(processRupture5803,207136
+void EW::processMaterialBlock(processMaterialBlock6205,221427
+void EW::processAnisotropicMaterialBlock(processAnisotropicMaterialBlock6383,227673
+void EW::processReceiverHDF5(processReceiverHDF56661,237357
+void EW::processReceiver(processReceiver6770,241424
+void EW::processObservationHDF5(processObservationHDF57078,252899
+void EW::processObservation(processObservation7214,257518
+void EW::processScaleFactors(processScaleFactors7583,270578
+void EW::processCG(processCG7683,273808
+void EW::processMaterialPfile(processMaterialPfile7843,279640
+void EW::processMaterialIfile(processMaterialIfile7944,283127
+void EW::processMaterialVimaterial(processMaterialVimaterial8018,285462
+void EW::processMaterialRfile(processMaterialRfile8090,287565
+void EW::processMaterialSfile(processMaterialSfile8155,289740
+void EW::processMaterialGMG(processMaterialGMG8212,291616
+void EW::processMaterialInvtest(processMaterialInvtest8259,293095
+void EW::processRandomBlock(processRandomBlock8462,299781
+void EW::processEvent(processEvent8555,303038
+int EW::findNumberOfEvents(findNumberOfEvents8595,304364
 
 Patch.C,164
 Patch::Patch(Patch8,156
@@ -1537,17 +1580,17 @@ void RandomizedMaterial::assign_perturbation(assign_perturbation241,10046
 void RandomizedMaterial::gen_random_mtrl_fft3d_fftw(gen_random_mtrl_fft3d_fftw302,13514
 #define u(332,14796
 #define ucc(387,16803
-#undef u444,18975
-#undef ucc445,18984
-void RandomizedMaterial::get_fourier_modes(get_fourier_modes477,20007
-void RandomizedMaterial::rescale_perturbation(rescale_perturbation521,21847
-void RandomizedMaterial::redistribute_array(redistribute_array559,23330
-void RandomizedMaterial::repad_sarray(repad_sarray653,26535
-void RandomizedMaterial::comm_sarray(comm_sarray693,28099
-void RandomizedMaterial::set_vsmax(set_vsmax751,30499
-double RandomizedMaterial::get_vsmax(get_vsmax754,30647
-void RandomizedMaterial::set_vsmin(set_vsmin756,30780
-double RandomizedMaterial::get_vsmin(get_vsmin759,30928
+#undef u444,18976
+#undef ucc445,18985
+void RandomizedMaterial::get_fourier_modes(get_fourier_modes477,20008
+void RandomizedMaterial::rescale_perturbation(rescale_perturbation521,21848
+void RandomizedMaterial::redistribute_array(redistribute_array559,23331
+void RandomizedMaterial::repad_sarray(repad_sarray653,26536
+void RandomizedMaterial::comm_sarray(comm_sarray693,28100
+void RandomizedMaterial::set_vsmax(set_vsmax751,30500
+double RandomizedMaterial::get_vsmax(get_vsmax754,30648
+void RandomizedMaterial::set_vsmin(set_vsmin756,30781
+double RandomizedMaterial::get_vsmin(get_vsmin759,30929
 
 readhdf5.C,1871
 #define READHDF5_C35,1399
@@ -1751,7 +1794,7 @@ void EW::subsurfforcingsg_ci(subsurfforcingsg_ci230,9363
 #undef strx280,11460
 #undef stry281,11472
 
-rhs4th3fortc.C,3651
+rhs4th3fortc.C,3743
 void rhs4th3fort_ci(17,289
 #define mu(27,881
 #define la(28,939
@@ -1774,127 +1817,131 @@ void rhs4th3fort_ci(17,289
 #undef bope1083,57155
 #undef ghcof1084,57167
 void rhs4th3fortsgstr_ci(1088,57257
-#define mu(1107,58247
-#define la(1108,58305
-#define u(1110,58392
-#define lu(1111,58465
-#define strx(1112,58540
-#define stry(1113,58576
-#define strz(1114,58612
-#define acof(1115,58648
-#define bope(1116,58715
-#define ghcof(1117,58762
-#define ltu(1118,58794
-#undef mu2223,113754
-#undef la2224,113764
-#undef u2225,113774
-#undef lu2226,113783
-#undef strx2227,113793
-#undef stry2228,113805
-#undef strz2229,113817
-#undef acof2230,113829
-#undef bope2231,113841
-#undef ghcof2232,113853
-void rhserrfort_ci(2236,113943
-#define fo(2241,114252
-#define u2(2242,114327
-#undef fo2288,115853
-#undef u22289,115863
-void rhouttlumf_ci(2293,115950
-#define fo(2299,116328
-#define uacc(2300,116403
-#define lu(2301,116482
-#define rho(2302,116557
-#undef fo2351,118272
-#undef uacc2352,118282
-#undef lu2353,118294
-#undef rho2354,118304
-void predfort_ci(2358,118392
-void corrfort_ci(2403,120378
-void dpdmtfort_ci(2426,121345
-void dpdmtfortatt_ci(2450,122426
-void satt_ci(2536,125249
-void solveattfreeac_ci(2557,125998
-#define alpha(2561,126237
-#define up(2562,126318
-#undef alpha2591,127247
-#undef up2592,127260
-void solveattfreec_ci(2596,127347
-#define u(2604,127798
-#define met(2605,127871
-#define mu(2606,127948
-#define la(2607,128006
-#define muve(2608,128064
-#define lambdave(2609,128112
-#define sgstrx(2610,128164
-#define sgstry(2611,128201
-#define bforcerhs(2612,128238
-#undef u2659,130117
-#undef mu2660,130126
-#undef la2661,130136
-#undef met2662,130146
-#undef muve2663,130157
-#undef lambdave2664,130169
-#undef sgstrx2665,130185
-#undef sgstry2666,130199
-#undef bforcerhs2667,130213
-void addbstresswresc_ci(2671,130307
-#define u(2682,130987
-#define um(2683,131060
-#define met(2684,131135
-#define alphap(2685,131212
-#define alpham(2687,131299
-#define muve(2689,131386
-#define lave(2690,131448
-#define muvebnd(2691,131510
-#define lambdavebnd(2692,131564
-#define sgstrx(2693,131626
-#define sgstry(2694,131663
-#define bforcerhs(2697,131830
-#define memforce(2698,131906
-#undef u2871,139517
-#undef um2872,139526
-#undef met2873,139536
-#undef alphap2874,139547
-#undef alpham2875,139561
-#undef muve2876,139575
-#undef lave2877,139587
-#undef muvebnd2878,139599
-#undef lambdavebnd2879,139614
-#undef sgstrx2880,139633
-#undef sgstry2881,139647
-#undef bforcerhs2882,139661
-#undef memforce2883,139678
-void ve_bndry_stress_curvi_ci(2887,139771
-#define alphap(2895,140237
-#define muve(2897,140324
-#define lave(2898,140386
-#define met(2899,140448
-#define sgstrx(2900,140525
-#define sgstry(2901,140562
-#define bforcerhs(2904,140729
-#undef alphap3068,147930
-#undef muve3069,147944
-#undef lave3070,147956
-#undef met3071,147968
-#undef sgstrx3072,147979
-#undef sgstry3073,147993
-#undef bforcerhs3074,148007
-void att_free_curvi_ci(3077,148099
-#define u(3084,148501
-#define mu(3085,148574
-#define la(3086,148632
-#define met(3087,148694
-#define sgstrx(3088,148771
-#define sgstry(3089,148808
-#define bforcerhs(3090,148845
-#undef u3230,155252
-#undef mu3231,155261
-#undef la3232,155271
-#undef met3233,155281
-#undef sgstrx3234,155292
-#undef sgstry3235,155306
-#undef bforcerhs3236,155320
+#define mu(1108,58311
+#define la(1109,58364
+#define u1(1112,58521
+#define u2(1113,58572
+#define u3(1114,58623
+#define lu(1115,58674
+#define strx(1116,58749
+#define stry(1117,58785
+#define strz(1118,58821
+#define acof(1119,58857
+#define bope(1120,58924
+#define ghcof(1121,58971
+#define ltu(1122,59003
+#undef mu2272,113679
+#undef la2273,113689
+#undef u12274,113699
+#undef u22275,113709
+#undef u32276,113719
+#undef lu2277,113729
+#undef strx2278,113739
+#undef stry2279,113751
+#undef strz2280,113763
+#undef acof2281,113775
+#undef bope2282,113787
+#undef ghcof2283,113799
+void rhserrfort_ci(2287,113889
+#define fo(2292,114198
+#define u2(2293,114273
+#undef fo2339,115799
+#undef u22340,115809
+void rhouttlumf_ci(2344,115896
+#define fo(2350,116274
+#define uacc(2351,116349
+#define lu(2352,116428
+#define rho(2353,116503
+#undef fo2402,118218
+#undef uacc2403,118228
+#undef lu2404,118240
+#undef rho2405,118250
+void predfort_ci(2409,118338
+void corrfort_ci(2454,120324
+void dpdmtfort_ci(2477,121291
+void dpdmtfortatt_ci(2501,122372
+void satt_ci(2587,125195
+void solveattfreeac_ci(2611,126073
+#define alpha(2615,126312
+#define up(2616,126393
+#undef alpha2645,127322
+#undef up2646,127335
+void solveattfreec_ci(2650,127422
+#define u(2658,127873
+#define met(2659,127946
+#define mu(2660,128023
+#define la(2661,128081
+#define muve(2662,128139
+#define lambdave(2663,128187
+#define sgstrx(2664,128239
+#define sgstry(2665,128276
+#define bforcerhs(2666,128313
+#undef u2713,130192
+#undef mu2714,130201
+#undef la2715,130211
+#undef met2716,130221
+#undef muve2717,130232
+#undef lambdave2718,130244
+#undef sgstrx2719,130260
+#undef sgstry2720,130274
+#undef bforcerhs2721,130288
+void addbstresswresc_ci(2725,130382
+#define u(2736,131062
+#define um(2737,131135
+#define met(2738,131210
+#define alphap(2739,131287
+#define alpham(2741,131374
+#define muve(2743,131461
+#define lave(2744,131523
+#define muvebnd(2745,131585
+#define lambdavebnd(2746,131639
+#define sgstrx(2747,131701
+#define sgstry(2748,131738
+#define bforcerhs(2751,131905
+#define memforce(2752,131981
+#undef u2925,139592
+#undef um2926,139601
+#undef met2927,139611
+#undef alphap2928,139622
+#undef alpham2929,139636
+#undef muve2930,139650
+#undef lave2931,139662
+#undef muvebnd2932,139674
+#undef lambdavebnd2933,139689
+#undef sgstrx2934,139708
+#undef sgstry2935,139722
+#undef bforcerhs2936,139736
+#undef memforce2937,139753
+void ve_bndry_stress_curvi_ci(2941,139846
+#define alphap(2949,140312
+#define muve(2951,140399
+#define lave(2952,140461
+#define met(2953,140523
+#define sgstrx(2954,140600
+#define sgstry(2955,140637
+#define bforcerhs(2958,140804
+#undef alphap3122,148028
+#undef muve3123,148042
+#undef lave3124,148054
+#undef met3125,148066
+#undef sgstrx3126,148077
+#undef sgstry3127,148091
+#undef bforcerhs3128,148105
+void att_free_curvi_ci(3131,148197
+#define u(3138,148599
+#define mu(3139,148672
+#define la(3140,148730
+#define met(3141,148792
+#define sgstrx(3142,148869
+#define sgstry(3143,148906
+#define bforcerhs(3144,148943
+#undef u3284,155350
+#undef mu3285,155359
+#undef la3286,155369
+#undef met3287,155379
+#undef sgstrx3288,155390
+#undef sgstry3289,155404
+#undef bforcerhs3290,155418
 
 rhs4th3windc2.C,394
 void update_unext(12,240
@@ -1912,10 +1959,10 @@ void dpdmt_wind(70,2287
 #define u(77,2689
 #define um(78,2767
 #define u_tt(80,2899
-#undef up136,4566
-#undef u137,4576
-#undef um138,4585
-#undef u_tt139,4595
+#undef up136,4589
+#undef u137,4599
+#undef um138,4608
+#undef u_tt139,4618
 
 rhs4th3windc.C,237
 void rhs4th3wind(15,282
@@ -1985,7 +2032,7 @@ void convertjday(24,583
 void readSACheader(42,1013
 void readSACdata(131,3755
 
-Sarray.C,3477
+Sarray.C,3559
 std::unordered_map<std::string, float_sw4*> Sarray::static_map 46,1602
 bool Sarray::m_corder 49,1742
 Sarray::Sarray(Sarray54,2027
@@ -2007,64 +2054,66 @@ void Sarray::side_plane(side_plane491,14516
 void Sarray::side_plane_fortran(side_plane_fortran525,15399
 void Sarray::set_to_zero_async(set_to_zero_async548,16015
 void Sarray::set_to_zero(set_to_zero557,16320
-void Sarray::set_to_minusOne(set_to_minusOne570,16731
-void Sarray::set_to_minusOneHost(set_to_minusOneHost601,17383
-void Sarray::set_valueHost(set_valueHost608,17599
-void Sarray::set_value(set_value614,17826
-void Sarray::set_value_async(set_value_async622,18124
-void Sarray::set_to_random(set_to_random631,18435
-bool Sarray::in_domain(in_domain640,18782
-float_sw4 Sarray::maximum(maximum646,18999
-float_sw4 Sarray::minimum(minimum671,19877
-float_sw4 Sarray::sum(sum695,20679
-size_t Sarray::count_nans(count_nans716,21381
-size_t Sarray::count_nans(count_nans726,21722
-void Sarray::copy(copy769,23032
-void Sarray::extract_subarray(extract_subarray793,23697
-void Sarray::insert_subarray(insert_subarray823,24952
-void Sarray::insert_subarray(insert_subarray854,26228
-void Sarray::extract_subarrayIK(extract_subarrayIK886,27541
-void Sarray::insert_subarrayIK(insert_subarrayIK918,28815
-void Sarray::copy_kplane(copy_kplane952,30139
-void Sarray::save_to_disk(save_to_disk1025,32644
-void Sarray::assign(assign1060,34129
-void Sarray::assign(assign1089,35358
-void Sarray::extract(extract1163,38193
-void Sarray::assign(assign1191,39335
-void Sarray::assign(assign1198,39577
-void Sarray::define_offsets(define_offsets1205,39820
-void Sarray::transposeik(transposeik1229,40717
-void Sarray::prefetch(prefetch1262,41886
-void Sarray::forceprefetch(forceprefetch1278,42277
-SView::SView(1293,42652
-SView::SView(1296,42748
-    : data{data}, base{base1298,42857
-    : data{data}, base{base}, offc{offc1298,42857
-    : data{data}, base{base}, offc{offc}, offi{offi1298,42857
-    : data{data}, base{base}, offc{offc}, offi{offi}, offj{offj1298,42857
-SView::SView(SView1299,42937
-void SView::set(set1309,43226
-void SarrayVectorPrefetch(1319,43518
-void SarrayVectorPrefetch(1323,43642
-void SarrayVectorPrefetch(1327,43768
-typedef std::tuple<uintptr_t,uintptr_t1333,43936
-typedef std::tuple<uintptr_t, int,1333,43936
-typedef std::tuple<uintptr_t, int, int,1333,43936
-typedef std::tuple<uintptr_t, int, int, int,1333,43936
-typedef std::tuple<uintptr_t, int, int, int, int> mkey_t;1333,43936
-struct key_hash 1335,43995
-  std::size_t operator()(operator()1336,44063
-float_sw4* memoize(1341,44226
-void Sarray::insert_intersection(insert_intersection1361,44850
-void Sarray::extrapolij(extrapolij1428,47163
-void Sarray::copy_kplane2(copy_kplane21505,50463
-void Sarray::swrite(swrite1565,52636
-void Sarray::GetAtt(GetAtt1583,53185
-void Sarray::switch_space(switch_space1603,53907
-void mset_to_zero_async(1622,54529
-int aligned(1653,55512
-void vset_to_zero_async(1658,55636
-float_sw4 Sarray::norm(norm1790,59906
+void Sarray::set_to_minusOne(set_to_minusOne570,16764
+void Sarray::set_to_minusOneHost(set_to_minusOneHost601,17449
+void Sarray::set_valueHost(set_valueHost608,17665
+void Sarray::set_value(set_value614,17892
+void Sarray::set_value_async(set_value_async622,18190
+void Sarray::set_to_random(set_to_random631,18501
+bool Sarray::in_domain(in_domain640,18848
+float_sw4 Sarray::maximum(maximum646,19065
+float_sw4 Sarray::minimum(minimum671,19943
+float_sw4 Sarray::sum(sum695,20745
+size_t Sarray::count_nans(count_nans716,21447
+size_t Sarray::count_nans(count_nans726,21788
+void Sarray::copy(copy769,23098
+void Sarray::extract_subarray(extract_subarray793,23763
+void Sarray::insert_subarray(insert_subarray823,25018
+void Sarray::insert_subarray(insert_subarray854,26294
+void Sarray::extract_subarrayIK(extract_subarrayIK886,27607
+void Sarray::insert_subarrayIK(insert_subarrayIK918,28881
+void Sarray::copy_kplane(copy_kplane952,30205
+void Sarray::save_to_disk(save_to_disk1029,32869
+void Sarray::assign(assign1064,34354
+void Sarray::assign(assign1093,35583
+void Sarray::extract(extract1167,38418
+void Sarray::assign(assign1195,39560
+void Sarray::assign(assign1202,39802
+void Sarray::define_offsets(define_offsets1209,40045
+void Sarray::transposeik(transposeik1233,40942
+void Sarray::prefetch(prefetch1266,42111
+void Sarray::forceprefetch(forceprefetch1282,42502
+SView::SView(1297,42877
+SView::SView(1300,42973
+    : data{data}, base{base1302,43082
+    : data{data}, base{base}, offc{offc1302,43082
+    : data{data}, base{base}, offc{offc}, offi{offi1302,43082
+    : data{data}, base{base}, offc{offc}, offi{offi}, offj{offj1302,43082
+SView::SView(SView1303,43162
+void SView::set(set1313,43451
+void SarrayVectorPrefetch(1323,43743
+void SarrayVectorPrefetch(1327,43867
+void SarrayVectorPrefetch(1331,43993
+typedef std::tuple<uintptr_t,uintptr_t1337,44161
+typedef std::tuple<uintptr_t, int,1337,44161
+typedef std::tuple<uintptr_t, int, int,1337,44161
+typedef std::tuple<uintptr_t, int, int, int,1337,44161
+typedef std::tuple<uintptr_t, int, int, int, int> mkey_t;1337,44161
+struct key_hash 1339,44220
+  std::size_t operator()(operator()1340,44288
+float_sw4* memoize(1345,44451
+void Sarray::insert_intersection(insert_intersection1365,45075
+void Sarray::extrapolij(extrapolij1432,47412
+void Sarray::copy_kplane2(copy_kplane21509,50712
+void Sarray::swrite(swrite1569,52885
+void Sarray::GetAtt(GetAtt1587,53434
+void Sarray::switch_space(switch_space1607,54156
+void mset_to_zero_async(1626,54778
+int aligned(1657,55788
+void vset_to_zero_async(1662,55912
+float_sw4 Sarray::norm(norm1809,60770
+ size_t Sarray::fwrite(fwrite1827,61230
+ size_t Sarray::fread(fread1835,61472
 
 scalar_prodc.C,29
 void scalar_prod_ci(39,1464
@@ -2083,38 +2132,38 @@ void EW::compute_epicenter(compute_epicenter844,32929
 void EW::setupSBPCoeff(setupSBPCoeff873,34041
 void EW::perturb_vels(perturb_vels897,35244
 void EW::set_materials(set_materials907,35613
-void EW::set_anisotropic_materials(set_anisotropic_materials1310,51536
-void EW::check_anisotropic_material(check_anisotropic_material1501,58819
-void EW::create_directory(create_directory1545,60711
-void EW::computeDT(computeDT1597,62507
-void EW::computeDTanisotropic(computeDTanisotropic1788,70708
-int EW::mkdirs(mkdirs1854,73384
-void EW::setup_supergrid(setup_supergrid1982,78326
-void EW::assign_supergrid_damping_arrays(assign_supergrid_damping_arrays2094,83079
-#define dcx(2140,84723
-#define dcy(2141,84773
-#define dcz(2142,84823
-#define strx(2144,84874
-#define stry(2145,84926
-#define strz(2146,84978
-#define cornerx(2148,85031
-#define cornery(2149,85089
-#define cornerz(2150,85147
-#undef dcx2329,91420
-#undef dcy2330,91431
-#undef dcz2331,91442
-#undef strx2332,91453
-#undef stry2333,91465
-#undef strz2334,91477
-#undef cornerx2335,91489
-#undef cornery2336,91504
-#undef cornerz2337,91519
-void EW::material_ic(material_ic2341,91611
-void EW::perturb_velocities(perturb_velocities2378,93097
-void EW::getDtFromRestartFile(getDtFromRestartFile2472,97152
-void EW::initial_tw_test(initial_tw_test2497,98123
-void EW::checkpoint_twilight_test(checkpoint_twilight_test2591,102436
-void EW::perturb_rho(perturb_rho2651,104743
+void EW::set_anisotropic_materials(set_anisotropic_materials1310,51557
+void EW::check_anisotropic_material(check_anisotropic_material1501,58840
+void EW::create_directory(create_directory1545,60732
+void EW::computeDT(computeDT1597,62528
+void EW::computeDTanisotropic(computeDTanisotropic1788,70729
+int EW::mkdirs(mkdirs1854,73405
+void EW::setup_supergrid(setup_supergrid1982,78347
+void EW::assign_supergrid_damping_arrays(assign_supergrid_damping_arrays2094,83100
+#define dcx(2140,84744
+#define dcy(2141,84794
+#define dcz(2142,84844
+#define strx(2144,84895
+#define stry(2145,84947
+#define strz(2146,84999
+#define cornerx(2148,85052
+#define cornery(2149,85110
+#define cornerz(2150,85168
+#undef dcx2329,91441
+#undef dcy2330,91452
+#undef dcz2331,91463
+#undef strx2332,91474
+#undef stry2333,91486
+#undef strz2334,91498
+#undef cornerx2335,91510
+#undef cornery2336,91525
+#undef cornerz2337,91540
+void EW::material_ic(material_ic2341,91632
+void EW::perturb_velocities(perturb_velocities2378,93118
+void EW::getDtFromRestartFile(getDtFromRestartFile2472,97173
+void EW::initial_tw_test(initial_tw_test2497,98144
+void EW::checkpoint_twilight_test(checkpoint_twilight_test2591,102457
+void EW::perturb_rho(perturb_rho2651,104764
 
 SfileOutput.C,641
 int SfileOutput::mPreceedZeros 46,1613
@@ -2138,64 +2187,64 @@ void EW::solerr3c_ci(solerr3c_ci103,4262
 void EW::meterr4c_ci(meterr4c_ci158,6669
 void EW::meterr4c_ci(meterr4c_ci191,8092
 
-solve.C,2694
+solve.C,2695
 __constant__ double cmem_acof[cmem_acof34,1399
 __constant__ double cmem_acof_no_gp[cmem_acof_no_gp35,1435
-#define SQR(64,2225
-void EW::solve(solve67,2324
-void EW::cycleSolutionArrays(cycleSolutionArrays1755,63665
-void EW::enforceBC(enforceBC1775,64493
-#define SW4_RAJA_CURVIMR1897,70231
-void EW::enforceBCanisotropic(enforceBCanisotropic1978,73559
-void EW::update_curvilinear_cartesian_interface(update_curvilinear_cartesian_interface2057,77187
-void EW::update_curvilinear_cartesian_interface_org(update_curvilinear_cartesian_interface_org2117,79742
-void EW::enforceIC(enforceIC2148,81025
-#define FUSED_KERNELS 2179,82473
-void EW::enforceIC2(enforceIC22342,89999
-void EW::check_corrector(check_corrector2501,97066
-void EW::check_displacement_continuity(check_displacement_continuity2547,99547
-void EW::dirichlet_hom_ic(dirichlet_hom_ic2619,102448
-void EW::dirichlet_twilight_ic(dirichlet_twilight_ic2711,105810
-void EW::dirichlet_LRic(dirichlet_LRic2735,106846
-void EW::dirichlet_LRstress(dirichlet_LRstress2866,112653
-void EW::gridref_initial_guess(gridref_initial_guess3200,128408
-void EW::compute_preliminary_corrector(compute_preliminary_corrector3245,129625
-void EW::compute_preliminary_predictor(compute_preliminary_predictor3470,139793
-void EW::compute_icstresses(compute_icstresses3655,148188
-#define str_x(3664,148525
-#define str_y(3665,148564
-#undef str_x3748,151654
-#undef str_y3749,151667
-void EW::add_ve_stresses(add_ve_stresses3753,151757
-#define str_x(3763,152101
-#define str_y(3764,152140
-#undef str_x3821,154571
-#undef str_y3822,154584
-void EW::cartesian_bc_forcing_olde(cartesian_bc_forcing_olde3826,154681
-void EW::test_sources(test_sources4518,184997
-void EW::testSourceDiscretization(testSourceDiscretization4608,188092
-void EW::extractRecordData(extractRecordData4688,191123
-void EW::addSuperGridDamping(addSuperGridDamping4972,204308
-void EW::simpleAttenuation(simpleAttenuation5052,208128
-void EW::enforceBCfreeAtt2(enforceBCfreeAtt25085,209034
-void EW::CurviCartIC(CurviCartIC5457,228564
-void EW::compute_icstresses2(compute_icstresses25717,240792
-#define str_x(5727,241219
-#define str_y(5728,241258
-#undef str_x5785,243504
-#undef str_y5786,243517
-void EW::compute_icstresses_curv(compute_icstresses_curv5790,243607
-#define str_x(5801,244111
-#define str_y(5802,244150
-#undef str_x5912,248505
-#undef str_y5913,248518
-void EW::compute_icstresses_cpu(compute_icstresses_cpu5916,248607
-#define str_x(5927,249025
-#define str_y(5928,249064
-#undef str_x5976,250831
-#undef str_y5977,250844
-void EW::cartesian_bc_forcing(cartesian_bc_forcing5979,250859
-void check_ghcof_no_gp(6476,274276
+#define SQR(69,2296
+void EW::solve(solve72,2395
+void EW::cycleSolutionArrays(cycleSolutionArrays1800,64996
+void EW::enforceBC(enforceBC1820,65824
+#define SW4_RAJA_CURVIMR1942,71567
+void EW::enforceBCanisotropic(enforceBCanisotropic2023,74895
+void EW::update_curvilinear_cartesian_interface(update_curvilinear_cartesian_interface2102,78523
+void EW::update_curvilinear_cartesian_interface_org(update_curvilinear_cartesian_interface_org2162,81063
+void EW::enforceIC(enforceIC2193,82346
+#define FUSED_KERNELS 2224,83794
+void EW::enforceIC2(enforceIC22387,91320
+void EW::check_corrector(check_corrector2546,98387
+void EW::check_displacement_continuity(check_displacement_continuity2592,100868
+void EW::dirichlet_hom_ic(dirichlet_hom_ic2664,103769
+void EW::dirichlet_twilight_ic(dirichlet_twilight_ic2756,107131
+void EW::dirichlet_LRic(dirichlet_LRic2780,108167
+void EW::dirichlet_LRstress(dirichlet_LRstress2911,113974
+void EW::gridref_initial_guess(gridref_initial_guess3245,129729
+void EW::compute_preliminary_corrector(compute_preliminary_corrector3290,130946
+void EW::compute_preliminary_predictor(compute_preliminary_predictor3515,141114
+void EW::compute_icstresses(compute_icstresses3700,149509
+#define str_x(3709,149846
+#define str_y(3710,149885
+#undef str_x3793,152975
+#undef str_y3794,152988
+void EW::add_ve_stresses(add_ve_stresses3798,153078
+#define str_x(3808,153422
+#define str_y(3809,153461
+#undef str_x3866,155892
+#undef str_y3867,155905
+void EW::cartesian_bc_forcing_olde(cartesian_bc_forcing_olde3871,156002
+void EW::test_sources(test_sources4563,186318
+void EW::testSourceDiscretization(testSourceDiscretization4653,189413
+void EW::extractRecordData(extractRecordData4733,192444
+void EW::addSuperGridDamping(addSuperGridDamping5018,205649
+void EW::simpleAttenuation(simpleAttenuation5098,209478
+void EW::enforceBCfreeAtt2(enforceBCfreeAtt25131,210384
+void EW::CurviCartIC(CurviCartIC5503,229965
+void EW::compute_icstresses2(compute_icstresses25763,242193
+#define str_x(5773,242620
+#define str_y(5774,242659
+#undef str_x5831,244905
+#undef str_y5832,244918
+void EW::compute_icstresses_curv(compute_icstresses_curv5836,245008
+#define str_x(5847,245512
+#define str_y(5848,245551
+#undef str_x5958,249906
+#undef str_y5959,249919
+void EW::compute_icstresses_cpu(compute_icstresses_cpu5962,250008
+#define str_x(5973,250426
+#define str_y(5974,250465
+#undef str_x6022,252232
+#undef str_y6023,252245
+void EW::cartesian_bc_forcing(cartesian_bc_forcing6025,252260
+void check_ghcof_no_gp(6522,275677
 
 Source.C,3552
 #define SQR(50,1673
@@ -2249,36 +2298,36 @@ void Source::set_grid_point_sources4(set_grid_point_sources41415,63669
 void Source::exact_testmoments(exact_testmoments2687,116581
 void Source::perturb(perturb2757,118435
 void Source::filter_timefunc(filter_timefunc2773,118783
-int Source::spline_interpolation(spline_interpolation2891,122217
-Source* Source::copy(copy2959,124667
-float_sw4 Source::find_min_exponent(find_min_exponent3008,126170
-void Source::compute_metric_at_source(compute_metric_at_source3014,126376
-void Source::get_mr_psources(get_mr_psources3182,132524
-#define CUB(3185,132747
-#define BISQR(3186,132778
-#define a(3192,133006
-#define b(3193,133052
-#define x(3194,133096
-#define mom_f(3408,141789
-#undef mom_f3491,145633
-#undef a3797,157096
-#undef b3798,157105
-#undef x3799,157114
-#undef CUB3800,157123
-#undef BISQR3801,157134
-void Source::get_cc_psources(get_cc_psources3805,157224
-#define CUB(3809,157519
-#define BISQR(3810,157550
-#define a(3817,157833
-#define b(3818,157879
-#define x(3819,157923
-#undef mom_f4019,166265
-#undef a4325,177705
-#undef b4326,177714
-#undef x4327,177723
-#undef CUB4328,177732
-#undef BISQR4329,177743
-void Source::compute_grid_point(compute_grid_point4333,177833
+int Source::spline_interpolation(spline_interpolation2891,122238
+Source* Source::copy(copy2959,124688
+float_sw4 Source::find_min_exponent(find_min_exponent3008,126191
+void Source::compute_metric_at_source(compute_metric_at_source3014,126397
+void Source::get_mr_psources(get_mr_psources3182,132545
+#define CUB(3185,132768
+#define BISQR(3186,132799
+#define a(3192,133027
+#define b(3193,133073
+#define x(3194,133117
+#define mom_f(3408,141810
+#undef mom_f3491,145654
+#undef a3797,157117
+#undef b3798,157126
+#undef x3799,157135
+#undef CUB3800,157144
+#undef BISQR3801,157155
+void Source::get_cc_psources(get_cc_psources3805,157245
+#define CUB(3809,157540
+#define BISQR(3810,157571
+#define a(3817,157854
+#define b(3818,157900
+#define x(3819,157944
+#undef mom_f4019,166286
+#undef a4325,177726
+#undef b4326,177735
+#undef x4327,177744
+#undef CUB4328,177753
+#undef BISQR4329,177764
+void Source::compute_grid_point(compute_grid_point4333,177854
 
 SuperGrid.C,650
 SuperGrid::SuperGrid(SuperGrid39,1464
@@ -2324,16 +2373,16 @@ TestRayleighWave::TestRayleighWave(41,1486
 
 testsrcc.C,79
 void EW::testsrc_ci(testsrc_ci3,33
-void EW::testsrcc_ci(testsrcc_ci76,2340
+void EW::testsrcc_ci(testsrcc_ci78,2366
 
 TestTwilight.C,323
 TestTwilight::TestTwilight(4,48
 void TestTwilight::get_rho(get_rho17,480
 void TestTwilight::get_mula(get_mula37,1313
 void TestTwilight::get_ubnd(get_ubnd67,2647
-void TestTwilight::get_ubnd(get_ubnd102,4037
-void TestTwilight::get_mula_att(get_mula_att138,5422
-void TestTwilight::get_bnd_att(get_bnd_att158,6278
+void TestTwilight::get_ubnd(get_ubnd116,4610
+void TestTwilight::get_mula_att(get_mula_att153,6010
+void TestTwilight::get_bnd_att(get_bnd_att228,9117
 
 time_functions.C,4377
 float_sw4 VerySmoothBump(41,1495
@@ -2557,21 +2606,21 @@ void EW::exactaccfortc_ci(exactaccfortc_ci489,19999
 void EW::forcingfort_ci(forcingfort_ci527,21518
 void EW::forcingttfort_ci(forcingttfort_ci675,26986
 void EW::forcingfortc_ci(forcingfortc_ci834,33429
-void EW::forcingttfortc_ci(forcingttfortc_ci973,38773
-void EW::exactmatfort_ci(exactmatfort_ci1126,44760
-void EW::exactmatfortc_ci(exactmatfortc_ci1163,46546
-void EW::exactrhsfortsg_ci(exactrhsfortsg_ci1200,48384
-void EW::exactrhsfortsgc_ci(exactrhsfortsgc_ci1368,54941
-void EW::exactmatfortatt_ci(exactmatfortatt_ci1536,61585
-void EW::exactmatfortattc_ci(exactmatfortattc_ci1567,62997
-void EW::forcingfortatt_ci(forcingfortatt_ci1595,64434
-void EW::forcingttattfort_ci(forcingttattfort_ci1723,69632
-void EW::addmemvarforcing_ci(addmemvarforcing_ci1890,76102
-void EW::memvarforcesurf_ci(memvarforcesurf_ci2021,81070
-void EW::forcingfortattc_ci(forcingfortattc_ci2147,85555
-void EW::forcingttattfortc_ci(forcingttattfortc_ci2275,90837
-void EW::addmemvarforcingc_ci(addmemvarforcingc_ci2440,97180
-void EW::memvarforcesurfc_ci(memvarforcesurfc_ci2572,102238
+void EW::forcingttfortc_ci(forcingttfortc_ci980,39118
+void EW::exactmatfort_ci(exactmatfort_ci1133,45105
+void EW::exactmatfortc_ci(exactmatfortc_ci1170,46891
+void EW::exactrhsfortsg_ci(exactrhsfortsg_ci1207,48729
+void EW::exactrhsfortsgc_ci(exactrhsfortsgc_ci1375,55286
+void EW::exactmatfortatt_ci(exactmatfortatt_ci1543,61930
+void EW::exactmatfortattc_ci(exactmatfortattc_ci1574,63342
+void EW::forcingfortatt_ci(forcingfortatt_ci1602,64779
+void EW::forcingttattfort_ci(forcingttattfort_ci1730,69977
+void EW::addmemvarforcing_ci(addmemvarforcing_ci1897,76447
+void EW::memvarforcesurf_ci(memvarforcesurf_ci2028,81415
+void EW::forcingfortattc_ci(forcingfortattc_ci2154,85900
+void EW::forcingttattfortc_ci(forcingttattfortc_ci2288,91474
+void EW::addmemvarforcingc_ci(addmemvarforcingc_ci2459,98109
+void EW::memvarforcesurfc_ci(memvarforcesurfc_ci2591,103167
 
 twilightsgfortc.C,477
 void EW::forcingfortsg_ci(forcingfortsg_ci8,195
@@ -2585,8 +2634,8 @@ void EW::forcingttfortsgattc_ci(forcingttfortsgattc_ci1379,52328
 
 updatememvarc.C,109
 void memvar_pred_fort_ci(43,1608
-void memvar_corr_fort_ci(118,4147
-void memvar_corr_fort_wind_ci(201,7167
+void memvar_corr_fort_ci(118,4170
+void memvar_corr_fort_wind_ci(202,7291
 
 velsumc.C,35
 void EW::velsum_ci(velsum_ci4,54
@@ -2601,8 +2650,8 @@ const char* compiler 46,1635
 const char* libdir 48,1710
 const char* incdir 49,1742
 const char* version 50,1774
-std::string getVersionInfo(52,1810
-std::string compiler_options(91,3147
+std::string getVersionInfo(52,1804
+std::string compiler_options(91,3141
 
 AllDims.h,850
 #define SW4_ALLDIMS_H2,22
@@ -2689,37 +2738,38 @@ caliper.h,227
 #define SW4_MARK_BEGIN(19,356
 #define SW4_MARK_END(21,385
 
-CheckPoint.h,935
+CheckPoint.h,999
 #define SW4_CHECKPOINT_H2,25
 class CheckPoint 19,261
   static CheckPoint* nil;21,289
-  bool useHDF5(64,2432
-  hid_t m_es_id;76,2947
-  std::string mCheckPointFile;79,2972
-  std::string mRestartFile;80,3003
-  std::string mCheckPointFileM;83,3078
-  std::string mCheckPointFileMM;84,3110
-  int m_fileno;85,3143
-  float_sw4 mStartTime;87,3160
-  int mWritingCycle;88,3184
-  int mCycleInterval;89,3205
-  bool m_winallocated;90,3227
-  size_t m_bufsize;91,3250
-  bool mDoCheckPointing;93,3271
-  bool mDoRestart;94,3296
-  bool mRestartPathSet;95,3315
-  string mRestartPath;96,3339
-  bool mUseHDF5;97,3362
-  int mCompMode;98,3379
-  double mCompPar;99,3396
-  int mPreceedZeros;104,3555
-  bool m_double;105,3632
-  bool m_kji_order;106,3649
-  EW* mEW;107,3669
-  Parallel_IO** m_parallel_io;108,3680
-  std::vector<int*> mWindow;109,3711
-  std::vector<int*> mGlobalDims;111,3856
-  std::vector<bool> m_ihavearray;113,3989
+  bool useHDF5(74,2958
+  hid_t m_es_id;86,3473
+  std::string mCheckPointFile;89,3498
+  std::string mRestartFile;90,3529
+  std::string mCheckPointFileM;93,3604
+  std::string mCheckPointFileMM;94,3636
+  int m_fileno;95,3669
+  float_sw4 mStartTime;97,3686
+  int mWritingCycle;98,3710
+  int mCycleInterval;99,3731
+  bool m_winallocated;100,3753
+  size_t m_bufsize;101,3776
+  bool mDoCheckPointing;103,3797
+  bool mDoRestart;104,3822
+  bool mRestartPathSet;105,3841
+  string mRestartPath;106,3865
+  bool mUseHDF5;107,3888
+  int mCompMode;108,3905
+  double mCompPar;109,3922
+  int mPreceedZeros;114,4081
+  bool m_double;115,4158
+  bool m_kji_order;116,4175
+  EW* mEW;117,4195
+  Parallel_IO** m_parallel_io;118,4206
+  std::vector<int*> mWindow;119,4237
+  std::vector<int*> mGlobalDims;121,4382
+  std::vector<bool> m_ihavearray;123,4515
+  std::FILE *scr_file_handle;scr_file_handle124,4549
 
 csstime.h,296
 #define _CSSTIME_H60,2786
@@ -3351,22 +3401,22 @@ ESSI3DHDF5.h,582
 #define SW4_ESSI3DHDF5_H34,1404
 class ESSI3DHDF5 44,1528
   static ESSI3DHDF5* nil;46,1556
-  const std::string& filename(63,2159
-  void set_ihavearray(64,2215
-  std::string m_filename;72,2463
-  bool m_ihavearray;73,2489
-  int m_end_cycle;74,2510
-  int m_window[m_window75,2529
-  int m_global[m_global76,2548
-  int m_precision;77,2567
-  hsize_t m_window_dims[m_window_dims80,2603
-  hsize_t m_global_dims[m_global_dims81,2666
-  hsize_t m_cycle_dims[m_cycle_dims82,2708
-  hsize_t m_slice_dims[m_slice_dims83,2765
-  hid_t m_file_id;85,2816
-  hid_t m_es_id;86,2835
+  const std::string& filename(63,2176
+  void set_ihavearray(64,2232
+  std::string m_filename;72,2480
+  bool m_ihavearray;73,2506
+  int m_end_cycle;74,2527
+  int m_window[m_window75,2546
+  int m_global[m_global76,2565
+  int m_precision;77,2584
+  hsize_t m_window_dims[m_window_dims80,2620
+  hsize_t m_global_dims[m_global_dims81,2683
+  hsize_t m_cycle_dims[m_cycle_dims82,2725
+  hsize_t m_slice_dims[m_slice_dims83,2782
+  hid_t m_file_id;85,2833
+  hid_t m_es_id;86,2852
 
-EW.h,18497
+EW.h,18564
 #define EW_H35,1404
 using namespace std;76,2278
 class EW 78,2300
@@ -3462,330 +3512,331 @@ class EW 78,2300
   Sarray mTopo, mTopoGridExt;1615,85659
   vector<Sarray> m_curviInterface;1619,85795
   vector<MaterialProperty*> m_materials;1622,85907
-  MPI_Comm m_cartesian_communicator;1623,85948
-  ofstream msgStream;1625,85986
-  vector<Sarray> mMu;1628,86072
-  vector<Sarray> mLambda;1629,86094
-  vector<Sarray> mRho;1630,86120
-  vector<Sarray*> mMuVE,1631,86143
-  vector<Sarray*> mMuVE, mLambdaVE;1631,86143
-  vector<Sarray> mC;1632,86204
-  Sarray mCcurv;1633,86276
-  vector<Sarray> m_Morf,1636,86405
-  vector<Sarray> m_Morf, m_Mlrf,1636,86405
-  vector<Sarray> m_Morf, m_Mlrf, m_Mufs,1636,86405
-  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs,1636,86405
-  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc,1636,86405
-  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc,1636,86405
-  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs,1636,86405
-  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs, m_Mlcs;1636,86405
-  vector<float_sw4> m_curviRefLev;1638,86487
-  int m_nevent;1645,86707
-  int m_nevents_specified;1647,86814
-  bool m_events_parallel;1648,86881
-  map<map1649,86939
-  map<string, int> m_event_names;1649,86939
-  vector<float_sw4> m_epi_lat,1652,86989
-  vector<float_sw4> m_epi_lat, m_epi_lon,1652,86989
-  vector<float_sw4> m_epi_lat, m_epi_lon, m_epi_depth,1652,86989
-  vector<float_sw4> m_epi_lat, m_epi_lon, m_epi_depth, m_epi_t0;1652,86989
-  GeographicProjection* m_geoproj;1656,87115
-  ForcingTwilight* m_twilight_forcing;1658,87151
-  TestPointSource* m_point_source_test;1659,87190
-  bool m_moment_test;1660,87230
-  TestEnergy* m_energy_test;1661,87252
-  TestLamb* m_lamb_test;1662,87281
-  TestRayleighWave* m_rayleigh_wave_test;1663,87306
-  vector<MaterialData*> m_mtrlblocks;1665,87349
-  vector<AnisotropicMaterial*> m_anisotropic_mtrlblocks;1666,87387
-  boundaryConditionType mbcGlobalType[mbcGlobalType1670,87547
-      m_bcType;1673,87729
-  float_sw4 mTstart;1675,87868
-  float_sw4 mDt;1676,87889
-  bool m_doubly_periodic;1678,87907
-  int m_proc_array[m_proc_array1680,87934
-  bool mbcsSet;1682,87958
-  bool m_analytical_topo,1686,88091
-  bool m_analytical_topo, m_use_analytical_metric;1686,88091
-  float_sw4 m_GaussianAmp,1687,88142
-  float_sw4 m_GaussianAmp, m_GaussianLx,1687,88142
-  float_sw4 m_GaussianAmp, m_GaussianLx, m_GaussianLy,1687,88142
-  float_sw4 m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc,1687,88142
-      m_GaussianYc;1688,88211
-  bool m_useVelocityThresholds;1697,88527
-  float_sw4 m_vpMin,1698,88559
-  float_sw4 m_vpMin, m_vsMin;1698,88559
-  int m_grid_interpolation_order;1701,88653
-  float_sw4 m_zetaBreak;1702,88687
-  float_sw4 m_minJacobian,1705,88749
-  float_sw4 m_minJacobian, m_maxJacobian;1705,88749
-  string m_scenario;1707,88792
-  float_sw4 m_frequency_limit;1710,88842
-  bool m_limit_frequency;1711,88873
-  int m_ppw;1712,88899
-  bool m_pfs;1715,88936
-  int m_nwriters;1716,88950
-  bool m_use_supergrid;1719,88984
-  int m_sg_gp_thickness;1720,89008
-  int m_sg_damping_order;1721,89059
-  float_sw4 m_supergrid_damping_coefficient;1722,89123
-  float_sw4 m_supergrid_width;1723,89168
-  bool m_use_sg_width;1724,89227
-  vector<SuperGrid> m_supergrid_taper_x,1725,89286
-  vector<SuperGrid> m_supergrid_taper_x, m_supergrid_taper_y;1725,89286
-  vector<SuperGrid> m_supergrid_taper_z;1726,89348
-  vector<string> mPath,1729,89430
-  vector<string> mPath, mObsPath;1729,89430
-  string mTempPath;1730,89476
-  vector<int*> m_NumberOfBCPoints;1733,89541
-  vector<int*> m_BndryWindow;1736,89650
-  bool m_use_attenuation,1739,89751
-  bool m_use_attenuation, m_att_use_max_frequency;1739,89751
-  int m_number_mechanisms;1740,89802
-  float_sw4 m_velo_omega,1741,89829
-  float_sw4 m_velo_omega, m_min_omega,1741,89829
-  float_sw4 m_velo_omega, m_min_omega, m_max_omega,1741,89829
-  float_sw4 m_velo_omega, m_min_omega, m_max_omega, m_att_max_frequency,1741,89829
-      m_att_ppw;1742,89902
-  float_sw4 m_qmultiplier;1743,89919
-  vector<Sarray> mQp,1745,89947
-  vector<Sarray> mQp, mQs;1745,89947
-  vector<float_sw4> mOmegaVE;1748,90041
-  bool m_anisotropic;1751,90098
-  bool m_randomize,1754,90156
-  bool m_randomize, m_randomize_density;1754,90156
-  int m_random_seed[m_random_seed1755,90197
-  float_sw4 m_random_dist,1756,90221
-  float_sw4 m_random_dist, m_random_distz,1756,90221
-  float_sw4 m_random_dist, m_random_distz, m_random_amp,1756,90221
-  float_sw4 m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad,1756,90221
-      m_random_sdlimit;1757,90297
-  vector<RandomizedMaterial*> m_random_blocks;1758,90321
-  float_sw4 m_global_xmax,1774,90956
-  float_sw4 m_global_xmax, m_global_ymax,1774,90956
-  float_sw4 m_global_xmax, m_global_ymax, m_global_zmin,1774,90956
-  float_sw4 m_global_xmax, m_global_ymax, m_global_zmin, m_global_zmax;1774,90956
-  int mMaterialExtrapolate;1778,91131
-  int m_nx_base,1781,91204
-  int m_nx_base, m_ny_base,1781,91204
-  int m_nx_base, m_ny_base, m_nz_base;1781,91204
-  float_sw4 m_h_base;1782,91243
-  vector<bool> m_iscurvilinear;1783,91265
-  vector<float_sw4> m_refinementBoundaries;1784,91297
-  InputMode m_topoInputStyle;1785,91341
-  string m_topoFileName,1786,91371
-  string m_topoFileName, m_topoExtFileName,1786,91371
-  string m_topoFileName, m_topoExtFileName, m_QueryType;1786,91371
-  bool mTopoImageFound;1787,91428
-  float_sw4 m_topo_zmax;1788,91452
-  int m_maxIter;1789,91477
-  int m_myRank,1794,91604
-  int m_myRank, m_nProcs;1794,91604
-  string mName;1796,91631
-  string mGMTFileName;1798,91673
-  bool mWriteGMTOutput;1800,91697
-  int mPlotFrequency;1801,91721
-  int mNumFiles;1802,91743
-  int mVerbose;1803,91760
-  bool mQuiet;1804,91776
-  bool mDebugIO;1806,91792
-  bool mHomogeneous;1807,91809
-  bool mCompareSACFiles;1810,91874
-  float mSACFileErrorTolerance;1811,91899
-  vector<Image*> mImageFiles;1814,91953
-  vector<Image3D*> mImage3DFiles;1815,91983
-  vector<ESSI3D*> mESSI3DFiles;1816,92017
-  vector<SfileOutput*> mSfiles;1817,92049
-  bool m_iotiming;1818,92081
-  vector<bool> mTimeIsSet;1821,92116
-  vector<float_sw4> mTmax;1822,92143
-  vector<int> mNumberOfTimeSteps;1824,92171
-  int m_update_boundary_function;1827,92222
-  int mOrder;1832,92327
-  float_sw4 mCFL,1836,92516
-  float_sw4 mCFL, mCFLmax;1836,92516
-  vector<int*> m_onesided;1839,92589
-  float_sw4 m_curlcoeff,1840,92616
-  float_sw4 m_curlcoeff, m_d4coeff,1840,92616
-  float_sw4 m_curlcoeff, m_d4coeff, m_d4_cfl;1840,92616
-  vector<float_sw4*> m_sg_dc_x,1843,92734
-  vector<float_sw4*> m_sg_dc_x, m_sg_dc_y,1843,92734
-  vector<float_sw4*> m_sg_dc_x, m_sg_dc_y, m_sg_dc_z;1843,92734
-  vector<float_sw4*> m_sg_str_x,1844,92788
-  vector<float_sw4*> m_sg_str_x, m_sg_str_y,1844,92788
-  vector<float_sw4*> m_sg_str_x, m_sg_str_y, m_sg_str_z;1844,92788
-  vector<float_sw4*> m_sg_corner_x,1845,92845
-  vector<float_sw4*> m_sg_corner_x, m_sg_corner_y,1845,92845
-  vector<float_sw4*> m_sg_corner_x, m_sg_corner_y, m_sg_corner_z;1845,92845
-  bool m_energy_log,1857,93230
-  bool m_energy_log, m_energy_print;1857,93230
-  float_sw4 m_saved_energy;1858,93267
-  string m_energy_logfile;1859,93295
-  vector<float_sw4> m_energy;1860,93322
-  bool m_do_timing;1865,93494
-  int m_timing_print;1866,93514
-  bool m_output_detailed_timing;1867,93536
-  bool m_output_load;1868,93569
-  int m_projection_cycle;1870,93592
-  bool m_checkfornan;1872,93619
-  float_sw4 m_max_error[m_max_error1875,93655
-  float_sw4 m_max_error[3], m_l2_error[m_l2_error1875,93655
-  string m_error_log_file;1877,93699
-  bool m_error_log,1878,93726
-  bool m_error_log, m_error_print;1878,93726
-  int m_inner_loop;1879,93761
-  bool m_mesh_refinements;1883,93842
-  bool m_matrices_decomposed;1884,93869
-  float_sw4 m_citol,1885,93899
-  float_sw4 m_citol, m_cirelfact;1885,93899
-  int m_cimaxiter;1886,93933
-  vector<float_sw4*> m_cimat1;1888,93953
-  vector<float_sw4*> m_cimat2;1889,93984
-  vector<int*> m_ciipiv1;1890,94015
-  vector<int*> m_ciipiv2;1891,94041
-  bool m_do_geodynbc;1897,94135
-  std::vector<float_sw4*> m_geo_usgh;1898,94157
-  std::vector<int*> m_geodyn_dims;1899,94216
-  std::vector<Sarray> m_geodyn_data1;1900,94251
-  std::vector<Sarray> m_geodyn_data2;1901,94289
-  double m_geodyn_origin[m_geodyn_origin1902,94327
-  double m_geodyn_origin[3], m_geodyn_h,1902,94327
-  double m_geodyn_origin[3], m_geodyn_h, m_geodyn_dt;1902,94327
-  int m_geodyn_step,1903,94381
-  int m_geodyn_step, m_geodyn_maxsteps,1903,94381
-  int m_geodyn_step, m_geodyn_maxsteps, m_geodyn_blocksize;1903,94381
-  int m_geodyn_ni,1904,94441
-  int m_geodyn_ni, m_geodyn_nj,1904,94441
-  int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk,1904,94441
-  int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk, m_geodyn_faces;1904,94441
-  std::string m_geodyn_filename;1905,94502
-  std::ifstream m_geodynfile;1906,94535
-  bool m_geodyn_iwillread,1907,94565
-  bool m_geodyn_iwillread, m_geodyn_past_end;1907,94565
-  bool m_geodynbc_found,1910,94642
-  bool m_geodynbc_found, m_geodynbc_center;1910,94642
-  std::string m_geodynbc_filename;1911,94686
-  float_sw4 m_ibc_origin[m_ibc_origin1912,94721
-  int mPrintInterval;1914,94751
-  double mGeoAz;1916,94815
-  double mLonOrigin,1917,94832
-  double mLonOrigin, mLatOrigin;1917,94832
-  float_sw4 mMetersPerDegree,1920,94898
-  float_sw4 mMetersPerDegree, mMetersPerLongitude;1920,94898
-  bool mConstMetersPerLongitude;1921,94949
-  bool mParsingSuccessful,1924,95028
-  bool mParsingSuccessful, mIsInitialized,1924,95028
-  bool mParsingSuccessful, mIsInitialized, mSourcesOK;1924,95028
-  bool m_testing;1925,95083
-  bool m_inverse_problem;1928,95149
-  bool m_iniguess_pos,1929,95214
-  bool m_iniguess_pos, m_iniguess_t0fr,1929,95214
-  bool m_iniguess_pos, m_iniguess_t0fr, m_iniguess_mom,1929,95214
-      m_iniguess_shifts;1930,95270
-  bool m_output_initial_seismograms;1931,95324
-  bool m_compute_scalefactors;1932,95361
-  int m_maxit,1933,95392
-  int m_maxit, m_maxrestart;1933,95392
-  float_sw4 m_tolerance;1934,95421
-  float_sw4 m_scalefactors[m_scalefactors1935,95446
-  int m_cgstepselection,1936,95478
-  int m_cgstepselection, m_cgvarcase;1936,95478
-  bool m_cgfletcherreeves,1937,95516
-  bool m_cgfletcherreeves, m_do_linesearch;1937,95516
-  bool m_opt_testing;1938,95560
-  int m_opt_method,1939,95582
-  int m_opt_method, m_lbfgs_m;1939,95582
-  float_sw4 m_perturb;1941,95644
-  int m_iperturb,1942,95667
-  int m_iperturb, m_jperturb,1942,95667
-  int m_iperturb, m_jperturb, m_kperturb,1942,95667
-  int m_iperturb, m_jperturb, m_kperturb, m_pervar;1942,95667
-  vector<float_sw4> mMinVsOverH;1945,95781
-  int m_ext_ghost_points;1947,95815
-  int m_ghost_points;1948,95841
-  int m_ppadding;1949,95863
-  float_sw4 *m_sbop,m_sbop1953,95968
-  float_sw4 *m_sbop, *m_acof,m_acof1953,95968
-  float_sw4 *m_sbop, *m_acof, *m_bop,m_bop1953,95968
-  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope,m_bope1953,95968
-  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope, *m_ghcof;m_ghcof1953,95968
-  float_sw4 *m_acof_no_gp,m_acof_no_gp1954,96025
-  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp,m_ghcof_no_gp1954,96025
-  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp, *m_sbop_no_gp;m_sbop_no_gp1954,96025
-  float_sw4 m_sbop[m_sbop1956,96089
-  float_sw4 m_sbop[6], m_acof[m_acof1956,96089
-  float_sw4 m_sbop[6], m_acof[384], m_bop[m_bop1956,96089
-  float_sw4 m_sbop[6], m_acof[384], m_bop[24], m_bope[m_bope1956,96089
-  float_sw4 m_sbop[6], m_acof[384], m_bop[24], m_bope[48], m_ghcof[m_ghcof1956,96089
-  float_sw4 m_acof_no_gp[m_acof_no_gp1957,96160
-  float_sw4 m_acof_no_gp[384], m_ghcof_no_gp[m_ghcof_no_gp1957,96160
-  float_sw4 m_acof_no_gp[384], m_ghcof_no_gp[6], m_sbop_no_gp[m_sbop_no_gp1957,96160
-  SView* viewArrayActual;1963,96449
-  vector<CurvilinearInterface2*> m_cli2;1965,96476
-  vector<MPI_Datatype> m_send_type1;1968,96542
-  vector<MPI_Datatype> m_send_type3;1969,96579
-  vector<MPI_Datatype> m_send_type4;1970,96616
-  vector<MPI_Datatype> m_send_type21;1971,96665
-  MPI_Datatype m_send_type_2dfinest[m_send_type_2dfinest1972,96719
-  MPI_Datatype m_send_type_2dfinest_ext[m_send_type_2dfinest_ext1973,96759
-  vector<MPI_Datatype> m_send_type_isurfx;1976,96846
-  vector<MPI_Datatype> m_send_type_isurfy;1977,96889
-  vector<MPI_Datatype> m_send_type_2dx;1979,96933
-  vector<MPI_Datatype> m_send_type_2dy;1980,96973
-  vector<MPI_Datatype> m_send_type_2dx3p;1981,97013
-  vector<MPI_Datatype> m_send_type_2dy3p;1982,97055
-  vector<MPI_Datatype> m_send_type_2dx1p;1983,97097
-  vector<MPI_Datatype> m_send_type_2dy1p;1984,97139
-  vector<vector1987,97226
-  vector<std::tuple<int, int, int>> send_type1;1987,97226
-  vector<vector1988,97274
-  vector<std::tuple<int, int, int>> send_type3;1988,97274
-  vector<vector1989,97322
-  vector<std::tuple<int, int, int>> send_type4;1989,97322
-  vector<vector1990,97370
-  vector<std::tuple<int, int, int>> send_type21;1990,97370
-  vector<vector1992,97420
-  vector<std::tuple<int, int, int>> send_type_2dx;1992,97420
-  vector<vector1993,97471
-  vector<std::tuple<int, int, int>> send_type_2dy;1993,97471
-  vector<vector1995,97523
-  vector<std::tuple<int, int, int>> send_type_2dfinest_ext;1995,97523
-  vector<vector1997,97584
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type1;1997,97584
-  vector<vector1998,97641
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type3;1998,97641
-  vector<vector1999,97698
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type4;1999,97698
-  vector<vector2000,97755
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type21;2000,97755
-  vector<vector2002,97814
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type_2dx;2002,97814
-  vector<vector2003,97874
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type_2dy;2003,97874
-  vector<vector2005,97935
-  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type_2dfinest_ext;2005,97935
-  Space mpi_buffer_space;2007,98005
-  float_sw4* ForceVector;2010,98083
-  float_sw4** ForceAddress;2011,98109
-  int* idnts;2012,98137
-  GridPointSource** GPS;2013,98151
-  StatMachine<StatMachine2018,98336
-  StatMachine<size_t, double> sm;2018,98336
-  StatMachine<StatMachine2019,98370
-  StatMachine<size_t, double> sm2;2019,98370
-  StatMachine<StatMachine2020,98405
-  StatMachine<int, double> coll_sm;2020,98405
-  StatMachine<StatMachine2021,98441
-  StatMachine<int, double> step_sm;2021,98441
-  StatMachine<StatMachine2022,98477
-  StatMachine<int, double> host_sm;2022,98477
-  int m_neighbor[m_neighbor2025,98529
-  MPI_Datatype m_mpifloat;2026,98550
-  bool m_topography_exists;2028,98578
-  vector<vector<int>> m_utc0;2033,98716
-  bool m_croutines;2039,98871
-  CheckPoint* m_check_point;2043,98965
-  bool ProfilerOn;2044,98994
+  MPI_Comm m_cartesian_communicator,1623,85948
+  MPI_Comm m_cartesian_communicator, m_1d_communicator;1623,85948
+  ofstream msgStream;1625,86005
+  vector<Sarray> mMu;1628,86091
+  vector<Sarray> mLambda;1629,86113
+  vector<Sarray> mRho;1630,86139
+  vector<Sarray*> mMuVE,1631,86162
+  vector<Sarray*> mMuVE, mLambdaVE;1631,86162
+  vector<Sarray> mC;1632,86223
+  Sarray mCcurv;1633,86295
+  vector<Sarray> m_Morf,1636,86424
+  vector<Sarray> m_Morf, m_Mlrf,1636,86424
+  vector<Sarray> m_Morf, m_Mlrf, m_Mufs,1636,86424
+  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs,1636,86424
+  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc,1636,86424
+  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc,1636,86424
+  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs,1636,86424
+  vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs, m_Mlcs;1636,86424
+  vector<float_sw4> m_curviRefLev;1638,86506
+  int m_nevent;1645,86726
+  int m_nevents_specified;1647,86833
+  bool m_events_parallel;1648,86900
+  map<map1649,86958
+  map<string, int> m_event_names;1649,86958
+  vector<float_sw4> m_epi_lat,1652,87008
+  vector<float_sw4> m_epi_lat, m_epi_lon,1652,87008
+  vector<float_sw4> m_epi_lat, m_epi_lon, m_epi_depth,1652,87008
+  vector<float_sw4> m_epi_lat, m_epi_lon, m_epi_depth, m_epi_t0;1652,87008
+  GeographicProjection* m_geoproj;1656,87134
+  ForcingTwilight* m_twilight_forcing;1658,87170
+  TestPointSource* m_point_source_test;1659,87209
+  bool m_moment_test;1660,87249
+  TestEnergy* m_energy_test;1661,87271
+  TestLamb* m_lamb_test;1662,87300
+  TestRayleighWave* m_rayleigh_wave_test;1663,87325
+  vector<MaterialData*> m_mtrlblocks;1665,87368
+  vector<AnisotropicMaterial*> m_anisotropic_mtrlblocks;1666,87406
+  boundaryConditionType mbcGlobalType[mbcGlobalType1670,87566
+      m_bcType;1673,87748
+  float_sw4 mTstart;1675,87887
+  float_sw4 mDt;1676,87908
+  bool m_doubly_periodic;1678,87926
+  int m_proc_array[m_proc_array1680,87953
+  bool mbcsSet;1682,87977
+  bool m_analytical_topo,1686,88110
+  bool m_analytical_topo, m_use_analytical_metric;1686,88110
+  float_sw4 m_GaussianAmp,1687,88161
+  float_sw4 m_GaussianAmp, m_GaussianLx,1687,88161
+  float_sw4 m_GaussianAmp, m_GaussianLx, m_GaussianLy,1687,88161
+  float_sw4 m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc,1687,88161
+      m_GaussianYc;1688,88230
+  bool m_useVelocityThresholds;1697,88546
+  float_sw4 m_vpMin,1698,88578
+  float_sw4 m_vpMin, m_vsMin;1698,88578
+  int m_grid_interpolation_order;1701,88672
+  float_sw4 m_zetaBreak;1702,88706
+  float_sw4 m_minJacobian,1705,88768
+  float_sw4 m_minJacobian, m_maxJacobian;1705,88768
+  string m_scenario;1707,88811
+  float_sw4 m_frequency_limit;1710,88861
+  bool m_limit_frequency;1711,88892
+  int m_ppw;1712,88918
+  bool m_pfs;1715,88955
+  int m_nwriters;1716,88969
+  bool m_use_supergrid;1719,89003
+  int m_sg_gp_thickness;1720,89027
+  int m_sg_damping_order;1721,89078
+  float_sw4 m_supergrid_damping_coefficient;1722,89142
+  float_sw4 m_supergrid_width;1723,89187
+  bool m_use_sg_width;1724,89246
+  vector<SuperGrid> m_supergrid_taper_x,1725,89305
+  vector<SuperGrid> m_supergrid_taper_x, m_supergrid_taper_y;1725,89305
+  vector<SuperGrid> m_supergrid_taper_z;1726,89367
+  vector<string> mPath,1729,89449
+  vector<string> mPath, mObsPath;1729,89449
+  string mTempPath;1730,89495
+  vector<int*> m_NumberOfBCPoints;1733,89560
+  vector<int*> m_BndryWindow;1736,89669
+  bool m_use_attenuation,1739,89770
+  bool m_use_attenuation, m_att_use_max_frequency;1739,89770
+  int m_number_mechanisms;1740,89821
+  float_sw4 m_velo_omega,1741,89848
+  float_sw4 m_velo_omega, m_min_omega,1741,89848
+  float_sw4 m_velo_omega, m_min_omega, m_max_omega,1741,89848
+  float_sw4 m_velo_omega, m_min_omega, m_max_omega, m_att_max_frequency,1741,89848
+      m_att_ppw;1742,89921
+  float_sw4 m_qmultiplier;1743,89938
+  vector<Sarray> mQp,1745,89966
+  vector<Sarray> mQp, mQs;1745,89966
+  vector<float_sw4> mOmegaVE;1748,90060
+  bool m_anisotropic;1751,90117
+  bool m_randomize,1754,90175
+  bool m_randomize, m_randomize_density;1754,90175
+  int m_random_seed[m_random_seed1755,90216
+  float_sw4 m_random_dist,1756,90240
+  float_sw4 m_random_dist, m_random_distz,1756,90240
+  float_sw4 m_random_dist, m_random_distz, m_random_amp,1756,90240
+  float_sw4 m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad,1756,90240
+      m_random_sdlimit;1757,90316
+  vector<RandomizedMaterial*> m_random_blocks;1758,90340
+  float_sw4 m_global_xmax,1774,90975
+  float_sw4 m_global_xmax, m_global_ymax,1774,90975
+  float_sw4 m_global_xmax, m_global_ymax, m_global_zmin,1774,90975
+  float_sw4 m_global_xmax, m_global_ymax, m_global_zmin, m_global_zmax;1774,90975
+  int mMaterialExtrapolate;1778,91150
+  int m_nx_base,1781,91223
+  int m_nx_base, m_ny_base,1781,91223
+  int m_nx_base, m_ny_base, m_nz_base;1781,91223
+  float_sw4 m_h_base;1782,91262
+  vector<bool> m_iscurvilinear;1783,91284
+  vector<float_sw4> m_refinementBoundaries;1784,91316
+  InputMode m_topoInputStyle;1785,91360
+  string m_topoFileName,1786,91390
+  string m_topoFileName, m_topoExtFileName,1786,91390
+  string m_topoFileName, m_topoExtFileName, m_QueryType;1786,91390
+  bool mTopoImageFound;1787,91447
+  float_sw4 m_topo_zmax;1788,91471
+  int m_maxIter;1789,91496
+  int m_myRank,1794,91623
+  int m_myRank, m_nProcs;1794,91623
+  string mName;1796,91650
+  string mGMTFileName;1798,91692
+  bool mWriteGMTOutput;1800,91716
+  int mPlotFrequency;1801,91740
+  int mNumFiles;1802,91762
+  int mVerbose;1803,91779
+  bool mQuiet;1804,91795
+  bool mDebugIO;1806,91811
+  bool mHomogeneous;1807,91828
+  bool mCompareSACFiles;1810,91893
+  float mSACFileErrorTolerance;1811,91918
+  vector<Image*> mImageFiles;1814,91972
+  vector<Image3D*> mImage3DFiles;1815,92002
+  vector<ESSI3D*> mESSI3DFiles;1816,92036
+  vector<SfileOutput*> mSfiles;1817,92068
+  bool m_iotiming;1818,92100
+  vector<bool> mTimeIsSet;1821,92135
+  vector<float_sw4> mTmax;1822,92162
+  vector<int> mNumberOfTimeSteps;1824,92190
+  int m_update_boundary_function;1827,92241
+  int mOrder;1832,92346
+  float_sw4 mCFL,1836,92535
+  float_sw4 mCFL, mCFLmax;1836,92535
+  vector<int*> m_onesided;1839,92608
+  float_sw4 m_curlcoeff,1840,92635
+  float_sw4 m_curlcoeff, m_d4coeff,1840,92635
+  float_sw4 m_curlcoeff, m_d4coeff, m_d4_cfl;1840,92635
+  vector<float_sw4*> m_sg_dc_x,1843,92753
+  vector<float_sw4*> m_sg_dc_x, m_sg_dc_y,1843,92753
+  vector<float_sw4*> m_sg_dc_x, m_sg_dc_y, m_sg_dc_z;1843,92753
+  vector<float_sw4*> m_sg_str_x,1844,92807
+  vector<float_sw4*> m_sg_str_x, m_sg_str_y,1844,92807
+  vector<float_sw4*> m_sg_str_x, m_sg_str_y, m_sg_str_z;1844,92807
+  vector<float_sw4*> m_sg_corner_x,1845,92864
+  vector<float_sw4*> m_sg_corner_x, m_sg_corner_y,1845,92864
+  vector<float_sw4*> m_sg_corner_x, m_sg_corner_y, m_sg_corner_z;1845,92864
+  bool m_energy_log,1857,93249
+  bool m_energy_log, m_energy_print;1857,93249
+  float_sw4 m_saved_energy;1858,93286
+  string m_energy_logfile;1859,93314
+  vector<float_sw4> m_energy;1860,93341
+  bool m_do_timing;1865,93513
+  int m_timing_print;1866,93533
+  bool m_output_detailed_timing;1867,93555
+  bool m_output_load;1868,93588
+  int m_projection_cycle;1870,93611
+  bool m_checkfornan;1872,93638
+  float_sw4 m_max_error[m_max_error1875,93674
+  float_sw4 m_max_error[3], m_l2_error[m_l2_error1875,93674
+  string m_error_log_file;1877,93718
+  bool m_error_log,1878,93745
+  bool m_error_log, m_error_print;1878,93745
+  int m_inner_loop;1879,93780
+  bool m_mesh_refinements;1883,93861
+  bool m_matrices_decomposed;1884,93888
+  float_sw4 m_citol,1885,93918
+  float_sw4 m_citol, m_cirelfact;1885,93918
+  int m_cimaxiter;1886,93952
+  vector<float_sw4*> m_cimat1;1888,93972
+  vector<float_sw4*> m_cimat2;1889,94003
+  vector<int*> m_ciipiv1;1890,94034
+  vector<int*> m_ciipiv2;1891,94060
+  bool m_do_geodynbc;1897,94154
+  std::vector<float_sw4*> m_geo_usgh;1898,94176
+  std::vector<int*> m_geodyn_dims;1899,94235
+  std::vector<Sarray> m_geodyn_data1;1900,94270
+  std::vector<Sarray> m_geodyn_data2;1901,94308
+  double m_geodyn_origin[m_geodyn_origin1902,94346
+  double m_geodyn_origin[3], m_geodyn_h,1902,94346
+  double m_geodyn_origin[3], m_geodyn_h, m_geodyn_dt;1902,94346
+  int m_geodyn_step,1903,94400
+  int m_geodyn_step, m_geodyn_maxsteps,1903,94400
+  int m_geodyn_step, m_geodyn_maxsteps, m_geodyn_blocksize;1903,94400
+  int m_geodyn_ni,1904,94460
+  int m_geodyn_ni, m_geodyn_nj,1904,94460
+  int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk,1904,94460
+  int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk, m_geodyn_faces;1904,94460
+  std::string m_geodyn_filename;1905,94521
+  std::ifstream m_geodynfile;1906,94554
+  bool m_geodyn_iwillread,1907,94584
+  bool m_geodyn_iwillread, m_geodyn_past_end;1907,94584
+  bool m_geodynbc_found,1910,94661
+  bool m_geodynbc_found, m_geodynbc_center;1910,94661
+  std::string m_geodynbc_filename;1911,94705
+  float_sw4 m_ibc_origin[m_ibc_origin1912,94740
+  int mPrintInterval;1914,94770
+  double mGeoAz;1916,94834
+  double mLonOrigin,1917,94851
+  double mLonOrigin, mLatOrigin;1917,94851
+  float_sw4 mMetersPerDegree,1920,94917
+  float_sw4 mMetersPerDegree, mMetersPerLongitude;1920,94917
+  bool mConstMetersPerLongitude;1921,94968
+  bool mParsingSuccessful,1924,95047
+  bool mParsingSuccessful, mIsInitialized,1924,95047
+  bool mParsingSuccessful, mIsInitialized, mSourcesOK;1924,95047
+  bool m_testing;1925,95102
+  bool m_inverse_problem;1928,95168
+  bool m_iniguess_pos,1929,95233
+  bool m_iniguess_pos, m_iniguess_t0fr,1929,95233
+  bool m_iniguess_pos, m_iniguess_t0fr, m_iniguess_mom,1929,95233
+      m_iniguess_shifts;1930,95289
+  bool m_output_initial_seismograms;1931,95343
+  bool m_compute_scalefactors;1932,95380
+  int m_maxit,1933,95411
+  int m_maxit, m_maxrestart;1933,95411
+  float_sw4 m_tolerance;1934,95440
+  float_sw4 m_scalefactors[m_scalefactors1935,95465
+  int m_cgstepselection,1936,95497
+  int m_cgstepselection, m_cgvarcase;1936,95497
+  bool m_cgfletcherreeves,1937,95535
+  bool m_cgfletcherreeves, m_do_linesearch;1937,95535
+  bool m_opt_testing;1938,95579
+  int m_opt_method,1939,95601
+  int m_opt_method, m_lbfgs_m;1939,95601
+  float_sw4 m_perturb;1941,95663
+  int m_iperturb,1942,95686
+  int m_iperturb, m_jperturb,1942,95686
+  int m_iperturb, m_jperturb, m_kperturb,1942,95686
+  int m_iperturb, m_jperturb, m_kperturb, m_pervar;1942,95686
+  vector<float_sw4> mMinVsOverH;1945,95800
+  int m_ext_ghost_points;1947,95834
+  int m_ghost_points;1948,95860
+  int m_ppadding;1949,95882
+  float_sw4 *m_sbop,m_sbop1953,95987
+  float_sw4 *m_sbop, *m_acof,m_acof1953,95987
+  float_sw4 *m_sbop, *m_acof, *m_bop,m_bop1953,95987
+  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope,m_bope1953,95987
+  float_sw4 *m_sbop, *m_acof, *m_bop, *m_bope, *m_ghcof;m_ghcof1953,95987
+  float_sw4 *m_acof_no_gp,m_acof_no_gp1954,96044
+  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp,m_ghcof_no_gp1954,96044
+  float_sw4 *m_acof_no_gp, *m_ghcof_no_gp, *m_sbop_no_gp;m_sbop_no_gp1954,96044
+  float_sw4 m_sbop[m_sbop1956,96108
+  float_sw4 m_sbop[6], m_acof[m_acof1956,96108
+  float_sw4 m_sbop[6], m_acof[384], m_bop[m_bop1956,96108
+  float_sw4 m_sbop[6], m_acof[384], m_bop[24], m_bope[m_bope1956,96108
+  float_sw4 m_sbop[6], m_acof[384], m_bop[24], m_bope[48], m_ghcof[m_ghcof1956,96108
+  float_sw4 m_acof_no_gp[m_acof_no_gp1957,96179
+  float_sw4 m_acof_no_gp[384], m_ghcof_no_gp[m_ghcof_no_gp1957,96179
+  float_sw4 m_acof_no_gp[384], m_ghcof_no_gp[6], m_sbop_no_gp[m_sbop_no_gp1957,96179
+  SView* viewArrayActual;1963,96468
+  vector<CurvilinearInterface2*> m_cli2;1965,96495
+  vector<MPI_Datatype> m_send_type1;1968,96561
+  vector<MPI_Datatype> m_send_type3;1969,96598
+  vector<MPI_Datatype> m_send_type4;1970,96635
+  vector<MPI_Datatype> m_send_type21;1971,96684
+  MPI_Datatype m_send_type_2dfinest[m_send_type_2dfinest1972,96738
+  MPI_Datatype m_send_type_2dfinest_ext[m_send_type_2dfinest_ext1973,96778
+  vector<MPI_Datatype> m_send_type_isurfx;1976,96865
+  vector<MPI_Datatype> m_send_type_isurfy;1977,96908
+  vector<MPI_Datatype> m_send_type_2dx;1979,96952
+  vector<MPI_Datatype> m_send_type_2dy;1980,96992
+  vector<MPI_Datatype> m_send_type_2dx3p;1981,97032
+  vector<MPI_Datatype> m_send_type_2dy3p;1982,97074
+  vector<MPI_Datatype> m_send_type_2dx1p;1983,97116
+  vector<MPI_Datatype> m_send_type_2dy1p;1984,97158
+  vector<vector1987,97245
+  vector<std::tuple<int, int, int>> send_type1;1987,97245
+  vector<vector1988,97293
+  vector<std::tuple<int, int, int>> send_type3;1988,97293
+  vector<vector1989,97341
+  vector<std::tuple<int, int, int>> send_type4;1989,97341
+  vector<vector1990,97389
+  vector<std::tuple<int, int, int>> send_type21;1990,97389
+  vector<vector1992,97439
+  vector<std::tuple<int, int, int>> send_type_2dx;1992,97439
+  vector<vector1993,97490
+  vector<std::tuple<int, int, int>> send_type_2dy;1993,97490
+  vector<vector1995,97542
+  vector<std::tuple<int, int, int>> send_type_2dfinest_ext;1995,97542
+  vector<vector1997,97603
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type1;1997,97603
+  vector<vector1998,97660
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type3;1998,97660
+  vector<vector1999,97717
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type4;1999,97717
+  vector<vector2000,97774
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type21;2000,97774
+  vector<vector2002,97833
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type_2dx;2002,97833
+  vector<vector2003,97893
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type_2dy;2003,97893
+  vector<vector2005,97954
+  vector<std::tuple<float_sw4*, float_sw4*>> bufs_type_2dfinest_ext;2005,97954
+  Space mpi_buffer_space;2007,98024
+  float_sw4* ForceVector;2010,98102
+  float_sw4** ForceAddress;2011,98128
+  int* idnts;2012,98156
+  GridPointSource** GPS;2013,98170
+  StatMachine<StatMachine2018,98355
+  StatMachine<size_t, double> sm;2018,98355
+  StatMachine<StatMachine2019,98389
+  StatMachine<size_t, double> sm2;2019,98389
+  StatMachine<StatMachine2020,98424
+  StatMachine<int, double> coll_sm;2020,98424
+  StatMachine<StatMachine2021,98460
+  StatMachine<int, double> step_sm;2021,98460
+  StatMachine<StatMachine2022,98496
+  StatMachine<int, double> host_sm;2022,98496
+  int m_neighbor[m_neighbor2025,98548
+  MPI_Datatype m_mpifloat;2026,98569
+  bool m_topography_exists;2028,98597
+  vector<vector<int>> m_utc0;2033,98735
+  bool m_croutines;2039,98890
+  CheckPoint* m_check_point;2043,98984
+  bool ProfilerOn;2044,99013
 
 F77_FUNC.h,209
 #define F77_FUNC_H34,1398
@@ -3936,180 +3987,182 @@ class GridPointSource 48,1624
   float_sw4 m_hesspos1[9], m_hesspos2[9], m_hesspos3[9], m_dddp[m_dddp150,5782
   float_sw4 m_dir[m_dir151,5850
 
-hip_foralls.h,6454
+hip_foralls.h,6511
 #define __HIP_FORALLS_H__2,26
-__global__ void forallkernel(17,323
-void forall(22,493
-void forallasync(33,942
-template <int N,44,1373
-void forall(45,1409
-__global__ void forallkernelB(58,1880
-void forallB(72,2303
-class Range 84,2687
-  Range(86,2710
-  static const int value 92,2933
-  int start;93,2963
-  int end;94,2976
-  int blocks;95,2987
-  int tpb;96,3001
-  bool invalid;97,3012
-template <int N,100,3032
-class RangeGS 101,3056
-  RangeGS(103,3081
-  int start;104,3162
-  int end;105,3175
-  int blocks;106,3186
-  int tpb;107,3200
-template <int WGS,110,3215
-template <int WGS, int OCC,110,3215
-__launch_bounds__(111,3258
-__launch_bounds__(120,3729
-template <int N,129,4174
-__launch_bounds__(130,4206
-__global__ void forall3gskernel(140,4676
-void forall3(152,5195
-constexpr int extractN(181,6222
-template <typename T1,185,6276
-template <typename T1, typename T2,185,6276
-template <typename T1, typename T2, typename T3,185,6276
-void forall3async(186,6344
-template <typename T1,202,7116
-template <typename T1, typename T2,202,7116
-template <typename T1, typename T2, typename T3,202,7116
-void forall3(203,7184
-template <typename T1,212,7553
-template <typename T1, typename T2,212,7553
-template <typename T1, typename T2, typename T3,212,7553
-void forall3GSasync(213,7621
-template <typename T1,222,7992
-template <typename T1, typename T2,222,7992
-template <typename T1, typename T2, typename T3,222,7992
-void forall3GS(223,8060
-template <int WGS,234,8445
-template <int WGS, int OCC,234,8445
-__launch_bounds__(235,8488
-__global__ void forall2kernel(244,8846
-template <typename T1,251,9154
-template <typename T1, typename T2,251,9154
-void forall2async(252,9209
-template <typename T1,263,9645
-template <typename T1, typename T2,263,9645
-void forall2(264,9700
-template <int N,275,10035
-template <int N, int M,275,10035
-class RangeAT 276,10066
-  RangeAT(278,10091
-  static std::map<std::map354,13291
-  static std::map<std::tuple<int, int, int>, std::tuple<dim3, dim3>> map;354,13291
-  static std::map<std::map355,13365
-      confs;357,13465
-  static std::map<std::map358,13478
-  static std::map<std::tuple<int, int, int>, float> mintime;358,13478
-  static std::map<std::map359,13539
-  static std::map<std::tuple<int, int, int>, int> vloca;359,13539
-  static std::map<std::map360,13596
-  static std::map<std::tuple<int, int, int>, std::ofstream> files;360,13596
-  static dim3 mint,361,13663
-  static dim3 mint, minb;361,13663
-  int istart,362,13689
-  int istart, jstart,362,13689
-  int istart, jstart, kstart;362,13689
-  int iend,363,13719
-  int iend, jend,363,13719
-  int iend, jend, kend;363,13719
-  int ib,364,13743
-  int ib, jb,364,13743
-  int ib, jb, kb;364,13743
-  int ic,365,13761
-  int ic, jc,365,13761
-  int ic, jc, kc;365,13761
-  int blocks;366,13779
-  int tpb;367,13793
-template <int N,370,13808
-template <int N, typename T1,370,13808
-void forall3asyncAT(371,13857
-#define SW4_VERBOSE381,14263
-class Tclass 458,17559
-template <int N,460,17577
-template <int N, typename Tag,460,17577
-__launch_bounds__(461,17623
-template <int WGS,469,18077
-template <int WGS, int OCC,469,18077
-template <int WGS, int OCC, typename Tag,469,18077
-__launch_bounds__(470,18134
-template <int WGS,479,18593
-template <int WGS, int OCC,479,18593
-__launch_bounds__(480,18636
-template <int N,488,19086
-template <int N, typename Tag,488,19086
-template <int N, typename Tag, typename T1,488,19086
-template <int N, typename Tag, typename T1, typename T2,488,19086
-template <int N, typename Tag, typename T1, typename T2, typename T3,488,19086
-void forall3async(490,19185
-template <int N,516,20460
-template <int N, typename Tag,516,20460
-template <int N, typename Tag, typename T1,516,20460
-template <int N, typename Tag, typename T1, typename T2,516,20460
-template <int N, typename Tag, typename T1, typename T2, typename T3,516,20460
-void forall3(518,20559
-template <int WGS,523,20720
-template <int WGS, int OCC,523,20720
-template <int WGS, int OCC, typename Tag,523,20720
-template <int WGS, int OCC, typename Tag, typename T1,523,20720
-template <int WGS, int OCC, typename Tag, typename T1, typename T2,523,20720
-template <int WGS, int OCC, typename Tag, typename T1, typename T2, typename T3,523,20720
-void forall3asyncV(525,20830
-template <typename T,554,22173
-template <typename T, typename F0,554,22173
-template <typename T, typename F0, typename F1,554,22173
-template <typename T, typename F0, typename F1, typename F2,554,22173
-__global__ void multiforallkernel(555,22247
-template <int N,571,22925
-template <int N, typename T,571,22925
-template <int N, typename T, typename LB0,571,22925
-template <int N, typename T, typename LB0, typename LB1,571,22925
-template <int N, typename T, typename LB0, typename LB1, typename LB2,571,22925
-void multiforall(573,23020
-template <typename T,585,23521
-__device__ inline void runner(586,23562
-template <typename T,591,23739
-template <typename T, typename LoopBody,591,23739
-__device__ inline void runner(592,23795
-template <typename T,599,24006
-template <typename T, typename LoopBody,599,24006
-__global__ void gmforallkernel(600,24062
-template <int N,606,24204
-template <int N, typename T,606,24204
-template <int N, typename T, typename LoopBody,606,24204
-void gmforall(607,24267
-class MRange 620,24759
-  int i,622,24783
-  int i, j,622,24783
-  int i, j, k;622,24783
-template <typename T,625,24802
-__device__ inline void runner3(626,24843
-template <typename T,636,25328
-template <typename T, typename LoopBody,636,25328
-__device__ inline void runner3(637,25384
-template <typename T,649,25904
-template <typename T, typename LoopBody,649,25904
-__global__ void gmforallkernel3(650,25960
-template <int I,654,26080
-template <int I, int J,654,26080
-template <int I, int J, int K,654,26080
-template <int I, int J, int K, typename T,654,26080
-template <int I, int J, int K, typename T, typename LoopBody,654,26080
-void gmforall3async(655,26157
-template <int N,664,26476
-template <int N, typename Tag,664,26476
-__launch_bounds__(665,26525
-#define USE_SHARED_MEMORY 670,26776
-template <int N,692,27369
-template <int N, typename Tag,692,27369
-template <int N, typename Tag, typename T1,692,27369
-template <int N, typename Tag, typename T1, typename T2,692,27369
-template <int N, typename Tag, typename T1, typename T2, typename T3,692,27369
-void forall3asyncSF(694,27473
+#define HSYNC_DEVICE 4,53
+#define HSYNC_STREAM 5,119
+__global__ void forallkernel(21,477
+void forall(26,647
+void forallasync(37,1086
+template <int N,47,1488
+void forall(48,1524
+__global__ void forallkernelB(61,1985
+void forallB(75,2408
+class Range 87,2782
+  Range(89,2805
+  static const int value 95,3028
+  int start;96,3058
+  int end;97,3071
+  int blocks;98,3082
+  int tpb;99,3096
+  bool invalid;100,3107
+template <int N,103,3127
+class RangeGS 104,3151
+  RangeGS(106,3176
+  int start;107,3257
+  int end;108,3270
+  int blocks;109,3281
+  int tpb;110,3295
+template <int WGS,113,3310
+template <int WGS, int OCC,113,3310
+__launch_bounds__(114,3353
+__launch_bounds__(123,3824
+template <int N,132,4269
+__launch_bounds__(133,4301
+__global__ void forall3gskernel(143,4771
+void forall3(155,5290
+constexpr int extractN(184,6307
+template <typename T1,188,6361
+template <typename T1, typename T2,188,6361
+template <typename T1, typename T2, typename T3,188,6361
+void forall3async(189,6429
+template <typename T1,205,7201
+template <typename T1, typename T2,205,7201
+template <typename T1, typename T2, typename T3,205,7201
+void forall3(206,7269
+template <typename T1,215,7627
+template <typename T1, typename T2,215,7627
+template <typename T1, typename T2, typename T3,215,7627
+void forall3GSasync(216,7695
+template <typename T1,225,8066
+template <typename T1, typename T2,225,8066
+template <typename T1, typename T2, typename T3,225,8066
+void forall3GS(226,8134
+template <int WGS,237,8508
+template <int WGS, int OCC,237,8508
+__launch_bounds__(238,8551
+__global__ void forall2kernel(247,8909
+template <typename T1,254,9217
+template <typename T1, typename T2,254,9217
+void forall2async(255,9272
+template <typename T1,266,9708
+template <typename T1, typename T2,266,9708
+void forall2(267,9763
+template <int N,278,10087
+template <int N, int M,278,10087
+class RangeAT 279,10118
+  RangeAT(281,10143
+  static std::map<std::map357,13343
+  static std::map<std::tuple<int, int, int>, std::tuple<dim3, dim3>> map;357,13343
+  static std::map<std::map358,13417
+      confs;360,13517
+  static std::map<std::map361,13530
+  static std::map<std::tuple<int, int, int>, float> mintime;361,13530
+  static std::map<std::map362,13591
+  static std::map<std::tuple<int, int, int>, int> vloca;362,13591
+  static std::map<std::map363,13648
+  static std::map<std::tuple<int, int, int>, std::ofstream> files;363,13648
+  static dim3 mint,364,13715
+  static dim3 mint, minb;364,13715
+  int istart,365,13741
+  int istart, jstart,365,13741
+  int istart, jstart, kstart;365,13741
+  int iend,366,13771
+  int iend, jend,366,13771
+  int iend, jend, kend;366,13771
+  int ib,367,13795
+  int ib, jb,367,13795
+  int ib, jb, kb;367,13795
+  int ic,368,13813
+  int ic, jc,368,13813
+  int ic, jc, kc;368,13813
+  int blocks;369,13831
+  int tpb;370,13845
+template <int N,373,13860
+template <int N, typename T1,373,13860
+void forall3asyncAT(374,13909
+#define SW4_VERBOSE384,14315
+class Tclass 461,17611
+template <int N,463,17629
+template <int N, typename Tag,463,17629
+__launch_bounds__(464,17675
+template <int WGS,472,18129
+template <int WGS, int OCC,472,18129
+template <int WGS, int OCC, typename Tag,472,18129
+__launch_bounds__(473,18186
+template <int WGS,482,18645
+template <int WGS, int OCC,482,18645
+__launch_bounds__(483,18688
+template <int N,491,19138
+template <int N, typename Tag,491,19138
+template <int N, typename Tag, typename T1,491,19138
+template <int N, typename Tag, typename T1, typename T2,491,19138
+template <int N, typename Tag, typename T1, typename T2, typename T3,491,19138
+void forall3async(493,19237
+template <int N,519,20512
+template <int N, typename Tag,519,20512
+template <int N, typename Tag, typename T1,519,20512
+template <int N, typename Tag, typename T1, typename T2,519,20512
+template <int N, typename Tag, typename T1, typename T2, typename T3,519,20512
+void forall3(521,20611
+template <int WGS,526,20761
+template <int WGS, int OCC,526,20761
+template <int WGS, int OCC, typename Tag,526,20761
+template <int WGS, int OCC, typename Tag, typename T1,526,20761
+template <int WGS, int OCC, typename Tag, typename T1, typename T2,526,20761
+template <int WGS, int OCC, typename Tag, typename T1, typename T2, typename T3,526,20761
+void forall3asyncV(528,20871
+template <typename T,557,22214
+template <typename T, typename F0,557,22214
+template <typename T, typename F0, typename F1,557,22214
+template <typename T, typename F0, typename F1, typename F2,557,22214
+__global__ void multiforallkernel(558,22288
+template <int N,574,22966
+template <int N, typename T,574,22966
+template <int N, typename T, typename LB0,574,22966
+template <int N, typename T, typename LB0, typename LB1,574,22966
+template <int N, typename T, typename LB0, typename LB1, typename LB2,574,22966
+void multiforall(576,23061
+template <typename T,588,23562
+__device__ inline void runner(589,23603
+template <typename T,594,23780
+template <typename T, typename LoopBody,594,23780
+__device__ inline void runner(595,23836
+template <typename T,602,24047
+template <typename T, typename LoopBody,602,24047
+__global__ void gmforallkernel(603,24103
+template <int N,609,24245
+template <int N, typename T,609,24245
+template <int N, typename T, typename LoopBody,609,24245
+void gmforall(610,24308
+class MRange 623,24800
+  int i,625,24824
+  int i, j,625,24824
+  int i, j, k;625,24824
+template <typename T,628,24843
+__device__ inline void runner3(629,24884
+template <typename T,639,25369
+template <typename T, typename LoopBody,639,25369
+__device__ inline void runner3(640,25425
+template <typename T,652,25945
+template <typename T, typename LoopBody,652,25945
+__global__ void gmforallkernel3(653,26001
+template <int I,657,26121
+template <int I, int J,657,26121
+template <int I, int J, int K,657,26121
+template <int I, int J, int K, typename T,657,26121
+template <int I, int J, int K, typename T, typename LoopBody,657,26121
+void gmforall3async(658,26198
+template <int N,667,26517
+template <int N, typename Tag,667,26517
+__launch_bounds__(668,26566
+#define USE_SHARED_MEMORY 673,26817
+template <int N,695,27410
+template <int N, typename Tag,695,27410
+template <int N, typename Tag, typename T1,695,27410
+template <int N, typename Tag, typename T1, typename T2,695,27410
+template <int N, typename Tag, typename T1, typename T2, typename T3,695,27410
+void forall3asyncSF(697,27514
 
 hip_policies.h,3194
 #define __HIP_POLICIES_H__2,27
@@ -4362,7 +4415,7 @@ class MaterialData 39,1459
   bool coversAllPoints(51,1938
   bool mCoversAllPoints;54,2006
 
-MaterialGMG.h,947
+MaterialGMG.h,988
 #define MATERIALGMG_FILE34,1404
 class MaterialGMG 45,1526
   bool use_attenuation(58,1956
@@ -4379,16 +4432,17 @@ class MaterialGMG 45,1526
   double m_Origin_x, m_Origin_y, m_Yaz, m_Zmax,99,3070
   double m_Origin_x, m_Origin_y, m_Yaz, m_Zmax, m_Zmin;99,3070
   char* m_CRS;100,3126
-  hsize_t m_Top_dims[m_Top_dims101,3141
-  float* m_Top_surface;102,3166
-  vector<double> m_hv,103,3190
-  vector<double> m_hv, m_hh,103,3190
-  vector<double> m_hv, m_hh, m_ztop;103,3190
-  vector<int> m_ni,104,3227
-  vector<int> m_ni, m_nj,104,3227
-  vector<int> m_ni, m_nj, m_nk,104,3227
-  vector<int> m_ni, m_nj, m_nk, m_nc;104,3227
-  vector<float*> m_Material;105,3265
+  hsize_t m_Top_dims[m_Top_dims102,3157
+  size_t m_Top_dims[m_Top_dims104,3188
+  float* m_Top_surface;106,3219
+  vector<double> m_hv,107,3243
+  vector<double> m_hv, m_hh,107,3243
+  vector<double> m_hv, m_hh, m_ztop;107,3243
+  vector<int> m_ni,108,3280
+  vector<int> m_ni, m_nj,108,3280
+  vector<int> m_ni, m_nj, m_nk,108,3280
+  vector<int> m_ni, m_nj, m_nk, m_nc;108,3280
+  vector<float*> m_Material;109,3318
 
 MaterialIfile.h,1260
 #define MATERIALIFILE_H34,1403
@@ -4642,8 +4696,8 @@ template <typename T,201,5365
 void autopeel(211,5625
 template <typename T,216,5712
 void autopeel(217,5752
-void Write(225,5930
-void spacecopy(233,6077
+void Write(225,5931
+void spacecopy(233,6078
 
 nearlyEqual.h,30
 #define NEARLYEQUAL_H34,1401
@@ -4990,21 +5044,21 @@ class Sarray 88,2760
   void getnonzero(205,7619
   int ncomp(224,8387
   int npts(225,8424
-  int m_nc,267,10288
-  int m_nc, m_ni,267,10288
-  int m_nc, m_ni, m_nj,267,10288
-  int m_nc, m_ni, m_nj, m_nk;267,10288
-  inline SView& getview(272,10446
-  SView view;276,10514
-  static std::unordered_map<std::unordered_map277,10528
-  static std::unordered_map<std::string, float_sw4*> static_map;277,10528
-  bool static_alloc;278,10593
-  float_sw4* m_data;281,10625
-  bool prefetched;282,10646
-  std::ofstream of;285,10808
-  float_sw4* dev_data;286,10828
-  inline int min(287,10851
-  inline int max(293,10950
+  int m_nc,269,10345
+  int m_nc, m_ni,269,10345
+  int m_nc, m_ni, m_nj,269,10345
+  int m_nc, m_ni, m_nj, m_nk;269,10345
+  inline SView& getview(274,10503
+  SView view;278,10571
+  static std::unordered_map<std::unordered_map279,10585
+  static std::unordered_map<std::string, float_sw4*> static_map;279,10585
+  bool static_alloc;280,10650
+  float_sw4* m_data;283,10682
+  bool prefetched;284,10703
+  std::ofstream of;287,10865
+  float_sw4* dev_data;288,10885
+  inline int min(289,10908
+  inline int max(295,11007
 
 SecondOrderSection.h,159
 #define SECOND_ORDER_SECTION_H35,1423
