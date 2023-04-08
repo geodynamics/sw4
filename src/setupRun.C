@@ -649,10 +649,10 @@ void EW::preprocessSources(vector<vector<Source *> > &a_GlobalUniqueSources) {
               (need_mu_corr || a_GlobalUniqueSources[e][i]->get_CorrectForMu());
 
         // must communicate need_mu_corr
-        sw4_type mu_corr_global = 0, mu_corr_loc = need_mu_corr ? 1 : 0;
+        int mu_corr_global = 0, mu_corr_loc = need_mu_corr ? 1 : 0;
 
         // take max over all procs to communicate
-        MPI_Allreduce(&mu_corr_loc, &mu_corr_global, 1, MPI_SW4_TYPE, MPI_MAX,
+        MPI_Allreduce(&mu_corr_loc, &mu_corr_global, 1, MPI_INT, MPI_MAX,
                       m_cartesian_communicator);
         need_mu_corr = (bool)mu_corr_global;
 

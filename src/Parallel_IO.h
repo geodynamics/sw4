@@ -100,7 +100,8 @@ class Parallel_IO {
   template <class T>
   size_t write_with_limit(sw4_type* fid, T* rbuf, size_t nelem, size_t limit);
 
-  sw4_type m_iwrite, m_nwriters, m_parallel_file_system;
+  int m_iwrite;
+  sw4_type m_nwriters, m_parallel_file_system;
   sw4_type m_csteps;
   sw4_type* m_writer_ids;
   sw4_type ni, nj, nk, nig, njg, nkg, oi, oj, ok;

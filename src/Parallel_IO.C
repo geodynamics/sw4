@@ -247,7 +247,7 @@ void Parallel_IO::init_pio(sw4_type iwrite, sw4_type pfs, sw4_type ihave_array)
 // m_writer_ids[i] is id in m_data_comm of proc i in m_write_comm.
 //-----------------------------------------------------------------------
 {
-  sw4_type* tmp;
+  int* tmp;
   sw4_type nprocs, p, i, retcode;
   MPI_Group world_group, writer_group, array_group;
 
@@ -274,8 +274,8 @@ void Parallel_IO::init_pio(sw4_type iwrite, sw4_type pfs, sw4_type ihave_array)
       MPI_Abort(MPI_COMM_WORLD, 0);
     }
 
-    sw4_type participator = ihave_array || iwrite;
-    retcode = MPI_Allgather(&participator, 1, MPI_SW4_TYPE, tmp, 1, MPI_SW4_TYPE,
+    int participator = ihave_array || iwrite;
+    retcode = MPI_Allgather(&participator, 1, MPI_INT, tmp, 1, MPI_INT,
                             MPI_COMM_WORLD);
     if (retcode != MPI_SUCCESS) {
       cout << "Parallel_IO::init_pio, error from first call to MPI_Allgather, "
@@ -365,7 +365,7 @@ void Parallel_IO::init_pio(sw4_type iwrite, sw4_type pfs, sw4_type ihave_array)
       MPI_Abort(MPI_COMM_WORLD, 0);
     }
     retcode =
-        MPI_Allgather(&m_iwrite, 1, MPI_SW4_TYPE, tmp, 1, MPI_SW4_TYPE, m_data_comm);
+        MPI_Allgather(&m_iwrite, 1, MPI_INT, tmp, 1, MPI_INT, m_data_comm);
     if (retcode != MPI_SUCCESS) {
       cout << "Parallel_IO::init_pio, error from second call to MPI_Allgather, "
            << "return code = " << retcode << " from processor " << gproc
@@ -444,9 +444,10 @@ void Parallel_IO::init_array(sw4_type globalsizes[3], sw4_type localsizes[3],
   //                      padding avoids writing these twice.
   sw4_type blsize, s, blocks_in_writer, r, p, b, blnr, kb, ke, l;
   sw4_type ibl, iel, jbl, jel, kbl, kel, nsend;
-  sw4_type found, i, j, q, lims[6], v[6], vr[6], nprocs, tag2, myid;
+  int found;
+  sw4_type i, j, q, lims[6], v[6], vr[6], nprocs, tag2, myid;
   sw4_type retcode, gproc;
-  sw4_type* nrecvs;
+  int* nrecvs;
   size_t nblocks, npts, maxpts;
 
   MPI_Status status;
@@ -727,7 +728,7 @@ void Parallel_IO::init_array(sw4_type globalsizes[3], sw4_type localsizes[3],
               break;
             }
         }
-        retcode = MPI_Gather(&found, 1, MPI_SW4_TYPE, nrecvs, 1, MPI_SW4_TYPE,
+        retcode = MPI_Gather(&found, 1, MPI_INT, nrecvs, 1, MPI_INT,
                              m_writer_ids[p - 1], m_data_comm);
         if (retcode != MPI_SUCCESS) {
           cout << "Parallel_IO::init_array, error from call to MPI_Gather. "

@@ -287,10 +287,10 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   // AP changed to false
   bool output_timefunc = false;
   if (output_timefunc) {
-    sw4_type has_source_id = -1, has_source_max;
+    int has_source_id = -1, has_source_max;
     if (point_sources.size() > 0) has_source_id = m_myRank;
 
-    MPI_Allreduce(&has_source_id, &has_source_max, 1, MPI_SW4_TYPE, MPI_MAX,
+    MPI_Allreduce(&has_source_id, &has_source_max, 1, MPI_INT, MPI_MAX,
                   m_cartesian_communicator);
     if (m_myRank == has_source_max) {
       if (!mQuiet && mVerbose >= 1)
@@ -4569,9 +4569,9 @@ void EW::test_sources(vector<GridPointSource*>& a_point_sources,
   sw4_type ky[3] = {0, 0, 0};
   sw4_type kz[3] = {0, 0, 0};
   float_sw4 moments[3], momexact[3];
-  sw4_type nsourcesloc = a_point_sources.size();
-  sw4_type nsources;
-  MPI_Allreduce(&nsourcesloc, &nsources, 1, MPI_SW4_TYPE, MPI_SUM,
+  int nsourcesloc = a_point_sources.size();
+  int nsources;
+  MPI_Allreduce(&nsourcesloc, &nsources, 1, MPI_INT, MPI_SUM,
                 m_cartesian_communicator);
 
   if (proc_zero()) {
