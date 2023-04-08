@@ -58,16 +58,16 @@ Image* Image::nil = static_cast<Image*>(0);
 
 using namespace std;
 
-Image::Image(EW* a_ew, float_sw4 time, float_sw4 timeSw4_Typeerval, sw4_type cycle,
-             sw4_type cycleSw4_Typeerval, const std::string& filePrefix, ImageMode mode,
+Image::Image(EW* a_ew, float_sw4 time, float_sw4 timeInterval, sw4_type cycle,
+             sw4_type cycleInterval, const std::string& filePrefix, ImageMode mode,
              ImageOrientation locationType, float_sw4 locationValue,
              bool doubleMode, bool usehdf5, bool userCreated)
     : mTime(time),
       mEW(a_ew),
       m_time_done(false),
-      mTimeSw4_Typeerval(timeSw4_Typeerval),
+      mTimeInterval(timeInterval),
       mWritingCycle(cycle),
-      mCycleSw4_Typeerval(cycleSw4_Typeerval),
+      mCycleInterval(cycleInterval),
       mFilePrefix(filePrefix),
       mMode(mode),
       //  mFileName(""),
@@ -372,7 +372,7 @@ void Image::computeGridPtIndex() {
 
 //-----------------------------------------------------------------------
 bool Image::plane_in_proc(sw4_type a_gridIndexCoarsest) {
-  // Find sw4_typeersection of image with local processor grid block, all computed
+  // Find intersection of image with local processor grid block, all computed
   // in global indices.
   bool retval = false;
   sw4_type a_iStart = mEW->m_iStart[0];
@@ -398,7 +398,7 @@ bool Image::plane_in_proc(sw4_type a_gridIndexCoarsest) {
 void Image::initializeTime(double t) {
   mNextTime = t;
   m_time_done = false;
-  // with the option timeSw4_Typeerval=..., first time is always t=0
+  // with the option timeInterval=..., first time is always t=0
 }
 
 //-----------------------------------------------------------------------
@@ -421,7 +421,7 @@ bool Image::timeToWrite(float_sw4 time, sw4_type cycle, float_sw4 dt) {
   // -----------------------------------------------
   bool do_it = false;
   if (cycle == mWritingCycle) do_it = true;
-  if (mCycleSw4_Typeerval != 0 && cycle % mCycleSw4_Typeerval == 0) do_it = true;
+  if (mCycleInterval != 0 && cycle % mCycleInterval == 0) do_it = true;
   // ---------------------------------------------------
   // Check based on time
   // ---------------------------------------------------
@@ -429,11 +429,11 @@ bool Image::timeToWrite(float_sw4 time, sw4_type cycle, float_sw4 dt) {
     m_time_done = true;
     do_it = true;
   }
-  if (mTimeSw4_Typeerval != 0.0 && mNextTime <= time + dt * 0.5) {
-    // we're going to write it, so increase the time sw4_typeerval
+  if (mTimeInterval != 0.0 && mNextTime <= time + dt * 0.5) {
+    // we're going to write it, so increase the time interval
 
     //     while( mNextTime < time )
-    mNextTime += mTimeSw4_Typeerval;
+    mNextTime += mTimeInterval;
     do_it = true;
   }
   return do_it;
@@ -446,7 +446,7 @@ bool Image::timeToWrite(sw4_type cycle) {
   // -----------------------------------------------
   bool do_it = false;
   if (cycle == mWritingCycle) do_it = true;
-  if (mCycleSw4_Typeerval != 0 && cycle % mCycleSw4_Typeerval == 0) do_it = true;
+  if (mCycleInterval != 0 && cycle % mCycleInterval == 0) do_it = true;
   return do_it;
 }
 
@@ -1136,7 +1136,7 @@ void Image::writeImagePlane_2(sw4_type cycle, std::string& path, float_sw4 t) {
         cout << "ERROR: Image::writeImagePlane_2 could not write zmin for grid "
              << g << endl;
 
-      // should hold the global number of sw4_typeerior points
+      // should hold the global number of interior points
       if (mLocationType == Image::X) {
         globalPlaneSize[0] = 1;
         globalPlaneSize[1] = mEW->m_global_ny[g];
@@ -1266,7 +1266,7 @@ void Image::writeImagePlane_2(sw4_type cycle, std::string& path, float_sw4 t) {
       grid_size[g - glow] = static_cast<double>(mEW->mGridSize[g]);
       zmin[g - glow] = static_cast<double>(mEW->m_zmin[g]);
 
-      // should hold the global number of sw4_typeerior points
+      // should hold the global number of interior points
       if (mLocationType == Image::X) {
         ni[g - glow] = mEW->m_global_ny[g];
         nj[g - glow] = mEW->m_global_nz[g];

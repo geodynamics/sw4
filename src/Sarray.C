@@ -474,7 +474,7 @@ void Sarray::define(const Sarray& u) {
 }
 
 //-----------------------------------------------------------------------
-void Sarray::sw4_typeersection(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
+void Sarray::intersection(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                           sw4_type wind[6]) {
   SW4_MARK_FUNCTION;
   wind[0] = max(ib, m_ib);
@@ -1215,7 +1215,7 @@ void Sarray::define_offsets() {
     m_offi = 1;
     m_offj = m_ni;
     m_offk = m_ni * m_nj;
-    // Can use zero based array sw4_typeernally in class, i.e.,
+    // Can use zero based array internally in class, i.e.,
     // (i,j,k,c) = i + ni*j+ni*nj*k+ni*nj*nk*c
   } else {
     // (c,i,j,k)=c-1+nc*(i-ib)+nc*ni*(j-jb)+nc*ni*nj*(k-kb)
@@ -1224,7 +1224,7 @@ void Sarray::define_offsets() {
     m_offi = m_nc;
     m_offj = m_nc * m_ni;
     m_offk = m_nc * m_ni * m_nj;
-    // Can use zero based array sw4_typeernally in class, i.e.,
+    // Can use zero based array internally in class, i.e.,
     // (i,j,k,c) = c + nc*i + nc*ni*j+nc*ni*nj*k
   }
   view.set(*this);
@@ -1362,13 +1362,13 @@ float_sw4* memoize(Sarray& u, sw4_type c, sw4_type i, sw4_type j, sw4_type k) {
   }
 }
 //-----------------------------------------------------------------------
-void Sarray::insert_sw4_typeersection(Sarray& a_U) {
+void Sarray::insert_intersection(Sarray& a_U) {
   SW4_MARK_FUNCTION;
   // Assuming nc is the same for m_data and a_U.m_data.
   sw4_type wind[6];
   sw4_type ib = a_U.m_ib, ie = a_U.m_ie, jb = a_U.m_jb, je = a_U.m_je, kb = a_U.m_kb,
       ke = a_U.m_ke;
-  sw4_typeersection(ib, ie, jb, je, kb, ke, wind);
+  intersection(ib, ie, jb, je, kb, ke, wind);
   sw4_type nis = ie - ib + 1;
   sw4_type njs = je - jb + 1;
   sw4_type nks = ke - kb + 1;
@@ -1388,7 +1388,7 @@ void Sarray::insert_sw4_typeersection(Sarray& a_U) {
     const sw4_type lm_nj = m_nj;
     // const sw4_type lm_nk = m_nk;
     const sw4_type lm_nc = m_nc;
-    // std::cout<<"Calling sw4_typeerest \n"<<std::flush;
+    // std::cout<<"Calling interest \n"<<std::flush;
 
 #if !defined(RAJA_ONLY) && defined (ENABLE_GPU)
 
@@ -1508,7 +1508,7 @@ void Sarray::extrapolij(sw4_type npts) {
 //-----------------------------------------------------------------------
 void Sarray::copy_kplane2(Sarray& u, sw4_type k) {
   // Only check k-dimension, other dims do not have to match, only copy the
-  // sw4_typeersecting part.
+  // intersecting part.
   SW4_MARK_FUNCTION;
   if (!(u.m_kb <= k && k <= u.m_ke && m_kb <= k && k <= m_ke)) {
     cout << "Sarray::copy_kplane, ERROR k index " << k << " not in range "
@@ -1516,7 +1516,7 @@ void Sarray::copy_kplane2(Sarray& u, sw4_type k) {
     return;
   }
   sw4_type wind[6];
-  sw4_typeersection(u.m_ib, u.m_ie, u.m_jb, u.m_je, u.m_kb, u.m_ke, wind);
+  intersection(u.m_ib, u.m_ie, u.m_jb, u.m_je, u.m_kb, u.m_ke, wind);
   if (m_corder) {
     sw4_type lm_nc = m_nc;
     sw4_type lm_ib = m_ib;

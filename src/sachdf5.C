@@ -398,7 +398,7 @@ sw4_type createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, sw4_type tot
           TimeSeries[0]->getMUTC(5), TimeSeries[0]->getMUTC(6));
   createWriteAttrStr(fid, "DATETIME", utcstr);
 
-  // delta, sample sw4_typeerval of time-series (seconds)
+  // delta, sample interval of time-series (seconds)
   sw4_type downsample = TimeSeries[0]->getDownSample();
   if (downsample < 1) downsample = 1;
 

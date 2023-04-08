@@ -5,7 +5,7 @@
 #define sw4_type int
 
 // enum boundaryConditionType { bStressFree, bDirichlet, bSuperGrid, bPeriodic,
-// bCCSw4_Typeerface, bRefSw4_Typeerface, bAESw4_Typeerface,
+// bCCInterface, bRefInterface, bAEInterface,
 // bProcessor, bNone };
 
 // enum timeDep { iRicker, iGaussian, iRamp, iTriangle, iSawtooth, iSmoothWave,

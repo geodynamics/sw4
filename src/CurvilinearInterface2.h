@@ -1,5 +1,5 @@
-#ifndef SW4_CURVILINEARSW4_TYPEERFACE2
-#define SW4_CURVILINEARSW4_TYPEERFACE2
+#ifndef SW4_CURVILINEARINTERFACE2
+#define SW4_CURVILINEARINTERFACE2
 
 #include <vector>
 
@@ -14,7 +14,7 @@
 class Sarray;
 class EW;
 
-class CurvilinearSw4_Typeerface2 {
+class CurvilinearInterface2 {
   EW* m_ew;
   TestTwilight* m_tw;
   TestEcons* m_etest;
@@ -67,7 +67,7 @@ class CurvilinearSw4_Typeerface2 {
   float_sw4 m_sbop[6], m_sbop_no_gp[6], m_bop[24];
 #endif
 
-  void sw4_typeerface_block(Sarray& matrix);
+  void interface_block(Sarray& matrix);
 
   void compute_icstresses_curv_host(Sarray& a_Up, Sarray& B, sw4_type kic,
                                     Sarray& a_metric, Sarray& a_mu,
@@ -93,9 +93,9 @@ class CurvilinearSw4_Typeerface2 {
   void allocate_mpi_buffers();
 
  public:
-  CurvilinearSw4_Typeerface2(sw4_type a_gc, EW* a_ew);
-  CurvilinearSw4_Typeerface2() {}
-  ~CurvilinearSw4_Typeerface2();
+  CurvilinearInterface2(sw4_type a_gc, EW* a_ew);
+  CurvilinearInterface2() {}
+  ~CurvilinearInterface2();
   void init_arrays(std::vector<float_sw4*>& a_strx,
                    std::vector<float_sw4*>& a_stry);
   //   void test1( EW* a_ew, sw4_type gc, std::vector<Sarray>& a_U );
@@ -103,7 +103,7 @@ class CurvilinearSw4_Typeerface2 {
 
   void impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
                  std::vector<Sarray*>& a_AlphaVE);
-  void sw4_typeerface_lhs(Sarray& lhs, Sarray& uc);
+  void interface_lhs(Sarray& lhs, Sarray& uc);
   void compute_icstresses_curv(Sarray& a_Up, Sarray& B, sw4_type kic,
                                Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
                                float_sw4* a_str_x, float_sw4* a_str_y,
@@ -114,7 +114,7 @@ class CurvilinearSw4_Typeerface2 {
   void bnd_zero(Sarray& u, sw4_type npts);
   void bnd_zero_host(Sarray& u, sw4_type npts);
   void injection(Sarray& u_f, Sarray& u_c);
-  void sw4_typeerface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
+  void interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
                      std::vector<Sarray>& Alpha_c,
                      std::vector<Sarray>& Alpha_f);
   void prolongate2D(Sarray& Uc, Sarray& Uf, sw4_type kc, sw4_type kf);

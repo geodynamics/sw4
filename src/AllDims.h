@@ -36,7 +36,7 @@ class AllDims {
           sw4_type nghost, sw4_type npad);
 
   void getdims_nopad(sw4_type dims[6], sw4_type p1 = -1, sw4_type p2 = -1, sw4_type p3 = -1);
-  bool sw4_typeersect(sw4_type p1, sw4_type p2, sw4_type p3, AllDims& other, sw4_type dims[6]);
+  bool intersect(sw4_type p1, sw4_type p2, sw4_type p3, AllDims& other, sw4_type dims[6]);
   void compute_myid3d();
   sw4_type proc1d(sw4_type p1, sw4_type p2, sw4_type p3);
   bool owner(sw4_type p1, sw4_type p2, sw4_type p3);

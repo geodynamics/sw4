@@ -110,7 +110,7 @@ void MaterialRfile::set_material_properties(std::vector<Sarray>& rho,
             sw4_type j0 = static_cast<sw4_type>(trunc(1 + (y - m_y0) / m_hh[gr]));
             sw4_type k0 = static_cast<sw4_type>(trunc(1 + (z - m_z0[gr]) / m_hv[gr]));
 
-            // Use bilinear sw4_typeerpolation always:
+            // Use bilinear interpolation always:
             bool sw4_typep_cubic = false;
 
             // Bias stencil near the boundary, need to communicate arrays
@@ -587,7 +587,7 @@ void MaterialRfile::read_rfile() {
       }
     }
 
-    // Sw4_Typeersect local grid with grid on rfile, assume all patches have the
+    // Intersect local grid with grid on rfile, assume all patches have the
     // same x- and y- extent. Assume patch=0 is topography, patches
     // =1,..npatches-1 are ordered from top to bottom.
     float_sw4 xminrf = m_x0, xmaxrf = m_x0 + (m_ni[0] - 1) * m_hh[0];
@@ -816,7 +816,7 @@ void MaterialRfile::fill_in_fluids() {
 
                 if (!(id >= mMaterial[pd].m_ib && id <= mMaterial[pd].m_ie &&
                       jd >= mMaterial[pd].m_jb && jd <= mMaterial[pd].m_je)) {
-                  // out of bounds: find nearest sw4_typeerior point
+                  // out of bounds: find nearest interior point
                   if (id < mMaterial[pd].m_ib) id = mMaterial[pd].m_ib;
                   if (id > mMaterial[pd].m_ie) id = mMaterial[pd].m_ie;
                   if (jd < mMaterial[pd].m_jb) jd = mMaterial[pd].m_jb;

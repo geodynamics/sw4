@@ -57,13 +57,13 @@ class ESSI3D {
  public:
   static ESSI3D* nil;
 
-  ESSI3D(EW* a_ew, const std::string& filePrefix, sw4_type dumpSw4_Typeerval,
-         sw4_type bufferSw4_Typeerval, float_sw4 coordBox[4], float_sw4 depth,
+  ESSI3D(EW* a_ew, const std::string& filePrefix, sw4_type dumpInterval,
+         sw4_type bufferInterval, float_sw4 coordBox[4], float_sw4 depth,
          sw4_type precision, sw4_type compressionMode, double compressionPar);
   ~ESSI3D();
 
-  void set_dump_sw4_typeerval(sw4_type a_dumpSw4_Typeerval);
-  void set_buffer_sw4_typeerval(sw4_type a_bufferSw4_Typeerval);
+  void set_dump_interval(sw4_type a_dumpInterval);
+  void set_buffer_interval(sw4_type a_bufferInterval);
   void setup();
 
   double getHDF5Timings();
@@ -129,8 +129,8 @@ class ESSI3D {
   ESSI3DHDF5* m_hdf5helper;
 
   sw4_type m_cycle;
-  sw4_type m_dumpSw4_Typeerval;    // Note: this cycle sw4_typeerval to start a new file
-  sw4_type m_bufferSw4_Typeerval;  // Note: number of steps to buffer data before writting
+  sw4_type m_dumpInterval;    // Note: this cycle interval to start a new file
+  sw4_type m_bufferInterval;  // Note: number of steps to buffer data before writting
                          // out
   sw4_type m_nbufstep;
   sw4_type mWindow[6];      // Local in processor start + end indices for (i,j,k) for

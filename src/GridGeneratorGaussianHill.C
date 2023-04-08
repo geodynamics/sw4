@@ -4,9 +4,9 @@
 
 GridGeneratorGaussianHill::GridGeneratorGaussianHill(
     float_sw4 topo_zmax, bool always_new, bool analytic_metric,
-    sw4_type grid_sw4_typeerpolation_order, float_sw4 zetaBreak, float_sw4 amp,
+    sw4_type grid_interpolation_order, float_sw4 zetaBreak, float_sw4 amp,
     float_sw4 xc, float_sw4 yc, float_sw4 lx, float_sw4 ly)
-    : GridGenerator(topo_zmax, always_new, grid_sw4_typeerpolation_order, zetaBreak),
+    : GridGenerator(topo_zmax, always_new, grid_interpolation_order, zetaBreak),
       m_analytic_metric(analytic_metric),
       m_amp(amp),
       m_xc(xc),
@@ -30,9 +30,9 @@ bool GridGeneratorGaussianHill::grid_mapping(EW* a_ew, float_sw4 q, float_sw4 r,
   if (m_always_new ||
       a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids > 1) {
     // new
-    float_sw4 s1 = curvilinear_sw4_typeerface_parameter(
+    float_sw4 s1 = curvilinear_interface_parameter(
         a_ew, g - a_ew->mNumberOfCartesianGrids);
-    float_sw4 s0 = curvilinear_sw4_typeerface_parameter(
+    float_sw4 s0 = curvilinear_interface_parameter(
         a_ew, g - a_ew->mNumberOfCartesianGrids - 1);
     float_sw4 Ztop = s1 * (-tau) + (1 - s1) * m_topo_zmax;
     float_sw4 Zbot = s0 * (-tau) + (1 - s0) * m_topo_zmax;
@@ -52,7 +52,7 @@ bool GridGeneratorGaussianHill::grid_mapping(EW* a_ew, float_sw4 q, float_sw4 r,
     float_sw4 zeta = (s - 1) * izb;
     if (zeta < 1) {
       float_sw4 omsm = (1 - zeta);
-      for (sw4_type l = 2; l <= m_grid_sw4_typeerpolation_order; l++) omsm *= (1 - zeta);
+      for (sw4_type l = 2; l <= m_grid_interpolation_order; l++) omsm *= (1 - zeta);
       z -= omsm * (zu1 + tau);
     }
     return true;
@@ -71,14 +71,14 @@ bool GridGeneratorGaussianHill::inverse_grid_mapping(EW* a_ew, float_sw4 x,
   r = y / h + 1;
   sw4_type i = static_cast<sw4_type>(round(q));
   sw4_type j = static_cast<sw4_type>(round(r));
-  if (a_ew->sw4_typeerior_point_in_proc(i, j, g)) {
+  if (a_ew->interior_point_in_proc(i, j, g)) {
     float_sw4 tau = top(x, y);
     if (m_always_new ||
         a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids > 1) {
       // new
-      float_sw4 s1 = curvilinear_sw4_typeerface_parameter(
+      float_sw4 s1 = curvilinear_interface_parameter(
           a_ew, g - a_ew->mNumberOfCartesianGrids);
-      float_sw4 s0 = curvilinear_sw4_typeerface_parameter(
+      float_sw4 s0 = curvilinear_interface_parameter(
           a_ew, g - a_ew->mNumberOfCartesianGrids - 1);
       float_sw4 Ztop = s1 * (-tau) + (1 - s1) * m_topo_zmax;
       float_sw4 Zbot = s0 * (-tau) + (1 - s0) * m_topo_zmax;
@@ -115,9 +115,9 @@ bool GridGeneratorGaussianHill::inverse_grid_mapping(EW* a_ew, float_sw4 x,
         while (er > tol && it < maxit) {
           float_sw4 omra = 1 - (s - 1) * izb;
           float_sw4 omsm = omra;
-          for (sw4_type l = 2; l <= m_grid_sw4_typeerpolation_order - 1; l++)
+          for (sw4_type l = 2; l <= m_grid_interpolation_order - 1; l++)
             omsm *= omra;
-          float_sw4 dfcn = h + izb * m_grid_sw4_typeerpolation_order * omsm * z0;
+          float_sw4 dfcn = h + izb * m_grid_interpolation_order * omsm * z0;
           omsm *= omra;
           float_sw4 fcn = m_topo_zmax - (nz - s) * h - omsm * z0 - z;
           float_sw4 sp = s - fcn / dfcn;
@@ -152,9 +152,9 @@ void GridGeneratorGaussianHill::grid_mapping_diff(
   if (m_always_new ||
       a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids > 1) {
     // new
-    float_sw4 s1 = curvilinear_sw4_typeerface_parameter(
+    float_sw4 s1 = curvilinear_interface_parameter(
         a_ew, g - a_ew->mNumberOfCartesianGrids);
-    float_sw4 s0 = curvilinear_sw4_typeerface_parameter(
+    float_sw4 s0 = curvilinear_interface_parameter(
         a_ew, g - a_ew->mNumberOfCartesianGrids - 1);
 
     // Topography
@@ -167,7 +167,7 @@ void GridGeneratorGaussianHill::grid_mapping_diff(
     tauqr *= h * h;
     taurr *= h * h;
 
-    // Upper and lower sw4_typeerfaces for this grid
+    // Upper and lower interfaces for this grid
     float_sw4 Ztop = s1 * (-tau) + (1 - s1) * m_topo_zmax;
     float_sw4 Ztopq = s1 * (-tauq);
     float_sw4 Ztopr = s1 * (-taur);
@@ -206,7 +206,7 @@ void GridGeneratorGaussianHill::grid_mapping_diff(
     zq = zr = 0;
     zs = h * (nz - 1);
     if (zeta < 1) {
-      sw4_type m = m_grid_sw4_typeerpolation_order;  // shorter name
+      sw4_type m = m_grid_interpolation_order;  // shorter name
       float_sw4 tau, tauq, taur, tauqq, tauqr, taurr;
       topder((q - 1) * h, (r - 1) * h, tau, tauq, taur);
       topder2nd((q - 1) * h, (r - 1) * h, tauqq, tauqr, taurr);
@@ -259,9 +259,9 @@ void GridGeneratorGaussianHill::generate_grid_and_met_new_gh(
   if (0 <= iSurfTop &&
       iSurfTop <= a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids - 1) {
     float_sw4 h = a_ew->mGridSize[g];
-    float_sw4 s1 = curvilinear_sw4_typeerface_parameter(a_ew, iSurfTop);
-    float_sw4 s0 = curvilinear_sw4_typeerface_parameter(a_ew, iSurfTop - 1);
-    //      std::cout << " grid " << g << " sw4_typeerface parameters s0,s1 " << s0
+    float_sw4 s1 = curvilinear_interface_parameter(a_ew, iSurfTop);
+    float_sw4 s0 = curvilinear_interface_parameter(a_ew, iSurfTop - 1);
+    //      std::cout << " grid " << g << " interface parameters s0,s1 " << s0
     //      << " " << s1 <<
     //         " ksw4_type = " << a_ew->m_kStartSw4_Type[g] << " " << a_ew->m_kEndSw4_Type[g]
     //         << std::endl;
@@ -277,7 +277,7 @@ void GridGeneratorGaussianHill::generate_grid_and_met_new_gh(
         float_sw4 tau, taup, tauq;
         topder(X0, Y0, tau, taup, tauq);
 
-        // Upper and lower sw4_typeerfaces for this grid
+        // Upper and lower interfaces for this grid
         float_sw4 Ztop = s1 * (-tau) + (1 - s1) * m_topo_zmax;
         float_sw4 Ztopp = s1 * (-taup);
         float_sw4 Ztopq = s1 * (-tauq);
@@ -286,7 +286,7 @@ void GridGeneratorGaussianHill::generate_grid_and_met_new_gh(
         float_sw4 Zbotp = s0 * (-taup);
         float_sw4 Zbotq = s0 * (-tauq);
 
-        // Linear sw4_typeerpolation in the vertical direction
+        // Linear interpolation in the vertical direction
         float_sw4 Nz_real =
             static_cast<float_sw4>(a_ew->m_kEndSw4_Type[g] - a_ew->m_kStartSw4_Type[g]);
         float_sw4 inzr = 1.0 / Nz_real;
@@ -326,7 +326,7 @@ void GridGeneratorGaussianHill::generate_grid_and_met_old_gh(
   float_sw4 zu1 = m_topo_zmax - (nz - 1) * h;
   float_sw4 inzm1 = 1.0 / (nz - 1);
   float_sw4 izb = 1.0 / (m_zetaBreak * (nz - 1));
-  sw4_type m = m_grid_sw4_typeerpolation_order;  // shorter name
+  sw4_type m = m_grid_interpolation_order;  // shorter name
   std::cout << "in old grid gen nk= " << nz << " kmin = " << a_x.m_kb
             << " kmax= " << a_x.m_ke << " m= " << m << std::endl;
   for (sw4_type k = a_x.m_kb; k <= a_x.m_ke; k++)
@@ -377,7 +377,7 @@ void GridGeneratorGaussianHill::generate_grid_and_met_old_gh(
 }
 
 //-----------------------------------------------------------------------
-sw4_type GridGeneratorGaussianHill::sw4_typeerpolate_topography(EW* a_ew, float_sw4 x,
+sw4_type GridGeneratorGaussianHill::interpolate_topography(EW* a_ew, float_sw4 x,
                                                       float_sw4 y, float_sw4& z,
                                                       Sarray& topo) {
   //   float_sw4 h = a_ew->mGridSize[a_ew->mNumberOfGrids-1];
@@ -422,8 +422,8 @@ void GridGeneratorGaussianHill::generate_z_and_j(EW* a_ew, sw4_type g, Sarray& z
   if (0 <= iSurfTop &&
       iSurfTop <= a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids - 1) {
     float_sw4 h = a_ew->mGridSize[g];
-    float_sw4 s1 = curvilinear_sw4_typeerface_parameter(a_ew, iSurfTop);
-    float_sw4 s0 = curvilinear_sw4_typeerface_parameter(a_ew, iSurfTop - 1);
+    float_sw4 s1 = curvilinear_interface_parameter(a_ew, iSurfTop);
+    float_sw4 s0 = curvilinear_interface_parameter(a_ew, iSurfTop - 1);
     for (sw4_type j = z.m_jb; j <= z.m_je; j++)
       for (sw4_type i = z.m_ib; i <= z.m_ie; i++) {
         float_sw4 X0 = (i - 1) * h;
@@ -433,7 +433,7 @@ void GridGeneratorGaussianHill::generate_z_and_j(EW* a_ew, sw4_type g, Sarray& z
         float_sw4 tau, taup, tauq;
         topder(X0, Y0, tau, taup, tauq);
 
-        // Upper and lower sw4_typeerfaces for this grid
+        // Upper and lower interfaces for this grid
         float_sw4 Ztop = s1 * (-tau) + (1 - s1) * m_topo_zmax;
         //        float_sw4 Ztopp = s1 * (-taup);
         // float_sw4 Ztopq = s1 * (-tauq);
@@ -442,7 +442,7 @@ void GridGeneratorGaussianHill::generate_z_and_j(EW* a_ew, sw4_type g, Sarray& z
         //  float_sw4 Zbotp = s0 * (-taup);
         // float_sw4 Zbotq = s0 * (-tauq);
 
-        // Linear sw4_typeerpolation in the vertical direction
+        // Linear interpolation in the vertical direction
         float_sw4 Nz_real =
             static_cast<float_sw4>(a_ew->m_kEndSw4_Type[g] - a_ew->m_kStartSw4_Type[g]);
         float_sw4 inzr = 1.0 / Nz_real;

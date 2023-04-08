@@ -62,14 +62,14 @@ void meterr4c(sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*, 
 //     1] - (nzg - 1) * h * (1 - m_zetaBreak); if (m_croutines)
 //       metricexgh_ci(Bx, Nx, By, Ny, Bz, Nz, nzg, mX.c_ptr(), mY.c_ptr(),
 //                     mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr(),
-//                     m_grid_sw4_typeerpolation_order, m_zetaBreak, zmax,
+//                     m_grid_interpolation_order, m_zetaBreak, zmax,
 //                     m_GaussianAmp, m_GaussianXc, m_GaussianYc, m_GaussianLx,
 //                     m_GaussianLy);
 
 //     else
 //       metricexgh(&Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg, mX.c_ptr(),
 //                  mY.c_ptr(), mZ.c_ptr(), mMetric.c_ptr(), mJ.c_ptr(),
-//                  &m_grid_sw4_typeerpolation_order, &m_zetaBreak, &zmax,
+//                  &m_grid_interpolation_order, &m_zetaBreak, &zmax,
 //                  &m_GaussianAmp, &m_GaussianXc, &m_GaussianYc, &m_GaussianLx,
 //                  &m_GaussianLy);
 //   } else {
@@ -120,7 +120,7 @@ void meterr4c(sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*, 
 //   // jlast spacing h.
 //   if (!m_topography_exists) return;
 
-//   //  m_grid_sw4_typeerpolation_order = a_order;
+//   //  m_grid_interpolation_order = a_order;
 
 //   if (mVerbose >= 1 && proc_zero())
 //     cout << "***inside generate_grid***" << endl;
@@ -202,7 +202,7 @@ void meterr4c(sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*, 
 //                 m_cartesian_communicator);
 //   if (mVerbose > 3 && proc_zero()) {
 //     printf(
-//         "Curvilinear/Cartesian sw4_typeerface (k=Nz-1): Min grid size ratio - 1 =
+//         "Curvilinear/Cartesian interface (k=Nz-1): Min grid size ratio - 1 =
 //         "
 //         "%e, max ratio z - 1 = %e, top grid # = %i\n",
 //         zMinGlobal - 1., zMaxGlobal - 1., gTop);
@@ -213,7 +213,7 @@ void meterr4c(sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*, 
 //-----------------------------------------------------------------------
 bool EW::curvilinear_grid_mapping(float_sw4 q, float_sw4 r, float_sw4 s,
                                   float_sw4& X0, float_sw4& Y0, float_sw4& Z0) {
-  // if (q,r) is on this processor (need a 2x2 sw4_typeerval in (i,j)-index space:
+  // if (q,r) is on this processor (need a 2x2 interval in (i,j)-index space:
   // Return true and assign (X0,Y0,Z0) corresponding to (q,r,s)
 
   // Returns false if
@@ -257,7 +257,7 @@ bool EW::curvilinear_grid_mapping(float_sw4 q, float_sw4 r, float_sw4 s,
   float_sw4 zMaxCart = m_zmin[mNumberOfCartesianGrids - 1];
 
   // ************************
-  // compute index sw4_typeerval based on (q,r)
+  // compute index interval based on (q,r)
   sw4_type iNear, jNear, kNear, g, i, j, k;
 
   Z0 = zMaxCart - h;  // to make computeNearestGridPoint think we are in the
@@ -270,7 +270,7 @@ bool EW::curvilinear_grid_mapping(float_sw4 q, float_sw4 r, float_sw4 s,
   if (m_analytical_topo) {
     tau = m_GaussianAmp * exp(-SQR((X0 - m_GaussianXc) / m_GaussianLx) -
                               SQR((Y0 - m_GaussianYc) / m_GaussianLy));
-  } else  // general case: sw4_typeerpolate mTopoGrid array
+  } else  // general case: interpolate mTopoGrid array
   {
     // if (X0, Y0) falls within roundoff of grid point (iNear,jNear), we only
     // need that grid point on this proc, otherwise we need the 2x2 area [i,i+1]
@@ -288,11 +288,11 @@ bool EW::curvilinear_grid_mapping(float_sw4 q, float_sw4 r, float_sw4 s,
       tau = mTopoGridExt(iNear, jNear, 1);
     } else {
       computeNearestLowGridPoint(i, j, k, g, X0, Y0, Z0);
-      // There are some subtle issues with the bi-cubic sw4_typeerpolation near
+      // There are some subtle issues with the bi-cubic interpolation near
       // parallel processor boundaries, see invert_curvilinear_mapping (below)
       // for a discussion
 
-      // bi-cubic sw4_typeerpolation for O(h^4) accuracy
+      // bi-cubic interpolation for O(h^4) accuracy
       //       if ((point_in_proc(i-1,j-1,gCurv) && point_in_proc(i,j-1,gCurv)
       //       && point_in_proc(i+1,j-1,gCurv) && point_in_proc(i+2,j-1,gCurv)
       //       &&
@@ -333,7 +333,7 @@ bool EW::curvilinear_grid_mapping(float_sw4 q, float_sw4 r, float_sw4 s,
       //	     point_in_proc_ext(i,j+1,gCurv) &&
       // point_in_proc_ext(i+1,j+1,gCurv) ) )
       //      {
-      //// linear sw4_typeerpolation to define topography between grid points
+      //// linear interpolation to define topography between grid points
       //	double Qi, Qip1, Rj, Rjp1;
       //	Qi = (i+1 - q);
       //	Qip1 = (q - i);
@@ -358,7 +358,7 @@ bool EW::curvilinear_grid_mapping(float_sw4 q, float_sw4 r, float_sw4 s,
       }
     }  // end else...(not smackOnTop)
 
-  }  // end general case: sw4_typeerpolating mTopoGrid array
+  }  // end general case: interpolating mTopoGrid array
 
   // now we need to calculate Z0 = Z(q,r,s)
 
@@ -374,28 +374,28 @@ bool EW::curvilinear_grid_mapping(float_sw4 q, float_sw4 r, float_sw4 s,
   // quadratic term to make variation in grid size small at bottom boundary
   c1 = zMax + tau - mGridSize[gCurv] * (sBreak - 1);
   // cubic term to make 2nd derivative zero at zeta=1
-  if (m_grid_sw4_typeerpolation_order >= 3)
+  if (m_grid_interpolation_order >= 3)
     c2 = c1;
   else
     c2 = 0.;
 
   // 4th order term takes care of 3rd derivative, but can make grid warp itself
   // inside out
-  if (m_grid_sw4_typeerpolation_order >= 4)
+  if (m_grid_interpolation_order >= 4)
     c3 = c2;
   else
     c3 = 0.;
 
   // Added continuity of the 4th and 5th derivatives
-  if (m_grid_sw4_typeerpolation_order >= 5)
+  if (m_grid_interpolation_order >= 5)
     c4 = c3;
   else
     c4 = 0;
-  if (m_grid_sw4_typeerpolation_order >= 6)
+  if (m_grid_interpolation_order >= 6)
     c5 = c4;
   else
     c5 = 0;
-  if (m_grid_sw4_typeerpolation_order >= 7)
+  if (m_grid_interpolation_order >= 7)
     c6 = c5;
   else
     c6 = 0;
@@ -449,7 +449,7 @@ bool EW::invert_curvilinear_grid_mapping(float_sw4 X0, float_sw4 Y0,
     return false;
   }
 
-  // compute index sw4_typeerval based on (q,r)
+  // compute index interval based on (q,r)
   sw4_type iNear, jNear, kNear, g, i, j, k;
 
   // for ghost points in the curvilinear grid, calling computeNearestGridPoint
@@ -473,7 +473,7 @@ bool EW::invert_curvilinear_grid_mapping(float_sw4 X0, float_sw4 Y0,
   if (m_analytical_topo) {
     tau = m_GaussianAmp * exp(-SQR((X0 - m_GaussianXc) / m_GaussianLx) -
                               SQR((Y0 - m_GaussianYc) / m_GaussianLy));
-  } else  // general case: sw4_typeerpolate mTopoGrid array
+  } else  // general case: interpolate mTopoGrid array
   {
     // if (X0, Y0) falls within roundoff of grid point (iNear,jNear), we only
     // need that grid point on this proc, otherwise we need the 2x2 area [i,i+1]
@@ -503,15 +503,15 @@ bool EW::invert_curvilinear_grid_mapping(float_sw4 X0, float_sw4 Y0,
       // float_sw4 Qim1, Qi, Qip1, Qip2, Rjm1, Rj, Rjp1, Rjp2, tjm1, tj, tjp1,
       // tjp2;
 
-      // The bi-cubic sw4_typeerpolation has the following problem:
+      // The bi-cubic interpolation has the following problem:
       // When the source is close to a processor boundary, the same source must
       // be discretized on two (or more processors). However, the topography
       // grid only has 2 points overlap, which sometimes is insufficient for the
-      // bi-cubic sw4_typeerpolation formula. In practice, the difference between the
+      // bi-cubic interpolation formula. In practice, the difference between the
       // bi-linear and bi-cubic formula makes very little difference, so it is
       // more robust to always use the bi-linear formula.
 
-      // // bi-cubic sw4_typeerpolation for O(h^4) accuracy
+      // // bi-cubic interpolation for O(h^4) accuracy
       //       if ( (point_in_proc(i-1,j-1,gCurv) && point_in_proc(i,j-1,gCurv)
       //       && point_in_proc(i+1,j-1,gCurv) && point_in_proc(i+2,j-1,gCurv)
       //       &&
@@ -554,7 +554,7 @@ bool EW::invert_curvilinear_grid_mapping(float_sw4 X0, float_sw4 Y0,
       //	     point_in_proc_ext(i,j+1,gCurv) &&
       // point_in_proc_ext(i+1,j+1,gCurv) ) )
       //      {
-      // use linear sw4_typeerpolation if there are not enough points for the
+      // use linear interpolation if there are not enough points for the
       // bi-cubic formula
       //	Qi = (i+1 - q);
       //	Qip1 = (q - i);
@@ -581,7 +581,7 @@ bool EW::invert_curvilinear_grid_mapping(float_sw4 X0, float_sw4 Y0,
         if (mVerbose >= 3)
           printf(
               "invert_curvilinear_mapping returning false from bi-lin "
-              "sw4_typeerpolation\n"
+              "interpolation\n"
               "not all points around i=%i and j=%i are on this proc!\n",
               i, j);
         return false;
@@ -604,28 +604,28 @@ bool EW::invert_curvilinear_grid_mapping(float_sw4 X0, float_sw4 Y0,
   // quadratic term to make variation in grid size small at bottom boundary
   c1 = zMax + tau - mGridSize[gCurv] * (sBreak - 1);
   // cubic term to make 2nd derivative zero at zeta=1
-  if (m_grid_sw4_typeerpolation_order >= 3)
+  if (m_grid_interpolation_order >= 3)
     c2 = c1;
   else
     c2 = 0.;
 
   // 4th order term takes care of 3rd derivative, but can make grid warp itself
   // inside out
-  if (m_grid_sw4_typeerpolation_order >= 4)
+  if (m_grid_interpolation_order >= 4)
     c3 = c2;
   else
     c3 = 0.;
 
   // Added continuity of the 4th and 5th derivatives
-  if (m_grid_sw4_typeerpolation_order >= 5)
+  if (m_grid_interpolation_order >= 5)
     c4 = c3;
   else
     c4 = 0;
-  if (m_grid_sw4_typeerpolation_order >= 6)
+  if (m_grid_interpolation_order >= 6)
     c5 = c4;
   else
     c5 = 0;
-  if (m_grid_sw4_typeerpolation_order >= 7)
+  if (m_grid_interpolation_order >= 7)
     c6 = c5;
   else
     c6 = 0;
@@ -819,11 +819,11 @@ void EW::buildGaussianHillTopography(float_sw4 amp, float_sw4 Lx, float_sw4 Ly,
 }
 
 //-----------------------------------------------------------------------
-sw4_type EW::sw4_typeerpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0,
+sw4_type EW::interpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0,
                                bool smoothed) {
-  // Sw4_Typeerpolate the smoothed or raw topography
+  // Interpolate the smoothed or raw topography
   //
-  // if (q,r) is on this processor (need a 2x2 sw4_typeerval in (i,j)-index space:
+  // if (q,r) is on this processor (need a 2x2 interval in (i,j)-index space:
   // Return true and assign Z0 corresponding to (q,r)
 
   // Returns false if
@@ -856,7 +856,7 @@ sw4_type EW::sw4_typeerpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0
   bool inside_domain = (q >= qMin && q <= qMax && r >= rMin && r <= rMax);
 
   if (!inside_domain) {
-    cout << "sw4_typeerpolate_topography: input parameters out of bounds (q,r) = "
+    cout << "interpolate_topography: input parameters out of bounds (q,r) = "
          << q << ", " << r << endl;
     return -11;
   }
@@ -869,7 +869,7 @@ sw4_type EW::sw4_typeerpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0
   float_sw4 zMaxCart = m_zmin[mNumberOfCartesianGrids - 1];
 
   // ************************
-  // compute index sw4_typeerval based on (q,r)
+  // compute index interval based on (q,r)
   sw4_type iNear, jNear, kNear, g, i, j, k;
 
   Z0 = zMaxCart - h;  // to make computeNearestGridPoint think we are in the
@@ -877,14 +877,14 @@ sw4_type EW::sw4_typeerpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0
   computeNearestGridPoint(iNear, jNear, kNear, g, X0, Y0, Z0);
 
   if (g != gCurv) {
-    cout << "sw4_typeerpolate_topography: g = " << g << " gcurv = " << gCurv << endl;
+    cout << "interpolate_topography: g = " << g << " gcurv = " << gCurv << endl;
     return -13;
   }
   float_sw4 tau;  // holds the elevation at (q,r). Recall that elevation=-z
   if (m_analytical_topo) {
     tau = m_GaussianAmp * exp(-SQR((X0 - m_GaussianXc) / m_GaussianLx) -
                               SQR((Y0 - m_GaussianYc) / m_GaussianLy));
-  } else  // general case: sw4_typeerpolate mTopoGrid array
+  } else  // general case: interpolate mTopoGrid array
   {
     // if (X0, Y0) falls within roundoff of grid point (iNear,jNear), we only
     // need that grid point on this proc, otherwise we need the 2x2 area [i,i+1]
@@ -916,7 +916,7 @@ sw4_type EW::sw4_typeerpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0
       //              point_in_proc(i+1,j+1,gCurv) ) )
       //        return false;
 
-      // linear sw4_typeerpolation to define topography between grid points
+      // linear interpolation to define topography between grid points
       //      double Qi, Qip1, Rj, Rjp1;
       //      Qi = (i+1 - q);
       //      Qip1 = (q - i);
@@ -940,14 +940,14 @@ sw4_type EW::sw4_typeerpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0
             tau +=
                 a6cofi[k - i + 3] * a6cofj[l - j + 3] * mTopoGridExt(k, l, 1);
       } else {
-        cout << "sw4_typeerpolate_topography: point not in ext domain i= " << i
+        cout << "interpolate_topography: point not in ext domain i= " << i
              << " j = " << j << " limits " << m_iStart[gCurv] << " "
              << m_iEnd[gCurv] << " " << m_jStart[gCurv] << " " << m_jEnd[gCurv]
              << " nearest i = " << iNear << " j= " << jNear << endl;
         return -14;
       }
     }
-  }  // end general case: sw4_typeerpolating mTopoGrid array
+  }  // end general case: interpolating mTopoGrid array
   Z0 = -tau;
   return 1;
 }
@@ -979,12 +979,12 @@ void EW::metric_derivatives_test() {
   //      metricexgh_ci( Bx, Nx, By, Ny, Bz, Nz, nzg, mX[g].c_ptr(),
   //      mY[g].c_ptr(), mZ[g].c_ptr(),
   //				    metex.c_ptr(), jacex.c_ptr(),
-  // m_grid_sw4_typeerpolation_order, m_zetaBreak, zmax,
+  // m_grid_interpolation_order, m_zetaBreak, zmax,
   // m_GaussianAmp, m_GaussianXc, m_GaussianYc, m_GaussianLx, m_GaussianLy );
   // FTNC   else
   // FTNC      metricexgh( &Bx, &Nx, &By, &Ny, &Bz, &Nz, &nxg, &nyg, &nzg,
   // mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr(), FTNC
-  // metex.c_ptr(), jacex.c_ptr(), &m_grid_sw4_typeerpolation_order, &m_zetaBreak,
+  // metex.c_ptr(), jacex.c_ptr(), &m_grid_interpolation_order, &m_zetaBreak,
   // &zmax, FTNC				    &m_GaussianAmp,
   // &m_GaussianXc, &m_GaussianYc, &m_GaussianLx, &m_GaussianLy );
   communicate_array(metex, mNumberOfGrids - 1);
@@ -1118,7 +1118,7 @@ void EW::smooth_grid(sw4_type maxIter) {
 
   // Laplacian filter
   for (iter = 0; iter < maxIter; iter++) {
-// loop over all sw4_typeerior points
+// loop over all interior points
 #pragma omp parallel for
     for (sw4_type k = m_kStart[topLevel] + m_ghost_points + 1;
          k <= m_kEnd[topLevel] - m_ghost_points - 2; k++)

@@ -4,7 +4,7 @@
 #include <cstdio>
 
 #include "caliper.h"
-#include "cf_sw4_typeerface.h"
+#include "cf_interface.h"
 #include "sw4.h"
 
 //#ifdef SW4_NOC
@@ -795,7 +795,7 @@ void rhs4th3wind_host(
                    tf * (mu(i, j, k) * stry(j) + mu(i, j + 2, k) * stry(j + 2));
 
             /* xx, yy, and zz derivatives: */
-            /* note that we could have sw4_typeroduced sw4_typeermediate variables for the
+            /* note that we could have sw4_typeroduced intermediate variables for the
              * average of lambda  */
             /* in the same way as we did for mu */
             r1 = i6 * (strx(i) * ((2 * mux1 + la(i - 1, j, k) * strx(i - 1) -

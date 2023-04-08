@@ -995,13 +995,13 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
       float_sw4 h = mGridSize[g];
       float_sw4 h2 = h * h;
 
-      bool low_sw4_typeerior, high_sw4_typeerior;
-      low_sw4_typeerior = m_iStartSw4_Type[g] <= i0 + 1 && i0 + 1 <= m_iEndSw4_Type[g];
-      high_sw4_typeerior = m_iStartSw4_Type[g] <= i1 - 1 && i1 - 1 <= m_iEndSw4_Type[g];
+      bool low_interior, high_interior;
+      low_interior = m_iStartSw4_Type[g] <= i0 + 1 && i0 + 1 <= m_iEndSw4_Type[g];
+      high_interior = m_iStartSw4_Type[g] <= i1 - 1 && i1 - 1 <= m_iEndSw4_Type[g];
       bool surface_correction = k0 <= 1 && g == mNumberOfGrids - 1;
 
       Sarray Lu0(3, i0, i0, j0, j1, k0, k1, __FILE__, __LINE__);
-      if (low_sw4_typeerior)
+      if (low_interior)
         evalLu_Dim(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                    m_kEnd[g],
                    //			U[g].c_ptr(), Lu0.c_ptr(),
@@ -1009,7 +1009,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
                    U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(), h, i0, i0, j0,
                    j1, k0, k1);
       Sarray Lu1(3, i1, i1, j0, j1, k0, k1, __FILE__, __LINE__);
-      if (high_sw4_typeerior)
+      if (high_interior)
         evalLu_Dip(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                    m_kEnd[g],
                    //			U[g].c_ptr(), Lu1.c_ptr(),
@@ -1019,14 +1019,14 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
       sw4_type kstart = k0 + 1;
       if (surface_correction) {
         // Special at corner between free surface and Geodyn cube
-        if (low_sw4_typeerior)
+        if (low_interior)
           evalLu_DkpDim(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                         m_kStart[g], m_kEnd[g],
                         //			U[g].c_ptr(), Lu0.c_ptr(),
                         // mu[g].c_ptr(), lambda[g].c_ptr(),
                         U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(), h, i0, i0,
                         j0, j1, k0, k1);
-        if (high_sw4_typeerior)
+        if (high_interior)
           evalLu_DkpDip(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                         m_kStart[g], m_kEnd[g],
                         //			U[g].c_ptr(), Lu1.c_ptr(),
@@ -1087,7 +1087,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
 
           // Lower bndry
           float_sw4 res1, res2, res3;
-          if (low_sw4_typeerior) {
+          if (low_interior) {
             res1 = crf * rho[g](i0, j, k) *
                        (bnd0[0] - 2 * U[g](1, i0, j, k) + Um[g](1, i0, j, k)) *
                        d2i -
@@ -1114,7 +1114,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
                 2 * h2 * res3 / (mu[g](i0 + 1, j, k) + mu[g](i0, j, k));
           }
           // Upper bndry
-          if (high_sw4_typeerior) {
+          if (high_interior) {
             res1 = crf * rho[g](i1, j, k) *
                        (bnd1[0] - 2 * U[g](1, i1, j, k) + Um[g](1, i1, j, k)) *
                        d2i -
@@ -1143,10 +1143,10 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
         }
 
       // Side with j=const
-      low_sw4_typeerior = m_jStartSw4_Type[g] <= j0 + 1 && j0 + 1 <= m_jEndSw4_Type[g];
-      high_sw4_typeerior = m_jStartSw4_Type[g] <= j1 - 1 && j1 - 1 <= m_jEndSw4_Type[g];
+      low_interior = m_jStartSw4_Type[g] <= j0 + 1 && j0 + 1 <= m_jEndSw4_Type[g];
+      high_interior = m_jStartSw4_Type[g] <= j1 - 1 && j1 - 1 <= m_jEndSw4_Type[g];
 
-      if (low_sw4_typeerior) {
+      if (low_interior) {
         Lu0.define(3, i0, i1, j0, j0, k0, k1);
         evalLu_Djm(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                    m_kEnd[g],
@@ -1155,7 +1155,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
                    U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(), h, i0, i1, j0,
                    j0, k0, k1);
       }
-      if (high_sw4_typeerior) {
+      if (high_interior) {
         Lu1.define(3, i0, i1, j1, j1, k0, k1);
         evalLu_Djp(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                    m_kEnd[g],
@@ -1165,14 +1165,14 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
                    j1, k0, k1);
       }
       if (surface_correction) {
-        if (low_sw4_typeerior)
+        if (low_interior)
           evalLu_DkpDjm(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                         m_kStart[g], m_kEnd[g],
                         //			U[g].c_ptr(), Lu0.c_ptr(),
                         // mu[g].c_ptr(), lambda[g].c_ptr(),
                         U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(), h, i0, i1,
                         j0, j0, k0, k1);
-        if (high_sw4_typeerior)
+        if (high_interior)
           evalLu_DkpDjp(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                         m_kStart[g], m_kEnd[g],
                         //			U[g].c_ptr(), Lu1.c_ptr(),
@@ -1228,7 +1228,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
           }
           float_sw4 res1, res2, res3;
           // Lower bndry
-          if (low_sw4_typeerior) {
+          if (low_interior) {
             res1 = crf * rho[g](i, j0, k) *
                        (bnd0[0] - 2 * U[g](1, i, j0, k) + Um[g](1, i, j0, k)) *
                        d2i -
@@ -1255,7 +1255,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
                 2 * h2 * res3 / (mu[g](i, j0 + 1, k) + mu[g](i, j0, k));
           }
           // Upper bndry
-          if (high_sw4_typeerior) {
+          if (high_interior) {
             res1 = crf * rho[g](i, j1, k) *
                        (bnd1[0] - 2 * U[g](1, i, j1, k) + Um[g](1, i, j1, k)) *
                        d2i -
@@ -1284,10 +1284,10 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
         }
 
       // Side with k=const
-      low_sw4_typeerior = (m_kStartSw4_Type[g] <= k0 + 1 && k0 + 1 <= m_kEndSw4_Type[g]) &&
+      low_interior = (m_kStartSw4_Type[g] <= k0 + 1 && k0 + 1 <= m_kEndSw4_Type[g]) &&
                      !surface_correction;
-      high_sw4_typeerior = m_kStartSw4_Type[g] <= k1 - 1 && k1 - 1 <= m_kEndSw4_Type[g];
-      if (m_geodyn_faces == 6 && low_sw4_typeerior) {
+      high_interior = m_kStartSw4_Type[g] <= k1 - 1 && k1 - 1 <= m_kEndSw4_Type[g];
+      if (m_geodyn_faces == 6 && low_interior) {
         Lu0.define(3, i0, i1, j0, j1, k0, k0);
         evalLu_Dkm(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                    m_kEnd[g],
@@ -1297,7 +1297,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
                    j1, k0, k0);
       }
 
-      if (high_sw4_typeerior) {
+      if (high_interior) {
         Lu1.define(3, i0, i1, j0, j1, k1, k1);
         evalLu_Dkp(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                    m_kEnd[g],
@@ -1325,7 +1325,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
               m_geodyn_h;
           float_sw4 bnd0[3], bnd1[3];
           for (sw4_type c = 1; c <= 3; c++) {
-            if (m_geodyn_faces == 6 && low_sw4_typeerior) {
+            if (m_geodyn_faces == 6 && low_interior) {
               bnd0[c - 1] =
                   twgh * ((1 - wghi) * (1 - wghj) *
                               m_geodyn_data1[4](c, ig0, jg0, 1) +
@@ -1360,7 +1360,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
           }
           // Upper bndry
           float_sw4 res1, res2, res3;
-          if (high_sw4_typeerior) {
+          if (high_interior) {
             res1 = crf * rho[g](i, j, k1) *
                        (bnd1[0] - 2 * U[g](1, i, j, k1) + Um[g](1, i, j, k1)) *
                        d2i -
@@ -1387,7 +1387,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
                      0.5 * (lambda[g](i, j, k1 - 1) + lambda[g](i, j, k1)));
           }
           // Lower bndry
-          if (m_geodyn_faces == 6 && low_sw4_typeerior) {
+          if (m_geodyn_faces == 6 && low_interior) {
             res1 = crf * rho[g](i, j, k0) *
                        (bnd0[0] - 2 * U[g](1, i, j, k0) + Um[g](1, i, j, k0)) *
                        d2i -
@@ -1453,19 +1453,19 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
   float_sw4 zcubelen = (m_geodyn_nk - 1) * m_geodyn_h;
   //   bool   at_surface = k0==1;
 
-  bool low_sw4_typeerior, high_sw4_typeerior;
-  low_sw4_typeerior = m_iStartSw4_Type[g] <= i0 + 1 && i0 + 1 <= m_iEndSw4_Type[g];
-  high_sw4_typeerior = m_iStartSw4_Type[g] <= i1 - 1 && i1 - 1 <= m_iEndSw4_Type[g];
+  bool low_interior, high_interior;
+  low_interior = m_iStartSw4_Type[g] <= i0 + 1 && i0 + 1 <= m_iEndSw4_Type[g];
+  high_interior = m_iStartSw4_Type[g] <= i1 - 1 && i1 - 1 <= m_iEndSw4_Type[g];
   bool surface_correction = k0 <= 1 && g == mNumberOfGrids - 1;
 
   Sarray Lu0(3, i0, i0, j0, j1, k0, k1, __FILE__, __LINE__);
-  if (low_sw4_typeerior)
+  if (low_interior)
     evalLuCurv<0, 1, 1, 1, 1, 1>(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                                  m_kStart[g], m_kEnd[g], U[g], Lu0,
                                  mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g],
                                  mJ[g], i0, i0, j0, j1, k0, k1);
   Sarray Lu1(3, i1, i1, j0, j1, k0, k1, __FILE__, __LINE__);
-  if (high_sw4_typeerior)
+  if (high_interior)
     evalLuCurv<1, 0, 1, 1, 1, 1>(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                                  m_kStart[g], m_kEnd[g], U[g], Lu1,
                                  mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g],
@@ -1474,12 +1474,12 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
   sw4_type kstart = k0 + 1;
   if (surface_correction) {
     // Special at corner between free surface and Geodyn cube
-    if (low_sw4_typeerior)
+    if (low_interior)
       evalLuCurv<0, 1, 1, 1, 1, 0>(m_iStart[g], m_iEnd[g], m_jStart[g],
                                    m_jEnd[g], m_kStart[g], m_kEnd[g], U[g], Lu0,
                                    mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g],
                                    mJ[g], i0, i0, j0, j1, k0, k0);
-    if (high_sw4_typeerior)
+    if (high_interior)
       evalLuCurv<1, 0, 1, 1, 1, 0>(m_iStart[g], m_iEnd[g], m_jStart[g],
                                    m_jEnd[g], m_kStart[g], m_kEnd[g], U[g], Lu1,
                                    mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g],
@@ -1549,7 +1549,7 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
       }
       // Lower bndry
       float_sw4 res1, res2, res3;
-      if (low_sw4_typeerior) {
+      if (low_interior) {
         res1 = crf * rho[g](i0, j, k) *
                    (bnd0[0] - 2 * U[g](1, i0, j, k) + Um[g](1, i0, j, k)) *
                    d2i -
@@ -1592,7 +1592,7 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
         // bnd0[0] << " " << Lu0(1,i0,j,k) << endl;
       }
       // Upper bndry
-      if (high_sw4_typeerior) {
+      if (high_interior) {
         res1 = crf * rho[g](i1, j, k) *
                    (bnd1[0] - 2 * U[g](1, i1, j, k) + Um[g](1, i1, j, k)) *
                    d2i -
@@ -1632,16 +1632,16 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
       }
     }
   // Side with j=const
-  low_sw4_typeerior = m_jStartSw4_Type[g] <= j0 + 1 && j0 + 1 <= m_jEndSw4_Type[g];
-  high_sw4_typeerior = m_jStartSw4_Type[g] <= j1 - 1 && j1 - 1 <= m_jEndSw4_Type[g];
-  if (low_sw4_typeerior) {
+  low_interior = m_jStartSw4_Type[g] <= j0 + 1 && j0 + 1 <= m_jEndSw4_Type[g];
+  high_interior = m_jStartSw4_Type[g] <= j1 - 1 && j1 - 1 <= m_jEndSw4_Type[g];
+  if (low_interior) {
     Lu0.define(3, i0, i1, j0, j0, k0, k1);
     evalLuCurv<1, 1, 0, 1, 1, 1>(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                                  m_kStart[g], m_kEnd[g], U[g], Lu0,
                                  mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g],
                                  mJ[g], i0, i1, j0, j0, k0, k1);
   }
-  if (high_sw4_typeerior) {
+  if (high_interior) {
     Lu1.define(3, i0, i1, j1, j1, k0, k1);
     evalLuCurv<1, 1, 1, 0, 1, 1>(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                                  m_kStart[g], m_kEnd[g], U[g], Lu1,
@@ -1649,12 +1649,12 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
                                  mJ[g], i0, i1, j1, j1, k0, k1);
   }
   if (surface_correction) {
-    if (low_sw4_typeerior)
+    if (low_interior)
       evalLuCurv<1, 1, 0, 1, 1, 0>(m_iStart[g], m_iEnd[g], m_jStart[g],
                                    m_jEnd[g], m_kStart[g], m_kEnd[g], U[g], Lu0,
                                    mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g],
                                    mJ[g], i0, i1, j0, j0, k0, k0);
-    if (high_sw4_typeerior)
+    if (high_interior)
       evalLuCurv<1, 1, 1, 0, 1, 0>(m_iStart[g], m_iEnd[g], m_jStart[g],
                                    m_jEnd[g], m_kStart[g], m_kEnd[g], U[g], Lu1,
                                    mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g],
@@ -1719,7 +1719,7 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
       }
       float_sw4 res1, res2, res3;
       // Lower bndry
-      if (low_sw4_typeerior) {
+      if (low_interior) {
         res1 = crf * rho[g](i, j0, k) *
                    (bnd0[0] - 2 * U[g](1, i, j0, k) + Um[g](1, i, j0, k)) *
                    d2i -
@@ -1758,7 +1758,7 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
                  mu[g](i, j0, k) * SQR(mMetric[g](1, i, j0, k)));
       }
       // Upper bndry
-      if (high_sw4_typeerior) {
+      if (high_interior) {
         res1 = crf * rho[g](i, j1, k) *
                    (bnd1[0] - 2 * U[g](1, i, j1, k) + Um[g](1, i, j1, k)) *
                    d2i -
@@ -1798,19 +1798,19 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
       }
     }
   // Side with k=const
-  low_sw4_typeerior = (m_kStartSw4_Type[g] <= k0 + 1 && k0 + 1 <= m_kEndSw4_Type[g]) &&
+  low_interior = (m_kStartSw4_Type[g] <= k0 + 1 && k0 + 1 <= m_kEndSw4_Type[g]) &&
                  !surface_correction;
-  high_sw4_typeerior = m_kStartSw4_Type[g] <= k1 - 1 && k1 - 1 <= m_kEndSw4_Type[g];
-  if (m_geodyn_faces == 6 && low_sw4_typeerior) {
-    //      cout << "geodyn low_sw4_typeerior curvi " << endl;
+  high_interior = m_kStartSw4_Type[g] <= k1 - 1 && k1 - 1 <= m_kEndSw4_Type[g];
+  if (m_geodyn_faces == 6 && low_interior) {
+    //      cout << "geodyn low_interior curvi " << endl;
     Lu0.define(3, i0, i1, j0, j1, k0, k0);
     evalLuCurv<1, 1, 1, 1, 0, 1>(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                                  m_kStart[g], m_kEnd[g], U[g], Lu0,
                                  mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g],
                                  mJ[g], i0, i1, j0, j1, k0, k0);
   }
-  if (high_sw4_typeerior) {
-    //      cout << "geodyn high_sw4_typeerior curvi " << endl;
+  if (high_interior) {
+    //      cout << "geodyn high_interior curvi " << endl;
     Lu1.define(3, i0, i1, j0, j1, k1, k1);
     evalLuCurv<1, 1, 1, 1, 1, 0>(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                                  m_kStart[g], m_kEnd[g], U[g], Lu1,
@@ -1836,7 +1836,7 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
           m_geodyn_h;
       float_sw4 bnd0[3], bnd1[3];
       for (sw4_type c = 1; c <= 3; c++) {
-        if (m_geodyn_faces == 6 && low_sw4_typeerior) {
+        if (m_geodyn_faces == 6 && low_interior) {
           bnd0[c - 1] =
               twgh *
                   ((1 - wghi) * (1 - wghj) * m_geodyn_data1[4](c, ig0, jg0, 1) +
@@ -1863,7 +1863,7 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
       }
       // Upper bndry
       float_sw4 res1, res2, res3;
-      if (high_sw4_typeerior) {
+      if (high_interior) {
         res1 = crf * rho[g](i, j, k1) *
                    (bnd1[0] - 2 * U[g](1, i, j, k1) + Um[g](1, i, j, k1)) *
                    d2i -
@@ -1948,7 +1948,7 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
         U[g](3, i, j, k1 - 1) = U[g](3, i, j, k1 - 1) + x[2];
       }
       // Lower bndry
-      if (m_geodyn_faces == 6 && low_sw4_typeerior) {
+      if (m_geodyn_faces == 6 && low_interior) {
         res1 = crf * rho[g](i, j, k0) *
                    (bnd0[0] - 2 * U[g](1, i, j, k0) + Um[g](1, i, j, k0)) *
                    d2i -
@@ -3611,9 +3611,9 @@ void EW::geodyn_up_from_uacc(vector<Sarray>& Up, vector<Sarray>& Uacc,
       sw4_type j1 = m_geodyn_dims[g][3];
       sw4_type k0 = m_geodyn_dims[g][4];
       sw4_type k1 = m_geodyn_dims[g][5];
-      bool low_sw4_typeerior, high_sw4_typeerior;
-      low_sw4_typeerior = m_iStartSw4_Type[g] <= i0 + 1 && i0 + 1 <= m_iEndSw4_Type[g];
-      high_sw4_typeerior = m_iStartSw4_Type[g] <= i1 - 1 && i1 - 1 <= m_iEndSw4_Type[g];
+      bool low_interior, high_interior;
+      low_interior = m_iStartSw4_Type[g] <= i0 + 1 && i0 + 1 <= m_iEndSw4_Type[g];
+      high_interior = m_iStartSw4_Type[g] <= i1 - 1 && i1 - 1 <= m_iEndSw4_Type[g];
       bool surface_correction = k0 <= 1 && g == mNumberOfGrids - 1;
       sw4_type kstart = k0 + 1;
       if (surface_correction) kstart = k0;
@@ -3621,7 +3621,7 @@ void EW::geodyn_up_from_uacc(vector<Sarray>& Up, vector<Sarray>& Uacc,
       // Side with i=const.
       for (sw4_type k = kstart; k <= k1 - 1; k++)
         for (sw4_type j = j0 + 1; j <= j1 - 1; j++) {
-          if (low_sw4_typeerior) {
+          if (low_interior) {
             Up[g](1, i0 + 1, j, k) = dt2 * Uacc[g](1, i0 + 1, j, k) +
                                      2 * U[g](1, i0 + 1, j, k) -
                                      Um[g](1, i0 + 1, j, k);
@@ -3632,7 +3632,7 @@ void EW::geodyn_up_from_uacc(vector<Sarray>& Up, vector<Sarray>& Uacc,
                                      2 * U[g](3, i0 + 1, j, k) -
                                      Um[g](3, i0 + 1, j, k);
           }
-          if (high_sw4_typeerior) {
+          if (high_interior) {
             Up[g](1, i1 - 1, j, k) = dt2 * Uacc[g](1, i1 - 1, j, k) +
                                      2 * U[g](1, i1 - 1, j, k) -
                                      Um[g](1, i1 - 1, j, k);
@@ -3645,11 +3645,11 @@ void EW::geodyn_up_from_uacc(vector<Sarray>& Up, vector<Sarray>& Uacc,
           }
         }
       // Side with j=const
-      low_sw4_typeerior = m_jStartSw4_Type[g] <= j0 + 1 && j0 + 1 <= m_jEndSw4_Type[g];
-      high_sw4_typeerior = m_jStartSw4_Type[g] <= j1 - 1 && j1 - 1 <= m_jEndSw4_Type[g];
+      low_interior = m_jStartSw4_Type[g] <= j0 + 1 && j0 + 1 <= m_jEndSw4_Type[g];
+      high_interior = m_jStartSw4_Type[g] <= j1 - 1 && j1 - 1 <= m_jEndSw4_Type[g];
       for (sw4_type k = kstart; k <= k1 - 1; k++)
         for (sw4_type i = i0 + 1; i <= i1 - 1; i++) {
-          if (low_sw4_typeerior) {
+          if (low_interior) {
             Up[g](1, i, j0 + 1, k) = dt2 * Uacc[g](1, i, j0 + 1, k) +
                                      2 * U[g](1, i, j0 + 1, k) -
                                      Um[g](1, i, j0 + 1, k);
@@ -3660,7 +3660,7 @@ void EW::geodyn_up_from_uacc(vector<Sarray>& Up, vector<Sarray>& Uacc,
                                      2 * U[g](3, i, j0 + 1, k) -
                                      Um[g](3, i, j0 + 1, k);
           }
-          if (high_sw4_typeerior) {
+          if (high_interior) {
             Up[g](1, i, j1 - 1, k) = dt2 * Uacc[g](1, i, j1 - 1, k) +
                                      2 * U[g](1, i, j1 - 1, k) -
                                      Um[g](1, i, j1 - 1, k);
@@ -3673,11 +3673,11 @@ void EW::geodyn_up_from_uacc(vector<Sarray>& Up, vector<Sarray>& Uacc,
           }
         }
       // Side with k=const
-      low_sw4_typeerior = m_kStartSw4_Type[g] <= k0 + 1 && k0 + 1 <= m_kEndSw4_Type[g];
-      high_sw4_typeerior = m_kStartSw4_Type[g] <= k1 - 1 && k1 - 1 <= m_kEndSw4_Type[g];
+      low_interior = m_kStartSw4_Type[g] <= k0 + 1 && k0 + 1 <= m_kEndSw4_Type[g];
+      high_interior = m_kStartSw4_Type[g] <= k1 - 1 && k1 - 1 <= m_kEndSw4_Type[g];
       for (sw4_type j = j0 + 1; j <= j1 - 1; j++)
         for (sw4_type i = i0 + 1; i <= i1 - 1; i++) {
-          if (low_sw4_typeerior && m_geodyn_faces == 6) {
+          if (low_interior && m_geodyn_faces == 6) {
             Up[g](1, i, j, k0 + 1) = dt2 * Uacc[g](1, i, j, k0 + 1) +
                                      2 * U[g](1, i, j, k0 + 1) -
                                      Um[g](1, i, j, k0 + 1);
@@ -3688,7 +3688,7 @@ void EW::geodyn_up_from_uacc(vector<Sarray>& Up, vector<Sarray>& Uacc,
                                      2 * U[g](3, i, j, k0 + 1) -
                                      Um[g](3, i, j, k0 + 1);
           }
-          if (high_sw4_typeerior) {
+          if (high_interior) {
             Up[g](1, i, j, k1 - 1) = dt2 * Uacc[g](1, i, j, k1 - 1) +
                                      2 * U[g](1, i, j, k1 - 1) -
                                      Um[g](1, i, j, k1 - 1);

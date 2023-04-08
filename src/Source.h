@@ -143,7 +143,7 @@ class Source {
   void get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r, float_sw4 s,
                        bool gradient, float_sw4 normwgh[4],
                        std::vector<GridPointSource*>& point_sources);
-  sw4_type spline_sw4_typeerpolation();
+  sw4_type spline_interpolation();
   void getsourcewgh(float_sw4 ai, float_sw4 wgh[6], float_sw4 dwghda[6],
                     float_sw4 ddwghda[6]) const;
   void getsourcedwgh(float_sw4 ai, float_sw4 wgh[6], float_sw4 dwghda[6],

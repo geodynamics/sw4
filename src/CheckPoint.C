@@ -27,7 +27,7 @@ CheckPoint* CheckPoint::nil = static_cast<CheckPoint*>(0);
 CheckPoint::CheckPoint(EW* a_ew)
     : mEW(a_ew),
       mWritingCycle(-1),
-      mCycleSw4_Typeerval(0),
+      mCycleInterval(0),
       mStartTime(0.0),
       mCheckPointFile(" "),
       mPreceedZeros(0),
@@ -47,11 +47,11 @@ CheckPoint::CheckPoint(EW* a_ew)
 
 //-----------------------------------------------------------------------
 // Save check point files, but no restart
-CheckPoint::CheckPoint(EW* a_ew, sw4_type cycle, sw4_type cycleSw4_Typeerval, string fname,
+CheckPoint::CheckPoint(EW* a_ew, sw4_type cycle, sw4_type cycleInterval, string fname,
                        size_t bufsize)
     : mEW(a_ew),
       mWritingCycle(cycle),
-      mCycleSw4_Typeerval(cycleSw4_Typeerval),
+      mCycleInterval(cycleInterval),
       mStartTime(0.0),
       mCheckPointFile(fname),
       mPreceedZeros(0),
@@ -75,7 +75,7 @@ CheckPoint::CheckPoint(EW* a_ew, sw4_type cycle, sw4_type cycleSw4_Typeerval, st
 CheckPoint::CheckPoint(EW* a_ew, string fname, size_t bufsize)
     : mEW(a_ew),
       mWritingCycle(-1),
-      mCycleSw4_Typeerval(0),
+      mCycleInterval(0),
       mStartTime(0.0),
       mCheckPointFile("chkpt"),
       mPreceedZeros(0),
@@ -106,7 +106,7 @@ CheckPoint::~CheckPoint() {
 bool CheckPoint::do_checkpointing() { return mDoCheckPointing; }
 
 //-----------------------------------------------------------------------
-sw4_type CheckPoint::get_checkpoint_cycle_sw4_typeerval() { return mCycleSw4_Typeerval; }
+sw4_type CheckPoint::get_checkpoint_cycle_interval() { return mCycleInterval; }
 
 //-----------------------------------------------------------------------
 // Disable restart if given restartlatest, but no checkpoint is available
@@ -176,7 +176,7 @@ void CheckPoint::setup_sizes() {
 
       // all points in k-dir are local to each proc
       mWindow[g][4] = mEW->m_kStartSw4_Type[g] -
-                      ghost_points;  // need 1 ghost point at MR sw4_typeerface
+                      ghost_points;  // need 1 ghost point at MR interface
       mWindow[g][5] =
           mEW->m_kEndSw4_Type[g] + ghost_points;  // and all ghost points at bottom
 
@@ -297,7 +297,7 @@ bool CheckPoint::timeToWrite(float_sw4 time, sw4_type cycle, float_sw4 dt) {
   // Will we write at this time step (cycle) ?
   bool do_it = false;
   if (cycle == mWritingCycle) do_it = true;
-  if (mCycleSw4_Typeerval != 0 && cycle % mCycleSw4_Typeerval == 0 && time >= mStartTime)
+  if (mCycleInterval != 0 && cycle % mCycleInterval == 0 && time >= mStartTime)
     do_it = true;
 
 #ifndef SW4_USE_SCR
@@ -887,13 +887,13 @@ std::string CheckPoint::get_restart_path() {
 }
 
 //-----------------------------------------------------------------------
-void CheckPoint::set_checkpoint_file(string fname, sw4_type cycle, sw4_type cycleSw4_Typeerval,
+void CheckPoint::set_checkpoint_file(string fname, sw4_type cycle, sw4_type cycleInterval,
                                      size_t bufsize, bool useHDF5,
                                      sw4_type compressionMode,
                                      double compressionPar) {
   mCheckPointFile = fname;
   mWritingCycle = cycle;
-  mCycleSw4_Typeerval = cycleSw4_Typeerval;
+  mCycleInterval = cycleInterval;
   m_bufsize = bufsize;
   mDoCheckPointing = true;
   mUseHDF5 = useHDF5;

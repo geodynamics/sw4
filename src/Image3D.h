@@ -68,8 +68,8 @@ class Image3D {
 
   static Image3D* nil;
 
-  Image3D(EW* a_ew, float_sw4 time, float_sw4 timeSw4_Typeerval, sw4_type cycle,
-          sw4_type cycleSw4_Typeerval, float_sw4 tstart, const std::string& filePrefix,
+  Image3D(EW* a_ew, float_sw4 time, float_sw4 timeInterval, sw4_type cycle,
+          sw4_type cycleInterval, float_sw4 tstart, const std::string& filePrefix,
           Image3DMode mode, bool doubleMode);
   ~Image3D();
 
@@ -116,12 +116,12 @@ class Image3D {
   std::string mFilePrefix;
   float_sw4 mTime;
   bool m_time_done;
-  float_sw4 mTimeSw4_Typeerval;
+  float_sw4 mTimeInterval;
   float_sw4 mNextTime;
   float_sw4 mStartTime;
 
   sw4_type mWritingCycle;
-  sw4_type mCycleSw4_Typeerval;
+  sw4_type mCycleInterval;
   sw4_type mImageSamplingFactor;
 
   std::string mFileName;

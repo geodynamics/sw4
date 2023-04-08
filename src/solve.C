@@ -38,8 +38,8 @@ __constant__ double cmem_acof_no_gp[384];
 #include "EW.h"
 #include "Mspace.h"
 #include "caliper.h"
-#include "cf_sw4_typeerface.h"
-#include "f_sw4_typeerface.h"
+#include "cf_interface.h"
+#include "f_interface.h"
 #include "impose_cartesian_bc.h"
 #include "policies.h"
 #ifdef ENABLE_CUDA
@@ -173,7 +173,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   }
   // done allocating solution arrays
 
-  // Setup curvilinear grid refinement sw4_typeerface
+  // Setup curvilinear grid refinement interface
   for (sw4_type g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++)
     m_cli2[g - mNumberOfCartesianGrids]->init_arrays(m_sg_str_x, m_sg_str_y);
 
@@ -441,7 +441,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   {
     if (!mQuiet && proc_zero()) cout << "***Twilight Testing..." << endl;
 
-    // output some sw4_typeernal flags
+    // output some internal flags
     for (sw4_type g = 0; g < mNumberOfGrids; g++) {
       printf("proc=%i, Onesided[grid=%i]:", m_myRank, g);
       for (sw4_type q = 0; q < 6; q++) printf(" os[%i]=%i", q, m_onesided[g][q]);
@@ -460,17 +460,17 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
     // evaluate and prsw4_type errors
     float_sw4* lowZ = new float_sw4[3 * mNumberOfGrids];
-    float_sw4* sw4_typeeriorZ = new float_sw4[3 * mNumberOfGrids];
+    float_sw4* interiorZ = new float_sw4[3 * mNumberOfGrids];
     float_sw4* highZ = new float_sw4[3 * mNumberOfGrids];
-    //    float_sw4 lowZ[3], sw4_typeeriorZ[3], highZ[3];
-    bndrySw4_TypeeriorDifference(F, Up, lowZ, sw4_typeeriorZ, highZ);
+    //    float_sw4 lowZ[3], interiorZ[3], highZ[3];
+    bndryInteriorDifference(F, Up, lowZ, interiorZ, highZ);
 
     float_sw4* tmp = new float_sw4[3 * mNumberOfGrids];
     for (sw4_type i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = lowZ[i];
     MPI_Reduce(tmp, lowZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
                m_cartesian_communicator);
-    for (sw4_type i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = sw4_typeeriorZ[i];
-    MPI_Reduce(tmp, sw4_typeeriorZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
+    for (sw4_type i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = interiorZ[i];
+    MPI_Reduce(tmp, interiorZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
                m_cartesian_communicator);
     for (sw4_type i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = highZ[i];
     MPI_Reduce(tmp, highZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
@@ -481,8 +481,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
         printf("Grid nr: %3i \n", g);
         printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n",
                lowZ[3 * g], lowZ[3 * g + 1], lowZ[3 * g + 2]);
-        printf("Max errors sw4_typeerior RHS:        %15.7e  %15.7e  %15.7e\n",
-               sw4_typeeriorZ[3 * g], sw4_typeeriorZ[3 * g + 1], sw4_typeeriorZ[3 * g + 2]);
+        printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n",
+               interiorZ[3 * g], interiorZ[3 * g + 1], interiorZ[3 * g + 2]);
         printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n",
                highZ[3 * g], highZ[3 * g + 1], highZ[3 * g + 2]);
       }
@@ -496,13 +496,13 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     evalRHS(U, mMu, mLambda, Lu, AlphaVE);  // save Lu in composite grid 'Lu'
     Force(t, F, point_sources, identsources);
     exactAccTwilight(t, Uacc);  // save Utt in Uacc
-    test_RhoUtt_Lu(Uacc, Lu, F, lowZ, sw4_typeeriorZ, highZ);
+    test_RhoUtt_Lu(Uacc, Lu, F, lowZ, interiorZ, highZ);
 
     for (sw4_type i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = lowZ[i];
     MPI_Reduce(tmp, lowZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
                m_cartesian_communicator);
-    for (sw4_type i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = sw4_typeeriorZ[i];
-    MPI_Reduce(tmp, sw4_typeeriorZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
+    for (sw4_type i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = interiorZ[i];
+    MPI_Reduce(tmp, interiorZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
                m_cartesian_communicator);
     for (sw4_type i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = highZ[i];
     MPI_Reduce(tmp, highZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
@@ -514,15 +514,15 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
         printf("Grid nr: %3i \n", g);
         printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n",
                lowZ[3 * g], lowZ[3 * g + 1], lowZ[3 * g + 2]);
-        printf("Max errors sw4_typeerior RHS:        %15.7e  %15.7e  %15.7e\n",
-               sw4_typeeriorZ[3 * g], sw4_typeeriorZ[3 * g + 1], sw4_typeeriorZ[3 * g + 2]);
+        printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n",
+               interiorZ[3 * g], interiorZ[3 * g + 1], interiorZ[3 * g + 2]);
         printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n",
                highZ[3 * g], highZ[3 * g + 1], highZ[3 * g + 2]);
       }
     }
     delete[] tmp;
     delete[] lowZ;
-    delete[] sw4_typeeriorZ;
+    delete[] interiorZ;
     delete[] highZ;
   }  // end m_twilight_forcing
 
@@ -848,7 +848,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
   // output flags and settings that affect the run
   if (proc_zero() && mVerbose >= 1) {
-    printf("\nReporting SW4 sw4_typeernal flags and settings:\n");
+    printf("\nReporting SW4 internal flags and settings:\n");
     printf(
         "m_testing=%s, twilight=%s, point_source=%s, moment_test=%s, "
         "energy_test=%s, "
@@ -858,7 +858,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
         m_energy_test ? "yes" : "no", m_lamb_test ? "yes" : "no",
         m_rayleigh_wave_test ? "yes" : "no");
     printf("m_use_supergrid=%s\n", usingSupergrid() ? "yes" : "no");
-    printf("End report of sw4_typeernal flags and settings\n\n");
+    printf("End report of internal flags and settings\n\n");
   }
 
   if (!mQuiet && proc_zero()) cout << "  Begin time stepping..." << endl;
@@ -1146,12 +1146,12 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
 
     if (m_checkfornan) check_for_nan(Up, 1, "U pred. ");
 
-    // Grid refinement sw4_typeerface conditions:
+    // Grid refinement interface conditions:
     // *** 2nd order in TIME
     if (mOrder == 2) {
       SW4_MARK_BEGIN("mOrder=2");
-      // add super-grid damping terms before enforcing sw4_typeerface conditions
-      // (otherwise, Up doesn't have the correct values on the sw4_typeerface)
+      // add super-grid damping terms before enforcing interface conditions
+      // (otherwise, Up doesn't have the correct values on the interface)
       if (usingSupergrid()) {
         addSuperGridDamping(Up, U, Um, mRho);
       }
@@ -1168,7 +1168,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       if (m_output_detailed_timing) time_measure[8] = MPI_Wtime();
       // end test
 
-      // sw4_typeerface conditions for 2nd order in time
+      // interface conditions for 2nd order in time
       // NOTE: this routine calls preliminary_predictor for t+dt, which needs
       // F(t+dt). It is computed at the top of next time step
       enforceIC2(Up, U, Um, AlphaVEp, t, F, point_sources);
@@ -1201,7 +1201,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       if (m_output_detailed_timing) time_measure[8] = MPI_Wtime();
       // end test
 
-      // *** 4th order in TIME sw4_typeerface conditions for the predictor
+      // *** 4th order in TIME interface conditions for the predictor
       // June 14, 2017: adding AlphaVE & AlphaVEm
       // NOTE: true means call preliminary_corrector, which needs F_tt(t) & is
       // computed 5 lines down
@@ -1371,7 +1371,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
       }
 #endif
 
-      // sw4_typeerface conditions for the corrector
+      // interface conditions for the corrector
       // June 14, 2017: adding AlphaVE & AlphaVEm
       // NOTE: false means call preliminary_predictor for t+dt, which needs
       // F(t+dt). It is computed at the top of next time step
@@ -1548,8 +1548,8 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     }
 
     // // See if it is time to write a restart file
-    // //      if (mRestartDumpSw4_Typeerval > 0 &&  currentTimeStep %
-    // mRestartDumpSw4_Typeerval == 0)
+    // //      if (mRestartDumpInterval > 0 &&  currentTimeStep %
+    // mRestartDumpInterval == 0)
     // //        serialize(currentTimeStep, U, Um);
 
     if (m_output_detailed_timing) {
@@ -1712,7 +1712,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     //       string path=".";
     //       im->writeImagePlane_2(1,path);
 
-    // depending on the test case, we should compare in the sw4_typeerior, or only on
+    // depending on the test case, we should compare in the interior, or only on
     // the surface
     if (m_lamb_test)
       normOfSurfaceDifference(Up, U, errInf, errL2, solInf, solL2, a_Sources);
@@ -1943,11 +1943,11 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
 #ifdef SW4_RAJA_CURVIMR
   SW4_MARK_BEGIN("CURVI in EnforceBC");
   // NEW CURVI MR CODE
-  // Sw4_Typeerface condition between curvilinear and top Cartesian grid
+  // Interface condition between curvilinear and top Cartesian grid
   if (mNumberOfGrids - mNumberOfCartesianGrids > 0) {
     if (m_gridGenerator->curviCartIsSmooth(mNumberOfGrids -
                                            mNumberOfCartesianGrids))
-      update_curvilinear_cartesian_sw4_typeerface(a_U);
+      update_curvilinear_cartesian_interface(a_U);
     else
       CurviCartIC(mNumberOfCartesianGrids - 1, a_U, a_Mu, a_Lambda, a_AlphaVE,
                   t);
@@ -1962,7 +1962,7 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   return;
 #else
   // Below is the PRE CURVI_MR CODE
-  // sw4_typeerface between curvilinear and top Cartesian grid
+  // interface between curvilinear and top Cartesian grid
   if (topographyExists()) {
     sw4_type nc = 3;
     sw4_type g = mNumberOfCartesianGrids - 1;
@@ -2096,12 +2096,12 @@ void EW::enforceBCanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
                           bforce_side5_ptr, m_sg_str_x[g], m_sg_str_y[g]);
     }
   }
-  update_curvilinear_cartesian_sw4_typeerface(a_U);
+  update_curvilinear_cartesian_interface(a_U);
 }
 //
-void EW::update_curvilinear_cartesian_sw4_typeerface(vector<Sarray>& a_U) {
+void EW::update_curvilinear_cartesian_interface(vector<Sarray>& a_U) {
   SW4_MARK_FUNCTION;
-  // std::cout<<"EW::update_curvilinear_cartesian_sw4_typeerface_raja<\n"<<std::flush;
+  // std::cout<<"EW::update_curvilinear_cartesian_interface_raja<\n"<<std::flush;
   if (topographyExists()) {
     const sw4_type nc = 3;
     sw4_type g = mNumberOfCartesianGrids - 1;
@@ -2159,14 +2159,14 @@ void EW::update_curvilinear_cartesian_sw4_typeerface(vector<Sarray>& a_U) {
 }
 
 //-----------------------------------------------------------------------
-void EW::update_curvilinear_cartesian_sw4_typeerface_org(vector<Sarray>& a_U) {
+void EW::update_curvilinear_cartesian_interface_org(vector<Sarray>& a_U) {
   SW4_MARK_FUNCTION;
   SYNC_STREAM;
   if (topographyExists()) {
     sw4_type g = mNumberOfCartesianGrids - 1;
     sw4_type gc = mNumberOfGrids - 1;
     sw4_type nc = a_U[0].m_nc;
-    // std::cout<<"CALL TO void EW::update_curvilinear_cartesian_sw4_typeerface\n";
+    // std::cout<<"CALL TO void EW::update_curvilinear_cartesian_interface\n";
 // inject solution values between lower boundary of gc and upper boundary of g
 #pragma omp parallel for
     for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
@@ -2188,7 +2188,7 @@ void EW::update_curvilinear_cartesian_sw4_typeerface_org(vector<Sarray>& a_U) {
       }
   }
 }
-//-----------------Mesh refinement sw4_typeerface condition for 4th order
+//-----------------Mesh refinement interface condition for 4th order
 // predictor-corrector scheme------------------------
 void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                    vector<Sarray>& a_Um, vector<Sarray*>& a_AlphaVEp,
@@ -2197,7 +2197,7 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                    vector<GridPointSource*>& point_sources) {
   SW4_MARK_FUNCTION;
   for (sw4_type g = 0; g < mNumberOfCartesianGrids - 1; g++) {
-    // Sw4_Typeerpolate between g and g+1, assume factor 2 refinement with at least
+    // Interpolate between g and g+1, assume factor 2 refinement with at least
     // three ghost points
     VERIFY2(m_ghost_points >= 3,
             "enforceIC Error: "
@@ -2214,11 +2214,11 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     SW4_MARK_BEGIN("enforceIC::Allocs");
     // fine side
     Sarray Unextf(3, ibf, ief, jbf, jef, kf, kf, __FILE__,
-                  __LINE__);  // only needs k=kf (on the sw4_typeerface)
+                  __LINE__);  // only needs k=kf (on the interface)
     Sarray Bf(3, ibf, ief, jbf, jef, kf, kf, __FILE__, __LINE__);
     // coarse side
     Sarray Unextc(3, ibc, iec, jbc, jec, kc, kc, __FILE__,
-                  __LINE__);  // only needs k=kc (on the sw4_typeerface)
+                  __LINE__);  // only needs k=kc (on the interface)
     Sarray Bc(3, ibc, iec, jbc, jec, kc, kc, __FILE__, __LINE__);
 
 #define FUSED_KERNELS 1
@@ -2234,14 +2234,14 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
 #endif
 
     // to compute the corrector we need the acceleration in the vicinity of the
-    // sw4_typeerface
+    // interface
     Sarray Uf_tt(3, ibf, ief, jbf, jef, kf - 7, kf + 1, __FILE__, __LINE__);
     Sarray Uc_tt(3, ibc, iec, jbc, jec, kc - 1, kc + 7, __FILE__, __LINE__);
     // reuse Utt to hold the acceleration of the memory variables
     SW4_MARK_END("enforceIC::Allocs");
 
     // Set to zero the ghost point values that are unknowns when solving the
-    // sw4_typeerface condition. Assume that Dirichlet data is already set on ghost
+    // interface condition. Assume that Dirichlet data is already set on ghost
     // points on the (supergrid) sides, which are not treated as unknown
     // variables.
     dirichlet_hom_ic(a_Up[g + 1], g + 1, kf + 1, true);  // inside=true
@@ -2257,11 +2257,11 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
       SW4_MARK_BEGIN("enforceIC::PREDICTOR");
       //  REMARK: June 15, 2017: if predictor == true, the memory variable
       //  a_alphaVEp holds the predicted
-      // (2nd order) values on entry. However, the sw4_typeerior contribution to the
-      // displacement on the sw4_typeerface depends on the corrected memory variable.
+      // (2nd order) values on entry. However, the interior contribution to the
+      // displacement on the interface depends on the corrected memory variable.
       // The memory variable is updated within compute_preliminary_corrector.
 
-      // get the sw4_typeerior contribution to the displacements on the sw4_typeerface for
+      // get the interior contribution to the displacements on the interface for
       // the corrector (depends on the corrector value of AlphaVEp)
       compute_preliminary_corrector(a_Up[g + 1], a_U[g + 1], a_Um[g + 1],
                                     a_AlphaVEp[g + 1], a_AlphaVE[g + 1],
@@ -2334,14 +2334,14 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     communicate_array_2d(Bf, g + 1, kf);
     communicate_array_2d(Bc, g, kc);
     SW4_MARK_END("enforceIC::MPI2DCOMM");
-    // Up to here, sw4_typeerface stresses and displacement (Bc,Bf) and (Unextc,
+    // Up to here, interface stresses and displacement (Bc,Bf) and (Unextc,
     // Unextf) were computed with correct ghost point values in the corners
     // (supergrid layers). In the following iteration, we use centered formulas
-    // for sw4_typeerpolation and restriction, all the way up to the Dirichlet
+    // for interpolation and restriction, all the way up to the Dirichlet
     // boundaries. We must therefore set the corner ghost point values to zero.
     // This is needed in the call to conssw4_typep() because Up[g+1] (fine grid) is
     // used in a 7-point restriction stencil, and Up[g] (coarse grid) is used in
-    // a 4-point sw4_typeerpolation stencil (ic-1,jc-1) -> (ic+2, jc+2)
+    // a 4-point interpolation stencil (ic-1,jc-1) -> (ic+2, jc+2)
     //
     // Note: the inside flag is now false -> only zero out the ghost points in
     // the corners, i.e., above (or below) the sides where dirichlet boundary
@@ -2350,7 +2350,7 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
       dirichlet_hom_ic(a_Up[g + 1], g + 1, kf + 1, false);
       dirichlet_hom_ic(a_Up[g], g, kc - 1, false);
     }
-    // Initial guesses for grid sw4_typeerface iteration
+    // Initial guesses for grid interface iteration
     gridref_initial_guess(a_Up[g + 1], g + 1, false);
     gridref_initial_guess(a_Up[g], g, true);
 
@@ -2372,7 +2372,7 @@ void EW::enforceIC(vector<Sarray>& a_Up, vector<Sarray>& a_U,
   }  // end for g...
   SW4_MARK_BEGIN("enforceIC::IMPOSE_IC");
   for (sw4_type g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++) {
-    //         m_clSw4_Typeerface[g-mNumberOfCartesianGrids]->impose_ic( a_Up,
+    //         m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up,
     //         time+mDt );
     m_cli2[g - mNumberOfCartesianGrids]->impose_ic(a_Up, time + mDt,
                                                    a_AlphaVEp);
@@ -2391,7 +2391,7 @@ void EW::enforceIC2(vector<Sarray>& a_Up, vector<Sarray>& a_U,
   SW4_MARK_FUNCTION;
   bool predictor = false;  // or true???
   for (sw4_type g = 0; g < mNumberOfCartesianGrids - 1; g++) {
-    // Sw4_Typeerpolate between g and g+1, assume factor 2 refinement with at least
+    // Interpolate between g and g+1, assume factor 2 refinement with at least
     // three ghost points
     VERIFY2(m_ghost_points >= 3,
             "enforceIC2 Error: "
@@ -2406,20 +2406,20 @@ void EW::enforceIC2(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     sw4_type kc = 1;
     // fine side
     Unextf.define(3, ibf, ief, jbf, jef, kf,
-                  kf);  // only needs k=kf (on the sw4_typeerface)
+                  kf);  // only needs k=kf (on the interface)
     Bf.define(3, ibf, ief, jbf, jef, kf, kf);
     // coarse side
     Unextc.define(3, ibc, iec, jbc, jec, kc,
-                  kc);  // only needs k=kc (on the sw4_typeerface)
+                  kc);  // only needs k=kc (on the interface)
     Bc.define(3, ibc, iec, jbc, jec, kc, kc);
 
     // test: check that the condition Up[g+1](kf) = P Up[g](1) is satisfied on
-    // the sw4_typeerface
+    // the interface
     if (mVerbose >= 3)
       check_displacement_continuity(a_Up[g + 1], a_Up[g], g + 1, g);
 
     //  Zero out the ghost point values that are unknowns when solving the
-    //  sw4_typeerface condition. Assume that Dirichlet data
+    //  interface condition. Assume that Dirichlet data
     // are already set on ghost points on the other (supergrid) sides, which are
     // not treated as unknown variables.
     dirichlet_hom_ic(a_Up[g + 1], g + 1, kf + 1, true);  // inside=true
@@ -2431,7 +2431,7 @@ void EW::enforceIC2(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     }
 
     //  compute contribution to the displacements at the next time level
-    //  (Unextc, Unextf) from the sw4_typeerior grid points in Up
+    //  (Unextc, Unextf) from the interior grid points in Up
     // note: t+dt refers to the time level for the forcing. Unextf lives on time
     // level t+2*dt
     //
@@ -2451,7 +2451,7 @@ void EW::enforceIC2(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     // test: assign exact (twilight) solution to a_Up
     //      initialData(time+mDt, a_Up, a_AlphaVEp);
     // end test
-    //  compute contribution to the normal stresses (Bc, Bf) from the sw4_typeerior
+    //  compute contribution to the normal stresses (Bc, Bf) from the interior
     //  grid points in Up
     compute_icstresses(a_Up[g + 1], Bf, g + 1, kf, m_sg_str_x[g + 1],
                        m_sg_str_y[g + 1]);
@@ -2487,14 +2487,14 @@ void EW::enforceIC2(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     communicate_array_2d(Bf, g + 1, kf);
     communicate_array_2d(Bc, g, kc);
 
-    // Up to here, sw4_typeerface stresses and displacement (Bc,Bf) and (Unextc,
+    // Up to here, interface stresses and displacement (Bc,Bf) and (Unextc,
     // Unextf) were computed with correct ghost point values in the corners. In
-    // the following iteration, we use centered formulas for sw4_typeerpolation and
+    // the following iteration, we use centered formulas for interpolation and
     // restriction, all the way up to the Dirichlet boundaries. We must
     // therefore set the corner ghost point values to zero. This is needed in
     // the call to conssw4_typep() because Up[g+1] (fine grid) is used in a 7-point
     // restriction stencil, and Up[g] (coarse grid) is used in a 4-point
-    // sw4_typeerpolation stencil (ic-1,jc-1) -> (ic+2, jc+2)
+    // interpolation stencil (ic-1,jc-1) -> (ic+2, jc+2)
     //
     // Note: the inside flag is now false -> only zero out the ghost points in
     // the corners, i.e., above (or below) the sides where dirichlet boundary
@@ -2503,7 +2503,7 @@ void EW::enforceIC2(vector<Sarray>& a_Up, vector<Sarray>& a_U,
       dirichlet_hom_ic(a_Up[g + 1], g + 1, kf + 1, false);
       dirichlet_hom_ic(a_Up[g], g, kc - 1, false);
     }
-    // Initial guesses for grid sw4_typeerface iteration
+    // Initial guesses for grid interface iteration
     gridref_initial_guess(a_Up[g + 1], g + 1, false);
     gridref_initial_guess(a_Up[g], g, true);
     float_sw4 cof = predictor ? 12 : 1;
@@ -2535,7 +2535,7 @@ void EW::enforceIC2(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     }
   }
   for (sw4_type g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++) {
-    //      m_clSw4_Typeerface[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt
+    //      m_clInterface[g-mNumberOfCartesianGrids]->impose_ic( a_Up, time+mDt
     //      );
     m_cli2[g - mNumberOfCartesianGrids]->impose_ic(a_Up, time + mDt,
                                                    a_AlphaVEp);
@@ -2609,7 +2609,7 @@ void EW::check_displacement_continuity(Sarray& Uf, Sarray& Uc, sw4_type gf, sw4_
   float_sw4 l2err = 0, l2err_global = 0;
 
   // for i=2*ic-1 and j=2*jc-1: Enforce continuity of displacements and normal
-  // stresses along the sw4_typeerface
+  // stresses along the interface
   for (sw4_type jc = jcb; jc <= jce; jc++)
     for (sw4_type ic = icb; ic <= ice; ic++) {
       // i odd, j odd
@@ -2719,7 +2719,7 @@ void EW::dirichlet_hom_ic(Sarray& U, sw4_type g, sw4_type k, bool inner) {
           [=] RAJA_DEVICE(sw4_type c, sw4_type j, sw4_type i) { UV(c, i, j, k) = 0; });
     }
   } else {
-    // Sw4_Typeerior, unknown ghost points.
+    // Interior, unknown ghost points.
     sw4_type ib, ie, jb, je;
     if (m_iStartSw4_Type[g] == 1)
       ib = 1;
@@ -2780,7 +2780,7 @@ void EW::dirichlet_twilight_ic(Sarray& U, sw4_type g, sw4_type kic, float_sw4 t)
 void EW::dirichlet_LRic(Sarray& U, sw4_type g, sw4_type kic, float_sw4 t, sw4_type adj) {
   SW4_MARK_FUNCTION;
   // Put back exact solution at the ghost points that don't participate in the
-  // sw4_typeerface conditions, i.e. at supergrid points
+  // interface conditions, i.e. at supergrid points
   //   sw4_type k = upper ? 0 : m_global_nz[g]+1;
   //
   // set adj= 0 for ghost pts + boundary pt
@@ -2910,7 +2910,7 @@ void EW::dirichlet_LRic(Sarray& U, sw4_type g, sw4_type kic, float_sw4 t, sw4_ty
 //-----------------------------------------------------------------------
 void EW::dirichlet_LRstress(Sarray& B, sw4_type g, sw4_type kic, float_sw4 t, sw4_type adj) {
   SW4_MARK_FUNCTION;
-  // Exact stresses at the ghost points that don't participate in the sw4_typeerface
+  // Exact stresses at the ghost points that don't participate in the interface
   // conditions, i.e. at supergrid (Dirichlet) points
   //   sw4_type k = upper ? 0 : m_global_nz[g]+1;
   //
@@ -3295,15 +3295,15 @@ void EW::compute_preliminary_corrector(
   SW4_MARK_FUNCTION;
   //
   // NOTE: This routine is called by enforceIC() after the predictor stage to
-  // calculate the sw4_typeerior contribution to the corrector on the sw4_typeerface at
+  // calculate the interior contribution to the corrector on the interface at
   // time step. It is NOT called by enforceIC2(), which handles 2nd order time
   // stepping. Super-grid dissipation is added because it is part of the
-  // sw4_typeerior contribution to the corrected displacement.
+  // interior contribution to the corrected displacement.
   //
   float_sw4 idt2 = 1 / (mDt * mDt);
   // to evaluate L(Up_tt) for k=kic, we need Up(k) in the vicinity of the
-  // sw4_typeerface Note: Utt is needed at all points (sw4_typeerior + ghost) to evaluate
-  // L(Utt) in all sw4_typeerior points
+  // interface Note: Utt is needed at all points (interior + ghost) to evaluate
+  // L(Utt) in all interior points
 
   Utt.prefetch();
   a_U.prefetch();
@@ -3357,8 +3357,8 @@ void EW::compute_preliminary_corrector(
     op = '-';  // Subtract Lu := Lu - L_a(alpha)
     for (sw4_type a = 0; a < m_number_mechanisms; a++) {
       // compute corrected memory variable for mechanism 'a', near the
-      // sw4_typeerface, store in 'Utt'
-      updateMemVarCorrNearSw4_Typeerface(Utt, a_AlphaVEm[a], a_Up, a_U, a_Um, t, a,
+      // interface, store in 'Utt'
+      updateMemVarCorrNearInterface(Utt, a_AlphaVEm[a], a_Up, a_U, a_Um, t, a,
                                     g);
 
       // assume a_U and a_AlphaVE have the same dimensions for all mechanisms
@@ -3518,7 +3518,7 @@ void EW::compute_preliminary_predictor(
   SW4_MARK_FUNCTION;
   //
   // NOTE: This routine is called by enforceIC() after the corrector stage to
-  // calculate the sw4_typeerior contribution to the predictor on the sw4_typeerface at
+  // calculate the interior contribution to the predictor on the interface at
   // next time step. It is also called by enforceIC2(), which handles 2nd order
   // time stepping. Only in that case should super-grid dissipation be added.
   //
@@ -5220,7 +5220,7 @@ void EW::enforceBCfreeAtt2(vector<Sarray>& a_Up, vector<Sarray>& a_Mu,
             b4cj = d4b * m_sg_str_yg[j - jfirst];
           }
           // this would be more efficient if done in Fortran
-          // first add sw4_typeerior elastic terms (use ghost point stencils)
+          // first add interior elastic terms (use ghost point stencils)
           g1 = h * forcing[3 * ind] -
                a_MugV(i, j, 1) *
                    (lm_sbop[1] * a_UpgV(1, i, j, 1) +
@@ -5712,7 +5712,7 @@ void EW::CurviCartIC(sw4_type gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
 
   bool debug = false;
   if (debug) {
-    // Verify that sw4_typeerface condition is satisfied.
+    // Verify that interface condition is satisfied.
     curvilinear4sgwind(
         ib, ie, jb, je, kb, ke, nk, nk, a_U[gcurv].c_ptr(), a_Mu[gcurv].c_ptr(),
         a_Lambda[gcurv].c_ptr(), mMetric[gcurv].c_ptr(), mJ[gcurv].c_ptr(), Lup,

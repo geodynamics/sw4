@@ -133,16 +133,16 @@ using EBFA_POL = DEFAULT_LOOP2;
 // void EW::get_exact_point_source in EW.C
 using GEPS_POL = DEFAULT_LOOP3;
 
-// CurvilinearSw4_Typeerface2.C
+// CurvilinearInterface2.C
 
 using BZ_POL_ASYNC = DEFAULT_LOOP3;
 
-// Injection in CurvilinearSw4_Typeerface2.C
+// Injection in CurvilinearInterface2.C
 
 using INJ_POL_ASYNC = DEFAULT_LOOP3;
 
 using INJ_POL2_ASYNC = DEFAULT_LOOP2;
-// CurvilinearSw4_Typeerface2::communicate_array
+// CurvilinearInterface2::communicate_array
 
 using CA_POL = DEFAULT_LOOP3;
 
@@ -150,7 +150,7 @@ using CA_POL = DEFAULT_LOOP3;
 
 using SAA_POL = DEFAULT_LOOP4;
 
-// Sarray::insert_sw4_typeersection(
+// Sarray::insert_intersection(
 using SII_POL = DEFAULT_LOOP3;
 
 // TestEcons::get_ubnd(

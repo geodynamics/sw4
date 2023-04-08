@@ -207,7 +207,7 @@ class Sarray {
       if (m_data[i] > 0.0)
         std::cout << "FORCE " << i << " " << m_data[i] << "\n";
   }
-  void sw4_typeersection(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
+  void intersection(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                     sw4_type wind[6]);
   void side_plane(sw4_type side, sw4_type wind[6], sw4_type nGhost = 1);
   void side_plane_fortran(sw4_type side, sw4_type wind[6], sw4_type nGhost = 1);
@@ -241,7 +241,7 @@ class Sarray {
                        double* ar);
   void insert_subarray(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                        float* ar);
-  void insert_sw4_typeersection(Sarray& a_U);
+  void insert_intersection(Sarray& a_U);
   void insert_subarrayIK(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                          float_sw4* ar);
   void copy_kplane(Sarray& u, sw4_type k);

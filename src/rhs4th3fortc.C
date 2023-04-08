@@ -778,7 +778,7 @@ void rhs4th3fort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type j
                    tf * (mu(i, j, k) * stry(j) + mu(i, j + 2, k) * stry(j + 2));
 
             /* xx, yy, and zz derivatives: */
-            /* note that we could have sw4_typeroduced sw4_typeermediate variables for the
+            /* note that we could have sw4_typeroduced intermediate variables for the
              * average of lambda  */
             /* in the same way as we did for mu */
             r1 = i6 * (strx(i) * ((2 * mux1 + la(i - 1, j, k) * strx(i - 1) -
@@ -1953,7 +1953,7 @@ void rhs4th3fortsgstr_ci(
                tf * (mu(i, j, k) * stry(j) + mu(i, j + 2, k) * stry(j + 2));
 
         /* xx, yy, and zz derivatives: */
-        /* note that we could have sw4_typeroduced sw4_typeermediate variables for the
+        /* note that we could have sw4_typeroduced intermediate variables for the
          * average of lambda  */
         /* in the same way as we did for mu */
         r1 = i6 * (strx(i) * ((2 * mux1 + la(i - 1, j, k) * strx(i - 1) -
@@ -2287,7 +2287,7 @@ void rhs4th3fortsgstr_ci(
 void rhserrfort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
                    sw4_type klast, sw4_type nz, float_sw4 h, float_sw4* __restrict__ a_fo,
                    float_sw4* __restrict__ a_u2, float_sw4 lowZ[3],
-                   float_sw4 sw4_typeerZ[3], float_sw4 highZ[3]) {
+                   float_sw4 interZ[3], float_sw4 highZ[3]) {
   SW4_MARK_FUNCTION;
 #define fo(c, i, j, k) a_fo[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
 #define u2(c, i, j, k) a_u2[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
@@ -2312,16 +2312,16 @@ void rhserrfort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jl
   }
 
   for (sw4_type c = 1; c <= 3; c++) {
-    float_sw4 sw4_typeerz = 0;
+    float_sw4 interz = 0;
 #pragma omp parallel
-#pragma omp for reduction(max : sw4_typeerz)
+#pragma omp for reduction(max : interz)
     for (sw4_type k = 7; k <= nz - 6; k++)
       for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
         for (sw4_type i = ifirst + 2; i <= ilast - 2; i++) {
           float_sw4 er = std::abs(fo(c, i, j, k) - u2(c, i, j, k));
-          if (sw4_typeerz < er) sw4_typeerz = er;
+          if (interz < er) interz = er;
         }
-    sw4_typeerZ[c - 1] = sw4_typeerz;
+    interZ[c - 1] = interz;
   }
 
   for (sw4_type c = 1; c <= 3; c++) {
@@ -2345,7 +2345,7 @@ void rhouttlumf_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jl
                    sw4_type klast, sw4_type nz, float_sw4* __restrict__ a_uacc,
                    float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_fo,
                    float_sw4* __restrict__ a_rho, float_sw4 lowZ[3],
-                   float_sw4 sw4_typeerZ[3], float_sw4 highZ[3]) {
+                   float_sw4 interZ[3], float_sw4 highZ[3]) {
   SW4_MARK_FUNCTION;
 #define fo(c, i, j, k) a_fo[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
 #define uacc(c, i, j, k) a_uacc[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
@@ -2373,17 +2373,17 @@ void rhouttlumf_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jl
   }
 
   for (sw4_type c = 1; c <= 3; c++) {
-    float_sw4 sw4_typeerz = 0;
+    float_sw4 interz = 0;
 #pragma omp parallel
-#pragma omp for reduction(max : sw4_typeerz)
+#pragma omp for reduction(max : interz)
     for (sw4_type k = 7; k <= nz - 6; k++)
       for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
         for (sw4_type i = ifirst + 2; i <= ilast - 2; i++) {
           float_sw4 er = std::abs(rho(i, j, k) * uacc(c, i, j, k) -
                                   lu(c, i, j, k) - fo(c, i, j, k));
-          if (sw4_typeerz < er) sw4_typeerz = er;
+          if (interz < er) interz = er;
         }
-    sw4_typeerZ[c - 1] = sw4_typeerz;
+    interZ[c - 1] = interz;
   }
 
   for (sw4_type c = 1; c <= 3; c++) {

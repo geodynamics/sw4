@@ -3,7 +3,7 @@
 #include "caliper.h"
 #include "policies.h"
 #include "sw4.h"
-void oddIoddJsw4_typeerpJacobi(
+void oddIoddJinterpJacobi(
     float_sw4 rmax[3], Sarray &Uf, Sarray &UfNew, Sarray &Uc, Sarray &UcNew,
     Sarray &Mufs, Sarray &Mlfs, Sarray &Morc, Sarray &Mlrc, Sarray &Mucs,
     Sarray &Mlcs, Sarray &Morf, Sarray &Mlrf, Sarray &Unextf,
@@ -260,10 +260,10 @@ void oddIoddJsw4_typeerpJacobi(
   rmax[0] = rmax1;
   rmax[1] = rmax2;
   rmax[2] = rmax3;
-}  // end oddIoddJsw4_typeerpJacobi
+}  // end oddIoddJinterpJacobi
 
 // optimized version using macros instead of Sarray indexing
-void oddIoddJsw4_typeerpJacobiOpt(
+void oddIoddJinterpJacobiOpt(
     RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax1,
     RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax2,
     RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax3,
@@ -688,10 +688,10 @@ void oddIoddJsw4_typeerpJacobiOpt(
 #undef Uc
 #undef Uf
 #undef UfNew
-}  // end oddIoddJsw4_typeerpJacobiOpt
+}  // end oddIoddJinterpJacobiOpt
 
 //---------------------------- Reference version ----------------------
-void oddIoddJsw4_typeerp(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf,
+void oddIoddJinterp(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf,
                     Sarray &Rhof, Sarray &Uc, Sarray &Muc, Sarray &Lambdac,
                     Sarray &Rhoc, Sarray &Mufs, Sarray &Mlfs, Sarray &Unextf,
                     Sarray &BfRestrict, Sarray &Unextc, Sarray &Bc,
@@ -756,7 +756,7 @@ void oddIoddJsw4_typeerp(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lam
       a22 = -nuc / Rhoc(ic, jc, 1) * Muc(ic, jc, 1) * a_ghcof[0];
       for (sw4_type c = 1; c <= 2; c++)  //  the 2 tangential components ?
       {
-        // apply the restriction operator to the normal stress on the sw4_typeerface
+        // apply the restriction operator to the normal stress on the interface
         // (Bf is on the fine grid) scale Bf by 1/strf ? b1  = i1024*(
         //   Bf(c,i-3,j-3,nkf)-9*Bf(c,i-3,j-1,nkf)-16*Bf(c,i-3,j,nkf)-9*Bf(c,i-3,j+1,nkf)+Bf(c,i-3,j+3,nkf)
         //   +9*(-Bf(c,i-1,j-3,nkf)+9*Bf(c,i-1,j-1,nkf)+16*Bf(c,i-1,j,nkf)+9*Bf(c,i-1,j+1,nkf)-Bf(c,i-1,j+3,nkf))
@@ -936,4 +936,4 @@ void oddIoddJsw4_typeerp(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lam
 #undef strc_y
 #undef strf_x
 #undef strf_y
-}  // end oddIoddJsw4_typeerp
+}  // end oddIoddJinterp

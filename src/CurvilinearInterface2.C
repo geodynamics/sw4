@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "CurvilinearSw4_Typeerface2.h"
+#include "CurvilinearInterface2.h"
 #include "EW.h"
 #include "F77_FUNC.h"
 #include "GridGenerator.h"
@@ -26,7 +26,7 @@ void curvilinear4sgwind(sw4_type, sw4_type, sw4_type, sw4_type, sw4_type, sw4_ty
                         char);
 
 //-----------------------------------------------------------------------
-CurvilinearSw4_Typeerface2::CurvilinearSw4_Typeerface2(sw4_type a_gc, EW* a_ew) {
+CurvilinearInterface2::CurvilinearInterface2(sw4_type a_gc, EW* a_ew) {
   SW4_MARK_FUNCTION;
 #if defined(ENABLE_CUDA)
 #if defined(SW4_MANAGED_MPI_BUFFERS)
@@ -79,8 +79,8 @@ CurvilinearSw4_Typeerface2::CurvilinearSw4_Typeerface2(sw4_type a_gc, EW* a_ew) 
   // Allocate space for MPI buffers
 }
 
-CurvilinearSw4_Typeerface2::~CurvilinearSw4_Typeerface2() {
-  std::cout << "~CurvilinearSw4_Typeerface2()...\n" << std::flush;
+CurvilinearInterface2::~CurvilinearInterface2() {
+  std::cout << "~CurvilinearInterface2()...\n" << std::flush;
 #if defined(ENABLE_CUDA)
   ::operator delete[](m_sbop, Space::Managed);
 #endif
@@ -102,11 +102,11 @@ CurvilinearSw4_Typeerface2::~CurvilinearSw4_Typeerface2() {
   ::operator delete[](m_mass_block, Space::Managed);
   ::operator delete[](x, Space::Managed);
 #endif
-  std::cout << "~CurvilinearSw4_Typeerface2().. Done\n" << std::flush;
+  std::cout << "~CurvilinearInterface2().. Done\n" << std::flush;
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::bnd_zero_host(Sarray& u, sw4_type npts) {
+void CurvilinearInterface2::bnd_zero_host(Sarray& u, sw4_type npts) {
   // Homogeneous Dirichet at boundaries on sides. Do not apply at upper and
   // lower boundaries.
   for (sw4_type s = 0; s < 4; s++)
@@ -125,7 +125,7 @@ void CurvilinearSw4_Typeerface2::bnd_zero_host(Sarray& u, sw4_type npts) {
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::bnd_zero(Sarray& u, sw4_type npts) {
+void CurvilinearInterface2::bnd_zero(Sarray& u, sw4_type npts) {
   SW4_MARK_FUNCTION;
   // Homogeneous Dirichet at boundaries on sides. Do not apply at upper and
   // lower boundaries.
@@ -224,7 +224,7 @@ void CurvilinearSw4_Typeerface2::bnd_zero(Sarray& u, sw4_type npts) {
         });
 
   } else {
-    std::cerr << " ERROR SIZE in CurvilinearSw4_Typeerface2::bnd_zero 0 "
+    std::cerr << " ERROR SIZE in CurvilinearInterface2::bnd_zero 0 "
               << st.size() << "\n";
     abort();
   }
@@ -233,7 +233,7 @@ void CurvilinearSw4_Typeerface2::bnd_zero(Sarray& u, sw4_type npts) {
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::copy_str(float_sw4* dest, float_sw4* src,
+void CurvilinearInterface2::copy_str(float_sw4* dest, float_sw4* src,
                                      sw4_type offset, sw4_type n, sw4_type nsw) {
   SW4_MARK_FUNCTION;
   //
@@ -259,10 +259,10 @@ void CurvilinearSw4_Typeerface2::copy_str(float_sw4* dest, float_sw4* src,
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::init_arrays(vector<float_sw4*>& a_strx,
+void CurvilinearInterface2::init_arrays(vector<float_sw4*>& a_strx,
                                         vector<float_sw4*>& a_stry) {
   SW4_MARK_FUNCTION;
-  // std::cout << "void CurvilinearSw4_Typeerface2::init_arrays \n";
+  // std::cout << "void CurvilinearInterface2::init_arrays \n";
   for (sw4_type s = 0; s < 4; s++)
     m_isbndry[s] = m_ew->getLocalBcType(m_gc, s) != bProcessor;
 
@@ -373,9 +373,9 @@ void CurvilinearSw4_Typeerface2::init_arrays(vector<float_sw4*>& a_strx,
   m_ew->m_gridGenerator->generate_grid_and_met(m_ew, m_gc, m_x_c, m_y_c, m_z_c,
                                                m_jac_c, m_met_c, false);
   // std::cout<<"HERE 1\n";
-  m_met_c.insert_sw4_typeersection(m_ew->mMetric[m_gc]);
+  m_met_c.insert_intersection(m_ew->mMetric[m_gc]);
   // std::cout<<"HERE 1.1\n"<<std::flush;
-  m_jac_c.insert_sw4_typeersection(m_ew->mJ[m_gc]);
+  m_jac_c.insert_intersection(m_ew->mJ[m_gc]);
   // std::cout<<"HERE 1.2\n"<<std::flush;
   communicate_array(m_met_c, true);
   communicate_array(m_jac_c, true);
@@ -386,8 +386,8 @@ void CurvilinearSw4_Typeerface2::init_arrays(vector<float_sw4*>& a_strx,
   m_met_f.define(4, m_ibf, m_ief, m_jbf, m_jef, m_kbf, m_kef);
   m_ew->m_gridGenerator->generate_grid_and_met(m_ew, m_gf, m_x_f, m_y_f, m_z_f,
                                                m_jac_f, m_met_f, false);
-  m_met_f.insert_sw4_typeersection(m_ew->mMetric[m_gf]);
-  m_jac_f.insert_sw4_typeersection(m_ew->mJ[m_gf]);
+  m_met_f.insert_intersection(m_ew->mMetric[m_gf]);
+  m_jac_f.insert_intersection(m_ew->mJ[m_gf]);
 
   communicate_array(m_met_f, true);
   communicate_array(m_jac_f, true);
@@ -398,12 +398,12 @@ void CurvilinearSw4_Typeerface2::init_arrays(vector<float_sw4*>& a_strx,
     m_tw->get_mula(m_mu_c, m_lambda_c, m_x_c, m_y_c, m_z_c);
     m_tw->get_mula(m_mu_f, m_lambda_f, m_x_f, m_y_f, m_z_f);
   } else {
-    m_rho_c.insert_sw4_typeersection(m_ew->mRho[m_gc]);
-    m_rho_f.insert_sw4_typeersection(m_ew->mRho[m_gf]);
-    m_mu_c.insert_sw4_typeersection(m_ew->mMu[m_gc]);
-    m_mu_f.insert_sw4_typeersection(m_ew->mMu[m_gf]);
-    m_lambda_c.insert_sw4_typeersection(m_ew->mLambda[m_gc]);
-    m_lambda_f.insert_sw4_typeersection(m_ew->mLambda[m_gf]);
+    m_rho_c.insert_intersection(m_ew->mRho[m_gc]);
+    m_rho_f.insert_intersection(m_ew->mRho[m_gf]);
+    m_mu_c.insert_intersection(m_ew->mMu[m_gc]);
+    m_mu_f.insert_intersection(m_ew->mMu[m_gf]);
+    m_lambda_c.insert_intersection(m_ew->mLambda[m_gc]);
+    m_lambda_f.insert_intersection(m_ew->mLambda[m_gf]);
     SYNC_STREAM;
     sw4_type extra_ghost = m_nghost - m_ew->getNumberOfGhostPoints();
     if (extra_ghost > 0) {
@@ -433,10 +433,10 @@ void CurvilinearSw4_Typeerface2::init_arrays(vector<float_sw4*>& a_strx,
 
   if (m_use_attenuation) init_arrays_att();
 
-  // Matrix only defined at sw4_typeerior points
+  // Matrix only defined at interior points
   m_Mass_block.define(9, m_ib + m_nghost, m_ie - m_nghost, m_jb + m_nghost,
                       m_je - m_nghost, 1, 1);
-  sw4_typeerface_block(m_Mass_block);
+  interface_block(m_Mass_block);
 
   // Repackage Mass_block sw4_typeo array of fortran order.
   sw4_type nimb = (m_Mass_block.m_ie - m_Mass_block.m_ib + 1);
@@ -565,7 +565,7 @@ void CurvilinearSw4_Typeerface2::init_arrays(vector<float_sw4*>& a_strx,
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::init_arrays_att() {
+void CurvilinearInterface2::init_arrays_att() {
   SW4_MARK_FUNCTION;
   // Attenuation material setup
   if (m_use_attenuation) {
@@ -587,10 +587,10 @@ void CurvilinearSw4_Typeerface2::init_arrays_att() {
       m_tw->get_mula_att(m_muve_f[0], m_lambdave_f[0], m_x_f, m_y_f, m_z_f);
     } else {
       for (sw4_type a = 0; a < m_number_mechanisms; a++) {
-        m_muve_c[a].insert_sw4_typeersection(m_ew->mMuVE[m_gc][a]);
-        m_lambdave_c[a].insert_sw4_typeersection(m_ew->mLambdaVE[m_gc][a]);
-        m_muve_f[a].insert_sw4_typeersection(m_ew->mMuVE[m_gf][a]);
-        m_lambdave_f[a].insert_sw4_typeersection(m_ew->mLambdaVE[m_gf][a]);
+        m_muve_c[a].insert_intersection(m_ew->mMuVE[m_gc][a]);
+        m_lambdave_c[a].insert_intersection(m_ew->mLambdaVE[m_gc][a]);
+        m_muve_f[a].insert_intersection(m_ew->mMuVE[m_gf][a]);
+        m_lambdave_f[a].insert_intersection(m_ew->mLambdaVE[m_gf][a]);
       }
       SYNC_STREAM;
       sw4_type extra_ghost = m_nghost - m_ew->getNumberOfGhostPoints();
@@ -623,7 +623,7 @@ void CurvilinearSw4_Typeerface2::init_arrays_att() {
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
+void CurvilinearInterface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t,
                                       std::vector<Sarray*>& a_AlphaVE) {
   SW4_MARK_FUNCTION;
 #ifdef SW4_NORM_TRACE
@@ -650,8 +650,8 @@ void CurvilinearSw4_Typeerface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t
 
   //  1. copy   a_U sw4_typeo U_f and U_c
   // std::cout<<"HERE 3\n";
-  U_f.insert_sw4_typeersection(a_U[m_gf]);
-  U_c.insert_sw4_typeersection(a_U[m_gc]);
+  U_f.insert_intersection(a_U[m_gf]);
+  U_c.insert_intersection(a_U[m_gc]);
   // std::cout<<"Initial UC "<<U_c.norm()<<"\n"<<std::flush;
   if (m_use_attenuation) {
     Alpha_c.resize(m_number_mechanisms);
@@ -664,8 +664,8 @@ void CurvilinearSw4_Typeerface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t
                         Space::Managed_temps);
       Alpha_c[a].define(3, m_ib, m_ie, m_jb, m_je, m_kb, m_ke,
                         Space::Managed_temps);
-      Alpha_f[a].insert_sw4_typeersection(a_AlphaVE[m_gf][a]);
-      Alpha_c[a].insert_sw4_typeersection(a_AlphaVE[m_gc][a]);
+      Alpha_f[a].insert_intersection(a_AlphaVE[m_gf][a]);
+      Alpha_c[a].insert_intersection(a_AlphaVE[m_gc][a]);
     }
     // std::cout<<"BRACKET CLOSE\n"<<std::flush;
   }
@@ -692,7 +692,7 @@ void CurvilinearSw4_Typeerface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t
       m_tw->get_ubnd(U_c, m_x_c, m_y_c, m_z_c, t, m_nghost + 1, sides);
       a_U[m_gc].copy_kplane2(U_c, 0);      // have computed U_c:s ghost points
       a_U[m_gc].copy_kplane2(U_c, 1);      // have computed U_c:s ghost points
-      a_U[m_gf].copy_kplane2(U_f, m_nkf);  // .. and U_f:s sw4_typeerface points
+      a_U[m_gf].copy_kplane2(U_f, m_nkf);  // .. and U_f:s interface points
       a_U[m_gf].copy_kplane2(U_f, m_nkf + 1);  // .. and U_f:s ghost point
       return;
       // End debug
@@ -716,7 +716,7 @@ void CurvilinearSw4_Typeerface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t
   }
   SW4_MARK_END("IMPOSE_IC_2");
   SW4_MARK_BEGIN("IMPOSE_IC_3");
-  // 3. Inject U_f := U_c on sw4_typeerface
+  // 3. Inject U_f := U_c on interface
   communicate_array(U_c, true);
   injection(U_f, U_c);
   communicate_array(U_f, true);
@@ -736,12 +736,12 @@ void CurvilinearSw4_Typeerface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t
   //  sw4_type asize = 3*(m_ie-m_ib+1)*(m_je-m_jb+1);
   // std::cout<<"RHS SIZE "<<m_ib<<" "<<m_ie<<" "<<m_jb<<" "<<m_je<<" size =
   // "<<asize<<"\n";
-  sw4_typeerface_rhs(rhs, U_c, U_f, Alpha_c, Alpha_f);
+  interface_rhs(rhs, U_c, U_f, Alpha_c, Alpha_f);
   SW4_MARK_END("IMPOSE_IC_3");
   SW4_MARK_BEGIN("IMPOSE_IC_4");
   // 4.b Left hand side, lhs*x
   Sarray lhs(rhs, Space::Managed_temps), residual(rhs, Space::Managed_temps);
-  sw4_typeerface_lhs(lhs, U_c);
+  interface_lhs(lhs, U_c);
 
   // Initial residual
   float_sw4 maxresloc = 0;
@@ -955,12 +955,12 @@ void CurvilinearSw4_Typeerface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t
 #endif
 
 #ifdef SW4_NORM_TRACE
-    if (!myRank) ofile<<"PRE-SW4_TYPEERFACE U_C"<<U_c.norm()<<"\n";
+    if (!myRank) ofile<<"PRE-INTERFACE U_C"<<U_c.norm()<<"\n";
 #endif
 
     // 4.d Communicate U_c here (only k=0 plane)
     communicate_array(U_c, false, 0);
-    sw4_typeerface_lhs(lhs, U_c);
+    interface_lhs(lhs, U_c);
 
     // 4.e. Compute residual and its norm
     maxresloc = 0;
@@ -988,7 +988,7 @@ void CurvilinearSw4_Typeerface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t
   //   convhist.push_back(maxres);
   //   convhist.push_back(it);
   if (maxres > m_reltol * maxres0 && scalef * maxres > m_abstol) {
-    std::cerr << "WARNING, no convergence in curvilinear sw4_typeerface, res = "
+    std::cerr << "WARNING, no convergence in curvilinear interface, res = "
               << maxres << " reltol= " << m_reltol
               << " initial res = " << maxres0 << std::endl;
     std::cerr << "     scaled res = " << scalef * maxres
@@ -1009,7 +1009,7 @@ void CurvilinearSw4_Typeerface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t
   // 5. Copy U_c and U_f back to a_U, only k=0 for U_c and k=n3f for U_f.
   // std::cout<<"IMPOSIC 1 "<<a_U[m_gc].norm()<<" "<<a_U[m_gf].norm()<<"\n";
   a_U[m_gc].copy_kplane2(U_c, 0);      // have computed U_c:s ghost points
-  a_U[m_gf].copy_kplane2(U_f, m_nkf);  // .. and U_f:s sw4_typeerface points
+  a_U[m_gf].copy_kplane2(U_f, m_nkf);  // .. and U_f:s interface points
   // std::cout<<"IMPOSIC 2 "<<a_U[m_gc].norm()<<" "<<a_U[m_gf].norm()<<"\n";
   if (m_use_attenuation) {
     for (sw4_type a = 0; a < m_number_mechanisms; a++)
@@ -1019,9 +1019,9 @@ void CurvilinearSw4_Typeerface2::impose_ic(std::vector<Sarray>& a_U, float_sw4 t
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::injection(Sarray& u_fA, Sarray& u_cA) {
+void CurvilinearInterface2::injection(Sarray& u_fA, Sarray& u_cA) {
   SW4_MARK_FUNCTION;
-  // Injection at the sw4_typeerface
+  // Injection at the interface
 
   const float_sw4 a = 9.0 / 16;
   const float_sw4 b = -1.0 / 16;
@@ -1104,7 +1104,7 @@ void CurvilinearSw4_Typeerface2::injection(Sarray& u_fA, Sarray& u_cA) {
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::sw4_typeerface_block(Sarray& matrix) {
+void CurvilinearInterface2::interface_block(Sarray& matrix) {
   SW4_MARK_FUNCTION;
   const float_sw4 w1 = 17.0 / 48;
   matrix_Lu(m_ib, m_jb, matrix, m_met_c, m_jac_c, m_mu_c, m_lambda_c, m_strx_c,
@@ -1131,7 +1131,7 @@ void CurvilinearSw4_Typeerface2::sw4_typeerface_block(Sarray& matrix) {
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::sw4_typeerface_lhs(Sarray& lhs, Sarray& uc) {
+void CurvilinearInterface2::interface_lhs(Sarray& lhs, Sarray& uc) {
   SW4_MARK_FUNCTION;
 
   const float_sw4 w1 = 17.0 / 48;
@@ -1150,14 +1150,14 @@ void CurvilinearSw4_Typeerface2::sw4_typeerface_lhs(Sarray& lhs, Sarray& uc) {
 #pragma unroll
         for (sw4_type c = 1; c <= 3; c++) lhsV(c, i, j, 1) /= m_rho_cV(i, j, 1);
       });
-  // std::cout<<"sw4_typeerface_lhs 1 "<<lhs.norm()<<"
+  // std::cout<<"interface_lhs 1 "<<lhs.norm()<<"
   // "<<m_rho_c.norm()<<"\n"<<std::flush;
   if (!m_tw && !m_psource) bnd_zero(lhs, m_nghost);
 
   Sarray prollhs(3, m_ibf, m_ief, m_jbf, m_jef, m_nkf, m_nkf, __FILE__,
                  __LINE__);
   prolongate2D(lhs, prollhs, 1, m_nkf);
-  // std::cout<<"sw4_typeerface_lhs 2 "<<lhs.norm()<<"
+  // std::cout<<"interface_lhs 2 "<<lhs.norm()<<"
   // "<<prollhs.norm()<<"\n"<<std::flush;
   // for (sw4_type c = 1; c <= 3; c++)
   //   for (sw4_type j = prollhs.m_jb; j <= prollhs.m_je; j++)
@@ -1184,10 +1184,10 @@ void CurvilinearSw4_Typeerface2::sw4_typeerface_lhs(Sarray& lhs, Sarray& uc) {
 	//	printf("LOOP %d %d %lf %lf\n",i,j,lm_strx_f[i - lm_ibf] ,lm_stry_f[j - lm_jbf]);
       });
  // std::cout<<"JAC = "<<m_jac_f.norm()<<" RHOF = "<<m_rho_f.norm()<<"\n";
-  //std::cout<<"sw4_typeerface_lhs 3 "<<lhs.norm()<<"   "<<prollhs.norm()<<"\n"<<std::flush;
+  //std::cout<<"interface_lhs 3 "<<lhs.norm()<<"   "<<prollhs.norm()<<"\n"<<std::flush;
   if (!m_tw && !m_psource) bnd_zero(prollhs, m_nghost);
   restrict2D(lhs, prollhs, 1, m_nkf);
-  // std::cout<<"sw4_typeerface_lhs 4 "<<lhs.norm()<<"
+  // std::cout<<"interface_lhs 4 "<<lhs.norm()<<"
   // "<<prollhs.norm()<<"\n"<<std::flush;
   Sarray Bc(lhs, Space::Managed_temps);
   // Bc.set_to_zero(); // For debugging
@@ -1202,13 +1202,13 @@ void CurvilinearSw4_Typeerface2::sw4_typeerface_lhs(Sarray& lhs, Sarray& uc) {
 #pragma unroll
         for (sw4_type c = 1; c <= 3; c++) lhsV(c, i, j, 1) -= BcV(c, i, j, 1);
       });
-  // std::cout<<"sw4_typeerface_lhs 5 "<<lhs.norm()<<"
+  // std::cout<<"interface_lhs 5 "<<lhs.norm()<<"
   // "<<Bc.norm()<<"\n"<<std::flush;
   // SYNC_STREAM;
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::sw4_typeerface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
+void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
                                           vector<Sarray>& Alpha_c,
                                           vector<Sarray>& Alpha_f) {
   SW4_MARK_FUNCTION;
@@ -1370,7 +1370,7 @@ void CurvilinearSw4_Typeerface2::sw4_typeerface_rhs(Sarray& rhs, Sarray& uc, Sar
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::compute_icstresses_curv_host(
+void CurvilinearInterface2::compute_icstresses_curv_host(
     Sarray& a_Up, Sarray& B, sw4_type kic, Sarray& a_metric, Sarray& a_mu,
     Sarray& a_lambda, float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop,
     char op) {
@@ -1474,7 +1474,7 @@ void CurvilinearSw4_Typeerface2::compute_icstresses_curv_host(
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::lhs_icstresses_curv(
+void CurvilinearInterface2::lhs_icstresses_curv(
     Sarray& a_Up, Sarray& a_lhs, sw4_type kic, Sarray& a_metric, Sarray& a_mu,
     Sarray& a_lambda, float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop) {
   SW4_MARK_FUNCTION;
@@ -1541,7 +1541,7 @@ void CurvilinearSw4_Typeerface2::lhs_icstresses_curv(
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::lhs_Lu(Sarray& a_Ua, Sarray& a_lhsa, Sarray& meta,
+void CurvilinearInterface2::lhs_Lu(Sarray& a_Ua, Sarray& a_lhsa, Sarray& meta,
                                    Sarray& jaca, Sarray& mua, Sarray& laa,
                                    float_sw4* a_str_x, float_sw4* a_str_y,
                                    float_sw4 ghcof) {
@@ -1609,7 +1609,7 @@ void CurvilinearSw4_Typeerface2::lhs_Lu(Sarray& a_Ua, Sarray& a_lhsa, Sarray& me
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::mat_icstresses_curv(
+void CurvilinearInterface2::mat_icstresses_curv(
     sw4_type ib, sw4_type jb, Sarray& a_mat, sw4_type kic, Sarray& a_metric, Sarray& a_mu,
     Sarray& a_lambda, float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop) {
   SW4_MARK_FUNCTION;
@@ -1677,7 +1677,7 @@ void CurvilinearSw4_Typeerface2::mat_icstresses_curv(
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::matrix_Lu(sw4_type strib, sw4_type strjb, Sarray& a_mat,
+void CurvilinearInterface2::matrix_Lu(sw4_type strib, sw4_type strjb, Sarray& a_mat,
                                       Sarray& met, Sarray& jac, Sarray& mu,
                                       Sarray& la, float_sw4* a_str_x,
                                       float_sw4* a_str_y, float_sw4 ghcof) {
@@ -1727,7 +1727,7 @@ void CurvilinearSw4_Typeerface2::matrix_Lu(sw4_type strib, sw4_type strjb, Sarra
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::restprol2D(Sarray& Uc, Sarray& alpha, sw4_type kc,
+void CurvilinearInterface2::restprol2D(Sarray& Uc, Sarray& alpha, sw4_type kc,
                                        sw4_type kf) {
   SW4_MARK_FUNCTION;
   SYNC_STREAM;
@@ -1779,7 +1779,7 @@ void CurvilinearSw4_Typeerface2::restprol2D(Sarray& Uc, Sarray& alpha, sw4_type 
       }
 }
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::prolongate2D(Sarray& Uc, Sarray& Uf, sw4_type kc,
+void CurvilinearInterface2::prolongate2D(Sarray& Uc, Sarray& Uf, sw4_type kc,
                                          sw4_type kf) {
   SW4_MARK_FUNCTION;
   const float_sw4 i16 = 1.0 / 16;
@@ -1904,7 +1904,7 @@ void CurvilinearSw4_Typeerface2::prolongate2D(Sarray& Uc, Sarray& Uf, sw4_type k
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::restrict2D(Sarray& Uc, Sarray& Uf, sw4_type kc, sw4_type kf) {
+void CurvilinearInterface2::restrict2D(Sarray& Uc, Sarray& Uf, sw4_type kc, sw4_type kf) {
   SW4_MARK_FUNCTION;
   sw4_type icb, ice, jcb, jce;
   if (Uf.m_ib % 2 == 0)
@@ -1967,7 +1967,7 @@ void CurvilinearSw4_Typeerface2::restrict2D(Sarray& Uc, Sarray& Uf, sw4_type kc,
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::communicate_array_org(Sarray& u, bool allkplanes,
+void CurvilinearInterface2::communicate_array_org(Sarray& u, bool allkplanes,
                                                   sw4_type kplane) {
   SW4_MARK_FUNCTION;
   //
@@ -2105,7 +2105,7 @@ void CurvilinearSw4_Typeerface2::communicate_array_org(Sarray& u, bool allkplane
 }
 
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::communicate_array1d(float_sw4* u, sw4_type n, sw4_type dir,
+void CurvilinearInterface2::communicate_array1d(float_sw4* u, sw4_type n, sw4_type dir,
                                                 sw4_type ngh) {
   // WARNING :: This is using managed memory. Needs -M -gpu flag for safety
   SW4_MARK_FUNCTION;
@@ -2139,7 +2139,7 @@ void CurvilinearSw4_Typeerface2::communicate_array1d(float_sw4* u, sw4_type n, s
   MPI_Wait(&req2, &status);
 }
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::compute_icstresses_curv(
+void CurvilinearInterface2::compute_icstresses_curv(
     Sarray& a_Up, Sarray& B, sw4_type kic, Sarray& a_metric, Sarray& a_mu,
     Sarray& a_lambda, float_sw4* a_str_x, float_sw4* a_str_y, float_sw4* sbop,
     char op) {
@@ -2262,7 +2262,7 @@ void CurvilinearSw4_Typeerface2::compute_icstresses_curv(
 #undef str_x
 #undef str_y
 }
-void CurvilinearSw4_Typeerface2::allocate_mpi_buffers() {
+void CurvilinearInterface2::allocate_mpi_buffers() {
   sw4_type ni = m_ief - m_ibf + 1;
   sw4_type nj = m_jef - m_jbf + 1;
   sw4_type nk = m_kef - m_kbf + 1;
@@ -2277,7 +2277,7 @@ void CurvilinearSw4_Typeerface2::allocate_mpi_buffers() {
   m_mpi_buffer_space = SW4_NEW(Space::Pinned, float_sw4[m_mpi_buffer_size]);
 }
 //-----------------------------------------------------------------------
-void CurvilinearSw4_Typeerface2::communicate_array(Sarray& u, bool allkplanes,
+void CurvilinearInterface2::communicate_array(Sarray& u, bool allkplanes,
                                               sw4_type kplane) {
   SW4_MARK_FUNCTION;
   //

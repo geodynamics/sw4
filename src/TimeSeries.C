@@ -134,7 +134,7 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
   // 1. Adjust z if depth below topography is given
   if (m_zRelativeToTopography && a_ew->topographyExists()) {
     float_sw4 zTopoLocal;
-    if (a_ew->m_gridGenerator->sw4_typeerpolate_topography(a_ew, mX, mY, zTopoLocal,
+    if (a_ew->m_gridGenerator->interpolate_topography(a_ew, mX, mY, zTopoLocal,
                                                       a_ew->mTopoGridExt) < 0)
       zTopoLocal = -1e38;
     MPI_Allreduce(&zTopoLocal, &m_zTopo, 1, a_ew->m_mpifloat, MPI_MAX,
@@ -160,11 +160,11 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
   mQuietMode = a_ew->getQuiet();
 
   // does this processor write this station?
-  // m_myPoint = a_ew->sw4_typeerior_point_in_proc(m_i0, m_j0, m_grid0);
+  // m_myPoint = a_ew->interior_point_in_proc(m_i0, m_j0, m_grid0);
 
   // The following is a safety check to make sure only one processor writes each
   // time series. We could remove this check if we were certain that
-  // sw4_typeerior_point_in_proc() never lies
+  // interior_point_in_proc() never lies
   sw4_type iwrite = m_myPoint ? 1 : 0;
   sw4_type counter;
   MPI_Allreduce(&iwrite, &counter, 1, MPI_SW4_TYPE, MPI_SUM, MPI_COMM_WORLD);
@@ -197,7 +197,7 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
   //   q = mX / h + 1.0;
   //   r = mY / h + 1.0;
   //   // evaluate elevation of topography on the grid
-  //   if (!a_ew->sw4_typeerpolate_topography(q, r, m_zTopo, true)) {
+  //   if (!a_ew->interpolate_topography(q, r, m_zTopo, true)) {
   //     cerr << "Unable to evaluate topography for receiver station" <<
   //     m_fileName
   //          << " mX= " << mX << " mY= " << mY << endl;
@@ -1071,7 +1071,7 @@ void TimeSeries::write_sac_format(sw4_type npts, char* ofile, float* y, float bt
         y	R	array of values
         npts	I	number of points in data
         btime	R	start time
-        dt	R	sample sw4_typeerval
+        dt	R	sample interval
         maxpts	I	maximum number of points to read
         nerr	I	error return
     -----
@@ -1517,8 +1517,8 @@ void TimeSeries::readFile(EW* ew, bool ignore_utc) {
 }
 
 //-----------------------------------------------------------------------
-void TimeSeries::sw4_typeerpolate(TimeSeries& sw4_typepfrom) {
-  // Sw4_Typeerpolate data to the grid in this object
+void TimeSeries::interpolate(TimeSeries& sw4_typepfrom) {
+  // Interpolate data to the grid in this object
   sw4_type order = 4;
 
   float_sw4 dtfr = sw4_typepfrom.m_dt;
@@ -1535,7 +1535,7 @@ void TimeSeries::sw4_typeerpolate(TimeSeries& sw4_typepfrom) {
     else
       mRecordedFloats[0][i] = mRecordedFloats[1][i] = mRecordedFloats[2][i] = 0;
     if (mmax - mmin + 1 > nfrsteps) {
-      cout << "Error in TimeSeries::sw4_typeerpolate : Can not sw4_typeerpolate, "
+      cout << "Error in TimeSeries::interpolate : Can not interpolate, "
            << "because the grid is too coarse " << endl;
       return;
     }
@@ -1610,8 +1610,8 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
   // Computes  misfit, as norm of difference between `this' and `observed'.
   //
   // The misfit is assumed of the form \sum_n (u_j^n - obs(t_n-s))^2, where s is
-  // a shift of the observed data. The observed data are sw4_typeerpolated onto the
-  // grid of `this' and is set to zero outside its sw4_typeerval of definition.
+  // a shift of the observed data. The observed data are interpolated onto the
+  // grid of `this' and is set to zero outside its interval of definition.
   //
   // Input: observed - Observed data.
   //
@@ -1630,7 +1630,7 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
   ddshift = 0;
   dd1shift = 0;
   if (m_myPoint) {
-    // Sw4_Typeerpolate data to this object
+    // Interpolate data to this object
     //      sw4_type order = 4;
     float_sw4 scale_factor = 0;
 
@@ -1698,7 +1698,7 @@ float_sw4 TimeSeries::misfit(TimeSeries& observed, TimeSeries* diff,
       sw4_type mmin = ie - 2;
       sw4_type mmax = ie + 3;
       if (mmax - mmin + 1 > nfrsteps) {
-        cout << "Error in TimeSeries::misfit : Can not sw4_typeerpolate, "
+        cout << "Error in TimeSeries::misfit : Can not interpolate, "
              << "because the grid is too coarse " << endl;
         cout << "mmin = " << mmin << endl;
         cout << "mmax = " << mmax << endl;
@@ -1929,7 +1929,7 @@ float_sw4 TimeSeries::compute_maxshift(TimeSeries& observed) {
 void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
                            float_sw4& func, float_sw4& dfunc, float_sw4& ddfunc,
                            float_sw4** adjsrc) {
-  // Sw4_Typeerpolate data to this object
+  // Interpolate data to this object
 
   // Cross correlation function \sum
   // w(t_n)*u(t_n)*w(t_n+tshift)*uobs(t_n+tshift)
@@ -1974,7 +1974,7 @@ void TimeSeries::shiftfunc(TimeSeries& observed, float_sw4 tshift,
     sw4_type mmin = ie - 2;
     sw4_type mmax = ie + 3;
     if (mmax - mmin + 1 > nfrsteps) {
-      cout << "Error in TimeSeries::shiftfunc : Can not sw4_typeerpolate, "
+      cout << "Error in TimeSeries::shiftfunc : Can not interpolate, "
            << "because the grid is too coarse " << endl;
       cout << "mmin = " << mmin << endl;
       cout << "mmax = " << mmax << endl;
@@ -2113,7 +2113,7 @@ float_sw4 TimeSeries::misfit2(TimeSeries& observed, TimeSeries* diff) {
   // Computes  travel time (correlation) misfit.
   //  if diff !=NULL, also computes diff := this - observed
   //       where 'diff' has the same grid points as 'this'. 'observed' is
-  //       sw4_typeerpolated to this grid, and is set to zero outside its sw4_typeerval
+  //       interpolated to this grid, and is set to zero outside its interval
   //       of definition.
   float_sw4 misfit = 0;
   if (m_myPoint) {
@@ -2582,7 +2582,7 @@ void TimeSeries::prsw4_type_timeinfo() const {
          << "' at grid point " << m_i0 << " " << m_j0 << " " << m_k0 << endl;
     cout << "   t0 = " << m_t0 << " shift= " << m_shift << " dt= " << m_dt
          << endl;
-    cout << "   Observation sw4_typeerval  [ " << m_t0 + m_shift << " , "
+    cout << "   Observation interval  [ " << m_t0 + m_shift << " , "
          << m_t0 + m_shift + m_dt * mLastTimeStep << " ] simulation time "
          << endl;
     printf("   Observation reference UTC  %02i/%02i/%i:%i:%i:%02i.%03i\n",
@@ -2718,7 +2718,7 @@ void TimeSeries::readSACfiles(EW* ew, const char* sac1, const char* sac2,
         if (!mIsRestart)  // For restart, already in xyz format?
         {
           m_xyzcomponent = false;  // note this is format on output file,
-          // sw4_typeernally, we always use (x,y,z) during computation.
+          // internally, we always use (x,y,z) during computation.
 
           // Convert (e,n,u) to (x,y,z) components.
           float_sw4 deti = 1.0 / (m_thynrm * m_calpha + m_thxnrm * m_salpha);
@@ -2931,7 +2931,7 @@ void TimeSeries::set_utc_to_simulation_utc() {
 
 #ifdef USE_HDF5
 /*
- * Cubic sw4_typeerpolation code spline, splsw4_type, spline1_c are modified from
+ * Cubic interpolation code spline, splsw4_type, spline1_c are modified from
  * https://www.atnf.csiro.au/computing/software/gipsy/sub/spline.c
  */
 static sw4_type spline(float* x, float* y, sw4_type n, float yp1, float ypn, float* y2) {
@@ -2995,13 +2995,13 @@ static sw4_type splsw4_type(float* xa, float* ya, float* y2a, sw4_type n, float 
 /* yi      Array containing input y-coordinates. */
 /* nin     Number of (XI,YI) coordinate pairs. */
 /* xo      Array containing x-coordinates for which y-coordinates */
-/*         are to be sw4_typeerpolated. */
-/* yo      Array containing sw4_typeerpolated y-coordinates. */
+/*         are to be interpolated. */
+/* yo      Array containing interpolated y-coordinates. */
 /*         If ALL YI are undefined, ALL YO are set to undefined. */
-/* nout    Number of x-coordinates for which sw4_typeerpolation */
+/* nout    Number of x-coordinates for which interpolation */
 /*         is wanted. */
 
-static sw4_type cubic_sw4_typeerp(float* xi, float* yi, sw4_type nin, float* xo, float* yo,
+static sw4_type cubic_interp(float* xi, float* yi, sw4_type nin, float* xo, float* yo,
                         sw4_type nout) {
   float* y2;
   sw4_type error, n;
@@ -3145,20 +3145,20 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
 
       for (sw4_type i = 0; i < sw4npts; i++) nx[i] = i;
 
-      // Cubic sw4_typeerpolation
-      ret = cubic_sw4_typeerp(x, buf_0, npts, nx, buf_0up, sw4npts);
+      // Cubic interpolation
+      ret = cubic_interp(x, buf_0, npts, nx, buf_0up, sw4npts);
       if (ret < 0) {
-        cout << "ERROR: cubic_sw4_typeerp failed!" << endl;
+        cout << "ERROR: cubic_interp failed!" << endl;
         return;
       }
-      ret = cubic_sw4_typeerp(x, buf_1, npts, nx, buf_1up, sw4npts);
+      ret = cubic_interp(x, buf_1, npts, nx, buf_1up, sw4npts);
       if (ret < 0) {
-        cout << "ERROR: cubic_sw4_typeerp failed!" << endl;
+        cout << "ERROR: cubic_interp failed!" << endl;
         return;
       }
-      ret = cubic_sw4_typeerp(x, buf_2, npts, nx, buf_2up, sw4npts);
+      ret = cubic_interp(x, buf_2, npts, nx, buf_2up, sw4npts);
       if (ret < 0) {
-        cout << "ERROR: cubic_sw4_typeerp failed!" << endl;
+        cout << "ERROR: cubic_interp failed!" << endl;
         return;
       }
 

@@ -1525,7 +1525,7 @@ float_sw4 Dirac(float_sw4 freq, float_sw4 t, float_sw4* par, sw4_type npar,
   // k0 is center of pulse on grid given by t + k*dt
 
   float_sw4 kc = -t * freq;
-  // stencil point of t in [-2,..,2] sw4_typeerval
+  // stencil point of t in [-2,..,2] interval
   sw4_type k0 = (sw4_type)floor(kc + 0.5);
   //   std::cout << "t="<< t << " kc=" << kc << " k0= " << k0 << std::endl;
   if (k0 < -2 || k0 > 2)
@@ -1571,7 +1571,7 @@ float_sw4 Dirac_t(float_sw4 freq, float_sw4 t, float_sw4* par, sw4_type npar,
   // Stencil from -s to p
   // k0 is center of pulse on grid given by t + k*dt
   float_sw4 kc = -t * freq;
-  // stencil point of t in [-2,..,2] sw4_typeerval
+  // stencil point of t in [-2,..,2] interval
   sw4_type k0 = (sw4_type)floor(kc + 0.5);
   if (k0 < -2 || k0 > 2)
     return 0;
@@ -1610,7 +1610,7 @@ float_sw4 Dirac_tt(float_sw4 freq, float_sw4 t, float_sw4* par, sw4_type npar,
   // Stencil from -s to p
   // k0 is center of pulse on grid given by t + k*dt
   float_sw4 kc = -t * freq;
-  // stencil point of t in [-2,..,2] sw4_typeerval
+  // stencil point of t in [-2,..,2] interval
   sw4_type k0 = (sw4_type)floor(kc + 0.5);
   if (k0 < -2 || k0 > 2)
     return 0;
@@ -1644,7 +1644,7 @@ float_sw4 Dirac_ttt(float_sw4 freq, float_sw4 t, float_sw4* par, sw4_type npar,
   // Stencil from -s to p
   // k0 is center of pulse on grid given by t + k*dt
   float_sw4 kc = -t * freq;
-  // stencil point of t in [-2,..,2] sw4_typeerval
+  // stencil point of t in [-2,..,2] interval
   sw4_type k0 = (sw4_type)floor(kc + 0.5);
   if (k0 < -2 || k0 > 2)
     return 0;
@@ -1678,7 +1678,7 @@ float_sw4 Dirac_tttt(float_sw4 freq, float_sw4 t, float_sw4* par, sw4_type npar,
   // Stencil from -s to p
   // k0 is center of pulse on grid given by t + k*dt
   float_sw4 kc = -t * freq;
-  // stencil point of t in [-2,..,2] sw4_typeerval
+  // stencil point of t in [-2,..,2] interval
   sw4_type k0 = (sw4_type)floor(kc + 0.5);
   if (k0 < -2 || k0 > 2)
     return 0;

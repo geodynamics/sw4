@@ -350,9 +350,9 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
       // 3. smooth the topo
       smoothTopography(m_maxIter);
 
-      // Assign sw4_typeerface surfaces (needed when there is MR in the curvilinear
+      // Assign interface surfaces (needed when there is MR in the curvilinear
       // portion of the grid)
-      m_gridGenerator->assignSw4_TypeerfaceSurfaces(this, mTopoGridExt);
+      m_gridGenerator->assignInterfaceSurfaces(this, mTopoGridExt);
     }
 #ifdef PEEKS_GALORE
     SW4_PEEK;
@@ -972,7 +972,7 @@ void EW::processGrid(char* buffer) {
       origin[1] = y;
     }  // end if latlon given
     else {
-      // lat-lon corner of cube not given, sw4_typeerpret origin realtive (0,0,0)
+      // lat-lon corner of cube not given, interpret origin realtive (0,0,0)
       if (m_geodynbc_center) {
         // Center cube in the middle of the domain (in x,y), discarding input
         // origin.
@@ -1447,7 +1447,7 @@ void EW::processTopography(char* buffer) {
   float_sw4 zetaBreak = 0.95, topo_zmax = 0;
   float_sw4 GaussianAmp = 0.05, GaussianLx = 0.15, GaussianLy = 0.15,
             GaussianXc = 0.5, GaussianYc = 0.5;
-  sw4_type grid_sw4_typeerpolation_order = 3;
+  sw4_type grid_interpolation_order = 3;
   bool use_analytical_metric = false;  // topo_zmax_given = false;
   bool always_new = false;
 
@@ -1463,11 +1463,11 @@ void EW::processTopography(char* buffer) {
       topo_zmax = atof(token);
     } else if (startswith("order=", token)) {
       token += 6;  // skip logfile=
-      grid_sw4_typeerpolation_order = atoi(token);
-      if (grid_sw4_typeerpolation_order < 2 || grid_sw4_typeerpolation_order > 7) {
+      grid_interpolation_order = atoi(token);
+      if (grid_interpolation_order < 2 || grid_interpolation_order > 7) {
         if (m_myRank == 0)
           cout << "order needs to be 2,3,4,5,6,or 7 not: "
-               << grid_sw4_typeerpolation_order << endl;
+               << grid_interpolation_order << endl;
         MPI_Abort(MPI_COMM_WORLD, 1);
       }
     } else if (startswith(
@@ -1582,11 +1582,11 @@ void EW::processTopography(char* buffer) {
 
   if (m_topoInputStyle == GaussianHill)
     m_gridGenerator = new GridGeneratorGaussianHill(
-        topo_zmax, always_new, use_analytical_metric, grid_sw4_typeerpolation_order,
+        topo_zmax, always_new, use_analytical_metric, grid_interpolation_order,
         zetaBreak, GaussianAmp, GaussianXc, GaussianYc, GaussianLx, GaussianLy);
   else
     m_gridGenerator = new GridGeneratorGeneral(
-        topo_zmax, always_new, grid_sw4_typeerpolation_order, zetaBreak);
+        topo_zmax, always_new, grid_interpolation_order, zetaBreak);
 }
 
 // //-----------------------------------------------------------------------
@@ -1911,7 +1911,7 @@ void EW::processDeveloper(char* buffer) {
                                  strcmp(token, "on") == 0 ||
                                  strcmp(token, "yes") == 0;
     }
-    //     else if (startswith("sw4_typeerpolation=", token))
+    //     else if (startswith("interpolation=", token))
     //     {
     //       token += 14;
     //       cons = strcmp(token,"conservative") == 0;
@@ -1972,7 +1972,7 @@ void EW::processDeveloper(char* buffer) {
   // //   mSimulation->set_update_boundary_function( update_boundary_function );
   //    mSimulation->set_output_options( output_load, output_timing );
   // //  mSimulation->set_alltoallv( use_alltoallv );
-  //    mSimulation->set_conservative_sw4_typeerpolation( cons, ctol, cmaxit );
+  //    mSimulation->set_conservative_interpolation( cons, ctol, cmaxit );
   //    if( logenergy || prsw4_typeenergy )
   //       mSimulation->set_energylog( energyfile, prsw4_typeenergy, logenergy );
   //   mSimulation->setIO_method(use_mpiio, use_iotiming);
@@ -2223,7 +2223,7 @@ bool EW::checkTestEnergyPeriodic(char* buffer) {
 
 //-----------------------------------------------------------------------
 void EW::processFileIO(char* buffer) {
-  sw4_type prsw4_typecycle = 100;
+  sw4_type printcycle = 100;
   //  char* path = 0;
   // char* scenario = 0;
   sw4_type nwriters = 8;
@@ -2269,7 +2269,7 @@ void EW::processFileIO(char* buffer) {
       token += 11;  // skip prsw4_typecycle=
       CHECK_INPUT(atoi(token) > -1,
                   err << "prsw4_typecycle must be zero or greater, not: " << token);
-      prsw4_typecycle = atoi(token);
+      printcycle = atoi(token);
     } else if (startswith("pfs=", token)) {
       token += 4;  // skip pfs=
       pfs = (atoi(token) == 1);
@@ -3276,10 +3276,10 @@ void EW::processMaterial(char* buffer) {
 
 //-----------------------------------------------------------------------
 void EW::processSfileOutput(char* buffer) {
-  sw4_type cycle = -1, cycleSw4_Typeerval = 0;
+  sw4_type cycle = -1, cycleInterval = 0;
   sw4_type sampleFactorH = 1;
   sw4_type sampleFactorV = 1;
-  float_sw4 time = 0.0, timeSw4_Typeerval = 0.0;
+  float_sw4 time = 0.0, timeInterval = 0.0;
   /* bool timingSet = false; */
   float_sw4 tStart = -999.99;
   string filePrefix = "sfileoutput";
@@ -3304,12 +3304,12 @@ void EW::processSfileOutput(char* buffer) {
     /* time = atof(token); */
     /* timingSet = true; */
     /* } */
-    /* else if (startswith("timeSw4_Typeerval=", token) ) */
+    /* else if (startswith("timeInterval=", token) ) */
     /* { */
-    /* token += 13; // skip timeSw4_Typeerval= */
+    /* token += 13; // skip timeInterval= */
     /* CHECK_INPUT( atof(token) >= 0.,"Processing sfileoutput command:
-     * timeSw4_Typeerval must be a non-negative number, not: " << token); */
-    /* timeSw4_Typeerval = atof(token); */
+     * timeInterval must be a non-negative number, not: " << token); */
+    /* timeInterval = atof(token); */
     /* timingSet = true; */
     /* } */
     /* else if (startswith("startTime=", token) ) */
@@ -3347,12 +3347,12 @@ void EW::processSfileOutput(char* buffer) {
     /* cycle = atoi(token); */
     /* timingSet = true; */
     /* } */
-    /* else if (startswith("cycleSw4_Typeerval=", token) ) */
+    /* else if (startswith("cycleInterval=", token) ) */
     /* { */
-    /* token += 14; // skip cycleSw4_Typeerval= */
+    /* token += 14; // skip cycleInterval= */
     /* CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command:
-       cycleSw4_Typeerval must be a non-negative sw4_typeeger, not: " << token); */
-    /* cycleSw4_Typeerval = atoi(token); */
+       cycleInterval must be a non-negative sw4_typeeger, not: " << token); */
+    /* cycleInterval = atoi(token); */
     /* timingSet = true; */
     /* } */
     else if (startswith("file=", token)) {
@@ -3373,10 +3373,10 @@ void EW::processSfileOutput(char* buffer) {
 
   if (!m_inverse_problem) {
     /* CHECK_INPUT( timingSet, "Processing sfileoutput command: " << */
-    /* "at least one timing mechanism must be set: cycle, time, cycleSw4_Typeerval or
-     * timeSw4_Typeerval"  << endl ); */
+    /* "at least one timing mechanism must be set: cycle, time, cycleInterval or
+     * timeInterval"  << endl ); */
     SfileOutput* sfile =
-        new SfileOutput(this, time, timeSw4_Typeerval, cycle, cycleSw4_Typeerval, tStart,
+        new SfileOutput(this, time, timeInterval, cycle, cycleInterval, tStart,
                         filePrefix, sampleFactorH, sampleFactorV, use_double);
     addSfileOutput(sfile);
   }
@@ -3384,9 +3384,9 @@ void EW::processSfileOutput(char* buffer) {
 
 //-----------------------------------------------------------------------
 void EW::processImage3D(char* buffer) {
-  sw4_type cycle = -1, cycleSw4_Typeerval = 0;
+  sw4_type cycle = -1, cycleInterval = 0;
   Image3D::Image3DMode mode = Image3D::RHO;
-  float_sw4 time = 0.0, timeSw4_Typeerval = 0.0;
+  float_sw4 time = 0.0, timeInterval = 0.0;
   bool timingSet = false;
   float_sw4 tStart = -999.99;
   string filePrefix = "volimage";
@@ -3411,13 +3411,13 @@ void EW::processImage3D(char* buffer) {
                       << token);
       time = atof(token);
       timingSet = true;
-    } else if (startswith("timeSw4_Typeerval=", token)) {
-      token += 13;  // skip timeSw4_Typeerval=
+    } else if (startswith("timeInterval=", token)) {
+      token += 13;  // skip timeInterval=
       CHECK_INPUT(atof(token) >= 0.,
-                  "Processing volimage command: timeSw4_Typeerval must be a "
+                  "Processing volimage command: timeInterval must be a "
                   "non-negative number, not: "
                       << token);
-      timeSw4_Typeerval = atof(token);
+      timeInterval = atof(token);
       timingSet = true;
     } else if (startswith("startTime=", token)) {
       token += 10;  // skip startTime=
@@ -3430,13 +3430,13 @@ void EW::processImage3D(char* buffer) {
                       << token);
       cycle = atoi(token);
       timingSet = true;
-    } else if (startswith("cycleSw4_Typeerval=", token)) {
-      token += 14;  // skip cycleSw4_Typeerval=
+    } else if (startswith("cycleInterval=", token)) {
+      token += 14;  // skip cycleInterval=
       CHECK_INPUT(atoi(token) >= 0.,
-                  "Processing volimage command: cycleSw4_Typeerval must be a "
+                  "Processing volimage command: cycleInterval must be a "
                   "non-negative sw4_typeeger, not: "
                       << token);
-      cycleSw4_Typeerval = atoi(token);
+      cycleInterval = atoi(token);
       timingSet = true;
     } else if (startswith("file=", token)) {
       token += 5;  // skip file=
@@ -3517,9 +3517,9 @@ void EW::processImage3D(char* buffer) {
   if (!forwardgrad) {
     CHECK_INPUT(timingSet, "Processing volimage command: "
                                << "at least one timing mechanism must be set: "
-                                  "cycle, time, cycleSw4_Typeerval or timeSw4_Typeerval"
+                                  "cycle, time, cycleInterval or timeInterval"
                                << endl);
-    Image3D* im3 = new Image3D(this, time, timeSw4_Typeerval, cycle, cycleSw4_Typeerval,
+    Image3D* im3 = new Image3D(this, time, timeInterval, cycle, cycleInterval,
                                tStart, filePrefix, mode, use_double);
     addImage3D(im3);
   }
@@ -3527,7 +3527,7 @@ void EW::processImage3D(char* buffer) {
 
 //-----------------------------------------------------------------------
 void EW::processESSI3D(char* buffer) {
-  sw4_type dumpSw4_Typeerval = -1, bufferSw4_Typeerval = 1;
+  sw4_type dumpInterval = -1, bufferInterval = 1;
   string filePrefix = "ssioutput";
   float_sw4 coordValue;
   float_sw4 coordBox[4];
@@ -3559,12 +3559,12 @@ void EW::processESSI3D(char* buffer) {
     else if (startswith("file=", token)) {
       token += 5;  // skip file=
       filePrefix = token;
-    } else if (startswith("dumpSw4_Typeerval=", token)) {
-      token += 13;  // skip dumpSw4_Typeerval=
-      dumpSw4_Typeerval = atoi(token);
-    } else if (startswith("bufferSw4_Typeerval=", token)) {
-      token += 15;  // skip bufferSw4_Typeerval=
-      bufferSw4_Typeerval = atoi(token);
+    } else if (startswith("dumpInterval=", token)) {
+      token += 13;  // skip dumpInterval=
+      dumpInterval = atoi(token);
+    } else if (startswith("bufferInterval=", token)) {
+      token += 15;  // skip bufferInterval=
+      bufferInterval = atoi(token);
     } else if (startswith("xmin=", token)) {
       token += 5;  // skip xmin=
       coordValue = atof(token);
@@ -3654,7 +3654,7 @@ void EW::processESSI3D(char* buffer) {
          << endl;
 #endif
 
-  if (compressionMode != 0 && bufferSw4_Typeerval == 1) bufferSw4_Typeerval = 100;
+  if (compressionMode != 0 && bufferInterval == 1) bufferInterval = 100;
 
   // Check the specified min/max values make sense
   for (sw4_type d = 0; d < 2 * 2; d += 2) {
@@ -3677,7 +3677,7 @@ void EW::processESSI3D(char* buffer) {
   }
 
   ESSI3D* essi3d =
-      new ESSI3D(this, filePrefix, dumpSw4_Typeerval, bufferSw4_Typeerval, coordBox,
+      new ESSI3D(this, filePrefix, dumpInterval, bufferInterval, coordBox,
                  depth, precision, compressionMode, compressionPar);
   addESSI3D(essi3d);
 }
@@ -3689,7 +3689,7 @@ void EW::processCheckPoint(char* buffer) {
               "ERROR: not a checkpoint line...: " << token);
   token = strtok(NULL, " \t");
   string err = "CheckPoint Error: ";
-  sw4_type cycle = -1, cycleSw4_Typeerval = 0;
+  sw4_type cycle = -1, cycleInterval = 0;
   string filePrefix = "checkpoint";
 
   string restartFileName, restartPath;
@@ -3708,12 +3708,12 @@ void EW::processCheckPoint(char* buffer) {
     // sw4_typeeger, not: " << token); 	 cycle = atoi(token); 	 timingSet =
     // true;
     //      }
-    if (startswith("cycleSw4_Typeerval=", token)) {
-      token += 14;  // skip cycleSw4_Typeerval=
+    if (startswith("cycleInterval=", token)) {
+      token += 14;  // skip cycleInterval=
       CHECK_INPUT(atoi(token) >= 0.,
-                  err << "cycleSw4_Typeerval must be a non-negative sw4_typeeger, not: "
+                  err << "cycleInterval must be a non-negative sw4_typeeger, not: "
                       << token);
-      cycleSw4_Typeerval = atoi(token);
+      cycleInterval = atoi(token);
     } else if (startswith("file=", token)) {
       token += 5;  // skip file=
       filePrefix = token;
@@ -3803,8 +3803,8 @@ void EW::processCheckPoint(char* buffer) {
 #endif
 
   if (m_check_point == CheckPoint::nil) m_check_point = new CheckPoint(this);
-  if (cycleSw4_Typeerval > 0)
-    m_check_point->set_checkpoint_file(filePrefix, cycle, cycleSw4_Typeerval,
+  if (cycleInterval > 0)
+    m_check_point->set_checkpoint_file(filePrefix, cycle, cycleInterval,
                                        bufsize, useHDF5, compressionMode,
                                        compressionPar);
 
@@ -4224,8 +4224,8 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
   // portion of the grid
   if (m_topography_exists)  // UPDATED  for more than 1 curvilinear grid
   {
-    // Allocate elements in the m_curviSw4_Typeerface vector
-    m_curviSw4_Typeerface.resize(mNumberOfGrids - mNumberOfCartesianGrids);
+    // Allocate elements in the m_curviInterface vector
+    m_curviInterface.resize(mNumberOfGrids - mNumberOfCartesianGrids);
 
     // NEW
     for (sw4_type g = mNumberOfGrids - 1; g >= mNumberOfCartesianGrids;
@@ -4238,7 +4238,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
       m_jEnd[g] = jlast;  // finest grid size in y from above
                           // k-bounds must be determined by the grid generator
 
-      // local index bounds for sw4_typeerior points (= no ghost or parallel padding
+      // local index bounds for interior points (= no ghost or parallel padding
       // points)
       if (ifirst == 1 - m_ghost_points)
         m_iStartSw4_Type[g] = 1;
@@ -4263,17 +4263,17 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
       // m_kStartSw4_Type[g] = 1;
       // m_kEndSw4_Type[g]   = nz[g];
 
-      // check that there are more sw4_typeerior points than padding points
+      // check that there are more interior points than padding points
       if (m_iEndSw4_Type[g] - m_iStartSw4_Type[g] + 1 < m_ppadding) {
         printf(
-            "WARNING: less sw4_typeerior points than padding in proc=%d, grid=%d, "
+            "WARNING: less interior points than padding in proc=%d, grid=%d, "
             "m_iStartSw4_Type=%d, "
             "m_iEndSw4_Type=%d, padding=%d\n",
             m_myRank, g, m_iStartSw4_Type[g], m_iEndSw4_Type[g], m_ppadding);
       }
       if (m_jEndSw4_Type[g] - m_jStartSw4_Type[g] + 1 < m_ppadding) {
         printf(
-            "WARNING: less sw4_typeerior points than padding in proc=%d, grid=%d, "
+            "WARNING: less interior points than padding in proc=%d, grid=%d, "
             "m_jStartSw4_Type=%d, "
             "m_jEndSw4_Type=%d, padding=%d\n",
             m_myRank, g, m_jStartSw4_Type[g], m_jEndSw4_Type[g], m_ppadding);
@@ -4283,18 +4283,18 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
       if (proc_zero() && mVerbose >= 1 /*3*/)  // tmp
       {
         printf(
-            "Rank=%d, Grid #%d (curvilinear), iSw4_Typeerior=[%d,%d], "
-            "jSw4_Typeerior=[%d,%d]\n",
+            "Rank=%d, Grid #%d (curvilinear), iInterior=[%d,%d], "
+            "jInterior=[%d,%d]\n",
             m_myRank, g, m_iStartSw4_Type[g], m_iEndSw4_Type[g], m_jStartSw4_Type[g],
             m_jEndSw4_Type[g]);
       }
 
-      // number of extra ghost points to allow highly accurate sw4_typeerpolation;
+      // number of extra ghost points to allow highly accurate interpolation;
       // needed for the source discretization
       m_ext_ghost_points = 8;
 
-      // Allocate sw4_typeerface the sw4_typeerface surface for this curvilinear grid
-      m_curviSw4_Typeerface[g - mNumberOfCartesianGrids].define(
+      // Allocate interface the interface surface for this curvilinear grid
+      m_curviInterface[g - mNumberOfCartesianGrids].define(
           m_iStart[g] - m_ext_ghost_points, m_iEnd[g] + m_ext_ghost_points,
           m_jStart[g] - m_ext_ghost_points, m_jEnd[g] + m_ext_ghost_points, 1,
           1);
@@ -4351,7 +4351,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
     m_kStart[g] = kfirst;
     m_kEnd[g] = klast;
 
-    // local index bounds for sw4_typeerior points (= no ghost or parallel padding
+    // local index bounds for interior points (= no ghost or parallel padding
     // points)
     if (ifirst == 1 - m_ghost_points)
       m_iStartSw4_Type[g] = 1;
@@ -4376,17 +4376,17 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
     m_kStartSw4_Type[g] = 1;
     m_kEndSw4_Type[g] = nz[g];
 
-    // check that there are more sw4_typeerior points than padding points
+    // check that there are more interior points than padding points
     if (m_iEndSw4_Type[g] - m_iStartSw4_Type[g] + 1 < m_ppadding) {
       printf(
-          "WARNING: less sw4_typeerior points than padding in proc=%d, grid=%d, "
+          "WARNING: less interior points than padding in proc=%d, grid=%d, "
           "m_iStartSw4_Type=%d, "
           "m_iEndSw4_Type=%d, padding=%d\n",
           m_myRank, g, m_iStartSw4_Type[g], m_iEndSw4_Type[g], m_ppadding);
     }
     if (m_jEndSw4_Type[g] - m_jStartSw4_Type[g] + 1 < m_ppadding) {
       printf(
-          "WARNING: less sw4_typeerior points than padding in proc=%d, grid=%d, "
+          "WARNING: less interior points than padding in proc=%d, grid=%d, "
           "m_jStartSw4_Type=%d, "
           "m_jEndSw4_Type=%d, padding=%d\n",
           m_myRank, g, m_jStartSw4_Type[g], m_jEndSw4_Type[g], m_ppadding);
@@ -4396,8 +4396,8 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
     if (proc_zero() && mVerbose >= 1 /*3*/)  // tmp
     {
       printf(
-          "Rank=%d, Grid #%d (Cartesian), iSw4_Typeerior=[%d,%d], "
-          "jSw4_Typeerior=[%d,%d], kSw4_Typeerior=[%d,%d]\n",
+          "Rank=%d, Grid #%d (Cartesian), iInterior=[%d,%d], "
+          "jInterior=[%d,%d], kInterior=[%d,%d]\n",
           m_myRank, g, m_iStartSw4_Type[g], m_iEndSw4_Type[g], m_jStartSw4_Type[g],
           m_jEndSw4_Type[g], m_kStartSw4_Type[g], m_kEndSw4_Type[g]);
     }
@@ -4458,7 +4458,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
     //      << " , " << ilast << endl; cout << g << " " << my_proc_coords[1] <<
     //      " J Split sw4_typeo " << jfirst << " , " << jlast << endl; cout << "grid
     //      " << g << " zmin = " << m_zmin[g] << " nz = " << nz[g] << "
-    //      ksw4_typeerval " << kfirst << " , " << klast << endl;
+    //      kinterval " << kfirst << " , " << klast << endl;
 
   }  // end for all Cartesian grids
 
@@ -4784,10 +4784,10 @@ void EW::deprecatedImageMode(sw4_type value, const char* name) const {
 
 //-----------------------------------------------------------------------
 void EW::processImage(char* buffer, bool use_hdf5) {
-  sw4_type cycle = -1, cycleSw4_Typeerval = 0;
+  sw4_type cycle = -1, cycleInterval = 0;
   //   sw4_type pfs = 0, nwriters=1;
   Image::ImageMode mode = Image::RHO;
-  float_sw4 time = 0.0, timeSw4_Typeerval = 0.0;
+  float_sw4 time = 0.0, timeInterval = 0.0;
   bool timingSet = false;
   string filePrefix = "image";
 
@@ -4832,14 +4832,14 @@ void EW::processImage(char* buffer, bool use_hdf5) {
       }
       time = atof(token);
       timingSet = true;
-    } else if (startswith("timeSw4_Typeerval=", token)) {
-      token += 13;  // skip timeSw4_Typeerval=
+    } else if (startswith("timeInterval=", token)) {
+      token += 13;  // skip timeInterval=
       if (atof(token) <= 0.) {
         cerr << "Processing image command: "
-             << "timeSw4_Typeerval must be a positive number, not: " << token;
+             << "timeInterval must be a positive number, not: " << token;
         MPI_Abort(MPI_COMM_WORLD, 1);
       }
-      timeSw4_Typeerval = atof(token);
+      timeInterval = atof(token);
       timingSet = true;
     } else if (startswith("cycle=", token)) {
       token += 6;  // skip cycle=
@@ -4850,14 +4850,14 @@ void EW::processImage(char* buffer, bool use_hdf5) {
       }
       cycle = atoi(token);
       timingSet = true;
-    } else if (startswith("cycleSw4_Typeerval=", token)) {
-      token += 14;  // skip cycleSw4_Typeerval=
+    } else if (startswith("cycleInterval=", token)) {
+      token += 14;  // skip cycleInterval=
       if (atoi(token) <= 0) {
         cerr << "Processing image command: "
-             << "cycleSw4_Typeerval must be a positive sw4_typeeger, not: " << token;
+             << "cycleInterval must be a positive sw4_typeeger, not: " << token;
         MPI_Abort(MPI_COMM_WORLD, 1);
       }
-      cycleSw4_Typeerval = atoi(token);
+      cycleInterval = atoi(token);
       timingSet = true;
     } else if (startswith("file=", token)) {
       token += 5;  // skip file=
@@ -5047,7 +5047,7 @@ void EW::processImage(char* buffer, bool use_hdf5) {
   if (!timingSet) {
     cerr << "Processing image command: "
          << "at least one timing mechanism must be set: cycle, time, "
-            "cycleSw4_Typeerval or timeSw4_Typeerval"
+            "cycleInterval or timeInterval"
          << endl;
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
@@ -5074,35 +5074,35 @@ void EW::processImage(char* buffer, bool use_hdf5) {
     if (coordWasSet) {
       if (mode_is_grid) {
         if (locationType == Image::X) {
-          i = new Image(this, time, timeSw4_Typeerval, cycle, cycleSw4_Typeerval,
+          i = new Image(this, time, timeInterval, cycle, cycleInterval,
                         filePrefix, Image::GRIDY, locationType, coordValue,
                         use_double, use_hdf5);
           addImage(i);
-          i = new Image(this, time, timeSw4_Typeerval, cycle, cycleSw4_Typeerval,
+          i = new Image(this, time, timeInterval, cycle, cycleInterval,
                         filePrefix, Image::GRIDZ, locationType, coordValue,
                         use_double, use_hdf5);
           addImage(i);
         } else if (locationType == Image::Y) {
-          i = new Image(this, time, timeSw4_Typeerval, cycle, cycleSw4_Typeerval,
+          i = new Image(this, time, timeInterval, cycle, cycleInterval,
                         filePrefix, Image::GRIDX, locationType, coordValue,
                         use_double, use_hdf5);
           addImage(i);
-          i = new Image(this, time, timeSw4_Typeerval, cycle, cycleSw4_Typeerval,
+          i = new Image(this, time, timeInterval, cycle, cycleInterval,
                         filePrefix, Image::GRIDZ, locationType, coordValue,
                         use_double, use_hdf5);
           addImage(i);
         } else if (locationType == Image::Z) {
-          i = new Image(this, time, timeSw4_Typeerval, cycle, cycleSw4_Typeerval,
+          i = new Image(this, time, timeInterval, cycle, cycleInterval,
                         filePrefix, Image::GRIDX, locationType, coordValue,
                         use_double, use_hdf5);
           addImage(i);
-          i = new Image(this, time, timeSw4_Typeerval, cycle, cycleSw4_Typeerval,
+          i = new Image(this, time, timeInterval, cycle, cycleInterval,
                         filePrefix, Image::GRIDY, locationType, coordValue,
                         use_double, use_hdf5);
           addImage(i);
         }
       } else {
-        i = new Image(this, time, timeSw4_Typeerval, cycle, cycleSw4_Typeerval,
+        i = new Image(this, time, timeInterval, cycle, cycleInterval,
                       filePrefix, mode, locationType, coordValue, use_double,
                       use_hdf5);
         addImage(i);

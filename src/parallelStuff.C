@@ -71,7 +71,7 @@ void EW::coarsen1d(sw4_type& n, sw4_type& ifirst, sw4_type& ilast, sw4_type peri
   // n - total number of points 1<=i<=n,
   // Total index space is 1-ghosts <= i <= n + ghosts
   //
-  // This routine coarsens the sw4_typeerval ifirst <= i <= ilast
+  // This routine coarsens the interval ifirst <= i <= ilast
   // by a factor two, and returns coarsened values of
   // all input parameters.
   //
@@ -233,7 +233,7 @@ void EW::setup2D_MPICommunications() {
   MPI_Type_commit(&m_send_type_2dfinest_ext[0]);
   MPI_Type_commit(&m_send_type_2dfinest_ext[1]);
 
-  // NEW: July-2019 communicators for sw4_typeerface surfaces
+  // NEW: July-2019 communicators for interface surfaces
   sw4_type numSurfaces = mNumberOfGrids - mNumberOfCartesianGrids;
   m_send_type_isurfx.resize(numSurfaces);
   m_send_type_isurfy.resize(numSurfaces);

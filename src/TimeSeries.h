@@ -114,7 +114,7 @@ class TimeSeries {
                    float_sw4& ddshift, float_sw4& dd1shift);
   float_sw4 misfit2(TimeSeries& observed, TimeSeries* diff);
 
-  void sw4_typeerpolate(TimeSeries& sw4_typepfrom);
+  void interpolate(TimeSeries& sw4_typepfrom);
 
   void use_as_forcing(sw4_type n, std::vector<Sarray>& f, std::vector<float_sw4>& h,
                       float_sw4 dt, Sarray& Jac, bool topography_exists);

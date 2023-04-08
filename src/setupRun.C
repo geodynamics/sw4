@@ -32,7 +32,7 @@
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 #include <cstring>
 
-#include "CurvilinearSw4_Typeerface2.h"
+#include "CurvilinearInterface2.h"
 #include "EW.h"
 #include "GridGenerator.h"
 #include "caliper.h"
@@ -252,7 +252,7 @@ void EW::setupRun(vector<vector<Source *> > &a_GlobalUniqueSources) {
   //    communicate_array( mR, mNumberOfGrids-1 );
   //    communicate_array( mS, mNumberOfGrids-1 );
 
-  // test sw4_typeerpolation of metric
+  // test interpolation of metric
   //     double dist=0., X0, Y0, Z0, q0, r0, s0, qX[3], rX[3], sX[3];
   //     sw4_type i, j, k, gTop = mNumberOfGrids-1;
   //     for (k=m_kStart[gTop]; k<=m_kEnd[gTop]; k++)
@@ -292,7 +292,7 @@ void EW::setupRun(vector<vector<Source *> > &a_GlobalUniqueSources) {
         m_myRank, m_iStart[top], m_iEnd[top], m_global_nx[top], m_jStart[top],
         m_jEnd[top], m_global_ny[top]);
     printf(
-        "=================Processor #%i sw4_typeerior index "
+        "=================Processor #%i interior index "
         "bounds====================\n"
         "m_iStartSw4_Type=%i, m_iEndSw4_Type=%i, m_jStartSw4_Type=%i, m_jEndSw4_Type=%i\n",
         m_myRank, m_iStartSw4_Type[top], m_iEndSw4_Type[top], m_jStartSw4_Type[top],
@@ -388,19 +388,19 @@ void EW::setupRun(vector<vector<Source *> > &a_GlobalUniqueSources) {
   // form combinations of material coefficients for MR
   setup_MR_coefficients();
 
-  // Define curvilinear grid refinement sw4_typeerfaces
+  // Define curvilinear grid refinement interfaces
   if (mNumberOfGrids - mNumberOfCartesianGrids > 1) {
     m_cli2.resize(mNumberOfGrids - mNumberOfCartesianGrids - 1);
     for (sw4_type g = mNumberOfCartesianGrids; g < mNumberOfGrids - 1; g++) {
-      m_cli2[g - mNumberOfCartesianGrids] = new CurvilinearSw4_Typeerface2(g, this);
+      m_cli2[g - mNumberOfCartesianGrids] = new CurvilinearInterface2(g, this);
     }
   }
 
   //   if( mNumberOfGrids-mNumberOfCartesianGrids > 1 )
   //   {
-  //      m_clSw4_Typeerface.resize(mNumberOfGrids-mNumberOfCartesianGrids-1);
+  //      m_clInterface.resize(mNumberOfGrids-mNumberOfCartesianGrids-1);
   //      for( sw4_type g=mNumberOfCartesianGrids ; g < mNumberOfGrids-1 ; g++ )
-  //         m_clSw4_Typeerface[g-mNumberOfCartesianGrids]= new CurvilinearSw4_Typeerface(
+  //         m_clInterface[g-mNumberOfCartesianGrids]= new CurvilinearInterface(
   //         g, this );
   //   }
 
@@ -1578,7 +1578,7 @@ void EW::create_directory(const string &path) {
 
   //
   // AP: The following stat() and access() calls appear unneccessary because
-  // a) not all processes need to sw4_typeeract with the file system
+  // a) not all processes need to interact with the file system
   // b) why would a directory only be accessible from proc=0 ?
   //
   // Check that the path directory exists from all processes (NB: Only a few of
@@ -2046,7 +2046,7 @@ void EW::setup_supergrid() {
   }
 
   for (sw4_type g = 0; g < mNumberOfGrids; g++) {
-    // Add one to thickness to allow two layers of sw4_typeernal ghost points
+    // Add one to thickness to allow two layers of internal ghost points
     sw4_type sgpts = m_sg_gp_thickness;
     if (m_use_sg_width) sgpts = m_supergrid_width / mGridSize[g];
     sw4_type imin = 1 + sgpts, imax = m_global_nx[g] - sgpts, jmin = 1 + sgpts,
@@ -2067,7 +2067,7 @@ void EW::setup_supergrid() {
     m_kStartActGlobal[g] = m_kStartAct[g] = 1;
     m_kEndActGlobal[g] = m_kEndAct[g] = kmax - 1;
 
-    // Changed to sw4_typeerior Start --> StartSw4_Type etc..
+    // Changed to interior Start --> StartSw4_Type etc..
     if (m_iStartAct[g] < m_iStartSw4_Type[g]) m_iStartAct[g] = m_iStartSw4_Type[g];
     if (m_jStartAct[g] < m_jStartSw4_Type[g]) m_jStartAct[g] = m_jStartSw4_Type[g];
     if (m_iEndAct[g] > m_iEndSw4_Type[g]) m_iEndAct[g] = m_iEndSw4_Type[g];
@@ -2340,7 +2340,7 @@ void EW::assign_supergrid_damping_arrays() {
 //-----------------------------------------------------------------------
 void EW::material_ic(vector<Sarray> &a_mtrl) {
   SW4_MARK_FUNCTION;
-  // sw4_typeerface between curvilinear and top Cartesian grid
+  // interface between curvilinear and top Cartesian grid
   if (topographyExists()) {
     if (m_gridGenerator->curviCartIsSmooth(mNumberOfGrids -
                                            mNumberOfCartesianGrids)) {
@@ -2390,7 +2390,7 @@ void EW::perturb_velocities(vector<Sarray> &a_vs, vector<Sarray> &a_vp) {
   sw4_type klast = m_kEnd[g];
   // Need to save random numbers on the overlap between the topograpy-grid
   // and the uppermost Cartesian grid, in order to make the perturbation
-  // continuous across the grid/grid sw4_typeerface. The overlap is always saved,
+  // continuous across the grid/grid interface. The overlap is always saved,
   // even if there is only a Cartesian grid, to simplify the code.
   //
   // NOTE: This might not work if grid refinement is put sw4_typeo the code later.
@@ -2505,7 +2505,7 @@ void EW::initial_tw_test(vector<Sarray> &U, vector<Sarray> &Up,
   {
     if (!mQuiet && proc_zero()) cout << "***Twilight Testing..." << endl;
 
-    // output some sw4_typeernal flags
+    // output some internal flags
     for (sw4_type g = 0; g < mNumberOfGrids; g++) {
       printf("proc=%i, Onesided[grid=%i]:", m_myRank, g);
       for (sw4_type q = 0; q < 6; q++) printf(" os[%i]=%i", q, m_onesided[g][q]);
@@ -2524,17 +2524,17 @@ void EW::initial_tw_test(vector<Sarray> &U, vector<Sarray> &Up,
 
     // evaluate and prsw4_type errors
     float_sw4 *lowZ = new float_sw4[3 * mNumberOfGrids];
-    float_sw4 *sw4_typeeriorZ = new float_sw4[3 * mNumberOfGrids];
+    float_sw4 *interiorZ = new float_sw4[3 * mNumberOfGrids];
     float_sw4 *highZ = new float_sw4[3 * mNumberOfGrids];
-    //    float_sw4 lowZ[3], sw4_typeeriorZ[3], highZ[3];
-    bndrySw4_TypeeriorDifference(F, Up, lowZ, sw4_typeeriorZ, highZ);
+    //    float_sw4 lowZ[3], interiorZ[3], highZ[3];
+    bndryInteriorDifference(F, Up, lowZ, interiorZ, highZ);
 
     float_sw4 *tmp = new float_sw4[3 * mNumberOfGrids];
     for (sw4_type i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = lowZ[i];
     MPI_Reduce(tmp, lowZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
                m_cartesian_communicator);
-    for (sw4_type i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = sw4_typeeriorZ[i];
-    MPI_Reduce(tmp, sw4_typeeriorZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
+    for (sw4_type i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = interiorZ[i];
+    MPI_Reduce(tmp, interiorZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
                m_cartesian_communicator);
     for (sw4_type i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = highZ[i];
     MPI_Reduce(tmp, highZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
@@ -2545,8 +2545,8 @@ void EW::initial_tw_test(vector<Sarray> &U, vector<Sarray> &Up,
         printf("Grid nr: %3i \n", g);
         printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n",
                lowZ[3 * g], lowZ[3 * g + 1], lowZ[3 * g + 2]);
-        printf("Max errors sw4_typeerior RHS:        %15.7e  %15.7e  %15.7e\n",
-               sw4_typeeriorZ[3 * g], sw4_typeeriorZ[3 * g + 1], sw4_typeeriorZ[3 * g + 2]);
+        printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n",
+               interiorZ[3 * g], interiorZ[3 * g + 1], interiorZ[3 * g + 2]);
         printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n",
                highZ[3 * g], highZ[3 * g + 1], highZ[3 * g + 2]);
       }
@@ -2556,13 +2556,13 @@ void EW::initial_tw_test(vector<Sarray> &U, vector<Sarray> &Up,
     evalRHS(U, mMu, mLambda, Lu, AlphaVE);  // save Lu in composite grid 'Lu'
     Force(t, F, point_sources, identsources);
     exactAccTwilight(t, Uacc);  // save Utt in Uacc
-    test_RhoUtt_Lu(Uacc, Lu, F, lowZ, sw4_typeeriorZ, highZ);
+    test_RhoUtt_Lu(Uacc, Lu, F, lowZ, interiorZ, highZ);
 
     for (sw4_type i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = lowZ[i];
     MPI_Reduce(tmp, lowZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
                m_cartesian_communicator);
-    for (sw4_type i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = sw4_typeeriorZ[i];
-    MPI_Reduce(tmp, sw4_typeeriorZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
+    for (sw4_type i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = interiorZ[i];
+    MPI_Reduce(tmp, interiorZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
                m_cartesian_communicator);
     for (sw4_type i = 0; i < 3 * mNumberOfGrids; i++) tmp[i] = highZ[i];
     MPI_Reduce(tmp, highZ, 3 * mNumberOfGrids, m_mpifloat, MPI_MAX, 0,
@@ -2574,15 +2574,15 @@ void EW::initial_tw_test(vector<Sarray> &U, vector<Sarray> &Up,
         printf("Grid nr: %3i \n", g);
         printf("Max errors low-k boundary RHS:  %15.7e  %15.7e  %15.7e\n",
                lowZ[3 * g], lowZ[3 * g + 1], lowZ[3 * g + 2]);
-        printf("Max errors sw4_typeerior RHS:        %15.7e  %15.7e  %15.7e\n",
-               sw4_typeeriorZ[3 * g], sw4_typeeriorZ[3 * g + 1], sw4_typeeriorZ[3 * g + 2]);
+        printf("Max errors interior RHS:        %15.7e  %15.7e  %15.7e\n",
+               interiorZ[3 * g], interiorZ[3 * g + 1], interiorZ[3 * g + 2]);
         printf("Max errors high-k boundary RHS: %15.7e  %15.7e  %15.7e\n",
                highZ[3 * g], highZ[3 * g + 1], highZ[3 * g + 2]);
       }
     }
     delete[] tmp;
     delete[] lowZ;
-    delete[] sw4_typeeriorZ;
+    delete[] interiorZ;
     delete[] highZ;
   }
 }

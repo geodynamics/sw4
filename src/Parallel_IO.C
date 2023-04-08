@@ -130,7 +130,7 @@ void Comminfo::prsw4_type(sw4_type recv) {
              << " " << m_nkblock[s] << endl;
         if (m_ncomm[s] > 0) {
           cout << "number of substeps = " << m_nsubcomm[s]
-               << " sw4_typeervals = " << endl;
+               << " intervals = " << endl;
           for (sw4_type ss = 0; ss <= m_nsubcomm[s]; ss++)
             cout << " " << m_subcomm[s][ss] << " ";
           cout << endl;
@@ -152,7 +152,7 @@ Parallel_IO::Parallel_IO(sw4_type iwrite, sw4_type pfs, sw4_type globalsizes[3],
   //        localsizes  - Size of sub block of array in this processor.
   //        starts      - Location of starting point of this array's sub block.
   //                       Zero based indices.
-  //        nptsbuf     - Size of sw4_typeernal buffer in number of grid points.
+  //        nptsbuf     - Size of internal buffer in number of grid points.
   //        padding     - Size of overlap (halo points, ghost points) between
   //        blocks
   //                      in different processors. padding is zero by default.
@@ -570,7 +570,7 @@ void Parallel_IO::init_array(sw4_type globalsizes[3], sw4_type localsizes[3],
           }
           if (kb <= 1) kb = 1;
           if (ke >= nglast) ke = nglast;
-          // sw4_typeersect my array patch [1+oi,ni+oi]x[1+oj,nj+oj]x..
+          // intersect my array patch [1+oi,ni+oi]x[1+oj,nj+oj]x..
           // with the block in writer p, [1..nig]x[1..njg]x[kb,ke]
           kbl = 1 + olast;
           kel = nlast + olast;
@@ -618,7 +618,7 @@ void Parallel_IO::init_array(sw4_type globalsizes[3], sw4_type localsizes[3],
           if (kb <= 1) kb = 1;
           if (ke >= nglast) ke = nglast;
 
-          // sw4_typeersect my array patch
+          // intersect my array patch
           // [1+lgmap(1),ni+lgmap(1)]x[1+lgmap(2),nj+lgmap(2)]x.. with the block
           // in writer p, [1..nig]x[1..njg]x[kb,ke]
 
@@ -970,7 +970,7 @@ void Parallel_IO::setup_substeps() {
           size += blsize;
       }
       m_irecv.m_nsubcomm[b] = nsub;
-      // Set up sw4_typeervalls for the substeps
+      // Set up intervalls for the substeps
       m_irecv.m_subcomm[b] = new sw4_type[nsub + 1];
       size = 0;
       m_irecv.m_subcomm[b][0] = 0;

@@ -90,7 +90,7 @@ class MaterialSfile : public MaterialData {
   vector<Sarray> mMaterial_qp;
   vector<Sarray> mMaterial_qs;
 
-  vector<Sarray> mSw4_Typeerface;
+  vector<Sarray> mInterface;
   vector<bool> m_isempty;
 };
 #endif

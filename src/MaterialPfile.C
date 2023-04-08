@@ -854,7 +854,7 @@ void MaterialPfile::sample_latlon(double lats, double lons, float_sw4 zs,
       // now we should have mZ(k1) <= zs < mZ(k1+1)
       if (k1 <= 0) k1 = 1;
 
-      // linear sw4_typeerpolation factor ( what happens if two mZ values are
+      // linear interpolation factor ( what happens if two mZ values are
       // identical? )
       //	  double factor =
       //(zs-mZ(i1+1,j1+1,k1))/(mZ(i1+1,j1+1,k1+1)-mZ(i1+1,j1+1,k1)); if( factor
@@ -1017,7 +1017,7 @@ void MaterialPfile::sample_cart(float_sw4 xs, float_sw4 ys, float_sw4 zs,
 
       // now we should have mZ(k1) <= zs < mZ(k1+1)
 
-      // linear sw4_typeerpolation factor
+      // linear interpolation factor
       float_sw4 dz = mZ(i1 + 1, j1 + 1, k1 + 1) - mZ(i1 + 1, j1 + 1, k1);
       float_sw4 factor = 0;
       //	  double factor =

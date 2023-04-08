@@ -6,7 +6,7 @@
 #include "GridGenerator.h"
 
 class GridGeneratorGeneral : public GridGenerator {
-  std::vector<Sarray> m_curviSw4_Typeerface;
+  std::vector<Sarray> m_curviInterface;
 
   void generate_grid_and_met_new(EW* a_ew, sw4_type g, Sarray& a_x, Sarray& a_y,
                                  Sarray& a_z, Sarray& a_jac, Sarray& a_met);
@@ -44,8 +44,8 @@ class GridGeneratorGeneral : public GridGenerator {
 
  public:
   GridGeneratorGeneral(float_sw4 topo_zmax, bool always_new,
-                       sw4_type grid_sw4_typeerpolation_order, float_sw4 zetaBreak);
-  void assignSw4_TypeerfaceSurfaces(EW* a_ew, Sarray& TopoGridExt);
+                       sw4_type grid_interpolation_order, float_sw4 zetaBreak);
+  void assignInterfaceSurfaces(EW* a_ew, Sarray& TopoGridExt);
   virtual void generate_grid_and_met(EW* a_ew, sw4_type g, Sarray& a_x, Sarray& a_y,
                                      Sarray& a_z, Sarray& a_jac, Sarray& a_met,
                                      bool a_comm = true);

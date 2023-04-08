@@ -95,8 +95,8 @@ class Image {
 
   enum ImageOrientation { UNDEFINED, X, Y, Z };
 
-  Image(EW* a_ew, float_sw4 time, float_sw4 timeSw4_Typeerval, sw4_type cycle,
-        sw4_type cycleSw4_Typeerval, const std::string& filePrefix, ImageMode mode,
+  Image(EW* a_ew, float_sw4 time, float_sw4 timeInterval, sw4_type cycle,
+        sw4_type cycleInterval, const std::string& filePrefix, ImageMode mode,
         ImageOrientation locationType, float_sw4 locationValue, bool doubleMode,
         bool usehdf5 = false, bool userCreated = true);
 
@@ -208,10 +208,10 @@ class Image {
 
   float_sw4 mTime;
   bool m_time_done;
-  float_sw4 mTimeSw4_Typeerval;
+  float_sw4 mTimeInterval;
   float_sw4 mNextTime;
   sw4_type mWritingCycle;
-  sw4_type mCycleSw4_Typeerval;
+  sw4_type mCycleInterval;
   // std::string mFileName;
 
   std::vector<std::string> mMode2Suffix;

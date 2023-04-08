@@ -131,9 +131,9 @@ sw4_type GridGenerator::metric_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_typ
 }
 
 //-----------------------------------------------------------------------
-sw4_type GridGenerator::sw4_typeerpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
+sw4_type GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
                                           float_sw4& z, Sarray& topo) {
-  // Sw4_Typeerpolate the topography
+  // Interpolate the topography
   //
   // if (q,r) is on this processor then
   // Return true and assign z corresponding to (q,r)
@@ -166,7 +166,7 @@ sw4_type GridGenerator::sw4_typeerpolate_topography(EW* a_ew, float_sw4 x, float
     else
       return -2;
   } else {
-    // Not at a grid  point, sw4_typeerpolate the topography
+    // Not at a grid  point, interpolate the topography
     // Nearest lower grid point
     iNear = static_cast<sw4_type>(floor(q));
     jNear = static_cast<sw4_type>(floor(r));
@@ -230,12 +230,12 @@ bool GridGenerator::exact_metric(EW* a_ew, sw4_type g, Sarray& a_jac,
 
 //-----------------------------------------------------------------------
 void GridGenerator::get_gridgen_info(sw4_type& order, float_sw4& zetaBreak) const {
-  order = m_grid_sw4_typeerpolation_order;
+  order = m_grid_interpolation_order;
   zetaBreak = m_zetaBreak;
 }
 
 //-----------------------------------------------------------------------
-float_sw4 GridGenerator::curvilinear_sw4_typeerface_parameter(EW* a_ew, sw4_type gcurv) {
+float_sw4 GridGenerator::curvilinear_interface_parameter(EW* a_ew, sw4_type gcurv) {
   if (gcurv < 0)
     return 0;
   else

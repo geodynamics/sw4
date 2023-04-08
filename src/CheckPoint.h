@@ -20,13 +20,13 @@ class CheckPoint {
  public:
   static CheckPoint* nil;  // nil pointer
   CheckPoint(EW* a_ew);
-  CheckPoint(EW* a_ew, sw4_type cycle, sw4_type cycleSw4_Typeerval, string fname,
+  CheckPoint(EW* a_ew, sw4_type cycle, sw4_type cycleInterval, string fname,
              size_t bufsize = 10000000);
   CheckPoint(EW* a_ew, string fname, size_t bufsize = 10000000);
   ~CheckPoint();
   void set_restart_latest(size_t bufsize);
   void set_restart_file(string fname, size_t bufsize);
-  void set_checkpoint_file(string fname, sw4_type cycle, sw4_type cycleSw4_Typeerval,
+  void set_checkpoint_file(string fname, sw4_type cycle, sw4_type cycleInterval,
                            size_t bufsize, bool useHDF5, sw4_type compressionMode,
                            double compressionPar);
 
@@ -66,7 +66,7 @@ void write_checkpoint_scr(float_sw4 a_time, sw4_type a_cycle,
   bool timeToWrite(float_sw4 time, sw4_type cycle, float_sw4 dt);
   float_sw4 getDt();
   bool do_checkpointing();
-  sw4_type get_checkpoint_cycle_sw4_typeerval();
+  sw4_type get_checkpoint_cycle_interval();
   bool verify_restart();
   bool do_restart();
   void set_restart_path(string restartPath);
@@ -96,7 +96,7 @@ void write_checkpoint_scr(float_sw4 a_time, sw4_type a_cycle,
 
   float_sw4 mStartTime;
   sw4_type mWritingCycle;
-  sw4_type mCycleSw4_Typeerval;
+  sw4_type mCycleInterval;
   bool m_winallocated;
   size_t m_bufsize;
 

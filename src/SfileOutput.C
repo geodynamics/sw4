@@ -48,16 +48,16 @@ sw4_type SfileOutput::mPreceedZeros = 0;
 SfileOutput* SfileOutput::nil = static_cast<SfileOutput*>(0);
 
 //-----------------------------------------------------------------------
-SfileOutput::SfileOutput(EW* a_ew, float_sw4 time, float_sw4 timeSw4_Typeerval,
-                         sw4_type cycle, sw4_type cycleSw4_Typeerval, float_sw4 tstart,
+SfileOutput::SfileOutput(EW* a_ew, float_sw4 time, float_sw4 timeInterval,
+                         sw4_type cycle, sw4_type cycleInterval, float_sw4 tstart,
                          const std::string& filePrefix, sw4_type sampleFactorH,
                          sw4_type sampleFactorV, bool doubleMode)
     : mTime(time),
       mEW(a_ew),
       m_time_done(false),
-      mTimeSw4_Typeerval(timeSw4_Typeerval),
+      mTimeInterval(timeInterval),
       mWritingCycle(cycle),
-      mCycleSw4_Typeerval(cycleSw4_Typeerval),
+      mCycleInterval(cycleInterval),
       mFilePrefix(filePrefix),
       mSampleH(sampleFactorH),
       mSampleV(sampleFactorV),
@@ -271,11 +271,11 @@ bool SfileOutput::timeToWrite(float_sw4 time, sw4_type cycle, float_sw4 dt) {
   // -----------------------------------------------
   // Check based on cycle
   // -----------------------------------------------
-  //   cout << "in time to write " << mWritingCycle << " " << mCycleSw4_Typeerval <<
-  //   " " << " " << mTime << " " <<  mTimeSw4_Typeerval << " " << endl;
+  //   cout << "in time to write " << mWritingCycle << " " << mCycleInterval <<
+  //   " " << " " << mTime << " " <<  mTimeInterval << " " << endl;
   bool do_it = false;
   if (cycle == mWritingCycle) do_it = true;
-  if (mCycleSw4_Typeerval != 0 && cycle % mCycleSw4_Typeerval == 0 && time >= mStartTime)
+  if (mCycleInterval != 0 && cycle % mCycleInterval == 0 && time >= mStartTime)
     do_it = true;
 
   // ---------------------------------------------------
@@ -285,8 +285,8 @@ bool SfileOutput::timeToWrite(float_sw4 time, sw4_type cycle, float_sw4 dt) {
     m_time_done = true;
     do_it = true;
   }
-  if (mTimeSw4_Typeerval != 0.0 && mNextTime <= time + dt * 0.5) {
-    mNextTime += mTimeSw4_Typeerval;
+  if (mTimeInterval != 0.0 && mNextTime <= time + dt * 0.5) {
+    mNextTime += mTimeInterval;
     if (time >= mStartTime) do_it = true;
   }
   return do_it;
@@ -409,7 +409,7 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 down_z = (double)a_Z[gz](i, j, t);
                 up_v = (double)((*data1)(1, i, j, t - 1));
                 down_v = (double)((*data1)(1, i, j, t));
-                // Linear sw4_typeerp
+                // Linear interp
                 m_doubleField[g][ind] =
                     up_v + (down_v - up_v) * (my_z - up_z) / (down_z - up_z);
               }
@@ -437,7 +437,7 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 down_z = (double)a_Z[gz](i, j, t);
                 up_v = (double)((*data1)(1, i, j, t - 1));
                 down_v = (double)((*data1)(1, i, j, t));
-                // Linear sw4_typeerp
+                // Linear interp
                 m_floatField[g][ind] =
                     up_v + (down_v - up_v) * (my_z - up_z) / (down_z - up_z);
               }
@@ -484,7 +484,7 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 down_v = sqrt((2.0 * down_mu + down_lambda) /
                               ((*data1)(1, i, j, t)));
 
-                // Linear sw4_typeerp
+                // Linear interp
                 m_doubleField[g][ind] =
                     up_v + (down_v - up_v) * (my_z - up_z) / (down_z - up_z);
               }
@@ -531,7 +531,7 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                             ((*data1)(1, i, j, t - 1)));
                 down_v = sqrt((2.0 * down_mu + down_lambda) /
                               ((*data1)(1, i, j, t)));
-                // Linear sw4_typeerp
+                // Linear interp
                 m_floatField[g][ind] =
                     up_v + (down_v - up_v) * (my_z - up_z) / (down_z - up_z);
                 /* // TODO: debug */
@@ -581,7 +581,7 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 /* } */
                 up_v = sqrt(up_mu / ((*data1)(1, i, j, t - 1)));
                 down_v = sqrt(down_mu / ((*data1)(1, i, j, t)));
-                // Linear sw4_typeerp
+                // Linear interp
                 m_doubleField[g][ind] =
                     up_v + (down_v - up_v) * (my_z - up_z) / (down_z - up_z);
               }
@@ -623,7 +623,7 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 up_v = sqrt(up_mu / ((*data1)(1, i, j, t - 1)));
                 down_v = sqrt(down_mu / ((*data1)(1, i, j, t)));
 
-                // Linear sw4_typeerp
+                // Linear interp
                 m_floatField[g][ind] =
                     up_v + (down_v - up_v) * (my_z - up_z) / (down_z - up_z);
               }
@@ -813,13 +813,13 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
     H5Awrite(attr, H5T_NATIVE_DOUBLE, minmaxdp);
     H5Aclose(attr);
 
-    grp = H5Gcreate(h5_fid, "Z_sw4_typeerfaces", H5P_DEFAULT, H5P_DEFAULT,
+    grp = H5Gcreate(h5_fid, "Z_interfaces", H5P_DEFAULT, H5P_DEFAULT,
                     H5P_DEFAULT);
     if (grp < 0)
       VERIFY2(0,
-              "ERROR: SfileOutput::write_image, error creating Z_sw4_typeerfaces");
+              "ERROR: SfileOutput::write_image, error creating Z_interfaces");
 
-    // Top sw4_typeerface (topo)
+    // Top interface (topo)
     hsize_t globalSize[3];
     globalSize[0] =
         (hsize_t)(mGlobalDims[ng - 1][1] - mGlobalDims[ng - 1][0]) / stH + 1;
@@ -830,7 +830,7 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
     dspace = H5Screate_simple(2, globalSize, NULL);
     hid_t dcpl;
     float sw4_typef = 0.0;
-    // No topo fill all 0s to top sw4_typeerface
+    // No topo fill all 0s to top interface
     dcpl = H5Pcreate(H5P_DATASET_CREATE);
     if (gridinfo == 0) H5Pset_fill_value(dcpl, H5T_NATIVE_FLOAT, &sw4_typef);
     dset = H5Dcreate(grp, dname, H5T_NATIVE_FLOAT, dspace, H5P_DEFAULT, dcpl,
@@ -840,7 +840,7 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
     H5Sclose(dspace);
     H5Dclose(dset);
 
-    // Create sw4_typeerfaces other than top one
+    // Create interfaces other than top one
     for (sw4_type g = ng - 1; g >= 0; g--) {
       sprintf(dname, "z_values_%d", ng - g);
       globalSize[0] =
@@ -943,7 +943,7 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
 
     H5Gclose(grp);
 
-    // Top sw4_typeerface (topo)
+    // Top interface (topo)
     H5Sclose(attr_space1);
     H5Sclose(attr_space2);
     H5Sclose(attr_space3);
@@ -964,7 +964,7 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
 
-  // Write sw4_typeerfaces
+  // Write interfaces
   if (gridinfo == 1 && m_modestring == "Rho") {
     for (sw4_type g = mEW->mNumberOfCartesianGrids; g < ng; g++) {
       sw4_type real_g = g + 1;
@@ -991,7 +991,7 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
             zfp[ind] = (float)a_Z[real_g](i, j, nk);
         }
 
-      sprintf(gname, "Z_sw4_typeerfaces");
+      sprintf(gname, "Z_interfaces");
       grp = H5Gopen(h5_fid, gname, H5P_DEFAULT);
       if (grp < 0) {
         cout << "Rank " << myid << " error opening [" << gname
@@ -1024,7 +1024,7 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
 
       ret = H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, dxpl, zfp);
       if (ret < 0) {
-        cout << "Sfileoutput error writing sw4_typeerface!" << endl;
+        cout << "Sfileoutput error writing interface!" << endl;
         cout << "Rank " << myid << ": offsets " << offsets[0] << ", "
              << offsets[1] << ", " << offsets[2] << endl;
         cout << "Rank " << myid << ": counts  " << counts[0] << ", "

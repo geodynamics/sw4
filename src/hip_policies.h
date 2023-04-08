@@ -337,7 +337,7 @@ using GEPS_POL = RAJA::KernelPolicy<
                                 2, RAJA::hip_thread_z_direct,
                                 RAJA::statement::Lambda<0>>>>>>>>>;
 
-// CurvilinearSw4_Typeerface2::bnd_zero
+// CurvilinearInterface2::bnd_zero
 using BZ_POL_ASYNC =
     RAJA::KernelPolicy<RAJA::statement::HipKernelAsync<RAJA::statement::Tile<
         0, RAJA::tile_fixed<4>, RAJA::hip_block_z_loop,
@@ -352,7 +352,7 @@ using BZ_POL_ASYNC =
                         RAJA::statement::For<2, RAJA::hip_thread_x_direct,
                                              RAJA::statement::Lambda<0>>>>>>>>>;
 
-// CurvilinearSw4_Typeerface2::injection
+// CurvilinearInterface2::injection
 using INJ_POL_ASYNC = RAJA::KernelPolicy<RAJA::statement::HipKernelFixedAsync<
     256,
     RAJA::statement::Tile<
@@ -373,7 +373,7 @@ using INJ_POL2_ASYNC = RAJA::KernelPolicy<RAJA::statement::HipKernelAsync<
                          RAJA::statement::For<0, RAJA::hip_thread_x_loop,
                                               RAJA::statement::Lambda<0>>>>>;
 
-// CurvilinearSw4_Typeerface2::communicate_array
+// CurvilinearInterface2::communicate_array
 
 using CA_POL = RAJA::KernelPolicy<RAJA::statement::HipKernelFixed<
     512,
@@ -409,7 +409,7 @@ using SAA_POL =
                                 0, RAJA::seq_exec,
                                 RAJA::statement::Lambda<0>>>>>>>>>>;
 
-// Sarray::insert_sw4_typeersection(
+// Sarray::insert_intersection(
 using SII_POL =
     RAJA::KernelPolicy<RAJA::statement::HipKernel<RAJA::statement::Tile<
         0, RAJA::tile_fixed<4>, RAJA::hip_block_z_loop,

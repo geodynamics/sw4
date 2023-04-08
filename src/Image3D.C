@@ -47,16 +47,16 @@ sw4_type Image3D::mPreceedZeros = 0;
 Image3D* Image3D::nil = static_cast<Image3D*>(0);
 
 //-----------------------------------------------------------------------
-Image3D::Image3D(EW* a_ew, float_sw4 time, float_sw4 timeSw4_Typeerval, sw4_type cycle,
-                 sw4_type cycleSw4_Typeerval, float_sw4 tstart,
+Image3D::Image3D(EW* a_ew, float_sw4 time, float_sw4 timeInterval, sw4_type cycle,
+                 sw4_type cycleInterval, float_sw4 tstart,
                  const std::string& filePrefix, Image3DMode mode,
                  bool doubleMode)
     : mTime(time),
       mEW(a_ew),
       m_time_done(false),
-      mTimeSw4_Typeerval(timeSw4_Typeerval),
+      mTimeInterval(timeInterval),
       mWritingCycle(cycle),
-      mCycleSw4_Typeerval(cycleSw4_Typeerval),
+      mCycleInterval(cycleInterval),
       mFilePrefix(filePrefix),
       mImageSamplingFactor(1),
       mMode(mode),
@@ -295,11 +295,11 @@ bool Image3D::timeToWrite(float_sw4 time, sw4_type cycle, float_sw4 dt) {
   // -----------------------------------------------
   // Check based on cycle
   // -----------------------------------------------
-  //   cout << "in time to write " << mWritingCycle << " " << mCycleSw4_Typeerval <<
-  //   " " << " " << mTime << " " <<  mTimeSw4_Typeerval << " " << endl;
+  //   cout << "in time to write " << mWritingCycle << " " << mCycleInterval <<
+  //   " " << " " << mTime << " " <<  mTimeInterval << " " << endl;
   bool do_it = false;
   if (cycle == mWritingCycle) do_it = true;
-  if (mCycleSw4_Typeerval != 0 && cycle % mCycleSw4_Typeerval == 0 && time >= mStartTime)
+  if (mCycleInterval != 0 && cycle % mCycleInterval == 0 && time >= mStartTime)
     do_it = true;
 
   // ---------------------------------------------------
@@ -309,8 +309,8 @@ bool Image3D::timeToWrite(float_sw4 time, sw4_type cycle, float_sw4 dt) {
     m_time_done = true;
     do_it = true;
   }
-  if (mTimeSw4_Typeerval != 0.0 && mNextTime <= time + dt * 0.5) {
-    mNextTime += mTimeSw4_Typeerval;
+  if (mTimeInterval != 0.0 && mNextTime <= time + dt * 0.5) {
+    mNextTime += mTimeInterval;
     if (time >= mStartTime) do_it = true;
   }
   return do_it;

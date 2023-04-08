@@ -35,11 +35,11 @@ class GridGeneratorGaussianHill : public GridGenerator {
 
  public:
   GridGeneratorGaussianHill(float_sw4 topo_zmax, bool always_new,
-                            bool analytic_metric, sw4_type grid_sw4_typeerpolation_order,
+                            bool analytic_metric, sw4_type grid_interpolation_order,
                             float_sw4 zetaBreak, float_sw4 amp, float_sw4 xc,
                             float_sw4 yc, float_sw4 lx, float_sw4 ly);
 
-  virtual void assignSw4_TypeerfaceSurfaces(EW* a_ew, Sarray& TopoGridExt){};
+  virtual void assignInterfaceSurfaces(EW* a_ew, Sarray& TopoGridExt){};
 
   virtual void generate_grid_and_met(EW* a_ew, sw4_type g, Sarray& a_x, Sarray& a_y,
                                      Sarray& a_z, Sarray& a_jac, Sarray& a_met,
@@ -55,7 +55,7 @@ class GridGeneratorGaussianHill : public GridGenerator {
                                  float_sw4& zqq, float_sw4& zqr, float_sw4& zqs,
                                  float_sw4& zrr, float_sw4& zrs,
                                  float_sw4& zss);
-  virtual sw4_type sw4_typeerpolate_topography(EW* a_ew, float_sw4 q, float_sw4 r,
+  virtual sw4_type interpolate_topography(EW* a_ew, float_sw4 q, float_sw4 r,
                                      float_sw4& z, Sarray& topo);
   virtual bool exact_metric(EW* a_ew, sw4_type g, Sarray& a_jac, Sarray& a_met);
   virtual void fill_topo(Sarray& topo, float_sw4 h);

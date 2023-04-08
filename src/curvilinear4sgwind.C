@@ -61,7 +61,7 @@ void curvilinear4sgwind(
   // jfirst:jlast, kfirst:klast, the calling routine need to assure that
   // kfirst:klast is large enough to fit a stencil evaluated at all k between
   // kfirstw and klastw. Typical use kfirstw=klastw=k0 to compute Lu on the grid
-  // plane k=k0, to use in grid-grid sw4_typeerface conditions.
+  // plane k=k0, to use in grid-grid interface conditions.
   //
   // Note: This routine does not use the 'onesided' array, it is assumed that
   // both k-boundaries use SBP operators.
@@ -76,7 +76,7 @@ void curvilinear4sgwind(
   //   and a_acof_no_gp.
   //
   // opcount:
-  //      Sw4_Typeerior (k>6), 2126 arithmetic ops.
+  //      Interior (k>6), 2126 arithmetic ops.
   //      Boundary discretization (1<=k<=6 ), 6049 arithmetic ops.
 
   //   const float_sw4 a1 =0;

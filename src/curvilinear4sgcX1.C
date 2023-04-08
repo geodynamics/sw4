@@ -53,10 +53,10 @@ void curvilinear4sgX1_ci(
   //     *                         op )
 
   // Routine with supergrid stretchings strx and stry. No stretching
-  // in z, since top is always topography, and bottom always sw4_typeerface
+  // in z, since top is always topography, and bottom always interface
   // to a deeper Cartesian grid.
   // opcount:
-  //      Sw4_Typeerior (k>6), 2126 arithmetic ops.
+  //      Interior (k>6), 2126 arithmetic ops.
   //      Boundary discretization (1<=k<=6 ), 6049 arithmetic ops.
 
   //   const float_sw4 a1 =0;

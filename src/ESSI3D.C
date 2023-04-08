@@ -48,8 +48,8 @@ sw4_type ESSI3D::mNumberOfTimeSteps = -1;
 ESSI3D* ESSI3D::nil = static_cast<ESSI3D*>(0);
 
 //-----------------------------------------------------------------------
-ESSI3D::ESSI3D(EW* a_ew, const std::string& filePrefix, sw4_type dumpSw4_Typeerval,
-               sw4_type bufferSw4_Typeerval, float_sw4 coordBox[6], float_sw4 depth,
+ESSI3D::ESSI3D(EW* a_ew, const std::string& filePrefix, sw4_type dumpInterval,
+               sw4_type bufferInterval, float_sw4 coordBox[6], float_sw4 depth,
                sw4_type precision, sw4_type compressionMode, double compressionPar)
     : mEW(a_ew),
       mFilePrefix(filePrefix),
@@ -60,8 +60,8 @@ ESSI3D::ESSI3D(EW* a_ew, const std::string& filePrefix, sw4_type dumpSw4_Typeerv
       m_ihavearray(false),
       m_hdf5_time(0),
       m_cycle(-1),
-      m_dumpSw4_Typeerval(-1),
-      m_bufferSw4_Typeerval(1),
+      m_dumpInterval(-1),
+      m_bufferInterval(1),
       m_nbufstep(0),
       mDepth(depth),
       m_precision(precision),
@@ -71,8 +71,8 @@ ESSI3D::ESSI3D(EW* a_ew, const std::string& filePrefix, sw4_type dumpSw4_Typeerv
   // volimage subdomain x,y corner coordinates
   for (sw4_type d = 0; d < 2 * 2; d++) mCoordBox[d] = coordBox[d];
 
-  set_dump_sw4_typeerval(dumpSw4_Typeerval);
-  set_buffer_sw4_typeerval(bufferSw4_Typeerval);
+  set_dump_interval(dumpInterval);
+  set_buffer_interval(bufferInterval);
 
   MPI_Comm_rank(a_ew->m_cartesian_communicator, &m_rank);
 }
@@ -105,14 +105,14 @@ void ESSI3D::set_restart(bool is_restart) {
 }
 
 //-----------------------------------------------------------------------
-void ESSI3D::set_dump_sw4_typeerval(sw4_type a_dumpSw4_Typeerval) {
-  if (a_dumpSw4_Typeerval > 0) m_dumpSw4_Typeerval = a_dumpSw4_Typeerval;
+void ESSI3D::set_dump_interval(sw4_type a_dumpInterval) {
+  if (a_dumpInterval > 0) m_dumpInterval = a_dumpInterval;
   return;
 }
 
 //-----------------------------------------------------------------------
-void ESSI3D::set_buffer_sw4_typeerval(sw4_type a_bufferSw4_Typeerval) {
-  if (a_bufferSw4_Typeerval > 0) m_bufferSw4_Typeerval = a_bufferSw4_Typeerval;
+void ESSI3D::set_buffer_interval(sw4_type a_bufferInterval) {
+  if (a_bufferInterval > 0) m_bufferInterval = a_bufferInterval;
   return;
 }
 
@@ -135,7 +135,7 @@ void ESSI3D::setup() {
     //   << boxStart << " , " << boxEnd << ")" << endl;
     sw4_type ixStart = (dim == 0) ? mEW->m_iStartSw4_Type[g] : mEW->m_jStartSw4_Type[g];
     sw4_type ixEnd = (dim == 0) ? mEW->m_iEndSw4_Type[g] : mEW->m_jEndSw4_Type[g];
-    // Check if the output box indices sw4_typeersect with this proc's
+    // Check if the output box indices intersect with this proc's
     if (m_ihavearray && (boxStart <= ixEnd) && (boxEnd >= ixStart)) {
       mWindow[2 * dim] = max(ixStart, min(boxStart, ixEnd));
       mWindow[2 * dim + 1] = max(ixStart, min(boxEnd, ixEnd));
@@ -175,7 +175,7 @@ void ESSI3D::setup() {
     size_t npts = ((size_t)(mWindow[1] - mWindow[0]) + 1) *
                   ((mWindow[3] - mWindow[2]) + 1) *
                   ((mWindow[5] - mWindow[4]) + 1);
-    npts *= m_bufferSw4_Typeerval;
+    npts *= m_bufferInterval;
 
     if (m_precision == 4) {
       m_floatField = new float*[3];
@@ -223,9 +223,9 @@ void ESSI3D::update_image(sw4_type a_cycle, float_sw4 a_time, float_sw4 a_dt,
   if (!m_fileOpen)  // must be first call, open file and write
     open_vel_file(a_cycle, a_path, a_time, a_Z);
 
-  if (m_dumpSw4_Typeerval != -1) {
-    if (a_cycle % m_dumpSw4_Typeerval != 0 && a_cycle != mNumberOfTimeSteps) return;
-    a_cycle /= m_dumpSw4_Typeerval;
+  if (m_dumpInterval != -1) {
+    if (a_cycle % m_dumpInterval != 0 && a_cycle != mNumberOfTimeSteps) return;
+    a_cycle /= m_dumpInterval;
   }
 
   write_image_hdf5(a_cycle, a_path, a_time, a_U);
@@ -367,21 +367,21 @@ void ESSI3D::open_vel_file(sw4_type a_cycle, std::string& a_path, float_sw4 a_ti
       cout << "Creating hdf5 velocity fields..." << endl;
   }
 
-  if (m_dumpSw4_Typeerval > 0) {
-    sw4_type nstep = (sw4_type)ceil(m_ntimestep / m_dumpSw4_Typeerval);
+  if (m_dumpInterval > 0) {
+    sw4_type nstep = (sw4_type)ceil(m_ntimestep / m_dumpInterval);
     if (m_compressionMode > 0)
       m_hdf5helper->init_write_vel(m_isRestart, nstep, m_compressionMode,
-                                   m_compressionPar, m_bufferSw4_Typeerval);
+                                   m_compressionPar, m_bufferInterval);
     else
       m_hdf5helper->init_write_vel(m_isRestart, nstep, 0, 0.0,
-                                   m_bufferSw4_Typeerval);
+                                   m_bufferInterval);
   } else {
     if (m_compressionMode > 0)
       m_hdf5helper->init_write_vel(m_isRestart, m_ntimestep, m_compressionMode,
-                                   m_compressionPar, m_bufferSw4_Typeerval);
+                                   m_compressionPar, m_bufferInterval);
     else
       m_hdf5helper->init_write_vel(m_isRestart, m_ntimestep, 0, 0.0,
-                                   m_bufferSw4_Typeerval);
+                                   m_bufferInterval);
   }
 
   MPI_Comm comm = mEW->m_cartesian_communicator;
@@ -419,10 +419,10 @@ void ESSI3D::write_image_hdf5(sw4_type cycle, std::string& path, float_sw4 t,
   /* debug = true; */
 
   for (sw4_type i = 0; i < 3; i++) {
-    sw4_type nstep = (sw4_type)floor(m_ntimestep / m_dumpSw4_Typeerval);
+    sw4_type nstep = (sw4_type)floor(m_ntimestep / m_dumpInterval);
     compute_image(a_U[g], i, cycle);
     if (cycle > 0 &&
-        (m_nbufstep == m_bufferSw4_Typeerval - 1 || cycle == nstep)) {
+        (m_nbufstep == m_bufferInterval - 1 || cycle == nstep)) {
       if (m_precision == 4)
         m_hdf5helper->write_vel((void*)m_floatField[i], i, cycle,
                                 m_nbufstep + 1);
@@ -435,7 +435,7 @@ void ESSI3D::write_image_hdf5(sw4_type cycle, std::string& path, float_sw4 t,
   }
 
   m_nbufstep++;
-  m_nbufstep %= m_bufferSw4_Typeerval;
+  m_nbufstep %= m_bufferInterval;
 
   if (!(doWrite == 3 || doWrite == 0))
     fprintf(stderr,

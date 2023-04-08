@@ -3,7 +3,7 @@
 
 #include "Mspace.h"
 #include "caliper.h"
-#include "cf_sw4_typeerface.h"
+#include "cf_interface.h"
 #include "foralls.h"
 #include "policies.h"
 #include "sw4.h"

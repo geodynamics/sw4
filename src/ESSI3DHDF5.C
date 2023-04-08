@@ -321,7 +321,7 @@ void ESSI3DHDF5::write_topo(void* window_array) {
 }
 void ESSI3DHDF5::init_write_vel(bool isRestart, sw4_type ntimestep,
                                 sw4_type compressionMode, double compressionPar,
-                                sw4_type bufferSw4_Typeerval) {
+                                sw4_type bufferInterval) {
   bool debug = false;
   /* debug=true; */
 
@@ -357,7 +357,7 @@ void ESSI3DHDF5::init_write_vel(bool isRestart, sw4_type ntimestep,
       if (my_chunk[i] > 4) my_chunk[i] = ((hsize_t)(my_chunk[i] / 4)) * 4;
     }
 
-    my_chunk[0] = bufferSw4_Typeerval;
+    my_chunk[0] = bufferInterval;
 
     char* env_char = NULL;
     env_char = getenv("SSI_CHUNK_X");

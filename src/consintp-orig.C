@@ -62,7 +62,7 @@ void EW::conssw4_typep(Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf,
   while (jacerr > m_citol && it < m_cimaxiter) {
     double rmax[6] = {0, 0, 0, 0, 0, 0};
     // for i=2*ic-1 and j=2*jc-1: Enforce continuity of displacements and normal
-    // stresses along the sw4_typeerface
+    // stresses along the interface
     for (sw4_type jc = jcb; jc <= jce; jc++)
       for (sw4_type ic = icb; ic <= ice; ic++) {
         // i odd, j odd
@@ -78,7 +78,7 @@ void EW::conssw4_typep(Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf,
         for (sw4_type c = 1; c <= 2; c++)  // AP: what are the 2 components?
         {
           // apply the restriction operator to the normal stress on the
-          // sw4_typeerface (Bf is on the fine grid)
+          // interface (Bf is on the fine grid)
           b1 = i1024 *
                (Bf(c, i - 3, j - 3, nkf) - 9 * Bf(c, i - 3, j - 1, nkf) -
                 16 * Bf(c, i - 3, j, nkf) - 9 * Bf(c, i - 3, j + 1, nkf) +
@@ -241,7 +241,7 @@ void EW::conssw4_typep(Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf,
       }
     //      goto skipthis;
 
-    // Enforce continuity of displacements along the sw4_typeerface (for fine ghost
+    // Enforce continuity of displacements along the interface (for fine ghost
     // points in between coarse points)
     sw4_type ic, jc;
     for (sw4_type j = jfb; j <= jfe; j++)
@@ -425,7 +425,7 @@ void EW::conssw4_typep(Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf,
 
         // (i,j) both odd is handled by the first iteration
 
-      }  // end for all fine grid points on the sw4_typeerface
+      }  // end for all fine grid points on the interface
 
     //   skipthis:
     communicate_array_2d(Uf, gf, nkf + 1);

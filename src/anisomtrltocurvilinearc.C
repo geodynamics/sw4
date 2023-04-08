@@ -63,7 +63,7 @@ void EW::anisomtrltocurvilinear_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfi
   //*
   //* The input Cartesian stress tensor has 21 elements, these are assumed
   // enumerated
-  //* in the non-standard way used sw4_typeernally in SW4.
+  //* in the non-standard way used internally in SW4.
   //*
   //* The output stress tensor has 45 elements. These are ordered according to
   //*  A11=[c1 c2 c3]  A22=[c7 c8 c9  ]  A33=[c13 c14 c15]  A21=[c19 c20 c21]

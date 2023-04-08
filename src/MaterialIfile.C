@@ -98,7 +98,7 @@ void MaterialIfile::set_material_properties(std::vector<Sarray>& rho,
             //		  if ( inside_cartesian_material_surfaces(x, y) )
             // allow evaluation outside the surfaces (for ghost point values)
             if (true) {
-              // sw4_typeerpolate material surfaces to find which material is at the
+              // interpolate material surfaces to find which material is at the
               // specified depth
               sw4_type materialID = getCartesianMaterialID(x, y, depth);
               if (0 <= materialID && materialID < mEw->m_materials.size()) {
@@ -120,7 +120,7 @@ void MaterialIfile::set_material_properties(std::vector<Sarray>& rho,
             // getMaterialID
             mEw->computeGeographicCoord(x, y, lon, lat);
             if (inside_material_surfaces(lat, lon)) {
-              // sw4_typeerpolate material surfaces to find which material is at the
+              // interpolate material surfaces to find which material is at the
               // specified depth
               sw4_type materialID = getMaterialID(lat, lon, depth);
               if (0 <= materialID && materialID < mEw->m_materials.size()) {
@@ -180,7 +180,7 @@ void MaterialIfile::set_material_properties(std::vector<Sarray>& rho,
             // (lon,lat) or (x,y) coordinates ?
             if (m_mat_Cartesian) {
               if (inside_cartesian_material_surfaces(x, y)) {
-                // sw4_typeerpolate material surfaces to find which material is at
+                // interpolate material surfaces to find which material is at
                 // the specified depth
                 sw4_type materialID = getCartesianMaterialID(x, y, depth);
                 if (0 <= materialID && materialID < mEw->m_materials.size()) {
@@ -202,7 +202,7 @@ void MaterialIfile::set_material_properties(std::vector<Sarray>& rho,
               // getMaterialID
               mEw->computeGeographicCoord(x, y, lon, lat);
               if (inside_material_surfaces(lat, lon)) {
-                // sw4_typeerpolate material surfaces to find which material is at
+                // interpolate material surfaces to find which material is at
                 // the specified depth
                 sw4_type materialID = getMaterialID(lat, lon, depth);
                 if (0 <= materialID && materialID < mEw->m_materials.size()) {
@@ -355,7 +355,7 @@ void MaterialIfile::extractSurfaceFromGridFile(string a_surfaceFileName) {
       }
   if (mEw->proc_zero())
     printf(
-        "Material sw4_typeerface surfaces: lonMin=%e, lonMax=%e\nlatMin=%e, "
+        "Material interface surfaces: lonMin=%e, lonMax=%e\nlatMin=%e, "
         "latMax=%e\ndepthMin=%e, depthMax=%e\n",
         m_materialLonMin, m_materialLonMax, m_materialLatMin, m_materialLatMax,
         depthMin, depthMax);
@@ -510,7 +510,7 @@ void MaterialIfile::extractSurfaceFromCartesianFile(string a_surfaceFileName) {
       }
   if (mEw->proc_zero())
     printf(
-        "Material sw4_typeerface surfaces: Xmin=%e, Xmax=%e\nYmin=%e, "
+        "Material interface surfaces: Xmin=%e, Xmax=%e\nYmin=%e, "
         "Ymax=%e\ndepthMin=%e, depthMax=%e\n",
         m_mat_Xmin, m_mat_Xmax, m_mat_Ymin, m_mat_Ymax, depthMin, depthMax);
 
@@ -552,13 +552,13 @@ void MaterialIfile::extractSurfaceFromCartesianFile(string a_surfaceFileName) {
 
 //-----------------------------------------------------------------------
 sw4_type MaterialIfile::getMaterialID(double lat, double lon, float_sw4 depth) {
-  // Sw4_Typeerpolate the materialDepth surfaces to find which material is at the
+  // Interpolate the materialDepth surfaces to find which material is at the
   // specified depth
 
-  // 1. Sw4_Typeerpolate in the grid file to get elevations on the computational grid
+  // 1. Interpolate in the grid file to get elevations on the computational grid
   double deltaLat = (m_materialLatMax - m_materialLatMin) / m_Nlat;
   double deltaLon = (m_materialLonMax - m_materialLonMin) / m_Nlon;
-  // double eSw4_Typeerp;
+  // double eInterp;
   double xi, eta;
   sw4_type i0, j0;
   if (lat > m_materialLatMax || lat < m_materialLatMin ||
@@ -587,7 +587,7 @@ sw4_type MaterialIfile::getMaterialID(double lat, double lon, float_sw4 depth) {
   if (i0 > m_Nlon - 1) i0 = m_Nlon - 1;
   if (j0 > m_Nlat - 1) j0 = m_Nlat - 1;
 
-  // Test that we are inside the sw4_typeerval
+  // Test that we are inside the interval
   if (!(m_materialLon[i0] <= lon && lon < m_materialLon[i0 + 1])) {
     printf("lon=%e outside (m_materialLon[%i]=%e, m_materialLon[%i]=%e)\n", lon,
            i0, m_materialLon[i0], i0 + 1, m_materialLon[i0 + 1]);
@@ -602,7 +602,7 @@ sw4_type MaterialIfile::getMaterialID(double lat, double lon, float_sw4 depth) {
   xi = (lon - m_materialLon[i0]) / (m_materialLon[i0 + 1] - m_materialLon[i0]);
   eta = (lat - m_materialLat[j0]) / (m_materialLat[j0 + 1] - m_materialLat[j0]);
 
-  // Bi-linear sw4_typeerpolation for all surfaces
+  // Bi-linear interpolation for all surfaces
   sw4_type materialID = -1;  // default material is unknown
   float_sw4 minDepth = 0, maxDepth;
   for (sw4_type q = 1; q <= m_number_material_surfaces;
@@ -628,10 +628,10 @@ sw4_type MaterialIfile::getMaterialID(double lat, double lon, float_sw4 depth) {
 //-----------------------------------------------------------------------
 sw4_type MaterialIfile::getCartesianMaterialID(float_sw4 xP, float_sw4 yP,
                                           float_sw4 depth) {
-  // sw4_typeerpolate the materialDepth surfaces to find which material is at the
+  // interpolate the materialDepth surfaces to find which material is at the
   // specified depth
 
-  // Sw4_Typeerpolate in the grid file to get elevations on the computational grid
+  // Interpolate in the grid file to get elevations on the computational grid
   // allow extrapolation (for ghost points)
   // if (yP > m_mat_Ymax || yP < m_mat_Ymin || xP > m_mat_Xmax || xP <
   // m_mat_Xmin)
@@ -652,7 +652,7 @@ sw4_type MaterialIfile::getCartesianMaterialID(float_sw4 xP, float_sw4 yP,
   if (j0 < 1) j0 = 1;
   if (j0 > m_mat_Ny - 1) j0 = m_mat_Ny - 1;
 
-  // find the right sw4_typeerval
+  // find the right interval
   while (i0 >= 1 && i0 < m_mat_Nx &&
          (xP < m_mat_Xvec[i0] || m_mat_Xvec[i0 + 1] < xP)) {
     if (xP < m_mat_Xvec[i0])
@@ -675,7 +675,7 @@ sw4_type MaterialIfile::getCartesianMaterialID(float_sw4 xP, float_sw4 yP,
   if (j0 > m_mat_Ny - 1) j0 = m_mat_Ny - 1;
 
   // remove this test to allow extrapolation to ghost points
-  // test that we are inside the sw4_typeerval
+  // test that we are inside the interval
   // if (!(m_mat_Xvec[i0] <= xP && xP <= m_mat_Xvec[i0+1]))
   // {
   //    printf("xP=%e outside (m_mat_Xvec[%i]=%e, m_mat_Xvec[%i]=%e)\n",
@@ -694,7 +694,7 @@ sw4_type MaterialIfile::getCartesianMaterialID(float_sw4 xP, float_sw4 yP,
   float_sw4 xi, eta;
   xi = (xP - m_mat_Xvec[i0]) / (m_mat_Xvec[i0 + 1] - m_mat_Xvec[i0]);
   eta = (yP - m_mat_Yvec[j0]) / (m_mat_Yvec[j0 + 1] - m_mat_Yvec[j0]);
-  // bi-linear sw4_typeerpolation for all surfaces
+  // bi-linear interpolation for all surfaces
   sw4_type materialID = -1;  // default material is unknown
   float_sw4 minDepth = 0, maxDepth;
   for (sw4_type q = 1; q <= m_number_material_surfaces;

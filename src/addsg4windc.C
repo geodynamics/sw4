@@ -80,7 +80,7 @@ void addsg4wind_ci(float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
   //
   // add in the SG damping
   //
-  // There are enough ghost points to always use the sw4_typeerior formula
+  // There are enough ghost points to always use the interior formula
   // But only in (i,j) because the k-window may be near a refinement bndry
   //
   // the corner tapering is applied by replacing

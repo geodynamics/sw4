@@ -63,7 +63,7 @@ void EW::convert_material_to_mulambda() {
 void EW::check_materials() {
   //---------------------------------------------------------------
   // Verify that the density is nonzero and positive in the
-  // sw4_typeernal grid points
+  // internal grid points
   //---------------------------------------------------------------
 
   // Minimum allowed  cp/cs, positive definite operator requires cp/cs >

@@ -45,10 +45,10 @@ using namespace std;
 Qspline::Qspline(sw4_type npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt,
                  sw4_type bclow, sw4_type bchigh, float_sw4 s1, float_sw4 t1,
                  float_sw4 sn, float_sw4 tn) {
-  // Qusw4_typeic spline sw4_typeerpolation of a function defined on a uniform grid.
+  // Qusw4_typeic spline interpolation of a function defined on a uniform grid.
   //
   // npts - Number of spline points
-  // fun  - The function to sw4_typeerpolate, defined at points k=0,..,npts-1
+  // fun  - The function to interpolate, defined at points k=0,..,npts-1
   // tmin, dt - Gives the assumed uniform grid, t_k = tmin+k*dt, k=0,..,npts-1
   // bclow - Lower end boundary condition, 1-'not a knot', condition (full order
   // one sided)
@@ -79,7 +79,7 @@ Qspline::Qspline(sw4_type npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt,
   else if (bclow == 2 && bchigh == 2)
     minpts = 2;
   if (npts < minpts) {
-    cout << "ERROR in Qspline, number of sw4_typeerpolation points, " << npts
+    cout << "ERROR in Qspline, number of interpolation points, " << npts
          << ", is too small" << endl;
     cout << " Spline not constructed " << endl;
   }

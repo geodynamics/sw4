@@ -1,7 +1,7 @@
 #include "EW.h"
 #include "Mspace.h"
 #include "caliper.h"
-#include "cf_sw4_typeerface.h"
+#include "cf_interface.h"
 #include "policies.h"
 
 #define SQR(x) ((x) * (x))
@@ -104,10 +104,10 @@ void EW::conssw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
                __FILE__, __LINE__);  // only one k-index
   Sarray UfNew(3, m_iStart[gf], m_iEnd[gf], m_jStart[gf], m_jEnd[gf], nkf + 1,
                nkf + 1, __FILE__, __LINE__);  // the k-index is arbitrary,
-  Sarray UnextcSw4_Typeerp(3, m_iStart[gf], m_iEnd[gf], m_jStart[gf], m_jEnd[gf], 1,
+  Sarray UnextcInterp(3, m_iStart[gf], m_iEnd[gf], m_jStart[gf], m_jEnd[gf], 1,
                       1, __FILE__, __LINE__);  // the k-index is arbitrary,
-  SView &UnextcSw4_TypeerpV = UnextcSw4_Typeerp.getview();
-  UnextcSw4_Typeerp.prefetch();
+  SView &UnextcInterpV = UnextcInterp.getview();
+  UnextcInterp.prefetch();
   SView &UnextcV = Unextc.getview();
   Unextc.prefetch();
 
@@ -199,13 +199,13 @@ void EW::conssw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
   if (jfodd % 2 == 0) jfodd++;    // make sure jfodd is odd
   if (jfeven % 2 == 1) jfeven++;  // make sure jfeven is even
 
-  // pre-compute UnextcSw4_Typeerp
-  // Sarray UnextcSw4_Typeerp(3,m_iStart[gf],
+  // pre-compute UnextcInterp
+  // Sarray UnextcInterp(3,m_iStart[gf],
   // m_iEnd[gf],m_jStart[gf],m_jEnd[gf],1,1,__FILE__,__LINE__); // the k-index
   // is arbitrary,
   // // using k=1 since it comes from Unextc(c,ic,jc,1)
-  //    SView &UnextcSw4_TypeerpV = UnextcSw4_Typeerp.getview();
-  //    UnextcSw4_Typeerp.prefetch();
+  //    SView &UnextcInterpV = UnextcInterp.getview();
+  //    UnextcInterp.prefetch();
   //    SView &UnextcV = Unextc.getview();
   //    Unextc.prefetch();
   SW4_MARK_BEGIN("CONSSW4_TYPEP_LOOP4");
@@ -229,7 +229,7 @@ void EW::conssw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
           sw4_type ic = (i + 1) / 2;
           sw4_type jc = j / 2;
           for (sw4_type c = 1; c <= 3; c++)
-            UnextcSw4_TypeerpV(c, i, j, 1) =
+            UnextcInterpV(c, i, j, 1) =
                 i16 * (-UnextcV(c, ic, jc - 1, 1) +
                        9 * (UnextcV(c, ic, jc, 1) + UnextcV(c, ic, jc + 1, 1)) -
                        UnextcV(c, ic, jc + 2, 1));
@@ -250,7 +250,7 @@ void EW::conssw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
           sw4_type ic = i / 2;
           sw4_type jc = (j + 1) / 2;
           for (sw4_type c = 1; c <= 3; c++)
-            UnextcSw4_TypeerpV(c, i, j, 1) =
+            UnextcInterpV(c, i, j, 1) =
                 i16 * (-UnextcV(c, ic - 1, jc, 1) +
                        9 * (UnextcV(c, ic, jc, 1) + UnextcV(c, ic + 1, jc, 1)) -
                        UnextcV(c, ic + 2, jc, 1));
@@ -268,7 +268,7 @@ void EW::conssw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
           sw4_type ic = i / 2;
           sw4_type jc = j / 2;
           for (sw4_type c = 1; c <= 3; c++)
-            UnextcSw4_TypeerpV(c, i, j, 1) =
+            UnextcInterpV(c, i, j, 1) =
                 i256 *
                 (UnextcV(c, ic - 1, jc - 1, 1) -
                  9 * (UnextcV(c, ic, jc - 1, 1) +
@@ -307,7 +307,7 @@ void EW::conssw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
     // stretching function may be different in the fine and coarse grids!
     //
     // for i=2*ic-1 and j=2*jc-1: Enforce continuity of displacements and normal
-    // stresses along the sw4_typeerface
+    // stresses along the interface
 
     RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax1(0);
     RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax2(0);
@@ -318,7 +318,7 @@ void EW::conssw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
 
     if (m_croutines)  // tmp
                       // optimized version for updating odd i and odd j
-      oddIoddJsw4_typeerpJacobiOpt(
+      oddIoddJinterpJacobiOpt(
           rmax1, rmax2, rmax3, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(),
           UcNew.c_ptr(), m_Mufs[gf].c_ptr(), m_Mlfs[gf].c_ptr(),
           m_Morc[gc].c_ptr(), m_Mlrc[gc].c_ptr(), m_Mucs[gc].c_ptr(),
@@ -329,7 +329,7 @@ void EW::conssw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
           m_jStartSw4_Type.data(), m_jEndSw4_Type.data(), gf, gc, nkf, mDt, hf, hc, cof,
           relax, m_sbop, m_ghcof);
     else
-      oddIoddJsw4_typeerpJacobi(rmax, Uf, UfNew, Uc, UcNew, m_Mufs[gf], m_Mlfs[gf],
+      oddIoddJinterpJacobi(rmax, Uf, UfNew, Uc, UcNew, m_Mufs[gf], m_Mlfs[gf],
                            m_Morc[gc], m_Mlrc[gc], m_Mucs[gc], m_Mlcs[gc],
                            m_Morf[gf], m_Mlrf[gf], Unextf, BfRestrict, Unextc,
                            Bc, m_iStart.data(), m_iEnd.data(), m_jStart.data(),
@@ -339,59 +339,59 @@ void EW::conssw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
                            mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
 
     //
-    // Enforce continuity of displacements along the sw4_typeerface (for fine ghost
+    // Enforce continuity of displacements along the interface (for fine ghost
     // points in between coarse points)
     //
     if (m_croutines)  // tmp
                       // optimized version for updating odd i and even j
-      oddIevenJsw4_typeerpJacobiOpt(
+      oddIevenJinterpJacobiOpt(
           rmax4, rmax5, rmax6, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(),
           m_Morc[gc].c_ptr(), m_Mlrc[gc].c_ptr(), m_Morf[gf].c_ptr(),
-          m_Mlrf[gf].c_ptr(), Unextf.c_ptr(), UnextcSw4_Typeerp.c_ptr(),
+          m_Mlrf[gf].c_ptr(), Unextf.c_ptr(), UnextcInterp.c_ptr(),
           m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(),
           m_kStart.data(), m_kEnd.data(), m_iStartSw4_Type.data(), m_iEndSw4_Type.data(),
           m_jStartSw4_Type.data(), m_jEndSw4_Type.data(), gf, gc, nkf, mDt, hf, hc, cof,
           relax, m_sbop, m_ghcof);
     else
-      oddIevenJsw4_typeerpJacobi(
+      oddIevenJinterpJacobi(
           rmax, Uf, UfNew, Uc, m_Morc[gc], m_Mlrc[gc], m_Morf[gf], m_Mlrf[gf],
-          Unextf, UnextcSw4_Typeerp, m_iStart.data(), m_iEnd.data(), m_jStart.data(),
+          Unextf, UnextcInterp, m_iStart.data(), m_iEnd.data(), m_jStart.data(),
           m_jEnd.data(), m_kStart.data(), m_kEnd.data(), m_iStartSw4_Type.data(),
           m_iEndSw4_Type.data(), m_jStartSw4_Type.data(), m_jEndSw4_Type.data(), gf, gc, nkf,
           mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
 
     if (m_croutines)
       // optimized version for updating even i and odd j
-      evenIoddJsw4_typeerpJacobiOpt(
+      evenIoddJinterpJacobiOpt(
           rmax4, rmax5, rmax6, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(),
           m_Morc[gc].c_ptr(), m_Mlrc[gc].c_ptr(), m_Morf[gf].c_ptr(),
-          m_Mlrf[gf].c_ptr(), Unextf.c_ptr(), UnextcSw4_Typeerp.c_ptr(),
+          m_Mlrf[gf].c_ptr(), Unextf.c_ptr(), UnextcInterp.c_ptr(),
           m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(),
           m_kStart.data(), m_kEnd.data(), m_iStartSw4_Type.data(), m_iEndSw4_Type.data(),
           m_jStartSw4_Type.data(), m_jEndSw4_Type.data(), gf, gc, nkf, mDt, hf, hc, cof,
           relax, m_sbop, m_ghcof);
     else
-      evenIoddJsw4_typeerpJacobi(
+      evenIoddJinterpJacobi(
           rmax, Uf, UfNew, Uc, m_Morc[gc], m_Mlrc[gc], m_Morf[gf], m_Mlrf[gf],
-          Unextf, UnextcSw4_Typeerp, m_iStart.data(), m_iEnd.data(), m_jStart.data(),
+          Unextf, UnextcInterp, m_iStart.data(), m_iEnd.data(), m_jStart.data(),
           m_jEnd.data(), m_kStart.data(), m_kEnd.data(), m_iStartSw4_Type.data(),
           m_iEndSw4_Type.data(), m_jStartSw4_Type.data(), m_jEndSw4_Type.data(), gf, gc, nkf,
           mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
 
     if (m_croutines)
       // optimized version for updating even i and even j
-      evenIevenJsw4_typeerpJacobiOpt(
+      evenIevenJinterpJacobiOpt(
           rmax4, rmax5, rmax6, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(),
           m_Morc[gc].c_ptr(), m_Mlrc[gc].c_ptr(), m_Morf[gf].c_ptr(),
-          m_Mlrf[gf].c_ptr(), Unextf.c_ptr(), UnextcSw4_Typeerp.c_ptr(),
+          m_Mlrf[gf].c_ptr(), Unextf.c_ptr(), UnextcInterp.c_ptr(),
           m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(),
           m_kStart.data(), m_kEnd.data(), m_iStartSw4_Type.data(), m_iEndSw4_Type.data(),
           m_jStartSw4_Type.data(), m_jEndSw4_Type.data(), gf, gc, nkf, mDt, hf, hc, cof,
           relax, m_sbop, m_ghcof);
     else
-      evenIevenJsw4_typeerpJacobi(
+      evenIevenJinterpJacobi(
           rmax, Uf, UfNew, Uc, m_Morc[gc], m_Mlrc[gc], m_Morf[gf], m_Mlrf[gf],
-          Unextf, UnextcSw4_Typeerp, m_iStart.data(), m_iEnd.data(), m_jStart.data(),
+          Unextf, UnextcInterp, m_iStart.data(), m_iEnd.data(), m_jStart.data(),
           m_jEnd.data(), m_kStart.data(), m_kEnd.data(), m_iStartSw4_Type.data(),
           m_iEndSw4_Type.data(), m_jStartSw4_Type.data(), m_jEndSw4_Type.data(), gf, gc, nkf,
           mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
@@ -476,20 +476,20 @@ void EW::checksw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
                    Sarray &Rhoc, float_sw4 hc, float_sw4 cof, sw4_type gc, sw4_type gf,
                    sw4_type is_periodic[2], float_sw4 time) {
   //
-  // This routine computes the residual in the sw4_typeerpolation conditions
+  // This routine computes the residual in the interpolation conditions
   //
   // time: time corresponding to time level n+1
   //
-  // Uf: Fine grid displacement, defined at sw4_typeerior and ghost points, at time
-  // level n+1 Unextf: Sw4_Typeerior contributions (incl. forcing) to the fine grid
+  // Uf: Fine grid displacement, defined at interior and ghost points, at time
+  // level n+1 Unextf: Interior contributions (incl. forcing) to the fine grid
   // displacement, at time level n+2
   //
-  // Uc: Coarse grid displacement, defined at sw4_typeerior and ghost points, at time
-  // level n+1 Unextc: Sw4_Typeerior contributions (incl. forcing) to the coarse grid
+  // Uc: Coarse grid displacement, defined at interior and ghost points, at time
+  // level n+1 Unextc: Interior contributions (incl. forcing) to the coarse grid
   // displacement, at time level n+2
   //
-  // Bf: Sw4_Typeerior contributions (incl. forcing) to the fine grid boundary
-  // traction, at time level n+1, defined for k=nkf Bc: Sw4_Typeerior contributions
+  // Bf: Interior contributions (incl. forcing) to the fine grid boundary
+  // traction, at time level n+1, defined for k=nkf Bc: Interior contributions
   // (incl. forcing) to the coarse grid boundary traction, at time level n+1,
   // defined for k=1
   //
@@ -548,7 +548,7 @@ void EW::checksw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
   jfe = m_jEndSw4_Type[gf];
 
   nkf = m_global_nz[gf];
-  // material coefficients along the sw4_typeerface (fine grid)
+  // material coefficients along the interface (fine grid)
   Sarray Mlfs(m_iStart[gf], m_iEnd[gf], m_jStart[gf], m_jEnd[gf], nkf, nkf);
   // make a local copy of Muf to simplify the addition of stretching
   Sarray Mufs(m_iStart[gf], m_iEnd[gf], m_jStart[gf], m_jEnd[gf], nkf, nkf);
@@ -569,7 +569,7 @@ void EW::checksw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
       }
     }
 
-  // material coefficients along the sw4_typeerface (coarse grid)
+  // material coefficients along the interface (coarse grid)
   Sarray Morc(m_iStart[gc], m_iEnd[gc], m_jStart[gc], m_jEnd[gc], 1, 1);
   Sarray Mlrc(m_iStart[gc], m_iEnd[gc], m_jStart[gc], m_jEnd[gc], 1, 1);
 #pragma omp parallel for
@@ -608,7 +608,7 @@ void EW::checksw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
     laa_ptr = mLambdaVE[gc][0].c_ptr();
   }
 
-  // fill in the sw4_typeerior
+  // fill in the interior
   sw4_type i1 = icb, i2 = ice;
   sw4_type j1 = jcb, j2 = jce;
   sw4_type kic = 1;
@@ -675,7 +675,7 @@ void EW::checksw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
   // stretching function may be different in the fine and coarse grids!
   //
   // for i=2*ic-1 and j=2*jc-1: Enforce continuity of displacements and normal
-  // stresses along the sw4_typeerface
+  // stresses along the interface
   printf("checksw4_typep: icb=%d, ice=%d, jcb=%d, jce=%d\n", icb, ice, jcb, jce);
 
   // Can not parallellize: file write in loop
@@ -703,12 +703,12 @@ void EW::checksw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
 
       for (sw4_type c = 1; c <= 2; c++)  //  the 2 tangential components ?
       {
-        // apply the restriction operator to the normal stress on the sw4_typeerface
+        // apply the restriction operator to the normal stress on the interface
         // (Bf is on the fine grid) scale Bf by 1/strf ? fine grid stress
         fstress[c - 1] = -0.25 * Mufs(i, j, nkf) * m_sbop[0] * ihf *
                          Uf(c, i, j, nkf + 1);  // -a11*Uf
 
-        // add in sw4_typeerpolation terms along the sw4_typeerface  (negative sign
+        // add in interpolation terms along the interface  (negative sign
         // because this is the k=Nk boundary)
         fstress[c - 1] +=
             -i1024 * m_sbop[0] * ihf *
@@ -739,7 +739,7 @@ void EW::checksw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
              9 * Mufs(i + 3, j + 1, nkf) * Uf(c, i + 3, j + 1, nkf + 1) +
              Mufs(i + 3, j + 3, nkf) * Uf(c, i + 3, j + 3, nkf + 1));
 
-        //  add sw4_typeerpolated sw4_typeerior terms
+        //  add interpolated interior terms
         fstress[c - 1] +=
             i1024 *
             (Bf(c, i - 3, j - 3, nkf) - 9 * Bf(c, i - 3, j - 1, nkf) -
@@ -758,12 +758,12 @@ void EW::checksw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
              16 * Bf(c, i + 3, j, nkf) - 9 * Bf(c, i + 3, j + 1, nkf) +
              Bf(c, i + 3, j + 3, nkf));
 
-        // fine stress without sw4_typeerpolation
+        // fine stress without interpolation
         //            fstress[c-1] =
         //            -Mufs(i,j,nkf)*m_sbop[0]*ihf*Uf(c,i,j,nkf+1) + Bf(c,i,
         //            j,nkf);
 
-        // coarse stress: ghost point + sw4_typeerior contribution
+        // coarse stress: ghost point + interior contribution
         cstress[c - 1] = Muc(ic, jc, 1) * m_sbop[0] * ihc /
                              (strc_x(ic) * strc_y(jc)) * Uc(c, ic, jc, 0) +
                          Bc(c, ic, jc, 1);  // a12
@@ -786,7 +786,7 @@ void EW::checksw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
       fstress[2] = -0.25 * Mlfs(i, j, nkf) * m_sbop[0] * ihf *
                    Uf(3, i, j, nkf + 1);  // -a11*Uf
 
-      // add in sw4_typeerpolation terms (negative sign because this is the k=Nk
+      // add in interpolation terms (negative sign because this is the k=Nk
       // boundary)
       fstress[2] +=
           -i1024 * m_sbop[0] * ihf *
@@ -816,7 +816,7 @@ void EW::checksw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
            9 * Mlfs(i + 3, j + 1, nkf) * Uf(3, i + 3, j + 1, nkf + 1) +
            Mlfs(i + 3, j + 3, nkf) * Uf(3, i + 3, j + 3, nkf + 1));
 
-      // add in the sw4_typeerior contribution
+      // add in the interior contribution
       fstress[2] +=
           i1024 *
           (Bf(3, i - 3, j - 3, nkf) - 9 * Bf(3, i - 3, j - 1, nkf) -
@@ -835,11 +835,11 @@ void EW::checksw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
            16 * Bf(3, i + 3, j, nkf) - 9 * Bf(3, i + 3, j + 1, nkf) +
            Bf(3, i + 3, j + 3, nkf));
 
-      // fine stress without sw4_typeerpolation
+      // fine stress without interpolation
       //            fstress[2] = -Mlfs(i,j,nkf)*m_sbop[0]*ihf*Uf(3,i,j,nkf+1) +
       //            Bf(3,i,  j,nkf);
 
-      // coarse stress: ghost point + sw4_typeerior contributions
+      // coarse stress: ghost point + interior contributions
       cstress[2] = a12 * Uc(3, ic, jc, 0) + Bc(3, ic, jc, 1);
 
       err_c = 0;
@@ -869,15 +869,15 @@ void EW::checksw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
   err2_stress = sqrt(err2_stress / ((ice - icb + 1) * (jce - jcb + 1)));
   f2_stress = sqrt(f2_stress / ((ice - icb + 1) * (jce - jcb + 1)));
   printf(
-      "checksw4_typep: coinciding points: coarse grid sw4_typeerface stress error: "
+      "checksw4_typep: coinciding points: coarse grid interface stress error: "
       "max=%e, L2=%e\n",
       errmax_stress, err2_stress);
   printf(
-      "checksw4_typep: coinciding points: fine grid sw4_typeerface stress error: max=%e, "
+      "checksw4_typep: coinciding points: fine grid interface stress error: max=%e, "
       "L2=%e\n",
       fmax_stress, f2_stress);
   //
-  // Enforce continuity of displacements along the sw4_typeerface (for fine ghost
+  // Enforce continuity of displacements along the interface (for fine ghost
   // points in between coarse points)
   //
   // TODO: insert coarse and fine stretching functions below
@@ -1077,7 +1077,7 @@ void EW::checksw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
 
       // (i,j) both odd is handled by the first iteration
 
-    }  // end for all fine grid points on the sw4_typeerface
+    }  // end for all fine grid points on the interface
 
   rmax[3] = rmax1;
   rmax[4] = rmax2;

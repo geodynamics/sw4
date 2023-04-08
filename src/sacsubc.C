@@ -689,7 +689,7 @@ void wsac1(char *ofile, float *y, sw4_type npts, float btime, float dt, sw4_type
   c	y	R	array of values
   c	npts	I	number of points in data
   c	btime	R	start time
-  c	dt	R	sample sw4_typeerval
+  c	dt	R	sample interval
   c	maxpts	I	maximum number of points to read
   c	nerr	I	error return
   c-----

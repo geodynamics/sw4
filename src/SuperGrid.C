@@ -199,7 +199,7 @@ float_sw4 SuperGrid::Psi0(float_sw4 xi) const {
 }
 
 float_sw4 SuperGrid::cornerTaper(
-    float_sw4 x) const {  // this function is 1 in the sw4_typeerior and tapers
+    float_sw4 x) const {  // this function is 1 in the interior and tapers
                           // linearly to 1/2 in the SG layers
   const float_sw4 cmin = 0.33;
   return 1.0 - (1.0 - cmin) * lsw4_typeaper(x);

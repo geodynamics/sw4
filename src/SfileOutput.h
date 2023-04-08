@@ -72,8 +72,8 @@ class SfileOutput {
 
   static SfileOutput* nil;
 
-  SfileOutput(EW* a_ew, float_sw4 time, float_sw4 timeSw4_Typeerval, sw4_type cycle,
-              sw4_type cycleSw4_Typeerval, float_sw4 tstart,
+  SfileOutput(EW* a_ew, float_sw4 time, float_sw4 timeInterval, sw4_type cycle,
+              sw4_type cycleInterval, float_sw4 tstart,
               const std::string& filePrefix, sw4_type sampleFactor_h,
               sw4_type sampleFactor_v, bool doubleMode);
   ~SfileOutput();
@@ -121,12 +121,12 @@ class SfileOutput {
   std::string mFilePrefix;
   float_sw4 mTime;
   bool m_time_done;
-  float_sw4 mTimeSw4_Typeerval;
+  float_sw4 mTimeInterval;
   float_sw4 mNextTime;
   float_sw4 mStartTime;
 
   sw4_type mWritingCycle;
-  sw4_type mCycleSw4_Typeerval;
+  sw4_type mCycleInterval;
   /* sw4_type mImageSamplingFactor; */
   sw4_type mSampleH;
   sw4_type mSampleV;

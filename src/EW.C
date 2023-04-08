@@ -502,7 +502,7 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
 
       // mRestartFilePrefix(""),
       // mRestartFromCycle(0),
-      // mRestartDumpSw4_Typeerval(0),
+      // mRestartDumpInterval(0),
 
       m_doubly_periodic(false),
       mbcsSet(false),
@@ -547,7 +547,7 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
       m_useVelocityThresholds(false),
       m_vpMin(0.),
       m_vsMin(0.),
-      m_grid_sw4_typeerpolation_order(3),
+      m_grid_interpolation_order(3),
       m_zetaBreak(0.95),
       m_global_xmax(0.),
       m_global_ymax(0.),
@@ -1062,36 +1062,36 @@ void EW::assign_local_bcs() {
     //        m_bcType[g][0], m_bcType[g][1], m_bcType[g][2], m_bcType[g][3]);
   }
 
-  // vertical bc's are sw4_typeerpolating except at the bottom and the top, where
+  // vertical bc's are interpolating except at the bottom and the top, where
   // they equal the global conditions
   //   ( Only preliminary support for acoustic/elastic, not fully implemented)
   m_bcType[top][4] = mbcGlobalType[4];
   for (g = 0; g < mNumberOfGrids - 1; g++) {
     if (m_iscurvilinear[g + 1] && !m_iscurvilinear[g])  // Elastic case only
-      m_bcType[g][4] = bCCSw4_Typeerface;
+      m_bcType[g][4] = bCCInterface;
     if (!m_iscurvilinear[g + 1] &&
         !m_iscurvilinear[g])  // Two Cartesian grids, must be refinement bndry.
-      m_bcType[g][4] = bRefSw4_Typeerface;
+      m_bcType[g][4] = bRefInterface;
     if (!m_iscurvilinear[g + 1] && m_iscurvilinear[g])  // Acoustic case only
-      m_bcType[g][4] = bCCSw4_Typeerface;
+      m_bcType[g][4] = bCCInterface;
     if (m_iscurvilinear[g + 1] &&
-        m_iscurvilinear[g])  // Acoustic/Elastic sw4_typeerface
-      m_bcType[g][4] = bAESw4_Typeerface;
+        m_iscurvilinear[g])  // Acoustic/Elastic interface
+      m_bcType[g][4] = bAEInterface;
   }
 
   m_bcType[0][5] = mbcGlobalType[5];
   for (g = 1; g < mNumberOfGrids; g++) {
     if (m_iscurvilinear[g] && !m_iscurvilinear[g - 1])  // Elastic case
-      m_bcType[g][5] = bCCSw4_Typeerface;
+      m_bcType[g][5] = bCCInterface;
     if (!m_iscurvilinear[g] &&
         !m_iscurvilinear[g -
                          1])  // Two Cartesian grids, must be refinement bndry.
-      m_bcType[g][5] = bRefSw4_Typeerface;
+      m_bcType[g][5] = bRefInterface;
     if (!m_iscurvilinear[g] && m_iscurvilinear[g - 1])  // Acoustic case
-      m_bcType[g][5] = bCCSw4_Typeerface;
+      m_bcType[g][5] = bCCInterface;
     if (m_iscurvilinear[g] &&
-        m_iscurvilinear[g - 1])  // Acoustic/Elastic sw4_typeerface
-      m_bcType[g][5] = bAESw4_Typeerface;
+        m_iscurvilinear[g - 1])  // Acoustic/Elastic interface
+      m_bcType[g][5] = bAEInterface;
   }
 
   // Find out which boundaries need one sided approximation in mixed derivatives
@@ -1100,23 +1100,23 @@ void EW::assign_local_bcs() {
     for (side = 0; side < 4; side++) m_onesided[g][side] = 0;
     for (side = 4; side < 6; side++)
       //        m_onesided[g][side] = (m_bcType[g][side] == bStressFree) ||
-      //        (m_bcType[g][side]== bCCSw4_Typeerface) ;
+      //        (m_bcType[g][side]== bCCInterface) ;
       m_onesided[g][side] = (m_bcType[g][side] == bStressFree) ||
-                            (m_bcType[g][side] == bRefSw4_Typeerface) ||
-                            (m_bcType[g][side] == bAESw4_Typeerface) ||
-                            (m_bcType[g][side] == bCCSw4_Typeerface &&
+                            (m_bcType[g][side] == bRefInterface) ||
+                            (m_bcType[g][side] == bAEInterface) ||
+                            (m_bcType[g][side] == bCCInterface &&
                              !(m_gridGenerator->curviCartIsSmooth(ncurv)));
     // Pre CURVIMR configuration
     // for (side = 4; side < 6; side++)
     //   m_onesided[g][side] = (m_bcType[g][side] == bStressFree) ||
-    //                         (m_bcType[g][side] == bRefSw4_Typeerface) ||
-    //                         (m_bcType[g][side] == bAESw4_Typeerface);
+    //                         (m_bcType[g][side] == bRefInterface) ||
+    //                         (m_bcType[g][side] == bAEInterface);
   }
 }
 
 //-----------------------------------------------------------------------
 // Note that the padding cell array is no longer needed.
-// use m_iStartSw4_Type[g], m_iEndSw4_Type[g] to get the range of sw4_typeerior points
+// use m_iStartSw4_Type[g], m_iEndSw4_Type[g] to get the range of interior points
 void EW::initializePaddingCells() {
   SW4_MARK_FUNCTION;
   sw4_type g = mNumberOfGrids - 1;
@@ -1176,12 +1176,12 @@ string EW::bc_name(const boundaryConditionType bc) const {
     retval = "supergrid";
   else if (bc == bPeriodic)
     retval = "periodic";
-  else if (bc == bCCSw4_Typeerface)
-    retval = "Curvilinear/Cartesian sw4_typeerface";
-  else if (bc == bRefSw4_Typeerface)
-    retval = "Grid refinement sw4_typeerface";
-  else if (bc == bAESw4_Typeerface)
-    retval = "Acoustic/Elastic sw4_typeerface";
+  else if (bc == bCCInterface)
+    retval = "Curvilinear/Cartesian interface";
+  else if (bc == bRefInterface)
+    retval = "Grid refinement interface";
+  else if (bc == bAEInterface)
+    retval = "Acoustic/Elastic interface";
   else if (bc == bProcessor)
     retval = "processor";
   else if (bc == bNone)
@@ -1219,7 +1219,7 @@ bool EW::getDepth(float_sw4 x, float_sw4 y, float_sw4 z, float_sw4& depth) {
 
     // // evaluate elevation of topography on the grid (smoothed topo)
     success = true;
-    sw4_type ret = m_gridGenerator->sw4_typeerpolate_topography(this, x, y, zMsw4_typeilde,
+    sw4_type ret = m_gridGenerator->interpolate_topography(this, x, y, zMsw4_typeilde,
                                                       mTopoGridExt);
     if (ret < 0) {
       cerr << "ERROR: getDepth: Unable to evaluate topography for x=" << x
@@ -1347,7 +1347,7 @@ sw4_type EW::computeNearestGridPoint2(sw4_type& a_i, sw4_type& a_j, sw4_type& a_
                               << m_kEnd[a_g] - m_ghost_points << ")"
                               << " x,y,z = " << a_x << " " << a_y << " "
                               << a_z);
-    success = sw4_typeerior_point_in_proc(a_i, a_j, a_g);
+    success = interior_point_in_proc(a_i, a_j, a_g);
   } else {
     // point is in a curvilinear grid
     //
@@ -1407,7 +1407,7 @@ void EW::computeNearestGridPoint(sw4_type& a_i, sw4_type& a_j, sw4_type& a_k,
                                   // kind of pointless...
     {
       // Point is located on top surface if g=finest grid, else the location is
-      // on a grid/grid sw4_typeerface, and point is flagged as located on the finer
+      // on a grid/grid interface, and point is flagged as located on the finer
       // (upper) grid.
       if (g == mNumberOfGrids - 1) {
         a_i = (sw4_type)floor(a_x / mGridSize[g]) + 1;
@@ -1544,10 +1544,10 @@ void EW::computeNearestLowGridPoint(
 }
 
 //-----------------------------------------------------------------------
-bool EW::sw4_typeerior_point_in_proc(sw4_type a_i, sw4_type a_j, sw4_type a_g) {
+bool EW::interior_point_in_proc(sw4_type a_i, sw4_type a_j, sw4_type a_g) {
   SW4_MARK_FUNCTION;
   // NOT TAKING PARALLEL GHOST POINTS SW4_TYPEO ACCOUNT!
-  // Determine if grid point with index (a_i, a_j) on grid a_g is an sw4_typeerior
+  // Determine if grid point with index (a_i, a_j) on grid a_g is an interior
   // grid point on this processor
 
   bool retval = false;
@@ -2231,8 +2231,8 @@ void EW::normOfSurfaceDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
 }
 
 //---------------------------------------------------------------------------
-void EW::bndrySw4_TypeeriorDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
-                                 float_sw4* lowZ, float_sw4* sw4_typeeriorZ,
+void EW::bndryInteriorDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
+                                 float_sw4* lowZ, float_sw4* interiorZ,
                                  float_sw4* highZ) {
   SW4_MARK_FUNCTION;
   sw4_type g, ifirst, ilast, jfirst, jlast, kfirst, klast, nz;
@@ -2253,10 +2253,10 @@ void EW::bndrySw4_TypeeriorDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U
     // need to do a gather over all processors
     if (m_croutines)
       rhserrfort_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz, h, uex_ptr,
-                    u_ptr, &lowZ[3 * g], &sw4_typeeriorZ[3 * g], &highZ[3 * g]);
+                    u_ptr, &lowZ[3 * g], &interiorZ[3 * g], &highZ[3 * g]);
     else
       rhserrfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz, &h,
-                 uex_ptr, u_ptr, &lowZ[3 * g], &sw4_typeeriorZ[3 * g],
+                 uex_ptr, u_ptr, &lowZ[3 * g], &interiorZ[3 * g],
                  &highZ[3 * g]);
   }
 }
@@ -2264,7 +2264,7 @@ void EW::bndrySw4_TypeeriorDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U
 //---------------------------------------------------------------------------
 void EW::test_RhoUtt_Lu(vector<Sarray>& a_Uacc, vector<Sarray>& a_Lu,
                         vector<Sarray>& a_F, float_sw4* lowZ,
-                        float_sw4* sw4_typeeriorZ, float_sw4* highZ) {
+                        float_sw4* interiorZ, float_sw4* highZ) {
   SW4_MARK_FUNCTION;
   sw4_type g, ifirst, ilast, jfirst, jlast, kfirst, klast, nz;
   float_sw4 *rho_ptr, *uacc_ptr, *lu_ptr, *f_ptr;
@@ -2287,12 +2287,12 @@ void EW::test_RhoUtt_Lu(vector<Sarray>& a_Uacc, vector<Sarray>& a_Lu,
     // evaluate rho*uacc - lu - f in fortran routine
     if (m_croutines)
       rhouttlumf_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz, uacc_ptr,
-                    lu_ptr, f_ptr, rho_ptr, &lowZ[3 * g], &sw4_typeeriorZ[3 * g],
+                    lu_ptr, f_ptr, rho_ptr, &lowZ[3 * g], &interiorZ[3 * g],
                     &highZ[3 * g]);
     else
       rhouttlumf(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
                  uacc_ptr, lu_ptr, f_ptr, rho_ptr, &lowZ[3 * g],
-                 &sw4_typeeriorZ[3 * g], &highZ[3 * g]);
+                 &interiorZ[3 * g], &highZ[3 * g]);
   }
 }
 
@@ -5527,7 +5527,7 @@ void EW::updateMemVarCorr(vector<Sarray*>& a_AlphaVEp,
 }
 
 //-----------------------------------------------------------------------
-void EW::updateMemVarCorrNearSw4_Typeerface(Sarray& a_AlphaVEp, Sarray& a_AlphaVEm,
+void EW::updateMemVarCorrNearInterface(Sarray& a_AlphaVEp, Sarray& a_AlphaVEm,
                                        Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
                                        double a_t, sw4_type a_mech, sw4_type a_grid) {
   SW4_MARK_FUNCTION;
@@ -6424,7 +6424,7 @@ void EW::extractTopographyFromGridFile(string a_topoFileName) {
     }  // end for i
   }    // end if lonv[1] > lonv[Nlon]
 
-  // 2. sw4_typeerpolate in the grid file to get elevations on the computational grid
+  // 2. interpolate in the grid file to get elevations on the computational grid
   double deltaLat = (latMax - latMin) / Nlat;
   double deltaLon = (lonMax - lonMin) / Nlon;
 
@@ -6471,11 +6471,11 @@ void EW::extractTopographyFromGridFile(string a_topoFileName) {
 
       if (j0 > Nlat - 1) j0 = Nlat - 1;
 
-      // test that we are inside the sw4_typeerval
+      // test that we are inside the interval
       if (!(lonv[i0] <= lon && lon < lonv[i0 + 1])) {
         printf(
             "EW::extractTopographyFromGridFile: Fatal error: Unable to "
-            "sw4_typeerpolate topography for lon=%e\n"
+            "interpolate topography for lon=%e\n"
             "because it is outside the cell (lonv[%i]=%e, lonv[%i]=%e)\n",
             lon, i0, lonv[i0], i0 + 1, lonv[i0 + 1]);
         MPI_Abort(MPI_COMM_WORLD, 1);
@@ -6484,13 +6484,13 @@ void EW::extractTopographyFromGridFile(string a_topoFileName) {
       if (!(latv[j0] <= lat && lat < latv[j0 + 1])) {
         printf(
             "EW::extractTopographyFromGridFile: Fatal error: Unable to "
-            "sw4_typeerpolate topography for lat=%e\n"
+            "interpolate topography for lat=%e\n"
             "because it is outside the cell (latv[%i]=%e, latv[%i]=%e)\n",
             lat, j0, latv[j0], j0 + 1, latv[j0 + 1]);
         MPI_Abort(MPI_COMM_WORLD, 1);
       }
 
-      // bi-cubic sw4_typeerpolation should make the surface smoother
+      // bi-cubic interpolation should make the surface smoother
       // shift the stencil if it is too close to the boundaries
       if (i0 < 2) i0 = 2;
       if (i0 > Nlon - 2) i0 = Nlon - 2;
@@ -6528,7 +6528,7 @@ void EW::extractTopographyFromGridFile(string a_topoFileName) {
 
       mTopo(i, j, 1) = Rjm1 * tjm1 + Rj * tj + Rjp1 * tjp1 + Rjp2 * tjp2;
 
-      // bi-linear sw4_typeerpolation
+      // bi-linear interpolation
       // // local step sizes
       //       xi = (lon - lonv[i0])/(lonv[i0+1]-lonv[i0]);
       //       eta = (lat - latv[j0])/(latv[j0+1]-latv[j0]);
@@ -6636,7 +6636,7 @@ void EW::extractTopographyFromCartesianFile(string a_topoFileName) {
     }
   }
 
-  // 2. sw4_typeerpolate in the grid file to get elevations on the computational grid
+  // 2. interpolate in the grid file to get elevations on the computational grid
   float_sw4 deltaY = (yMax - yMin) / Ny;
   float_sw4 deltaX = (xMax - xMin) / Nx;
   sw4_type topLevel = mNumberOfGrids - 1;
@@ -6703,11 +6703,11 @@ void EW::extractTopographyFromCartesianFile(string a_topoFileName) {
       if (j0 < 1) j0 = 1;
       if (j0 > Ny - 1) j0 = Ny - 1;
 
-      // test that we are inside the sw4_typeerval
+      // test that we are inside the interval
       if (!xGhost && !(xv[i0] <= xP && xP <= xv[i0 + 1])) {
         printf(
             "EW::extractTopographyFromCartesianFile: Fatal error: Unable to "
-            "sw4_typeerpolate topography for xP=%e\n"
+            "interpolate topography for xP=%e\n"
             "because it is outside the cell (xv[%i]=%e, xv[%i]=%e)\n",
             xP, i0, xv[i0], i0 + 1, xv[i0 + 1]);
         MPI_Abort(MPI_COMM_WORLD, 1);
@@ -6716,13 +6716,13 @@ void EW::extractTopographyFromCartesianFile(string a_topoFileName) {
       if (!yGhost && !(yv[j0] <= yP && yP <= yv[j0 + 1])) {
         printf(
             "EW::extractTopographyFromCartesianFile: Fatal error: Unable to "
-            "sw4_typeerpolate topography for yP=%e\n"
+            "interpolate topography for yP=%e\n"
             "because it is outside the cell (yv[%i]=%e, yv[%i]=%e)\n",
             yP, j0, yv[j0], j0 + 1, yv[j0 + 1]);
         MPI_Abort(MPI_COMM_WORLD, 1);
       }
 
-      // bi-cubic sw4_typeerpolation should make the surface smoother
+      // bi-cubic interpolation should make the surface smoother
       // shift the stencil if it is too close to the boundaries
       if (i0 < 2) i0 = 2;
       if (i0 > Nx - 2) i0 = Nx - 2;
@@ -7142,7 +7142,7 @@ void EW::extractTopographyFromRfile(std::string a_topoFileName) {
              x0, y0);
     }
 
-    // Topography read, next sw4_typeerpolate to the computational grid
+    // Topography read, next interpolate to the computational grid
     sw4_type topLevel = mNumberOfGrids - 1;
 
     float_sw4 topomax = -1e99, topomin = 1e99;
@@ -7211,10 +7211,10 @@ void EW::extractTopographyFromRfile(std::string a_topoFileName) {
           // test
           if (mVerbose >= 3) {
             if (i0 < 2 || i0 > nitop - 2)
-              printf("WARNING: topo sw4_typeerp out of bounds i0=%i, nitop=%i\n", i0,
+              printf("WARNING: topo interp out of bounds i0=%i, nitop=%i\n", i0,
                      nitop);
             if (j0 < 2 || j0 > njtop - 2)
-              printf("WARNING: topo sw4_typeerp out of bounds j0=%i, njtop=%i\n", j0,
+              printf("WARNING: topo interp out of bounds j0=%i, njtop=%i\n", j0,
                      njtop);
           }
 
@@ -7266,7 +7266,7 @@ bool EW::is_onesided(sw4_type g, sw4_type side) const { return m_onesided[g][sid
 
 //-----------------------------------------------------------------------
 void EW::get_gridgen_info(sw4_type& order, float_sw4& zetaBreak) const {
-  order = m_grid_sw4_typeerpolation_order;
+  order = m_grid_interpolation_order;
   zetaBreak = m_zetaBreak;
 }
 
@@ -8981,7 +8981,7 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
   char intf_name[32];
 
   if (m_myRank == 0) {
-    group_id = H5Gopen(file_id, "Z_sw4_typeerfaces", H5P_DEFAULT);
+    group_id = H5Gopen(file_id, "Z_interfaces", H5P_DEFAULT);
     ASSERT(group_id >= 0);
 
     sprintf(intf_name, "z_values_%d", 0);
@@ -9073,7 +9073,7 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
            y0);
   }
 
-  // Topography read, next sw4_typeerpolate to the computational grid
+  // Topography read, next interpolate to the computational grid
   sw4_type topLevel = mNumberOfGrids - 1;
 
   float_sw4 topomax = -1e30, topomin = 1e30;
@@ -9139,10 +9139,10 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
 
         if (mVerbose >= 3) {
           if (i0 < 2 || i0 > nitop - 2)
-            printf("WARNING: topo sw4_typeerp out of bounds i0=%i, nitop=%i\n", i0,
+            printf("WARNING: topo interp out of bounds i0=%i, nitop=%i\n", i0,
                    nitop);
           if (j0 < 2 || j0 > njtop - 2)
-            printf("WARNING: topo sw4_typeerp out of bounds j0=%i, njtop=%i\n", j0,
+            printf("WARNING: topo interp out of bounds j0=%i, njtop=%i\n", j0,
                    njtop);
         }
 
@@ -9324,7 +9324,7 @@ void EW::extractTopographyFromGMG(std::string a_topoFileName) {
   }
   MPI_Bcast(f_data, dims[0] * dims[1], MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-  // Topography read, next sw4_typeerpolate to the computational grid
+  // Topography read, next interpolate to the computational grid
   sw4_type topLevel = mNumberOfGrids - 1;
 
   float_sw4 topomax = -1e30, topomin = 1e30;
@@ -9370,11 +9370,11 @@ void EW::extractTopographyFromGMG(std::string a_topoFileName) {
       double fac1 = (gmg_x - i0 * hh) / hh;
 
       /* printf("x=%f, y=%f, i0=%d, j0=%d\n", x, y, i0, j0); */
-      /* printf("sw4_typeerp points: %f %f %f %f\n", f_data[i0*dims[1]+j0],
+      /* printf("interp points: %f %f %f %f\n", f_data[i0*dims[1]+j0],
        * f_data[(i0+1)*dims[1]+j0], f_data[i0*dims[1]+j0+1],
        * f_data[(i0+1)*dims[1]+j0+1]); */
 
-      // Linear sw4_typeerpolation with 4 surrounding points
+      // Linear interpolation with 4 surrounding points
       float_sw4 mytopo =
           f_data[i0 * dims[1] + j0] +
           (f_data[i0 * dims[1] + j0 + 1] - f_data[i0 * dims[1] + j0]) * fac0 +

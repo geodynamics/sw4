@@ -106,7 +106,7 @@ void AnisotropicMaterialBlock::set_material_properties(std::vector<Sarray>& rho,
                                                        std::vector<Sarray>& c) {
   //  sw4_type pc[4];
   // compute the number of parallel overlap points
-  //  mEW->sw4_typeeriorPaddingCells( pc );
+  //  mEW->interiorPaddingCells( pc );
   sw4_type material = 0, outside = 0;
 
   for (sw4_type g = 0; g < mEW->mNumberOfCartesianGrids; g++)  // Cartesian grids

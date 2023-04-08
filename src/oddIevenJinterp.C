@@ -7,9 +7,9 @@
 #include "sw4.h"
 
 //--------------------- Jacobi ---------------------
-void oddIevenJsw4_typeerpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew,
+void oddIevenJinterpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew,
                            Sarray &Uc, Sarray &Morc, Sarray &Mlrc, Sarray &Morf,
-                           Sarray &Mlrf, Sarray &Unextf, Sarray &UnextcSw4_Typeerp,
+                           Sarray &Mlrf, Sarray &Unextf, Sarray &UnextcInterp,
                            sw4_type a_iStart[], sw4_type a_iEnd[], sw4_type a_jStart[],
                            sw4_type a_jEnd[], sw4_type a_kStart[], sw4_type a_kEnd[],
                            sw4_type a_iStartSw4_Type[], sw4_type a_iEndSw4_Type[],
@@ -18,7 +18,7 @@ void oddIevenJsw4_typeerpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew,
                            float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[],
                            float_sw4 a_ghcof[]) {
   // tmp
-  //  printf("Inside oddIevenJsw4_typeerp! ");
+  //  printf("Inside oddIevenJinterp! ");
 
   // sw4_type icb = a_iStartSw4_Type[gc];
   sw4_type ifb = a_iStartSw4_Type[gf];
@@ -64,7 +64,7 @@ void oddIevenJsw4_typeerpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew,
       // All Uc terms
       // NOTE: Uc is not changed by this routine, so the Uc-dependence could be
       // pre-computed
-      b1 = UnextcSw4_Typeerp(c, i, j, 1) +
+      b1 = UnextcInterp(c, i, j, 1) +
            nuc * a_ghcof[0] * i16 *
                (-Uc(c, ic, jc - 1, 0) * Morc(ic, jc - 1, 1) +
                 9 * Uc(c, ic, jc, 0) * Morc(ic, jc, 1) +
@@ -87,7 +87,7 @@ void oddIevenJsw4_typeerpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew,
       // All Uc terms
       // NOTE: Uc is not changed by this routine, so the Uc-dependence could be
       // pre-computed
-      b1 = UnextcSw4_Typeerp(c, i, j, 1) +
+      b1 = UnextcInterp(c, i, j, 1) +
            nuc * a_ghcof[0] * i16 *
                (-Uc(c, ic, jc - 1, 0) * Morc(ic, jc - 1, 1) +
                 9 * Uc(c, ic, jc, 0) * Morc(ic, jc, 1) +
@@ -114,7 +114,7 @@ void oddIevenJsw4_typeerpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew,
       // right hand side is mismatch in displacement
       // NOTE: Uc is not changed by this routine, so the Uc-dependence could be
       // pre-computed
-      b1 = UnextcSw4_Typeerp(3, i, j, 1) +
+      b1 = UnextcInterp(3, i, j, 1) +
            nuc * a_ghcof[0] * i16 *
                (-Uc(3, ic, jc - 1, 0) * Mlrc(ic, jc - 1, 1) +
                 9 * Uc(3, ic, jc, 0) * Mlrc(ic, jc, 1) +
@@ -150,9 +150,9 @@ void oddIevenJsw4_typeerpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew,
   rmax[3] = rmax1;
   rmax[4] = rmax2;
   rmax[5] = rmax3;
-}  // end oddIevenJsw4_typeerpJacobi
+}  // end oddIevenJinterpJacobi
 
-void oddIevenJsw4_typeerpJacobiOpt(
+void oddIevenJinterpJacobiOpt(
     RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax1,
     RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax2,
     RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> &rmax3,
@@ -193,7 +193,7 @@ void oddIevenJsw4_typeerpJacobiOpt(
   const sw4_type nijk_uncsw4_type = nijF * (1);  // only one k-plane
   const sw4_type base3_uncsw4_type =
       (iStartF + niF * jStartF + nijF * 1 + nijk_uncsw4_type);  // only k=1
-#define UnextcSw4_Typeerp(c, i, j, k) \
+#define UnextcInterp(c, i, j, k) \
   a_uncsw4_type[-base3_uncsw4_type + i + niF * (j) + nijF * (k) + nijk_uncsw4_type * (c)]
 
   const sw4_type base_mufs =
@@ -287,7 +287,7 @@ void oddIevenJsw4_typeerpJacobiOpt(
         // All Uc terms
         // NOTE: Uc is not changed by this routine, so the Uc-dependence could
         // be pre-computed
-        b1 = UnextcSw4_Typeerp(c, i, j, 1) +
+        b1 = UnextcInterp(c, i, j, 1) +
              nuc * a_ghcof[0] * i16 *
                  (-Uc(c, ic, jc - 1, 0) * Morc(ic, jc - 1, 1) +
                   9 * Uc(c, ic, jc, 0) * Morc(ic, jc, 1) +
@@ -311,7 +311,7 @@ void oddIevenJsw4_typeerpJacobiOpt(
         // All Uc terms
         // NOTE: Uc is not changed by this routine, so the Uc-dependence could
         // be pre-computed
-        b1 = UnextcSw4_Typeerp(c, i, j, 1) +
+        b1 = UnextcInterp(c, i, j, 1) +
              nuc * a_ghcof[0] * i16 *
                  (-Uc(c, ic, jc - 1, 0) * Morc(ic, jc - 1, 1) +
                   9 * Uc(c, ic, jc, 0) * Morc(ic, jc, 1) +
@@ -341,7 +341,7 @@ void oddIevenJsw4_typeerpJacobiOpt(
         // NOTE: Uc is not changed by this routine, so the Uc-dependence could
         // be pre-computed
         c = 3;
-        b1 = UnextcSw4_Typeerp(3, i, j, 1) +
+        b1 = UnextcInterp(3, i, j, 1) +
              nuc * a_ghcof[0] * i16 *
                  (-Uc(3, ic, jc - 1, 0) * Mlrc(ic, jc - 1, 1) +
                   9 * Uc(3, ic, jc, 0) * Mlrc(ic, jc, 1) +
@@ -395,7 +395,7 @@ void oddIevenJsw4_typeerpJacobiOpt(
   // rmax[5]=rmax3;
 
 #undef Unextf
-#undef UnextcSw4_Typeerp
+#undef UnextcInterp
 #undef Mufs
 #undef Mlfs
 #undef Morf
@@ -410,13 +410,13 @@ void oddIevenJsw4_typeerpJacobiOpt(
 #undef Uc
 #undef Uf
 #undef UfNew
-}  // end oddIevenJsw4_typeerpJacobiOpt
+}  // end oddIevenJinterpJacobiOpt
 
 //--------------------- Reference implementation
-void oddIevenJsw4_typeerp(float_sw4 rmax[6], Sarray &Uf, Sarray &Muf,
+void oddIevenJinterp(float_sw4 rmax[6], Sarray &Uf, Sarray &Muf,
                      Sarray &Lambdaf, Sarray &Rhof, Sarray &Uc, Sarray &Muc,
                      Sarray &Lambdac, Sarray &Rhoc, Sarray &Morc, Sarray &Mlrc,
-                     Sarray &Unextf, Sarray &Bf, Sarray &UnextcSw4_Typeerp,
+                     Sarray &Unextf, Sarray &Bf, Sarray &UnextcInterp,
                      Sarray &Bc, sw4_type a_iStart[], sw4_type a_jStart[],
                      sw4_type a_iStartSw4_Type[], sw4_type a_iEndSw4_Type[], sw4_type a_jStartSw4_Type[],
                      sw4_type a_jEndSw4_Type[], sw4_type gf, sw4_type gc, sw4_type nkf, float_sw4 a_Dt,
@@ -426,7 +426,7 @@ void oddIevenJsw4_typeerp(float_sw4 rmax[6], Sarray &Uf, Sarray &Muf,
                      float_sw4 a_sbop[], float_sw4 a_ghcof[]) {
   SW4_MARK_FUNCTION;
 // tmp
-//  printf("Inside oddIevenJsw4_typeerp! ");
+//  printf("Inside oddIevenJinterp! ");
 
 // stretching on the coarse side
 #define strc_x(i) a_strc_x[(i - a_iStart[gc])]
@@ -477,7 +477,7 @@ void oddIevenJsw4_typeerp(float_sw4 rmax[6], Sarray &Uf, Sarray &Muf,
         //         b1 =
         //         i16*(-Unextc(c,ic,jc-1,1)+9*(Unextc(c,ic,jc,1)+Unextc(c,ic,jc+1,1))-Unextc(c,ic,jc+2,1));
         // All Uc terms
-        b1 = UnextcSw4_Typeerp(c, i, j, 1) +
+        b1 = UnextcInterp(c, i, j, 1) +
              nuc * a_ghcof[0] * i16 *
                  (-Uc(c, ic, jc - 1, 0) * Morc(ic, jc - 1, 1) +
                   9 * Uc(c, ic, jc, 0) * Morc(ic, jc, 1) +
@@ -510,7 +510,7 @@ void oddIevenJsw4_typeerp(float_sw4 rmax[6], Sarray &Uf, Sarray &Muf,
         //      b1 =
         //      i16*(-Unextc(3,ic,jc-1,1)+9*(Unextc(3,ic,jc,1)+Unextc(3,ic,jc+1,1))-Unextc(3,ic,jc+2,1));
         // All Uc terms
-        b1 = UnextcSw4_Typeerp(3, i, j, 1) +
+        b1 = UnextcInterp(3, i, j, 1) +
              nuc * a_ghcof[0] * i16 *
                  (-Uc(3, ic, jc - 1, 0) * Mlrc(ic, jc - 1, 1) +
                   9 * Uc(3, ic, jc, 0) * Mlrc(ic, jc, 1) +
@@ -541,4 +541,4 @@ void oddIevenJsw4_typeerp(float_sw4 rmax[6], Sarray &Uf, Sarray &Muf,
 #undef strc_y
 #undef strf_x
 #undef strf_y
-}  // end oddIevenJsw4_typeerp
+}  // end oddIevenJinterp

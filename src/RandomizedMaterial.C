@@ -64,7 +64,7 @@ RandomizedMaterial::RandomizedMaterial(EW* a_ew, float_sw4 zmin, float_sw4 zmax,
   m_hh = global_xmax / (m_nig - 1);
   m_hv = (zmax - zmin) / (m_nkg - 1);
 
-  // Find finest grid sw4_typeersecting this block, and limit the grid spacing to
+  // Find finest grid intersecting this block, and limit the grid spacing to
   // not be finer than spacing in the computational grid.
   sw4_type g = a_ew->mNumberOfGrids - 1;
 
@@ -124,8 +124,8 @@ RandomizedMaterial::RandomizedMaterial(EW* a_ew, float_sw4 zmin, float_sw4 zmax,
                              scaledcorrleny, scaledcorrlenz, m_hurst);
   rescale_perturbation();
 
-  // with linear sw4_typeerpolation between fd grid and the random material grid, one
-  // ghost point should be enough to allow sw4_typeerpolation without communication.
+  // with linear interpolation between fd grid and the random material grid, one
+  // ghost point should be enough to allow interpolation without communication.
   repad_sarray(mRndMaterial, 0, 2);
   //   cout << "RANDMTRL dims padded array " << mRndMaterial.m_jb << " " <<
   //   mRndMaterial.m_je << endl;
@@ -145,15 +145,15 @@ void RandomizedMaterial::perturb_velocities(sw4_type g, Sarray& cs, Sarray& cp,
   //-----------------------------------------------------------------------
 
   if (m_zmax > zmin && zmax > m_zmin) {
-    //      cout << "sw4_typeersection, z lims grid block " << zmin << " " << zmax <<
-    //      endl; cout << "sw4_typeersection, z lims rand block " << m_zmin << " " <<
+    //      cout << "intersection, z lims grid block " << zmin << " " << zmax <<
+    //      endl; cout << "intersection, z lims rand block " << m_zmin << " " <<
     //      m_zmax << endl;
-    // Grid block sw4_typeersects random material block
+    // Grid block intersects random material block
     //      bool curvilinear = g == mEW->mNumberOfGrids-1 &&
     //      mEW->topographyExists(); // NOT verified for several curvilinear
     //      grids
     bool curvilinear = g >= mEW->mNumberOfCartesianGrids;
-    // Sw4_Typeerpolate to sw4 grid
+    // Interpolate to sw4 grid
     for (sw4_type k = mEW->m_kStartSw4_Type[g]; k <= mEW->m_kEndSw4_Type[g]; k++)
       for (sw4_type j = mEW->m_jStartSw4_Type[g]; j <= mEW->m_jEndSw4_Type[g]; j++)
         for (sw4_type i = mEW->m_iStartSw4_Type[g]; i <= mEW->m_iEndSw4_Type[g]; i++) {
@@ -243,7 +243,7 @@ void RandomizedMaterial::assign_perturbation(sw4_type g, Sarray& pert, Sarray& c
                                              bool rho) {
   if (m_zmax > zmin && zmax > m_zmin) {
     bool curvilinear = g >= mEW->mNumberOfCartesianGrids;
-    // Sw4_Typeerpolate to sw4 grid
+    // Interpolate to sw4 grid
     for (sw4_type k = mEW->m_kStartSw4_Type[g]; k <= mEW->m_kEndSw4_Type[g]; k++)
       for (sw4_type j = mEW->m_jStartSw4_Type[g]; j <= mEW->m_jEndSw4_Type[g]; j++)
         for (sw4_type i = mEW->m_iStartSw4_Type[g]; i <= mEW->m_iEndSw4_Type[g]; i++) {
@@ -360,7 +360,7 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw(sw4_type n1g, sw4_type n2g, 
     }
   }
 
-  // Processor sw4_typeeraction
+  // Processor interaction
   // get ucc from other proc
 
   MPI_Request* req = new MPI_Request[n1];
@@ -570,26 +570,26 @@ void RandomizedMaterial::redistribute_array(AllDims& src, AllDims& dest,
   for (sw4_type p3 = 0; p3 < dest.m_nprock; p3++)
     for (sw4_type p2 = 0; p2 < dest.m_nprocj; p2++)
       for (sw4_type p1 = 0; p1 < dest.m_nproci; p1++)
-        if (dest.sw4_typeersect(p1, p2, p3, src, dims)) {
-          Patch* sw4_typeersection = new Patch(dims, dest.proc1d(p1, p2, p3));
+        if (dest.intersect(p1, p2, p3, src, dims)) {
+          Patch* intersection = new Patch(dims, dest.proc1d(p1, p2, p3));
           if (!dest.owner(p1, p2, p3))
-            sendlist.push_back(sw4_typeersection);
+            sendlist.push_back(intersection);
           else {
-            selfsend = sw4_typeersection;
+            selfsend = intersection;
             selfsnr++;
           }
         }
 
   if (selfsnr > 1)
-    std::cout << "ERROR: found more than one self sw4_typeersection" << std::endl;
+    std::cout << "ERROR: found more than one self intersection" << std::endl;
 
   for (sw4_type p3 = 0; p3 < src.m_nprock; p3++)
     for (sw4_type p2 = 0; p2 < src.m_nprocj; p2++)
       for (sw4_type p1 = 0; p1 < src.m_nproci; p1++)
-        if (src.sw4_typeersect(p1, p2, p3, dest, dims)) {
-          Patch* sw4_typeersection = new Patch(dims, src.proc1d(p1, p2, p3));
+        if (src.intersect(p1, p2, p3, dest, dims)) {
+          Patch* intersection = new Patch(dims, src.proc1d(p1, p2, p3));
           if (!src.owner(p1, p2, p3))
-            recvlist.push_back(sw4_typeersection);
+            recvlist.push_back(intersection);
           else
             selfrnr++;
         }
@@ -605,7 +605,7 @@ void RandomizedMaterial::redistribute_array(AllDims& src, AllDims& dest,
   //      {
   //         cout << "sendlist      " << sendlist.size() << endl;
   //         cout << "recvlist      " << recvlist.size() << endl;
-  //         cout << "selfsw4_typeersect " << selfsnr << endl;
+  //         cout << "selfintersect " << selfsnr << endl;
   //      }
   if (selfsnr == 1) {
     // Copy patches between my own parts of the arrays

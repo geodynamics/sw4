@@ -223,8 +223,8 @@ class EW {
   bool get_testing_mode() { return m_testing; }
 
   void default_bcs();
-  void update_curvilinear_cartesian_sw4_typeerface(vector<Sarray>& a_U);
-  void update_curvilinear_cartesian_sw4_typeerface_org(vector<Sarray>& a_U);
+  void update_curvilinear_cartesian_interface(vector<Sarray>& a_U);
+  void update_curvilinear_cartesian_interface_org(vector<Sarray>& a_U);
 
   void set_twilight_forcing(ForcingTwilight* a_forcing);
   // perhaps these functions should be in the ForcingTwilight class?
@@ -323,7 +323,7 @@ class EW {
                         vector<Sarray*>& a_AlphaVEm, vector<Sarray>& a_Up,
                         vector<Sarray>& a_U, vector<Sarray>& a_Um, double a_t);
 
-  void updateMemVarCorrNearSw4_Typeerface(Sarray& a_AlphaVEp, Sarray& a_AlphaVEm,
+  void updateMemVarCorrNearInterface(Sarray& a_AlphaVEp, Sarray& a_AlphaVEm,
                                      Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
                                      double a_t, sw4_type a_mech, sw4_type a_grid);
 
@@ -348,14 +348,14 @@ class EW {
   void cycleSolutionArrays(vector<Sarray>& a_Um, vector<Sarray>& a_U,
                            vector<Sarray>& a_Up);
 
-  void bndrySw4_TypeeriorDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
-                               float_sw4 lowZ[3], float_sw4 sw4_typeeriorZ[3],
+  void bndryInteriorDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
+                               float_sw4 lowZ[3], float_sw4 interiorZ[3],
                                float_sw4 highZ[3]);
   void test_RhoUtt_Lu(vector<Sarray>& a_Uacc, vector<Sarray>& a_Lu,
                       vector<Sarray>& a_F, float_sw4 lowZ[3],
-                      float_sw4 sw4_typeeriorZ[3], float_sw4 highZ[3]);
+                      float_sw4 interiorZ[3], float_sw4 highZ[3]);
 
-  void setRestartInfo(sw4_type fromCycle, sw4_type dumpSw4_Typeerval,
+  void setRestartInfo(sw4_type fromCycle, sw4_type dumpInterval,
                       const string& filePrefix);
   void computeDT();
   void computeDTanisotropic();
@@ -542,13 +542,13 @@ class EW {
       sw4_type& a_g,  // grid on which indices are located
       float_sw4 a_x, float_sw4 a_y, float_sw4 a_z);
 
-  bool sw4_typeerior_point_in_proc(
-      sw4_type a_i, sw4_type a_j, sw4_type a_g);  // only takes sw4_typeerior points sw4_typeo account
+  bool interior_point_in_proc(
+      sw4_type a_i, sw4_type a_j, sw4_type a_g);  // only takes interior points sw4_typeo account
   bool point_in_proc(sw4_type a_i, sw4_type a_j,
-                     sw4_type a_g);  // both sw4_typeerior and parallel ghost points
+                     sw4_type a_g);  // both interior and parallel ghost points
   bool point_in_proc_ext(
       sw4_type a_i, sw4_type a_j,
-      sw4_type a_g);  // both sw4_typeerior and parallel ghost points+extra ghost points
+      sw4_type a_g);  // both interior and parallel ghost points+extra ghost points
 
   void initializePaddingCells();
   void check_dimensions();
@@ -574,10 +574,10 @@ class EW {
 
   bool is_onesided(sw4_type g, sw4_type side) const;
 
-  void sw4_typeerpolate_between_grids(vector<Sarray>& u, vector<Sarray>& um,
+  void interpolate_between_grids(vector<Sarray>& u, vector<Sarray>& um,
                                  float_sw4 t, vector<Sarray*>& AlphaVE);
 
-  sw4_type sw4_typeerpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0,
+  sw4_type interpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0,
                              bool smoothed);
 
   void copy_topo_to_topogridext();
@@ -606,7 +606,7 @@ class EW {
 
   void set_scenario(const string& scenario);
 
-  void set_conservative_sw4_typeerpolation(bool onoff, float_sw4 ctol, sw4_type cmaxit);
+  void set_conservative_interpolation(bool onoff, float_sw4 ctol, sw4_type cmaxit);
 
   void set_geodyn_data(string filename, sw4_type nx, sw4_type nz, float_sw4 h,
                        float_sw4 origin[3], float_sw4 dt, sw4_type nsteps,
@@ -825,26 +825,26 @@ class EW {
   void read_volimage(std::string& path, std::string& fname,
                      vector<Sarray>& data);
 
-  void sw4_typeerpolate(sw4_type nx, sw4_type ny, sw4_type nz, float_sw4 xmin, float_sw4 ymin,
+  void interpolate(sw4_type nx, sw4_type ny, sw4_type nz, float_sw4 xmin, float_sw4 ymin,
                    float_sw4 zmin, float_sw4 hx, float_sw4 hy, float_sw4 hz,
                    Sarray& rho, Sarray& mu, Sarray& lambda, sw4_type grid,
                    Sarray& rhogrid, Sarray& mugrid, Sarray& lambdagrid);
 
-  void sw4_typeerpolate_to_coarse(sw4_type nx, sw4_type ny, sw4_type nz, float_sw4 xmin,
+  void interpolate_to_coarse(sw4_type nx, sw4_type ny, sw4_type nz, float_sw4 xmin,
                              float_sw4 ymin, float_sw4 zmin, float_sw4 hx,
                              float_sw4 hy, float_sw4 hz, Sarray& rho,
                              Sarray& mu, Sarray& lambda,
                              vector<Sarray>& rhogrid, vector<Sarray>& mugrid,
                              vector<Sarray>& lambdagrid);
 
-  void sw4_typeerpolation_gradient(sw4_type nx, sw4_type ny, sw4_type nz, float_sw4 xmin,
+  void interpolation_gradient(sw4_type nx, sw4_type ny, sw4_type nz, float_sw4 xmin,
                               float_sw4 ymin, float_sw4 zmin, float_sw4 hx,
                               float_sw4 hy, float_sw4 hz, Sarray& gradrho,
                               Sarray& gradmu, Sarray& gradlambda, sw4_type grid,
                               Sarray& gradrhogrid, Sarray& gradmugrid,
                               Sarray& gradlambdagrid);
 
-  // Functions to impose conditions at grid refinement sw4_typeerface:
+  // Functions to impose conditions at grid refinement interface:
   // void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U,
   // std::vector<Sarray> & a_Um,
   //                 vector<Sarray*>& a_AlphaVEp,
@@ -1574,12 +1574,12 @@ class EW {
   vector<sw4_type> m_global_nx, m_global_ny, m_global_nz;
 
   // part of global array on each processor, excluding ghost points and parallel
-  // overlap points = sw4_typeerior points
+  // overlap points = interior points
   vector<sw4_type> m_iStartSw4_Type, m_iEndSw4_Type, m_jStartSw4_Type, m_jEndSw4_Type, m_kStartSw4_Type,
       m_kEndSw4_Type;
 
   // Note that the m_paddingCells array is no longer needed to get the range of
-  // sw4_typeernal grid points Instead use m_iStartSw4_Type[g], m_iEndSw4_Type[g], etc,
+  // internal grid points Instead use m_iStartSw4_Type[g], m_iEndSw4_Type[g], etc,
   sw4_type m_paddingCells[4];  // indexing is [0] = low-i, [1] = high-i, [2] = low-j,
                           // [3] = high-j
 
@@ -1614,9 +1614,9 @@ class EW {
   // curvilinear grid
   Sarray mTopo, mTopoGridExt;
 
-  // 2-D arrays with sw4_typeerface surfaces (z-coordinates) for mesh refinement in
+  // 2-D arrays with interface surfaces (z-coordinates) for mesh refinement in
   // the curvilinear grid
-  vector<Sarray> m_curviSw4_Typeerface;
+  vector<Sarray> m_curviInterface;
 
   // material description used with material surfaces and the ifile command
   vector<MaterialProperty*> m_materials;
@@ -1687,7 +1687,7 @@ class EW {
   float_sw4 m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc,
       m_GaussianYc;
 
-  // sw4_typeerface surfaces in the material model
+  // interface surfaces in the material model
   // sw4_type m_number_material_surfaces, m_Nlon, m_Nlat;
   // float_sw4 m_materialLonMax, m_materialLonMin, m_materialLatMax,
   // m_materialLatMin; Sarray m_materialDepth; float_sw4 *m_materialLon,
@@ -1698,7 +1698,7 @@ class EW {
   float_sw4 m_vpMin, m_vsMin;
 
   // order of polynomial mapping in algebraic grid genenerator
-  sw4_type m_grid_sw4_typeerpolation_order;
+  sw4_type m_grid_interpolation_order;
   float_sw4 m_zetaBreak;
 
   // metric of the curvilinear grid
@@ -1849,7 +1849,7 @@ class EW {
   //-------------------------------------------
   // string mRestartFilePrefix;
   // sw4_type mRestartFromCycle;
-  // sw4_type mRestartDumpSw4_Typeerval;
+  // sw4_type mRestartDumpInterval;
 
   //----------------------------------------
   // Energy test data
@@ -1878,7 +1878,7 @@ class EW {
   bool m_error_log, m_error_prsw4_type;
   sw4_type m_inner_loop;
 
-  //  Conservative sw4_typeerface
+  //  Conservative interface
   // bool m_sw4_typep_conservative;
   bool m_mesh_refinements;
   bool m_matrices_decomposed;
@@ -1962,7 +1962,7 @@ class EW {
   // Array of sviews used in EW::enforceBCfreeAtt2 in solve.C
   SView* viewArrayActual;
 
-  vector<CurvilinearSw4_Typeerface2*> m_cli2;
+  vector<CurvilinearInterface2*> m_cli2;
 
   // sw4_type m_neighbor[4];
   vector<MPI_Datatype> m_send_type1;
@@ -1972,7 +1972,7 @@ class EW {
   MPI_Datatype m_send_type_2dfinest[2];
   MPI_Datatype m_send_type_2dfinest_ext[2];
 
-  // for communicating sw4_typeerface surfaces
+  // for communicating interface surfaces
   vector<MPI_Datatype> m_send_type_isurfx;
   vector<MPI_Datatype> m_send_type_isurfy;
 

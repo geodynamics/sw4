@@ -331,8 +331,8 @@ void AllDims::getdims_nopad(sw4_type dims[6], sw4_type p1, sw4_type p2, sw4_type
 }
 
 //-----------------------------------------------------------------------
-bool AllDims::sw4_typeersect(sw4_type p1, sw4_type p2, sw4_type p3, AllDims& other, sw4_type dims[6]) {
-  // Sw4_Typeersection of patch(procno) with other.patch(myid)
+bool AllDims::intersect(sw4_type p1, sw4_type p2, sw4_type p3, AllDims& other, sw4_type dims[6]) {
+  // Intersection of patch(procno) with other.patch(myid)
   // First remove padding points
   sw4_type dims1[6];
   getdims_nopad(dims1, p1, p2, p3);
@@ -556,7 +556,7 @@ void AllDims::decomp1d_frf(sw4_type N, sw4_type myid, sw4_type nproc, sw4_type& 
     s = 1;
   else {
     // First point in this processor (not counting pad and ghost points)
-    // is first point to the right of sw4_typeerface pt xf_{sf-1/2} on fine grid.
+    // is first point to the right of interface pt xf_{sf-1/2} on fine grid.
     s = static_cast<sw4_type>((sf - 1 - 0.5) * hrat) + 2;
   }
 
@@ -564,7 +564,7 @@ void AllDims::decomp1d_frf(sw4_type N, sw4_type myid, sw4_type nproc, sw4_type& 
     e = N;
   else {
     // Last point in this processor (not counting pad and ghost points)
-    // is last point to the left of sw4_typeerface pt xf_{ef+1/2} on fine grid.
+    // is last point to the left of interface pt xf_{ef+1/2} on fine grid.
     e = static_cast<sw4_type>((ef - 1 + 0.5) * hrat) + 1;
   }
   if (myid == 0)

@@ -123,7 +123,7 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
             z = mEW->m_zmin[g] + (k - 1) * mEW->mGridSize[g];
 
           // Deal with some values on top grid that exceeds the topogrophy
-          // sw4_typeerface
+          // interface
           if (g == mEW->mNumberOfGrids - 1 && z < m_Zmin) z = m_Zmin;
 
           // Find which block the current point belongs to
@@ -134,7 +134,7 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
           gr--;
           double sw4_typef = top - m_ztop[gr];
 
-          // When sw4 z exceeds gmg sw4_typeerface
+          // When sw4 z exceeds gmg interface
           if (z < sw4_typef) z = sw4_typef;
 
           // i0, j0, k0 are the coordiates in GMG block
@@ -153,7 +153,7 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
             if (k0 >= m_nk[gr] - 1) k0 = m_nk[gr] - 2;
             if (k0 < 0) k0 = 0;
 
-            // Use bilinear sw4_typeerpolation always:
+            // Use bilinear interpolation always:
             // Bias stencil near the boundary, need to communicate arrays
             // afterwards.
             float_sw4 wghx = (gmg_x - i0 * m_hh[gr]) / m_hh[gr];
@@ -631,7 +631,7 @@ void MaterialGMG::fill_in_fluids() {
             kd = 0;  // get value from top of block pd
 
             if (!(id >= 0 && id < m_ni[pd] && jd >= 0 && jd < m_nj[pd])) {
-              // out of bounds: find nearest sw4_typeerior point
+              // out of bounds: find nearest interior point
               if (id > m_ni[pd] - 1) id = m_ni[pd] - 1;
               if (jd > m_nj[pd] - 1) jd = m_nj[pd] - 1;
 

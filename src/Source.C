@@ -114,7 +114,7 @@ Source::Source(EW* a_ew, float_sw4 frequency, float_sw4 t0, float_sw4 x0,
   }
 
   // if( mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments )
-  //    spline_sw4_typeerpolation();
+  //    spline_interpolation();
   // else
   if (mTimeDependence != iDiscrete &&
       mTimeDependence != iDiscrete6moments)  // not sure about iDiscrete6moments
@@ -184,7 +184,7 @@ Source::Source(EW* a_ew, float_sw4 frequency, float_sw4 t0, float_sw4 x0,
     mIpar = new sw4_type[1];
   }
   if (mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments)
-    spline_sw4_typeerpolation();
+    spline_interpolation();
   else {
     mPar[0] = find_min_exponent();
     mPar[1] = mNcyc;
@@ -445,19 +445,19 @@ void Source::correct_Z_level(EW* a_ew) {
 
   // The following is a safety check to make sure only one processor considers
   // this (i,j) to be interior We could remove this check if we were certain
-  // that sw4_typeerior_point_in_proc() never lies
+  // that interior_point_in_proc() never lies
   int iwrite = m_myPoint ? 1 : 0;
   sw4_type size;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   std::vector<int> whoIsOne(size);
   sw4_type counter = 0;
-  MPI_Allgather(&iwrite, 1, MPI_INT, &whoIsOne[0], 1, MPI_SW4_TYPE, MPI_COMM_WORLD);
+  MPI_Allgather(&iwrite, 1, MPI_INT, &whoIsOne[0], 1, MPI_INT, MPI_COMM_WORLD);
   for (unsigned sw4_type p = 0; p < whoIsOne.size(); ++p)
     if (whoIsOne[p] == 1) {
       counter++;
     }
   REQUIRE2(counter == 1,
-           "Source error: the nearest grid point should only be sw4_typeerior to "
+           "Source error: the nearest grid point should only be interior to "
            "one proc, but counter = "
                << counter << " for source station at (x,y,depth)=" << mX0
                << ", " << mY0 << ", " << mZ0);
@@ -469,7 +469,7 @@ void Source::correct_Z_level(EW* a_ew) {
     // With topography, compute z-coordinate at topography directly above the
     // source
     float_sw4 zTopoLocal;
-    if (a_ew->m_gridGenerator->sw4_typeerpolate_topography(
+    if (a_ew->m_gridGenerator->interpolate_topography(
             a_ew, mX0, mY0, zTopoLocal, a_ew->mTopoGridExt) < 0)
       zTopoLocal = -1e38;
     MPI_Allreduce(&zTopoLocal, &m_zTopo, 1, a_ew->m_mpifloat, MPI_MAX,
@@ -1282,7 +1282,7 @@ void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep,
   if (mTimeDependence == iDiscrete || mTimeDependence == iDiscrete6moments) {
     // new approach for Discrete time functions
     if (!doFilter) {
-      spline_sw4_typeerpolation();
+      spline_interpolation();
       m_timeFuncIsReady = true;
     } else {
       // 0. build filter for the discrete time series
@@ -1290,7 +1290,7 @@ void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep,
       // 2. extend time grid by appropriate number of time samples, pad with
       // zeros
       // 3. Perform filtering with the dt of the time series
-      // 4. Sw4_Typeerpolate by spline
+      // 4. Interpolate by spline
       Filter my_filter(sw4_filter->get_type(), sw4_filter->get_order(),
                        sw4_filter->get_passes(), sw4_filter->get_corner_freq1(),
                        sw4_filter->get_corner_freq2());
@@ -1361,7 +1361,7 @@ void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep,
       // delete[] discfunc;
 
       // Build the spline representation
-      spline_sw4_typeerpolation();
+      spline_interpolation();
       m_is_filtered = true;
       // only do the filtering once
       m_timeFuncIsReady = true;
@@ -1415,11 +1415,12 @@ void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep,
 void Source::set_grid_point_sources4(EW* a_EW,
                                      vector<GridPointSource*>& point_sources) {
   // note that this routine is called from all processors, for each input source
-  sw4_type i, j, k, g;
+  sw4_type i, j, k;
+  int g;
   sw4_type success = a_EW->computeNearestGridPoint2(i, j, k, g, mX0, mY0, mZ0);
-  sw4_type gg = -1;
+  int gg = -1;
   if (success) gg = g;
-  MPI_Allreduce(&gg, &g, 1, MPI_SW4_TYPE, MPI_MAX, MPI_COMM_WORLD);
+  MPI_Allreduce(&gg, &g, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
   float_sw4 q, r, s;
   float_sw4 h = a_EW->mGridSize[g];
   bool canBeInverted, curvilinear;
@@ -1438,10 +1439,10 @@ void Source::set_grid_point_sources4(EW* a_EW,
 
     // Broadcast the computed s to all processors.
     // First find out the ID of a processor that defines s ...
-    sw4_type s_owner = -1;
+    int s_owner = -1;
     if (canBeInverted) MPI_Comm_rank(MPI_COMM_WORLD, &s_owner);
-    sw4_type s_owner_tmp = s_owner;
-    MPI_Allreduce(&s_owner_tmp, &s_owner, 1, MPI_SW4_TYPE, MPI_MAX, MPI_COMM_WORLD);
+    int s_owner_tmp = s_owner;
+    MPI_Allreduce(&s_owner_tmp, &s_owner, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
     // ...then broadcast s
     if (s_owner > -1)
       MPI_Bcast(&s, 1, a_EW->m_mpifloat, s_owner,
@@ -1515,7 +1516,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
   if (jc <= 2) jc = 3;
   if (jc >= Nj - 2) jc = Nj - 3;
 
-  // Six point stencil, with points, kc-2,..kc+3, Sw4_Typeerior in domain
+  // Six point stencil, with points, kc-2,..kc+3, Interior in domain
   // if kc-2>=1, kc+3 <= Nz --> kc >= 3 and kc <= Nz-3
   // Can evaluate with two ghost points if kc-2>=-1 and kc+3 <= Nz+2
   //  --->  kc >=1 and kc <= Nz-1
@@ -1524,18 +1525,18 @@ void Source::set_grid_point_sources4(EW* a_EW,
   if (kc < 1) kc = 1;
 
   // upper(surface) and lower boundaries , when the six point stencil
-  // kc-2,..kc+3 make use of the first (k=1) or the last (k=Nz) sw4_typeerior point.
+  // kc-2,..kc+3 make use of the first (k=1) or the last (k=Nz) interior point.
   upperbndry = (kc == 1 || kc == 2 || kc == 3);
   lowerbndry = (kc == Nz - 1 || kc == Nz - 2 || kc == Nz - 3);
 
-  // ccbndry=true if at the sw4_typeerface between the curvilinear grid and the
+  // ccbndry=true if at the interface between the curvilinear grid and the
   // cartesian grid. Defined as the six point stencil uses values from both
   // grids.
   ccbndry = a_EW->topographyExists() &&
             ((upperbndry && g == a_EW->mNumberOfCartesianGrids - 1) ||
              (lowerbndry && g == a_EW->mNumberOfCartesianGrids));
 
-  // gridrefbndry=true if at the sw4_typeerface between two cartesian grids of
+  // gridrefbndry=true if at the interface between two cartesian grids of
   // different refinements.
   gridrefbndry = (upperbndry && g < a_EW->mNumberOfGrids - 1 && !ccbndry) ||
                  (lowerbndry && g > 0 && !ccbndry);
@@ -1550,7 +1551,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
   // (ic, jc, kc) and gridrefbndry ******
   //
 
-  // AP: Jun 29, 2017: Since sw4_typeerior_point_in_proc only takes the (i,j)
+  // AP: Jun 29, 2017: Since interior_point_in_proc only takes the (i,j)
   // indices sw4_typeo account, there is no point looping over
   // k. Furthermore, since this source belongs to this MPI task, it
   // needs to get initialized (filtered), unless it has already been done
@@ -1558,8 +1559,8 @@ void Source::set_grid_point_sources4(EW* a_EW,
   for (sw4_type j = jc - 2; j <= jc + 3; j++)
     for (sw4_type i = ic - 2; i <= ic + 3; i++) {
       // check if (i,j) belongs to this processor
-      if (a_EW->sw4_typeerior_point_in_proc(i, j, g) && !m_timeFuncIsReady) {
-        // (optionally) filter and spline sw4_typeerpolate the time function in
+      if (a_EW->interior_point_in_proc(i, j, g) && !m_timeFuncIsReady) {
+        // (optionally) filter and spline interpolate the time function in
         // this Source object, unless already done before
         prepareTimeFunc(a_EW->m_prefilter_sources, a_EW->getTimeStep(),
                         a_EW->getNumberOfTimeSteps(), a_EW->m_filter_ptr);
@@ -1569,7 +1570,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
   // AP: Jun 29, 2017: The purpose of the following code is to make sure
   // the time function is properly initialized. This is important for
   // iDiscrete time functions, which have to be (optionally) filtered
-  // and sw4_typeerpolated by a spline before they can be evaluated.
+  // and interpolated by a spline before they can be evaluated.
   //
   // Consider a source that is near a processor boundary and a grid
   // refinement boundary, but belongs to a neighboring processor. It is
@@ -1577,7 +1578,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
   // because the 6-point source stencil extends further on a coarser
   // grid. In that case, we must also initialize the time function on
   // this process.
-  if (gridrefbndry)  // near MR sw4_typeerface
+  if (gridrefbndry)  // near MR interface
   {
     // compute (icref, jcref) (duplicated from below)
     sw4_type icref, jcref;
@@ -1608,7 +1609,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
         // Finer grid above
         for (sw4_type j = jcref - 2; j <= jcref + 3; j++)
           for (sw4_type i = icref - 2; i <= icref + 3; i++) {
-            if (a_EW->sw4_typeerior_point_in_proc(i, j, g + 1) &&
+            if (a_EW->interior_point_in_proc(i, j, g + 1) &&
                 !m_timeFuncIsReady)  // checks if (i,j) belongs to this
                                      // processor
             {
@@ -1623,7 +1624,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
         // Coarser grid below
         for (sw4_type j = jcref - 2; j <= jcref + 3; j++)
           for (sw4_type i = icref - 2; i <= icref + 3; i++) {
-            if (a_EW->sw4_typeerior_point_in_proc(i, j, g - 1) &&
+            if (a_EW->interior_point_in_proc(i, j, g - 1) &&
                 !m_timeFuncIsReady)  // checks if (i,j) belongs to this
                                      // processor
             {
@@ -1636,9 +1637,9 @@ void Source::set_grid_point_sources4(EW* a_EW,
       }  // end if k >= Nz
 
     }  // end for kc
-  }    // end if near MR sw4_typeerface
+  }    // end if near MR interface
 
-  // If not at the sw4_typeerface between different grids, bias stencil away
+  // If not at the interface between different grids, bias stencil away
   // from the boundary.
   if (!ccbndry && !gridrefbndry) {
     if (kc <= 2) kc = 3;
@@ -1876,8 +1877,8 @@ void Source::set_grid_point_sources4(EW* a_EW,
   //   else
   //      cout << " can not be inverted";
 
-  // If source at grid refinement sw4_typeerface, set up variables for
-  // discretization on grid on the other side of the sw4_typeerface
+  // If source at grid refinement interface, set up variables for
+  // discretization on grid on the other side of the interface
   sw4_type icref, jcref;
   float_sw4 airef, biref, wghiref[6], wghirefx[6], wghirefxx[6];
   float_sw4 wghjref[6], wghjrefy[6], wghjrefyy[6];
@@ -1929,7 +1930,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
                 wghi[i - ic + 2] * wghj[j - jc + 2] * wghk[k - kc + 2];
             if ((wF != 0) &&
                 (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) &&
-                a_EW->sw4_typeerior_point_in_proc(
+                a_EW->interior_point_in_proc(
                     i, j, g))  // checks if (i,j) belongs to this processor
             {
               if (curvilinear)
@@ -1974,7 +1975,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
                                wghkref[k - kc + 2];
                 if ((wF != 0) &&
                     (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) &&
-                    a_EW->sw4_typeerior_point_in_proc(
+                    a_EW->interior_point_in_proc(
                         i, j,
                         g + 1))  // checks if (i,j) belongs to this processor
                 {
@@ -1997,7 +1998,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
                                wghkref[k - kc + 2];
                 if ((wF != 0) &&
                     (mForces[0] != 0 || mForces[1] != 0 || mForces[2] != 0) &&
-                    a_EW->sw4_typeerior_point_in_proc(
+                    a_EW->interior_point_in_proc(
                         i, j,
                         g - 1))  // checks if (i,j) belongs to this processor
                 {
@@ -2050,7 +2051,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
         //   (ic, jc are undefined if canBeInverted is false.)
         float_sw4 zdertmp[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0}, zq, zr, zs;
         float_sw4 zqq, zqr, zqs, zrr, zrs, zss;
-        if (a_EW->sw4_typeerior_point_in_proc(ic, jc, g) /*&& canBeInverted*/) {
+        if (a_EW->interior_point_in_proc(ic, jc, g) /*&& canBeInverted*/) {
           //        compute_metric_at_source(a_EW, q, r, s, ic, jc, kc, g, zq,
           //        zr, zs, zqq,
           //                                 zqr, zqs, zrr, zrs, zss);
@@ -2070,7 +2071,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
         //	 // Broadcast the computed metric to all processors.
         //	 // First find out the ID of the processor that computed the
         // metric... 	 sw4_type owner = -1; 	 if(
-        // a_EW->sw4_typeerior_point_in_proc( ic, jc, g )
+        // a_EW->interior_point_in_proc( ic, jc, g )
         //&& canBeInverted )
         //            MPI_Comm_rank(MPI_COMM_WORLD, &owner );
         //	 sw4_type owntmp = owner;
@@ -2162,7 +2163,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
         for (sw4_type j = jc - 2; j <= jc + 3; j++)
           for (sw4_type i = ic - 2; i <= ic + 3; i++) {
             float_sw4 wFx = 0, wFy = 0, wFz = 0, dsdp[27];
-            if (a_EW->sw4_typeerior_point_in_proc(i, j, g)) {
+            if (a_EW->interior_point_in_proc(i, j, g)) {
               //                     cout << " src at " << i << " " << j << " "
               //                     << k << endl;
               wFx += qX0[0] * dwghi[i - ic + 2] * wghj[j - jc + 2] *
@@ -2604,7 +2605,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
         // These arrays are currently undefined across the mesh refinement
         // boundary.
         // --> Source inversion can not be done if the source is located at the
-        // sw4_typeerface.
+        // interface.
         float_sw4 dddp[9], dh1[9], dh2[9], dh3[9], dsdp[27];
         for (sw4_type k = kc - 2; k <= kc + 3; k++) {
           if (k <= 1) {
@@ -2613,7 +2614,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
             for (sw4_type j = jcref - 2; j <= jcref + 3; j++)
               for (sw4_type i = icref - 2; i <= icref + 3; i++) {
                 float_sw4 wFx = 0, wFy = 0, wFz = 0;
-                if (a_EW->sw4_typeerior_point_in_proc(i, j, g + 1)) {
+                if (a_EW->interior_point_in_proc(i, j, g + 1)) {
                   wFx = dwghiref[i - icref + 2] * wghjref[j - jcref + 2] *
                         wghkref[k - kc + 2] * hi;
                   wFy = wghiref[i - icref + 2] * dwghjref[j - jcref + 2] *
@@ -2646,7 +2647,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
             for (sw4_type j = jcref - 2; j <= jcref + 3; j++)
               for (sw4_type i = icref - 2; i <= icref + 3; i++) {
                 float_sw4 wFx = 0, wFy = 0, wFz = 0;
-                if (a_EW->sw4_typeerior_point_in_proc(i, j, g - 1)) {
+                if (a_EW->interior_point_in_proc(i, j, g - 1)) {
                   wFx = dwghiref[i - icref + 2] * wghjref[j - jcref + 2] *
                         wghkref[k - kc + 2] * hi;
                   wFy = wghiref[i - icref + 2] * dwghjref[j - jcref + 2] *
@@ -2882,17 +2883,17 @@ void Source::filter_timefunc(Filter* filter_ptr, float_sw4 tstart, float_sw4 dt,
     delete[] discfunc;
 
     // Build the spline representation
-    spline_sw4_typeerpolation();
+    spline_interpolation();
     m_is_filtered = true;
   }
 }
 
 //-----------------------------------------------------------------------
-sw4_type Source::spline_sw4_typeerpolation() {
+sw4_type Source::spline_interpolation() {
   // Assume mPar[1], to mPar[npts] contain the function
   // Assume mIpar[0] contains npts
   // Assume mFreq contains 1/dt, and mPar[0] is tstart.
-  // Compute the six spline coefficients for each sw4_typeerval and return in
+  // Compute the six spline coefficients for each interval and return in
   // mPar[1],to mPar[6*(npts-1)]
   if (mTimeDependence == iDiscrete) {
     sw4_type npts = mIpar[0];
@@ -2902,7 +2903,7 @@ sw4_type Source::spline_sw4_typeerpolation() {
     // MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
     // if (myRank == 0)
     // {
-    // 	cout << "before spline sw4_typeerp" << endl;
+    // 	cout << "before spline interp" << endl;
     // 	cout << "npts = " << npts << " t0 = " << mPar[0] << " dt= " << 1/mFreq
     // << endl; 	for( sw4_type i=0 ; i < npts ; i++ ) 	  cout << "fun["
     // <<
@@ -2921,7 +2922,7 @@ sw4_type Source::spline_sw4_typeerpolation() {
     mPar[0] = tstart;
     float_sw4* qsppt = qusw4_typeicspline.get_polycof_ptr();
     for (sw4_type i = 0; i < 6 * (npts - 1); i++) mPar[i + 1] = qsppt[i];
-    //      cout << "after spline sw4_typeerp" << endl;
+    //      cout << "after spline interp" << endl;
     //      for( sw4_type i=0 ; i < npts ; i++ )
     //	 cout << "fun[" << i << "] = "<< mPar[6*i+1] << endl;
 
@@ -3033,7 +3034,7 @@ void Source::compute_metric_at_source(EW* a_EW, float_sw4 q, float_sw4 r,
     // 3. Recompute metric to sixth order accuracy. Increased accuracy needed
     // because
     //    of the multiplication with a singular (Dirac) function.
-    //    compute only in the processor where the point is sw4_typeerior
+    //    compute only in the processor where the point is interior
 
     //      bool eightptstencil = true;
     float_sw4 ai = q - ic;
@@ -3216,21 +3217,21 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
   // ic-2,..,ic+2 and jc-2,..,jc+2 are not guaranteed to be owned by this
   // processor. Need to supply grid z and Jacobian for all stencil points,
   // extended arrays are being used.
-  if (a_EW->sw4_typeerior_point_in_proc(ic - 2, jc - 2, g) ||
-      a_EW->sw4_typeerior_point_in_proc(ic + 2, jc - 2, g) ||
-      a_EW->sw4_typeerior_point_in_proc(ic - 2, jc + 2, g) ||
-      a_EW->sw4_typeerior_point_in_proc(ic + 2, jc + 2, g) ||
-      a_EW->sw4_typeerior_point_in_proc(icref - 2, jcref - 2, gref) ||
-      a_EW->sw4_typeerior_point_in_proc(icref + 2, jcref - 2, gref) ||
-      a_EW->sw4_typeerior_point_in_proc(icref - 2, jcref + 2, gref) ||
-      a_EW->sw4_typeerior_point_in_proc(icref + 2, jcref + 2, gref)) {
+  if (a_EW->interior_point_in_proc(ic - 2, jc - 2, g) ||
+      a_EW->interior_point_in_proc(ic + 2, jc - 2, g) ||
+      a_EW->interior_point_in_proc(ic - 2, jc + 2, g) ||
+      a_EW->interior_point_in_proc(ic + 2, jc + 2, g) ||
+      a_EW->interior_point_in_proc(icref - 2, jcref - 2, gref) ||
+      a_EW->interior_point_in_proc(icref + 2, jcref - 2, gref) ||
+      a_EW->interior_point_in_proc(icref - 2, jcref + 2, gref) ||
+      a_EW->interior_point_in_proc(icref + 2, jcref + 2, gref)) {
     Sarray zg(ic - 2, ic + 2, jc - 2, jc + 2, kc - 2, kc + 2);
     Sarray Jg(zg);
-    if (!a_EW->sw4_typeerior_point_in_proc(ic, jc, g))
+    if (!a_EW->interior_point_in_proc(ic, jc, g))
       a_EW->m_gridGenerator->generate_z_and_j(a_EW, g, zg, Jg);
     else {
-      zg.insert_sw4_typeersection(a_EW->mZ[g]);
-      Jg.insert_sw4_typeersection(a_EW->mJ[g]);
+      zg.insert_intersection(a_EW->mZ[g]);
+      Jg.insert_intersection(a_EW->mJ[g]);
       SYNC_STREAM;
     }
     sw4_type kll, kul;
@@ -3244,11 +3245,11 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
     }
     Sarray zgref(icref - 2, icref + 2, jcref - 2, jcref + 2, kll, kul);
     Sarray Jref(zgref);
-    if (!a_EW->sw4_typeerior_point_in_proc(icref, jcref, gref))
+    if (!a_EW->interior_point_in_proc(icref, jcref, gref))
       a_EW->m_gridGenerator->generate_z_and_j(a_EW, gref, zgref, Jref);
     else {
-      zgref.insert_sw4_typeersection(a_EW->mZ[gref]);
-      Jref.insert_sw4_typeersection(a_EW->mJ[gref]);
+      zgref.insert_intersection(a_EW->mZ[gref]);
+      Jref.insert_intersection(a_EW->mJ[gref]);
       SYNC_STREAM;
     }
 
@@ -3260,7 +3261,7 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
     float_sw4* b_ = new float_sw4[ldb * nrhs];
     //   float_sw4* x_ = new float_sw4[125];
 
-    //   std::cout << "SOURCE at sw4_typeerface, g= " << g << " (ic,jc,kc)= " << ic
+    //   std::cout << "SOURCE at interface, g= " << g << " (ic,jc,kc)= " << ic
     //   <<
     //      ", " << jc << ", " << kc << std::endl;
     float_sw4 xc = h * (ic - 1);
@@ -3372,7 +3373,7 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
           }
       }
       if (k == 1 || k == Nz) {
-        // On sw4_typeerface, impose special condition on the fine side
+        // On interface, impose special condition on the fine side
         sw4_type gf, icf, jcf, icc, jcc, Nzf;
         const float_sw4 i256 = 1.0 / 256;
         //         std::cout << "SOURCE:  k= " << k << " ic,jc= " << ic << " "
@@ -3678,7 +3679,7 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
         // Discretization on this grid
         for (sw4_type j = jc - 2; j <= jc + 2; j++)
           for (sw4_type i = ic - 2; i <= ic + 2; i++)
-            if (a_EW->sw4_typeerior_point_in_proc(i, j, g)) {
+            if (a_EW->interior_point_in_proc(i, j, g)) {
               sw4_type ind = i - ic + 2 + 5 * (j - jc + 2) + 25 * (k - kc + 2) + 1;
               float_sw4 fx, fy, fz;
               if (gradient) {
@@ -3712,7 +3713,7 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
         if (kk >= Nzp - 3) nwgh = normwgh[Nzp - kk];
         for (sw4_type j = jcref - 2; j <= jcref + 2; j++)
           for (sw4_type i = icref - 2; i <= icref + 2; i++)
-            if (a_EW->sw4_typeerior_point_in_proc(i, j, g + 1)) {
+            if (a_EW->interior_point_in_proc(i, j, g + 1)) {
               sw4_type ind =
                   i - icref + 2 + 5 * (j - jcref + 2) + 25 * (k - kc + 2) + 1;
               float_sw4 fx, fy, fz;
@@ -3754,7 +3755,7 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
         if (kk <= 4) nwgh = normwgh[kk - 1];
         for (sw4_type j = jcref - 2; j <= jcref + 2; j++)
           for (sw4_type i = icref - 2; i <= icref + 2; i++)
-            if (a_EW->sw4_typeerior_point_in_proc(i, j, g - 1)) {
+            if (a_EW->interior_point_in_proc(i, j, g - 1)) {
               sw4_type ind =
                   i - icref + 2 + 5 * (j - jcref + 2) + 25 * (k - kc + 2) + 1;
               float_sw4 fx, fy, fz;
@@ -3805,7 +3806,7 @@ void Source::get_mr_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
 void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
                              float_sw4 s, bool gradient, float_sw4 normwgh[4],
                              vector<GridPointSource*>& point_sources) {
-  // Curvilinear/Cartesian sw4_typeerface with sw4_typeerface conditions imposed.
+  // Curvilinear/Cartesian interface with interface conditions imposed.
 #define CUB(x) (x) * (x) * (x)
 #define BISQR(x) (x) * (x) * (x) * (x)
   //   ic, jc on current grid
@@ -3837,25 +3838,25 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
   // ic-2,..,ic+2 and jc-2,..,jc+2 are not guaranteed to be owned by this
   // processor. Need to supply grid z and Jacobian for all stencil points,
   // extended arrays are being used.
-  if (a_EW->sw4_typeerior_point_in_proc(ic - 2, jc - 2, g) ||
-      a_EW->sw4_typeerior_point_in_proc(ic + 2, jc - 2, g) ||
-      a_EW->sw4_typeerior_point_in_proc(ic - 2, jc + 2, g) ||
-      a_EW->sw4_typeerior_point_in_proc(ic + 2, jc + 2, g) ||
-      a_EW->sw4_typeerior_point_in_proc(icref - 2, jcref - 2, gref) ||
-      a_EW->sw4_typeerior_point_in_proc(icref + 2, jcref - 2, gref) ||
-      a_EW->sw4_typeerior_point_in_proc(icref - 2, jcref + 2, gref) ||
-      a_EW->sw4_typeerior_point_in_proc(icref + 2, jcref + 2, gref)) {
+  if (a_EW->interior_point_in_proc(ic - 2, jc - 2, g) ||
+      a_EW->interior_point_in_proc(ic + 2, jc - 2, g) ||
+      a_EW->interior_point_in_proc(ic - 2, jc + 2, g) ||
+      a_EW->interior_point_in_proc(ic + 2, jc + 2, g) ||
+      a_EW->interior_point_in_proc(icref - 2, jcref - 2, gref) ||
+      a_EW->interior_point_in_proc(icref + 2, jcref - 2, gref) ||
+      a_EW->interior_point_in_proc(icref - 2, jcref + 2, gref) ||
+      a_EW->interior_point_in_proc(icref + 2, jcref + 2, gref)) {
     Sarray zg, Jg, zgref, Jgref;
     sw4_type kll, kul;
     if (g == a_EW->mNumberOfCartesianGrids) {
       // g is curvilinear, gref Cartesian
       zg.define(ic - 2, ic + 2, jc - 2, jc + 2, kc - 2, kc + 2);
       Jg.define(ic - 2, ic + 2, jc - 2, jc + 2, kc - 2, kc + 2);
-      if (!a_EW->sw4_typeerior_point_in_proc(ic, jc, g))
+      if (!a_EW->interior_point_in_proc(ic, jc, g))
         a_EW->m_gridGenerator->generate_z_and_j(a_EW, g, zg, Jg);
       else {
-        zg.insert_sw4_typeersection(a_EW->mZ[g]);
-        Jg.insert_sw4_typeersection(a_EW->mJ[g]);
+        zg.insert_intersection(a_EW->mZ[g]);
+        Jg.insert_intersection(a_EW->mJ[g]);
         SYNC_STREAM;
       }
       sw4_type kll = 1;
@@ -3887,11 +3888,11 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
       kul = Nzp;
       zgref.define(icref - 2, icref + 2, jcref - 2, jcref + 2, kll, kul);
       Jgref.define(icref - 2, icref + 2, jcref - 2, jcref + 2, kll, kul);
-      if (!a_EW->sw4_typeerior_point_in_proc(icref, jcref, gref))
+      if (!a_EW->interior_point_in_proc(icref, jcref, gref))
         a_EW->m_gridGenerator->generate_z_and_j(a_EW, gref, zgref, Jgref);
       else {
-        zgref.insert_sw4_typeersection(a_EW->mZ[gref]);
-        Jgref.insert_sw4_typeersection(a_EW->mJ[gref]);
+        zgref.insert_intersection(a_EW->mZ[gref]);
+        Jgref.insert_intersection(a_EW->mJ[gref]);
         SYNC_STREAM;
       }
     }
@@ -3904,7 +3905,7 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
     float_sw4* b_ = new float_sw4[ldb * nrhs];
     //   float_sw4* x_ = new float_sw4[125];
 
-    //   std::cout << "SOURCE at sw4_typeerface, g= " << g << " (ic,jc,kc)= " << ic
+    //   std::cout << "SOURCE at interface, g= " << g << " (ic,jc,kc)= " << ic
     //   <<
     //      ", " << jc << ", " << kc << std::endl;
     float_sw4 xc = h * (ic - 1);
@@ -4206,7 +4207,7 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
         // Discretization on this grid
         for (sw4_type j = jc - 2; j <= jc + 2; j++)
           for (sw4_type i = ic - 2; i <= ic + 2; i++)
-            if (a_EW->sw4_typeerior_point_in_proc(i, j, g)) {
+            if (a_EW->interior_point_in_proc(i, j, g)) {
               sw4_type ind = i - ic + 2 + 5 * (j - jc + 2) + 25 * (k - kc + 2) + 1;
               float_sw4 fx, fy, fz;
               if (gradient) {
@@ -4223,7 +4224,7 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
               }
               if (fx != 0 || fy != 0 || fz != 0) {
                 float_sw4 ijac = 1.0 / (nwgh * (Jg(i, j, k)));
-                if (k == 1)  // On sw4_typeerface, special
+                if (k == 1)  // On interface, special
                   ijac = 1.0 / (nwgh *
                                 (Jg(i, j, k) +
                                  Jgref(i, j, a_EW->m_global_nz[gref] + k - 1)));
@@ -4242,7 +4243,7 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
         if (kk >= Nzp - 3) nwgh = normwgh[Nzp - kk];
         for (sw4_type j = jcref - 2; j <= jcref + 2; j++)
           for (sw4_type i = icref - 2; i <= icref + 2; i++)
-            if (a_EW->sw4_typeerior_point_in_proc(i, j, g + 1)) {
+            if (a_EW->interior_point_in_proc(i, j, g + 1)) {
               sw4_type ind =
                   i - icref + 2 + 5 * (j - jcref + 2) + 25 * (k - kc + 2) + 1;
               float_sw4 fx, fy, fz;
@@ -4282,7 +4283,7 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
         if (kk <= 4) nwgh = normwgh[kk - 1];
         for (sw4_type j = jcref - 2; j <= jcref + 2; j++)
           for (sw4_type i = icref - 2; i <= icref + 2; i++)
-            if (a_EW->sw4_typeerior_point_in_proc(i, j, g - 1)) {
+            if (a_EW->interior_point_in_proc(i, j, g - 1)) {
               sw4_type ind =
                   i - icref + 2 + 5 * (j - jcref + 2) + 25 * (k - kc + 2) + 1;
               float_sw4 fx, fy, fz;
@@ -4307,7 +4308,7 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
                 //                     std::cout << g-1 << " (i,j,k)" << i << "
                 //                     " << j << " " << kk << " " << wF <<
                 //                     std::endl;
-                if (k == Nz)  // on sw4_typeerface, special
+                if (k == Nz)  // on interface, special
                   ijac = 1.0 / (nwgh * (Jg(i, j, k) + Jgref(i, j, kk)));
                 GridPointSource* sourcePtr =
                     new GridPointSource(mFreq, mT0, i, j, kk, g - 1, fx * ijac,
