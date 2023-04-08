@@ -2291,7 +2291,7 @@ void EW::processFileIO(char* buffer) {
   }
 
   //  if (path != 0) setOutputPath(path);
-  setPrsw4_typeCycle(prsw4_typecycle);
+  setPrintCycle(printcycle);
   setVerbosity(verbose);
   setParallel_IO(pfs, nwriters);
 }
