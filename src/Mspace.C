@@ -22,10 +22,10 @@ struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0, 0,
                                                          0, 1, 0, 0, 0, 0};
 using namespace std;
 
-sw4_type presetGPUID(sw4_type mpi_rank, sw4_type local_rank, sw4_type local_size) {
-  sw4_type dev_counts_local[256] = {0};
-  sw4_type dev_counts_global[256] = {0};
-  sw4_type device = 0;
+int presetGPUID(int mpi_rank, int local_rank, int local_size) {
+  int dev_counts_local[256] = {0};
+  int dev_counts_global[256] = {0};
+  int device = 0;
   // SW4_CheckDeviceError(cudaErrorStartupFailure); // For testing code in
   // CheckError
 #if defined(ENABLE_GPU_ERROR)
@@ -43,7 +43,7 @@ sw4_type presetGPUID(sw4_type mpi_rank, sw4_type local_rank, sw4_type local_size
 #endif  // USE_MAGMA
 
 #ifdef ENABLE_CUDA
-  sw4_type devices_per_node = 4;
+  int devices_per_node = 4;
   SW4_CheckDeviceError(cudaGetDeviceCount(&devices_per_node));
   global_variables.num_devices = devices_per_node;
   if (devices_per_node > 1) {
@@ -78,7 +78,7 @@ sw4_type presetGPUID(sw4_type mpi_rank, sw4_type local_rank, sw4_type local_size
 #endif  // ENDIF ENABLE_CUDA
 
 #ifdef ENABLE_HIP
-  sw4_type devices_per_node = 4;
+  int devices_per_node = 4;
   SW4_CheckDeviceError(hipGetDeviceCount(&devices_per_node));
   //printf("Number of devices is %d\n", devices_per_node);
   fflush(stdout);
@@ -104,7 +104,7 @@ sw4_type presetGPUID(sw4_type mpi_rank, sw4_type local_rank, sw4_type local_size
   }
 #endif  // ENDIF ENABLE_HIP
   dev_counts_local[device] = 1;
-  MPI_Reduce(dev_counts_local, dev_counts_global, devices_per_node, MPI_SW4_TYPE,
+  MPI_Reduce(dev_counts_local, dev_counts_global, devices_per_node, MPI_INT,
              MPI_SUM, 0, MPI_COMM_WORLD);
   if (!mpi_rank)
     for (sw4_type i = 0; i < devices_per_node; i++)

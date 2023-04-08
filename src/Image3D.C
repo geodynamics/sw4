@@ -906,7 +906,7 @@ void EW::read_volimage(std::string& path, std::string& fname,
   }
   // Open file from processor zero and read header.
 
-  sw4_type prec = 0;
+  int prec = 0;
   if (parallel_io[0]->proc_zero()) {
     fid = open(const_cast<char*>(s.str().c_str()), O_RDONLY);
     CHECK_INPUT(fid != -1, "EW::read_image: Error opening: " << s.str());
@@ -996,8 +996,8 @@ void EW::read_volimage(std::string& path, std::string& fname,
   }
 
   parallel_io[0]->writer_barrier();
-  sw4_type tmpprec = prec;
-  MPI_Allreduce(&tmpprec, &prec, 1, MPI_SW4_TYPE, MPI_MAX, MPI_COMM_WORLD);
+  int tmpprec = prec;
+  MPI_Allreduce(&tmpprec, &prec, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
 
   // Open file from all readers
   if (iread && !parallel_io[0]->proc_zero()) {

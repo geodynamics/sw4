@@ -77,7 +77,7 @@ class MaterialRfile : public MaterialData {
 
   bool m_use_attenuation;
 
-  sw4_type m_npatches;
+  int m_npatches;
   // Index range of patch in file coordinate system
   vector<sw4_type> m_ifirst, m_ilast, m_jfirst, m_jlast, m_kfirst, m_klast, m_ni,
       m_nj, m_nk;

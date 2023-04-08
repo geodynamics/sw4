@@ -329,7 +329,7 @@ void CheckPoint::compute_file_suffix(sw4_type cycle, std::stringstream& fileSuff
 }
 
 //-----------------------------------------------------------------------
-void CheckPoint::write_checkpoint(float_sw4 a_time, sw4_type a_cycle,
+void CheckPoint::write_checkpoint(float_sw4 a_time, int a_cycle,
                                   vector<Sarray>& a_Um, vector<Sarray>& a_U,
                                   vector<Sarray*>& a_AlphaVEm,
                                   vector<Sarray*>& a_AlphaVE) {
@@ -372,8 +372,8 @@ void CheckPoint::write_checkpoint(float_sw4 a_time, sw4_type a_cycle,
   cycle_checkpoints(s.str());
 
   // Open file from processor zero and write header.
-  sw4_type hsize;
-  sw4_type fid = -1;
+  int hsize;
+  int fid = -1;
   if (m_parallel_io[0]->proc_zero()) {
     fid = open(const_cast<char*>(s.str().c_str()), O_CREAT | O_TRUNC | O_WRONLY,
                0660);
@@ -388,8 +388,8 @@ void CheckPoint::write_checkpoint(float_sw4 a_time, sw4_type a_cycle,
     fsync(fid);
   }
   //   m_parallel_io[0]->writer_barrier();
-  sw4_type bcast_root = m_parallel_io[0]->proc_zero_rank_in_comm_world();
-  MPI_Bcast(&hsize, 1, MPI_SW4_TYPE, bcast_root, mEW->m_cartesian_communicator);
+  int bcast_root = m_parallel_io[0]->proc_zero_rank_in_comm_world();
+  MPI_Bcast(&hsize, 1, MPI_INT, bcast_root, mEW->m_cartesian_communicator);
   off_t offset = hsize;
 
   // Open file from all writers
@@ -497,8 +497,8 @@ void CheckPoint::read_checkpoint(float_sw4& a_time, sw4_type& a_cycle,
   }
 
   // Open file from processor zero and read header.
-  sw4_type fid = -1;
-  sw4_type hsize;
+  int fid = -1;
+  int hsize;
   if (m_parallel_io[0]->proc_zero()) {
     fid = open(const_cast<char*>(s.str().c_str()), O_RDONLY);
     CHECK_INPUT(fid != -1,
@@ -512,11 +512,11 @@ void CheckPoint::read_checkpoint(float_sw4& a_time, sw4_type& a_cycle,
   //   m_parallel_io[0]->writer_barrier();
 
   // Broadcast read information to all other processors.
-  sw4_type bcast_root = m_parallel_io[0]->proc_zero_rank_in_comm_world();
-  MPI_Bcast(&a_cycle, 1, MPI_SW4_TYPE, bcast_root, mEW->m_cartesian_communicator);
+  int bcast_root = m_parallel_io[0]->proc_zero_rank_in_comm_world();
+  MPI_Bcast(&a_cycle, 1, MPI_INT, bcast_root, mEW->m_cartesian_communicator);
   MPI_Bcast(&a_time, 1, mEW->m_mpifloat, bcast_root,
             mEW->m_cartesian_communicator);
-  MPI_Bcast(&hsize, 1, MPI_SW4_TYPE, bcast_root, mEW->m_cartesian_communicator);
+  MPI_Bcast(&hsize, 1, MPI_INT, bcast_root, mEW->m_cartesian_communicator);
   off_t offset = hsize;
 
   // Open file from all readers
@@ -1247,10 +1247,10 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, sw4_type a_cycle,
               (mWindow[g][5] - mWindow[g][4] + 1);
     npts[g] *= 3;
     myoff[g] = 0;
-    MPI_Exscan(&npts[g], &myoff[g], 1, MPI_LONG_LONG_SW4_TYPE, MPI_SUM,
+    MPI_Exscan(&npts[g], &myoff[g], 1, MPI_LONG_LONG_INT, MPI_SUM,
                MPI_COMM_WORLD);
     total[g] = npts[g] + myoff[g];
-    MPI_Bcast(&total[g], 1, MPI_LONG_LONG_SW4_TYPE, nrank - 1, MPI_COMM_WORLD);
+    MPI_Bcast(&total[g], 1, MPI_LONG_LONG_INT, nrank - 1, MPI_COMM_WORLD);
     /* fprintf(stderr, "Create, g %d, rank %d: off %llu, size %llu, total
      * %llu\n", g, myrank, myoff[g], */
     /*         npts[g], total[g]); */
@@ -1437,9 +1437,9 @@ void CheckPoint::read_checkpoint_hdf5(float_sw4& a_time, sw4_type& a_cycle,
            (mWindow[g][5] - mWindow[g][4] + 1);
     npts *= 3;
     myoff = 0;
-    MPI_Exscan(&npts, &myoff, 1, MPI_LONG_LONG_SW4_TYPE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Exscan(&npts, &myoff, 1, MPI_LONG_LONG_INT, MPI_SUM, MPI_COMM_WORLD);
     total = npts + myoff;
-    MPI_Bcast(&total, 1, MPI_LONG_LONG_SW4_TYPE, nrank - 1, MPI_COMM_WORLD);
+    MPI_Bcast(&total, 1, MPI_LONG_LONG_INT, nrank - 1, MPI_COMM_WORLD);
     /* fprintf(stderr, "rank %d: off %llu, size %llu, total %llu\n", myrank,
      * myoff, npts, total); */
 
