@@ -117,7 +117,7 @@ void MaterialBlock::set_material_properties(std::vector<Sarray>& rho,
   //  sw4_type pc[4];
   // compute the number of parallel overlap points
   //  mEW->interiorPaddingCells( pc );
-  sw4_type material = 0, outside = 0;
+  int material = 0, outside = 0;
 
   for (sw4_type g = 0; g < mEW->mNumberOfCartesianGrids; g++)  // Cartesian grids
   {
@@ -235,9 +235,9 @@ void MaterialBlock::set_material_properties(std::vector<Sarray>& rho,
     }
   }
   // end if topographyExists
-  sw4_type outsideSum, materialSum;
-  MPI_Reduce(&outside, &outsideSum, 1, MPI_SW4_TYPE, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&material, &materialSum, 1, MPI_SW4_TYPE, MPI_SUM, 0, MPI_COMM_WORLD);
+  int outsideSum, materialSum;
+  MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if (mEW->proc_zero())
     cout << "block command: outside = " << outsideSum << ", "
