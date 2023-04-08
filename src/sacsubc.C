@@ -32,7 +32,7 @@
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 #ifndef SACSUB_C
 #define SACSUB_C
-
+#include "sw4.h"
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
@@ -307,7 +307,7 @@ void arsac(sw4_type LN, char *name, float **data, sw4_type *nerr)
       ls = strlen(cval);
       /* check for prsw4_typeing characters */
       for (l = 0; l < 8; l++) {
-        if (isprsw4_type(cval[l]) == 0 || l >= ls) cval[l] = ' ';
+        if (isprint(cval[l]) == 0 || l >= ls) cval[l] = ' ';
       }
       cval[8] = '\0';
       strncpy(sachdr.chdr[i + k], cval, 8);
@@ -400,7 +400,7 @@ void awsac(sw4_type LN, const char *name, float *data)
   for (i = 0; i < 8; i++) {
     for (j = j1; j < j2; j++) {
       for (k = 0; k < 8; k++) {
-        if (isprsw4_type(sachdr.chdr[j][k]))
+        if (isprint(sachdr.chdr[j][k]))
           cval[k] = sachdr.chdr[j][k];
         else
           cval[k] = ' ';

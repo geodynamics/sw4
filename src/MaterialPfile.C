@@ -102,8 +102,8 @@ void MaterialPfile::set_material_properties(std::vector<Sarray> &rho,
   //  bool use_attenuation = m_ew->usingAttenuation();
   //  bool use_attenuation = false;
 
-  sw4_type outside = 0;
-  sw4_type material = 0;
+  int outside = 0;
+  int material = 0;
 
   if (myRank == 0)
     cout << "Assigning material properties from pfile data..." << endl;
@@ -321,9 +321,9 @@ void MaterialPfile::set_material_properties(std::vector<Sarray> &rho,
 
   //  extrapolation is now done in WPP2:set_materials()
 
-  sw4_type outsideSum, materialSum;
-  MPI_Reduce(&outside, &outsideSum, 1, MPI_SW4_TYPE, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&material, &materialSum, 1, MPI_SW4_TYPE, MPI_SUM, 0, MPI_COMM_WORLD);
+  int outsideSum, materialSum;
+  MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if (mEW->proc_zero())
     cout << "outside = " << outsideSum << ", "

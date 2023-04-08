@@ -72,7 +72,7 @@ void MaterialIfile::set_material_properties(std::vector<Sarray>& rho,
          << " defined materials" << endl;
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
-  sw4_type totalPoints = 0, definedPoints = 0;
+  int totalPoints = 0, definedPoints = 0;
   sw4_type g;
   double lon, lat;
   for (g = 0; g < mEw->mNumberOfCartesianGrids; g++)  // Cartesian grids
@@ -225,10 +225,10 @@ void MaterialIfile::set_material_properties(std::vector<Sarray>& rho,
     }              // end for g (curvilinear)
 
   }  // end if topographyExists
-  sw4_type totalPointsSum, materialSum;
-  MPI_Reduce(&totalPoints, &totalPointsSum, 1, MPI_SW4_TYPE, MPI_SUM, 0,
+  int totalPointsSum, materialSum;
+  MPI_Reduce(&totalPoints, &totalPointsSum, 1, MPI_INT, MPI_SUM, 0,
              mEw->m_cartesian_communicator);
-  MPI_Reduce(&definedPoints, &materialSum, 1, MPI_SW4_TYPE, MPI_SUM, 0,
+  MPI_Reduce(&definedPoints, &materialSum, 1, MPI_INT, MPI_SUM, 0,
              mEw->m_cartesian_communicator);
   if (mEw->proc_zero())
     cout << "MaterialIfile:: set_material_properties: Total # points="

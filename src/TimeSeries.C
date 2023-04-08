@@ -165,9 +165,9 @@ TimeSeries::TimeSeries(EW* a_ew, std::string fileName, std::string staName,
   // The following is a safety check to make sure only one processor writes each
   // time series. We could remove this check if we were certain that
   // interior_point_in_proc() never lies
-  sw4_type iwrite = m_myPoint ? 1 : 0;
-  sw4_type counter;
-  MPI_Allreduce(&iwrite, &counter, 1, MPI_SW4_TYPE, MPI_SUM, MPI_COMM_WORLD);
+  int iwrite = m_myPoint ? 1 : 0;
+  int counter;
+  MPI_Allreduce(&iwrite, &counter, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
   a_ew->get_utc(m_utc, m_event);
   //   sw4_type size;
