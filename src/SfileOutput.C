@@ -787,19 +787,19 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
 
     aname = "Attenuation";
     sw4_type att = mEW->usingAttenuation();
-    attr = H5Acreate(h5_fid, aname, H5T_NATIVE_SW4_TYPE, attr_space1, H5P_DEFAULT,
+    attr = H5Acreate(h5_fid, aname, H5T_NATIVE_INT, attr_space1, H5P_DEFAULT,
                      H5P_DEFAULT);
     if (attr < 0)
       VERIFY2(0, "ERROR: SfileOutput::write_image, error creating " << aname);
-    H5Awrite(attr, H5T_NATIVE_SW4_TYPE, &att);
+    H5Awrite(attr, H5T_NATIVE_INT, &att);
     H5Aclose(attr);
 
     aname = "ngrids";
-    attr = H5Acreate(h5_fid, aname, H5T_NATIVE_SW4_TYPE, attr_space1, H5P_DEFAULT,
+    attr = H5Acreate(h5_fid, aname, H5T_NATIVE_INT, attr_space1, H5P_DEFAULT,
                      H5P_DEFAULT);
     if (attr < 0)
       VERIFY2(0, "ERROR: SfileOutput::write_image, error creating " << aname);
-    H5Awrite(attr, H5T_NATIVE_SW4_TYPE, &ng);
+    H5Awrite(attr, H5T_NATIVE_INT, &ng);
     H5Aclose(attr);
 
     aname = "Min, max depth";
@@ -905,11 +905,11 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
 
       aname = "Number of components";
       sw4_type ncomp = m_att ? 5 : 3;
-      attr = H5Acreate(grp2, aname, H5T_NATIVE_SW4_TYPE, attr_space1, H5P_DEFAULT,
+      attr = H5Acreate(grp2, aname, H5T_NATIVE_INT, attr_space1, H5P_DEFAULT,
                        H5P_DEFAULT);
       if (attr < 0)
         VERIFY2(0, "ERROR: SfileOutput::write_image, error creating " << aname);
-      H5Awrite(attr, H5T_NATIVE_SW4_TYPE, &ncomp);
+      H5Awrite(attr, H5T_NATIVE_INT, &ncomp);
       H5Aclose(attr);
 
       globalSize[0] =

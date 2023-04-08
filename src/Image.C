@@ -325,7 +325,7 @@ void Image::computeGridPtIndex() {
     }  // end if in the Cartesian
   }    // end if Z
 
-  sw4_type iwrite = plane_in_proc(m_gridPtIndex[0]) ? 1 : 0;
+  int iwrite = plane_in_proc(m_gridPtIndex[0]) ? 1 : 0;
 
   MPI_Group origGroup, newGroup;
   MPI_Comm_group(MPI_COMM_WORLD, &origGroup);
@@ -337,8 +337,8 @@ void Image::computeGridPtIndex() {
 
   sw4_type size;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  std::vector<sw4_type> writers(size);
-  MPI_Allgather(&iwrite, 1, MPI_SW4_TYPE, &writers[0], 1, MPI_SW4_TYPE, MPI_COMM_WORLD);
+  std::vector<int> writers(size);
+  MPI_Allgather(&iwrite, 1, MPI_INT, &writers[0], 1, MPI_INT, MPI_COMM_WORLD);
   std::vector<sw4_type> fileWriterIDs;
   for (unsigned sw4_type i = 0; i < writers.size(); ++i)
     if (writers[i] == 1) {
@@ -489,7 +489,7 @@ void Image::define_pio() {
     }
     if (!plane_in_proc(m_gridPtIndex[0])) local[0] = local[1] = local[2] = 0;
 
-    sw4_type iwrite = 0;
+    int iwrite = 0;
     // mpiComm_writers consists of all processors that
     // own some part of the image.
     if (m_mpiComm_writers != MPI_COMM_NULL) {
@@ -1190,7 +1190,7 @@ void Image::writeImagePlane_2(sw4_type cycle, std::string& path, float_sw4 t) {
     attr_space1 = H5Screate_simple(1, &dims1, NULL);
 
     nPatches = mLocationType == Image::Z ? 1 : mEW->mNumberOfGrids;
-    ret = createWriteAttr(h5_fid, "npatch", H5T_NATIVE_SW4_TYPE, attr_space1,
+    ret = createWriteAttr(h5_fid, "npatch", H5T_NATIVE_INT, attr_space1,
                           &nPatches);
     if (ret < 0)
       cout
@@ -1211,7 +1211,7 @@ void Image::writeImagePlane_2(sw4_type cycle, std::string& path, float_sw4 t) {
     else
       ltype = 2;
 
-    ret = createWriteAttr(h5_fid, "plane", H5T_NATIVE_SW4_TYPE, attr_space1, &ltype);
+    ret = createWriteAttr(h5_fid, "plane", H5T_NATIVE_INT, attr_space1, &ltype);
     if (ret < 0)
       cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 plane type"
            << endl;
@@ -1228,12 +1228,12 @@ void Image::writeImagePlane_2(sw4_type cycle, std::string& path, float_sw4 t) {
            << endl;
 
     sw4_type imode = static_cast<sw4_type>(mMode);
-    ret = createWriteAttr(h5_fid, "mode", H5T_NATIVE_SW4_TYPE, attr_space1, &imode);
+    ret = createWriteAttr(h5_fid, "mode", H5T_NATIVE_INT, attr_space1, &imode);
     if (ret < 0)
       cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 imode"
            << endl;
 
-    ret = createWriteAttr(h5_fid, "gridinfo", H5T_NATIVE_SW4_TYPE, attr_space1,
+    ret = createWriteAttr(h5_fid, "gridinfo", H5T_NATIVE_INT, attr_space1,
                           &mGridinfo);
     if (ret < 0)
       cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 gridinfo"
@@ -1305,17 +1305,17 @@ void Image::writeImagePlane_2(sw4_type cycle, std::string& path, float_sw4 t) {
           << endl;
     H5Dclose(dset);
 
-    dset = H5Dcreate(h5_fid, "ni", H5T_NATIVE_SW4_TYPE, dset_space, H5P_DEFAULT,
+    dset = H5Dcreate(h5_fid, "ni", H5T_NATIVE_INT, dset_space, H5P_DEFAULT,
                      H5P_DEFAULT, H5P_DEFAULT);
-    ret = H5Dwrite(dset, H5T_NATIVE_SW4_TYPE, H5S_ALL, H5S_ALL, H5P_DEFAULT, ni);
+    ret = H5Dwrite(dset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, ni);
     if (ret < 0)
       cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 ni dataset"
            << endl;
     H5Dclose(dset);
 
-    dset = H5Dcreate(h5_fid, "nj", H5T_NATIVE_SW4_TYPE, dset_space, H5P_DEFAULT,
+    dset = H5Dcreate(h5_fid, "nj", H5T_NATIVE_INT, dset_space, H5P_DEFAULT,
                      H5P_DEFAULT, H5P_DEFAULT);
-    ret = H5Dwrite(dset, H5T_NATIVE_SW4_TYPE, H5S_ALL, H5S_ALL, H5P_DEFAULT, nj);
+    ret = H5Dwrite(dset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, nj);
     if (ret < 0)
       cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 nj dataset"
            << endl;

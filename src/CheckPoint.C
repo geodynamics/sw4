@@ -926,17 +926,17 @@ void CheckPoint::write_header_hdf5(hid_t fid, float_sw4 a_time, sw4_type a_cycle
   hid_t dtype = (m_double ? H5T_NATIVE_DOUBLE : H5T_NATIVE_FLOAT);
 
   sw4_type prec = m_double ? 8 : 4;
-  attr = H5Acreate(fid, "prec", H5T_NATIVE_SW4_TYPE, attr_space, H5P_DEFAULT,
+  attr = H5Acreate(fid, "prec", H5T_NATIVE_INT, attr_space, H5P_DEFAULT,
                    H5P_DEFAULT);
-  ret = H5Awrite(attr, H5T_NATIVE_SW4_TYPE, &prec);
+  ret = H5Awrite(attr, H5T_NATIVE_INT, &prec);
   CHECK_INPUT(ret >= 0,
               "CheckPoint::write_header_hdf5: Error writing precision");
   H5Aclose(attr);
 
   sw4_type ng = mEW->mNumberOfGrids;
-  attr = H5Acreate(fid, "ngrid", H5T_NATIVE_SW4_TYPE, attr_space, H5P_DEFAULT,
+  attr = H5Acreate(fid, "ngrid", H5T_NATIVE_INT, attr_space, H5P_DEFAULT,
                    H5P_DEFAULT);
-  ret = H5Awrite(attr, H5T_NATIVE_SW4_TYPE, &ng);
+  ret = H5Awrite(attr, H5T_NATIVE_INT, &ng);
   CHECK_INPUT(ret >= 0, "CheckPoint::write_header_hdf5: Error writing ng");
   H5Aclose(attr);
 
@@ -945,9 +945,9 @@ void CheckPoint::write_header_hdf5(hid_t fid, float_sw4 a_time, sw4_type a_cycle
   CHECK_INPUT(ret >= 0, "CheckPoint::write_header_hdf5: Error writing time");
   H5Aclose(attr);
 
-  attr = H5Acreate(fid, "cycle", H5T_NATIVE_SW4_TYPE, attr_space, H5P_DEFAULT,
+  attr = H5Acreate(fid, "cycle", H5T_NATIVE_INT, attr_space, H5P_DEFAULT,
                    H5P_DEFAULT);
-  ret = H5Awrite(attr, H5T_NATIVE_SW4_TYPE, &a_cycle);
+  ret = H5Awrite(attr, H5T_NATIVE_INT, &a_cycle);
   CHECK_INPUT(ret >= 0, "CheckPoint::write_header_hdf5: Error writing cycle");
   H5Aclose(attr);
 
@@ -958,17 +958,17 @@ void CheckPoint::write_header_hdf5(hid_t fid, float_sw4 a_time, sw4_type a_cycle
   H5Aclose(attr);
 
   sw4_type nmech = mEW->getNumberOfMechanisms();
-  attr = H5Acreate(fid, "nmesh", H5T_NATIVE_SW4_TYPE, attr_space, H5P_DEFAULT,
+  attr = H5Acreate(fid, "nmesh", H5T_NATIVE_INT, attr_space, H5P_DEFAULT,
                    H5P_DEFAULT);
-  ret = H5Awrite(attr, H5T_NATIVE_SW4_TYPE, &nmech);
+  ret = H5Awrite(attr, H5T_NATIVE_INT, &nmech);
   CHECK_INPUT(ret >= 0, "CheckPoint::write_header_hdf5: Error writing nmech");
   H5Aclose(attr);
 
   sw4_type nrank;
   MPI_Comm_size(mEW->m_cartesian_communicator, &nrank);
-  attr = H5Acreate(fid, "nrank", H5T_NATIVE_SW4_TYPE, attr_space, H5P_DEFAULT,
+  attr = H5Acreate(fid, "nrank", H5T_NATIVE_INT, attr_space, H5P_DEFAULT,
                    H5P_DEFAULT);
-  ret = H5Awrite(attr, H5T_NATIVE_SW4_TYPE, &nrank);
+  ret = H5Awrite(attr, H5T_NATIVE_INT, &nrank);
   CHECK_INPUT(ret >= 0, "CheckPoint::write_header_hdf5: Error writing nrank");
   H5Aclose(attr);
 
@@ -982,9 +982,9 @@ void CheckPoint::write_header_hdf5(hid_t fid, float_sw4 a_time, sw4_type a_cycle
     globalSize[3] = mGlobalDims[g][3] - mGlobalDims[g][2] + 1;
     globalSize[4] = 1;
     globalSize[5] = mGlobalDims[g][5] - mGlobalDims[g][4] + 1;
-    attr = H5Acreate(fid, name, H5T_NATIVE_SW4_TYPE, attr_space6, H5P_DEFAULT,
+    attr = H5Acreate(fid, name, H5T_NATIVE_INT, attr_space6, H5P_DEFAULT,
                      H5P_DEFAULT);
-    ret = H5Awrite(attr, H5T_NATIVE_SW4_TYPE, globalSize);
+    ret = H5Awrite(attr, H5T_NATIVE_INT, globalSize);
     CHECK_INPUT(ret >= 0,
                 "CheckPoint::write_header_hdf5: Error writing global sizes");
     H5Aclose(attr);
@@ -1012,7 +1012,7 @@ void CheckPoint::read_header_hdf5(hid_t fid, float_sw4& a_time, sw4_type& a_cycl
 
   sw4_type prec;
   attr = H5Aopen(fid, "prec", H5P_DEFAULT);
-  ret = H5Aread(attr, H5T_NATIVE_SW4_TYPE, &prec);
+  ret = H5Aread(attr, H5T_NATIVE_INT, &prec);
   H5Aclose(attr);
   CHECK_INPUT(ret >= 0,
               "CheckPoint::read_header_hdf5: Error reading precision");
@@ -1022,7 +1022,7 @@ void CheckPoint::read_header_hdf5(hid_t fid, float_sw4& a_time, sw4_type& a_cycl
           << " does not match precision in solver");
   sw4_type ng;
   attr = H5Aopen(fid, "ngrid", H5P_DEFAULT);
-  ret = H5Aread(attr, H5T_NATIVE_SW4_TYPE, &ng);
+  ret = H5Aread(attr, H5T_NATIVE_INT, &ng);
   H5Aclose(attr);
   CHECK_INPUT(ret >= 0, "CheckPoint::read_header_hdf5: Error reading ng");
   CHECK_INPUT(
@@ -1036,7 +1036,7 @@ void CheckPoint::read_header_hdf5(hid_t fid, float_sw4& a_time, sw4_type& a_cycl
   CHECK_INPUT(ret >= 0, "CheckPoint::read_header_hdf5: Error reading time");
 
   attr = H5Aopen(fid, "cycle", H5P_DEFAULT);
-  ret = H5Aread(attr, H5T_NATIVE_SW4_TYPE, &a_cycle);
+  ret = H5Aread(attr, H5T_NATIVE_INT, &a_cycle);
   H5Aclose(attr);
   CHECK_INPUT(ret >= 0, "CheckPoint::read_header_hdf5: Error reading cycle");
 
@@ -1049,7 +1049,7 @@ void CheckPoint::read_header_hdf5(hid_t fid, float_sw4& a_time, sw4_type& a_cycl
 
   sw4_type nmech;
   attr = H5Aopen(fid, "nmesh", H5P_DEFAULT);
-  ret = H5Aread(attr, H5T_NATIVE_SW4_TYPE, &nmech);
+  ret = H5Aread(attr, H5T_NATIVE_INT, &nmech);
   H5Aclose(attr);
   CHECK_INPUT(ret >= 0, "CheckPoint::read_header_hdf5: Error reading nmech");
   CHECK_INPUT(
@@ -1062,7 +1062,7 @@ void CheckPoint::read_header_hdf5(hid_t fid, float_sw4& a_time, sw4_type& a_cycl
   MPI_Comm_size(mEW->m_cartesian_communicator, &nrank);
 
   attr = H5Aopen(fid, "nrank", H5P_DEFAULT);
-  ret = H5Aread(attr, H5T_NATIVE_SW4_TYPE, &nrank_restart);
+  ret = H5Aread(attr, H5T_NATIVE_INT, &nrank_restart);
   H5Aclose(attr);
   CHECK_INPUT(ret >= 0, "CheckPoint::read_header_hdf5: Error reading nrank");
   CHECK_INPUT(nrank == nrank_restart,
@@ -1075,7 +1075,7 @@ void CheckPoint::read_header_hdf5(hid_t fid, float_sw4& a_time, sw4_type& a_cycl
   for (sw4_type g = 0; g < ng; g++) {
     sprintf(name, "mesh%d", g);
     attr = H5Aopen(fid, name, H5P_DEFAULT);
-    ret = H5Aread(attr, H5T_NATIVE_SW4_TYPE, globalSize);
+    ret = H5Aread(attr, H5T_NATIVE_INT, globalSize);
     H5Aclose(attr);
     CHECK_INPUT(ret >= 0,
                 "CheckPoint::read_header_hdf5: Error reading global sizes");

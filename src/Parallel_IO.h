@@ -103,7 +103,7 @@ class Parallel_IO {
   int m_iwrite;
   sw4_type m_nwriters, m_parallel_file_system;
   sw4_type m_csteps;
-  sw4_type* m_writer_ids;
+  int* m_writer_ids;
   sw4_type ni, nj, nk, nig, njg, nkg, oi, oj, ok;
   sw4_type m_zerorank_in_commworld;
   Byteswapper m_bswap;

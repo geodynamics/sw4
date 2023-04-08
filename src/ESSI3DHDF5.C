@@ -588,7 +588,7 @@ void ESSI3DHDF5::close_file() {
    */
   /*                H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); */
   /* sw4_type cycles[2] = {0, m_end_cycle}; */
-  /* herr_t ierr = H5Dwrite(dataset_id, H5T_NATIVE_SW4_TYPE, H5S_ALL, H5S_ALL, */
+  /* herr_t ierr = H5Dwrite(dataset_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, */
   /*                        H5P_DEFAULT, cycles); */
   /* ierr = H5Dclose(dataset_id); */
   /* ierr = H5Sclose(dataspace_id); */

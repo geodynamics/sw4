@@ -384,7 +384,7 @@ void Parallel_IO::init_pio(sw4_type iwrite, sw4_type pfs, sw4_type ihave_array)
     // writer_ids are the processor ids of the writer processors in the
     // enumeration by the m_data_comm group.
     try {
-      m_writer_ids = new sw4_type[m_nwriters];
+      m_writer_ids = new int[m_nwriters];
     } catch (bad_alloc& ba) {
       cout << "Parallel_IO::init_pio, processor " << gproc
            << ". Allocation of m_writer_ids failed. "
@@ -445,7 +445,8 @@ void Parallel_IO::init_array(sw4_type globalsizes[3], sw4_type localsizes[3],
   sw4_type blsize, s, blocks_in_writer, r, p, b, blnr, kb, ke, l;
   sw4_type ibl, iel, jbl, jel, kbl, kel, nsend;
   int found;
-  sw4_type i, j, q, lims[6], v[6], vr[6], nprocs, tag2, myid;
+  sw4_type i, j, q, lims[6], vr[6], nprocs, tag2, myid;
+  int v[6];
   sw4_type retcode, gproc;
   int* nrecvs;
   size_t nblocks, npts, maxpts;
@@ -745,7 +746,7 @@ void Parallel_IO::init_array(sw4_type globalsizes[3], sw4_type localsizes[3],
           v[5] = m_isend.m_comm_index[5][b - 1][found];
           if (myid != m_writer_ids[p - 1]) {
             retcode =
-                MPI_Send(v, 6, MPI_SW4_TYPE, m_writer_ids[p - 1], tag2, m_data_comm);
+                MPI_Send(v, 6, MPI_INT, m_writer_ids[p - 1], tag2, m_data_comm);
             if (retcode != MPI_SUCCESS) {
               cout << "Parallel_IO::init_array, error from call to MPI_Send. "
                    << "Return code = " << retcode << " from processor " << gproc
@@ -786,7 +787,7 @@ void Parallel_IO::init_array(sw4_type globalsizes[3], sw4_type localsizes[3],
             lims[5] = -1;
             for (i = 0; i < j; i++) {
               if (myid != m_irecv.m_comm_id[b - 1][i]) {
-                retcode = MPI_Recv(vr, 6, MPI_SW4_TYPE, m_irecv.m_comm_id[b - 1][i],
+                retcode = MPI_Recv(vr, 6, MPI_INT, m_irecv.m_comm_id[b - 1][i],
                                    tag2, m_data_comm, &status);
                 if (retcode != MPI_SUCCESS) {
                   cout << "Parallel_IO::init_array, error from call to "
@@ -893,10 +894,10 @@ void Parallel_IO::init_array(sw4_type globalsizes[3], sw4_type localsizes[3],
     //      endl; m_irecv.m_maxbuf = maxptsbz;
 
     if (m_iwrite == 1) {
-      sw4_type bufsize1, bufsize2;
-      MPI_Allreduce(&(m_irecv.m_maxbuf), &bufsize1, 1, MPI_SW4_TYPE, MPI_MAX,
+      int bufsize1, bufsize2;
+      MPI_Allreduce(&(m_irecv.m_maxbuf), &bufsize1, 1, MPI_INT, MPI_MAX,
                     m_write_comm);
-      MPI_Allreduce(&(m_irecv.m_maxiobuf), &bufsize2, 1, MPI_SW4_TYPE, MPI_MAX,
+      MPI_Allreduce(&(m_irecv.m_maxiobuf), &bufsize2, 1, MPI_INT, MPI_MAX,
                     m_write_comm);
       // should check verbose value before prsw4_typeing this...
       // if( myid == m_writer_ids[0] )
@@ -945,7 +946,7 @@ void Parallel_IO::setup_substeps() {
     sw4_type tag = 665 + b;
     MPI_Status status;
     MPI_Request* req;
-    sw4_type* rbuf;
+    int* rbuf;
     // Count the number of substeps
     if (m_iwrite && m_irecv.m_ncomm[b] > 0) {
       sw4_type nsub = 1;
@@ -996,12 +997,12 @@ void Parallel_IO::setup_substeps() {
       m_irecv.m_subcomm[b][s] = m_irecv.m_ncomm[b];
 
       // Communicate the step id to non-io processors
-      rbuf = new sw4_type[m_irecv.m_ncomm[b]];
+      rbuf = new int[m_irecv.m_ncomm[b]];
       for (sw4_type ss = 0; ss < nsub; ss++) {
         for (sw4_type i = m_irecv.m_subcomm[b][ss]; i < m_irecv.m_subcomm[b][ss + 1];
              i++) {
           rbuf[i] = ss;
-          MPI_Isend(&rbuf[i], 1, MPI_SW4_TYPE, m_irecv.m_comm_id[b][i], tag,
+          MPI_Isend(&rbuf[i], 1, MPI_INT, m_irecv.m_comm_id[b][i], tag,
                     m_data_comm, &req[i]);
         }
       }
@@ -1011,9 +1012,9 @@ void Parallel_IO::setup_substeps() {
 
     // Receive the step id
     m_isend.m_subcommlabel[b] = new sw4_type[m_isend.m_ncomm[b]];
-    for (sw4_type i = 0; i < m_isend.m_ncomm[b]; i++) {
-      sw4_type subid;
-      MPI_Recv(&subid, 1, MPI_SW4_TYPE, m_isend.m_comm_id[b][i], tag, m_data_comm,
+    for (int i = 0; i < m_isend.m_ncomm[b]; i++) {
+      int subid;
+      MPI_Recv(&subid, 1, MPI_INT, m_isend.m_comm_id[b][i], tag, m_data_comm,
                &status);
       m_isend.m_subcommlabel[b][i] = subid;
     }
@@ -1735,7 +1736,7 @@ void Parallel_IO::write_array(sw4_type* fid, sw4_type nc, void* array, off_t pos
             if (eno == EAGAIN) cout << "errno = EAGAIN" << endl;
             if (eno == EBADF) cout << "errno = EBADF" << endl;
             if (eno == EFBIG) cout << "errno = EFBIG" << endl;
-            if (eno == ESW4_TYPER) cout << "errno = ESW4_TYPER" << endl;
+            if (eno == EINTR) cout << "errno = EINTR" << endl;
             if (eno == EINVAL) cout << "errno = EINVAL" << endl;
             if (eno == EIO) cout << "errno = EIO" << endl;
             if (eno == ENOSPC) cout << "errno = ENOSPC" << endl;
@@ -2087,22 +2088,22 @@ void Parallel_IO::read_array(sw4_type* fid, sw4_type nc, float_sw4* array, off_t
 //-----------------------------------------------------------------------
 void Parallel_IO::begin_sequential(MPI_Comm comm) {
   if (m_parallel_file_system == 0) {
-    sw4_type mtag, slask, myid;
+    int mtag, slask, myid;
     MPI_Status status;
     mtag = 10;
     MPI_Comm_rank(comm, &myid);
-    if (myid > 0) MPI_Recv(&slask, 1, MPI_SW4_TYPE, myid - 1, mtag, comm, &status);
+    if (myid > 0) MPI_Recv(&slask, 1, MPI_INT, myid - 1, mtag, comm, &status);
   }
 }
 
 //-----------------------------------------------------------------------
 void Parallel_IO::end_sequential(MPI_Comm comm) {
   if (m_parallel_file_system == 0) {
-    sw4_type mtag, slask = 0, myid, nproc;
+    int mtag, slask = 0, myid, nproc;
     mtag = 10;
     MPI_Comm_rank(comm, &myid);
     MPI_Comm_size(comm, &nproc);
-    if (myid < nproc - 1) MPI_Send(&slask, 1, MPI_SW4_TYPE, myid + 1, mtag, comm);
+    if (myid < nproc - 1) MPI_Send(&slask, 1, MPI_INT, myid + 1, mtag, comm);
   }
 }
 
@@ -2158,10 +2159,10 @@ sw4_type Parallel_IO::proc_zero()
 sw4_type Parallel_IO::proc_zero_rank_in_comm_world() {
   if (m_zerorank_in_commworld == -1) {
     // Compute zerorank_in_commworld
-    sw4_type retval = -1;
-    sw4_type myid = -1;
+    int retval = -1;
+    int myid = -1;
     if (proc_zero()) MPI_Comm_rank(MPI_COMM_WORLD, &myid);
-    MPI_Allreduce(&myid, &retval, 1, MPI_SW4_TYPE, MPI_MAX, MPI_COMM_WORLD);
+    MPI_Allreduce(&myid, &retval, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
     m_zerorank_in_commworld = retval;
   }
   return m_zerorank_in_commworld;

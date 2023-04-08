@@ -225,7 +225,7 @@ sw4_type openWriteData(hid_t loc, const char *name, hid_t type_id, void *data,
 
   /* etime = MPI_Wtime(); */
 
-  if (isLast) openWriteAttr(loc, "NPTS", H5T_NATIVE_SW4_TYPE, &total_npts);
+  if (isLast) openWriteAttr(loc, "NPTS", H5T_NATIVE_INT, &total_npts);
 
   /* etime1 = MPI_Wtime(); */
 
@@ -404,7 +404,7 @@ sw4_type createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, sw4_type tot
 
   dt = (float)delta * downsample;
   createWriteAttr(fid, "DELTA", H5T_NATIVE_FLOAT, attr_space1, &dt);
-  createWriteAttr(fid, "DOWNSAMPLE", H5T_NATIVE_SW4_TYPE, attr_space1, &downsample);
+  createWriteAttr(fid, "DOWNSAMPLE", H5T_NATIVE_INT, attr_space1, &downsample);
 
   // o, origin time (seconds, relative to start time of SW4 calculation and
   // seismogram, earliest source)
@@ -432,7 +432,7 @@ sw4_type createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, sw4_type tot
     }
 
     // Number of points
-    createAttr(grp, "NPTS", H5T_NATIVE_SW4_TYPE, attr_space1);
+    createAttr(grp, "NPTS", H5T_NATIVE_INT, attr_space1);
 
     // x, y, z
     createAttr(grp, "STX,STY,STZ", H5T_NATIVE_DOUBLE, attr_space3);
@@ -441,12 +441,12 @@ sw4_type createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, sw4_type tot
     createAttr(grp, "STLA,STLO,STDP", H5T_NATIVE_DOUBLE, attr_space3);
 
     // TODO: Location, no value to write now
-    createAttr(grp, "LOC", H5T_NATIVE_SW4_TYPE, attr_space1);
+    createAttr(grp, "LOC", H5T_NATIVE_INT, attr_space1);
 
     xyzcomponent = TimeSeries[ts]->getXYZcomponent();
     if (!xyzcomponent) isnsew = 1;
 
-    createWriteAttr(grp, "ISNSEW", H5T_NATIVE_SW4_TYPE, attr_space1, &isnsew);
+    createWriteAttr(grp, "ISNSEW", H5T_NATIVE_INT, attr_space1, &isnsew);
 
     cmpazs[0] = TimeSeries[ts]->getXaz();
     cmpazs[1] = TimeSeries[ts]->getXaz() + 90.;
@@ -598,10 +598,10 @@ sw4_type readAttrSw4_Type(hid_t loc, const char *name, sw4_type *data) {
 #ifdef USE_DSET_ATTR
   hid_t dxpl = H5Pcreate(H5P_DATASET_XFER);
   H5Pset_dxpl_mpio(dxpl, H5FD_MPIO_INDEPENDENT);
-  ret = H5Dread(attr, H5T_NATIVE_SW4_TYPE, H5S_ALL, H5S_ALL, dxpl, (void *)data);
+  ret = H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, dxpl, (void *)data);
   H5Pclose(dxpl);
 #else
-  ret = H5Aread(attr, H5T_NATIVE_SW4_TYPE, (void *)data);
+  ret = H5Aread(attr, H5T_NATIVE_INT, (void *)data);
 #endif
   if (ret < 0) {
     printf("%s: Error with H5Aread [%s]\n", __func__, name);

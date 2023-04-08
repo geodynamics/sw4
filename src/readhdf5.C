@@ -162,7 +162,7 @@ static herr_t traverse_func(hid_t loc_id, const char *grp_name,
       attr = H5Dopen(grp, "ISNSEW", H5P_DEFAULT);
       ASSERT(attr > 0);
       ret =
-          H5Dread(attr, H5T_NATIVE_SW4_TYPE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &isnsew);
+          H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &isnsew);
       ASSERT(ret >= 0);
       H5Dclose(attr);
       if (isnsew == 0) {
@@ -423,7 +423,7 @@ static herr_t traverse_func2(hid_t loc_id, const char *grp_name,
       attr = H5Dopen(grp, "ISNSEW", H5P_DEFAULT);
       ASSERT(attr > 0);
       ret =
-          H5Dread(attr, H5T_NATIVE_SW4_TYPE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &isnsew);
+          H5Dread(attr, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &isnsew);
       ASSERT(ret >= 0);
       H5Dclose(attr);
     }
@@ -530,8 +530,8 @@ void readRuptureHDF5(char *fname,
   ctype = H5Tcreate(H5T_COMPOUND, 9 * sizeof(float) + 2 * sizeof(sw4_type));
   H5Tinsert(ctype, "ELON", 0, H5T_NATIVE_FLOAT);
   H5Tinsert(ctype, "ELAT", 1 * sizeof(float), H5T_NATIVE_FLOAT);
-  H5Tinsert(ctype, "NSTK", 2 * sizeof(float), H5T_NATIVE_SW4_TYPE);
-  H5Tinsert(ctype, "NDIP", 2 * sizeof(float) + 1 * sizeof(sw4_type), H5T_NATIVE_SW4_TYPE);
+  H5Tinsert(ctype, "NSTK", 2 * sizeof(float), H5T_NATIVE_INT);
+  H5Tinsert(ctype, "NDIP", 2 * sizeof(float) + 1 * sizeof(sw4_type), H5T_NATIVE_INT);
   H5Tinsert(ctype, "LEN", 2 * sizeof(float) + 2 * sizeof(sw4_type),
             H5T_NATIVE_FLOAT);
   H5Tinsert(ctype, "WID", 3 * sizeof(float) + 2 * sizeof(sw4_type),
@@ -560,13 +560,13 @@ void readRuptureHDF5(char *fname,
   H5Tinsert(dtype, "DEN", 9 * sizeof(float), H5T_NATIVE_FLOAT);
   H5Tinsert(dtype, "RAKE", 10 * sizeof(float), H5T_NATIVE_FLOAT);
   H5Tinsert(dtype, "SLIP1", 11 * sizeof(float), H5T_NATIVE_FLOAT);
-  H5Tinsert(dtype, "NT1", 12 * sizeof(float), H5T_NATIVE_SW4_TYPE);
+  H5Tinsert(dtype, "NT1", 12 * sizeof(float), H5T_NATIVE_INT);
   H5Tinsert(dtype, "SLIP2", 12 * sizeof(float) + 1 * sizeof(sw4_type),
             H5T_NATIVE_FLOAT);
-  H5Tinsert(dtype, "NT2", 13 * sizeof(float) + 1 * sizeof(sw4_type), H5T_NATIVE_SW4_TYPE);
+  H5Tinsert(dtype, "NT2", 13 * sizeof(float) + 1 * sizeof(sw4_type), H5T_NATIVE_INT);
   H5Tinsert(dtype, "SLIP3", 13 * sizeof(float) + 2 * sizeof(sw4_type),
             H5T_NATIVE_FLOAT);
-  H5Tinsert(dtype, "NT3", 14 * sizeof(float) + 2 * sizeof(sw4_type), H5T_NATIVE_SW4_TYPE);
+  H5Tinsert(dtype, "NT3", 14 * sizeof(float) + 2 * sizeof(sw4_type), H5T_NATIVE_INT);
 
   struct srf_meta_t *srf_metadata;
   struct srf_data_t *point_data;

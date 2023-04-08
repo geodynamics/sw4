@@ -446,7 +446,7 @@ void MaterialSfile::read_sfile() {
   sw4_type att;
   attr_id = H5Aopen(file_id, "Attenuation", H5P_DEFAULT);
   ASSERT(attr_id >= 0);
-  ierr = H5Aread(attr_id, H5T_NATIVE_SW4_TYPE, &att);
+  ierr = H5Aread(attr_id, H5T_NATIVE_INT, &att);
   ASSERT(ierr >= 0);
   H5Aclose(attr_id);
 
@@ -466,7 +466,7 @@ void MaterialSfile::read_sfile() {
 
   // ---------- number of blocks on file
   attr_id = H5Aopen(file_id, "ngrids", H5P_DEFAULT);
-  ierr = H5Aread(attr_id, H5T_NATIVE_SW4_TYPE, &m_npatches);
+  ierr = H5Aread(attr_id, H5T_NATIVE_INT, &m_npatches);
   ASSERT(ierr >= 0);
   H5Aclose(attr_id);
 
@@ -505,7 +505,7 @@ void MaterialSfile::read_sfile() {
 
     attr_id = H5Aopen(grid_id, "Number of components", H5P_DEFAULT);
     ASSERT(attr_id >= 0);
-    ierr = H5Aread(attr_id, H5T_NATIVE_SW4_TYPE, &ncblock[p]);
+    ierr = H5Aread(attr_id, H5T_NATIVE_INT, &ncblock[p]);
     ASSERT(ierr >= 0);
     H5Aclose(attr_id);
 
