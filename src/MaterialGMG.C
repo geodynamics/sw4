@@ -309,10 +309,10 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
   }
 
   size_t materialSum, outsideSum;
-  sw4_type mpisizelong, mpisizelonglong, mpisizesw4_type;
+  int mpisizelong, mpisizelonglong, mpisizeint;
   MPI_Type_size(MPI_LONG, &mpisizelong);
   MPI_Type_size(MPI_LONG_LONG, &mpisizelonglong);
-  MPI_Type_size(MPI_SW4_TYPE, &mpisizesw4_type);
+  MPI_Type_size(MPI_INT, &mpisizeint);
   if (sizeof(size_t) == mpisizelong) {
     MPI_Reduce(&material, &materialSum, 1, MPI_LONG, MPI_SUM, 0,
                mEW->m_1d_communicator);
@@ -323,16 +323,16 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
                mEW->m_1d_communicator);
     MPI_Reduce(&outside, &outsideSum, 1, MPI_LONG_LONG, MPI_SUM, 0,
                mEW->m_1d_communicator);
-  } else if (sizeof(size_t) == mpisizesw4_type) {
-    MPI_Reduce(&material, &materialSum, 1, MPI_SW4_TYPE, MPI_SUM, 0,
+  } else if (sizeof(size_t) == mpisizeint) {
+    MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0,
                mEW->m_1d_communicator);
-    MPI_Reduce(&outside, &outsideSum, 1, MPI_SW4_TYPE, MPI_SUM, 0,
+    MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0,
                mEW->m_1d_communicator);
   } else {
-    sw4_type materialsumi, outsidesumi, materiali = material, outsidei = outside;
-    MPI_Reduce(&materiali, &materialsumi, 1, MPI_SW4_TYPE, MPI_SUM, 0,
+    int materialsumi, outsidesumi, materiali = material, outsidei = outside;
+    MPI_Reduce(&materiali, &materialsumi, 1, MPI_INT, MPI_SUM, 0,
                mEW->m_1d_communicator);
-    MPI_Reduce(&outsidei, &outsidesumi, 1, MPI_SW4_TYPE, MPI_SUM, 0,
+    MPI_Reduce(&outsidei, &outsidesumi, 1, MPI_INT, MPI_SUM, 0,
                mEW->m_1d_communicator);
     materialSum = materialsumi;
     outsideSum = outsidesumi;
@@ -400,7 +400,7 @@ void MaterialGMG::read_gmg() {
   herr_t ierr;
   hsize_t dims[4];
   char grid_name[128];
-  sw4_type str_len, hv[5];
+  int str_len, hv[5];
   string fname = m_model_dir + "/" + m_model_file;
 
   // Fixed for GMG grids
@@ -445,7 +445,7 @@ void MaterialGMG::read_gmg() {
     }
 
     m_CRS = read_hdf5_attr_str(file_id, "crs");
-    str_len = (sw4_type)(strlen(m_CRS) + 1);
+    str_len = (int)(strlen(m_CRS) + 1);
 
     group_id = H5Gopen(file_id, "blocks", H5P_DEFAULT);
     ASSERT(group_id >= 0);
@@ -463,10 +463,10 @@ void MaterialGMG::read_gmg() {
               p, dims[0], dims[1], dims[2], dims[3]);
 #endif
 
-      m_ni[p] = (sw4_type)dims[0];
-      m_nj[p] = (sw4_type)dims[1];
-      m_nk[p] = (sw4_type)dims[2];
-      m_nc[p] = (sw4_type)dims[3];
+      m_ni[p] = (int)dims[0];
+      m_nj[p] = (int)dims[1];
+      m_nk[p] = (int)dims[2];
+      m_nc[p] = (int)dims[3];
 
       read_hdf5_attr(dataset_id, H5T_IEEE_F64LE, "z_top", &m_ztop[p]);
       read_hdf5_attr(dataset_id, H5T_IEEE_F64LE, "resolution_horiz", &m_hh[p]);
@@ -534,13 +534,13 @@ void MaterialGMG::read_gmg() {
   MPI_Bcast(&m_Zmin, 1, MPI_DOUBLE, 0, mEW->m_1d_communicator);
   MPI_Bcast(&m_hv[0], m_npatches, MPI_DOUBLE, 0, mEW->m_1d_communicator);
   MPI_Bcast(&m_hh[0], m_npatches, MPI_DOUBLE, 0, mEW->m_1d_communicator);
-  MPI_Bcast(&m_ni[0], m_npatches, MPI_SW4_TYPE, 0, mEW->m_1d_communicator);
-  MPI_Bcast(&m_nj[0], m_npatches, MPI_SW4_TYPE, 0, mEW->m_1d_communicator);
-  MPI_Bcast(&m_nk[0], m_npatches, MPI_SW4_TYPE, 0, mEW->m_1d_communicator);
-  MPI_Bcast(&m_nc[0], m_npatches, MPI_SW4_TYPE, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_ni[0], m_npatches, MPI_INT, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_nj[0], m_npatches, MPI_INT, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_nk[0], m_npatches, MPI_INT, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_nc[0], m_npatches, MPI_INT, 0, mEW->m_1d_communicator);
   MPI_Bcast(&m_ztop[0], m_npatches, MPI_DOUBLE, 0, mEW->m_1d_communicator);
 
-  MPI_Bcast(&str_len, 1, MPI_SW4_TYPE, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&str_len, 1, MPI_INT, 0, mEW->m_1d_communicator);
   MPI_Bcast(m_Top_dims, 2, MPI_LONG_LONG, 0, mEW->m_1d_communicator);
 
   if (mEW->getRank() != 0) {

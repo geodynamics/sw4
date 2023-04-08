@@ -95,7 +95,7 @@ class MaterialGMG : public MaterialData {
   std::string m_model_file, m_model_dir;
 
   bool m_use_attenuation;
-  sw4_type m_npatches;
+  int m_npatches;
   double m_Origin_x, m_Origin_y, m_Yaz, m_Zmax, m_Zmin;
   char* m_CRS;
 #ifdef USE_HDF5
@@ -105,7 +105,7 @@ class MaterialGMG : public MaterialData {
 #endif
   float* m_Top_surface;
   vector<double> m_hv, m_hh, m_ztop;
-  vector<sw4_type> m_ni, m_nj, m_nk, m_nc;
+  vector<int> m_ni, m_nj, m_nk, m_nc;
   vector<float*> m_Material;
 };
 #endif
