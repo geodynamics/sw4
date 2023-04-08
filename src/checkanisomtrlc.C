@@ -2,12 +2,12 @@
 #include "F77_FUNC.h"
 #include "sw4.h"
 extern "C" {
-void F77_FUNC(dspev, DSPEV)(char& JOBZ, char& UPLO, int& N, double* AP,
-                            double* W, double* Z, int& LDZ, double* WORK,
-                            int& INFO);
+void F77_FUNC(dspev, DSPEV)(char& JOBZ, char& UPLO, sw4_type& N, double* AP,
+                            double* W, double* Z, sw4_type& LDZ, double* WORK,
+                            sw4_type& INFO);
 }
-void EW::checkanisomtrl_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, float_sw4* __restrict__ rho,
+void EW::checkanisomtrl_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ rho,
                            float_sw4* __restrict__ c, float_sw4& a_rhomin,
                            float_sw4& a_rhomax, float_sw4& a_eigmin,
                            float_sw4& a_eigmax)
@@ -23,12 +23,12 @@ void EW::checkanisomtrl_ci(int ifirst, int ilast, int jfirst, int jlast,
   {
 #pragma omp for reduction(max : rhomax, eigmax) reduction(min : rhomin, eigmin)
     for (size_t ind = 0; ind < npts; ind++) {
-      int info = 0, six = 6, one = 1;
+      sw4_type info = 0, six = 6, one = 1;
       char n = 'N', l = 'L';
       double a[21], eig[6], work[18], z;
       if (rho[ind] < rhomin) rhomin = rho[ind];
       if (rho[ind] > rhomax) rhomax = rho[ind];
-      for (int m = 0; m < 21; m++) a[m] = c[ind + m * npts];
+      for (sw4_type m = 0; m < 21; m++) a[m] = c[ind + m * npts];
       F77_FUNC(dspev, DSPEV)(n, l, six, a, eig, &z, one, work, info);
       if (info != 0)
         cout << "ERROR in check_anisotropic_materialc:"

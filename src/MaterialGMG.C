@@ -86,15 +86,15 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
   const double cosAz = cos(yazimuthRad);
   const double sinAz = sin(yazimuthRad);
 
-  for (int g = 0; g < mEW->mNumberOfGrids; g++) {
+  for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
     bool curvilinear =
         mEW->topographyExists() && g >= mEW->mNumberOfCartesianGrids;
-    for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i) {
-      for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j) {
+    for (sw4_type i = mEW->m_iStartSw4_Type[g]; i <= mEW->m_iEndSw4_Type[g]; ++i) {
+      for (sw4_type j = mEW->m_jStartSw4_Type[g]; j <= mEW->m_jEndSw4_Type[g]; ++j) {
         float_sw4 x = (i - 1) * mEW->mGridSize[g];
         float_sw4 y = (j - 1) * mEW->mGridSize[g];
 
-        int i0, j0;
+        sw4_type i0, j0;
         double sw4_lon, sw4_lat, gmg_x, gmg_y, gmg_x0, gmg_y0, top;
         mEW->computeGeographicCoord(x, y, sw4_lon, sw4_lat);
         /* printf("\ncomputeGeographicCoord: %f %f %f %f\n", x, y, sw4_lon,
@@ -110,12 +110,12 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
         gmg_x = xRel * cosAz - yRel * sinAz;
         gmg_y = xRel * sinAz + yRel * cosAz;
 
-        i0 = static_cast<int>(floor(gmg_x / m_hh[0]));
-        j0 = static_cast<int>(floor(gmg_y / m_hh[0]));
+        i0 = static_cast<sw4_type>(floor(gmg_x / m_hh[0]));
+        j0 = static_cast<sw4_type>(floor(gmg_y / m_hh[0]));
 
         top = -m_Top_surface[i0 * m_Top_dims[1] + j0];
 
-        for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k) {
+        for (sw4_type k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k) {
           float_sw4 z;
           if (curvilinear)
             z = mEW->mZ[g](i, j, k);
@@ -123,24 +123,24 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
             z = mEW->m_zmin[g] + (k - 1) * mEW->mGridSize[g];
 
           // Deal with some values on top grid that exceeds the topogrophy
-          // interface
+          // sw4_typeerface
           if (g == mEW->mNumberOfGrids - 1 && z < m_Zmin) z = m_Zmin;
 
           // Find which block the current point belongs to
-          int gr;
+          sw4_type gr;
           for (gr = 1; gr < m_npatches; gr++)
             if (z <= top - m_ztop[gr]) break;
 
           gr--;
-          double intf = top - m_ztop[gr];
+          double sw4_typef = top - m_ztop[gr];
 
-          // When sw4 z exceeds gmg interface
-          if (z < intf) z = intf;
+          // When sw4 z exceeds gmg sw4_typeerface
+          if (z < sw4_typef) z = sw4_typef;
 
           // i0, j0, k0 are the coordiates in GMG block
-          i0 = static_cast<int>(floor(gmg_x / m_hh[gr]));
-          j0 = static_cast<int>(floor(gmg_y / m_hh[gr]));
-          int k0 = static_cast<int>(floor((z - intf) / m_hv[gr]));
+          i0 = static_cast<sw4_type>(floor(gmg_x / m_hh[gr]));
+          j0 = static_cast<sw4_type>(floor(gmg_y / m_hh[gr]));
+          sw4_type k0 = static_cast<sw4_type>(floor((z - sw4_typef) / m_hv[gr]));
 
           // (x, y, z) is the coordinate of current grid point
           if (m_Zmin <= z && z <= m_Zmax) {
@@ -153,17 +153,17 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
             if (k0 >= m_nk[gr] - 1) k0 = m_nk[gr] - 2;
             if (k0 < 0) k0 = 0;
 
-            // Use bilinear interpolation always:
+            // Use bilinear sw4_typeerpolation always:
             // Bias stencil near the boundary, need to communicate arrays
             // afterwards.
             float_sw4 wghx = (gmg_x - i0 * m_hh[gr]) / m_hh[gr];
             float_sw4 wghy = (gmg_y - j0 * m_hh[gr]) / m_hh[gr];
-            float_sw4 wghz = (z - intf - k0 * m_hv[gr]) / m_hv[gr];
+            float_sw4 wghz = (z - sw4_typef - k0 * m_hv[gr]) / m_hv[gr];
 
             /* if (x == 80000 && y == 9000) { */
             /*     printf("g=%d, ijk: %d %d %d, lalo: %f %f, converted gmg xyz:
-             * %f %f %f, intf %f, gr %d, ijk %d %d %d, mat %f %f %f\n", */
-            /*             g, i, j, k, sw4_lat, sw4_lon, gmg_x, gmg_y, z, intf,
+             * %f %f %f, sw4_typef %f, gr %d, ijk %d %d %d, mat %f %f %f\n", */
+            /*             g, i, j, k, sw4_lat, sw4_lon, gmg_x, gmg_y, z, sw4_typef,
              * gr, i0, j0, k0, mat(gr,0,i0,j0,k0), mat(gr,1,i0,j0,k0),
              * mat(gr,2,i0,j0,k0) ); */
             /* } */
@@ -209,9 +209,9 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
 
             /* if (x == 80000 && y == 9000) { */
             /*     printf("g=%d, ijk: %d %d %d, lalo: %f %f, converted gmg xyz:
-             * %f %f %f, intf %f, gr %d, ijk %d %d %d, mat %f %f %f, rho=%f\n",
+             * %f %f %f, sw4_typef %f, gr %d, ijk %d %d %d, mat %f %f %f, rho=%f\n",
              */
-            /*             g, i, j, k, sw4_lat, sw4_lon, gmg_x, gmg_y, z, intf,
+            /*             g, i, j, k, sw4_lat, sw4_lon, gmg_x, gmg_y, z, sw4_typef,
              * gr, i0, j0, k0, mat(gr,0,i0,j0,k0), mat(gr,1,i0,j0,k0),
              * mat(gr,2,i0,j0,k0), rho[g](i, j, k)); */
             /* } */
@@ -292,7 +292,7 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
   }        // end for g...
 
   free(m_CRS);
-  for (int i = 0; i < m_npatches; i++) delete[] m_Material[i];
+  for (sw4_type i = 0; i < m_npatches; i++) delete[] m_Material[i];
   delete[] m_Top_surface;
 
   mEW->communicate_arrays(rho);
@@ -309,10 +309,10 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
   }
 
   size_t materialSum, outsideSum;
-  int mpisizelong, mpisizelonglong, mpisizeint;
+  sw4_type mpisizelong, mpisizelonglong, mpisizesw4_type;
   MPI_Type_size(MPI_LONG, &mpisizelong);
   MPI_Type_size(MPI_LONG_LONG, &mpisizelonglong);
-  MPI_Type_size(MPI_INT, &mpisizeint);
+  MPI_Type_size(MPI_SW4_TYPE, &mpisizesw4_type);
   if (sizeof(size_t) == mpisizelong) {
     MPI_Reduce(&material, &materialSum, 1, MPI_LONG, MPI_SUM, 0,
                mEW->m_1d_communicator);
@@ -323,16 +323,16 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
                mEW->m_1d_communicator);
     MPI_Reduce(&outside, &outsideSum, 1, MPI_LONG_LONG, MPI_SUM, 0,
                mEW->m_1d_communicator);
-  } else if (sizeof(size_t) == mpisizeint) {
-    MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0,
+  } else if (sizeof(size_t) == mpisizesw4_type) {
+    MPI_Reduce(&material, &materialSum, 1, MPI_SW4_TYPE, MPI_SUM, 0,
                mEW->m_1d_communicator);
-    MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0,
+    MPI_Reduce(&outside, &outsideSum, 1, MPI_SW4_TYPE, MPI_SUM, 0,
                mEW->m_1d_communicator);
   } else {
-    int materialsumi, outsidesumi, materiali = material, outsidei = outside;
-    MPI_Reduce(&materiali, &materialsumi, 1, MPI_INT, MPI_SUM, 0,
+    sw4_type materialsumi, outsidesumi, materiali = material, outsidei = outside;
+    MPI_Reduce(&materiali, &materialsumi, 1, MPI_SW4_TYPE, MPI_SUM, 0,
                mEW->m_1d_communicator);
-    MPI_Reduce(&outsidei, &outsidesumi, 1, MPI_INT, MPI_SUM, 0,
+    MPI_Reduce(&outsidei, &outsidesumi, 1, MPI_SW4_TYPE, MPI_SUM, 0,
                mEW->m_1d_communicator);
     materialSum = materialsumi;
     outsideSum = outsidesumi;
@@ -358,7 +358,7 @@ void MaterialGMG::set_material_properties(std::vector<Sarray>& rho,
 static void read_hdf5_attr(hid_t loc, hid_t dtype, const char* name,
                            void* data) {
   hid_t attr_id;
-  int ierr;
+  sw4_type ierr;
   attr_id = H5Aopen(loc, name, H5P_DEFAULT);
   ASSERT(attr_id >= 0);
   ierr = H5Aread(attr_id, dtype, data);
@@ -368,7 +368,7 @@ static void read_hdf5_attr(hid_t loc, hid_t dtype, const char* name,
 
 static char* read_hdf5_attr_str(hid_t loc, const char* name) {
   hid_t attr_id, dtype;
-  int ierr;
+  sw4_type ierr;
   char* data = NULL;
 
   attr_id = H5Aopen(loc, name, H5P_DEFAULT);
@@ -391,7 +391,7 @@ static char* read_hdf5_attr_str(hid_t loc, const char* name) {
 void MaterialGMG::read_gmg() {
   // Timers
   double time_start, time_end;
-  /* double intf_start, intf_end, mat_start, mat_end; */
+  /* double sw4_typef_start, sw4_typef_end, mat_start, mat_end; */
   time_start = MPI_Wtime();
 
 #ifdef USE_HDF5
@@ -400,7 +400,7 @@ void MaterialGMG::read_gmg() {
   herr_t ierr;
   hsize_t dims[4];
   char grid_name[128];
-  int str_len, hv[5];
+  sw4_type str_len, hv[5];
   string fname = m_model_dir + "/" + m_model_file;
 
   // Fixed for GMG grids
@@ -445,12 +445,12 @@ void MaterialGMG::read_gmg() {
     }
 
     m_CRS = read_hdf5_attr_str(file_id, "crs");
-    str_len = (int)(strlen(m_CRS) + 1);
+    str_len = (sw4_type)(strlen(m_CRS) + 1);
 
     group_id = H5Gopen(file_id, "blocks", H5P_DEFAULT);
     ASSERT(group_id >= 0);
 
-    for (int p = 0; p < m_npatches; p++) {
+    for (sw4_type p = 0; p < m_npatches; p++) {
       sprintf(grid_name, "vres%dm", hv[p]);
       dataset_id = H5Dopen(group_id, grid_name, H5P_DEFAULT);
       ASSERT(dataset_id >= 0);
@@ -463,17 +463,17 @@ void MaterialGMG::read_gmg() {
               p, dims[0], dims[1], dims[2], dims[3]);
 #endif
 
-      m_ni[p] = (int)dims[0];
-      m_nj[p] = (int)dims[1];
-      m_nk[p] = (int)dims[2];
-      m_nc[p] = (int)dims[3];
+      m_ni[p] = (sw4_type)dims[0];
+      m_nj[p] = (sw4_type)dims[1];
+      m_nk[p] = (sw4_type)dims[2];
+      m_nc[p] = (sw4_type)dims[3];
 
       read_hdf5_attr(dataset_id, H5T_IEEE_F64LE, "z_top", &m_ztop[p]);
       read_hdf5_attr(dataset_id, H5T_IEEE_F64LE, "resolution_horiz", &m_hh[p]);
       read_hdf5_attr(dataset_id, H5T_IEEE_F64LE, "resolution_vert", &m_hv[p]);
 
       // Make assumption is correct with the data
-      ASSERT(hv[p] == (int)m_hv[p]);
+      ASSERT(hv[p] == (sw4_type)m_hv[p]);
       ASSERT(dims[3] == 7);
 
       m_Material[p] = new float[dims[0] * dims[1] * dims[2] * dims[3]]();
@@ -519,7 +519,7 @@ void MaterialGMG::read_gmg() {
     H5Fclose(file_id);
 
     m_Zmin = 1e10;
-    for (int i = 0; i < m_Top_dims[0] * m_Top_dims[1]; i++) {
+    for (sw4_type i = 0; i < m_Top_dims[0] * m_Top_dims[1]; i++) {
       if (-m_Top_surface[i] < m_Zmin) m_Zmin = -m_Top_surface[i];
     }
 
@@ -534,13 +534,13 @@ void MaterialGMG::read_gmg() {
   MPI_Bcast(&m_Zmin, 1, MPI_DOUBLE, 0, mEW->m_1d_communicator);
   MPI_Bcast(&m_hv[0], m_npatches, MPI_DOUBLE, 0, mEW->m_1d_communicator);
   MPI_Bcast(&m_hh[0], m_npatches, MPI_DOUBLE, 0, mEW->m_1d_communicator);
-  MPI_Bcast(&m_ni[0], m_npatches, MPI_INT, 0, mEW->m_1d_communicator);
-  MPI_Bcast(&m_nj[0], m_npatches, MPI_INT, 0, mEW->m_1d_communicator);
-  MPI_Bcast(&m_nk[0], m_npatches, MPI_INT, 0, mEW->m_1d_communicator);
-  MPI_Bcast(&m_nc[0], m_npatches, MPI_INT, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_ni[0], m_npatches, MPI_SW4_TYPE, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_nj[0], m_npatches, MPI_SW4_TYPE, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_nk[0], m_npatches, MPI_SW4_TYPE, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&m_nc[0], m_npatches, MPI_SW4_TYPE, 0, mEW->m_1d_communicator);
   MPI_Bcast(&m_ztop[0], m_npatches, MPI_DOUBLE, 0, mEW->m_1d_communicator);
 
-  MPI_Bcast(&str_len, 1, MPI_INT, 0, mEW->m_1d_communicator);
+  MPI_Bcast(&str_len, 1, MPI_SW4_TYPE, 0, mEW->m_1d_communicator);
   MPI_Bcast(m_Top_dims, 2, MPI_LONG_LONG, 0, mEW->m_1d_communicator);
 
   if (mEW->getRank() != 0) {
@@ -548,7 +548,7 @@ void MaterialGMG::read_gmg() {
      * mEW->getRank(), str_len, m_Top_dims[0], m_Top_dims[1]); */
     m_CRS = new char[str_len]();
     m_Top_surface = new float[m_Top_dims[0] * m_Top_dims[1]];
-    for (int p = 0; p < m_npatches; p++) {
+    for (sw4_type p = 0; p < m_npatches; p++) {
       m_Material[p] = new float[m_ni[p] * m_nj[p] * m_nk[p] * m_nc[p]]();
       ASSERT(m_Material[p]);
     }
@@ -558,7 +558,7 @@ void MaterialGMG::read_gmg() {
   MPI_Bcast(m_Top_surface, m_Top_dims[0] * m_Top_dims[1], MPI_FLOAT, 0,
             mEW->m_1d_communicator);
 
-  for (int p = 0; p < m_npatches; p++)
+  for (sw4_type p = 0; p < m_npatches; p++)
     MPI_Bcast(m_Material[p], m_ni[p] * m_nj[p] * m_nk[p] * m_nc[p], MPI_FLOAT,
               0, mEW->m_1d_communicator);
 
@@ -584,7 +584,7 @@ void MaterialGMG::read_gmg() {
     fprintf(stderr, "Rank %d, surface first last %f, %f\n", mEW->getRank(),
             m_Top_surface[0], m_Top_surface[m_Top_dims[0] * m_Top_dims[1] - 1]);
 
-    for (int i = 0; i < m_npatches; i++) {
+    for (sw4_type i = 0; i < m_npatches; i++) {
       fprintf(stderr, "Rank %d, p=%d, material first last %f, %f\n",
               mEW->getRank(), i, m_Material[i][0],
               m_Material[i][m_ni[i] * m_nj[i] * m_nk[i] * m_nc[i] - 1]);
@@ -609,11 +609,11 @@ void MaterialGMG::read_gmg() {
 //-----------------------------------------------------------------------
 void MaterialGMG::fill_in_fluids() {
   // start from the last (bottom) block and progress upwards
-  for (int p = m_npatches - 1; p >= 0; p--) {
+  for (sw4_type p = m_npatches - 1; p >= 0; p--) {
     /* #pragma omp parallel for */
-    for (int i = 0; i < m_ni[p]; i++) {
-      for (int j = 0; j < m_nj[p]; j++) {
-        int k0 = 0;
+    for (sw4_type i = 0; i < m_ni[p]; i++) {
+      for (sw4_type j = 0; j < m_nj[p]; j++) {
+        sw4_type k0 = 0;
         // Vs is 2 in GMG model
         while (mat(p, 2, i, j, k0) < 0 && k0 < m_nk[p] - 1) k0++;
 
@@ -622,16 +622,16 @@ void MaterialGMG::fill_in_fluids() {
         if (k0 == m_nk[p] - 1 && mat(p, 2, i, j, k0) < 0) {
           // get value from block p+1
           if (p < m_npatches - 1) {
-            int pd = p + 1, id, jd, kd;  // index of donor block
+            sw4_type pd = p + 1, id, jd, kd;  // index of donor block
             float_sw4 xm = i * m_hh[p];
             float_sw4 ym = j * m_hh[p];
             // get closest (id,jd) index on patch pd
-            id = static_cast<int>(xm / m_hh[pd]);
-            jd = static_cast<int>(ym / m_hh[pd]);
+            id = static_cast<sw4_type>(xm / m_hh[pd]);
+            jd = static_cast<sw4_type>(ym / m_hh[pd]);
             kd = 0;  // get value from top of block pd
 
             if (!(id >= 0 && id < m_ni[pd] && jd >= 0 && jd < m_nj[pd])) {
-              // out of bounds: find nearest interior point
+              // out of bounds: find nearest sw4_typeerior point
               if (id > m_ni[pd] - 1) id = m_ni[pd] - 1;
               if (jd > m_nj[pd] - 1) jd = m_nj[pd] - 1;
 
@@ -671,7 +671,7 @@ void MaterialGMG::fill_in_fluids() {
          * j, k0, mat(p,0,i,j,k0)); */
         /* } */
 
-        for (int k = 0; k < k0; k++) {
+        for (sw4_type k = 0; k < k0; k++) {
           mat_assign(p, 0, i, j, k, mat(p, 0, i, j, k0));
           mat_assign(p, 1, i, j, k, mat(p, 1, i, j, k0));
           mat_assign(p, 2, i, j, k, mat(p, 2, i, j, k0));
@@ -688,14 +688,14 @@ void MaterialGMG::fill_in_fluids() {
 
 //-----------------------------------------------------------------------
 void MaterialGMG::material_check(bool water) {
-  bool printsmallcpcs = false;
-  for (int p = 0; p < m_npatches; p++) {
+  bool prsw4_typesmallcpcs = false;
+  for (sw4_type p = 0; p < m_npatches; p++) {
     double csmin = 1e38, cpmin = 1e38, cratmin = 1e38, csmax = -1e38,
            cpmax = -1e38, cratmax = -1e38;
     double rhomin = 1e38, rhomax = -1e38;
-    for (int i = 0; i < m_ni[p]; i++)
-      for (int j = 0; j < m_nj[p]; j++)
-        for (int k = 0; k < m_nk[p]; k++) {
+    for (sw4_type i = 0; i < m_ni[p]; i++)
+      for (sw4_type j = 0; j < m_nj[p]; j++)
+        for (sw4_type k = 0; k < m_nk[p]; k++) {
           if (water || mat(p, 2, i, j, k) > 0) {
             if (mat(p, 0, i, j, k) < rhomin) rhomin = mat(p, 0, i, j, k);
             if (mat(p, 0, i, j, k) > rhomax) rhomax = mat(p, 0, i, j, k);
@@ -706,7 +706,7 @@ void MaterialGMG::material_check(bool water) {
             double crat = mat(p, 1, i, j, k) / mat(p, 2, i, j, k);
             if (crat < cratmin) {
               cratmin = crat;
-              if (printsmallcpcs && crat < 1.41) {
+              if (prsw4_typesmallcpcs && crat < 1.41) {
                 cout << "crat= " << crat << " at " << i << " " << j << " " << k
                      << endl;
                 cout << " material is " << mat(p, 0, i, j, k) << " "
@@ -724,7 +724,7 @@ void MaterialGMG::material_check(bool water) {
                mEW->m_1d_communicator);
     MPI_Reduce(cmaxs, cmaxstot, 4, MPI_DOUBLE, MPI_MAX, 0,
                mEW->m_1d_communicator);
-    int myid;
+    sw4_type myid;
     MPI_Comm_rank(mEW->m_1d_communicator, &myid);
     if (myid == 0)
     //	 if( mEW->getRank()==0 )

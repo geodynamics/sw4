@@ -2,12 +2,12 @@
 #include "F77_FUNC.h"
 
 extern "C" {
-void F77_FUNC(dgesv, DGESV)(int*, int*, double*, int*, int*, double*, int*,
-                            int*);
+void F77_FUNC(dgesv, DGESV)(sw4_type*, sw4_type*, double*, sw4_type*, sw4_type*, double*, sw4_type*,
+                            sw4_type*);
 }
 
-void EW::bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
-                        int wind[36], int nx, int ny, int nz, float_sw4* u,
+void EW::bcfortanisg_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
+                        sw4_type wind[36], sw4_type nx, sw4_type ny, sw4_type nz, float_sw4* u,
                         float_sw4 h, boundaryConditionType bccnd[6],
                         float_sw4 sbop[5], float_sw4* c, float_sw4* bforce1,
                         float_sw4* bforce2, float_sw4* bforce3,
@@ -19,16 +19,16 @@ void EW::bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
   const size_t nij = ni * (je - jb + 1);
   const size_t npts =
       static_cast<size_t>((ie - ib + 1)) * (je - jb + 1) * (ke - kb + 1);
-  for (int s = 0; s < 6; s++) {
+  for (sw4_type s = 0; s < 6; s++) {
     if (bccnd[s] == bDirichlet || bccnd[s] == bSuperGrid) {
       size_t idel = 1 + wind[1 + 6 * s] - wind[6 * s];
       size_t ijdel = idel * (1 + wind[3 + 6 * s] - wind[2 + 6 * s]);
       if (s == 0) {
         //            #pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
           size_t qq = (k - wind[4 + 6 * s]) * ijdel;
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               u[ind] = bforce1[3 * qq];
               u[ind + npts] = bforce1[1 + 3 * qq];
@@ -39,10 +39,10 @@ void EW::bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
         }
       } else if (s == 1) {
         //            #pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
           size_t qq = (k - wind[4 + 6 * s]) * ijdel;
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               u[ind] = bforce2[3 * qq];
               u[ind + npts] = bforce2[1 + 3 * qq];
@@ -53,10 +53,10 @@ void EW::bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
         }
       } else if (s == 2) {
         //            #pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
           size_t qq = (k - wind[4 + 6 * s]) * ijdel;
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               u[ind] = bforce3[3 * qq];
               u[ind + npts] = bforce3[1 + 3 * qq];
@@ -67,10 +67,10 @@ void EW::bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
         }
       } else if (s == 3) {
         //            #pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
           size_t qq = (k - wind[4 + 6 * s]) * ijdel;
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               u[ind] = bforce4[3 * qq];
               u[ind + npts] = bforce4[1 + 3 * qq];
@@ -81,10 +81,10 @@ void EW::bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
         }
       } else if (s == 4) {
         //            #pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
           size_t qq = (k - wind[4 + 6 * s]) * ijdel;
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               u[ind] = bforce5[3 * qq];
               u[ind + npts] = bforce5[1 + 3 * qq];
@@ -95,10 +95,10 @@ void EW::bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
         }
       } else if (s == 5) {
         //            #pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
           size_t qq = (k - wind[4 + 6 * s]) * ijdel;
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               u[ind] = bforce6[3 * qq];
               u[ind + npts] = bforce6[1 + 3 * qq];
@@ -111,9 +111,9 @@ void EW::bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
     } else if (bccnd[s] == bPeriodic) {
       if (s == 0) {
 #pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t indp = ind + nx;
               u[ind] = u[indp];
@@ -122,9 +122,9 @@ void EW::bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
             }
       } else if (s == 1) {
 #pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t indp = ind - nx;
               u[ind] = u[indp];
@@ -133,9 +133,9 @@ void EW::bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
             }
       } else if (s == 2) {
 #pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t indp = ind + ni * ny;
               u[ind] = u[indp];
@@ -144,9 +144,9 @@ void EW::bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
             }
       } else if (s == 3) {
 #pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t indp = ind - ni * ny;
               u[ind] = u[indp];
@@ -155,9 +155,9 @@ void EW::bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
             }
       } else if (s == 4) {
 #pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t indp = ind + nij * nz;
               u[ind] = u[indp];
@@ -166,9 +166,9 @@ void EW::bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
             }
       } else if (s == 5) {
 #pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t indp = ind - nij * nz;
               u[ind] = u[indp];
@@ -182,10 +182,10 @@ void EW::bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
                    << " not implemented for side " << s << endl);
       double s0i = 1 / sbop[0];
       if (s == 4) {
-        int k = 1;
+        sw4_type k = 1;
 #pragma omp parallel for
-        for (int j = jb + 2; j <= je - 2; j++)
-          for (int i = ib + 2; i <= ie - 2; i++) {
+        for (sw4_type j = jb + 2; j <= je - 2; j++)
+          for (sw4_type i = ib + 2; i <= ie - 2; i++) {
             size_t qq = i - ib + ni * (j - jb);
             size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
             float_sw4 du = strx[i - ib] * (d4a * (u[ind + 1] - u[ind - 1]) +
@@ -222,7 +222,7 @@ void EW::bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
                     c[ind + 19 * npts] * dw;
 
             du = dv = dw = 0;
-            for (int w = 1; w <= 4; w++) {
+            for (sw4_type w = 1; w <= 4; w++) {
               du += sbop[w] * u[ind + nij * (w - 1)];
               dv += sbop[w] * u[npts + ind + nij * (w - 1)];
               dw += sbop[w] * u[2 * npts + ind + nij * (w - 1)];
@@ -245,7 +245,7 @@ void EW::bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
             a[6] = c[ind + 14 * npts];
             a[7] = c[ind + 19 * npts];
             a[8] = c[ind + 20 * npts];
-            int dim = 3, one = 1, info = 0, ipiv[3];
+            sw4_type dim = 3, one = 1, info = 0, ipiv[3];
             F77_FUNC(dgesv, DGESV)(&dim, &one, a, &dim, ipiv, x, &dim, &info);
             if (info != 0)
               cout << "ERROR in bcfortanisosg_ci, call to DGESV returned info "
@@ -255,10 +255,10 @@ void EW::bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
             u[2 * npts + ind - nij] = -s0i * x[2];
           }
       } else {
-        int k = nz;
+        sw4_type k = nz;
 #pragma omp parallel for
-        for (int j = jb + 2; j <= je - 2; j++)
-          for (int i = ib + 2; i <= ie - 2; i++) {
+        for (sw4_type j = jb + 2; j <= je - 2; j++)
+          for (sw4_type i = ib + 2; i <= ie - 2; i++) {
             size_t qq = i - ib + ni * (j - jb);
             size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
             float_sw4 du = strx[i - ib] * (d4a * (u[ind + 1] - u[ind - 1]) +
@@ -295,7 +295,7 @@ void EW::bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
                     c[ind + 19 * npts] * dw;
 
             du = dv = dw = 0;
-            for (int w = 1; w <= 4; w++) {
+            for (sw4_type w = 1; w <= 4; w++) {
               du -= sbop[w] * u[ind - nij * (w - 1)];
               dv -= sbop[w] * u[npts + ind - nij * (w - 1)];
               dw -= sbop[w] * u[2 * npts + ind - nij * (w - 1)];
@@ -319,7 +319,7 @@ void EW::bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
             a[6] = c[ind + 14 * npts];
             a[7] = c[ind + 19 * npts];
             a[8] = c[ind + 20 * npts];
-            int dim = 3, one = 1, info = 0, ipiv[3];
+            sw4_type dim = 3, one = 1, info = 0, ipiv[3];
             F77_FUNC(dgesv, DGESV)(&dim, &one, a, &dim, ipiv, x, &dim, &info);
             if (info != 0)
               cout << "ERROR in bcfortanisosg_ci, call to DGESV returned info "

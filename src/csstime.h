@@ -64,13 +64,13 @@
 struct date_time {
   double epoch;
   long date;
-  int year;
-  int month;
+  sw4_type year;
+  sw4_type month;
   char mname[4];
-  int day;
+  sw4_type day;
   long doy;
-  int hour;
-  int minute;
+  sw4_type hour;
+  sw4_type minute;
   float second;
 };
 
@@ -81,7 +81,7 @@ void etoh(struct date_time *dt);      /* epoch to human		*/
 void mdtodate(struct date_time *dt);  /* from epoch to YYYY DOY */
 void timestr(struct date_time *dt, char *str);
 /* 1999 12 31 23:59:59.999	*/
-void timeprintstr(struct date_time *dt, char *str);
+void timeprsw4_typestr(struct date_time *dt, char *str);
 /* epoch jday mon 12,1999 23:59:59.999*/
 
 #endif

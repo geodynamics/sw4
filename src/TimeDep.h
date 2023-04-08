@@ -42,7 +42,7 @@ enum timeDep {
   iSawtooth,
   iSmoothWave,
   iErf,
-  iRickerInt,
+  iRickerSw4_Type,
   iVerySmoothBump,
   iBrune,
   iBruneSmoothed,

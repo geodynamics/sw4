@@ -1,12 +1,12 @@
 #include "EW.h"
 #include "sw4.h"
 //-----------------------------------------------------------------------
-void EW::solerr3_ci(int ib, int ie, int jb, int je, int kb, int ke, float_sw4 h,
+void EW::solerr3_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke, float_sw4 h,
                     float_sw4* __restrict__ uex, float_sw4* __restrict__ u,
                     float_sw4& li, float_sw4& l2, float_sw4& xli,
                     float_sw4 zmin, float_sw4 x0, float_sw4 y0, float_sw4 z0,
-                    float_sw4 radius, int imin, int imax, int jmin, int jmax,
-                    int kmin, int kmax) {
+                    float_sw4 radius, sw4_type imin, sw4_type imax, sw4_type jmin, sw4_type jmax,
+                    sw4_type kmin, sw4_type kmax) {
   li = 0;
   l2 = 0;
   xli = 0;
@@ -17,7 +17,7 @@ void EW::solerr3_ci(int ib, int ie, int jb, int je, int kb, int ke, float_sw4 h,
   const float_sw4 h3 = h * h * h;
   const size_t nijk = nij * (ke - kb + 1);
 
-  for (int c = 0; c < 3; c++) {
+  for (sw4_type c = 0; c < 3; c++) {
     float_sw4 liloc = 0, l2loc = 0, xliloc = 0;
 #pragma omp parallel for reduction(max : liloc, xliloc) reduction(+ : l2loc)
     for (size_t k = kmin; k <= kmax; k++)
@@ -46,8 +46,8 @@ void EW::solerr3_ci(int ib, int ie, int jb, int je, int kb, int ke, float_sw4 h,
 }
 
 //-----------------------------------------------------------
-void EW::solerrgp_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                     int klast, float_sw4 h, float_sw4* __restrict__ uex,
+void EW::solerrgp_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                     sw4_type klast, float_sw4 h, float_sw4* __restrict__ uex,
                      float_sw4* __restrict__ u, float_sw4& li, float_sw4& l2) {
   const size_t ni = ilast - ifirst + 1;
   const size_t nij = ni * (jlast - jfirst + 1);
@@ -56,12 +56,12 @@ void EW::solerrgp_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
   const size_t base = -(ifirst + ni * jfirst + nij * kfirst);
   li = 0;
   l2 = 0;
-  //   int k=kfirst+1;
-  for (int c = 0; c < 3; c++) {
+  //   sw4_type k=kfirst+1;
+  for (sw4_type c = 0; c < 3; c++) {
     float_sw4 liloc = 0, l2loc = 0;
 #pragma omp parallel for reduction(max : liloc) reduction(+ : l2loc)
-    for (int j = jfirst + 2; j <= jlast - 2; j++)
-      for (int i = ifirst + 2; i <= ilast - 2; i++) {
+    for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
+      for (sw4_type i = ifirst + 2; i <= ilast - 2; i++) {
         // exact solution in array 'uex'
         size_t ind = base + i + ni * j + nij * (kfirst + 1) + nijk * c;
         float_sw4 err = abs(u[ind] - uex[ind]);
@@ -78,11 +78,11 @@ void EW::solerrgp_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
     l2 += l2loc;
   }
   //      k=klast-1;
-  for (int c = 0; c < 3; c++) {
+  for (sw4_type c = 0; c < 3; c++) {
     float_sw4 liloc = 0, l2loc = 0;
 #pragma omp parallel for reduction(max : liloc) reduction(+ : l2loc)
-    for (int j = jfirst + 2; j <= jlast - 2; j++)
-      for (int i = ifirst + 2; i <= ilast - 2; i++) {
+    for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
+      for (sw4_type i = ifirst + 2; i <= ilast - 2; i++) {
         size_t ind = base + i + ni * j + nij * (klast - 1) + nijk * c;
         float_sw4 err = abs(u[ind] - uex[ind]);
         if (liloc < err) {
@@ -100,14 +100,14 @@ void EW::solerrgp_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 }
 
 //-----------------------------------------------------------------------
-void EW::solerr3c_ci(int ib, int ie, int jb, int je, int kb, int ke,
+void EW::solerr3c_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                      float_sw4* __restrict__ uex, float_sw4* __restrict__ u,
                      float_sw4* __restrict__ x, float_sw4* __restrict__ y,
                      float_sw4* __restrict__ z, float_sw4* __restrict__ jac,
                      float_sw4& li, float_sw4& l2, float_sw4& xli, float_sw4 x0,
-                     float_sw4 y0, float_sw4 z0, float_sw4 radius, int imin,
-                     int imax, int jmin, int jmax, int kmin, int kmax,
-                     int usesg, float_sw4* __restrict__ strx,
+                     float_sw4 y0, float_sw4 z0, float_sw4 radius, sw4_type imin,
+                     sw4_type imax, sw4_type jmin, sw4_type jmax, sw4_type kmin, sw4_type kmax,
+                     sw4_type usesg, float_sw4* __restrict__ strx,
                      float_sw4* __restrict__ stry) {
   li = 0;
   l2 = 0;
@@ -119,7 +119,7 @@ void EW::solerr3c_ci(int ib, int ie, int jb, int je, int kb, int ke,
   const size_t nijk = nij * (ke - kb + 1);
   const size_t base = -(ib + ni * jb + nij * kb);
 
-  for (int c = 0; c < 3; c++) {
+  for (sw4_type c = 0; c < 3; c++) {
     float_sw4 liloc = 0, xliloc = 0, l2loc = 0;
 #pragma omp parallel for reduction(max : liloc, xliloc) reduction(+ : l2loc)
     for (size_t k = kmin; k <= kmax; k++)
@@ -155,23 +155,23 @@ void EW::solerr3c_ci(int ib, int ie, int jb, int je, int kb, int ke,
 //
 // LLNL: SW4 ICE in clangtana with -qsmp=omp (152435).
 // Use workaround below until this is fixed.
-void EW::meterr4c_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                     int klast, float_sw4* __restrict__ met,
+void EW::meterr4c_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                     sw4_type klast, float_sw4* __restrict__ met,
                      float_sw4* __restrict__ metex, float_sw4* __restrict__ jac,
                      float_sw4* __restrict__ jacex, float_sw4 li[5],
-                     float_sw4 l2[5], int imin, int imax, int jmin, int jmax,
-                     int kmin, int kmax, float_sw4 h) {
+                     float_sw4 l2[5], sw4_type imin, sw4_type imax, sw4_type jmin, sw4_type jmax,
+                     sw4_type kmin, sw4_type kmax, float_sw4 h) {
   const size_t ni = ilast - ifirst + 1;
   const size_t nij = ni * (jlast - jfirst + 1);
   const size_t nijk = nij * (klast - kfirst + 1);
   const size_t base = -(ifirst + ni * jfirst + nij * kfirst);
 
-  for (int c = 0; c < 5; c++) li[c] = l2[c] = 0;
+  for (sw4_type c = 0; c < 5; c++) li[c] = l2[c] = 0;
 
   const float_sw4 isqh = 1 / sqrt(h);
   const float_sw4 ih3 = 1 / (h * h * h);
 #pragma omp parallel
-  for (int c = 0; c < 5; c++)
+  for (sw4_type c = 0; c < 5; c++)
 #pragma omp for reduction(max : li[:5]) reduction(+ : l2[:5])
     for (size_t k = kmin; k <= kmax; k++)
       for (size_t j = jmin; j <= jmax; j++)
@@ -188,24 +188,24 @@ void EW::meterr4c_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 }
 #else
 //-----------------------------------------------------------------------
-void EW::meterr4c_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                     int klast, float_sw4* __restrict__ met,
+void EW::meterr4c_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                     sw4_type klast, float_sw4* __restrict__ met,
                      float_sw4* __restrict__ metex, float_sw4* __restrict__ jac,
                      float_sw4* __restrict__ jacex, float_sw4 li[5],
-                     float_sw4 l2[5], int imin, int imax, int jmin, int jmax,
-                     int kmin, int kmax, float_sw4 h) {
+                     float_sw4 l2[5], sw4_type imin, sw4_type imax, sw4_type jmin, sw4_type jmax,
+                     sw4_type kmin, sw4_type kmax, float_sw4 h) {
   const size_t ni = ilast - ifirst + 1;
   const size_t nij = ni * (jlast - jfirst + 1);
   const size_t nijk = nij * (klast - kfirst + 1);
   const size_t base = -(ifirst + ni * jfirst + nij * kfirst);
 
-  for (int c = 0; c < 5; c++) li[c] = l2[c] = 0;
+  for (sw4_type c = 0; c < 5; c++) li[c] = l2[c] = 0;
 
   float_sw4 tmp_li;
   float_sw4 tmp_l2;
   const float_sw4 isqh = 1 / sqrt(h);
   const float_sw4 ih3 = 1 / (h * h * h);
-  for (int c = 0; c < 5; c++) {
+  for (sw4_type c = 0; c < 5; c++) {
     tmp_li = li[c];
     tmp_l2 = l2[c];
 #pragma omp parallel for reduction(max : tmp_li) reduction(+ : tmp_l2)

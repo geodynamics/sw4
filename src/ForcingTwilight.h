@@ -51,7 +51,7 @@ class ForcingTwilight {
   float_sw4 m_omega, m_c, m_phase, m_momega, m_mphase, m_amprho, m_ampmu,
       m_amplambda;
   bool m_use_attenuation;
-  int m_number_mechanisms;
+  sw4_type m_number_mechanisms;
 
  private:
   ForcingTwilight(const ForcingTwilight&);

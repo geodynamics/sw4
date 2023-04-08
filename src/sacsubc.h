@@ -40,38 +40,38 @@
 #define False 0
 
 #ifdef MSDOS
-#define INT long
+#define SW4_TYPE long
 #else
-#define INT int
+#define SW4_TYPE sw4_type
 #endif
 
 /* data structures */
 
 struct sachdr_ {
   float rhdr[70];
-  INT ihdr[40];
+  SW4_TYPE ihdr[40];
   char chdr[24][8];
 };
 
 /* function prototypes */
-void scmxmn(float *x, int npts, float *depmax, float *depmin, float *depmen);
+void scmxmn(float *x, sw4_type npts, float *depmax, float *depmin, float *depmen);
 
-void brsac(int npts, char *name, float **data, int *nerr);
-void arsac(int npts, char *name, float **data, int *nerr);
-void getfhv(char *strcmd, float *fval, int *nerr);
-void getnhv(char *strcmd, int *ival, int *nerr);
-void getkhv(char *strcmd, char *cval, int *nerr);
-void getlhv(char *strcmd, int *lval, int *nerr);
-void bwsac(int npts, const char *name, float *data);
-void awsac(int npts, const char *name, float *data);
-void setfhv(const char *strcmd, float fval, int *nerr);
-void setnhv(const char *strcmd, int ival, int *nerr);
-void setkhv(const char *strcmd, char *cval, int *nerr);
-void setlhv(const char *strcmd, int lval, int *nerr);
+void brsac(sw4_type npts, char *name, float **data, sw4_type *nerr);
+void arsac(sw4_type npts, char *name, float **data, sw4_type *nerr);
+void getfhv(char *strcmd, float *fval, sw4_type *nerr);
+void getnhv(char *strcmd, sw4_type *ival, sw4_type *nerr);
+void getkhv(char *strcmd, char *cval, sw4_type *nerr);
+void getlhv(char *strcmd, sw4_type *lval, sw4_type *nerr);
+void bwsac(sw4_type npts, const char *name, float *data);
+void awsac(sw4_type npts, const char *name, float *data);
+void setfhv(const char *strcmd, float fval, sw4_type *nerr);
+void setnhv(const char *strcmd, sw4_type ival, sw4_type *nerr);
+void setkhv(const char *strcmd, char *cval, sw4_type *nerr);
+void setlhv(const char *strcmd, sw4_type lval, sw4_type *nerr);
 void newhdr(void);
 void inihdr(void);
-void getihv(char *strcmd, char *strval, int *nerr);
-void setihv(const char *strcmd, const char *strval, int *nerr);
-int streql(const char *str1, const char *str2);
+void getihv(char *strcmd, char *strval, sw4_type *nerr);
+void setihv(const char *strcmd, const char *strval, sw4_type *nerr);
+sw4_type streql(const char *str1, const char *str2);
 
 #endif

@@ -34,7 +34,7 @@
 #include "MaterialInvtest.h"
 
 //-----------------------------------------------------------------------
-MaterialInvtest::MaterialInvtest(EW* a_ew, int nr) : mEW(a_ew), m_nr(nr) {
+MaterialInvtest::MaterialInvtest(EW* a_ew, sw4_type nr) : mEW(a_ew), m_nr(nr) {
   mCoversAllPoints = true;
 }
 
@@ -44,10 +44,10 @@ void MaterialInvtest::set_material_properties(std::vector<Sarray>& rho,
                                               std::vector<Sarray>& cp,
                                               std::vector<Sarray>& xis,
                                               std::vector<Sarray>& xip) {
-  int ifirst, ilast, jfirst, jlast, kfirst, klast;
+  sw4_type ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *rho_ptr, *cs_ptr, *cp_ptr;
 
-  for (int g = 0; g < mEW->mNumberOfCartesianGrids; g++) {
+  for (sw4_type g = 0; g < mEW->mNumberOfCartesianGrids; g++) {
     rho_ptr = rho[g].c_ptr();
     cs_ptr = cs[g].c_ptr();
     cp_ptr = cp[g].c_ptr();
@@ -63,7 +63,7 @@ void MaterialInvtest::set_material_properties(std::vector<Sarray>& rho,
                 cp_ptr, h, zmin, m_nr);
   }
   if (mEW->topographyExists()) {
-    int g = mEW->mNumberOfGrids - 1;
+    sw4_type g = mEW->mNumberOfGrids - 1;
     rho_ptr = rho[g].c_ptr();
     cs_ptr = cs[g].c_ptr();
     cp_ptr = cp[g].c_ptr();
@@ -83,10 +83,10 @@ void MaterialInvtest::set_material_properties(std::vector<Sarray>& rho,
 }
 
 //-----------------------------------------------------------------------
-void MaterialInvtest::invtestmtrl(int ib, int ie, int jb, int je, int kb,
-                                  int ke, float_sw4* rho, float_sw4* cs,
+void MaterialInvtest::invtestmtrl(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb,
+                                  sw4_type ke, float_sw4* rho, float_sw4* cs,
                                   float_sw4* cp, float_sw4 h, float_sw4 zmin,
-                                  int nr) {
+                                  sw4_type nr) {
   const float_sw4 ep = 0.01;
   const float_sw4 pi2 = atan(1.0) * 8;  // 2*pi
   const float_sw4 om = pi2;
@@ -128,11 +128,11 @@ void MaterialInvtest::invtestmtrl(int ib, int ie, int jb, int je, int kb,
     Lz = 200;
   }
   size_t ind = 0;
-  for (int k = kb; k <= ke; k++) {
+  for (sw4_type k = kb; k <= ke; k++) {
     float_sw4 z = zmin + (k - 1) * h;
-    for (int j = jb; j <= je; j++) {
+    for (sw4_type j = jb; j <= je; j++) {
       float_sw4 y = (j - 1) * h;
-      for (int i = ib; i <= ie; i++) {
+      for (sw4_type i = ib; i <= ie; i++) {
         float_sw4 x = (i - 1) * h;
         if (nr == 1) {
           rho[ind] = 1 + ep * sin(om * x + 0.13) * sin(om * y) * sin(om * z);
@@ -174,10 +174,10 @@ void MaterialInvtest::invtestmtrl(int ib, int ie, int jb, int je, int kb,
 }
 
 //-----------------------------------------------------------------------
-void MaterialInvtest::invtestmtrlc(int ib, int ie, int jb, int je, int kb,
-                                   int ke, float_sw4* rho, float_sw4* cs,
+void MaterialInvtest::invtestmtrlc(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb,
+                                   sw4_type ke, float_sw4* rho, float_sw4* cs,
                                    float_sw4* cp, float_sw4* xx, float_sw4* yy,
-                                   float_sw4* zz, int nr) {
+                                   float_sw4* zz, sw4_type nr) {
   const float_sw4 ep = 0.01;
   const float_sw4 pi2 = atan(1.0) * 8;  // 2*pi
   const float_sw4 om = pi2;
@@ -219,9 +219,9 @@ void MaterialInvtest::invtestmtrlc(int ib, int ie, int jb, int je, int kb,
     Lz = 200;
   }
   size_t ind = 0;
-  for (int k = kb; k <= ke; k++)
-    for (int j = jb; j <= je; j++)
-      for (int i = ib; i <= ie; i++) {
+  for (sw4_type k = kb; k <= ke; k++)
+    for (sw4_type j = jb; j <= je; j++)
+      for (sw4_type i = ib; i <= ie; i++) {
         float_sw4 x = xx[ind];
         float_sw4 y = yy[ind];
         float_sw4 z = zz[ind];

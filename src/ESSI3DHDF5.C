@@ -49,8 +49,8 @@ using std::cout;
 ESSI3DHDF5* ESSI3DHDF5::nil = static_cast<ESSI3DHDF5*>(0);
 
 //-----------------------------------------------------------------------
-ESSI3DHDF5::ESSI3DHDF5(const std::string& filename, int (&global)[3],
-                       int (&window)[6], bool ihavearray, int precision)
+ESSI3DHDF5::ESSI3DHDF5(const std::string& filename, sw4_type (&global)[3],
+                       sw4_type (&window)[6], bool ihavearray, sw4_type precision)
     : m_end_cycle(-1),
       m_filename(filename),
       m_ihavearray(ihavearray),
@@ -58,12 +58,12 @@ ESSI3DHDF5::ESSI3DHDF5(const std::string& filename, int (&global)[3],
 #ifdef USE_HDF5
   bool debug = false;
   /* debug = true; */
-  for (int d = 0; d < 3; d++) {
+  for (sw4_type d = 0; d < 3; d++) {
     m_global[d] = global[d];
     m_window[2 * d] = window[2 * d];          // lo, relative to global
     m_window[2 * d + 1] = window[2 * d + 1];  // hi
   }
-  int myRank;
+  sw4_type myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
   if (debug) {
     char msg[1000];
@@ -85,7 +85,7 @@ ESSI3DHDF5::ESSI3DHDF5(const std::string& filename, int (&global)[3],
   m_window_dims[0] = 1;  // write one time step
   m_cycle_dims[0] = 1;   // this will become cycle-1
 
-  for (int d = 1; d < 4; d++) {
+  for (sw4_type d = 1; d < 4; d++) {
     m_window_dims[d] = m_window[2 * (d - 1) + 1] - m_window[2 * (d - 1)] + 1;
     m_global_dims[d] = m_global[d - 1];
     m_cycle_dims[d] = m_global[d - 1];
@@ -112,7 +112,7 @@ void ESSI3DHDF5::create_file(bool is_restart, bool is_root) {
   hid_t fapl = H5Pcreate(H5P_FILE_ACCESS);
   H5Pset_libver_bounds(fapl, H5F_LIBVER_LATEST, H5F_LIBVER_LATEST);
 
-  int m_rank;
+  sw4_type m_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &m_rank);
   if (is_restart) {
     if (!is_root) {
@@ -152,12 +152,12 @@ void ESSI3DHDF5::create_file(bool is_restart, bool is_root) {
 }
 
 void ESSI3DHDF5::write_header(double h, double (&lonlat_origin)[2], double az,
-                              double (&origin)[3], int cycle, double t,
+                              double (&origin)[3], sw4_type cycle, double t,
                               double dt) {
 #ifdef USE_HDF5
   bool debug = false;
   /* debug=true; */
-  int myRank;
+  sw4_type myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
   // Add all the metadata to the file
@@ -235,7 +235,7 @@ void ESSI3DHDF5::write_topo(void* window_array) {
   bool debug = false;
   /* debug=true; */
   MPI_Comm comm = MPI_COMM_WORLD;
-  int myRank;
+  sw4_type myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
   hid_t dtype = H5T_NATIVE_DOUBLE;
@@ -248,8 +248,8 @@ void ESSI3DHDF5::write_topo(void* window_array) {
   char msg[1000];
   if (debug) {
     sprintf(msg, "Rank %d creating z dataspace size = %d %d %d\n", myRank,
-            (int)m_global_dims[0], (int)m_global_dims[1],
-            (int)m_global_dims[2]);
+            (sw4_type)m_global_dims[0], (sw4_type)m_global_dims[1],
+            (sw4_type)m_global_dims[2]);
     cerr << msg;
   }
 
@@ -267,7 +267,7 @@ void ESSI3DHDF5::write_topo(void* window_array) {
 
   if (debug) {
     sprintf(msg, "Rank %d creating chunk/slice size = %d %d %d\n", myRank,
-            (int)m_slice_dims[1], (int)m_slice_dims[2], (int)m_slice_dims[3]);
+            (sw4_type)m_slice_dims[1], (sw4_type)m_slice_dims[2], (sw4_type)m_slice_dims[3]);
     cerr << msg;
   }
 
@@ -288,7 +288,7 @@ void ESSI3DHDF5::write_topo(void* window_array) {
   // We should write data
   if (debug) {
     sprintf(msg, "Rank %d selecting z hyperslab = %d %d %d\n", myRank,
-            (int)start[0], (int)start[1], (int)start[2]);
+            (sw4_type)start[0], (sw4_type)start[1], (sw4_type)start[2]);
     cerr << msg;
   }
   hid_t window_id = H5Screate_simple(z_dims, &m_window_dims[1], NULL);
@@ -319,14 +319,14 @@ void ESSI3DHDF5::write_topo(void* window_array) {
 #endif
   return;
 }
-void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
-                                int compressionMode, double compressionPar,
-                                int bufferInterval) {
+void ESSI3DHDF5::init_write_vel(bool isRestart, sw4_type ntimestep,
+                                sw4_type compressionMode, double compressionPar,
+                                sw4_type bufferSw4_Typeerval) {
   bool debug = false;
   /* debug=true; */
 
 #ifdef USE_HDF5
-  int myRank, nProc;
+  sw4_type myRank, nProc;
 
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
   MPI_Comm_size(MPI_COMM_WORLD, &nProc);
@@ -353,11 +353,11 @@ void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
                   MPI_MAX, MPI_COMM_WORLD);
 
     // Keep last dimension (z)
-    for (int i = 1; i < 3; i++) {
+    for (sw4_type i = 1; i < 3; i++) {
       if (my_chunk[i] > 4) my_chunk[i] = ((hsize_t)(my_chunk[i] / 4)) * 4;
     }
 
-    my_chunk[0] = bufferInterval;
+    my_chunk[0] = bufferSw4_Typeerval;
 
     char* env_char = NULL;
     env_char = getenv("SSI_CHUNK_X");
@@ -370,7 +370,7 @@ void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
     if (env_char != NULL) my_chunk[3] = atoi(env_char);
 
     hsize_t total_chunk_size = m_precision;
-    for (int i = 0; i < num_dims; i++) total_chunk_size *= my_chunk[i];
+    for (sw4_type i = 0; i < num_dims; i++) total_chunk_size *= my_chunk[i];
 
     // Make sure chunk size is less than 4GB, which is the HDF5 chunk limit
     while (total_chunk_size >= 4294967295llu) {
@@ -386,7 +386,7 @@ void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
     if (myRank == 0) {
       /* if (debug && myRank == 0) { */
       printf("SSI ouput chunk sizes:");
-      for (int i = 0; i < num_dims; i++) printf("%llu  ", my_chunk[i]);
+      for (sw4_type i = 0; i < num_dims; i++) printf("%llu  ", my_chunk[i]);
       printf("\n");
       fflush(stdout);
     }
@@ -394,13 +394,13 @@ void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
     if (compressionMode == SW4_SZIP) {
       H5Pset_szip(prop_id, H5_SZIP_NN_OPTION_MASK, 32);
     } else if (compressionMode == SW4_ZLIB) {
-      H5Pset_deflate(prop_id, (int)compressionPar);
+      H5Pset_deflate(prop_id, (sw4_type)compressionPar);
     }
 #ifdef USE_ZFP
     else if (compressionMode == SW4_ZFP_MODE_RATE) {
       H5Pset_zfp_rate(prop_id, compressionPar);
     } else if (compressionMode == SW4_ZFP_MODE_PRECISION) {
-      H5Pset_zfp_precision(prop_id, (unsigned int)compressionPar);
+      H5Pset_zfp_precision(prop_id, (unsigned sw4_type)compressionPar);
     } else if (compressionMode == SW4_ZFP_MODE_ACCURACY) {
       H5Pset_zfp_accuracy(prop_id, compressionPar);
     } else if (compressionMode == SW4_ZFP_MODE_REVERSIBLE) {
@@ -410,8 +410,8 @@ void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
 #ifdef USE_SZ
     else if (compressionMode == SW4_SZ) {
       size_t cd_nelmts;
-      unsigned int* cd_values = NULL;
-      int dataType = SZ_DOUBLE;
+      unsigned sw4_type* cd_values = NULL;
+      sw4_type dataType = SZ_DOUBLE;
       if (m_precision == 4) dataType = SZ_FLOAT;
       SZ_metaDataToCdArray(&cd_nelmts, &cd_values, dataType, 0, m_cycle_dims[3],
                            m_cycle_dims[2], m_cycle_dims[1], m_cycle_dims[0]);
@@ -424,15 +424,15 @@ void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
   if (debug && myRank == 0) {
     char msg[1000];
     sprintf(msg, "Rank %d creating vel dataspaces size = %d %d %d %d\n", myRank,
-            (int)m_cycle_dims[0], (int)m_cycle_dims[1], (int)m_cycle_dims[2],
-            (int)m_cycle_dims[3]);
+            (sw4_type)m_cycle_dims[0], (sw4_type)m_cycle_dims[1], (sw4_type)m_cycle_dims[2],
+            (sw4_type)m_cycle_dims[3]);
     cerr << msg;
     fflush(stdout);
   }
 
   hid_t dset, dspace;
   if (myRank == 0) {
-    for (int c = 0; c < 3; c++) {
+    for (sw4_type c = 0; c < 3; c++) {
       dspace = H5Screate_simple(num_dims, m_cycle_dims, m_cycle_dims);
       char var[100];
       sprintf(var, "vel_%d ijk layout", c);
@@ -458,7 +458,7 @@ void ESSI3DHDF5::init_write_vel(bool isRestart, int ntimestep,
   return;
 }
 
-void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
+void ESSI3DHDF5::write_vel(void* window_array, sw4_type comp, sw4_type cycle, sw4_type nstep) {
   bool enable_timing = true;
   bool debug = false;
   /* debug=true; */
@@ -466,8 +466,8 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
 
   herr_t ierr;
   double write_time_start, write_time;
-  int myRank;
-  int write_size = m_precision;
+  sw4_type myRank;
+  sw4_type write_size = m_precision;
   m_end_cycle = cycle;  // save for header for later when we close the file
   time_t now;
 
@@ -480,7 +480,7 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
   hid_t dtype = H5T_NATIVE_DOUBLE;
   if (m_precision == 4) dtype = H5T_NATIVE_FLOAT;
 
-  for (int i = 0; i < 4; i++) write_size *= m_window_dims[i];
+  for (sw4_type i = 0; i < 4; i++) write_size *= m_window_dims[i];
 
   if (enable_timing) write_time_start = MPI_Wtime();
 
@@ -504,16 +504,16 @@ void ESSI3DHDF5::write_vel(void* window_array, int comp, int cycle, int nstep) {
     printf(
         "Rank %d: cycle=%d, nstep=%d, writing vel start = %d %d %d %d, size = "
         "%d %d %d %d, time: %s",
-        myRank, cycle, nstep, (int)start[0], (int)start[1], (int)start[2],
-        (int)start[3], (int)buf_window_dims[0], (int)buf_window_dims[1],
-        (int)buf_window_dims[2], (int)buf_window_dims[3], ctime(&now));
+        myRank, cycle, nstep, (sw4_type)start[0], (sw4_type)start[1], (sw4_type)start[2],
+        (sw4_type)start[3], (sw4_type)buf_window_dims[0], (sw4_type)buf_window_dims[1],
+        (sw4_type)buf_window_dims[2], (sw4_type)buf_window_dims[3], ctime(&now));
     fflush(stdout);
   }
 
   hid_t dset, dspace;
   hsize_t my_size = 1;
   hsize_t num_dims = 4;
-  for (int i = 0; i < vel_dims; i++) my_size *= m_window_dims[i];
+  for (sw4_type i = 0; i < vel_dims; i++) my_size *= m_window_dims[i];
 
   dspace = H5Screate_simple(num_dims, m_cycle_dims, m_cycle_dims);
 
@@ -587,8 +587,8 @@ void ESSI3DHDF5::close_file() {
   /*     H5Dcreate2(m_file_id, "cycle start, end", H5T_STD_I32LE, dataspace_id,
    */
   /*                H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT); */
-  /* int cycles[2] = {0, m_end_cycle}; */
-  /* herr_t ierr = H5Dwrite(dataset_id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, */
+  /* sw4_type cycles[2] = {0, m_end_cycle}; */
+  /* herr_t ierr = H5Dwrite(dataset_id, H5T_NATIVE_SW4_TYPE, H5S_ALL, H5S_ALL, */
   /*                        H5P_DEFAULT, cycles); */
   /* ierr = H5Dclose(dataset_id); */
   /* ierr = H5Sclose(dataspace_id); */

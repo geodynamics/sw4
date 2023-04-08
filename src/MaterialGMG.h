@@ -62,7 +62,7 @@ class MaterialGMG : public MaterialData {
   void fill_in_fluids();
   void material_check(bool water);
 
-  float mat(int gr, int c, int i, int j, int k) {
+  float mat(sw4_type gr, sw4_type c, sw4_type i, sw4_type j, sw4_type k) {
 #ifdef BZ_DEBUG
     ASSERT(m_npatches > 0);
     ASSERT(gr >= 0 && gr < m_npatches);
@@ -75,7 +75,7 @@ class MaterialGMG : public MaterialData {
                           j * m_nk[gr] * m_nc[gr] + k * m_nc[gr] + c];
   };
 
-  void mat_assign(int gr, int c, int i, int j, int k, float v) {
+  void mat_assign(sw4_type gr, sw4_type c, sw4_type i, sw4_type j, sw4_type k, float v) {
 #ifdef BZ_DEBUG
     ASSERT(m_npatches > 0);
     ASSERT(gr >= 0 && gr < m_npatches);
@@ -95,7 +95,7 @@ class MaterialGMG : public MaterialData {
   std::string m_model_file, m_model_dir;
 
   bool m_use_attenuation;
-  int m_npatches;
+  sw4_type m_npatches;
   double m_Origin_x, m_Origin_y, m_Yaz, m_Zmax, m_Zmin;
   char* m_CRS;
 #ifdef USE_HDF5
@@ -105,7 +105,7 @@ class MaterialGMG : public MaterialData {
 #endif
   float* m_Top_surface;
   vector<double> m_hv, m_hh, m_ztop;
-  vector<int> m_ni, m_nj, m_nk, m_nc;
+  vector<sw4_type> m_ni, m_nj, m_nk, m_nc;
   vector<float*> m_Material;
 };
 #endif

@@ -36,13 +36,13 @@
 #include "caliper.h"
 #include "policies.h"
 //-----------------------------------------------------------------------
-void EW::bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
-                   int nx, int ny, int nz, float_sw4* u, float_sw4 h,
+void EW::bcfort_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke, sw4_type wind[36],
+                   sw4_type nx, sw4_type ny, sw4_type nz, float_sw4* u, float_sw4 h,
                    boundaryConditionType bccnd[6], float_sw4 sbop[5],
                    float_sw4* mu, float_sw4* la, float_sw4 t,
                    float_sw4* bforce1, float_sw4* bforce2, float_sw4* bforce3,
                    float_sw4* bforce4, float_sw4* bforce5, float_sw4* bforce6,
-                   float_sw4 om, float_sw4 ph, float_sw4 cv, int curvilinear) {
+                   float_sw4 om, float_sw4 ph, float_sw4 cv, sw4_type curvilinear) {
   SW4_MARK_FUNCTION;
   const float_sw4 d4a = 2.0 / 3.0;
   const float_sw4 d4b = -1.0 / 12.0;
@@ -50,16 +50,16 @@ void EW::bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
   const size_t nij = ni * (je - jb + 1);
   const size_t npts =
       static_cast<size_t>((ie - ib + 1)) * (je - jb + 1) * (ke - kb + 1);
-  for (int s = 0; s < 6; s++) {
+  for (sw4_type s = 0; s < 6; s++) {
     if (bccnd[s] == bDirichlet || bccnd[s] == bSuperGrid) {
       size_t idel = 1 + wind[1 + 6 * s] - wind[6 * s];
       size_t ijdel = idel * (1 + wind[3 + 6 * s] - wind[2 + 6 * s]);
       if (s == 0) {
         //#pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
           size_t qq = (k - wind[4 + 6 * s]) * ijdel;
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               u[ind] = bforce1[3 * qq];
               u[ind + npts] = bforce1[1 + 3 * qq];
@@ -70,10 +70,10 @@ void EW::bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
         }
       } else if (s == 1) {
         //#pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
           size_t qq = (k - wind[4 + 6 * s]) * ijdel;
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               u[ind] = bforce2[3 * qq];
               u[ind + npts] = bforce2[1 + 3 * qq];
@@ -84,10 +84,10 @@ void EW::bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
         }
       } else if (s == 2) {
         //#pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
           size_t qq = (k - wind[4 + 6 * s]) * ijdel;
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               u[ind] = bforce3[3 * qq];
               u[ind + npts] = bforce3[1 + 3 * qq];
@@ -98,10 +98,10 @@ void EW::bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
         }
       } else if (s == 3) {
         //#pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
           size_t qq = (k - wind[4 + 6 * s]) * ijdel;
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               u[ind] = bforce4[3 * qq];
               u[ind + npts] = bforce4[1 + 3 * qq];
@@ -111,11 +111,11 @@ void EW::bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
           }
         }
       } else if (s == 4) {
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
           size_t qq = (k - wind[4 + 6 * s]) * ijdel;
           //#pragma omp parallel for
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               u[ind] = bforce5[3 * qq];
               u[ind + npts] = bforce5[1 + 3 * qq];
@@ -125,11 +125,11 @@ void EW::bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
           }
         }
       } else if (s == 5) {
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++) {
           size_t qq = (k - wind[4 + 6 * s]) * ijdel;
           //#pragma omp parallel for
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++) {
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               u[ind] = bforce6[3 * qq];
               u[ind + npts] = bforce6[1 + 3 * qq];
@@ -142,9 +142,9 @@ void EW::bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
     } else if (bccnd[s] == bPeriodic) {
       if (s == 0) {
 #pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t indp = ind + nx;
               u[ind] = u[indp];
@@ -153,9 +153,9 @@ void EW::bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
             }
       } else if (s == 1) {
 #pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t indp = ind - nx;
               u[ind] = u[indp];
@@ -164,9 +164,9 @@ void EW::bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
             }
       } else if (s == 2) {
 #pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t indp = ind + ni * ny;
               u[ind] = u[indp];
@@ -175,9 +175,9 @@ void EW::bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
             }
       } else if (s == 3) {
 #pragma omp parallel for
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t indp = ind - ni * ny;
               u[ind] = u[indp];
@@ -185,10 +185,10 @@ void EW::bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
               u[ind + 2 * npts] = u[indp + 2 * npts];
             }
       } else if (s == 4) {
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
 #pragma omp parallel for
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t indp = ind + nij * nz;
               u[ind] = u[indp];
@@ -196,10 +196,10 @@ void EW::bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
               u[ind + 2 * npts] = u[indp + 2 * npts];
             }
       } else if (s == 5) {
-        for (int k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
+        for (sw4_type k = wind[4 + 6 * s]; k <= wind[5 + 6 * s]; k++)
 #pragma omp parallel for
-          for (int j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
-            for (int i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
+          for (sw4_type j = wind[2 + 6 * s]; j <= wind[3 + 6 * s]; j++)
+            for (sw4_type i = wind[6 * s]; i <= wind[1 + 6 * s]; i++) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t indp = ind - nij * nz;
               u[ind] = u[indp];
@@ -212,10 +212,10 @@ void EW::bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
                                      << " not implemented for side " << s
                                      << endl);
       if (s == 4 && curvilinear == 0) {
-        int k = 1, kl = 1;
+        sw4_type k = 1, kl = 1;
 #pragma omp parallel for
-        for (int j = jb + 2; j <= je - 2; j++)
-          for (int i = ib + 2; i <= ie - 2; i++) {
+        for (sw4_type j = jb + 2; j <= je - 2; j++)
+          for (sw4_type i = ib + 2; i <= ie - 2; i++) {
             size_t qq = i - ib + ni * (j - jb);
             size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
             float_sw4 wx =
@@ -230,7 +230,7 @@ void EW::bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
                 d4a * (u[npts + ind + ni] - u[npts + ind - ni]) +
                 d4b * (u[npts + ind + 2 * ni] - u[npts + ind - 2 * ni]);
             float_sw4 uz = 0, vz = 0, wz = 0;
-            for (int w = 1; w <= 4; w++) {
+            for (sw4_type w = 1; w <= 4; w++) {
               uz += sbop[w] * u[ind + nij * kl * (w - 1)];
               vz += sbop[w] * u[npts + ind + nij * kl * (w - 1)];
               wz += sbop[w] * u[2 * npts + ind + nij * kl * (w - 1)];
@@ -247,10 +247,10 @@ void EW::bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
                 sbop[0];
           }
       } else if (s == 5 && curvilinear == 0) {
-        int k = nz, kl = -1;
+        sw4_type k = nz, kl = -1;
 #pragma omp parallel for
-        for (int j = jb + 2; j <= je - 2; j++)
-          for (int i = ib + 2; i <= ie - 2; i++) {
+        for (sw4_type j = jb + 2; j <= je - 2; j++)
+          for (sw4_type i = ib + 2; i <= ie - 2; i++) {
             size_t qq = i - ib + ni * (j - jb);
             size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
             float_sw4 wx =
@@ -265,7 +265,7 @@ void EW::bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
                 d4a * (u[npts + ind + ni] - u[npts + ind - ni]) +
                 d4b * (u[npts + ind + 2 * ni] - u[npts + ind - 2 * ni]);
             float_sw4 uz = 0, vz = 0, wz = 0;
-            for (int w = 1; w <= 4; w++) {
+            for (sw4_type w = 1; w <= 4; w++) {
               uz += sbop[w] * u[ind + nij * kl * (w - 1)];
               vz += sbop[w] * u[npts + ind + nij * kl * (w - 1)];
               wz += sbop[w] * u[2 * npts + ind + nij * kl * (w - 1)];
@@ -287,8 +287,8 @@ void EW::bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
 }
 
 //-----------------------------------------------------------------------
-void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
-                     int wind[36], int nx, int ny, int nz, float_sw4* u,
+void EW::bcfortsg_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
+                     sw4_type wind[36], sw4_type nx, sw4_type ny, sw4_type nz, float_sw4* u,
                      float_sw4 h, boundaryConditionType bccnd[6],
                      float_sw4 sbop[5], float_sw4* mu, float_sw4* la,
                      float_sw4 t, float_sw4* bforce1, float_sw4* bforce2,
@@ -303,29 +303,29 @@ void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
   const size_t npts =
       static_cast<size_t>((ie - ib + 1)) * (je - jb + 1) * (ke - kb + 1);
 
-  for (int s = 0; s < 6; s++) {
+  for (sw4_type s = 0; s < 6; s++) {
     if (bccnd[s] == bDirichlet || bccnd[s] == bSuperGrid) {
       // std::cout<<"SET 1 "<<s<<"\n";
       // size_t idel = 1+wind[1+6*s]-wind[6*s];
       // size_t ijdel = idel * (1+wind[3+6*s]-wind[2+6*s]);
       if (s == 0) {
         // PREFETCH(bforce1);
-        int lni = wind[1 + 6 * s] - wind[6 * s] + 1;
-        int lnij = (wind[3 + 6 * s] - wind[2 + 6 * s] + 1) * lni;
-        int istart = wind[6 * s];
-        int jstart = wind[2 + 6 * s];
-        int kstart = wind[4 + 6 * s];
+        sw4_type lni = wind[1 + 6 * s] - wind[6 * s] + 1;
+        sw4_type lnij = (wind[3 + 6 * s] - wind[2 + 6 * s] + 1) * lni;
+        sw4_type istart = wind[6 * s];
+        sw4_type jstart = wind[2 + 6 * s];
+        sw4_type kstart = wind[4 + 6 * s];
         RAJA::RangeSegment k_range(kstart, wind[5 + 6 * s] + 1);
         RAJA::RangeSegment j_range(jstart, wind[3 + 6 * s] + 1);
         RAJA::RangeSegment i_range(istart, wind[1 + 6 * s] + 1);
         //#pragma omp parallel for
-        // for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
+        // for( sw4_type k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
         //    size_t qq = (k-wind[4+6*s])*ijdel;
-        //    for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
-        // 	  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
+        //    for( sw4_type j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
+        // 	  for( sw4_type i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
         RAJA::kernel<BCFORT_EXEC_POL2_ASYNC>(
             RAJA::make_tuple(k_range, j_range, i_range),
-            [=] RAJA_DEVICE(int k, int j, int i) {
+            [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t qq =
                   (k - kstart) * lnij + (j - jstart) * lni + (i - istart);
@@ -338,22 +338,22 @@ void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
         // }
       } else if (s == 1) {
         // PREFETCH(bforce2);
-        int lni = wind[1 + 6 * s] - wind[6 * s] + 1;
-        int lnij = (wind[3 + 6 * s] - wind[2 + 6 * s] + 1) * lni;
-        int istart = wind[6 * s];
-        int jstart = wind[2 + 6 * s];
-        int kstart = wind[4 + 6 * s];
+        sw4_type lni = wind[1 + 6 * s] - wind[6 * s] + 1;
+        sw4_type lnij = (wind[3 + 6 * s] - wind[2 + 6 * s] + 1) * lni;
+        sw4_type istart = wind[6 * s];
+        sw4_type jstart = wind[2 + 6 * s];
+        sw4_type kstart = wind[4 + 6 * s];
         RAJA::RangeSegment k_range(kstart, wind[5 + 6 * s] + 1);
         RAJA::RangeSegment j_range(jstart, wind[3 + 6 * s] + 1);
         RAJA::RangeSegment i_range(istart, wind[1 + 6 * s] + 1);
         //#pragma omp parallel for
-        // for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
+        // for( sw4_type k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
         //    size_t qq = (k-wind[4+6*s])*ijdel;
-        //    for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
-        // 	  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
+        //    for( sw4_type j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
+        // 	  for( sw4_type i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
         RAJA::kernel<BCFORT_EXEC_POL2_ASYNC>(
             RAJA::make_tuple(k_range, j_range, i_range),
-            [=] RAJA_DEVICE(int k, int j, int i) {
+            [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t qq =
                   (k - kstart) * lnij + (j - jstart) * lni + (i - istart);
@@ -366,22 +366,22 @@ void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
         // }
       } else if (s == 2) {
         // PREFETCH(bforce3);
-        int lni = wind[1 + 6 * s] - wind[6 * s] + 1;
-        int lnij = (wind[3 + 6 * s] - wind[2 + 6 * s] + 1) * lni;
-        int istart = wind[6 * s];
-        int jstart = wind[2 + 6 * s];
-        int kstart = wind[4 + 6 * s];
+        sw4_type lni = wind[1 + 6 * s] - wind[6 * s] + 1;
+        sw4_type lnij = (wind[3 + 6 * s] - wind[2 + 6 * s] + 1) * lni;
+        sw4_type istart = wind[6 * s];
+        sw4_type jstart = wind[2 + 6 * s];
+        sw4_type kstart = wind[4 + 6 * s];
         RAJA::RangeSegment k_range(kstart, wind[5 + 6 * s] + 1);
         RAJA::RangeSegment j_range(jstart, wind[3 + 6 * s] + 1);
         RAJA::RangeSegment i_range(istart, wind[1 + 6 * s] + 1);
         //#pragma omp parallel for
-        // for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
+        // for( sw4_type k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
         //    size_t qq = (k-wind[4+6*s])*ijdel;
-        //    for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
-        // 	  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
+        //    for( sw4_type j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
+        // 	  for( sw4_type i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
         RAJA::kernel<BCFORT_EXEC_POL2_ASYNC>(
             RAJA::make_tuple(k_range, j_range, i_range),
-            [=] RAJA_DEVICE(int k, int j, int i) {
+            [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t qq =
                   (k - kstart) * lnij + (j - jstart) * lni + (i - istart);
@@ -394,22 +394,22 @@ void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
         //  }
       } else if (s == 3) {
         // PREFETCH(bforce4);
-        int lni = wind[1 + 6 * s] - wind[6 * s] + 1;
-        int lnij = (wind[3 + 6 * s] - wind[2 + 6 * s] + 1) * lni;
-        int istart = wind[6 * s];
-        int jstart = wind[2 + 6 * s];
-        int kstart = wind[4 + 6 * s];
+        sw4_type lni = wind[1 + 6 * s] - wind[6 * s] + 1;
+        sw4_type lnij = (wind[3 + 6 * s] - wind[2 + 6 * s] + 1) * lni;
+        sw4_type istart = wind[6 * s];
+        sw4_type jstart = wind[2 + 6 * s];
+        sw4_type kstart = wind[4 + 6 * s];
         RAJA::RangeSegment k_range(kstart, wind[5 + 6 * s] + 1);
         RAJA::RangeSegment j_range(jstart, wind[3 + 6 * s] + 1);
         RAJA::RangeSegment i_range(istart, wind[1 + 6 * s] + 1);
         //#pragma omp parallel for
-        // for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
+        // for( sw4_type k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
         //    size_t qq = (k-wind[4+6*s])*ijdel;
-        //    for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
-        // 	  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
+        //    for( sw4_type j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
+        // 	  for( sw4_type i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
         RAJA::kernel<BCFORT_EXEC_POL2_ASYNC>(
             RAJA::make_tuple(k_range, j_range, i_range),
-            [=] RAJA_DEVICE(int k, int j, int i) {
+            [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t qq =
                   (k - kstart) * lnij + (j - jstart) * lni + (i - istart);
@@ -422,22 +422,22 @@ void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
         //   }
       } else if (s == 4) {
         PREFETCH(bforce5);
-        int lni = wind[1 + 6 * s] - wind[6 * s] + 1;
-        int lnij = (wind[3 + 6 * s] - wind[2 + 6 * s] + 1) * lni;
-        int istart = wind[6 * s];
-        int jstart = wind[2 + 6 * s];
-        int kstart = wind[4 + 6 * s];
+        sw4_type lni = wind[1 + 6 * s] - wind[6 * s] + 1;
+        sw4_type lnij = (wind[3 + 6 * s] - wind[2 + 6 * s] + 1) * lni;
+        sw4_type istart = wind[6 * s];
+        sw4_type jstart = wind[2 + 6 * s];
+        sw4_type kstart = wind[4 + 6 * s];
         RAJA::RangeSegment k_range(kstart, wind[5 + 6 * s] + 1);
         RAJA::RangeSegment j_range(jstart, wind[3 + 6 * s] + 1);
         RAJA::RangeSegment i_range(istart, wind[1 + 6 * s] + 1);
-        // for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
+        // for( sw4_type k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
         //    size_t qq = (k-wind[4+6*s])*ijdel;
         //    //#pragma omp parallel for
-        //    for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
-        // 	  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
+        //    for( sw4_type j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
+        // 	  for( sw4_type i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
         RAJA::kernel<BCFORT_EXEC_POL2_ASYNC>(
             RAJA::make_tuple(k_range, j_range, i_range),
-            [=] RAJA_DEVICE(int k, int j, int i) {
+            [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t qq =
                   (k - kstart) * lnij + (j - jstart) * lni + (i - istart);
@@ -450,22 +450,22 @@ void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
         // }
       } else if (s == 5) {
         // PREFETCH(bforce6);
-        int lni = wind[1 + 6 * s] - wind[6 * s] + 1;
-        int lnij = (wind[3 + 6 * s] - wind[2 + 6 * s] + 1) * lni;
-        int istart = wind[6 * s];
-        int jstart = wind[2 + 6 * s];
-        int kstart = wind[4 + 6 * s];
+        sw4_type lni = wind[1 + 6 * s] - wind[6 * s] + 1;
+        sw4_type lnij = (wind[3 + 6 * s] - wind[2 + 6 * s] + 1) * lni;
+        sw4_type istart = wind[6 * s];
+        sw4_type jstart = wind[2 + 6 * s];
+        sw4_type kstart = wind[4 + 6 * s];
         RAJA::RangeSegment k_range(kstart, wind[5 + 6 * s] + 1);
         RAJA::RangeSegment j_range(jstart, wind[3 + 6 * s] + 1);
         RAJA::RangeSegment i_range(istart, wind[1 + 6 * s] + 1);
-        // for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
+        // for( sw4_type k=wind[4+6*s]; k <= wind[5+6*s] ; k++ ) {
         //    size_t qq = (k-wind[4+6*s])*ijdel;
         //    //#pragma omp parallel for
-        //    for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
-        // 	  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
+        //    for( sw4_type j=wind[2+6*s]; j <= wind[3+6*s] ; j++ ) {
+        // 	  for( sw4_type i=wind[6*s]; i <= wind[1+6*s] ; i++ ) {
         RAJA::kernel<BCFORT_EXEC_POL2_ASYNC>(
             RAJA::make_tuple(k_range, j_range, i_range),
-            [=] RAJA_DEVICE(int k, int j, int i) {
+            [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t qq =
                   (k - kstart) * lnij + (j - jstart) * lni + (i - istart);
@@ -480,20 +480,20 @@ void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
     } else if (bccnd[s] == bPeriodic) {
       // std::cout<<"SET 2\n";
       if (s == 0) {
-        int istart = wind[6 * s];
-        int jstart = wind[2 + 6 * s];
-        int kstart = wind[4 + 6 * s];
+        sw4_type istart = wind[6 * s];
+        sw4_type jstart = wind[2 + 6 * s];
+        sw4_type kstart = wind[4 + 6 * s];
         RAJA::RangeSegment k_range(kstart, wind[5 + 6 * s] + 1);
         RAJA::RangeSegment j_range(jstart, wind[3 + 6 * s] + 1);
         RAJA::RangeSegment i_range(istart, wind[1 + 6 * s] + 1);
         //#pragma omp parallel for
-        // for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
-        //    for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
-        // 	  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
+        // for( sw4_type k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
+        //    for( sw4_type j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
+        // 	  for( sw4_type i=wind[6*s]; i <= wind[1+6*s] ; i++ )
         // 	  {
         RAJA::kernel<BCFORT_EXEC_POL2_ASYNC>(
             RAJA::make_tuple(k_range, j_range, i_range),
-            [=] RAJA_DEVICE(int k, int j, int i) {
+            [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t indp = ind + nx;
               u[ind] = u[indp];
@@ -502,19 +502,19 @@ void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
             });  // SYNC_STREAM;
       } else if (s == 1) {
         // #pragma omp parallel for
-        // 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
-        // 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
-        // 		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
+        // 	    for( sw4_type k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
+        // 	       for( sw4_type j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
+        // 		  for( sw4_type i=wind[6*s]; i <= wind[1+6*s] ; i++ )
         // 		  {
-        int istart = wind[6 * s];
-        int jstart = wind[2 + 6 * s];
-        int kstart = wind[4 + 6 * s];
+        sw4_type istart = wind[6 * s];
+        sw4_type jstart = wind[2 + 6 * s];
+        sw4_type kstart = wind[4 + 6 * s];
         RAJA::RangeSegment k_range(kstart, wind[5 + 6 * s] + 1);
         RAJA::RangeSegment j_range(jstart, wind[3 + 6 * s] + 1);
         RAJA::RangeSegment i_range(istart, wind[1 + 6 * s] + 1);
         RAJA::kernel<BCFORT_EXEC_POL2_ASYNC>(
             RAJA::make_tuple(k_range, j_range, i_range),
-            [=] RAJA_DEVICE(int k, int j, int i) {
+            [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t indp = ind - nx;
               u[ind] = u[indp];
@@ -523,19 +523,19 @@ void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
             });  // SYNC_STREAM;
       } else if (s == 2) {
         // #pragma omp parallel for
-        // 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
-        // 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
-        // 		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
+        // 	    for( sw4_type k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
+        // 	       for( sw4_type j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
+        // 		  for( sw4_type i=wind[6*s]; i <= wind[1+6*s] ; i++ )
         // 		  {
-        int istart = wind[6 * s];
-        int jstart = wind[2 + 6 * s];
-        int kstart = wind[4 + 6 * s];
+        sw4_type istart = wind[6 * s];
+        sw4_type jstart = wind[2 + 6 * s];
+        sw4_type kstart = wind[4 + 6 * s];
         RAJA::RangeSegment k_range(kstart, wind[5 + 6 * s] + 1);
         RAJA::RangeSegment j_range(jstart, wind[3 + 6 * s] + 1);
         RAJA::RangeSegment i_range(istart, wind[1 + 6 * s] + 1);
         RAJA::kernel<BCFORT_EXEC_POL2_ASYNC>(
             RAJA::make_tuple(k_range, j_range, i_range),
-            [=] RAJA_DEVICE(int k, int j, int i) {
+            [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t indp = ind + ni * ny;
               u[ind] = u[indp];
@@ -544,19 +544,19 @@ void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
             });  // SYNC_STREAM;
       } else if (s == 3) {
         // #pragma omp parallel for
-        // 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
-        // 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
-        // 		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
+        // 	    for( sw4_type k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
+        // 	       for( sw4_type j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
+        // 		  for( sw4_type i=wind[6*s]; i <= wind[1+6*s] ; i++ )
         // 		  {
-        int istart = wind[6 * s];
-        int jstart = wind[2 + 6 * s];
-        int kstart = wind[4 + 6 * s];
+        sw4_type istart = wind[6 * s];
+        sw4_type jstart = wind[2 + 6 * s];
+        sw4_type kstart = wind[4 + 6 * s];
         RAJA::RangeSegment k_range(kstart, wind[5 + 6 * s] + 1);
         RAJA::RangeSegment j_range(jstart, wind[3 + 6 * s] + 1);
         RAJA::RangeSegment i_range(istart, wind[1 + 6 * s] + 1);
         RAJA::kernel<BCFORT_EXEC_POL2_ASYNC>(
             RAJA::make_tuple(k_range, j_range, i_range),
-            [=] RAJA_DEVICE(int k, int j, int i) {
+            [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t indp = ind - ni * ny;
               u[ind] = u[indp];
@@ -564,20 +564,20 @@ void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
               u[ind + 2 * npts] = u[indp + 2 * npts];
             });  // SYNC_STREAM;
       } else if (s == 4) {
-        // 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
+        // 	    for( sw4_type k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
         // #pragma omp parallel for
-        // 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
-        // 		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
+        // 	       for( sw4_type j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
+        // 		  for( sw4_type i=wind[6*s]; i <= wind[1+6*s] ; i++ )
         // 		  {
-        int istart = wind[6 * s];
-        int jstart = wind[2 + 6 * s];
-        int kstart = wind[4 + 6 * s];
+        sw4_type istart = wind[6 * s];
+        sw4_type jstart = wind[2 + 6 * s];
+        sw4_type kstart = wind[4 + 6 * s];
         RAJA::RangeSegment k_range(kstart, wind[5 + 6 * s] + 1);
         RAJA::RangeSegment j_range(jstart, wind[3 + 6 * s] + 1);
         RAJA::RangeSegment i_range(istart, wind[1 + 6 * s] + 1);
         RAJA::kernel<BCFORT_EXEC_POL2_ASYNC>(
             RAJA::make_tuple(k_range, j_range, i_range),
-            [=] RAJA_DEVICE(int k, int j, int i) {
+            [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t indp = ind + nij * nz;
               u[ind] = u[indp];
@@ -585,20 +585,20 @@ void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
               u[ind + 2 * npts] = u[indp + 2 * npts];
             });  // SYNC_STREAM;
       } else if (s == 5) {
-        // 	    for( int k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
+        // 	    for( sw4_type k=wind[4+6*s]; k <= wind[5+6*s] ; k++ )
         // #pragma omp parallel for
-        // 	       for( int j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
-        // 		  for( int i=wind[6*s]; i <= wind[1+6*s] ; i++ )
+        // 	       for( sw4_type j=wind[2+6*s]; j <= wind[3+6*s] ; j++ )
+        // 		  for( sw4_type i=wind[6*s]; i <= wind[1+6*s] ; i++ )
         // 		  {
-        int istart = wind[6 * s];
-        int jstart = wind[2 + 6 * s];
-        int kstart = wind[4 + 6 * s];
+        sw4_type istart = wind[6 * s];
+        sw4_type jstart = wind[2 + 6 * s];
+        sw4_type kstart = wind[4 + 6 * s];
         RAJA::RangeSegment k_range(kstart, wind[5 + 6 * s] + 1);
         RAJA::RangeSegment j_range(jstart, wind[3 + 6 * s] + 1);
         RAJA::RangeSegment i_range(istart, wind[1 + 6 * s] + 1);
         RAJA::kernel<BCFORT_EXEC_POL2_ASYNC>(
             RAJA::make_tuple(k_range, j_range, i_range),
-            [=] RAJA_DEVICE(int k, int j, int i) {
+            [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               size_t indp = ind - nij * nz;
               u[ind] = u[indp];
@@ -614,15 +614,15 @@ void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
 
       if (s == 4) {
         // PREFETCH(bforce5);
-        int k = 1, kl = 1;
+        sw4_type k = 1, kl = 1;
         //#pragma omp parallel for
         RAJA::RangeSegment i_range(ib + 2, ie - 1);
         RAJA::RangeSegment j_range(jb + 2, je - 1);
-        // for( int j=jb+2 ; j <= je-2 ; j++ )
-        //    for( int i=ib+2 ; i <= ie-2 ; i++ )
+        // for( sw4_type j=jb+2 ; j <= je-2 ; j++ )
+        //    for( sw4_type i=ib+2 ; i <= ie-2 ; i++ )
         //    {
         RAJA::kernel<BCFORT_EXEC_POL3_ASYNC>(
-            RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+            RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(sw4_type j, sw4_type i) {
               size_t qq = i - ib + ni * (j - jb);
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               float_sw4 wx =
@@ -641,7 +641,7 @@ void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
                   (d4a * (u[npts + ind + ni] - u[npts + ind - ni]) +
                    d4b * (u[npts + ind + 2 * ni] - u[npts + ind - 2 * ni]));
               float_sw4 uz = 0, vz = 0, wz = 0;
-              for (int w = 1; w <= 4; w++) {
+              for (sw4_type w = 1; w <= 4; w++) {
                 uz += sbop[w] * u[ind + nij * kl * (w - 1)];
                 vz += sbop[w] * u[npts + ind + nij * kl * (w - 1)];
                 wz += sbop[w] * u[2 * npts + ind + nij * kl * (w - 1)];
@@ -659,16 +659,16 @@ void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
                   sbop[0];
             });  // SYNC_STREAM;
       } else {
-        int k = nz, kl = -1;
+        sw4_type k = nz, kl = -1;
         // #pragma omp parallel for
-        // 	    for( int j=jb+2 ; j <= je-2 ; j++ )
-        // 	       for( int i=ib+2 ; i <= ie-2 ; i++ )
+        // 	    for( sw4_type j=jb+2 ; j <= je-2 ; j++ )
+        // 	       for( sw4_type i=ib+2 ; i <= ie-2 ; i++ )
         // 	       {
         // PREFETCH(bforce6);
         RAJA::RangeSegment i_range(ib + 2, ie - 1);
         RAJA::RangeSegment j_range(jb + 2, je - 1);
         RAJA::kernel<BCFORT_EXEC_POL3_ASYNC>(
-            RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+            RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(sw4_type j, sw4_type i) {
               size_t qq = i - ib + ni * (j - jb);
               size_t ind = i - ib + ni * (j - jb) + nij * (k - kb);
               float_sw4 wx =
@@ -687,7 +687,7 @@ void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
                   (d4a * (u[npts + ind + ni] - u[npts + ind - ni]) +
                    d4b * (u[npts + ind + 2 * ni] - u[npts + ind - 2 * ni]));
               float_sw4 uz = 0, vz = 0, wz = 0;
-              for (int w = 1; w <= 4; w++) {
+              for (sw4_type w = 1; w <= 4; w++) {
                 uz += sbop[w] * u[ind + nij * kl * (w - 1)];
                 vz += sbop[w] * u[npts + ind + nij * kl * (w - 1)];
                 wz += sbop[w] * u[2 * npts + ind + nij * kl * (w - 1)];
@@ -711,27 +711,27 @@ void EW::bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke,
 }
 
 //-----------------------------------------------------------------------
-void EW::twdirbdry_ci(int wind[6], float_sw4 h, float_sw4 t, float_sw4 om,
+void EW::twdirbdry_ci(sw4_type wind[6], float_sw4 h, float_sw4 t, float_sw4 om,
                       float_sw4 cv, float_sw4 ph, float_sw4* bforce,
                       float_sw4 zmin) {
   SW4_MARK_FUNCTION;
   // size_t qq=0;
-  int ni = wind[1] - wind[0] + 1;
-  int nij = (wind[3] - wind[2] + 1) * ni;
-  // int klen = wind[5]-wind[4]+1;
-  int istart = wind[0];
-  int jstart = wind[2];
-  int kstart = wind[4];
+  sw4_type ni = wind[1] - wind[0] + 1;
+  sw4_type nij = (wind[3] - wind[2] + 1) * ni;
+  // sw4_type klen = wind[5]-wind[4]+1;
+  sw4_type istart = wind[0];
+  sw4_type jstart = wind[2];
+  sw4_type kstart = wind[4];
   RAJA::RangeSegment k_range(wind[4], wind[5] + 1);
   RAJA::RangeSegment j_range(wind[2], wind[3] + 1);
   RAJA::RangeSegment i_range(wind[0], wind[1] + 1);
   RAJA::kernel<BCFORT_EXEC_POL1>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
         // #pragma omp parallel for // qq variable will not work with OpenMP
-        // for( int k=wind[4]; k <= wind[5] ; k++ ) {
-        //    for( int j=wind[2]; j <= wind[3] ; j++ ) {
-        // 	 for( int i=wind[0]; i <= wind[1] ; i++ ) {
+        // for( sw4_type k=wind[4]; k <= wind[5] ; k++ ) {
+        //    for( sw4_type j=wind[2]; j <= wind[3] ; j++ ) {
+        // 	 for( sw4_type i=wind[0]; i <= wind[1] ; i++ ) {
         double x = (i - 1) * h, y = (j - 1) * h, z = zmin + (k - 1) * h;
         size_t qq = (k - kstart) * nij + (j - jstart) * ni + (i - istart);
         // if (lqq!=qq) std::cout<<i<<" "<<j<<" "<<k<<" "<<lqq<<" "<<qq;
@@ -747,8 +747,8 @@ void EW::twdirbdry_ci(int wind[6], float_sw4 h, float_sw4 t, float_sw4 om,
 }
 
 //-----------------------------------------------------------------------
-void EW::twdirbdryc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                       int klast, int lwind[6], float_sw4 t, float_sw4 om,
+void EW::twdirbdryc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                       sw4_type klast, sw4_type lwind[6], float_sw4 t, float_sw4 om,
                        float_sw4 cv, float_sw4 ph, float_sw4* bforce,
                        float_sw4* x, float_sw4* y, float_sw4* z) {
   SW4_MARK_FUNCTION;
@@ -756,18 +756,18 @@ void EW::twdirbdryc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
   const size_t nij = ni * (jlast - jfirst + 1);
   // size_t qq = 0;
   // #pragma omp parallel for qq variable will not work with OpenMP
-  // for (int k = wind[4]; k <= wind[5]; k++) {
-  //   for (int j = wind[2]; j <= wind[3]; j++) {
-  //     for (int i = wind[0]; i <= wind[1]; i++) {
-  int wind[6];
-  for (int i = 0; i < 6; i++) wind[i] = lwind[i];
+  // for (sw4_type k = wind[4]; k <= wind[5]; k++) {
+  //   for (sw4_type j = wind[2]; j <= wind[3]; j++) {
+  //     for (sw4_type i = wind[0]; i <= wind[1]; i++) {
+  sw4_type wind[6];
+  for (sw4_type i = 0; i < 6; i++) wind[i] = lwind[i];
   RAJA::RangeSegment k_range(wind[4], wind[5] + 1);
   RAJA::RangeSegment j_range(wind[2], wind[3] + 1);
   RAJA::RangeSegment i_range(wind[0], wind[1] + 1);
 
   RAJA::kernel<DEFAULT_LOOP3>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
         size_t ind = i - ifirst + ni * (j - jfirst) + nij * (k - kfirst);
         size_t qq =
             (i - wind[0]) + (j - wind[2]) * (wind[1] - wind[0] + 1) +
@@ -784,8 +784,8 @@ void EW::twdirbdryc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 }
 
 //-----------------------------------------------------------------------
-void EW::twfrsurfz_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                      int klast, float_sw4 h, int kz, float_sw4 t,
+void EW::twfrsurfz_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                      sw4_type klast, float_sw4 h, sw4_type kz, float_sw4 t,
                       float_sw4 omega, float_sw4 c, float_sw4 phase,
                       float_sw4* bforce, float_sw4* mu, float_sw4* lambda,
                       float_sw4 zmin) {
@@ -796,10 +796,10 @@ void EW::twfrsurfz_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
   RAJA::RangeSegment j_range(jfirst, jlast + 1);
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::kernel<BCFORT_EXEC_POL2>(
-      RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+      RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(sw4_type j, sw4_type i) {
         // #pragma omp parallel for
-        //    for( int j=jfirst ; j<= jlast ; j++ )
-        //       for( int i=ifirst ; i<= ilast ; i++ )
+        //    for( sw4_type j=jfirst ; j<= jlast ; j++ )
+        //       for( sw4_type i=ifirst ; i<= ilast ; i++ )
         //       {
         size_t ind = (i - ifirst) + ni * (j - jfirst) + nij * (kz - kfirst);
         size_t qq = (i - ifirst) + ni * (j - jfirst);
@@ -844,8 +844,8 @@ void EW::twfrsurfz_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 }
 
 //-----------------------------------------------------------------------
-void EW::twfrsurfzatt_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, float_sw4 h, int kz,
+void EW::twfrsurfzatt_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, float_sw4 h, sw4_type kz,
                          float_sw4 t, float_sw4 omega, float_sw4 c,
                          float_sw4 phase, float_sw4* bforce, float_sw4* mua,
                          float_sw4* lambdaa, float_sw4 zmin) {
@@ -854,8 +854,8 @@ void EW::twfrsurfzatt_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t nij = ni * (jlast - jfirst + 1);
   double z = (kz - 1) * h + zmin;
 #pragma omp parallel for
-  for (int j = jfirst; j <= jlast; j++)
-    for (int i = ifirst; i <= ilast; i++) {
+  for (sw4_type j = jfirst; j <= jlast; j++)
+    for (sw4_type i = ifirst; i <= ilast; i++) {
       size_t ind = (i - ifirst) + ni * (j - jfirst) + nij * (kz - kfirst);
       size_t qq = (i - ifirst) + ni * (j - jfirst);
       double x = (i - 1) * h, y = (j - 1) * h;
@@ -900,8 +900,8 @@ void EW::twfrsurfzatt_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::twfrsurfzsgstr_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, float_sw4 h, int kz,
+void EW::twfrsurfzsgstr_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, float_sw4 h, sw4_type kz,
                            float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                            float_sw4 omstrx, float_sw4 omstry,
                            float_sw4* bforce, float_sw4* mu, float_sw4* lambda,
@@ -911,8 +911,8 @@ void EW::twfrsurfzsgstr_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t nij = ni * (jlast - jfirst + 1);
   double z = (kz - 1) * h + zmin;
 #pragma omp parallel for
-  for (int j = jfirst; j <= jlast; j++)
-    for (int i = ifirst; i <= ilast; i++) {
+  for (sw4_type j = jfirst; j <= jlast; j++)
+    for (sw4_type i = ifirst; i <= ilast; i++) {
       size_t ind = (i - ifirst) + ni * (j - jfirst) + nij * (kz - kfirst);
       size_t qq = (i - ifirst) + ni * (j - jfirst);
       double x = (i - 1) * h, y = (j - 1) * h;
@@ -958,8 +958,8 @@ void EW::twfrsurfzsgstr_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::twfrsurfzsgstratt_ci(int ifirst, int ilast, int jfirst, int jlast,
-                              int kfirst, int klast, float_sw4 h, int kz,
+void EW::twfrsurfzsgstratt_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                              sw4_type kfirst, sw4_type klast, float_sw4 h, sw4_type kz,
                               float_sw4 t, float_sw4 omega, float_sw4 c,
                               float_sw4 phase, float_sw4 omstrx,
                               float_sw4 omstry, float_sw4* bforce,
@@ -970,8 +970,8 @@ void EW::twfrsurfzsgstratt_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t nij = ni * (jlast - jfirst + 1);
   float_sw4 z = (kz - 1) * h + zmin;
 #pragma omp parallel for
-  for (int j = jfirst; j <= jlast; j++)
-    for (int i = ifirst; i <= ilast; i++) {
+  for (sw4_type j = jfirst; j <= jlast; j++)
+    for (sw4_type i = ifirst; i <= ilast; i++) {
       size_t ind = (i - ifirst) + ni * (j - jfirst) + nij * (kz - kfirst);
       size_t qq = (i - ifirst) + ni * (j - jfirst);
       float_sw4 x = (i - 1) * h, y = (j - 1) * h;
@@ -1021,26 +1021,26 @@ void EW::twfrsurfzsgstratt_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::twfrsurfz_wind_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, float_sw4 h, int kz,
+void EW::twfrsurfz_wind_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, float_sw4 h, sw4_type kz,
                            float_sw4 t, float_sw4 omega, float_sw4 c,
                            float_sw4 phase, float_sw4* __restrict__ bforce,
                            float_sw4* __restrict__ mu,
                            float_sw4* __restrict__ lambda, float_sw4 zmin,
-                           int i1, int i2, int j1, int j2) {
+                           sw4_type i1, sw4_type i2, sw4_type j1, sw4_type j2) {
   SW4_MARK_FUNCTION;
   const size_t ni = ilast - ifirst + 1;
   const size_t nij = ni * (jlast - jfirst + 1);
   float_sw4 z = (kz - 1) * h + zmin;
 // the do loops should span j1,j2 and i1,i2
 #pragma omp parallel for
-  for (int j = j1; j <= j2; j++) {
+  for (sw4_type j = j1; j <= j2; j++) {
     float_sw4 t13, t15, t16, t19, t20, t21, t23, t24, t28, t29, t32, t33, t34,
         t37, t38, t43, t44, t49, t60, t62, t65;
     float_sw4 y = (j - 1) * h;
 #pragma ivdep
 #pragma simd
-    for (int i = i1; i <= i2; i++) {
+    for (sw4_type i = i1; i <= i2; i++) {
       size_t ind = (i - ifirst) + ni * (j - jfirst) + nij * (kz - kfirst);
       size_t qq = (i - ifirst) + ni * (j - jfirst);
       float_sw4 x = (i - 1) * h;
@@ -1080,26 +1080,26 @@ void EW::twfrsurfz_wind_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::twfrsurfzsg_wind_ci(int ifirst, int ilast, int jfirst, int jlast,
-                             int kfirst, int klast, float_sw4 h, int kz,
+void EW::twfrsurfzsg_wind_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                             sw4_type kfirst, sw4_type klast, float_sw4 h, sw4_type kz,
                              float_sw4 t, float_sw4 om, float_sw4 c,
                              float_sw4 ph, float_sw4 omstrx, float_sw4 omstry,
                              float_sw4* __restrict__ bforce,
                              float_sw4* __restrict__ mu,
                              float_sw4* __restrict__ lambda, float_sw4 zmin,
-                             int i1, int i2, int j1, int j2) {
+                             sw4_type i1, sw4_type i2, sw4_type j1, sw4_type j2) {
   SW4_MARK_FUNCTION;
   const size_t ni = ilast - ifirst + 1;
   const size_t nij = ni * (jlast - jfirst + 1);
   float_sw4 z = (kz - 1) * h + zmin;
 #pragma omp parallel for
-  for (int j = j1; j <= j2; j++) {
+  for (sw4_type j = j1; j <= j2; j++) {
     float_sw4 t1, t10, t11, t12, t15, t17, t19, t20, t22, t24, t25, t29, t3,
         t31, t32, t36, t39, t4, t40, t46, t51, t53, t56, t6, t7;
     float_sw4 y = (j - 1) * h;
 #pragma ivdep
 #pragma simd
-    for (int i = i1; i <= i2; i++) {
+    for (sw4_type i = i1; i <= i2; i++) {
       size_t ind = (i - ifirst) + ni * (j - jfirst) + nij * (kz - kfirst);
       size_t qq = (i - ifirst) + ni * (j - jfirst);
       float_sw4 x = (i - 1) * h;
@@ -1142,26 +1142,26 @@ void EW::twfrsurfzsg_wind_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::twfrsurfz_att_wind_ci(int ifirst, int ilast, int jfirst, int jlast,
-                               int kfirst, int klast, float_sw4 h, int kz,
+void EW::twfrsurfz_att_wind_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                               sw4_type kfirst, sw4_type klast, float_sw4 h, sw4_type kz,
                                float_sw4 t, float_sw4 omega, float_sw4 c,
                                float_sw4 phase, float_sw4* __restrict__ bforce,
                                float_sw4* __restrict__ mua,
                                float_sw4* __restrict__ lambdaa, float_sw4 zmin,
-                               int i1, int i2, int j1, int j2) {
+                               sw4_type i1, sw4_type i2, sw4_type j1, sw4_type j2) {
   SW4_MARK_FUNCTION;
   // THIS ROUTINE ACCUMULATES CONTRIBUTIONS TO 'bforce'
   const size_t ni = ilast - ifirst + 1;
   const size_t nij = ni * (jlast - jfirst + 1);
   float_sw4 z = (kz - 1) * h + zmin;
 #pragma omp parallel for
-  for (int j = j1; j <= j2; j++) {
+  for (sw4_type j = j1; j <= j2; j++) {
     float_sw4 t2, t3, t6, t7, t8, t11, t12, t17, t18, t27, t30, t20, t31, t35;
     float_sw4 t40, t45, t50, t52, t54, t16, t23, t24, t34;
     float_sw4 y = (j - 1) * h;
 #pragma ivdep
 #pragma simd
-    for (int i = i1; i <= i2; i++) {
+    for (sw4_type i = i1; i <= i2; i++) {
       size_t ind = (i - ifirst) + ni * (j - jfirst) + nij * (kz - kfirst);
       size_t qq = (i - ifirst) + ni * (j - jfirst);
       float_sw4 x = (i - 1) * h;
@@ -1203,25 +1203,25 @@ void EW::twfrsurfz_att_wind_ci(int ifirst, int ilast, int jfirst, int jlast,
 
 //-----------------------------------------------------------------------
 void EW::twfrsurfzsg_att_wind_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-    float_sw4 h, int kz, float_sw4 t, float_sw4 omega, float_sw4 c,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
+    float_sw4 h, sw4_type kz, float_sw4 t, float_sw4 omega, float_sw4 c,
     float_sw4 phase, float_sw4 omstrx, float_sw4 omstry,
     float_sw4* __restrict__ bforce, float_sw4* __restrict__ mua,
-    float_sw4* __restrict__ lambdaa, float_sw4 zmin, int i1, int i2, int j1,
-    int j2) {
+    float_sw4* __restrict__ lambdaa, float_sw4 zmin, sw4_type i1, sw4_type i2, sw4_type j1,
+    sw4_type j2) {
   SW4_MARK_FUNCTION;
   // THIS ROUTINE ACCUMULATES CONTRIBUTIONS TO 'bforce'
   const size_t ni = ilast - ifirst + 1;
   const size_t nij = ni * (jlast - jfirst + 1);
   float_sw4 z = (kz - 1) * h + zmin;
 #pragma omp parallel for
-  for (int j = j1; j <= j2; j++) {
+  for (sw4_type j = j1; j <= j2; j++) {
     float_sw4 t1, t12, t13, t17, t19, t22, t23, t28, t3, t31, t32, t35, t36, t4,
         t40, t42, t43, t45, t5, t51, t56, t61, t66, t68, t7, t8;
     float_sw4 y = (j - 1) * h;
 #pragma ivdep
 #pragma simd
-    for (int i = i1; i <= i2; i++) {
+    for (sw4_type i = i1; i <= i2; i++) {
       size_t ind = (i - ifirst) + ni * (j - jfirst) + nij * (kz - kfirst);
       size_t qq = (i - ifirst) + ni * (j - jfirst);
       float_sw4 x = (i - 1) * h;
@@ -1268,16 +1268,16 @@ void EW::twfrsurfzsg_att_wind_ci(
 }
 
 //-----------------------------------------------------------------------
-void EW::twstensor_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                      int klast, int kz, float_sw4 t, float_sw4 om, float_sw4 c,
+void EW::twstensor_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                      sw4_type klast, sw4_type kz, float_sw4 t, float_sw4 om, float_sw4 c,
                       float_sw4 ph, float_sw4* xx, float_sw4* yy, float_sw4* zz,
                       float_sw4* tau, float_sw4* mu, float_sw4* lambda) {
   SW4_MARK_FUNCTION;
   const size_t ni = ilast - ifirst + 1;
   const size_t nij = ni * (jlast - jfirst + 1);
 #pragma omp parallel for
-  for (int j = jfirst; j <= jlast; j++)
-    for (int i = ifirst; i <= ilast; i++) {
+  for (sw4_type j = jfirst; j <= jlast; j++)
+    for (sw4_type i = ifirst; i <= ilast; i++) {
       double t1, t11, t12, t20, t21, t23, t24, t26, t3, t30, t31, t35, t36, t37,
           t38, t4, t41, t42, t46, t50, t51, t54, t7, t8;
       size_t ind = (i - ifirst) + ni * (j - jfirst) + nij * (kz - kfirst);
@@ -1320,8 +1320,8 @@ void EW::twstensor_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 }
 
 //-----------------------------------------------------------------------
-void EW::twstensorsg_ci(int ifirst, int ilast, int jfirst, int jlast,
-                        int kfirst, int klast, int kz, float_sw4 t,
+void EW::twstensorsg_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                        sw4_type kfirst, sw4_type klast, sw4_type kz, float_sw4 t,
                         float_sw4 om, float_sw4 c, float_sw4 ph, float_sw4* xx,
                         float_sw4* yy, float_sw4* zz, float_sw4* tau,
                         float_sw4* mu, float_sw4* lambda, float_sw4 omstrx,
@@ -1330,8 +1330,8 @@ void EW::twstensorsg_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t ni = ilast - ifirst + 1;
   const size_t nij = ni * (jlast - jfirst + 1);
 #pragma omp parallel for
-  for (int j = jfirst; j <= jlast; j++)
-    for (int i = ifirst; i <= ilast; i++) {
+  for (sw4_type j = jfirst; j <= jlast; j++)
+    for (sw4_type i = ifirst; i <= ilast; i++) {
       size_t ind = (i - ifirst) + ni * (j - jfirst) + nij * (kz - kfirst);
       size_t qq = (i - ifirst) + ni * (j - jfirst);
       double x = xx[ind], y = yy[ind], z = zz[ind];
@@ -1381,8 +1381,8 @@ void EW::twstensorsg_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::twstensoratt_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, int kz, float_sw4 t,
+void EW::twstensoratt_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, sw4_type kz, float_sw4 t,
                          float_sw4 omega, float_sw4 c, float_sw4 phase,
                          float_sw4* xx, float_sw4* yy, float_sw4* zz,
                          float_sw4* tau, float_sw4* mu, float_sw4* lambda) {
@@ -1390,8 +1390,8 @@ void EW::twstensoratt_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t ni = ilast - ifirst + 1;
   const size_t nij = ni * (jlast - jfirst + 1);
 #pragma omp parallel for
-  for (int j = jfirst; j <= jlast; j++)
-    for (int i = ifirst; i <= ilast; i++) {
+  for (sw4_type j = jfirst; j <= jlast; j++)
+    for (sw4_type i = ifirst; i <= ilast; i++) {
       size_t ind = (i - ifirst) + ni * (j - jfirst) + nij * (kz - kfirst);
       size_t qq = (i - ifirst) + ni * (j - jfirst);
       double x = xx[ind], y = yy[ind], z = zz[ind];
@@ -1444,8 +1444,8 @@ void EW::twstensoratt_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::twstensorsgatt_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, int kz, float_sw4 t,
+void EW::twstensorsgatt_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, sw4_type kz, float_sw4 t,
                            float_sw4 omega, float_sw4 c, float_sw4 phase,
                            float_sw4* xx, float_sw4* yy, float_sw4* zz,
                            float_sw4* tau, float_sw4* mu, float_sw4* lambda,
@@ -1454,8 +1454,8 @@ void EW::twstensorsgatt_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t ni = ilast - ifirst + 1;
   const size_t nij = ni * (jlast - jfirst + 1);
 #pragma omp parallel for
-  for (int j = jfirst; j <= jlast; j++)
-    for (int i = ifirst; i <= ilast; i++) {
+  for (sw4_type j = jfirst; j <= jlast; j++)
+    for (sw4_type i = ifirst; i <= ilast; i++) {
       double t10, t13, t14, t17, t18, t2, t21, t22, t24, t26, t31, t33, t34,
           t38, t39, t4, t42, t43, t44;
       double t47, t48, t5, t52, t53, t55, t59, t6, t72, t76, t8, t9;

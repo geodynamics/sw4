@@ -71,7 +71,7 @@
 // This macro is used both for optimized and non-optimized code
 #define CHECK_INPUT(x, msg)                                                  \
   if (!(x)) {                                                                \
-    int myRank;                                                              \
+    sw4_type myRank;                                                              \
     MPI_Comm_rank(MPI_COMM_WORLD, &myRank);                                  \
     std::cout << "Fatal input error: " << msg << __LINE__ << " " << __FILE__ \
               << std::endl;                                                  \
@@ -86,7 +86,7 @@
 // these macros are also used both for optimized and non-optimized code
 #define DBC_ASSERTION(x, msg, kind)                                            \
   if (!(x)) {                                                                  \
-    int myRank;                                                                \
+    sw4_type myRank;                                                                \
     MPI_Comm_rank(MPI_COMM_WORLD, &myRank);                                    \
     if (myRank == 0) {                                                         \
       std::cout << kind << ": " << msg << std::endl;                           \

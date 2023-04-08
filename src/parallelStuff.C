@@ -37,21 +37,21 @@
 #include "mpi.h"
 #include "policies.h"
 //-----------------------------------------------------------------------
-bool EW::proc_decompose_2d(int ni, int nj, int nproc, int proc_max[2]) {
-  // This routine determines a decomposition of nproc processors into
+bool EW::proc_decompose_2d(sw4_type ni, sw4_type nj, sw4_type nproc, sw4_type proc_max[2]) {
+  // This routine determines a decomposition of nproc processors sw4_typeo
   // a 2D processor array  proc_max[0] x proc_max[1], which gives minimal
   // communication boundary for a grid with ni x nj points.
 
   float_sw4 fmin = ni + nj;
   bool first = true;
-  int p1max = ni / m_ppadding;
-  int p2max = nj / m_ppadding;
-  for (int p1 = 1; p1 <= nproc; p1++)
+  sw4_type p1max = ni / m_ppadding;
+  sw4_type p2max = nj / m_ppadding;
+  for (sw4_type p1 = 1; p1 <= nproc; p1++)
     if (nproc % p1 == 0) {
-      int p2 = nproc / p1;
+      sw4_type p2 = nproc / p1;
       if (p1 <= p1max && p2 <= p2max) {
-        // int w1 = p1==1?0:1;
-        // int w2 = p2==1?0:1;
+        // sw4_type w1 = p1==1?0:1;
+        // sw4_type w2 = p2==1?0:1;
         // double f = w2*(double)(ni)/p1 + w1*(double)(nj)/p2;
         // try to make each subdomain as square as possible
         float_sw4 f = fabs((float_sw4)(ni) / p1 - (float_sw4)(nj) / p2);
@@ -67,15 +67,15 @@ bool EW::proc_decompose_2d(int ni, int nj, int nproc, int proc_max[2]) {
 }
 
 //-----------------------------------------------------------------------
-void EW::coarsen1d(int& n, int& ifirst, int& ilast, int periodic) {
+void EW::coarsen1d(sw4_type& n, sw4_type& ifirst, sw4_type& ilast, sw4_type periodic) {
   // n - total number of points 1<=i<=n,
   // Total index space is 1-ghosts <= i <= n + ghosts
   //
-  // This routine coarsens the interval ifirst <= i <= ilast
+  // This routine coarsens the sw4_typeerval ifirst <= i <= ilast
   // by a factor two, and returns coarsened values of
   // all input parameters.
   //
-  int nc;
+  sw4_type nc;
   if (periodic)
     nc = n / 2;
   else
@@ -99,16 +99,16 @@ void EW::coarsen1d(int& n, int& ifirst, int& ilast, int periodic) {
 }
 
 //-----------------------------------------------------------------------
-void EW::decomp1d(int nglobal, int myid, int nproc, int& s, int& e)
+void EW::decomp1d(sw4_type nglobal, sw4_type myid, sw4_type nproc, sw4_type& s, sw4_type& e)
 //
-// Decompose index space 1 <= i <= nglobal into nproc blocks
+// Decompose index space 1 <= i <= nglobal sw4_typeo nproc blocks
 // returns start and end indices for block nr. myid,
 //          where 0 <= myid <= nproc-1
 //
 {
-  int olap = 2 * m_ppadding;
-  int nlocal = (nglobal + (nproc - 1) * olap) / nproc;
-  int deficit = (nglobal + (nproc - 1) * olap) % nproc;
+  sw4_type olap = 2 * m_ppadding;
+  sw4_type nlocal = (nglobal + (nproc - 1) * olap) / nproc;
+  sw4_type deficit = (nglobal + (nproc - 1) * olap) % nproc;
 
   if (myid < deficit)
     s = myid * (nlocal - olap) + myid + 1;
@@ -128,8 +128,8 @@ void EW::setup2D_MPICommunications() {
   // // Define MPI datatypes for communication across processor boundaries
   // // For topography: finest grid (curvilinear) only, only one value per grid
   // // point (nc=1) get the size from the top Cartesian grid
-  int g = mNumberOfGrids - 1;
-  int ni = m_iEnd[g] - m_iStart[g] + 1, nj = m_jEnd[g] - m_jStart[g] + 1;
+  sw4_type g = mNumberOfGrids - 1;
+  sw4_type ni = m_iEnd[g] - m_iStart[g] + 1, nj = m_jEnd[g] - m_jStart[g] + 1;
   // std::cout<<"GRID = "<<g<<" size "<<ni<<" "<<nj<<"\n";
   // MPI_Type_vector(nj, m_ppadding, ni, m_mpifloat, &m_send_type_2dfinest[0]);
   // MPI_Type_vector(1, m_ppadding * ni, ni * nj, m_mpifloat,
@@ -140,7 +140,7 @@ void EW::setup2D_MPICommunications() {
   // // Extended number of padding points
   ni = ni + 2 * m_ext_ghost_points;
   nj = nj + 2 * m_ext_ghost_points;
-  int extpadding = m_ppadding + m_ext_ghost_points;
+  sw4_type extpadding = m_ppadding + m_ext_ghost_points;
   // MPI_Type_vector(nj, extpadding, ni, m_mpifloat,
   // &m_send_type_2dfinest_ext[0]); MPI_Type_vector(1, extpadding * ni, ni * nj,
   // m_mpifloat,
@@ -173,7 +173,7 @@ void EW::setup2D_MPICommunications() {
   bufs_type_2dx.resize(mNumberOfCartesianGrids);
   bufs_type_2dy.resize(mNumberOfCartesianGrids);
 
-  for (int g = 0; g < mNumberOfCartesianGrids; g++) {
+  for (sw4_type g = 0; g < mNumberOfCartesianGrids; g++) {
     ni = m_iEnd[g] - m_iStart[g] + 1;
     nj = m_jEnd[g] - m_jStart[g] + 1;
     //   if (m_croutines) {
@@ -233,15 +233,15 @@ void EW::setup2D_MPICommunications() {
   MPI_Type_commit(&m_send_type_2dfinest_ext[0]);
   MPI_Type_commit(&m_send_type_2dfinest_ext[1]);
 
-  // NEW: July-2019 communicators for interface surfaces
-  int numSurfaces = mNumberOfGrids - mNumberOfCartesianGrids;
+  // NEW: July-2019 communicators for sw4_typeerface surfaces
+  sw4_type numSurfaces = mNumberOfGrids - mNumberOfCartesianGrids;
   m_send_type_isurfx.resize(numSurfaces);
   m_send_type_isurfy.resize(numSurfaces);
 
-  for (int iSurf = 0; iSurf < numSurfaces; iSurf++) {
-    int g = mNumberOfCartesianGrids + iSurf;
-    int ni = m_iEnd[g] - m_iStart[g] + 1 + 2 * m_ext_ghost_points;
-    int nj = m_jEnd[g] - m_jStart[g] + 1 + 2 * m_ext_ghost_points;
+  for (sw4_type iSurf = 0; iSurf < numSurfaces; iSurf++) {
+    sw4_type g = mNumberOfCartesianGrids + iSurf;
+    sw4_type ni = m_iEnd[g] - m_iStart[g] + 1 + 2 * m_ext_ghost_points;
+    sw4_type nj = m_jEnd[g] - m_jStart[g] + 1 + 2 * m_ext_ghost_points;
 
     MPI_Type_vector(nj, extpadding, ni, m_mpifloat, &m_send_type_isurfx[iSurf]);
     MPI_Type_vector(1, extpadding * ni, ni * nj, m_mpifloat,
@@ -259,8 +259,8 @@ void EW::setup2D_MPICommunications() {
   m_send_type_2dy1p.resize(mNumberOfGrids);
   m_send_type_2dx3p.resize(mNumberOfGrids);  // padding=3
   m_send_type_2dy3p.resize(mNumberOfGrids);
-  for (int g = 0; g < mNumberOfGrids; g++) {
-    int ni = m_iEnd[g] - m_iStart[g] + 1, nj = m_jEnd[g] - m_jStart[g] + 1;
+  for (sw4_type g = 0; g < mNumberOfGrids; g++) {
+    sw4_type ni = m_iEnd[g] - m_iStart[g] + 1, nj = m_jEnd[g] - m_jStart[g] + 1;
 
     MPI_Type_vector(3 * nj, m_ppadding, ni, m_mpifloat, &m_send_type_2dx[g]);
     MPI_Type_vector(3, m_ppadding * ni, ni * nj, m_mpifloat,
@@ -338,11 +338,11 @@ void EW::setupMPICommunications() {
   bufs_type21.resize(4 * mNumberOfGrids);
 
   // End Data for ASYNC_SEND_RECV
-  for (int g = 0; g < mNumberOfGrids; g++) {
-    //      int ni = mU[g].m_ni, nj=mU[g].m_nj, nk=mU[g].m_nk;
-    int ni = m_iEnd[g] - m_iStart[g] + 1;
-    int nj = m_jEnd[g] - m_jStart[g] + 1;
-    int nk = m_kEnd[g] - m_kStart[g] + 1;
+  for (sw4_type g = 0; g < mNumberOfGrids; g++) {
+    //      sw4_type ni = mU[g].m_ni, nj=mU[g].m_nj, nk=mU[g].m_nk;
+    sw4_type ni = m_iEnd[g] - m_iStart[g] + 1;
+    sw4_type nj = m_jEnd[g] - m_jStart[g] + 1;
+    sw4_type nk = m_kEnd[g] - m_kStart[g] + 1;
 
     MPI_Type_vector(nj * nk, m_ppadding, ni, m_mpifloat, &m_send_type1[2 * g]);
     MPI_Type_vector(nk, m_ppadding * ni, ni * nj, m_mpifloat,
@@ -420,17 +420,17 @@ void EW::setupMPICommunications() {
   // test call
   //   communicate_array( mRho[0], 0 );
 
-  //   int g=mNumberOfGrids-1;
+  //   sw4_type g=mNumberOfGrids-1;
   //   mRho[g].set_to_zero();
-  //   for( int j=mU[g].m_jb+m_ppadding ; j <= mU[g].m_je-m_ppadding ; j++ )
-  //      for( int i=mU[g].m_ib+m_ppadding ; i <= mU[g].m_ie-m_ppadding ; i++ )
+  //   for( sw4_type j=mU[g].m_jb+m_ppadding ; j <= mU[g].m_je-m_ppadding ; j++ )
+  //      for( sw4_type i=mU[g].m_ib+m_ppadding ; i <= mU[g].m_ie-m_ppadding ; i++ )
   //      {
   //	 mRho[g](i,j,1) = j;
   //      }
   //   communicate_array_2dfinest(mRho[g]);
 
-  //   int myid;
-  //   int seerank;
+  //   sw4_type myid;
+  //   sw4_type seerank;
   //   MPI_Comm_rank( m_cartesian_communicator, &myid );
   //   do{
   //      if( myid == 0 )
@@ -438,15 +438,15 @@ void EW::setupMPICommunications() {
   //	 cout << "Give rank no (or -1 to exit) > " << endl;
   //	 cin >> seerank ;
   //      }
-  //      MPI_Bcast( &seerank, 1, MPI_INT, 0, m_cartesian_communicator );
+  //      MPI_Bcast( &seerank, 1, MPI_SW4_TYPE, 0, m_cartesian_communicator );
   //      if( myid == seerank )
   //      {
   //         cout << "Array bounds: " << mU[g].m_ib << " <= i <= " << mU[g].m_ie
   //         << " , "
   //	      << mU[g].m_jb << " <= j <= " << mU[g].m_je << endl;
-  //	 for( int j=mU[g].m_je ; j >= mU[g].m_jb ; j-- )
+  //	 for( sw4_type j=mU[g].m_je ; j >= mU[g].m_jb ; j-- )
   //	 {
-  //	    for( int i=mU[g].m_ib ; i <= mU[g].m_ie ; i++ )
+  //	    for( sw4_type i=mU[g].m_ib ; i <= mU[g].m_ie ; i++ )
   //	       cout << " " << mRho[g](i,j,1);
   //	    cout << endl;
   //	 }
@@ -459,15 +459,15 @@ void EW::setupMPICommunications() {
 
   //   if( dbg )
   //   {
-  //      int tag = 3, dum;
-  //      int myid;
+  //      sw4_type tag = 3, dum;
+  //      sw4_type myid;
   //      MPI_Comm_rank( m_cartesian_communicator, &myid );
   //      MPI_Status status;
   //      stringstream str;
   //      str << "dbg." << myid << ".dat";
   //      ofstream fileout(str.str().c_str());
   //      if( myid>0 )
-  //	 MPI_Recv( &dum, 1, MPI_INT, myid-1, tag, m_cartesian_communicator,
+  //	 MPI_Recv( &dum, 1, MPI_SW4_TYPE, myid-1, tag, m_cartesian_communicator,
   //&status );
   //      MPI_Comm_rank( m_cartesian_communicator, &myid );
   //      fileout << "Id in 1d " << myid << " Id in 2d " << my_proc_coords[0] <<
@@ -476,7 +476,7 @@ void EW::setupMPICommunications() {
   // neigh[1] << " y-dir " << neigh[2]
   //	      << " and " << neigh[3] << endl;
   //      if( myid < nprocs-1 )
-  //	 MPI_Send( &dum, 1, MPI_INT, myid+1, tag, m_cartesian_communicator );
+  //	 MPI_Send( &dum, 1, MPI_SW4_TYPE, myid+1, tag, m_cartesian_communicator );
   //      fileout.close();
   //   }
 
@@ -517,7 +517,7 @@ void EW::setupMPICommunications() {
 #endif
 }
 
-void EW::communicate_array(Sarray& u, int grid) {
+void EW::communicate_array(Sarray& u, sw4_type grid) {
   // The async version using either device or managed memory works
   // spectrum-mpi/2018.02.05 on Ray. And it is slower on the Hayward case:
   // baseline communicate_array ( without -gpu) : 25 minutes 20 secs
@@ -531,8 +531,8 @@ void EW::communicate_array(Sarray& u, int grid) {
   return;
 }
 //-----------------------------------------------------------------------
-void EW::communicate_array_host(Sarray& u, int grid) {
-  // std::cout<<"void EW::communicate_array(Sarray& u, int grid"<<std::flush;
+void EW::communicate_array_host(Sarray& u, sw4_type grid) {
+  // std::cout<<"void EW::communicate_array(Sarray& u, sw4_type grid"<<std::flush;
   SW4_MARK_FUNCTION;
   // The async version using either device or managed memory works
   // spectrum-mpi/2018.02.05 on Ray. And it is slower on the Hayward case:
@@ -548,14 +548,14 @@ void EW::communicate_array_host(Sarray& u, int grid) {
            "Communicate array, only implemented for one-, three-, four-, and "
            "21-component arrays"
                << " nc = " << u.m_nc);
-  int ie = u.m_ie, ib = u.m_ib, je = u.m_je, jb = u.m_jb, kb = u.m_kb;
-  //  int ke = u.m_ke;
+  sw4_type ie = u.m_ie, ib = u.m_ib, je = u.m_je, jb = u.m_jb, kb = u.m_kb;
+  //  sw4_type ke = u.m_ke;
   MPI_Status status;
   if (u.m_nc == 1) {
-    int xtag1 = 345;
-    int xtag2 = 346;
-    int ytag1 = 347;
-    int ytag2 = 348;
+    sw4_type xtag1 = 345;
+    sw4_type xtag2 = 346;
+    sw4_type ytag1 = 347;
+    sw4_type ytag2 = 348;
     // X-direction communication
     MPI_Sendrecv(&u(ie - (2 * m_ppadding - 1), jb, kb), 1,
                  m_send_type1[2 * grid], m_neighbor[1], xtag1, &u(ib, jb, kb),
@@ -575,10 +575,10 @@ void EW::communicate_array_host(Sarray& u, int grid) {
                  m_send_type1[2 * grid + 1], m_neighbor[3], ytag2,
                  m_cartesian_communicator, &status);
   } else if (u.m_nc == 3) {
-    int xtag1 = 345;
-    int xtag2 = 346;
-    int ytag1 = 347;
-    int ytag2 = 348;
+    sw4_type xtag1 = 345;
+    sw4_type xtag2 = 346;
+    sw4_type ytag1 = 347;
+    sw4_type ytag2 = 348;
     // X-direction communication
     MPI_Sendrecv(&u(1, ie - (2 * m_ppadding - 1), jb, kb), 1,
                  m_send_type3[2 * grid], m_neighbor[1], xtag1,
@@ -598,10 +598,10 @@ void EW::communicate_array_host(Sarray& u, int grid) {
                  m_send_type3[2 * grid + 1], m_neighbor[3], ytag2,
                  m_cartesian_communicator, &status);
   } else if (u.m_nc == 4) {
-    int xtag1 = 345;
-    int xtag2 = 346;
-    int ytag1 = 347;
-    int ytag2 = 348;
+    sw4_type xtag1 = 345;
+    sw4_type xtag2 = 346;
+    sw4_type ytag1 = 347;
+    sw4_type ytag2 = 348;
     // X-direction communication
     MPI_Sendrecv(&u(1, ie - (2 * m_ppadding - 1), jb, kb), 1,
                  m_send_type4[2 * grid], m_neighbor[1], xtag1,
@@ -621,10 +621,10 @@ void EW::communicate_array_host(Sarray& u, int grid) {
                  m_send_type4[2 * grid + 1], m_neighbor[3], ytag2,
                  m_cartesian_communicator, &status);
   } else if (u.m_nc == 21) {
-    int xtag1 = 345;
-    int xtag2 = 346;
-    int ytag1 = 347;
-    int ytag2 = 348;
+    sw4_type xtag1 = 345;
+    sw4_type xtag2 = 346;
+    sw4_type ytag1 = 347;
+    sw4_type ytag2 = 348;
     // X-direction communication
     MPI_Sendrecv(&u(1, ie - (2 * m_ppadding - 1), jb, kb), 1,
                  m_send_type21[2 * grid], m_neighbor[1], xtag1,
@@ -648,36 +648,36 @@ void EW::communicate_array_host(Sarray& u, int grid) {
 //-----------------------------------------------------------------------
 void EW::communicate_arrays(vector<Sarray>& u) {
   SW4_MARK_FUNCTION;
-  for (int g = 0; g < u.size(); g++) communicate_array(u[g], g);
+  for (sw4_type g = 0; g < u.size(); g++) communicate_array(u[g], g);
 }
 
 //-----------------------------------------------------------------------
 void EW::communicate_host_arrays(vector<Sarray>& u) {
   SW4_MARK_FUNCTION;
-  for (int g = 0; g < u.size(); g++) communicate_array_host(u[g], g);
+  for (sw4_type g = 0; g < u.size(); g++) communicate_array_host(u[g], g);
 }
 #if defined(ENABLE_GPU)
-void EW::communicate_array_2d(Sarray& u, int g, int k) {
+void EW::communicate_array_2d(Sarray& u, sw4_type g, sw4_type k) {
   communicate_array_2d_async(u, g, k);
   return;
 }
 #else
 //-----------------------------------------------------------------------
-void EW::communicate_array_2d(Sarray& u, int g, int k) {
+void EW::communicate_array_2d(Sarray& u, sw4_type g, sw4_type k) {
   SW4_MARK_FUNCTION;
   REQUIRE2(u.m_nc == 3,
            "Communicate array 2d, only implemented for three-component arrays");
   REQUIRE2(g < m_send_type_2dx.size(),
            "Communicate array 2d, only implemented for grid=0.."
                << m_send_type_2dx.size() - 1 << " but g= " << g);
-  int ie = m_iEnd[g], ib = m_iStart[g];
-  int je = m_jEnd[g], jb = m_jStart[g];
+  sw4_type ie = m_iEnd[g], ib = m_iStart[g];
+  sw4_type je = m_jEnd[g], jb = m_jStart[g];
 
   MPI_Status status;
-  int xtag1 = 345;
-  int xtag2 = 346;
-  int ytag1 = 347;
-  int ytag2 = 348;
+  sw4_type xtag1 = 345;
+  sw4_type xtag2 = 346;
+  sw4_type ytag1 = 347;
+  sw4_type ytag2 = 348;
   // communicate_array_2d_async( u, g, k );
   // communicate_array_2d_async_memo( u, g, k ); // Memoized version to avoid
   // possible page fault return;
@@ -742,19 +742,19 @@ void EW::communicate_array_2d_ext(Sarray& u) {
   REQUIRE2(
       u.m_nc == 1,
       "Communicate array 2d ext, only implemented for one-component arrays");
-  int g = mNumberOfGrids - 1;
-  int ie = m_iEnd[g] + m_ext_ghost_points,
+  sw4_type g = mNumberOfGrids - 1;
+  sw4_type ie = m_iEnd[g] + m_ext_ghost_points,
       ib = m_iStart[g] - m_ext_ghost_points;
-  int je = m_jEnd[g] + m_ext_ghost_points,
+  sw4_type je = m_jEnd[g] + m_ext_ghost_points,
       jb = m_jStart[g] - m_ext_ghost_points;
 
   MPI_Status status;
-  int xtag1 = 345;
-  int xtag2 = 346;
-  int ytag1 = 347;
-  int ytag2 = 348;
-  int k = 1;
-  int extpadding = m_ppadding + m_ext_ghost_points;
+  sw4_type xtag1 = 345;
+  sw4_type xtag2 = 346;
+  sw4_type ytag1 = 347;
+  sw4_type ytag2 = 348;
+  sw4_type k = 1;
+  sw4_type extpadding = m_ppadding + m_ext_ghost_points;
   // X-direction communication
   MPI_Sendrecv(&u(1, ie - (2 * extpadding - 1), jb, k), 1,
                m_send_type_2dfinest_ext[0], m_neighbor[1], xtag1,
@@ -782,19 +782,19 @@ void EW::communicate_array_2d_ext_async(Sarray& u) {
   REQUIRE2(
       u.m_nc == 1,
       "Communicate array 2d ext, only implemented for one-component arrays");
-  int g = mNumberOfGrids - 1;
-  int ie = m_iEnd[g] + m_ext_ghost_points,
+  sw4_type g = mNumberOfGrids - 1;
+  sw4_type ie = m_iEnd[g] + m_ext_ghost_points,
       ib = m_iStart[g] - m_ext_ghost_points;
-  int je = m_jEnd[g] + m_ext_ghost_points,
+  sw4_type je = m_jEnd[g] + m_ext_ghost_points,
       jb = m_jStart[g] - m_ext_ghost_points;
 
   MPI_Status status;
-  int xtag1 = 345;
-  int xtag2 = 346;
-  int ytag1 = 347;
-  int ytag2 = 348;
-  int k = 1;
-  int extpadding = m_ppadding + m_ext_ghost_points;
+  sw4_type xtag1 = 345;
+  sw4_type xtag2 = 346;
+  sw4_type ytag1 = 347;
+  sw4_type ytag2 = 348;
+  sw4_type k = 1;
+  sw4_type extpadding = m_ppadding + m_ext_ghost_points;
   // X-direction communication
   AMPI_Sendrecv(&u(1, ie - (2 * extpadding - 1), jb, k), 1,
                 send_type_2dfinest_ext[0], m_neighbor[1], xtag1,
@@ -819,7 +819,7 @@ void EW::communicate_array_2d_ext_async(Sarray& u) {
 }
 
 //-----------------------------------------------------------------------
-void EW::communicate_array_2d_asym(Sarray& u, int g, int k) {
+void EW::communicate_array_2d_asym(Sarray& u, sw4_type g, sw4_type k) {
   SW4_MARK_FUNCTION;
   REQUIRE2(
       u.m_nc == 3,
@@ -827,16 +827,16 @@ void EW::communicate_array_2d_asym(Sarray& u, int g, int k) {
   REQUIRE2(g < m_send_type_2dx3p.size(),
            "Communicate array 2d asym, only implemented for grid=0.."
                << m_send_type_2dx3p.size() - 1 << " but g= " << g);
-  int ie = m_iEnd[g], ib = m_iStart[g];
-  int je = m_jEnd[g], jb = m_jStart[g];
+  sw4_type ie = m_iEnd[g], ib = m_iStart[g];
+  sw4_type je = m_jEnd[g], jb = m_jStart[g];
 
   MPI_Status status;
-  int xtag1 = 345;
-  int xtag2 = 346;
-  int ytag1 = 347;
-  int ytag2 = 348;
-  int extupper = ie % 2;
-  int extlower = 1 - (ib % 2);
+  sw4_type xtag1 = 345;
+  sw4_type xtag2 = 346;
+  sw4_type ytag1 = 347;
+  sw4_type ytag2 = 348;
+  sw4_type extupper = ie % 2;
+  sw4_type extlower = 1 - (ib % 2);
 
   // X-direction communication
   if (extupper && extlower) {
@@ -919,7 +919,7 @@ void EW::communicate_array_2dfinest(Sarray& u) {
       u.m_nc == 1,
       "Communicate array 2dfinest, only implemented for one-component arrays");
 
-  int ie = u.m_ie, ib = u.m_ib, je = u.m_je, jb = u.m_jb;
+  sw4_type ie = u.m_ie, ib = u.m_ib, je = u.m_je, jb = u.m_jb;
   REQUIRE2(ib == m_iStart[mNumberOfGrids - 1] &&
                ie == m_iEnd[mNumberOfGrids - 1] &&
                jb == m_jStart[mNumberOfGrids - 1] &&
@@ -928,10 +928,10 @@ void EW::communicate_array_2dfinest(Sarray& u) {
            "sizes don't match");
 
   MPI_Status status;
-  int xtag1 = 345;
-  int xtag2 = 346;
-  int ytag1 = 347;
-  int ytag2 = 348;
+  sw4_type xtag1 = 345;
+  sw4_type xtag2 = 346;
+  sw4_type ytag1 = 347;
+  sw4_type ytag2 = 348;
   // X-direction communication
   MPI_Sendrecv(&u(ie - (2 * m_ppadding - 1), jb, 1), 1, m_send_type_2dfinest[0],
                m_neighbor[1], xtag1, &u(ib, jb, 1), 1, m_send_type_2dfinest[0],
@@ -950,15 +950,15 @@ void EW::communicate_array_2dfinest(Sarray& u) {
                m_cartesian_communicator, &status);
 }
 //-----------------------------------------------------------------------
-void EW::make_type(vector<std::tuple<int, int, int>>& send_type,
+void EW::make_type(vector<std::tuple<sw4_type, sw4_type, sw4_type>>& send_type,
                    vector<std::tuple<float_sw4*, float_sw4*>>& bufs_type,
-                   int i1, int j1, int k1, int i2, int j2, int k2, int g) {
+                   sw4_type i1, sw4_type j1, sw4_type k1, sw4_type i2, sw4_type j2, sw4_type k2, sw4_type g) {
   send_type[2 * g] = std::make_tuple(i1, j1, k1);
   send_type[2 * g + 1] = std::make_tuple(i2, j2, k2);
 
   float_sw4* tbuf =
       SW4_NEW(mpi_buffer_space, float_sw4[i1 * j1 * 4 + i2 * j2 * 4]);
-  //std::cout<<"MPI BUFFER ALLOCATE TYPE IS "<<as_int(mpi_buffer_space)<<" "<<tbuf<<"\n";
+  //std::cout<<"MPI BUFFER ALLOCATE TYPE IS "<<as_sw4_type(mpi_buffer_space)<<" "<<tbuf<<"\n";
   bufs_type[4 * g + 0] = std::make_tuple(tbuf, tbuf + i1 * j1);
   bufs_type[4 * g + 1] =
       std::make_tuple(tbuf + 2 * i1 * j1, tbuf + 3 * i1 * j1);
@@ -971,9 +971,9 @@ void EW::make_type(vector<std::tuple<int, int, int>>& send_type,
       global_variables.buffer_size, std::max<size_t>(i1 * j1, i2 * j2));
 }
 //-----------------------------------------------------------------------
-void EW::make_type_2d(vector<std::tuple<int, int, int>>& send_type,
+void EW::make_type_2d(vector<std::tuple<sw4_type, sw4_type, sw4_type>>& send_type,
                       vector<std::tuple<float_sw4*, float_sw4*>>& bufs_type,
-                      int i1, int j1, int k1, int g) {
+                      sw4_type i1, sw4_type j1, sw4_type k1, sw4_type g) {
   send_type[g] = std::make_tuple(i1, j1, k1);
 
   float_sw4* tbuf = SW4_NEW(Space::Pinned, float_sw4[i1 * j1 * 2]);
@@ -983,28 +983,28 @@ void EW::make_type_2d(vector<std::tuple<int, int, int>>& send_type,
       std::max<size_t>(global_variables.buffer_size, i1 * j1);
 }
 //-----------------------------------------------------------------------
-void EW::communicate_array_async(Sarray& u, int grid) {
+void EW::communicate_array_async(Sarray& u, sw4_type grid) {
   SW4_MARK_FUNCTION;
   // u.forceprefetch();
   // u.prefetch(cudaCpuDeviceId);
   REQUIRE2(u.m_nc == 1 || u.m_nc == 3 || u.m_nc == 4,
            "Communicate array, only implemented for nc=1,3, and 4 "
                << " nc = " << u.m_nc);
-  int ie = u.m_ie, ib = u.m_ib, je = u.m_je, jb = u.m_jb,
+  sw4_type ie = u.m_ie, ib = u.m_ib, je = u.m_je, jb = u.m_jb,
       kb = u.m_kb;  //,ke=u.m_ke;
   MPI_Status status;
 #ifdef THREADED_MPI
-  const int threaded_mpi = 1;
+  const sw4_type threaded_mpi = 1;
 #else
-  //  const int threaded_mpi = 0;
+  //  const sw4_type threaded_mpi = 0;
 #endif
   if (u.m_nc == 1) {
-    int xtag1 = 345;
-    int xtag2 = 346;
-    int ytag1 = 347;
-    int ytag2 = 348;
+    sw4_type xtag1 = 345;
+    sw4_type xtag2 = 346;
+    sw4_type ytag1 = 347;
+    sw4_type ytag2 = 348;
     // X-direction communication
-    // for (int i=0;i<4;i++)std::cout<<m_neighbor[i]<<" ";
+    // for (sw4_type i=0;i<4;i++)std::cout<<m_neighbor[i]<<" ";
     // std::cout<<"\n";
     //#pragma omp parallel default(shared) if (threaded_mpi)
     //#pragma omp sections
@@ -1035,10 +1035,10 @@ void EW::communicate_array_async(Sarray& u, int grid) {
                     &status);
     }
   } else if (u.m_nc == 3) {
-    int xtag1 = 345;
-    int xtag2 = 346;
-    int ytag1 = 347;
-    int ytag2 = 348;
+    sw4_type xtag1 = 345;
+    sw4_type xtag2 = 346;
+    sw4_type ytag1 = 347;
+    sw4_type ytag2 = 348;
     //#pragma omp parallel default(shared) if (threaded_mpi)
     //#pragma omp sections
     {
@@ -1070,10 +1070,10 @@ void EW::communicate_array_async(Sarray& u, int grid) {
                     &status);
     }
   } else if (u.m_nc == 4) {
-    int xtag1 = 345;
-    int xtag2 = 346;
-    int ytag1 = 347;
-    int ytag2 = 348;
+    sw4_type xtag1 = 345;
+    sw4_type xtag2 = 346;
+    sw4_type ytag1 = 347;
+    sw4_type ytag2 = 348;
     //#pragma omp parallel default(shared) if (threaded_mpi)
     //#pragma omp sections
     {
@@ -1106,10 +1106,10 @@ void EW::communicate_array_async(Sarray& u, int grid) {
     }
   } else if (u.m_nc == 21) {
     std::cerr << "WARNING:: untested u.m_nc=21 branch being used \n";
-    int xtag1 = 345;
-    int xtag2 = 346;
-    int ytag1 = 347;
-    int ytag2 = 348;
+    sw4_type xtag1 = 345;
+    sw4_type xtag2 = 346;
+    sw4_type ytag1 = 347;
+    sw4_type ytag2 = 348;
     //#pragma omp parallel default(shared) if (threaded_mpi)
     //#pragma omp sections
     {
@@ -1144,18 +1144,18 @@ void EW::communicate_array_async(Sarray& u, int grid) {
   // u.prefetch();
 }
 //-----------------------------------------------------------------------
-void EW::AMPI_Sendrecv(float_sw4* a, int scount,
-                       std::tuple<int, int, int>& sendt, int sendto, int stag,
-                       float_sw4* b, int rcount,
-                       std::tuple<int, int, int>& recvt, int recvfrom, int rtag,
+void EW::AMPI_Sendrecv(float_sw4* a, sw4_type scount,
+                       std::tuple<sw4_type, sw4_type, sw4_type>& sendt, sw4_type sendto, sw4_type stag,
+                       float_sw4* b, sw4_type rcount,
+                       std::tuple<sw4_type, sw4_type, sw4_type>& recvt, sw4_type recvfrom, sw4_type rtag,
                        std::tuple<float_sw4*, float_sw4*>& buf, MPI_Comm comm,
                        MPI_Status* status) {
   SW4_MARK_FUNCTION;
   SW4_MARK_BEGIN("THE REST");
   MPI_Request send_req = MPI_REQUEST_NULL, recv_req = MPI_REQUEST_NULL;
 
-  int recv_count = std::get<0>(recvt) * std::get<1>(recvt);
-  int send_count = std::get<0>(sendt) * std::get<1>(sendt);
+  sw4_type recv_count = std::get<0>(recvt) * std::get<1>(recvt);
+  sw4_type send_count = std::get<0>(sendt) * std::get<1>(sendt);
 
   SW4_MARK_END("THE REST");
 #if defined(ENABLE_MPI_TIMING_BARRIER)
@@ -1195,7 +1195,7 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount,
     SYNC_STREAM;
     // getbuffer_device(a,std::get<0>(buf),sendt);
     // std::cout<<"SENDING :: "<<sendto<<" ";
-    // for(int i=0;i<10;i++) std::cout<<std::get<0>(buf)[i]<<" ";
+    // for(sw4_type i=0;i<10;i++) std::cout<<std::get<0>(buf)[i]<<" ";
     // std::cout<<"\n";
     if (MPI_Isend(std::get<0>(buf), send_count, MPI_DOUBLE, sendto, stag, comm,
                   &send_req) != MPI_SUCCESS)
@@ -1215,7 +1215,7 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount,
     putbuffer_device(b, std::get<1>(buf), recvt, true);
     // putbuffer_host(b, std::get<1>(buf), recvt);
     // std::cout<<"RECEIVING :: "<<recvfrom<<" ";
-    // for(int i=0;i<10;i++) std::cout<<std::get<1>(buf)[i]<<" ";
+    // for(sw4_type i=0;i<10;i++) std::cout<<std::get<1>(buf)[i]<<" ";
     // std::cout<<"\n";
   }
   SW4_MARK_END("MPI_RECV_WAIT");
@@ -1252,15 +1252,15 @@ void EW::AMPI_Sendrecv(float_sw4* a, int scount,
 }
 //-----------------------------------------------------------------------
 void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
-                          std::tuple<int, int, int>& mtype, bool async) {
+                          std::tuple<sw4_type, sw4_type, sw4_type>& mtype, bool async) {
   SW4_MARK_FUNCTION;
-  int count = std::get<0>(mtype);
-  int bl = std::get<1>(mtype);
-  int stride = std::get<2>(mtype);
+  sw4_type count = std::get<0>(mtype);
+  sw4_type bl = std::get<1>(mtype);
+  sw4_type stride = std::get<2>(mtype);
   // std::cout<<"getbuffer_device...";
   // PREFETCH(buf);
-  // forall(0,count,[=] RAJA_DEVICE(int i){
-  // RAJA::forall<DEFAULT_LOOP1> (0,count,[=] RAJA_DEVICE(int i){
+  // forall(0,count,[=] RAJA_DEVICE(sw4_type i){
+  // RAJA::forall<DEFAULT_LOOP1> (0,count,[=] RAJA_DEVICE(sw4_type i){
 
   // Messages are greater than 2K for Hayward h=200 on 16 ranks.
   // for larger messages, host copy is slower.
@@ -1276,13 +1276,13 @@ void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
   RAJA::RangeSegment k_range(0, bl);
   RAJA::RangeSegment i_range(0, count);
   RAJA::kernel<BUFFER_POL>(RAJA::make_tuple(k_range, i_range),
-                           [=] RAJA_DEVICE(int k, int i) {
+                           [=] RAJA_DEVICE(sw4_type k, sw4_type i) {
                              lbuf[k + i * bl] = data[i * stride + k];
                            });
 #else
   Range<16> k_range(0, bl);
   Range<16> i_range(0, count);
-  forall2async(i_range, k_range, [=] RAJA_DEVICE(int i, int k) {
+  forall2async(i_range, k_range, [=] RAJA_DEVICE(sw4_type i, sw4_type k) {
     lbuf[k + i * bl] = data[i * stride + k];
   });
 #endif
@@ -1310,13 +1310,13 @@ void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
   RAJA::RangeSegment k_range(0, bl);
   RAJA::RangeSegment i_range(0, count);
   RAJA::kernel<BUFFER_POL>(RAJA::make_tuple(k_range, i_range),
-                           [=] RAJA_DEVICE(int k, int i) {
+                           [=] RAJA_DEVICE(sw4_type k, sw4_type i) {
                              buf[k + i * bl] = data[i * stride + k];
                            });
 #else
   Range<16> k_range(0, bl);
   Range<16> i_range(0, count);
-  forall2async(i_range, k_range, [=] RAJA_DEVICE(int i, int k) {
+  forall2async(i_range, k_range, [=] RAJA_DEVICE(sw4_type i, sw4_type k) {
     buf[k + i * bl] = data[i * stride + k];
   });
 #endif
@@ -1332,32 +1332,32 @@ void EW::getbuffer_device(float_sw4* data, float_sw4* buf,
 
   // } else {
   //   std::cout<<bl*count*8<<"\ bytes n";
-  //   for(int i=0;i<count;i++) for(int k=0;k<bl;k++)
+  //   for(sw4_type i=0;i<count;i++) for(sw4_type k=0;k<bl;k++)
   //   buf[k+i*bl]=data[i*stride+k];
   // }
   // std::cout<<"Done\n";
 }
 //-----------------------------------------------------------------------
 void EW::getbuffer_host(float_sw4* data, float_sw4* buf,
-                        std::tuple<int, int, int>& mtype) {
+                        std::tuple<sw4_type, sw4_type, sw4_type>& mtype) {
   SW4_MARK_FUNCTION;
-  int count = std::get<0>(mtype);
-  int bl = std::get<1>(mtype);
-  int stride = std::get<2>(mtype);
+  sw4_type count = std::get<0>(mtype);
+  sw4_type bl = std::get<1>(mtype);
+  sw4_type stride = std::get<2>(mtype);
 
   // std::cout<<bl*count*8<<"\ bytes n";
 #pragma omp parallel for collapse(2)
-  for (int i = 0; i < count; i++)
-    for (int k = 0; k < bl; k++) buf[k + i * bl] = data[i * stride + k];
+  for (sw4_type i = 0; i < count; i++)
+    for (sw4_type k = 0; k < bl; k++) buf[k + i * bl] = data[i * stride + k];
   // std::cout<<"Done\n";
 }
 //-----------------------------------------------------------------------
 void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
-                          std::tuple<int, int, int>& mtype, bool async) {
+                          std::tuple<sw4_type, sw4_type, sw4_type>& mtype, bool async) {
   SW4_MARK_FUNCTION;
-  int count = std::get<0>(mtype);
-  int bl = std::get<1>(mtype);
-  int stride = std::get<2>(mtype);
+  sw4_type count = std::get<0>(mtype);
+  sw4_type bl = std::get<1>(mtype);
+  sw4_type stride = std::get<2>(mtype);
   // std::cout<<"putbuffer_device...";
   // PREFETCHFORCED(buf);
 
@@ -1376,16 +1376,16 @@ void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
 #if !defined(RAJA_ONLY)
   Range<16> k_range(0, bl);
   Range<16> i_range(0, count);
-  forall2async(i_range, k_range, [=] RAJA_DEVICE(int i, int k) {
+  forall2async(i_range, k_range, [=] RAJA_DEVICE(sw4_type i, sw4_type k) {
     data[i * stride + k] = lbuf[k + i * bl];
   });
 #else
   RAJA::RangeSegment k_range(0, bl);
   RAJA::RangeSegment i_range(0, count);
   RAJA::kernel<BUFFER_POL>(RAJA::make_tuple(k_range, i_range),
-                           [=] RAJA_DEVICE(int k, int i) {
+                           [=] RAJA_DEVICE(sw4_type k, sw4_type i) {
                              // RAJA::forall<DEFAULT_LOOP1> (0,count,[=]
-                             // RAJA_DEVICE(int i){
+                             // RAJA_DEVICE(sw4_type i){
                              data[i * stride + k] = lbuf[k + i * bl];
                            });
 #endif
@@ -1396,16 +1396,16 @@ void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
 #if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
   Range<16> k_range(0, bl);
   Range<16> i_range(0, count);
-  forall2async(i_range, k_range, [=] RAJA_DEVICE(int i, int k) {
+  forall2async(i_range, k_range, [=] RAJA_DEVICE(sw4_type i, sw4_type k) {
     data[i * stride + k] = buf[k + i * bl];
   });
 #else
   RAJA::RangeSegment k_range(0, bl);
   RAJA::RangeSegment i_range(0, count);
   RAJA::kernel<BUFFER_POL>(RAJA::make_tuple(k_range, i_range),
-                           [=] RAJA_DEVICE(int k, int i) {
+                           [=] RAJA_DEVICE(sw4_type k, sw4_type i) {
                              // RAJA::forall<DEFAULT_LOOP1> (0,count,[=]
-                             // RAJA_DEVICE(int i){
+                             // RAJA_DEVICE(sw4_type i){
                              data[i * stride + k] = buf[k + i * bl];
                            });
 #endif
@@ -1420,32 +1420,32 @@ void EW::putbuffer_device(float_sw4* data, float_sw4* buf,
 }
 //-----------------------------------------------------------------------
 void EW::putbuffer_host(float_sw4* data, float_sw4* buf,
-                        std::tuple<int, int, int>& mtype) {
+                        std::tuple<sw4_type, sw4_type, sw4_type>& mtype) {
   SW4_MARK_FUNCTION;
-  int count = std::get<0>(mtype);
-  int bl = std::get<1>(mtype);
-  int stride = std::get<2>(mtype);
+  sw4_type count = std::get<0>(mtype);
+  sw4_type bl = std::get<1>(mtype);
+  sw4_type stride = std::get<2>(mtype);
   // std::cout<<"putbuffer_device...";
 #pragma omp parallel for collapse(2)
-  for (int i = 0; i < count; i++)
-    for (int k = 0; k < bl; k++) data[i * stride + k] = buf[k + i * bl];
+  for (sw4_type i = 0; i < count; i++)
+    for (sw4_type k = 0; k < bl; k++) data[i * stride + k] = buf[k + i * bl];
 }
 //-----------------------------------------------------------------------
-void EW::communicate_array_2d_async(Sarray& u, int g, int k) {
+void EW::communicate_array_2d_async(Sarray& u, sw4_type g, sw4_type k) {
   SW4_MARK_FUNCTION;
   REQUIRE2(u.m_nc == 3,
            "Communicate array 2d, only implemented for three-component arrays");
   REQUIRE2(g < m_send_type_2dx.size(),
            "Communicate array 2d, only implemented for grid=0.."
                << m_send_type_2dx.size() - 1 << " but g= " << g);
-  int ie = m_iEnd[g], ib = m_iStart[g];
-  int je = m_jEnd[g], jb = m_jStart[g];
+  sw4_type ie = m_iEnd[g], ib = m_iStart[g];
+  sw4_type je = m_jEnd[g], jb = m_jStart[g];
 
   MPI_Status status;
-  int xtag1 = 345;
-  int xtag2 = 346;
-  int ytag1 = 347;
-  int ytag2 = 348;
+  sw4_type xtag1 = 345;
+  sw4_type xtag2 = 346;
+  sw4_type ytag1 = 347;
+  sw4_type ytag2 = 348;
 
   if (m_croutines && u.m_ke - u.m_kb + 1 != 1) {
     SW4_MARK_BEGIN("comm_array_2d_async::ALLOC");
@@ -1502,21 +1502,21 @@ void EW::communicate_array_2d_async(Sarray& u, int g, int k) {
   }
 }
 //-----------------------------------------------------------------------
-void EW::communicate_array_2d_async_memo(Sarray& u, int g, int k) {
+void EW::communicate_array_2d_async_memo(Sarray& u, sw4_type g, sw4_type k) {
   SW4_MARK_FUNCTION;
   REQUIRE2(u.m_nc == 3,
            "Communicate array 2d, only implemented for three-component arrays");
   REQUIRE2(g < m_send_type_2dx.size(),
            "Communicate array 2d, only implemented for grid=0.."
                << m_send_type_2dx.size() - 1 << " but g= " << g);
-  int ie = m_iEnd[g], ib = m_iStart[g];
-  int je = m_jEnd[g], jb = m_jStart[g];
+  sw4_type ie = m_iEnd[g], ib = m_iStart[g];
+  sw4_type je = m_jEnd[g], jb = m_jStart[g];
 
   MPI_Status status;
-  int xtag1 = 345;
-  int xtag2 = 346;
-  int ytag1 = 347;
-  int ytag2 = 348;
+  sw4_type xtag1 = 345;
+  sw4_type xtag2 = 346;
+  sw4_type ytag1 = 347;
+  sw4_type ytag2 = 348;
 
   if (m_croutines && u.m_ke - u.m_kb + 1 != 1) {
     SW4_MARK_BEGIN("comm_array_2d_async::ALLOC");
@@ -1575,18 +1575,18 @@ void EW::communicate_array_2d_async_memo(Sarray& u, int g, int k) {
   }
 }
 //-----------------------------------------------------------------------
-void EW::AMPI_Sendrecv2(float_sw4* a, int scount,
-                        std::tuple<int, int, int>& sendt, int sendto, int stag,
-                        float_sw4* b, int rcount,
-                        std::tuple<int, int, int>& recvt, int recvfrom,
-                        int rtag, std::tuple<float_sw4*, float_sw4*>& buf,
+void EW::AMPI_Sendrecv2(float_sw4* a, sw4_type scount,
+                        std::tuple<sw4_type, sw4_type, sw4_type>& sendt, sw4_type sendto, sw4_type stag,
+                        float_sw4* b, sw4_type rcount,
+                        std::tuple<sw4_type, sw4_type, sw4_type>& recvt, sw4_type recvfrom,
+                        sw4_type rtag, std::tuple<float_sw4*, float_sw4*>& buf,
                         MPI_Comm comm, MPI_Status* status) {
   SW4_MARK_FUNCTION;
   SW4_MARK_BEGIN("THE REST2");
   MPI_Request send_req = MPI_REQUEST_NULL, recv_req = MPI_REQUEST_NULL;
 
-  int recv_count = std::get<0>(recvt) * std::get<1>(recvt);
-  int send_count = std::get<0>(sendt) * std::get<1>(sendt);
+  sw4_type recv_count = std::get<0>(recvt) * std::get<1>(recvt);
+  sw4_type send_count = std::get<0>(sendt) * std::get<1>(sendt);
 
   SW4_MARK_END("THE REST2");
 #if defined(ENABLE_MPI_TIMING_BARRIER)
@@ -1636,7 +1636,7 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount,
   if (sendto != MPI_PROC_NULL) {
     // getbuffer_device(a,std::get<0>(buf),sendt);
     // std::cout<<"SENDING :: "<<sendto<<" ";
-    // for(int i=0;i<10;i++) std::cout<<std::get<0>(buf)[i]<<" ";
+    // for(sw4_type i=0;i<10;i++) std::cout<<std::get<0>(buf)[i]<<" ";
     // std::cout<<"\n";
     // SYNC_STREAM;
     if (MPI_Isend(std::get<0>(buf), send_count, MPI_DOUBLE, sendto, stag, comm,
@@ -1672,7 +1672,7 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount,
 #endif
     }
     // std::cout<<"RECEIVING :: "<<recvfrom<<" ";
-    // for(int i=0;i<10;i++) std::cout<<std::get<1>(buf)[i]<<" ";
+    // for(sw4_type i=0;i<10;i++) std::cout<<std::get<1>(buf)[i]<<" ";
     // std::cout<<"\n";
   }
   SW4_MARK_END("MPI_RECV_WAIT2");
@@ -1708,25 +1708,25 @@ void EW::AMPI_Sendrecv2(float_sw4* a, int scount,
 #endif
 }
 //-----------------------------------------------------------------------
-void EW::communicate_array_2d_isurf(Sarray& u, int iSurf) {
+void EW::communicate_array_2d_isurf(Sarray& u, sw4_type iSurf) {
   SW4_MARK_FUNCTION;
   REQUIRE2(
       u.m_nc == 1,
       "Communicate array 2d isurf, only implemented for one-component arrays");
   SYNC_STREAM;
-  int g = mNumberOfCartesianGrids + iSurf;
-  int ie = m_iEnd[g] + m_ext_ghost_points,
+  sw4_type g = mNumberOfCartesianGrids + iSurf;
+  sw4_type ie = m_iEnd[g] + m_ext_ghost_points,
       ib = m_iStart[g] - m_ext_ghost_points;
-  int je = m_jEnd[g] + m_ext_ghost_points,
+  sw4_type je = m_jEnd[g] + m_ext_ghost_points,
       jb = m_jStart[g] - m_ext_ghost_points;
 
   MPI_Status status;
-  int xtag1 = 345;
-  int xtag2 = 346;
-  int ytag1 = 347;
-  int ytag2 = 348;
-  int k = 1;
-  int extpadding = m_ppadding + m_ext_ghost_points;
+  sw4_type xtag1 = 345;
+  sw4_type xtag2 = 346;
+  sw4_type ytag1 = 347;
+  sw4_type ytag2 = 348;
+  sw4_type k = 1;
+  sw4_type extpadding = m_ppadding + m_ext_ghost_points;
   // X-direction communication
   // std::cout<<"COMM "<<&u(1, ie - (2 * extpadding - 1),jb,k)<<" "<<iSurf<<" "
   //	   <<&u(1, ib, jb, k)<<"\n"<<std::flush;

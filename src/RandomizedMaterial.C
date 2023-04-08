@@ -15,7 +15,7 @@
 
 MPI_Datatype get_mpi_datatype(double* var) { return MPI_DOUBLE; }
 MPI_Datatype get_mpi_datatype(float* var) { return MPI_FLOAT; }
-MPI_Datatype get_mpi_datatype(int* var) { return MPI_INT; }
+MPI_Datatype get_mpi_datatype(sw4_type* var) { return MPI_SW4_TYPE; }
 MPI_Datatype get_mpi_datatype(std::complex<double>* var) {
   return MPI_CXX_DOUBLE_COMPLEX;
 }
@@ -28,7 +28,7 @@ RandomizedMaterial::RandomizedMaterial(EW* a_ew, float_sw4 zmin, float_sw4 zmax,
                                        float_sw4 corrlen, float_sw4 corrlenz,
                                        float_sw4 hurst, float_sw4 sigma,
                                        float_sw4 rhoamplitude, bool randomrho,
-                                       unsigned int seed) {
+                                       unsigned sw4_type seed) {
   mEW = a_ew;
   float_sw4 bbox[6];
   a_ew->getGlobalBoundingBox(bbox);
@@ -64,17 +64,17 @@ RandomizedMaterial::RandomizedMaterial(EW* a_ew, float_sw4 zmin, float_sw4 zmax,
   m_hh = global_xmax / (m_nig - 1);
   m_hv = (zmax - zmin) / (m_nkg - 1);
 
-  // Find finest grid intersecting this block, and limit the grid spacing to
+  // Find finest grid sw4_typeersecting this block, and limit the grid spacing to
   // not be finer than spacing in the computational grid.
-  int g = a_ew->mNumberOfGrids - 1;
+  sw4_type g = a_ew->mNumberOfGrids - 1;
 
   // Force spacings to be multiple of h to make the domain size exactly the same
   // as for the computational grid.
   float_sw4 htmp = m_hh / a_ew->mGridSize[g];
-  int ratio = static_cast<int>(round(htmp));
+  sw4_type ratio = static_cast<sw4_type>(round(htmp));
   m_hh = ratio * a_ew->mGridSize[g];
-  m_nig = static_cast<int>(round(global_xmax / m_hh) + 1);
-  m_njg = static_cast<int>(round(global_ymax / m_hh) + 1);
+  m_nig = static_cast<sw4_type>(round(global_xmax / m_hh) + 1);
+  m_njg = static_cast<sw4_type>(round(global_ymax / m_hh) + 1);
 
   bool tmptest = false;
   if (tmptest) {
@@ -102,7 +102,7 @@ RandomizedMaterial::RandomizedMaterial(EW* a_ew, float_sw4 zmin, float_sw4 zmax,
     }
     if (m_hv < a_ew->mGridSize[g]) {
       m_hv = a_ew->mGridSize[g];
-      m_nkg = static_cast<int>(round((zmax - zmin) / m_hv + 1));
+      m_nkg = static_cast<sw4_type>(round((zmax - zmin) / m_hv + 1));
       m_hv = (zmax - zmin) / (m_nkg - 1);
     }
     if (a_ew->getRank() == 0) {
@@ -111,7 +111,7 @@ RandomizedMaterial::RandomizedMaterial(EW* a_ew, float_sw4 zmin, float_sw4 zmax,
            << m_nkg << endl;
     }
   }
-  int per2d[2], coord2d[2];
+  sw4_type per2d[2], coord2d[2];
   MPI_Cart_get(a_ew->m_cartesian_communicator, 2, m_nproc2d, per2d, coord2d);
   //   cout << "RANDMTRL myrank " << a_ew->getRank() << " " << m_nproc2d[0] << "
   //   " << m_nproc2d[1] << endl;
@@ -124,15 +124,15 @@ RandomizedMaterial::RandomizedMaterial(EW* a_ew, float_sw4 zmin, float_sw4 zmax,
                              scaledcorrleny, scaledcorrlenz, m_hurst);
   rescale_perturbation();
 
-  // with linear interpolation between fd grid and the random material grid, one
-  // ghost point should be enough to allow interpolation without communication.
+  // with linear sw4_typeerpolation between fd grid and the random material grid, one
+  // ghost point should be enough to allow sw4_typeerpolation without communication.
   repad_sarray(mRndMaterial, 0, 2);
   //   cout << "RANDMTRL dims padded array " << mRndMaterial.m_jb << " " <<
   //   mRndMaterial.m_je << endl;
 }
 
 //-----------------------------------------------------------------------
-void RandomizedMaterial::perturb_velocities(int g, Sarray& cs, Sarray& cp,
+void RandomizedMaterial::perturb_velocities(sw4_type g, Sarray& cs, Sarray& cp,
                                             float_sw4 h, float_sw4 zmin,
                                             float_sw4 zmax) {
   //-----------------------------------------------------------------------
@@ -145,18 +145,18 @@ void RandomizedMaterial::perturb_velocities(int g, Sarray& cs, Sarray& cp,
   //-----------------------------------------------------------------------
 
   if (m_zmax > zmin && zmax > m_zmin) {
-    //      cout << "intersection, z lims grid block " << zmin << " " << zmax <<
-    //      endl; cout << "intersection, z lims rand block " << m_zmin << " " <<
+    //      cout << "sw4_typeersection, z lims grid block " << zmin << " " << zmax <<
+    //      endl; cout << "sw4_typeersection, z lims rand block " << m_zmin << " " <<
     //      m_zmax << endl;
-    // Grid block intersects random material block
+    // Grid block sw4_typeersects random material block
     //      bool curvilinear = g == mEW->mNumberOfGrids-1 &&
     //      mEW->topographyExists(); // NOT verified for several curvilinear
     //      grids
     bool curvilinear = g >= mEW->mNumberOfCartesianGrids;
-    // Interpolate to sw4 grid
-    for (int k = mEW->m_kStartInt[g]; k <= mEW->m_kEndInt[g]; k++)
-      for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; j++)
-        for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; i++) {
+    // Sw4_Typeerpolate to sw4 grid
+    for (sw4_type k = mEW->m_kStartSw4_Type[g]; k <= mEW->m_kEndSw4_Type[g]; k++)
+      for (sw4_type j = mEW->m_jStartSw4_Type[g]; j <= mEW->m_jEndSw4_Type[g]; j++)
+        for (sw4_type i = mEW->m_iStartSw4_Type[g]; i <= mEW->m_iEndSw4_Type[g]; i++) {
           float_sw4 x = (i - 1) * h, y = (j - 1) * h, z = zmin + (k - 1) * h;
           if (curvilinear) {
             x = mEW->mX[g](i, j, k);
@@ -164,7 +164,7 @@ void RandomizedMaterial::perturb_velocities(int g, Sarray& cs, Sarray& cp,
             z = mEW->mZ[g](i, j, k);
           }
           if (m_zmin <= z && z <= m_zmax) {
-            int ip = x / m_hh, jp = y / m_hh, kp = (z - m_zmin) / m_hv;
+            sw4_type ip = x / m_hh, jp = y / m_hh, kp = (z - m_zmin) / m_hv;
             if (ip >= mRndMaterial.m_ib && ip <= mRndMaterial.m_ie - 1 &&
                 jp >= mRndMaterial.m_jb && jp <= mRndMaterial.m_je - 1 &&
                 kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke - 1) {
@@ -213,7 +213,7 @@ void RandomizedMaterial::perturb_velocities(int g, Sarray& cs, Sarray& cp,
 //-----------------------------------------------------------------------
 void RandomizedMaterial::perturb_velocities(std::vector<Sarray>& cs,
                                             std::vector<Sarray>& cp) {
-  for (int g = 0; g < cs.size(); g++) {
+  for (sw4_type g = 0; g < cs.size(); g++) {
     // tmp testing the 1 grid case, with equal grid spacing
 
     // Note: mRndMaterial is a zero-based array -->  add 1 here
@@ -224,9 +224,9 @@ void RandomizedMaterial::perturb_velocities(std::vector<Sarray>& cs,
         cs[0].m_kb <= mRndMaterial.m_kb + 1 &&
         cs[0].m_ke >= mRndMaterial.m_ke + 1) {
       cout << "DOING MTRL " << endl;
-      for (int k = mRndMaterial.m_kb; k <= mRndMaterial.m_ke; k++)
-        for (int j = mRndMaterial.m_jb; j <= mRndMaterial.m_je; j++)
-          for (int i = mRndMaterial.m_ib; i <= mRndMaterial.m_ie; i++) {
+      for (sw4_type k = mRndMaterial.m_kb; k <= mRndMaterial.m_ke; k++)
+        for (sw4_type j = mRndMaterial.m_jb; j <= mRndMaterial.m_je; j++)
+          for (sw4_type i = mRndMaterial.m_ib; i <= mRndMaterial.m_ie; i++) {
             if (m_vsmin <= cs[0](i + 1, j + 1, k + 1) &&
                 cs[0](i + 1, j + 1, k + 1) <= m_vsmax) {
               cs[0](i + 1, j + 1, k + 1) *= mRndMaterial(i, j, k);
@@ -238,15 +238,15 @@ void RandomizedMaterial::perturb_velocities(std::vector<Sarray>& cs,
 }
 
 //-----------------------------------------------------------------------
-void RandomizedMaterial::assign_perturbation(int g, Sarray& pert, Sarray& cs,
+void RandomizedMaterial::assign_perturbation(sw4_type g, Sarray& pert, Sarray& cs,
                                              double h, double zmin, double zmax,
                                              bool rho) {
   if (m_zmax > zmin && zmax > m_zmin) {
     bool curvilinear = g >= mEW->mNumberOfCartesianGrids;
-    // Interpolate to sw4 grid
-    for (int k = mEW->m_kStartInt[g]; k <= mEW->m_kEndInt[g]; k++)
-      for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; j++)
-        for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; i++) {
+    // Sw4_Typeerpolate to sw4 grid
+    for (sw4_type k = mEW->m_kStartSw4_Type[g]; k <= mEW->m_kEndSw4_Type[g]; k++)
+      for (sw4_type j = mEW->m_jStartSw4_Type[g]; j <= mEW->m_jEndSw4_Type[g]; j++)
+        for (sw4_type i = mEW->m_iStartSw4_Type[g]; i <= mEW->m_iEndSw4_Type[g]; i++) {
           float_sw4 x = (i - 1) * h, y = (j - 1) * h, z = zmin + (k - 1) * h;
           if (curvilinear) {
             x = mEW->mX[g](i, j, k);
@@ -254,7 +254,7 @@ void RandomizedMaterial::assign_perturbation(int g, Sarray& pert, Sarray& cs,
             z = mEW->mZ[g](i, j, k);
           }
           if (m_zmin <= z && z <= m_zmax) {
-            int ip = x / m_hh, jp = y / m_hh, kp = (z - m_zmin) / m_hv;
+            sw4_type ip = x / m_hh, jp = y / m_hh, kp = (z - m_zmin) / m_hv;
             if (ip >= mRndMaterial.m_ib && ip <= mRndMaterial.m_ie - 1 &&
                 jp >= mRndMaterial.m_jb && jp <= mRndMaterial.m_je - 1 &&
                 kp >= mRndMaterial.m_kb && kp <= mRndMaterial.m_ke - 1) {
@@ -299,23 +299,23 @@ void RandomizedMaterial::assign_perturbation(int g, Sarray& pert, Sarray& cs,
 }
 
 //-----------------------------------------------------------------------
-void RandomizedMaterial::gen_random_mtrl_fft3d_fftw(int n1g, int n2g, int n3g,
+void RandomizedMaterial::gen_random_mtrl_fft3d_fftw(sw4_type n1g, sw4_type n2g, sw4_type n3g,
                                                     float_sw4 Lx, float_sw4 Ly,
                                                     float_sw4 Lz,
                                                     float_sw4 hurst) {
 #ifdef ENABLE_FFTW
-  int nprocs;
+  sw4_type nprocs;
   MPI_Comm_size(mEW->m_cartesian_communicator, &nprocs);
   AllDims* dimobj = new AllDims(nprocs, 0, n1g - 1, 0, n2g - 1, 0, n3g - 1, 0,
                                 mEW->m_cartesian_communicator);
-  int dims[6];
+  sw4_type dims[6];
   dimobj->getdims_nopad(dims);
   ptrdiff_t ib1 = dims[0], n1 = dims[1] - dims[0] + 1;
   complex<float_sw4>* uc = new complex<float_sw4>[dimobj->m_fftw_alloc_local];
 
   if (m_seed == 0) {
-    int fd = open("/dev/urandom", O_RDONLY);
-    read(fd, &m_seed, sizeof(unsigned int));
+    sw4_type fd = open("/dev/urandom", O_RDONLY);
+    read(fd, &m_seed, sizeof(unsigned sw4_type));
     close(fd);
   }
 
@@ -326,8 +326,8 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw(int n1g, int n2g, int n3g,
       n1g, n2g, n3g, (fftw_complex*)uc, (fftw_complex*)uc,
       mEW->m_cartesian_communicator, FFTW_BACKWARD, FFTW_ESTIMATE);
   // 2. Enforce symmetries
-  int r1 = (n1g - 1) / 2, r2 = (n2g - 1) / 2, r3 = (n3g - 1) / 2;
-  int n1h = n1g / 2, n2h = n2g / 2, n3h = n3g / 2;
+  sw4_type r1 = (n1g - 1) / 2, r2 = (n2g - 1) / 2, r3 = (n3g - 1) / 2;
+  sw4_type n1h = n1g / 2, n2h = n2g / 2, n3h = n3g / 2;
 
 #define u(k1, k2, k3) uc[k3 + n3g * (k2) + n2g * n3g * (k1 - ib1)]
   if (ib1 == 0) u(0, 0, 0) = 0;
@@ -336,39 +336,39 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw(int n1g, int n2g, int n3g,
     u(n1h, 0, 0) = real(u(n1h, 0, 0));
 
   // Local symmetries (in processor)
-  int ulim = 0;
+  sw4_type ulim = 0;
   if (n1g % 2 == 0) ulim = n1h;
 
-  for (int k1 = 0; k1 <= ulim; k1 += n1h) {
+  for (sw4_type k1 = 0; k1 <= ulim; k1 += n1h) {
     if (ib1 <= k1 && k1 <= n1 - 1 + ib1) {
       if (n2g % 2 == 0) u(k1, n2h, 0) = real(u(k1, n2h, 0));
       if (n3g % 2 == 0) u(k1, 0, n3h) = real(u(k1, 0, n3h));
       if (n2g % 2 == 0 && n3g % 2 == 0) u(k1, n2h, n3h) = real(u(k1, n2h, n3h));
-      for (int k2 = 1; k2 <= r2; k2++) {
+      for (sw4_type k2 = 1; k2 <= r2; k2++) {
         u(k1, n2g - k2, 0) = conj(u(k1, k2, 0));
         if (n3g % 2 == 0) u(k1, n2g - k2, n3h) = conj(u(k1, k2, n3h));
       }
-      for (int k3 = 1; k3 <= r3; k3++) {
+      for (sw4_type k3 = 1; k3 <= r3; k3++) {
         u(k1, 0, n3g - k3) = conj(u(k1, 0, k3));
         if (n2g % 2 == 0) u(k1, n2h, n3g - k3) = conj(u(k1, n2h, k3));
       }
-      for (int k2 = 1; k2 <= r2; k2++)
-        for (int k3 = 1; k3 <= r3; k3++) {
+      for (sw4_type k2 = 1; k2 <= r2; k2++)
+        for (sw4_type k3 = 1; k3 <= r3; k3++) {
           u(k1, n2g - k2, n3g - k3) = conj(u(k1, k2, k3));
           u(k1, k2, n3g - k3) = conj(u(k1, n2g - k2, k3));
         }
     }
   }
 
-  // Processor interaction
+  // Processor sw4_typeeraction
   // get ucc from other proc
 
   MPI_Request* req = new MPI_Request[n1];
-  int tag = 349;
-  for (int k1 = 1; k1 <= r1; k1++) {
+  sw4_type tag = 349;
+  for (sw4_type k1 = 1; k1 <= r1; k1++) {
     if (ib1 <= k1 && k1 <= ib1 + n1 - 1) {
       // Isend plane k1 to owner of n1g-k1
-      int proc = dimobj->owner_i(n1g - k1);
+      sw4_type proc = dimobj->owner_i(n1g - k1);
       if (proc == -1) {
         std::cout << "k1 " << k1 << " will send to " << proc << " who owns "
                   << n1g - k1 << endl;
@@ -386,10 +386,10 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw(int n1g, int n2g, int n3g,
   complex<double>* ucc_ = new complex<double>[n2g * n3g];
 #define ucc(k2, k3) ucc_[k3 + n3g * (k2)]
 
-  for (int k1 = n1g - 1; k1 >= n1g - r1; k1--) {
+  for (sw4_type k1 = n1g - 1; k1 >= n1g - r1; k1--) {
     if (ib1 <= k1 && k1 <= ib1 + n1 - 1) {
       //  receive plane to ucc from owner of n1g-k1
-      int proc = dimobj->owner_i(n1g - k1);
+      sw4_type proc = dimobj->owner_i(n1g - k1);
       if (proc == -1) {
         std::cout << " k1 " << k1 << " will receive from " << proc
                   << " who owns " << n1g - k1 << endl;
@@ -409,7 +409,7 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw(int n1g, int n2g, int n3g,
       if (n2g % 2 == 0) u(k1, n2h, 0) = conj(ucc(n2h, 0));
       if (n3g % 2 == 0) u(k1, 0, n3h) = conj(ucc(0, n3h));
       if (n2g % 2 == 0 && n3g % 2 == 0) u(k1, n2h, n3h) = conj(ucc(n2h, n3h));
-      for (int k2 = 1; k2 <= r2; k2++) {
+      for (sw4_type k2 = 1; k2 <= r2; k2++) {
         u(k1, k2, 0) = conj(ucc(n2g - k2, 0));
         u(k1, n2g - k2, 0) = conj(ucc(k2, 0));
         if (n3g % 2 == 0) {
@@ -417,7 +417,7 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw(int n1g, int n2g, int n3g,
           u(k1, n2g - k2, n3h) = conj(ucc(k2, n3h));
         }
       }
-      for (int k3 = 1; k3 <= r3; k3++) {
+      for (sw4_type k3 = 1; k3 <= r3; k3++) {
         u(k1, 0, k3) = conj(ucc(0, n3g - k3));
         u(k1, 0, n3g - k3) = conj(ucc(0, k3));
         if (n2g % 2 == 0) {
@@ -425,8 +425,8 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw(int n1g, int n2g, int n3g,
           u(k1, n2h, n3g - k3) = conj(ucc(n2h, k3));
         }
       }
-      for (int k2 = 1; k2 <= r2; k2++)
-        for (int k3 = 1; k3 <= r3; k3++) {
+      for (sw4_type k2 = 1; k2 <= r2; k2++)
+        for (sw4_type k3 = 1; k3 <= r3; k3++) {
           u(k1, k2, k3) = conj(ucc(n2g - k2, n3g - k3));
           u(k1, n2g - k2, n3g - k3) = conj(ucc(k2, k3));
           u(k1, k2, n3g - k3) = conj(ucc(n2g - k2, k3));
@@ -434,7 +434,7 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw(int n1g, int n2g, int n3g,
         }
     }
   }
-  for (int k1 = 1; k1 <= r1; k1++) {
+  for (sw4_type k1 = 1; k1 <= r1; k1++) {
     // Wait for Isend to complete
     if (ib1 <= k1 && k1 <= ib1 + n1 - 1) {
       MPI_Status status;
@@ -474,16 +474,16 @@ void RandomizedMaterial::gen_random_mtrl_fft3d_fftw(int n1g, int n2g, int n3g,
 }
 
 //-----------------------------------------------------------------------
-void RandomizedMaterial::get_fourier_modes(complex<float_sw4>* uhat, int n1,
-                                           int ib1, int n1g, int n2, int n3,
+void RandomizedMaterial::get_fourier_modes(complex<float_sw4>* uhat, sw4_type n1,
+                                           sw4_type ib1, sw4_type n1g, sw4_type n2, sw4_type n3,
                                            float_sw4 l1, float_sw4 l2,
                                            float_sw4 l3, float_sw4 hurst,
-                                           unsigned int seed) {
+                                           unsigned sw4_type seed) {
   const complex<float_sw4> I(0.0, 1.0);
   //   float_sw4 A0=1; // Amplitude
   float_sw4 A0 = m_sigma * sqrt(8 * M_PI * sqrt(M_PI) * tgamma(hurst + 1.5) *
                                 l1 * l2 * l3 / tgamma(hurst));
-  int D = 3;  // For three space dimensions
+  sw4_type D = 3;  // For three space dimensions
   //   float_sw4 A0isq2 = A0/sqrt(2.0);
   float_sw4 A0isq2 = A0;
   float_sw4 hhalf = 0.5 * (hurst + D * 0.5);
@@ -493,16 +493,16 @@ void RandomizedMaterial::get_fourier_modes(complex<float_sw4>* uhat, int n1,
   //   normal_distribution<float_sw4> ndist(0.0,1.0);
   uniform_real_distribution<double> udist(0.0, 2 * M_PI);
 
-  int r1 = (n1g - 1) / 2, r2 = (n2 - 1) / 2, r3 = (n3 - 1) / 2;
+  sw4_type r1 = (n1g - 1) / 2, r2 = (n2 - 1) / 2, r3 = (n3 - 1) / 2;
   float_sw4 tpi = 2 * M_PI;
   float_sw4 tpi2 = tpi * tpi;
-  for (int k1 = ib1; k1 <= n1 - 1 + ib1; k1++) {
+  for (sw4_type k1 = ib1; k1 <= n1 - 1 + ib1; k1++) {
     float_sw4 k1eff = k1;
     if (k1 > r1) k1eff = k1 - n1g;
-    for (int k2 = 0; k2 <= n2 - 1; k2++) {
+    for (sw4_type k2 = 0; k2 <= n2 - 1; k2++) {
       float_sw4 k2eff = k2;
       if (k2 > r2) k2eff = k2 - n2;
-      for (int k3 = 0; k3 <= n3 - 1; k3++) {
+      for (sw4_type k3 = 0; k3 <= n3 - 1; k3++) {
         float_sw4 k3eff = k3;
         if (k3 > r3) k3eff = k3 - n3;
         uhat[k3 + n3 * k2 + n2 * n3 * (k1 - ib1)] =
@@ -564,32 +564,32 @@ void RandomizedMaterial::redistribute_array(AllDims& src, AllDims& dest,
 
   std::vector<Patch*> sendlist, recvlist;
   Patch* selfsend;
-  int dims[6], selfsnr = 0, selfrnr = 0;
+  sw4_type dims[6], selfsnr = 0, selfrnr = 0;
   MPI_Datatype mpi_datatype = get_mpi_datatype(src_array);
 
-  for (int p3 = 0; p3 < dest.m_nprock; p3++)
-    for (int p2 = 0; p2 < dest.m_nprocj; p2++)
-      for (int p1 = 0; p1 < dest.m_nproci; p1++)
-        if (dest.intersect(p1, p2, p3, src, dims)) {
-          Patch* intersection = new Patch(dims, dest.proc1d(p1, p2, p3));
+  for (sw4_type p3 = 0; p3 < dest.m_nprock; p3++)
+    for (sw4_type p2 = 0; p2 < dest.m_nprocj; p2++)
+      for (sw4_type p1 = 0; p1 < dest.m_nproci; p1++)
+        if (dest.sw4_typeersect(p1, p2, p3, src, dims)) {
+          Patch* sw4_typeersection = new Patch(dims, dest.proc1d(p1, p2, p3));
           if (!dest.owner(p1, p2, p3))
-            sendlist.push_back(intersection);
+            sendlist.push_back(sw4_typeersection);
           else {
-            selfsend = intersection;
+            selfsend = sw4_typeersection;
             selfsnr++;
           }
         }
 
   if (selfsnr > 1)
-    std::cout << "ERROR: found more than one self intersection" << std::endl;
+    std::cout << "ERROR: found more than one self sw4_typeersection" << std::endl;
 
-  for (int p3 = 0; p3 < src.m_nprock; p3++)
-    for (int p2 = 0; p2 < src.m_nprocj; p2++)
-      for (int p1 = 0; p1 < src.m_nproci; p1++)
-        if (src.intersect(p1, p2, p3, dest, dims)) {
-          Patch* intersection = new Patch(dims, src.proc1d(p1, p2, p3));
+  for (sw4_type p3 = 0; p3 < src.m_nprock; p3++)
+    for (sw4_type p2 = 0; p2 < src.m_nprocj; p2++)
+      for (sw4_type p1 = 0; p1 < src.m_nproci; p1++)
+        if (src.sw4_typeersect(p1, p2, p3, dest, dims)) {
+          Patch* sw4_typeersection = new Patch(dims, src.proc1d(p1, p2, p3));
           if (!src.owner(p1, p2, p3))
-            recvlist.push_back(intersection);
+            recvlist.push_back(sw4_typeersection);
           else
             selfrnr++;
         }
@@ -599,13 +599,13 @@ void RandomizedMaterial::redistribute_array(AllDims& src, AllDims& dest,
 
   T** recv_array_patch;
   MPI_Request* req;
-  int tag = 667;
+  sw4_type tag = 667;
 
   //      if( src.m_myid1d == 0 )
   //      {
   //         cout << "sendlist      " << sendlist.size() << endl;
   //         cout << "recvlist      " << recvlist.size() << endl;
-  //         cout << "selfintersect " << selfsnr << endl;
+  //         cout << "selfsw4_typeersect " << selfsnr << endl;
   //      }
   if (selfsnr == 1) {
     // Copy patches between my own parts of the arrays
@@ -619,14 +619,14 @@ void RandomizedMaterial::redistribute_array(AllDims& src, AllDims& dest,
   }
 
   // Post receives
-  for (int r = 0; r < recvlist.size(); r++) {
+  for (sw4_type r = 0; r < recvlist.size(); r++) {
     size_t size = recvlist[r]->size();
     recv_array_patch[r] = new T[size];
     MPI_Irecv(recv_array_patch[r], size, mpi_datatype, recvlist[r]->m_procid,
               tag, mEW->m_cartesian_communicator, &req[r]);
   }
   // Pack data and send
-  for (int s = 0; s < sendlist.size(); s++) {
+  for (sw4_type s = 0; s < sendlist.size(); s++) {
     size_t size = sendlist[s]->size();
     T* array_patch = new T[size];
     sendlist[s]->pack(src_array, src, array_patch);
@@ -636,7 +636,7 @@ void RandomizedMaterial::redistribute_array(AllDims& src, AllDims& dest,
   }
 
   // Do the receieve and unpack
-  for (int r = 0; r < recvlist.size(); r++) {
+  for (sw4_type r = 0; r < recvlist.size(); r++) {
     MPI_Status status;
     MPI_Wait(&req[r], &status);
     recvlist[r]->unpack(dest_array, dest, recv_array_patch[r]);
@@ -650,25 +650,25 @@ void RandomizedMaterial::redistribute_array(AllDims& src, AllDims& dest,
 }
 
 // -----------------------------------------------------------------------
-void RandomizedMaterial::repad_sarray(Sarray& sar, int old_padding,
-                                      int new_padding) {
+void RandomizedMaterial::repad_sarray(Sarray& sar, sw4_type old_padding,
+                                      sw4_type new_padding) {
   // Assuming 2D processor decomp.
   if (old_padding == new_padding) return;
 
   // Shorter names
-  int neigh[4] = {mEW->m_neighbor[0], mEW->m_neighbor[1], mEW->m_neighbor[2],
+  sw4_type neigh[4] = {mEW->m_neighbor[0], mEW->m_neighbor[1], mEW->m_neighbor[2],
                   mEW->m_neighbor[3]};
 
   // Leave physical boundaries unchanged.
-  int ib = sar.m_ib, ie = sar.m_ie;
+  sw4_type ib = sar.m_ib, ie = sar.m_ie;
   if (neigh[0] != MPI_PROC_NULL) ib = ib + old_padding - new_padding;
   if (neigh[1] != MPI_PROC_NULL) ie = ie - old_padding + new_padding;
 
-  int jb = sar.m_jb, je = sar.m_je;
+  sw4_type jb = sar.m_jb, je = sar.m_je;
   if (neigh[2] != MPI_PROC_NULL) jb = jb + old_padding - new_padding;
   if (neigh[3] != MPI_PROC_NULL) je = je - old_padding + new_padding;
 
-  int kb = sar.m_kb, ke = sar.m_ke;
+  sw4_type kb = sar.m_kb, ke = sar.m_ke;
 
   if (old_padding < new_padding) {
     Sarray tmp(sar.m_nc, ib, ie, jb, je, kb, ke);
@@ -690,8 +690,8 @@ void RandomizedMaterial::repad_sarray(Sarray& sar, int old_padding,
 }
 
 // -----------------------------------------------------------------------
-void RandomizedMaterial::comm_sarray(Sarray& sar, int neigh[4], int padding) {
-  const int ib = sar.m_ib, ie = sar.m_ie, jb = sar.m_jb, je = sar.m_je,
+void RandomizedMaterial::comm_sarray(Sarray& sar, sw4_type neigh[4], sw4_type padding) {
+  const sw4_type ib = sar.m_ib, ie = sar.m_ie, jb = sar.m_jb, je = sar.m_je,
             kb = sar.m_kb, ke = sar.m_ke;
 
   size_t npts1 =
@@ -706,8 +706,8 @@ void RandomizedMaterial::comm_sarray(Sarray& sar, int neigh[4], int padding) {
   MPI_Comm comm = mEW->m_cartesian_communicator;
 
   MPI_Status status;
-  int xtag1 = 3343, xtag2 = 3344;
-  int ytag1 = 3345, ytag2 = 3346;
+  sw4_type xtag1 = 3343, xtag2 = 3344;
+  sw4_type ytag1 = 3345, ytag2 = 3346;
 
   //   memset(sbuf,0,ptsmax*sizeof(float_sw4)); // To shut up memory checker
   // I-direction communication

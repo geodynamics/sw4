@@ -6,8 +6,8 @@
 #include "sw4.h"
 
 //-----------------------------------------------------------------------
-void EW::freesurfcurvisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
-                            int nz, int side, float_sw4* __restrict__ a_u,
+void EW::freesurfcurvisg_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
+                            sw4_type nz, sw4_type side, float_sw4* __restrict__ a_u,
                             float_sw4* __restrict__ a_mu,
                             float_sw4* __restrict__ a_la,
                             float_sw4* __restrict__ a_met, float_sw4* s,
@@ -17,14 +17,14 @@ void EW::freesurfcurvisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
   SW4_MARK_FUNCTION;
   const float_sw4 c1 = 2.0 / 3, c2 = -1.0 / 12;
 
-  const int ni = ie - ib + 1;
-  const int nij = ni * (je - jb + 1);
-  const int nijk = ni * (je - jb + 1) * (ke - kb + 1);
-  const int base = -(ib + ni * jb + nij * kb);
-  const int basef = -(ib + ni * jb);
-  const int base4 = base - nijk;
-  const int base3 = base - nijk;
-  const int nic3 = 3 * ni;
+  const sw4_type ni = ie - ib + 1;
+  const sw4_type nij = ni * (je - jb + 1);
+  const sw4_type nijk = ni * (je - jb + 1) * (ke - kb + 1);
+  const sw4_type base = -(ib + ni * jb + nij * kb);
+  const sw4_type basef = -(ib + ni * jb);
+  const sw4_type base4 = base - nijk;
+  const sw4_type base3 = base - nijk;
+  const sw4_type nic3 = 3 * ni;
 #define mu(i, j, k) a_mu[base + i + ni * (j) + nij * (k)]
 #define la(i, j, k) a_la[base + i + ni * (j) + nij * (k)]
 #define met(c, i, j, k) a_met[base4 + (i) + ni * (j) + nij * (k) + nijk * (c)]
@@ -33,7 +33,7 @@ void EW::freesurfcurvisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
 #define strx(i) a_strx[i - ib]
 #define stry(j) a_stry[j - jb]
 
-  int k, kl;
+  sw4_type k, kl;
   if (side == 5) {
     k = 1;
     kl = 1;
@@ -44,18 +44,18 @@ void EW::freesurfcurvisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
 
   float_sw4 s0i = 1 / s[0];
   // #pragma omp parallel for
-  //    for( int j= jb+2; j<=je-2 ; j++ )
+  //    for( sw4_type j= jb+2; j<=je-2 ; j++ )
   //    {
 
   // #pragma ivdep
   // #pragma simd
-  //       for( int i= ib+2; i<=ie-2 ; i++ )
+  //       for( sw4_type i= ib+2; i<=ie-2 ; i++ )
   //       {
 
   RAJA::RangeSegment i_range(ib + 2, ie - 1);
   RAJA::RangeSegment j_range(jb + 2, je - 1);
   RAJA::kernel<RHS4CU_POL_ASYNC>(
-      RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+      RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(sw4_type j, sw4_type i) {
         float_sw4 istrx = 1 / strx(i);
         float_sw4 istry = 1 / stry(j);
         // First tangential derivatives
@@ -173,20 +173,20 @@ void EW::freesurfcurvisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
 
 //-----------------------------------------------------------------------
 void EW::getsurfforcingsg_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, int k,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast, sw4_type k,
     float_sw4* __restrict__ a_met, float_sw4* __restrict__ a_jac,
     float_sw4* __restrict__ a_tau, float_sw4* __restrict__ a_strx,
     float_sw4* __restrict__ a_stry, float_sw4* __restrict__ a_forcing) {
   SW4_MARK_FUNCTION;
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = ni * (jlast - jfirst + 1) * (klast - kfirst + 1);
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int basef = -(ifirst + ni * jfirst);
-  const int base3 = base - nijk;
-  // const int basef3= basef-nij;
-  const int nic3 = 3 * ni;
-  // const int nic6  = 6*ni;
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijk = ni * (jlast - jfirst + 1) * (klast - kfirst + 1);
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type basef = -(ifirst + ni * jfirst);
+  const sw4_type base3 = base - nijk;
+  // const sw4_type basef3= basef-nij;
+  const sw4_type nic3 = 3 * ni;
+  // const sw4_type nic6  = 6*ni;
 
 #define met(c, i, j, k) a_met[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 #define jac(i, j, k) a_jac[base + (i) + ni * (j) + nij * (k)]
@@ -197,11 +197,11 @@ void EW::getsurfforcingsg_ci(
 #define stry(j) a_stry[j - jfirst]
 
 #pragma omp parallel for
-  for (int j = jfirst; j <= jlast; j++) {
+  for (sw4_type j = jfirst; j <= jlast; j++) {
     float_sw4 istry = 1 / stry(j);
 #pragma ivdep
 #pragma simd
-    for (int i = ifirst; i <= ilast; i++) {
+    for (sw4_type i = ifirst; i <= ilast; i++) {
       float_sw4 istrx = 1 / strx(i);
       float_sw4 sqjac = sqrt(jac(i, j, k));
       forcing(1, i, j) =
@@ -228,20 +228,20 @@ void EW::getsurfforcingsg_ci(
 
 //-----------------------------------------------------------------------
 void EW::subsurfforcingsg_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, int k,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast, sw4_type k,
     float_sw4* __restrict__ a_met, float_sw4* __restrict__ a_jac,
     float_sw4* __restrict__ a_tau, float_sw4* __restrict__ a_strx,
     float_sw4* __restrict__ a_stry, float_sw4* __restrict__ a_forcing) {
   SW4_MARK_FUNCTION;
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = ni * (jlast - jfirst + 1) * (klast - kfirst + 1);
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int basef = -(ifirst + ni * jfirst);
-  const int base3 = base - nijk;
-  // const int basef3= basef-nij;
-  const int nic3 = 3 * ni;
-  // const int nic6  = 6*ni;
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijk = ni * (jlast - jfirst + 1) * (klast - kfirst + 1);
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type basef = -(ifirst + ni * jfirst);
+  const sw4_type base3 = base - nijk;
+  // const sw4_type basef3= basef-nij;
+  const sw4_type nic3 = 3 * ni;
+  // const sw4_type nic6  = 6*ni;
 
 #define met(c, i, j, k) a_met[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 #define jac(i, j, k) a_jac[base + (i) + ni * (j) + nij * (k)]
@@ -252,11 +252,11 @@ void EW::subsurfforcingsg_ci(
 #define stry(j) a_stry[j - jfirst]
 
 #pragma omp parallel for
-  for (int j = jfirst; j <= jlast; j++) {
+  for (sw4_type j = jfirst; j <= jlast; j++) {
     float_sw4 istry = 1 / stry(j);
 #pragma ivdep
 #pragma simd
-    for (int i = ifirst; i <= ilast; i++) {
+    for (sw4_type i = ifirst; i <= ilast; i++) {
       float_sw4 istrx = 1 / strx(i);
       float_sw4 sqjac = sqrt(jac(i, j, k));
       forcing(1, i, j) -=

@@ -72,17 +72,17 @@ class SfileOutput {
 
   static SfileOutput* nil;
 
-  SfileOutput(EW* a_ew, float_sw4 time, float_sw4 timeInterval, int cycle,
-              int cycleInterval, float_sw4 tstart,
-              const std::string& filePrefix, int sampleFactor_h,
-              int sampleFactor_v, bool doubleMode);
+  SfileOutput(EW* a_ew, float_sw4 time, float_sw4 timeSw4_Typeerval, sw4_type cycle,
+              sw4_type cycleSw4_Typeerval, float_sw4 tstart,
+              const std::string& filePrefix, sw4_type sampleFactor_h,
+              sw4_type sampleFactor_v, bool doubleMode);
   ~SfileOutput();
 
   void setup_images();
 
-  static void setSteps(int a_steps);
+  static void setSteps(sw4_type a_steps);
 
-  void update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
+  void update_image(sw4_type a_cycle, float_sw4 a_time, float_sw4 a_dt,
                     std::vector<Sarray>& a_U, std::vector<Sarray>& a_Rho,
                     std::vector<Sarray>& a_Mu, std::vector<Sarray>& a_Lambda,
                     std::vector<Sarray>& a_gRho, std::vector<Sarray>& a_gMu,
@@ -90,7 +90,7 @@ class SfileOutput {
                     std::vector<Sarray>& a_Qs, std::string a_path,
                     std::vector<Sarray>& a_Z);
 
-  void force_write_image(float_sw4 a_time, int a_cycle,
+  void force_write_image(float_sw4 a_time, sw4_type a_cycle,
                          std::vector<Sarray>& a_U, std::vector<Sarray>& a_Rho,
                          std::vector<Sarray>& a_Mu,
                          std::vector<Sarray>& a_Lambda,
@@ -101,7 +101,7 @@ class SfileOutput {
                          std::string a_path, std::vector<Sarray>& a_Z);
 
  protected:
-  bool timeToWrite(float_sw4 time, int cycle, float_sw4 dt);
+  bool timeToWrite(float_sw4 time, sw4_type cycle, float_sw4 dt);
 
   void compute_image(std::vector<Sarray>& a_U, std::vector<Sarray>& a_Rho,
                      std::vector<Sarray>& a_Mu, std::vector<Sarray>& a_Lambda,
@@ -113,23 +113,23 @@ class SfileOutput {
 
   void define_pio();
 
-  void compute_file_suffix(int cycle, std::stringstream& fileSuffix);
+  void compute_file_suffix(sw4_type cycle, std::stringstream& fileSuffix);
 
-  void gen_fname(std::string& path, int cycle, std::string& fname);
+  void gen_fname(std::string& path, sw4_type cycle, std::string& fname);
 
   SfileOutputMode mMode;
   std::string mFilePrefix;
   float_sw4 mTime;
   bool m_time_done;
-  float_sw4 mTimeInterval;
+  float_sw4 mTimeSw4_Typeerval;
   float_sw4 mNextTime;
   float_sw4 mStartTime;
 
-  int mWritingCycle;
-  int mCycleInterval;
-  /* int mImageSamplingFactor; */
-  int mSampleH;
-  int mSampleV;
+  sw4_type mWritingCycle;
+  sw4_type mCycleSw4_Typeerval;
+  /* sw4_type mImageSamplingFactor; */
+  sw4_type mSampleH;
+  sw4_type mSampleV;
 
   std::string mFileName;
   /* std::string m_modestring; */
@@ -138,7 +138,7 @@ class SfileOutput {
   bool m_winallocated;
   bool m_memallocated;
 
-  static int
+  static sw4_type
       mPreceedZeros;  // number of digits for unique time step in file names
 
  private:
@@ -150,14 +150,14 @@ class SfileOutput {
   EW* mEW;
   Parallel_IO** m_parallel_io;
 
-  std::vector<int*> mWindow;      // Local in processor start + end indices for
+  std::vector<sw4_type*> mWindow;      // Local in processor start + end indices for
                                   // (i,j,k) for each grid level
-  std::vector<int*> mGlobalDims;  // Global start + end indices for (i,j,k) for
+  std::vector<sw4_type*> mGlobalDims;  // Global start + end indices for (i,j,k) for
                                   // each grid level
 
   std::vector<double*> m_doubleField;
   std::vector<float*> m_floatField;
-  std::vector<int> m_extraz;
+  std::vector<sw4_type> m_extraz;
   std::vector<bool> m_ihavearray;
   bool m_isCreated;
 };

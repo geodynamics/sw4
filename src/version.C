@@ -78,7 +78,7 @@ std::string getVersionInfo() {
 }
 };  // namespace ewversion
 
-// Print library versions and compiler options
+// Prsw4_type library versions and compiler options
 // ! Indicates options that slow down the code
 //
 #include "RAJA/RAJA.hpp"

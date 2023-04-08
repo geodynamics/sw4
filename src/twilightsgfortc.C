@@ -5,8 +5,8 @@
 //#include <math.h>
 //#include <sys/types.h>
 //-----------------------------------------------------------------------
-void EW::forcingfortsg_ci(int ifirst, int ilast, int jfirst, int jlast,
-                          int kfirst, int klast, float_sw4* __restrict__ fo,
+void EW::forcingfortsg_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                          sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                           float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                           float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                           float_sw4 ampmu, float_sw4 amplambda, float_sw4 h,
@@ -24,7 +24,7 @@ void EW::forcingfortsg_ci(int ifirst, int ilast, int jfirst, int jlast,
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::kernel<DEFAULT_LOOP3>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
         float_sw4 forces[3], t10, t100, t102, t103, t104, t105, t106, t113,
             t114, t115, t116, t117, t119, t121, t122, t123, t124, t126, t129,
             t13, t132, t133, t14, t142, t143, t144, t145, t147, t148, t150,
@@ -35,15 +35,15 @@ void EW::forcingfortsg_ci(int ifirst, int ilast, int jfirst, int jlast,
             t51, t56, t6, t61, t62, t63, t72, t73, t75, t76, t78, t80, t81, t82,
             t84, t85, t87, t88, t9, t91, t92, t96, t97, t99;
         // #pragma omp for
-        //       for( int k=kfirst; k<=klast; k++ )
+        //       for( sw4_type k=kfirst; k<=klast; k++ )
         //       {
         // 	 float_sw4 z=(k-1)*h+zmin;
-        // 	 for( int j=jfirst; j<=jlast; j++ )
+        // 	 for( sw4_type j=jfirst; j<=jlast; j++ )
         // 	 {
         // 	    float_sw4 y=(j-1)*h;
         // #pragma ivdep
         // #pragma simd
-        // 	    for( int i=ifirst; i<=ilast; i++ )
+        // 	    for( sw4_type i=ifirst; i<=ilast; i++ )
         // 	    {
         float_sw4 x = (i - 1) * h;
         float_sw4 y = (j - 1) * h;
@@ -197,8 +197,8 @@ void EW::forcingfortsg_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::forcingttfortsg_ci(int ifirst, int ilast, int jfirst, int jlast,
-                            int kfirst, int klast, float_sw4* __restrict__ fo,
+void EW::forcingttfortsg_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                            sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                             float_sw4 t, float_sw4 om, float_sw4 c,
                             float_sw4 ph, float_sw4 omm, float_sw4 phm,
                             float_sw4 amprho, float_sw4 ampmu,
@@ -218,7 +218,7 @@ void EW::forcingttfortsg_ci(int ifirst, int ilast, int jfirst, int jlast,
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::kernel<TWILIGHTSG_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
         float_sw4 forces[3], t10, t100, t102, t103, t106, t107, t110, t120,
             t121, t122, t123, t124, t125, t127, t129, t13, t131, t133, t135,
             t138, t14, t142, t143, t150, t151, t157, t158, t159, t16, t160,
@@ -230,15 +230,15 @@ void EW::forcingttfortsg_ci(int ifirst, int ilast, int jfirst, int jlast,
             t74, t77, t78, t80, t82, t83, t84, t86, t87, t88, t9, t90, t92, t96,
             t99;
         // #pragma omp for
-        //       for( int k=kfirst; k<=klast; k++ )
+        //       for( sw4_type k=kfirst; k<=klast; k++ )
         //       {
         // 	 float_sw4 z=(k-1)*h+zmin;
-        // 	 for( int j=jfirst; j<=jlast; j++ )
+        // 	 for( sw4_type j=jfirst; j<=jlast; j++ )
         // 	 {
         // 	    float_sw4 y=(j-1)*h;
         // #pragma ivdep
         // #pragma simd
-        // 	    for( int i=ifirst; i<=ilast; i++ )
+        // 	    for( sw4_type i=ifirst; i<=ilast; i++ )
         // 	    {
         float_sw4 x = (i - 1) * h;
         float_sw4 y = (j - 1) * h;
@@ -404,8 +404,8 @@ void EW::forcingttfortsg_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::forcingfortcsg_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, float_sw4* __restrict__ fo,
+void EW::forcingfortcsg_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                            float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                            float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                            float_sw4 ampmu, float_sw4 amplambda,
@@ -425,7 +425,7 @@ void EW::forcingfortcsg_ci(int ifirst, int ilast, int jfirst, int jlast,
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::kernel<TWILIGHTSG_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
         float_sw4 forces[3], t10, t100, t102, t103, t104, t105, t106, t113,
             t114, t115, t116, t117, t119, t121, t122, t123, t124, t126, t129,
             t13, t132, t133, t14, t142, t143, t144, t145, t147, t148, t150,
@@ -436,11 +436,11 @@ void EW::forcingfortcsg_ci(int ifirst, int ilast, int jfirst, int jlast,
             t51, t56, t6, t61, t62, t63, t72, t73, t75, t76, t78, t80, t81, t82,
             t84, t85, t87, t88, t9, t91, t92, t96, t97, t99;
         // #pragma omp for
-        //       for( int k=kfirst; k<=klast; k++ )
-        // 	 for( int j=jfirst; j<=jlast; j++ )
+        //       for( sw4_type k=kfirst; k<=klast; k++ )
+        // 	 for( sw4_type j=jfirst; j<=jlast; j++ )
         // #pragma ivdep
         // #pragma simd
-        // 	    for( int i=ifirst; i<=ilast; i++ )
+        // 	    for( sw4_type i=ifirst; i<=ilast; i++ )
         // 	    {
         size_t ind = base + i + ni * j + nij * k;
         float_sw4 x = xx[ind];
@@ -593,8 +593,8 @@ void EW::forcingfortcsg_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::forcingttfortcsg_ci(int ifirst, int ilast, int jfirst, int jlast,
-                             int kfirst, int klast, float_sw4* __restrict__ fo,
+void EW::forcingttfortcsg_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                             sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                              float_sw4 t, float_sw4 om, float_sw4 c,
                              float_sw4 ph, float_sw4 omm, float_sw4 phm,
                              float_sw4 amprho, float_sw4 ampmu,
@@ -615,7 +615,7 @@ void EW::forcingttfortcsg_ci(int ifirst, int ilast, int jfirst, int jlast,
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::kernel<TWILIGHTSG_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
         float_sw4 forces[3], t10, t100, t102, t103, t106, t107, t110, t120,
             t121, t122, t123, t124, t125, t127, t129, t13, t131, t133, t135,
             t138, t14, t142, t143, t150, t151, t157, t158, t159, t16, t160,
@@ -627,11 +627,11 @@ void EW::forcingttfortcsg_ci(int ifirst, int ilast, int jfirst, int jlast,
             t74, t77, t78, t80, t82, t83, t84, t86, t87, t88, t9, t90, t92, t96,
             t99;
         // #pragma omp for
-        //       for( int k=kfirst; k<=klast; k++ )
-        // 	 for( int j=jfirst; j<=jlast; j++ )
+        //       for( sw4_type k=kfirst; k<=klast; k++ )
+        // 	 for( sw4_type j=jfirst; j<=jlast; j++ )
         // #pragma ivdep
         // #pragma simd
-        // 	    for( int i=ifirst; i<=ilast; i++ )
+        // 	    for( sw4_type i=ifirst; i<=ilast; i++ )
         // 	    {
         size_t ind = base + i + ni * j + nij * k;
         float_sw4 x = xx[ind];
@@ -795,8 +795,8 @@ void EW::forcingttfortcsg_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::forcingfortsgatt_ci(int ifirst, int ilast, int jfirst, int jlast,
-                             int kfirst, int klast, float_sw4* __restrict__ fo,
+void EW::forcingfortsgatt_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                             sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                              float_sw4 t, float_sw4 omega, float_sw4 c,
                              float_sw4 phase, float_sw4 momega,
                              float_sw4 mphase, float_sw4 amprho,
@@ -814,7 +814,7 @@ void EW::forcingfortsgatt_ci(int ifirst, int ilast, int jfirst, int jlast,
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::kernel<DEFAULT_LOOP3>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
         float_sw4 forces[3], t1, t10, t100, t103, t104, t105, t106, t107, t11,
             t110, t111, t116, t117, t119, t120, t122, t125, t128, t132, t133,
             t134, t135, t137, t138, t14, t140, t141, t142, t144, t148, t15,
@@ -824,15 +824,15 @@ void EW::forcingfortsgatt_ci(int ifirst, int ilast, int jfirst, int jlast,
             t42, t44, t50, t56, t57, t58, t6, t64, t67, t7, t73, t74, t76, t77,
             t78, t8, t81, t82, t85, t86, t87, t88, t92, t95, t97, t98;
         // #pragma omp for
-        //       for( int k=kfirst; k<=klast; k++ )
+        //       for( sw4_type k=kfirst; k<=klast; k++ )
         //       {
         //
-        // 	 for( int j=jfirst; j<=jlast; j++ )
+        // 	 for( sw4_type j=jfirst; j<=jlast; j++ )
         // 	 {
         //
         // #pragma ivdep
         // #pragma simd
-        // 	    for( int i=ifirst; i<=ilast; i++ )
+        // 	    for( sw4_type i=ifirst; i<=ilast; i++ )
         // 	    {
         float_sw4 y = (j - 1) * h;
         float_sw4 x = (i - 1) * h;
@@ -977,7 +977,7 @@ void EW::forcingfortsgatt_ci(int ifirst, int ilast, int jfirst, int jlast,
 
 //-----------------------------------------------------------------------
 void EW::forcingttfortsgatt_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
     float_sw4* __restrict__ fo, float_sw4 t, float_sw4 omega, float_sw4 c,
     float_sw4 phase, float_sw4 momega, float_sw4 mphase, float_sw4 amprho,
     float_sw4 ampmu, float_sw4 amplambda, float_sw4 h, float_sw4 zmin,
@@ -994,7 +994,7 @@ void EW::forcingttfortsgatt_ci(
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::kernel<TWILIGHTSG_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
         float_sw4 forces[3], t1, t10, t100, t101, t104, t105, t107, t108, t109,
             t11, t110, t114, t115, t116, t120, t121, t124, t125, t127, t128,
             t130, t131, t135, t14, t141, t146, t147, t149, t15, t150, t151,
@@ -1007,15 +1007,15 @@ void EW::forcingttfortsgatt_ci(
             t48, t49, t50, t52, t55, t6, t61, t67, t68, t69, t7, t75, t76, t78,
             t8, t82, t85, t86, t88, t89, t90, t94, t95, t96, t98, t99;
         // #pragma omp for
-        //       for( int k=kfirst; k<=klast; k++ )
+        //       for( sw4_type k=kfirst; k<=klast; k++ )
         //       {
         // 	 float_sw4 z=(k-1)*h+zmin;
-        // 	 for( int j=jfirst; j<=jlast; j++ )
+        // 	 for( sw4_type j=jfirst; j<=jlast; j++ )
         // 	 {
         // 	    float_sw4 y=(j-1)*h;
         // #pragma ivdep
         // #pragma simd
-        // 	    for( int i=ifirst; i<=ilast; i++ )
+        // 	    for( sw4_type i=ifirst; i<=ilast; i++ )
         // 	    {
         float_sw4 x = (i - 1) * h;
         float_sw4 y = (j - 1) * h;
@@ -1201,7 +1201,7 @@ void EW::forcingttfortsgatt_ci(
 
 //-----------------------------------------------------------------------
 void EW::forcingfortsgattc_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
     float_sw4* __restrict__ fo, float_sw4 t, float_sw4 omega, float_sw4 c,
     float_sw4 phase, float_sw4 momega, float_sw4 mphase, float_sw4 amprho,
     float_sw4 ampmu, float_sw4 amplambda, float_sw4* __restrict__ xx,
@@ -1220,7 +1220,7 @@ void EW::forcingfortsgattc_ci(
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::kernel<TWILIGHTSG_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
         float_sw4 forces[3], t1, t10, t100, t103, t104, t105, t106, t107, t11,
             t110, t111, t116, t117, t119, t120, t122, t125, t128, t132, t133,
             t134, t135, t137, t138, t14, t140, t141, t142, t144, t148, t15,
@@ -1230,11 +1230,11 @@ void EW::forcingfortsgattc_ci(
             t42, t44, t50, t56, t57, t58, t6, t64, t67, t7, t73, t74, t76, t77,
             t78, t8, t81, t82, t85, t86, t87, t88, t92, t95, t97, t98;
         // #pragma omp for
-        //       for( int k=kfirst; k<=klast; k++ )
-        // 	 for( int j=jfirst; j<=jlast; j++ )
+        //       for( sw4_type k=kfirst; k<=klast; k++ )
+        // 	 for( sw4_type j=jfirst; j<=jlast; j++ )
         // #pragma ivdep
         // #pragma simd
-        // 	    for( int i=ifirst; i<=ilast; i++ )
+        // 	    for( sw4_type i=ifirst; i<=ilast; i++ )
         // 	    {
         size_t ind = base + i + ni * j + nij * k;
         float_sw4 z = zz[ind];
@@ -1377,7 +1377,7 @@ void EW::forcingfortsgattc_ci(
 
 //-----------------------------------------------------------------------
 void EW::forcingttfortsgattc_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
     float_sw4* __restrict__ fo, float_sw4 t, float_sw4 omega, float_sw4 c,
     float_sw4 phase, float_sw4 momega, float_sw4 mphase, float_sw4 amprho,
     float_sw4 ampmu, float_sw4 amplambda, float_sw4* __restrict__ xx,
@@ -1396,7 +1396,7 @@ void EW::forcingttfortsgattc_ci(
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::kernel<TWILIGHTSG_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
         float_sw4 forces[3], t1, t10, t100, t101, t104, t105, t107, t108, t109,
             t11, t110, t114, t115, t116, t120, t121, t124, t125, t127, t128,
             t130, t131, t135, t14, t141, t146, t147, t149, t15, t150, t151,
@@ -1409,11 +1409,11 @@ void EW::forcingttfortsgattc_ci(
             t48, t49, t50, t52, t55, t6, t61, t67, t68, t69, t7, t75, t76, t78,
             t8, t82, t85, t86, t88, t89, t90, t94, t95, t96, t98, t99;
         // #pragma omp for
-        //       for( int k=kfirst; k<=klast; k++ )
-        // 	 for( int j=jfirst; j<=jlast; j++ )
+        //       for( sw4_type k=kfirst; k<=klast; k++ )
+        // 	 for( sw4_type j=jfirst; j<=jlast; j++ )
         // #pragma ivdep
         // #pragma simd
-        // 	    for( int i=ifirst; i<=ilast; i++ )
+        // 	    for( sw4_type i=ifirst; i<=ilast; i++ )
         // 	    {
         size_t ind = base + i + ni * j + nij * k;
         float_sw4 z = zz[ind];

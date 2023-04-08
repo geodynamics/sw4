@@ -35,20 +35,20 @@
 #include "mpi.h"
 
 extern "C" {
-void F77_FUNC(dgbsv, DGBSV)(int*, int*, int*, int*, double*, int*, int*,
-                            double*, int*, int*);
+void F77_FUNC(dgbsv, DGBSV)(sw4_type*, sw4_type*, sw4_type*, sw4_type*, double*, sw4_type*, sw4_type*,
+                            double*, sw4_type*, sw4_type*);
 }
 
 using namespace std;
 
 //-----------------------------------------------------------------------
-Qspline::Qspline(int npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt,
-                 int bclow, int bchigh, float_sw4 s1, float_sw4 t1,
+Qspline::Qspline(sw4_type npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt,
+                 sw4_type bclow, sw4_type bchigh, float_sw4 s1, float_sw4 t1,
                  float_sw4 sn, float_sw4 tn) {
-  // Quintic spline interpolation of a function defined on a uniform grid.
+  // Qusw4_typeic spline sw4_typeerpolation of a function defined on a uniform grid.
   //
   // npts - Number of spline points
-  // fun  - The function to interpolate, defined at points k=0,..,npts-1
+  // fun  - The function to sw4_typeerpolate, defined at points k=0,..,npts-1
   // tmin, dt - Gives the assumed uniform grid, t_k = tmin+k*dt, k=0,..,npts-1
   // bclow - Lower end boundary condition, 1-'not a knot', condition (full order
   // one sided)
@@ -71,7 +71,7 @@ Qspline::Qspline(int npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt,
     bchigh = 1;
   }
 
-  int minpts = 0;
+  sw4_type minpts = 0;
   if (bclow == 1 && bchigh == 1)
     minpts = 7;
   else if ((bclow == 1 && bchigh == 2) || (bclow == 2 && bchigh == 1))
@@ -79,7 +79,7 @@ Qspline::Qspline(int npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt,
   else if (bclow == 2 && bchigh == 2)
     minpts = 2;
   if (npts < minpts) {
-    cout << "ERROR in Qspline, number of interpolation points, " << npts
+    cout << "ERROR in Qspline, number of sw4_typeerpolation points, " << npts
          << ", is too small" << endl;
     cout << " Spline not constructed " << endl;
   }
@@ -92,11 +92,11 @@ Qspline::Qspline(int npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt,
   // setup and solve linear system for uniform grid Hermite 5th order polynomial
   // splines System is a band matrix with kl lower diagonals, and ku upper
   // diagonals
-  int kl = 6, ku = 6;
+  sw4_type kl = 6, ku = 6;
   if (bclow == 2) ku = 3;
   if (bchigh == 2) kl = 3;
   // tmp
-  // int myRank;
+  // sw4_type myRank;
   // MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
   // if (myRank == 0)
   // {
@@ -106,12 +106,12 @@ Qspline::Qspline(int npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt,
   // }
   // end tmp
 
-  int lda = (2 * kl + ku + 1);
+  sw4_type lda = (2 * kl + ku + 1);
   double* mat = new double[lda * 2 * npts];
   double* rhs = new double[2 * npts];
 #define A(i, j) mat[kl + ku + 1 + (i) - (j)-1 + lda * ((j)-1)]
-  for (int i = 0; i < lda * 2 * npts; i++) mat[i] = 0;
-  for (int i = 1; i <= npts - 2; i++) {
+  for (sw4_type i = 0; i < lda * 2 * npts; i++) mat[i] = 0;
+  for (sw4_type i = 1; i <= npts - 2; i++) {
     A(2 * i + 1, 2 * i - 1) = -8;
     A(2 * i + 1, 2 * i) = -1;
     A(2 * i + 1, 2 * i + 2) = 6;
@@ -171,8 +171,8 @@ Qspline::Qspline(int npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt,
     rhs[2 * npts - 1] = tn;
   }
 
-  int n = 2 * npts, one = 1, info;
-  int* ipiv = new int[2 * npts];
+  sw4_type n = 2 * npts, one = 1, info;
+  sw4_type* ipiv = new sw4_type[2 * npts];
   F77_FUNC(dgbsv, DGBSV)(&n, &kl, &ku, &one, mat, &lda, ipiv, rhs, &n, &info);
   if (info != 0) {
     cout << "ERROR solving dbgsv in Qspline, info = " << info << endl;
@@ -188,7 +188,7 @@ Qspline::Qspline(int npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt,
 
   m_npts = npts;
   m_polcof = new float_sw4[6 * (npts - 1)];
-  for (int i = 0; i < npts - 1; i++) {
+  for (sw4_type i = 0; i < npts - 1; i++) {
     m_polcof[6 * i] = fun[i];
     m_polcof[1 + 6 * i] = rhs[2 * i];
     m_polcof[2 + 6 * i] = rhs[2 * i + 1] * 0.5;
@@ -208,7 +208,7 @@ Qspline::Qspline(int npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt,
 //-----------------------------------------------------------------------
 // void Qspline::evalf( double t, double& f )
 // {
-//    int k = static_cast<int>(floor((t-m_tmin)/m_dt));
+//    sw4_type k = static_cast<sw4_type>(floor((t-m_tmin)/m_dt));
 //    if( k < 0 )
 //       k = 0;
 //    if( k > m_npts-2 )
@@ -223,7 +223,7 @@ Qspline::Qspline(int npts, float_sw4* fun, float_sw4 tmin, float_sw4 dt,
 // void Qspline::evaldd( double t, double& f, double& f1, double& f2, double&
 // f3, double& f4 )
 // {
-//    int k = static_cast<int>(floor((t-m_tmin)/m_dt));
+//    sw4_type k = static_cast<sw4_type>(floor((t-m_tmin)/m_dt));
 //    if( k < 0 )
 //       k = 0;
 //    if( k > m_npts-2 )

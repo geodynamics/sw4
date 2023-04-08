@@ -4,18 +4,18 @@
 
 //-----------------------------------------------------------------------
 GridGeneratorGeneral::GridGeneratorGeneral(float_sw4 topo_zmax, bool always_new,
-                                           int grid_interpolation_order,
+                                           sw4_type grid_sw4_typeerpolation_order,
                                            float_sw4 zetaBreak)
-    : GridGenerator(topo_zmax, always_new, grid_interpolation_order,
+    : GridGenerator(topo_zmax, always_new, grid_sw4_typeerpolation_order,
                     zetaBreak) {}
 
 //-----------------------------------------------------------------------
-void GridGeneratorGeneral::generate_grid_and_met(EW* a_ew, int g, Sarray& a_x,
+void GridGeneratorGeneral::generate_grid_and_met(EW* a_ew, sw4_type g, Sarray& a_x,
                                                  Sarray& a_y, Sarray& a_z,
                                                  Sarray& a_jac, Sarray& a_met,
                                                  bool a_comm) {
   SW4_MARK_FUNCTION;
-  int ncurv = a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids;
+  sw4_type ncurv = a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids;
   if (m_always_new || ncurv > 1)
     generate_grid_and_met_new(a_ew, g, a_x, a_y, a_z, a_jac, a_met);
   else
@@ -28,39 +28,39 @@ void GridGeneratorGeneral::generate_grid_and_met(EW* a_ew, int g, Sarray& a_x,
 
 //-----------------------------------------------------------------------
 bool GridGeneratorGeneral::grid_mapping(EW* a_ew, float_sw4 q, float_sw4 r,
-                                        float_sw4 s, int g, float_sw4& x,
+                                        float_sw4 s, sw4_type g, float_sw4& x,
                                         float_sw4& y, float_sw4& z) {
   SW4_MARK_FUNCTION;
-  int ncurv = a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids;
+  sw4_type ncurv = a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids;
   if (m_always_new || ncurv > 1) {
     // New mapping.
     float_sw4 h = a_ew->mGridSize[g];
-    int Nz = a_ew->m_global_nz[g];
+    sw4_type Nz = a_ew->m_global_nz[g];
     return grid_mapping_new(a_ew, q, r, s, g, x, y, z, h, Nz);
   } else {
     // Old mapping, always only the topmost grid.
     float_sw4 h = a_ew->mGridSize[a_ew->mNumberOfGrids - 1];
-    int Nz = a_ew->m_global_nz[a_ew->mNumberOfGrids - 1];
+    sw4_type Nz = a_ew->m_global_nz[a_ew->mNumberOfGrids - 1];
     return grid_mapping_old(q, r, s, g, x, y, z, a_ew->mTopoGridExt, h, Nz);
   }
 }
 
 //-----------------------------------------------------------------------
 bool GridGeneratorGeneral::inverse_grid_mapping(EW* a_ew, float_sw4 x,
-                                                float_sw4 y, float_sw4 z, int g,
+                                                float_sw4 y, float_sw4 z, sw4_type g,
                                                 float_sw4& q, float_sw4& r,
                                                 float_sw4& s) {
   SW4_MARK_FUNCTION;
-  int ncurv = a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids;
+  sw4_type ncurv = a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids;
   if (m_always_new || ncurv > 1) {
     // New mapping.
     float_sw4 h = a_ew->mGridSize[g];
-    int Nz = a_ew->m_global_nz[g];
+    sw4_type Nz = a_ew->m_global_nz[g];
     return inverse_grid_mapping_new(a_ew, x, y, z, g, q, r, s, h, Nz);
   } else {
     // Old mapping, always only the topmost grid.
     float_sw4 h = a_ew->mGridSize[a_ew->mNumberOfGrids - 1];
-    int Nz = a_ew->m_global_nz[a_ew->mNumberOfGrids - 1];
+    sw4_type Nz = a_ew->m_global_nz[a_ew->mNumberOfGrids - 1];
 
     float_sw4 bbox[6];
     a_ew->getGlobalBoundingBox(bbox);
@@ -73,8 +73,8 @@ bool GridGeneratorGeneral::inverse_grid_mapping(EW* a_ew, float_sw4 x,
 
 //-----------------------------------------------------------------------
 void GridGeneratorGeneral::grid_mapping_diff(EW* a_ew, float_sw4 q, float_sw4 r,
-                                             float_sw4 s, int g, int ic, int jc,
-                                             int kc, float_sw4& zq,
+                                             float_sw4 s, sw4_type g, sw4_type ic, sw4_type jc,
+                                             sw4_type kc, float_sw4& zq,
                                              float_sw4& zr, float_sw4& zs,
                                              float_sw4& zqq, float_sw4& zqr,
                                              float_sw4& zqs, float_sw4& zrr,
@@ -82,17 +82,17 @@ void GridGeneratorGeneral::grid_mapping_diff(EW* a_ew, float_sw4 q, float_sw4 r,
 
 {
   SW4_MARK_FUNCTION;
-  int ncurv = a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids;
+  sw4_type ncurv = a_ew->mNumberOfGrids - a_ew->mNumberOfCartesianGrids;
   if (m_always_new || ncurv > 1) {
     // New mapping.
     float_sw4 h = a_ew->mGridSize[g];
-    int Nz = a_ew->m_global_nz[g];
+    sw4_type Nz = a_ew->m_global_nz[g];
     return grid_mapping_diff_new(a_ew, q, r, s, g, ic, jc, kc, zq, zr, zs, zqq,
                                  zqr, zqs, zrr, zrs, zss, h, Nz);
   } else {
     // Old mapping, always only the topmost grid.
     float_sw4 h = a_ew->mGridSize[a_ew->mNumberOfGrids - 1];
-    int Nz = a_ew->m_global_nz[a_ew->mNumberOfGrids - 1];
+    sw4_type Nz = a_ew->m_global_nz[a_ew->mNumberOfGrids - 1];
     return grid_mapping_diff_old(a_ew, q, r, s, g, ic, jc, kc, zq, zr, zs, zqq,
                                  zqr, zqs, zrr, zrs, zss, a_ew->mTopoGridExt, h,
                                  Nz);
@@ -107,32 +107,32 @@ void GridGeneratorGeneral::generate_grid_and_met_old(EW* a_ew, Sarray& a_x,
   SW4_MARK_FUNCTION;
   // Curvilinear grid that smoothly transitions to Cartesian at bottom.
   // Single top curvilinear grid only.
-  int g = a_ew->mNumberOfGrids - 1;
-  int nz = a_ew->m_global_nz[g];
+  sw4_type g = a_ew->mNumberOfGrids - 1;
+  sw4_type nz = a_ew->m_global_nz[g];
   float_sw4 h = a_ew->mGridSize[g];
 
   float_sw4 izb = 1.0 / (m_zetaBreak * (nz - 1));
 #pragma omp parallel for
-  for (int k = a_x.m_kb; k <= a_x.m_ke; k++) {
+  for (sw4_type k = a_x.m_kb; k <= a_x.m_ke; k++) {
     float_sw4 s = (k - 1) * izb;
     float_sw4 omsm = (1 - s);
-    for (int l = 2; l <= m_grid_interpolation_order; l++) omsm *= (1 - s);
-    for (int j = a_x.m_jb; j <= a_x.m_je; j++)
-      for (int i = a_x.m_ib; i <= a_x.m_ie; i++) {
+    for (sw4_type l = 2; l <= m_grid_sw4_typeerpolation_order; l++) omsm *= (1 - s);
+    for (sw4_type j = a_x.m_jb; j <= a_x.m_je; j++)
+      for (sw4_type i = a_x.m_ib; i <= a_x.m_ie; i++) {
         a_x(i, j, k) = (i - 1) * h;
         a_y(i, j, k) = (j - 1) * h;
         if (s >= 1)
           a_z(i, j, k) = m_topo_zmax - (nz - k) * h;
         else {
           float_sw4 tau;
-          tau = -m_curviInterface[0](i, j, 1);
+          tau = -m_curviSw4_Typeerface[0](i, j, 1);
           //               evaluate_topography(a_x(i,j,k),a_y(i,j,k),tau,m_topo);
           a_z(i, j, k) = m_topo_zmax - (nz - k) * h -
                          omsm * (m_topo_zmax - (nz - 1) * h + tau);
         }
       }
   }
-  int ierr = 0;
+  sw4_type ierr = 0;
   ierr = metric_ci(a_x.m_ib, a_x.m_ie, a_x.m_jb, a_x.m_je, a_x.m_kb, a_x.m_ke,
                    a_x.c_ptr(), a_y.c_ptr(), a_z.c_ptr(), a_met.c_ptr(),
                    a_jac.c_ptr());
@@ -140,22 +140,22 @@ void GridGeneratorGeneral::generate_grid_and_met_old(EW* a_ew, Sarray& a_x,
 }
 
 //-----------------------------------------------------------------------
-void GridGeneratorGeneral::generate_grid_and_met_new(EW* a_ew, int g,
+void GridGeneratorGeneral::generate_grid_and_met_new(EW* a_ew, sw4_type g,
                                                      Sarray& a_x, Sarray& a_y,
                                                      Sarray& a_z, Sarray& a_jac,
                                                      Sarray& a_met) {
   SW4_MARK_FUNCTION;
-  int ng = a_ew->mNumberOfGrids;
-  int ncg = a_ew->mNumberOfCartesianGrids;
-  int ref = 1;
-  for (int grid = ng - 1; grid > g; grid--) ref *= 2;
+  sw4_type ng = a_ew->mNumberOfGrids;
+  sw4_type ncg = a_ew->mNumberOfCartesianGrids;
+  sw4_type ref = 1;
+  for (sw4_type grid = ng - 1; grid > g; grid--) ref *= 2;
 
-  int iSurfTop = g - a_ew->mNumberOfCartesianGrids;
-  int iSurfBot = iSurfTop - 1;
+  sw4_type iSurfTop = g - a_ew->mNumberOfCartesianGrids;
+  sw4_type iSurfBot = iSurfTop - 1;
   float_sw4 h = a_ew->mGridSize[g];
   //  float_sw4 h0 = 2.0 * h;
   float_sw4 Nz_real =
-      static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
+      static_cast<float_sw4>(a_ew->m_kEndSw4_Type[g] - a_ew->m_kStartSw4_Type[g]);
   float_sw4 iNz_real = 1.0 / Nz_real;
   float_sw4 scaleRatio = 0;
   if (g > ncg) {
@@ -165,27 +165,27 @@ void GridGeneratorGeneral::generate_grid_and_met_new(EW* a_ew, int g,
                  (m_topo_zmax - a_ew->m_curviRefLev[g - ncg]);
   }
 #pragma omp parallel for
-  for (int j = a_x.m_jb; j <= a_x.m_je; j++)
-    for (int i = a_x.m_ib; i <= a_x.m_ie; i++) {
+  for (sw4_type j = a_x.m_jb; j <= a_x.m_je; j++)
+    for (sw4_type i = a_x.m_ib; i <= a_x.m_ie; i++) {
       float_sw4 X0 = (i - 1) * h;
       float_sw4 Y0 = (j - 1) * h;
-      float_sw4 Ztop = m_curviInterface[iSurfTop](i, j, 1);
+      float_sw4 Ztop = m_curviSw4_Typeerface[iSurfTop](i, j, 1);
       float_sw4 Zbot;
       if (iSurfBot < 0) {
-        // Bottom interface of g=mNumberOfCartesianGrids is flat with
+        // Bottom sw4_typeerface of g=mNumberOfCartesianGrids is flat with
         // z=m_topo_zmax
         Zbot = m_topo_zmax;
       } else {
         Zbot = scaleRatio * Ztop + (1 - scaleRatio) * m_topo_zmax;
         //            Zbot =
-        //            scaleFact*m_curviInterface[ng-1-ncg](ref*(i-1)+1,ref*(j-1)+1,
+        //            scaleFact*m_curviSw4_Typeerface[ng-1-ncg](ref*(i-1)+1,ref*(j-1)+1,
         //            1) +
         //                                          (1.0 - scaleFact)*
         //                                          m_topo_zmax;
 
-        // Bottom interface is non-planar (curvilinear)
-        //            int iLow = static_cast<int>( floor(X0/h0) )+1 ;
-        //            int jLow = static_cast<int>( floor(Y0/h0) )+1;
+        // Bottom sw4_typeerface is non-planar (curvilinear)
+        //            sw4_type iLow = static_cast<sw4_type>( floor(X0/h0) )+1 ;
+        //            sw4_type jLow = static_cast<sw4_type>( floor(Y0/h0) )+1;
 
         //            float_sw4 xPt = (iLow-1)*h0;
         //            float_sw4 yPt = (jLow-1)*h0;
@@ -193,43 +193,43 @@ void GridGeneratorGeneral::generate_grid_and_met_new(EW* a_ew, int g,
         // First check if we are very close to a grid point
         //            if( fabs((xPt-X0)/h0) < 1.e-9 && fabs((yPt-Y0)/h0) < 1.e-9
         //            )
-        //               Zbot = m_curviInterface[iSurfBot](iLow, jLow, 1);
+        //               Zbot = m_curviSw4_Typeerface[iSurfBot](iLow, jLow, 1);
         //            else
         //            {
-        // high order interpolation to get intermediate value of zBot
+        // high order sw4_typeerpolation to get sw4_typeermediate value of zBot
         //               if( true ) // point_in_proc_ext(i-3,j-3,gFinest) &&
         //               point_in_proc_ext(i+4,j+4,gFinest)
         //               {
         /* gettopowgh( q-i, a6cofi ); */
         /* gettopowgh( r-j, a6cofj ); */
         /* Zbot = 0; */
-        /* for( int l=j-3 ; l <= j+4 ; l++ ) */
-        /*    for( int k=i-3 ; k <= i+4 ; k++ ) */
+        /* for( sw4_type l=j-3 ; l <= j+4 ; l++ ) */
+        /*    for( sw4_type k=i-3 ; k <= i+4 ; k++ ) */
         /*       Zbot +=
-         * a6cofi[k-i+3]*a6cofj[l-j+3]*m_curviInterface[iSurfBot](k,l,1); */
+         * a6cofi[k-i+3]*a6cofj[l-j+3]*m_curviSw4_Typeerface[iSurfBot](k,l,1); */
         // for the purpose of plotting the grid, it suffices with linear
-        // interpolation
+        // sw4_typeerpolation
         //                  float_sw4 xi  = (X0 - xPt)/h0;
         //                  float_sw4 eta = (Y0 - yPt)/h0;
         //                  Zbot =
         //                           xi*eta
-        //                           *(m_curviInterface[iSurfBot](iLow+1,jLow+1,1))
+        //                           *(m_curviSw4_Typeerface[iSurfBot](iLow+1,jLow+1,1))
         //                           +
         //                     (1.0-xi)*(1.0-eta)
-        //                     *(m_curviInterface[iSurfBot](iLow,jLow,1)) +
+        //                     *(m_curviSw4_Typeerface[iSurfBot](iLow,jLow,1)) +
         //                           xi*(1.0-eta)
-        //                           *(m_curviInterface[iSurfBot](iLow+1,jLow,1))
+        //                           *(m_curviSw4_Typeerface[iSurfBot](iLow+1,jLow,1))
         //                           +
         //                     (1.0-xi)*eta
-        //                     *(m_curviInterface[iSurfBot](iLow,jLow+1,1));
+        //                     *(m_curviSw4_Typeerface[iSurfBot](iLow,jLow+1,1));
         //               }
         //            }
       }
 #pragma omp parallel for
-      for (int k = a_x.m_kb; k <= a_x.m_ke; k++) {
-        // Linear interpolation in the vertical direction
+      for (sw4_type k = a_x.m_kb; k <= a_x.m_ke; k++) {
+        // Linear sw4_typeerpolation in the vertical direction
         float_sw4 zeta =
-            static_cast<float_sw4>((k - a_ew->m_kStartInt[g]) * iNz_real);
+            static_cast<float_sw4>((k - a_ew->m_kStartSw4_Type[g]) * iNz_real);
         a_x(i, j, k) = X0;
         a_y(i, j, k) = Y0;
         a_z(i, j, k) = (1.0 - zeta) * Ztop + zeta * Zbot;
@@ -239,7 +239,7 @@ void GridGeneratorGeneral::generate_grid_and_met_new(EW* a_ew, int g,
   //   a_ew->communicate_array( a_z, g );
 
   // Compute metric
-  // int ierr = 0;
+  // sw4_type ierr = 0;
   // Error code returned but not checked. PBUGS ? July 12 2021
   metric_ci(a_x.m_ib, a_x.m_ie, a_x.m_jb, a_x.m_je, a_x.m_kb, a_x.m_ke,
             a_x.c_ptr(), a_y.c_ptr(), a_z.c_ptr(), a_met.c_ptr(),
@@ -247,86 +247,86 @@ void GridGeneratorGeneral::generate_grid_and_met_new(EW* a_ew, int g,
 }
 
 //-----------------------------------------------------------------------
-void GridGeneratorGeneral::assignInterfaceSurfaces(EW* a_ew,
+void GridGeneratorGeneral::assignSw4_TypeerfaceSurfaces(EW* a_ew,
                                                    Sarray& TopoGridExt) {
   SW4_MARK_FUNCTION;
-  int ng = a_ew->mNumberOfGrids;
-  int ncg = a_ew->mNumberOfCartesianGrids;
-  m_curviInterface.resize(ng - ncg);
-  int imin = TopoGridExt.m_ib;
-  int imax = TopoGridExt.m_ie;
-  int jmin = TopoGridExt.m_jb;
-  int jmax = TopoGridExt.m_je;
-  m_curviInterface[ng - 1 - ncg].define(imin, imax, jmin, jmax, 1, 1);
-  for (int i = imin; i <= imax; ++i)
-    for (int j = jmin; j <= jmax; ++j) {
-      m_curviInterface[ng - 1 - ncg](i, j, 1) = -TopoGridExt(i, j, 1);
+  sw4_type ng = a_ew->mNumberOfGrids;
+  sw4_type ncg = a_ew->mNumberOfCartesianGrids;
+  m_curviSw4_Typeerface.resize(ng - ncg);
+  sw4_type imin = TopoGridExt.m_ib;
+  sw4_type imax = TopoGridExt.m_ie;
+  sw4_type jmin = TopoGridExt.m_jb;
+  sw4_type jmax = TopoGridExt.m_je;
+  m_curviSw4_Typeerface[ng - 1 - ncg].define(imin, imax, jmin, jmax, 1, 1);
+  for (sw4_type i = imin; i <= imax; ++i)
+    for (sw4_type j = jmin; j <= jmax; ++j) {
+      m_curviSw4_Typeerface[ng - 1 - ncg](i, j, 1) = -TopoGridExt(i, j, 1);
     }
-  int extragh = a_ew->m_iStart[ng - 1] -
+  sw4_type extragh = a_ew->m_iStart[ng - 1] -
                 TopoGridExt.m_ib;  // Number of extra ghost points
-  int egh = a_ew->m_iStartInt[ng - 1] -
+  sw4_type egh = a_ew->m_iStartSw4_Type[ng - 1] -
             TopoGridExt
                 .m_ib;  // Total number of ghost points (including extra points)
-  int refFact = 1;
-  for (int g = ng - 2; g >= ncg; g--) {
-    int icib = a_ew->m_iStart[g] - extragh;
-    int icie = a_ew->m_iEnd[g] + extragh;
-    int icjb = a_ew->m_jStart[g] - extragh;
-    int icje = a_ew->m_jEnd[g] + extragh;
-    m_curviInterface[g - ncg].define(icib, icie, icjb, icje, 1, 1);
+  sw4_type refFact = 1;
+  for (sw4_type g = ng - 2; g >= ncg; g--) {
+    sw4_type icib = a_ew->m_iStart[g] - extragh;
+    sw4_type icie = a_ew->m_iEnd[g] + extragh;
+    sw4_type icjb = a_ew->m_jStart[g] - extragh;
+    sw4_type icje = a_ew->m_jEnd[g] + extragh;
+    m_curviSw4_Typeerface[g - ncg].define(icib, icie, icjb, icje, 1, 1);
     refFact *= 2;
     float_sw4 scaleFact =
         (m_topo_zmax - a_ew->m_curviRefLev[g - ncg]) / m_topo_zmax;
 
-    // Interior only:
-    for (int i = a_ew->m_iStartInt[g]; i <= a_ew->m_iEndInt[g]; i++)
-      for (int j = a_ew->m_jStartInt[g]; j <= a_ew->m_jEndInt[g]; j++) {
-        int iFine = 1 + (i - 1) * refFact;
-        int jFine = 1 + (j - 1) * refFact;
-        m_curviInterface[g - ncg](i, j, 1) =
-            scaleFact * m_curviInterface[ng - 1 - ncg](iFine, jFine, 1) +
+    // Sw4_Typeerior only:
+    for (sw4_type i = a_ew->m_iStartSw4_Type[g]; i <= a_ew->m_iEndSw4_Type[g]; i++)
+      for (sw4_type j = a_ew->m_jStartSw4_Type[g]; j <= a_ew->m_jEndSw4_Type[g]; j++) {
+        sw4_type iFine = 1 + (i - 1) * refFact;
+        sw4_type jFine = 1 + (j - 1) * refFact;
+        m_curviSw4_Typeerface[g - ncg](i, j, 1) =
+            scaleFact * m_curviSw4_Typeerface[ng - 1 - ncg](iFine, jFine, 1) +
             (1.0 - scaleFact) * m_topo_zmax;
       }
 
     // Extrapolate to ghost points at domain boundaries:
-    if (a_ew->m_jStartInt[g] == 1) {
-      for (int i = icib + egh; i <= icie - egh; i++)
-        for (int q = 0; q < egh; q++)
-          m_curviInterface[g - ncg](i, icjb + q, 1) =
-              m_curviInterface[g - ncg](i, icjb + egh, 1);
+    if (a_ew->m_jStartSw4_Type[g] == 1) {
+      for (sw4_type i = icib + egh; i <= icie - egh; i++)
+        for (sw4_type q = 0; q < egh; q++)
+          m_curviSw4_Typeerface[g - ncg](i, icjb + q, 1) =
+              m_curviSw4_Typeerface[g - ncg](i, icjb + egh, 1);
     }
-    if (a_ew->m_jEndInt[g] == a_ew->m_global_ny[g]) {
-      for (int i = icib + egh; i <= icie - egh; i++)
-        for (int q = 0; q < egh; q++)
-          m_curviInterface[g - ncg](i, icje - q, 1) =
-              m_curviInterface[g - ncg](i, icje - egh, 1);
+    if (a_ew->m_jEndSw4_Type[g] == a_ew->m_global_ny[g]) {
+      for (sw4_type i = icib + egh; i <= icie - egh; i++)
+        for (sw4_type q = 0; q < egh; q++)
+          m_curviSw4_Typeerface[g - ncg](i, icje - q, 1) =
+              m_curviSw4_Typeerface[g - ncg](i, icje - egh, 1);
     }
-    if (a_ew->m_iStartInt[g] == 1) {
-      for (int j = icjb; j <= icje; j++)
-        for (int q = 0; q < egh; q++)
-          m_curviInterface[g - ncg](icib + q, j, 1) =
-              m_curviInterface[g - ncg](icib + egh, j, 1);
+    if (a_ew->m_iStartSw4_Type[g] == 1) {
+      for (sw4_type j = icjb; j <= icje; j++)
+        for (sw4_type q = 0; q < egh; q++)
+          m_curviSw4_Typeerface[g - ncg](icib + q, j, 1) =
+              m_curviSw4_Typeerface[g - ncg](icib + egh, j, 1);
     }
-    if (a_ew->m_iEndInt[g] == a_ew->m_global_nx[g]) {
-      for (int j = icjb; j <= icje; j++)
-        for (int q = 0; q < egh; q++)
-          m_curviInterface[g - ncg](icie - q, j, 1) =
-              m_curviInterface[g - ncg](icie - egh, j, 1);
+    if (a_ew->m_iEndSw4_Type[g] == a_ew->m_global_nx[g]) {
+      for (sw4_type j = icjb; j <= icje; j++)
+        for (sw4_type q = 0; q < egh; q++)
+          m_curviSw4_Typeerface[g - ncg](icie - q, j, 1) =
+              m_curviSw4_Typeerface[g - ncg](icie - egh, j, 1);
     }
 
     // Communicate padding points at processor boundaries
     a_ew->communicate_array_2d_isurf(
-        m_curviInterface[g - ncg],
+        m_curviSw4_Typeerface[g - ncg],
         g - ncg);  // Note: this routine adds ncg to its second argument.
   }
 }
 
 //-----------------------------------------------------------------------
 bool GridGeneratorGeneral::grid_mapping_old(float_sw4 q, float_sw4 r,
-                                            float_sw4 s, int g, float_sw4& x,
+                                            float_sw4 s, sw4_type g, float_sw4& x,
                                             float_sw4& y, float_sw4& z,
                                             Sarray& TopoGridExt, float_sw4 h,
-                                            int Nz) {
+                                            sw4_type Nz) {
   SW4_MARK_FUNCTION;
   //
   // Return (x,y) corresponding to (q,r).
@@ -343,7 +343,7 @@ bool GridGeneratorGeneral::grid_mapping_old(float_sw4 q, float_sw4 r,
   // (without ghost points),
   //  1 <= r <= Ny, 1 <= s <= Nz.
 
-  int nghost = 3;  // 3 ghost points is maximum in solver.
+  sw4_type nghost = 3;  // 3 ghost points is maximum in solver.
                    // 0. Check if s is in range
   if (!(1 - nghost <= s && s <= Nz + nghost)) return false;
 
@@ -355,8 +355,8 @@ bool GridGeneratorGeneral::grid_mapping_old(float_sw4 q, float_sw4 r,
 
   // 2a. Find topography at (q,r), tau=tau(q,r)
   // Nearest grid point:
-  int iNear = static_cast<int>(round(q));
-  int jNear = static_cast<int>(round(r));
+  sw4_type iNear = static_cast<sw4_type>(round(q));
+  sw4_type jNear = static_cast<sw4_type>(round(r));
   float_sw4 tau;
   if (fabs(iNear - q) < 1.e-9 && fabs(jNear - r) < 1.e-9) {
     // At a grid point, evaluate topography at that point
@@ -365,18 +365,18 @@ bool GridGeneratorGeneral::grid_mapping_old(float_sw4 q, float_sw4 r,
     else
       return false;
   } else {
-    // Not at a grid  point, interpolate the topography
+    // Not at a grid  point, sw4_typeerpolate the topography
     // Nearest lower grid point
-    iNear = static_cast<int>(floor(q));
-    jNear = static_cast<int>(floor(r));
+    iNear = static_cast<sw4_type>(floor(q));
+    jNear = static_cast<sw4_type>(floor(r));
     if (TopoGridExt.in_range(1, iNear - 3, jNear - 3, 1) &&
         TopoGridExt.in_range(1, iNear + 4, jNear + 4, 1)) {
       float_sw4 a6cofi[8], a6cofj[8];
       gettopowgh(q - iNear, a6cofi);
       gettopowgh(r - jNear, a6cofj);
       tau = 0;
-      for (int l = -3; l <= 4; l++)
-        for (int k = -3; k <= 4; k++)
+      for (sw4_type l = -3; l <= 4; l++)
+        for (sw4_type k = -3; k <= 4; k++)
           tau += a6cofi[k + 3] * a6cofj[l + 3] *
                  TopoGridExt(k + iNear, l + jNear, 1);
     } else {
@@ -384,12 +384,12 @@ bool GridGeneratorGeneral::grid_mapping_old(float_sw4 q, float_sw4 r,
     }
   }
   // 2b. Evaluate z-mapping
-  //   int Nz = m_global_nz[gFinest];
+  //   sw4_type Nz = m_global_nz[gFinest];
   z = m_topo_zmax - (Nz - s) * h;
   if (s - 1 < m_zetaBreak * (Nz - 1)) {
     float_sw4 omra = 1 - (s - 1) / (m_zetaBreak * (Nz - 1));
     float_sw4 omsm = omra;
-    for (int l = 2; l <= m_grid_interpolation_order; l++) omsm *= omra;
+    for (sw4_type l = 2; l <= m_grid_sw4_typeerpolation_order; l++) omsm *= omra;
     z -= omsm * (m_topo_zmax - (Nz - 1) * h + tau);
   }
   return true;
@@ -397,8 +397,8 @@ bool GridGeneratorGeneral::grid_mapping_old(float_sw4 q, float_sw4 r,
 
 //-----------------------------------------------------------------------
 bool GridGeneratorGeneral::inverse_grid_mapping_old(
-    EW* a_ew, float_sw4 x, float_sw4 y, float_sw4 z, int g, float_sw4& q,
-    float_sw4& r, float_sw4& s, Sarray& TopoGridExt, float_sw4 h, int Nz) {
+    EW* a_ew, float_sw4 x, float_sw4 y, float_sw4 z, sw4_type g, float_sw4& q,
+    float_sw4& r, float_sw4& s, Sarray& TopoGridExt, float_sw4 h, sw4_type Nz) {
   SW4_MARK_FUNCTION;
   //
   // If (X0, Y0, Z0) is on the curvilinear grid and (X0, Y0) is on this
@@ -409,15 +409,15 @@ bool GridGeneratorGeneral::inverse_grid_mapping_old(
   // ghost points),
   //  1 <= r <= Ny, 1 <= s <= Nz.
   //
-  //  int gCurv   = mNumberOfGrids - 1;
+  //  sw4_type gCurv   = mNumberOfGrids - 1;
   //  float_sw4 h = mGridSize[gCurv];
 
   // 1. Compute q and r
   q = x / h + 1.0;
   r = y / h + 1.0;
-  int i = static_cast<int>(round(q));
-  int j = static_cast<int>(round(r));
-  if (a_ew->interior_point_in_proc(i, j, g)) {
+  sw4_type i = static_cast<sw4_type>(round(q));
+  sw4_type j = static_cast<sw4_type>(round(r));
+  if (a_ew->sw4_typeerior_point_in_proc(i, j, g)) {
     s = 0.;
     // 2. Compute s
     float_sw4 zlim = m_topo_zmax - (Nz - 1) * (1 - m_zetaBreak) * h;
@@ -428,8 +428,8 @@ bool GridGeneratorGeneral::inverse_grid_mapping_old(
       // z is in curvilinear part of grid.
       // 2b. Find topography at (q,r), tau=tau(q,r)
       // Nearest grid point:
-      int iNear = static_cast<int>(round(q));
-      int jNear = static_cast<int>(round(r));
+      sw4_type iNear = static_cast<sw4_type>(round(q));
+      sw4_type jNear = static_cast<sw4_type>(round(r));
       float_sw4 tau;
       if (fabs(iNear - q) < 1.e-9 && fabs(jNear - r) < 1.e-9) {
         // At a grid point, evaluate topography at that point
@@ -438,18 +438,18 @@ bool GridGeneratorGeneral::inverse_grid_mapping_old(
         else
           return false;
       } else {
-        // Not at a grid  point, interpolate the topography
+        // Not at a grid  point, sw4_typeerpolate the topography
         // Nearest lower grid point
-        iNear = static_cast<int>(floor(q));
-        jNear = static_cast<int>(floor(r));
+        iNear = static_cast<sw4_type>(floor(q));
+        jNear = static_cast<sw4_type>(floor(r));
         if (TopoGridExt.in_range(1, iNear - 3, jNear - 3, 1) &&
             TopoGridExt.in_range(1, iNear + 4, jNear + 4, 1)) {
           float_sw4 a6cofi[8], a6cofj[8];
           gettopowgh(q - iNear, a6cofi);
           gettopowgh(r - jNear, a6cofj);
           tau = 0;
-          for (int l = -3; l <= 4; l++)
-            for (int k = -3; k <= 4; k++)
+          for (sw4_type l = -3; l <= 4; l++)
+            for (sw4_type k = -3; k <= 4; k++)
               tau += a6cofi[k + 3] * a6cofj[l + 3] *
                      TopoGridExt(k + iNear, l + jNear, 1);
         } else {
@@ -464,13 +464,13 @@ bool GridGeneratorGeneral::inverse_grid_mapping_old(
       float_sw4 izb = 1.0 / (m_zetaBreak * (Nz - 1));
       float_sw4 tol = 1e-12;
       float_sw4 er = tol + 1;
-      int maxit = 10;
-      int it = 0;
+      sw4_type maxit = 10;
+      sw4_type it = 0;
       while (er > tol && it < maxit) {
         float_sw4 omra = 1 - (s - 1) * izb;
         float_sw4 omsm = omra;
-        for (int l = 2; l <= m_grid_interpolation_order - 1; l++) omsm *= omra;
-        float_sw4 dfcn = h + izb * m_grid_interpolation_order * omsm * z0;
+        for (sw4_type l = 2; l <= m_grid_sw4_typeerpolation_order - 1; l++) omsm *= omra;
+        float_sw4 dfcn = h + izb * m_grid_sw4_typeerpolation_order * omsm * z0;
         omsm *= omra;
         float_sw4 fcn = m_topo_zmax - (Nz - s) * h - omsm * z0 - z;
         float_sw4 sp = s - fcn / dfcn;
@@ -493,10 +493,10 @@ bool GridGeneratorGeneral::inverse_grid_mapping_old(
 
 //-----------------------------------------------------------------------
 void GridGeneratorGeneral::grid_mapping_diff_old(
-    EW* a_EW, float_sw4 q, float_sw4 r, float_sw4 s, int g, int ic, int jc,
-    int kc, float_sw4& zq, float_sw4& zr, float_sw4& zs, float_sw4& zqq,
+    EW* a_EW, float_sw4 q, float_sw4 r, float_sw4 s, sw4_type g, sw4_type ic, sw4_type jc,
+    sw4_type kc, float_sw4& zq, float_sw4& zr, float_sw4& zs, float_sw4& zqq,
     float_sw4& zqr, float_sw4& zqs, float_sw4& zrr, float_sw4& zrs,
-    float_sw4& zss, Sarray& TopoGridExt, float_sw4 h, int Nz) {
+    float_sw4& zss, Sarray& TopoGridExt, float_sw4 h, sw4_type Nz) {
   SW4_MARK_FUNCTION;
   bool analytic_derivative = true;
   float_sw4 ai = q - ic;
@@ -521,7 +521,7 @@ void GridGeneratorGeneral::grid_mapping_diff_old(
     zs = h;
     zqq = zqr = zqs = zrr = zrs = zss = 0;
   } else {
-    int order = m_grid_interpolation_order;
+    sw4_type order = m_grid_sw4_typeerpolation_order;
 
     float_sw4 pp = pow(1 - zpar, order - 1);
     float_sw4 powo = (1 - zpar) * pp;
@@ -529,8 +529,8 @@ void GridGeneratorGeneral::grid_mapping_diff_old(
     float_sw4 tauavg = 0;
     float_sw4 tauq = 0, taur = 0;
     float_sw4 tauqq = 0, tauqr = 0, taurr = 0;
-    for (int j = jc - 3; j <= jc + 4; j++)
-      for (int i = ic - 3; i <= ic + 4; i++) {
+    for (sw4_type j = jc - 3; j <= jc + 4; j++)
+      for (sw4_type i = ic - 3; i <= ic + 4; i++) {
         tauavg +=
             a6cofi[i - (ic - 3)] * a6cofj[j - (jc - 3)] * TopoGridExt(i, j, 1);
         tauq +=
@@ -565,13 +565,13 @@ void GridGeneratorGeneral::grid_mapping_diff_old(
       zs = 0;
       zss = 0;
       float_sw4 z1d = 0;
-      for (int k = kc - 3; k <= kc + 4; k++) {
+      for (sw4_type k = kc - 3; k <= kc + 4; k++) {
         zpar = (k - 1) / (m_zetaBreak * (Nz - 1));
         if (zpar >= 1)
           z1d = zMax + (k - kBreak) * h;
         else {
           z1d = (1 - zpar) * (-tauavg) + zpar * (zMax + c1 * (1 - zpar));
-          for (int o = 2; o < order; o++) z1d += zpar * c1 * pow(1 - zpar, o);
+          for (sw4_type o = 2; o < order; o++) z1d += zpar * c1 * pow(1 - zpar, o);
         }
         zs += d6cofk[k - (kc - 3)] * z1d;
         zss += dd6cofk[k - (kc - 3)] * z1d;
@@ -582,9 +582,9 @@ void GridGeneratorGeneral::grid_mapping_diff_old(
 
 //-----------------------------------------------------------------------
 bool GridGeneratorGeneral::grid_mapping_new(EW* a_ew, float_sw4 q, float_sw4 r,
-                                            float_sw4 s, int g, float_sw4& x,
+                                            float_sw4 s, sw4_type g, float_sw4& x,
                                             float_sw4& y, float_sw4& z,
-                                            float_sw4 h, int Nz) {
+                                            float_sw4 h, sw4_type Nz) {
   SW4_MARK_FUNCTION;
   //
   // Return (x,y) corresponding to (q,r).
@@ -601,7 +601,7 @@ bool GridGeneratorGeneral::grid_mapping_new(EW* a_ew, float_sw4 q, float_sw4 r,
   // (without ghost points),
   //  1 <= r <= Ny, 1 <= s <= Nz.
 
-  int nghost = 3;  // 3 ghost points is maximum in solver.
+  sw4_type nghost = 3;  // 3 ghost points is maximum in solver.
                    // 0. Check if s is in range
   if (!(1 - nghost <= s && s <= Nz + nghost)) return false;
 
@@ -610,67 +610,67 @@ bool GridGeneratorGeneral::grid_mapping_new(EW* a_ew, float_sw4 q, float_sw4 r,
   y = (r - 1.0) * h;
 
   // 2. Compute z
-  int iSurfTop = g - a_ew->mNumberOfCartesianGrids;
-  int iSurfBot = iSurfTop - 1;
+  sw4_type iSurfTop = g - a_ew->mNumberOfCartesianGrids;
+  sw4_type iSurfBot = iSurfTop - 1;
   float_sw4 h0 = 2.0 * h;
   float_sw4 Nz_real =
-      static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
+      static_cast<float_sw4>(a_ew->m_kEndSw4_Type[g] - a_ew->m_kStartSw4_Type[g]);
   float_sw4 iNz_real = 1.0 / Nz_real;
 
-  int i = static_cast<int>(floor(q));
-  int j = static_cast<int>(floor(r));
+  sw4_type i = static_cast<sw4_type>(floor(q));
+  sw4_type j = static_cast<sw4_type>(floor(r));
 
   float_sw4 Ztop = 0;
   float_sw4 a6cofi[8], a6cofj[8];
   gettopowgh(q - i, a6cofi);
   gettopowgh(r - j, a6cofj);
-  for (int l = -3; l <= 4; l++)
-    for (int k = -3; k <= 4; k++)
+  for (sw4_type l = -3; l <= 4; l++)
+    for (sw4_type k = -3; k <= 4; k++)
       Ztop += a6cofi[k + 3] * a6cofj[l + 3] *
-              m_curviInterface[iSurfTop](k + i, l + j, 1);
+              m_curviSw4_Typeerface[iSurfTop](k + i, l + j, 1);
 
   float_sw4 Zbot;
   if (iSurfBot < 0) {
-    // Bottom interface of g=mNumberOfCartesianGrids is flat with z=m_topo_zmax
+    // Bottom sw4_typeerface of g=mNumberOfCartesianGrids is flat with z=m_topo_zmax
     Zbot = m_topo_zmax;
   } else {
-    // Bottom interface is non-planar (curvilinear)
-    int iLow = static_cast<int>(floor(x / h0)) + 1;
-    int jLow = static_cast<int>(floor(y / h0)) + 1;
+    // Bottom sw4_typeerface is non-planar (curvilinear)
+    sw4_type iLow = static_cast<sw4_type>(floor(x / h0)) + 1;
+    sw4_type jLow = static_cast<sw4_type>(floor(y / h0)) + 1;
 
     float_sw4 xPt = (iLow - 1) * h0;
     float_sw4 yPt = (jLow - 1) * h0;
 
     // First check if we are very close to a grid point
     if (fabs((xPt - x) / h0) < 1.e-9 && fabs((yPt - y) / h0) < 1.e-9)
-      Zbot = m_curviInterface[iSurfBot](iLow, jLow, 1);
-    else {       // high order interpolation to get intermediate value of zBot
+      Zbot = m_curviSw4_Typeerface[iSurfBot](iLow, jLow, 1);
+    else {       // high order sw4_typeerpolation to get sw4_typeermediate value of zBot
       if (true)  // point_in_proc_ext(i-3,j-3,gFinest) &&
                  // point_in_proc_ext(i+4,j+4,gFinest)
       {
         /* gettopowgh( q-i, a6cofi ); */
         /* gettopowgh( r-j, a6cofj ); */
         /* Zbot = 0; */
-        /* for( int l=j-3 ; l <= j+4 ; l++ ) */
-        /*    for( int k=i-3 ; k <= i+4 ; k++ ) */
+        /* for( sw4_type l=j-3 ; l <= j+4 ; l++ ) */
+        /*    for( sw4_type k=i-3 ; k <= i+4 ; k++ ) */
         /*       Zbot +=
-         * a6cofi[k-i+3]*a6cofj[l-j+3]*m_curviInterface[iSurfBot](k,l,1); */
+         * a6cofi[k-i+3]*a6cofj[l-j+3]*m_curviSw4_Typeerface[iSurfBot](k,l,1); */
         // for the purpose of plotting the grid, it suffices with linear
-        // interpolation
+        // sw4_typeerpolation
         float_sw4 xi = (x - xPt) / h0;
         float_sw4 eta = (y - yPt) / h0;
         Zbot =
-            xi * eta * (m_curviInterface[iSurfBot](iLow + 1, jLow + 1, 1)) +
+            xi * eta * (m_curviSw4_Typeerface[iSurfBot](iLow + 1, jLow + 1, 1)) +
             (1.0 - xi) * (1.0 - eta) *
-                (m_curviInterface[iSurfBot](iLow, jLow, 1)) +
-            xi * (1.0 - eta) * (m_curviInterface[iSurfBot](iLow + 1, jLow, 1)) +
-            (1.0 - xi) * eta * (m_curviInterface[iSurfBot](iLow, jLow + 1, 1));
+                (m_curviSw4_Typeerface[iSurfBot](iLow, jLow, 1)) +
+            xi * (1.0 - eta) * (m_curviSw4_Typeerface[iSurfBot](iLow + 1, jLow, 1)) +
+            (1.0 - xi) * eta * (m_curviSw4_Typeerface[iSurfBot](iLow, jLow + 1, 1));
       }
     }
   }
-  // Linear interpolation in the vertical direction
+  // Linear sw4_typeerpolation in the vertical direction
   float_sw4 zeta =
-      static_cast<float_sw4>((s - a_ew->m_kStartInt[g]) * iNz_real);
+      static_cast<float_sw4>((s - a_ew->m_kStartSw4_Type[g]) * iNz_real);
   z = (1.0 - zeta) * Ztop + zeta * Zbot;
   return true;
 }
@@ -678,9 +678,9 @@ bool GridGeneratorGeneral::grid_mapping_new(EW* a_ew, float_sw4 q, float_sw4 r,
 //-----------------------------------------------------------------------
 bool GridGeneratorGeneral::inverse_grid_mapping_new(EW* a_ew, float_sw4 x,
                                                     float_sw4 y, float_sw4 z,
-                                                    int g, float_sw4& q,
+                                                    sw4_type g, float_sw4& q,
                                                     float_sw4& r, float_sw4& s,
-                                                    float_sw4 h, int Nz) {
+                                                    float_sw4 h, sw4_type Nz) {
   SW4_MARK_FUNCTION;
   //
   // If (X0, Y0, Z0) is in the curvilinear grid g and (X0, Y0) is on this
@@ -691,44 +691,44 @@ bool GridGeneratorGeneral::inverse_grid_mapping_new(EW* a_ew, float_sw4 x,
   // ghost points),
   //  1 <= r <= Ny, 1 <= s <= Nz.
   //
-  //  int gCurv   = mNumberOfGrids - 1;
+  //  sw4_type gCurv   = mNumberOfGrids - 1;
   //  float_sw4 h = mGridSize[gCurv];
 
   bool retval = false;
   // 1. Compute q and r
   q = x / h + 1.0;
   r = y / h + 1.0;
-  int i = static_cast<int>(floor(q));
-  int j = static_cast<int>(floor(r));
-  if (a_ew->interior_point_in_proc(i, j, g)) {
+  sw4_type i = static_cast<sw4_type>(floor(q));
+  sw4_type j = static_cast<sw4_type>(floor(r));
+  if (a_ew->sw4_typeerior_point_in_proc(i, j, g)) {
     // 2. Compute s
     s = 0.;
-    int grel = g - a_ew->mNumberOfCartesianGrids;
+    sw4_type grel = g - a_ew->mNumberOfCartesianGrids;
     float_sw4 ztop;
     // Find ztop at (x,y)
     if (fabs(x - (i - 1) * h) < 1.e-9 * h &&
         fabs(y - (j - 1) * h) < 1.e-9 * h) {
-      ztop = m_curviInterface[grel](i, j, 1);
+      ztop = m_curviSw4_Typeerface[grel](i, j, 1);
     } else {
       //      if (g == a_ew->mNumberOfGrids - 1) {
       if (true) {
-        // Use same interpolation order as for interpolate_topography.
+        // Use same sw4_typeerpolation order as for sw4_typeerpolate_topography.
         float_sw4 a6cofi[8], a6cofj[8];
         gettopowgh(q - i, a6cofi);
         gettopowgh(r - j, a6cofj);
         ztop = 0;
-        for (int l = -3; l <= 4; l++)
-          for (int m = -3; m <= 4; m++)
+        for (sw4_type l = -3; l <= 4; l++)
+          for (sw4_type m = -3; m <= 4; m++)
             ztop += a6cofi[m + 3] * a6cofj[l + 3] *
-                    m_curviInterface[grel](m + i, l + j, 1);
+                    m_curviSw4_Typeerface[grel](m + i, l + j, 1);
       } else {
-        // Use bilinear interpolation for compatibility with lower interfaces
+        // Use bilinear sw4_typeerpolation for compatibility with lower sw4_typeerfaces
         float_sw4 xi = (x - (i - 1) * h) / (h);
         float_sw4 eta = (y - (j - 1) * h) / (h);
-        ztop = xi * eta * (m_curviInterface[grel](i + 1, j + 1, 1)) +
-               (1.0 - xi) * (1.0 - eta) * (m_curviInterface[grel](i, j, 1)) +
-               xi * (1.0 - eta) * (m_curviInterface[grel](i + 1, j, 1)) +
-               (1.0 - xi) * eta * (m_curviInterface[grel](i, j + 1, 1));
+        ztop = xi * eta * (m_curviSw4_Typeerface[grel](i + 1, j + 1, 1)) +
+               (1.0 - xi) * (1.0 - eta) * (m_curviSw4_Typeerface[grel](i, j, 1)) +
+               xi * (1.0 - eta) * (m_curviSw4_Typeerface[grel](i + 1, j, 1)) +
+               (1.0 - xi) * eta * (m_curviSw4_Typeerface[grel](i, j + 1, 1));
       }
     }
     // Find zbot at (x,y)
@@ -736,13 +736,13 @@ bool GridGeneratorGeneral::inverse_grid_mapping_new(EW* a_ew, float_sw4 x,
     if (g == a_ew->mNumberOfCartesianGrids) {
       zbot = m_topo_zmax;
     } else {
-      int ic = static_cast<int>(floor(x / (hc) + 1));
-      int jc = static_cast<int>(floor(y / (hc) + 1));
+      sw4_type ic = static_cast<sw4_type>(floor(x / (hc) + 1));
+      sw4_type jc = static_cast<sw4_type>(floor(y / (hc) + 1));
       if (fabs(x - (ic - 1) * hc) < 1.e-9 * hc &&
           fabs(y - (jc - 1) * hc) < 1.e-9 * hc)
-        zbot = m_curviInterface[grel - 1](ic, jc, 1);
-      else {  // Linear interpolation to get intermediate value of zbot
-              // Use same interpolation order as for interpolate_topography.
+        zbot = m_curviSw4_Typeerface[grel - 1](ic, jc, 1);
+      else {  // Linear sw4_typeerpolation to get sw4_typeermediate value of zbot
+              // Use same sw4_typeerpolation order as for sw4_typeerpolate_topography.
         float_sw4 xi = (x - (ic - 1) * hc) / (hc);
         float_sw4 eta = (y - (jc - 1) * hc) / (hc);
         if (true) {
@@ -750,17 +750,17 @@ bool GridGeneratorGeneral::inverse_grid_mapping_new(EW* a_ew, float_sw4 x,
           gettopowgh(xi, a6cofi);
           gettopowgh(eta, a6cofj);
           zbot = 0;
-          for (int l = -3; l <= 4; l++)
-            for (int m = -3; m <= 4; m++)
+          for (sw4_type l = -3; l <= 4; l++)
+            for (sw4_type m = -3; m <= 4; m++)
               zbot += a6cofi[m + 3] * a6cofj[l + 3] *
-                      m_curviInterface[grel - 1](m + ic, l + jc, 1);
+                      m_curviSw4_Typeerface[grel - 1](m + ic, l + jc, 1);
         } else {
           zbot =
-              xi * eta * (m_curviInterface[grel - 1](ic + 1, jc + 1, 1)) +
+              xi * eta * (m_curviSw4_Typeerface[grel - 1](ic + 1, jc + 1, 1)) +
               (1.0 - xi) * (1.0 - eta) *
-                  (m_curviInterface[grel - 1](ic, jc, 1)) +
-              xi * (1.0 - eta) * (m_curviInterface[grel - 1](ic + 1, jc, 1)) +
-              (1.0 - xi) * eta * (m_curviInterface[grel - 1](ic, jc + 1, 1));
+                  (m_curviSw4_Typeerface[grel - 1](ic, jc, 1)) +
+              xi * (1.0 - eta) * (m_curviSw4_Typeerface[grel - 1](ic + 1, jc, 1)) +
+              (1.0 - xi) * eta * (m_curviSw4_Typeerface[grel - 1](ic, jc + 1, 1));
         }
       }
     }
@@ -779,20 +779,20 @@ bool GridGeneratorGeneral::inverse_grid_mapping_new(EW* a_ew, float_sw4 x,
 
 //-----------------------------------------------------------------------
 void GridGeneratorGeneral::grid_mapping_diff_new(
-    EW* a_ew, float_sw4 q, float_sw4 r, float_sw4 s, int g, int ic, int jc,
-    int kc, float_sw4& zq, float_sw4& zr, float_sw4& zs, float_sw4& zqq,
+    EW* a_ew, float_sw4 q, float_sw4 r, float_sw4 s, sw4_type g, sw4_type ic, sw4_type jc,
+    sw4_type kc, float_sw4& zq, float_sw4& zr, float_sw4& zs, float_sw4& zqq,
     float_sw4& zqr, float_sw4& zqs, float_sw4& zrr, float_sw4& zrs,
-    float_sw4& zss, float_sw4 h, int Nz) {
+    float_sw4& zss, float_sw4 h, sw4_type Nz) {
   SW4_MARK_FUNCTION;
   // Computes derivatives of the grid mapping z=z(q,r,s) at the given location
   // (q,r,s).
   //
   // Input: (q,r,s)    - Location in mapped space
   //        (ic,jc,kc) - Center stencils around this grid point
-  //                     It is assumed that (ic,jc) is in the interior of this
+  //                     It is assumed that (ic,jc) is in the sw4_typeerior of this
   //                     processor.
   //        h          - Grid spacing
-  //        Nz         - Number of (interior) grid points in the k-direction
+  //        Nz         - Number of (sw4_typeerior) grid points in the k-direction
   // Output: zq, zr, zs - Derivatives of the grid z-coordinate (grid mapping
   // z=z(q,r,s) )
   //    zqq, zqr, zqs, zrr, zrs, zss - Second derivatives of z=z(q,r,s)
@@ -800,7 +800,7 @@ void GridGeneratorGeneral::grid_mapping_diff_new(
   // The parameters (q,r,s) are normalized such that 1 <= q <= Nx is the
   // full domain (without ghost points). Similarly 1 <= r <= Ny, 1 <= s <= Nz.
 
-  int nghost = 3;  // 3 ghost points is maximum in solver.
+  sw4_type nghost = 3;  // 3 ghost points is maximum in solver.
 
   if (!(1 - nghost <= s && s <= Nz + nghost)) return;
 
@@ -813,46 +813,46 @@ void GridGeneratorGeneral::grid_mapping_diff_new(
   getmetwgh(ai, a6cofi, d6cofi, dd6cofi, ddd6cofi);
   getmetwgh(bi, a6cofj, d6cofj, dd6cofj, ddd6cofj);
 
-  int iSurfTop = g - a_ew->mNumberOfCartesianGrids;
-  int iSurfBot = iSurfTop - 1;
+  sw4_type iSurfTop = g - a_ew->mNumberOfCartesianGrids;
+  sw4_type iSurfBot = iSurfTop - 1;
   float_sw4 x = (q - 1) * h;
   float_sw4 y = (r - 1) * h;
   float_sw4 h0 = 2.0 * h;
   float_sw4 Nz_real =
-      static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
+      static_cast<float_sw4>(a_ew->m_kEndSw4_Type[g] - a_ew->m_kStartSw4_Type[g]);
   float_sw4 iNz_real = 1.0 / Nz_real;
 
-  if (!(m_curviInterface[iSurfTop].in_range(1, ic - 3, jc - 3, 1) &&
-        m_curviInterface[iSurfTop].in_range(1, ic + 4, jc + 4, 1)))
+  if (!(m_curviSw4_Typeerface[iSurfTop].in_range(1, ic - 3, jc - 3, 1) &&
+        m_curviSw4_Typeerface[iSurfTop].in_range(1, ic + 4, jc + 4, 1)))
     std::cout << "ERROR in gridgen diff new, top " << ic << " " << jc
               << std::endl;
   //   std::cout << "in gridgen diff" << std::endl;
 
   float_sw4 Ztop = 0, Ztopq = 0, Ztopr = 0, Ztopqq = 0, Ztopqr = 0, Ztoprr = 0;
-  for (int j = jc - 3; j <= jc + 4; j++)
-    for (int i = ic - 3; i <= ic + 4; i++) {
+  for (sw4_type j = jc - 3; j <= jc + 4; j++)
+    for (sw4_type i = ic - 3; i <= ic + 4; i++) {
       Ztop += a6cofi[i - (ic - 3)] * a6cofj[j - (jc - 3)] *
-              m_curviInterface[iSurfTop](i, j, 1);
+              m_curviSw4_Typeerface[iSurfTop](i, j, 1);
       Ztopq += d6cofi[i - (ic - 3)] * a6cofj[j - (jc - 3)] *
-               m_curviInterface[iSurfTop](i, j, 1);
+               m_curviSw4_Typeerface[iSurfTop](i, j, 1);
       Ztopr += a6cofi[i - (ic - 3)] * d6cofj[j - (jc - 3)] *
-               m_curviInterface[iSurfTop](i, j, 1);
+               m_curviSw4_Typeerface[iSurfTop](i, j, 1);
       Ztopqq += dd6cofi[i - (ic - 3)] * a6cofj[j - (jc - 3)] *
-                m_curviInterface[iSurfTop](i, j, 1);
+                m_curviSw4_Typeerface[iSurfTop](i, j, 1);
       Ztopqr += d6cofi[i - (ic - 3)] * d6cofj[j - (jc - 3)] *
-                m_curviInterface[iSurfTop](i, j, 1);
+                m_curviSw4_Typeerface[iSurfTop](i, j, 1);
       Ztoprr += a6cofi[i - (ic - 3)] * dd6cofj[j - (jc - 3)] *
-                m_curviInterface[iSurfTop](i, j, 1);
+                m_curviSw4_Typeerface[iSurfTop](i, j, 1);
     }
 
   float_sw4 Zbot = 0, Zbotq = 0, Zbotr = 0, Zbotqq = 0, Zbotqr = 0, Zbotrr = 0;
   if (iSurfBot < 0) {
-    // Bottom interface of g=mNumberOfCartesianGrids is flat with z=m_topo_zmax
+    // Bottom sw4_typeerface of g=mNumberOfCartesianGrids is flat with z=m_topo_zmax
     Zbot = m_topo_zmax;
   } else {
-    // Bottom interface is non-planar (curvilinear)
-    int icc = static_cast<int>(floor(x / h0)) + 1;
-    int jcc = static_cast<int>(floor(y / h0)) + 1;
+    // Bottom sw4_typeerface is non-planar (curvilinear)
+    sw4_type icc = static_cast<sw4_type>(floor(x / h0)) + 1;
+    sw4_type jcc = static_cast<sw4_type>(floor(y / h0)) + 1;
     //
     //      float_sw4 xPt = (iLow-1)*h0;
     //      float_sw4 yPt = (jLow-1)*h0;
@@ -862,24 +862,24 @@ void GridGeneratorGeneral::grid_mapping_diff_new(
 
     getmetwgh(xi, a6cofi, d6cofi, dd6cofi, ddd6cofi);
     getmetwgh(eta, a6cofj, d6cofj, dd6cofj, ddd6cofj);
-    if (!(m_curviInterface[iSurfBot].in_range(1, icc - 3, jcc - 3, 1) &&
-          m_curviInterface[iSurfBot].in_range(1, icc + 4, jcc + 4, 1)))
+    if (!(m_curviSw4_Typeerface[iSurfBot].in_range(1, icc - 3, jcc - 3, 1) &&
+          m_curviSw4_Typeerface[iSurfBot].in_range(1, icc + 4, jcc + 4, 1)))
       std::cout << "ERROR in gridgen diff new, bot " << icc << " " << jcc
                 << std::endl;
-    for (int j = jcc - 3; j <= jcc + 4; j++)
-      for (int i = icc - 3; i <= icc + 4; i++) {
+    for (sw4_type j = jcc - 3; j <= jcc + 4; j++)
+      for (sw4_type i = icc - 3; i <= icc + 4; i++) {
         Zbot += a6cofi[i - (icc - 3)] * a6cofj[j - (jcc - 3)] *
-                m_curviInterface[iSurfBot](i, j, 1);
+                m_curviSw4_Typeerface[iSurfBot](i, j, 1);
         Zbotq += d6cofi[i - (icc - 3)] * a6cofj[j - (jcc - 3)] *
-                 m_curviInterface[iSurfBot](i, j, 1);
+                 m_curviSw4_Typeerface[iSurfBot](i, j, 1);
         Zbotr += a6cofi[i - (icc - 3)] * d6cofj[j - (jcc - 3)] *
-                 m_curviInterface[iSurfBot](i, j, 1);
+                 m_curviSw4_Typeerface[iSurfBot](i, j, 1);
         Zbotqq += dd6cofi[i - (icc - 3)] * a6cofj[j - (jcc - 3)] *
-                  m_curviInterface[iSurfBot](i, j, 1);
+                  m_curviSw4_Typeerface[iSurfBot](i, j, 1);
         Zbotqr += d6cofi[i - (icc - 3)] * d6cofj[j - (jcc - 3)] *
-                  m_curviInterface[iSurfBot](i, j, 1);
+                  m_curviSw4_Typeerface[iSurfBot](i, j, 1);
         Zbotrr += a6cofi[i - (icc - 3)] * dd6cofj[j - (jcc - 3)] *
-                  m_curviInterface[iSurfBot](i, j, 1);
+                  m_curviSw4_Typeerface[iSurfBot](i, j, 1);
       }
     // Above derivatives are taken w.r.t. to the coarse grid parameter
     // qc=(q+1)/2,. Need to transform to derivatives w.r.t. q :
@@ -889,9 +889,9 @@ void GridGeneratorGeneral::grid_mapping_diff_new(
     Zbotqr *= 0.25;
     Zbotrr *= 0.25;
   }
-  // Linear interpolation in the vertical direction
+  // Linear sw4_typeerpolation in the vertical direction
   float_sw4 zeta =
-      static_cast<float_sw4>((s - a_ew->m_kStartInt[g]) * iNz_real);
+      static_cast<float_sw4>((s - a_ew->m_kStartSw4_Type[g]) * iNz_real);
   zq = (1.0 - zeta) * Ztopq + zeta * Zbotq;
   zr = (1.0 - zeta) * Ztopr + zeta * Zbotr;
   zs = (Zbot - Ztop) * iNz_real;
@@ -1012,19 +1012,19 @@ void GridGeneratorGeneral::getmetwgh(float_sw4 ai, float_sw4 wgh[8],
 }
 
 //-----------------------------------------------------------------------
-void GridGeneratorGeneral::generate_z_and_j(EW* a_ew, int g, Sarray& z,
+void GridGeneratorGeneral::generate_z_and_j(EW* a_ew, sw4_type g, Sarray& z,
                                             Sarray& J) {
   SW4_MARK_FUNCTION;
-  int ng = a_ew->mNumberOfGrids;
-  int ncg = a_ew->mNumberOfCartesianGrids;
-  int ref = 1;
-  for (int grid = ng - 1; grid > g; grid--) ref *= 2;
+  sw4_type ng = a_ew->mNumberOfGrids;
+  sw4_type ncg = a_ew->mNumberOfCartesianGrids;
+  sw4_type ref = 1;
+  for (sw4_type grid = ng - 1; grid > g; grid--) ref *= 2;
 
-  int iSurfTop = g - a_ew->mNumberOfCartesianGrids;
-  int iSurfBot = iSurfTop - 1;
+  sw4_type iSurfTop = g - a_ew->mNumberOfCartesianGrids;
+  sw4_type iSurfBot = iSurfTop - 1;
   float_sw4 h = a_ew->mGridSize[g];
   float_sw4 Nz_real =
-      static_cast<float_sw4>(a_ew->m_kEndInt[g] - a_ew->m_kStartInt[g]);
+      static_cast<float_sw4>(a_ew->m_kEndSw4_Type[g] - a_ew->m_kStartSw4_Type[g]);
   float_sw4 iNz_real = 1.0 / Nz_real;
   float_sw4 scaleRatio = 0;  // scaleFact=0;
   if (g > ncg) {
@@ -1037,37 +1037,37 @@ void GridGeneratorGeneral::generate_z_and_j(EW* a_ew, int g, Sarray& z,
   //   {
   //   std::cout << "zlims " << z.m_ib << " " << z.m_ie << " " << z.m_jb << " "
   //   << z.m_je << std::endl; std::cout << "curvii lims = "
-  //             << m_curviInterface[iSurfTop].m_ib << " "
-  //             << m_curviInterface[iSurfTop].m_ie << " "
-  //             << m_curviInterface[iSurfTop].m_jb << " "
-  //             << m_curviInterface[iSurfTop].m_je << std::endl;
+  //             << m_curviSw4_Typeerface[iSurfTop].m_ib << " "
+  //             << m_curviSw4_Typeerface[iSurfTop].m_ie << " "
+  //             << m_curviSw4_Typeerface[iSurfTop].m_jb << " "
+  //             << m_curviSw4_Typeerface[iSurfTop].m_je << std::endl;
   //   std::cout << "ref = " << ref << " curvitop lims = "
-  //             << m_curviInterface[ng-1-ncg].m_ib << " "
-  //             << m_curviInterface[ng-1-ncg].m_ie << " "
-  //             << m_curviInterface[ng-1-ncg].m_jb << " "
-  //             << m_curviInterface[ng-1-ncg].m_je << std::endl;
+  //             << m_curviSw4_Typeerface[ng-1-ncg].m_ib << " "
+  //             << m_curviSw4_Typeerface[ng-1-ncg].m_ie << " "
+  //             << m_curviSw4_Typeerface[ng-1-ncg].m_jb << " "
+  //             << m_curviSw4_Typeerface[ng-1-ncg].m_je << std::endl;
   //   }
 #pragma omp parallel for
-  for (int j = z.m_jb; j <= z.m_je; j++)
-    for (int i = z.m_ib; i <= z.m_ie; i++) {
-      float_sw4 Ztop = m_curviInterface[iSurfTop](i, j, 1);
+  for (sw4_type j = z.m_jb; j <= z.m_je; j++)
+    for (sw4_type i = z.m_ib; i <= z.m_ie; i++) {
+      float_sw4 Ztop = m_curviSw4_Typeerface[iSurfTop](i, j, 1);
       float_sw4 Zbot;
       if (iSurfBot < 0) {
-        // Bottom interface of g=mNumberOfCartesianGrids is flat with
+        // Bottom sw4_typeerface of g=mNumberOfCartesianGrids is flat with
         // z=m_topo_zmax
         Zbot = m_topo_zmax;
       } else {
         //            Zbot =
-        //            scaleFact*m_curviInterface[ng-1-ncg](ref*(i-1)+1,ref*(j-1)+1,
+        //            scaleFact*m_curviSw4_Typeerface[ng-1-ncg](ref*(i-1)+1,ref*(j-1)+1,
         //            1) +
         //                          (1.0 - scaleFact)* m_topo_zmax;
         Zbot = scaleRatio * Ztop + (1 - scaleRatio) * m_topo_zmax;
       }
 #pragma omp parallel for
-      for (int k = z.m_kb; k <= z.m_ke; k++) {
-        // Linear interpolation in the vertical direction
+      for (sw4_type k = z.m_kb; k <= z.m_ke; k++) {
+        // Linear sw4_typeerpolation in the vertical direction
         float_sw4 zeta =
-            static_cast<float_sw4>((k - a_ew->m_kStartInt[g]) * iNz_real);
+            static_cast<float_sw4>((k - a_ew->m_kStartSw4_Type[g]) * iNz_real);
         z(i, j, k) = (1.0 - zeta) * Ztop + zeta * Zbot;
         J(i, j, k) = h * h * iNz_real * (Zbot - Ztop);  // (h*h*dz/dr)
         // note, mapping linear in k, exact and numerical derivatives are the

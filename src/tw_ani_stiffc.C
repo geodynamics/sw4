@@ -2,8 +2,8 @@
 #include "sw4.h"
 
 //-----------------------------------------------------------------------
-void EW::tw_ani_stiff_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, float_sw4 h, float_sw4 zmin,
+void EW::tw_ani_stiff_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, float_sw4 h, float_sw4 zmin,
                          float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                          float_sw4* __restrict__ a_rho, float_sw4 a_phc[21],
                          float_sw4* __restrict__ a_cm)
@@ -20,11 +20,11 @@ void EW::tw_ani_stiff_ci(int ifirst, int ilast, int jfirst, int jlast,
 
 #pragma omp parallel
 #pragma omp for
-  for (int k = kfirst; k <= klast; k++)
-    for (int j = jfirst; j <= jlast; j++)
+  for (sw4_type k = kfirst; k <= klast; k++)
+    for (sw4_type j = jfirst; j <= jlast; j++)
 #pragma ivdep
 #pragma simd
-      for (int i = ifirst; i <= ilast; i++) {
+      for (sw4_type i = ifirst; i <= ilast; i++) {
         size_t ind = base + i + ni * j + nij * k;
         float_sw4 x = (i - 1) * h;
         float_sw4 y = (j - 1) * h;
@@ -82,7 +82,7 @@ void EW::tw_ani_stiff_ci(int ifirst, int ilast, int jfirst, int jlast,
 
 //-----------------------------------------------------------------------
 void EW::tw_ani_curvi_stiff_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
     float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
     float_sw4* __restrict__ zz, float_sw4 omm, float_sw4 phm, float_sw4 amprho,
     float_sw4* __restrict__ a_rho, float_sw4 a_phc[21],
@@ -100,11 +100,11 @@ void EW::tw_ani_curvi_stiff_ci(
 
 #pragma omp parallel
 #pragma omp for
-  for (int k = kfirst; k <= klast; k++)
-    for (int j = jfirst; j <= jlast; j++)
+  for (sw4_type k = kfirst; k <= klast; k++)
+    for (sw4_type j = jfirst; j <= jlast; j++)
 #pragma ivdep
 #pragma simd
-      for (int i = ifirst; i <= ilast; i++) {
+      for (sw4_type i = ifirst; i <= ilast; i++) {
         size_t ind = base + i + ni * j + nij * k;
         float_sw4 x = xx[ind];
         float_sw4 y = yy[ind];

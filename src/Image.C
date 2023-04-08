@@ -50,24 +50,24 @@
 #endif
 
 // initializing static member
-int Image::mPreceedZeros = 0;
+sw4_type Image::mPreceedZeros = 0;
 
-int Image::MODES = 40;
+sw4_type Image::MODES = 40;
 
 Image* Image::nil = static_cast<Image*>(0);
 
 using namespace std;
 
-Image::Image(EW* a_ew, float_sw4 time, float_sw4 timeInterval, int cycle,
-             int cycleInterval, const std::string& filePrefix, ImageMode mode,
+Image::Image(EW* a_ew, float_sw4 time, float_sw4 timeSw4_Typeerval, sw4_type cycle,
+             sw4_type cycleSw4_Typeerval, const std::string& filePrefix, ImageMode mode,
              ImageOrientation locationType, float_sw4 locationValue,
              bool doubleMode, bool usehdf5, bool userCreated)
     : mTime(time),
       mEW(a_ew),
       m_time_done(false),
-      mTimeInterval(timeInterval),
+      mTimeSw4_Typeerval(timeSw4_Typeerval),
       mWritingCycle(cycle),
-      mCycleInterval(cycleInterval),
+      mCycleSw4_Typeerval(cycleSw4_Typeerval),
       mFilePrefix(filePrefix),
       mMode(mode),
       //  mFileName(""),
@@ -137,8 +137,8 @@ Image::Image(EW* a_ew, float_sw4 time, float_sw4 timeInterval, int cycle,
   initializeTime();
 
   mWindow.resize(mEW->mNumberOfGrids);
-  for (int g = 0; g < mEW->mNumberOfGrids; g++) {
-    mWindow[g] = new int[6];
+  for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
+    mWindow[g] = new sw4_type[6];
     mWindow[g][0] = 1;
     mWindow[g][1] = 0;
     mWindow[g][2] = 1;
@@ -164,7 +164,7 @@ void Image::associate_gridfiles(vector<Image*>& imgs) {
     // if my location type is X find Gridz with equal x-coord.
     //                        Y find Gridz with equal y-coord.
     // Require same precision for now, simplifies file format.
-    for (int i = 0; i < imgs.size(); i++) {
+    for (sw4_type i = 0; i < imgs.size(); i++) {
       if (mLocationType == Image::X && imgs[i]->mMode == Image::GRIDZ &&
           imgs[i]->mLocationType == Image::X &&
           fabs(mCoordValue - imgs[i]->mCoordValue) < 1e-3 &&
@@ -203,20 +203,20 @@ void Image::associate_gridfiles(vector<Image*>& imgs) {
 //-----------------------------------------------------------------------
 // bool Image::proc_write()
 //{
-//  int myRank;
+//  sw4_type myRank;
 //  MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 //  return (myRank == m_rankWriter);
 //}
 
 //-------------------------------------
-void Image::setSteps(int a_steps) {
+void Image::setSteps(sw4_type a_steps) {
   char buffer[50];
   mPreceedZeros = snprintf(buffer, 50, "%d", a_steps);
 }
 
 //-----------------------------------------------------------------------
 void Image::computeGridPtIndex() {
-  // the purpose of this routine is to assign the vector<int> m_gridPtIndex
+  // the purpose of this routine is to assign the vector<sw4_type> m_gridPtIndex
   /* Here, we compute the index --in the local grid-- of the coordinate value at
      which we have to plot. For x, y, the local grid is the same as the global
      grid, but for z, k resets at each refinement boundary. */
@@ -232,13 +232,13 @@ void Image::computeGridPtIndex() {
   //           m_gridPtIndex[1] is
   //              the grid no. of the image plane.
   //
-  int myRank;
+  sw4_type myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
   //   if (myRank == 0)
   //     printf("======== Initializing Image ==========\n");
 
-  int n = mEW->mNumberOfCartesianGrids;
-  int nTotal = mEW->mNumberOfGrids;
+  sw4_type n = mEW->mNumberOfCartesianGrids;
+  sw4_type nTotal = mEW->mNumberOfGrids;
 
   if (mLocationType == Image::X || mLocationType == Image::Y) {
     m_gridPtIndex.resize(nTotal);
@@ -246,11 +246,11 @@ void Image::computeGridPtIndex() {
     /* I store the indices for i on the local grid of all levels:
      * index(iCoarse,iFiner,iFinest) */
 
-    for (int g = 0; g < n; g++)  // loop over the Cartesian grids
+    for (sw4_type g = 0; g < n; g++)  // loop over the Cartesian grids
     {
       if (g == 0)  // We find the closest ***COARSE*** grid line
       {
-        m_gridPtIndex[g] = (int)floor(mCoordValue / mEW->mGridSize[g]) + 1;
+        m_gridPtIndex[g] = (sw4_type)floor(mCoordValue / mEW->mGridSize[g]) + 1;
 
         if (mCoordValue - ((m_gridPtIndex[g] - 0.5) * mEW->mGridSize[g]) > 0.)
           (m_gridPtIndex[g])++;
@@ -272,7 +272,7 @@ void Image::computeGridPtIndex() {
       m_gridPtIndex[n] = m_gridPtIndex[n - 1];
     }
     // NEW: loop over the remaining (finer) curvilinear grids
-    for (int g = n + 1; g < nTotal; g++) {
+    for (sw4_type g = n + 1; g < nTotal; g++) {
       m_gridPtIndex[g] = 2 * m_gridPtIndex[g - 1] - 1;
     }
 
@@ -290,12 +290,12 @@ void Image::computeGridPtIndex() {
       m_gridPtIndex[0] = 1;
       m_gridPtIndex[1] = nTotal - 1;
     } else {
-      for (int g = 0; g < n;
+      for (sw4_type g = 0; g < n;
            g++)  // currently only looking through the Cartesian grids
       {
         if (mCoordValue > mEW->m_zmin[g]) {
           m_gridPtIndex[0] =
-              (int)floor((mCoordValue - mEW->m_zmin[g]) / mEW->mGridSize[g]) +
+              (sw4_type)floor((mCoordValue - mEW->m_zmin[g]) / mEW->mGridSize[g]) +
               1;
           m_gridPtIndex[1] = g;
 
@@ -310,7 +310,7 @@ void Image::computeGridPtIndex() {
             m_gridPtIndex[0] = 1;
             m_gridPtIndex[1] = g;
           } else {
-            m_gridPtIndex[0] = (int)floor((mCoordValue - mEW->m_zmin[g + 1]) /
+            m_gridPtIndex[0] = (sw4_type)floor((mCoordValue - mEW->m_zmin[g + 1]) /
                                           mEW->mGridSize[g + 1]) +
                                1;  // Here, I know I am on a grid line
             m_gridPtIndex[1] = g + 1;
@@ -325,22 +325,22 @@ void Image::computeGridPtIndex() {
     }  // end if in the Cartesian
   }    // end if Z
 
-  int iwrite = plane_in_proc(m_gridPtIndex[0]) ? 1 : 0;
+  sw4_type iwrite = plane_in_proc(m_gridPtIndex[0]) ? 1 : 0;
 
   MPI_Group origGroup, newGroup;
   MPI_Comm_group(MPI_COMM_WORLD, &origGroup);
 
-  //   int myRank;
+  //   sw4_type myRank;
   //   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
   //   cout<<"myRank "<<myRank<<" and I write "<<iwrite<<endl;
   //   MPI_Barrier;
 
-  int size;
+  sw4_type size;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  std::vector<int> writers(size);
-  MPI_Allgather(&iwrite, 1, MPI_INT, &writers[0], 1, MPI_INT, MPI_COMM_WORLD);
-  std::vector<int> fileWriterIDs;
-  for (unsigned int i = 0; i < writers.size(); ++i)
+  std::vector<sw4_type> writers(size);
+  MPI_Allgather(&iwrite, 1, MPI_SW4_TYPE, &writers[0], 1, MPI_SW4_TYPE, MPI_COMM_WORLD);
+  std::vector<sw4_type> fileWriterIDs;
+  for (unsigned sw4_type i = 0; i < writers.size(); ++i)
     if (writers[i] == 1) {
       fileWriterIDs.push_back(i);
     }
@@ -355,7 +355,7 @@ void Image::computeGridPtIndex() {
   MPI_Group_incl(origGroup, fileWriterIDs.size(), &fileWriterIDs[0], &newGroup);
   MPI_Comm_create(MPI_COMM_WORLD, newGroup, &m_mpiComm_writers);
 
-  //   int newRank;
+  //   sw4_type newRank;
   //   MPI_Group_rank(newGroup,&newRank);
   //   MPI_Group_size(newGroup,&size);
 
@@ -371,14 +371,14 @@ void Image::computeGridPtIndex() {
 }
 
 //-----------------------------------------------------------------------
-bool Image::plane_in_proc(int a_gridIndexCoarsest) {
-  // Find intersection of image with local processor grid block, all computed
+bool Image::plane_in_proc(sw4_type a_gridIndexCoarsest) {
+  // Find sw4_typeersection of image with local processor grid block, all computed
   // in global indices.
   bool retval = false;
-  int a_iStart = mEW->m_iStart[0];
-  int a_iEnd = mEW->m_iEnd[0];
-  int a_jStart = mEW->m_jStart[0];
-  int a_jEnd = mEW->m_jEnd[0];
+  sw4_type a_iStart = mEW->m_iStart[0];
+  sw4_type a_iEnd = mEW->m_iEnd[0];
+  sw4_type a_jStart = mEW->m_jStart[0];
+  sw4_type a_jEnd = mEW->m_jEnd[0];
 
   if (mLocationType == Image::X) {
     retval = (a_gridIndexCoarsest >= (a_iStart + mEW->m_paddingCells[0])) &&
@@ -398,7 +398,7 @@ bool Image::plane_in_proc(int a_gridIndexCoarsest) {
 void Image::initializeTime(double t) {
   mNextTime = t;
   m_time_done = false;
-  // with the option timeInterval=..., first time is always t=0
+  // with the option timeSw4_Typeerval=..., first time is always t=0
 }
 
 //-----------------------------------------------------------------------
@@ -415,13 +415,13 @@ bool Image::is_time_derivative() const {
 }
 
 //-----------------------------------------------------------------------
-bool Image::timeToWrite(float_sw4 time, int cycle, float_sw4 dt) {
+bool Image::timeToWrite(float_sw4 time, sw4_type cycle, float_sw4 dt) {
   // -----------------------------------------------
   // Check based on cycle
   // -----------------------------------------------
   bool do_it = false;
   if (cycle == mWritingCycle) do_it = true;
-  if (mCycleInterval != 0 && cycle % mCycleInterval == 0) do_it = true;
+  if (mCycleSw4_Typeerval != 0 && cycle % mCycleSw4_Typeerval == 0) do_it = true;
   // ---------------------------------------------------
   // Check based on time
   // ---------------------------------------------------
@@ -429,48 +429,48 @@ bool Image::timeToWrite(float_sw4 time, int cycle, float_sw4 dt) {
     m_time_done = true;
     do_it = true;
   }
-  if (mTimeInterval != 0.0 && mNextTime <= time + dt * 0.5) {
-    // we're going to write it, so increase the time interval
+  if (mTimeSw4_Typeerval != 0.0 && mNextTime <= time + dt * 0.5) {
+    // we're going to write it, so increase the time sw4_typeerval
 
     //     while( mNextTime < time )
-    mNextTime += mTimeInterval;
+    mNextTime += mTimeSw4_Typeerval;
     do_it = true;
   }
   return do_it;
 }
 
 //-----------------------------------------------------------------------
-bool Image::timeToWrite(int cycle) {
+bool Image::timeToWrite(sw4_type cycle) {
   // -----------------------------------------------
   // Check based on cycle only
   // -----------------------------------------------
   bool do_it = false;
   if (cycle == mWritingCycle) do_it = true;
-  if (mCycleInterval != 0 && cycle % mCycleInterval == 0) do_it = true;
+  if (mCycleSw4_Typeerval != 0 && cycle % mCycleSw4_Typeerval == 0) do_it = true;
   return do_it;
 }
 
 //-----------------------------------------------------------------------
 void Image::define_pio() {
-  int glow = 0, ghigh = mEW->mNumberOfGrids;
+  sw4_type glow = 0, ghigh = mEW->mNumberOfGrids;
   if (mLocationType == Image::Z) {
     glow = m_gridPtIndex[1];
     ghigh = glow + 1;
   }
   m_pio = new Parallel_IO*[ghigh - glow + 1];
-  for (int g = glow; g < ghigh; g++) {
-    int global[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g],
+  for (sw4_type g = glow; g < ghigh; g++) {
+    sw4_type global[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g],
                      mEW->m_global_nz[g]};
     //		       mEW->m_kEnd[g] - mEW->m_kStart[g] -
     // 2*mEW->m_ghost_points+1}
     //;
-    int local[3];
+    sw4_type local[3];
     local[0] = mWindow[g][1] - mWindow[g][0] + 1;
     local[1] = mWindow[g][3] - mWindow[g][2] + 1;
     local[2] = mWindow[g][5] - mWindow[g][4] + 1;
 
     // subtracting off 1 because C-arrays are base 0
-    int start[3];
+    sw4_type start[3];
     start[0] = mWindow[g][0] - 1;
     start[1] = mWindow[g][2] - 1;
     start[2] = mWindow[g][4] - 1;
@@ -489,18 +489,18 @@ void Image::define_pio() {
     }
     if (!plane_in_proc(m_gridPtIndex[0])) local[0] = local[1] = local[2] = 0;
 
-    int iwrite = 0;
+    sw4_type iwrite = 0;
     // mpiComm_writers consists of all processors that
     // own some part of the image.
     if (m_mpiComm_writers != MPI_COMM_NULL) {
-      int nproc = 0, myid = 0;
+      sw4_type nproc = 0, myid = 0;
       // Select group of writing processors as
       // subset of the processors that own the plane.
       MPI_Comm_size(m_mpiComm_writers, &nproc);
       MPI_Comm_rank(m_mpiComm_writers, &myid);
-      int nrwriters = mEW->getNumberOfWritersPFS();
+      sw4_type nrwriters = mEW->getNumberOfWritersPFS();
       if (nrwriters > nproc) nrwriters = nproc;
-      int q, r;
+      sw4_type q, r;
       if (nproc == 1 || nrwriters == 1) {
         q = 0;
         r = 0;
@@ -508,7 +508,7 @@ void Image::define_pio() {
         q = (nproc - 1) / (nrwriters - 1);
         r = (nproc - 1) % (nrwriters - 1);
       }
-      for (int w = 0; w < nrwriters; w++)
+      for (sw4_type w = 0; w < nrwriters; w++)
         if (q * w + r == myid) iwrite = 1;
     }
     m_pio[g - glow] =
@@ -525,7 +525,7 @@ void Image::allocatePlane() {
   bool iwrite = plane_in_proc(m_gridPtIndex[0]);
 
   if (iwrite) {
-    int myRank;
+    sw4_type myRank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
     bool breakLoop = (mLocationType == Image::Z);
@@ -537,12 +537,12 @@ void Image::allocatePlane() {
     // mFilePrefix.c_str(), m_rankWriter);
     //       }
 
-    //    int nPatches = mEW->mNumberOfGrids;  // both Cartesian and curvilinear
+    //    sw4_type nPatches = mEW->mNumberOfGrids;  // both Cartesian and curvilinear
 
     //   if (breakLoop) nPatches = 1;
 
     // figure out the sizes...
-    for (int g = 0; g < mEW->mNumberOfGrids; g++) {
+    for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
       if (breakLoop) g = m_gridPtIndex[1];
 
       mWindow[g][0] = mEW->m_iStart[g] + mEW->m_paddingCells[0];
@@ -568,7 +568,7 @@ void Image::allocatePlane() {
         mWindow[g][5] = m_gridPtIndex[0];
       }
 
-      int npts = (mWindow[g][1] - mWindow[g][0] + 1) *
+      sw4_type npts = (mWindow[g][1] - mWindow[g][0] + 1) *
                  (mWindow[g][3] - mWindow[g][2] + 1) *
                  (mWindow[g][5] - mWindow[g][4] + 1);
 
@@ -589,7 +589,7 @@ void Image::allocatePlane() {
 //-----------------------------------------------------------------------
 void Image::computeImageDivCurl(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                                 vector<Sarray>& a_Um, float_sw4 dt,
-                                int dminus) {
+                                sw4_type dminus) {
   ASSERT(m_isDefinedMPIWriters);
   ASSERT(mMode == Image::DIV || mMode == Image::CURLMAG ||
          mMode == Image::DIVDT || mMode == Image::CURLMAGDT);
@@ -597,7 +597,7 @@ void Image::computeImageDivCurl(vector<Sarray>& a_Up, vector<Sarray>& a_U,
   // a part in these planes
   bool iwrite = plane_in_proc(m_gridPtIndex[0]);
   if (iwrite) {
-    int gmin, gmax;
+    sw4_type gmin, gmax;
     if (mLocationType == Image::Z)
       gmin = gmax = m_gridPtIndex[1];
     else {
@@ -606,15 +606,15 @@ void Image::computeImageDivCurl(vector<Sarray>& a_Up, vector<Sarray>& a_U,
     }
     if (mMode == Image::DIV) {
       vector<float_sw4*> div(mEW->mNumberOfGrids);
-      for (int g = gmin; g <= gmax; g++) {
-        int npts = (mWindow[g][1] - mWindow[g][0] + 1) *
+      for (sw4_type g = gmin; g <= gmax; g++) {
+        sw4_type npts = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1) *
                    (mWindow[g][5] - mWindow[g][4] + 1);
         div[g] = new float_sw4[npts];
       }
       computeDivergence(a_Up, div);
-      for (int g = gmin; g <= gmax; g++) {
-        int npts = (mWindow[g][1] - mWindow[g][0] + 1) *
+      for (sw4_type g = gmin; g <= gmax; g++) {
+        sw4_type npts = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1) *
                    (mWindow[g][5] - mWindow[g][4] + 1);
         if (m_double)
@@ -627,15 +627,15 @@ void Image::computeImageDivCurl(vector<Sarray>& a_Up, vector<Sarray>& a_U,
       }
     } else if (mMode == Image::CURLMAG) {
       vector<float_sw4*> curl(mEW->mNumberOfGrids);
-      for (int g = gmin; g <= gmax; g++) {
-        int npts = (mWindow[g][1] - mWindow[g][0] + 1) *
+      for (sw4_type g = gmin; g <= gmax; g++) {
+        sw4_type npts = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1) *
                    (mWindow[g][5] - mWindow[g][4] + 1);
         curl[g] = new float_sw4[3 * npts];
       }
       computeCurl(a_Up, curl);
-      for (int g = gmin; g <= gmax; g++) {
-        int npts = (mWindow[g][1] - mWindow[g][0] + 1) *
+      for (sw4_type g = gmin; g <= gmax; g++) {
+        sw4_type npts = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1) *
                    (mWindow[g][5] - mWindow[g][4] + 1);
         if (m_double)
@@ -654,8 +654,8 @@ void Image::computeImageDivCurl(vector<Sarray>& a_Up, vector<Sarray>& a_U,
       }
     } else if (mMode == Image::DIVDT) {
       vector<float_sw4*> div(mEW->mNumberOfGrids), divm(mEW->mNumberOfGrids);
-      for (int g = gmin; g <= gmax; g++) {
-        int npts = (mWindow[g][1] - mWindow[g][0] + 1) *
+      for (sw4_type g = gmin; g <= gmax; g++) {
+        sw4_type npts = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1) *
                    (mWindow[g][5] - mWindow[g][4] + 1);
         div[g] = new float_sw4[npts];
@@ -670,8 +670,8 @@ void Image::computeImageDivCurl(vector<Sarray>& a_Up, vector<Sarray>& a_U,
         computeDivergence(a_Um, divm);
         idt = 1 / (2 * dt);
       }
-      for (int g = gmin; g <= gmax; g++) {
-        int npts = (mWindow[g][1] - mWindow[g][0] + 1) *
+      for (sw4_type g = gmin; g <= gmax; g++) {
+        sw4_type npts = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1) *
                    (mWindow[g][5] - mWindow[g][4] + 1);
         if (m_double)
@@ -685,8 +685,8 @@ void Image::computeImageDivCurl(vector<Sarray>& a_Up, vector<Sarray>& a_U,
       }
     } else if (mMode == Image::CURLMAGDT) {
       vector<float_sw4*> curl(mEW->mNumberOfGrids), curlm(mEW->mNumberOfGrids);
-      for (int g = gmin; g <= gmax; g++) {
-        int npts = (mWindow[g][1] - mWindow[g][0] + 1) *
+      for (sw4_type g = gmin; g <= gmax; g++) {
+        sw4_type npts = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1) *
                    (mWindow[g][5] - mWindow[g][4] + 1);
         curl[g] = new float_sw4[3 * npts];
@@ -701,8 +701,8 @@ void Image::computeImageDivCurl(vector<Sarray>& a_Up, vector<Sarray>& a_U,
         computeCurl(a_Um, curlm);
         idt = 1 / (2 * dt);
       }
-      for (int g = gmin; g <= gmax; g++) {
-        int npts = (mWindow[g][1] - mWindow[g][0] + 1) *
+      for (sw4_type g = gmin; g <= gmax; g++) {
+        sw4_type npts = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1) *
                    (mWindow[g][5] - mWindow[g][4] + 1);
         if (m_double)
@@ -733,28 +733,28 @@ void Image::computeImageDivCurl(vector<Sarray>& a_Up, vector<Sarray>& a_U,
 }
 
 //-----------------------------------------------------------------------
-void Image::computeImageQuantity(std::vector<Sarray>& a_mu, int a_nComp) {
+void Image::computeImageQuantity(std::vector<Sarray>& a_mu, sw4_type a_nComp) {
   ASSERT(m_isDefinedMPIWriters);
   // plane_in_proc returns true for z=const lpanes, because all processors have
   // a part in these planes
   bool iwrite = plane_in_proc(m_gridPtIndex[0]);
   if (iwrite) {
-    int gmin, gmax;
+    sw4_type gmin, gmax;
     if (mLocationType == Image::Z)
       gmin = gmax = m_gridPtIndex[1];
     else {
       gmin = 0;
       gmax = mEW->mNumberOfGrids - 1;
     }
-    for (int g = gmin; g <= gmax; g++) {
+    for (sw4_type g = gmin; g <= gmax; g++) {
       //       size_t iField=0;
       size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
       size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1);
 #pragma omp parallel for
-      for (int kk = mWindow[g][4]; kk <= mWindow[g][5]; kk++)
-        for (int jj = mWindow[g][2]; jj <= mWindow[g][3]; jj++)
-          for (int ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++) {
+      for (sw4_type kk = mWindow[g][4]; kk <= mWindow[g][5]; kk++)
+        for (sw4_type jj = mWindow[g][2]; jj <= mWindow[g][3]; jj++)
+          for (sw4_type ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++) {
             size_t iField = (ii - mWindow[g][0]) + ni * (jj - mWindow[g][2]) +
                             nij * (kk - mWindow[g][4]);
             if (m_double)
@@ -774,29 +774,29 @@ void Image::computeImageGrid(std::vector<Sarray>& a_X, std::vector<Sarray>& a_Y,
   ASSERT(mMode == Image::GRIDX || mMode == Image::GRIDY ||
          mMode == Image::GRIDZ);
   if (plane_in_proc(m_gridPtIndex[0])) {
-    int topCartesian = mEW->mNumberOfCartesianGrids - 1;
-    int component = 1;
+    sw4_type topCartesian = mEW->mNumberOfCartesianGrids - 1;
+    sw4_type component = 1;
     if (mMode == Image::GRIDY)
       component = 2;
     else if (mMode == Image::GRIDZ)
       component = 3;
 
-    int gmin, gmax;
+    sw4_type gmin, gmax;
     if (mLocationType == Image::Z)
       gmin = gmax = m_gridPtIndex[1];
     else {
       gmin = 0;
       gmax = mEW->mNumberOfGrids - 1;
     }
-    for (int g = gmin; g <= gmax; g++) {
+    for (sw4_type g = gmin; g <= gmax; g++) {
       //	size_t iField = 0;
       size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
       size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1);
 #pragma omp parallel for
-      for (int kk = mWindow[g][4]; kk <= mWindow[g][5]; kk++)
-        for (int jj = mWindow[g][2]; jj <= mWindow[g][3]; jj++)
-          for (int ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++) {
+      for (sw4_type kk = mWindow[g][4]; kk <= mWindow[g][5]; kk++)
+        for (sw4_type jj = mWindow[g][2]; jj <= mWindow[g][3]; jj++)
+          for (sw4_type ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++) {
             size_t iField = (ii - mWindow[g][0]) + ni * (jj - mWindow[g][2]) +
                             nij * (kk - mWindow[g][4]);
             float_sw4 val;
@@ -834,12 +834,12 @@ void Image::computeImageLatLon(std::vector<Sarray>& a_X,
   // plane_in_proc returns true for z=const lpanes, because all processors have
   // a part in these planes
   if (plane_in_proc(m_gridPtIndex[0])) {
-    int g;
+    sw4_type g;
     // lat, lon images are only meaningful on Image::Z planes, but we will write
     // lat and lon on any plane
-    int topCartesian = mEW->mNumberOfCartesianGrids - 1;
+    sw4_type topCartesian = mEW->mNumberOfCartesianGrids - 1;
     // write the data...
-    int gmin, gmax;
+    sw4_type gmin, gmax;
     if (mLocationType == Image::Z)
       gmin = gmax = m_gridPtIndex[1];
     else {
@@ -851,10 +851,10 @@ void Image::computeImageLatLon(std::vector<Sarray>& a_X,
       size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
       size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1);
-      for (int kk = mWindow[g][4]; kk <= mWindow[g][5]; kk++)
+      for (sw4_type kk = mWindow[g][4]; kk <= mWindow[g][5]; kk++)
 #pragma omp parallel for
-        for (int jj = mWindow[g][2]; jj <= mWindow[g][3]; jj++)
-          for (int ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++) {
+        for (sw4_type jj = mWindow[g][2]; jj <= mWindow[g][3]; jj++)
+          for (sw4_type ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++) {
             size_t iField = (ii - mWindow[g][0]) + ni * (jj - mWindow[g][2]) +
                             nij * (kk - mWindow[g][4]);
             double latP, lonP, xP, yP, val;
@@ -890,22 +890,22 @@ void Image::computeImagePvel(std::vector<Sarray>& mu,
   ASSERT(m_isDefinedMPIWriters);
   ASSERT(mMode == Image::P);
   if (plane_in_proc(m_gridPtIndex[0])) {
-    int gmin, gmax;
+    sw4_type gmin, gmax;
     if (mLocationType == Image::Z)
       gmin = gmax = m_gridPtIndex[1];
     else {
       gmin = 0;
       gmax = mEW->mNumberOfGrids - 1;
     }
-    for (int g = gmin; g <= gmax; g++) {
+    for (sw4_type g = gmin; g <= gmax; g++) {
       //	 size_t iField=0;
       size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
       size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1);
 #pragma omp parallel for
-      for (int kk = mWindow[g][4]; kk <= mWindow[g][5]; kk++)
-        for (int jj = mWindow[g][2]; jj <= mWindow[g][3]; jj++)
-          for (int ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++) {
+      for (sw4_type kk = mWindow[g][4]; kk <= mWindow[g][5]; kk++)
+        for (sw4_type jj = mWindow[g][2]; jj <= mWindow[g][3]; jj++)
+          for (sw4_type ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++) {
             size_t iField = (ii - mWindow[g][0]) + ni * (jj - mWindow[g][2]) +
                             nij * (kk - mWindow[g][4]);
             if (m_double)
@@ -928,22 +928,22 @@ void Image::computeImageSvel(std::vector<Sarray>& mu,
   ASSERT(m_isDefinedMPIWriters);
   ASSERT(mMode == Image::S);
   if (plane_in_proc(m_gridPtIndex[0])) {
-    int gmin, gmax;
+    sw4_type gmin, gmax;
     if (mLocationType == Image::Z)
       gmin = gmax = m_gridPtIndex[1];
     else {
       gmin = 0;
       gmax = mEW->mNumberOfGrids - 1;
     }
-    for (int g = gmin; g <= gmax; g++) {
+    for (sw4_type g = gmin; g <= gmax; g++) {
       //	 size_t iField=0;
       size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
       size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1);
 #pragma omp parallel for
-      for (int kk = mWindow[g][4]; kk <= mWindow[g][5]; kk++)
-        for (int jj = mWindow[g][2]; jj <= mWindow[g][3]; jj++)
-          for (int ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++) {
+      for (sw4_type kk = mWindow[g][4]; kk <= mWindow[g][5]; kk++)
+        for (sw4_type jj = mWindow[g][2]; jj <= mWindow[g][3]; jj++)
+          for (sw4_type ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++) {
             size_t iField = (ii - mWindow[g][0]) + ni * (jj - mWindow[g][2]) +
                             nij * (kk - mWindow[g][4]);
             if (m_double)
@@ -964,7 +964,7 @@ void Image::copy2DArrayToImage(Sarray& u2) {
   REQUIRE2(
       u2.m_nc == 1,
       "Image::copy2DArrayToImage, only implemented for one-component arrays");
-  int ie = u2.m_ie, ib = u2.m_ib, je = u2.m_je, jb = u2.m_jb;
+  sw4_type ie = u2.m_ie, ib = u2.m_ib, je = u2.m_je, jb = u2.m_jb;
   REQUIRE2(ib == mEW->m_iStart[mEW->mNumberOfGrids - 1] &&
                ie == mEW->m_iEnd[mEW->mNumberOfGrids - 1] &&
                jb == mEW->m_jStart[mEW->mNumberOfGrids - 1] &&
@@ -978,12 +978,12 @@ void Image::copy2DArrayToImage(Sarray& u2) {
     ASSERT2(mLocationType == Image::Z,
             "Image::copy2DArrayToImage only works for z=const");
     // write the data...
-    int g = m_gridPtIndex[1];
+    sw4_type g = m_gridPtIndex[1];
     //      size_t iField = 0;
     size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
 #pragma omp parallel for
-    for (int jj = mWindow[g][2]; jj <= mWindow[g][3]; jj++)
-      for (int ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++) {
+    for (sw4_type jj = mWindow[g][2]; jj <= mWindow[g][3]; jj++)
+      for (sw4_type ii = mWindow[g][0]; ii <= mWindow[g][1]; ii++) {
         size_t iField = (ii - mWindow[g][0]) + ni * (jj - mWindow[g][2]);
         if (m_double)
           m_doubleField[g][iField] = (double)u2(ii, jj, 1);
@@ -995,7 +995,7 @@ void Image::copy2DArrayToImage(Sarray& u2) {
 }
 
 //-----------------------------------------------------------------------
-void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
+void Image::writeImagePlane_2(sw4_type cycle, std::string& path, float_sw4 t) {
   if (!m_user_created) return;
 
   ASSERT(m_isDefinedMPIWriters);
@@ -1010,16 +1010,16 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
   // a part in these planes
   bool ihavearray = plane_in_proc(m_gridPtIndex[0]);
 
-  int glow = 0, ghigh = mEW->mNumberOfGrids;
+  sw4_type glow = 0, ghigh = mEW->mNumberOfGrids;
   if (mLocationType == Image::Z) {
     glow = m_gridPtIndex[1];
     ghigh = glow + 1;
   }
   bool iwrite = false;
-  for (int g = glow; g < ghigh; g++)
+  for (sw4_type g = glow; g < ghigh; g++)
     iwrite = iwrite || m_pio[g - glow]->i_write();
 
-  // Header: [precision(int) npatches(int) time, plane, coordinate, imagetype,
+  // Header: [precision(sw4_type) npatches(sw4_type) time, plane, coordinate, imagetype,
   // gridinfo, timeofday,
   //                            h_1 zmin_1 sizes_1 h_2 zmin_2 sizes_2 ... h_ng
   //                            zmin_ng sizes_ng ]
@@ -1035,12 +1035,12 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
   // timeofday - String describing the creation date of the file, max 25 bytes.
 
   // offset initialized to header size:
-  off_t offset = 2 * sizeof(int) + 2 * sizeof(double) + 3 * sizeof(int) +
+  off_t offset = 2 * sizeof(sw4_type) + 2 * sizeof(double) + 3 * sizeof(sw4_type) +
                  25 * sizeof(char) +
-                 (ghigh - glow) * (2 * sizeof(double) + 4 * sizeof(int));
-  int fid = -1;
+                 (ghigh - glow) * (2 * sizeof(double) + 4 * sizeof(sw4_type));
+  sw4_type fid = -1;
   stringstream s, fileSuffix;
-  int prec, nPatches, globalPlaneSize[4];
+  sw4_type prec, nPatches, globalPlaneSize[4];
   if (iwrite) {
     if (mMode == Image::GRIDX || mMode == Image::GRIDY || mMode == Image::GRIDZ)
       compute_file_suffix(fileSuffix, 0);
@@ -1062,14 +1062,14 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
     cout << "writing image plane on file " << s.str()
          << endl;  // " (msg from proc # " << m_rankWriter << ")" << endl;
     prec = m_double ? 8 : 4;
-    size_t ret = write(fid, &prec, sizeof(int));
-    if (ret != sizeof(int))
+    size_t ret = write(fid, &prec, sizeof(sw4_type));
+    if (ret != sizeof(sw4_type))
       cout << "ERROR: Image::writeImagePlane_2 could not write precision"
            << endl;
 
     nPatches = mLocationType == Image::Z ? 1 : mEW->mNumberOfGrids;
-    ret = write(fid, &nPatches, sizeof(int));
-    if (ret != sizeof(int))
+    ret = write(fid, &nPatches, sizeof(sw4_type));
+    if (ret != sizeof(sw4_type))
       cout
           << "ERROR: Image::writeImagePlane_2 could not write number of patches"
           << endl;
@@ -1079,7 +1079,7 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
     if (ret != sizeof(double))
       cout << "ERROR: Image::writeImagePlane_2 could not write time" << endl;
 
-    int ltype;
+    sw4_type ltype;
     if (mLocationType == Image::X)
       ltype = 0;
     else if (mLocationType == Image::Y)
@@ -1087,8 +1087,8 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
     else
       ltype = 2;
 
-    ret = write(fid, &ltype, sizeof(int));
-    if (ret != sizeof(int))
+    ret = write(fid, &ltype, sizeof(sw4_type));
+    if (ret != sizeof(sw4_type))
       cout << "ERROR: Image::writeImagePlane_2 could not write plane type"
            << endl;
 
@@ -1101,13 +1101,13 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
       cout << "ERROR: Image::writeImagePlane_2 could not write coordinate value"
            << endl;
 
-    int imode = static_cast<int>(mMode);
-    ret = write(fid, &imode, sizeof(int));
-    if (ret != sizeof(int))
+    sw4_type imode = static_cast<sw4_type>(mMode);
+    ret = write(fid, &imode, sizeof(sw4_type));
+    if (ret != sizeof(sw4_type))
       cout << "ERROR: Image::writeImagePlane_2 could not write imode" << endl;
 
-    ret = write(fid, &mGridinfo, sizeof(int));
-    if (ret != sizeof(int))
+    ret = write(fid, &mGridinfo, sizeof(sw4_type));
+    if (ret != sizeof(sw4_type))
       cout << "ERROR: Image::writeImagePlane_2 could not write gridinfo"
            << endl;
 
@@ -1123,7 +1123,7 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
       cout << "ERROR: Image::writeImagePlane_2 could not write strtimec"
            << endl;
 
-    for (int g = glow; g < ghigh; g++) {
+    for (sw4_type g = glow; g < ghigh; g++) {
       dblevar = static_cast<double>(mEW->mGridSize[g]);
       ret = write(fid, &dblevar, sizeof(double));
       if (ret != sizeof(double))
@@ -1136,7 +1136,7 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
         cout << "ERROR: Image::writeImagePlane_2 could not write zmin for grid "
              << g << endl;
 
-      // should hold the global number of interior points
+      // should hold the global number of sw4_typeerior points
       if (mLocationType == Image::X) {
         globalPlaneSize[0] = 1;
         globalPlaneSize[1] = mEW->m_global_ny[g];
@@ -1155,8 +1155,8 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
         globalPlaneSize[2] = 1;
         globalPlaneSize[3] = mEW->m_global_ny[g];
       }
-      ret = write(fid, globalPlaneSize, 4 * sizeof(int));
-      if (ret != 4 * sizeof(int))
+      ret = write(fid, globalPlaneSize, 4 * sizeof(sw4_type));
+      if (ret != 4 * sizeof(sw4_type))
         cout << "ERROR: Image::writeImagePlane_2 could not write dimensions of "
                 "grid "
              << g << endl;
@@ -1164,10 +1164,10 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
     fsync(fid);
   } else if (m_usehdf5 == true && m_pio[0]->proc_zero()) {
 #ifdef USE_HDF5
-    int ret, ltype;
+    sw4_type ret, ltype;
     hsize_t dims, dims1 = 1, total_elem = 0;
     setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
-    int alignment = 65536;
+    sw4_type alignment = 65536;
     /* char *env = getenv("HDF5_ALIGNMENT_SIZE"); */
     /* if (env != NULL) */
     /*     alignment = atoi(env); */
@@ -1190,7 +1190,7 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
     attr_space1 = H5Screate_simple(1, &dims1, NULL);
 
     nPatches = mLocationType == Image::Z ? 1 : mEW->mNumberOfGrids;
-    ret = createWriteAttr(h5_fid, "npatch", H5T_NATIVE_INT, attr_space1,
+    ret = createWriteAttr(h5_fid, "npatch", H5T_NATIVE_SW4_TYPE, attr_space1,
                           &nPatches);
     if (ret < 0)
       cout
@@ -1211,7 +1211,7 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
     else
       ltype = 2;
 
-    ret = createWriteAttr(h5_fid, "plane", H5T_NATIVE_INT, attr_space1, &ltype);
+    ret = createWriteAttr(h5_fid, "plane", H5T_NATIVE_SW4_TYPE, attr_space1, &ltype);
     if (ret < 0)
       cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 plane type"
            << endl;
@@ -1227,13 +1227,13 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
               "value"
            << endl;
 
-    int imode = static_cast<int>(mMode);
-    ret = createWriteAttr(h5_fid, "mode", H5T_NATIVE_INT, attr_space1, &imode);
+    sw4_type imode = static_cast<sw4_type>(mMode);
+    ret = createWriteAttr(h5_fid, "mode", H5T_NATIVE_SW4_TYPE, attr_space1, &imode);
     if (ret < 0)
       cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 imode"
            << endl;
 
-    ret = createWriteAttr(h5_fid, "gridinfo", H5T_NATIVE_INT, attr_space1,
+    ret = createWriteAttr(h5_fid, "gridinfo", H5T_NATIVE_SW4_TYPE, attr_space1,
                           &mGridinfo);
     if (ret < 0)
       cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 gridinfo"
@@ -1257,16 +1257,16 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
 
     double* grid_size = new double[nPatches];
     double* zmin = new double[nPatches];
-    int* ni = new int[nPatches];
-    int* nj = new int[nPatches];
-    /* int    *ib        = new int[nPatches]; */
-    /* int    *jb        = new int[nPatches]; */
+    sw4_type* ni = new sw4_type[nPatches];
+    sw4_type* nj = new sw4_type[nPatches];
+    /* sw4_type    *ib        = new sw4_type[nPatches]; */
+    /* sw4_type    *jb        = new sw4_type[nPatches]; */
 
-    for (int g = glow; g < ghigh; g++) {
+    for (sw4_type g = glow; g < ghigh; g++) {
       grid_size[g - glow] = static_cast<double>(mEW->mGridSize[g]);
       zmin[g - glow] = static_cast<double>(mEW->m_zmin[g]);
 
-      // should hold the global number of interior points
+      // should hold the global number of sw4_typeerior points
       if (mLocationType == Image::X) {
         ni[g - glow] = mEW->m_global_ny[g];
         nj[g - glow] = mEW->m_global_nz[g];
@@ -1305,17 +1305,17 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
           << endl;
     H5Dclose(dset);
 
-    dset = H5Dcreate(h5_fid, "ni", H5T_NATIVE_INT, dset_space, H5P_DEFAULT,
+    dset = H5Dcreate(h5_fid, "ni", H5T_NATIVE_SW4_TYPE, dset_space, H5P_DEFAULT,
                      H5P_DEFAULT, H5P_DEFAULT);
-    ret = H5Dwrite(dset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, ni);
+    ret = H5Dwrite(dset, H5T_NATIVE_SW4_TYPE, H5S_ALL, H5S_ALL, H5P_DEFAULT, ni);
     if (ret < 0)
       cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 ni dataset"
            << endl;
     H5Dclose(dset);
 
-    dset = H5Dcreate(h5_fid, "nj", H5T_NATIVE_INT, dset_space, H5P_DEFAULT,
+    dset = H5Dcreate(h5_fid, "nj", H5T_NATIVE_SW4_TYPE, dset_space, H5P_DEFAULT,
                      H5P_DEFAULT, H5P_DEFAULT);
-    ret = H5Dwrite(dset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, nj);
+    ret = H5Dwrite(dset, H5T_NATIVE_SW4_TYPE, H5S_ALL, H5S_ALL, H5P_DEFAULT, nj);
     if (ret < 0)
       cout << "ERROR: Image::writeImagePlane_2 could not write HDF5 nj dataset"
            << endl;
@@ -1342,8 +1342,8 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
     H5Dclose(dset);
 
     if (mGridinfo == 1) {
-      int g = mEW->mNumberOfGrids - 1;
-      int globalSizes[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g],
+      sw4_type g = mEW->mNumberOfGrids - 1;
+      sw4_type globalSizes[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g],
                             mEW->m_global_nz[g]};
       if (mLocationType == Image::X) globalSizes[0] = 1;
       if (mLocationType == Image::Y) globalSizes[1] = 1;
@@ -1380,8 +1380,8 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
   // write the data...
   if (m_usehdf5 == false) {
     if (ihavearray) {
-      for (int g = glow; g < ghigh; g++) {
-        int globalSizes[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g],
+      for (sw4_type g = glow; g < ghigh; g++) {
+        sw4_type globalSizes[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g],
                               mEW->m_global_nz[g]};
         if (mLocationType == Image::X) globalSizes[0] = 1;
         if (mLocationType == Image::Y) globalSizes[1] = 1;
@@ -1435,8 +1435,8 @@ void Image::writeImagePlane_2(int cycle, std::string& path, float_sw4 t) {
     // hsize_t dims, dims1 = 1;
     if (ihavearray) {
       offset = 0;
-      for (int g = glow; g < ghigh; g++) {
-        int globalSizes[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g],
+      for (sw4_type g = glow; g < ghigh; g++) {
+        sw4_type globalSizes[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g],
                               mEW->m_global_nz[g]};
 
         if (mLocationType == Image::X) globalSizes[0] = 1;
@@ -1479,9 +1479,9 @@ void Image::add_grid_to_file_hdf5(const char* fname, bool iwrite,
   bool ihavearray = plane_in_proc(m_gridPtIndex[0]);
   if (ihavearray) {
 #ifdef USE_HDF5
-    //      int g=mEW->mNumberOfGrids-1;
-    for (int g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids; g++) {
-      int globalSizes[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g],
+    //      sw4_type g=mEW->mNumberOfGrids-1;
+    for (sw4_type g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids; g++) {
+      sw4_type globalSizes[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g],
                             mEW->m_global_nz[g]};
       if (mLocationType == Image::X) globalSizes[0] = 1;
       if (mLocationType == Image::Y) globalSizes[1] = 1;
@@ -1514,7 +1514,7 @@ void Image::add_grid_to_file_hdf5(const char* fname, bool iwrite,
 void Image::add_grids_to_file(const char* fname, bool iwrite, size_t offset) {
   bool ihavearray = plane_in_proc(m_gridPtIndex[0]);
   if (ihavearray) {
-    int fid;
+    sw4_type fid;
     if (iwrite) {
       fid = open(fname, O_WRONLY, 0660);
       if (fid == -1)
@@ -1522,8 +1522,8 @@ void Image::add_grids_to_file(const char* fname, bool iwrite, size_t offset) {
             0, "ERROR: Image::add_grids_to_file, error opening file " << fname);
     }
 
-    for (int g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids; g++) {
-      int globalSizes[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g],
+    for (sw4_type g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids; g++) {
+      sw4_type globalSizes[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g],
                             mEW->m_global_nz[g]};
       if (mLocationType == Image::X) globalSizes[0] = 1;
       if (mLocationType == Image::Y) globalSizes[1] = 1;
@@ -1554,7 +1554,7 @@ void Image::add_grids_to_file(const char* fname, bool iwrite, size_t offset) {
 void Image::add_grid_to_file(const char* fname, bool iwrite, size_t offset) {
   bool ihavearray = plane_in_proc(m_gridPtIndex[0]);
   if (ihavearray) {
-    int fid;
+    sw4_type fid;
     if (iwrite) {
       fid = open(fname, O_WRONLY, 0660);
       if (fid == -1)
@@ -1562,8 +1562,8 @@ void Image::add_grid_to_file(const char* fname, bool iwrite, size_t offset) {
                 "ERROR: Image::add_grid_to_file, error opening file " << fname);
     }
 
-    int g = mEW->mNumberOfGrids - 1;
-    int globalSizes[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g],
+    sw4_type g = mEW->mNumberOfGrids - 1;
+    sw4_type globalSizes[3] = {mEW->m_global_nx[g], mEW->m_global_ny[g],
                           mEW->m_global_nz[g]};
     if (mLocationType == Image::X) globalSizes[0] = 1;
     if (mLocationType == Image::Y) globalSizes[1] = 1;
@@ -1594,14 +1594,14 @@ void Image::add_grid_filenames_to_file(const char* fname) {
     stringstream str1;
     m_gridimage->compute_file_suffix(str1, 0);
     string img1str = str1.str();
-    int fid = open(fname, O_WRONLY, 0660);
+    sw4_type fid = open(fname, O_WRONLY, 0660);
     if (fid == -1)
       VERIFY2(0, "ERROR: Image::add_grid_filenames_to_file, error opening file "
                      << fname);
     size_t nr = lseek(fid, 0, SEEK_END);
-    int n = img1str.length();
-    nr = write(fid, &n, sizeof(int));
-    if (nr != sizeof(int))
+    sw4_type n = img1str.length();
+    nr = write(fid, &n, sizeof(sw4_type));
+    if (nr != sizeof(sw4_type))
       cout << "ERROR: Image::add_grid_filenames_to file, could not write n1 "
            << endl;
 
@@ -1614,10 +1614,10 @@ void Image::add_grid_filenames_to_file(const char* fname) {
 }
 
 //-----------------------------------------------------------------------
-void Image::compute_file_suffix(stringstream& fileSuffix, int cycle) {
+void Image::compute_file_suffix(stringstream& fileSuffix, sw4_type cycle) {
   fileSuffix << mFilePrefix << ".cycle=";
-  int temp = static_cast<int>(pow(10.0, mPreceedZeros - 1));
-  int testcycle = cycle;
+  sw4_type temp = static_cast<sw4_type>(pow(10.0, mPreceedZeros - 1));
+  sw4_type testcycle = cycle;
   if (cycle == 0) testcycle = 1;
 
   while (testcycle < temp) {
@@ -1639,7 +1639,7 @@ void Image::update_maxes_hVelMax(vector<Sarray>& a_Up, vector<Sarray>& a_Um,
   // geographic = true  --> Max of N- and E-components
   // (max(|u_{N-S}|,|u_{E-W}|)) geograpic  = false --> L2 norm of x- and
   // y-components (sqrt(ux*ux+uy*uy)).
-  int gmin, gmax;
+  sw4_type gmin, gmax;
   if (mLocationType == Image::Z)
     gmin = gmax = m_gridPtIndex[1];
   else {
@@ -1649,7 +1649,7 @@ void Image::update_maxes_hVelMax(vector<Sarray>& a_Up, vector<Sarray>& a_Um,
   float_sw4 di = 1 / dt;
   if (geographic) {
     // C.B> with N-S and E-W max: max(|u_{N-S}|,|u_{E-W}|))
-    for (int g = gmin; g <= gmax; g++) {
+    for (sw4_type g = gmin; g <= gmax; g++) {
       //	 size_t iField = 0;
       //	 double velNS, velEW;
       //	 double Ux, Uy, nrm;
@@ -1665,10 +1665,10 @@ void Image::update_maxes_hVelMax(vector<Sarray>& a_Up, vector<Sarray>& a_Um,
       size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
       size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1);
-      for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+      for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k++)
 #pragma omp parallel for
-        for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
-          for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
+        for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+          for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
             size_t iField = (i - mWindow[g][0]) + ni * (j - mWindow[g][2]) +
                             nij * (k - mWindow[g][4]);
             // first get velocities in the (x,y) directions
@@ -1717,16 +1717,16 @@ void Image::update_maxes_hVelMax(vector<Sarray>& a_Up, vector<Sarray>& a_Um,
           }
     }
   } else {
-    for (int g = gmin; g <= gmax; g++) {
+    for (sw4_type g = gmin; g <= gmax; g++) {
       //	 size_t iField = 0;
       //	 double Ux, Uy, nrm, hvmag;
       size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
       size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1);
-      for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+      for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k++)
 #pragma omp parallel for
-        for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
-          for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
+        for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+          for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
             size_t iField = (i - mWindow[g][0]) + ni * (j - mWindow[g][2]) +
                             nij * (k - mWindow[g][4]);
             float_sw4 Ux = (a_Up[g](1, i, j, k) - a_Um[g](1, i, j, k)) * di;
@@ -1750,7 +1750,7 @@ void Image::update_maxes_hVelMax(vector<Sarray>& a_Up, vector<Sarray>& a_Um,
 void Image::update_maxes_vVelMax(std::vector<Sarray>& a_Up,
                                  std::vector<Sarray>& a_Um, float_sw4 dt) {
   static bool firstVVM = true;
-  int gmax, gmin;
+  sw4_type gmax, gmin;
   if (mLocationType == Image::Z)
     gmax = gmin = m_gridPtIndex[1];
   else {
@@ -1758,15 +1758,15 @@ void Image::update_maxes_vVelMax(std::vector<Sarray>& a_Up,
     gmax = mEW->mNumberOfGrids - 1;
   }
   float_sw4 di = 1 / dt;
-  for (int g = gmin; g <= gmax; g++) {
+  for (sw4_type g = gmin; g <= gmax; g++) {
     //      size_t iField = 0;
     size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
     size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                  (mWindow[g][3] - mWindow[g][2] + 1);
-    for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+    for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k++)
 #pragma omp parallel for
-      for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
-        for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
+      for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+        for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
           float_sw4 vel = fabs(a_Up[g](3, i, j, k) - a_Um[g](3, i, j, k)) * di;
           size_t iField = (i - mWindow[g][0]) + ni * (j - mWindow[g][2]) +
                           nij * (k - mWindow[g][4]);
@@ -1788,23 +1788,23 @@ void Image::update_maxes_hMax(vector<Sarray>& a_U)
 
 {
   static bool firstHM = true;
-  int gmin, gmax;
+  sw4_type gmin, gmax;
   if (mLocationType == Image::Z)
     gmin = gmax = m_gridPtIndex[1];
   else {
     gmin = 0;
     gmax = mEW->mNumberOfGrids - 1;
   }
-  for (int g = gmin; g <= gmax; g++) {
+  for (sw4_type g = gmin; g <= gmax; g++) {
     //      size_t iField = 0;
     //      float_sw4 hmag;
     size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
     size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                  (mWindow[g][3] - mWindow[g][2] + 1);
-    for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+    for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k++)
 #pragma omp parallel for
-      for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
-        for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
+      for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+        for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
           size_t iField = (i - mWindow[g][0]) + ni * (j - mWindow[g][2]) +
                           nij * (k - mWindow[g][4]);
           float_sw4 hmag = sqrt(a_U[g](1, i, j, k) * a_U[g](1, i, j, k) +
@@ -1825,22 +1825,22 @@ void Image::update_maxes_hMax(vector<Sarray>& a_U)
 //-----------------------------------------------------------------------
 void Image::update_maxes_vMax(std::vector<Sarray>& a_U) {
   static bool firstVM = true;
-  int gmax, gmin;
+  sw4_type gmax, gmin;
   if (mLocationType == Image::Z)
     gmax = gmin = m_gridPtIndex[1];
   else {
     gmin = 0;
     gmax = mEW->mNumberOfGrids - 1;
   }
-  for (int g = gmin; g <= gmax; g++) {
+  for (sw4_type g = gmin; g <= gmax; g++) {
     //      size_t iField = 0;
     size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
     size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                  (mWindow[g][3] - mWindow[g][2] + 1);
-    for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+    for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k++)
 #pragma omp parallel for
-      for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
-        for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
+      for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+        for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
           float_sw4 uz = fabs(a_U[g](3, i, j, k));
           size_t iField = (i - mWindow[g][0]) + ni * (j - mWindow[g][2]) +
                           nij * (k - mWindow[g][4]);
@@ -1876,7 +1876,7 @@ void Image::computeDivergence(std::vector<Sarray>& a_U,
     const float_sw4 os = 1.0 / 6;
     const float_sw4 d3 = 14.0 / 3;
 
-    int gmin, gmax;
+    sw4_type gmin, gmax;
     bool dotop;
     if (mLocationType == Image::Z) {
       if (m_gridPtIndex[1] < mEW->mNumberOfCartesianGrids) {
@@ -1897,18 +1897,18 @@ void Image::computeDivergence(std::vector<Sarray>& a_U,
       dotop = true;
     }
 
-    int gh = mEW->getNumberOfGhostPoints();
+    sw4_type gh = mEW->getNumberOfGhostPoints();
     // Do the Cartesian grids.
-    for (int g = gmin; g <= gmax; g++) {
+    for (sw4_type g = gmin; g <= gmax; g++) {
       float_sw4 factor = 1.0 / (mEW->mGridSize[g]);
       //          size_t iField = 0;
       size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
       size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1);
 #pragma omp parallel for
-      for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
-        for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
-          for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
+      for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+        for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+          for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
             float_sw4 val = 0.;
             size_t iField = (i - mWindow[g][0]) + ni * (j - mWindow[g][2]) +
                             nij * (k - mWindow[g][4]);
@@ -2003,17 +2003,17 @@ void Image::computeDivergence(std::vector<Sarray>& a_U,
     }
     // curvilinear grid
     if (mEW->topographyExists() && dotop) {
-      for (int g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids; g++) {
-        //          int g = mEW->mNumberOfGrids - 1;
+      for (sw4_type g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids; g++) {
+        //          sw4_type g = mEW->mNumberOfGrids - 1;
         float_sw4 factor = 1.0 / 2.0;
         //          size_t iField = 0;
         size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
         size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                      (mWindow[g][3] - mWindow[g][2] + 1);
-        for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+        for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k++)
 #pragma omp parallel for
-          for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
-            for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
+          for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+            for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
               float_sw4 val = 0.;
               size_t iField = (i - mWindow[g][0]) + ni * (j - mWindow[g][2]) +
                               nij * (k - mWindow[g][4]);
@@ -2189,7 +2189,7 @@ void Image::computeCurl(std::vector<Sarray>& a_U,
     const float_sw4 os = 1.0 / 6;
     const float_sw4 d3 = 14.0 / 3;
 
-    int gmin, gmax;
+    sw4_type gmin, gmax;
     bool dotop;
     if (mLocationType == Image::Z) {
       if (m_gridPtIndex[1] < mEW->mNumberOfCartesianGrids) {
@@ -2209,18 +2209,18 @@ void Image::computeCurl(std::vector<Sarray>& a_U,
       gmax = mEW->mNumberOfCartesianGrids - 1;
       dotop = true;
     }
-    int gh = mEW->getNumberOfGhostPoints();
+    sw4_type gh = mEW->getNumberOfGhostPoints();
     // Do the Cartesian grids.
-    for (int g = gmin; g <= gmax; g++) {
+    for (sw4_type g = gmin; g <= gmax; g++) {
       float_sw4 factor = 1.0 / (mEW->mGridSize[g]);
       //          size_t iField = 0;
       size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
       size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1);
 #pragma omp parallel for
-      for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
-        for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
-          for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
+      for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+        for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+          for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
             float_sw4 duydx, duzdx, duxdy, duzdy, duxdz, duydz;
             size_t iField = (i - mWindow[g][0]) + ni * (j - mWindow[g][2]) +
                             nij * (k - mWindow[g][4]);
@@ -2388,17 +2388,17 @@ void Image::computeCurl(std::vector<Sarray>& a_U,
 
     // curvilinear grid
     if (mEW->topographyExists() && dotop) {
-      for (int g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids; g++) {
-        //          int g = mEW->mNumberOfGrids - 1;
-        //          int iField = 0;
+      for (sw4_type g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids; g++) {
+        //          sw4_type g = mEW->mNumberOfGrids - 1;
+        //          sw4_type iField = 0;
         //          float_sw4 factor = 1.0/(2);
         size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
         size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                      (mWindow[g][3] - mWindow[g][2] + 1);
-        for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+        for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k++)
 #pragma omp parallel for
-          for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
-            for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
+          for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+            for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
               size_t iField = (i - mWindow[g][0]) + ni * (j - mWindow[g][2]) +
                               nij * (k - mWindow[g][4]);
               float_sw4 duydq = 0.0, duzdq = 0.0;
@@ -2647,7 +2647,7 @@ void Image::computeImageMagdt(vector<Sarray>& a_Up, vector<Sarray>& a_Um,
   // a part in these planes
   bool iwrite = plane_in_proc(m_gridPtIndex[0]);
   if (iwrite) {
-    int gmin, gmax;
+    sw4_type gmin, gmax;
     if (mLocationType == Image::Z)
       gmin = gmax = m_gridPtIndex[1];
     else {
@@ -2655,14 +2655,14 @@ void Image::computeImageMagdt(vector<Sarray>& a_Up, vector<Sarray>& a_Um,
       gmax = mEW->mNumberOfGrids - 1;
     }
     float_sw4 factor = 1.0 / dt;
-    for (int g = gmin; g <= gmax; g++) {
+    for (sw4_type g = gmin; g <= gmax; g++) {
       size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
       size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1);
 #pragma omp parallel for
-      for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
-        for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
-          for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
+      for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+        for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+          for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
             size_t iField = (i - mWindow[g][0]) + ni * (j - mWindow[g][2]) +
                             nij * (k - mWindow[g][4]);
             float_sw4 vmag =
@@ -2690,21 +2690,21 @@ void Image::computeImageMag(vector<Sarray>& a_U) {
   // a part in these planes
   bool iwrite = plane_in_proc(m_gridPtIndex[0]);
   if (iwrite) {
-    int gmin, gmax;
+    sw4_type gmin, gmax;
     if (mLocationType == Image::Z)
       gmin = gmax = m_gridPtIndex[1];
     else {
       gmin = 0;
       gmax = mEW->mNumberOfGrids - 1;
     }
-    for (int g = gmin; g <= gmax; g++) {
+    for (sw4_type g = gmin; g <= gmax; g++) {
       size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
       size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1);
 #pragma omp parallel for
-      for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
-        for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
-          for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
+      for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+        for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+          for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
             size_t iField = (i - mWindow[g][0]) + ni * (j - mWindow[g][2]) +
                             nij * (k - mWindow[g][4]);
             float_sw4 mag = sqrt(a_U[g](1, i, j, k) * a_U[g](1, i, j, k) +
@@ -2729,7 +2729,7 @@ void Image::computeImageHmagdt(vector<Sarray>& a_Up, vector<Sarray>& a_Um,
   // a part in these planes
   bool iwrite = plane_in_proc(m_gridPtIndex[0]);
   if (iwrite) {
-    int gmin, gmax;
+    sw4_type gmin, gmax;
     if (mLocationType == Image::Z)
       gmin = gmax = m_gridPtIndex[1];
     else {
@@ -2737,14 +2737,14 @@ void Image::computeImageHmagdt(vector<Sarray>& a_Up, vector<Sarray>& a_Um,
       gmax = mEW->mNumberOfGrids - 1;
     }
     float_sw4 factor = 1.0 / dt;
-    for (int g = gmin; g <= gmax; g++) {
+    for (sw4_type g = gmin; g <= gmax; g++) {
       size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
       size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1);
 #pragma omp parallel for
-      for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
-        for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
-          for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
+      for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+        for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+          for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
             size_t iField = (i - mWindow[g][0]) + ni * (j - mWindow[g][2]) +
                             nij * (k - mWindow[g][4]);
             float_sw4 vmag =
@@ -2770,22 +2770,22 @@ void Image::computeImageHmag(vector<Sarray>& a_U) {
   // a part in these planes
   bool iwrite = plane_in_proc(m_gridPtIndex[0]);
   if (iwrite) {
-    int gmin, gmax;
+    sw4_type gmin, gmax;
     if (mLocationType == Image::Z)
       gmin = gmax = m_gridPtIndex[1];
     else {
       gmin = 0;
       gmax = mEW->mNumberOfGrids - 1;
     }
-    for (int g = gmin; g <= gmax; g++) {
+    for (sw4_type g = gmin; g <= gmax; g++) {
       //         size_t iField = 0;
       size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
       size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1);
 #pragma omp parallel for
-      for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
-        for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
-          for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
+      for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+        for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+          for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
             size_t iField = (i - mWindow[g][0]) + ni * (j - mWindow[g][2]) +
                             nij * (k - mWindow[g][4]);
             float_sw4 mag = sqrt(a_U[g](1, i, j, k) * a_U[g](1, i, j, k) +
@@ -2810,21 +2810,21 @@ void Image::compute_image_gradp(vector<Sarray>& a_gLambda, vector<Sarray>& a_Mu,
   // a part in these planes
   bool iwrite = plane_in_proc(m_gridPtIndex[0]);
   if (iwrite) {
-    int gmin, gmax;
+    sw4_type gmin, gmax;
     if (mLocationType == Image::Z)
       gmin = gmax = m_gridPtIndex[1];
     else {
       gmin = 0;
       gmax = mEW->mNumberOfGrids - 1;
     }
-    for (int g = gmin; g <= gmax; g++) {
+    for (sw4_type g = gmin; g <= gmax; g++) {
       size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
       size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1);
 #pragma omp parallel for
-      for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
-        for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
-          for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
+      for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+        for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+          for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
             size_t iField = (i - mWindow[g][0]) + ni * (j - mWindow[g][2]) +
                             nij * (k - mWindow[g][4]);
             float_sw4 gradp =
@@ -2851,21 +2851,21 @@ void Image::compute_image_grads(vector<Sarray>& a_gMu,
   // a part in these planes
   bool iwrite = plane_in_proc(m_gridPtIndex[0]);
   if (iwrite) {
-    int gmin, gmax;
+    sw4_type gmin, gmax;
     if (mLocationType == Image::Z)
       gmin = gmax = m_gridPtIndex[1];
     else {
       gmin = 0;
       gmax = mEW->mNumberOfGrids - 1;
     }
-    for (int g = gmin; g <= gmax; g++) {
+    for (sw4_type g = gmin; g <= gmax; g++) {
       size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
       size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1);
 #pragma omp parallel for
-      for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
-        for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
-          for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
+      for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+        for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+          for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
             size_t iField = (i - mWindow[g][0]) + ni * (j - mWindow[g][2]) +
                             nij * (k - mWindow[g][4]);
             float_sw4 grads =
@@ -2882,13 +2882,13 @@ void Image::compute_image_grads(vector<Sarray>& a_gMu,
 }
 
 //-----------------------------------------------------------------------
-void Image::update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
+void Image::update_image(sw4_type a_cycle, float_sw4 a_time, float_sw4 a_dt,
                          vector<Sarray>& a_Up, vector<Sarray>& a_U,
                          vector<Sarray>& a_Um, vector<Sarray>& a_Rho,
                          vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
                          vector<Sarray>& a_gRho, vector<Sarray>& a_gMu,
                          vector<Sarray>& a_gLambda, vector<Source*>& a_sources,
-                         int a_dminus) {
+                         sw4_type a_dminus) {
   if (mMode == HMAXDUDT) {
     if (a_dminus)
       update_maxes_hVelMax(a_Up, a_U, a_dt);
@@ -2907,7 +2907,7 @@ void Image::update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
 
   // Center time derivatives around t-dt, i.e., (up-um)/(2*dt), except when
   // dminus is set. Use (up-u)/dt assumed centered at t, when dminus is true.
-  int td = 0;
+  sw4_type td = 0;
   if (!a_dminus) td = is_time_derivative();
 
   if (timeToWrite(a_time - td * a_dt, a_cycle - td, a_dt))
@@ -2916,14 +2916,14 @@ void Image::update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
 }
 
 //-----------------------------------------------------------------------
-void Image::output_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
+void Image::output_image(sw4_type a_cycle, float_sw4 a_time, float_sw4 a_dt,
                          vector<Sarray>& a_Up, vector<Sarray>& a_U,
                          vector<Sarray>& a_Um, vector<Sarray>& a_Rho,
                          vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
                          vector<Sarray>& a_gRho, vector<Sarray>& a_gMu,
                          vector<Sarray>& a_gLambda, vector<Source*>& a_sources,
-                         int a_dminus) {
-  int td = 0;
+                         sw4_type a_dminus) {
+  sw4_type td = 0;
   if (!a_dminus) td = is_time_derivative();
 
   if (mMode == UX)
@@ -2956,7 +2956,7 @@ void Image::output_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
       mMode == UXERR || mMode == UYERR || mMode == UZERR) {
     vector<Sarray> Uex(mEW->mNumberOfGrids);
     vector<Sarray*> alpha;  // dummy, the array is not used in routine exactSol.
-    for (int g = 0; g < mEW->mNumberOfGrids; g++)
+    for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++)
       Uex[g].define(3, mEW->m_iStart[g], mEW->m_iEnd[g], mEW->m_jStart[g],
                     mEW->m_jEnd[g], mEW->m_kStart[g], mEW->m_kEnd[g]);
     mEW->exactSol(a_time, Uex, alpha, a_sources);
@@ -3007,7 +3007,7 @@ void Image::output_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
       printf(
           "Can only write ux, uy, uz, mu, rho, lambda: - remove once "
           "completely implemented\n");
-      printf("I can not print data of type %i\n", mMode);
+      printf("I can not prsw4_type data of type %i\n", mMode);
     }
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
@@ -3038,29 +3038,29 @@ void Image::output_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
 
 //-----------------------------------------------------------------------
 void Image::computeImageQuantityDiff(vector<Sarray>& a_U, vector<Sarray>& a_Uex,
-                                     int comp) {
+                                     sw4_type comp) {
   ASSERT(m_isDefinedMPIWriters);
 
   // plane_in_proc returns true for z=const planes, because all processors have
   // a part in these planes
   bool iwrite = plane_in_proc(m_gridPtIndex[0]);
   if (iwrite) {
-    int gmin, gmax;
+    sw4_type gmin, gmax;
     if (mLocationType == Image::Z)
       gmin = gmax = m_gridPtIndex[1];
     else {
       gmin = 0;
       gmax = mEW->mNumberOfGrids - 1;
     }
-    for (int g = gmin; g <= gmax; g++) {
+    for (sw4_type g = gmin; g <= gmax; g++) {
       //         size_t iField = 0;
       size_t ni = (mWindow[g][1] - mWindow[g][0] + 1);
       size_t nij = (mWindow[g][1] - mWindow[g][0] + 1) *
                    (mWindow[g][3] - mWindow[g][2] + 1);
 #pragma omp parallel for
-      for (int k = mWindow[g][4]; k <= mWindow[g][5]; k++)
-        for (int j = mWindow[g][2]; j <= mWindow[g][3]; j++)
-          for (int i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
+      for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k++)
+        for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j++)
+          for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i++) {
             size_t iField = (i - mWindow[g][0]) + ni * (j - mWindow[g][2]) +
                             nij * (k - mWindow[g][4]);
             if (m_double)

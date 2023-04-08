@@ -36,14 +36,14 @@
 //-----------------------------------------------------------------------
 void EW::convert_material_to_mulambda() {
   SW4_MARK_FUNCTION;
-  for (int g = 0; g < mNumberOfGrids; g++) {
+  for (sw4_type g = 0; g < mNumberOfGrids; g++) {
     // On input, we have stored cs in MU, cp in Lambda
     // use mu = rho*cs*cs and lambda = rho*cp*cp  - 2*mu
 
 #pragma omp parallel for
-    for (int k = m_kStart[g]; k <= m_kEnd[g]; k++) {
-      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++) {
-        for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+    for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++) {
+      for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++) {
+        for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
           //                   if (k==32)
           //                     printf("%i %i %i %i %f %f %f %f
           //                     %f\n",i,j,k,g,mRho[g](i,j,k)*mMu[g](i,j,k)*mMu[g](i,j,k),mRho[g](i,j,k)*mLambda[g](i,j,k)*mLambda[g](i,j,k)-2*mMu[g](i,j,k),mMu[g](i,j,k),mLambda[g](i,j,k),mRho[g](i,j,k));
@@ -63,7 +63,7 @@ void EW::convert_material_to_mulambda() {
 void EW::check_materials() {
   //---------------------------------------------------------------
   // Verify that the density is nonzero and positive in the
-  // internal grid points
+  // sw4_typeernal grid points
   //---------------------------------------------------------------
 
   // Minimum allowed  cp/cs, positive definite operator requires cp/cs >
@@ -131,7 +131,7 @@ void EW::check_materials() {
                   m_cartesian_communicator);
   }
 
-  int myRank;
+  sw4_type myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
   if (myRank == 0) {
     string indent = "\n       ";
@@ -159,11 +159,11 @@ void EW::check_materials() {
   }
 
   if (mins[0] <= 0.0) {
-    for (int g = 0; g < mNumberOfGrids; g++)
+    for (sw4_type g = 0; g < mNumberOfGrids; g++)
 #pragma omp parallel for
-      for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
-        for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-          for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+      for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
+        for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
+          for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
             CHECK_INPUT(mRho[g](i, j, k) > 0.,
                         "Density= " << mRho[g](i, j, k) << " in grid g= " << g
                                     << " at point "
@@ -173,11 +173,11 @@ void EW::check_materials() {
   }
 
   if (mins[3] < 0.0) {
-    for (int g = 0; g < mNumberOfGrids; g++)
+    for (sw4_type g = 0; g < mNumberOfGrids; g++)
 #pragma omp parallel for
-      for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
-        for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-          for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+      for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
+        for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
+          for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
             CHECK_INPUT(mMu[g](i, j, k) >= 0.,
                         "mu= " << mMu[g](i, j, k) << " in grid g= " << g
                                << " at point "
@@ -185,11 +185,11 @@ void EW::check_materials() {
           }
   }
   if (mins[4] <= 0.0) {
-    for (int g = 0; g < mNumberOfGrids; g++)
+    for (sw4_type g = 0; g < mNumberOfGrids; g++)
 #pragma omp parallel for
-      for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
-        for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-          for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+      for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
+        for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
+          for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
             CHECK_INPUT(mLambda[g](i, j, k) >= la_min_fact * mMu[g](i, j, k),
                         "lambda= " << mLambda[g](i, j, k) << " in grid g= " << g
                                    << " at point "
@@ -199,11 +199,11 @@ void EW::check_materials() {
   }
   if (m_use_attenuation && !m_twilight_forcing) {
     if (mins[6] <= 0.0) {
-      for (int g = 0; g < mNumberOfGrids; g++)
+      for (sw4_type g = 0; g < mNumberOfGrids; g++)
 #pragma omp parallel for
-        for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
-          for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-            for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+        for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
+          for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
+            for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
               CHECK_INPUT(mQs[g](i, j, k) >= 0.,
                           "Qs= " << mQs[g](i, j, k) << " in grid g= " << g
                                  << " at point "
@@ -211,11 +211,11 @@ void EW::check_materials() {
             }
     }
     if (mins[7] <= 0.0) {
-      for (int g = 0; g < mNumberOfGrids; g++)
+      for (sw4_type g = 0; g < mNumberOfGrids; g++)
 #pragma omp parallel for
-        for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
-          for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-            for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+        for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
+          for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
+            for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
               CHECK_INPUT(mQp[g](i, j, k) >= 0.,
                           "Qp= " << mQp[g](i, j, k) << " in grid g= " << g
                                  << " at point "
@@ -241,7 +241,7 @@ void EW::check_materials() {
   if (mVerbose >= 3) {
     float_sw4 minRho, maxRho, minMu, maxMu, minLambda, maxLambda;
 
-    for (int g = 0; g < mNumberOfGrids; g++) {
+    for (sw4_type g = 0; g < mNumberOfGrids; g++) {
       minRho = 1e38, minMu = 1e38, minLambda = 1e38;
       maxRho = 0, maxMu = 0, maxLambda = 0;
 
@@ -249,9 +249,9 @@ void EW::check_materials() {
                                    : minMu, minLambda, minRho) \
     reduction(max                                              \
               : maxMu, maxLambda, maxRho)
-      for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
-        for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-          for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+      for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
+        for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
+          for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
             if (mMu[g](i, j, k) < minMu) minMu = mMu[g](i, j, k);
             if (mMu[g](i, j, k) > maxMu) maxMu = mMu[g](i, j, k);
             if (mLambda[g](i, j, k) < minLambda)
@@ -274,7 +274,7 @@ void EW::check_materials() {
                     m_cartesian_communicator);
       MPI_Allreduce(&maxLambda, &maxs[2], 1, m_mpifloat, MPI_MAX,
                     m_cartesian_communicator);
-      // printout results
+      // prsw4_typeout results
       if (proc_zero()) {
         printf(
             "Grid #%i:, %e <= Rho <= %e, %e <= Mu <= %e, %e <= Lambda <= %e\n",
@@ -289,13 +289,13 @@ void EW::check_materials() {
   if (mVerbose >= 1) {
     double Cs, C_hat, minCs, maxCs, minC_hat, maxC_hat;
 
-    for (int g = 0; g < mNumberOfGrids; g++) {
+    for (sw4_type g = 0; g < mNumberOfGrids; g++) {
       minCs = 1e100, minC_hat = 1e100;
       maxCs = 0, maxC_hat = 0;
 
-      for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
-        for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-          for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+      for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
+        for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
+          for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
             // take square root after computing the min and max
             Cs = mMu[g](i, j, k) / mRho[g](i, j, k);
             C_hat =
@@ -321,7 +321,7 @@ void EW::check_materials() {
                     m_cartesian_communicator);
       MPI_Allreduce(&maxC_hat, &maxs[1], 1, MPI_DOUBLE, MPI_MAX,
                     m_cartesian_communicator);
-      // printout results
+      // prsw4_typeout results
       if (mVerbose >= 2 && proc_zero()) {
         printf(
             "Material model info, Grid g=%i: %e <= Cs <= %e, %e <= C-hat <= "
@@ -337,12 +337,12 @@ void EW::check_materials() {
 float_sw4 EW::localMin(std::vector<Sarray>& a_field) {
   float_sw4 lmin_all = a_field[0](m_iStart[0], m_jStart[0], m_kStart[0]);
 
-  for (int g = 0; g < mNumberOfGrids; g++) {
+  for (sw4_type g = 0; g < mNumberOfGrids; g++) {
     float_sw4 lmin = 1e38;
 #pragma omp parallel for reduction(min : lmin)
-    for (int k = m_kStart[g]; k <= m_kEnd[g]; k++) {
-      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++) {
-        for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+    for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++) {
+      for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++) {
+        for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
           if (a_field[g](i, j, k) < lmin) {
             lmin = a_field[g](i, j, k);
             //		      cout << "lmin = " << lmin << " at " << i << " " <<
@@ -361,12 +361,12 @@ float_sw4 EW::localMin(std::vector<Sarray>& a_field) {
 //-----------------------------------------------------------------------
 float_sw4 EW::localMax(std::vector<Sarray>& a_field) {
   float_sw4 lmax_all = a_field[0](m_iStart[0], m_jStart[0], m_kStart[0]);
-  for (int g = 0; g < mNumberOfGrids; g++) {
+  for (sw4_type g = 0; g < mNumberOfGrids; g++) {
     float_sw4 lmax = -1e38;
 #pragma omp parallel for reduction(max : lmax)
-    for (int k = m_kStart[g]; k <= m_kEnd[g]; k++) {
-      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++) {
-        for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+    for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++) {
+      for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++) {
+        for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
           if (a_field[g](i, j, k) > lmax) {
             lmax = a_field[g](i, j, k);
           }
@@ -386,12 +386,12 @@ float_sw4 EW::localMinVp() {
             mLambda[0](m_iStart[0], m_jStart[0], m_kStart[0])) /
            mRho[0](m_iStart[0], m_jStart[0], m_kStart[0]));
 
-  for (int g = 0; g < mNumberOfGrids; g++) {
+  for (sw4_type g = 0; g < mNumberOfGrids; g++) {
     float_sw4 lmin = 1e38;
 #pragma omp parallel for reduction(min : lmin)
-    for (int k = m_kStart[g]; k <= m_kEnd[g]; k++) {
-      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++) {
-        for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+    for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++) {
+      for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++) {
+        for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
           if (sqrt((2. * mMu[g](i, j, k) + mLambda[g](i, j, k)) /
                    mRho[g](i, j, k)) < lmin) {
             lmin = sqrt((2. * mMu[g](i, j, k) + mLambda[g](i, j, k)) /
@@ -412,12 +412,12 @@ float_sw4 EW::localMaxVp() {
             mLambda[0](m_iStart[0], m_jStart[0], m_kStart[0])) /
            mRho[0](m_iStart[0], m_jStart[0], m_kStart[0]));
 
-  for (int g = 0; g < mNumberOfGrids; g++) {
+  for (sw4_type g = 0; g < mNumberOfGrids; g++) {
     float_sw4 lmax = -1e38;
 #pragma omp parallel for reduction(max : lmax)
-    for (int k = m_kStart[g]; k <= m_kEnd[g]; k++) {
-      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++) {
-        for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+    for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++) {
+      for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++) {
+        for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
           if (sqrt((2. * mMu[g](i, j, k) + mLambda[g](i, j, k)) /
                    mRho[g](i, j, k)) > lmax) {
             lmax = sqrt((2. * mMu[g](i, j, k) + mLambda[g](i, j, k)) /
@@ -437,12 +437,12 @@ float_sw4 EW::localMinVs() {
   float_sw4 lmin_all = sqrt(mMu[0](m_iStart[0], m_jStart[0], m_kStart[0]) /
                             mRho[0](m_iStart[0], m_jStart[0], m_kStart[0]));
 
-  for (int g = 0; g < mNumberOfGrids; g++) {
+  for (sw4_type g = 0; g < mNumberOfGrids; g++) {
     float_sw4 lmin = 1e38;
 #pragma omp parallel for reduction(min : lmin)
-    for (int k = m_kStart[g]; k <= m_kEnd[g]; k++) {
-      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++) {
-        for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+    for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++) {
+      for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++) {
+        for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
           if (sqrt(mMu[g](i, j, k) / mRho[g](i, j, k)) < lmin) {
             lmin = sqrt(mMu[g](i, j, k) / mRho[g](i, j, k));
           }
@@ -460,12 +460,12 @@ float_sw4 EW::localMaxVs() {
   float_sw4 lmax_all = sqrt(mMu[0](m_iStart[0], m_jStart[0], m_kStart[0]) /
                             mRho[0](m_iStart[0], m_jStart[0], m_kStart[0]));
 
-  for (int g = 0; g < mNumberOfGrids; g++) {
+  for (sw4_type g = 0; g < mNumberOfGrids; g++) {
     float_sw4 lmax = -1e38;
 #pragma omp parallel for reduction(max : lmax)
-    for (int k = m_kStart[g]; k <= m_kEnd[g]; k++) {
-      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++) {
-        for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+    for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++) {
+      for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++) {
+        for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
           if (sqrt(mMu[g](i, j, k) / mRho[g](i, j, k)) > lmax) {
             lmax = sqrt(mMu[g](i, j, k) / mRho[g](i, j, k));
           }
@@ -486,12 +486,12 @@ float_sw4 EW::localMinVpOverVs() {
       sqrt(mMu[0](m_iStart[0], m_jStart[0], m_kStart[0]) /
            mRho[0](m_iStart[0], m_jStart[0], m_kStart[0]));
 
-  for (int g = 0; g < mNumberOfGrids; g++) {
+  for (sw4_type g = 0; g < mNumberOfGrids; g++) {
     float_sw4 lmin = 1e38;
 #pragma omp parallel for reduction(min : lmin)
-    for (int k = m_kStart[g]; k <= m_kEnd[g]; k++) {
-      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++) {
-        for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+    for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++) {
+      for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++) {
+        for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
           // Unneccessary to divided by rho in Vp and Vs because it cancels
           if (sqrt((2. * mMu[g](i, j, k) + mLambda[g](i, j, k)) /
                    mRho[g](i, j, k)) /
@@ -518,12 +518,12 @@ float_sw4 EW::localMaxVpOverVs() {
       sqrt(mMu[0](m_iStart[0], m_jStart[0], m_kStart[0]) /
            mRho[0](m_iStart[0], m_jStart[0], m_kStart[0]));
 
-  for (int g = 0; g < mNumberOfGrids; g++) {
+  for (sw4_type g = 0; g < mNumberOfGrids; g++) {
     float_sw4 lmax = -1e38;
 #pragma omp parallel for reduction(max : lmax)
-    for (int k = m_kStart[g]; k <= m_kEnd[g]; k++) {
-      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++) {
-        for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+    for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++) {
+      for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++) {
+        for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
           // Unneccessary to divided by rho in Vp and Vs because it cancels
           if (sqrt((2. * mMu[g](i, j, k) + mLambda[g](i, j, k)) /
                    mRho[g](i, j, k)) /
@@ -554,9 +554,9 @@ float_sw4 EW::localMaxVpOverVs() {
 //  // Unless, 2*field(n) <= field(n-1), then we just set it to
 //  // field(n).
 //  // -------------------------------------------------------------
-//   //  int numGhostPoints = getExternalGhostPointsPerBoundaryPoint();
+//   //  sw4_type numGhostPoints = getExternalGhostPointsPerBoundaryPoint();
 //
-//  int i, j, k;
+//  sw4_type i, j, k;
 //  double extField;
 
 // tmp
@@ -590,117 +590,117 @@ float_sw4 EW::localMaxVpOverVs() {
 //-----------------------------------------------------------------------
 void EW::extrapolateInXY(vector<Sarray>& field) {
   SW4_MARK_FUNCTION;
-  for (int g = 0; g < mNumberOfGrids; g++) {
-    if (m_iStartInt[g] == 1)
+  for (sw4_type g = 0; g < mNumberOfGrids; g++) {
+    if (m_iStartSw4_Type[g] == 1)
 #pragma omp parallel for
-      for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
-        for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-          for (int i = m_iStart[g]; i < 1; i++) {
+      for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
+        for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
+          for (sw4_type i = m_iStart[g]; i < 1; i++) {
             if (field[g](i, j, k) == -1) field[g](i, j, k) = field[g](1, j, k);
           }
-    if (m_iEndInt[g] == m_global_nx[g])
+    if (m_iEndSw4_Type[g] == m_global_nx[g])
 #pragma omp parallel for
-      for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
-        for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-          for (int i = m_iEndInt[g] + 1; i <= m_iEnd[g]; i++) {
+      for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
+        for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
+          for (sw4_type i = m_iEndSw4_Type[g] + 1; i <= m_iEnd[g]; i++) {
             if (field[g](i, j, k) == -1)
-              field[g](i, j, k) = field[g](m_iEndInt[g], j, k);
+              field[g](i, j, k) = field[g](m_iEndSw4_Type[g], j, k);
           }
-    if (m_jStartInt[g] == 1)
+    if (m_jStartSw4_Type[g] == 1)
 #pragma omp parallel for
-      for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
-        for (int j = m_jStart[g]; j < 1; j++)
-          for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+      for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
+        for (sw4_type j = m_jStart[g]; j < 1; j++)
+          for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
             if (field[g](i, j, k) == -1) field[g](i, j, k) = field[g](i, 1, k);
           }
-    if (m_jEndInt[g] == m_global_ny[g])
+    if (m_jEndSw4_Type[g] == m_global_ny[g])
 #pragma omp parallel for
-      for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
-        for (int j = m_jEndInt[g] + 1; j <= m_jEnd[g]; j++)
-          for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+      for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
+        for (sw4_type j = m_jEndSw4_Type[g] + 1; j <= m_jEnd[g]; j++)
+          for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
             if (field[g](i, j, k) == -1)
-              field[g](i, j, k) = field[g](i, m_jEndInt[g], k);
+              field[g](i, j, k) = field[g](i, m_jEndSw4_Type[g], k);
           }
     // corners not necessary to treat explicitly???
   }
 }
 
 //-----------------------------------------------------------------------
-void EW::extrapolateInZ(int g, Sarray& field, bool lowk, bool highk) {
+void EW::extrapolateInZ(sw4_type g, Sarray& field, bool lowk, bool highk) {
   SW4_MARK_FUNCTION;
   if (lowk)
-    for (int k = m_kStart[g]; k < 1; k++)
-      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-        for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
+    for (sw4_type k = m_kStart[g]; k < 1; k++)
+      for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
+        for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++)
           if (field(i, j, k) == -1) field(i, j, k) = field(i, j, 1);
   if (highk)
-    for (int k = m_kEndInt[g] + 1; k <= m_kEnd[g]; k++)
-      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-        for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
-          if (field(i, j, k) == -1) field(i, j, k) = field(i, j, m_kEndInt[g]);
+    for (sw4_type k = m_kEndSw4_Type[g] + 1; k <= m_kEnd[g]; k++)
+      for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
+        for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++)
+          if (field(i, j, k) == -1) field(i, j, k) = field(i, j, m_kEndSw4_Type[g]);
 }
 
 //-----------------------------------------------------------------------
 void EW::extrapolateInXYvector(vector<Sarray>& field) {
-  for (int g = 0; g < mNumberOfGrids; g++) {
-    int nc = field[g].m_nc;
-    if (m_iStartInt[g] == 1)
+  for (sw4_type g = 0; g < mNumberOfGrids; g++) {
+    sw4_type nc = field[g].m_nc;
+    if (m_iStartSw4_Type[g] == 1)
 #pragma omp parallel for
-      for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
-        for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-          for (int i = m_iStart[g]; i < 1; i++)
-            for (int m = 1; m <= nc; m++) {
+      for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
+        for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
+          for (sw4_type i = m_iStart[g]; i < 1; i++)
+            for (sw4_type m = 1; m <= nc; m++) {
               if (field[g](m, i, j, k) == -1)
                 field[g](m, i, j, k) = field[g](m, 1, j, k);
             }
-    if (m_iEndInt[g] == m_global_nx[g])
+    if (m_iEndSw4_Type[g] == m_global_nx[g])
 #pragma omp parallel for
-      for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
-        for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-          for (int i = m_iEndInt[g] + 1; i <= m_iEnd[g]; i++)
-            for (int m = 1; m <= nc; m++) {
+      for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
+        for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
+          for (sw4_type i = m_iEndSw4_Type[g] + 1; i <= m_iEnd[g]; i++)
+            for (sw4_type m = 1; m <= nc; m++) {
               if (field[g](m, i, j, k) == -1)
-                field[g](m, i, j, k) = field[g](m, m_iEndInt[g], j, k);
+                field[g](m, i, j, k) = field[g](m, m_iEndSw4_Type[g], j, k);
             }
-    if (m_jStartInt[g] == 1)
+    if (m_jStartSw4_Type[g] == 1)
 #pragma omp parallel for
-      for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
-        for (int j = m_jStart[g]; j < 1; j++)
-          for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
-            for (int m = 1; m <= nc; m++) {
+      for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
+        for (sw4_type j = m_jStart[g]; j < 1; j++)
+          for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++)
+            for (sw4_type m = 1; m <= nc; m++) {
               if (field[g](m, i, j, k) == -1)
                 field[g](m, i, j, k) = field[g](m, i, 1, k);
             }
-    if (m_jEndInt[g] == m_global_ny[g])
+    if (m_jEndSw4_Type[g] == m_global_ny[g])
 #pragma omp parallel for
-      for (int k = m_kStart[g]; k <= m_kEnd[g]; k++)
-        for (int j = m_jEndInt[g] + 1; j <= m_jEnd[g]; j++)
-          for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
-            for (int m = 1; m <= nc; m++) {
+      for (sw4_type k = m_kStart[g]; k <= m_kEnd[g]; k++)
+        for (sw4_type j = m_jEndSw4_Type[g] + 1; j <= m_jEnd[g]; j++)
+          for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++)
+            for (sw4_type m = 1; m <= nc; m++) {
               if (field[g](m, i, j, k) == -1)
-                field[g](m, i, j, k) = field[g](m, i, m_jEndInt[g], k);
+                field[g](m, i, j, k) = field[g](m, i, m_jEndSw4_Type[g], k);
             }
     // corners not necessary to treat explicitly???
   }
 }
 
 //-----------------------------------------------------------------------
-void EW::extrapolateInZvector(int g, Sarray& field, bool lowk, bool highk) {
-  int nc = field.m_nc;
+void EW::extrapolateInZvector(sw4_type g, Sarray& field, bool lowk, bool highk) {
+  sw4_type nc = field.m_nc;
   if (lowk)
-    for (int k = m_kStart[g]; k < 1; k++)
-      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-        for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
-          for (int m = 1; m <= nc; m++) {
+    for (sw4_type k = m_kStart[g]; k < 1; k++)
+      for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
+        for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++)
+          for (sw4_type m = 1; m <= nc; m++) {
             if (field(m, i, j, k) == -1) field(m, i, j, k) = field(m, i, j, 1);
           }
   if (highk)
-    for (int k = m_kEndInt[g] + 1; k <= m_kEnd[g]; k++)
-      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-        for (int i = m_iStart[g]; i <= m_iEnd[g]; i++)
-          for (int m = 1; m <= nc; m++) {
+    for (sw4_type k = m_kEndSw4_Type[g] + 1; k <= m_kEnd[g]; k++)
+      for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
+        for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++)
+          for (sw4_type m = 1; m <= nc; m++) {
             if (field(m, i, j, k) == -1)
-              field(m, i, j, k) = field(m, i, j, m_kEndInt[g]);
+              field(m, i, j, k) = field(m, i, j, m_kEndSw4_Type[g]);
           }
 }
 
@@ -711,11 +711,11 @@ void EW::setup_MR_coefficients() {
 #define str_x(i) m_sg_str_x[g][(i - m_iStart[g])]
 #define str_y(j) m_sg_str_y[g][(j - m_jStart[g])]
   // calculate m_Morc, etc for all Cartesian grids
-  for (int g = 0; g < mNumberOfCartesianGrids; g++) {
-    int nk = m_global_nz[g];
-    for (int c = 1; c <= 3; c++)
-      for (int j = m_jStart[g]; j <= m_jEnd[g]; j++)
-        for (int i = m_iStart[g]; i <= m_iEnd[g]; i++) {
+  for (sw4_type g = 0; g < mNumberOfCartesianGrids; g++) {
+    sw4_type nk = m_global_nz[g];
+    for (sw4_type c = 1; c <= 3; c++)
+      for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
+        for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
           float_sw4 irho = 1 / mRho[g](i, j, 1);
           m_Morc[g](i, j, 1) = mMu[g](i, j, 1) * irho;  // mu/rho at k=1
           m_Mlrc[g](i, j, 1) = (2 * mMu[g](i, j, 1) + mLambda[g](i, j, 1)) *

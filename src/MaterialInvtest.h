@@ -40,21 +40,21 @@ class EW;
 
 class MaterialInvtest : public MaterialData {
  public:
-  MaterialInvtest(EW* a_ew, int nr);
+  MaterialInvtest(EW* a_ew, sw4_type nr);
   void set_material_properties(std::vector<Sarray>& rho,
                                std::vector<Sarray>& cs, std::vector<Sarray>& cp,
                                std::vector<Sarray>& xis,
                                std::vector<Sarray>& xip);
 
  private:
-  int m_nr;
+  sw4_type m_nr;
   EW* mEW;
-  void invtestmtrl(int ib, int ie, int jb, int je, int kb, int ke,
+  void invtestmtrl(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                    float_sw4* rho, float_sw4* cs, float_sw4* cp, float_sw4 h,
-                   float_sw4 zmin, int nr);
-  void invtestmtrlc(int ib, int ie, int jb, int je, int kb, int ke,
+                   float_sw4 zmin, sw4_type nr);
+  void invtestmtrlc(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                     float_sw4* rho, float_sw4* cs, float_sw4* cp, float_sw4* xx,
-                    float_sw4* yy, float_sw4* zz, int nr);
+                    float_sw4* yy, float_sw4* zz, sw4_type nr);
 };
 
 #endif

@@ -50,13 +50,13 @@ class RandomizedMaterial {
   RandomizedMaterial(EW* a_ew, float_sw4 zmin, float_sw4 zmax,
                      float_sw4 corrlen, float_sw4 corrlenz, float_sw4 hurst,
                      float_sw4 sigma, float_sw4 rhoamplitude = 0.0,
-                     bool randomrho = false, unsigned int seed = 0);
+                     bool randomrho = false, unsigned sw4_type seed = 0);
   ~RandomizedMaterial();
-  void perturb_velocities(int g, Sarray& cs, Sarray& cp, double h, double zmin,
+  void perturb_velocities(sw4_type g, Sarray& cs, Sarray& cp, double h, double zmin,
                           double zmax);
 
   void perturb_velocities(std::vector<Sarray>& cs, std::vector<Sarray>& cp);
-  void assign_perturbation(int g, Sarray& pert, Sarray& cs, double h,
+  void assign_perturbation(sw4_type g, Sarray& pert, Sarray& cs, double h,
                            double zmin, double zmax, bool rho);
 
   void set_vsmax(float_sw4 vsmax);
@@ -67,19 +67,19 @@ class RandomizedMaterial {
   float_sw4 rhoamplitude() { return m_rhoamplitude; }
 
  private:
-  void gen_random_mtrl_fft3d_fftw(int n1g, int n2g, int n3g, float_sw4 Lx,
+  void gen_random_mtrl_fft3d_fftw(sw4_type n1g, sw4_type n2g, sw4_type n3g, float_sw4 Lx,
                                   float_sw4 Ly, float_sw4 Lz, float_sw4 hurst);
 
-  void get_fourier_modes(std::complex<float_sw4>* uhat, int n1, int ib1,
-                         int n1g, int n2, int n3, float_sw4 l1, float_sw4 l2,
-                         float_sw4 l3, float_sw4 hurst, unsigned int seed);
+  void get_fourier_modes(std::complex<float_sw4>* uhat, sw4_type n1, sw4_type ib1,
+                         sw4_type n1g, sw4_type n2, sw4_type n3, float_sw4 l1, float_sw4 l2,
+                         float_sw4 l3, float_sw4 hurst, unsigned sw4_type seed);
   void rescale_perturbation();
   template <class T>
   void redistribute_array(AllDims& src, AllDims& dest, T* src_array,
                           T* dest_array);
 
-  void repad_sarray(Sarray& sar, int old_padding, int new_padding);
-  void comm_sarray(Sarray& sar, int neigh[4], int padding);
+  void repad_sarray(Sarray& sar, sw4_type old_padding, sw4_type new_padding);
+  void comm_sarray(Sarray& sar, sw4_type neigh[4], sw4_type padding);
 
   inline bool inside(float_sw4 x, float_sw4 y, float_sw4 z) {
     return m_xminloc <= x && x <= m_xmaxloc && m_yminloc <= y &&
@@ -89,8 +89,8 @@ class RandomizedMaterial {
   EW* mEW;
 
   // Index range of patch in file coordinate system
-  int m_ifirst, m_ilast, m_jfirst, m_jlast, m_kfirst, m_klast, m_ni, m_nj, m_nk;
-  int m_nig, m_njg, m_nkg;
+  sw4_type m_ifirst, m_ilast, m_jfirst, m_jlast, m_kfirst, m_klast, m_ni, m_nj, m_nk;
+  sw4_type m_nig, m_njg, m_nkg;
 
   // file coordinate system is x=(i-1)*m_hx[gr] + m_xmin[gr], in SW4
   // coordinates.
@@ -98,8 +98,8 @@ class RandomizedMaterial {
       m_vsmax;
   float_sw4 m_vsmin;
   //   float_sw4 m_x0, m_y0;
-  unsigned int m_seed;
-  int m_nproc2d[2];
+  unsigned sw4_type m_seed;
+  sw4_type m_nproc2d[2];
 
   // xminloc, xmaxloc, etc. is the bounding box for the set of data patches in
   // this processor.

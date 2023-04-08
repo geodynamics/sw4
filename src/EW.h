@@ -85,25 +85,25 @@ class EW {
 
   void set_output_options(bool output_load, bool output_detailed_timing);
   void setGMTOutput(string filename, string wppfilename);
-  void saveGMTFile(vector<vector<Source*>>& a_GlobalUniqueSources, int event);
+  void saveGMTFile(vector<vector<Source*>>& a_GlobalUniqueSources, sw4_type event);
   void allocateCartesianSolverArrays(float_sw4 a_global_zmax);
   // void setGoalTime(float_sw4 t);
-  void setGoalTime(float_sw4 t, int event = 0);
+  void setGoalTime(float_sw4 t, sw4_type event = 0);
   // double getCurrentTime(){return mTime;}
 
-  // void setNumberSteps(int steps);  // remove???
-  void setNumberSteps(int steps, int event = 0);  // remove???
-  // int getNumberOfSteps() const;
-  int getNumberOfSteps(int event = 0) const;
-  int getNumberOfEvents() const;
+  // void setNumberSteps(sw4_type steps);  // remove???
+  void setNumberSteps(sw4_type steps, sw4_type event = 0);  // remove???
+  // sw4_type getNumberOfSteps() const;
+  sw4_type getNumberOfSteps(sw4_type event = 0) const;
+  sw4_type getNumberOfEvents() const;
   float_sw4 getGlobalZmin() { return m_global_zmin; }
   float_sw4 getGlobalZmax() { return m_global_zmax; }
-  int findNumberOfEvents();
+  sw4_type findNumberOfEvents();
 
   void setupRun(vector<vector<Source*>>& a_GlobalUniqueSources);
 
   void solve(vector<Source*>& a_GlobalSources,
-             vector<TimeSeries*>& a_GlobalTimeSeries, int event);
+             vector<TimeSeries*>& a_GlobalTimeSeries, sw4_type event);
   void solve_backward(vector<Source*>& a_Sources,
                       vector<TimeSeries*>& a_TimeSeries, float_sw4 gradient[11],
                       float_sw4 hessian[121]);
@@ -123,15 +123,15 @@ class EW {
                               vector<DataPatches*>& Ucorr_saved_sides,
                               float_sw4 gradients[11], vector<Sarray>& gRho,
                               vector<Sarray>& gMu, vector<Sarray>& gLambda);
-  // int nmpar, float_sw4* gradientm );
+  // sw4_type nmpar, float_sw4* gradientm );
 
   bool parseInputFile(vector<vector<Source*>>& a_GlobalSources,
                       vector<vector<TimeSeries*>>& a_GlobalTimeSeries);
-  void parsedate(char* datestr, int& year, int& month, int& day, int& hour,
-                 int& minute, int& second, int& msecond, int& fail);
+  void parsedate(char* datestr, sw4_type& year, sw4_type& month, sw4_type& day, sw4_type& hour,
+                 sw4_type& minute, sw4_type& second, sw4_type& msecond, sw4_type& fail);
 
-  void extractRecordData(TimeSeries::receiverMode mode, int i0, int j0, int k0,
-                         int grid0, vector<float_sw4>& uRec,
+  void extractRecordData(TimeSeries::receiverMode mode, sw4_type i0, sw4_type j0, sw4_type k0,
+                         sw4_type grid0, vector<float_sw4>& uRec,
                          vector<Sarray>& Um2, vector<Sarray>& U);
 
   // some (all?) of these functions are called from parseInputFile() and should
@@ -150,7 +150,7 @@ class EW {
   void processImage3D(char* buffer);
   void processESSI3D(char* buffer);
   void processSfileOutput(char* buffer);
-  void deprecatedImageMode(int value, const char* name) const;
+  void deprecatedImageMode(sw4_type value, const char* name) const;
   void processTestPointSource(char* buffer);
   void processTestRayleigh(char* buffer);
   void processTestLamb(char* buffer);
@@ -166,14 +166,14 @@ class EW {
                           vector<vector<Source*>>& a_GlobalUniqueSources);
   void processMaterial(char* buffer);
   void processMaterialIfile(char* buffer);
-  void processMaterialBlock(char* buffer, int& blockCount);
+  void processMaterialBlock(char* buffer, sw4_type& blockCount);
   void processMaterialPfile(char* buffer);
   void processMaterialVimaterial(char* buffer);
   void processMaterialInvtest(char* buffer);
   void processMaterialRfile(char* buffer);
   void processMaterialSfile(char* buffer);
   void processMaterialGMG(char* buffer);
-  void processAnisotropicMaterialBlock(char* buffer, int& ablockCount);
+  void processAnisotropicMaterialBlock(char* buffer, sw4_type& ablockCount);
   // void processReceiver(char* buffer, vector<TimeSeries*>&
   // a_GlobalTimeSeries);
   void processReceiver(char* buffer,
@@ -198,33 +198,33 @@ class EW {
   void processCheckPoint(char* buffer);
   void processGeodynbc(char* buffer);
 
-  void processEvent(char* buffer, int enr);
+  void processEvent(char* buffer, sw4_type enr);
   // void getEfileInfo(char* buffer);
 
-  void side_plane(int g, int side, int wind[6], int nGhost);
-  void setPrintCycle(int cycle) { mPrintInterval = cycle; }
-  void setVerbosity(int level) { mVerbose = level; };
+  void side_plane(sw4_type g, sw4_type side, sw4_type wind[6], sw4_type nGhost);
+  void setPrintCycle(sw4_type cycle) { mPrintInterval = cycle; }
+  void setVerbosity(sw4_type level) { mVerbose = level; };
   void setQuiet(bool stealth) { mQuiet = stealth; };
   bool getQuiet() { return mQuiet; };
-  int getVerbosity() { return mVerbose; };
-  int getRank() { return m_myRank; };
+  sw4_type getVerbosity() { return mVerbose; };
+  sw4_type getRank() { return m_myRank; };
   void setDebugIO(bool onoff) { mDebugIO = onoff; }
 
   // void setDampingCFL(float_sw4 d4_cfl) { m_d4_cfl = d4_cfl; }
 
-  void printTime(int cycle, float_sw4 t, bool force = false) const;
-  void printPreamble(vector<Source*>& a_Sources, int event) const;
+  void prsw4_typeTime(sw4_type cycle, float_sw4 t, bool force = false) const;
+  void prsw4_typePreamble(vector<Source*>& a_Sources, sw4_type event) const;
   void switch_on_checkfornan();
   void switch_on_error_log();
-  void set_energylog(string logfile, bool print, bool elog);
-  void set_inner_loop(int loopnr);
+  void set_energylog(string logfile, bool prsw4_type, bool elog);
+  void set_inner_loop(sw4_type loopnr);
   void set_cflnumber(float_sw4 cfl);
   void set_testing_mode(bool a_testing) { m_testing = a_testing; }
   bool get_testing_mode() { return m_testing; }
 
   void default_bcs();
-  void update_curvilinear_cartesian_interface(vector<Sarray>& a_U);
-  void update_curvilinear_cartesian_interface_org(vector<Sarray>& a_U);
+  void update_curvilinear_cartesian_sw4_typeerface(vector<Sarray>& a_U);
+  void update_curvilinear_cartesian_sw4_typeerface_org(vector<Sarray>& a_U);
 
   void set_twilight_forcing(ForcingTwilight* a_forcing);
   // perhaps these functions should be in the ForcingTwilight class?
@@ -237,16 +237,16 @@ class EW {
   void exactAccTwilight(float_sw4 a_t, vector<Sarray>& a_Uacc);
   void Force(float_sw4 a_t, vector<Sarray>& a_F,
              vector<GridPointSource*>& point_sources,
-             vector<int>& identsources);
+             vector<sw4_type>& identsources);
   void Force_tt(float_sw4 a_t, vector<Sarray>& a_F,
                 vector<GridPointSource*>& point_sources,
-                vector<int>& identsources);
+                vector<sw4_type>& identsources);
   // void ForceX(float_sw4 a_t, vector<Sarray> & a_F, vector<GridPointSource*>
-  // point_sources, vector<int> identsources ); void ForceX_tt(float_sw4 a_t,
-  // vector<Sarray> & a_F, vector<GridPointSource*> point_sources, vector<int>
+  // point_sources, vector<sw4_type> identsources ); void ForceX_tt(float_sw4 a_t,
+  // vector<Sarray> & a_F, vector<GridPointSource*> point_sources, vector<sw4_type>
   // identsources );
   void sort_grid_point_sources(vector<GridPointSource*>& point_sources,
-                               vector<int>& identsources);
+                               vector<sw4_type>& identsources);
 
   void normOfDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
                         float_sw4& diffInf, float_sw4& diffL2, float_sw4& xInf,
@@ -260,11 +260,11 @@ class EW {
 
   void test_sources(vector<GridPointSource*>& a_point_sources,
                     vector<Source*>& a_global_unique_sources, vector<Sarray>& F,
-                    vector<int>& identsources);
-  void testSourceDiscretization(int kx[3], int ky[3], int kz[3],
+                    vector<sw4_type>& identsources);
+  void testSourceDiscretization(sw4_type kx[3], sw4_type ky[3], sw4_type kz[3],
                                 float_sw4 moments[3],
                                 vector<GridPointSource*>& point_sources,
-                                vector<Sarray>& F, vector<int>& identsources);
+                                vector<Sarray>& F, vector<sw4_type>& identsources);
 
   void setupSBPCoeff();
 
@@ -309,7 +309,7 @@ class EW {
                      vector<Sarray>& a_Um, vector<Sarray>& a_Rho,
                      vector<Sarray>& a_Lu, vector<Sarray>& a_F);
 
-  void evalDpDmInTime(vector<Sarray>& a_Up, vector<Sarray>& a_U,
+  void evalDpDmSw4_Typeime(vector<Sarray>& a_Up, vector<Sarray>& a_U,
                       vector<Sarray>& a_Um, vector<Sarray>& a_Uacc);
 
   void evalCorrector(vector<Sarray>& a_Up, vector<Sarray>& a_Rho,
@@ -323,9 +323,9 @@ class EW {
                         vector<Sarray*>& a_AlphaVEm, vector<Sarray>& a_Up,
                         vector<Sarray>& a_U, vector<Sarray>& a_Um, double a_t);
 
-  void updateMemVarCorrNearInterface(Sarray& a_AlphaVEp, Sarray& a_AlphaVEm,
+  void updateMemVarCorrNearSw4_Typeerface(Sarray& a_AlphaVEp, Sarray& a_AlphaVEm,
                                      Sarray& a_Up, Sarray& a_U, Sarray& a_Um,
-                                     double a_t, int a_mech, int a_grid);
+                                     double a_t, sw4_type a_mech, sw4_type a_grid);
 
   // void updateMemoryVariables( vector<Sarray*>& a_AlphaVEp,
   // 			    vector<Sarray*>& a_AlphaVEm,
@@ -334,7 +334,7 @@ class EW {
   // vector<Sarray*>&
   // a_AlphaVEp, 			    vector<Sarray*>& a_AlphaVEm,
   // vector<Sarray>& a_Up, vector<Sarray>& a_U, vector<Sarray>& a_Um );
-  void evalDpDmInTimeAtt(vector<Sarray*>& a_AlphaVEp,
+  void evalDpDmSw4_TypeimeAtt(vector<Sarray*>& a_AlphaVEp,
                          vector<Sarray*>& a_AlphaVE,
                          vector<Sarray*>& a_AlphaVEm);
 
@@ -348,51 +348,51 @@ class EW {
   void cycleSolutionArrays(vector<Sarray>& a_Um, vector<Sarray>& a_U,
                            vector<Sarray>& a_Up);
 
-  void bndryInteriorDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
-                               float_sw4 lowZ[3], float_sw4 interiorZ[3],
+  void bndrySw4_TypeeriorDifference(vector<Sarray>& a_Uex, vector<Sarray>& a_U,
+                               float_sw4 lowZ[3], float_sw4 sw4_typeeriorZ[3],
                                float_sw4 highZ[3]);
   void test_RhoUtt_Lu(vector<Sarray>& a_Uacc, vector<Sarray>& a_Lu,
                       vector<Sarray>& a_F, float_sw4 lowZ[3],
-                      float_sw4 interiorZ[3], float_sw4 highZ[3]);
+                      float_sw4 sw4_typeeriorZ[3], float_sw4 highZ[3]);
 
-  void setRestartInfo(int fromCycle, int dumpInterval,
+  void setRestartInfo(sw4_type fromCycle, sw4_type dumpSw4_Typeerval,
                       const string& filePrefix);
   void computeDT();
   void computeDTanisotropic();
-  // bool inTestSourceMode() { return mTestSource; }
-  // bool inTestLambMode() { return mTestLamb; }
+  // bool sw4_typeestSourceMode() { return mTestSource; }
+  // bool sw4_typeestLambMode() { return mTestLamb; }
   bool proc_zero() const;
-  int no_of_procs() const;
+  sw4_type no_of_procs() const;
   void create_output_directory();
   void create_directory(const string& path);
   void initialize_image_files();
-  void update_images(int Nsteps, float_sw4 time, vector<Sarray>& a_Up,
+  void update_images(sw4_type Nsteps, float_sw4 time, vector<Sarray>& a_Up,
                      vector<Sarray>& a_U, vector<Sarray>& a_Um,
                      vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
                      vector<Sarray>& a_Lambda, vector<Source*>& a_sources,
-                     int dminus, int event = 0);
+                     sw4_type dminus, sw4_type event = 0);
 
   void initialize_SAC_files();   // going away
-  void update_SACs(int Nsteps);  // going away
+  void update_SACs(sw4_type Nsteps);  // going away
 
-  void print_execution_times(float_sw4 times[7]);
-  void print_execution_time(float_sw4 t1, float_sw4 t2, string msg);
+  void prsw4_type_execution_times(float_sw4 times[7]);
+  void prsw4_type_execution_time(float_sw4 t1, float_sw4 t2, string msg);
   void finalizeIO();
   string bc_name(const boundaryConditionType bc) const;
-  int mkdirs(const string& path);
+  sw4_type mkdirs(const string& path);
   void setOutputPath(const string& path);
   // const string& getOutputPath() {
   //   return mPath;
   // };  // Consider getPath instead! This function has caused grief in the past
-  const string& getOutputPath(int event = 0) {
+  const string& getOutputPath(sw4_type event = 0) {
     return mPath[event];
   };  // Consider getPath instead! This function has caused grief in the past
   // const string& getObservationPath() { return mObsPath; };
-  const string& getObservationPath(int event) { return mObsPath[event]; };
+  const string& getObservationPath(sw4_type event) { return mObsPath[event]; };
   const string& getName() { return mName; };
   void set_global_bcs(
       boundaryConditionType bct[6]);  // assigns the global boundary conditions
-  boundaryConditionType getLocalBcType(int g, int side) {
+  boundaryConditionType getLocalBcType(sw4_type g, sw4_type side) {
     return m_bcType[g][side];
   };
 
@@ -411,21 +411,21 @@ class EW {
     m_materials.push_back(mat);
   }
 
-  // void getMaterialID(float_sw4 lat, float_sw4 lon, float_sw4 depth, int
-  // &materialID); bool knownMaterial(int materialID); float_sw4 lookup_Rho(int
-  // materialID, float_sw4 depth); float_sw4 lookup_Vs(int materialID, float_sw4
-  // depth); float_sw4 lookup_Vp(int materialID, float_sw4 depth);
+  // void getMaterialID(float_sw4 lat, float_sw4 lon, float_sw4 depth, sw4_type
+  // &materialID); bool knownMaterial(sw4_type materialID); float_sw4 lookup_Rho(sw4_type
+  // materialID, float_sw4 depth); float_sw4 lookup_Vs(sw4_type materialID, float_sw4
+  // depth); float_sw4 lookup_Vp(sw4_type materialID, float_sw4 depth);
 
   //// attenuation model
-  // float_sw4 lookup_Qp(int materialID, float_sw4 depth);
-  // float_sw4 lookup_Qs(int materialID, float_sw4 depth);
+  // float_sw4 lookup_Qp(sw4_type materialID, float_sw4 depth);
+  // float_sw4 lookup_Qs(sw4_type materialID, float_sw4 depth);
 
   // super-grid functions
   void processSupergrid(char* buffer);
   void set_sg_damping(float_sw4 coeff);
-  void set_sg_thickness(int gp_thickness);
+  void set_sg_thickness(sw4_type gp_thickness);
   void set_sg_width(float_sw4 sg_width);
-  // void set_sg_transition(int gp_trans);
+  // void set_sg_transition(sw4_type gp_trans);
   bool usingSupergrid() { return m_use_supergrid; };
   void setup_supergrid();
   // void supergrid_taper_material();
@@ -436,26 +436,26 @@ class EW {
 
   void assign_local_bcs();
   bool timeSteppingSet();
-  bool proc_decompose_2d(int ni, int nj, int nproc, int proc_max[2]);
-  void decomp1d(int nglobal, int myid, int nproc, int& s, int& e);
-  void coarsen1d(int& n, int& ifirst, int& ilast, int periodic);
+  bool proc_decompose_2d(sw4_type ni, sw4_type nj, sw4_type nproc, sw4_type proc_max[2]);
+  void decomp1d(sw4_type nglobal, sw4_type myid, sw4_type nproc, sw4_type& s, sw4_type& e);
+  void coarsen1d(sw4_type& n, sw4_type& ifirst, sw4_type& ilast, sw4_type periodic);
   void allocateCurvilinearArrays();
   void generate_grid();
   void setup_metric();
-  void check_min_max_int(vector<Sarray>& a_U);
+  void check_min_max_sw4_type(vector<Sarray>& a_U);
 
   void setupMPICommunications();
   void setup2D_MPICommunications();
-  void communicate_array(Sarray& u, int grid);
-  void communicate_array_host(Sarray& u, int grid);
+  void communicate_array(Sarray& u, sw4_type grid);
+  void communicate_array_host(Sarray& u, sw4_type grid);
   void communicate_arrays(vector<Sarray>& u);
   void communicate_host_arrays(vector<Sarray>& u);
   void communicate_array_2dfinest(Sarray& u);
-  void communicate_array_2d(Sarray& u, int g, int k);
-  void communicate_array_2d_asym(Sarray& u, int g, int k);
+  void communicate_array_2d(Sarray& u, sw4_type g, sw4_type k);
+  void communicate_array_2d_asym(Sarray& u, sw4_type g, sw4_type k);
   void communicate_array_2d_ext(Sarray& u);
   void communicate_array_2d_ext_async(Sarray& u);
-  void communicate_array_2d_isurf(Sarray& u, int iSurf);
+  void communicate_array_2d_isurf(Sarray& u, sw4_type iSurf);
 
   void set_materials();
   void set_anisotropic_materials();
@@ -465,9 +465,9 @@ class EW {
   void reverse_setup_viscoelastic();
   void* use_twilight_forcing() { return m_twilight_forcing; };
 
-  void extrapolateInZ(int g, Sarray& field, bool lowk, bool highk);
+  void extrapolateInZ(sw4_type g, Sarray& field, bool lowk, bool highk);
   void extrapolateInXY(vector<Sarray>& field);
-  void extrapolateInZvector(int g, Sarray& field, bool lowk, bool highk);
+  void extrapolateInZvector(sw4_type g, Sarray& field, bool lowk, bool highk);
   void extrapolateInXYvector(vector<Sarray>& field);
   void extrapolateTopo(Sarray& field);
   void checkTopo(Sarray& field);
@@ -477,7 +477,7 @@ class EW {
   void addESSI3D(ESSI3D* i);
   void addSfileOutput(SfileOutput* i);
   void setIO_timing(bool iotiming);
-  void setParallel_IO(bool pfs, int nwriters);
+  void setParallel_IO(bool pfs, sw4_type nwriters);
 
   void extractTopographyFromGridFile(string a_topoFileName);
   void extractTopographyFromImageFile(string a_topoFileName);
@@ -487,7 +487,7 @@ class EW {
   void extractTopographyFromSfile(std::string a_topoFileName);
   void extractTopographyFromGMG(std::string a_topoFileName);
 
-  void smoothTopography(int maxIter);
+  void smoothTopography(sw4_type maxIter);
 
   void buildGaussianHillTopography(float_sw4 amp, float_sw4 Lx, float_sw4 Ly,
                                    float_sw4 x0, float_sw4 y0);
@@ -503,11 +503,11 @@ class EW {
                               float_sw4& latitude);
 
   void initializeSystemTime();
-  void compute_epicenter(vector<Source*>& a_GlobalUniqueSources, int event = 0);
+  void compute_epicenter(vector<Source*>& a_GlobalUniqueSources, sw4_type event = 0);
   void set_epicenter(float_sw4 epiLat, float_sw4 epiLon, float_sw4 epiDepth,
-                     float_sw4 earliestTime, int e = 0);
+                     float_sw4 earliestTime, sw4_type e = 0);
   void get_epicenter(float_sw4& epiLat, float_sw4& epiLon, float_sw4& epiDepth,
-                     float_sw4& earliestTime, int e = 0);
+                     float_sw4& earliestTime, sw4_type e = 0);
 
   // void update_all_boundaries(vector<Sarray> &U, vector<Sarray> &UM, float_sw4
   // t, 			   vector<Sarray*> &AlphaVE );
@@ -515,40 +515,40 @@ class EW {
   // void impose_physical_bc(vector<Sarray> &U, vector<Sarray> &UM, float_sw4 t,
   // 			vector<Sarray*> &AlphaVE );
 
-  /* void bc_dirichlet( Sarray& u, int g, float_sw4 t, int side, */
+  /* void bc_dirichlet( Sarray& u, sw4_type g, float_sw4 t, sw4_type side, */
   /*  		   Forcing* forcing, float_sw4 h ); */
 
-  /* void bc_free_surface( Sarray& u, int g, float_sw4 t, int side, */
-  /* 		      Forcing* forcing, float_sw4 h, int onesided[6] ); */
+  /* void bc_free_surface( Sarray& u, sw4_type g, float_sw4 t, sw4_type side, */
+  /* 		      Forcing* forcing, float_sw4 h, sw4_type onesided[6] ); */
 
-  void computeNearestGridPoint(int& a_i, int& a_j, int& a_k,
-                               int& a_g,  // grid on which indices are located
+  void computeNearestGridPoint(sw4_type& a_i, sw4_type& a_j, sw4_type& a_k,
+                               sw4_type& a_g,  // grid on which indices are located
                                float_sw4 a_x, float_sw4 a_y, float_sw4 a_z);
-  int computeNearestGridPoint2(int& a_i, int& a_j, int& a_k,
-                               int& a_g,  // grid on which indices are located
+  sw4_type computeNearestGridPoint2(sw4_type& a_i, sw4_type& a_j, sw4_type& a_k,
+                               sw4_type& a_g,  // grid on which indices are located
                                float_sw4 a_x, float_sw4 a_y, float_sw4 a_z);
 
-  void computeNearestSurfaceGridPoint(int& a_i, int& a_j, float_sw4 a_x,
+  void computeNearestSurfaceGridPoint(sw4_type& a_i, sw4_type& a_j, float_sw4 a_x,
                                       float_sw4 a_y, float_sw4 a_z);
 
-  void coord_from_index(int i, int j, int k, int g, float_sw4& x, float_sw4& y,
+  void coord_from_index(sw4_type i, sw4_type j, sw4_type k, sw4_type g, float_sw4& x, float_sw4& y,
                         float_sw4& z);
 
   float_sw4 distance(float_sw4 a_x1, float_sw4 a_y1, float_sw4 a_z1,
                      float_sw4 a_x0, float_sw4 a_y0, float_sw4 a_z0);
 
   void computeNearestLowGridPoint(
-      int& a_i, int& a_j, int& a_k,
-      int& a_g,  // grid on which indices are located
+      sw4_type& a_i, sw4_type& a_j, sw4_type& a_k,
+      sw4_type& a_g,  // grid on which indices are located
       float_sw4 a_x, float_sw4 a_y, float_sw4 a_z);
 
-  bool interior_point_in_proc(
-      int a_i, int a_j, int a_g);  // only takes interior points into account
-  bool point_in_proc(int a_i, int a_j,
-                     int a_g);  // both interior and parallel ghost points
+  bool sw4_typeerior_point_in_proc(
+      sw4_type a_i, sw4_type a_j, sw4_type a_g);  // only takes sw4_typeerior points sw4_typeo account
+  bool point_in_proc(sw4_type a_i, sw4_type a_j,
+                     sw4_type a_g);  // both sw4_typeerior and parallel ghost points
   bool point_in_proc_ext(
-      int a_i, int a_j,
-      int a_g);  // both interior and parallel ghost points+extra ghost points
+      sw4_type a_i, sw4_type a_j,
+      sw4_type a_g);  // both sw4_typeerior and parallel ghost points+extra ghost points
 
   void initializePaddingCells();
   void check_dimensions();
@@ -572,12 +572,12 @@ class EW {
   bool topographyExists() { return m_topography_exists; };
   bool usingAttenuation() { return m_use_attenuation; };
 
-  bool is_onesided(int g, int side) const;
+  bool is_onesided(sw4_type g, sw4_type side) const;
 
-  void interpolate_between_grids(vector<Sarray>& u, vector<Sarray>& um,
+  void sw4_typeerpolate_between_grids(vector<Sarray>& u, vector<Sarray>& um,
                                  float_sw4 t, vector<Sarray*>& AlphaVE);
 
-  int interpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0,
+  sw4_type sw4_typeerpolate_topography(float_sw4 q, float_sw4 r, float_sw4& Z0,
                              bool smoothed);
 
   void copy_topo_to_topogridext();
@@ -599,18 +599,18 @@ class EW {
 
   void compute_minvsoverh(float_sw4& minvsoh);
 
-  void set_resolution(int ppw);
+  void set_resolution(sw4_type ppw);
 
-  void set_prefilter(FilterType passband, int order, int passes, float_sw4 fc1,
+  void set_prefilter(FilterType passband, sw4_type order, sw4_type passes, float_sw4 fc1,
                      float_sw4 fc2);
 
   void set_scenario(const string& scenario);
 
-  void set_conservative_interpolation(bool onoff, float_sw4 ctol, int cmaxit);
+  void set_conservative_sw4_typeerpolation(bool onoff, float_sw4 ctol, sw4_type cmaxit);
 
-  void set_geodyn_data(string filename, int nx, int nz, float_sw4 h,
-                       float_sw4 origin[3], float_sw4 dt, int nsteps,
-                       int faces);
+  void set_geodyn_data(string filename, sw4_type nx, sw4_type nz, float_sw4 h,
+                       float_sw4 origin[3], float_sw4 dt, sw4_type nsteps,
+                       sw4_type faces);
 
   void impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um, float_sw4 t,
                              vector<float_sw4**>& bforcing);
@@ -628,20 +628,20 @@ class EW {
   //                                vector<Sarray>& lambda,
   //                                vector<Sarray>& forcing, double t,
   //                                vector<Sarray>& U, vector<Sarray>& Um,
-  //                                int crf);
+  //                                sw4_type crf);
 
   void geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
                                  vector<Sarray>& lambda,
                                  vector<Sarray>& forcing, float_sw4 t,
                                  vector<Sarray>& U, vector<Sarray>& Um,
-                                 int crf);
+                                 sw4_type crf);
 
   void geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
                                              vector<Sarray>& mu,
                                              vector<Sarray>& lambda,
                                              vector<Sarray>& forcing,
                                              float_sw4 t, vector<Sarray>& U,
-                                             vector<Sarray>& Um, int crf);
+                                             vector<Sarray>& Um, sw4_type crf);
 
   void geodyn_up_from_uacc(vector<Sarray>& Up, vector<Sarray>& Uacc,
                            vector<Sarray>& U, vector<Sarray>& Um, float_sw4 dt);
@@ -652,19 +652,19 @@ class EW {
   void geodynbcGetSizes(string filename, float_sw4 origin[3],
                         float_sw4& cubelen, float_sw4& zcubelen,
                         float_sw4& hcube, bool& found_latlon, double& lat,
-                        double& lon, double& az, int& adjust);
+                        double& lon, double& az, sw4_type& adjust);
   void geodynFindFile(char* buffer);
-  void bcsurf_curvilinear_2nd_order(int side, int i0, int i1, int j0, int j1,
-                                    int k0, int g, Sarray& u,
+  void bcsurf_curvilinear_2nd_order(sw4_type side, sw4_type i0, sw4_type i1, sw4_type j0, sw4_type j1,
+                                    sw4_type k0, sw4_type g, Sarray& u,
                                     float_sw4* bforcing);
-  void integrate_source();
+  void sw4_typeegrate_source();
 
   void compute_energy(float_sw4 dt, bool write_file, vector<Sarray>& Um,
-                      vector<Sarray>& U, vector<Sarray>& Up, int step,
-                      int event);
+                      vector<Sarray>& U, vector<Sarray>& Up, sw4_type step,
+                      sw4_type event);
 
   float_sw4 scalarProduct(vector<Sarray>& U, vector<Sarray>& V);
-  void get_gridgen_info(int& order, float_sw4& zetaBreak) const;
+  void get_gridgen_info(sw4_type& order, float_sw4& zetaBreak) const;
 
   //  void update_maxes_hVelMax();
   //  void update_maxes_vVelMax();
@@ -689,39 +689,39 @@ class EW {
   };
 
   // access functions needed by the Image (and perhaps other) classes
-  int getNumberOfCartesianGrids() { return mNumberOfCartesianGrids; };
-  int getNumberOfGrids() { return mNumberOfGrids; };
-  int getNumberOfGhostPoints() { return m_ghost_points; };
-  int getNumberOfParallelPaddingPoints() { return m_ppadding; };
+  sw4_type getNumberOfCartesianGrids() { return mNumberOfCartesianGrids; };
+  sw4_type getNumberOfGrids() { return mNumberOfGrids; };
+  sw4_type getNumberOfGhostPoints() { return m_ghost_points; };
+  sw4_type getNumberOfParallelPaddingPoints() { return m_ppadding; };
   float_sw4 getLonOrigin() { return mLonOrigin; };
   float_sw4 getLatOrigin() { return mLatOrigin; };
   float_sw4 getGridAzimuth() { return mGeoAz; };
   float_sw4 getMetersPerDegree() { return mMetersPerDegree; };
   bool usingParallelFS() { return m_pfs; };
-  int getNumberOfWritersPFS() { return m_nwriters; };
+  sw4_type getNumberOfWritersPFS() { return m_nwriters; };
   float_sw4 getTimeStep() const { return mDt; };
-  // int getNumberOfTimeSteps() const { return mNumberOfTimeSteps; };
-  int getNumberOfTimeSteps(int event = 0) const {
+  // sw4_type getNumberOfTimeSteps() const { return mNumberOfTimeSteps; };
+  sw4_type getNumberOfTimeSteps(sw4_type event = 0) const {
     return mNumberOfTimeSteps[event];
   };
-  int getNumberOfMechanisms() const { return m_number_mechanisms; };
+  sw4_type getNumberOfMechanisms() const { return m_number_mechanisms; };
 
   // test point source
-  void get_exact_point_source(float_sw4* u, float_sw4 t, int g, Source& source,
-                              int* wind = 0);
-  RAJA_HOST_DEVICE static float_sw4 VerySmoothBump_x_T_Integral(float_sw4 t,
+  void get_exact_point_source(float_sw4* u, float_sw4 t, sw4_type g, Source& source,
+                              sw4_type* wind = 0);
+  RAJA_HOST_DEVICE static float_sw4 VerySmoothBump_x_T_Sw4_Typeegral(float_sw4 t,
                                                                 float_sw4 R,
                                                                 float_sw4 alpha,
                                                                 float_sw4 beta);
-  RAJA_HOST_DEVICE static float_sw4 C6SmoothBump_x_T_Integral(float_sw4 t,
+  RAJA_HOST_DEVICE static float_sw4 C6SmoothBump_x_T_Sw4_Typeegral(float_sw4 t,
                                                               float_sw4 R,
                                                               float_sw4 alpha,
                                                               float_sw4 beta);
-  RAJA_HOST_DEVICE static float_sw4 SmoothWave_x_T_Integral(float_sw4 t,
+  RAJA_HOST_DEVICE static float_sw4 SmoothWave_x_T_Sw4_Typeegral(float_sw4 t,
                                                             float_sw4 R,
                                                             float_sw4 alpha,
                                                             float_sw4 beta);
-  RAJA_HOST_DEVICE static float_sw4 Gaussian_x_T_Integral(
+  RAJA_HOST_DEVICE static float_sw4 Gaussian_x_T_Sw4_Typeegral(
       float_sw4 t, float_sw4 R, float_sw4 f, float_sw4 alpha, float_sw4 beta);
   RAJA_HOST_DEVICE static float_sw4 VSBTP(float_sw4 Lim, float_sw4 t);
   RAJA_HOST_DEVICE static float_sw4 C6SBTP(float_sw4 Lim, float_sw4 t);
@@ -747,18 +747,18 @@ class EW {
   // Lamb's problem
   void get_exact_lamb(vector<Sarray>& a_U, float_sw4 a_t, Source& a_source);
   void get_exact_lamb2(vector<Sarray>& a_U, float_sw4 a_t, Source& a_source);
-  float_sw4 G4_Integral(float_sw4 T, float_sw4 t, float_sw4 r, float_sw4 beta);
-  float_sw4 G3_Integral(float_sw4 iT, float_sw4 it, float_sw4 ir,
+  float_sw4 G4_Sw4_Typeegral(float_sw4 T, float_sw4 t, float_sw4 r, float_sw4 beta);
+  float_sw4 G3_Sw4_Typeegral(float_sw4 iT, float_sw4 it, float_sw4 ir,
                         float_sw4 ibeta);
-  float_sw4 G2_Integral(float_sw4 iT, float_sw4 it, float_sw4 ir,
+  float_sw4 G2_Sw4_Typeegral(float_sw4 iT, float_sw4 it, float_sw4 ir,
                         float_sw4 ibeta);
 
   void getGlobalBoundingBox(float_sw4 bbox[6]);
 
   // string getPath() { return mPath; }
-  string getPath(int event = 0) { return mPath[event]; }
+  string getPath(sw4_type event = 0) { return mPath[event]; }
   void set_utcref(TimeSeries& ts);
-  void print_utc(int event = 0);
+  void prsw4_type_utc(sw4_type event = 0);
 
   // For inverse problem
   void processCG(char* buffer);
@@ -771,40 +771,40 @@ class EW {
   bool compute_sf();
   void compute_guess(bool& guesspos, bool& guesst0fr, bool& guessmom,
                      bool& guessshifts, bool& output_seismograms);
-  void get_cgparameters(int& maxit, int& maxrestart, float_sw4& tolerance,
-                        bool& fletcherreeves, int& stepselection,
-                        bool& do_linesearch, int& varcase, bool& testing);
-  void parameters_to_material(int nmpar, float_sw4* xm, vector<Sarray>& rho,
+  void get_cgparameters(sw4_type& maxit, sw4_type& maxrestart, float_sw4& tolerance,
+                        bool& fletcherreeves, sw4_type& stepselection,
+                        bool& do_linesearch, sw4_type& varcase, bool& testing);
+  void parameters_to_material(sw4_type nmpar, float_sw4* xm, vector<Sarray>& rho,
                               vector<Sarray>& mu, vector<Sarray>& lambda);
-  void material_to_parameters(int nmpar, float_sw4* xm, vector<Sarray>& rho,
+  void material_to_parameters(sw4_type nmpar, float_sw4* xm, vector<Sarray>& rho,
                               vector<Sarray>& mu, vector<Sarray>& lambda);
-  void get_material_parameter(int nmpar, float_sw4* xm);
-  void get_scale_factors(int nmpar, float_sw4* xm);
+  void get_material_parameter(sw4_type nmpar, float_sw4* xm);
+  void get_scale_factors(sw4_type nmpar, float_sw4* xm);
 
 #ifdef ENABLE_OPT
-  void material_correction(int nmpar, float_sw4* xm);
+  void material_correction(sw4_type nmpar, float_sw4* xm);
 
   void project_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
-                        vector<Sarray>& a_lambda, int& info);
+                        vector<Sarray>& a_lambda, sw4_type& info);
 
   void check_material(vector<Sarray>& a_rho, vector<Sarray>& a_mu,
-                      vector<Sarray>& a_lambda, int& ok);
+                      vector<Sarray>& a_lambda, sw4_type& ok);
 #endif
 
   void check_anisotropic_material(vector<Sarray>& rho, vector<Sarray>& c);
 
-  void get_nr_of_material_parameters(int& nmvar);
+  void get_nr_of_material_parameters(sw4_type& nmvar);
   void add_to_grad(vector<Sarray>& K, vector<Sarray>& Kacc, vector<Sarray>& Um,
                    vector<Sarray>& U, vector<Sarray>& Up, vector<Sarray>& Uacc,
                    vector<Sarray>& gRho, vector<Sarray>& gMu,
                    vector<Sarray>& gLambda);
 
-  void get_optmethod(int& method, int& bfgs_m);
-  void get_utc(int utc[7], int event = 0) const;
+  void get_optmethod(sw4_type& method, sw4_type& bfgs_m);
+  void get_utc(sw4_type utc[7], sw4_type event = 0) const;
 
   void perturb_mtrl();
-  void perturb_mtrl(int peri, int perj, int perk, float_sw4 h, int grid,
-                    int var);
+  void perturb_mtrl(sw4_type peri, sw4_type perj, sw4_type perk, float_sw4 h, sw4_type grid,
+                    sw4_type var);
 
   void perturb_velocities(vector<Sarray>& a_vs, vector<Sarray>& a_vp);
 
@@ -814,37 +814,37 @@ class EW {
 
   void gettopowgh(float_sw4 ai, float_sw4 wgh[8]) const;
 
-  void smooth_grid(int maxIter);
+  void smooth_grid(sw4_type maxIter);
 
   void enforceDirichlet5(vector<Sarray>& a_U);
 
-  bool check_for_nan(vector<Sarray>& a_U, int verbose, string name);
+  bool check_for_nan(vector<Sarray>& a_U, sw4_type verbose, string name);
 
   void define_parallel_io(vector<Parallel_IO*>& parallel_io);
 
   void read_volimage(std::string& path, std::string& fname,
                      vector<Sarray>& data);
 
-  void interpolate(int nx, int ny, int nz, float_sw4 xmin, float_sw4 ymin,
+  void sw4_typeerpolate(sw4_type nx, sw4_type ny, sw4_type nz, float_sw4 xmin, float_sw4 ymin,
                    float_sw4 zmin, float_sw4 hx, float_sw4 hy, float_sw4 hz,
-                   Sarray& rho, Sarray& mu, Sarray& lambda, int grid,
+                   Sarray& rho, Sarray& mu, Sarray& lambda, sw4_type grid,
                    Sarray& rhogrid, Sarray& mugrid, Sarray& lambdagrid);
 
-  void interpolate_to_coarse(int nx, int ny, int nz, float_sw4 xmin,
+  void sw4_typeerpolate_to_coarse(sw4_type nx, sw4_type ny, sw4_type nz, float_sw4 xmin,
                              float_sw4 ymin, float_sw4 zmin, float_sw4 hx,
                              float_sw4 hy, float_sw4 hz, Sarray& rho,
                              Sarray& mu, Sarray& lambda,
                              vector<Sarray>& rhogrid, vector<Sarray>& mugrid,
                              vector<Sarray>& lambdagrid);
 
-  void interpolation_gradient(int nx, int ny, int nz, float_sw4 xmin,
+  void sw4_typeerpolation_gradient(sw4_type nx, sw4_type ny, sw4_type nz, float_sw4 xmin,
                               float_sw4 ymin, float_sw4 zmin, float_sw4 hx,
                               float_sw4 hy, float_sw4 hz, Sarray& gradrho,
-                              Sarray& gradmu, Sarray& gradlambda, int grid,
+                              Sarray& gradmu, Sarray& gradlambda, sw4_type grid,
                               Sarray& gradrhogrid, Sarray& gradmugrid,
                               Sarray& gradlambdagrid);
 
-  // Functions to impose conditions at grid refinement interface:
+  // Functions to impose conditions at grid refinement sw4_typeerface:
   // void enforceIC( std::vector<Sarray> & a_Up, std::vector<Sarray> & a_U,
   // std::vector<Sarray> & a_Um,
   //                 vector<Sarray*>& a_AlphaVEp,
@@ -855,388 +855,388 @@ class EW {
   void enforceIC(std::vector<Sarray>& a_Up, std::vector<Sarray>& a_U,
                  std::vector<Sarray>& a_Um, float_sw4 t, bool predictor,
                  std::vector<GridPointSource*>& point_sources);
-  // void dirichlet_hom_ic( Sarray& U, int g, int k, bool inner );
-  // void dirichlet_LRic( Sarray& U, int g, int kic, float_sw4 t, int adj );
-  // void gridref_initial_guess( Sarray& u, int g, bool upper );
+  // void dirichlet_hom_ic( Sarray& U, sw4_type g, sw4_type k, bool inner );
+  // void dirichlet_LRic( Sarray& U, sw4_type g, sw4_type kic, float_sw4 t, sw4_type adj );
+  // void gridref_initial_guess( Sarray& u, sw4_type g, bool upper );
   // void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray&
-  // a_Um, Sarray& Unext, 				    int g, int kic,
+  // a_Um, Sarray& Unext, 				    sw4_type g, sw4_type kic,
   // float_sw4 t, std::vector<GridPointSource*> point_sources ); void
   // compute_preliminary_predictor( Sarray& a_Up, Sarray& a_U, Sarray& Unext,
-  // int
-  // g, int kic, float_sw4 t, std::vector<GridPointSource*> point_sources );
+  // sw4_type
+  // g, sw4_type kic, float_sw4 t, std::vector<GridPointSource*> point_sources );
   // void
-  // compute_icstresses( Sarray& a_Up, Sarray& B, int g, int kic, float_sw4*
-  // a_str_x, float_sw4* a_str_y); void consintp( Sarray& Uf, Sarray& Unextf,
+  // compute_icstresses( Sarray& a_Up, Sarray& B, sw4_type g, sw4_type kic, float_sw4*
+  // a_str_x, float_sw4* a_str_y); void conssw4_typep( Sarray& Uf, Sarray& Unextf,
   // Sarray& Bf, Sarray& Muf, Sarray& Lambdaf, Sarray& Rhof, float_sw4 hf,
   //	       Sarray& Uc, Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray&
-  // Lambdac, Sarray& Rhoc, float_sw4 hc, 	       float_sw4 cof, int gc,
-  // int gp, int is_periodic[2] ); void check_corrector( Sarray& Uf, Sarray& Uc,
+  // Lambdac, Sarray& Rhoc, float_sw4 hc, 	       float_sw4 cof, sw4_type gc,
+  // sw4_type gp, sw4_type is_periodic[2] ); void check_corrector( Sarray& Uf, Sarray& Uc,
   // Sarray&
-  // Unextf, Sarray& Unextc, int kf, int kc );
+  // Unextf, Sarray& Unextc, sw4_type kf, sw4_type kc );
 
   // Previous version fortran routines, now in C
-  void addsgd4_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                  int klast, float_sw4* a_Up, float_sw4* a_U, float_sw4* a_Um,
+  void addsgd4_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                  sw4_type klast, float_sw4* a_Up, float_sw4* a_U, float_sw4* a_Um,
                   float_sw4* Rho, float_sw4* sg_dc_x, float_sw4* sg_dc_y,
                   float_sw4* sg_dc_z, float_sw4* sg_str_x, float_sw4* sg_str_y,
                   float_sw4* sg_str_z, float_sw4* sg_corner_x,
                   float_sw4* sg_corner_y, float_sw4* sg_corner_z,
                   float_sw4 damping_coefficient);
-  void addsgd6_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                  int klast, float_sw4* a_Up, float_sw4* a_U, float_sw4* a_Um,
+  void addsgd6_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                  sw4_type klast, float_sw4* a_Up, float_sw4* a_U, float_sw4* a_Um,
                   float_sw4* Rho, float_sw4* sg_dc_x, float_sw4* sg_dc_y,
                   float_sw4* sg_dc_z, float_sw4* sg_str_x, float_sw4* sg_str_y,
                   float_sw4* sg_str_z, float_sw4* sg_corner_x,
                   float_sw4* sg_corner_y, float_sw4* sg_corner_z,
                   float_sw4 damping_coefficient);
-  void addsgd4c_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                   int klast, float_sw4* a_Up, float_sw4* a_U, float_sw4* a_Um,
+  void addsgd4c_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                   sw4_type klast, float_sw4* a_Up, float_sw4* a_U, float_sw4* a_Um,
                    float_sw4* Rho, float_sw4* sg_dc_x, float_sw4* sg_dc_y,
                    float_sw4* sg_str_x, float_sw4* sg_str_y, float_sw4* jac,
                    float_sw4* sg_corner_x, float_sw4* sg_corner_y,
                    float_sw4 damping_coefficient);
-  void addsgd6c_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                   int klast, float_sw4* a_Up, float_sw4* a_U, float_sw4* a_Um,
+  void addsgd6c_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                   sw4_type klast, float_sw4* a_Up, float_sw4* a_U, float_sw4* a_Um,
                    float_sw4* Rho, float_sw4* sg_dc_x, float_sw4* sg_dc_y,
                    float_sw4* sg_str_x, float_sw4* sg_str_y, float_sw4* jac,
                    float_sw4* sg_corner_x, float_sw4* sg_corner_y,
                    float_sw4 damping_coefficient);
 
-  void bcfort_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
-                 int nx, int ny, int nz, float_sw4* u, float_sw4 h,
+  void bcfort_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke, sw4_type wind[36],
+                 sw4_type nx, sw4_type ny, sw4_type nz, float_sw4* u, float_sw4 h,
                  boundaryConditionType bccnd[6], float_sw4 sbop[6],
                  float_sw4* mu, float_sw4* la, float_sw4 t, float_sw4* bforce1,
                  float_sw4* bforce2, float_sw4* bforce3, float_sw4* bforce4,
                  float_sw4* bforce5, float_sw4* bforce6, float_sw4 om,
-                 float_sw4 ph, float_sw4 cv, int curvilinear);
-  void bcfortsg_ci(int ib, int ie, int jb, int je, int kb, int ke, int wind[36],
-                   int nx, int ny, int nz, float_sw4* u, float_sw4 h,
+                 float_sw4 ph, float_sw4 cv, sw4_type curvilinear);
+  void bcfortsg_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke, sw4_type wind[36],
+                   sw4_type nx, sw4_type ny, sw4_type nz, float_sw4* u, float_sw4 h,
                    boundaryConditionType bccnd[6], float_sw4 sbop[6],
                    float_sw4* mu, float_sw4* la, float_sw4 t,
                    float_sw4* bforce1, float_sw4* bforce2, float_sw4* bforce3,
                    float_sw4* bforce4, float_sw4* bforce5, float_sw4* bforce6,
                    float_sw4 om, float_sw4 ph, float_sw4 cv, float_sw4* strx,
                    float_sw4* stry);
-  void twdirbdry_ci(int wind[6], float_sw4 h, float_sw4 t, float_sw4 om,
+  void twdirbdry_ci(sw4_type wind[6], float_sw4 h, float_sw4 t, float_sw4 om,
                     float_sw4 cv, float_sw4 ph, float_sw4* bforce,
                     float_sw4 zmin);
-  void twdirbdryc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                     int klast, int wind[6], float_sw4 t, float_sw4 om,
+  void twdirbdryc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                     sw4_type klast, sw4_type wind[6], float_sw4 t, float_sw4 om,
                      float_sw4 cv, float_sw4 ph, float_sw4* bforce,
                      float_sw4* x, float_sw4* y, float_sw4* z);
-  void twfrsurfz_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                    int klast, float_sw4 h, int kz, float_sw4 t,
+  void twfrsurfz_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                    sw4_type klast, float_sw4 h, sw4_type kz, float_sw4 t,
                     float_sw4 omega, float_sw4 c, float_sw4 phase,
                     float_sw4* bforce, float_sw4* mu, float_sw4* lambda,
                     float_sw4 zmin);
-  void twfrsurfzatt_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                       int klast, float_sw4 h, int kz, float_sw4 t,
+  void twfrsurfzatt_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                       sw4_type klast, float_sw4 h, sw4_type kz, float_sw4 t,
                        float_sw4 omega, float_sw4 c, float_sw4 phase,
                        float_sw4* bforce, float_sw4* mua, float_sw4* lambdaa,
                        float_sw4 zmin);
-  void twfrsurfzsgstr_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, float_sw4 h, int kz,
+  void twfrsurfzsgstr_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, float_sw4 h, sw4_type kz,
                          float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                          float_sw4 omstrx, float_sw4 omstry, float_sw4* bforce,
                          float_sw4* mu, float_sw4* lambda, float_sw4 zmin);
-  void twfrsurfzsgstratt_ci(int ifirst, int ilast, int jfirst, int jlast,
-                            int kfirst, int klast, float_sw4 h, int kz,
+  void twfrsurfzsgstratt_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                            sw4_type kfirst, sw4_type klast, float_sw4 h, sw4_type kz,
                             float_sw4 t, float_sw4 omega, float_sw4 c,
                             float_sw4 phase, float_sw4 omstrx, float_sw4 omstry,
                             float_sw4* bforce, float_sw4* mua,
                             float_sw4* lambdaa, float_sw4 zmin);
-  void twstensor_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                    int klast, int kz, float_sw4 t, float_sw4 om, float_sw4 c,
+  void twstensor_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                    sw4_type klast, sw4_type kz, float_sw4 t, float_sw4 om, float_sw4 c,
                     float_sw4 ph, float_sw4* xx, float_sw4* yy, float_sw4* zz,
                     float_sw4* tau, float_sw4* mu, float_sw4* lambda);
-  void twstensorsg_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                      int klast, int kz, float_sw4 t, float_sw4 om, float_sw4 c,
+  void twstensorsg_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                      sw4_type klast, sw4_type kz, float_sw4 t, float_sw4 om, float_sw4 c,
                       float_sw4 ph, float_sw4* xx, float_sw4* yy, float_sw4* zz,
                       float_sw4* tau, float_sw4* mu, float_sw4* lambda,
                       float_sw4 omstrx, float_sw4 omstry);
-  void twstensoratt_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                       int klast, int kz, float_sw4 t, float_sw4 omega,
+  void twstensoratt_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                       sw4_type klast, sw4_type kz, float_sw4 t, float_sw4 omega,
                        float_sw4 c, float_sw4 phase, float_sw4* xx,
                        float_sw4* yy, float_sw4* zz, float_sw4* tau,
                        float_sw4* mu, float_sw4* lambda);
-  void twstensorsgatt_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, int kz, float_sw4 t,
+  void twstensorsgatt_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, sw4_type kz, float_sw4 t,
                          float_sw4 omega, float_sw4 c, float_sw4 phase,
                          float_sw4* xx, float_sw4* yy, float_sw4* zz,
                          float_sw4* tau, float_sw4* mu, float_sw4* lambda,
                          float_sw4 omstrx, float_sw4 omstry);
-  void bcfortanisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
-                      int wind[36], int nx, int ny, int nz, float_sw4* u,
+  void bcfortanisg_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
+                      sw4_type wind[36], sw4_type nx, sw4_type ny, sw4_type nz, float_sw4* u,
                       float_sw4 h, boundaryConditionType bccnd[6],
                       float_sw4 sbop[6], float_sw4* c, float_sw4* bforce1,
                       float_sw4* bforce2, float_sw4* bforce3,
                       float_sw4* bforce4, float_sw4* bforce5,
                       float_sw4* bforce6, float_sw4* strx, float_sw4* stry);
-  void bcfreesurfcurvani_ci(int ifirst, int ilast, int jfirst, int jlast,
-                            int kfirst, int klast, int nz, float_sw4* u,
-                            float_sw4* c, int side, float_sw4 sbop[6],
+  void bcfreesurfcurvani_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                            sw4_type kfirst, sw4_type klast, sw4_type nz, float_sw4* u,
+                            float_sw4* c, sw4_type side, float_sw4 sbop[6],
                             float_sw4* bforce5, float_sw4* bforce6,
                             float_sw4* strx, float_sw4* stry);
   void GetStencilCoefficients(float_sw4* _acof, float_sw4* _ghcof,
                               float_sw4* _bop, float_sw4* _bope,
                               float_sw4* _sbop);
-  void checkanisomtrl_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, float_sw4* rho, float_sw4* c,
+  void checkanisomtrl_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, float_sw4* rho, float_sw4* c,
                          float_sw4& rhomin, float_sw4& rhomax,
                          float_sw4& eigmin, float_sw4& eigmax);
   void maxwave(float_sw4 c[21], float_sw4 rho, float_sw4& eigestimate);
   void maxwavecurv(float_sw4 c[21], float_sw4 rho, float_sw4 jac,
                    float_sw4& eigestimate);
-  void computedtaniso2_ci(int ifirst, int ilast, int jfirst, int jlast,
-                          int kfirst, int klast, float_sw4* rho, float_sw4* c,
+  void computedtaniso2_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                          sw4_type kfirst, sw4_type klast, float_sw4* rho, float_sw4* c,
                           float_sw4 cfl, float_sw4 dx, float_sw4& a_dtloc);
-  void computedtaniso2curv_ci(int ifirst, int ilast, int jfirst, int jlast,
-                              int kfirst, int klast, float_sw4* rho,
+  void computedtaniso2curv_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                              sw4_type kfirst, sw4_type klast, float_sw4* rho,
                               float_sw4* c, float_sw4* jac, float_sw4 cfl,
                               float_sw4& a_dtloc);
-  void randomfield3d_ci(int ifirst, int ilast, int jfirst, int jlast,
-                        int kfirst, int klast, int nig, int njg, int nkg,
-                        int gh, float_sw4* __restrict__ a_w,
+  void randomfield3d_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                        sw4_type kfirst, sw4_type klast, sw4_type nig, sw4_type njg, sw4_type nkg,
+                        sw4_type gh, float_sw4* __restrict__ a_w,
                         float_sw4* __restrict__ a_wgh, float_sw4 dist,
-                        float_sw4 distz, float_sw4 h, int* randw,
-                        float_sw4* __restrict__ a_saverands, int p, int pz);
-  void randomfield3dc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, int nig, int njg, int nkg,
-                         int gh, float_sw4* __restrict__ a_w,
+                        float_sw4 distz, float_sw4 h, sw4_type* randw,
+                        float_sw4* __restrict__ a_saverands, sw4_type p, sw4_type pz);
+  void randomfield3dc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, sw4_type nig, sw4_type njg, sw4_type nkg,
+                         sw4_type gh, float_sw4* __restrict__ a_w,
                          float_sw4* __restrict__ a_wgh, float_sw4 dist,
                          float_sw4 distz, float_sw4 h,
-                         float_sw4* __restrict__ a_z, int* randw,
-                         float_sw4* __restrict__ a_saverands, int p, int pz);
-  void perturbvelocity_ci(int ifirst, int ilast, int jfirst, int jlast,
-                          int kfirst, int klast, float_sw4* __restrict__ a_vs,
+                         float_sw4* __restrict__ a_z, sw4_type* randw,
+                         float_sw4* __restrict__ a_saverands, sw4_type p, sw4_type pz);
+  void perturbvelocity_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                          sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ a_vs,
                           float_sw4* __restrict__ a_vp,
                           float_sw4* __restrict__ a_per, float_sw4 amp,
                           float_sw4 grad, float_sw4 zmin, float_sw4 h,
                           float_sw4 plimit);
-  void perturbvelocityc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, float_sw4* a_vs,
+  void perturbvelocityc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, float_sw4* a_vs,
                            float_sw4* a_vp, float_sw4* a_per, float_sw4 amp,
                            float_sw4 grad, float_sw4* a_z, float_sw4 plimit);
 
-  void gridinfo_ci(int ib, int ie, int jb, int je, int kb, int ke,
+  void gridinfo_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                    float_sw4* met, float_sw4* jac, float_sw4& minj,
                    float_sw4& maxj);
 
-  int metric_ci(int ib, int ie, int jb, int je, int kb, int ke, float_sw4* a_x,
+  sw4_type metric_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke, float_sw4* a_x,
                 float_sw4* a_y, float_sw4* a_z, float_sw4* a_met,
                 float_sw4* a_jac);
 
-  void metricexgh_ci(int ib, int ie, int jb, int je, int kb, int ke, int nz,
+  void metricexgh_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke, sw4_type nz,
                      float_sw4* a_x, float_sw4* a_y, float_sw4* a_z,
-                     float_sw4* a_met, float_sw4* a_jac, int order,
+                     float_sw4* a_met, float_sw4* a_jac, sw4_type order,
                      float_sw4 sb, float_sw4 zmax, float_sw4 amp, float_sw4 xc,
                      float_sw4 yc, float_sw4 xl, float_sw4 yl);
 
-  void freesurfcurvi_ci(int ib, int ie, int jb, int je, int kb, int ke, int nz,
-                        int side, float_sw4* a_u, float_sw4* a_mu,
+  void freesurfcurvi_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke, sw4_type nz,
+                        sw4_type side, float_sw4* a_u, float_sw4* a_mu,
                         float_sw4* a_la, float_sw4* a_met, float_sw4* s,
                         float_sw4* a_forcing);
 
-  void freesurfcurvisg_ci(int ib, int ie, int jb, int je, int kb, int ke,
-                          int nz, int side, float_sw4* a_u, float_sw4* a_mu,
+  void freesurfcurvisg_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
+                          sw4_type nz, sw4_type side, float_sw4* a_u, float_sw4* a_mu,
                           float_sw4* a_la, float_sw4* a_met, float_sw4* s,
                           float_sw4* a_forcing, float_sw4* a_strx,
                           float_sw4* a_stry);
 
-  void getsurfforcing_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, int k, float_sw4* a_met,
+  void getsurfforcing_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, sw4_type k, float_sw4* a_met,
                          float_sw4* a_jac, float_sw4* a_tau,
                          float_sw4* a_forcing);
 
-  void getsurfforcingsg_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, int k, float_sw4* a_met,
+  void getsurfforcingsg_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, sw4_type k, float_sw4* a_met,
                            float_sw4* a_jac, float_sw4* a_tau,
                            float_sw4* a_strx, float_sw4* a_stry,
                            float_sw4* a_forcing);
 
-  void getsurfforcinggh_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, int k, float_sw4 h,
+  void getsurfforcinggh_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, sw4_type k, float_sw4 h,
                            float_sw4* a_tau, float_sw4* a_forcing,
                            float_sw4 amp, float_sw4 xc, float_sw4 yc,
                            float_sw4 xl, float_sw4 yl);
 
-  void subsurfforcing_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, int k, float_sw4* a_met,
+  void subsurfforcing_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, sw4_type k, float_sw4* a_met,
                          float_sw4* a_jac, float_sw4* a_tau,
                          float_sw4* a_forcing);
 
-  void subsurfforcingsg_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, int k, float_sw4* a_met,
+  void subsurfforcingsg_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, sw4_type k, float_sw4* a_met,
                            float_sw4* a_jac, float_sw4* a_tau,
                            float_sw4* a_strx, float_sw4* a_stry,
                            float_sw4* a_forcing);
 
-  void addbstressc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                      int klast, int nz, float_sw4* a_u, float_sw4* a_mu,
+  void addbstressc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                      sw4_type klast, sw4_type nz, float_sw4* a_u, float_sw4* a_mu,
                       float_sw4* a_la, float_sw4* a_bs, float_sw4* a_met,
-                      int side, float_sw4* s, char op, int ghterm, int usesg,
+                      sw4_type side, float_sw4* s, char op, sw4_type ghterm, sw4_type usesg,
                       float_sw4* a_sgstrx, float_sw4* a_sgstry);
 
-  // void updatememvar_ci( int ifirst, int ilast, int jfirst, int jlast, int
-  // kfirst, int klast, 		      float_sw4* __restrict__ a_alp,
+  // void updatememvar_ci( sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type
+  // kfirst, sw4_type klast, 		      float_sw4* __restrict__ a_alp,
   // float_sw4* __restrict__
   // a_alm, float_sw4* __restrict__ a_up, 		      float_sw4*
   // __restrict__ a_u, float_sw4*
-  //__restrict__ a_um, 		      float_sw4 omega, float_sw4 dt, int domain
+  //__restrict__ a_um, 		      float_sw4 omega, float_sw4 dt, sw4_type domain
   //);
 
-  void solerr3_ci(int ib, int ie, int jb, int je, int kb, int ke, float_sw4 h,
+  void solerr3_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke, float_sw4 h,
                   float_sw4* __restrict__ uex, float_sw4* __restrict__ u,
                   float_sw4& li, float_sw4& l2, float_sw4& xli, float_sw4 zmin,
                   float_sw4 x0, float_sw4 y0, float_sw4 z0, float_sw4 radius,
-                  int imin, int imax, int jmin, int jmax, int kmin, int kmax);
-  void solerrgp_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                   int klast, float_sw4 h, float_sw4* __restrict__ uex,
+                  sw4_type imin, sw4_type imax, sw4_type jmin, sw4_type jmax, sw4_type kmin, sw4_type kmax);
+  void solerrgp_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                   sw4_type klast, float_sw4 h, float_sw4* __restrict__ uex,
                    float_sw4* __restrict__ u, float_sw4& li, float_sw4& l2);
-  void solerr3c_ci(int ib, int ie, int jb, int je, int kb, int ke,
+  void solerr3c_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                    float_sw4* __restrict__ uex, float_sw4* __restrict__ u,
                    float_sw4* __restrict__ x, float_sw4* __restrict__ y,
                    float_sw4* __restrict__ z, float_sw4* __restrict__ jac,
                    float_sw4& li, float_sw4& l2, float_sw4& xli, float_sw4 x0,
-                   float_sw4 y0, float_sw4 z0, float_sw4 radius, int imin,
-                   int imax, int jmin, int jmax, int kmin, int kmax, int usesg,
+                   float_sw4 y0, float_sw4 z0, float_sw4 radius, sw4_type imin,
+                   sw4_type imax, sw4_type jmin, sw4_type jmax, sw4_type kmin, sw4_type kmax, sw4_type usesg,
                    float_sw4* __restrict__ strx, float_sw4* __restrict__ stry);
-  void meterr4c_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                   int klast, float_sw4* __restrict__ met,
+  void meterr4c_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                   sw4_type klast, float_sw4* __restrict__ met,
                    float_sw4* __restrict__ metex, float_sw4* __restrict__ jac,
                    float_sw4* __restrict__ jacex, float_sw4 li[5],
-                   float_sw4 l2[5], int imin, int imax, int jmin, int jmax,
-                   int kmin, int kmax, float_sw4 h);
-  void testsrc_ci(float_sw4* __restrict__ f, int ib, int ie, int jb, int je,
-                  int kb, int ke, int nk, int wind[6], float_sw4 zmin,
-                  float_sw4 h, int kx[3], int ky[3], int kz[3],
+                   float_sw4 l2[5], sw4_type imin, sw4_type imax, sw4_type jmin, sw4_type jmax,
+                   sw4_type kmin, sw4_type kmax, float_sw4 h);
+  void testsrc_ci(float_sw4* __restrict__ f, sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je,
+                  sw4_type kb, sw4_type ke, sw4_type nk, sw4_type wind[6], float_sw4 zmin,
+                  float_sw4 h, sw4_type kx[3], sw4_type ky[3], sw4_type kz[3],
                   float_sw4 mom[3]);
-  void testsrcc_ci(float_sw4* __restrict__ f, int ib, int ie, int jb, int je,
-                   int kb, int ke, int nk, int g, int wind[6], int kx[3],
-                   int ky[3], int kz[3], float_sw4 mom[3]);
-  void tw_aniso_force_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, float_sw4* fo, float_sw4 t,
+  void testsrcc_ci(float_sw4* __restrict__ f, sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je,
+                   sw4_type kb, sw4_type ke, sw4_type nk, sw4_type g, sw4_type wind[6], sw4_type kx[3],
+                   sw4_type ky[3], sw4_type kz[3], float_sw4 mom[3]);
+  void tw_aniso_force_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, float_sw4* fo, float_sw4 t,
                          float_sw4 om, float_sw4 cv, float_sw4 ph,
                          float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                          float_sw4 phc[21], float_sw4 h, float_sw4 zmin);
-  void tw_aniso_curvi_force_ci(int ifirst, int ilast, int jfirst, int jlast,
-                               int kfirst, int klast,
+  void tw_aniso_curvi_force_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                               sw4_type kfirst, sw4_type klast,
                                float_sw4* __restrict__ fo, float_sw4 t,
                                float_sw4 om, float_sw4 cv, float_sw4 ph,
                                float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                                float_sw4 phc[21], float_sw4* __restrict__ xx,
                                float_sw4* __restrict__ yy,
                                float_sw4* __restrict__ zz);
-  void tw_aniso_free_surf_z_ci(int ifirst, int ilast, int jfirst, int jlast,
-                               int kfirst, int klast, int kz, float_sw4 t,
+  void tw_aniso_free_surf_z_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                               sw4_type kfirst, sw4_type klast, sw4_type kz, float_sw4 t,
                                float_sw4 om, float_sw4 cv, float_sw4 ph,
                                float_sw4 omm, float_sw4 phc[21],
                                float_sw4* __restrict__ bforce, float_sw4 h,
                                float_sw4 zmin);
-  void tw_aniso_force_tt_ci(int ifirst, int ilast, int jfirst, int jlast,
-                            int kfirst, int klast, float_sw4* __restrict__ fo,
+  void tw_aniso_force_tt_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                            sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                             float_sw4 t, float_sw4 om, float_sw4 cv,
                             float_sw4 ph, float_sw4 omm, float_sw4 phm,
                             float_sw4 amprho, float_sw4 phc[21], float_sw4 h,
                             float_sw4 zmin);
   void tw_aniso_curvi_force_tt_ci(
-      int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+      sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
       float_sw4* __restrict__ fo, float_sw4 t, float_sw4 om, float_sw4 cv,
       float_sw4 ph, float_sw4 omm, float_sw4 phm, float_sw4 amprho,
       float_sw4 phc[21], float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
       float_sw4* __restrict__ zz);
 
-  void twilightfort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                       int klast, float_sw4* __restrict__ u, float_sw4 t,
+  void twilightfort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                       sw4_type klast, float_sw4* __restrict__ u, float_sw4 t,
                        float_sw4 om, float_sw4 cv, float_sw4 ph, float_sw4 h,
                        float_sw4 zmin);
-  void twilightfortwind_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, float_sw4* __restrict__ u,
+  void twilightfortwind_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ u,
                            float_sw4 t, float_sw4 om, float_sw4 cv,
-                           float_sw4 ph, float_sw4 h, float_sw4 zmin, int i1,
-                           int i2, int j1, int j2, int k1, int k2);
-  void twilightfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                        int kfirst, int klast, float_sw4* __restrict__ u,
+                           float_sw4 ph, float_sw4 h, float_sw4 zmin, sw4_type i1,
+                           sw4_type i2, sw4_type j1, sw4_type j2, sw4_type k1, sw4_type k2);
+  void twilightfortc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                        sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ u,
                         float_sw4 t, float_sw4 om, float_sw4 cv, float_sw4 ph,
                         float_sw4* __restrict__ x, float_sw4* __restrict__ y,
                         float_sw4* __restrict__ z);
-  void twilightfortatt_ci(int ifirst, int ilast, int jfirst, int jlast,
-                          int kfirst, int klast, float_sw4* __restrict__ alpha,
+  void twilightfortatt_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                          sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ alpha,
                           float_sw4 t, float_sw4 om, float_sw4 cv, float_sw4 ph,
                           float_sw4 h, float_sw4 zmin);
-  void twilightfortattc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, float_sw4* __restrict__ alpha,
+  void twilightfortattc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ alpha,
                            float_sw4 t, float_sw4 om, float_sw4 cv,
                            float_sw4 ph, float_sw4* __restrict__ x,
                            float_sw4* __restrict__ y,
                            float_sw4* __restrict__ z);
-  void exactrhsfort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                       int klast, float_sw4* __restrict__ fo, float_sw4 t,
+  void exactrhsfort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                       sw4_type klast, float_sw4* __restrict__ fo, float_sw4 t,
                        float_sw4 om, float_sw4 c, float_sw4 ph, float_sw4 omm,
                        float_sw4 phm, float_sw4 amprho, float_sw4 ampmu,
                        float_sw4 amplambda, float_sw4 h, float_sw4 zmin);
-  void exactrhsfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                        int kfirst, int klast, float_sw4* __restrict__ fo,
+  void exactrhsfortc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                        sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                         float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                         float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                         float_sw4 ampmu, float_sw4 amplambda,
                         float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
                         float_sw4* __restrict__ zz);
-  void exactaccfort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                       int klast, float_sw4* __restrict__ utt, float_sw4 t,
+  void exactaccfort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                       sw4_type klast, float_sw4* __restrict__ utt, float_sw4 t,
                        float_sw4 om, float_sw4 c, float_sw4 ph, float_sw4 h,
                        float_sw4 zmin);
-  void exactaccfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                        int kfirst, int klast, float_sw4* __restrict__ utt,
+  void exactaccfortc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                        sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ utt,
                         float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                         float_sw4* __restrict__ x, float_sw4* __restrict__ y,
                         float_sw4* __restrict__ z);
-  void forcingfort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                      int klast, float_sw4* __restrict__ fo, float_sw4 t,
+  void forcingfort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                      sw4_type klast, float_sw4* __restrict__ fo, float_sw4 t,
                       float_sw4 om, float_sw4 c, float_sw4 ph, float_sw4 omm,
                       float_sw4 phm, float_sw4 amprho, float_sw4 ampmu,
                       float_sw4 amplambda, float_sw4 h, float_sw4 zmin);
-  void forcingttfort_ci(int ifirst, int ilast, int jfirst, int jlast,
-                        int kfirst, int klast, float_sw4* __restrict__ fo,
+  void forcingttfort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                        sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                         float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                         float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                         float_sw4 ampmu, float_sw4 amplambda, float_sw4 h,
                         float_sw4 zmin);
-  void forcingfortc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                       int klast, float_sw4* __restrict__ fo, float_sw4 t,
+  void forcingfortc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                       sw4_type klast, float_sw4* __restrict__ fo, float_sw4 t,
                        float_sw4 om, float_sw4 c, float_sw4 ph, float_sw4 omm,
                        float_sw4 phm, float_sw4 amprho, float_sw4 ampmu,
                        float_sw4 amplambda, float_sw4* __restrict__ xx,
                        float_sw4* __restrict__ yy, float_sw4* __restrict__ zz);
-  void forcingttfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, float_sw4* __restrict__ fo,
+  void forcingttfortc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                          float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                          float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                          float_sw4 ampmu, float_sw4 amplambda,
                          float_sw4* __restrict__ xx, float_sw4* __restrict__ yy,
                          float_sw4* __restrict__ zz);
-  void exactmatfort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                       int klast, float_sw4* __restrict__ rho,
+  void exactmatfort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                       sw4_type klast, float_sw4* __restrict__ rho,
                        float_sw4* __restrict__ mu, float_sw4* __restrict__ la,
                        float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                        float_sw4 ampmu, float_sw4 amplambda, float_sw4 h,
                        float_sw4 zmin);
-  void exactmatfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                        int kfirst, int klast, float_sw4* __restrict__ rho,
+  void exactmatfortc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                        sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ rho,
                         float_sw4* __restrict__ mu, float_sw4* __restrict__ la,
                         float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                         float_sw4 ampmu, float_sw4 amplambda,
                         float_sw4* __restrict__ x, float_sw4* __restrict__ y,
                         float_sw4* __restrict__ z);
-  void exactrhsfortsg_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, float_sw4* __restrict__ fo,
+  void exactrhsfortsg_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                          float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                          float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                          float_sw4 ampmu, float_sw4 amplambda, float_sw4 h,
                          float_sw4 zmin, float_sw4 omstrx, float_sw4 omstry,
                          float_sw4 omstrz);
-  void exactrhsfortsgc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                          int kfirst, int klast, float_sw4* __restrict__ fo,
+  void exactrhsfortsgc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                          sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                           float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                           float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                           float_sw4 ampmu, float_sw4 amplambda,
@@ -1244,66 +1244,66 @@ class EW {
                           float_sw4* __restrict__ yy,
                           float_sw4* __restrict__ zz, float_sw4 omstrx,
                           float_sw4 omstry, float_sw4 omstrz);
-  void exactmatfortatt_ci(int ifirst, int ilast, int jfirst, int jlast,
-                          int kfirst, int klast, float_sw4* __restrict__ mu,
+  void exactmatfortatt_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                          sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ mu,
                           float_sw4* __restrict__ la, float_sw4 momega,
                           float_sw4 mphase, float_sw4 ampmu,
                           float_sw4 amplambda, float_sw4 h, float_sw4 zmin);
-  void exactmatfortattc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, float_sw4* __restrict__ mu,
+  void exactmatfortattc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ mu,
                            float_sw4* __restrict__ la, float_sw4 momega,
                            float_sw4 mphase, float_sw4 ampmu,
                            float_sw4 amplambda, float_sw4* __restrict__ xx,
                            float_sw4* __restrict__ yy,
                            float_sw4* __restrict__ zz);
-  void forcingfortatt_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, float_sw4* __restrict__ fo,
+  void forcingfortatt_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                          float_sw4 t, float_sw4 omega, float_sw4 c,
                          float_sw4 phase, float_sw4 momega, float_sw4 mphase,
                          float_sw4 amprho, float_sw4 ampmu, float_sw4 amplambda,
                          float_sw4 h, float_sw4 zmin);
-  void forcingttattfort_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, float_sw4* __restrict__ fo,
+  void forcingttattfort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                            float_sw4 t, float_sw4 omega, float_sw4 c,
                            float_sw4 phase, float_sw4 momega, float_sw4 mphase,
                            float_sw4 amprho, float_sw4 ampmu,
                            float_sw4 amplambda, float_sw4 h, float_sw4 zmin);
-  void addmemvarforcing_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, float_sw4* __restrict__ alpha,
+  void addmemvarforcing_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ alpha,
                            float_sw4 t, float_sw4 omega, float_sw4 c,
                            float_sw4 phase, float_sw4 omegaVE, float_sw4 dt,
                            float_sw4 h, float_sw4 zmin);
-  void memvarforcesurf_ci(int ifirst, int ilast, int jfirst, int jlast, int k,
+  void memvarforcesurf_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type k,
                           float_sw4* __restrict__ fo, float_sw4 t,
                           float_sw4 omega, float_sw4 c, float_sw4 phase,
                           float_sw4 omegaVE, float_sw4 dt, float_sw4 h,
                           float_sw4 zmin);
-  void forcingfortattc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                          int kfirst, int klast, float_sw4* __restrict__ fo,
+  void forcingfortattc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                          sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                           float_sw4 t, float_sw4 omega, float_sw4 c,
                           float_sw4 phase, float_sw4 momega, float_sw4 mphase,
                           float_sw4 amprho, float_sw4 ampmu,
                           float_sw4 amplambda, float_sw4* __restrict__ xx,
                           float_sw4* __restrict__ yy,
                           float_sw4* __restrict__ zz);
-  void forcingttattfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                            int kfirst, int klast, float_sw4* __restrict__ fo,
+  void forcingttattfortc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                            sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                             float_sw4 t, float_sw4 omega, float_sw4 c,
                             float_sw4 phase, float_sw4 momega, float_sw4 mphase,
                             float_sw4 amprho, float_sw4 ampmu,
                             float_sw4 amplambda, float_sw4* __restrict__ xx,
                             float_sw4* __restrict__ yy,
                             float_sw4* __restrict__ zz);
-  void addmemvarforcingc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                            int kfirst, int klast,
+  void addmemvarforcingc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                            sw4_type kfirst, sw4_type klast,
                             float_sw4* __restrict__ alpha, float_sw4 t,
                             float_sw4 omega, float_sw4 c, float_sw4 phase,
                             float_sw4 omegaVE, float_sw4 dt,
                             float_sw4* __restrict__ xx,
                             float_sw4* __restrict__ yy,
                             float_sw4* __restrict__ zz);
-  void memvarforcesurfc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, int k,
+  void memvarforcesurfc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, sw4_type k,
                            float_sw4* __restrict__ fo, float_sw4 t,
                            float_sw4 omega, float_sw4 c, float_sw4 phase,
                            float_sw4 omegaVE, float_sw4 dt,
@@ -1311,54 +1311,54 @@ class EW {
                            float_sw4* __restrict__ yy,
                            float_sw4* __restrict__ zz);
 
-  void forcingfortsg_ci(int ifirst, int ilast, int jfirst, int jlast,
-                        int kfirst, int klast, float_sw4* __restrict__ fo,
+  void forcingfortsg_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                        sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                         float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                         float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                         float_sw4 ampmu, float_sw4 amplambda, float_sw4 h,
                         float_sw4 zmin, float_sw4 omstrx, float_sw4 omstry,
                         float_sw4 omstrz);
-  void forcingttfortsg_ci(int ifirst, int ilast, int jfirst, int jlast,
-                          int kfirst, int klast, float_sw4* __restrict__ fo,
+  void forcingttfortsg_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                          sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                           float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                           float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                           float_sw4 ampmu, float_sw4 amplambda, float_sw4 h,
                           float_sw4 zmin, float_sw4 omstrx, float_sw4 omstry,
                           float_sw4 omstrz);
-  void forcingfortcsg_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, float_sw4* __restrict__ fo,
+  void forcingfortcsg_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                          float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                          float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                          float_sw4 ampmu, float_sw4 amplambda,
                          float_sw4* __restrict__ xx, float_sw4* __restrict yy,
                          float_sw4* __restrict__ zz, float_sw4 omstrx,
                          float_sw4 omstry, float_sw4 omstrz);
-  void forcingttfortcsg_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, float_sw4* __restrict__ fo,
+  void forcingttfortcsg_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                            float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                            float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                            float_sw4 ampmu, float_sw4 amplambda,
                            float_sw4* __restrict__ xx, float_sw4* __restrict yy,
                            float_sw4* __restrict__ zz, float_sw4 omstrx,
                            float_sw4 omstry, float_sw4 omstrz);
-  void forcingfortsgatt_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, float_sw4* __restrict__ fo,
+  void forcingfortsgatt_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                            float_sw4 t, float_sw4 omega, float_sw4 c,
                            float_sw4 phase, float_sw4 momega, float_sw4 mphase,
                            float_sw4 amprho, float_sw4 ampmu,
                            float_sw4 amplambda, float_sw4 h, float_sw4 zmin,
                            float_sw4 omstrx, float_sw4 omstry,
                            float_sw4 omstrz);
-  void forcingttfortsgatt_ci(int ifirst, int ilast, int jfirst, int jlast,
-                             int kfirst, int klast, float_sw4* __restrict__ fo,
+  void forcingttfortsgatt_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                             sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                              float_sw4 t, float_sw4 omega, float_sw4 c,
                              float_sw4 phase, float_sw4 momega,
                              float_sw4 mphase, float_sw4 amprho,
                              float_sw4 ampmu, float_sw4 amplambda, float_sw4 h,
                              float_sw4 zmin, float_sw4 omstrx, float_sw4 omstry,
                              float_sw4 omstrz);
-  void forcingfortsgattc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                            int kfirst, int klast, float_sw4* __restrict__ fo,
+  void forcingfortsgattc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                            sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                             float_sw4 t, float_sw4 omega, float_sw4 c,
                             float_sw4 phase, float_sw4 momega, float_sw4 mphase,
                             float_sw4 amprho, float_sw4 ampmu,
@@ -1367,66 +1367,66 @@ class EW {
                             float_sw4* __restrict__ zz, float_sw4 omstrx,
                             float_sw4 omstry, float_sw4 omstrz);
   void forcingttfortsgattc_ci(
-      int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+      sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
       float_sw4* __restrict__ fo, float_sw4 t, float_sw4 omega, float_sw4 c,
       float_sw4 phase, float_sw4 momega, float_sw4 mphase, float_sw4 amprho,
       float_sw4 ampmu, float_sw4 amplambda, float_sw4* __restrict__ xx,
       float_sw4* __restrict__ yy, float_sw4* __restrict__ zz, float_sw4 omstrx,
       float_sw4 omstry, float_sw4 omstrz);
 
-  void twfrsurfz_wind_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, float_sw4 h, int kz,
+  void twfrsurfz_wind_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, float_sw4 h, sw4_type kz,
                          float_sw4 t, float_sw4 omega, float_sw4 c,
                          float_sw4 phase, float_sw4* __restrict__ bforce,
                          float_sw4* __restrict__ mu,
-                         float_sw4* __restrict__ lambda, float_sw4 zmin, int i1,
-                         int i2, int j1, int j2);
-  void twfrsurfzsg_wind_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, float_sw4 h, int kz,
+                         float_sw4* __restrict__ lambda, float_sw4 zmin, sw4_type i1,
+                         sw4_type i2, sw4_type j1, sw4_type j2);
+  void twfrsurfzsg_wind_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, float_sw4 h, sw4_type kz,
                            float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                            float_sw4 omstrx, float_sw4 omstry,
                            float_sw4* __restrict__ bforce,
                            float_sw4* __restrict__ mu,
                            float_sw4* __restrict__ lambda, float_sw4 zmin,
-                           int i1, int i2, int j1, int j2);
-  void twfrsurfz_att_wind_ci(int ifirst, int ilast, int jfirst, int jlast,
-                             int kfirst, int klast, float_sw4 h, int kz,
+                           sw4_type i1, sw4_type i2, sw4_type j1, sw4_type j2);
+  void twfrsurfz_att_wind_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                             sw4_type kfirst, sw4_type klast, float_sw4 h, sw4_type kz,
                              float_sw4 t, float_sw4 omega, float_sw4 c,
                              float_sw4 phase, float_sw4* __restrict__ bforce,
                              float_sw4* __restrict__ mua,
                              float_sw4* __restrict__ lambdaa, float_sw4 zmin,
-                             int i1, int i2, int j1, int j2);
-  void twfrsurfzsg_att_wind_ci(int ifirst, int ilast, int jfirst, int jlast,
-                               int kfirst, int klast, float_sw4 h, int kz,
+                             sw4_type i1, sw4_type i2, sw4_type j1, sw4_type j2);
+  void twfrsurfzsg_att_wind_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                               sw4_type kfirst, sw4_type klast, float_sw4 h, sw4_type kz,
                                float_sw4 t, float_sw4 omega, float_sw4 c,
                                float_sw4 phase, float_sw4 omstrx,
                                float_sw4 omstry, float_sw4* __restrict__ bforce,
                                float_sw4* __restrict__ mua,
                                float_sw4* __restrict__ lambdaa, float_sw4 zmin,
-                               int i1, int i2, int j1, int j2);
+                               sw4_type i1, sw4_type i2, sw4_type j1, sw4_type j2);
 
-  void tw_ani_stiff_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                       int klast, float_sw4 h, float_sw4 zmin, float_sw4 omm,
+  void tw_ani_stiff_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                       sw4_type klast, float_sw4 h, float_sw4 zmin, float_sw4 omm,
                        float_sw4 phm, float_sw4 amprho,
                        float_sw4* __restrict__ a_rho, float_sw4 a_phc[21],
                        float_sw4* __restrict__ a_cm);
 
-  void tw_ani_curvi_stiff_ci(int ifirst, int ilast, int jfirst, int jlast,
-                             int kfirst, int klast, float_sw4* __restrict__ xx,
+  void tw_ani_curvi_stiff_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                             sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ xx,
                              float_sw4* __restrict__ yy,
                              float_sw4* __restrict__ zz, float_sw4 omm,
                              float_sw4 phm, float_sw4 amprho,
                              float_sw4* __restrict__ a_rho, float_sw4 a_phc[21],
                              float_sw4* __restrict__ a_cm);
 
-  void anisomtrltocurvilinear_ci(int ifirst, int ilast, int jfirst, int jlast,
-                                 int kfirst, int klast,
+  void anisomtrltocurvilinear_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                                 sw4_type kfirst, sw4_type klast,
                                  float_sw4* __restrict__ a_met,
                                  float_sw4* __restrict__ a_c,
                                  float_sw4* __restrict__ a_cnew);
 
-  void velsum_ci(int is, int ie, int js, int je, int ks, int ke, int i1, int i2,
-                 int j1, int j2, int k1, int k2, float_sw4* __restrict__ mu,
+  void velsum_ci(sw4_type is, sw4_type ie, sw4_type js, sw4_type je, sw4_type ks, sw4_type ke, sw4_type i1, sw4_type i2,
+                 sw4_type j1, sw4_type j2, sw4_type k1, sw4_type k2, float_sw4* __restrict__ mu,
                  float_sw4* __restrict__ lambda, float_sw4* __restrict__ rho,
                  float_sw4& cp, float_sw4& cs, size_t& npts);
 
@@ -1439,104 +1439,104 @@ class EW {
                   std::vector<Sarray>& a_Um, vector<Sarray*>& a_AlphaVEp,
                   float_sw4 t, vector<Sarray>& F,
                   std::vector<GridPointSource*>& point_sources);
-  void CurviCartIC(int gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
+  void CurviCartIC(sw4_type gcart, vector<Sarray>& a_U, vector<Sarray>& a_Mu,
                    vector<Sarray>& a_Lambda, vector<Sarray*>& a_AlphaVE,
                    float_sw4 t);
-  void dirichlet_hom_ic(Sarray& U, int g, int k, bool inner);
-  void dirichlet_twilight_ic(Sarray& U, int g, int kic, float_sw4 t);
+  void dirichlet_hom_ic(Sarray& U, sw4_type g, sw4_type k, bool inner);
+  void dirichlet_twilight_ic(Sarray& U, sw4_type g, sw4_type kic, float_sw4 t);
 
-  void dirichlet_LRic(Sarray& U, int g, int kic, float_sw4 t, int adj);
-  void dirichlet_LRstress(Sarray& B, int g, int kic, float_sw4 t, int adj);
+  void dirichlet_LRic(Sarray& U, sw4_type g, sw4_type kic, float_sw4 t, sw4_type adj);
+  void dirichlet_LRstress(Sarray& B, sw4_type g, sw4_type kic, float_sw4 t, sw4_type adj);
 
-  void gridref_initial_guess(Sarray& u, int g, bool upper);
+  void gridref_initial_guess(Sarray& u, sw4_type g, bool upper);
   void compute_preliminary_corrector(
       Sarray& a_Up, Sarray& a_U, Sarray& a_Um, Sarray* a_AlphaVEp,
-      Sarray* a_AlphaVE, Sarray* a_AlphaVEm, Sarray& Utt, Sarray& Unext, int g,
-      int kic, float_sw4 t, Sarray& Ftt,
+      Sarray* a_AlphaVE, Sarray* a_AlphaVEm, Sarray& Utt, Sarray& Unext, sw4_type g,
+      sw4_type kic, float_sw4 t, Sarray& Ftt,
       std::vector<GridPointSource*>& point_sources);
   // void compute_preliminary_corrector( Sarray& a_Up, Sarray& a_U, Sarray&
   // a_Um,
   //                                     Sarray& Utt, Sarray& Unext,
-  //                                     int g, int kic, double t,
+  //                                     sw4_type g, sw4_type kic, double t,
   //                                     std::vector<GridPointSource*>
   //                                     point_sources );
 
   void compute_preliminary_predictor(Sarray& a_Up, Sarray& a_U,
-                                     Sarray* a_AlphaVEp, Sarray& Unext, int g,
-                                     int kic, float_sw4 t, Sarray& F,
+                                     Sarray* a_AlphaVEp, Sarray& Unext, sw4_type g,
+                                     sw4_type kic, float_sw4 t, Sarray& F,
                                      vector<GridPointSource*>& point_sources);
 
-  void compute_icstresses(Sarray& a_Up, Sarray& B, int g, int kic,
+  void compute_icstresses(Sarray& a_Up, Sarray& B, sw4_type g, sw4_type kic,
                           float_sw4* a_str_x, float_sw4* a_str_y);
-  void compute_icstresses_cpu(Sarray& a_Up, Sarray& B, int g, int kic,
+  void compute_icstresses_cpu(Sarray& a_Up, Sarray& B, sw4_type g, sw4_type kic,
                               float_sw4* a_str_x, float_sw4* a_str_y,
                               float_sw4* sbop, char op);
-  void compute_icstresses2(Sarray& a_Up, Sarray& B, int kic, float_sw4 h,
+  void compute_icstresses2(Sarray& a_Up, Sarray& B, sw4_type kic, float_sw4 h,
                            Sarray& a_mu, Sarray& a_lambda, float_sw4* a_str_x,
                            float_sw4* a_str_y, float_sw4* sbop, char op);
 
-  void compute_icstresses_curv(Sarray& a_Up, Sarray& B, int kic,
+  void compute_icstresses_curv(Sarray& a_Up, Sarray& B, sw4_type kic,
                                Sarray& a_metric, Sarray& a_mu, Sarray& a_lambda,
                                float_sw4* a_str_x, float_sw4* a_str_y,
                                float_sw4* sbop, char op);
-  void add_ve_stresses(Sarray& a_Up, Sarray& B, int g, int kic, int a_a,
+  void add_ve_stresses(Sarray& a_Up, Sarray& B, sw4_type g, sw4_type kic, sw4_type a_a,
                        float_sw4* a_str_x, float_sw4* a_str_y);
 
-  void consintp(Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf,
+  void conssw4_typep(Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf,
                 Sarray& Lambdaf, Sarray& Rhof, float_sw4 hf, Sarray& Uc,
                 Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray& Lambdac,
-                Sarray& Rhoc, float_sw4 hc, float_sw4 cof, int gc, int gp,
-                int is_periodic[2]);
+                Sarray& Rhoc, float_sw4 hc, float_sw4 cof, sw4_type gc, sw4_type gp,
+                sw4_type is_periodic[2]);
 
-  void checkintp(Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf,
+  void checksw4_typep(Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf,
                  Sarray& Lambdaf, Sarray& Rhof, float_sw4 hf, Sarray& Uc,
                  Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray& Lambdac,
-                 Sarray& Rhoc, float_sw4 hc, float_sw4 cof, int gc, int gf,
-                 int is_periodic[2], float_sw4 t);
+                 Sarray& Rhoc, float_sw4 hc, float_sw4 cof, sw4_type gc, sw4_type gf,
+                 sw4_type is_periodic[2], float_sw4 t);
 
-  void check_displacement_continuity(Sarray& Uf, Sarray& Uc, int gf, int gc);
+  void check_displacement_continuity(Sarray& Uf, Sarray& Uc, sw4_type gf, sw4_type gc);
   void check_corrector(Sarray& Uf, Sarray& Uc, Sarray& Unextf, Sarray& Unextc,
-                       int kf, int kc);
+                       sw4_type kf, sw4_type kc);
   void getDtFromRestartFile();
   void initial_tw_test(vector<Sarray>& U, vector<Sarray>& Up, vector<Sarray>& F,
                        vector<Sarray>& Mu, vector<Sarray>& Lambda,
                        vector<Sarray>& Lu, vector<Sarray>& Uacc,
                        vector<Sarray*> AlphaVE,
                        vector<GridPointSource*> point_sources,
-                       vector<int> identsources, float_sw4 t);
+                       vector<sw4_type> identsources, float_sw4 t);
   void checkpoint_twilight_test(vector<Sarray>& Um, vector<Sarray>& U,
                                 vector<Sarray>& Up, vector<Sarray*> AlphaVEm,
                                 vector<Sarray*> AlphaVE,
                                 vector<Sarray*> AlphaVEp,
                                 vector<Source*> a_Sources, float_sw4 t);
-  void make_type(vector<std::tuple<int, int, int>>& send_type,
-                 vector<std::tuple<float_sw4*, float_sw4*>>& bufs_type, int i1,
-                 int j1, int k1, int i2, int j2, int k2, int g);
-  void make_type_2d(vector<std::tuple<int, int, int>>& send_type,
+  void make_type(vector<std::tuple<sw4_type, sw4_type, sw4_type>>& send_type,
+                 vector<std::tuple<float_sw4*, float_sw4*>>& bufs_type, sw4_type i1,
+                 sw4_type j1, sw4_type k1, sw4_type i2, sw4_type j2, sw4_type k2, sw4_type g);
+  void make_type_2d(vector<std::tuple<sw4_type, sw4_type, sw4_type>>& send_type,
                     vector<std::tuple<float_sw4*, float_sw4*>>& bufs_type,
-                    int i1, int j1, int k1, int g);
-  void communicate_array_async(Sarray& u, int grid);
-  void communicate_array_2d_async(Sarray& u, int g, int k);
-  void communicate_array_2d_async_memo(Sarray& u, int g, int k);
-  void AMPI_Sendrecv(float_sw4* a, int scount, std::tuple<int, int, int>& sendt,
-                     int sentto, int stag, float_sw4* b, int rcount,
-                     std::tuple<int, int, int>& recvt, int recvfrom, int rtag,
+                    sw4_type i1, sw4_type j1, sw4_type k1, sw4_type g);
+  void communicate_array_async(Sarray& u, sw4_type grid);
+  void communicate_array_2d_async(Sarray& u, sw4_type g, sw4_type k);
+  void communicate_array_2d_async_memo(Sarray& u, sw4_type g, sw4_type k);
+  void AMPI_Sendrecv(float_sw4* a, sw4_type scount, std::tuple<sw4_type, sw4_type, sw4_type>& sendt,
+                     sw4_type sentto, sw4_type stag, float_sw4* b, sw4_type rcount,
+                     std::tuple<sw4_type, sw4_type, sw4_type>& recvt, sw4_type recvfrom, sw4_type rtag,
                      std::tuple<float_sw4*, float_sw4*>& buf, MPI_Comm comm,
                      MPI_Status* status);
-  void AMPI_Sendrecv2(float_sw4* a, int scount,
-                      std::tuple<int, int, int>& sendt, int sentto, int stag,
-                      float_sw4* b, int rcount,
-                      std::tuple<int, int, int>& recvt, int recvfrom, int rtag,
+  void AMPI_Sendrecv2(float_sw4* a, sw4_type scount,
+                      std::tuple<sw4_type, sw4_type, sw4_type>& sendt, sw4_type sentto, sw4_type stag,
+                      float_sw4* b, sw4_type rcount,
+                      std::tuple<sw4_type, sw4_type, sw4_type>& recvt, sw4_type recvfrom, sw4_type rtag,
                       std::tuple<float_sw4*, float_sw4*>& buf, MPI_Comm comm,
                       MPI_Status* status);
   void getbuffer_device(float_sw4* data, float_sw4* buf,
-                        std::tuple<int, int, int>& mtype, bool async = false);
+                        std::tuple<sw4_type, sw4_type, sw4_type>& mtype, bool async = false);
   void putbuffer_device(float_sw4* data, float_sw4* buf,
-                        std::tuple<int, int, int>& mtype, bool async = false);
+                        std::tuple<sw4_type, sw4_type, sw4_type>& mtype, bool async = false);
   void getbuffer_host(float_sw4* data, float_sw4* buf,
-                      std::tuple<int, int, int>& mtype);
+                      std::tuple<sw4_type, sw4_type, sw4_type>& mtype);
   void putbuffer_host(float_sw4* data, float_sw4* buf,
-                      std::tuple<int, int, int>& mtype);
+                      std::tuple<sw4_type, sw4_type, sw4_type>& mtype);
   void perturb_vels(Sarray& cs, Sarray& cp, Sarray& rndpert);
   void perturb_rho(Sarray& rho, Sarray& rndpert);
 
@@ -1553,34 +1553,34 @@ class EW {
   // Grid
   // ------------------------------------------
 
-  int mNumberOfGrids, mNumberOfCartesianGrids;
+  sw4_type mNumberOfGrids, mNumberOfCartesianGrids;
 
   // grid sizes are needed by the Source and Image classes, so should be kept
   // public
   vector<float_sw4> mGridSize;
 
   // part of global array on each processor, including ghost points = all points
-  vector<int> m_iStart, m_iEnd, m_jStart, m_jEnd, m_kStart, m_kEnd;
+  vector<sw4_type> m_iStart, m_iEnd, m_jStart, m_jEnd, m_kStart, m_kEnd;
 
   // Active subcube is the part of the domain where the material is
   // variable in material inversion.
-  vector<int> m_iStartAct, m_iEndAct, m_jStartAct, m_jEndAct, m_kStartAct,
+  vector<sw4_type> m_iStartAct, m_iEndAct, m_jStartAct, m_jEndAct, m_kStartAct,
       m_kEndAct;
-  vector<int> m_iStartActGlobal, m_iEndActGlobal, m_jStartActGlobal,
+  vector<sw4_type> m_iStartActGlobal, m_iEndActGlobal, m_jStartActGlobal,
       m_jEndActGlobal;
-  vector<int> m_kStartActGlobal, m_kEndActGlobal;
+  vector<sw4_type> m_kStartActGlobal, m_kEndActGlobal;
 
   // global number of grid points on each refinement level, without ghost points
-  vector<int> m_global_nx, m_global_ny, m_global_nz;
+  vector<sw4_type> m_global_nx, m_global_ny, m_global_nz;
 
   // part of global array on each processor, excluding ghost points and parallel
-  // overlap points = interior points
-  vector<int> m_iStartInt, m_iEndInt, m_jStartInt, m_jEndInt, m_kStartInt,
-      m_kEndInt;
+  // overlap points = sw4_typeerior points
+  vector<sw4_type> m_iStartSw4_Type, m_iEndSw4_Type, m_jStartSw4_Type, m_jEndSw4_Type, m_kStartSw4_Type,
+      m_kEndSw4_Type;
 
   // Note that the m_paddingCells array is no longer needed to get the range of
-  // internal grid points Instead use m_iStartInt[g], m_iEndInt[g], etc,
-  int m_paddingCells[4];  // indexing is [0] = low-i, [1] = high-i, [2] = low-j,
+  // sw4_typeernal grid points Instead use m_iStartSw4_Type[g], m_iEndSw4_Type[g], etc,
+  sw4_type m_paddingCells[4];  // indexing is [0] = low-i, [1] = high-i, [2] = low-j,
                           // [3] = high-j
 
   // For the Cartesian grid, we only need to offset in z
@@ -1604,7 +1604,7 @@ class EW {
   Filter* m_filterobs_ptr;
   // Test cases for optimizer, validate gradient, hessian, output function
   // surface, etc...
-  int m_opttest;
+  sw4_type m_opttest;
 
   // 2-D arrays with elevation-values (=-z) as function of horizontal indices
   // mTopo holds the raw topography (according to the "elevation" field in the
@@ -1614,9 +1614,9 @@ class EW {
   // curvilinear grid
   Sarray mTopo, mTopoGridExt;
 
-  // 2-D arrays with interface surfaces (z-coordinates) for mesh refinement in
+  // 2-D arrays with sw4_typeerface surfaces (z-coordinates) for mesh refinement in
   // the curvilinear grid
-  vector<Sarray> m_curviInterface;
+  vector<Sarray> m_curviSw4_Typeerface;
 
   // material description used with material surfaces and the ifile command
   vector<MaterialProperty*> m_materials;
@@ -1632,7 +1632,7 @@ class EW {
   vector<Sarray> mC;                 // Anisotropic material parameters
   Sarray mCcurv;  // Anisotropic material with metric (on curvilinear grid).
 
-  // Store coefficeints needed for Mesh refinement
+  // Store coefficesw4_types needed for Mesh refinement
   vector<Sarray> m_Morf, m_Mlrf, m_Mufs, m_Mlfs, m_Morc, m_Mlrc, m_Mucs, m_Mlcs;
 
   vector<float_sw4> m_curviRefLev;
@@ -1640,13 +1640,13 @@ class EW {
  private:
   // void preprocessSources(vector<Source*>& a_GlobalSources);
   void preprocessSources(vector<vector<Source*>>& a_GlobalSources);
-  void revvector(int npts, float_sw4* v);
+  void revvector(sw4_type npts, float_sw4* v);
 
-  int m_nevent;  // Number of events, needed for multiple event material
+  sw4_type m_nevent;  // Number of events, needed for multiple event material
                  // optimization.
-  int m_nevents_specified;  // Number of event lines in input file
+  sw4_type m_nevents_specified;  // Number of event lines in input file
   bool m_events_parallel;   // Process events in parallel
-  map<string, int> m_event_names;
+  map<string, sw4_type> m_event_names;
 
   // epicenter
   vector<float_sw4> m_epi_lat, m_epi_lon, m_epi_depth, m_epi_t0;
@@ -1677,7 +1677,7 @@ class EW {
 
   bool m_doubly_periodic;
 
-  int m_proc_array[2];
+  sw4_type m_proc_array[2];
 
   bool mbcsSet;
 
@@ -1687,8 +1687,8 @@ class EW {
   float_sw4 m_GaussianAmp, m_GaussianLx, m_GaussianLy, m_GaussianXc,
       m_GaussianYc;
 
-  // interface surfaces in the material model
-  // int m_number_material_surfaces, m_Nlon, m_Nlat;
+  // sw4_typeerface surfaces in the material model
+  // sw4_type m_number_material_surfaces, m_Nlon, m_Nlat;
   // float_sw4 m_materialLonMax, m_materialLonMin, m_materialLatMax,
   // m_materialLatMin; Sarray m_materialDepth; float_sw4 *m_materialLon,
   // *m_materialLat;
@@ -1698,7 +1698,7 @@ class EW {
   float_sw4 m_vpMin, m_vsMin;
 
   // order of polynomial mapping in algebraic grid genenerator
-  int m_grid_interpolation_order;
+  sw4_type m_grid_sw4_typeerpolation_order;
   float_sw4 m_zetaBreak;
 
   // metric of the curvilinear grid
@@ -1709,16 +1709,16 @@ class EW {
   // command limitfrequency
   float_sw4 m_frequency_limit;
   bool m_limit_frequency;
-  int m_ppw;
+  sw4_type m_ppw;
 
   // parallel io stuff
   bool m_pfs;
-  int m_nwriters;
+  sw4_type m_nwriters;
 
   // supergrid
   bool m_use_supergrid;
-  int m_sg_gp_thickness;   //, m_sg_gp_transition;
-  int m_sg_damping_order;  // 4 or 6 order dissipation operator
+  sw4_type m_sg_gp_thickness;   //, m_sg_gp_transition;
+  sw4_type m_sg_damping_order;  // 4 or 6 order dissipation operator
   float_sw4 m_supergrid_damping_coefficient;
   float_sw4 m_supergrid_width;  // width in physical units
   bool m_use_sg_width;          // use width instead of gp
@@ -1730,14 +1730,14 @@ class EW {
   string mTempPath;
 
   // number of boundary points on each side
-  vector<int*> m_NumberOfBCPoints;
+  vector<sw4_type*> m_NumberOfBCPoints;
 
   // ghost point index window for each side of the boundary on each grid
-  vector<int*> m_BndryWindow;
+  vector<sw4_type*> m_BndryWindow;
 
   // attenuation variables (only allocated if attenuation is enabled)
   bool m_use_attenuation, m_att_use_max_frequency;
-  int m_number_mechanisms;
+  sw4_type m_number_mechanisms;
   float_sw4 m_velo_omega, m_min_omega, m_max_omega, m_att_max_frequency,
       m_att_ppw;
   float_sw4 m_qmultiplier;
@@ -1752,7 +1752,7 @@ class EW {
 
   // Randomization of the material
   bool m_randomize, m_randomize_density;
-  int m_random_seed[3];
+  sw4_type m_random_seed[3];
   float_sw4 m_random_dist, m_random_distz, m_random_amp, m_random_amp_grad,
       m_random_sdlimit;
   vector<RandomizedMaterial*> m_random_blocks;
@@ -1760,12 +1760,12 @@ class EW {
   // Vectors of pointers to hold boundary forcing arrays in each grid
   // this is innner cube data for coupling with other codes
   // bool m_do_geodynbc;
-  // vector<int*> m_geodyn_dims;
+  // vector<sw4_type*> m_geodyn_dims;
   // vector<Sarray> m_geodyn_data1;
   // vector<Sarray> m_geodyn_data2;
   // float_sw4 m_geodyn_origin[3], m_geodyn_h, m_geodyn_dt;
-  // int m_geodyn_step, m_geodyn_maxsteps, m_geodyn_blocksize;
-  //    int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk, m_geodyn_faces;
+  // sw4_type m_geodyn_step, m_geodyn_maxsteps, m_geodyn_blocksize;
+  //    sw4_type m_geodyn_ni, m_geodyn_nj, m_geodyn_nk, m_geodyn_faces;
   // string m_geodyn_filename;
   // ifstream m_geodynfile;
   // bool m_geodyn_iwillread;
@@ -1775,10 +1775,10 @@ class EW {
 
   // number of grid points near mesh refinement boundary, for  extrapolating
   // material properties
-  int mMaterialExtrapolate;
+  sw4_type mMaterialExtrapolate;
 
   // variables from the old FileInput class
-  int m_nx_base, m_ny_base, m_nz_base;
+  sw4_type m_nx_base, m_ny_base, m_nz_base;
   float_sw4 m_h_base;
   vector<bool> m_iscurvilinear;
   vector<float_sw4> m_refinementBoundaries;
@@ -1786,21 +1786,21 @@ class EW {
   string m_topoFileName, m_topoExtFileName, m_QueryType;
   bool mTopoImageFound;
   float_sw4 m_topo_zmax;
-  int m_maxIter;
+  sw4_type m_maxIter;
 
   //-------------------------------------------
   // IO data
   //-------------------------------------------
-  int m_myRank, m_nProcs;
+  sw4_type m_myRank, m_nProcs;
 
   string mName;
   // string mWPPFileName;
   string mGMTFileName;
 
   bool mWriteGMTOutput;
-  int mPlotFrequency;
-  int mNumFiles;
-  int mVerbose;
+  sw4_type mPlotFrequency;
+  sw4_type mNumFiles;
+  sw4_type mVerbose;
   bool mQuiet;
 
   bool mDebugIO;
@@ -1821,22 +1821,22 @@ class EW {
   vector<bool> mTimeIsSet;
   vector<float_sw4> mTmax;
 
-  vector<int> mNumberOfTimeSteps;
+  vector<sw4_type> mNumberOfTimeSteps;
 
   // Test modes
-  int m_update_boundary_function;
+  sw4_type m_update_boundary_function;
 
   // bool mTestSource;
   // bool mTestLamb;
   // bool mTestingEnergy;
-  int mOrder;
+  sw4_type mOrder;
   // mCFL actual cfl. Used to determine time step in forward solver.
   // mCFLmax, maximum possible cfl. Used for limiting
   //          wave speeds during material inversion
   float_sw4 mCFL, mCFLmax;
 
   // info on SBP boundary operators, or not.
-  vector<int*> m_onesided;
+  vector<sw4_type*> m_onesided;
   float_sw4 m_curlcoeff, m_d4coeff, m_d4_cfl;  // these should go away
 
   // storage for the 1-D damping coefficients
@@ -1848,13 +1848,13 @@ class EW {
   // restart data
   //-------------------------------------------
   // string mRestartFilePrefix;
-  // int mRestartFromCycle;
-  // int mRestartDumpInterval;
+  // sw4_type mRestartFromCycle;
+  // sw4_type mRestartDumpSw4_Typeerval;
 
   //----------------------------------------
   // Energy test data
   //----------------------------------------
-  bool m_energy_log, m_energy_print;
+  bool m_energy_log, m_energy_prsw4_type;
   float_sw4 m_saved_energy;
   string m_energy_logfile;
   vector<float_sw4> m_energy;  // *
@@ -1863,11 +1863,11 @@ class EW {
   // Measure wall clock time variables
   //-------------------------------------------
   bool m_do_timing;
-  int m_timing_print;
+  sw4_type m_timing_prsw4_type;
   bool m_output_detailed_timing;
   bool m_output_load;
 
-  int m_projection_cycle;
+  sw4_type m_projection_cycle;
 
   bool m_checkfornan;
 
@@ -1875,20 +1875,20 @@ class EW {
   float_sw4 m_max_error[3], m_l2_error[3];
 
   string m_error_log_file;
-  bool m_error_log, m_error_print;
-  int m_inner_loop;
+  bool m_error_log, m_error_prsw4_type;
+  sw4_type m_inner_loop;
 
-  //  Conservative interface
-  // bool m_intp_conservative;
+  //  Conservative sw4_typeerface
+  // bool m_sw4_typep_conservative;
   bool m_mesh_refinements;
   bool m_matrices_decomposed;
   float_sw4 m_citol, m_cirelfact;
-  int m_cimaxiter;
+  sw4_type m_cimaxiter;
 
   vector<float_sw4*> m_cimat1;
   vector<float_sw4*> m_cimat2;
-  vector<int*> m_ciipiv1;
-  vector<int*> m_ciipiv2;
+  vector<sw4_type*> m_ciipiv1;
+  vector<sw4_type*> m_ciipiv2;
 
   EW(const EW&);
   EW& operator=(const EW&);
@@ -1896,12 +1896,12 @@ class EW {
   // Geodyn coupling
   bool m_do_geodynbc;
   std::vector<float_sw4*> m_geo_usgh;  // Save ghost point
-  std::vector<int*> m_geodyn_dims;
+  std::vector<sw4_type*> m_geodyn_dims;
   std::vector<Sarray> m_geodyn_data1;
   std::vector<Sarray> m_geodyn_data2;
   double m_geodyn_origin[3], m_geodyn_h, m_geodyn_dt;
-  int m_geodyn_step, m_geodyn_maxsteps, m_geodyn_blocksize;
-  int m_geodyn_ni, m_geodyn_nj, m_geodyn_nk, m_geodyn_faces;
+  sw4_type m_geodyn_step, m_geodyn_maxsteps, m_geodyn_blocksize;
+  sw4_type m_geodyn_ni, m_geodyn_nj, m_geodyn_nk, m_geodyn_faces;
   std::string m_geodyn_filename;
   std::ifstream m_geodynfile;
   bool m_geodyn_iwillread, m_geodyn_past_end;
@@ -1911,7 +1911,7 @@ class EW {
   std::string m_geodynbc_filename;
   float_sw4 m_ibc_origin[3];
 
-  int mPrintInterval;
+  sw4_type mPrintInterval;
   // (lon, lat) origin of Grid as well as
   double mGeoAz;
   double mLonOrigin, mLatOrigin;
@@ -1930,23 +1930,23 @@ class EW {
       m_iniguess_shifts;  // Estimate initial guess ?
   bool m_output_initial_seismograms;
   bool m_compute_scalefactors;
-  int m_maxit, m_maxrestart;
+  sw4_type m_maxit, m_maxrestart;
   float_sw4 m_tolerance;
   float_sw4 m_scalefactors[11];
-  int m_cgstepselection, m_cgvarcase;
+  sw4_type m_cgstepselection, m_cgvarcase;
   bool m_cgfletcherreeves, m_do_linesearch;
   bool m_opt_testing;
-  int m_opt_method, m_lbfgs_m;
+  sw4_type m_opt_method, m_lbfgs_m;
   // perturbations for testing
   float_sw4 m_perturb;
-  int m_iperturb, m_jperturb, m_kperturb, m_pervar;
+  sw4_type m_iperturb, m_jperturb, m_kperturb, m_pervar;
 
   // Number of grid points per wave length, P = min Vs/(f*h)
   vector<float_sw4> mMinVsOverH;
 
-  int m_ext_ghost_points;
-  int m_ghost_points;
-  int m_ppadding;
+  sw4_type m_ext_ghost_points;
+  sw4_type m_ghost_points;
+  sw4_type m_ppadding;
 
 // coefficients for boundary modified 4th order SBP operators
 #if defined(ENABLE_GPU)
@@ -1962,9 +1962,9 @@ class EW {
   // Array of sviews used in EW::enforceBCfreeAtt2 in solve.C
   SView* viewArrayActual;
 
-  vector<CurvilinearInterface2*> m_cli2;
+  vector<CurvilinearSw4_Typeerface2*> m_cli2;
 
-  // int m_neighbor[4];
+  // sw4_type m_neighbor[4];
   vector<MPI_Datatype> m_send_type1;
   vector<MPI_Datatype> m_send_type3;
   vector<MPI_Datatype> m_send_type4;   // metric
@@ -1972,7 +1972,7 @@ class EW {
   MPI_Datatype m_send_type_2dfinest[2];
   MPI_Datatype m_send_type_2dfinest_ext[2];
 
-  // for communicating interface surfaces
+  // for communicating sw4_typeerface surfaces
   vector<MPI_Datatype> m_send_type_isurfx;
   vector<MPI_Datatype> m_send_type_isurfy;
 
@@ -1984,15 +1984,15 @@ class EW {
   vector<MPI_Datatype> m_send_type_2dy1p;
 
   // Data used by async send_recv with RAJA
-  vector<std::tuple<int, int, int>> send_type1;
-  vector<std::tuple<int, int, int>> send_type3;
-  vector<std::tuple<int, int, int>> send_type4;
-  vector<std::tuple<int, int, int>> send_type21;
+  vector<std::tuple<sw4_type, sw4_type, sw4_type>> send_type1;
+  vector<std::tuple<sw4_type, sw4_type, sw4_type>> send_type3;
+  vector<std::tuple<sw4_type, sw4_type, sw4_type>> send_type4;
+  vector<std::tuple<sw4_type, sw4_type, sw4_type>> send_type21;
 
-  vector<std::tuple<int, int, int>> send_type_2dx;
-  vector<std::tuple<int, int, int>> send_type_2dy;
+  vector<std::tuple<sw4_type, sw4_type, sw4_type>> send_type_2dx;
+  vector<std::tuple<sw4_type, sw4_type, sw4_type>> send_type_2dy;
 
-  vector<std::tuple<int, int, int>> send_type_2dfinest_ext;
+  vector<std::tuple<sw4_type, sw4_type, sw4_type>> send_type_2dfinest_ext;
 
   vector<std::tuple<float_sw4*, float_sw4*>> bufs_type1;
   vector<std::tuple<float_sw4*, float_sw4*>> bufs_type3;
@@ -2009,7 +2009,7 @@ class EW {
   // Arrays used for offloading parts of EW::Force
   float_sw4* ForceVector;
   float_sw4** ForceAddress;
-  int* idnts;
+  sw4_type* idnts;
   GridPointSource** GPS;
 
   // std::unordered_map<size_t, double > mpi_times,mpi_times2;
@@ -2017,20 +2017,20 @@ class EW {
 #ifdef SW4_TRACK_MPI
   StatMachine<size_t, double> sm;
   StatMachine<size_t, double> sm2;
-  StatMachine<int, double> coll_sm;
-  StatMachine<int, double> step_sm;
-  StatMachine<int, double> host_sm;
+  StatMachine<sw4_type, double> coll_sm;
+  StatMachine<sw4_type, double> step_sm;
+  StatMachine<sw4_type, double> host_sm;
 #endif
  public:
-  int m_neighbor[4];
+  sw4_type m_neighbor[4];
   MPI_Datatype m_mpifloat;
 
   bool m_topography_exists;
 
   // UTC time corresponding to simulation time 0.
   // bool m_utc0set, m_utc0isrefevent;
-  // int m_utc0[7];
-  vector<vector<int>> m_utc0;  // Nevent?
+  // sw4_type m_utc0[7];
+  vector<vector<sw4_type>> m_utc0;  // Nevent?
 
   // Error handling facility
   // ErrorChecking* m_error_checking;

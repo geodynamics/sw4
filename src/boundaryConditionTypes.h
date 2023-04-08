@@ -38,9 +38,9 @@ enum boundaryConditionType {
   bDirichlet,
   bSuperGrid,
   bPeriodic,
-  bCCInterface,
-  bRefInterface,
-  bAEInterface,
+  bCCSw4_Typeerface,
+  bRefSw4_Typeerface,
+  bAESw4_Typeerface,
   bProcessor,
   bNone
 };

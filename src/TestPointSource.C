@@ -5,7 +5,7 @@
 #include "TestPointSource.h"
 
 void TestPointSource::ubnd(Sarray& u, Sarray& xx, Sarray& yy, Sarray& zz,
-                           float_sw4 t, float_sw4 h, int npts, int sides[6]) {
+                           float_sw4 t, float_sw4 h, sw4_type npts, sw4_type sides[6]) {
   Source& source = *m_source_ptr;
   timeDep tD;
   if (!(source.getName() == "SmoothWave" ||
@@ -50,9 +50,9 @@ void TestPointSource::ubnd(Sarray& u, Sarray& xx, Sarray& yy, Sarray& zz,
   //   float_sw4 h   = mGridSize[g];
   float_sw4 eps = 1e-3 * h;
 
-  for (int s = 0; s < 6; s++)
+  for (sw4_type s = 0; s < 6; s++)
     if (sides[s] == 1) {
-      int kb = u.m_kb, ke = u.m_ke, jb = u.m_jb, je = u.m_je, ib = u.m_ib,
+      sw4_type kb = u.m_kb, ke = u.m_ke, jb = u.m_jb, je = u.m_je, ib = u.m_ib,
           ie = u.m_ie;
       if (s == 0) ie = ib + npts - 1;
       if (s == 1) ib = ie - npts + 1;
@@ -66,9 +66,9 @@ void TestPointSource::ubnd(Sarray& u, Sarray& xx, Sarray& yy, Sarray& zz,
         kb = ke - npts + 1;
         if (kb < u.m_kb) kb = u.m_kb;
       }
-      for (int k = kb; k <= ke; k++)
-        for (int j = jb; j <= je; j++)
-          for (int i = ib; i <= ie; i++) {
+      for (sw4_type k = kb; k <= ke; k++)
+        for (sw4_type j = jb; j <= je; j++)
+          for (sw4_type i = ib; i <= ie; i++) {
             float_sw4 x = xx(i, j, k), y = yy(i, j, k), z = zz(i, j, k);
             if (!ismomentsource) {
               float_sw4 R = sqrt((x - x0) * (x - x0) + (y - y0) * (y - y0) +
@@ -81,49 +81,49 @@ void TestPointSource::ubnd(Sarray& u, Sarray& xx, Sarray& yy, Sarray& zz,
                   A = (1 / pow(alpha, 2) * SmoothWave(time, fr * R, alpha) -
                        1 / pow(beta, 2) * SmoothWave(time, fr * R, beta) +
                        3 / pow(fr * R, 2) *
-                           SmoothWave_x_T_Integral(time, fr * R, alpha, beta)) /
+                           SmoothWave_x_T_Sw4_Typeegral(time, fr * R, alpha, beta)) /
                       (4 * M_PI * rho * R * R * R);
 
                   B = (1 / pow(beta, 2) * SmoothWave(time, fr * R, beta) -
                        1 / pow(fr * R, 2) *
-                           SmoothWave_x_T_Integral(time, fr * R, alpha, beta)) /
+                           SmoothWave_x_T_Sw4_Typeegral(time, fr * R, alpha, beta)) /
                       (4 * M_PI * rho * R);
                 } else if (tD == iVerySmoothBump) {
                   A = (1 / pow(alpha, 2) * VerySmoothBump(time, fr * R, alpha) -
                        1 / pow(beta, 2) * VerySmoothBump(time, fr * R, beta) +
                        3 / pow(fr * R, 2) *
-                           VerySmoothBump_x_T_Integral(time, fr * R, alpha,
+                           VerySmoothBump_x_T_Sw4_Typeegral(time, fr * R, alpha,
                                                        beta)) /
                       (4 * M_PI * rho * R * R * R);
 
                   B = (1 / pow(beta, 2) * VerySmoothBump(time, fr * R, beta) -
                        1 / pow(fr * R, 2) *
-                           VerySmoothBump_x_T_Integral(time, fr * R, alpha,
+                           VerySmoothBump_x_T_Sw4_Typeegral(time, fr * R, alpha,
                                                        beta)) /
                       (4 * M_PI * rho * R);
                 } else if (tD == iC6SmoothBump) {
                   A = (1 / pow(alpha, 2) * C6SmoothBump(time, fr * R, alpha) -
                        1 / pow(beta, 2) * C6SmoothBump(time, fr * R, beta) +
                        3 / pow(fr * R, 2) *
-                           C6SmoothBump_x_T_Integral(time, fr * R, alpha,
+                           C6SmoothBump_x_T_Sw4_Typeegral(time, fr * R, alpha,
                                                      beta)) /
                       (4 * M_PI * rho * R * R * R);
 
                   B = (1 / pow(beta, 2) * C6SmoothBump(time, fr * R, beta) -
                        1 / pow(fr * R, 2) *
-                           C6SmoothBump_x_T_Integral(time, fr * R, alpha,
+                           C6SmoothBump_x_T_Sw4_Typeegral(time, fr * R, alpha,
                                                      beta)) /
                       (4 * M_PI * rho * R);
                 } else if (tD == iGaussian) {
                   A = (1 / pow(alpha, 2) * Gaussian(time, R, alpha, fr) -
                        1 / pow(beta, 2) * Gaussian(time, R, beta, fr) +
                        3 / pow(R, 2) *
-                           Gaussian_x_T_Integral(time, R, fr, alpha, beta)) /
+                           Gaussian_x_T_Sw4_Typeegral(time, R, fr, alpha, beta)) /
                       (4 * M_PI * rho * R * R * R);
 
                   B = (1 / pow(beta, 2) * Gaussian(time, R, beta, fr) -
                        1 / pow(R, 2) *
-                           Gaussian_x_T_Integral(time, R, fr, alpha, beta)) /
+                           Gaussian_x_T_Sw4_Typeegral(time, R, fr, alpha, beta)) /
                       (4 * M_PI * rho * R);
                 }
                 u(1, i, j, k) =
@@ -154,25 +154,25 @@ void TestPointSource::ubnd(Sarray& u, Sarray& xx, Sarray& yy, Sarray& zz,
                 if (tD == iSmoothWave) {
                   A = SmoothWave(time, R, alpha);
                   B = SmoothWave(time, R, beta);
-                  C = SmoothWave_x_T_Integral(time, R, alpha, beta);
+                  C = SmoothWave_x_T_Sw4_Typeegral(time, R, alpha, beta);
                   D = d_SmoothWave_dt(time, R, alpha) / pow(alpha, 3) / R;
                   E = d_SmoothWave_dt(time, R, beta) / pow(beta, 3) / R;
                 } else if (tD == iVerySmoothBump) {
                   A = VerySmoothBump(time, R, alpha);
                   B = VerySmoothBump(time, R, beta);
-                  C = VerySmoothBump_x_T_Integral(time, R, alpha, beta);
+                  C = VerySmoothBump_x_T_Sw4_Typeegral(time, R, alpha, beta);
                   D = d_VerySmoothBump_dt(time, R, alpha) / pow(alpha, 3) / R;
                   E = d_VerySmoothBump_dt(time, R, beta) / pow(beta, 3) / R;
                 } else if (tD == iC6SmoothBump) {
                   A = C6SmoothBump(time, R, alpha);
                   B = C6SmoothBump(time, R, beta);
-                  C = C6SmoothBump_x_T_Integral(time, R, alpha, beta);
+                  C = C6SmoothBump_x_T_Sw4_Typeegral(time, R, alpha, beta);
                   D = d_C6SmoothBump_dt(time, R, alpha) / pow(alpha, 3) / R;
                   E = d_C6SmoothBump_dt(time, R, beta) / pow(beta, 3) / R;
                 } else if (tD == iGaussian) {
                   A = Gaussian(time, R, alpha, fr);
                   B = Gaussian(time, R, beta, fr);
-                  C = Gaussian_x_T_Integral(time, R, fr, alpha, beta);
+                  C = Gaussian_x_T_Sw4_Typeegral(time, R, fr, alpha, beta);
                   D = d_Gaussian_dt(time, R, alpha, fr) / pow(alpha, 3) / R;
                   E = d_Gaussian_dt(time, R, beta, fr) / pow(beta, 3) / R;
                 }
@@ -917,8 +917,8 @@ float_sw4 TestPointSource::C6SBTP(float_sw4 Lim, float_sw4 t) {
 }
 
 //-----------------------------------------------------------------------
-// Integral of H(t-T)*H(1-t+T)*SmoothWave(t-T)*T from R/alpha to R/beta
-float_sw4 TestPointSource::SmoothWave_x_T_Integral(float_sw4 t, float_sw4 R,
+// Sw4_Typeegral of H(t-T)*H(1-t+T)*SmoothWave(t-T)*T from R/alpha to R/beta
+float_sw4 TestPointSource::SmoothWave_x_T_Sw4_Typeegral(float_sw4 t, float_sw4 R,
                                                    float_sw4 alpha,
                                                    float_sw4 beta) {
   float_sw4 temp = R;
@@ -946,8 +946,8 @@ float_sw4 TestPointSource::SmoothWave_x_T_Integral(float_sw4 t, float_sw4 R,
 }
 
 //-----------------------------------------------------------------------
-// Integral of H(t-T)*H(1-t+T)*VerySmoothBump(t-T)*T from R/alpha to R/beta
-float_sw4 TestPointSource::VerySmoothBump_x_T_Integral(float_sw4 t, float_sw4 R,
+// Sw4_Typeegral of H(t-T)*H(1-t+T)*VerySmoothBump(t-T)*T from R/alpha to R/beta
+float_sw4 TestPointSource::VerySmoothBump_x_T_Sw4_Typeegral(float_sw4 t, float_sw4 R,
                                                        float_sw4 alpha,
                                                        float_sw4 beta) {
   float_sw4 temp = R;
@@ -975,8 +975,8 @@ float_sw4 TestPointSource::VerySmoothBump_x_T_Integral(float_sw4 t, float_sw4 R,
 }
 
 //-----------------------------------------------------------------------
-// Integral of H(t-T)*H(1-t+T)*C6SmoothBump(t-T)*T from R/alpha to R/beta
-float_sw4 TestPointSource::C6SmoothBump_x_T_Integral(float_sw4 t, float_sw4 R,
+// Sw4_Typeegral of H(t-T)*H(1-t+T)*C6SmoothBump(t-T)*T from R/alpha to R/beta
+float_sw4 TestPointSource::C6SmoothBump_x_T_Sw4_Typeegral(float_sw4 t, float_sw4 R,
                                                      float_sw4 alpha,
                                                      float_sw4 beta) {
   float_sw4 temp = R;
@@ -1021,7 +1021,7 @@ float_sw4 TestPointSource::d_Gaussian_dt(float_sw4 t, float_sw4 R, float_sw4 c,
 }
 
 //-----------------------------------------------------------------------
-float_sw4 TestPointSource::Gaussian_x_T_Integral(float_sw4 t, float_sw4 R,
+float_sw4 TestPointSource::Gaussian_x_T_Sw4_Typeegral(float_sw4 t, float_sw4 R,
                                                  float_sw4 f, float_sw4 alpha,
                                                  float_sw4 beta) {
   float_sw4 temp = R;

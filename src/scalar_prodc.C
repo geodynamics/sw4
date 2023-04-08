@@ -36,8 +36,8 @@
 #include "policies.h"
 #include "sw4.h"
 
-void scalar_prod_ci(int is, int ie, int js, int je, int ks, int ke, int i1,
-                    int i2, int j1, int j2, int k1, int k2, int onesided[6],
+void scalar_prod_ci(sw4_type is, sw4_type ie, sw4_type js, sw4_type je, sw4_type ks, sw4_type ke, sw4_type i1,
+                    sw4_type i2, sw4_type j1, sw4_type j2, sw4_type k1, sw4_type k2, sw4_type onesided[6],
                     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_v,
                     float_sw4* __restrict__ a_strx,
                     float_sw4* __restrict__ a_stry,
@@ -45,11 +45,11 @@ void scalar_prod_ci(int is, int ie, int js, int je, int ks, int ke, int i1,
   SW4_MARK_FUNCTION;
   // is,ie,js,je,ks,ke declared size
   // i1,i2,j1,j2,k1,k2 domain over which scalar product is computed
-  const int ni = ie - is + 1;
-  const int nij = ni * (je - js + 1);
-  const int nijk = nij * (ke - ks + 1);
-  const int base = -(is + ni * js + nij * ks);
-  //   const int base3 = base-nijk;
+  const sw4_type ni = ie - is + 1;
+  const sw4_type nij = ni * (je - js + 1);
+  const sw4_type nijk = nij * (ke - ks + 1);
+  const sw4_type base = -(is + ni * js + nij * ks);
+  //   const sw4_type base3 = base-nijk;
   //#define u(c,i,j,k) a_u[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]
   //#define v(c,i,j,k) a_v[base3+(i)+ni*(j)+nij*(k)+nijk*(c)]
   //#define strx(i) a_strx[i-is]
@@ -65,13 +65,13 @@ void scalar_prod_ci(int is, int ie, int js, int je, int ks, int ke, int i1,
   RAJA::RangeSegment i_range(i1, i2 + 1);
   RAJA::kernel<ENERGY4CI_EXEC_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
         const float_sw4 normwgh[4] = {17.0 / 48, 59.0 / 48, 43.0 / 48,
                                       49.0 / 48};
         // #pragma omp parallel for reduction(+ : scprod_loc)
-        //   for (int k = k1; k <= k2; k++)
-        //     for (int j = j1; j <= j2; j++)
-        //       for (int i = i1; i <= i2; i++) {
+        //   for (sw4_type k = k1; k <= k2; k++)
+        //     for (sw4_type j = j1; j <= j2; j++)
+        //       for (sw4_type i = i1; i <= i2; i++) {
         size_t ind = base + i + ni * j + nij * k;
         // NOTE: the scalar product is scaled by the stretching
         //	    float_sw4 term =(u(1,i,j,k)*v(1,i,j,k) +

@@ -51,8 +51,8 @@ bool Sarray::m_corder = false;
 // subsequent calls. The allocations are deleted in the EW dtor. It reduces
 // runtime at the cost of additional memory usage. A memory pool would be a
 // better way to do this.
-Sarray::Sarray(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
-               int kend, const char* file, int line) {
+Sarray::Sarray(sw4_type nc, sw4_type ibeg, sw4_type iend, sw4_type jbeg, sw4_type jend, sw4_type kbeg,
+               sw4_type kend, const char* file, sw4_type line) {
   // static size_t total = 0;
   // SW4_MARK_FUNCTION;
   m_nc = nc;
@@ -104,8 +104,8 @@ Sarray::Sarray(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
 }
 
 //-----------------------------------------------------------------------
-Sarray::Sarray(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
-               int kend)
+Sarray::Sarray(sw4_type nc, sw4_type ibeg, sw4_type iend, sw4_type jbeg, sw4_type jend, sw4_type kbeg,
+               sw4_type kend)
     : static_alloc(false) {
   m_nc = nc;
   m_ib = ibeg;
@@ -129,7 +129,7 @@ Sarray::Sarray(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
 }
 
 //-----------------------------------------------------------------------
-Sarray::Sarray(int ibeg, int iend, int jbeg, int jend, int kbeg, int kend)
+Sarray::Sarray(sw4_type ibeg, sw4_type iend, sw4_type jbeg, sw4_type jend, sw4_type kbeg, sw4_type kend)
     : static_alloc(false) {
   m_nc = 1;
   m_ib = ibeg;
@@ -153,7 +153,7 @@ Sarray::Sarray(int ibeg, int iend, int jbeg, int jend, int kbeg, int kend)
 }
 
 //-----------------------------------------------------------------------
-Sarray::Sarray(int nc, int iend, int jend, int kend) : static_alloc(false) {
+Sarray::Sarray(sw4_type nc, sw4_type iend, sw4_type jend, sw4_type kend) : static_alloc(false) {
   m_nc = nc;
   m_ib = 1;
   m_ie = iend;
@@ -175,7 +175,7 @@ Sarray::Sarray(int nc, int iend, int jend, int kend) : static_alloc(false) {
 }
 
 //-----------------------------------------------------------------------
-Sarray::Sarray(int iend, int jend, int kend) : static_alloc(false) {
+Sarray::Sarray(sw4_type iend, sw4_type jend, sw4_type kend) : static_alloc(false) {
   m_nc = 1;
   m_ib = 1;
   m_ie = iend;
@@ -264,7 +264,7 @@ Sarray::Sarray(const Sarray& u, Space space_in) {
 }
 
 //-----------------------------------------------------------------------
-Sarray::Sarray(Sarray& u, int nc) : static_alloc(false) {
+Sarray::Sarray(Sarray& u, sw4_type nc) : static_alloc(false) {
   if (nc == -1)
     m_nc = u.m_nc;
   else
@@ -290,7 +290,7 @@ Sarray::Sarray(Sarray& u, int nc) : static_alloc(false) {
 }
 
 //-----------------------------------------------------------------------
-// void Sarray::define( CartesianProcessGrid* cartcomm, int nc )
+// void Sarray::define( CartesianProcessGrid* cartcomm, sw4_type nc )
 // {
 //   if( m_data != NULL )
 //      delete[] m_data;
@@ -332,7 +332,7 @@ Sarray::Sarray(Sarray& u, int nc) : static_alloc(false) {
 // }
 
 //-----------------------------------------------------------------------
-void Sarray::define(int nc, int iend, int jend, int kend) {
+void Sarray::define(sw4_type nc, sw4_type iend, sw4_type jend, sw4_type kend) {
   if (m_data != NULL) ::operator delete[](m_data, Space::Managed);
 
   m_nc = nc;
@@ -357,7 +357,7 @@ void Sarray::define(int nc, int iend, int jend, int kend) {
 }
 
 //-----------------------------------------------------------------------
-void Sarray::define(int iend, int jend, int kend) {
+void Sarray::define(sw4_type iend, sw4_type jend, sw4_type kend) {
   if (m_data != NULL) ::operator delete[](m_data, space);
 
   m_nc = 1;
@@ -382,8 +382,8 @@ void Sarray::define(int iend, int jend, int kend) {
 }
 
 //-----------------------------------------------------------------------
-void Sarray::define(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
-                    int kend, Space space_in) {
+void Sarray::define(sw4_type nc, sw4_type ibeg, sw4_type iend, sw4_type jbeg, sw4_type jend, sw4_type kbeg,
+                    sw4_type kend, Space space_in) {
   if (m_data != NULL) ::operator delete[](m_data, space);
   m_nc = nc;
   m_ib = ibeg;
@@ -415,7 +415,7 @@ void Sarray::define(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
 }
 
 //-----------------------------------------------------------------------
-void Sarray::define(int ibeg, int iend, int jbeg, int jend, int kbeg, int kend,
+void Sarray::define(sw4_type ibeg, sw4_type iend, sw4_type jbeg, sw4_type jend, sw4_type kbeg, sw4_type kend,
                     Space space_in) {
   if (m_data != NULL)
     ::operator delete[](
@@ -474,8 +474,8 @@ void Sarray::define(const Sarray& u) {
 }
 
 //-----------------------------------------------------------------------
-void Sarray::intersection(int ib, int ie, int jb, int je, int kb, int ke,
-                          int wind[6]) {
+void Sarray::sw4_typeersection(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
+                          sw4_type wind[6]) {
   SW4_MARK_FUNCTION;
   wind[0] = max(ib, m_ib);
   wind[1] = min(ie, m_ie);
@@ -488,7 +488,7 @@ void Sarray::intersection(int ib, int ie, int jb, int je, int kb, int ke,
 //-----------------------------------------------------------------------
 // side_plane returns the index of the ghost points along side =0,1,2,3,4,5
 // (low-i, high-i, low-j, high-j, low-k, high-k)
-void Sarray::side_plane(int side, int wind[6], int nGhost) {
+void Sarray::side_plane(sw4_type side, sw4_type wind[6], sw4_type nGhost) {
   wind[0] = m_ib;
   wind[1] = m_ie;
   wind[2] = m_jb;
@@ -522,7 +522,7 @@ void Sarray::side_plane(int side, int wind[6], int nGhost) {
 }
 
 //-----------------------------------------------------------------------
-void Sarray::side_plane_fortran(int side, int wind[6], int nGhost) {
+void Sarray::side_plane_fortran(sw4_type side, sw4_type wind[6], sw4_type nGhost) {
   // Fortran arrays are base 1
   wind[0] = 1;
   wind[1] = m_ni;
@@ -637,16 +637,16 @@ void Sarray::set_to_random(float_sw4 llim, float_sw4 ulim) {
 }
 
 //-----------------------------------------------------------------------
-bool Sarray::in_domain(int i, int j, int k) {
+bool Sarray::in_domain(sw4_type i, sw4_type j, sw4_type k) {
   return m_ib <= i && i <= m_ie && m_jb <= j && j <= m_je && m_kb <= k &&
          k <= m_ke;
 }
 
 //-----------------------------------------------------------------------
-float_sw4 Sarray::maximum(int c) {
-  ///   int cm = c-1;
+float_sw4 Sarray::maximum(sw4_type c) {
+  ///   sw4_type cm = c-1;
   //   float_sw4 mx = m_data[cm];
-  //   for( int i=0 ; i<m_ni*m_nj*m_nk ; i++ )
+  //   for( sw4_type i=0 ; i<m_ni*m_nj*m_nk ; i++ )
   //      mx = mx > m_data[cm+i*m_nc] ? mx : m_data[cm+i*m_nc];
   //   size_t first = m_base+m_offc*c+m_offi*m_ib+m_offj*m_jb+m_offk*m_kb;
   size_t npts = static_cast<size_t>(m_ni) * m_nj * m_nk;
@@ -655,23 +655,23 @@ float_sw4 Sarray::maximum(int c) {
     size_t first = (c - 1) * npts;
     mx = m_data[first];
 #pragma omp parallel for reduction(max : mx)
-    for (int i = 0; i < npts; i++)
+    for (sw4_type i = 0; i < npts; i++)
       mx = mx > m_data[first + i] ? mx : m_data[first + i];
   } else {
     size_t first = (c - 1);
     mx = m_data[first];
 #pragma omp parallel for reduction(max : mx)
-    for (int i = 0; i < npts; i++)
+    for (sw4_type i = 0; i < npts; i++)
       mx = mx > m_data[first + i * m_nc] ? mx : m_data[first + i * m_nc];
   }
   return mx;
 }
 
 //-----------------------------------------------------------------------
-float_sw4 Sarray::minimum(int c) {
-  //   int cm = c-1;
+float_sw4 Sarray::minimum(sw4_type c) {
+  //   sw4_type cm = c-1;
   //   float_sw4 mn = m_data[cm];
-  //   for( int i=0 ; i<m_ni*m_nj*m_nk ; i++ )
+  //   for( sw4_type i=0 ; i<m_ni*m_nj*m_nk ; i++ )
   //      mn = mn < m_data[cm+i*m_nc] ? mn : m_data[cm+i*m_nc];
   size_t npts = static_cast<size_t>(m_ni) * m_nj * m_nk;
   float_sw4 mn;
@@ -679,23 +679,23 @@ float_sw4 Sarray::minimum(int c) {
     size_t first = (c - 1) * npts;
     mn = m_data[first];
 #pragma omp parallel for reduction(min : mn)
-    for (int i = 0; i < npts; i++)
+    for (sw4_type i = 0; i < npts; i++)
       mn = mn < m_data[first + i] ? mn : m_data[first + i];
   } else {
     size_t first = (c - 1);
     mn = m_data[first];
 #pragma omp parallel for reduction(min : mn)
-    for (int i = 0; i < npts; i++)
+    for (sw4_type i = 0; i < npts; i++)
       mn = mn < m_data[first + i * m_nc] ? mn : m_data[first + i * m_nc];
   }
   return mn;
 }
 
 //-----------------------------------------------------------------------
-float_sw4 Sarray::sum(int c) {
-  //   int cm = c-1;
+float_sw4 Sarray::sum(sw4_type c) {
+  //   sw4_type cm = c-1;
   //   float_sw4 s = 0;
-  //   for( int i=0 ; i<m_ni*m_nj*m_nk ; i++ )
+  //   for( sw4_type i=0 ; i<m_ni*m_nj*m_nk ; i++ )
   //      s += m_data[cm+i*m_nc];
   //   size_t first = m_base+m_offc*c+m_offi*m_ib+m_offj*m_jb+m_offk*m_kb;
   size_t npts = static_cast<size_t>(m_ni) * m_nj * m_nk;
@@ -703,11 +703,11 @@ float_sw4 Sarray::sum(int c) {
   if (m_corder) {
     size_t first = (c - 1) * npts;
 #pragma omp parallel for reduction(+ : s)
-    for (int i = 0; i < npts; i++) s += m_data[first + i];
+    for (sw4_type i = 0; i < npts; i++) s += m_data[first + i];
   } else {
     size_t first = (c - 1);
 #pragma omp parallel for reduction(+ : s)
-    for (int i = 0; i < npts; i++) s += m_data[first + i * m_nc];
+    for (sw4_type i = 0; i < npts; i++) s += m_data[first + i * m_nc];
   }
   return s;
 }
@@ -723,17 +723,17 @@ size_t Sarray::count_nans() {
 }
 
 //-----------------------------------------------------------------------
-size_t Sarray::count_nans(int& cfirst, int& ifirst, int& jfirst, int& kfirst) {
+size_t Sarray::count_nans(sw4_type& cfirst, sw4_type& ifirst, sw4_type& jfirst, sw4_type& kfirst) {
   cfirst = ifirst = jfirst = kfirst = 0;
   size_t retval = 0, ind = 0;
   // Note: you're going to get various threads racing to set the "first" values.
   // This won't work.
   //#pragma omp parallel for reduction(+:retval)
   if (m_corder) {
-    for (int c = 1; c <= m_nc; c++)
-      for (int k = m_kb; k <= m_ke; k++)
-        for (int j = m_jb; j <= m_je; j++)
-          for (int i = m_ib; i <= m_ie; i++) {
+    for (sw4_type c = 1; c <= m_nc; c++)
+      for (sw4_type k = m_kb; k <= m_ke; k++)
+        for (sw4_type j = m_jb; j <= m_je; j++)
+          for (sw4_type i = m_ib; i <= m_ie; i++) {
             if (std::isnan(m_data[ind])) {
               if (retval == 0) {
                 ifirst = i;
@@ -746,10 +746,10 @@ size_t Sarray::count_nans(int& cfirst, int& ifirst, int& jfirst, int& kfirst) {
             ind++;
           }
   } else {
-    for (int k = m_kb; k <= m_ke; k++)
-      for (int j = m_jb; j <= m_je; j++)
-        for (int i = m_ib; i <= m_ie; i++)
-          for (int c = 1; c <= m_nc; c++) {
+    for (sw4_type k = m_kb; k <= m_ke; k++)
+      for (sw4_type j = m_jb; j <= m_je; j++)
+        for (sw4_type i = m_ib; i <= m_ie; i++)
+          for (sw4_type c = 1; c <= m_nc; c++) {
             if (std::isnan(m_data[ind])) {
               if (retval == 0) {
                 ifirst = i;
@@ -783,173 +783,173 @@ void Sarray::copy(const Sarray& u) {
   if (m_nc * m_ni * m_nj * m_nk > 0) {
     m_data = SW4_NEW(Space::Managed, float_sw4[m_nc * m_ni * m_nj * m_nk]);
 #pragma omp parallel for
-    for (int i = 0; i < m_nc * m_ni * m_nj * m_nk; i++) m_data[i] = u.m_data[i];
+    for (sw4_type i = 0; i < m_nc * m_ni * m_nj * m_nk; i++) m_data[i] = u.m_data[i];
   } else
     m_data = NULL;
   define_offsets();
 }
 
 //-----------------------------------------------------------------------
-void Sarray::extract_subarray(int ib, int ie, int jb, int je, int kb, int ke,
+void Sarray::extract_subarray(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                               float_sw4* ar) {
   // Assuming nc is the same for m_data and subarray ar.
-  int nis = ie - ib + 1;
-  int njs = je - jb + 1;
+  sw4_type nis = ie - ib + 1;
+  sw4_type njs = je - jb + 1;
   size_t sind = 0, ind = 0;
   if (m_corder) {
     size_t totpts = static_cast<size_t>(m_ni) * m_nj * m_nk;
     size_t totptss = static_cast<size_t>(nis) * njs * (ke - kb + 1);
-    for (int k = kb; k <= ke; k++)
-      for (int j = jb; j <= je; j++)
-        for (int i = ib; i <= ie; i++) {
+    for (sw4_type k = kb; k <= ke; k++)
+      for (sw4_type j = jb; j <= je; j++)
+        for (sw4_type i = ib; i <= ie; i++) {
           sind = (i - ib) + nis * (j - jb) + nis * njs * (k - kb);
           ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
-          for (int c = 1; c <= m_nc; c++)
+          for (sw4_type c = 1; c <= m_nc; c++)
             ar[sind + totptss * (c - 1)] = m_data[ind + totpts * (c - 1)];
         }
   } else {
-    for (int k = kb; k <= ke; k++)
-      for (int j = jb; j <= je; j++)
-        for (int i = ib; i <= ie; i++) {
+    for (sw4_type k = kb; k <= ke; k++)
+      for (sw4_type j = jb; j <= je; j++)
+        for (sw4_type i = ib; i <= ie; i++) {
           sind = (i - ib) + nis * (j - jb) + nis * njs * (k - kb);
           ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
-          for (int c = 1; c <= m_nc; c++)
+          for (sw4_type c = 1; c <= m_nc; c++)
             ar[sind * m_nc + c - 1] = m_data[ind * m_nc + c - 1];
         }
   }
 }
 
 //-----------------------------------------------------------------------
-void Sarray::insert_subarray(int ib, int ie, int jb, int je, int kb, int ke,
+void Sarray::insert_subarray(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                              double* ar) {
   // Assuming nc is the same for m_data and subarray ar.
-  int nis = ie - ib + 1;
-  int njs = je - jb + 1;
-  //   int nks = ke-kb+1;
+  sw4_type nis = ie - ib + 1;
+  sw4_type njs = je - jb + 1;
+  //   sw4_type nks = ke-kb+1;
   size_t sind = 0, ind = 0;
   if (m_corder) {
     size_t totpts = static_cast<size_t>(m_ni) * m_nj * m_nk;
     size_t totptss = static_cast<size_t>(nis) * njs * (ke - kb + 1);
-    for (int k = kb; k <= ke; k++)
-      for (int j = jb; j <= je; j++)
-        for (int i = ib; i <= ie; i++) {
+    for (sw4_type k = kb; k <= ke; k++)
+      for (sw4_type j = jb; j <= je; j++)
+        for (sw4_type i = ib; i <= ie; i++) {
           sind = (i - ib) + nis * (j - jb) + nis * njs * (k - kb);
           ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
-          for (int c = 1; c <= m_nc; c++)
+          for (sw4_type c = 1; c <= m_nc; c++)
             m_data[ind + totpts * (c - 1)] = ar[sind + totptss * (c - 1)];
         }
   } else {
-    for (int k = kb; k <= ke; k++)
-      for (int j = jb; j <= je; j++)
-        for (int i = ib; i <= ie; i++) {
+    for (sw4_type k = kb; k <= ke; k++)
+      for (sw4_type j = jb; j <= je; j++)
+        for (sw4_type i = ib; i <= ie; i++) {
           sind = (i - ib) + nis * (j - jb) + nis * njs * (k - kb);
           ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
-          for (int c = 1; c <= m_nc; c++)
+          for (sw4_type c = 1; c <= m_nc; c++)
             m_data[ind * m_nc + c - 1] = ar[sind * m_nc + c - 1];
         }
   }
 }
 
 //-----------------------------------------------------------------------
-void Sarray::insert_subarray(int ib, int ie, int jb, int je, int kb, int ke,
+void Sarray::insert_subarray(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                              float* ar) {
   // Assuming nc is the same for m_data and subarray ar.
-  int nis = ie - ib + 1;
-  int njs = je - jb + 1;
-  //   int nks = ke-kb+1;
+  sw4_type nis = ie - ib + 1;
+  sw4_type njs = je - jb + 1;
+  //   sw4_type nks = ke-kb+1;
   size_t sind = 0, ind = 0;
   if (m_corder) {
     size_t totpts = static_cast<size_t>(m_ni) * m_nj * m_nk;
     size_t totptss = static_cast<size_t>(nis) * njs * (ke - kb + 1);
-    for (int k = kb; k <= ke; k++)
-      for (int j = jb; j <= je; j++)
-        for (int i = ib; i <= ie; i++) {
+    for (sw4_type k = kb; k <= ke; k++)
+      for (sw4_type j = jb; j <= je; j++)
+        for (sw4_type i = ib; i <= ie; i++) {
           sind = (i - ib) + nis * (j - jb) + nis * njs * (k - kb);
           ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
-          for (int c = 1; c <= m_nc; c++)
+          for (sw4_type c = 1; c <= m_nc; c++)
             m_data[ind + totpts * (c - 1)] =
                 (float_sw4)ar[sind + totptss * (c - 1)];
         }
   } else {
-    for (int k = kb; k <= ke; k++)
-      for (int j = jb; j <= je; j++)
-        for (int i = ib; i <= ie; i++) {
+    for (sw4_type k = kb; k <= ke; k++)
+      for (sw4_type j = jb; j <= je; j++)
+        for (sw4_type i = ib; i <= ie; i++) {
           sind = (i - ib) + nis * (j - jb) + nis * njs * (k - kb);
           ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
-          for (int c = 1; c <= m_nc; c++)
+          for (sw4_type c = 1; c <= m_nc; c++)
             m_data[ind * m_nc + c - 1] = (float_sw4)ar[sind * m_nc + c - 1];
         }
   }
 }
 
 //-----------------------------------------------------------------------
-void Sarray::extract_subarrayIK(int ib, int ie, int jb, int je, int kb, int ke,
+void Sarray::extract_subarrayIK(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                                 float_sw4* ar) {
   // Assuming nc is the same for m_data and subarray ar.
   // Return `ar' in order suitable for storing array on file.
 
-  //   int nis = ie-ib+1;
-  int njs = je - jb + 1;
-  int nks = ke - kb + 1;
+  //   sw4_type nis = ie-ib+1;
+  sw4_type njs = je - jb + 1;
+  sw4_type nks = ke - kb + 1;
   size_t sind = 0, ind = 0;
   if (m_corder) {
     size_t totpts = static_cast<size_t>(m_ni) * m_nj * m_nk;
-    for (int k = kb; k <= ke; k++)
-      for (int j = jb; j <= je; j++)
-        for (int i = ib; i <= ie; i++) {
+    for (sw4_type k = kb; k <= ke; k++)
+      for (sw4_type j = jb; j <= je; j++)
+        for (sw4_type i = ib; i <= ie; i++) {
           sind = (k - kb) + nks * (j - jb) + nks * njs * (i - ib);
           ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
-          for (int c = 1; c <= m_nc; c++)
+          for (sw4_type c = 1; c <= m_nc; c++)
             ar[sind * m_nc + c - 1] = m_data[ind + totpts * (c - 1)];
         }
   } else {
-    for (int k = kb; k <= ke; k++)
-      for (int j = jb; j <= je; j++)
-        for (int i = ib; i <= ie; i++) {
+    for (sw4_type k = kb; k <= ke; k++)
+      for (sw4_type j = jb; j <= je; j++)
+        for (sw4_type i = ib; i <= ie; i++) {
           sind = (k - kb) + nks * (j - jb) + nks * njs * (i - ib);
           ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
-          for (int c = 1; c <= m_nc; c++)
+          for (sw4_type c = 1; c <= m_nc; c++)
             ar[sind * m_nc + c - 1] = m_data[ind * m_nc + c - 1];
         }
   }
 }
 
 //-----------------------------------------------------------------------
-void Sarray::insert_subarrayIK(int ib, int ie, int jb, int je, int kb, int ke,
+void Sarray::insert_subarrayIK(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                                float_sw4* ar) {
   // Assuming nc is the same for m_data and subarray ar.
   // Insert array `ar', where `ar' is in order suitable for storing array on
   // file.
 
-  //   int nis = ie-ib+1;
-  int njs = je - jb + 1;
-  int nks = ke - kb + 1;
-  //   int nks = ke-kb+1;
+  //   sw4_type nis = ie-ib+1;
+  sw4_type njs = je - jb + 1;
+  sw4_type nks = ke - kb + 1;
+  //   sw4_type nks = ke-kb+1;
   size_t sind = 0, ind = 0;
   if (m_corder) {
     size_t totpts = static_cast<size_t>(m_ni) * m_nj * m_nk;
-    for (int k = kb; k <= ke; k++)
-      for (int j = jb; j <= je; j++)
-        for (int i = ib; i <= ie; i++) {
+    for (sw4_type k = kb; k <= ke; k++)
+      for (sw4_type j = jb; j <= je; j++)
+        for (sw4_type i = ib; i <= ie; i++) {
           sind = (k - kb) + nks * (j - jb) + nks * njs * (i - ib);
           ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
-          for (int c = 1; c <= m_nc; c++)
+          for (sw4_type c = 1; c <= m_nc; c++)
             m_data[ind + totpts * (c - 1)] = ar[sind * m_nc + c - 1];
         }
   } else {
-    for (int k = kb; k <= ke; k++)
-      for (int j = jb; j <= je; j++)
-        for (int i = ib; i <= ie; i++) {
+    for (sw4_type k = kb; k <= ke; k++)
+      for (sw4_type j = jb; j <= je; j++)
+        for (sw4_type i = ib; i <= ie; i++) {
           sind = (k - kb) + nks * (j - jb) + nks * njs * (i - ib);
           ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
-          for (int c = 1; c <= m_nc; c++)
+          for (sw4_type c = 1; c <= m_nc; c++)
             m_data[ind * m_nc + c - 1] = ar[sind * m_nc + c - 1];
         }
   }
 }
 
 //-----------------------------------------------------------------------
-void Sarray::copy_kplane(Sarray& u, int k) {
+void Sarray::copy_kplane(Sarray& u, sw4_type k) {
   SW4_MARK_FUNCTION;
   if (!(u.m_ib == m_ib && u.m_ie == m_ie && u.m_jb == m_jb && u.m_je == m_je)) {
     cout << "Sarray::copy_kplane, ERROR arrays must have same (i,j) dimensions"
@@ -962,19 +962,19 @@ void Sarray::copy_kplane(Sarray& u, int k) {
 
     float_sw4* um_data = u.m_data;
     float_sw4* lm_data = m_data;
-    int um_kb = u.m_kb;
+    sw4_type um_kb = u.m_kb;
     ASSERT_MANAGED(m_data);
     ASSERT_MANAGED(um_data);
-    //    int mib = m_ib;
-    // int mjb = m_jb;
-    int mkb = m_kb;
-    int mni = m_ni;
-    int mnj = m_nj;
-    // int mnc = m_nc;
+    //    sw4_type mib = m_ib;
+    // sw4_type mjb = m_jb;
+    sw4_type mkb = m_kb;
+    sw4_type mni = m_ni;
+    sw4_type mnj = m_nj;
+    // sw4_type mnc = m_nc;
     // SW4_MARK_BEGIN("CK_PREF");
 //#ifdef SW4_A100_1
 // Not required if get/putbuffer_device is used to avoid page faults
-    //static int cc=0;
+    //static sw4_type cc=0;
     //cc++;
     //if (cc%2==0) u.forceprefetch();
 //#endif
@@ -989,36 +989,36 @@ void Sarray::copy_kplane(Sarray& u, int k) {
 
     RAJA::kernel<COPY_KPLANE_EXEC_POL>(
         RAJA::make_tuple(c_range, j_range, i_range),
-        [=] RAJA_DEVICE(int c, int j, int i) {
+        [=] RAJA_DEVICE(sw4_type c, sw4_type j, sw4_type i) {
 
 #else
     Range<16> I(0, m_ie + 1 - m_ib);
     Range<4> J(0, m_je + 1 - m_jb);
     Range<4> C(0, m_nc);
-    forall3(I, J, C, [=] RAJA_DEVICE(int i, int j, int c) {
-    // forall2(I, J, [=] RAJA_DEVICE(int i, int j ) {
+    forall3(I, J, C, [=] RAJA_DEVICE(sw4_type i, sw4_type j, sw4_type c) {
+    // forall2(I, J, [=] RAJA_DEVICE(sw4_type i, sw4_type j ) {
 
 #endif
-          // for( int c=0 ; c < m_nc ; c++ )
-          // 	 for( int j=m_jb ; j<=m_je ; j++ )
-          // 	    for( int i=m_ib ; i <= m_ie ; i++ )
+          // for( sw4_type c=0 ; c < m_nc ; c++ )
+          // 	 for( sw4_type j=m_jb ; j<=m_je ; j++ )
+          // 	    for( sw4_type i=m_ib ; i <= m_ie ; i++ )
           // 	    {
           size_t ind = (i) + mni * (j) + ind_start;    // mni*mnj*(k-mkb);
           size_t uind = (i) + mni * (j) + uind_start;  // mni*mnj*(k-um_kb);
 
           // size_t ind = i+ mni*j + ind_start; // mni*mnj*(k-mkb);
           // size_t uind = i + mni*j + uind_start; // mni*mnj*(k-um_kb);
-          // for (int c=0;c<3;c++)
+          // for (sw4_type c=0;c<3;c++)
           lm_data[ind + c * nijk] = um_data[uind + c * unijk];
         });  // SYNC_STREAM;
   } else {
     SW4_MARK_BEGIN("RUNNING ON HOST");
-    for (int j = m_jb; j <= m_je; j++)
-      for (int i = m_ib; i <= m_ie; i++) {
+    for (sw4_type j = m_jb; j <= m_je; j++)
+      for (sw4_type i = m_ib; i <= m_ie; i++) {
         size_t ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
         size_t uind =
             (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - u.m_kb);
-        for (int c = 0; c < m_nc; c++)
+        for (sw4_type c = 0; c < m_nc; c++)
           m_data[c + m_nc * ind] = u.m_data[c + m_nc * uind];
       }
     SW4_MARK_END("RUNNING ON HOST");
@@ -1027,28 +1027,28 @@ void Sarray::copy_kplane(Sarray& u, int k) {
 
 //-----------------------------------------------------------------------
 void Sarray::save_to_disk(const char* fname) {
-  int fd = open(fname, O_CREAT | O_TRUNC | O_WRONLY, 0660);
+  sw4_type fd = open(fname, O_CREAT | O_TRUNC | O_WRONLY, 0660);
   if (fd == -1)
     std::cout << "ERROR opening file" << fname << " for writing " << std::endl;
-  size_t nr = write(fd, &m_nc, sizeof(int));
-  if (nr != sizeof(int))
+  size_t nr = write(fd, &m_nc, sizeof(sw4_type));
+  if (nr != sizeof(sw4_type))
     std::cout << "Error saving nc to " << fname << std::endl;
-  nr = write(fd, &m_ni, sizeof(int));
-  if (nr != sizeof(int))
+  nr = write(fd, &m_ni, sizeof(sw4_type));
+  if (nr != sizeof(sw4_type))
     std::cout << "Error saving ni to " << fname << std::endl;
-  nr = write(fd, &m_nj, sizeof(int));
-  if (nr != sizeof(int))
+  nr = write(fd, &m_nj, sizeof(sw4_type));
+  if (nr != sizeof(sw4_type))
     std::cout << "Error saving nj to " << fname << std::endl;
-  nr = write(fd, &m_nk, sizeof(int));
-  if (nr != sizeof(int))
+  nr = write(fd, &m_nk, sizeof(sw4_type));
+  if (nr != sizeof(sw4_type))
     std::cout << "Error saving nk to " << fname << std::endl;
   size_t npts = m_nc * ((size_t)m_ni) * m_nj * ((size_t)m_nk);
   if (m_corder) {
     float_sw4* ar = SW4_NEW(Space::Host, float_sw4[npts]);
-    for (int k = 0; k < m_nk; k++)
-      for (int j = 0; j < m_nj; j++)
-        for (int i = 0; i < m_ni; i++)
-          for (int c = 0; c < m_nc; c++)
+    for (sw4_type k = 0; k < m_nk; k++)
+      for (sw4_type j = 0; j < m_nj; j++)
+        for (sw4_type i = 0; i < m_ni; i++)
+          for (sw4_type c = 0; c < m_nc; c++)
             ar[c + m_nc * i + m_nc * m_ni * j + m_nc * m_ni * m_nj * k] =
                 m_data[i + m_ni * j + m_ni * m_nj * k + m_ni * m_nj * m_nk * c];
     nr = write(fd, ar, sizeof(float_sw4) * npts);
@@ -1061,7 +1061,7 @@ void Sarray::save_to_disk(const char* fname) {
 }
 
 //-----------------------------------------------------------------------
-void Sarray::assign(const float* ar, int corder) {
+void Sarray::assign(const float* ar, sw4_type corder) {
   std::cout << "WARNING:: Float version of Sarray::assign not offloaded \n";
   if (corder == m_corder || corder == -1) {
     // Both arrays in the same order
@@ -1071,26 +1071,26 @@ void Sarray::assign(const float* ar, int corder) {
   } else if (m_corder) {
     // Class array in corder, input array in fortran order,
 #pragma omp parallel for
-    for (int i = 0; i < m_ni; i++)
-      for (int j = 0; j < m_nj; j++)
-        for (int k = 0; k < m_nk; k++)
-          for (int c = 0; c < m_nc; c++)
+    for (sw4_type i = 0; i < m_ni; i++)
+      for (sw4_type j = 0; j < m_nj; j++)
+        for (sw4_type k = 0; k < m_nk; k++)
+          for (sw4_type c = 0; c < m_nc; c++)
             m_data[i + m_ni * j + m_ni * m_nj * k + m_ni * m_nj * m_nk * c] =
                 ar[c + m_nc * i + m_nc * m_ni * j + m_nc * m_ni * m_nj * k];
   } else {
     // Class array in fortran order, input array in corder,
 #pragma omp parallel for
-    for (int i = 0; i < m_ni; i++)
-      for (int j = 0; j < m_nj; j++)
-        for (int k = 0; k < m_nk; k++)
-          for (int c = 0; c < m_nc; c++)
+    for (sw4_type i = 0; i < m_ni; i++)
+      for (sw4_type j = 0; j < m_nj; j++)
+        for (sw4_type k = 0; k < m_nk; k++)
+          for (sw4_type c = 0; c < m_nc; c++)
             m_data[c + m_nc * i + m_nc * m_ni * j + m_nc * m_ni * m_nj * k] =
                 ar[i + m_ni * j + m_ni * m_nj * k + m_ni * m_nj * m_nk * c];
   }
 }
 
 //-----------------------------------------------------------------------
-void Sarray::assign(const double* ar, int corder) {
+void Sarray::assign(const double* ar, sw4_type corder) {
   SW4_MARK_FUNCTION;
   if (corder == m_corder || corder == -1) {
     // Both arrays in the same order
@@ -1104,24 +1104,24 @@ void Sarray::assign(const double* ar, int corder) {
   } else if (m_corder) {
     // Class array in corder, input array in fortran order,
     // #pragma omp parallel for
-    //       for( int i=0 ; i <m_ni ; i++ )
-    // 	 for( int j=0 ; j <m_nj ; j++ )
-    // 	    for( int k=0 ; k <m_nk ; k++ )
-    // 	       for( int c=0 ; c < m_nc ; c++ )
+    //       for( sw4_type i=0 ; i <m_ni ; i++ )
+    // 	 for( sw4_type j=0 ; j <m_nj ; j++ )
+    // 	    for( sw4_type k=0 ; k <m_nk ; k++ )
+    // 	       for( sw4_type c=0 ; c < m_nc ; c++ )
 
     // RAJA::RangeSegment i_range(0,m_ni);
     // RAJA::RangeSegment j_range(0,m_nj);
     // RAJA::RangeSegment k_range(0,m_nk);
     // RAJA::nested::forall(SARRAY_LOOP_POL2{},
     // 				      RAJA::make_tuple(i_range,j_range,k_range),
-    // 				      [=]RAJA_DEVICE (int i,int j, int k) {
-    // 					for(int c=0;c<m_nc;c++)
+    // 				      [=]RAJA_DEVICE (sw4_type i,sw4_type j, sw4_type k) {
+    // 					for(sw4_type c=0;c<m_nc;c++)
     // 					m_data[i+m_ni*j+m_ni*m_nj*k+m_ni*m_nj*m_nk*c]
     // = ar[c+m_nc*i+m_nc*m_ni*j+m_nc*m_ni*m_nj*k];});
-    int mni = m_ni;
-    int mnj = m_nj;
-    int mnk = m_nk;
-    int mnc = m_nc;
+    sw4_type mni = m_ni;
+    sw4_type mnj = m_nj;
+    sw4_type mnk = m_nk;
+    sw4_type mnc = m_nc;
     ASSERT_MANAGED(m_data);
     ASSERT_MANAGED((void*)ar);
     prefetch();
@@ -1134,29 +1134,29 @@ void Sarray::assign(const double* ar, int corder) {
     RAJA::RangeSegment c_range(0, mnc);
     RAJA::kernel<SAA_POL>(
         RAJA::make_tuple(c_range, k_range, j_range, i_range),
-        [=] RAJA_DEVICE(int c, int k, int j, int i) {
+        [=] RAJA_DEVICE(sw4_type c, sw4_type k, sw4_type j, sw4_type i) {
           mdata[i + mni * j + mni * mnj * k + mni * mnj * mnk * c] =
               ar[c + mnc * i + mnc * mni * j + mnc * mni * mnj * k];
         });  // SYNC_STREAM;
   } else {
     // Class array in fortran order, input array in corder,
     // #pragma omp parallel for
-    //       for( int i=0 ; i <m_ni ; i++ )
-    // 	 for( int j=0 ; j <m_nj ; j++ )
-    // 	    for( int k=0 ; k <m_nk ; k++ )
-    // 	       for( int c=0 ; c < m_nc ; c++ )
+    //       for( sw4_type i=0 ; i <m_ni ; i++ )
+    // 	 for( sw4_type j=0 ; j <m_nj ; j++ )
+    // 	    for( sw4_type k=0 ; k <m_nk ; k++ )
+    // 	       for( sw4_type c=0 ; c < m_nc ; c++ )
     float_sw4* mdata = m_data;
-    int mni = m_ni;
-    int mnj = m_nj;
-    int mnk = m_nk;
-    int mnc = m_nc;
+    sw4_type mni = m_ni;
+    sw4_type mnj = m_nj;
+    sw4_type mnk = m_nk;
+    sw4_type mnc = m_nc;
     RAJA::RangeSegment i_range(0, m_ni);
     RAJA::RangeSegment j_range(0, m_nj);
     RAJA::RangeSegment k_range(0, m_nk);
     RAJA::RangeSegment c_range(0, m_nc);
     RAJA::kernel<SARRAY_LOOP_POL2>(
         RAJA::make_tuple(i_range, j_range, k_range, c_range),
-        [=] RAJA_DEVICE(int i, int j, int k, int c) {
+        [=] RAJA_DEVICE(sw4_type i, sw4_type j, sw4_type k, sw4_type c) {
           mdata[c + mnc * i + mnc * mni * j + mnc * mni * mnj * k] =
               ar[i + mni * j + mni * mnj * k + mni * mnj * mnk * c];
         });  // SYNC_STREAM;
@@ -1164,7 +1164,7 @@ void Sarray::assign(const double* ar, int corder) {
 }
 
 //-----------------------------------------------------------------------
-void Sarray::extract(double* ar, int corder) {
+void Sarray::extract(double* ar, sw4_type corder) {
   if (corder == m_corder || corder == -1) {
     // Both arrays in the same order
 #pragma omp parallel for
@@ -1173,19 +1173,19 @@ void Sarray::extract(double* ar, int corder) {
   } else if (m_corder) {
     // Class array in corder, ar array in fortran order,
 #pragma omp parallel for
-    for (int i = 0; i < m_ni; i++)
-      for (int j = 0; j < m_nj; j++)
-        for (int k = 0; k < m_nk; k++)
-          for (int c = 0; c < m_nc; c++)
+    for (sw4_type i = 0; i < m_ni; i++)
+      for (sw4_type j = 0; j < m_nj; j++)
+        for (sw4_type k = 0; k < m_nk; k++)
+          for (sw4_type c = 0; c < m_nc; c++)
             ar[c + m_nc * i + m_nc * m_ni * j + m_nc * m_ni * m_nj * k] =
                 m_data[i + m_ni * j + m_ni * m_nj * k + m_ni * m_nj * m_nk * c];
   } else {
     // Class array in fortran order, ar array in corder,
 #pragma omp parallel for
-    for (int i = 0; i < m_ni; i++)
-      for (int j = 0; j < m_nj; j++)
-        for (int k = 0; k < m_nk; k++)
-          for (int c = 0; c < m_nc; c++)
+    for (sw4_type i = 0; i < m_ni; i++)
+      for (sw4_type j = 0; j < m_nj; j++)
+        for (sw4_type k = 0; k < m_nk; k++)
+          for (sw4_type c = 0; c < m_nc; c++)
             ar[i + m_ni * j + m_ni * m_nj * k + m_ni * m_nj * m_nk * c] =
                 m_data[c + m_nc * i + m_nc * m_ni * j + m_nc * m_ni * m_nj * k];
   }
@@ -1215,7 +1215,7 @@ void Sarray::define_offsets() {
     m_offi = 1;
     m_offj = m_ni;
     m_offk = m_ni * m_nj;
-    // Can use zero based array internally in class, i.e.,
+    // Can use zero based array sw4_typeernally in class, i.e.,
     // (i,j,k,c) = i + ni*j+ni*nj*k+ni*nj*nk*c
   } else {
     // (c,i,j,k)=c-1+nc*(i-ib)+nc*ni*(j-jb)+nc*ni*nj*(k-kb)
@@ -1224,7 +1224,7 @@ void Sarray::define_offsets() {
     m_offi = m_nc;
     m_offj = m_nc * m_ni;
     m_offk = m_nc * m_ni * m_nj;
-    // Can use zero based array internally in class, i.e.,
+    // Can use zero based array sw4_typeernally in class, i.e.,
     // (i,j,k,c) = c + nc*i + nc*ni*j+nc*ni*nj*k
   }
   view.set(*this);
@@ -1237,22 +1237,22 @@ void Sarray::transposeik() {
   if (m_corder) {
     size_t npts = static_cast<size_t>(m_ni) * m_nj * m_nk;
 #pragma omp parallel for
-    for (int i = 0; i < m_ni; i++)
-      for (int j = 0; j < m_nj; j++)
-        for (int k = 0; k < m_nk; k++) {
+    for (sw4_type i = 0; i < m_ni; i++)
+      for (sw4_type j = 0; j < m_nj; j++)
+        for (sw4_type k = 0; k < m_nk; k++) {
           size_t ind = i + m_ni * j + m_ni * m_nj * k;
           size_t indr = k + m_nk * j + m_nk * m_nj * i;
-          for (int c = 0; c < m_nc; c++)
+          for (sw4_type c = 0; c < m_nc; c++)
             tmpar[npts * c + ind] = m_data[npts * c + indr];
         }
   } else {
 #pragma omp parallel for
-    for (int i = 0; i < m_ni; i++)
-      for (int j = 0; j < m_nj; j++)
-        for (int k = 0; k < m_nk; k++) {
+    for (sw4_type i = 0; i < m_ni; i++)
+      for (sw4_type j = 0; j < m_nj; j++)
+        for (sw4_type k = 0; k < m_nk; k++) {
           size_t ind = i + m_ni * j + m_ni * m_nj * k;
           size_t indr = k + m_nk * j + m_nk * m_nj * i;
-          for (int c = 0; c < m_nc; c++)
+          for (sw4_type c = 0; c < m_nc; c++)
             tmpar[c + m_nc * ind] = m_data[c + m_nc * indr];
         }
   }
@@ -1263,7 +1263,7 @@ void Sarray::transposeik() {
   ::operator delete[](tmpar, Space::Managed);
 }
 
-void Sarray::prefetch(int device) {
+void Sarray::prefetch(sw4_type device) {
 #if defined(DISABLE_PREFETCH)
   return;
 #else
@@ -1279,7 +1279,7 @@ void Sarray::prefetch(int device) {
 
 #endif  // #if defined(DISABLE_PREFETCH)
 }
-void Sarray::forceprefetch(int device) {
+void Sarray::forceprefetch(sw4_type device) {
 #if defined(DISABLE_PREFETCH2)
   return;
 #else
@@ -1322,19 +1322,19 @@ void SView::set(Sarray& x) {
 }
 void SarrayVectorPrefetch(vector<Sarray>& v) {
   SW4_MARK_FUNCTION;
-  for (int i = 0; i < v.size(); i++) v[i].prefetch();
+  for (sw4_type i = 0; i < v.size(); i++) v[i].prefetch();
 }
 void SarrayVectorPrefetch(vector<Sarray*>& v) {
   SW4_MARK_FUNCTION;
-  for (int i = 0; i < v.size(); i++) v[i]->prefetch();
+  for (sw4_type i = 0; i < v.size(); i++) v[i]->prefetch();
 }
-void SarrayVectorPrefetch(vector<Sarray*>& v, int n) {
+void SarrayVectorPrefetch(vector<Sarray*>& v, sw4_type n) {
   SW4_MARK_FUNCTION;
-  for (int i = 0; i < v.size(); i++)
-    for (int j = 0; j < n; j++) v[i][j].prefetch();
+  for (sw4_type i = 0; i < v.size(); i++)
+    for (sw4_type j = 0; j < n; j++) v[i][j].prefetch();
 }
 
-typedef std::tuple<uintptr_t, int, int, int, int> mkey_t;
+typedef std::tuple<uintptr_t, sw4_type, sw4_type, sw4_type, sw4_type> mkey_t;
 
 struct key_hash : public std::unary_function<mkey_t, std::size_t> {
   std::size_t operator()(const mkey_t& k) const {
@@ -1342,12 +1342,12 @@ struct key_hash : public std::unary_function<mkey_t, std::size_t> {
            std::get<4>(k);
   }
 };
-float_sw4* memoize(Sarray& u, int c, int i, int j, int k) {
-  static std::unordered_map<std::tuple<uintptr_t, int, int, int, int>,
+float_sw4* memoize(Sarray& u, sw4_type c, sw4_type i, sw4_type j, sw4_type k) {
+  static std::unordered_map<std::tuple<uintptr_t, sw4_type, sw4_type, sw4_type, sw4_type>,
                             float_sw4*, key_hash>
       map;
-  static int fc = 0;
-  static int nfc = 0;
+  static sw4_type fc = 0;
+  static sw4_type nfc = 0;
   auto index = std::make_tuple((uintptr_t)u.c_ptr(), c, i, j, k);
   auto found = map.find(index);
   // std::cout<<" Stats "<<fc<<" "<<nfc<<"\n";
@@ -1362,33 +1362,33 @@ float_sw4* memoize(Sarray& u, int c, int i, int j, int k) {
   }
 }
 //-----------------------------------------------------------------------
-void Sarray::insert_intersection(Sarray& a_U) {
+void Sarray::insert_sw4_typeersection(Sarray& a_U) {
   SW4_MARK_FUNCTION;
   // Assuming nc is the same for m_data and a_U.m_data.
-  int wind[6];
-  int ib = a_U.m_ib, ie = a_U.m_ie, jb = a_U.m_jb, je = a_U.m_je, kb = a_U.m_kb,
+  sw4_type wind[6];
+  sw4_type ib = a_U.m_ib, ie = a_U.m_ie, jb = a_U.m_jb, je = a_U.m_je, kb = a_U.m_kb,
       ke = a_U.m_ke;
-  intersection(ib, ie, jb, je, kb, ke, wind);
-  int nis = ie - ib + 1;
-  int njs = je - jb + 1;
-  int nks = ke - kb + 1;
+  sw4_typeersection(ib, ie, jb, je, kb, ke, wind);
+  sw4_type nis = ie - ib + 1;
+  sw4_type njs = je - jb + 1;
+  sw4_type nks = ke - kb + 1;
 
   if (m_corder) {
     const size_t totpts = static_cast<size_t>(m_ni) * m_nj * m_nk;
     const size_t totptss = static_cast<size_t>(nis) * njs * (nks);
     float_sw4* dst_m_data = m_data;
     float_sw4* src_m_data = a_U.m_data;
-    // for (int k = wind[4]; k <= wind[5]; k++)
-    //   for (int j = wind[2]; j <= wind[3]; j++)
-    //     for (int i = wind[0]; i <= wind[1]; i++) {
-    const int lm_ib = m_ib;
-    const int lm_jb = m_jb;
-    const int lm_kb = m_kb;
-    const int lm_ni = m_ni;
-    const int lm_nj = m_nj;
-    // const int lm_nk = m_nk;
-    const int lm_nc = m_nc;
-    // std::cout<<"Calling interest \n"<<std::flush;
+    // for (sw4_type k = wind[4]; k <= wind[5]; k++)
+    //   for (sw4_type j = wind[2]; j <= wind[3]; j++)
+    //     for (sw4_type i = wind[0]; i <= wind[1]; i++) {
+    const sw4_type lm_ib = m_ib;
+    const sw4_type lm_jb = m_jb;
+    const sw4_type lm_kb = m_kb;
+    const sw4_type lm_ni = m_ni;
+    const sw4_type lm_nj = m_nj;
+    // const sw4_type lm_nk = m_nk;
+    const sw4_type lm_nc = m_nc;
+    // std::cout<<"Calling sw4_typeerest \n"<<std::flush;
 
 #if !defined(RAJA_ONLY) && defined (ENABLE_GPU)
 
@@ -1397,7 +1397,7 @@ void Sarray::insert_intersection(Sarray& a_U) {
     Range<1> K(wind[4], wind[5] + 1);
 
 #pragma forceinline
-    forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+    forall3async(I, J, K, [=] RAJA_DEVICE(sw4_type i, sw4_type j, sw4_type k) {
 #else
 
     RAJA::RangeSegment k_range(wind[4], wind[5] + 1);
@@ -1405,62 +1405,62 @@ void Sarray::insert_intersection(Sarray& a_U) {
     RAJA::RangeSegment i_range(wind[0], wind[1] + 1);
     RAJA::kernel<SII_POL>(
         RAJA::make_tuple(k_range, j_range, i_range),
-        [=] RAJA_DEVICE(int k, int j, int i) {
+        [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
       size_t sind = (i - ib) + nis * (j - jb) + nis * njs * (k - kb);
       size_t ind =
           (i - lm_ib) + lm_ni * (j - lm_jb) + lm_ni * lm_nj * (k - lm_kb);
 
-      for (int c = 1; c <= lm_nc; c++)
+      for (sw4_type c = 1; c <= lm_nc; c++)
         dst_m_data[ind + totpts * (c - 1)] =
             src_m_data[sind + totptss * (c - 1)];
     });
     // SYNC_STREAM;
   } else {
     size_t sind = 0, ind = 0;
-    for (int k = wind[4]; k <= wind[5]; k++)
-      for (int j = wind[2]; j <= wind[3]; j++)
-        for (int i = wind[0]; i <= wind[1]; i++) {
+    for (sw4_type k = wind[4]; k <= wind[5]; k++)
+      for (sw4_type j = wind[2]; j <= wind[3]; j++)
+        for (sw4_type i = wind[0]; i <= wind[1]; i++) {
           sind = (i - ib) + nis * (j - jb) + nis * njs * (k - kb);
           ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
-          for (int c = 1; c <= m_nc; c++)
+          for (sw4_type c = 1; c <= m_nc; c++)
             m_data[ind * m_nc + c - 1] = a_U.m_data[sind * m_nc + c - 1];
         }
   }
 }
 
-void Sarray::extrapolij(int npts) {
+void Sarray::extrapolij(sw4_type npts) {
   // Extrapolate to layer npts thick at outermost points in i- and j-directions.
   if (m_corder) {
     size_t nijk = static_cast<size_t>(m_ni) * m_nj * m_nk;
-    for (int c = 0; c < m_nc; c++) {
-      for (int k = 0; k <= m_nk - 1; k++)
-        for (int j = 0; j <= m_nj - 1; j++)
-          for (int i = 0; i <= npts - 1; i++) {
+    for (sw4_type c = 0; c < m_nc; c++) {
+      for (sw4_type k = 0; k <= m_nk - 1; k++)
+        for (sw4_type j = 0; j <= m_nj - 1; j++)
+          for (sw4_type i = 0; i <= npts - 1; i++) {
             size_t ind = i + m_ni * j + m_ni * m_nj * k;
             size_t indf = npts + m_ni * j + m_ni * m_nj * k;
             m_data[ind + c * nijk] = m_data[indf + c * nijk];
           }
       // side i-high
-      for (int k = 0; k <= m_nk - 1; k++)
-        for (int j = 0; j <= m_nj - 1; j++)
-          for (int i = m_ni - npts; i <= m_ni - 1; i++) {
+      for (sw4_type k = 0; k <= m_nk - 1; k++)
+        for (sw4_type j = 0; j <= m_nj - 1; j++)
+          for (sw4_type i = m_ni - npts; i <= m_ni - 1; i++) {
             size_t ind = i + m_ni * j + m_ni * m_nj * k;
             size_t indf = m_ni - npts - 1 + m_ni * j + m_ni * m_nj * k;
             m_data[ind + c * nijk] = m_data[indf + c * nijk];
           }
       // side j-low
-      for (int k = 0; k <= m_nk - 1; k++)
-        for (int j = 0; j <= npts - 1; j++)
-          for (int i = 0; i <= m_ni - 1; i++) {
+      for (sw4_type k = 0; k <= m_nk - 1; k++)
+        for (sw4_type j = 0; j <= npts - 1; j++)
+          for (sw4_type i = 0; i <= m_ni - 1; i++) {
             size_t ind = i + m_ni * j + m_ni * m_nj * k;
             size_t indf = i + m_ni * npts + m_ni * m_nj * k;
             m_data[ind + c * nijk] = m_data[indf + c * nijk];
           }
       // side j-high
-      for (int k = 0; k <= m_nk - 1; k++)
-        for (int j = m_nj - npts; j <= m_nj - 1; j++)
-          for (int i = 0; i <= m_ni - 1; i++) {
+      for (sw4_type k = 0; k <= m_nk - 1; k++)
+        for (sw4_type j = m_nj - npts; j <= m_nj - 1; j++)
+          for (sw4_type i = 0; i <= m_ni - 1; i++) {
             size_t ind = i + m_ni * j + m_ni * m_nj * k;
             size_t indf = i + m_ni * (m_nj - npts - 1) + m_ni * m_nj * k;
             m_data[ind + c * nijk] = m_data[indf + c * nijk];
@@ -1468,37 +1468,37 @@ void Sarray::extrapolij(int npts) {
     }
   } else {
     // side i-low
-    for (int k = 0; k <= m_nk - 1; k++)
-      for (int j = 0; j <= m_nj - 1; j++)
-        for (int i = 0; i <= npts - 1; i++)
-          for (int c = 0; c < m_nc; c++) {
+    for (sw4_type k = 0; k <= m_nk - 1; k++)
+      for (sw4_type j = 0; j <= m_nj - 1; j++)
+        for (sw4_type i = 0; i <= npts - 1; i++)
+          for (sw4_type c = 0; c < m_nc; c++) {
             size_t ind = i + m_ni * j + m_ni * m_nj * k;
             size_t indf = npts + m_ni * j + m_ni * m_nj * k;
             m_data[c + m_nc * ind] = m_data[c + m_nc * indf];
           }
     // side i-high
-    for (int k = 0; k <= m_nk - 1; k++)
-      for (int j = 0; j <= m_nj - 1; j++)
-        for (int i = m_ni - npts; i <= m_ni - 1; i++)
-          for (int c = 0; c < m_nc; c++) {
+    for (sw4_type k = 0; k <= m_nk - 1; k++)
+      for (sw4_type j = 0; j <= m_nj - 1; j++)
+        for (sw4_type i = m_ni - npts; i <= m_ni - 1; i++)
+          for (sw4_type c = 0; c < m_nc; c++) {
             size_t ind = i + m_ni * j + m_ni * m_nj * k;
             size_t indf = m_ni - 1 - npts + m_ni * j + m_ni * m_nj * k;
             m_data[c + m_nc * ind] = m_data[c + m_nc * indf];
           }
     // side j-low
-    for (int k = 0; k <= m_nk - 1; k++)
-      for (int j = 0; j <= npts - 1; j++)
-        for (int i = 0; i <= m_ni - 1; i++)
-          for (int c = 0; c < m_nc; c++) {
+    for (sw4_type k = 0; k <= m_nk - 1; k++)
+      for (sw4_type j = 0; j <= npts - 1; j++)
+        for (sw4_type i = 0; i <= m_ni - 1; i++)
+          for (sw4_type c = 0; c < m_nc; c++) {
             size_t ind = i + m_ni * j + m_ni * m_nj * k;
             size_t indf = i + m_ni * npts + m_ni * m_nj * k;
             m_data[c + m_nc * ind] = m_data[c + m_nc * indf];
           }
     // side j-high
-    for (int k = 0; k <= m_nk - 1; k++)
-      for (int j = m_nj - npts; j <= m_nj - 1; j++)
-        for (int i = 0; i <= m_ni - 1; i++)
-          for (int c = 0; c < m_nc; c++) {
+    for (sw4_type k = 0; k <= m_nk - 1; k++)
+      for (sw4_type j = m_nj - npts; j <= m_nj - 1; j++)
+        for (sw4_type i = 0; i <= m_ni - 1; i++)
+          for (sw4_type c = 0; c < m_nc; c++) {
             size_t ind = i + m_ni * j + m_ni * m_nj * k;
             size_t indf = i + m_ni * (m_nj - 1 - npts) + m_ni * m_nj * k;
             m_data[c + m_nc * ind] = m_data[c + m_nc * indf];
@@ -1506,61 +1506,61 @@ void Sarray::extrapolij(int npts) {
   }
 }
 //-----------------------------------------------------------------------
-void Sarray::copy_kplane2(Sarray& u, int k) {
+void Sarray::copy_kplane2(Sarray& u, sw4_type k) {
   // Only check k-dimension, other dims do not have to match, only copy the
-  // intersecting part.
+  // sw4_typeersecting part.
   SW4_MARK_FUNCTION;
   if (!(u.m_kb <= k && k <= u.m_ke && m_kb <= k && k <= m_ke)) {
     cout << "Sarray::copy_kplane, ERROR k index " << k << " not in range "
          << endl;
     return;
   }
-  int wind[6];
-  intersection(u.m_ib, u.m_ie, u.m_jb, u.m_je, u.m_kb, u.m_ke, wind);
+  sw4_type wind[6];
+  sw4_typeersection(u.m_ib, u.m_ie, u.m_jb, u.m_je, u.m_kb, u.m_ke, wind);
   if (m_corder) {
-    int lm_nc = m_nc;
-    int lm_ib = m_ib;
-    int lm_ni = m_ni;
-    int lm_jb = m_jb;
-    int lm_nj = m_nj;
-    int lm_kb = m_kb;
+    sw4_type lm_nc = m_nc;
+    sw4_type lm_ib = m_ib;
+    sw4_type lm_ni = m_ni;
+    sw4_type lm_jb = m_jb;
+    sw4_type lm_nj = m_nj;
+    sw4_type lm_kb = m_kb;
 
-    int ulm_ib = u.m_ib;
-    int ulm_ni = u.m_ni;
-    int ulm_jb = u.m_jb;
-    int ulm_nj = u.m_nj;
-    int ulm_kb = u.m_kb;
+    sw4_type ulm_ib = u.m_ib;
+    sw4_type ulm_ni = u.m_ni;
+    sw4_type ulm_jb = u.m_jb;
+    sw4_type ulm_nj = u.m_nj;
+    sw4_type ulm_kb = u.m_kb;
 
     float_sw4* lm_data = m_data;
     float_sw4* ulm_data = u.m_data;
     size_t nijk = m_ni * m_nj * m_nk;
     size_t unijk = u.m_ni * u.m_nj * u.m_nk;
-    // for (int c = 0; c < m_nc; c++)
-    //   for (int j = wind[2]; j <= wind[3]; j++)
-    //     for (int i = wind[0]; i <= wind[1]; i++) {
+    // for (sw4_type c = 0; c < m_nc; c++)
+    //   for (sw4_type j = wind[2]; j <= wind[3]; j++)
+    //     for (sw4_type i = wind[0]; i <= wind[1]; i++) {
     RAJA::RangeSegment j_range(wind[2], wind[3] + 1);
     RAJA::RangeSegment i_range(wind[0], wind[1] + 1);
     RAJA::kernel<ODDIODDJ_EXEC_POL1_ASYNC>(
-        RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+        RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(sw4_type j, sw4_type i) {
           size_t ind =
               (i - lm_ib) + lm_ni * (j - lm_jb) + lm_ni * lm_nj * (k - lm_kb);
 
           size_t uind = (i - ulm_ib) + ulm_ni * (j - ulm_jb) +
                         ulm_ni * ulm_nj * (k - ulm_kb);
 
-          for (int c = 0; c < lm_nc; c++)
+          for (sw4_type c = 0; c < lm_nc; c++)
             lm_data[ind + c * nijk] = ulm_data[uind + c * unijk];
         });
     // SYNC_STREAM;
   } else {
     std::cout << "WARNING Sarray::copy_kplane2 running on CPU !!\n"
               << std::flush;
-    for (int j = wind[2]; j <= wind[3]; j++)
-      for (int i = wind[0]; i <= wind[1]; i++) {
+    for (sw4_type j = wind[2]; j <= wind[3]; j++)
+      for (sw4_type i = wind[0]; i <= wind[1]; i++) {
         size_t ind = (i - m_ib) + m_ni * (j - m_jb) + m_ni * m_nj * (k - m_kb);
         size_t uind = (i - u.m_ib) + u.m_ni * (j - u.m_jb) +
                       u.m_ni * u.m_nj * (k - u.m_kb);
-        for (int c = 0; c < m_nc; c++)
+        for (sw4_type c = 0; c < m_nc; c++)
           m_data[c + m_nc * ind] = u.m_data[c + m_nc * uind];
       }
   }
@@ -1568,7 +1568,7 @@ void Sarray::copy_kplane2(Sarray& u, int k) {
 //----------------------------------------------------------------------
 void Sarray::swrite(std::string filename) {
   if (!of.is_open()) {
-    int myRank = -1;
+    sw4_type myRank = -1;
     MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
     std::stringstream ss;
     ss << filename << "_" << myRank << ".dat";
@@ -1579,13 +1579,13 @@ void Sarray::swrite(std::string filename) {
   }
 
   of << " \n\n++++ " << filename << " \n\n";
-  for (int i = 0; i < m_nc * m_ni * m_nj * m_nk; i++) {
+  for (sw4_type i = 0; i < m_nc * m_ni * m_nj * m_nk; i++) {
     of << i << " " << m_data[i] << "\n";
   }
 }
 //----------------------------------------------------------------------
-void Sarray::GetAtt(char* file, int line) {
-  short int data = -999;
+void Sarray::GetAtt(char* file, sw4_type line) {
+  short sw4_type data = -999;
 #ifdef ENABLE_CUDA
   if (cuMemRangeGetAttribute(
           &data, 4, CU_MEM_RANGE_ATTRIBUTE_PREFERRED_LOCATION,
@@ -1607,8 +1607,8 @@ void Sarray::GetAtt(char* file, int line) {
 void Sarray::switch_space(Space new_space) {
 #ifdef ENABLE_GPU
 
-  // std::cout<<"Switching from "<<as_int(space)<<" to
-  // "<<as_int(new_space)<<"\n"<<std::flush;
+  // std::cout<<"Switching from "<<as_sw4_type(space)<<" to
+  // "<<as_sw4_type(new_space)<<"\n"<<std::flush;
   if (space == new_space) return;
 
   float_sw4* n_data = SW4_NEW(new_space, float_sw4[m_nc * m_ni * m_nj * m_nk]);
@@ -1618,7 +1618,7 @@ void Sarray::switch_space(Space new_space) {
   ::operator delete[](m_data, space);
   reference(n_data);
   space = new_space;
-  // std::cout<<"Switching from "<<as_int(space)<<" to "<<as_int(new_space)<<"
+  // std::cout<<"Switching from "<<as_sw4_type(space)<<" to "<<as_sw4_type(new_space)<<"
   // DONE\n"<<std::flush;
 #endif
 }
@@ -1654,17 +1654,17 @@ void mset_to_zero_async(Sarray& S0, Sarray& S1, Sarray& S2, Sarray& S3) {
   // 		   });
 #endif
 }
-int aligned(double* p) {
-  for (int i = 16; i <= 2048; i *= 2)
-    if ((long int)p % i != 0) return i / 2;
+sw4_type aligned(double* p) {
+  for (sw4_type i = 16; i <= 2048; i *= 2)
+    if ((long sw4_type)p % i != 0) return i / 2;
   return 2048;
 }
-void vset_to_zero_async(std::vector<Sarray>& v, int N) {
-  // for(int i=0;i<N;i++)
+void vset_to_zero_async(std::vector<Sarray>& v, sw4_type N) {
+  // for(sw4_type i=0;i<N;i++)
   // std::cout<<"SIZES "<<v[i].m_npts<<"\n";
 
 #if defined(RAJA_ONLY) || not defined(ENABLE_GPU)
-  for (int g = 0; g < N; g++) v[g].set_to_zero_async();
+  for (sw4_type g = 0; g < N; g++) v[g].set_to_zero_async();
 
 #else
   float_sw4 *m0, *m1, *m2, *m3, *m4, *m5, *m6, *m7;

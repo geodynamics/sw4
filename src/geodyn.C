@@ -23,67 +23,67 @@ using namespace std;
 
 #define SQR(x) ((x) * (x))
 
-template <int iu, int il, int ju, int jl, int ku, int kl>
-void evalLuCurv(int ib, int ie, int jb, int je, int kb, int ke, Sarray& u,
+template <sw4_type iu, sw4_type il, sw4_type ju, sw4_type jl, sw4_type ku, sw4_type kl>
+void evalLuCurv(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke, Sarray& u,
                 Sarray& lu, float_sw4* a_mu, float_sw4* a_la, Sarray& met,
-                Sarray& jac, int ilb, int ile, int jlb, int jle, int klb,
-                int kle);
+                Sarray& jac, sw4_type ilb, sw4_type ile, sw4_type jlb, sw4_type jle, sw4_type klb,
+                sw4_type kle);
 
 void evalLu_Dip(
-    int ib, int ie, int jb, int je, int kb, int ke,
+    sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
     //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
     Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la, float_sw4 h,
-    int ilb, int ile, int jlb, int jle, int klb, int kle);
+    sw4_type ilb, sw4_type ile, sw4_type jlb, sw4_type jle, sw4_type klb, sw4_type kle);
 void evalLu_Dim(
-    int ib, int ie, int jb, int je, int kb, int ke,
+    sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
     //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
     Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la, float_sw4 h,
-    int ilb, int ile, int jlb, int jle, int klb, int kle);
+    sw4_type ilb, sw4_type ile, sw4_type jlb, sw4_type jle, sw4_type klb, sw4_type kle);
 void evalLu_Djp(
-    int ib, int ie, int jb, int je, int kb, int ke,
+    sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
     //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
     Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la, float_sw4 h,
-    int ilb, int ile, int jlb, int jle, int klb, int kle);
+    sw4_type ilb, sw4_type ile, sw4_type jlb, sw4_type jle, sw4_type klb, sw4_type kle);
 void evalLu_Djm(
-    int ib, int ie, int jb, int je, int kb, int ke,
+    sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
     //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
     Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la, float_sw4 h,
-    int ilb, int ile, int jlb, int jle, int klb, int kle);
+    sw4_type ilb, sw4_type ile, sw4_type jlb, sw4_type jle, sw4_type klb, sw4_type kle);
 void evalLu_Dkp(
-    int ib, int ie, int jb, int je, int kb, int ke,
+    sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
     //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
     Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la, float_sw4 h,
-    int ilb, int ile, int jlb, int jle, int klb, int kle);
+    sw4_type ilb, sw4_type ile, sw4_type jlb, sw4_type jle, sw4_type klb, sw4_type kle);
 void evalLu_Dkm(
-    int ib, int ie, int jb, int je, int kb, int ke,
+    sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
     //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
     Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la, float_sw4 h,
-    int ilb, int ile, int jlb, int jle, int klb, int kle);
+    sw4_type ilb, sw4_type ile, sw4_type jlb, sw4_type jle, sw4_type klb, sw4_type kle);
 void evalLu_DkpDip(
-    int ib, int ie, int jb, int je, int kb, int ke,
+    sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
     //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
     Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la, float_sw4 h,
-    int ilb, int ile, int jlb, int jle, int klb, int kle);
+    sw4_type ilb, sw4_type ile, sw4_type jlb, sw4_type jle, sw4_type klb, sw4_type kle);
 void evalLu_DkpDim(
-    int ib, int ie, int jb, int je, int kb, int ke,
+    sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
     //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
     Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la, float_sw4 h,
-    int ilb, int ile, int jlb, int jle, int klb, int kle);
+    sw4_type ilb, sw4_type ile, sw4_type jlb, sw4_type jle, sw4_type klb, sw4_type kle);
 void evalLu_DkpDjp(
-    int ib, int ie, int jb, int je, int kb, int ke,
+    sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
     //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
     Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la, float_sw4 h,
-    int ilb, int ile, int jlb, int jle, int klb, int kle);
+    sw4_type ilb, sw4_type ile, sw4_type jlb, sw4_type jle, sw4_type klb, sw4_type kle);
 void evalLu_DkpDjm(
-    int ib, int ie, int jb, int je, int kb, int ke,
+    sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
     //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
     Sarray& a_u, Sarray& a_lu, float_sw4* a_mu, float_sw4* a_la, float_sw4 h,
-    int ilb, int ile, int jlb, int jle, int klb, int kle);
+    sw4_type ilb, sw4_type ile, sw4_type jlb, sw4_type jle, sw4_type klb, sw4_type kle);
 
 //-----------------------------------------------------------------------
-void EW::set_geodyn_data(string file, int nx, int nz, float_sw4 h,
-                         float_sw4 origin[3], float_sw4 dt, int nsteps,
-                         int faces) {
+void EW::set_geodyn_data(string file, sw4_type nx, sw4_type nz, float_sw4 h,
+                         float_sw4 origin[3], float_sw4 dt, sw4_type nsteps,
+                         sw4_type faces) {
   SW4_MARK_FUNCTION;
   m_do_geodynbc = true;
   m_geodyn_past_end = false;
@@ -98,7 +98,7 @@ void EW::set_geodyn_data(string file, int nx, int nz, float_sw4 h,
   m_geodyn_faces = faces;
   m_geodyn_maxsteps = nsteps;
 
-  int ny = nx;
+  sw4_type ny = nx;
   if (m_geodyn_faces == 6)
     m_geodyn_blocksize = 2 * (nx * ny + nx * nz + ny * nz);
   else if (m_geodyn_faces == 5)
@@ -124,7 +124,7 @@ void EW::set_geodyn_data(string file, int nx, int nz, float_sw4 h,
 
   m_geo_usgh.resize(4);
 
-  int i0, i1, j0, j1, k0, k1;
+  sw4_type i0, i1, j0, j1, k0, k1;
   float_sw4 cubelen = (nx - 1) * m_geodyn_h;
   float_sw4 zcubelen = (nz - 1) * m_geodyn_h;
 
@@ -132,16 +132,16 @@ void EW::set_geodyn_data(string file, int nx, int nz, float_sw4 h,
   m_geodyn_dims.resize(mNumberOfGrids);
   m_geodyn_iwillread = false;
 
-  for (int g = 0; g < mNumberOfGrids; g++) {
-    i0 = static_cast<int>(round(m_geodyn_origin[0] / mGridSize[g] + 1));
-    i1 = static_cast<int>(
+  for (sw4_type g = 0; g < mNumberOfGrids; g++) {
+    i0 = static_cast<sw4_type>(round(m_geodyn_origin[0] / mGridSize[g] + 1));
+    i1 = static_cast<sw4_type>(
         round((m_geodyn_origin[0] + cubelen) / mGridSize[g] + 1));
-    j0 = static_cast<int>(round(m_geodyn_origin[1] / mGridSize[g] + 1));
-    j1 = static_cast<int>(
+    j0 = static_cast<sw4_type>(round(m_geodyn_origin[1] / mGridSize[g] + 1));
+    j1 = static_cast<sw4_type>(
         round((m_geodyn_origin[1] + cubelen) / mGridSize[g] + 1));
-    k0 = static_cast<int>(
+    k0 = static_cast<sw4_type>(
         round((m_geodyn_origin[2] - m_zmin[g]) / mGridSize[g] + 1));
-    k1 = static_cast<int>(
+    k1 = static_cast<sw4_type>(
         round((m_geodyn_origin[2] - m_zmin[g] + zcubelen) / mGridSize[g] + 1));
 
     if (g == mNumberOfGrids - 1 &&
@@ -153,18 +153,18 @@ void EW::set_geodyn_data(string file, int nx, int nz, float_sw4 h,
 
       // Find k=const grid surface with smallest distance to the plane
       // z=cubelen.
-      int icmin = m_iStartInt[g], icmax = m_iEndInt[g], jcmin = m_jStartInt[g],
-          jcmax = m_jEndInt[g];
+      sw4_type icmin = m_iStartSw4_Type[g], icmax = m_iEndSw4_Type[g], jcmin = m_jStartSw4_Type[g],
+          jcmax = m_jEndSw4_Type[g];
       if (i0 > icmin) icmin = i0;
       if (i1 < icmax) icmax = i1;
       if (j0 > jcmin) jcmin = j0;
       if (j1 < jcmax) jcmax = j1;
 
       float_sw4 kavgm = 0, kavgp = 0;
-      int nptsij = 0;
-      for (int j = jcmin; j <= jcmax; j++)
-        for (int i = icmin; i <= icmax; i++) {
-          int k = 1;
+      sw4_type nptsij = 0;
+      for (sw4_type j = jcmin; j <= jcmax; j++)
+        for (sw4_type i = icmin; i <= icmax; i++) {
+          sw4_type k = 1;
           while (k <= m_kEnd[g] && mZ[g](i, j, k) - mZ[g](i, j, 1) < zcubelen)
             k++;
           kavgm += k - 1;
@@ -178,15 +178,15 @@ void EW::set_geodyn_data(string file, int nx, int nz, float_sw4 h,
       ktmp = nptsij;
       float_sw4 nptstot;
       MPI_Allreduce(&ktmp, &nptstot, 1, m_mpifloat, MPI_SUM, MPI_COMM_WORLD);
-      int km = static_cast<int>(round(kavgm / nptstot));
-      int kp = static_cast<int>(round(kavgp / nptstot));
+      sw4_type km = static_cast<sw4_type>(round(kavgm / nptstot));
+      sw4_type kp = static_cast<sw4_type>(round(kavgp / nptstot));
 
       float_sw4 deperrp = 0, deperrm = 0;
       if (nptsij > 0) {
         if (kp > m_kEnd[g]) kp = m_kEnd[g];
         if (km > m_kEnd[g]) km = m_kEnd[g];
-        for (int j = jcmin; j <= jcmax; j++)
-          for (int i = icmin; i <= icmax; i++) {
+        for (sw4_type j = jcmin; j <= jcmax; j++)
+          for (sw4_type i = icmin; i <= icmax; i++) {
             deperrp += (mZ[g](i, j, kp) - mZ[g](i, j, 1) - zcubelen) *
                        (mZ[g](i, j, kp) - mZ[g](i, j, 1) - zcubelen);
             deperrm += (mZ[g](i, j, km) - mZ[g](i, j, 1) - zcubelen) *
@@ -203,8 +203,8 @@ void EW::set_geodyn_data(string file, int nx, int nz, float_sw4 h,
           k1 = km;
       } else
         k1 = 0;  // k1 =0 if cube not in my processor
-      int k1tmp = k1;
-      MPI_Allreduce(&k1tmp, &k1, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+      sw4_type k1tmp = k1;
+      MPI_Allreduce(&k1tmp, &k1, 1, MPI_SW4_TYPE, MPI_MAX, MPI_COMM_WORLD);
     }
     bool cubeok = true;
     if (g == mNumberOfGrids - 1 && m_geodyn_faces == 5) {
@@ -241,9 +241,9 @@ void EW::set_geodyn_data(string file, int nx, int nz, float_sw4 h,
             "SW4 exiting because Geodyn cube placement is too close to the "
             "surface");
 
-    m_geodyn_dims[g] = new int[6];
-    int imin = m_iStart[g], jmin = m_jStart[g], kmin = m_kStart[g];
-    int imax = m_iEnd[g], jmax = m_jEnd[g], kmax = m_kEnd[g];
+    m_geodyn_dims[g] = new sw4_type[6];
+    sw4_type imin = m_iStart[g], jmin = m_jStart[g], kmin = m_kStart[g];
+    sw4_type imax = m_iEnd[g], jmax = m_jEnd[g], kmax = m_kEnd[g];
     if ((i0 <= imax && i1 >= imin) && (j0 <= jmax && j1 >= jmin) &&
         (k0 <= kmax && k1 >= kmin)) {
       if (i0 < imin) i0 = imin;
@@ -295,21 +295,21 @@ void EW::set_geodyn_data(string file, int nx, int nz, float_sw4 h,
 void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
                                float_sw4 t, vector<float_sw4**>& bforcing) {
   SW4_MARK_FUNCTION;
-  //   int n1 = static_cast<int>(floor(t/m_geodyn_dt));
-  int i0, i1, j0, j1, k0, k1;
+  //   sw4_type n1 = static_cast<sw4_type>(floor(t/m_geodyn_dt));
+  sw4_type i0, i1, j0, j1, k0, k1;
 
   // Zero out values inside the cube. Use -100000 for debug.
-  for (int g = 0; g < mNumberOfGrids; g++) {
+  for (sw4_type g = 0; g < mNumberOfGrids; g++) {
     i0 = m_geodyn_dims[g][0];
     i1 = m_geodyn_dims[g][1];
     j0 = m_geodyn_dims[g][2];
     j1 = m_geodyn_dims[g][3];
     k0 = m_geodyn_dims[g][4];
     k1 = m_geodyn_dims[g][5];
-    for (int k = k0 + 1; k <= k1 - 1; k++)
-      for (int j = j0 + 1; j <= j1 - 1; j++)
-        for (int i = i0 + 1; i <= i1 - 1; i++)
-          for (int c = 1; c <= 3; c++) {
+    for (sw4_type k = k0 + 1; k <= k1 - 1; k++)
+      for (sw4_type j = j0 + 1; j <= j1 - 1; j++)
+        for (sw4_type i = i0 + 1; i <= i1 - 1; i++)
+          for (sw4_type c = 1; c <= 3; c++) {
             //		      u[g](c,i,j,k) = -100000;
             u[g](c, i, j, k) = 0;
           }
@@ -322,7 +322,7 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
     // Note: need to reset both n+1 and n levels.
     m_do_geodynbc = false;
     if (m_myRank == 0) cout << "Switching off Geodyn boundary " << endl;
-    for (int g = 0; g < mNumberOfGrids; g++) {
+    for (sw4_type g = 0; g < mNumberOfGrids; g++) {
       i0 = m_geodyn_dims[g][0];
       i1 = m_geodyn_dims[g][1];
       j0 = m_geodyn_dims[g][2];
@@ -330,10 +330,10 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
       k0 = m_geodyn_dims[g][4];
       k1 = m_geodyn_dims[g][5];
 #pragma omp parallel for
-      for (int k = k0; k <= k1; k++)
-        for (int j = j0; j <= j1; j++)
-          for (int i = i0; i <= i1; i++)
-            for (int c = 1; c <= 3; c++)
+      for (sw4_type k = k0; k <= k1; k++)
+        for (sw4_type j = j0; j <= j1; j++)
+          for (sw4_type i = i0; i <= i1; i++)
+            for (sw4_type c = 1; c <= 3; c++)
               u[g](c, i, j, k) = um[g](c, i, j, k) = 0;
     }
   } else {
@@ -350,7 +350,7 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
     //    if( m_geodyn_iwillread )
     // 	 {
     // 	    char buf[256];
-    // 	    for( int i=0 ; i < m_geodyn_blocksize*(n1-m_geodyn_step-2) ; i++ )
+    // 	    for( sw4_type i=0 ; i < m_geodyn_blocksize*(n1-m_geodyn_step-2) ; i++ )
     // 	       m_geodynfile.getline(buf,256);
     // 	 }
     //    get_geodyn_timelevel( m_geodyn_data1 );
@@ -363,7 +363,7 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
 
     float_sw4 twgh = ((m_geodyn_step + 1) * m_geodyn_dt - t) / m_geodyn_dt;
 
-    for (int g = 0; g < mNumberOfCartesianGrids; g++) {
+    for (sw4_type g = 0; g < mNumberOfCartesianGrids; g++) {
       i0 = m_geodyn_dims[g][0];
       i1 = m_geodyn_dims[g][1];
       j0 = m_geodyn_dims[g][2];
@@ -374,11 +374,11 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
 
       float_sw4 h = mGridSize[g];
 #pragma omp parallel for
-      for (int k = k0; k <= k1; k++)
-        for (int j = j0; j <= j1; j++) {
-          int jg0 = static_cast<int>(
+      for (sw4_type k = k0; k <= k1; k++)
+        for (sw4_type j = j0; j <= j1; j++) {
+          sw4_type jg0 = static_cast<sw4_type>(
               floor(((j - 1) * h - m_geodyn_origin[1]) / m_geodyn_h + 1));
-          int kg0 = static_cast<int>(
+          sw4_type kg0 = static_cast<sw4_type>(
               floor(((k - 1) * h - m_geodyn_origin[2]) / m_geodyn_h + 1));
           if (jg0 >= m_geodyn_nj) jg0 = m_geodyn_nj - 1;
           if (jg0 <= 0) jg0 = 1;
@@ -391,7 +391,7 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
               ((k - 1) * h - (m_geodyn_origin[2] + (kg0 - 1) * m_geodyn_h)) /
               m_geodyn_h;
 
-          for (int c = 1; c <= 3; c++) {
+          for (sw4_type c = 1; c <= 3; c++) {
             u[g](c, i0, j, k) =
                 twgh *
                     ((1 - wghj) * (1 - wghk) *
@@ -421,11 +421,11 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
           }
         }
 #pragma omp parallel for
-      for (int k = k0; k <= k1; k++)
-        for (int i = i0; i <= i1; i++) {
-          int ig0 = static_cast<int>(
+      for (sw4_type k = k0; k <= k1; k++)
+        for (sw4_type i = i0; i <= i1; i++) {
+          sw4_type ig0 = static_cast<sw4_type>(
               floor(((i - 1) * h - m_geodyn_origin[0]) / m_geodyn_h + 1));
-          int kg0 = static_cast<int>(
+          sw4_type kg0 = static_cast<sw4_type>(
               floor(((k - 1) * h - m_geodyn_origin[2]) / m_geodyn_h + 1));
           if (ig0 >= m_geodyn_ni) ig0 = m_geodyn_ni - 1;
           if (ig0 <= 0) ig0 = 1;
@@ -438,7 +438,7 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
               ((k - 1) * h - (m_geodyn_origin[2] + (kg0 - 1) * m_geodyn_h)) /
               m_geodyn_h;
 
-          for (int c = 1; c <= 3; c++) {
+          for (sw4_type c = 1; c <= 3; c++) {
             u[g](c, i, j0, k) =
                 twgh *
                     ((1 - wghi) * (1 - wghk) *
@@ -468,8 +468,8 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
           }
         }
       //	 if( k0==1 && m_geodyn_faces == 5)
-      //	    for( int i=i0 ;  i<=i1 ; i++ )
-      //	       for( int c=1 ; c <= 3 ; c++ )
+      //	    for( sw4_type i=i0 ;  i<=i1 ; i++ )
+      //	       for( sw4_type c=1 ; c <= 3 ; c++ )
       //	       {
       //		  u[g](c,i,j0,k0-1) =
       // cext1*u[g](c,i,j0,k0)+cext2*u[g](c,i,j0,k0+1)+cext3*u[g](c,i,j0,k0+2);
@@ -480,11 +480,11 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
       Sarray& gd14 = m_geodyn_data1[4];
       Sarray& gd24 = m_geodyn_data2[4];
 #pragma omp parallel for
-      for (int j = j0; j <= j1; j++)
-        for (int i = i0; i <= i1; i++) {
-          int ig0 = static_cast<int>(
+      for (sw4_type j = j0; j <= j1; j++)
+        for (sw4_type i = i0; i <= i1; i++) {
+          sw4_type ig0 = static_cast<sw4_type>(
               floor(((i - 1) * h - m_geodyn_origin[0]) / m_geodyn_h + 1));
-          int jg0 = static_cast<int>(
+          sw4_type jg0 = static_cast<sw4_type>(
               floor(((j - 1) * h - m_geodyn_origin[1]) / m_geodyn_h + 1));
           if (ig0 >= m_geodyn_ni) ig0 = m_geodyn_ni - 1;
           if (ig0 <= 0) ig0 = 1;
@@ -496,7 +496,7 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
           float_sw4 wghj =
               ((j - 1) * h - (m_geodyn_origin[1] + (jg0 - 1) * m_geodyn_h)) /
               m_geodyn_h;
-          for (int c = 1; c <= 3; c++) {
+          for (sw4_type c = 1; c <= 3; c++) {
             if (!at_surface && m_geodyn_faces == 6) {
               //		     u[g](c,i,j,k0) = twgh*(
               //(1-wghi)*(1-wghj)*m_geodyn_data1[4](c,ig0,jg0,1)+
@@ -537,12 +537,12 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
         }
       // Impose ghost point at corner to free surface
       if (at_surface) {
-        int ib = m_iStart[g];
-        int jb = m_jStart[g];
-        int ni = m_iEnd[g] - m_iStart[g] + 1;
+        sw4_type ib = m_iStart[g];
+        sw4_type jb = m_jStart[g];
+        sw4_type ni = m_iEnd[g] - m_iStart[g] + 1;
         // Free surface condition
-        for (int j = j0; j <= j1; j++) {
-          int i = i0;
+        for (sw4_type j = j0; j <= j1; j++) {
+          sw4_type i = i0;
           size_t qq = i - ib + ni * (j - jb);
           // One sided x-derivatives
           float_sw4 wx = u[g](3, i, j, k0) - u[g](3, i - 1, j, k0);
@@ -601,8 +601,8 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
                2 * h * bforcing[g][4][2 + 3 * qq]) /
                   (2 * mum + lam);
         }
-        for (int i = i0; i <= i1; i++) {
-          int j = j0;
+        for (sw4_type i = i0; i <= i1; i++) {
+          sw4_type j = j0;
           size_t qq = i - ib + ni * (j - jb);
           // One sided y-derivatives
           float_sw4 wx = 0.5 * (u[g](3, i + 1, j, k0) - u[g](3, i - 1, j, k0));
@@ -665,7 +665,7 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
     }  // for g=0, mNumberOfCartesianGrids-1
     if (topographyExists()) {
       // Curvilinear, inaccurate quick fix
-      int g = mNumberOfGrids - 1;
+      sw4_type g = mNumberOfGrids - 1;
       i0 = m_geodyn_dims[g][0];
       i1 = m_geodyn_dims[g][1];
       j0 = m_geodyn_dims[g][2];
@@ -676,15 +676,15 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
       float_sw4 zcubelen = (m_geodyn_nk - 1) * m_geodyn_h;
       bool at_surface = k0 == 1;
 #pragma omp parallel for
-      for (int k = k0; k <= k1; k++)
-        for (int j = j0; j <= j1; j++) {
+      for (sw4_type k = k0; k <= k1; k++)
+        for (sw4_type j = j0; j <= j1; j++) {
           float_sw4 strfact = (mZ[g](i0, j, k1) - mZ[g](i0, j, 1)) / zcubelen;
-          int jg0 = static_cast<int>(
+          sw4_type jg0 = static_cast<sw4_type>(
               floor(((j - 1) * h - m_geodyn_origin[1]) / m_geodyn_h + 1));
-          int kg0 = static_cast<int>(floor((mZ[g](i0, j, k) - mZ[g](i0, j, 1)) /
+          sw4_type kg0 = static_cast<sw4_type>(floor((mZ[g](i0, j, k) - mZ[g](i0, j, 1)) /
                                                (strfact * m_geodyn_h) +
                                            1));
-          //               int kg0 = static_cast<int>(floor(((k-1)*h -
+          //               sw4_type kg0 = static_cast<sw4_type>(floor(((k-1)*h -
           //               m_geodyn_origin[2])/m_geodyn_h+1));
           if (jg0 >= m_geodyn_nj) jg0 = m_geodyn_nj - 1;
           if (jg0 <= 0) jg0 = 1;
@@ -697,7 +697,7 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
                             ((kg0 - 1) * m_geodyn_h)) /
                            m_geodyn_h;
 
-          for (int c = 1; c <= 3; c++) {
+          for (sw4_type c = 1; c <= 3; c++) {
             u[g](c, i0, j, k) =
                 twgh *
                     ((1 - wghj) * (1 - wghk) *
@@ -713,7 +713,7 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
                      wghj * wghk * m_geodyn_data2[0](c, jg0 + 1, kg0 + 1, 1));
           }
           strfact = (mZ[g](i1, j, k1) - mZ[g](i1, j, 1)) / zcubelen;
-          kg0 = static_cast<int>(floor((mZ[g](i1, j, k) - mZ[g](i1, j, 1)) /
+          kg0 = static_cast<sw4_type>(floor((mZ[g](i1, j, k) - mZ[g](i1, j, 1)) /
                                            (strfact * m_geodyn_h) +
                                        1));
           if (kg0 >= m_geodyn_nk) kg0 = m_geodyn_nk - 1;
@@ -722,7 +722,7 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
                   ((kg0 - 1) * m_geodyn_h)) /
                  m_geodyn_h;
 
-          for (int c = 1; c <= 3; c++) {
+          for (sw4_type c = 1; c <= 3; c++) {
             u[g](c, i1, j, k) =
                 twgh *
                     ((1 - wghj) * (1 - wghk) *
@@ -739,15 +739,15 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
           }
         }
 #pragma omp parallel for
-      for (int k = k0; k <= k1; k++)
-        for (int i = i0; i <= i1; i++) {
+      for (sw4_type k = k0; k <= k1; k++)
+        for (sw4_type i = i0; i <= i1; i++) {
           float_sw4 strfact = (mZ[g](i, j0, k1) - mZ[g](i, j0, 1)) / zcubelen;
-          int ig0 = static_cast<int>(
+          sw4_type ig0 = static_cast<sw4_type>(
               floor(((i - 1) * h - m_geodyn_origin[0]) / m_geodyn_h + 1));
-          int kg0 = static_cast<int>(floor((mZ[g](i, j0, k) - mZ[g](i, j0, 1)) /
+          sw4_type kg0 = static_cast<sw4_type>(floor((mZ[g](i, j0, k) - mZ[g](i, j0, 1)) /
                                                (strfact * m_geodyn_h) +
                                            1));
-          //	       int kg0 = static_cast<int>(floor(((k-1)*h -
+          //	       sw4_type kg0 = static_cast<sw4_type>(floor(((k-1)*h -
           // m_geodyn_origin[2])/m_geodyn_h+1));
           if (ig0 >= m_geodyn_ni) ig0 = m_geodyn_ni - 1;
           if (ig0 <= 0) ig0 = 1;
@@ -762,7 +762,7 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
                             ((kg0 - 1) * m_geodyn_h)) /
                            m_geodyn_h;
 
-          for (int c = 1; c <= 3; c++) {
+          for (sw4_type c = 1; c <= 3; c++) {
             u[g](c, i, j0, k) =
                 twgh *
                     ((1 - wghi) * (1 - wghk) *
@@ -778,7 +778,7 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
                      wghi * wghk * m_geodyn_data2[2](c, ig0 + 1, kg0 + 1, 1));
           }
           strfact = (mZ[g](i, j1, k1) - mZ[g](i, j1, 1)) / zcubelen;
-          kg0 = static_cast<int>(floor((mZ[g](i, j1, k) - mZ[g](i, j1, 1)) /
+          kg0 = static_cast<sw4_type>(floor((mZ[g](i, j1, k) - mZ[g](i, j1, 1)) /
                                            (strfact * m_geodyn_h) +
                                        1));
           if (kg0 >= m_geodyn_nk) kg0 = m_geodyn_nk - 1;
@@ -786,7 +786,7 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
           wghk = ((mZ[g](i, j1, k) - mZ[g](i, j1, 1)) / strfact -
                   ((kg0 - 1) * m_geodyn_h)) /
                  m_geodyn_h;
-          for (int c = 1; c <= 3; c++) {
+          for (sw4_type c = 1; c <= 3; c++) {
             u[g](c, i, j1, k) =
                 twgh *
                     ((1 - wghi) * (1 - wghk) *
@@ -805,11 +805,11 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
       Sarray& gd14 = m_geodyn_data1[4];
       Sarray& gd24 = m_geodyn_data2[4];
 #pragma omp parallel for
-      for (int j = j0; j <= j1; j++)
-        for (int i = i0; i <= i1; i++) {
-          int ig0 = static_cast<int>(
+      for (sw4_type j = j0; j <= j1; j++)
+        for (sw4_type i = i0; i <= i1; i++) {
+          sw4_type ig0 = static_cast<sw4_type>(
               floor(((i - 1) * h - m_geodyn_origin[0]) / m_geodyn_h + 1));
-          int jg0 = static_cast<int>(
+          sw4_type jg0 = static_cast<sw4_type>(
               floor(((j - 1) * h - m_geodyn_origin[1]) / m_geodyn_h + 1));
           if (ig0 >= m_geodyn_ni) ig0 = m_geodyn_ni - 1;
           if (ig0 <= 0) ig0 = 1;
@@ -821,7 +821,7 @@ void EW::impose_geodyn_ibcdata(vector<Sarray>& u, vector<Sarray>& um,
           float_sw4 wghj =
               ((j - 1) * h - (m_geodyn_origin[1] + (jg0 - 1) * m_geodyn_h)) /
               m_geodyn_h;
-          for (int c = 1; c <= 3; c++) {
+          for (sw4_type c = 1; c <= 3; c++) {
             if (!at_surface && m_geodyn_faces == 6) {
               //		     u[g](c,i,j,k0) = twgh*(
               //(1-wghi)*(1-wghj)*m_geodyn_data1[4](c,ig0,jg0,1)+
@@ -888,7 +888,7 @@ void EW::advance_geodyn_time(float_sw4 t) {
   // as described above. It is assumed that t >= geodyn_step*geodyn_dt,
   // if t < geodyn_step*geodyn_dt, this routine does not do anything.
   //
-  int n1 = static_cast<int>(floor(t / m_geodyn_dt));
+  sw4_type n1 = static_cast<sw4_type>(floor(t / m_geodyn_dt));
   if (n1 > m_geodyn_maxsteps - 2)
     m_geodyn_past_end = true;
   else {
@@ -901,7 +901,7 @@ void EW::advance_geodyn_time(float_sw4 t) {
       // Advance many steps
       if (m_geodyn_iwillread) {
         char buf[256];
-        for (int i = 0; i < m_geodyn_blocksize * (n1 - m_geodyn_step - 2); i++)
+        for (sw4_type i = 0; i < m_geodyn_blocksize * (n1 - m_geodyn_step - 2); i++)
           m_geodynfile.getline(buf, 256);
       }
       get_geodyn_timelevel(m_geodyn_data1);
@@ -917,23 +917,23 @@ void EW::get_geodyn_timelevel(vector<Sarray>& geodyndata) {
   if (m_geodyn_iwillread) {
     VERIFY2(!m_geodynfile.eof(),
             "Error: trying to read past end of Geodyn file");
-    for (int side = 0; side <= 1; side++) {
-      for (int k = 1; k <= m_geodyn_nk; k++)
-        for (int j = 1; j <= m_geodyn_nj; j++)
+    for (sw4_type side = 0; side <= 1; side++) {
+      for (sw4_type k = 1; k <= m_geodyn_nk; k++)
+        for (sw4_type j = 1; j <= m_geodyn_nj; j++)
           m_geodynfile >> geodyndata[side](1, j, k, 1) >>
               geodyndata[side](2, j, k, 1) >> geodyndata[side](3, j, k, 1);
     }
-    for (int side = 2; side <= 3; side++) {
-      for (int k = 1; k <= m_geodyn_nk; k++)
-        for (int i = 1; i <= m_geodyn_ni; i++)
+    for (sw4_type side = 2; side <= 3; side++) {
+      for (sw4_type k = 1; k <= m_geodyn_nk; k++)
+        for (sw4_type i = 1; i <= m_geodyn_ni; i++)
           m_geodynfile >> geodyndata[side](1, i, k, 1) >>
               geodyndata[side](2, i, k, 1) >> geodyndata[side](3, i, k, 1);
     }
-    int llim = 4;
+    sw4_type llim = 4;
     if (m_geodyn_faces == 5) llim = 5;
-    for (int side = llim; side <= 5; side++) {
-      for (int j = 1; j <= m_geodyn_nj; j++)
-        for (int i = 1; i <= m_geodyn_ni; i++)
+    for (sw4_type side = llim; side <= 5; side++) {
+      for (sw4_type j = 1; j <= m_geodyn_nj; j++)
+        for (sw4_type i = 1; i <= m_geodyn_ni; i++)
           m_geodynfile >> geodyndata[side](1, i, j, 1) >>
               geodyndata[side](2, i, j, 1) >> geodyndata[side](3, i, j, 1);
     }
@@ -947,27 +947,27 @@ void EW::get_geodyn_timelevel(vector<Sarray>& geodyndata) {
 void EW::copy_geodyn_timelevel(vector<Sarray>& geodyndata1,
                                vector<Sarray>& geodyndata2) {
   SW4_MARK_FUNCTION;
-  for (int side = 0; side <= 1; side++) {
+  for (sw4_type side = 0; side <= 1; side++) {
 #pragma omp parallel for
-    for (int k = 1; k <= m_geodyn_nk; k++)
-      for (int j = 1; j <= m_geodyn_nj; j++)
-        for (int c = 1; c <= 3; c++)
+    for (sw4_type k = 1; k <= m_geodyn_nk; k++)
+      for (sw4_type j = 1; j <= m_geodyn_nj; j++)
+        for (sw4_type c = 1; c <= 3; c++)
           geodyndata1[side](c, j, k, 1) = geodyndata2[side](c, j, k, 1);
   }
-  for (int side = 2; side <= 3; side++) {
+  for (sw4_type side = 2; side <= 3; side++) {
 #pragma omp parallel for
-    for (int k = 1; k <= m_geodyn_nk; k++)
-      for (int i = 1; i <= m_geodyn_ni; i++)
-        for (int c = 1; c <= 3; c++)
+    for (sw4_type k = 1; k <= m_geodyn_nk; k++)
+      for (sw4_type i = 1; i <= m_geodyn_ni; i++)
+        for (sw4_type c = 1; c <= 3; c++)
           geodyndata1[side](c, i, k, 1) = geodyndata2[side](c, i, k, 1);
   }
-  int llim = 4;
+  sw4_type llim = 4;
   if (m_geodyn_faces == 5) llim = 5;
-  for (int side = llim; side <= 5; side++) {
+  for (sw4_type side = llim; side <= 5; side++) {
 #pragma omp parallel for
-    for (int j = 1; j <= m_geodyn_nj; j++)
-      for (int i = 1; i <= m_geodyn_ni; i++)
-        for (int c = 1; c <= 3; c++)
+    for (sw4_type j = 1; j <= m_geodyn_nj; j++)
+      for (sw4_type i = 1; i <= m_geodyn_ni; i++)
+        for (sw4_type c = 1; c <= 3; c++)
           geodyndata1[side](c, i, j, 1) = geodyndata2[side](c, i, j, 1);
   }
 }
@@ -977,31 +977,31 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
                                    vector<Sarray>& lambda,
                                    vector<Sarray>& forcing, float_sw4 t,
                                    vector<Sarray>& U, vector<Sarray>& Um,
-                                   int crf) {
+                                   sw4_type crf) {
   SW4_MARK_FUNCTION;
-  //   int n1 = static_cast<int>(floor(t/m_geodyn_dt));
+  //   sw4_type n1 = static_cast<sw4_type>(floor(t/m_geodyn_dt));
   //   m_geodyn_step = n1;
   if (m_do_geodynbc) {
     float_sw4 twgh = ((m_geodyn_step + 1) * m_geodyn_dt - t) / m_geodyn_dt;
     float_sw4 d2i = 1 / (mDt * mDt);
     //      cout << "twgh = " << twgh << " geostep = " << m_geodyn_step << endl;
-    for (int g = 0; g < mNumberOfCartesianGrids; g++) {
-      int i0 = m_geodyn_dims[g][0];
-      int i1 = m_geodyn_dims[g][1];
-      int j0 = m_geodyn_dims[g][2];
-      int j1 = m_geodyn_dims[g][3];
-      int k0 = m_geodyn_dims[g][4];
-      int k1 = m_geodyn_dims[g][5];
+    for (sw4_type g = 0; g < mNumberOfCartesianGrids; g++) {
+      sw4_type i0 = m_geodyn_dims[g][0];
+      sw4_type i1 = m_geodyn_dims[g][1];
+      sw4_type j0 = m_geodyn_dims[g][2];
+      sw4_type j1 = m_geodyn_dims[g][3];
+      sw4_type k0 = m_geodyn_dims[g][4];
+      sw4_type k1 = m_geodyn_dims[g][5];
       float_sw4 h = mGridSize[g];
       float_sw4 h2 = h * h;
 
-      bool low_interior, high_interior;
-      low_interior = m_iStartInt[g] <= i0 + 1 && i0 + 1 <= m_iEndInt[g];
-      high_interior = m_iStartInt[g] <= i1 - 1 && i1 - 1 <= m_iEndInt[g];
+      bool low_sw4_typeerior, high_sw4_typeerior;
+      low_sw4_typeerior = m_iStartSw4_Type[g] <= i0 + 1 && i0 + 1 <= m_iEndSw4_Type[g];
+      high_sw4_typeerior = m_iStartSw4_Type[g] <= i1 - 1 && i1 - 1 <= m_iEndSw4_Type[g];
       bool surface_correction = k0 <= 1 && g == mNumberOfGrids - 1;
 
       Sarray Lu0(3, i0, i0, j0, j1, k0, k1, __FILE__, __LINE__);
-      if (low_interior)
+      if (low_sw4_typeerior)
         evalLu_Dim(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                    m_kEnd[g],
                    //			U[g].c_ptr(), Lu0.c_ptr(),
@@ -1009,24 +1009,24 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
                    U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(), h, i0, i0, j0,
                    j1, k0, k1);
       Sarray Lu1(3, i1, i1, j0, j1, k0, k1, __FILE__, __LINE__);
-      if (high_interior)
+      if (high_sw4_typeerior)
         evalLu_Dip(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                    m_kEnd[g],
                    //			U[g].c_ptr(), Lu1.c_ptr(),
                    // mu[g].c_ptr(), lambda[g].c_ptr(),
                    U[g], Lu1, mu[g].c_ptr(), lambda[g].c_ptr(), h, i1, i1, j0,
                    j1, k0, k1);
-      int kstart = k0 + 1;
+      sw4_type kstart = k0 + 1;
       if (surface_correction) {
         // Special at corner between free surface and Geodyn cube
-        if (low_interior)
+        if (low_sw4_typeerior)
           evalLu_DkpDim(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                         m_kStart[g], m_kEnd[g],
                         //			U[g].c_ptr(), Lu0.c_ptr(),
                         // mu[g].c_ptr(), lambda[g].c_ptr(),
                         U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(), h, i0, i0,
                         j0, j1, k0, k1);
-        if (high_interior)
+        if (high_sw4_typeerior)
           evalLu_DkpDip(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                         m_kStart[g], m_kEnd[g],
                         //			U[g].c_ptr(), Lu1.c_ptr(),
@@ -1039,11 +1039,11 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
 
 // Side with i=const.
 #pragma omp parallel for
-      for (int k = kstart; k <= k1 - 1; k++)
-        for (int j = j0 + 1; j <= j1 - 1; j++) {
-          int jg0 = static_cast<int>(
+      for (sw4_type k = kstart; k <= k1 - 1; k++)
+        for (sw4_type j = j0 + 1; j <= j1 - 1; j++) {
+          sw4_type jg0 = static_cast<sw4_type>(
               floor(((j - 1) * h - m_geodyn_origin[1]) / m_geodyn_h + 1));
-          int kg0 = static_cast<int>(
+          sw4_type kg0 = static_cast<sw4_type>(
               floor(((k - 1) * h - m_geodyn_origin[2]) / m_geodyn_h + 1));
           if (jg0 >= m_geodyn_nj) jg0 = m_geodyn_nj - 1;
           if (jg0 <= 0) jg0 = 1;
@@ -1056,7 +1056,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
               ((k - 1) * h - (m_geodyn_origin[2] + (kg0 - 1) * m_geodyn_h)) /
               m_geodyn_h;
           float_sw4 bnd0[3], bnd1[3];
-          for (int c = 1; c <= 3; c++) {
+          for (sw4_type c = 1; c <= 3; c++) {
             bnd0[c - 1] =
                 twgh *
                     ((1 - wghj) * (1 - wghk) *
@@ -1087,7 +1087,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
 
           // Lower bndry
           float_sw4 res1, res2, res3;
-          if (low_interior) {
+          if (low_sw4_typeerior) {
             res1 = crf * rho[g](i0, j, k) *
                        (bnd0[0] - 2 * U[g](1, i0, j, k) + Um[g](1, i0, j, k)) *
                        d2i -
@@ -1114,7 +1114,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
                 2 * h2 * res3 / (mu[g](i0 + 1, j, k) + mu[g](i0, j, k));
           }
           // Upper bndry
-          if (high_interior) {
+          if (high_sw4_typeerior) {
             res1 = crf * rho[g](i1, j, k) *
                        (bnd1[0] - 2 * U[g](1, i1, j, k) + Um[g](1, i1, j, k)) *
                        d2i -
@@ -1143,10 +1143,10 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
         }
 
       // Side with j=const
-      low_interior = m_jStartInt[g] <= j0 + 1 && j0 + 1 <= m_jEndInt[g];
-      high_interior = m_jStartInt[g] <= j1 - 1 && j1 - 1 <= m_jEndInt[g];
+      low_sw4_typeerior = m_jStartSw4_Type[g] <= j0 + 1 && j0 + 1 <= m_jEndSw4_Type[g];
+      high_sw4_typeerior = m_jStartSw4_Type[g] <= j1 - 1 && j1 - 1 <= m_jEndSw4_Type[g];
 
-      if (low_interior) {
+      if (low_sw4_typeerior) {
         Lu0.define(3, i0, i1, j0, j0, k0, k1);
         evalLu_Djm(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                    m_kEnd[g],
@@ -1155,7 +1155,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
                    U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(), h, i0, i1, j0,
                    j0, k0, k1);
       }
-      if (high_interior) {
+      if (high_sw4_typeerior) {
         Lu1.define(3, i0, i1, j1, j1, k0, k1);
         evalLu_Djp(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                    m_kEnd[g],
@@ -1165,14 +1165,14 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
                    j1, k0, k1);
       }
       if (surface_correction) {
-        if (low_interior)
+        if (low_sw4_typeerior)
           evalLu_DkpDjm(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                         m_kStart[g], m_kEnd[g],
                         //			U[g].c_ptr(), Lu0.c_ptr(),
                         // mu[g].c_ptr(), lambda[g].c_ptr(),
                         U[g], Lu0, mu[g].c_ptr(), lambda[g].c_ptr(), h, i0, i1,
                         j0, j0, k0, k1);
-        if (high_interior)
+        if (high_sw4_typeerior)
           evalLu_DkpDjp(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                         m_kStart[g], m_kEnd[g],
                         //			U[g].c_ptr(), Lu1.c_ptr(),
@@ -1181,11 +1181,11 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
                         j1, j1, k0, k1);
       }
 #pragma omp parallel for
-      for (int k = kstart; k <= k1 - 1; k++)
-        for (int i = i0 + 1; i <= i1 - 1; i++) {
-          int ig0 = static_cast<int>(
+      for (sw4_type k = kstart; k <= k1 - 1; k++)
+        for (sw4_type i = i0 + 1; i <= i1 - 1; i++) {
+          sw4_type ig0 = static_cast<sw4_type>(
               floor(((i - 1) * h - m_geodyn_origin[0]) / m_geodyn_h + 1));
-          int kg0 = static_cast<int>(
+          sw4_type kg0 = static_cast<sw4_type>(
               floor(((k - 1) * h - m_geodyn_origin[2]) / m_geodyn_h + 1));
           if (ig0 >= m_geodyn_ni) ig0 = m_geodyn_ni - 1;
           if (ig0 <= 0) ig0 = 1;
@@ -1198,7 +1198,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
               ((k - 1) * h - (m_geodyn_origin[2] + (kg0 - 1) * m_geodyn_h)) /
               m_geodyn_h;
           float_sw4 bnd0[3], bnd1[3];
-          for (int c = 1; c <= 3; c++) {
+          for (sw4_type c = 1; c <= 3; c++) {
             bnd0[c - 1] =
                 twgh *
                     ((1 - wghi) * (1 - wghk) *
@@ -1228,7 +1228,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
           }
           float_sw4 res1, res2, res3;
           // Lower bndry
-          if (low_interior) {
+          if (low_sw4_typeerior) {
             res1 = crf * rho[g](i, j0, k) *
                        (bnd0[0] - 2 * U[g](1, i, j0, k) + Um[g](1, i, j0, k)) *
                        d2i -
@@ -1255,7 +1255,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
                 2 * h2 * res3 / (mu[g](i, j0 + 1, k) + mu[g](i, j0, k));
           }
           // Upper bndry
-          if (high_interior) {
+          if (high_sw4_typeerior) {
             res1 = crf * rho[g](i, j1, k) *
                        (bnd1[0] - 2 * U[g](1, i, j1, k) + Um[g](1, i, j1, k)) *
                        d2i -
@@ -1284,10 +1284,10 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
         }
 
       // Side with k=const
-      low_interior = (m_kStartInt[g] <= k0 + 1 && k0 + 1 <= m_kEndInt[g]) &&
+      low_sw4_typeerior = (m_kStartSw4_Type[g] <= k0 + 1 && k0 + 1 <= m_kEndSw4_Type[g]) &&
                      !surface_correction;
-      high_interior = m_kStartInt[g] <= k1 - 1 && k1 - 1 <= m_kEndInt[g];
-      if (m_geodyn_faces == 6 && low_interior) {
+      high_sw4_typeerior = m_kStartSw4_Type[g] <= k1 - 1 && k1 - 1 <= m_kEndSw4_Type[g];
+      if (m_geodyn_faces == 6 && low_sw4_typeerior) {
         Lu0.define(3, i0, i1, j0, j1, k0, k0);
         evalLu_Dkm(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                    m_kEnd[g],
@@ -1297,7 +1297,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
                    j1, k0, k0);
       }
 
-      if (high_interior) {
+      if (high_sw4_typeerior) {
         Lu1.define(3, i0, i1, j0, j1, k1, k1);
         evalLu_Dkp(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                    m_kEnd[g],
@@ -1307,11 +1307,11 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
                    j1, k1, k1);
       }
 #pragma omp parallel for
-      for (int j = j0 + 1; j <= j1 - 1; j++)
-        for (int i = i0 + 1; i <= i1 - 1; i++) {
-          int ig0 = static_cast<int>(
+      for (sw4_type j = j0 + 1; j <= j1 - 1; j++)
+        for (sw4_type i = i0 + 1; i <= i1 - 1; i++) {
+          sw4_type ig0 = static_cast<sw4_type>(
               floor(((i - 1) * h - m_geodyn_origin[0]) / m_geodyn_h + 1));
-          int jg0 = static_cast<int>(
+          sw4_type jg0 = static_cast<sw4_type>(
               floor(((j - 1) * h - m_geodyn_origin[1]) / m_geodyn_h + 1));
           if (ig0 >= m_geodyn_ni) ig0 = m_geodyn_ni - 1;
           if (ig0 <= 0) ig0 = 1;
@@ -1324,8 +1324,8 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
               ((j - 1) * h - (m_geodyn_origin[1] + (jg0 - 1) * m_geodyn_h)) /
               m_geodyn_h;
           float_sw4 bnd0[3], bnd1[3];
-          for (int c = 1; c <= 3; c++) {
-            if (m_geodyn_faces == 6 && low_interior) {
+          for (sw4_type c = 1; c <= 3; c++) {
+            if (m_geodyn_faces == 6 && low_sw4_typeerior) {
               bnd0[c - 1] =
                   twgh * ((1 - wghi) * (1 - wghj) *
                               m_geodyn_data1[4](c, ig0, jg0, 1) +
@@ -1360,7 +1360,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
           }
           // Upper bndry
           float_sw4 res1, res2, res3;
-          if (high_interior) {
+          if (high_sw4_typeerior) {
             res1 = crf * rho[g](i, j, k1) *
                        (bnd1[0] - 2 * U[g](1, i, j, k1) + Um[g](1, i, j, k1)) *
                        d2i -
@@ -1387,7 +1387,7 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
                      0.5 * (lambda[g](i, j, k1 - 1) + lambda[g](i, j, k1)));
           }
           // Lower bndry
-          if (m_geodyn_faces == 6 && low_interior) {
+          if (m_geodyn_faces == 6 && low_sw4_typeerior) {
             res1 = crf * rho[g](i, j, k0) *
                        (bnd0[0] - 2 * U[g](1, i, j, k0) + Um[g](1, i, j, k0)) *
                        d2i -
@@ -1426,8 +1426,8 @@ void EW::geodyn_second_ghost_point(vector<Sarray>& rho, vector<Sarray>& mu,
 
 //-----------------------------------------------------------------------
 extern "C" {
-void F77_FUNC(dgesv, DGESV)(int* n, int* nrhs, double* A, int* lda, int* ipiv,
-                            double* b, int* ldb, int* info);
+void F77_FUNC(dgesv, DGESV)(sw4_type* n, sw4_type* nrhs, double* A, sw4_type* lda, sw4_type* ipiv,
+                            double* b, sw4_type* ldb, sw4_type* info);
 }
 
 //-----------------------------------------------------------------------
@@ -1436,50 +1436,50 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
                                                vector<Sarray>& lambda,
                                                vector<Sarray>& forcing,
                                                float_sw4 t, vector<Sarray>& U,
-                                               vector<Sarray>& Um, int crf) {
+                                               vector<Sarray>& Um, sw4_type crf) {
   SW4_MARK_FUNCTION;
   float_sw4 twgh = ((m_geodyn_step + 1) * m_geodyn_dt - t) / m_geodyn_dt;
   float_sw4 d2i = 1 / (mDt * mDt);
-  int g = mNumberOfGrids - 1;
+  sw4_type g = mNumberOfGrids - 1;
   float_sw4 h = mGridSize[g];
 
-  int i0 = m_geodyn_dims[g][0];
-  int i1 = m_geodyn_dims[g][1];
-  int j0 = m_geodyn_dims[g][2];
-  int j1 = m_geodyn_dims[g][3];
-  int k0 = m_geodyn_dims[g][4];
-  int k1 = m_geodyn_dims[g][5];
+  sw4_type i0 = m_geodyn_dims[g][0];
+  sw4_type i1 = m_geodyn_dims[g][1];
+  sw4_type j0 = m_geodyn_dims[g][2];
+  sw4_type j1 = m_geodyn_dims[g][3];
+  sw4_type k0 = m_geodyn_dims[g][4];
+  sw4_type k1 = m_geodyn_dims[g][5];
 
   float_sw4 zcubelen = (m_geodyn_nk - 1) * m_geodyn_h;
   //   bool   at_surface = k0==1;
 
-  bool low_interior, high_interior;
-  low_interior = m_iStartInt[g] <= i0 + 1 && i0 + 1 <= m_iEndInt[g];
-  high_interior = m_iStartInt[g] <= i1 - 1 && i1 - 1 <= m_iEndInt[g];
+  bool low_sw4_typeerior, high_sw4_typeerior;
+  low_sw4_typeerior = m_iStartSw4_Type[g] <= i0 + 1 && i0 + 1 <= m_iEndSw4_Type[g];
+  high_sw4_typeerior = m_iStartSw4_Type[g] <= i1 - 1 && i1 - 1 <= m_iEndSw4_Type[g];
   bool surface_correction = k0 <= 1 && g == mNumberOfGrids - 1;
 
   Sarray Lu0(3, i0, i0, j0, j1, k0, k1, __FILE__, __LINE__);
-  if (low_interior)
+  if (low_sw4_typeerior)
     evalLuCurv<0, 1, 1, 1, 1, 1>(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                                  m_kStart[g], m_kEnd[g], U[g], Lu0,
                                  mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g],
                                  mJ[g], i0, i0, j0, j1, k0, k1);
   Sarray Lu1(3, i1, i1, j0, j1, k0, k1, __FILE__, __LINE__);
-  if (high_interior)
+  if (high_sw4_typeerior)
     evalLuCurv<1, 0, 1, 1, 1, 1>(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                                  m_kStart[g], m_kEnd[g], U[g], Lu1,
                                  mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g],
                                  mJ[g], i1, i1, j0, j1, k0, k1);
 
-  int kstart = k0 + 1;
+  sw4_type kstart = k0 + 1;
   if (surface_correction) {
     // Special at corner between free surface and Geodyn cube
-    if (low_interior)
+    if (low_sw4_typeerior)
       evalLuCurv<0, 1, 1, 1, 1, 0>(m_iStart[g], m_iEnd[g], m_jStart[g],
                                    m_jEnd[g], m_kStart[g], m_kEnd[g], U[g], Lu0,
                                    mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g],
                                    mJ[g], i0, i0, j0, j1, k0, k0);
-    if (high_interior)
+    if (high_sw4_typeerior)
       evalLuCurv<1, 0, 1, 1, 1, 0>(m_iStart[g], m_iEnd[g], m_jStart[g],
                                    m_jEnd[g], m_kStart[g], m_kEnd[g], U[g], Lu1,
                                    mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g],
@@ -1488,14 +1488,14 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
   }
 // Side with i=const.
 #pragma omp parallel for
-  for (int k = kstart; k <= k1 - 1; k++)
-    for (int j = j0 + 1; j <= j1 - 1; j++) {
+  for (sw4_type k = kstart; k <= k1 - 1; k++)
+    for (sw4_type j = j0 + 1; j <= j1 - 1; j++) {
       float_sw4 strfact = (mZ[g](i0, j, k1) - mZ[g](i0, j, 1)) / zcubelen;
-      int jg0 = static_cast<int>(
+      sw4_type jg0 = static_cast<sw4_type>(
           floor(((j - 1) * h - m_geodyn_origin[1]) / m_geodyn_h + 1));
-      int kg0 = static_cast<int>(floor(
+      sw4_type kg0 = static_cast<sw4_type>(floor(
           (mZ[g](i0, j, k) - mZ[g](i0, j, 1)) / (strfact * m_geodyn_h) + 1));
-      //               int kg0 = static_cast<int>(floor(((k-1)*h -
+      //               sw4_type kg0 = static_cast<sw4_type>(floor(((k-1)*h -
       //               m_geodyn_origin[2])/m_geodyn_h+1));
       if (jg0 >= m_geodyn_nj) jg0 = m_geodyn_nj - 1;
       if (jg0 <= 0) jg0 = 1;
@@ -1513,7 +1513,7 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
       //" zk1 "
       //		 << mZ[g](i0,j,k1) << " z1 " << mZ[g](i0,j,1) << " k1 "
       //<< k1 <<  endl;
-      for (int c = 1; c <= 3; c++) {
+      for (sw4_type c = 1; c <= 3; c++) {
         bnd0[c - 1] =
             twgh *
                 ((1 - wghj) * (1 - wghk) * m_geodyn_data1[0](c, jg0, kg0, 1) +
@@ -1527,14 +1527,14 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
                  wghj * wghk * m_geodyn_data2[0](c, jg0 + 1, kg0 + 1, 1));
       }
       strfact = (mZ[g](i1, j, k1) - mZ[g](i1, j, 1)) / zcubelen;
-      kg0 = static_cast<int>(floor(
+      kg0 = static_cast<sw4_type>(floor(
           (mZ[g](i1, j, k) - mZ[g](i1, j, 1)) / (strfact * m_geodyn_h) + 1));
       if (kg0 >= m_geodyn_nk) kg0 = m_geodyn_nk - 1;
       if (kg0 <= 0) kg0 = 1;
       wghk = ((mZ[g](i1, j, k) - mZ[g](i1, j, 1)) / strfact -
               ((kg0 - 1) * m_geodyn_h)) /
              m_geodyn_h;
-      for (int c = 1; c <= 3; c++) {
+      for (sw4_type c = 1; c <= 3; c++) {
         bnd1[c - 1] =
             twgh *
                 ((1 - wghj) * (1 - wghk) * m_geodyn_data1[1](c, jg0, kg0, 1) +
@@ -1549,7 +1549,7 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
       }
       // Lower bndry
       float_sw4 res1, res2, res3;
-      if (low_interior) {
+      if (low_sw4_typeerior) {
         res1 = crf * rho[g](i0, j, k) *
                    (bnd0[0] - 2 * U[g](1, i0, j, k) + Um[g](1, i0, j, k)) *
                    d2i -
@@ -1592,7 +1592,7 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
         // bnd0[0] << " " << Lu0(1,i0,j,k) << endl;
       }
       // Upper bndry
-      if (high_interior) {
+      if (high_sw4_typeerior) {
         res1 = crf * rho[g](i1, j, k) *
                    (bnd1[0] - 2 * U[g](1, i1, j, k) + Um[g](1, i1, j, k)) *
                    d2i -
@@ -1632,16 +1632,16 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
       }
     }
   // Side with j=const
-  low_interior = m_jStartInt[g] <= j0 + 1 && j0 + 1 <= m_jEndInt[g];
-  high_interior = m_jStartInt[g] <= j1 - 1 && j1 - 1 <= m_jEndInt[g];
-  if (low_interior) {
+  low_sw4_typeerior = m_jStartSw4_Type[g] <= j0 + 1 && j0 + 1 <= m_jEndSw4_Type[g];
+  high_sw4_typeerior = m_jStartSw4_Type[g] <= j1 - 1 && j1 - 1 <= m_jEndSw4_Type[g];
+  if (low_sw4_typeerior) {
     Lu0.define(3, i0, i1, j0, j0, k0, k1);
     evalLuCurv<1, 1, 0, 1, 1, 1>(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                                  m_kStart[g], m_kEnd[g], U[g], Lu0,
                                  mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g],
                                  mJ[g], i0, i1, j0, j0, k0, k1);
   }
-  if (high_interior) {
+  if (high_sw4_typeerior) {
     Lu1.define(3, i0, i1, j1, j1, k0, k1);
     evalLuCurv<1, 1, 1, 0, 1, 1>(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                                  m_kStart[g], m_kEnd[g], U[g], Lu1,
@@ -1649,26 +1649,26 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
                                  mJ[g], i0, i1, j1, j1, k0, k1);
   }
   if (surface_correction) {
-    if (low_interior)
+    if (low_sw4_typeerior)
       evalLuCurv<1, 1, 0, 1, 1, 0>(m_iStart[g], m_iEnd[g], m_jStart[g],
                                    m_jEnd[g], m_kStart[g], m_kEnd[g], U[g], Lu0,
                                    mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g],
                                    mJ[g], i0, i1, j0, j0, k0, k0);
-    if (high_interior)
+    if (high_sw4_typeerior)
       evalLuCurv<1, 1, 1, 0, 1, 0>(m_iStart[g], m_iEnd[g], m_jStart[g],
                                    m_jEnd[g], m_kStart[g], m_kEnd[g], U[g], Lu1,
                                    mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g],
                                    mJ[g], i0, i1, j1, j1, k0, k0);
   }
 #pragma omp parallel for
-  for (int k = kstart; k <= k1 - 1; k++)
-    for (int i = i0 + 1; i <= i1 - 1; i++) {
+  for (sw4_type k = kstart; k <= k1 - 1; k++)
+    for (sw4_type i = i0 + 1; i <= i1 - 1; i++) {
       float_sw4 strfact = (mZ[g](i, j0, k1) - mZ[g](i, j0, 1)) / zcubelen;
-      int ig0 = static_cast<int>(
+      sw4_type ig0 = static_cast<sw4_type>(
           floor(((i - 1) * h - m_geodyn_origin[0]) / m_geodyn_h + 1));
-      int kg0 = static_cast<int>(floor(
+      sw4_type kg0 = static_cast<sw4_type>(floor(
           (mZ[g](i, j0, k) - mZ[g](i, j0, 1)) / (strfact * m_geodyn_h) + 1));
-      //	       int kg0 = static_cast<int>(floor(((k-1)*h -
+      //	       sw4_type kg0 = static_cast<sw4_type>(floor(((k-1)*h -
       // m_geodyn_origin[2])/m_geodyn_h+1));
       if (ig0 >= m_geodyn_ni) ig0 = m_geodyn_ni - 1;
       if (ig0 <= 0) ig0 = 1;
@@ -1683,7 +1683,7 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
                         ((kg0 - 1) * m_geodyn_h)) /
                        m_geodyn_h;
       float_sw4 bnd0[3], bnd1[3];
-      for (int c = 1; c <= 3; c++) {
+      for (sw4_type c = 1; c <= 3; c++) {
         bnd0[c - 1] =
             twgh *
                 ((1 - wghi) * (1 - wghk) * m_geodyn_data1[2](c, ig0, kg0, 1) +
@@ -1697,14 +1697,14 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
                  wghi * wghk * m_geodyn_data2[2](c, ig0 + 1, kg0 + 1, 1));
       }
       strfact = (mZ[g](i, j1, k1) - mZ[g](i, j1, 1)) / zcubelen;
-      kg0 = static_cast<int>(floor(
+      kg0 = static_cast<sw4_type>(floor(
           (mZ[g](i, j1, k) - mZ[g](i, j1, 1)) / (strfact * m_geodyn_h) + 1));
       if (kg0 >= m_geodyn_nk) kg0 = m_geodyn_nk - 1;
       if (kg0 <= 0) kg0 = 1;
       wghk = ((mZ[g](i, j1, k) - mZ[g](i, j1, 1)) / strfact -
               ((kg0 - 1) * m_geodyn_h)) /
              m_geodyn_h;
-      for (int c = 1; c <= 3; c++) {
+      for (sw4_type c = 1; c <= 3; c++) {
         bnd1[c - 1] =
             twgh *
                 ((1 - wghi) * (1 - wghk) * m_geodyn_data1[3](c, ig0, kg0, 1) +
@@ -1719,7 +1719,7 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
       }
       float_sw4 res1, res2, res3;
       // Lower bndry
-      if (low_interior) {
+      if (low_sw4_typeerior) {
         res1 = crf * rho[g](i, j0, k) *
                    (bnd0[0] - 2 * U[g](1, i, j0, k) + Um[g](1, i, j0, k)) *
                    d2i -
@@ -1758,7 +1758,7 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
                  mu[g](i, j0, k) * SQR(mMetric[g](1, i, j0, k)));
       }
       // Upper bndry
-      if (high_interior) {
+      if (high_sw4_typeerior) {
         res1 = crf * rho[g](i, j1, k) *
                    (bnd1[0] - 2 * U[g](1, i, j1, k) + Um[g](1, i, j1, k)) *
                    d2i -
@@ -1798,19 +1798,19 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
       }
     }
   // Side with k=const
-  low_interior = (m_kStartInt[g] <= k0 + 1 && k0 + 1 <= m_kEndInt[g]) &&
+  low_sw4_typeerior = (m_kStartSw4_Type[g] <= k0 + 1 && k0 + 1 <= m_kEndSw4_Type[g]) &&
                  !surface_correction;
-  high_interior = m_kStartInt[g] <= k1 - 1 && k1 - 1 <= m_kEndInt[g];
-  if (m_geodyn_faces == 6 && low_interior) {
-    //      cout << "geodyn low_interior curvi " << endl;
+  high_sw4_typeerior = m_kStartSw4_Type[g] <= k1 - 1 && k1 - 1 <= m_kEndSw4_Type[g];
+  if (m_geodyn_faces == 6 && low_sw4_typeerior) {
+    //      cout << "geodyn low_sw4_typeerior curvi " << endl;
     Lu0.define(3, i0, i1, j0, j1, k0, k0);
     evalLuCurv<1, 1, 1, 1, 0, 1>(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                                  m_kStart[g], m_kEnd[g], U[g], Lu0,
                                  mu[g].c_ptr(), lambda[g].c_ptr(), mMetric[g],
                                  mJ[g], i0, i1, j0, j1, k0, k0);
   }
-  if (high_interior) {
-    //      cout << "geodyn high_interior curvi " << endl;
+  if (high_sw4_typeerior) {
+    //      cout << "geodyn high_sw4_typeerior curvi " << endl;
     Lu1.define(3, i0, i1, j0, j1, k1, k1);
     evalLuCurv<1, 1, 1, 1, 1, 0>(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                                  m_kStart[g], m_kEnd[g], U[g], Lu1,
@@ -1818,11 +1818,11 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
                                  mJ[g], i0, i1, j0, j1, k1, k1);
   }
 #pragma omp parallel for
-  for (int j = j0 + 1; j <= j1 - 1; j++)
-    for (int i = i0 + 1; i <= i1 - 1; i++) {
-      int ig0 = static_cast<int>(
+  for (sw4_type j = j0 + 1; j <= j1 - 1; j++)
+    for (sw4_type i = i0 + 1; i <= i1 - 1; i++) {
+      sw4_type ig0 = static_cast<sw4_type>(
           floor(((i - 1) * h - m_geodyn_origin[0]) / m_geodyn_h + 1));
-      int jg0 = static_cast<int>(
+      sw4_type jg0 = static_cast<sw4_type>(
           floor(((j - 1) * h - m_geodyn_origin[1]) / m_geodyn_h + 1));
       if (ig0 >= m_geodyn_ni) ig0 = m_geodyn_ni - 1;
       if (ig0 <= 0) ig0 = 1;
@@ -1835,8 +1835,8 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
           ((j - 1) * h - (m_geodyn_origin[1] + (jg0 - 1) * m_geodyn_h)) /
           m_geodyn_h;
       float_sw4 bnd0[3], bnd1[3];
-      for (int c = 1; c <= 3; c++) {
-        if (m_geodyn_faces == 6 && low_interior) {
+      for (sw4_type c = 1; c <= 3; c++) {
+        if (m_geodyn_faces == 6 && low_sw4_typeerior) {
           bnd0[c - 1] =
               twgh *
                   ((1 - wghi) * (1 - wghj) * m_geodyn_data1[4](c, ig0, jg0, 1) +
@@ -1863,7 +1863,7 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
       }
       // Upper bndry
       float_sw4 res1, res2, res3;
-      if (high_interior) {
+      if (high_sw4_typeerior) {
         res1 = crf * rho[g](i, j, k1) *
                    (bnd1[0] - 2 * U[g](1, i, j, k1) + Um[g](1, i, j, k1)) *
                    d2i -
@@ -1932,7 +1932,7 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
                                          SQR(mMetric[g](3, i, j, k1 - 1))) +
                   mu[g](i, j, k1) * (SQR(mMetric[g](2, i, j, k1)) +
                                      SQR(mMetric[g](3, i, j, k1)));
-        int ipiv[3], info, three = 3, one = 1;
+        sw4_type ipiv[3], info, three = 3, one = 1;
         F77_FUNC(dgesv, DGESV)
         (&three, &one, amat_, &three, ipiv, x, &three, &info);
         VERIFY2(
@@ -1948,7 +1948,7 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
         U[g](3, i, j, k1 - 1) = U[g](3, i, j, k1 - 1) + x[2];
       }
       // Lower bndry
-      if (m_geodyn_faces == 6 && low_interior) {
+      if (m_geodyn_faces == 6 && low_sw4_typeerior) {
         res1 = crf * rho[g](i, j, k0) *
                    (bnd0[0] - 2 * U[g](1, i, j, k0) + Um[g](1, i, j, k0)) *
                    d2i -
@@ -2016,7 +2016,7 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
                                          SQR(mMetric[g](3, i, j, k0 + 1))) +
                   mu[g](i, j, k0) * (SQR(mMetric[g](2, i, j, k0)) +
                                      SQR(mMetric[g](3, i, j, k0)));
-        int ipiv[3], info, three = 3, one = 1;
+        sw4_type ipiv[3], info, three = 3, one = 1;
         F77_FUNC(dgesv, DGESV)
         (&three, &one, amat_, &three, ipiv, x, &three, &info);
         VERIFY2(
@@ -2037,13 +2037,13 @@ void EW::geodyn_second_ghost_point_curvilinear(vector<Sarray>& rho,
 
 //-----------------------------------------------------------------------
 void evalLu_Dip(
-    int ib, int ie, int jb, int je, int kb, int ke,
+    sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
     //		 double* a_u, double* a_lu, double* a_mu, double* a_la,
     Sarray& u_arg, Sarray& lu_arg, float_sw4* a_mu, float_sw4* a_la,
-    float_sw4 h, int ilb, int ile, int jlb, int jle, int klb, int kle) {
+    float_sw4 h, sw4_type ilb, sw4_type ile, sw4_type jlb, sw4_type jle, sw4_type klb, sw4_type kle) {
   SW4_MARK_FUNCTION;
   // Suggested change: Input Sarray& a_lu instead and define
-  //   const long int lb= a_lu.m_base;
+  //   const long sw4_type lb= a_lu.m_base;
   //   const size_t loi=a_lu.m_offi;
   //   const size_t loj=a_lu.m_offj;
   //   const size_t lok=a_lu.m_offk;
@@ -2052,7 +2052,7 @@ void evalLu_Dip(
   ////#define lu(c,i,j,k) a_lupt[lb+loc*(c)+loi*(i)+loj*(j)+lok*(k)]
   //   float_sw4* a_lupt = &(a_lu.m_data[lb]);
   //#define lu(c,i,j,k) a_lupt[loc*(c)+loi*(i)+loj*(j)+lok*(k)]
-  //   const long int b=a_u.m_base;
+  //   const long sw4_type b=a_u.m_base;
   //   const size_t oi=a_u.m_offi;
   //   const size_t oj=a_u.m_offj;
   //   const size_t ok=a_u.m_offk;
@@ -2087,7 +2087,7 @@ void evalLu_Dip(
 
   Tclass<1455> tag1;
   forall3<__LINE__>(
-      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1455> t, int i, int j, int k) {
+      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1455> t, sw4_type i, sw4_type j, sw4_type k) {
 
 #else
 
@@ -2116,11 +2116,11 @@ void evalLu_Dip(
   RAJA::RangeSegment i_range(ilb, ile + 1);
   RAJA::kernel<LOCAL_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
-        // for( int k=klb+1 ; k <= kle-1; k++ )
-        //    for( int j=jlb+1 ; j <= jle-1; j++ )
-        // 	 for( int i=ilb ; i <= ile; i++ )
+        // for( sw4_type k=klb+1 ; k <= kle-1; k++ )
+        //    for( sw4_type j=jlb+1 ; j <= jle-1; j++ )
+        // 	 for( sw4_type i=ilb ; i <= ile; i++ )
         float_sw4 mupx = half * (mu(i, j, k) + mu(i + 1, j, k));
         float_sw4 mumx = half * (mu(i, j, k) + mu(i - 1, j, k));
         float_sw4 mupy = half * (mu(i, j + 1, k) + mu(i, j, k));
@@ -2206,12 +2206,12 @@ void evalLu_Dip(
 }
 
 //-----------------------------------------------------------------------
-void evalLu_Dim(int ib, int ie, int jb, int je, int kb, int ke,
+void evalLu_Dim(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                 //		 float_sw4* a_u, float_sw4* a_lu, float_sw4*
                 // a_mu, float_sw4* a_la,
                 Sarray& u_arg, Sarray& lu_arg, float_sw4* a_mu, float_sw4* a_la,
-                float_sw4 h, int ilb, int ile, int jlb, int jle, int klb,
-                int kle) {
+                float_sw4 h, sw4_type ilb, sw4_type ile, sw4_type jlb, sw4_type jle, sw4_type klb,
+                sw4_type kle) {
   SW4_MARK_FUNCTION;
 #define mu(i, j, k) a_mu[i - ib + ni * (j - jb) + nij * (k - kb)]
 #define la(i, j, k) a_la[i - ib + ni * (j - jb) + nij * (k - kb)]
@@ -2239,13 +2239,13 @@ void evalLu_Dim(int ib, int ie, int jb, int je, int kb, int ke,
 
   Tclass<1456> tag1;
   forall3<__LINE__>(
-      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1456> t, int i, int j, int k) {
+      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1456> t, sw4_type i, sw4_type j, sw4_type k) {
 
 #else
 
-  // for( int k=klb+1 ; k <= kle-1; k++ )
-  //    for( int j=jlb+1 ; j <= jle-1; j++ )
-  // 	 for( int i=ilb ; i <= ile; i++ )
+  // for( sw4_type k=klb+1 ; k <= kle-1; k++ )
+  //    for( sw4_type j=jlb+1 ; j <= jle-1; j++ )
+  // 	 for( sw4_type i=ilb ; i <= ile; i++ )
 
 #if defined (ENABLE_GPU)
   using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
@@ -2272,7 +2272,7 @@ void evalLu_Dim(int ib, int ie, int jb, int je, int kb, int ke,
   RAJA::RangeSegment i_range(ilb, ile + 1);
   RAJA::kernel<LOCAL_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
         float_sw4 mupx = half * (mu(i, j, k) + mu(i + 1, j, k));
         float_sw4 mumx = half * (mu(i, j, k) + mu(i - 1, j, k));
@@ -2359,12 +2359,12 @@ void evalLu_Dim(int ib, int ie, int jb, int je, int kb, int ke,
 }
 
 //-----------------------------------------------------------------------
-void evalLu_Djp(int ib, int ie, int jb, int je, int kb, int ke,
+void evalLu_Djp(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                 //		 float_sw4* a_u, float_sw4* a_lu, float_sw4*
                 // a_mu, float_sw4* a_la,
                 Sarray& u_arg, Sarray& lu_arg, float_sw4* a_mu, float_sw4* a_la,
-                float_sw4 h, int ilb, int ile, int jlb, int jle, int klb,
-                int kle) {
+                float_sw4 h, sw4_type ilb, sw4_type ile, sw4_type jlb, sw4_type jle, sw4_type klb,
+                sw4_type kle) {
   SW4_MARK_FUNCTION;
 #define mu(i, j, k) a_mu[i - ib + ni * (j - jb) + nij * (k - kb)]
 #define la(i, j, k) a_la[i - ib + ni * (j - jb) + nij * (k - kb)]
@@ -2390,7 +2390,7 @@ void evalLu_Djp(int ib, int ie, int jb, int je, int kb, int ke,
 
   Tclass<1460> tag1;
   forall3<__LINE__>(
-      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1460> t, int i, int j, int k) {
+      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1460> t, sw4_type i, sw4_type j, sw4_type k) {
 
 #else
 
@@ -2419,11 +2419,11 @@ void evalLu_Djp(int ib, int ie, int jb, int je, int kb, int ke,
   RAJA::RangeSegment i_range(ilb + 1, ile);
   RAJA::kernel<LOCAL_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
-        // for( int k=klb+1 ; k <= kle-1; k++ )
-        //    for( int j=jlb ; j <= jle; j++ )
-        // 	 for( int i=ilb+1 ; i <= ile-1; i++ )
+        // for( sw4_type k=klb+1 ; k <= kle-1; k++ )
+        //    for( sw4_type j=jlb ; j <= jle; j++ )
+        // 	 for( sw4_type i=ilb+1 ; i <= ile-1; i++ )
 
         float_sw4 mupx = half * (mu(i, j, k) + mu(i + 1, j, k));
         float_sw4 mumx = half * (mu(i, j, k) + mu(i - 1, j, k));
@@ -2516,12 +2516,12 @@ void evalLu_Djp(int ib, int ie, int jb, int je, int kb, int ke,
 }
 
 //-----------------------------------------------------------------------
-void evalLu_Djm(int ib, int ie, int jb, int je, int kb, int ke,
+void evalLu_Djm(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                 //		 float_sw4* a_u, float_sw4* a_lu, float_sw4*
                 // a_mu, float_sw4* a_la,
                 Sarray& u_arg, Sarray& lu_arg, float_sw4* a_mu, float_sw4* a_la,
-                float_sw4 h, int ilb, int ile, int jlb, int jle, int klb,
-                int kle) {
+                float_sw4 h, sw4_type ilb, sw4_type ile, sw4_type jlb, sw4_type jle, sw4_type klb,
+                sw4_type kle) {
   SW4_MARK_FUNCTION;
 #define mu(i, j, k) a_mu[i - ib + ni * (j - jb) + nij * (k - kb)]
 #define la(i, j, k) a_la[i - ib + ni * (j - jb) + nij * (k - kb)]
@@ -2549,7 +2549,7 @@ void evalLu_Djm(int ib, int ie, int jb, int je, int kb, int ke,
 
   Tclass<1459> tag1;
   forall3<__LINE__>(
-      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1459> t, int i, int j, int k) {
+      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1459> t, sw4_type i, sw4_type j, sw4_type k) {
 
 #else
 
@@ -2578,11 +2578,11 @@ void evalLu_Djm(int ib, int ie, int jb, int je, int kb, int ke,
   RAJA::RangeSegment i_range(ilb + 1, ile);
   RAJA::kernel<LOCAL_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
-        // for( int k=klb+1 ; k <= kle-1; k++ )
-        //    for( int j=jlb ; j <= jle; j++ )
-        // 	 for( int i=ilb+1 ; i <= ile-1; i++ )
+        // for( sw4_type k=klb+1 ; k <= kle-1; k++ )
+        //    for( sw4_type j=jlb ; j <= jle; j++ )
+        // 	 for( sw4_type i=ilb+1 ; i <= ile-1; i++ )
 
         float_sw4 mupx = half * (mu(i, j, k) + mu(i + 1, j, k));
         float_sw4 mumx = half * (mu(i, j, k) + mu(i - 1, j, k));
@@ -2674,12 +2674,12 @@ void evalLu_Djm(int ib, int ie, int jb, int je, int kb, int ke,
 }
 
 //-----------------------------------------------------------------------
-void evalLu_Dkp(int ib, int ie, int jb, int je, int kb, int ke,
+void evalLu_Dkp(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                 //		 float_sw4* a_u, float_sw4* a_lu, float_sw4*
                 // a_mu, float_sw4* a_la,
                 Sarray& u_arg, Sarray& lu_arg, float_sw4* a_mu, float_sw4* a_la,
-                float_sw4 h, int ilb, int ile, int jlb, int jle, int klb,
-                int kle) {
+                float_sw4 h, sw4_type ilb, sw4_type ile, sw4_type jlb, sw4_type jle, sw4_type klb,
+                sw4_type kle) {
   SW4_MARK_FUNCTION;
 #define mu(i, j, k) a_mu[i - ib + ni * (j - jb) + nij * (k - kb)]
 #define la(i, j, k) a_la[i - ib + ni * (j - jb) + nij * (k - kb)]
@@ -2705,7 +2705,7 @@ void evalLu_Dkp(int ib, int ie, int jb, int je, int kb, int ke,
 
   Tclass<1457> tag1;
   forall3<__LINE__>(
-      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1457> t, int i, int j, int k) {
+      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1457> t, sw4_type i, sw4_type j, sw4_type k) {
 
 #else
 
@@ -2734,11 +2734,11 @@ void evalLu_Dkp(int ib, int ie, int jb, int je, int kb, int ke,
   RAJA::RangeSegment i_range(ilb + 1, ile);
   RAJA::kernel<LOCAL_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
-        // for( int k=klb ; k <= kle; k++ )
-        //    for( int j=jlb+1 ; j <= jle-1; j++ )
-        // 	 for( int i=ilb+1 ; i <= ile-1; i++ )
+        // for( sw4_type k=klb ; k <= kle; k++ )
+        //    for( sw4_type j=jlb+1 ; j <= jle-1; j++ )
+        // 	 for( sw4_type i=ilb+1 ; i <= ile-1; i++ )
 
         float_sw4 mupx = half * (mu(i, j, k) + mu(i + 1, j, k));
         float_sw4 mumx = half * (mu(i, j, k) + mu(i - 1, j, k));
@@ -2831,12 +2831,12 @@ void evalLu_Dkp(int ib, int ie, int jb, int je, int kb, int ke,
 }
 
 //-----------------------------------------------------------------------
-void evalLu_Dkm(int ib, int ie, int jb, int je, int kb, int ke,
+void evalLu_Dkm(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                 //		 float_sw4* a_u, float_sw4* a_lu, float_sw4*
                 // a_mu, float_sw4* a_la,
                 Sarray& u_arg, Sarray& lu_arg, float_sw4* a_mu, float_sw4* a_la,
-                float_sw4 h, int ilb, int ile, int jlb, int jle, int klb,
-                int kle) {
+                float_sw4 h, sw4_type ilb, sw4_type ile, sw4_type jlb, sw4_type jle, sw4_type klb,
+                sw4_type kle) {
   SW4_MARK_FUNCTION;
 #define mu(i, j, k) a_mu[i - ib + ni * (j - jb) + nij * (k - kb)]
 #define la(i, j, k) a_la[i - ib + ni * (j - jb) + nij * (k - kb)]
@@ -2864,7 +2864,7 @@ void evalLu_Dkm(int ib, int ie, int jb, int je, int kb, int ke,
   // )("<<ilb+1<<","<<ile<<")\n";
   Tclass<1461> tag1;
   forall3<__LINE__>(
-      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1461> t, int i, int j, int k) {
+      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1461> t, sw4_type i, sw4_type j, sw4_type k) {
 
 #else
 
@@ -2893,11 +2893,11 @@ void evalLu_Dkm(int ib, int ie, int jb, int je, int kb, int ke,
   RAJA::RangeSegment i_range(ilb + 1, ile);
   RAJA::kernel<LOCAL_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
-        // for( int k=klb ; k <= kle; k++ )
-        //    for( int j=jlb+1 ; j <= jle-1; j++ )
-        // 	 for( int i=ilb+1 ; i <= ile-1; i++ )
+        // for( sw4_type k=klb ; k <= kle; k++ )
+        //    for( sw4_type j=jlb+1 ; j <= jle-1; j++ )
+        // 	 for( sw4_type i=ilb+1 ; i <= ile-1; i++ )
 
         float_sw4 mupx = half * (mu(i, j, k) + mu(i + 1, j, k));
         float_sw4 mumx = half * (mu(i, j, k) + mu(i - 1, j, k));
@@ -2990,12 +2990,12 @@ void evalLu_Dkm(int ib, int ie, int jb, int je, int kb, int ke,
 }
 
 //-----------------------------------------------------------------------
-void evalLu_DkpDip(int ib, int ie, int jb, int je, int kb, int ke,
+void evalLu_DkpDip(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                    //		    float_sw4* a_u, float_sw4* a_lu, float_sw4*
                    // a_mu, float_sw4* a_la,
                    Sarray& u_arg, Sarray& lu_arg, float_sw4* a_mu,
-                   float_sw4* a_la, float_sw4 h, int ilb, int ile, int jlb,
-                   int jle, int klb, int kle) {
+                   float_sw4* a_la, float_sw4 h, sw4_type ilb, sw4_type ile, sw4_type jlb,
+                   sw4_type jle, sw4_type klb, sw4_type kle) {
   SW4_MARK_FUNCTION;
 #define mu(i, j, k) a_mu[i - ib + ni * (j - jb) + nij * (k - kb)]
 #define la(i, j, k) a_la[i - ib + ni * (j - jb) + nij * (k - kb)]
@@ -3021,7 +3021,7 @@ void evalLu_DkpDip(int ib, int ie, int jb, int je, int kb, int ke,
 
   Tclass<1555> tag1;
   forall3<__LINE__>(
-      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1555> t, int i, int j, int k) {
+      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1555> t, sw4_type i, sw4_type j, sw4_type k) {
 
 #else
 
@@ -3050,11 +3050,11 @@ void evalLu_DkpDip(int ib, int ie, int jb, int je, int kb, int ke,
   RAJA::RangeSegment i_range(ilb, ile + 1);
   RAJA::kernel<LOCAL_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
-        // for( int k=klb ; k <= klb; k++ )
-        //    for( int j=jlb+1 ; j <= jle-1; j++ )
-        // 	 for( int i=ilb ; i <= ile; i++ )
+        // for( sw4_type k=klb ; k <= klb; k++ )
+        //    for( sw4_type j=jlb+1 ; j <= jle-1; j++ )
+        // 	 for( sw4_type i=ilb ; i <= ile; i++ )
         // 	 {
         float_sw4 mupx = half * (mu(i, j, k) + mu(i + 1, j, k));
         float_sw4 mumx = half * (mu(i, j, k) + mu(i - 1, j, k));
@@ -3141,12 +3141,12 @@ void evalLu_DkpDip(int ib, int ie, int jb, int je, int kb, int ke,
 }
 
 //-----------------------------------------------------------------------
-void evalLu_DkpDim(int ib, int ie, int jb, int je, int kb, int ke,
+void evalLu_DkpDim(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                    //		    float_sw4* a_u, float_sw4* a_lu, float_sw4*
                    // a_mu, float_sw4* a_la,
                    Sarray& u_arg, Sarray& lu_arg, float_sw4* a_mu,
-                   float_sw4* a_la, float_sw4 h, int ilb, int ile, int jlb,
-                   int jle, int klb, int kle) {
+                   float_sw4* a_la, float_sw4 h, sw4_type ilb, sw4_type ile, sw4_type jlb,
+                   sw4_type jle, sw4_type klb, sw4_type kle) {
   SW4_MARK_FUNCTION;
 #define mu(i, j, k) a_mu[i - ib + ni * (j - jb) + nij * (k - kb)]
 #define la(i, j, k) a_la[i - ib + ni * (j - jb) + nij * (k - kb)]
@@ -3172,7 +3172,7 @@ void evalLu_DkpDim(int ib, int ie, int jb, int je, int kb, int ke,
 
   Tclass<1556> tag1;
   forall3<__LINE__>(
-      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1556> t, int i, int j, int k) {
+      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1556> t, sw4_type i, sw4_type j, sw4_type k) {
 
 #else
 
@@ -3202,11 +3202,11 @@ void evalLu_DkpDim(int ib, int ie, int jb, int je, int kb, int ke,
   RAJA::RangeSegment i_range(ilb, ile + 1);
   RAJA::kernel<LOCAL_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
-        // for( int k=klb ; k <= klb; k++ )
-        //    for( int j=jlb+1 ; j <= jle-1; j++ )
-        // 	 for( int i=ilb ; i <= ile; i++ )
+        // for( sw4_type k=klb ; k <= klb; k++ )
+        //    for( sw4_type j=jlb+1 ; j <= jle-1; j++ )
+        // 	 for( sw4_type i=ilb ; i <= ile; i++ )
         // 	 {
         float_sw4 mupx = half * (mu(i, j, k) + mu(i + 1, j, k));
         float_sw4 mumx = half * (mu(i, j, k) + mu(i - 1, j, k));
@@ -3294,12 +3294,12 @@ void evalLu_DkpDim(int ib, int ie, int jb, int je, int kb, int ke,
 }
 
 //-----------------------------------------------------------------------
-void evalLu_DkpDjp(int ib, int ie, int jb, int je, int kb, int ke,
+void evalLu_DkpDjp(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                    //		 float_sw4* a_u, float_sw4* a_lu, float_sw4*
                    // a_mu, float_sw4* a_la,
                    Sarray& u_arg, Sarray& lu_arg, float_sw4* a_mu,
-                   float_sw4* a_la, float_sw4 h, int ilb, int ile, int jlb,
-                   int jle, int klb, int kle) {
+                   float_sw4* a_la, float_sw4 h, sw4_type ilb, sw4_type ile, sw4_type jlb,
+                   sw4_type jle, sw4_type klb, sw4_type kle) {
   SW4_MARK_FUNCTION;
 #define mu(i, j, k) a_mu[i - ib + ni * (j - jb) + nij * (k - kb)]
 #define la(i, j, k) a_la[i - ib + ni * (j - jb) + nij * (k - kb)]
@@ -3325,7 +3325,7 @@ void evalLu_DkpDjp(int ib, int ie, int jb, int je, int kb, int ke,
 
   Tclass<1455> tag1;
   forall3<__LINE__>(
-      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1455> t, int i, int j, int k) {
+      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1455> t, sw4_type i, sw4_type j, sw4_type k) {
 
 #else
 
@@ -3354,11 +3354,11 @@ void evalLu_DkpDjp(int ib, int ie, int jb, int je, int kb, int ke,
   RAJA::RangeSegment i_range(ilb + 1, ile);
   RAJA::kernel<LOCAL_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
-        // for( int k=klb ; k <= klb; k++ )
-        //    for( int j=jlb ; j <= jle; j++ )
-        // 	 for( int i=ilb+1 ; i <= ile-1; i++ )
+        // for( sw4_type k=klb ; k <= klb; k++ )
+        //    for( sw4_type j=jlb ; j <= jle; j++ )
+        // 	 for( sw4_type i=ilb+1 ; i <= ile-1; i++ )
         // 	 {
         float_sw4 mupx = half * (mu(i, j, k) + mu(i + 1, j, k));
         float_sw4 mumx = half * (mu(i, j, k) + mu(i - 1, j, k));
@@ -3446,12 +3446,12 @@ void evalLu_DkpDjp(int ib, int ie, int jb, int je, int kb, int ke,
 }
 
 //-----------------------------------------------------------------------
-void evalLu_DkpDjm(int ib, int ie, int jb, int je, int kb, int ke,
+void evalLu_DkpDjm(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                    //		 float_sw4* a_u, float_sw4* a_lu, float_sw4*
                    // a_mu, float_sw4* a_la,
                    Sarray& u_arg, Sarray& lu_arg, float_sw4* a_mu,
-                   float_sw4* a_la, float_sw4 h, int ilb, int ile, int jlb,
-                   int jle, int klb, int kle) {
+                   float_sw4* a_la, float_sw4 h, sw4_type ilb, sw4_type ile, sw4_type jlb,
+                   sw4_type jle, sw4_type klb, sw4_type kle) {
   SW4_MARK_FUNCTION;
 #define mu(i, j, k) a_mu[i - ib + ni * (j - jb) + nij * (k - kb)]
 #define la(i, j, k) a_la[i - ib + ni * (j - jb) + nij * (k - kb)]
@@ -3477,7 +3477,7 @@ void evalLu_DkpDjm(int ib, int ie, int jb, int je, int kb, int ke,
 
   Tclass<1595> tag1;
   forall3<__LINE__>(
-      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1595> t, int i, int j, int k) {
+      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1595> t, sw4_type i, sw4_type j, sw4_type k) {
 
 #else
 
@@ -3506,11 +3506,11 @@ void evalLu_DkpDjm(int ib, int ie, int jb, int je, int kb, int ke,
   RAJA::RangeSegment i_range(ilb + 1, ile);
   RAJA::kernel<LOCAL_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
-        // for( int k=klb ; k <= klb; k++ )
-        //    for( int j=jlb ; j <= jle; j++ )
-        // 	 for( int i=ilb+1 ; i <= ile-1; i++ )
+        // for( sw4_type k=klb ; k <= klb; k++ )
+        //    for( sw4_type j=jlb ; j <= jle; j++ )
+        // 	 for( sw4_type i=ilb+1 ; i <= ile-1; i++ )
         // 	 {
         float_sw4 mupx = half * (mu(i, j, k) + mu(i + 1, j, k));
         float_sw4 mumx = half * (mu(i, j, k) + mu(i - 1, j, k));
@@ -3604,24 +3604,24 @@ void EW::geodyn_up_from_uacc(vector<Sarray>& Up, vector<Sarray>& Uacc,
   SW4_MARK_FUNCTION;
   if (m_do_geodynbc) {
     float_sw4 dt2 = dt * dt;
-    for (int g = 0; g < mNumberOfGrids; g++) {
-      int i0 = m_geodyn_dims[g][0];
-      int i1 = m_geodyn_dims[g][1];
-      int j0 = m_geodyn_dims[g][2];
-      int j1 = m_geodyn_dims[g][3];
-      int k0 = m_geodyn_dims[g][4];
-      int k1 = m_geodyn_dims[g][5];
-      bool low_interior, high_interior;
-      low_interior = m_iStartInt[g] <= i0 + 1 && i0 + 1 <= m_iEndInt[g];
-      high_interior = m_iStartInt[g] <= i1 - 1 && i1 - 1 <= m_iEndInt[g];
+    for (sw4_type g = 0; g < mNumberOfGrids; g++) {
+      sw4_type i0 = m_geodyn_dims[g][0];
+      sw4_type i1 = m_geodyn_dims[g][1];
+      sw4_type j0 = m_geodyn_dims[g][2];
+      sw4_type j1 = m_geodyn_dims[g][3];
+      sw4_type k0 = m_geodyn_dims[g][4];
+      sw4_type k1 = m_geodyn_dims[g][5];
+      bool low_sw4_typeerior, high_sw4_typeerior;
+      low_sw4_typeerior = m_iStartSw4_Type[g] <= i0 + 1 && i0 + 1 <= m_iEndSw4_Type[g];
+      high_sw4_typeerior = m_iStartSw4_Type[g] <= i1 - 1 && i1 - 1 <= m_iEndSw4_Type[g];
       bool surface_correction = k0 <= 1 && g == mNumberOfGrids - 1;
-      int kstart = k0 + 1;
+      sw4_type kstart = k0 + 1;
       if (surface_correction) kstart = k0;
 
       // Side with i=const.
-      for (int k = kstart; k <= k1 - 1; k++)
-        for (int j = j0 + 1; j <= j1 - 1; j++) {
-          if (low_interior) {
+      for (sw4_type k = kstart; k <= k1 - 1; k++)
+        for (sw4_type j = j0 + 1; j <= j1 - 1; j++) {
+          if (low_sw4_typeerior) {
             Up[g](1, i0 + 1, j, k) = dt2 * Uacc[g](1, i0 + 1, j, k) +
                                      2 * U[g](1, i0 + 1, j, k) -
                                      Um[g](1, i0 + 1, j, k);
@@ -3632,7 +3632,7 @@ void EW::geodyn_up_from_uacc(vector<Sarray>& Up, vector<Sarray>& Uacc,
                                      2 * U[g](3, i0 + 1, j, k) -
                                      Um[g](3, i0 + 1, j, k);
           }
-          if (high_interior) {
+          if (high_sw4_typeerior) {
             Up[g](1, i1 - 1, j, k) = dt2 * Uacc[g](1, i1 - 1, j, k) +
                                      2 * U[g](1, i1 - 1, j, k) -
                                      Um[g](1, i1 - 1, j, k);
@@ -3645,11 +3645,11 @@ void EW::geodyn_up_from_uacc(vector<Sarray>& Up, vector<Sarray>& Uacc,
           }
         }
       // Side with j=const
-      low_interior = m_jStartInt[g] <= j0 + 1 && j0 + 1 <= m_jEndInt[g];
-      high_interior = m_jStartInt[g] <= j1 - 1 && j1 - 1 <= m_jEndInt[g];
-      for (int k = kstart; k <= k1 - 1; k++)
-        for (int i = i0 + 1; i <= i1 - 1; i++) {
-          if (low_interior) {
+      low_sw4_typeerior = m_jStartSw4_Type[g] <= j0 + 1 && j0 + 1 <= m_jEndSw4_Type[g];
+      high_sw4_typeerior = m_jStartSw4_Type[g] <= j1 - 1 && j1 - 1 <= m_jEndSw4_Type[g];
+      for (sw4_type k = kstart; k <= k1 - 1; k++)
+        for (sw4_type i = i0 + 1; i <= i1 - 1; i++) {
+          if (low_sw4_typeerior) {
             Up[g](1, i, j0 + 1, k) = dt2 * Uacc[g](1, i, j0 + 1, k) +
                                      2 * U[g](1, i, j0 + 1, k) -
                                      Um[g](1, i, j0 + 1, k);
@@ -3660,7 +3660,7 @@ void EW::geodyn_up_from_uacc(vector<Sarray>& Up, vector<Sarray>& Uacc,
                                      2 * U[g](3, i, j0 + 1, k) -
                                      Um[g](3, i, j0 + 1, k);
           }
-          if (high_interior) {
+          if (high_sw4_typeerior) {
             Up[g](1, i, j1 - 1, k) = dt2 * Uacc[g](1, i, j1 - 1, k) +
                                      2 * U[g](1, i, j1 - 1, k) -
                                      Um[g](1, i, j1 - 1, k);
@@ -3673,11 +3673,11 @@ void EW::geodyn_up_from_uacc(vector<Sarray>& Up, vector<Sarray>& Uacc,
           }
         }
       // Side with k=const
-      low_interior = m_kStartInt[g] <= k0 + 1 && k0 + 1 <= m_kEndInt[g];
-      high_interior = m_kStartInt[g] <= k1 - 1 && k1 - 1 <= m_kEndInt[g];
-      for (int j = j0 + 1; j <= j1 - 1; j++)
-        for (int i = i0 + 1; i <= i1 - 1; i++) {
-          if (low_interior && m_geodyn_faces == 6) {
+      low_sw4_typeerior = m_kStartSw4_Type[g] <= k0 + 1 && k0 + 1 <= m_kEndSw4_Type[g];
+      high_sw4_typeerior = m_kStartSw4_Type[g] <= k1 - 1 && k1 - 1 <= m_kEndSw4_Type[g];
+      for (sw4_type j = j0 + 1; j <= j1 - 1; j++)
+        for (sw4_type i = i0 + 1; i <= i1 - 1; i++) {
+          if (low_sw4_typeerior && m_geodyn_faces == 6) {
             Up[g](1, i, j, k0 + 1) = dt2 * Uacc[g](1, i, j, k0 + 1) +
                                      2 * U[g](1, i, j, k0 + 1) -
                                      Um[g](1, i, j, k0 + 1);
@@ -3688,7 +3688,7 @@ void EW::geodyn_up_from_uacc(vector<Sarray>& Up, vector<Sarray>& Uacc,
                                      2 * U[g](3, i, j, k0 + 1) -
                                      Um[g](3, i, j, k0 + 1);
           }
-          if (high_interior) {
+          if (high_sw4_typeerior) {
             Up[g](1, i, j, k1 - 1) = dt2 * Uacc[g](1, i, j, k1 - 1) +
                                      2 * U[g](1, i, j, k1 - 1) -
                                      Um[g](1, i, j, k1 - 1);
@@ -3709,21 +3709,21 @@ void EW::save_geoghost(vector<Sarray>& U) {
   SW4_MARK_FUNCTION;
   //   if( m_do_geodynbc && m_geodyn_faces==5 )
   if (m_do_geodynbc) {
-    int g = mNumberOfGrids - 1;
-    int i0 = m_geodyn_dims[g][0];
-    int i1 = m_geodyn_dims[g][1];
-    int j0 = m_geodyn_dims[g][2];
-    int j1 = m_geodyn_dims[g][3];
-    int k0 = m_geodyn_dims[g][4];
-    int k1 = m_geodyn_dims[g][5];
+    sw4_type g = mNumberOfGrids - 1;
+    sw4_type i0 = m_geodyn_dims[g][0];
+    sw4_type i1 = m_geodyn_dims[g][1];
+    sw4_type j0 = m_geodyn_dims[g][2];
+    sw4_type j1 = m_geodyn_dims[g][3];
+    sw4_type k0 = m_geodyn_dims[g][4];
+    sw4_type k1 = m_geodyn_dims[g][5];
     if (k0 <= 1 && k1 - k0 + 1 > 0) {
-      for (int j = j0; j <= j1; j++)
-        for (int c = 1; c <= 3; c++) {
+      for (sw4_type j = j0; j <= j1; j++)
+        for (sw4_type c = 1; c <= 3; c++) {
           m_geo_usgh[0][c - 1 + 3 * (j - j0)] = U[g](c, i0, j, 0);
           m_geo_usgh[1][c - 1 + 3 * (j - j0)] = U[g](c, i1, j, 0);
         }
-      for (int i = i0; i <= i1; i++)
-        for (int c = 1; c <= 3; c++) {
+      for (sw4_type i = i0; i <= i1; i++)
+        for (sw4_type c = 1; c <= 3; c++) {
           m_geo_usgh[2][c - 1 + 3 * (i - i0)] = U[g](c, i, j0, 0);
           m_geo_usgh[3][c - 1 + 3 * (i - i0)] = U[g](c, i, j1, 0);
         }
@@ -3736,21 +3736,21 @@ void EW::restore_geoghost(vector<Sarray>& U) {
   SW4_MARK_FUNCTION;
   //   if( m_do_geodynbc && m_geodyn_faces==5 )
   {
-    int g = mNumberOfGrids - 1;
-    int i0 = m_geodyn_dims[g][0];
-    int i1 = m_geodyn_dims[g][1];
-    int j0 = m_geodyn_dims[g][2];
-    int j1 = m_geodyn_dims[g][3];
-    int k0 = m_geodyn_dims[g][4];
-    int k1 = m_geodyn_dims[g][5];
+    sw4_type g = mNumberOfGrids - 1;
+    sw4_type i0 = m_geodyn_dims[g][0];
+    sw4_type i1 = m_geodyn_dims[g][1];
+    sw4_type j0 = m_geodyn_dims[g][2];
+    sw4_type j1 = m_geodyn_dims[g][3];
+    sw4_type k0 = m_geodyn_dims[g][4];
+    sw4_type k1 = m_geodyn_dims[g][5];
     if (k0 <= 1 && k1 - k0 + 1 > 0) {
-      for (int j = j0; j <= j1; j++)
-        for (int c = 1; c <= 3; c++) {
+      for (sw4_type j = j0; j <= j1; j++)
+        for (sw4_type c = 1; c <= 3; c++) {
           U[g](c, i0, j, 0) = m_geo_usgh[0][c - 1 + 3 * (j - j0)];
           U[g](c, i1, j, 0) = m_geo_usgh[1][c - 1 + 3 * (j - j0)];
         }
-      for (int i = i0; i <= i1; i++)
-        for (int c = 1; c <= 3; c++) {
+      for (sw4_type i = i0; i <= i1; i++)
+        for (sw4_type c = 1; c <= 3; c++) {
           U[g](c, i, j0, 0) = m_geo_usgh[2][c - 1 + 3 * (i - i0)];
           U[g](c, i, j1, 0) = m_geo_usgh[3][c - 1 + 3 * (i - i0)];
         }
@@ -3759,8 +3759,8 @@ void EW::restore_geoghost(vector<Sarray>& U) {
 }
 
 //-----------------------------------------------------------------------
-void EW::bcsurf_curvilinear_2nd_order(int side, int i0, int i1, int j0, int j1,
-                                      int k0, int g, Sarray& u,
+void EW::bcsurf_curvilinear_2nd_order(sw4_type side, sw4_type i0, sw4_type i1, sw4_type j0, sw4_type j1,
+                                      sw4_type k0, sw4_type g, Sarray& u,
                                       float_sw4* bforcing) {
   SW4_MARK_FUNCTION;
   if (side == 0) {
@@ -3776,13 +3776,13 @@ void EW::bcsurf_curvilinear_2nd_order(int side, int i0, int i1, int j0, int j1,
     // side j=j1
     j0 = j1;
   }
-  int ib = m_iStart[g];
-  int jb = m_jStart[g];
-  int ni = m_iEnd[g] - m_iStart[g] + 1;
-  int nj = m_jEnd[g] - m_jStart[g] + 1;
+  sw4_type ib = m_iStart[g];
+  sw4_type jb = m_jStart[g];
+  sw4_type ni = m_iEnd[g] - m_iStart[g] + 1;
+  sw4_type nj = m_jEnd[g] - m_jStart[g] + 1;
   Sarray& met = mMetric[g];  // Rename mMetric, makes formulas shorter.
-  for (int j = j0; j <= j1; j++)
-    for (int i = i0; i <= i1; i++) {
+  for (sw4_type j = j0; j <= j1; j++)
+    for (sw4_type i = i0; i <= i1; i++) {
       size_t qq = i - ib + ni * (j - jb);
 
       // One sided x-derivatives
@@ -3924,7 +3924,7 @@ void EW::bcsurf_curvilinear_2nd_order(int side, int i0, int i1, int j0, int j1,
                           mupla * met(4, i, j, k0) * met(4, i, j, k0));
 #undef amat
       // solve linear 3x3 system:
-      int ipiv[3], info, three = 3, one = 1;
+      sw4_type ipiv[3], info, three = 3, one = 1;
       F77_FUNC(dgesv, DGESV)
       (&three, &one, amat_, &three, ipiv, b, &three, &info);
       VERIFY2(info == 0,
@@ -3941,11 +3941,11 @@ void EW::bcsurf_curvilinear_2nd_order(int side, int i0, int i1, int j0, int j1,
 }
 
 //-----------------------------------------------------------------------
-template <int iu, int il, int ju, int jl, int ku, int kl>
-void evalLuCurv(int ib, int ie, int jb, int je, int kb, int ke, Sarray& u_arg,
+template <sw4_type iu, sw4_type il, sw4_type ju, sw4_type jl, sw4_type ku, sw4_type kl>
+void evalLuCurv(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke, Sarray& u_arg,
                 Sarray& lu_arg, float_sw4* a_mu, float_sw4* a_la,
-                Sarray& met_arg, Sarray& jac_arg, int ilb, int ile, int jlb,
-                int jle, int klb, int kle) {
+                Sarray& met_arg, Sarray& jac_arg, sw4_type ilb, sw4_type ile, sw4_type jlb,
+                sw4_type jle, sw4_type klb, sw4_type kle) {
   SW4_MARK_FUNCTION;
 #define mu(i, j, k) a_mu[i - ib + ni * (j - jb) + nij * (k - kb)]
 #define la(i, j, k) a_la[i - ib + ni * (j - jb) + nij * (k - kb)]
@@ -3969,9 +3969,9 @@ void evalLuCurv(int ib, int ie, int jb, int je, int kb, int ke, Sarray& u_arg,
   auto& met = met_arg.getview();
   auto& jac = jac_arg.getview();
 
-  const int ok = ku == kl ? 1 : 0;
-  const int oj = ju == jl ? 1 : 0;
-  const int oi = iu == il ? 1 : 0;
+  const sw4_type ok = ku == kl ? 1 : 0;
+  const sw4_type oj = ju == jl ? 1 : 0;
+  const sw4_type oi = iu == il ? 1 : 0;
 
 #if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
   Range<4> K(klb + ok, kle - ok + 1);
@@ -3980,13 +3980,13 @@ void evalLuCurv(int ib, int ie, int jb, int je, int kb, int ke, Sarray& u_arg,
 
   Tclass<1471> tag1;
   forall3<__LINE__>(
-      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1471> t, int i, int j, int k) {
+      tag1, I, J, K, [=] RAJA_DEVICE(Tclass<1471> t, sw4_type i, sw4_type j, sw4_type k) {
 
 #else
 
-  // for( int k=klb+1 ; k <= kle-1; k++ )
-  //    for( int j=jlb+1 ; j <= jle-1; j++ )
-  // 	 for( int i=ilb ; i <= ile; i++ )
+  // for( sw4_type k=klb+1 ; k <= kle-1; k++ )
+  //    for( sw4_type j=jlb+1 ; j <= jle-1; j++ )
+  // 	 for( sw4_type i=ilb ; i <= ile; i++ )
 
 #if defined(ENABLE_GPU)
   using LOCAL_POL = RAJA::KernelPolicy<RAJA::statement::CudaKernelFixed<
@@ -4013,16 +4013,16 @@ void evalLuCurv(int ib, int ie, int jb, int je, int kb, int ke, Sarray& u_arg,
   RAJA::RangeSegment i_range(ilb + oi, ile - oi + 1);
   RAJA::kernel<LOCAL_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
         // 255 regs per thread with NVCC with spills
 
-        // for( int k=klb+ok ; k <= kle-ok; k++ )
-        //    for( int j=jlb+oj ; j <= jle-oj; j++ )
-        // 	 for( int i=ilb+oi ; i <= ile-oi; i++ )
-        // 	    //   for( int k=klb+1 ; k <= kle-1; k++ )
-        // 	    //      for( int j=jlb ; j <= jle; j++ )
-        // 	    //	 for( int i=ilb+1 ; i <= ile-1; i++ )
+        // for( sw4_type k=klb+ok ; k <= kle-ok; k++ )
+        //    for( sw4_type j=jlb+oj ; j <= jle-oj; j++ )
+        // 	 for( sw4_type i=ilb+oi ; i <= ile-oi; i++ )
+        // 	    //   for( sw4_type k=klb+1 ; k <= kle-1; k++ )
+        // 	    //      for( sw4_type j=jlb ; j <= jle; j++ )
+        // 	    //	 for( sw4_type i=ilb+1 ; i <= ile-1; i++ )
         // 	 {
         float_sw4 r1 = 0, r2 = 0, r3 = 0;
         float_sw4 ijac = 1.0 / jac(i, j, k);

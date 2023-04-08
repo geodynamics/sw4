@@ -69,35 +69,35 @@ class SView {
       return false;
   }
   void set(Sarray& x);
-  RAJA_HOST_DEVICE inline float_sw4& operator()(int c, int i, int j,
-                                                int k) const {
+  RAJA_HOST_DEVICE inline float_sw4& operator()(sw4_type c, sw4_type i, sw4_type j,
+                                                sw4_type k) const {
     return data[base + c * offc + i * offi + j * offj +
                 k * offk];  // When will this overflow if at all PBUGS
   }
 
-  RAJA_HOST_DEVICE inline float_sw4& operator()(int i, int j, int k) const {
+  RAJA_HOST_DEVICE inline float_sw4& operator()(sw4_type i, sw4_type j, sw4_type k) const {
     return data[base + offc + i * offi + j * offj + k * offk];
   }
-  RAJA_HOST_DEVICE void print(bool cond) const {
+  RAJA_HOST_DEVICE void prsw4_type(bool cond) const {
     if (cond)
-      printf("SView pointer = %p base = %d offi = %d %d %d\n", data, int(base),
-             int(offi), int(offj), int(offk));
+      printf("SView pointer = %p base = %d offi = %d %d %d\n", data, sw4_type(base),
+             sw4_type(offi), sw4_type(offj), sw4_type(offk));
   }
 };
 
 class Sarray {
  public:
   Space space;
-  //   Sarray( CartesianProcessGrid* cartcomm, int nc=1 );
-  Sarray(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend,
-         const char* file, int line);
-  Sarray(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg, int kend);
-  Sarray(int ibeg, int iend, int jbeg, int jend, int kbeg, int kend);
-  Sarray(int nc, int iend, int jend, int kend);
-  Sarray(int iend, int jend, int kend);
+  //   Sarray( CartesianProcessGrid* cartcomm, sw4_type nc=1 );
+  Sarray(sw4_type nc, sw4_type ibeg, sw4_type iend, sw4_type jbeg, sw4_type jend, sw4_type kbeg, sw4_type kend,
+         const char* file, sw4_type line);
+  Sarray(sw4_type nc, sw4_type ibeg, sw4_type iend, sw4_type jbeg, sw4_type jend, sw4_type kbeg, sw4_type kend);
+  Sarray(sw4_type ibeg, sw4_type iend, sw4_type jbeg, sw4_type jend, sw4_type kbeg, sw4_type kend);
+  Sarray(sw4_type nc, sw4_type iend, sw4_type jend, sw4_type kend);
+  Sarray(sw4_type iend, sw4_type jend, sw4_type kend);
   Sarray(const Sarray& u);
   Sarray(const Sarray& u, Space space);
-  Sarray(Sarray& u, int nc = -1);
+  Sarray(Sarray& u, sw4_type nc = -1);
   Sarray();
   ~Sarray() {
 #ifndef SW4_USE_UMPIRE
@@ -117,7 +117,7 @@ class Sarray {
     }
 #endif
   }
-  //   void define( CartesianProcessGrid* cartcomm, int nc );
+  //   void define( CartesianProcessGrid* cartcomm, sw4_type nc );
   inline Sarray& operator=(Sarray& rhs) {
     // std::cout<<"opertaot=\n"<<std::flush;
     if (this == &rhs) return *this;
@@ -125,16 +125,16 @@ class Sarray {
       std::cerr << "Sarray::operator= node implemented from device memory\n";
       abort();
     }
-    for (int i = 0; i < m_npts; i++)
+    for (sw4_type i = 0; i < m_npts; i++)
       this->m_data[i] = rhs.m_data[i];  // Assumes Space is host or Managed,
                                         // never device PBUGS
     return *this;
   }
-  void define(int iend, int jend, int kend);
-  void define(int nc, int iend, int jend, int kend);
-  void define(int nc, int ibeg, int iend, int jbeg, int jend, int kbeg,
-              int kend, Space space = Space::Managed);
-  void define(int ibeg, int iend, int jbeg, int jend, int kbeg, int kend,
+  void define(sw4_type iend, sw4_type jend, sw4_type kend);
+  void define(sw4_type nc, sw4_type iend, sw4_type jend, sw4_type kend);
+  void define(sw4_type nc, sw4_type ibeg, sw4_type iend, sw4_type jbeg, sw4_type jend, sw4_type kbeg,
+              sw4_type kend, Space space = Space::Managed);
+  void define(sw4_type ibeg, sw4_type iend, sw4_type jbeg, sw4_type jend, sw4_type kbeg, sw4_type kend,
               Space space = Space::Managed);
   void define(const Sarray& u);
   inline float_sw4* c_ptr() { return m_data; }
@@ -149,14 +149,14 @@ class Sarray {
   }
   void reference_dev(float_sw4* new_data) { dev_data = new_data; }
 
-  //   inline float_sw4& operator()( int c, int i, int j, int k )
+  //   inline float_sw4& operator()( sw4_type c, sw4_type i, sw4_type j, sw4_type k )
   //   {return
   //   m_data[c-1+m_nc*(i-m_ib)+m_nc*m_ni*(j-m_jb)+m_nc*m_ni*m_nj*(k-m_kb)];}
-  inline bool in_range(int c, int i, int j, int k) const {
+  inline bool in_range(sw4_type c, sw4_type i, sw4_type j, sw4_type k) const {
     return 1 <= c && c <= m_nc && m_ib <= i && i <= m_ie && m_jb <= j &&
            j <= m_je && m_kb <= k && k <= m_ke;
   }
-  inline float_sw4& operator()(int c, int i, int j, int k) const {
+  inline float_sw4& operator()(sw4_type c, sw4_type i, sw4_type j, sw4_type k) const {
 #ifdef BZ_DEBUG
     VERIFY2(in_range(c, i, j, k), "Error Index (c,i,j,k) = ("
                                       << c << "," << i << "," << j << "," << k
@@ -169,7 +169,7 @@ class Sarray {
     //      m_data[c-1+m_nc*(i-m_ib)+m_nc*m_ni*(j-m_jb)+m_nc*m_ni*m_nj*(k-m_kb)];}
     return m_data[m_base + m_offc * c + m_offi * i + m_offj * j + m_offk * k];
   }
-  inline float_sw4& operator()(int i, int j, int k) const {
+  inline float_sw4& operator()(sw4_type i, sw4_type j, sw4_type k) const {
 #ifdef BZ_DEBUG
     if (!in_range(1, i, j, k))
       VERIFY2(0, "Error Index (c,i,j,k) = ("
@@ -184,34 +184,34 @@ class Sarray {
     return m_data[m_base + m_offi * i + m_offj * j + m_offk * k + m_offc];
   }
   inline bool is_defined() { return m_data != NULL; }
-  int m_ib, m_ie, m_jb, m_je, m_kb, m_ke;
+  sw4_type m_ib, m_ie, m_jb, m_je, m_kb, m_ke;
   static bool m_corder;
   ssize_t m_base;
   size_t m_offi, m_offj, m_offk, m_offc, m_npts;
-  //   int index( int i, int j, int k ) {return
+  //   sw4_type index( sw4_type i, sw4_type j, sw4_type k ) {return
   //   (i-m_ib)+m_ni*(j-m_jb)+m_ni*m_nj*(k-m_kb);}
-  size_t index(int i, int j, int k) {
+  size_t index(sw4_type i, sw4_type j, sw4_type k) {
     return m_base + m_offc + m_offi * i + m_offj * j + m_offk * k;
   }
 #ifdef SW4_CUDA
-  __host__ __device__ size_t index(int c, int i, int j, int k) {
+  __host__ __device__ size_t index(sw4_type c, sw4_type i, sw4_type j, sw4_type k) {
     return m_base + m_offc * c + m_offi * i + m_offj * j + m_offk * k;
   }
 #else
-  size_t index(int c, int i, int j, int k) {
+  size_t index(sw4_type c, sw4_type i, sw4_type j, sw4_type k) {
     return m_base + m_offc * c + m_offi * i + m_offj * j + m_offk * k;
   }
 #endif
   void getnonzero() {
-    for (int i = 0; i < m_nc * m_ni * m_nj * m_nk; i++)
+    for (sw4_type i = 0; i < m_nc * m_ni * m_nj * m_nk; i++)
       if (m_data[i] > 0.0)
         std::cout << "FORCE " << i << " " << m_data[i] << "\n";
   }
-  void intersection(int ib, int ie, int jb, int je, int kb, int ke,
-                    int wind[6]);
-  void side_plane(int side, int wind[6], int nGhost = 1);
-  void side_plane_fortran(int side, int wind[6], int nGhost = 1);
-  bool in_domain(int i, int j, int k);
+  void sw4_typeersection(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
+                    sw4_type wind[6]);
+  void side_plane(sw4_type side, sw4_type wind[6], sw4_type nGhost = 1);
+  void side_plane_fortran(sw4_type side, sw4_type wind[6], sw4_type nGhost = 1);
+  bool in_domain(sw4_type i, sw4_type j, sw4_type k);
   void set_to_zero();
   void set_to_zero_async();
   void set_to_minusOne();
@@ -221,40 +221,40 @@ class Sarray {
   void set_value_async(float_sw4 scalar);
   void set_to_random(float_sw4 llim = 0.0, float_sw4 ulim = 1.0);
   void save_to_disk(const char* fname);
-  int ncomp() const { return m_nc; }
-  int npts() const { return m_ni * m_nj * m_nk; }
+  sw4_type ncomp() const { return m_nc; }
+  sw4_type npts() const { return m_ni * m_nj * m_nk; }
   void copy(const Sarray& u);
-  float_sw4 maximum(int c = 1);
-  float_sw4 minimum(int c = 1);
-  float_sw4 sum(int c = 1);
+  float_sw4 maximum(sw4_type c = 1);
+  float_sw4 minimum(sw4_type c = 1);
+  float_sw4 sum(sw4_type c = 1);
   size_t count_nans();
-  size_t count_nans(int& cfirst, int& ifirst, int& jfirst, int& kfirst);
+  size_t count_nans(sw4_type& cfirst, sw4_type& ifirst, sw4_type& jfirst, sw4_type& kfirst);
   size_t check_match_cpu_gpu(EWCuda* cu, string name);
-  size_t check_match_cpu_gpu(EWCuda* cu, int& cfirst, int& ifirst, int& jfirst,
-                             int& kfirst, string name);
-  void extract_subarray(int ib, int ie, int jb, int je, int kb, int ke,
+  size_t check_match_cpu_gpu(EWCuda* cu, sw4_type& cfirst, sw4_type& ifirst, sw4_type& jfirst,
+                             sw4_type& kfirst, string name);
+  void extract_subarray(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                         float_sw4* ar);
-  void extract_subarrayIK(int ib, int ie, int jb, int je, int kb, int ke,
+  void extract_subarrayIK(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                           float_sw4* ar);
 
-  void insert_subarray(int ib, int ie, int jb, int je, int kb, int ke,
+  void insert_subarray(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                        double* ar);
-  void insert_subarray(int ib, int ie, int jb, int je, int kb, int ke,
+  void insert_subarray(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                        float* ar);
-  void insert_intersection(Sarray& a_U);
-  void insert_subarrayIK(int ib, int ie, int jb, int je, int kb, int ke,
+  void insert_sw4_typeersection(Sarray& a_U);
+  void insert_subarrayIK(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                          float_sw4* ar);
-  void copy_kplane(Sarray& u, int k);
-  void copy_kplane2(Sarray& u, int k);
-  void assign(const float* ar, int corder);
-  void assign(const double* ar, int corder);
-  void extract(double* ar, int corder);
+  void copy_kplane(Sarray& u, sw4_type k);
+  void copy_kplane2(Sarray& u, sw4_type k);
+  void assign(const float* ar, sw4_type corder);
+  void assign(const double* ar, sw4_type corder);
+  void extract(double* ar, sw4_type corder);
   void assign(const float* ar);
   void assign(const double* ar);
   void transposeik();
-  void extrapolij(int npts);
-  void copy_to_device(EWCuda* cu, bool async = false, int st = 0);
-  void copy_from_device(EWCuda* cu, bool async = false, int st = 0);
+  void extrapolij(sw4_type npts);
+  void copy_to_device(EWCuda* cu, bool async = false, sw4_type st = 0);
+  void copy_from_device(EWCuda* cu, bool async = false, sw4_type st = 0);
   void allocate_on_device(EWCuda* cu);
   void page_lock(EWCuda* cu);
   void page_unlock(EWCuda* cu);
@@ -263,12 +263,12 @@ class Sarray {
   size_t fread(FILE *file);
   Sarray* create_copy_on_device(EWCuda* cu);
   void define_offsets();
-  void GetAtt(char* file, int line);
+  void GetAtt(char* file, sw4_type line);
   //   void write( char* filename, CartesianProcessGrid* cartcomm,
   //   std::vector<float_sw4> pars );
-  int m_nc, m_ni, m_nj, m_nk;
-  void prefetch(int device = 0);
-  void forceprefetch(int device = 0);
+  sw4_type m_nc, m_ni, m_nj, m_nk;
+  void prefetch(sw4_type device = 0);
+  void forceprefetch(sw4_type device = 0);
   void switch_space(Space space_in);
   float_sw4 norm();
   inline SView& getview() {
@@ -283,16 +283,16 @@ class Sarray {
   float_sw4* m_data;
   bool prefetched;
   friend void mset_to_zero_async(Sarray& A, Sarray& B, Sarray& C, Sarray& D);
-  friend void vset_to_zero_async(std::vector<Sarray>& v, int N);
+  friend void vset_to_zero_async(std::vector<Sarray>& v, sw4_type N);
   std::ofstream of;
   float_sw4* dev_data;
-  inline int min(int i1, int i2) {
+  inline sw4_type min(sw4_type i1, sw4_type i2) {
     if (i1 < i2)
       return i1;
     else
       return i2;
   }
-  inline int max(int i1, int i2) {
+  inline sw4_type max(sw4_type i1, sw4_type i2) {
     if (i1 > i2)
       return i1;
     else
@@ -304,9 +304,9 @@ class Sarray {
 };
 void SarrayVectorPrefetch(std::vector<Sarray>& v);
 void SarrayVectorPrefetch(std::vector<Sarray*>& v);
-void SarrayVectorPrefetch(std::vector<Sarray*>& v, int n);
+void SarrayVectorPrefetch(std::vector<Sarray*>& v, sw4_type n);
 
-float_sw4* memoize(Sarray& u, int c, int i, int j, int k);
+float_sw4* memoize(Sarray& u, sw4_type c, sw4_type i, sw4_type j, sw4_type k);
 
 void mset_to_zero_async(Sarray& S0, Sarray& S1, Sarray& S2, Sarray& S3);
 #endif

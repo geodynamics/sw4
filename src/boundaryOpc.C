@@ -426,8 +426,8 @@ void EW::GetStencilCoefficients(float_sw4* _acof, float_sw4* _ghcof,
   bop(4, 5) = 32.0 / 49.0;
   bop(4, 6) = -4.0 / 49.0;
 
-  for (int k = 1; k <= 6; k++)
-    for (int q = 1; q <= 4; q++) bope(q, k) = bop(q, k);
+  for (sw4_type k = 1; k <= 6; k++)
+    for (sw4_type q = 1; q <= 4; q++) bope(q, k) = bop(q, k);
   bope(1, 7) = 0;
   bope(1, 8) = 0;
   bope(2, 7) = 0;

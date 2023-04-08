@@ -39,7 +39,7 @@ double rvel(double *lambda, double *mu);
 }
 
 TestRayleighWave::TestRayleighWave(float_sw4 rho, float_sw4 cs, float_sw4 cp,
-                                   int nwl, float_sw4 xmax)
+                                   sw4_type nwl, float_sw4 xmax)
     : m_rho(rho),
       m_cs(cs),
       m_cp(cp),

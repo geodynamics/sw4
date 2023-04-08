@@ -45,7 +45,7 @@ using namespace std;
 class MaterialPfile : public MaterialData {
  public:
   MaterialPfile(EW *a_ew, const std::string file, const std::string directory,
-                const int nstenc, const float_sw4 vpminppm,
+                const sw4_type nstenc, const float_sw4 vpminppm,
                 const float_sw4 vsminppm, const float_sw4 rhominppm,
                 const bool flatten, const bool coords_geographic);
 
@@ -56,7 +56,7 @@ class MaterialPfile : public MaterialData {
                                std::vector<Sarray> &xis,
                                std::vector<Sarray> &xip);
 
-  //  int get_material_pt( double x, double y, double z, double& rho, double&
+  //  sw4_type get_material_pt( double x, double y, double z, double& rho, double&
   //  cs, double& cp,
   //		       double& qs, double& qp );
 
@@ -84,11 +84,11 @@ class MaterialPfile : public MaterialData {
                      float_sw4 &qs, bool debug);
 
   EW *mEW;
-  int m_nlat, m_nlon, m_nmaxdepth, m_nx, m_ny;
-  int m_nstenc;
+  sw4_type m_nlat, m_nlon, m_nmaxdepth, m_nx, m_ny;
+  sw4_type m_nstenc;
   float_sw4 m_h;
   double m_dlon, m_dlat;
-  int m_ksed, m_kmoho, m_k410, m_k660;
+  sw4_type m_ksed, m_kmoho, m_k410, m_k660;
   double *m_lon, *m_lat;
   float_sw4 *m_x, *m_y;
   // new 3-dimensional Sarrays

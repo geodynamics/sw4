@@ -44,7 +44,7 @@ class Polynomial {
  public:
   Polynomial();
   Polynomial(float_sw4 c[3]);
-  float_sw4 coeff(unsigned int q);
+  float_sw4 coeff(unsigned sw4_type q);
 
   // for efficiency and simplicity reasons, we make the coefficients public
   float_sw4 m_c[3];

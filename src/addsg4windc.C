@@ -52,9 +52,9 @@ void addsg4wind_ci(float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
                    float_sw4* __restrict__ a_stry,
                    float_sw4* __restrict__ a_strz,
                    float_sw4* __restrict__ a_cox, float_sw4* __restrict__ a_coy,
-                   float_sw4* __restrict__ a_coz, int ifirst, int ilast,
-                   int jfirst, int jlast, int kfirst, int klast, float_sw4 beta,
-                   int kupb, int kupe, int kwindb, int kwinde) {
+                   float_sw4* __restrict__ a_coz, sw4_type ifirst, sw4_type ilast,
+                   sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast, float_sw4 beta,
+                   sw4_type kupb, sw4_type kupe, sw4_type kwindb, sw4_type kwinde) {
   SW4_MARK_FUNCTION;
   //***********************************************************************
   //*** Version with correct density scaling and supergrid stretching.
@@ -80,7 +80,7 @@ void addsg4wind_ci(float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
   //
   // add in the SG damping
   //
-  // There are enough ghost points to always use the interior formula
+  // There are enough ghost points to always use the sw4_typeerior formula
   // But only in (i,j) because the k-window may be near a refinement bndry
   //
   // the corner tapering is applied by replacing
@@ -92,10 +92,10 @@ void addsg4wind_ci(float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
   const size_t nij = ni * (jlast - jfirst + 1);
   const size_t nijk = nij * (klast - kfirst + 1);
   const size_t nijkp = nij * (kupe - kupb + 1);
-  const int base = -ifirst - ni * jfirst - nij * kfirst;
-  //   const int basep= -ifirst-ni*jfirst-nij*kupb;
-  const int base3 = -ifirst - ni * jfirst - nij * kfirst - nijk;
-  const int base3p = -ifirst - ni * jfirst - nij * kupb - nijkp;
+  const sw4_type base = -ifirst - ni * jfirst - nij * kfirst;
+  //   const sw4_type basep= -ifirst-ni*jfirst-nij*kupb;
+  const sw4_type base3 = -ifirst - ni * jfirst - nij * kfirst - nijk;
+  const sw4_type base3p = -ifirst - ni * jfirst - nij * kupb - nijkp;
 
 #define rho(i, j, k) a_rho[base + (i) + ni * (j) + nij * (k)]
 #define u(c, i, j, k) a_u[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
@@ -111,13 +111,13 @@ void addsg4wind_ci(float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
 #define strz(k) a_strz[k - kfirst]
 #define coz(k) a_coz[k - kfirst]
 
-  //   for( int c=1 ; c<=3 ; c++ )
-  //      for( int k=kwindb ; k<= kwinde ;k++)
+  //   for( sw4_type c=1 ; c<=3 ; c++ )
+  //      for( sw4_type k=kwindb ; k<= kwinde ;k++)
   // #pragma omp parallel for
-  // 	for( int j=jfirst+2 ; j<= jlast-2; j++ )
+  // 	for( sw4_type j=jfirst+2 ; j<= jlast-2; j++ )
   // #pragma ivdep
   // #pragma simd
-  // 	   for( int i=ifirst+2 ; i<= ilast-2; i++ )
+  // 	   for( sw4_type i=ifirst+2 ; i<= ilast-2; i++ )
   // 	   {
 
   RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
@@ -126,7 +126,7 @@ void addsg4wind_ci(float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
   RAJA::RangeSegment c_range(1, 4);
   RAJA::kernel<ADDSGD_POL_ASYNC>(
       RAJA::make_tuple(i_range, j_range, k_range, c_range),
-      [=] RAJA_DEVICE(int i, int j, int k, int c) {
+      [=] RAJA_DEVICE(sw4_type i, sw4_type j, sw4_type k, sw4_type c) {
         up(c, i, j, k) -=
             coeff *
             (

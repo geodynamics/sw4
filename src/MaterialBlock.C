@@ -114,20 +114,20 @@ void MaterialBlock::set_material_properties(std::vector<Sarray>& rho,
                                             std::vector<Sarray>& cp,
                                             std::vector<Sarray>& qs,
                                             std::vector<Sarray>& qp) {
-  //  int pc[4];
+  //  sw4_type pc[4];
   // compute the number of parallel overlap points
-  //  mEW->interiorPaddingCells( pc );
-  int material = 0, outside = 0;
+  //  mEW->sw4_typeeriorPaddingCells( pc );
+  sw4_type material = 0, outside = 0;
 
-  for (int g = 0; g < mEW->mNumberOfCartesianGrids; g++)  // Cartesian grids
+  for (sw4_type g = 0; g < mEW->mNumberOfCartesianGrids; g++)  // Cartesian grids
   {
     // reference z-level for gradients is at z=0: AP changed this on 12/21/09
     float_sw4 zsurf = 0.;  // ?
 
 #pragma omp parallel for reduction(+ : material, outside)
-    for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; k++) {
-      for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; j++) {
-        for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; i++) {
+    for (sw4_type k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; k++) {
+      for (sw4_type j = mEW->m_jStartSw4_Type[g]; j <= mEW->m_jEndSw4_Type[g]; j++) {
+        for (sw4_type i = mEW->m_iStartSw4_Type[g]; i <= mEW->m_iEndSw4_Type[g]; i++) {
           float_sw4 x = (i - 1) * mEW->mGridSize[g];
           float_sw4 y = (j - 1) * mEW->mGridSize[g];
           float_sw4 z = mEW->m_zmin[g] + (k - 1) * mEW->mGridSize[g];
@@ -178,15 +178,15 @@ void MaterialBlock::set_material_properties(std::vector<Sarray>& rho,
 
   if (mEW->topographyExists())  // curvilinear grid
   {
-    for (int g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids; g++) {
-      //    int g = mEW->mNumberOfGrids - 1;
+    for (sw4_type g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids; g++) {
+      //    sw4_type g = mEW->mNumberOfGrids - 1;
       // reference z-level for gradients is at z=0: AP changed this on 12/21/09
       float_sw4 zsurf = 0.;
 
 #pragma omp parallel for reduction(+ : material, outside)
-      for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; k++) {
-        for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; j++) {
-          for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; i++) {
+      for (sw4_type k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; k++) {
+        for (sw4_type j = mEW->m_jStartSw4_Type[g]; j <= mEW->m_jEndSw4_Type[g]; j++) {
+          for (sw4_type i = mEW->m_iStartSw4_Type[g]; i <= mEW->m_iEndSw4_Type[g]; i++) {
             float_sw4 x = mEW->mX[g](i, j, k);
             float_sw4 y = mEW->mY[g](i, j, k);
             float_sw4 z = mEW->mZ[g](i, j, k);
@@ -235,9 +235,9 @@ void MaterialBlock::set_material_properties(std::vector<Sarray>& rho,
     }
   }
   // end if topographyExists
-  int outsideSum, materialSum;
-  MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  sw4_type outsideSum, materialSum;
+  MPI_Reduce(&outside, &outsideSum, 1, MPI_SW4_TYPE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&material, &materialSum, 1, MPI_SW4_TYPE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if (mEW->proc_zero())
     cout << "block command: outside = " << outsideSum << ", "

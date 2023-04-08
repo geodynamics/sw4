@@ -17,10 +17,10 @@ void bndryOpNoGhostc(float_sw4* acof_no_gp, float_sw4* ghcof_no_gp,
   d5[4] = -5.0;
   d5[5] = 1.0;
   float_sw4 w0 = 17.0 / 48.0;
-  for (int j = 1; j <= 8; j++) acof(1, j, 1) = acof(1, j, 1) + d5[j] / (4 * w0);
+  for (sw4_type j = 1; j <= 8; j++) acof(1, j, 1) = acof(1, j, 1) + d5[j] / (4 * w0);
 
   // the coeff for all ghost points are zero (don't divided by them!)
-  for (int k = 0; k < 6; k++) ghcof_no_gp[k] = 0;
+  for (sw4_type k = 0; k < 6; k++) ghcof_no_gp[k] = 0;
 
   // boundary normal derivative, not using ghost points
   // sb = (-25*f(1)/12 + 4*f(2) - 3*f(3) + 4*f(4)/3 - f(5)/4)/h(q);

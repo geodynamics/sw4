@@ -34,8 +34,8 @@
 #define _READHDF5_H
 
 void readStationHDF5(EW *ew, string inFileName, string outFileName,
-                     int writeEvery, int downSample,
-                     TimeSeries::receiverMode mode, int event,
+                     sw4_type writeEvery, sw4_type downSample,
+                     TimeSeries::receiverMode mode, sw4_type event,
                      std::vector<std::vector<TimeSeries *> > *GlobalTimeSeries,
                      float_sw4 m_global_xmax, float_sw4 m_global_ymax,
                      bool is_obs, bool winlset, bool winrset, float_sw4 winl,
@@ -44,13 +44,13 @@ void readStationHDF5(EW *ew, string inFileName, string outFileName,
 
 void readRuptureHDF5(char *fname,
                      std::vector<std::vector<Source *> > &a_GlobalUniqueSource,
-                     EW *ew, int event, float_sw4 m_global_xmax,
+                     EW *ew, sw4_type event, float_sw4 m_global_xmax,
                      float_sw4 m_global_ymax, float_sw4 m_global_zmax,
                      float_sw4 mGeoAz, float_sw4 xmin, float_sw4 ymin,
-                     float_sw4 zmin, int mVerboses, int nreader);
+                     float_sw4 zmin, sw4_type mVerboses, sw4_type nreader);
 
 void readStationInfoHDF5(string inFileName, std::vector<string> *staname,
                          std::vector<double> *x, std::vector<double> *y,
-                         std::vector<double> *z, std::vector<int> *is_nsew,
-                         int *n);
+                         std::vector<double> *z, std::vector<sw4_type> *is_nsew,
+                         sw4_type *n);
 #endif  // _READHDF5_H

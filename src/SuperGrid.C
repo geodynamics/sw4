@@ -47,7 +47,7 @@ SuperGrid::SuperGrid() {
   m_tw_omega = 1.2;
 }
 
-void SuperGrid::print_parameters() const {
+void SuperGrid::prsw4_type_parameters() const {
   printf(
       "SuperGrid parameters left=%i, right=%i, x0=%e, x1=%e, width=%e, "
       "transition=%e epsL=%e\n",
@@ -89,7 +89,7 @@ void SuperGrid::define_taper(bool left, float_sw4 leftStart, bool right,
 
   if (m_left && m_right) {
     if (m_x0 + m_width > m_x1 - m_width) {
-      print_parameters();
+      prsw4_type_parameters();
       CHECK_INPUT(false,
                   "The supergrid taper functions at the left and right must be "
                   "separated. Here x0+width = "
@@ -99,7 +99,7 @@ void SuperGrid::define_taper(bool left, float_sw4 leftStart, bool right,
 
   } else if (m_left) {
     if (m_x0 + m_width > m_x1) {
-      print_parameters();
+      prsw4_type_parameters();
       CHECK_INPUT(false,
                   "The supergrid taper functions at the left must be smaller "
                   "than the domain. Here x0+width = "
@@ -107,7 +107,7 @@ void SuperGrid::define_taper(bool left, float_sw4 leftStart, bool right,
     }
   } else if (m_right) {
     if (m_x0 > m_x1 - m_width) {
-      print_parameters();
+      prsw4_type_parameters();
       CHECK_INPUT(false,
                   "The supergrid taper functions at the right must be smaller "
                   "than the domain. Here x0 = "
@@ -160,7 +160,7 @@ float_sw4 SuperGrid::PsiDamp(float_sw4 x) const {  // PsiAux = psi in our papers
   return f;
 }
 
-float_sw4 SuperGrid::linTaper(float_sw4 x) const {
+float_sw4 SuperGrid::lsw4_typeaper(float_sw4 x) const {
   // this function is zero for m_x0+m_width <= x <= m_x1-m_width
   // and one for x=m_x0 and x=m_x1
   float_sw4 f = 0.;
@@ -199,10 +199,10 @@ float_sw4 SuperGrid::Psi0(float_sw4 xi) const {
 }
 
 float_sw4 SuperGrid::cornerTaper(
-    float_sw4 x) const {  // this function is 1 in the interior and tapers
+    float_sw4 x) const {  // this function is 1 in the sw4_typeerior and tapers
                           // linearly to 1/2 in the SG layers
   const float_sw4 cmin = 0.33;
-  return 1.0 - (1.0 - cmin) * linTaper(x);
+  return 1.0 - (1.0 - cmin) * lsw4_typeaper(x);
 }
 
 float_sw4 SuperGrid::tw_stretching(float_sw4 x) const {

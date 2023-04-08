@@ -40,18 +40,18 @@
 using namespace std;
 
 Polynomial::Polynomial() {
-  for (int q = 0; q < 3; q++) {
+  for (sw4_type q = 0; q < 3; q++) {
     m_c[q] = 0.;
   }
 }  // end default constructor
 
 Polynomial::Polynomial(float_sw4 c[3]) {
-  for (int q = 0; q < 3; q++) {
+  for (sw4_type q = 0; q < 3; q++) {
     m_c[q] = c[q];
   }
 }  // end constructor
 
-float_sw4 Polynomial::coeff(unsigned int q) { return m_c[q]; }
+float_sw4 Polynomial::coeff(unsigned sw4_type q) { return m_c[q]; }
 
 // output all coefficients
 ostream& operator<<(ostream& output, const Polynomial& s) {

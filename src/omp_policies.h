@@ -54,11 +54,11 @@ using RHS4_EXEC_POL_ASYNC = XRHS_POL;
 using ICSTRESS_EXEC_POL = DEFAULT_LOOP2;
 using ICSTRESS_EXEC_POL_ASYNC = DEFAULT_LOOP2;
 
-using CONSINTP_EXEC_POL1 = DEFAULT_LOOP2;
+using CONSSW4_TYPEP_EXEC_POL1 = DEFAULT_LOOP2;
 
-using CONSINTP_EXEC_POL3 = DEFAULT_LOOP3;
+using CONSSW4_TYPEP_EXEC_POL3 = DEFAULT_LOOP3;
 
-using CONSINTP_EXEC_POL4 = DEFAULT_LOOP2;
+using CONSSW4_TYPEP_EXEC_POL4 = DEFAULT_LOOP2;
 
 using PRELIM_CORR_EXEC_POL1 = DEFAULT_LOOP2;
 using PRELIM_CORR_EXEC_POL1_ASYNC = DEFAULT_LOOP2;
@@ -133,16 +133,16 @@ using EBFA_POL = DEFAULT_LOOP2;
 // void EW::get_exact_point_source in EW.C
 using GEPS_POL = DEFAULT_LOOP3;
 
-// CurvilinearInterface2.C
+// CurvilinearSw4_Typeerface2.C
 
 using BZ_POL_ASYNC = DEFAULT_LOOP3;
 
-// Injection in CurvilinearInterface2.C
+// Injection in CurvilinearSw4_Typeerface2.C
 
 using INJ_POL_ASYNC = DEFAULT_LOOP3;
 
 using INJ_POL2_ASYNC = DEFAULT_LOOP2;
-// CurvilinearInterface2::communicate_array
+// CurvilinearSw4_Typeerface2::communicate_array
 
 using CA_POL = DEFAULT_LOOP3;
 
@@ -150,7 +150,7 @@ using CA_POL = DEFAULT_LOOP3;
 
 using SAA_POL = DEFAULT_LOOP4;
 
-// Sarray::insert_intersection(
+// Sarray::insert_sw4_typeersection(
 using SII_POL = DEFAULT_LOOP3;
 
 // TestEcons::get_ubnd(

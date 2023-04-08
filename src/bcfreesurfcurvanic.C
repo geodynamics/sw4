@@ -2,13 +2,13 @@
 #include "F77_FUNC.h"
 
 extern "C" {
-void F77_FUNC(dgesv, DGESV)(int*, int*, double*, int*, int*, double*, int*,
-                            int*);
+void F77_FUNC(dgesv, DGESV)(sw4_type*, sw4_type*, double*, sw4_type*, sw4_type*, double*, sw4_type*,
+                            sw4_type*);
 }
 
-void EW::bcfreesurfcurvani_ci(int ifirst, int ilast, int jfirst, int jlast,
-                              int kfirst, int klast, int nz, float_sw4* u,
-                              float_sw4* c, int side, float_sw4 sbop[5],
+void EW::bcfreesurfcurvani_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                              sw4_type kfirst, sw4_type klast, sw4_type nz, float_sw4* u,
+                              float_sw4* c, sw4_type side, float_sw4 sbop[5],
                               float_sw4* bforce5, float_sw4* bforce6,
                               float_sw4* strx, float_sw4* stry) {
   const float_sw4 d4a = 2.0 / 3.0;
@@ -19,10 +19,10 @@ void EW::bcfreesurfcurvani_ci(int ifirst, int ilast, int jfirst, int jlast,
   double s0i = 1 / sbop[0];
   // side is fortran enumeration 1,2,3,4,5,6
   if (side == 5) {
-    int k = 1;
+    sw4_type k = 1;
 #pragma omp parallel for
-    for (int j = jfirst + 2; j <= jlast - 2; j++)
-      for (int i = ifirst + 2; i <= ilast - 2; i++) {
+    for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
+      for (sw4_type i = ifirst + 2; i <= ilast - 2; i++) {
         size_t qq = i - ifirst + ni * (j - jfirst);
         size_t ind = i - ifirst + ni * (j - jfirst) + nij * (k - kfirst);
         float_sw4 du = strx[i - ifirst] * (d4a * (u[ind + 1] - u[ind - 1]) +
@@ -57,7 +57,7 @@ void EW::bcfreesurfcurvani_ci(int ifirst, int ilast, int jfirst, int jlast,
                 c[ind + 44 * npts] * dw;
 
         du = dv = dw = 0;
-        for (int w = 1; w <= 4; w++) {
+        for (sw4_type w = 1; w <= 4; w++) {
           du += sbop[w] * u[ind + nij * (w - 1)];
           dv += sbop[w] * u[npts + ind + nij * (w - 1)];
           dw += sbop[w] * u[2 * npts + ind + nij * (w - 1)];
@@ -80,7 +80,7 @@ void EW::bcfreesurfcurvani_ci(int ifirst, int ilast, int jfirst, int jlast,
         a[6] = c[ind + 14 * npts];
         a[7] = c[ind + 16 * npts];
         a[8] = c[ind + 17 * npts];
-        int dim = 3, one = 1, info = 0, ipiv[3];
+        sw4_type dim = 3, one = 1, info = 0, ipiv[3];
         F77_FUNC(dgesv, DGESV)(&dim, &one, a, &dim, ipiv, x, &dim, &info);
         if (info != 0)
           cout << "ERROR in bcfreesurfcurvanic_ci, call to DGESV returned info "
@@ -90,10 +90,10 @@ void EW::bcfreesurfcurvani_ci(int ifirst, int ilast, int jfirst, int jlast,
         u[2 * npts + ind - nij] = -s0i * x[2];
       }
   } else if (side == 6) {
-    int k = nz;
+    sw4_type k = nz;
 #pragma omp parallel for
-    for (int j = jfirst + 2; j <= jlast - 2; j++)
-      for (int i = ifirst + 2; i <= ilast - 2; i++) {
+    for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
+      for (sw4_type i = ifirst + 2; i <= ilast - 2; i++) {
         size_t qq = i - ifirst + ni * (j - jfirst);
         size_t ind = i - ifirst + ni * (j - jfirst) + nij * (k - kfirst);
         float_sw4 du = strx[i - ifirst] * (d4a * (u[ind + 1] - u[ind - 1]) +
@@ -128,7 +128,7 @@ void EW::bcfreesurfcurvani_ci(int ifirst, int ilast, int jfirst, int jlast,
                 c[ind + 44 * npts] * dw;
 
         du = dv = dw = 0;
-        for (int w = 1; w <= 4; w++) {
+        for (sw4_type w = 1; w <= 4; w++) {
           du -= sbop[w] * u[ind - nij * (w - 1)];
           dv -= sbop[w] * u[npts + ind - nij * (w - 1)];
           dw -= sbop[w] * u[2 * npts + ind - nij * (w - 1)];
@@ -152,7 +152,7 @@ void EW::bcfreesurfcurvani_ci(int ifirst, int ilast, int jfirst, int jlast,
         a[6] = c[ind + 14 * npts];
         a[7] = c[ind + 16 * npts];
         a[8] = c[ind + 17 * npts];
-        int dim = 3, one = 1, info = 0, ipiv[3];
+        sw4_type dim = 3, one = 1, info = 0, ipiv[3];
         F77_FUNC(dgesv, DGESV)(&dim, &one, a, &dim, ipiv, x, &dim, &info);
         if (info != 0)
           cout << "ERROR in bcfreesurfcurvani_ci, call to DGESV returned info "

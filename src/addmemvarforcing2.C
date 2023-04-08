@@ -14,11 +14,11 @@ void addMemVarPredCart(float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha,
   // double c=m_c;
   float_sw4 cof = 2 * dt / (1 + omegaVE * dt);
   // #pragma omp parallel for
-  //   for( int k=alpha.m_kb ; k<= alpha.m_ke; k++ )
-  //     for( int j=alpha.m_jb ; j<= alpha.m_je; j++ )
+  //   for( sw4_type k=alpha.m_kb ; k<= alpha.m_ke; k++ )
+  //     for( sw4_type j=alpha.m_jb ; j<= alpha.m_je; j++ )
   // #pragma ivdep
   // #pragma simd
-  //       for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
+  //       for( sw4_type i=alpha.m_ib ; i<= alpha.m_ie; i++ )
   //       {
   SView &alphaV = alpha.getview();
 
@@ -27,7 +27,7 @@ void addMemVarPredCart(float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha,
   RAJA::RangeSegment i_range(alpha.m_ib, alpha.m_ie + 1);
   RAJA::kernel<AMVPCa_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
         float_sw4 x = (i - 1) * h;
         float_sw4 y = (j - 1) * h;
         float_sw4 z = zMin + (k - 1) * h;
@@ -118,11 +118,11 @@ void addMemVarPredCurvilinear(Sarray &a_X, Sarray &a_Y, Sarray &a_Z,
   // double c=m_c;
   float_sw4 cof = 2 * dt / (1 + omegaVE * dt);
   // #pragma omp parallel for
-  //   for( int k=a_X.m_kb ; k<=a_X.m_ke; k++ )
-  //     for( int j=a_X.m_jb ; j<=a_X.m_je; j++ )
+  //   for( sw4_type k=a_X.m_kb ; k<=a_X.m_ke; k++ )
+  //     for( sw4_type j=a_X.m_jb ; j<=a_X.m_je; j++ )
   // #pragma ivdep
   // #pragma simd
-  //       for( int i=a_X.m_ib ; i<=a_X.m_ie; i++ )
+  //       for( sw4_type i=a_X.m_ib ; i<=a_X.m_ie; i++ )
   //       {
   SView &alphaV = alpha.getview();
   SView &a_XV = a_X.getview();
@@ -134,7 +134,7 @@ void addMemVarPredCurvilinear(Sarray &a_X, Sarray &a_Y, Sarray &a_Z,
   RAJA::RangeSegment i_range(a_X.m_ib, a_X.m_ie + 1);
   RAJA::kernel<AMVPCu_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
         float_sw4 x = a_XV(i, j, k);
         float_sw4 y = a_YV(i, j, k);
         float_sw4 z = a_ZV(i, j, k);
@@ -280,9 +280,9 @@ void addMemVarPredCurvilinear(Sarray &a_X, Sarray &a_Y, Sarray &a_Z,
 //   double t94;
 //   double t99;
 
-//   for( int k=alpha.m_kb ; k<= alpha.m_ke; k++ )
-//     for( int j=alpha.m_jb ; j<= alpha.m_je; j++ )
-//       for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
+//   for( sw4_type k=alpha.m_kb ; k<= alpha.m_ke; k++ )
+//     for( sw4_type j=alpha.m_jb ; j<= alpha.m_je; j++ )
+//       for( sw4_type i=alpha.m_ib ; i<= alpha.m_ie; i++ )
 //       {
 // 	x = (i-1)*h;
 // 	y = (j-1)*h;
@@ -431,9 +431,9 @@ void addMemVarPredCurvilinear(Sarray &a_X, Sarray &a_Y, Sarray &a_Z,
 //   double t94;
 //   double t99;
 
-//   for( int k=a_X.m_kb ; k<=a_X.m_ke; k++ )
-//     for( int j=a_X.m_jb ; j<=a_X.m_je; j++ )
-//       for( int i=a_X.m_ib ; i<=a_X.m_ie; i++ )
+//   for( sw4_type k=a_X.m_kb ; k<=a_X.m_ke; k++ )
+//     for( sw4_type j=a_X.m_jb ; j<=a_X.m_je; j++ )
+//       for( sw4_type i=a_X.m_ib ; i<=a_X.m_ie; i++ )
 //       {
 // 	x = a_X(i,j,k);
 // 	y = a_Y(i,j,k);
@@ -524,11 +524,11 @@ void addMemVarCorr2Cart(float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha,
   float_sw4 cof = 1.0 / (1.0 / 2 + 1.0 / (2 * dto) + dto / 4 + dto * dto / 12);
 
   // #pragma omp parallel for
-  //    for( int k=alpha.m_kb ; k<= alpha.m_ke; k++ )
-  //       for( int j=alpha.m_jb ; j<= alpha.m_je; j++ )
+  //    for( sw4_type k=alpha.m_kb ; k<= alpha.m_ke; k++ )
+  //       for( sw4_type j=alpha.m_jb ; j<= alpha.m_je; j++ )
   // #pragma ivdep
   // #pragma simd
-  //          for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
+  //          for( sw4_type i=alpha.m_ib ; i<= alpha.m_ie; i++ )
   //          {
   SView &alphaV = alpha.getview();
 
@@ -537,7 +537,7 @@ void addMemVarCorr2Cart(float_sw4 zMin, float_sw4 h, float_sw4 t, Sarray &alpha,
   RAJA::RangeSegment i_range(alpha.m_ib, alpha.m_ie + 1);
   RAJA::kernel<AMVC2Ca_POL_ASYNC>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
         float_sw4 x, y, z;
         float_sw4 forces[3];
         float_sw4 t1;
@@ -711,11 +711,11 @@ void addMemVarCorr2Curvilinear(Sarray &a_X, Sarray &a_Y, Sarray &a_Z,
   float_sw4 cof = 1.0 / (1.0 / 2 + 1.0 / (2 * dto) + dto / 4 + dto * dto / 12);
 
   // #pragma omp parallel for
-  //    for( int k=alpha.m_kb ; k<= alpha.m_ke; k++ )
-  //       for( int j=alpha.m_jb ; j<= alpha.m_je; j++ )
+  //    for( sw4_type k=alpha.m_kb ; k<= alpha.m_ke; k++ )
+  //       for( sw4_type j=alpha.m_jb ; j<= alpha.m_je; j++ )
   // #pragma ivdep
   // #pragma simd
-  //          for( int i=alpha.m_ib ; i<= alpha.m_ie; i++ )
+  //          for( sw4_type i=alpha.m_ib ; i<= alpha.m_ie; i++ )
   // 	 {
   SView &alphaV = alpha.getview();
   SView &a_XV = a_X.getview();
@@ -727,7 +727,7 @@ void addMemVarCorr2Curvilinear(Sarray &a_X, Sarray &a_Y, Sarray &a_Z,
   RAJA::RangeSegment i_range(alpha.m_ib, alpha.m_ie + 1);
   RAJA::kernel<AMVC2Cu_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
         float_sw4 x, y, z;
         float_sw4 forces[3];
         float_sw4 t1;

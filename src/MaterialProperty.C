@@ -32,7 +32,7 @@
 // # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
 #include "MaterialProperty.h"
 
-MaterialProperty::MaterialProperty(int id, float_sw4 vp0, float_sw4 vp1,
+MaterialProperty::MaterialProperty(sw4_type id, float_sw4 vp0, float_sw4 vp1,
                                    float_sw4 vp2, float_sw4 vs0, float_sw4 vs1,
                                    float_sw4 vs2, float_sw4 rho0,
                                    float_sw4 rho1, float_sw4 rho2, float_sw4 qp,

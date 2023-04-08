@@ -1,8 +1,8 @@
 #include "EW.h"
 #include "caliper.h"
 #include "sw4.h"
-void EW::tw_aniso_force_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, float_sw4* fo, float_sw4 t,
+void EW::tw_aniso_force_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, float_sw4* fo, float_sw4 t,
                            float_sw4 om, float_sw4 cv, float_sw4 ph,
                            float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                            float_sw4 phc[21], float_sw4 h, float_sw4 zmin) {
@@ -61,9 +61,9 @@ void EW::tw_aniso_force_ci(int ifirst, int ilast, int jfirst, int jlast,
     ph21 = phc[20];
 
 #pragma omp for
-    for (int k = kfirst; k <= klast; k++)
-      for (int j = jfirst; j <= jlast; j++)
-        for (int i = ifirst; i <= ilast; i++) {
+    for (sw4_type k = kfirst; k <= klast; k++)
+      for (sw4_type j = jfirst; j <= jlast; j++)
+        for (sw4_type i = ifirst; i <= ilast; i++) {
           float_sw4 x = (i - 1) * h;
           float_sw4 y = (j - 1) * h;
           float_sw4 z = zmin + (k - 1) * h;
@@ -389,8 +389,8 @@ void EW::tw_aniso_force_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::tw_aniso_curvi_force_ci(int ifirst, int ilast, int jfirst, int jlast,
-                                 int kfirst, int klast,
+void EW::tw_aniso_curvi_force_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                                 sw4_type kfirst, sw4_type klast,
                                  float_sw4* __restrict__ fo, float_sw4 t,
                                  float_sw4 om, float_sw4 cv, float_sw4 ph,
                                  float_sw4 omm, float_sw4 phm, float_sw4 amprho,
@@ -456,9 +456,9 @@ void EW::tw_aniso_curvi_force_ci(int ifirst, int ilast, int jfirst, int jlast,
     ph21 = phc[20];
 
 #pragma omp for
-    for (int k = kfirst; k <= klast; k++)
-      for (int j = jfirst; j <= jlast; j++)
-        for (int i = ifirst; i <= ilast; i++) {
+    for (sw4_type k = kfirst; k <= klast; k++)
+      for (sw4_type j = jfirst; j <= jlast; j++)
+        for (sw4_type i = ifirst; i <= ilast; i++) {
           size_t ind = base + i + ni * j + nij * k;
           float_sw4 x = xx[ind];
           float_sw4 y = yy[ind];
@@ -784,14 +784,14 @@ void EW::tw_aniso_curvi_force_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::tw_aniso_free_surf_z_ci(int ifirst, int ilast, int jfirst, int jlast,
-                                 int kfirst, int klast, int kz, float_sw4 t,
+void EW::tw_aniso_free_surf_z_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                                 sw4_type kfirst, sw4_type klast, sw4_type kz, float_sw4 t,
                                  float_sw4 om, float_sw4 cv, float_sw4 ph,
                                  float_sw4 omm, float_sw4 phc[21],
                                  float_sw4* __restrict__ bforce, float_sw4 h,
                                  float_sw4 zmin) {
   SW4_MARK_FUNCTION;
-  //      real(dp), intent(out):: bforce(3,ifirst:ilast,jfirst:jlast)
+  //      real(dp), sw4_typeent(out):: bforce(3,ifirst:ilast,jfirst:jlast)
   const size_t ni = ilast - ifirst + 1;
   // const size_t nij   = ni*(jlast-jfirst+1);
   const size_t base = -(ifirst + ni * jfirst);
@@ -831,9 +831,9 @@ void EW::tw_aniso_free_surf_z_ci(int ifirst, int ilast, int jfirst, int jlast,
 
     float_sw4 z = (kz - 1) * h + zmin;
 #pragma omp for
-    for (int j = jfirst; j <= jlast; j++) {
+    for (sw4_type j = jfirst; j <= jlast; j++) {
       float_sw4 y = (j - 1) * h;
-      for (int i = ifirst; i <= ilast; i++) {
+      for (sw4_type i = ifirst; i <= ilast; i++) {
         float_sw4 x = (i - 1) * h;
         t1 = omm * x;
         t3 = sin(t1 + ph3);

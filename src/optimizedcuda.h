@@ -8,8 +8,8 @@
 
 template <bool c_order, bool pred>
 __launch_bounds__(BX* BY) __global__
-    void rhs4_v2(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                 int klast, int ni, int nj, int nk,
+    void rhs4_v2(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                 sw4_type klast, sw4_type ni, sw4_type nj, sw4_type nk,
                  float_sw4* __restrict__ a_up,
                  const float_sw4* __restrict__ a_u,
                  const float_sw4* __restrict__ a_mu,
@@ -17,8 +17,8 @@ __launch_bounds__(BX* BY) __global__
                  const float_sw4* __restrict__ a_strx,
                  const float_sw4* __restrict__ a_stry,
                  const float_sw4* __restrict__ a_strz, const float_sw4 h,
-                 const int a1fac, const float_sw4 cof) {
-  int index;
+                 const sw4_type a1fac, const float_sw4 cof) {
+  sw4_type index;
 
   const float_sw4 i6 = 1.0 / 6;
   const float_sw4 i144 = 1.0 / 144;
@@ -44,22 +44,22 @@ __launch_bounds__(BX* BY) __global__
   float_sw4 a0, a1, a2, b0, b1, b2, c0, c1, c2, d0, d1, d2;
 
   float_sw4 r1, r2, r3;
-  int active = 0, loader = 0, loady2 = 0, loadx2 = 0;
+  sw4_type active = 0, loader = 0, loady2 = 0, loadx2 = 0;
 
   __shared__ float_sw4 shu[3][5][BY + 4][BX + 4];
 
   // i starts at 0, while j starts at jfirst
-  const int i = threadIdx.x + blockIdx.x * BX;
-  const int j = jfirst + threadIdx.y + blockIdx.y * BY;
+  const sw4_type i = threadIdx.x + blockIdx.x * BX;
+  const sw4_type j = jfirst + threadIdx.y + blockIdx.y * BY;
 
-  const int ti = threadIdx.x + 2;
-  const int tj = threadIdx.y + 2;
-  // const int tk = 2;
+  const sw4_type ti = threadIdx.x + 2;
+  const sw4_type tj = threadIdx.y + 2;
+  // const sw4_type tk = 2;
 
-  const int nij = ni * nj;
-  const int nijk = nij * nk;
+  const sw4_type nij = ni * nj;
+  const sw4_type nijk = nij * nk;
 
-  int kthm0 = 3, kthm1 = 2, kthm2 = 1, kthm3 = 0, kthm4 = 4, kthtmp;
+  sw4_type kthm0 = 3, kthm1 = 2, kthm2 = 1, kthm3 = 0, kthm4 = 4, kthtmp;
 
   // Active threads doing the computation at (i,j,k)
   if (i >= ifirst && i <= ilast && j <= jlast) active = 1;
@@ -77,7 +77,7 @@ __launch_bounds__(BX* BY) __global__
   // Load the first 4 plans of U in the shared memory
   // and prefetch the 5th plan in a,b,c,d
   if (loader) {
-    int idx = index;
+    sw4_type idx = index;
     shu[0][0][threadIdx.y][threadIdx.x] = u(0, idx);
     shu[1][0][threadIdx.y][threadIdx.x] = u(1, idx);
     shu[2][0][threadIdx.y][threadIdx.x] = u(2, idx);
@@ -99,7 +99,7 @@ __launch_bounds__(BX* BY) __global__
     a2 = u(2, idx);
   }
   if (loadx2) {
-    int idx = index + BX;
+    sw4_type idx = index + BX;
     shu[0][0][threadIdx.y][threadIdx.x + BX] = u(0, idx);
     shu[1][0][threadIdx.y][threadIdx.x + BX] = u(1, idx);
     shu[2][0][threadIdx.y][threadIdx.x + BX] = u(2, idx);
@@ -121,7 +121,7 @@ __launch_bounds__(BX* BY) __global__
     b2 = u(2, idx);
   }
   if (loader && loady2) {
-    int idx = index + BY * ni;
+    sw4_type idx = index + BY * ni;
     shu[0][0][threadIdx.y + BY][threadIdx.x] = u(0, idx);
     shu[1][0][threadIdx.y + BY][threadIdx.x] = u(1, idx);
     shu[2][0][threadIdx.y + BY][threadIdx.x] = u(2, idx);
@@ -143,7 +143,7 @@ __launch_bounds__(BX* BY) __global__
     c2 = u(2, idx);
   }
   if (loadx2 && loady2) {
-    int idx = index + BY * ni + BX;
+    sw4_type idx = index + BY * ni + BX;
     shu[0][0][threadIdx.y + BY][threadIdx.x + BX] = u(0, idx);
     shu[1][0][threadIdx.y + BY][threadIdx.x + BX] = u(1, idx);
     shu[2][0][threadIdx.y + BY][threadIdx.x + BX] = u(2, idx);
@@ -180,7 +180,7 @@ __launch_bounds__(BX* BY) __global__
     stry_jp2 = a_stry[j + 2];
 
     // Load first 4 lambda and mu values
-    int idx = index + 2 * ni + 2;
+    sw4_type idx = index + 2 * ni + 2;
     la_km2 = a_lambda[idx];
     mu_km2 = a_mu[idx];
     idx += nij;
@@ -206,7 +206,7 @@ __launch_bounds__(BX* BY) __global__
   // cof = 1.0/(h*h);
 
   // Main loop on K dimension
-  for (int k = kfirst; k <= klast; k++) {
+  for (sw4_type k = kfirst; k <= klast; k++) {
     // Rotate the shared memory indices
     kthtmp = kthm4;
     kthm4 = kthm3;
@@ -241,7 +241,7 @@ __launch_bounds__(BX* BY) __global__
 
     // Prefetch the next iteration variables for U to better hide the latency
     if (k < klast) {
-      int idx = index + nij;
+      sw4_type idx = index + nij;
       if (loader) {
         a0 = u(0, idx);
         a1 = u(1, idx);
@@ -274,7 +274,7 @@ __launch_bounds__(BX* BY) __global__
 
       // Load new values of lambda and mu, and the (i,j) halos
       {
-        int idx = index + 2 * ni + 2;
+        sw4_type idx = index + 2 * ni + 2;
         la_kp2 = a_lambda[idx];
         mu_kp2 = a_mu[idx];
         // Halos at k
@@ -667,7 +667,7 @@ __launch_bounds__(BX* BY) __global__
       // Use the result at point (i,j,k)
       if (pred) {
         // Apply predictor
-        // int idx = k * nij + j * ni + i;
+        // sw4_type idx = k * nij + j * ni + i;
         // float_sw4 fact = dt*dt / rho;
         // up(0,idx) = 2 * shu[0][kthm2][tj][ti] - um0 + fact * (cof * r1 +
         // fo0); up(1,idx) = 2 * shu[1][kthm2][tj][ti] - um1 + fact * (cof * r2
@@ -675,7 +675,7 @@ __launch_bounds__(BX* BY) __global__
         // r3 + fo2);
       } else {
         // Apply 4th order correction
-        int idx = k * nij + j * ni + i;
+        sw4_type idx = k * nij + j * ni + i;
         // float_sw4 fact = dt*dt*dt*dt / (12 * rho);
         up(0, idx) = a1fac * up(0, idx) + cof * r1;
         up(1, idx) = a1fac * up(1, idx) + cof * r2;
@@ -707,8 +707,8 @@ __launch_bounds__(BX* BY) __global__
 }
 #undef u
 #undef up
-void rhs4th3fortsgstr_ciopt(int ifirst, int ilast, int jfirst, int jlast,
-                            int kfirst, int klast, int ni, int nj, int nk,
+void rhs4th3fortsgstr_ciopt(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                            sw4_type kfirst, sw4_type klast, sw4_type ni, sw4_type nj, sw4_type nk,
                             float_sw4* a_lu, float_sw4* a_u, float_sw4* a_mu,
                             float_sw4* a_lambda, float_sw4 h, float_sw4* a_strx,
                             float_sw4* a_stry, float_sw4* a_strz, char op);

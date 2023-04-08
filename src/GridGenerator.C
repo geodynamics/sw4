@@ -3,7 +3,7 @@
 #include "caliper.h"
 
 //-----------------------------------------------------------------------
-int GridGenerator::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
+sw4_type GridGenerator::metric_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                              float_sw4* __restrict__ a_x,
                              float_sw4* __restrict__ a_y,
                              float_sw4* __restrict__ a_z,
@@ -13,14 +13,14 @@ int GridGenerator::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
   const float_sw4 c1 = 2.0 / 3, c2 = -1.0 / 12;
   const float_sw4 fs = 5.0 / 6, ot = 1.0 / 12, ft = 4.0 / 3, os = 1.0 / 6,
                   d3 = 14.0 / 3;
-  const int ni = ie - ib + 1;
-  const int nij = ni * (je - jb + 1);
-  const int nijk = nij * (ke - kb + 1);
-  const int base = -(ib + ni * jb + nij * kb);
-  const int base4 = base - nijk;
-  int ecode = 0;
-  //   const int nic  = 4*ni;
-  //   const int nijc = 4*nij;
+  const sw4_type ni = ie - ib + 1;
+  const sw4_type nij = ni * (je - jb + 1);
+  const sw4_type nijk = nij * (ke - kb + 1);
+  const sw4_type base = -(ib + ni * jb + nij * kb);
+  const sw4_type base4 = base - nijk;
+  sw4_type ecode = 0;
+  //   const sw4_type nic  = 4*ni;
+  //   const sw4_type nijc = 4*nij;
 #define x(i, j, k) a_x[base + i + ni * (j) + nij * (k)]
 #define y(i, j, k) a_y[base + i + ni * (j) + nij * (k)]
 #define z(i, j, k) a_z[base + i + ni * (j) + nij * (k)]
@@ -30,11 +30,11 @@ int GridGenerator::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
   double h = x(ib + 1, jb, kb) - x(ib, jb, kb);
 
 #pragma omp parallel for reduction(+ : ecode)
-  for (int k = kb; k <= ke; k++)
-    for (int j = jb; j <= je; j++)
+  for (sw4_type k = kb; k <= ke; k++)
+    for (sw4_type j = jb; j <= je; j++)
 //#pragma ivdep
 #pragma omp simd
-      for (int i = ib; i <= ie; i++) {
+      for (sw4_type i = ib; i <= ie; i++) {
         // k-derivatives
         double zr, zp, zq, sqzr;
         if (k >= kb + 2 && k <= ke - 2)
@@ -131,9 +131,9 @@ int GridGenerator::metric_ci(int ib, int ie, int jb, int je, int kb, int ke,
 }
 
 //-----------------------------------------------------------------------
-int GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
+sw4_type GridGenerator::sw4_typeerpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
                                           float_sw4& z, Sarray& topo) {
-  // Interpolate the topography
+  // Sw4_Typeerpolate the topography
   //
   // if (q,r) is on this processor then
   // Return true and assign z corresponding to (q,r)
@@ -149,15 +149,15 @@ int GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
 
   if (!a_ew->topographyExists()) return -1;
 
-  int gTop = a_ew->mNumberOfGrids - 1;
+  sw4_type gTop = a_ew->mNumberOfGrids - 1;
   float_sw4 h = a_ew->mGridSize[gTop];
   float_sw4 q = x / h + 1.0;
   float_sw4 r = y / h + 1.0;
 
   // Find topography at (q,r), tau=tau(q,r)
   // Nearest grid point:
-  int iNear = static_cast<int>(round(q));
-  int jNear = static_cast<int>(round(r));
+  sw4_type iNear = static_cast<sw4_type>(round(q));
+  sw4_type jNear = static_cast<sw4_type>(round(r));
   float_sw4 tau;
   if (fabs(iNear - q) < 1.e-9 && fabs(jNear - r) < 1.e-9) {
     // At a grid point, evaluate topography at that point
@@ -166,18 +166,18 @@ int GridGenerator::interpolate_topography(EW* a_ew, float_sw4 x, float_sw4 y,
     else
       return -2;
   } else {
-    // Not at a grid  point, interpolate the topography
+    // Not at a grid  point, sw4_typeerpolate the topography
     // Nearest lower grid point
-    iNear = static_cast<int>(floor(q));
-    jNear = static_cast<int>(floor(r));
+    iNear = static_cast<sw4_type>(floor(q));
+    jNear = static_cast<sw4_type>(floor(r));
     if (topo.in_range(1, iNear - 3, jNear - 3, 1) &&
         topo.in_range(1, iNear + 4, jNear + 4, 1)) {
       float_sw4 a6cofi[8], a6cofj[8];
       gettopowgh(q - iNear, a6cofi);
       gettopowgh(r - jNear, a6cofj);
       tau = 0;
-      for (int l = -3; l <= 4; l++)
-        for (int k = -3; k <= 4; k++)
+      for (sw4_type l = -3; l <= 4; l++)
+        for (sw4_type k = -3; k <= 4; k++)
           tau += a6cofi[k + 3] * a6cofj[l + 3] * topo(k + iNear, l + jNear, 1);
     } else {
       return -3;
@@ -222,20 +222,20 @@ void GridGenerator::gettopowgh(float_sw4 ai, float_sw4 wgh[8]) const {
 }
 
 //-----------------------------------------------------------------------
-bool GridGenerator::exact_metric(EW* a_ew, int g, Sarray& a_jac,
+bool GridGenerator::exact_metric(EW* a_ew, sw4_type g, Sarray& a_jac,
                                  Sarray& a_met) {
   std::cout << "GridGenerator: Exact metric is not available \n" << std::endl;
   return false;
 }
 
 //-----------------------------------------------------------------------
-void GridGenerator::get_gridgen_info(int& order, float_sw4& zetaBreak) const {
-  order = m_grid_interpolation_order;
+void GridGenerator::get_gridgen_info(sw4_type& order, float_sw4& zetaBreak) const {
+  order = m_grid_sw4_typeerpolation_order;
   zetaBreak = m_zetaBreak;
 }
 
 //-----------------------------------------------------------------------
-float_sw4 GridGenerator::curvilinear_interface_parameter(EW* a_ew, int gcurv) {
+float_sw4 GridGenerator::curvilinear_sw4_typeerface_parameter(EW* a_ew, sw4_type gcurv) {
   if (gcurv < 0)
     return 0;
   else
@@ -249,8 +249,8 @@ void GridGenerator::fill_topo(Sarray& topo, float_sw4 h) {
 }
 //-----------------------------------------------------------------------
 void GridGenerator::grid_mapping_diff(EW* a_ew, float_sw4 q, float_sw4 r,
-                                      float_sw4 s, int g, int ic, int jc,
-                                      int kc, float_sw4& zq, float_sw4& zr,
+                                      float_sw4 s, sw4_type g, sw4_type ic, sw4_type jc,
+                                      sw4_type kc, float_sw4& zq, float_sw4& zr,
                                       float_sw4& zs, float_sw4& zqq,
                                       float_sw4& zqr, float_sw4& zqs,
                                       float_sw4& zrr, float_sw4& zrs,

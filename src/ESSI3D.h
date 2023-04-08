@@ -57,52 +57,52 @@ class ESSI3D {
  public:
   static ESSI3D* nil;
 
-  ESSI3D(EW* a_ew, const std::string& filePrefix, int dumpInterval,
-         int bufferInterval, float_sw4 coordBox[4], float_sw4 depth,
-         int precision, int compressionMode, double compressionPar);
+  ESSI3D(EW* a_ew, const std::string& filePrefix, sw4_type dumpSw4_Typeerval,
+         sw4_type bufferSw4_Typeerval, float_sw4 coordBox[4], float_sw4 depth,
+         sw4_type precision, sw4_type compressionMode, double compressionPar);
   ~ESSI3D();
 
-  void set_dump_interval(int a_dumpInterval);
-  void set_buffer_interval(int a_bufferInterval);
+  void set_dump_sw4_typeerval(sw4_type a_dumpSw4_Typeerval);
+  void set_buffer_sw4_typeerval(sw4_type a_bufferSw4_Typeerval);
   void setup();
 
   double getHDF5Timings();
-  void set_ntimestep(int ntimestep);
+  void set_ntimestep(sw4_type ntimestep);
   void set_restart(bool is_restart);
 
-  static void setSteps(int a_steps);
+  static void setSteps(sw4_type a_steps);
 
-  void update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
+  void update_image(sw4_type a_cycle, float_sw4 a_time, float_sw4 a_dt,
                     std::vector<Sarray>& a_U, std::string& a_path, Sarray& a_Z);
 
-  void force_write_image(float_sw4 a_time, int a_cycle,
+  void force_write_image(float_sw4 a_time, sw4_type a_cycle,
                          std::vector<Sarray>& a_U, std::string& a_path,
                          Sarray& a_Z);
 
   void finalize_hdf5();
 
  protected:
-  void compute_image(Sarray& a_U, int a_comp, int cycle);
+  void compute_image(Sarray& a_U, sw4_type a_comp, sw4_type cycle);
 
-  void write_image(int cycle, std::string& path, float_sw4 t, Sarray& a_Z);
+  void write_image(sw4_type cycle, std::string& path, float_sw4 t, Sarray& a_Z);
 
   void define_pio();
 
 #ifdef USE_HDF5
-  void open_vel_file(int a_cycle, std::string& a_path, float_sw4 a_time,
+  void open_vel_file(sw4_type a_cycle, std::string& a_path, float_sw4 a_time,
                      Sarray& a_Z);
   void close_vel_file();
-  void write_image_hdf5(int cycle, std::string& path, float_sw4 t,
+  void write_image_hdf5(sw4_type cycle, std::string& path, float_sw4 t,
                         std::vector<Sarray>& a_U);
 #endif
 
-  void compute_file_suffix(int cycle, std::stringstream& fileSuffix);
+  void compute_file_suffix(sw4_type cycle, std::stringstream& fileSuffix);
 
   std::string mFilePrefix;
   float_sw4 mTime;
   float_sw4 mCoordBox[4];
   float_sw4 mDepth;
-  int m_precision;
+  sw4_type m_precision;
 
   std::string mFileName;
 
@@ -113,12 +113,12 @@ class ESSI3D {
 
   bool m_fileOpen;
 
-  int m_compressionMode;
+  sw4_type m_compressionMode;
   double m_compressionPar;
 
-  static int
+  static sw4_type
       mPreceedZeros;  // number of digits for unique time step in file names
-  static int mNumberOfTimeSteps;  // number of time steps for the whole sim
+  static sw4_type mNumberOfTimeSteps;  // number of time steps for the whole sim
 
  private:
   ESSI3D();                  // make it impossible to call default constructor
@@ -128,21 +128,21 @@ class ESSI3D {
 
   ESSI3DHDF5* m_hdf5helper;
 
-  int m_cycle;
-  int m_dumpInterval;    // Note: this cycle interval to start a new file
-  int m_bufferInterval;  // Note: number of steps to buffer data before writting
+  sw4_type m_cycle;
+  sw4_type m_dumpSw4_Typeerval;    // Note: this cycle sw4_typeerval to start a new file
+  sw4_type m_bufferSw4_Typeerval;  // Note: number of steps to buffer data before writting
                          // out
-  int m_nbufstep;
-  int mWindow[6];      // Local in processor start + end indices for (i,j,k) for
+  sw4_type m_nbufstep;
+  sw4_type mWindow[6];      // Local in processor start + end indices for (i,j,k) for
                        // last curvilinear grid
-  int mGlobalDims[6];  // Global start + end indices for (i,j,k) for last
+  sw4_type mGlobalDims[6];  // Global start + end indices for (i,j,k) for last
                        // curvilinear grid
   double** m_doubleField;
   float** m_floatField;
   bool m_ihavearray;
-  int m_ntimestep;
+  sw4_type m_ntimestep;
   bool m_isRestart;
-  int m_rank;
+  sw4_type m_rank;
 };
 
 #endif

@@ -1,23 +1,23 @@
 #include "sw4.h"
 
-void addgradrho_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                   int klast, int ifirstact, int ilastact, int jfirstact,
-                   int jlastact, int kfirstact, int klastact,
+void addgradrho_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                   sw4_type klast, sw4_type ifirstact, sw4_type ilastact, sw4_type jfirstact,
+                   sw4_type jlastact, sw4_type kfirstact, sw4_type klastact,
                    float_sw4* __restrict__ a_kap,
                    float_sw4* __restrict__ a_kapacc,
                    float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_u,
                    float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_uacc,
                    float_sw4* __restrict__ a_grho, float_sw4 dt, float_sw4 h,
-                   int onesided[6]) {
+                   sw4_type onesided[6]) {
   const float_sw4 idt = 1.0 / dt;
   const float_sw4 dt2o12 = dt * dt / 12;
   const float_sw4 h3 = h * h * h;
   const float_sw4 normwgh[4] = {17.0 / 48, 59.0 / 48, 43.0 / 48, 49.0 / 48};
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = nij * (klast - kfirst + 1);
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int base3 = base - nijk;
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijk = nij * (klast - kfirst + 1);
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type base3 = base - nijk;
 #define grho(i, j, k) a_grho[base + (i) + ni * (j) + nij * (k)]
 #define um(c, i, j, k) a_um[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 #define u(c, i, j, k) a_u[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
@@ -27,11 +27,11 @@ void addgradrho_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
   a_kapacc[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 #define uacc(c, i, j, k) a_uacc[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 #pragma omp parallel for
-  for (int k = kfirstact; k <= klastact; k++)
-    for (int j = jfirstact; j <= jlastact; j++)
+  for (sw4_type k = kfirstact; k <= klastact; k++)
+    for (sw4_type j = jfirstact; j <= jlastact; j++)
 #pragma simd
 #pragma ivdep
-      for (int i = ifirstact; i <= ilastact; i++) {
+      for (sw4_type i = ifirstact; i <= ilastact; i++) {
         float_sw4 normfact = h3;
         if (k <= 4 && onesided[4] == 1) normfact *= normwgh[k - 1];
         grho(i, j, k) +=
@@ -52,24 +52,24 @@ void addgradrho_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 }
 
 //-----------------------------------------------------------------------
-void addgradrhoc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                    int klast, int ifirstact, int ilastact, int jfirstact,
-                    int jlastact, int kfirstact, int klastact,
+void addgradrhoc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                    sw4_type klast, sw4_type ifirstact, sw4_type ilastact, sw4_type jfirstact,
+                    sw4_type jlastact, sw4_type kfirstact, sw4_type klastact,
                     float_sw4* __restrict__ a_kap,
                     float_sw4* __restrict__ a_kapacc,
                     float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_u,
                     float_sw4* __restrict__ a_up,
                     float_sw4* __restrict__ a_uacc,
                     float_sw4* __restrict__ a_grho, float_sw4 dt,
-                    float_sw4* __restrict__ a_jac, int onesided[6]) {
+                    float_sw4* __restrict__ a_jac, sw4_type onesided[6]) {
   const float_sw4 idt = 1.0 / dt;
   const float_sw4 dt2o12 = dt * dt / 12;
   const float_sw4 normwgh[4] = {17.0 / 48, 59.0 / 48, 43.0 / 48, 49.0 / 48};
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = nij * (klast - kfirst + 1);
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int base3 = base - nijk;
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijk = nij * (klast - kfirst + 1);
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type base3 = base - nijk;
 #define grho(i, j, k) a_grho[base + (i) + ni * (j) + nij * (k)]
 #define jac(i, j, k) a_jac[base + (i) + ni * (j) + nij * (k)]
 #define um(c, i, j, k) a_um[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
@@ -80,11 +80,11 @@ void addgradrhoc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
   a_kapacc[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 #define uacc(c, i, j, k) a_uacc[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 #pragma omp parallel for
-  for (int k = kfirstact; k <= klastact; k++)
-    for (int j = jfirstact; j <= jlastact; j++)
+  for (sw4_type k = kfirstact; k <= klastact; k++)
+    for (sw4_type j = jfirstact; j <= jlastact; j++)
 #pragma simd
 #pragma ivdep
-      for (int i = ifirstact; i <= ilastact; i++) {
+      for (sw4_type i = ifirstact; i <= ilastact; i++) {
         float_sw4 normfact = jac(i, j, k);
         if (k <= 4 && onesided[4] == 1) normfact *= normwgh[k - 1];
         grho(i, j, k) +=
@@ -105,15 +105,15 @@ void addgradrhoc_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 }
 
 //-----------------------------------------------------------------------
-void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                    int klast, int ifirstact, int ilastact, int jfirstact,
-                    int jlastact, int kfirstact, int klastact,
+void addgradmula_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                    sw4_type klast, sw4_type ifirstact, sw4_type ilastact, sw4_type jfirstact,
+                    sw4_type jlastact, sw4_type kfirstact, sw4_type klastact,
                     float_sw4* __restrict__ a_kap,
                     float_sw4* __restrict__ a_kapacc,
                     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_uacc,
                     float_sw4* __restrict__ a_gmu,
                     float_sw4* __restrict__ a_glambda, float_sw4 dt,
-                    float_sw4 h, int onesided[6], int nb, int wb,
+                    float_sw4 h, sw4_type onesided[6], sw4_type nb, sw4_type wb,
                     float_sw4* __restrict__ a_bop) {
   const float_sw4 h3 = h * h * h;
   const float_sw4 ih2 = 1.0 / (h * h);
@@ -127,11 +127,11 @@ void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
   const float_sw4 al2 = -1441.0 / 39984;
   const float_sw4 al3 = -2593.0 / 151704;
   const float_sw4 al4 = 11.0 / 3528;
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = nij * (klast - kfirst + 1);
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int base3 = base - nijk;
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijk = nij * (klast - kfirst + 1);
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type base3 = base - nijk;
 #define gmu(i, j, k) a_gmu[base + (i) + ni * (j) + nij * (k)]
 #define glambda(i, j, k) a_glambda[base + (i) + ni * (j) + nij * (k)]
 #define u(c, i, j, k) a_u[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
@@ -141,7 +141,7 @@ void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
   a_kapacc[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 #define bop(q, k) a_bop[q - 1 + 4 * (k - 1)]
 
-  int kstart = kfirstact;
+  sw4_type kstart = kfirstact;
 #pragma omp parallel
   {
     if (kfirstact <= 4 && onesided[4] == 1) {
@@ -150,11 +150,11 @@ void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
       float_sw4 w6m[4] = {0, 0, al1, al1 + al2};
       float_sw4 w6p[4] = {0, al1, al1 + al2, al1 + al2 + al3};
 #pragma omp for
-      for (int k = kfirstact; k <= 4; k++)
-        for (int j = jfirstact; j <= jlastact; j++)
+      for (sw4_type k = kfirstact; k <= 4; k++)
+        for (sw4_type j = jfirstact; j <= jlastact; j++)
 #pragma ivdep
 #pragma simd
-          for (int i = ifirstact; i <= ilastact; i++) {
+          for (sw4_type i = ifirstact; i <= ilastact; i++) {
             float_sw4 normfact = h3 * wgh[k - 1];
             // Diagonal terms
             float_sw4 dux = d4b * (u(1, i + 2, j, k) - u(1, i - 2, j, k)) +
@@ -179,7 +179,7 @@ void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                 d4b * (kapacc(2, i, j + 2, k) - kapacc(2, i, j - 2, k)) +
                 d4a * (kapacc(2, i, j + 1, k) - kapacc(2, i, j - 1, k));
             float_sw4 dwz = 0, dmz = 0, dwaz = 0, dmaz = 0;
-            for (int m = 1; m <= wb; m++) {
+            for (sw4_type m = 1; m <= wb; m++) {
               dwz += bop(k, m) * u(3, i, j, m);
               dmz += bop(k, m) * kap(3, i, j, m);
               dwaz += bop(k, m) * uacc(3, i, j, m);
@@ -237,7 +237,7 @@ void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
             float_sw4 stkaxz =
                 d4b * (kapacc(3, i + 2, j, k) - kapacc(3, i - 2, j, k)) +
                 d4a * (kapacc(3, i + 1, j, k) - kapacc(3, i - 1, j, k));
-            for (int m = 1; m <= wb; m++) {
+            for (sw4_type m = 1; m <= wb; m++) {
               stuxz += bop(k, m) * u(1, i, j, m);
               stkxz += bop(k, m) * kap(1, i, j, m);
               stuaxz += bop(k, m) * uacc(1, i, j, m);
@@ -259,7 +259,7 @@ void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
             float_sw4 stkayz =
                 d4b * (kapacc(3, i, j + 2, k) - kapacc(3, i, j - 2, k)) +
                 d4a * (kapacc(3, i, j + 1, k) - kapacc(3, i, j - 1, k));
-            for (int m = 1; m <= wb; m++) {
+            for (sw4_type m = 1; m <= wb; m++) {
               stuyz += bop(k, m) * u(2, i, j, m);
               stkyz += bop(k, m) * kap(2, i, j, m);
               stuayz += bop(k, m) * uacc(2, i, j, m);
@@ -544,11 +544,11 @@ void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
     }
 
 #pragma omp for
-    for (int k = kstart; k <= klastact; k++)
-      for (int j = jfirstact; j <= jlastact; j++)
+    for (sw4_type k = kstart; k <= klastact; k++)
+      for (sw4_type j = jfirstact; j <= jlastact; j++)
 #pragma ivdep
 #pragma simd
-        for (int i = ifirstact; i <= ilastact; i++) {
+        for (sw4_type i = ifirstact; i <= ilastact; i++) {
           float_sw4 normfact = h3;
           // Diagonal terms
           float_sw4 dux = d4b * (u(1, i + 2, j, k) - u(1, i - 2, j, k)) +
@@ -917,14 +917,14 @@ void addgradmula_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 
 //-----------------------------------------------------------------------
 void addgradmulac_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-    int ifirstact, int ilastact, int jfirstact, int jlastact, int kfirstact,
-    int klastact, float_sw4* __restrict__ a_kap,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
+    sw4_type ifirstact, sw4_type ilastact, sw4_type jfirstact, sw4_type jlastact, sw4_type kfirstact,
+    sw4_type klastact, float_sw4* __restrict__ a_kap,
     float_sw4* __restrict__ a_kapacc, float_sw4* __restrict__ a_u,
     float_sw4* __restrict__ a_uacc, float_sw4* __restrict__ a_gmu,
     float_sw4* __restrict__ a_glambda, float_sw4 dt, float_sw4 h,
     float_sw4* __restrict__ a_met, float_sw4* __restrict__ a_jac,
-    int onesided[6], int nb, int wb, float_sw4* __restrict__ a_bop) {
+    sw4_type onesided[6], sw4_type nb, sw4_type wb, float_sw4* __restrict__ a_bop) {
   const float_sw4 dt2o12 = dt * dt / 12;
   const float_sw4 wgh[4] = {17.0 / 48, 59.0 / 48, 43.0 / 48, 49.0 / 48};
   const float_sw4 d4a = 2.0 / 3;
@@ -935,11 +935,11 @@ void addgradmulac_ci(
   const float_sw4 al2 = -1441.0 / 39984;
   const float_sw4 al3 = -2593.0 / 151704;
   const float_sw4 al4 = 11.0 / 3528;
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = nij * (klast - kfirst + 1);
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int base3 = base - nijk;
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijk = nij * (klast - kfirst + 1);
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type base3 = base - nijk;
 #define jac(i, j, k) a_jac[base + (i) + ni * (j) + nij * (k)]
 #define gmu(i, j, k) a_gmu[base + (i) + ni * (j) + nij * (k)]
 #define glambda(i, j, k) a_glambda[base + (i) + ni * (j) + nij * (k)]
@@ -951,7 +951,7 @@ void addgradmulac_ci(
 #define met(c, i, j, k) a_met[base3 + (i) + ni * (j) + nij * (k) + nijk * (c)]
 #define bop(q, k) a_bop[q - 1 + 4 * (k - 1)]
 
-  int kstart = kfirstact;
+  sw4_type kstart = kfirstact;
 #pragma omp parallel
   {
     if (kfirstact <= 4 && onesided[4] == 1) {
@@ -960,11 +960,11 @@ void addgradmulac_ci(
       float_sw4 w6m[4] = {0, 0, al1, al1 + al2};
       float_sw4 w6p[4] = {0, al1, al1 + al2, al1 + al2 + al3};
 #pragma omp for
-      for (int k = kfirstact; k <= 4; k++)
-        for (int j = jfirstact; j <= jlastact; j++)
+      for (sw4_type k = kfirstact; k <= 4; k++)
+        for (sw4_type j = jfirstact; j <= jlastact; j++)
 #pragma ivdep
 #pragma simd
-          for (int i = ifirstact; i <= ilastact; i++) {
+          for (sw4_type i = ifirstact; i <= ilastact; i++) {
             float_sw4 normfact = wgh[k - 1];
             // Diagonal terms
             float_sw4 dux = d4b * (u(1, i + 2, j, k) - u(1, i - 2, j, k)) +
@@ -991,7 +991,7 @@ void addgradmulac_ci(
             float_sw4 duz = 0, dvz = 0, dwz = 0, dkz = 0, dlz = 0, dmz = 0;
             float_sw4 duaz = 0, dvaz = 0, dwaz = 0, dkaz = 0, dlaz = 0,
                       dmaz = 0;
-            for (int m = 1; m <= wb; m++) {
+            for (sw4_type m = 1; m <= wb; m++) {
               duz += bop(k, m) * u(1, i, j, m);
               dvz += bop(k, m) * u(2, i, j, m);
               dwz += bop(k, m) * u(3, i, j, m);
@@ -1552,11 +1552,11 @@ void addgradmulac_ci(
     }
 
 #pragma omp for
-    for (int k = kstart; k <= klastact; k++)
-      for (int j = jfirstact; j <= jlastact; j++)
+    for (sw4_type k = kstart; k <= klastact; k++)
+      for (sw4_type j = jfirstact; j <= jlastact; j++)
 #pragma ivdep
 #pragma simd
-        for (int i = ifirstact; i <= ilastact; i++) {
+        for (sw4_type i = ifirstact; i <= ilastact; i++) {
           // Diagonal terms
           float_sw4 dux = d4b * (u(1, i + 2, j, k) - u(1, i - 2, j, k)) +
                           d4a * (u(1, i + 1, j, k) - u(1, i - 1, j, k));

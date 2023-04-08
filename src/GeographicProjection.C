@@ -58,7 +58,7 @@ GeographicProjection::GeographicProjection(double lon_origin, double lat_origin,
 
   double x0 = lon_origin * DEG_TO_RAD;
   double y0 = lat_origin * DEG_TO_RAD;
-  int status = pj_transform(m_latlong, m_projection, 1, 1, &x0, &y0, NULL);
+  sw4_type status = pj_transform(m_latlong, m_projection, 1, 1, &x0, &y0, NULL);
   // tmp
   //   printf("Origin mapped from (lon,lat)=(%e, %e) to (x0,y0)=(%e, %e)\n",
   //   lon_origin, lat_origin, x0, y0);
@@ -110,7 +110,7 @@ void GeographicProjection::computeGeographicCoord(double x, double y,
                                                   double &latitude) {
 #ifdef ENABLE_PROJ4
   double xmap, ymap;
-  int status;
+  sw4_type status;
 
   xmap = x * sin(m_az) + y * cos(m_az) + m_xoffset;
   ymap = x * cos(m_az) - y * sin(m_az) + m_yoffset;
@@ -146,7 +146,7 @@ void GeographicProjection::computeCartesianCoord(double &x, double &y,
                                                  double lon, double lat) {
 #ifdef ENABLE_PROJ4
   double xlon, ylat;
-  int status;
+  sw4_type status;
 
   xlon = lon * DEG_TO_RAD;
   ylat = lat * DEG_TO_RAD;

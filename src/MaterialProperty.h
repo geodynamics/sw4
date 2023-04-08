@@ -44,13 +44,13 @@ class MaterialProperty {
   //
   // Defines Vp, Vs, Rho and, optionally, Qp and Qs.
   // ------------------------------------------------------------------
-  MaterialProperty(int id, float_sw4 vp0, float_sw4 vp1, float_sw4 vp2,
+  MaterialProperty(sw4_type id, float_sw4 vp0, float_sw4 vp1, float_sw4 vp2,
                    float_sw4 vs0, float_sw4 vs1, float_sw4 vs2, float_sw4 rho0,
                    float_sw4 rho1, float_sw4 rho2, float_sw4 qp, float_sw4 qs);
 
   void setSqrtCoefficients(float_sw4 vp1o2, float_sw4 vs1o2, float_sw4 rho1o2);
 
-  int m_materialID;
+  sw4_type m_materialID;
   float_sw4 m_vp0, m_vp1, m_vp2, m_vp1o2, m_vs0, m_vs1, m_vs2, m_vs1o2, m_rho0,
       m_rho1, m_rho2, m_rho1o2, m_qp, m_qs;
 

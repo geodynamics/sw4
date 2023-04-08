@@ -53,8 +53,8 @@ class MaterialIfile : public MaterialData {
  protected:
   void extractSurfaceFromGridFile(std::string a_surfaceFileName);
   void extractSurfaceFromCartesianFile(std::string a_surfaceFileName);
-  int getMaterialID(double lat, double lon, float_sw4 depth);
-  int getCartesianMaterialID(float_sw4 xP, float_sw4 yP, float_sw4 depth);
+  sw4_type getMaterialID(double lat, double lon, float_sw4 depth);
+  sw4_type getCartesianMaterialID(float_sw4 xP, float_sw4 yP, float_sw4 depth);
 
   inline bool inside_material_surfaces(double lat, double lon) {
     return (lat <= m_materialLatMax && lat >= m_materialLatMin &&
@@ -84,7 +84,7 @@ class MaterialIfile : public MaterialData {
   }
   // General variables
   bool m_mat_Cartesian;
-  int m_number_material_surfaces;
+  sw4_type m_number_material_surfaces;
   Sarray m_materialDepth;
   EW* mEw;
 
@@ -94,7 +94,7 @@ class MaterialIfile : public MaterialData {
   double *m_materialLon, *m_materialLat;
 
   // Variables for Cartesian coords
-  int m_mat_Nx, m_mat_Ny;
+  sw4_type m_mat_Nx, m_mat_Ny;
   float_sw4 m_mat_Xmax, m_mat_Xmin, m_mat_Ymax, m_mat_Ymin;
   float_sw4 *m_mat_Xvec, *m_mat_Yvec;
 };

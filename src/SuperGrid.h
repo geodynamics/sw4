@@ -47,7 +47,7 @@ class SuperGrid {
   float_sw4 tw_stretching(float_sw4 x) const;
   float_sw4 get_tw_omega() const { return m_tw_omega; }
   void set_twilight(float_sw4 omega);
-  void print_parameters() const;
+  void prsw4_type_parameters() const;
   void set_eps(float_sw4 new_eps);
 
  private:
@@ -57,6 +57,6 @@ class SuperGrid {
   float_sw4 Psi0(float_sw4 xi) const;
   float_sw4 PsiAux(float_sw4 x) const;
   float_sw4 PsiDamp(float_sw4 x) const;
-  float_sw4 linTaper(float_sw4 x) const;
+  float_sw4 lsw4_typeaper(float_sw4 x) const;
 };
 #endif

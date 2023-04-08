@@ -3,8 +3,8 @@
 #include "caliper.h"
 #include "policies.h"
 #include "sw4.h"
-void EW::twilightfort_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, float_sw4* __restrict__ u,
+void EW::twilightfort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ u,
                          float_sw4 t, float_sw4 om, float_sw4 cv, float_sw4 ph,
                          float_sw4 h, float_sw4 zmin)
 // new 3d twilight functions (corresponding to subroutines fg, fgt and twrfsurz,
@@ -19,13 +19,13 @@ void EW::twilightfort_ci(int ifirst, int ilast, int jfirst, int jlast,
   const ssize_t base = -(ifirst + ni * jfirst + nij * kfirst);
 #pragma omp parallel
 #pragma omp for
-  for (int k = kfirst; k <= klast; k++) {
+  for (sw4_type k = kfirst; k <= klast; k++) {
     float_sw4 z = (k - 1) * h + zmin;
-    for (int j = jfirst; j <= jlast; j++) {
+    for (sw4_type j = jfirst; j <= jlast; j++) {
       float_sw4 y = (j - 1) * h;
 #pragma ivdep
       //#pragma simd
-      for (int i = ifirst; i <= ilast; i++) {
+      for (sw4_type i = ifirst; i <= ilast; i++) {
         float_sw4 x = (i - 1) * h;
         size_t ind = base + i + ni * j + nij * k;
         u[ind] = sin(om * (x - cv * t)) * sin(om * y + ph) * sin(om * z + ph);
@@ -39,11 +39,11 @@ void EW::twilightfort_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::twilightfortwind_ci(int ifirst, int ilast, int jfirst, int jlast,
-                             int kfirst, int klast, float_sw4* __restrict__ u,
+void EW::twilightfortwind_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                             sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ u,
                              float_sw4 t, float_sw4 om, float_sw4 cv,
-                             float_sw4 ph, float_sw4 h, float_sw4 zmin, int i1,
-                             int i2, int j1, int j2, int k1, int k2) {
+                             float_sw4 ph, float_sw4 h, float_sw4 zmin, sw4_type i1,
+                             sw4_type i2, sw4_type j1, sw4_type j2, sw4_type k1, sw4_type k2) {
   SW4_MARK_FUNCTION;
   // new 3d twilight functions (corresponding to subroutines fg, fgt and
   // twrfsurz, see below u      := sin(om*(x-cv*t))*sin(om*y+ph)*sin(om*z+ph);
@@ -56,11 +56,11 @@ void EW::twilightfortwind_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t base = -(ifirst + ni * jfirst + nij * kfirst);
 #pragma omp parallel
 #pragma omp for
-  for (int k = k1; k <= k2; k++) {
+  for (sw4_type k = k1; k <= k2; k++) {
     float_sw4 z = (k - 1) * h + zmin;
-    for (int j = j1; j <= j2; j++) {
+    for (sw4_type j = j1; j <= j2; j++) {
       float_sw4 y = (j - 1) * h;
-      for (int i = i1; i <= i2; i++) {
+      for (sw4_type i = i1; i <= i2; i++) {
         float_sw4 x = (i - 1) * h;
         size_t ind = base + i + ni * j + nij * k;
         u[ind] = sin(om * (x - cv * t)) * sin(om * y + ph) * sin(om * z + ph);
@@ -74,8 +74,8 @@ void EW::twilightfortwind_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::twilightfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                          int kfirst, int klast, float_sw4* __restrict__ u,
+void EW::twilightfortc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                          sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ u,
                           float_sw4 t, float_sw4 om, float_sw4 cv, float_sw4 ph,
                           float_sw4* __restrict__ x, float_sw4* __restrict__ y,
                           float_sw4* __restrict__ z) {
@@ -90,15 +90,15 @@ void EW::twilightfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t base = -(ifirst + ni * jfirst + nij * kfirst);
   // #pragma omp parallel
   // #pragma omp for
-  //   for (int k = kfirst; k <= klast; k++)
-  //     for (int j = jfirst; j <= jlast; j++)
-  //       for (int i = ifirst; i <= ilast; i++) {
+  //   for (sw4_type k = kfirst; k <= klast; k++)
+  //     for (sw4_type j = jfirst; j <= jlast; j++)
+  //       for (sw4_type i = ifirst; i <= ilast; i++) {
   RAJA::RangeSegment k_range(kfirst, klast + 1);
   RAJA::RangeSegment j_range(jfirst, jlast + 1);
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::kernel<DEFAULT_LOOP3>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
         size_t ind = base + i + ni * j + nij * k;
         u[ind] = sin(om * (x[ind] - cv * t)) * sin(om * y[ind] + ph) *
                  sin(om * z[ind] + ph);
@@ -112,8 +112,8 @@ void EW::twilightfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::twilightfortatt_ci(int ifirst, int ilast, int jfirst, int jlast,
-                            int kfirst, int klast,
+void EW::twilightfortatt_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                            sw4_type kfirst, sw4_type klast,
                             float_sw4* __restrict__ alpha, float_sw4 t,
                             float_sw4 om, float_sw4 cv, float_sw4 ph,
                             float_sw4 h, float_sw4 zmin) {
@@ -130,11 +130,11 @@ void EW::twilightfortatt_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t base = -(ifirst + ni * jfirst + nij * kfirst);
 #pragma omp parallel
 #pragma omp for
-  for (int k = kfirst; k <= klast; k++) {
+  for (sw4_type k = kfirst; k <= klast; k++) {
     float_sw4 z = (k - 1) * h + zmin;
-    for (int j = jfirst; j <= jlast; j++) {
+    for (sw4_type j = jfirst; j <= jlast; j++) {
       float_sw4 y = (j - 1) * h;
-      for (int i = ifirst; i <= ilast; i++) {
+      for (sw4_type i = ifirst; i <= ilast; i++) {
         float_sw4 x = (i - 1) * h;
         size_t ind = base + i + ni * j + nij * k;
         alpha[ind] = cos(om * (x - cv * t) + ph) * sin(om * x + ph) *
@@ -149,8 +149,8 @@ void EW::twilightfortatt_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::twilightfortattc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                             int kfirst, int klast,
+void EW::twilightfortattc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                             sw4_type kfirst, sw4_type klast,
                              float_sw4* __restrict__ alpha, float_sw4 t,
                              float_sw4 om, float_sw4 cv, float_sw4 ph,
                              float_sw4* __restrict__ x,
@@ -167,11 +167,11 @@ void EW::twilightfortattc_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t base = -(ifirst + ni * jfirst + nij * kfirst);
 #pragma omp parallel
 #pragma omp for
-  for (int k = kfirst; k <= klast; k++)
-    for (int j = jfirst; j <= jlast; j++)
+  for (sw4_type k = kfirst; k <= klast; k++)
+    for (sw4_type j = jfirst; j <= jlast; j++)
 #pragma ivdep
 #pragma simd
-      for (int i = ifirst; i <= ilast; i++) {
+      for (sw4_type i = ifirst; i <= ilast; i++) {
         size_t ind = base + i + ni * j + nij * k;
         alpha[ind] = cos(om * (x[ind] - cv * t) + ph) * sin(om * x[ind] + ph) *
                      cos(om * (z[ind] - cv * t) + ph);
@@ -184,8 +184,8 @@ void EW::twilightfortattc_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::exactrhsfort_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, float_sw4* __restrict__ fo,
+void EW::exactrhsfort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                          float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                          float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                          float_sw4 ampmu, float_sw4 amplambda, float_sw4 h,
@@ -204,11 +204,11 @@ void EW::exactrhsfort_ci(int ifirst, int ilast, int jfirst, int jlast,
         t54, t55, t57, t58, t6, t60, t63, t64, t69, t7, t70, t71, t72, t77, t78,
         t79, t8, t80, t81, t82, t83, t85, t87, t89, t92, t95, t97;
 #pragma omp for
-    for (int k = kfirst; k <= klast; k++) {
+    for (sw4_type k = kfirst; k <= klast; k++) {
       float_sw4 z = (k - 1) * h + zmin;
-      for (int j = jfirst; j <= jlast; j++) {
+      for (sw4_type j = jfirst; j <= jlast; j++) {
         float_sw4 y = (j - 1) * h;
-        for (int i = ifirst; i <= ilast; i++) {
+        for (sw4_type i = ifirst; i <= ilast; i++) {
           float_sw4 x = (i - 1) * h;
           t2 = omm * x + phm;
           t3 = sin(t2);
@@ -314,8 +314,8 @@ void EW::exactrhsfort_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::exactrhsfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                          int kfirst, int klast, float_sw4* __restrict__ fo,
+void EW::exactrhsfortc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                          sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                           float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                           float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                           float_sw4 ampmu, float_sw4 amplambda,
@@ -336,9 +336,9 @@ void EW::exactrhsfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
         t54, t55, t57, t58, t6, t60, t63, t64, t69, t7, t70, t71, t72, t77, t78,
         t79, t8, t80, t81, t82, t83, t85, t87, t89, t92, t95, t97;
 #pragma omp for
-    for (int k = kfirst; k <= klast; k++)
-      for (int j = jfirst; j <= jlast; j++)
-        for (int i = ifirst; i <= ilast; i++) {
+    for (sw4_type k = kfirst; k <= klast; k++)
+      for (sw4_type j = jfirst; j <= jlast; j++)
+        for (sw4_type i = ifirst; i <= ilast; i++) {
           size_t ind = base + i + ni * j + nij * k;
           float_sw4 z = zz[ind];
           float_sw4 y = yy[ind];
@@ -444,8 +444,8 @@ void EW::exactrhsfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::exactaccfort_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, float_sw4* __restrict__ utt,
+void EW::exactaccfort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ utt,
                          float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                          float_sw4 h, float_sw4 zmin) {
   SW4_MARK_FUNCTION;
@@ -457,11 +457,11 @@ void EW::exactaccfort_ci(int ifirst, int ilast, int jfirst, int jlast,
   {
     float_sw4 acc[3], t1, t4, t5, t7, t10, t14, t19, t22, t30;
 #pragma omp for
-    for (int k = kfirst; k <= klast; k++) {
+    for (sw4_type k = kfirst; k <= klast; k++) {
       float_sw4 z = (k - 1) * h + zmin;
-      for (int j = jfirst; j <= jlast; j++) {
+      for (sw4_type j = jfirst; j <= jlast; j++) {
         float_sw4 y = (j - 1) * h;
-        for (int i = ifirst; i <= ilast; i++) {
+        for (sw4_type i = ifirst; i <= ilast; i++) {
           float_sw4 x = (i - 1) * h;
           t1 = c * t;
           t4 = sin(om * (x - t1));
@@ -486,8 +486,8 @@ void EW::exactaccfort_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::exactaccfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                          int kfirst, int klast, float_sw4* __restrict__ utt,
+void EW::exactaccfortc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                          sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ utt,
                           float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                           float_sw4* __restrict__ x, float_sw4* __restrict__ y,
                           float_sw4* __restrict__ z) {
@@ -500,9 +500,9 @@ void EW::exactaccfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
   {
     float_sw4 acc[3], t1, t4, t5, t7, t10, t14, t19, t22, t30;
 #pragma omp for
-    for (int k = kfirst; k <= klast; k++)
-      for (int j = jfirst; j <= jlast; j++)
-        for (int i = ifirst; i <= ilast; i++) {
+    for (sw4_type k = kfirst; k <= klast; k++)
+      for (sw4_type j = jfirst; j <= jlast; j++)
+        for (sw4_type i = ifirst; i <= ilast; i++) {
           size_t ind = base + i + ni * j + nij * k;
           t1 = c * t;
           t4 = sin(om * (x[ind] - t1));
@@ -524,8 +524,8 @@ void EW::exactaccfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::forcingfort_ci(int ifirst, int ilast, int jfirst, int jlast,
-                        int kfirst, int klast, float_sw4* __restrict__ fo,
+void EW::forcingfort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                        sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                         float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                         float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                         float_sw4 ampmu, float_sw4 amplambda, float_sw4 h,
@@ -540,7 +540,7 @@ void EW::forcingfort_ci(int ifirst, int ilast, int jfirst, int jlast,
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::kernel<RHS4_EXEC_POL>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
         // #pragma omp parallel
         //    {
         float_sw4 forces[3], t10, t102, t105, t107, t110, t111, t112, t113,
@@ -551,13 +551,13 @@ void EW::forcingfort_ci(int ifirst, int ilast, int jfirst, int jlast,
             t6, t62, t64, t65, t66, t68, t69, t71, t74, t75, t80, t81, t82, t83,
             t88, t89, t9, t90, t91, t92, t93, t95, t97, t99;
         // #pragma omp for
-        //       for( int k=kfirst; k<=klast; k++ )
+        //       for( sw4_type k=kfirst; k<=klast; k++ )
         //       {
         float_sw4 z = (k - 1) * h + zmin;
-        // for( int j=jfirst; j<=jlast; j++ )
+        // for( sw4_type j=jfirst; j<=jlast; j++ )
         // {
         float_sw4 y = (j - 1) * h;
-        // for( int i=ifirst; i<=ilast; i++ )
+        // for( sw4_type i=ifirst; i<=ilast; i++ )
         // {
         float_sw4 x = (i - 1) * h;
         t2 = omm * x + phm;
@@ -672,8 +672,8 @@ void EW::forcingfort_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::forcingttfort_ci(int ifirst, int ilast, int jfirst, int jlast,
-                          int kfirst, int klast, float_sw4* __restrict__ fo,
+void EW::forcingttfort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                          sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                           float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                           float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                           float_sw4 ampmu, float_sw4 amplambda, float_sw4 h,
@@ -693,7 +693,7 @@ void EW::forcingttfort_ci(int ifirst, int ilast, int jfirst, int jlast,
     RAJA::RangeSegment i_range(ifirst, ilast + 1);
     RAJA::kernel<RHS4_EXEC_POL>(
         RAJA::make_tuple(k_range, j_range, i_range),
-        [=] RAJA_DEVICE(int k, int j, int i) {
+        [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
           float_sw4 forces[3], t10, t100, t102, t103, t105, t107, t110, t115,
               t118, t119, t120, t121, t122, t124, t125, t127, t13, t135, t14,
               t140, t141, t144, t145, t146, t147, t150, t154, t16, t161, t163,
@@ -703,13 +703,13 @@ void EW::forcingttfort_ci(int ifirst, int ilast, int jfirst, int jlast,
               t69, t70, t71, t72, t73, t74, t76, t77, t84, t85, t87, t88, t9,
               t94, t95, t96, t97, t98;
           // #pragma omp for
-          //       for( int k=kfirst; k<=klast; k++ )
+          //       for( sw4_type k=kfirst; k<=klast; k++ )
           //       {
           // 	 float_sw4 z=(k-1)*h+zmin;
-          // 	 for( int j=jfirst; j<=jlast; j++ )
+          // 	 for( sw4_type j=jfirst; j<=jlast; j++ )
           // 	 {
           // 	    float_sw4 y=(j-1)*h;
-          // 	    for( int i=ifirst; i<=ilast; i++ )
+          // 	    for( sw4_type i=ifirst; i<=ilast; i++ )
           // 	    {
           float_sw4 z = (k - 1) * h + zmin;
           float_sw4 y = (j - 1) * h;
@@ -831,8 +831,8 @@ void EW::forcingttfort_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::forcingfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, float_sw4* __restrict__ fo,
+void EW::forcingfortc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                          float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                          float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                          float_sw4 ampmu, float_sw4 amplambda,
@@ -851,7 +851,7 @@ void EW::forcingfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
     RAJA::RangeSegment i_range(ifirst, ilast + 1);
     RAJA::kernel<RHS4_EXEC_POL>(
         RAJA::make_tuple(k_range, j_range, i_range),
-        [=] RAJA_DEVICE(int k, int j, int i) {
+        [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
     float_sw4 forces[3], t10, t102, t105, t107, t110, t111, t112, t113, t115,
         t116, t118, t124, t125, t129, t13, t130, t133, t134, t135, t137, t14,
         t140, t144, t150, t156, t16, t163, t165, t17, t172, t181, t183, t188,
@@ -860,9 +860,9 @@ void EW::forcingfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
         t66, t68, t69, t71, t74, t75, t80, t81, t82, t83, t88, t89, t9, t90,
         t91, t92, t93, t95, t97, t99;
 // #pragma omp for
-//     for (int k = kfirst; k <= klast; k++)
-//       for (int j = jfirst; j <= jlast; j++)
-//         for (int i = ifirst; i <= ilast; i++) {
+//     for (sw4_type k = kfirst; k <= klast; k++)
+//       for (sw4_type j = jfirst; j <= jlast; j++)
+//         for (sw4_type i = ifirst; i <= ilast; i++) {
           size_t ind = base + i + ni * j + nij * k;
           float_sw4 z = zz[ind];
           float_sw4 y = yy[ind];
@@ -977,8 +977,8 @@ void EW::forcingfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::forcingttfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, float_sw4* __restrict__ fo,
+void EW::forcingttfortc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                            float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                            float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                            float_sw4 ampmu, float_sw4 amplambda,
@@ -998,7 +998,7 @@ void EW::forcingttfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
     RAJA::RangeSegment i_range(ifirst, ilast + 1);
     RAJA::kernel<RHS4_EXEC_POL>(
         RAJA::make_tuple(k_range, j_range, i_range),
-        [=] RAJA_DEVICE(int k, int j, int i) {
+        [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
           float_sw4 forces[3], t10, t100, t102, t103, t105, t107, t110, t115,
               t118, t119, t120, t121, t122, t124, t125, t127, t13, t135, t14,
               t140, t141, t144, t145, t146, t147, t150, t154, t16, t161, t163,
@@ -1008,9 +1008,9 @@ void EW::forcingttfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
               t69, t70, t71, t72, t73, t74, t76, t77, t84, t85, t87, t88, t9,
               t94, t95, t96, t97, t98;
           // #pragma omp for
-          //       for( int k=kfirst; k<=klast; k++ )
-          // 	 for( int j=jfirst; j<=jlast; j++ )
-          // 	    for( int i=ifirst; i<=ilast; i++ )
+          //       for( sw4_type k=kfirst; k<=klast; k++ )
+          // 	 for( sw4_type j=jfirst; j<=jlast; j++ )
+          // 	    for( sw4_type i=ifirst; i<=ilast; i++ )
           // 	    {
           size_t ind = base + i + ni * j + nij * k;
           float_sw4 z = zz[ind];
@@ -1130,8 +1130,8 @@ void EW::forcingttfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::exactmatfort_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, float_sw4* __restrict__ rho,
+void EW::exactmatfort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ rho,
                          float_sw4* __restrict__ mu, float_sw4* __restrict__ la,
                          float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                          float_sw4 ampmu, float_sw4 amplambda, float_sw4 h,
@@ -1148,11 +1148,11 @@ void EW::exactmatfort_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t base = -(ifirst + ni * jfirst + nij * kfirst);
 #pragma omp parallel
 #pragma omp for
-  for (int k = kfirst; k <= klast; k++) {
+  for (sw4_type k = kfirst; k <= klast; k++) {
     float_sw4 z = (k - 1) * h + zmin;
-    for (int j = jfirst; j <= jlast; j++) {
+    for (sw4_type j = jfirst; j <= jlast; j++) {
       float_sw4 y = (j - 1) * h;
-      for (int i = ifirst; i <= ilast; i++) {
+      for (sw4_type i = ifirst; i <= ilast; i++) {
         float_sw4 x = (i - 1) * h;
         size_t ind = base + i + ni * j + nij * k;
         rho[ind] = amprho * (2 + sin(omm * x + phm) * cos(omm * y + phm) *
@@ -1167,8 +1167,8 @@ void EW::exactmatfort_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::exactmatfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                          int kfirst, int klast, float_sw4* __restrict__ rho,
+void EW::exactmatfortc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                          sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ rho,
                           float_sw4* __restrict__ mu,
                           float_sw4* __restrict__ la, float_sw4 omm,
                           float_sw4 phm, float_sw4 amprho, float_sw4 ampmu,
@@ -1187,9 +1187,9 @@ void EW::exactmatfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t base = -(ifirst + ni * jfirst + nij * kfirst);
 #pragma omp parallel
 #pragma omp for
-  for (int k = kfirst; k <= klast; k++)
-    for (int j = jfirst; j <= jlast; j++)
-      for (int i = ifirst; i <= ilast; i++) {
+  for (sw4_type k = kfirst; k <= klast; k++)
+    for (sw4_type j = jfirst; j <= jlast; j++)
+      for (sw4_type i = ifirst; i <= ilast; i++) {
         size_t ind = base + i + ni * j + nij * k;
         rho[ind] =
             amprho * (2 + sin(omm * x[ind] + phm) * cos(omm * y[ind] + phm) *
@@ -1204,8 +1204,8 @@ void EW::exactmatfortc_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::exactrhsfortsg_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, float_sw4* __restrict__ fo,
+void EW::exactrhsfortsg_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                            float_sw4 t, float_sw4 om, float_sw4 c, float_sw4 ph,
                            float_sw4 omm, float_sw4 phm, float_sw4 amprho,
                            float_sw4 ampmu, float_sw4 ampla, float_sw4 h,
@@ -1227,11 +1227,11 @@ void EW::exactrhsfortsg_ci(int ifirst, int ilast, int jfirst, int jlast,
         t65, t66, t68, t7, t70, t71, t72, t74, t75, t77, t78, t8, t81, t82, t86,
         t87, t89, t90, t92, t93, t94, t95, t96;
 #pragma omp for
-    for (int k = kfirst; k <= klast; k++) {
+    for (sw4_type k = kfirst; k <= klast; k++) {
       float_sw4 z = (k - 1) * h + zmin;
-      for (int j = jfirst; j <= jlast; j++) {
+      for (sw4_type j = jfirst; j <= jlast; j++) {
         float_sw4 y = (j - 1) * h;
-        for (int i = ifirst; i <= ilast; i++) {
+        for (sw4_type i = ifirst; i <= ilast; i++) {
           float_sw4 x = (i - 1) * h;
           t1 = omstrx * x;
           t2 = sin(t1);
@@ -1372,8 +1372,8 @@ void EW::exactrhsfortsg_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::exactrhsfortsgc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                            int kfirst, int klast, float_sw4* __restrict__ fo,
+void EW::exactrhsfortsgc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                            sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                             float_sw4 t, float_sw4 om, float_sw4 c,
                             float_sw4 ph, float_sw4 omm, float_sw4 phm,
                             float_sw4 amprho, float_sw4 ampmu, float_sw4 ampla,
@@ -1397,9 +1397,9 @@ void EW::exactrhsfortsgc_ci(int ifirst, int ilast, int jfirst, int jlast,
         t65, t66, t68, t7, t70, t71, t72, t74, t75, t77, t78, t8, t81, t82, t86,
         t87, t89, t90, t92, t93, t94, t95, t96;
 #pragma omp for
-    for (int k = kfirst; k <= klast; k++)
-      for (int j = jfirst; j <= jlast; j++)
-        for (int i = ifirst; i <= ilast; i++) {
+    for (sw4_type k = kfirst; k <= klast; k++)
+      for (sw4_type j = jfirst; j <= jlast; j++)
+        for (sw4_type i = ifirst; i <= ilast; i++) {
           size_t ind = base + i + ni * j + nij * k;
           float_sw4 z = zz[ind];
           float_sw4 y = yy[ind];
@@ -1540,8 +1540,8 @@ void EW::exactrhsfortsgc_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::exactmatfortatt_ci(int ifirst, int ilast, int jfirst, int jlast,
-                            int kfirst, int klast, float_sw4* __restrict__ mu,
+void EW::exactmatfortatt_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                            sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ mu,
                             float_sw4* __restrict__ la, float_sw4 momega,
                             float_sw4 mphase, float_sw4 ampmu,
                             float_sw4 amplambda, float_sw4 h, float_sw4 zmin) {
@@ -1552,11 +1552,11 @@ void EW::exactmatfortatt_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t base = -(ifirst + ni * jfirst + nij * kfirst);
 #pragma omp parallel
 #pragma omp for
-  for (int k = kfirst; k <= klast; k++) {
+  for (sw4_type k = kfirst; k <= klast; k++) {
     float_sw4 z = (k - 1) * h + zmin;
-    for (int j = jfirst; j <= jlast; j++) {
+    for (sw4_type j = jfirst; j <= jlast; j++) {
       float_sw4 y = (j - 1) * h;
-      for (int i = ifirst; i <= ilast; i++) {
+      for (sw4_type i = ifirst; i <= ilast; i++) {
         float_sw4 x = (i - 1) * h;
         size_t ind = base + i + ni * j + nij * k;
         mu[ind] = ampmu * (1.5 + 0.5 * cos(momega * x + mphase) *
@@ -1571,8 +1571,8 @@ void EW::exactmatfortatt_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::exactmatfortattc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                             int kfirst, int klast, float_sw4* __restrict__ mu,
+void EW::exactmatfortattc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                             sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ mu,
                              float_sw4* __restrict__ la, float_sw4 momega,
                              float_sw4 mphase, float_sw4 ampmu,
                              float_sw4 amplambda, float_sw4* __restrict__ x,
@@ -1585,9 +1585,9 @@ void EW::exactmatfortattc_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t base = -(ifirst + ni * jfirst + nij * kfirst);
 #pragma omp parallel
 #pragma omp for
-  for (int k = kfirst; k <= klast; k++)
-    for (int j = jfirst; j <= jlast; j++)
-      for (int i = ifirst; i <= ilast; i++) {
+  for (sw4_type k = kfirst; k <= klast; k++)
+    for (sw4_type j = jfirst; j <= jlast; j++)
+      for (sw4_type i = ifirst; i <= ilast; i++) {
         size_t ind = base + i + ni * j + nij * k;
         mu[ind] = ampmu * (1.5 + 0.5 * cos(momega * x[ind] + mphase) *
                                      cos(momega * y[ind] + mphase) *
@@ -1599,8 +1599,8 @@ void EW::exactmatfortattc_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::forcingfortatt_ci(int ifirst, int ilast, int jfirst, int jlast,
-                           int kfirst, int klast, float_sw4* __restrict__ fo,
+void EW::forcingfortatt_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                           sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                            float_sw4 t, float_sw4 omega, float_sw4 c,
                            float_sw4 phase, float_sw4 momega, float_sw4 mphase,
                            float_sw4 amprho, float_sw4 ampmu,
@@ -1619,11 +1619,11 @@ void EW::forcingfortatt_ci(int ifirst, int ilast, int jfirst, int jlast,
         t52, t53, t55, t56, t6, t62, t63, t67, t68, t7, t71, t72, t73, t77, t8,
         t80, t84, t85, t86, t87, t95, t96, t97;
 #pragma omp for
-    for (int k = kfirst; k <= klast; k++) {
+    for (sw4_type k = kfirst; k <= klast; k++) {
       float_sw4 z = (k - 1) * h + zmin;
-      for (int j = jfirst; j <= jlast; j++) {
+      for (sw4_type j = jfirst; j <= jlast; j++) {
         float_sw4 y = (j - 1) * h;
-        for (int i = ifirst; i <= ilast; i++) {
+        for (sw4_type i = ifirst; i <= ilast; i++) {
           float_sw4 x = (i - 1) * h;
           t2 = momega * x + mphase;
           t3 = sin(t2);
@@ -1727,8 +1727,8 @@ void EW::forcingfortatt_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::forcingttattfort_ci(int ifirst, int ilast, int jfirst, int jlast,
-                             int kfirst, int klast, float_sw4* __restrict__ fo,
+void EW::forcingttattfort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                             sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                              float_sw4 t, float_sw4 omega, float_sw4 c,
                              float_sw4 phase, float_sw4 momega,
                              float_sw4 mphase, float_sw4 amprho,
@@ -1750,11 +1750,11 @@ void EW::forcingttattfort_ci(int ifirst, int ilast, int jfirst, int jlast,
         t64, t65, t66, t67, t68, t69, t7, t70, t74, t75, t78, t79, t80, t82,
         t83, t84, t85, t88, t89, t90, t91, t92, t93, t97, t99;
 #pragma omp for
-    for (int k = kfirst; k <= klast; k++) {
+    for (sw4_type k = kfirst; k <= klast; k++) {
       float_sw4 z = (k - 1) * h + zmin;
-      for (int j = jfirst; j <= jlast; j++) {
+      for (sw4_type j = jfirst; j <= jlast; j++) {
         float_sw4 y = (j - 1) * h;
-        for (int i = ifirst; i <= ilast; i++) {
+        for (sw4_type i = ifirst; i <= ilast; i++) {
           float_sw4 x = (i - 1) * h;
           t2 = momega * x + mphase;
           t3 = sin(t2);
@@ -1894,8 +1894,8 @@ void EW::forcingttattfort_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::addmemvarforcing_ci(int ifirst, int ilast, int jfirst, int jlast,
-                             int kfirst, int klast,
+void EW::addmemvarforcing_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                             sw4_type kfirst, sw4_type klast,
                              float_sw4* __restrict__ alpha, float_sw4 t,
                              float_sw4 omega, float_sw4 c, float_sw4 phase,
                              float_sw4 omegaVE, float_sw4 dt, float_sw4 h,
@@ -1915,11 +1915,11 @@ void EW::addmemvarforcing_ci(int ifirst, int ilast, int jfirst, int jlast,
         t37, t4, t40, t42, t43, t45, t48, t5, t52, t53, t6, t60, t62, t63, t74,
         t82, t83, t84, t86, t88, t89, t9, t91, t93, t95, t97, t98, t99;
 #pragma omp for
-    for (int k = kfirst; k <= klast; k++) {
+    for (sw4_type k = kfirst; k <= klast; k++) {
       float_sw4 z = (k - 1) * h + zmin;
-      for (int j = jfirst; j <= jlast; j++) {
+      for (sw4_type j = jfirst; j <= jlast; j++) {
         float_sw4 y = (j - 1) * h;
-        for (int i = ifirst; i <= ilast; i++) {
+        for (sw4_type i = ifirst; i <= ilast; i++) {
           float_sw4 x = (i - 1) * h;
           t1 = 1 / omegaVE;
           t2 = c * t;
@@ -2025,7 +2025,7 @@ void EW::addmemvarforcing_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::memvarforcesurf_ci(int ifirst, int ilast, int jfirst, int jlast, int k,
+void EW::memvarforcesurf_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type k,
                             float_sw4* __restrict__ fo, float_sw4 t,
                             float_sw4 omega, float_sw4 c, float_sw4 phase,
                             float_sw4 omegaVE, float_sw4 dt, float_sw4 h,
@@ -2044,9 +2044,9 @@ void EW::memvarforcesurf_ci(int ifirst, int ilast, int jfirst, int jlast, int k,
         t82, t83, t84, t86, t88, t89, t9, t91, t93, t95, t97, t98, t99;
     float_sw4 z = (k - 1) * h + zmin;
 #pragma omp for
-    for (int j = jfirst; j <= jlast; j++) {
+    for (sw4_type j = jfirst; j <= jlast; j++) {
       float_sw4 y = (j - 1) * h;
-      for (int i = ifirst; i <= ilast; i++) {
+      for (sw4_type i = ifirst; i <= ilast; i++) {
         float_sw4 x = (i - 1) * h;
         t1 = 1 / omegaVE;
         t2 = c * t;
@@ -2151,8 +2151,8 @@ void EW::memvarforcesurf_ci(int ifirst, int ilast, int jfirst, int jlast, int k,
 }
 
 //-----------------------------------------------------------------------
-void EW::forcingfortattc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                            int kfirst, int klast, float_sw4* __restrict__ fo,
+void EW::forcingfortattc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                            sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ fo,
                             float_sw4 t, float_sw4 omega, float_sw4 c,
                             float_sw4 phase, float_sw4 momega, float_sw4 mphase,
                             float_sw4 amprho, float_sw4 ampmu,
@@ -2171,7 +2171,7 @@ void EW::forcingfortattc_ci(int ifirst, int ilast, int jfirst, int jlast,
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::kernel<DEFAULT_LOOP3>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
     float_sw4 forces[3], t10, t100, t103, t108, t109, t11, t110, t112, t113,
         t116, t118, t12, t131, t133, t135, t14, t144, t15, t152, t156, t158,
         t159, t162, t178, t180, t182, t189, t19, t191, t195, t2, t21, t22, t23,
@@ -2179,9 +2179,9 @@ void EW::forcingfortattc_ci(int ifirst, int ilast, int jfirst, int jlast,
         t52, t53, t55, t56, t6, t62, t63, t67, t68, t7, t71, t72, t73, t77, t8,
         t80, t84, t85, t86, t87, t95, t96, t97;
 // #pragma omp for
-//     for (int k = kfirst; k <= klast; k++)
-//       for (int j = jfirst; j <= jlast; j++)
-//         for (int i = ifirst; i <= ilast; i++) {
+//     for (sw4_type k = kfirst; k <= klast; k++)
+//       for (sw4_type j = jfirst; j <= jlast; j++)
+//         for (sw4_type i = ifirst; i <= ilast; i++) {
           size_t ind = base + i + ni * j + nij * k;
           float_sw4 z = zz[ind];
           float_sw4 y = yy[ind];
@@ -2286,7 +2286,7 @@ void EW::forcingfortattc_ci(int ifirst, int ilast, int jfirst, int jlast,
 
 //-----------------------------------------------------------------------
 void EW::forcingttattfortc_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
     float_sw4* __restrict__ fo, float_sw4 t, float_sw4 omega, float_sw4 c,
     float_sw4 phase, float_sw4 momega, float_sw4 mphase, float_sw4 amprho,
     float_sw4 ampmu, float_sw4 amplambda, float_sw4* __restrict__ xx,
@@ -2303,7 +2303,7 @@ void EW::forcingttattfortc_ci(
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::kernel<DEFAULT_LOOP3>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
     float_sw4 forces[3], t10, t104, t108, t109, t11, t112, t113, t118, t12,
         t121, t122, t124, t125, t13, t130, t133, t134, t135, t136, t139, t14,
         t141, t142, t143, t151, t152, t157, t16, t160, t178, t186, t19, t190,
@@ -2313,9 +2313,9 @@ void EW::forcingttattfortc_ci(
         t64, t65, t66, t67, t68, t69, t7, t70, t74, t75, t78, t79, t80, t82,
         t83, t84, t85, t88, t89, t90, t91, t92, t93, t97, t99;
 // #pragma omp for
-//     for (int k = kfirst; k <= klast; k++)
-//       for (int j = jfirst; j <= jlast; j++)
-//         for (int i = ifirst; i <= ilast; i++) {
+//     for (sw4_type k = kfirst; k <= klast; k++)
+//       for (sw4_type j = jfirst; j <= jlast; j++)
+//         for (sw4_type i = ifirst; i <= ilast; i++) {
           size_t ind = base + i + ni * j + nij * k;
           float_sw4 z = zz[ind];
           float_sw4 y = yy[ind];
@@ -2456,8 +2456,8 @@ void EW::forcingttattfortc_ci(
 }
 
 //-----------------------------------------------------------------------
-void EW::addmemvarforcingc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                              int kfirst, int klast,
+void EW::addmemvarforcingc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                              sw4_type kfirst, sw4_type klast,
                               float_sw4* __restrict__ alpha, float_sw4 t,
                               float_sw4 omega, float_sw4 c, float_sw4 phase,
                               float_sw4 omegaVE, float_sw4 dt,
@@ -2479,9 +2479,9 @@ void EW::addmemvarforcingc_ci(int ifirst, int ilast, int jfirst, int jlast,
         t37, t4, t40, t42, t43, t45, t48, t5, t52, t53, t6, t60, t62, t63, t74,
         t82, t83, t84, t86, t88, t89, t9, t91, t93, t95, t97, t98, t99;
 #pragma omp for
-    for (int k = kfirst; k <= klast; k++)
-      for (int j = jfirst; j <= jlast; j++)
-        for (int i = ifirst; i <= ilast; i++) {
+    for (sw4_type k = kfirst; k <= klast; k++)
+      for (sw4_type j = jfirst; j <= jlast; j++)
+        for (sw4_type i = ifirst; i <= ilast; i++) {
           size_t ind = base + i + ni * j + nij * k;
           float_sw4 z = zz[ind];
           float_sw4 y = yy[ind];
@@ -2588,8 +2588,8 @@ void EW::addmemvarforcingc_ci(int ifirst, int ilast, int jfirst, int jlast,
 }
 
 //-----------------------------------------------------------------------
-void EW::memvarforcesurfc_ci(int ifirst, int ilast, int jfirst, int jlast,
-                             int kfirst, int klast, int k,
+void EW::memvarforcesurfc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                             sw4_type kfirst, sw4_type klast, sw4_type k,
                              float_sw4* __restrict__ fo, float_sw4 t,
                              float_sw4 omega, float_sw4 c, float_sw4 phase,
                              float_sw4 omegaVE, float_sw4 dt,
@@ -2610,8 +2610,8 @@ void EW::memvarforcesurfc_ci(int ifirst, int ilast, int jfirst, int jlast,
         t37, t4, t40, t42, t43, t45, t48, t5, t52, t53, t6, t60, t62, t63, t74,
         t82, t83, t84, t86, t88, t89, t9, t91, t93, t95, t97, t98, t99;
 #pragma omp for
-    for (int j = jfirst; j <= jlast; j++)
-      for (int i = ifirst; i <= ilast; i++) {
+    for (sw4_type j = jfirst; j <= jlast; j++)
+      for (sw4_type i = ifirst; i <= ilast; i++) {
         size_t ind = base3 + i + ni * j + nij * k;
         float_sw4 z = zz[ind];
         float_sw4 y = yy[ind];

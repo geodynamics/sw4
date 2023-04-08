@@ -3,12 +3,12 @@
 
 class Patch {
  public:
-  int m_procid;  // ID of processor to send patch to, or to receive patch from.
+  sw4_type m_procid;  // ID of processor to send patch to, or to receive patch from.
                  // Sending or receiving depending on context.
-  int m_ib, m_ie, m_jb, m_je, m_kb,
+  sw4_type m_ib, m_ie, m_jb, m_je, m_kb,
       m_ke;  // Size of array patch in my processor
 
-  Patch(int dims[6], int procid);
+  Patch(sw4_type dims[6], sw4_type procid);
 
   template <class T>
   void pack(T* array, AllDims& dims, T* array_patch);

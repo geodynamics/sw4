@@ -38,7 +38,7 @@
 
 class TestEnergy {
  public:
-  TestEnergy(int seed, double cpcsratio, int write_every, std::string filename,
+  TestEnergy(sw4_type seed, double cpcsratio, sw4_type write_every, std::string filename,
              double amp, double sg_eps)
       : m_seed(seed),
         m_cpcsratio(cpcsratio),
@@ -50,7 +50,7 @@ class TestEnergy {
     srand48(m_seed);
   }
 
-  void record_data(double energy, int step, bool write_file, int myrank,
+  void record_data(double energy, sw4_type step, bool write_file, sw4_type myrank,
                    string path) {
     m_energyvector.push_back(energy);
     if (myrank == 0) {
@@ -61,14 +61,14 @@ class TestEnergy {
         //	    FILE *fd=fopen(m_filename.c_str(),"w");
         FILE* fd = fopen(filewpath.str().c_str(), "w");
         //	 	 cout << "energy = " << energy << endl;
-        for (int i = 0; i < m_energyvector.size(); i++)
+        for (sw4_type i = 0; i < m_energyvector.size(); i++)
           fprintf(fd, "%.20e\n", m_energyvector[i]);
         fclose(fd);
       }
     }
   }
 
-  int m_seed, m_write_every;
+  sw4_type m_seed, m_write_every;
   double m_cpcsratio, m_stochastic_amp, m_sg_epsL;
   std::vector<double> m_energyvector;
   std::string m_filename;

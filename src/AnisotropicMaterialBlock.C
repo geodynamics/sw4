@@ -42,7 +42,7 @@ AnisotropicMaterialBlock::AnisotropicMaterialBlock(
     EW* a_ew, float_sw4 rho, float_sw4 c[21], float_sw4 xmin, float_sw4 xmax,
     float_sw4 ymin, float_sw4 ymax, float_sw4 zmin, float_sw4 zmax) {
   m_rho = rho;
-  for (int i = 0; i < 21; i++) {
+  for (sw4_type i = 0; i < 21; i++) {
     m_c[i] = c[i];
     m_cgrad[i] = 0;
   }
@@ -91,7 +91,7 @@ void AnisotropicMaterialBlock::set_absoluteDepth(bool absDepth) {
 void AnisotropicMaterialBlock::set_gradients(float_sw4 rhograd,
                                              float_sw4 cgrad[21]) {
   m_rhograd = rhograd;
-  for (int i = 0; i < 21; i++) m_cgrad[i] = cgrad[i];
+  for (sw4_type i = 0; i < 21; i++) m_cgrad[i] = cgrad[i];
 }
 
 //-----------------------------------------------------------------------
@@ -104,21 +104,21 @@ bool AnisotropicMaterialBlock::inside_block(float_sw4 x, float_sw4 y,
 //-----------------------------------------------------------------------
 void AnisotropicMaterialBlock::set_material_properties(std::vector<Sarray>& rho,
                                                        std::vector<Sarray>& c) {
-  //  int pc[4];
+  //  sw4_type pc[4];
   // compute the number of parallel overlap points
-  //  mEW->interiorPaddingCells( pc );
-  int material = 0, outside = 0;
+  //  mEW->sw4_typeeriorPaddingCells( pc );
+  sw4_type material = 0, outside = 0;
 
-  for (int g = 0; g < mEW->mNumberOfCartesianGrids; g++)  // Cartesian grids
+  for (sw4_type g = 0; g < mEW->mNumberOfCartesianGrids; g++)  // Cartesian grids
   {
 #pragma omp parallel
     {
       // reference z-level for gradients is at z=0: AP changed this on 12/21/09
       float_sw4 zsurf = 0.;  // ?
 #pragma omp for reduction(+ : material, outside)
-      for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; k++) {
-        for (int j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; j++) {
-          for (int i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g]; i++) {
+      for (sw4_type k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; k++) {
+        for (sw4_type j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; j++) {
+          for (sw4_type i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g]; i++) {
             float_sw4 x = (i - 1) * mEW->mGridSize[g];
             float_sw4 y = (j - 1) * mEW->mGridSize[g];
             float_sw4 z = mEW->m_zmin[g] + (k - 1) * mEW->mGridSize[g];
@@ -135,7 +135,7 @@ void AnisotropicMaterialBlock::set_material_properties(std::vector<Sarray>& rho,
             if (inside_block(x, y, depth)) {
               if (m_rho != -1)
                 rho[g](i, j, k) = m_rho + m_rhograd * (depth - zsurf);
-              for (int nr = 1; nr <= 21; nr++)
+              for (sw4_type nr = 1; nr <= 21; nr++)
                 c[g](nr, i, j, k) =
                     m_c[nr - 1] + m_cgrad[nr - 1] * (depth - zsurf);
               material++;
@@ -163,9 +163,9 @@ void AnisotropicMaterialBlock::set_material_properties(std::vector<Sarray>& rho,
 
   if (mEW->topographyExists())  // curvilinear grid
   {
-    //    int gTop = mEW->mNumberOfGrids - 1;
-    for (int g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids; g++) {
-//    int g = mEW->mNumberOfGrids-1;
+    //    sw4_type gTop = mEW->mNumberOfGrids - 1;
+    for (sw4_type g = mEW->mNumberOfCartesianGrids; g < mEW->mNumberOfGrids; g++) {
+//    sw4_type g = mEW->mNumberOfGrids-1;
 
 // reference z-level for gradients is at z=0: AP changed this on 12/21/09
 #pragma omp parallel
@@ -173,9 +173,9 @@ void AnisotropicMaterialBlock::set_material_properties(std::vector<Sarray>& rho,
         float_sw4 zsurf = 0.;
 
 #pragma omp for reduction(+ : material, outside)
-        for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; k++) {
-          for (int j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; j++) {
-            for (int i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g]; i++) {
+        for (sw4_type k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; k++) {
+          for (sw4_type j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; j++) {
+            for (sw4_type i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g]; i++) {
               float_sw4 x = mEW->mX[g](i, j, k);
               float_sw4 y = mEW->mY[g](i, j, k);
               float_sw4 z = mEW->mZ[g](i, j, k);
@@ -192,7 +192,7 @@ void AnisotropicMaterialBlock::set_material_properties(std::vector<Sarray>& rho,
               if (inside_block(x, y, depth)) {
                 if (m_rho != -1)
                   rho[g](i, j, k) = m_rho + m_rhograd * (depth - zsurf);
-                for (int nr = 1; nr <= 21; nr++)
+                for (sw4_type nr = 1; nr <= 21; nr++)
                   c[g](nr, i, j, k) =
                       m_c[nr - 1] + m_cgrad[nr - 1] * (depth - zsurf);
                 material++;
@@ -215,9 +215,9 @@ void AnisotropicMaterialBlock::set_material_properties(std::vector<Sarray>& rho,
     }            // end for g (curvilinear)
 
   }  // end if topographyExists
-  int outsideSum, materialSum;
-  MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  sw4_type outsideSum, materialSum;
+  MPI_Reduce(&outside, &outsideSum, 1, MPI_SW4_TYPE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&material, &materialSum, 1, MPI_SW4_TYPE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if (mEW->proc_zero())
     cout << "block command: outside = " << outsideSum << ", "

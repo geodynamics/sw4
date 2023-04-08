@@ -44,8 +44,8 @@
 
 using namespace std;
 
-Filter::Filter(FilterType type, unsigned int numberOfPoles,
-               unsigned int numberOfPasses, float_sw4 f1, float_sw4 f2) {
+Filter::Filter(FilterType type, unsigned sw4_type numberOfPoles,
+               unsigned sw4_type numberOfPasses, float_sw4 f1, float_sw4 f2) {
   m_type = type;
   m_poles = numberOfPoles;
   CHECK_INPUT(m_poles > 0,
@@ -66,7 +66,7 @@ Filter::Filter(FilterType type, unsigned int numberOfPoles,
 
 // destructor
 Filter::~Filter() {
-  for (int q = 0; q < m_numberOfSOS; q++) delete m_SOSp[q];
+  for (sw4_type q = 0; q < m_numberOfSOS; q++) delete m_SOSp[q];
 }
 
 void Filter::computeSOS(float_sw4 dt) {
@@ -100,7 +100,7 @@ void Filter::computeSOS(float_sw4 dt) {
   } else {
     alpha0 = M_PI - 0.5 * dAlpha;
   }
-  for (int q = 0; q < m_complex_pairs; q++) {
+  for (sw4_type q = 0; q < m_complex_pairs; q++) {
     if (m_type == bandPass) {
       pole_re = complexConjugatedPolesBP(m_f1, m_f2, m_dt, alpha0, sos1_ptr,
                                          sos2_ptr);
@@ -131,7 +131,7 @@ ostream &operator<<(ostream &output, const Filter &s) {
          << " corner freq 2 = " << s.m_f2 << " passes = " << s.m_passes << endl
          << "The filter consists of " << s.m_SOSp.size()
          << " second order sections:" << endl;
-  for (int q = 0; q < s.m_SOSp.size(); q++) {
+  for (sw4_type q = 0; q < s.m_SOSp.size(); q++) {
     SecondOrderSection *sos_ptr = s.m_SOSp[q];
     //    printf("sos_ptr = %d\n", sos_ptr);
     output << "Numerator coefficients: " << sos_ptr->m_n << endl;
@@ -283,7 +283,7 @@ float_sw4 Filter::complexConjugatedPolesBP(float_sw4 f1, float_sw4 f2,
 
   // initialize storage
   float_sw4 n1[3], n2[3], d1[3], d2[3];
-  for (int q = 0; q < 3; q++) {
+  for (sw4_type q = 0; q < 3; q++) {
     n1[q] = 0;
     n2[q] = 0;
     d1[q] = 0;
@@ -381,7 +381,7 @@ float_sw4 Filter::complexConjugatedPolesLP(float_sw4 fc, float_sw4 dt,
 
   // initialize storage
   float_sw4 n1[3], d1[3];
-  for (int q = 0; q < 3; q++) {
+  for (sw4_type q = 0; q < 3; q++) {
     n1[q] = 0;
     d1[q] = 0;
   }
@@ -440,7 +440,7 @@ float_sw4 Filter::estimatePrecursor() {
 }
 
 //
-void Filter::evaluate(int N, float_sw4 *u, float_sw4 *mf)
+void Filter::evaluate(sw4_type N, float_sw4 *u, float_sw4 *mf)
 // Input: N: size of arrays u and mf
 //        u[i]: signal to be filtered
 // Output: mf[i]: filtered signal
@@ -448,7 +448,7 @@ void Filter::evaluate(int N, float_sw4 *u, float_sw4 *mf)
 // Note: u and mf can be the same array, in which case the filtered signal
 // overwrites the original signal
 {
-  int q, i;
+  sw4_type q, i;
   float_sw4 a[3], b[3], op;
   float_sw4 x1, x2, y1, y2;
 
@@ -458,7 +458,7 @@ void Filter::evaluate(int N, float_sw4 *u, float_sw4 *mf)
 
   if (mf != u) {
 #pragma omp parallel for
-    for (int i = 0; i < N; i++) mf[i] = u[i];
+    for (sw4_type i = 0; i < N; i++) mf[i] = u[i];
   }
 
   // first do the forwards filtering

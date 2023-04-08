@@ -43,21 +43,21 @@
 #include "mpi.h"
 
 // static variable definition (in class only declaration):
-int SfileOutput::mPreceedZeros = 0;
+sw4_type SfileOutput::mPreceedZeros = 0;
 
 SfileOutput* SfileOutput::nil = static_cast<SfileOutput*>(0);
 
 //-----------------------------------------------------------------------
-SfileOutput::SfileOutput(EW* a_ew, float_sw4 time, float_sw4 timeInterval,
-                         int cycle, int cycleInterval, float_sw4 tstart,
-                         const std::string& filePrefix, int sampleFactorH,
-                         int sampleFactorV, bool doubleMode)
+SfileOutput::SfileOutput(EW* a_ew, float_sw4 time, float_sw4 timeSw4_Typeerval,
+                         sw4_type cycle, sw4_type cycleSw4_Typeerval, float_sw4 tstart,
+                         const std::string& filePrefix, sw4_type sampleFactorH,
+                         sw4_type sampleFactorV, bool doubleMode)
     : mTime(time),
       mEW(a_ew),
       m_time_done(false),
-      mTimeInterval(timeInterval),
+      mTimeSw4_Typeerval(timeSw4_Typeerval),
       mWritingCycle(cycle),
-      mCycleInterval(cycleInterval),
+      mCycleSw4_Typeerval(cycleSw4_Typeerval),
       mFilePrefix(filePrefix),
       mSampleH(sampleFactorH),
       mSampleV(sampleFactorV),
@@ -76,14 +76,14 @@ SfileOutput::SfileOutput(EW* a_ew, float_sw4 time, float_sw4 timeInterval,
 SfileOutput::~SfileOutput() {
   if (m_memallocated) {
     if (m_double)
-      for (unsigned int g = 0; g < m_doubleField.size(); g++)
+      for (unsigned sw4_type g = 0; g < m_doubleField.size(); g++)
         delete[] m_doubleField[g];
     else
-      for (unsigned int g = 0; g < m_floatField.size(); g++)
+      for (unsigned sw4_type g = 0; g < m_floatField.size(); g++)
         delete[] m_floatField[g];
   }
   if (m_winallocated)
-    for (int g = 0; g < mEW->mNumberOfGrids; g++) {
+    for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
       delete[] mWindow[g];
       delete[] mGlobalDims[g];
     }
@@ -100,19 +100,19 @@ void SfileOutput::setup_images() {
   if (!m_winallocated) {
     mWindow.resize(mEW->mNumberOfGrids);
     mGlobalDims.resize(mEW->mNumberOfGrids);
-    for (int g = 0; g < mEW->mNumberOfGrids; g++) {
-      mWindow[g] = new int[6];
-      mGlobalDims[g] = new int[6];
+    for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
+      mWindow[g] = new sw4_type[6];
+      mGlobalDims[g] = new sw4_type[6];
     }
     m_winallocated = true;
   }
-  for (int g = 0; g < mEW->mNumberOfGrids; g++) {
-    mWindow[g][0] = mEW->m_iStartInt[g];
-    mWindow[g][1] = mEW->m_iEndInt[g];
-    mWindow[g][2] = mEW->m_jStartInt[g];
-    mWindow[g][3] = mEW->m_jEndInt[g];
-    mWindow[g][4] = mEW->m_kStartInt[g];
-    mWindow[g][5] = mEW->m_kEndInt[g];
+  for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
+    mWindow[g][0] = mEW->m_iStartSw4_Type[g];
+    mWindow[g][1] = mEW->m_iEndSw4_Type[g];
+    mWindow[g][2] = mEW->m_jStartSw4_Type[g];
+    mWindow[g][3] = mEW->m_jEndSw4_Type[g];
+    mWindow[g][4] = mEW->m_kStartSw4_Type[g];
+    mWindow[g][5] = mEW->m_kEndSw4_Type[g];
 
     mGlobalDims[g][0] = 1;
     mGlobalDims[g][1] = mEW->m_global_nx[g];
@@ -127,8 +127,8 @@ void SfileOutput::setup_images() {
 
     // Coarsen grid a number of levels
     if (mSampleH > 1 && m_ihavearray[g]) {
-      for (int dim = 0; dim < 2; dim++) {
-        int remainder =
+      for (sw4_type dim = 0; dim < 2; dim++) {
+        sw4_type remainder =
             (mWindow[g][2 * dim] - mGlobalDims[g][2 * dim]) % mSampleH;
         if (remainder != 0) mWindow[g][2 * dim] += mSampleH - remainder;
         remainder =
@@ -139,8 +139,8 @@ void SfileOutput::setup_images() {
             (mGlobalDims[g][2 * dim + 1] - mGlobalDims[g][2 * dim]) % mSampleH;
         if (remainder != 0) mGlobalDims[g][2 * dim + 1] -= remainder;
       }
-      for (int dim = 2; dim < 3; dim++) {
-        int remainder =
+      for (sw4_type dim = 2; dim < 3; dim++) {
+        sw4_type remainder =
             (mWindow[g][2 * dim] - mGlobalDims[g][2 * dim]) % mSampleV;
         if (remainder != 0) mWindow[g][2 * dim] += mSampleV - remainder;
         remainder =
@@ -158,7 +158,7 @@ void SfileOutput::setup_images() {
   m_extraz.resize(mEW->mNumberOfGrids);
   m_extraz[0] = 0;
   // Feature disabled
-  //   for( int g=1 ; g < mEW->mNumberOfGrids ; g++ )
+  //   for( sw4_type g=1 ; g < mEW->mNumberOfGrids ; g++ )
   //   {
   //      m_extraz[g] = 0;
   //      if( mEW->m_zmin[g] + (mWindow[g][5]-1)*mEW->mGridSize[g] <
@@ -168,7 +168,7 @@ void SfileOutput::setup_images() {
 
   if (m_double) {
     m_doubleField.resize(mEW->mNumberOfGrids);
-    for (int g = 0; g < mEW->mNumberOfGrids; g++) {
+    for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
       if (m_ihavearray[g]) {
         size_t npts =
             ((size_t)(mWindow[g][1] - mWindow[g][0]) / mSampleH + 1) *
@@ -180,7 +180,7 @@ void SfileOutput::setup_images() {
     }
   } else {
     m_floatField.resize(mEW->mNumberOfGrids);
-    for (int g = 0; g < mEW->mNumberOfGrids; g++) {
+    for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
       if (m_ihavearray[g]) {
         size_t npts =
             ((size_t)(mWindow[g][1] - mWindow[g][0]) / mSampleH + 1) *
@@ -197,11 +197,11 @@ void SfileOutput::setup_images() {
 
 //-----------------------------------------------------------------------
 void SfileOutput::define_pio() {
-  int glow = 0, ghigh = mEW->mNumberOfGrids;
+  sw4_type glow = 0, ghigh = mEW->mNumberOfGrids;
   m_parallel_io = new Parallel_IO*[ghigh - glow + 1];
-  for (int g = glow; g < ghigh; g++) {
-    int global[3], local[3], start[3];
-    for (int dim = 0; dim < 2; dim++) {
+  for (sw4_type g = glow; g < ghigh; g++) {
+    sw4_type global[3], local[3], start[3];
+    for (sw4_type dim = 0; dim < 2; dim++) {
       global[dim] =
           (mGlobalDims[g][2 * dim + 1] - mGlobalDims[g][2 * dim]) / mSampleH +
           1;
@@ -209,7 +209,7 @@ void SfileOutput::define_pio() {
           (mWindow[g][2 * dim + 1] - mWindow[g][2 * dim]) / mSampleH + 1;
       start[dim] = (mWindow[g][2 * dim] - mGlobalDims[g][2 * dim]) / mSampleH;
     }
-    for (int dim = 2; dim < 3; dim++) {
+    for (sw4_type dim = 2; dim < 3; dim++) {
       global[dim] =
           (mGlobalDims[g][2 * dim + 1] - mGlobalDims[g][2 * dim]) / mSampleV +
           1;
@@ -220,21 +220,21 @@ void SfileOutput::define_pio() {
     global[2] += m_extraz[g];
     local[2] += m_extraz[g];
 
-    int iwrite = 0;
-    int nrwriters = mEW->getNumberOfWritersPFS();
-    int nproc = 0, myid = 0;
+    sw4_type iwrite = 0;
+    sw4_type nrwriters = mEW->getNumberOfWritersPFS();
+    sw4_type nproc = 0, myid = 0;
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
     // new hack
-    int* owners = new int[nproc];
-    int i = 0;
-    for (int p = 0; p < nproc; p++)
+    sw4_type* owners = new sw4_type[nproc];
+    sw4_type i = 0;
+    for (sw4_type p = 0; p < nproc; p++)
       if (m_ihavearray[g]) owners[i++] = p;
     if (nrwriters > i) nrwriters = i;
 
     if (nrwriters > nproc) nrwriters = nproc;
-    int q, r;
+    sw4_type q, r;
     if (nproc == 1 || nrwriters == 1) {
       q = 0;
       r = 0;
@@ -242,7 +242,7 @@ void SfileOutput::define_pio() {
       q = (nproc - 1) / (nrwriters - 1);
       r = (nproc - 1) % (nrwriters - 1);
     }
-    for (int w = 0; w < nrwriters; w++)
+    for (sw4_type w = 0; w < nrwriters; w++)
       if (q * w + r == myid) iwrite = 1;
     //      std::cout << "Define PIO: grid " << g << " myid = " << myid << "
     //      iwrite= " << iwrite << " start= "
@@ -255,7 +255,7 @@ void SfileOutput::define_pio() {
 }
 
 //-----------------------------------------------------------------------
-void SfileOutput::setSteps(int a_steps) {
+void SfileOutput::setSteps(sw4_type a_steps) {
   char buffer[50];
   mPreceedZeros = snprintf(buffer, 50, "%d", a_steps);
 }
@@ -267,15 +267,15 @@ void SfileOutput::setSteps(int a_steps) {
 //}
 
 //-----------------------------------------------------------------------
-bool SfileOutput::timeToWrite(float_sw4 time, int cycle, float_sw4 dt) {
+bool SfileOutput::timeToWrite(float_sw4 time, sw4_type cycle, float_sw4 dt) {
   // -----------------------------------------------
   // Check based on cycle
   // -----------------------------------------------
-  //   cout << "in time to write " << mWritingCycle << " " << mCycleInterval <<
-  //   " " << " " << mTime << " " <<  mTimeInterval << " " << endl;
+  //   cout << "in time to write " << mWritingCycle << " " << mCycleSw4_Typeerval <<
+  //   " " << " " << mTime << " " <<  mTimeSw4_Typeerval << " " << endl;
   bool do_it = false;
   if (cycle == mWritingCycle) do_it = true;
-  if (mCycleInterval != 0 && cycle % mCycleInterval == 0 && time >= mStartTime)
+  if (mCycleSw4_Typeerval != 0 && cycle % mCycleSw4_Typeerval == 0 && time >= mStartTime)
     do_it = true;
 
   // ---------------------------------------------------
@@ -285,15 +285,15 @@ bool SfileOutput::timeToWrite(float_sw4 time, int cycle, float_sw4 dt) {
     m_time_done = true;
     do_it = true;
   }
-  if (mTimeInterval != 0.0 && mNextTime <= time + dt * 0.5) {
-    mNextTime += mTimeInterval;
+  if (mTimeSw4_Typeerval != 0.0 && mNextTime <= time + dt * 0.5) {
+    mNextTime += mTimeSw4_Typeerval;
     if (time >= mStartTime) do_it = true;
   }
   return do_it;
 }
 
 //-----------------------------------------------------------------------
-void SfileOutput::update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
+void SfileOutput::update_image(sw4_type a_cycle, float_sw4 a_time, float_sw4 a_dt,
                                vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                                vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda,
                                vector<Sarray>& a_gRho, vector<Sarray>& a_gMu,
@@ -307,17 +307,17 @@ void SfileOutput::update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
 
 //-----------------------------------------------------------------------
 void SfileOutput::force_write_image(
-    float_sw4 a_time, int a_cycle, vector<Sarray>& a_U, vector<Sarray>& a_Rho,
+    float_sw4 a_time, sw4_type a_cycle, vector<Sarray>& a_U, vector<Sarray>& a_Rho,
     vector<Sarray>& a_Mu, vector<Sarray>& a_Lambda, vector<Sarray>& a_gRho,
     vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda, vector<Sarray>& a_Qp,
     vector<Sarray>& a_Qs, std::string a_path, std::vector<Sarray>& a_Z) {
   double stime, etime, ttime = 0.0;
   enum SfileOutputMode vars[5] = {RHO, P, S, QP, QS};
-  int nvar = m_att ? 5 : 3;
+  sw4_type nvar = m_att ? 5 : 3;
   std::string fname;
   gen_fname(a_path, a_cycle, fname);
 
-  for (int varid = 0; varid < nvar; varid++) {
+  for (sw4_type varid = 0; varid < nvar; varid++) {
     mMode = vars[varid];
     compute_image(a_U, a_Rho, a_Mu, a_Lambda, a_gRho, a_gMu, a_gLambda, a_Qp,
                   a_Qs, a_Z);
@@ -340,31 +340,31 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                                 vector<Sarray>& a_gLambda, vector<Sarray>& a_Qp,
                                 vector<Sarray>& a_Qs,
                                 std::vector<Sarray>& a_Z) {
-  int stH = mSampleH;
-  int stV = mSampleV;
+  sw4_type stH = mSampleH;
+  sw4_type stV = mSampleV;
   double my_z, up_z, down_z, up_v, down_v;
 
   /* if (mMode== RHO && m_parallel_io[0]->proc_zero()) { */
-  /*     for( int g=mEW->mNumberOfCartesianGrids ; g < mEW->mNumberOfGrids ; g++
+  /*     for( sw4_type g=mEW->mNumberOfCartesianGrids ; g < mEW->mNumberOfGrids ; g++
    * ) { */
   /*       cout << "g="<< g << ", a_Z.m_kb="<< a_Z[g].m_kb << ", a_Z.m_ke=" <<
    * a_Z[g].m_ke << ", gz=" << mWindow[g][5] << endl; */
-  /*       cout << "kend, kstart: " << mEW->m_kEndInt[g] << ", " <<
-   * mEW->m_kStartInt[g]; */
+  /*       cout << "kend, kstart: " << mEW->m_kEndSw4_Type[g] << ", " <<
+   * mEW->m_kStartSw4_Type[g]; */
   /*       printf("Z values\n"); */
-  /*       for (int j = 0; j <= a_Z[g].m_ke; j++) { */
+  /*       for (sw4_type j = 0; j <= a_Z[g].m_ke; j++) { */
   /*         printf("(1,1,%d): %f\n", j, a_Z[g](1,1,j)); */
   /*       } */
   /*     } */
   /* } */
 
-  for (int g = 0; g < mEW->mNumberOfGrids; g++) {
-    int nkw = (mWindow[g][5] - mWindow[g][4]) / stV + 1;
-    int njkw = nkw * ((mWindow[g][3] - mWindow[g][2]) / stH + 1);
-    int gz = g;
-    /* int ku = mWindow[gz][5]; */
-    int kl = mEW->m_kStartInt[gz];
-    int ku = mEW->m_kEndInt[gz];
+  for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
+    sw4_type nkw = (mWindow[g][5] - mWindow[g][4]) / stV + 1;
+    sw4_type njkw = nkw * ((mWindow[g][3] - mWindow[g][2]) / stH + 1);
+    sw4_type gz = g;
+    /* sw4_type ku = mWindow[gz][5]; */
+    sw4_type kl = mEW->m_kStartSw4_Type[gz];
+    sw4_type ku = mEW->m_kEndSw4_Type[gz];
 
     Sarray *data1 = NULL, *data2 = NULL, *data3 = NULL;
     if (mMode == RHO)
@@ -389,9 +389,9 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
             QS) {  // these modes just copy the values straight from the array
       if (m_double) {
 #pragma omp parallel for
-        for (int k = mWindow[g][4]; k <= mWindow[g][5]; k += stV)
-          for (int j = mWindow[g][2]; j <= mWindow[g][3]; j += stH)
-            for (int i = mWindow[g][0]; i <= mWindow[g][1]; i += stH) {
+        for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k += stV)
+          for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j += stH)
+            for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i += stH) {
               size_t ind = (k - mWindow[g][4]) / stV +
                            nkw * (j - mWindow[g][2]) / stH +
                            njkw * (i - mWindow[g][0]) / stH;
@@ -401,7 +401,7 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 double z_kl = -mEW->mTopo(i, j, 1);
                 double z_ku = a_Z[gz](i, j, ku);
                 my_z = z_kl + (z_ku - z_kl) * (k - 1) / (double)(ku - 1);
-                int t = 1;
+                sw4_type t = 1;
                 while (my_z >= a_Z[gz](i, j, t) && t < mWindow[g][5]) {
                   t++;
                 }
@@ -409,16 +409,16 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 down_z = (double)a_Z[gz](i, j, t);
                 up_v = (double)((*data1)(1, i, j, t - 1));
                 down_v = (double)((*data1)(1, i, j, t));
-                // Linear interp
+                // Linear sw4_typeerp
                 m_doubleField[g][ind] =
                     up_v + (down_v - up_v) * (my_z - up_z) / (down_z - up_z);
               }
             }
       } else {
 #pragma omp parallel for
-        for (int k = mWindow[g][4]; k <= mWindow[g][5]; k += stV)
-          for (int j = mWindow[g][2]; j <= mWindow[g][3]; j += stH)
-            for (int i = mWindow[g][0]; i <= mWindow[g][1]; i += stH) {
+        for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k += stV)
+          for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j += stH)
+            for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i += stH) {
               size_t ind = (k - mWindow[g][4]) / stV +
                            nkw * (j - mWindow[g][2]) / stH +
                            njkw * (i - mWindow[g][0]) / stH;
@@ -429,7 +429,7 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 double z_kl = -mEW->mTopo(i, j, 1);
                 double z_ku = a_Z[gz](i, j, ku);
                 my_z = z_kl + (z_ku - z_kl) * (k - 1) / (double)(ku - 1);
-                int t = 1;
+                sw4_type t = 1;
                 while (my_z >= a_Z[gz](i, j, t) && t < mWindow[g][5]) {
                   t++;
                 }
@@ -437,7 +437,7 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 down_z = (double)a_Z[gz](i, j, t);
                 up_v = (double)((*data1)(1, i, j, t - 1));
                 down_v = (double)((*data1)(1, i, j, t));
-                // Linear interp
+                // Linear sw4_typeerp
                 m_floatField[g][ind] =
                     up_v + (down_v - up_v) * (my_z - up_z) / (down_z - up_z);
               }
@@ -446,9 +446,9 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
     } else if (mMode == P) {
       if (m_double) {
 #pragma omp parallel for
-        for (int k = mWindow[g][4]; k <= mWindow[g][5]; k += stV)
-          for (int j = mWindow[g][2]; j <= mWindow[g][3]; j += stH)
-            for (int i = mWindow[g][0]; i <= mWindow[g][1]; i += stH) {
+        for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k += stV)
+          for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j += stH)
+            for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i += stH) {
               size_t ind = (k - mWindow[g][4]) / stV +
                            nkw * (j - mWindow[g][2]) / stH +
                            njkw * (i - mWindow[g][0]) / stH;
@@ -460,7 +460,7 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 double z_kl = -mEW->mTopo(i, j, 1);
                 double z_ku = a_Z[gz](i, j, ku);
                 my_z = z_kl + (z_ku - z_kl) * (k - 1) / (double)(ku - 1);
-                int t = 1;
+                sw4_type t = 1;
                 while (my_z >= a_Z[gz](i, j, t) && t < mWindow[g][5]) {
                   t++;
                 }
@@ -484,16 +484,16 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 down_v = sqrt((2.0 * down_mu + down_lambda) /
                               ((*data1)(1, i, j, t)));
 
-                // Linear interp
+                // Linear sw4_typeerp
                 m_doubleField[g][ind] =
                     up_v + (down_v - up_v) * (my_z - up_z) / (down_z - up_z);
               }
             }
       } else {
 #pragma omp parallel for
-        for (int k = mWindow[g][4]; k <= mWindow[g][5]; k += stV)
-          for (int j = mWindow[g][2]; j <= mWindow[g][3]; j += stH)
-            for (int i = mWindow[g][0]; i <= mWindow[g][1]; i += stH) {
+        for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k += stV)
+          for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j += stH)
+            for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i += stH) {
               size_t ind = (k - mWindow[g][4]) / stV +
                            nkw * (j - mWindow[g][2]) / stH +
                            njkw * (i - mWindow[g][0]) / stH;
@@ -505,7 +505,7 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 double z_kl = -mEW->mTopo(i, j, 1);
                 double z_ku = a_Z[gz](i, j, ku);
                 my_z = z_kl + (z_ku - z_kl) * (k - 1) / (double)(ku - 1);
-                int t = 1;
+                sw4_type t = 1;
                 while (my_z >= a_Z[gz](i, j, t) && t < mWindow[g][5]) {
                   t++;
                 }
@@ -531,7 +531,7 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                             ((*data1)(1, i, j, t - 1)));
                 down_v = sqrt((2.0 * down_mu + down_lambda) /
                               ((*data1)(1, i, j, t)));
-                // Linear interp
+                // Linear sw4_typeerp
                 m_floatField[g][ind] =
                     up_v + (down_v - up_v) * (my_z - up_z) / (down_z - up_z);
                 /* // TODO: debug */
@@ -547,9 +547,9 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
     } else if (mMode == S) {
       if (m_double) {
 #pragma omp parallel for
-        for (int k = mWindow[g][4]; k <= mWindow[g][5]; k += stV)
-          for (int j = mWindow[g][2]; j <= mWindow[g][3]; j += stH)
-            for (int i = mWindow[g][0]; i <= mWindow[g][1]; i += stH) {
+        for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k += stV)
+          for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j += stH)
+            for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i += stH) {
               size_t ind = (k - mWindow[g][4]) / stV +
                            nkw * (j - mWindow[g][2]) / stH +
                            njkw * (i - mWindow[g][0]) / stH;
@@ -560,7 +560,7 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 double z_kl = -mEW->mTopo(i, j, 1);
                 double z_ku = a_Z[gz](i, j, ku);
                 my_z = z_kl + (z_ku - z_kl) * (k - 1) / (double)(ku - 1);
-                int t = 1;
+                sw4_type t = 1;
                 while (my_z >= a_Z[gz](i, j, t) && t < mWindow[g][5]) {
                   t++;
                 }
@@ -581,16 +581,16 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 /* } */
                 up_v = sqrt(up_mu / ((*data1)(1, i, j, t - 1)));
                 down_v = sqrt(down_mu / ((*data1)(1, i, j, t)));
-                // Linear interp
+                // Linear sw4_typeerp
                 m_doubleField[g][ind] =
                     up_v + (down_v - up_v) * (my_z - up_z) / (down_z - up_z);
               }
             }
       } else {
 #pragma omp parallel for
-        for (int k = mWindow[g][4]; k <= mWindow[g][5]; k += stV)
-          for (int j = mWindow[g][2]; j <= mWindow[g][3]; j += stH)
-            for (int i = mWindow[g][0]; i <= mWindow[g][1]; i += stH) {
+        for (sw4_type k = mWindow[g][4]; k <= mWindow[g][5]; k += stV)
+          for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j += stH)
+            for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i += stH) {
               size_t ind = (k - mWindow[g][4]) / stV +
                            nkw * (j - mWindow[g][2]) / stH +
                            njkw * (i - mWindow[g][0]) / stH;
@@ -601,7 +601,7 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 double z_kl = -mEW->mTopo(i, j, 1);
                 double z_ku = a_Z[gz](i, j, ku);
                 my_z = z_kl + (z_ku - z_kl) * (k - 1) / (double)(ku - 1);
-                int t = 1;
+                sw4_type t = 1;
                 while (my_z >= a_Z[gz](i, j, t) && t < mWindow[g][5]) {
                   t++;
                 }
@@ -623,7 +623,7 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
                 up_v = sqrt(up_mu / ((*data1)(1, i, j, t - 1)));
                 down_v = sqrt(down_mu / ((*data1)(1, i, j, t)));
 
-                // Linear interp
+                // Linear sw4_typeerp
                 m_floatField[g][ind] =
                     up_v + (down_v - up_v) * (my_z - up_z) / (down_z - up_z);
               }
@@ -634,7 +634,7 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
     // Extrapolate extra point in z
     if (m_extraz[g] == 1) {
       /* cout << "g=" << g << ", need extrapolate extra z" << endl; */
-      int k = mWindow[g][5] + stV;
+      sw4_type k = mWindow[g][5] + stV;
       size_t ind, ind_1, ind_2;
 #ifdef BZ_DEBUG
       size_t npts = ((size_t)(mWindow[g][1] - mWindow[g][0]) / stH + 1) *
@@ -644,12 +644,12 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
 
       // Linear extrapolation assumes that
       // mWindow[g][5]-st>=mWindow[g][4], i.e. mWindow[g][5] -mWindow[g][4]>=st.
-      int ok = 2;
+      sw4_type ok = 2;
       if (mWindow[g][5] - mWindow[g][4] < stV) ok = 1;
 
       if (m_double) {
-        for (int j = mWindow[g][2]; j <= mWindow[g][3]; j += stH)
-          for (int i = mWindow[g][0]; i <= mWindow[g][1]; i += stH) {
+        for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j += stH)
+          for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i += stH) {
             ind = (k - mWindow[g][4]) / stV + nkw * (j - mWindow[g][2]) / stH +
                   njkw * (i - mWindow[g][0]) / stH;
             ind_1 = (k - 1 - mWindow[g][4]) / stV +
@@ -666,8 +666,8 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
           }
 
       } else {
-        for (int j = mWindow[g][2]; j <= mWindow[g][3]; j += stH)
-          for (int i = mWindow[g][0]; i <= mWindow[g][1]; i += stH) {
+        for (sw4_type j = mWindow[g][2]; j <= mWindow[g][3]; j += stH)
+          for (sw4_type i = mWindow[g][0]; i <= mWindow[g][1]; i += stH) {
             ind = (k - mWindow[g][4]) / stV + nkw * (j - mWindow[g][2]) / stH +
                   njkw * (i - mWindow[g][0]) / stH;
             ind_1 = (k - 1 - mWindow[g][4]) / stV +
@@ -688,12 +688,12 @@ void SfileOutput::compute_image(vector<Sarray>& a_U, vector<Sarray>& a_Rho,
 }
 
 //-----------------------------------------------------------------------
-void SfileOutput::gen_fname(std::string& path, int cycle, std::string& fname) {
+void SfileOutput::gen_fname(std::string& path, sw4_type cycle, std::string& fname) {
   fname = path;
   fname += mFilePrefix;
   /* fname += ".cycle="; */
-  /* int temp = static_cast<int>(pow(10.0, mPreceedZeros - 1)); */
-  /* int testcycle = cycle; */
+  /* sw4_type temp = static_cast<sw4_type>(pow(10.0, mPreceedZeros - 1)); */
+  /* sw4_type testcycle = cycle; */
   /* if (cycle == 0) */
   /*   testcycle=1; */
   /* while (testcycle < temp) { */
@@ -721,26 +721,26 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
 #ifdef USE_HDF5
   hid_t h5_fid, grp, grp2, dset, attr, dspace, attr_space1, attr_space2,
       attr_space3, fapl, dxpl, filespace, memspace;
-  int ret;
-  int myid = 0;
+  sw4_type ret;
+  sw4_type myid = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
   hsize_t offsets[3], counts[3];
   char dname[128], gname[128];
 
-  int ng = mEW->mNumberOfGrids;
+  sw4_type ng = mEW->mNumberOfGrids;
 
   ASSERT(m_isDefinedMPIWriters);
-  int gridinfo = 0;
+  sw4_type gridinfo = 0;
   if (mEW->topographyExists()) gridinfo = 1;
 
   bool iwrite = false;
-  for (int g = 0; g < ng; g++) iwrite = iwrite || m_parallel_io[g]->i_write();
+  for (sw4_type g = 0; g < ng; g++) iwrite = iwrite || m_parallel_io[g]->i_write();
 
-  int stV = mSampleV;
-  int stH = mSampleH;
+  sw4_type stV = mSampleV;
+  sw4_type stH = mSampleH;
 
-  int alignment = 65536;
+  sw4_type alignment = 65536;
   setenv("HDF5_USE_FILE_LOCKING", "FALSE", 1);
 
   // Open file from processor zero and write header.
@@ -786,20 +786,20 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
     H5Aclose(attr);
 
     aname = "Attenuation";
-    int att = mEW->usingAttenuation();
-    attr = H5Acreate(h5_fid, aname, H5T_NATIVE_INT, attr_space1, H5P_DEFAULT,
+    sw4_type att = mEW->usingAttenuation();
+    attr = H5Acreate(h5_fid, aname, H5T_NATIVE_SW4_TYPE, attr_space1, H5P_DEFAULT,
                      H5P_DEFAULT);
     if (attr < 0)
       VERIFY2(0, "ERROR: SfileOutput::write_image, error creating " << aname);
-    H5Awrite(attr, H5T_NATIVE_INT, &att);
+    H5Awrite(attr, H5T_NATIVE_SW4_TYPE, &att);
     H5Aclose(attr);
 
     aname = "ngrids";
-    attr = H5Acreate(h5_fid, aname, H5T_NATIVE_INT, attr_space1, H5P_DEFAULT,
+    attr = H5Acreate(h5_fid, aname, H5T_NATIVE_SW4_TYPE, attr_space1, H5P_DEFAULT,
                      H5P_DEFAULT);
     if (attr < 0)
       VERIFY2(0, "ERROR: SfileOutput::write_image, error creating " << aname);
-    H5Awrite(attr, H5T_NATIVE_INT, &ng);
+    H5Awrite(attr, H5T_NATIVE_SW4_TYPE, &ng);
     H5Aclose(attr);
 
     aname = "Min, max depth";
@@ -813,13 +813,13 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
     H5Awrite(attr, H5T_NATIVE_DOUBLE, minmaxdp);
     H5Aclose(attr);
 
-    grp = H5Gcreate(h5_fid, "Z_interfaces", H5P_DEFAULT, H5P_DEFAULT,
+    grp = H5Gcreate(h5_fid, "Z_sw4_typeerfaces", H5P_DEFAULT, H5P_DEFAULT,
                     H5P_DEFAULT);
     if (grp < 0)
       VERIFY2(0,
-              "ERROR: SfileOutput::write_image, error creating Z_interfaces");
+              "ERROR: SfileOutput::write_image, error creating Z_sw4_typeerfaces");
 
-    // Top interface (topo)
+    // Top sw4_typeerface (topo)
     hsize_t globalSize[3];
     globalSize[0] =
         (hsize_t)(mGlobalDims[ng - 1][1] - mGlobalDims[ng - 1][0]) / stH + 1;
@@ -829,10 +829,10 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
 
     dspace = H5Screate_simple(2, globalSize, NULL);
     hid_t dcpl;
-    float intf = 0.0;
-    // No topo fill all 0s to top interface
+    float sw4_typef = 0.0;
+    // No topo fill all 0s to top sw4_typeerface
     dcpl = H5Pcreate(H5P_DATASET_CREATE);
-    if (gridinfo == 0) H5Pset_fill_value(dcpl, H5T_NATIVE_FLOAT, &intf);
+    if (gridinfo == 0) H5Pset_fill_value(dcpl, H5T_NATIVE_FLOAT, &sw4_typef);
     dset = H5Dcreate(grp, dname, H5T_NATIVE_FLOAT, dspace, H5P_DEFAULT, dcpl,
                      H5P_DEFAULT);
 
@@ -840,8 +840,8 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
     H5Sclose(dspace);
     H5Dclose(dset);
 
-    // Create interfaces other than top one
-    for (int g = ng - 1; g >= 0; g--) {
+    // Create sw4_typeerfaces other than top one
+    for (sw4_type g = ng - 1; g >= 0; g--) {
       sprintf(dname, "z_values_%d", ng - g);
       globalSize[0] =
           (hsize_t)(mGlobalDims[g][1] - mGlobalDims[g][0]) / stH + 1;
@@ -853,12 +853,12 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
       // Cartisian grid, fill with a const value
       if (g <= mEW->mNumberOfCartesianGrids) {
         if (g == 0)
-          intf = mEW->getGlobalZmax();
+          sw4_typef = mEW->getGlobalZmax();
         else
-          intf = mEW->m_zmin[g - 1];
-        /* std::cout << "Setting const z value to intf " << ng-g << " with " <<
-         * intf << std::endl; */
-        H5Pset_fill_value(dcpl, H5T_NATIVE_FLOAT, &intf);
+          sw4_typef = mEW->m_zmin[g - 1];
+        /* std::cout << "Setting const z value to sw4_typef " << ng-g << " with " <<
+         * sw4_typef << std::endl; */
+        H5Pset_fill_value(dcpl, H5T_NATIVE_FLOAT, &sw4_typef);
       }
 
       dset = H5Dcreate(grp, dname, H5T_NATIVE_FLOAT, dspace, H5P_DEFAULT, dcpl,
@@ -888,7 +888,7 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
               "ERROR: SfileOutput::write_image, error creating Material model "
               "group");
 
-    for (int g = 0; g < ng; g++) {
+    for (sw4_type g = 0; g < ng; g++) {
       sprintf(gname, "grid_%d", ng - g - 1);
       grp2 = H5Gcreate(grp, gname, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
       if (grp2 < 0)
@@ -904,12 +904,12 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
       H5Aclose(attr);
 
       aname = "Number of components";
-      int ncomp = m_att ? 5 : 3;
-      attr = H5Acreate(grp2, aname, H5T_NATIVE_INT, attr_space1, H5P_DEFAULT,
+      sw4_type ncomp = m_att ? 5 : 3;
+      attr = H5Acreate(grp2, aname, H5T_NATIVE_SW4_TYPE, attr_space1, H5P_DEFAULT,
                        H5P_DEFAULT);
       if (attr < 0)
         VERIFY2(0, "ERROR: SfileOutput::write_image, error creating " << aname);
-      H5Awrite(attr, H5T_NATIVE_INT, &ncomp);
+      H5Awrite(attr, H5T_NATIVE_SW4_TYPE, &ncomp);
       H5Aclose(attr);
 
       globalSize[0] =
@@ -943,7 +943,7 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
 
     H5Gclose(grp);
 
-    // Top interface (topo)
+    // Top sw4_typeerface (topo)
     H5Sclose(attr_space1);
     H5Sclose(attr_space2);
     H5Sclose(attr_space3);
@@ -964,10 +964,10 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
 
-  // Write interfaces
+  // Write sw4_typeerfaces
   if (gridinfo == 1 && m_modestring == "Rho") {
-    for (int g = mEW->mNumberOfCartesianGrids; g < ng; g++) {
-      int real_g = g + 1;
+    for (sw4_type g = mEW->mNumberOfCartesianGrids; g < ng; g++) {
+      sw4_type real_g = g + 1;
       bool is_topo = (g == ng - 1);
       if (is_topo) real_g = g;
 
@@ -976,12 +976,12 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
            1) *
           ((mGlobalDims[real_g][3] - mGlobalDims[real_g][2]) / stH + 1);
 
-      int nj = (int)(mWindow[real_g][3] - mWindow[real_g][2]) / stH + 1;
-      int nk = mWindow[real_g][5];
+      sw4_type nj = (sw4_type)(mWindow[real_g][3] - mWindow[real_g][2]) / stH + 1;
+      sw4_type nk = mWindow[real_g][5];
       float* zfp = new float[npts];
 #pragma omp parallel for
-      for (int j = mWindow[real_g][2]; j <= mWindow[real_g][3]; j += stH)
-        for (int i = mWindow[real_g][0]; i <= mWindow[real_g][1]; i += stH) {
+      for (sw4_type j = mWindow[real_g][2]; j <= mWindow[real_g][3]; j += stH)
+        for (sw4_type i = mWindow[real_g][0]; i <= mWindow[real_g][1]; i += stH) {
           size_t ind = (size_t)(j - mWindow[real_g][2]) / stH +
                        nj * (i - mWindow[real_g][0]) / stH;
           /* ASSERT(ind < npts); */
@@ -991,7 +991,7 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
             zfp[ind] = (float)a_Z[real_g](i, j, nk);
         }
 
-      sprintf(gname, "Z_interfaces");
+      sprintf(gname, "Z_sw4_typeerfaces");
       grp = H5Gopen(h5_fid, gname, H5P_DEFAULT);
       if (grp < 0) {
         cout << "Rank " << myid << " error opening [" << gname
@@ -1024,7 +1024,7 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
 
       ret = H5Dwrite(dset, H5T_NATIVE_FLOAT, memspace, filespace, dxpl, zfp);
       if (ret < 0) {
-        cout << "Sfileoutput error writing interface!" << endl;
+        cout << "Sfileoutput error writing sw4_typeerface!" << endl;
         cout << "Rank " << myid << ": offsets " << offsets[0] << ", "
              << offsets[1] << ", " << offsets[2] << endl;
         cout << "Rank " << myid << ": counts  " << counts[0] << ", "
@@ -1045,7 +1045,7 @@ void SfileOutput::write_image(const char* fname, std::vector<Sarray>& a_Z) {
 
   }  // end if grid info
 
-  for (int g = 0; g < ng; g++) {
+  for (sw4_type g = 0; g < ng; g++) {
     // Sfile grid order is reverse of sw4 grid order
     sprintf(gname, "/Material_model/grid_%d", ng - g - 1);
 

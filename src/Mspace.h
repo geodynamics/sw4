@@ -39,7 +39,7 @@
 #include "cuda_runtime.h"
 bool mpi_supports_device_buffers();
 void CheckError(cudaError_t const err, const char *file, char const *const fun,
-                const int line);
+                const sw4_type line);
 void prefetch_to_device(const float_sw4 *ptr);
 #define SW4_CheckDeviceError(err) \
   CheckError(err, __FILE__, __FUNCTION__, __LINE__)
@@ -52,7 +52,7 @@ void prefetch_to_device(const float_sw4 *ptr);
 #include <roctracer/roctracer_ext.h>
 #endif
 void CheckError(hipError_t const err, const char *file, char const *const fun,
-                const int line);
+                const sw4_type line);
 #define SW4_CheckDeviceError(err) \
   CheckError(err, __FILE__, __FUNCTION__, __LINE__)
 //#define PROFILER_START SW4_CheckDeviceError(hipProfilerStart())
@@ -66,7 +66,7 @@ void CheckError(hipError_t const err, const char *file, char const *const fun,
 #else
 // void CheckError(hipError_t const err, const char *file, char const *const
 // fun,
-//                const int line);
+//                const sw4_type line);
 #define SW4_CheckDeviceError(err)
 #define PROFILER_START
 #define PROFILER_STOP
@@ -83,7 +83,7 @@ enum class Space : unsigned int {
   Space_Error
 };
 template <typename Enumeration>
-auto as_int(Enumeration const value) ->
+auto as_sw4_type(Enumeration const value) ->
     typename std::underlying_type<Enumeration>::type {
   return static_cast<typename std::underlying_type<Enumeration>::type>(value);
 }
@@ -91,13 +91,13 @@ Space GML(const void *ptr);
 void *operator new(std::size_t size, Space loc) throw();
 void operator delete(void *ptr, Space loc) throw();
 void *operator new[](std::size_t size, Space loc) throw();
-void *operator new[](std::size_t size, Space loc, const char *file, int line);
+void *operator new[](std::size_t size, Space loc, const char *file, sw4_type line);
 void operator delete[](void *ptr, Space loc) throw();
-void operator delete(void *ptr, Space loc, const char *file, int line) throw();
+void operator delete(void *ptr, Space loc, const char *file, sw4_type line) throw();
 void operator delete[](void *ptr, Space loc, const char *file,
-                       int line) throw();
-int presetGPUID(int mpi_rank, int local_rank, int local_size);
-void print_hwm(int rank);
+                       sw4_type line) throw();
+sw4_type presetGPUID(sw4_type mpi_rank, sw4_type local_rank, sw4_type local_size);
+void prsw4_type_hwm(sw4_type rank);
 struct global_variable_holder_struct {
   size_t gpu_memory_hwm;
   size_t curr_mem;
@@ -105,10 +105,10 @@ struct global_variable_holder_struct {
   size_t host_mem_hwm;
   size_t host_curr_mem;
   size_t host_max_mem;
-  int device;
-  int num_devices;
+  sw4_type device;
+  sw4_type num_devices;
   bool firstCycle;
-  int current_step;
+  sw4_type current_step;
   size_t buffer_size;
   float_sw4 *device_buffer;
   std::vector<std::tuple<char *, size_t>> massprefetch;
@@ -135,13 +135,13 @@ extern struct global_variable_holder_struct global_variables;
 
 #define PREFETCH(ptr) (prefetch_to_device((ptr)))
 
-void assert_check_host(void *ptr, const char *file, int line);
-void assert_check_managed(void *ptr, const char *file, int line);
+void assert_check_host(void *ptr, const char *file, sw4_type line);
+void assert_check_managed(void *ptr, const char *file, sw4_type line);
 
 #define PTR_PUSH(type, ptr, size) \
   (ptr_push(ptr, type, size, __FILE__, __LINE__))
 
-void ptr_push(void *ptr, Space type, size_t size, const char *file, int line);
+void ptr_push(void *ptr, Space type, size_t size, const char *file, sw4_type line);
 
 #else
 
@@ -165,8 +165,8 @@ class Managed {
   static size_t ocount;
   static size_t hwm;
   // static size_t mem_total;
-  // static int host;
-  // static int device;
+  // static sw4_type host;
+  // static sw4_type device;
 
   Managed() {}
   ~Managed() {
@@ -193,7 +193,7 @@ class Managed {
 class Apc {
  public:
   std::ofstream ofile;
-  int counter;
+  sw4_type counter;
   Apc(char *s);
   ~Apc();
 };
@@ -201,11 +201,11 @@ class Apc {
 template <typename T, typename N>
 std::string line(T, N) = delete;
 
-std::string line(int n, int C);
-std::string line(int *n, int C);
-std::string line(double n, int C);
-std::string line(double *n, int C);
-std::string line(char n, int C);
+std::string line(sw4_type n, sw4_type C);
+std::string line(sw4_type *n, sw4_type C);
+std::string line(double n, sw4_type C);
+std::string line(double *n, sw4_type C);
+std::string line(char n, sw4_type C);
 
 template <typename T>
 void autopeel(Apc &apc, T only) {
@@ -227,7 +227,7 @@ void Write(T &t, std::string filename) {
     i.swrite(filename);
   }
 }
-void invert(float_sw4 *A, int N);
+void invert(float_sw4 *A, sw4_type N);
 
 template <class T>
 void spacecopy(T *&dst, T *&src, Space dst_space, Space src_space,
@@ -259,6 +259,6 @@ void spacecopy(T *&dst, T *&src, Space dst_space, Space src_space,
   }
 
   std::cout << "ERROR :: Undefined Mspace::copy operation from "
-            << as_int(src_space) << " to " << as_int(dst_space) << "\n";
+            << as_sw4_type(src_space) << " to " << as_sw4_type(dst_space) << "\n";
 }
 #endif

@@ -34,7 +34,7 @@
 
 extern __constant__ double cmem_acof[384];
 extern __constant__ double cmem_acof_no_gp[384];
-//__device__ inline double  acof(int i, int j, int k){ return cmem_acof[(i - 1)
+//__device__ inline double  acof(sw4_type i, sw4_type j, sw4_type k){ return cmem_acof[(i - 1)
 //+ 6 * (j - 1) + 48 * (k - 1)];}
 #endif
 
@@ -47,16 +47,16 @@ extern __constant__ double cmem_acof_no_gp[384];
 #define SPLIT_VERSION
 #ifdef SPLIT_VERSION
 
-template <int N>
+template <sw4_type N>
 void curvilinear4sgX3_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,
     float_sw4* __restrict__ a_lambda, float_sw4* __restrict__ a_met,
-    float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu, int* onesided,
+    float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu, sw4_type* onesided,
     float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
     float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_acof_no_gp,
     float_sw4* __restrict__ a_ghcof_no_gp, float_sw4* __restrict__ a_strx,
-    float_sw4* __restrict__ a_stry, int nk, char op) {
+    float_sw4* __restrict__ a_stry, sw4_type nk, char op) {
   SW4_MARK_FUNCTION;
   //      subroutine CURVILINEAR4SG( ifirst, ilast, jfirst, jlast, kfirst,
   //     *                         klast, u, mu, la, met, jac, lu,
@@ -64,10 +64,10 @@ void curvilinear4sgX3_ci(
   //     *                         op )
 
   // Routine with supergrid stretchings strx and stry. No stretching
-  // in z, since top is always topography, and bottom always interface
+  // in z, since top is always topography, and bottom always sw4_typeerface
   // to a deeper Cartesian grid.
   // opcount:
-  //      Interior (k>6), 2126 arithmetic ops.
+  //      Sw4_Typeerior (k>6), 2126 arithmetic ops.
   //      Boundary discretization (1<=k<=6 ), 6049 arithmetic ops.
 
   //   const float_sw4 a1 =0;
@@ -99,14 +99,14 @@ void curvilinear4sgX3_ci(
   const float_sw4 c1 = 2.0 / 3;
   const float_sw4 c2 = -1.0 / 12;
 
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = nij * (klast - kfirst + 1);
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int base3 = base - nijk;
-  const int base4 = base - nijk;
-  const int ifirst0 = ifirst;
-  const int jfirst0 = jfirst;
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijk = nij * (klast - kfirst + 1);
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type base3 = base - nijk;
+  const sw4_type base4 = base - nijk;
+  const sw4_type ifirst0 = ifirst;
+  const sw4_type jfirst0 = jfirst;
 
   // Direct reuse of fortran code by these macro definitions:
   // Direct reuse of fortran code by these macro definitions:
@@ -146,8 +146,8 @@ void curvilinear4sgX3_ci(
 #endif
   //#pragma omp parallel
   {
-    int kstart = kfirst + 2;
-    int kend = klast - 2;
+    sw4_type kstart = kfirst + 2;
+    sw4_type kend = klast - 2;
     if (onesided[5] == 1) kend = nk - 6;
     if (onesided[4] == 1) {
       kstart = 7;
@@ -175,22 +175,22 @@ void curvilinear4sgX3_ci(
       // Uses 166 registers, no spills
       Tclass<1> tag1;
       forall3async<__LINE__>(
-          tag1, I, J, K, [=] SW4_DEVICE(Tclass<1> t, int i, int j, int k) {
+          tag1, I, J, K, [=] SW4_DEVICE(Tclass<1> t, sw4_type i, sw4_type j, sw4_type k) {
 #else
       RAJA::RangeSegment k_range(1, 6 + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
       RAJA::kernel<CURV_POL>(
           RAJA::make_tuple(k_range, j_range, i_range),
-          [=] SW4_DEVICE(int k, int j, int i) {
+          [=] SW4_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
             // float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1,
             // muz2, muz3, muz4; float_sw4 r1, r2, r3; #pragma omp for
-            //       for( int k= 1; k <= 6 ; k++ )
-            // 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
+            //       for( sw4_type k= 1; k <= 6 ; k++ )
+            // 	 for( sw4_type j=jfirst+2; j <= jlast-2 ; j++ )
             // #pragma omp simd
             // #pragma ivdep
-            // 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
+            // 	    for( sw4_type i=ifirst+2; i <= ilast-2 ; i++ )
             // 	    {
             // 5 ops
 
@@ -354,7 +354,7 @@ void curvilinear4sgX3_ci(
             float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2,
                 coeff;
             //#pragma unroll 1 // slowdown due to register spills
-            for (int q = 1; q <= 8; q++) {
+            for (sw4_type q = 1; q <= 8; q++) {
               mucofu2 = 0;
               mucofuv = 0;
               mucofuw = 0;
@@ -362,7 +362,7 @@ void curvilinear4sgX3_ci(
               mucofv2 = 0;
               mucofw2 = 0;
               //#pragma unroll 1 // slowdown due to register spills
-              for (int m = 1; m <= 8; m++) {
+              for (sw4_type m = 1; m <= 8; m++) {
                 if constexpr (N == 0) {
                   coeff = acof(k, q, m);
                 } else {
@@ -563,7 +563,7 @@ void curvilinear4sgX3_ci(
             float_sw4 dvdrm2 = 0, dvdrm1 = 0, dvdrp1 = 0, dvdrp2 = 0;
             float_sw4 dwdrm2 = 0, dwdrm1 = 0, dwdrp1 = 0, dwdrp2 = 0;
             //#pragma unroll 1
-            for (int q = 1; q <= 8; q++) {
+            for (sw4_type q = 1; q <= 8; q++) {
               dudrm2 += bope(k, q) * u(1, i - 2, j, q);
               dvdrm2 += bope(k, q) * u(2, i - 2, j, q);
               dwdrm2 += bope(k, q) * u(3, i - 2, j, q);
@@ -667,7 +667,7 @@ void curvilinear4sgX3_ci(
             dwdrp1 = 0;
             dwdrp2 = 0;
             //#pragma unroll 1
-            for (int q = 1; q <= 8; q++) {
+            for (sw4_type q = 1; q <= 8; q++) {
               dudrm2 += bope(k, q) * u(1, i, j - 2, q);
               dvdrm2 += bope(k, q) * u(2, i, j - 2, q);
               dwdrm2 += bope(k, q) * u(3, i, j - 2, q);
@@ -756,7 +756,7 @@ void curvilinear4sgX3_ci(
             // pr and qr derivatives at once
             // in loop: 8*(53+53+43) = 1192 ops, tot=6037
             //#pragma unroll 1
-            for (int q = 1; q <= 8; q++) {
+            for (sw4_type q = 1; q <= 8; q++) {
               // (u-eq)
               // 53 ops
               r1 += bope(k, q) *
@@ -864,29 +864,29 @@ void curvilinear4sgX3_ci(
     Range<2> K(kstart, kend + 1);  // Changed for CUrvi-MR Was klast-1
 #endif
     // std::cout<<"KSTART END"<<kstart<<" "<<kend<<"\n";
-    // forall3GS(IS,JS,KS, [=]SW4_DEVICE(int i,int j,int k){
+    // forall3GS(IS,JS,KS, [=]SW4_DEVICE(sw4_type i,sw4_type j,sw4_type k){
     // Use 168 regissters , no spills
     Tclass<2> tag2;
 #pragma forceinline
     forall3async<__LINE__>(
-        tag2, I, J, K, [=] SW4_DEVICE(Tclass<2> t, int i, int j, int k) {
+        tag2, I, J, K, [=] SW4_DEVICE(Tclass<2> t, sw4_type i, sw4_type j, sw4_type k) {
     // forall3X<256>(ifirst + 2, ilast - 1,jfirst + 2, jlast - 1,kstart, kend +
     // 1,
-    //	      [=] SW4_DEVICE(int i, int j, int k) {
+    //	      [=] SW4_DEVICE(sw4_type i, sw4_type j, sw4_type k) {
 #else
     RAJA::RangeSegment k_range(kstart, kend + 1);
     RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::kernel<CURV_POL>(
         RAJA::make_tuple(k_range, j_range, i_range),
-        [=] SW4_DEVICE(int k, int j, int i) {
+        [=] SW4_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
           // #pragma omp for
-          //    for( int k= kstart; k <= klast-2 ; k++ )
-          //       for( int j=jfirst+2; j <= jlast-2 ; j++ )
+          //    for( sw4_type k= kstart; k <= klast-2 ; k++ )
+          //       for( sw4_type j=jfirst+2; j <= jlast-2 ; j++ )
           // #pragma omp simd
           // #pragma ivdep
-          // 	 for( int i=ifirst+2; i <= ilast-2 ; i++ )
+          // 	 for( sw4_type i=ifirst+2; i <= ilast-2 ; i++ )
           // 	 {
           // 5 ops
           float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
@@ -1300,19 +1300,19 @@ void curvilinear4sgX3_ci(
     // Range<2>J(jfirst+2,jlast-1);
     // Range<2>K(kstart,klast-1);
 
-    // forall3GS(IS,JS,KS, [=]SW4_DEVICE(int i,int j,int k){
+    // forall3GS(IS,JS,KS, [=]SW4_DEVICE(sw4_type i,sw4_type j,sw4_type k){
     // Uses 254 reisters, no spills
     Tclass<3> tag3;
 #pragma forceinline
     forall3async<__LINE__>(
-        tag3, I, J, K, [=] SW4_DEVICE(Tclass<3> t, int i, int j, int k) {
+        tag3, I, J, K, [=] SW4_DEVICE(Tclass<3> t, sw4_type i, sw4_type j, sw4_type k) {
 #else
     // RAJA::RangeSegment k_range(kstart,klast-1);
     // RAJA::RangeSegment j_range(jfirst+2,jlast-1);
     // RAJA::RangeSegment i_range(ifirst+2,ilast-1);
     RAJA::kernel<CURV_POL>(
         RAJA::make_tuple(k_range, j_range, i_range),
-        [=] SW4_DEVICE(int k, int j, int i) {
+        [=] SW4_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
           float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
           float_sw4 istry = 1 / (stry(j));
@@ -1708,19 +1708,19 @@ void curvilinear4sgX3_ci(
     // Range<2>J(jfirst+2,jlast-1);
     // Range<2>K(kstart,klast-1);
 
-    // forall3GS(IS,JS,KS, [=]SW4_DEVICE(int i,int j,int k){
+    // forall3GS(IS,JS,KS, [=]SW4_DEVICE(sw4_type i,sw4_type j,sw4_type k){
     // Uses 255 registers, no spills
     Tclass<4> tag4;
 #pragma forceinline
     forall3async<__LINE__>(
-        tag4, I, J, K, [=] SW4_DEVICE(Tclass<4> t, int i, int j, int k) {
+        tag4, I, J, K, [=] SW4_DEVICE(Tclass<4> t, sw4_type i, sw4_type j, sw4_type k) {
 #else
     // RAJA::RangeSegment k_range(kstart,klast-1);
     // RAJA::RangeSegment j_range(jfirst+2,jlast-1);
     // RAJA::RangeSegment i_range(ifirst+2,ilast-1);
     RAJA::kernel<CURV_POL>(
         RAJA::make_tuple(k_range, j_range, i_range),
-        [=] SW4_DEVICE(int k, int j, int i) {
+        [=] SW4_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
           float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
           float_sw4 istry = 1 / (stry(j));
@@ -2123,13 +2123,13 @@ void curvilinear4sgX3_ci(
   /// CURVIMR ADDITION
   if (onesided[5] == 1) {
 // #pragma omp for
-//     for (int k = nk - 5; k <= nk; k++)
-//       for (int j = jfirst + 2; j <= jlast - 2; j++)
+//     for (sw4_type k = nk - 5; k <= nk; k++)
+//       for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
 // #pragma omp simd
 // #pragma ivdep
-//         for (int i = ifirst + 2; i <= ilast - 2; i++) {
+//         for (sw4_type i = ifirst + 2; i <= ilast - 2; i++) {
 
-//    const int UNROLL_LEN=1;
+//    const sw4_type UNROLL_LEN=1;
 #if !defined(RAJA_ONLY)
     // LOOP -1
     // 32,4,2 is 4% slower. 32 4 4 does not fit
@@ -2145,26 +2145,26 @@ void curvilinear4sgX3_ci(
 #endif
     // Register count goes upto 254. Runtime goes up by factor of 2.8X
     //     Range<16> JJ2(jfirst + 2, jlast - 1);
-    //     forall2async(II, JJ2,[=] SW4_DEVICE(int i, int j) {
+    //     forall2async(II, JJ2,[=] SW4_DEVICE(sw4_type i, sw4_type j) {
     // #pragma unroll
-    // 	for (int kk=-5;kk<1;kk++){
-    // 	  int k=nk+kk;
+    // 	for (sw4_type kk=-5;kk<1;kk++){
+    // 	  sw4_type k=nk+kk;
     // Uses 240 registers, no spills
     Tclass<5> tag5;
 #pragma forceinline
     forall3async<__LINE__>(
-        tag5, II, JJ, KK, [=] SW4_DEVICE(Tclass<5> t, int i, int j, int k) {
+        tag5, II, JJ, KK, [=] SW4_DEVICE(Tclass<5> t, sw4_type i, sw4_type j, sw4_type k) {
     // forall3X results in a 2.5X slowdown even though registers drop from
     // 168 to 130
     // forall3X<256>(ifirst + 2, ilast - 1,jfirst + 2, jlast - 1,nk-5,nk+1,
-    //    [=] SW4_DEVICE(int i, int j, int k) {
+    //    [=] SW4_DEVICE(sw4_type i, sw4_type j, sw4_type k) {
 #else
     RAJA::RangeSegment kk_range(nk - 5, nk + 1);
     RAJA::RangeSegment jj_range(jfirst + 2, jlast - 1);
     RAJA::RangeSegment ii_range(ifirst + 2, ilast - 1);
     RAJA::kernel<CURV_POL>(
         RAJA::make_tuple(kk_range, jj_range, ii_range),
-        [=] SW4_DEVICE(int k, int j, int i) {
+        [=] SW4_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
           // 5 ops
           float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
@@ -2327,7 +2327,7 @@ void curvilinear4sgX3_ci(
           // 54*8*8+25*8 = 3656 ops, tot=3939
           float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2;
           //#pragma unroll 8
-          for (int q = nk - 7; q <= nk; q++) {
+          for (sw4_type q = nk - 7; q <= nk; q++) {
             mucofu2 = 0;
             mucofuv = 0;
             mucofuw = 0;
@@ -2335,7 +2335,7 @@ void curvilinear4sgX3_ci(
             mucofv2 = 0;
             mucofw2 = 0;
             //#pragma unroll 8
-            for (int m = nk - 7; m <= nk; m++) {
+            for (sw4_type m = nk - 7; m <= nk; m++) {
               if (acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) != 0.0) {
                 mucofu2 += acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
                            ((2 * mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
@@ -2494,7 +2494,7 @@ void curvilinear4sgX3_ci(
           float_sw4 dvdrm2 = 0, dvdrm1 = 0, dvdrp1 = 0, dvdrp2 = 0;
           float_sw4 dwdrm2 = 0, dwdrm1 = 0, dwdrp1 = 0, dwdrp2 = 0;
           //#pragma unroll 8
-          for (int q = nk - 7; q <= nk; q++) {
+          for (sw4_type q = nk - 7; q <= nk; q++) {
             dudrm2 -= bope(nk - k + 1, nk - q + 1) * u(1, i - 2, j, q);
             dvdrm2 -= bope(nk - k + 1, nk - q + 1) * u(2, i - 2, j, q);
             dwdrm2 -= bope(nk - k + 1, nk - q + 1) * u(3, i - 2, j, q);
@@ -2597,7 +2597,7 @@ void curvilinear4sgX3_ci(
           dwdrp1 = 0;
           dwdrp2 = 0;
           //#pragma unroll 8
-          for (int q = nk - 7; q <= nk; q++) {
+          for (sw4_type q = nk - 7; q <= nk; q++) {
             dudrm2 -= bope(nk - k + 1, nk - q + 1) * u(1, i, j - 2, q);
             dvdrm2 -= bope(nk - k + 1, nk - q + 1) * u(2, i, j - 2, q);
             dwdrm2 -= bope(nk - k + 1, nk - q + 1) * u(3, i, j - 2, q);
@@ -2685,7 +2685,7 @@ void curvilinear4sgX3_ci(
           // pr and qr derivatives at once
           // in loop: 8*(53+53+43) = 1192 ops, tot=6037
           //#pragma unroll 8
-          for (int q = nk - 7; q <= nk; q++) {
+          for (sw4_type q = nk - 7; q <= nk; q++) {
             // (u-eq)
             // 53 ops
             r1 -= bope(nk - k + 1, nk - q + 1) *
@@ -2791,10 +2791,10 @@ void curvilinear4sgX3_ci(
 }
 #else
 void curvilinear4sg_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,
     float_sw4* __restrict__ a_lambda, float_sw4* __restrict__ a_met,
-    float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu, int* onesided,
+    float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu, sw4_type* onesided,
     float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
     float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_strx,
     float_sw4* __restrict__ a_stry, char op) {
@@ -2805,10 +2805,10 @@ void curvilinear4sg_ci(
   //     *                         op )
 
   // Routine with supergrid stretchings strx and stry. No stretching
-  // in z, since top is always topography, and bottom always interface
+  // in z, since top is always topography, and bottom always sw4_typeerface
   // to a deeper Cartesian grid.
   // opcount:
-  //      Interior (k>6), 2126 arithmetic ops.
+  //      Sw4_Typeerior (k>6), 2126 arithmetic ops.
   //      Boundary discretization (1<=k<=6 ), 6049 arithmetic ops.
 
   //   const float_sw4 a1 =0;
@@ -2830,14 +2830,14 @@ void curvilinear4sg_ci(
   const float_sw4 c1 = 2.0 / 3;
   const float_sw4 c2 = -1.0 / 12;
 
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = nij * (klast - kfirst + 1);
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int base3 = base - nijk;
-  const int base4 = base - nijk;
-  const int ifirst0 = ifirst;
-  const int jfirst0 = jfirst;
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijk = nij * (klast - kfirst + 1);
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type base3 = base - nijk;
+  const sw4_type base4 = base - nijk;
+  const sw4_type ifirst0 = ifirst;
+  const sw4_type jfirst0 = jfirst;
 
   // Direct reuse of fortran code by these macro definitions:
   // Direct reuse of fortran code by these macro definitions:
@@ -2858,7 +2858,7 @@ void curvilinear4sg_ci(
 
   //#pragma omp parallel
   {
-    int kstart = kfirst + 2;
+    sw4_type kstart = kfirst + 2;
     if (onesided[4] == 1) {
       kstart = 7;
       // SBP Boundary closure terms
@@ -2867,25 +2867,25 @@ void curvilinear4sg_ci(
       Range<16> I(ifirst + 2, ilast - 1);
       Range<4> J(jfirst + 2, jlast - 1);
       Range<4> K(1, 6 + 1);
-      forall3async(I, J, K, [=] SW4_DEVICE(int i, int j, int k) {
+      forall3async(I, J, K, [=] SW4_DEVICE(sw4_type i, sw4_type j, sw4_type k) {
 #else
       RAJA::RangeSegment k_range(1, 6 + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
       RAJA::kernel<
           CURV_POL>(RAJA::make_tuple(k_range, j_range, i_range), [=] SW4_DEVICE(
-                                                                     int k,
-                                                                     int j,
-                                                                     int i) {
+                                                                     sw4_type k,
+                                                                     sw4_type j,
+                                                                     sw4_type i) {
 #endif
         // float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2,
         // muz3, muz4; float_sw4 r1, r2, r3;
         // #pragma omp for
-        //       for( int k= 1; k <= 6 ; k++ )
-        // 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
+        //       for( sw4_type k= 1; k <= 6 ; k++ )
+        // 	 for( sw4_type j=jfirst+2; j <= jlast-2 ; j++ )
         // #pragma omp simd
         // #pragma ivdep
-        // 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
+        // 	    for( sw4_type i=ifirst+2; i <= ilast-2 ; i++ )
         // 	    {
         // 5 ops
         float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
@@ -3048,14 +3048,14 @@ void curvilinear4sg_ci(
         // 54*8*8+25*8 = 3656 ops, tot=3939
         float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2;
 #pragma unroll UNROLL_LEN
-        for (int q = 1; q <= 8; q++) {
+        for (sw4_type q = 1; q <= 8; q++) {
           mucofu2 = 0;
           mucofuv = 0;
           mucofuw = 0;
           mucofvw = 0;
           mucofv2 = 0;
           mucofw2 = 0;
-          for (int m = 1; m <= 8; m++) {
+          for (sw4_type m = 1; m <= 8; m++) {
             mucofu2 += acof(k, q, m) *
                        ((2 * mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
                             strx(i) * met(2, i, j, m) * strx(i) +
@@ -3197,7 +3197,7 @@ void curvilinear4sg_ci(
         float_sw4 dvdrm2 = 0, dvdrm1 = 0, dvdrp1 = 0, dvdrp2 = 0;
         float_sw4 dwdrm2 = 0, dwdrm1 = 0, dwdrp1 = 0, dwdrp2 = 0;
 #pragma unroll UNROLL_LEN
-        for (int q = 1; q <= 8; q++) {
+        for (sw4_type q = 1; q <= 8; q++) {
           dudrm2 += bope(k, q) * u(1, i - 2, j, q);
           dvdrm2 += bope(k, q) * u(2, i - 2, j, q);
           dwdrm2 += bope(k, q) * u(3, i - 2, j, q);
@@ -3297,7 +3297,7 @@ void curvilinear4sg_ci(
         dwdrm1 = 0;
         dwdrp1 = 0;
         dwdrp2 = 0;
-        for (int q = 1; q <= 8; q++) {
+        for (sw4_type q = 1; q <= 8; q++) {
           dudrm2 += bope(k, q) * u(1, i, j - 2, q);
           dvdrm2 += bope(k, q) * u(2, i, j - 2, q);
           dwdrm2 += bope(k, q) * u(3, i, j - 2, q);
@@ -3384,7 +3384,7 @@ void curvilinear4sg_ci(
 
         // pr and qr derivatives at once
         // in loop: 8*(53+53+43) = 1192 ops, tot=6037
-        for (int q = 1; q <= 8; q++) {
+        for (sw4_type q = 1; q <= 8; q++) {
           // (u-eq)
           // 53 ops
           r1 += bope(k, q) *
@@ -3472,22 +3472,22 @@ void curvilinear4sg_ci(
     RangeGS<16, 16> I(ifirst + 2, ilast - 1);
     RangeGS<4, 16> J(jfirst + 2, jlast - 1);
     RangeGS<4, 4> K(kstart, klast - 1);
-    forall3GSasync(I, J, K, [=] SW4_DEVICE(int i, int j, int k) {
+    forall3GSasync(I, J, K, [=] SW4_DEVICE(sw4_type i, sw4_type j, sw4_type k) {
 #else
     RAJA::RangeSegment k_range(kstart, klast - 1);
     RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::kernel<
         CURV_POL>(RAJA::make_tuple(k_range, j_range, i_range), [=] SW4_DEVICE(
-                                                                   int k, int j,
-                                                                   int i) {
+                                                                   sw4_type k, sw4_type j,
+                                                                   sw4_type i) {
 #endif
       // #pragma omp for
-      //    for( int k= kstart; k <= klast-2 ; k++ )
-      //       for( int j=jfirst+2; j <= jlast-2 ; j++ )
+      //    for( sw4_type k= kstart; k <= klast-2 ; k++ )
+      //       for( sw4_type j=jfirst+2; j <= jlast-2 ; j++ )
       // #pragma omp simd
       // #pragma ivdep
-      // 	 for( int i=ifirst+2; i <= ilast-2 ; i++ )
+      // 	 for( sw4_type i=ifirst+2; i <= ilast-2 ; i++ )
       // 	 {
       // 5 ops
       float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);

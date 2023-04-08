@@ -40,8 +40,8 @@ using namespace std;
 class SecondOrderSection {
  public:
   SecondOrderSection(Polynomial &n, Polynomial &d);
-  float_sw4 numer(unsigned int q);
-  float_sw4 denom(unsigned int q);
+  float_sw4 numer(unsigned sw4_type q);
+  float_sw4 denom(unsigned sw4_type q);
 
   // for efficiency and simplicity reasons, we make the coefficients public
   Polynomial m_n, m_d;

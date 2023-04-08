@@ -4,7 +4,7 @@
 #include <cstdio>
 
 #include "caliper.h"
-#include "cf_interface.h"
+#include "cf_sw4_typeerface.h"
 #include "sw4.h"
 
 //#ifdef SW4_NOC
@@ -13,14 +13,14 @@
 
 //-----------------------------------------------------------------------
 void rhs4th3wind_host(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, int nk,
-    int* __restrict__ onesided, float_sw4* __restrict__ a_acof,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast, sw4_type nk,
+    sw4_type* __restrict__ onesided, float_sw4* __restrict__ a_acof,
     float_sw4* __restrict__ a_bope, float_sw4* __restrict__ a_ghcof,
     float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
     float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, float_sw4 h,
     float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry,
-    float_sw4* __restrict__ a_strz, char op, int kfirstu, int klastu,
-    int kfirstw, int klastw) {
+    float_sw4* __restrict__ a_strz, char op, sw4_type kfirstu, sw4_type klastu,
+    sw4_type kfirstw, sw4_type klastw) {
   SW4_MARK_FUNCTION;
   // Direct reuse of fortran code by these macro definitions:
 #define mu(i, j, k) a_mu[base + i + ni * (j) + nij * (k)]
@@ -41,19 +41,19 @@ void rhs4th3wind_host(
   const float_sw4 i144 = 1.0 / 144;
   const float_sw4 tf = 0.75;
 
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  //  const int nijk = nij * (klast - kfirst + 1);
-  const int nijku = nij * (klastu - kfirstu + 1);
-  const int nijkw = nij * (klastw - kfirstw + 1);
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int base3u = -(ifirst + ni * jfirst + nij * kfirstu + nijku);
-  const int base3w = -(ifirst + ni * jfirst + nij * kfirstw + nijkw);
-  //   const int nic  = 3*ni;
-  //   const int nijc = 3*nij;
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  //  const sw4_type nijk = nij * (klast - kfirst + 1);
+  const sw4_type nijku = nij * (klastu - kfirstu + 1);
+  const sw4_type nijkw = nij * (klastw - kfirstw + 1);
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type base3u = -(ifirst + ni * jfirst + nij * kfirstu + nijku);
+  const sw4_type base3w = -(ifirst + ni * jfirst + nij * kfirstw + nijkw);
+  //   const sw4_type nic  = 3*ni;
+  //   const sw4_type nijc = 3*nij;
 
   float_sw4 cof = 1.0 / (h * h);
-  int a1 = 0;
+  sw4_type a1 = 0;
   if (op == '=') {
     a1 = 0;
     for (size_t i = 0;
@@ -74,7 +74,7 @@ void rhs4th3wind_host(
   // Assume only one of three cases, upper,lower,center
   //  if k-index runs over more than one this will not work
 
-  int i, j, k, kb, q, qb, mb;
+  sw4_type i, j, k, kb, q, qb, mb;
   float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3,
       muz4;
   float_sw4 r1, r2, r3, mucof, mu1zz, mu2zz, mu3zz;
@@ -795,7 +795,7 @@ void rhs4th3wind_host(
                    tf * (mu(i, j, k) * stry(j) + mu(i, j + 2, k) * stry(j + 2));
 
             /* xx, yy, and zz derivatives: */
-            /* note that we could have introduced intermediate variables for the
+            /* note that we could have sw4_typeroduced sw4_typeermediate variables for the
              * average of lambda  */
             /* in the same way as we did for mu */
             r1 = i6 * (strx(i) * ((2 * mux1 + la(i - 1, j, k) * strx(i - 1) -
@@ -822,7 +822,7 @@ void rhs4th3wind_host(
                                   muy4 * (u(1, i, j + 2, k) - u(1, i, j, k))));
 
             /* all indices ending with 'b' are indices relative to the boundary,
-             * going into the domain (1,2,3,...)*/
+             * going sw4_typeo the domain (1,2,3,...)*/
             kb = nk - k + 1;
             /* all coefficient arrays (acof, bope, ghcof) should be indexed with
              * these indices */

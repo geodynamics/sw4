@@ -1,8 +1,8 @@
 #include "EW.h"
 #include "sw4.h"
-void EW::testsrc_ci(float_sw4* __restrict__ f, int ib, int ie, int jb, int je,
-                    int kb, int ke, int nk, int wind[6], float_sw4 zmin,
-                    float_sw4 h, int kx[3], int ky[3], int kz[3],
+void EW::testsrc_ci(float_sw4* __restrict__ f, sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je,
+                    sw4_type kb, sw4_type ke, sw4_type nk, sw4_type wind[6], float_sw4 zmin,
+                    float_sw4 h, sw4_type kx[3], sw4_type ky[3], sw4_type kz[3],
                     float_sw4 mom[3]) {
   const size_t ni = ie - ib + 1;
   const size_t nij = ni * (je - jb + 1);
@@ -16,11 +16,11 @@ void EW::testsrc_ci(float_sw4* __restrict__ f, int ib, int ie, int jb, int je,
 #pragma omp parallel
 #pragma omp for reduction(+ : mom1, mom2, mom3)
 #endif
-  for (int k = wind[4]; k <= wind[5]; k++) {
+  for (sw4_type k = wind[4]; k <= wind[5]; k++) {
     float_sw4 z = zmin + (k - 1) * h;
-    for (int j = wind[2]; j <= wind[3]; j++) {
+    for (sw4_type j = wind[2]; j <= wind[3]; j++) {
       float_sw4 y = (j - 1) * h;
-      for (int i = wind[0]; i <= wind[1]; i++) {
+      for (sw4_type i = wind[0]; i <= wind[1]; i++) {
         float_sw4 normfact = h3;
         float_sw4 x = (i - 1) * h;
         if (k <= 4) normfact *= wgh[k - 1];
@@ -75,9 +75,9 @@ void EW::testsrc_ci(float_sw4* __restrict__ f, int ib, int ie, int jb, int je,
 }
 
 //-----------------------------------------------------------------------
-void EW::testsrcc_ci(float_sw4* __restrict__ f, int ib, int ie, int jb, int je,
-                     int kb, int ke, int nk, int g, int wind[6], int kx[3],
-                     int ky[3], int kz[3], float_sw4 mom[3]) {
+void EW::testsrcc_ci(float_sw4* __restrict__ f, sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je,
+                     sw4_type kb, sw4_type ke, sw4_type nk, sw4_type g, sw4_type wind[6], sw4_type kx[3],
+                     sw4_type ky[3], sw4_type kz[3], float_sw4 mom[3]) {
   const size_t ni = ie - ib + 1;
   const size_t nij = ni * (je - jb + 1);
   const size_t nijk = nij * (ke - kb + 1);
@@ -90,9 +90,9 @@ void EW::testsrcc_ci(float_sw4* __restrict__ f, int ib, int ie, int jb, int je,
 #pragma omp parallel
 #pragma omp for reduction(+ : mom1, mom2, mom3)
 #endif
-  for (int k = wind[4]; k <= wind[5]; k++) {
-    for (int j = wind[2]; j <= wind[3]; j++) {
-      for (int i = wind[0]; i <= wind[1]; i++) {
+  for (sw4_type k = wind[4]; k <= wind[5]; k++) {
+    for (sw4_type j = wind[2]; j <= wind[3]; j++) {
+      for (sw4_type i = wind[0]; i <= wind[1]; i++) {
         float_sw4 x = mX[g](i, j, k);
         float_sw4 y = mY[g](i, j, k);
         float_sw4 z = mZ[g](i, j, k);

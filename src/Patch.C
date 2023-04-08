@@ -5,7 +5,7 @@
 #include "sw4.h"
 
 //-----------------------------------------------------------------------
-Patch::Patch(int dims[6], int procid) {
+Patch::Patch(sw4_type dims[6], sw4_type procid) {
   m_ib = dims[0];
   m_ie = dims[1];
   m_jb = dims[2];
@@ -18,15 +18,15 @@ Patch::Patch(int dims[6], int procid) {
 //-----------------------------------------------------------------------
 template <class T>
 void Patch::pack(T* array, AllDims& dims, T* array_patch) {
-  int myib = dims.m_ib[dims.m_myid3di];
-  int myie = dims.m_ie[dims.m_myid3di];
-  int myjb = dims.m_jb[dims.m_myid3dj];
-  int myje = dims.m_je[dims.m_myid3dj];
-  int mykb = dims.m_kb[dims.m_myid3dk];
-  int myke = dims.m_ke[dims.m_myid3dk];
-  int ni = myie - myib + 1;
-  int nj = myje - myjb + 1;
-  int nk = myke - mykb + 1;
+  sw4_type myib = dims.m_ib[dims.m_myid3di];
+  sw4_type myie = dims.m_ie[dims.m_myid3di];
+  sw4_type myjb = dims.m_jb[dims.m_myid3dj];
+  sw4_type myje = dims.m_je[dims.m_myid3dj];
+  sw4_type mykb = dims.m_kb[dims.m_myid3dk];
+  sw4_type myke = dims.m_ke[dims.m_myid3dk];
+  sw4_type ni = myie - myib + 1;
+  sw4_type nj = myje - myjb + 1;
+  sw4_type nk = myke - mykb + 1;
   size_t ind = 0;
   size_t ai = 1, aj = ni, ak = ni * nj;
   if (dims.m_indrev) {
@@ -34,9 +34,9 @@ void Patch::pack(T* array, AllDims& dims, T* array_patch) {
     aj = nk;
     ak = 1;
   }
-  for (int k = m_kb; k <= m_ke; k++)
-    for (int j = m_jb; j <= m_je; j++)
-      for (int i = m_ib; i <= m_ie; i++)
+  for (sw4_type k = m_kb; k <= m_ke; k++)
+    for (sw4_type j = m_jb; j <= m_je; j++)
+      for (sw4_type i = m_ib; i <= m_ie; i++)
         array_patch[ind++] =
             array[ai * (i - myib) + aj * (j - myjb) + ak * (k - mykb)];
 }
@@ -44,15 +44,15 @@ void Patch::pack(T* array, AllDims& dims, T* array_patch) {
 //-----------------------------------------------------------------------
 template <class T>
 void Patch::unpack(T* array, AllDims& dims, T* array_patch) {
-  int myib = dims.m_ib[dims.m_myid3di];
-  int myie = dims.m_ie[dims.m_myid3di];
-  int myjb = dims.m_jb[dims.m_myid3dj];
-  int myje = dims.m_je[dims.m_myid3dj];
-  int mykb = dims.m_kb[dims.m_myid3dk];
-  int myke = dims.m_ke[dims.m_myid3dk];
-  int ni = myie - myib + 1;
-  int nj = myje - myjb + 1;
-  int nk = myke - mykb + 1;
+  sw4_type myib = dims.m_ib[dims.m_myid3di];
+  sw4_type myie = dims.m_ie[dims.m_myid3di];
+  sw4_type myjb = dims.m_jb[dims.m_myid3dj];
+  sw4_type myje = dims.m_je[dims.m_myid3dj];
+  sw4_type mykb = dims.m_kb[dims.m_myid3dk];
+  sw4_type myke = dims.m_ke[dims.m_myid3dk];
+  sw4_type ni = myie - myib + 1;
+  sw4_type nj = myje - myjb + 1;
+  sw4_type nk = myke - mykb + 1;
   size_t ind = 0;
   size_t ai = 1, aj = ni, ak = ni * nj;
   if (dims.m_indrev) {
@@ -60,9 +60,9 @@ void Patch::unpack(T* array, AllDims& dims, T* array_patch) {
     aj = nk;
     ak = 1;
   }
-  for (int k = m_kb; k <= m_ke; k++)
-    for (int j = m_jb; j <= m_je; j++)
-      for (int i = m_ib; i <= m_ie; i++)
+  for (sw4_type k = m_kb; k <= m_ke; k++)
+    for (sw4_type j = m_jb; j <= m_je; j++)
+      for (sw4_type i = m_ib; i <= m_ie; i++)
         array[ai * (i - myib) + aj * (j - myjb) + ak * (k - mykb)] =
             array_patch[ind++];
 }
@@ -70,25 +70,25 @@ void Patch::unpack(T* array, AllDims& dims, T* array_patch) {
 //-----------------------------------------------------------------------
 template <class T>
 void Patch::selfcopy(AllDims& src, T* src_array, AllDims& dest, T* dest_array) {
-  int myib = src.m_ib[src.m_myid3di];
-  int myie = src.m_ie[src.m_myid3di];
-  int myjb = src.m_jb[src.m_myid3dj];
-  int myje = src.m_je[src.m_myid3dj];
-  int mykb = src.m_kb[src.m_myid3dk];
-  int myke = src.m_ke[src.m_myid3dk];
-  int ni = myie - myib + 1;
-  int nj = myje - myjb + 1;
-  int nk = myke - mykb + 1;
+  sw4_type myib = src.m_ib[src.m_myid3di];
+  sw4_type myie = src.m_ie[src.m_myid3di];
+  sw4_type myjb = src.m_jb[src.m_myid3dj];
+  sw4_type myje = src.m_je[src.m_myid3dj];
+  sw4_type mykb = src.m_kb[src.m_myid3dk];
+  sw4_type myke = src.m_ke[src.m_myid3dk];
+  sw4_type ni = myie - myib + 1;
+  sw4_type nj = myje - myjb + 1;
+  sw4_type nk = myke - mykb + 1;
 
-  int myibd = dest.m_ib[dest.m_myid3di];
-  int myied = dest.m_ie[dest.m_myid3di];
-  int myjbd = dest.m_jb[dest.m_myid3dj];
-  int myjed = dest.m_je[dest.m_myid3dj];
-  int mykbd = dest.m_kb[dest.m_myid3dk];
-  int myked = dest.m_ke[dest.m_myid3dk];
-  int nid = myied - myibd + 1;
-  int njd = myjed - myjbd + 1;
-  int nkd = myked - mykbd + 1;
+  sw4_type myibd = dest.m_ib[dest.m_myid3di];
+  sw4_type myied = dest.m_ie[dest.m_myid3di];
+  sw4_type myjbd = dest.m_jb[dest.m_myid3dj];
+  sw4_type myjed = dest.m_je[dest.m_myid3dj];
+  sw4_type mykbd = dest.m_kb[dest.m_myid3dk];
+  sw4_type myked = dest.m_ke[dest.m_myid3dk];
+  sw4_type nid = myied - myibd + 1;
+  sw4_type njd = myjed - myjbd + 1;
+  sw4_type nkd = myked - mykbd + 1;
 
   size_t ai = 1, aj = ni, ak = ni * nj;
   if (src.m_indrev) {
@@ -102,9 +102,9 @@ void Patch::selfcopy(AllDims& src, T* src_array, AllDims& dest, T* dest_array) {
     ajd = nkd;
     akd = 1;
   }
-  for (int k = m_kb; k <= m_ke; k++)
-    for (int j = m_jb; j <= m_je; j++)
-      for (int i = m_ib; i <= m_ie; i++)
+  for (sw4_type k = m_kb; k <= m_ke; k++)
+    for (sw4_type j = m_jb; j <= m_je; j++)
+      for (sw4_type i = m_ib; i <= m_ie; i++)
         dest_array[aid * (i - myibd) + ajd * (j - myjbd) + akd * (k - mykbd)] =
             src_array[ai * (i - myib) + aj * (j - myjb) + ak * (k - mykb)];
 }

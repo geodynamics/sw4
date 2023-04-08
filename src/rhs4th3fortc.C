@@ -14,8 +14,8 @@
 //#include "tests.h"
 // extern "C" {
 
-void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                    int klast, int nk, int* __restrict__ onesided,
+void rhs4th3fort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                    sw4_type klast, sw4_type nk, sw4_type* __restrict__ onesided,
                     float_sw4* __restrict__ a_acof,
                     float_sw4* __restrict__ a_bope,
                     float_sw4* __restrict__ a_ghcof,
@@ -41,16 +41,16 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
   const float_sw4 i144 = 1.0 / 144;
   const float_sw4 tf = 0.75;
 
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = nij * (klast - kfirst + 1);
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int base3 = base - nijk;
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijk = nij * (klast - kfirst + 1);
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type base3 = base - nijk;
 
-  int k1, k2;
+  sw4_type k1, k2;
 
   float_sw4 cof = 1.0 / (h * h);
-  int a1;
+  sw4_type a1;
 
   if (op == '=')
     a1 = 0;
@@ -79,7 +79,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::kernel<RHS4_EXEC_POL>(
         RAJA::make_tuple(k_range, j_range, i_range),
-        [=] RAJA_DEVICE(int k, int j, int i) {
+        [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
           float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2,
               muz3, muz4;
           float_sw4 r1, r2, r3;
@@ -418,7 +418,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
       RAJA::kernel<RHS4_EXEC_POL>(
           RAJA::make_tuple(k_range, j_range, i_range),
-          [=] RAJA_DEVICE(int k, int j, int i) {
+          [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
             float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
             float_sw4 r1, r2, r3, mu1zz, mu2zz, mu3zz, lap2mu, mucof;
             /* from inner_loop_4a */
@@ -475,7 +475,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
             mu1zz = 0;
             mu2zz = 0;
             mu3zz = 0;
-            for (int q = 1; q <= 8; q++) {
+            for (sw4_type q = 1; q <= 8; q++) {
               //		     lap2mu= 0;
               //		     mucof = 0;
               //		     for( m=1 ; m<=8; m++ )
@@ -591,7 +591,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
             float_sw4 u3zip1 = 0;
             float_sw4 u3zim1 = 0;
             float_sw4 u3zim2 = 0;
-            for (int q = 1; q <= 8; q++) {
+            for (sw4_type q = 1; q <= 8; q++) {
               u3zip2 += bope(k, q) * u(3, i + 2, j, q);
               u3zip1 += bope(k, q) * u(3, i + 1, j, q);
               u3zim1 += bope(k, q) * u(3, i - 1, j, q);
@@ -604,7 +604,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
             r1 = r1 + strx(i) * lau3zx;
             /*   (mu*w_x)_z: NOT CENTERED */
             float_sw4 mu3xz = 0;
-            for (int q = 1; q <= 8; q++)
+            for (sw4_type q = 1; q <= 8; q++)
               mu3xz +=
                   bope(k, q) * (mu(i, j, q) * i12 *
                                 (-u(3, i + 2, j, q) + 8 * u(3, i + 1, j, q) -
@@ -656,7 +656,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
             float_sw4 u3zjp1 = 0;
             float_sw4 u3zjm1 = 0;
             float_sw4 u3zjm2 = 0;
-            for (int q = 1; q <= 8; q++) {
+            for (sw4_type q = 1; q <= 8; q++) {
               u3zjp2 += bope(k, q) * u(3, i, j + 2, q);
               u3zjp1 += bope(k, q) * u(3, i, j + 1, q);
               u3zjm1 += bope(k, q) * u(3, i, j - 1, q);
@@ -671,7 +671,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 
             /* (mu*w_y)_z: NOT CENTERED */
             float_sw4 mu3yz = 0;
-            for (int q = 1; q <= 8; q++)
+            for (sw4_type q = 1; q <= 8; q++)
               mu3yz +=
                   bope(k, q) * (mu(i, j, q) * i12 *
                                 (-u(3, i, j + 2, q) + 8 * u(3, i, j + 1, q) -
@@ -685,7 +685,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
             float_sw4 u1zip1 = 0;
             float_sw4 u1zim1 = 0;
             float_sw4 u1zim2 = 0;
-            for (int q = 1; q <= 8; q++) {
+            for (sw4_type q = 1; q <= 8; q++) {
               u1zip2 += bope(k, q) * u(1, i + 2, j, q);
               u1zip1 += bope(k, q) * u(1, i + 1, j, q);
               u1zim1 += bope(k, q) * u(1, i - 1, j, q);
@@ -702,7 +702,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
             float_sw4 u2zjp1 = 0;
             float_sw4 u2zjm1 = 0;
             float_sw4 u2zjm2 = 0;
-            for (int q = 1; q <= 8; q++) {
+            for (sw4_type q = 1; q <= 8; q++) {
               u2zjp2 += bope(k, q) * u(2, i, j + 2, q);
               u2zjp1 += bope(k, q) * u(2, i, j + 1, q);
               u2zjm1 += bope(k, q) * u(2, i, j - 1, q);
@@ -716,7 +716,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 
             /*   (la*u_x)_z: NOT CENTERED */
             float_sw4 lau1xz = 0;
-            for (int q = 1; q <= 8; q++)
+            for (sw4_type q = 1; q <= 8; q++)
               lau1xz +=
                   bope(k, q) * (la(i, j, q) * i12 *
                                 (-u(1, i + 2, j, q) + 8 * u(1, i + 1, j, q) -
@@ -725,7 +725,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 
             /* (la*v_y)_z: NOT CENTERED */
             float_sw4 lau2yz = 0;
-            for (int q = 1; q <= 8; q++)
+            for (sw4_type q = 1; q <= 8; q++)
               lau2yz +=
                   bope(k, q) * (la(i, j, q) * i12 *
                                 (-u(2, i, j + 2, q) + 8 * u(2, i, j + 1, q) -
@@ -744,7 +744,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
       RAJA::kernel<RHS4_EXEC_POL>(
           RAJA::make_tuple(k_range, j_range, i_range),
-          [=] RAJA_DEVICE(int k, int j, int i) {
+          [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
             float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
             float_sw4 r1, r2, r3;
             // #pragma omp for
@@ -778,7 +778,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                    tf * (mu(i, j, k) * stry(j) + mu(i, j + 2, k) * stry(j + 2));
 
             /* xx, yy, and zz derivatives: */
-            /* note that we could have introduced intermediate variables for the
+            /* note that we could have sw4_typeroduced sw4_typeermediate variables for the
              * average of lambda  */
             /* in the same way as we did for mu */
             r1 = i6 * (strx(i) * ((2 * mux1 + la(i - 1, j, k) * strx(i - 1) -
@@ -805,8 +805,8 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                                   muy4 * (u(1, i, j + 2, k) - u(1, i, j, k))));
 
             /* all indices ending with 'b' are indices relative to the boundary,
-             * going into the domain (1,2,3,...)*/
-            int kb = nk - k + 1;
+             * going sw4_typeo the domain (1,2,3,...)*/
+            sw4_type kb = nk - k + 1;
             /* all coefficient arrays (acof, bope, ghcof) should be indexed with
              * these indices */
             /* all solution and material property arrays should be indexed with
@@ -818,10 +818,10 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
             float_sw4 mu1zz = 0;
             float_sw4 mu2zz = 0;
             float_sw4 mu3zz = 0;
-            for (int qb = 1; qb <= 8; qb++) {
+            for (sw4_type qb = 1; qb <= 8; qb++) {
               float_sw4 mucof = 0;
               float_sw4 lap2mu = 0;
-              for (int mb = 1; mb <= 8; mb++) {
+              for (sw4_type mb = 1; mb <= 8; mb++) {
                 mucof += acof(kb, qb, mb) * mu(i, j, nk - mb + 1);
                 lap2mu += acof(kb, qb, mb) *
                           (2 * mu(i, j, nk - mb + 1) + la(i, j, nk - mb + 1));
@@ -919,7 +919,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
             float_sw4 u3zip1 = 0;
             float_sw4 u3zim1 = 0;
             float_sw4 u3zim2 = 0;
-            for (int qb = 1; qb <= 8; qb++) {
+            for (sw4_type qb = 1; qb <= 8; qb++) {
               u3zip2 -= bope(kb, qb) * u(3, i + 2, j, nk - qb + 1);
               u3zip1 -= bope(kb, qb) * u(3, i + 1, j, nk - qb + 1);
               u3zim1 -= bope(kb, qb) * u(3, i - 1, j, nk - qb + 1);
@@ -933,7 +933,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 
             /*   (mu*w_x)_z: NOT CENTERED */
             float_sw4 mu3xz = 0;
-            for (int qb = 1; qb <= 8; qb++)
+            for (sw4_type qb = 1; qb <= 8; qb++)
               mu3xz -= bope(kb, qb) * (mu(i, j, nk - qb + 1) * i12 *
                                        (-u(3, i + 2, j, nk - qb + 1) +
                                         8 * u(3, i + 1, j, nk - qb + 1) -
@@ -987,7 +987,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
             float_sw4 u3zjp1 = 0;
             float_sw4 u3zjm1 = 0;
             float_sw4 u3zjm2 = 0;
-            for (int qb = 1; qb <= 8; qb++) {
+            for (sw4_type qb = 1; qb <= 8; qb++) {
               u3zjp2 -= bope(kb, qb) * u(3, i, j + 2, nk - qb + 1);
               u3zjp1 -= bope(kb, qb) * u(3, i, j + 1, nk - qb + 1);
               u3zjm1 -= bope(kb, qb) * u(3, i, j - 1, nk - qb + 1);
@@ -1001,7 +1001,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 
             /* (mu*w_y)_z: NOT CENTERED */
             float_sw4 mu3yz = 0;
-            for (int qb = 1; qb <= 8; qb++)
+            for (sw4_type qb = 1; qb <= 8; qb++)
               mu3yz -= bope(kb, qb) * (mu(i, j, nk - qb + 1) * i12 *
                                        (-u(3, i, j + 2, nk - qb + 1) +
                                         8 * u(3, i, j + 1, nk - qb + 1) -
@@ -1015,7 +1015,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
             float_sw4 u1zip1 = 0;
             float_sw4 u1zim1 = 0;
             float_sw4 u1zim2 = 0;
-            for (int qb = 1; qb <= 8; qb++) {
+            for (sw4_type qb = 1; qb <= 8; qb++) {
               u1zip2 -= bope(kb, qb) * u(1, i + 2, j, nk - qb + 1);
               u1zip1 -= bope(kb, qb) * u(1, i + 1, j, nk - qb + 1);
               u1zim1 -= bope(kb, qb) * u(1, i - 1, j, nk - qb + 1);
@@ -1032,7 +1032,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
             float_sw4 u2zjp1 = 0;
             float_sw4 u2zjm1 = 0;
             float_sw4 u2zjm2 = 0;
-            for (int qb = 1; qb <= 8; qb++) {
+            for (sw4_type qb = 1; qb <= 8; qb++) {
               u2zjp2 -= bope(kb, qb) * u(2, i, j + 2, nk - qb + 1);
               u2zjp1 -= bope(kb, qb) * u(2, i, j + 1, nk - qb + 1);
               u2zjm1 -= bope(kb, qb) * u(2, i, j - 1, nk - qb + 1);
@@ -1046,7 +1046,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 
             /*   (la*u_x)_z: NOT CENTERED */
             float_sw4 lau1xz = 0;
-            for (int qb = 1; qb <= 8; qb++)
+            for (sw4_type qb = 1; qb <= 8; qb++)
               lau1xz -= bope(kb, qb) * (la(i, j, nk - qb + 1) * i12 *
                                         (-u(1, i + 2, j, nk - qb + 1) +
                                          8 * u(1, i + 1, j, nk - qb + 1) -
@@ -1056,7 +1056,7 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 
             /* (la*v_y)_z: NOT CENTERED */
             float_sw4 lau2yz = 0;
-            for (int qb = 1; qb <= 8; qb++) {
+            for (sw4_type qb = 1; qb <= 8; qb++) {
               lau2yz -= bope(kb, qb) * (la(i, j, nk - qb + 1) * i12 *
                                         (-u(2, i, j + 2, nk - qb + 1) +
                                          8 * u(2, i, j + 1, nk - qb + 1) -
@@ -1086,8 +1086,8 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 
 //-----------------------------------------------------------------------
 void rhs4th3fortsgstr_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, int nk,
-    int* __restrict__ onesided, float_sw4* __restrict__ a_acof,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast, sw4_type nk,
+    sw4_type* __restrict__ onesided, float_sw4* __restrict__ a_acof,
     float_sw4* __restrict__ a_bope, float_sw4* __restrict__ a_ghcof,
     float_sw4* __restrict__ a_lu, 
     float_sw4* __restrict__ a_u1,float_sw4* __restrict__ a_u2,float_sw4* __restrict__ a_u3,
@@ -1100,7 +1100,7 @@ void rhs4th3fortsgstr_ci(
   // return;
   // This would work to create multi-dimensional C arrays:
   //   float_sw4** b_ar=(float_sw4*)malloc(ni*nj*sizeof(float_sw4*));
-  //   for( int j=0;j<nj;j++)
+  //   for( sw4_type j=0;j<nj;j++)
   //      b_ar[j] = &a_lu[j-1+ni*(1-1)];
   //#define ar(i,j) b_ar[j][i];
 
@@ -1126,20 +1126,20 @@ void rhs4th3fortsgstr_ci(
   const float_sw4 i144 = 1.0 / 144;
   const float_sw4 tf = 0.75;
 
-  const int ni = ilast - ifirst + 1;
-  //   const int nj= jlast-jfirst+1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = nij * (klast - kfirst + 1);
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int base3 = base - nijk;
-  // const int nic  = 3*ni;
-  // const int nijc = 3*nij;
-  const int ifirst0 = ifirst;
-  const int jfirst0 = jfirst;
-  const int kfirst0 = kfirst;
+  const sw4_type ni = ilast - ifirst + 1;
+  //   const sw4_type nj= jlast-jfirst+1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijk = nij * (klast - kfirst + 1);
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type base3 = base - nijk;
+  // const sw4_type nic  = 3*ni;
+  // const sw4_type nijc = 3*nij;
+  const sw4_type ifirst0 = ifirst;
+  const sw4_type jfirst0 = jfirst;
+  const sw4_type kfirst0 = kfirst;
 
-  int k1, k2;
-  // int i, j, k, m,a1;
+  sw4_type k1, k2;
+  // sw4_type i, j, k, m,a1;
   // float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2, muz3,
   // muz4; float_sw4 r1,r2,r3,mucof, mu1zz, mu2zz, mu3zz; float_sw4 lap2mu,
   // u3zip2, u3zip1, u3zim1, u3zim2, lau3zx, mu3xz, u3zjp2, u3zjp1, u3zjm1,
@@ -1147,7 +1147,7 @@ void rhs4th3fortsgstr_ci(
   // u1zim2; float_sw4 u2zjp2, u2zjp1, u2zjm1, u2zjm2, lau1xz, lau2yz;
 
   float_sw4 cof = 1.0 / (h * h);
-  int a1;
+  sw4_type a1;
 
   if (op == '=')
     a1 = 0;
@@ -1176,7 +1176,7 @@ void rhs4th3fortsgstr_ci(
 
   PREFETCH(a_mu);      // Needed
   PREFETCH(a_lambda);  // Needed
-                       //   int nkk=klast-kfirst+1;
+                       //   sw4_type nkk=klast-kfirst+1;
 #ifdef ENABLE_CUDA
                        // rhs4th3fortsgstr_ciopt(2,ni-2,2,nj-2,2,nkk-2,
   //    			  ni,nj,nkk,
@@ -1220,7 +1220,7 @@ void rhs4th3fortsgstr_ci(
 #ifdef SW4_AUTOTUNE
     RangeAT<384, __LINE__, 1> IJK_AT(ifirst + 2, ilast - 1, jfirst + 2,
                                      jlast - 1, k1, k2 + 1);
-    forall3asyncAT<__LINE__>(IJK_AT, [=] RAJA_DEVICE(int i, int j, int k) {
+    forall3asyncAT<__LINE__>(IJK_AT, [=] RAJA_DEVICE(sw4_type i, sw4_type j, sw4_type k) {
 #else
 #ifdef ENABLE_CUDA
     Range<16> I(ifirst + 2, ilast - 1);
@@ -1231,14 +1231,14 @@ void rhs4th3fortsgstr_ci(
     Range<2> J(jfirst + 2, jlast - 1);
     Range<2> K(k1, k2 + 1);
 #endif
-    forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+    forall3async(I, J, K, [=] RAJA_DEVICE(sw4_type i, sw4_type j, sw4_type k) {
 #endif
 #else
     RAJA::kernel<
         XRHS_POL_ASYNC>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
-                                                                         int k,
-                                                                         int j,
-                                                                         int i) {
+                                                                         sw4_type k,
+                                                                         sw4_type j,
+                                                                         sw4_type i) {
 #endif
       float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1, muz2,
           muz3, muz4;
@@ -1550,7 +1550,7 @@ void rhs4th3fortsgstr_ci(
       Range<2> J(jfirst + 2, jlast - 1);
       Range<2> K(1, 7);
 #endif
-      forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+      forall3async(I, J, K, [=] RAJA_DEVICE(sw4_type i, sw4_type j, sw4_type k) {
 #else
       RAJA::RangeSegment k_range(1, 6 + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
@@ -1561,9 +1561,9 @@ void rhs4th3fortsgstr_ci(
 
       RAJA::kernel<
           RHS4TH3_POL_ASYNC>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
-                                                                              int k,
-                                                                              int j,
-                                                                              int i) {
+                                                                              sw4_type k,
+                                                                              sw4_type j,
+                                                                              sw4_type i) {
 #endif
         float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
         float_sw4 r1, r2, r3;
@@ -1628,7 +1628,7 @@ void rhs4th3fortsgstr_ci(
 #ifdef ENABLE_HIP
 #pragma unroll 8
 #endif
-        for (int q = 1; q <= 8; q++) {
+        for (sw4_type q = 1; q <= 8; q++) {
           //		     lap2mu= 0;
           //		     mucof = 0;
           //		     for( m=1 ; m<=8; m++ )
@@ -1745,7 +1745,7 @@ void rhs4th3fortsgstr_ci(
 #ifdef ENABLE_HIP
 #pragma unroll 8
 #endif
-        for (int q = 1; q <= 8; q++) {
+        for (sw4_type q = 1; q <= 8; q++) {
           u3zip2 += bope(k, q) * u3(i + 2, j, q);
           u3zip1 += bope(k, q) * u3(i + 1, j, q);
           u3zim1 += bope(k, q) * u3(i - 1, j, q);
@@ -1760,7 +1760,7 @@ void rhs4th3fortsgstr_ci(
 #ifdef ENABLE_HIP
 #pragma unroll 8
 #endif
-        for (int q = 1; q <= 8; q++)
+        for (sw4_type q = 1; q <= 8; q++)
           mu3xz += bope(k, q) * (mu(i, j, q) * i12 *
                                  (-u3(i + 2, j, q) + 8 * u3(i + 1, j, q) -
                                   8 * u3(i - 1, j, q) + u3(i - 2, j, q)));
@@ -1812,7 +1812,7 @@ void rhs4th3fortsgstr_ci(
 #ifdef ENABLE_HIP
 #pragma unroll 8
 #endif
-        for (int q = 1; q <= 8; q++) {
+        for (sw4_type q = 1; q <= 8; q++) {
           u3zjp2 += bope(k, q) * u3(i, j + 2, q);
           u3zjp1 += bope(k, q) * u3(i, j + 1, q);
           u3zjm1 += bope(k, q) * u3(i, j - 1, q);
@@ -1829,7 +1829,7 @@ void rhs4th3fortsgstr_ci(
 #ifdef ENABLE_HIP
 #pragma unroll 8
 #endif
-        for (int q = 1; q <= 8; q++)
+        for (sw4_type q = 1; q <= 8; q++)
           mu3yz += bope(k, q) * (mu(i, j, q) * i12 *
                                  (-u3(i, j + 2, q) + 8 * u3(i, j + 1, q) -
                                   8 * u3(i, j - 1, q) + u3(i, j - 2, q)));
@@ -1843,7 +1843,7 @@ void rhs4th3fortsgstr_ci(
         float_sw4 u1zim1 = 0;
         float_sw4 u1zim2 = 0;
 	//#pragma unroll 8 // This one slowed the code 3m 11.28 
-        for (int q = 1; q <= 8; q++) {
+        for (sw4_type q = 1; q <= 8; q++) {
           u1zip2 += bope(k, q) * u1(i + 2, j, q);
           u1zip1 += bope(k, q) * u1(i + 1, j, q);
           u1zim1 += bope(k, q) * u1(i - 1, j, q);
@@ -1860,7 +1860,7 @@ void rhs4th3fortsgstr_ci(
         float_sw4 u2zjm1 = 0;
         float_sw4 u2zjm2 = 0;
 	//#pragma unroll 8 // 3m 10.74
-        for (int q = 1; q <= 8; q++) {
+        for (sw4_type q = 1; q <= 8; q++) {
           u2zjp2 += bope(k, q) * u2(i, j + 2, q);
           u2zjp1 += bope(k, q) * u2(i, j + 1, q);
           u2zjm1 += bope(k, q) * u2(i, j - 1, q);
@@ -1874,7 +1874,7 @@ void rhs4th3fortsgstr_ci(
         /*   (la*u_x)_z: NOT CENTERED */
         float_sw4 lau1xz = 0;
 	//#pragma unroll 8 // 3m 10.86
-        for (int q = 1; q <= 8; q++)
+        for (sw4_type q = 1; q <= 8; q++)
           lau1xz += bope(k, q) * (la(i, j, q) * i12 *
                                   (-u1(i + 2, j, q) + 8 * u1(i + 1, j, q) -
                                    8 * u1(i - 1, j, q) + u1(i - 2, j, q)));
@@ -1883,7 +1883,7 @@ void rhs4th3fortsgstr_ci(
         /* (la*v_y)_z: NOT CENTERED */
         float_sw4 lau2yz = 0;
 	//#pragma unroll 8 // 3m 10.73
-        for (int q = 1; q <= 8; q++)
+        for (sw4_type q = 1; q <= 8; q++)
           lau2yz += bope(k, q) * (la(i, j, q) * i12 *
                                   (-u2(i, j + 2, q) + 8 * u2(i, j + 1, q) -
                                    8 * u2(i, j - 1, q) + u2(i, j - 2, q)));
@@ -1910,7 +1910,7 @@ void rhs4th3fortsgstr_ci(
       Range<2> J(jfirst + 2, jlast - 1);
       Range<2> K(nk - 5, nk + 1);
 #endif
-      forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+      forall3async(I, J, K, [=] RAJA_DEVICE(sw4_type i, sw4_type j, sw4_type k) {
 #else
       RAJA::RangeSegment k_range(nk - 5, nk + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
@@ -1920,9 +1920,9 @@ void rhs4th3fortsgstr_ci(
 
       RAJA::kernel<
           RHS4TH3_POL2_ASYNC>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
-                                                                               int k,
-                                                                               int j,
-                                                                               int i) {
+                                                                               sw4_type k,
+                                                                               sw4_type j,
+                                                                               sw4_type i) {
 #endif
         float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
         float_sw4 r1, r2, r3;
@@ -1953,7 +1953,7 @@ void rhs4th3fortsgstr_ci(
                tf * (mu(i, j, k) * stry(j) + mu(i, j + 2, k) * stry(j + 2));
 
         /* xx, yy, and zz derivatives: */
-        /* note that we could have introduced intermediate variables for the
+        /* note that we could have sw4_typeroduced sw4_typeermediate variables for the
          * average of lambda  */
         /* in the same way as we did for mu */
         r1 = i6 * (strx(i) * ((2 * mux1 + la(i - 1, j, k) * strx(i - 1) -
@@ -1980,8 +1980,8 @@ void rhs4th3fortsgstr_ci(
                               muy4 * (u1(i, j + 2, k) - u1(i, j, k))));
 
         /* all indices ending with 'b' are indices relative to the boundary,
-         * going into the domain (1,2,3,...)*/
-        int kb = nk - k + 1;
+         * going sw4_typeo the domain (1,2,3,...)*/
+        sw4_type kb = nk - k + 1;
         /* all coefficient arrays (acof, bope, ghcof) should be indexed with
          * these indices */
         /* all solution and material property arrays should be indexed with
@@ -1996,10 +1996,10 @@ void rhs4th3fortsgstr_ci(
 #ifdef ENABLE_HIP
 #pragma unroll 8
 #endif
-        for (int qb = 1; qb <= 8; qb++) {
+        for (sw4_type qb = 1; qb <= 8; qb++) {
           float_sw4 mucof = 0;
           float_sw4 lap2mu = 0;
-          for (int mb = 1; mb <= 8; mb++) {
+          for (sw4_type mb = 1; mb <= 8; mb++) {
             mucof += acof(kb, qb, mb) * mu(i, j, nk - mb + 1);
             lap2mu += acof(kb, qb, mb) *
                       (2 * mu(i, j, nk - mb + 1) + la(i, j, nk - mb + 1));
@@ -2098,7 +2098,7 @@ void rhs4th3fortsgstr_ci(
 #ifdef ENABLE_HIP
 	//#pragma unroll 8 // Slower
 #endif
-        for (int qb = 1; qb <= 8; qb++) {
+        for (sw4_type qb = 1; qb <= 8; qb++) {
           u3zip2 -= bope(kb, qb) * u3(i + 2, j, nk - qb + 1);
           u3zip1 -= bope(kb, qb) * u3(i + 1, j, nk - qb + 1);
           u3zim1 -= bope(kb, qb) * u3(i - 1, j, nk - qb + 1);
@@ -2114,7 +2114,7 @@ void rhs4th3fortsgstr_ci(
 #ifdef ENABLE_HIP
 	//#pragma unroll 8
 #endif
-        for (int qb = 1; qb <= 8; qb++)
+        for (sw4_type qb = 1; qb <= 8; qb++)
           mu3xz -=
               bope(kb, qb) *
               (mu(i, j, nk - qb + 1) * i12 *
@@ -2169,7 +2169,7 @@ void rhs4th3fortsgstr_ci(
 #ifdef ENABLE_HIP
 	//#pragma unroll 8
 #endif
-        for (int qb = 1; qb <= 8; qb++) {
+        for (sw4_type qb = 1; qb <= 8; qb++) {
           u3zjp2 -= bope(kb, qb) * u3(i, j + 2, nk - qb + 1);
           u3zjp1 -= bope(kb, qb) * u3(i, j + 1, nk - qb + 1);
           u3zjm1 -= bope(kb, qb) * u3(i, j - 1, nk - qb + 1);
@@ -2185,7 +2185,7 @@ void rhs4th3fortsgstr_ci(
 #ifdef ENABLE_HIP
 	//#pragma unroll 8
 #endif
-        for (int qb = 1; qb <= 8; qb++)
+        for (sw4_type qb = 1; qb <= 8; qb++)
           mu3yz -=
               bope(kb, qb) *
               (mu(i, j, nk - qb + 1) * i12 *
@@ -2202,7 +2202,7 @@ void rhs4th3fortsgstr_ci(
 #ifdef ENABLE_HIP
 	//#pragma unroll 8
 #endif
-        for (int qb = 1; qb <= 8; qb++) {
+        for (sw4_type qb = 1; qb <= 8; qb++) {
           u1zip2 -= bope(kb, qb) * u1(i + 2, j, nk - qb + 1);
           u1zip1 -= bope(kb, qb) * u1(i + 1, j, nk - qb + 1);
           u1zim1 -= bope(kb, qb) * u1(i - 1, j, nk - qb + 1);
@@ -2221,7 +2221,7 @@ void rhs4th3fortsgstr_ci(
 #ifdef ENABLE_HIP
 	//#pragma unroll 8
 #endif
-        for (int qb = 1; qb <= 8; qb++) {
+        for (sw4_type qb = 1; qb <= 8; qb++) {
           u2zjp2 -= bope(kb, qb) * u2(i, j + 2, nk - qb + 1);
           u2zjp1 -= bope(kb, qb) * u2(i, j + 1, nk - qb + 1);
           u2zjm1 -= bope(kb, qb) * u2(i, j - 1, nk - qb + 1);
@@ -2237,7 +2237,7 @@ void rhs4th3fortsgstr_ci(
 #ifdef ENABLE_HIP
 	//#pragma unroll 8
 #endif
-        for (int qb = 1; qb <= 8; qb++)
+        for (sw4_type qb = 1; qb <= 8; qb++)
           lau1xz -=
               bope(kb, qb) *
               (la(i, j, nk - qb + 1) * i12 *
@@ -2250,7 +2250,7 @@ void rhs4th3fortsgstr_ci(
 #ifdef ENABLE_HIP
 	//#pragma unroll 8
 #endif
-        for (int qb = 1; qb <= 8; qb++) {
+        for (sw4_type qb = 1; qb <= 8; qb++) {
           lau2yz -=
               bope(kb, qb) *
               (la(i, j, nk - qb + 1) * i12 *
@@ -2284,53 +2284,53 @@ void rhs4th3fortsgstr_ci(
 }
 
 //-----------------------------------------------------------------------
-void rhserrfort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                   int klast, int nz, float_sw4 h, float_sw4* __restrict__ a_fo,
+void rhserrfort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                   sw4_type klast, sw4_type nz, float_sw4 h, float_sw4* __restrict__ a_fo,
                    float_sw4* __restrict__ a_u2, float_sw4 lowZ[3],
-                   float_sw4 interZ[3], float_sw4 highZ[3]) {
+                   float_sw4 sw4_typeerZ[3], float_sw4 highZ[3]) {
   SW4_MARK_FUNCTION;
 #define fo(c, i, j, k) a_fo[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
 #define u2(c, i, j, k) a_u2[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
 
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = nij * (klast - kfirst + 1);
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int base3 = base - nijk;
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijk = nij * (klast - kfirst + 1);
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type base3 = base - nijk;
 
-  for (int c = 1; c <= 3; c++) {
+  for (sw4_type c = 1; c <= 3; c++) {
     float_sw4 lowz = 0;
 #pragma omp parallel
 #pragma omp for reduction(max : lowz)
-    for (int k = 1; k <= 6; k++)
-      for (int j = jfirst + 2; j <= jlast - 2; j++)
-        for (int i = ifirst + 2; i <= ilast - 2; i++) {
+    for (sw4_type k = 1; k <= 6; k++)
+      for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
+        for (sw4_type i = ifirst + 2; i <= ilast - 2; i++) {
           float_sw4 er = std::abs(fo(c, i, j, k) - u2(c, i, j, k));
           if (lowz < er) lowz = er;
         }
     lowZ[c - 1] = lowz;
   }
 
-  for (int c = 1; c <= 3; c++) {
-    float_sw4 interz = 0;
+  for (sw4_type c = 1; c <= 3; c++) {
+    float_sw4 sw4_typeerz = 0;
 #pragma omp parallel
-#pragma omp for reduction(max : interz)
-    for (int k = 7; k <= nz - 6; k++)
-      for (int j = jfirst + 2; j <= jlast - 2; j++)
-        for (int i = ifirst + 2; i <= ilast - 2; i++) {
+#pragma omp for reduction(max : sw4_typeerz)
+    for (sw4_type k = 7; k <= nz - 6; k++)
+      for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
+        for (sw4_type i = ifirst + 2; i <= ilast - 2; i++) {
           float_sw4 er = std::abs(fo(c, i, j, k) - u2(c, i, j, k));
-          if (interz < er) interz = er;
+          if (sw4_typeerz < er) sw4_typeerz = er;
         }
-    interZ[c - 1] = interz;
+    sw4_typeerZ[c - 1] = sw4_typeerz;
   }
 
-  for (int c = 1; c <= 3; c++) {
+  for (sw4_type c = 1; c <= 3; c++) {
     float_sw4 highz = 0;
 #pragma omp parallel
 #pragma omp for reduction(max : highz)
-    for (int k = nz - 5; k <= nz; k++)
-      for (int j = jfirst + 2; j <= jlast - 2; j++)
-        for (int i = ifirst + 2; i <= ilast - 2; i++) {
+    for (sw4_type k = nz - 5; k <= nz; k++)
+      for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
+        for (sw4_type i = ifirst + 2; i <= ilast - 2; i++) {
           float_sw4 er = std::abs(fo(c, i, j, k) - u2(c, i, j, k));
           if (highz < er) highz = er;
         }
@@ -2341,30 +2341,30 @@ void rhserrfort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 }
 
 //-----------------------------------------------------------------------
-void rhouttlumf_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                   int klast, int nz, float_sw4* __restrict__ a_uacc,
+void rhouttlumf_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                   sw4_type klast, sw4_type nz, float_sw4* __restrict__ a_uacc,
                    float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_fo,
                    float_sw4* __restrict__ a_rho, float_sw4 lowZ[3],
-                   float_sw4 interZ[3], float_sw4 highZ[3]) {
+                   float_sw4 sw4_typeerZ[3], float_sw4 highZ[3]) {
   SW4_MARK_FUNCTION;
 #define fo(c, i, j, k) a_fo[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
 #define uacc(c, i, j, k) a_uacc[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
 #define lu(c, i, j, k) a_lu[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
 #define rho(i, j, k) a_rho[base + i + ni * (j) + nij * (k)]
 
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = nij * (klast - kfirst + 1);
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int base3 = base - nijk;
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijk = nij * (klast - kfirst + 1);
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type base3 = base - nijk;
 
-  for (int c = 1; c <= 3; c++) {
+  for (sw4_type c = 1; c <= 3; c++) {
     float_sw4 lowz = 0;
 #pragma omp parallel
 #pragma omp for reduction(max : lowz)
-    for (int k = 1; k <= 6; k++)
-      for (int j = jfirst + 2; j <= jlast - 2; j++)
-        for (int i = ifirst + 2; i <= ilast - 2; i++) {
+    for (sw4_type k = 1; k <= 6; k++)
+      for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
+        for (sw4_type i = ifirst + 2; i <= ilast - 2; i++) {
           float_sw4 er = std::abs(rho(i, j, k) * uacc(c, i, j, k) -
                                   lu(c, i, j, k) - fo(c, i, j, k));
           if (lowz < er) lowz = er;
@@ -2372,27 +2372,27 @@ void rhouttlumf_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
     lowZ[c - 1] = lowz;
   }
 
-  for (int c = 1; c <= 3; c++) {
-    float_sw4 interz = 0;
+  for (sw4_type c = 1; c <= 3; c++) {
+    float_sw4 sw4_typeerz = 0;
 #pragma omp parallel
-#pragma omp for reduction(max : interz)
-    for (int k = 7; k <= nz - 6; k++)
-      for (int j = jfirst + 2; j <= jlast - 2; j++)
-        for (int i = ifirst + 2; i <= ilast - 2; i++) {
+#pragma omp for reduction(max : sw4_typeerz)
+    for (sw4_type k = 7; k <= nz - 6; k++)
+      for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
+        for (sw4_type i = ifirst + 2; i <= ilast - 2; i++) {
           float_sw4 er = std::abs(rho(i, j, k) * uacc(c, i, j, k) -
                                   lu(c, i, j, k) - fo(c, i, j, k));
-          if (interz < er) interz = er;
+          if (sw4_typeerz < er) sw4_typeerz = er;
         }
-    interZ[c - 1] = interz;
+    sw4_typeerZ[c - 1] = sw4_typeerz;
   }
 
-  for (int c = 1; c <= 3; c++) {
+  for (sw4_type c = 1; c <= 3; c++) {
     float_sw4 highz = 0;
 #pragma omp parallel
 #pragma omp for reduction(max : highz)
-    for (int k = nz - 5; k <= nz; k++)
-      for (int j = jfirst + 2; j <= jlast - 2; j++)
-        for (int i = ifirst + 2; i <= ilast - 2; i++) {
+    for (sw4_type k = nz - 5; k <= nz; k++)
+      for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
+        for (sw4_type i = ifirst + 2; i <= ilast - 2; i++) {
           float_sw4 er = std::abs(rho(i, j, k) * uacc(c, i, j, k) -
                                   lu(c, i, j, k) - fo(c, i, j, k));
           if (highz < er) highz = er;
@@ -2406,7 +2406,7 @@ void rhouttlumf_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 }
 
 //-----------------------------------------------------------------------
-void predfort_ci(int ib, int ie, int jb, int je, int kb, int ke,
+void predfort_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                  float_sw4* __restrict__ up, float_sw4* __restrict__ u,
                  float_sw4* __restrict__ um, float_sw4* __restrict__ lu,
                  float_sw4* __restrict__ fo, float_sw4* __restrict__ rho,
@@ -2451,7 +2451,7 @@ void predfort_ci(int ib, int ie, int jb, int je, int kb, int ke,
 }
 
 //-----------------------------------------------------------------------
-void corrfort_ci(int ib, int ie, int jb, int je, int kb, int ke,
+void corrfort_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                  float_sw4* __restrict__ up, float_sw4* __restrict__ lu,
                  float_sw4* __restrict__ fo, float_sw4* __restrict__ rho,
                  float_sw4 dt4) {
@@ -2474,10 +2474,10 @@ void corrfort_ci(int ib, int ie, int jb, int je, int kb, int ke,
 }
 
 //-----------------------------------------------------------------------
-void dpdmtfort_ci(int ib, int ie, int jb, int je, int kb, int ke,
+void dpdmtfort_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                   float_sw4* __restrict__ up, float_sw4* __restrict__ u,
                   float_sw4* __restrict__ um, float_sw4* __restrict__ u2,
-                  float_sw4 dt2i, int rank) {
+                  float_sw4 dt2i, sw4_type rank) {
   SW4_MARK_FUNCTION;
   const size_t npts =
       static_cast<size_t>((ie - ib + 1)) * (je - jb + 1) * (ke - kb + 1);
@@ -2498,7 +2498,7 @@ void dpdmtfort_ci(int ib, int ie, int jb, int je, int kb, int ke,
 }
 
 //-----------------------------------------------------------------------
-void dpdmtfortatt_ci(int ib, int ie, int jb, int je, int kb, int ke,
+void dpdmtfortatt_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                      float_sw4* __restrict__ up, float_sw4* __restrict__ u,
                      float_sw4* __restrict__ um, float_sw4 dt2i) {
   SW4_MARK_FUNCTION;
@@ -2519,21 +2519,21 @@ void dpdmtfortatt_ci(int ib, int ie, int jb, int je, int kb, int ke,
 }
 
 // //-----------------------------------------------------------------------
-// void EW::updatememvar_ci( int ifirst, int ilast, int jfirst, int jlast, int
-// kfirst, int klast, 			  float_sw4* __restrict__ a_alp,
+// void EW::updatememvar_ci( sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type
+// kfirst, sw4_type klast, 			  float_sw4* __restrict__ a_alp,
 // float_sw4*
 // __restrict__ a_alm, 			  float_sw4* __restrict__ a_up,
 // float_sw4* __restrict__ a_u, 			  float_sw4*
-// __restrict__ a_um, 			  float_sw4 omega, float_sw4 dt, int
+// __restrict__ a_um, 			  float_sw4 omega, float_sw4 dt, sw4_type
 // domain
 // )
 // {
 //    const float_sw4 i6 = 1.0/6;
-//    const int ni    = ilast-ifirst+1;
-//    const int nij   = ni*(jlast-jfirst+1);
-//    const int nijk  = nij*(klast-kfirst+1);
-//    const int base  = -(ifirst+ni*jfirst+nij*kfirst);
-//    const int base3 = base-nijk;
+//    const sw4_type ni    = ilast-ifirst+1;
+//    const sw4_type nij   = ni*(jlast-jfirst+1);
+//    const sw4_type nijk  = nij*(klast-kfirst+1);
+//    const sw4_type base  = -(ifirst+ni*jfirst+nij*kfirst);
+//    const sw4_type base3 = base-nijk;
 
 // #define alp(c,i,j,k) a_alp[base3+i+ni*(j)+nij*(k)+nijk*(c)]
 // #define alm(c,i,j,k) a_alm[base3+i+ni*(j)+nij*(k)+nijk*(c)]
@@ -2545,7 +2545,7 @@ void dpdmtfortatt_ci(int ib, int ie, int jb, int je, int kb, int ke,
 //    float_sw4 icp = 1.0/( 1.0/2 + 1/(2*dto) + dto/4 + dto*dto/12 );
 //    float_sw4 cm  =     1.0/2 - 1/(2*dto) - dto/4 + dto*dto/12;
 
-//    int k1, k2;
+//    sw4_type k1, k2;
 //    if( domain == 0 )
 //    {
 //       k1 = kfirst;
@@ -2562,14 +2562,14 @@ void dpdmtfortatt_ci(int ib, int ie, int jb, int je, int kb, int ke,
 //       k2 = klast;
 //    }
 
-//    for( int c=1 ; c<=3 ; c++ )
+//    for( sw4_type c=1 ; c<=3 ; c++ )
 // #pragma omp parallel
 // #pragma omp for
-//       for( int k=k1 ; k<=k2 ; k++ )
-// 	 for( int j=jfirst ; j<=jlast ; j++ )
+//       for( sw4_type k=k1 ; k<=k2 ; k++ )
+// 	 for( sw4_type j=jfirst ; j<=jlast ; j++ )
 // #pragma ivdep
 // #pragma simd
-// 	    for( int i=ifirst ; i<=ilast ; i++ )
+// 	    for( sw4_type i=ifirst ; i<=ilast ; i++ )
 // 	    {
 // 	       alp(c,i,j,k) = icp*(-cm*alm(c,i,j,k) + u(c,i,j,k) +
 // 			  i6*( dto*dto*u(c,i,j,k) +
@@ -2585,8 +2585,8 @@ void dpdmtfortatt_ci(int ib, int ie, int jb, int je, int kb, int ke,
 
 //-----------------------------------------------------------------------
 void satt_ci(float_sw4* __restrict__ up, float_sw4* __restrict__ qs,
-             float_sw4 dt, float_sw4 cfreq, int ifirst, int ilast, int jfirst,
-             int jlast, int kfirst, int klast) {
+             float_sw4 dt, float_sw4 cfreq, sw4_type ifirst, sw4_type ilast, sw4_type jfirst,
+             sw4_type jlast, sw4_type kfirst, sw4_type klast) {
   SW4_MARK_FUNCTION;
   const size_t npts = static_cast<size_t>((ilast - ifirst + 1)) *
                       (jlast - jfirst + 1) * (klast - kfirst + 1);
@@ -2608,38 +2608,38 @@ void satt_ci(float_sw4* __restrict__ up, float_sw4* __restrict__ qs,
 }
 
 //-----------------------------------------------------------------------
-void solveattfreeac_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                       int klast, float_sw4* __restrict__ a_alpha,
+void solveattfreeac_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                       sw4_type klast, float_sw4* __restrict__ a_alpha,
                        float_sw4 cof, float_sw4* __restrict__ a_up) {
   SW4_MARK_FUNCTION;
 #define alpha(c, i, j, k) a_alpha[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
 #define up(c, i, j, k) a_up[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = nij * (klast - kfirst + 1);
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int base3 = base - nijk;
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijk = nij * (klast - kfirst + 1);
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type base3 = base - nijk;
 
 #pragma omp parallel
   {
-    int k = 0;
+    sw4_type k = 0;
 #pragma omp for
-    for (int j = jfirst + 2; j <= jlast - 2; j++)
+    for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
 #pragma ivdep
 #pragma simd
-      for (int i = ifirst + 2; i <= ilast - 2; i++)
+      for (sw4_type i = ifirst + 2; i <= ilast - 2; i++)
         alpha(1, i, j, k) += cof * up(1, i, j, k);
 #pragma omp for
-    for (int j = jfirst + 2; j <= jlast - 2; j++)
+    for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
 #pragma ivdep
 #pragma simd
-      for (int i = ifirst + 2; i <= ilast - 2; i++)
+      for (sw4_type i = ifirst + 2; i <= ilast - 2; i++)
         alpha(2, i, j, k) += cof * up(2, i, j, k);
 #pragma omp for
-    for (int j = jfirst + 2; j <= jlast - 2; j++)
+    for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
 #pragma ivdep
 #pragma simd
-      for (int i = ifirst + 2; i <= ilast - 2; i++)
+      for (sw4_type i = ifirst + 2; i <= ilast - 2; i++)
         alpha(3, i, j, k) += cof * up(3, i, j, k);
   }
 #undef alpha
@@ -2648,11 +2648,11 @@ void solveattfreeac_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 
 //-----------------------------------------------------------------------
 void solveattfreec_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,
     float_sw4* __restrict__ a_la, float_sw4* __restrict__ a_muve,
     float_sw4* __restrict__ a_lave, float_sw4* __restrict__ a_bforcerhs,
-    float_sw4* __restrict__ a_met, float_sw4 s[5], int usesg,
+    float_sw4* __restrict__ a_met, float_sw4 s[5], sw4_type usesg,
     float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry) {
   SW4_MARK_FUNCTION;
 #define u(c, i, j, k) a_u[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
@@ -2665,23 +2665,23 @@ void solveattfreec_ci(
 #define sgstry(j) a_stry[j - jfirst]
 #define bforcerhs(c, i, j) a_bforcerhs[base03 + (i) + ni * (j) + nij * (c)]
 
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = nij * (klast - kfirst + 1);
-  const int base0 = -(ifirst + ni * jfirst);
-  const int base03 = base0 - nij;
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int base3 = base - nijk;
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijk = nij * (klast - kfirst + 1);
+  const sw4_type base0 = -(ifirst + ni * jfirst);
+  const sw4_type base03 = base0 - nij;
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type base3 = base - nijk;
 
 #pragma omp parallel
   {
     float_sw4 sgx = 1, sgy = 1, isgx = 1, isgy = 1, s0i = 1 / s[0];
-    int k = 1, kl = 1;
+    sw4_type k = 1, kl = 1;
 #pragma omp for
-    for (int j = jfirst + 2; j <= jlast - 2; j++)
+    for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
 #pragma ivdep
 #pragma simd
-      for (int i = ifirst + 2; i <= ilast - 2; i++) {
+      for (sw4_type i = ifirst + 2; i <= ilast - 2; i++) {
         float_sw4 mupt = mu(i, j, k) - muve(i, j);
         float_sw4 lapt = la(i, j, k) - lambdave(i, j);
         if (usesg == 1) {
@@ -2723,14 +2723,14 @@ void solveattfreec_ci(
 
 //-----------------------------------------------------------------------
 void addbstresswresc_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, int nz,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast, sw4_type nz,
     float_sw4* __restrict__ a_alphap, float_sw4* __restrict__ a_alpham,
     float_sw4* __restrict__ a_muve, float_sw4* __restrict__ a_lave,
     float_sw4* __restrict__ a_bforcerhs, float_sw4* __restrict__ a_u,
-    float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_met, int side,
+    float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_met, sw4_type side,
     float_sw4 dt, float_sw4 omegave, float_sw4* __restrict__ a_memforce,
     float_sw4* __restrict__ a_muvebnd, float_sw4* __restrict__ a_lambdavebnd,
-    float_sw4 s[5], float_sw4& cof, int usesg, float_sw4* __restrict__ a_strx,
+    float_sw4 s[5], float_sw4& cof, sw4_type usesg, float_sw4* __restrict__ a_strx,
     float_sw4* __restrict__ a_stry) {
   SW4_MARK_FUNCTION;
 #define u(c, i, j, k) a_u[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
@@ -2754,15 +2754,15 @@ void addbstresswresc_ci(
   const float_sw4 i6 = 1.0 / 6;
   const float_sw4 c1 = 2.0 / 3;
   const float_sw4 c2 = -1.0 / 12;
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = nij * (klast - kfirst + 1);
-  //   const int base0 = -(ifirst+ni*jfirst);
-  const int base0 = -(ifirst + ni * jfirst);
-  const int base03 = base0 - nij;
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int base3 = base - nijk;
-  int k, kl;
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijk = nij * (klast - kfirst + 1);
+  //   const sw4_type base0 = -(ifirst+ni*jfirst);
+  const sw4_type base0 = -(ifirst + ni * jfirst);
+  const sw4_type base03 = base0 - nij;
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type base3 = base - nijk;
+  sw4_type k, kl;
   if (side == 5) {
     k = 1;
     kl = 1;
@@ -2779,10 +2779,10 @@ void addbstresswresc_ci(
   {
     float_sw4 sgx = 1, sgy = 1, isgx = 1, isgy = 1;
 #pragma omp for
-    for (int j = jfirst + 2; j <= jlast - 2; j++)
+    for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
 #pragma ivdep
 #pragma simd
-      for (int i = ifirst + 2; i <= ilast - 2; i++) {
+      for (sw4_type i = ifirst + 2; i <= ilast - 2; i++) {
         float_sw4 r1 =
             (-cm * alpham(1, i, j, k - kl) +
              (4 + omdt * omdt) * i6 * u(1, i, j, k - kl) +
@@ -2939,11 +2939,11 @@ void addbstresswresc_ci(
 
 //-----------------------------------------------------------------------
 void ve_bndry_stress_curvi_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, int nz,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast, sw4_type nz,
     float_sw4* __restrict__ a_alphap, float_sw4* __restrict__ a_muve,
     float_sw4* __restrict__ a_lave, float_sw4* __restrict__ a_bforcerhs,
-    float_sw4* __restrict__ a_met, int side, float_sw4* __restrict__ sbop,
-    int usesg, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry) {
+    float_sw4* __restrict__ a_met, sw4_type side, float_sw4* __restrict__ sbop,
+    sw4_type usesg, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry) {
   SW4_MARK_FUNCTION;
   // SW4_MARK_BEGIN("HOST CODE");
 #define alphap(c, i, j, k) \
@@ -2960,15 +2960,15 @@ void ve_bndry_stress_curvi_ci(
   // const float_sw4 i6 = 1.0/6;
   const float_sw4 c1 = 2.0 / 3;
   const float_sw4 c2 = -1.0 / 12;
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = nij * (klast - kfirst + 1);
-  //   const int base0 = -(ifirst+ni*jfirst);
-  const int base0 = -(ifirst + ni * jfirst);
-  const int base03 = base0 - nij;
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int base3 = base - nijk;
-  int k, kl;
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijk = nij * (klast - kfirst + 1);
+  //   const sw4_type base0 = -(ifirst+ni*jfirst);
+  const sw4_type base0 = -(ifirst + ni * jfirst);
+  const sw4_type base03 = base0 - nij;
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type base3 = base - nijk;
+  sw4_type k, kl;
   if (side == 5) {
     k = 1;
     kl = 1;
@@ -2981,9 +2981,9 @@ void ve_bndry_stress_curvi_ci(
   {
     //
     // #pragma omp for
-    //       for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
+    //       for( sw4_type j=jfirst+2 ; j<=jlast-2 ; j++ )
     // #pragma ivdep
-    // 	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
+    // 	 for( sw4_type i=ifirst+2 ; i<=ilast-2 ; i++ )
     // 	 {
 
     // SW4_MARK_END("HOST CODE");
@@ -2991,13 +2991,13 @@ void ve_bndry_stress_curvi_ci(
 #if !defined(RAJA_ONLY)  && defined(ENABLE_GPU) // Fine
     Range<16> I(ifirst + 2, ilast - 1);
     Range<16> J(jfirst + 2, jlast - 1);
-    forall2async(I, J, [=] RAJA_DEVICE(int i, int j) {
+    forall2async(I, J, [=] RAJA_DEVICE(sw4_type i, sw4_type j) {
 #else
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
     RAJA::kernel<VBSC_POL>(RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(
-                                                                   int j,
-                                                                   int i) {
+                                                                   sw4_type j,
+                                                                   sw4_type i) {
 #endif
       float_sw4 sgx = 1, sgy = 1, isgx = 1, isgy = 1;
       if (usesg == 1) {
@@ -3129,10 +3129,10 @@ void ve_bndry_stress_curvi_ci(
 
 //-----------------------------------------------------------------------
 void att_free_curvi_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,
     float_sw4* __restrict__ a_lambda, float_sw4* __restrict__ a_bforcerhs,
-    float_sw4* __restrict__ a_met, float_sw4* __restrict__ sbop, int usesg,
+    float_sw4* __restrict__ a_met, float_sw4* __restrict__ sbop, sw4_type usesg,
     float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry) {
   SW4_MARK_FUNCTION;
 #define u(c, i, j, k) a_u[base3 + i + ni * (j) + nij * (k) + nijk * (c)]
@@ -3145,30 +3145,30 @@ void att_free_curvi_ci(
 
   const float_sw4 c1 = 2.0 / 3;
   const float_sw4 c2 = -1.0 / 12;
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = nij * (klast - kfirst + 1);
-  const int base0 = -(ifirst + ni * jfirst);
-  const int base03 = base0 - nij;
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int base3 = base - nijk;
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijk = nij * (klast - kfirst + 1);
+  const sw4_type base0 = -(ifirst + ni * jfirst);
+  const sw4_type base03 = base0 - nij;
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type base3 = base - nijk;
 
   // Hardcoded for the k=1 surface
-  int k = 1, kl = 1;
+  sw4_type k = 1, kl = 1;
   //#pragma omp parallel
   {
     //     float_sw4 sgx = 1, sgy = 1, isgx = 1, isgy = 1;
     float_sw4 s0i = 1 / sbop[0];
     // #pragma omp for
-    //       for( int j=jfirst+2 ; j<=jlast-2 ; j++ )
+    //       for( sw4_type j=jfirst+2 ; j<=jlast-2 ; j++ )
     // #pragma ivdep
-    // 	 for( int i=ifirst+2 ; i<=ilast-2 ; i++ )
+    // 	 for( sw4_type i=ifirst+2 ; i<=ilast-2 ; i++ )
     // 	 {
 
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
     RAJA::kernel<AFCC_POL_ASYNC>(
-        RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(int j, int i) {
+        RAJA::make_tuple(j_range, i_range), [=] RAJA_DEVICE(sw4_type j, sw4_type i) {
           float_sw4 sgx = 1, sgy = 1, isgx = 1, isgy = 1;
           if (usesg == 1) {
             sgx = sgstrx(i);
@@ -3292,18 +3292,18 @@ void att_free_curvi_ci(
 
 //}
 // #ifdef ENABLE_CUDA
-// void rhs4th3fortsgstr_ciopt( int ifirst, int ilast, int jfirst, int jlast,
-// int kfirst, int klast, 			     int ni,int nj,int nk,
+// void rhs4th3fortsgstr_ciopt( sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+// sw4_type kfirst, sw4_type klast, 			     sw4_type ni,sw4_type nj,sw4_type nk,
 // float_sw4* a_lu, float_sw4* a_u, 			     float_sw4* a_mu,
 // float_sw4* a_lambda, 			     float_sw4 h, float_sw4*
 // a_strx, float_sw4* a_stry, 			     float_sw4* a_strz, char op
 // ){
 //   SW4_MARK_FUNCTION;
-//   int njcomp = jlast - jfirst + 1;
+//   sw4_type njcomp = jlast - jfirst + 1;
 //   dim3 blocks = dim3((ni+BX-1)/BX, (njcomp+BY-1)/BY, 1);
 //   dim3 threads = dim3(BX, BY, 1);
 
-//   int a1;
+//   sw4_type a1;
 //   float_sw4 cof = 1.0/(h*h);
 //    if( op == '=' )
 //       a1 = 0;

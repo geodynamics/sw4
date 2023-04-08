@@ -47,16 +47,16 @@ class Filter {
   friend std::ostream &operator<<(std::ostream &output, const Filter &s);
 
  public:
-  Filter(FilterType type, unsigned int numberOfPoles,
-         unsigned int numberOfPasses, float_sw4 f1, float_sw4 f2);
+  Filter(FilterType type, unsigned sw4_type numberOfPoles,
+         unsigned sw4_type numberOfPasses, float_sw4 f1, float_sw4 f2);
   ~Filter();
-  void evaluate(int N, float_sw4 *u, float_sw4 *mf);
+  void evaluate(sw4_type N, float_sw4 *u, float_sw4 *mf);
   void computeSOS(float_sw4 dt);
   float_sw4 estimatePrecursor();
 
   FilterType get_type() { return m_type; }
-  int get_order() { return m_poles; }
-  int get_passes() { return m_passes; }
+  sw4_type get_order() { return m_poles; }
+  sw4_type get_passes() { return m_passes; }
   float_sw4 get_corner_freq1() { return m_f1; }
   float_sw4 get_corner_freq2() { return m_f2; }
 
@@ -77,10 +77,10 @@ class Filter {
 
   FilterType m_type;
   float_sw4 m_dt, m_f1, m_f2;
-  unsigned int m_passes, m_poles;
+  unsigned sw4_type m_passes, m_poles;
   vector<SecondOrderSection *> m_SOSp;
-  int m_numberOfSOS;
-  int m_real_poles, m_complex_pairs;
+  sw4_type m_numberOfSOS;
+  sw4_type m_real_poles, m_complex_pairs;
   bool m_initialized;
   float_sw4 m_pole_min_re;
 };

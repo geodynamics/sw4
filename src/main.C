@@ -70,7 +70,7 @@
 #include <csignal>
 extern volatile std::sig_atomic_t signal_status;
 
-void signal_handler(int signal) {
+void signal_handler(sw4_type signal) {
   signal_status = signal;
   std::cout << " RECEIVED SIGNAL " << signal << "\n";
 }
@@ -84,23 +84,23 @@ void usage(string thereason) {
        << endl
        << endl
        << "Usage: sw4 [-v] file.in" << endl
-       << "\t -v:      prints out the version info" << endl
+       << "\t -v:      prsw4_types out the version info" << endl
        << "\t file.in: an input file" << endl
        << endl
        << "Reason for message: " << thereason << endl;
 }
 
-int main(int argc, char **argv) {
+sw4_type main(sw4_type argc, char **argv) {
   // PROFILER_STOP;
   // cudaProfilerStop();
-  int myRank = 0, nProcs = 0;
+  sw4_type myRank = 0, nProcs = 0;
   string fileName;
   // bool checkmode = false;
 
   stringstream reason;
   // Initialize MPI...
 #ifdef USE_HDF5_ASYNC
-  int provided;
+  sw4_type provided;
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
 #else
   MPI_Init(&argc, &argv);
@@ -132,12 +132,12 @@ int main(int argc, char **argv) {
   MPI_Info_create(&info);
   MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, myRank, info,
                       &shared_comm);
-  int local_rank = -1, local_size = -1;
+  sw4_type local_rank = -1, local_size = -1;
   MPI_Comm_rank(shared_comm, &local_rank);
   MPI_Comm_size(shared_comm, &local_size);
   MPI_Info_free(&info);
 
-  int device = presetGPUID(myRank, local_rank, local_size);
+  sw4_type device = presetGPUID(myRank, local_rank, local_size);
 
 #if defined(SW4_SIGNAL_CHECKPOINT)
   std::signal(SIGUSR1, signal_handler);
@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
       global_variables.device);
 #endif
 
-  const int alignment = 512; // 1024 may be 1% faster on Crusher
+  const sw4_type alignment = 512; // 1024 may be 1% faster on Crusher
   auto pooled_allocator =
       rma.makeAllocator<umpire::strategy::QuickPool, true>(
           string("UM_pool"), pref_allocator, pool_size, 1024 * 1024, alignment);
@@ -235,17 +235,17 @@ int main(int argc, char **argv) {
   TAU_PROFILE_INIT(argc, argv);
 #endif
 
-  int status = 0;
+  sw4_type status = 0;
 
   // mpi2 adds on four more args...  [-p4pg, dir, -p4wd, dir]
-  int mpi2args = 4;
+  sw4_type mpi2args = 4;
 
   if (argc != 2 && argc != 3 && argc != (2 + mpi2args) &&
       argc != (3 + mpi2args)) {
     reason << "Wrong number of args (1-2), not: " << argc - 1 << endl;
 
     if (myRank == 0) {
-      for (int i = 0; i < argc; ++i)
+      for (sw4_type i = 0; i < argc; ++i)
         cout << "Argv[" << i << "] = " << argv[i] << endl;
 
       usage(reason.str());
@@ -269,7 +269,7 @@ int main(int argc, char **argv) {
     return status;
   } else if (argc == 1) {
     reason << "ERROR: ****No input file specified!" << endl;
-    for (int i = 0; i < argc; ++i)
+    for (sw4_type i = 0; i < argc; ++i)
       reason << "Argv[" << i << "] = " << argv[i] << endl;
 
     if (myRank == 0) usage(reason.str());
@@ -335,7 +335,7 @@ int main(int argc, char **argv) {
         status = 1;
       } else {
         if (myRank == 0) {
-          int nth = 1;
+          sw4_type nth = 1;
 #ifdef _OPENMP
 #pragma omp parallel
           {
@@ -372,7 +372,7 @@ int main(int argc, char **argv) {
 
         double myWriteTime = 0.0, allWriteTime;
 
-        for (int ts = 0; ts < GlobalTimeSeries[0].size(); ts++) {
+        for (sw4_type ts = 0; ts < GlobalTimeSeries[0].size(); ts++) {
           GlobalTimeSeries[0][ts]->writeFile();
 #ifdef USE_HDF5
           myWriteTime += GlobalTimeSeries[0][ts]->getWriteTime();
@@ -400,7 +400,7 @@ int main(int argc, char **argv) {
       }
     }
 #if defined(SW4_EXCEPTIONS)
-  } catch (int e) {
+  } catch (sw4_type e) {
     printf("Exception %d in EW init\n", e);
     MPI_Finalize();
     return status;
@@ -415,7 +415,7 @@ int main(int argc, char **argv) {
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
 
-  print_hwm(myRank);
+  prsw4_type_hwm(myRank);
 
 #ifdef USE_MAGMA
   if (magma_finalize() != MAGMA_SUCCESS) {

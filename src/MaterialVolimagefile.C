@@ -60,19 +60,19 @@ void MaterialVolimagefile::set_material_properties(std::vector<Sarray>& rho,
   mEW->read_volimage(m_path, m_rho, rho);
   mEW->read_volimage(m_path, m_mu, cs);
   mEW->read_volimage(m_path, m_lambda, cp);
-  //   mEW->check_min_max_int( rho );
+  //   mEW->check_min_max_sw4_type( rho );
 
   mEW->communicate_arrays(rho);
   mEW->communicate_arrays(cs);
   mEW->communicate_arrays(cp);
-  mEW->update_curvilinear_cartesian_interface(rho);
-  mEW->update_curvilinear_cartesian_interface(cs);
-  mEW->update_curvilinear_cartesian_interface(cp);
+  mEW->update_curvilinear_cartesian_sw4_typeerface(rho);
+  mEW->update_curvilinear_cartesian_sw4_typeerface(cs);
+  mEW->update_curvilinear_cartesian_sw4_typeerface(cp);
 
   if (xis[0].is_defined()) {
     mEW->read_volimage(m_path, m_qs, xis);
     mEW->communicate_arrays(xis);
-    mEW->update_curvilinear_cartesian_interface(xis);
+    mEW->update_curvilinear_cartesian_sw4_typeerface(xis);
     // tmp
     // if (mEW->proc_zero())
     // 	cout << "qs[0] array is defined in MatVolimgfile()" << endl;
@@ -87,11 +87,11 @@ void MaterialVolimagefile::set_material_properties(std::vector<Sarray>& rho,
   if (xip[0].is_defined()) {
     mEW->read_volimage(m_path, m_qp, xip);
     mEW->communicate_arrays(xip);
-    mEW->update_curvilinear_cartesian_interface(xip);
+    mEW->update_curvilinear_cartesian_sw4_typeerface(xip);
   }
 
   if (m_rhomula) {
-    for (int g = 0; g < mEW->mNumberOfGrids; g++) {
+    for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
       // Convert to cp,cs,rho, here cs is mu, cp is lambda
       float_sw4* rhoptr = rho[g].c_ptr();
       float_sw4* csptr = cs[g].c_ptr();

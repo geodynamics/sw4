@@ -72,9 +72,9 @@ class MaterialSfile : public MaterialData {
   std::string m_model_file, m_model_dir;
 
   bool m_use_attenuation;
-  int m_npatches;
+  sw4_type m_npatches;
 
-  vector<int> m_ifirst, m_ilast, m_jfirst, m_jlast, m_kfirst, m_klast, m_ni,
+  vector<sw4_type> m_ifirst, m_ilast, m_jfirst, m_jlast, m_kfirst, m_klast, m_ni,
       m_nj, m_nk;
   vector<float_sw4> m_hh;
   double m_x0, m_y0, m_lon0, m_lat0, m_azim;
@@ -90,7 +90,7 @@ class MaterialSfile : public MaterialData {
   vector<Sarray> mMaterial_qp;
   vector<Sarray> mMaterial_qs;
 
-  vector<Sarray> mInterface;
+  vector<Sarray> mSw4_Typeerface;
   vector<bool> m_isempty;
 };
 #endif

@@ -73,34 +73,34 @@ using namespace std;
 
 #define SQR(x) ((x) * (x))
 
-// int gcd( int a, int b )
+// sw4_type gcd( sw4_type a, sw4_type b )
 //{
 //   // Euclidean algorithm
 //   while( b != 0 )
 //   {
-//      int t = b;
+//      sw4_type t = b;
 //      b = a % b;
 //      a = t;
 //   }
 //   return a;
 //}
 
-void EW::revvector(int npts, float_sw4* v) {
-  for (int i = 0; i < npts / 2; i++) {
+void EW::revvector(sw4_type npts, float_sw4* v) {
+  for (sw4_type i = 0; i < npts / 2; i++) {
     float_sw4 sl = v[i];
     v[i] = v[npts - 1 - i];
     v[npts - 1 - i] = sl;
   }
 }
 
-int computeEndGridPoint(float_sw4 maxval, float_sw4 dh) {
+sw4_type computeEndGridPoint(float_sw4 maxval, float_sw4 dh) {
   // We round up one, so that the end point
   // specified by the user is always included
   // in the domain.  i.e. if z was specified
   // as 15.0, and dh was computed to be 3.33,
   // the number of grid points would be 15.0/3.33 + 1
   // or 5, giving us a new max z = 16.64.
-  int pts = 0;
+  sw4_type pts = 0;
   float_sw4 x = 0.0;
 
   while (x < maxval && !dbc::nearlyEqual(x, maxval)) {
@@ -115,10 +115,10 @@ int computeEndGridPoint(float_sw4 maxval, float_sw4 dh) {
 }
 
 //-----------------------------------------------------------------------
-int gcd(int a, int b) {
+sw4_type gcd(sw4_type a, sw4_type b) {
   // Euclidean algorithm
   while (b != 0) {
-    int t = b;
+    sw4_type t = b;
     b = a % b;
     a = t;
   }
@@ -128,8 +128,8 @@ int gcd(int a, int b) {
 //-----------------------------------------------------------------------
 // bool endswith(string end, string& mystr)
 //{
-//   int lenEnd = end.length();
-//   int lenStr = mystr.length();
+//   sw4_type lenEnd = end.length();
+//   sw4_type lenStr = mystr.length();
 
 //   if (lenEnd > lenStr) return false;
 
@@ -144,7 +144,7 @@ int gcd(int a, int b) {
 
 //-----------------------------------------------------------------------
 bool EW::startswith(const char begin[], char* line) {
-  int lenb = strlen(begin);
+  sw4_type lenb = strlen(begin);
 
   // We ignore any preceeding whitespace
   while (strncmp(line, " ", 1) == 0 || strncmp(line, "\t", 1) == 0) line++;
@@ -183,8 +183,8 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
                         vector<vector<TimeSeries*> >& a_GlobalTimeSeries) {
   char buffer[256];
   ifstream inputFile;
-  int blockCount = 0;
-  int ablockCount = 0;
+  sw4_type blockCount = 0;
+  sw4_type ablockCount = 0;
 
   MPI_Barrier(MPI_COMM_WORLD);
   double time_start = MPI_Wtime();
@@ -242,7 +242,7 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
   // can be read in with the other material properties
   //---------------------------------------------------------------
 
-  // these commands can enter data directly into the object (this->)
+  // these commands can enter data directly sw4_typeo the object (this->)
   while (!inputFile.eof()) {
     inputFile.getline(buffer, 256);
     if (startswith("grid", buffer)) {
@@ -350,9 +350,9 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
       // 3. smooth the topo
       smoothTopography(m_maxIter);
 
-      // Assign interface surfaces (needed when there is MR in the curvilinear
+      // Assign sw4_typeerface surfaces (needed when there is MR in the curvilinear
       // portion of the grid)
-      m_gridGenerator->assignInterfaceSurfaces(this, mTopoGridExt);
+      m_gridGenerator->assignSw4_TypeerfaceSurfaces(this, mTopoGridExt);
     }
 #ifdef PEEKS_GALORE
     SW4_PEEK;
@@ -378,7 +378,7 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
   setupMPICommunications();
 
   // Make curvilinear grid and compute metric
-  for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++)
+  for (sw4_type g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++)
     m_gridGenerator->generate_grid_and_met(this, g, mX[g], mY[g], mZ[g], mJ[g],
                                            mMetric[g]);
 
@@ -389,7 +389,7 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
   //     mNumberOfGrids-mNumberOfCartesianGrids > 1 )
   //     {
   //        TestGrid* gh = create_gaussianHill();
-  //        for( int g=mNumberOfCartesianGrids ; g < mNumberOfGrids ; g++ )
+  //        for( sw4_type g=mNumberOfCartesianGrids ; g < mNumberOfGrids ; g++ )
   //           gh->generate_grid_and_met( this, g, mX[g], mY[g], mZ[g], mJ[g],
   //           mMetric[g] );
   //        delete gh;
@@ -403,20 +403,20 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
 
   // output grid size info
   if (m_myRank == 0) {
-    int nx, ny, nz;
+    sw4_type nx, ny, nz;
     double nTot = 0.;
     printf("\nGlobal grid sizes (without ghost points)\n");
     //             1234  12345679  12345679  12345679  12345679
     printf(
         "Grid         h        Nx        Ny        Nz       Points      "
         "Type\n");
-    for (int g = 0; g < mNumberOfGrids; g++) {
+    for (sw4_type g = 0; g < mNumberOfGrids; g++) {
       nx = m_global_nx[g];
       ny = m_global_ny[g];
       nz = m_kEnd[g] - m_ghost_points;
-      nTot += ((long long int)nx) * ny * nz;
+      nTot += ((long long sw4_type)nx) * ny * nz;
       printf("%4i %9g %9i %9i %9i %12lld     %s\n", g, mGridSize[g], nx, ny, nz,
-             ((long long int)nx) * ny * nz,
+             ((long long sw4_type)nx) * ny * nz,
              (g < mNumberOfCartesianGrids) ? "Cartesian" : "Curvilinear");
     }
     printf("Total number of grid points (without ghost points): %g\n\n", nTot);
@@ -571,7 +571,7 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
       cout << "Read station input, took "
            << a_GlobalTimeSeries[0][0]->getReadTime() << "seconds." << endl;
 
-  print_execution_time(time_start, MPI_Wtime(), "reading input file");
+  prsw4_type_execution_time(time_start, MPI_Wtime(), "reading input file");
 
   // ---------------------------------------------
   // cross command line checks
@@ -592,7 +592,7 @@ void EW::processGrid(char* buffer) {
   float_sw4 x = 0.0;
   float_sw4 y = 0.0;
   float_sw4 z = 0.0;
-  int nx = 0, ny = 0, nz = 0;
+  sw4_type nx = 0, ny = 0, nz = 0;
   float_sw4 h = 0.0;
 
   //-----------------------------------------------------------------
@@ -652,19 +652,19 @@ void EW::processGrid(char* buffer) {
       token += 3;  // skip ny=
 
       CHECK_INPUT(atoi(token) > 0,
-                  err << "ny is not a positive integer: " << token);
+                  err << "ny is not a positive sw4_typeeger: " << token);
       ny = atoi(token);
     } else if (startswith("nx=", token)) {
       token += 3;  // skip nx=
 
       CHECK_INPUT(atoi(token) > 0,
-                  err << "nx is not a positive integer: " << token);
+                  err << "nx is not a positive sw4_typeeger: " << token);
       nx = atoi(token);
     } else if (startswith("nz=", token)) {
       token += 3;  // skip nz=
 
       CHECK_INPUT(atoi(token) >= 0,
-                  err << "nz is not a positive integer: " << token);
+                  err << "nz is not a positive sw4_typeeger: " << token);
       nz = atoi(token);
     } else if (startswith("x=", token)) {
       token += 2;  // skip x=
@@ -737,16 +737,16 @@ void EW::processGrid(char* buffer) {
     //                        1234567890123456
     else if (startswith("extrapolate=", token)) {
       token += 12;
-      int extrapolate = atoi(token);
+      sw4_type extrapolate = atoi(token);
       CHECK_INPUT(extrapolate >= 0 && extrapolate <= 5,
-                  err << "extrapolate must be an integer between 0 and 5, not "
+                  err << "extrapolate must be an sw4_typeeger between 0 and 5, not "
                       << extrapolate);
       mMaterialExtrapolate = extrapolate;
     }
     //     else if( startswith("ghostpts=",token))
     //     {
     //	token += 9;
-    //        int ghost = atoi(token);
+    //        sw4_type ghost = atoi(token);
     //	CHECK_INPUT( ghost == 2 || ghost == 3, err << "Number of ghost points
     // must be 2 or 3, not " << ghost );
 
@@ -831,7 +831,7 @@ void EW::processGrid(char* buffer) {
     CHECK_INPUT((nx > 0) + (ny > 0) + (nz > 0) == 1, gridSetupErr);
   }
 
-  int nxprime, nyprime, nzprime;
+  sw4_type nxprime, nyprime, nzprime;
   float_sw4 xprime, yprime, zprime;
   // -------------------------------------------------------------
   // Make sure all the bounds are consistent.
@@ -842,7 +842,7 @@ void EW::processGrid(char* buffer) {
   // include the end points in the spatial data arrays.  For example,
   // if x = 1000. and nx = 10, you'd think h would be 100.  However,
   // if we'd like the bounds to go from -500 to 500, we actually
-  // need x divided up into 9 cells so that both x = -500 and x = 500
+  // need x divided up sw4_typeo 9 cells so that both x = -500 and x = 500
   // will be included in the data array.  In this case, h would be
   // 111.11, giving:
   //
@@ -905,7 +905,7 @@ void EW::processGrid(char* buffer) {
     double ibclat, ibclon, ibcaz;
 
     bool found_latlon;
-    int adjust;
+    sw4_type adjust;
     geodynbcGetSizes(m_geodynbc_filename, origin, cubelen, zcubelen, hcube,
                      found_latlon, ibclat, ibclon, ibcaz, adjust);
     // Use approximate h
@@ -933,19 +933,19 @@ void EW::processGrid(char* buffer) {
       if (adjust == 1 || origin[2] == 0) {
         // h based on cube length only, adjust z-position of cube
         /*
-        int nc = static_cast<int>(round(cubelen) / hcube);
+        sw4_type nc = static_cast<sw4_type>(round(cubelen) / hcube);
         h = cubelen / nc;
         */
         origin[2] -= hcube * (origin[2] / hcube - round(origin[2] / hcube));
       } else {
         // h based on cube length and z-position of cube
         /*
-        int a = static_cast<int>(round(origin[2] * prec));
-        int b = static_cast<int>(round((origin[2] + zcubelen) * prec));
+        sw4_type a = static_cast<sw4_type>(round(origin[2] * prec));
+        sw4_type b = static_cast<sw4_type>(round((origin[2] + zcubelen) * prec));
         //
-        int d = gcd(a, b);
-        int n1 = a / d;
-        int k = static_cast<int>(round(origin[2] / (n1 * hcube)));
+        sw4_type d = gcd(a, b);
+        sw4_type n1 = a / d;
+        sw4_type k = static_cast<sw4_type>(round(origin[2] / (n1 * hcube)));
         h = origin[2] / (k * n1);
         */
       }
@@ -972,7 +972,7 @@ void EW::processGrid(char* buffer) {
       origin[1] = y;
     }  // end if latlon given
     else {
-      // lat-lon corner of cube not given, interpret origin realtive (0,0,0)
+      // lat-lon corner of cube not given, sw4_typeerpret origin realtive (0,0,0)
       if (m_geodynbc_center) {
         // Center cube in the middle of the domain (in x,y), discarding input
         // origin.
@@ -986,7 +986,7 @@ void EW::processGrid(char* buffer) {
       if (adjust == 1) {
         // h based on cube length only, adjust cube position
         /*
-        int nc = static_cast<int>(round(cubelen / hcube));
+        sw4_type nc = static_cast<sw4_type>(round(cubelen / hcube));
         h = cubelen / nc;
         */
         //	   cout << "nc= " << nc << " cubelen= " << cubelen << " origin
@@ -1145,7 +1145,7 @@ void EW::processGrid(char* buffer) {
            << ")" << endl;
 
     nxprime = nx;
-    nyprime = (int)(y / h + 0.5);
+    nyprime = (sw4_type)(y / h + 0.5);
     nzprime = computeEndGridPoint(z, h);  // non-periodic in z
 
     // -------------------------------------------------------------
@@ -1222,7 +1222,7 @@ void EW::cleanUpRefinementLevels() {
   if (m_topography_exists) {
     topo_zmax = m_gridGenerator->get_topo_zmax();
     CHECK_INPUT(topo_zmax < m_global_zmax - m_h_base,
-                "The topography is extending too deep into the ground and "
+                "The topography is extending too deep sw4_typeo the ground and "
                 "there is no space for the Cartesian grid.");
 
     m_curviRefLev.push_back(0.0);  // for the curvilinear refinements
@@ -1235,9 +1235,9 @@ void EW::cleanUpRefinementLevels() {
   }
 
   // need to sort m_refinementBoundaries in decreasing order
-  int nRef = m_refinementBoundaries.size();
+  sw4_type nRef = m_refinementBoundaries.size();
   float_sw4* zValues = new float_sw4[nRef];
-  int q;
+  sw4_type q;
 
   for (q = 0; q < nRef; q++) zValues[q] = m_refinementBoundaries[q];
   sort(zValues, zValues + nRef);
@@ -1345,8 +1345,8 @@ void EW::processAttenuation(char* buffer) {
   token = strtok(NULL, " \t");
 
   string err = "Attenuation error ";
-  int nmech = 3;
-  //   int nmech=-1;
+  sw4_type nmech = 3;
+  //   sw4_type nmech=-1;
   float_sw4 velofreq = 1;
   bool foundppw = false, foundfreq = false;
 
@@ -1447,7 +1447,7 @@ void EW::processTopography(char* buffer) {
   float_sw4 zetaBreak = 0.95, topo_zmax = 0;
   float_sw4 GaussianAmp = 0.05, GaussianLx = 0.15, GaussianLy = 0.15,
             GaussianXc = 0.5, GaussianYc = 0.5;
-  int grid_interpolation_order = 3;
+  sw4_type grid_sw4_typeerpolation_order = 3;
   bool use_analytical_metric = false;  // topo_zmax_given = false;
   bool always_new = false;
 
@@ -1463,11 +1463,11 @@ void EW::processTopography(char* buffer) {
       topo_zmax = atof(token);
     } else if (startswith("order=", token)) {
       token += 6;  // skip logfile=
-      grid_interpolation_order = atoi(token);
-      if (grid_interpolation_order < 2 || grid_interpolation_order > 7) {
+      grid_sw4_typeerpolation_order = atoi(token);
+      if (grid_sw4_typeerpolation_order < 2 || grid_sw4_typeerpolation_order > 7) {
         if (m_myRank == 0)
           cout << "order needs to be 2,3,4,5,6,or 7 not: "
-               << grid_interpolation_order << endl;
+               << grid_sw4_typeerpolation_order << endl;
         MPI_Abort(MPI_COMM_WORLD, 1);
       }
     } else if (startswith(
@@ -1582,11 +1582,11 @@ void EW::processTopography(char* buffer) {
 
   if (m_topoInputStyle == GaussianHill)
     m_gridGenerator = new GridGeneratorGaussianHill(
-        topo_zmax, always_new, use_analytical_metric, grid_interpolation_order,
+        topo_zmax, always_new, use_analytical_metric, grid_sw4_typeerpolation_order,
         zetaBreak, GaussianAmp, GaussianXc, GaussianYc, GaussianLx, GaussianLy);
   else
     m_gridGenerator = new GridGeneratorGeneral(
-        topo_zmax, always_new, grid_interpolation_order, zetaBreak);
+        topo_zmax, always_new, grid_sw4_typeerpolation_order, zetaBreak);
 }
 
 // //-----------------------------------------------------------------------
@@ -1595,10 +1595,10 @@ void EW::processTopography(char* buffer) {
 //     char* token = strtok(buffer, " \t");
 //     CHECK_INPUT(strcmp("energy", token) == 0,
 //  	    "ERROR: not a energy test line...: " << token);
-//     int seed;
+//     sw4_type seed;
 //     string logfile="energy.dat";
 //     double cpcsratio=3;
-//     bool print=false;
+//     bool prsw4_type=false;
 //     bool const_coeff = false;
 
 //     token = strtok(NULL, " \t");
@@ -1629,10 +1629,10 @@ void EW::processTopography(char* buffer) {
 //  	  token += 15;
 //  	  const_coeff = atoi(token) == 1;
 //         }
-//         else if( startswith("print=", token ) )
+//         else if( startswith("prsw4_type=", token ) )
 //         {
 //  	  token += 6;
-//  	  print = atoi(token) == 1;
+//  	  prsw4_type = atoi(token) == 1;
 //         }
 //         else
 //         {
@@ -1642,7 +1642,7 @@ void EW::processTopography(char* buffer) {
 //     }
 //     Forcing* force = new ForcingEnergy( seed, cpcsratio, const_coeff );
 //     mSimulation->set_forcing( force );
-//     mSimulation->set_energylog( logfile, print, true );
+//     mSimulation->set_energylog( logfile, prsw4_type, true );
 // }
 
 //-----------------------------------------------------------------------
@@ -1660,8 +1660,8 @@ void EW::processTwilight(char* buffer) {
   float_sw4 amplambda = 1;
   float_sw4 omstrx = 1.1, omstry = 0.8, omstrz = 0.9;
 
-  int sgstretch = 0;
-  int frsurfu = 1, frsurfl = 0;
+  sw4_type sgstretch = 0;
+  sw4_type frsurfu = 1, frsurfl = 0;
 
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("twilight", token) == 0,
@@ -1758,19 +1758,19 @@ void EW::processTwilight(char* buffer) {
 
   // Use supergrid stretching
   if (sgstretch == 1) {
-    for (int side = 0; side < 4; side++)
+    for (sw4_type side = 0; side < 4; side++)
       if (bct[side] == bDirichlet) bct[side] = bSuperGrid;
 
-    for (int side = 4; side < 5; side++)
+    for (sw4_type side = 4; side < 5; side++)
       if (bct[side] == bDirichlet && !topographyExists())
         bct[side] = bSuperGrid;
 
     if (bct[0] == bSuperGrid || bct[1] == bSuperGrid) {
-      for (int g = 0; g < mNumberOfGrids; g++)
+      for (sw4_type g = 0; g < mNumberOfGrids; g++)
         m_supergrid_taper_x[g].set_twilight(omstrx);
     }
     if (bct[2] == bSuperGrid || bct[3] == bSuperGrid) {
-      for (int g = 0; g < mNumberOfGrids; g++)
+      for (sw4_type g = 0; g < mNumberOfGrids; g++)
         m_supergrid_taper_y[g].set_twilight(omstry);
     }
     CHECK_INPUT(
@@ -1784,7 +1784,7 @@ void EW::processTwilight(char* buffer) {
                   "Error: Twilight testing, supergrid stretching can not be "
                   "used in the z-direction when topography is present");
 
-    for (int g = 0; g < mNumberOfGrids; g++)
+    for (sw4_type g = 0; g < mNumberOfGrids; g++)
       m_supergrid_taper_z[g].set_twilight(0.0);
 
     if (bct[4] == bSuperGrid && bct[5] == bSuperGrid) {
@@ -1805,22 +1805,22 @@ void EW::processDeveloper(char* buffer) {
   //    //   if (m_myRank == 0)
   //    //      cout << "Entering developer mode..." << endl;
 
-  //   int ilno = 5;
-  //   int update_boundary_function = 1;
+  //   sw4_type ilno = 5;
+  //   sw4_type update_boundary_function = 1;
   //   double cfl=-1;
   //   bool cflset = false;
   //   bool output_load = false;
   //   bool output_timing = false;
   //   bool use_alltoallv = true;
   //   bool logenergy = false;
-  //   bool printenergy = false;
+  //   bool prsw4_typeenergy = false;
   //   string energyfile = "energy.dat";
   //   bool use_mpiio = false;
   //   bool use_iotiming = false;
 
   //   bool cons = true;
   //   double ctol = 1e-3;
-  //   int cmaxit = 20;
+  //   sw4_type cmaxit = 20;
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("developer", token) == 0,
               "ERROR: not a developer line...: " << token);
@@ -1855,7 +1855,7 @@ void EW::processDeveloper(char* buffer) {
       set_cflnumber(cfl);
     } else if (startswith("time_order=", token)) {
       token += 11;
-      int newOrder = atoi(token);
+      sw4_type newOrder = atoi(token);
       CHECK_INPUT(newOrder == 2 || newOrder == 4, "Error unknown time-order");
       mOrder = newOrder;
     } else if (startswith("perturb=", token)) {
@@ -1911,7 +1911,7 @@ void EW::processDeveloper(char* buffer) {
                                  strcmp(token, "on") == 0 ||
                                  strcmp(token, "yes") == 0;
     }
-    //     else if (startswith("interpolation=", token))
+    //     else if (startswith("sw4_typeerpolation=", token))
     //     {
     //       token += 14;
     //       cons = strcmp(token,"conservative") == 0;
@@ -1938,10 +1938,10 @@ void EW::processDeveloper(char* buffer) {
     //        token += 11;
     //        energyfile=token;
     //     }
-    //     else if (startswith("print_energy=", token))
+    //     else if (startswith("prsw4_type_energy=", token))
     //     {
     //        token += 13;
-    //        printenergy = (atoi(token) == 1);
+    //        prsw4_typeenergy = (atoi(token) == 1);
     //     }
     // //                       123456789
     //        else if (startswith("mpiio=", token))
@@ -1972,9 +1972,9 @@ void EW::processDeveloper(char* buffer) {
   // //   mSimulation->set_update_boundary_function( update_boundary_function );
   //    mSimulation->set_output_options( output_load, output_timing );
   // //  mSimulation->set_alltoallv( use_alltoallv );
-  //    mSimulation->set_conservative_interpolation( cons, ctol, cmaxit );
-  //    if( logenergy || printenergy )
-  //       mSimulation->set_energylog( energyfile, printenergy, logenergy );
+  //    mSimulation->set_conservative_sw4_typeerpolation( cons, ctol, cmaxit );
+  //    if( logenergy || prsw4_typeenergy )
+  //       mSimulation->set_energylog( energyfile, prsw4_typeenergy, logenergy );
   //   mSimulation->setIO_method(use_mpiio, use_iotiming);
 }
 
@@ -2020,7 +2020,7 @@ void EW::processTestRayleigh(char* buffer) {
               "ERROR: not a testrayleigh line...: " << token);
   token = strtok(NULL, " \t");
   float_sw4 cs = 1.0, rho = 1.0, cp = sqrt(3.0);
-  int nwl = 1;
+  sw4_type nwl = 1;
 
   while (token != NULL) {
     if (startswith("#", token) || startswith(" ", buffer)) break;
@@ -2138,7 +2138,7 @@ void EW::processTestEnergy(char* buffer) {
   float_sw4 stochastic_amp = 1;
   float_sw4 sg_eps = 1e-4;
 
-  int seed = 2934839, write_every = 1000;
+  sw4_type seed = 2934839, write_every = 1000;
   string filename("energy.log");
 
   float_sw4 cpcsratio = sqrt(3.0);
@@ -2166,7 +2166,7 @@ void EW::processTestEnergy(char* buffer) {
       write_every = atoi(token);
       CHECK_INPUT(write_every >= 0,
                   err << "testenergy command: writeEvery must be set to a "
-                         "non-negative integer, not: "
+                         "non-negative sw4_typeeger, not: "
                       << token);
     } else if (startswith("filename=", token)) {
       token += 9;
@@ -2189,11 +2189,11 @@ void EW::processTestEnergy(char* buffer) {
                                   bPeriodic, bStressFree, bDirichlet};
 
   if (use_dirichlet) {
-    for (int side = 0; side < 4; side++) bct[side] = bDirichlet;
+    for (sw4_type side = 0; side < 4; side++) bct[side] = bDirichlet;
   } else if (use_supergrid)  // supergrid on all sides, except low-z, where we
                              // use a free surface bc
   {
-    for (int side = 0; side < 6; side++) bct[side] = bSuperGrid;
+    for (sw4_type side = 0; side < 6; side++) bct[side] = bSuperGrid;
 
     bct[4] = bStressFree;
   }
@@ -2223,13 +2223,13 @@ bool EW::checkTestEnergyPeriodic(char* buffer) {
 
 //-----------------------------------------------------------------------
 void EW::processFileIO(char* buffer) {
-  int printcycle = 100;
+  sw4_type prsw4_typecycle = 100;
   //  char* path = 0;
   // char* scenario = 0;
-  int nwriters = 8;
+  sw4_type nwriters = 8;
   bool pfs = false;
 
-  int verbose = 0;
+  sw4_type verbose = 0;
   //  bool debug = false;
 
   char* token = strtok(buffer, " \t");
@@ -2265,11 +2265,11 @@ void EW::processFileIO(char* buffer) {
       CHECK_INPUT(atoi(token) >= 0,
                   err << "verbose must be non-negative, not: " << token);
       verbose = atoi(token);
-    } else if (startswith("printcycle=", token)) {
-      token += 11;  // skip printcycle=
+    } else if (startswith("prsw4_typecycle=", token)) {
+      token += 11;  // skip prsw4_typecycle=
       CHECK_INPUT(atoi(token) > -1,
-                  err << "printcycle must be zero or greater, not: " << token);
-      printcycle = atoi(token);
+                  err << "prsw4_typecycle must be zero or greater, not: " << token);
+      prsw4_typecycle = atoi(token);
     } else if (startswith("pfs=", token)) {
       token += 4;  // skip pfs=
       pfs = (atoi(token) == 1);
@@ -2291,7 +2291,7 @@ void EW::processFileIO(char* buffer) {
   }
 
   //  if (path != 0) setOutputPath(path);
-  setPrintCycle(printcycle);
+  setPrsw4_typeCycle(prsw4_typecycle);
   setVerbosity(verbose);
   setParallel_IO(pfs, nwriters);
 }
@@ -2322,14 +2322,14 @@ void EW::processGMT(char* buffer) {
 }
 
 //-----------------------------------------------------------------------
-void EW::parsedate(char* datestr, int& year, int& month, int& day, int& hour,
-                   int& minute, int& second, int& msecond, int& fail) {
+void EW::parsedate(char* datestr, sw4_type& year, sw4_type& month, sw4_type& day, sw4_type& hour,
+                   sw4_type& minute, sw4_type& second, sw4_type& msecond, sw4_type& fail) {
   // Format: 01/04/2012:17:34:45.2343 (Month/Day/Year:Hour:Min:Sec.fraction)
   fail = 0;
-  int n = strlen(datestr);
+  sw4_type n = strlen(datestr);
   //      cout << "x" << datestr << "x" << endl;
   //   cout << "strlen = " << n << endl;
-  int i = 0;
+  sw4_type i = 0;
   string buf = "";
   while (i < n) {
     if (datestr[i] == '/' || datestr[i] == ':' || datestr[i] == '.')
@@ -2354,8 +2354,8 @@ void EW::parsedate(char* datestr, int& year, int& month, int& day, int& hour,
     if (hour < 0 || hour > 24) fail = 5;
     if (minute < 0 || minute > 60) fail = 6;
     if (fsec < 0) fail = 8;
-    second = static_cast<int>(std::trunc(fsec));
-    msecond = static_cast<int>(std::round((fsec - second) * 1000));
+    second = static_cast<sw4_type>(std::trunc(fsec));
+    msecond = static_cast<sw4_type>(std::round((fsec - second) * 1000));
     if (second < 0 || second > 60) fail = 7;
     //      cout << " second = " << second << " msecond = " << msecond <<endl;
   } else
@@ -2365,14 +2365,14 @@ void EW::parsedate(char* datestr, int& year, int& month, int& day, int& hour,
 //-----------------------------------------------------------------------
 void EW::processTime(char* buffer) {
   float_sw4 t = 0.0;
-  int steps = -1;
-  int year, month, day, hour, minute, second, msecond, fail;
+  sw4_type steps = -1;
+  sw4_type year, month, day, hour, minute, second, msecond, fail;
   bool refdateset = false;  // refeventdateset = false;
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("time", token) == 0,
               "ERROR: not a time line...: " << token);
   token = strtok(NULL, " \t");
-  int event = 0;
+  sw4_type event = 0;
   string err = "Time Error: ";
 
   while (token != NULL) {
@@ -2389,7 +2389,7 @@ void EW::processTime(char* buffer) {
     } else if (startswith("steps=", token)) {
       token += 6;  // skip steps=
       CHECK_INPUT(atoi(token) >= 0,
-                  err << "steps is not a non-negative integer: " << token);
+                  err << "steps is not a non-negative sw4_typeeger: " << token);
       steps = atoi(token);
     }
     // Only care about 'event' if event lines are present in input file
@@ -2397,7 +2397,7 @@ void EW::processTime(char* buffer) {
       token += 6;
       // Ignore if no events given
       if (m_nevents_specified > 0) {
-        map<string, int>::iterator it = m_event_names.find(token);
+        map<string, sw4_type>::iterator it = m_event_names.find(token);
         CHECK_INPUT(it != m_event_names.end(),
                     err << "event with name " << token << " not found");
         event = it->second;
@@ -2459,8 +2459,8 @@ void EW::processBoundaryConditions(char* buffer) {
   boundaryConditionType bct[6] = {bSuperGrid, bSuperGrid,  bSuperGrid,
                                   bSuperGrid, bStressFree, bSuperGrid};
 
-  int type;
-  int side;
+  sw4_type type;
+  sw4_type side;
   while (token != NULL) {
     if (startswith("#", token) || startswith(" ", buffer))
       // Ignore commented lines and lines with just a space.
@@ -2527,7 +2527,7 @@ void EW::processSupergrid(char* buffer) {
   CHECK_INPUT(strcmp("supergrid", token) == 0,
               "ERROR: not a supergrid line...: " << token);
   token = strtok(NULL, " \t");
-  int sg_n_gp;  // sg_transition;
+  sw4_type sg_n_gp;  // sg_transition;
   float_sw4 sg_coeff, sg_width;
   bool gpSet = false, dampingCoeffSet = false,
        widthSet = false;  // , transitionSet=false
@@ -2577,7 +2577,7 @@ void EW::processSupergrid(char* buffer) {
       dampingCoeffSet = true;
     } else if (startswith("order=", token)) {
       token += 6;
-      int damping = atoi(token);
+      sw4_type damping = atoi(token);
       CHECK_INPUT(
           damping == 4 || damping == 6,
           "The supergrid dissipation order must be 4 or 6, not:" << damping);
@@ -2620,7 +2620,7 @@ void EW::processGlobalMaterial(char* buffer) {
   token = strtok(NULL, " \t");
 
   string err = "globalmaterial error: ";
-  //  int modelnr = 0;
+  //  sw4_type modelnr = 0;
   // float_sw4 frequency = 1;
   float_sw4 vpmin = 0, vsmin = 0;
 
@@ -2725,7 +2725,7 @@ void EW::processGlobalMaterial(char* buffer) {
 //    // End parsing...
 
 // #else
-//    CHECK_INPUT(0, "Error: Etree support not compiled into EW
+//    CHECK_INPUT(0, "Error: Etree support not compiled sw4_typeo EW
 //    (-DENABLE_ETREE)");
 // #endif
 // }
@@ -2739,7 +2739,7 @@ void EW::processGlobalMaterial(char* buffer) {
 
 //    string err = "limitfrequency Error: ";
 //    string commandName = token;
-//    int ppw = 15;
+//    sw4_type ppw = 15;
 //    while (token != NULL)
 //    {
 //       if (startswith("#", token) || startswith(" ", buffer))
@@ -2772,8 +2772,8 @@ void EW::processPrefilter(char* buffer) {
   string commandName = token;
   float_sw4 fc1 = 0.1, fc2 = 1.0;  // only fc2 is used for low-pass
   FilterType passband = bandPass;  //
-  int passes = 2;  // forwards and backwards gives a zero-phase filter
-  int order = 2;
+  sw4_type passes = 2;  // forwards and backwards gives a zero-phase filter
+  sw4_type order = 2;
 
   while (token != NULL) {
     if (startswith("#", token) || startswith(" ", buffer)) break;
@@ -2826,7 +2826,7 @@ void EW::processPrefilter(char* buffer) {
 
 //-----------------------------------------------------------------------
 void EW::processGeodynbc(char* buf) {
-  // At this point, the geodyn file has already been read into m_geodyn_filename
+  // At this point, the geodyn file has already been read sw4_typeo m_geodyn_filename
   char* token = strtok(buf, " \t");
   CHECK_INPUT(strcmp("geodynbc", token) == 0,
               "ERROR: not a geodynbc line...: " << token);
@@ -2839,7 +2839,7 @@ void EW::processGeodynbc(char* buf) {
   string err = "geodynbc Error: ";
   string commandName = "geodynbc";
 
-  int faces = 6, nx = 0, ny = 0, nz = 0, nsteps = 0;  // filter = 0, adjust = 1;
+  sw4_type faces = 6, nx = 0, ny = 0, nz = 0, nsteps = 0;  // filter = 0, adjust = 1;
   // float_sw4 x0, y0, z0, lat, lon, elev, az, timestep, rho = 0, vs = 0, vp =
   // 0,
   //  freq;
@@ -3023,7 +3023,7 @@ void EW::geodynFindFile(char* buffer) {
 void EW::geodynbcGetSizes(string filename, float_sw4 origin[3],
                           float_sw4& cubelen, float_sw4& zcubelen,
                           float_sw4& hcube, bool& found_latlon, double& lat,
-                          double& lon, double& az, int& adjust) {
+                          double& lon, double& az, sw4_type& adjust) {
   ifstream geodynfile(m_geodynbc_filename.c_str());
   CHECK_INPUT(geodynfile.is_open(),
               "Error: opening geodyn file " << m_geodynbc_filename);
@@ -3031,7 +3031,7 @@ void EW::geodynbcGetSizes(string filename, float_sw4 origin[3],
   string err = "geodynbc Error: ";
   string commandName = "geodynbc";
 
-  int nx = 0, ny = 0, nz = 0;  // faces = 6;
+  sw4_type nx = 0, ny = 0, nz = 0;  // faces = 6;
   double x0, y0, z0, elev, h;
   adjust = 1;
 
@@ -3163,7 +3163,7 @@ void EW::processMaterial(char* buffer) {
 
   token = strtok(NULL, " \t");
 
-  int materialID = -1;
+  sw4_type materialID = -1;
   float_sw4 vp0 = -1, vs0 = -1, rho0 = -1, qp = -1, qs = -1;
   float_sw4 vp1 = 0, vs1 = 0, rho1 = 0;
   float_sw4 vp2 = 0, vs2 = 0, rho2 = 0;
@@ -3276,10 +3276,10 @@ void EW::processMaterial(char* buffer) {
 
 //-----------------------------------------------------------------------
 void EW::processSfileOutput(char* buffer) {
-  int cycle = -1, cycleInterval = 0;
-  int sampleFactorH = 1;
-  int sampleFactorV = 1;
-  float_sw4 time = 0.0, timeInterval = 0.0;
+  sw4_type cycle = -1, cycleSw4_Typeerval = 0;
+  sw4_type sampleFactorH = 1;
+  sw4_type sampleFactorV = 1;
+  float_sw4 time = 0.0, timeSw4_Typeerval = 0.0;
   /* bool timingSet = false; */
   float_sw4 tStart = -999.99;
   string filePrefix = "sfileoutput";
@@ -3304,12 +3304,12 @@ void EW::processSfileOutput(char* buffer) {
     /* time = atof(token); */
     /* timingSet = true; */
     /* } */
-    /* else if (startswith("timeInterval=", token) ) */
+    /* else if (startswith("timeSw4_Typeerval=", token) ) */
     /* { */
-    /* token += 13; // skip timeInterval= */
+    /* token += 13; // skip timeSw4_Typeerval= */
     /* CHECK_INPUT( atof(token) >= 0.,"Processing sfileoutput command:
-     * timeInterval must be a non-negative number, not: " << token); */
-    /* timeInterval = atof(token); */
+     * timeSw4_Typeerval must be a non-negative number, not: " << token); */
+    /* timeSw4_Typeerval = atof(token); */
     /* timingSet = true; */
     /* } */
     /* else if (startswith("startTime=", token) ) */
@@ -3321,21 +3321,21 @@ void EW::processSfileOutput(char* buffer) {
       token += 14;
       CHECK_INPUT(atoi(token) >= 1,
                   "Processing sfileoutput command: sampleFactorH must be a "
-                  "positive integer, not: "
+                  "positive sw4_typeeger, not: "
                       << token);
       sampleFactorH = atoi(token);
     } else if (startswith("sampleFactorV=", token)) {
       token += 14;
       CHECK_INPUT(atoi(token) >= 1,
                   "Processing sfileoutput command: sampleFactorV must be a "
-                  "positive integer, not: "
+                  "positive sw4_typeeger, not: "
                       << token);
       sampleFactorV = atoi(token);
     } else if (startswith("sampleFactor=", token)) {
       token += 13;
       CHECK_INPUT(atoi(token) >= 1,
                   "Processing sfileoutput command: sampleFactor must be a "
-                  "positive integer, not: "
+                  "positive sw4_typeeger, not: "
                       << token);
       sampleFactorH = sampleFactorV = atoi(token);
     }
@@ -3343,16 +3343,16 @@ void EW::processSfileOutput(char* buffer) {
     /* { */
     /* token += 6; // skip cycle= */
     /* CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command: cycle
-       must be a non-negative integer, not: " << token); */
+       must be a non-negative sw4_typeeger, not: " << token); */
     /* cycle = atoi(token); */
     /* timingSet = true; */
     /* } */
-    /* else if (startswith("cycleInterval=", token) ) */
+    /* else if (startswith("cycleSw4_Typeerval=", token) ) */
     /* { */
-    /* token += 14; // skip cycleInterval= */
+    /* token += 14; // skip cycleSw4_Typeerval= */
     /* CHECK_INPUT( atoi(token) >= 0.,"Processing sfileoutput command:
-       cycleInterval must be a non-negative integer, not: " << token); */
-    /* cycleInterval = atoi(token); */
+       cycleSw4_Typeerval must be a non-negative sw4_typeeger, not: " << token); */
+    /* cycleSw4_Typeerval = atoi(token); */
     /* timingSet = true; */
     /* } */
     else if (startswith("file=", token)) {
@@ -3373,10 +3373,10 @@ void EW::processSfileOutput(char* buffer) {
 
   if (!m_inverse_problem) {
     /* CHECK_INPUT( timingSet, "Processing sfileoutput command: " << */
-    /* "at least one timing mechanism must be set: cycle, time, cycleInterval or
-     * timeInterval"  << endl ); */
+    /* "at least one timing mechanism must be set: cycle, time, cycleSw4_Typeerval or
+     * timeSw4_Typeerval"  << endl ); */
     SfileOutput* sfile =
-        new SfileOutput(this, time, timeInterval, cycle, cycleInterval, tStart,
+        new SfileOutput(this, time, timeSw4_Typeerval, cycle, cycleSw4_Typeerval, tStart,
                         filePrefix, sampleFactorH, sampleFactorV, use_double);
     addSfileOutput(sfile);
   }
@@ -3384,9 +3384,9 @@ void EW::processSfileOutput(char* buffer) {
 
 //-----------------------------------------------------------------------
 void EW::processImage3D(char* buffer) {
-  int cycle = -1, cycleInterval = 0;
+  sw4_type cycle = -1, cycleSw4_Typeerval = 0;
   Image3D::Image3DMode mode = Image3D::RHO;
-  float_sw4 time = 0.0, timeInterval = 0.0;
+  float_sw4 time = 0.0, timeSw4_Typeerval = 0.0;
   bool timingSet = false;
   float_sw4 tStart = -999.99;
   string filePrefix = "volimage";
@@ -3411,13 +3411,13 @@ void EW::processImage3D(char* buffer) {
                       << token);
       time = atof(token);
       timingSet = true;
-    } else if (startswith("timeInterval=", token)) {
-      token += 13;  // skip timeInterval=
+    } else if (startswith("timeSw4_Typeerval=", token)) {
+      token += 13;  // skip timeSw4_Typeerval=
       CHECK_INPUT(atof(token) >= 0.,
-                  "Processing volimage command: timeInterval must be a "
+                  "Processing volimage command: timeSw4_Typeerval must be a "
                   "non-negative number, not: "
                       << token);
-      timeInterval = atof(token);
+      timeSw4_Typeerval = atof(token);
       timingSet = true;
     } else if (startswith("startTime=", token)) {
       token += 10;  // skip startTime=
@@ -3426,17 +3426,17 @@ void EW::processImage3D(char* buffer) {
       token += 6;  // skip cycle=
       CHECK_INPUT(atoi(token) >= 0.,
                   "Processing volimage command: cycle must be a non-negative "
-                  "integer, not: "
+                  "sw4_typeeger, not: "
                       << token);
       cycle = atoi(token);
       timingSet = true;
-    } else if (startswith("cycleInterval=", token)) {
-      token += 14;  // skip cycleInterval=
+    } else if (startswith("cycleSw4_Typeerval=", token)) {
+      token += 14;  // skip cycleSw4_Typeerval=
       CHECK_INPUT(atoi(token) >= 0.,
-                  "Processing volimage command: cycleInterval must be a "
-                  "non-negative integer, not: "
+                  "Processing volimage command: cycleSw4_Typeerval must be a "
+                  "non-negative sw4_typeeger, not: "
                       << token);
-      cycleInterval = atoi(token);
+      cycleSw4_Typeerval = atoi(token);
       timingSet = true;
     } else if (startswith("file=", token)) {
       token += 5;  // skip file=
@@ -3517,9 +3517,9 @@ void EW::processImage3D(char* buffer) {
   if (!forwardgrad) {
     CHECK_INPUT(timingSet, "Processing volimage command: "
                                << "at least one timing mechanism must be set: "
-                                  "cycle, time, cycleInterval or timeInterval"
+                                  "cycle, time, cycleSw4_Typeerval or timeSw4_Typeerval"
                                << endl);
-    Image3D* im3 = new Image3D(this, time, timeInterval, cycle, cycleInterval,
+    Image3D* im3 = new Image3D(this, time, timeSw4_Typeerval, cycle, cycleSw4_Typeerval,
                                tStart, filePrefix, mode, use_double);
     addImage3D(im3);
   }
@@ -3527,13 +3527,13 @@ void EW::processImage3D(char* buffer) {
 
 //-----------------------------------------------------------------------
 void EW::processESSI3D(char* buffer) {
-  int dumpInterval = -1, bufferInterval = 1;
+  sw4_type dumpSw4_Typeerval = -1, bufferSw4_Typeerval = 1;
   string filePrefix = "ssioutput";
   float_sw4 coordValue;
   float_sw4 coordBox[4];
   const float_sw4 zero = 0.0;
-  int precision = 8;
-  int compressionMode = 0;
+  sw4_type precision = 8;
+  sw4_type compressionMode = 0;
   double compressionPar;
 
   // Default is whole domain
@@ -3559,12 +3559,12 @@ void EW::processESSI3D(char* buffer) {
     else if (startswith("file=", token)) {
       token += 5;  // skip file=
       filePrefix = token;
-    } else if (startswith("dumpInterval=", token)) {
-      token += 13;  // skip dumpInterval=
-      dumpInterval = atoi(token);
-    } else if (startswith("bufferInterval=", token)) {
-      token += 15;  // skip bufferInterval=
-      bufferInterval = atoi(token);
+    } else if (startswith("dumpSw4_Typeerval=", token)) {
+      token += 13;  // skip dumpSw4_Typeerval=
+      dumpSw4_Typeerval = atoi(token);
+    } else if (startswith("bufferSw4_Typeerval=", token)) {
+      token += 15;  // skip bufferSw4_Typeerval=
+      bufferSw4_Typeerval = atoi(token);
     } else if (startswith("xmin=", token)) {
       token += 5;  // skip xmin=
       coordValue = atof(token);
@@ -3625,7 +3625,7 @@ void EW::processESSI3D(char* buffer) {
       compressionMode = SW4_ZLIB;
       compressionPar = atof(token);
       if (proc_zero())
-        cout << "SSI ouput will use ZLIB level=" << (int)compressionPar << endl;
+        cout << "SSI ouput will use ZLIB level=" << (sw4_type)compressionPar << endl;
     } else if (startswith("szip=", token)) {
       token += 5;
       compressionMode = SW4_SZIP;
@@ -3654,10 +3654,10 @@ void EW::processESSI3D(char* buffer) {
          << endl;
 #endif
 
-  if (compressionMode != 0 && bufferInterval == 1) bufferInterval = 100;
+  if (compressionMode != 0 && bufferSw4_Typeerval == 1) bufferSw4_Typeerval = 100;
 
   // Check the specified min/max values make sense
-  for (int d = 0; d < 2 * 2; d += 2) {
+  for (sw4_type d = 0; d < 2 * 2; d += 2) {
     if (coordBox[d + 1] < coordBox[d]) {
       char coordName[2] = {'x', 'y'};
       if (proc_zero())
@@ -3677,7 +3677,7 @@ void EW::processESSI3D(char* buffer) {
   }
 
   ESSI3D* essi3d =
-      new ESSI3D(this, filePrefix, dumpInterval, bufferInterval, coordBox,
+      new ESSI3D(this, filePrefix, dumpSw4_Typeerval, bufferSw4_Typeerval, coordBox,
                  depth, precision, compressionMode, compressionPar);
   addESSI3D(essi3d);
 }
@@ -3689,12 +3689,12 @@ void EW::processCheckPoint(char* buffer) {
               "ERROR: not a checkpoint line...: " << token);
   token = strtok(NULL, " \t");
   string err = "CheckPoint Error: ";
-  int cycle = -1, cycleInterval = 0;
+  sw4_type cycle = -1, cycleSw4_Typeerval = 0;
   string filePrefix = "checkpoint";
 
   string restartFileName, restartPath;
   bool restartLatestGiven = false, restartFileGiven = false, restartPathGiven = false, useHDF5 = false;
-  int compressionMode = 0;
+  sw4_type compressionMode = 0;
   double compressionPar;
 
   size_t bufsize = 10000000;
@@ -3705,15 +3705,15 @@ void EW::processCheckPoint(char* buffer) {
     //      {
     //	 token += 6; // skip cycle=
     //	 CHECK_INPUT( atoi(token) >= 0., err << "cycle must be a non-negative
-    // integer, not: " << token); 	 cycle = atoi(token); 	 timingSet =
+    // sw4_typeeger, not: " << token); 	 cycle = atoi(token); 	 timingSet =
     // true;
     //      }
-    if (startswith("cycleInterval=", token)) {
-      token += 14;  // skip cycleInterval=
+    if (startswith("cycleSw4_Typeerval=", token)) {
+      token += 14;  // skip cycleSw4_Typeerval=
       CHECK_INPUT(atoi(token) >= 0.,
-                  err << "cycleInterval must be a non-negative integer, not: "
+                  err << "cycleSw4_Typeerval must be a non-negative sw4_typeeger, not: "
                       << token);
-      cycleInterval = atoi(token);
+      cycleSw4_Typeerval = atoi(token);
     } else if (startswith("file=", token)) {
       token += 5;  // skip file=
       filePrefix = token;
@@ -3765,7 +3765,7 @@ void EW::processCheckPoint(char* buffer) {
       compressionPar = atof(token);
       useHDF5 = true;
       if (proc_zero())
-        cout << "Checkpoint will use ZLIB level=" << (int)compressionPar
+        cout << "Checkpoint will use ZLIB level=" << (sw4_type)compressionPar
              << endl;
     } else if (startswith("szip=", token)) {
       token += 5;
@@ -3803,8 +3803,8 @@ void EW::processCheckPoint(char* buffer) {
 #endif
 
   if (m_check_point == CheckPoint::nil) m_check_point = new CheckPoint(this);
-  if (cycleInterval > 0)
-    m_check_point->set_checkpoint_file(filePrefix, cycle, cycleInterval,
+  if (cycleSw4_Typeerval > 0)
+    m_check_point->set_checkpoint_file(filePrefix, cycle, cycleSw4_Typeerval,
                                        bufsize, useHDF5, compressionMode,
                                        compressionPar);
 
@@ -3832,38 +3832,38 @@ void EW::setOutputPath(const string& path) {
 void EW::setIO_timing(bool iotiming) { m_iotiming = iotiming; }
 
 //-----------------------------------------------------------------------
-void EW::setParallel_IO(bool pfs, int nwriters) {
+void EW::setParallel_IO(bool pfs, sw4_type nwriters) {
   m_pfs = pfs;
   m_nwriters = nwriters;
 }
 
 //-----------------------------------------------------------------------
-void EW::setGoalTime(float_sw4 t, int event) {
+void EW::setGoalTime(float_sw4 t, sw4_type event) {
   mTmax[event] = t;
   mTstart = 0.0;
   mTimeIsSet[event] = true;
 }
 
 //-----------------------------------------------------------------------
-void EW::setNumberSteps(int steps, int event) {
+void EW::setNumberSteps(sw4_type steps, sw4_type event) {
   mNumberOfTimeSteps[event] = steps;
   mTimeIsSet[event] = false;
 }
 
 //-----------------------------------------------------------------------
-int EW::getNumberOfSteps(int event) const { return mNumberOfTimeSteps[event]; }
+sw4_type EW::getNumberOfSteps(sw4_type event) const { return mNumberOfTimeSteps[event]; }
 
 //-----------------------------------------------------------------------
-int EW::getNumberOfEvents() const { return m_nevent; }
+sw4_type EW::getNumberOfEvents() const { return m_nevent; }
 
 //-----------------------------------------------------------------------
 void EW::switch_on_error_log() { m_error_log = true; }
 
 //-----------------------------------------------------------------------
-void EW::set_energylog(string logfile, bool print, bool elog) {
+void EW::set_energylog(string logfile, bool prsw4_type, bool elog) {
   m_energy_log = elog;
   m_energy_logfile = logfile;
-  m_energy_print = print;
+  m_energy_prsw4_type = prsw4_type;
 }
 
 //-----------------------------------------------------------------------
@@ -3887,8 +3887,8 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
         m_ghost_points, m_ppadding, m_topography_exists ? "true" : "false");
 
   // z=0 is the last element in m_refinementBoundaries[]
-  int nCurvilinearGrids = 0;
-  int nCartGrids = 0;
+  sw4_type nCurvilinearGrids = 0;
+  sw4_type nCartGrids = 0;
 
   //    m_topography_exists indicates if there was a topography command in the
   //    input file
@@ -3903,16 +3903,16 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
     printf("refBndrSize= %lu, nCartGrids=%d, nCurviGrids=%d \n",
            m_refinementBoundaries.size(), nCartGrids, nCurvilinearGrids);
 
-  int refFact = 1;
+  sw4_type refFact = 1;
   // Cartesian refinements
-  for (int r = 0; r < nCartGrids - 1; r++) {
+  for (sw4_type r = 0; r < nCartGrids - 1; r++) {
     refFact *= 2;
     //      cout << "refinement boundary " << r << " is " <<
     //      m_refinementBoundaries[r] << endl;
   }
 
   // Curvilinear refinements
-  for (int r = 0; r < nCurvilinearGrids - 1; r++) {
+  for (sw4_type r = 0; r < nCurvilinearGrids - 1; r++) {
     refFact *= 2;
     //      cout << "refinement boundary " << r << " is " << m_curviRefLev[r] <<
     //      endl;
@@ -3921,7 +3921,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
   // is there an attenuation command in the file?
   if (!m_use_attenuation) m_number_mechanisms = 0;
 
-  int is_periodic[2] = {0, 0};
+  sw4_type is_periodic[2] = {0, 0};
 
   // some test cases, such as testrayleigh uses periodic boundary conditions in
   // the x and y directions
@@ -3932,21 +3932,21 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
 
   // m_nx_base, m_ny_base: number of grid points in the coarsest grid: assigned
   // by processGrid()
-  int nx_finest_w_ghost = refFact * (m_nx_base - 1) + 1 + 2 * m_ghost_points;
-  int ny_finest_w_ghost = refFact * (m_ny_base - 1) + 1 + 2 * m_ghost_points;
+  sw4_type nx_finest_w_ghost = refFact * (m_nx_base - 1) + 1 + 2 * m_ghost_points;
+  sw4_type ny_finest_w_ghost = refFact * (m_ny_base - 1) + 1 + 2 * m_ghost_points;
   if (is_periodic[0])
     nx_finest_w_ghost = refFact * m_nx_base + 2 * m_ghost_points;
   if (is_periodic[1])
     ny_finest_w_ghost = refFact * m_ny_base + 2 * m_ghost_points;
 
-  int proc_max[2];
+  sw4_type proc_max[2];
   // this info is obtained by the contructor
   //   MPI_Comm_size( MPI_COMM_WORLD, &nprocs  );
   proc_decompose_2d(nx_finest_w_ghost, ny_finest_w_ghost, m_nProcs, proc_max);
 
   MPI_Cart_create(MPI_COMM_WORLD, 2, proc_max, is_periodic, true,
                   &m_cartesian_communicator);
-  int my_proc_coords[2];
+  sw4_type my_proc_coords[2];
   MPI_Cart_get(m_cartesian_communicator, 2, proc_max, is_periodic,
                my_proc_coords);
   MPI_Cart_shift(m_cartesian_communicator, 0, 1, m_neighbor, m_neighbor + 1);
@@ -3966,7 +3966,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
   m_proc_array[1] = proc_max[1];
 
   // the domain decomposition is done for the finest grid
-  int ifirst, ilast, jfirst, jlast;
+  sw4_type ifirst, ilast, jfirst, jlast;
   decomp1d(nx_finest_w_ghost, my_proc_coords[0], proc_max[0], ifirst, ilast);
   decomp1d(ny_finest_w_ghost, my_proc_coords[1], proc_max[1], jfirst, jlast);
 
@@ -3974,9 +3974,9 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
   ilast -= m_ghost_points;
   jfirst -= m_ghost_points;
   jlast -= m_ghost_points;
-  int nx = nx_finest_w_ghost - 2 * m_ghost_points;
-  int ny = ny_finest_w_ghost - 2 * m_ghost_points;
-  int kfirst, klast;
+  sw4_type nx = nx_finest_w_ghost - 2 * m_ghost_points;
+  sw4_type ny = ny_finest_w_ghost - 2 * m_ghost_points;
+  sw4_type kfirst, klast;
 
   //   cout << "nCartGrids = " << nCartGrids << endl;
   mNumberOfCartesianGrids = nCartGrids;
@@ -3993,9 +3993,9 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
   }
 
   m_iscurvilinear.resize(mNumberOfGrids);
-  for (int g = 0; g < mNumberOfCartesianGrids; g++) m_iscurvilinear[g] = false;
+  for (sw4_type g = 0; g < mNumberOfCartesianGrids; g++) m_iscurvilinear[g] = false;
   //   if( m_topography_exists )
-  for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++)
+  for (sw4_type g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++)
     m_iscurvilinear[g] = true;
 
   m_supergrid_taper_x.resize(mNumberOfGrids);
@@ -4045,7 +4045,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
                                            // per mechanism)
 
     // muVE and lambdaVE are vectors of vectors
-    for (int g = 0; g < mNumberOfGrids; g++) {
+    for (sw4_type g = 0; g < mNumberOfGrids; g++) {
       mMuVE[g] = new Sarray[m_number_mechanisms];
       mLambdaVE[g] = new Sarray[m_number_mechanisms];
     }
@@ -4074,37 +4074,37 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
   m_kStartActGlobal.resize(mNumberOfGrids);
   m_kEndActGlobal.resize(mNumberOfGrids);
 
-  m_iStartInt.resize(mNumberOfGrids);
-  m_iEndInt.resize(mNumberOfGrids);
-  m_jStartInt.resize(mNumberOfGrids);
-  m_jEndInt.resize(mNumberOfGrids);
-  m_kStartInt.resize(mNumberOfGrids);
-  m_kEndInt.resize(mNumberOfGrids);
+  m_iStartSw4_Type.resize(mNumberOfGrids);
+  m_iEndSw4_Type.resize(mNumberOfGrids);
+  m_jStartSw4_Type.resize(mNumberOfGrids);
+  m_jEndSw4_Type.resize(mNumberOfGrids);
+  m_kStartSw4_Type.resize(mNumberOfGrids);
+  m_kEndSw4_Type.resize(mNumberOfGrids);
 
   m_global_nx.resize(mNumberOfGrids);
   m_global_ny.resize(mNumberOfGrids);
   m_global_nz.resize(mNumberOfGrids);
 
   m_onesided.resize(mNumberOfGrids);
-  for (int g = 0; g < mNumberOfGrids; g++) m_onesided[g] = new int[6];
+  for (sw4_type g = 0; g < mNumberOfGrids; g++) m_onesided[g] = new sw4_type[6];
 
   m_bcType.resize(mNumberOfGrids);
-  for (int g = 0; g < mNumberOfGrids; g++)
+  for (sw4_type g = 0; g < mNumberOfGrids; g++)
     m_bcType[g] = new boundaryConditionType[6];
 
   m_NumberOfBCPoints.resize(mNumberOfGrids);
   m_BndryWindow.resize(mNumberOfGrids);
 
-  //  int* wind;
+  //  sw4_type* wind;
 
-  for (int g = 0; g < mNumberOfGrids; g++) {
-    m_NumberOfBCPoints[g] = new int[6];
-    m_BndryWindow[g] = new int[36];  // 6 by 6 array in Fortran
-    for (int side = 0; side < 6; side++) {
+  for (sw4_type g = 0; g < mNumberOfGrids; g++) {
+    m_NumberOfBCPoints[g] = new sw4_type[6];
+    m_BndryWindow[g] = new sw4_type[36];  // 6 by 6 array in Fortran
+    for (sw4_type side = 0; side < 6; side++) {
       m_NumberOfBCPoints[g][side] = 0;
-      for (int qq = 0; qq < 6; qq += 2)  // 0, 2, 4
+      for (sw4_type qq = 0; qq < 6; qq += 2)  // 0, 2, 4
         m_BndryWindow[g][qq + side * 6] = 999;
-      for (int qq = 1; qq < 6; qq += 2)  // 1, 3, 5
+      for (sw4_type qq = 1; qq < 6; qq += 2)  // 1, 3, 5
         m_BndryWindow[g][qq + side * 6] = -999;
     }
   }
@@ -4112,7 +4112,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
   float_sw4 h = m_h_base;
 
   // save the grid spacing for all Cartesian grids
-  for (int g = 0; g < nCartGrids; g++) {
+  for (sw4_type g = 0; g < nCartGrids; g++) {
     mGridSize[g] = h;
     h = h / 2.;
   }
@@ -4121,7 +4121,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
   // save the horizontal grid spacing for all curvilinear grids
   h = mGridSize[nCartGrids - 1];  // bottom curvilinear grid has same grid size
                                   // as the top Cartesian
-  for (int g = nCartGrids; g < mNumberOfGrids; g++) {
+  for (sw4_type g = nCartGrids; g < mNumberOfGrids; g++) {
     mGridSize[g] = h;
     h = h / 2.;
   }
@@ -4130,7 +4130,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
   m_global_ny[mNumberOfGrids - 1] = ny_finest_w_ghost - 2 * m_ghost_points;
 
   // Grid size in the curvilinear portion
-  for (int g = mNumberOfGrids - 2; g >= nCartGrids;
+  for (sw4_type g = mNumberOfGrids - 2; g >= nCartGrids;
        g--)  // the coarsest curvilinear grid has grid number 'nCartGrids'
   {
     if (is_periodic[0])
@@ -4153,7 +4153,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
   }
 
   // previous code for Cartesian MR
-  for (int g = nCartGrids - 2; g >= 0; g--) {
+  for (sw4_type g = nCartGrids - 2; g >= 0; g--) {
     if (is_periodic[0])
       m_global_nx[g] = m_global_nx[g + 1] / 2;
     else
@@ -4173,14 +4173,14 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
   // }
 
   // Define grid in z-direction, by formula z_k = (k-1)*h + zmin
-  vector<int> nz;
+  vector<sw4_type> nz;
   nz.resize(nCartGrids);
 
   // don't change the zmin of the finest cartesian grid
   m_zmin[nCartGrids - 1] = m_refinementBoundaries[nCartGrids - 1];
-  for (int g = nCartGrids - 1; g >= 0; g--) {
+  for (sw4_type g = nCartGrids - 1; g >= 0; g--) {
     float_sw4 zmax = (g > 0 ? m_refinementBoundaries[g - 1] : a_global_zmax);
-    nz[g] = 1 + static_cast<int>((zmax - m_zmin[g]) / mGridSize[g] + 0.5);
+    nz[g] = 1 + static_cast<sw4_type>((zmax - m_zmin[g]) / mGridSize[g] + 0.5);
 
     zmax = m_zmin[g] + (nz[g] - 1) * mGridSize[g];
 
@@ -4214,7 +4214,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
   {
     cout << "Cartesian refinement levels after correction: " << endl;
 
-    for (int g = 0; g < nCartGrids; g++) {
+    for (sw4_type g = 0; g < nCartGrids; g++) {
       cout << "Grid=" << g << " z-min=" << m_zmin[g] << endl;
     }
     cout << "Corrected global_zmax = " << m_global_zmax << endl << endl;
@@ -4224,11 +4224,11 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
   // portion of the grid
   if (m_topography_exists)  // UPDATED  for more than 1 curvilinear grid
   {
-    // Allocate elements in the m_curviInterface vector
-    m_curviInterface.resize(mNumberOfGrids - mNumberOfCartesianGrids);
+    // Allocate elements in the m_curviSw4_Typeerface vector
+    m_curviSw4_Typeerface.resize(mNumberOfGrids - mNumberOfCartesianGrids);
 
     // NEW
-    for (int g = mNumberOfGrids - 1; g >= mNumberOfCartesianGrids;
+    for (sw4_type g = mNumberOfGrids - 1; g >= mNumberOfCartesianGrids;
          g--)  // g=mNumberOfGrids-1 is the finest curvilinear grid
     {
       // save the local index bounds
@@ -4238,63 +4238,63 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
       m_jEnd[g] = jlast;  // finest grid size in y from above
                           // k-bounds must be determined by the grid generator
 
-      // local index bounds for interior points (= no ghost or parallel padding
+      // local index bounds for sw4_typeerior points (= no ghost or parallel padding
       // points)
       if (ifirst == 1 - m_ghost_points)
-        m_iStartInt[g] = 1;
+        m_iStartSw4_Type[g] = 1;
       else
-        m_iStartInt[g] = ifirst + m_ppadding;
+        m_iStartSw4_Type[g] = ifirst + m_ppadding;
 
       if (ilast == nx + m_ghost_points)
-        m_iEndInt[g] = nx;
+        m_iEndSw4_Type[g] = nx;
       else
-        m_iEndInt[g] = ilast - m_ppadding;
+        m_iEndSw4_Type[g] = ilast - m_ppadding;
 
       if (jfirst == 1 - m_ghost_points)
-        m_jStartInt[g] = 1;
+        m_jStartSw4_Type[g] = 1;
       else
-        m_jStartInt[g] = jfirst + m_ppadding;
+        m_jStartSw4_Type[g] = jfirst + m_ppadding;
 
       if (jlast == ny + m_ghost_points)
-        m_jEndInt[g] = ny;
+        m_jEndSw4_Type[g] = ny;
       else
-        m_jEndInt[g] = jlast - m_ppadding;
+        m_jEndSw4_Type[g] = jlast - m_ppadding;
 
-      // m_kStartInt[g] = 1;
-      // m_kEndInt[g]   = nz[g];
+      // m_kStartSw4_Type[g] = 1;
+      // m_kEndSw4_Type[g]   = nz[g];
 
-      // check that there are more interior points than padding points
-      if (m_iEndInt[g] - m_iStartInt[g] + 1 < m_ppadding) {
+      // check that there are more sw4_typeerior points than padding points
+      if (m_iEndSw4_Type[g] - m_iStartSw4_Type[g] + 1 < m_ppadding) {
         printf(
-            "WARNING: less interior points than padding in proc=%d, grid=%d, "
-            "m_iStartInt=%d, "
-            "m_iEndInt=%d, padding=%d\n",
-            m_myRank, g, m_iStartInt[g], m_iEndInt[g], m_ppadding);
+            "WARNING: less sw4_typeerior points than padding in proc=%d, grid=%d, "
+            "m_iStartSw4_Type=%d, "
+            "m_iEndSw4_Type=%d, padding=%d\n",
+            m_myRank, g, m_iStartSw4_Type[g], m_iEndSw4_Type[g], m_ppadding);
       }
-      if (m_jEndInt[g] - m_jStartInt[g] + 1 < m_ppadding) {
+      if (m_jEndSw4_Type[g] - m_jStartSw4_Type[g] + 1 < m_ppadding) {
         printf(
-            "WARNING: less interior points than padding in proc=%d, grid=%d, "
-            "m_jStartInt=%d, "
-            "m_jEndInt=%d, padding=%d\n",
-            m_myRank, g, m_jStartInt[g], m_jEndInt[g], m_ppadding);
+            "WARNING: less sw4_typeerior points than padding in proc=%d, grid=%d, "
+            "m_jStartSw4_Type=%d, "
+            "m_jEndSw4_Type=%d, padding=%d\n",
+            m_myRank, g, m_jStartSw4_Type[g], m_jEndSw4_Type[g], m_ppadding);
       }
 
       // output bounds
       if (proc_zero() && mVerbose >= 1 /*3*/)  // tmp
       {
         printf(
-            "Rank=%d, Grid #%d (curvilinear), iInterior=[%d,%d], "
-            "jInterior=[%d,%d]\n",
-            m_myRank, g, m_iStartInt[g], m_iEndInt[g], m_jStartInt[g],
-            m_jEndInt[g]);
+            "Rank=%d, Grid #%d (curvilinear), iSw4_Typeerior=[%d,%d], "
+            "jSw4_Typeerior=[%d,%d]\n",
+            m_myRank, g, m_iStartSw4_Type[g], m_iEndSw4_Type[g], m_jStartSw4_Type[g],
+            m_jEndSw4_Type[g]);
       }
 
-      // number of extra ghost points to allow highly accurate interpolation;
+      // number of extra ghost points to allow highly accurate sw4_typeerpolation;
       // needed for the source discretization
       m_ext_ghost_points = 8;
 
-      // Allocate interface the interface surface for this curvilinear grid
-      m_curviInterface[g - mNumberOfCartesianGrids].define(
+      // Allocate sw4_typeerface the sw4_typeerface surface for this curvilinear grid
+      m_curviSw4_Typeerface[g - mNumberOfCartesianGrids].define(
           m_iStart[g] - m_ext_ghost_points, m_iEnd[g] + m_ext_ghost_points,
           m_jStart[g] - m_ext_ghost_points, m_jEnd[g] + m_ext_ghost_points, 1,
           1);
@@ -4338,7 +4338,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
   // On entry to this loop: (nx, ifirst, ilast) and (ny, jfirst, jlast) are the
   // local number of grid points, starting, and ending indices of the finest
   // Cartesian grif
-  for (int g = nCartGrids - 1; g >= 0; g--) {
+  for (sw4_type g = nCartGrids - 1; g >= 0; g--) {
     // NOTE: same number of ghost points in all directions
     kfirst = 1 - m_ghost_points;
     klast = nz[g] + m_ghost_points;
@@ -4351,55 +4351,55 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
     m_kStart[g] = kfirst;
     m_kEnd[g] = klast;
 
-    // local index bounds for interior points (= no ghost or parallel padding
+    // local index bounds for sw4_typeerior points (= no ghost or parallel padding
     // points)
     if (ifirst == 1 - m_ghost_points)
-      m_iStartInt[g] = 1;
+      m_iStartSw4_Type[g] = 1;
     else
-      m_iStartInt[g] = ifirst + m_ppadding;
+      m_iStartSw4_Type[g] = ifirst + m_ppadding;
 
     if (ilast == nx + m_ghost_points)
-      m_iEndInt[g] = nx;
+      m_iEndSw4_Type[g] = nx;
     else
-      m_iEndInt[g] = ilast - m_ppadding;
+      m_iEndSw4_Type[g] = ilast - m_ppadding;
 
     if (jfirst == 1 - m_ghost_points)
-      m_jStartInt[g] = 1;
+      m_jStartSw4_Type[g] = 1;
     else
-      m_jStartInt[g] = jfirst + m_ppadding;
+      m_jStartSw4_Type[g] = jfirst + m_ppadding;
 
     if (jlast == ny + m_ghost_points)
-      m_jEndInt[g] = ny;
+      m_jEndSw4_Type[g] = ny;
     else
-      m_jEndInt[g] = jlast - m_ppadding;
+      m_jEndSw4_Type[g] = jlast - m_ppadding;
 
-    m_kStartInt[g] = 1;
-    m_kEndInt[g] = nz[g];
+    m_kStartSw4_Type[g] = 1;
+    m_kEndSw4_Type[g] = nz[g];
 
-    // check that there are more interior points than padding points
-    if (m_iEndInt[g] - m_iStartInt[g] + 1 < m_ppadding) {
+    // check that there are more sw4_typeerior points than padding points
+    if (m_iEndSw4_Type[g] - m_iStartSw4_Type[g] + 1 < m_ppadding) {
       printf(
-          "WARNING: less interior points than padding in proc=%d, grid=%d, "
-          "m_iStartInt=%d, "
-          "m_iEndInt=%d, padding=%d\n",
-          m_myRank, g, m_iStartInt[g], m_iEndInt[g], m_ppadding);
+          "WARNING: less sw4_typeerior points than padding in proc=%d, grid=%d, "
+          "m_iStartSw4_Type=%d, "
+          "m_iEndSw4_Type=%d, padding=%d\n",
+          m_myRank, g, m_iStartSw4_Type[g], m_iEndSw4_Type[g], m_ppadding);
     }
-    if (m_jEndInt[g] - m_jStartInt[g] + 1 < m_ppadding) {
+    if (m_jEndSw4_Type[g] - m_jStartSw4_Type[g] + 1 < m_ppadding) {
       printf(
-          "WARNING: less interior points than padding in proc=%d, grid=%d, "
-          "m_jStartInt=%d, "
-          "m_jEndInt=%d, padding=%d\n",
-          m_myRank, g, m_jStartInt[g], m_jEndInt[g], m_ppadding);
+          "WARNING: less sw4_typeerior points than padding in proc=%d, grid=%d, "
+          "m_jStartSw4_Type=%d, "
+          "m_jEndSw4_Type=%d, padding=%d\n",
+          m_myRank, g, m_jStartSw4_Type[g], m_jEndSw4_Type[g], m_ppadding);
     }
 
     // output bounds
     if (proc_zero() && mVerbose >= 1 /*3*/)  // tmp
     {
       printf(
-          "Rank=%d, Grid #%d (Cartesian), iInterior=[%d,%d], "
-          "jInterior=[%d,%d], kInterior=[%d,%d]\n",
-          m_myRank, g, m_iStartInt[g], m_iEndInt[g], m_jStartInt[g],
-          m_jEndInt[g], m_kStartInt[g], m_kEndInt[g]);
+          "Rank=%d, Grid #%d (Cartesian), iSw4_Typeerior=[%d,%d], "
+          "jSw4_Typeerior=[%d,%d], kSw4_Typeerior=[%d,%d]\n",
+          m_myRank, g, m_iStartSw4_Type[g], m_iEndSw4_Type[g], m_jStartSw4_Type[g],
+          m_jEndSw4_Type[g], m_kStartSw4_Type[g], m_kEndSw4_Type[g]);
     }
 
     //
@@ -4424,7 +4424,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
       m_Mucs[g].define(ifirst, ilast, jfirst, jlast, 1, 1);
       m_Mlcs[g].define(ifirst, ilast, jfirst, jlast, 1, 1);
 
-      int nkf = m_global_nz[g];
+      sw4_type nkf = m_global_nz[g];
       m_Morf[g].define(ifirst, ilast, jfirst, jlast, nkf, nkf);
       m_Mlrf[g].define(ifirst, ilast, jfirst, jlast, nkf, nkf);
       m_Mufs[g].define(ifirst, ilast, jfirst, jlast, nkf, nkf);
@@ -4434,7 +4434,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
     if (m_use_attenuation) {
       mQs[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Host);
       mQp[g].define(ifirst, ilast, jfirst, jlast, kfirst, klast, Space::Host);
-      for (int a = 0; a < m_number_mechanisms;
+      for (sw4_type a = 0; a < m_number_mechanisms;
            a++)  // the simplest attenuation model only uses Q, not MuVE or
                  // LambdaVE
       {
@@ -4454,18 +4454,18 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
     // go to the next coarser grid
     coarsen1d(nx, ifirst, ilast, is_periodic[0]);
     coarsen1d(ny, jfirst, jlast, is_periodic[1]);
-    //      cout << g << " " << my_proc_coords[0] << " I Split into " << ifirst
+    //      cout << g << " " << my_proc_coords[0] << " I Split sw4_typeo " << ifirst
     //      << " , " << ilast << endl; cout << g << " " << my_proc_coords[1] <<
-    //      " J Split into " << jfirst << " , " << jlast << endl; cout << "grid
+    //      " J Split sw4_typeo " << jfirst << " , " << jlast << endl; cout << "grid
     //      " << g << " zmin = " << m_zmin[g] << " nz = " << nz[g] << "
-    //      kinterval " << kfirst << " , " << klast << endl;
+    //      ksw4_typeerval " << kfirst << " , " << klast << endl;
 
   }  // end for all Cartesian grids
 
   // tmp
-  //   int myRank;
+  //   sw4_type myRank;
   //   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-  //   for (int q=0; q<mNumberOfCartesianGrids; q++)
+  //   for (sw4_type q=0; q<mNumberOfCartesianGrids; q++)
   //   {
   //     printf("Proc #%i, m_iEnd[%i]=%i, m_global_nx[%i]=%i, m_jEnd[%i]=%i,
   //     m_global_ny[%i]=%i\n",
@@ -4487,11 +4487,11 @@ void EW::allocateCurvilinearArrays() {
 
   // 1: get the min and max elevation from mTopoGridExt
 
-  //   int gTop = mNumberOfGrids-1;
-  //   int ifirst = m_iStart[gTop];
-  //   int ilast  = m_iEnd[gTop];
-  //   int jfirst = m_jStart[gTop];
-  //   int jlast  = m_jEnd[gTop];
+  //   sw4_type gTop = mNumberOfGrids-1;
+  //   sw4_type ifirst = m_iStart[gTop];
+  //   sw4_type ilast  = m_iEnd[gTop];
+  //   sw4_type jfirst = m_jStart[gTop];
+  //   sw4_type jlast  = m_jEnd[gTop];
   float_sw4 h = mGridSize[mNumberOfGrids -
                           1];  // grid size must agree with top cartesian grid
   //   float_sw4 zTopCart = m_zmin[g]; // bottom z-level for curvilinear grid
@@ -4500,13 +4500,13 @@ void EW::allocateCurvilinearArrays() {
   // decide on the number of grid point in the k-direction (evaluate
   // mTopoGrid...)
   float_sw4 zMinLocal, zMinGlobal, zMaxLocal, zMaxGlobal;
-  //   int i=m_iStart[gTop], j=m_jEnd[gTop];
+  //   sw4_type i=m_iStart[gTop], j=m_jEnd[gTop];
   // note that the z-coordinate points downwards, so positive elevation (above
   // sea level) has negative z-values
   //   zMaxLocal = zMinLocal = -mTopoGridExt(i,j,1);
   // tmp
-  //   int i_min_loc=i, i_max_loc=i;
-  //   int j_min_loc=j, j_max_loc=j;
+  //   sw4_type i_min_loc=i, i_max_loc=i;
+  //   sw4_type j_min_loc=j, j_max_loc=j;
   // end tmp
   // the mTopoGridExt array was allocated in allocateCartesianSolverArrays()
   zMinLocal = -mTopoGridExt.maximum();
@@ -4541,15 +4541,15 @@ void EW::allocateCurvilinearArrays() {
 
   // Compute some un-divided differences of the topographic surface to evaluate
   // its smoothness
-  int imin = mTopoGridExt.m_ib;
-  int imax = mTopoGridExt.m_ie;
-  int jmin = mTopoGridExt.m_jb;
-  int jmax = mTopoGridExt.m_je;
+  sw4_type imin = mTopoGridExt.m_ib;
+  sw4_type imax = mTopoGridExt.m_ie;
+  sw4_type jmin = mTopoGridExt.m_jb;
+  sw4_type jmax = mTopoGridExt.m_je;
   float_sw4 maxd2zh = 0, maxd2z2h = 0, maxd3zh = 1.e-20, maxd3z2h = 1.e-20, d2h,
             d3h;  // h3 = h * h * h;
   // grid size h
-  for (int i = imin + 1; i <= imax - 1; i++)
-    for (int j = jmin + 1; j <= jmax - 1; j++) {
+  for (sw4_type i = imin + 1; i <= imax - 1; i++)
+    for (sw4_type j = jmin + 1; j <= jmax - 1; j++) {
       d2h =
           sqrt(SQR((mTopoGridExt(i - 1, j, 1) - 2 * mTopoGridExt(i, j, 1) +
                     mTopoGridExt(i + 1, j, 1)) /
@@ -4563,8 +4563,8 @@ void EW::allocateCurvilinearArrays() {
       if (d2h > maxd2zh) maxd2zh = d2h;
     }
   // 3rd differences
-  for (int i = imin + 1; i <= imax - 2; i++)
-    for (int j = jmin + 1; j <= jmax - 2; j++) {
+  for (sw4_type i = imin + 1; i <= imax - 2; i++)
+    for (sw4_type j = jmin + 1; j <= jmax - 2; j++) {
       d3h =
           sqrt(SQR((mTopoGridExt(i - 1, j, 1) - 3 * mTopoGridExt(i, j, 1) +
                     3 * mTopoGridExt(i + 1, j, 1) - mTopoGridExt(i + 2, j, 1)) /
@@ -4586,8 +4586,8 @@ void EW::allocateCurvilinearArrays() {
       if (d3h > maxd3zh) maxd3zh = d3h;
     }
   // grid size 2h
-  for (int i = imin + 2; i <= imax - 2; i += 2)
-    for (int j = jmin + 2; j <= jmax - 2; j += 2) {
+  for (sw4_type i = imin + 2; i <= imax - 2; i += 2)
+    for (sw4_type j = jmin + 2; j <= jmax - 2; j += 2) {
       d2h =
           sqrt(SQR((mTopoGridExt(i - 2, j, 1) - 2 * mTopoGridExt(i, j, 1) +
                     mTopoGridExt(i + 2, j, 1)) /
@@ -4601,8 +4601,8 @@ void EW::allocateCurvilinearArrays() {
       if (d2h > maxd2z2h) maxd2z2h = d2h;
     }
   // 3rd differences
-  for (int i = imin + 2; i <= imax - 4; i += 2)
-    for (int j = jmin + 2; j <= jmax - 4; j += 2) {
+  for (sw4_type i = imin + 2; i <= imax - 4; i += 2)
+    for (sw4_type j = jmin + 2; j <= jmax - 4; j += 2) {
       d3h =
           sqrt(SQR((mTopoGridExt(i - 2, j, 1) - 3 * mTopoGridExt(i, j, 1) +
                     3 * mTopoGridExt(i + 2, j, 1) - mTopoGridExt(i + 4, j, 1)) /
@@ -4668,7 +4668,7 @@ void EW::allocateCurvilinearArrays() {
 
   // if (proc_zero())
   // {
-  //    for (int q=0; q<m_refinementBoundaries.size(); q++)
+  //    for (sw4_type q=0; q<m_refinementBoundaries.size(); q++)
   //       printf("m_refBndry[%d] = %e\n", q, m_refinementBoundaries[q]);
   // }
 
@@ -4681,15 +4681,15 @@ void EW::allocateCurvilinearArrays() {
       printf("m_curviRefLev[%lu]=%e\n", q, m_curviRefLev[q]);
   }
 
-  // scale the refinement levels to take the average topographic elevation into
+  // scale the refinement levels to take the average topographic elevation sw4_typeo
   // account
-  for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+  for (sw4_type g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
     m_zmin[g] = avg_minZ + m_curviRefLev[g - mNumberOfCartesianGrids] *
                                (topo_zmax - avg_minZ) / topo_zmax;
   }
 
   if (mVerbose >= 3 && proc_zero()) {
-    for (int g = 0; g < mNumberOfGrids; g++)
+    for (sw4_type g = 0; g < mNumberOfGrids; g++)
       printf("m_zmin[%d] = %e\n", g, m_zmin[g]);
   }
 
@@ -4697,14 +4697,14 @@ void EW::allocateCurvilinearArrays() {
   // loop over all curvilinear grids and allocate space + estimate the number of
   // grid points in z
   //
-  for (int g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
+  for (sw4_type g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
     // on average the same gridsize in z
-    int Nz = 1 + (int)((m_zmin[g - 1] - m_zmin[g]) / mGridSize[g]);
+    sw4_type Nz = 1 + (sw4_type)((m_zmin[g - 1] - m_zmin[g]) / mGridSize[g]);
     m_kStart[g] = 1 - m_ghost_points;
     m_kEnd[g] = Nz + m_ghost_points;
     m_global_nz[g] = Nz;
-    m_kStartInt[g] = 1;
-    m_kEndInt[g] = Nz;
+    m_kStartSw4_Type[g] = 1;
+    m_kEndSw4_Type[g] = Nz;
     if (mVerbose >= 3 && proc_zero())
       printf(
           "allocateCurvilinearArrays: Number of grid points in curvilinear "
@@ -4761,7 +4761,7 @@ void EW::allocateCurvilinearArrays() {
       mQp[g].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                     m_kEnd[g], Space::Host);
       mQp[g].set_to_minusOneHost();
-      for (int a = 0; a < m_number_mechanisms;
+      for (sw4_type a = 0; a < m_number_mechanisms;
            a++)  // the simplest attenuation model has m_number_mechanisms = 0
       {
         mMuVE[g][a].define(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
@@ -4776,18 +4776,18 @@ void EW::allocateCurvilinearArrays() {
 }  // end allocateCurvilinearArrays()
 
 //-----------------------------------------------------------------------
-void EW::deprecatedImageMode(int value, const char* name) const {
+void EW::deprecatedImageMode(sw4_type value, const char* name) const {
   if (m_myRank == 0)
-    cout << "***Warning specifying the mode using integers is deprecated, mode="
+    cout << "***Warning specifying the mode using sw4_typeegers is deprecated, mode="
          << value << " should be mode=" << name << " instead." << endl;
 }
 
 //-----------------------------------------------------------------------
 void EW::processImage(char* buffer, bool use_hdf5) {
-  int cycle = -1, cycleInterval = 0;
-  //   int pfs = 0, nwriters=1;
+  sw4_type cycle = -1, cycleSw4_Typeerval = 0;
+  //   sw4_type pfs = 0, nwriters=1;
   Image::ImageMode mode = Image::RHO;
-  float_sw4 time = 0.0, timeInterval = 0.0;
+  float_sw4 time = 0.0, timeSw4_Typeerval = 0.0;
   bool timingSet = false;
   string filePrefix = "image";
 
@@ -4800,7 +4800,7 @@ void EW::processImage(char* buffer, bool use_hdf5) {
   // -----------------------------------------------------
   Image::ImageOrientation locationType = Image::UNDEFINED;
   float_sw4 coordValue;
-  /* int gridPointValue; */
+  /* sw4_type gridPointValue; */
   bool coordWasSet = false;
   bool use_double = false;
   bool mode_is_grid = false;
@@ -4832,32 +4832,32 @@ void EW::processImage(char* buffer, bool use_hdf5) {
       }
       time = atof(token);
       timingSet = true;
-    } else if (startswith("timeInterval=", token)) {
-      token += 13;  // skip timeInterval=
+    } else if (startswith("timeSw4_Typeerval=", token)) {
+      token += 13;  // skip timeSw4_Typeerval=
       if (atof(token) <= 0.) {
         cerr << "Processing image command: "
-             << "timeInterval must be a positive number, not: " << token;
+             << "timeSw4_Typeerval must be a positive number, not: " << token;
         MPI_Abort(MPI_COMM_WORLD, 1);
       }
-      timeInterval = atof(token);
+      timeSw4_Typeerval = atof(token);
       timingSet = true;
     } else if (startswith("cycle=", token)) {
       token += 6;  // skip cycle=
       if (atoi(token) < 0) {
         cerr << "Processing image command: "
-             << "cycle must be a non-negative integer, not: " << token;
+             << "cycle must be a non-negative sw4_typeeger, not: " << token;
         MPI_Abort(MPI_COMM_WORLD, 1);
       }
       cycle = atoi(token);
       timingSet = true;
-    } else if (startswith("cycleInterval=", token)) {
-      token += 14;  // skip cycleInterval=
+    } else if (startswith("cycleSw4_Typeerval=", token)) {
+      token += 14;  // skip cycleSw4_Typeerval=
       if (atoi(token) <= 0) {
         cerr << "Processing image command: "
-             << "cycleInterval must be a positive integer, not: " << token;
+             << "cycleSw4_Typeerval must be a positive sw4_typeeger, not: " << token;
         MPI_Abort(MPI_COMM_WORLD, 1);
       }
-      cycleInterval = atoi(token);
+      cycleSw4_Typeerval = atoi(token);
       timingSet = true;
     } else if (startswith("file=", token)) {
       token += 5;  // skip file=
@@ -5047,7 +5047,7 @@ void EW::processImage(char* buffer, bool use_hdf5) {
   if (!timingSet) {
     cerr << "Processing image command: "
          << "at least one timing mechanism must be set: cycle, time, "
-            "cycleInterval or timeInterval"
+            "cycleSw4_Typeerval or timeSw4_Typeerval"
          << endl;
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
@@ -5074,35 +5074,35 @@ void EW::processImage(char* buffer, bool use_hdf5) {
     if (coordWasSet) {
       if (mode_is_grid) {
         if (locationType == Image::X) {
-          i = new Image(this, time, timeInterval, cycle, cycleInterval,
+          i = new Image(this, time, timeSw4_Typeerval, cycle, cycleSw4_Typeerval,
                         filePrefix, Image::GRIDY, locationType, coordValue,
                         use_double, use_hdf5);
           addImage(i);
-          i = new Image(this, time, timeInterval, cycle, cycleInterval,
+          i = new Image(this, time, timeSw4_Typeerval, cycle, cycleSw4_Typeerval,
                         filePrefix, Image::GRIDZ, locationType, coordValue,
                         use_double, use_hdf5);
           addImage(i);
         } else if (locationType == Image::Y) {
-          i = new Image(this, time, timeInterval, cycle, cycleInterval,
+          i = new Image(this, time, timeSw4_Typeerval, cycle, cycleSw4_Typeerval,
                         filePrefix, Image::GRIDX, locationType, coordValue,
                         use_double, use_hdf5);
           addImage(i);
-          i = new Image(this, time, timeInterval, cycle, cycleInterval,
+          i = new Image(this, time, timeSw4_Typeerval, cycle, cycleSw4_Typeerval,
                         filePrefix, Image::GRIDZ, locationType, coordValue,
                         use_double, use_hdf5);
           addImage(i);
         } else if (locationType == Image::Z) {
-          i = new Image(this, time, timeInterval, cycle, cycleInterval,
+          i = new Image(this, time, timeSw4_Typeerval, cycle, cycleSw4_Typeerval,
                         filePrefix, Image::GRIDX, locationType, coordValue,
                         use_double, use_hdf5);
           addImage(i);
-          i = new Image(this, time, timeInterval, cycle, cycleInterval,
+          i = new Image(this, time, timeSw4_Typeerval, cycle, cycleSw4_Typeerval,
                         filePrefix, Image::GRIDY, locationType, coordValue,
                         use_double, use_hdf5);
           addImage(i);
         }
       } else {
-        i = new Image(this, time, timeInterval, cycle, cycleInterval,
+        i = new Image(this, time, timeSw4_Typeerval, cycle, cycleSw4_Typeerval,
                       filePrefix, mode, locationType, coordValue, use_double,
                       use_hdf5);
         addImage(i);
@@ -5120,7 +5120,7 @@ void EW::processImage(char* buffer, bool use_hdf5) {
     cout << "********Done parsing image command*********" << endl;
 }
 
-// int sgn(double arg)
+// sw4_type sgn(double arg)
 // {
 //   if (arg < 0)
 //     return -1;
@@ -5137,11 +5137,11 @@ void EW::processSource(char* buffer,
   float_sw4 t0 = 0.0, f0 = 1.0, freq = 1.0;
   // Should be center of the grid
   double x = 0.0, y = 0.0, z = 0.0;
-  //  int i = 0, j = 0, k = 0;
+  //  sw4_type i = 0, j = 0, k = 0;
   float_sw4 mxx = 0.0, mxy = 0.0, mxz = 0.0, myy = 0.0, myz = 0.0, mzz = 0.0;
   float_sw4 strike = 0.0, dip = 0.0, rake = 0.0;
   float_sw4 fx = 0.0, fy = 0.0, fz = 0.0;
-  int isMomentType = -1;
+  sw4_type isMomentType = -1;
 
   double lat = 0.0, lon = 0.0, depth = 0.0;
   bool topodepth = false, depthSet = false, zSet = false;
@@ -5152,11 +5152,11 @@ void EW::processSource(char* buffer,
   bool dfileset = false;
   bool sacbaseset = false;
 
-  int ncyc = 0;
-  int event = 0;
+  sw4_type ncyc = 0;
+  sw4_type event = 0;
   bool ncyc_set = false;
 
-  timeDep tDep = iRickerInt;
+  timeDep tDep = iRickerSw4_Type;
   char formstring[1000];
   char dfile[1000];
 
@@ -5330,7 +5330,7 @@ void EW::processSource(char* buffer,
       //"<< event << " out of range" );
       // Ignore if no events given
       if (m_nevents_specified > 0) {
-        map<string, int>::iterator it = m_event_names.find(token);
+        map<string, sw4_type>::iterator it = m_event_names.find(token);
         CHECK_INPUT(it != m_event_names.end(),
                     err << "event with name " << token << " not found");
         event = it->second;
@@ -5360,12 +5360,12 @@ void EW::processSource(char* buffer,
         tDep = iSawtooth;
       else if (!strcmp("SmoothWave", formstring))
         tDep = iSmoothWave;
-      else if (!strcmp("Erf", formstring) || !strcmp("GaussianInt", formstring))
+      else if (!strcmp("Erf", formstring) || !strcmp("GaussianSw4_Type", formstring))
         tDep = iErf;
       else if (!strcmp("VerySmoothBump", formstring))
         tDep = iVerySmoothBump;
-      else if (!strcmp("RickerInt", formstring))
-        tDep = iRickerInt;
+      else if (!strcmp("RickerSw4_Type", formstring))
+        tDep = iRickerSw4_Type;
       else if (!strcmp("Brune", formstring))
         tDep = iBrune;
       else if (!strcmp("BruneSmoothed", formstring))
@@ -5382,7 +5382,7 @@ void EW::processSource(char* buffer,
         tDep = iC6SmoothBump;
       else if (m_myRank == 0)
         cout << "unknown time function: " << formstring << endl
-             << " using default RickerInt function." << endl;
+             << " using default RickerSw4_Type function." << endl;
     } else if (startswith("ncyc=", token)) {
       token += 5;  // skip ncyc=
       ncyc = atoi(token);
@@ -5424,8 +5424,8 @@ void EW::processSource(char* buffer,
 
   // Discrete source time function
   float_sw4* par = NULL;
-  int* ipar = NULL;
-  int npar = 0, nipar = 0;
+  sw4_type* ipar = NULL;
+  sw4_type npar = 0, nipar = 0;
   if (dfileset) {
     tDep = iDiscrete;
     //  g(t) defined by spline points on a uniform grid, read from file.
@@ -5437,14 +5437,14 @@ void EW::processSource(char* buffer,
     CHECK_INPUT(fd != NULL,
                 err << "Source time function file " << dfile << " not found");
     float_sw4 t0, dt;
-    int npts;
+    sw4_type npts;
     fscanf(fd, " %lg %lg %i", &t0, &dt, &npts);
     par = new float_sw4[npts + 1];
     par[0] = t0;
     freq = 1 / dt;
-    ipar = new int[1];
+    ipar = new sw4_type[1];
     ipar[0] = npts;
-    for (int i = 0; i < npts; i++) fscanf(fd, "%lg", &par[i + 1]);
+    for (sw4_type i = 0; i < npts; i++) fscanf(fd, "%lg", &par[i + 1]);
     npar = npts + 1;
     nipar = 1;
     //     cout << "Read disc source: t0=" << t0 << " dt="  << dt << " npts= "
@@ -5468,7 +5468,7 @@ void EW::processSource(char* buffer,
     bool useB = false;  // Use sac header begin time parameter B.
 
     float_sw4 dt, t0, latsac, lonsac, cmpazsac, cmpincsac;
-    int utcsac[7], npts;
+    sw4_type utcsac[7], npts;
     string basename = dfile;
     string fname;
     // PBUGS npts not set in original code. Set below to turnoff warning
@@ -5506,7 +5506,7 @@ void EW::processSource(char* buffer,
     freq = 1 / dt;
     nipar = 1;
     par = new float_sw4[npar];
-    ipar = new int[1];
+    ipar = new sw4_type[1];
     ipar[0] = npts;
     size_t offset = 0;
     par[offset] = t0;
@@ -5634,7 +5634,7 @@ void EW::processSource(char* buffer,
     }
   }
 
-  // if strike, dip and rake have been given we need to convert into M_{ij} form
+  // if strike, dip and rake have been given we need to convert sw4_typeo M_{ij} form
   if (strikeDipRake) {
     float_sw4 radconv = M_PI / 180.;
     float_sw4 S, D, R;
@@ -5728,7 +5728,7 @@ void EW::processSource(char* buffer,
 void EW::processRuptureHDF5(char* buffer,
                             vector<vector<Source*> >& a_GlobalUniqueSources) {
 #ifdef USE_HDF5
-  int event = 0;
+  sw4_type event = 0;
   bool rfileset = false;
   char rfile[1000];
   double stime, etime;
@@ -5770,7 +5770,7 @@ void EW::processRuptureHDF5(char* buffer,
       //"<< event << " out of range" );
       // Ignore if no events given
       if (m_nevents_specified > 0) {
-        map<string, int>::iterator it = m_event_names.find(token);
+        map<string, sw4_type>::iterator it = m_event_names.find(token);
         CHECK_INPUT(it != m_event_names.end(),
                     err << "event with name " << token << " not found");
         event = it->second;
@@ -5815,11 +5815,11 @@ void EW::processRupture(char* buffer,
   // float_sw4 f0 = 1.0;
   // Should be center of the grid
   double x = 0.0, y = 0.0, z = 0.0;
-  //  int i = 0, j = 0, k = 0;
+  //  sw4_type i = 0, j = 0, k = 0;
   float_sw4 mxx = 0.0, mxy = 0.0, mxz = 0.0, myy = 0.0, myz = 0.0, mzz = 0.0;
   // float_sw4 strike = 0.0, dip = 0.0, rake = 0.0;
   // float_sw4 fx = 0.0, fy = 0.0, fz = 0.0;
-  int event = 0;
+  sw4_type event = 0;
 
   // double lat = 0.0, lon = 0.0;
   bool topodepth = true;
@@ -5867,7 +5867,7 @@ void EW::processRupture(char* buffer,
       //"<< event << " out of range" );
       // Ignore if no events given
       if (m_nevents_specified > 0) {
-        map<string, int>::iterator it = m_event_names.find(token);
+        map<string, sw4_type>::iterator it = m_event_names.find(token);
         CHECK_INPUT(it != m_event_names.end(),
                     err << "event with name " << token << " not found");
         event = it->second;
@@ -5880,13 +5880,13 @@ void EW::processRupture(char* buffer,
 
   float_sw4 rVersion;
 
-  const int bufsize = 1024;
+  const sw4_type bufsize = 1024;
   char buf[bufsize];
 
   // Discrete source time function
   float_sw4* par = NULL;
-  int* ipar = NULL;
-  int npar = 0, nipar = 0, ncyc = 0;
+  sw4_type* ipar = NULL;
+  sw4_type npar = 0, nipar = 0, ncyc = 0;
   if (rfileset) {
     //  g(t) defined by spline points on a uniform grid, read from file.
     //  Format: t0, dt, npts
@@ -5908,14 +5908,14 @@ void EW::processRupture(char* buffer,
     REQUIRE2(strcmp("PLANE", token) == 0,
              "ERROR: not a HEADER BLOCK line...: " << token);
     // read the number of planes
-    int nseg;
+    sw4_type nseg;
     token = strtok(NULL, " \t");
     nseg = atoi(token);
     if (proc_zero()) printf("Number of segments in header block: %i\n", nseg);
     // read each header block
-    for (int seg = 0; seg < nseg; seg++) {
+    for (sw4_type seg = 0; seg < nseg; seg++) {
       double elon, elat, len, wid, stk, dip, dtop, shyp, dhyp;
-      int nstk, ndip;
+      sw4_type nstk, ndip;
       fgets(buf, bufsize, fd);
       sscanf(buf, "%lg %lg %i %i %lg %lg", &elon, &elat, &nstk, &ndip, &len,
              &wid);
@@ -5935,18 +5935,18 @@ void EW::processRupture(char* buffer,
     REQUIRE2(strcmp("POINTS", token) == 0,
              "ERROR: not a DATA BLOCK line...: " << token);
     // read the number of points
-    int npts;
+    sw4_type npts;
     token = strtok(NULL, " \t");
     npts = atoi(token);
     if (proc_zero())
       printf("Number of point sources in data block: %i\n", npts);
 
     // read all point sources
-    int nSources = 0, nu1 = 0, nu2 = 0, nu3 = 0;
-    for (int pts = 0; pts < npts; pts++) {
+    sw4_type nSources = 0, nu1 = 0, nu2 = 0, nu3 = 0;
+    for (sw4_type pts = 0; pts < npts; pts++) {
       double lon, lat, dep, stk, dip, area, tinit, dt, rake, slip1, slip2,
           slip3;
-      int nt1 = 0, nt2 = 0, nt3 = 0;
+      sw4_type nt1 = 0, nt2 = 0, nt3 = 0;
       fgets(buf, bufsize, fd);
       sscanf(buf, "%lg %lg %lg %lg %lg %lg %lg %lg", &lon, &lat, &dep, &stk,
              &dip, &area, &tinit, &dt);
@@ -5972,17 +5972,17 @@ void EW::processRupture(char* buffer,
         // note that the first data point is always zero, but the last is not
         // for this reason we always pad the time zeries with a '0'
         // also note that we need at least 7 data points, i.e. nt1>=6
-        int nt1dim = max(6, nt1);
+        sw4_type nt1dim = max(6, nt1);
         par = new float_sw4[nt1dim + 2];
         par[0] = tinit;
         t0 = tinit;
         freq = 1 / dt;
-        ipar = new int[1];
+        ipar = new sw4_type[1];
         ipar[0] = nt1dim + 1;  // add an extra point
         fgets(buf, bufsize, fd);
         token = strtok(buf, " \t");
         //	printf("buf='%s'\n", buf);
-        for (int i = 0; i < nt1; i++) {
+        for (sw4_type i = 0; i < nt1; i++) {
           // read another line if there are no more tokens
           if (token == NULL) {
             fgets(buf, bufsize, fd);
@@ -5995,22 +5995,22 @@ void EW::processRupture(char* buffer,
         }
         // pad with 0
         if (nt1 < 6) {
-          for (int j = nt1; j < 6; j++) par[j + 1] = 0.;
+          for (sw4_type j = nt1; j < 6; j++) par[j + 1] = 0.;
         }
 
         // last 0
         par[nt1dim + 1] = 0.0;
 
         // scale cm/s to m/s
-        for (int i = 1; i <= nt1dim + 1; i++) {
+        for (sw4_type i = 1; i <= nt1dim + 1; i++) {
           par[i] *= 1e-2;
         }
 
-        // AP: Mar. 1, 2016: Additional scaling is needed to make the integral
+        // AP: Mar. 1, 2016: Additional scaling is needed to make the sw4_typeegral
         // of the time function = 1
         float_sw4 slip_m = slip1 * 1e-2;
         float_sw4 slip_sum = 0;
-        for (int i = 1; i <= nt1dim + 1; i++) {
+        for (sw4_type i = 1; i <= nt1dim + 1; i++) {
           slip_sum += par[i];
         }
         slip_sum *= dt;
@@ -6021,13 +6021,13 @@ void EW::processRupture(char* buffer,
               "header)=%e [m]\n",
               slip_sum, slip_m);
         }
-        // scale time series to sum to integrate to one
-        for (int i = 1; i <= nt1dim + 1; i++) {
+        // scale time series to sum to sw4_typeegrate to one
+        for (sw4_type i = 1; i <= nt1dim + 1; i++) {
           par[i] /= slip_sum;
         }
         if (proc_zero() && mVerbose >= 2) {
           slip_sum = 0;
-          for (int i = 1; i <= nt1dim + 1; i++) {
+          for (sw4_type i = 1; i <= nt1dim + 1; i++) {
             slip_sum += par[i];
           }
           slip_sum *= dt;
@@ -6041,7 +6041,7 @@ void EW::processRupture(char* buffer,
         nipar = 1;
 
         // printf("Read discrete time series: tinit=%g, dt=%g, nt1=%i\n", tinit,
-        // dt, nt1); for (int i=0; i<nt1+1; i++)
+        // dt, nt1); for (sw4_type i=0; i<nt1+1; i++)
         //   printf("Sv1[%i]=%g\n", i+1, par[i+1]);
 
         // convert lat, lon, depth to (x,y,z)
@@ -6151,7 +6151,7 @@ void EW::processRupture(char* buffer,
         fgets(buf, bufsize, fd);
         token = strtok(buf, " \t");
         //	printf("buf='%s'\n", buf);
-        for (int i = 0; i < nt2; i++) {
+        for (sw4_type i = 0; i < nt2; i++) {
           // read another line if there are no more tokens
           if (token == NULL) {
             fgets(buf, bufsize, fd);
@@ -6172,7 +6172,7 @@ void EW::processRupture(char* buffer,
         fgets(buf, bufsize, fd);
         token = strtok(buf, " \t");
         //	printf("buf='%s'\n", buf);
-        for (int i = 0; i < nt3; i++) {
+        for (sw4_type i = 0; i < nt3; i++) {
           // read another line if there are no more tokens
           if (token == NULL) {
             fgets(buf, bufsize, fd);
@@ -6202,13 +6202,13 @@ void EW::processRupture(char* buffer,
 }  // end processRupture()
 
 //------------------------------------------------------------------------
-void EW::processMaterialBlock(char* buffer, int& blockCount) {
+void EW::processMaterialBlock(char* buffer, sw4_type& blockCount) {
   float_sw4 vpgrad = 0.0, vsgrad = 0.0, rhograd = 0.0;
   bool x1set = false, x2set = false, y1set = false, y2set = false,
        z1set = false, z2set = false;
 
   float_sw4 x1 = 0.0, x2 = 0.0, y1 = 0.0, y2 = 0.0, z1 = 0.0, z2 = 0.0;
-  //  int i1 = -1, i2 = -1, j1 = -1, j2 = -1, k1 = -1, k2 = -1;
+  //  sw4_type i1 = -1, i2 = -1, j1 = -1, j2 = -1, k1 = -1, k2 = -1;
 
   string name = "Block";
 
@@ -6380,10 +6380,10 @@ void EW::processMaterialBlock(char* buffer, int& blockCount) {
 }
 
 //-----------------------------------------------------------------------
-void EW::processAnisotropicMaterialBlock(char* buffer, int& blockCount) {
+void EW::processAnisotropicMaterialBlock(char* buffer, sw4_type& blockCount) {
   float_sw4 rho = -1, rhograd = 0.0;
   float_sw4 c[21], cgrad[21];
-  for (int m = 0; m < 21; m++) {
+  for (sw4_type m = 0; m < 21; m++) {
     c[m] = -1;
     cgrad[m] = 0;
   }
@@ -6392,7 +6392,7 @@ void EW::processAnisotropicMaterialBlock(char* buffer, int& blockCount) {
        z1set = false, z2set = false;
 
   float_sw4 x1 = 0.0, x2 = 0.0, y1 = 0.0, y2 = 0.0, z1 = 0.0, z2 = 0.0;
-  //  int i1 = -1, i2 = -1, j1 = -1, j2 = -1, k1 = -1, k2 = -1;
+  //  sw4_type i1 = -1, i2 = -1, j1 = -1, j2 = -1, k1 = -1, k2 = -1;
 
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(
@@ -6663,9 +6663,9 @@ void EW::processReceiverHDF5(char* buffer,
   string inFileName = "station";
   string fileName = "station_out";
   string staName = "station";
-  int writeEvery = 1000;
-  int downSample = 1;
-  int event = 0;
+  sw4_type writeEvery = 1000;
+  sw4_type downSample = 1;
+  sw4_type event = 0;
   TimeSeries::receiverMode mode = TimeSeries::Displacement;
   double stime, etime;
   stime = MPI_Wtime();
@@ -6693,7 +6693,7 @@ void EW::processReceiverHDF5(char* buffer,
       token += strlen("writeEvery=");
       writeEvery = atoi(token);
       CHECK_INPUT(writeEvery >= 0, err << "rechdf5 command: writeEvery must be "
-                                          "set to a non-negative integer, not: "
+                                          "set to a non-negative sw4_typeeger, not: "
                                        << token);
     } else if (startswith("downSample=", token) ||
                startswith("downsample=", token)) {
@@ -6701,13 +6701,13 @@ void EW::processReceiverHDF5(char* buffer,
       downSample = atoi(token);
       CHECK_INPUT(downSample >= 1,
                   err << "rechdf5 command: downsample must be set to an "
-                         "integer greater or equal than 1, not: "
+                         "sw4_typeeger greater or equal than 1, not: "
                       << token);
     } else if (startswith("event=", token)) {
       token += 6;
       // Ignore if no events given
       if (m_nevents_specified > 0) {
-        map<string, int>::iterator it = m_event_names.find(token);
+        map<string, sw4_type>::iterator it = m_event_names.find(token);
         CHECK_INPUT(it != m_event_names.end(),
                     err << "event with name " << token << " not found");
         event = it->second;
@@ -6746,7 +6746,7 @@ void EW::processReceiverHDF5(char* buffer,
   bool is_obs = false;
   // Adjust writeEvery so it is always a multiple of downsample
   if (writeEvery % downSample != 0) {
-    writeEvery = (int)writeEvery / downSample;
+    writeEvery = (sw4_type)writeEvery / downSample;
     writeEvery *= downSample;
     if (proc_zero())
       cout << "receiver command: writeEvery=" << writeEvery
@@ -6779,8 +6779,8 @@ void EW::processReceiver(char* buffer,
   double stime, etime;
   stime = MPI_Wtime();
 
-  int writeEvery = 1000;
-  int downSample = 1;
+  sw4_type writeEvery = 1000;
+  sw4_type downSample = 1;
 
   bool topodepth = false;
 
@@ -6790,8 +6790,8 @@ void EW::processReceiver(char* buffer,
 
   char* token = strtok(buffer, " \t");
   bool nsew = false;
-  int event = 0;
-  // int vel=0;
+  sw4_type event = 0;
+  // sw4_type vel=0;
 
   // tmp
   //  cerr << "******************** INSIDE process receiver
@@ -6923,14 +6923,14 @@ void EW::processReceiver(char* buffer,
       token += strlen("writeEvery=");
       writeEvery = atoi(token);
       CHECK_INPUT(writeEvery >= 0, err << "sac command: writeEvery must be set "
-                                          "to a non-negative integer, not: "
+                                          "to a non-negative sw4_typeeger, not: "
                                        << token);
     } else if (startswith("downSample=", token) ||
                startswith("downsample=", token)) {
       token += strlen("downSample=");
       downSample = atoi(token);
       CHECK_INPUT(downSample >= 1,
-                  err << "sac command: downSample must be set to an integer "
+                  err << "sac command: downSample must be set to an sw4_typeeger "
                          "greater or equal than 1, not: "
                       << token);
     } else if (startswith("event=", token)) {
@@ -6940,7 +6940,7 @@ void EW::processReceiver(char* buffer,
       //"<< event << " out of range" );
       // Ignore if no events given
       if (m_nevents_specified > 0) {
-        map<string, int>::iterator it = m_event_names.find(token);
+        map<string, sw4_type>::iterator it = m_event_names.find(token);
         CHECK_INPUT(it != m_event_names.end(),
                     err << "event with name " << token << " not found");
         event = it->second;
@@ -7041,7 +7041,7 @@ void EW::processReceiver(char* buffer,
     }
   } else {
     if (writeEvery % downSample != 0) {
-      writeEvery = (int)writeEvery / downSample;
+      writeEvery = (sw4_type)writeEvery / downSample;
       writeEvery *= downSample;
       if (proc_zero())
         cout << "receiver command: writeEvery=" << writeEvery
@@ -7084,15 +7084,15 @@ void EW::processObservationHDF5(
   /* bool cartCoordSet = false, geoCoordSet = false; */
   string inhdf5file = "";
   string outhdf5file = "station";
-  int writeEvery = 0;
-  int downSample = 1;
+  sw4_type writeEvery = 0;
+  sw4_type downSample = 1;
   TimeSeries::receiverMode mode = TimeSeries::Displacement;
   float_sw4 winl, winr;
   bool winlset = false, winrset = false;
   char exclstr[4] = {'\0', '\0', '\0', '\0'};
   bool usex = true, usey = true, usez = true;
   bool scalefactor_set = false;
-  int event = 0;
+  sw4_type event = 0;
 
   char* token = strtok(buffer, " \t");
   m_filter_observations = true;
@@ -7121,7 +7121,7 @@ void EW::processObservationHDF5(
       //"<< event << " out of range" );
       // Ignore if no events given
       if (m_nevents_specified > 0) {
-        map<string, int>::iterator it = m_event_names.find(token);
+        map<string, sw4_type>::iterator it = m_event_names.find(token);
         CHECK_INPUT(it != m_event_names.end(),
                     err << "event with name " << token << " not found");
         event = it->second;
@@ -7140,7 +7140,7 @@ void EW::processObservationHDF5(
     //	   ignore_utc = true;
     //	else
     //	{
-    //	   int year,month,day,hour,minute,second,msecond, fail;
+    //	   sw4_type year,month,day,hour,minute,second,msecond, fail;
     //	   // Format: 01/04/2012:17:34:45.2343
     //(Month/Day/Year:Hour:Min:Sec.fraction) 	   parsedate( token, year,
     // month, day, hour, minute, second, msecond, fail ); 	   if( fail == 0
@@ -7173,7 +7173,7 @@ void EW::processObservationHDF5(
       token += 8;
       strncpy(exclstr, token, 4);
 
-      int c = 0;
+      sw4_type c = 0;
       while (c < 3 && exclstr[c] != '\0') {
         if (exclstr[c] == 'x' || exclstr[c] == 'e') usex = false;
         if (exclstr[c] == 'y' || exclstr[c] == 'n') usey = false;
@@ -7222,13 +7222,13 @@ void EW::processObservation(char* buffer,
   string staName = "station";
   bool staNameGiven = false;
 
-  int writeEvery = 0;
+  sw4_type writeEvery = 0;
 
   /* bool dateSet = false; */
   /* bool timeSet = false; */
   bool topodepth = false;
 
-  //  int utc[7];
+  //  sw4_type utc[7];
   //  bool utcset = false;
 
   string date = "";
@@ -7244,7 +7244,7 @@ void EW::processObservation(char* buffer,
   bool usex = true, usey = true, usez = true;
   bool usgsfileset = false, sf1set = false, sf2set = false, sf3set = false;
   bool scalefactor_set = false;
-  int event = 0;
+  sw4_type event = 0;
 
   char* token = strtok(buffer, " \t");
   m_filter_observations = true;
@@ -7350,7 +7350,7 @@ void EW::processObservation(char* buffer,
       //"<< event << " out of range" );
       // Ignore if no events given
       if (m_nevents_specified > 0) {
-        map<string, int>::iterator it = m_event_names.find(token);
+        map<string, sw4_type>::iterator it = m_event_names.find(token);
         CHECK_INPUT(it != m_event_names.end(),
                     err << "event with name " << token << " not found");
         event = it->second;
@@ -7373,7 +7373,7 @@ void EW::processObservation(char* buffer,
     //	   ignore_utc = true;
     //	else
     //	{
-    //	   int year,month,day,hour,minute,second,msecond, fail;
+    //	   sw4_type year,month,day,hour,minute,second,msecond, fail;
     //	   // Format: 01/04/2012:17:34:45.2343
     //(Month/Day/Year:Hour:Min:Sec.fraction) 	   parsedate( token, year,
     // month, day, hour, minute, second, msecond, fail ); 	   if( fail == 0
@@ -7406,7 +7406,7 @@ void EW::processObservation(char* buffer,
       token += 8;
       strncpy(exclstr, token, 4);
 
-      int c = 0;
+      sw4_type c = 0;
       while (c < 3 && exclstr[c] != '\0') {
         if (exclstr[c] == 'x' || exclstr[c] == 'e') usex = false;
         if (exclstr[c] == 'y' || exclstr[c] == 'n') usey = false;
@@ -7450,7 +7450,7 @@ void EW::processObservation(char* buffer,
         "processObservation, Error: must give at least three sac files");
 
     // Find a name for the SAC station
-    int l = sacfile1.length();
+    sw4_type l = sacfile1.length();
     if (sacfile1.substr(l - 4, 4) == ".sac")
       fileName = sacfile1.substr(0, l - 4);
     else
@@ -7757,7 +7757,7 @@ void EW::processCG(char* buffer) {
                           strcmp("true", token) == 0 || strcmp("1", token) == 0;
     } else if (startswith("write_initial_ts=", token)) {
       token += 17;
-      int val = atoi(token);
+      sw4_type val = atoi(token);
       if (val == 1)
         m_output_initial_seismograms = true;
       else if (val == 0)
@@ -7851,7 +7851,7 @@ void EW::processMaterialPfile(char* buffer) {
   string cflatten = "NONE";
   bool flatten = false;
   bool coords_geographic = true;
-  int nstenc = 5;
+  sw4_type nstenc = 5;
 
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(
@@ -7889,12 +7889,12 @@ void EW::processMaterialPfile(char* buffer) {
     } else if (startswith("flatten=", token)) {
       token += 8;  // skip flatten=
       cflatten = token;
-      VERIFY2((int)cflatten.find('T') >= 0 || (int)cflatten.find('t') >= 0 ||
-                  (int)cflatten.find('F') >= 0 || (int)cflatten.find('f') >= 0,
+      VERIFY2((sw4_type)cflatten.find('T') >= 0 || (sw4_type)cflatten.find('t') >= 0 ||
+                  (sw4_type)cflatten.find('F') >= 0 || (sw4_type)cflatten.find('f') >= 0,
               "processMaterialPfile Error: value of flatten unclear\n");
-      if ((int)cflatten.find('T') >= 0 || (int)cflatten.find('t') >= 0)
+      if ((sw4_type)cflatten.find('T') >= 0 || (sw4_type)cflatten.find('t') >= 0)
         flatten = true;
-      else if ((int)cflatten.find('F') >= 0 || (int)cflatten.find('f') >= 0)
+      else if ((sw4_type)cflatten.find('F') >= 0 || (sw4_type)cflatten.find('f') >= 0)
         flatten = false;
       else
         flatten = false;
@@ -7946,7 +7946,7 @@ void EW::processMaterialIfile(char* buffer) {
   //      z1set = false, z2set = false;
 
   //  float_sw4 x1 = 0.0, x2 = 0.0, y1 = 0.0, y2 = 0.0, z1 = 0.0, z2 = 0.0;
-  //  int i1 = -1, i2 = -1, j1 = -1, j2 = -1, k1 = -1, k2 = -1;
+  //  sw4_type i1 = -1, i2 = -1, j1 = -1, j2 = -1, k1 = -1, k2 = -1;
 
   string name = "Ifile";
 
@@ -8097,8 +8097,8 @@ void EW::processMaterialRfile(char* buffer) {
   string cflatten = "NONE";
   // bool flatten = false;
   // bool coords_geographic = true;
-  // int nstenc = 5;
-  int bufsize = 200000;  // Parallel IO buffer, in number of grid points.
+  // sw4_type nstenc = 5;
+  sw4_type bufsize = 200000;  // Parallel IO buffer, in number of grid points.
 
   char* token = strtok(buffer, " \t");
   //  CHECK_INPUT(strcmp("rfile", token) == 0,
@@ -8160,8 +8160,8 @@ void EW::processMaterialSfile(char* buffer) {
   string cflatten = "NONE";
   // bool flatten = false;
   // bool coords_geographic = true;
-  // int nstenc = 5;
-  // int bufsize = 200000;  // Parallel IO buffer, in number of grid points.
+  // sw4_type nstenc = 5;
+  // sw4_type bufsize = 200000;  // Parallel IO buffer, in number of grid points.
 
   char* token = strtok(buffer, " \t");
   //  CHECK_INPUT(strcmp("rfile", token) == 0,
@@ -8257,7 +8257,7 @@ void EW::processMaterialGMG(char* buffer) {
 
 //-----------------------------------------------------------------------
 void EW::processMaterialInvtest(char* buffer) {
-  int nr = 1;
+  sw4_type nr = 1;
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("invtestmaterial", token) == 0,
               "ERROR: not an invtestmaterial line: " << token);
@@ -8384,7 +8384,7 @@ void EW::processMaterialInvtest(char* buffer) {
 //   bool lengthscaleset = false, lengthscalezset = false, vsmaxset = false;
 //   float_sw4 corrlen = 1000, corrlenz = 1000, sigma = 0.1, hurst = 0.3,
 //             zmin = -1e38, zmax = 1e38, vsmax = 1e38;
-//   unsigned int seed = 0;
+//   unsigned sw4_type seed = 0;
 
 //   m_randomize = true;
 //   while (token != NULL) {
@@ -8478,7 +8478,7 @@ void EW::processRandomBlock(char* buffer) {
   float_sw4 corrlen = 1000, corrlenz = 1000, sigma = 0.1, hurst = 0.3,
             zmin = -1e38, zmax = 1e38, vsmax = 1e38, vsmin = 0;
   float_sw4 rhoamp = 0.8;
-  unsigned int seed = 0;
+  unsigned sw4_type seed = 0;
 
   m_randomize = true;
   while (token != NULL) {
@@ -8552,7 +8552,7 @@ void EW::processRandomBlock(char* buffer) {
 }
 
 //-----------------------------------------------------------------------
-void EW::processEvent(char* buffer, int enr) {
+void EW::processEvent(char* buffer, sw4_type enr) {
   char* token = strtok(buffer, " \t");
   CHECK_INPUT(strcmp("event", token) == 0,
               "ERROR: not an event line: " << token);
@@ -8579,7 +8579,7 @@ void EW::processEvent(char* buffer, int enr) {
       //	 mObsPath[enr] += '/';
     } else if (startswith("name=", token)) {
       token += 5;
-      map<string, int>::iterator it = m_event_names.find(token);
+      map<string, sw4_type>::iterator it = m_event_names.find(token);
       CHECK_INPUT(
           it == m_event_names.end(),
           "ERROR: processEvent, name = " << token << " multiply defined");
@@ -8592,7 +8592,7 @@ void EW::processEvent(char* buffer, int enr) {
 }
 
 //-----------------------------------------------------------------------
-int EW::findNumberOfEvents() {
+sw4_type EW::findNumberOfEvents() {
   char buffer[256];
   ifstream inputFile;
   MPI_Barrier(MPI_COMM_WORLD);
@@ -8602,7 +8602,7 @@ int EW::findNumberOfEvents() {
       cerr << endl << "ERROR OPENING INPUT FILE: " << mName << endl << endl;
     CHECK_INPUT(false, "ERROR opening input file : " << mName << endl << endl);
   }
-  int events = 0;
+  sw4_type events = 0;
   while (!inputFile.eof()) {
     inputFile.getline(buffer, 256);
     if (startswith("event", buffer)) {

@@ -19,7 +19,7 @@ class StatMachine : public StatMachineBase {
       map[arg1].push_back(arg2);
     }
   }
-  void print(ofstream &ofile) {
+  void prsw4_type(ofstream &ofile) {
     ofile << "#Key Mean Median Min Max Count\n";
 
     for (auto it : map) {
@@ -34,7 +34,7 @@ class StatMachine : public StatMachineBase {
     }
   }
   template <typename Func1, typename Func2>
-  void print(ofstream &ofile, Func1 &&f1, Func2 &&f2, std::string &&str) {
+  void prsw4_type(ofstream &ofile, Func1 &&f1, Func2 &&f2, std::string &&str) {
     ofile << "#Key Mean Median Min Max Psum Count " << str << "\n";
     T2 grand_total(0);
     for (auto it : map) {
@@ -55,8 +55,8 @@ class StatMachine : public StatMachineBase {
     }
     ofile << "# Grand total " << grand_total << " " << str << " \n";
   }
-  void printhistory(ofstream &ofile) {
-    int c = 0;
+  void prsw4_typehistory(ofstream &ofile) {
+    sw4_type c = 0;
     for (auto it : map) {
       ofile << "#" << it.first << "\n";
       for (auto v : it.second) ofile << c++ << " " << v << "\n";

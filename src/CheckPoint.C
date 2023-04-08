@@ -27,7 +27,7 @@ CheckPoint* CheckPoint::nil = static_cast<CheckPoint*>(0);
 CheckPoint::CheckPoint(EW* a_ew)
     : mEW(a_ew),
       mWritingCycle(-1),
-      mCycleInterval(0),
+      mCycleSw4_Typeerval(0),
       mStartTime(0.0),
       mCheckPointFile(" "),
       mPreceedZeros(0),
@@ -47,11 +47,11 @@ CheckPoint::CheckPoint(EW* a_ew)
 
 //-----------------------------------------------------------------------
 // Save check point files, but no restart
-CheckPoint::CheckPoint(EW* a_ew, int cycle, int cycleInterval, string fname,
+CheckPoint::CheckPoint(EW* a_ew, sw4_type cycle, sw4_type cycleSw4_Typeerval, string fname,
                        size_t bufsize)
     : mEW(a_ew),
       mWritingCycle(cycle),
-      mCycleInterval(cycleInterval),
+      mCycleSw4_Typeerval(cycleSw4_Typeerval),
       mStartTime(0.0),
       mCheckPointFile(fname),
       mPreceedZeros(0),
@@ -75,7 +75,7 @@ CheckPoint::CheckPoint(EW* a_ew, int cycle, int cycleInterval, string fname,
 CheckPoint::CheckPoint(EW* a_ew, string fname, size_t bufsize)
     : mEW(a_ew),
       mWritingCycle(-1),
-      mCycleInterval(0),
+      mCycleSw4_Typeerval(0),
       mStartTime(0.0),
       mCheckPointFile("chkpt"),
       mPreceedZeros(0),
@@ -96,7 +96,7 @@ CheckPoint::CheckPoint(EW* a_ew, string fname, size_t bufsize)
 //-----------------------------------------------------------------------
 CheckPoint::~CheckPoint() {
   if (m_winallocated)
-    for (int g = 0; g < mEW->mNumberOfGrids; g++) {
+    for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
       delete[] mWindow[g];
       delete[] mGlobalDims[g];
     }
@@ -106,14 +106,14 @@ CheckPoint::~CheckPoint() {
 bool CheckPoint::do_checkpointing() { return mDoCheckPointing; }
 
 //-----------------------------------------------------------------------
-int CheckPoint::get_checkpoint_cycle_interval() { return mCycleInterval; }
+sw4_type CheckPoint::get_checkpoint_cycle_sw4_typeerval() { return mCycleSw4_Typeerval; }
 
 //-----------------------------------------------------------------------
 // Disable restart if given restartlatest, but no checkpoint is available
 bool CheckPoint::verify_restart() {
 #ifdef SW4_USE_SCR
   // Check whether SCR loaded a checkpoint.
-  int have_restart = 0;
+  sw4_type have_restart = 0;
   char cycle_num[SCR_MAX_FILENAME];
   SCR_Have_restart(&have_restart, cycle_num);
 
@@ -134,51 +134,51 @@ void CheckPoint::setup_sizes() {
     if (!m_winallocated) {
       mWindow.resize(mEW->mNumberOfGrids);
       mGlobalDims.resize(mEW->mNumberOfGrids);
-      for (int g = 0; g < mEW->mNumberOfGrids; g++) {
-        mWindow[g] = new int[6];
-        mGlobalDims[g] = new int[6];
+      for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
+        mWindow[g] = new sw4_type[6];
+        mGlobalDims[g] = new sw4_type[6];
       }
       m_winallocated = true;
     }
 
     m_ihavearray.resize(mEW->mNumberOfGrids);
 
-    int ghost_points = mEW->getNumberOfGhostPoints();
+    sw4_type ghost_points = mEW->getNumberOfGhostPoints();
     // tmp
     //      printf("CheckPoint: Number of ghost points = %d\n", ghost_points);
 
-    for (int g = 0; g < mEW->mNumberOfGrids; g++) {
+    for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
       // With attenuation, the memory variables must be saved at all ghost
       // points. This is because the memory variables satisfy ODEs at all
       // points, and do not satify any boundary conditions
 
       if (mEW->getLocalBcType(g, 0) == bProcessor)
-        mWindow[g][0] = mEW->m_iStartInt[g];
+        mWindow[g][0] = mEW->m_iStartSw4_Type[g];
       else
-        mWindow[g][0] = mEW->m_iStartInt[g] - ghost_points;
+        mWindow[g][0] = mEW->m_iStartSw4_Type[g] - ghost_points;
       ;
 
       if (mEW->getLocalBcType(g, 1) == bProcessor)
-        mWindow[g][1] = mEW->m_iEndInt[g];
+        mWindow[g][1] = mEW->m_iEndSw4_Type[g];
       else
-        mWindow[g][1] = mEW->m_iEndInt[g] + ghost_points;
+        mWindow[g][1] = mEW->m_iEndSw4_Type[g] + ghost_points;
 
       if (mEW->getLocalBcType(g, 2) == bProcessor)
-        mWindow[g][2] = mEW->m_jStartInt[g];
+        mWindow[g][2] = mEW->m_jStartSw4_Type[g];
       else
-        mWindow[g][2] = mEW->m_jStartInt[g] - ghost_points;
+        mWindow[g][2] = mEW->m_jStartSw4_Type[g] - ghost_points;
       ;
 
       if (mEW->getLocalBcType(g, 3) == bProcessor)
-        mWindow[g][3] = mEW->m_jEndInt[g];
+        mWindow[g][3] = mEW->m_jEndSw4_Type[g];
       else
-        mWindow[g][3] = mEW->m_jEndInt[g] + ghost_points;
+        mWindow[g][3] = mEW->m_jEndSw4_Type[g] + ghost_points;
 
       // all points in k-dir are local to each proc
-      mWindow[g][4] = mEW->m_kStartInt[g] -
-                      ghost_points;  // need 1 ghost point at MR interface
+      mWindow[g][4] = mEW->m_kStartSw4_Type[g] -
+                      ghost_points;  // need 1 ghost point at MR sw4_typeerface
       mWindow[g][5] =
-          mEW->m_kEndInt[g] + ghost_points;  // and all ghost points at bottom
+          mEW->m_kEndSw4_Type[g] + ghost_points;  // and all ghost points at bottom
 
       // Need to store ghost point values outside the physical boundaries for
       // the attenuation memory variables, because they satisfy ODEs and not BC
@@ -209,7 +209,7 @@ void CheckPoint::setup_sizes() {
 
 //-----------------------------------------------------------------------
 void CheckPoint::define_pio() {
-  int glow = 0, ghigh = mEW->mNumberOfGrids;
+  sw4_type glow = 0, ghigh = mEW->mNumberOfGrids;
 
   double time_start = MPI_Wtime();
   /* double time_measure[12]; */
@@ -223,32 +223,32 @@ void CheckPoint::define_pio() {
   if (mRestartPathSet) mEW->create_directory(mRestartPath);
 
   m_parallel_io = new Parallel_IO*[ghigh - glow + 1];
-  for (int g = glow; g < ghigh; g++) {
+  for (sw4_type g = glow; g < ghigh; g++) {
     // tmp
     if (mEW->proc_zero()) cout << "setup_sizes for grid g = " << g << endl;
 
-    int global[3], local[3], start[3];
-    for (int dim = 0; dim < 3; dim++) {
+    sw4_type global[3], local[3], start[3];
+    for (sw4_type dim = 0; dim < 3; dim++) {
       global[dim] = mGlobalDims[g][2 * dim + 1] - mGlobalDims[g][2 * dim] + 1;
       local[dim] = mWindow[g][2 * dim + 1] - mWindow[g][2 * dim] + 1;
       start[dim] = mWindow[g][2 * dim] - mGlobalDims[g][2 * dim];
     }
 
-    int iwrite = 0;
-    int nrwriters = mEW->getNumberOfWritersPFS();
-    int nproc = 0, myid = 0;
+    sw4_type iwrite = 0;
+    sw4_type nrwriters = mEW->getNumberOfWritersPFS();
+    sw4_type nproc = 0, myid = 0;
     MPI_Comm_size(mEW->m_cartesian_communicator, &nproc);
     MPI_Comm_rank(mEW->m_cartesian_communicator, &myid);
 
     // new hack
-    int* owners = new int[nproc];
-    int i = 0;
-    for (int p = 0; p < nproc; p++)
+    sw4_type* owners = new sw4_type[nproc];
+    sw4_type i = 0;
+    for (sw4_type p = 0; p < nproc; p++)
       if (m_ihavearray[g]) owners[i++] = p;
     if (nrwriters > i) nrwriters = i;
 
     if (nrwriters > nproc) nrwriters = nproc;
-    int q, r;
+    sw4_type q, r;
     if (nproc == 1 || nrwriters == 1) {
       q = 0;
       r = 0;
@@ -256,14 +256,14 @@ void CheckPoint::define_pio() {
       q = (nproc - 1) / (nrwriters - 1);
       r = (nproc - 1) % (nrwriters - 1);
     }
-    for (int w = 0; w < nrwriters; w++)
+    for (sw4_type w = 0; w < nrwriters; w++)
       if (q * w + r == myid) iwrite = 1;
     //      std::cout << "Define PIO: grid " << g << " myid = " << myid << "
     //      iwrite= " << iwrite << " start= "
     //		<< start[0] << " " << start[1] << " " << start[2] << std::endl;
     if (m_kji_order) {
       // Swap i and k on file
-      int tmp = global[0];
+      sw4_type tmp = global[0];
       global[0] = global[2];
       global[2] = tmp;
       tmp = local[0];
@@ -285,19 +285,19 @@ void CheckPoint::define_pio() {
 }
 
 //-----------------------------------------------------------------------
-void CheckPoint::setSteps(int a_steps) {
+void CheckPoint::setSteps(sw4_type a_steps) {
   char buffer[50];
   mPreceedZeros = snprintf(buffer, 50, "%d", a_steps);
 }
 
 //-----------------------------------------------------------------------
-bool CheckPoint::timeToWrite(float_sw4 time, int cycle, float_sw4 dt) {
+bool CheckPoint::timeToWrite(float_sw4 time, sw4_type cycle, float_sw4 dt) {
   if (!mDoCheckPointing) return false;
 
   // Will we write at this time step (cycle) ?
   bool do_it = false;
   if (cycle == mWritingCycle) do_it = true;
-  if (mCycleInterval != 0 && cycle % mCycleInterval == 0 && time >= mStartTime)
+  if (mCycleSw4_Typeerval != 0 && cycle % mCycleSw4_Typeerval == 0 && time >= mStartTime)
     do_it = true;
 
 #ifndef SW4_USE_SCR
@@ -306,7 +306,7 @@ bool CheckPoint::timeToWrite(float_sw4 time, int cycle, float_sw4 dt) {
   // the recommendation even if one makes the call.
   // By default, this always returns false,
   // but there are various ways to configure SCR to use it.
-  //int flag;
+  //sw4_type flag;
   //SCR_Need_checkpoint(&flag);
   //do_it = flag;
 #endif
@@ -315,10 +315,10 @@ bool CheckPoint::timeToWrite(float_sw4 time, int cycle, float_sw4 dt) {
 }
 
 //-----------------------------------------------------------------------
-void CheckPoint::compute_file_suffix(int cycle, std::stringstream& fileSuffix) {
+void CheckPoint::compute_file_suffix(sw4_type cycle, std::stringstream& fileSuffix) {
   fileSuffix << mCheckPointFile << ".cycle=";
-  int temp = static_cast<int>(pow(10.0, mPreceedZeros - 1));
-  int testcycle = cycle;
+  sw4_type temp = static_cast<sw4_type>(pow(10.0, mPreceedZeros - 1));
+  sw4_type testcycle = cycle;
   if (cycle == 0) testcycle = 1;
   while (testcycle < temp) {
     fileSuffix << "0";
@@ -329,7 +329,7 @@ void CheckPoint::compute_file_suffix(int cycle, std::stringstream& fileSuffix) {
 }
 
 //-----------------------------------------------------------------------
-void CheckPoint::write_checkpoint(float_sw4 a_time, int a_cycle,
+void CheckPoint::write_checkpoint(float_sw4 a_time, sw4_type a_cycle,
                                   vector<Sarray>& a_Um, vector<Sarray>& a_U,
                                   vector<Sarray*>& a_AlphaVEm,
                                   vector<Sarray*>& a_AlphaVE) {
@@ -350,11 +350,11 @@ void CheckPoint::write_checkpoint(float_sw4 a_time, int a_cycle,
   //
   // Would it be possible to save the entire input file to the restart file ?
   //
-  int ng = mEW->mNumberOfGrids;
-  //   off_t offset = (4+6*ng)*sizeof(int) + 2*sizeof(float_sw4);
+  sw4_type ng = mEW->mNumberOfGrids;
+  //   off_t offset = (4+6*ng)*sizeof(sw4_type) + 2*sizeof(float_sw4);
 
   bool iwrite = false;
-  for (int g = 0; g < ng; g++) iwrite = iwrite || m_parallel_io[g]->i_write();
+  for (sw4_type g = 0; g < ng; g++) iwrite = iwrite || m_parallel_io[g]->i_write();
 
   std::stringstream s;
   if (iwrite) {
@@ -372,14 +372,14 @@ void CheckPoint::write_checkpoint(float_sw4 a_time, int a_cycle,
   cycle_checkpoints(s.str());
 
   // Open file from processor zero and write header.
-  int hsize;
-  int fid = -1;
+  sw4_type hsize;
+  sw4_type fid = -1;
   if (m_parallel_io[0]->proc_zero()) {
     fid = open(const_cast<char*>(s.str().c_str()), O_CREAT | O_TRUNC | O_WRONLY,
                0660);
     CHECK_INPUT(fid != -1,
                 "CheckPoint::write_file: Error opening: " << s.str());
-    int myid;
+    sw4_type myid;
 
     MPI_Comm_rank(mEW->m_cartesian_communicator, &myid);
     std::cout << "writing check point on file " << s.str() << " using "
@@ -388,8 +388,8 @@ void CheckPoint::write_checkpoint(float_sw4 a_time, int a_cycle,
     fsync(fid);
   }
   //   m_parallel_io[0]->writer_barrier();
-  int bcast_root = m_parallel_io[0]->proc_zero_rank_in_comm_world();
-  MPI_Bcast(&hsize, 1, MPI_INT, bcast_root, mEW->m_cartesian_communicator);
+  sw4_type bcast_root = m_parallel_io[0]->proc_zero_rank_in_comm_world();
+  MPI_Bcast(&hsize, 1, MPI_SW4_TYPE, bcast_root, mEW->m_cartesian_communicator);
   off_t offset = hsize;
 
   // Open file from all writers
@@ -402,7 +402,7 @@ void CheckPoint::write_checkpoint(float_sw4 a_time, int a_cycle,
   // Write data blocks
   char cprec[] = "double";
   if (!m_double) strcpy(cprec, "float");
-  for (int g = 0; g < ng; g++) {
+  for (sw4_type g = 0; g < ng; g++) {
     size_t npts = ((size_t)(mGlobalDims[g][1] - mGlobalDims[g][0] + 1)) *
                   ((size_t)(mGlobalDims[g][3] - mGlobalDims[g][2] + 1)) *
                   ((size_t)(mGlobalDims[g][5] - mGlobalDims[g][4] + 1));
@@ -427,7 +427,7 @@ void CheckPoint::write_checkpoint(float_sw4 a_time, int a_cycle,
                                 doubleField);
       m_parallel_io[g]->write_array(&fid, 3, doubleField, offset, cprec);
       offset += 3 * npts * sizeof(float_sw4);
-      for (int m = 0; m < mEW->getNumberOfMechanisms(); m++) {
+      for (sw4_type m = 0; m < mEW->getNumberOfMechanisms(); m++) {
         a_AlphaVEm[g][m].extract_subarrayIK(
             mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3],
             mWindow[g][4], mWindow[g][5], doubleField);
@@ -453,7 +453,7 @@ void CheckPoint::write_checkpoint(float_sw4 a_time, int a_cycle,
       m_parallel_io[g]->write_array(&fid, 3, doubleField, offset, cprec);
       offset += 3 * npts * sizeof(float_sw4);
 
-      for (int m = 0; m < mEW->getNumberOfMechanisms(); m++) {
+      for (sw4_type m = 0; m < mEW->getNumberOfMechanisms(); m++) {
         a_AlphaVEm[g][m].extract_subarray(
             mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3],
             mWindow[g][4], mWindow[g][5], doubleField);
@@ -473,7 +473,7 @@ void CheckPoint::write_checkpoint(float_sw4 a_time, int a_cycle,
 }  // end write_checkpoint()
 
 //-----------------------------------------------------------------------
-void CheckPoint::read_checkpoint(float_sw4& a_time, int& a_cycle,
+void CheckPoint::read_checkpoint(float_sw4& a_time, sw4_type& a_cycle,
                                  vector<Sarray>& a_Um, vector<Sarray>& a_U,
                                  vector<Sarray*>& a_AlphaVEm,
                                  vector<Sarray*>& a_AlphaVE) {
@@ -482,10 +482,10 @@ void CheckPoint::read_checkpoint(float_sw4& a_time, int& a_cycle,
   // dimensions. This routine will check that sizes match, but will not
   // allocate or resize the arrays Um and U, AlphaVEm, AlphaVE
   //
-  int ng = mEW->mNumberOfGrids;
-  //   off_t offset = (4+6*ng)*sizeof(int) + 2*sizeof(float_sw4);
+  sw4_type ng = mEW->mNumberOfGrids;
+  //   off_t offset = (4+6*ng)*sizeof(sw4_type) + 2*sizeof(float_sw4);
   bool iread = false;
-  for (int g = 0; g < ng; g++) iread = iread || m_parallel_io[g]->i_write();
+  for (sw4_type g = 0; g < ng; g++) iread = iread || m_parallel_io[g]->i_write();
 
   std::stringstream s;
   if (iread) {
@@ -497,13 +497,13 @@ void CheckPoint::read_checkpoint(float_sw4& a_time, int& a_cycle,
   }
 
   // Open file from processor zero and read header.
-  int fid = -1;
-  int hsize;
+  sw4_type fid = -1;
+  sw4_type hsize;
   if (m_parallel_io[0]->proc_zero()) {
     fid = open(const_cast<char*>(s.str().c_str()), O_RDONLY);
     CHECK_INPUT(fid != -1,
                 "CheckPoint::read_checkpoint: Error opening: " << s.str());
-    int myid;
+    sw4_type myid;
 
     MPI_Comm_rank(mEW->m_cartesian_communicator, &myid);
     std::cout << "reading check point on file " << s.str() << endl;
@@ -512,11 +512,11 @@ void CheckPoint::read_checkpoint(float_sw4& a_time, int& a_cycle,
   //   m_parallel_io[0]->writer_barrier();
 
   // Broadcast read information to all other processors.
-  int bcast_root = m_parallel_io[0]->proc_zero_rank_in_comm_world();
-  MPI_Bcast(&a_cycle, 1, MPI_INT, bcast_root, mEW->m_cartesian_communicator);
+  sw4_type bcast_root = m_parallel_io[0]->proc_zero_rank_in_comm_world();
+  MPI_Bcast(&a_cycle, 1, MPI_SW4_TYPE, bcast_root, mEW->m_cartesian_communicator);
   MPI_Bcast(&a_time, 1, mEW->m_mpifloat, bcast_root,
             mEW->m_cartesian_communicator);
-  MPI_Bcast(&hsize, 1, MPI_INT, bcast_root, mEW->m_cartesian_communicator);
+  MPI_Bcast(&hsize, 1, MPI_SW4_TYPE, bcast_root, mEW->m_cartesian_communicator);
   off_t offset = hsize;
 
   // Open file from all readers
@@ -530,7 +530,7 @@ void CheckPoint::read_checkpoint(float_sw4& a_time, int& a_cycle,
   char cprec[] = "double";
   if (!m_double) strcpy(cprec, "float");
 
-  for (int g = 0; g < ng; g++) {
+  for (sw4_type g = 0; g < ng; g++) {
     size_t npts = ((size_t)(mGlobalDims[g][1] - mGlobalDims[g][0] + 1)) *
                   ((size_t)(mGlobalDims[g][3] - mGlobalDims[g][2] + 1)) *
                   ((size_t)(mGlobalDims[g][5] - mGlobalDims[g][4] + 1));
@@ -545,7 +545,7 @@ void CheckPoint::read_checkpoint(float_sw4& a_time, int& a_cycle,
 
     if (!mEW->usingParallelFS() || g == 0) m_parallel_io[g]->writer_barrier();
 
-    // array with ghost points in k-ONLY read into doubleField,
+    // array with ghost points in k-ONLY read sw4_typeo doubleField,
     float_sw4* doubleField = new float_sw4[3 * nptsloc];
     if (m_kji_order) {
       m_parallel_io[g]->read_array(&fid, 3, doubleField, offset, cprec);
@@ -560,7 +560,7 @@ void CheckPoint::read_checkpoint(float_sw4& a_time, int& a_cycle,
                                mWindow[g][3], mWindow[g][4], mWindow[g][5],
                                doubleField);
 
-      for (int m = 0; m < mEW->getNumberOfMechanisms(); m++) {
+      for (sw4_type m = 0; m < mEW->getNumberOfMechanisms(); m++) {
         m_parallel_io[g]->read_array(&fid, 3, doubleField, offset, cprec);
         offset += 3 * npts * sizeof(float_sw4);
         a_AlphaVEm[g][m].insert_subarrayIK(
@@ -586,7 +586,7 @@ void CheckPoint::read_checkpoint(float_sw4& a_time, int& a_cycle,
                              mWindow[g][3], mWindow[g][4], mWindow[g][5],
                              doubleField);
 
-      for (int m = 0; m < mEW->getNumberOfMechanisms(); m++) {
+      for (sw4_type m = 0; m < mEW->getNumberOfMechanisms(); m++) {
         m_parallel_io[g]->read_array(&fid, 3, doubleField, offset, cprec);
         offset += 3 * npts * sizeof(float_sw4);
         a_AlphaVEm[g][m].insert_subarray(
@@ -626,7 +626,7 @@ float_sw4 CheckPoint::getDt() {
 
       hid_t attr = H5Aopen(fid, "dt", H5P_DEFAULT);
       hid_t dtype = (m_double ? H5T_NATIVE_DOUBLE : H5T_NATIVE_FLOAT);
-      int ret = H5Aread(attr, dtype, &dt);
+      sw4_type ret = H5Aread(attr, dtype, &dt);
       H5Aclose(attr);
       CHECK_INPUT(ret >= 0, "CheckPoint::read_header_hdf5: Error reading dt");
       H5Fclose(fid);
@@ -637,9 +637,9 @@ float_sw4 CheckPoint::getDt() {
              << endl;
 #endif
     } else {
-      int fid = open(const_cast<char*>(s.str().c_str()), O_RDONLY);
+      sw4_type fid = open(const_cast<char*>(s.str().c_str()), O_RDONLY);
       CHECK_INPUT(fid != -1, "CheckPoint::getDt: Error opening: " << s.str());
-      lseek(fid, 3 * sizeof(int) + sizeof(float_sw4), SEEK_SET);
+      lseek(fid, 3 * sizeof(sw4_type) + sizeof(float_sw4), SEEK_SET);
       size_t nr = read(fid, &dt, sizeof(float_sw4));
       CHECK_INPUT(
           nr == sizeof(float_sw4),
@@ -651,7 +651,7 @@ float_sw4 CheckPoint::getDt() {
   return dt;
 #else
 
-  int have_restart = 0;
+  sw4_type have_restart = 0;
   char cycle_num[SCR_MAX_FILENAME];
   SCR_Have_restart(&have_restart, cycle_num);
   if (! have_restart) {
@@ -669,7 +669,7 @@ float_sw4 CheckPoint::getDt() {
   char scr_file[SCR_MAX_FILENAME];
   SCR_Route_file(s.str().c_str(), scr_file);
 
-  int valid=1;
+  sw4_type valid=1;
   if (std::FILE *file=std::fopen(scr_file,"rb")){
     float_sw4 dt; 
     if ( std::fread(&dt,sizeof dt,1,file)==1) {
@@ -695,34 +695,34 @@ float_sw4 CheckPoint::getDt() {
 }
 
 //-----------------------------------------------------------------------
-void CheckPoint::write_header(int& fid, float_sw4 a_time, int a_cycle,
-                              int& hsize) {
+void CheckPoint::write_header(sw4_type& fid, float_sw4 a_time, sw4_type a_cycle,
+                              sw4_type& hsize) {
   //
-  // Header format: prec - precision 8--> double, 4--> single (int)
-  //                ng   - Number of grids (int)
+  // Header format: prec - precision 8--> double, 4--> single (sw4_type)
+  //                ng   - Number of grids (sw4_type)
   //                time - Time (float)
-  //                cycle- Time step number corresponding to Time (int)
+  //                cycle- Time step number corresponding to Time (sw4_type)
   //                dt   - Time step size (float)
   //                nmech- Number of mechanisms in attenuation model
   //                dims(g,1:6) - Size of array on grid g,
   //                       dim(1) <= i <= dim(2), dim(3) <= j <= dim(4)
   //                       dim(5) <= k <= dim(6)
   //
-  int prec = m_double ? 8 : 4;
-  size_t ret = write(fid, &prec, sizeof(int));
-  CHECK_INPUT(ret == sizeof(int),
+  sw4_type prec = m_double ? 8 : 4;
+  size_t ret = write(fid, &prec, sizeof(sw4_type));
+  CHECK_INPUT(ret == sizeof(sw4_type),
               "CheckPoint::write_header: Error writing precision");
 
-  int ng = mEW->mNumberOfGrids;
-  ret = write(fid, &ng, sizeof(int));
-  CHECK_INPUT(ret == sizeof(int), "CheckPoint::write_header: Error writing ng");
+  sw4_type ng = mEW->mNumberOfGrids;
+  ret = write(fid, &ng, sizeof(sw4_type));
+  CHECK_INPUT(ret == sizeof(sw4_type), "CheckPoint::write_header: Error writing ng");
 
   ret = write(fid, &a_time, sizeof(float_sw4));
   CHECK_INPUT(ret == sizeof(float_sw4),
               "CheckPoint::write_header: Error writing time");
 
-  ret = write(fid, &a_cycle, sizeof(int));
-  CHECK_INPUT(ret == sizeof(int),
+  ret = write(fid, &a_cycle, sizeof(sw4_type));
+  CHECK_INPUT(ret == sizeof(sw4_type),
               "CheckPoint::write_header: Error writing cycle");
 
   float_sw4 dt = mEW->getTimeStep();
@@ -730,54 +730,54 @@ void CheckPoint::write_header(int& fid, float_sw4 a_time, int a_cycle,
   CHECK_INPUT(ret == sizeof(float_sw4),
               "CheckPoint::write_header: Error writing dt");
 
-  int nmech = mEW->getNumberOfMechanisms();
-  ret = write(fid, &nmech, sizeof(int));
-  CHECK_INPUT(ret == sizeof(int),
+  sw4_type nmech = mEW->getNumberOfMechanisms();
+  ret = write(fid, &nmech, sizeof(sw4_type));
+  CHECK_INPUT(ret == sizeof(sw4_type),
               "CheckPoint::write_header: Error writing nmech");
-  for (int g = 0; g < ng; g++) {
-    int globalSize[6];
+  for (sw4_type g = 0; g < ng; g++) {
+    sw4_type globalSize[6];
     globalSize[0] = 1;
     globalSize[1] = mGlobalDims[g][1] - mGlobalDims[g][0] + 1;
     globalSize[2] = 1;
     globalSize[3] = mGlobalDims[g][3] - mGlobalDims[g][2] + 1;
     globalSize[4] = 1;
     globalSize[5] = mGlobalDims[g][5] - mGlobalDims[g][4] + 1;
-    ret = write(fid, globalSize, 6 * sizeof(int));
-    CHECK_INPUT(ret == 6 * sizeof(int),
+    ret = write(fid, globalSize, 6 * sizeof(sw4_type));
+    CHECK_INPUT(ret == 6 * sizeof(sw4_type),
                 "CheckPoint::write_header: Error writing global sizes");
     //      cout << "wrote global size " << globalSize[0] << " " <<
     //      globalSize[1] << " " << globalSize[2] << " "
     //	   << globalSize[3] << " " << globalSize[4] << " " << globalSize[5] <<
     // endl;
   }
-  hsize = (4 + 6 * ng) * sizeof(int) + 2 * sizeof(float_sw4);
+  hsize = (4 + 6 * ng) * sizeof(sw4_type) + 2 * sizeof(float_sw4);
 }
 
 //-----------------------------------------------------------------------
-void CheckPoint::read_header(int& fid, float_sw4& a_time, int& a_cycle,
-                             int& hsize) {
+void CheckPoint::read_header(sw4_type& fid, float_sw4& a_time, sw4_type& a_cycle,
+                             sw4_type& hsize) {
   //
-  // Header format: prec - precision 8--> double, 4--> single (int)
-  //                ng   - Number of grids (int)
+  // Header format: prec - precision 8--> double, 4--> single (sw4_type)
+  //                ng   - Number of grids (sw4_type)
   //                time - Time (float)
-  //                cycle- Time step number corresponding to Time (int)
+  //                cycle- Time step number corresponding to Time (sw4_type)
   //                dt   - Time step size (float)
   //                nmech- Number of mechanisms in attenuation model
   //                dims(g,1:6) - Size of array on grid g,
   //                       dim(1) <= i <= dim(2), dim(3) <= j <= dim(4)
   //                       dim(5) <= k <= dim(6)
   //
-  int prec;
-  size_t ret = read(fid, &prec, sizeof(int));
-  CHECK_INPUT(ret == sizeof(int),
+  sw4_type prec;
+  size_t ret = read(fid, &prec, sizeof(sw4_type));
+  CHECK_INPUT(ret == sizeof(sw4_type),
               "CheckPoint::read_header: Error reading precision");
   CHECK_INPUT(
       (m_double && prec == 8) || (!m_double && prec == 4),
       "CheckPoint::read_header, floating point precision on restart file"
           << " does not match precision in solver");
-  int ng;
-  ret = read(fid, &ng, sizeof(int));
-  CHECK_INPUT(ret == sizeof(int), "CheckPoint::read_header: Error reading ng");
+  sw4_type ng;
+  ret = read(fid, &ng, sizeof(sw4_type));
+  CHECK_INPUT(ret == sizeof(sw4_type), "CheckPoint::read_header: Error reading ng");
   CHECK_INPUT(ng == mEW->mNumberOfGrids,
               "CheckPoint::read_header: Error number of grids on restart file"
                   << " does not match number of grids in solver");
@@ -786,8 +786,8 @@ void CheckPoint::read_header(int& fid, float_sw4& a_time, int& a_cycle,
   CHECK_INPUT(ret == sizeof(float_sw4),
               "CheckPoint::read_header: Error reading time");
 
-  ret = read(fid, &a_cycle, sizeof(int));
-  CHECK_INPUT(ret == sizeof(int),
+  ret = read(fid, &a_cycle, sizeof(sw4_type));
+  CHECK_INPUT(ret == sizeof(sw4_type),
               "CheckPoint::read_header: Error reading cycle");
 
   float_sw4 dt;
@@ -795,9 +795,9 @@ void CheckPoint::read_header(int& fid, float_sw4& a_time, int& a_cycle,
   CHECK_INPUT(ret == sizeof(float_sw4),
               "CheckPoint::read_header: Error reading dt");
 
-  int nmech;
-  ret = read(fid, &nmech, sizeof(int));
-  CHECK_INPUT(ret == sizeof(int),
+  sw4_type nmech;
+  ret = read(fid, &nmech, sizeof(sw4_type));
+  CHECK_INPUT(ret == sizeof(sw4_type),
               "CheckPoint::read_header: Error reading nmech");
   CHECK_INPUT(
       nmech == mEW->getNumberOfMechanisms(),
@@ -805,10 +805,10 @@ void CheckPoint::read_header(int& fid, float_sw4& a_time, int& a_cycle,
           << "of attenuation mechanisms on restart file"
           << " does not match number of attenuation mechanisms in solver");
 
-  for (int g = 0; g < ng; g++) {
-    int globalSize[6];
-    ret = read(fid, globalSize, 6 * sizeof(int));
-    CHECK_INPUT(ret == 6 * sizeof(int),
+  for (sw4_type g = 0; g < ng; g++) {
+    sw4_type globalSize[6];
+    ret = read(fid, globalSize, 6 * sizeof(sw4_type));
+    CHECK_INPUT(ret == 6 * sizeof(sw4_type),
                 "CheckPoint::read_header: Error reading global sizes");
     CHECK_INPUT(globalSize[0] == 1,
                 "CheckPoint::read_checkpoint: Error in global sizes, "
@@ -831,7 +831,7 @@ void CheckPoint::read_header(int& fid, float_sw4& a_time, int& a_cycle,
                 "CheckPoint::read_checkpoint: Error in global sizes, "
                     << "upper k-index is " << globalSize[5]);
   }
-  hsize = (4 + 6 * ng) * sizeof(int) + 2 * sizeof(float_sw4);
+  hsize = (4 + 6 * ng) * sizeof(sw4_type) + 2 * sizeof(float_sw4);
 }
 
 //-----------------------------------------------------------------------
@@ -842,7 +842,7 @@ void CheckPoint::cycle_checkpoints(string CheckPointFile) {
   if (m_fileno >= 3) {
     // Delete  mCheckPointFileMM
     if (m_parallel_io[0]->proc_zero()) {
-      int er = unlink(const_cast<char*>(mCheckPointFileMM.c_str()));
+      sw4_type er = unlink(const_cast<char*>(mCheckPointFileMM.c_str()));
       CHECK_INPUT(
           er == 0,
           "CheckPoint::cycle_checkpoints, error deleting old check point file "
@@ -887,13 +887,13 @@ std::string CheckPoint::get_restart_path() {
 }
 
 //-----------------------------------------------------------------------
-void CheckPoint::set_checkpoint_file(string fname, int cycle, int cycleInterval,
+void CheckPoint::set_checkpoint_file(string fname, sw4_type cycle, sw4_type cycleSw4_Typeerval,
                                      size_t bufsize, bool useHDF5,
-                                     int compressionMode,
+                                     sw4_type compressionMode,
                                      double compressionPar) {
   mCheckPointFile = fname;
   mWritingCycle = cycle;
-  mCycleInterval = cycleInterval;
+  mCycleSw4_Typeerval = cycleSw4_Typeerval;
   m_bufsize = bufsize;
   mDoCheckPointing = true;
   mUseHDF5 = useHDF5;
@@ -903,20 +903,20 @@ void CheckPoint::set_checkpoint_file(string fname, int cycle, int cycleInterval,
 
 #ifdef USE_HDF5
 //-----------------------------------------------------------------------
-void CheckPoint::write_header_hdf5(hid_t fid, float_sw4 a_time, int a_cycle) {
+void CheckPoint::write_header_hdf5(hid_t fid, float_sw4 a_time, sw4_type a_cycle) {
   // Must be called by all participating process
   //
-  // Header format: prec - precision 8--> double, 4--> single (int)
-  //                ng   - Number of grids (int)
+  // Header format: prec - precision 8--> double, 4--> single (sw4_type)
+  //                ng   - Number of grids (sw4_type)
   //                time - Time (float)
-  //                cycle- Time step number corresponding to Time (int)
+  //                cycle- Time step number corresponding to Time (sw4_type)
   //                dt   - Time step size (float)
   //                nmech- Number of mechanisms in attenuation model
   //                dims(g,1:6) - Size of array on grid g,
   //                       dim(1) <= i <= dim(2), dim(3) <= j <= dim(4)
   //                       dim(5) <= k <= dim(6)
   //
-  int ret;
+  sw4_type ret;
   hid_t attr, attr_space, attr_space6;
   hsize_t dims = 1, dims6 = 6;
 
@@ -925,18 +925,18 @@ void CheckPoint::write_header_hdf5(hid_t fid, float_sw4 a_time, int a_cycle) {
 
   hid_t dtype = (m_double ? H5T_NATIVE_DOUBLE : H5T_NATIVE_FLOAT);
 
-  int prec = m_double ? 8 : 4;
-  attr = H5Acreate(fid, "prec", H5T_NATIVE_INT, attr_space, H5P_DEFAULT,
+  sw4_type prec = m_double ? 8 : 4;
+  attr = H5Acreate(fid, "prec", H5T_NATIVE_SW4_TYPE, attr_space, H5P_DEFAULT,
                    H5P_DEFAULT);
-  ret = H5Awrite(attr, H5T_NATIVE_INT, &prec);
+  ret = H5Awrite(attr, H5T_NATIVE_SW4_TYPE, &prec);
   CHECK_INPUT(ret >= 0,
               "CheckPoint::write_header_hdf5: Error writing precision");
   H5Aclose(attr);
 
-  int ng = mEW->mNumberOfGrids;
-  attr = H5Acreate(fid, "ngrid", H5T_NATIVE_INT, attr_space, H5P_DEFAULT,
+  sw4_type ng = mEW->mNumberOfGrids;
+  attr = H5Acreate(fid, "ngrid", H5T_NATIVE_SW4_TYPE, attr_space, H5P_DEFAULT,
                    H5P_DEFAULT);
-  ret = H5Awrite(attr, H5T_NATIVE_INT, &ng);
+  ret = H5Awrite(attr, H5T_NATIVE_SW4_TYPE, &ng);
   CHECK_INPUT(ret >= 0, "CheckPoint::write_header_hdf5: Error writing ng");
   H5Aclose(attr);
 
@@ -945,9 +945,9 @@ void CheckPoint::write_header_hdf5(hid_t fid, float_sw4 a_time, int a_cycle) {
   CHECK_INPUT(ret >= 0, "CheckPoint::write_header_hdf5: Error writing time");
   H5Aclose(attr);
 
-  attr = H5Acreate(fid, "cycle", H5T_NATIVE_INT, attr_space, H5P_DEFAULT,
+  attr = H5Acreate(fid, "cycle", H5T_NATIVE_SW4_TYPE, attr_space, H5P_DEFAULT,
                    H5P_DEFAULT);
-  ret = H5Awrite(attr, H5T_NATIVE_INT, &a_cycle);
+  ret = H5Awrite(attr, H5T_NATIVE_SW4_TYPE, &a_cycle);
   CHECK_INPUT(ret >= 0, "CheckPoint::write_header_hdf5: Error writing cycle");
   H5Aclose(attr);
 
@@ -957,24 +957,24 @@ void CheckPoint::write_header_hdf5(hid_t fid, float_sw4 a_time, int a_cycle) {
   CHECK_INPUT(ret >= 0, "CheckPoint::write_header_hdf5: Error writing dt");
   H5Aclose(attr);
 
-  int nmech = mEW->getNumberOfMechanisms();
-  attr = H5Acreate(fid, "nmesh", H5T_NATIVE_INT, attr_space, H5P_DEFAULT,
+  sw4_type nmech = mEW->getNumberOfMechanisms();
+  attr = H5Acreate(fid, "nmesh", H5T_NATIVE_SW4_TYPE, attr_space, H5P_DEFAULT,
                    H5P_DEFAULT);
-  ret = H5Awrite(attr, H5T_NATIVE_INT, &nmech);
+  ret = H5Awrite(attr, H5T_NATIVE_SW4_TYPE, &nmech);
   CHECK_INPUT(ret >= 0, "CheckPoint::write_header_hdf5: Error writing nmech");
   H5Aclose(attr);
 
-  int nrank;
+  sw4_type nrank;
   MPI_Comm_size(mEW->m_cartesian_communicator, &nrank);
-  attr = H5Acreate(fid, "nrank", H5T_NATIVE_INT, attr_space, H5P_DEFAULT,
+  attr = H5Acreate(fid, "nrank", H5T_NATIVE_SW4_TYPE, attr_space, H5P_DEFAULT,
                    H5P_DEFAULT);
-  ret = H5Awrite(attr, H5T_NATIVE_INT, &nrank);
+  ret = H5Awrite(attr, H5T_NATIVE_SW4_TYPE, &nrank);
   CHECK_INPUT(ret >= 0, "CheckPoint::write_header_hdf5: Error writing nrank");
   H5Aclose(attr);
 
-  int globalSize[6];
+  sw4_type globalSize[6];
   char name[16];
-  for (int g = 0; g < ng; g++) {
+  for (sw4_type g = 0; g < ng; g++) {
     sprintf(name, "mesh%d", g);
     globalSize[0] = 1;
     globalSize[1] = mGlobalDims[g][1] - mGlobalDims[g][0] + 1;
@@ -982,9 +982,9 @@ void CheckPoint::write_header_hdf5(hid_t fid, float_sw4 a_time, int a_cycle) {
     globalSize[3] = mGlobalDims[g][3] - mGlobalDims[g][2] + 1;
     globalSize[4] = 1;
     globalSize[5] = mGlobalDims[g][5] - mGlobalDims[g][4] + 1;
-    attr = H5Acreate(fid, name, H5T_NATIVE_INT, attr_space6, H5P_DEFAULT,
+    attr = H5Acreate(fid, name, H5T_NATIVE_SW4_TYPE, attr_space6, H5P_DEFAULT,
                      H5P_DEFAULT);
-    ret = H5Awrite(attr, H5T_NATIVE_INT, globalSize);
+    ret = H5Awrite(attr, H5T_NATIVE_SW4_TYPE, globalSize);
     CHECK_INPUT(ret >= 0,
                 "CheckPoint::write_header_hdf5: Error writing global sizes");
     H5Aclose(attr);
@@ -994,12 +994,12 @@ void CheckPoint::write_header_hdf5(hid_t fid, float_sw4 a_time, int a_cycle) {
 }
 
 //-----------------------------------------------------------------------
-void CheckPoint::read_header_hdf5(hid_t fid, float_sw4& a_time, int& a_cycle) {
+void CheckPoint::read_header_hdf5(hid_t fid, float_sw4& a_time, sw4_type& a_cycle) {
   //
-  // Header format: prec - precision 8--> double, 4--> single (int)
-  //                ng   - Number of grids (int)
+  // Header format: prec - precision 8--> double, 4--> single (sw4_type)
+  //                ng   - Number of grids (sw4_type)
   //                time - Time (float)
-  //                cycle- Time step number corresponding to Time (int)
+  //                cycle- Time step number corresponding to Time (sw4_type)
   //                dt   - Time step size (float)
   //                nmech- Number of mechanisms in attenuation model
   //                dims(g,1:6) - Size of array on grid g,
@@ -1008,11 +1008,11 @@ void CheckPoint::read_header_hdf5(hid_t fid, float_sw4& a_time, int& a_cycle) {
   //
   hid_t attr;
   hid_t dtype = (m_double ? H5T_NATIVE_DOUBLE : H5T_NATIVE_FLOAT);
-  int ret;
+  sw4_type ret;
 
-  int prec;
+  sw4_type prec;
   attr = H5Aopen(fid, "prec", H5P_DEFAULT);
-  ret = H5Aread(attr, H5T_NATIVE_INT, &prec);
+  ret = H5Aread(attr, H5T_NATIVE_SW4_TYPE, &prec);
   H5Aclose(attr);
   CHECK_INPUT(ret >= 0,
               "CheckPoint::read_header_hdf5: Error reading precision");
@@ -1020,9 +1020,9 @@ void CheckPoint::read_header_hdf5(hid_t fid, float_sw4& a_time, int& a_cycle) {
       (m_double && prec == 8) || (!m_double && prec == 4),
       "CheckPoint::read_header_hdf5, floating point precision on restart file"
           << " does not match precision in solver");
-  int ng;
+  sw4_type ng;
   attr = H5Aopen(fid, "ngrid", H5P_DEFAULT);
-  ret = H5Aread(attr, H5T_NATIVE_INT, &ng);
+  ret = H5Aread(attr, H5T_NATIVE_SW4_TYPE, &ng);
   H5Aclose(attr);
   CHECK_INPUT(ret >= 0, "CheckPoint::read_header_hdf5: Error reading ng");
   CHECK_INPUT(
@@ -1036,7 +1036,7 @@ void CheckPoint::read_header_hdf5(hid_t fid, float_sw4& a_time, int& a_cycle) {
   CHECK_INPUT(ret >= 0, "CheckPoint::read_header_hdf5: Error reading time");
 
   attr = H5Aopen(fid, "cycle", H5P_DEFAULT);
-  ret = H5Aread(attr, H5T_NATIVE_INT, &a_cycle);
+  ret = H5Aread(attr, H5T_NATIVE_SW4_TYPE, &a_cycle);
   H5Aclose(attr);
   CHECK_INPUT(ret >= 0, "CheckPoint::read_header_hdf5: Error reading cycle");
 
@@ -1047,9 +1047,9 @@ void CheckPoint::read_header_hdf5(hid_t fid, float_sw4& a_time, int& a_cycle) {
   /* CHECK_INPUT( ret >= 0,"CheckPoint::read_header_hdf5: Error reading dt" );
    */
 
-  int nmech;
+  sw4_type nmech;
   attr = H5Aopen(fid, "nmesh", H5P_DEFAULT);
-  ret = H5Aread(attr, H5T_NATIVE_INT, &nmech);
+  ret = H5Aread(attr, H5T_NATIVE_SW4_TYPE, &nmech);
   H5Aclose(attr);
   CHECK_INPUT(ret >= 0, "CheckPoint::read_header_hdf5: Error reading nmech");
   CHECK_INPUT(
@@ -1058,11 +1058,11 @@ void CheckPoint::read_header_hdf5(hid_t fid, float_sw4& a_time, int& a_cycle) {
           << "of attenuation mechanisms on restart file"
           << " does not match number of attenuation mechanisms in solver");
 
-  int nrank, nrank_restart;
+  sw4_type nrank, nrank_restart;
   MPI_Comm_size(mEW->m_cartesian_communicator, &nrank);
 
   attr = H5Aopen(fid, "nrank", H5P_DEFAULT);
-  ret = H5Aread(attr, H5T_NATIVE_INT, &nrank_restart);
+  ret = H5Aread(attr, H5T_NATIVE_SW4_TYPE, &nrank_restart);
   H5Aclose(attr);
   CHECK_INPUT(ret >= 0, "CheckPoint::read_header_hdf5: Error reading nrank");
   CHECK_INPUT(nrank == nrank_restart,
@@ -1070,12 +1070,12 @@ void CheckPoint::read_header_hdf5(hid_t fid, float_sw4& a_time, int& a_cycle) {
                   << "of ranks on restart file does not match number of ranks "
                      "in currrent run");
 
-  int globalSize[6];
+  sw4_type globalSize[6];
   char name[16];
-  for (int g = 0; g < ng; g++) {
+  for (sw4_type g = 0; g < ng; g++) {
     sprintf(name, "mesh%d", g);
     attr = H5Aopen(fid, name, H5P_DEFAULT);
-    ret = H5Aread(attr, H5T_NATIVE_INT, globalSize);
+    ret = H5Aread(attr, H5T_NATIVE_SW4_TYPE, globalSize);
     H5Aclose(attr);
     CHECK_INPUT(ret >= 0,
                 "CheckPoint::read_header_hdf5: Error reading global sizes");
@@ -1104,7 +1104,7 @@ void CheckPoint::finalize_hdf5() {
 #ifdef USE_HDF5_ASYNC
   size_t num_in_progress;
   hbool_t op_failed;
-  int ret;
+  sw4_type ret;
   if (m_es_id > 0) {
     ret = H5ESwait(m_es_id, H5ES_WAIT_FOREVER, &num_in_progress, &op_failed);
     if (ret < 0) fprintf(stderr, "Error with H5ESwait!\n");
@@ -1145,7 +1145,7 @@ void CheckPoint::write_hdf5_dset(hid_t fid, char* dset_name, hid_t dtype,
 }
 
 //-----------------------------------------------------------------------
-void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
+void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, sw4_type a_cycle,
                                        vector<Sarray>& a_Um,
                                        vector<Sarray>& a_U,
                                        vector<Sarray*>& a_AlphaVEm,
@@ -1164,7 +1164,7 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
   cycle_checkpoints(s.str());
 
   hid_t fid, fapl, dxpl, dspace, mspace, mydspace, dtype, dcpl;
-  int myrank, nrank;
+  sw4_type myrank, nrank;
   double stime, etime;
   hsize_t my_chunk[1];
 
@@ -1199,13 +1199,13 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
   if (mCompMode == SW4_SZIP) {
     H5Pset_szip(dcpl, H5_SZIP_NN_OPTION_MASK, 32);
   } else if (mCompMode == SW4_ZLIB) {
-    H5Pset_deflate(dcpl, (int)mCompPar);
+    H5Pset_deflate(dcpl, (sw4_type)mCompPar);
   }
 #ifdef USE_ZFP
   else if (mCompMode == SW4_ZFP_MODE_RATE) {
     H5Pset_zfp_rate(dcpl, mCompPar);
   } else if (mCompMode == SW4_ZFP_MODE_PRECISION) {
-    H5Pset_zfp_precision(dcpl, (unsigned int)mCompPar);
+    H5Pset_zfp_precision(dcpl, (unsigned sw4_type)mCompPar);
   } else if (mCompMode == SW4_ZFP_MODE_ACCURACY) {
     H5Pset_zfp_accuracy(dcpl, mCompPar);
   } else if (mCompMode == SW4_ZFP_MODE_REVERSIBLE) {
@@ -1215,8 +1215,8 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
 #ifdef USE_SZ
   else if (mCompMode == SW4_SZ) {
     size_t cd_nelmts;
-    unsigned int* cd_values = NULL;
-    int dataType = SZ_DOUBLE;
+    unsigned sw4_type* cd_values = NULL;
+    sw4_type dataType = SZ_DOUBLE;
     if (m_precision == 4) dataType = SZ_FLOAT;
     SZ_metaDataToCdArray(&cd_nelmts, &cd_values, dataType, 0, m_cycle_dims[3],
                          m_cycle_dims[2], m_cycle_dims[1], m_cycle_dims[0]);
@@ -1241,16 +1241,16 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
 
   // Workaround for summit system with spectrum MPI and HDF5 1.10.4,
   // have to create all dsets before write to avoid runtime error
-  for (int g = 0; g < mEW->mNumberOfGrids; g++) {
+  for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
     npts[g] = (hsize_t)(mWindow[g][1] - mWindow[g][0] + 1) *
               (mWindow[g][3] - mWindow[g][2] + 1) *
               (mWindow[g][5] - mWindow[g][4] + 1);
     npts[g] *= 3;
     myoff[g] = 0;
-    MPI_Exscan(&npts[g], &myoff[g], 1, MPI_LONG_LONG_INT, MPI_SUM,
+    MPI_Exscan(&npts[g], &myoff[g], 1, MPI_LONG_LONG_SW4_TYPE, MPI_SUM,
                MPI_COMM_WORLD);
     total[g] = npts[g] + myoff[g];
-    MPI_Bcast(&total[g], 1, MPI_LONG_LONG_INT, nrank - 1, MPI_COMM_WORLD);
+    MPI_Bcast(&total[g], 1, MPI_LONG_LONG_SW4_TYPE, nrank - 1, MPI_COMM_WORLD);
     /* fprintf(stderr, "Create, g %d, rank %d: off %llu, size %llu, total
      * %llu\n", g, myrank, myoff[g], */
     /*         npts[g], total[g]); */
@@ -1258,7 +1258,7 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
 
   // Only rank 0 creates the dataset
   if (myrank == 0) {
-    for (int g = 0; g < mEW->mNumberOfGrids; g++) {
+    for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
       dspace = H5Screate_simple(1, &total[g], NULL);
 
       sprintf(dset_name, "Um%d", g);
@@ -1267,7 +1267,7 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
       sprintf(dset_name, "U%d", g);
       create_hdf5_dset(fid, dset_name, dtype, dspace, dcpl);
 
-      for (int m = 0; m < mEW->getNumberOfMechanisms(); m++) {
+      for (sw4_type m = 0; m < mEW->getNumberOfMechanisms(); m++) {
         sprintf(dset_name, "VEM%d_m%d", g, m);
         create_hdf5_dset(fid, dset_name, dtype, dspace, dcpl);
 
@@ -1284,7 +1284,7 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
 
   fapl = H5Pcreate(H5P_FILE_ACCESS);
 
-  int alignment = 16777216;
+  sw4_type alignment = 16777216;
   char* env = getenv("HDF5_ALIGNMENT_SIZE");
   if (env != NULL) alignment = atoi(env);
   if (alignment < 65536) alignment = 65536;
@@ -1307,7 +1307,7 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
 #endif
 
   // Start write
-  for (int g = 0; g < mEW->mNumberOfGrids; g++) {
+  for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
     mspace = H5Screate_simple(1, &npts[g], NULL);
     mydspace = H5Screate_simple(1, &total[g], NULL);
     H5Sselect_hyperslab(mydspace, H5S_SELECT_SET, &myoff[g], NULL, &npts[g],
@@ -1339,7 +1339,7 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
     sprintf(dset_name, "U%d", g);
     write_hdf5_dset(fid, dset_name, dtype, mspace, mydspace, dxpl, doubleField);
 
-    for (int m = 0; m < mEW->getNumberOfMechanisms(); m++) {
+    for (sw4_type m = 0; m < mEW->getNumberOfMechanisms(); m++) {
       if (m_kji_order)
         a_AlphaVEm[g][m].extract_subarrayIK(
             mWindow[g][0], mWindow[g][1], mWindow[g][2], mWindow[g][3],
@@ -1392,11 +1392,11 @@ void CheckPoint::write_checkpoint_hdf5(float_sw4 a_time, int a_cycle,
 }  // end write_checkpoint_hdf5()
 
 //-----------------------------------------------------------------------
-void CheckPoint::read_checkpoint_hdf5(float_sw4& a_time, int& a_cycle,
+void CheckPoint::read_checkpoint_hdf5(float_sw4& a_time, sw4_type& a_cycle,
                                       vector<Sarray>& a_Um, vector<Sarray>& a_U,
                                       vector<Sarray*>& a_AlphaVEm,
                                       vector<Sarray*>& a_AlphaVE) {
-  int myrank, nrank;
+  sw4_type myrank, nrank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
   MPI_Comm_size(MPI_COMM_WORLD, &nrank);
 
@@ -1431,15 +1431,15 @@ void CheckPoint::read_checkpoint_hdf5(float_sw4& a_time, int& a_cycle,
   hsize_t npts, myoff, total;
   hid_t dtype = (m_double ? H5T_NATIVE_DOUBLE : H5T_NATIVE_FLOAT);
 
-  for (int g = 0; g < mEW->mNumberOfGrids; g++) {
+  for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
     npts = (hsize_t)(mWindow[g][1] - mWindow[g][0] + 1) *
            (mWindow[g][3] - mWindow[g][2] + 1) *
            (mWindow[g][5] - mWindow[g][4] + 1);
     npts *= 3;
     myoff = 0;
-    MPI_Exscan(&npts, &myoff, 1, MPI_LONG_LONG_INT, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Exscan(&npts, &myoff, 1, MPI_LONG_LONG_SW4_TYPE, MPI_SUM, MPI_COMM_WORLD);
     total = npts + myoff;
-    MPI_Bcast(&total, 1, MPI_LONG_LONG_INT, nrank - 1, MPI_COMM_WORLD);
+    MPI_Bcast(&total, 1, MPI_LONG_LONG_SW4_TYPE, nrank - 1, MPI_COMM_WORLD);
     /* fprintf(stderr, "rank %d: off %llu, size %llu, total %llu\n", myrank,
      * myoff, npts, total); */
 
@@ -1477,7 +1477,7 @@ void CheckPoint::read_checkpoint_hdf5(float_sw4& a_time, int& a_cycle,
                              mWindow[g][3], mWindow[g][4], mWindow[g][5],
                              doubleField);
 
-    for (int m = 0; m < mEW->getNumberOfMechanisms(); m++) {
+    for (sw4_type m = 0; m < mEW->getNumberOfMechanisms(); m++) {
       sprintf(dset_name, "VEM%d_m%d", g, m);
       dset = H5Dopen(fid, dset_name, H5P_DEFAULT);
       H5Dread(dset, dtype, mspace, mydspace, dxpl, doubleField);
@@ -1517,7 +1517,7 @@ void CheckPoint::read_checkpoint_hdf5(float_sw4& a_time, int& a_cycle,
 }
 #endif  // End USE_HDF5
 //-----------------------------------------------------------------------
-void CheckPoint::write_checkpoint_scr(float_sw4 a_time, int a_cycle,
+void CheckPoint::write_checkpoint_scr(float_sw4 a_time, sw4_type a_cycle,
 				      vector<Sarray>& a_U, vector<Sarray>& a_Up,
 				      vector<Sarray*>& a_AlphaVE,
 				      vector<Sarray*>& a_AlphaVEm) {
@@ -1535,21 +1535,21 @@ void CheckPoint::write_checkpoint_scr(float_sw4 a_time, int a_cycle,
   char scr_file[SCR_MAX_FILENAME];
   SCR_Route_file(s.str().c_str(), scr_file);
   std::cout<<"Writing SCR checkpoint file to "<<scr_file<<"\n";
-  int valid=1;
+  sw4_type valid=1;
   if (std::FILE *file=std::fopen(scr_file,"wb")){
-    int ng = mEW->mNumberOfGrids;
+    sw4_type ng = mEW->mNumberOfGrids;
     std::fwrite(&mDt, sizeof mDt,1, file);
     std::fwrite(&a_time,sizeof a_time,1,file);
     std::fwrite(&a_cycle,sizeof a_cycle,1,file);
     
-    int nmech = mEW->getNumberOfMechanisms();
+    sw4_type nmech = mEW->getNumberOfMechanisms();
     std::fwrite(&ng, sizeof ng, 1, file);
     std::fwrite(&nmech, sizeof nmech, 1, file);
-    int prec = m_double ? 8 : 4;
+    sw4_type prec = m_double ? 8 : 4;
     std::fwrite(&prec, sizeof prec, 1, file);
     
-    int globalSize[6];
-    for (int g = 0; g < ng; g++) {
+    sw4_type globalSize[6];
+    for (sw4_type g = 0; g < ng; g++) {
       globalSize[0] = 1;
       globalSize[1] = mGlobalDims[g][1] - mGlobalDims[g][0] + 1;
       globalSize[2] = 1;
@@ -1560,10 +1560,10 @@ void CheckPoint::write_checkpoint_scr(float_sw4 a_time, int a_cycle,
     }
 
     size_t total=0;
-    for(int g=0;g<ng;g++){
+    for(sw4_type g=0;g<ng;g++){
       total+=a_U[g].fwrite(file);
       total+=a_Up[g].fwrite(file);
-      for (int m = 0; m < mEW->getNumberOfMechanisms(); m++) {
+      for (sw4_type m = 0; m < mEW->getNumberOfMechanisms(); m++) {
 	total+=a_AlphaVE[g][m].fwrite(file);
 	total+=a_AlphaVEm[g][m].fwrite(file);
       }
@@ -1579,43 +1579,43 @@ void CheckPoint::write_checkpoint_scr(float_sw4 a_time, int a_cycle,
 #endif
 }
 //-----------------------------------------------------------------------
-void CheckPoint::read_checkpoint_scr(float_sw4& a_time, int& a_cycle,
+void CheckPoint::read_checkpoint_scr(float_sw4& a_time, sw4_type& a_cycle,
                                  vector<Sarray>& a_Um, vector<Sarray>& a_U,
                                  vector<Sarray*>& a_AlphaVEm,
                                  vector<Sarray*>& a_AlphaVE) {
 #ifdef SW4_USE_SCR
 
   SYNC_STREAM;
-  int valid=1;
+  sw4_type valid=1;
   FILE *file=scr_file_handle;
   if (file){
     // Dt has a;ready been read in by getDt
     std::fread(&a_time,sizeof a_time,1,file);
     std::fread(&a_cycle,sizeof a_cycle, 1,file);
     
-    int ng;
+    sw4_type ng;
     std::fread(&ng, sizeof ng, 1, file);
     CHECK_INPUT(ng == mEW->mNumberOfGrids,
 		"CheckPoint::read_checkpoint_scr: Error number of grids on restart file"
 		<< " does not match number of grids in solver");
-    int nmech;
+    sw4_type nmech;
     std::fread(&nmech,sizeof nmech, 1,file);
     CHECK_INPUT(
 		nmech == mEW->getNumberOfMechanisms(),
 		"CheckPoint::read_checkpoint_scr: Error number "
 		<< "of attenuation mechanisms on restart file"
 		<< " does not match number of attenuation mechanisms in solver");
-    int prec;
+    sw4_type prec;
     std::fread(&prec, sizeof prec, 1, file);
     CHECK_INPUT(
       (m_double && prec == 8) || (!m_double && prec == 4),
       "CheckPoint::read_checkpoint_scr, floating point precision on restart file"
           << " does not match precision in solver");
 
-    int globalSize[6];
-    for (int g = 0; g < ng; g++) {
+    sw4_type globalSize[6];
+    for (sw4_type g = 0; g < ng; g++) {
 
-    int ret = fread(globalSize, sizeof globalSize[0], 6, file);
+    sw4_type ret = fread(globalSize, sizeof globalSize[0], 6, file);
     CHECK_INPUT(ret == 6 ,
                 "CheckPoint::read_checkpoint_scr: Error reading global sizes");
     CHECK_INPUT(globalSize[0] == 1,
@@ -1638,10 +1638,10 @@ void CheckPoint::read_checkpoint_scr(float_sw4& a_time, int& a_cycle,
                     << "upper k-index is " << globalSize[5]);
   }
     size_t total=0;
-    for(int g=0;g<mEW->mNumberOfGrids;g++){
+    for(sw4_type g=0;g<mEW->mNumberOfGrids;g++){
       total+=a_Um[g].fread(file);
       total+=a_U[g].fread(file);
-      for (int m = 0; m < mEW->getNumberOfMechanisms(); m++) {
+      for (sw4_type m = 0; m < mEW->getNumberOfMechanisms(); m++) {
 	total+=a_AlphaVEm[g][m].fread(file);
 	total+=a_AlphaVE[g][m].fread(file);
       }

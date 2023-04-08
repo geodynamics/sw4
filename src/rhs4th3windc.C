@@ -3,7 +3,7 @@
 
 #include "Mspace.h"
 #include "caliper.h"
-#include "cf_interface.h"
+#include "cf_sw4_typeerface.h"
 #include "foralls.h"
 #include "policies.h"
 #include "sw4.h"
@@ -12,15 +12,15 @@
 //#endif
 
 //-----------------------------------------------------------------------
-void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                 int klast, int nk, int* __restrict__ onesided,
+void rhs4th3wind(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                 sw4_type klast, sw4_type nk, sw4_type* __restrict__ onesided,
                  float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
                  float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_lu,
                  float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,
                  float_sw4* __restrict__ a_lambda, float_sw4 h,
                  float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry,
-                 float_sw4* __restrict__ a_strz, char op, int kfirstu,
-                 int klastu, int kfirstw, int klastw) {
+                 float_sw4* __restrict__ a_strz, char op, sw4_type kfirstu,
+                 sw4_type klastu, sw4_type kfirstw, sw4_type klastw) {
   SW4_MARK_FUNCTION;
   // std::cout<<"RHS$G\n";
   // return;
@@ -42,16 +42,16 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
   const float_sw4 i144 = 1.0 / 144;
   const float_sw4 tf = 0.75;
 
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijku = nij * (klastu - kfirstu + 1);
-  const int nijkw = nij * (klastw - kfirstw + 1);
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int base3u = -(ifirst + ni * jfirst + nij * kfirstu + nijku);
-  const int base3w = -(ifirst + ni * jfirst + nij * kfirstw + nijkw);
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijku = nij * (klastu - kfirstu + 1);
+  const sw4_type nijkw = nij * (klastw - kfirstw + 1);
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type base3u = -(ifirst + ni * jfirst + nij * kfirstu + nijku);
+  const sw4_type base3w = -(ifirst + ni * jfirst + nij * kfirstw + nijkw);
 
   float_sw4 cof = 1.0 / (h * h);
-  int a1 = 0;
+  sw4_type a1 = 0;
   if (op == '=')
     a1 = 0;
   else if (op == '+')
@@ -78,7 +78,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
       RAJA::kernel<RHS4_EXEC_POL_ASYNC>(
           RAJA::make_tuple(k_range, j_range, i_range),
-          [=] RAJA_DEVICE(int k, int j, int i) {
+          [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
             float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4, muz1,
                 muz2, muz3, muz4;
             float_sw4 r1, r2, r3;
@@ -450,16 +450,16 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
       Range<2> K(kfirstw, klastw + 1);
 #endif
       // Tclass<81> t1;
-      forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+      forall3async(I, J, K, [=] RAJA_DEVICE(sw4_type i, sw4_type j, sw4_type k) {
 #else
       RAJA::RangeSegment k_range(kfirstw, klastw + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
       RAJA::kernel<
           RHS4_EXEC_POL_ASYNC>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
-                                                                                int k,
-                                                                                int j,
-                                                                                int i) {
+                                                                                sw4_type k,
+                                                                                sw4_type j,
+                                                                                sw4_type i) {
 #endif
         float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
         float_sw4 r1, r2, r3;
@@ -523,7 +523,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 #ifdef ENABLE_HIP
 #pragma unroll 8
 #endif
-        for (int q = 1; q <= 8; q++) {
+        for (sw4_type q = 1; q <= 8; q++) {
           //		     lap2mu= 0;
           //		     mucof = 0;
           //		     for( m=1 ; m<=8; m++ )
@@ -637,7 +637,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
         float_sw4 u3zip1 = 0;
         float_sw4 u3zim1 = 0;
         float_sw4 u3zim2 = 0;
-        for (int q = 1; q <= 8; q++) {
+        for (sw4_type q = 1; q <= 8; q++) {
           u3zip2 += bope(k, q) * u(3, i + 2, j, q);
           u3zip1 += bope(k, q) * u(3, i + 1, j, q);
           u3zim1 += bope(k, q) * u(3, i - 1, j, q);
@@ -649,7 +649,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
         r1 = r1 + strx(i) * lau3zx;
         /*   (mu*w_x)_z: NOT CENTERED */
         float_sw4 mu3xz = 0;
-        for (int q = 1; q <= 8; q++)
+        for (sw4_type q = 1; q <= 8; q++)
           mu3xz += bope(k, q) * (mu(i, j, q) * i12 *
                                  (-u(3, i + 2, j, q) + 8 * u(3, i + 1, j, q) -
                                   8 * u(3, i - 1, j, q) + u(3, i - 2, j, q)));
@@ -698,7 +698,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
         float_sw4 u3zjp1 = 0;
         float_sw4 u3zjm1 = 0;
         float_sw4 u3zjm2 = 0;
-        for (int q = 1; q <= 8; q++) {
+        for (sw4_type q = 1; q <= 8; q++) {
           u3zjp2 += bope(k, q) * u(3, i, j + 2, q);
           u3zjp1 += bope(k, q) * u(3, i, j + 1, q);
           u3zjm1 += bope(k, q) * u(3, i, j - 1, q);
@@ -712,7 +712,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 
         /* (mu*w_y)_z: NOT CENTERED */
         float_sw4 mu3yz = 0;
-        for (int q = 1; q <= 8; q++)
+        for (sw4_type q = 1; q <= 8; q++)
           mu3yz += bope(k, q) * (mu(i, j, q) * i12 *
                                  (-u(3, i, j + 2, q) + 8 * u(3, i, j + 1, q) -
                                   8 * u(3, i, j - 1, q) + u(3, i, j - 2, q)));
@@ -725,7 +725,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
         float_sw4 u1zip1 = 0;
         float_sw4 u1zim1 = 0;
         float_sw4 u1zim2 = 0;
-        for (int q = 1; q <= 8; q++) {
+        for (sw4_type q = 1; q <= 8; q++) {
           u1zip2 += bope(k, q) * u(1, i + 2, j, q);
           u1zip1 += bope(k, q) * u(1, i + 1, j, q);
           u1zim1 += bope(k, q) * u(1, i - 1, j, q);
@@ -741,7 +741,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
         float_sw4 u2zjp1 = 0;
         float_sw4 u2zjm1 = 0;
         float_sw4 u2zjm2 = 0;
-        for (int q = 1; q <= 8; q++) {
+        for (sw4_type q = 1; q <= 8; q++) {
           u2zjp2 += bope(k, q) * u(2, i, j + 2, q);
           u2zjp1 += bope(k, q) * u(2, i, j + 1, q);
           u2zjm1 += bope(k, q) * u(2, i, j - 1, q);
@@ -754,7 +754,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 
         /*   (la*u_x)_z: NOT CENTERED */
         float_sw4 lau1xz = 0;
-        for (int q = 1; q <= 8; q++)
+        for (sw4_type q = 1; q <= 8; q++)
           lau1xz += bope(k, q) * (la(i, j, q) * i12 *
                                   (-u(1, i + 2, j, q) + 8 * u(1, i + 1, j, q) -
                                    8 * u(1, i - 1, j, q) + u(1, i - 2, j, q)));
@@ -762,7 +762,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 
         /* (la*v_y)_z: NOT CENTERED */
         float_sw4 lau2yz = 0;
-        for (int q = 1; q <= 8; q++)
+        for (sw4_type q = 1; q <= 8; q++)
           lau2yz += bope(k, q) * (la(i, j, q) * i12 *
                                   (-u(2, i, j + 2, q) + 8 * u(2, i, j + 1, q) -
                                    8 * u(2, i, j - 1, q) + u(2, i, j - 2, q)));
@@ -788,16 +788,16 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
       Range<2> K(kfirstw, klastw + 1);
 #endif
       // Tclass<91> t2;
-      forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+      forall3async(I, J, K, [=] RAJA_DEVICE(sw4_type i, sw4_type j, sw4_type k) {
 #else
       RAJA::RangeSegment k_range(kfirstw, klastw + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
       RAJA::kernel<
           RHS4_EXEC_POL_ASYNC>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
-                                                                                int k,
-                                                                                int j,
-                                                                                int i) {
+                                                                                sw4_type k,
+                                                                                sw4_type j,
+                                                                                sw4_type i) {
 #endif
         float_sw4 mux1, mux2, mux3, mux4, muy1, muy2, muy3, muy4;
         float_sw4 r1, r2, r3;
@@ -828,7 +828,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                tf * (mu(i, j, k) * stry(j) + mu(i, j + 2, k) * stry(j + 2));
 
         /* xx, yy, and zz derivatives: */
-        /* note that we could have introduced intermediate variables for the
+        /* note that we could have sw4_typeroduced sw4_typeermediate variables for the
          * average of lambda  */
         /* in the same way as we did for mu */
         r1 = i6 * (strx(i) * ((2 * mux1 + la(i - 1, j, k) * strx(i - 1) -
@@ -855,8 +855,8 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                               muy4 * (u(1, i, j + 2, k) - u(1, i, j, k))));
 
         /* all indices ending with 'b' are indices relative to the boundary,
-         * going into the domain (1,2,3,...)*/
-        int kb = nk - k + 1;
+         * going sw4_typeo the domain (1,2,3,...)*/
+        sw4_type kb = nk - k + 1;
         /* all coefficient arrays (acof, bope, ghcof) should be indexed with
          * these indices */
         /* all solution and material property arrays should be indexed with
@@ -871,13 +871,13 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 #ifdef ENABLE_HIP
 #pragma unroll 8
 #endif
-        for (int qb = 1; qb <= 8; qb++) {
+        for (sw4_type qb = 1; qb <= 8; qb++) {
           float_sw4 mucof = 0;
           float_sw4 lap2mu = 0;
 #ifdef ENABLE_HIP
 #pragma unroll 8
 #endif
-          for (int mb = 1; mb <= 8; mb++) {
+          for (sw4_type mb = 1; mb <= 8; mb++) {
             mucof += acof(kb, qb, mb) * mu(i, j, nk - mb + 1);
             lap2mu += acof(kb, qb, mb) *
                       (2 * mu(i, j, nk - mb + 1) + la(i, j, nk - mb + 1));
@@ -973,7 +973,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
         float_sw4 u3zip1 = 0;
         float_sw4 u3zim1 = 0;
         float_sw4 u3zim2 = 0;
-        for (int qb = 1; qb <= 8; qb++) {
+        for (sw4_type qb = 1; qb <= 8; qb++) {
           u3zip2 -= bope(kb, qb) * u(3, i + 2, j, nk - qb + 1);
           u3zip1 -= bope(kb, qb) * u(3, i + 1, j, nk - qb + 1);
           u3zim1 -= bope(kb, qb) * u(3, i - 1, j, nk - qb + 1);
@@ -986,7 +986,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 
         /*   (mu*w_x)_z: NOT CENTERED */
         float_sw4 mu3xz = 0;
-        for (int qb = 1; qb <= 8; qb++)
+        for (sw4_type qb = 1; qb <= 8; qb++)
           mu3xz -=
               bope(kb, qb) *
               (mu(i, j, nk - qb + 1) * i12 *
@@ -1038,7 +1038,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
         float_sw4 u3zjp1 = 0;
         float_sw4 u3zjm1 = 0;
         float_sw4 u3zjm2 = 0;
-        for (int qb = 1; qb <= 8; qb++) {
+        for (sw4_type qb = 1; qb <= 8; qb++) {
           u3zjp2 -= bope(kb, qb) * u(3, i, j + 2, nk - qb + 1);
           u3zjp1 -= bope(kb, qb) * u(3, i, j + 1, nk - qb + 1);
           u3zjm1 -= bope(kb, qb) * u(3, i, j - 1, nk - qb + 1);
@@ -1051,7 +1051,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 
         /* (mu*w_y)_z: NOT CENTERED */
         float_sw4 mu3yz = 0;
-        for (int qb = 1; qb <= 8; qb++)
+        for (sw4_type qb = 1; qb <= 8; qb++)
           mu3yz -=
               bope(kb, qb) *
               (mu(i, j, nk - qb + 1) * i12 *
@@ -1065,7 +1065,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
         float_sw4 u1zip1 = 0;
         float_sw4 u1zim1 = 0;
         float_sw4 u1zim2 = 0;
-        for (int qb = 1; qb <= 8; qb++) {
+        for (sw4_type qb = 1; qb <= 8; qb++) {
           u1zip2 -= bope(kb, qb) * u(1, i + 2, j, nk - qb + 1);
           u1zip1 -= bope(kb, qb) * u(1, i + 1, j, nk - qb + 1);
           u1zim1 -= bope(kb, qb) * u(1, i - 1, j, nk - qb + 1);
@@ -1081,7 +1081,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
         float_sw4 u2zjp1 = 0;
         float_sw4 u2zjm1 = 0;
         float_sw4 u2zjm2 = 0;
-        for (int qb = 1; qb <= 8; qb++) {
+        for (sw4_type qb = 1; qb <= 8; qb++) {
           u2zjp2 -= bope(kb, qb) * u(2, i, j + 2, nk - qb + 1);
           u2zjp1 -= bope(kb, qb) * u(2, i, j + 1, nk - qb + 1);
           u2zjm1 -= bope(kb, qb) * u(2, i, j - 1, nk - qb + 1);
@@ -1094,7 +1094,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 
         /*   (la*u_x)_z: NOT CENTERED */
         float_sw4 lau1xz = 0;
-        for (int qb = 1; qb <= 8; qb++)
+        for (sw4_type qb = 1; qb <= 8; qb++)
           lau1xz -=
               bope(kb, qb) *
               (la(i, j, nk - qb + 1) * i12 *
@@ -1104,7 +1104,7 @@ void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
 
         /* (la*v_y)_z: NOT CENTERED */
         float_sw4 lau2yz = 0;
-        for (int qb = 1; qb <= 8; qb++) {
+        for (sw4_type qb = 1; qb <= 8; qb++) {
           lau2yz -=
               bope(kb, qb) *
               (la(i, j, nk - qb + 1) * i12 *

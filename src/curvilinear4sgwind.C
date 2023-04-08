@@ -44,14 +44,14 @@
 //#include <iostream>
 // using namespace std;
 void curvilinear4sgwind(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-    int kfirstw, int klastw, float_sw4* __restrict__ a_u,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
+    sw4_type kfirstw, sw4_type klastw, float_sw4* __restrict__ a_u,
     float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda,
     float_sw4* __restrict__ a_met, float_sw4* __restrict__ a_jac,
-    float_sw4* __restrict__ a_lu, int* onesided, float_sw4* __restrict__ a_acof,
+    float_sw4* __restrict__ a_lu, sw4_type* onesided, float_sw4* __restrict__ a_acof,
     float_sw4* __restrict__ a_bope, float_sw4* __restrict__ a_ghcof,
     float_sw4* __restrict__ a_acof_no_gp, float_sw4* __restrict__ a_ghcof_no_gp,
-    float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, int nk,
+    float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, sw4_type nk,
     char op) {
   SW4_MARK_FUNCTION;
   // SYNC_STREAM;  // CURVI_CPU
@@ -61,7 +61,7 @@ void curvilinear4sgwind(
   // jfirst:jlast, kfirst:klast, the calling routine need to assure that
   // kfirst:klast is large enough to fit a stencil evaluated at all k between
   // kfirstw and klastw. Typical use kfirstw=klastw=k0 to compute Lu on the grid
-  // plane k=k0, to use in grid-grid interface conditions.
+  // plane k=k0, to use in grid-grid sw4_typeerface conditions.
   //
   // Note: This routine does not use the 'onesided' array, it is assumed that
   // both k-boundaries use SBP operators.
@@ -76,7 +76,7 @@ void curvilinear4sgwind(
   //   and a_acof_no_gp.
   //
   // opcount:
-  //      Interior (k>6), 2126 arithmetic ops.
+  //      Sw4_Typeerior (k>6), 2126 arithmetic ops.
   //      Boundary discretization (1<=k<=6 ), 6049 arithmetic ops.
 
   //   const float_sw4 a1 =0;
@@ -109,16 +109,16 @@ void curvilinear4sgwind(
   const float_sw4 c1 = 2.0 / 3;
   const float_sw4 c2 = -1.0 / 12;
 
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = nij * (klast - kfirst + 1);
-  const int base = -(ifirst + ni * jfirst + nij * kfirst);
-  const int base3 = base - nijk;
-  const int base4 = base - nijk;
-  const int ifirst0 = ifirst;
-  const int jfirst0 = jfirst;
-  const int nijkw = nij * (klastw - kfirstw + 1);
-  const int base3w = -(ifirst + ni * jfirst + nij * kfirstw) - nijkw;
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijk = nij * (klast - kfirst + 1);
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst);
+  const sw4_type base3 = base - nijk;
+  const sw4_type base4 = base - nijk;
+  const sw4_type ifirst0 = ifirst;
+  const sw4_type jfirst0 = jfirst;
+  const sw4_type nijkw = nij * (klastw - kfirstw + 1);
+  const sw4_type base3w = -(ifirst + ni * jfirst + nij * kfirstw) - nijkw;
 
   // Direct reuse of fortran code by these macro definitions:
   // Direct reuse of fortran code by these macro definitions:
@@ -144,7 +144,7 @@ void curvilinear4sgwind(
 #endif
 
   bool lower = false, mid = false, upper = false;
-  int klowb = 1, klowe = 0, kmidb = 1, kmide = 0, khighb = 1, khighe = 0;
+  sw4_type klowb = 1, klowe = 0, kmidb = 1, kmide = 0, khighb = 1, khighe = 0;
   if (kfirstw <= 6) {
     lower = true;
     klowb = kfirstw;
@@ -185,7 +185,7 @@ void curvilinear4sgwind(
   //   std::cout << "Curvilinear4sgwind u,l,m= " << upper << " " << mid << "  "
   //   << lower << " high(kb,ke)= " << khighb << " " << khighe << " low(kb,ke) =
   //   " << klowb << " " << klowe << std::endl; bool debug= (ifirst==105 &&
-  //   ilast==137 && jfirst==105 && jlast==137); int idbg=108, jdbg=107;
+  //   ilast==137 && jfirst==105 && jlast==137); sw4_type idbg=108, jdbg=107;
   //#pragma omp parallel
 
   using LOCAL_POL = DEFAULT_LOOP3;
@@ -197,11 +197,11 @@ void curvilinear4sgwind(
       // std::cout<<"LOWER K"<<klowb<<" "<<klowe<<"\n";
       // SBP Boundary closure terms
       // #pragma omp for
-      //       for (int k = klowb; k <= klowe; k++)
-      //         for (int j = jfirst + 2; j <= jlast - 2; j++)
+      //       for (sw4_type k = klowb; k <= klowe; k++)
+      //         for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
       // #pragma omp simd
       // #pragma ivdep
-      //           for (int i = ifirst + 2; i <= ilast - 2; i++) {
+      //           for (sw4_type i = ifirst + 2; i <= ilast - 2; i++) {
 
 #ifdef PEEKS_GALORE
       SW4_PEEK;
@@ -221,16 +221,16 @@ void curvilinear4sgwind(
       Tclass<31> t1;
       forall3asyncV<
           256,
-          1>(t1, I, J, K, [=] RAJA_DEVICE(Tclass<31> t, int i, int j, int k) {
+          1>(t1, I, J, K, [=] RAJA_DEVICE(Tclass<31> t, sw4_type i, sw4_type j, sw4_type k) {
 #else
       RAJA::RangeSegment k_range(klowb, klowe + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
       RAJA::kernel<
           LOCAL_POL>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
-                                                                      int k,
-                                                                      int j,
-                                                                      int i) {
+                                                                      sw4_type k,
+                                                                      sw4_type j,
+                                                                      sw4_type i) {
 #endif
         // printf("IN THE ROUTINE\n");
         // 5 ops
@@ -396,7 +396,7 @@ void curvilinear4sgwind(
         // averaging the coefficient
         // 54*8*8+25*8 = 3656 ops, tot=3939
         float_sw4 mucofu2, mucofuv, mucofuw, mucofvw, mucofv2, mucofw2;
-        for (int q = 1; q <= 8; q++) {
+        for (sw4_type q = 1; q <= 8; q++) {
           mucofu2 = 0;
           mucofuv = 0;
           mucofuw = 0;
@@ -406,7 +406,7 @@ void curvilinear4sgwind(
 #ifdef ENABLE_HIP
 #pragma unroll 8
 #endif
-          for (int m = 1; m <= 8; m++) {
+          for (sw4_type m = 1; m <= 8; m++) {
             mucofu2 += acof(k, q, m) *
                        ((2 * mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
                             strx(i) * met(2, i, j, m) * strx(i) +
@@ -549,7 +549,7 @@ void curvilinear4sgwind(
         float_sw4 dvdrm2 = 0, dvdrm1 = 0, dvdrp1 = 0, dvdrp2 = 0;
         float_sw4 dwdrm2 = 0, dwdrm1 = 0, dwdrp1 = 0, dwdrp2 = 0;
         // PROBLEM EXISTS BEFORE THIS LINE
-        for (int q = 1; q <= 8; q++) {
+        for (sw4_type q = 1; q <= 8; q++) {
           dudrm2 += bope(k, q) * u(1, i - 2, j, q);
           dvdrm2 += bope(k, q) * u(2, i - 2, j, q);
           dwdrm2 += bope(k, q) * u(3, i - 2, j, q);
@@ -649,7 +649,7 @@ void curvilinear4sgwind(
         dwdrm1 = 0;
         dwdrp1 = 0;
         dwdrp2 = 0;
-        for (int q = 1; q <= 8; q++) {
+        for (sw4_type q = 1; q <= 8; q++) {
           dudrm2 += bope(k, q) * u(1, i, j - 2, q);
           dvdrm2 += bope(k, q) * u(2, i, j - 2, q);
           dwdrm2 += bope(k, q) * u(3, i, j - 2, q);
@@ -736,7 +736,7 @@ void curvilinear4sgwind(
         // pr and qr derivatives at once
         // in loop: 8*(53+53+43) = 1192 ops, tot=6037
         // return;
-        for (int q = 1; q <= 8; q++) {
+        for (sw4_type q = 1; q <= 8; q++) {
           // (u-eq)
           // 53 ops
           r1 += bope(k, q) *
@@ -839,11 +839,11 @@ void curvilinear4sgwind(
 #endif
 
 // #pragma omp for
-//       for (int k = kmidb; k <= kmide; k++)
-//         for (int j = jfirst + 2; j <= jlast - 2; j++)
+//       for (sw4_type k = kmidb; k <= kmide; k++)
+//         for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
 // #pragma omp simd
 // #pragma ivdep
-//           for (int i = ifirst + 2; i <= ilast - 2; i++) {
+//           for (sw4_type i = ifirst + 2; i <= ilast - 2; i++) {
 #if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
 
 #ifdef ENABLE_CUDA
@@ -859,14 +859,14 @@ void curvilinear4sgwind(
 #endif
       Tclass<32> t1;
       forall3async<__LINE__>(
-          t1, I, J, K, [=] RAJA_DEVICE(Tclass<32> t, int i, int j, int k) {
+          t1, I, J, K, [=] RAJA_DEVICE(Tclass<32> t, sw4_type i, sw4_type j, sw4_type k) {
 #else
       RAJA::RangeSegment k_range(kmidb, kmide + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
       RAJA::kernel<LOCAL_POL>(
           RAJA::make_tuple(k_range, j_range, i_range),
-          [=] RAJA_DEVICE(int k, int j, int i) {
+          [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
             // 5 ops
             float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
@@ -2190,11 +2190,11 @@ void curvilinear4sgwind(
 #endif
 
 // #pragma omp for
-//       for (int k = khighb; k <= khighe; k++)
-//         for (int j = jfirst + 2; j <= jlast - 2; j++)
+//       for (sw4_type k = khighb; k <= khighe; k++)
+//         for (sw4_type j = jfirst + 2; j <= jlast - 2; j++)
 // #pragma omp simd
 // #pragma ivdep
-//           for (int i = ifirst + 2; i <= ilast - 2; i++) {
+//           for (sw4_type i = ifirst + 2; i <= ilast - 2; i++) {
 #if !defined(RAJA_ONLY_2) && defined(ENABLE_GPU)
 
 #ifdef ENABLE_CUDA
@@ -2211,16 +2211,16 @@ void curvilinear4sgwind(
       Tclass<33> t1;
       forall3asyncV<
           256,
-          1>(t1, I, J, K, [=] RAJA_DEVICE(Tclass<33> t, int i, int j, int k) {
+          1>(t1, I, J, K, [=] RAJA_DEVICE(Tclass<33> t, sw4_type i, sw4_type j, sw4_type k) {
 #else
       RAJA::RangeSegment k_range(khighb, khighe + 1);
       RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
       RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
       RAJA::kernel<
           LOCAL_POL>(RAJA::make_tuple(k_range, j_range, i_range), [=] RAJA_DEVICE(
-                                                                      int k,
-                                                                      int j,
-                                                                      int i) {
+                                                                      sw4_type k,
+                                                                      sw4_type j,
+                                                                      sw4_type i) {
 #endif
         // 5 ops
         float_sw4 ijac = strx(i) * stry(j) / jac(i, j, k);
@@ -2385,7 +2385,7 @@ void curvilinear4sgwind(
 #ifdef ENABLE_HIP
 	//#pragma unroll 8
 #endif
-        for (int q = nk - 7; q <= nk; q++) {
+        for (sw4_type q = nk - 7; q <= nk; q++) {
           mucofu2 = 0;
           mucofuv = 0;
           mucofuw = 0;
@@ -2395,7 +2395,7 @@ void curvilinear4sgwind(
 #ifdef ENABLE_HIP
 #pragma unroll 8
 #endif
-          for (int m = nk - 7; m <= nk; m++) {
+          for (sw4_type m = nk - 7; m <= nk; m++) {
             mucofu2 += acof_no_gp(nk - k + 1, nk - q + 1, nk - m + 1) *
                        ((2 * mu(i, j, m) + la(i, j, m)) * met(2, i, j, m) *
                             strx(i) * met(2, i, j, m) * strx(i) +
@@ -2542,7 +2542,7 @@ void curvilinear4sgwind(
         float_sw4 dudrm2 = 0, dudrm1 = 0, dudrp1 = 0, dudrp2 = 0;
         float_sw4 dvdrm2 = 0, dvdrm1 = 0, dvdrp1 = 0, dvdrp2 = 0;
         float_sw4 dwdrm2 = 0, dwdrm1 = 0, dwdrp1 = 0, dwdrp2 = 0;
-        for (int q = nk - 7; q <= nk; q++) {
+        for (sw4_type q = nk - 7; q <= nk; q++) {
           dudrm2 -= bope(nk - k + 1, nk - q + 1) * u(1, i - 2, j, q);
           dvdrm2 -= bope(nk - k + 1, nk - q + 1) * u(2, i - 2, j, q);
           dwdrm2 -= bope(nk - k + 1, nk - q + 1) * u(3, i - 2, j, q);
@@ -2642,7 +2642,7 @@ void curvilinear4sgwind(
         dwdrm1 = 0;
         dwdrp1 = 0;
         dwdrp2 = 0;
-        for (int q = nk - 7; q <= nk; q++) {
+        for (sw4_type q = nk - 7; q <= nk; q++) {
           dudrm2 -= bope(nk - k + 1, nk - q + 1) * u(1, i, j - 2, q);
           dvdrm2 -= bope(nk - k + 1, nk - q + 1) * u(2, i, j - 2, q);
           dwdrm2 -= bope(nk - k + 1, nk - q + 1) * u(3, i, j - 2, q);
@@ -2729,7 +2729,7 @@ void curvilinear4sgwind(
 
         // pr and qr derivatives at once
         // in loop: 8*(53+53+43) = 1192 ops, tot=6037
-        for (int q = nk - 7; q <= nk; q++) {
+        for (sw4_type q = nk - 7; q <= nk; q++) {
           // (u-eq)
           // 53 ops
           r1 -= bope(nk - k + 1, nk - q + 1) *

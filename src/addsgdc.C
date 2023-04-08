@@ -41,7 +41,7 @@
 #include "policies.h"
 //-----------------------------------------------------------------------
 void EW::addsgd4_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
     float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
     float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_rho,
     float_sw4* __restrict__ a_dcx, float_sw4* __restrict__ a_dcy,
@@ -76,13 +76,13 @@ void EW::addsgd4_ci(
     // AP: The for c loop could be inside the for i loop. The simd, ivdep
     // pragmas should be outside the inner-most loop #pragma omp parallel
     //       {
-    //       for( int c=0 ; c < 3 ; c++ )
+    //       for( sw4_type c=0 ; c < 3 ; c++ )
     // #pragma omp for
-    //       for( int k=kfirst+2; k <= klast-2 ; k++ )
-    // 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
+    //       for( sw4_type k=kfirst+2; k <= klast-2 ; k++ )
+    // 	 for( sw4_type j=jfirst+2; j <= jlast-2 ; j++ )
     // #pragma simd
     // #pragma ivdep
-    // 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
+    // 	    for( sw4_type i=ifirst+2; i <= ilast-2 ; i++ )
     // 	    {
     ASSERT_MANAGED(a_dcx);
     ASSERT_MANAGED(a_cox);
@@ -101,9 +101,9 @@ void EW::addsgd4_ci(
     Range<2> J(jfirst + 2, jlast - 1);
     Range<2> K(kfirst + 2, klast - 1);
 #endif
-    forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+    forall3async(I, J, K, [=] RAJA_DEVICE(sw4_type i, sw4_type j, sw4_type k) {
       float_sw4 birho = beta / rho(i, j, k);
-      for (int c = 0; c < 3; c++)
+      for (sw4_type c = 0; c < 3; c++)
 #else
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
@@ -112,7 +112,7 @@ void EW::addsgd4_ci(
 
     RAJA::kernel<ADDSGD_POL_ASYNC>(
         RAJA::make_tuple(c_range, k_range, j_range, i_range),
-        [=] RAJA_DEVICE(int c, int k, int j, int i) {
+        [=] RAJA_DEVICE(sw4_type c, sw4_type k, sw4_type j, sw4_type i) {
           float_sw4 birho = beta / rho(i, j, k);
 #endif
       {
@@ -123,10 +123,10 @@ void EW::addsgd4_ci(
 
         // RAJA::kernel<ADDSGD_POL3_ASYNC>(
         // 			    RAJA::make_tuple(k_range,j_range,i_range),
-        // 			    [=]RAJA_DEVICE (int k, int j,int i) {
+        // 			    [=]RAJA_DEVICE (sw4_type k, sw4_type j,sw4_type i) {
         // 			      float_sw4 birho=beta/rho(i,j,k);
         // 			      //#pragma unroll
-        // 			      for(int c=0;c<3;c++)
+        // 			      for(sw4_type c=0;c<3;c++)
         // 				{
         up(c, i, j, k) -=
             birho * (
@@ -212,7 +212,7 @@ void EW::addsgd4_ci(
 
 //-----------------------------------------------------------------------
 void EW::addsgd6_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
     float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
     float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_rho,
     float_sw4* __restrict__ a_dcx, float_sw4* __restrict__ a_dcy,
@@ -244,13 +244,13 @@ void EW::addsgd6_ci(
     const size_t npts = nij * (klast - kfirst + 1);
 #pragma omp parallel
     {
-      for (int c = 0; c < 3; c++)
+      for (sw4_type c = 0; c < 3; c++)
 #pragma omp for
-        for (int k = kfirst + 3; k <= klast - 3; k++)
-          for (int j = jfirst + 3; j <= jlast - 3; j++)
+        for (sw4_type k = kfirst + 3; k <= klast - 3; k++)
+          for (sw4_type j = jfirst + 3; j <= jlast - 3; j++)
 #pragma simd
 #pragma ivdep
-            for (int i = ifirst + 3; i <= ilast - 3; i++) {
+            for (sw4_type i = ifirst + 3; i <= ilast - 3; i++) {
               float_sw4 birho = 0.5 * beta / rho(i, j, k);
               {
                 up(c, i, j, k) +=
@@ -361,7 +361,7 @@ void EW::addsgd6_ci(
 
 //-----------------------------------------------------------------------
 void EW::addsgd4c_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
     float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
     float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_rho,
     float_sw4* __restrict__ a_dcx, float_sw4* __restrict__ a_dcy,
@@ -393,13 +393,13 @@ void EW::addsgd4c_ci(
 
     // #pragma omp parallel
     //       {
-    //       for( int c=0 ; c < 3 ; c++ )
+    //       for( sw4_type c=0 ; c < 3 ; c++ )
     // #pragma omp for
-    //       for( int k=kfirst+2; k <= klast-2 ; k++ )
-    // 	 for( int j=jfirst+2; j <= jlast-2 ; j++ )
+    //       for( sw4_type k=kfirst+2; k <= klast-2 ; k++ )
+    // 	 for( sw4_type j=jfirst+2; j <= jlast-2 ; j++ )
     // #pragma simd
     // #pragma ivdep
-    // 	    for( int i=ifirst+2; i <= ilast-2 ; i++ )
+    // 	    for( sw4_type i=ifirst+2; i <= ilast-2 ; i++ )
     // 	    {
 
 #if !defined(RAJA_ONLY) && defined(ENABLE_GPU)
@@ -416,9 +416,9 @@ void EW::addsgd4c_ci(
     Range<2> J(jfirst + 2, jlast - 1);
     Range<2> K(kfirst + 2, klast - 1);
 #endif
-    forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+    forall3async(I, J, K, [=] RAJA_DEVICE(sw4_type i, sw4_type j, sw4_type k) {
       float_sw4 irhoj = beta / (rho(i, j, k) * jac(i, j, k));
-      for (int c = 0; c < 3; c++)
+      for (sw4_type c = 0; c < 3; c++)
 #else
     RAJA::RangeSegment i_range(ifirst + 2, ilast - 1);
     RAJA::RangeSegment j_range(jfirst + 2, jlast - 1);
@@ -426,7 +426,7 @@ void EW::addsgd4c_ci(
     RAJA::RangeSegment c_range(0, 3);
     RAJA::kernel<ADDSGD_POL2_ASYNC>(
         RAJA::make_tuple(c_range, k_range, j_range, i_range),
-        [=] RAJA_DEVICE(int c, int k, int j, int i) {
+        [=] RAJA_DEVICE(sw4_type c, sw4_type k, sw4_type j, sw4_type i) {
           float_sw4 irhoj = beta / (rho(i, j, k) * jac(i, j, k));
 #endif
       {
@@ -491,7 +491,7 @@ void EW::addsgd4c_ci(
 
 //-----------------------------------------------------------------------
 void EW::addsgd6c_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
     float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_u,
     float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_rho,
     float_sw4* __restrict__ a_dcx, float_sw4* __restrict__ a_dcy,
@@ -521,13 +521,13 @@ void EW::addsgd6c_ci(
     const size_t npts = nij * (klast - kfirst + 1);
 #pragma omp parallel
     {
-      for (int c = 0; c < 3; c++)
+      for (sw4_type c = 0; c < 3; c++)
 #pragma omp for
-        for (int k = kfirst + 3; k <= klast - 3; k++)
-          for (int j = jfirst + 3; j <= jlast - 3; j++)
+        for (sw4_type k = kfirst + 3; k <= klast - 3; k++)
+          for (sw4_type j = jfirst + 3; j <= jlast - 3; j++)
 #pragma simd
 #pragma ivdep
-            for (int i = ifirst + 3; i <= ilast - 3; i++) {
+            for (sw4_type i = ifirst + 3; i <= ilast - 3; i++) {
               float_sw4 birho = 0.5 * beta / (rho(i, j, k) * jac(i, j, k));
               {
                 up(c, i, j, k) +=

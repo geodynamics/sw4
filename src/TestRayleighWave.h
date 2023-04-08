@@ -40,7 +40,7 @@
 
 class TestRayleighWave {
  public:
-  TestRayleighWave(float_sw4 rho, float_sw4 cs, float_sw4 cp, int nwl,
+  TestRayleighWave(float_sw4 rho, float_sw4 cs, float_sw4 cp, sw4_type nwl,
                    float_sw4 xmax);
 
   float_sw4 m_rho, m_cp, m_cs, m_cr, m_omega, m_alpha;

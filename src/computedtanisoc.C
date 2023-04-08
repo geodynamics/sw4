@@ -2,9 +2,9 @@
 #include "F77_FUNC.h"
 #include "sw4.h"
 extern "C" {
-void F77_FUNC(dspev, DSPEV)(char& JOBZ, char& UPLO, int& N, double* AP,
-                            double* W, double* Z, int& LDZ, double* WORK,
-                            int& INFO);
+void F77_FUNC(dspev, DSPEV)(char& JOBZ, char& UPLO, sw4_type& N, double* AP,
+                            double* W, double* Z, sw4_type& LDZ, double* WORK,
+                            sw4_type& INFO);
 }
 
 void EW::maxwave(float_sw4 c[21], float_sw4 rho, float_sw4& eigestimate) {
@@ -12,7 +12,7 @@ void EW::maxwave(float_sw4 c[21], float_sw4 rho, float_sw4& eigestimate) {
   //   \sum_{i,j} ki* kj* Aij
   //   where \sum_{i} ki*ki = 1, scaled by the density.
   // This is equal to (4*mu+lambda)/rho in the isotropic case
-  int info, three = 3, one = 1;
+  sw4_type info, three = 3, one = 1;
   char n = 'N', l = 'L';
   double eg[3], a[6], work[9], z;
   a[0] = c[0] + c[6] + c[11];
@@ -35,7 +35,7 @@ void EW::maxwave(float_sw4 c[21], float_sw4 rho, float_sw4& eigestimate) {
 void EW::maxwavecurv(float_sw4 c[45], float_sw4 rho, float_sw4 jac,
                      float_sw4& eigestimate) {
   // Traces of matrices, in order xx,xy,xz,yy,yz,zz
-  int info, three = 3, one = 1;
+  sw4_type info, three = 3, one = 1;
   char n = 'N', l = 'L';
   double eg[3], a[6], work[9], z;
   a[0] = c[0] + c[3] + c[5];
@@ -54,8 +54,8 @@ void EW::maxwavecurv(float_sw4 c[45], float_sw4 rho, float_sw4 jac,
   eigestimate = mxeig / (jac * rho);
 }
 
-void EW::computedtaniso2_ci(int ifirst, int ilast, int jfirst, int jlast,
-                            int kfirst, int klast, float_sw4* __restrict__ rho,
+void EW::computedtaniso2_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                            sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ rho,
                             float_sw4* __restrict__ c, float_sw4 cfl,
                             float_sw4 dx, float_sw4& a_dtloc) {
   size_t npts = static_cast<size_t>(ilast - ifirst + 1) * (jlast - jfirst + 1) *
@@ -67,7 +67,7 @@ void EW::computedtaniso2_ci(int ifirst, int ilast, int jfirst, int jlast,
 #pragma omp for reduction(min : dtloc)
     for (size_t ind = 0; ind < npts; ind++) {
       float_sw4 cpt[21], eigestimate;
-      for (int m = 0; m < 21; m++) cpt[m] = c[ind + m * npts];
+      for (sw4_type m = 0; m < 21; m++) cpt[m] = c[ind + m * npts];
       maxwave(cpt, rho[ind], eigestimate);
       float_sw4 dtgp2 = cfldx2 / eigestimate;
       if (dtgp2 < dtloc * dtloc) dtloc = sqrt(dtgp2);
@@ -76,8 +76,8 @@ void EW::computedtaniso2_ci(int ifirst, int ilast, int jfirst, int jlast,
   a_dtloc = dtloc;
 }
 
-void EW::computedtaniso2curv_ci(int ifirst, int ilast, int jfirst, int jlast,
-                                int kfirst, int klast,
+void EW::computedtaniso2curv_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                                sw4_type kfirst, sw4_type klast,
                                 float_sw4* __restrict__ rho,
                                 float_sw4* __restrict__ c, float_sw4* jac,
                                 float_sw4 cfl, float_sw4& a_dtloc) {
@@ -90,7 +90,7 @@ void EW::computedtaniso2curv_ci(int ifirst, int ilast, int jfirst, int jlast,
 #pragma omp for reduction(min : dtloc)
     for (size_t ind = 0; ind < npts; ind++) {
       float_sw4 cpt[45], eigestimate;
-      for (int m = 0; m < 45; m++) cpt[m] = c[ind + m * npts];
+      for (sw4_type m = 0; m < 45; m++) cpt[m] = c[ind + m * npts];
       maxwavecurv(cpt, rho[ind], jac[ind], eigestimate);
       float_sw4 dtgp2 = cfl2 / eigestimate;
       if (dtgp2 < dtloc * dtloc) dtloc = sqrt(dtgp2);

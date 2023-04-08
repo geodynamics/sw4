@@ -1,10 +1,10 @@
 #include "EW.h"
 //-----------------------------------------------------------------------
-void EW::consintp(Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf,
+void EW::conssw4_typep(Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf,
                   Sarray& Lambdaf, Sarray& Rhof, double hf, Sarray& Uc,
                   Sarray& Unextc, Sarray& Bc, Sarray& Muc, Sarray& Lambdac,
-                  Sarray& Rhoc, double hc, double cof, int gc, int gf,
-                  int is_periodic[2]) {
+                  Sarray& Rhoc, double hc, double cof, sw4_type gc, sw4_type gf,
+                  sw4_type is_periodic[2]) {
   // At boundaries to the left and right, at least three ghost points are
   // required e.g., domain in i-direction:   i=-2,-1,0,1,2,...,Ni,Ni+1,Ni+2,Ni+3
   // we solve for ghost points at i=2,..,Ni-1, assuming Dirichlet conditions
@@ -21,38 +21,38 @@ void EW::consintp(Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf,
   const double i256 = 1.0 / 256;
   const double i1024 = 1.0 / 1024;
 
-  int jcb, jce, icb, ice, jfb, jfe, ifb, ife, nkf;
+  sw4_type jcb, jce, icb, ice, jfb, jfe, ifb, ife, nkf;
   double nuf =
       mDt * mDt / (cof * hf * hf);  // cof is an argument to this routine
   double nuc = mDt * mDt / (cof * hc * hc);
   double ihc = 1 / hc, ihf = 1 / hf;
   double jacerr = m_citol + 1, jacerr0;
   double a11, a12, a21, a22, b1, b2, r1, r2, r3, deti, relax;
-  int it = 0;
+  sw4_type it = 0;
   relax = m_cirelfact;
 
-  icb = m_iStartInt[gc];
-  ifb = m_iStartInt[gf];
+  icb = m_iStartSw4_Type[gc];
+  ifb = m_iStartSw4_Type[gf];
 
-  ice = m_iEndInt[gc];
-  ife = m_iEndInt[gf];
+  ice = m_iEndSw4_Type[gc];
+  ife = m_iEndSw4_Type[gf];
 
-  jcb = m_jStartInt[gc];
-  jfb = m_jStartInt[gf];
+  jcb = m_jStartSw4_Type[gc];
+  jfb = m_jStartSw4_Type[gf];
 
-  jce = m_jEndInt[gc];
-  jfe = m_jEndInt[gf];
+  jce = m_jEndSw4_Type[gc];
+  jfe = m_jEndSw4_Type[gf];
 
   nkf = m_global_nz[gf];
   Sarray Mlf(m_iStart[gf], m_iEnd[gf], m_jStart[gf], m_jEnd[gf], nkf, nkf);
-  for (int j = m_jStart[gf]; j <= m_jEnd[gf]; j++)
-    for (int i = m_iStart[gf]; i <= m_iEnd[gf]; i++)
+  for (sw4_type j = m_jStart[gf]; j <= m_jEnd[gf]; j++)
+    for (sw4_type i = m_iStart[gf]; i <= m_iEnd[gf]; i++)
       Mlf(i, j, nkf) = 2 * Muf(i, j, nkf) +
                        Lambdaf(i, j, nkf);  // 2*mu + lambda on the fine grid
   Sarray Morc(m_iStart[gc], m_iEnd[gc], m_jStart[gc], m_jEnd[gc], 1, 1);
   Sarray Mlrc(m_iStart[gc], m_iEnd[gc], m_jStart[gc], m_jEnd[gc], 1, 1);
-  for (int jc = m_jStart[gc]; jc <= m_jEnd[gc]; jc++)
-    for (int ic = m_iStart[gc]; ic <= m_iEnd[gc]; ic++) {
+  for (sw4_type jc = m_jStart[gc]; jc <= m_jEnd[gc]; jc++)
+    for (sw4_type ic = m_iStart[gc]; ic <= m_iEnd[gc]; ic++) {
       double irho = 1 / Rhoc(ic, jc, 1);
       Morc(ic, jc, 1) = Muc(ic, jc, 1) * irho;  // mu/rho on the coarse grid
       Mlrc(ic, jc, 1) = (2 * Muc(ic, jc, 1) + Lambdac(ic, jc, 1)) *
@@ -62,11 +62,11 @@ void EW::consintp(Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf,
   while (jacerr > m_citol && it < m_cimaxiter) {
     double rmax[6] = {0, 0, 0, 0, 0, 0};
     // for i=2*ic-1 and j=2*jc-1: Enforce continuity of displacements and normal
-    // stresses along the interface
-    for (int jc = jcb; jc <= jce; jc++)
-      for (int ic = icb; ic <= ice; ic++) {
+    // stresses along the sw4_typeerface
+    for (sw4_type jc = jcb; jc <= jce; jc++)
+      for (sw4_type ic = icb; ic <= ice; ic++) {
         // i odd, j odd
-        int i = 2 * ic - 1, j = 2 * jc - 1;
+        sw4_type i = 2 * ic - 1, j = 2 * jc - 1;
         // setup 2x2 system matrix
         a11 = 0.25 * Muf(i, j, nkf) * m_sbop[0] *
               ihf;                               // ihf = 1/h on the fine grid
@@ -75,10 +75,10 @@ void EW::consintp(Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf,
               m_ghcof[0];  // nuf = dt^2/(cof * h^2) on the fine grid
         a22 = -nuc / Rhoc(ic, jc, 1) * Muc(ic, jc, 1) *
               m_ghcof[0];  // nuc = dt^2/(cof * h^2) on the coarse grid
-        for (int c = 1; c <= 2; c++)  // AP: what are the 2 components?
+        for (sw4_type c = 1; c <= 2; c++)  // AP: what are the 2 components?
         {
           // apply the restriction operator to the normal stress on the
-          // interface (Bf is on the fine grid)
+          // sw4_typeerface (Bf is on the fine grid)
           b1 = i1024 *
                (Bf(c, i - 3, j - 3, nkf) - 9 * Bf(c, i - 3, j - 1, nkf) -
                 16 * Bf(c, i - 3, j, nkf) - 9 * Bf(c, i - 3, j + 1, nkf) +
@@ -228,7 +228,7 @@ void EW::consintp(Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf,
         r2 = r2 - Uc(3, ic, jc, 0);
         rmax[2] = rmax[2] > fabs(r1) ? rmax[2] : fabs(r1);
         rmax[2] = rmax[2] > fabs(r2) ? rmax[2] : fabs(r2);
-        //	       int c=3;
+        //	       sw4_type c=3;
         //	       if( c == 3 && ic == 12 && jc == 13 )
         //	       {
         //	         cout << "i,j " << i << " " << j << " " << b1 << " " <<
@@ -241,16 +241,16 @@ void EW::consintp(Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf,
       }
     //      goto skipthis;
 
-    // Enforce continuity of displacements along the interface (for fine ghost
+    // Enforce continuity of displacements along the sw4_typeerface (for fine ghost
     // points in between coarse points)
-    int ic, jc;
-    for (int j = jfb; j <= jfe; j++)
-      for (int i = ifb; i <= ife; i++) {
+    sw4_type ic, jc;
+    for (sw4_type j = jfb; j <= jfe; j++)
+      for (sw4_type i = ifb; i <= ife; i++) {
         if (!((i % 2 == 1 &&
                j % 2 == 1)))  // not both i and j are odd (handled above)
         {
           // updated components 1,2 of the ghost point value of Uf
-          for (int c = 1; c <= 2; c++) {
+          for (sw4_type c = 1; c <= 2; c++) {
             if ((j % 2 == 0) && (i % 2 == 1))  // j is even, i is odd
             {
               ic = (i + 1) / 2;
@@ -425,13 +425,13 @@ void EW::consintp(Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf,
 
         // (i,j) both odd is handled by the first iteration
 
-      }  // end for all fine grid points on the interface
+      }  // end for all fine grid points on the sw4_typeerface
 
     //   skipthis:
     communicate_array_2d(Uf, gf, nkf + 1);
     communicate_array_2d(Uc, gc, 0);
     double jacerrtmp = 0;
-    for (int q = 0; q < 6; q++) jacerrtmp += rmax[q];
+    for (sw4_type q = 0; q < 6; q++) jacerrtmp += rmax[q];
 
     MPI_Allreduce(&jacerrtmp, &jacerr, 1, MPI_DOUBLE, MPI_MAX,
                   m_cartesian_communicator);
@@ -442,10 +442,10 @@ void EW::consintp(Sarray& Uf, Sarray& Unextf, Sarray& Bf, Sarray& Muf,
   }  // end while jacerr > eps
 
   if (jacerr > m_citol && proc_zero())
-    cout << "EW::consintp, Warning, no convergence. err = " << jacerr
+    cout << "EW::conssw4_typep, Warning, no convergence. err = " << jacerr
          << " tol= " << m_citol << endl;
 
   if (proc_zero() && mVerbose >= 4)
-    cout << "EW::consintp, no of iterations= " << it
+    cout << "EW::conssw4_typep, no of iterations= " << it
          << " Jac iteration error= " << jacerr << endl;
 }

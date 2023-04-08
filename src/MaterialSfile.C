@@ -84,24 +84,24 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> &rho,
   size_t outside = 0, material = 0;
   float_sw4 z_min = m_zminloc;
 
-  // Find the relative dimension size of upper and lower interface for each grid
+  // Find the relative dimension size of upper and lower sw4_typeerface for each grid
   // patch
-  int *ist = new int[m_npatches];
-  int *jst = new int[m_npatches];
-  for (int g = 0; g < m_npatches; g++) {
-    ist[g] = (int)ceil((double)mInterface[g].m_ni / mInterface[g + 1].m_ni);
-    jst[g] = (int)ceil((double)mInterface[g].m_nj / mInterface[g + 1].m_nj);
+  sw4_type *ist = new sw4_type[m_npatches];
+  sw4_type *jst = new sw4_type[m_npatches];
+  for (sw4_type g = 0; g < m_npatches; g++) {
+    ist[g] = (sw4_type)ceil((double)mSw4_Typeerface[g].m_ni / mSw4_Typeerface[g + 1].m_ni);
+    jst[g] = (sw4_type)ceil((double)mSw4_Typeerface[g].m_nj / mSw4_Typeerface[g + 1].m_nj);
   }
 
-  for (int g = 0; g < mEW->mNumberOfGrids; g++) {
+  for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
     bool curvilinear =
         mEW->topographyExists() && g >= mEW->mNumberOfCartesianGrids;
     size_t ni = mEW->m_iEnd[g] - mEW->m_iStart[g] + 1;
     size_t nj = mEW->m_jEnd[g] - mEW->m_jStart[g] + 1;
 #pragma omp parallel for reduction(+ : material, outside)
-    for (int k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k) {
-      for (int j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j) {
-        for (int i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i) {
+    for (sw4_type k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k) {
+      for (sw4_type j = mEW->m_jStartSw4_Type[g]; j <= mEW->m_jEndSw4_Type[g]; ++j) {
+        for (sw4_type i = mEW->m_iStartSw4_Type[g]; i <= mEW->m_iEndSw4_Type[g]; ++i) {
           float_sw4 z0, hv;
           float_sw4 x = (i - 1) * mEW->mGridSize[g];
           float_sw4 y = (j - 1) * mEW->mGridSize[g];
@@ -112,7 +112,7 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> &rho,
             z = mEW->m_zmin[g] + (k - 1) * mEW->mGridSize[g];
 
           // Deal with some values on top grid that exceeds the topogrophy
-          // interface
+          // sw4_typeerface
           if (g == mEW->mNumberOfGrids - 1 && z < z_min) z = z_min;
 
           // (x, y, z) is the coordinate of current grid point
@@ -124,17 +124,17 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> &rho,
             if (y > m_ymaxloc) y = m_ymaxloc;
 
             material++;
-            int i0, j0, i1, j1, k0, gr = m_npatches - 1;
+            sw4_type i0, j0, i1, j1, k0, gr = m_npatches - 1;
             float_sw4 tmph, down_z;
             // gr is the patch id that has the current sw4 grid point's data
-            // need to use the interface value to determine which patch the
+            // need to use the sw4_typeerface value to determine which patch the
             // current point is in
             while (gr >= 0) {
-              i0 = i1 = static_cast<int>(trunc(1 + (x - m_x0) / m_hh[gr]));
-              j0 = j1 = static_cast<int>(trunc(1 + (y - m_y0) / m_hh[gr]));
-              down_z = mInterface[gr + 1](1, i0, j0, 1);
+              i0 = i1 = static_cast<sw4_type>(trunc(1 + (x - m_x0) / m_hh[gr]));
+              j0 = j1 = static_cast<sw4_type>(trunc(1 + (y - m_y0) / m_hh[gr]));
+              down_z = mSw4_Typeerface[gr + 1](1, i0, j0, 1);
 
-              // Adjust the index if upper and lower interface have different
+              // Adjust the index if upper and lower sw4_typeerface have different
               // dimension
               if (ist[gr] > 1) {
                 i1 = i1 * ist[gr] - 1;
@@ -142,7 +142,7 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> &rho,
               if (jst[gr] > 1) {
                 j1 = j1 * jst[gr] - 1;
               }
-              z0 = mInterface[gr](1, i1, j1, 1);
+              z0 = mSw4_Typeerface[gr](1, i1, j1, 1);
 
               if (gr == 0 || z > z0) break;
               gr--;
@@ -157,9 +157,9 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> &rho,
             hv = tmph / (m_nk[gr] - 1);
 
             // we are using curvilinear grid in sfile
-            k0 = static_cast<int>(trunc(1 + (z - z0) / hv));
+            k0 = static_cast<sw4_type>(trunc(1 + (z - z0) / hv));
 
-            // Use bilinear interpolation always:
+            // Use bilinear sw4_typeerpolation always:
             // Bias stencil near the boundary, need to communicate arrays
             // afterwards.
             if (i0 <= m_ifirst[gr]) i0 = m_ifirst[gr];
@@ -174,7 +174,7 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> &rho,
 
             if (k0 >= m_klast[gr] - 1) k0 = m_klast[gr] - 1;
 
-            // bilinear intp.
+            // bilinear sw4_typep.
             float_sw4 wghx = (x - ((i0 - 1) * m_hh[gr] + m_x0)) / m_hh[gr];
             float_sw4 wghy = (y - ((j0 - 1) * m_hh[gr] + m_y0)) / m_hh[gr];
             float_sw4 wghz = (z - ((k0 - 1) * hv + z0)) / hv;
@@ -295,7 +295,7 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> &rho,
 
     /* debug */
     /* if (mEW->getRank() == 0) */
-    /*   printf("After interpolation from sfile\n"); */
+    /*   printf("After sw4_typeerpolation from sfile\n"); */
 
     /* printf("Rank %d grid %d: rho min = %.2f, max = %.2f\n", mEW->getRank(),
      * g, rho[g].minimum(), rho[g].maximum()); */
@@ -330,10 +330,10 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> &rho,
   }
 
   size_t materialSum, outsideSum;
-  int mpisizelong, mpisizelonglong, mpisizeint;
+  sw4_type mpisizelong, mpisizelonglong, mpisizesw4_type;
   MPI_Type_size(MPI_LONG, &mpisizelong);
   MPI_Type_size(MPI_LONG_LONG, &mpisizelonglong);
-  MPI_Type_size(MPI_INT, &mpisizeint);
+  MPI_Type_size(MPI_SW4_TYPE, &mpisizesw4_type);
   if (sizeof(size_t) == mpisizelong) {
     MPI_Reduce(&material, &materialSum, 1, MPI_LONG, MPI_SUM, 0,
                MPI_COMM_WORLD);
@@ -343,14 +343,14 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> &rho,
                MPI_COMM_WORLD);
     MPI_Reduce(&outside, &outsideSum, 1, MPI_LONG_LONG, MPI_SUM, 0,
                MPI_COMM_WORLD);
-  } else if (sizeof(size_t) == mpisizeint) {
-    MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  } else if (sizeof(size_t) == mpisizesw4_type) {
+    MPI_Reduce(&material, &materialSum, 1, MPI_SW4_TYPE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&outside, &outsideSum, 1, MPI_SW4_TYPE, MPI_SUM, 0, MPI_COMM_WORLD);
   } else {
-    int materialsumi, outsidesumi, materiali = material, outsidei = outside;
-    MPI_Reduce(&materiali, &materialsumi, 1, MPI_INT, MPI_SUM, 0,
+    sw4_type materialsumi, outsidesumi, materiali = material, outsidei = outside;
+    MPI_Reduce(&materiali, &materialsumi, 1, MPI_SW4_TYPE, MPI_SUM, 0,
                MPI_COMM_WORLD);
-    MPI_Reduce(&outsidei, &outsidesumi, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&outsidei, &outsidesumi, 1, MPI_SW4_TYPE, MPI_SUM, 0, MPI_COMM_WORLD);
     materialSum = materialsumi;
     outsideSum = outsidesumi;
   }
@@ -375,7 +375,7 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> &rho,
 void MaterialSfile::read_sfile() {
   // Timers
   double time_start, time_end;
-  /* double intf_start, intf_end; */
+  /* double sw4_typef_start, sw4_typef_end; */
   time_start = MPI_Wtime();
 
   string rname = "MaterialSfile::read_sfile";
@@ -384,16 +384,16 @@ void MaterialSfile::read_sfile() {
   // Figure out bounding box in this processor
   float_sw4 xmin = 1e38, xmax = -1e38, ymin = 1e38, ymax = -1e38, zmin = 1e38,
             zmax = -1e38;
-  for (int g = 0; g < mEW->mNumberOfGrids; g++) {
+  for (sw4_type g = 0; g < mEW->mNumberOfGrids; g++) {
     float_sw4 h = mEW->mGridSize[g];
     if (xmin > (mEW->m_iStart[g] - 1) * h) xmin = (mEW->m_iStart[g] - 1) * h;
     if (xmax < (mEW->m_iEnd[g] - 1) * h) xmax = (mEW->m_iEnd[g] - 1) * h;
     if (ymin > (mEW->m_jStart[g] - 1) * h) ymin = (mEW->m_jStart[g] - 1) * h;
     if (ymax < (mEW->m_jEnd[g] - 1) * h) ymax = (mEW->m_jEnd[g] - 1) * h;
     if (mEW->topographyExists() && g >= mEW->mNumberOfCartesianGrids) {
-      int kb = mEW->m_kStart[g], ke = mEW->m_kEnd[g];
-      for (int j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; j++) {
-        for (int i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g]; i++) {
+      sw4_type kb = mEW->m_kStart[g], ke = mEW->m_kEnd[g];
+      for (sw4_type j = mEW->m_jStart[g]; j <= mEW->m_jEnd[g]; j++) {
+        for (sw4_type i = mEW->m_iStart[g]; i <= mEW->m_iEnd[g]; i++) {
           if (zmin > mEW->mZ[g](i, j, kb)) zmin = mEW->mZ[g](i, j, kb);
           if (zmax < mEW->mZ[g](i, j, ke)) zmax = mEW->mZ[g](i, j, ke);
         }
@@ -416,7 +416,7 @@ void MaterialSfile::read_sfile() {
 
   hid_t file_id, dataset_id, datatype_id, h5_dtype, group_id, grid_id,
       memspace_id, filespace_id, attr_id, plist_id, dxpl;
-  int prec;
+  sw4_type prec;
   double lonlataz[3];
   herr_t ierr;
   hsize_t dim[3];
@@ -433,7 +433,7 @@ void MaterialSfile::read_sfile() {
     MPI_Abort(MPI_COMM_WORLD, file_id);
   }
 
-  // Read sfile header. Translate each patch into SW4 Cartesian coordinate
+  // Read sfile header. Translate each patch sw4_typeo SW4 Cartesian coordinate
   // system Origin longitude, latitude, azimuth
   attr_id =
       H5Aopen(file_id, "Origin longitude, latitude, azimuth", H5P_DEFAULT);
@@ -443,10 +443,10 @@ void MaterialSfile::read_sfile() {
   H5Aclose(attr_id);
 
   // ---------- attenuation on file ?
-  int att;
+  sw4_type att;
   attr_id = H5Aopen(file_id, "Attenuation", H5P_DEFAULT);
   ASSERT(attr_id >= 0);
-  ierr = H5Aread(attr_id, H5T_NATIVE_INT, &att);
+  ierr = H5Aread(attr_id, H5T_NATIVE_SW4_TYPE, &att);
   ASSERT(ierr >= 0);
   H5Aclose(attr_id);
 
@@ -466,7 +466,7 @@ void MaterialSfile::read_sfile() {
 
   // ---------- number of blocks on file
   attr_id = H5Aopen(file_id, "ngrids", H5P_DEFAULT);
-  ierr = H5Aread(attr_id, H5T_NATIVE_INT, &m_npatches);
+  ierr = H5Aread(attr_id, H5T_NATIVE_SW4_TYPE, &m_npatches);
   ASSERT(ierr >= 0);
   H5Aclose(attr_id);
 
@@ -483,12 +483,12 @@ void MaterialSfile::read_sfile() {
   m_nk.resize(m_npatches);
 
   // ---------- read block headers
-  vector<int> ncblock(m_npatches);
+  vector<sw4_type> ncblock(m_npatches);
   char grid_name[16];
 
   group_id = H5Gopen(file_id, "Material_model", H5P_DEFAULT);
   ASSERT(group_id >= 0);
-  for (int p = 0; p < m_npatches; p++) {
+  for (sw4_type p = 0; p < m_npatches; p++) {
     sprintf(grid_name, "grid_%d", p);
     grid_id = H5Gopen(group_id, grid_name, H5P_DEFAULT);
     ASSERT(grid_id >= 0);
@@ -505,7 +505,7 @@ void MaterialSfile::read_sfile() {
 
     attr_id = H5Aopen(grid_id, "Number of components", H5P_DEFAULT);
     ASSERT(attr_id >= 0);
-    ierr = H5Aread(attr_id, H5T_NATIVE_INT, &ncblock[p]);
+    ierr = H5Aread(attr_id, H5T_NATIVE_SW4_TYPE, &ncblock[p]);
     ASSERT(ierr >= 0);
     H5Aclose(attr_id);
 
@@ -514,9 +514,9 @@ void MaterialSfile::read_sfile() {
 
     filespace_id = H5Dget_space(dataset_id);
     H5Sget_simple_extent_dims(filespace_id, dim, NULL);
-    m_ni[p] = (int)dim[0];
-    m_nj[p] = (int)dim[1];
-    m_nk[p] = (int)dim[2];
+    m_ni[p] = (sw4_type)dim[0];
+    m_nj[p] = (sw4_type)dim[1];
+    m_nk[p] = (sw4_type)dim[2];
 
     H5Sclose(filespace_id);
     H5Dclose(dataset_id);
@@ -537,7 +537,7 @@ void MaterialSfile::read_sfile() {
   ASSERT(ierr >= 0);
   H5Aclose(attr_id);
 
-  // Intersect local grid with grid on sfile, assume all patches have same x-
+  // Sw4_Typeersect local grid with grid on sfile, assume all patches have same x-
   // and y- extent.
   float_sw4 xminrf = m_x0, xmaxrf = m_x0 + (m_ni[0] - 1) * m_hh[0];
   float_sw4 yminrf = m_y0, ymaxrf = m_y0 + (m_nj[0] - 1) * m_hh[0];
@@ -571,11 +571,11 @@ void MaterialSfile::read_sfile() {
   if (!m_outside) {
     // each patch, figure out a box that encloses [xmin,xmax] x [ymin,ymax] x
     // [zmin,zmax]
-    for (int p = 0; p < m_npatches; p++) {
-      m_ifirst[p] = static_cast<int>(floor(1 + (m_xminloc - m_x0) / m_hh[p]));
-      m_ilast[p] = static_cast<int>(ceil(1 + (m_xmaxloc - m_x0) / m_hh[p]));
-      m_jfirst[p] = static_cast<int>(floor(1 + (m_yminloc - m_y0) / m_hh[p]));
-      m_jlast[p] = static_cast<int>(ceil(1 + (m_ymaxloc - m_y0) / m_hh[p]));
+    for (sw4_type p = 0; p < m_npatches; p++) {
+      m_ifirst[p] = static_cast<sw4_type>(floor(1 + (m_xminloc - m_x0) / m_hh[p]));
+      m_ilast[p] = static_cast<sw4_type>(ceil(1 + (m_xmaxloc - m_x0) / m_hh[p]));
+      m_jfirst[p] = static_cast<sw4_type>(floor(1 + (m_yminloc - m_y0) / m_hh[p]));
+      m_jlast[p] = static_cast<sw4_type>(ceil(1 + (m_ymaxloc - m_y0) / m_hh[p]));
       m_kfirst[p] = 1;
       m_klast[p] = m_nk[p];
       // Read all depth for simplicity
@@ -609,7 +609,7 @@ void MaterialSfile::read_sfile() {
       }
     }
   } else {
-    for (int p = 0; p < m_npatches; p++) {
+    for (sw4_type p = 0; p < m_npatches; p++) {
       m_isempty[p] = true;
       m_ilast[p] = 0;
       m_jlast[p] = 0;
@@ -619,14 +619,14 @@ void MaterialSfile::read_sfile() {
       m_kfirst[p] = 1;
     }
   }
-  vector<int> isempty(m_npatches), isemptymin(m_npatches);
-  for (int p = 0; p < m_npatches; p++) isempty[p] = m_isempty[p];
-  MPI_Allreduce(&isempty[0], &isemptymin[0], m_npatches, MPI_INT, MPI_MIN,
+  vector<sw4_type> isempty(m_npatches), isemptymin(m_npatches);
+  for (sw4_type p = 0; p < m_npatches; p++) isempty[p] = m_isempty[p];
+  MPI_Allreduce(&isempty[0], &isemptymin[0], m_npatches, MPI_SW4_TYPE, MPI_MIN,
                 MPI_COMM_WORLD);
-  for (int p = 0; p < m_npatches; p++) m_isempty[p] = (isemptymin[p] == 1);
+  for (sw4_type p = 0; p < m_npatches; p++) m_isempty[p] = (isemptymin[p] == 1);
 
   // Allocate memory
-  for (int p = 0; p < m_npatches; p++) {
+  for (sw4_type p = 0; p < m_npatches; p++) {
     try {
       if (!m_isempty[p]) {
         mMaterial_rho[p].define(1, m_ifirst[p], m_ilast[p], m_jfirst[p],
@@ -656,26 +656,26 @@ void MaterialSfile::read_sfile() {
 
   bool roworder = true;
 
-  // Read interfaces
+  // Read sw4_typeerfaces
   hid_t topo_grp;
-  mInterface.resize(m_npatches + 1);
-  char intf_name[32];
+  mSw4_Typeerface.resize(m_npatches + 1);
+  char sw4_typef_name[32];
   void *in_data;
 
-  topo_grp = H5Gopen(file_id, "Z_interfaces", H5P_DEFAULT);
+  topo_grp = H5Gopen(file_id, "Z_sw4_typeerfaces", H5P_DEFAULT);
   ASSERT(topo_grp >= 0);
 
-  /* intf_start = MPI_Wtime(); */
-  for (int p = 0; p < m_npatches + 1; p++) {
-    sprintf(intf_name, "z_values_%d", p);
-    dataset_id = H5Dopen(topo_grp, intf_name, H5P_DEFAULT);
+  /* sw4_typef_start = MPI_Wtime(); */
+  for (sw4_type p = 0; p < m_npatches + 1; p++) {
+    sprintf(sw4_typef_name, "z_values_%d", p);
+    dataset_id = H5Dopen(topo_grp, sw4_typef_name, H5P_DEFAULT);
     ASSERT(dataset_id >= 0);
 
     filespace_id = H5Dget_space(dataset_id);
     H5Sget_simple_extent_dims(filespace_id, dim, NULL);
     H5Sclose(filespace_id);
 
-    mInterface[p].define(1, 1, (int)dim[0], 1, (int)dim[1], 1, 1);
+    mSw4_Typeerface[p].define(1, 1, (sw4_type)dim[0], 1, (sw4_type)dim[1], 1, 1);
 
     float *f_data = new float[dim[0] * dim[1]];
     double *d_data = new double[dim[0] * dim[1]];
@@ -683,7 +683,7 @@ void MaterialSfile::read_sfile() {
     if (p == 0) {
       // Get precision
       datatype_id = H5Dget_type(dataset_id);
-      prec = (int)H5Tget_size(datatype_id);
+      prec = (sw4_type)H5Tget_size(datatype_id);
       H5Tclose(datatype_id);
 
       if (prec == 4)
@@ -705,31 +705,31 @@ void MaterialSfile::read_sfile() {
     H5Dclose(dataset_id);
 
     if (prec == 4) {
-      mInterface[p].assign(f_data);
+      mSw4_Typeerface[p].assign(f_data);
     } else {
-      mInterface[p].assign(d_data);
+      mSw4_Typeerface[p].assign(d_data);
     }
 
-    /* printf("Rank %d: interface %d min = %.2f, max = %.2f\n", */
-    /*         mEW->getRank(), p,  mInterface[p].minimum(),
-     * mInterface[p].maximum()); */
+    /* printf("Rank %d: sw4_typeerface %d min = %.2f, max = %.2f\n", */
+    /*         mEW->getRank(), p,  mSw4_Typeerface[p].minimum(),
+     * mSw4_Typeerface[p].maximum()); */
 
-    if (roworder) mInterface[p].transposeik();
+    if (roworder) mSw4_Typeerface[p].transposeik();
 
     delete[] f_data;
     delete[] d_data;
   }
   H5Gclose(topo_grp);
-  /* intf_end = MPI_Wtime(); */
+  /* sw4_typef_end = MPI_Wtime(); */
 
   hid_t rho_id, cs_id, cp_id, qs_id, qp_id;
-  for (int p = 0; p < m_npatches; p++) {
+  for (sw4_type p = 0; p < m_npatches; p++) {
     if (!m_isempty[p]) {
-      int global[3] = {m_ni[p], m_nj[p], m_nk[p]};
-      int local[3] = {m_ilast[p] - m_ifirst[p] + 1,
+      sw4_type global[3] = {m_ni[p], m_nj[p], m_nk[p]};
+      sw4_type local[3] = {m_ilast[p] - m_ifirst[p] + 1,
                       m_jlast[p] - m_jfirst[p] + 1,
                       m_klast[p] - m_kfirst[p] + 1};
-      int start[3] = {m_ifirst[p] - 1, m_jfirst[p] - 1, m_kfirst[p] - 1};
+      sw4_type start[3] = {m_ifirst[p] - 1, m_jfirst[p] - 1, m_kfirst[p] - 1};
 
       /* // debug */
       /* printf("\nRank %d: start (%d, %d, %d), count (%d, %d, %d), global (%d,
@@ -765,7 +765,7 @@ void MaterialSfile::read_sfile() {
       }
 
       hsize_t /*h5_global[3], */ h5_count[3], h5_start[3];
-      for (int i = 0; i < 3; i++) {
+      for (sw4_type i = 0; i < 3; i++) {
         /* h5_global[i] = (hsize_t)global[i]; */
         h5_count[i] = (hsize_t)local[i];
         h5_start[i] = (hsize_t)start[i];
@@ -863,8 +863,8 @@ void MaterialSfile::read_sfile() {
 
   time_end = MPI_Wtime();
   if (mEW->getRank() == 0) {
-    /* cout << "MaterialSfile::read_sfile, time to read interface: " << intf_end
-     * - intf_start << " seconds." << endl; */
+    /* cout << "MaterialSfile::read_sfile, time to read sw4_typeerface: " << sw4_typef_end
+     * - sw4_typef_start << " seconds." << endl; */
     cout << "MaterialSfile::read_sfile, time to read material file: "
          << time_end - time_start << " seconds." << endl;
   }
@@ -877,12 +877,12 @@ void MaterialSfile::fill_in_fluids() {
   // Start from p=0
   // start from the last (bottom) block and progress upwards
   if (!m_outside) {
-    for (int p = m_npatches - 1; p >= 0; p--) {
+    for (sw4_type p = m_npatches - 1; p >= 0; p--) {
       if (!m_isempty[p]) {
 #pragma omp parallel for
-        for (int j = mMaterial_cs[p].m_jb; j <= mMaterial_cs[p].m_je; j++) {
-          for (int i = mMaterial_cs[p].m_ib; i <= mMaterial_cs[p].m_ie; i++) {
-            int k0 = mMaterial_cs[p].m_kb;
+        for (sw4_type j = mMaterial_cs[p].m_jb; j <= mMaterial_cs[p].m_je; j++) {
+          for (sw4_type i = mMaterial_cs[p].m_ib; i <= mMaterial_cs[p].m_ie; i++) {
+            sw4_type k0 = mMaterial_cs[p].m_kb;
             while (mMaterial_cs[p](1, i, j, k0) < 0 &&
                    k0 < mMaterial_cs[p].m_ke)
               k0++;
@@ -892,19 +892,19 @@ void MaterialSfile::fill_in_fluids() {
             if (mMaterial_cs[p](1, i, j, k0) < 0) {
               // get value from block p+1
               if (p < m_npatches - 1) {
-                int pd = p + 1, id, jd, kd;  // index of donor block
+                sw4_type pd = p + 1, id, jd, kd;  // index of donor block
                 float_sw4 xm = (i - 1) * m_hh[p];
                 float_sw4 ym = (j - 1) * m_hh[p];
                 // get closest (id,jd) index on patch pd
-                id = static_cast<int>(1 + trunc(xm / m_hh[pd]));
-                jd = static_cast<int>(1 + trunc(ym / m_hh[pd]));
+                id = static_cast<sw4_type>(1 + trunc(xm / m_hh[pd]));
+                jd = static_cast<sw4_type>(1 + trunc(ym / m_hh[pd]));
                 kd = mMaterial_cs[pd].m_kb;  // get value from top of block pd
 
                 if (!(id >= mMaterial_cs[pd].m_ib &&
                       id <= mMaterial_cs[pd].m_ie &&
                       jd >= mMaterial_cs[pd].m_jb &&
                       jd <= mMaterial_cs[pd].m_je)) {
-                  // out of bounds: find nearest interior point
+                  // out of bounds: find nearest sw4_typeerior point
                   if (id < mMaterial_cs[pd].m_ib) id = mMaterial_cs[pd].m_ib;
                   if (id > mMaterial_cs[pd].m_ie) id = mMaterial_cs[pd].m_ie;
                   if (jd < mMaterial_cs[pd].m_jb) jd = mMaterial_cs[pd].m_jb;
@@ -937,7 +937,7 @@ void MaterialSfile::fill_in_fluids() {
               }
             }
 
-            for (int k = mMaterial_cs[p].m_kb; k < k0; k++) {
+            for (sw4_type k = mMaterial_cs[p].m_kb; k < k0; k++) {
               mMaterial_rho[p](1, i, j, k) = mMaterial_rho[p](1, i, j, k0);
               mMaterial_cp[p](1, i, j, k) = mMaterial_cp[p](1, i, j, k0);
               mMaterial_cs[p](1, i, j, k) = mMaterial_cs[p](1, i, j, k0);
@@ -956,14 +956,14 @@ void MaterialSfile::fill_in_fluids() {
 
 //-----------------------------------------------------------------------
 void MaterialSfile::material_check(bool water) {
-  bool printsmallcpcs = false;
-  for (int p = 1; p < m_npatches; p++) {
+  bool prsw4_typesmallcpcs = false;
+  for (sw4_type p = 1; p < m_npatches; p++) {
     double csmin = 1e38, cpmin = 1e38, cratmin = 1e38, csmax = -1e38,
            cpmax = -1e38, cratmax = -1e38;
     double rhomin = 1e38, rhomax = -1e38;
-    for (int k = mMaterial_cs[p].m_kb; k <= mMaterial_cs[p].m_ke; k++)
-      for (int j = mMaterial_cs[p].m_jb; j <= mMaterial_cs[p].m_je; j++)
-        for (int i = mMaterial_cs[p].m_ib; i <= mMaterial_cs[p].m_ie; i++) {
+    for (sw4_type k = mMaterial_cs[p].m_kb; k <= mMaterial_cs[p].m_ke; k++)
+      for (sw4_type j = mMaterial_cs[p].m_jb; j <= mMaterial_cs[p].m_je; j++)
+        for (sw4_type i = mMaterial_cs[p].m_ib; i <= mMaterial_cs[p].m_ie; i++) {
           if (water || mMaterial_cs[p](1, i, j, k) != -999) {
             if (mMaterial_rho[p](1, i, j, k) < rhomin)
               rhomin = mMaterial_rho[p](1, i, j, k);
@@ -981,7 +981,7 @@ void MaterialSfile::material_check(bool water) {
                 mMaterial_cp[p](1, i, j, k) / mMaterial_cs[p](1, i, j, k);
             if (crat < cratmin) {
               cratmin = crat;
-              if (printsmallcpcs && crat < 1.41) {
+              if (prsw4_typesmallcpcs && crat < 1.41) {
                 cout << "crat= " << crat << " at " << i << " " << j << " " << k
                      << endl;
                 cout << " material is " << mMaterial_rho[p](1, i, j, k) << " "
@@ -999,7 +999,7 @@ void MaterialSfile::material_check(bool water) {
     double cminstot[4], cmaxstot[4];
     MPI_Reduce(cmins, cminstot, 4, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(cmaxs, cmaxstot, 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    int myid;
+    sw4_type myid;
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
     if (myid == 0)
     //	 if( mEW->getRank()==0 )

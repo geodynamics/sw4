@@ -22,10 +22,10 @@ struct global_variable_holder_struct global_variables = {0, 0, 0, 0, 0, 0,
                                                          0, 1, 0, 0, 0, 0};
 using namespace std;
 
-int presetGPUID(int mpi_rank, int local_rank, int local_size) {
-  int dev_counts_local[256] = {0};
-  int dev_counts_global[256] = {0};
-  int device = 0;
+sw4_type presetGPUID(sw4_type mpi_rank, sw4_type local_rank, sw4_type local_size) {
+  sw4_type dev_counts_local[256] = {0};
+  sw4_type dev_counts_global[256] = {0};
+  sw4_type device = 0;
   // SW4_CheckDeviceError(cudaErrorStartupFailure); // For testing code in
   // CheckError
 #if defined(ENABLE_GPU_ERROR)
@@ -43,12 +43,12 @@ int presetGPUID(int mpi_rank, int local_rank, int local_size) {
 #endif  // USE_MAGMA
 
 #ifdef ENABLE_CUDA
-  int devices_per_node = 4;
+  sw4_type devices_per_node = 4;
   SW4_CheckDeviceError(cudaGetDeviceCount(&devices_per_node));
   global_variables.num_devices = devices_per_node;
   if (devices_per_node > 1) {
     // char *crank = getenv("SLURM_LOCALID");
-    // int device = atoi(crank) % devices_per_node;
+    // sw4_type device = atoi(crank) % devices_per_node;
     if (local_size == devices_per_node) {
       device = local_rank;
     } else {
@@ -78,7 +78,7 @@ int presetGPUID(int mpi_rank, int local_rank, int local_size) {
 #endif  // ENDIF ENABLE_CUDA
 
 #ifdef ENABLE_HIP
-  int devices_per_node = 4;
+  sw4_type devices_per_node = 4;
   SW4_CheckDeviceError(hipGetDeviceCount(&devices_per_node));
   //printf("Number of devices is %d\n", devices_per_node);
   fflush(stdout);
@@ -87,7 +87,7 @@ int presetGPUID(int mpi_rank, int local_rank, int local_size) {
     // char *crank = getenv("SLURM_LOCALID");
     // printf("Return from GETENV IS %s\n", crank);
     // fflush(stdout);
-    // int device = atoi(crank) % devices_per_node;
+    // sw4_type device = atoi(crank) % devices_per_node;
     // device = mpi_rank % devices_per_node;
     if (local_size == devices_per_node) {
       device = local_rank;
@@ -104,10 +104,10 @@ int presetGPUID(int mpi_rank, int local_rank, int local_size) {
   }
 #endif  // ENDIF ENABLE_HIP
   dev_counts_local[device] = 1;
-  MPI_Reduce(dev_counts_local, dev_counts_global, devices_per_node, MPI_INT,
+  MPI_Reduce(dev_counts_local, dev_counts_global, devices_per_node, MPI_SW4_TYPE,
              MPI_SUM, 0, MPI_COMM_WORLD);
   if (!mpi_rank)
-    for (int i = 0; i < devices_per_node; i++)
+    for (sw4_type i = 0; i < devices_per_node; i++)
       if (dev_counts_global[i] != 0)
         std::cout << "Device " << i << " used by " << dev_counts_global[i]
                   << " ranks \n";
@@ -118,7 +118,7 @@ int presetGPUID(int mpi_rank, int local_rank, int local_size) {
 
 typedef struct {
   const char *file;
-  int line;
+  sw4_type line;
   size_t size;
   Space type;
 } pattr_t;
@@ -150,14 +150,14 @@ void check_mem() {
       std::max((mtotal - mfree), global_variables.gpu_memory_hwm);
 }
 
-void print_hwm(int rank) {
-  const int allocator_count = 3;
+void prsw4_type_hwm(sw4_type rank) {
+  const sw4_type allocator_count = 3;
   long long host_mem_used = 0;
 #ifdef SW4_CPU_HWM
   host_mem_used = node_mem();
 #endif
 #if defined(ENABLE_CUDA) || defined(ENABLE_HIP)
-  // std::cout<<"PRINT_HWM"<<std::flush;
+  // std::cout<<"PRSW4_TYPE_HWM"<<std::flush;
   float hwm_local[allocator_count + 2], hwm_global[allocator_count + 2],
       hwm_global_min[allocator_count + 2];
 #ifdef SW4_USE_UMPIRE
@@ -174,7 +174,7 @@ void print_hwm(int rank) {
                      .getHighWatermark() /
                  1024.0 / 1024.0 / 1024.0;
   hwm_local[allocator_count] = 0;
-  for (int i = 0; i < allocator_count; i++)
+  for (sw4_type i = 0; i < allocator_count; i++)
     hwm_local[allocator_count] += hwm_local[i];
 
   hwm_local[allocator_count + 1] =
@@ -197,7 +197,7 @@ void print_hwm(int rank) {
   MPI_Reduce(&hwm_local[allocator_count], &hwm_total, 1, MPI_FLOAT, MPI_SUM, 0,
              MPI_COMM_WORLD);
   if (!rank) {
-    for (int i = 0; i < allocator_count; i++) {
+    for (sw4_type i = 0; i < allocator_count; i++) {
       std::cerr << std::setprecision(2) << i << " MIN Global Device HWM is "
                 << hwm_global_min[i] << " GB\n";
       std::cerr << i << " MAX Global Device HWM is " << hwm_global[i]
@@ -217,7 +217,7 @@ void print_hwm(int rank) {
     std::cout << " Total device memory used " << hwm_total << " GB\n";
   }
 
-  // umpire::util::StatisticsDatabase::getDatabase()->printStatistics(std::cout);
+  // umpire::util::StatisticsDatabase::getDatabase()->prsw4_typeStatistics(std::cout);
   if (Managed::hwm > 0) {
     std::cerr << "Space::Managed object count & HWM are " << Managed::ocount
               << " & " << Managed::hwm << " Size = "
@@ -229,7 +229,7 @@ void print_hwm(int rank) {
                  "the simulation\n";
     // std::cout<<" ~HOST MEM MAX
     // "<<global_variables.host_mem_hwm/1024.0/1024.0<<" MB\n";
-    // std::cout<<"PRINT_HWM DONE"<<std::flush;
+    // std::cout<<"PRSW4_TYPE_HWM DONE"<<std::flush;
 #endif  // ENABLE_CUDA
 }
 void *operator new(std::size_t size, Space loc) throw() {
@@ -307,7 +307,7 @@ void *operator new(std::size_t size, Space loc) throw() {
     return ::operator new(size, Space::Managed);
 #endif
   } else {
-    std::cerr << "Unknown memory space for allocation request 0 " << as_int(loc)
+    std::cerr << "Unknown memory space for allocation request 0 " << as_sw4_type(loc)
               << "\n";
     // throw std::bad_alloc();
     abort();
@@ -327,7 +327,7 @@ void *operator new(std::size_t size, Space loc) throw() {
   }
 #endif  // ENABE_GPU
 }
-void *operator new(std::size_t size, Space loc, char *file, int line) throw() {
+void *operator new(std::size_t size, Space loc, char *file, sw4_type line) throw() {
   SW4_MARK_FUNCTION;
   std::cout << "Calling tracking new from " << line << " of " << file << "\n";
   pattr_t *ss = new pattr_t;
@@ -410,7 +410,7 @@ void *operator new[](std::size_t size, Space loc) throw() {
 #endif
   } else {
     // cudaHostAlloc(&ptr,size+sizeof(size_t)*MEM_PAD_LEN,cudaHostAllocMapped));
-    std::cerr << "Unknown memory space for allocation request  2" << as_int(loc)
+    std::cerr << "Unknown memory space for allocation request  2" << as_sw4_type(loc)
               << "\n";
     abort();
     // throw std::bad_alloc();
@@ -425,13 +425,13 @@ void *operator new[](std::size_t size, Space loc) throw() {
     // std::cout<<"Calling my placement new \n";
     return ::operator new(size);
   } else {
-    std::cerr << "Unknown memory space for allocation request 3" << as_int(loc)
+    std::cerr << "Unknown memory space for allocation request 3" << as_sw4_type(loc)
               << "\n";
     throw std::bad_alloc();
   }
 #endif  // ENABLE_GPU
 }
-void *operator new[](std::size_t size, Space loc, const char *file, int line) {
+void *operator new[](std::size_t size, Space loc, const char *file, sw4_type line) {
   SW4_MARK_FUNCTION;
   //  std::cout<<"Calling tracking new from "<<line<<" of "<<file<<"\n";
   pattr_t *ss = new pattr_t;
@@ -494,7 +494,7 @@ void operator delete(void *ptr, Space loc) throw() {
     ::operator delete(ptr);
   } else {
     std::cerr << "Unknown memory space for de-allocation request "
-              << as_int(loc) << "\n";
+              << as_sw4_type(loc) << "\n";
   }
 #endif
 }
@@ -513,7 +513,7 @@ void operator delete[](void *ptr, Space loc) throw() {
       std::cerr << "Null pointer passed to freee \n";
     } else {
       if (GML(ptr) != Space::Managed) {
-        std::cerr << " Wrong space " << as_int(GML(ptr)) << " " << ptr << "\n";
+        std::cerr << " Wrong space " << as_sw4_type(GML(ptr)) << " " << ptr << "\n";
         abort();
       } else {
         SW4_CheckDeviceError(SW4_FREE_MANAGED(ptr));
@@ -548,7 +548,7 @@ void operator delete[](void *ptr, Space loc) throw() {
 #endif
   } else {
     std::cerr << "Unknown memory space for de-allocation request "
-              << as_int(loc) << "\n";
+              << as_sw4_type(loc) << "\n";
     abort();
   }
 #else
@@ -561,65 +561,65 @@ void operator delete[](void *ptr, Space loc) throw() {
     ::operator delete(ptr);
   } else {
     std::cerr << "Unknown memory space for de-allocation request "
-              << as_int(loc) << "\n";
+              << as_sw4_type(loc) << "\n";
     abort();
   }
 #endif
 }
 
-void operator delete(void *ptr, Space loc, const char *file, int line) throw() {
+void operator delete(void *ptr, Space loc, const char *file, sw4_type line) throw() {
   ::operator delete(ptr, loc);
 }
 void operator delete[](void *ptr, Space loc, const char *file,
-                       int line) throw() {
+                       sw4_type line) throw() {
   ::operator delete[](ptr, loc);
 }
 
 #if defined(SW4_TRACK_MEMORY_ALLOCATIONS)
-void assert_check_managed(void *ptr, const char *file, int line) {
+void assert_check_managed(void *ptr, const char *file, sw4_type line) {
   if (ptr == NULL) return;
   pattr_t *ss = patpush(ptr, NULL);
   if (ss != NULL) {
     if (ss->type != Space::Managed) {
       std::cerr << "ASSERT_MANAGED FAILURE in line" << line << " of file "
-                << file << "type = " << as_int(ss->type) << "pointer  =" << ptr
+                << file << "type = " << as_sw4_type(ss->type) << "pointer  =" << ptr
                 << "\n";
       std::cerr << "ASSERT_MANAGED failed on allocation from line" << ss->line
                 << "of " << ss->file << "\n";
     }
   } else {
     std::cerr << "ASSERT_MANAGED FAILURE in line" << line << " of file " << file
-              << "type = " << as_int(ss->type) << "pointer  =" << ptr << "\n";
+              << "type = " << as_sw4_type(ss->type) << "pointer  =" << ptr << "\n";
     std::cerr << "No info in map\n Use PointerAttributes\n";
-    // printf("Address not in map\n Calling PrintPointerAttributes\n");
+    // printf("Address not in map\n Calling Prsw4_typePointerAttributes\n");
     // if ( PointerAttributes(ptr)!=HYPRE_MANAGED_POINTER){
     // fprintf(stderr,"ASSERT_MANAGED FAILURE in line %d of file %s \n NO
     // ALLOCATION INFO\n",line,file);
     //}
   }
 }
-void assert_check_host(void *ptr, const char *file, int line) {
+void assert_check_host(void *ptr, const char *file, sw4_type line) {
   if (ptr == NULL) return;
   pattr_t *ss = patpush(ptr, NULL);
   if (ss != NULL) {
     if (ss->type != Space::Host) {
       std::cerr << "ASSERT_HOST FAILURE in line" << line << " of file " << file
-                << "type = " << as_int(ss->type) << "pointer  =" << ptr << "\n";
+                << "type = " << as_sw4_type(ss->type) << "pointer  =" << ptr << "\n";
       std::cerr << "ASSERT_HOST failed on allocation from line" << ss->line
                 << "of " << ss->file << "\n";
     }
   } else {
     std::cerr << "ASSERT_HOST FAILURE in line" << line << " of file " << file
-              << "type = " << as_int(ss->type) << "pointer  =" << ptr << "\n";
+              << "type = " << as_sw4_type(ss->type) << "pointer  =" << ptr << "\n";
     std::cerr << "Ptr not in map\n Use PointerAttribs or somesuch\n";
-    // printf("Address not in map\n Calling PrintPointerAttributes\n");
+    // printf("Address not in map\n Calling Prsw4_typePointerAttributes\n");
     // if ( PointerAttributes(ptr)!=HYPRE_HOST_POINTER){
     // 	fprintf(stderr,"ASSERT_HOST FAILURE in line %d of file %s \n NO
     // ALLOCATION INFO\n",line,file);
     // }
   }
 }
-void ptr_push(void *ptr, Space type, size_t size, const char *file, int line) {
+void ptr_push(void *ptr, Space type, size_t size, const char *file, sw4_type line) {
   pattr_t *ss = new pattr_t;
   ss->file = file;
   ss->line = line;
@@ -659,7 +659,7 @@ void prefetch_to_device(const float_sw4 *ptr) {
 }
 
 void CheckError(cudaError_t const err, const char *file, char const *const fun,
-                const int line) {
+                const sw4_type line) {
   if (err) {
     std::cerr << "CUDA Error Code[" << err << "]: " << cudaGetErrorString(err)
               << " " << file << " " << fun << " Line number:  " << line << "\n"
@@ -691,7 +691,7 @@ void prefetch_to_device(const float_sw4 *ptr) {
 }
 
 void CheckError(hipError_t const err, const char *file, char const *const fun,
-                const int line) {
+                const sw4_type line) {
   if (err) {
     std::cerr << "HIP Error Code[" << err << "]: " << hipGetErrorString(err)
               << " " << file << " " << fun << " Line number:  " << line << "\n"
@@ -784,30 +784,30 @@ size_t Managed::hwm = 0;
 #if defined(SW4_TRACK_MEMORY_ALLOCATIONS)
 // AUTOPEEL uses getsize which only works when SW4_TRACK_MEMORY_ALLOCATIONS is
 // defined
-std::string line(int n, int C) {
+std::string line(sw4_type n, sw4_type C) {
   std::ostringstream buf;
-  buf << "int arg" << C << " = " << n << ";\n";
+  buf << "sw4_type arg" << C << " = " << n << ";\n";
   return buf.str();
 }
-std::string line(int *n, int C) {
+std::string line(sw4_type *n, sw4_type C) {
   std::ostringstream buf;
-  buf << "int arg" << C << "[6]={";
-  for (int i = 0; i < 5; i++) buf << n[i] << ",";
+  buf << "sw4_type arg" << C << "[6]={";
+  for (sw4_type i = 0; i < 5; i++) buf << n[i] << ",";
   buf << n[5] << "};\n";
   return buf.str();
 }
-std::string line(double n, int C) {
+std::string line(double n, sw4_type C) {
   std::ostringstream buf;
   buf << "double arg" << C << " = " << n << ";\n";
   return buf.str();
 }
-std::string line(double *n, int C) {
+std::string line(double *n, sw4_type C) {
   std::ostringstream buf;
   buf << "double *arg" << C << ";\n cudaMallocManaged((void*)&arg" << C << ","
       << getsize((void **)n) << ");\n";
   return buf.str();
 }
-std::string line(char n, int C) {
+std::string line(char n, sw4_type C) {
   std::ostringstream buf;
   buf << "char arg" << C << " = \"" << n << "\";\n";
   return buf.str();
@@ -816,11 +816,11 @@ std::string line(char n, int C) {
 Apc::Apc(char *s) {
   counter = 0;
   ofile.open(s, std::ios::out);
-  ofile << "int main(int argc, char *argv[]){\n";
+  ofile << "sw4_type main(sw4_type argc, char *argv[]){\n";
 }
 Apc::~Apc() {
   ofile << "FUNCTION(";
-  for (int i = 0; i < counter; i++) ofile << "arg" << i << ",";
+  for (sw4_type i = 0; i < counter; i++) ofile << "arg" << i << ",";
   ofile << "arg" << counter << ");\n";
   ofile << "}\n";
   ofile.close();
@@ -831,7 +831,7 @@ Apc::~Apc() {
 void global_prefetch() {
 #if defined(ENABLE_CUDA)
 #ifdef SW4_MASS_PREFETCH
-  int count = 0;
+  sw4_type count = 0;
   std::vector<std::string> allocators = {"UM_pool", "UM_pool_temps",
                                          "UM_object_pool"};
   for (auto v : global_variables.massprefetch) {
@@ -857,15 +857,15 @@ void global_prefetch() {
 
 #endif  // ENABLE_CUDA
 }
-std::vector<int> factors(int N) {
-  std::vector<int> v;
-  for (int i = 1; i <= N; i++)
+std::vector<sw4_type> factors(sw4_type N) {
+  std::vector<sw4_type> v;
+  for (sw4_type i = 1; i <= N; i++)
     if (N % i == 0) v.push_back(i);
   return v;
 }
-std::vector<int> factors(int N, int start) {
-  std::vector<int> v;
-  for (int i = start; i <= N; i++)
+std::vector<sw4_type> factors(sw4_type N, sw4_type start) {
+  std::vector<sw4_type> v;
+  for (sw4_type i = start; i <= N; i++)
     if (N % i == 0) v.push_back(i);
   return v;
 }
@@ -910,13 +910,13 @@ Space GML(const void *ptr) {
 }
 #endif
 
-void invert(float_sw4 *A, int msize) {
+void invert(float_sw4 *A, sw4_type msize) {
   float_sw4 B[9];
 
 #define M(i, j, d) A[(d * 9) + (i - 1) + (j - 1) * 3]
 #define I(i, j) B[(j - 1) + (i - 1) * 3]
 
-  for (int c = 0; c < msize; c++) {
+  for (sw4_type c = 0; c < msize; c++) {
     float_sw4 dA = M(1, 1, c) * M(2, 2, c) * M(3, 3, c) +
                    M(1, 2, c) * M(2, 3, c) * M(3, 1, c) +
                    M(1, 3, c) * M(2, 1, c) * M(3, 2, c) -
@@ -939,18 +939,18 @@ void invert(float_sw4 *A, int msize) {
 #ifdef DEBUG
     float_sw4 Prod[9];
 #define P(i, j) Prod[(j - 1) + (i - 1) * 3]
-    for (int i = 1; i < 4; i++) {
-      for (int j = 1; j < 4; j++) {
+    for (sw4_type i = 1; i < 4; i++) {
+      for (sw4_type j = 1; j < 4; j++) {
         float_sw4 sum = 0.0;
-        for (int k = 1; k < 4; k++) {
+        for (sw4_type k = 1; k < 4; k++) {
           sum += M(i, k, c) * I(k, j);
         }
         P(i, j) = sum / dA;
       }
     }
 
-    for (int i = 1; i < 4; i++) {
-      for (int j = 1; j < 4; j++) {
+    for (sw4_type i = 1; i < 4; i++) {
+      for (sw4_type j = 1; j < 4; j++) {
         std::cout << P(i, j) << ",";
       }
       std::cout << "\n";
@@ -958,8 +958,8 @@ void invert(float_sw4 *A, int msize) {
     std::cout << "_______________________\n";
 #endif
 
-    for (int i = 1; i < 4; i++) {
-      for (int j = 1; j < 4; j++) {
+    for (sw4_type i = 1; i < 4; i++) {
+      for (sw4_type j = 1; j < 4; j++) {
         M(j, i, c) = I(i, j) / dA;
       }
     }

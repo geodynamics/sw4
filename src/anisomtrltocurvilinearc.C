@@ -33,8 +33,8 @@
 #include "EW.h"
 
 //-----------------------------------------------------------------------
-void EW::anisomtrltocurvilinear_ci(int ifirst, int ilast, int jfirst, int jlast,
-                                   int kfirst, int klast,
+void EW::anisomtrltocurvilinear_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                                   sw4_type kfirst, sw4_type klast,
                                    float_sw4* __restrict__ a_met,
                                    float_sw4* __restrict__ a_c,
                                    float_sw4* __restrict__ a_cnew) {
@@ -63,7 +63,7 @@ void EW::anisomtrltocurvilinear_ci(int ifirst, int ilast, int jfirst, int jlast,
   //*
   //* The input Cartesian stress tensor has 21 elements, these are assumed
   // enumerated
-  //* in the non-standard way used internally in SW4.
+  //* in the non-standard way used sw4_typeernally in SW4.
   //*
   //* The output stress tensor has 45 elements. These are ordered according to
   //*  A11=[c1 c2 c3]  A22=[c7 c8 c9  ]  A33=[c13 c14 c15]  A21=[c19 c20 c21]
@@ -86,10 +86,10 @@ void EW::anisomtrltocurvilinear_ci(int ifirst, int ilast, int jfirst, int jlast,
   //*  transposing A21, A31, and A32 respectively.
   //*********************************************************************
 
-  const int ni = ilast - ifirst + 1;
-  const int nij = ni * (jlast - jfirst + 1);
-  const int nijk = nij * (klast - kfirst + 1);
-  const int base = -(ifirst + ni * jfirst + nij * kfirst) - nijk;
+  const sw4_type ni = ilast - ifirst + 1;
+  const sw4_type nij = ni * (jlast - jfirst + 1);
+  const sw4_type nijk = nij * (klast - kfirst + 1);
+  const sw4_type base = -(ifirst + ni * jfirst + nij * kfirst) - nijk;
 
 #define cind(i1, i2, i3, i4) \
   _cind[i1 - 1 + 3 * (i2 - 1) + 9 * (i3 - 1) + 27 * (i4 - 1)]
@@ -97,7 +97,7 @@ void EW::anisomtrltocurvilinear_ci(int ifirst, int ilast, int jfirst, int jlast,
 #define c(m, i, j, k) a_c[base + (i) + ni * (j) + nij * (k) + nijk * (m)]
 #define cnew(m, i, j, k) a_cnew[base + (i) + ni * (j) + nij * (k) + nijk * (m)]
 #define mder(i1, i2) _mder[i1 - 1 + 3 * (i2 - 1)]
-  int _cind[81];
+  sw4_type _cind[81];
 
   // xx-matrix
   cind(1, 1, 1, 1) = 1;
@@ -142,8 +142,8 @@ void EW::anisomtrltocurvilinear_ci(int ifirst, int ilast, int jfirst, int jlast,
   cind(3, 1, 1, 2) = 8;
   cind(3, 2, 1, 2) = 13;
   cind(3, 3, 1, 2) = 14;
-  for (int j = 1; j <= 3; j++)
-    for (int i = 1; i <= 3; i++) cind(i, j, 2, 1) = cind(j, i, 1, 2);
+  for (sw4_type j = 1; j <= 3; j++)
+    for (sw4_type i = 1; i <= 3; i++) cind(i, j, 2, 1) = cind(j, i, 1, 2);
 
   // zx-matrix
   cind(1, 1, 1, 3) = 3;
@@ -155,8 +155,8 @@ void EW::anisomtrltocurvilinear_ci(int ifirst, int ilast, int jfirst, int jlast,
   cind(3, 1, 1, 3) = 12;
   cind(3, 2, 1, 3) = 14;
   cind(3, 3, 1, 3) = 15;
-  for (int j = 1; j <= 3; j++)
-    for (int i = 1; i <= 3; i++) cind(i, j, 3, 1) = cind(j, i, 1, 3);
+  for (sw4_type j = 1; j <= 3; j++)
+    for (sw4_type i = 1; i <= 3; i++) cind(i, j, 3, 1) = cind(j, i, 1, 3);
 
   // zy-matrix
   cind(1, 1, 2, 3) = 8;
@@ -168,16 +168,16 @@ void EW::anisomtrltocurvilinear_ci(int ifirst, int ilast, int jfirst, int jlast,
   cind(3, 1, 2, 3) = 14;
   cind(3, 2, 2, 3) = 19;
   cind(3, 3, 2, 3) = 20;
-  for (int j = 1; j <= 3; j++)
-    for (int i = 1; i <= 3; i++) cind(i, j, 3, 2) = cind(j, i, 2, 3);
+  for (sw4_type j = 1; j <= 3; j++)
+    for (sw4_type i = 1; i <= 3; i++) cind(i, j, 3, 2) = cind(j, i, 2, 3);
 
 #pragma omp parallel
   {
     float_sw4 _mder[9];
 #pragma omp for
-    for (int ks = kfirst; ks <= klast; ks++)
-      for (int js = jfirst; js <= jlast; js++)
-        for (int is = ifirst; is <= ilast; is++) {
+    for (sw4_type ks = kfirst; ks <= klast; ks++)
+      for (sw4_type js = jfirst; js <= jlast; js++)
+        for (sw4_type is = ifirst; is <= ilast; is++) {
           // General expression for metric. Input a full 3x3 mder-matrix instead
           // of met will work for general curvilinear grids.
           mder(1, 1) = met(1, is, js, ks);
@@ -189,15 +189,15 @@ void EW::anisomtrltocurvilinear_ci(int ifirst, int ilast, int jfirst, int jlast,
           mder(3, 1) = 0;
           mder(3, 2) = 0;
           mder(3, 3) = met(4, is, js, ks);
-          int i45 = 1;
-          int k = 1;
-          int l = 1;
+          sw4_type i45 = 1;
+          sw4_type k = 1;
+          sw4_type l = 1;
           // matrix A in (A u_x)_x
-          for (int n = 1; n <= 3; n++)
-            for (int p = n; p <= 3; p++) {
+          for (sw4_type n = 1; n <= 3; n++)
+            for (sw4_type p = n; p <= 3; p++) {
               cnew(i45, is, js, ks) = 0;
-              for (int j = 1; j <= 3; j++)
-                for (int i = 1; i <= 3; i++) {
+              for (sw4_type j = 1; j <= 3; j++)
+                for (sw4_type i = 1; i <= 3; i++) {
                   cnew(i45, is, js, ks) =
                       cnew(i45, is, js, ks) +
                       c(cind(n, p, i, j), is, js, ks) * mder(i, k) * mder(j, l);
@@ -207,11 +207,11 @@ void EW::anisomtrltocurvilinear_ci(int ifirst, int ilast, int jfirst, int jlast,
           k = 2;
           l = 2;
           // matrix A in (A u_y)_y
-          for (int n = 1; n <= 3; n++)
-            for (int p = n; p <= 3; p++) {
+          for (sw4_type n = 1; n <= 3; n++)
+            for (sw4_type p = n; p <= 3; p++) {
               cnew(i45, is, js, ks) = 0;
-              for (int j = 1; j <= 3; j++)
-                for (int i = 1; i <= 3; i++)
+              for (sw4_type j = 1; j <= 3; j++)
+                for (sw4_type i = 1; i <= 3; i++)
                   cnew(i45, is, js, ks) =
                       cnew(i45, is, js, ks) +
                       c(cind(n, p, i, j), is, js, ks) * mder(i, k) * mder(j, l);
@@ -220,11 +220,11 @@ void EW::anisomtrltocurvilinear_ci(int ifirst, int ilast, int jfirst, int jlast,
           k = 3;
           l = 3;
           //   matrix A in (A u_z)_z
-          for (int n = 1; n <= 3; n++)
-            for (int p = n; p <= 3; p++) {
+          for (sw4_type n = 1; n <= 3; n++)
+            for (sw4_type p = n; p <= 3; p++) {
               cnew(i45, is, js, ks) = 0;
-              for (int j = 1; j <= 3; j++)
-                for (int i = 1; i <= 3; i++)
+              for (sw4_type j = 1; j <= 3; j++)
+                for (sw4_type i = 1; i <= 3; i++)
                   cnew(i45, is, js, ks) =
                       cnew(i45, is, js, ks) +
                       c(cind(n, p, i, j), is, js, ks) * mder(i, k) * mder(j, l);
@@ -233,11 +233,11 @@ void EW::anisomtrltocurvilinear_ci(int ifirst, int ilast, int jfirst, int jlast,
           k = 1;
           l = 2;
           // matrix A in (A u_y)_x
-          for (int n = 1; n <= 3; n++)
-            for (int p = 1; p <= 3; p++) {
+          for (sw4_type n = 1; n <= 3; n++)
+            for (sw4_type p = 1; p <= 3; p++) {
               cnew(i45, is, js, ks) = 0;
-              for (int j = 1; j <= 3; j++)
-                for (int i = 1; i <= 3; i++)
+              for (sw4_type j = 1; j <= 3; j++)
+                for (sw4_type i = 1; i <= 3; i++)
                   cnew(i45, is, js, ks) =
                       cnew(i45, is, js, ks) +
                       c(cind(n, p, i, j), is, js, ks) * mder(i, k) * mder(j, l);
@@ -246,11 +246,11 @@ void EW::anisomtrltocurvilinear_ci(int ifirst, int ilast, int jfirst, int jlast,
           k = 1;
           l = 3;
           // matrix A in (A u_z)_x
-          for (int n = 1; n <= 3; n++)
-            for (int p = 1; p <= 3; p++) {
+          for (sw4_type n = 1; n <= 3; n++)
+            for (sw4_type p = 1; p <= 3; p++) {
               cnew(i45, is, js, ks) = 0;
-              for (int j = 1; j <= 3; j++)
-                for (int i = 1; i <= 3; i++)
+              for (sw4_type j = 1; j <= 3; j++)
+                for (sw4_type i = 1; i <= 3; i++)
                   cnew(i45, is, js, ks) =
                       cnew(i45, is, js, ks) +
                       c(cind(n, p, i, j), is, js, ks) * mder(i, k) * mder(j, l);
@@ -259,11 +259,11 @@ void EW::anisomtrltocurvilinear_ci(int ifirst, int ilast, int jfirst, int jlast,
           k = 2;
           l = 3;
           // matrix A in (A u_z)_y
-          for (int n = 1; n <= 3; n++)
-            for (int p = 1; p <= 3; p++) {
+          for (sw4_type n = 1; n <= 3; n++)
+            for (sw4_type p = 1; p <= 3; p++) {
               cnew(i45, is, js, ks) = 0;
-              for (int j = 1; j <= 3; j++)
-                for (int i = 1; i <= 3; i++)
+              for (sw4_type j = 1; j <= 3; j++)
+                for (sw4_type i = 1; i <= 3; i++)
                   cnew(i45, is, js, ks) =
                       cnew(i45, is, js, ks) +
                       c(cind(n, p, i, j), is, js, ks) * mder(i, k) * mder(j, l);

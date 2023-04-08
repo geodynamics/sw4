@@ -40,10 +40,10 @@
 #include "sw4.h"
 // 90 GB/s on V100 !! with 16 4 4
 // 500 GBs on V100 with 16 16 4. But this is slower fro long runs !!
-void memvar_pred_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, float_sw4* __restrict__ alp,
+void memvar_pred_fort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ alp,
                          float_sw4* __restrict__ alm, float_sw4* __restrict__ u,
-                         float_sw4 omega, float_sw4 dt, int domain) {
+                         float_sw4 omega, float_sw4 dt, sw4_type domain) {
   SW4_MARK_FUNCTION;
   //***********************************************************************
   //***
@@ -58,7 +58,7 @@ void memvar_pred_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   float_sw4 dto = dt * omega;
   float_sw4 icp = 1 / (1.0 / 2 + 1 / (2 * dto));
   float_sw4 cm = 0.5 - 1 / (2 * dto);
-  int k1, k2;
+  sw4_type k1, k2;
   if (domain == 0) {
     k1 = kfirst;
     k2 = klast;
@@ -72,12 +72,12 @@ void memvar_pred_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t ni = ilast - ifirst + 1;
   const size_t nij = ni * (jlast - jfirst + 1);
   const size_t nijk = nij * (klast - kfirst + 1);
-  const int base = -ifirst - ni * jfirst - nij * kfirst;
-  //    for( int c=0 ; c < 3 ;c++)
+  const sw4_type base = -ifirst - ni * jfirst - nij * kfirst;
+  //    for( sw4_type c=0 ; c < 3 ;c++)
   // #pragma omp parallel for
-  //       for( int k=k1 ; k <= k2 ; k++)
-  // 	 for( int j=jfirst ; j<= jlast; j++ )
-  // 	    for( int i=ifirst ; i<= ilast; i++ )
+  //       for( sw4_type k=k1 ; k <= k2 ; k++)
+  // 	 for( sw4_type j=jfirst ; j<= jlast; j++ )
+  // 	    for( sw4_type i=ifirst ; i<= ilast; i++ )
   // 	    {
 
   ASSERT_MANAGED(alp);
@@ -97,15 +97,15 @@ void memvar_pred_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   Range<16> I(ifirst, ilast + 1);
   Range<4> J(jfirst, jlast + 1);
   Range<4> K(k1, k2 + 1);
-  forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+  forall3async(I, J, K, [=] RAJA_DEVICE(sw4_type i, sw4_type j, sw4_type k) {
 #else
   RAJA::kernel<MPFC_POL_ASYNC>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
     size_t ind = base + i + ni * j + nij * k;
 #pragma unroll 3
-    for (int c = 0; c < 3; c++)
+    for (sw4_type c = 0; c < 3; c++)
       alp[ind + c * nijk] =
           icp * (-cm * alm[ind + c * nijk] + u[ind + c * nijk]);
   });  // SYNC_STREAM;
@@ -115,12 +115,12 @@ void memvar_pred_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
 
 //-----------------------------------------------------------------------
 // 618 Gb/s on V100
-void memvar_corr_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
-                         int kfirst, int klast, float_sw4* __restrict__ alp,
+void memvar_corr_fort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                         sw4_type kfirst, sw4_type klast, float_sw4* __restrict__ alp,
                          float_sw4* __restrict__ alm,
                          float_sw4* __restrict__ up, float_sw4* __restrict__ u,
                          float_sw4* __restrict__ um, float_sw4 omega,
-                         float_sw4 dt, int domain) {
+                         float_sw4 dt, sw4_type domain) {
   SW4_MARK_FUNCTION;
   //***********************************************************************
   //***
@@ -139,7 +139,7 @@ void memvar_corr_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   float_sw4 icp = 1 / (0.5 + 1 / (2 * dto) + dto / 4 + dto * dto / 12);
   float_sw4 cm = 1 / (2 * dto) + dto / 4 - 0.5 - dto * dto / 12;
 
-  int k1, k2;
+  sw4_type k1, k2;
   if (domain == 0) {
     k1 = kfirst;
     k2 = klast;
@@ -153,12 +153,12 @@ void memvar_corr_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   const size_t ni = ilast - ifirst + 1;
   const size_t nij = ni * (jlast - jfirst + 1);
   const size_t nijk = nij * (klast - kfirst + 1);
-  const int base = -ifirst - ni * jfirst - nij * kfirst;
-  //    for( int c=0 ; c < 3 ;c++)
+  const sw4_type base = -ifirst - ni * jfirst - nij * kfirst;
+  //    for( sw4_type c=0 ; c < 3 ;c++)
   // #pragma omp parallel for
-  //       for( int k=k1 ; k <= k2 ; k++)
-  // 	 for( int j=jfirst ; j<= jlast; j++ )
-  // 	    for( int i=ifirst ; i<= ilast; i++ )
+  //       for( sw4_type k=k1 ; k <= k2 ; k++)
+  // 	 for( sw4_type j=jfirst ; j<= jlast; j++ )
+  // 	    for( sw4_type i=ifirst ; i<= ilast; i++ )
   // 	    {
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::RangeSegment j_range(jfirst, jlast + 1);
@@ -176,16 +176,16 @@ void memvar_corr_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
   Range<1> J(jfirst, jlast + 1);
   Range<1> K(k1, k2 + 1);
 #endif
-  forall3async(I, J, K, [=] RAJA_DEVICE(int i, int j, int k) {
+  forall3async(I, J, K, [=] RAJA_DEVICE(sw4_type i, sw4_type j, sw4_type k) {
 #else
   RAJA::kernel<MPFC_POL_ASYNC>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
 #endif
     size_t ind = base + i + ni * j + nij * k;
     // Note that alp is ASSIGNED by this formula
 #pragma unroll 3
-    for (int c = 0; c < 3; c++)
+    for (sw4_type c = 0; c < 3; c++)
       alp[ind + c * nijk] =
           icp * (cm * alm[ind + c * nijk] + u[ind + c * nijk] +
                  i6 * (dto * dto * u[ind + c * nijk] +
@@ -200,11 +200,11 @@ void memvar_corr_fort_ci(int ifirst, int ilast, int jfirst, int jlast,
 //-----------------------------------------------------------------------
 // 565 GB/s on V100
 void memvar_corr_fort_wind_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
-    float_sw4* __restrict__ alp, int d1b, int d1e, int d2b, int d2e, int d3b,
-    int d3e, float_sw4* __restrict__ alm, float_sw4* __restrict__ up,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
+    float_sw4* __restrict__ alp, sw4_type d1b, sw4_type d1e, sw4_type d2b, sw4_type d2e, sw4_type d3b,
+    sw4_type d3e, float_sw4* __restrict__ alm, float_sw4* __restrict__ up,
     float_sw4* __restrict__ u, float_sw4* __restrict__ um, float_sw4 omega,
-    float_sw4 dt, int domain) {
+    float_sw4 dt, sw4_type domain) {
   SW4_MARK_FUNCTION;
   //***********************************************************************
   //***
@@ -222,7 +222,7 @@ void memvar_corr_fort_wind_ci(
   float_sw4 icp = 1 / (0.5 + 1 / (2 * dto) + dto / 4 + dto * dto / 12);
   float_sw4 cm = 1 / (2 * dto) + dto / 4 - 0.5 - dto * dto / 12;
 
-  int k1, k2;
+  sw4_type k1, k2;
   if (domain == 0) {
     k1 = kfirst;
     k2 = klast;
@@ -236,12 +236,12 @@ void memvar_corr_fort_wind_ci(
   const size_t ni = ilast - ifirst + 1;
   const size_t nij = ni * (jlast - jfirst + 1);
   const size_t nijk = nij * (klast - kfirst + 1);
-  const int base = -ifirst - ni * jfirst - nij * kfirst;
+  const sw4_type base = -ifirst - ni * jfirst - nij * kfirst;
 
   const size_t dni = d1e - d1b + 1;
   const size_t dnij = dni * (d2e - d2b + 1);
   const size_t dnijk = dnij * (d3e - d3b + 1);
-  const int dbase = -d1b - dni * d2b - dnij * d3b;
+  const sw4_type dbase = -d1b - dni * d2b - dnij * d3b;
 
   //  real*8 up(3,d1b:d1e, d2b:d2e, d3b:d3e)
   //  real*8  u(3,d1b:d1e, d2b:d2e, d3b:d3e);
@@ -249,11 +249,11 @@ void memvar_corr_fort_wind_ci(
   //  real*8 alp(3,ifirst:ilast,jfirst:jlast,kfirst:klast) // different sizes
   //  here real*8 alm(3,d1b:d1e, d2b:d2e, d3b:d3e)
 
-  //   for( int c=0 ; c < 3 ;c++)
+  //   for( sw4_type c=0 ; c < 3 ;c++)
   // #pragma omp parallel for
-  //       for( int k=k1 ; k <= k2 ; k++)
-  // 	 for( int j=jfirst ; j<= jlast; j++ )
-  // 	    for( int i=ifirst ; i<= ilast; i++ )
+  //       for( sw4_type k=k1 ; k <= k2 ; k++)
+  // 	 for( sw4_type j=jfirst ; j<= jlast; j++ )
+  // 	    for( sw4_type i=ifirst ; i<= ilast; i++ )
 
   RAJA::RangeSegment i_range(ifirst, ilast + 1);
   RAJA::RangeSegment j_range(jfirst, jlast + 1);
@@ -262,11 +262,11 @@ void memvar_corr_fort_wind_ci(
 
   RAJA::kernel<XRHS_POL_ASYNC>(
       RAJA::make_tuple(k_range, j_range, i_range),
-      [=] RAJA_DEVICE(int k, int j, int i) {
+      [=] RAJA_DEVICE(sw4_type k, sw4_type j, sw4_type i) {
         size_t ind = base + i + ni * j + nij * k;
         size_t dind = dbase + i + dni * j + dnij * k;
 #pragma unroll
-        for (int c = 0; c < 3; c++)
+        for (sw4_type c = 0; c < 3; c++)
           alp[ind + c * nijk] =
               icp * (cm * alm[dind + c * dnijk] + u[dind + c * dnijk] +
                      i6 * (dto * dto * u[dind + c * dnijk] +
