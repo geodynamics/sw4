@@ -403,7 +403,7 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
 
   // output grid size info
   if (m_myRank == 0) {
-    sw4_type nx, ny, nz;
+    int nx, ny, nz;
     double nTot = 0.;
     printf("\nGlobal grid sizes (without ghost points)\n");
     //             1234  12345679  12345679  12345679  12345679
@@ -414,9 +414,9 @@ bool EW::parseInputFile(vector<vector<Source*> >& a_GlobalUniqueSources,
       nx = m_global_nx[g];
       ny = m_global_ny[g];
       nz = m_kEnd[g] - m_ghost_points;
-      nTot += ((long long sw4_type)nx) * ny * nz;
+      nTot += ((long long )nx) * ny * nz;
       printf("%4i %9g %9i %9i %9i %12lld     %s\n", g, mGridSize[g], nx, ny, nz,
-             ((long long sw4_type)nx) * ny * nz,
+             ((long long )nx) * ny * nz,
              (g < mNumberOfCartesianGrids) ? "Cartesian" : "Curvilinear");
     }
     printf("Total number of grid points (without ghost points): %g\n\n", nTot);
@@ -3921,7 +3921,7 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
   // is there an attenuation command in the file?
   if (!m_use_attenuation) m_number_mechanisms = 0;
 
-  sw4_type is_periodic[2] = {0, 0};
+  int is_periodic[2] = {0, 0};
 
   // some test cases, such as testrayleigh uses periodic boundary conditions in
   // the x and y directions
@@ -3939,14 +3939,14 @@ void EW::allocateCartesianSolverArrays(float_sw4 a_global_zmax) {
   if (is_periodic[1])
     ny_finest_w_ghost = refFact * m_ny_base + 2 * m_ghost_points;
 
-  sw4_type proc_max[2];
+  int proc_max[2];
   // this info is obtained by the contructor
   //   MPI_Comm_size( MPI_COMM_WORLD, &nprocs  );
   proc_decompose_2d(nx_finest_w_ghost, ny_finest_w_ghost, m_nProcs, proc_max);
 
   MPI_Cart_create(MPI_COMM_WORLD, 2, proc_max, is_periodic, true,
                   &m_cartesian_communicator);
-  sw4_type my_proc_coords[2];
+  int my_proc_coords[2];
   MPI_Cart_get(m_cartesian_communicator, 2, proc_max, is_periodic,
                my_proc_coords);
   MPI_Cart_shift(m_cartesian_communicator, 0, 1, m_neighbor, m_neighbor + 1);

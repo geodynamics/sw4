@@ -30,11 +30,11 @@ class CheckPoint {
                            size_t bufsize, bool useHDF5, sw4_type compressionMode,
                            double compressionPar);
 
-  void write_checkpoint(float_sw4 a_time, sw4_type a_cycle,
+  void write_checkpoint(float_sw4 a_time, int a_cycle,
                         std::vector<Sarray>& a_Um, std::vector<Sarray>& a_U,
                         std::vector<Sarray*>& a_AlphaVEm,
                         std::vector<Sarray*>& a_AlphaVE);
-  void read_checkpoint(float_sw4& a_time, sw4_type& a_cycle,
+  void read_checkpoint(float_sw4& a_time, int& a_cycle,
                        std::vector<Sarray>& a_Um, std::vector<Sarray>& a_U,
                        std::vector<Sarray*>& a_AlphaVEm,
                        std::vector<Sarray*>& a_AlphaVE);
@@ -75,11 +75,11 @@ void write_checkpoint_scr(float_sw4 a_time, sw4_type a_cycle,
 
  protected:
   void define_pio();
-  void setSteps(sw4_type a_steps);
+  void setSteps(int a_steps);
   void compute_file_suffix(sw4_type cycle, std::stringstream& fileSuffix);
   void cycle_checkpoints(string fname);
-  void write_header(sw4_type& fid, float_sw4 a_time, sw4_type a_cycle, sw4_type& hsize);
-  void read_header(sw4_type& fid, float_sw4& a_time, sw4_type& a_cycle, sw4_type& hsize);
+  void write_header(int& fid, float_sw4 a_time, int a_cycle, int& hsize);
+  void read_header(int& fid, float_sw4& a_time, int& a_cycle, int& hsize);
 #ifdef USE_HDF5
   void write_header_hdf5(hid_t fid, float_sw4 a_time, sw4_type a_cycle);
   void read_header_hdf5(hid_t fid, float_sw4& a_time, sw4_type& a_cycle);

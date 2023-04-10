@@ -147,10 +147,10 @@ class TimeSeries {
   float_sw4 get_scalefactor() const;
 
   // for simplicity, make the grid point location public
-  sw4_type m_i0;
-  sw4_type m_j0;
-  sw4_type m_k0;
-  sw4_type m_grid0;
+  int m_i0;
+  int m_j0;
+  int m_k0;
+  int m_grid0;
 
 #ifdef USE_HDF5
   sw4_type getNsteps() { return m_nsteps; };

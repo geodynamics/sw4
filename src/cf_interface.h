@@ -8,48 +8,48 @@
 extern "C" {
 #endif
 
-void update_unext(int ib, int ie, int jb, int je, int kb, int ke,
+void update_unext(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                   float_sw4* __restrict__ a_unext, float_sw4* __restrict__ a_up,
                   float_sw4* __restrict__ a_lutt,
                   float_sw4* __restrict__ a_force,
-                  float_sw4* __restrict__ a_rho, float_sw4 cof, int kic);
+                  float_sw4* __restrict__ a_rho, float_sw4 cof, sw4_type kic);
 
-void rhs4th3wind(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                 int klast, int nk, int* __restrict__ onesided,
+void rhs4th3wind(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                 sw4_type klast, sw4_type nk, sw4_type* __restrict__ onesided,
                  float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
                  float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_lu,
                  float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,
                  float_sw4* __restrict__ a_lambda, float_sw4 h,
                  float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry,
-                 float_sw4* __restrict__ a_strz, char op, int kfirstu,
-                 int klastu, int kfirstw, int klastw);
+                 float_sw4* __restrict__ a_strz, char op, sw4_type kfirstu,
+                 sw4_type klastu, sw4_type kfirstw, sw4_type klastw);
 void rhs4th3wind_host(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, int nk,
-    int* __restrict__ onesided, float_sw4* __restrict__ a_acof,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast, sw4_type nk,
+    sw4_type* __restrict__ onesided, float_sw4* __restrict__ a_acof,
     float_sw4* __restrict__ a_bope, float_sw4* __restrict__ a_ghcof,
     float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_u,
     float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda, float_sw4 h,
     float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry,
-    float_sw4* __restrict__ a_strz, char op, int kfirstu, int klastu,
-    int kfirstw, int klastw);
+    float_sw4* __restrict__ a_strz, char op, sw4_type kfirstu, sw4_type klastu,
+    sw4_type kfirstw, sw4_type klastw);
 
 #ifdef SW4_NOC
 }
 #endif
 
-void dpdmt_wind(int ib, int ie, int jb, int je, int kb_tt, int ke_tt, int kb_u,
-                int ke_u, float_sw4* __restrict__ a_up,
+void dpdmt_wind(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb_tt, sw4_type ke_tt, sw4_type kb_u,
+                sw4_type ke_u, float_sw4* __restrict__ a_up,
                 float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_um,
                 float_sw4* __restrict__ a_utt, float_sw4 dt2i);
 
 void evenIevenJinterpJacobi(float_sw4 rmax[6], Sarray& Uf, Sarray& UfNew,
                             Sarray& Uc, Sarray& Morc, Sarray& Mlrc,
                             Sarray& Morf, Sarray& Mlrf, Sarray& Unextf,
-                            Sarray& UnextcInterp, int a_iStart[], int a_iEnd[],
-                            int a_jStart[], int a_jEnd[], int a_kStart[],
-                            int a_kEnd[], int a_iStartInt[], int a_iEndInt[],
-                            int a_jStartInt[], int a_jEndInt[], int gf, int gc,
-                            int nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc,
+                            Sarray& UnextcInterp, sw4_type a_iStart[], sw4_type a_iEnd[],
+                            sw4_type a_jStart[], sw4_type a_jEnd[], sw4_type a_kStart[],
+                            sw4_type a_kEnd[], sw4_type a_iStartInt[], sw4_type a_iEndInt[],
+                            sw4_type a_jStartInt[], sw4_type a_jEndInt[], sw4_type gf, sw4_type gc,
+                            sw4_type nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc,
                             float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[],
                             float_sw4 a_ghcof[]);
 
@@ -61,20 +61,20 @@ void evenIevenJinterpJacobiOpt(
     float_sw4* __restrict__ a_uc, float_sw4* __restrict__ a_morc,
     float_sw4* __restrict__ a_mlrc, float_sw4* __restrict__ a_morf,
     float_sw4* __restrict__ a_mlrf, float_sw4* __restrict__ a_unextf,
-    float_sw4* __restrict__ a_uncint, int a_iStart[], int a_iEnd[],
-    int a_jStart[], int a_jEnd[], int a_kStart[], int a_kEnd[],
+    float_sw4* __restrict__ a_uncint, sw4_type a_iStart[], sw4_type a_iEnd[],
+    sw4_type a_jStart[], sw4_type a_jEnd[], sw4_type a_kStart[], sw4_type a_kEnd[],
     int a_iStartInt[], int a_iEndInt[], int a_jStartInt[], int a_jEndInt[],
-    int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc,
+    sw4_type gf, sw4_type gc, sw4_type nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc,
     float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[], float_sw4 a_ghcof[]);
 
 void oddIoddJinterpJacobi(
     float_sw4 rmax[3], Sarray& Uf, Sarray& UfNew, Sarray& Uc, Sarray& UcNew,
     Sarray& Mufs, Sarray& Mlfs, Sarray& Morc, Sarray& Mlrc, Sarray& Mucs,
     Sarray& Mlcs, Sarray& Morf, Sarray& Mlrf, Sarray& Unextf,
-    Sarray& BfRestrict, Sarray& Unextc, Sarray& Bc, int a_iStart[],
-    int a_iEnd[], int a_jStart[], int a_jEnd[], int a_kStart[], int a_kEnd[],
-    int a_iStartInt[], int a_iEndInt[], int a_jStartInt[], int a_jEndInt[],
-    int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc,
+    Sarray& BfRestrict, Sarray& Unextc, Sarray& Bc, sw4_type a_iStart[],
+    sw4_type a_iEnd[], sw4_type a_jStart[], sw4_type a_jEnd[], sw4_type a_kStart[], sw4_type a_kEnd[],
+    sw4_type a_iStartInt[], sw4_type a_iEndInt[], sw4_type a_jStartInt[], sw4_type a_jEndInt[],
+    sw4_type gf, sw4_type gc, sw4_type nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc,
     float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[], float_sw4 a_ghcof[]);
 
 void oddIoddJinterpJacobiOpt(
@@ -89,9 +89,9 @@ void oddIoddJinterpJacobiOpt(
     float_sw4* __restrict__ a_morf, float_sw4* __restrict__ a_mlrf,
     float_sw4* __restrict__ a_unextf, float_sw4* __restrict__ a_bfr,
     float_sw4* __restrict__ a_unextc, float_sw4* __restrict__ a_bc,
-    int a_iStart[], int a_iEnd[], int a_jStart[], int a_jEnd[], int a_kStart[],
-    int a_kEnd[], int a_iStartInt[], int a_iEndInt[], int a_jStartInt[],
-    int a_jEndInt[], int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf,
+    sw4_type a_iStart[], sw4_type a_iEnd[], sw4_type a_jStart[], sw4_type a_jEnd[], sw4_type a_kStart[],
+    sw4_type a_kEnd[], int a_iStartInt[], int a_iEndInt[], int a_jStartInt[],
+    int a_jEndInt[], sw4_type gf, sw4_type gc, sw4_type nkf, float_sw4 a_Dt, float_sw4 hf,
     float_sw4 hc, float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[],
     float_sw4 a_ghcof[]);
 
@@ -99,9 +99,9 @@ void evenIevenJinterp(float_sw4 rmax[6], Sarray& Uf, Sarray& Muf,
                       Sarray& Lambdaf, Sarray& Rhof, Sarray& Uc, Sarray& Muc,
                       Sarray& Lambdac, Sarray& Rhoc, Sarray& Morc, Sarray& Mlrc,
                       Sarray& Unextf, Sarray& Bf, Sarray& Unextc, Sarray& Bc,
-                      int a_iStart[], int a_jStart[], int a_iStartInt[],
+                      sw4_type a_iStart[], sw4_type a_jStart[], int a_iStartInt[],
                       int a_iEndInt[], int a_jStartInt[], int a_jEndInt[],
-                      int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf,
+                      sw4_type gf, sw4_type gc, sw4_type nkf, float_sw4 a_Dt, float_sw4 hf,
                       float_sw4 hc, float_sw4 cof, float_sw4 relax,
                       float_sw4* a_strf_x, float_sw4* a_strf_y,
                       float_sw4* a_strc_x, float_sw4* a_strc_y,
@@ -110,11 +110,11 @@ void evenIevenJinterp(float_sw4 rmax[6], Sarray& Uf, Sarray& Muf,
 void oddIevenJinterpJacobi(float_sw4 rmax[6], Sarray& Uf, Sarray& UfNew,
                            Sarray& Uc, Sarray& Morc, Sarray& Mlrc, Sarray& Morf,
                            Sarray& Mlrf, Sarray& Unextf, Sarray& Unextc,
-                           int a_iStart[], int a_iEnd[], int a_jStart[],
-                           int a_jEnd[], int a_kStart[], int a_kEnd[],
+                           sw4_type a_iStart[], sw4_type a_iEnd[], sw4_type a_jStart[],
+                           sw4_type a_jEnd[], sw4_type a_kStart[], sw4_type a_kEnd[],
                            int a_iStartInt[], int a_iEndInt[],
-                           int a_jStartInt[], int a_jEndInt[], int gf, int gc,
-                           int nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc,
+                           int a_jStartInt[], int a_jEndInt[], sw4_type gf, sw4_type gc,
+                           sw4_type nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc,
                            float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[],
                            float_sw4 a_ghcof[]);
 
@@ -128,9 +128,9 @@ void oddIevenJinterpJacobiOpt(
     float_sw4* __restrict__ a_mlrf, float_sw4* __restrict__ a_unextf,
     float_sw4* __restrict__ a_uncint,
     //			      Sarray &UnextcInterp,
-    int a_iStart[], int a_iEnd[], int a_jStart[], int a_jEnd[], int a_kStart[],
-    int a_kEnd[], int a_iStartInt[], int a_iEndInt[], int a_jStartInt[],
-    int a_jEndInt[], int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf,
+    sw4_type a_iStart[], sw4_type a_iEnd[], sw4_type a_jStart[], sw4_type a_jEnd[], sw4_type a_kStart[],
+    sw4_type a_kEnd[], int a_iStartInt[], int a_iEndInt[], int a_jStartInt[],
+    int a_jEndInt[], sw4_type gf, sw4_type gc, sw4_type nkf, float_sw4 a_Dt, float_sw4 hf,
     float_sw4 hc, float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[],
     float_sw4 a_ghcof[]);
 
@@ -138,9 +138,9 @@ void oddIevenJinterp(float_sw4 rmax[6], Sarray& Uf, Sarray& Muf,
                      Sarray& Lambdaf, Sarray& Rhof, Sarray& Uc, Sarray& Muc,
                      Sarray& Lambdac, Sarray& Rhoc, Sarray& Morc, Sarray& Mlrc,
                      Sarray& Unextf, Sarray& Bf, Sarray& Unextc, Sarray& Bc,
-                     int a_iStart[], int a_jStart[], int a_iStartInt[],
-                     int a_iEndInt[], int a_jStartInt[], int a_jEndInt[],
-                     int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf,
+                     sw4_type a_iStart[], sw4_type a_jStart[], sw4_type a_iStartInt[],
+                     sw4_type a_iEndInt[], sw4_type a_jStartInt[], sw4_type a_jEndInt[],
+                     sw4_type gf, sw4_type gc, sw4_type nkf, float_sw4 a_Dt, float_sw4 hf,
                      float_sw4 hc, float_sw4 cof, float_sw4 relax,
                      float_sw4* a_strf_x, float_sw4* a_strf_y,
                      float_sw4* a_strc_x, float_sw4* a_strc_y,
@@ -150,9 +150,9 @@ void evenIoddJinterp(float_sw4 rmax[6], Sarray& Uf, Sarray& Muf,
                      Sarray& Lambdaf, Sarray& Rhof, Sarray& Uc, Sarray& Muc,
                      Sarray& Lambdac, Sarray& Rhoc, Sarray& Morc, Sarray& Mlrc,
                      Sarray& Unextf, Sarray& Bf, Sarray& Unextc, Sarray& Bc,
-                     int a_iStart[], int a_jStart[], int a_iStartInt[],
-                     int a_iEndInt[], int a_jStartInt[], int a_jEndInt[],
-                     int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf,
+                     sw4_type a_iStart[], sw4_type a_jStart[], sw4_type a_iStartInt[],
+                     sw4_type a_iEndInt[], sw4_type a_jStartInt[], sw4_type a_jEndInt[],
+                     sw4_type gf, sw4_type gc, sw4_type nkf, float_sw4 a_Dt, float_sw4 hf,
                      float_sw4 hc, float_sw4 cof, float_sw4 relax,
                      float_sw4* a_strf_x, float_sw4* a_strf_y,
                      float_sw4* a_strc_x, float_sw4* a_strc_y,
@@ -161,11 +161,11 @@ void evenIoddJinterp(float_sw4 rmax[6], Sarray& Uf, Sarray& Muf,
 void evenIoddJinterpJacobi(float_sw4 rmax[6], Sarray& Uf, Sarray& UfNext,
                            Sarray& Uc, Sarray& Morc, Sarray& Mlrc, Sarray& Morf,
                            Sarray& Mlrf, Sarray& Unextf, Sarray& Unextc,
-                           int a_iStart[], int a_iEnd[], int a_jStart[],
-                           int a_jEnd[], int a_kStart[], int a_kEnd[],
-                           int a_iStartInt[], int a_iEndInt[],
-                           int a_jStartInt[], int a_jEndInt[], int gf, int gc,
-                           int nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc,
+                           sw4_type a_iStart[], sw4_type a_iEnd[], sw4_type a_jStart[],
+                           sw4_type a_jEnd[], sw4_type a_kStart[], sw4_type a_kEnd[],
+                           sw4_type a_iStartInt[], sw4_type a_iEndInt[],
+                           sw4_type a_jStartInt[], sw4_type a_jEndInt[], sw4_type gf, sw4_type gc,
+                           sw4_type nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc,
                            float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[],
                            float_sw4 a_ghcof[]);
 
@@ -177,26 +177,26 @@ void evenIoddJinterpJacobiOpt(
     float_sw4* __restrict__ a_uc, float_sw4* __restrict__ a_morc,
     float_sw4* __restrict__ a_mlrc, float_sw4* __restrict__ a_morf,
     float_sw4* __restrict__ a_mlrf, float_sw4* __restrict__ a_unextf,
-    float_sw4* __restrict__ a_uncint, int a_iStart[], int a_iEnd[],
-    int a_jStart[], int a_jEnd[], int a_kStart[], int a_kEnd[],
+    float_sw4* __restrict__ a_uncint, sw4_type a_iStart[], sw4_type a_iEnd[],
+    sw4_type a_jStart[], sw4_type a_jEnd[], sw4_type a_kStart[], sw4_type a_kEnd[],
     int a_iStartInt[], int a_iEndInt[], int a_jStartInt[], int a_jEndInt[],
-    int gf, int gc, int nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc,
+    sw4_type gf, sw4_type gc, sw4_type nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc,
     float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[], float_sw4 a_ghcof[]);
 
 void oddIoddJinterp(float_sw4 rmax[3], Sarray& Uf, Sarray& Muf, Sarray& Lambdaf,
                     Sarray& Rhof, Sarray& Uc, Sarray& Muc, Sarray& Lambdac,
                     Sarray& Rhoc, Sarray& Mufs, Sarray& Mlfs, Sarray& Unextf,
-                    Sarray& Bf, Sarray& Unextc, Sarray& Bc, int a_iStart[],
-                    int a_jStart[], int a_iStartInt[], int a_iEndInt[],
-                    int a_jStartInt[], int a_jEndInt[], int gf, int gc, int nkf,
+                    Sarray& Bf, Sarray& Unextc, Sarray& Bc, sw4_type a_iStart[],
+                    sw4_type a_jStart[], sw4_type a_iStartInt[], sw4_type a_iEndInt[],
+                    sw4_type a_jStartInt[], sw4_type a_jEndInt[], sw4_type gf, sw4_type gc, sw4_type nkf,
                     float_sw4 a_Dt, float_sw4 hf, float_sw4 hc, float_sw4 cof,
                     float_sw4 relax, float_sw4* a_strf_x, float_sw4* a_strf_y,
                     float_sw4* a_strc_x, float_sw4* a_strc_y,
                     float_sw4 a_sbop[], float_sw4 a_ghcof[]);
 
 void rhs4th3fortsgstr_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, int nk,
-    int* __restrict__ onesided, float_sw4* __restrict__ a_acof,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast, sw4_type nk,
+    sw4_type* __restrict__ onesided, float_sw4* __restrict__ a_acof,
     float_sw4* __restrict__ a_bope, float_sw4* __restrict__ a_ghcof,
     float_sw4* __restrict__ a_lu, 
     float_sw4* __restrict__ a_u1,float_sw4* __restrict__ a_u2,float_sw4* __restrict__ a_u3,
@@ -204,8 +204,8 @@ void rhs4th3fortsgstr_ci(
     float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry,
     float_sw4* __restrict__ a_strz, char op);
 
-void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                    int klast, int nk, int* __restrict__ onesided,
+void rhs4th3fort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                    sw4_type klast, sw4_type nk, sw4_type* __restrict__ onesided,
                     float_sw4* __restrict__ a_acof,
                     float_sw4* __restrict__ a_bope,
                     float_sw4* __restrict__ a_ghcof,
@@ -213,77 +213,77 @@ void rhs4th3fort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
                     float_sw4* __restrict__ a_mu,
                     float_sw4* __restrict__ a_lambda, float_sw4 h, char op);
 
-void predfort_ci(int ib, int ie, int jb, int je, int kb, int ke,
+void predfort_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                  float_sw4* __restrict__ up, float_sw4* __restrict__ u,
                  float_sw4* __restrict__ um, float_sw4* __restrict__ lu,
                  float_sw4* __restrict__ fo, float_sw4* __restrict__ rho,
                  float_sw4 dt2);
 
-void corrfort_ci(int ib, int ie, int jb, int je, int kb, int ke,
+void corrfort_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                  float_sw4* __restrict__ up, float_sw4* __restrict__ lu,
                  float_sw4* __restrict__ fo, float_sw4* __restrict__ rho,
                  float_sw4 dt4);
 
-void dpdmtfort_ci(int ib, int ie, int jb, int je, int kb, int ke,
+void dpdmtfort_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                   float_sw4* __restrict__ up, float_sw4* __restrict__ u,
                   float_sw4* __restrict__ um, float_sw4* __restrict__ u2,
-                  float_sw4 dt2i, int rank);
+                  float_sw4 dt2i, sw4_type rank);
 
-void rhouttlumf_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                   int klast, int nz, float_sw4* __restrict__ a_uacc,
+void rhouttlumf_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                   sw4_type klast, sw4_type nz, float_sw4* __restrict__ a_uacc,
                    float_sw4* __restrict__ a_lu, float_sw4* __restrict__ a_fo,
                    float_sw4* __restrict__ a_rho, float_sw4 lowZ[3],
-                   float_sw4 interZ[3], float_sw4 highZ[3]);
+                   float_sw4 sw4_typeerZ[3], float_sw4 highZ[3]);
 
-void rhserrfort_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                   int klast, int nz, float_sw4 h, float_sw4* __restrict__ a_fo,
+void rhserrfort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                   sw4_type klast, sw4_type nz, float_sw4 h, float_sw4* __restrict__ a_fo,
                    float_sw4* __restrict__ a_u2, float_sw4 lowZ[3],
                    float_sw4 interZ[3], float_sw4 highZ[3]);
 
-void dpdmtfortatt_ci(int ib, int ie, int jb, int je, int kb, int ke,
+void dpdmtfortatt_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
                      float_sw4* __restrict__ up, float_sw4* __restrict__ u,
                      float_sw4* __restrict__ um, float_sw4 dt2i);
 
 void satt_ci(float_sw4* __restrict__ up, float_sw4* __restrict__ qs,
-             float_sw4 dt, float_sw4 cfreq, int ifirst, int ilast, int jfirst,
-             int jlast, int kfirst, int klast);
+             float_sw4 dt, float_sw4 cfreq, sw4_type ifirst, sw4_type ilast, sw4_type jfirst,
+             sw4_type jlast, sw4_type kfirst, sw4_type klast);
 
-void solveattfreeac_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                       int klast, float_sw4* __restrict__ a_alpha,
+void solveattfreeac_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                       sw4_type klast, float_sw4* __restrict__ a_alpha,
                        float_sw4 cof, float_sw4* __restrict__ a_up);
 
 void solveattfreec_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,
     float_sw4* __restrict__ a_la, float_sw4* __restrict__ a_muve,
     float_sw4* __restrict__ a_lave, float_sw4* __restrict__ a_bforcerhs,
-    float_sw4* __restrict__ a_met, float_sw4 s[5], int usesg,
+    float_sw4* __restrict__ a_met, float_sw4 s[5], sw4_type usesg,
     float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry);
 
 void addbstresswresc_ci(
-    int ifirst, int ilast, int jfirst, int jlast, int kfirst, int klast, int nz,
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast, sw4_type nz,
     float_sw4* __restrict__ a_alphap, float_sw4* __restrict__ a_alpham,
     float_sw4* __restrict__ a_muve, float_sw4* __restrict__ a_lave,
     float_sw4* __restrict__ a_bforcerhs, float_sw4* __restrict__ a_u,
-    float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_met, int side,
+    float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_met, sw4_type side,
     float_sw4 dt, float_sw4 omegave, float_sw4* __restrict__ a_memforce,
     float_sw4* __restrict__ a_muvebnd, float_sw4* __restrict__ a_lambdavebnd,
-    float_sw4 s[5], float_sw4& cof, int usesg, float_sw4* __restrict__ a_strx,
+    float_sw4 s[5], float_sw4& cof, sw4_type usesg, float_sw4* __restrict__ a_strx,
     float_sw4* __restrict__ a_stry);
 
 void addsg4wind_ci(float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
                    float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
-                   float_sw4*, float_sw4*, float_sw4*, int, int, int, int, int,
-                   int, float_sw4, int, int, int, int);
-void ve_bndry_stress_curvi_ci(int ifirst, int ilast, int jfirst, int jlast,
-                              int kfirst, int klast, int nz, float_sw4* alphap,
+                   float_sw4*, float_sw4*, float_sw4*, sw4_type, sw4_type, sw4_type, sw4_type, sw4_type,
+                   sw4_type, float_sw4, sw4_type, sw4_type, sw4_type, sw4_type);
+void ve_bndry_stress_curvi_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast,
+                              sw4_type kfirst, sw4_type klast, sw4_type nz, float_sw4* alphap,
                               float_sw4* muve, float_sw4* lave,
-                              float_sw4* bforcerhs, float_sw4* met, int side,
-                              float_sw4* sbop, int usesg, float_sw4* sgstrx,
+                              float_sw4* bforcerhs, float_sw4* met, sw4_type side,
+                              float_sw4* sbop, sw4_type usesg, float_sw4* sgstrx,
                               float_sw4* sgstry);
-void att_free_curvi_ci(int ifirst, int ilast, int jfirst, int jlast, int kfirst,
-                       int klast, float_sw4* u, float_sw4* mu, float_sw4* la,
+void att_free_curvi_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
+                       sw4_type klast, float_sw4* u, float_sw4* mu, float_sw4* la,
                        float_sw4* bforcerhs, float_sw4* met, float_sw4* sbop,
-                       int usesg, float_sw4* sgstrx, float_sw4* sgstry);
+                       sw4_type usesg, float_sw4* sgstrx, float_sw4* sgstry);
 
 #endif

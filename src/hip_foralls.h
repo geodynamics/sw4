@@ -288,7 +288,7 @@ class RangeAT {
     auto curr =
         std::make_tuple((iend - istart), (jend - jstart), (kend - kstart));
     if (files.find(curr) == files.end()) {
-      sw4_type myRank;
+      int myRank;
       MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
       // std::cout << "Opening the file \n";
       std::stringstream s;

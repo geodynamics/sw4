@@ -724,7 +724,7 @@ void MaterialGMG::material_check(bool water) {
                mEW->m_1d_communicator);
     MPI_Reduce(cmaxs, cmaxstot, 4, MPI_DOUBLE, MPI_MAX, 0,
                mEW->m_1d_communicator);
-    sw4_type myid;
+    int myid;
     MPI_Comm_rank(mEW->m_1d_communicator, &myid);
     if (myid == 0)
     //	 if( mEW->getRank()==0 )

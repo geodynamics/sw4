@@ -1779,7 +1779,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
         ::operator delete[](BCForcing[g][side], Space::Managed);
     delete[] BCForcing[g];
   }
-  sw4_type myRank;
+  int myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
   // std::cerr<<"Deleting point_sources "<<myRank<"\n";
 

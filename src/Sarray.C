@@ -1568,7 +1568,7 @@ void Sarray::copy_kplane2(Sarray& u, sw4_type k) {
 //----------------------------------------------------------------------
 void Sarray::swrite(std::string filename) {
   if (!of.is_open()) {
-    sw4_type myRank = -1;
+    int myRank = -1;
     MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
     std::stringstream ss;
     ss << filename << "_" << myRank << ".dat";
@@ -1585,7 +1585,7 @@ void Sarray::swrite(std::string filename) {
 }
 //----------------------------------------------------------------------
 void Sarray::GetAtt(char* file, sw4_type line) {
-  short sw4_type data = -999;
+  short int data = -999;
 #ifdef ENABLE_CUDA
   if (cuMemRangeGetAttribute(
           &data, 4, CU_MEM_RANGE_ATTRIBUTE_PREFERRED_LOCATION,
@@ -1654,9 +1654,9 @@ void mset_to_zero_async(Sarray& S0, Sarray& S1, Sarray& S2, Sarray& S3) {
   // 		   });
 #endif
 }
-sw4_type aligned(double* p) {
-  for (sw4_type i = 16; i <= 2048; i *= 2)
-    if ((long sw4_type)p % i != 0) return i / 2;
+int aligned(double* p) {
+  for (int i = 16; i <= 2048; i *= 2)
+    if ((long int)p % i != 0) return i / 2;
   return 2048;
 }
 void vset_to_zero_async(std::vector<Sarray>& v, sw4_type N) {

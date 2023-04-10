@@ -12,27 +12,27 @@ void oddIevenJinterpJacobi(float_sw4 rmax[6], Sarray &Uf, Sarray &UfNew,
                            Sarray &Mlrf, Sarray &Unextf, Sarray &UnextcInterp,
                            sw4_type a_iStart[], sw4_type a_iEnd[], sw4_type a_jStart[],
                            sw4_type a_jEnd[], sw4_type a_kStart[], sw4_type a_kEnd[],
-                           sw4_type a_iStartSw4_Type[], sw4_type a_iEndSw4_Type[],
-                           sw4_type a_jStartSw4_Type[], sw4_type a_jEndSw4_Type[], sw4_type gf, sw4_type gc,
+                           sw4_type a_iStartInt[], sw4_type a_iEndInt[],
+                           sw4_type a_jStartInt[], sw4_type a_jEndInt[], sw4_type gf, sw4_type gc,
                            sw4_type nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc,
                            float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[],
                            float_sw4 a_ghcof[]) {
   // tmp
   //  printf("Inside oddIevenJinterp! ");
 
-  // sw4_type icb = a_iStartSw4_Type[gc];
-  sw4_type ifb = a_iStartSw4_Type[gf];
+  // sw4_type icb = a_iStartInt[gc];
+  sw4_type ifb = a_iStartInt[gf];
   if (ifb % 2 == 0) ifb++;  // make sure ifb is odd
 
-  // sw4_type ice = a_iEndSw4_Type[gc];
-  sw4_type ife = a_iEndSw4_Type[gf];
+  // sw4_type ice = a_iEndInt[gc];
+  sw4_type ife = a_iEndInt[gf];
 
-  // sw4_type jcb = a_jStartSw4_Type[gc];
-  sw4_type jfb = a_jStartSw4_Type[gf];
+  // sw4_type jcb = a_jStartInt[gc];
+  sw4_type jfb = a_jStartInt[gf];
   if (jfb % 2 == 1) jfb++;  // make sure jfb is even
 
-  // sw4_type jce = a_jEndSw4_Type[gc];
-  sw4_type jfe = a_jEndSw4_Type[gf];
+  // sw4_type jce = a_jEndInt[gc];
+  sw4_type jfe = a_jEndInt[gf];
 
   float_sw4 nuf =
       a_Dt * a_Dt / (cof * hf * hf);  // cof=12 for the predictor, cof=1 for the
@@ -162,7 +162,7 @@ void oddIevenJinterpJacobiOpt(
     float_sw4 *__restrict__ a_mlrf, float_sw4 *__restrict__ a_unextf,
     float_sw4 *__restrict__ a_uncsw4_type, sw4_type a_iStart[], sw4_type a_iEnd[],
     sw4_type a_jStart[], sw4_type a_jEnd[], sw4_type a_kStart[], sw4_type a_kEnd[],
-    sw4_type a_iStartSw4_Type[], sw4_type a_iEndSw4_Type[], sw4_type a_jStartSw4_Type[], sw4_type a_jEndSw4_Type[],
+    int a_iStartInt[], int a_iEndInt[], int a_jStartInt[], int a_jEndInt[],
     sw4_type gf, sw4_type gc, sw4_type nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc,
     float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[], float_sw4 a_ghcof[]) {
   SW4_MARK_FUNCTION;
@@ -230,19 +230,19 @@ void oddIevenJinterpJacobiOpt(
   a_ufnew[-base3_ufnew + i + niF * (j) + nijF * (k) + nijk_ufnew * (c)]
 
   // previous stuff
-  // sw4_type icb = a_iStartSw4_Type[gc];
-  sw4_type ifb = a_iStartSw4_Type[gf];
+  // sw4_type icb = a_iStartInt[gc];
+  sw4_type ifb = a_iStartInt[gf];
   if (ifb % 2 == 0) ifb++;  // make sure ifb is odd
 
-  // sw4_type ice = a_iEndSw4_Type[gc];
-  sw4_type ife = a_iEndSw4_Type[gf];
+  // sw4_type ice = a_iEndInt[gc];
+  sw4_type ife = a_iEndInt[gf];
 
-  //  sw4_type jcb = a_jStartSw4_Type[gc];
-  sw4_type jfb = a_jStartSw4_Type[gf];
+  //  sw4_type jcb = a_jStartInt[gc];
+  sw4_type jfb = a_jStartInt[gf];
   if (jfb % 2 == 1) jfb++;  // make sure jfb is even
 
-  //  sw4_type jce = a_jEndSw4_Type[gc];
-  sw4_type jfe = a_jEndSw4_Type[gf];
+  //  sw4_type jce = a_jEndInt[gc];
+  sw4_type jfe = a_jEndInt[gf];
 
   float_sw4 nuf =
       a_Dt * a_Dt / (cof * hf * hf);  // cof=12 for the predictor, cof=1 for the
@@ -418,8 +418,8 @@ void oddIevenJinterp(float_sw4 rmax[6], Sarray &Uf, Sarray &Muf,
                      Sarray &Lambdac, Sarray &Rhoc, Sarray &Morc, Sarray &Mlrc,
                      Sarray &Unextf, Sarray &Bf, Sarray &UnextcInterp,
                      Sarray &Bc, sw4_type a_iStart[], sw4_type a_jStart[],
-                     sw4_type a_iStartSw4_Type[], sw4_type a_iEndSw4_Type[], sw4_type a_jStartSw4_Type[],
-                     sw4_type a_jEndSw4_Type[], sw4_type gf, sw4_type gc, sw4_type nkf, float_sw4 a_Dt,
+                     sw4_type a_iStartInt[], sw4_type a_iEndInt[], sw4_type a_jStartInt[],
+                     sw4_type a_jEndInt[], sw4_type gf, sw4_type gc, sw4_type nkf, float_sw4 a_Dt,
                      float_sw4 hf, float_sw4 hc, float_sw4 cof, float_sw4 relax,
                      float_sw4 *a_strf_x, float_sw4 *a_strf_y,
                      float_sw4 *a_strc_x, float_sw4 *a_strc_y,
@@ -436,19 +436,19 @@ void oddIevenJinterp(float_sw4 rmax[6], Sarray &Uf, Sarray &Muf,
 #define strf_x(i) a_strf_x[(i - a_iStart[gf])]
 #define strf_y(j) a_strf_y[(j - a_jStart[gf])]
 
-  //  sw4_type icb = a_iStartSw4_Type[gc];
-  sw4_type ifb = a_iStartSw4_Type[gf];
+  //  sw4_type icb = a_iStartInt[gc];
+  sw4_type ifb = a_iStartInt[gf];
   if (ifb % 2 == 0) ifb++;  // make sure ifb is odd
 
-  //  sw4_type ice = a_iEndSw4_Type[gc];
-  sw4_type ife = a_iEndSw4_Type[gf];
+  //  sw4_type ice = a_iEndInt[gc];
+  sw4_type ife = a_iEndInt[gf];
 
-  //  sw4_type jcb = a_jStartSw4_Type[gc];
-  sw4_type jfb = a_jStartSw4_Type[gf];
+  //  sw4_type jcb = a_jStartInt[gc];
+  sw4_type jfb = a_jStartInt[gf];
   if (jfb % 2 == 1) jfb++;  // make sure jfb is even
 
-  //  sw4_type jce = a_jEndSw4_Type[gc];
-  sw4_type jfe = a_jEndSw4_Type[gf];
+  //  sw4_type jce = a_jEndInt[gc];
+  sw4_type jfe = a_jEndInt[gf];
 
   float_sw4 nuf =
       a_Dt * a_Dt / (cof * hf * hf);  // cof=12 for the predictor, cof=1 for the

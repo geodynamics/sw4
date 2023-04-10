@@ -37,7 +37,7 @@
 #include "mpi.h"
 #include "policies.h"
 //-----------------------------------------------------------------------
-bool EW::proc_decompose_2d(sw4_type ni, sw4_type nj, sw4_type nproc, sw4_type proc_max[2]) {
+bool EW::proc_decompose_2d(sw4_type ni, sw4_type nj, sw4_type nproc, int proc_max[2]) {
   // This routine determines a decomposition of nproc processors sw4_typeo
   // a 2D processor array  proc_max[0] x proc_max[1], which gives minimal
   // communication boundary for a grid with ni x nj points.

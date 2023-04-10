@@ -209,7 +209,7 @@ void Image::associate_gridfiles(vector<Image*>& imgs) {
 //}
 
 //-------------------------------------
-void Image::setSteps(sw4_type a_steps) {
+void Image::setSteps(int a_steps) {
   char buffer[50];
   mPreceedZeros = snprintf(buffer, 50, "%d", a_steps);
 }
@@ -232,7 +232,7 @@ void Image::computeGridPtIndex() {
   //           m_gridPtIndex[1] is
   //              the grid no. of the image plane.
   //
-  sw4_type myRank;
+  int myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
   //   if (myRank == 0)
   //     printf("======== Initializing Image ==========\n");
@@ -335,12 +335,12 @@ void Image::computeGridPtIndex() {
   //   cout<<"myRank "<<myRank<<" and I write "<<iwrite<<endl;
   //   MPI_Barrier;
 
-  sw4_type size;
+  int size;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   std::vector<int> writers(size);
   MPI_Allgather(&iwrite, 1, MPI_INT, &writers[0], 1, MPI_INT, MPI_COMM_WORLD);
-  std::vector<sw4_type> fileWriterIDs;
-  for (unsigned sw4_type i = 0; i < writers.size(); ++i)
+  std::vector<int> fileWriterIDs;
+  for (unsigned int i = 0; i < writers.size(); ++i)
     if (writers[i] == 1) {
       fileWriterIDs.push_back(i);
     }
@@ -493,7 +493,7 @@ void Image::define_pio() {
     // mpiComm_writers consists of all processors that
     // own some part of the image.
     if (m_mpiComm_writers != MPI_COMM_NULL) {
-      sw4_type nproc = 0, myid = 0;
+      int nproc = 0, myid = 0;
       // Select group of writing processors as
       // subset of the processors that own the plane.
       MPI_Comm_size(m_mpiComm_writers, &nproc);
@@ -525,7 +525,7 @@ void Image::allocatePlane() {
   bool iwrite = plane_in_proc(m_gridPtIndex[0]);
 
   if (iwrite) {
-    sw4_type myRank;
+    int myRank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
     bool breakLoop = (mLocationType == Image::Z);

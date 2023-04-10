@@ -45,67 +45,67 @@ class Comminfo {
  public:
   Comminfo();
   ~Comminfo();
-  void prsw4_type(sw4_type recv);
+  void print(int recv);
   bool m_has_values;
-  sw4_type m_steps;
-  sw4_type* m_ncomm;
-  sw4_type** m_comm_id;
-  sw4_type** m_comm_index[6];
-  sw4_type m_maxbuf;
-  sw4_type m_maxiobuf;
-  sw4_type* m_ilow;
-  sw4_type* m_jlow;
-  sw4_type* m_klow;
-  sw4_type* m_niblock;
-  sw4_type* m_njblock;
-  sw4_type* m_nkblock;
+  int m_steps;
+  int* m_ncomm;
+  int** m_comm_id;
+  int** m_comm_index[6];
+  int m_maxbuf;
+  int m_maxiobuf;
+  int* m_ilow;
+  int* m_jlow;
+  int* m_klow;
+  int* m_niblock;
+  int* m_njblock;
+  int* m_nkblock;
 
   // Communication substeps
-  sw4_type* m_nsubcomm;
-  sw4_type** m_subcomm;
-  sw4_type** m_subcommlabel;
+  int* m_nsubcomm;
+  int** m_subcomm;
+  int** m_subcommlabel;
 };
 
 class Parallel_IO {
  public:
-  Parallel_IO(sw4_type iwrite, sw4_type pfs, sw4_type globalsizes[3], sw4_type localsizes[3],
-              sw4_type starts[3], sw4_type nptsbuf = 8000000, sw4_type padding = 0);
-  void write_array(sw4_type* fid, sw4_type nc, void* array, off_t pos0, char* type);
+  Parallel_IO(int iwrite, int pfs, int globalsizes[3], int localsizes[3],
+              int starts[3], int nptsbuf = 8000000, int padding = 0);
+  void write_array(int* fid, int nc, void* array, off_t pos0, char* type);
 #ifdef USE_HDF5
   void write_array_hdf5(const char* fname, const char* gname, const char* dname,
-                        sw4_type nc, void* array, hsize_t pos0, char* type);
+                        int nc, void* array, hsize_t pos0, char* type);
 #endif
-  void read_array(sw4_type* fid, sw4_type nc, float_sw4* array, off_t pos0,
+  void read_array(int* fid, int nc, float_sw4* array, off_t pos0,
                   const char* typ, bool swap_bytes = false);
 
-  void prsw4_type();
+  void print();
   void begin_sequential(MPI_Comm comm);
   void end_sequential(MPI_Comm comm);
-  sw4_type proc_zero();
-  sw4_type i_write() const { return m_iwrite == 1; }
+  int proc_zero();
+  int i_write() const { return m_iwrite == 1; }
   void writer_barrier();
-  sw4_type n_writers() const { return m_nwriters; }
-  sw4_type proc_zero_rank_in_comm_world();
+  int n_writers() const { return m_nwriters; }
+  int proc_zero_rank_in_comm_world();
 
  private:
-  void init_pio(sw4_type iwrite, sw4_type pfs, sw4_type ihave_array = -1);
-  void init_array(sw4_type globalsizes[3], sw4_type localsizes[3], sw4_type starts[3],
-                  sw4_type nptsbuf, sw4_type padding = 0);
+  void init_pio(int iwrite, int pfs, int ihave_array = -1);
+  void init_array(int globalsizes[3], int localsizes[3], int starts[3],
+                  int nptsbuf, int padding = 0);
   void setup_substeps();
-  //   size_t read_dble_wlim( sw4_type* fid, double* rbuf, size_t nelem, size_t limit
-  //   ); size_t write_dble_wlim( sw4_type* fid, double* rbuf, size_t nelem, size_t
+  //   size_t read_dble_wlim( int* fid, double* rbuf, size_t nelem, size_t limit
+  //   ); size_t write_dble_wlim( int* fid, double* rbuf, size_t nelem, size_t
   //   limit );
   template <class T>
-  size_t read_with_limit(sw4_type* fid, T* rbuf, size_t nelem, size_t limit);
+  size_t read_with_limit(int* fid, T* rbuf, size_t nelem, size_t limit);
   template <class T>
-  size_t write_with_limit(sw4_type* fid, T* rbuf, size_t nelem, size_t limit);
+  size_t write_with_limit(int* fid, T* rbuf, size_t nelem, size_t limit);
 
   int m_iwrite;
-  sw4_type m_nwriters, m_parallel_file_system;
-  sw4_type m_csteps;
+  int m_nwriters, m_parallel_file_system;
+  int m_csteps;
   int* m_writer_ids;
-  sw4_type ni, nj, nk, nig, njg, nkg, oi, oj, ok;
-  sw4_type m_zerorank_in_commworld;
+  int ni, nj, nk, nig, njg, nkg, oi, oj, ok;
+  int m_zerorank_in_commworld;
   Byteswapper m_bswap;
 
   MPI_Comm m_write_comm;

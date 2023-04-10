@@ -94,7 +94,7 @@ void MaterialPfile::set_material_properties(std::vector<Sarray> &rho,
                                             std::vector<Sarray> &cp,
                                             std::vector<Sarray> &qs,
                                             std::vector<Sarray> &qp) {
-  sw4_type myRank;
+  int myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
   // the qs and qp arrays are always allocated to allow qs[g].is_defined() to be
   // called
@@ -344,7 +344,7 @@ void MaterialPfile::read_pfile() {
   //   m_vsmin   = vsmin;
   //   m_rhomin  = rhomin;
 
-  sw4_type myRank;
+  int myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
   // Open file

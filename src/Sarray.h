@@ -78,10 +78,10 @@ class SView {
   RAJA_HOST_DEVICE inline float_sw4& operator()(sw4_type i, sw4_type j, sw4_type k) const {
     return data[base + offc + i * offi + j * offj + k * offk];
   }
-  RAJA_HOST_DEVICE void prsw4_type(bool cond) const {
+  RAJA_HOST_DEVICE void print(bool cond) const {
     if (cond)
-      printf("SView pointer = %p base = %d offi = %d %d %d\n", data, sw4_type(base),
-             sw4_type(offi), sw4_type(offj), sw4_type(offk));
+      printf("SView pointer = %p base = %d offi = %d %d %d\n", data, int(base),
+             int(offi), int(offj), int(offk));
   }
 };
 

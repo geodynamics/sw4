@@ -439,7 +439,7 @@ void Source::correct_Z_level(EW* a_ew) {
   // tmp
   //   printf("Entering correct_Z_level()\n");
 
-  sw4_type i, j, k, g;
+  int i, j, k, g;
   sw4_type success = a_ew->computeNearestGridPoint2(i, j, k, g, mX0, mY0, mZ0);
   m_myPoint = success && a_ew->interior_point_in_proc(i, j, g);
 
@@ -447,7 +447,7 @@ void Source::correct_Z_level(EW* a_ew) {
   // this (i,j) to be interior We could remove this check if we were certain
   // that interior_point_in_proc() never lies
   int iwrite = m_myPoint ? 1 : 0;
-  sw4_type size;
+  int size;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   std::vector<int> whoIsOne(size);
   sw4_type counter = 0;
@@ -1415,7 +1415,7 @@ void Source::prepareTimeFunc(bool doFilter, float_sw4 sw4TimeStep,
 void Source::set_grid_point_sources4(EW* a_EW,
                                      vector<GridPointSource*>& point_sources) {
   // note that this routine is called from all processors, for each input source
-  sw4_type i, j, k;
+  int  i, j, k;
   int g;
   sw4_type success = a_EW->computeNearestGridPoint2(i, j, k, g, mX0, mY0, mZ0);
   int gg = -1;
@@ -1869,7 +1869,7 @@ void Source::set_grid_point_sources4(EW* a_EW,
     }
   }
 
-  sw4_type myid;
+  int myid;
   MPI_Comm_rank(MPI_COMM_WORLD, &myid);
   //   cout << myid << " SOURCE at " << ic << " " << jc << " "  << kc ;
   //   if( canBeInverted )
@@ -4334,7 +4334,7 @@ void Source::get_cc_psources(EW* a_EW, sw4_type g, float_sw4 q, float_sw4 r,
 void Source::compute_grid_point(EW* a_ew) {
   // Sets values (m_i0,m_j0,m_k0) and m_grid.
   // Should be called after the topographic correction of mZ0
-  sw4_type i, j, k, g;
+  int i, j, k, g;
   sw4_type success = a_ew->computeNearestGridPoint2(i, j, k, g, mX0, mY0, mZ0);
   m_myPoint = success && a_ew->interior_point_in_proc(i, j, g);
   int inds[4] = {-9999, -9999, -9999, -9999};

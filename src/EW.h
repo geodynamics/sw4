@@ -207,7 +207,7 @@ class EW {
   void setQuiet(bool stealth) { mQuiet = stealth; };
   bool getQuiet() { return mQuiet; };
   sw4_type getVerbosity() { return mVerbose; };
-  sw4_type getRank() { return m_myRank; };
+  int getRank() { return m_myRank; };
   void setDebugIO(bool onoff) { mDebugIO = onoff; }
 
   // void setDampingCFL(float_sw4 d4_cfl) { m_d4_cfl = d4_cfl; }
@@ -436,7 +436,7 @@ class EW {
 
   void assign_local_bcs();
   bool timeSteppingSet();
-  bool proc_decompose_2d(sw4_type ni, sw4_type nj, sw4_type nproc, sw4_type proc_max[2]);
+  bool proc_decompose_2d(sw4_type ni, sw4_type nj, sw4_type nproc, int proc_max[2]);
   void decomp1d(sw4_type nglobal, sw4_type myid, sw4_type nproc, sw4_type& s, sw4_type& e);
   void coarsen1d(sw4_type& n, sw4_type& ifirst, sw4_type& ilast, sw4_type periodic);
   void allocateCurvilinearArrays();
@@ -524,8 +524,8 @@ class EW {
   void computeNearestGridPoint(sw4_type& a_i, sw4_type& a_j, sw4_type& a_k,
                                sw4_type& a_g,  // grid on which indices are located
                                float_sw4 a_x, float_sw4 a_y, float_sw4 a_z);
-  sw4_type computeNearestGridPoint2(sw4_type& a_i, sw4_type& a_j, sw4_type& a_k,
-                               sw4_type& a_g,  // grid on which indices are located
+  sw4_type computeNearestGridPoint2(int& a_i, int& a_j, int& a_k,
+                               int& a_g,  // grid on which indices are located
                                float_sw4 a_x, float_sw4 a_y, float_sw4 a_z);
 
   void computeNearestSurfaceGridPoint(sw4_type& a_i, sw4_type& a_j, float_sw4 a_x,
@@ -1575,8 +1575,8 @@ class EW {
 
   // part of global array on each processor, excluding ghost points and parallel
   // overlap points = interior points
-  vector<sw4_type> m_iStartSw4_Type, m_iEndSw4_Type, m_jStartSw4_Type, m_jEndSw4_Type, m_kStartSw4_Type,
-      m_kEndSw4_Type;
+  vector<int> m_iStartInt, m_iEndInt, m_jStartInt, m_jEndInt, m_kStartInt,
+      m_kEndInt;
 
   // Note that the m_paddingCells array is no longer needed to get the range of
   // internal grid points Instead use m_iStartSw4_Type[g], m_iEndSw4_Type[g], etc,
@@ -1791,7 +1791,7 @@ class EW {
   //-------------------------------------------
   // IO data
   //-------------------------------------------
-  sw4_type m_myRank, m_nProcs;
+  int m_myRank, m_nProcs;
 
   string mName;
   // string mWPPFileName;
@@ -2022,7 +2022,7 @@ class EW {
   StatMachine<sw4_type, double> host_sm;
 #endif
  public:
-  sw4_type m_neighbor[4];
+  int m_neighbor[4];
   MPI_Datatype m_mpifloat;
 
   bool m_topography_exists;

@@ -1319,7 +1319,7 @@ void EW::computeGeographicCoord(double x, double y, double& longitude,
   // latitude  = lonlat.v/deg2rad;
 }
 //-----------------------------------------------------------------------
-sw4_type EW::computeNearestGridPoint2(sw4_type& a_i, sw4_type& a_j, sw4_type& a_k, sw4_type& a_g,
+sw4_type EW::computeNearestGridPoint2(int& a_i, int& a_j, int& a_k, int& a_g,
                                  float_sw4 a_x, float_sw4 a_y, float_sw4 a_z) {
   SW4_MARK_FUNCTION;
   sw4_type success = 0;

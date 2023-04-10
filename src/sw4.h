@@ -2,7 +2,7 @@
 #define SW4_H
 
 #define float_sw4 double
-#define sw4_type int
+#define sw4_type long long
 
 // enum boundaryConditionType { bStressFree, bDirichlet, bSuperGrid, bPeriodic,
 // bCCInterface, bRefInterface, bAEInterface,

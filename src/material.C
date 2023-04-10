@@ -131,7 +131,7 @@ void EW::check_materials() {
                   m_cartesian_communicator);
   }
 
-  sw4_type myRank;
+  int myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
   if (myRank == 0) {
     string indent = "\n       ";
@@ -241,7 +241,7 @@ void EW::check_materials() {
   if (mVerbose >= 3) {
     float_sw4 minRho, maxRho, minMu, maxMu, minLambda, maxLambda;
 
-    for (sw4_type g = 0; g < mNumberOfGrids; g++) {
+    for (int g = 0; g < mNumberOfGrids; g++) {
       minRho = 1e38, minMu = 1e38, minLambda = 1e38;
       maxRho = 0, maxMu = 0, maxLambda = 0;
 

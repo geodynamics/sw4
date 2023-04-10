@@ -66,8 +66,8 @@ class Source {
 
   ~Source();
 
-  sw4_type m_i0, m_j0, m_k0;
-  sw4_type m_grid;
+  int m_i0, m_j0, m_k0;
+  int m_grid;
 
   // keep track of new filtering approach:
   bool m_timeFuncIsReady;

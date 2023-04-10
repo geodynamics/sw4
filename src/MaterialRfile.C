@@ -90,8 +90,8 @@ void MaterialRfile::set_material_properties(std::vector<Sarray>& rho,
                   ni * nj * (mEW->m_kStart[g]);
 #pragma omp parallel for reduction(+ : material, outside)
     for (sw4_type k = mEW->m_kStart[g]; k <= mEW->m_kEnd[g]; ++k)
-      for (sw4_type j = mEW->m_jStartSw4_Type[g]; j <= mEW->m_jEndSw4_Type[g]; ++j)
-        for (sw4_type i = mEW->m_iStartSw4_Type[g]; i <= mEW->m_iEndSw4_Type[g]; ++i) {
+      for (sw4_type j = mEW->m_jStartInt[g]; j <= mEW->m_jEndInt[g]; ++j)
+        for (sw4_type i = mEW->m_iStartInt[g]; i <= mEW->m_iEndInt[g]; ++i) {
           float_sw4 x = (i - 1) * mEW->mGridSize[g];
           float_sw4 y = (j - 1) * mEW->mGridSize[g];
           float_sw4 z;
@@ -360,8 +360,8 @@ void MaterialRfile::set_material_properties(std::vector<Sarray>& rho,
 //-----------------------------------------------------------------------
 sw4_type MaterialRfile::io_processor() {
   // Find out if this processor will participate in the I/O
-  sw4_type iread = 0, nproc, myid;
-  sw4_type nrwriters = mEW->getNumberOfWritersPFS();
+  int iread = 0, nproc, myid;
+  int nrwriters = mEW->getNumberOfWritersPFS();
   MPI_Comm_size(MPI_COMM_WORLD, &nproc);
   MPI_Comm_rank(MPI_COMM_WORLD, &myid);
   if (nrwriters > nproc) nrwriters = nproc;
@@ -418,7 +418,7 @@ void MaterialRfile::read_rfile() {
   // Read rfile header. Translate each patch sw4_typeo SW4 Cartesian coordinate
   // system
   string fname = m_model_dir + "/" + m_model_file;
-  sw4_type fd = open(fname.c_str(), O_RDONLY);
+  int fd = open(fname.c_str(), O_RDONLY);
   if (fd != -1) {
     sw4_type magic;
     size_t nr = read(fd, &magic, sizeof(sw4_type));
@@ -564,8 +564,8 @@ void MaterialRfile::read_rfile() {
       m_z0[p] = static_cast<float_sw4>(hs[2]);
 
       // ---------- second part of block header
-      sw4_type dim[4];
-      nr = read(fd, dim, 4 * sizeof(sw4_type));
+      int dim[4];
+      nr = read(fd, dim, 4 * sizeof(int));
       if (nr != 4 * sizeof(sw4_type)) {
         cout << rname << " Error reading block dimensions nr= " << nr
              << "bytes read" << endl;
@@ -714,11 +714,11 @@ void MaterialRfile::read_rfile() {
     bool roworder = true;
     for (sw4_type p = 0; p < m_npatches; p++) {
       if (!m_isempty[p]) {
-        sw4_type global[3] = {m_ni[p], m_nj[p], m_nk[p]};
-        sw4_type local[3] = {m_ilast[p] - m_ifirst[p] + 1,
+        int global[3] = {m_ni[p], m_nj[p], m_nk[p]};
+        int local[3] = {m_ilast[p] - m_ifirst[p] + 1,
                         m_jlast[p] - m_jfirst[p] + 1,
                         m_klast[p] - m_kfirst[p] + 1};
-        sw4_type start[3] = {m_ifirst[p] - 1, m_jfirst[p] - 1, m_kfirst[p] - 1};
+        int start[3] = {m_ifirst[p] - 1, m_jfirst[p] - 1, m_kfirst[p] - 1};
         if (roworder) {
           sw4_type tmp = global[0];
           global[0] = global[2];
@@ -904,7 +904,7 @@ void MaterialRfile::material_check(bool water) {
     double cminstot[4], cmaxstot[4];
     MPI_Reduce(cmins, cminstot, 4, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(cmaxs, cmaxstot, 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    sw4_type myid;
+    int myid;
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
     if (myid == 0)
     //	 if( mEW->getRank()==0 )

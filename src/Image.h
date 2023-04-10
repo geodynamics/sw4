@@ -100,7 +100,7 @@ class Image {
         ImageOrientation locationType, float_sw4 locationValue, bool doubleMode,
         bool usehdf5 = false, bool userCreated = true);
 
-  static void setSteps(sw4_type a_steps);
+  static void setSteps(int a_steps);
 
   // static void setTiming(float startTime, float dt);
   // static void setGridAttributes(std::vector<double> a_gridSize      ,

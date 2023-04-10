@@ -68,18 +68,18 @@ class Image3D {
 
   static Image3D* nil;
 
-  Image3D(EW* a_ew, float_sw4 time, float_sw4 timeInterval, sw4_type cycle,
-          sw4_type cycleInterval, float_sw4 tstart, const std::string& filePrefix,
+  Image3D(EW* a_ew, float_sw4 time, float_sw4 timeInterval, int cycle,
+          int cycleInterval, float_sw4 tstart, const std::string& filePrefix,
           Image3DMode mode, bool doubleMode);
   ~Image3D();
 
   void setup_images();
 
-  static void setSteps(sw4_type a_steps);
+  static void setSteps(int a_steps);
 
   //   void set_double( bool val=true );
 
-  void update_image(sw4_type a_cycle, float_sw4 a_time, float_sw4 a_dt,
+  void update_image(int a_cycle, float_sw4 a_time, float_sw4 a_dt,
                     std::vector<Sarray>& a_U, std::vector<Sarray>& a_Rho,
                     std::vector<Sarray>& a_Mu, std::vector<Sarray>& a_Lambda,
                     std::vector<Sarray>& a_gRho, std::vector<Sarray>& a_gMu,
@@ -87,7 +87,7 @@ class Image3D {
                     std::vector<Sarray>& a_Qs, std::string a_path,
                     std::vector<Sarray>& a_Z);
 
-  void force_write_image(float_sw4 a_time, sw4_type a_cycle, vector<Sarray>& a_U,
+  void force_write_image(float_sw4 a_time, int a_cycle, vector<Sarray>& a_U,
                          vector<Sarray>& a_Rho, vector<Sarray>& a_Mu,
                          vector<Sarray>& a_Lambda, vector<Sarray>& a_gRho,
                          vector<Sarray>& a_gMu, vector<Sarray>& a_gLambda,
@@ -97,7 +97,7 @@ class Image3D {
   //   void set_start_time(double tStart);
 
  protected:
-  bool timeToWrite(float_sw4 time, sw4_type cycle, float_sw4 dt);
+  bool timeToWrite(float_sw4 time, int cycle, float_sw4 dt);
 
   void compute_image(std::vector<Sarray>& a_U, std::vector<Sarray>& a_Rho,
                      std::vector<Sarray>& a_Mu, std::vector<Sarray>& a_Lambda,
@@ -105,12 +105,12 @@ class Image3D {
                      std::vector<Sarray>& a_gLambda, std::vector<Sarray>& a_Qp,
                      std::vector<Sarray>& a_Qs);
 
-  void write_image(sw4_type cycle, std::string& path, float_sw4 t,
+  void write_image(int cycle, std::string& path, float_sw4 t,
                    std::vector<Sarray>& a_Z);
 
   void define_pio();
 
-  void compute_file_suffix(sw4_type cycle, std::stringstream& fileSuffix);
+  void compute_file_suffix(int cycle, std::stringstream& fileSuffix);
 
   Image3DMode mMode;
   std::string mFilePrefix;
@@ -120,9 +120,9 @@ class Image3D {
   float_sw4 mNextTime;
   float_sw4 mStartTime;
 
-  sw4_type mWritingCycle;
-  sw4_type mCycleInterval;
-  sw4_type mImageSamplingFactor;
+  int mWritingCycle;
+  int mCycleInterval;
+  int mImageSamplingFactor;
 
   std::string mFileName;
   std::string m_modestring;
@@ -131,7 +131,7 @@ class Image3D {
   bool m_winallocated;
   bool m_memallocated;
 
-  static sw4_type
+  static int
       mPreceedZeros;  // number of digits for unique time step in file names
 
  private:
@@ -142,14 +142,14 @@ class Image3D {
   EW* mEW;
   Parallel_IO** m_parallel_io;
 
-  std::vector<sw4_type*> mWindow;      // Local in processor start + end indices for
+  std::vector<int*> mWindow;      // Local in processor start + end indices for
                                   // (i,j,k) for each grid level
-  std::vector<sw4_type*> mGlobalDims;  // Global start + end indices for (i,j,k) for
+  std::vector<int*> mGlobalDims;  // Global start + end indices for (i,j,k) for
                                   // each grid level
 
   std::vector<double*> m_doubleField;
   std::vector<float*> m_floatField;
-  std::vector<sw4_type> m_extraz;
+  std::vector<int> m_extraz;
   std::vector<bool> m_ihavearray;
 };
 

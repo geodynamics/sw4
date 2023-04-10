@@ -86,17 +86,17 @@ void EW::conssw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
   sw4_type it = 0;
   relax = m_cirelfact;
 
-  icb = m_iStartSw4_Type[gc];
-  ifb = m_iStartSw4_Type[gf];
+  icb = m_iStartInt[gc];
+  ifb = m_iStartInt[gf];
 
-  ice = m_iEndSw4_Type[gc];
-  ife = m_iEndSw4_Type[gf];
+  ice = m_iEndInt[gc];
+  ife = m_iEndInt[gf];
 
-  jcb = m_jStartSw4_Type[gc];
-  jfb = m_jStartSw4_Type[gf];
+  jcb = m_jStartInt[gc];
+  jfb = m_jStartInt[gf];
 
-  jce = m_jEndSw4_Type[gc];
-  jfe = m_jEndSw4_Type[gf];
+  jce = m_jEndInt[gc];
+  jfe = m_jEndInt[gf];
 
   nkf = m_global_nz[gf];
   float_sw4 rmax[6] = {0, 0, 0, 0, 0, 0};
@@ -316,7 +316,7 @@ void EW::conssw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
     RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax5(0);
     RAJA::ReduceMax<REDUCTION_POLICY, float_sw4> rmax6(0);
 
-    if (m_croutines)  // tmp
+    //    if (m_croutines)  // tmp
                       // optimized version for updating odd i and odd j
       oddIoddJinterpJacobiOpt(
           rmax1, rmax2, rmax3, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(),
@@ -325,76 +325,76 @@ void EW::conssw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
           m_Mlcs[gc].c_ptr(), m_Morf[gf].c_ptr(), m_Mlrf[gf].c_ptr(),
           Unextf.c_ptr(), BfRestrict.c_ptr(), Unextc.c_ptr(), Bc.c_ptr(),
           m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(),
-          m_kStart.data(), m_kEnd.data(), m_iStartSw4_Type.data(), m_iEndSw4_Type.data(),
-          m_jStartSw4_Type.data(), m_jEndSw4_Type.data(), gf, gc, nkf, mDt, hf, hc, cof,
+          m_kStart.data(), m_kEnd.data(), m_iStartInt.data(), m_iEndInt.data(),
+          m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf, mDt, hf, hc, cof,
           relax, m_sbop, m_ghcof);
-    else
-      oddIoddJinterpJacobi(rmax, Uf, UfNew, Uc, UcNew, m_Mufs[gf], m_Mlfs[gf],
-                           m_Morc[gc], m_Mlrc[gc], m_Mucs[gc], m_Mlcs[gc],
-                           m_Morf[gf], m_Mlrf[gf], Unextf, BfRestrict, Unextc,
-                           Bc, m_iStart.data(), m_iEnd.data(), m_jStart.data(),
-                           m_jEnd.data(), m_kStart.data(), m_kEnd.data(),
-                           m_iStartSw4_Type.data(), m_iEndSw4_Type.data(),
-                           m_jStartSw4_Type.data(), m_jEndSw4_Type.data(), gf, gc, nkf,
-                           mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
+    // else
+    //   oddIoddJinterpJacobi(rmax, Uf, UfNew, Uc, UcNew, m_Mufs[gf], m_Mlfs[gf],
+    //                        m_Morc[gc], m_Mlrc[gc], m_Mucs[gc], m_Mlcs[gc],
+    //                        m_Morf[gf], m_Mlrf[gf], Unextf, BfRestrict, Unextc,
+    //                        Bc, m_iStart.data(), m_iEnd.data(), m_jStart.data(),
+    //                        m_jEnd.data(), m_kStart.data(), m_kEnd.data(),
+    //                        m_iStartInt.data(), m_iEndInt.data(),
+    //                        m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf,
+    //                        mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
 
     //
     // Enforce continuity of displacements along the interface (for fine ghost
     // points in between coarse points)
     //
-    if (m_croutines)  // tmp
+      //    if (m_croutines)  // tmp
                       // optimized version for updating odd i and even j
       oddIevenJinterpJacobiOpt(
           rmax4, rmax5, rmax6, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(),
           m_Morc[gc].c_ptr(), m_Mlrc[gc].c_ptr(), m_Morf[gf].c_ptr(),
           m_Mlrf[gf].c_ptr(), Unextf.c_ptr(), UnextcInterp.c_ptr(),
           m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(),
-          m_kStart.data(), m_kEnd.data(), m_iStartSw4_Type.data(), m_iEndSw4_Type.data(),
-          m_jStartSw4_Type.data(), m_jEndSw4_Type.data(), gf, gc, nkf, mDt, hf, hc, cof,
+          m_kStart.data(), m_kEnd.data(), m_iStartInt.data(), m_iEndInt.data(),
+          m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf, mDt, hf, hc, cof,
           relax, m_sbop, m_ghcof);
-    else
-      oddIevenJinterpJacobi(
-          rmax, Uf, UfNew, Uc, m_Morc[gc], m_Mlrc[gc], m_Morf[gf], m_Mlrf[gf],
-          Unextf, UnextcInterp, m_iStart.data(), m_iEnd.data(), m_jStart.data(),
-          m_jEnd.data(), m_kStart.data(), m_kEnd.data(), m_iStartSw4_Type.data(),
-          m_iEndSw4_Type.data(), m_jStartSw4_Type.data(), m_jEndSw4_Type.data(), gf, gc, nkf,
-          mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
+    // else
+    //   oddIevenJinterpJacobi(
+    //       rmax, Uf, UfNew, Uc, m_Morc[gc], m_Mlrc[gc], m_Morf[gf], m_Mlrf[gf],
+    //       Unextf, UnextcInterp, m_iStart.data(), m_iEnd.data(), m_jStart.data(),
+    //       m_jEnd.data(), m_kStart.data(), m_kEnd.data(), m_iStartInt.data(),
+    //       m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf,
+    //       mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
 
-    if (m_croutines)
+      //    if (m_croutines)
       // optimized version for updating even i and odd j
       evenIoddJinterpJacobiOpt(
           rmax4, rmax5, rmax6, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(),
           m_Morc[gc].c_ptr(), m_Mlrc[gc].c_ptr(), m_Morf[gf].c_ptr(),
           m_Mlrf[gf].c_ptr(), Unextf.c_ptr(), UnextcInterp.c_ptr(),
           m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(),
-          m_kStart.data(), m_kEnd.data(), m_iStartSw4_Type.data(), m_iEndSw4_Type.data(),
-          m_jStartSw4_Type.data(), m_jEndSw4_Type.data(), gf, gc, nkf, mDt, hf, hc, cof,
+          m_kStart.data(), m_kEnd.data(), m_iStartInt.data(), m_iEndInt.data(),
+          m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf, mDt, hf, hc, cof,
           relax, m_sbop, m_ghcof);
-    else
-      evenIoddJinterpJacobi(
-          rmax, Uf, UfNew, Uc, m_Morc[gc], m_Mlrc[gc], m_Morf[gf], m_Mlrf[gf],
-          Unextf, UnextcInterp, m_iStart.data(), m_iEnd.data(), m_jStart.data(),
-          m_jEnd.data(), m_kStart.data(), m_kEnd.data(), m_iStartSw4_Type.data(),
-          m_iEndSw4_Type.data(), m_jStartSw4_Type.data(), m_jEndSw4_Type.data(), gf, gc, nkf,
-          mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
+    // else
+    //   evenIoddJinterpJacobi(
+    //       rmax, Uf, UfNew, Uc, m_Morc[gc], m_Mlrc[gc], m_Morf[gf], m_Mlrf[gf],
+    //       Unextf, UnextcInterp, m_iStart.data(), m_iEnd.data(), m_jStart.data(),
+    //       m_jEnd.data(), m_kStart.data(), m_kEnd.data(), m_iStartInt.data(),
+    //       m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf,
+    //       mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
 
-    if (m_croutines)
+      //    if (m_croutines)
       // optimized version for updating even i and even j
       evenIevenJinterpJacobiOpt(
           rmax4, rmax5, rmax6, Uf.c_ptr(), UfNew.c_ptr(), Uc.c_ptr(),
           m_Morc[gc].c_ptr(), m_Mlrc[gc].c_ptr(), m_Morf[gf].c_ptr(),
           m_Mlrf[gf].c_ptr(), Unextf.c_ptr(), UnextcInterp.c_ptr(),
           m_iStart.data(), m_iEnd.data(), m_jStart.data(), m_jEnd.data(),
-          m_kStart.data(), m_kEnd.data(), m_iStartSw4_Type.data(), m_iEndSw4_Type.data(),
-          m_jStartSw4_Type.data(), m_jEndSw4_Type.data(), gf, gc, nkf, mDt, hf, hc, cof,
+          m_kStart.data(), m_kEnd.data(), m_iStartInt.data(), m_iEndInt.data(),
+          m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf, mDt, hf, hc, cof,
           relax, m_sbop, m_ghcof);
-    else
-      evenIevenJinterpJacobi(
-          rmax, Uf, UfNew, Uc, m_Morc[gc], m_Mlrc[gc], m_Morf[gf], m_Mlrf[gf],
-          Unextf, UnextcInterp, m_iStart.data(), m_iEnd.data(), m_jStart.data(),
-          m_jEnd.data(), m_kStart.data(), m_kEnd.data(), m_iStartSw4_Type.data(),
-          m_iEndSw4_Type.data(), m_jStartSw4_Type.data(), m_jEndSw4_Type.data(), gf, gc, nkf,
-          mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
+    // else
+    //   evenIevenJinterpJacobi(
+    //       rmax, Uf, UfNew, Uc, m_Morc[gc], m_Mlrc[gc], m_Morf[gf], m_Mlrf[gf],
+    //       Unextf, UnextcInterp, m_iStart.data(), m_iEnd.data(), m_jStart.data(),
+    //       m_jEnd.data(), m_kStart.data(), m_kEnd.data(), m_iStartInt.data(),
+    //       m_iEndInt.data(), m_jStartInt.data(), m_jEndInt.data(), gf, gc, nkf,
+    //       mDt, hf, hc, cof, relax, m_sbop, m_ghcof);
 
     rmax[0] = std::max(rmax[0], static_cast<float_sw4>(rmax1.get()));
     rmax[1] = std::max(rmax[1], static_cast<float_sw4>(rmax2.get()));
@@ -535,17 +535,17 @@ void EW::checksw4_typep(Sarray &Uf, Sarray &Unextf, Sarray &Bf, Sarray &Muf,
   // sw4_type it = 0;
   relax = m_cirelfact;
 
-  icb = m_iStartSw4_Type[gc];
-  ifb = m_iStartSw4_Type[gf];
+  icb = m_iStartInt[gc];
+  ifb = m_iStartInt[gf];
 
-  ice = m_iEndSw4_Type[gc];
-  ife = m_iEndSw4_Type[gf];
+  ice = m_iEndInt[gc];
+  ife = m_iEndInt[gf];
 
-  jcb = m_jStartSw4_Type[gc];
-  jfb = m_jStartSw4_Type[gf];
+  jcb = m_jStartInt[gc];
+  jfb = m_jStartInt[gf];
 
-  jce = m_jEndSw4_Type[gc];
-  jfe = m_jEndSw4_Type[gf];
+  jce = m_jEndInt[gc];
+  jfe = m_jEndInt[gf];
 
   nkf = m_global_nz[gf];
   // material coefficients along the interface (fine grid)

@@ -9,21 +9,21 @@ void oddIoddJinterpJacobi(
     Sarray &Mlcs, Sarray &Morf, Sarray &Mlrf, Sarray &Unextf,
     Sarray &BfRestrict, Sarray &Unextc, Sarray &Bc, sw4_type a_iStart[],
     sw4_type a_iEnd[], sw4_type a_jStart[], sw4_type a_jEnd[], sw4_type a_kStart[], sw4_type a_kEnd[],
-    sw4_type a_iStartSw4_Type[], sw4_type a_iEndSw4_Type[], sw4_type a_jStartSw4_Type[], sw4_type a_jEndSw4_Type[],
+    sw4_type a_iStartInt[], sw4_type a_iEndInt[], sw4_type a_jStartInt[], sw4_type a_jEndInt[],
     sw4_type gf, sw4_type gc, sw4_type nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc,
     float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[], float_sw4 a_ghcof[]) {
   SW4_MARK_FUNCTION;
-  sw4_type icb = a_iStartSw4_Type[gc];
-  // sw4_type ifb = a_iStartSw4_Type[gf];
+  sw4_type icb = a_iStartInt[gc];
+  // sw4_type ifb = a_iStartInt[gf];
 
-  sw4_type ice = a_iEndSw4_Type[gc];
-  // sw4_type ife = a_iEndSw4_Type[gf];
+  sw4_type ice = a_iEndInt[gc];
+  // sw4_type ife = a_iEndInt[gf];
 
-  sw4_type jcb = a_jStartSw4_Type[gc];
-  // sw4_type jfb = a_jStartSw4_Type[gf];
+  sw4_type jcb = a_jStartInt[gc];
+  // sw4_type jfb = a_jStartInt[gf];
 
-  sw4_type jce = a_jEndSw4_Type[gc];
-  // sw4_type jfe = a_jEndSw4_Type[gf];
+  sw4_type jce = a_jEndInt[gc];
+  // sw4_type jfe = a_jEndInt[gf];
 
   float_sw4 nuf =
       a_Dt * a_Dt / (cof * hf * hf);  // cof=12 for the predictor, cof=1 for the
@@ -276,8 +276,8 @@ void oddIoddJinterpJacobiOpt(
     float_sw4 *__restrict__ a_unextf, float_sw4 *__restrict__ a_bfr,
     float_sw4 *__restrict__ a_unextc, float_sw4 *__restrict__ a_bc,
     sw4_type a_iStart[], sw4_type a_iEnd[], sw4_type a_jStart[], sw4_type a_jEnd[], sw4_type a_kStart[],
-    sw4_type a_kEnd[], sw4_type a_iStartSw4_Type[], sw4_type a_iEndSw4_Type[], sw4_type a_jStartSw4_Type[],
-    sw4_type a_jEndSw4_Type[], sw4_type gf, sw4_type gc, sw4_type nkf, float_sw4 a_Dt, float_sw4 hf,
+    sw4_type a_kEnd[], int a_iStartInt[], int a_iEndInt[], int a_jStartInt[],
+    int a_jEndInt[], sw4_type gf, sw4_type gc, sw4_type nkf, float_sw4 a_Dt, float_sw4 hf,
     float_sw4 hc, float_sw4 cof, float_sw4 relax, float_sw4 a_sbop[],
     float_sw4 a_ghcof[]) {
   SW4_MARK_FUNCTION;
@@ -380,17 +380,17 @@ void oddIoddJinterpJacobiOpt(
   ASSERT_MANAGED(a_sbop);
   ASSERT_MANAGED(a_ghcof);
   // previous stuff
-  sw4_type icb = a_iStartSw4_Type[gc];
-  // sw4_type ifb = a_iStartSw4_Type[gf];
+  sw4_type icb = a_iStartInt[gc];
+  // sw4_type ifb = a_iStartInt[gf];
 
-  sw4_type ice = a_iEndSw4_Type[gc];
-  // sw4_type ife = a_iEndSw4_Type[gf];
+  sw4_type ice = a_iEndInt[gc];
+  // sw4_type ife = a_iEndInt[gf];
 
-  sw4_type jcb = a_jStartSw4_Type[gc];
-  // sw4_type jfb = a_jStartSw4_Type[gf];
+  sw4_type jcb = a_jStartInt[gc];
+  // sw4_type jfb = a_jStartInt[gf];
 
-  sw4_type jce = a_jEndSw4_Type[gc];
-  // sw4_type jfe = a_jEndSw4_Type[gf];
+  sw4_type jce = a_jEndInt[gc];
+  // sw4_type jfe = a_jEndInt[gf];
 
   float_sw4 nuf =
       a_Dt * a_Dt / (cof * hf * hf);  // cof=12 for the predictor, cof=1 for the
@@ -695,8 +695,8 @@ void oddIoddJinterp(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf,
                     Sarray &Rhof, Sarray &Uc, Sarray &Muc, Sarray &Lambdac,
                     Sarray &Rhoc, Sarray &Mufs, Sarray &Mlfs, Sarray &Unextf,
                     Sarray &BfRestrict, Sarray &Unextc, Sarray &Bc,
-                    sw4_type a_iStart[], sw4_type a_jStart[], sw4_type a_iStartSw4_Type[],
-                    sw4_type a_iEndSw4_Type[], sw4_type a_jStartSw4_Type[], sw4_type a_jEndSw4_Type[], sw4_type gf,
+                    sw4_type a_iStart[], sw4_type a_jStart[], sw4_type a_iStartInt[],
+                    sw4_type a_iEndInt[], sw4_type a_jStartInt[], sw4_type a_jEndInt[], sw4_type gf,
                     sw4_type gc, sw4_type nkf, float_sw4 a_Dt, float_sw4 hf, float_sw4 hc,
                     float_sw4 cof, float_sw4 relax, float_sw4 *a_strf_x,
                     float_sw4 *a_strf_y, float_sw4 *a_strc_x,
@@ -711,17 +711,17 @@ void oddIoddJinterp(float_sw4 rmax[3], Sarray &Uf, Sarray &Muf, Sarray &Lambdaf,
 #define strf_x(i) a_strf_x[(i - a_iStart[gf])]
 #define strf_y(j) a_strf_y[(j - a_jStart[gf])]
 
-  sw4_type icb = a_iStartSw4_Type[gc];
-  //  sw4_type ifb = a_iStartSw4_Type[gf];
+  sw4_type icb = a_iStartInt[gc];
+  //  sw4_type ifb = a_iStartInt[gf];
 
-  sw4_type ice = a_iEndSw4_Type[gc];
-  // sw4_type ife = a_iEndSw4_Type[gf];
+  sw4_type ice = a_iEndInt[gc];
+  // sw4_type ife = a_iEndInt[gf];
 
-  sw4_type jcb = a_jStartSw4_Type[gc];
-  //  sw4_type jfb = a_jStartSw4_Type[gf];
+  sw4_type jcb = a_jStartInt[gc];
+  //  sw4_type jfb = a_jStartInt[gf];
 
-  sw4_type jce = a_jEndSw4_Type[gc];
-  //  sw4_type jfe = a_jEndSw4_Type[gf];
+  sw4_type jce = a_jEndInt[gc];
+  //  sw4_type jfe = a_jEndInt[gf];
 
   float_sw4 nuf =
       a_Dt * a_Dt / (cof * hf * hf);  // cof=12 for the predictor, cof=1 for the

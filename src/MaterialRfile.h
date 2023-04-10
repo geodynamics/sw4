@@ -79,7 +79,7 @@ class MaterialRfile : public MaterialData {
 
   int m_npatches;
   // Index range of patch in file coordinate system
-  vector<sw4_type> m_ifirst, m_ilast, m_jfirst, m_jlast, m_kfirst, m_klast, m_ni,
+  vector<int> m_ifirst, m_ilast, m_jfirst, m_jlast, m_kfirst, m_klast, m_ni,
       m_nj, m_nk;
 
   // file coordinate system is x=(i-1)*m_hx[gr] + m_xmin[gr], in SW4

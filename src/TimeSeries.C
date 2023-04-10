@@ -493,7 +493,7 @@ void TimeSeries::writeFile(string suffix) {
   hid_t fid, grp = 0;
   double stlalodp[3], stxyz[3];
   float origsw4_typeime;
-  sw4_type myRank;
+  int myRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
   // create a new function to write metadata only
@@ -3429,7 +3429,7 @@ hid_t TimeSeries::openHDF5File(std::string suffix) {
   else
     printf("%s: Error with ts0 pointer!\n", __func__);
 
-  sw4_type myRank;
+  int myRank;
   if (is_debug) {
     MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
     printf("Rank %d: HDF5 file [%s] successfully opened: %ld\n", myRank,
