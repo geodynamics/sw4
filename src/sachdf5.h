@@ -44,24 +44,24 @@
 
 #include "hdf5.h"
 
-sw4_type createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, sw4_type totalSteps,
+int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
                              float_sw4 delta, string suffix);
-sw4_type writeTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, sw4_type npts,
+int writeTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int npts,
                             void *data);
 
-sw4_type createAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id);
-sw4_type createWriteAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id,
+int createAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id);
+int createWriteAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id,
                     void *data);
-sw4_type openWriteAttr(hid_t loc, const char *name, hid_t type_id, void *data);
-sw4_type createWriteAttrStr(hid_t loc, const char *name, const char *str);
-sw4_type openWriteData(hid_t loc, const char *name, hid_t type_id, void *data,
-                  sw4_type ndim, hsize_t *start, hsize_t *count, sw4_type total_npts,
+int openWriteAttr(hid_t loc, const char *name, hid_t type_id, void *data);
+int createWriteAttrStr(hid_t loc, const char *name, const char *str);
+int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data,
+                  int ndim, hsize_t *start, hsize_t *count, int total_npts,
                   float btime, float cmpinc, float cmpaz, bool isIncAzWritten,
                   bool isLast);
-sw4_type readAttrStr(hid_t loc, const char *name, char *str);
-sw4_type readAttrSw4_Type(hid_t loc, const char *name, sw4_type *data);
-sw4_type readAttrFloat(hid_t loc, const char *name, float *data);
-sw4_type readHDF5Data(hid_t loc, const char *name, sw4_type npts, void *data);
+int readAttrStr(hid_t loc, const char *name, char *str);
+int readAttrInt(hid_t loc, const char *name, int *data);
+int readAttrFloat(hid_t loc, const char *name, float *data);
+int readHDF5Data(hid_t loc, const char *name, int npts, void *data);
 
 #endif  // USE_HDF5
 

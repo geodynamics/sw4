@@ -1,6 +1,6 @@
 #ifndef SW4_ALLDIMS_H
 #define SW4_ALLDIMS_H
-
+#include "sw4.h"
 #include <mpi.h>
 #include <sys/types.h>
 

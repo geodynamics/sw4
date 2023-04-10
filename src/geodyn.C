@@ -124,7 +124,7 @@ void EW::set_geodyn_data(string file, sw4_type nx, sw4_type nz, float_sw4 h,
 
   m_geo_usgh.resize(4);
 
-  sw4_type i0, i1, j0, j1, k0, k1;
+  int i0, i1, j0, j1, k0,k1;
   float_sw4 cubelen = (nx - 1) * m_geodyn_h;
   float_sw4 zcubelen = (nz - 1) * m_geodyn_h;
 
@@ -203,8 +203,8 @@ void EW::set_geodyn_data(string file, sw4_type nx, sw4_type nz, float_sw4 h,
           k1 = km;
       } else
         k1 = 0;  // k1 =0 if cube not in my processor
-      sw4_type k1tmp = k1;
-      MPI_Allreduce(&k1tmp, &k1, 1, MPI_SW4_TYPE, MPI_MAX, MPI_COMM_WORLD);
+      int k1tmp = k1;
+      MPI_Allreduce(&k1tmp, &k1, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
     }
     bool cubeok = true;
     if (g == mNumberOfGrids - 1 && m_geodyn_faces == 5) {

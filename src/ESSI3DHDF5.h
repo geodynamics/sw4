@@ -45,20 +45,20 @@ class ESSI3DHDF5 {
  public:
   static ESSI3DHDF5* nil;
 
-  ESSI3DHDF5(const std::string& filename, sw4_type (&global)[3], sw4_type (&window)[6],
-             bool ihavearray, sw4_type precision);
+  ESSI3DHDF5(const std::string& filename, int (&global)[3], int (&window)[6],
+             bool ihavearray, int precision);
   ~ESSI3DHDF5();
 
   void create_file(bool is_restart, bool is_root);
   void close_file();
   void write_header(double h, double (&lonlat_origin)[2], double az,
-                    double (&origin)[3], sw4_type cycle, double t, double dt);
+                    double (&origin)[3], int cycle, double t, double dt);
   void write_topo(void* window_array);
 
-  void write_vel(void* window_array, sw4_type comp, sw4_type cycle, sw4_type nstep);
+  void write_vel(void* window_array, int comp, int cycle, int nstep);
 
-  void init_write_vel(bool m_isRestart, sw4_type ntimestep, sw4_type ZFPmode,
-                      double ZFPpar, sw4_type dumpInterval);
+  void init_write_vel(bool m_isRestart, int ntimestep, int ZFPmode,
+                      double ZFPpar, int dumpInterval);
 
   const std::string& filename() { return m_filename; };
   void set_ihavearray(bool ihavearray) { m_ihavearray = ihavearray; };
@@ -71,10 +71,10 @@ class ESSI3DHDF5 {
 
   std::string m_filename;
   bool m_ihavearray;
-  sw4_type m_end_cycle;
-  sw4_type m_window[6];
-  sw4_type m_global[3];
-  sw4_type m_precision;
+  int m_end_cycle;
+  int m_window[6];
+  int m_global[3];
+  int m_precision;
 
 #ifdef USE_HDF5
   hsize_t m_window_dims[4];  // for just this proc, this cycle

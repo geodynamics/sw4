@@ -54,7 +54,7 @@
 
 #include "sachdf5.h"
 
-sw4_type createAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id) {
+int createAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id) {
   hid_t attr, dcpl;
 
 #ifdef USE_DSET_ATTR
@@ -79,7 +79,7 @@ sw4_type createAttr(hid_t loc, const char *name, hid_t type_id, hid_t space_id) 
   return 1;
 }
 
-sw4_type createWriteAttr(hid_t loc, char const *name, hid_t type_id, hid_t space_id,
+int createWriteAttr(hid_t loc, char const *name, hid_t type_id, hid_t space_id,
                     void *data) {
   hid_t attr, dcpl;
   herr_t ret;
@@ -115,7 +115,7 @@ sw4_type createWriteAttr(hid_t loc, char const *name, hid_t type_id, hid_t space
   return 1;
 }
 
-sw4_type openWriteAttr(hid_t loc, const char *name, hid_t type_id, void *data) {
+int openWriteAttr(hid_t loc, const char *name, hid_t type_id, void *data) {
   hid_t attr;
   herr_t ret;
 
@@ -152,12 +152,12 @@ sw4_type openWriteAttr(hid_t loc, const char *name, hid_t type_id, void *data) {
 #endif
 
   // debug
-  /* printf("%s: write [%s] success sw4_type=%d, float=%.2f!\n", __func__, name,
-   * *((sw4_type*)data), *((float*)data)); */
+  /* printf("%s: write [%s] success int=%d, float=%.2f!\n", __func__, name,
+   * *((int*)data), *((float*)data)); */
   return 1;
 }
 
-sw4_type createWriteAttrStr(hid_t loc, const char *name, const char *str) {
+int createWriteAttrStr(hid_t loc, const char *name, const char *str) {
   hid_t attr, atype, space;
   herr_t ret;
 
@@ -187,8 +187,8 @@ sw4_type createWriteAttrStr(hid_t loc, const char *name, const char *str) {
   return 1;
 }
 
-sw4_type openWriteData(hid_t loc, const char *name, hid_t type_id, void *data,
-                  sw4_type ndim, hsize_t *start, hsize_t *count, sw4_type total_npts,
+int openWriteData(hid_t loc, const char *name, hid_t type_id, void *data,
+                  int ndim, hsize_t *start, hsize_t *count, int total_npts,
                   float btime, float cmpinc, float cmpaz, bool isIncAzWritten,
                   bool isLast) {
   bool is_debug = false;
@@ -229,7 +229,7 @@ sw4_type openWriteData(hid_t loc, const char *name, hid_t type_id, void *data,
 
   /* etime1 = MPI_Wtime(); */
 
-  /* sw4_type myRank; */
+  /* int myRank; */
   /* MPI_Comm_rank(MPI_COMM_WORLD, &myRank); */
   /* printf("Rank %d: Attr write time %f, data write time %f\n", myRank,
    * etime1-etime, etime-stime); */
@@ -254,7 +254,7 @@ sw4_type openWriteData(hid_t loc, const char *name, hid_t type_id, void *data,
   return 1;
 }
 
-sw4_type createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, sw4_type totalSteps,
+int createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, int totalSteps,
                              float_sw4 delta, string suffix) {
   bool is_debug = false;
 
@@ -266,7 +266,7 @@ sw4_type createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, sw4_type tot
   std::string dset_names[10];
   TimeSeries::receiverMode mode;
   bool xyzcomponent;
-  sw4_type ndset = 0, isnsew = 0;
+  int ndset = 0, isnsew = 0;
 
   if (TimeSeries.size() == 0) return 0;
 
@@ -281,7 +281,7 @@ sw4_type createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, sw4_type tot
   std::string filename;
 
   char setstripe[4096], *env;
-  sw4_type disablestripe = 0, stripecount = 128, stripesize = 512;
+  int disablestripe = 0, stripecount = 128, stripesize = 512;
 
   env = getenv("DISABLE_LUSTRE_STRIPE");
   if (env != NULL) disablestripe = atoi(env);
@@ -340,7 +340,7 @@ sw4_type createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, sw4_type tot
       cout << "ERROR: renaming SAC-HDF5 file to " << bak.c_str() << endl;
   }
 
-  sw4_type alignment = 65536;
+  int alignment = 65536;
   /* char *env = getenv("HDF5_ALIGNMENT_SIZE"); */
   /* if (env != NULL) */
   /*     alignment = atoi(env); */
@@ -399,7 +399,7 @@ sw4_type createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, sw4_type tot
   createWriteAttrStr(fid, "DATETIME", utcstr);
 
   // delta, sample interval of time-series (seconds)
-  sw4_type downsample = TimeSeries[0]->getDownSample();
+  int downsample = TimeSeries[0]->getDownSample();
   if (downsample < 1) downsample = 1;
 
   dt = (float)delta * downsample;
@@ -408,7 +408,7 @@ sw4_type createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, sw4_type tot
 
   // o, origin time (seconds, relative to start time of SW4 calculation and
   // seismogram, earliest source)
-  createAttr(fid, "ORIGSW4_TYPEIME", H5T_NATIVE_FLOAT, attr_space1);
+  createAttr(fid, "ORIGINTIME", H5T_NATIVE_FLOAT, attr_space1);
 
   // units, units for motion (m for displacement, m/s for velocity, m/s/s for
   // acceleration
@@ -422,7 +422,7 @@ sw4_type createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, sw4_type tot
 
   float cmpazs[9] = {0}, cmpincs[9] = {0};
 
-  for (sw4_type ts = 0; ts < TimeSeries.size(); ts++) {
+  for (int ts = 0; ts < TimeSeries.size(); ts++) {
     std::string stationname = TimeSeries[ts]->getStationName();
     grp = H5Gcreate(fid, stationname.c_str(), H5P_DEFAULT, H5P_DEFAULT,
                     H5P_DEFAULT);
@@ -509,7 +509,7 @@ sw4_type createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, sw4_type tot
       dset_names[8] = "DUZDZ";
     }
 
-    for (sw4_type i = 0; i < ndset; i++) {
+    for (int i = 0; i < ndset; i++) {
       total_dims = (hsize_t)(totalSteps / TimeSeries[ts]->getDownSample());
       if (total_dims == 0) {
         printf("%s: Error with dataset length 0\n", __func__);
@@ -555,7 +555,7 @@ sw4_type createTimeSeriesHDF5File(vector<TimeSeries *> &TimeSeries, sw4_type tot
   return 1;
 }
 
-sw4_type readAttrStr(hid_t loc, const char *name, char *str) {
+int readAttrStr(hid_t loc, const char *name, char *str) {
   herr_t ret;
   hid_t attr, atype;
 
@@ -581,7 +581,7 @@ sw4_type readAttrStr(hid_t loc, const char *name, char *str) {
   return 1;
 }
 
-sw4_type readAttrSw4_Type(hid_t loc, const char *name, sw4_type *data) {
+int readAttrInt(hid_t loc, const char *name, int *data) {
   hid_t attr;
   herr_t ret;
 
@@ -617,7 +617,7 @@ sw4_type readAttrSw4_Type(hid_t loc, const char *name, sw4_type *data) {
   return 1;
 }
 
-sw4_type readAttrFloat(hid_t loc, const char *name, float *data) {
+int readAttrFloat(hid_t loc, const char *name, float *data) {
   hid_t attr;
   herr_t ret;
 
@@ -653,7 +653,7 @@ sw4_type readAttrFloat(hid_t loc, const char *name, float *data) {
   return 1;
 }
 
-sw4_type readHDF5Data(hid_t loc, const char *name, sw4_type npts, void *data) {
+int readHDF5Data(hid_t loc, const char *name, int npts, void *data) {
   hid_t dset, filespace, dxpl;
   hsize_t start, count;
   herr_t ret;

@@ -3054,8 +3054,8 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
   }
 
   // dt may be downsampled
-  sw4_type downsample;
-  readAttrSw4_Type(fid, "DOWNSAMPLE", &downsample);
+  int downsample;
+  readAttrInt(fid, "DOWNSAMPLE", &downsample);
   if (downsample < 1) {
     cout << "ERROR: downsample=" << downsample << " is invalid! Setting to 1"
          << endl;
@@ -3075,8 +3075,8 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
     grp = H5Gopen(fid, m_staName.c_str(), H5P_DEFAULT);
     if (grp < 0) cout << "ERROR opening group [" << m_staName << "] !" << endl;
 
-    sw4_type is_nsew, npts, sw4npts;
-    readAttrSw4_Type(grp, "ISNSEW", &is_nsew);
+    int is_nsew, npts, sw4npts;
+    readAttrInt(grp, "ISNSEW", &is_nsew);
 
     if (is_nsew == 1) {
       dset_names[0] = "EW";
@@ -3090,7 +3090,7 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
     }
     m_xyzcomponent = cartesian;
 
-    readAttrSw4_Type(grp, "NPTS", &npts);
+    readAttrInt(grp, "NPTS", &npts);
     if (npts <= 1) {
       cout << "ERROR: observed data is too short" << endl;
       cout << "    File " << FileName << " not read." << endl;

@@ -163,15 +163,15 @@ AllDims::AllDims(sw4_type nprocs, sw4_type ibg, sw4_type ieg, sw4_type jbg, sw4_
       fftw_mpi_local_size_3d(nig, njg, nkg, m_communicator, &ni, &ib);
   m_fftw_alloc_local = static_cast<size_t>(fftw_alloc_local);
 #else
-  sw4_type ni, ib;
+  long long ni, ib;
 #endif
 
-  std::vector<sw4_type> niloc(m_nproci), ibloc(m_nproci);
+  std::vector<long long> niloc(m_nproci), ibloc(m_nproci);
   niloc[m_myid1d] = ni;
   ibloc[m_myid1d] = ib;
 
-  MPI_Allgather(&ni, 1, MPI_SW4_TYPE, &niloc[0], 1, MPI_SW4_TYPE, m_communicator);
-  MPI_Allgather(&ib, 1, MPI_SW4_TYPE, &ibloc[0], 1, MPI_SW4_TYPE, m_communicator);
+  MPI_Allgather(&ni, 1, MPI_LONG_LONG, &niloc[0], 1, MPI_LONG_LONG, m_communicator);
+  MPI_Allgather(&ib, 1, MPI_LONG_LONG, &ibloc[0], 1, MPI_LONG_LONG, m_communicator);
 
   m_ib.resize(m_nproci);
   m_ie.resize(m_nproci);
@@ -225,12 +225,12 @@ AllDims::AllDims(sw4_type nprocs, sw4_type ibg, sw4_type ieg, sw4_type jbg, sw4_
   m_fftw_alloc_local = static_cast<size_t>(fftw_alloc_local);
 #endif
 
-  std::vector<sw4_type> niloc(m_nproci), ibloc(m_nproci);
+  std::vector<long long> niloc(m_nproci), ibloc(m_nproci);
   niloc[m_myid1d] = ni;
   ibloc[m_myid1d] = ib;
 
-  MPI_Allgather(&ni, 1, MPI_SW4_TYPE, &niloc[0], 1, MPI_SW4_TYPE, MPI_COMM_WORLD);
-  MPI_Allgather(&ib, 1, MPI_SW4_TYPE, &ibloc[0], 1, MPI_SW4_TYPE, MPI_COMM_WORLD);
+  MPI_Allgather(&ni, 1, MPI_LONG_LONG, &niloc[0], 1, MPI_LONG_LONG, MPI_COMM_WORLD);
+  MPI_Allgather(&ib, 1, MPI_LONG_LONG, &ibloc[0], 1, MPI_LONG_LONG, MPI_COMM_WORLD);
 
   m_ib.resize(m_nproci);
   m_ie.resize(m_nproci);

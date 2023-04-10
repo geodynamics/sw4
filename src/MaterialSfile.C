@@ -330,10 +330,10 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> &rho,
   }
 
   size_t materialSum, outsideSum;
-  sw4_type mpisizelong, mpisizelonglong, mpisizesw4_type;
+  int mpisizelong, mpisizelonglong, mpisizeint;
   MPI_Type_size(MPI_LONG, &mpisizelong);
   MPI_Type_size(MPI_LONG_LONG, &mpisizelonglong);
-  MPI_Type_size(MPI_SW4_TYPE, &mpisizesw4_type);
+  MPI_Type_size(MPI_INT, &mpisizeint);
   if (sizeof(size_t) == mpisizelong) {
     MPI_Reduce(&material, &materialSum, 1, MPI_LONG, MPI_SUM, 0,
                MPI_COMM_WORLD);
@@ -343,14 +343,14 @@ void MaterialSfile::set_material_properties(std::vector<Sarray> &rho,
                MPI_COMM_WORLD);
     MPI_Reduce(&outside, &outsideSum, 1, MPI_LONG_LONG, MPI_SUM, 0,
                MPI_COMM_WORLD);
-  } else if (sizeof(size_t) == mpisizesw4_type) {
-    MPI_Reduce(&material, &materialSum, 1, MPI_SW4_TYPE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&outside, &outsideSum, 1, MPI_SW4_TYPE, MPI_SUM, 0, MPI_COMM_WORLD);
+  } else if (sizeof(size_t) == mpisizeint) {
+    MPI_Reduce(&material, &materialSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&outside, &outsideSum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
   } else {
-    sw4_type materialsumi, outsidesumi, materiali = material, outsidei = outside;
-    MPI_Reduce(&materiali, &materialsumi, 1, MPI_SW4_TYPE, MPI_SUM, 0,
+    int materialsumi, outsidesumi, materiali = material, outsidei = outside;
+    MPI_Reduce(&materiali, &materialsumi, 1, MPI_INT, MPI_SUM, 0,
                MPI_COMM_WORLD);
-    MPI_Reduce(&outsidei, &outsidesumi, 1, MPI_SW4_TYPE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&outsidei, &outsidesumi, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     materialSum = materialsumi;
     outsideSum = outsidesumi;
   }
@@ -619,9 +619,9 @@ void MaterialSfile::read_sfile() {
       m_kfirst[p] = 1;
     }
   }
-  vector<sw4_type> isempty(m_npatches), isemptymin(m_npatches);
+  vector<int> isempty(m_npatches), isemptymin(m_npatches);
   for (sw4_type p = 0; p < m_npatches; p++) isempty[p] = m_isempty[p];
-  MPI_Allreduce(&isempty[0], &isemptymin[0], m_npatches, MPI_SW4_TYPE, MPI_MIN,
+  MPI_Allreduce(&isempty[0], &isemptymin[0], m_npatches, MPI_INT, MPI_MIN,
                 MPI_COMM_WORLD);
   for (sw4_type p = 0; p < m_npatches; p++) m_isempty[p] = (isemptymin[p] == 1);
 

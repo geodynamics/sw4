@@ -15,7 +15,7 @@
 
 MPI_Datatype get_mpi_datatype(double* var) { return MPI_DOUBLE; }
 MPI_Datatype get_mpi_datatype(float* var) { return MPI_FLOAT; }
-MPI_Datatype get_mpi_datatype(sw4_type* var) { return MPI_SW4_TYPE; }
+MPI_Datatype get_mpi_datatype(int* var) { return MPI_INT; }
 MPI_Datatype get_mpi_datatype(std::complex<double>* var) {
   return MPI_CXX_DOUBLE_COMPLEX;
 }

@@ -54,15 +54,15 @@
 #include "hdf5.h"
 
 struct traverse_data_t {
-  sw4_type myRank;
+  int myRank;
   EW *ew;
   /* bool cartCoordSet; */
   string inFileName;
   string outFileName;
-  sw4_type writeEvery;
-  sw4_type downSample;
+  int writeEvery;
+  int downSample;
   TimeSeries::receiverMode mode;
-  sw4_type event;
+  int event;
   vector<vector<TimeSeries *> > *GlobalTimeSeries;
   float_sw4 m_global_xmax;
   float_sw4 m_global_ymax;
@@ -84,15 +84,15 @@ struct traverse_data2_t {
   vector<double> *x;
   vector<double> *y;
   vector<double> *z;
-  vector<sw4_type> *is_nsew;
-  sw4_type *n;
+  vector<int> *is_nsew;
+  int *n;
 } traverse_data2_t;
 
 struct srf_meta_t {
   float elon;
   float elat;
-  sw4_type nstk;
-  sw4_type ndip;
+  int nstk;
+  int ndip;
   float len;
   float wid;
   float stk;
@@ -115,11 +115,11 @@ struct srf_data_t {
   float den;
   float rake;
   float slip1;
-  sw4_type nt1;
+  int nt1;
   float slip2;
-  sw4_type nt2;
+  int nt2;
   float slip3;
-  sw4_type nt3;
+  int nt3;
 } srf_data_t;
 
 static herr_t traverse_func(hid_t loc_id, const char *grp_name,
@@ -134,7 +134,7 @@ static herr_t traverse_func(hid_t loc_id, const char *grp_name,
   double data[3];
   double lon, lat, depth, x, y, z;
   bool geoCoordSet = true, topodepth = false, nsew = true;
-  sw4_type isnsew, ret;
+  int isnsew, ret;
 
   ASSERT(operator_data != NULL);
 
@@ -332,8 +332,8 @@ static herr_t traverse_func(hid_t loc_id, const char *grp_name,
 }
 
 void readStationHDF5(EW *ew, string inFileName, string outFileName,
-                     sw4_type writeEvery, sw4_type downSample,
-                     TimeSeries::receiverMode mode, sw4_type event,
+                     int writeEvery, int downSample,
+                     TimeSeries::receiverMode mode, int event,
                      vector<vector<TimeSeries *> > *GlobalTimeSeries,
                      float_sw4 m_global_xmax, float_sw4 m_global_ymax,
                      bool is_obs, bool winlset, bool winrset, float_sw4 winl,
@@ -397,7 +397,7 @@ static herr_t traverse_func2(hid_t loc_id, const char *grp_name,
   H5O_info_t infobuf;
 #endif
   float data[3];
-  sw4_type isnsew, ret;
+  int isnsew, ret;
 
   ASSERT(operator_data != NULL);
 
@@ -476,7 +476,7 @@ static herr_t traverse_func2(hid_t loc_id, const char *grp_name,
 
 void readStationInfoHDF5(string inFileName, vector<string> *staname,
                          vector<double> *x, vector<double> *y,
-                         vector<double> *z, vector<sw4_type> *is_nsew, sw4_type *n) {
+                         vector<double> *z, vector<int> *is_nsew, int *n) {
   hid_t fid, fapl;
 
   struct traverse_data2_t tData;
@@ -504,20 +504,20 @@ void readStationInfoHDF5(string inFileName, vector<string> *staname,
 
 void readRuptureHDF5(char *fname,
                      vector<vector<Source *> > &a_GlobalUniqueSources, EW *ew,
-                     sw4_type event, float_sw4 m_global_xmax,
+                     int event, float_sw4 m_global_xmax,
                      float_sw4 m_global_ymax, float_sw4 m_global_zmax,
                      float_sw4 mGeoAz, float_sw4 xmin, float_sw4 ymin,
-                     float_sw4 zmin, sw4_type mVerbose, sw4_type nreader) {
+                     float_sw4 zmin, int mVerbose, int nreader) {
   bool is_debug = true;
-  sw4_type world_rank, world_size;
+  int world_rank, world_size;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   if (nreader <= 0) nreader = 1;
   if (nreader > world_size) nreader = world_size;
 
-  sw4_type read_color = world_rank % (world_size / nreader) == 0 ? 0 : 1;
-  sw4_type node_color = world_rank / (world_size / nreader);
-  sw4_type read_rank, read_size;
+  int read_color = world_rank % (world_size / nreader) == 0 ? 0 : 1;
+  int node_color = world_rank / (world_size / nreader);
+  int read_rank, read_size;
   MPI_Comm read_comm, node_comm;
   MPI_Comm_split(MPI_COMM_WORLD, read_color, world_rank, &read_comm);
   MPI_Comm_split(MPI_COMM_WORLD, node_color, world_rank, &node_comm);
@@ -527,27 +527,27 @@ void readRuptureHDF5(char *fname,
   double stime, etime;
   hid_t fid, attr, ctype, dtype, dset, dspace, aspace, fapl;
 
-  ctype = H5Tcreate(H5T_COMPOUND, 9 * sizeof(float) + 2 * sizeof(sw4_type));
+  ctype = H5Tcreate(H5T_COMPOUND, 9 * sizeof(float) + 2 * sizeof(int));
   H5Tinsert(ctype, "ELON", 0, H5T_NATIVE_FLOAT);
   H5Tinsert(ctype, "ELAT", 1 * sizeof(float), H5T_NATIVE_FLOAT);
   H5Tinsert(ctype, "NSTK", 2 * sizeof(float), H5T_NATIVE_INT);
-  H5Tinsert(ctype, "NDIP", 2 * sizeof(float) + 1 * sizeof(sw4_type), H5T_NATIVE_INT);
-  H5Tinsert(ctype, "LEN", 2 * sizeof(float) + 2 * sizeof(sw4_type),
+  H5Tinsert(ctype, "NDIP", 2 * sizeof(float) + 1 * sizeof(int), H5T_NATIVE_INT);
+  H5Tinsert(ctype, "LEN", 2 * sizeof(float) + 2 * sizeof(int),
             H5T_NATIVE_FLOAT);
-  H5Tinsert(ctype, "WID", 3 * sizeof(float) + 2 * sizeof(sw4_type),
+  H5Tinsert(ctype, "WID", 3 * sizeof(float) + 2 * sizeof(int),
             H5T_NATIVE_FLOAT);
-  H5Tinsert(ctype, "STK", 4 * sizeof(float) + 2 * sizeof(sw4_type),
+  H5Tinsert(ctype, "STK", 4 * sizeof(float) + 2 * sizeof(int),
             H5T_NATIVE_FLOAT);
-  H5Tinsert(ctype, "DIP", 5 * sizeof(float) + 2 * sizeof(sw4_type),
+  H5Tinsert(ctype, "DIP", 5 * sizeof(float) + 2 * sizeof(int),
             H5T_NATIVE_FLOAT);
-  H5Tinsert(ctype, "DTOP", 6 * sizeof(float) + 2 * sizeof(sw4_type),
+  H5Tinsert(ctype, "DTOP", 6 * sizeof(float) + 2 * sizeof(int),
             H5T_NATIVE_FLOAT);
-  H5Tinsert(ctype, "SHYP", 7 * sizeof(float) + 2 * sizeof(sw4_type),
+  H5Tinsert(ctype, "SHYP", 7 * sizeof(float) + 2 * sizeof(int),
             H5T_NATIVE_FLOAT);
-  H5Tinsert(ctype, "DHYP", 8 * sizeof(float) + 2 * sizeof(sw4_type),
+  H5Tinsert(ctype, "DHYP", 8 * sizeof(float) + 2 * sizeof(int),
             H5T_NATIVE_FLOAT);
 
-  dtype = H5Tcreate(H5T_COMPOUND, 14 * sizeof(float) + 3 * sizeof(sw4_type));
+  dtype = H5Tcreate(H5T_COMPOUND, 14 * sizeof(float) + 3 * sizeof(int));
   H5Tinsert(dtype, "LON", 0, H5T_NATIVE_FLOAT);
   H5Tinsert(dtype, "LAT", 1 * sizeof(float), H5T_NATIVE_FLOAT);
   H5Tinsert(dtype, "DEP", 2 * sizeof(float), H5T_NATIVE_FLOAT);
@@ -561,21 +561,21 @@ void readRuptureHDF5(char *fname,
   H5Tinsert(dtype, "RAKE", 10 * sizeof(float), H5T_NATIVE_FLOAT);
   H5Tinsert(dtype, "SLIP1", 11 * sizeof(float), H5T_NATIVE_FLOAT);
   H5Tinsert(dtype, "NT1", 12 * sizeof(float), H5T_NATIVE_INT);
-  H5Tinsert(dtype, "SLIP2", 12 * sizeof(float) + 1 * sizeof(sw4_type),
+  H5Tinsert(dtype, "SLIP2", 12 * sizeof(float) + 1 * sizeof(int),
             H5T_NATIVE_FLOAT);
-  H5Tinsert(dtype, "NT2", 13 * sizeof(float) + 1 * sizeof(sw4_type), H5T_NATIVE_INT);
-  H5Tinsert(dtype, "SLIP3", 13 * sizeof(float) + 2 * sizeof(sw4_type),
+  H5Tinsert(dtype, "NT2", 13 * sizeof(float) + 1 * sizeof(int), H5T_NATIVE_INT);
+  H5Tinsert(dtype, "SLIP3", 13 * sizeof(float) + 2 * sizeof(int),
             H5T_NATIVE_FLOAT);
-  H5Tinsert(dtype, "NT3", 14 * sizeof(float) + 2 * sizeof(sw4_type), H5T_NATIVE_INT);
+  H5Tinsert(dtype, "NT3", 14 * sizeof(float) + 2 * sizeof(int), H5T_NATIVE_INT);
 
   struct srf_meta_t *srf_metadata;
   struct srf_data_t *point_data;
   float *sr_data;
 
-  sw4_type npts = 0, nseg = 0, nsr1 = 0;
+  int npts = 0, nseg = 0, nsr1 = 0;
   hsize_t dims;
   double rVersion;
-  sw4_type nSources = 0, nu1 = 0, nu2 = 0, nu3 = 0;
+  int nSources = 0, nu1 = 0, nu2 = 0, nu3 = 0;
 
   stime = MPI_Wtime();
   // Only rank 0 reads data, then broadcast to all other processes
@@ -596,7 +596,7 @@ void readRuptureHDF5(char *fname,
     attr = H5Aopen(fid, "PLANE", H5P_DEFAULT);
     aspace = H5Aget_space(attr);
     H5Sget_simple_extent_dims(aspace, &dims, NULL);
-    nseg = (sw4_type)dims;
+    nseg = (int)dims;
     srf_metadata =
         (struct srf_meta_t *)malloc(nseg * sizeof(struct srf_meta_t));
     H5Sclose(aspace);
@@ -606,7 +606,7 @@ void readRuptureHDF5(char *fname,
     H5Aclose(attr);
 
     if (world_rank == 0) {
-      for (sw4_type seg = 0; seg < nseg; seg++) {
+      for (int seg = 0; seg < nseg; seg++) {
         printf("Seg #%i: elon=%g, elat=%g, nstk=%i, ndip=%i, len=%g, wid=%g\n",
                seg + 1, srf_metadata[seg].elon, srf_metadata[seg].elat,
                srf_metadata[seg].nstk, srf_metadata[seg].ndip,
@@ -627,7 +627,7 @@ void readRuptureHDF5(char *fname,
       dspace = H5Dget_space(dset);
 
       H5Sget_simple_extent_dims(dspace, &dims, NULL);
-      npts = (sw4_type)dims;
+      npts = (int)dims;
       if (world_rank == 0)
         printf("Number of point sources in data block: %i\n", npts);
 
@@ -646,7 +646,7 @@ void readRuptureHDF5(char *fname,
       dspace = H5Dget_space(dset);
 
       H5Sget_simple_extent_dims(dspace, &dims, NULL);
-      nsr1 = (sw4_type)dims;
+      nsr1 = (int)dims;
 
       sr_data = (float *)malloc(nsr1 * sizeof(float));
       H5Dread(dset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, sr_data);
@@ -661,12 +661,12 @@ void readRuptureHDF5(char *fname,
   if (is_debug && world_rank == 0)
     printf("Read SRF-HDF5 takes %.2f seconds\n", etime - stime);
 
-  MPI_Bcast(&npts, 1, MPI_SW4_TYPE, 0, node_comm);
-  /* MPI_Bcast(&npts, 1, MPI_SW4_TYPE, 0, MPI_COMM_WORLD); */
+  MPI_Bcast(&npts, 1, MPI_INT, 0, node_comm);
+  /* MPI_Bcast(&npts, 1, MPI_INT, 0, MPI_COMM_WORLD); */
   if (npts == -1) return;
 
-  MPI_Bcast(&nsr1, 1, MPI_SW4_TYPE, 0, node_comm);
-  /* MPI_Bcast(&nsr1, 1, MPI_SW4_TYPE, 0, MPI_COMM_WORLD); */
+  MPI_Bcast(&nsr1, 1, MPI_INT, 0, node_comm);
+  /* MPI_Bcast(&nsr1, 1, MPI_INT, 0, MPI_COMM_WORLD); */
   if (nsr1 == -1) return;
 
   if (read_color != 0) {
@@ -701,12 +701,12 @@ void readRuptureHDF5(char *fname,
   bool topodepth = true;
   // Discrete source time function
   float_sw4 *par = NULL;
-  sw4_type *ipar = NULL;
-  sw4_type npar = 0, nipar = 0, ncyc = 0, sr1pos = 0;
+  int *ipar = NULL;
+  int npar = 0, nipar = 0, ncyc = 0, sr1pos = 0;
   // read all point sources
-  for (sw4_type pts = 0; pts < npts; pts++) {
+  for (int pts = 0; pts < npts; pts++) {
     double lon, lat, dep, stk, dip, area, tinit, dt, rake, slip1, slip2, slip3;
-    sw4_type nt1, nt2, nt3;
+    int nt1, nt2, nt3;
 
     lon = (double)point_data[pts].lon;
     lat = (double)point_data[pts].lat;
@@ -720,9 +720,9 @@ void readRuptureHDF5(char *fname,
     slip1 = (double)point_data[pts].slip1;
     slip2 = (double)point_data[pts].slip2;
     slip3 = (double)point_data[pts].slip3;
-    nt1 = (sw4_type)point_data[pts].nt1;
-    nt2 = (sw4_type)point_data[pts].nt2;
-    nt3 = (sw4_type)point_data[pts].nt3;
+    nt1 = (int)point_data[pts].nt1;
+    nt2 = (int)point_data[pts].nt2;
+    nt3 = (int)point_data[pts].nt3;
 
     // nothing to do if nt1=nt2=nt3=0
     if (nt1 <= 0 && nt2 <= 0 && nt3 <= 0) continue;
@@ -744,34 +744,34 @@ void readRuptureHDF5(char *fname,
       // note that the first data point is always zero, but the last is not
       // for this reason we always pad the time zeries with a '0'
       // also note that we need at least 7 data points, i.e. nt1>=6
-      sw4_type nt1dim = max(6, nt1);
+      int nt1dim = max(6, nt1);
       par = new float_sw4[nt1dim + 2];
       par[0] = tinit;
       t0 = tinit;
       freq = 1 / dt;
-      ipar = new sw4_type[1];
+      ipar = new int[1];
       ipar[0] = nt1dim + 1;  // add an extra point
 
-      for (sw4_type i = 0; i < nt1; i++) par[i + 1] = sr_data[sr1pos++];
+      for (int i = 0; i < nt1; i++) par[i + 1] = sr_data[sr1pos++];
 
       // pad with 0
       if (nt1 < 6) {
-        for (sw4_type j = nt1; j < 6; j++) par[j + 1] = 0.;
+        for (int j = nt1; j < 6; j++) par[j + 1] = 0.;
       }
 
       // last 0
       par[nt1dim + 1] = 0.0;
 
       // scale cm/s to m/s
-      for (sw4_type i = 1; i <= nt1dim + 1; i++) {
+      for (int i = 1; i <= nt1dim + 1; i++) {
         par[i] *= 1e-2;
       }
 
-      // AP: Mar. 1, 2016: Additional scaling is needed to make the sw4_typeegral of
+      // AP: Mar. 1, 2016: Additional scaling is needed to make the integral of
       // the time function = 1
       float_sw4 slip_m = slip1 * 1e-2;
       float_sw4 slip_sum = 0;
-      for (sw4_type i = 1; i <= nt1dim + 1; i++) {
+      for (int i = 1; i <= nt1dim + 1; i++) {
         slip_sum += par[i];
       }
       slip_sum *= dt;
@@ -782,13 +782,13 @@ void readRuptureHDF5(char *fname,
             "header)=%e [m]\n",
             slip_sum, slip_m);
       }
-      // scale time series to sum to sw4_typeegrate to one
-      for (sw4_type i = 1; i <= nt1dim + 1; i++) {
+      // scale time series to sum to integrate to one
+      for (int i = 1; i <= nt1dim + 1; i++) {
         par[i] /= slip_sum;
       }
       if (world_rank == 0 && mVerbose >= 2) {
         slip_sum = 0;
-        for (sw4_type i = 1; i <= nt1dim + 1; i++) {
+        for (int i = 1; i <= nt1dim + 1; i++) {
           slip_sum += par[i];
         }
         slip_sum *= dt;
@@ -802,7 +802,7 @@ void readRuptureHDF5(char *fname,
       nipar = 1;
 
       // printf("Read discrete time series: tinit=%g, dt=%g, nt1=%i\n", tinit,
-      // dt, nt1); for (sw4_type i=0; i<nt1+1; i++)
+      // dt, nt1); for (int i=0; i<nt1+1; i++)
       //   printf("Sv1[%i]=%g\n", i+1, par[i+1]);
 
       // convert lat, lon, depth to (x,y,z)
