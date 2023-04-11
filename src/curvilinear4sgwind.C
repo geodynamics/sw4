@@ -48,7 +48,7 @@ void curvilinear4sgwind(
     sw4_type kfirstw, sw4_type klastw, float_sw4* __restrict__ a_u,
     float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda,
     float_sw4* __restrict__ a_met, float_sw4* __restrict__ a_jac,
-    float_sw4* __restrict__ a_lu, sw4_type* onesided, float_sw4* __restrict__ a_acof,
+    float_sw4* __restrict__ a_lu, int* onesided, float_sw4* __restrict__ a_acof,
     float_sw4* __restrict__ a_bope, float_sw4* __restrict__ a_ghcof,
     float_sw4* __restrict__ a_acof_no_gp, float_sw4* __restrict__ a_ghcof_no_gp,
     float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, sw4_type nk,

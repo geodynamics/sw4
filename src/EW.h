@@ -88,17 +88,17 @@ class EW {
   void saveGMTFile(vector<vector<Source*>>& a_GlobalUniqueSources, sw4_type event);
   void allocateCartesianSolverArrays(float_sw4 a_global_zmax);
   // void setGoalTime(float_sw4 t);
-  void setGoalTime(float_sw4 t, sw4_type event = 0);
+  void setGoalTime(float_sw4 t, int event = 0);
   // double getCurrentTime(){return mTime;}
 
   // void setNumberSteps(sw4_type steps);  // remove???
-  void setNumberSteps(sw4_type steps, sw4_type event = 0);  // remove???
+  void setNumberSteps(int steps, int event = 0);  // remove???
   // sw4_type getNumberOfSteps() const;
-  sw4_type getNumberOfSteps(sw4_type event = 0) const;
-  sw4_type getNumberOfEvents() const;
+  int getNumberOfSteps(int event = 0) const;
+  int getNumberOfEvents() const;
   float_sw4 getGlobalZmin() { return m_global_zmin; }
   float_sw4 getGlobalZmax() { return m_global_zmax; }
-  sw4_type findNumberOfEvents();
+  int findNumberOfEvents();
 
   void setupRun(vector<vector<Source*>>& a_GlobalUniqueSources);
 
@@ -127,8 +127,8 @@ class EW {
 
   bool parseInputFile(vector<vector<Source*>>& a_GlobalSources,
                       vector<vector<TimeSeries*>>& a_GlobalTimeSeries);
-  void parsedate(char* datestr, sw4_type& year, sw4_type& month, sw4_type& day, sw4_type& hour,
-                 sw4_type& minute, sw4_type& second, sw4_type& msecond, sw4_type& fail);
+  void parsedate(char* datestr, int& year, int& month, int& day, int& hour,
+                 int& minute, int& second, int& msecond, int& fail);
 
   void extractRecordData(TimeSeries::receiverMode mode, sw4_type i0, sw4_type j0, sw4_type k0,
                          sw4_type grid0, vector<float_sw4>& uRec,
@@ -150,7 +150,7 @@ class EW {
   void processImage3D(char* buffer);
   void processESSI3D(char* buffer);
   void processSfileOutput(char* buffer);
-  void deprecatedImageMode(sw4_type value, const char* name) const;
+  void deprecatedImageMode(int value, const char* name) const;
   void processTestPointSource(char* buffer);
   void processTestRayleigh(char* buffer);
   void processTestLamb(char* buffer);
@@ -198,7 +198,7 @@ class EW {
   void processCheckPoint(char* buffer);
   void processGeodynbc(char* buffer);
 
-  void processEvent(char* buffer, sw4_type enr);
+  void processEvent(char* buffer, int enr);
   // void getEfileInfo(char* buffer);
 
   void side_plane(sw4_type g, sw4_type side, sw4_type wind[6], sw4_type nGhost);
@@ -212,11 +212,11 @@ class EW {
 
   // void setDampingCFL(float_sw4 d4_cfl) { m_d4_cfl = d4_cfl; }
 
-  void prsw4_typeTime(sw4_type cycle, float_sw4 t, bool force = false) const;
-  void prsw4_typePreamble(vector<Source*>& a_Sources, sw4_type event) const;
+  void printTime(sw4_type cycle, float_sw4 t, bool force = false) const;
+  void printPreamble(vector<Source*>& a_Sources, sw4_type event) const;
   void switch_on_checkfornan();
   void switch_on_error_log();
-  void set_energylog(string logfile, bool prsw4_type, bool elog);
+  void set_energylog(string logfile, bool print, bool elog);
   void set_inner_loop(sw4_type loopnr);
   void set_cflnumber(float_sw4 cfl);
   void set_testing_mode(bool a_testing) { m_testing = a_testing; }
@@ -375,8 +375,8 @@ class EW {
   void initialize_SAC_files();   // going away
   void update_SACs(sw4_type Nsteps);  // going away
 
-  void prsw4_type_execution_times(float_sw4 times[7]);
-  void prsw4_type_execution_time(float_sw4 t1, float_sw4 t2, string msg);
+  void print_execution_times(float_sw4 times[7]);
+  void print_execution_time(float_sw4 t1, float_sw4 t2, string msg);
   void finalizeIO();
   string bc_name(const boundaryConditionType bc) const;
   sw4_type mkdirs(const string& path);
@@ -437,8 +437,8 @@ class EW {
   void assign_local_bcs();
   bool timeSteppingSet();
   bool proc_decompose_2d(sw4_type ni, sw4_type nj, sw4_type nproc, int proc_max[2]);
-  void decomp1d(sw4_type nglobal, sw4_type myid, sw4_type nproc, sw4_type& s, sw4_type& e);
-  void coarsen1d(sw4_type& n, sw4_type& ifirst, sw4_type& ilast, sw4_type periodic);
+  void decomp1d(int nglobal, int myid, int nproc, int& s, int& e);
+  void coarsen1d(int& n, int& ifirst, int& ilast, int periodic);
   void allocateCurvilinearArrays();
   void generate_grid();
   void setup_metric();
@@ -477,7 +477,7 @@ class EW {
   void addESSI3D(ESSI3D* i);
   void addSfileOutput(SfileOutput* i);
   void setIO_timing(bool iotiming);
-  void setParallel_IO(bool pfs, sw4_type nwriters);
+  void setParallel_IO(bool pfs, int nwriters);
 
   void extractTopographyFromGridFile(string a_topoFileName);
   void extractTopographyFromImageFile(string a_topoFileName);
@@ -652,7 +652,7 @@ class EW {
   void geodynbcGetSizes(string filename, float_sw4 origin[3],
                         float_sw4& cubelen, float_sw4& zcubelen,
                         float_sw4& hcube, bool& found_latlon, double& lat,
-                        double& lon, double& az, sw4_type& adjust);
+                        double& lon, double& az, int& adjust);
   void geodynFindFile(char* buffer);
   void bcsurf_curvilinear_2nd_order(sw4_type side, sw4_type i0, sw4_type i1, sw4_type j0, sw4_type j1,
                                     sw4_type k0, sw4_type g, Sarray& u,
@@ -708,7 +708,7 @@ class EW {
 
   // test point source
   void get_exact_point_source(float_sw4* u, float_sw4 t, sw4_type g, Source& source,
-                              sw4_type* wind = 0);
+                              int* wind = 0);
   RAJA_HOST_DEVICE static float_sw4 VerySmoothBump_x_T_Sw4_Typeegral(float_sw4 t,
                                                                 float_sw4 R,
                                                                 float_sw4 alpha,
@@ -758,7 +758,7 @@ class EW {
   // string getPath() { return mPath; }
   string getPath(sw4_type event = 0) { return mPath[event]; }
   void set_utcref(TimeSeries& ts);
-  void prsw4_type_utc(sw4_type event = 0);
+  void print_utc(sw4_type event = 0);
 
   // For inverse problem
   void processCG(char* buffer);
@@ -902,14 +902,14 @@ class EW {
                    float_sw4* sg_corner_x, float_sw4* sg_corner_y,
                    float_sw4 damping_coefficient);
 
-  void bcfort_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke, sw4_type wind[36],
+  void bcfort_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke, int wind[36],
                  sw4_type nx, sw4_type ny, sw4_type nz, float_sw4* u, float_sw4 h,
                  boundaryConditionType bccnd[6], float_sw4 sbop[6],
                  float_sw4* mu, float_sw4* la, float_sw4 t, float_sw4* bforce1,
                  float_sw4* bforce2, float_sw4* bforce3, float_sw4* bforce4,
                  float_sw4* bforce5, float_sw4* bforce6, float_sw4 om,
                  float_sw4 ph, float_sw4 cv, sw4_type curvilinear);
-  void bcfortsg_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke, sw4_type wind[36],
+  void bcfortsg_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke, int wind[36],
                    sw4_type nx, sw4_type ny, sw4_type nz, float_sw4* u, float_sw4 h,
                    boundaryConditionType bccnd[6], float_sw4 sbop[6],
                    float_sw4* mu, float_sw4* la, float_sw4 t,
@@ -917,11 +917,11 @@ class EW {
                    float_sw4* bforce4, float_sw4* bforce5, float_sw4* bforce6,
                    float_sw4 om, float_sw4 ph, float_sw4 cv, float_sw4* strx,
                    float_sw4* stry);
-  void twdirbdry_ci(sw4_type wind[6], float_sw4 h, float_sw4 t, float_sw4 om,
+  void twdirbdry_ci(int wind[6], float_sw4 h, float_sw4 t, float_sw4 om,
                     float_sw4 cv, float_sw4 ph, float_sw4* bforce,
                     float_sw4 zmin);
   void twdirbdryc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
-                     sw4_type klast, sw4_type wind[6], float_sw4 t, float_sw4 om,
+                     sw4_type klast, int wind[6], float_sw4 t, float_sw4 om,
                      float_sw4 cv, float_sw4 ph, float_sw4* bforce,
                      float_sw4* x, float_sw4* y, float_sw4* z);
   void twfrsurfz_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
@@ -966,7 +966,7 @@ class EW {
                          float_sw4* tau, float_sw4* mu, float_sw4* lambda,
                          float_sw4 omstrx, float_sw4 omstry);
   void bcfortanisg_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
-                      sw4_type wind[36], sw4_type nx, sw4_type ny, sw4_type nz, float_sw4* u,
+                      int wind[36], sw4_type nx, sw4_type ny, sw4_type nz, float_sw4* u,
                       float_sw4 h, boundaryConditionType bccnd[6],
                       float_sw4 sbop[6], float_sw4* c, float_sw4* bforce1,
                       float_sw4* bforce2, float_sw4* bforce3,
@@ -1646,7 +1646,7 @@ class EW {
                  // optimization.
   sw4_type m_nevents_specified;  // Number of event lines in input file
   bool m_events_parallel;   // Process events in parallel
-  map<string, sw4_type> m_event_names;
+  map<string, int> m_event_names;
 
   // epicenter
   vector<float_sw4> m_epi_lat, m_epi_lon, m_epi_depth, m_epi_t0;
@@ -1730,10 +1730,10 @@ class EW {
   string mTempPath;
 
   // number of boundary points on each side
-  vector<sw4_type*> m_NumberOfBCPoints;
+  vector<int*> m_NumberOfBCPoints;
 
   // ghost point index window for each side of the boundary on each grid
-  vector<sw4_type*> m_BndryWindow;
+  vector<int*> m_BndryWindow;
 
   // attenuation variables (only allocated if attenuation is enabled)
   bool m_use_attenuation, m_att_use_max_frequency;
@@ -1836,7 +1836,7 @@ class EW {
   float_sw4 mCFL, mCFLmax;
 
   // info on SBP boundary operators, or not.
-  vector<sw4_type*> m_onesided;
+  vector<int*> m_onesided;
   float_sw4 m_curlcoeff, m_d4coeff, m_d4_cfl;  // these should go away
 
   // storage for the 1-D damping coefficients
@@ -1854,7 +1854,7 @@ class EW {
   //----------------------------------------
   // Energy test data
   //----------------------------------------
-  bool m_energy_log, m_energy_prsw4_type;
+  bool m_energy_log, m_energy_print;
   float_sw4 m_saved_energy;
   string m_energy_logfile;
   vector<float_sw4> m_energy;  // *
@@ -1863,7 +1863,7 @@ class EW {
   // Measure wall clock time variables
   //-------------------------------------------
   bool m_do_timing;
-  sw4_type m_timing_prsw4_type;
+  sw4_type m_timing_print;
   bool m_output_detailed_timing;
   bool m_output_load;
 
@@ -1875,7 +1875,7 @@ class EW {
   float_sw4 m_max_error[3], m_l2_error[3];
 
   string m_error_log_file;
-  bool m_error_log, m_error_prsw4_type;
+  bool m_error_log, m_error_print;
   sw4_type m_inner_loop;
 
   //  Conservative interface

@@ -41,7 +41,7 @@ void convertjday(sw4_type jday, sw4_type year, sw4_type& day, sw4_type& month) {
 //-----------------------------------------------------------------------
 void readSACheader(const char* fname, float_sw4& dt, float_sw4& t0,
                    float_sw4& lat, float_sw4& lon, float_sw4& cmpaz,
-                   float_sw4& cmpinc, sw4_type utc[7], sw4_type& npts,
+                   float_sw4& cmpinc, int utc[7], int& npts,
                    bool& need_byte_reversal) {
   float float70[70];
   sw4_type sw4_type35[35], logical[5];

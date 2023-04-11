@@ -67,7 +67,7 @@ bool EW::proc_decompose_2d(sw4_type ni, sw4_type nj, sw4_type nproc, int proc_ma
 }
 
 //-----------------------------------------------------------------------
-void EW::coarsen1d(sw4_type& n, sw4_type& ifirst, sw4_type& ilast, sw4_type periodic) {
+void EW::coarsen1d(int& n, int& ifirst, int& ilast, int periodic) {
   // n - total number of points 1<=i<=n,
   // Total index space is 1-ghosts <= i <= n + ghosts
   //
@@ -99,7 +99,7 @@ void EW::coarsen1d(sw4_type& n, sw4_type& ifirst, sw4_type& ilast, sw4_type peri
 }
 
 //-----------------------------------------------------------------------
-void EW::decomp1d(sw4_type nglobal, sw4_type myid, sw4_type nproc, sw4_type& s, sw4_type& e)
+void EW::decomp1d(int nglobal, int myid, int nproc, int& s, int& e)
 //
 // Decompose index space 1 <= i <= nglobal sw4_typeo nproc blocks
 // returns start and end indices for block nr. myid,

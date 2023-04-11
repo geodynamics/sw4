@@ -62,7 +62,7 @@ bool StatMachineBase::ProfilerOn(false);
 void check_ghcof_no_gp(double* ghcof_no_gp);
 void curvilinear4sgwind(sw4_type, sw4_type, sw4_type, sw4_type, sw4_type, sw4_type, sw4_type, sw4_type, float_sw4*,
                         float_sw4*, float_sw4*, float_sw4*, float_sw4*,
-                        float_sw4*, sw4_type*, float_sw4*, float_sw4*, float_sw4*,
+                        float_sw4*, int*, float_sw4*, float_sw4*, float_sw4*,
                         float_sw4*, float_sw4*, float_sw4*, float_sw4*, sw4_type,
                         char);
 
@@ -1694,9 +1694,9 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   m_check_point->finalize_hdf5();
 #endif
 
-  prsw4_type_execution_time(time_start_solve, time_end_solve, "solver phase");
+  print_execution_time(time_start_solve, time_end_solve, "solver phase");
 
-  if (m_output_detailed_timing) prsw4_type_execution_times(time_sum);
+  if (m_output_detailed_timing) print_execution_times(time_sum);
 
   // check the accuracy of the final solution, store exact solution in Up,
   // ignore AlphaVE
@@ -1826,7 +1826,7 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   boundaryConditionType* bcType_ptr;
   float_sw4 *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr,
       *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
-  sw4_type* wind_ptr;
+  int* wind_ptr;
   float_sw4 om = 0, ph = 0, cv = 0;
 
   for (g = 0; g < mNumberOfGrids; g++) {
@@ -1871,18 +1871,18 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
 
     if (usingSupergrid()) {
       // std::cout<<" THIS 1\n";
-      if (m_croutines)
+      //      if (m_croutines)
         bcfortsg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, wind_ptr, nx,
                     ny, nz, u_ptr, h, bcType_ptr, m_sbop, mu_ptr, la_ptr, t,
                     bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
                     bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr, om,
                     ph, cv, m_sg_str_x[g], m_sg_str_y[g]);
-      else
-        bcfortsg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, wind_ptr,
-                 &nx, &ny, &nz, u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr,
-                 &t, bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
-                 bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr, &om, &ph,
-                 &cv, m_sg_str_x[g], m_sg_str_y[g]);
+      // else
+      //   bcfortsg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, wind_ptr,
+      //            &nx, &ny, &nz, u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr,
+      //            &t, bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
+      //            bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr, &om, &ph,
+      //            &cv, m_sg_str_x[g], m_sg_str_y[g]);
       sw4_type side;
       if (topo == 1 && m_bcType[g][4] == bStressFree) {
         // std::cout<<" THIS 2\n";
@@ -1900,18 +1900,18 @@ void EW::enforceBC(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
       }
     } else {
       // std::cout<<" THIS 3 OFF \n ";
-      if (m_croutines)
+      //      if (m_croutines)
         bcfort_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, wind_ptr, nx, ny,
                   nz, u_ptr, h, bcType_ptr, m_sbop, mu_ptr, la_ptr, t,
                   bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
                   bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr, om, ph,
                   cv, topo);
-      else
-        bcfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, wind_ptr, &nx,
-               &ny, &nz, u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr, &t,
-               bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
-               bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr, &om, &ph,
-               &cv, &topo);
+      // else
+      //   bcfort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, wind_ptr, &nx,
+      //          &ny, &nz, u_ptr, &h, bcType_ptr, m_sbop, mu_ptr, la_ptr, &t,
+      //          bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
+      //          bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr, &om, &ph,
+      //          &cv, &topo);
       sw4_type side;
       if (topo == 1 && m_bcType[g][4] == bStressFree) {
         // std::cout<<" THIS 4 OFF \n";
@@ -2028,7 +2028,7 @@ void EW::enforceBCanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
   boundaryConditionType* bcType_ptr;
   float_sw4 *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr,
       *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
-  sw4_type* wind_ptr;
+  int* wind_ptr;
   // float_sw4 om=0, ph=0, cv=0;
 
   for (g = 0; g < mNumberOfGrids; g++) {
@@ -2070,18 +2070,18 @@ void EW::enforceBCanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
     bforce_side4_ptr = a_BCForcing[g][4];  // low-k bndry forcing array pointer
     bforce_side5_ptr = a_BCForcing[g][5];  // high-k bndry forcing array pointer
 
-    if (m_croutines)
+    //   if (m_croutines)
       bcfortanisg_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, wind_ptr, nx,
                      ny, nz, u_ptr, h, bcType_ptr, m_sbop, c_ptr,
                      bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
                      bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr,
                      m_sg_str_x[g], m_sg_str_y[g]);
-    else
-      bcfortanisg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, wind_ptr,
-                  &nx, &ny, &nz, u_ptr, &h, bcType_ptr, m_sbop, c_ptr,
-                  bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
-                  bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr,
-                  m_sg_str_x[g], m_sg_str_y[g]);
+    // else
+    //   bcfortanisg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, wind_ptr,
+    //               &nx, &ny, &nz, u_ptr, &h, bcType_ptr, m_sbop, c_ptr,
+    //               bforce_side0_ptr, bforce_side1_ptr, bforce_side2_ptr,
+    //               bforce_side3_ptr, bforce_side4_ptr, bforce_side5_ptr,
+    //               m_sg_str_x[g], m_sg_str_y[g]);
     if (topographyExists() && g == mNumberOfGrids - 1 &&
         m_bcType[g][4] == bStressFree) {
       sw4_type fside = 5;
@@ -3879,7 +3879,7 @@ void EW::cartesian_bc_forcing_olde(float_sw4 t,
   //  boundaryConditionType *bcType_ptr;
   float_sw4 *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr,
       *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
-  sw4_type* wind_ptr;
+  int* wind_ptr;
   float_sw4 om = 0, ph = 0, cv = 0, omm;
 
   for (g = 0; g < mNumberOfGrids; g++) {
@@ -3931,103 +3931,103 @@ void EW::cartesian_bc_forcing_olde(float_sw4 t,
       if (m_bcType[g][0] == bDirichlet || m_bcType[g][0] == bSuperGrid) {
         SW4_MARK_BEGIN("LOOP1");
         if (!curvilinear) {
-          if (m_croutines)
+	  //          if (m_croutines)
             twdirbdry_ci(&wind_ptr[0], h, t, om, cv, ph, bforce_side0_ptr,
                          m_zmin[g]);
-          else
-            twdirbdry(&wind_ptr[0], &h, &t, &om, &cv, &ph, bforce_side0_ptr,
-                      &m_zmin[g]);
+          // else
+          //   twdirbdry(&wind_ptr[0], &h, &t, &om, &cv, &ph, bforce_side0_ptr,
+          //             &m_zmin[g]);
         } else {
-          if (m_croutines)
+	  //          if (m_croutines)
             twdirbdryc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                           &wind_ptr[0], t, om, cv, ph, bforce_side0_ptr,
                           mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
-          else
-            twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                       &wind_ptr[0], &t, &om, &cv, &ph, bforce_side0_ptr,
-                       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+          // else
+          //   twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+          //              &wind_ptr[0], &t, &om, &cv, &ph, bforce_side0_ptr,
+          //              mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
         }
         SW4_MARK_END("LOOP1");
       }
 
       if (m_bcType[g][1] == bDirichlet || m_bcType[g][1] == bSuperGrid) {
         if (!curvilinear) {
-          if (m_croutines)
+	  //          if (m_croutines)
             twdirbdry_ci(&wind_ptr[6], h, t, om, cv, ph, bforce_side1_ptr,
                          m_zmin[g]);
-          else
-            twdirbdry(&wind_ptr[6], &h, &t, &om, &cv, &ph, bforce_side1_ptr,
-                      &m_zmin[g]);
+          // else
+          //   twdirbdry(&wind_ptr[6], &h, &t, &om, &cv, &ph, bforce_side1_ptr,
+          //             &m_zmin[g]);
         } else {
-          if (m_croutines)
+	  //          if (m_croutines)
             twdirbdryc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                           &wind_ptr[6], t, om, cv, ph, bforce_side1_ptr,
                           mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
-          else
-            twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                       &wind_ptr[6], &t, &om, &cv, &ph, bforce_side1_ptr,
-                       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+          // else
+          //   twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+          //              &wind_ptr[6], &t, &om, &cv, &ph, bforce_side1_ptr,
+          //              mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
         }
       }
       SW4_MARK_BEGIN("LOOP2");
       if (m_bcType[g][2] == bDirichlet || m_bcType[g][2] == bSuperGrid) {
         if (!curvilinear) {
-          if (m_croutines)
+	  //          if (m_croutines)
             twdirbdry_ci(&wind_ptr[6 * 2], h, t, om, cv, ph, bforce_side2_ptr,
                          m_zmin[g]);
-          else
-            twdirbdry(&wind_ptr[6 * 2], &h, &t, &om, &cv, &ph, bforce_side2_ptr,
-                      &m_zmin[g]);
+          // else
+          //   twdirbdry(&wind_ptr[6 * 2], &h, &t, &om, &cv, &ph, bforce_side2_ptr,
+          //             &m_zmin[g]);
         } else {
-          if (m_croutines)
+	  //          if (m_croutines)
             twdirbdryc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                           &wind_ptr[6 * 2], t, om, cv, ph, bforce_side2_ptr,
                           mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
-          else
-            twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                       &wind_ptr[6 * 2], &t, &om, &cv, &ph, bforce_side2_ptr,
-                       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+          // else
+          //   twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+          //              &wind_ptr[6 * 2], &t, &om, &cv, &ph, bforce_side2_ptr,
+          //              mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
         }
       }
 
       if (m_bcType[g][3] == bDirichlet || m_bcType[g][3] == bSuperGrid) {
         if (!curvilinear) {
-          if (m_croutines)
+	  //          if (m_croutines)
             twdirbdry_ci(&wind_ptr[6 * 3], h, t, om, cv, ph, bforce_side3_ptr,
                          m_zmin[g]);
-          else
-            twdirbdry(&wind_ptr[6 * 3], &h, &t, &om, &cv, &ph, bforce_side3_ptr,
-                      &m_zmin[g]);
+          // else
+          //   twdirbdry(&wind_ptr[6 * 3], &h, &t, &om, &cv, &ph, bforce_side3_ptr,
+          //             &m_zmin[g]);
         } else {
-          if (m_croutines)
+	  //          if (m_croutines)
             twdirbdryc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                           &wind_ptr[6 * 3], t, om, cv, ph, bforce_side3_ptr,
                           mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
-          else
-            twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                       &wind_ptr[6 * 3], &t, &om, &cv, &ph, bforce_side3_ptr,
-                       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+          // else
+          //   twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+          //              &wind_ptr[6 * 3], &t, &om, &cv, &ph, bforce_side3_ptr,
+          //              mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
         }
       }
       SW4_MARK_END("LOOP2");
       SW4_MARK_BEGIN("LOOP3");
       if (m_bcType[g][4] == bDirichlet || m_bcType[g][4] == bSuperGrid) {
         if (!curvilinear) {
-          if (m_croutines)
+	  //          if (m_croutines)
             twdirbdry_ci(&wind_ptr[6 * 4], h, t, om, cv, ph, bforce_side4_ptr,
                          m_zmin[g]);
-          else
-            twdirbdry(&wind_ptr[6 * 4], &h, &t, &om, &cv, &ph, bforce_side4_ptr,
-                      &m_zmin[g]);
+          // else
+          //   twdirbdry(&wind_ptr[6 * 4], &h, &t, &om, &cv, &ph, bforce_side4_ptr,
+          //             &m_zmin[g]);
         } else {
-          if (m_croutines)
+	  //          if (m_croutines)
             twdirbdryc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                           &wind_ptr[6 * 4], t, om, cv, ph, bforce_side4_ptr,
                           mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
-          else
-            twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                       &wind_ptr[6 * 4], &t, &om, &cv, &ph, bforce_side4_ptr,
-                       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+          // else
+          //   twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+          //              &wind_ptr[6 * 4], &t, &om, &cv, &ph, bforce_side4_ptr,
+          //              mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
         }
       } else if (m_bcType[g][4] == bStressFree) {
         k = 1;
@@ -4200,21 +4200,21 @@ void EW::cartesian_bc_forcing_olde(float_sw4 t,
       if (m_bcType[g][5] == bDirichlet || m_bcType[g][5] == bSuperGrid) {
         SW4_MARK_BEGIN("LOOP4");
         if (!curvilinear) {
-          if (m_croutines)
+	  //          if (m_croutines)
             twdirbdry_ci(&wind_ptr[6 * 5], h, t, om, cv, ph, bforce_side5_ptr,
                          m_zmin[g]);
-          else
-            twdirbdry(&wind_ptr[6 * 5], &h, &t, &om, &cv, &ph, bforce_side5_ptr,
-                      &m_zmin[g]);
+          // else
+          //   twdirbdry(&wind_ptr[6 * 5], &h, &t, &om, &cv, &ph, bforce_side5_ptr,
+          //             &m_zmin[g]);
         } else {
-          if (m_croutines)
+	  //          if (m_croutines)
             twdirbdryc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast,
                           &wind_ptr[6 * 5], t, om, cv, ph, bforce_side5_ptr,
                           mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
-          else
-            twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                       &wind_ptr[6 * 5], &t, &om, &cv, &ph, bforce_side5_ptr,
-                       mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
+          // else
+          //   twdirbdryc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+          //              &wind_ptr[6 * 5], &t, &om, &cv, &ph, bforce_side5_ptr,
+          //              mX[g].c_ptr(), mY[g].c_ptr(), mZ[g].c_ptr());
         }
         SW4_MARK_END("LOOP4");
       } else if (m_bcType[g][5] == bStressFree) {
@@ -6031,7 +6031,7 @@ void EW::cartesian_bc_forcing(float_sw4 t, vector<float_sw4**>& a_BCForcing,
   float_sw4 *mu_ptr, *la_ptr, h, zmin;
   float_sw4 *bforce_side0_ptr, *bforce_side1_ptr, *bforce_side2_ptr,
       *bforce_side3_ptr, *bforce_side4_ptr, *bforce_side5_ptr;
-  sw4_type* wind_ptr;
+  int* wind_ptr;
   float_sw4 om = 0, ph = 0, cv = 0, omm;
 
   for (sw4_type g = 0; g < mNumberOfGrids; g++) {

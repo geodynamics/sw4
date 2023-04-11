@@ -134,7 +134,7 @@ void addsgd6c(float_sw4* dt, float_sw4* a_Up, float_sw4* a_U, float_sw4* a_Um,
               float_sw4* damping_coefficient);
 //  subroutine RAYDIRBDRY( bforce, wind, t, lambda, mu, rho, cr,
 // +     omega, alpha, h, zmin )
-void raydirbdry(float_sw4* bforce_side_ptr, sw4_type* wind_ptr, float_sw4* t,
+void raydirbdry(float_sw4* bforce_side_ptr, int* wind_ptr, float_sw4* t,
                 float_sw4* lambda, float_sw4* mu, float_sw4* rho, float_sw4* cr,
                 float_sw4* omega, float_sw4* alpha, float_sw4* h,
                 float_sw4* zmin);

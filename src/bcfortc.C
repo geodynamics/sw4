@@ -36,7 +36,7 @@
 #include "caliper.h"
 #include "policies.h"
 //-----------------------------------------------------------------------
-void EW::bcfort_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke, sw4_type wind[36],
+void EW::bcfort_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke, int wind[36],
                    sw4_type nx, sw4_type ny, sw4_type nz, float_sw4* u, float_sw4 h,
                    boundaryConditionType bccnd[6], float_sw4 sbop[5],
                    float_sw4* mu, float_sw4* la, float_sw4 t,
@@ -288,7 +288,7 @@ void EW::bcfort_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type 
 
 //-----------------------------------------------------------------------
 void EW::bcfortsg_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
-                     sw4_type wind[36], sw4_type nx, sw4_type ny, sw4_type nz, float_sw4* u,
+                     int wind[36], sw4_type nx, sw4_type ny, sw4_type nz, float_sw4* u,
                      float_sw4 h, boundaryConditionType bccnd[6],
                      float_sw4 sbop[5], float_sw4* mu, float_sw4* la,
                      float_sw4 t, float_sw4* bforce1, float_sw4* bforce2,
@@ -711,7 +711,7 @@ void EW::bcfortsg_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_typ
 }
 
 //-----------------------------------------------------------------------
-void EW::twdirbdry_ci(sw4_type wind[6], float_sw4 h, float_sw4 t, float_sw4 om,
+void EW::twdirbdry_ci(int wind[6], float_sw4 h, float_sw4 t, float_sw4 om,
                       float_sw4 cv, float_sw4 ph, float_sw4* bforce,
                       float_sw4 zmin) {
   SW4_MARK_FUNCTION;
@@ -748,7 +748,7 @@ void EW::twdirbdry_ci(sw4_type wind[6], float_sw4 h, float_sw4 t, float_sw4 om,
 
 //-----------------------------------------------------------------------
 void EW::twdirbdryc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
-                       sw4_type klast, sw4_type lwind[6], float_sw4 t, float_sw4 om,
+                       sw4_type klast, int lwind[6], float_sw4 t, float_sw4 om,
                        float_sw4 cv, float_sw4 ph, float_sw4* bforce,
                        float_sw4* x, float_sw4* y, float_sw4* z) {
   SW4_MARK_FUNCTION;

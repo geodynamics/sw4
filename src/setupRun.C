@@ -475,7 +475,7 @@ void EW::setupRun(vector<vector<Source *> > &a_GlobalUniqueSources) {
   double time_start_solve = MPI_Wtime();
   time_measure[10] = time_start_solve;
 
-  prsw4_type_execution_time(time_start, time_start_solve, "start up phase");
+  print_execution_time(time_start, time_start_solve, "start up phase");
 
   if (m_output_detailed_timing) {
     double times[10];

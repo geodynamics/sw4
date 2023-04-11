@@ -7,7 +7,7 @@ void F77_FUNC(dgesv, DGESV)(sw4_type*, sw4_type*, double*, sw4_type*, sw4_type*,
 }
 
 void EW::bcfortanisg_ci(sw4_type ib, sw4_type ie, sw4_type jb, sw4_type je, sw4_type kb, sw4_type ke,
-                        sw4_type wind[36], sw4_type nx, sw4_type ny, sw4_type nz, float_sw4* u,
+                        int wind[36], sw4_type nx, sw4_type ny, sw4_type nz, float_sw4* u,
                         float_sw4 h, boundaryConditionType bccnd[6],
                         float_sw4 sbop[5], float_sw4* c, float_sw4* bforce1,
                         float_sw4* bforce2, float_sw4* bforce3,

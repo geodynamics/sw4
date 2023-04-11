@@ -15,7 +15,7 @@
 // extern "C" {
 
 void rhs4th3fort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
-                    sw4_type klast, sw4_type nk, sw4_type* __restrict__ onesided,
+                    sw4_type klast, sw4_type nk, int* __restrict__ onesided,
                     float_sw4* __restrict__ a_acof,
                     float_sw4* __restrict__ a_bope,
                     float_sw4* __restrict__ a_ghcof,
@@ -1087,7 +1087,7 @@ void rhs4th3fort_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type j
 //-----------------------------------------------------------------------
 void rhs4th3fortsgstr_ci(
     sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast, sw4_type nk,
-    sw4_type* __restrict__ onesided, float_sw4* __restrict__ a_acof,
+    int* __restrict__ onesided, float_sw4* __restrict__ a_acof,
     float_sw4* __restrict__ a_bope, float_sw4* __restrict__ a_ghcof,
     float_sw4* __restrict__ a_lu, 
     float_sw4* __restrict__ a_u1,float_sw4* __restrict__ a_u2,float_sw4* __restrict__ a_u3,

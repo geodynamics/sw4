@@ -13,7 +13,7 @@
 
 //-----------------------------------------------------------------------
 void rhs4th3wind(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
-                 sw4_type klast, sw4_type nk, sw4_type* __restrict__ onesided,
+                 sw4_type klast, sw4_type nk, int* __restrict__ onesided,
                  float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
                  float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_lu,
                  float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_mu,

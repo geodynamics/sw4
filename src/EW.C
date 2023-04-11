@@ -249,7 +249,7 @@ void addgradrho(sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*
 void addgradrhoc(sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*,
                  sw4_type*, sw4_type*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
                  float_sw4*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
-                 sw4_type*);
+                 int*);
 void addgradmula(sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*, sw4_type*,
                  sw4_type*, sw4_type*, float_sw4*, float_sw4*, float_sw4*, float_sw4*,
                  float_sw4*, float_sw4*, float_sw4*, float_sw4*, sw4_type*, sw4_type*,
@@ -321,7 +321,7 @@ void memvar_corr_fort_wind(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4
 void ilanisocurv_ci(
     sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast, sw4_type nk,
     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_c,
-    float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu, sw4_type* onesided,
+    float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu, int* onesided,
     float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
     float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_strx,
     float_sw4* __restrict__ a_stry, float_sw4* __restrict__ a_strz);
@@ -377,7 +377,7 @@ void addgradrhoc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type j
                     float_sw4* __restrict__ a_up,
                     float_sw4* __restrict__ a_uacc,
                     float_sw4* __restrict__ a_grho, float_sw4 dt,
-                    float_sw4* __restrict__ a_jac, sw4_type onesided[6]);
+                    float_sw4* __restrict__ a_jac, int onesided[6]);
 void addgradmula_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
                     sw4_type klast, sw4_type ifirstact, sw4_type ilastact, sw4_type jfirstact,
                     sw4_type jlastact, sw4_type kfirstact, sw4_type klastact,
@@ -386,7 +386,7 @@ void addgradmula_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type j
                     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_uacc,
                     float_sw4* __restrict__ a_gmu,
                     float_sw4* __restrict__ a_glambda, float_sw4 dt,
-                    float_sw4 h, sw4_type onesided[6], sw4_type nb, sw4_type wb,
+                    float_sw4 h, int onesided[6], sw4_type nb, sw4_type wb,
                     float_sw4* __restrict__ a_bop);
 void addgradmulac_ci(
     sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
@@ -396,7 +396,7 @@ void addgradmulac_ci(
     float_sw4* __restrict__ a_uacc, float_sw4* __restrict__ a_gmu,
     float_sw4* __restrict__ a_glambda, float_sw4 dt, float_sw4 h,
     float_sw4* __restrict__ a_met, float_sw4* __restrict__ a_jac,
-    sw4_type onesided[6], sw4_type nb, sw4_type wb, float_sw4* __restrict__ a_bop);
+    int onesided[6], sw4_type nb, sw4_type wb, float_sw4* __restrict__ a_bop);
 
 void scalar_prod_ci(sw4_type is, sw4_type ie, sw4_type js, sw4_type je, sw4_type ks, sw4_type ke, sw4_type i1,
                     sw4_type i2, sw4_type j1, sw4_type j2, sw4_type k1, sw4_type k2, sw4_type onesided[6],
@@ -527,12 +527,12 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
       m_maxJacobian(0.),
 
       m_energy_log(false),
-      m_energy_prsw4_type(false),
+      m_energy_print(false),
       m_energy_logfile("energy.dat"),
       m_saved_energy(0.0),
 
       m_do_timing(false),
-      m_timing_prsw4_type(0),
+      m_timing_print(0),
       m_output_detailed_timing(false),
       m_output_load(false),
 
@@ -541,7 +541,7 @@ EW::EW(const string& fileName, vector<vector<Source*>>& a_GlobalSources,
 
       m_error_log_file("TwilightErr.txt"),
       m_error_log(false),
-      m_error_prsw4_type(true),
+      m_error_print(true),
       m_inner_loop(9),
       m_topography_exists(false),
       m_useVelocityThresholds(false),
@@ -813,34 +813,34 @@ EW::~EW() {
   //   "<<it.first*mpi_count2[it.first]/it.second*8*1.0e6/1024/1024/1024<<"
   //   "<<mpi_count2[it.first]<<"\n";
   // }
-  // sm.prsw4_type(ofile);
-  sm.prsw4_type(
+  // sm.print(ofile);
+  sm.print(
       ofile, [=](size_t size) -> double { return size * 8 / 1024.0; },
       [=](size_t size, double time) -> double {
         return size / time * 8 * 1.0e6 / 1024 / 1024 / 1024;
       },
       "Sendrecv");
-  sm2.prsw4_type(
+  sm2.print(
       ofile, [=](size_t size) -> double { return size * 8 / 1024.0; },
       [=](size_t size, double time) -> double {
         return size / time * 8 * 1.0e6 / 1024 / 1024 / 1024;
       },
       "SendRecv2");
-  coll_sm.prsw4_typehistory(bfile);  // This needs to be done before prsw4_type in which
+  coll_sm.printhistory(bfile);  // This needs to be done before print in which
                                 // the history gets sorted
-  coll_sm.prsw4_type(
+  coll_sm.print(
       ofile, [=](sw4_type size) -> double { return size; },
       [=](sw4_type size, double time) -> double { return time; }, "Barrier");
-  step_sm.prsw4_typehistory(hfile);  // This needs to be done before prsw4_type in which
+  step_sm.printhistory(hfile);  // This needs to be done before print in which
                                 // the history gets sorted
-  host_sm.prsw4_type(
+  host_sm.print(
       ofile, [=](size_t size) -> double { return size * 8 / 1024.0; },
       [=](size_t size, double time) -> double {
         return size / time * 8 * 1.0e6 / 1024 / 1024 / 1024;
       },
       "Host");
 
-  step_sm.prsw4_type(
+  step_sm.print(
       ofile, [=](size_t size) -> double { return size; },
       [=](size_t size, double time) -> double { return time; }, "STEP_ms");
 
@@ -858,7 +858,7 @@ bool EW::isInitialized() { return (mIsInitialized && mSourcesOK); }
 bool EW::wasParsingSuccessful() { return mParsingSuccessful; }
 
 //-----------------------------------------------------------------------
-void EW::prsw4_typeTime(sw4_type cycle, float_sw4 t, bool force) const {
+void EW::printTime(sw4_type cycle, float_sw4 t, bool force) const {
   if (!mQuiet && proc_zero() &&
       (force || mPrintInterval == 1 || (cycle % mPrintInterval) == 1 ||
        cycle == 1)) {
@@ -870,7 +870,7 @@ void EW::prsw4_typeTime(sw4_type cycle, float_sw4 t, bool force) const {
   }
 }
 //-----------------------------------------------------------------------
-void EW::prsw4_typePreamble(vector<Source*>& a_Sources, sw4_type event) const {
+void EW::printPreamble(vector<Source*>& a_Sources, sw4_type event) const {
   stringstream msg;
 
   if (!mQuiet && proc_zero()) {
@@ -924,8 +924,8 @@ void EW::prsw4_typePreamble(vector<Source*>& a_Sources, sw4_type event) const {
   cerr.flush();
 
   // m0 values in each source command gets added up. This number is called the
-  // "Total seismic moment" and should be prsw4_typeed to stdout with the unit Nm
-  // (Newton-meter). If that number is >0, you should also prsw4_type Mw = 2/3
+  // "Total seismic moment" and should be printed to stdout with the unit Nm
+  // (Newton-meter). If that number is >0, you should also print Mw = 2/3
   // *(log10(M0) - 9.1). That is the moment magnitude (dimensionless).
 
   if (proc_zero()) {
@@ -1723,7 +1723,7 @@ void EW::saveGMTFile(vector<vector<Source*>>& a_GlobalUniqueSources,
       contents << "EOF" << endl;
       contents << "psxy -R -J -O -K -Sc0.1 -Gred -W0.25p event.d >> plot.ps"
                << endl;
-      contents << "awk '{prsw4_type $1, $2, 12, 1, 9, $4, $3}' event.d | pstext -R "
+      contents << "awk '{print $1, $2, 12, 1, 9, $4, $3}' event.d | pstext -R "
                   "-J -O -D0.2/0.2v -Gred -N -K >> plot.ps"
                << endl
                << endl;
@@ -1815,7 +1815,7 @@ void EW::saveGMTFile(vector<vector<Source*>>& a_GlobalUniqueSources,
     stationstr << "# plot station names" << endl
                << "psxy -R -J -O -K -St0.1 -Gblue -W0.25p stations.d >> plot.ps"
                << endl
-               << "awk '{prsw4_type $1, $2, 12, 1, 9, $4, $3}' stations.d | pstext "
+               << "awk '{print $1, $2, 12, 1, 9, $4, $3}' stations.d | pstext "
                   "-R -J -O -Dj0.3/0.3v -Gblue -N >> plot.ps"
                << endl;
 
@@ -1839,7 +1839,7 @@ void EW::saveGMTFile(vector<vector<Source*>>& a_GlobalUniqueSources,
 }
 
 //-----------------------------------------------------------------------
-void EW::prsw4_type_execution_time(double t1, double t2, string msg) {
+void EW::print_execution_time(double t1, double t2, string msg) {
   //   if( !mQuiet && proc_zero() )
   if (proc_zero()) {
     double s = t2 - t1;
@@ -1864,10 +1864,10 @@ void EW::prsw4_type_execution_time(double t1, double t2, string msg) {
 }
 
 //-----------------------------------------------------------------------
-void EW::prsw4_type_execution_times(double times[9]) {
+void EW::print_execution_times(double times[9]) {
   double* time_sums = new double[9 * no_of_procs()];
   MPI_Gather(times, 9, MPI_DOUBLE, time_sums, 9, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  bool prsw4_typeavgs = true;
+  bool printavgs = true;
   if (!mQuiet && proc_zero()) {
     double avgs[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     for (sw4_type p = 0; p < no_of_procs(); p++)
@@ -1875,7 +1875,7 @@ void EW::prsw4_type_execution_times(double times[9]) {
     for (sw4_type c = 0; c < 9; c++) avgs[c] /= no_of_procs();
     cout << "\n----------------------------------------" << endl;
     cout << "          Execution time summary (average)" << endl;
-    if (prsw4_typeavgs) {
+    if (printavgs) {
       //                             5                  10          7      2 2
       //                             5       2                      6 7
       cout << "Total      Div-stress Forcing    BC         SG         Comm.    "
@@ -2894,10 +2894,10 @@ RAJA_HOST_DEVICE float_sw4 EW::Gaussian_x_T_Sw4_Typeegral(float_sw4 t, float_sw4
 // source )
 #ifdef NO_DEVICE_FUNCTION_POINTERS
 void EW::get_exact_point_source(float_sw4* up, float_sw4 t, sw4_type g,
-                                Source& source, sw4_type* wind) {}
+                                Source& source, int* wind) {}
 #else
 void EW::get_exact_point_source(float_sw4* up, float_sw4 t, sw4_type g,
-                                Source& source, sw4_type* wind) {
+                                Source& source, int* wind) {
   SW4_MARK_FUNCTION;
   // If wind is given, it is assumed that wind is the declared size of up. If
   // not given (wind=0), it is assumed that up is the size of the local
@@ -4634,7 +4634,7 @@ void EW::Force(float_sw4 a_t, vector<Sarray>& a_F,
 
       // if (point_sources.size()>0) std::cerr<<getRank()<<" Calling
       // GPS[r]->initializeTimeFunction() "<<point_sources.size()<<" \n";
-      // for (sw4_type i=0;i<point_sources.size();i++) GPSL[i]->prsw4_type_vals();
+      // for (sw4_type i=0;i<point_sources.size();i++) GPSL[i]->print_vals();
       RAJA::forall<DEFAULT_LOOP1>(
           RAJA::RangeSegment(0, point_sources.size()),
           [=] RAJA_DEVICE(sw4_type r) { GPSL[r]->initializeTimeFunction(); });
@@ -4955,7 +4955,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
   sw4_type ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *uacc_ptr, *u_ptr, *mu_ptr, *la_ptr, h;
 
-  sw4_type* onesided_ptr;
+  int* onesided_ptr;
 
   sw4_type g, nz;
   vset_to_zero_async(a_Uacc, mNumberOfGrids);
@@ -5904,7 +5904,7 @@ void EW::update_images(sw4_type currentTimeStep, float_sw4 time,
           printf(
               "Can only write ux, uy, uz, mu, rho, lambda: - remove once "
               "completely implemented\n");
-          printf("I can not prsw4_type data of type %i\n", img->mMode);
+          printf("I can not print data of type %i\n", img->mMode);
         }
         MPI_Abort(MPI_COMM_WORLD, 1);
       }
@@ -6240,7 +6240,7 @@ void EW::compute_energy(float_sw4 dt, bool write_file, vector<Sarray>& Um,
     float_sw4* um_ptr = Um[g].c_ptr();
     float_sw4* rho_ptr = mRho[g].c_ptr();
     float_sw4 locenergy;
-    sw4_type* onesided_ptr = m_onesided[g];
+    int* onesided_ptr = m_onesided[g];
     //   if (topographyExists() && g == mNumberOfGrids - 1) {
     if (topographyExists() && g >= mNumberOfCartesianGrids) {
       if (m_gridGenerator->curviCartIsSmooth(mNumberOfGrids -
@@ -6296,7 +6296,7 @@ float_sw4 EW::scalarProduct(vector<Sarray>& U, vector<Sarray>& V) {
     float_sw4* u_ptr = U[g].c_ptr();
     float_sw4* v_ptr = V[g].c_ptr();
     float_sw4 loc_s_prod;
-    sw4_type* onesided_ptr = m_onesided[g];
+    int* onesided_ptr = m_onesided[g];
     if (m_croutines)
       scalar_prod_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                      m_kStart[g], m_kEnd[g], istart, iend, jstart, jend, kstart,
@@ -6324,7 +6324,7 @@ void EW::get_utc(sw4_type utc[7], sw4_type event) const {
 }
 
 //-----------------------------------------------------------------------
-void EW::prsw4_type_utc(sw4_type e) {
+void EW::print_utc(sw4_type e) {
   if (proc_zero()) {
     printf("EW reference UTC is  %02i/%02i/%i:%i:%i:%i.%i\n", m_utc0[e][1],
            m_utc0[e][2], m_utc0[e][0], m_utc0[e][3], m_utc0[e][4], m_utc0[e][5],
@@ -7404,11 +7404,11 @@ void EW::add_to_grad(vector<Sarray>& K, vector<Sarray>& Kacc,
     float_sw4* gmu_ptr = gMu[g].c_ptr();
     float_sw4* glambda_ptr = gLambda[g].c_ptr();
     float_sw4 h = mGridSize[g];
-    sw4_type* onesided_ptr = m_onesided[g];
+    int* onesided_ptr = m_onesided[g];
     sw4_type nb = 4, wb = 6;
     //    if (topographyExists() && g == mNumberOfGrids - 1) {
     if (topographyExists() && g >= mNumberOfCartesianGrids) {
-      if (m_croutines) {
+      //      if (m_croutines) {
         addgradrhoc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, ifirstact,
                        ilastact, jfirstact, jlastact, kfirstact, klastact,
                        k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr,
@@ -7418,19 +7418,19 @@ void EW::add_to_grad(vector<Sarray>& K, vector<Sarray>& Kacc,
                         k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr, glambda_ptr, mDt,
                         h, mMetric[g].c_ptr(), mJ[g].c_ptr(), onesided_ptr, nb,
                         wb, m_bop);
-      } else {
-        addgradrhoc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                    &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
-                    &klastact, k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr,
-                    grho_ptr, &mDt, mJ[g].c_ptr(), onesided_ptr);
-        addgradmulac(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                     &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
-                     &klastact, k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr,
-                     glambda_ptr, &mDt, &h, mMetric[g].c_ptr(), mJ[g].c_ptr(),
-                     onesided_ptr, &nb, &wb, m_bop);
-      }
+      // } else {
+      //   addgradrhoc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+      //               &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
+      //               &klastact, k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr,
+      //               grho_ptr, &mDt, mJ[g].c_ptr(), onesided_ptr);
+      //   addgradmulac(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+      //                &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
+      //                &klastact, k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr,
+      //                glambda_ptr, &mDt, &h, mMetric[g].c_ptr(), mJ[g].c_ptr(),
+      //                onesided_ptr, &nb, &wb, m_bop);
+      // }
     } else {
-      if (m_croutines) {
+      //      if (m_croutines) {
         addgradrho_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, ifirstact,
                       ilastact, jfirstact, jlastact, kfirstact, klastact, k_ptr,
                       ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr, grho_ptr, mDt, h,
@@ -7439,16 +7439,16 @@ void EW::add_to_grad(vector<Sarray>& K, vector<Sarray>& Kacc,
                        ilastact, jfirstact, jlastact, kfirstact, klastact,
                        k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr, glambda_ptr, mDt,
                        h, onesided_ptr, nb, wb, m_bop);
-      } else {
-        addgradrho(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                   &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
-                   &klastact, k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr,
-                   grho_ptr, &mDt, &h, onesided_ptr);
-        addgradmula(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                    &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
-                    &klastact, k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr,
-                    glambda_ptr, &mDt, &h, onesided_ptr, &nb, &wb, m_bop);
-      }
+      // } else {
+      //   addgradrho(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+      //              &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
+      //              &klastact, k_ptr, ka_ptr, um_ptr, u_ptr, up_ptr, ua_ptr,
+      //              grho_ptr, &mDt, &h, onesided_ptr);
+      //   addgradmula(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+      //               &ifirstact, &ilastact, &jfirstact, &jlastact, &kfirstact,
+      //               &klastact, k_ptr, ka_ptr, u_ptr, ua_ptr, gmu_ptr,
+      //               glambda_ptr, &mDt, &h, onesided_ptr, &nb, &wb, m_bop);
+      // }
     }
   }
 }
@@ -7809,7 +7809,7 @@ void EW::checkTopo(Sarray& field) {
   for (sw4_type j = m_jStart[g]; j <= m_jEnd[g]; j++)
     for (sw4_type i = m_iStart[g]; i <= m_iEnd[g]; i++) {
       if (field(i, j, k) == NO_TOPO) {
-        // prsw4_type some msg is verbose is high enough?
+        // print some msg is verbose is high enough?
         topo_ok = false;
       }
     }
@@ -7888,7 +7888,7 @@ void EW::setup_viscoelastic() {
     } else
       omc[0] = mOmegaVE[0];
 
-    // tmp: prsw4_type omega and omc
+    // tmp: print omega and omc
     if (proc_zero() && mVerbose >= 1) {
       for (k = 0; k < n; k++) printf("omega[%i]=%e ", k, mOmegaVE[k]);
       printf("\n");
