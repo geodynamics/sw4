@@ -6663,9 +6663,9 @@ void EW::processReceiverHDF5(char* buffer,
   string inFileName = "station";
   string fileName = "station_out";
   string staName = "station";
-  sw4_type writeEvery = 1000;
-  sw4_type downSample = 1;
-  sw4_type event = 0;
+  int writeEvery = 1000;
+  int downSample = 1;
+  int event = 0;
   TimeSeries::receiverMode mode = TimeSeries::Displacement;
   double stime, etime;
   stime = MPI_Wtime();

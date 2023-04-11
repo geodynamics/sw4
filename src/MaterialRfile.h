@@ -45,7 +45,7 @@ using namespace std;
 class MaterialRfile : public MaterialData {
  public:
   MaterialRfile(EW* a_ew, const std::string file, const std::string directory,
-                sw4_type bufsize);
+                int bufsize);
 
   ~MaterialRfile();
 
@@ -54,7 +54,7 @@ class MaterialRfile : public MaterialData {
                                std::vector<Sarray>& xis,
                                std::vector<Sarray>& xip);
 
-  //  sw4_type get_material_pt( double x, double y, double z, double& rho, double&
+  //  int get_material_pt( double x, double y, double z, double& rho, double&
   //  cs, double& cp,
   //		       double& qs, double& qp );
 
@@ -68,7 +68,7 @@ class MaterialRfile : public MaterialData {
 
   void read_rfile();
   void fill_in_fluids();
-  sw4_type io_processor();
+  int io_processor();
   void material_check(bool water);
 
   EW* mEW;
@@ -91,15 +91,15 @@ class MaterialRfile : public MaterialData {
   // this processor.
   float_sw4 m_xminloc, m_xmaxloc, m_yminloc, m_ymaxloc, m_zminloc, m_zmaxloc;
   bool m_outside;
-  sw4_type m_bufsize;
+  int m_bufsize;
 
   // 3-dimensional Sarrays
   vector<Sarray> mMaterial;
   vector<bool> m_isempty;
-  //   sw4_type m_nlat, m_nlon, m_nmaxdepth, m_nx, m_ny;
-  //   sw4_type m_nstenc;
+  //   int m_nlat, m_nlon, m_nmaxdepth, m_nx, m_ny;
+  //   int m_nstenc;
   //   double m_h, m_dlon, m_dlat;
-  //   sw4_type     m_ksed, m_kmoho, m_k410, m_k660;
+  //   int     m_ksed, m_kmoho, m_k410, m_k660;
   //   double *m_lon, *m_lat, *m_x, *m_y;
   //   double  m_vpmin, m_vsmin, m_rhomin;
   //   string m_model_file, m_model_dir, m_model_name;

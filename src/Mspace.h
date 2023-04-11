@@ -96,7 +96,7 @@ void operator delete[](void *ptr, Space loc) throw();
 void operator delete(void *ptr, Space loc, const char *file, sw4_type line) throw();
 void operator delete[](void *ptr, Space loc, const char *file,
                        sw4_type line) throw();
-sw4_type presetGPUID(sw4_type mpi_rank, sw4_type local_rank, sw4_type local_size);
+int presetGPUID(int mpi_rank, int local_rank, int local_size);
 void prsw4_type_hwm(sw4_type rank);
 struct global_variable_holder_struct {
   size_t gpu_memory_hwm;
