@@ -327,7 +327,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
   if (!mQuiet && mVerbose && proc_zero()) {
     cout << endl << "***  Starting solve ***" << endl;
   }
-  prsw4_typePreamble(a_Sources, event);
+  printPreamble(a_Sources, event);
 
   // Set up timers
   double time_start_solve = MPI_Wtime();
@@ -1407,7 +1407,7 @@ void EW::solve(vector<Source*>& a_Sources, vector<TimeSeries*>& a_TimeSeries,
     t += mDt;
 
     // periodically, prsw4_type time stepping info to stdout
-    prsw4_typeTime(currentTimeStep, t, currentTimeStep == mNumberOfTimeSteps[event]);
+    printTime(currentTimeStep, t, currentTimeStep == mNumberOfTimeSteps[event]);
     //    prsw4_typeTime( currentTimeStep, t, true );
 
     // Images have to be written before the solution arrays are cycled, because

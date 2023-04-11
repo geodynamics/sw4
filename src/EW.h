@@ -800,7 +800,7 @@ class EW {
                    vector<Sarray>& gLambda);
 
   void get_optmethod(sw4_type& method, sw4_type& bfgs_m);
-  void get_utc(sw4_type utc[7], sw4_type event = 0) const;
+  void get_utc(int utc[7], sw4_type event = 0) const;
 
   void perturb_mtrl();
   void perturb_mtrl(sw4_type peri, sw4_type perj, sw4_type perk, float_sw4 h, sw4_type grid,

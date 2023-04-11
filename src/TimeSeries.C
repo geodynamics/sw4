@@ -1390,7 +1390,7 @@ void TimeSeries::readFile(EW* ew, bool ignore_utc) {
           string timestr(buf);
           size_t utcind = timestr.find("UTC");
           if (utcind != string::npos) {
-            sw4_type fail;
+            int fail;
             char* utcstr = new char[timestr.size()];
             // Skip characters 'UTC'
             utcind += 3;
@@ -1402,7 +1402,7 @@ void TimeSeries::readFile(EW* ew, bool ignore_utc) {
               cout << "ERROR reading observation " << m_fileName
                    << " , UTC parse failure no. " << fail << endl;
             else {
-              sw4_type utcrefsim[7];
+              int utcrefsim[7];
               m_ew->get_utc(utcrefsim, m_event);
               //		     cout << "UTC from EW : ";
               //		     for( sw4_type c=0;c<7;c++ )
@@ -2338,7 +2338,7 @@ float_sw4 TimeSeries::product_wgh(TimeSeries& ts) const {
 }
 
 //-----------------------------------------------------------------------
-float_sw4 TimeSeries::utc_distance(sw4_type utc1[7], sw4_type utc2[7]) {
+float_sw4 TimeSeries::utc_distance(int utc1[7], int utc2[7]) {
   // Compute time in seconds between two [y,M,d,h,m,s,ms] times
   // returns utc2-utc1 in seconds.
 
@@ -2672,7 +2672,7 @@ void TimeSeries::readSACfiles(EW* ew, const char* sac1, const char* sac2,
         if (!mIsRestart) {
           if (!ignore_utc) {
             for (sw4_type c = 0; c < 7; c++) m_utc[c] = utc1[c];
-            sw4_type utcrefsim[7];
+            int utcrefsim[7];
             m_ew->get_utc(utcrefsim, m_event);
             m_t0 = utc_distance(utcrefsim, m_utc);
           }
@@ -3048,7 +3048,7 @@ void TimeSeries::readSACHDF5(EW* ew, string FileName, bool ignore_utc) {
     cout << "ERROR reading observation " << m_fileName << " , UTC parse ["
          << datetime << "] failed!" << endl;
   } else {
-    sw4_type utcrefsim[7];
+    int utcrefsim[7];
     m_ew->get_utc(utcrefsim, m_event);
     m_t0 = utc_distance(utcrefsim, m_utc);
   }

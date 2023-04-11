@@ -37,7 +37,7 @@
 #include "sw4.h"
 
 void scalar_prod_ci(sw4_type is, sw4_type ie, sw4_type js, sw4_type je, sw4_type ks, sw4_type ke, sw4_type i1,
-                    sw4_type i2, sw4_type j1, sw4_type j2, sw4_type k1, sw4_type k2, sw4_type onesided[6],
+                    sw4_type i2, sw4_type j1, sw4_type j2, sw4_type k1, sw4_type k2, int onesided[6],
                     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_v,
                     float_sw4* __restrict__ a_strx,
                     float_sw4* __restrict__ a_stry,

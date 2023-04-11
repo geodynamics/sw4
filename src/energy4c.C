@@ -38,7 +38,7 @@
 
 void energy4_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
                 sw4_type klast, sw4_type i1, sw4_type i2, sw4_type j1, sw4_type j2, sw4_type k1, sw4_type k2,
-                sw4_type* onesided, float_sw4* __restrict__ a_um,
+                int* onesided, float_sw4* __restrict__ a_um,
                 float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_up,
                 float_sw4* __restrict__ a_rho, float_sw4 h, float_sw4* a_strx,
                 float_sw4* a_stry, float_sw4* a_strz, float_sw4& a_energy) {
@@ -115,7 +115,7 @@ void energy4_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast
 //-----------------------------------------------------------------------
 void energy4c_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
                  sw4_type klast, sw4_type i1, sw4_type i2, sw4_type j1, sw4_type j2, sw4_type k1, sw4_type k2,
-                 sw4_type* onesided, float_sw4* __restrict__ a_um,
+                 int* onesided, float_sw4* __restrict__ a_um,
                  float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_up,
                  float_sw4* __restrict__ a_rho, float_sw4* __restrict__ a_jac,
                  float_sw4& a_energy) {

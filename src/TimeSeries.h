@@ -178,7 +178,7 @@ class TimeSeries {
   void write_sac_format(sw4_type npts, char* ofile, float* y, float btime, float dt,
                         char* var, float cmpinc, float cmpaz,
                         bool makeCopy = false);
-  float_sw4 utc_distance(sw4_type utc1[7], sw4_type utc2[7]);
+  float_sw4 utc_distance(int utc1[7], int utc2[7]);
   void dayinc(sw4_type date[7]);
   sw4_type lastofmonth(sw4_type year, sw4_type month);
   sw4_type utccompare(sw4_type utc1[7], sw4_type utc2[7]);
@@ -247,7 +247,7 @@ class TimeSeries {
   //           where 'utc reference time' corresponds to simulation time zero.
   //     the time series values are thus given by simulation times t_k = m_t0 +
   //     m_shift + k*m_dt, k=0,1,..,mLastTimeStep
-  sw4_type m_utc[7];
+  int m_utc[7];
 
   // Variables for rotating the output displacement or velocity components when
   // Nort-East-UP is selected (m_xyzcomponent=false) instead of Cartesian

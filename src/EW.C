@@ -329,7 +329,7 @@ void ilanisocurv_ci(
 void innerloopanisgstrvc_ci(
     sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast, sw4_type nk,
     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_lu,
-    float_sw4* __restrict__ a_c, sw4_type* onesided, float_sw4* __restrict__ a_acof,
+    float_sw4* __restrict__ a_c, int* onesided, float_sw4* __restrict__ a_acof,
     float_sw4* __restrict__ a_bope, float_sw4* __restrict__ a_ghcof,
     float_sw4 h, float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry,
     float_sw4* __restrict__ a_strz);
@@ -342,20 +342,20 @@ void curvilinear4sg_ci(
     float_sw4* __restrict__ a_mu,
     float_sw4* __restrict__ a_lambda, 
     float_sw4* __restrict__ a_met,
-    float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu, sw4_type* onesided,
+    float_sw4* __restrict__ a_jac, float_sw4* __restrict__ a_lu, int* onesided,
     float_sw4* __restrict__ a_acof, float_sw4* __restrict__ a_bope,
     float_sw4* __restrict__ a_ghcof, float_sw4* __restrict__ a_acof_no_gp,
     float_sw4* __restrict__ a_ghcof_no_gp, float_sw4* __restrict__ a_strx,
     float_sw4* __restrict__ a_stry, sw4_type nk, char op);
 void energy4_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
                 sw4_type klast, sw4_type i1, sw4_type i2, sw4_type j1, sw4_type j2, sw4_type k1, sw4_type k2,
-                sw4_type* onesided, float_sw4* __restrict__ a_um,
+                int* onesided, float_sw4* __restrict__ a_um,
                 float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_up,
                 float_sw4* __restrict__ a_rho, float_sw4 h, float_sw4* a_strx,
                 float_sw4* a_stry, float_sw4* a_strz, float_sw4& a_energy);
 void energy4c_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
                  sw4_type klast, sw4_type i1, sw4_type i2, sw4_type j1, sw4_type j2, sw4_type k1, sw4_type k2,
-                 sw4_type* onesided, float_sw4* __restrict__ a_um,
+                 int* onesided, float_sw4* __restrict__ a_um,
                  float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_up,
                  float_sw4* __restrict__ a_rho, float_sw4* __restrict__ a_jac,
                  float_sw4& a_energy);
@@ -367,7 +367,7 @@ void addgradrho_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jl
                    float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_u,
                    float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_uacc,
                    float_sw4* __restrict__ a_grho, float_sw4 dt, float_sw4 h,
-                   sw4_type onesided[6]);
+                   int onesided[6]);
 void addgradrhoc_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst,
                     sw4_type klast, sw4_type ifirstact, sw4_type ilastact, sw4_type jfirstact,
                     sw4_type jlastact, sw4_type kfirstact, sw4_type klastact,
@@ -399,7 +399,7 @@ void addgradmulac_ci(
     int onesided[6], sw4_type nb, sw4_type wb, float_sw4* __restrict__ a_bop);
 
 void scalar_prod_ci(sw4_type is, sw4_type ie, sw4_type js, sw4_type je, sw4_type ks, sw4_type ke, sw4_type i1,
-                    sw4_type i2, sw4_type j1, sw4_type j2, sw4_type k1, sw4_type k2, sw4_type onesided[6],
+                    sw4_type i2, sw4_type j1, sw4_type j2, sw4_type k1, sw4_type k2, int onesided[6],
                     float_sw4* a_u, float_sw4* a_v, float_sw4* a_strx,
                     float_sw4* a_stry, float_sw4* a_strz, float_sw4& sc_prod);
 
@@ -4994,7 +4994,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
     nz = m_global_nz[g];
     onesided_ptr = m_onesided[g];
     char op = '=';  // Assign Uacc := L(u)
-    if (m_croutines) {
+    //    if (m_croutines) {
       if (usingSupergrid())
         rhs4th3fortsgstr_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
                             onesided_ptr, m_acof, m_bope, m_ghcof, uacc_ptr,
@@ -5005,17 +5005,17 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
         rhs4th3fort_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
                        onesided_ptr, m_acof, m_bope, m_ghcof, uacc_ptr, u_ptr,
                        mu_ptr, la_ptr, h, op);
-    } else {
-      if (usingSupergrid())
-        rhs4th3fortsgstr(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
-                         onesided_ptr, m_acof, m_bope, m_ghcof, uacc_ptr, u_ptr,
-                         mu_ptr, la_ptr, &h, m_sg_str_x[g], m_sg_str_y[g],
-                         m_sg_str_z[g], &op);
-      else
-        rhs4th3fort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
-                    onesided_ptr, m_acof, m_bope, m_ghcof, uacc_ptr, u_ptr,
-                    mu_ptr, la_ptr, &h, &op);
-    }
+    // } else {
+    //   if (usingSupergrid())
+    //     rhs4th3fortsgstr(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
+    //                      onesided_ptr, m_acof, m_bope, m_ghcof, uacc_ptr, u_ptr,
+    //                      mu_ptr, la_ptr, &h, m_sg_str_x[g], m_sg_str_y[g],
+    //                      m_sg_str_z[g], &op);
+    //   else
+    //     rhs4th3fort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
+    //                 onesided_ptr, m_acof, m_bope, m_ghcof, uacc_ptr, u_ptr,
+    //                 mu_ptr, la_ptr, &h, &op);
+    // }
 #ifdef SW4_NORM_TRACE
     if (norm_trace_file != nullptr)
       *norm_trace_file << " evalRHS_1 " << g << " " << a_Uacc[g].norm() << "\n";
@@ -5038,7 +5038,7 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
         //	  if( nn > 0 )
         //	     cout << "Alpha before LU " << nn << " nans" << endl;
 
-        if (m_croutines) {
+	//       if (m_croutines) {
           if (usingSupergrid())
             rhs4th3fortsgstr_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
                                 onesided_ptr, m_acof_no_gp, m_bope,
@@ -5051,18 +5051,18 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
             rhs4th3fort_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
                            onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp,
                            uacc_ptr, alpha_ptr, mua_ptr, lambdaa_ptr, h, op);
-        } else {
-          if (usingSupergrid())
-            rhs4th3fortsgstr(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                             &nz, onesided_ptr, m_acof_no_gp, m_bope,
-                             m_ghcof_no_gp, uacc_ptr, alpha_ptr, mua_ptr,
-                             lambdaa_ptr, &h, m_sg_str_x[g], m_sg_str_y[g],
-                             m_sg_str_z[g], &op);
-          else
-            rhs4th3fort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
-                        onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp,
-                        uacc_ptr, alpha_ptr, mua_ptr, lambdaa_ptr, &h, &op);
-        }
+        // } else {
+        //   if (usingSupergrid())
+        //     rhs4th3fortsgstr(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+        //                      &nz, onesided_ptr, m_acof_no_gp, m_bope,
+        //                      m_ghcof_no_gp, uacc_ptr, alpha_ptr, mua_ptr,
+        //                      lambdaa_ptr, &h, m_sg_str_x[g], m_sg_str_y[g],
+        //                      m_sg_str_z[g], &op);
+        //   else
+        //     rhs4th3fort(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz,
+        //                 onesided_ptr, m_acof_no_gp, m_bope, m_ghcof_no_gp,
+        //                 uacc_ptr, alpha_ptr, mua_ptr, lambdaa_ptr, &h, &op);
+        // }
       }
       //    nn=a_Uacc[g].count_nans();
       //    if( nn > 0 )
@@ -5139,15 +5139,15 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
 #endif
 
     } else {
-      if (usingSupergrid())
-        curvilinear4sg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, u_ptr,
-                       mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr, onesided_ptr,
-                       m_acof, m_bope, m_ghcof, m_sg_str_x[g], m_sg_str_y[g],
-                       &op);
-      else
-        curvilinear4(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, u_ptr,
-                     mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr, onesided_ptr,
-                     m_acof, m_bope, m_ghcof, &op);
+      // if (usingSupergrid())
+      //   curvilinear4sg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, u_ptr,
+      //                  mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr, onesided_ptr,
+      //                  m_acof, m_bope, m_ghcof, m_sg_str_x[g], m_sg_str_y[g],
+      //                  &op);
+      // else
+      //   curvilinear4(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, u_ptr,
+      //                mu_ptr, la_ptr, met_ptr, jac_ptr, uacc_ptr, onesided_ptr,
+      //                m_acof, m_bope, m_ghcof, &op);
     }
 #ifdef SW4_NORM_TRACE
     if (norm_trace_file != nullptr) {
@@ -5218,16 +5218,16 @@ void EW::evalRHS(vector<Sarray>& a_U, vector<Sarray>& a_Mu,
 #endif
 
         } else {
-          if (usingSupergrid())
-            curvilinear4sg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                           alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
-                           uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope,
-                           m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], &op);
-          else
-            curvilinear4(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                         alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
-                         uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope,
-                         m_ghcof_no_gp, &op);
+          // if (usingSupergrid())
+          //   curvilinear4sg(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+          //                  alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
+          //                  uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope,
+          //                  m_ghcof_no_gp, m_sg_str_x[g], m_sg_str_y[g], &op);
+          // else
+          //   curvilinear4(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+          //                alpha_ptr, mua_ptr, lambdaa_ptr, met_ptr, jac_ptr,
+          //                uacc_ptr, onesided_ptr, m_acof_no_gp, m_bope,
+          //                m_ghcof_no_gp, &op);
         }
       }
 #ifdef SW4_NORM_TRACE
@@ -5252,7 +5252,7 @@ void EW::evalRHSanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
   sw4_type ifirst, ilast, jfirst, jlast, kfirst, klast;
   float_sw4 *uacc_ptr, *u_ptr, *c_ptr, h;
 
-  sw4_type* onesided_ptr;
+  int* onesided_ptr;
 
   sw4_type g, nz;
 
@@ -5269,16 +5269,16 @@ void EW::evalRHSanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
     h = mGridSize[g];
     nz = m_global_nz[g];
     onesided_ptr = m_onesided[g];
-    if (m_croutines)
+    //    if (m_croutines)
       innerloopanisgstrvc_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz,
                              u_ptr, uacc_ptr, c_ptr, onesided_ptr, m_acof,
                              m_bope, m_ghcof, h, m_sg_str_x[g], m_sg_str_y[g],
                              m_sg_str_z[g]);
-    else
-      innerloopanisgstrvc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
-                          &nz, u_ptr, uacc_ptr, c_ptr, onesided_ptr, m_acof,
-                          m_bope, m_ghcof, &h, m_sg_str_x[g], m_sg_str_y[g],
-                          m_sg_str_z[g]);
+    // else
+    //   innerloopanisgstrvc(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast,
+    //                       &nz, u_ptr, uacc_ptr, c_ptr, onesided_ptr, m_acof,
+    //                       m_bope, m_ghcof, &h, m_sg_str_x[g], m_sg_str_y[g],
+    //                       m_sg_str_z[g]);
   }
   //  if (topographyExists()) {
   for (g = mNumberOfCartesianGrids; g < mNumberOfGrids; g++) {
@@ -5295,14 +5295,14 @@ void EW::evalRHSanisotropic(vector<Sarray>& a_U, vector<Sarray>& a_C,
     kfirst = m_kStart[g];
     klast = m_kEnd[g];
     nz = m_global_nz[g];
-    if (m_croutines)
+    //    if (m_croutines)
       ilanisocurv_ci(ifirst, ilast, jfirst, jlast, kfirst, klast, nz, u_ptr,
                      c_ptr, jac_ptr, uacc_ptr, m_onesided[g], m_acof, m_bope,
                      m_ghcof, m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g]);
-    else
-      ilanisocurv(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz, u_ptr,
-                  c_ptr, jac_ptr, uacc_ptr, m_onesided[g], m_acof, m_bope,
-                  m_ghcof, m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g]);
+    // else
+    //   ilanisocurv(&ifirst, &ilast, &jfirst, &jlast, &kfirst, &klast, &nz, u_ptr,
+    //               c_ptr, jac_ptr, uacc_ptr, m_onesided[g], m_acof, m_bope,
+    //               m_ghcof, m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g]);
   }
 }
 
@@ -6248,28 +6248,28 @@ void EW::compute_energy(float_sw4 dt, bool write_file, vector<Sarray>& Um,
           g == mNumberOfCartesianGrids)
         kend--;
 
-      if (m_croutines)
+      //      if (m_croutines)
         energy4c_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                     m_kEnd[g], istart, iend, jstart, jend, kstart, kend,
                     onesided_ptr, um_ptr, u_ptr, up_ptr, rho_ptr, mJ[g].c_ptr(),
                     locenergy);
-      else
-        energy4c(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-                 &m_kStart[g], &m_kEnd[g], &istart, &iend, &jstart, &jend,
-                 &kstart, &kend, onesided_ptr, um_ptr, u_ptr, up_ptr, rho_ptr,
-                 mJ[g].c_ptr(), &locenergy);
+      // else
+      //   energy4c(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+      //            &m_kStart[g], &m_kEnd[g], &istart, &iend, &jstart, &jend,
+      //            &kstart, &kend, onesided_ptr, um_ptr, u_ptr, up_ptr, rho_ptr,
+      //            mJ[g].c_ptr(), &locenergy);
     } else {
-      if (m_croutines)
+      //      if (m_croutines)
         energy4_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
                    m_kEnd[g], istart, iend, jstart, jend, kstart, kend,
                    onesided_ptr, um_ptr, u_ptr, up_ptr, rho_ptr, mGridSize[g],
                    m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g], locenergy);
-      else
-        energy4(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
-                &m_kStart[g], &m_kEnd[g], &istart, &iend, &jstart, &jend,
-                &kstart, &kend, onesided_ptr, um_ptr, u_ptr, up_ptr, rho_ptr,
-                &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
-                &locenergy);
+      // else
+      //   energy4(&m_iStart[g], &m_iEnd[g], &m_jStart[g], &m_jEnd[g],
+      //           &m_kStart[g], &m_kEnd[g], &istart, &iend, &jstart, &jend,
+      //           &kstart, &kend, onesided_ptr, um_ptr, u_ptr, up_ptr, rho_ptr,
+      //           &mGridSize[g], m_sg_str_x[g], m_sg_str_y[g], m_sg_str_z[g],
+      //           &locenergy);
     }
     energy += locenergy;
   }
@@ -6297,16 +6297,16 @@ float_sw4 EW::scalarProduct(vector<Sarray>& U, vector<Sarray>& V) {
     float_sw4* v_ptr = V[g].c_ptr();
     float_sw4 loc_s_prod;
     int* onesided_ptr = m_onesided[g];
-    if (m_croutines)
+    //    if (m_croutines)
       scalar_prod_ci(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g],
                      m_kStart[g], m_kEnd[g], istart, iend, jstart, jend, kstart,
                      kend, onesided_ptr, u_ptr, v_ptr, m_sg_str_x[g],
                      m_sg_str_y[g], m_sg_str_z[g], loc_s_prod);
-    else
-      scalar_prod(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
-                  m_kEnd[g], istart, iend, jstart, jend, kstart, kend,
-                  onesided_ptr, u_ptr, v_ptr, m_sg_str_x[g], m_sg_str_y[g],
-                  m_sg_str_z[g], &loc_s_prod);
+    // else
+    //   scalar_prod(m_iStart[g], m_iEnd[g], m_jStart[g], m_jEnd[g], m_kStart[g],
+    //               m_kEnd[g], istart, iend, jstart, jend, kstart, kend,
+    //               onesided_ptr, u_ptr, v_ptr, m_sg_str_x[g], m_sg_str_y[g],
+    //               m_sg_str_z[g], &loc_s_prod);
     s_prod += loc_s_prod;
   }
   // output my sum
@@ -6319,7 +6319,7 @@ float_sw4 EW::scalarProduct(vector<Sarray>& U, vector<Sarray>& V) {
 }
 
 //-----------------------------------------------------------------------
-void EW::get_utc(sw4_type utc[7], sw4_type event) const {
+void EW::get_utc(int utc[7], sw4_type event) const {
   for (sw4_type c = 0; c < 7; c++) utc[c] = m_utc0[event][c];
 }
 

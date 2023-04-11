@@ -8,7 +8,7 @@ void addgradrho_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jl
                    float_sw4* __restrict__ a_um, float_sw4* __restrict__ a_u,
                    float_sw4* __restrict__ a_up, float_sw4* __restrict__ a_uacc,
                    float_sw4* __restrict__ a_grho, float_sw4 dt, float_sw4 h,
-                   sw4_type onesided[6]) {
+                   int onesided[6]) {
   const float_sw4 idt = 1.0 / dt;
   const float_sw4 dt2o12 = dt * dt / 12;
   const float_sw4 h3 = h * h * h;
@@ -113,7 +113,7 @@ void addgradmula_ci(sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type j
                     float_sw4* __restrict__ a_u, float_sw4* __restrict__ a_uacc,
                     float_sw4* __restrict__ a_gmu,
                     float_sw4* __restrict__ a_glambda, float_sw4 dt,
-                    float_sw4 h, sw4_type onesided[6], sw4_type nb, sw4_type wb,
+                    float_sw4 h, int onesided[6], sw4_type nb, sw4_type wb,
                     float_sw4* __restrict__ a_bop) {
   const float_sw4 h3 = h * h * h;
   const float_sw4 ih2 = 1.0 / (h * h);

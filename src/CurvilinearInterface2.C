@@ -19,11 +19,22 @@ void F77_FUNC(dgetrs, DGETRS)(char*, sw4_type*, sw4_type*, double*, sw4_type*, s
 void bndryOpNoGhostc(double* acof_no_gp, double* ghcof_no_gp,
                      double* sbop_no_gp);
 
-void curvilinear4sgwind(sw4_type, sw4_type, sw4_type, sw4_type, sw4_type, sw4_type, sw4_type, sw4_type, float_sw4*,
-                        float_sw4*, float_sw4*, float_sw4*, float_sw4*,
-                        float_sw4*, sw4_type*, float_sw4*, float_sw4*, float_sw4*,
-                        float_sw4*, float_sw4*, float_sw4*, float_sw4*, sw4_type,
-                        char);
+// void curvilinear4sgwind(sw4_type, sw4_type, sw4_type, sw4_type, sw4_type, sw4_type, sw4_type, sw4_type, float_sw4*,
+//                         float_sw4*, float_sw4*, float_sw4*, float_sw4*,
+//                         float_sw4*, sw4_type*, float_sw4*, float_sw4*, float_sw4*,
+//                         float_sw4*, float_sw4*, float_sw4*, float_sw4*, sw4_type,
+//                         char);
+void curvilinear4sgwind(
+    sw4_type ifirst, sw4_type ilast, sw4_type jfirst, sw4_type jlast, sw4_type kfirst, sw4_type klast,
+    sw4_type kfirstw, sw4_type klastw, float_sw4* __restrict__ a_u,
+    float_sw4* __restrict__ a_mu, float_sw4* __restrict__ a_lambda,
+    float_sw4* __restrict__ a_met, float_sw4* __restrict__ a_jac,
+    float_sw4* __restrict__ a_lu, int* onesided, float_sw4* __restrict__ a_acof,
+    float_sw4* __restrict__ a_bope, float_sw4* __restrict__ a_ghcof,
+    float_sw4* __restrict__ a_acof_no_gp, float_sw4* __restrict__ a_ghcof_no_gp,
+    float_sw4* __restrict__ a_strx, float_sw4* __restrict__ a_stry, sw4_type nk,
+    char op) ;
+
 
 //-----------------------------------------------------------------------
 CurvilinearInterface2::CurvilinearInterface2(sw4_type a_gc, EW* a_ew) {
@@ -1235,7 +1246,7 @@ void CurvilinearInterface2::interface_rhs(Sarray& rhs, Sarray& uc, Sarray& uf,
                                      });
   SW4_MARK_END("SAVE_GHOSTS");
   // std::cout<<"CALL TO CURV4SGWIND A\n";
-  sw4_type onesided[6] = {0, 0, 0, 0, 1, 1};
+  int onesided[6] = {0, 0, 0, 0, 1, 1};
   // 2. Compute L(uc)/rhoc
   curvilinear4sgwind(m_ib, m_ie, m_jb, m_je, m_kb, m_ke, 1, 1, uc.c_ptr(),
                      m_mu_c.c_ptr(), m_lambda_c.c_ptr(), m_met_c.c_ptr(),
