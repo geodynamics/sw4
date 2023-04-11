@@ -113,7 +113,7 @@ sw4_type CheckPoint::get_checkpoint_cycle_interval() { return mCycleInterval; }
 bool CheckPoint::verify_restart() {
 #ifdef SW4_USE_SCR
   // Check whether SCR loaded a checkpoint.
-  sw4_type have_restart = 0;
+  int have_restart = 0;
   char cycle_num[SCR_MAX_FILENAME];
   SCR_Have_restart(&have_restart, cycle_num);
 
@@ -651,7 +651,7 @@ float_sw4 CheckPoint::getDt() {
   return dt;
 #else
 
-  sw4_type have_restart = 0;
+  int have_restart = 0;
   char cycle_num[SCR_MAX_FILENAME];
   SCR_Have_restart(&have_restart, cycle_num);
   if (! have_restart) {
@@ -1517,7 +1517,7 @@ void CheckPoint::read_checkpoint_hdf5(float_sw4& a_time, int& a_cycle,
 }
 #endif  // End USE_HDF5
 //-----------------------------------------------------------------------
-void CheckPoint::write_checkpoint_scr(float_sw4 a_time, sw4_type a_cycle,
+void CheckPoint::write_checkpoint_scr(float_sw4 a_time, int a_cycle,
 				      vector<Sarray>& a_U, vector<Sarray>& a_Up,
 				      vector<Sarray*>& a_AlphaVE,
 				      vector<Sarray*>& a_AlphaVEm) {
@@ -1579,7 +1579,7 @@ void CheckPoint::write_checkpoint_scr(float_sw4 a_time, sw4_type a_cycle,
 #endif
 }
 //-----------------------------------------------------------------------
-void CheckPoint::read_checkpoint_scr(float_sw4& a_time, sw4_type& a_cycle,
+void CheckPoint::read_checkpoint_scr(float_sw4& a_time, int& a_cycle,
                                  vector<Sarray>& a_Um, vector<Sarray>& a_U,
                                  vector<Sarray*>& a_AlphaVEm,
                                  vector<Sarray*>& a_AlphaVE) {

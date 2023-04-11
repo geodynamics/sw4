@@ -54,11 +54,11 @@ class CheckPoint {
                        hid_t mydspace, hid_t dxpl, void* buf);
   void finalize_hdf5();
 #endif
-void write_checkpoint_scr(float_sw4 a_time, sw4_type a_cycle,
+void write_checkpoint_scr(float_sw4 a_time, int a_cycle,
 			  std::vector<Sarray>& a_U, std::vector<Sarray>& a_Up,
 			  std::vector<Sarray*>& a_AlphaVE,
 			  std::vector<Sarray*>& a_AlphaVEm) ;
- void read_checkpoint_scr(float_sw4& a_time, sw4_type& a_cycle,
+ void read_checkpoint_scr(float_sw4& a_time, int& a_cycle,
                             std::vector<Sarray>& a_Um, std::vector<Sarray>& a_U,
                             std::vector<Sarray*>& a_AlphaVEm,
                             std::vector<Sarray*>& a_AlphaVE);
