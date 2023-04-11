@@ -166,14 +166,14 @@ class EW {
                           vector<vector<Source*>>& a_GlobalUniqueSources);
   void processMaterial(char* buffer);
   void processMaterialIfile(char* buffer);
-  void processMaterialBlock(char* buffer, sw4_type& blockCount);
+  void processMaterialBlock(char* buffer, int& blockCount);
   void processMaterialPfile(char* buffer);
   void processMaterialVimaterial(char* buffer);
   void processMaterialInvtest(char* buffer);
   void processMaterialRfile(char* buffer);
   void processMaterialSfile(char* buffer);
   void processMaterialGMG(char* buffer);
-  void processAnisotropicMaterialBlock(char* buffer, sw4_type& ablockCount);
+  void processAnisotropicMaterialBlock(char* buffer, int& ablockCount);
   // void processReceiver(char* buffer, vector<TimeSeries*>&
   // a_GlobalTimeSeries);
   void processReceiver(char* buffer,
@@ -1640,7 +1640,7 @@ class EW {
  private:
   // void preprocessSources(vector<Source*>& a_GlobalSources);
   void preprocessSources(vector<vector<Source*>>& a_GlobalSources);
-  void revvector(sw4_type npts, float_sw4* v);
+  void revvector(int npts, float_sw4* v);
 
   sw4_type m_nevent;  // Number of events, needed for multiple event material
                  // optimization.
