@@ -8911,7 +8911,7 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
   double start_time, end_time;
   start_time = MPI_Wtime();
 #ifdef USE_HDF5
-  /* sw4_type verbose = mVerbose; */
+  /* int verbose = mVerbose; */
   std::string rname = "EW::extractTopographyFromSfile";
   Sarray gridElev;
   herr_t ierr;
@@ -8950,7 +8950,7 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
                   << " azimuth of coordinate sytem = " << mGeoAz
                   << " difference = " << alpha - mGeoAz);
 
-  // Ngrids - sw4_type, number of 3D grids in the file
+  // Ngrids - int, number of 3D grids in the file
   int npatches;
   if (m_myRank == 0) {
     attr_id = H5Aopen(file_id, "ngrids", H5P_DEFAULT);
@@ -8976,7 +8976,7 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
   }
   MPI_Bcast(&hh, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  // ---------- read topography on file sw4_typeo array gridElev
+  // ---------- read topography on file into array gridElev
   hsize_t dims[2];
   char intf_name[32];
 
@@ -8999,7 +8999,7 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
   MPI_Bcast(dims, 2, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
   MPI_Bcast(&prec, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  sw4_type nitop = (sw4_type)dims[0], njtop = (sw4_type)dims[1];
+  int nitop = (int)dims[0], njtop = (int)dims[1];
 
   if (m_myRank == 0 && mVerbose >= 2) {
     printf("Topography header\n");
@@ -9033,7 +9033,7 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
   MPI_Bcast(in_data, nitop * njtop * prec, MPI_CHAR, 0, MPI_COMM_WORLD);
 
   float_sw4* data = new float_sw4[nitop * njtop];
-  for (sw4_type i = 0; i < nitop * njtop; i++) {
+  for (int i = 0; i < nitop * njtop; i++) {
     if (prec == 4)
       data[i] = -(float_sw4)f_data[i];
     else if (prec == 8)
@@ -9053,7 +9053,7 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
            data[nitop * njtop - 1], gridElev(nitop, njtop, 1));
     // get min and max
     float tmax = -9e-10, tmin = 9e+10;
-    for (sw4_type q = 0; q < nitop * njtop; q++) {
+    for (int q = 0; q < nitop * njtop; q++) {
       if (data[q] > tmax) tmax = data[q];
       if (data[q] < tmin) tmin = data[q];
     }
@@ -9074,16 +9074,16 @@ void EW::extractTopographyFromSfile(std::string a_topoFileName) {
   }
 
   // Topography read, next interpolate to the computational grid
-  sw4_type topLevel = mNumberOfGrids - 1;
+  int topLevel = mNumberOfGrids - 1;
 
   float_sw4 topomax = -1e30, topomin = 1e30;
 #pragma omp parallel for reduction(max : topomax) reduction(min : topomin)
-  for (sw4_type i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
-    for (sw4_type j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j) {
+  for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
+    for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j) {
       float_sw4 x = (i - 1) * mGridSize[topLevel];
       float_sw4 y = (j - 1) * mGridSize[topLevel];
-      sw4_type i0 = static_cast<sw4_type>(trunc(1 + (x - x0) / hh));
-      sw4_type j0 = static_cast<sw4_type>(trunc(1 + (y - y0) / hh));
+      int i0 = static_cast<int>(trunc(1 + (x - x0) / hh));
+      int j0 = static_cast<int>(trunc(1 + (y - y0) / hh));
       // test
       float_sw4 xmat0 = (i0 - 1) * hh, ymat0 = (j0 - 1) * hh;
       float_sw4 xmatx = x - x0, ymaty = y - y0;
@@ -9265,13 +9265,13 @@ void EW::extractTopographyFromGMG(std::string a_topoFileName) {
     H5Sclose(dataspace_id);
 
     datatype_id = H5Dget_type(dataset_id);
-    prec = (sw4_type)H5Tget_size(datatype_id);
+    prec = (int)H5Tget_size(datatype_id);
     H5Tclose(datatype_id);
 
     read_hdf5_attr(dataset_id, H5T_IEEE_F64LE, "resolution_horiz", &hh);
 
     crs_to = read_hdf5_attr_str(file_id, "crs");
-    str_len = (sw4_type)(strlen(crs_to) + 1);
+    str_len = (int)(strlen(crs_to) + 1);
   }
 
   MPI_Bcast(&origin_x, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -9325,7 +9325,7 @@ void EW::extractTopographyFromGMG(std::string a_topoFileName) {
   MPI_Bcast(f_data, dims[0] * dims[1], MPI_FLOAT, 0, MPI_COMM_WORLD);
 
   // Topography read, next interpolate to the computational grid
-  sw4_type topLevel = mNumberOfGrids - 1;
+  int topLevel = mNumberOfGrids - 1;
 
   float_sw4 topomax = -1e30, topomin = 1e30;
 
@@ -9341,8 +9341,8 @@ void EW::extractTopographyFromGMG(std::string a_topoFileName) {
   /* fprintf(stderr, "origin xy: %f %f\n", origin_x, origin_y); */
 
   // proj is not thread safe, so no omp pragma here
-  for (sw4_type i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
-    for (sw4_type j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j) {
+  for (int i = m_iStart[topLevel]; i <= m_iEnd[topLevel]; ++i) {
+    for (int j = m_jStart[topLevel]; j <= m_jEnd[topLevel]; ++j) {
       float_sw4 x = (i - 1) * mGridSize[topLevel];
       float_sw4 y = (j - 1) * mGridSize[topLevel];
 
@@ -9363,8 +9363,8 @@ void EW::extractTopographyFromGMG(std::string a_topoFileName) {
       /* printf("converted gmg xy: %f, %f, origin: %f %f\n", gmg_x, gmg_y,
        * origin_x, origin_y); */
 
-      sw4_type i0 = static_cast<sw4_type>(floor(gmg_x / hh));
-      sw4_type j0 = static_cast<sw4_type>(floor(gmg_y / hh));
+      int i0 = static_cast<int>(floor(gmg_x / hh));
+      int j0 = static_cast<int>(floor(gmg_y / hh));
 
       double fac0 = (gmg_y - j0 * hh) / hh;
       double fac1 = (gmg_x - i0 * hh) / hh;
